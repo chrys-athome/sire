@@ -1,0 +1,63 @@
+
+ParameterTable params = assign_parameters<
+				atoms_from< AtomTypeDB, combine<ChargeDB,LJDB> >,
+				bonds_from< BondDB >,
+				angles_from< sum_of<AngleDB,UreyBradleyDB> >,
+				dihedrals_from< DihedralDB > >();
+
+ParameterTables : public ParameterTableBase, 
+                  public atom_tables<AtomTypeTable, 
+				  					 combine_table<ChargeParameterTable,
+				                                   LJParameterTable>
+									>,
+				  public bond_tables<BondTable>,
+				  public angle_tables< sum_of<AngleTable,UreyBradleyTable >,
+				  public dihedral_tables<DihedralTable>
+{
+};
+
+params.assign();
+params.assignAtoms( db.... );
+params.assignBonds( ... );
+params.assignAngles();
+params.assign<ChargeTable>();
+params.assign<CLJTable>();
+
+template<a,b,c,d...>
+class atoms : public a::table, public b::table etc.
+{
+public:
+	atoms() : a::table(), b::table() etc.
+	{
+		tableinfo = AtomTableInfo(molecule);
+		a::table::setInfo(tableinfo);
+		b::table::setInfo(tableinfo);
+		etc.
+	}
+	
+	~atoms()
+	{}
+	
+	void assignAtoms(db); //all unassigned atoms in molecule
+	void replaceAtoms(db); //all atoms in molecule
+	
+	void assignAtoms(resnum, db); //all unassigned atoms in residue
+	void replaceAtoms(resnum, db); //all atoms in residue
+	
+	void assignAtoms(atomlist, db); //all unassigned atoms in list
+	void replaceAtoms(atomlist, db); //all atoms in list
+	
+	void assignAtom(atom, db); //atom, if not already assigned
+	void replaceAtom(atom, db); //atom
+	
+};
+
+class atoms_base
+{
+public:
+	atoms_base(const Molecule &mol)
+	{}
+	
+private:
+	MoleculeInfo mol;
+};
