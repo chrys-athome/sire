@@ -1,0 +1,270 @@
+Split coordinates totally from the energy...
+
+Have the core that only contains the coordinates of the system, and tools for calculating 
+distances, performing rotations/translations, hooks to make moves and integrate forces/torques
+etc.
+
+Each molecule can be loaded separately
+
+The forcefield is completely separate. This even means that things like the charges and parameters
+are completely separate (the forcefield holds the arrays that hold the parameters/charges etc)
+(though the core does hold the proton number of the atom, got from mol2
+input - input must provide proton number or element name). We can thus keep adding forcefields
+together. Forcefield is initialised first by loading parameters into it (see constructor below).
+This loads all of the parameters and builds the forcefield databases, as in ProtoMS 2.
+
+We will need to keep the forcefield separate from the geometry in the template files. Indeed
+perhaps the template files should be moved into the core, and the forcefield files assign
+parameters based on the names and residue names of the atoms. Yes, this makes sense! Only 
+problem is perturbation, though this is something that is more part of the forcefield than the
+coordinates (indeed forcefield perturbation should be part of the forcefield, and coordinate
+perturbation should be part of the coordinates).
+
+Then we add the forcefield *to selected parts* of the system. This builds a complete forcefield
+list, with the different bits of the forcefield knowing which groups effect it. This means that
+when a group moves, we know which parts of the forcefield need to be recalculated. The total
+energy is just the sum of each of the individual forcefield groups. Thus adding a restraint between
+a pair of atoms is the same as adding an opls forcefield interaction between two molecules!
+(or adding a GB term to a solute). Different energy terms are held in different plugins, and
+they are implemented as library type functions.
+
+e.g. 
+
+MMForceField:
+    __init__([files])  # construct generic MM forcefield and read parameters from specified .ff files
+    readFile([files])  # read parameters from specified .ff files
+    
+    ## loads of query functions to interogate the contents of the ff databases
+    
+    initialiseSystem([system]) # construct all of the arrays and assign all of the parameters
+                               # for all of the atoms within 'system'
+    initialiseSystem([system1],[system2])  # construct all of the arrays and assign all of the 
+                                           # parameters for interactions between these two systems
+    
+    #calculate the energy of all of [moving-groups], given the rest of the groups listed
+    #in [system], making sure that the energy components required to be monitored in [nrg-monitors]
+    #are kept up to date (the nrgmonitors know whether to store the results in 'new', 'old' or 'dontcare')
+    (nrg,nrgf,nrgb) = calculateEnergy([moving-groups],[system],[nrg-monitors])
+    
+    #[system] is the whole rest of the system that does not include [moving-groups] and also
+    #does not include any groups that do not have this forcefield (e.g. QM groups).
+    #In other words, 'group' must be one of the groups listed in 'initialiseSystem'
+    #Note that we have a list of forcefields, that have associated groups. Thus a single group can belong
+    #to multiple forcefields (as it should do, e.g. soft-core group would also need to belong
+    #to the opls-softcore group so that the opls-softcore interaction energy could be calculated
+    
+    #calculate the forces acting on 'moving-groups' given the rest of the system in [system], taking
+    #care to record any specified values in [force-monitors]
+    [forces] = calculateForces([moving-groups],[system],[force-monitors])
+
+    #[forces] is a list of lists, one list per moving-group, with each list containing a list of force
+    #vectors, one per atom. Everything is in order, to make things easier!
+
+    #first ensure that 'moving-groups' are not in [system]
+    #then calculate pair-pair energies within [moving-groups]
+    #then do pair-pair between [moving-groups] and [system]
+    #then do within each of [moving-groups]
+    
+    #have simplifying force/energy functions, e.g. calculateTotalEnergy([system],[nrg-monitors]),
+    #    calculateEnergy(group,[system],[nrg-monitors])
+    
+    #main 'calculateEnergy' calls above calculateEnergy. This looks at the ID of the 'group' to 
+    #see if it is a protein. If it isn't, then there is no way that the group could be bound
+    #to anything, so it calls;
+    
+    #calculateNonBondedEnergy(group1,group2,[nrg-monitors-that-involve-group1-or-group2])
+    #for all pairs, and accumalates the total. However, it checks if these two groups are
+    #within the cutoff before it calls this function.
+
+    #if the pair of groups could be bonded, then call
+    #   calculateBondedEnergy(group1,group2,[nrg-monitors...])
+    
+    #have this distinction as calculateBondedEnergy will be slower as it needs to check
+    #whether or not there are bonds
+    
+    #all these individual functions multiply by scaling factors if required.
+    
+or;
+
+QMForceField:
+    __init__() # constructor
+            
+    initialiseSystem([qm-region],[mm-region])
+    
+    calculateEnergy([moved],[system]) #calculate the energy of the moved region given the rest
+                                      #of the system. In this case, we recalculate the complete
+                                      #QM energy, but may be able to optimise as we know what has moved
+
+Note that these are just base classes, which should be able to abstract a lot of the donkey work.
+Because the coordinates of the entire system are distributed over all of the processors that are
+assigned to this system, it should be possible to parallalize the 'calculateEnergy' functions
+over multiple processors using mpi, and passing the id's of the groups that are to be calculated. Each
+parallel instance will need to have loaded the correct plugins for this to work.
+
+Separate 'systems'. A system contains everything that a single ProtoMS job contains. Read molecules
+outside of system, and can do whatever we want to them outside a system. Once added to a system they 
+are then read-only, can only be modified via the system, and cannot be added to another system.
+System can then be used like ProtoMS, e.g. we have sets of commands that can only be used in setup, 
+and must be given first (e.g. setting up forcefields, setting cutoffs, etc.). We then have 
+dynamic commands (chunks/actions), e.g. setting stream directions, running simulations, 
+reading/writing restart files etc. Monitors (energy, force and geometric) can be added, cleared,
+deleted, followed graphically, printed to files etc. at will. A monitor keeps a record of 
+the average, stddev and periodic individual values.
+
+Keep the same basic design as ProtoMS (protein/solute/solvent - chain/flex/rigid). Use rigid body
+MD for solvents. Use periodic boundaries in core. 
+
+Dependencies on QT, C++, Python (though no python libraries, and built in interpreter), 
+blas/lapack (need to investigate), FFT, mpi library, sqlite for database?
+
+IO uses mol2 files as higher precision, more info, and have element names? Allow to write
+mol2, dcd etc.
+
+C++ with Python interface, run whole interpreter in main thread. Interface with interpreter either
+via script or via gui interface that can be popped up or closed down at will. We use a gui
+interface and not a command line as we need to be able to use mpi, and also we don't want to
+kill the job if the interface goes down. Use some connection protocol so that I can connect
+to the running job with a validation key to get it to open an x-window. I would need to
+pass it my x-info though...
+
+Use MPI to do parallel processing. Get number of processors.
+
+example script;
+
+p1 = protoms.readProtein("filename.mol2")
+s1 = protoms.readSolute("filename.mol2")
+svn = protoms.readSolvent("filename.mol2")
+
+processors = protoms.availableProcessors({"rank":bySpeed)
+
+print processors[0].info()
+
+#build a system out of p1,s1,svn. Note that this modifies p1,s1,svn such that 
+#they now know they are in a system, and cannot thus by moved out of the system.
+#Also note that they can not now be modified without going through the system
+#(p1,s1,svn are now effectively read-only references. Also protein is not deleted
+#if p1 goes out of scope because it still exists in the system)
+system1 = System([p1,s1,svn])
+
+system1.setStream(INFO,"info.txt")
+system1.setStream(WARNING,"warning.txt")
+
+#load up the generic molecular mechanics forcefield and populate with the following parameter files
+opls = protoms.MMForceField(["../parameters/opls.ff","../parameters/solvents.ff","../parameters/opls-residues.ff"])
+opls.setCutoff(15.0)
+opls.setFeather(0.5)
+opls.setLJRules(arithmetic)
+
+opls.readFiles(["myligand.ff"])
+
+#set protein and solvent to use the opls forcefield - note that a forcefield cannot be
+#modified once it has been added to a system. This prevents really weird bugs!
+system1.addForceField(opls,[p1,svn])
+
+#could also do;
+system1.addForceField("MM",opls,[p1],[svn])  # this would add an opls forcefield that only acts *between*
+                                        # the protein and solvent, and not within the protein or solvent
+                                        # This would not normally be useful, but is necessary for highly
+                                        # mixed forcefields, e.g. gay-berne with opls, where specific
+                                        # mixed interaction forms are necessary, or soft-core and opls
+
+#can change some forcefied parameters dynamically, e.g.
+system1.forceField["MM"].setCutoff(15.0)  # forceField returns dictionary of all forcefields on system
+                                          # the dynamic forcefield parameters are copied to local storage
+                                          # for this system. Can also remove forcefields dynamically, and
+                                          # add forcefields dynamically! It is up to the user to ensure
+                                          # that the sum of all forcefields is complete!
+
+                                          # e.g. system1.removeForceField("MM")
+
+#load up an AM1 semiempirical forcefield and populate with the following AM1-BCC parameter files
+am1 = protoms.AM1ForceField("QM",["../parameters/am1-bcc.ff"])  # perturbing forcefield of MM region
+                                                                # if have QM region could get expensive!
+
+#set solute to be represented via am1 forcefield
+system1.addForceField(am1,s1)
+
+#get a label for atom CA in protein residue 154
+atom1 = system1.atom({"molecule":p1,"atmnam":"CA","resnum":154})
+
+#get a label for atom C2 in solute residue NRG
+atom2 = system1.atom({"molecule":s1,"atmnam":"C2","resnam":"NRG"})
+
+#add a harmonic bond restraint between these two atoms (list, if two atoms then length, three then angle etc.)
+system1.addForceField("bond restraint 1",protoms.harmonicRestraint(atoms=[atom1,atom2],k=25.0,r=10.0))
+
+#get a label for a point in space
+point = system1.point([1.0,2.0,1.5])
+
+#add a positional restraint
+system1.addForceField("bond restraint2",protoms.harmonicRestraint(atoms=[atom1,point],k=10.0,r=5.0))
+
+#this distributes copies of the coordinates of system1 onto all of the processors,
+#and also informs system1 about which processors are being used. Note that 
+#this will fail if system1 is distributed to processors that are already in use
+system1.setProcessors(processors[0:2])
+
+#add a geom_monitor that measures a distance, angle, dihedral (depending on number of atoms) for every
+#move of the simulation (monitor collects average and stddev)
+mon1 = system1.addGeomMonitor([atom1,atom2,point])
+
+#add an energy monitor, in this case to monitor the average difference in energy between forwards and backwards
+#energies (also monitors stddev)
+dgf = system1.addEnergyMonitor("deltaGF")
+
+#add an energy monitor for the solute solvent(1) energy
+emon1 = system1.addEnergyMonitor(component="coulomb",[s1,svn])
+
+#get a copy of all of the molecules in the system (this is a deep copy)
+molecules = system1.copyMolecules()
+
+#the below function pushes the 'simulate' chunk onto the queue for system1 and then immediately returns
+system1.simulate({"length":500000,protein:10,solute:1,solvent:1000,"printmove":100})
+
+#print a real-time updated graph of this monitor
+mon1.graph()
+
+#print a real-time updated graph of dgf
+dgf.graph()
+
+#print out what system1 is currently doing (it should be running the above simulate chunk)
+print system1.status()
+
+#the below function pushes the 'outputCoords' chunk onto the queue for system1 and then returns
+system1.outputCoords({"format":"mol2","protein":0,"solvent",[0:10],"includedummy",True})
+
+#print out what system1 is currently doing (probably still running the simulation!), with
+#one chunk remaining
+print system1.status()
+
+#write a restart file for system1 - this function is special as it blocks until the system is ready
+#to run it
+system1.writeRestart("restart1.data")
+
+#could also do
+system1.forceRestart("restart1.data")  # this stop system1 whereever it is and writes a restart as soon 
+                                       # as possible
+
+#wait until system1 has finished
+system1.wait()
+
+#or keep polling until system1 is ready...
+while(system1.isBusy()):
+    time.sleep(5)
+    
+#print the monitor data to an output file
+mon1.output(format="agr",file="monitor.agr")
+
+#clear the statistics of the monitor
+mon1.clear()
+
+#print out the free energy average
+print "Free energy = %f (%f)" % (dgf.avg(),dgf.stddev())
+
+dgf.clear()
+
+
+#By using processors and a thread to actually run, we can have an interactive shell that can spawn off
+#multiple independent jobs (using mpi to spread the load, not ssh!) and that can have some pretty
+#fancy scheduling. The interactive script can be used to monitor what is going on, to send termination
+#or steering if necessary, or to perform multi-system moves, e.g. REM, gibbs ensemble etc.

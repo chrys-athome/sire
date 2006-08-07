@@ -1,0 +1,112 @@
+
+
+Plan new hierarchy for CutGroups...
+
+     CutGroup                
+        |    \               
+        |     -----------    
+        |                 \          
+     CutMolecule--         CutResidue
+     /     |      \             \
+ RigidMol  FlexMol ChainMol     ChainRes
+
+
+In addition have FlexGroup class, that is inherited by  FlexMol, ChainMol and ChainRes.
+FlexGroup is a virtual base class that returns all of the bonds in the molecule, all
+of the flexible degrees of freedom in the molecule etc.
+
+This split allows code that is doing energy to split molecules from residues, and does
+not confuse the energy calculations with unnecessary FlexGroup information (as we can then
+split into flexgroups, and calculate intramolecule energy of flexgroups...)
+
+Then have SimVolume calculate distances between two atomarrays (distance(atomarray0,atomarray1)),
+Then have intermolecular energy routines work via two CutGroupSets, thus allowing cachining of one
+set, and no replication of one group with set and total energy of set with set.
+
+(mol with set), do (set(mol) with set)
+all within set, do;
+
+tmpset
+
+for i in range set.count-2, 0 
+    
+    tmpset.append(set[i+1])
+    nrg += set[i] with tmpset
+    
+This allows lots of caching between sets (of the parameter tables etc.
+A more efficient all-within-set could be provided in a subclass (this is a virtual function)
+
+mol with mol, do set(mol) with set(mol)
+Least efficient, though rarely called. Could be specialised by a child class.
+
+This means that the minimum necessary to be written is set with set.
+
+Energy routines all work with CutGroups, not CutMolecules.
+
+def energy(set0,set1)
+
+    for mol0 in set0
+
+        const CutGroup* mol0 = mol0.get();
+        if (mol0 == 0) next;
+
+        ismol0 = mol0.ismolecule
+        params0 = mol0.params
+    
+        const AtomArray &atoms1 = mol0.atoms()
+        id0 = mol0.id
+    
+        for mol1 in set1
+
+            const CutGroup* mol1 = mol1.get();
+            if (mol1 == 0 or mol1.id == id0) next;
+            
+            #if either are molecule, then cannot be bonded
+            if ismol0 or mol1.ismolecule
+                  #non-bonded pair energy
+                  
+                  &atoms1 = mol1.atoms()
+                  distmat = simvol.invdist2(atoms0,atoms1)
+                  
+                  parammat = mm.combineParams(params0,mol1.params)
+                  
+                  for iat0 in range 0,mol0.natoms
+                        for iat1 in range 0,mol1.natoms
+
+                            c01 = parammat.charge(iat0,iat1)...
+                            invdist2 = distmat[iat0,iat1]
+
+                            nrg += coul invdist2 + lj invdist2 ...
+                  
+            else
+                  #bonded pair energy
+
+Forcefields could use an SSMatrix to store the individual CutGroup-CutGroup energies
+and distances. This would make the collection of components easier.
+
+Only need to store energies of pairs within the cutoff distance (hence sparse matrix).
+
+If need to store index (2*long) and coulomb and LJ (2*double), then need 24 bytes per pair.
+
+If we have 500000 CutGroups, then expect that maybe 1000 CutGroups within each 
+CutGroups cutoff distance. This would mean we would have 500 M values!
+
+This would require over 11 GB of storage! So would not be possible...
+
+If we have 100000 CutGroups, with 500 within each distance, then need 50 M values.
+This would require 1 GB! Also not possible...
+
+How about 10000 with 100 within each distance, then need 1 M values.
+This would require 22 MB, so would be possible. Also remember that would actually
+only store each pair once (so 11 MB) and could use floats rather than doubles for
+the components? (Indeed, store double total, then float coul. This enables high
+accuracy total energy, and can get float accuracy coul and lj from difference).
+Doing this would require 20 bytes per value rather than 24, thus bringing
+the usage down to 19 MB.
+
+For larger systems I could provide an MM forcefield that is optimised for large
+systems that does not use this memory-hungry scheme!
+
+The benefit of this scheme is that it removes the need to double-calculate the
+energy for each MC move! This would be a significant bonus!
+

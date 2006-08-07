@@ -1,0 +1,21 @@
+First, install Qt4 for windows (mingw compiled version, e.g. qt-win-opensource-4.1.0-mingw.exe)
+
+Install into Qt directory, e.g. C:\Qt\4.1.0
+
+Install the MinGW compiler with the Qt install (when running qt-win...exe, choose to also install
+MinGW, and download and install that).
+
+MinGW will be installed to C:\MinGW
+
+Download and install windows version of python (e.g. from python.org, Python 2.4.2 Windows installer link)
+Install this somewhere, e.g. C:\Python24\
+
+(this is VC++ compiled, so need to convert libs to correct format for linking by mingw compiler)
+
+Also need to do gsl...
+
+Also need to do boost libraries...
+
+Also need to do MPI libraries...
+
+
