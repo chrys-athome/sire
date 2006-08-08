@@ -1,0 +1,40 @@
+
+CutGroups  --> NetObjects
+Molecule   --> NetObjects
+
+FField     --> NetObjects + IPI
+
+
+System     --> NetObjects
+  |
+  |-FFGroup (contained in System, distributed as part of System)
+  | |-FFWrapper         (contained in FFGroup, distributed as part of System)
+  | |  |                 (FFWrapperPtr is a boost::shared_ptr to an FFWrapper,
+  | |  |                  an FFWrapper<FF> is a wrapper that holds energy state information,
+  | |  |                  and is also the Invoker to the FF)
+  | |  |
+  | |  |-FFieldPtr     NetObject::Ptr<FField> - controlled via FFWrapper invoker
+  |
+  |-MoleculeGroup
+  |  |-Molecule
+
+Use SystemPtrWriter when simulating. This prevents any other editing.
+FField is read-only to get energies. Master status held by System, so again,
+cannot be edited (all forcefields locked)
+
+Simulation  --> NetObjects + IPI
+
+SupraSimulation  --> NetObjects + IPI
+
+FFWrapper must be on the same processor as System as it contains the System state data.
+We must also be able to rapidly create checkpoint objects for it.
+
+System is really just a handle for a lot of NetObjects (Molecules grouped into MoleculeGroups,
+and FFields grouped into FFGroups). 
+
+FF must return its name via a virtual function. This allows the creation of an FFWrapper for the FF
+on the processor of the System. This FFWrapper can then create an Invoker<FF> to control the 
+FF remotely. 
+
+Problem is that each FF needs its own invoker and interface - this is very necessary. A lot of 
+the donkey work can be removed by using a class hierarchy that includes template base classes.

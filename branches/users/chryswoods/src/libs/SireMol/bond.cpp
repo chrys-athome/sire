@@ -1,0 +1,198 @@
+
+#include <QDataStream>
+
+#include "bond.h"
+    
+#include "SireMol/errors.h"
+    
+#include "SireStream/datastream.h"
+
+using namespace SireStream;
+using namespace SireMol;
+    
+static const RegisterMetaType<Bond> r_bond("SireMol::Bond");
+    
+/** Serialise a Bond to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const Bond &bond)
+{
+    writeHeader(ds, r_bond, 1) << bond.atoms[0] << bond.atoms[1];
+    
+    return ds;
+}
+    
+/** Deserialise a Bond from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, Bond &bond)
+{
+    VersionID v = readHeader(ds, r_bond);
+    
+    if (v == 1)
+    {
+        ds >> bond.atoms[0] >> bond.atoms[1];
+    }
+    else
+        throw version_error(v, "1", r_bond, CODELOC);
+    
+    return ds;
+}
+
+/** Construct a null Bond */
+Bond::Bond()
+{}
+
+/** Construct a Bond between these two AtomIndexes. The atoms must not be the same, 
+    or else an exception will be thrown. Note that the Bond will sort the atoms
+    so that the Bond between atom0-atom1 will be the same as the Bond
+    between atom1-atom0. 
+*/
+Bond::Bond(const AtomIndex &atom0, const AtomIndex &atom1)
+{
+    this->create(atom0,atom1);
+}        
+
+/** Construct a Bond between the two AtomIndexes held in the tuple object */
+Bond::Bond(const tuple<AtomIndex,AtomIndex> &atoms)
+{
+    this->create( atoms.get<0>(), atoms.get<1>() );
+}
+
+/** Construct a bond between two atoms called 'atom0' and 'atom1' in residue with
+    residue number 'resnum' */
+Bond::Bond(const QString &atom0, const QString &atom1, ResNum resnum)
+{
+    this->create( AtomIndex(atom0, resnum), AtomIndex(atom1, resnum) );
+}
+
+/** Construct a bond between atoms AtomIndex(nam0,res0) and AtomIndex(nam1,res1) */
+Bond::Bond(const QString &nam0, ResNum res0, const QString &nam1, ResNum res1)
+{
+    this->create( AtomIndex(nam0,res0), AtomIndex(nam1,res1) );
+}
+
+/** Copy constructor */
+Bond::Bond(const Bond &other)
+{
+    operator=(other);
+}
+    
+/** Destructor */
+Bond::~Bond()
+{}
+    
+/** Return a string representation of the Bond */
+QString Bond::toString() const
+{
+    return QObject::tr("%1-%2").arg(atoms[0].toString(),atoms[1].toString());
+}
+    
+/** Construct the Bond between these two AtomIndexes. The atoms must not be the same, 
+    or else an exception will be thrown. Note that the Bond will sort the atoms
+    so that the Bond between atom0-atom1 will be the same as the Bond
+    between atom1-atom0. 
+
+    \throw SireMol::duplicate_atom
+*/
+void Bond::create(const AtomIndex &atom0, const AtomIndex &atom1)
+{
+    if (atom0 < atom1)
+    {
+        atoms[0] = atom0;
+        atoms[1] = atom1;
+    }
+    else if (atom0 > atom1)
+    {
+        atoms[0] = atom1;
+        atoms[1] = atom0;
+    }
+    else
+    {
+        throw SireMol::duplicate_atom(QObject::tr(
+                    "Cannot create a Bond between the same atoms! %1-%2")
+                          .arg(atom0.toString(),atom1.toString()), CODELOC);
+    }
+}
+
+/** Return the index of the atom which is not 'atm' (e.g. return the other atom!)
+    This throws an exception if 'atm' is not in this Bond. */
+const AtomIndex& Bond::other(const AtomIndex &atm) const
+{
+    if (atm == atoms[0])
+        return atoms[1];
+    else if (atm == atoms[1])
+        return atoms[0];
+    else
+        throw SireMol::missing_atom(QObject::tr(
+                "There is not atom %1 in this Bond (%2)")
+                      .arg(atm.toString(), this->toString()), CODELOC);
+}
+
+/** Return the atomindex of the atom that is in the other residue to 'res'. This 
+    only works properly if this is an inter-residue bond, and 'res' is the residue
+    of one of the atoms in this bond. */
+const AtomIndex& Bond::other(ResNum res) const
+{
+    if (atoms[0].resNum() == res)
+        return atoms[1];
+    else
+        return atoms[0];
+}
+
+/** Return the residue number of the other residue in an inter-residue bond. This 
+    returns the same residue number if this is an intra-residue bond */
+ResNum Bond::otherRes(ResNum resnum) const
+{
+    if (atoms[0].resNum() == resnum)
+        return atoms[1].resNum();
+    else
+        return atoms[0].resNum();
+}
+
+/** Test for equality */
+bool Bond::operator==(const Bond &other) const
+{
+    return atoms[0] == other.atoms[0] and atoms[1] == other.atoms[1];
+}
+
+/** Test for inequality */
+bool Bond::operator!=(const Bond &other) const
+{
+    return not operator==(other);
+}
+    
+/** Assignment operator */
+const Bond& Bond::operator=(const Bond &other)
+{
+    for (int i=0; i<2; ++i)
+        atoms[i] = other.atoms[i];
+    
+    return *this;
+}
+   
+/** A Bond is greater than another if atm0 of the bond is greater than
+    atm0 of the other bond. If both atm0s are equal, then the test is on atm1 */
+bool Bond::operator>(const Bond &other) const
+{
+    return (atoms[0] > other.atoms[0]) 
+            or ( atoms[0] == other.atoms[0] and atoms[1] > other.atoms[1] );
+}
+    
+/** A Bond is greater than another if atm0 of the bond is greater than
+    atm0 of the other bond. If both atm0s are equal, then the test is on atm1 */
+bool Bond::operator>=(const Bond &other) const
+{
+    return (atoms[0] > other.atoms[0]) 
+            or ( atoms[0] == other.atoms[0] and atoms[1] >= other.atoms[1] );
+}
+
+/** A Bond is less than another if atm0 of the bond is less than
+    atm0 of the other bond. If both atm0s are equal, then the test is on atm1 */
+bool Bond::operator<(const Bond &other) const
+{
+    return not operator>=(other);
+}
+    
+/** A Bond is less than another if atm0 of the bond is less than
+    atm0 of the other bond. If both atm0s are equal, then the test is on atm1 */
+bool Bond::operator<=(const Bond &other) const
+{
+    return not operator>(other);
+}

@@ -1,0 +1,108 @@
+This directory contains the python wrapping of a small amount
+of the Qt4 library that will be useful to use when using
+the Sire libraries. This contains only the key classes,
+namely;
+
+QString     : Used to pass string arguments to functions/classes
+QByteArray  : Used to store binary representations of classes
+QTime       : Used to get the current time and date, and also to
+              time the execution of functions
+        
+The wrapping of these classes is copied from the python-qt
+project, the details of which are copied below
+
+If you wish to use Qt from within Python, then I recommend
+looking into using python-qt (still in early development,
+but very promising) or try PyQt4 (just released and
+very complete)
+
+==============================================================
+
+------- README ------------
+---+ Qt4 bindings for Python
+Author: Eric Jardim <ericjardim@gmail.com>
+
+---++ About python-qt4
+Qt4 bindings for Python using Boost.Python. The goal is to make a very pythonic 
+API but taking advantage of the power of Qt. Another goals are: QtDesigner 
+integration, C++ embedded Python Widgets and an extensive documentation with 
+demos and examples.
+
+http://developer.berlios.de/projects/python-qt4/
+
+
+---++ About Qt
+Qt is a comprehensive C++ application development framework. It includes a class 
+library and tools for cross-platform development and internationalization.
+
+http://www.trolltech.com/products/qt/index.html
+
+
+---++ About Python
+Python is an interpreted, interactive, object-oriented programming language. It is often compared to Tcl, Perl, Scheme or Java.
+
+Python combines remarkable power with very clear syntax. It has modules, classes, exceptions, very high level dynamic data types, and dynamic typing. There are interfaces to many system calls and libraries, as well as to various windowing systems (X11, Motif, Tk, Mac, MFC). New built-in modules are easily written in C or C++. Python is also usable as an extension language for applications that need a programmable interface.
+
+The Python implementation is portable: it runs on many brands of UNIX, on Windows, OS/2, Mac, Amiga, and many other platforms. If your favorite system isn't listed here, it may still be supported, if there's a C compiler for it. Ask around on news:comp.lang.python -- or just try compiling Python yourself.
+
+http://www.python.org/
+
+
+---++ About Boost.Python
+Boost.Python, a C++ library which enables seamless interoperability between C++ and the Python programming language. The new version has been rewritten from the ground up, with a more convenient and flexible interface, and many new capabilities, including support for:
+    * References and Pointers
+    * Globally Registered Type Coercions
+    * Automatic Cross-Module Type Conversions
+    * Efficient Function Overloading
+    * C++ to Python Exception Translation
+    * Default Arguments
+    * Keyword Arguments
+    * Manipulating Python objects in C++
+    * Exporting C++ Iterators as Python Iterators
+    * Documentation Strings
+
+http://www.boost.org/libs/python/doc/index.html
+
+
+---++ Copyright Acknowledgments
+Qt and the Qt logo are trademarks of Trolltech in Norway, the United States and 
+other countries.
+
+---------- AUTHORS --------------
+Eric Jardim <ericjardim@gmail.com>
+   - Original author
+   - Main developer
+
+
+>>> Credits:
+
+Wiliam Alves de Souza <wiliamsouza83@gmail.com>
+   - Created some examples
+   - Testing
+
+
+Craig Ringer <craig@postnewspapers.com.au>
+   - QString to/from unicode convertion
+   - Some cool new unittests for string testing
+
+
+---------- CHANGELOG ------------
+
+>>> 0.0.3
+ - Support for unicode (Nice! Thanks Craig)
+ - Rewriten connection mechanism. Now we use QMetaObject.
+ - Added suppor for Layout classes
+ - Added a few examples (exmaples/layout) and some tests
+ - Better support for virtual methods (specially in QObject, QLayoutItem, QLayout)
+ - Better memory management (still unstable)
+ - Using custom Boost.Python policy to 
+ - QtDesigner plugin (just a scratch)
+ - C++ embedding (exemple, must become a library)
+
+
+>>> 0.0.2
+ - Signal/Slot connection mechanism (virtual slots)
+ - New examples and tests
+ - Some new classes exposed 
+ - Using a "trick" to handle parent/child internal references
+

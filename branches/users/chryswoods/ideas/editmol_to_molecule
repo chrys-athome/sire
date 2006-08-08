@@ -1,0 +1,15 @@
+Convert Molecule to/from EditMol by using user supplied functions.
+
+General RULE - DO NOT USE ENUM FOR CONTROL - USE FUNCTION OBJECTS!!!
+
+Even better would be to allow a function object to actually be a python function.
+That would be cool :-)
+
+E.g.
+
+Molecule mol( editmol, convertfunc );
+
+editmol = mol->toEditMol(convertfunc);
+
+mol = editmol->toMolecule(convertfunc);
+
