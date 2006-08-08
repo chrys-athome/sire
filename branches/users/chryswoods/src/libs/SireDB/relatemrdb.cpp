@@ -8,6 +8,7 @@
 #include "SireDB/errors.h"
 
 #include <QSqlQuery>
+#include <QDebug>
 
 #include "SireStream/datastream.h"
 
@@ -403,7 +404,7 @@ RelateIDMap RelateMRDB::search(const RelateMRData &relatedata)
     QSqlQuery q(database());
 
     q.exec( QString("select ResAlias, ResBonds, ResNoBonds from 'SireDB_RelateMRDB_resalias' "
-                    "where (ResName = %1 and ResNum = %2)")
+                    "where (ResName = %1 or ResName = 0) and (ResNum = %2 or ResNum = 0)")
                 .arg(relatedata.residueName()).arg(relatedata.residueNumber().toString()) );
     checkErrors(q, CODELOC);
     

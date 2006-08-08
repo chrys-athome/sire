@@ -6,14 +6,14 @@ from Sire.MM import *
 
 from Sire.Qt import *
 
-mols = PDB().read("test/io/p38.pdb")
+mols = PDB().read("test/io/aladip.pdb")
 
 for mol in mols:
     mol.addAutoBonds()
 
 mols = flexibleAndResidueCutting(mols)
 
-p38 = mols[0]
+aladip = mols[0]
 
 #create the database and load into it the solvent parameters
 db = ParameterDB()
@@ -28,12 +28,14 @@ t = QTime()
 
 print "Assigning the parameters..."
 t.start()
-params = db.assign(p38, [assign_atoms(using_parameters(ChargeDB,LJDB,AtomTypeDB)),
-                         assign_bonds(using_parameters(BondDB)),
-                         assign_angles(using_parameters(AngleDB)),
-                         assign_dihedrals(using_parameters(DihedralDB)),
-                         using_relationships(RelateMRADB,RelateAtomTypeDB)]
+params = db.assign(aladip, [assign_atoms(using_parameters(ChargeDB,LJDB,AtomTypeDB)),
+                            assign_bonds(using_parameters(BondDB)),
+                            assign_angles(using_parameters(AngleDB)),
+                            assign_dihedrals(using_parameters(DihedralDB)),
+                            using_relationships(RelateMRADB,RelateAtomTypeDB)]
                   )
+
+db.dump("test.db")
 
 ms = t.elapsed()
 print "...assigning parameters took %d ms" % ms
@@ -52,9 +54,11 @@ typs = params.asA(AtomTypeTable)
 
 for atom in params.molecule().atoms():
     if (chgs.assignedParameter(atom) and ljs.assignedParameter(atom) and
-               type.assignedParameter(atom)):
+               typs.assignedParameter(atom)):
 	       
 	 print atom, chgs.getCharge(atom), ljs.getLJ(atom), \
         	        typs.getParameter(atom)
                 
+
+
 print "Done!"
