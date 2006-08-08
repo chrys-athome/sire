@@ -85,3 +85,11 @@ All commits to this repository are monitored. Please only write to those
 parts of the repository to which you have permission, or else your commits
 will be reversed and you will be issued with a warning. If you repeatedly
 write to forbidden areas then your repository privileges may be revoked.
+
+Also, the total size of this repository is limited to 100MB. Please avoid
+adding large files to this repository unless you really have to! The
+developers are not likely to allow large files to be included in any
+releases unless they are really necessary. If you wish to include large
+data files then please first post a request on the sire-developers mailing
+list and we will discuss it with you.
+
