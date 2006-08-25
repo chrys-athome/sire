@@ -49,7 +49,7 @@ HEADERS += aabox.h \
            moleculesignature.h \
            convertmolecule.h \
            indexinfo.h \
-	   groupedvector.hpp \
+           groupedvector.hpp \
            cutgroupid.h \
            cgatomid.h \
            molcutgroupid.h \
@@ -65,7 +65,8 @@ HEADERS += aabox.h \
            groupindexid.h \
            resnumatomid.h \
            idtypes.h \
-           resnumindexid.h 
+           resnumindexid.h \
+           moleculeversion.h 
 SOURCES += aabox.cpp \
            angle.cpp \
            atom.cpp \
@@ -99,7 +100,8 @@ SOURCES += aabox.cpp \
            molcgatomid.cpp \
            groupindexid.cpp \
            resnumatomid.cpp \
-           resnumindexid.cpp 
+           resnumindexid.cpp \
+           moleculeversion.cpp 
 TARGET = SireMol
 TEMPLATE = lib
 sire.root = ../../.. # AUTO_GENERATED_LINE

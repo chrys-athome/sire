@@ -11,6 +11,7 @@
 #include "residueset.h"
 #include "residueidset.h"
 #include "moleculebonds.h"
+#include "moleculeversion.h"
 
 #include "moleculecginfo.h"
 
@@ -79,10 +80,14 @@ public:
     
     ~MoleculeData();
 
-   ////// Dealing with the ID number ///////////////////////
+   ////// Dealing with the ID number and version ///////////
      MoleculeID ID() const;
      void setNewID();
      MoleculeData clone() const;
+     
+     const MoleculeVersion& version() const;
+     void incrementMajorVersion();
+     void incrementMinorVersion();
    /////////////////////////////////////////////////////////
     
 

@@ -18,7 +18,6 @@
       <part>kdevclassview</part>
       <part>kdevdebugger</part>
       <part>kdevdocumentation</part>
-      <part>kdevdoxygen</part>
       <part>kdevkonsoleview</part>
       <part>kdevfilegroups</part>
       <part>kdevfileselector</part>
@@ -120,7 +119,7 @@
   </kdevfilecreate>
   <kdevtrollproject>
     <general>
-      <activedir>src/libs/SireMM</activedir>
+      <activedir>src/libs/SireMol</activedir>
     </general>
     <run>
       <directoryradio>executable</directoryradio>

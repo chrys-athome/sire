@@ -1,78 +1,65 @@
-// #ifndef SIREFF_CLJFF_H
-// #define SIREFF_CLJFF_H
+// #ifndef SIREMM_CLJFF_H
+// #define SIREMM_CLJFF_H
 // 
-// #include <boost/shared_ptr.hpp>
-// 
-// #include "SireMol/cutgroupptr.h"
-// #include "SireMol/cutgroupset.h"
-// #include "SireVol/simvolumeptr.h"
+// #include "SireFF/forcefield.h"
+// #include "SireMaths/maths.h"
 // #include "SireVol/simvolume.h"
+// #include "SireUnits/units.h"
 // 
-// #include "energytypes.h"
-// #include "cljtable.h"
-// #include "cljmutator.h"
-// 
-// #include "forcefield.h"
-// 
-// namespace SireFF
-// {
-// class CLJFF;
-// }
-// 
-// namespace SireMol
-// {
-// inline bool sameMolecule(const CutGroup&, const CutGroup&)
-// {
-//     return false;
-// }
-// }
-// 
-// QDataStream& operator<<(QDataStream&, const SireFF::CLJFF&);
-// QDataStream& operator>>(QDataStream&, SireFF::CLJFF&);
+// #include "cljpair.h"
 // 
 // namespace SireFF
 // {
 // 
-// using SireVol::SimVolume;
-// using SireVol::SimVolumePtr;
+// using SireFF::ForceField;
 // using SireVol::DistMatrix;
 // 
-// using SireMol::CutGroupPtr;
-// using SireMol::CutGroupSet;
-// using SireMol::CutGroupID;
-// using SireMol::CutGroup;
-// 
-// class CLJFF;
-// typedef void (CLJFF::*cljCombineFunc)(const CLJWindow&, const CLJWindow&, CLJPairMatrix&) const;
-// 
-// /** Small function used to find the smallest CutGroupSet out of a pair of sets */
-// inline const CutGroupSet& smallestCutGroupSet(const CutGroupSet &g0, const CutGroupSet &g1)
+// /** This inline function is used to calculate the charge and LJ energy
+//     of two molecules based on the inter-atomic distances stored in 'distmatrix'
+//     and using the combined CLJ parameters listed in 'cljmatrix'. The
+//     charge and LJ energy are added onto the references 'chgnrg' and 'ljnrg'
+//     as I have found that this is the fastest method of returning a pair of
+//     values from a function. */
+// inline void calculateCLJEnergy(DistMatrix &distmat, CLJPairMatrix &cljmatrix,
+//                                double &chgnrg, double &ljnrg)
 // {
-//     if (g0.count() <= g1.count())
-//         return g0;
-//     else
-//         return g1;
-// }
-// 
-// /** Small function used to find the largest CutGroupSet out of a pair of sets */
-// inline const CutGroupSet& largestCutGroupSet(const CutGroupSet &g0, const CutGroupSet &g1)
-// {
-//     if (g1.count() > g0.count())
-//         return g1;
-//     else
-//         return g0;
+//     int nats0 = distmatrix.nOuter();
+//     int nats1 = distmatrix.nInner();
+//     
+//     //loop over all pairs of atoms
+//     for (int i=0; i<nats0; ++i)
+//     {
+//         distmatrix.setOuterIndex(i);
+//         cljmatrix.setOuterIndex(i);
+//         
+//         for (int j=0; j<nats1; ++j)
+//         {
+//             //get the distance and CLJPair for this atom pair
+//             const double &invdist2 = distmat[j];
+//             const CLJPair &cljpair = cljmat[j];
+//                
+//             double sig2_over_dist2 = SireMaths::pow_2(cljpair.sigma()) * invdist2;
+//             double sig6_over_dist6 = SireMaths::pow_3(sig2_over_dist2);
+//             double sig12_over_dist12 = SireMaths::pow_2(sig6_over_dist6);
+//                 
+//             //coulomb energy
+//             chgnrg += SireUnits::one_over_four_pi_eps0 * 
+//                                        cljpair.charge2() * std::sqrt(invdist2);
+//                                       
+//             //LJ energy
+//             ljnrg += 4.0 * cljpair.epsilon() * 
+//                                      ( sig12_over_dist12 - sig6_over_dist6 );
+//         }
+//     }
 // }
 // 
 // /**
-// A CLJFF is a non-visible base-class for all forcefields that implement a charge/Lennard Jones (CLJ) forcefield. This provides basic functions for calculating the CLJ energy of pairs of CutGroups.
+// A CLJFF is the base-class for all forcefields that implement a charge/Lennard Jones (CLJ) forcefield. This provides basic functions for calculating the CLJ energy of pairs of CutGroups.
 //  
 // @author Christopher Woods
 // */
 // class CLJFF : public ForceField
 // {
-// 
-// friend QDataStream& ::operator<<(QDataStream&, const CLJFF&);
-// friend QDataStream& ::operator>>(QDataStream&, CLJFF&);
 // 
 // public:
 // 
@@ -90,72 +77,10 @@
 //         return "SireFF::CLJFF";
 //     }
 //     
-//     void setVolume(const SimVolume &vol);
-//     void setLambda(const Lambda &lam);
-// 
-//     void setCutoff(double cut);
-//     void setCutoff(double cut, double feather);
-//     void setFeather(double feath);
-//     
-//     const double& cutoff() const;
-//     const double& cutoff2() const;
-//     const double& feather() const;
-//     const double& feather2() const;
-// 
-//     bool hasPerturbableParams(const CutGroupID &id) const;
-// 
 // protected:
 //     
-//     void combineGeometric(const CLJWindow &cljwindow0, const CLJWindow &cljwindow1, 
-//                           CLJPairMatrix &cljmat) const;
-//     void combineArithmetic(const CLJWindow &cljwindow0, const CLJWindow &cljwindow1,
-//                            CLJPairMatrix &cljmat) const;
-// 
-//     void setParameters(const CutGroupPtr &group, const CLJTable &params);
-//     void setParameters(const CutGroupPtr &group, const CLJMutator &mutator);
-// 
-//     void setParameters(const CutGroupID &id, const CLJWindows &windows);
-//     const CLJWindow& getParameters(const CutGroupID &id, const LambdaState &stat) const;
-// 
-//     virtual double featherFactor(double dist2) const;
+//     void setVolume(const SimVolume &vol);
 //     
-//     void cljEnergy(const CutGroup &group0, const CutGroup &group1,
-//                         const CLJWindow &clj0, const LambdaState &lamstate,
-//                         DistMatrix &distmat, CLJPairMatrix &cljmat,
-//                         double &cnrg, double &ljnrg) const;
-// 
-//     /** Hash of all of the CLJ parameters for the groups in this forcefield,
-//         indexed by CutGroupID */
-//     QHash< CutGroupID, CLJWindows* > cljparams;
-//     
-//     /** Hash of all of the mutators for perturbable cutgroup, indexed by 
-//         CutGroupID */
-//     QHash< CutGroupID, CLJMutatorPtr > cljmutators;
-//     
-//     /** Set of all of the cutgroups that are perturbable in this forcefield */
-//     CutGroupSet pertgroups;
-//     
-//     /** The current value of lambda for this forcefield */
-//     SireBase::Lambda lambda;
-// 
-//     /** Pointer to the function used to combine together CLJ parameters */
-//     cljCombineFunc combineCLJ;
-// 
-//     /** Pointer to the volume for this forcefield */
-//     SimVolumePtr volptr;
-// 
-//     /** The non-bonded cutoff distance used within this forcefield */
-//     double nbcut;
-//     /** The square of the cutoff */
-//     double nbcut2;
-//     
-//     /** The non-bonded feather distance used within this forcefield.
-//         (if this cutoff is 15, then feathering over the last 0.5
-//         would require the feather to be 14.5) - this must be 
-//         less than nbcut. */
-//     double nbfeather;
-//     /** The square of the feather distance*/
-//     double nbfeather2;
 // 
 // };
 // 

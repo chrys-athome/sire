@@ -9,9 +9,23 @@ HEADERS += energy.h \
            energytypes.h \
            energymaths.hpp \
            window.hpp \
-           forcefield.h 
+           forcefield.h \
+           ffworker.h \
+           ffield.h \
+           ffbase.h \
+           forcetable.h \
+           movedmols.h \
+           changedmols.h \
+           moverecord.h 
 SOURCES += energy.cpp \
-           forcefield.cpp 
+           forcefield.cpp \
+           ffworker.cpp \
+           ffield.cpp \
+           ffbase.cpp \
+           forcetable.cpp \
+           movedmols.cpp \
+           changedmols.cpp \
+           moverecord.cpp 
 TARGET = SireFF
 TEMPLATE = lib
 sire.root = ../../.. # AUTO_GENERATED_LINE

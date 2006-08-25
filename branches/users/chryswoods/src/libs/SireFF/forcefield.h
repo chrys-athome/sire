@@ -1,7 +1,7 @@
 #ifndef SIREFF_FORCEFIELD_H
 #define SIREFF_FORCEFIELD_H
 
-#include "sireglobal.h"
+#include "SireBase/dynamicsharedptr.hpp"
 
 SIRE_BEGIN_HEADER
 
@@ -16,9 +16,14 @@ QDataStream& operator>>(QDataStream&, SireFF::ForceField&);
 namespace SireFF
 {
 
+class FFBase;
+
 /**
-An ForceField is the virtual base class of all forcefields. A forcefield is not handled directly by the code - rather it is handled via an FFGroup, which represents a group of forcefields, with the FFGroup holding the  forcefields via FFWrappers  (a templated class that handles all of the energy bookkeeping).
- 
+This class is the "user" interface to all forcefield classes. This holds an implicitly 
+shared copy of the forcefield class.
+
+The smaller, "worker" interface to all forcefield classes is provided by "FField".
+
 @author Christopher Woods
 */
 class SIREFF_EXPORT ForceField
@@ -29,10 +34,17 @@ friend QDataStream& ::operator>>(QDataStream&, ForceField&);
 
 public:
     ForceField();
-    virtual ~ForceField();
+    ForceField(const ForceField &other);
+    ForceField(const FFBase &ffbase);
+    
+    ~ForceField();
 
-    /** Return the class name of the forcefield */
-    virtual const char* what() const=0;
+    ForceField& operator=(const ForceField &other);
+    ForceField& operator=(const FFBase &ffbase);
+
+private:
+    /** Dynamic shared pointer to the FFBase "user" interface */
+    SireBase::DynamicSharedPtr<FFBase> d;
 };
 
 }

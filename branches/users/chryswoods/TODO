@@ -1,3 +1,13 @@
+--------
+SireBase
+--------
+
+(*) Rewrite DynamicSharedPtr so that it is like QSharedPointer,
+    rather than using a QSharedPointer to a polymorphic pointer.
+    Need to make polymorphic version of QSharedPointer, as at 
+    the moment I have a QSharedPointer to a polymorphic pointer,
+    which is slightly inefficient.
+
 ----------
 SireStream
 ----------
@@ -20,6 +30,10 @@ SireCAS
 ------
 SireDB
 ------
+
+(*) Fix problem of corruption of binary data dumped into the 
+    database (see test/db/protoms_speed_test.py, and notice
+    how test.db and test2.db are not identical!)
 
 (*) Improve parameter assignment code by adding a cache for 
     mol/res lookups (so don't lookup mol/res for every single

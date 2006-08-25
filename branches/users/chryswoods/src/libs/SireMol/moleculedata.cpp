@@ -73,6 +73,10 @@ public:
    ////// Dealing with the ID number ///////////////////////
      MoleculeID ID() const;
      void setNewID();
+   
+     const MoleculeVersion& version() const;
+     void incrementMajorVersion();
+     void incrementMinorVersion();
    /////////////////////////////////////////////////////////
    
    
@@ -210,6 +214,9 @@ private:
 
     /** ID number used to identify the molecule */
     MoleculeID id;
+    
+    /** The version number of the molecule */
+    MoleculeVersion molversion;
 };
 
 } // End of namespace SireMol
@@ -227,7 +234,7 @@ QDataStream &operator<<(QDataStream &ds, const MoleculeDataPvt &moldata)
 {
     writeHeader(ds, r_moldata, 1) << moldata.molinfo << moldata.cgroups
                                   << moldata.rescgroups << moldata.molbonds
-                                  << moldata.id;
+                                  << moldata.id << moldata.molversion;
     return ds;
 }
 
@@ -239,7 +246,7 @@ QDataStream &operator>>(QDataStream &ds, MoleculeDataPvt &moldata)
     if (v == 1)
     {
         ds >> moldata.molinfo >> moldata.cgroups >> moldata.rescgroups
-           >> moldata.molbonds >> moldata.id;
+           >> moldata.molbonds >> moldata.id >> moldata.molversion;
     }
     else
         throw version_error(v, "1", r_moldata, CODELOC);
@@ -370,6 +377,9 @@ MoleculeDataPvt::MoleculeDataPvt(const QString &molname, const ResidueIDSet &res
         }
     }
     
+    //increment the version number of the molecule
+    molversion.incrementMajor();
+    
     //all done!
 }
 
@@ -377,7 +387,7 @@ MoleculeDataPvt::MoleculeDataPvt(const QString &molname, const ResidueIDSet &res
 MoleculeDataPvt::MoleculeDataPvt(const MoleculeDataPvt &other) 
                 : QSharedData(), molinfo(other.molinfo),
                   cgroups(other.cgroups), rescgroups(other.rescgroups),
-                  molbonds(other.molbonds), id(other.id)
+                  molbonds(other.molbonds), id(other.id), molversion(other.molversion)
 {}
 
 /** Destructor */
@@ -460,7 +470,25 @@ void MoleculeDataPvt::setNewID()
         array[i].setID( MolCutGroupID(id,i) );
     }
 }
-   
+ 
+/** Return the version number of the molecule */
+inline const MoleculeVersion& MoleculeDataPvt::version() const
+{
+    return molversion;
+}
+
+/** Increment the major version of the molecule */
+inline void MoleculeDataPvt::incrementMajorVersion()
+{
+    molversion.incrementMajor();
+}
+
+/** Increment the minor version number of the molecule */
+void MoleculeDataPvt::incrementMinorVersion()
+{
+    molversion.incrementMinor();
+}
+
 /** Return the connectivity of this molecule */
 inline MoleculeBonds MoleculeDataPvt::connectivity() const
 {
@@ -855,6 +883,9 @@ void MoleculeDataPvt::translate(const Vector &delta)
             
         cgroup.setCoordinates(coords);
     }
+    
+    //increment the version number
+    incrementMinorVersion();
 }
 
 /** Translate the set of atoms in 'atoms' by 'delta' 
@@ -879,6 +910,9 @@ void MoleculeDataPvt::translate(const AtomIndexSet &atoms, const Vector &delta)
     
         cgroup.setCoordinates(id.atomID(),coords);
     }
+    
+    //increment the version number
+    incrementMinorVersion();
 }
 
 /** Translate all of the atoms in residue 'resnum' whose names are in 
@@ -908,6 +942,9 @@ void MoleculeDataPvt::translate(ResNum resnum, const QStringList &atoms,
     
         cgroup.setCoordinates(id.atomID(),coords);
     }
+    
+    //increment the version number
+    incrementMinorVersion();
 }
 
 /** Translate all of the atoms in residue 'resnum' by 'delta' 
@@ -935,6 +972,9 @@ void MoleculeDataPvt::translate(ResNum resnum, const Vector &delta)
     
         cgroup.setCoordinates(id.atomID(),coords);
     }
+    
+    //increment the version number
+    incrementMinorVersion();
 }
 
 /** Internal function used to translate an individual atom by 'delta' 
@@ -951,6 +991,9 @@ inline void MoleculeDataPvt::translate(const AtomIndex &atm, const Vector &delta
     coords += delta;
     
     cgroup.setCoordinates(id.atomID(),coords);
+    
+    //increment the version number
+    incrementMinorVersion();
 }
 
 /** Translate the AtomIDGroup 'group' by 'delta' 
@@ -1006,6 +1049,9 @@ void MoleculeDataPvt::rotate(const Quaternion &quat, const Vector &point)
         
         cgroup.setCoordinates(coords);
     }
+    
+    //increment the version number
+    incrementMinorVersion();
 }
 
 /** Rotate the atom 'atm' by the rotation matrix 'rotmat' about the point 'point'
@@ -1024,6 +1070,9 @@ inline void MoleculeDataPvt::rotate(const AtomIndex &atm,
     coords = SireMaths::rotate(coords,rotmat,point);
     
     cgroup.setCoordinates(id.atomID(),coords);
+    
+    //increment the version number
+    incrementMinorVersion();
 }
 
 /** Rotate the atoms in residue 'resnum' whose names are in 'atoms' by the 
@@ -1050,6 +1099,9 @@ inline void MoleculeDataPvt::rotate(ResNum resnum, const QStringList &atoms,
     
         cgroup.setCoordinates(id.atomID(),coords);
     }
+    
+    //increment the version number
+    incrementMinorVersion();
 }
 
 /** Rotate the residue 'resnum' by the rotation matrix 'rotmat' about the 
@@ -1076,6 +1128,9 @@ inline void MoleculeDataPvt::rotate(ResNum resnum,
     
         cgroup.setCoordinates(id.atomID(),coords);
     }
+    
+    //increment the version number
+    incrementMinorVersion();
 }
 
 /** Rotate the atoms in residue 'resnum' whose names are in 'atoms'
@@ -1514,14 +1569,35 @@ MoleculeID MoleculeData::ID() const
 }
     
 /** Give this Molecule a new ID number. This detachs the molecule from shared
-    storage. It also gives a new ID number to any identified objects in the 
-    molecule (e.g. the CutGroups) */
+    storage. */
 void MoleculeData::setNewID()
 {
     this->detach();
     d().setNewID();
 }
-    
+
+/** Return the version number of this molecule */
+const MoleculeVersion& MoleculeData::version() const
+{
+    return d().version();
+}
+
+/** Increment the major version number of this molecule - this does not
+    detach the molecule from shared storage (e.g. it increases the version
+    number for the molecule and any residue views) */
+void MoleculeData::incrementMajorVersion()
+{
+    d().incrementMajorVersion();
+}
+
+/** Increment the minor version number of this molecule - this does not
+    detach the molecule from shared storage (e.g. it increases the version
+    number for the molecule and any residue views) */
+void MoleculeData::incrementMinorVersion()
+{
+    d().incrementMinorVersion();
+}
+
 /** Return a clone of this Molecule. A clone is a Molecule that has the same data,
     but has a different ID number, and different ID numbers for any contained
     objects, e.g. CutGroups */
