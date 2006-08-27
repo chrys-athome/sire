@@ -3,6 +3,11 @@
 import sys
 import os
 
+runmodules = []
+
+if len(sys.argv) > 1:
+    runmodules = sys.argv[1:]
+
 # Relative path to the api doc directory
 docdir = "docs/api"
 
@@ -12,29 +17,66 @@ topdir = os.getcwd()
 #get the template doxyfile
 doxyfile = "%s/Doxyfile" % topdir
 
+#definition of the Module class
+class Module:
+    def __init__(self,name,indir,outdir):
+        self._name = name
+        self._id = outdir
+        self._indir = indir
+        self._outdir = "../../../%s/%s" % (docdir,outdir)
+        self._tagfile = "%s/%s.tag" % (self._outdir,self._name)
+        self._html = "../../../%s/html" % outdir
+        
+    def name(self):
+        return self._name
+
+    def ID(self):
+        return self._id
+
+    def indir(self):
+        return self._indir
+        
+    def outdir(self):
+        return self._outdir
+
+    def tagfile(self):
+        return self._tagfile
+
+    def html(self):
+        return self._html
+
 # List the modules whose documentation should
 # be compiled, together with the location of the 
 # source code, and where to place the docs
 modules = [
-            ["SireStream", "src/libs/SireStream", "libs/SireStream"],
-            ["SireError", "src/libs/SireError","libs/SireError"],
-            ["SireUnits", "src/libs/SireUnits","libs/SireUnits"],
-            ["SireMaths", "src/libs/SireMaths","libs/SireMaths"],
-            ["SireCAS", "src/libs/SireCAS","libs/SireCAS"],
-            ["SireBase", "src/libs/SireBase", "libs/SireBase"],
-            ["SireMol", "src/libs/SireMol", "libs/SireMol"],
-            ["SireVol", "src/libs/SireVol", "libs/SireVol"],
-            ["SireDB", "src/libs/SireDB", "libs/SireDB"],
-            ["SireFF", "src/libs/SireFF", "libs/SireFF"],
-            ["SireMM", "src/libs/SireMM", "libs/SireMM"],
-            ["SireIO", "src/libs/SireIO", "libs/SireIO"],
-            ["SireSystem", "src/libs/SireSystem", "libs/SireSystem"],
-            ["Spier", "src/libs/Spier", "libs/Spier"],
-            ["SireTest", "src/libs/SireTest", "libs/SireTest"],
-            ["SireUnitTest", "src/libs/SireUnitTest", "libs/SireUnitTest"],
-            ["SirePy", "src/libs/SirePy", "libs/SirePy"]
-            
+            Module("SireStream", "src/libs/SireStream", "libs/SireStream"),
+            Module("SireError", "src/libs/SireError","libs/SireError"),
+            Module("SireUnits", "src/libs/SireUnits","libs/SireUnits"),
+            Module("SireMaths", "src/libs/SireMaths","libs/SireMaths"),
+            Module("SireCAS", "src/libs/SireCAS","libs/SireCAS"),
+            Module("SireBase", "src/libs/SireBase", "libs/SireBase"),
+            Module("SireMol", "src/libs/SireMol", "libs/SireMol"),
+            Module("SireVol", "src/libs/SireVol", "libs/SireVol"),
+            Module("SireDB", "src/libs/SireDB", "libs/SireDB"),
+            Module("SireFF", "src/libs/SireFF", "libs/SireFF"),
+            Module("SireMM", "src/libs/SireMM", "libs/SireMM"),
+            Module("SireIO", "src/libs/SireIO", "libs/SireIO"),
+            Module("SireSystem", "src/libs/SireSystem", "libs/SireSystem"),
+            Module("Spier", "src/libs/Spier", "libs/Spier"),
+            Module("SireTest", "src/libs/SireTest", "libs/SireTest"),
+            Module("SireUnitTest", "src/libs/SireUnitTest", "libs/SireUnitTest"),
+            Module("SirePy", "src/libs/SirePy", "libs/SirePy"),
+           
+            Module("Sire", "src/apps/sire", "apps/sire"),
+            Module("Spier", "src/apps/spier", "apps/spier"),
+            Module("siretest", "src/apps/siretest", "apps/siretest")
           ]
+
+#index all of the modules
+modulehash = {}
+
+for module in modules:
+    modulehash[module.ID()] = module
 
 #first, parse the Doxyfile and save each key-value pair
 template = file(doxyfile,"r").readlines()
@@ -42,33 +84,40 @@ template = file(doxyfile,"r").readlines()
 #variable used to save the paths and names of all of the
 #generated tag files
 tagfiles = {}
-          
-#make the docs for each directory in turn
-for moduledata in modules:
+
+#save the mapping from a modules tagfile to the location
+#of the html docs
+for module in modules:
+    tagfiles[module.tagfile()] = module.html()
+
+def removeDir(directory):
+    
+    try:
+      os.remove(directory)
+    except OSError:
+      for filename in os.listdir(directory):
+        removeDir("%s/%s" % (directory,filename))
+        
+      os.rmdir(directory)
+
+def processModule(module):
     #change to the top-level directory
     os.chdir(topdir)
     
-    #get the information about the module whose documentation
-    #is to be generated
-    module = moduledata[0]
-    indir = moduledata[1]
-    outdir = moduledata[2]
-    
-    print "Making documentation for %s" % (module)
+    print "Making documentation for %s" % (module.name())
     
     #change into the input directory
-    os.chdir(indir)
-    
-    #get the relative path back to the output directory
-    outdir = "../../../%s/%s" % (docdir,outdir)
+    os.chdir(module.indir())
     
     #create the output directory
     try:
-        os.makedirs(outdir)
+        os.makedirs(module.outdir())
     except OSError:
-        print "Directory %s already exists!" % outdir
+        print "Directory %s already exists!" % module.outdir()
+        #remove the existing directory
+        removeDir(module.outdir())
     
-    print "input from %s, output to %s" % (os.getcwd(),outdir)
+    print "input from %s, output to %s" % (os.getcwd(),module.outdir())
 
     pipe = os.popen("doxygen -","w")
     #pipe = file("test.txt","w")
@@ -77,28 +126,41 @@ for moduledata in modules:
     for line in template:
        pipe.write(line)
     
+    #now write the local-template configuration commands
+    try:
+       localtmpl = file("Doxyfile","r").readlines()
+       
+       for line in localtmpl:
+           pipe.write(line)
+
+    except IOError:
+       #there are no local options for this module
+       nolocal = True
+    
     #now write the local configuration for this module
-    pipe.write("PROJECT_NAME = %s\n" % module)
+    pipe.write("PROJECT_NAME = %s\n" % module.name())
     pipe.write("INPUT = .\n")
-    pipe.write("OUTPUT_DIRECTORY = %s\n" % outdir)
-    
+    pipe.write("OUTPUT_DIRECTORY = %s\n" % module.outdir())
+    pipe.write("HTML_HEADER = ../../../build/apidocs/header.html\n")
+    pipe.write("HTML_FOOTER = ../../../build/apidocs/footer.html\n")
+   
     #what is the name of this modules tag file?
-    tagfile = "%s/%s.tag" % (outdir,module)
+    pipe.write("GENERATE_TAGFILE = %s\n" % module.tagfile())
     
-    pipe.write("GENERATE_TAGFILE = %s\n" % tagfile)
-    
-    if len(tagfiles) > 0:
-       #link to existing tag files
-       pipe.write("TAGFILES = ")
+    #link to existing tag files
+    pipe.write("TAGFILES = ")
        
-       needslash = False
-       
-       for taglink in tagfiles:
-           pipe.write(" \\ \n      %s=%s" % (taglink,tagfiles[taglink]))
+    for taglink in tagfiles:
+       pipe.write(" \\ \n      %s=%s" % (taglink,tagfiles[taglink]))
            
-       pipe.write("\n")
+    pipe.write("\n")
     
     pipe.close()
-    
-    tagfiles[tagfile] = "../../../%s/html" % moduledata[2]
-    
+
+if len(runmodules) > 0:
+    for module in runmodules:
+        processModule(modulehash[module])
+        
+else:
+    for module in modules:
+        processModule(module)
