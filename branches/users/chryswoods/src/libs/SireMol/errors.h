@@ -276,6 +276,33 @@ public:
     }
 };
 
+/** This exception is thrown when an incompatible molecule is used
+
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT incompatible_molecule : public siremol_error
+{
+public:
+    incompatible_molecule() : siremol_error()
+    {}
+    
+    incompatible_molecule(QString err, QString place = QString::null) 
+                          : siremol_error(err,place)
+    {}
+    
+    incompatible_molecule(const incompatible_molecule &other) 
+                          : siremol_error(other)
+    {}
+    
+    ~incompatible_molecule() throw()
+    {}
+    
+    const char* what() const throw()
+    {
+        return "SireMol::incompatible_molecule";
+    }
+};
+
 }
 
 Q_DECLARE_METATYPE(SireMol::siremol_error)
@@ -288,6 +315,7 @@ Q_DECLARE_METATYPE(SireMol::duplicate_residue)
 Q_DECLARE_METATYPE(SireMol::template_error)
 Q_DECLARE_METATYPE(SireMol::anchor_error)
 Q_DECLARE_METATYPE(SireMol::ring_error)
+Q_DECLARE_METATYPE(SireMol::incompatible_molecule)
 
 SIRE_END_HEADER
 

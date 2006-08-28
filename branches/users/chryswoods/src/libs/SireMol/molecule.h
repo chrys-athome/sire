@@ -45,6 +45,8 @@ public:
      MoleculeID ID() const;
      void setNewID();
      Molecule clone() const;
+     
+     const MoleculeVersion& version() const;
    /////////////////////////////////////////////////////////
    
    
