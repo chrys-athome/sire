@@ -66,7 +66,8 @@ HEADERS += aabox.h \
            resnumatomid.h \
            idtypes.h \
            resnumindexid.h \
-           moleculeversion.h 
+           moleculeversion.h \
+           atominfo.h 
 SOURCES += aabox.cpp \
            angle.cpp \
            atom.cpp \
@@ -101,7 +102,8 @@ SOURCES += aabox.cpp \
            groupindexid.cpp \
            resnumatomid.cpp \
            resnumindexid.cpp \
-           moleculeversion.cpp 
+           moleculeversion.cpp \
+           atominfo.cpp 
 TARGET = SireMol
 TEMPLATE = lib
 sire.root = ../../.. # AUTO_GENERATED_LINE

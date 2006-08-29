@@ -23,7 +23,7 @@ ABBREVIATE_BRIEF       = "The $name class" \
                          an \
                          the
 ALWAYS_DETAILED_SEC    = NO
-INLINE_INHERITED_MEMB  = YES
+INLINE_INHERITED_MEMB  = NO
 FULL_PATH_NAMES        = NO
 STRIP_FROM_PATH        = 
 STRIP_FROM_INC_PATH    = 
@@ -31,7 +31,7 @@ SHORT_NAMES            = YES
 JAVADOC_AUTOBRIEF      = YES
 MULTILINE_CPP_IS_BRIEF = NO
 DETAILS_AT_TOP         = YES
-INHERIT_DOCS           = YES
+INHERIT_DOCS           = NO
 DISTRIBUTE_GROUP_DOC   = NO
 TAB_SIZE               = 4
 ALIASES                = 
@@ -144,8 +144,8 @@ FILTER_SOURCE_FILES    = NO
 SOURCE_BROWSER         = YES
 INLINE_SOURCES         = NO
 STRIP_CODE_COMMENTS    = YES
-REFERENCED_BY_RELATION = YES
-REFERENCES_RELATION    = YES
+REFERENCED_BY_RELATION = NO
+REFERENCES_RELATION    = NO
 VERBATIM_HEADERS       = YES
 #---------------------------------------------------------------------------
 # configuration options related to the alphabetical class index

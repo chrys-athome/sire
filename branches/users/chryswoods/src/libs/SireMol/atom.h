@@ -1,10 +1,7 @@
 #ifndef SIREMOL_ATOM_H
 #define SIREMOL_ATOM_H
 
-#include "SireMol/atomnum.h"
-#include "SireMol/atomindex.h"
-#include "SireMol/elementdb.h"
-
+#include "atominfo.h"
 #include "SireMaths/vector.h"
 
 SIRE_BEGIN_HEADER
@@ -16,8 +13,6 @@ class Atom;
 
 QDataStream& operator<<(QDataStream&, const SireMol::Atom&);
 QDataStream& operator>>(QDataStream&, SireMol::Atom&);
-
-uint qHash(const SireMol::Atom&);
 
 namespace SireMol
 {
@@ -52,7 +47,7 @@ if ( atom0 < atom1 or (atom0 == atom1 and atom0.number() < atom1.number()) )
 
 @author Christopher Woods
 */
-class SIREMOL_EXPORT Atom : public AtomIndex, public Element, public SireMaths::Vector
+class SIREMOL_EXPORT Atom : public AtomInfo, public SireMaths::Vector
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const Atom&);
@@ -85,107 +80,63 @@ public:
     Atom(AtomNum num, const QString &name, const Vector &coords);
     Atom(AtomNum num, const QString &name, const QString &element, const Vector &coords);
         
+    Atom(const AtomInfo &atominfo, const Vector &coords);
+        
     ~Atom();
 
-    const Atom& operator=(const Atom &other);
-    const Atom& operator=(const Vector &other);
+    Atom& operator=(const Atom &other);
+    Atom& operator=(const Vector &other);
     
     bool operator==(const Atom &other) const;
-    bool operator==(const AtomIndex &other) const;
-    
     bool operator!=(const Atom &other) const;
-    bool operator!=(const AtomIndex &other) const;
     
-    QString toString() const;
-    QString name() const;
-    
-    const AtomIndex& index() const;
-    AtomIndex& index();
-           
-    const Element& element() const;
-    Element& element();
+    const AtomInfo& info() const;
+    AtomInfo& info();
     
     const Vector& vector() const;
     Vector& vector();
     
-    AtomNum number() const;
-    AtomNum atomNum() const;
+    QString toString() const;
     
     static bool withinBondRadii(const Atom &atm0, const Atom &atm1, double err=0.0);
-
-protected:
-    AtomNum atmnum;
 };
 
 /** Return whether two atoms are equal */
 inline bool Atom::operator==(const Atom &other) const
 {
-    return ( Element::operator==(other) and
-             Vector::operator==(other) and
-             AtomIndex::operator==(other) );
-}
-
-/** Return whether two atoms are equal - this is a convenience function that says that
-    two atoms are equal if they have the same AtomIndex. You could explicitly use
-    this function via atom.index() == other */
-inline bool Atom::operator==(const AtomIndex &other) const
-{
-    return AtomIndex::operator==(other);
+    return ( AtomInfo::operator==(other) and
+             Vector::operator==(other) );
 }
 
 /** Test for inequality */
 inline bool Atom::operator!=(const Atom &other) const
 {
-    return ( AtomIndex::operator!=(other) or
-             Element::operator!=(other) or
+    return ( AtomInfo::operator!=(other) or
              Vector::operator!=(other) );
 }   
-
-/** Test for inequality - equivalent to atom.index() != other */
-inline bool Atom::operator!=(const AtomIndex &other) const
-{
-    return AtomIndex::operator!=(other);
-}
 
 /** Just copy the Vector part of the atom - this is a convenience function that 
     allows an atom to be moved (alternatively, you can modify the vector part of 
     this atom via the reference returned by Atom::vector) */
-inline const Atom& Atom::operator=(const Vector &other)
+inline Atom& Atom::operator=(const Vector &other)
 {
     Vector::operator=(other);
     return *this;
 }
 
-/** Copy one atom to another (deep copy, though quick as no heap allocation) */
-inline const Atom& Atom::operator=(const Atom &other)
+/** Copy one Atom to another (deep copy, though quick as no heap allocation) */
+inline Atom& Atom::operator=(const Atom &other)
 {
-    //do not copy ourself to ourself!
-    if (&other == this)
-      return *this;
-
-    Element::operator=(other);
-    AtomIndex::operator=(other);
+    AtomInfo::operator=(other);
     Vector::operator=(other);
 
     return *this;
 }
 
-/** Return the name of the Atom */
-inline QString Atom::name() const
+/** Cast this Atom as an AtomInfo */
+inline const AtomInfo& Atom::info() const
 {
-    return AtomIndex::name();
-}
-
-/** Cast this Atom as an AtomIndex */
-inline const AtomIndex& Atom::index() const
-{
-    return static_cast<const AtomIndex&>(*this);
-}
-
-/** Cast this Atom an an Element */
-inline const Element& Atom::element() const
-{
-    return static_cast<const Element&>(*this);
+    return static_cast<const AtomInfo&>(*this);
 }
 
 /** Cast this Atom as a Vector */
@@ -194,16 +145,10 @@ inline const SireMaths::Vector& Atom::vector() const
     return static_cast<const SireMaths::Vector&>(*this);
 }
 
-/** Cast this Atom as an AtomIndex */
-inline AtomIndex& Atom::index()
+/** Cast this Atom as an AtomInfo */
+inline AtomInfo& Atom::info()
 {
-    return static_cast<AtomIndex&>(*this);
-}
-
-/** Cast this Atom an an Element */
-inline Element& Atom::element()
-{
-    return static_cast<Element&>(*this);
+    return static_cast<AtomInfo&>(*this);
 }
 
 /** Cast this Atom as a Vector */
@@ -212,31 +157,13 @@ inline SireMaths::Vector& Atom::vector()
     return static_cast<SireMaths::Vector&>(*this);
 }
 
-/** Return the number of this atom. This number may not necesserily have been set (in which
-    case it will be 0), and it may not be unique within a molecule. The atom number is not
-    really used for anything within this program, and its only purpose is so that the 
-    atom number that is read in from the initial coordinate file can be retained throughout
-    the lifetime of this atom, and can then be written out when this atom is written back
-    out to an output coordinate file. As much as possible you should avoid writing code
-    that relies on the atom number to identify the atom. There are a few cases where this is
-    not possible (e.g. the PSF file reader, SireIO::PSF), and in those cases you should 
-    mention that what you are doing is not massively safe...! */
-inline AtomNum Atom::number() const
+/** Return a string representation of this Atom (required
+    to remove ambiguity) */
+inline QString Atom::toString() const
 {
-    return atmnum;
+    return AtomInfo::toString();
 }
 
-/** Synonym for Atom::number() */
-inline AtomNum Atom::atomNum() const
-{
-    return atmnum;
-}
-
-}
-
-inline uint qHash(const SireMol::Atom &atom)
-{
-    return qHash(atom.index());
 }
 
 Q_DECLARE_METATYPE(SireMol::Atom)

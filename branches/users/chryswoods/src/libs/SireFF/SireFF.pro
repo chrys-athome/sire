@@ -18,7 +18,8 @@ HEADERS += energy.h \
            changerecordbase.h \
            changerecord.h \
            movedmol.h \
-           removedmol.h 
+           removedmol.h \
+           movedparts.h 
 SOURCES += energy.cpp \
            forcefield.cpp \
            ffworker.cpp \
@@ -29,7 +30,8 @@ SOURCES += energy.cpp \
            changerecordbase.cpp \
            changerecord.cpp \
            movedmol.cpp \
-           removedmol.cpp 
+           removedmol.cpp \
+           movedparts.cpp 
 TARGET = SireFF
 TEMPLATE = lib
 sire.root = ../../.. # AUTO_GENERATED_LINE
