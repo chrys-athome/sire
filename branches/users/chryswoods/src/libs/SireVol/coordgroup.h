@@ -96,8 +96,6 @@ public:
     
     bool isNull() const;
     
-    void clear();
-    
     int count() const;
     int size() const;
     
@@ -154,8 +152,6 @@ public:
     Vector* data();
 
     bool isNull() const;
-    
-    void clear();
     
     int count() const;
     int size() const;

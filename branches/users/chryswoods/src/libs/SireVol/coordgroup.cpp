@@ -490,12 +490,6 @@ bool CoordGroup::isNull() const
     return d->isNull();
 }
 
-/** Clear this CoordGroup (make it null) */
-void CoordGroup::clear()
-{
-    d = shared_null;
-}
-
 /** Return the number of coordinates in this group */
 int CoordGroup::count() const
 {
@@ -626,12 +620,6 @@ Vector* CoordGroupEditor::data()
 bool CoordGroupEditor::isNull() const
 {
     return d->isNull();
-}
-
-/** Clear this group */
-void CoordGroupEditor::clear()
-{
-    d = shared_null;
 }
 
 /** Return the number of coordinates in this group */
