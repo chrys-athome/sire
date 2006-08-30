@@ -3,10 +3,10 @@
 /**
   * @file
   *
-  * C++ Interface: CoordGroup and CoordGroupEditor
+  * C++ Interface: CoordGroupBase, CoordGroup and CoordGroupEditor
   *
   * Description: 
-  * Interface to CoordGroup and CoordGroupEditor
+  * Interface to CoordGroupBase, CoordGroup and CoordGroupEditor
   * 
   * Author: Christopher Woods, (C) 2006
   *
@@ -44,13 +44,37 @@ using SireMaths::Quaternion;
 using SireMaths::Matrix;
 
 class CoordGroupPvt;
+class CoordGroupEditor;
+
+/**
+This is the common base class of CoordGroup and CoordGroupEditor, thus allowing both classes to exchange information with one another.
+
+@author Christopher Woods
+*/
+class SIREVOL_EXPORT CoordGroupBase
+{
+public:
+    CoordGroupBase();
+    CoordGroupBase(int size);
+    CoordGroupBase(int size, const Vector &value);
+    
+    CoordGroupBase(const CoordGroupBase &other);
+    
+    ~CoordGroupBase();
+    
+    CoordGroupBase& operator=(const CoordGroupBase &other);
+    
+protected:
+    /** Implicitly shared pointer to the coordinate data */
+    QSharedDataPointer<CoordGroupPvt> d;
+};
 
 /**
 This class holds a group of coordinates. This group forms the basis of the Molecular CutGroup, as defined in SireMol. A CoordGroup contains a list of coordinates, together with an AABox which provides information as to the center and extents of this group. SireVol is designed to calculate distances between points in different CoordGroups, or to calculate distances between points within a CoordGroup. A CoordGroup is implicitly shared and is designed to be fast to use, and fast to copy.
 
 @author Christopher Woods
 */
-class SIREVOL_EXPORT CoordGroup
+class SIREVOL_EXPORT CoordGroup : public CoordGroupBase
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const CoordGroup&);
@@ -61,11 +85,11 @@ public:
     CoordGroup(int size);
     CoordGroup(int size, const Vector &value);
     
-    CoordGroup(const CoordGroup &other);
+    CoordGroup(const CoordGroupBase &other);
 
     ~CoordGroup();
 
-    CoordGroup& operator=(const CoordGroup &other);
+    CoordGroup& operator=(const CoordGroupBase &other);
 
     const Vector& at(int i) const;
     const Vector& operator[](int i) const;
@@ -81,14 +105,10 @@ public:
     const Vector* constData() const;
     
     void translate(const Vector &delta);
-    void rotate(const Vector &point, const Quaternion &quat);
-    void rotate(const Vector &point, const Matrix &rotmat);
+    void rotate(const Quaternion &quat, const Vector &point);
+    void rotate(const Matrix &rotmat, const Vector &point);
 
     CoordGroupEditor edit();
-
-private:
-    /** Implicitly shared pointer to the coordinate data */
-    QSharedDataPointer<CoordGroupPvt> d;
 };
 
 /** This class is used to edit a CoordGroup. This class is used when you want to make several small changes to a CoordGroup, but do not want the CoordGroup to update its internal state after each change (e.g. you are moving each point in turn, and do not want the AABox to be updated for every step!)
@@ -114,15 +134,15 @@ coordgroup = editor.commit();
 
 @author Christopher Woods
 */
-class SIREVOL_EXPORT CoordGroupEditor
+class SIREVOL_EXPORT CoordGroupEditor : public CoordGroupBase
 {
 public:
     CoordGroupEditor();
-    CoordGroupEditor(const CoordGroupEditor &other);
+    CoordGroupEditor(const CoordGroupBase &other);
     
     ~CoordGroupEditor();
     
-    CoordGroupEditor& operator=(const CoordGroupEditor &other);
+    CoordGroupEditor& operator=(const CoordGroupBase &other);
 
     const Vector& at(int i) const;
 
@@ -141,14 +161,10 @@ public:
     int size() const;
     
     void translate(const Vector &delta);
-    void rotate(const Vector &point, const Quaternion &quat);
-    void rotate(const Vector &point, const Matrix &rotmat);
+    void rotate(const Quaternion &quat, const Vector &point);
+    void rotate(const Matrix &rotmat, const Vector &point);
 
     CoordGroup commit();
-
-private:
-    /** Implicitly shared pointer to the coordinate data */
-    QSharedDataPointer<CoordGroupPvt> d;
 };
 
 }

@@ -3,12 +3,14 @@
 # Subdir relative project main directory: ./src/libs/SireVol
 # Target is a library:  SireVol
 
-HEADERS += cartesian.h \
+HEADERS += aabox.h \
+           cartesian.h \
            simvolume.h \
            simvolumeptr.h \
            periodicbox.h \
            coordgroup.h 
-SOURCES += cartesian.cpp \
+SOURCES += aabox.cpp \ 
+           cartesian.cpp \
            simvolume.cpp \
            periodicbox.cpp \
            coordgroup.cpp 

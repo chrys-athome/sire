@@ -17,8 +17,8 @@ SUBDIRS += ThirdParty \
 	   SireMaths \
 	   SireCAS \
            SireBase \
-	   SireMol \
 	   SireVol \
+	   SireMol \
 	   SqliteDriver \
 	   SireDB \
 	   SireFF \

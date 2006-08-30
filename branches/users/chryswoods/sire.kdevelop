@@ -124,7 +124,7 @@
   </kdevfilecreate>
   <kdevtrollproject>
     <general>
-      <activedir>src/libs/SireMol</activedir>
+      <activedir>src/libs/SireVol</activedir>
     </general>
     <run>
       <directoryradio>executable</directoryradio>

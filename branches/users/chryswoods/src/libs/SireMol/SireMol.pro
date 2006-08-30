@@ -3,8 +3,7 @@
 # Subdir relative project main directory: ./src/libs/SireMol
 # Target is a library:  SireMol
 
-HEADERS += aabox.h \
-           angle.h \
+HEADERS += angle.h \
            atom.h \
            atomindexset.h \
            atomset.h \
@@ -68,8 +67,7 @@ HEADERS += aabox.h \
            resnumindexid.h \
            moleculeversion.h \
            atominfo.h 
-SOURCES += aabox.cpp \
-           angle.cpp \
+SOURCES += angle.cpp \
            atom.cpp \
            atomset.cpp \
            bond.cpp \

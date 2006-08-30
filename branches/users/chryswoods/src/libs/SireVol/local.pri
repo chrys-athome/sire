@@ -2,7 +2,7 @@
 #use the QtCore library
 QT += core
 
-sire.depends *= SireMol SireBase SireMaths SireUnits
+sire.depends *= SireBase SireMaths SireUnits
 
 LIBS += 
 INCLUDEPATH += $$boost.headers

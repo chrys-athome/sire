@@ -1,15 +1,16 @@
 
 #include "aabox.h"
+#include "coordgroup.h"
 
 #include "SireStream/datastream.h"
 
 using namespace SireStream;
-using namespace SireMol;
+using namespace SireVol;
 
-static const RegisterMetaType<AABox> r_aabox("SireMol::AABox");
+static const RegisterMetaType<AABox> r_aabox("SireVol::AABox");
 
 /** Serialise an AABox to a binary datastream */
-QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const AABox &aabox)
+QDataStream SIREVOL_EXPORT &operator<<(QDataStream &ds, const AABox &aabox)
 {
     writeHeader(ds, r_aabox, 1) << aabox.cent << aabox.halfextents << aabox.rad;
     
@@ -17,7 +18,7 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const AABox &aabox)
 }
 
 /** Deserialise an AABox from a binary datastream */
-QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, AABox &aabox)
+QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds, AABox &aabox)
 {
     VersionID v = readHeader(ds, r_aabox);
     
@@ -41,22 +42,10 @@ AABox::AABox(const Vector &c, const Vector &extents) : cent(c), halfextents(exte
     rad = halfextents.length();
 }
 
-/** Construct an AABox that completely encases the atoms 'atoms' */
-AABox::AABox(const AtomSet &atoms)
+/** Construct an AABox that completely encases the CoordGroup 'coordgroup' */
+AABox::AABox(const CoordGroup &coordgroup)
 {
-    recalculate(atoms);
-}
-
-/** Construct an AABox that completely encases the atoms 'atoms' */
-AABox::AABox(const AtomVector &atoms)
-{
-    recalculate(atoms);
-}
-
-/** Construct an AABox that completely encases the atoms 'atoms' */
-AABox::AABox(const AtomList &atoms)
-{
-    recalculate(atoms);
+    recalculate(coordgroup);
 }
 
 /** Destructor */
@@ -77,70 +66,47 @@ bool AABox::operator!=(const AABox &other) const
           (rad != other.rad or cent != other.cent or halfextents != other.halfextents);
 }
 
-/** Operator '=' also recalculates the AABox to encase 'atoms' */
-const AABox& AABox::operator=(const AtomVector &atoms)
+/** Internal function used to recalculate the AABox from the coordinates in the 
+    array 'coords' (which has size 'sz') */
+void AABox::recalculate(const Vector *coords, int sz)
 {
-    recalculate(atoms);
-    return *this;
-}
-
-/** Operator '=' also recalculates the AABox to encase 'atoms' */
-const AABox& AABox::operator=(const AtomSet &atoms)
-{
-    recalculate(atoms);
-    return *this;
-}
-
-/** This is a template function that calculates an AABox from the supplied atom container */
-template<class T>
-AABox getAABox(const T &atoms)
-{
-    if (atoms.count() > 0)
+    if (sz > 0)
     {
-        //set the initial max and min coords from the first atom in the CutGroup
-        Vector maxcoords(atoms.at(0));
-        Vector mincoords(maxcoords);
+        //set the initial max and min coords from the first coordinate in the group
+        Vector maxcoords( coords[0] );
+        Vector mincoords( maxcoords );
     
-        //loop through all of the atoms of the CutGroup
-        for (int i=1; i < atoms.count(); i++)
+        //loop through all of the remaining coordinates in the group
+        for (int i=1; i < sz; ++i)
         {
             //calculate the maximum and minimum coordinates
-            const Atom &atom = atoms.at(i);
-            maxcoords.setMax( atom );
-            mincoords.setMin( atom );
+            const Vector &coord = coords[i];
+            maxcoords.setMax( coord );
+            mincoords.setMin( coord );
         }
         
         //now calculate the center as half the maximum and minimum coordinates
-        Vector cent = 0.5 * (maxcoords + mincoords);
+        cent = 0.5 * (maxcoords + mincoords);
         
         //the positive half-extent is the difference between the maximum
         //coordinates and the center
-        Vector halfextents = maxcoords - cent;
-    
-        return AABox(cent,halfextents);
+        halfextents = maxcoords - cent;
+        
+        //the radius is the length of 'halfextents'
+        rad = halfextents.length();
     }
     else
     {
-        return AABox();
-    }   
+        cent = Vector(0);
+        halfextents = Vector(0);
+        sz = 0;
+    }
 }
 
-/** Recalculate the box to completely encase 'atoms' */
-void AABox::recalculate(const AtomVector &atoms)
+/** Recalculate the AABox so that it completely encloses the CoordGroup 'coordgroup' */
+void AABox::recalculate(const CoordGroup &coordgroup)
 {
-    *this = getAABox<AtomVector>(atoms);
-}        
-
-/** Recalculate the box to completely encase 'atoms' */
-void AABox::recalculate(const AtomSet &atoms)
-{
-    *this = getAABox<AtomSet>(atoms);
-}
-
-/** Recalculate the box to completely encase 'atoms' */
-void AABox::recalculate(const AtomList &atoms)
-{
-    *this = getAABox<AtomList>(atoms);
+    this->recalculate( coordgroup.constData(), coordgroup.size() );
 }
 
 /** Return whether or not this box is within 'dist' of box 'box'.
