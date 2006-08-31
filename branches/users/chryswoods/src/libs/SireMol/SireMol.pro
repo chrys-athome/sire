@@ -66,7 +66,8 @@ HEADERS += angle.h \
            idtypes.h \
            resnumindexid.h \
            moleculeversion.h \
-           atominfo.h 
+           atominfo.h \
+           moleculeinfo.h 
 SOURCES += angle.cpp \
            atom.cpp \
            atomset.cpp \
@@ -101,11 +102,11 @@ SOURCES += angle.cpp \
            resnumatomid.cpp \
            resnumindexid.cpp \
            moleculeversion.cpp \
-           atominfo.cpp 
+           atominfo.cpp \
+           moleculeinfo.cpp 
 TARGET = SireMol
 TEMPLATE = lib
 sire.root = ../../.. # AUTO_GENERATED_LINE
 sire.build = $$sire.root/build # AUTO_GENERATED_LINE
 sire.config = $$sire.root/configure.pri # AUTO_GENERATED_LINE
 sire.global = $$sire.build/global.pri # AUTO_GENERATED_LINE
-!include($$sire.global): error(Cannot find global configure file!) # AUTO_GENERATED_LINE

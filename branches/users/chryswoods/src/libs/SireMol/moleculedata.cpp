@@ -195,6 +195,26 @@ private:
     void rotate(ResNum resnum, const QStringList &atoms, 
                 const Matrix &rotmat, const Vector &point);
 
+
+    /** ID number used to identify the molecule */
+    MoleculeID id;
+    
+    /** The version number of the molecule */
+    MoleculeVersion molversion;
+    
+    /** The metainfo about the molecule - this contains the names of the molecule,
+        residue and all atoms, and additional metainfo about all of the residues
+        and atoms. This object may also be used to map from atom or residue IDs
+        to CGAtomIDs (which are used to lookup the coordinates) */
+    MoleculeInfo molinfo;
+    
+    /** The connectivity of this molecule */
+    MoleculeBonds molbonds;
+    
+    /** The coordinates of all of the atoms in this molecule, arranged by
+        CGAtomID */
+    QHash<CutGroupID, CoordGroup> coords;
+
     /** The molecule info - this contains a hash of ResidueInfo objects, indexed
         by residue number, each of which contains the names of the atoms in each 
         residue. This also provides the information necessary to map from an
@@ -211,12 +231,6 @@ private:
     
     /** The connectivity of this molecule */
     MoleculeBonds molbonds;
-
-    /** ID number used to identify the molecule */
-    MoleculeID id;
-    
-    /** The version number of the molecule */
-    MoleculeVersion molversion;
 };
 
 } // End of namespace SireMol

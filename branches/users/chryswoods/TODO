@@ -58,4 +58,10 @@ SireDB
 (*) Dihedral-term code is not working and needs fixing - also need
     to automatically resolve functions and recursively fix function
     of a function
-    
+
+-------
+SireMol
+-------
+
+(*) Change AtomID, ResID, CutGroupID and MoleculeID to ensure that they are not typedefs of Index, so that we can overload on them. Important for correct working of MoleculeInfo.
+

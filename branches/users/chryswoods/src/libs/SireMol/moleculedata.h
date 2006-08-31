@@ -5,11 +5,9 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "cutgroupset.h"
-#include "atomvector.h"
 #include "atomindex.h"
-#include "residueset.h"
 #include "residueidset.h"
+
 #include "moleculebonds.h"
 #include "moleculeversion.h"
 
@@ -26,6 +24,11 @@ class Line;
 class Triangle;
 class Torsion;
 class Angle;
+}
+
+namespace SireVol
+{
+class CoordGroup;
 }
 
 namespace SireMol
@@ -57,6 +60,8 @@ class WeightFunction;
 
 class MoleculeSignature;
 
+using SireVol::CoordGroup;
+
 /**
 This class holds the shared molecule data for the Molecule and Residue classes (which are both just views on this MolculeData class). This is very similar to the EditMolData class, on which EditMol and EditRes are merely views.
 
@@ -73,7 +78,7 @@ public:
     
     MoleculeData(const QString &molname, 
                  const ResidueIDSet &resids = ResidueIDSet(),
-                 const CutGroupVector &cutgroups = CutGroupVector(), 
+                 const QVector<CutGroup> &cutgroups = QVector<CutGroup>(),
                  const MoleculeBonds &molbonds = MoleculeBonds());
     
     MoleculeData(const MoleculeData &other);
@@ -112,7 +117,7 @@ public:
     Residue residue(ResNum renum);
     Residue residue(const QString &resname);
     
-    ResidueSet residues();
+    QHash<ResNum,Residue> residues();
     
     Residue at(int i);
     const Atom& at(ResNum resnum, int i) const;

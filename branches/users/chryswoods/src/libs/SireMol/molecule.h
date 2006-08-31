@@ -34,7 +34,7 @@ public:
     
     Molecule(const QString &molname, 
              const ResidueIDSet &resids = ResidueIDSet(),
-             const CutGroupVector &cutgroups = CutGroupVector(), 
+             const QVector<CutGroup> &cutgroups = QVector<CutGroup>(), 
              const MoleculeBonds &molbonds = MoleculeBonds());
     
     Molecule(const Molecule &other);
@@ -89,8 +89,11 @@ public:
     bool isNull() const;
     bool isEmpty() const;
 
-    CutGroupSet cutGroups() const;
-    const CutGroup& cutGroup(CutGroupID id) const;
+    const CutGroup& cutGroup(CutGroupID cgid) const;
+    QHash<CutGroupID,CutGroup> cutGroups() const;
+    
+    const CoordGroup& coordGroup(CutGroupID cgid) const;
+    QHash<CutGroupID,CoordGroup> coordinates() const;
 
     MoleculeBonds connectivity() const;
 
@@ -146,6 +149,9 @@ public:
     void rotate(const AtomIDGroup &group, const Quaternion &quat, const Vector &point);
     void rotate(const AtomIndexSet &atoms, const Quaternion &quat, const Vector &point);
     void rotate(ResNum resnum, const Quaternion &quat, const Vector &point);
+   
+    void setCoordinates(CutGroupID cgid, const CoordGroup &coords);
+    void setCoordinates(const QHash<CutGroupID,CoordGroup> coords);
    /////////////////////////////////////////////////////////
 
    
