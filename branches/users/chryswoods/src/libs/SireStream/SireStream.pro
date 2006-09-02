@@ -7,14 +7,16 @@ HEADERS += datastream.h \
            registermetatype.hpp \
            getmagic.h \
            magic_error.h \
-           version_error.h 
+           version_error.h \
+           implicitstreamer.h \
+           streamedobject.hpp 
 SOURCES += getmagic.cpp \
            magic_error.cpp \
-           version_error.cpp 
+           version_error.cpp \
+           implicitstreamer.cpp 
 TARGET = SireStream
 TEMPLATE = lib
 sire.root = ../../.. # AUTO_GENERATED_LINE
 sire.build = $$sire.root/build # AUTO_GENERATED_LINE
 sire.config = $$sire.root/configure.pri # AUTO_GENERATED_LINE
 sire.global = $$sire.build/global.pri # AUTO_GENERATED_LINE
-!include($$sire.global): error(Cannot find global configure file!) # AUTO_GENERATED_LINE
