@@ -24,7 +24,7 @@
 # override this value by setting 'sire.install' on the qmake
 # command line
 
-installdir = /home/chris/local
+installdir = ~/local
 
 #Uncomment this if you wish to compile for debugging
 #CONFIG += debug
@@ -47,7 +47,7 @@ sire.compile.cxxflags = $$sire.compile.cflags
 #debugging flags - these are the flags that are used when compiling
 #for debugging
 
-sire.debug.cflags = -O2 -g -gdb
+sire.debug.cflags = -O2 -g -ggdb
 sire.debug.cxxflags = $$sire.compile.cxxflags
 
 ###########################################
@@ -85,7 +85,7 @@ gsl.libs = -lgsl -lgslcblas
 #sire.lflags = 
 
 #uncomment the below line if you want to disable symbol hiding
-#sire.no_symbol_hiding = 1
+sire.no_symbol_hiding = 1
 
 # this gets the root directory in which sire will be installed
 # This will be equal to 'installdir' if that was set above, or

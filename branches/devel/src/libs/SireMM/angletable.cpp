@@ -1,5 +1,5 @@
 
-#include "qhash_siremol.h"
+#include "SireMol/qhash_siremol.h"
 #include "qhash_siremm.h"
 
 #include "angletable.h"
