@@ -50,4 +50,5 @@ target_link_libraries (SireUnitTest
 		       SireMM
                        SireCAS
 		       SireUnits
+		       ${BOOST_UNITTEST_LIBRARY}
                        )

@@ -19,6 +19,12 @@ set (SIRE_VERSION_PATCH "1")
 
 set (SIRE_VERSION "${SIRE_VERSION_MAJOR}.${SIRE_VERSION_MINOR}.${SIRE_VERSION_PATCH}")
 
+# Build shared libraries by default
+set (BUILD_SHARED_LIBS ON)
+
+# Uncomment for more verbose compiling/linking
+# set (CMAKE_VERBOSE_MAKEFILE ON)
+
 # Path to the project's extra cmake files
 set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/build/cmake)
 
@@ -51,6 +57,49 @@ include( FindPythonLibs )
 set (Boost_FIND_REQUIRED TRUE)
 include ( ${CMAKE_MODULE_PATH}/FindBoost.cmake )
 find_package(Boost REQUIRED)
+
+# Sire depends on >= boost_python 1.31
+set ( BOOST_VERSION "1_32" CACHE STRING "Version of Boost Library to use")
+
+find_library( BOOST_PYTHON_LIBRARY
+              NAMES
+                boost_python-${BOOST_VERSION}
+                boost_python
+              PATHS
+                /usr/lib
+                /usr/local/lib
+              DOC 
+                "Path where the Boost Python Library can be found"
+            )
+
+message( STATUS "Boost python library = ${BOOST_PYTHON_LIBRARY}" )
+
+find_library( BOOST_UNITTEST_LIBRARY
+              NAMES
+	        boost_unit_test_framework-${BOOST_VERSION}
+	        boost_unit_test_framework
+	      PATHS
+	        /usr/lib
+		/usr/local/lib
+	      DOC
+	        "Path where the Boost Unit Test Library can be found"
+            )
+
+message( STATUS "Boost unit test library = ${BOOST_UNITTEST_LIBRARY}" )
+
+find_library( UTIL_LIBRARY
+              NAMES
+	        util
+	      PATHS
+	        /usr/lib
+		/usr/local/lib
+	      DOC
+	        "Path where the util library can be found (libutil.so)"
+	    )
+
+if (UNIX)
+   set( PYTHON_LIBRARY ${PYTHON_LIBRARY} ${UTIL_LIBRARY} )
+endif (UNIX)
 
 # Sire depends on >= GSL 1.6
 include ( ${CMAKE_MODULE_PATH}/FindGSL.cmake )

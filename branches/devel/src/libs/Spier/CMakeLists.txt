@@ -80,7 +80,10 @@ set_target_properties (Spier PROPERTIES
 
 # Link to other Sire libraries
 target_link_libraries (Spier
+                       SireIO
                        SireMol
+		       SireMaths
+		       ThirdPartyGUI
                        ${QT_QTGUI_LIBRARY}
                        ${QT_QTOPENGL_LIBRARY}
                        )

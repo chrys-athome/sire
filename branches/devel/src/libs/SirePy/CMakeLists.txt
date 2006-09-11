@@ -24,7 +24,7 @@ set ( SIREPY_MOCS
 
 qt4_wrap_cpp( SIREPY_MOC_SRCS ${SIREPY_MOCS} )
 
-add_library (SirePy SHARED ${SIREPY_SOURCES} ${SIREPY_MOC_SRCS})
+add_library (SirePy ${SIREPY_SOURCES} ${SIREPY_MOC_SRCS})
 
 set_target_properties (SirePy PROPERTIES
                        VERSION ${SIRE_VERSION}
@@ -35,4 +35,5 @@ set_target_properties (SirePy PROPERTIES
 target_link_libraries (SirePy
                        SireError
                        ${PYTHON_LIBRARY}
+		       ${BOOST_PYTHON_LIBRARY}
                        )
