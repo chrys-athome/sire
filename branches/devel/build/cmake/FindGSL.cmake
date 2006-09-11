@@ -39,7 +39,7 @@ ELSE(WIN32)
       /usr/bin/
       ENV PATH
       )
-    MESSAGE("DBG GSL_CONFIG ${GSL_CONFIG}")
+    #MESSAGE("DBG GSL_CONFIG ${GSL_CONFIG}")
     
     IF (GSL_CONFIG) 
       # set CXXFLAGS to be fed into CXX_FLAGS by the user:
