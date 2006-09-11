@@ -22,6 +22,13 @@ set (SIRE_VERSION "${SIRE_VERSION_MAJOR}.${SIRE_VERSION_MINOR}.${SIRE_VERSION_PA
 # Build shared libraries by default
 set (BUILD_SHARED_LIBS ON)
 
+# Name of executable install dir
+set (SIRE_BIN "bin")
+# Shared library install dir
+set (SIRE_LIBS "lib")
+# Static library install dir
+set (SIRE_ARCHIVES "lib/static")
+
 # Uncomment for more verbose compiling/linking
 # set (CMAKE_VERBOSE_MAKEFILE ON)
 
@@ -51,7 +58,69 @@ include_directories( ${QT_INCLUDE_DIR} ${QT_QTCORE_INCLUDE_DIR} )
 add_definitions( ${QT_DEFINITIONS} )
 
 # Sire depends on >= Python 2.3
-include( FindPythonLibs )
+find_program( Python REQUIRED )
+
+# Get the version number of this python interpreter
+exec_program ( ${PYTHON_EXECUTABLE}
+               ARGS "-c \"import sys; print sys.version[0:1]\""
+	       OUTPUT_VARIABLE PYTHON_MAJOR_VERSION
+	     )
+
+exec_program ( ${PYTHON_EXECUTABLE}
+               ARGS "-c \"import sys; print sys.version[2:3]\""
+	       OUTPUT_VARIABLE PYTHON_MINOR_VERSION
+	     )
+
+set( PYTHON_REQUIRE_MAJOR 2 )
+set( PYTHON_REQUIRE_MINOR 4 )
+
+set( PYTHON_VERSION_FOUND False )
+
+if ( PYTHON_MAJOR_VERSION EQUAL PYTHON_REQUIRE_MAJOR )
+   if (PYTHON_MINOR_VERSION EQUAL PYTHON_REQUIRE_MINOR )
+      set (PYTHON_VERSION_FOUND True)
+   endif (PYTHON_MINOR_VERSION EQUAL PYTHON_REQUIRE_MINOR)
+
+   if (PYTHON_MINOR_VERSION GREATER PYTHON_REQUIRE_MINOR)
+      set (PYTHON_VERSION_FOUND True)
+   endif (PYTHON_MINOR_VERSION GREATER PYTHON_REQUIRE_MINOR)
+endif (PYTHON_MAJOR_VERSION EQUAL PYTHON_REQUIRE_MAJOR)
+
+if ( PYTHON_MAJOR_VERSION GREATER PYTHON_REQUIRE_MAJOR )
+   set (PYTHON_VERSION_FOUND True)
+endif (PYTHON_MAJOR_VERSION GREATER PYTHON_REQUIRE_MAJOR )
+
+if ( NOT PYTHON_VERSION_FOUND )
+   message( FATAL_ERROR  "Require Python version >= "
+                         "${PYTHON_REQUIRE_MAJOR}.${PYTHON_REQUIRE_MINOR}, while have found "
+                         "Python-Version ${PYTHON_MAJOR_VERSION}.${PYTHON_MINOR_VERSION}" )
+endif ( NOT PYTHON_VERSION_FOUND )
+
+message( STATUS "Found Python-Version ${PYTHON_MAJOR_VERSION}.${PYTHON_MINOR_VERSION}" )
+
+# Use the python interpreter to get the link options, version and install
+# directory - simplify by using the python script in the build directory
+set (PYTHON_CONFIG ${CMAKE_SOURCE_DIR}/build/python-config)
+
+# get the link flags for the shared library
+exec_program ( ${PYTHON_EXECUTABLE}
+               ARGS "${PYTHON_CONFIG} --lflags"
+	       OUTPUT_VARIABLE PYTHON_LIBRARY
+	     )
+
+# get the include directories
+exec_program ( ${PYTHON_EXECUTABLE}
+               ARGS "${PYTHON_CONFIG} --cflags"
+	       OUTPUT_VARIABLE PYTHON_INCLUDE_DIR
+	     )
+
+# get the path to the python site files (excluding the prefix)
+set( PYTHON_SITE_DIR "lib/python${PYTHON_MAJOR_VERSION}.${PYTHON_MINOR_VERSION}/site-packages" )
+
+message( STATUS "Python paths ${PYTHON_LIBRARY} | ${PYTHON_INCLUDE_DIR} | ${PYTHON_SITE_DIR}" )
+
+# set the location to install the python modules
+set (SIRE_PYTHON "${PYTHON_SITE_DIR}")
 
 # Sire depends on >= boost 1.31
 set (Boost_FIND_REQUIRED TRUE)

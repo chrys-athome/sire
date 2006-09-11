@@ -17,7 +17,7 @@ set ( SIRESYSTEM_SOURCES
       #systemview.cpp
     )
 
-add_library (SireSystem SHARED ${SIRESYSTEM_SOURCES})
+add_library (SireSystem ${SIRESYSTEM_SOURCES})
 
 set_target_properties (SireSystem PROPERTIES
                        VERSION ${SIRE_VERSION}
@@ -25,5 +25,13 @@ set_target_properties (SireSystem PROPERTIES
                       )
 
 # Link to other Sire libraries
-target_link_libraries (SireFF
+target_link_libraries (SireSystem
+                       SireFF
                        )
+
+# installation
+install( TARGETS SireSystem
+         RUNTIME DESTINATION ${SIRE_BIN}
+         LIBRARY DESTINATION ${SIRE_LIBS}
+         ARCHIVE DESTINATION ${SIRE_ARCHIVES}
+       )

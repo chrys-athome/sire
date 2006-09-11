@@ -46,7 +46,7 @@ set ( SIRECAS_SOURCES
       values.cpp
     )
 
-add_library (SireCAS SHARED ${SIRECAS_SOURCES})
+add_library (SireCAS ${SIRECAS_SOURCES})
 
 set_target_properties (SireCAS PROPERTIES
                        VERSION ${SIRE_VERSION}
@@ -59,3 +59,10 @@ target_link_libraries (SireCAS
                        ${GSL_LIBRARIES}
                        )
 
+# installation
+install( TARGETS SireCAS
+         RUNTIME DESTINATION ${SIRE_BIN}
+         LIBRARY DESTINATION ${SIRE_LIBS}
+         ARCHIVE DESTINATION ${SIRE_ARCHIVES}
+       )
+				  

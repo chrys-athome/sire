@@ -17,7 +17,7 @@ set ( SIREBASE_SOURCES
       md5sum.cpp
     )
 
-add_library (SireBase SHARED ${SIREBASE_SOURCES})
+add_library (SireBase ${SIREBASE_SOURCES})
 
 set_target_properties (SireBase PROPERTIES
                        VERSION ${SIRE_VERSION}
@@ -28,4 +28,11 @@ set_target_properties (SireBase PROPERTIES
 target_link_libraries (SireBase 
                        SireError
                        )
+
+# installation
+install( TARGETS SireBase
+         RUNTIME DESTINATION ${SIRE_BIN}
+	 LIBRARY DESTINATION ${SIRE_LIBS}
+	 ARCHIVE DESTINATION ${SIRE_ARCHIVES}
+       )
 

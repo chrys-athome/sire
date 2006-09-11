@@ -14,9 +14,16 @@ set ( SIREUNITS_SOURCES
       convert.cpp            
     )
 
-add_library (SireUnits SHARED ${SIREUNITS_SOURCES})
+add_library (SireUnits ${SIREUNITS_SOURCES})
 
 set_target_properties (SireUnits PROPERTIES
                        VERSION ${SIRE_VERSION}
                        SOVERSION ${SIRE_VERSION_MAJOR}
                       )
+
+# installation
+install( TARGETS SireUnits
+         RUNTIME DESTINATION ${SIRE_BIN}
+         LIBRARY DESTINATION ${SIRE_LIBS}
+         ARCHIVE DESTINATION ${SIRE_ARCHIVES}
+       )

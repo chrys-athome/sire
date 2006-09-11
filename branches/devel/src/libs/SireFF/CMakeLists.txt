@@ -16,7 +16,7 @@ set ( SIREFF_SOURCES
       forcefield.cpp
     )
 
-add_library (SireFF SHARED ${SIREFF_SOURCES})
+add_library (SireFF ${SIREFF_SOURCES})
 
 set_target_properties (SireFF PROPERTIES
                        VERSION ${SIRE_VERSION}
@@ -29,3 +29,9 @@ target_link_libraries (SireFF
                        ${QT_QTSQL_LIBRARY}
                        )
 
+# installation
+install( TARGETS SireFF
+         RUNTIME DESTINATION ${SIRE_BIN}
+         LIBRARY DESTINATION ${SIRE_LIBS}
+         ARCHIVE DESTINATION ${SIRE_ARCHIVES}
+       )

@@ -30,7 +30,7 @@ set ( SIREMATHS_SOURCES
       vector.cpp
     )
 
-add_library (SireMaths SHARED ${SIREMATHS_SOURCES})
+add_library (SireMaths ${SIREMATHS_SOURCES})
 
 set_target_properties (SireMaths PROPERTIES
                        VERSION ${SIRE_VERSION}
@@ -44,3 +44,9 @@ target_link_libraries (SireMaths
                        ${QT_QTCORE_LIBRARY}
                        )
 
+# installation
+install( TARGETS SireMaths
+         RUNTIME DESTINATION ${SIRE_BIN}
+         LIBRARY DESTINATION ${SIRE_LIBS}
+         ARCHIVE DESTINATION ${SIRE_ARCHIVES}
+       )

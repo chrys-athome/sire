@@ -14,7 +14,7 @@ set ( SIRETEST_SOURCES
       runtests.cpp
     )
 
-add_library (SireTest SHARED ${SIRETEST_SOURCES})
+add_library (SireTest ${SIRETEST_SOURCES})
 
 set_target_properties (SireTest PROPERTIES
                        VERSION ${SIRE_VERSION}
@@ -25,3 +25,10 @@ set_target_properties (SireTest PROPERTIES
 target_link_libraries (SireTest
                        SireCAS
                        )
+
+# installation
+install( TARGETS SireTest
+         RUNTIME DESTINATION ${SIRE_BIN}
+         LIBRARY DESTINATION ${SIRE_LIBS}
+         ARCHIVE DESTINATION ${SIRE_ARCHIVES}
+       )

@@ -47,7 +47,7 @@ set ( SIREMM_SOURCES
       ureybradleydb.cpp
     )
 
-add_library (SireMM SHARED ${SIREMM_SOURCES})
+add_library (SireMM ${SIREMM_SOURCES})
 
 set_target_properties (SireMM PROPERTIES
                        VERSION ${SIRE_VERSION}
@@ -57,5 +57,12 @@ set_target_properties (SireMM PROPERTIES
 # Link to other Sire libraries
 target_link_libraries (SireMM
                        SireFF
-		       SireUnits
+                       SireUnits
                        )
+
+# installation
+install( TARGETS SireMM
+         RUNTIME DESTINATION ${SIRE_BIN}
+         LIBRARY DESTINATION ${SIRE_LIBS}
+         ARCHIVE DESTINATION ${SIRE_ARCHIVES}
+       )

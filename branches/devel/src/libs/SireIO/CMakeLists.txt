@@ -21,7 +21,7 @@ set ( SIREIO_SOURCES
       psf.cpp
     )
 
-add_library (SireIO SHARED ${SIREIO_SOURCES})
+add_library (SireIO ${SIREIO_SOURCES})
 
 set_target_properties (SireIO PROPERTIES
                        VERSION ${SIRE_VERSION}
@@ -33,3 +33,10 @@ target_link_libraries (SireIO
                        SireMM
                        SireMol
                        )
+
+# installation
+install( TARGETS SireIO
+         RUNTIME DESTINATION ${SIRE_BIN}
+         LIBRARY DESTINATION ${SIRE_LIBS}
+         ARCHIVE DESTINATION ${SIRE_ARCHIVES}
+       )

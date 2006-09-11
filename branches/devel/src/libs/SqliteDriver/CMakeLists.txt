@@ -60,7 +60,7 @@ endif (WIN32)
 
 add_definitions( -DQT_NO_CAST_TO_ASCII -DQT_NO_CAST_FROM_ASCII )
 
-add_library (SqliteDriver SHARED 
+add_library (SqliteDriver
                 ${SQLITEDRIVER_SOURCES} ${SQLITEDRIVER_OS_SOURCES})
 
 set_target_properties (SqliteDriver PROPERTIES
@@ -73,3 +73,9 @@ target_link_libraries (SqliteDriver
                        ${QT_QTSQL_LIBRARY}
                       )
 
+# installation
+install( TARGETS SqliteDriver
+         RUNTIME DESTINATION ${SIRE_BIN}
+         LIBRARY DESTINATION ${SIRE_LIBS}
+         ARCHIVE DESTINATION ${SIRE_ARCHIVES}
+       )

@@ -1,12 +1,11 @@
 ###############################
 #
 # CMake file to compile the
-# Sire libraries
+# Sire Python wrappers
 #
 ###############################
 
 # Add each library
-add_subdirectory (PyWrap)
 add_subdirectory (SireBase)
 add_subdirectory (SireCAS)
 add_subdirectory (SireDB)
@@ -18,6 +17,7 @@ add_subdirectory (SireMM)
 add_subdirectory (SireMol)
 add_subdirectory (SireMove)
 add_subdirectory (SirePy)
+add_subdirectory (SireQt)
 add_subdirectory (SireSim)
 add_subdirectory (SireStream)
 add_subdirectory (SireSystem)
@@ -26,8 +26,5 @@ add_subdirectory (SireUnits)
 add_subdirectory (SireUnitTest)
 add_subdirectory (SireVol)
 add_subdirectory (Spier)
-add_subdirectory (SqliteDriver)
 add_subdirectory (Squire)
 add_subdirectory (ThirdParty)
-add_subdirectory (ThirdPartyGUI)
-

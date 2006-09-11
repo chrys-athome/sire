@@ -55,7 +55,7 @@ set ( SIREDB_SOURCES
       using_database.cpp
     )
 
-add_library (SireDB SHARED ${SIREDB_SOURCES})
+add_library (SireDB ${SIREDB_SOURCES})
 
 set_target_properties (SireDB PROPERTIES
                        VERSION ${SIRE_VERSION}
@@ -65,9 +65,15 @@ set_target_properties (SireDB PROPERTIES
 # Link to other Sire libraries
 target_link_libraries (SireDB
                        SireMol
-		       SireCAS
-		       SqliteDriver
+                       SireCAS
+                       SqliteDriver
                        ${QT_QTCORE_LIBRARY}
                        ${QT_QTSQL_LIBRARY}
                        )
 
+# installation
+install( TARGETS SireDB
+         RUNTIME DESTINATION ${SIRE_BIN}
+         LIBRARY DESTINATION ${SIRE_LIBS}
+         ARCHIVE DESTINATION ${SIRE_ARCHIVES}
+       )

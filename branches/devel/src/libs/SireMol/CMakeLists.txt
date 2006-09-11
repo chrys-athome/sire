@@ -47,7 +47,7 @@ set ( SIREMOL_SOURCES
       weightfunction.cpp
     )
 
-add_library (SireMol SHARED ${SIREMOL_SOURCES})
+add_library (SireMol ${SIREMOL_SOURCES})
 
 set_target_properties (SireMol PROPERTIES
                        VERSION ${SIRE_VERSION}
@@ -59,3 +59,9 @@ target_link_libraries (SireMol
                        SireStream
                        )
 
+# installation
+install( TARGETS SireMol
+         RUNTIME DESTINATION ${SIRE_BIN}
+         LIBRARY DESTINATION ${SIRE_LIBS}
+         ARCHIVE DESTINATION ${SIRE_ARCHIVES}
+       )

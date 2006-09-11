@@ -34,7 +34,7 @@ set ( SIREUNITTEST_RCCS
 qt4_add_resources(SIREUNITTEST_RCC_SRCS ${SIREUNITTEST_RCCS})
 
 # generate the library
-add_library (SireUnitTest SHARED 
+add_library (SireUnitTest 
                     ${SIREUNITTEST_SOURCES}
                     ${SIREUNITTEST_RCC_SRCS}
             )
@@ -47,8 +47,15 @@ set_target_properties (SireUnitTest PROPERTIES
 # Link to other Sire libraries
 target_link_libraries (SireUnitTest
                        SireIO
-		       SireMM
+                       SireMM
                        SireCAS
-		       SireUnits
-		       ${BOOST_UNITTEST_LIBRARY}
+                       SireUnits
+                       ${BOOST_UNITTEST_LIBRARY}
                        )
+
+# installation
+install( TARGETS SireUnitTest
+         RUNTIME DESTINATION ${SIRE_BIN}
+         LIBRARY DESTINATION ${SIRE_LIBS}
+         ARCHIVE DESTINATION ${SIRE_ARCHIVES}
+       )

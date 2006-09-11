@@ -68,9 +68,9 @@ set ( SPIER_MOCS
 qt4_wrap_cpp(SPIER_MOC_SRCS ${SPIER_MOCS})
 
 # generate the library
-add_library (Spier SHARED 
-                    ${SPIER_SOURCES}
-                    ${SPIER_MOC_SRCS}
+add_library (Spier
+                ${SPIER_SOURCES}
+                ${SPIER_MOC_SRCS}
             )
 
 set_target_properties (Spier PROPERTIES
@@ -82,8 +82,15 @@ set_target_properties (Spier PROPERTIES
 target_link_libraries (Spier
                        SireIO
                        SireMol
-		       SireMaths
-		       ThirdPartyGUI
+                       SireMaths
+                       ThirdPartyGUI
                        ${QT_QTGUI_LIBRARY}
                        ${QT_QTOPENGL_LIBRARY}
                        )
+
+# installation
+install( TARGETS Spier
+         RUNTIME DESTINATION ${SIRE_BIN}
+         LIBRARY DESTINATION ${SIRE_LIBS}
+         ARCHIVE DESTINATION ${SIRE_ARCHIVES}
+       )

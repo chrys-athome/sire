@@ -16,7 +16,7 @@ set ( SIREVOL_SOURCES
       simvolume.cpp
     )
 
-add_library (SireVol SHARED ${SIREVOL_SOURCES})
+add_library (SireVol ${SIREVOL_SOURCES})
 
 set_target_properties (SireVol PROPERTIES
                        VERSION ${SIRE_VERSION}
@@ -27,3 +27,10 @@ set_target_properties (SireVol PROPERTIES
 target_link_libraries (SireVol
                        SireMol
                        )
+
+# installation
+install( TARGETS SireVol
+         RUNTIME DESTINATION ${SIRE_BIN}
+         LIBRARY DESTINATION ${SIRE_LIBS}
+         ARCHIVE DESTINATION ${SIRE_ARCHIVES}
+       )

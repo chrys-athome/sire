@@ -28,5 +28,9 @@ target_link_libraries (siretest
                        SireUnitTest
                       )
 
-message( STATUS "siretest lib path = ${CMAKE_LIBRARY_PATH}" )
-
+# installation
+install( TARGETS siretest
+         RUNTIME DESTINATION ${SIRE_BIN}
+         LIBRARY DESTINATION ${SIRE_LIBS}
+         ARCHIVE DESTINATION ${SIRE_ARCHIVES}
+       )

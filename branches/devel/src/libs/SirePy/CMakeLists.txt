@@ -35,5 +35,12 @@ set_target_properties (SirePy PROPERTIES
 target_link_libraries (SirePy
                        SireError
                        ${PYTHON_LIBRARY}
-		       ${BOOST_PYTHON_LIBRARY}
+                       ${BOOST_PYTHON_LIBRARY}
                        )
+
+# installation
+install( TARGETS SirePy
+         RUNTIME DESTINATION ${SIRE_BIN}
+         LIBRARY DESTINATION ${SIRE_LIBS}
+         ARCHIVE DESTINATION ${SIRE_ARCHIVES}
+       )
