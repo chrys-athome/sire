@@ -65,6 +65,7 @@ set_target_properties (SireDB PROPERTIES
 # Link to other Sire libraries
 target_link_libraries (SireDB
                        SireMol
+		       SqliteDriver
                        ${QT_QTCORE_LIBRARY}
                        ${QT_QTSQL_LIBRARY}
                        )

@@ -18,7 +18,13 @@ set ( SIREPY_SOURCES
       pythonscript.cpp
     )
 
-add_library (SirePy SHARED ${SIREPY_SOURCES})
+set ( SIREPY_MOCS
+      pythonparser.h
+    )
+
+qt4_wrap_cpp( SIREPY_MOC_SRCS ${SIREPY_MOCS} )
+
+add_library (SirePy SHARED ${SIREPY_SOURCES} ${SIREPY_MOC_SRCS})
 
 set_target_properties (SirePy PROPERTIES
                        VERSION ${SIRE_VERSION}
@@ -28,5 +34,5 @@ set_target_properties (SirePy PROPERTIES
 # Link to other Sire libraries
 target_link_libraries (SirePy
                        SireError
-                       ${PYTHON_LIBRARIES}
+                       ${PYTHON_LIBRARY}
                        )

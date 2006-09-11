@@ -14,6 +14,10 @@ ENDIF (NOT OPENGL_FOUND)
 add_library (ThirdPartyGUI SHARED
              glew.c)
 
+set_target_properties (ThirdPartyGUI PROPERTIES
+                       VERSION ${SIRE_VERSION}
+                       SOVERSION ${SIRE_VERSION_MAJOR}
+                       )
 include_directories ( ${OPENGL_INCLUDE_DIR} )
 
 target_link_libraries ( ThirdPartyGUI 

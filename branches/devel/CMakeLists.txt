@@ -47,8 +47,6 @@ add_definitions( ${QT_DEFINITIONS} )
 # Sire depends on >= Python 2.3
 include( FindPythonLibs )
 
-message( STATUS "${PYTHON_LIBRARIES}" )
-
 # Sire depends on >= boost 1.31
 set (Boost_FIND_REQUIRED TRUE)
 include ( ${CMAKE_MODULE_PATH}/FindBoost.cmake )
