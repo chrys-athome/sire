@@ -28,3 +28,10 @@ add_subdirectory (SireVol)
 add_subdirectory (Spier)
 add_subdirectory (Squire)
 add_subdirectory (ThirdParty)
+
+# Install main Sire __init__.py file
+set ( INSTALLDIR ${SIRE_PYTHON}/Sire )
+
+install ( FILES __init__.py
+          DESTINATION ${INSTALLDIR}
+        )

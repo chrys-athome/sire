@@ -10,6 +10,9 @@
 
 import Sire.Maths
 
+# Import all of the Qt classes
+import Sire.Qt
+
 # Import all of the classes and functions from the C++ library
 from Sire.CAS._CAS import *
 

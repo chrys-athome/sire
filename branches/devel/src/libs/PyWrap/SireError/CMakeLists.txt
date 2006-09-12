@@ -1,6 +1,6 @@
 ########################################
 #
-# CMake file for Python wrapper:_Base
+# CMake file for Python wrapper:_Error
 #
 ########################################
 
@@ -15,51 +15,51 @@ include(${QT_USE_FILE})
 include_directories(${CMAKE_SOURCE_DIR}/src/libs
                     ${CMAKE_SOURCE_DIR}/src/libs/PyWrap)
 
-# Define the sources in SireBase
-set ( WRAPBASE_SOURCES
-      wrap_md5sum.cpp
+# Define the sources in SireError
+set ( WRAPERROR_SOURCES
+      wrap_exceptions.cpp
     )
 
 # Create the library that holds all of the class wrappers
-add_library (PyWrap_SireBase ${WRAPBASE_SOURCES})
+add_library (PyWrap_SireError ${WRAPERROR_SOURCES})
 
-set_target_properties (PyWrap_SireBase PROPERTIES
+set_target_properties (PyWrap_SireError PROPERTIES
                        VERSION ${SIRE_VERSION}
-                       SOVERSION ${SIRE_VERSION_MAJOR}
+		       SOVERSION ${SIRE_VERSION_MAJOR}
 		       )
 		       
-target_link_libraries (PyWrap_SireBase
-                       SireBase
+target_link_libraries (PyWrap_SireError
+                       SireError
                        PyWrap_SireQt
-                       ${BOOST_PYTHON_LIBRARY}
+		       ${BOOST_PYTHON_LIBRARY}
 		      )
 
 # Install the wrappers library with the other Sire libraries
-install( TARGETS PyWrap_SireBase
+install( TARGETS PyWrap_SireError
          RUNTIME DESTINATION ${SIRE_BIN}
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}
        )
 
 # Now create the thin-wrapper python module
-add_library (PythonWrapping_SireBase wrap_SireBase.cpp)
+add_library (PythonWrapping_SireError wrap_SireError.cpp)
 
-target_link_libraries (PythonWrapping_SireBase
-                       PyWrap_SireBase
+target_link_libraries (PythonWrapping_SireError
+                       PyWrap_SireError
                        )
 
 # Use properties to change the filename of the python module
-set_target_properties (PythonWrapping_SireBase
+set_target_properties (PythonWrapping_SireError
                        PROPERTIES
-                         OUTPUT_NAME "Base"
+                         OUTPUT_NAME "Error"
                          PREFIX "_"
                          SUFFIX ${PYTHON_MODULE_EXTENSION}
                       )
 
 # installation
-set( INSTALLDIR ${SIRE_PYTHON}/Sire/Base )
+set( INSTALLDIR ${SIRE_PYTHON}/Sire/Error )
 
-install( TARGETS PythonWrapping_SireBase
+install( TARGETS PythonWrapping_SireError
          LIBRARY DESTINATION ${INSTALLDIR}
        )
 

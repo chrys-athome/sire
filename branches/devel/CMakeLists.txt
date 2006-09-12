@@ -57,46 +57,10 @@ include( FindQt4 )
 include_directories( ${QT_INCLUDE_DIR} ${QT_QTCORE_INCLUDE_DIR} )
 add_definitions( ${QT_DEFINITIONS} )
 
-# Sire depends on >= Python 2.3
-find_program( Python REQUIRED )
-
-# Get the version number of this python interpreter
-exec_program ( ${PYTHON_EXECUTABLE}
-               ARGS "-c \"import sys; print sys.version[0:1]\""
-	       OUTPUT_VARIABLE PYTHON_MAJOR_VERSION
-	     )
-
-exec_program ( ${PYTHON_EXECUTABLE}
-               ARGS "-c \"import sys; print sys.version[2:3]\""
-	       OUTPUT_VARIABLE PYTHON_MINOR_VERSION
-	     )
-
+# Sire depends on >= Python 2.2
 set( PYTHON_REQUIRE_MAJOR 2 )
-set( PYTHON_REQUIRE_MINOR 4 )
-
-set( PYTHON_VERSION_FOUND False )
-
-if ( PYTHON_MAJOR_VERSION EQUAL PYTHON_REQUIRE_MAJOR )
-   if (PYTHON_MINOR_VERSION EQUAL PYTHON_REQUIRE_MINOR )
-      set (PYTHON_VERSION_FOUND True)
-   endif (PYTHON_MINOR_VERSION EQUAL PYTHON_REQUIRE_MINOR)
-
-   if (PYTHON_MINOR_VERSION GREATER PYTHON_REQUIRE_MINOR)
-      set (PYTHON_VERSION_FOUND True)
-   endif (PYTHON_MINOR_VERSION GREATER PYTHON_REQUIRE_MINOR)
-endif (PYTHON_MAJOR_VERSION EQUAL PYTHON_REQUIRE_MAJOR)
-
-if ( PYTHON_MAJOR_VERSION GREATER PYTHON_REQUIRE_MAJOR )
-   set (PYTHON_VERSION_FOUND True)
-endif (PYTHON_MAJOR_VERSION GREATER PYTHON_REQUIRE_MAJOR )
-
-if ( NOT PYTHON_VERSION_FOUND )
-   message( FATAL_ERROR  "Require Python version >= "
-                         "${PYTHON_REQUIRE_MAJOR}.${PYTHON_REQUIRE_MINOR}, while have found "
-                         "Python-Version ${PYTHON_MAJOR_VERSION}.${PYTHON_MINOR_VERSION}" )
-endif ( NOT PYTHON_VERSION_FOUND )
-
-message( STATUS "Found Python-Version ${PYTHON_MAJOR_VERSION}.${PYTHON_MINOR_VERSION}" )
+set( PYTHON_REQUIRE_MINOR 2 )
+include( ${CMAKE_MODULE_PATH}/FindPython.cmake )
 
 # Use the python interpreter to get the link options, version and install
 # directory - simplify by using the python script in the build directory

@@ -8,8 +8,8 @@
 #include "wrapInternalTable.hpp"
 #include "wrapDihedralTable.hpp"
 
-#include "dihedraltable.h"
-#include "moldihedralinfo.h"
+#include "SireMM/dihedraltable.h"
+#include "SireMM/moldihedralinfo.h"
 
 #include "SireQt/qdatastream.hpp"
 

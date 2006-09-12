@@ -85,7 +85,7 @@ QStringList parseCmdArgs(int argc, char **argv)
     return files;
 }
 
-#include <boost/test/included/prg_exec_monitor.hpp>
+//#include <boost/test/included/prg_exec_monitor.hpp>
 
 /** Use the boost-test program execution monitor - this will catch all
     errors that result in program termination and will translate them
@@ -98,7 +98,7 @@ QStringList parseCmdArgs(int argc, char **argv)
     back to 'main' and don't link to the boost_test_exec_monitor library
     (by editing sire.pro to remove this from the list of libraries)
 */
-int cpp_main(int argc, char **argv)
+int main(int argc, char **argv)
 {
    
     //create the Qt application that has the event loop        

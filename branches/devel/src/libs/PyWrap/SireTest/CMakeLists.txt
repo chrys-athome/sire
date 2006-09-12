@@ -1,6 +1,6 @@
 ########################################
 #
-# CMake file for Python wrapper:_Base
+# CMake file for Python wrapper:_Test
 #
 ########################################
 
@@ -15,51 +15,51 @@ include(${QT_USE_FILE})
 include_directories(${CMAKE_SOURCE_DIR}/src/libs
                     ${CMAKE_SOURCE_DIR}/src/libs/PyWrap)
 
-# Define the sources in SireBase
-set ( WRAPBASE_SOURCES
-      wrap_md5sum.cpp
+# Define the sources in SireTest
+set ( WRAPTEST_SOURCES
+      wrap_runtests.cpp
+      wrap_testcast.cpp
     )
 
 # Create the library that holds all of the class wrappers
-add_library (PyWrap_SireBase ${WRAPBASE_SOURCES})
+add_library (PyWrap_SireTest ${WRAPTEST_SOURCES})
 
-set_target_properties (PyWrap_SireBase PROPERTIES
+set_target_properties (PyWrap_SireTest PROPERTIES
                        VERSION ${SIRE_VERSION}
                        SOVERSION ${SIRE_VERSION_MAJOR}
 		       )
 		       
-target_link_libraries (PyWrap_SireBase
-                       SireBase
-                       PyWrap_SireQt
+target_link_libraries (PyWrap_SireTest
+                       SireTest
                        ${BOOST_PYTHON_LIBRARY}
 		      )
 
 # Install the wrappers library with the other Sire libraries
-install( TARGETS PyWrap_SireBase
+install( TARGETS PyWrap_SireTest
          RUNTIME DESTINATION ${SIRE_BIN}
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}
        )
 
 # Now create the thin-wrapper python module
-add_library (PythonWrapping_SireBase wrap_SireBase.cpp)
+add_library (PythonWrapping_SireTest wrap_SireTest.cpp)
 
-target_link_libraries (PythonWrapping_SireBase
-                       PyWrap_SireBase
+target_link_libraries (PythonWrapping_SireTest
+                       PyWrap_SireTest
                        )
 
 # Use properties to change the filename of the python module
-set_target_properties (PythonWrapping_SireBase
+set_target_properties (PythonWrapping_SireTest
                        PROPERTIES
-                         OUTPUT_NAME "Base"
+                         OUTPUT_NAME "Test"
                          PREFIX "_"
                          SUFFIX ${PYTHON_MODULE_EXTENSION}
                       )
 
 # installation
-set( INSTALLDIR ${SIRE_PYTHON}/Sire/Base )
+set( INSTALLDIR ${SIRE_PYTHON}/Sire/Test )
 
-install( TARGETS PythonWrapping_SireBase
+install( TARGETS PythonWrapping_SireTest
          LIBRARY DESTINATION ${INSTALLDIR}
        )
 
