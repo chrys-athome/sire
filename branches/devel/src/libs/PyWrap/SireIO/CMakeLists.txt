@@ -34,6 +34,7 @@ target_link_libraries (PyWrap_SireIO
                        SireIO
                        PyWrap_SireMM
                        PyWrap_SireMol
+		       PyWrap_SireQt
                        ${BOOST_PYTHON_LIBRARY}
 		      )
 

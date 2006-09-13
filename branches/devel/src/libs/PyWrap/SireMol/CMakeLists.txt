@@ -67,7 +67,9 @@ set_target_properties (PyWrap_SireMol PROPERTIES
 		       
 target_link_libraries (PyWrap_SireMol
                        SireMol
+                       SireMaths
                        PyWrap_SireMaths
+                       PyWrap_SireQt
                        ${BOOST_PYTHON_LIBRARY}
 		      )
 

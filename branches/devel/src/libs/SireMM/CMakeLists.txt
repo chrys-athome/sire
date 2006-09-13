@@ -57,6 +57,7 @@ set_target_properties (SireMM PROPERTIES
 # Link to other Sire libraries
 target_link_libraries (SireMM
                        SireFF
+                       SireDB
                        SireUnits
                        )
 

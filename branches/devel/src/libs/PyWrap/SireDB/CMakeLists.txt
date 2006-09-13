@@ -49,7 +49,10 @@ set_target_properties (PyWrap_SireDB PROPERTIES
 		       
 target_link_libraries (PyWrap_SireDB
                        SireDB
+                       SireMol
                        PyWrap_SireCAS
+                       PyWrap_SireQt
+                       PyWrap_SireMol
 		       ${BOOST_PYTHON_LIBRARY}
 		      )
 

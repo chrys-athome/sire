@@ -5,7 +5,7 @@
 ########################################
 
 # Third Party dependencies of this module
-include_directories(${PYTHON_INCLUDE_PATH})
+include_directories(${PYTHON_INCLUDE_DIR})
 
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)

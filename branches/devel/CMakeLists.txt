@@ -9,6 +9,11 @@
 # require cmake >= 2.4.1
 cmake_minimum_required(VERSION 2.4.1 FATAL_ERROR)
 
+# Absolutely can't run cmake in the source directory!
+if ( CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR )
+  message( FATAL_ERROR "You must run CMake in a different directory to the source!" ) 
+endif ( CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR )
+
 # name the project
 project (SIRE)
 
@@ -54,13 +59,10 @@ endif ( BUILD_SPIER )
 set (QT_MIN_VERSION "4.1.0")
 include( FindQt4 )
 
-include_directories( ${QT_INCLUDE_DIR} ${QT_QTCORE_INCLUDE_DIR} )
-add_definitions( ${QT_DEFINITIONS} )
-
 # Sire depends on >= Python 2.2
 set( PYTHON_REQUIRE_MAJOR 2 )
 set( PYTHON_REQUIRE_MINOR 2 )
-include( ${CMAKE_MODULE_PATH}/FindPython.cmake )
+include( FindPython )
 
 # Use the python interpreter to get the link options, version and install
 # directory - simplify by using the python script in the build directory
@@ -87,56 +89,63 @@ message( STATUS "Python paths ${PYTHON_LIBRARY} | ${PYTHON_INCLUDE_DIR} | ${PYTH
 set (SIRE_PYTHON "${PYTHON_SITE_DIR}")
 
 # Sire depends on >= boost 1.31
-set (Boost_FIND_REQUIRED TRUE)
-include ( ${CMAKE_MODULE_PATH}/FindBoost.cmake )
-find_package(Boost REQUIRED)
+set (BOOST_FIND_REQUIRED TRUE)
+include ( FindBoost )
+
+message( STATUS "Boost paths ${BOOST_LIBRARY_DIRS} | ${BOOST_INCLUDE_DIRS}" )
 
 # Sire depends on >= boost_python 1.31
-set ( BOOST_VERSION "1_32" CACHE STRING "Version of Boost Library to use")
-
 find_library( BOOST_PYTHON_LIBRARY
               NAMES
-                boost_python-${BOOST_VERSION}
                 boost_python
               PATHS
+                ${BOOST_LIBRARY_DIRS}
                 /usr/lib
                 /usr/local/lib
-              DOC 
+                ENV LD_LIBRARY_PATH
+              DOC
                 "Path where the Boost Python Library can be found"
             )
+
+# Need to ensure that we are linking to boost_python shared library!
+if (UNIX)
+  if ( BOOST_PYTHON_LIBRARY MATCHES "(\\.so$)" OR BOOST_PYTHON_LIBRARY MATCHES "(\\.SO$)" )
+  else ( BOOST_PYTHON_LIBRARY MATCHES "(\\.so$)" OR BOOST_PYTHON_LIBRARY MATCHES "(\\.SO$)" )
+    message( FATAL_ERROR "Need to link to shared boost::python library (should be "
+                         "boost_python.so, "
+                         "not ${BOOST_PYTHON_LIBRARY})" )
+  endif ( BOOST_PYTHON_LIBRARY MATCHES "(\\.so$)" OR BOOST_PYTHON_LIBRARY MATCHES "(\\.SO$)" )
+endif (UNIX)
 
 message( STATUS "Boost python library = ${BOOST_PYTHON_LIBRARY}" )
 
 find_library( BOOST_UNITTEST_LIBRARY
               NAMES
-	        boost_unit_test_framework-${BOOST_VERSION}
-	        boost_unit_test_framework
-	      PATHS
-	        /usr/lib
-		/usr/local/lib
-	      DOC
-	        "Path where the Boost Unit Test Library can be found"
+                boost_unit_test_framework
+              PATHS
+                ${BOOST_LIBRARY_DIRS}
+                /usr/lib
+                /usr/local/lib
+                ENV LD_LIBRARY_PATH
+              DOC
+                "Path where the Boost UnitTest Library can be found"
             )
 
 message( STATUS "Boost unit test library = ${BOOST_UNITTEST_LIBRARY}" )
 
-find_library( UTIL_LIBRARY
-              NAMES
-	        util
-	      PATHS
-	        /usr/lib
-		/usr/local/lib
-	      DOC
-	        "Path where the util library can be found (libutil.so)"
-	    )
-
-if (UNIX)
-   set( PYTHON_LIBRARY ${PYTHON_LIBRARY} ${UTIL_LIBRARY} )
-endif (UNIX)
-
 # Sire depends on >= GSL 1.6
-include ( ${CMAKE_MODULE_PATH}/FindGSL.cmake )
+include ( FindGSL )
 find_package(GSL REQUIRED)
+
+message( STATUS "GSL paths ${GSL_LINK_DIRECTORIES} ${GSL_LIBRARIES} | ${GSL_INCLUDE_DIR}" )
+
+# Add defaults for all parts of the program
+include_directories( ${QT_INCLUDE_DIR} 
+                     ${QT_QTCORE_INCLUDE_DIR} 
+                     ${BOOST_INCLUDE_DIRS}
+                   )
+
+add_definitions( ${QT_DEFINITIONS} )
 
 # Recurse into the src/libs and src/apps subdirectories
 add_subdirectory (src/libs)
