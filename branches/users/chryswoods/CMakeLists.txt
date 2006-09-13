@@ -1,0 +1,153 @@
+################################
+#
+#  CMake Project file for Sire
+#
+#   (C) Christopher Woods
+#
+################################
+
+# require cmake >= 2.4.1
+cmake_minimum_required(VERSION 2.4.1 FATAL_ERROR)
+
+# Absolutely can't run cmake in the source directory!
+if ( CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR )
+  message( FATAL_ERROR "You must run CMake in a different directory to the source!" ) 
+endif ( CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR )
+
+# name the project
+project (SIRE)
+
+# project version
+set (SIRE_VERSION_MAJOR "0")
+set (SIRE_VERSION_MINOR "0")
+set (SIRE_VERSION_PATCH "1")
+
+set (SIRE_VERSION "${SIRE_VERSION_MAJOR}.${SIRE_VERSION_MINOR}.${SIRE_VERSION_PATCH}")
+
+# Build shared libraries by default
+set (BUILD_SHARED_LIBS ON)
+
+# Name of executable install dir
+set (SIRE_BIN "bin")
+# Shared library install dir
+set (SIRE_LIBS "lib")
+# Static library install dir
+set (SIRE_ARCHIVES "lib/static")
+
+# Uncomment for more verbose compiling/linking
+# set (CMAKE_VERBOSE_MAKEFILE ON)
+
+# Path to the project's extra cmake files
+set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/build/cmake)
+
+# Add option to disable compilation of Spier (removes openGL dependency)
+option ( BUILD_SPIER "Build Spier molecular viewer (requires openGL)" ON )
+
+# include the right Qt modules - what we need depends on 
+# whether any GUI apps are compiled
+set (QT_USE_QTSQL TRUE)
+
+# Don't need GUI if aren't compiling Spier
+if ( BUILD_SPIER )
+   set (QT_USE_QTGUI TRUE)
+   set (QT_USE_OPENGL TRUE)
+else ( BUILD_SPIER )
+   set (QT_DONT_USE_QTGUI TRUE)
+endif ( BUILD_SPIER )
+
+# Sire depends on >= Qt 4.1
+set (QT_MIN_VERSION "4.1.0")
+include( FindQt4 )
+
+# Sire depends on >= Python 2.2
+set( PYTHON_REQUIRE_MAJOR 2 )
+set( PYTHON_REQUIRE_MINOR 2 )
+include( FindPython )
+
+# Use the python interpreter to get the link options, version and install
+# directory - simplify by using the python script in the build directory
+set (PYTHON_CONFIG ${CMAKE_SOURCE_DIR}/build/python-config)
+
+# get the link flags for the shared library
+exec_program ( ${PYTHON_EXECUTABLE}
+               ARGS "${PYTHON_CONFIG} --lflags"
+	       OUTPUT_VARIABLE PYTHON_LIBRARY
+	     )
+
+# get the include directories
+exec_program ( ${PYTHON_EXECUTABLE}
+               ARGS "${PYTHON_CONFIG} --cflags"
+	       OUTPUT_VARIABLE PYTHON_INCLUDE_DIR
+	     )
+
+# get the path to the python site files (excluding the prefix)
+set( PYTHON_SITE_DIR "lib/python${PYTHON_MAJOR_VERSION}.${PYTHON_MINOR_VERSION}/site-packages" )
+
+message( STATUS "Python paths ${PYTHON_LIBRARY} | ${PYTHON_INCLUDE_DIR} | ${PYTHON_SITE_DIR}" )
+
+# set the location to install the python modules
+set (SIRE_PYTHON "${PYTHON_SITE_DIR}")
+
+# Sire depends on >= boost 1.31
+set (BOOST_FIND_REQUIRED TRUE)
+include ( FindBoost )
+
+message( STATUS "Boost paths ${BOOST_LIBRARY_DIRS} | ${BOOST_INCLUDE_DIRS}" )
+
+# Sire depends on >= boost_python 1.31
+find_library( BOOST_PYTHON_LIBRARY
+              NAMES
+                boost_python
+              PATHS
+                ${BOOST_LIBRARY_DIRS}
+                /usr/lib
+                /usr/local/lib
+                ENV LD_LIBRARY_PATH
+              DOC
+                "Path where the Boost Python Library can be found"
+            )
+
+# Need to ensure that we are linking to boost_python shared library!
+if (UNIX)
+  if ( BOOST_PYTHON_LIBRARY MATCHES "(\\.so$)" OR BOOST_PYTHON_LIBRARY MATCHES "(\\.SO$)" )
+  else ( BOOST_PYTHON_LIBRARY MATCHES "(\\.so$)" OR BOOST_PYTHON_LIBRARY MATCHES "(\\.SO$)" )
+    message( FATAL_ERROR "Need to link to shared boost::python library (should be "
+                         "boost_python.so, "
+                         "not ${BOOST_PYTHON_LIBRARY})" )
+  endif ( BOOST_PYTHON_LIBRARY MATCHES "(\\.so$)" OR BOOST_PYTHON_LIBRARY MATCHES "(\\.SO$)" )
+endif (UNIX)
+
+message( STATUS "Boost python library = ${BOOST_PYTHON_LIBRARY}" )
+
+find_library( BOOST_UNITTEST_LIBRARY
+              NAMES
+                boost_unit_test_framework
+              PATHS
+                ${BOOST_LIBRARY_DIRS}
+                /usr/lib
+                /usr/local/lib
+                ENV LD_LIBRARY_PATH
+              DOC
+                "Path where the Boost UnitTest Library can be found"
+            )
+
+message( STATUS "Boost unit test library = ${BOOST_UNITTEST_LIBRARY}" )
+
+# Sire depends on >= GSL 1.6
+include ( FindGSL )
+find_package(GSL REQUIRED)
+
+message( STATUS "GSL paths ${GSL_LINK_DIRECTORIES} ${GSL_LIBRARIES} | ${GSL_INCLUDE_DIR}" )
+
+# Add defaults for all parts of the program
+include_directories( ${QT_INCLUDE_DIR} 
+                     ${QT_QTCORE_INCLUDE_DIR} 
+                     ${BOOST_INCLUDE_DIRS}
+                   )
+
+add_definitions( ${QT_DEFINITIONS} )
+
+# Recurse into the src/libs and src/apps subdirectories
+add_subdirectory (src/libs)
+add_subdirectory (src/apps)
+
