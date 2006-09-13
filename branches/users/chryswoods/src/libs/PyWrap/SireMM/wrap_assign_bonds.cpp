@@ -8,7 +8,8 @@
 #include "SireDB/using_database.h"
 
 #include "wrapAssignInternals.hpp"
-#include "assign_bonds.h"
+
+#include "SireMM/assign_bonds.h"
 
 using namespace boost::python;
 

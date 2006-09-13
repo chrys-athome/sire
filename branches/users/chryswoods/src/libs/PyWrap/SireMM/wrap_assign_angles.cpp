@@ -8,7 +8,8 @@
 #include "SireDB/using_database.h"
 
 #include "wrapAssignInternals.hpp"
-#include "assign_angles.h"
+
+#include "SireMM/assign_angles.h"
 
 using namespace boost::python;
 

@@ -4,9 +4,7 @@
 
 #include "sireglobal.h"
 
-#ifdef BUILD_SHARED_WRAPPERS
 #include "wrap_SireMol.h"
-#endif
 
 namespace SireMol
 {

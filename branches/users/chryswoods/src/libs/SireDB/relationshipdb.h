@@ -4,7 +4,7 @@
 #include <QList>
 
 #include "dbbase.h"
-#include "atomindex.h"
+#include "SireMol/atomindex.h"
 #include "matchmrdata.h"
 
 SIRE_BEGIN_HEADER

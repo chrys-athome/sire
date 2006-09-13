@@ -8,8 +8,8 @@
 #include "wrapInternalTable.hpp"
 #include "wrapAngleTable.hpp"
 
-#include "angletable.h"
-#include "molangleinfo.h"
+#include "SireMM/angletable.h"
+#include "SireMM/molangleinfo.h"
 
 #include "SireQt/qdatastream.hpp"
 

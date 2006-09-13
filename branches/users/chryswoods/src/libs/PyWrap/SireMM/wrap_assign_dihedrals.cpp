@@ -8,7 +8,8 @@
 #include "SireDB/using_database.h"
 
 #include "wrapAssignInternals.hpp"
-#include "assign_dihedrals.h"
+
+#include "SireMM/assign_dihedrals.h"
 
 using namespace boost::python;
 
