@@ -5,9 +5,9 @@
   *
   * C++ Interface: MoleculeInfo
   *
-  * Description: 
+  * Description:
   * Interface to MoleculeInfo
-  * 
+  *
   * Author: Christopher Woods, (C) 2006
   *
   * Copyright: See COPYING file that comes with this distribution
@@ -26,7 +26,7 @@ class MoleculeInfo;
 QDataStream& operator<<(QDataStream&, const SireMol::MoleculeInfo&);
 QDataStream& operator>>(QDataStream&, SireMol::MoleculeInfo&);
 
-namespace SireMol 
+namespace SireMol
 {
 
 class MoleculeInfoPvt;
@@ -44,9 +44,9 @@ friend QDataStream& ::operator>>(QDataStream&, MoleculeInfo&);
 
 public:
     MoleculeInfo();
-/*    MoleculeInfo( const EditMol &editmol, 
-                  const ConvertFunc &converter = ConvertOneCutGroupPerResidue() );*/
-    
+    MoleculeInfo( const EditMol &editmol,
+                  const ConvertFunction &converter = ResidueCutting() );
+
     MoleculeInfo(const MoleculeInfo &other);
 
     ~MoleculeInfo();
@@ -66,35 +66,35 @@ public:
 
     const ResidueInfo& at(ResID resid) const;
     const ResidueInfo& at(ResNum resnum) const;
-    
+
     const CGAtomID& at(AtomID atmid) const;
     const CGAtomID& at(const AtomIndex &atomindex) const;
     const CGAtomID& at(const ResNumAtomID &resatomid) const;
     const CGAtomID& at(const ResIDAtomID &resatomid) const;
-    
+
     const AtomInfo& atom(AtomID atomid) const;
     const AtomInfo& atom(const AtomIndex &atomindex) const;
     const AtomInfo& atom(const ResNumAtomID &rsid) const;
     const AtomInfo& atom(const ResIDAtomID &rsid) const;
     const AtomInfo& atom(const CGAtomID &cgid) const;
-    
+
     QSet<AtomInfo> getAtoms( const QSet<AtomID> &idxs ) const;
     QSet<AtomInfo> getAtoms( const QSet<AtomIndex> &atms ) const;
     QSet<AtomInfo> getAtoms( const QSet<ResNumAtomID> &rsids) const;
     QSet<AtomInfo> getAtoms( const QSet<ResIDAtomID> &rsids) const;
     QSet<AtomInfo> getAtoms( const QSet<CGAtomID> &cgids ) const;
-    
+
     const ResidueInfo& residue(AtomID atmid) const;
     const ResidueInfo& residue(ResID resid) const;
     const ResidueInfo& residue(ResNum resnum) const;
-    
+
     QString name() const;
-    
+
     bool isEmpty() const;
     bool isNull() const;
-    
+
     QString toString() const;
-    
+
     int nResidues() const;
 
     int nAtoms() const;
@@ -102,15 +102,15 @@ public:
 
     QVector<ResNum> residueNumbers() const;
     QVector<ResNum> residueNumbers(const QString &resname) const;
-    
+
     QStringList residueNames() const;
-    
+
     QHash<CutGroupID,AtomInfoGroup> atomGroups() const;
-    
+
     bool contains(ResNum resnum) const;
     bool contains(ResID resid) const;
     bool contains(CutGroupID cgid) const;
-    
+
     bool contains(AtomID atmid) const;
     bool contains(const AtomIndex &atm) const;
     bool contains(const CGAtomID &cgid) const;

@@ -11,11 +11,11 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the sources in SireMol
 set ( SIREMOL_SOURCES
-      aabox.cpp      
       angle.cpp	     
       atom.cpp	     
       atomidgroup.cpp      
       atomindex.cpp	     
+      atominfo.cpp
       atomset.cpp	     
       bond.cpp	     
       cgatomid.cpp	     
@@ -35,7 +35,9 @@ set ( SIREMOL_SOURCES
       moleculebonds.cpp  
       molecule.cpp
       moleculedata.cpp
+      moleculeinfo.cpp
       moleculesignature.cpp
+      moleculeversion.cpp
       residuebonds.cpp
       residue.cpp
       residueidset.cpp

@@ -1,10 +1,10 @@
-/** 
+/**
   * @file
   *
   * C++ Implementation: MoleculeInfo and MoleculeInfoPvt
   *
-  * Description: 
-  * Implementation of the public MoleculeInfo class, and the 
+  * Description:
+  * Implementation of the public MoleculeInfo class, and the
   * private MoleculeInfoPvt class.
   *
   * @author Christopher Woods, (C) 2006
@@ -12,9 +12,9 @@
   * Copyright: See COPYING file that comes with this distribution
   *
   */
-  
+
 #include <QSharedData>
-  
+
 #include "moleculeinfo.h"
 
 #include "SireStream/datastream.h"
@@ -33,7 +33,7 @@ class MoleculeInfoPvt : public QSharedData
 {
 public:
     MoleculeInfoPvt();
-    
+
     MoleculeInfoPvt(const MoleculeInfoPvt &other);
 
     ~MoleculeInfoPvt();
@@ -53,29 +53,29 @@ public:
 
     const ResidueInfo& at(ResID resid) const;
     const ResidueInfo& at(ResNum resnum) const;
-    
+
     const CGAtomID& at(AtomID atmid) const;
     const CGAtomID& at(const AtomIndex &atomindex) const;
     const CGAtomID& at(const ResNumAtomID &resatomid) const;
     const CGAtomID& at(const ResIDAtomID &resatomid) const;
-    
+
     const AtomInfo& atom(AtomID atomid) const;
     const AtomInfo& atom(const AtomIndex &atomindex) const;
     const AtomInfo& atom(const ResNumAtomID &rsid) const;
     const AtomInfo& atom(const ResIDAtomID &rsid) const;
     const AtomInfo& atom(const CGAtomID &cgid) const;
-    
+
     const ResidueInfo& residue(AtomID atmid) const;
     const ResidueInfo& residue(ResID resid) const;
     const ResidueInfo& residue(ResNum resnum) const;
-    
+
     QString name() const;
-    
+
     bool isEmpty() const;
     bool isNull() const;
-    
+
     QString toString() const;
-    
+
     int nResidues() const;
 
     int nAtoms() const;
@@ -83,29 +83,29 @@ public:
 
     QVector<ResNum> residueNumbers() const;
     QVector<ResNum> residueNumbers(const QString &resname) const;
-    
+
     QStringList residueNames() const;
-    
-    QHash<CutGroupID,AtomInfoGroup> atomGroups() const;
-    
+
+    QVector<AtomInfoGroup> atomGroups() const;
+
     bool contains(ResNum resnum) const;
     bool contains(ResID resid) const;
     bool contains(CutGroupID cgid) const;
-    
+
     bool contains(AtomID atmid) const;
     bool contains(const AtomIndex &atm) const;
     bool contains(const CGAtomID &cgid) const;
     bool contains(const ResNumAtomID &resid) const;
     bool contains(const ResIDAtomID &resid) const;
-    
+
 private:
     void regenerateIndex();
-    
+
     const ResidueInfo& _unsafe_residue(ResNum resnum) const;
     const ResidueInfo& _unsafe_residue(ResID resid) const;
-    
+
     const AtomInfo& _unsafe_atom(const CGAtomID &cgid) const;
-    
+
     /** The name of this molecule */
     QString molname;
 
@@ -118,15 +118,15 @@ private:
         hash directly to the residues for single-cutgroup molecules
         - e.g. most solvents!) */
     QHash<CutGroupID, AtomInfoGroup> atominfos;
-    
+
     /** Metainfo for all of the residues, indexed by residue number */
     QHash<ResNum, ResidueInfo> resinfos;
 
     /** QMap mapping the highest index of the atom in each residue
-        to the residue number. This is used to quickly find the 'ith' 
+        to the residue number. This is used to quickly find the 'ith'
         atom in the molecule. */
     QMap<AtomID, ResNum> idx2resnum;
-    
+
     /** The total number of atoms in this molecule */
     quint32 nats;
 };
@@ -135,18 +135,18 @@ private:
 
 using namespace SireMol;
 
-static const RegisterMetaType<MoleculeInfoPvt> r_molpvt("SireMol::MoleculeInfoPvt", 
+static const RegisterMetaType<MoleculeInfoPvt> r_molpvt("SireMol::MoleculeInfoPvt",
                                                         MAGIC_ONLY);
 
 /** Serialise to a binary data stream */
 QDataStream &operator<<(QDataStream &ds, const MoleculeInfoPvt &molinfo)
 {
-    writeHeader(ds, r_molpvt, 1) 
+    writeHeader(ds, r_molpvt, 1)
           << molinfo.molname << molinfo.resnums << molinfo.atominfos
           << molinfo.resinfos;
-        
+
     //don't need to save idx2resnum and nats as these can be regenerated
-          
+
     return ds;
 }
 
@@ -154,18 +154,18 @@ QDataStream &operator<<(QDataStream &ds, const MoleculeInfoPvt &molinfo)
 QDataStream &operator>>(QDataStream &ds, MoleculeInfoPvt &molinfo)
 {
     VersionID v = readHeader(ds, r_molpvt);
-    
+
     if (v == 1)
     {
         ds >> molinfo.molname >> molinfo.resnums >> molinfo.atominfos
            >> molinfo.resinfos;
-           
+
         //regenerate idx2resnums and nats
         molinfo.regenerateIndex();
     }
     else
         throw version_error(v, "1", r_molpvt, CODELOC);
-    
+
     return ds;
 }
 
@@ -203,7 +203,7 @@ MoleculeInfoPvt& MoleculeInfoPvt::operator=(const MoleculeInfoPvt &other)
         idx2resnum = other.idx2resnum;
         nats = other.nats;
     }
-    
+
     return *this;
 }
 
@@ -236,16 +236,16 @@ const ResidueInfo& MoleculeInfoPvt::_unsafe_residue(ResID i) const
 }
 
 /** Internal function used to return the ResidueInfo for residue with number
-    'resnum'. This assumes that there is a residue with this number, so will 
+    'resnum'. This assumes that there is a residue with this number, so will
     have undefined results if that is not the case! */
 const ResidueInfo& MoleculeInfoPvt::_unsafe_residue(ResNum resnum) const
 {
     return resinfos.find( resnum ).value();
 }
 
-/** Return the ResidueInfo for the 'ith' residue in this molecule. This will 
-    throw an exception if 'i' is an invalid index. 
-    
+/** Return the ResidueInfo for the 'ith' residue in this molecule. This will
+    throw an exception if 'i' is an invalid index.
+
     \throw SireError::invalid_index
 */
 const ResidueInfo& MoleculeInfoPvt::operator[](ResID i) const
@@ -256,7 +256,7 @@ const ResidueInfo& MoleculeInfoPvt::operator[](ResID i) const
 
 /** Return the ResidueInfo for the residue with residue number 'resnum'. This
     will throw an exception if there is no such residue.
-    
+
     \throw SireMol::missing_residue
 */
 const ResidueInfo& MoleculeInfoPvt::operator[](ResNum resnum) const
@@ -265,7 +265,7 @@ const ResidueInfo& MoleculeInfoPvt::operator[](ResNum resnum) const
     return this->_unsafe_residue(resnum);
 }
 
-/** Throw an exception if passed an invalid AtomID 
+/** Throw an exception if passed an invalid AtomID
 
     \throw SireError::invalid_index
 */
@@ -277,38 +277,38 @@ inline void MoleculeInfoPvt::checkAtom(AtomID atmid) const
                     .arg(this->toString()).arg(atmid.index()), CODELOC );
 }
 
-/** Return the CGAtomID of the 'ith' atom in this molecule. This will throw an 
+/** Return the CGAtomID of the 'ith' atom in this molecule. This will throw an
     exception if 'i' is an invalid index.
-    
+
     \throw SireError::invalid_index
 */
 const CGAtomID& MoleculeInfoPvt::operator[](AtomID i) const
 {
     checkAtom(i);
-                    
+
     //find the nearest index to 'i'
     QMap<AtomID,ResNum>::const_iterator it = idx2resnum.lowerBound(i.index());
 
     BOOST_ASSERT( it != idx2resnum.end() ); //this should be impossible...
-    
+
     //get the residueinfo that contains this index...
     const ResidueInfo &resinfo = this->_unsafe_residue( it.value() );
-    
+
     //ok - it.key() contains the highest index for this residue
     //If we subtract it.key() from i that will convert i into a reversed
     //index into the residueinfo
     i -= it.key().index();
-    
+
     //convert the reversed index into a real index by adding
     //it to 'natoms' in the residue (remembering that i is negative)
     i += resinfo.nAtoms();
-    
+
     return resinfo[i];
 }
 
 /** Return the CGAtomID of the atom with AtomIndex 'atm'. This will throw an
     exception if there is no such atom in this molecule.
-    
+
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
@@ -319,7 +319,7 @@ const CGAtomID& MoleculeInfoPvt::operator[](const AtomIndex &atm) const
 
 /** Return the CGAtomID of the atom with index 'resatomid'. This will throw
     an exception if there is no such atom in this molecule.
-    
+
     \throw SireMol::missing_residue
     \throw SireError::invalid_index
 */
@@ -330,7 +330,7 @@ const CGAtomID& MoleculeInfoPvt::operator[](const ResNumAtomID &resatomid) const
 
 /** Return the CGAtomID of the atom with index 'resatomid'. This will throw
     an exception if thereis no such atom in this molecule.
-    
+
     \throw SireError::invalid_index
 */
 const CGAtomID& MoleculeInfoPvt::operator[](const ResIDAtomID &resatomid) const
@@ -404,12 +404,12 @@ const AtomInfo& MoleculeInfoPvt::_unsafe_atom(const CGAtomID &cgid) const
 
 /** Return the AtomInfo for the 'ith' atom of this molecule. This throws
     an index if 'i' is invalid.
-    
+
     \throw SireError::invalid_index
 */
 const AtomInfo& MoleculeInfoPvt::atom(AtomID i) const
 {
-    //get the CGAtomID of this atom - this will throw an 
+    //get the CGAtomID of this atom - this will throw an
     //exception if this is an invalid index
     const CGAtomID &cgid = this->at(i);
 
@@ -420,13 +420,13 @@ const AtomInfo& MoleculeInfoPvt::atom(AtomID i) const
 
 /** Return the AtomInfo for the atom with index 'atomindex'. This will throw
     an exception if there is no such atom in this molecule.
-    
+
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
 const AtomInfo& MoleculeInfoPvt::atom(const AtomIndex &atomindex) const
 {
-    //get the CGAtomID of this atom - this will throw an 
+    //get the CGAtomID of this atom - this will throw an
     //exception if this is an invalid index
     const CGAtomID &cgid = this->at(atomindex);
 
@@ -437,13 +437,13 @@ const AtomInfo& MoleculeInfoPvt::atom(const AtomIndex &atomindex) const
 
 /** Return the AtomInfo for the atom with index 'rsid'. This will throw
     an exception if there is no such atom in this molecule.
-    
+
     \throw SireMol::missing_residue
     \throw SireError::invalid_index
 */
 const AtomInfo& MoleculeInfoPvt::atom(const ResNumAtomID &rsid) const
 {
-    //get the CGAtomID of this atom - this will throw an 
+    //get the CGAtomID of this atom - this will throw an
     //exception if this is an invalid index
     const CGAtomID &cgid = this->at(rsid);
 
@@ -454,12 +454,12 @@ const AtomInfo& MoleculeInfoPvt::atom(const ResNumAtomID &rsid) const
 
 /** Return the AtomInfo for the atom with index 'rsid'. This will throw
     an exception if there is no such atom in this molecule.
-    
+
     \throw SireError::invalid_index
 */
 const AtomInfo& MoleculeInfoPvt::atom(const ResIDAtomID &rsid) const
 {
-    //get the CGAtomID of this atom - this will throw an 
+    //get the CGAtomID of this atom - this will throw an
     //exception if this is an invalid index
     const CGAtomID &cgid = this->at(rsid);
 
@@ -470,25 +470,25 @@ const AtomInfo& MoleculeInfoPvt::atom(const ResIDAtomID &rsid) const
 
 /** Return the AtomInfo for the atom with CGAtomID 'cgid'. This will throw
     an exception if there is no such atom in this molecule.
-    
+
     \throw SireMol::missing_cutgroup
     \throw SireError::invalid_index
 */
 const AtomInfo& MoleculeInfoPvt::atom(const CGAtomID &cgid) const
 {
     QHash<CutGroupID,AtomInfoGroup>::const_iterator it = atominfos.find(cgid.cutGroupID());
-    
+
     if (it == atominfos.end())
         throw SireMol::missing_cutgroup( QObject::tr(
                 "There is no CutGroup with CutGroupID == %1 in molecule %2 "
                 "(nCutGroups() == %3)")
                     .arg(cgid.cutGroupID()).arg(this->name()).arg(this->nCutGroups()),
                         CODELOC );
-                        
+
     return it.value().atom(cgid.atomID());
 }
 
-/** Return the residue that contains the atom with AtomID 'atmid' 
+/** Return the residue that contains the atom with AtomID 'atmid'
 
     \throw SireError::invalid_index
 */
@@ -500,14 +500,14 @@ const ResidueInfo& MoleculeInfoPvt::residue(AtomID atmid) const
     QMap<AtomID,ResNum>::const_iterator it = idx2resnum.lowerBound(i.index());
 
     BOOST_ASSERT( it != idx2resnum.end() ); //this should be impossible...
-    
+
     //get the residueinfo that contains this index...
     return this->_unsafe_residue( it.value() );
 }
 
 /** Return the 'ith' residue in this molecule. This will throw an exception
-    if 'i' refers to an invalid residue. 
-    
+    if 'i' refers to an invalid residue.
+
     \throw SireError::invalid_index
 */
 const ResidueInfo& MoleculeInfoPvt::residue(ResID i) const
@@ -516,8 +516,8 @@ const ResidueInfo& MoleculeInfoPvt::residue(ResID i) const
 }
 
 /** Return the residue with number 'resnum'. This will throw an exception
-    if there is no such residue. 
-    
+    if there is no such residue.
+
     \throw SireMol::missing_residue
 */
 const ResidueInfo& MoleculeInfoPvt::residue(ResNum resnum) const
@@ -567,7 +567,7 @@ int MoleculeInfoPvt::nAtoms(ResNum resnm) const
     return residue(resnum).nAtoms();
 }
 
-/** Return the numbers of all of the residues, in the order that the residues 
+/** Return the numbers of all of the residues, in the order that the residues
     appear in the molecule (ResID order) */
 QVector<ResNum> MoleculeInfoPvt::residueNumbers() const
 {
@@ -578,7 +578,7 @@ QVector<ResNum> MoleculeInfoPvt::residueNumbers() const
 QVector<ResNum> MoleculeInfoPvt::residueNumbers(const QString &resname) const
 {
     QVector<ResNum> ret;
-    
+
     for (QHash<ResNum, ResidueInfo>::const_iterator it = resinfos.begin();
          it != resinfos.end();
          ++it)
@@ -586,7 +586,7 @@ QVector<ResNum> MoleculeInfoPvt::residueNumbers(const QString &resname) const
         if (it->resName() == resname)
             ret.append( it->resNum() );
     }
-    
+
     return ret;
 }
 
@@ -595,14 +595,14 @@ QVector<ResNum> MoleculeInfoPvt::residueNumbers(const QString &resname) const
 QStringList MoleculeInfoPvt::residueNames() const
 {
     QStringList ret;
-    
+
     for (QHash<ResNum, ResidueInfo>::const_iterator it = resinfos.begin();
          it != resinfos.end();
          ++it)
     {
          ret.append( it->resName() );
     }
-    
+
     return ret;
 }
 
@@ -641,7 +641,7 @@ bool MoleculeInfoPvt::contains(const AtomIndex &atm) const
 {
     QHash<ResNum, ResidueInfo>::const_iterator it = resinfos.find(atm.resNum());
 
-    return it != resinfos.end() and 
+    return it != resinfos.end() and
            it.value().contains(atm.name());
 }
 
@@ -649,8 +649,8 @@ bool MoleculeInfoPvt::contains(const AtomIndex &atm) const
 bool MoleculeInfoPvt::contains(const CGAtomID &cgid) const
 {
     QHash<CutGroupID, AtomInfoGroup>::const_iterator it = atominfos.find(cgid.cutGroupID());
-    
-    return it != atominfos.end() and 
+
+    return it != atominfos.end() and
            it->contains(cgid.atomID());
 }
 
@@ -659,14 +659,14 @@ bool MoleculeInfoPvt::contains(const ResNumAtomID &resid) const
 {
     QHash<ResNum, ResidueInfo>::const_iterator it = resinfos.find(resid.resNum());
 
-    return it != resinfos.end() and 
+    return it != resinfos.end() and
            it.value().contains(resid.atomID());
 }
 
 /** Return whether or not this molecule contains an atom with index 'resid' */
 bool MoleculeInfoPvt::contains(const ResIDAtomID &resid) const
 {
-    return (resid.resID() > 0 and resid.resID() < nResidues()) and 
+    return (resid.resID() > 0 and resid.resID() < nResidues()) and
            _unsafe_residue(resid.resID()).contains(resid.atomID());
 }
 
@@ -675,14 +675,14 @@ void MoleculeInfoPvt::regenerateIndex()
 {
     nats = 0;
     idx2resnum.clear();
-    
+
     int nres = nResidues();
     const ResNum *resarray = resnums.constData();
-    
+
     for (int i=0; i<nres; ++i)
     {
         ResNum resnum = resarray[i];
-        
+
         nats += _unsafe_residue(resnum).nAtoms();
         idx2resnum.insert(nats, resnum);
     }
@@ -697,12 +697,10 @@ static const RegisterMetaType<SireMol::MoleculeInfo> r_molinfo("SireMol::Molecul
 /** Serialise to a binary data stream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const MoleculeInfo &molinfo)
 {
-    //get a streamer object to help stream this implicitly shared class
-    ImplicitStreamer streamer = ImplicitStore::getStreamer(ds);
-
     writeHeader(ds, r_molinfo, 1);
-    streamer.saveQSharedData(molinfo.d);
-    
+
+    SharedDataStream(ds) << molinfo.d;
+
     return ds;
 }
 
@@ -710,17 +708,14 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const MoleculeInfo &moli
 QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MoleculeInfo &molinfo)
 {
     VersionID v = readHeader(ds, r_molinfo);
-    
+
     if (v == 1)
     {
-        //get a streamer object to help stream this implicitly shared class
-        ImplicitStreamer streamer = ImplicitStore::getStreamer(ds);
-        
-        streamer.loadQSharedData(molinfo.d);
+        SharedDataStream(ds) >> molinfo.d;
     }
     else
         throw version_error(v, "1", r_molinfo, CODELOC);
-    
+
     return ds;
 }
 
@@ -764,9 +759,9 @@ QString MoleculeInfo::name() const
     return d->name();
 }
 
-/** Return the ResidueInfo for the 'ith' residue in this molecule. This will 
-    throw an exception if 'i' is an invalid index. 
-    
+/** Return the ResidueInfo for the 'ith' residue in this molecule. This will
+    throw an exception if 'i' is an invalid index.
+
     \throw SireError::invalid_index
 */
 const ResidueInfo& MoleculeInfo::operator[](ResID i) const
@@ -776,7 +771,7 @@ const ResidueInfo& MoleculeInfo::operator[](ResID i) const
 
 /** Return the ResidueInfo for the residue with residue number 'resnum'. This
     will throw an exception if there is no such residue.
-    
+
     \throw SireMol::missing_residue
 */
 const ResidueInfo& MoleculeInfo::operator[](ResNum resnum) const
@@ -784,9 +779,9 @@ const ResidueInfo& MoleculeInfo::operator[](ResNum resnum) const
     return d->operator[](resnum);
 }
 
-/** Return the CGAtomID of the 'ith' atom in this molecule. This will throw an 
+/** Return the CGAtomID of the 'ith' atom in this molecule. This will throw an
     exception if 'i' is an invalid index.
-    
+
     \throw SireError::invalid_index
 */
 const CGAtomID& MoleculeInfo::operator[](AtomID i) const
@@ -796,7 +791,7 @@ const CGAtomID& MoleculeInfo::operator[](AtomID i) const
 
 /** Return the CGAtomID of the atom with AtomIndex 'atm'. This will throw an
     exception if there is no such atom in this molecule.
-    
+
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
@@ -807,7 +802,7 @@ const CGAtomID& MoleculeInfo::operator[](const AtomIndex &atm) const
 
 /** Return the CGAtomID of the atom with index 'resatomid'. This will throw
     an exception if there is no such atom in this molecule.
-    
+
     \throw SireMol::missing_residue
     \throw SireError::invalid_index
 */
@@ -818,7 +813,7 @@ const CGAtomID& MoleculeInfo::operator[](const ResNumAtomID &resatomid) const
 
 /** Return the CGAtomID of the atom with index 'resatomid'. This will throw
     an exception if thereis no such atom in this molecule.
-    
+
     \throw SireError::invalid_index
 */
 const CGAtomID& MoleculeInfo::operator[](const ResIDAtomID &resatomid) const
@@ -884,7 +879,7 @@ const CGAtomID& MoleculeInfo::at(const ResIDAtomID &resatomid) const
 
 /** Return the AtomInfo for the 'ith' atom of this molecule. This throws
     an index if 'i' is invalid.
-    
+
     \throw SireError::invalid_index
 */
 const AtomInfo& MoleculeInfo::atom(AtomID i) const
@@ -894,7 +889,7 @@ const AtomInfo& MoleculeInfo::atom(AtomID i) const
 
 /** Return the AtomInfo for the atom with index 'atomindex'. This will throw
     an exception if there is no such atom in this molecule.
-    
+
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
@@ -905,7 +900,7 @@ const AtomInfo& MoleculeInfo::atom(const AtomIndex &atomindex) const
 
 /** Return the AtomInfo for the atom with index 'rsid'. This will throw
     an exception if there is no such atom in this molecule.
-    
+
     \throw SireMol::missing_residue
     \throw SireError::invalid_index
 */
@@ -916,7 +911,7 @@ const AtomInfo& MoleculeInfo::atom(const ResNumAtomID &rsid) const
 
 /** Return the AtomInfo for the atom with index 'rsid'. This will throw
     an exception if there is no such atom in this molecule.
-    
+
     \throw SireError::invalid_index
 */
 const AtomInfo& MoleculeInfo::atom(const ResIDAtomID &rsid) const
@@ -926,7 +921,7 @@ const AtomInfo& MoleculeInfo::atom(const ResIDAtomID &rsid) const
 
 /** Return the AtomInfo for the atom with CGAtomID 'cgid'. This will throw
     an exception if there is no such atom in this molecule.
-    
+
     \throw SireMol::missing_cutgroup
     \throw SireError::invalid_index
 */
@@ -935,7 +930,7 @@ const AtomInfo& MoleculeInfo::atom(const CGAtomID &cgid) const
     return d->atom(cgid);
 }
 
-/** Return the residue that contains the atom with AtomID 'atmid' 
+/** Return the residue that contains the atom with AtomID 'atmid'
 
     \throw SireError::invalid_index
 */
@@ -945,8 +940,8 @@ const ResidueInfo& MoleculeInfo::residue(AtomID atmid) const
 }
 
 /** Return the 'ith' residue in this molecule. This will throw an exception
-    if 'i' refers to an invalid residue. 
-    
+    if 'i' refers to an invalid residue.
+
     \throw SireError::invalid_index
 */
 const ResidueInfo& MoleculeInfo::residue(ResID i) const
@@ -955,8 +950,8 @@ const ResidueInfo& MoleculeInfo::residue(ResID i) const
 }
 
 /** Return the residue with number 'resnum'. This will throw an exception
-    if there is no such residue. 
-    
+    if there is no such residue.
+
     \throw SireMol::missing_residue
 */
 const ResidueInfo& MoleculeInfo::residue(ResNum resnum) const
@@ -1003,7 +998,7 @@ int MoleculeInfo::nAtoms(ResNum resnum) const
     return d->nAtoms(resnum);
 }
 
-/** Return the numbers of all of the residues, in the order that the residues 
+/** Return the numbers of all of the residues, in the order that the residues
     appear in the molecule (ResID order) */
 QVector<ResNum> MoleculeInfo::residueNumbers() const
 {
@@ -1084,16 +1079,16 @@ bool MoleculeInfo::contains(const ResIDAtomID &resid) const
 QSet<AtomInfo> MoleculeInfo::getAtoms( const QSet<AtomID> &idxs ) const
 {
     QSet<AtomInfo> ret;
-    
+
     ret.reserve( idxs.count() );
-    
+
     for (QSet<AtomID>::const_iterator it = idxs.begin();
          it != idxs.end();
          ++it)
     {
         ret.insert( this->at(*it) );
     }
-    
+
     return ret;
 }
 
@@ -1105,16 +1100,16 @@ QSet<AtomInfo> MoleculeInfo::getAtoms( const QSet<AtomID> &idxs ) const
 QSet<AtomInfo> MoleculeInfo::getAtoms( const QSet<AtomIndex> &atms ) const
 {
     QSet<AtomInfo> ret;
-    
+
     ret.reserve( idxs.count() );
-    
+
     for (QSet<AtomIndex>::const_iterator it = idxs.begin();
          it != idxs.end();
          ++it)
     {
         ret.insert( this->at(*it) );
     }
-    
+
     return ret;
 }
 
@@ -1125,16 +1120,16 @@ QSet<AtomInfo> MoleculeInfo::getAtoms( const QSet<AtomIndex> &atms ) const
 QSet<AtomInfo> MoleculeInfo::getAtoms( const QSet<ResNumAtomID> &rsids) const
 {
     QSet<AtomInfo> ret;
-    
+
     ret.reserve( idxs.count() );
-    
+
     for (QSet<ResNumAtomID>::const_iterator it = idxs.begin();
          it != idxs.end();
          ++it)
     {
         ret.insert( this->at(*it) );
     }
-    
+
     return ret;
 }
 
@@ -1145,16 +1140,16 @@ QSet<AtomInfo> MoleculeInfo::getAtoms( const QSet<ResNumAtomID> &rsids) const
 QSet<AtomInfo> MoleculeInfo::getAtoms( const QSet<ResIDAtomID> &rsids) const
 {
     QSet<AtomInfo> ret;
-    
+
     ret.reserve( idxs.count() );
-    
+
     for (QSet<ResIDAtomID>::const_iterator it = idxs.begin();
          it != idxs.end();
          ++it)
     {
         ret.insert( this->at(*it) );
     }
-    
+
     return ret;
 }
 
@@ -1165,15 +1160,15 @@ QSet<AtomInfo> MoleculeInfo::getAtoms( const QSet<ResIDAtomID> &rsids) const
 QSet<AtomInfo> MoleculeInfo::getAtoms( const QSet<CGAtomID> &cgids ) const
 {
     QSet<AtomInfo> ret;
-    
+
     ret.reserve( idxs.count() );
-    
+
     for (QSet<CGAtomID>::const_iterator it = idxs.begin();
          it != idxs.end();
          ++it)
     {
         ret.insert( this->at(*it) );
     }
-    
+
     return ret;
 }

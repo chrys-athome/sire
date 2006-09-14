@@ -14,9 +14,10 @@
 
 #include "SireMol/editmol.h"
 
-#include "SirePy/indexer.hpp"
+#include "SireQt/qlist.hpp"
 
 using namespace boost::python;
+using namespace SireQt;
 
 namespace SireMol
 {
@@ -24,8 +25,8 @@ namespace SireMol
 void export_EditMolList()
 {
     /** Wrap up an EditMolList */
-    wrapList<EditMol>("EditMolList");
-    wrapVector<EditMol>("EditMolVector");
+    wrap_QList<EditMol>("QList_EditMol_");
+    wrap_QVector<EditMol>("QVector_EditMol_");
 }
 
 }

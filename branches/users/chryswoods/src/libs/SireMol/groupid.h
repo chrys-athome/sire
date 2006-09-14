@@ -10,7 +10,7 @@ namespace SireMol
 
 /** This ID number is used to identify a Group (e.g. a group
     of bonds or angles)
-    
+
     @author Christopher Woods
 */
 class SIREMOL_EXPORT GroupID : public ID<GroupID>
@@ -19,13 +19,13 @@ class SIREMOL_EXPORT GroupID : public ID<GroupID>
 public:
     GroupID() : ID<GroupID>()
     {}
-    
-    GroupID(quint32 id) : ID<GroupID>(id)
+
+    explicit GroupID(quint32 id) : ID<GroupID>(id)
     {}
-    
+
     GroupID(const GroupID &other) : ID<GroupID>(other)
     {}
-    
+
     ~GroupID()
     {}
 };

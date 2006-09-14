@@ -5,9 +5,9 @@
   *
   * C++ Interface: CutGroup
   *
-  * Description: 
+  * Description:
   * Interface for CutGroup
-  * 
+  *
   * Author: Christopher Woods, (C) 2006
   *
   * Copyright: See COPYING file that comes with this distribution
@@ -42,11 +42,11 @@ using SireMaths::Matrix;
 
 /**
 A CutGroup is a logical grouping of Atoms into a single group that is considered for intermolecular non-bonded cutting.
-  
+
 The data in a CutGroup is implicitly shared, meaning that copying a CutGroup is very fast, with most of the copying occuring when the copy is modified.
 
 CutGroup is reentrant, but definitely not thread-safe! Copying a CutGroup is thread-safe.
-  
+
 You can edit the coordinates of the atoms in the CutGroup via the code;
 
 \code
@@ -58,7 +58,7 @@ editor[i] = ....
 
 cgroup = editor.commit();
 \endcode
-  
+
 @author Christopher Woods
 */
 class SIREMOL_EXPORT CutGroup
@@ -68,28 +68,31 @@ friend QDataStream& ::operator<<(QDataStream&, const CutGroup&);
 friend QDataStream& ::operator>>(QDataStream&, CutGroup&);
 
 public:
-    
+
     CutGroup();
     CutGroup(const QVector<Atom> atoms);
     CutGroup(const QList<Atom> atoms);
-    
+
+    CutGroup(const AtomInfoGroup &atominfos, const CoordGroup &coords);
+    CutGroup(const AtomInfoGroup &atominfos);
+
     CutGroup(const CutGroup &other);
-    
+
     ~CutGroup();
 
     Atom at(int i) const;
     Atom operator[](int i) const;
-   
+
     CutGroup& operator=(const CutGroup &other);
     CutGroup& operator=(const CoordGroup &other);
-    
+
     bool isNull() const;
-    
+
     QString toString() const;
 
     QVector<Atom> atoms() const;
     QVector<Atom> atoms(int strt, int end) const;
-        
+
     Atom atom(int i) const;
 
     int nAtoms() const;
@@ -108,7 +111,7 @@ private:
         These can be combined with coordinates of the inherited CoordGroup
         to form complete atoms. */
     QVector<AtomInfo> atominfos;
-    
+
     /** The coordinates of the atoms */
     CoordGroup coords;
 };
@@ -143,7 +146,7 @@ inline void CutGroup::translate(const Vector &delta)
     coords.translate(delta);
 }
 
-/** Rotate the Atoms in the CutGroup by the Quaternion 'quat' 
+/** Rotate the Atoms in the CutGroup by the Quaternion 'quat'
     about the point 'point' */
 inline void CutGroup::rotate(const Quaternion &quat, const Vector &point)
 {

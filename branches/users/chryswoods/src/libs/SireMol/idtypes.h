@@ -7,6 +7,7 @@
 #include "resid.h"
 #include "atomnum.h"
 #include "atomid.h"
+#include "groupid.h"
 
 #include "molcgatomid.h"
 #include "molcutgroupid.h"

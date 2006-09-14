@@ -11,7 +11,9 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the sources in SireVol
 set ( SIREVOL_SOURCES
+      aabox.cpp
       cartesian.cpp
+      coordgroup.cpp
       periodicbox.cpp
       simvolume.cpp
     )
