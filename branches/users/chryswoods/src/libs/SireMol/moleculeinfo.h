@@ -16,6 +16,11 @@
 
 #include <QSharedDataPointer>
 
+#include <QHash>
+#include <QSet>
+
+#include "residuecutting.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol
@@ -28,6 +33,18 @@ QDataStream& operator>>(QDataStream&, SireMol::MoleculeInfo&);
 
 namespace SireMol
 {
+
+class AtomID;
+class CutGroupID;
+class ResID;
+class ResNum;
+class CGAtomID;
+class ResNumAtomID;
+class ResIDAtomID;
+
+class AtomInfo;
+class ResidueInfo;
+class AtomInfoGroup;
 
 class MoleculeInfoPvt;
 

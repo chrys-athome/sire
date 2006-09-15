@@ -14,7 +14,7 @@
   *
   */
 
-#include "moleculedata.h"
+#include <QSharedDataPointer>
 
 SIRE_BEGIN_HEADER
 
@@ -29,6 +29,9 @@ QDataStream& operator>>(QDataStream&, SireMol::Molecule&);
 namespace SireMol
 {
 
+class MoleculeData;
+class Residue;
+
 /**
 A Molecule represents a complete molecule. This class is merely a view on the underlying
 MoleculeData class.
@@ -38,21 +41,26 @@ MoleculeData class.
 class SIREMOL_EXPORT Molecule
 {
 
-friend class MoleculeData; //so it can call the MoleculeData constructor
+friend class Residue; //so it can call the MoleculeData constructor
 friend QDataStream& ::operator<<(QDataStream&, const Molecule&);
 friend QDataStream& ::operator>>(QDataStream&, Molecule&);
 
 public:
+   ////// Constructors / destructor ////////////////////////
     Molecule();
 
     Molecule(const EditMol &editmol,
              const ConvertFunction &converter = ResidueCutting() );
 
+    Molecule(const Residue &residue);
+
     Molecule(const Molecule &other);
 
     ~Molecule();
+   /////////////////////////////////////////////////////////
 
-   ////// Dealing with the ID number ///////////////////////
+
+   ////// Dealing with the ID number and version ///////////
      MoleculeID ID() const;
      void setNewID();
 
@@ -60,159 +68,308 @@ public:
    /////////////////////////////////////////////////////////
 
 
-   ///// Operators /////////////////////////////////////////
+   ////// Operators ////////////////////////////////////////
+    Molecule& operator=(const Molecule &other);
+
     bool operator==(const Molecule &other) const;
     bool operator!=(const Molecule &other) const;
 
-    Molecule& operator=(const Molecule &other);
-    Molecule& operator=(const Residue &other);
+    CutGroup operator[](CutGroupID cgid) const;
 
-    Residue operator[](int i) const;
+    Residue operator[](ResID resid) const;
+    Residue operator[](ResNum resnum) const;
+
+    Atom operator[](AtomID atomid) const;
+    Atom operator[](const CGAtomID &cgatomid) const;
+    Atom operator[](const ResNumAtomID &resatomid) const;
+    Atom operator[](const ResIDAtomID &resatomid) const;
+    Atom operator[](const AtomIndex &atm) const;
    /////////////////////////////////////////////////////////
 
 
-   ///// Memory mangement and interface with residue ///////
+   ///// Interfacing with Residue //////////////////////////
     Residue residue(ResNum resnum) const;
-    Residue at(int i) const;
+    Residue residue(ResID resid) const;
+    Residue residue(const QString &resname) const;
 
-    QHash<ResNum,Residue> residues();
+    void merge(const Residue &residue);
+
     QHash<ResNum,Residue> residues() const;
+
+    Residue at(ResNum resnum) const;
+    Residue at(ResID i) const;
+   /////////////////////////////////////////////////////////
+
+
+   ////// Interfacing with EditMol /////////////////////////
+    EditMol toEditMol() const;
+    void update(const EditMol &editmol, const ConvertFunction &convertfunc);
    /////////////////////////////////////////////////////////
 
 
    ///// Querying the molecule /////////////////////////////
-    QString toString() const;
+    CutGroup at(CutGroupID cgid) const;
 
-    QString name() const;
-
-    const MoleculeInfo& info() const;
-
-    bool isNull() const;
-    bool isEmpty() const;
-
-    CutGroup cutGroup(CutGroupID cgid) const;
-    QVector<CutGroup> cutGroups() const;
-
-    CoordGroup coordinates(CutGroupID cgid) const;
-    QVector<CoordGroup> coordinates() const;
+    Atom at(AtomID atomid) const;
+    Atom at(const ResNumAtomID &resatomid) const;
+    Atom at(const ResIDAtomID &resatomid) const;
+    Atom at(const CGAtomID &cgatomid) const;
+    Atom at(const AtomIndex &atm) const;
 
     MoleculeBonds connectivity() const;
 
+    ResidueBonds connectivity(ResNum resnum) const;
+    ResidueBonds connectivity(ResID resid) const;
+
+    const MoleculeInfo& info() const;
+
+    QVector<Atom> atoms() const;
+    QVector<Atom> atoms(ResNum resnum) const;
+    QVector<Atom> atoms(ResID resid) const;
+
+    QHash<CutGroupID,CutGroup> cutGroups() const;
+    QHash<CutGroupID,CutGroup> cutGroups(ResNum resnum) const;
+    QHash<CutGroupID,CutGroup> cutGroups(ResID resid) const;
+
+    CutGroup cutGroup(CutGroupID id) const;
+
+    QHash<CutGroupID,CoordGroup> coordGroups() const;
+    QHash<CutGroupID,CoordGroup> coordGroups(ResNum resnum) const;
+    QHash<CutGroupID,CoordGroup> coordGroups(ResID resid) const;
+
+    CoordGroup coordGroup(CutGroupID id) const;
+
+    Atom atom(CutGroupID cgid, AtomID atomid) const;
+    Atom atom(const CGAtomID &cgatmid) const;
+    Atom atom(ResNum resnum, AtomID atomid) const;
+    Atom atom(const ResNumAtomID &resatomid) const;
+    Atom atom(ResID resid, AtomID atomid) const;
+    Atom atom(const ResIDAtomID &resatomid) const;
+    Atom atom(const AtomIndex &atm) const;
+    Atom atom(ResNum resnum, const QString &atomname) const;
+
+    Vector coordinates(CutGroupID cgid, AtomID atomid) const;
+    Vector coordinates(const CGAtomID &cgatomid) const;
+    Vector coordinates(ResNum resnum, AtomID atomid) const;
+    Vector coordinates(const ResNumAtomID &resatomid) const;
+    Vector coordinates(ResID resid, AtomID atomid) const;
+    Vector coordinates(const ResIDAtomID &resatomid) const;
+    Vector coordinates(const AtomIndex &atm) const;
+    Vector coordinates(ResNum resnum, const QString &atomname) const;
+
+    QHash<CGAtomID,Vector> coordinates(const QSet<CGAtomID> &cgatomids) const;
+    QHash<ResNumAtomID,Vector> coordinates(const QSet<ResNumAtomID> &resatomids) const;
+    QHash<ResIDAtomID,Vector> coordinates(const QSet<ResIDAtomID> &resatomids) const;
+    QHash<AtomIndex,Vector> coordinates(const QSet<AtomIndex> &atoms) const;
+
+    QVector<Vector> coordinates(CutGroupID cgid);
+    QHash< CutGroupID,QVector<Vector> >
+          coordinates(const QSet<CutGroupID> &cgids) const;
+
+    QVector<Vector> coordinates(ResNum resnum);
+    QHash< ResNum,QVector<Vector> >
+          coordinates(const QSet<ResNum> &resnums) const;
+
+    QVector<Vector> coordinates(ResID resid);
+    QHash< ResID,QVector<Vector> >
+          coordinates(const QSet<ResID> &resids) const;
+
+    const QString& name() const;
+
     QString residueName(ResNum resnum) const;
+    QString residueName(ResID resid) const;
 
-    QList<ResNum> residueNumbers() const;
-    QList<ResNum> residueNumbers(const QString &resnam) const;
+    ResNum residueNumber(ResID resid) const;
 
+    bool isEmpty() const;
+    bool isEmpty(ResNum resnum) const;
+    bool isEmpty(ResID resid) const;
+    bool isEmpty(CutGroupID cgid) const;
+
+    QVector<ResNum> residueNumbers() const;
     QStringList residueNames() const;
 
-    QHash<ResNum,QString> residueIDs() const;
+    QVector<ResNum> residueNumbers(const QString &resnam) const;
+    QVector<ResNum> residueNumbers(CutGroupID cgid) const;
 
-    Atom atom( const AtomIndex &atm ) const;
+    QHash<ResNum,Residue> residuesBondedTo(ResNum resnum) const;
+    QHash<ResNum,Residue> residuesBondedTo(ResID resid) const;
 
-    QList<Atom> atoms() const;
-    QList<Atom> atoms(ResNum resnum) const;
+    bool contains(CutGroupID cgid) const;
+    bool contains(ResNum resnum) const;
+    bool contains(ResID resid) const;
 
-    QVector<Atom> atomVector() const;
-    QVector<Atom> atomVector(ResNum resnum) const;
+    bool contains(ResNum resnum, const QString &atomname) const;
+    bool contains(const AtomIndex &atm) const;
+    bool contains(CutGroupID cgid, AtomID atomid) const;
+    bool contains(const CGAtomID &cgatomid) const;
+    bool contains(ResNum resnum, AtomID atomid) const;
+    bool contains(const ResNumAtomID &resatomid) const;
+    bool contains(ResID resid, AtomID atomid) const;
+    bool contains(const ResIDAtomID &resatomid) const;
 
-    QList<Bond> bonds() const;
-    QList<Bond> bonds(ResNum resnum) const;
+    bool contains(const Bond &bond) const;
 
     int nAtoms() const;
-    int nAtoms(CutGroupID id) const;
     int nAtoms(ResNum resnum) const;
+    int nAtoms(ResID resid) const;
+    int nAtoms(CutGroupID id) const;
 
-    int nBonds() const;
     int nResidues() const;
+
     int nCutGroups() const;
 
-    int count() const;
+    QStringList atomNames(ResNum resnum) const;
+    QStringList atomNames(ResID resid) const;
 
-    SireMaths::Line bond( const Bond &bnd ) const;
-    SireMaths::Triangle angle( const Angle &ang ) const;
-    SireMaths::Torsion dihedral( const Dihedral &dih ) const;
-    SireMaths::Torsion improper( const Improper &imp ) const;
+    SireMaths::Line bond(const Bond &bnd) const;
+    SireMaths::Triangle angle(const SireMol::Angle &ang) const;
+    SireMaths::Torsion dihedral(const Dihedral &dih) const;
+    SireMaths::Torsion improper(const Improper &improper) const;
 
-    double measure( const Bond &bond ) const;
-    SireMaths::Angle measure( const Angle &ang ) const;
-    SireMaths::Angle measure( const Dihedral &dih ) const;
-    SireMaths::Angle measure( const Improper &imp ) const;
+    double measure(const Bond &bnd) const;
+    SireMaths::Angle measure(const SireMol::Angle &ang) const;
+    SireMaths::Angle measure(const Dihedral &dih) const;
+    SireMaths::Angle measure(const Improper &improper) const;
+
+    double getWeight(const AtomIDGroup &group0, const AtomIDGroup &group1,
+                     const WeightFunction &weightfunc) const;
    /////////////////////////////////////////////////////////
 
 
-   ///// Moving the molecule ///////////////////////////////
+   //////// Moving the molecule ////////////////////
     void translate(const Vector &delta);
     void translate(const AtomIDGroup &group, const Vector &delta);
-    void translate(const AtomIndexSet &atoms, const Vector &delta);
+    void translate(const AtomIndex &atom, const Vector &delta);
+    void translate(const QSet<AtomIndex> &atoms, const Vector &delta);
+    void translate(ResNum resnum, const QStringList &atoms, const Vector &delta);
     void translate(ResNum resnum, const Vector &delta);
+    void translate(const QSet<ResNum> &resnums, const Vector &delta);
+    void translate(ResID resid, const QStringList &atoms, const Vector &delta);
+    void translate(ResID resid, const Vector &delta);
+    void translate(const QSet<ResID> &resids, const Vector &delta);
+    void translate(CutGroupID cgid, const Vector &delta);
+    void translate(const QSet<CutGroupID> &cgids, const Vector &delta);
 
     void rotate(const Quaternion &quat, const Vector &point);
     void rotate(const AtomIDGroup &group, const Quaternion &quat, const Vector &point);
-    void rotate(const AtomIndexSet &atoms, const Quaternion &quat, const Vector &point);
+    void rotate(const AtomIndex &atom, const Quaternion &quat, const Vector &point);
+    void rotate(const QSet<AtomIndex> &atoms, const Quaternion &quat, const Vector &point);
+    void rotate(ResNum resnum, const QStringList &atoms, const Quaternion &quat,
+                const Vector &point);
     void rotate(ResNum resnum, const Quaternion &quat, const Vector &point);
+    void rotate(const QSet<ResNum> &resnums, const Quaternion &quat, const Vector &point);
+    void rotate(ResID resid, const QStringList &atoms, const Quaternion &quat,
+                const Vector &point);
+    void rotate(ResID resid, const Quaternion &quat, const Vector &point);
+    void rotate(const QSet<ResID> &resids, const Quaternion &quat, const Vector &point);
+    void rotate(CutGroupID cgid, const Quaternion &quat, const Vector &point);
+    void rotate(const QSet<CutGroupID> &cgids, const Vector &delta);
 
-    void setCoordinates(CutGroupID cgid, const CoordGroup &coords);
-    void setCoordinates(const QHash<CutGroupID,CoordGroup> coords);
-   /////////////////////////////////////////////////////////
+    void rotate(const Matrix &matrix, const Vector &point);
+    void rotate(const AtomIDGroup &group, const Matrix &matrix, const Vector &point);
+    void rotate(const AtomIndex &atom, const Matrix &matrix, const Vector &point);
+    void rotate(const QSet<AtomIndex> &atoms, const Matrix &matrix, const Vector &point);
+    void rotate(ResNum resnum, const QStringList &atoms, const Matrix &matrix,
+                const Vector &point);
+    void rotate(ResNum resnum, const Matrix &matrix, const Vector &point);
+    void rotate(const QSet<ResNum> &resnums, const Matrix &matrix, const Vector &point);
+    void rotate(ResID resid, const QStringList &atoms, const Matrix &matrix,
+                const Vector &point);
+    void rotate(ResID resid, const Matrix &matrix, const Vector &point);
+    void rotate(const QSet<ResID> &resids, const Matrix &matrix, const Vector &point);
+    void rotate(CutGroupID cgid, const Matrix &matrix, const Vector &point);
+    void rotate(const QSet<CutGroupID> &cgids, const Matrix &matrix, const Vector &point);
+
+    void setCoordinates(CutGroupID cgid, const CoordGroup &newcoords);
+    void setCoordinates(const QHash<CutGroupID,CoordGroup> &newcoords);
+
+    void setCoordinates(CutGroupID cgid, const QVector<Vector> &newcoords);
+    void setCoordinates(const QHash< CutGroupID,QVector<Vector> > &newcoords);
+
+    void setCoordinates(ResNum resnum, const QVector<Vector> &newcoords);
+    void setCoordinates(const QHash< ResNum,QVector<Vector> > &newcoords);
+
+    void setCoordinates(ResID resid, const QVector<Vector> &newcoords);
+    void setCoordinates(const QHash< ResID,QVector<Vector> > &newcoords);
+
+    void setCoordinates(const AtomIndex &atom, const Vector &newcoords);
+    void setCoordinates(const QHash<AtomIndex,Vector> &newcoords);
+
+    void setCoordinates(const CGAtomID &cgatomid, const Vector &newcoords);
+    void setCoordinates(const QHash<CGAtomID,Vector> &newcoords);
+
+    void setCoordinates(const ResNumAtomID &resatomid, const Vector &newcoords);
+    void setCoordinates(const QHash<ResNumAtomID,Vector> &newcoords);
+
+    void setCoordinates(const ResIDAtomID &resatomid, const Vector &newcoords);
+    void setCoordinates(const QHash<ResIDAtomID,Vector> &newcoords);
+   /////////////////////////////////////////////////
 
 
-   ///// Internal geometry moves ///////////////////////////
+   //////// Internal geometry moves ////////////////
     void change(const Bond &bond, double delta,
-                const AtomIndexSet &anchors = AtomIndexSet());
+                const QSet<AtomIndex> &anchors = QSet<AtomIndex>());
     void change(const Bond &bond, double delta, const WeightFunction &func,
-                const AtomIndexSet &anchors = AtomIndexSet());
+                const QSet<AtomIndex> &anchors = QSet<AtomIndex>());
 
     void change(const Angle &angle, const SireMaths::Angle &delta,
-                const AtomIndexSet &anchors = AtomIndexSet());
+                const QSet<AtomIndex> &anchors = QSet<AtomIndex>());
     void change(const Angle &angle, const SireMaths::Angle &delta,
-                const WeightFunction &func, const AtomIndexSet &anchors = AtomIndexSet());
+                const WeightFunction &func,
+                const QSet<AtomIndex> &anchors = QSet<AtomIndex>());
 
     void change(const Dihedral &dihedral, const SireMaths::Angle &delta,
-                const AtomIndexSet &anchors = AtomIndexSet());
+                const QSet<AtomIndex> &anchors = QSet<AtomIndex>());
     void change(const Dihedral &dihedral, const SireMaths::Angle &delta,
-                const WeightFunction &func, const AtomIndexSet &anchors = AtomIndexSet());
+                const WeightFunction &func,
+                const QSet<AtomIndex> &anchors = QSet<AtomIndex>());
 
     void change(const Bond &bond, const SireMaths::Angle &delta,
-                const AtomIndexSet &anchors = AtomIndexSet());
+                const QSet<AtomIndex> &anchors = QSet<AtomIndex>());
     void change(const Bond &bond, const SireMaths::Angle &delta,
-                const WeightFunction &func, const AtomIndexSet &anchors = AtomIndexSet());
+                const WeightFunction &func,
+                const QSet<AtomIndex> &anchors = QSet<AtomIndex>());
 
     void change(const Improper &improper, const SireMaths::Angle &delta,
-                const AtomIndexSet &anchors = AtomIndexSet());
+                const QSet<AtomIndex> &anchors = QSet<AtomIndex>());
     void change(const Improper &improper, const SireMaths::Angle &delta,
-                const WeightFunction &func, const AtomIndexSet &anchors = AtomIndexSet());
+                const WeightFunction &func,
+                const QSet<AtomIndex> &anchors = QSet<AtomIndex>());
 
-    void set(const Bond &bond, double lgth, const AtomIndexSet &anchors = AtomIndexSet());
+    void set(const Bond &bond, double lgth,
+             const QSet<AtomIndex> &anchors = QSet<AtomIndex>());
     void set(const Bond &bond, double lgth, const WeightFunction &func,
-             const AtomIndexSet &anchors = AtomIndexSet());
+             const QSet<AtomIndex> &anchors = QSet<AtomIndex>());
 
     void set(const SireMol::Angle &angle, const SireMaths::Angle &ang,
-             const AtomIndexSet &anchors = AtomIndexSet());
+             const QSet<AtomIndex> &anchors = QSet<AtomIndex>());
     void set(const SireMol::Angle &angle, const SireMaths::Angle &ang,
-             const WeightFunction &func, const AtomIndexSet &anchors = AtomIndexSet());
+             const WeightFunction &func,
+             const QSet<AtomIndex> &anchors = QSet<AtomIndex>());
 
     void set(const Dihedral &dihedral, const SireMaths::Angle &ang,
-             const AtomIndexSet &anchors = AtomIndexSet());
+             const QSet<AtomIndex> &anchors = QSet<AtomIndex>());
     void set(const Dihedral &dihedral, const SireMaths::Angle &ang,
-             const WeightFunction &func, const AtomIndexSet &anchors = AtomIndexSet());
+             const WeightFunction &func,
+             const QSet<AtomIndex> &anchors = QSet<AtomIndex>());
 
     void setAll(const Dihedral &dihedral, const SireMaths::Angle &ang,
-                const AtomIndexSet &anchors = AtomIndexSet());
+                const QSet<AtomIndex> &anchors = QSet<AtomIndex>());
     void setAll(const Dihedral &dihedral, const SireMaths::Angle &ang,
-                const WeightFunction &func, const AtomIndexSet &anchors = AtomIndexSet());
+                const WeightFunction &func,
+                const QSet<AtomIndex> &anchors = QSet<AtomIndex>());
 
     void set(const Improper &improper, const SireMaths::Angle &ang,
-             const AtomIndexSet &anchors = AtomIndexSet());
+             const QSet<AtomIndex> &anchors = QSet<AtomIndex>());
     void set(const Improper &improper, const SireMaths::Angle &ang,
-             const WeightFunction &func, const AtomIndexSet &anchors = AtomIndexSet());
-   /////////////////////////////////////////////////////////
+             const WeightFunction &func,
+             const QSet<AtomIndex> &anchors = QSet<AtomIndex>());
+   /////////////////////////////////////////////////
 
 private:
-    Molecule(const MoleculeData &moldata);
-
-    /** The MoleculeData object that contains all of the data
-        and functionality of this molecule */
-    MoleculeData moldata;
+    /** Implicitly shared pointer to the data for this molecule */
+    QSharedDataPointer<MoleculeData> d;
 };
 
 }

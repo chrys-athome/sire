@@ -39,8 +39,6 @@ public:
 /** This is a movable type */
 Q_DECLARE_TYPEINFO(SireMol::AtomID, Q_MOVABLE_TYPE);
 
-}
-
 SIRE_END_HEADER
 
 #endif

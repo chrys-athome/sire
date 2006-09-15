@@ -33,7 +33,7 @@ public:
 }
 
 /** This is a movable type */
-Q_DECLARE_TYPEINFO(SireMol::ResNum, Q_MOVABLE_TYPE);
+Q_DECLARE_TYPEINFO(SireMol::ResID, Q_MOVABLE_TYPE);
 
 SIRE_END_HEADER
 

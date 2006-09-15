@@ -1,11 +1,9 @@
 /**
   * @file
   *
-  * C++ Implementation: MoleculeData and MoleculeDataPvt
+  * C++ Implementation: MoleculeData
   *
-  * Description:
-  * Implementation of public MoleculeData class,
-  * and the private MoleculeDataPvt class.
+  * Description: Implementation of MoleculeData
   *
   * @author Christopher Woods, (C) 2006
   *
@@ -22,7 +20,6 @@
 #include "moleculedata.h"
 #include "residuebonds.h"
 #include "cutgroup.h"
-#include "cutgroupset.h"
 #include "molecule.h"
 #include "residue.h"
 #include "bond.h"
@@ -47,302 +44,13 @@
 #include "SireStream/datastream.h"
 
 using namespace SireStream;
-
-QDataStream& operator<<(QDataStream&, const SireMol::MoleculeDataPvt&);
-QDataStream& operator>>(QDataStream&, SireMol::MoleculeDataPvt&);
-
-namespace SireMol
-{
-
-using SireMaths::Matrix;
-using SireMaths::Quaternion;
-
-/** This class is a simple holder for the molecule's metadata, allowing
-    it to be implicitly shared. The reason for breaking off this data is
-    because the normal situation will be that only the coordinates of the
-    molecule will be changed. Changing the coordinates should not cause
-    duplication of any other data in the molecule. By holding all of the
-    other data in an implicitly shared class we ensure that it is not
-    duplicated when the molecule is moved.
-
-    @author Christopher Woods
-*/
-class MolMetaData : public QSharedData
-{
-public:
-    /** Null constructor */
-    MolMetaDataPvt()
-            : QSharedData(),
-              id(0)
-    {}
-
-    /** Copy constructor */
-    MolMetaDataPvt(const MolMetaDataPvt &other)
-            : QSharedData(),
-              id( other.id ),
-              molversion( other.molversion ),
-              molinfo( other.molinfo ),
-              molbonds( other.molbonds )
-    {}
-
-    /** Destructor */
-    ~MolMetaDataPvt()
-    {}
-
-    /** Assignment operator */
-    MolMetaData& operator=(const MolMetaData &other)
-    {
-        id = other.id;
-        molversion = other.molversion;
-        molinfo = other.molinfo;
-        molbonds = other.molbonds;
-        return *this;
-    }
-
-};
-
-/**
-This class is the private implementation of MoleculeData. You should not use
-this class in your own code.
-
-@author Christopher Woods
-*/
-class MoleculeDataPvt : public QSharedData
-{
-
-friend QDataStream& ::operator<<(QDataStream&, const MoleculeDataPvt&);
-friend QDataStream& ::operator>>(QDataStream&, MoleculeDataPvt&);
-
-public:
-    MoleculeData();
-
-    MoleculeData(const EditMol &editmol,
-                 const ConvertFunction &convertfunc);
-
-    MoleculeData(const MoleculeData &other);
-
-    ~MoleculeData();
-
-   ////// Dealing with the ID number and version ///////////
-     MoleculeID ID() const;
-     void setNewID();
-
-     const MoleculeVersion& version() const;
-     void incrementMajorVersion();
-     void incrementMinorVersion();
-   /////////////////////////////////////////////////////////
-
-
-   ////// Operators ////////////////////////////////////////
-    MoleculeData& operator=(const MoleculeData &other);
-
-    bool operator==(const MoleculeData &other) const;
-    bool operator!=(const MoleculeData &other) const;
-   /////////////////////////////////////////////////////////
-
-
-   ///// Interfacing with Molecule and Residue /////////////
-    Molecule molecule() const;
-
-    Residue residue(ResNum resnum) const;
-    Residue residue(ResID resid) const;
-    Residue residue(const QString &resname) const;
-
-    void merge(const Residue &residue);
-
-    QHash<ResNum,Residue> residues() const;
-
-    Residue at(ResNum resnum) const;
-    Residue at(ResID i) const;
-   /////////////////////////////////////////////////////////
-
-
-   ///// Querying the molecule /////////////////////////////
-    const MoleculeBonds& connectivity() const;
-    ResidueBonds connectivity(ResNum resnum) const;
-
-    const MoleculeInfo& info() const;
-
-    QList<Atom> atoms() const;
-    QList<Atom> atoms(ResNum resnum) const;
-    QList<Atom> atoms(ResID resid) const;
-
-    QVector<Atom> atomVector() const;
-    QVector<Atom> atomVector(ResNum resnum) const;
-    QVector<Atom> atomVector(ResID resid) const;
-
-    QVector<CutGroup> cutGroups() const;
-    QVector<CutGroup> cutGroups(ResNum resnum) const;
-    QVector<CutGroup> cutGroups(ResID resid) const;
-
-    CutGroup cutGroup(CutGroupID id) const;
-
-    const QVector<CoordGroup>& coordinates() const;
-    QVector<CoordGroup> coordinates(ResNum resnum) const;
-    QVector<CoordGroup> coordinates(ResID resid) const;
-
-    CoordGroup coordinates(CutGroupID id) const;
-
-    Atom atom(CutGroupID cgid, AtomID atomid) const;
-    Atom atom(ResNum resnum, AtomID atomid) const;
-    Atom atom(ResID resid, AtomID atomid) const;
-    Atom atom(const AtomIndex &atm) const;
-
-    Vector coordinates(CutGroupID cgid, AtomID atomid) const;
-    Vector coordinates(ResNum resnum, AtomID atomid) const;
-    Vector coordinates(ResID resid, AtomID atomid) const;
-    Vector coordinates(const AtomIndex &atm) const;
-
-    const QString& name() const;
-
-    QString residueName(ResNum resnum) const;
-    QString residueName(ResID resid) const;
-
-    ResNum residueNumber(ResID resid) const;
-
-    bool isEmpty() const;
-    bool isEmpty(ResNum resnum) const;
-    bool isEmpty(ResID resid) const;
-
-    QList<ResNum> residueNumbers() const;
-    QStringList residueNames() const;
-
-    QList<ResNum> residueNumbers(const QString &resnam) const;
-
-    QHash<ResNum,Residue> residuesBondedTo(ResNum resnum) const;
-    QHash<ResNum,Residue> residuesBondedTo(ResID resid) const;
-
-    bool contains(CutGroupID cgid) const;
-    bool contains(ResNum resnum) const;
-    bool contains(ResID resid) const;
-
-    bool contains(const AtomIndex &atm) const;
-    bool contains(CutGroupID cgid, AtomID atomid) const;
-    bool contains(ResNum resnum, AtomID atomid) const;
-    bool contains(ResID resid, AtomID atomid) const;
-
-    bool contains(const Bond &bond) const;
-
-    int nAtoms() const;
-    int nAtoms(ResNum resnum) const;
-    int nAtoms(ResID resid) const;
-    int nAtoms(CutGroupID id) const;
-
-    int nResidues() const;
-
-    int nCutGroups() const;
-
-    QStringList atomNames(ResNum resnum) const;
-    QStringList atomNames(ResID resid) const;
-
-    void checkResidue(ResNum) const;
-    void checkResidue(ResID) const;
-
-    SireMaths::Line bond(const Bond &bnd) const;
-    SireMaths::Triangle angle(const SireMol::Angle &ang) const;
-    SireMaths::Torsion dihedral(const Dihedral &dih) const;
-    SireMaths::Torsion improper(const Improper &improper) const;
-
-    double measure(const Bond &bnd) const;
-    SireMaths::Angle measure(const SireMol::Angle &ang) const;
-    SireMaths::Angle measure(const Dihedral &dih) const;
-    SireMaths::Angle measure(const Improper &improper) const;
-
-    double getWeight(const AtomIDGroup &group0, const AtomIDGroup &group1,
-                     const WeightFunction &weightfunc) const;
-   /////////////////////////////////////////////////////////
-
-
-   //////// Moving the molecule ////////////////////
-    void translate(const Vector &delta);
-    void translate(const AtomIDGroup &group, const Vector &delta);
-    void translate(const AtomIndex &atom, const Vector &delta);
-    void translate(ResNum resnum, const QStringList &atoms, const Vector &delta);
-    void translate(ResNum resnum, const Vector &delta);
-    void translate(ResID resid, const QStringList &atoms, const Vector &delta);
-    void translate(ResID resid, const Vector &delta);
-
-    void rotate(const Quaternion &quat, const Vector &point);
-    void rotate(const AtomIDGroup &group, const Quaternion &quat, const Vector &point);
-    void rotate(const AtomIndex &atom, const Quaternion &quat, const Vector &point);
-    void rotate(ResNum resnum, const QStringList &atoms, const Quaternion &quat,
-                const Vector &point);
-    void rotate(ResNum resnum, const Quaternion &quat, const Vector &point);
-    void rotate(ResID resid, const QStringList &atoms, const Quaternion &quat,
-                const Vector &point);
-    void rotate(ResID resid, const Quaternion &quat, const Vector &point);
-
-    void rotate(const Matrix &matrix, const Vector &point);
-    void rotate(const AtomIDGroup &group, const Matrix &matrix, const Vector &point);
-    void rotate(const AtomIndex &atom, const Matrix &matrix, const Vector &point);
-    void rotate(ResNum resnum, const QStringList &atoms, const Matrix &matrix,
-                const Vector &point);
-    void rotate(ResNum resnum, const Matrix &matrix, const Vector &point);
-    void rotate(ResID resid, const QStringList &atoms, const Matrix &matrix,
-                const Vector &point);
-    void rotate(ResID resid, const Matrix &matrix, const Vector &point);
-   /////////////////////////////////////////////////
-
-
-   //////// Internal geometry moves ////////////////
-    void change(const Bond &bnd, double delta,
-                const AtomIDGroup &group0, const AtomIDGroup &group1,
-                const WeightFunction &weightfunc, const AtomIndexSet &anchors);
-
-    void change(const SireMol::Angle &ang, const SireMaths::Angle &delta,
-                const AtomIDGroup &group0, const AtomIDGroup &group1,
-                const WeightFunction &weightfunc, const AtomIndexSet &anchors);
-
-    void change(const Bond &bnd, const SireMaths::Angle &delta,
-                const AtomIDGroup &group0, const AtomIDGroup &group1,
-                const WeightFunction &weightfunc, const AtomIndexSet &anchors);
-
-    void change(const Improper &improper, const SireMaths::Angle &delta,
-                const AtomIDGroup &group0, const AtomIDGroup &group1,
-                const WeightFunction &weightfunc, const AtomIndexSet &anchors);
-   /////////////////////////////////////////////////
-
-private:
-
-    static MoleculeID getNewID();
-    static QMutex idmutex;
-    static MoleculeID lastid;
-
-    /** ID number used to identify the molecule */
-    MoleculeID _id;
-
-    /** The version number of the metadata */
-    MoleculeVersion _molversion;
-
-    /** The metainfo about the molecule - this contains the names of the molecule,
-        residue and all atoms, and additional metainfo about all of the residues
-        and atoms. This object may also be used to map from atom or residue IDs
-        to CGAtomIDs (which are used to lookup the coordinates) */
-    MoleculeInfo _molinfo;
-
-    /** The connectivity of this molecule */
-    MoleculeBonds _molbonds;
-
-    /** The coordinates of all of the atoms in this molecule, arranged into
-        CoordGroups, with the index into the vector being the CutGroupID
-        of the CutGroup to which these coordinates belong. */
-    QVector<CoordGroup> _coords;
-
-};
-
-} // End of namespace SireMol
-
 using namespace SireMol;
 
-////////////
-//////////// Implementation of MoleculeDataPvt
-////////////
-
-static const RegisterMetaType<MoleculeDataPvt> r_pvt("SireMol::MoleculeDataPvt",
-                                                     MAGIC_ONLY);
+static const RegisterMetaType<MoleculeData> r_pvt("SireMol::MoleculeData",
+                                                  MAGIC_ONLY);
 
 /** Serialise to a binary data stream */
-QDataStream &operator<<(QDataStream &ds, const MoleculeDataPvt &moldata)
+QDataStream &operator<<(QDataStream &ds, const MoleculeData &moldata)
 {
     writeHeader(ds, r_pvt, 1) << moldata.id() << moldata.molversion()
                               << moldata.coords() << moldata.molinfo()
@@ -351,7 +59,7 @@ QDataStream &operator<<(QDataStream &ds, const MoleculeDataPvt &moldata)
 }
 
 /** Deserialise from a binary data stream */
-QDataStream &operator>>(QDataStream &ds, MoleculeDataPvt &moldata)
+QDataStream &operator>>(QDataStream &ds, MoleculeData &moldata)
 {
     VersionID v = readHeader(ds, r_pvt);
 
@@ -368,13 +76,13 @@ QDataStream &operator>>(QDataStream &ds, MoleculeDataPvt &moldata)
 }
 
 /** Mutex to serialise the aquisition of new ID numbers */
-QMutex MoleculeDataPvt::idmutex;
+QMutex MoleculeData::idmutex;
 
 /** The last allocated ID number */
-MoleculeID MoleculeDataPvt::lastid(0);
+MoleculeID MoleculeData::lastid(0);
 
 /** Get a new, unique, ID number */
-MoleculeID MoleculeDataPvt::getNewID()
+MoleculeID MoleculeData::getNewID()
 {
     QMutexLocker lkr(&idmutex);
     ++lastid;
@@ -382,7 +90,7 @@ MoleculeID MoleculeDataPvt::getNewID()
 }
 
 /** Null constructor */
-MoleculeDataPvt::MoleculeDataPvt()
+MoleculeData::MoleculeData()
                 : QSharedData(),
                   _id(0), _molversion(0,0)
 {}
@@ -390,7 +98,7 @@ MoleculeDataPvt::MoleculeDataPvt()
 /** Construct the molecule data from an EditMol using the conversion function
     'converter'
 */
-MoleculeDataPvt::MoleculeDataPvt(const EditMol &editmol,
+MoleculeData::MoleculeData(const EditMol &editmol,
                                  const ConvertFunction &converter)
                 : QSharedData(),
                   _id(0), _molversion(0,0)
@@ -403,7 +111,7 @@ MoleculeDataPvt::MoleculeDataPvt(const EditMol &editmol,
 }
 
 /** Copy constructor */
-MoleculeDataPvt::MoleculeDataPvt(const MoleculeDataPvt &other)
+MoleculeData::MoleculeData(const MoleculeData &other)
                 : QSharedData(),
                   _id(other._id),
                   _molversion(other._molversion),
@@ -413,11 +121,11 @@ MoleculeDataPvt::MoleculeDataPvt(const MoleculeDataPvt &other)
 {}
 
 /** Destructor */
-MoleculeDataPvt::~MoleculeDataPvt()
+MoleculeData::~MoleculeData()
 {}
 
 /** Comparison operator */
-bool MoleculeDataPvt::operator==(const MoleculeDataPvt &other) const
+bool MoleculeData::operator==(const MoleculeData &other) const
 {
     return _id == other._id and
            _molversion == other._molversion and
@@ -427,7 +135,7 @@ bool MoleculeDataPvt::operator==(const MoleculeDataPvt &other) const
 }
 
 /** Comparison operator */
-bool MoleculeDataPvt::operator!=(const MoleculeDataPvt &other) const
+bool MoleculeData::operator!=(const MoleculeData &other) const
 {
     return _id != other._id or
            _molversion != other._molversion or
@@ -439,23 +147,23 @@ bool MoleculeDataPvt::operator!=(const MoleculeDataPvt &other) const
 /** Build this molecule from the passed EditMol using the supplied
     ConvertFunction. This will increment the major version number
     of the molecule. */
-void MoleculeDataPvt::buildMolecule(const EditMol &editmol,
+void MoleculeData::buildMolecule(const EditMol &editmol,
                                     const ConvertFunction &convertfunction)
 {
-#warning Need to write MoleculeDataPvt::buildMolecule()!
+#warning Need to write MoleculeData::buildMolecule()!
 
     //increment the major version number of the molecule
     incrementMajorVersion();
 }
 
 /** Return the name of this molecule */
-const QString& MoleculeDataPvt::name() const
+const QString& MoleculeData::name() const
 {
     return info().name();
 }
 
 /** Return the number of atoms in this molecule */
-int MoleculeDataPvt::nAtoms() const
+int MoleculeData::nAtoms() const
 {
     return info().nAtoms();
 }
@@ -464,25 +172,25 @@ int MoleculeDataPvt::nAtoms() const
 
     \throw SireMol::missing_residue
 */
-int MoleculeDataPvt::nAtoms(ResNum resnum) const
+int MoleculeData::nAtoms(ResNum resnum) const
 {
     return info().residue(resnum).nAtoms();
 }
 
 /** Return the number of residues in the molecule. */
-int MoleculeDataPvt::nResidues() const
+int MoleculeData::nResidues() const
 {
     return info().nResidues();
 }
 
 /** Return the number of bonds in the molecule */
-int MoleculeDataPvt::nBonds() const
+int MoleculeData::nBonds() const
 {
     return connectivity().nBonds();
 }
 
 /** Check that the residue 'resnum' exists - else throw an exception */
-void MoleculeDataPvt::checkResidue(ResNum resnum) const
+void MoleculeData::checkResidue(ResNum resnum) const
 {
     if (not info().contains(resnum))
         throw SireMol::missing_residue(QObject::tr(
@@ -492,7 +200,7 @@ void MoleculeDataPvt::checkResidue(ResNum resnum) const
 
 /** Check that the residue with index 'resid' exists - else throw
     an exception */
-void MoleculeDataPvt::checkResidue(ResID resid) const
+void MoleculeData::checkResidue(ResID resid) const
 {
     if (not info().contains(resid))
         throw SireError::invalid_index(QObject::tr(
@@ -501,14 +209,14 @@ void MoleculeDataPvt::checkResidue(ResID resid) const
 }
 
 /** Return the ID number of the molecule */
-MoleculeID MoleculeDataPvt::ID() const
+MoleculeID MoleculeData::ID() const
 {
     return _id;
 }
 
 /** Give this molecule a new ID number. This will also give a new
     ID number to all contained (identified) objects, e.g. CutGroups */
-void MoleculeDataPvt::setNewID()
+void MoleculeData::setNewID()
 {
     //get a new ID number
     _id = getNewID();
@@ -518,25 +226,25 @@ void MoleculeDataPvt::setNewID()
 }
 
 /** Return the version number of the molecule */
-const MoleculeVersion& MoleculeDataPvt::version() const
+const MoleculeVersion& MoleculeData::version() const
 {
     return _molversion;
 }
 
 /** Increment the major version of the molecule */
-void MoleculeDataPvt::incrementMajorVersion()
+void MoleculeData::incrementMajorVersion()
 {
     _molversion.incrementMajor();
 }
 
 /** Increment the minor version number of the molecule */
-void MoleculeDataPvt::incrementMinorVersion()
+void MoleculeData::incrementMinorVersion()
 {
     _molversion.incrementMinor();
 }
 
 /** Return the connectivity of this molecule */
-MoleculeBonds MoleculeDataPvt::connectivity() const
+MoleculeBonds MoleculeData::connectivity() const
 {
     return _molbonds;
 }
@@ -545,26 +253,26 @@ MoleculeBonds MoleculeDataPvt::connectivity() const
 
     \throw SireMol::missing_residue
 */
-ResidueBonds MoleculeDataPvt::connectivity(ResNum resnum) const
+ResidueBonds MoleculeData::connectivity(ResNum resnum) const
 {
     checkResidue(resnum);
     return connectivity().residue(resnum);
 }
 
 /** Return a const reference to the molecule info */
-const MoleculeInfo& MoleculeDataPvt::info() const
+const MoleculeInfo& MoleculeData::info() const
 {
     return _info;
 }
 
 /** Return the number of CutGroups in the molecule */
-int MoleculeDataPvt::nCutGroups() const
+int MoleculeData::nCutGroups() const
 {
     return _coords.count();
 }
 
 /** Check the CutGroupID is valid */
-void MoleculeDataPvt::checkCutGroup(CutGroupID id) const
+void MoleculeData::checkCutGroup(CutGroupID id) const
 {
     if ( id >= nCutGroups() )
         throw SireMol::missing_cutgroup(QObject::tr(
@@ -576,7 +284,7 @@ void MoleculeDataPvt::checkCutGroup(CutGroupID id) const
 
     \throw SireMol::missing_cutgroup
 */
-CutGroup MoleculeDataPvt::cutGroup(CutGroupID id) const
+CutGroup MoleculeData::cutGroup(CutGroupID id) const
 {
     return CutGroup( info().atomGroup(id), coordinates(id) );
 }
@@ -585,7 +293,7 @@ CutGroup MoleculeDataPvt::cutGroup(CutGroupID id) const
 
     \throw SireMol::missing_cutgroup
 */
-CoordGroup MoleculeDataPvt::coordinates(CutGroupID id) const
+CoordGroup MoleculeData::coordGroup(CutGroupID id) const
 {
     checkCutGroup(id);
     return _coords.at(id);
@@ -596,7 +304,7 @@ CoordGroup MoleculeDataPvt::coordinates(CutGroupID id) const
     \throw SireMol::missing_cutgroup
     \throw SireError::invalid_index
 */
-Atom MoleculeDataPvt::atom(const CGAtomID &cgatomid) const
+Atom MoleculeData::atom(const CGAtomID &cgatomid) const
 {
     return Atom( info().atom(cgatomid), coordinates(cgatomid) );
 }
@@ -606,7 +314,7 @@ Atom MoleculeDataPvt::atom(const CGAtomID &cgatomid) const
     \throw SireMol::missing_cutgroup
     \throw SireError::invalid_index
 */
-Atom MoleculeDataPvt::atom(CutGroupID cgid, AtomID atmid) const
+Atom MoleculeData::atom(CutGroupID cgid, AtomID atmid) const
 {
     return atom( CGAtomID(cgid,atmid) );
 }
@@ -616,7 +324,7 @@ Atom MoleculeDataPvt::atom(CutGroupID cgid, AtomID atmid) const
     \throw SireMol::missing_cutgroup
     \throw SireError::invalid_index
 */
-Vector MoleculeDataPvt::coordinates(const CGAtomID &cgatomid) const
+Vector MoleculeData::coordinates(const CGAtomID &cgatomid) const
 {
     return coordinates(cgatomid.cutGroupID()).at(cgatomid.atomID());
 }
@@ -627,7 +335,7 @@ Vector MoleculeDataPvt::coordinates(const CGAtomID &cgatomid) const
     \throw SireMol::missing_cutgroup
     \throw SireError::invalid_index
 */
-Vector MoleculeDataPvt::coordinates(CutGroupID cgid, AtomID atmid) const
+Vector MoleculeData::coordinates(CutGroupID cgid, AtomID atmid) const
 {
     return coordinates(cgid).at(atmid);
 }
@@ -637,7 +345,7 @@ Vector MoleculeDataPvt::coordinates(CutGroupID cgid, AtomID atmid) const
 
     \throw SireMol::missing_residue
 */
-QVector<Atom> MoleculeDataPvt::atoms(ResNum resnum) const
+QVector<Atom> MoleculeData::atoms(ResNum resnum) const
 {
     //get the metainfo for this residue
     ResidueInfo resinfo = info().residue(resnum);
@@ -663,7 +371,7 @@ QVector<Atom> MoleculeDataPvt::atoms(ResNum resnum) const
     residue. This function can be slow as it copies all of the
     atoms that are in the molecule.
 */
-QVector<Atom> MoleculeDataPvt::atoms() const
+QVector<Atom> MoleculeData::atoms() const
 {
     QVector<Atom> atms;
     int nats = info().nAtoms();
@@ -688,7 +396,7 @@ QVector<Atom> MoleculeDataPvt::atoms() const
 /** Return a hash of all of the CutGroups in the molecule, indexed by their
     CutGroupID
 */
-QHash<CutGroupID,CutGroup> MoleculeDataPvt::cutGroups() const
+QHash<CutGroupID,CutGroup> MoleculeData::cutGroups() const
 {
     QHash<CutGroupID,CutGroup> cgroups;
 
@@ -707,7 +415,7 @@ QHash<CutGroupID,CutGroup> MoleculeDataPvt::cutGroups() const
 /** Internal function used to return the hash of all CutGroups in the
     residue described by 'resinfo' */
 QHash<CutGroupID,CutGroup>
-MoleculeDataPvt::cutGroups(const ResidueInfo &resinfo) const
+MoleculeData::cutGroups(const ResidueInfo &resinfo) const
 {
     QHash<CutGroupID,AtomInfoGroup> resgroups = resinfo.atomGroups();
 
@@ -732,7 +440,7 @@ MoleculeDataPvt::cutGroups(const ResidueInfo &resinfo) const
     \throw SireMol::missing_residue
 */
 QHash<CutGroupID,CutGroup>
-MoleculeDataPvt::cutGroups(ResNum resnum) const
+MoleculeData::cutGroups(ResNum resnum) const
 {
     return cutGroups( info().residue(resnum) );
 }
@@ -742,24 +450,21 @@ MoleculeDataPvt::cutGroups(ResNum resnum) const
 
     \throw SireError::invalid_index
 */
-QHash<CutGroupID,CutGroup>
-MoleculeDataPvt::cutGroups(ResID resid) const
+QHash<CutGroupID,CutGroup> MoleculeData::cutGroups(ResID resid) const
 {
     return cutGroups( info().residue(resid) );
 }
 
 /** Return a hash of all of the coordinates of atoms in this molecule,
     organised by CoordGroup, and indexed by CutGroupID */
-QHash<CutGroupID,CoordGroup>
-MoleculeDataPvt::coordinates() const
+QHash<CutGroupID,CoordGroup> MoleculeData::coordGroups() const
 {
     return _coords;
 }
 
 /** Internal function used to return a hash of the CoordGroups containing the
     coordinates of the residue described by 'resinfo' */
-QHash<CutGroupID,CoordGroup>
-MoleculeDataPvt::coordinates(const ResidueInfo &resinfo) const
+QHash<CutGroupID,CoordGroup> MoleculeData::coordGroups(const ResidueInfo &resinfo) const
 {
     QHash<CutGroupID, AtomInfoGroup> resgroups = resinfo.atomGroups();
 
@@ -784,8 +489,7 @@ MoleculeDataPvt::coordinates(const ResidueInfo &resinfo) const
 
     \throw SireMol::missing_residue
 */
-QHash<CutGroupID,CoordGroup>
-MoleculeDataPvt::coordinates(ResNum resnum) const
+QHash<CutGroupID,CoordGroup> MoleculeData::coordGroups(ResNum resnum) const
 {
     return coordinates( info().residue(resnum) );
 }
@@ -797,8 +501,7 @@ MoleculeDataPvt::coordinates(ResNum resnum) const
 
     \throw SireError::invalid_index
 */
-QHash<CutGroupID,CoordGroup>
-MoleculeDataPvt::coordinates(ResID resid) const
+QHash<CutGroupID,CoordGroup> MoleculeData::coordGroups(ResID resid) const
 {
     return coordinates( info().residue(resid) );
 }
@@ -807,7 +510,7 @@ MoleculeDataPvt::coordinates(ResID resid) const
 
     \throw SireMol::missing_residue
 */
-QString MoleculeDataPvt::residueName(ResNum resnum) const
+QString MoleculeData::residueName(ResNum resnum) const
 {
     return info().residue(resnum).name();
 }
@@ -816,13 +519,13 @@ QString MoleculeDataPvt::residueName(ResNum resnum) const
 
     \throw SireError::invalid_index
 */
-QString MoleculeDataPvt::residueName(ResID resid) const
+QString MoleculeData::residueName(ResID resid) const
 {
     return info().residue(resid).name();
 }
 
 /** Return whether or not this is an empty molecule (no residues or atoms) */
-bool MoleculeDataPvt::isEmpty() const
+bool MoleculeData::isEmpty() const
 {
     return nResidues() == 0;
 }
@@ -831,7 +534,7 @@ bool MoleculeDataPvt::isEmpty() const
 
     \throw SireMol::missing_residue
 */
-bool MoleculeDataPvt::isEmpty(ResNum resnum) const
+bool MoleculeData::isEmpty(ResNum resnum) const
 {
     return nAtoms(resnum) == 0;
 }
@@ -840,26 +543,26 @@ bool MoleculeDataPvt::isEmpty(ResNum resnum) const
 
     \throw SireError::invalid_index
 */
-bool MoleculeDataPvt::isEmpty(ResID resid) const
+bool MoleculeData::isEmpty(ResID resid) const
 {
     return nAtoms(resid) == 0;
 }
 
 /** Return the list of residue numbers in this molecule */
-QVector<ResNum> MoleculeDataPvt::residueNumbers() const
+QVector<ResNum> MoleculeData::residueNumbers() const
 {
     return info().residueNumbers();
 }
 
 /** Return the list of residue names in this molecule */
-QStringList MoleculeDataPvt::residueNames() const
+QStringList MoleculeData::residueNames() const
 {
     return info().residueNames();
 }
 
 /** Return the list of residue numbers of residues called 'resnam'.
     Returns an empty list if there are no residues called 'resnam' */
-QVector<ResNum> MoleculeDataPvt::residueNumbers(const QString &resnam) const
+QVector<ResNum> MoleculeData::residueNumbers(const QString &resnam) const
 {
     return info().residueNumbers(resnam);
 }
@@ -868,7 +571,7 @@ QVector<ResNum> MoleculeDataPvt::residueNumbers(const QString &resnam) const
 
     \throw SireMol::missing_atom
 */
-Atom MoleculeDataPvt::atom(const AtomIndex &atm) const
+Atom MoleculeData::atom(const AtomIndex &atm) const
 {
     return atom( info().at(atm) );
 }
@@ -878,7 +581,7 @@ Atom MoleculeDataPvt::atom(const AtomIndex &atm) const
     \throw SireMol::missing_residue
     \throw SireError::invalid_index
 */
-Atom MoleculeDataPvt::atom(ResNum resnum, AtomID atmid) const
+Atom MoleculeData::atom(ResNum resnum, AtomID atmid) const
 {
     return atom( info().at(ResNumAtomID(resnum,atmid)) );
 }
@@ -887,7 +590,7 @@ Atom MoleculeDataPvt::atom(ResNum resnum, AtomID atmid) const
 
     \throw SireError::invalid_index
 */
-Atom MoleculeDataPvt::atom(ResID resid, AtomID atmid) const
+Atom MoleculeData::atom(ResID resid, AtomID atmid) const
 {
     return atom( info().at(ResIDAtomID(resid,atmid)) );
 }
@@ -897,7 +600,7 @@ Atom MoleculeDataPvt::atom(ResID resid, AtomID atmid) const
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-Vector MoleculeDataPvt::coordinates(const AtomIndex &atm) const
+Vector MoleculeData::coordinates(const AtomIndex &atm) const
 {
     return coordinates( info().at(atm) );
 }
@@ -908,7 +611,7 @@ Vector MoleculeDataPvt::coordinates(const AtomIndex &atm) const
     \throw SireMol::missing_residue
     \throw SireError::invalid_index
 */
-Vector MoleculeDataPvt::coordinates(ResNum resnum, AtomID atomid) const
+Vector MoleculeData::coordinates(ResNum resnum, AtomID atomid) const
 {
     return coordinates( info().at(ResNumAtomID(resnum,atomid)) );
 }
@@ -918,25 +621,25 @@ Vector MoleculeDataPvt::coordinates(ResNum resnum, AtomID atomid) const
 
     \throw SireError::invalid_index
 */
-Vector MoleculeDataPvt::coordinates(ResID resid, AtomID atomid) const
+Vector MoleculeData::coordinates(ResID resid, AtomID atomid) const
 {
     return coordinates( info().at(ResIDAtomID(resid,atomid)) );
 }
 
 /** Return whether this molecule contains a residue with number 'resnum' */
-bool MoleculeDataPvt::contains(ResNum resnum) const
+bool MoleculeData::contains(ResNum resnum) const
 {
     return info().contains(resnum);
 }
 
 /** Return whether this molecule contains an atom with index 'atm' */
-bool MoleculeDataPvt::contains(const AtomIndex &atm) const
+bool MoleculeData::contains(const AtomIndex &atm) const
 {
     return info().contains(atm);
 }
 
 /** Return whether this molecule contains the bond 'bnd' */
-bool MoleculeDataPvt::contains(const Bond &bond) const
+bool MoleculeData::contains(const Bond &bond) const
 {
     return connectivity().contains(bond);
 }
@@ -945,13 +648,13 @@ bool MoleculeDataPvt::contains(const Bond &bond) const
 
     \throw SireMol::missing_cutgroup
 */
-int MoleculeDataPvt::nAtoms(CutGroupID id) const
+int MoleculeData::nAtoms(CutGroupID id) const
 {
     return info().nAtoms( id );
 }
 
 /** Return the name of all of the atoms in residue 'resnum' */
-QStringList MoleculeDataPvt::atomNames(ResNum resnum) const
+QStringList MoleculeData::atomNames(ResNum resnum) const
 {
     return info().residue(resnum).atomNames();
 }
@@ -960,7 +663,7 @@ QStringList MoleculeDataPvt::atomNames(ResNum resnum) const
 
     \throw SireMol::missing_atom
 */
-SireMaths::Line MoleculeDataPvt::bond(const Bond &bnd) const
+SireMaths::Line MoleculeData::bond(const Bond &bnd) const
 {
     return SireMaths::Line( coordinates(bnd.atom0()),
                             coordinates(bnd.atom1()) );
@@ -970,7 +673,7 @@ SireMaths::Line MoleculeDataPvt::bond(const Bond &bnd) const
 
     \throw SireMol::missing_atom
 */
-SireMaths::Triangle MoleculeDataPvt::angle(const SireMol::Angle &ang) const
+SireMaths::Triangle MoleculeData::angle(const SireMol::Angle &ang) const
 {
     return SireMaths::Triangle( coordinates(ang.atom0()),
                                 coordinates(ang.atom1()),
@@ -981,7 +684,7 @@ SireMaths::Triangle MoleculeDataPvt::angle(const SireMol::Angle &ang) const
 
     \throw SireMol::missing_atom
 */
-SireMaths::Torsion MoleculeDataPvt::dihedral(const Dihedral &dih) const
+SireMaths::Torsion MoleculeData::dihedral(const Dihedral &dih) const
 {
     return SireMaths::Torsion( coordinates(dih.atom0()),
                                coordinates(dih.atom1()),
@@ -993,7 +696,7 @@ SireMaths::Torsion MoleculeDataPvt::dihedral(const Dihedral &dih) const
 
     \throw SireMol::missing_atom
 */
-SireMaths::Torsion MoleculeDataPvt::improper(const Improper &imp) const
+SireMaths::Torsion MoleculeData::improper(const Improper &imp) const
 {
     return SireMaths::Torsion( coordinates(imp.atom0()),
                                coordinates(imp.atom1()),
@@ -1005,7 +708,7 @@ SireMaths::Torsion MoleculeDataPvt::improper(const Improper &imp) const
 
     \throw SireMol::missing_atom
 */
-double MoleculeDataPvt::measure(const Bond &bnd) const
+double MoleculeData::measure(const Bond &bnd) const
 {
     return bond(bnd).length();
 }
@@ -1014,7 +717,7 @@ double MoleculeDataPvt::measure(const Bond &bnd) const
 
     \throw SireMol::missing_atom
 */
-SireMaths::Angle MoleculeDataPvt::measure(const SireMol::Angle &ang) const
+SireMaths::Angle MoleculeData::measure(const SireMol::Angle &ang) const
 {
     return angle(ang).angle1();
 }
@@ -1023,7 +726,7 @@ SireMaths::Angle MoleculeDataPvt::measure(const SireMol::Angle &ang) const
 
     \throw SireMol::missing_atom
 */
-SireMaths::Angle MoleculeDataPvt::measure(const Dihedral &dih) const
+SireMaths::Angle MoleculeData::measure(const Dihedral &dih) const
 {
     return dihedral(dih).angle();
 }
@@ -1032,7 +735,7 @@ SireMaths::Angle MoleculeDataPvt::measure(const Dihedral &dih) const
 
     \throw SireMol::missing_atom
 */
-SireMaths::Angle MoleculeDataPvt::measure(const Improper &improper) const
+SireMaths::Angle MoleculeData::measure(const Improper &improper) const
 {
     throw SireError::incomplete_code("Need to write this!", CODELOC);
 
@@ -1045,12 +748,12 @@ SireMaths::Angle MoleculeDataPvt::measure(const Improper &improper) const
     \throw SireMol::missing_atom
     \throw SireMol::missing_residue
 */
-double MoleculeDataPvt::getWeight(const AtomIDGroup &group0, const AtomIDGroup &group1,
+double MoleculeData::getWeight(const AtomIDGroup &group0, const AtomIDGroup &group1,
                                   const WeightFunction &weightfunc) const
 {
     WeightCalculator calc(weightfunc);
 
-#warning MoleculeDataPvt::getWeight() needs refactoring as it is inefficient!
+#warning MoleculeData::getWeight() needs refactoring as it is inefficient!
 
     //add all of atoms in the groups to the calculator
     foreach( AtomIndex atm, group0.atoms() )
@@ -1134,7 +837,7 @@ private:
 
 /** Internal function used to translate the whole molecule by 'delta',
     as part of a larger move */
-void MoleculeDataPvt::translate(const Vector &delta, MoveWorkspace &workspace) const
+void MoleculeData::translate(const Vector &delta, MoveWorkspace &workspace) const
 {
     if (delta.isZero())
         return;
@@ -1148,7 +851,7 @@ void MoleculeDataPvt::translate(const Vector &delta, MoveWorkspace &workspace) c
 }
 
 /** Translate the whole molecule by 'delta' */
-void MoleculeDataPvt::translate(const Vector &delta)
+void MoleculeData::translate(const Vector &delta)
 {
     //create a workspace for this move
     MoveWorkspace workspace(_coords);
@@ -1166,7 +869,7 @@ void MoleculeDataPvt::translate(const Vector &delta)
 
     \throw SireMol::missing_atom
 */
-void MoleculeDataPvt::translate(const QSet<AtomIndex> &atoms, const Vector &delta,
+void MoleculeData::translate(const QSet<AtomIndex> &atoms, const Vector &delta,
                                 MoveWorkspace &workspace) const
 {
     if (delta.isZero())
@@ -1192,7 +895,7 @@ void MoleculeDataPvt::translate(const QSet<AtomIndex> &atoms, const Vector &delt
 
     \throw SireMol::missing_atom
 */
-void MoleculeDataPvt::translate(const QSet<AtomIndex> &atoms, const Vector &delta)
+void MoleculeData::translate(const QSet<AtomIndex> &atoms, const Vector &delta)
 {
     // Key to improving efficiency is to ensure that we only recalculate
     // metadata for the moved atoms once *all* of them have been moved.
@@ -1218,7 +921,7 @@ void MoleculeDataPvt::translate(const QSet<AtomIndex> &atoms, const Vector &delt
 
     \throw SireMol::missing_atom
 */
-void MoleculeDataPvt::translate(const ResidueInfo &resinfo,
+void MoleculeData::translate(const ResidueInfo &resinfo,
                                 const QStringList &atomnames,
                                 const Vector &delta,
                                 MoveWorkspace &workspace) const
@@ -1242,7 +945,7 @@ void MoleculeDataPvt::translate(const ResidueInfo &resinfo,
 
     \throw SireMol::missing_atom
 */
-void MoleculeDataPvt::translate(const ResidueInfo &resinfo,
+void MoleculeData::translate(const ResidueInfo &resinfo,
                                 const QStringList &atomnames,
                                 const Vector &delta)
 {
@@ -1263,7 +966,7 @@ void MoleculeDataPvt::translate(const ResidueInfo &resinfo,
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-void MoleculeDataPvt::translate(ResNum resnum, const QStringList &atoms,
+void MoleculeData::translate(ResNum resnum, const QStringList &atoms,
                                 const Vector &delta)
 {
     translate( info().residue(resnum), atoms, delta );
@@ -1275,7 +978,7 @@ void MoleculeDataPvt::translate(ResNum resnum, const QStringList &atoms,
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-void MoleculeDataPvt::translate(ResID resid, const QStringList &atoms,
+void MoleculeData::translate(ResID resid, const QStringList &atoms,
                                 const Vector &delta)
 {
     translate( info().residue(resid), atoms, delta );
@@ -1283,7 +986,7 @@ void MoleculeDataPvt::translate(ResID resid, const QStringList &atoms,
 
 /** Internal function used to translate all of the atoms in the residue
     represented by 'resinfo' by the vector 'delta' */
-void MoleculeDataPvt::translate(const ResidueInfo &resinfo, const Vector &delta,
+void MoleculeData::translate(const ResidueInfo &resinfo, const Vector &delta,
                                 MoveWorkspace &workspace) const
 {
     if (delta.isZero())
@@ -1305,7 +1008,7 @@ void MoleculeDataPvt::translate(const ResidueInfo &resinfo, const Vector &delta,
 
 /** Internal function used to translate all of the atoms in the residue
     represented by 'resinfo' by the vector 'delta' */
-void MoleculeDataPvt::translate(const ResidueInfo &resinfo, const Vector &delta)
+void MoleculeData::translate(const ResidueInfo &resinfo, const Vector &delta)
 {
     //create a workspace for the move
     MoveWorkspace workspace(_coords);
@@ -1323,7 +1026,7 @@ void MoleculeDataPvt::translate(const ResidueInfo &resinfo, const Vector &delta)
 
     \throw SireMol::missing_residue
 */
-void MoleculeDataPvt::translate(ResNum resnum, const Vector &delta,
+void MoleculeData::translate(ResNum resnum, const Vector &delta,
                                 MoveWorkspace &workspace) const
 {
     translate( info().residue(resnum), delta, workspace );
@@ -1333,7 +1036,7 @@ void MoleculeDataPvt::translate(ResNum resnum, const Vector &delta,
 
     \throw SireMol::missing_residue
 */
-void MoleculeDataPvt::translate(ResNum resnum, const Vector &delta)
+void MoleculeData::translate(ResNum resnum, const Vector &delta)
 {
     translate( info().residue(resnum), delta );
 }
@@ -1343,7 +1046,7 @@ void MoleculeDataPvt::translate(ResNum resnum, const Vector &delta)
 
     \throw SireError::invalid_index
 */
-void MoleculeDataPvt::translate(ResID resid, const Vector &delta,
+void MoleculeData::translate(ResID resid, const Vector &delta,
                                 MoveWorkspace &workspace) const
 {
     translate( info().residue(resid), delta, workspace );
@@ -1354,7 +1057,7 @@ void MoleculeDataPvt::translate(ResID resid, const Vector &delta,
 
     \throw SireError::invalid_index
 */
-void MoleculeDataPvt::translate(ResID resnum, const Vector &delta)
+void MoleculeData::translate(ResID resnum, const Vector &delta)
 {
     translate( info().residue(resid), delta );
 }
@@ -1364,7 +1067,7 @@ void MoleculeDataPvt::translate(ResID resnum, const Vector &delta)
 
     \throw SireMol::missing_atom
 */
-void MoleculeDataPvt::translate(const AtomIndex &atm, const Vector &delta,
+void MoleculeData::translate(const AtomIndex &atm, const Vector &delta,
                                 MoveWorkspace &workspace) const
 {
     //find the index of this atom in the molecule
@@ -1381,7 +1084,7 @@ void MoleculeDataPvt::translate(const AtomIndex &atm, const Vector &delta,
 
     \throw SireMol::missing_atom
 */
-void MoleculeDataPvt::translate(const AtomIndex &atm, const Vector &delta)
+void MoleculeData::translate(const AtomIndex &atm, const Vector &delta)
 {
     //create a workspace for this move
     MoveWorkspace workspace(_coords);
@@ -1399,7 +1102,7 @@ void MoleculeDataPvt::translate(const AtomIndex &atm, const Vector &delta)
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-void MoleculeDataPvt::translate(const AtomIDGroup &group, const Vector &delta,
+void MoleculeData::translate(const AtomIDGroup &group, const Vector &delta,
                                 MoveWorkspace &workspace) const
 {
     if (delta.isZero())
@@ -1422,7 +1125,7 @@ void MoleculeDataPvt::translate(const AtomIDGroup &group, const Vector &delta,
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-void MoleculeDataPvt::translate(const AtomIDGroup &group, const Vector &delta)
+void MoleculeData::translate(const AtomIDGroup &group, const Vector &delta)
 {
     //create a workspace for the move
     MoveWorkspace workspace(_coords);
@@ -1437,7 +1140,7 @@ void MoleculeDataPvt::translate(const AtomIDGroup &group, const Vector &delta)
 
 /** Internal function used to rotate the entire molecule by the matrix 'matrix'
     (which may not actually be a rotation matrix!) as part of an existing move */
-void MoleculeDataPvt::rotate(const Matrix &matrix, const Vector &point,
+void MoleculeData::rotate(const Matrix &matrix, const Vector &point,
                              MoveWorkspace &workspace) const
 {
     if (matrix.isIdentity())
@@ -1458,7 +1161,7 @@ void MoleculeDataPvt::rotate(const Matrix &matrix, const Vector &point,
 
 /** Rotate the entire molecule by the matrix 'matrix' (which may not actually be a
     rotation matrix) about the point 'point'. */
-void MoleculeDataPvt::rotate(const Matrix &matrix, const Vector &point)
+void MoleculeData::rotate(const Matrix &matrix, const Vector &point)
 {
     //create a workspace for the move
     MoveWorkspace workspace(_coords);
@@ -1473,7 +1176,7 @@ void MoleculeDataPvt::rotate(const Matrix &matrix, const Vector &point)
 
 /** Internal function used to rotate the entire molecule by the quaternion 'quat'
     about the point 'point', as part of a larger move */
-void MoleculeDataPvt::rotate(const Quaternion &quat, const Vector &point,
+void MoleculeData::rotate(const Quaternion &quat, const Vector &point,
                              MoveWorkspace &workspace) const
 {
     if (quat.isIdentity())
@@ -1483,7 +1186,7 @@ void MoleculeDataPvt::rotate(const Quaternion &quat, const Vector &point,
 }
 
 /** Rotate the entire molecule by the quaternion 'quat' about the point 'point' */
-void MoleculeDataPvt::rotate(const Quaternion &quat, const Vector &point)
+void MoleculeData::rotate(const Quaternion &quat, const Vector &point)
 {
     if (quat.isIdentity())
         return;
@@ -1493,7 +1196,7 @@ void MoleculeDataPvt::rotate(const Quaternion &quat, const Vector &point)
 
 /** Internal function used to rotate the residue described by 'resinfo' by the
     matrix 'matrix' about the point 'point', as part of an existing move */
-void MoleculeDataPvt::rotate(const ResidueInfo &resinfo, const Matrix &matrix,
+void MoleculeData::rotate(const ResidueInfo &resinfo, const Matrix &matrix,
                              const Vector &point, MoveWorkspace &workspace) const
 {
     //loop over all atoms in the residue
@@ -1514,7 +1217,7 @@ void MoleculeDataPvt::rotate(const ResidueInfo &resinfo, const Matrix &matrix,
 
 /** Internal function to rotate all of the atoms in the residue represented by 'resinfo'
     by the matrix 'matrix' about the point 'point'. */
-void MoleculeDataPvt::rotate(const ResidueInfo &resinfo, const Matrix &matrix,
+void MoleculeData::rotate(const ResidueInfo &resinfo, const Matrix &matrix,
                              const Vector &point)
 {
     //create the workspace
@@ -1533,7 +1236,7 @@ void MoleculeDataPvt::rotate(const ResidueInfo &resinfo, const Matrix &matrix,
 
     \throw SireMol::missing_residue
 */
-void MoleculeDataPvt::rotate(ResNum resnum, const Matrix &matrix,
+void MoleculeData::rotate(ResNum resnum, const Matrix &matrix,
                              const Vector &point, MoveWorkspace &workspace) const
 {
     rotate( info().residue(resnum), matrix, point, workspace );
@@ -1544,7 +1247,7 @@ void MoleculeDataPvt::rotate(ResNum resnum, const Matrix &matrix,
 
     \throw SireMol::missing_residue
 */
-void MoleculeDataPvt::rotate(ResNum resnum, const Matrix &matrix,
+void MoleculeData::rotate(ResNum resnum, const Matrix &matrix,
                              const Vector &point)
 {
     rotate( info().residue(resnum), matrix, point );
@@ -1555,7 +1258,7 @@ void MoleculeDataPvt::rotate(ResNum resnum, const Matrix &matrix,
 
     \throw SireError::invalid_index
 */
-void MoleculeDataPvt::rotate(ResID resid, const Matrix &matrix,
+void MoleculeData::rotate(ResID resid, const Matrix &matrix,
                              const Vector &point, MoveWorkspace &workspace) const
 {
     rotate( info().residue(resid), matrix, point, workspace );
@@ -1566,7 +1269,7 @@ void MoleculeDataPvt::rotate(ResID resid, const Matrix &matrix,
 
     \throw SireError::invalid_index
 */
-void MoleculeDataPvt::rotate(ResID resid, const Matrix &matrix,
+void MoleculeData::rotate(ResID resid, const Matrix &matrix,
                              const Vector &point)
 {
     rotate( info().residue(resid), matrix, point );
@@ -1574,7 +1277,7 @@ void MoleculeDataPvt::rotate(ResID resid, const Matrix &matrix,
 
 /** Internal function used to rotate a residue represented by 'resinfo' about
     the quaternion 'quat' about the point 'point' as part of an existing move */
-void MoleculeDataPvt::rotate(const ResidueInfo &resinfo, const Quaternion &quat,
+void MoleculeData::rotate(const ResidueInfo &resinfo, const Quaternion &quat,
                              const Vector &point, MoveWorkspace &workspace) const
 {
     if (quat.isIdentity())
@@ -1585,7 +1288,7 @@ void MoleculeDataPvt::rotate(const ResidueInfo &resinfo, const Quaternion &quat,
 
 /** Internal function used to rotate a residue represented by 'resinfo' about
     the quaternion 'quat' about the point 'point' */
-void MoleculeDataPvt::rotate(const ResidueInfo &resinfo, const Quaternion &quat,
+void MoleculeData::rotate(const ResidueInfo &resinfo, const Quaternion &quat,
                              const Vector &point)
 {
     if (quat.isIdentity())
@@ -1599,7 +1302,7 @@ void MoleculeDataPvt::rotate(const ResidueInfo &resinfo, const Quaternion &quat,
 
     \throw SireMol::missing_residue
 */
-void MoleculeDataPvt::rotate(ResNum resnum, const Quaternion &quat,
+void MoleculeData::rotate(ResNum resnum, const Quaternion &quat,
                              const Vector &point, MoveWorkspace &workspace) const
 {
     rotate( info().residue(resnum), quat, point, workspace );
@@ -1610,7 +1313,7 @@ void MoleculeDataPvt::rotate(ResNum resnum, const Quaternion &quat,
 
     \throw SireMol::missing_residue
 */
-void MoleculeDataPvt::rotate(ResNum resnum, const Quaternion &quat,
+void MoleculeData::rotate(ResNum resnum, const Quaternion &quat,
                              const Vector &point)
 {
     rotate( info().residue(resnum), quat, point );
@@ -1621,7 +1324,7 @@ void MoleculeDataPvt::rotate(ResNum resnum, const Quaternion &quat,
 
     \throw SireError::invalid_index
 */
-void MoleculeDataPvt::rotate(ResID resid, const Quaternion &quat,
+void MoleculeData::rotate(ResID resid, const Quaternion &quat,
                              const Vector &point, MoveWorkspace &workspace) const
 {
     rotate( info().residue(resid), quat, point, workspace );
@@ -1632,7 +1335,7 @@ void MoleculeDataPvt::rotate(ResID resid, const Quaternion &quat,
 
     \throw SireError::invalid_index
 */
-void MoleculeDataPvt::rotate(ResID resid, const Quaternion &quat,
+void MoleculeData::rotate(ResID resid, const Quaternion &quat,
                              const Vector &point)
 {
     rotate( info().residue(resid), quat, point );
@@ -1644,7 +1347,7 @@ void MoleculeDataPvt::rotate(ResID resid, const Quaternion &quat,
 
     \throw SireMol::missing_atom
 */
-void MoleculeDataPvt::rotate(const ResidueInfo &resinfo, const QStringList &atomnames,
+void MoleculeData::rotate(const ResidueInfo &resinfo, const QStringList &atomnames,
                              const Matrix &matrix, const Vector &point,
                              MoveWorkspace &workspace) const
 {
@@ -1669,7 +1372,7 @@ void MoleculeDataPvt::rotate(const ResidueInfo &resinfo, const QStringList &atom
 
     \throw SireMol::missing_atom
 */
-void MoleculeDataPvt::rotate(const ResidueInfo &resinfo, const QStringList &atomnames,
+void MoleculeData::rotate(const ResidueInfo &resinfo, const QStringList &atomnames,
                              const Matrix &matrix, const Vector &point)
 {
     if (matrix.isIdentity())
@@ -1692,7 +1395,7 @@ void MoleculeDataPvt::rotate(const ResidueInfo &resinfo, const QStringList &atom
 
     \throw SireMol::missing_atom
 */
-void MoleculeDataPvt::rotate(const ResidueInfo &resinfo, const QStringList &atomnames,
+void MoleculeData::rotate(const ResidueInfo &resinfo, const QStringList &atomnames,
                              const Quaternion &quat, const Vector &point,
                              MoveWorkspace &workspace) const
 {
@@ -1704,7 +1407,7 @@ void MoleculeDataPvt::rotate(const ResidueInfo &resinfo, const QStringList &atom
 
     \throw SireMol::missing_atom
 */
-void MoleculeDataPvt::rotate(const ResidueInfo &resinfo, const QStringList &atomnames,
+void MoleculeData::rotate(const ResidueInfo &resinfo, const QStringList &atomnames,
                              const Quaternion &quat, const Vector &point)
 {
     if (quat.isIdentity())
@@ -1728,7 +1431,7 @@ void MoleculeDataPvt::rotate(const ResidueInfo &resinfo, const QStringList &atom
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-void MoleculeDataPvt::rotate(ResNum resnum, const QStringList &atomnames,
+void MoleculeData::rotate(ResNum resnum, const QStringList &atomnames,
                              const Matrix &matrix, const Vector &point,
                              MoveWorkspace &workspace) const
 {
@@ -1741,7 +1444,7 @@ void MoleculeDataPvt::rotate(ResNum resnum, const QStringList &atomnames,
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-void MoleculeDataPvt::rotate(ResNum resnum, const QStringList &atomnames,
+void MoleculeData::rotate(ResNum resnum, const QStringList &atomnames,
                              const Matrix &matrix, const Vector &point)
 {
     rotate( info().residue(resnum), atomnames, matrix, point );
@@ -1754,7 +1457,7 @@ void MoleculeDataPvt::rotate(ResNum resnum, const QStringList &atomnames,
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-void MoleculeDataPvt::rotate(ResNum resnum, const QStringList &atomnames,
+void MoleculeData::rotate(ResNum resnum, const QStringList &atomnames,
                              const Quaternion &quat, const Vector &point,
                              MoveWorkspace &workspace) const
 {
@@ -1767,7 +1470,7 @@ void MoleculeDataPvt::rotate(ResNum resnum, const QStringList &atomnames,
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-void MoleculeDataPvt::rotate(ResNum resnum, const QStringList &atomnames,
+void MoleculeData::rotate(ResNum resnum, const QStringList &atomnames,
                              const Quaternion &quat, const Vector &point)
 {
     rotate( info().residue(resnum), atomnames, quat, point );
@@ -1780,7 +1483,7 @@ void MoleculeDataPvt::rotate(ResNum resnum, const QStringList &atomnames,
     \throw SireError::invalid_index
     \throw SireMol::missing_atom
 */
-void MoleculeDataPvt::rotate(ResID resid, const QStringList &atomnames,
+void MoleculeData::rotate(ResID resid, const QStringList &atomnames,
                              const Matrix &matrix, const Vector &point,
                              MoveWorkspace &workspace) const
 {
@@ -1793,7 +1496,7 @@ void MoleculeDataPvt::rotate(ResID resid, const QStringList &atomnames,
     \throw SireError::invalid_index
     \throw SireMol::missing_atom
 */
-void MoleculeDataPvt::rotate(ResID resid, const QStringList &atomnames,
+void MoleculeData::rotate(ResID resid, const QStringList &atomnames,
                              const Matrix &matrix, const Vector &point)
 {
     rotate( info().residue(resid), atomnames, matrix, point );
@@ -1806,7 +1509,7 @@ void MoleculeDataPvt::rotate(ResID resid, const QStringList &atomnames,
     \throw SireError::invalid_index
     \throw SireMol::missing_atom
 */
-void MoleculeDataPvt::rotate(ResID resid, const QStringList &atomnames,
+void MoleculeData::rotate(ResID resid, const QStringList &atomnames,
                              const Quaternion &quat, const Vector &point,
                              MoveWorkspace &workspace) const
 {
@@ -1819,7 +1522,7 @@ void MoleculeDataPvt::rotate(ResID resid, const QStringList &atomnames,
     \throw SireError::invalid_index
     \throw SireMol::missing_atom
 */
-void MoleculeDataPvt::rotate(ResID resid, const QStringList &atomnames,
+void MoleculeData::rotate(ResID resid, const QStringList &atomnames,
                              const Quaternion &quat, const Vector &point)
 {
     rotate( info().residue(resid), atomnames, quat, point );
@@ -1830,7 +1533,7 @@ void MoleculeDataPvt::rotate(ResID resid, const QStringList &atomnames,
 
     \throw SireMol::missing_atom
 */
-void MoleculeDataPvt::rotate(const QSet<AtomIndex> &atoms, const Matrix &matrix,
+void MoleculeData::rotate(const QSet<AtomIndex> &atoms, const Matrix &matrix,
                              const Vector &point, MoveWorkspace &workspace) const
 {
     //loop over all of the atoms
@@ -1854,7 +1557,7 @@ void MoleculeDataPvt::rotate(const QSet<AtomIndex> &atoms, const Matrix &matrix,
 
     \throw SireMol::missing_atom
 */
-void MoleculeDataPvt::rotate(const QSet<AtomIndex> &atoms, const Matrix &matrix,
+void MoleculeData::rotate(const QSet<AtomIndex> &atoms, const Matrix &matrix,
                              const Vector &point)
 {
     if (matrix.isIdentity())
@@ -1876,7 +1579,7 @@ void MoleculeDataPvt::rotate(const QSet<AtomIndex> &atoms, const Matrix &matrix,
 
     \throw SireMol::missing_atom
 */
-void MoleculeDataPvt::rotate(const QSet<Atom> &atoms, const Quaternion &quat,
+void MoleculeData::rotate(const QSet<Atom> &atoms, const Quaternion &quat,
                              const Vector &point, MoveWorkspace &workspace) const
 {
     if (quat.isIdentity())
@@ -1890,7 +1593,7 @@ void MoleculeDataPvt::rotate(const QSet<Atom> &atoms, const Quaternion &quat,
 
     \throw SireMol::missing_atom
 */
-void MoleculeDataPvt::rotate(const QSet<Atom> &atoms, const Quaternion &quat,
+void MoleculeData::rotate(const QSet<Atom> &atoms, const Quaternion &quat,
                              const Vector &point)
 {
     //create the workspace
@@ -1909,7 +1612,7 @@ void MoleculeDataPvt::rotate(const QSet<Atom> &atoms, const Quaternion &quat,
 
     \throw SireMol::missing_atom
 */
-void MoleculeDataPvt::rotate(const AtomIndex &atm, const Matrix &matrix,
+void MoleculeData::rotate(const AtomIndex &atm, const Matrix &matrix,
                              const Vector &point, MoveWorkspace &workspace) const
 {
     //get the index for this atom
@@ -1926,7 +1629,7 @@ void MoleculeDataPvt::rotate(const AtomIndex &atm, const Matrix &matrix,
 
     \throw SireMol::missing_atom
 */
-void MoleculeDataPvt::rotate(const AtomIndex &atm, const Matrix &matrix,
+void MoleculeData::rotate(const AtomIndex &atm, const Matrix &matrix,
                              const Vector &point)
 {
     //create a workspace for the move
@@ -1947,7 +1650,7 @@ void MoleculeDataPvt::rotate(const AtomIndex &atm, const Matrix &matrix,
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-void MoleculeDataPvt::rotate(const AtomIDGroup &group, const Matrix &matrix,
+void MoleculeData::rotate(const AtomIDGroup &group, const Matrix &matrix,
                              const Vector &point, MoveWorkspace &workspace) const
 {
     //loop over all of the residues
@@ -1968,7 +1671,7 @@ void MoleculeDataPvt::rotate(const AtomIDGroup &group, const Matrix &matrix,
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-void MoleculeDataPvt::rotate(const AtomIDGroup &group, const Matrix &matrix,
+void MoleculeData::rotate(const AtomIDGroup &group, const Matrix &matrix,
                              const Vector &point)
 {
     if (matrix.isIdentity())
@@ -1992,7 +1695,7 @@ void MoleculeDataPvt::rotate(const AtomIDGroup &group, const Matrix &matrix,
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-void MoleculeDataPvt::rotate(const AtomIDGroup &group, const Quaternion &quat,
+void MoleculeData::rotate(const AtomIDGroup &group, const Quaternion &quat,
                              const Vector &point, MoveWorkspace &workspace) const
 {
     if (quat.isIdentity())
@@ -2007,7 +1710,7 @@ void MoleculeDataPvt::rotate(const AtomIDGroup &group, const Quaternion &quat,
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-void MoleculeDataPvt::rotate(const AtomIDGroup &group, const Quaternion &quat,
+void MoleculeData::rotate(const AtomIDGroup &group, const Quaternion &quat,
                              const Vector &point)
 {
     //create a workspace for this move
@@ -2034,7 +1737,7 @@ void MoleculeDataPvt::rotate(const AtomIDGroup &group, const Quaternion &quat,
     \throw SireMol::missing_residue
     \throw SireMol::anchor_error
 */
-void MoleculeDataPvt::change(const Bond &bnd, double delta,
+void MoleculeData::change(const Bond &bnd, double delta,
                 const AtomIDGroup &group0, const AtomIDGroup &group1,
                 const WeightFunction &weightfunc, const AtomIndexSet &anchors)
 {
@@ -2093,7 +1796,7 @@ void MoleculeDataPvt::change(const Bond &bnd, double delta,
     \throw SireMol::missing_residue
     \throw SireMol::anchor_error
 */
-void MoleculeDataPvt::change(const SireMol::Angle &ang, const SireMaths::Angle &delta,
+void MoleculeData::change(const SireMol::Angle &ang, const SireMaths::Angle &delta,
                 const AtomIDGroup &group0, const AtomIDGroup &group1,
                 const WeightFunction &weightfunc, const AtomIndexSet &anchors)
 {
@@ -2155,7 +1858,7 @@ void MoleculeDataPvt::change(const SireMol::Angle &ang, const SireMaths::Angle &
     \throw SireMol::missing_residue
     \throw SireMol::anchor_error
 */
-void MoleculeDataPvt::change(const Bond &dih, const SireMaths::Angle &delta,
+void MoleculeData::change(const Bond &dih, const SireMaths::Angle &delta,
                 const AtomIDGroup &group0, const AtomIDGroup &group1,
                 const WeightFunction &weightfunc, const AtomIndexSet &anchors)
 {
@@ -2217,669 +1920,9 @@ void MoleculeDataPvt::change(const Bond &dih, const SireMaths::Angle &delta,
     \throw SireMol::missing_residue
     \throw SireMol::anchor_error
 */
-void MoleculeDataPvt::change(const Improper &improper, const SireMaths::Angle &delta,
+void MoleculeData::change(const Improper &improper, const SireMaths::Angle &delta,
                 const AtomIDGroup &group0, const AtomIDGroup &group1,
                 const WeightFunction &weightfunc, const AtomIndexSet &anchors)
 {
     throw SireError::incomplete_code("Need to write this!", CODELOC);
-}
-
-////////////
-//////////// Implementation of MoleculeData
-////////////
-
-static const RegisterMetaType<MoleculeData> r_moldata("SireMol::MoleculeData",
-                                                      MAGIC_ONLY);
-
-/** Serialise the molecule data to a binary datastream */
-QDataStream& operator<<(QDataStream &ds, const MoleculeData &mol)
-{
-    writeHeader(ds, r_moldata, 1);
-
-    SharedDataStream(ds) << mol.d;
-
-    return ds;
-}
-
-/** Deserialise the molecule data from a binary datastream - this will detach
-    this data from any other shared copies before reading in the data. */
-QDataStream& operator>>(QDataStream &ds, MoleculeData &mol)
-{
-    VersionID v = readHeader(ds, r_moldata);
-
-    if (v == 1)
-    {
-        SharedDataStream(ds) >> mol.d;
-    }
-    else
-        throw version_error(v, "1", r_moldata, CODELOC);
-
-    return ds;
-}
-
-/** Shared null Molecule */
-static QSharedDataPointer<MoleculeDataPvt> shared_null( new MoleculeDataPvt() );
-
-/** Construct a new, empty molecule. */
-MoleculeData::MoleculeData() : d( shared_null )
-{}
-
-/** Construct a molecule from the EditMol 'editmol' using the conversion function
-    'convertfunc'
-*/
-MoleculeData::MoleculeData(const EditMol &editmol, const ConvertFunction &convertfunc)
-             : d( new MoleculeDataPvt(editmol, convertfunc) )
-{}
-
-/** Copy constructor - fast as this class is implicitly shared */
-MoleculeData::MoleculeData(const MoleculeData &other) : d(other.d)
-{}
-
-/** Destructor */
-MoleculeData::~MoleculeData()
-{}
-
-/** Assignment operator - fast as this class is implicitly shared */
-MoleculeData& MoleculeData::operator=(const MoleculeData &other)
-{
-    d = other.d;
-    return *this;
-}
-
-/** Comparison operator - two molecules are equal if they have the same
-    ID and version */
-bool MoleculeData::operator==(const MoleculeData &other) const
-{
-    return d.get() == other.d.get() or
-           *d == *(other.d);
-}
-
-/** Comparison operator - two molecules are different if they have different
-    molecule ID numbers. */
-bool MoleculeData::operator!=(const MoleculeData &other) const
-{
-    return d.get() != other.d.get() and
-           *d != *(other.d);
-}
-
-/** Return a Molecule view of a copy of this data. This is fast
-    as this class is implicitly shared. */
-Molecule MoleculeData::molecule()
-{
-    return Molecule(*this);
-}
-
-/** Return a Residue view of a copy of this data - this is fast
-    as this class is implicitly shared.
-
-    \throw SireMol::missing_residue
-*/
-Residue MoleculeData::residue(ResNum resnum)
-{
-    return Residue(*this, resnum);
-}
-
-/** Return a Residue view of the first residue called 'resname'.
-    This is fast as this class is implicitly shared.
-
-    \throw SireMol::missing_residue
-*/
-Residue MoleculeData::residue(const QString &resname)
-{
-    QVector<ResNum> resnums = d->residueNumbers(resname);
-
-    if (resnums.count() == 0)
-        throw SireMol::missing_residue(QObject::tr(
-            "There is no residue called \"%1\" in molecule \"%2\"")
-                .arg(resname, name()), CODELOC);
-
-    return residue(resnums[0]);
-}
-
-/** Return the set of all Residues in the molecule. These residues are
-    all independent copies of this data. This is fast as they are all
-    implicit copies. */
-QHash<ResNum, Residue> MoleculeData::residues()
-{
-    QVector<ResNum> resnums = d->residueNumbers();
-
-    QHash<ResNum,Residue> residus;
-    residus.reserve(resnums.count());
-
-    for (int i=0; i<resnums.count(); ++i)
-        residus.insert( resnums[i], residue(resnums[i]) );
-
-    return residus;
-}
-
-/** Return a Residue copy of the residue at index 'resid' in the molecule.
-
-    \throw SireError::invalid_index
-*/
-Residue MoleculeData::at(ResID resid)
-{
-    return Residue(*this, resid);
-}
-
-/** Return the ID number of this molecule */
-MoleculeID MoleculeData::ID() const
-{
-    return d->ID();
-}
-
-/** Give this Molecule a new ID number. */
-void MoleculeData::setNewID()
-{
-    d->setNewID();
-}
-
-/** Return the version number of this molecule */
-const MoleculeVersion& MoleculeData::version() const
-{
-    return d->version();
-}
-
-/** Increment the major version number of this molecule */
-void MoleculeData::incrementMajorVersion()
-{
-    d->incrementMajorVersion();
-}
-
-/** Increment the minor version number of this molecule */
-void MoleculeData::incrementMinorVersion()
-{
-    d->incrementMinorVersion();
-}
-
-/** Return the connectivity of the molecule */
-MoleculeBonds MoleculeData::connectivity() const
-{
-    return d->connectivity();
-}
-
-/** Return the connectivity of the residue 'resnum'
-
-    \throw SireMol::missing_residue
-*/
-ResidueBonds MoleculeData::connectivity(ResNum resnum) const
-{
-    return d->connectivity(resnum);
-}
-
-/** Return the connectivity of the residue at index 'resid'
-
-    \throw SireMol::invalid_index
-*/
-ResidueBonds MoleculeData::connectivity(ResID resid) const
-{
-    return d->connectivity(resid);
-}
-
-/** Return the MoleculeInfo containing metadata for this molecule */
-const MoleculeInfo& MoleculeData::info() const
-{
-    return d->info();
-}
-
-/** Return an array of all of the atoms in residue 'resnum'
-
-    \throw SireMol::missing_residue
-*/
-QVector<Atom> MoleculeData::atoms(ResNum resnum) const
-{
-    return d->atomVector(resnum);
-}
-
-/** Return an array of all of the atoms in the residue at index 'resid'
-
-    \throw SireError::invalid_index
-*/
-QVector<Atom> MoleculeData::atoms(ResID resid) const
-{
-    return d->atomVector(resid);
-}
-
-/** Return an array of all of the atoms in the molecule */
-QVector<Atom> MoleculeData::atoms() const
-{
-    return d->atoms();
-}
-
-/** Return the a copy of all of the CutGroups in the molecule,
-    indexed by CutGroupID */
-QHash<CutGroupID, CutGroup> MoleculeData::cutGroups() const
-{
-    return d->cutGroups();
-}
-
-/** Return a copy of all of the CutGroups that contain
-    atoms from the residue with number 'resnum', indexed
-    by CutGroupID
-
-    \throw SireMol::missing_residue
-*/
-QHash<CutGroupID,CutGroup> MoleculeData::cutGroups(ResNum resnum) const
-{
-    return d->cutGroups(resnum);
-}
-
-/** Return a copy of all of the CutGroups that contain
-    atoms from the residue with index 'resid', indexed
-    by CutGroupID
-
-    \throw SireError::invalid_index
-*/
-QHash<CutGroupID,CutGroup> MoleculeData::cutGroups(ResID resid) const
-{
-    return d->cutGroups(resid);
-}
-
-#warning I am here!
-
-/** Return the CutGroup with ID == id
-
-    \throw SireMol::missing_cutgroup
-*/
-const CutGroup& MoleculeData::cutGroup(CutGroupID id) const
-{
-    return d().cutGroup(id);
-}
-
-/** Return the atom in CutGroup with ID == id
-
-    \throw SireMol::missing_cutgroup
-    \throw SireMol::missing_atom
-*/
-const Atom& MoleculeData::atom(const CGAtomID &id) const
-{
-    return d().atom(id);
-}
-
-/** Return the name of the molecule */
-const QString& MoleculeData::name() const
-{
-    return d().name();
-}
-
-/** Return the name of residue 'resnum'
-
-    \throw SireMol::missing_residue
-*/
-QString MoleculeData::residueName(ResNum resnum) const
-{
-    return d().residueName(resnum);
-}
-
-/** Return whether or not this is an empty molecule (contains no atoms or bonds) */
-bool MoleculeData::isEmpty() const
-{
-    return d().isEmpty();
-}
-
-/** Return whether the residue 'resnum' is empty
-
-    \throw SireMol::missing_residue
-*/
-bool MoleculeData::isEmpty(ResNum resnum) const
-{
-    return d().isEmpty(resnum);
-}
-
-/** Return the list of residue numbers in this molecule */
-ResNumList MoleculeData::residueNumbers() const
-{
-    return d().residueNumbers();
-}
-
-/** Return the list of residue names in this molecule */
-QStringList MoleculeData::residueNames() const
-{
-    return d().residueNames();
-}
-
-/** Return the list of residue numbers of residues called 'resname'. This
-    returns an empty list if there are no residues called 'resname'. */
-ResNumList MoleculeData::residueNumbers(const QString &resnam) const
-{
-    return d().residueNumbers(resnam);
-}
-
-/** Return the list of residues that are bonded to residue 'resnum'. This returns
-    an empty list if there are no other residues bonded to residue 'resnum'
-
-    \throw SireMol::missing_residue
-*/
-ResidueSet MoleculeData::residuesBondedTo(ResNum resnum)
-{
-    d().checkResidue(resnum);
-    ResNumList resnums = connectivity().resNumsBondedTo(resnum);
-
-    ResidueSet residus;
-    foreach( ResNum rnum,  resnums )
-        residus.insert( Residue(*this, rnum) );
-
-    return residus;
-}
-
-/** Return a const reference to the atom with index 'atm'
-
-    \throw SireMol::missing_atom
-*/
-const Atom& MoleculeData::atom(const AtomIndex &atm) const
-{
-    return d().atom(atm);
-}
-
-/** Return whether or not the molecule contains a residue with number 'resnum' */
-bool MoleculeData::contains(ResNum resnum) const
-{
-    return d().contains(resnum);
-}
-
-/** Return whether or not the molecule contains an atom with index 'atm' */
-bool MoleculeData::contains(const AtomIndex &atm) const
-{
-    return d().contains(atm);
-}
-
-/** Return whether or not the molecule contains the bond 'bond' */
-bool MoleculeData::contains(const Bond &bond) const
-{
-    return d().contains(bond);
-}
-
-/** Return the ith atom of residue 'resnum'
-
-    \throw SireMol::missing_residue
-    \throw SireMol::invalid_index
-*/
-const Atom& MoleculeData::at(ResNum resnum, int i) const
-{
-    return d().at(resnum,i);
-}
-
-/** Return the total number of atoms in the molecule */
-int MoleculeData::nAtoms() const
-{
-    return d().nAtoms();
-}
-
-/** Return the total number of atoms in residue 'resnum'
-
-    \throw SireMol::missing_residue
-*/
-int MoleculeData::nAtoms(ResNum resnum) const
-{
-    return d().nAtoms(resnum);
-}
-
-/** Return the total number of atoms in CutGroup 'id' */
-int MoleculeData::nAtoms(CutGroupID id) const
-{
-    return d().nAtoms(id);
-}
-
-/** Return the total number of residues in the molecule */
-int MoleculeData::nResidues() const
-{
-    return d().nResidues();
-}
-
-/** Return the total number of CutGroups in the molecule */
-int MoleculeData::nCutGroups() const
-{
-    return d().nCutGroups();
-}
-
-/** Return the list of atom names in residue 'resnum'
-
-    \throw SireMol::missing_residue
-*/
-QStringList MoleculeData::atomNames(ResNum resnum) const
-{
-    return d().atomNames(resnum);
-}
-
-/** Check that the residue with number 'resnum' exists - if not, then
-    throw an exception.
-
-    \throw SireMol::missing_residue
-*/
-void MoleculeData::checkResidue(ResNum resnum) const
-{
-    d().checkResidue(resnum);
-}
-
-/** Return the geometric line representing the bond 'bnd'
-
-    \throw SireMol::missing_atom
-*/
-SireMaths::Line MoleculeData::bond(const Bond &bnd) const
-{
-    return d().bond(bnd);
-}
-
-/** Return the geometric triangle representing the angle 'ang'
-
-    \throw SireMol::missing_atom
-*/
-SireMaths::Triangle MoleculeData::angle(const SireMol::Angle &ang) const
-{
-    return d().angle(ang);
-}
-
-/** Return the geometric torsion representing the dihedral 'dih'
-
-    \throw SireMol::missing_atom
-*/
-SireMaths::Torsion MoleculeData::dihedral(const Dihedral &dih) const
-{
-    return d().dihedral(dih);
-}
-
-/** Return the geometric torsion representing the improper angle 'imp'
-
-    \throw SireMol::missing_atom
-*/
-SireMaths::Torsion MoleculeData::improper(const Improper &imp) const
-{
-    return d().improper(imp);
-}
-
-/** Return the length of the bond 'bnd'
-
-    \throw SireMol::missing_atom
-*/
-double MoleculeData::measure(const Bond &bnd) const
-{
-    return d().measure(bnd);
-}
-
-/** Return the size of the angle 'ang'
-
-    \throw SireMol::missing_atom
-*/
-SireMaths::Angle MoleculeData::measure(const SireMol::Angle &ang) const
-{
-    return d().measure(ang);
-}
-
-/** Return the size of the dihedral 'dih'
-
-    \throw SireMol::missing_atom
-*/
-SireMaths::Angle MoleculeData::measure(const Dihedral &dih) const
-{
-    return d().measure(dih);
-}
-
-/** Return the size of the improper angle 'imp'
-
-    \throw SireMol::missing_atom
-*/
-SireMaths::Angle MoleculeData::measure(const Improper &imp) const
-{
-    return d().measure(imp);
-}
-
-/** Return the relative weight of the two atom groups 'group0' and 'group1' using
-    the supplied weight function
-
-    \throw SireMol::missing_atom
-    \throw SireMol::missing_residue
-*/
-double MoleculeData::getWeight(const AtomIDGroup &group0, const AtomIDGroup &group1,
-                               const WeightFunction &weightfunc) const
-{
-    return d().getWeight(group0,group1,weightfunc);
-}
-
-/** Translate the whole molecule by 'delta' */
-void MoleculeData::translate(const Vector &delta)
-{
-    d().translate(delta);
-}
-
-/** Translate the atom group 'group' by 'delta'
-
-    \throw SireMol::missing_atom
-    \throw SireMol::missing_residue
-*/
-void MoleculeData::translate(const AtomIDGroup &group, const Vector &delta)
-{
-    d().translate(group,delta);
-}
-
-/** Translate the atoms whose indexes are in 'atoms' by 'delta'
-
-    \throw SireMol::missing_atom
-*/
-void MoleculeData::translate(const AtomIndexSet &atoms, const Vector &delta)
-{
-    d().translate(atoms,delta);
-}
-
-/** Translate atoms whose names are in 'atoms' in residue 'resnum' by 'delta'
-
-    \throw SireMol::missing_atom
-    \throw SireMol::missing_residue
-*/
-void MoleculeData::translate(ResNum resnum, const QStringList &atoms, const Vector &delta)
-{
-    d().translate(resnum,atoms,delta);
-}
-
-/** Translate the whole of the residue 'resnum' by 'delta'
-
-    \throw SireMol::missing_residue
-*/
-void MoleculeData::translate(ResNum resnum, const Vector &delta)
-{
-    d().translate(resnum,delta);
-}
-
-/** Rotate the whole molecule by the quaternion 'quat' about the point 'point' */
-void MoleculeData::rotate(const Quaternion &quat, const Vector &point)
-{
-    d().rotate(quat,point);
-}
-
-/** Rotate the atoms in 'group' by 'quat' about 'point'
-
-    \throw SireMol::missing_atom
-    \throw SireMol::missing_residue
-*/
-void MoleculeData::rotate(const AtomIDGroup &group, const Quaternion &quat, const Vector &point)
-{
-    d().rotate(group,quat,point);
-}
-
-/** Rotate the atoms whose indexes are in 'atoms' by 'quat' about 'point'
-
-    \throw SireMol::missing_atom
-*/
-void MoleculeData::rotate(const AtomIndexSet &atoms, const Quaternion &quat, const Vector &point)
-{
-    d().rotate(atoms,quat,point);
-}
-
-/** Rotate the atoms whose names are in 'atoms' and that are in residue 'resnum' by
-    'quat' about 'point'
-
-    \throw SireMol::missing_atom
-    \throw SireMol::missing_residue
-*/
-void MoleculeData::rotate(ResNum resnum, const QStringList &atoms, const Quaternion &quat,
-                          const Vector &point)
-{
-    d().rotate(resnum,atoms,quat,point);
-}
-
-/** Rotate the whole of residue 'resnum' by 'quat' about 'point'
-
-    \throw SireMol::missing_residue
-*/
-void MoleculeData::rotate(ResNum resnum, const Quaternion &quat, const Vector &point)
-{
-    d().rotate(resnum,quat,point);
-}
-
-/** Translate 'group0' and 'group1' by 'delta' along the vector of bond 'bnd', weighting the motion
-    using the weight function 'weightfunc' and ensuring that the atoms in 'anchors' are
-    anchored.
-
-    \throw SireMol::missing_atom
-    \throw SireMol::missing_residue
-    \throw SireMol::anchor_error
-*/
-void MoleculeData::change(const Bond &bnd, double delta,
-                          const AtomIDGroup &group0, const AtomIDGroup &group1,
-                          const WeightFunction &weightfunc, const AtomIndexSet &anchors)
-{
-    d().change(bnd,delta,group0,group1,weightfunc,anchors);
-}
-
-/** Rotate 'group0' and 'group1' by 'delta' about the vector perpendicular to 'ang' and
-    about the point of atom1 in the angle, with the motion weighted using 'weightfunc' and
-    ensuring that the atoms in 'anchors' are anchored.
-
-    \throw SireMol::missing_atom
-    \throw SireMol::missing_residue
-    \throw SireMol::anchor_error
-*/
-void MoleculeData::change(const SireMol::Angle &ang, const SireMaths::Angle &delta,
-                          const AtomIDGroup &group0, const AtomIDGroup &group1,
-                          const WeightFunction &weightfunc, const AtomIndexSet &anchors)
-{
-    d().change(ang,delta,group0,group1,weightfunc,anchors);
-}
-
-/** Rotate 'group0' and 'group1' by delta about the vector of the bond 'bnd' and
-    the point in the centre of the vector, with the motion weighted using 'weightfunc'
-    and ensuring that the atoms in 'anchors' are anchored.
-
-    \throw SireMol::missing_atom
-    \throw SireMol::missing_residue
-    \throw SireMol::anchor_error
-*/
-void MoleculeData::change(const Bond &bnd, const SireMaths::Angle &delta,
-                          const AtomIDGroup &group0, const AtomIDGroup &group1,
-                          const WeightFunction &weightfunc, const AtomIndexSet &anchors)
-{
-    d().change(bnd,delta,group0,group1,weightfunc,anchors);
-}
-
-/** Rotate 'group0' and 'group1' about the improper 'imp' by 'delta', weighting the
-    motion of the two groups by 'weightfunc' and ensuring that the atoms in
-    'anchors' are anchored.
-
-    \throw SireMol::missing_atom
-    \throw SireMol::missing_residue
-    \throw SireMol::anchor_error
-*/
-void MoleculeData::change(const Improper &imp, const SireMaths::Angle &delta,
-                          const AtomIDGroup &group0, const AtomIDGroup &group1,
-                          const WeightFunction &weightfunc, const AtomIndexSet &anchors)
-{
-    d().change(imp,delta,group0,group1,weightfunc,anchors);
 }

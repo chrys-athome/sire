@@ -34,6 +34,8 @@ QDataStream& operator>>(QDataStream&, SireMol::CutGroup&);
 namespace SireMol
 {
 
+class AtomInfoGroup;
+
 using SireVol::CoordGroup;
 
 using SireMaths::Vector;
