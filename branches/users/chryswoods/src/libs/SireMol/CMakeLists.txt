@@ -17,11 +17,9 @@ set ( SIREMOL_SOURCES
       atomindex.cpp	     
       atominfo.cpp
       atominfogroup.cpp
-      atomset.cpp	     
       bond.cpp	     
       cgatomid.cpp
       convertfunction.cpp  
-      convertmolecule.cpp  
       cutgroup.cpp	     
       dihedral.cpp	     
       editmol.cpp	     
@@ -38,18 +36,15 @@ set ( SIREMOL_SOURCES
       molecule.cpp
       moleculedata.cpp
       moleculeinfo.cpp
-      moleculesignature.cpp
       moleculeversion.cpp
       residatomid.cpp
       residue.cpp
       residuebonds.cpp
       residuecutting.cpp
-      residueidset.cpp
       residueinfo.cpp
       resnumatomid.cpp
       resnumindexid.cpp
       splitmolecule.cpp
-      templatefunction.cpp
       weightfunction.cpp
     )
 

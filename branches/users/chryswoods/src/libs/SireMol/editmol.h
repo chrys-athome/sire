@@ -2,8 +2,6 @@
 #define SIREMOL_EDITMOL_H
 
 #include "editmoldata.h"
-#include "bondset.h"
-#include "atomset.h"
 
 SIRE_BEGIN_HEADER
 
