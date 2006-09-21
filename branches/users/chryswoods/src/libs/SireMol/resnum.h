@@ -19,17 +19,17 @@ namespace SireMol
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT ResNum : public ID<ResNum>
+class SIREMOL_EXPORT ResNum : public IDBase
 {
 
 public:
-    ResNum() : ID<ResNum>()
+    ResNum() : IDBase()
     {}
 
-    explicit ResNum(quint32 id) : ID<ResNum>(id)
+    explicit ResNum(quint32 id) : IDBase(id)
     {}
 
-    ResNum(const ResNum &other) : ID<ResNum>(other)
+    ResNum(const ResNum &other) : IDBase(other)
     {}
 
     ~ResNum()

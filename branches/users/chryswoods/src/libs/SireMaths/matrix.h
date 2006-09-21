@@ -24,7 +24,7 @@ class Matrix4;
 
 /**
 This class represents a 3x3 square matrix, used to represent 3D transformations.
- 
+
 @author Christopher Woods
 */
 class SIREMATHS_EXPORT Matrix
@@ -40,12 +40,12 @@ public:
     Matrix(double sxx=1.0, double sxy=0.0, double sxz=0.0,
            double syx=0.0, double syy=1.0, double syz=0.0,
            double szx=0.0, double szy=0.0, double szz=1.0);
-    
+
     Matrix(const Vector& c1, const Vector& c2, const Vector& c3);
     Matrix(double val);
-    
+
     Matrix(const Matrix& m);
-    
+
     ~Matrix();
 
     Matrix transpose() const;
@@ -57,7 +57,7 @@ public:
     bool isSymmetric() const;
     void enforceSymmetric();
     Matrix getPrincipalAxes() const;
-    
+
     Vector column0() const;
     Vector column1() const;
     Vector column2() const;
@@ -70,9 +70,11 @@ public:
 
     void setToIdentity();
 
+    bool isIdentity() const;
+
     static Matrix identity();
     static Matrix zero();
-    
+
     bool operator==(const Matrix& m);
     bool operator!=(const Matrix& m);
 
@@ -94,9 +96,9 @@ public:
 
 protected:
     /** The components of the matrix */
-    
+
     //First column0, (xx,xy,xz)
-    double xx,xy,xz; 
+    double xx,xy,xz;
     //Now column1, (yx,yy,yz)
     double yx,yy,yz;
     //Now column2, (zx,zy,zz)

@@ -17,17 +17,17 @@ namespace SireMol
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT AtomID : public ID<AtomID>
+class SIREMOL_EXPORT AtomID : public IDBase
 {
 
 public:
-    AtomID() : ID<AtomID>()
+    AtomID() : IDBase()
     {}
 
-    explicit AtomID(quint32 id) : ID<AtomID>(id)
+    explicit AtomID(quint32 id) : IDBase(id)
     {}
 
-    AtomID(const AtomID &other) : ID<AtomID>(other)
+    AtomID(const AtomID &other) : IDBase(other)
     {}
 
     ~AtomID()

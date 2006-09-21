@@ -43,8 +43,11 @@ class ResNumAtomID;
 class ResIDAtomID;
 
 class AtomInfo;
+class AtomIndex;
 class ResidueInfo;
 class AtomInfoGroup;
+
+class EditMol;
 
 class MoleculeInfoPvt;
 
@@ -95,6 +98,8 @@ public:
     const AtomInfo& atom(const ResIDAtomID &rsid) const;
     const AtomInfo& atom(const CGAtomID &cgid) const;
 
+    const AtomInfoGroup& atomGroup(CutGroupID cgid) const;
+
     QSet<AtomInfo> getAtoms( const QSet<AtomID> &idxs ) const;
     QSet<AtomInfo> getAtoms( const QSet<AtomIndex> &atms ) const;
     QSet<AtomInfo> getAtoms( const QSet<ResNumAtomID> &rsids) const;
@@ -113,9 +118,11 @@ public:
     QString toString() const;
 
     int nResidues() const;
+    int nCutGroups() const;
 
     int nAtoms() const;
     int nAtoms(ResNum resnm) const;
+    int nAtoms(CutGroupID cgid) const;
 
     QVector<ResNum> residueNumbers() const;
     QVector<ResNum> residueNumbers(const QString &resname) const;

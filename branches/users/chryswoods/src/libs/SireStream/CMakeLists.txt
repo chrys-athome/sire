@@ -9,6 +9,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 add_library (SireStream
              getmagic.cpp
              magic_error.cpp
+             shareddatastream.cpp
              version_error.cpp)
 
 target_link_libraries (SireStream

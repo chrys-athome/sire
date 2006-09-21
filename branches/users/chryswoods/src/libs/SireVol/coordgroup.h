@@ -5,9 +5,9 @@
   *
   * C++ Interface: CoordGroupBase, CoordGroup and CoordGroupEditor
   *
-  * Description: 
+  * Description:
   * Interface to CoordGroupBase, CoordGroup and CoordGroupEditor
-  * 
+  *
   * Author: Christopher Woods, (C) 2006
   *
   * Copyright: See COPYING file that comes with this distribution
@@ -36,7 +36,7 @@ class CoordGroup;
 QDataStream& operator<<(QDataStream&, const SireVol::CoordGroup&);
 QDataStream& operator>>(QDataStream&, SireVol::CoordGroup&);
 
-namespace SireVol 
+namespace SireVol
 {
 
 using SireMaths::Vector;
@@ -57,13 +57,13 @@ public:
     CoordGroupBase();
     CoordGroupBase(int size);
     CoordGroupBase(int size, const Vector &value);
-    
+
     CoordGroupBase(const CoordGroupBase &other);
-    
+
     ~CoordGroupBase();
-    
+
     CoordGroupBase& operator=(const CoordGroupBase &other);
-    
+
 protected:
     /** Implicitly shared pointer to the coordinate data */
     QSharedDataPointer<CoordGroupPvt> d;
@@ -84,24 +84,28 @@ public:
     CoordGroup();
     CoordGroup(int size);
     CoordGroup(int size, const Vector &value);
-    
+    CoordGroup(const QVector<Vector> &points);
+
     CoordGroup(const CoordGroupBase &other);
 
     ~CoordGroup();
 
     CoordGroup& operator=(const CoordGroupBase &other);
 
+    bool operator==(const CoordGroup &other) const;
+    bool operator!=(const CoordGroup &other) const;
+
     const Vector& at(int i) const;
     const Vector& operator[](int i) const;
-    
+
     bool isNull() const;
-    
+
     int count() const;
     int size() const;
-    
+
     const AABox& aaBox() const;
     const Vector* constData() const;
-    
+
     void translate(const Vector &delta);
     void rotate(const Quaternion &quat, const Vector &point);
     void rotate(const Matrix &rotmat, const Vector &point);
@@ -109,7 +113,11 @@ public:
     CoordGroupEditor edit();
 };
 
-/** This class is used to edit a CoordGroup. This class is used when you want to make several small changes to a CoordGroup, but do not want the CoordGroup to update its internal state after each change (e.g. you are moving each point in turn, and do not want the AABox to be updated for every step!)
+/**
+This class is used to edit a CoordGroup. This class is used when you want to
+make several small changes to a CoordGroup, but do not want the CoordGroup to
+update its internal state after each change (e.g. you are moving each point in
+turn, and do not want the AABox to be updated for every step!)
 
 You use a CoordGroupEditor like this;
 
@@ -124,7 +132,7 @@ CoordGroupEditor editor = coordgroup.edit();
 //manipulate each coordinate in turn
 for (int i=0; i<100; ++i)
     editor[i] = Vector(i,i+1,i+2);
-    
+
 //commit the changes
 coordgroup = editor.commit();
 
@@ -137,9 +145,9 @@ class SIREVOL_EXPORT CoordGroupEditor : public CoordGroupBase
 public:
     CoordGroupEditor();
     CoordGroupEditor(const CoordGroupBase &other);
-    
+
     ~CoordGroupEditor();
-    
+
     CoordGroupEditor& operator=(const CoordGroupBase &other);
 
     const Vector& at(int i) const;
@@ -152,13 +160,18 @@ public:
     Vector* data();
 
     bool isNull() const;
-    
+
     int count() const;
     int size() const;
-    
+
     void translate(const Vector &delta);
+    void translate(int i, const Vector &delta);
+
     void rotate(const Quaternion &quat, const Vector &point);
     void rotate(const Matrix &rotmat, const Vector &point);
+
+    void rotate(int i, const Quaternion &quat, const Vector &point);
+    void rotate(int i, const Matrix &rotmat, const Vector &point);
 
     CoordGroup commit();
 };

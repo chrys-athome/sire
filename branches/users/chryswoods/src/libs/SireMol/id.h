@@ -12,9 +12,6 @@ SIRE_BEGIN_HEADER
 namespace SireMol
 {
 class IDBase;
-
-template<class T>
-class ID;
 }
 
 QDataStream& operator<<(QDataStream&, const SireMol::IDBase&);
@@ -46,6 +43,36 @@ public:
     ~IDBase()
     {}
 
+    IDBase& operator=(quint32 val)
+    {
+        _id = val;
+        return *this;
+    }
+
+    IDBase& operator++()
+    {
+        ++ _id;
+        return *this;
+    }
+
+    IDBase& operator+=(quint32 val)
+    {
+        _id += val;
+        return *this;
+    }
+
+    IDBase& operator--()
+    {
+        -- _id;
+        return *this;
+    }
+
+    IDBase& operator-=(quint32 val)
+    {
+        _id -= val;
+        return *this;
+    }
+
     quint32 toInt() const
     {
         return _id;
@@ -64,138 +91,6 @@ public:
 protected:
     /** The ID value */
     quint32 _id;
-};
-
-template<class T>
-class ID : public IDBase
-{
-
-public:
-    ID() : IDBase()
-    {}
-
-    explicit ID(quint32 id) : IDBase(id)
-    {}
-
-    ID(const ID &other) : IDBase(other)
-    {}
-
-    ~ID()
-    {}
-
-    T& operator=(const T &other)
-    {
-        _id = other._id;
-        return static_cast<T&>(*this);
-    }
-
-    bool operator==(const T &other) const
-    {
-        return _id == other._id;
-    }
-
-    bool operator!=(const T &other) const
-    {
-        return _id != other._id;
-    }
-
-    bool operator<(const T &other) const
-    {
-        return _id < other._id;
-    }
-
-    bool operator<=(const T &other) const
-    {
-        return _id <= other._id;
-    }
-
-    bool operator>(const T &other) const
-    {
-        return _id > other._id;
-    }
-
-    bool operator>=(const T &other) const
-    {
-        return _id >= other._id;
-    }
-
-    T& operator++()
-    {
-        ++ _id;
-        return static_cast<T&>(*this);
-    }
-
-    T operator++(int)
-    {
-        T ret;
-        ret._id = _id + 1;
-        return ret;
-    }
-
-    T& operator+=(quint32 val)
-    {
-        _id += val;
-        return static_cast<T&>(*this);
-    }
-
-    T& operator+=(T val)
-    {
-        _id += val._id;
-        return static_cast<T&>(*this);
-    }
-
-    T operator+(quint32 val) const
-    {
-        T ret;
-        ret._id = _id + val;
-        return ret;
-    }
-
-    T operator+(T val) const
-    {
-        T ret;
-        ret._id = _id + val;
-        return ret;
-    }
-
-    T& operator--()
-    {
-        -- _id;
-        return static_cast<T&>(*this);
-    }
-
-    T operator--(int)
-    {
-        T ret;
-        ret._id = _id - 1;
-        return ret;
-    }
-
-    T& operator-=(quint32 val)
-    {
-        _id -= val;
-        return static_cast<T&>(*this);
-    }
-
-    T& operator-=(T val)
-    {
-        _id -= val._id;
-        return static_cast<T&>(*this);
-    }
-
-    T operator-(quint32 val) const
-    {
-        T ret;
-        ret._id = _id - val;
-        return ret;
-    }
-
-    T operator-(T val) const
-    {
-        T ret;
-        ret._id = _id - val;
-        return ret;
-    }
 };
 
 }

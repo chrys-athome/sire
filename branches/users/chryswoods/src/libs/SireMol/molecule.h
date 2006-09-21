@@ -16,6 +16,13 @@
 
 #include <QSharedDataPointer>
 
+#include <QList>
+#include <QVector>
+#include <QSet>
+#include <QHash>
+
+#include "residuecutting.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol
@@ -26,11 +33,60 @@ class Molecule;
 QDataStream& operator<<(QDataStream&, const SireMol::Molecule&);
 QDataStream& operator>>(QDataStream&, SireMol::Molecule&);
 
+namespace SireMaths
+{
+class Vector;
+class Matrix;
+class Quaternion;
+class Line;
+class Angle;
+class Triangle;
+class Torsion;
+}
+
+namespace SireVol
+{
+class CoordGroup;
+}
+
 namespace SireMol
 {
 
 class MoleculeData;
 class Residue;
+class CutGroup;
+class Atom;
+
+class MoleculeID;
+class ResID;
+class AtomID;
+class ResNum;
+class AtomIndex;
+class CutGroupID;
+
+class Bond;
+class Angle;
+class Dihedral;
+
+class CGAtomID;
+class ResNumAtomID;
+class ResIDAtomID;
+
+class AtomIDGroup;
+
+class MoleculeVersion;
+class MoleculeInfo;
+
+class MoleculeBonds;
+class ResidueBonds;
+class WeightFunction;
+
+using SireMaths::Vector;
+using SireMaths::Matrix;
+using SireMaths::Quaternion;
+
+using SireVol::CoordGroup;
+
 
 /**
 A Molecule represents a complete molecule. This class is merely a view on the underlying
@@ -127,13 +183,13 @@ public:
     QVector<Atom> atoms(ResNum resnum) const;
     QVector<Atom> atoms(ResID resid) const;
 
-    QHash<CutGroupID,CutGroup> cutGroups() const;
+    QVector<CutGroup> cutGroups() const;
     QHash<CutGroupID,CutGroup> cutGroups(ResNum resnum) const;
     QHash<CutGroupID,CutGroup> cutGroups(ResID resid) const;
 
     CutGroup cutGroup(CutGroupID id) const;
 
-    QHash<CutGroupID,CoordGroup> coordGroups() const;
+    QVector<CoordGroup> coordGroups() const;
     QHash<CutGroupID,CoordGroup> coordGroups(ResNum resnum) const;
     QHash<CutGroupID,CoordGroup> coordGroups(ResID resid) const;
 
@@ -174,7 +230,7 @@ public:
     QHash< ResID,QVector<Vector> >
           coordinates(const QSet<ResID> &resids) const;
 
-    const QString& name() const;
+    QString name() const;
 
     QString residueName(ResNum resnum) const;
     QString residueName(ResID resid) const;
@@ -264,7 +320,7 @@ public:
     void rotate(ResID resid, const Quaternion &quat, const Vector &point);
     void rotate(const QSet<ResID> &resids, const Quaternion &quat, const Vector &point);
     void rotate(CutGroupID cgid, const Quaternion &quat, const Vector &point);
-    void rotate(const QSet<CutGroupID> &cgids, const Vector &delta);
+    void rotate(const QSet<CutGroupID> &cgids, const Quaternion &quat, const Vector &point);
 
     void rotate(const Matrix &matrix, const Vector &point);
     void rotate(const AtomIDGroup &group, const Matrix &matrix, const Vector &point);

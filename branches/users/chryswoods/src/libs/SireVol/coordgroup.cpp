@@ -1,9 +1,9 @@
-/** 
+/**
   * @file
   *
   * C++ Implementation: CoordGroupBase, CoordGroup, CoordGroupEditor and CoordGroupPvt
   *
-  * Description: 
+  * Description:
   * Implementation of the public CoordGroupBase, CoordGroup and CoordGroupEditor classes,
   * and the private CoordGroupPvt class.
   *
@@ -33,7 +33,7 @@ static const RegisterMetaType<SireVol::CoordGroup> r_coordgroup("SireVol::CoordG
 QDataStream& operator<<(QDataStream&, const SireVol::CoordGroupPvt&);
 QDataStream& operator>>(QDataStream&, SireVol::CoordGroupPvt&);
 
-namespace SireVol 
+namespace SireVol
 {
 
 /** Private class which holds the data for CoordGroup and CoordGroupEditor
@@ -50,39 +50,44 @@ public:
     CoordGroupPvt();
     CoordGroupPvt(int size);
     CoordGroupPvt(int size, const Vector &value);
-    
+
     CoordGroupPvt(const CoordGroupPvt &other);
-    
+
     ~CoordGroupPvt();
-    
+
     CoordGroupPvt& operator=(const CoordGroupPvt &other);
-    
+
     const Vector& at(int i) const;
-    
+
     const Vector& operator[](int i) const;
     Vector& operator[](int i);
-    
+
     bool isNull() const;
-    
+
     int count() const;
     int size() const;
-    
+
     const AABox& aaBox() const;
-    
+
     const Vector* constData() const;
     const Vector* data() const;
     Vector* data();
-    
+
     void translate(const Vector &delta);
+    void translate(int i, const Vector &delta);
+
     void rotate(const Quaternion &quat, const Vector &point);
     void rotate(const Matrix &rotmat, const Vector &point);
-    
+
+    void rotate(int i, const Quaternion &quat, const Vector &point);
+    void rotate(int i, const Matrix &rotmat, const Vector &point);
+
     void translateAndUpdate(const Vector &delta);
     void rotateAndUpdate(const Quaternion &quat, const Vector &point);
     void rotateAndUpdate(const Matrix &rotmat, const Vector &point);
-    
+
     void update();
-    
+
 private:
     void checkIndex(int i) const;
 
@@ -90,7 +95,7 @@ private:
     boost::scoped_array<Vector> coords;
     /** The number of coordinates in the group */
     qint32 sz;
-    
+
     /** The AABox which should completely enclose all of the points */
     AABox aabox;
 };
@@ -109,15 +114,15 @@ QDataStream &operator<<(QDataStream &ds, const CoordGroupPvt &coordgroup)
     qint32 sz = coordgroup.size();
 
     writeHeader(ds, r_coordgroup, 1) << sz;
-    
+
     if (sz > 0)
     {
         for (int i=0; i<sz; ++i)
             ds << coordgroup.coords[i];
-        
+
         ds << coordgroup.aabox;
     }
-    
+
     return ds;
 }
 
@@ -125,23 +130,23 @@ QDataStream &operator<<(QDataStream &ds, const CoordGroupPvt &coordgroup)
 QDataStream &operator>>(QDataStream &ds, CoordGroupPvt &coordgroup)
 {
     VersionID v = readHeader(ds, r_coordgroup);
-    
+
     if (v == 1)
     {
         qint32 sz;
         ds >> sz;
-        
+
         if (sz > 0)
         {
             boost::scoped_array<Vector> new_array( new Vector[sz] );
-        
+
             for (int i=0; i<sz; ++i)
                 ds >> new_array[i];
-                
+
             AABox new_box;
-                
+
             ds >> new_box;
-            
+
             //now everything has been successfully loaded, we can
             //update 'coordgroup' (*maintain the invariant*)
             coordgroup.coords.swap(new_array);
@@ -157,7 +162,7 @@ QDataStream &operator>>(QDataStream &ds, CoordGroupPvt &coordgroup)
     }
     else
         throw version_error(v, "1", r_coordgroup, CODELOC);
-    
+
     return ds;
 }
 
@@ -177,17 +182,17 @@ CoordGroupPvt::CoordGroupPvt(int size) : QSharedData()
         sz = 0;
 }
 
-/** Construct a CoordGroup to hold 'size' coordinates, all of which have the 
+/** Construct a CoordGroup to hold 'size' coordinates, all of which have the
     value 'value' */
 CoordGroupPvt::CoordGroupPvt(int size, const Vector &value) : QSharedData()
 {
     if (size > 0)
     {
         coords.reset( new Vector[size] );
-        
+
         for (int i=0; i<size; ++i)
             coords[i] = value;
-            
+
         sz = size;
         aabox = AABox(value, Vector(0));
     }
@@ -202,12 +207,12 @@ CoordGroupPvt::CoordGroupPvt(const CoordGroupPvt &other)
     if (sz > 0)
     {
         coords.reset( new Vector[sz] );
-        
+
         //use memcpy to copy the vector (possible as this
         //is a movable class) (actually use the qMemCopy function provided by Qt
         //in qglobal.h)
         void *output = qMemCopy( coords.get(), other.coords.get(), sz * sizeof(Vector) );
-        
+
         BOOST_ASSERT( output == coords.get() );
     }
 }
@@ -223,11 +228,11 @@ CoordGroupPvt& CoordGroupPvt::operator=(const CoordGroupPvt &other)
     {
         sz = other.sz;
         aabox = other.aabox;
-    
+
         coords.reset( new Vector[sz] );
-        
+
         void *output = qMemCopy( coords.get(), other.coords.get(), sz * sizeof(Vector) );
-        
+
         BOOST_ASSERT( output = coords.get() );
     }
     else
@@ -236,11 +241,11 @@ CoordGroupPvt& CoordGroupPvt::operator=(const CoordGroupPvt &other)
         coords.reset();
         aabox = AABox();
     }
-    
+
     return *this;
 }
 
-/** Check that an index is valid - else throw an exception 
+/** Check that an index is valid - else throw an exception
 
     \throw SireError::invalid_index
 */
@@ -252,9 +257,9 @@ inline void CoordGroupPvt::checkIndex(int i) const
                     .arg(i).arg(sz), CODELOC );
 }
 
-/** Return the 'ith' coordinate in the group - this will throw an 
+/** Return the 'ith' coordinate in the group - this will throw an
     exception if 'i' refers to an invalid index.
-    
+
     \throw SireError::invalid_index
 */
 inline const Vector& CoordGroupPvt::at(int i) const
@@ -263,9 +268,9 @@ inline const Vector& CoordGroupPvt::at(int i) const
     return coords[i];
 }
 
-/** Return the 'ith' coordinate in the group - this will throw an 
+/** Return the 'ith' coordinate in the group - this will throw an
     exception if 'i' refers to an invalid index.
-    
+
     \throw SireError::invalid_index
 */
 inline const Vector& CoordGroupPvt::operator[](int i) const
@@ -274,9 +279,9 @@ inline const Vector& CoordGroupPvt::operator[](int i) const
     return coords[i];
 }
 
-/** Return the 'ith' coordinate in the group - this will throw an 
+/** Return the 'ith' coordinate in the group - this will throw an
     exception if 'i' refers to an invalid index.
-    
+
     \throw SireError::invalid_index
 */
 inline Vector& CoordGroupPvt::operator[](int i)
@@ -323,7 +328,7 @@ inline const Vector* CoordGroupPvt::data() const
     return coords.get();
 }
 
-/** Return a modifiable pointer to the array of coordinates - 
+/** Return a modifiable pointer to the array of coordinates -
     *do not delete this pointer* */
 inline Vector* CoordGroupPvt::data()
 {
@@ -337,10 +342,17 @@ inline void CoordGroupPvt::translate(const Vector &delta)
     {
         for (int i=0; i<sz; ++i)
             coords[i] += delta;
-            
+
         //translate the AABox
         aabox.translate(delta);
     }
+}
+
+/** Translate the 'ith' atom by 'delta' */
+inline void CoordGroupPvt::translate(int i, const Vector &delta)
+{
+    checkIndex(i);
+    coords[i] += delta;
 }
 
 /** Rotate (and possibly shear and scale) the coordinates about the point 'point'
@@ -353,10 +365,31 @@ inline void CoordGroupPvt::rotate(const Matrix &rotmat, const Vector &point)
     }
 }
 
+/** Rotate (and possibly shear and scale) the coordinates of the 'ith' point
+    using the matrix 'rotmat' about the point 'point'
+
+    \throw SireError::invalid_index
+*/
+inline void CoordGroupPvt::rotate(int i, const Matrix &rotmat, const Vector &point)
+{
+    checkIndex(i);
+    coords[i] = SireMaths::rotate( coords[i], rotmat, point );
+}
+
 /** Rotate the coordinates about 'point' by the Quaternion 'quat' */
 inline void CoordGroupPvt::rotate(const Quaternion &quat, const Vector &point)
 {
     this->rotate(quat.toMatrix(), point);
+}
+
+/** Rotate the coordinates of the 'ith' point using the quaternion 'quat'
+    about the point 'point'
+
+    \throw SireError::invalid_index
+*/
+inline void CoordGroupPvt::rotate(int i, const Matrix &rotmat, const Vector &point)
+{
+    this->rotate(i, quat.toMatrix(), point);
 }
 
 /** Update the AABox so that it encloses the coordinates. */
@@ -409,14 +442,14 @@ CoordGroupBase::CoordGroupBase() : d(shared_null)
 CoordGroupBase::CoordGroupBase(int size) : d( new CoordGroupPvt(size) )
 {}
 
-/** Construct a CoordGroup that holds 'size' coordinates, all with the 
+/** Construct a CoordGroup that holds 'size' coordinates, all with the
     value 'value' */
 CoordGroupBase::CoordGroupBase(int size, const Vector &value)
                : d( new CoordGroupPvt(size, value) )
 {}
 
 /** Copy constructor - copying is fast as this class is implicitly shared */
-CoordGroupBase::CoordGroupBase(const CoordGroupBase &other) 
+CoordGroupBase::CoordGroupBase(const CoordGroupBase &other)
                : d( other.d )
 {}
 
@@ -434,7 +467,7 @@ CoordGroupBase& CoordGroupBase::operator=(const CoordGroupBase &other)
 /////////////
 ///////////// Implementation of CoordGroup
 /////////////
-    
+
 /** Null constructor */
 CoordGroup::CoordGroup() : CoordGroupBase()
 {}
@@ -443,7 +476,7 @@ CoordGroup::CoordGroup() : CoordGroupBase()
 CoordGroup::CoordGroup(int size) : CoordGroupBase(size)
 {}
 
-/** Construct a CoordGroup that holds 'size' coordinates, all with the 
+/** Construct a CoordGroup that holds 'size' coordinates, all with the
     value 'value' */
 CoordGroup::CoordGroup(int size, const Vector &value)
            : CoordGroupBase(size, value)
@@ -464,9 +497,9 @@ CoordGroup& CoordGroup::operator=(const CoordGroupBase &other)
     return *this;
 }
 
-/** Return the 'ith' coordinate in the group - this will throw an exception 
+/** Return the 'ith' coordinate in the group - this will throw an exception
     if 'i' refers to an invalid index
-    
+
     \throw SireError::invalid_index
 */
 const Vector& CoordGroup::at(int i) const
@@ -474,9 +507,9 @@ const Vector& CoordGroup::at(int i) const
     return d->at(i);
 }
 
-/** Return the 'ith' coordinate in the group - this will throw an exception 
+/** Return the 'ith' coordinate in the group - this will throw an exception
     if 'i' refers to an invalid index
-    
+
     \throw SireError::invalid_index
 */
 const Vector& CoordGroup::operator[](int i) const
@@ -509,7 +542,7 @@ const AABox& CoordGroup::aaBox() const
     return d->aaBox();
 }
 
-/** Return a const-pointer to the array holding the coordinates in 
+/** Return a const-pointer to the array holding the coordinates in
     this group. */
 const Vector* CoordGroup::constData() const
 {
@@ -565,9 +598,9 @@ CoordGroupEditor& CoordGroupEditor::operator=(const CoordGroupBase &other)
     return *this;
 }
 
-/** Return the 'ith' coordinate in the group - this will throw an exception 
+/** Return the 'ith' coordinate in the group - this will throw an exception
     if 'i' refers to an invalid index
-    
+
     \throw SireError::invalid_index
 */
 const Vector& CoordGroupEditor::at(int i) const
@@ -575,9 +608,9 @@ const Vector& CoordGroupEditor::at(int i) const
     return d->at(i);
 }
 
-/** Return the 'ith' coordinate in the group - this will throw an exception 
+/** Return the 'ith' coordinate in the group - this will throw an exception
     if 'i' refers to an invalid index
-    
+
     \throw SireError::invalid_index
 */
 const Vector& CoordGroupEditor::operator[](int i) const
@@ -585,9 +618,9 @@ const Vector& CoordGroupEditor::operator[](int i) const
     return d->operator[](i);
 }
 
-/** Return a modifiable reference to the 'ith' coordinate in the group 
+/** Return a modifiable reference to the 'ith' coordinate in the group
     - this will throw an exception if 'i' refers to an invalid index
-    
+
     \throw SireError::invalid_index
 */
 Vector& CoordGroupEditor::operator[](int i)
@@ -595,21 +628,21 @@ Vector& CoordGroupEditor::operator[](int i)
     return d->operator[](i);
 }
 
-/** Return a const-pointer to the array holding the coordinates in 
+/** Return a const-pointer to the array holding the coordinates in
     this group. */
 const Vector* CoordGroupEditor::constData() const
 {
     return d->constData();
 }
 
-/** Return a const-pointer to the array holding the coordinates in 
+/** Return a const-pointer to the array holding the coordinates in
     this group. */
 const Vector* CoordGroupEditor::data() const
 {
     return d->data();
 }
 
-/** Return a modifiable pointer to the array of coordinates - 
+/** Return a modifiable pointer to the array of coordinates -
     *do not delete this pointer* */
 Vector* CoordGroupEditor::data()
 {
@@ -640,10 +673,29 @@ void CoordGroupEditor::translate(const Vector &delta)
     d->translate(delta);
 }
 
+/** Translate the 'ith' point in the group by 'delta'
+
+    \throw SireError::invalid_index
+*/
+void CoordGroupEditor::translate(int i, const Vector &delta)
+{
+    d->translate(i, delta);
+}
+
 /** Rotate this group by the Quaternion 'quat' about the point 'point' */
 void CoordGroupEditor::rotate(const Quaternion &quat, const Vector &point)
 {
     d->rotate(quat, point);
+}
+
+/** Rotate the 'ith' point in the group using the quaternion 'quat' about the
+    point 'point'
+
+    \throw SireError::index
+*/
+void CoordGroupEditor::rotate(int i, const Quaternion &quat, const Vector &point)
+{
+    d->rotate(i, quat, point);
 }
 
 /** Rotate (and perhaps scale and shear) this group by the matrix 'rotmat'
@@ -653,14 +705,24 @@ void CoordGroupEditor::rotate(const Matrix &rotmat, const Vector &point)
     d->rotate(rotmat, point);
 }
 
-/** Return a CoordGroup which is a copy of this group. This will update the 
+/** Rotate the 'ith' point in the group using the matrix 'rotmat' about the
+    point 'point'
+
+    \throw SireError::index
+*/
+void CoordGroupEditor::rotate(int i, const Matrix &rotmat, const Vector &point)
+{
+    d->rotate(i, rotmat, point);
+}
+
+/** Return a CoordGroup which is a copy of this group. This will update the
     AABox before making the copy, thus ensuring that the AABox of the returned
     CoordGroup is consistent with its coordinates. */
 CoordGroup CoordGroupEditor::commit()
 {
     //update the AABox
     d->update();
-    
+
     //return a copy of this CoordGroup
     return CoordGroup(*this);
 }

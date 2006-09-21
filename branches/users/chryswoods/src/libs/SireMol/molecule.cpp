@@ -14,7 +14,35 @@
 
 #include "qhash_siremol.h"
 
+#include "molecule.h"
 #include "moleculedata.h"
+#include "residue.h"
+#include "cutgroup.h"
+#include "editmol.h"
+
+#include "moleculeinfo.h"
+#include "moleculebonds.h"
+#include "residuebonds.h"
+
+#include "cgatomid.h"
+#include "resnumatomid.h"
+#include "residatomid.h"
+
+#include "atomidgroup.h"
+
+#include "bond.h"
+#include "angle.h"
+#include "dihedral.h"
+
+#include "splitmolecule.h"
+#include "weightfunction.h"
+
+#include "SireMaths/line.h"
+#include "SireMaths/triangle.h"
+#include "SireMaths/torsion.h"
+
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
 
 using namespace SireStream;
 using namespace SireMol;
@@ -46,6 +74,10 @@ QDataStream& operator>>(QDataStream &ds, Molecule &mol)
     return ds;
 }
 
+/** @name Constructors and Destructor */
+/////////////////////////////////////////////////////////
+//@{
+
 /** Create an empty molecule */
 Molecule::Molecule() : d( MoleculeData::null() )
 {}
@@ -70,7 +102,14 @@ Molecule::Molecule(const Molecule &other) : d( other.d )
 Molecule::~Molecule()
 {}
 
-///// Operators /////////////////////////////////////////
+/////////////////////////////////////////////////////////
+//@}
+
+/** @name Operators
+    Miscellaneous operators
+*/
+/////////////////////////////////////////////////////////
+//@{
 
 /** Comparison operator */
 bool Molecule::operator==(const Molecule &other) const
@@ -93,6 +132,16 @@ Molecule& Molecule::operator=(const Molecule &other)
     return *this;
 }
 
+/////////////////////////////////////////////////////////
+//@}
+
+/** @name Molecule::operator[...]
+    Indexing operators used to return copies of the objects in the molecule
+    at the passed index. See also Molecule::at(...)
+*/
+/////////////////////////////////////////////////////////
+//@{
+
 /** Return a copy of the CutGroup with ID == cgid
 
     \throw SireMol::missing_cutgroup
@@ -108,7 +157,7 @@ CutGroup Molecule::operator[](CutGroupID cgid) const
 */
 Residue Molecule::operator[](ResID resid) const
 {
-    return d->at(resid);
+    return Residue(*this, resid);
 }
 
 /** Return a copy of the residue with number 'resnum'
@@ -117,7 +166,7 @@ Residue Molecule::operator[](ResID resid) const
 */
 Residue Molecule::operator[](ResNum resnum) const
 {
-    return d->at(resnum);
+    return Residue(*this, resnum);
 }
 
 /** Return a copy of the atom at index 'atomid'
@@ -169,9 +218,15 @@ Atom Molecule::operator[](const AtomIndex &atm) const
 }
 
 /////////////////////////////////////////////////////////
+//@}
 
+/////////////////////////////////////////////////////////
 
-///// Interfacing with Residue //////////////////////////
+/** @name Molecule::residue(...), Molecule::residues()
+    Functions used to return copies of the residues in this molecule.
+*/
+/////////////////////////////////////////////////////////
+//@{
 
 /** Return a copy of the residue with number 'resnum' in this molecule
 
@@ -220,6 +275,25 @@ QHash<ResNum,Residue> Molecule::residues() const
     return residus;
 }
 
+/////////////////////////////////////////////////////////
+//@}
+
+EditMol Molecule::toEditMol() const
+{
+    return d->toEditMol();
+}
+
+void Molecule::update(const EditMol &editmol, const ConvertFunction &convertfunc)
+{
+    d->update( editmol, convertfunc );
+}
+
+/** @name Molecule::at(...)
+    Indexing type operators - return a copy of the object at the passed index.
+*/
+/////////////////////////////////////////////////////////
+//@{
+
 /** Return a copy of the residue with residue number 'resnum'
 
     \throw SireMol::missing_residue
@@ -237,25 +311,6 @@ Residue Molecule::at(ResID resid) const
 {
     return Residue(*this, resid);
 }
-
-/////////////////////////////////////////////////////////
-
-
-////// Interfacing with EditMol /////////////////////////
-EditMol Molecule::toEditMol() const
-{
-    return d->toEditMol();
-}
-
-void Molecule::update(const EditMol &editmol, const ConvertFunction &convertfunc)
-{
-    d->update( editmol, convertfunc );
-}
-
-/////////////////////////////////////////////////////////
-
-
-///// Querying the molecule /////////////////////////////
 
 /** Return a copy of the CutGroup with ID == cgid
 
@@ -314,6 +369,16 @@ Atom Molecule::at(const AtomIndex &atm) const
     return d->at(atm);
 }
 
+/////////////////////////////////////////////////////////
+//@}
+
+/** @name Molecule::connectivity(...)
+    Functions that are used to return the connectivity of the molecule
+    or of parts of the molecule.
+*/
+/////////////////////////////////////////////////////////
+//@{
+
 /** Return a copy of the connectivity of this molecule */
 MoleculeBonds Molecule::connectivity() const
 {
@@ -340,15 +405,24 @@ ResidueBonds Molecule::connectivity(ResID resid) const
     return d->connectivity(resid);
 }
 
+/////////////////////////////////////////////////////////
+//@}
+
 /** Return the MoleculeInfo that holds the metainfo for this
     molecule */
-const MoleculeInfo& info() const
+const MoleculeInfo& Molecule::info() const
 {
     return d->info();
 }
 
+/** @name Molecule::atoms(...)
+    Functions that are used to return copies of groups of atoms in the molecule.
+*/
+/////////////////////////////////////////////////////////
+//@{
+
 /** Return an array holding a copy of all of the atoms in this molecule */
-QVector<Atom> atoms() const
+QVector<Atom> Molecule::atoms() const
 {
     return d->atoms();
 }
@@ -358,7 +432,7 @@ QVector<Atom> atoms() const
 
     \throw SireMol::missing_residue
 */
-QVector<Atom> atoms(ResNum resnum) const
+QVector<Atom> Molecule::atoms(ResNum resnum) const
 {
     return d->atoms(resnum);
 }
@@ -368,192 +442,1400 @@ QVector<Atom> atoms(ResNum resnum) const
 
     \throw SireError::invalid_index
 */
-QVector<Atom> atoms(ResID resid) const
+QVector<Atom> Molecule::atoms(ResID resid) const
 {
     return d->atoms(resid);
 }
-
-QHash<CutGroupID,CutGroup> cutGroups() const;
-QHash<CutGroupID,CutGroup> cutGroups(ResNum resnum) const;
-QHash<CutGroupID,CutGroup> cutGroups(ResID resid) const;
-
-CutGroup cutGroup(CutGroupID id) const;
-
-QHash<CutGroupID,CoordGroup> coordGroups() const;
-QHash<CutGroupID,CoordGroup> coordGroups(ResNum resnum) const;
-QHash<CutGroupID,CoordGroup> coordGroups(ResID resid) const;
-
-CoordGroup coordGroup(CutGroupID id) const;
-
-Atom atom(CutGroupID cgid, AtomID atomid) const;
-Atom atom(const CGAtomID &cgatmid) const;
-Atom atom(ResNum resnum, AtomID atomid) const;
-Atom atom(const ResNumAtomID &resatomid) const;
-Atom atom(ResID resid, AtomID atomid) const;
-Atom atom(const ResIDAtomID &resatomid) const;
-Atom atom(const AtomIndex &atm) const;
-Atom atom(ResNum resnum, const QString &atomname) const;
-
-Vector coordinates(CutGroupID cgid, AtomID atomid) const;
-Vector coordinates(const CGAtomID &cgatomid) const;
-Vector coordinates(ResNum resnum, AtomID atomid) const;
-Vector coordinates(const ResNumAtomID &resatomid) const;
-Vector coordinates(ResID resid, AtomID atomid) const;
-Vector coordinates(const ResIDAtomID &resatomid) const;
-Vector coordinates(const AtomIndex &atm) const;
-Vector coordinates(ResNum resnum, const QString &atomname) const;
-
-QHash<CGAtomID,Vector> coordinates(const QSet<CGAtomID> &cgatomids) const;
-QHash<ResNumAtomID,Vector> coordinates(const QSet<ResNumAtomID> &resatomids) const;
-QHash<ResIDAtomID,Vector> coordinates(const QSet<ResIDAtomID> &resatomids) const;
-QHash<AtomIndex,Vector> coordinates(const QSet<AtomIndex> &atoms) const;
-
-QVector<Vector> coordinates(CutGroupID cgid);
-QHash< CutGroupID,QVector<Vector> >
-coordinates(const QSet<CutGroupID> &cgids) const;
-
-QVector<Vector> coordinates(ResNum resnum);
-QHash< ResNum,QVector<Vector> >
-coordinates(const QSet<ResNum> &resnums) const;
-
-QVector<Vector> coordinates(ResID resid);
-QHash< ResID,QVector<Vector> >
-coordinates(const QSet<ResID> &resids) const;
-
-const QString& name() const;
-
-QString residueName(ResNum resnum) const;
-QString residueName(ResID resid) const;
-
-ResNum residueNumber(ResID resid) const;
-
-bool isEmpty() const;
-bool isEmpty(ResNum resnum) const;
-bool isEmpty(ResID resid) const;
-bool isEmpty(CutGroupID cgid) const;
-
-QVector<ResNum> residueNumbers() const;
-QStringList residueNames() const;
-
-QVector<ResNum> residueNumbers(const QString &resnam) const;
-QVector<ResNum> residueNumbers(CutGroupID cgid) const;
-
-QHash<ResNum,Residue> residuesBondedTo(ResNum resnum) const;
-QHash<ResNum,Residue> residuesBondedTo(ResID resid) const;
-
-bool contains(CutGroupID cgid) const;
-bool contains(ResNum resnum) const;
-bool contains(ResID resid) const;
-
-bool contains(ResNum resnum, const QString &atomname) const;
-bool contains(const AtomIndex &atm) const;
-bool contains(CutGroupID cgid, AtomID atomid) const;
-bool contains(const CGAtomID &cgatomid) const;
-bool contains(ResNum resnum, AtomID atomid) const;
-bool contains(const ResNumAtomID &resatomid) const;
-bool contains(ResID resid, AtomID atomid) const;
-bool contains(const ResIDAtomID &resatomid) const;
-
-bool contains(const Bond &bond) const;
-
-int nAtoms() const;
-int nAtoms(ResNum resnum) const;
-int nAtoms(ResID resid) const;
-int nAtoms(CutGroupID id) const;
-
-int nResidues() const;
-
-int nCutGroups() const;
-
-QStringList atomNames(ResNum resnum) const;
-QStringList atomNames(ResID resid) const;
-
-SireMaths::Line bond(const Bond &bnd) const;
-SireMaths::Triangle angle(const SireMol::Angle &ang) const;
-SireMaths::Torsion dihedral(const Dihedral &dih) const;
-SireMaths::Torsion improper(const Improper &improper) const;
-
-double measure(const Bond &bnd) const;
-SireMaths::Angle measure(const SireMol::Angle &ang) const;
-SireMaths::Angle measure(const Dihedral &dih) const;
-SireMaths::Angle measure(const Improper &improper) const;
-
-double getWeight(const AtomIDGroup &group0, const AtomIDGroup &group1,
-                 const WeightFunction &weightfunc) const;
 /////////////////////////////////////////////////////////
+//@}
 
+/** @name Molecule::cutGroups(...)
+    Functions that are used to return copies of the CutGroups in the molecule.
+*/
+/////////////////////////////////////////////////////////
+//@{
 
-//////// Moving the molecule ////////////////////
-void translate(const Vector &delta);
-void translate(const AtomIDGroup &group, const Vector &delta);
-void translate(const AtomIndex &atom, const Vector &delta);
-void translate(const QSet<AtomIndex> &atoms, const Vector &delta);
-void translate(ResNum resnum, const QStringList &atoms, const Vector &delta);
-void translate(ResNum resnum, const Vector &delta);
-void translate(const QSet<ResNum> &resnums, const Vector &delta);
-void translate(ResID resid, const QStringList &atoms, const Vector &delta);
-void translate(ResID resid, const Vector &delta);
-void translate(const QSet<ResID> &resids, const Vector &delta);
-void translate(CutGroupID cgid, const Vector &delta);
-void translate(const QSet<CutGroupID> &cgids, const Vector &delta);
+/** Return a copy of all of the CutGroups in the molecule, indexed
+    by CutGroupID */
+QVector<CutGroup> Molecule::cutGroups() const
+{
+    return d->cutGroups();
+}
 
-void rotate(const Quaternion &quat, const Vector &point);
-void rotate(const AtomIDGroup &group, const Quaternion &quat, const Vector &point);
-void rotate(const AtomIndex &atom, const Quaternion &quat, const Vector &point);
-void rotate(const QSet<AtomIndex> &atoms, const Quaternion &quat, const Vector &point);
-void rotate(ResNum resnum, const QStringList &atoms, const Quaternion &quat,
-            const Vector &point);
-void rotate(ResNum resnum, const Quaternion &quat, const Vector &point);
-void rotate(const QSet<ResNum> &resnums, const Quaternion &quat, const Vector &point);
-void rotate(ResID resid, const QStringList &atoms, const Quaternion &quat,
-            const Vector &point);
-void rotate(ResID resid, const Quaternion &quat, const Vector &point);
-void rotate(const QSet<ResID> &resids, const Quaternion &quat, const Vector &point);
-void rotate(CutGroupID cgid, const Quaternion &quat, const Vector &point);
-void rotate(const QSet<CutGroupID> &cgids, const Vector &delta);
+/** Return a copy of all of the CutGroups that contain atoms from
+    the residue with number 'resnum', indexed by CutGroupID
 
-void rotate(const Matrix &matrix, const Vector &point);
-void rotate(const AtomIDGroup &group, const Matrix &matrix, const Vector &point);
-void rotate(const AtomIndex &atom, const Matrix &matrix, const Vector &point);
-void rotate(const QSet<AtomIndex> &atoms, const Matrix &matrix, const Vector &point);
-void rotate(ResNum resnum, const QStringList &atoms, const Matrix &matrix,
-            const Vector &point);
-void rotate(ResNum resnum, const Matrix &matrix, const Vector &point);
-void rotate(const QSet<ResNum> &resnums, const Matrix &matrix, const Vector &point);
-void rotate(ResID resid, const QStringList &atoms, const Matrix &matrix,
-            const Vector &point);
-void rotate(ResID resid, const Matrix &matrix, const Vector &point);
-void rotate(const QSet<ResID> &resids, const Matrix &matrix, const Vector &point);
-void rotate(CutGroupID cgid, const Matrix &matrix, const Vector &point);
-void rotate(const QSet<CutGroupID> &cgids, const Matrix &matrix, const Vector &point);
+    \throw SireMol::missing_residue
+*/
+QHash<CutGroupID,CutGroup> Molecule::cutGroups(ResNum resnum) const
+{
+    return d->cutGroups(resnum);
+}
 
-void setCoordinates(CutGroupID cgid, const CoordGroup &newcoords);
-void setCoordinates(const QHash<CutGroupID,CoordGroup> &newcoords);
+/** Return a copy of all of the CutGroups that contain atoms from
+    the residue at index 'resid'
 
-void setCoordinates(CutGroupID cgid, const QVector<Vector> &newcoords);
-void setCoordinates(const QHash< CutGroupID,QVector<Vector> > &newcoords);
+    \throw SireError::invalid_index
+*/
+QHash<CutGroupID,CutGroup> Molecule::cutGroups(ResID resid) const
+{
+    return d->cutGroups(resid);
+}
 
-void setCoordinates(ResNum resnum, const QVector<Vector> &newcoords);
-void setCoordinates(const QHash< ResNum,QVector<Vector> > &newcoords);
+/** Return a copy of the CutGroup with ID == id
 
-void setCoordinates(ResID resid, const QVector<Vector> &newcoords);
-void setCoordinates(const QHash< ResID,QVector<Vector> > &newcoords);
+    \throw SireMol::missing_cutgroup
+*/
+CutGroup Molecule::cutGroup(CutGroupID id) const
+{
+    return d->cutGroup(id);
+}
 
-void setCoordinates(const AtomIndex &atom, const Vector &newcoords);
-void setCoordinates(const QHash<AtomIndex,Vector> &newcoords);
+/////////////////////////////////////////////////////////
+//@}
 
-void setCoordinates(const CGAtomID &cgatomid, const Vector &newcoords);
-void setCoordinates(const QHash<CGAtomID,Vector> &newcoords);
+/** @name Molecule::coordGroups(...)
+    Functions that are used to return copies of the CoordGroups that
+    contain the grouped coordinates of atoms in the molecule.
+*/
+/////////////////////////////////////////////////////////
+//@{
 
-void setCoordinates(const ResNumAtomID &resatomid, const Vector &newcoords);
-void setCoordinates(const QHash<ResNumAtomID,Vector> &newcoords);
+/** Return a copy of all of the CoordGroups that contain the coordinates
+    of the atoms in this molecule. This is very fast, as this data is
+    implicitly shared and held directly by the molecule.
+*/
+QVector<CoordGroup> Molecule::coordGroups() const
+{
+    return d->coordGroups();
+}
 
-void setCoordinates(const ResIDAtomID &resatomid, const Vector &newcoords);
-void setCoordinates(const QHash<ResIDAtomID,Vector> &newcoords);
+/** Return a copy of the CoordGroups that contain the coordinates of atoms
+    in the residue with number 'resnum'.
+
+    \throw SireMol::missing_residue
+*/
+QHash<CutGroupID,CoordGroup> Molecule::coordGroups(ResNum resnum) const
+{
+    return d->coordGroups(resnum);
+}
+
+/** Return a copy of the CoordGroups that contain the coordinates of atoms
+    in the residue at index 'resid'
+
+    \throw SireError::invalid_index
+*/
+QHash<CutGroupID,CoordGroup> Molecule::coordGroups(ResID resid) const
+{
+    return d->coordGroups(resid);
+}
+
+/** Return a copy of the CoordGroup that holds the coordinates for the
+    atoms in the CutGroup with ID == id
+
+    \throw SireMol::missing_cutgroup
+*/
+CoordGroup Molecule::coordGroup(CutGroupID id) const
+{
+    return d->coordGroup(id);
+}
+
+/////////////////////////////////////////////////////////
+//@}
+
+/** @name Molecule::atom(....)
+    Functions that are used to return copies of atoms in the molecule.
+*/
+/////////////////////////////////////////////////////////
+//@{
+
+/** Return a copy of the atom at index 'atomid' in the CutGroup with
+    ID == cgid
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+Atom Molecule::atom(CutGroupID cgid, AtomID atomid) const
+{
+    return d->atom(cgid, atomid);
+}
+
+/** Return a copy of the atom at index 'cgatmid'
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+Atom Molecule::atom(const CGAtomID &cgatmid) const
+{
+    return d->atom(cgatmid);
+}
+
+/** Return a copy of the atom at index 'atomid' in the residue
+    with number 'resnum'
+
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+*/
+Atom Molecule::atom(ResNum resnum, AtomID atomid) const
+{
+    return d->atom(resnum, atomid);
+}
+
+/** Return a copy of the atom at index 'resatomid'
+
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+*/
+Atom Molecule::atom(const ResNumAtomID &resatomid) const
+{
+    return d->atom(resatomid);
+}
+
+/** Return a copy of the atom at index 'atomid' in the residue
+    at index 'resid'
+
+    \throw SireError::invalid_index
+*/
+Atom Molecule::atom(ResID resid, AtomID atomid) const
+{
+    return d->atom(resid, atomid);
+}
+
+/** Return a copy of the atom at index 'resatomid'
+
+    \throw SireError::invalid_index
+*/
+Atom Molecule::atom(const ResIDAtomID &resatomid) const
+{
+    return d->atom(resatomid);
+}
+
+/** Return a copy of the atom at index 'atm'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+Atom Molecule::atom(const AtomIndex &atm) const
+{
+    return d->atom(atm);
+}
+
+/** Return a copy of the atom called 'atomname' in the residue with
+    number 'resnum'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+Atom Molecule::atom(ResNum resnum, const QString &atomname) const
+{
+    return d->atom(resnum, atomname);
+}
+
+/////////////////////////////////////////////////////////
+//@}
+
+/** @name Molecule::coordinates(....)
+    Functions that are used to return the coordinates of atoms or groups
+    of atoms in the molecule.
+*/
+/////////////////////////////////////////////////////////
+//@{
+
+/** Return a copy of the coordinates of the atom at index 'atomid' in the CutGroup with
+    ID == cgid
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+Vector Molecule::coordinates(CutGroupID cgid, AtomID atomid) const
+{
+    return d->coordinates(cgid, atomid);
+}
+
+/** Return a copy of the coordinates of the atom at index 'cgatmid'
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+Vector Molecule::coordinates(const CGAtomID &cgatmid) const
+{
+    return d->coordinates(cgatmid);
+}
+
+/** Return a copy of the coordinates of the atom at index 'atomid' in the residue
+    with number 'resnum'
+
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+*/
+Vector Molecule::coordinates(ResNum resnum, AtomID atomid) const
+{
+    return d->coordinates(resnum, atomid);
+}
+
+/** Return a copy of the coordinates of the atom at index 'resatomid'
+
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+*/
+Vector Molecule::coordinates(const ResNumAtomID &resatomid) const
+{
+    return d->coordinates(resatomid);
+}
+
+/** Return a copy of the coordinates of the atom at index 'atomid' in the residue
+    at index 'resid'
+
+    \throw SireError::invalid_index
+*/
+Vector Molecule::coordinates(ResID resid, AtomID atomid) const
+{
+    return d->coordinates(resid, atomid);
+}
+
+/** Return a copy of the coordinates of the atom at index 'resatomid'
+
+    \throw SireError::invalid_index
+*/
+Vector Molecule::coordinates(const ResIDAtomID &resatomid) const
+{
+    return d->coordinates(resatomid);
+}
+
+/** Return a copy of the coordinates of the atom at index 'atm'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+Vector Molecule::coordinates(const AtomIndex &atm) const
+{
+    return d->coordinates(atm);
+}
+
+/** Return a copy of the coordinates of the atom called 'atomname' in the residue with
+    number 'resnum'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+Vector Molecule::coordinates(ResNum resnum, const QString &atomname) const
+{
+    return d->coordinates(resnum, atomname);
+}
+
+/** Return copies of the coordinates of the atoms indexed by the passed indicies,
+    with the returned coordinates stored in a hash that is itself then indexed
+    by those indicies.
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+QHash<CGAtomID,Vector> Molecule::coordinates(const QSet<CGAtomID> &cgatomids) const
+{
+    return d->coordinates(cgatomids);
+}
+
+/** Return copies of the coordinates of the atoms indexed by the passed indicies,
+    with the returned coordinates stored in a hash that is itself then indexed
+    by those indicies.
+
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+*/
+QHash<ResNumAtomID,Vector> Molecule::coordinates(
+                                      const QSet<ResNumAtomID> &resatomids) const
+{
+    return d->coordinates(resatomids);
+}
+
+/** Return copies of the coordinates of the atoms indexed by the passed indicies,
+    with the returned coordinates stored in a hash that is itself then indexed
+    by those indicies.
+
+    \throw SireError::invalid_index
+*/
+QHash<ResIDAtomID,Vector> Molecule::coordinates(
+                                      const QSet<ResIDAtomID> &resatomids) const
+{
+    return d->coordinates(resatomids);
+}
+
+/** Return copies of the coordinates of the atoms indexed by the passed indicies,
+    with the returned coordinates stored in a hash that is itself then indexed
+    by those indicies.
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+QHash<AtomIndex,Vector> Molecule::coordinates(const QSet<AtomIndex> &atoms) const
+{
+    return d->coordinates(atoms);
+}
+
+/** Return an array of all of the coordinates in the CutGroup with ID == cgid,
+    with the coordinates having the same order in the array as the atoms do in
+    the CutGroup.
+
+    \throw SireMol::missing_cutgroup
+*/
+QVector<Vector> Molecule::coordinates(CutGroupID cgid)
+{
+    return d->coordinates(cgid);
+}
+
+/** Return arrays of all of the coordinates in the CutGroups whose ID numbers are
+    passed in 'cgids', returning the arrays in a hash indexed by CutGroupID.
+
+    \throw SireMol::missing_cutgroup
+*/
+QHash< CutGroupID,QVector<Vector> > Molecule::coordinates(
+                                        const QSet<CutGroupID> &cgids) const
+{
+    return d->coordinates(cgids);
+}
+
+/** Return an array of the coordinates of the atoms in the residue with number
+    'resnum'. The coordinates are stored in the array in the same order as the
+    atoms are stored in the residue.
+
+    \throw SireMol::missing_residue
+*/
+QVector<Vector> Molecule::coordinates(ResNum resnum)
+{
+    return d->coordinates(resnum);
+}
+
+/** Return arrays of the coordinates of the atoms in the residues with numbers
+    passed in 'resnums'. The coordinates are returned in a hash also indexed
+    by ResNum.
+
+    \throw SireMol::missing_residue
+*/
+QHash< ResNum,QVector<Vector> > Molecule::coordinates(
+                                      const QSet<ResNum> &resnums) const
+{
+    return d->coordinates(resnums);
+}
+
+/** Return an array of the coordinates of the atoms in the residue at index
+    'resid'. The coordinates are stored in the array in the same order as the
+    atoms are stored in the residue.
+
+    \throw SireError::invalid_index
+*/
+QVector<Vector> Molecule::coordinates(ResID resid)
+{
+    return d->coordinates(resid);
+}
+
+/** Return arrays of the coordinates of the atoms in the residues at indicies
+    passed in 'resids'. The coordinates are returned in a hash also indexed
+    by ResID.
+
+    \throw SireError::invalid_index
+*/
+QHash< ResID,QVector<Vector> > Molecule::coordinates(
+                                      const QSet<ResID> &resids) const
+{
+    return d->coordinates(resids);
+}
+
+/////////////////////////////////////////////////////////
+//@}
+
+/** Return the name of the molecule. */
+QString Molecule::name() const
+{
+    return d->name();
+}
+
+/** Return the name of the residue at number 'resnum'
+
+    \throw SireMol::missing_residue
+*/
+QString Molecule::residueName(ResNum resnum) const
+{
+    return d->residueName(resnum);
+}
+
+/** Return the name of the residue at index 'resid'
+
+    \throw SireError::invalid_index
+*/
+QString Molecule::residueName(ResID resid) const
+{
+    return d->residueName(resid);
+}
+
+/** Return the number of the residue at index 'resid'
+
+    \throw SireError::invalid_index
+*/
+ResNum Molecule::residueNumber(ResID resid) const
+{
+    return d->residueNumber(resid);
+}
+
+/** @name Molecule::isEmpty(...)
+    Functions used to query if parts of the molecule are empty.
+*/
+/////////////////////////////////////////////////////////
+//@{
+
+/** Return whether or not the entire molecule is empty */
+bool Molecule::isEmpty() const
+{
+    return d->isEmpty();
+}
+
+/** Return whether or not the residue with number 'resnum' is empty.
+
+    \throw SireMol::missing_residue
+*/
+bool Molecule::isEmpty(ResNum resnum) const
+{
+    return d->isEmpty(resnum);
+}
+
+/** Return whether or not the residue at index 'resid' is empty.
+
+    \throw SireError::invalid_index
+*/
+bool Molecule::isEmpty(ResID resid) const
+{
+    return d->isEmpty(resid);
+}
+
+/** Return whether or not the CutGroup with ID == cgid is empty.
+
+    \throw SireMol::missing_cutgroup
+*/
+bool Molecule::isEmpty(CutGroupID cgid) const
+{
+    return d->isEmpty(cgid);
+}
+
+/////////////////////////////////////////////////////////
+//@}
+
+/** Return the list of the names of the residues in this molecule, in
+    the same order that they exist in this molecule. (i.e. the same
+    order as the residue numbers are returned by Molecule::residueNumbers() )
+*/
+QStringList Molecule::residueNames() const
+{
+    return d->residueNames();
+}
+
+/** @name Molecule::residueNumbers(...)
+    Functions to return the numbers of groups of residues.
+*/
+/////////////////////////////////////////////////////////
+//@{
+
+/** Return an array of the numbers of all of the residues in this molecule.
+    This is in the same order as the residues exist in this molecule,
+    (i.e. the same as the residue names returned by Molecule::residueNames() )
+*/
+QVector<ResNum> Molecule::residueNumbers() const
+{
+    return d->residueNumbers();
+}
+
+/** Return an array of the numbers of all of the residues that are called
+    'resnam'. This returns an empty array if there are no residues with
+    this name in this molecule. */
+QVector<ResNum> Molecule::residueNumbers(const QString &resnam) const
+{
+    return d->residueNumbers(resnam);
+}
+
+/** Return an array of the numbers of all of the residues who have atoms
+    that are in the CutGroup with ID == cgid
+
+    \throw SireMol::missing_cutgroup
+*/
+QVector<ResNum> Molecule::residueNumbers(CutGroupID cgid) const
+{
+    return d->residueNumbers(cgid);
+}
+
+/////////////////////////////////////////////////////////
+//@}
+
+/** Return copies of the residues bonded to the residue with number 'resnum',
+    indexed by residue number.
+
+    \throw SireMol::missing_residue
+*/
+QHash<ResNum,Residue> Molecule::residuesBondedTo(ResNum resnum) const
+{
+    return d->residuesBondedTo(resnum);
+}
+
+/** Return copies of the residues bonded to the residue at index 'resid',
+    indexed by residue number.
+
+    \throw SireError::invalid_index
+*/
+QHash<ResNum,Residue> Molecule::residuesBondedTo(ResID resid) const
+{
+    return d->residuesBondedTo(resid);
+}
+
+/** @name Molecule::contains(...)
+    Functions used to query whether or not the molecule contains various objects.
+*/
+/////////////////////////////////////////////////////////
+//@{
+
+/** Return whether or not this molecule contains a CutGroup with ID == cgid */
+bool Molecule::contains(CutGroupID cgid) const
+{
+    return d->contains(cgid);
+}
+
+/** Return whether or not this molecule contains a residue with number 'resnum' */
+bool Molecule::contains(ResNum resnum) const
+{
+    return d->contains(resnum);
+}
+
+/** Return whether or not this molecule contains a residue at index 'resid' */
+bool Molecule::contains(ResID resid) const
+{
+    return d->contains(resid);
+}
+
+/** Return whether or not this molecule contains an atom called 'atomname'
+    in a residue with number 'resnum'. */
+bool Molecule::contains(ResNum resnum, const QString &atomname) const
+{
+    return d->contains(resnum, atomname);
+}
+
+/** Return whether or not this molecule contains an atom at index 'atm' */
+bool Molecule::contains(const AtomIndex &atm) const
+{
+    return d->contains(atm);
+}
+
+/** Return whether or not this molecule contains an atom at index 'atomid'
+    in a CutGroup with ID == cgid */
+bool Molecule::contains(CutGroupID cgid, AtomID atomid) const
+{
+    return d->contains(cgid, atomid);
+}
+
+/** Return whether or not this molecule contains an atom at index 'cgatomid' */
+bool Molecule::contains(const CGAtomID &cgatomid) const
+{
+    return d->contains(cgatomid);
+}
+
+/** Return whether or not this molecule contains an atom at index 'atomid'
+    in a residue with number 'resnum' */
+bool Molecule::contains(ResNum resnum, AtomID atomid) const
+{
+    return d->contains(resnum, atomid);
+}
+
+/** Return whether or not this molecule contains an atoms at index 'resatomid' */
+bool Molecule::contains(const ResNumAtomID &resatomid) const
+{
+    return d->contains(resatomid);
+}
+
+/** Return whether or not this molecule contains an atom at index 'atomid' in
+    a residue at index 'resid' */
+bool Molecule::contains(ResID resid, AtomID atomid) const
+{
+    return d->contains(resid, atomid);
+}
+
+/** Return whether or not this molecule contains an atom at index 'resatomid' */
+bool Molecule::contains(const ResIDAtomID &resatomid) const
+{
+    return d->contains(resatomid);
+}
+
+/** Return whether or not this molecule contains the bond 'bond' */
+bool Molecule::contains(const Bond &bond) const
+{
+    return d->contains(bond);
+}
+
+/////////////////////////////////////////////////////////
+//@}
+
+/** @name Molecule::nAtoms(...)
+    Functions used to returns the number of atoms in different parts of the molecule.
+*/
+/////////////////////////////////////////////////////////
+//@{
+
+/** Return the total number of atoms in the molecule. */
+int Molecule::nAtoms() const
+{
+    return d->nAtoms();
+}
+
+/** Return the total number of atoms in the residue with number 'resnum'
+
+    \throw SireMol::missing_residue
+*/
+int Molecule::nAtoms(ResNum resnum) const
+{
+    return d->nAtoms(resnum);
+}
+
+/** Return the total number of atoms in the residue at index 'resid'
+
+    \throw SireError::invalid_index
+*/
+int Molecule::nAtoms(ResID resid) const
+{
+    return d->nAtoms(resid);
+}
+
+/** Return the total number of atoms in the CutGroup with ID == cgid
+
+    \throw SireMol::missing_cutgroup
+*/
+int Molecule::nAtoms(CutGroupID cgid) const
+{
+    return d->nAtoms(cgid);
+}
+
+/////////////////////////////////////////////////////////
+//@}
+
+/** Return the total number of residues in the Molecule */
+int Molecule::nResidues() const
+{
+    return d->nResidues();
+}
+
+/** Return the total number of CutGroups in the molecule */
+int Molecule::nCutGroups() const
+{
+    return d->nCutGroups();
+}
+
+/** Return the names of the atoms in the residue with number 'resnum',
+    returned in the same order as the atoms in the residue.
+
+    \throw SireMol::missing_residue
+*/
+QStringList Molecule::atomNames(ResNum resnum) const
+{
+    return d->atomNames(resnum);
+}
+
+/** Return the names of the atoms in the residue at index 'resid',
+    returned in the same order as the atoms in the residue.
+
+    \throw SireError::invalid_index
+*/
+QStringList Molecule::atomNames(ResID resid) const
+{
+    return d->atomNames(resid);
+}
+
+/** Return the geometric line that lies along the bond 'bnd'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+SireMaths::Line Molecule::bond(const Bond &bnd) const
+{
+    return d->bond(bnd);
+}
+
+/** Return the geometric triangle that represents the three atoms in the
+    angle 'ang'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+SireMaths::Triangle Molecule::angle(const SireMol::Angle &ang) const
+{
+    return d->angle(ang);
+}
+
+/** Return the geometric torsion that represents the four atoms in the
+    dihedral 'dih'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+SireMaths::Torsion Molecule::dihedral(const Dihedral &dih) const
+{
+    return d->dihedral(dih);
+}
+
+/** Return the geometric torsion that represents the four atoms of the
+    improper angle 'imp'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+SireMaths::Torsion Molecule::improper(const Improper &imp) const
+{
+    return d->improper(imp);
+}
+
+/** @name Molecule::measure(...)
+    Functions used to measure internal coordinates of the molecule.
+*/
+/////////////////////////////////////////////////////////
+//@{
+
+/** Return the length of the bond 'bnd'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+double Molecule::measure(const Bond &bnd) const
+{
+    return d->measure(bnd);
+}
+
+/** Return the size of the angle 'ang'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+SireMaths::Angle Molecule::measure(const SireMol::Angle &ang) const
+{
+    return d->measure(ang);
+}
+
+/** Return the size of the dihedral 'dih'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+SireMaths::Angle Molecule::measure(const Dihedral &dih) const
+{
+    return d->measure(dih);
+}
+
+/** Return the size of the improper angle 'imp'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+SireMaths::Angle Molecule::measure(const Improper &imp) const
+{
+    return d->measure(imp);
+}
+
+/////////////////////////////////////////////////////////
+//@}
+
+/** Return the relative weights of the two groups 'group0' and 'group1', using
+    the weight function 'weightfunc'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+double Molecule::getWeight(const AtomIDGroup &group0, const AtomIDGroup &group1,
+                           const WeightFunction &weightfunc) const
+{
+    return d->getWeight(group0, group1, weightfunc);
+}
+
+/** @name Molecule::translate(...)
+    Functions used to translate all or part of the molecule.
+*/
+/////////////////////////////////////////////////////////
+//@{
+
+/** Translate all of the molecule by 'delta' */
+void Molecule::translate(const Vector &delta)
+{
+    d->translate(delta);
+}
+
+/** Translate the group of atoms 'group' by 'delta'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+void Molecule::translate(const AtomIDGroup &group, const Vector &delta)
+{
+    d->translate(group, delta);
+}
+
+/** Translate the atom 'atom' by 'delta'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+void Molecule::translate(const AtomIndex &atom, const Vector &delta)
+{
+    d->translate(atom, delta);
+}
+
+/** Translate the set of atoms in 'atoms' by 'delta'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+void Molecule::translate(const QSet<AtomIndex> &atoms, const Vector &delta)
+{
+    d->translate(atoms, delta);
+}
+
+/** Translate the atoms in the residue with number 'resnum' whose names are
+    in 'atoms' by 'delta'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+void Molecule::translate(ResNum resnum, const QStringList &atoms, const Vector &delta)
+{
+    d->translate(resnum, atoms, delta);
+}
+
+/** Translate the residue with number 'resnum' by 'delta'
+
+    \throw SireMol::missing_residue
+*/
+void Molecule::translate(ResNum resnum, const Vector &delta)
+{
+    d->translate(resnum, delta);
+}
+
+/** Translate the set of residues whose residue numbers are in 'resnums'
+    by 'delta'
+
+    \throw SireMol::missing_residue
+*/
+void Molecule::translate(const QSet<ResNum> &resnums, const Vector &delta)
+{
+    d->translate(resnums, delta);
+}
+
+/** Translate the atoms in the residue at index 'resid' whose names are in
+    'atoms' by 'delta'
+
+    \throw SireError::invalid_index
+    \throw SireMol::missing_atom
+*/
+void Molecule::translate(ResID resid, const QStringList &atoms, const Vector &delta)
+{
+    d->translate(resid, atoms, delta);
+}
+
+/** Translate the residue at index 'resid' by 'delta'
+
+    \throw SireError::invalid_index
+*/
+void Molecule::translate(ResID resid, const Vector &delta)
+{
+    d->translate(resid, delta);
+}
+
+/** Translate the set of residues whose indicies are in 'resids' by 'delta'
+
+    \throw SireError::invalid_index
+*/
+void Molecule::translate(const QSet<ResID> &resids, const Vector &delta)
+{
+    d->translate(resids, delta);
+}
+
+/** Translate all of the atoms in the CutGroup with ID == cgid by 'delta'
+
+    \throw SireMol::missing_cutgroup
+*/
+void Molecule::translate(CutGroupID cgid, const Vector &delta)
+{
+    d->translate(cgid, delta);
+}
+
+/** Translate all of the atoms in the CutGroups with IDs in 'cgids' by 'delta'
+
+    \throw SireMol::missing_cutgroup
+*/
+void Molecule::translate(const QSet<CutGroupID> &cgids, const Vector &delta)
+{
+    d->translate(cgids, delta);
+}
+
+/////////////////////////////////////////////////////////
+//@}
+
+/** @name Molecule::rotate(...)
+    Functions used to rotate part or all of the molecule using quaternions or matricies.
+*/
+/////////////////////////////////////////////////////////
+//@{
+
+/** Rotate the whole molecule using the quaternion 'quat' about the point 'point' */
+void Molecule::rotate(const Quaternion &quat, const Vector &point)
+{
+    d->rotate(quat, point);
+}
+
+/** Rotate the atoms in the group 'group' using the quaternion 'quat' about the
+    point 'point'.
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+void Molecule::rotate(const AtomIDGroup &group, const Quaternion &quat,
+                      const Vector &point)
+{
+    d->rotate(group, quat, point);
+}
+
+/** Rotate the atom 'atom' using the quaternion 'quat' about the point 'point'.
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+void Molecule::rotate(const AtomIndex &atom, const Quaternion &quat,
+                      const Vector &point)
+{
+    d->rotate(atom, quat, point);
+}
+
+/** Rotate the atoms in 'atoms' using the quaternion 'quat' about the point 'point'.
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+void Molecule::rotate(const QSet<AtomIndex> &atoms, const Quaternion &quat,
+                      const Vector &point)
+{
+    d->rotate(atoms, quat, point);
+}
+
+/** Rotate the atoms in the residue with number 'resnum' whose names are in 'atoms'
+    using the quaternion 'quat' about the point 'point'.
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+void Molecule::rotate(ResNum resnum, const QStringList &atoms,
+                      const Quaternion &quat, const Vector &point)
+{
+    d->rotate(resnum, atoms, quat, point);
+}
+
+/** Rotate the atoms in the residue with number 'resnum' using the quaternion
+    'quat' about the point 'point'.
+
+    \throw SireMol::missing_residue
+*/
+void Molecule::rotate(ResNum resnum, const Quaternion &quat, const Vector &point)
+{
+    d->rotate(resnum, quat, point);
+}
+
+/** Rotate the atoms in the residues whose numbers are in 'resnums'
+    using the quaternion 'quat' about the point 'point'.
+
+    \throw SireMol::missing_residue
+*/
+void Molecule::rotate(const QSet<ResNum> &resnums, const Quaternion &quat,
+                      const Vector &point)
+{
+    d->rotate(resnums, quat, point);
+}
+
+/** Rotate the atoms in the residue at index 'resid' whose names are in 'atoms'
+    using the quaternion 'quat' about the point 'point'.
+
+    \throw SireError::invalid_index
+    \throw SireMol::missing_atom
+*/
+void Molecule::rotate(ResID resid, const QStringList &atoms,
+                      const Quaternion &quat, const Vector &point)
+{
+    d->rotate(resid, atoms, quat, point);
+}
+
+/** Rotate the atoms in the residue at index 'resid' using the quaternion 'quat'
+    about the point 'point'.
+
+    \throw SireError::invalid_index
+*/
+void Molecule::rotate(ResID resid, const Quaternion &quat, const Vector &point)
+{
+    d->rotate(resid, quat, point);
+}
+
+/** Rotate the atoms in the residues whose indicies are in 'resids'
+    using the quaternion 'quat' about the point 'point'.
+
+    \throw SireError::invalid_index
+*/
+void Molecule::rotate(const QSet<ResID> &resids, const Quaternion &quat,
+                      const Vector &point)
+{
+    d->rotate(resids, quat, point);
+}
+
+/** Rotate the atoms in the CutGroup with ID == cgid using the quaternion 'quat'
+    about the point 'point'.
+
+    \throw SireMol::missing_cutgroup
+*/
+void Molecule::rotate(CutGroupID cgid, const Quaternion &quat, const Vector &point)
+{
+    d->rotate(cgid, quat, point);
+}
+
+/** Rotate the atoms in the CutGroups whose IDs are in 'cgids'
+    using the quaternion 'quat' about the point 'point'.
+
+    \throw SireMol::missing_cutgroup
+*/
+void Molecule::rotate(const QSet<CutGroupID> &cgids, const Quaternion &quat,
+                      const Vector &point)
+{
+    d->rotate(cgids, quat, point);
+}
+
+/** Rotate the whole molecule using the matrix 'matrix' about the point 'point' */
+void Molecule::rotate(const Matrix &matrix, const Vector &point)
+{
+    d->rotate(matrix, point);
+}
+
+/** Rotate the atoms in the group 'group' using the matrix 'matrix' about the
+    point 'point'.
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+void Molecule::rotate(const AtomIDGroup &group, const Matrix &matrix,
+                      const Vector &point)
+{
+    d->rotate(group, matrix, point);
+}
+
+/** Rotate the atom 'atom' using the matrix 'matrix' about the point 'point'.
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+void Molecule::rotate(const AtomIndex &atom, const Matrix &matrix,
+                      const Vector &point)
+{
+    d->rotate(atom, matrix, point);
+}
+
+/** Rotate the atoms in 'atoms' using the matrix 'matrix' about the point 'point'.
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+void Molecule::rotate(const QSet<AtomIndex> &atoms, const Matrix &matrix,
+                      const Vector &point)
+{
+    d->rotate(atoms, matrix, point);
+}
+
+/** Rotate the atoms in the residue with number 'resnum' whose names are in 'atoms'
+    using the matrix 'matrix' about the point 'point'.
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+void Molecule::rotate(ResNum resnum, const QStringList &atoms,
+                      const Matrix &matrix, const Vector &point)
+{
+    d->rotate(resnum, atoms, matrix, point);
+}
+
+/** Rotate the atoms in the residue with number 'resnum' using the matrixernion
+    'matrix' about the point 'point'.
+
+    \throw SireMol::missing_residue
+*/
+void Molecule::rotate(ResNum resnum, const Matrix &matrix, const Vector &point)
+{
+    d->rotate(resnum, matrix, point);
+}
+
+/** Rotate the atoms in the residues whose numbers are in 'resnums'
+    using the matrix 'matrix' about the point 'point'.
+
+    \throw SireMol::missing_residue
+*/
+void Molecule::rotate(const QSet<ResNum> &resnums, const Matrix &matrix,
+                      const Vector &point)
+{
+    d->rotate(resnums, matrix, point);
+}
+
+/** Rotate the atoms in the residue at index 'resid' whose names are in 'atoms'
+    using the matrix 'matrix' about the point 'point'.
+
+    \throw SireError::invalid_index
+    \throw SireMol::missing_atom
+*/
+void Molecule::rotate(ResID resid, const QStringList &atoms,
+                      const Matrix &matrix, const Vector &point)
+{
+    d->rotate(resid, atoms, matrix, point);
+}
+
+/** Rotate the atoms in the residue at index 'resid' using the matrix 'matrix'
+    about the point 'point'.
+
+    \throw SireError::invalid_index
+*/
+void Molecule::rotate(ResID resid, const Matrix &matrix, const Vector &point)
+{
+    d->rotate(resid, matrix, point);
+}
+
+/** Rotate the atoms in the residues whose indicies are in 'resids'
+    using the matrix 'matrix' about the point 'point'.
+
+    \throw SireError::invalid_index
+*/
+void Molecule::rotate(const QSet<ResID> &resids, const Matrix &matrix,
+                      const Vector &point)
+{
+    d->rotate(resids, matrix, point);
+}
+
+/** Rotate the atoms in the CutGroup with ID == cgid using the matrix 'matrix'
+    about the point 'point'.
+
+    \throw SireMol::missing_cutgroup
+*/
+void Molecule::rotate(CutGroupID cgid, const Matrix &matrix, const Vector &point)
+{
+    d->rotate(cgid, matrix, point);
+}
+
+/** Rotate the atoms in the CutGroups whose IDs are in 'cgids'
+    using the matrix 'matrix' about the point 'point'.
+
+    \throw SireMol::missing_cutgroup
+*/
+void Molecule::rotate(const QSet<CutGroupID> &cgids, const Matrix &matrix,
+                      const Vector &point)
+{
+    d->rotate(cgids, matrix, point);
+}
+
+/////////////////////////////////////////////////////////
+//@}
+
+/** @name Molecule::setCoordinates(...)
+    Functions used to set directly the coordinates of atoms in the molecule.
+*/
+/////////////////////////////////////////////////////////
+//@{
+
+/** Set the coordinates of the atoms in the CutGroup with ID == cgid to
+    'newcoords'.
+
+    \warning 'newcoords' must have the same number of points as there
+             are atoms in the CutGroup or else an exception will be thrown.
+
+    \throw SireError::incompatible_error
+    \throw SireMol::missing_cutgroup
+*/
+void Molecule::setCoordinates(CutGroupID cgid, const CoordGroup &newcoords)
+{
+    d->setCoordinates(cgid, newcoords);
+}
+
+/** Set the coordinates of lots of CutGroups at once, with the new
+    coordinates in 'newcoords', indexed by the ID of the CutGroup
+    for which they are updating.
+
+    \throw SireError::incompatible_error
+    \throw SireMol::missing_cutgroup
+*/
+void Molecule::setCoordinates(const QHash<CutGroupID,CoordGroup> &newcoords)
+{
+    d->setCoordinates(newcoords);
+}
+
+/** Set the coordinates of the CutGroup with ID == cgid to the coordinates
+    stored in the array 'newcoords'.
+
+    \warning The number of coordinates in 'newcoords' must be the same as
+             the number of atoms in the CutGroup or else an exception will
+             be thrown.
+
+    \throw SireError::incompatible_error
+    \throw SireMol::missing_cutgroup
+*/
+void Molecule::setCoordinates(CutGroupID cgid, const QVector<Vector> &newcoords)
+{
+    d->setCoordinates(cgid, newcoords);
+}
+
+/** Set the coordinates for many CutGroups, using the arrays of coordinates
+    stored in 'newcoords', indexed by the ID numbers of the CutGroups for
+    which they are updating.
+
+    \throw SireError::incompatible_error
+    \throw SireMol::missing_cutgroup
+*/
+void Molecule::setCoordinates(const QHash< CutGroupID,QVector<Vector> > &newcoords)
+{
+    d->setCoordinates(newcoords);
+}
+
+/** Set the coordinates of the residue 'resnum' using the array of coordinates
+    in 'newcoords'. The coordinates should be in the same order as the atoms
+    are in the residue.
+
+    \warning The number of coordinates in 'newcoords' must be the same as
+             the number of atoms in the residue or else an exception will be
+             thrown.
+
+    \throw SireError::incompatible_error
+    \throw SireMol::missing_residue
+*/
+void Molecule::setCoordinates(ResNum resnum, const QVector<Vector> &newcoords)
+{
+    d->setCoordinates(resnum, newcoords);
+}
+
+/** Set the coordinates of a large number of residues, using the arrays
+    of coordinates in 'newcoords' indexed by the residue number of the
+    residue for which they are updating.
+
+    \throw SireError::incompatible_error
+    \throw SireMol::missing_residue
+*/
+void Molecule::setCoordinates(const QHash< ResNum,QVector<Vector> > &newcoords)
+{
+    d->setCoordinates(newcoords);
+}
+
+/** Set the coordinates of the residue at index 'resid' using the array of
+    coordinates 'newcoords'.
+
+    \warning The number of coordinates in 'newcoords' must be the same as
+             the number of atoms in the residue or else an exception will be
+             thrown.
+
+    \throw SireError::incompatible_error
+    \throw SireError::invalid_index
+*/
+void Molecule::setCoordinates(ResID resid, const QVector<Vector> &newcoords)
+{
+    d->setCoordinates(resid, newcoords);
+}
+
+/** Set the coordinates of many residues, with the new coordinates stored
+    as arrays indexed by the index (ResID) of the residue for which they
+    are updating.
+
+    \throw SireError::incompatible_error
+    \throw SireError::invalid_index
+*/
+void Molecule::setCoordinates(const QHash< ResID,QVector<Vector> > &newcoords)
+{
+    d->setCoordinates(newcoords);
+}
+
+/** Set the coordinates of the individual atom 'atom' to 'newcoords'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+void Molecule::setCoordinates(const AtomIndex &atom, const Vector &newcoords)
+{
+    d->setCoordinates(atom, newcoords);
+}
+
+/** Set the coordinates of many atoms to 'newcoords', with the new coordinates
+    indexed by the AtomIndex of the atoms that they are updating.
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+void Molecule::setCoordinates(const QHash<AtomIndex,Vector> &newcoords)
+{
+    d->setCoordinates(newcoords);
+}
+
+/** Set the coordinates of the atom at index 'cgatomid' to 'newcoords'
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+void Molecule::setCoordinates(const CGAtomID &cgatomid, const Vector &newcoords)
+{
+    d->setCoordinates(cgatomid, newcoords);
+}
+
+/** Set the coordinates of many atoms, with the new coordinates indexed
+    by the CGAtomID of the atoms that they are updating.
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+void Molecule::setCoordinates(const QHash<CGAtomID,Vector> &newcoords)
+{
+    d->setCoordinates(newcoords);
+}
+
+/** Set the coordinates of the atom with index 'resatomid' to 'newcoords'.
+
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+*/
+void Molecule::setCoordinates(const ResNumAtomID &resatomid, const Vector &newcoords)
+{
+    d->setCoordinates(resatomid, newcoords);
+}
+
+/** Set the coordinates of many atoms, with the new coordinates indexed
+    by the ResNumAtomID of the atoms that they are updating.
+
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+*/
+void Molecule::setCoordinates(const QHash<ResNumAtomID,Vector> &newcoords)
+{
+    d->setCoordinates(newcoords);
+}
+
+/** Set the coordinates of the atom at index 'resatomid' to 'newcoords'
+
+    \throw SireError::invalid_index
+*/
+void Molecule::setCoordinates(const ResIDAtomID &resatomid, const Vector &newcoords)
+{
+    d->setCoordinates(resatomid, newcoords);
+}
+
+/** Set the coordinates for many atoms, with the new coordinates indexed
+    by the ResIDAtomID of the atoms that they are updating.
+
+    \throw SireError::invalid_index
+*/
+void Molecule::setCoordinates(const QHash<ResIDAtomID,Vector> &newcoords)
+{
+    d->setCoordinates(newcoords);
+}
+
 /////////////////////////////////////////////////
+//@}
 
-
-///// Internal geometry moves ///////////////////////////
+/** @name Molecule::change(...)
+    Functions used to change the length or size of internal degrees of freedom
+    within this molecule.
+*/
+/////////////////////////////////////////////////
+//@{
 
 /** Change the length of the bond 'bnd' by 'delta'. The atoms passed passed in 'anchors'
     are anchors, e.g. atoms that may not be moved. The WeightFunction 'weightfunc' is used
@@ -739,6 +2021,16 @@ void Molecule::change(const Improper &improper, const SireMaths::Angle &delta,
     change(improper, delta, RelFromMass(), anchors);
 }
 
+/////////////////////////////////////////////////
+//@}
+
+/** @name Molecule::set(...)
+    Functions used to set the length or size of degrees of freedom
+    within this molecule.
+*/
+/////////////////////////////////////////////////
+//@{
+
 /** This function is similar to Molecule::changeBond, except that it sets the specified
     bond to a particular length
 
@@ -867,3 +2159,4 @@ void Molecule::set(const Improper &improper, const SireMaths::Angle &size,
 }
 
 /////////////////////////////////////////////////////////
+//@}

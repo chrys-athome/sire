@@ -1,9 +1,9 @@
-/** 
+/**
   * @file
   *
   * C++ Implementation: AtomInfo
   *
-  * Description: 
+  * Description:
   * Implementation of AtomInfo
   *
   * @author Christopher Woods, (C) 2006
@@ -26,9 +26,9 @@ static const RegisterMetaType<AtomInfo> r_atominfo("SireMol::AtomInfo");
 /** Serialise an AtomInfo to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const AtomInfo &atominfo)
 {
-    writeHeader(ds, r_atominfo, 1) << atominfo.number() << atominfo.index() 
+    writeHeader(ds, r_atominfo, 1) << atominfo.number() << atominfo.index()
                                    << atominfo.element();
-    
+
     return ds;
 }
 
@@ -36,23 +36,23 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const AtomInfo &atominfo
 QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, AtomInfo &atominfo)
 {
     VersionID v = readHeader(ds, r_atominfo);
-    
+
     if (v == 1)
     {
         ds >> atominfo.atmnum >> atominfo.index() >> atominfo.element();
     }
     else
         throw version_error(v, "1", r_atominfo, CODELOC);
-    
+
     return ds;
 }
 
 /** Construct a null AtomInfo */
-AtomInfo::AtomInfo() : AtomIndex(QString::null, 0), Element(), atmnum(0)
+AtomInfo::AtomInfo() : AtomIndex(), Element(), atmnum(0)
 {}
 
 /** Copy constructor */
-AtomInfo::AtomInfo(const AtomInfo &other) 
+AtomInfo::AtomInfo(const AtomInfo &other)
      : AtomIndex(other), Element(other), atmnum(other.atmnum)
 {}
 
@@ -88,39 +88,39 @@ AtomInfo::AtomInfo(AtomNum atm, const AtomInfo &other, ResNum resnum)
      : AtomIndex(other.name(),resnum), Element(other), atmnum(atm)
 {}
 
-/** Convienience constructors - these are used to allow string based creation of 
+/** Convienience constructors - these are used to allow string based creation of
     AtomInfos. This is particularly helpful when scripting the creation of AtomInfos.
-     
-    Create an AtomInfo called 'name' in residue 0, with element guessed from 'name' and 
+
+    Create an AtomInfo called 'name' in residue 0, with element guessed from 'name' and
     coordinates (0,0,0) and atom number 0.
 */
 AtomInfo::AtomInfo(const QString &name) : AtomIndex(name), Element(name), atmnum(0)
 {}
 
-/** Convienience constructors - these are used to allow string based creation of 
+/** Convienience constructors - these are used to allow string based creation of
     AtomInfos. This is particularly helpful when scripting the creation of AtomInfos.
-     
-    Create an AtomInfo called 'name' in residue 0, with element guessed from 'elem' and 
+
+    Create an AtomInfo called 'name' in residue 0, with element guessed from 'elem' and
     coordinates (0,0,0) and atom number 0.
 */
 AtomInfo::AtomInfo(const QString &name, const QString &elem)
      : AtomIndex(name), Element(elem), atmnum(0)
 {}
-    
-/** Convienience constructors - these are used to allow string based creation of 
+
+/** Convienience constructors - these are used to allow string based creation of
     AtomInfos. This is particularly helpful when scripting the creation of AtomInfos.
-     
-    Create an AtomInfo called 'name' in residue resnum, with element guessed from 'name' and 
+
+    Create an AtomInfo called 'name' in residue resnum, with element guessed from 'name' and
     coordinates (0,0,0) and atom number 0.
 */
 AtomInfo::AtomInfo(const QString &name, ResNum resnum)
      : AtomIndex(name,resnum), Element(name), atmnum(0)
 {}
 
-/** Convienience constructors - these are used to allow string based creation of 
+/** Convienience constructors - these are used to allow string based creation of
     AtomInfos. This is particularly helpful when scripting the creation of AtomInfos.
-     
-    Create an AtomInfo called 'name' in residue resnum, with element guessed from 'elem' and 
+
+    Create an AtomInfo called 'name' in residue resnum, with element guessed from 'elem' and
     coordinates (0,0,0) and atom number 0.
 */
 AtomInfo::AtomInfo(const QString &name, ResNum resnum, const QString &elem)
@@ -131,21 +131,21 @@ AtomInfo::AtomInfo(const QString &name, ResNum resnum, const QString &elem)
 AtomInfo::AtomInfo(const QString &name, const AtomInfo &other)
      : AtomIndex(name,other.resNum()), Element(other), atmnum(other.atmnum)
 {}
-    
-/** Convienience constructors - these are used to allow string based creation of 
+
+/** Convienience constructors - these are used to allow string based creation of
     AtomInfos. This is particularly helpful when scripting the creation of AtomInfos.
-     
-    Create an AtomInfo called 'name' in residue 0, with element guessed from 'name' and 
+
+    Create an AtomInfo called 'name' in residue 0, with element guessed from 'name' and
     coordinates (0,0,0) and atom number num.
 */
-AtomInfo::AtomInfo(AtomNum num, const QString &name) 
+AtomInfo::AtomInfo(AtomNum num, const QString &name)
          : AtomIndex(name), Element(name), atmnum(num)
 {}
-    
-/** Convienience constructors - these are used to allow string based creation of 
+
+/** Convienience constructors - these are used to allow string based creation of
     AtomInfos. This is particularly helpful when scripting the creation of AtomInfos.
-     
-    Create an AtomInfo called 'name' in residue 0, with element guessed from 'elem' and 
+
+    Create an AtomInfo called 'name' in residue 0, with element guessed from 'elem' and
     coordinates (0,0,0) and atom number num.
 */
 AtomInfo::AtomInfo(AtomNum num, const QString &name, const QString &elem)

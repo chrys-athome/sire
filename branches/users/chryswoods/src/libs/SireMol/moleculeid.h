@@ -9,22 +9,22 @@ namespace SireMol
 {
 
 /** This ID number is used to identify a Molecule.
-    
+
     @author Christopher Woods
 */
-class SIREMOL_EXPORT MoleculeID : public ID<MoleculeID>
+class SIREMOL_EXPORT MoleculeID : public IDBase
 {
 
 public:
-    MoleculeID() : ID<MoleculeID>()
+    MoleculeID() : IDBase()
     {}
-    
-    MoleculeID(quint32 id) : ID<MoleculeID>(id)
+
+    MoleculeID(quint32 id) : IDBase(id)
     {}
-    
-    MoleculeID(const MoleculeID &other) : ID<MoleculeID>(other)
+
+    MoleculeID(const MoleculeID &other) : IDBase(other)
     {}
-    
+
     ~MoleculeID()
     {}
 };

@@ -76,6 +76,7 @@ public:
     CutGroup(const QList<Atom> atoms);
 
     CutGroup(const AtomInfoGroup &atominfos, const CoordGroup &coords);
+    CutGroup(const AtomInfoGroup &atominfos, const QVector<Vector> &coords);
     CutGroup(const AtomInfoGroup &atominfos);
 
     CutGroup(const CutGroup &other);

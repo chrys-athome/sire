@@ -19,7 +19,7 @@ static const RegisterMetaType<MoleculeBonds> r_molbonds("SireMol::MoleculeBonds"
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const MoleculeBonds &molbnds)
 {
     writeHeader(ds, r_molbonds, 1) << molbnds.resbnds;
-    
+
     return ds;
 }
 
@@ -27,14 +27,14 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const MoleculeBonds &mol
 QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MoleculeBonds &molbnds)
 {
     VersionID v = readHeader(ds, r_molbonds);
-    
+
     if (v == 1)
     {
         ds >> molbnds.resbnds;
     }
     else
         throw version_error(v, "1", r_molbonds, CODELOC);
-    
+
     return ds;
 }
 
@@ -69,7 +69,7 @@ ResidueBonds& MoleculeBonds::getResidue(ResNum resnum)
 {
     if (not resbnds.contains(resnum))
         resbnds.insert( resnum, ResidueBonds(resnum) );
-        
+
     return resbnds[resnum];
 }
 
@@ -88,12 +88,12 @@ QString MoleculeBonds::toString() const
 void MoleculeBonds::add(const AtomIndex &atom0, const AtomIndex &atom1)
 {
     getResidue(atom0.resNum()).add(atom0,atom1);
-    
+
     if (atom0.resNum() != atom1.resNum())
         getResidue(atom1.resNum()).add(atom0,atom1);
 }
 
-/** Overloaded function - add a bond between atoms called 'atom0' and 'atom1' in 
+/** Overloaded function - add a bond between atoms called 'atom0' and 'atom1' in
     residue 'resnum' */
 void MoleculeBonds::add(ResNum resnum, const QString &atom0, const QString &atom1)
 {
@@ -105,8 +105,8 @@ void MoleculeBonds::add(const Bond &bond)
 {
     this->add(bond.atom0(),bond.atom1());
 }
-    
-/** Remove the bond between atoms 'atom0' and 'atom1'. This does nothing if there 
+
+/** Remove the bond between atoms 'atom0' and 'atom1'. This does nothing if there
     is no such bond. */
 void MoleculeBonds::remove(const AtomIndex &atom0, const AtomIndex &atom1)
 {
@@ -114,27 +114,27 @@ void MoleculeBonds::remove(const AtomIndex &atom0, const AtomIndex &atom1)
     {
         ResidueBonds &res = resbnds[atom0.resNum()];
         res.remove(atom0,atom1);
-        
+
         if (res.isEmpty())
-            //there cannot be any inter-residue bonds, so it is 
+            //there cannot be any inter-residue bonds, so it is
             //safe to remove this residue
             resbnds.remove(atom0.resNum());
     }
-    
+
     if (atom0.resNum() != atom1.resNum())
     {
         ResidueBonds &res = resbnds[atom1.resNum()];
         res.remove(atom0,atom1);
-        
+
         if (res.isEmpty())
-            //there cannot be any inter-residue bonds, so it is 
+            //there cannot be any inter-residue bonds, so it is
             //safe to remove this residue
             resbnds.remove(atom1.resNum());
     }
 }
 
-/** Overloaded function - remove the bond between atoms called 'atom0' and 'atom1' in 
-    residue with residue number 'resnum'. This does nothing if there is no 
+/** Overloaded function - remove the bond between atoms called 'atom0' and 'atom1' in
+    residue with residue number 'resnum'. This does nothing if there is no
     such bond in this molecule. */
 void MoleculeBonds::remove(ResNum resnum, const QString &atom0, const QString &atom1)
 {
@@ -142,9 +142,9 @@ void MoleculeBonds::remove(ResNum resnum, const QString &atom0, const QString &a
     {
         ResidueBonds &res = resbnds[resnum];
         res.remove(atom0,atom1);
-        
+
         if (res.isEmpty())
-            //there cannot be any inter-residue bonds, so it is 
+            //there cannot be any inter-residue bonds, so it is
             //safe to remove this residue
             resbnds.remove(resnum);
     }
@@ -156,7 +156,7 @@ void MoleculeBonds::remove(const Bond &bond)
 {
     this->remove(bond.atom0(),bond.atom1());
 }
-    
+
 /** Remove all bonds from the molecule that involve atom 'atom' */
 void MoleculeBonds::removeAll(const AtomIndex &atom)
 {
@@ -164,23 +164,23 @@ void MoleculeBonds::removeAll(const AtomIndex &atom)
     {
         //get the residue containing this atom
         ResidueBonds &res = resbnds[atom.resNum()];
-        
+
         //get the list of residue numbers of residues bonded to this atom
-        ResNumList bondedres = res.residuesBondedTo(atom.name());
-        
+        QList<ResNum> bondedres = res.residuesBondedTo(atom.name());
+
         //remove this atom from its residue
         res.remove(atom.name());
-        
+
         //if this residue has no other bonds, then it is safe to remove it
         if (res.isEmpty())
             resbnds.remove(res.resNum());
-        
+
         //now remove the atom from all of the bonded residues
         foreach (ResNum resnum, bondedres)
         {
             ResidueBonds &bondedres = getResidue(resnum);
             bondedres.remove(atom);
-            
+
             if (bondedres.isEmpty())
                 resbnds.remove(bondedres.resNum());
         }
@@ -194,18 +194,18 @@ void MoleculeBonds::removeAll(ResNum resnum)
     {
         //get the residue...
         ResidueBonds &res = resbnds[resnum];
-    
+
         //find all of the residues bonded to this residue
-        ResNumList resnums = res.residuesBondedTo();
-        
+        QList<ResNum> resnums = res.residuesBondedTo();
+
         //remove this residue
         resbnds.remove(resnum);
-        
+
         //now remove this residue from all of the bonded residues
         foreach( ResNum rnum, resnums )
         {
             ResidueBonds &bondedres = getResidue(rnum);
-            
+
             bondedres.remove(rnum);
             if (bondedres.isEmpty())
                 resbnds.remove(bondedres.resNum());
@@ -213,26 +213,26 @@ void MoleculeBonds::removeAll(ResNum resnum)
     }
 }
 
-/** Completely clear all of the bonding information */    
+/** Completely clear all of the bonding information */
 void MoleculeBonds::clear()
 {
     resbnds.clear();
 }
 
-/** Finalise the bonding information. This compacts the data structure to 
-    minimise the memory usage of the bonding data. Note that this will make 
+/** Finalise the bonding information. This compacts the data structure to
+    minimise the memory usage of the bonding data. Note that this will make
     it slower to modify. */
 void MoleculeBonds::finalise()
 {
     //finalise each of the ResidueBonds objects...
     QMutableHashIterator<ResNum,ResidueBonds> it(resbnds);
-    
+
     while (it.hasNext())
     {
         it.next();
         it.value().finalise();
     }
-    
+
     resbnds.squeeze();
 }
 
@@ -242,48 +242,48 @@ bool MoleculeBonds::isEmpty() const
     return resbnds.isEmpty();
 }
 
-/** Return the ResidueBonds for the residue with residue number 'resnum'. Note that 
+/** Return the ResidueBonds for the residue with residue number 'resnum'. Note that
     this will return an empty ResidueBonds if there are no bonds in this residue */
 ResidueBonds MoleculeBonds::residue(ResNum resnum) const
 {
     return resbnds.value(resnum);
 }
-    
-/** Return the list of ResidueBonds that contain the bonding of residues that are 
+
+/** Return the list of ResidueBonds that contain the bonding of residues that are
     bonded to the residue with residue number 'resnum' */
 QList<ResidueBonds> MoleculeBonds::bondedResidues(ResNum resnum) const
 {
     if (resbnds.contains(resnum))
     {
-        ResNumList resnums = resbnds[resnum].residuesBondedTo();
-        
+        QList<ResNum> resnums = resbnds[resnum].residuesBondedTo();
+
         QList<ResidueBonds> bondedres;
-        
+
         foreach( ResNum rnum, resnums )
         {
             BOOST_ASSERT(resbnds.contains(rnum));
             bondedres.append(resbnds[rnum]);
         }
-        
+
         return bondedres;
     }
     else
         return QList<ResidueBonds>();
 }
-    
+
 /** Return the total number of bonds in the molecule */
 int MoleculeBonds::nBonds() const
 {
     int nbnds = 0;
-    
+
     QHashIterator<ResNum, ResidueBonds> it(resbnds);
-    
+
     while (it.hasNext())
     {
         it.next();
         nbnds += it.value().nAsymmetricBonds();
     }
-    
+
     return nbnds;
 }
 
@@ -292,20 +292,20 @@ int MoleculeBonds::nResidues() const
 {
     return resbnds.count();
 }
-    
+
 /** Return the list of all of the bonds in this molecule */
 QList<Bond> MoleculeBonds::bonds() const
 {
     QList<Bond> bnds;
 
     QHashIterator<ResNum, ResidueBonds> it(resbnds);
-    
+
     while (it.hasNext())
     {
         it.next();
         bnds += it.value().asymmetricBonds();
     }
-    
+
     return bnds;
 }
 
@@ -340,7 +340,7 @@ bool MoleculeBonds::bonded(ResNum resnum0, ResNum resnum1) const
 /** Return whether or not this contains the bond 'bond' */
 bool MoleculeBonds::contains(const Bond &bond) const
 {
-    return resbnds.contains(bond.atom0().resNum()) and 
+    return resbnds.contains(bond.atom0().resNum()) and
               resbnds[bond.atom0().resNum()].bonded(bond.atom0(),bond.atom1());
 }
 
@@ -350,50 +350,50 @@ bool MoleculeBonds::contains(const AtomIndex &atom) const
     return resbnds.contains(atom.resNum()) and resbnds[atom.resNum()].contains(atom.name());
 }
 
-/** Return whether or not this contains bonding information for the residue 
+/** Return whether or not this contains bonding information for the residue
     with number 'resnum' */
 bool MoleculeBonds::contains(ResNum resnum) const
 {
     return resbnds.contains(resnum);
 }
 
-/** Return whether or not the atom 'atom0' is bonded to the atom 'atom1' in this 
+/** Return whether or not the atom 'atom0' is bonded to the atom 'atom1' in this
     molecule. */
 bool MoleculeBonds::bonded(const AtomIndex &atom0, const AtomIndex &atom1) const
 {
     return resbnds.contains(atom0.resNum()) and
               resbnds[atom0.resNum()].bonded(atom0,atom1);
 }
-   
-/** Return the list of residue numbers of residues bonded to the residue with 
+
+/** Return the list of residue numbers of residues bonded to the residue with
     residue number 'resnum' */
-ResNumList MoleculeBonds::resNumsBondedTo(ResNum resnum) const
+QList<ResNum> MoleculeBonds::resNumsBondedTo(ResNum resnum) const
 {
     if (resbnds.contains(resnum))
         return resbnds[resnum].residuesBondedTo();
     else
-        return ResNumList();
+        return QList<ResNum>();
 }
-   
+
 /** Return the complete list of residue numbers in this molecule
     (note that this only returns the residue numbers of residues that contain
     some bonding) */
-ResNumList MoleculeBonds::resNums() const
+QList<ResNum> MoleculeBonds::resNums() const
 {
     return resbnds.keys();
 }
 
 /** Return the complete list of atoms that are involved in bonding in this molecule */
-AtomIndexSet MoleculeBonds::atoms() const
+QSet<AtomIndex> MoleculeBonds::atoms() const
 {
-    AtomIndexSet atms;
+    QSet<AtomIndex> atms;
     QHashIterator<ResNum,ResidueBonds> it(resbnds);
-    
+
     while(it.hasNext())
     {
         it.next();
         atms.unite(it.value().atoms());
     }
-    
+
     return atms;
 }

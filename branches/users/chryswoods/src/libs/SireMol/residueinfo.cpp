@@ -1,10 +1,10 @@
-/** 
+/**
   * @file
   *
   * C++ Implementation: ResidueInfo and ResidueInfoPvt
   *
-  * Description: 
-  * Implementation of the public ResidueInfo class, and the 
+  * Description:
+  * Implementation of the public ResidueInfo class, and the
   * private ResidueInfoPvt class.
   *
   * @author Christopher Woods, (C) 2006
@@ -12,13 +12,29 @@
   * Copyright: See COPYING file that comes with this distribution
   *
   */
-  
+
 #include <QSharedData>
 
+#include "residueinfo.h"
+
+#include "atominfo.h"
+#include "atominfogroup.h"
+
+#include "resnum.h"
+#include "resid.h"
+
+#include "cgatomid.h"
+
+#include "SireMol/errors.h"
+#include "SireError/errors.h"
+
 #include "SireStream/datastream.h"
-#include "SireStream/implicitstreamer.h"
+#include "SireStream/shareddatastream.h"
 
 using namespace SireStream;
+
+QDataStream& operator<<(QDataStream&, const SireMol::ResidueInfoPvt&);
+QDataStream& operator>>(QDataStream&, SireMol::ResidueInfoPvt&);
 
 namespace SireMol
 {
@@ -29,70 +45,76 @@ namespace SireMol
 */
 class ResidueInfoPvt : public QSharedData
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const ResidueInfoPvt&);
+friend QDataStream& ::operator>>(QDataStream&, ResidueInfoPvt&);
+
 public:
     ResidueInfoPvt();
-    
+
     ResidueInfoPvt(const ResidueInfoPvt &other);
-    
+
     ~ResidueInfoPvt();
-    
+
     ResidueInfoPvt& operator=(const ResidueInfoPvt &other);
-    
+
     bool operator==(const ResidueInfoPvt &other) const;
     bool operator!=(const ResidueInfoPvt &other) const;
-    
+
     const CGAtomID& operator[](AtomID atmid) const;
     const CGAtomID& operator[](const QString &atmname) const;
-    
+
     const CGAtomID& at(AtomID atmid) const;
     const CGAtomID& at(const QString &atmname) const;
-    
+
     QString toString() const;
-    
+
     int nAtoms() const;
-    
+
     QString name() const;
     ResNum number() const;
-    
-    AtomInfo atom(AtomID i) const;
-    
+
+    const AtomInfo& atom(AtomID i) const;
+    const AtomInfo& atom(const QString &atmname) const;
+    const AtomInfo& atom(const CGAtomID &cgatomid) const;
+
     QStringList atomNames() const;
-    
+
     QVector<CutGroupID> cutGroupIDs() const;
     QHash<CutGroupID,AtomInfoGroup> atomGroups() const;
-    
+
     QVector<CGAtomID> indicies() const;
-    
+
     bool contains(const QString &atmname) const;
     bool contains(const AtomIndex &atm) const;
     bool contains(AtomID atm) const;
     bool contains(CutGroupID cgid) const;
     bool contains(const CGAtomID &cgid) const;
-    
+
 private:
     const AtomInfo& _unsafe_atom(const CGAtomID &cgid) const;
 
     /** The residue's name */
     QString resname;
-    
+
     /** The residue's number */
     ResNum resnum;
-    
+
     /** Hash mapping atom names to residue-based indicies */
     QHash<QString,AtomID> atomname2atomid;
 
-    /** The names of the atoms, in the order that 
+    /** The names of the atoms, in the order that
         they were added to the residue (AtomID order) */
     QStringList atmnames;
-    
-    /** The CGAtomID indicies of the atoms in the residue, in the 
+
+    /** The CGAtomID indicies of the atoms in the residue, in the
         order that they were added to the residue (AtomID order) */
     QVector<CGAtomID> cgidxs;
-    
-    /** The CutGroupIDs of all groups that contain atoms from this 
+
+    /** The CutGroupIDs of all groups that contain atoms from this
         residue */
     QVector<CutGroupID> cgids;
-    
+
     /** Metainfo for all of the atoms in this residue, indexed by CGAtomID */
     QHash<CutGroupID, AtomInfoGroup> atominfos;
 };
@@ -107,13 +129,13 @@ static const RegisterMetaType<ResidueInfoPvt> r_respvt("SireMol::ResidueInfo",
 /** Serialise to a binary data stream */
 QDataStream &operator<<(QDataStream &ds, const ResidueInfoPvt &resinfo)
 {
-    writeHeader(ds, r_respvt, 1) 
+    writeHeader(ds, r_respvt, 1)
             << resinfo.resname << resinfo.resnum << resinfo.atmnames
             << resinfo.cgidxs << resinfo.cgids << resinfo.atominfos;
-    
-    //no need to save atomname2atomid as this can be rebuilt from the 
+
+    //no need to save atomname2atomid as this can be rebuilt from the
     //above data
-    
+
     return ds;
 }
 
@@ -121,30 +143,29 @@ QDataStream &operator<<(QDataStream &ds, const ResidueInfoPvt &resinfo)
 QDataStream &operator>>(QDataStream &ds, ResidueInfoPvt &resinfo)
 {
     VersionID v = readHeader(ds, r_respvt);
-    
+
     if (v == 1)
     {
         ds >> resinfo.resname >> resinfo.resnum >> resinfo.atmnames
            >> resinfo.cgidxs >> resinfo.cgids >> resinfo.atominfos;
-           
+
         //rebuild atomname2atomid
         int nats = resinfo.atmnames.count();
         QHash<QString,AtomID> atomname2atomid;
-        
+
         if (nats > 0)
         {
             atomname2atomid.reserve(nats);
-            QString *namearray = resinfo.atmnames.constData();
-            
-            for (int i=0; i<nats; ++i)
-                atomname2atomid.insert(namearray[i], i);
+
+            for (AtomID i(0); i<nats; ++i)
+                atomname2atomid.insert(resinfo.atmnames[i], i);
         }
-        
+
         resinfo.atomname2atomid = atomname2atomid;
     }
     else
         throw version_error(v, "1", r_respvt, CODELOC);
-    
+
     return ds;
 }
 
@@ -158,13 +179,13 @@ ResidueInfoPvt::ResidueInfoPvt() : QSharedData()
 
 /** Copy constructor */
 ResidueInfoPvt::ResidueInfoPvt(const ResidueInfoPvt &other)
-               : QSharedData(),     
+               : QSharedData(),
                  resname(other.resname), resnum(other.resnum),
                  atomname2atomid(other.atomname2atomid),
                  atmnames(other.atmnames), cgidxs(other.cgidxs),
                  cgids(other.cgids), atominfos(other.atominfos)
 {}
-                 
+
 /** Destructor */
 ResidueInfoPvt::~ResidueInfoPvt()
 {}
@@ -182,7 +203,7 @@ ResidueInfoPvt& ResidueInfoPvt::operator=(const ResidueInfoPvt &other)
         cgids = other.cgids;
         atominfos = other.atominfos;
     }
-    
+
     return *this;
 }
 
@@ -190,7 +211,7 @@ ResidueInfoPvt& ResidueInfoPvt::operator=(const ResidueInfoPvt &other)
 bool ResidueInfoPvt::operator==(const ResidueInfoPvt &other) const
 {
     return (this == &other) or
-           (resname == other.resname and resnum == other.resnum and 
+           (resname == other.resname and resnum == other.resnum and
             atmnames == other.atmnames and cgidxs == other.cgidxs);
 }
 
@@ -224,12 +245,12 @@ ResNum ResidueInfoPvt::number() const
 QString ResidueInfoPvt::toString() const
 {
     return QObject::tr("%1(%2): nAtoms() == %3")
-                  .arg(resName()).arg(resNum()).arg(nAtoms());
+                  .arg(name()).arg(number()).arg(nAtoms());
 }
 
 /** Return the CGAtomID of the 'ith' atom in this residue. This will throw
-    an exception if 'i' is an invalid index. 
-    
+    an exception if 'i' is an invalid index.
+
     \throw SireError::invalid_index
 */
 const CGAtomID& ResidueInfoPvt::operator[](AtomID i) const
@@ -237,34 +258,34 @@ const CGAtomID& ResidueInfoPvt::operator[](AtomID i) const
     if (i < 0 or i >= nAtoms())
         throw SireError::invalid_index( QObject::tr(
                   "Invalid index in residue %1(%2). i == %3 while nAtoms() == %4")
-                      .arg(resName()).arg(resNum()).arg(i.index()).arg(nAtoms()),
+                      .arg(name()).arg(number()).arg(i).arg(nAtoms()),
                           CODELOC );
-                          
-    //access the index via 'constData()' as we have already checked that 
+
+    //access the index via 'constData()' as we have already checked that
     //this is a valid index
-    return cgidxs.constData()[i.index()];
+    return cgidxs.constData()[i];
 }
 
-/** Return the CGAtomID of the atom with name 'atmname' in this residue. This 
+/** Return the CGAtomID of the atom with name 'atmname' in this residue. This
     will throw an exception if there is no such atom in this residue.
-    
+
     \throw SireMol::missing_atom
 */
 const CGAtomID& ResidueInfoPvt::operator[](const QString &atmname) const
 {
     QHash<QString,AtomID>::const_iterator it = atomname2atomid.find(atmname);
-    
+
     if (it == atomname2atomid.constEnd())
         throw SireMol::missing_atom( QObject::tr(
                 "No atom called '%1' in residue %2(%3)")
-                    .arg(atmname, resName()).arg(resNum()), CODELOC );
-                    
-    //access the index via 'constData()' as we have already checked that 
+                    .arg(atmname, name()).arg(number()), CODELOC );
+
+    //access the index via 'constData()' as we have already checked that
     //it is valid
-    return cgidxs.constData()[it->index()];
+    return cgidxs.constData()[*it];
 }
 
-/** Synonym for operator[](AtomID) 
+/** Synonym for operator[](AtomID)
 
     \throw SireError::invalid_index
 */
@@ -273,7 +294,7 @@ const CGAtomID& ResidueInfoPvt::at(AtomID atmid) const
     return operator[](atmid);
 }
 
-/** Synonym for operator[](QString) 
+/** Synonym for operator[](QString)
 
     \throw SireMol::missing_atom
 */
@@ -292,7 +313,7 @@ inline const AtomInfo& ResidueInfoPvt::_unsafe_atom(const CGAtomID &cgid) const
     return atominfos.find(cgid.cutGroupID())->constData()[cgid.atomID()];
 }
 
-/** Return the AtomInfo of the ith atom in this residue 
+/** Return the AtomInfo of the ith atom in this residue
 
     \throw SireError::invalid_index
 */
@@ -301,8 +322,8 @@ const AtomInfo& ResidueInfoPvt::atom(AtomID i) const
     //get the CGAtomID of this atom - this will throw
     //an exception if this is an invalid atom
     const CGAtomID &cgid = this->at(i);
-    
-    //return the AtomInfo - can use unsafe access as 
+
+    //return the AtomInfo - can use unsafe access as
     //we know that cgid is valid
     return this->_unsafe_atom(cgid);
 }
@@ -316,7 +337,7 @@ const AtomInfo& ResidueInfoPvt::atom(const QString &atmname) const
     //get the CGAtomID of this atom - this will throw
     //an exception if this is an invalid atom
     const CGAtomID &cgid = this->at(atmname);
-    
+
     //return the AtomInfo - can use unsafe access as
     //we know that 'cgid' is valid
     return this->_unsafe_atom(cgid);
@@ -325,7 +346,7 @@ const AtomInfo& ResidueInfoPvt::atom(const QString &atmname) const
 /** Return the AtomInfo for the atom with CGAtomID 'cgid'.
     This will throw an exception if there is no atom in
     this residue with this 'cgid'.
-    
+
     \throw SireMol::missing_cutgroup
     \throw SireError::invalid_index
 */
@@ -333,23 +354,23 @@ const AtomInfo& ResidueInfoPvt::atom(const CGAtomID &cgid) const
 {
     //find the AtomInfoGroup corresponding to the CutGroupID
     QHash<CutGroupID,AtomInfoGroup>::const_iterator it = atominfos.find(cgid.cutGroupID());
-    
+
     if (it == atominfos.end())
         throw SireMol::missing_cutgroup( QObject::tr(
                 "There is no CutGroup with ID == %1 in residue %2(%3)")
-                    .arg(cgid.cutGroupID()).arg(resName()).arg(resNum()),
+                    .arg(cgid.cutGroupID()).arg(name()).arg(number()),
                         CODELOC );
-                        
+
     const AtomInfo &atominfo = it->at(cgid.atomID());
-    
-    if (atominfo.resNum() != this->resNum())
+
+    if (atominfo.number() != this->number())
         //this atom is not in this residue!
         throw SireError::invalid_index( QObject::tr(
                 "The atom '%1' at index %2 in CutGroup with ID == %3 is not in the residue "
                 "%4(%5)")
                     .arg(atominfo.toString()).arg(cgid.atomID()).arg(cgid.cutGroupID())
-                    .arg(resName()).arg(resNum), CODELOC );
-                    
+                    .arg(name()).arg(number()), CODELOC );
+
     return atominfo;
 }
 
@@ -359,14 +380,14 @@ QStringList ResidueInfoPvt::atomNames() const
 {
     return atmnames;
 }
-    
+
 /** Return the CutGroupIDs of all of the CutGroups that contain atoms from this residue. */
 QVector<CutGroupID> ResidueInfoPvt::cutGroupIDs() const
 {
     return cgids;
 }
 
-/** Return all of the AtomInfoGroups that contain atoms that come from this residue - 
+/** Return all of the AtomInfoGroups that contain atoms that come from this residue -
     note that these groups may also contain atoms that come from other residues. */
 QHash<CutGroupID,AtomInfoGroup> ResidueInfoPvt::atomGroups() const
 {
@@ -378,7 +399,7 @@ QHash<CutGroupID,AtomInfoGroup> ResidueInfoPvt::atomGroups() const
 QVector<CGAtomID> ResidueInfoPvt::indicies() const
 {
     return cgidxs;
-} 
+}
 
 /** Return whether or not this residue contains an atom called 'atmname' */
 bool ResidueInfoPvt::contains(const QString &atmname) const
@@ -389,7 +410,7 @@ bool ResidueInfoPvt::contains(const QString &atmname) const
 /** Return whether or not this residue contains the atom with AtomIndex 'atm' */
 bool ResidueInfoPvt::contains(const AtomIndex &atm) const
 {
-    return atm.resNum() == resNum() and this->contains(atm.name());
+    return atm.resNum() == number() and this->contains(atm.name());
 }
 
 /** Return whether or not this residue contains the atom with AtomID 'atmid' */
@@ -398,7 +419,7 @@ bool ResidueInfoPvt::contains(AtomID atmid) const
     return atmid >= 0 and atmid < this->nAtoms();
 }
 
-/** Return whether or not this residue contains atoms that are present in the 
+/** Return whether or not this residue contains atoms that are present in the
     CutGroup with CutGroupID == cgid */
 bool ResidueInfoPvt::contains(CutGroupID cgid) const
 {
@@ -409,10 +430,10 @@ bool ResidueInfoPvt::contains(CutGroupID cgid) const
 bool ResidueInfoPvt::contains(const CGAtomID &cgid) const
 {
     QHash<CutGroupID,AtomInfoGroup>::const_iterator it = atominfos.find(cgid.cutGroupID());
-    
+
     return ( it != atominfos.end() and
-             it->contains(cgid.atomID()) and
-             it->at(cgid.atomID()).resNum() == this->resNum() );
+             cgid.atomID() < it->count() and
+             it->at(cgid.atomID()).resNum() == this->number() );
 }
 
 ///////////
@@ -424,12 +445,10 @@ static const RegisterMetaType<SireMol::ResidueInfo> r_resinfo("SireMol::ResidueI
 /** Serialise to a binary data stream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const ResidueInfo &resinfo)
 {
-    //get a streamer object to help stream this implicitly shared class
-    ImplicitStreamer streamer = ImplicitStore::getStreamer(ds);
-    
     writeHeader(ds, r_resinfo, 1);
-    streamer.saveQSharedData(resinfo.d);
-    
+
+    SharedDataStream(ds) << resinfo.d;
+
     return ds;
 }
 
@@ -437,17 +456,14 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const ResidueInfo &resin
 QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, ResidueInfo &resinfo)
 {
     VersionID v = readHeader(ds, r_resinfo);
-    
+
     if (v == 1)
     {
-        //get a streamer object to help stream this implicitly shared class
-        ImplicitStreamer streamer = ImplicitStore::getStreamer(ds);
-        
-        streamer.loadQSharedData(resinfo.d);
+        SharedDataStream(ds) >> resinfo.d;
     }
     else
         throw version_error(v, "1", r_resinfo, CODELOC);
-    
+
     return ds;
 }
 

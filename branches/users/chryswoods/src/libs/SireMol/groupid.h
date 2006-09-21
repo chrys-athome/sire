@@ -13,17 +13,17 @@ namespace SireMol
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT GroupID : public ID<GroupID>
+class SIREMOL_EXPORT GroupID : public IDBase
 {
 
 public:
-    GroupID() : ID<GroupID>()
+    GroupID() : IDBase()
     {}
 
-    explicit GroupID(quint32 id) : ID<GroupID>(id)
+    explicit GroupID(quint32 id) : IDBase(id)
     {}
 
-    GroupID(const GroupID &other) : ID<GroupID>(other)
+    GroupID(const GroupID &other) : IDBase(other)
     {}
 
     ~GroupID()

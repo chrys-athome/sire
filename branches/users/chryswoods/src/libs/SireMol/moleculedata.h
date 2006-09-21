@@ -19,6 +19,7 @@
 #include <QVector>
 #include <QHash>
 #include <QSet>
+#include <QMutex>
 
 #include "moleculeid.h"
 #include "moleculeversion.h"
@@ -78,6 +79,8 @@ class ConvertFunction;
 
 class CutGroup;
 
+namespace detail{ class MoveWorkspace;}
+
 using SireVol::CoordGroup;
 
 using SireMaths::Vector;
@@ -98,7 +101,7 @@ Molecule and Residue.
 
 @author Christopher Woods
 */
-class MoleculeData
+class MoleculeData : public QSharedData
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const MoleculeData&);
@@ -159,13 +162,13 @@ public:
     QVector<Atom> atoms(ResNum resnum) const;
     QVector<Atom> atoms(ResID resid) const;
 
-    QHash<CutGroupID,CutGroup> cutGroups() const;
+    QVector<CutGroup> cutGroups() const;
     QHash<CutGroupID,CutGroup> cutGroups(ResNum resnum) const;
     QHash<CutGroupID,CutGroup> cutGroups(ResID resid) const;
 
     CutGroup cutGroup(CutGroupID id) const;
 
-    QHash<CutGroupID,CoordGroup> coordGroups() const;
+    QVector<CoordGroup> coordGroups() const;
     QHash<CutGroupID,CoordGroup> coordGroups(ResNum resnum) const;
     QHash<CutGroupID,CoordGroup> coordGroups(ResID resid) const;
 
@@ -194,7 +197,7 @@ public:
     QHash<ResIDAtomID,Vector> coordinates(const QSet<ResIDAtomID> &resatomids) const;
     QHash<AtomIndex,Vector> coordinates(const QSet<AtomIndex> &atoms) const;
 
-    QVector<Vector> coordinates(CutGroupID cgid);
+    QVector<Vector> coordinates(CutGroupID cgid) const;
     QHash< CutGroupID,QVector<Vector> >
           coordinates(const QSet<CutGroupID> &cgids) const;
 
@@ -206,7 +209,7 @@ public:
     QHash< ResID,QVector<Vector> >
           coordinates(const QSet<ResID> &resids) const;
 
-    const QString& name() const;
+    QString name() const;
 
     QString residueName(ResNum resnum) const;
     QString residueName(ResID resid) const;
@@ -306,13 +309,12 @@ public:
     void rotate(ResID resid, const Quaternion &quat, const Vector &point);
     void rotate(const QSet<ResID> &resids, const Quaternion &quat, const Vector &point);
     void rotate(CutGroupID cgid, const Quaternion &quat, const Vector &point);
-    void rotate(const QSet<CutGroupID> &cgids, const Vector &delta);
+    void rotate(const QSet<CutGroupID> &cgids, const Quaternion &quat, const Vector &point);
 
     void rotate(const Matrix &matrix, const Vector &point);
     void rotate(const AtomIDGroup &group, const Matrix &matrix, const Vector &point);
     void rotate(const AtomIndex &atom, const Matrix &matrix, const Vector &point);
     void rotate(const QSet<AtomIndex> &atoms, const Matrix &matrix, const Vector &point);
-    void rotate(const AtomIndexSet &atoms, const Matrix &matrix, const Vector &point);
     void rotate(ResNum resnum, const QStringList &atoms, const Matrix &matrix,
                 const Vector &point);
     void rotate(ResNum resnum, const Matrix &matrix, const Vector &point);
@@ -355,19 +357,19 @@ public:
    //////// Internal geometry moves ////////////////
     void change(const Bond &bnd, double delta,
                 const AtomIDGroup &group0, const AtomIDGroup &group1,
-                const WeightFunction &weightfunc, const AtomIndexSet &anchors);
+                const WeightFunction &weightfunc, const QSet<AtomIndex> &anchors);
 
     void change(const SireMol::Angle &ang, const SireMaths::Angle &delta,
                 const AtomIDGroup &group0, const AtomIDGroup &group1,
-                const WeightFunction &weightfunc, const AtomIndexSet &anchors);
+                const WeightFunction &weightfunc, const QSet<AtomIndex> &anchors);
 
     void change(const Bond &bnd, const SireMaths::Angle &delta,
                 const AtomIDGroup &group0, const AtomIDGroup &group1,
-                const WeightFunction &weightfunc, const AtomIndexSet &anchors);
+                const WeightFunction &weightfunc, const QSet<AtomIndex> &anchors);
 
     void change(const Improper &improper, const SireMaths::Angle &delta,
                 const AtomIDGroup &group0, const AtomIDGroup &group1,
-                const WeightFunction &weightfunc, const AtomIndexSet &anchors);
+                const WeightFunction &weightfunc, const QSet<AtomIndex> &anchors);
    /////////////////////////////////////////////////
 
    static QSharedDataPointer<MoleculeData> null();
@@ -377,8 +379,118 @@ private:
     static QMutex idmutex;
     static MoleculeID lastid;
 
+    void buildMolecule(const EditMol &editmol, const ConvertFunction &converter);
+
     void incrementMajorVersion();
     void incrementMinorVersion();
+
+    void translate(const ResidueInfo &resinfo, const QStringList &atoms,
+                   const Vector &delta);
+    void translate(const ResidueInfo &resinfo, const Vector &delta);
+
+    void translate(const ResidueInfo &resinfo, const QStringList &atoms,
+                   const Vector &delta, detail::MoveWorkspace &ws) const;
+    void translate(const ResidueInfo &resinfo,
+                   const Vector &delta, detail::MoveWorkspace &ws) const;
+
+    void rotate(const ResidueInfo &resinfo, const QStringList &atoms,
+                const Quaternion &quat, const Vector &point);
+    void rotate(const ResidueInfo &resinfo, const Quaternion &quat,
+                const Vector &point);
+
+    void rotate(const ResidueInfo &resinfo, const QStringList &atoms,
+                const Quaternion &quat, const Vector &point,
+                detail::MoveWorkspace &ws) const;
+    void rotate(const ResidueInfo &resinfo, const Quaternion &quat,
+                const Vector &point, detail::MoveWorkspace &ws) const;
+
+    void rotate(const ResidueInfo &resinfo, const QStringList &atoms,
+                const Matrix &matrix, const Vector &point);
+    void rotate(const ResidueInfo &resinfo, const Matrix &matrix,
+                const Vector &point);
+
+    void rotate(const ResidueInfo &resinfo, const QStringList &atoms,
+                const Matrix &matrix, const Vector &point,
+                detail::MoveWorkspace &ws) const;
+    void rotate(const ResidueInfo &resinfo, const Matrix &matrix,
+                const Vector &point, detail::MoveWorkspace &ws) const;
+
+    void translate(const Vector &delta, detail::MoveWorkspace &ws) const;
+    void translate(const AtomIDGroup &group, const Vector &delta,
+                   detail::MoveWorkspace &ws) const;
+    void translate(const AtomIndex &atom, const Vector &delta,
+                   detail::MoveWorkspace &ws) const;
+    void translate(const QSet<AtomIndex> &atoms, const Vector &delta,
+                   detail::MoveWorkspace &ws) const;
+    void translate(ResNum resnum, const QStringList &atoms, const Vector &delta,
+                   detail::MoveWorkspace &ws) const;
+    void translate(ResNum resnum, const Vector &delta,
+                   detail::MoveWorkspace &ws) const;
+    void translate(const QSet<ResNum> &resnums, const Vector &delta,
+                   detail::MoveWorkspace &ws) const;
+    void translate(ResID resid, const QStringList &atoms, const Vector &delta,
+                   detail::MoveWorkspace &ws) const;
+    void translate(ResID resid, const Vector &delta,
+                   detail::MoveWorkspace &ws) const;
+    void translate(const QSet<ResID> &resids, const Vector &delta,
+                   detail::MoveWorkspace &ws) const;
+    void translate(CutGroupID cgid, const Vector &delta,
+                   detail::MoveWorkspace &ws) const;
+    void translate(const QSet<CutGroupID> &cgids, const Vector &delta,
+                   detail::MoveWorkspace &ws) const;
+
+    void rotate(const Quaternion &quat, const Vector &point,
+                detail::MoveWorkspace &ws) const;
+    void rotate(const AtomIDGroup &group, const Quaternion &quat, const Vector &point,
+                detail::MoveWorkspace &ws) const;
+    void rotate(const AtomIndex &atom, const Quaternion &quat, const Vector &point,
+                detail::MoveWorkspace &ws) const;
+    void rotate(const QSet<AtomIndex> &atoms, const Quaternion &quat, const Vector &point,
+                detail::MoveWorkspace &ws) const;
+    void rotate(ResNum resnum, const QStringList &atoms, const Quaternion &quat,
+                const Vector &point, detail::MoveWorkspace &ws) const;
+    void rotate(ResNum resnum, const Quaternion &quat, const Vector &point,
+                detail::MoveWorkspace &ws) const;
+    void rotate(const QSet<ResNum> &resnums, const Quaternion &quat, const Vector &point,
+                detail::MoveWorkspace &ws) const;
+    void rotate(ResID resid, const QStringList &atoms, const Quaternion &quat,
+                const Vector &point, detail::MoveWorkspace &ws) const;
+    void rotate(ResID resid, const Quaternion &quat, const Vector &point,
+                detail::MoveWorkspace &ws) const;
+    void rotate(const QSet<ResID> &resids, const Quaternion &quat, const Vector &point,
+                detail::MoveWorkspace &ws) const;
+    void rotate(CutGroupID cgid, const Quaternion &quat, const Vector &point,
+                detail::MoveWorkspace &ws) const;
+    void rotate(const QSet<CutGroupID> &cgids, const Quaternion &quat, const Vector &point,
+                detail::MoveWorkspace &ws) const;
+
+    void rotate(const Matrix &matrix, const Vector &point,
+                detail::MoveWorkspace &ws) const;
+    void rotate(const AtomIDGroup &group, const Matrix &matrix, const Vector &point,
+                detail::MoveWorkspace &ws) const;
+    void rotate(const AtomIndex &atom, const Matrix &matrix, const Vector &point,
+                detail::MoveWorkspace &ws) const;
+    void rotate(const QSet<AtomIndex> &atoms, const Matrix &matrix, const Vector &point,
+                detail::MoveWorkspace &ws) const;
+    void rotate(ResNum resnum, const QStringList &atoms, const Matrix &matrix,
+                const Vector &point, detail::MoveWorkspace &ws) const;
+    void rotate(ResNum resnum, const Matrix &matrix, const Vector &point,
+                detail::MoveWorkspace &ws) const;
+    void rotate(const QSet<ResNum> &resnums, const Matrix &matrix, const Vector &point,
+                detail::MoveWorkspace &ws) const;
+    void rotate(ResID resid, const QStringList &atoms, const Matrix &matrix,
+                const Vector &point, detail::MoveWorkspace &ws) const;
+    void rotate(ResID resid, const Matrix &matrix, const Vector &point,
+                detail::MoveWorkspace &ws) const;
+    void rotate(const QSet<ResID> &resids, const Matrix &matrix, const Vector &point,
+                detail::MoveWorkspace &ws) const;
+    void rotate(CutGroupID cgid, const Matrix &matrix, const Vector &point,
+                detail::MoveWorkspace &ws) const;
+    void rotate(const QSet<CutGroupID> &cgids, const Matrix &matrix, const Vector &point,
+                detail::MoveWorkspace &ws) const;
+
+    QHash<CutGroupID,CutGroup> cutGroups(const ResidueInfo &resinfo) const;
+    QHash<CutGroupID,CoordGroup> coordGroups(const ResidueInfo &resinfo) const;
 
     /** ID number used to identify the molecule */
     MoleculeID _id;

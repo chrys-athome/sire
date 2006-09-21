@@ -14,7 +14,7 @@ static const RegisterMetaType<AtomIDGroup> r_atomidgroup("SireMol::AtomIDGroup")
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const AtomIDGroup &group)
 {
     writeHeader(ds, r_atomidgroup, 1) << group.atms << group.residus;
-    
+
     return ds;
 }
 
@@ -22,14 +22,14 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const AtomIDGroup &group
 QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, AtomIDGroup &group)
 {
     VersionID v = readHeader(ds, r_atomidgroup);
-    
+
     if (v == 1)
     {
         ds >> group.atms >> group.residus;
     }
     else
         throw version_error(v, "1", r_atomidgroup, CODELOC);
-    
+
     return ds;
 }
 
@@ -54,16 +54,16 @@ bool AtomIDGroup::isEmpty() const
     return atms.isEmpty() and residus.isEmpty();
 }
 
-/** Simplify this group - this ensures that if a residue has been 
+/** Simplify this group - this ensures that if a residue has been
     added to this group, then none of its atoms are in the list
-    of explicitly added atoms - this ensures that an atom in 
+    of explicitly added atoms - this ensures that an atom in
     the molecule will only appear once in this group; either
     explicitly in the list of atoms, or implicitly via the list
     of residues */
 void AtomIDGroup::simplify()
 {
-    AtomIndexList allatoms = this->atoms().toList();
-    
+    QList<AtomIndex> allatoms = this->atoms().toList();
+
     foreach( AtomIndex atom, allatoms )
     {
         if (this->contains(atom.resNum()))
@@ -76,20 +76,20 @@ void AtomIDGroup::simplify()
 QString AtomIDGroup::inventory() const
 {
     QString ret = QObject::tr("AtomIDGroup contents:\n");
-    
+
     int natm = 0;
     foreach( AtomIndex atm, atms )
     {
         natm++;
         ret += QObject::tr("Atom %1: %2").arg(natm).arg(atm.toString());
     }
-    
+
     int nres = 0;
     foreach( ResNum resnum, residus )
     {
         nres++;
         ret += QObject::tr("Residue %1: Number = %2").arg(nres).arg(resnum.toString());
     }
-    
+
     return ret;
 }

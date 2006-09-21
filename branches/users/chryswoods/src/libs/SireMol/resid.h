@@ -13,17 +13,17 @@ namespace SireMol
     number given to the residue by the user, and used internally to
     identify the residue
 */
-class SIREMOL_EXPORT ResID : public ID<ResID>
+class SIREMOL_EXPORT ResID : public IDBase
 {
 
 public:
-    ResID() : ID<ResID>()
+    ResID() : IDBase()
     {}
 
-    explicit ResID(quint32 id) : ID<ResID>(id)
+    explicit ResID(quint32 id) : IDBase(id)
     {}
 
-    ResID(const ResID &other) : ID<ResID>(other)
+    ResID(const ResID &other) : IDBase(other)
     {}
 
     ~ResID()

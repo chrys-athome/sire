@@ -42,9 +42,28 @@ friend QDataStream& ::operator>>(QDataStream&, AtomInfoGroup&);
 
 public:
     AtomInfoGroup();
+    AtomInfoGroup(int size);
+    AtomInfoGroup(int size, const AtomInfo &value);
+    AtomInfoGroup(const QVector<AtomInfo> &atoms);
+
+    AtomInfoGroup(const AtomInfoGroup &other);
 
     ~AtomInfoGroup();
 
+    AtomInfoGroup& operator=(const AtomInfoGroup &other);
+
+    bool operator==(const AtomInfoGroup &other) const;
+    bool operator!=(const AtomInfoGroup &other) const;
+
+    const AtomInfo& at(int i) const;
+    const AtomInfo& operator[](int i) const;
+
+    bool isNull() const;
+
+    int count() const;
+    int size() const;
+
+    const AtomInfo* constData() const;
 };
 
 }
