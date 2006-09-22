@@ -35,6 +35,7 @@ namespace SireMol
 {
 
 class AtomInfoGroup;
+class AtomID;
 
 using SireVol::CoordGroup;
 
@@ -83,27 +84,36 @@ public:
 
     ~CutGroup();
 
-    Atom at(int i) const;
-    Atom operator[](int i) const;
+    Atom at(AtomID i) const;
+    Atom operator[](AtomID i) const;
+
+    bool operator==(const CutGroup &other) const;
+    bool operator!=(const CutGroup &other) const;
 
     CutGroup& operator=(const CutGroup &other);
     CutGroup& operator=(const CoordGroup &other);
+    CutGroup& operator=(const QVector<Vector> &coords);
 
     bool isNull() const;
 
     QString toString() const;
 
     QVector<Atom> atoms() const;
-    QVector<Atom> atoms(int strt, int end) const;
+    QVector<Atom> atoms(AtomID strt, AtomID end) const;
 
-    Atom atom(int i) const;
+    QVector<Vector> coordinates() const;
+    QVector<Vector> coordinates(AtomID strt, AtomID end) const;
+
+    Atom atom(AtomID i) const;
 
     int nAtoms() const;
     int size() const;
     int count() const;
 
-    const CoordGroup& coordinates() const;
-    void setCoordinates(const CoordGroup &newcoords);
+    void setCoordinates(const QVector<Vector> &newcoords);
+
+    const CoordGroup& coordGroup() const;
+    void setCoordGroup(const CoordGroup &newcoords);
 
     void translate(const Vector &delta);
     void rotate(const Quaternion &quat, const Vector &point);
@@ -123,6 +133,12 @@ private:
 inline bool CutGroup::isNull() const
 {
     return coords.isNull();
+}
+
+/** Return the CoordGroup that contains the coordinates of the atoms */
+inline const CoordGroup& CutGroup::coordGroup() const
+{
+    return coords;
 }
 
 /** Return the number of atoms in the CutGroup */

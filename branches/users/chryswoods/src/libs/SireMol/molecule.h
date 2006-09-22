@@ -151,6 +151,7 @@ public:
     void merge(const Residue &residue);
 
     QHash<ResNum,Residue> residues() const;
+    QHash<ResNum,Residue> residues(const QList<ResNum> &resnums) const;
 
     Residue at(ResNum resnum) const;
     Residue at(ResID i) const;

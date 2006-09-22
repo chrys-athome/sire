@@ -23,10 +23,10 @@ namespace SireMol
 
 using boost::tuple;
 
-/** A ResNumAtomID is the ID number that uniquely identifies an Atom within 
-    an identified Residue (residue identified via residue number). It is the 
-    combination of the ResNum with an index number into the residue of the Atom 
-    
+/** A ResNumAtomID is the ID number that uniquely identifies an Atom within
+    an identified Residue (residue identified via residue number). It is the
+    combination of the ResNum with an index number into the residue of the Atom
+
     @author Christopher Woods
 */
 class SIREMOL_EXPORT ResNumAtomID
@@ -37,63 +37,63 @@ friend QDataStream& ::operator>>(QDataStream&, ResNumAtomID&);
 public:
     ResNumAtomID(ResNum resnum=0, AtomID atmid=0) : _resnum(resnum), _atmid(atmid)
     {}
-    
+
     ResNumAtomID(const tuple<ResNum,AtomID> &t)
               : _resnum( t.get<0>() ), _atmid( t.get<1>() )
     {}
-    
+
     ResNumAtomID(const ResNumAtomID &other) : _resnum(other._resnum), _atmid(other._atmid)
     {}
-    
+
     ~ResNumAtomID()
     {}
-    
+
     ResNum resNum() const
     {
         return _resnum;
     }
-    
+
     AtomID atomID() const
     {
         return _atmid;
     }
-    
+
     bool operator==(const ResNumAtomID &other) const
     {
         return _resnum == other._resnum and _atmid == other._atmid;
     }
-    
+
     bool operator!=(const ResNumAtomID &other) const
     {
         return _resnum != other._resnum or _atmid != other._atmid;
     }
-    
+
     bool operator<(const ResNumAtomID &other) const
     {
-        return _resnum < other._resnum or 
+        return _resnum < other._resnum or
                (_resnum == other._resnum and _atmid < other._atmid);
     }
-    
+
     bool operator<=(const ResNumAtomID &other) const
     {
         return _resnum < other._resnum or
                (_resnum == other._resnum and _atmid <= other._atmid);
     }
-    
+
     bool operator>(const ResNumAtomID &other) const
     {
         return _resnum > other._resnum or
                (_resnum == other._resnum and _atmid > other._atmid);
     }
-    
+
     bool operator>=(const ResNumAtomID &other) const
     {
         return _resnum > other._resnum or
                (_resnum == other._resnum and _atmid >= other._atmid);
     }
-    
+
     QString toString() const;
-    
+
 private:
     ResNum _resnum;
     AtomID _atmid;
@@ -107,7 +107,7 @@ Q_DECLARE_TYPEINFO(SireMol::ResNumAtomID, Q_MOVABLE_TYPE);
 /** Hash this ID type */
 inline uint qHash(const SireMol::ResNumAtomID &id)
 {
-    return ( (qHash(id.resNum())) << 16 ) | 
+    return ( (qHash(id.resNum())) << 16 ) |
            ( (qHash(id.atomID())) | 0x0000FFFF );
 }
 

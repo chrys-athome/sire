@@ -17,7 +17,6 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs
 
 # Define the sources in SireMol
 set ( WRAPMOL_SOURCES
-      wrap_aabox.cpp          
       wrap_angles.cpp         
       wrap_atom.cpp           
       wrap_atomlist.cpp       
@@ -49,11 +48,9 @@ set ( WRAPMOL_SOURCES
       wrap_moleculecginfo.cpp  
       wrap_molecule.cpp        
       wrap_moleculeset.cpp
-      wrap_moleculesignature.cpp
       wrap_residue2.cpp
       wrap_residuebonds.cpp
       wrap_residue.cpp
-      wrap_residueidset.cpp
       wrap_residueset.cpp
      )
 

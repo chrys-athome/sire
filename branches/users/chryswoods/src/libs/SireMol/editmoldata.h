@@ -42,6 +42,8 @@ class Element;
 
 class EditMol;
 class EditRes;
+
+class Atom;
 class Bond;
 class Angle;
 class Dihedral;

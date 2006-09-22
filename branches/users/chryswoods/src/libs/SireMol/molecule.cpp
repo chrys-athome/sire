@@ -260,7 +260,7 @@ Residue Molecule::residue(const QString &resname) const
     This is fast as this class is implicitly shared. */
 QHash<ResNum,Residue> Molecule::residues() const
 {
-    const QVector<ResNum> &resnums = d->residueNumbers();
+    const QVector<ResNum> &resnums = residueNumbers();
 
     int nres = resnums.count();
 
@@ -846,7 +846,7 @@ QHash< ResID,QVector<Vector> > Molecule::coordinates(
 /** Return the name of the molecule. */
 QString Molecule::name() const
 {
-    return d->name();
+    return info().name();
 }
 
 /** Return the name of the residue at number 'resnum'
@@ -855,7 +855,7 @@ QString Molecule::name() const
 */
 QString Molecule::residueName(ResNum resnum) const
 {
-    return d->residueName(resnum);
+    return info().residueName(resnum);
 }
 
 /** Return the name of the residue at index 'resid'
@@ -864,7 +864,7 @@ QString Molecule::residueName(ResNum resnum) const
 */
 QString Molecule::residueName(ResID resid) const
 {
-    return d->residueName(resid);
+    return info().residueName(resid);
 }
 
 /** Return the number of the residue at index 'resid'
@@ -873,7 +873,7 @@ QString Molecule::residueName(ResID resid) const
 */
 ResNum Molecule::residueNumber(ResID resid) const
 {
-    return d->residueNumber(resid);
+    return info().residueNumber(resid);
 }
 
 /** @name Molecule::isEmpty(...)
@@ -885,7 +885,7 @@ ResNum Molecule::residueNumber(ResID resid) const
 /** Return whether or not the entire molecule is empty */
 bool Molecule::isEmpty() const
 {
-    return d->isEmpty();
+    return info().isEmpty();
 }
 
 /** Return whether or not the residue with number 'resnum' is empty.
@@ -894,7 +894,7 @@ bool Molecule::isEmpty() const
 */
 bool Molecule::isEmpty(ResNum resnum) const
 {
-    return d->isEmpty(resnum);
+    return info().isEmpty(resnum);
 }
 
 /** Return whether or not the residue at index 'resid' is empty.
@@ -903,7 +903,7 @@ bool Molecule::isEmpty(ResNum resnum) const
 */
 bool Molecule::isEmpty(ResID resid) const
 {
-    return d->isEmpty(resid);
+    return info().isEmpty(resid);
 }
 
 /** Return whether or not the CutGroup with ID == cgid is empty.
@@ -912,7 +912,7 @@ bool Molecule::isEmpty(ResID resid) const
 */
 bool Molecule::isEmpty(CutGroupID cgid) const
 {
-    return d->isEmpty(cgid);
+    return info().isEmpty(cgid);
 }
 
 /////////////////////////////////////////////////////////
@@ -924,7 +924,7 @@ bool Molecule::isEmpty(CutGroupID cgid) const
 */
 QStringList Molecule::residueNames() const
 {
-    return d->residueNames();
+    return info().residueNames();
 }
 
 /** @name Molecule::residueNumbers(...)
@@ -939,7 +939,7 @@ QStringList Molecule::residueNames() const
 */
 QVector<ResNum> Molecule::residueNumbers() const
 {
-    return d->residueNumbers();
+    return info().residueNumbers();
 }
 
 /** Return an array of the numbers of all of the residues that are called
@@ -947,7 +947,7 @@ QVector<ResNum> Molecule::residueNumbers() const
     this name in this molecule. */
 QVector<ResNum> Molecule::residueNumbers(const QString &resnam) const
 {
-    return d->residueNumbers(resnam);
+    return info().residueNumbers(resnam);
 }
 
 /** Return an array of the numbers of all of the residues who have atoms
@@ -957,7 +957,7 @@ QVector<ResNum> Molecule::residueNumbers(const QString &resnam) const
 */
 QVector<ResNum> Molecule::residueNumbers(CutGroupID cgid) const
 {
-    return d->residueNumbers(cgid);
+    return info().residueNumbers(cgid);
 }
 
 /////////////////////////////////////////////////////////
@@ -970,7 +970,7 @@ QVector<ResNum> Molecule::residueNumbers(CutGroupID cgid) const
 */
 QHash<ResNum,Residue> Molecule::residuesBondedTo(ResNum resnum) const
 {
-    return d->residuesBondedTo(resnum);
+    return residues( connectivity().resNumsBondedTo(resnum) );
 }
 
 /** Return copies of the residues bonded to the residue at index 'resid',
@@ -980,7 +980,7 @@ QHash<ResNum,Residue> Molecule::residuesBondedTo(ResNum resnum) const
 */
 QHash<ResNum,Residue> Molecule::residuesBondedTo(ResID resid) const
 {
-    return d->residuesBondedTo(resid);
+    return residuesBondedTo( residueNumber(resid) );
 }
 
 /** @name Molecule::contains(...)
@@ -992,77 +992,77 @@ QHash<ResNum,Residue> Molecule::residuesBondedTo(ResID resid) const
 /** Return whether or not this molecule contains a CutGroup with ID == cgid */
 bool Molecule::contains(CutGroupID cgid) const
 {
-    return d->contains(cgid);
+    return info().contains(cgid);
 }
 
 /** Return whether or not this molecule contains a residue with number 'resnum' */
 bool Molecule::contains(ResNum resnum) const
 {
-    return d->contains(resnum);
+    return info().contains(resnum);
 }
 
 /** Return whether or not this molecule contains a residue at index 'resid' */
 bool Molecule::contains(ResID resid) const
 {
-    return d->contains(resid);
+    return info().contains(resid);
 }
 
 /** Return whether or not this molecule contains an atom called 'atomname'
     in a residue with number 'resnum'. */
 bool Molecule::contains(ResNum resnum, const QString &atomname) const
 {
-    return d->contains(resnum, atomname);
+    return info().contains( AtomIndex(atomname,resnum) );
 }
 
 /** Return whether or not this molecule contains an atom at index 'atm' */
 bool Molecule::contains(const AtomIndex &atm) const
 {
-    return d->contains(atm);
+    return info().contains(atm);
 }
 
 /** Return whether or not this molecule contains an atom at index 'atomid'
     in a CutGroup with ID == cgid */
 bool Molecule::contains(CutGroupID cgid, AtomID atomid) const
 {
-    return d->contains(cgid, atomid);
+    return info().contains( CGAtomID(cgid,atomid) );
 }
 
 /** Return whether or not this molecule contains an atom at index 'cgatomid' */
 bool Molecule::contains(const CGAtomID &cgatomid) const
 {
-    return d->contains(cgatomid);
+    return info().contains(cgatomid);
 }
 
 /** Return whether or not this molecule contains an atom at index 'atomid'
     in a residue with number 'resnum' */
 bool Molecule::contains(ResNum resnum, AtomID atomid) const
 {
-    return d->contains(resnum, atomid);
+    return info().contains( ResNumAtomID(resnum,atomid) );
 }
 
 /** Return whether or not this molecule contains an atoms at index 'resatomid' */
 bool Molecule::contains(const ResNumAtomID &resatomid) const
 {
-    return d->contains(resatomid);
+    return info().contains( resatomid );
 }
 
 /** Return whether or not this molecule contains an atom at index 'atomid' in
     a residue at index 'resid' */
 bool Molecule::contains(ResID resid, AtomID atomid) const
 {
-    return d->contains(resid, atomid);
+    return info().contains( ResIDAtomID(resid,atomid) );
 }
 
 /** Return whether or not this molecule contains an atom at index 'resatomid' */
 bool Molecule::contains(const ResIDAtomID &resatomid) const
 {
-    return d->contains(resatomid);
+    return info().contains( resatomid );
 }
 
 /** Return whether or not this molecule contains the bond 'bond' */
 bool Molecule::contains(const Bond &bond) const
 {
-    return d->contains(bond);
+    return connectivity().contains(bond);
 }
 
 /////////////////////////////////////////////////////////
@@ -1077,7 +1077,7 @@ bool Molecule::contains(const Bond &bond) const
 /** Return the total number of atoms in the molecule. */
 int Molecule::nAtoms() const
 {
-    return d->nAtoms();
+    return info().nAtoms();
 }
 
 /** Return the total number of atoms in the residue with number 'resnum'
@@ -1086,7 +1086,7 @@ int Molecule::nAtoms() const
 */
 int Molecule::nAtoms(ResNum resnum) const
 {
-    return d->nAtoms(resnum);
+    return info().nAtoms(resnum);
 }
 
 /** Return the total number of atoms in the residue at index 'resid'
@@ -1095,7 +1095,7 @@ int Molecule::nAtoms(ResNum resnum) const
 */
 int Molecule::nAtoms(ResID resid) const
 {
-    return d->nAtoms(resid);
+    return info().nAtoms(resid);
 }
 
 /** Return the total number of atoms in the CutGroup with ID == cgid
@@ -1104,7 +1104,7 @@ int Molecule::nAtoms(ResID resid) const
 */
 int Molecule::nAtoms(CutGroupID cgid) const
 {
-    return d->nAtoms(cgid);
+    return info().nAtoms(cgid);
 }
 
 /////////////////////////////////////////////////////////
@@ -1113,13 +1113,13 @@ int Molecule::nAtoms(CutGroupID cgid) const
 /** Return the total number of residues in the Molecule */
 int Molecule::nResidues() const
 {
-    return d->nResidues();
+    return info().nResidues();
 }
 
 /** Return the total number of CutGroups in the molecule */
 int Molecule::nCutGroups() const
 {
-    return d->nCutGroups();
+    return info().nCutGroups();
 }
 
 /** Return the names of the atoms in the residue with number 'resnum',
@@ -1129,7 +1129,7 @@ int Molecule::nCutGroups() const
 */
 QStringList Molecule::atomNames(ResNum resnum) const
 {
-    return d->atomNames(resnum);
+    return info().atomNames(resnum);
 }
 
 /** Return the names of the atoms in the residue at index 'resid',
@@ -1139,7 +1139,7 @@ QStringList Molecule::atomNames(ResNum resnum) const
 */
 QStringList Molecule::atomNames(ResID resid) const
 {
-    return d->atomNames(resid);
+    return info().atomNames(resid);
 }
 
 /** Return the geometric line that lies along the bond 'bnd'

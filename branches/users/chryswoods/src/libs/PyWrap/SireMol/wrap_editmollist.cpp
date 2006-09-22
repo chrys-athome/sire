@@ -8,13 +8,13 @@
 
 #include <Python.h>
 #include <boost/python.hpp>
-#include <boost/shared_ptr.hpp>
 
 #include "SireMol/qhash_siremol.h"
 
 #include "SireMol/editmol.h"
 
 #include "SireQt/qlist.hpp"
+#include "SireQt/qvector.hpp"
 
 using namespace boost::python;
 using namespace SireQt;

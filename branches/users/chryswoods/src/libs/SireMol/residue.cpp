@@ -74,7 +74,7 @@ Residue::Residue() : rnum(0)
 Residue::Residue(const Molecule &molecule, ResNum resnum)
         : d(molecule.d), rnum(resnum)
 {
-    d->assertResidueExists(rnum);
+    d->info().assertResidueExists(rnum);
 }
 
 /** Construct a residue that is a copy of the residue at index 'resid' in
@@ -83,7 +83,16 @@ Residue::Residue(const Molecule &molecule, ResNum resnum)
     \throw SireError::invalid_index
 */
 Residue::Residue(const Molecule &molecule, ResID resid)
-        : d(molecule.d), rnum( d->residueNumber(resid) )
+        : d(molecule.d), rnum( d->info().residueNumber(resid) )
+{}
+
+/** Construct a residue that is a copy of the first residue called 'resname'
+    in the passed molecule
+
+    \throw SireMol::missing_residue
+*/
+Residue::Residue(const Molecule &molecule, const QString &resname)
+        : d(molecule.d), rnum( d->info().residueNumber(resname) )
 {}
 
 /** Copy constructor - this is fast as this class is implicitly shared */

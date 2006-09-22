@@ -33,18 +33,17 @@ void wrap_ID(const char *wrapname)
         .def( self += int() )
         .def( self - int() )
         .def( self -= int() )
-        
+
         .def( "toString", &T::toString )
         .def( "value", &T::value )
-        .def( "index", &T::index )
-        
+
         .def( "__str__", __str__<T> )
         .def( "__rrshift__", &__rrshift__QDataStream<T>,
                    return_internal_reference< 1, with_custodian_and_ward<1,2> >() )
         .def( "__rlshift__", &__rlshift__QDataStream<T>,
                    return_internal_reference< 1, with_custodian_and_ward<1,2> >() )
     ;
-    
+
     implicitly_convertible<quint32,T>();
 }
 

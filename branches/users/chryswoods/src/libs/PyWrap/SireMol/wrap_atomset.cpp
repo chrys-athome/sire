@@ -12,8 +12,6 @@
 #include "SireMol/qhash_siremol.h"
 #include "SireMol/atom.h"
 
-#include "SireBase/wrap_set.h"
-
 #include "SireQt/qset.hpp"
 
 using namespace boost::python;
@@ -24,7 +22,6 @@ namespace SireMol
 
 void export_AtomSet()
 {
-    SireBase::wrapSet<AtomIndex,Atom>("AtomSet");
     wrap_QSet<Atom>("QSet_Atom_");
     wrap_QSet<AtomIndex>("QSet_AtomIndex_");
 }

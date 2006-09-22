@@ -8,19 +8,13 @@
 
 #include <Python.h>
 #include <boost/python.hpp>
-#include <boost/shared_ptr.hpp>
 
 #include "SireMol/qhash_siremol.h"
 
 #include "SireMol/cutgroup.h"
 #include "SireMol/atom.h"
-#include "SireMol/aabox.h"
 
 #include "SireMaths/quaternion.h"
-
-#include "SirePy/indexer.hpp"
-#include "SireBase/indexset.h"
-#include "../SireBase/wrap_set.h"
 
 using namespace boost::python;
 
@@ -29,24 +23,24 @@ namespace SireMol
 
 void export_CutGroup()
 {
-    const AtomSet& (CutGroup::*wrap_atoms1)() const = &CutGroup::atoms;
+/*    const AtomSet& (CutGroup::*wrap_atoms1)() const = &CutGroup::atoms;
     AtomSet (CutGroup::*wrap_atoms2)(AtomID strt, AtomID end) const = &CutGroup::atoms;
-    
+
     const Atom& (CutGroup::*wrap_atom1)(AtomID) const = &CutGroup::atom;
     const Atom& (CutGroup::*wrap_atom2)(const AtomIndex&) const = &CutGroup::atom;
-    
+
     VectorVector (CutGroup::*wrap_coordinates1)() const = &CutGroup::coordinates;
     const Vector& (CutGroup::*wrap_coordinates2)(const AtomIndex&) const = &CutGroup::coordinates;
     const Vector& (CutGroup::*wrap_coordinates3)(AtomID) const = &CutGroup::coordinates;
-    
+
     void (CutGroup::*wrap_setCoordinates1)(const VectorVector&) = &CutGroup::setCoordinates;
     void (CutGroup::*wrap_setCoordinates2)(const AtomIndex&, const Vector&)
                                        = &CutGroup::setCoordinates;
-    void (CutGroup::*wrap_setCoordinates3)(AtomID, const Vector&) = &CutGroup::setCoordinates;
-    
+    void (CutGroup::*wrap_setCoordinates3)(AtomID, const Vector&) = &CutGroup::setCoordinates;*/
+
     /** Provide the wrapping for the CutGroup object */
     class_<CutGroup>("CutGroup", init<>())
-          .def(init<const AtomSet&>())
+/*          .def(init<const AtomSet&>())
           .def(init<const CutGroup&>())
           .def("ID", &CutGroup::ID, return_value_policy<copy_const_reference>())
           .def("setID", &CutGroup::setID)
@@ -69,7 +63,7 @@ void export_CutGroup()
           .def("coordinates", wrap_coordinates3, return_value_policy<copy_const_reference>())
           .def("setCoordinates", wrap_setCoordinates1)
           .def("setCoordinates", wrap_setCoordinates2)
-          .def("setCoordinates", wrap_setCoordinates3)
+          .def("setCoordinates", wrap_setCoordinates3)*/
     ;
 }
 

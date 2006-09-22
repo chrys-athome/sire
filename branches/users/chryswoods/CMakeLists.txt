@@ -147,6 +147,9 @@ include_directories( ${QT_INCLUDE_DIR}
 
 add_definitions( ${QT_DEFINITIONS} )
 
+# Ensure that the libraries don't contain any undefined symbols
+set( SIRE_LINK_FLAGS "-Wl,--no-undefined" )
+
 # Recurse into the src/libs and src/apps subdirectories
 add_subdirectory (src/libs)
 add_subdirectory (src/apps)

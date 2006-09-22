@@ -14,6 +14,8 @@
   */
 
 #include <QSharedData>
+#include <QVector>
+
 #include <boost/scoped_array.hpp>
 
 #include "SireMaths/quaternion.h"
@@ -22,13 +24,15 @@
 
 #include "SireError/errors.h"
 #include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
 
 #include "coordgroup.h"
 
 using namespace SireMaths;
 using namespace SireStream;
 
-static const RegisterMetaType<SireVol::CoordGroup> r_coordgroup("SireVol::CoordGroup");
+static const RegisterMetaType<SireVol::CoordGroupPvt>
+                    r_grouppvt("SireVol::CoordGroupPvt", MAGIC_ONLY);
 
 QDataStream& operator<<(QDataStream&, const SireVol::CoordGroupPvt&);
 QDataStream& operator>>(QDataStream&, SireVol::CoordGroupPvt&);
@@ -50,6 +54,7 @@ public:
     CoordGroupPvt();
     CoordGroupPvt(int size);
     CoordGroupPvt(int size, const Vector &value);
+    CoordGroupPvt(const QVector<Vector> &coords);
 
     CoordGroupPvt(const CoordGroupPvt &other);
 
@@ -88,6 +93,8 @@ public:
 
     void update();
 
+    void setCoordinates(const QVector<Vector> &newcoords);
+
 private:
     void checkIndex(int i) const;
 
@@ -113,12 +120,23 @@ QDataStream &operator<<(QDataStream &ds, const CoordGroupPvt &coordgroup)
 {
     qint32 sz = coordgroup.size();
 
-    writeHeader(ds, r_coordgroup, 1) << sz;
+    writeHeader(ds, r_grouppvt, 1) << sz;
 
     if (sz > 0)
     {
+        const Vector *array = coordgroup.constData();
+
         for (int i=0; i<sz; ++i)
-            ds << coordgroup.coords[i];
+        {
+            //don't stream each vector individually, as this will
+            //fill the stream with metadata!
+            const Vector &coords = array[i];
+            double x = coords.x();
+            double y = coords.y();
+            double z = coords.z();
+
+            ds << x << y << z;
+        }
 
         ds << coordgroup.aabox;
     }
@@ -129,7 +147,7 @@ QDataStream &operator<<(QDataStream &ds, const CoordGroupPvt &coordgroup)
 /** Deserialise from a binary data stream */
 QDataStream &operator>>(QDataStream &ds, CoordGroupPvt &coordgroup)
 {
-    VersionID v = readHeader(ds, r_coordgroup);
+    VersionID v = readHeader(ds, r_grouppvt);
 
     if (v == 1)
     {
@@ -140,8 +158,15 @@ QDataStream &operator>>(QDataStream &ds, CoordGroupPvt &coordgroup)
         {
             boost::scoped_array<Vector> new_array( new Vector[sz] );
 
+            double x,y,z;
+
             for (int i=0; i<sz; ++i)
-                ds >> new_array[i];
+            {
+                Vector &coords = new_array[i];
+
+                ds >> x >> y >> z;
+                coords.set(x,y,z);
+            }
 
             AABox new_box;
 
@@ -161,7 +186,7 @@ QDataStream &operator>>(QDataStream &ds, CoordGroupPvt &coordgroup)
         }
     }
     else
-        throw version_error(v, "1", r_coordgroup, CODELOC);
+        throw version_error(v, "1", r_grouppvt, CODELOC);
 
     return ds;
 }
@@ -198,6 +223,13 @@ CoordGroupPvt::CoordGroupPvt(int size, const Vector &value) : QSharedData()
     }
     else
         sz = 0;
+}
+
+/** Create from a vector of coordinates */
+CoordGroupPvt::CoordGroupPvt(const QVector<Vector> &coords)
+              : QSharedData(), sz(0)
+{
+    setCoordinates(coords);
 }
 
 /** Copy constructor - deep-copies the coordinates of 'other' */
@@ -243,6 +275,30 @@ CoordGroupPvt& CoordGroupPvt::operator=(const CoordGroupPvt &other)
     }
 
     return *this;
+}
+
+/** Set the coordinates of this group to be the same as those in 'newcoords' */
+void CoordGroupPvt::setCoordinates(const QVector<Vector> &newcoords)
+{
+    int n = newcoords.size();
+    if (n > 0)
+    {
+        sz = n;
+        coords.reset( new Vector[sz] );
+
+        void *output = qMemCopy( coords.get(), newcoords.constData(),
+                                 sz * sizeof(Vector) );
+
+        BOOST_ASSERT( output = coords.get() );
+
+        this->update();
+    }
+    else
+    {
+        sz = 0;
+        coords.reset();
+        aabox = AABox();
+    }
 }
 
 /** Check that an index is valid - else throw an exception
@@ -387,7 +443,7 @@ inline void CoordGroupPvt::rotate(const Quaternion &quat, const Vector &point)
 
     \throw SireError::invalid_index
 */
-inline void CoordGroupPvt::rotate(int i, const Matrix &rotmat, const Vector &point)
+inline void CoordGroupPvt::rotate(int i, const Quaternion &quat, const Vector &point)
 {
     this->rotate(i, quat.toMatrix(), point);
 }
@@ -448,6 +504,11 @@ CoordGroupBase::CoordGroupBase(int size, const Vector &value)
                : d( new CoordGroupPvt(size, value) )
 {}
 
+/** Create from a vector of points */
+CoordGroupBase::CoordGroupBase(const QVector<Vector> &coords)
+               : d( new CoordGroupPvt(coords) )
+{}
+
 /** Copy constructor - copying is fast as this class is implicitly shared */
 CoordGroupBase::CoordGroupBase(const CoordGroupBase &other)
                : d( other.d )
@@ -462,6 +523,12 @@ CoordGroupBase& CoordGroupBase::operator=(const CoordGroupBase &other)
 {
     d = other.d;
     return *this;
+}
+
+/** Set the coordinates to 'newcoords' */
+void CoordGroupBase::setCoordinates(const QVector<Vector> &newcoords)
+{
+    d = QSharedDataPointer<CoordGroupPvt>( new CoordGroupPvt(newcoords) );
 }
 
 /////////////
@@ -480,6 +547,11 @@ CoordGroup::CoordGroup(int size) : CoordGroupBase(size)
     value 'value' */
 CoordGroup::CoordGroup(int size, const Vector &value)
            : CoordGroupBase(size, value)
+{}
+
+/** Construct a CoordGroup from a vector of points */
+CoordGroup::CoordGroup(const QVector<Vector> &coords)
+           : CoordGroupBase(coords)
 {}
 
 /** Copy constructor - copying is fast as this class is implicitly shared */
@@ -577,6 +649,33 @@ CoordGroupEditor CoordGroup::edit()
 /////////////
 ///////////// Implementation of CoordGroupEditor
 /////////////
+
+static const RegisterMetaType<CoordGroup> r_cgroup("SireVol::CoordGroup");
+
+/** Serialise to a binary datastream */
+QDataStream SIREVOL_EXPORT &operator<<(QDataStream &ds, const CoordGroup &cgroup)
+{
+    writeHeader(ds, r_cgroup, 1);
+
+    SharedDataStream(ds) << cgroup.d;
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds, CoordGroup &cgroup)
+{
+    VersionID v = readHeader(ds, r_cgroup);
+
+    if (v == 1)
+    {
+        SharedDataStream(ds) >> cgroup.d;
+    }
+    else
+        throw version_error(v, "1", r_cgroup, CODELOC);
+
+    return ds;
+}
 
 /** Null constructor */
 CoordGroupEditor::CoordGroupEditor() : CoordGroupBase()

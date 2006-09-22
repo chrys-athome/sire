@@ -112,9 +112,6 @@ public:
 
     QString name() const;
 
-    bool isEmpty() const;
-    bool isNull() const;
-
     QString toString() const;
 
     int nResidues() const;
@@ -122,12 +119,23 @@ public:
 
     int nAtoms() const;
     int nAtoms(ResNum resnm) const;
+    int nAtoms(ResID resid) const;
     int nAtoms(CutGroupID cgid) const;
+
+    ResNum residueNumber(ResID resid) const;
+    ResNum residueNumber(const QString &resname) const;
+
+    QString residueName(ResNum resnum) const;
+    QString residueName(ResID resid) const;
 
     QVector<ResNum> residueNumbers() const;
     QVector<ResNum> residueNumbers(const QString &resname) const;
+    QVector<ResNum> residueNumbers(CutGroupID cgid) const;
 
     QStringList residueNames() const;
+
+    QStringList atomNames(ResNum resnum) const;
+    QStringList atomNames(ResID resid) const;
 
     QHash<CutGroupID,AtomInfoGroup> atomGroups() const;
 
@@ -140,6 +148,23 @@ public:
     bool contains(const CGAtomID &cgid) const;
     bool contains(const ResNumAtomID &resid) const;
     bool contains(const ResIDAtomID &resid) const;
+
+    bool isNull() const;
+
+    bool isEmpty() const;
+    bool isEmpty(ResNum resnum) const;
+    bool isEmpty(ResID resid) const;
+    bool isEmpty(CutGroupID cgid) const;
+
+    void assertResidueExists(ResNum resnum) const;
+    void assertResidueExists(ResID resid) const;
+
+    void assertCutGroupExists(CutGroupID cgid) const;
+
+    void assertAtomExists(const AtomIndex &atom) const;
+    void assertAtomExists(const CGAtomID &cgatomid) const;
+    void assertAtomExists(const ResNumAtomID &resatomid) const;
+    void assertAtomExists(const ResIDAtomID &resatomid) const;
 
 private:
     /** Implicitly shared pointer to the data of this object */

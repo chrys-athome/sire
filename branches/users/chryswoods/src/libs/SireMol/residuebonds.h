@@ -6,6 +6,8 @@
 #include <QList>
 #include <QString>
 
+#include "sireglobal.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol

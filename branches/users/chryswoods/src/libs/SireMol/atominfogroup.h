@@ -29,6 +29,8 @@ QDataStream& operator>>(QDataStream&, SireMol::AtomInfoGroup&);
 namespace SireMol
 {
 
+class AtomID;
+
 /**
 This class holds the group of AtomInfo objects of Atoms in a CutGroup. This class is designed to be used with CutGroup and CoordGroup, and allows the data of a CutGroup to be split into two; the coordinates go to CutGroup while the remaining meta information goes to AtomInfoGroup.
 
@@ -55,8 +57,8 @@ public:
     bool operator==(const AtomInfoGroup &other) const;
     bool operator!=(const AtomInfoGroup &other) const;
 
-    const AtomInfo& at(int i) const;
-    const AtomInfo& operator[](int i) const;
+    const AtomInfo& at(AtomID i) const;
+    const AtomInfo& operator[](AtomID i) const;
 
     bool isNull() const;
 
@@ -64,6 +66,12 @@ public:
     int size() const;
 
     const AtomInfo* constData() const;
+
+private:
+    void checkAtom(AtomID i) const;
+
+    /** Vector of the AtomInfo data */
+    QVector<AtomInfo> atms;
 };
 
 }

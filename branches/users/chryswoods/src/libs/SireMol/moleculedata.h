@@ -151,7 +151,7 @@ public:
     Atom at(const CGAtomID &cgatomid) const;
     Atom at(const AtomIndex &atm) const;
 
-    MoleculeBonds connectivity() const;
+    const MoleculeBonds& connectivity() const;
 
     ResidueBonds connectivity(ResNum resnum) const;
     ResidueBonds connectivity(ResID resid) const;
@@ -174,6 +174,7 @@ public:
 
     CoordGroup coordGroup(CutGroupID id) const;
 
+    Atom atom(AtomID atomid) const;
     Atom atom(CutGroupID cgid, AtomID atomid) const;
     Atom atom(const CGAtomID &cgatmid) const;
     Atom atom(ResNum resnum, AtomID atomid) const;
@@ -201,71 +202,13 @@ public:
     QHash< CutGroupID,QVector<Vector> >
           coordinates(const QSet<CutGroupID> &cgids) const;
 
-    QVector<Vector> coordinates(ResNum resnum);
+    QVector<Vector> coordinates(ResNum resnum) const;
     QHash< ResNum,QVector<Vector> >
           coordinates(const QSet<ResNum> &resnums) const;
 
-    QVector<Vector> coordinates(ResID resid);
+    QVector<Vector> coordinates(ResID resid) const;
     QHash< ResID,QVector<Vector> >
           coordinates(const QSet<ResID> &resids) const;
-
-    QString name() const;
-
-    QString residueName(ResNum resnum) const;
-    QString residueName(ResID resid) const;
-
-    ResNum residueNumber(ResID resid) const;
-
-    bool isEmpty() const;
-    bool isEmpty(ResNum resnum) const;
-    bool isEmpty(ResID resid) const;
-    bool isEmpty(CutGroupID cgid) const;
-
-    QVector<ResNum> residueNumbers() const;
-    QStringList residueNames() const;
-
-    QVector<ResNum> residueNumbers(const QString &resnam) const;
-    QVector<ResNum> residueNumbers(CutGroupID cgid) const;
-
-    QHash<ResNum,Residue> residuesBondedTo(ResNum resnum) const;
-    QHash<ResNum,Residue> residuesBondedTo(ResID resid) const;
-
-    bool contains(CutGroupID cgid) const;
-    bool contains(ResNum resnum) const;
-    bool contains(ResID resid) const;
-
-    bool contains(ResNum resnum, const QString &atomname) const;
-    bool contains(const AtomIndex &atm) const;
-    bool contains(CutGroupID cgid, AtomID atomid) const;
-    bool contains(const CGAtomID &cgatomid) const;
-    bool contains(ResNum resnum, AtomID atomid) const;
-    bool contains(const ResNumAtomID &resatomid) const;
-    bool contains(ResID resid, AtomID atomid) const;
-    bool contains(const ResIDAtomID &resatomid) const;
-
-    bool contains(const Bond &bond) const;
-
-    int nAtoms() const;
-    int nAtoms(ResNum resnum) const;
-    int nAtoms(ResID resid) const;
-    int nAtoms(CutGroupID id) const;
-
-    int nResidues() const;
-
-    int nCutGroups() const;
-
-    QStringList atomNames(ResNum resnum) const;
-    QStringList atomNames(ResID resid) const;
-
-    void assertResidueExists(ResNum resnum) const;
-    void assertResidueExists(ResID resid) const;
-
-    void assertCutGroupExists(CutGroupID cgid) const;
-
-    void assertAtomExists(const AtomIndex &atom) const;
-    void assertAtomExists(const CGAtomID &cgatomid) const;
-    void assertAtomExists(const ResNumAtomID &resatomid) const;
-    void assertAtomExists(const ResIDAtomID &resatomid) const;
 
     SireMaths::Line bond(const Bond &bnd) const;
     SireMaths::Triangle angle(const SireMol::Angle &ang) const;
@@ -378,8 +321,6 @@ private:
     static MoleculeID getNewID();
     static QMutex idmutex;
     static MoleculeID lastid;
-
-    void buildMolecule(const EditMol &editmol, const ConvertFunction &converter);
 
     void incrementMajorVersion();
     void incrementMinorVersion();

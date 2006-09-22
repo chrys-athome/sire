@@ -8,21 +8,16 @@
 
 #include <Python.h>
 #include <boost/python.hpp>
-#include <boost/shared_ptr.hpp>
 
 #include "SireMol/qhash_siremol.h"
 
 #include "SireMol/cutgroup.h"
-#include "SireMol/atom.h"
-#include "SireMol/aabox.h"
+#include "SireMol/cutgroupid.h"
 
-#include "SireMaths/quaternion.h"
-
-#include "SirePy/indexer.hpp"
-#include "SireBase/indexset.h"
-#include "../SireBase/wrap_set.h"
+#include "SireQt/qhash.hpp"
 
 using namespace boost::python;
+using namespace SireQt;
 
 namespace SireMol
 {
@@ -30,7 +25,7 @@ namespace SireMol
 void export_CutGroupSet()
 {
     /** Wrap up a CutGroupSet */
-    SireBase::wrapSet<MolCutGroupID, CutGroup>("CutGroupSet");
+    wrap_QHash<CutGroupID,CutGroup>("QHash_CutGroupID_CutGroup_");
 }
 
 }

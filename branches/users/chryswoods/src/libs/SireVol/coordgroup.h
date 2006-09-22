@@ -57,6 +57,7 @@ public:
     CoordGroupBase();
     CoordGroupBase(int size);
     CoordGroupBase(int size, const Vector &value);
+    CoordGroupBase(const QVector<Vector> &coords);
 
     CoordGroupBase(const CoordGroupBase &other);
 
@@ -65,6 +66,8 @@ public:
     CoordGroupBase& operator=(const CoordGroupBase &other);
 
 protected:
+    void setCoordinates(const QVector<Vector> &newcoords);
+
     /** Implicitly shared pointer to the coordinate data */
     QSharedDataPointer<CoordGroupPvt> d;
 };

@@ -22,6 +22,7 @@ add_library (SireBase ${SIREBASE_SOURCES})
 set_target_properties (SireBase PROPERTIES
                        VERSION ${SIRE_VERSION}
                        SOVERSION ${SIRE_VERSION_MAJOR}
+                       LINK_FLAGS ${SIRE_LINK_FLAGS}
                       )
 
 # Link to other Sire libraries, and GSL

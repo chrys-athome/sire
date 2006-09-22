@@ -106,6 +106,9 @@ public:
 
     int nCutGroups() const;
 
+    ResNum residueNumber(ResID resid) const;
+    ResNum residueNumber(const QString &resname) const;
+
     QVector<ResNum> residueNumbers() const;
     QVector<ResNum> residueNumbers(const QString &resname) const;
 
@@ -597,6 +600,40 @@ int MoleculeInfoPvt::nAtoms(ResNum resnum) const
     return residue(resnum).nAtoms();
 }
 
+/** Return the residue number of the residue at index 'resid'
+
+    \throw SireError::invalid_index
+*/
+ResNum MoleculeInfoPvt::residueNumber(ResID resid) const
+{
+    checkResidue(resid);
+    return resnums.constData()[resid];
+}
+
+/** Return the residue number of the first residue with name 'resname'
+
+    \throw SireMol::missing_residue
+*/
+ResNum MoleculeInfoPvt::residueNumber(const QString &resname) const
+{
+    int nres = resnums.count();
+    const ResNum *array = resnums.constData();
+
+    for (int i=0; i<nres; ++i)
+    {
+        ResNum rnum = array[i];
+
+        if (resinfos[rnum].name() == resname)
+            return rnum;
+    }
+
+    throw SireMol::missing_residue( QObject::tr(
+                    "There is no residue called \"%1\" in the molecule \"%2\"")
+                        .arg(resname, molname), CODELOC );
+
+    return ResNum(0);
+}
+
 /** Return the numbers of all of the residues, in the order that the residues
     appear in the molecule (ResID order) */
 QVector<ResNum> MoleculeInfoPvt::residueNumbers() const
@@ -779,6 +816,34 @@ bool MoleculeInfo::operator==(const MoleculeInfo &other) const
 bool MoleculeInfo::operator!=(const MoleculeInfo &other) const
 {
     return *d != *(other.d);
+}
+
+/** Check that the residue 'resnum' exists - else throw an exception */
+void MoleculeInfo::assertResidueExists(ResNum resnum) const
+{
+    if (not contains(resnum))
+        throw SireMol::missing_residue(QObject::tr(
+            "Molecule \"%1\" does not contain a residue with number \"%2\"")
+                .arg(name()).arg(resnum), CODELOC);
+}
+
+/** Check that the residue with index 'resid' exists - else throw
+    an exception */
+void MoleculeInfo::assertResidueExists(ResID resid) const
+{
+    if (not contains(resid))
+        throw SireError::invalid_index(QObject::tr(
+            "Molecule \"%1\" has no residue with index \"%2\" (nResidues() == %3)")
+                .arg(name()).arg(resid).arg(nResidues()), CODELOC);
+}
+
+/** Check the CutGroupID is valid */
+void MoleculeInfo::assertCutGroupExists(CutGroupID id) const
+{
+    if ( id >= nCutGroups() )
+        throw SireMol::missing_cutgroup(QObject::tr(
+            "There is no CutGroup with ID == %1 in Molecule \"%2\" (nCutGroups() == %3)")
+                .arg(id).arg(name()).arg(nCutGroups()), CODELOC);
 }
 
 /** Return the name of this molecule */
@@ -1024,6 +1089,24 @@ int MoleculeInfo::nAtoms() const
 int MoleculeInfo::nAtoms(ResNum resnum) const
 {
     return d->nAtoms(resnum);
+}
+
+/** Return the residue number of the residue at index 'resid'
+
+    \throw SireError::invalid_index
+*/
+ResNum MoleculeInfo::residueNumber(ResID resid) const
+{
+    return d->residueNumber(resid);
+}
+
+/** Return the residue number of the first residue with name 'resname'
+
+    \throw SireMol::missing_residue
+*/
+ResNum MoleculeInfo::residueNumber(const QString &resname) const
+{
+    return d->residueNumber(resname);
 }
 
 /** Return the numbers of all of the residues, in the order that the residues
