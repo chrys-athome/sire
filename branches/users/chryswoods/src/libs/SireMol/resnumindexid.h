@@ -35,7 +35,8 @@ class SIREMOL_EXPORT ResNumIndexID
 friend QDataStream& ::operator>>(QDataStream&, ResNumIndexID&);
 
 public:
-    ResNumIndexID(ResNum resnum=0, Index idx=0) : _resnum(resnum), _idx(idx)
+    ResNumIndexID(ResNum resnum = ResNum(0), Index idx = Index(0)) 
+            : _resnum(resnum), _idx(idx)
     {}
     
     ResNumIndexID(const tuple<ResNum,Index> &t)

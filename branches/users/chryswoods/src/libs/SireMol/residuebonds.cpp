@@ -38,7 +38,7 @@ friend QDataStream& ::operator<<(QDataStream&, const ResidueBondsPvt&);
 friend QDataStream& ::operator>>(QDataStream&, ResidueBondsPvt&);
 
 public:
-    ResidueBondsPvt(ResNum resnum=0);
+    ResidueBondsPvt(ResNum resnum = ResNum(0));
     ResidueBondsPvt(const ResidueBondsPvt &other);
 
     ~ResidueBondsPvt();

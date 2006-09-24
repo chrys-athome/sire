@@ -35,7 +35,8 @@ class SIREMOL_EXPORT ResIDAtomID
 friend QDataStream& ::operator>>(QDataStream&, ResIDAtomID&);
 
 public:
-    ResIDAtomID(ResID resid=0, AtomID atmid=0) : _resid(resid), _atmid(atmid)
+    ResIDAtomID(ResID resid = ResID(0), AtomID atmid = AtomID(0)) 
+              : _resid(resid), _atmid(atmid)
     {}
 
     ResIDAtomID(const tuple<ResID,AtomID> &t)

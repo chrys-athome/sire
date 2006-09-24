@@ -15,6 +15,8 @@
 
 #include <QSharedData>
 
+#include "qhash_siremol.h"
+
 #include "moleculeinfo.h"
 #include "residueinfo.h"
 
@@ -66,78 +68,23 @@ public:
     bool operator==(const MoleculeInfoPvt &other) const;
     bool operator!=(const MoleculeInfoPvt &other) const;
 
-    const ResidueInfo& operator[](ResID resid) const;
-    const ResidueInfo& operator[](ResNum resnum) const;
-
-    const CGAtomID& operator[](AtomID atmid) const;
-    const CGAtomID& operator[](const AtomIndex &atomindex) const;
-    const CGAtomID& operator[](const ResNumAtomID &resatomid) const;
-    const CGAtomID& operator[](const ResIDAtomID &resatomid) const;
-
-    const ResidueInfo& at(ResID resid) const;
-    const ResidueInfo& at(ResNum resnum) const;
-
-    const CGAtomID& at(AtomID atmid) const;
-    const CGAtomID& at(const AtomIndex &atomindex) const;
-    const CGAtomID& at(const ResNumAtomID &resatomid) const;
-    const CGAtomID& at(const ResIDAtomID &resatomid) const;
-
-    const AtomInfo& atom(AtomID atomid) const;
-    const AtomInfo& atom(const AtomIndex &atomindex) const;
-    const AtomInfo& atom(const ResNumAtomID &rsid) const;
-    const AtomInfo& atom(const ResIDAtomID &rsid) const;
-    const AtomInfo& atom(const CGAtomID &cgid) const;
-
-    const ResidueInfo& residue(AtomID atmid) const;
-    const ResidueInfo& residue(ResID resid) const;
-    const ResidueInfo& residue(ResNum resnum) const;
-
-    QString name() const;
-
-    bool isEmpty() const;
-    bool isNull() const;
-
-    QString toString() const;
-
-    int nResidues() const;
-
-    int nAtoms() const;
-    int nAtoms(ResNum resnm) const;
-
-    int nCutGroups() const;
-
-    ResNum residueNumber(ResID resid) const;
-    ResNum residueNumber(const QString &resname) const;
-
-    QVector<ResNum> residueNumbers() const;
-    QVector<ResNum> residueNumbers(const QString &resname) const;
-
-    QStringList residueNames() const;
-
-    QHash<CutGroupID,AtomInfoGroup> atomGroups() const;
-
-    bool contains(ResNum resnum) const;
-    bool contains(ResID resid) const;
-    bool contains(CutGroupID cgid) const;
-
-    bool contains(AtomID atmid) const;
-    bool contains(const AtomIndex &atm) const;
-    bool contains(const CGAtomID &cgid) const;
-    bool contains(const ResNumAtomID &resid) const;
-    bool contains(const ResIDAtomID &resid) const;
-
-private:
     void regenerateIndex();
 
+    const AtomInfoGroup& _unsafe_atomInfoGroup(CutGroupID cgid) const;
     const ResidueInfo& _unsafe_residue(ResNum resnum) const;
-    const ResidueInfo& _unsafe_residue(ResID resid) const;
+    const AtomInfo& _unsafe_atom(const CGAtomID &cgatomid) const;
 
-    const AtomInfo& _unsafe_atom(const CGAtomID &cgid) const;
+    const CGAtomID& _unsafe_index(AtomID atomid) const;
 
-    void checkAtom(AtomID atomid) const;
-    void checkResidue(ResNum resnum) const;
-    void checkResidue(ResID resid) const;
-    void checkCutGroup(CutGroupID cgid) const;
+    void assertResidueExists(ResNum resnum) const;
+    void assertResidueExists(ResID resid) const;
+    void assertCutGroupExists(CutGroupID cgid) const;
+    
+    void assertAtomExists(AtomID atomid) const;
+    void assertAtomExists(const AtomIndex &atom) const;
+    void assertAtomExists(const CGAtomID &cgatomid) const;
+    void assertAtomExists(const ResNumAtomID &resatomid) const;
+    void assertAtomExists(const ResIDAtomID &resatomid) const;
 
     /** The name of this molecule */
     QString molname;
@@ -254,485 +201,50 @@ bool MoleculeInfoPvt::operator!=(const MoleculeInfoPvt &other) const
            (molname != other.molname or resinfos != other.resinfos);
 }
 
-/** Return the name of this molecule */
-QString MoleculeInfoPvt::name() const
+/** Return the AtomInfoGroup for the CutGroup with ID == cgid - this does
+    not check that cgid is valid! */
+const AtomInfoGroup& _unsafe_atomInfoGroup(CutGroupID cgid) const
 {
-    return molname;
+    return atominfos.find(cgid).value();
 }
 
-/** Internal function used to return the ResidueInfo for the 'ith' residue.
-    This assumes that 'i' is valid, so will have undefined results if that
-    is not the case! */
-const ResidueInfo& MoleculeInfoPvt::_unsafe_residue(ResID i) const
+/** Return the ResidueInfo for the residue with number 'resnum' - this
+    does not check that 'resnum' is valid */
+const ResidueInfo& _unsafe_residue(ResNum resnum) const
 {
-    return resinfos.find( resnums.constData()[i] ).value();
+    return resinfos.find(resnum).value();
 }
 
-/** Internal function used to return the ResidueInfo for residue with number
-    'resnum'. This assumes that there is a residue with this number, so will
-    have undefined results if that is not the case! */
-const ResidueInfo& MoleculeInfoPvt::_unsafe_residue(ResNum resnum) const
+/** Return the AtomInfo of the atom with index 'cgatomid' - this
+    does not check that this is a valid index */
+const AtomInfo& _unsafe_atom(const CGAtomID &cgatomid) const
 {
-    return resinfos.find( resnum ).value();
+    return _unsafe_atomInfoGroup(cgatomid.cutGroupID()).constData()[cgatomid.atotmID()];
 }
 
-/** Return the ResidueInfo for the 'ith' residue in this molecule. This will
-    throw an exception if 'i' is an invalid index.
-
-    \throw SireError::invalid_index
-*/
-const ResidueInfo& MoleculeInfoPvt::operator[](ResID i) const
+/** Convert the index 'atomid' into a CGAtomID index - this does
+    not check that the index is valid */
+const CGAtomID& _unsafe_index(AtomID atomid) const
 {
-    checkResidue(i);
-    return this->_unsafe_residue(i);
-}
-
-/** Return the ResidueInfo for the residue with residue number 'resnum'. This
-    will throw an exception if there is no such residue.
-
-    \throw SireMol::missing_residue
-*/
-const ResidueInfo& MoleculeInfoPvt::operator[](ResNum resnum) const
-{
-    checkResidue(resnum);
-    return this->_unsafe_residue(resnum);
-}
-
-/** Throw an exception if passed an invalid AtomID
-
-    \throw SireError::invalid_index
-*/
-inline void MoleculeInfoPvt::checkAtom(AtomID atmid) const
-{
-    if (atmid < 0 or atmid >= nAtoms())
-        throw SireError::invalid_index( QObject::tr(
-                "Invalid index in molecule '%1', no AtomID index '%2'")
-                    .arg(this->toString()).arg(atmid), CODELOC );
-}
-
-/** Return the CGAtomID of the 'ith' atom in this molecule. This will throw an
-    exception if 'i' is an invalid index.
-
-    \throw SireError::invalid_index
-*/
-const CGAtomID& MoleculeInfoPvt::operator[](AtomID i) const
-{
-    checkAtom(i);
-
-    //find the nearest index to 'i'
-    QMap<AtomID,ResNum>::const_iterator it = idx2resnum.lowerBound(i);
-
-    BOOST_ASSERT( it != idx2resnum.end() ); //this should be impossible...
-
-    //get the residueinfo that contains this index...
-    const ResidueInfo &resinfo = this->_unsafe_residue( it.value() );
-
+    //find the nearest index to 'atomid'
+    QMap<AtomID,ResNum>::const_iterator it = idx2resnum.lowerBound(atomid);
+    
+    BOOST_ASSERT( it != idx2resnum.end() ); //this should be impossible
+    
+    //get the ResidueInfo that contains this index
+    const ResidueInfo &resinfo = this->_unsafe_residue(it.value());
+    
     //ok - it.key() contains the highest index for this residue
-    //If we subtract it.key() from i that will convert i into a reversed
-    //index into the residueinfo
-    i -= it.key();
-
+    //If we subtract it.key() from atomid that will convert it into an
+    //index into the ResidueInfo
+    int i = atomid - it.key();
+    
     //convert the reversed index into a real index by adding
-    //it to 'natoms' in the residue (remembering that i is negative)
+    //it to 'natoms' in the residue (remembering that i is
+    //negative
     i += resinfo.nAtoms();
-
+    
     return resinfo[i];
-}
-
-/** Return the CGAtomID of the atom with AtomIndex 'atm'. This will throw an
-    exception if there is no such atom in this molecule.
-
-    \throw SireMol::missing_residue
-    \throw SireMol::missing_atom
-*/
-const CGAtomID& MoleculeInfoPvt::operator[](const AtomIndex &atm) const
-{
-    return residue(atm.resNum()).at(atm.name());
-}
-
-/** Return the CGAtomID of the atom with index 'resatomid'. This will throw
-    an exception if there is no such atom in this molecule.
-
-    \throw SireMol::missing_residue
-    \throw SireError::invalid_index
-*/
-const CGAtomID& MoleculeInfoPvt::operator[](const ResNumAtomID &resatomid) const
-{
-    return residue(resatomid.resNum()).at(resatomid.atomID());
-}
-
-/** Return the CGAtomID of the atom with index 'resatomid'. This will throw
-    an exception if thereis no such atom in this molecule.
-
-    \throw SireError::invalid_index
-*/
-const CGAtomID& MoleculeInfoPvt::operator[](const ResIDAtomID &resatomid) const
-{
-    return residue(resatomid.resID()).at(resatomid.atomID());
-}
-
-/** Synonym for operator[](ResID)
-
-    \throw SireError::invalid_index
-*/
-const ResidueInfo& MoleculeInfoPvt::at(ResID resid) const
-{
-    return operator[](resid);
-}
-
-/** Synonym for operator[](ResNum)
-
-    \throw SireMol::missing_residue
-*/
-const ResidueInfo& MoleculeInfoPvt::at(ResNum resnum) const
-{
-    return operator[](resnum);
-}
-
-/** Synonym for operator[](AtomID)
-
-    \throw SireError::invalid_index
-*/
-const CGAtomID& MoleculeInfoPvt::at(AtomID atmid) const
-{
-    return operator[](atmid);
-}
-
-/** Synonym for operator[](AtomIndex)
-
-    \throw SireMol::missing_residue
-    \throw SireMol::missing_atom
-*/
-const CGAtomID& MoleculeInfoPvt::at(const AtomIndex &atomindex) const
-{
-    return operator[](atomindex);
-}
-
-/** Synonym for operator[](ResID)
-
-    \throw SireMol::missing_residue
-    \throw SireError::invalid_index
-*/
-const CGAtomID& MoleculeInfoPvt::at(const ResNumAtomID &resatomid) const
-{
-    return operator[](resatomid);
-}
-
-/** Synonym for operator[](ResID)
-
-    \throw SireError::invalid_index
-*/
-const CGAtomID& MoleculeInfoPvt::at(const ResIDAtomID &resatomid) const
-{
-    return operator[](resatomid);
-}
-
-/** Internal function used to return the AtomInfo for the atom with CGAtomID
-    'cgid'. This assumes that 'cgid' is valid, so this will have undefined
-    consequences if cgid is not valid! */
-const AtomInfo& MoleculeInfoPvt::_unsafe_atom(const CGAtomID &cgid) const
-{
-    return atominfos.find(cgid.cutGroupID())->constData()[cgid.atomID()];
-}
-
-/** Return the AtomInfo for the 'ith' atom of this molecule. This throws
-    an index if 'i' is invalid.
-
-    \throw SireError::invalid_index
-*/
-const AtomInfo& MoleculeInfoPvt::atom(AtomID i) const
-{
-    //get the CGAtomID of this atom - this will throw an
-    //exception if this is an invalid index
-    const CGAtomID &cgid = this->at(i);
-
-    //get the AtomInfo - can use unsafe function as we know that
-    //cgid is valid
-    return this->_unsafe_atom(cgid);
-}
-
-/** Return the AtomInfo for the atom with index 'atomindex'. This will throw
-    an exception if there is no such atom in this molecule.
-
-    \throw SireMol::missing_residue
-    \throw SireMol::missing_atom
-*/
-const AtomInfo& MoleculeInfoPvt::atom(const AtomIndex &atomindex) const
-{
-    //get the CGAtomID of this atom - this will throw an
-    //exception if this is an invalid index
-    const CGAtomID &cgid = this->at(atomindex);
-
-    //get the AtomInfo - can use unsafe function as we know that
-    //cgid is valid
-    return this->_unsafe_atom(cgid);
-}
-
-/** Return the AtomInfo for the atom with index 'rsid'. This will throw
-    an exception if there is no such atom in this molecule.
-
-    \throw SireMol::missing_residue
-    \throw SireError::invalid_index
-*/
-const AtomInfo& MoleculeInfoPvt::atom(const ResNumAtomID &rsid) const
-{
-    //get the CGAtomID of this atom - this will throw an
-    //exception if this is an invalid index
-    const CGAtomID &cgid = this->at(rsid);
-
-    //get the AtomInfo - can use unsafe function as we know that
-    //cgid is valid
-    return this->_unsafe_atom(cgid);
-}
-
-/** Return the AtomInfo for the atom with index 'rsid'. This will throw
-    an exception if there is no such atom in this molecule.
-
-    \throw SireError::invalid_index
-*/
-const AtomInfo& MoleculeInfoPvt::atom(const ResIDAtomID &rsid) const
-{
-    //get the CGAtomID of this atom - this will throw an
-    //exception if this is an invalid index
-    const CGAtomID &cgid = this->at(rsid);
-
-    //get the AtomInfo - can use unsafe function as we know that
-    //cgid is valid
-    return this->_unsafe_atom(cgid);
-}
-
-/** Return the AtomInfo for the atom with CGAtomID 'cgid'. This will throw
-    an exception if there is no such atom in this molecule.
-
-    \throw SireMol::missing_cutgroup
-    \throw SireError::invalid_index
-*/
-const AtomInfo& MoleculeInfoPvt::atom(const CGAtomID &cgid) const
-{
-    QHash<CutGroupID,AtomInfoGroup>::const_iterator it = atominfos.find(cgid.cutGroupID());
-
-    if (it == atominfos.end())
-        throw SireMol::missing_cutgroup( QObject::tr(
-                "There is no CutGroup with CutGroupID == %1 in molecule %2 "
-                "(nCutGroups() == %3)")
-                    .arg(cgid.cutGroupID()).arg(this->name()).arg(this->nCutGroups()),
-                        CODELOC );
-
-    return it.value().at(cgid.atomID());
-}
-
-/** Return the residue that contains the atom with AtomID 'atmid'
-
-    \throw SireError::invalid_index
-*/
-const ResidueInfo& MoleculeInfoPvt::residue(AtomID atmid) const
-{
-    checkAtom(atmid);
-
-    //find the nearest index to 'i'
-    QMap<AtomID,ResNum>::const_iterator it = idx2resnum.lowerBound(atmid);
-
-    BOOST_ASSERT( it != idx2resnum.end() ); //this should be impossible...
-
-    //get the residueinfo that contains this index...
-    return this->_unsafe_residue( it.value() );
-}
-
-/** Return the 'ith' residue in this molecule. This will throw an exception
-    if 'i' refers to an invalid residue.
-
-    \throw SireError::invalid_index
-*/
-const ResidueInfo& MoleculeInfoPvt::residue(ResID i) const
-{
-    return this->at(i);
-}
-
-/** Return the residue with number 'resnum'. This will throw an exception
-    if there is no such residue.
-
-    \throw SireMol::missing_residue
-*/
-const ResidueInfo& MoleculeInfoPvt::residue(ResNum resnum) const
-{
-    return this->at(resnum);
-}
-
-/** Return whether or not this molecule is empty (contains no atoms) */
-bool MoleculeInfoPvt::isEmpty() const
-{
-    return nAtoms() == 0;
-}
-
-/** Return whether this is a null molecule (no atoms) */
-bool MoleculeInfoPvt::isNull() const
-{
-    return nAtoms() == 0;
-}
-
-/** Return a string representation of the molecule info */
-QString MoleculeInfoPvt::toString() const
-{
-    return QObject::tr("Molecule('%1'): nAtoms() == %2, nResidues() == %3, "
-                       "nCutGroups() == %4")
-                          .arg(this->name()).arg(nAtoms()).arg(nResidues())
-                          .arg(nCutGroups());
-}
-
-/** Return the number of residues in this molecule */
-int MoleculeInfoPvt::nResidues() const
-{
-    return resnums.count();
-}
-
-/** Return the number of atoms in this molecule */
-int MoleculeInfoPvt::nAtoms() const
-{
-    return nats;
-}
-
-/** Return the number of atoms in the residue with number 'resnum'
-
-    \throw SireMol::missing_residue
-*/
-int MoleculeInfoPvt::nAtoms(ResNum resnum) const
-{
-    return residue(resnum).nAtoms();
-}
-
-/** Return the residue number of the residue at index 'resid'
-
-    \throw SireError::invalid_index
-*/
-ResNum MoleculeInfoPvt::residueNumber(ResID resid) const
-{
-    checkResidue(resid);
-    return resnums.constData()[resid];
-}
-
-/** Return the residue number of the first residue with name 'resname'
-
-    \throw SireMol::missing_residue
-*/
-ResNum MoleculeInfoPvt::residueNumber(const QString &resname) const
-{
-    int nres = resnums.count();
-    const ResNum *array = resnums.constData();
-
-    for (int i=0; i<nres; ++i)
-    {
-        ResNum rnum = array[i];
-
-        if (resinfos[rnum].name() == resname)
-            return rnum;
-    }
-
-    throw SireMol::missing_residue( QObject::tr(
-                    "There is no residue called \"%1\" in the molecule \"%2\"")
-                        .arg(resname, molname), CODELOC );
-
-    return ResNum(0);
-}
-
-/** Return the numbers of all of the residues, in the order that the residues
-    appear in the molecule (ResID order) */
-QVector<ResNum> MoleculeInfoPvt::residueNumbers() const
-{
-    return resnums;
-}
-
-/** Return the numbers of all of the residues that are called 'resname'. */
-QVector<ResNum> MoleculeInfoPvt::residueNumbers(const QString &resname) const
-{
-    QVector<ResNum> ret;
-
-    for (QHash<ResNum, ResidueInfo>::const_iterator it = resinfos.begin();
-         it != resinfos.end();
-         ++it)
-    {
-        if (it->resName() == resname)
-            ret.append( it->resNum() );
-    }
-
-    return ret;
-}
-
-/** Return the list of residue names of the residues, in the order that they appear
-    in the molecule (ResID order) */
-QStringList MoleculeInfoPvt::residueNames() const
-{
-    QStringList ret;
-
-    for (QHash<ResNum, ResidueInfo>::const_iterator it = resinfos.begin();
-         it != resinfos.end();
-         ++it)
-    {
-         ret.append( it->resName() );
-    }
-
-    return ret;
-}
-
-/** Return all of the AtomInfoGroups of this molecule, indexed by CutGroupID */
-QHash<CutGroupID,AtomInfoGroup> MoleculeInfoPvt::atomGroups() const
-{
-    return atominfos;
-}
-
-/** Return whether or not this molecule contains a residue with number 'resnum' */
-bool MoleculeInfoPvt::contains(ResNum resnum) const
-{
-    return resinfos.contains(resnum);
-}
-
-/** Return whether or not this molecule contains a residue with ResID 'resid' */
-bool MoleculeInfoPvt::contains(ResID resid) const
-{
-    return resid >= 0 and resid < nResidues();
-}
-
-/** Return whether or not this molecule contains a CutGroup with ID 'cgid' */
-bool MoleculeInfoPvt::contains(CutGroupID cgid) const
-{
-    return atominfos.contains(cgid);
-}
-
-/** Return whether or not this molecule contains an atom with ID == 'atmid' */
-bool MoleculeInfoPvt::contains(AtomID atmid) const
-{
-    return atmid >= 0 and atmid < nAtoms();
-}
-
-/** Return whether or not this molecule contains an atom with index 'atm' */
-bool MoleculeInfoPvt::contains(const AtomIndex &atm) const
-{
-    QHash<ResNum, ResidueInfo>::const_iterator it = resinfos.find(atm.resNum());
-
-    return it != resinfos.end() and
-           it.value().contains(atm.name());
-}
-
-/** Return whether or not this molecule contains an atom with CGAtomID 'cgid' */
-bool MoleculeInfoPvt::contains(const CGAtomID &cgid) const
-{
-    QHash<CutGroupID, AtomInfoGroup>::const_iterator it = atominfos.find(cgid.cutGroupID());
-
-    return it != atominfos.end() and cgid.atomID() < it->count();
-}
-
-/** Return whether or not this molecule contains an atom with index 'resid' */
-bool MoleculeInfoPvt::contains(const ResNumAtomID &resid) const
-{
-    QHash<ResNum, ResidueInfo>::const_iterator it = resinfos.find(resid.resNum());
-
-    return it != resinfos.end() and resid.atomID() < it->nAtoms();
-}
-
-/** Return whether or not this molecule contains an atom with index 'resid' */
-bool MoleculeInfoPvt::contains(const ResIDAtomID &resid) const
-{
-    return (resid.resID() > 0 and resid.resID() < nResidues()) and
-           _unsafe_residue(resid.resID()).contains(resid.atomID());
 }
 
 /** Internal function used to recreate idx2resnum and nats */
@@ -741,7 +253,7 @@ void MoleculeInfoPvt::regenerateIndex()
     nats = 0;
     idx2resnum.clear();
 
-    int nres = nResidues();
+    int nres = resnums.count();
     const ResNum *resarray = resnums.constData();
 
     for (int i=0; i<nres; ++i)
@@ -751,6 +263,87 @@ void MoleculeInfoPvt::regenerateIndex()
         nats += _unsafe_residue(resnum).nAtoms();
         idx2resnum.insert( AtomID(nats), resnum );
     }
+}
+
+/** Assert that the residue 'resnum' exists - else throw an exception 
+
+    \throw SireMol::missing_residue
+*/
+void MoleculeInfoPvt::assertResidueExists(ResNum resnum) const
+{
+    if (not contains(resnum))
+        throw SireMol::missing_residue(QObject::tr(
+            "Molecule \"%1\" does not contain a residue with number \"%2\"")
+                .arg(name()).arg(resnum), CODELOC);
+}
+
+/** Assert that the residue with index 'resid' exists - else throw
+    an exception 
+    
+    \throw SireError::invalid_index
+*/
+void MoleculeInfoPvt::assertResidueExists(ResID resid) const
+{
+    if (not contains(resid))
+        throw SireError::invalid_index(QObject::tr(
+            "Molecule \"%1\" has no residue with index \"%2\" (nResidues() == %3)")
+                .arg(name()).arg(resid).arg(nResidues()), CODELOC);
+}
+
+/** Assert the CutGroupID is valid 
+
+    \throw SireMol::missing_cutgroup
+*/
+void MoleculeInfoPvt::assertCutGroupExists(CutGroupID cgid) const
+{
+    if ( id >= nCutGroups() )
+        throw SireMol::missing_cutgroup(QObject::tr(
+            "There is no CutGroup with ID == %1 in Molecule \"%2\" (nCutGroups() == %3)")
+                .arg(id).arg(name()).arg(nCutGroups()), CODELOC);
+}
+
+/** Assert the Atom with AtomIndex 'atom' exists 
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+void MoleculeInfoPvt::assertAtomExists(const AtomIndex &atom) const
+{
+    assertResidueExists(atom.resNum());
+    _unsafe_residue(atom.resNum()).assertAtomExists(atom.name());
+}
+
+/** Assert that the atom with index 'cgatomid' exists
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+void MoleculeInfoPvt::assertAtomExists(const CGAtomID &cgatomid) const
+{
+    assertCutGroupExists(cgatomid.cutGroupID());
+    _unsafe_atomInfoGroup(cgatomid.cutGroupID()).assertAtomExists(cgatomid.atomID());
+}
+
+/** Assert that the atom with index 'resatomid' exists
+
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+*/
+void MoleculeInfoPvt::assertAtomExists(const ResNumAtomID &resatomid) const
+{
+    assertResidueExists(resatomid.resNum());
+    _unsafe_residue(resatomid.resNum()).assertAtomExists(resatomid.atomID());
+}
+
+/** Assert that the atom with index 'resatomid' exists
+
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+*/
+void MoleculeInfoPvt::assertAtomExists(const ResIDAtomID &resatomid) const
+{
+    assertResidueExists(resatomid.resID());
+    _unsafe_residue(resatomid.resID()).assertAtomExists(resatomid.atomID());
 }
 
 ////////////
@@ -818,468 +411,858 @@ bool MoleculeInfo::operator!=(const MoleculeInfo &other) const
     return *d != *(other.d);
 }
 
-/** Check that the residue 'resnum' exists - else throw an exception */
-void MoleculeInfo::assertResidueExists(ResNum resnum) const
+/** Return a copy of the AtomInfoGroup for the CutGroup with ID == cgid
+
+    \throw SireMol::missing_cutgroup 
+*/
+const AtomInfoGroup& MoleculeInfo::operator[](CutGroupID cgid) const
 {
-    if (not contains(resnum))
-        throw SireMol::missing_residue(QObject::tr(
-            "Molecule \"%1\" does not contain a residue with number \"%2\"")
-                .arg(name()).arg(resnum), CODELOC);
+    d->assertCutGroupExists(cgid);
+    return d->_unsafe_atomInfoGroup(cgid);
 }
 
-/** Check that the residue with index 'resid' exists - else throw
-    an exception */
-void MoleculeInfo::assertResidueExists(ResID resid) const
-{
-    if (not contains(resid))
-        throw SireError::invalid_index(QObject::tr(
-            "Molecule \"%1\" has no residue with index \"%2\" (nResidues() == %3)")
-                .arg(name()).arg(resid).arg(nResidues()), CODELOC);
-}
-
-/** Check the CutGroupID is valid */
-void MoleculeInfo::assertCutGroupExists(CutGroupID id) const
-{
-    if ( id >= nCutGroups() )
-        throw SireMol::missing_cutgroup(QObject::tr(
-            "There is no CutGroup with ID == %1 in Molecule \"%2\" (nCutGroups() == %3)")
-                .arg(id).arg(name()).arg(nCutGroups()), CODELOC);
-}
-
-/** Return the name of this molecule */
-QString MoleculeInfo::name() const
-{
-    return d->name();
-}
-
-/** Return the ResidueInfo for the 'ith' residue in this molecule. This will
-    throw an exception if 'i' is an invalid index.
+/** Return the ResidueInfo for the Residue at index 'resid'
 
     \throw SireError::invalid_index
 */
-const ResidueInfo& MoleculeInfo::operator[](ResID i) const
+const ResidueInfo& MoleculeInfo::operator[](ResID resid) const
 {
-    return d->operator[](i);
+    return d->_unsafe_residue( residueNumber(resid) );
 }
 
-/** Return the ResidueInfo for the residue with residue number 'resnum'. This
-    will throw an exception if there is no such residue.
+/** Return the ResidueInfo for the Residue with number 'resnum'
 
     \throw SireMol::missing_residue
 */
 const ResidueInfo& MoleculeInfo::operator[](ResNum resnum) const
 {
-    return d->operator[](resnum);
+    d->assertResidueExists(resnum);
+    return d->_unsafe_residue(resnum);
 }
 
-/** Return the CGAtomID of the 'ith' atom in this molecule. This will throw an
-    exception if 'i' is an invalid index.
+/** Return the CGAtomID index of the atom with index 'atmid' 
 
     \throw SireError::invalid_index
 */
-const CGAtomID& MoleculeInfo::operator[](AtomID i) const
+const CGAtomID& MoleculeInfo::operator[](AtomID atmid) const
 {
-    return d->operator[](i);
+    d->assertAtomExists(atmid);
+    return d->_unsafe_index(atmid);
 }
 
-/** Return the CGAtomID of the atom with AtomIndex 'atm'. This will throw an
-    exception if there is no such atom in this molecule.
+/** Return the CGAtomID index of the atom 'atom'
 
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-const CGAtomID& MoleculeInfo::operator[](const AtomIndex &atm) const
+const CGAtomID& MoleculeInfo::operator[](const AtomIndex &atom) const
 {
-    return d->operator[](atm);
+    return this->operator[](atom.resNum()).at(atom.name());
 }
 
-/** Return the CGAtomID of the atom with index 'resatomid'. This will throw
-    an exception if there is no such atom in this molecule.
+/** Return the CGAtomID index of the atom with index 'resatomid'
 
     \throw SireMol::missing_residue
     \throw SireError::invalid_index
 */
 const CGAtomID& MoleculeInfo::operator[](const ResNumAtomID &resatomid) const
 {
-    return d->operator[](resatomid);
+    return this->operator[](resatomid.resNum()).at(resatomid.atomID());
 }
 
-/** Return the CGAtomID of the atom with index 'resatomid'. This will throw
-    an exception if thereis no such atom in this molecule.
+/** Return the CGAtomID index of the atom with index 'resatomid' 
 
     \throw SireError::invalid_index
 */
 const CGAtomID& MoleculeInfo::operator[](const ResIDAtomID &resatomid) const
 {
-    return d->operator[](resatomid);
+    return this->operator[](resatomid.resID()).at(resatomid.atomID());
 }
-
-/** Synonym for operator[](ResID)
+    
+/** Return the AtomInfoGroup for the CutGroup with ID == cgid */
+const AtomInfoGroup& MoleculeInfo::at(CutGroupID cgid) const
+{
+    return this->operator[](cgid);
+}
+    
+/** Return the ResidueInfo for the Residue at index 'resid'
 
     \throw SireError::invalid_index
 */
 const ResidueInfo& MoleculeInfo::at(ResID resid) const
 {
-    return d->at(resid);
+    return this->operator[](resid);
 }
 
-/** Synonym for operator[](ResNum)
+/** Return the ResidueInfo for the Residue with number 'resnum'
 
     \throw SireMol::missing_residue
 */
 const ResidueInfo& MoleculeInfo::at(ResNum resnum) const
 {
-    return d->at(resnum);
+    return this->operator[](resnum);
 }
 
-/** Synonym for operator[](AtomID)
+/** Return the CGAtomID index of the atom with index 'atmid' 
 
     \throw SireError::invalid_index
 */
 const CGAtomID& MoleculeInfo::at(AtomID atmid) const
 {
-    return d->at(atmid);
+    return this->operator[](atmid);
 }
 
-/** Synonym for operator[](AtomIndex)
+/** Return the CGAtomID index of the atom 'atom'
 
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-const CGAtomID& MoleculeInfo::at(const AtomIndex &atomindex) const
+const CGAtomID& MoleculeInfo::at(const AtomIndex &atom) const
 {
-    return d->at(atomindex);
+    return this->operator[](atom);
 }
 
-/** Synonym for operator[](ResID)
+/** Return the CGAtomID index of the atom with index 'resatomid'
 
     \throw SireMol::missing_residue
     \throw SireError::invalid_index
 */
 const CGAtomID& MoleculeInfo::at(const ResNumAtomID &resatomid) const
 {
-    return d->at(resatomid);
+    return this->operator[](resatomid);
 }
 
-/** Synonym for operator[](ResID)
+/** Return the CGAtomID index of the atom with index 'resatomid' 
 
     \throw SireError::invalid_index
 */
 const CGAtomID& MoleculeInfo::at(const ResIDAtomID &resatomid) const
 {
-    return d->at(resatomid);
+    return this->operator[](resatomid);
 }
 
-/** Return the AtomInfo for the 'ith' atom of this molecule. This throws
-    an index if 'i' is invalid.
+/** Return the AtomInfo for the atom with index 'atomid'
 
     \throw SireError::invalid_index
 */
-const AtomInfo& MoleculeInfo::atom(AtomID i) const
+const AtomInfo& MoleculeInfo::atom(AtomID atomid) const
 {
-    return d->atom(i);
+    return d->_unsafe_atom( this->at(atomid) );
 }
 
-/** Return the AtomInfo for the atom with index 'atomindex'. This will throw
-    an exception if there is no such atom in this molecule.
+/** Return the AtomInfo for the atom 'atom'
 
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-const AtomInfo& MoleculeInfo::atom(const AtomIndex &atomindex) const
+const AtomInfo& MoleculeInfo::atom(const AtomIndex &atom) const
 {
-    return d->atom(atomindex);
+    return d->_unsafe_atom( this->at(atom) );
 }
 
-/** Return the AtomInfo for the atom with index 'rsid'. This will throw
-    an exception if there is no such atom in this molecule.
+/** Return the AtomInfo for the atom with index 'rsid'
 
     \throw SireMol::missing_residue
     \throw SireError::invalid_index
 */
 const AtomInfo& MoleculeInfo::atom(const ResNumAtomID &rsid) const
 {
-    return d->atom(rsid);
+    return d->_unsafe_atom( this->at(rsid) );
 }
 
-/** Return the AtomInfo for the atom with index 'rsid'. This will throw
-    an exception if there is no such atom in this molecule.
+/** Return the AtomInfo for the atom with index 'rsid'
 
     \throw SireError::invalid_index
 */
 const AtomInfo& MoleculeInfo::atom(const ResIDAtomID &rsid) const
 {
-    return d->atom(rsid);
+    return d->_unsafe_atom( this->at(rsid) );
 }
 
-/** Return the AtomInfo for the atom with CGAtomID 'cgid'. This will throw
-    an exception if there is no such atom in this molecule.
+/** Return the AtomInfo for the atom with index 'cgid'
 
     \throw SireMol::missing_cutgroup
     \throw SireError::invalid_index
 */
 const AtomInfo& MoleculeInfo::atom(const CGAtomID &cgid) const
 {
-    return d->atom(cgid);
+    return d->_unsafe_atom(cgid);
 }
 
-/** Return the residue that contains the atom with AtomID 'atmid'
+/** Return the AtomInfoGroup for the CutGroup with ID == cgid
 
+    \throw SireMol::missing_cutgroup
+*/
+const AtomInfoGroup& MoleculeInfo::atomGroup(CutGroupID cgid) const
+{
+    return this->at(cgid);
+}
+    
+/** Return the AtomInfoGroups for all CutGroups, in a hash indexed by 
+    CutGroupID */
+QHash<CutGroupID,AtomInfoGroup> MoleculeInfo::atomGroups() const
+{
+    return d->atominfos;
+}
+
+/** Return the AtomInfoGroups for all of the CutGroups that contain atoms 
+    in the residue with number 'resnum', in a hash indexed by CutGroupID
+    
+    \throw SireMol::missing_residue
+*/
+QHash<CutGroupID,AtomInfoGroup> MoleculeInfo::atomGroups(ResNum resnum) const
+{
+    return this->at(resnum).atomGroups();
+}
+
+/** Return the AtomInfoGroups for all of the CutGroups that contain atoms 
+    in the residue with index 'resid', in a hash indexed by CutGroupID
+    
+    \throw SireError::invalid_index
+*/
+QHash<CutGroupID,AtomInfoGroup> MoleculeInfo::atomGroups(ResID resid) const
+{
+    return this->at(resid).atomGroups();
+}
+    
+/** Return the AtomInfoGroups for the CutGroups whose IDs are in 'cgids', returning
+    a hash indexed by CutGroupID
+    
+    \throw SireMol::missing_cutgroup
+*/
+QHash<CutGroupID,AtomInfoGroup> MoleculeInfo::atomGroups(
+                                          const QSet<CutGroupID> &cgids) const
+{
+    QHash<CutGroupID,AtomInfoGroup> groups;
+    groups.reserve(cgids.count());
+    
+    for (QSet<CutGroupID>::const_iterator it = cgids.begin();
+         it != cgids.end();
+         ++it)
+    {
+        groups.insert( *it, this->at(*it) );
+    }
+    
+    return groups;
+}
+
+/** Return the AtomInfoGroups for all of the CutGroups that contain atoms 
+    in the residues with numbers in 'resnums', in a hash indexed by CutGroupID
+    
+    \throw SireMol::missing_residue
+*/
+QHash<CutGroupID,AtomInfoGroup> MoleculeInfo::atomGroups(
+                                      const QSet<ResNum> &resnums) const
+{
+    QHash<CutGroupID,AtomInfoGroup> groups;
+    
+    for (QSet<ResNum>::const_iterator it = resnums.begin();
+         it != resnums.end();
+         ++it)
+    {
+        groups.unite( this->atomGroups(*it) );
+    }
+    
+    return groups;
+}
+
+/** Return the AtomInfoGroups for all of the CutGroups that contain atoms 
+    in the residues with indexes in 'resids', in a hash indexed by CutGroupID
+    
+    \throw SireMol::missing_residue
+*/
+QHash<CutGroupID,AtomInfoGroup> MoleculeInfo::atomGroups(
+                                      const QSet<ResID> &resids) const
+{
+    QHash<CutGroupID,AtomInfoGroup> groups;
+    
+    for (QSet<ResID>::const_iterator it = resids.begin();
+         it != resids.end();
+         ++it)
+    {
+        groups.unite( this->atomGroups(*it) );
+    }
+    
+    return groups;
+}
+
+/** Return an array that contains a copy of all of the AtomInfos of the atoms
+    in the molecule. The atoms are returned in the order as they are in the 
+    molecule. */
+QVector<AtomInfo> MoleculeInfo::atoms() const
+{
+    QVector<AtomInfo> atms;
+    atms.reserve( this->nAtoms() );
+    
+    int nres = this->nResidues();
+    const ResNum *resnums = d->resnums.constData();
+    
+    for (int i=0; i<nres; ++i)
+    {
+        atms += this->at(resnums[i]).atoms();
+    }
+    
+    return atms;
+}
+
+/** Return an array that contains a copy of all of the AtomInfos of the
+    atoms in the residue with number 'resnum', in the same order as they
+    were added to the residue.
+    
+    \throw SireMol::missing_residue
+*/
+QVector<AtomInfo> MoleculeInfo::atoms(ResNum resnum) const
+{
+    return this->at(resnum).atoms();
+}
+
+/** Return an array that contains a copy of all of the AtomInfos of the
+    atoms in the residue with index 'resid', in the same order as they
+    were added to the residue.
+    
+    \throw SireError::invalid_index
+*/ 
+QVector<AtomInfo> MoleculeInfo::atoms(ResID resid) const
+{
+    return this->at(resid).atoms();
+}
+
+/** Return an array that contains a copy of all of the AtomInfos of the
+    atoms in the CutGroup with ID == cgid, in the same order as they 
+    exist in the CutGroup
+    
+    \throw SireMol::missing_cutgroup
+*/
+QVector<AtomInfo> MoleculeInfo::atoms(CutGroupID cgid) const
+{
+    return this->at(cgid).atoms();
+}
+    
+template<class T>
+QHash<T,AtomInfo> getAtoms(const MoleculeInfo &mol, const QSet<T> &ids)
+{
+    QHash<T,AtomInfo> atms;
+    atms.reserve(ids.count());
+    
+    for (typename QSet<T,AtomInfo>::const_iterator it = ids.begin();
+         it != ids.end();
+         ++it)
+    {
+        atms.insert( *it, mol.atom(*it) );
+    }
+    
+    return atms;
+}
+    
+/** Return the AtomInfos for atoms whose IDs are in 'idxs', in a hash indexed 
+    by AtomID
+    
+    \throw SireError::invalid_index
+*/
+QHash<AtomID,AtomInfo> MoleculeInfo::atoms( const QSet<AtomID> &idxs ) const
+{
+    return getAtoms<AtomID>(*this, idxs);
+}
+
+/** Return the AtomInfos for atoms whose IDs are in 'cgids', in a hash indexed
+    by CGAtomID
+    
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+QHash<CGAtomID,AtomInfo> MoleculeInfo::atoms( const QSet<CGAtomID> &cgids ) const
+{
+    return getAtoms<CGAtomID>(*this, cgids);
+}
+
+/** Return the AtomInfos for atoms whose IDs are in 'rsids', in a hash indexed
+    by ResNumAtomID
+    
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+*/
+QHash<ResNumAtomID,AtomInfo> MoleculeInfo::atoms( const QSet<ResNumAtomID> &rsids) const
+{
+    return getAtoms<ResNumAtomID>(*this, rsids);
+}
+
+/** Return the AtomInfos for atoms whose IDs are in 'rsids', in a hash indexed
+    by ResIDAtomID
+    
+    \throw SireError::invalid_index
+*/
+QHash<ResIDAtomID,AtomInfo> MoleculeInfo::atoms( const QSet<ResIDAtomID> &rsids) const
+{
+    return getAtoms<ResIDAtomID>(*this, rsids);
+}
+
+/** Return the AtomInfos for atoms whose AtomIndexes are in 'atms', in a hash indexed
+    by AtomIndex
+    
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+QHash<AtomIndex,AtomInfo> MoleculeInfo::atoms( const QSet<AtomIndex> &atms ) const
+{
+    return getAtoms<AtomIndex>(*this, atms);
+}
+  
+template<class T>
+QHash< T, QVector<AtomInfo> > getAtomVectors(const MoleculeInfo &molinfo,
+                                             const QSet<T> &idxs)
+{
+    QHash< T, QVector<AtomInfo> > allatms;
+    allatms.reserve(idxs.count());
+    
+    for (typename QSet< T, QVector<AtomInfo> >::const_iterator it = idxs.begin();
+         it != idxs.end();
+         ++it)
+    {
+        allatms.insert( *it, molinfo.atoms(*it) );
+    }
+    
+    return allatms;
+}
+  
+/** Return the array of AtomInfos of the atoms in the CutGroup with ID == cgid, in the 
+    same order as the atoms exist in that CutGroup
+    
+    \throw SireMol::missing_cutgroup
+*/
+QVector<AtomInfo> MoleculeInfo::atoms(CutGroupID cgid) const
+{
+    return this->at(cgid).atoms();
+}
+
+/** Return the arrays of AtomInfos of the atoms in the CutGroups whose IDs are in 
+    'cgids', in a hash indexed by CutGroupID
+    
+    \throw SireMol::missing_cutgroup
+*/
+QHash< CutGroupID, QVector<AtomInfo> > MoleculeInfo::atoms(const QSet<CutGroupID> &cgids) const
+{
+    return getAtomVectors<CutGroupID>(*this, cgids);
+}
+    
+/** Return the array of AtomInfos of the atoms in the residue with number 'resnum',
+    in the same order as the atoms exist in that Residue
+    
+    \throw SireMol::missing_residue
+*/
+QVector<AtomInfo> MoleculeInfo::atoms(ResNum resnum) const
+{
+    return this->at(resnum).atoms();
+}
+
+/** Return the arrays of AtomInfos of the atoms in the residues whose numbers 
+    are in 'resnums', in a hash indexed by ResNum
+    
+    \throw SireMol::missing_residue
+*/
+QHash< ResNum, QVector<AtomInfo> > MoleculeInfo::atoms(const QSet<ResNum> &resnums) const
+{
+    return getAtomVectors<ResNum>(*this, resnums);
+}
+
+/** Return the array of AtomInfos of the atoms in the residue with index 'resid',
+    in the same order as the atoms exist in that Residue
+    
+    \throw SireError::invalid_index
+*/
+QVector<AtomInfo> MoleculeInfo::atoms(ResID resid) const
+{
+    return this->at(resid).atoms();
+}
+
+/** Return the arrays of AtomInfos of the atoms in the residues whose indicies
+    are in 'resids', in a hash indexed by ResID
+    
+    \throw SireError::invalid_index
+*/
+QHash< ResID, QVector<AtomInfo> > MoleculeInfo::atoms(const QSet<ResID> &resids) const
+{
+    return getAtomVectors<ResNum>(*this, resids);
+}
+
+/** Return the ResidueInfo for the residue that contains the atom 
+    with index 'atomid' 
+    
     \throw SireError::invalid_index
 */
 const ResidueInfo& MoleculeInfo::residue(AtomID atmid) const
 {
-    return d->residue(atmid);
+    d->assertAtomExists(atmid);
+    
+    //find the nearest index to 'atomid'
+    QMap<AtomID,ResNum>::const_iterator it = idx2resnum.lowerBound(atomid);
+    
+    BOOST_ASSERT( it != idx2resnum.end() ); //this should be impossible
+    
+    //return the ResidueInfo that contains this index
+    return d->_unsafe_residue(it.value());
 }
 
-/** Return the 'ith' residue in this molecule. This will throw an exception
-    if 'i' refers to an invalid residue.
+/** Return the ResidueInfo for the residue with index 'resid'
 
     \throw SireError::invalid_index
 */
-const ResidueInfo& MoleculeInfo::residue(ResID i) const
+const ResidueInfo& MoleculeInfo::residue(ResID resid) const
 {
-    return d->residue(i);
+    return d->at(resid);
 }
 
-/** Return the residue with number 'resnum'. This will throw an exception
-    if there is no such residue.
+/** Return the ResidueInfo for the residue with number 'resnum'
 
     \throw SireMol::missing_residue
 */
 const ResidueInfo& MoleculeInfo::residue(ResNum resnum) const
 {
-    return d->residue(resnum);
+    return d->at(resnum);
 }
 
-/** Return whether or not this molecule is empty (contains no atoms) */
-bool MoleculeInfo::isEmpty() const
+QString MoleculeInfo::toString() const;
+    
+/** Return the name of the molecule */
+QString MoleculeInfo::name() const
 {
-    return d->isEmpty();
+    return d->molname;
 }
 
-/** Return whether this is a null molecule (no atoms) */
-bool MoleculeInfo::isNull() const
-{
-    return d->isNull();
-}
-
-/** Return a string representation of the molecule info */
-QString MoleculeInfo::toString() const
-{
-    return d->toString();
-}
-
-/** Return the number of residues in this molecule */
-int MoleculeInfo::nResidues() const
-{
-    return d->nResidues();
-}
-
-/** Return the number of atoms in this molecule */
-int MoleculeInfo::nAtoms() const
-{
-    return d->nAtoms();
-}
-
-/** Return the number of atoms in the residue with number 'resnum'
+/** Return the name of the residue with number 'resnum' 
 
     \throw SireMol::missing_residue
 */
-int MoleculeInfo::nAtoms(ResNum resnum) const
+QString MoleculeInfo::residueName(ResNum resnum) const
 {
-    return d->nAtoms(resnum);
+    return this->at(resnum).name();
 }
 
-/** Return the residue number of the residue at index 'resid'
+/** Return the name of the residue with index 'resid'
+
+    \throw SireError::invalid_index
+*/
+QString MoleculeInfo::residueName(ResID resid) const
+{
+    return this->at(resid).name();
+}
+
+/** Return the number of the residue with index 'resid'
 
     \throw SireError::invalid_index
 */
 ResNum MoleculeInfo::residueNumber(ResID resid) const
 {
-    return d->residueNumber(resid);
+    d->assertResidueExists(resid);
+    return d->resnums.constData()[resid];
 }
 
-/** Return the residue number of the first residue with name 'resname'
-
+/** Return the number of the first residue in the molecule that is
+    called 'resname'
+    
     \throw SireMol::missing_residue
 */
 ResNum MoleculeInfo::residueNumber(const QString &resname) const
 {
-    return d->residueNumber(resname);
+    for (QVector<ResNum>::const_iterator it = d->resnums.begin();
+         it != d->resnums.end();
+         ++it)
+    {
+        if (d->_unsafe_residue(*it).name() == resname)
+            return *it;
+    }
+    
+    throw SireMol::missing_residue( QObject::tr(
+                  "There is no residue called \"%1\" in the molecule called \"%2\"")
+                        .arg(resname).arg(this->name()), CODELOC );
+                        
+    return ResNum(0);
 }
 
-/** Return the numbers of all of the residues, in the order that the residues
-    appear in the molecule (ResID order) */
+/** Return the number of residues in this molecule */
+int MoleculeInfo::nResidues() const
+{
+    return d->resnums.count();
+}
+
+/** Return the number of CutGroups in the molecule */
+int MoleculeInfo::nCutGroups() const
+{
+    return d->atominfos.count();
+}
+
+/** Return the number of atoms in the molecule */
+int MoleculeInfo::nAtoms() const
+{
+    return d->nats;
+}
+
+/** Return the number of atoms in the residue with number 'resnum' 
+
+    \throw SireMol::missing_residue
+*/
+int MoleculeInfo::nAtoms(ResNum resnum) const
+{
+    return this->at(resnum).nAtoms();
+}
+
+/** Return the number of atoms in the residue at index 'resid'
+
+    \throw SireError::invalid_index
+*/
+int MoleculeInfo::nAtoms(ResID resid) const
+{
+    return this->at(resid).nAtoms();
+}
+
+/** Return the number of atoms in the CutGroup with ID == 'cgid'
+
+    \throw SireMol::missing_cutgroup
+*/
+int MoleculeInfo::nAtoms(CutGroupID cgid) const
+{
+    return this->at(cgid).nAtoms();
+}
+
+/** Return the array of the numbers of the residues, in the order that 
+    they appear in the molecule */
 QVector<ResNum> MoleculeInfo::residueNumbers() const
 {
-    return d->residueNumbers();
+    return d->resnums;
 }
 
-/** Return the numbers of all of the residues that are called 'resname'. */
+/** Return the numbers of all residues that are called 'resname'. This
+    returns an empty array if there are no residues with this name */
 QVector<ResNum> MoleculeInfo::residueNumbers(const QString &resname) const
 {
-    return d->residueNumbers(resname);
+    QVector<ResNum> resnums;
+    
+    for (QVector<ResNum>::const_iterator it = d->resnums.begin();
+         it != d->resnums.end();
+         ++it)
+    {
+        if (d->_unsafe_residue(*it).name() == resname)
+            resnums.append(*it);
+    }
+    
+    return resnums;
 }
 
-/** Return the list of residue names of the residues, in the order that they appear
-    in the molecule (ResID order) */
+/** Return the residue numbers of all residues that have atoms in the 
+    CutGroup with ID == 'cgid'
+    
+    \throw SireMol::missing_cutgroup
+*/
+QVector<ResNum> MoleculeInfo::residueNumbers(CutGroupID cgid) const
+{
+    return this->at(cgid).residueNumbers();
+}
+
+/** Return the list of the names of all of the residues in this molecule,
+    in the order that they exist in this molecule */
 QStringList MoleculeInfo::residueNames() const
 {
-    return d->residueNames();
+    QStringList resnames;
+    
+    for (QVector<ResNum>::const_iterator it = d->resnums.begin();
+         it != d->resnums.end();
+         ++it)
+    {
+        resnames.append( d->_unsafe_residue(*it).name() );
+    }
+    
+    return resnames;
 }
 
-/** Return all of the AtomInfoGroups of this molecule, indexed by CutGroupID */
-QHash<CutGroupID,AtomInfoGroup> MoleculeInfo::atomGroups() const
+/** Return the names of all of the atoms in the residue with number 'resnum'
+
+    \throw SireMol::missing_residue
+*/
+QStringList MoleculeInfo::atomNames(ResNum resnum) const
 {
-    return d->atomGroups();
+    return this->at(resnum).atomNames();
+}
+
+/** Return the names of all of the atoms in the residue with index 'resid'
+
+    \throw SireError::invalid_index
+*/
+QStringList MoleculeInfo::atomNames(ResID resid) const
+{
+    return this->at(resid).atomNames();
+}
+
+/** Return whether or not this molecule contains a CutGroup with ID == 'cgid' */
+bool MoleculeInfo::contains(CutGroupID cgid) const
+{
+    return cgid < this->nCutGroups();
 }
 
 /** Return whether or not this molecule contains a residue with number 'resnum' */
 bool MoleculeInfo::contains(ResNum resnum) const
 {
-    return d->contains(resnum);
+    return d->resinfos.contains(resnum);
 }
 
-/** Return whether or not this molecule contains a residue with ResID 'resid' */
+/** Return whether or not this molecule contains a residue with index 'resid' */
 bool MoleculeInfo::contains(ResID resid) const
 {
-    return d->contains(resid);
+    return resid < this->nResidues();
 }
 
-/** Return whether or not this molecule contains a CutGroup with ID 'cgid' */
-bool MoleculeInfo::contains(CutGroupID cgid) const
+/** Return whether or not the molecule contains an atom called 'atomname' 
+    in a residue with number 'resnum' */
+bool MoleculeInfo::contains(ResNum resnum, const QString &atomname) const
 {
-    return d->contains(cgid);
+    return this->contains(resnum) and d->unsafe_residue(resnum).contains(atomname);
 }
 
-/** Return whether or not this molecule contains an atom with ID == 'atmid' */
-bool MoleculeInfo::contains(AtomID atmid) const
-{
-    return d->contains(atmid);
-}
-
-/** Return whether or not this molecule contains an atom with index 'atm' */
+/** Return whether or not the molecule contains an atom with AtomIndex 'atm' */
 bool MoleculeInfo::contains(const AtomIndex &atm) const
 {
-    return d->contains(atm);
+    return this->contains(atm.resNum(), atm.name());
 }
 
-/** Return whether or not this molecule contains an atom with CGAtomID 'cgid' */
-bool MoleculeInfo::contains(const CGAtomID &cgid) const
+/** Return whether or not the molecule contains an atom with index 'atomid' in the 
+    CutGroup with ID == cgid */
+bool MoleculeInfo::contains(CutGroupID cgid, AtomID atomid) const
 {
-    return d->contains(cgid);
+    return this->contains(cgid) and d->_unsafe_atomInfoGroup(cgid).contains(atomid);
 }
 
-/** Return whether or not this molecule contains an atom with index 'resid' */
-bool MoleculeInfo::contains(const ResNumAtomID &resid) const
+/** Return whether or not the molecule contains an atom with index 'cgatomid' */
+bool MoleculeInfo::contains(const CGAtomID &cgatomid) const
 {
-    return d->contains(resid);
+    return this->contains(cgatomid.cutGroupID(), cgatomid.atomID());
 }
 
-/** Return whether or not this molecule contains an atom with index 'resid' */
-bool MoleculeInfo::contains(const ResIDAtomID &resid) const
+/** Return whether or not the molecule contains an atom with index 'atomid'
+    in a residue with number 'resnum' */
+bool MoleculeInfo::contains(ResNum resnum, AtomID atomid) const
 {
-    return d->contains(resid);
+    return this->contains(resnum) and d->_unsafe_residue(resnum).contains(atomid);
 }
 
-/** Return the set of AtomInfos for the atoms whose indicies are in 'idxs'.
+/** Return whether or not the molecule contains an atom with index 'resatomid' */
+bool MoleculeInfo::contains(const ResNumAtomID &resatomid) const
+{
+    return this->contains( resatomid.resNum(), resatomid.atomID() );
+}
+
+/** Return whether or not the molecule contains an atom with index 'atomid'
+    in a residue with index 'resid' */
+bool MoleculeInfo::contains(ResID resid, AtomID atomid) const
+{
+    return this->contains(resid) and d->_unsafe_residue(resid).contains(atomid);
+}
+
+/** Return whether or not the molecule contains an atom with index 'resatomid' */
+bool MoleculeInfo::contains(const ResIDAtomID &resatomid) const
+{
+    return this->contains(resatomid.resID(), resatomid.atomID());
+}
+
+/** Return whether or not this molecule is empty (contains no atoms) */
+bool MoleculeInfo::isEmpty() const
+{
+    return this->nAtoms() == 0;
+}
+
+/** Return whether the residue with number 'resnum' is empty 
+
+    \throw SireMol::missing_residue
+*/
+bool MoleculeInfo::isEmpty(ResNum resnum) const
+{
+    return this->at(resnum).isEmpty();
+}
+
+/** Return whether the residue at index 'resid' is empty
 
     \throw SireError::invalid_index
 */
-QSet<AtomInfo> MoleculeInfo::getAtoms( const QSet<AtomID> &idxs ) const
+bool MoleculeInfo::isEmpty(ResID resid) const
 {
-    QSet<AtomInfo> ret;
-
-    ret.reserve( idxs.count() );
-
-    for (QSet<AtomID>::const_iterator it = idxs.begin();
-         it != idxs.end();
-         ++it)
-    {
-        ret.insert( this->atom(*it) );
-    }
-
-    return ret;
+    return this->at(resid).isEmpty();
 }
 
-/** Return the set of AtomInfos for the atoms whose AtomIndexes are in 'atms'.
+/** Return whether the CutGroup with ID == cgid is empty
+
+    \throw SireMol::missing_cutgroup
+*/
+bool MoleculeInfo::isEmpty(CutGroupID cgid) const
+{
+    return this->at(cgid).isEmpty();
+}
+
+/** Return whether this molecule is null (is empty) */
+bool MoleculeInfo::isNull() const
+{
+    return this->isEmpty();
+}
+
+/** Assert that the residue 'resnum' exists - else throw an exception 
+
+    \throw SireMol::missing_residue
+*/
+void MoleculeInfo::assertResidueExists(ResNum resnum) const
+{
+    d->assertResidueExists(resnum);
+}
+
+/** Assert that the residue with index 'resid' exists - else throw
+    an exception 
+    
+    \throw SireError::invalid_index
+*/
+void MoleculeInfo::assertResidueExists(ResID resid) const
+{
+    d->assertResidueExists(resid);
+}
+
+/** Assert the CutGroupID is valid 
+
+    \throw SireMol::missing_cutgroup
+*/
+void MoleculeInfo::assertCutGroupExists(CutGroupID cgid) const
+{
+    d->assertCutGroupExists(cgid);
+}
+
+/** Assert that the AtomIndex is valid 
 
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-QSet<AtomInfo> MoleculeInfo::getAtoms( const QSet<AtomIndex> &atms ) const
+void MoleculeInfo::assertAtomExists(const AtomIndex &atom) const
 {
-    QSet<AtomInfo> ret;
-
-    ret.reserve( atms.count() );
-
-    for (QSet<AtomIndex>::const_iterator it = atms.begin();
-         it != atms.end();
-         ++it)
-    {
-        ret.insert( this->atom(*it) );
-    }
-
-    return ret;
+    d->assertAtomExists(atom);
 }
 
-/** Return the set of AtomInfos for the atoms whose indicies are in 'rsids'.
+/** Assert that the index is valid
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+void MoleculeInfo::assertAtomExists(const CGAtomID &cgatomid) const
+{
+    d->assertAtomExists(cgatomid);
+}
+
+/** Assert that the index is valid
+
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+*/
+void MoleculeInfo::assertAtomExists(const ResNumAtomID &resatomid) const
+{
+    d->assertAtomExists(resatomid);
+}
+
+/** Assert that the index is valid
 
     \throw SireError::invalid_index
 */
-QSet<AtomInfo> MoleculeInfo::getAtoms( const QSet<ResNumAtomID> &rsids) const
+void MoleculeInfo::assertAtomExists(const ResIDAtomID &resatomid) const
 {
-    QSet<AtomInfo> ret;
-
-    ret.reserve( rsids.count() );
-
-    for (QSet<ResNumAtomID>::const_iterator it = rsids.begin();
-         it != rsids.end();
-         ++it)
-    {
-        ret.insert( this->atom(*it) );
-    }
-
-    return ret;
-}
-
-/** Return the set of AtomInfos for the atoms whose indicies are in 'rsids'.
-
-    \throw SireError::invalid_index
-*/
-QSet<AtomInfo> MoleculeInfo::getAtoms( const QSet<ResIDAtomID> &rsids) const
-{
-    QSet<AtomInfo> ret;
-
-    ret.reserve( rsids.count() );
-
-    for (QSet<ResIDAtomID>::const_iterator it = rsids.begin();
-         it != rsids.end();
-         ++it)
-    {
-        ret.insert( this->atom(*it) );
-    }
-
-    return ret;
-}
-
-/** Return the set of AtomInfos for the atoms whose indicies are in 'cgids'.
-
-    \throw SireError::invalid_index
-*/
-QSet<AtomInfo> MoleculeInfo::getAtoms( const QSet<CGAtomID> &cgids ) const
-{
-    QSet<AtomInfo> ret;
-
-    ret.reserve( cgids.count() );
-
-    for (QSet<CGAtomID>::const_iterator it = cgids.begin();
-         it != cgids.end();
-         ++it)
-    {
-        ret.insert( this->atom(*it) );
-    }
-
-    return ret;
+    d->assertAtomExists(resatomid);
 }

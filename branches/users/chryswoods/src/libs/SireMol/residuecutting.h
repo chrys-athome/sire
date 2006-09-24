@@ -27,7 +27,7 @@ residue-based cutting - i.e. each residue is in its own CutGroup.
 
 @author
 */
-class SIREMOL_EXPORT ResidueCutting
+class SIREMOL_EXPORT ResidueCutting : public ConvertFunction
 {
 public:
     ResidueCutting();

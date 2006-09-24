@@ -180,10 +180,6 @@ public:
 
     const MoleculeInfo& info() const;
 
-    QVector<Atom> atoms() const;
-    QVector<Atom> atoms(ResNum resnum) const;
-    QVector<Atom> atoms(ResID resid) const;
-
     QVector<CutGroup> cutGroups() const;
     QHash<CutGroupID,CutGroup> cutGroups(ResNum resnum) const;
     QHash<CutGroupID,CutGroup> cutGroups(ResID resid) const;
@@ -194,8 +190,13 @@ public:
     QHash<CutGroupID,CoordGroup> coordGroups(ResNum resnum) const;
     QHash<CutGroupID,CoordGroup> coordGroups(ResID resid) const;
 
+    QHash<CutGroupID,CoordGroup> coordGroups(const QSet<CutGroupID> &cgids) const;
+    QHash<CutGroupID,CoordGroup> coordGroups(const QSet<ResNum> &resnums) const;
+    QHash<CutGroupID,CoordGroup> coordGroups(const QSet<ResID> &resids) const;
+
     CoordGroup coordGroup(CutGroupID id) const;
 
+    Atom atom(AtomID atomid) const;
     Atom atom(CutGroupID cgid, AtomID atomid) const;
     Atom atom(const CGAtomID &cgatmid) const;
     Atom atom(ResNum resnum, AtomID atomid) const;
@@ -205,6 +206,7 @@ public:
     Atom atom(const AtomIndex &atm) const;
     Atom atom(ResNum resnum, const QString &atomname) const;
 
+    Vector coordinates(AtomID atomid) const;
     Vector coordinates(CutGroupID cgid, AtomID atomid) const;
     Vector coordinates(const CGAtomID &cgatomid) const;
     Vector coordinates(ResNum resnum, AtomID atomid) const;
@@ -214,10 +216,39 @@ public:
     Vector coordinates(const AtomIndex &atm) const;
     Vector coordinates(ResNum resnum, const QString &atomname) const;
 
+    QVector<Atom> atoms() const;
+    QVector<Atom> atoms(ResNum resnum) const;
+    QVector<Atom> atoms(ResID resid) const;
+    QVector<Atom> atoms(CutGroupID cgid) const;
+    
+    QHash<AtomID,Atom> atoms(const QSet<AtomID> &atomids) const;
+    QHash<CGAtomID,Atom> atoms(const QSet<CGAtomID> &cgatomids) const;
+    QHash<ResNumAtomID,Atom> atoms(const QSet<ResNumAtomID> &resatomids) const;
+    QHash<ResIDAtomID,Atom> atoms(const QSet<ResIDAtomID> &resatomids) const;
+    QHash<AtomIndex,Atom> atoms(const QSet<AtomIndex> &atoms) const;
+    
+    QVector<Vector> coordinates() const;
+    QVector<Vector> coordinates(ResNum resnum) const;
+    QVector<Vector> coordinates(ResID resid) const;
+    QVector<Vector> coordinates(CutGroupID cgid) const;
+    
+    QHash<AtomID,Vector> coordinates(const QSet<AtomID> &atomids) const;
     QHash<CGAtomID,Vector> coordinates(const QSet<CGAtomID> &cgatomids) const;
     QHash<ResNumAtomID,Vector> coordinates(const QSet<ResNumAtomID> &resatomids) const;
     QHash<ResIDAtomID,Vector> coordinates(const QSet<ResIDAtomID> &resatomids) const;
     QHash<AtomIndex,Vector> coordinates(const QSet<AtomIndex> &atoms) const;
+
+    QVector<Atom> atoms(CutGroupID cgid) const;
+    QHash< CutGroupID,QVector<Atom> >
+          atoms(const QSet<CutGroupID> &cgids) const;
+          
+    QVector<Atom> atoms(ResNum resnum) const;
+    QHash< ResNum,QVector<Atom> >
+          atoms(const QSet<ResNum> &resnums) const;
+          
+    QVector<Atom> atoms(ResID resid) const;
+    QHash< ResID,QVector<Atom> >
+          atoms(const QSet<ResID> &resids) const;
 
     QVector<Vector> coordinates(CutGroupID cgid);
     QHash< CutGroupID,QVector<Vector> >
@@ -237,6 +268,7 @@ public:
     QString residueName(ResID resid) const;
 
     ResNum residueNumber(ResID resid) const;
+    ResNum residueNumber(const QString &resname) const;
 
     bool isEmpty() const;
     bool isEmpty(ResNum resnum) const;

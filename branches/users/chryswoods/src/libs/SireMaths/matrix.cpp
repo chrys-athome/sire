@@ -146,16 +146,25 @@ Matrix Matrix::transpose() const
 /** Set the matrix to identity */
 void Matrix::setToIdentity()
 {
-    xx = 1.0;
-    yy = 1.0;
-    zz = 1.0;
+    xx = 1;
+    yy = 1;
+    zz = 1;
 
-    xy = 0.0;
-    xz = 0.0;
-    yx = 0.0;
-    yz = 0.0;
-    zx = 0.0;
-    zy = 0.0;
+    xy = 0;
+    xz = 0;
+    yx = 0;
+    yz = 0;
+    zx = 0;
+    zy = 0;
+}
+
+/** Return whether or not this matrix is equal to the identity matrix */
+bool Matrix::isIdentity() const
+{
+    return xx == 1 and yy == xx and zz == xx and
+           xy == 0 and xz == xy and yx == xy and
+           yz == xy and zx == xy and zy == xy;
+           
 }
 
 bool Matrix::operator==(const Matrix& m)

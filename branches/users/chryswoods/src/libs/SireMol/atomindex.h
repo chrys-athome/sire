@@ -41,7 +41,8 @@ friend QDataStream& ::operator<<(QDataStream&, const AtomIndex&);
 friend QDataStream& ::operator>>(QDataStream&, AtomIndex&);
 
 public:
-    AtomIndex(const QString &nm = QString::null, ResNum rnum = 1) : nme(nm), resnum(rnum)
+    AtomIndex(const QString &nm = QString::null, ResNum rnum = ResNum(1)) 
+        : nme(nm), resnum(rnum)
     {}
     AtomIndex(const AtomIndex &other) : nme(other.nme), resnum(other.resnum)
     {}

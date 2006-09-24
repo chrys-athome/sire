@@ -2,8 +2,6 @@
 #include <limits>
 #include <cmath>
 
-#include "SireMol/qhash_siremol.h"
-
 #include "periodicbox.h"
 #include "coordgroup.h"
 

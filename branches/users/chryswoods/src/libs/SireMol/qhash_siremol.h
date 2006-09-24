@@ -14,6 +14,7 @@ SIRE_BEGIN_HEADER
 namespace SireMol
 {
 class AtomIndex;
+class AtomInfo;
 
 class Bond;
 class Angle;
@@ -27,8 +28,8 @@ class MolCutGroupID;
 class IDBase;
 
 class CGAtomID;
-class ResAtomID;
-class ResIndexID;
+class ResNumAtomID;
+class ResIDAtomID;
 class MolCGAtomID;
 class MolResAtomID;
 class MolResIndexID;
@@ -38,6 +39,7 @@ class MolGroupIndexID;
 }
 
 uint qHash(const SireMol::AtomIndex&);
+uint qHash(const SireMol::AtomInfo&);
 uint qHash(const SireMol::Bond&);
 uint qHash(const SireMol::Angle&);
 uint qHash(const SireMol::Dihedral&);
@@ -47,8 +49,8 @@ uint qHash(const SireMol::ResidueID&);
 uint qHash(const SireMol::MolCutGroupID&);
 uint qHash(const SireMol::IDBase&);
 uint qHash(const SireMol::CGAtomID&);
-uint qHash(const SireMol::ResAtomID&);
-uint qHash(const SireMol::ResIndexID&);
+uint qHash(const SireMol::ResNumAtomID&);
+uint qHash(const SireMol::ResIDAtomID&);
 uint qHash(const SireMol::MolCGAtomID&);
 uint qHash(const SireMol::MolResAtomID&);
 uint qHash(const SireMol::MolResIndexID&);

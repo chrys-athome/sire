@@ -32,7 +32,9 @@ class SIREMOL_EXPORT MolCutGroupID
 friend QDataStream& ::operator>>(QDataStream&, MolCutGroupID&);
 
 public:
-    MolCutGroupID(MoleculeID molid=0, CutGroupID cgid=0) : _molid(molid), _cgid(cgid)
+    MolCutGroupID(MoleculeID molid = MoleculeID(0), 
+                  CutGroupID cgid = CutGroupID(0)) 
+        : _molid(molid), _cgid(cgid)
     {}
     
     MolCutGroupID( const tuple<MoleculeID,CutGroupID> &t )

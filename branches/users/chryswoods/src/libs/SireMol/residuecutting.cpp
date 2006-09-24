@@ -16,7 +16,7 @@
 
 using namespace SireMol;
 
-ResidueCutting::ResidueCutting()
+ResidueCutting::ResidueCutting() : ConvertFunction()
 {}
 
 
