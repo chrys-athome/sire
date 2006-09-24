@@ -215,22 +215,15 @@ public:
     Vector coordinates(const ResIDAtomID &resatomid) const;
     Vector coordinates(const AtomIndex &atm) const;
     Vector coordinates(ResNum resnum, const QString &atomname) const;
-
+    
     QVector<Atom> atoms() const;
-    QVector<Atom> atoms(ResNum resnum) const;
-    QVector<Atom> atoms(ResID resid) const;
-    QVector<Atom> atoms(CutGroupID cgid) const;
+    QVector<Vector> coordinates() const;
     
     QHash<AtomID,Atom> atoms(const QSet<AtomID> &atomids) const;
     QHash<CGAtomID,Atom> atoms(const QSet<CGAtomID> &cgatomids) const;
     QHash<ResNumAtomID,Atom> atoms(const QSet<ResNumAtomID> &resatomids) const;
     QHash<ResIDAtomID,Atom> atoms(const QSet<ResIDAtomID> &resatomids) const;
     QHash<AtomIndex,Atom> atoms(const QSet<AtomIndex> &atoms) const;
-    
-    QVector<Vector> coordinates() const;
-    QVector<Vector> coordinates(ResNum resnum) const;
-    QVector<Vector> coordinates(ResID resid) const;
-    QVector<Vector> coordinates(CutGroupID cgid) const;
     
     QHash<AtomID,Vector> coordinates(const QSet<AtomID> &atomids) const;
     QHash<CGAtomID,Vector> coordinates(const QSet<CGAtomID> &cgatomids) const;

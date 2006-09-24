@@ -66,6 +66,7 @@ public:
 
     ~ResidueInfo();
 
+   ////// Operators ////////////////////////////////////////
     ResidueInfo& operator=(const ResidueInfo &other);
 
     bool operator==(const ResidueInfo &other) const;
@@ -73,15 +74,38 @@ public:
 
     const CGAtomID& operator[](AtomID atmid) const;
     const CGAtomID& operator[](const QString &atmname) const;
+    
+    const AtomInfoGroup& operator[](CutGroupID cgid) const;
+   /////////////////////////////////////////////////////////
 
+   ///// Querying the molecule /////////////////////////////
     const CGAtomID& at(AtomID atmid) const;
     const CGAtomID& at(const QString &atmname) const;
+  
+    const AtomInfoGroup& at(CutGroupID cgid) const;
+
+    const AtomInfo& atom(AtomID i) const;
+    const AtomInfo& atom(const QString &atmname) const;
+    const AtomInfo& atom(const CGAtomID &cgid) const;
+
+    const AtomInfoGroup& atomGroup(CutGroupID cgid) const;
+    
+    QHash<CutGroupID,AtomInfoGroup> atomGroups() const;
+    QHash<CutGroupID,AtomInfoGroup> atomGroups(const QSet<CutGroupID> &cgids) const;
+    
+    QVector<AtomInfo> atoms() const;
+    
+    QHash<AtomID,AtomInfo> atoms( const QSet<AtomID> &idxs ) const;
+    QHash<CGAtomID,AtomInfo> atoms( const QSet<CGAtomID> &cgids ) const;
+    QHash<QString,AtomInfo> atoms( const QSet<QString> &atms ) const;
+
+    QVector<AtomInfo> atoms(CutGroupID cgid) const;
+    QHash< CutGroupID, QVector<AtomInfo> > atoms(const QSet<CutGroupID> &cgids) const;
+
+    const QVector<CGAtomID>& indicies() const;
+    const QVector<CutGroupID>& cutGroupIDs() const;
 
     QString toString() const;
-
-    int nAtoms() const;
-    int count() const;
-    int size() const;
 
     QString name() const;
     QString resName() const;
@@ -89,22 +113,26 @@ public:
     ResNum number() const;
     ResNum resNum() const;
 
-    const AtomInfo& atom(AtomID i) const;
-    const AtomInfo& atom(const QString &atmname) const;
-    const AtomInfo& atom(const CGAtomID &cgid) const;
+    int nCutGroups() const;
+
+    int nAtoms() const;
+    int nAtoms(CutGroupID cgid) const;
 
     QStringList atomNames() const;
-
-    QVector<CutGroupID> cutGroupIDs() const;
-    QHash<CutGroupID,AtomInfoGroup> atomGroups() const;
-
-    QVector<CGAtomID> indicies() const;
 
     bool contains(const QString &atmname) const;
     bool contains(const AtomIndex &atm) const;
     bool contains(AtomID atm) const;
     bool contains(CutGroupID cgid) const;
+    bool contains(CutGroupID cgid, AtomID atomid) const;
     bool contains(const CGAtomID &cgid) const;
+
+    bool isEmpty() const;
+    bool isEmpty(CutGroupID cgid) const;
+
+    void assertAtomExists(const QString &atomname) const;
+    void assertAtomExists(AtomID atomid) const;
+   /////////////////////////////////////////////////////////
 
 private:
     /** Implicitly shared pointer to the data for this object */

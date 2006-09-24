@@ -52,24 +52,41 @@ public:
 
     ~AtomInfoGroup();
 
+   ////// Operators ////////////////////////////////////////
     AtomInfoGroup& operator=(const AtomInfoGroup &other);
 
     bool operator==(const AtomInfoGroup &other) const;
     bool operator!=(const AtomInfoGroup &other) const;
-
-    const AtomInfo& at(AtomID i) const;
+   
     const AtomInfo& operator[](AtomID i) const;
+   /////////////////////////////////////////////////////////
 
-    bool isNull() const;
+   ///// Querying the group ////////////////////////////////
+    const AtomInfo& at(AtomID i) const;
 
-    int count() const;
-    int size() const;
+    const AtomInfo& atom(AtomID i) const;
+    
+    QVector<AtomInfo> atoms() const;
+    
+    QHash<AtomID,AtomInfo> atoms( const QSet<AtomID> &idxs ) const;
+
+    QString toString() const;
+
+    int nAtoms() const;
+    int nAtoms(ResNum resnum) const;
+    
+    bool contains(AtomID atomid) const;
+
+    bool isEmpty() const;
 
     const AtomInfo* constData() const;
 
-private:
-    void checkAtom(AtomID i) const;
+    QVector<ResNum> residueNumbers() const;
 
+    void assertAtomExists(AtomID atomid) const;
+   /////////////////////////////////////////////////////////
+
+private:
     /** Vector of the AtomInfo data */
     QVector<AtomInfo> atms;
 };

@@ -120,9 +120,6 @@ public:
     QHash<CutGroupID,AtomInfoGroup> atomGroups(const QSet<ResID> &resids) const;
 
     QVector<AtomInfo> atoms() const;
-    QVector<AtomInfo> atoms(ResNum resnum) const;
-    QVector<AtomInfo> atoms(ResID resid) const;
-    QVector<AtomInfo> atoms(CutGroupID cgid) const;
     
     QHash<AtomID,AtomInfo> atoms( const QSet<AtomID> &idxs ) const;
     QHash<CGAtomID,AtomInfo> atoms( const QSet<CGAtomID> &cgids ) const;
@@ -183,8 +180,6 @@ public:
     bool contains(ResID resid, AtomID atomid) const;
     bool contains(const ResIDAtomID &resatomid) const;
 
-    bool isNull() const;
-
     bool isEmpty() const;
     bool isEmpty(ResNum resnum) const;
     bool isEmpty(ResID resid) const;
@@ -199,6 +194,7 @@ public:
     void assertAtomExists(const CGAtomID &cgatomid) const;
     void assertAtomExists(const ResNumAtomID &resatomid) const;
     void assertAtomExists(const ResIDAtomID &resatomid) const;
+   /////////////////////////////////////////////////////////
 
 private:
     /** Implicitly shared pointer to the data of this object */
