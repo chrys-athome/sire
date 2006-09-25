@@ -166,7 +166,7 @@ void MoleculeBonds::removeAll(const AtomIndex &atom)
         ResidueBonds &res = resbnds[atom.resNum()];
 
         //get the list of residue numbers of residues bonded to this atom
-        QList<ResNum> bondedres = res.residuesBondedTo(atom.name());
+        QSet<ResNum> bondedres = res.residuesBondedTo(atom.name());
 
         //remove this atom from its residue
         res.remove(atom.name());
@@ -196,7 +196,7 @@ void MoleculeBonds::removeAll(ResNum resnum)
         ResidueBonds &res = resbnds[resnum];
 
         //find all of the residues bonded to this residue
-        QList<ResNum> resnums = res.residuesBondedTo();
+        QSet<ResNum> resnums = res.residuesBondedTo();
 
         //remove this residue
         resbnds.remove(resnum);
@@ -255,7 +255,7 @@ QList<ResidueBonds> MoleculeBonds::bondedResidues(ResNum resnum) const
 {
     if (resbnds.contains(resnum))
     {
-        QList<ResNum> resnums = resbnds[resnum].residuesBondedTo();
+        QSet<ResNum> resnums = resbnds[resnum].residuesBondedTo();
 
         QList<ResidueBonds> bondedres;
 
@@ -367,20 +367,20 @@ bool MoleculeBonds::bonded(const AtomIndex &atom0, const AtomIndex &atom1) const
 
 /** Return the list of residue numbers of residues bonded to the residue with
     residue number 'resnum' */
-QList<ResNum> MoleculeBonds::resNumsBondedTo(ResNum resnum) const
+QSet<ResNum> MoleculeBonds::resNumsBondedTo(ResNum resnum) const
 {
     if (resbnds.contains(resnum))
         return resbnds[resnum].residuesBondedTo();
     else
-        return QList<ResNum>();
+        return QSet<ResNum>();
 }
 
 /** Return the complete list of residue numbers in this molecule
     (note that this only returns the residue numbers of residues that contain
     some bonding) */
-QList<ResNum> MoleculeBonds::resNums() const
+QSet<ResNum> MoleculeBonds::resNums() const
 {
-    return resbnds.keys();
+    return resbnds.keys().toSet();
 }
 
 /** Return the complete list of atoms that are involved in bonding in this molecule */

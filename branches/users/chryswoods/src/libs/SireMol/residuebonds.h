@@ -75,8 +75,8 @@ public:
 
     ResNum resNum() const;
 
-    QList<ResNum> residuesBondedTo() const;
-    QList<ResNum> residuesBondedTo(const QString &atom) const;
+    QSet<ResNum> residuesBondedTo() const;
+    QSet<ResNum> residuesBondedTo(const QString &atom) const;
 
     bool bondedTo(ResNum resnum) const;
     bool bonded(const AtomIndex &atom0, const AtomIndex &atom1) const;

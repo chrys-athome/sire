@@ -275,6 +275,25 @@ QHash<ResNum,Residue> Molecule::residues() const
     return residus;
 }
 
+/** Return copies of the residues whose residues numbers are in 'resnums' 
+
+    \throw SireMol::missing_residue
+*/
+QHash<ResNum,Residue> Molecule::residues(const QSet<ResNum> &resnums) const
+{
+    QHash<ResNum,Residue> residus;
+    residus.reserve(resnums.count());
+    
+    for (QSet<ResNum>::const_iterator it = resnums.begin();
+         it != resnums.end();
+         ++it)
+    {
+        residus.insert( *it, this->residue(*it) );
+    }
+    
+    return residus;
+}
+
 /////////////////////////////////////////////////////////
 //@}
 
@@ -1121,6 +1140,87 @@ int Molecule::nCutGroups() const
 {
     return info().nCutGroups();
 }
+
+/** @name Molecule::nBonds(...)
+    Functions used to return the number of bonds in different parts of the molecule.
+*/
+/////////////////////////////////////////////////////////
+//@{
+
+/** Return the total number of bonds in this molecule */
+int Molecule::nBonds() const
+{
+    return connectivity().nBonds();
+}
+
+/** Return the total number of bonds in the residue with number 'resnum' 
+
+    \throw SireMol::missing_residue
+*/
+int Molecule::nBonds(ResNum resnum) const
+{
+    return connectivity(resnum).nBonds();
+}
+
+/** Return the total number of bonds in the residue with index 'resid' 
+
+    \throw SireError::invalid_index
+*/
+int Molecule::nBonds(ResID resid) const
+{
+    return connectivity(resid).nBonds();
+}
+
+/** Return the total number of inter-residue bonds in this molecule */
+int Molecule::nInterBonds() const
+{
+    return connectivity().nInterBonds();
+}
+
+/** Return the total number of inter-bonds in the residue with number 'resnum' 
+
+    \throw SireMol::missing_residue
+*/
+int Molecule::nInterBonds(ResNum resnum) const
+{
+    return connectivity(resnum).nInterBonds();
+}
+
+/** Return the total number of inter-bonds in the residue with index 'resid' 
+
+    \throw SireError::invalid_index
+*/
+int Molecule::nInterBonds(ResID resid) const
+{
+    return connectivity(resid).nInterBonds();
+}
+
+/** Return the total number of intra-bonds in this molecule */
+int Molecule::nIntraBonds() const
+{
+    return connectivity().nIntraBonds();
+}
+
+/** Return the total number of intra-bonds in the residue with number 'resnum' 
+
+    \throw SireMol::missing_residue
+*/
+int Molecule::nIntraBonds(ResNum resnum) const
+{
+    return connectivity(resnum).nIntraBonds();
+}
+
+/** Return the total number of intra-bonds in the residue with index 'resid' 
+
+    \throw SireError::invalid_index
+*/
+int Molecule::nIntraBonds(ResID resid) const
+{
+    return connectivity(resid).nIntraBonds();
+}
+
+/////////////////////////////////////////////////////////
+//@}
 
 /** Return the names of the atoms in the residue with number 'resnum',
     returned in the same order as the atoms in the residue.

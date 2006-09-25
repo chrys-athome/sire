@@ -52,8 +52,8 @@ public:
 
     ResNum resNum() const;
 
-    QList<ResNum> residuesBondedTo() const;
-    QList<ResNum> residuesBondedTo(const QString &atom) const;
+    QSet<ResNum> residuesBondedTo() const;
+    QSet<ResNum> residuesBondedTo(const QString &atom) const;
 
     bool bondedTo(ResNum resnum) const;
     bool bonded(const AtomIndex &atom0, const AtomIndex &atom1) const;
@@ -220,18 +220,18 @@ ResNum ResidueBondsPvt::resNum() const
 }
 
 /** Return the residue numbers of all residues that this residue is bonded to */
-QList<ResNum> ResidueBondsPvt::residuesBondedTo() const
+QSet<ResNum> ResidueBondsPvt::residuesBondedTo() const
 {
-    return bondedres.keys();
+    return bondedres.keys().toSet();
 }
 
 /** Return the list of residue numbers of all residues bonded to the atom 'atom' */
-QList<ResNum> ResidueBondsPvt::residuesBondedTo(const QString &atom) const
+QSet<ResNum> ResidueBondsPvt::residuesBondedTo(const QString &atom) const
 {
-    QList<ResNum> resnums;
+    QSet<ResNum> resnums;
 
     foreach( AtomIndex atm, atminterbnds.values(atom) )
-        resnums.append(atm.resNum());
+        resnums.insert(atm.resNum());
 
     return resnums;
 }
@@ -671,12 +671,12 @@ ResNum ResidueBonds::resNum() const
     return d->resNum();
 }
 
-QList<ResNum> ResidueBonds::residuesBondedTo() const
+QSet<ResNum> ResidueBonds::residuesBondedTo() const
 {
     return d->residuesBondedTo();
 }
 
-QList<ResNum> ResidueBonds::residuesBondedTo(const QString &atom) const
+QSet<ResNum> ResidueBonds::residuesBondedTo(const QString &atom) const
 {
     return d->residuesBondedTo(atom);
 }

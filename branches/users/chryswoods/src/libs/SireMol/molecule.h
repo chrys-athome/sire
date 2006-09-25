@@ -151,7 +151,7 @@ public:
     void merge(const Residue &residue);
 
     QHash<ResNum,Residue> residues() const;
-    QHash<ResNum,Residue> residues(const QList<ResNum> &resnums) const;
+    QHash<ResNum,Residue> residues(const QSet<ResNum> &resnums) const;
 
     Residue at(ResNum resnum) const;
     Residue at(ResID i) const;
@@ -300,6 +300,18 @@ public:
     int nResidues() const;
 
     int nCutGroups() const;
+
+    int nBonds() const;
+    int nBonds(ResNum resnum) const;
+    int nBonds(ResID resid) const;
+    
+    int nInterBonds() const;
+    int nInterBonds(ResNum resnum) const;
+    int nInterBonds(ResID resid) const;
+    
+    int nIntraBonds() const;
+    int nIntraBonds(ResNum resnum) const;
+    int nIntraBonds(ResID resid) const;
 
     QStringList atomNames(ResNum resnum) const;
     QStringList atomNames(ResID resid) const;

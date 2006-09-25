@@ -85,9 +85,9 @@ public:
     bool bonded(ResNum resnum0, ResNum resnum1) const;
     bool bonded(const AtomIndex &atom0, const AtomIndex &atom1) const;
 
-    QList<ResNum> resNumsBondedTo(ResNum resnum) const;
+    QSet<ResNum> resNumsBondedTo(ResNum resnum) const;
 
-    QList<ResNum> resNums() const;
+    QSet<ResNum> resNums() const;
     QSet<AtomIndex> atoms() const;
 
    ////////////////////////////////////////////////////

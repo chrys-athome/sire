@@ -227,6 +227,25 @@ const MoleculeBonds& MoleculeData::connectivity() const
     return _molbonds;
 }
 
+/** Return the connectivity of the residue with number 'resnum' 
+
+    \throw SireMol::missing_residue
+*/
+ResidueBonds MoleculeData::connectivity(ResNum resnum) const
+{
+    info().assertResidueExists(resnum);
+    return _molbonds.residue(resnum);
+}
+
+/** Return the connectivity of the residue at index 'resid' 
+
+    \throw SireError::invalid_index
+*/
+ResidueBonds MoleculeData::connectivity(ResID resid) const
+{
+    return _molbonds.residue( info().residueNumber(resid) );
+}
+
 /** Return a const reference to the molecule info */
 const MoleculeInfo& MoleculeData::info() const
 {
