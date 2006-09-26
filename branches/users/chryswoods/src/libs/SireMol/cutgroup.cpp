@@ -14,6 +14,7 @@
 
 #include "cutgroup.h"
 #include "atomid.h"
+#include "atom.h"
 
 #include "SireError/errors.h"
 #include "SireStream/datastream.h"
@@ -63,13 +64,14 @@ CutGroup::CutGroup(const QVector<Atom> atoms)
         const Atom *atomarray = atoms.constData();
 
         //make space for the AtomInfo objects
-        atominfos.resize(sz);
+        QVector<AtomInfo> atominfovector;
+        atominfovector.resize(sz);
 
         //edit a new CoordGroup
         CoordGroupEditor editor = CoordGroup(sz).edit();
 
         //get a mutable pointer to the coordinate array, and the info array
-        AtomInfo *infoarray = atominfos.data();
+        AtomInfo *infoarray = atominfovector.data();
         Vector *coordarray = editor.data();
 
         //copy the information from the Atom array into the info and coordinate arrays
@@ -81,6 +83,8 @@ CutGroup::CutGroup(const QVector<Atom> atoms)
 
         //save the coordinates
         coords = editor.commit();
+        //save the metadata
+        atominfos = atominfovector;
     }
 }
 
@@ -93,13 +97,14 @@ CutGroup::CutGroup(const QList<Atom> atoms)
 
     if (sz > 0)
     {
-        atominfos.resize(sz);
+        QVector<AtomInfo> atominfovector;
+        atominfovector.resize(sz);
 
         //edit a new CoordGroup
         CoordGroupEditor editor = CoordGroup(sz).edit();
 
         //get mutable pointers to the coordinate and info arrays
-        AtomInfo *infoarray = atominfos.data();
+        AtomInfo *infoarray = atominfovector.data();
         Vector *coordarray = editor.data();
 
         //copy the information from the list
@@ -115,7 +120,59 @@ CutGroup::CutGroup(const QList<Atom> atoms)
 
         //save the coordinates
         coords = editor.commit();
+        //save the metadata
+        atominfos = atominfovector;
     }
+}
+
+/** This function checks that the AtomInfoGroup and CoordGroup that comprise
+    this CutGroup are compatible - if not then an exception if thrown
+
+    \throw SireError::incompatible_error
+*/
+void CutGroup::assertCompatible() const
+{
+    if (atominfos.nAtoms() != coords.count())
+        throw SireError::incompatible_error( QObject::tr(
+              "You cannot create a CutGroup from an AtomInfo containing "
+              "%1 atoms, and a CoordGroup containing %2 sets of coordinates!")
+                  .arg(atominfos.nAtoms()).arg(coords.count()), CODELOC );
+}
+
+/** Construct a CutGroup using the atom information from 'infos' and
+    the coordinates from 'coordinates'. The number of coordinates in 'coordinates'
+    must be the same as the number of atoms in 'infos' or an
+    exception will be thrown.
+
+    \throw SireError::incompatible_error
+*/
+CutGroup::CutGroup(const AtomInfoGroup &infos, const CoordGroup &coordinates)
+         : atominfos(infos), coords(coordinates)
+{
+    this->assertCompatible();
+}
+
+/** Construct a CutGroup using the atom information from 'infos' and
+    the coordinates in 'coordinates'. The number of coordinates in
+    'coordinates' must be the same as the number of atoms in 'infos'
+    or an exception will be thrown
+
+    \throw SireError::incompatible_error
+*/
+CutGroup::CutGroup(const AtomInfoGroup &infos,
+                   const QVector<Vector> &coordinates)
+         : atominfos(infos), coords(coordinates)
+{
+    this->assertCompatible();
+}
+
+/** Construct a CutGroup using the atom infomation from 'infos'. The
+    atoms are all initially placed at the origin. */
+CutGroup::CutGroup(const AtomInfoGroup &infos)
+         : atominfos(infos)
+{
+    if (atominfos.nAtoms() > 0)
+        coords = CoordGroup(atominfos.nAtoms(), Vector(0));
 }
 
 /** Copy constructor - fast as the data for this object is implicitly shared */

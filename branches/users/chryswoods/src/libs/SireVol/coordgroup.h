@@ -65,6 +65,9 @@ public:
 
     CoordGroupBase& operator=(const CoordGroupBase &other);
 
+    bool operator==(const CoordGroupBase &other) const;
+    bool operator!=(const CoordGroupBase &other) const;
+
 protected:
     void setCoordinates(const QVector<Vector> &newcoords);
 
@@ -94,9 +97,6 @@ public:
     ~CoordGroup();
 
     CoordGroup& operator=(const CoordGroupBase &other);
-
-    bool operator==(const CoordGroup &other) const;
-    bool operator!=(const CoordGroup &other) const;
 
     const Vector& at(int i) const;
     const Vector& operator[](int i) const;

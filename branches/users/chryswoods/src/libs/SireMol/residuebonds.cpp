@@ -52,7 +52,7 @@ public:
 
     ResNum resNum() const;
 
-    QSet<ResNum> residuesBondedTo() const;
+    QSet<ResNum> bondedResidues() const;
     QSet<ResNum> residuesBondedTo(const QString &atom) const;
 
     bool bondedTo(ResNum resnum) const;
@@ -220,7 +220,7 @@ ResNum ResidueBondsPvt::resNum() const
 }
 
 /** Return the residue numbers of all residues that this residue is bonded to */
-QSet<ResNum> ResidueBondsPvt::residuesBondedTo() const
+QSet<ResNum> ResidueBondsPvt::bondedResidues() const
 {
     return bondedres.keys().toSet();
 }
@@ -671,9 +671,9 @@ ResNum ResidueBonds::resNum() const
     return d->resNum();
 }
 
-QSet<ResNum> ResidueBonds::residuesBondedTo() const
+QSet<ResNum> ResidueBonds::bondedResidues() const
 {
-    return d->residuesBondedTo();
+    return d->bondedResidues();
 }
 
 QSet<ResNum> ResidueBonds::residuesBondedTo(const QString &atom) const

@@ -65,6 +65,17 @@
 //     return ds;
 // }
 //
+
+#include "editmol.h"
+
+using namespace SireMol;
+
+EditMol::EditMol(const QString &)
+{}
+
+EditMol::~EditMol()
+{}
+
 // /** Create an empty EditMol with name 'name' */
 // EditMol::EditMol(const QString &name) : moldata(name)
 // {}

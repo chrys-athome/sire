@@ -65,9 +65,9 @@ public:
 
     bool operator==(const ResidueInfoPvt &other) const;
     bool operator!=(const ResidueInfoPvt &other) const;
-    
+
     const AtomInfo& _unsafe_atom(const CGAtomID &cgid) const;
-    
+
     const CGAtomID& _unsafe_index(AtomID atomid) const;
     const CGAtomID& _unsafe_index(const QString &atomname) const;
 
@@ -126,7 +126,7 @@ QDataStream &operator>>(QDataStream &ds, ResidueInfoPvt &resinfo)
     if (v == 1)
     {
         ResidueInfoPvt newinfo;
-    
+
         ds >> newinfo.resname >> newinfo.resnum >> newinfo.cgidxs >> newinfo.atominfos;
 
         //rebuild other metadata
@@ -142,15 +142,15 @@ QDataStream &operator>>(QDataStream &ds, ResidueInfoPvt &resinfo)
                 const CGAtomID &cgatomid = newinfo.cgidxs.constData()[i];
                 const AtomInfoGroup &atomgroup = newinfo.atominfos.
                                           constFind(cgatomid.cutGroupID()).value();
-                                          
+
                 const AtomInfo &atominfo = atomgroup.at(cgatomid.atomID());
-                
+
                 newinfo.atomname2atomid.insert( atominfo.name(), AtomID(i) );
                 cgids.insert( cgatomid.cutGroupID() );
             }
-            
+
             newinfo.cgids.reserve(cgids.count());
-            
+
             for (QSet<CutGroupID>::const_iterator it = cgids.constBegin();
                  it != cgids.constEnd();
                  ++it)
@@ -219,8 +219,8 @@ bool ResidueInfoPvt::operator!=(const ResidueInfoPvt &other) const
            (resname != other.resname or resnum != other.resnum or
             cgidxs != other.cgidxs or atomname2atomid != other.atomname2atomid);
 }
-    
-/** Return the AtomInfo of the atom at index 'cgatomid' - this does not 
+
+/** Return the AtomInfo of the atom at index 'cgatomid' - this does not
     check whether this is a valid index */
 const AtomInfo& ResidueInfoPvt::_unsafe_atom(const CGAtomID &cgatomid) const
 {
@@ -248,7 +248,7 @@ const AtomInfoGroup& ResidueInfoPvt::_unsafe_atomInfoGroup(CutGroupID cgid) cons
     return atominfos.find(cgid).value();
 }
 
-/** Assert that this residue contains an atom with index 'atomid' 
+/** Assert that this residue contains an atom with index 'atomid'
 
     \throw SireError::invalid_index
 */
@@ -269,7 +269,7 @@ void ResidueInfoPvt::assertCutGroupExists(CutGroupID cgid) const
                 .arg(cgid).arg(resname).arg(resnum), CODELOC);
 }
 
-/** Assert that this residue contains an atom with index 'cgatomid' 
+/** Assert that this residue contains an atom with index 'cgatomid'
 
     \throw SireMol::missing_cutgroup
     \throw SireError::invalid_index
@@ -277,7 +277,7 @@ void ResidueInfoPvt::assertCutGroupExists(CutGroupID cgid) const
 void ResidueInfoPvt::assertAtomExists(const CGAtomID &cgatomid) const
 {
     assertCutGroupExists(cgatomid.cutGroupID());
-    
+
     if (not cgidxs.contains(cgatomid))
         throw SireError::invalid_index( QObject::tr(
             "Residue \"%1\":%2 has no atom with index \"%3\", despite having atoms "
@@ -344,6 +344,49 @@ ResidueInfo::ResidueInfo(const ResidueInfo &other)
 ResidueInfo::~ResidueInfo()
 {}
 
+/** Assert that the AtomIndex 'atom' has the same residue number as
+    this residue
+
+    \throw SireError::invalid_arg
+*/
+void ResidueInfo::assertSameResidue(const AtomIndex &atom) const
+{
+    if (atom.resNum() != this->number())
+        throw SireError::invalid_arg( QObject::tr(
+                "You cannot use an AtomIndex with residue number \"%1\" "
+                "with a residue with number \"%2\"")
+                    .arg(atom.resNum()).arg(this->number()), CODELOC );
+}
+
+/** Assert that the AtomIndex objects in 'atoms' all have the same
+    residue number as this residue
+
+    \throw SireError::invalid_arg
+*/
+void ResidueInfo::assertSameResidue(const QSet<AtomIndex> &atom) const
+{
+    for (QSet<AtomIndex>::const_iterator it = atom.begin();
+         it != atom.end();
+         ++it)
+    {
+        this->assertSameResidue(*it);
+    }
+}
+
+/** Assert that at least some of the atoms in this residue are in
+    the CutGroup with ID == cgid
+
+    \throw SireMol::missing_cutgroup
+*/
+void ResidueInfo::assertSameResidue(CutGroupID cgid) const
+{
+    if (not this->contains(cgid))
+        throw SireMol::missing_cutgroup( QObject::tr(
+              "The residue \"%1\":\"%2\" does not have any atoms in the "
+              "CutGroup with ID == %3")
+                  .arg(this->name()).arg(this->number()).arg(cgid), CODELOC );
+}
+
 /** Assignment operator - this class is implicitly shared, so this is fast */
 ResidueInfo& ResidueInfo::operator=(const ResidueInfo &other)
 {
@@ -373,7 +416,7 @@ const CGAtomID& ResidueInfo::operator[](AtomID atmid) const
     return d->_unsafe_index(atmid);
 }
 
-/** Return the CGAtomID index of the atom with name 'atmname' 
+/** Return the CGAtomID index of the atom with name 'atmname'
 
     \throw SireMol::missing_atom
 */
@@ -385,7 +428,7 @@ const CGAtomID& ResidueInfo::operator[](const QString &atmname) const
 
 /** Return the AtomInfoGroup for the CutGroup with ID == cgid - this CutGroup
     must contain atoms that are in this residue
-    
+
     \throw SireMol::missing_cutgroup
 */
 const AtomInfoGroup& ResidueInfo::operator[](CutGroupID cgid) const
@@ -403,7 +446,7 @@ const CGAtomID& ResidueInfo::at(AtomID atmid) const
     return this->operator[](atmid);
 }
 
-/** Return the CGAtomID index of the atom with name 'atmname' 
+/** Return the CGAtomID index of the atom with name 'atmname'
 
     \throw SireMol::missing_atom
 */
@@ -414,7 +457,7 @@ const CGAtomID& ResidueInfo::at(const QString &atmname) const
 
 /** Return the AtomInfoGroup for the CutGroup with ID == cgid - this CutGroup
     must contain atoms that are in this residue
-    
+
     \throw SireMol::missing_cutgroup
 */
 const AtomInfoGroup& ResidueInfo::at(CutGroupID cgid) const
@@ -422,7 +465,7 @@ const AtomInfoGroup& ResidueInfo::at(CutGroupID cgid) const
     return this->operator[](cgid);
 }
 
-/** Return the AtomInfo for the atom at index 'atomid' 
+/** Return the AtomInfo for the atom at index 'atomid'
 
     \throw SireError::invalid_index
 */
@@ -431,7 +474,7 @@ const AtomInfo& ResidueInfo::atom(AtomID atomid) const
     return d->_unsafe_atom( this->at(atomid) );
 }
 
-/** Return the AtomInfo for the atom with name 'atomname' 
+/** Return the AtomInfo for the atom with name 'atomname'
 
     \throw SireMol::missing_atom
 */
@@ -443,7 +486,7 @@ const AtomInfo& ResidueInfo::atom(const QString &atomname) const
 /** Return the AtomInfo for the atom with index 'cgid'
 
     (note that this atom must exist in *this* residue)
-    
+
     \throw SireMol::missing_cutgroup
     \throw SireError::invalid_index
 */
@@ -455,7 +498,7 @@ const AtomInfo& ResidueInfo::atom(const CGAtomID &cgid) const
 
 /** Return the AtomInfoGroup for the CutGroup with ID == cgid - this CutGroup
     must contain atoms that are in this residue
-    
+
     \throw SireMol::missing_cutgroup
 */
 const AtomInfoGroup& ResidueInfo::atomGroup(CutGroupID cgid) const
@@ -471,38 +514,38 @@ QHash<CutGroupID,AtomInfoGroup> ResidueInfo::atomGroups() const
 }
 
 /** Return copies of the AtomInfoGroups for the CutGroups whose IDs are in 'cgids' - these
-    CutGroups must each contain atoms that are in this Residue 
-    
+    CutGroups must each contain atoms that are in this Residue
+
     \throw SireMol::missing_residue
 */
 QHash<CutGroupID,AtomInfoGroup> ResidueInfo::atomGroups(const QSet<CutGroupID> &cgids) const
 {
     QHash<CutGroupID,AtomInfoGroup> groups;
     groups.reserve(cgids.count());
-    
+
     for (QSet<CutGroupID>::const_iterator it = cgids.begin();
          it != cgids.end();
          ++it)
     {
         groups.insert( *it, this->atomGroup(*it) );
     }
-    
+
     return groups;
 }
 
-/** Return an array of all of the AtomInfos of the atoms in this residue, in the 
+/** Return an array of all of the AtomInfos of the atoms in this residue, in the
     order that they appear in this residue */
 QVector<AtomInfo> ResidueInfo::atoms() const
 {
     QVector<AtomInfo> atms;
-    
+
     int nats = d->cgidxs.count();
     const CGAtomID *cgarray = d->cgidxs.constData();
-    
+
     atms.reserve(nats);
     for (int i=0; i<nats; ++i)
         atms.append( d->_unsafe_atom( cgarray[i] ) );
-        
+
     return atms;
 }
 
@@ -511,20 +554,20 @@ QHash<T,AtomInfo> getAtoms(const ResidueInfo &resinfo, const QSet<T> &idxs)
 {
     QHash<T,AtomInfo> atms;
     atms.reserve(idxs.count());
-    
+
     for (typename QSet<T>::const_iterator it = idxs.begin();
          it != idxs.end();
          ++it)
     {
         atms.insert( *it, resinfo.atom(*it) );
     }
-    
+
     return atms;
 }
 
 /** Return the AtomInfos of the atoms whose indicies are in 'idxs' - these
-    are returned in a hash indexed by AtomID 
-    
+    are returned in a hash indexed by AtomID
+
     \throw SireError::invalid_index
 */
 QHash<AtomID,AtomInfo> ResidueInfo::atoms( const QSet<AtomID> &idxs ) const
@@ -535,7 +578,7 @@ QHash<AtomID,AtomInfo> ResidueInfo::atoms( const QSet<AtomID> &idxs ) const
 /** Return the AtomInfos of the atoms whose indicies are in 'idxs' - these
     are returned in a hash indexed by CGAtomID. Note that all of the atoms
     must be contained in this residue.
-    
+
     \throw SireMol::missing_cutgroup
     \throw SireError::invalid_index
 */
@@ -546,7 +589,7 @@ QHash<CGAtomID,AtomInfo> ResidueInfo::atoms( const QSet<CGAtomID> &cgids ) const
 
 /** Return the AtomInfos of the atoms whose names are in 'atomnames' - these
     are returned in a hash indexed by atom name.
-    
+
     \throw SireMol::missing_atom
 */
 QHash<QString,AtomInfo> ResidueInfo::atoms( const QSet<QString> &atomnames ) const
@@ -556,7 +599,7 @@ QHash<QString,AtomInfo> ResidueInfo::atoms( const QSet<QString> &atomnames ) con
 
 /** Return the vector of AtomInfos of the atoms that are in the CutGroup with ID == cgid.
     This CutGroup must contain atoms that are in this residue.
-    
+
     \throw SireMol::missing_residue
 */
 QVector<AtomInfo> ResidueInfo::atoms(CutGroupID cgid) const
@@ -566,25 +609,25 @@ QVector<AtomInfo> ResidueInfo::atoms(CutGroupID cgid) const
 }
 
 template<class T>
-QHash< T, QVector<AtomInfo> > getAtomVectors(const ResidueInfo &resinfo, 
+QHash< T, QVector<AtomInfo> > getAtomVectors(const ResidueInfo &resinfo,
                                              const QSet<T> &idxs)
 {
     QHash< T, QVector<AtomInfo> > atms;
     atms.reserve( idxs.count() );
-    
+
     for (typename QSet<T>::const_iterator it = idxs.begin();
          it != idxs.end();
          ++it)
     {
         atms.insert( *it, resinfo.atoms(*it) );
     }
-    
+
     return atms;
 }
 
-/** Return the arrays of AtomInfos of the atoms in the CutGroups whose IDs are 
+/** Return the arrays of AtomInfos of the atoms in the CutGroups whose IDs are
     in 'cgids' - each of these CutGroups must contain atoms that are in this residue.
-    
+
     \throw SireMol::missing_cutgroup
 */
 QHash< CutGroupID, QVector<AtomInfo> > ResidueInfo::atoms(
@@ -600,7 +643,7 @@ const QVector<CGAtomID>& ResidueInfo::indicies() const
     return d->cgidxs;
 }
 
-/** Return an array of the CutGroupIDs of all CutGroups that contain atoms 
+/** Return an array of the CutGroupIDs of all CutGroups that contain atoms
     that are in this residue. */
 const QVector<CutGroupID>& ResidueInfo::cutGroupIDs() const
 {
@@ -650,30 +693,59 @@ int ResidueInfo::nAtoms() const
     return d->cgidxs.count();
 }
 
-/** Return the number of atoms in CutGroup with ID == cgid 
+/** Return the number of atoms in CutGroup with ID == cgid
     *that are also in this residue*
-    
+
     \throw SireMol::missing_cutgroup
 */
 int ResidueInfo::nAtoms(CutGroupID cgid) const
 {
     d->assertCutGroupExists(cgid);
-    
+
     return d->_unsafe_atomInfoGroup(cgid).nAtoms(resNum());
 }
 
-/** Return the names of all of the atoms in this residue, in the order 
+/** Return the name of the atom at index 'atomid'
+
+    \throw SireError::invalid_index
+*/
+QString ResidueInfo::atomName(AtomID atomid) const
+{
+    return this->atom(atomid).name();
+}
+
+/** Return the names of the atoms whose indicies are in 'atomids',
+    returning a hash of the names indexed by AtomID
+
+    \throw SireError::invalid_index
+*/
+QHash<AtomID,QString> ResidueInfo::atomNames(const QSet<AtomID> &atomids) const
+{
+    QHash<AtomID,QString> names;
+    names.reserve(atomids.count());
+
+    for (QSet<AtomID>::const_iterator it = atomids.begin();
+         it != atomids.end();
+         ++it)
+    {
+        names.insert( *it, atomName(*it) );
+    }
+
+    return names;
+}
+
+/** Return the names of all of the atoms in this residue, in the order
     that they appear in this residue */
 QStringList ResidueInfo::atomNames() const
 {
     QStringList atmnames;
-    
+
     int nats = d->cgidxs.count();
     const CGAtomID *cgarray = d->cgidxs.constData();
-    
+
     for (int i=0; i<nats; ++i)
         atmnames.append( d->_unsafe_atom( cgarray[i] ).name() );
-        
+
     return atmnames;
 }
 
@@ -696,21 +768,21 @@ bool ResidueInfo::contains(AtomID atomid) const
     return atomid < this->nAtoms();
 }
 
-/** Return whether or not this residue contains atoms that are in the 
+/** Return whether or not this residue contains atoms that are in the
     CutGroup with ID == cgid */
 bool ResidueInfo::contains(CutGroupID cgid) const
 {
     return d->cgids.contains(cgid);
 }
 
-/** Return whether or not this residue contains an atom with 
+/** Return whether or not this residue contains an atom with
     index 'cgatomid' */
 bool ResidueInfo::contains(const CGAtomID &cgatomid) const
 {
     return d->cgidxs.contains(cgatomid);
 }
 
-/** Return whether or not this residue contains an atom with 
+/** Return whether or not this residue contains an atom with
     index 'atomid' in the CutGroup with ID == cgid */
 bool ResidueInfo::contains(CutGroupID cgid, AtomID atomid) const
 {

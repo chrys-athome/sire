@@ -75,7 +75,7 @@ public:
 
     ResNum resNum() const;
 
-    QSet<ResNum> residuesBondedTo() const;
+    QSet<ResNum> bondedResidues() const;
     QSet<ResNum> residuesBondedTo(const QString &atom) const;
 
     bool bondedTo(ResNum resnum) const;

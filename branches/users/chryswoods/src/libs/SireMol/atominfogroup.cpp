@@ -33,9 +33,9 @@ static const RegisterMetaType<AtomInfoGroup> r_aigroup("SireMol::AtomInfoGroup")
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const AtomInfoGroup &aigroup)
 {
     writeHeader(ds, r_aigroup, 1);
-    
+
     SharedDataStream(ds) << aigroup.atms;
-    
+
     return ds;
 }
 
@@ -74,6 +74,22 @@ AtomInfoGroup::AtomInfoGroup(int size, const AtomInfo &value)
 AtomInfoGroup::AtomInfoGroup(const QVector<AtomInfo> &atoms)
               : atms(atoms)
 {}
+
+/** Construct from an array of Atoms */
+AtomInfoGroup::AtomInfoGroup(const QVector<Atom> &atoms)
+{
+    int nats = atoms.count();
+    if (nats > 0)
+    {
+        atms.reserve(atoms.count());
+
+        AtomInfo *atmsdata = atms.data();
+        const Atom *atomdata = atoms.constData();
+
+        for (int i=0; i<nats; ++i)
+            atmsdata[i] = atomdata[i];
+    }
+}
 
 /** Copy constructor */
 AtomInfoGroup::AtomInfoGroup(const AtomInfoGroup &other)
@@ -125,7 +141,7 @@ const AtomInfo& AtomInfoGroup::at(AtomID i) const
     return atms.constData()[i];
 }
 
-/** Return the AtomInfo at index 'i' 
+/** Return the AtomInfo at index 'i'
 
     \throw SireError::invalid_index
 */
@@ -134,7 +150,7 @@ const AtomInfo& AtomInfoGroup::operator[](AtomID i) const
     return this->at(i);
 }
 
-/** Return the AtomInfo for the atom at index 'i' 
+/** Return the AtomInfo for the atom at index 'i'
 
     \throw SireError::invalid_index
 */
@@ -158,14 +174,14 @@ QHash<AtomID,AtomInfo> AtomInfoGroup::atoms( const QSet<AtomID> &idxs ) const
 {
     QHash<AtomID,AtomInfo> atmhash;
     atmhash.reserve(idxs.count());
-    
+
     for (QSet<AtomID>::const_iterator it = idxs.begin();
          it != idxs.end();
          ++it)
     {
         atmhash.insert( *it, this->atom(*it) );
     }
-    
+
     return atmhash;
 }
 
@@ -185,7 +201,7 @@ int AtomInfoGroup::nAtoms() const
 int AtomInfoGroup::nAtoms(ResNum resnum) const
 {
     int nresatms = 0;
-    
+
     for (QVector<AtomInfo>::const_iterator it = atms.begin();
          it != atms.end();
          ++it)
@@ -193,7 +209,7 @@ int AtomInfoGroup::nAtoms(ResNum resnum) const
         if (it->resNum() == resnum)
             ++nresatms;
     }
-    
+
     return nresatms;
 }
 
@@ -221,19 +237,19 @@ QVector<ResNum> AtomInfoGroup::residueNumbers() const
 {
     QSet<ResNum> resset;
     QVector<ResNum> resnums;
-    
+
     for (QVector<AtomInfo>::const_iterator it = atms.begin();
          it != atms.end();
          ++it)
     {
         ResNum resnum = it->resNum();
-        
+
         if (not resset.contains(resnum))
         {
             resnums.append(resnum);
             resset.insert(resnum);
         }
     }
-    
+
     return resnums;
 }

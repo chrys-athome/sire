@@ -76,6 +76,9 @@ public:
     QList<Bond> bonds(ResNum resnum) const;
 
     int nBonds() const;
+    int nInterBonds() const;
+    int nIntraBonds() const;
+
     int nResidues() const;
 
     bool contains(ResNum resnum) const;

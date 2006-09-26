@@ -14,6 +14,7 @@
   *
   */
 
+#include <QSharedDataPointer>
 #include <QHash>
 #include <QStringList>
 
@@ -74,14 +75,14 @@ public:
 
     const CGAtomID& operator[](AtomID atmid) const;
     const CGAtomID& operator[](const QString &atmname) const;
-    
+
     const AtomInfoGroup& operator[](CutGroupID cgid) const;
    /////////////////////////////////////////////////////////
 
    ///// Querying the molecule /////////////////////////////
     const CGAtomID& at(AtomID atmid) const;
     const CGAtomID& at(const QString &atmname) const;
-  
+
     const AtomInfoGroup& at(CutGroupID cgid) const;
 
     const AtomInfo& atom(AtomID i) const;
@@ -89,12 +90,12 @@ public:
     const AtomInfo& atom(const CGAtomID &cgid) const;
 
     const AtomInfoGroup& atomGroup(CutGroupID cgid) const;
-    
+
     QHash<CutGroupID,AtomInfoGroup> atomGroups() const;
     QHash<CutGroupID,AtomInfoGroup> atomGroups(const QSet<CutGroupID> &cgids) const;
-    
+
     QVector<AtomInfo> atoms() const;
-    
+
     QHash<AtomID,AtomInfo> atoms( const QSet<AtomID> &idxs ) const;
     QHash<CGAtomID,AtomInfo> atoms( const QSet<CGAtomID> &cgids ) const;
     QHash<QString,AtomInfo> atoms( const QSet<QString> &atms ) const;
@@ -118,6 +119,9 @@ public:
     int nAtoms() const;
     int nAtoms(CutGroupID cgid) const;
 
+    QString atomName(AtomID atomid) const;
+    QHash<AtomID,QString> atomNames(const QSet<AtomID> &atomids) const;
+
     QStringList atomNames() const;
 
     bool contains(const QString &atmname) const;
@@ -132,6 +136,10 @@ public:
 
     void assertAtomExists(const QString &atomname) const;
     void assertAtomExists(AtomID atomid) const;
+
+    void assertSameResidue(const AtomIndex &atom) const;
+    void assertSameResidue(const QSet<AtomIndex> &atoms) const;
+    void assertSameResidue(CutGroupID cgid) const;
    /////////////////////////////////////////////////////////
 
 private:

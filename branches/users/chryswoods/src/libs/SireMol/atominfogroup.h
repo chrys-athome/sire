@@ -29,6 +29,7 @@ QDataStream& operator>>(QDataStream&, SireMol::AtomInfoGroup&);
 namespace SireMol
 {
 
+class Atom;
 class AtomID;
 
 /**
@@ -47,6 +48,7 @@ public:
     AtomInfoGroup(int size);
     AtomInfoGroup(int size, const AtomInfo &value);
     AtomInfoGroup(const QVector<AtomInfo> &atoms);
+    AtomInfoGroup(const QVector<Atom> &atoms);
 
     AtomInfoGroup(const AtomInfoGroup &other);
 
@@ -54,10 +56,11 @@ public:
 
    ////// Operators ////////////////////////////////////////
     AtomInfoGroup& operator=(const AtomInfoGroup &other);
+    AtomInfoGroup& operator=(const QVector<AtomInfo> &other);
 
     bool operator==(const AtomInfoGroup &other) const;
     bool operator!=(const AtomInfoGroup &other) const;
-   
+
     const AtomInfo& operator[](AtomID i) const;
    /////////////////////////////////////////////////////////
 
@@ -65,16 +68,16 @@ public:
     const AtomInfo& at(AtomID i) const;
 
     const AtomInfo& atom(AtomID i) const;
-    
+
     QVector<AtomInfo> atoms() const;
-    
+
     QHash<AtomID,AtomInfo> atoms( const QSet<AtomID> &idxs ) const;
 
     QString toString() const;
 
     int nAtoms() const;
     int nAtoms(ResNum resnum) const;
-    
+
     bool contains(AtomID atomid) const;
 
     bool isEmpty() const;

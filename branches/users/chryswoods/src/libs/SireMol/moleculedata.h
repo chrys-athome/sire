@@ -238,6 +238,8 @@ public:
     void translate(const QSet<ResID> &resids, const Vector &delta);
     void translate(CutGroupID cgid, const Vector &delta);
     void translate(const QSet<CutGroupID> &cgids, const Vector &delta);
+    void translate(ResNum resnum, AtomID atomid, const Vector &delta);
+    void translate(ResNum resnum, const QSet<AtomID> &atomids, const Vector &delta);
 
     void rotate(const Quaternion &quat, const Vector &point);
     void rotate(const AtomIDGroup &group, const Quaternion &quat, const Vector &point);
@@ -253,6 +255,9 @@ public:
     void rotate(const QSet<ResID> &resids, const Quaternion &quat, const Vector &point);
     void rotate(CutGroupID cgid, const Quaternion &quat, const Vector &point);
     void rotate(const QSet<CutGroupID> &cgids, const Quaternion &quat, const Vector &point);
+    void rotate(ResNum resnum, AtomID atomid, const Quaternion &quat, const Vector &point);
+    void rotate(ResNum resnum, const QSet<AtomID> &atomids,
+                const Quaternion &quat, const Vector &point);
 
     void rotate(const Matrix &matrix, const Vector &point);
     void rotate(const AtomIDGroup &group, const Matrix &matrix, const Vector &point);
@@ -268,6 +273,9 @@ public:
     void rotate(const QSet<ResID> &resids, const Matrix &matrix, const Vector &point);
     void rotate(CutGroupID cgid, const Matrix &matrix, const Vector &point);
     void rotate(const QSet<CutGroupID> &cgids, const Matrix &matrix, const Vector &point);
+    void rotate(ResNum resnum, AtomID atomid, const Matrix &rotmat, const Vector &point);
+    void rotate(ResNum resnum, const QSet<AtomID> &atomids,
+                const Matrix &rotmat, const Vector &point);
 
     void setCoordinates(CutGroupID cgid, const CoordGroup &newcoords);
     void setCoordinates(const QHash<CutGroupID,CoordGroup> &newcoords);
@@ -294,6 +302,11 @@ public:
     void setCoordinates(const QHash<ResIDAtomID,Vector> &newcoords);
 
     void setCoordinates(const Residue &residue);
+
+    void setCoordinates(ResNum resnum, AtomID atomid, const Vector &newcoords);
+    void setCoordinates(ResNum resnum, const QHash<AtomID,Vector> &newcoords);
+
+    void setCoordinates(ResNum resnum, const QHash<QString,Vector> &newcoords);
    /////////////////////////////////////////////////
 
 

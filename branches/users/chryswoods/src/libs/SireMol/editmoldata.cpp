@@ -2083,3 +2083,14 @@
 // {
 //     d().change(improper, delta, group0, group1, weightfunc, anchors);
 // }
+
+#include "SireMol/editmoldata.h"
+
+using namespace SireMol;
+
+EditMolData::EditMolData(const QString&)
+{}
+
+EditMolData::~EditMolData()
+{}
+

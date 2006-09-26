@@ -196,7 +196,7 @@ void MoleculeBonds::removeAll(ResNum resnum)
         ResidueBonds &res = resbnds[resnum];
 
         //find all of the residues bonded to this residue
-        QSet<ResNum> resnums = res.residuesBondedTo();
+        QSet<ResNum> resnums = res.bondedResidues();
 
         //remove this residue
         resbnds.remove(resnum);
@@ -255,7 +255,7 @@ QList<ResidueBonds> MoleculeBonds::bondedResidues(ResNum resnum) const
 {
     if (resbnds.contains(resnum))
     {
-        QSet<ResNum> resnums = resbnds[resnum].residuesBondedTo();
+        QSet<ResNum> resnums = resbnds[resnum].bondedResidues();
 
         QList<ResidueBonds> bondedres;
 
@@ -285,6 +285,39 @@ int MoleculeBonds::nBonds() const
     }
 
     return nbnds;
+}
+
+/** Return the total number of intra-residue bonds in this molecule */
+int MoleculeBonds::nIntraBonds() const
+{
+    //loop over each residue and sum the number of intra-bonds
+    int nintra = 0;
+
+    for (QHash<ResNum,ResidueBonds>::const_iterator it = resbnds.begin();
+         it != resbnds.end();
+         ++it)
+    {
+        nintra += it->nIntraBonds();
+    }
+
+    return nintra;
+}
+
+/** Return the total number of inter-residue bonds in this molecule */
+int MoleculeBonds::nInterBonds() const
+{
+    //loop over each residue and sum the number of
+    //asymmetric inter-residue bonds
+    int ninter = 0;
+
+    for (QHash<ResNum,ResidueBonds>::const_iterator it = resbnds.begin();
+         it != resbnds.end();
+         ++it)
+    {
+        ninter += it->nAsymmetricBonds();
+    }
+
+    return ninter;
 }
 
 /** Return the number of residues */
@@ -370,7 +403,7 @@ bool MoleculeBonds::bonded(const AtomIndex &atom0, const AtomIndex &atom1) const
 QSet<ResNum> MoleculeBonds::resNumsBondedTo(ResNum resnum) const
 {
     if (resbnds.contains(resnum))
-        return resbnds[resnum].residuesBondedTo();
+        return resbnds[resnum].bondedResidues();
     else
         return QSet<ResNum>();
 }

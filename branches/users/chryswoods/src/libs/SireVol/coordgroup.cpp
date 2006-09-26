@@ -62,6 +62,9 @@ public:
 
     CoordGroupPvt& operator=(const CoordGroupPvt &other);
 
+    bool operator==(const CoordGroupPvt &other) const;
+    bool operator!=(const CoordGroupPvt &other) const;
+
     const Vector& at(int i) const;
 
     const Vector& operator[](int i) const;
@@ -275,6 +278,31 @@ CoordGroupPvt& CoordGroupPvt::operator=(const CoordGroupPvt &other)
     }
 
     return *this;
+}
+
+/** Comparison operator */
+bool CoordGroupPvt::operator==(const CoordGroupPvt &other) const
+{
+    if (this == &other)
+        return true;
+    else if (sz != other.sz)
+        return false;
+    else
+    {
+        for (int i=0; i<sz; ++i)
+        {
+            if (other.coords[i] != coords[i])
+                return false;
+        }
+
+        return true;
+    }
+}
+
+/** Comparison operator */
+bool CoordGroupPvt::operator!=(const CoordGroupPvt &other) const
+{
+    return not (*this == other);
 }
 
 /** Set the coordinates of this group to be the same as those in 'newcoords' */
@@ -523,6 +551,20 @@ CoordGroupBase& CoordGroupBase::operator=(const CoordGroupBase &other)
 {
     d = other.d;
     return *this;
+}
+
+/** Comparison operator */
+bool CoordGroupBase::operator==(const CoordGroupBase &other) const
+{
+    return d == other.d or
+           *d == *(other.d);
+}
+
+/** Comparison operator */
+bool CoordGroupBase::operator!=(const CoordGroupBase &other) const
+{
+    return d != other.d and
+           *d != *(other.d);
 }
 
 /** Set the coordinates to 'newcoords' */

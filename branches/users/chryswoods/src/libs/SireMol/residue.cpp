@@ -1,6 +1,13 @@
 
 #include "qhash_siremol.h"
 
+#include "atomid.h"
+#include "cutgroupid.h"
+#include "resnumatomid.h"
+
+#include "residueinfo.h"
+
+#include "cutgroup.h"
 #include "residue.h"
 #include "molecule.h"
 #include "resnum.h"
@@ -13,6 +20,9 @@
 #include "splitmolecule.h"
 #include "weightfunction.h"
 #include "residuebonds.h"
+
+#include "SireError/errors.h"
+#include "SireMol/errors.h"
 
 #include "SireMaths/angle.h"
 #include "SireMaths/quaternion.h"
@@ -149,25 +159,25 @@ Atom Residue::operator[](const QString &atomname) const
 /** Return a copy of the atom with index 'atom' - this will throw
     an invalid_arg exception if atom.resNum() is not the number of
     this residue
-    
+
     \throw SireError::invalid_arg
     \throw SireMol::missing_residue
 */
 Atom Residue::operator[](const AtomIndex &atom) const
 {
-    this->assertSameResidue(atom);
+    info().assertSameResidue(atom);
     return d->at( atom );
 }
 
-/** Return a copy of the CutGroup with ID == cgid - this CutGroup 
-    must contain atoms from this residue or an exception will be 
+/** Return a copy of the CutGroup with ID == cgid - this CutGroup
+    must contain atoms from this residue or an exception will be
     thrown
-    
+
     \throw SireMol::missing_cutgroup
 */
 CutGroup Residue::operator[](CutGroupID cgid) const
 {
-    this->assertSameResidue(cgid);
+    info().assertSameResidue(cgid);
     return d->at( cgid );
 }
 
@@ -177,7 +187,7 @@ CutGroup Residue::operator[](CutGroupID cgid) const
 ///// Interface with molecule ///////////////////////////
 
 /** Return a copy of the Molecule that contains this Residue */
-Molecule Residue::molecule()
+Molecule Residue::molecule() const
 {
     return Molecule(*this);
 }
@@ -208,7 +218,7 @@ Atom Residue::at(const QString &atomname) const
 /** Return a copy of the atom with index 'atom' - this will throw
     an invalid_arg exception if atom.resNum() is not the number of
     this residue
-    
+
     \throw SireError::invalid_arg
     \throw SireMol::missing_residue
 */
@@ -217,10 +227,10 @@ Atom Residue::at(const AtomIndex &atom) const
     return this->operator[](atom);
 }
 
-/** Return a copy of the CutGroup with ID == cgid - this CutGroup 
-    must contain atoms from this residue or an exception will be 
+/** Return a copy of the CutGroup with ID == cgid - this CutGroup
+    must contain atoms from this residue or an exception will be
     thrown
-    
+
     \throw SireMol::missing_cutgroup
 */
 CutGroup Residue::at(CutGroupID cgid) const
@@ -240,7 +250,7 @@ const ResidueInfo& Residue::info() const
     return d->info().at(rnum);
 }
 
-/** Return copies of the CutGroups that contain atoms that are 
+/** Return copies of the CutGroups that contain atoms that are
     in this residue */
 QHash<CutGroupID,CutGroup> Residue::cutGroups() const
 {
@@ -253,11 +263,11 @@ QHash<CutGroupID,CutGroup> Residue::cutGroups() const
 */
 CutGroup Residue::cutGroup(CutGroupID cgid) const
 {
-    this->assertSameResidue(cgid);
+    info().assertSameResidue(cgid);
     return d->cutGroup(cgid);
 }
 
-/** Return a copy of the CoordGroups containing the coordinates of 
+/** Return a copy of the CoordGroups containing the coordinates of
     CutGroups that contain atoms from this residue */
 QHash<CutGroupID,CoordGroup> Residue::coordGroups() const
 {
@@ -270,11 +280,11 @@ QHash<CutGroupID,CoordGroup> Residue::coordGroups() const
 */
 CoordGroup Residue::coordGroup(CutGroupID cgid) const
 {
-    this->assertSameResidue(cgid);
+    info().assertSameResidue(cgid);
     return d->coordGroup(cgid);
 }
 
-/** Return a copy of the atom at index 'i' 
+/** Return a copy of the atom at index 'i'
 
     \throw SireError::invalid_index
 */
@@ -283,7 +293,7 @@ Atom Residue::atom(AtomID i) const
     return this->operator[](i);
 }
 
-/** Return a copy of the atom with name 'atomname' 
+/** Return a copy of the atom with name 'atomname'
 
     \throw SireMol::missing_atom
 */
@@ -295,7 +305,7 @@ Atom Residue::atom(const QString &atomname) const
 /** Return a copy of the atom with index 'atom' - this will throw
     an invalid_arg exception if atom.resNum() is not the number of
     this residue
-    
+
     \throw SireError::invalid_arg
     \throw SireMol::missing_residue
 */
@@ -313,7 +323,7 @@ Vector Residue::coordinates(AtomID i) const
     return d->coordinates( ResNumAtomID(rnum,i) );
 }
 
-/** Return a copy of the coordinates of the atom with name 'atomname' 
+/** Return a copy of the coordinates of the atom with name 'atomname'
 
     \throw SireMol::missing_atom
 */
@@ -323,26 +333,26 @@ Vector Residue::coordinates(const QString &atomname) const
 }
 
 /** Return a copy of the coordinates of the atom with AtomIndex 'atom'.
-    - this will throw an invalid_arg exception if atom.resNum() is not 
+    - this will throw an invalid_arg exception if atom.resNum() is not
     the number of this residue
-    
+
     \throw SireError::invalid_arg
     \throw SireMol::missing_residue
 */
 Vector Residue::coordinates(const AtomIndex &atom) const
 {
-    this->assertSameResidue(atom.resNum());
+    info().assertSameResidue(atom);
     return d->coordinates(atom);
 }
 
-/** Return an array of all of the atoms in this residue, in the same 
+/** Return an array of all of the atoms in this residue, in the same
     order as they are in the residue */
 QVector<Atom> Residue::atoms() const
 {
     return d->atoms(rnum);
 }
 
-/** Return an array of the coordinates of the atoms in the 
+/** Return an array of the coordinates of the atoms in the
     residue in the same order as they are in this residue */
 QVector<Vector> Residue::coordinates() const
 {
@@ -354,14 +364,14 @@ QHash<T,Atom> getAtoms(const Residue &res, const QSet<T> &idxs)
 {
     QHash<T,Atom> atms;
     atms.reserve(idxs.count());
-    
+
     for (typename QSet<T>::const_iterator it = idxs.begin();
          it != idxs.end();
          ++it)
     {
         atms.insert( *it, res.atom(*it) );
     }
-    
+
     return atms;
 }
 
@@ -370,124 +380,709 @@ QHash<T,Vector> getCoords(const Residue &res, const QSet<T> &idxs)
 {
     QHash<T,Vector> coords;
     coords.reserve(idxs.count());
-    
+
     for (typename QSet<T>::const_iterator it = idxs.begin();
          it != idxs.end();
          ++it)
     {
         coords.insert( *it, res.coordinates(*it) );
     }
-    
+
     return coords;
 }
 
 /** Return copies of the atoms whose indicies are in 'atomids'
     in a hash indexed by AtomID
-    
+
     \throw SireError::invalid_index
 */
 QHash<AtomID,Atom> Residue::atoms(const QSet<AtomID> &atomids) const
 {
-    return getAtoms<AtomID>(atomids);
+    return getAtoms<AtomID>(*this, atomids);
 }
 
-/** Return copies of the coordinates of the atoms whose indicies are in 
-    'atomids', in a hash indexed by AtomID 
-    
+/** Return copies of the coordinates of the atoms whose indicies are in
+    'atomids', in a hash indexed by AtomID
+
     \throw SireError::invalid_index
 */
 QHash<AtomID,Vector> Residue::coordinates(const QSet<AtomID> &atomids) const
 {
-    return getCoords<AtomID>(atomids);
+    return getCoords<AtomID>(*this, atomids);
 }
 
-QHash<QString,Atom> Residue::atoms(const QSet<QString> &atomnames) const;
-QHash<QString,Vector> Residue::coordinates(const QSet<QString> &atomnames) const;
+/** Return copies of all of the atoms in the residue that have their name
+    in 'atomnames', in a hash indexed by atom name
 
-QHash<AtomIndex,Atom> Residue::atoms(const QSet<AtomIndex> &atms) const;
-QHash<AtomIndex,Vector> Residue::coordinates(const QSet<AtomIndex> &atms) const;
+    \throw SireMol::missing_atom
+*/
+QHash<QString,Atom> Residue::atoms(const QSet<QString> &atomnames) const
+{
+    return getAtoms<QString>(*this, atomnames);
+}
 
-QString Residue::name() const;
-QString Residue::resName() const;
+/** Return copies of the coordinates of the atoms whose names are in
+    'atomnames', in a hash indexed by atom name
 
-ResNum Residue::number() const;
-ResNum Residue::resNum() const;
+    \throw SireMol::missing_atom
+*/
+QHash<QString,Vector> Residue::coordinates(const QSet<QString> &atomnames) const
+{
+    return getCoords<QString>(*this, atomnames);
+}
 
-bool Residue::isEmpty() const;
+/** Return copies of the atoms that have an AtomIndex in 'atms' - each
+    of the AtomIndexes must refer to this residue or else an
+    invalid_arg exception will be thrown. This returns a hash indexed
+    by AtomIndex
 
-bool Residue::contains(CutGroupID cgid) const;
-bool Residue::contains(AtomID atomid) const;
-bool Residue::contains(const QString &atomname) const;
-bool Residue::contains(const AtomIndex &atom) const;
+    \throw SireError::invalid_arg
+    \throw SireMol::missing_atom
+*/
+QHash<AtomIndex,Atom> Residue::atoms(const QSet<AtomIndex> &atms) const
+{
+    return getAtoms<AtomIndex>(*this, atms);
+}
 
-bool Residue::contains(const Bond &bond) const;
+/** Return copies of the coordinates of atoms that have an AtomIndex in
+    'atms' - each of the AtomIndexes must refer to this residue or else
+    an invalid_arg exception will be thrown. This returns a hash indexed
+    by AtomIndex.
 
-int Residue::nAtoms() const;
-int Residue::nAtoms(CutGroupID cgid) const;
+    \throw SireError::invalid_arg
+    \throw SireMol::missing_atom
+*/
+QHash<AtomIndex,Vector> Residue::coordinates(const QSet<AtomIndex> &atms) const
+{
+    return getCoords<AtomIndex>(*this, atms);
+}
 
-int Residue::nCutGroups() const;
+/** Return the name of this residue */
+QString Residue::name() const
+{
+    return info().name();
+}
 
-int Residue::nBonds() const;
-int Residue::nIntraBonds() const;
-int Residue::nInterBonds() const;
+/** Return the name of this residue */
+QString Residue::resName() const
+{
+    return info().name();
+}
 
-QStringList Residue::atomNames() const;
+/** Return this residue's number */
+ResNum Residue::number() const
+{
+    return rnum;
+}
 
-QHash<ResNum,Residue> Residue::bondedResidues() const;
+/** Return this residue's number */
+ResNum Residue::resNum() const
+{
+    return rnum;
+}
 
-SireMaths::Line Residue::bond(const Bond &bnd) const;
-SireMaths::Triangle Residue::angle(const SireMol::Angle &ang) const;
-SireMaths::Torsion Residue::dihedral(const Dihedral &dih) const;
-SireMaths::Torsion Residue::improper(const Improper &improper) const;
+/** Return whether or not this residue is empty (has no atoms) */
+bool Residue::isEmpty() const
+{
+    return info().isEmpty();
+}
 
-double Residue::measure(const Bond &bnd) const;
-SireMaths::Angle Residue::measure(const SireMol::Angle &ang) const;
-SireMaths::Angle Residue::measure(const Dihedral &dih) const;
-SireMaths::Angle Residue::measure(const Improper &improper) const;
+/** Return whether or not this residue contains atoms that are in the
+    CutGroup with ID == 'cgid' */
+bool Residue::contains(CutGroupID cgid) const
+{
+    return info().contains(cgid);
+}
 
+/** Return whether or not this residue contains an atom with
+    index 'atomid' */
+bool Residue::contains(AtomID atomid) const
+{
+    return info().contains(atomid);
+}
+
+/** Return whether or not this residue contains an atom called
+    'atomname' */
+bool Residue::contains(const QString &atomname) const
+{
+    return info().contains(atomname);
+}
+
+/** Return whether or not this residue contains an atom with
+    AtomIndex 'atom' */
+bool Residue::contains(const AtomIndex &atom) const
+{
+    return atom.resNum() == rnum and this->contains(atom.name());
+}
+
+/** Return whether or not this residue contains the bond 'bond' */
+bool Residue::contains(const Bond &bond) const
+{
+    return connectivity().contains(bond);
+}
+
+/** Return the total number of atoms in this residue */
+int Residue::nAtoms() const
+{
+    return info().nAtoms();
+}
+
+/** Return the total number of atoms in the CutGroup with ID == cgid
+    that are also in this residue
+
+    \throw SireMol::missing_cutgroup
+*/
+int Residue::nAtoms(CutGroupID cgid) const
+{
+    return info().nAtoms(cgid);
+}
+
+/** Return the number of CutGroups that have atoms from this residue */
+int Residue::nCutGroups() const
+{
+    return info().nCutGroups();
+}
+
+/** Return the number of bonds that involve atoms from this residue */
+int Residue::nBonds() const
+{
+    return connectivity().nBonds();
+}
+
+/** Return the total number of intra-residue bonds in this residue */
+int Residue::nIntraBonds() const
+{
+    return connectivity().nIntraBonds();
+}
+
+/** Return the total number of inter-residue bonds that involve
+    atoms in this residue */
+int Residue::nInterBonds() const
+{
+    return connectivity().nInterBonds();
+}
+
+/** Return a list of the names of all atoms in this residue, in the
+    order of the atoms in this residue */
+QStringList Residue::atomNames() const
+{
+    return info().atomNames();
+}
+
+/** Return copies of the Residues bonded to this residue, in a hash
+    indexed by residue number */
+QHash<ResNum,Residue> Residue::bondedResidues() const
+{
+    //get the residue numbers of all residues bonded to this one
+    QSet<ResNum> resnums = connectivity().bondedResidues();
+
+    //return the residues associated with these numbers
+    return molecule().residues(resnums);
+}
+
+/** Return copies of the Residues that are bonded to the atom with
+    name 'atomname'
+
+    \throw SireMol::missing_atom
+*/
+QHash<ResNum,Residue> Residue::residuesBondedTo(const QString &atomname) const
+{
+    info().assertAtomExists(atomname);
+
+    //get the residue numbers of all residues bonded to this atom
+    QSet<ResNum> resnums = connectivity().residuesBondedTo(atomname);
+
+    //return the residues associated with these numbers
+    return molecule().residues(resnums);
+}
+
+/** Return copies of the Residues that are bonded to the atom with
+    AtomIndex 'atom' - this AtomIndex must have the same residue number
+    as this residue, else an invalid_arg exception will be thrown
+
+    \throw SireError::invalid_arg
+    \throw SireMol::missing_atom
+*/
+QHash<ResNum,Residue> Residue::residuesBondedTo(const AtomIndex &atom) const
+{
+    info().assertSameResidue(atom);
+
+    return residuesBondedTo(atom.name());
+}
+
+/** Return copies of the Residues that are bonded to the atom with
+    index 'atomid'
+
+    \throw SireError::invalid_index
+*/
+QHash<ResNum,Residue> Residue::residuesBondedTo(AtomID atomid) const
+{
+    return residuesBondedTo( info().atomName(atomid) );
+}
+
+/** Return the geometric line representing the bond 'bnd' - both atoms
+    in the bond must be in this residue.
+
+    \throw SireError::invalid_arg
+    \throw SireMol::missing_atom
+*/
+SireMaths::Line Residue::bond(const Bond &bnd) const
+{
+    return SireMaths::Line( this->coordinates(bnd.atom0()),
+                            this->coordinates(bnd.atom1()) );
+}
+
+/** Return the geometric triangle representing the angle 'ang' - all
+    atoms in the angle must be in this residue
+
+    \throw SireError::invalid_arg
+    \throw SireMol::missing_atom
+*/
+SireMaths::Triangle Residue::angle(const SireMol::Angle &ang) const
+{
+    return SireMaths::Triangle( this->coordinates(ang.atom0()),
+                                this->coordinates(ang.atom1()),
+                                this->coordinates(ang.atom2()) );
+}
+
+/** Return the geometric torsion representing the dihedral 'dih' - all
+    atoms in the dihedral must be in this residue
+
+    \throw SireError::invalid_arg
+    \throw SireMol::missing_atom
+*/
+SireMaths::Torsion Residue::dihedral(const Dihedral &dih) const
+{
+    return SireMaths::Torsion( this->coordinates(dih.atom0()),
+                               this->coordinates(dih.atom1()),
+                               this->coordinates(dih.atom2()),
+                               this->coordinates(dih.atom3()) );
+}
+
+/** Return the geometric torsion representing the improper angle 'imp' -
+    all atoms in the improper must be in this residue
+
+    \throw SireError::invalid_arg
+    \throw SireMol::missing_atom
+*/
+SireMaths::Torsion Residue::improper(const Improper &imp) const
+{
+    return SireMaths::Torsion( this->coordinates(imp.atom0()),
+                               this->coordinates(imp.atom1()),
+                               this->coordinates(imp.atom2()),
+                               this->coordinates(imp.atom3()) );
+}
+
+/** Return the length of the bond 'bnd' - both atoms in the bond must
+    be in this residue
+
+    \throw SireError::invalid_arg
+    \throw SireMol::missing_atom
+*/
+double Residue::measure(const Bond &bnd) const
+{
+    return this->bond(bnd).length();
+}
+
+/** Return the size of the angle 'ang' - all atoms in the angle must be
+    in this residue
+
+    \throw SireError::invalid_arg
+    \throw SireMol::missing_atom
+*/
+SireMaths::Angle Residue::measure(const SireMol::Angle &ang) const
+{
+    return this->angle(ang).angle();
+}
+
+/** Return the size of the dihedral 'dih' - all atoms in the dihedral
+    must be in this residue
+
+    \throw SireError::invalid_arg
+    \throw SireMol::missing_atom
+*/
+SireMaths::Angle Residue::measure(const Dihedral &dih) const
+{
+    return this->dihedral(dih).angle();
+}
+
+/** Return the size of the improper angle 'imp' - all atoms in the improper
+    must be in this residue
+
+    \throw SireError::invalid_arg
+    \throw SireMol::missing_atom
+*/
+SireMaths::Angle Residue::measure(const Improper &imp) const
+{
+    throw SireError::incomplete_code("Need to write this!", CODELOC);
+
+    return 0.0;
+}
+
+/** Return the relative weights of group0 and group1 using the weight function
+    'weightfunc' and listing atoms by their name
+
+    \throw SireMol::missing_atom
+*/
 double Residue::getWeight(const QStringList &group0, const QStringList &group1,
-                 const WeightFunction &weightfunc) const;
+                          const WeightFunction &weightfunc) const
+{
+    AtomIDGroup g0;
+    AtomIDGroup g1;
 
+    foreach (QString atom, group0)
+        g0.add( AtomIndex(atom,rnum) );
+
+    foreach (QString atom, group1)
+        g1.add( AtomIndex(atom,rnum) );
+
+    return d->getWeight(g0, g1, weightfunc);
+}
+
+/** Return the relative weights of group0 and group1 using the weight function
+    'weightfunc'. Each of the atoms in the two groups must have the same residue
+    number as this residue or an invalid_arg exception will be thrown.
+
+    \throw SireError::invalid_arg
+    \throw SireMol::missing_atom
+*/
 double Residue::getWeight(const QSet<AtomIndex> &group0, const QSet<AtomIndex> &group1,
-                 const WeightFunction &weightfunc) const;
+                          const WeightFunction &weightfunc) const
+{
+    AtomIDGroup g0;
+    AtomIDGroup g1;
+
+    foreach (AtomIndex atom, group0)
+    {
+        info().assertSameResidue(atom);
+        g0.add(atom);
+    }
+
+    foreach (AtomIndex atom, group1)
+    {
+        info().assertSameResidue(atom);
+        g1.add(atom);
+    }
+
+    return d->getWeight(g0, g1, weightfunc);
+}
+
 /////////////////////////////////////////////////////////
 
 
 //// Moving the residue /////////////////////////////////
-void Residue::translate(const Vector &delta);
-void Residue::translate(AtomID atomid, const Vector &delta);
-void Residue::translate(const QSet<AtomID> &atomids, const Vector &delta);
-void Residue::translate(const QString &atom, const Vector &delta);
-void Residue::translate(const QStringList &atoms, const Vector &delta);
-void Residue::translate(const AtomIndex &atom, const Vector &delta);
-void Residue::translate(const QSet<AtomIndex> &atoms, const Vector &delta);
 
-void Residue::rotate(const Quaternion &quat, const Vector &point);
-void Residue::rotate(AtomID atomid, const Quaternion &quat, const Vector &point);
-void Residue::rotate(const QSet<AtomID> &atomids, const Quaternion &quat, const Vector &point);
-void Residue::rotate(const QString &atom, const Quaternion &quat, const Vector &point);
-void Residue::rotate(const QStringList &atoms, const Quaternion &quat, const Vector &point);
-void Residue::rotate(const AtomIndex &atom, const Quaternion &quat, const Vector &point);
-void Residue::rotate(const QSet<AtomIndex> &atoms, const Quaternion &quat, const Vector &point);
+/** Translate the entire residue by 'delta' */
+void Residue::translate(const Vector &delta)
+{
+    d->translate(rnum, delta);
+}
 
-void Residue::rotate(const Matrix &rotmat, const Vector &point);
-void Residue::rotate(AtomID atomid, const Matrix &rotmat, const Vector &point);
-void Residue::rotate(const QSet<AtomID> &atomids, const Matrix &rotmat, const Vector &point);
-void Residue::rotate(const QString &atom, const Matrix &rotmat, const Vector &point);
-void Residue::rotate(const QStringList &atoms, const Matrix &rotmat, const Vector &point);
-void Residue::rotate(const AtomIndex &atom, const Matrix &rotmat, const Vector &point);
-void Residue::rotate(const QSet<AtomIndex> &atoms, const Matrix &rotmat, const Vector &point);
+/** Translate the atom at index 'atomid' by 'delta'
 
-void Residue::setCoordinates(const QVector<Vector> &newcoords) const;
+    \throw SireError::invalid_index
+*/
+void Residue::translate(AtomID atomid, const Vector &delta)
+{
+    d->translate(rnum, atomid, delta);
+}
 
-void Residue::setCoordinates(AtomID atomid, const Vector &newcoords) const;
-void Residue::setCoordinates(const QHash<AtomID,Vector> &newcoords) const;
+/** Translate the atoms with indicies in 'atomids' by 'delta'
 
-void Residue::setCoordinates(const QString &atomname, const Vector &newcoords) const;
-void Residue::setCoordinates(const QHash<QString,Vector> &newcoords) const;
+    \throw SireError::invalid_index
+*/
+void Residue::translate(const QSet<AtomID> &atomids, const Vector &delta)
+{
+    d->translate(rnum, atomids, delta);
+}
 
-void Residue::setCoordinates(const AtomIndex &atom, const Vector &newcoords) const;
-void Residue::setCoordinates(const QHash<AtomIndex,Vector> &newcoords) const;
+/** Translate the atom called 'atom' by 'delta'
+
+    \throw SireMol::missing_atom
+*/
+void Residue::translate(const QString &atom, const Vector &delta)
+{
+    d->translate(AtomIndex(atom,rnum), delta);
+}
+
+/** Translate the atoms whose names are in 'atoms' by 'delta'
+
+    \throw SireMol::missing_atom
+*/
+void Residue::translate(const QStringList &atoms, const Vector &delta)
+{
+    d->translate(rnum, atoms, delta);
+}
+
+/** Translate the atom 'atom' by delta - the residue number of 'atom'
+    must be the same as this residue or else an invalid_arg exception
+    will be thrown
+
+    \throw SireError::invalid_arg
+    \throw SireMol::missing_atom
+*/
+void Residue::translate(const AtomIndex &atom, const Vector &delta)
+{
+    info().assertSameResidue(atom);
+    d->translate(atom, delta);
+}
+
+/** Translate the atoms 'atoms' by 'delta' - the residue numbers of
+    each of the AtomIndex objects in 'atoms' must be the same as this
+    residue or else an invalid_arg exception will be thrown.
+
+    \throw SireError::invalid_arg
+    \throw SireMol::missing_atom
+*/
+void Residue::translate(const QSet<AtomIndex> &atoms, const Vector &delta)
+{
+    info().assertSameResidue(atoms);
+    d->translate(atoms, delta);
+}
+
+/** Rotate the whole residue using the quaternion 'quat' about the point
+    'point'
+*/
+void Residue::rotate(const Quaternion &quat, const Vector &point)
+{
+    d->rotate(rnum, quat, point);
+}
+
+/** Rotate the atom with index 'atomid' using the quaternion 'quat' about
+    the point 'point'
+
+    \throw SireError::invalid_index
+*/
+void Residue::rotate(AtomID atomid, const Quaternion &quat, const Vector &point)
+{
+    d->rotate(rnum, atomid, quat, point);
+}
+
+/** Rotate the atoms with indexes in 'atomids' using the quaternion 'quat'
+    about the point 'point'
+
+    \throw SireError::invalid_index
+*/
+void Residue::rotate(const QSet<AtomID> &atomids, const Quaternion &quat,
+                     const Vector &point)
+{
+    d->rotate(rnum, atomids, quat, point);
+}
+
+/** Rotate the atom called 'atomname' using the quaternion 'quat'
+    about the point 'point'
+
+    \throw SireMol::missing_atom
+*/
+void Residue::rotate(const QString &atomname, const Quaternion &quat,
+                     const Vector &point)
+{
+    d->rotate(AtomIndex(atomname,rnum), quat, point);
+}
+
+/** Rotate the atoms whose names are in 'atomnames' using the quaternion 'quat'
+    about the point 'point'
+
+    \throw SireMol::missing_atom
+*/
+void Residue::rotate(const QStringList &atomnames, const Quaternion &quat,
+                     const Vector &point)
+{
+    d->rotate(rnum, atomnames, quat, point);
+}
+
+/** Rotate the atom with AtomIndex 'atom' using the quaternion 'quat'
+    about the point 'point'. The residue number of the AtomIndex must
+    be the same as for this residue or else an invalid_arg exception
+    will be thrown.
+
+    \throw SireError::invalid_arg
+    \throw SireMol::missing_atom
+*/
+void Residue::rotate(const AtomIndex &atom, const Quaternion &quat,
+                     const Vector &point)
+{
+    info().assertSameResidue(atom);
+    d->rotate(atom, quat, point);
+}
+
+/** Rotate the atoms whose AtomIndex objects are in 'atoms', using
+    the quaternion 'quat' about the point 'point'. The residue number
+    of the AtomIndex objects must all be the same as the number of
+    this residue, or else an invalid_arg exception will be thrown.
+
+    \throw SireError::invalid_arg
+    \throw SireMol::missing_atom
+*/
+void Residue::rotate(const QSet<AtomIndex> &atoms, const Quaternion &quat,
+                     const Vector &point)
+{
+    info().assertSameResidue(atoms);
+    d->rotate(atoms, quat, point);
+}
+
+/** Rotate the whole residue using the matrix 'rotmat' about the point
+    'point'
+*/
+void Residue::rotate(const Matrix &rotmat, const Vector &point)
+{
+    d->rotate(rnum, rotmat, point);
+}
+
+/** Rotate the atom with index 'atomid' using the matrix 'rotmat' about
+    the point 'point'
+
+    \throw SireError::invalid_index
+*/
+void Residue::rotate(AtomID atomid, const Matrix &rotmat, const Vector &point)
+{
+    d->rotate(rnum, atomid, rotmat, point);
+}
+
+/** Rotate the atoms with indexes in 'atomids' using the matrix 'rotmat'
+    about the point 'point'
+
+    \throw SireError::invalid_index
+*/
+void Residue::rotate(const QSet<AtomID> &atomids, const Matrix &rotmat,
+                     const Vector &point)
+{
+    d->rotate(rnum, atomids, rotmat, point);
+}
+
+/** Rotate the atom called 'atomname' using the matrix 'rotmat'
+    about the point 'point'
+
+    \throw SireMol::missing_atom
+*/
+void Residue::rotate(const QString &atomname, const Matrix &rotmat,
+                     const Vector &point)
+{
+    d->rotate(AtomIndex(atomname,rnum), rotmat, point);
+}
+
+/** Rotate the atoms whose names are in 'atomnames' using the matrix 'rotmat'
+    about the point 'point'
+
+    \throw SireMol::missing_atom
+*/
+void Residue::rotate(const QStringList &atomnames, const Matrix &rotmat,
+                     const Vector &point)
+{
+    d->rotate(rnum, atomnames, rotmat, point);
+}
+
+/** Rotate the atom with AtomIndex 'atom' using the matrix 'rotmat'
+    about the point 'point'. The residue number of the AtomIndex must
+    be the same as for this residue or else an invalid_arg exception
+    will be thrown.
+
+    \throw SireError::invalid_arg
+    \throw SireMol::missing_atom
+*/
+void Residue::rotate(const AtomIndex &atom, const Matrix &rotmat,
+                     const Vector &point)
+{
+    info().assertSameResidue(atom);
+    d->rotate(atom, rotmat, point);
+}
+
+/** Rotate the atoms whose AtomIndex objects are in 'atoms', using
+    the matrix 'rotmat' about the point 'point'. The residue number
+    of the AtomIndex objects must all be the same as the number of
+    this residue, or else an invalid_arg exception will be thrown.
+
+    \throw SireError::invalid_arg
+    \throw SireMol::missing_atom
+*/
+void Residue::rotate(const QSet<AtomIndex> &atoms, const Matrix &rotmat,
+                     const Vector &point)
+{
+    info().assertSameResidue(atoms);
+    d->rotate(atoms, rotmat, point);
+}
+
+/** Set the coordinates of the residue to 'newcoords'. This must have
+    the same size as the number of atoms in this residue.
+
+    \throw SireError::incompatible_error
+*/
+void Residue::setCoordinates(const QVector<Vector> &newcoords)
+{
+    d->setCoordinates(rnum, newcoords);
+}
+
+/** Set the coordinates of the atom with index 'atomid' to 'newcoords'.
+
+    \throw SireError::invalid_index
+*/
+void Residue::setCoordinates(AtomID atomid, const Vector &newcoords)
+{
+   d->setCoordinates(rnum, atomid, newcoords);
+}
+
+/** Set the coordinates of the atoms with the specified indicies to the
+    supplied values.
+
+    \throw SireError::invalid_index
+*/
+void Residue::setCoordinates(const QHash<AtomID,Vector> &newcoords)
+{
+    d->setCoordinates(rnum, newcoords);
+}
+
+/** Set the coordinates of the atom with name 'atomname' to 'newcoords'
+
+    \throw SireMol::missing_atom
+*/
+void Residue::setCoordinates(const QString &atomname, const Vector &newcoords)
+{
+    d->setCoordinates( AtomIndex(atomname,rnum), newcoords );
+}
+
+/** Set the coordinates of the atoms whose names are supplied to the
+    corresponding coordinates.
+
+    \throw SireMol::missing_atom
+*/
+void Residue::setCoordinates(const QHash<QString,Vector> &newcoords)
+{
+    d->setCoordinates(rnum, newcoords);
+}
+
+/** Set the coordinates for the atom 'atom' to 'newcoords'. The residue
+    number of 'atom' must be the same as for this residue or else an
+    invalid_arg exception will be thrown.
+
+    \throw SireError::invalid_arg
+    \throw SireMol::missing_atom
+*/
+void Residue::setCoordinates(const AtomIndex &atom, const Vector &newcoords)
+{
+    info().assertSameResidue(atom);
+    d->setCoordinates(atom, newcoords);
+}
+
+/** Set the coordinates of the specified atoms to the supplied values.
+    The residue number for each of the AtomIndex objects must be equal
+    to that of this residue or else an invalid_arg exception will be
+    thrown.
+
+    \throw SireError::invalid_arg
+    \throw SireMol::missing_atom
+*/
+void Residue::setCoordinates(const QHash<AtomIndex,Vector> &newcoords)
+{
+    for (QHash<AtomIndex,Vector>::const_iterator it = newcoords.begin();
+         it != newcoords.end();
+         ++it)
+    {
+        info().assertSameResidue(it.key());
+    }
+
+    d->setCoordinates( newcoords );
+}
+
 /////////////////////////////////////////////////////////
 
 /////////////////////////////////////////////////////////
@@ -518,7 +1113,7 @@ void Residue::setCoordinates(const QHash<AtomIndex,Vector> &newcoords) const;
 
 */
 void Residue::change(const Bond &bnd, double delta,
-                     const WeightFunction &weightfunc, const AtomIndexSet &anchors)
+                     const WeightFunction &weightfunc, const QSet<AtomIndex> &anchors)
 {
     if (SireMaths::isZero(delta))
         return;
@@ -539,7 +1134,7 @@ void Residue::change(const Bond &bnd, double delta,
     \throw SireMol::missing_atom
     \throw SireMol::ring_error
 */
-void Residue::change(const Bond &bnd, double delta, const AtomIndexSet &anchors)
+void Residue::change(const Bond &bnd, double delta, const QSet<AtomIndex> &anchors)
 {
     change(bnd, delta, RelFromMass(), anchors);
 }
@@ -557,7 +1152,7 @@ void Residue::change(const Bond &bnd, double delta, const AtomIndexSet &anchors)
     \throw SireMol::ring_error
 */
 void Residue::change(const SireMol::Angle &ang, const SireMaths::Angle &delta,
-                     const WeightFunction &weightfunc, const AtomIndexSet &anchors)
+                     const WeightFunction &weightfunc, const QSet<AtomIndex> &anchors)
 {
     if (delta.isZero())
         return;
@@ -579,7 +1174,7 @@ void Residue::change(const SireMol::Angle &ang, const SireMaths::Angle &delta,
     \throw SireMol::ring_error
 */
 void Residue::change(const SireMol::Angle &ang, const SireMaths::Angle &delta,
-                     const AtomIndexSet &anchors)
+                     const QSet<AtomIndex> &anchors)
 {
     change(ang, delta, RelFromMass(), anchors);
 }
@@ -597,7 +1192,7 @@ void Residue::change(const SireMol::Angle &ang, const SireMaths::Angle &delta,
     \throw SireMol::ring_error
 */
 void Residue::change(const Dihedral &dih, const SireMaths::Angle &delta,
-                     const WeightFunction &weightfunc, const AtomIndexSet &anchors)
+                     const WeightFunction &weightfunc, const QSet<AtomIndex> &anchors)
 {
     if (delta.isZero())
         return;
@@ -618,7 +1213,7 @@ void Residue::change(const Dihedral &dih, const SireMaths::Angle &delta,
     \throw SireMol::ring_error
 */
 void Residue::change(const Dihedral &dih, const SireMaths::Angle &delta,
-                     const AtomIndexSet &anchors)
+                     const QSet<AtomIndex> &anchors)
 {
     change(dih, delta, RelFromMass(), anchors);
 }
@@ -631,7 +1226,7 @@ void Residue::change(const Dihedral &dih, const SireMaths::Angle &delta,
     \throw SireMol::ring_error
 */
 void Residue::change(const Bond &dih, const SireMaths::Angle &delta,
-                     const WeightFunction &weightfunc, const AtomIndexSet &anchors)
+                     const WeightFunction &weightfunc, const QSet<AtomIndex> &anchors)
 {
     if (delta.isZero())
         return;
@@ -651,7 +1246,7 @@ void Residue::change(const Bond &dih, const SireMaths::Angle &delta,
     \throw SireMol::missing_atom
     \throw SireMol::ring_error
 */
-void Residue::change(const Bond &bnd, const SireMaths::Angle &delta, const AtomIndexSet &anchors)
+void Residue::change(const Bond &bnd, const SireMaths::Angle &delta, const QSet<AtomIndex> &anchors)
 {
     change(bnd, delta, RelFromMass(), anchors);
 }
@@ -669,7 +1264,7 @@ void Residue::change(const Bond &bnd, const SireMaths::Angle &delta, const AtomI
     \throw SireMol::ring_error
 */
 void Residue::change(const Improper &improper, const SireMaths::Angle &delta,
-                     const WeightFunction &weightfunc, const AtomIndexSet &anchors)
+                     const WeightFunction &weightfunc, const QSet<AtomIndex> &anchors)
 {
     if (delta.isZero())
         return;
@@ -690,7 +1285,7 @@ void Residue::change(const Improper &improper, const SireMaths::Angle &delta,
     \throw SireMol::ring_error
 */
 void Residue::change(const Improper &improper, const SireMaths::Angle &delta,
-                     const AtomIndexSet &anchors)
+                     const QSet<AtomIndex> &anchors)
 {
     change(improper, delta, RelFromMass(), anchors);
 }
@@ -705,9 +1300,9 @@ void Residue::change(const Improper &improper, const SireMaths::Angle &delta,
     \throw SireMol::ring_error
 */
 void Residue::set(const Bond &bnd, double size,
-                  const WeightFunction &weightfunc, const AtomIndexSet &anchors)
+                  const WeightFunction &weightfunc, const QSet<AtomIndex> &anchors)
 {
-    change(bnd, size-moldata.measure(bnd), weightfunc, anchors);
+    change(bnd, size - this->measure(bnd), weightfunc, anchors);
 }
 
 /** Overloaded function used to use the default RelFromMass() weight function
@@ -716,7 +1311,7 @@ void Residue::set(const Bond &bnd, double size,
     \throw SireMol::missing_atom
     \throw SireMol::ring_error
 */
-void Residue::set(const Bond &bnd, double size, const AtomIndexSet &anchors)
+void Residue::set(const Bond &bnd, double size, const QSet<AtomIndex> &anchors)
 {
     set(bnd, size, RelFromMass(), anchors);
 }
@@ -731,9 +1326,9 @@ void Residue::set(const Bond &bnd, double size, const AtomIndexSet &anchors)
     \throw SireMol::ring_error
 */
 void Residue::set(const SireMol::Angle &ang, const SireMaths::Angle &size,
-                  const WeightFunction &weightfunc, const AtomIndexSet &anchors)
+                  const WeightFunction &weightfunc, const QSet<AtomIndex> &anchors)
 {
-    change(ang, size-moldata.measure(ang), weightfunc, anchors);
+    change(ang, size - this->measure(ang), weightfunc, anchors);
 }
 
 /** Overloaded function used to use the default RelFromMass() weight function
@@ -743,7 +1338,7 @@ void Residue::set(const SireMol::Angle &ang, const SireMaths::Angle &size,
     \throw SireMol::ring_error
 */
 void Residue::set(const SireMol::Angle &ang, const SireMaths::Angle &size,
-                  const AtomIndexSet &anchors)
+                  const QSet<AtomIndex> &anchors)
 {
     set(ang, size, RelFromMass(), anchors);
 }
@@ -758,9 +1353,9 @@ void Residue::set(const SireMol::Angle &ang, const SireMaths::Angle &size,
     \throw SireMol::ring_error
 */
 void Residue::set(const Dihedral &dih, const SireMaths::Angle &size,
-                  const WeightFunction &weightfunc, const AtomIndexSet &anchors)
+                  const WeightFunction &weightfunc, const QSet<AtomIndex> &anchors)
 {
-    change(dih, size-moldata.measure(dih), weightfunc, anchors);
+    change(dih, size - this->measure(dih), weightfunc, anchors);
 }
 
 /** Overloaded function used to use the default RelFromMass() weight function
@@ -769,9 +1364,9 @@ void Residue::set(const Dihedral &dih, const SireMaths::Angle &size,
     \throw SireMol::missing_atom
     \throw SireMol::ring_error
 */
-void Residue::set(const Dihedral &dih, const SireMaths::Angle &size, const AtomIndexSet &anchors)
+void Residue::set(const Dihedral &dih, const SireMaths::Angle &size, const QSet<AtomIndex> &anchors)
 {
-    change(dih, size-moldata.measure(dih), anchors);
+    change(dih, size - this->measure(dih), anchors);
 }
 
 /** This is a convienience function that allows you to directly set the size of
@@ -787,9 +1382,9 @@ void Residue::set(const Dihedral &dih, const SireMaths::Angle &size, const AtomI
     \throw SireMol::ring_error
 */
 void Residue::setAll(const Dihedral &dih, const SireMaths::Angle &size,
-                     const WeightFunction &weightfunc, const AtomIndexSet &anchors)
+                     const WeightFunction &weightfunc, const QSet<AtomIndex> &anchors)
 {
-    change(dih, size-moldata.measure(dih), weightfunc, anchors);
+    change(dih, size - this->measure(dih), weightfunc, anchors);
 }
 
 /** Overloaded function used to use the default RelFromMass() weight function
@@ -799,7 +1394,7 @@ void Residue::setAll(const Dihedral &dih, const SireMaths::Angle &size,
     \throw SireMol::ring_error
 */
 void Residue::setAll(const Dihedral &dih, const SireMaths::Angle &size,
-                     const AtomIndexSet &anchors)
+                     const QSet<AtomIndex> &anchors)
 {
     setAll(dih, size, RelFromMass(), anchors);
 }
@@ -815,9 +1410,9 @@ void Residue::setAll(const Dihedral &dih, const SireMaths::Angle &size,
     \throw SireMol::ring_error
 */
 void Residue::set(const Improper &improper, const SireMaths::Angle &size,
-                  const WeightFunction &weightfunc, const AtomIndexSet &anchors)
+                  const WeightFunction &weightfunc, const QSet<AtomIndex> &anchors)
 {
-    set(improper, size-moldata.measure(improper), weightfunc, anchors);
+    set(improper, size - this->measure(improper), weightfunc, anchors);
 }
 
 /** Overloaded function used to use the default RelFromMass() weight function
@@ -827,7 +1422,7 @@ void Residue::set(const Improper &improper, const SireMaths::Angle &size,
     \throw SireMol::ring_error
 */
 void Residue::set(const Improper &improper, const SireMaths::Angle &size,
-                  const AtomIndexSet &anchors)
+                  const QSet<AtomIndex> &anchors)
 {
     set(improper, size, RelFromMass(), anchors);
 }

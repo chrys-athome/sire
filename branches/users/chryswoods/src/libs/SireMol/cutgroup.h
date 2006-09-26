@@ -18,7 +18,7 @@
 
 #include "SireVol/coordgroup.h"
 
-#include "atom.h"
+#include "atominfogroup.h"
 
 SIRE_BEGIN_HEADER
 
@@ -115,15 +115,18 @@ public:
     const CoordGroup& coordGroup() const;
     void setCoordGroup(const CoordGroup &newcoords);
 
+    const AtomInfoGroup& atomGroup() const;
+
     void translate(const Vector &delta);
     void rotate(const Quaternion &quat, const Vector &point);
     void rotate(const Matrix &rotmat, const Vector &point);
 
 private:
-    /** Set of AtomInfo objects, one for each atom in this CutGroup.
-        These can be combined with coordinates of the inherited CoordGroup
-        to form complete atoms. */
-    QVector<AtomInfo> atominfos;
+    void assertCompatible() const;
+
+    /** The AtomInfoGroup that contains the metainfo for
+        all of the atoms */
+    AtomInfoGroup atominfos;
 
     /** The coordinates of the atoms */
     CoordGroup coords;
@@ -139,6 +142,13 @@ inline bool CutGroup::isNull() const
 inline const CoordGroup& CutGroup::coordGroup() const
 {
     return coords;
+}
+
+/** Return the AtomInfoGroup that contains the metainfo for all
+    of the atoms */
+inline const AtomInfoGroup& CutGroup::atomGroup() const
+{
+    return atominfos;
 }
 
 /** Return the number of atoms in the CutGroup */
