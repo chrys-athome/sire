@@ -275,7 +275,7 @@ QHash<ResNum,Residue> Molecule::residues() const
     return residus;
 }
 
-/** Return copies of the residues whose residues numbers are in 'resnums' 
+/** Return copies of the residues whose residues numbers are in 'resnums'
 
     \throw SireMol::missing_residue
 */
@@ -283,14 +283,14 @@ QHash<ResNum,Residue> Molecule::residues(const QSet<ResNum> &resnums) const
 {
     QHash<ResNum,Residue> residus;
     residus.reserve(resnums.count());
-    
+
     for (QSet<ResNum>::const_iterator it = resnums.begin();
          it != resnums.end();
          ++it)
     {
         residus.insert( *it, this->residue(*it) );
     }
-    
+
     return residus;
 }
 
@@ -568,6 +568,15 @@ CoordGroup Molecule::coordGroup(CutGroupID id) const
 /////////////////////////////////////////////////////////
 //@{
 
+/** Return a copy of the atom at index 'atomid'
+
+    \throw SireError::invalid_index
+*/
+Atom Molecule::atom(AtomID atomid) const
+{
+    return d->atom(atomid);
+}
+
 /** Return a copy of the atom at index 'atomid' in the CutGroup with
     ID == cgid
 
@@ -659,6 +668,15 @@ Atom Molecule::atom(ResNum resnum, const QString &atomname) const
 */
 /////////////////////////////////////////////////////////
 //@{
+
+/** Return a copy of the coordinates of the atom at index 'atomid'
+
+    \throw SireError::invalid_index
+*/
+Vector Molecule::coordinates(AtomID atomid) const
+{
+    return d->coordinates(atomid);
+}
 
 /** Return a copy of the coordinates of the atom at index 'atomid' in the CutGroup with
     ID == cgid
@@ -789,6 +807,13 @@ QHash<ResIDAtomID,Vector> Molecule::coordinates(
 QHash<AtomIndex,Vector> Molecule::coordinates(const QSet<AtomIndex> &atoms) const
 {
     return d->coordinates(atoms);
+}
+
+/** Return a copy of the coordinates of all of the atoms in this molecule, in
+    the order that the atoms appear in this molecule. */
+QVector<Vector> Molecule::coordinates() const
+{
+    return d->coordinates();
 }
 
 /** Return an array of all of the coordinates in the CutGroup with ID == cgid,
@@ -1153,7 +1178,7 @@ int Molecule::nBonds() const
     return connectivity().nBonds();
 }
 
-/** Return the total number of bonds in the residue with number 'resnum' 
+/** Return the total number of bonds in the residue with number 'resnum'
 
     \throw SireMol::missing_residue
 */
@@ -1162,7 +1187,7 @@ int Molecule::nBonds(ResNum resnum) const
     return connectivity(resnum).nBonds();
 }
 
-/** Return the total number of bonds in the residue with index 'resid' 
+/** Return the total number of bonds in the residue with index 'resid'
 
     \throw SireError::invalid_index
 */
@@ -1177,7 +1202,7 @@ int Molecule::nInterBonds() const
     return connectivity().nInterBonds();
 }
 
-/** Return the total number of inter-bonds in the residue with number 'resnum' 
+/** Return the total number of inter-bonds in the residue with number 'resnum'
 
     \throw SireMol::missing_residue
 */
@@ -1186,7 +1211,7 @@ int Molecule::nInterBonds(ResNum resnum) const
     return connectivity(resnum).nInterBonds();
 }
 
-/** Return the total number of inter-bonds in the residue with index 'resid' 
+/** Return the total number of inter-bonds in the residue with index 'resid'
 
     \throw SireError::invalid_index
 */
@@ -1201,7 +1226,7 @@ int Molecule::nIntraBonds() const
     return connectivity().nIntraBonds();
 }
 
-/** Return the total number of intra-bonds in the residue with number 'resnum' 
+/** Return the total number of intra-bonds in the residue with number 'resnum'
 
     \throw SireMol::missing_residue
 */
@@ -1210,7 +1235,7 @@ int Molecule::nIntraBonds(ResNum resnum) const
     return connectivity(resnum).nIntraBonds();
 }
 
-/** Return the total number of intra-bonds in the residue with index 'resid' 
+/** Return the total number of intra-bonds in the residue with index 'resid'
 
     \throw SireError::invalid_index
 */
@@ -1762,6 +1787,17 @@ void Molecule::setCoordinates(const QHash<CutGroupID,CoordGroup> &newcoords)
 {
     d->setCoordinates(newcoords);
 }
+
+/** Set the coordinates of all of the atoms in the whole molecule to the
+    the coordinates stored in the array 'newcoords'.
+
+    \warning The number of coordinates in 'newcoords' must be the same as
+             the number of atoms in the molecule or else an exception will
+             be thrown.
+
+    \throw SireError::incompatible_error
+*/
+void Molecule::setCoordinates(
 
 /** Set the coordinates of the CutGroup with ID == cgid to the coordinates
     stored in the array 'newcoords'.

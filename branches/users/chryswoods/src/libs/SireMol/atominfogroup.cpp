@@ -19,6 +19,7 @@
 
 #include "atominfogroup.h"
 #include "atomid.h"
+#include "atom.h"
 
 #include "SireError/errors.h"
 #include "SireStream/datastream.h"
@@ -104,6 +105,13 @@ AtomInfoGroup::~AtomInfoGroup()
 AtomInfoGroup& AtomInfoGroup::operator=(const AtomInfoGroup &other)
 {
     atms = other.atms;
+    return *this;
+}
+
+/** Assign from a vector of AtomInfo objects */
+AtomInfoGroup& AtomInfoGroup::operator=(const QVector<AtomInfo> &atominfos)
+{
+    atms = atominfos;
     return *this;
 }
 

@@ -158,10 +158,6 @@ public:
 
     const MoleculeInfo& info() const;
 
-    QVector<Atom> atoms() const;
-    QVector<Atom> atoms(ResNum resnum) const;
-    QVector<Atom> atoms(ResID resid) const;
-
     QVector<CutGroup> cutGroups() const;
     QHash<CutGroupID,CutGroup> cutGroups(ResNum resnum) const;
     QHash<CutGroupID,CutGroup> cutGroups(ResID resid) const;
@@ -184,6 +180,7 @@ public:
     Atom atom(const AtomIndex &atm) const;
     Atom atom(ResNum resnum, const QString &atomname) const;
 
+    Vector coordinates(AtomID atomid) const;
     Vector coordinates(CutGroupID cgid, AtomID atomid) const;
     Vector coordinates(const CGAtomID &cgatomid) const;
     Vector coordinates(ResNum resnum, AtomID atomid) const;
@@ -192,6 +189,23 @@ public:
     Vector coordinates(const ResIDAtomID &resatomid) const;
     Vector coordinates(const AtomIndex &atm) const;
     Vector coordinates(ResNum resnum, const QString &atomname) const;
+
+    QVector<Atom> atoms() const;
+    QVector<Vector> coordinates() const;
+
+    QHash<CGAtomID,Atom> atoms(const QSet<CGAtomID> &cgatomids) const;
+    QHash<ResNumAtomID,Atom> atoms(const QSet<ResNumAtomID> &resatomids) const;
+    QHash<ResIDAtomID,Atom> atoms(const QSet<ResIDAtomID> &resatomids) const;
+    QHash<AtomIndex,Atom> atoms(const QSet<AtomIndex> &atoms) const;
+
+    QVector<Atom> atoms(CutGroupID cgid) const;
+    QHash< CutGroupID,QVector<Atom> > atoms(const QSet<CutGroupID> &cgids) const;
+
+    QVector<Atom> atoms(ResNum resnum) const;
+    QHash< ResNum,QVector<Atom> > atoms(const QSet<ResNum> &resnums) const;
+
+    QVector<Atom> atoms(ResID resid) const;
+    QHash< ResID,QVector<Atom> > atoms(const QSet<ResID> &resids) const;
 
     QHash<CGAtomID,Vector> coordinates(const QSet<CGAtomID> &cgatomids) const;
     QHash<ResNumAtomID,Vector> coordinates(const QSet<ResNumAtomID> &resatomids) const;
@@ -338,6 +352,9 @@ private:
     void incrementMajorVersion();
     void incrementMinorVersion();
 
+    Atom _unsafe_atom(const CGAtomID &cgatomid) const;
+    Vector _unsafe_coordinates(const CGAtomID &cgatomid) const;
+
     void translate(const ResidueInfo &resinfo, const QStringList &atoms,
                    const Vector &delta);
     void translate(const ResidueInfo &resinfo, const Vector &delta);
@@ -368,6 +385,12 @@ private:
                 detail::MoveWorkspace &ws) const;
     void rotate(const ResidueInfo &resinfo, const Matrix &matrix,
                 const Vector &point, detail::MoveWorkspace &ws) const;
+    void rotate(const ResidueInfo &resinfo, AtomID atomid,
+                const Matrix &matrix, const Vector &point,
+                detail::MoveWorkspace &ws) const;
+    void rotate(const ResidueInfo &resinfo, const QSet<AtomID> &atomids,
+                const Matrix &matrix, const Vector &point,
+                detail::MoveWorkspace &ws) const;
 
     void translate(const Vector &delta, detail::MoveWorkspace &ws) const;
     void translate(const AtomIDGroup &group, const Vector &delta,
@@ -392,6 +415,10 @@ private:
                    detail::MoveWorkspace &ws) const;
     void translate(const QSet<CutGroupID> &cgids, const Vector &delta,
                    detail::MoveWorkspace &ws) const;
+    void translate(ResNum resnum, AtomID atomid, const Vector &delta,
+                   detail::MoveWorkspace &ws) const;
+    void translate(ResNum resnum, const QSet<AtomID> &atomids,
+                   const Vector &delta, detail::MoveWorkspace &ws) const;
 
     void rotate(const Quaternion &quat, const Vector &point,
                 detail::MoveWorkspace &ws) const;

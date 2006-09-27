@@ -215,16 +215,16 @@ public:
     Vector coordinates(const ResIDAtomID &resatomid) const;
     Vector coordinates(const AtomIndex &atm) const;
     Vector coordinates(ResNum resnum, const QString &atomname) const;
-    
+
     QVector<Atom> atoms() const;
     QVector<Vector> coordinates() const;
-    
+
     QHash<AtomID,Atom> atoms(const QSet<AtomID> &atomids) const;
     QHash<CGAtomID,Atom> atoms(const QSet<CGAtomID> &cgatomids) const;
     QHash<ResNumAtomID,Atom> atoms(const QSet<ResNumAtomID> &resatomids) const;
     QHash<ResIDAtomID,Atom> atoms(const QSet<ResIDAtomID> &resatomids) const;
     QHash<AtomIndex,Atom> atoms(const QSet<AtomIndex> &atoms) const;
-    
+
     QHash<AtomID,Vector> coordinates(const QSet<AtomID> &atomids) const;
     QHash<CGAtomID,Vector> coordinates(const QSet<CGAtomID> &cgatomids) const;
     QHash<ResNumAtomID,Vector> coordinates(const QSet<ResNumAtomID> &resatomids) const;
@@ -232,16 +232,13 @@ public:
     QHash<AtomIndex,Vector> coordinates(const QSet<AtomIndex> &atoms) const;
 
     QVector<Atom> atoms(CutGroupID cgid) const;
-    QHash< CutGroupID,QVector<Atom> >
-          atoms(const QSet<CutGroupID> &cgids) const;
-          
+    QHash< CutGroupID,QVector<Atom> > atoms(const QSet<CutGroupID> &cgids) const;
+
     QVector<Atom> atoms(ResNum resnum) const;
-    QHash< ResNum,QVector<Atom> >
-          atoms(const QSet<ResNum> &resnums) const;
-          
+    QHash< ResNum,QVector<Atom> > atoms(const QSet<ResNum> &resnums) const;
+
     QVector<Atom> atoms(ResID resid) const;
-    QHash< ResID,QVector<Atom> >
-          atoms(const QSet<ResID> &resids) const;
+    QHash< ResID,QVector<Atom> > atoms(const QSet<ResID> &resids) const;
 
     QVector<Vector> coordinates(CutGroupID cgid);
     QHash< CutGroupID,QVector<Vector> >
@@ -304,11 +301,11 @@ public:
     int nBonds() const;
     int nBonds(ResNum resnum) const;
     int nBonds(ResID resid) const;
-    
+
     int nInterBonds() const;
     int nInterBonds(ResNum resnum) const;
     int nInterBonds(ResID resid) const;
-    
+
     int nIntraBonds() const;
     int nIntraBonds(ResNum resnum) const;
     int nIntraBonds(ResID resid) const;
@@ -377,6 +374,8 @@ public:
 
     void setCoordinates(CutGroupID cgid, const CoordGroup &newcoords);
     void setCoordinates(const QHash<CutGroupID,CoordGroup> &newcoords);
+
+    void setCoordinates(const QVector<Vector> &newcoords) const;
 
     void setCoordinates(CutGroupID cgid, const QVector<Vector> &newcoords);
     void setCoordinates(const QHash< CutGroupID,QVector<Vector> > &newcoords);
