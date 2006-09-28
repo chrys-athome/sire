@@ -2,15 +2,8 @@
 #define SIREDB_ATOMTABLE_H
 
 #include "tablebase.h"
-#include "parameterstore.hpp"
-#include "atomtabledata.h"
 
-#include "SireMol/atomindex.h"
-#include "SireMol/atomindexset.h"
-#include "SireMol/cgatomid.h"
-#include "SireMol/resnumatomid.h"
-#include "SireMol/moleculecginfo.h"
-#include "SireMol/groupedvector.hpp"
+#include "SireMol/moleculeinfo.h"
 
 SIRE_BEGIN_HEADER
 
@@ -23,20 +16,25 @@ class QDataStream;
 QDataStream& operator<<(QDataStream&, const SireDB::AtomTable&);
 QDataStream& operator>>(QDataStream&, SireDB::AtomTable&);
 
+namespace SireMol
+{
+class AtomIndex;
+}
+
 namespace SireDB
 {
 
+using SireMol::MoleculeInfo;
+using SireMol::ResidueInfo;
 using SireMol::AtomIndex;
-using SireMol::AtomIndexSet;
-using SireMol::AtomID;
-using SireMol::ResNum;
+
 using SireMol::CutGroupID;
+using SireMol::ResNum;
+using SireMol::ResID;
+using SireMol::AtomID;
 using SireMol::CGAtomID;
 using SireMol::ResNumAtomID;
-using SireMol::MoleculeCGInfo;
-using SireMol::ResidueCGInfo;
-using SireMol::AtomIndexVector;
-using SireMol::GroupedVector;
+using SireMol::ResIDAtomID;
 
 /**
 This is the virtual base class of all tables that store atomic parameters (parameters that are assigned to individual atoms in the molecule). Classes derived from this include AtomTypeTable, ChargeTable and LJTable.
@@ -53,92 +51,100 @@ public:
     typedef CGAtomID index_type;
 
     AtomTable();
-    AtomTable(const Molecule &molecule);
+    AtomTable(const MoleculeInfo &molinfo);
 
     AtomTable(const AtomTable &other);
 
     ~AtomTable();
 
-    const MoleculeCGInfo& info() const;
+    const MoleculeInfo& info() const;
 
     bool isEmpty() const;
 
-    int size() const;
-    int count() const;
-    
-    int nAtoms() const;
-    int nAtoms(ResNum resnum) const;
-    int nAtoms(CutGroupID cgid) const;
-  
-    QHash<CutGroupID,uint> nAtomsPerCutGroup() const;
-  
-    int nAtoms(const QSet<ResNum> &resnums) const;
-    int nAtoms(const QSet<CutGroupID> &cgids) const;
+    virtual int nParameters() const;
+    int nParameters(ResNum resnum) const;
+    int nParameters(ResID resid) const;
+    int nParameters(CutGroupID cgid) const;
 
-    int nCutGroups() const;
-    int nResidues() const;
-    
-    bool isCompatibleWith(const Molecule &molecule) const;
-    
-    bool contains(const AtomIndex &atom) const;
-    bool contains(CutGroupID cgid) const;
-    bool contains(ResNum resnum) const;
-    bool contains(const CGAtomID &id) const;
-    bool contains(const ResNumAtomID &id) const;
+    virtual int nAssignedParameters() const;
+    int nAssignedParameters(ResNum resnum) const;
+    int nAssignedParameters(ResID resid) const;
+    int nAssignedParameters(CutGroupID cgid) const;
 
-    AtomIndex atom(const CGAtomID &id) const;
-    AtomIndex atom(const ResNumAtomID &rsid) const;
-    
-    QSet<AtomIndex> atoms(const QSet<CGAtomID> &cgids) const;
-    QSet<AtomIndex> atoms(const QSet<ResNumAtomID> &rsids) const;
-    
-    QVector<AtomIndex> atoms() const;
-    QVector<AtomIndex> atoms(ResNum resnum) const;
-    QVector<AtomIndex> atoms(CutGroupID cgid) const;
-    
-    GroupedVector<CGAtomID,AtomIndex> atomsByCutGroup() const;
-    GroupedVector<ResNumAtomID,AtomIndex> atomsByResidue() const;
-    GroupedVector<CGAtomID,AtomIndex> atomsByCutGroup(const QSet<CutGroupID> &cgids) const;
-    GroupedVector<ResNumAtomID,AtomIndex> atomsByResidue(const QSet<ResNum> &resnums) const;
+    virtual int nMissingParameters() const;
+    int nMissingParameters(ResNum resnum) const;
+    int nMissingParameters(ResID resid) const;
+    int nMissingParameters(CutGroupID cgid) const;
 
-    QSet<CutGroupID> cutGroupIDs() const;
-    QSet<ResNum> residueNumbers() const;
+    bool assignedParameter(const CGAtomID &cgatomid) const;
+    bool assignedParameter(const ResNumAtomID &resatomid) const;
+    bool assignedParameter(const ResIDAtomID &resatomid) const;
+    bool assignedParameter(const AtomIndex &atom) const;
+    bool assignedParameter(AtomID atomid) const;
 
-    QVector<CutGroupID> orderedCutGroupIDs() const;
+    virtual bool hasMissingParameters() const;
+    bool hasMissingParameters(ResNum resnum) const;
+    bool hasMissingParameters(ResID resid) const;
+    bool hasMissingParameters(CutGroupID cgid) const;
 
-    virtual int nParameters() const=0;
-    virtual int nParameters(ResNum resnum) const=0;
-    virtual int nParameters(CutGroupID cgid) const=0;
-    
-    virtual bool assignedParameter(const CGAtomID &cgid) const=0;
-    virtual bool assignedParameter(const ResNumAtomID &rsid) const=0;
-    virtual bool assignedParameter(const AtomIndex &atom) const=0;
-    
-    virtual bool hasMissingParameters() const=0;
-    virtual bool hasMissingParameters(ResNum resnum) const=0;
-    virtual bool hasMissingParameters(CutGroupID cgid) const=0;
-    
-    virtual void clear()=0;
-    virtual void clear(const CGAtomID &cgid)=0;
-    virtual void clear(const ResNumAtomID &rsid)=0;
-    virtual void clear(const AtomIndex &atom)=0;
-    virtual void clear(ResNum resnum)=0;
-    virtual void clear(CutGroupID cgid)=0;
-    
+    virtual QSet<AtomIndex> missingParameters() const;
+    QSet<AtomIndex> missingParameters(ResNum resnum) const;
+    QSet<AtomIndex> missingParameters(ResID resid) const;
+    QSet<AtomIndex> missingParameters(CutGroupID cgid) const;
+
+    template<class C>
+    QSet<AtomIndex> missingParameters(const C &lots) const;
+
+    virtual void clear();
+
+    void clear(const CGAtomID &cgatomid);
+    void clear(const ResNumAtomID &resatomid);
+    void clear(const ResIDAtomID &resatomid);
+    void clear(const AtomIndex &atom);
+    void clear(AtomID atomid);
+
+    void clear(ResNum resnum);
+    void clear(ResID resid);
+
+    void clear(CutGroupID cgid);
+
     template<class C>
     void clear(const C &lots);
 
-protected:
-    void setMolecule(const Molecule &molecule);
-    
 private:
+    virtual int _unsafe_nAssignedParameters(const ResidueInfo &resinfo) const=0;
+    virtual int _unsafe_nAssignedParameters(CutGroupID cgid) const=0;
 
-    /** The metadata needed by the atom tables */
-    AtomTableData metadata;
+    virtual int _unsafe_nMissingParameters(const ResidueInfo &resinfo) const=0;
+    virtual int _unsafe_nMissingParameters(CutGroupID cgid) const=0;
+
+    virtual bool _unsafe_assignedParameter(const CGAtomID &cgatomid) const=0;
+
+    virtual bool _unsafe_hasMissingParameters(const ResidueInfo &resinfo) const=0;
+    virtual bool _unsafe_hasMissingParameters(CutGroupID cgid) const=0;
+
+    virtual QSet<AtomIndex> _unsafe_missingParameters(
+                                            const ResidueInfo &resinfo) const=0;
+    virtual QSet<AtomIndex> _unsafe_missingParameters(CutGroupID cgid) const=0;
+
+    virtual void _unsafe_clear(const ResidueInfo &resinfo)=0;
+    virtual void _unsafe_clear(CutGroupID cgid)=0;
+    virtual void _unsafe_clear(const CGAtomID &cgatomid)=0;
+
+    /** The metadata for the molecule whose parameters
+        are in this table */
+    MoleculeInfo molinfo;
 };
 
-/** Clear all of the parameters for the objects in 'lots'. Note that 
-    all of the object must be in the molecule or else an exception 
+/** Return the metadata for the molecule whose parameters are in this
+    table */
+inline const MoleculeInfo& AtomTable::info() const
+{
+    return molinfo;
+}
+
+/** Clear all of the parameters for the objects in 'lots'. Note that
+    all of the object must be in the molecule or else an exception
     will be thrown. */
 template<class C>
 SIRE_OUTOFLINE_TEMPLATE
@@ -150,6 +156,23 @@ void AtomTable::clear(const C &lots)
     {
         this->clear( *it );
     }
+}
+
+/** Return the AtomIndexes of atoms that are missing parameters. */
+template<class C>
+SIRE_OUTOFLINE_TEMPLATE
+QSet<AtomIndex> AtomTable::missingParameters(const C &lots) const
+{
+    QSet<AtomIndex> missing_atoms;
+
+    for (typename C::const_iterator it = lots.begin();
+         it != lots.end();
+         ++it)
+    {
+        missing_atoms += this->missingParameters(*it);
+    }
+
+    return missing_atoms;
 }
 
 }

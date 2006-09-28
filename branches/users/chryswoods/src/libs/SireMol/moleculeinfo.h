@@ -19,6 +19,7 @@
 #include <QHash>
 #include <QSet>
 
+#include "idtypes.h"
 #include "residuecutting.h"
 
 SIRE_BEGIN_HEADER
@@ -33,14 +34,6 @@ QDataStream& operator>>(QDataStream&, SireMol::MoleculeInfo&);
 
 namespace SireMol
 {
-
-class AtomID;
-class CutGroupID;
-class ResID;
-class ResNum;
-class CGAtomID;
-class ResNumAtomID;
-class ResIDAtomID;
 
 class AtomInfo;
 class AtomIndex;
@@ -157,6 +150,8 @@ public:
     int nAtoms(ResNum resnm) const;
     int nAtoms(ResID resid) const;
     int nAtoms(CutGroupID cgid) const;
+
+    QVector<CutGroupID> cutGroupIDs() const;
 
     QVector<ResNum> residueNumbers() const;
     QVector<ResNum> residueNumbers(const QString &resname) const;

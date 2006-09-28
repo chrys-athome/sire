@@ -4,15 +4,20 @@
 #include <QDebug>
 
 #include "atomtable.h"
-#include "atomtabledata.h"
 
-#include "SireMol/molecule.h"
+#include "SireMol/moleculeinfo.h"
 
-#include <boost/assert.hpp>
+#include "SireMol/atom.h"
+#include "SireMol/cutgroup.h"
+
+#include "SireMol/cgatomid.h"
+#include "SireMol/resnumatomid.h"
+#include "SireMol/residatomid.h"
 
 #include "SireStream/datastream.h"
 
 using namespace SireStream;
+using namespace SireMol;
 using namespace SireDB;
 
 static const RegisterMetaType<AtomTable> r_atomtable("SireDB::AtomTable", MAGIC_ONLY);
@@ -20,9 +25,9 @@ static const RegisterMetaType<AtomTable> r_atomtable("SireDB::AtomTable", MAGIC_
 /** Serialise an AtomTable to a binary data stream */
 QDataStream SIREDB_EXPORT &operator<<(QDataStream &ds, const AtomTable &table)
 {
-    writeHeader(ds, r_atomtable, 1) 
-            << table.metadata << static_cast<const TableBase&>(table);
-    
+    writeHeader(ds, r_atomtable, 1)
+            << table.molinfo << static_cast<const TableBase&>(table);
+
     return ds;
 }
 
@@ -30,383 +35,427 @@ QDataStream SIREDB_EXPORT &operator<<(QDataStream &ds, const AtomTable &table)
 QDataStream SIREDB_EXPORT &operator>>(QDataStream &ds, AtomTable &table)
 {
     VersionID v = readHeader(ds, r_atomtable);
-    
+
     if (v == 1)
     {
-        ds >> table.metadata >> static_cast<TableBase&>(table);
+        ds >> table.molinfo >> static_cast<TableBase&>(table);
     }
     else
         throw version_error( v, "1", r_atomtable, CODELOC );
-    
+
     return ds;
 }
 
 /** Constructor */
 AtomTable::AtomTable() : TableBase()
 {}
-    
+
 /** Construct an AtomTable to hold the parameters for the passed molecule */
-AtomTable::AtomTable(const Molecule &molecule) : TableBase()
-{
-    this->setMolecule(molecule);
-}
-    
-/** Copy constructor - this is fast as the data of this class is 
+AtomTable::AtomTable(const MoleculeInfo &moleculeinfo)
+          : TableBase(), molinfo(moleculeinfo)
+{}
+
+/** Copy constructor - this is fast as the data of this class is
     implicitly shared */
-AtomTable::AtomTable(const AtomTable &other) 
-          : TableBase(other), metadata(other.metadata)
+AtomTable::AtomTable(const AtomTable &other)
+          : TableBase(other), molinfo(other.molinfo)
 {}
 
 /** Destructor */
 AtomTable::~AtomTable()
 {}
 
-/** Return the metainfo object that contains the metadata for 
-    the molecule whose atom-parameters are contained in this table */
-const MoleculeCGInfo& AtomTable::info() const
-{
-    return metadata.info();
-}
-
-/** Set the molecule for whom this table stores the parameter data */
-void AtomTable::setMolecule(const Molecule &molecule)
-{
-    if ( not metadata.isEmpty() )
-        throw SireError::program_bug(QObject::tr(
-                "Cannot change the molecule for an already-active AtomTable!"), CODELOC );
-                
-    metadata = AtomTableData(molecule);
-}
-
 /** Return whether or not this is an empty table (contains no atoms) */
 bool AtomTable::isEmpty() const
 {
-    return metadata.isEmpty();
+    return molinfo.isEmpty();
 }
-    
-/** Return the number of atoms in the table */
-int AtomTable::nAtoms() const
+
+/** Return the total number of parameters in this table
+    (this includes missing parameters, thus
+    nParameters() = nAssignedParameters() + nMissingParameters()
+*/
+int AtomTable::nParameters() const
 {
+    //the number of parameters must be the same as the number
+    //of atoms
     return info().nAtoms();
 }
 
-/** Return the number of atoms in each CutGroup */
-QHash<CutGroupID,uint> AtomTable::nAtomsPerCutGroup() const
-{
-    QSet<CutGroupID> cgroupids = metadata.cutGroupIDs();
-    
-    if (not cgroupids.isEmpty())
-    {
-        QHash<CutGroupID,uint> natoms;
-        natoms.reserve(cgroupids.count());
-        
-        for (QSet<CutGroupID>::const_iterator it = cgroupids.constBegin();
-             it != cgroupids.constEnd();
-             ++it)
-        {
-            natoms.insert( *it, metadata.nAtoms(*it) );
-        }
-        
-        return natoms;
-    }
-    else
-        return QHash<CutGroupID,uint>();
-}
+/** Return the total number of parameters in this table
+    that are in the residue with number 'resnum'.
 
-/** Return the number of atoms in the table */
-int AtomTable::size() const
+    (this includes missing parameters, thus
+    nParameters(resnum) = nAssignedParameters(resnum) + nMissingParameters(resnum)
+*/
+int AtomTable::nParameters(ResNum resnum) const
 {
-    return nAtoms();
-}
-
-/** Return the number of atoms in the table */
-int AtomTable::count() const
-{
-    return nAtoms();
-}
-
-/** Return the number of atoms in the residue with number 'resnum' */
-int AtomTable::nAtoms(ResNum resnum) const
-{
+    //the number of parameters must be the same as the number
+    //of atoms
     return info().nAtoms(resnum);
 }
 
-/** Return the number of atoms in the CutGroup with number 'cgid' */
-int AtomTable::nAtoms(CutGroupID cgid) const
-{
-    return metadata.nAtoms(cgid);
-}
+/** Return the total number of parameters in this table
+    that are in the residue with index 'resid'.
 
-/** Return the number of atoms in this table in the residues with 
-    residue numbers in 'resnums' */
-int AtomTable::nAtoms(const QSet<ResNum> &resnums) const
-{
-    int nats = 0;
-    for (QSet<ResNum>::const_iterator it = resnums.begin();
-         it != resnums.end();
-         ++it)
-    {
-        nats += nAtoms(*it);
-    }
-    
-    return nats;
-}
-
-/** Return the number of atoms in this table in the CutGroups 
-    with CutGroupIDs in 'cgids' */
-int AtomTable::nAtoms(const QSet<CutGroupID> &cgids) const
-{
-    int nats = 0;
-    
-    for (QSet<CutGroupID>::const_iterator it = cgids.begin();
-         it != cgids.end();
-         ++it)
-    {
-        nats += nAtoms(*it);
-    }
-    
-    return nats;
-}
-
-/** Return the number of CutGroups in the molecule */
-int AtomTable::nCutGroups() const
-{
-    return metadata.nCutGroups();
-}
-
-/** Return the number of residues in the molecule */
-int AtomTable::nResidues() const
-{
-    return info().nResidues();
-}
-    
-/** Return whether or not this table is compatible with the molecule 
-    'molecule'. This returns true if molecule.info() == this->info(),
-    else it returns false.
+    (this includes missing parameters, thus
+    nParameters(resid) = nAssignedParameters(resid) + nMissingParameters(resid)
 */
-bool AtomTable::isCompatibleWith(const Molecule &molecule) const
+int AtomTable::nParameters(ResID resid) const
 {
-    return info() == molecule.info();
-}
-    
-/** Return a vector of all of the IDs of the CutGroups, in the order of 
-    the CutGroups in the molecule. */
-QVector<CutGroupID> AtomTable::orderedCutGroupIDs() const
-{
-    return metadata.orderedCutGroupIDs();
+    //the number of parameters must be the same as the number
+    //of atoms
+    return info().nAtoms(resid);
 }
 
-/** Return whether or not this table contains the atom 'atom' */
-bool AtomTable::contains(const AtomIndex &atom) const
-{
-    return info().contains(atom);
-}
+/** Return the total number of parameters in this table
+    that are in the CutGroup with ID == cgid.
 
-/** Return whether or not this table contains the CutGroup cgid */
-bool AtomTable::contains(CutGroupID cgid) const
-{
-    return metadata.contains(cgid);
-}
-
-/** Return whether or not this table contains the residue 'resnum' */
-bool AtomTable::contains(ResNum resnum) const
-{
-    return info().contains(resnum);
-}
-
-/** Return whether or not this table contains the atom with index 'idx' */
-bool AtomTable::contains(const CGAtomID &idx) const
-{
-    return metadata.contains(idx);
-}
-
-/** Return whether or not this table contains the atom with index 'idx' */
-bool AtomTable::contains(const ResNumAtomID &idx) const
-{
-    return info().contains(idx);
-}
-
-/** Return the Atom at index 'cgid'. Throws an exception 
-    if there is no such atom.
-    
-    \throw SireMol::missing_cutgroup
-    \throw SireError::invalid_index
+    (this includes missing parameters, thus
+    nParameters(cgid) = nAssignedParameters(cgid) + nMissingParameters(cgid)
 */
-AtomIndex AtomTable::atom(const CGAtomID &cgid) const
+int AtomTable::nParameters(CutGroupID cgid) const
 {
-    return metadata.atom(cgid);
+    //the number of parameters must be the same as the number
+    //of atoms
+    return info().nAtoms(cgid);
 }
 
-/** Return the Atom at index 'rsid'. Throws an exception
-    if there is no such atom. 
-    
+/** Return the total number of assigned parameters in this table */
+int AtomTable::nAssignedParameters() const
+{
+    QVector<CutGroupID> cgids = info().cutGroupIDs();
+
+    int ncg = cgids.count();
+    const CutGroupID *cgarray = cgids.constData();
+
+    int nparams = 0;
+    for (int i=0; i<ncg; ++i)
+        nparams += this->_unsafe_nAssignedParameters( cgarray[i] );
+
+    return nparams;
+}
+
+/** Return the total number of assigned parameters in the
+    residue with number 'resnum'
+
     \throw SireMol::missing_residue
-    \throw SireError::invalid_index
 */
-AtomIndex AtomTable::atom(const ResNumAtomID &rsid) const
+int AtomTable::nAssignedParameters(ResNum resnum) const
 {
-    return info().atom(rsid.resNum(),rsid.atomID());
+    return this->_unsafe_nAssignedParameters( info().at(resnum) );
 }
 
-/** Return the set of all atoms for the set of indexes in 'cgids'
+/** Return the total number of assigned parameters in the
+    residue at index 'resid'
+
+    \throw SireError::invalid_index
+*/
+int AtomTable::nAssignedParameters(ResID resid) const
+{
+    return this->_unsafe_nAssignedParameters( info().at(resid) );
+}
+
+/** Return the total number of assigned parameters in the
+    CutGroup with ID == cgid
+
+    \throw SireMol::missing_cutgroup
+*/
+int AtomTable::nAssignedParameters(CutGroupID cgid) const
+{
+    info().assertCutGroupExists(cgid);
+    return this->_unsafe_nAssignedParameters(cgid);
+}
+
+/** Return the total number of missing parameters */
+int AtomTable::nMissingParameters() const
+{
+    QVector<CutGroupID> cgids = info().cutGroupIDs();
+
+    int ncg = cgids.count();
+    const CutGroupID *cgarray = cgids.constData();
+
+    int nparams = 0;
+    for (int i=0; i<ncg; ++i)
+        nparams += this->_unsafe_nMissingParameters(cgarray[i]);
+
+    return nparams;
+}
+
+/** Return the total number of missing parameters in the residue
+    with number 'resnum'
+
+    \throw SireMol::missing_residue
+*/
+int AtomTable::nMissingParameters(ResNum resnum) const
+{
+    return this->_unsafe_nMissingParameters( info().at(resnum) );
+}
+
+/** Return the total number of missing parameters in the residue
+    with index 'resid'
+
+    \throw SireError::invalid_index
+*/
+int AtomTable::nMissingParameters(ResID resid) const
+{
+    return this->_unsafe_nMissingParameters( info().at(resid) );
+}
+
+/** Return the total number of missing parameters in the CutGroup
+    with ID == cgid
+
+    \throw SireMol::missing_cutgroup
+*/
+int AtomTable::nMissingParameters(CutGroupID cgid) const
+{
+    info().assertCutGroupExists(cgid);
+    return this->_unsafe_nMissingParameters( cgid );
+}
+
+/** Return whether or not the parameter for the atom with
+    index 'cgatomid' has been assigned.
 
     \throw SireMol::missing_cutgroup
     \throw SireError::invalid_index
 */
-QSet<AtomIndex> AtomTable::atoms(const QSet<CGAtomID> &cgids) const
+bool AtomTable::assignedParameter(const CGAtomID &cgatomid) const
 {
-    if ( not cgids.isEmpty() )
-    {
-        QSet<AtomIndex> atms;
-        atms.reserve( cgids.count() );
-        
-        for (QSet<CGAtomID>::const_iterator it = cgids.begin();
-             it != cgids.end();
-             ++it)
-        {
-            atms.insert( metadata.atom(*it) );
-        }
-        
-        return atms;
-    }
-    else
-        return QSet<AtomIndex>();
-    
+    info().assertAtomExists(cgatomid);
+    return this->_unsafe_assignedParameter(cgatomid);
 }
 
-/** Return the set of all atoms for the set of indexes in 'rsids'
+/** Return whether or not the parameter for the atom with
+    index 'resatomid' has been assigned.
 
     \throw SireMol::missing_residue
     \throw SireError::invalid_index
 */
-QSet<AtomIndex> AtomTable::atoms(const QSet<ResNumAtomID> &rsids) const
+bool AtomTable::assignedParameter(const ResNumAtomID &resatomid) const
 {
-    if ( not rsids.isEmpty() )
-    {
-        QSet<AtomIndex> atms;
-        atms.reserve( rsids.count() );
-        
-        for (QSet<ResNumAtomID>::const_iterator it = rsids.begin();
-             it != rsids.end();
-             ++it)
-        {
-            atms.insert( info().atom(*it) );
-        }
-        
-        return atms;
-    }
-    else
-        return QSet<AtomIndex>();
-    
+    return this->_unsafe_assignedParameter( info().at(resatomid) );
 }
 
-/** Return a vector of the AtomIndex objects of all of the atoms 
-    in the table. This returns the atom indexes in the same order
-    as any parameters would be returned. */
-QVector<AtomIndex> AtomTable::atoms() const
+/** Return whether or not the parameter for the atom with
+    index 'resatomid' has been assigned.
+
+    \throw SireError::invalid_index
+*/
+bool AtomTable::assignedParameter(const ResIDAtomID &resatomid) const
 {
-    return metadata.atoms();
+    return this->_unsafe_assignedParameter( info().at(resatomid) );
 }
 
-/** Return a vector of the AtomIndex objects of all of the atoms
-    in the table in residue 'resnum'. This returns the atom indexes
-    in the same order as any parameters for this residue would be
-    returned. */ 
-QVector<AtomIndex> AtomTable::atoms(ResNum resnum) const
+/** Return whether or not the parameter for the atom with
+    AtomIndex 'atom' has been assigned.
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+bool AtomTable::assignedParameter(const AtomIndex &atom) const
 {
-    return metadata.atoms(resnum);
+    return this->_unsafe_assignedParameter( info().at(atom) );
 }
 
-/** Return a vector of the AtomIndex objects of all of the atoms
-    in the table in CutGroup 'cgid'. This returns teh atom indexes
-    in the same order as any parameters for this CutGroup would be
-    returned. */
-QVector<AtomIndex> AtomTable::atoms(CutGroupID cgid) const
+/** Return whether or not the parameter for the atom with
+    index 'atomid' has been assigned.
+
+    \throw SireError::invalid_index
+*/
+bool AtomTable::assignedParameter(AtomID atomid) const
 {
-    return metadata.atoms(cgid);
+    return this->_unsafe_assignedParameter( info().at(atomid) );
 }
 
-/** Return the set of all CutGroupID numbers of all of the CutGroups
+/** Return whether or not there are any missing parameters
     in this table */
-QSet<CutGroupID> AtomTable::cutGroupIDs() const
+bool AtomTable::hasMissingParameters() const
 {
-    return metadata.cutGroupIDs();
+    QVector<CutGroupID> cgids = info().cutGroupIDs();
+
+    int ncg = cgids.count();
+    const CutGroupID *cgarray = cgids.constData();
+
+    for (int i=0; i<ncg; ++i)
+        if (this->_unsafe_hasMissingParameters(cgarray[i]))
+            return true;
+
+    return false;
 }
 
-/** Return the set of all residue numbers of all of the residues
-    in this table */
-QSet<ResNum> AtomTable::residueNumbers() const
+/** Return whether or not the residue with number 'resnum' has
+    any missing parameters in this table
+
+    \throw SireMol::missing_residue
+*/
+bool AtomTable::hasMissingParameters(ResNum resnum) const
 {
-    return info().residueNumbers().toSet();
+    return this->_unsafe_hasMissingParameters( info().at(resnum) );
 }
 
-/** Return a GroupedVector of all of the AtomIndex objects of 
-    the atoms in this table indexed by CGAtomID of the atoms
-    in CutGroups with IDs in 'cgids' */
-GroupedVector<CGAtomID,AtomIndex> 
-AtomTable::atomsByCutGroup(const QSet<CutGroupID> &cgids) const
+/** Return whether or not the residue with index 'resid' has
+    any missing parameters in this table
+
+    \throw SireError::invalid_index
+*/
+bool AtomTable::hasMissingParameters(ResID resid) const
 {
-    if (not cgids.isEmpty())
-    {
-        GroupedVector<CGAtomID,AtomIndex> allatoms;
-        allatoms.reserve( cgids.count() );
-        
-        for (QSet<CutGroupID>::const_iterator it = cgids.begin();
-             it != cgids.end();
-             ++it)
-        {
-            CutGroupID cgid = *it;
-            
-            if (metadata.contains(cgid))
-                allatoms.insert( cgid, atoms(cgid) );
-        }
-        
-        if (not allatoms.isEmpty())
-            return allatoms;
-    }
-        
-    return GroupedVector<CGAtomID,AtomIndex>();
+    return this->_unsafe_hasMissingParameters( info().at(resid) );
 }
 
-/** Return a GroupedVector of all of the AtomIndex objects of
-    the atoms in this table indexed by ResNumAtomID of the atoms
-    in the residues with residue numbers in 'resnums' */
-GroupedVector<ResNumAtomID,AtomIndex> 
-AtomTable::atomsByResidue(const QSet<ResNum> &resnums) const
+/** Return whether the CutGroup with ID == cgid has any
+    missing parameters in this table
+
+    \throw SireMol::missing_cutgroup
+*/
+bool AtomTable::hasMissingParameters(CutGroupID cgid) const
 {
-    if (not resnums.isEmpty())
-    {
-        GroupedVector<ResNumAtomID,AtomIndex> allatoms;
-        allatoms.reserve( resnums.count() );
-        
-        for (QSet<ResNum>::const_iterator it = resnums.begin();
-             it != resnums.end();
-             ++it)
-        {
-            ResNum resnum = *it;
-            
-            if (info().contains(resnum))
-                allatoms.insert( resnum, atoms(resnum) );
-        }
-        
-        if (not allatoms.isEmpty())
-            return allatoms;
-    }
-    
-    return GroupedVector<ResNumAtomID,AtomIndex>();
-    
-}
-    
-/** Return a GroupedVector of all of the AtomIndex objects of the 
-    atoms in this table indexed by CGAtomID */
-GroupedVector<CGAtomID,AtomIndex> AtomTable::atomsByCutGroup() const
-{
-    return atomsByCutGroup( cutGroupIDs() );
+    info().assertCutGroupExists(cgid);
+    return this->_unsafe_hasMissingParameters(cgid);
 }
 
-/** Return a GroupedVector of all of the AtomIndex objects of the 
-    atoms in this table indexed by ResNumAtomID */
-GroupedVector<ResNumAtomID,AtomIndex> AtomTable::atomsByResidue() const
+/** Return the set of AtomIndexes of all atoms that are missing
+    parameters in this table */
+QSet<AtomIndex> AtomTable::missingParameters() const
 {
-    return atomsByResidue( residueNumbers() );
+    QVector<CutGroupID> cgids = info().cutGroupIDs();
+    int ncg = cgids.count();
+    const CutGroupID *cgarray = cgids.constData();
+
+    QSet<AtomIndex> atms;
+
+    for (int i=0; i<ncg; ++i)
+        atms += this->_unsafe_missingParameters(cgarray[i]);
+
+    return atms;
+}
+
+/** Return the set of AtomIndex objects of all atoms in the residue
+    with number 'resnum' that are missing parameters in this table
+
+    \throw SireMol::missing_residue
+*/
+QSet<AtomIndex> AtomTable::missingParameters(ResNum resnum) const
+{
+    return this->_unsafe_missingParameters( info().at(resnum) );
+}
+
+/** Return the set of AtomIndex objects of all atoms in the residue
+    with index 'resid' that are missing parameters in this table
+
+    \throw SireError::invalid_index
+*/
+QSet<AtomIndex> AtomTable::missingParameters(ResID resid) const
+{
+    return this->_unsafe_missingParameters( info().at(resid) );
+}
+
+/** Return the set of AtomIndex objects of all atoms in the CutGroup
+    with ID == cgid that are missing parameters in this table
+
+    \throw SireMol::missing_cutgroup
+*/
+QSet<AtomIndex> AtomTable::missingParameters(CutGroupID cgid) const
+{
+    info().assertCutGroupExists(cgid);
+    return this->_unsafe_missingParameters(cgid);
+}
+
+/** Clear this table of all parameters. Note that this only
+    clears the values of the parameters - it does not remove
+    the atoms */
+void AtomTable::clear()
+{
+    QVector<CutGroupID> cgids = info().cutGroupIDs();
+    int ncg = cgids.count();
+
+    const CutGroupID *cgarray = cgids.constData();
+
+    for (int i=0; i<ncg; ++i)
+        this->_unsafe_clear(cgarray[i]);
+}
+
+/** Clear this table of the parameter for the atom at
+    index 'cgatomid'
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+void AtomTable::clear(const CGAtomID &cgatomid)
+{
+    info().assertAtomExists(cgatomid);
+    this->_unsafe_clear(cgatomid);
+}
+
+/** Clear this table of the parameter for the atom at
+    index 'resatomid'
+
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+*/
+void AtomTable::clear(const ResNumAtomID &resatomid)
+{
+    this->_unsafe_clear( info().at(resatomid) );
+}
+
+/** Clear this table of the parameter for the atom at
+    index 'resatomid'
+
+    \throw SireError::invalid_index
+*/
+void AtomTable::clear(const ResIDAtomID &resatomid)
+{
+    this->_unsafe_clear( info().at(resatomid) );
+}
+
+/** Clear this table of the parameter for the atom with
+    AtomIndex 'atom'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+void AtomTable::clear(const AtomIndex &atom)
+{
+    this->_unsafe_clear( info().at(atom) );
+}
+
+/** Clear this table of the parameter for the atom at
+    index 'atomid'
+
+    \throw SireError::invalid_index
+*/
+void AtomTable::clear(AtomID atomid)
+{
+    this->_unsafe_clear( info().at(atomid) );
+}
+
+/** Clear this table of all parameters for the residue
+    with number 'resnum'
+
+    \throw SireMol::missing_residue
+*/
+void AtomTable::clear(ResNum resnum)
+{
+    this->_unsafe_clear( info().at(resnum) );
+}
+
+/** Clear this table of all parameters for the residue
+    at index 'resid'
+
+    \throw SireError::invalid_index
+*/
+void AtomTable::clear(ResID resid)
+{
+    this->_unsafe_clear( info().at(resid) );
+}
+
+/** Clear this table of all parameters for the atoms
+    in the CutGroup with ID == cgid
+
+    \throw SireMol::missing_cutgroup
+*/
+void AtomTable::clear(CutGroupID cgid)
+{
+    info().assertCutGroupExists(cgid);
+    this->_unsafe_clear(cgid);
 }

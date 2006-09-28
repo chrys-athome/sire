@@ -52,6 +52,8 @@ class CoordGroup;
 namespace SireMol
 {
 
+class EditMol;
+
 class MoleculeData;
 class Residue;
 class CutGroup;
@@ -67,6 +69,7 @@ class CutGroupID;
 class Bond;
 class Angle;
 class Dihedral;
+class Improper;
 
 class CGAtomID;
 class ResNumAtomID;

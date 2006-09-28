@@ -1,18 +1,31 @@
 #ifndef SIREMOL_IDTYPES_H
 #define SIREMOL_IDTYPES_H
 
-#include "moleculeid.h"
-#include "cutgroupid.h"
-#include "resnum.h"
-#include "resid.h"
-#include "atomnum.h"
-#include "atomid.h"
-#include "groupid.h"
+namespace SireMol
+{
 
-#include "molcgatomid.h"
-#include "molcutgroupid.h"
-#include "cgatomid.h"
+class Index;
+class GroupID;
 
-#include "groupindexid.h"
+class AtomNum;
+class AtomID;
+
+class ResNum;
+class ResID;
+
+class CutGroupID;
+
+class MoleculeID;
+
+class GroupIndexID;
+
+class CGAtomID;
+class ResNumAtomID;
+class ResIDAtomID;
+
+class MolResNumAtomID;
+class MolCGAtomID;
+
+}
 
 #endif

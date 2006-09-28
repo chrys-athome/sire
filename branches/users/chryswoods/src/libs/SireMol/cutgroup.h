@@ -106,10 +106,9 @@ public:
     QVector<Vector> coordinates(AtomID strt, AtomID end) const;
 
     Atom atom(AtomID i) const;
+    Vector coordinates(AtomID i) const;
 
     int nAtoms() const;
-    int size() const;
-    int count() const;
 
     void setCoordinates(const QVector<Vector> &newcoords);
 

@@ -306,10 +306,10 @@ void MoleculeInfoPvt::assertResidueExists(ResID resid) const
 */
 void MoleculeInfoPvt::assertCutGroupExists(CutGroupID cgid) const
 {
-    if ( cgid >= resinfos.count() )
+    if ( not atominfos.contains(cgid) )
         throw SireMol::missing_cutgroup(QObject::tr(
             "There is no CutGroup with ID == %1 in Molecule \"%2\" (nCutGroups() == %3)")
-                .arg(cgid).arg(molname).arg(resinfos.count()), CODELOC);
+                .arg(cgid).arg(molname).arg(atominfos.count()), CODELOC);
 }
 
 /** Assert the Atom with AtomIndex 'atom' exists
@@ -1032,6 +1032,12 @@ int MoleculeInfo::nAtoms(ResID resid) const
 int MoleculeInfo::nAtoms(CutGroupID cgid) const
 {
     return this->at(cgid).nAtoms();
+}
+
+/** Return the array of CutGroupIDs of the CutGroups in this molecule */
+QVector<CutGroupID> MoleculeInfo::cutGroupIDs() const
+{
+    return d->atominfos.keys().toVector();
 }
 
 /** Return the array of the numbers of the residues, in the order that
