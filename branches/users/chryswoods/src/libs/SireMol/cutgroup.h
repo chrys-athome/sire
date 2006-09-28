@@ -157,18 +157,6 @@ inline int CutGroup::nAtoms() const
     return coords.count();
 }
 
-/** Return the number of atoms in the CutGroup */
-inline int CutGroup::size() const
-{
-    return coords.size();
-}
-
-/** Return the number of atoms in the CutGroup */
-inline int CutGroup::count() const
-{
-    return coords.count();
-}
-
 /** Translate the CutGroup by 'delta' */
 inline void CutGroup::translate(const Vector &delta)
 {
