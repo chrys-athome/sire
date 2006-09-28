@@ -140,6 +140,8 @@ public:
     void assertSameResidue(const AtomIndex &atom) const;
     void assertSameResidue(const QSet<AtomIndex> &atoms) const;
     void assertSameResidue(CutGroupID cgid) const;
+
+    void assertNAtoms(int n) const;
    /////////////////////////////////////////////////////////
 
 private:

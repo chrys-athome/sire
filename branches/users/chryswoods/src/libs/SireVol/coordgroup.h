@@ -63,13 +63,24 @@ public:
 
     ~CoordGroupBase();
 
-    CoordGroupBase& operator=(const CoordGroupBase &other);
-
     bool operator==(const CoordGroupBase &other) const;
     bool operator!=(const CoordGroupBase &other) const;
 
+    const Vector& at(int i) const;
+    const Vector& operator[](int i) const;
+
+    const AABox& aaBox() const;
+
+    const Vector* constData() const;
+    const Vector* data() const;
+
+    bool isEmpty() const;
+
+    int count() const;
+    int size() const;
+
 protected:
-    void setCoordinates(const QVector<Vector> &newcoords);
+    CoordGroupBase& operator=(const CoordGroupBase &other);
 
     /** Implicitly shared pointer to the coordinate data */
     QSharedDataPointer<CoordGroupPvt> d;
@@ -96,22 +107,7 @@ public:
 
     ~CoordGroup();
 
-    CoordGroup& operator=(const CoordGroupBase &other);
-
-    const Vector& at(int i) const;
-    const Vector& operator[](int i) const;
-
-    bool isNull() const;
-
-    int count() const;
-    int size() const;
-
-    const AABox& aaBox() const;
-    const Vector* constData() const;
-
-    void translate(const Vector &delta);
-    void rotate(const Quaternion &quat, const Vector &point);
-    void rotate(const Matrix &rotmat, const Vector &point);
+    CoordGroup& operator=(const CoordGroup &other);
 
     CoordGroupEditor edit();
 };
@@ -153,19 +149,9 @@ public:
 
     CoordGroupEditor& operator=(const CoordGroupBase &other);
 
-    const Vector& at(int i) const;
-
-    const Vector& operator[](int i) const;
     Vector& operator[](int i);
 
-    const Vector* constData() const;
-    const Vector* data() const;
     Vector* data();
-
-    bool isNull() const;
-
-    int count() const;
-    int size() const;
 
     void translate(const Vector &delta);
     void translate(int i, const Vector &delta);
@@ -176,7 +162,13 @@ public:
     void rotate(int i, const Quaternion &quat, const Vector &point);
     void rotate(int i, const Matrix &rotmat, const Vector &point);
 
+    void setCoordinates(const QVector<Vector> &newcoords);
+    void setCoordinates(const CoordGroupBase &newcoords);
+
     CoordGroup commit();
+
+protected:
+    bool needsUpdate() const;
 };
 
 }

@@ -2634,38 +2634,449 @@ void MoleculeData::rotate(const AtomIDGroup &group, const Quaternion &quat,
 /////////////////////////////////////////////////////////
 //@{
 
-/** Set the
+/** Internal function used to set the coordinates of a CutGroup as part of
+    a larger move
+
+    \throw SireError::incompatible_error
+    \throw SireMol::missing_cutgroup
+*/
+void MoleculeData::setCoordinates(CutGroupID cgid, const CoordGroup &newcoords,
+                                  MoveWorkspace &workspace) const
+{
+    workspace.edit(cgid).setCoordinates(newcoords);
+}
+
+/** Set the coordinates of the CutGroup with ID == cgid to 'newcoords'
+
+    \throw SireError::incompatible_error
+    \throw SireMol::missing_cutgroup
+*/
 void MoleculeData::setCoordinates(CutGroupID cgid, const CoordGroup &newcoords)
+{
+    MoveWorkspace workspace(_coords);
 
-void MoleculeData::setCoordinates(const QHash<CutGroupID,CoordGroup> &newcoords);
+    this->setCoordinates(cgid, newcoords, workspace);
 
-void MoleculeData::setCoordinates(CutGroupID cgid, const QVector<Vector> &newcoords);
-void MoleculeData::setCoordinates(const QHash< CutGroupID,QVector<Vector> > &newcoords);
+    if (workspace.commit())
+        this->incrementMinorVersion();
+}
 
-void MoleculeData::setCoordinates(ResNum resnum, const QVector<Vector> &newcoords);
-void MoleculeData::setCoordinates(const QHash< ResNum,QVector<Vector> > &newcoords);
+/** Set the coordinates of several CutGroups to the values contained
+    in 'newcoords'
 
-void MoleculeData::setCoordinates(ResID resid, const QVector<Vector> &newcoords);
-void MoleculeData::setCoordinates(const QHash< ResID,QVector<Vector> > &newcoords);
+    \throw SireError::incompatible_error
+    \throw SireMol::missing_cutgroup
+*/
+void MoleculeData::setCoordinates(const QHash<CutGroupID,CoordGroup> &newcoords)
+{
+    MoveWorkspace workspace(_coords);
 
-void MoleculeData::setCoordinates(const AtomIndex &atom, const Vector &newcoords);
-void MoleculeData::setCoordinates(const QHash<AtomIndex,Vector> &newcoords);
+    for (QHash<CutGroupID,CoordGroup>::const_iterator it = newcoords.begin();
+         it != newcoords.end();
+         ++it)
+    {
+        this->setCoordinates(it.key(), it.value(), workspace);
+    }
 
-void MoleculeData::setCoordinates(const CGAtomID &cgatomid, const Vector &newcoords);
-void MoleculeData::setCoordinates(const QHash<CGAtomID,Vector> &newcoords);
+    if (workspace.commit())
+        this->incrementMinorVersion();
+}
 
-void MoleculeData::setCoordinates(const ResNumAtomID &resatomid, const Vector &newcoords);
-void MoleculeData::setCoordinates(const QHash<ResNumAtomID,Vector> &newcoords);
+/** Internal function used to set the coordinates of the CutGroup with
+    ID == 'cgid' to 'newcoords' as part of a larger move
 
-void MoleculeData::setCoordinates(const ResIDAtomID &resatomid, const Vector &newcoords);
-void MoleculeData::setCoordinates(const QHash<ResIDAtomID,Vector> &newcoords);
+    \throw SireError::incompatible_error
+    \throw SireMol::missing_cutgroup
+*/
+void MoleculeData::setCoordinates(CutGroupID cgid, const QVector<Vector> &newcoords,
+                                  MoveWorkspace &workspace) const
+{
+    workspace.edit(cgid).setCoordinates(newcoords);
+}
 
-void MoleculeData::setCoordinates(const Residue &residue);
+/** Set the coordinates of the CutGroup with ID == cgid to 'newcoords'
 
-void MoleculeData::setCoordinates(ResNum resnum, AtomID atomid, const Vector &newcoords);
-void MoleculeData::setCoordinates(ResNum resnum, const QHash<AtomID,Vector> &newcoords);
+    \throw SireError::incompatible_error
+    \throw SireMol::missing_cutgroup
+*/
+void MoleculeData::setCoordinates(CutGroupID cgid,
+                                  const QVector<Vector> &newcoords)
+{
+    MoveWorkspace workspace(_coords);
 
-void MoleculeData::setCoordinates(ResNum resnum, const QHash<QString,Vector> &newcoords);
+    this->setCoordinates(cgid, newcoords, workspace);
+
+    if (workspace.commit())
+        this->incrementMinorVersion();
+}
+
+/** Set the coordinates of lots of CutGroups to the values stored in
+    'newcoords'
+
+    \throw SireError::incompatible_error
+    \throw SireMol::missing_cutgroup
+*/
+void MoleculeData::setCoordinates(const QHash< CutGroupID,QVector<Vector> > &newcoords)
+{
+    MoveWorkspace workspace(_coords);
+
+    for (QHash< CutGroupID, QVector<Vector> >::const_iterator it = newcoords.begin();
+         it != newcoords.end();
+         ++it)
+    {
+        this->setCoordinates(it.key(), it.value(), workspace);
+    }
+
+    if (workspace.commit())
+        this->incrementMinorVersion();
+}
+
+/** Internal function used to set the coordinates of the atoms in the residue
+    described by 'resinfo' to 'newcoords'
+
+    \throw SireError::incompatible_error
+    \throw SireMol::missing_residue
+*/
+void MoleculeData::setCoordinates(const ResidueInfo &resinfo,
+                                  const QVector<Vector> &newcoords,
+                                  MoveWorkspace &workspace) const
+{
+    int nats = resinfo.nAtoms();
+
+    resinfo.assertNAtoms(newcoords.size());
+
+    const Vector *coordarray = newcoords.constData();
+
+    for (AtomID i(0); i<nats; ++i)
+    {
+        const CGAtomID &cgatomid = resinfo.at(i);
+
+        CoordGroupEditor &editor = workspace.edit(cgatomid.cutGroupID());
+
+        editor[cgatomid.atomID()] = coordarray[i];
+    }
+}
+
+/** Set the coordinates of the atoms in the residue with number 'resnum' to
+    'newcoords'
+
+    \throw SireError::incompatible_error
+    \throw SireMol::missing_residue
+*/
+void MoleculeData::setCoordinates(ResNum resnum,
+                                  const QVector<Vector> &newcoords)
+{
+    MoveWorkspace workspace(_coords);
+
+    this->setCoordinates( info().residue(resnum), newcoords, workspace );
+
+    if (workspace.commit())
+        this->incrementMinorVersion();
+}
+
+/** Set the coordinates of the atoms in several residues to equal 'newcoords'
+
+    \throw SireError::incompatible_error
+    \throw SireMol::missing_residue
+*/
+void MoleculeData::setCoordinates(const QHash< ResNum,QVector<Vector> > &newcoords)
+{
+    MoveWorkspace workspace(_coords);
+
+    for (QHash< ResNum,QVector<Vector> >::const_iterator it = newcoords.begin();
+         it != newcoords.end();
+         ++it)
+    {
+        this->setCoordinates( info().residue(it.key()),
+                              it.value(), workspace );
+    }
+
+    if (workspace.commit())
+        this->incrementMinorVersion();
+}
+
+/** Set the coordinates of all of the atoms in the residue at index 'resid'
+    to 'newcoords'
+
+    \throw SireError::incompatible_error
+    \throw SireError::invalid_index
+*/
+void MoleculeData::setCoordinates(ResID resid,
+                                  const QVector<Vector> &newcoords)
+{
+    MoveWorkspace workspace(_coords);
+
+    this->setCoordinates( info().residue(resid), newcoords, workspace );
+
+    if (workspace.commit())
+        this->incrementMinorVersion();
+}
+
+/** Set the coordinates of lots of residues to the values in 'newcoords'
+
+    \throw SireError::incompatible_error
+    \throw SireError::invalid_index
+*/
+void MoleculeData::setCoordinates(const QHash< ResID,QVector<Vector> > &newcoords)
+{
+    MoveWorkspace workspace(_coords);
+
+    for (QHash< ResID,QVector<Vector> >::const_iterator it = newcoords.begin();
+         it != newcoords.end();
+         ++it)
+    {
+        this->setCoordinates( info().residue(it.key()),
+                              it.value(), workspace );
+    }
+
+    if (workspace.commit())
+        this->incrementMinorVersion();
+}
+
+/** Internal function to set the coordinates of the atom with AtomIndex
+    'atom' to 'newcoords'
+*/
+void MoleculeData::setCoordinates(const CGAtomID &cgatomid, const Vector &newcoords,
+                                  MoveWorkspace &workspace) const
+{
+    CoordGroupEditor &editor = workspace.edit(cgatomid.cutGroupID());
+
+    editor[cgatomid.atomID()] = newcoords;
+}
+
+/** Set the coordinates of all atoms in the Molecule to 'newcoords'
+
+    \throw SireError::incompatible_error
+*/
+void MoleculeData::setCoordinates(const QVector<Vector> &newcoords)
+{
+    info().assertNAtoms(newcoords.size());
+
+    MoveWorkspace workspace(_coords);
+
+    int nats = newcoords.size();
+    const Vector *coordarray = newcoords.constData();
+
+    const MoleculeInfo &molinfo = info();
+
+    for (AtomID i(0); i<nats; ++i)
+    {
+        this->setCoordinates(molinfo.at(i), coordarray[i], workspace);
+    }
+
+    if (workspace.commit())
+        this->incrementMinorVersion();
+}
+
+/** Set the coordinates of the atom with AtomIndex 'atom' to 'newcoords'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+void MoleculeData::setCoordinates(const AtomIndex &atom, const Vector &newcoords)
+{
+    MoveWorkspace workspace(_coords);
+
+    this->setCoordinates( info().at(atom), newcoords, workspace );
+
+    if (workspace.commit())
+        this->incrementMinorVersion();
+}
+
+/** Set the coordinates of a large number of atoms to the values stored
+    in 'newcoords'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+void MoleculeData::setCoordinates(const QHash<AtomIndex,Vector> &newcoords)
+{
+    MoveWorkspace workspace(_coords);
+
+    for (QHash<AtomIndex,Vector>::const_iterator it = newcoords.begin();
+         it != newcoords.end();
+         ++it)
+    {
+        this->setCoordinates( info().at(it.key()),
+                              it.value(), workspace );
+    }
+
+    if (workspace.commit())
+        this->incrementMinorVersion();
+}
+
+/** Set the coordinates of the atom with index 'cgatomid' to 'newcoords'
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+void MoleculeData::setCoordinates(const CGAtomID &cgatomid,
+                                  const Vector &newcoords)
+{
+    info().assertAtomExists(cgatomid);
+
+    MoveWorkspace workspace(_coords);
+
+    this->setCoordinates(cgatomid, newcoords, workspace);
+
+    if (workspace.commit())
+        this->incrementMinorVersion();
+}
+
+/** Set the coordinates of lots of atoms to the values in 'newcoords'
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+void MoleculeData::setCoordinates(const QHash<CGAtomID,Vector> &newcoords)
+{
+    MoveWorkspace workspace(_coords);
+
+    for (QHash<CGAtomID,Vector>::const_iterator it = newcoords.begin();
+         it != newcoords.end();
+         ++it)
+    {
+        info().assertAtomExists(it.key());
+
+        this->setCoordinates(it.key(), it.value(), workspace);
+    }
+
+    if (workspace.commit())
+        this->incrementMinorVersion();
+}
+
+/** Set the coordinates of the atom at index 'resatomid' to 'newcoords'
+
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+*/
+void MoleculeData::setCoordinates(const ResNumAtomID &resatomid,
+                                  const Vector &newcoords)
+{
+    MoveWorkspace workspace(_coords);
+
+    this->setCoordinates( info().at(resatomid), newcoords, workspace );
+
+    if (workspace.commit())
+        this->incrementMinorVersion();
+}
+
+/** Set the coordinates of lots of atoms to the values in 'newcoords'
+
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+*/
+void MoleculeData::setCoordinates(const QHash<ResNumAtomID,Vector> &newcoords)
+{
+    MoveWorkspace workspace(_coords);
+
+    for (QHash<ResNumAtomID,Vector>::const_iterator it = newcoords.begin();
+         it != newcoords.end();
+         ++it)
+    {
+        this->setCoordinates( info().at(it.key()), it.value(), workspace );
+    }
+
+    if (workspace.commit())
+        this->incrementMinorVersion();
+}
+
+/** Set the coordinates of the atom at index 'resatomid' to 'newcoords'
+
+    \throw SireError::invalid_index
+*/
+void MoleculeData::setCoordinates(const ResIDAtomID &resatomid,
+                                  const Vector &newcoords)
+{
+    MoveWorkspace workspace(_coords);
+
+    this->setCoordinates( info().at(resatomid), newcoords, workspace );
+
+    if (workspace.commit())
+        this->incrementMinorVersion();
+}
+
+/** Set the coordinates of lots of atoms to 'newcoords'
+
+    \throw SireError::invalid_index
+*/
+void MoleculeData::setCoordinates(const QHash<ResIDAtomID,Vector> &newcoords)
+{
+    MoveWorkspace workspace(_coords);
+
+    for (QHash<ResIDAtomID,Vector>::const_iterator it = newcoords.begin();
+         it != newcoords.end();
+         ++it)
+    {
+        this->setCoordinates( info().at(it.key()),
+                              it.value(), workspace );
+    }
+
+    if (workspace.commit())
+        this->incrementMinorVersion();
+}
+
+/** Set the coordinates of the atom with index 'atomid' in the residue with
+    number 'resnum' to 'newcoords'
+
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+*/
+void MoleculeData::setCoordinates(ResNum resnum, AtomID atomid,
+                                  const Vector &newcoords)
+{
+    this->setCoordinates( ResNumAtomID(resnum,atomid), newcoords );
+}
+
+/** Set the coordinates of lots of atoms in the residue with number 'resnum'
+    to the values in 'newcoords'
+
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+*/
+void MoleculeData::setCoordinates(ResNum resnum,
+                                  const QHash<AtomID,Vector> &newcoords)
+{
+    const ResidueInfo &resinfo = info().at(resnum);
+
+    MoveWorkspace workspace(_coords);
+
+    for (QHash<AtomID,Vector>::const_iterator it = newcoords.begin();
+         it != newcoords.end();
+         ++it)
+    {
+        this->setCoordinates( resinfo.at(it.key()),
+                              it.value(), workspace );
+    }
+
+    if (workspace.commit())
+        this->incrementMinorVersion();
+}
+
+/** Set the coordinates of lots of atoms in the residue with number 'resnum'
+    to the values stored in 'newcoords'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+void MoleculeData::setCoordinates(ResNum resnum,
+                                  const QHash<QString,Vector> &newcoords)
+{
+    const ResidueInfo &resinfo = info().at(resnum);
+
+    MoveWorkspace workspace(_coords);
+
+    for (QHash<QString,Vector>::const_iterator it = newcoords.begin();
+         it != newcoords.end();
+         ++it)
+    {
+        this->setCoordinates( resinfo.at(it.key()),
+                              it.value(), workspace );
+    }
+
+    if (workspace.commit())
+        this->incrementMinorVersion();
+}
 
 /////////////////////////////////////////////////////////
 //@}

@@ -38,6 +38,7 @@ class AtomInfoGroup;
 class AtomID;
 
 using SireVol::CoordGroup;
+using SireVol::CoordGroupEditor;
 
 using SireMaths::Vector;
 using SireMaths::Quaternion;
@@ -94,7 +95,7 @@ public:
     CutGroup& operator=(const CoordGroup &other);
     CutGroup& operator=(const QVector<Vector> &coords);
 
-    bool isNull() const;
+    bool isEmpty() const;
 
     QString toString() const;
 
@@ -132,10 +133,10 @@ private:
     CoordGroup coords;
 };
 
-/** Return whether or not this is null (has no atoms) */
-inline bool CutGroup::isNull() const
+/** Return whether or not this is empty (has no atoms) */
+inline bool CutGroup::isEmpty() const
 {
-    return coords.isNull();
+    return coords.isEmpty();
 }
 
 /** Return the CoordGroup that contains the coordinates of the atoms */
@@ -172,21 +173,33 @@ inline int CutGroup::count() const
 /** Translate the CutGroup by 'delta' */
 inline void CutGroup::translate(const Vector &delta)
 {
-    coords.translate(delta);
+    CoordGroupEditor editor = coords.edit();
+
+    editor.translate(delta);
+
+    coords = editor.commit();
 }
 
 /** Rotate the Atoms in the CutGroup by the Quaternion 'quat'
     about the point 'point' */
 inline void CutGroup::rotate(const Quaternion &quat, const Vector &point)
 {
-    coords.rotate(quat, point);
+    CoordGroupEditor editor = coords.edit();
+
+    editor.rotate(quat, point);
+
+    coords = editor.commit();
 }
 
 /** Rotate (scale and/or shear) the Atoms in the CutGroup by the matrix
     'rotmat' about the point 'point' */
 inline void CutGroup::rotate(const Matrix &rotmat, const Vector &point)
 {
-    coords.rotate(rotmat, point);
+    CoordGroupEditor editor = coords.edit();
+
+    editor.rotate(rotmat, point);
+
+    coords = editor.commit();
 }
 
 }

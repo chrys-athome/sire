@@ -80,9 +80,9 @@ public:
 
     bool operator==(const MoleculeInfo &other) const;
     bool operator!=(const MoleculeInfo &other) const;
-    
+
     const AtomInfoGroup& operator[](CutGroupID cgid) const;
-    
+
     const ResidueInfo& operator[](ResID resid) const;
     const ResidueInfo& operator[](ResNum resnum) const;
 
@@ -94,7 +94,7 @@ public:
 
    ///// Querying the molecule /////////////////////////////
     const AtomInfoGroup& at(CutGroupID cgid) const;
-    
+
     const ResidueInfo& at(ResID resid) const;
     const ResidueInfo& at(ResNum resnum) const;
 
@@ -110,29 +110,29 @@ public:
     const AtomInfo& atom(const CGAtomID &cgid) const;
 
     const AtomInfoGroup& atomGroup(CutGroupID cgid) const;
-    
+
     QHash<CutGroupID,AtomInfoGroup> atomGroups() const;
     QHash<CutGroupID,AtomInfoGroup> atomGroups(ResNum resnum) const;
     QHash<CutGroupID,AtomInfoGroup> atomGroups(ResID resid) const;
-    
+
     QHash<CutGroupID,AtomInfoGroup> atomGroups(const QSet<CutGroupID> &cgids) const;
     QHash<CutGroupID,AtomInfoGroup> atomGroups(const QSet<ResNum> &resnums) const;
     QHash<CutGroupID,AtomInfoGroup> atomGroups(const QSet<ResID> &resids) const;
 
     QVector<AtomInfo> atoms() const;
-    
+
     QHash<AtomID,AtomInfo> atoms( const QSet<AtomID> &idxs ) const;
     QHash<CGAtomID,AtomInfo> atoms( const QSet<CGAtomID> &cgids ) const;
     QHash<ResNumAtomID,AtomInfo> atoms( const QSet<ResNumAtomID> &rsids) const;
     QHash<ResIDAtomID,AtomInfo> atoms( const QSet<ResIDAtomID> &rsids) const;
     QHash<AtomIndex,AtomInfo> atoms( const QSet<AtomIndex> &atms ) const;
-  
+
     QVector<AtomInfo> atoms(CutGroupID cgid) const;
     QHash< CutGroupID, QVector<AtomInfo> > atoms(const QSet<CutGroupID> &cgids) const;
-    
+
     QVector<AtomInfo> atoms(ResNum resnum) const;
     QHash< ResNum, QVector<AtomInfo> > atoms(const QSet<ResNum> &resnums) const;
-    
+
     QVector<AtomInfo> atoms(ResID resid) const;
     QHash< ResID, QVector<AtomInfo> > atoms(const QSet<ResID> &resids) const;
 
@@ -194,6 +194,8 @@ public:
     void assertAtomExists(const CGAtomID &cgatomid) const;
     void assertAtomExists(const ResNumAtomID &resatomid) const;
     void assertAtomExists(const ResIDAtomID &resatomid) const;
+
+    void assertNAtoms(int nats) const;
    /////////////////////////////////////////////////////////
 
 private:

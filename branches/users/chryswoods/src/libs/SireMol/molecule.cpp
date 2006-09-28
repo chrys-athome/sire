@@ -1797,7 +1797,10 @@ void Molecule::setCoordinates(const QHash<CutGroupID,CoordGroup> &newcoords)
 
     \throw SireError::incompatible_error
 */
-void Molecule::setCoordinates(
+void Molecule::setCoordinates(const QVector<Vector> &newcoords)
+{
+    d->setCoordinates(newcoords);
+}
 
 /** Set the coordinates of the CutGroup with ID == cgid to the coordinates
     stored in the array 'newcoords'.

@@ -148,8 +148,6 @@ public:
     Residue residue(ResID resid) const;
     Residue residue(const QString &resname) const;
 
-    void merge(const Residue &residue);
-
     QHash<ResNum,Residue> residues() const;
     QHash<ResNum,Residue> residues(const QSet<ResNum> &resnums) const;
 
@@ -375,7 +373,7 @@ public:
     void setCoordinates(CutGroupID cgid, const CoordGroup &newcoords);
     void setCoordinates(const QHash<CutGroupID,CoordGroup> &newcoords);
 
-    void setCoordinates(const QVector<Vector> &newcoords) const;
+    void setCoordinates(const QVector<Vector> &newcoords);
 
     void setCoordinates(CutGroupID cgid, const QVector<Vector> &newcoords);
     void setCoordinates(const QHash< CutGroupID,QVector<Vector> > &newcoords);

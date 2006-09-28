@@ -79,6 +79,8 @@ public:
 
     void assertCutGroupExists(CutGroupID cgid) const;
 
+    void assertNAtoms(int n) const;
+
     /** The residue's name */
     QString resname;
 
@@ -295,6 +297,20 @@ void ResidueInfoPvt::assertAtomExists(const QString &atomname) const
         throw SireMol::missing_atom( QObject::tr(
             "Residue \"%1\":%2 does not contain an atom called \"%3\"")
                 .arg(resname).arg(resnum).arg(atomname), CODELOC );
+}
+
+/** Assert that there are 'n' atoms in this residue
+
+    \throw SireError::incompatible_error
+*/
+void ResidueInfoPvt::assertNAtoms(int n) const
+{
+    if (cgidxs.count() != n)
+        throw SireError::incompatible_error( QObject::tr(
+                "The number of atoms in residue %1(%2), %3, is not equal "
+                "to %4.")
+                    .arg(resname).arg(resnum).arg(n).arg(cgidxs.count()),
+                        CODELOC );
 }
 
 ///////////
@@ -820,4 +836,13 @@ void ResidueInfo::assertAtomExists(const QString &atomname) const
 void ResidueInfo::assertAtomExists(AtomID atomid) const
 {
     d->assertAtomExists(atomid);
+}
+
+/** Assert that the number of atoms in this residue is 'nats'
+
+    \throw SireError::incompatible_error
+*/
+void ResidueInfo::assertNAtoms(int nats) const
+{
+    d->assertNAtoms(nats);
 }

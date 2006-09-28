@@ -294,6 +294,8 @@ public:
     void setCoordinates(CutGroupID cgid, const CoordGroup &newcoords);
     void setCoordinates(const QHash<CutGroupID,CoordGroup> &newcoords);
 
+    void setCoordinates(const QVector<Vector> &newcoords);
+
     void setCoordinates(CutGroupID cgid, const QVector<Vector> &newcoords);
     void setCoordinates(const QHash< CutGroupID,QVector<Vector> > &newcoords);
 
@@ -314,8 +316,6 @@ public:
 
     void setCoordinates(const ResIDAtomID &resatomid, const Vector &newcoords);
     void setCoordinates(const QHash<ResIDAtomID,Vector> &newcoords);
-
-    void setCoordinates(const Residue &residue);
 
     void setCoordinates(ResNum resnum, AtomID atomid, const Vector &newcoords);
     void setCoordinates(ResNum resnum, const QHash<AtomID,Vector> &newcoords);
@@ -469,6 +469,16 @@ private:
                 detail::MoveWorkspace &ws) const;
     void rotate(const QSet<CutGroupID> &cgids, const Matrix &matrix, const Vector &point,
                 detail::MoveWorkspace &ws) const;
+
+    void setCoordinates(const CGAtomID &cgatomid, const Vector &newcoords,
+                        detail::MoveWorkspace &workspace) const;
+    void setCoordinates(const ResidueInfo &resinfo,
+                        const QVector<Vector> &newcoords,
+                        detail::MoveWorkspace &workspace) const;
+    void setCoordinates(CutGroupID cgid, const QVector<Vector> &newcoords,
+                        detail::MoveWorkspace &workspace) const;
+    void setCoordinates(CutGroupID cgid, const CoordGroup &newcoords,
+                        detail::MoveWorkspace &workspace) const;
 
     QHash<CutGroupID,CutGroup> cutGroups(const ResidueInfo &resinfo) const;
     QHash<CutGroupID,CoordGroup> coordGroups(const ResidueInfo &resinfo) const;
