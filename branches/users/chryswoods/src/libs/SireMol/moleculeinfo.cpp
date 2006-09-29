@@ -1034,12 +1034,6 @@ int MoleculeInfo::nAtoms(CutGroupID cgid) const
     return this->at(cgid).nAtoms();
 }
 
-/** Return the array of CutGroupIDs of the CutGroups in this molecule */
-QVector<CutGroupID> MoleculeInfo::cutGroupIDs() const
-{
-    return d->atominfos.keys().toVector();
-}
-
 /** Return the array of the numbers of the residues, in the order that
     they appear in the molecule */
 QVector<ResNum> MoleculeInfo::residueNumbers() const

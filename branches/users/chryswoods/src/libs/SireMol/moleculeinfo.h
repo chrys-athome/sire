@@ -75,6 +75,7 @@ public:
     bool operator!=(const MoleculeInfo &other) const;
 
     const AtomInfoGroup& operator[](CutGroupID cgid) const;
+    const AtomInfoGroup& operator[](CutGroupNum cgnum) const;
 
     const ResidueInfo& operator[](ResID resid) const;
     const ResidueInfo& operator[](ResNum resnum) const;
@@ -83,10 +84,12 @@ public:
     const CGAtomID& operator[](const AtomIndex &atomindex) const;
     const CGAtomID& operator[](const ResNumAtomID &resatomid) const;
     const CGAtomID& operator[](const ResIDAtomID &resatomid) const;
+    const CGAtomID& operator[](const CGNumAtomID &cgatomid) const;
    /////////////////////////////////////////////////////////
 
    ///// Querying the molecule /////////////////////////////
     const AtomInfoGroup& at(CutGroupID cgid) const;
+    const AtomInfoGroup& at(CutGroupNum cgnum) const;
 
     const ResidueInfo& at(ResID resid) const;
     const ResidueInfo& at(ResNum resnum) const;
@@ -95,14 +98,17 @@ public:
     const CGAtomID& at(const AtomIndex &atomindex) const;
     const CGAtomID& at(const ResNumAtomID &resatomid) const;
     const CGAtomID& at(const ResIDAtomID &resatomid) const;
+    const CGAtomID& at(const CGNumAtomID &cgatomid) const;
 
     const AtomInfo& atom(AtomID atomid) const;
     const AtomInfo& atom(const AtomIndex &atomindex) const;
     const AtomInfo& atom(const ResNumAtomID &rsid) const;
     const AtomInfo& atom(const ResIDAtomID &rsid) const;
     const AtomInfo& atom(const CGAtomID &cgid) const;
+    const AtomInfo& atom(const CGNumAtomID &cgid) const;
 
     const AtomInfoGroup& atomGroup(CutGroupID cgid) const;
+    const AtomInfoGroup& atomGroup(CutGroupNum cgnum) const;
 
     QHash<CutGroupID,AtomInfoGroup> atomGroups() const;
     QHash<CutGroupID,AtomInfoGroup> atomGroups(ResNum resnum) const;
@@ -116,12 +122,15 @@ public:
 
     QHash<AtomID,AtomInfo> atoms( const QSet<AtomID> &idxs ) const;
     QHash<CGAtomID,AtomInfo> atoms( const QSet<CGAtomID> &cgids ) const;
+    QHash<CGNumAtomID,AtomInfo> atoms( const QSet<CGNumAtomID> &cgids) const;
     QHash<ResNumAtomID,AtomInfo> atoms( const QSet<ResNumAtomID> &rsids) const;
     QHash<ResIDAtomID,AtomInfo> atoms( const QSet<ResIDAtomID> &rsids) const;
     QHash<AtomIndex,AtomInfo> atoms( const QSet<AtomIndex> &atms ) const;
 
     QVector<AtomInfo> atoms(CutGroupID cgid) const;
+    QVector<AtomInfo> atoms(CutGroupNum cgnum) const;
     QHash< CutGroupID, QVector<AtomInfo> > atoms(const QSet<CutGroupID> &cgids) const;
+    QHash< CutGroupNum, QVector<AtomInfo> > atoms(const QSet<CutGroupNum> &cgnums) const;
 
     QVector<AtomInfo> atoms(ResNum resnum) const;
     QHash< ResNum, QVector<AtomInfo> > atoms(const QSet<ResNum> &resnums) const;
@@ -146,16 +155,21 @@ public:
     int nResidues() const;
     int nCutGroups() const;
 
+    CutGroupID cutGroupID(CutGroupNum cgnum) const;
+    CutGroupNum cutGroupNum(CutGroupID cgid) const;
+
     int nAtoms() const;
     int nAtoms(ResNum resnm) const;
     int nAtoms(ResID resid) const;
     int nAtoms(CutGroupID cgid) const;
+    int nAtoms(CutGroupNum cgnum) const;
 
-    QVector<CutGroupID> cutGroupIDs() const;
+    QVector<CutGroupNum> cutGroupNums() const;
 
     QVector<ResNum> residueNumbers() const;
     QVector<ResNum> residueNumbers(const QString &resname) const;
     QVector<ResNum> residueNumbers(CutGroupID cgid) const;
+    QVector<ResNum> residueNumbers(CutGroupNum cgnum) const;
 
     QStringList residueNames() const;
 
@@ -163,6 +177,7 @@ public:
     QStringList atomNames(ResID resid) const;
 
     bool contains(CutGroupID cgid) const;
+    bool contains(CutGroupNum cgnum) const;
     bool contains(ResNum resnum) const;
     bool contains(ResID resid) const;
 
@@ -170,6 +185,8 @@ public:
     bool contains(const AtomIndex &atm) const;
     bool contains(CutGroupID cgid, AtomID atomid) const;
     bool contains(const CGAtomID &cgatomid) const;
+    bool contains(CutGroupNum cgnum, AtomID atomid) const;
+    bool contains(const CGNumAtomID &cgatomid) const;
     bool contains(ResNum resnum, AtomID atomid) const;
     bool contains(const ResNumAtomID &resatomid) const;
     bool contains(ResID resid, AtomID atomid) const;
@@ -179,14 +196,17 @@ public:
     bool isEmpty(ResNum resnum) const;
     bool isEmpty(ResID resid) const;
     bool isEmpty(CutGroupID cgid) const;
+    bool isEmpty(CutGroupNum cgnum) const;
 
     void assertResidueExists(ResNum resnum) const;
     void assertResidueExists(ResID resid) const;
 
     void assertCutGroupExists(CutGroupID cgid) const;
+    void assertCutGroupExists(CutGroupNum cgnum) const;
 
     void assertAtomExists(const AtomIndex &atom) const;
     void assertAtomExists(const CGAtomID &cgatomid) const;
+    void assertAtomExists(const CGNumAtomID &cgatomid) const;
     void assertAtomExists(const ResNumAtomID &resatomid) const;
     void assertAtomExists(const ResIDAtomID &resatomid) const;
 

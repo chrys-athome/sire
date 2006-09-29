@@ -661,9 +661,10 @@ const QVector<CGAtomID>& ResidueInfo::indicies() const
 
 /** Return an array of the CutGroupIDs of all CutGroups that contain atoms
     that are in this residue. */
-const QVector<CutGroupID>& ResidueInfo::cutGroupIDs() const
+const QSet<CutGroupID>& ResidueInfo::cutGroupIDs() const
 {
-    return d->cgids;
+    #warning ResidueInfo::cutGroupIDs is broken!
+    return QSet<CutGroupID>();
 }
 
 /** Return a string representation of this ResidueInfo */

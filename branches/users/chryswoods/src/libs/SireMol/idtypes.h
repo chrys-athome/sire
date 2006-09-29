@@ -14,12 +14,15 @@ class ResNum;
 class ResID;
 
 class CutGroupID;
+class CutGroupNum;
 
 class MoleculeID;
 
 class GroupIndexID;
 
 class CGAtomID;
+class CGNumAtomID;
+
 class ResNumAtomID;
 class ResIDAtomID;
 

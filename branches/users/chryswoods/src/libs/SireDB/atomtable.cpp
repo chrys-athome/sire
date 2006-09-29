@@ -124,14 +124,11 @@ int AtomTable::nParameters(CutGroupID cgid) const
 /** Return the total number of assigned parameters in this table */
 int AtomTable::nAssignedParameters() const
 {
-    QVector<CutGroupID> cgids = info().cutGroupIDs();
-
-    int ncg = cgids.count();
-    const CutGroupID *cgarray = cgids.constData();
+    int ncg = info().nCutGroups();
 
     int nparams = 0;
-    for (int i=0; i<ncg; ++i)
-        nparams += this->_unsafe_nAssignedParameters( cgarray[i] );
+    for (CutGroupID i(0); i<ncg; ++i)
+        nparams += this->_unsafe_nAssignedParameters(i);
 
     return nparams;
 }
@@ -170,14 +167,11 @@ int AtomTable::nAssignedParameters(CutGroupID cgid) const
 /** Return the total number of missing parameters */
 int AtomTable::nMissingParameters() const
 {
-    QVector<CutGroupID> cgids = info().cutGroupIDs();
-
-    int ncg = cgids.count();
-    const CutGroupID *cgarray = cgids.constData();
+    int ncg = info().nCutGroups();
 
     int nparams = 0;
-    for (int i=0; i<ncg; ++i)
-        nparams += this->_unsafe_nMissingParameters(cgarray[i]);
+    for (CutGroupID i(0); i<ncg; ++i)
+        nparams += this->_unsafe_nMissingParameters(i);
 
     return nparams;
 }
@@ -271,13 +265,10 @@ bool AtomTable::assignedParameter(AtomID atomid) const
     in this table */
 bool AtomTable::hasMissingParameters() const
 {
-    QVector<CutGroupID> cgids = info().cutGroupIDs();
+    int ncg = info().nCutGroups();
 
-    int ncg = cgids.count();
-    const CutGroupID *cgarray = cgids.constData();
-
-    for (int i=0; i<ncg; ++i)
-        if (this->_unsafe_hasMissingParameters(cgarray[i]))
+    for (CutGroupID i(0); i<ncg; ++i)
+        if (this->_unsafe_hasMissingParameters(i))
             return true;
 
     return false;
@@ -318,14 +309,12 @@ bool AtomTable::hasMissingParameters(CutGroupID cgid) const
     parameters in this table */
 QSet<AtomIndex> AtomTable::missingParameters() const
 {
-    QVector<CutGroupID> cgids = info().cutGroupIDs();
-    int ncg = cgids.count();
-    const CutGroupID *cgarray = cgids.constData();
+    int ncg = info().nCutGroups();
 
     QSet<AtomIndex> atms;
 
-    for (int i=0; i<ncg; ++i)
-        atms += this->_unsafe_missingParameters(cgarray[i]);
+    for (CutGroupID i(0); i<ncg; ++i)
+        atms += this->_unsafe_missingParameters(i);
 
     return atms;
 }
@@ -366,13 +355,10 @@ QSet<AtomIndex> AtomTable::missingParameters(CutGroupID cgid) const
     the atoms */
 void AtomTable::clear()
 {
-    QVector<CutGroupID> cgids = info().cutGroupIDs();
-    int ncg = cgids.count();
+    int ncg = info().nCutGroups();
 
-    const CutGroupID *cgarray = cgids.constData();
-
-    for (int i=0; i<ncg; ++i)
-        this->_unsafe_clear(cgarray[i]);
+    for (CutGroupID i(0); i<ncg; ++i)
+        this->_unsafe_clear(i);
 }
 
 /** Clear this table of the parameter for the atom at

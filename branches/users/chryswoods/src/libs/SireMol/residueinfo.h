@@ -20,6 +20,8 @@
 
 #include "sireglobal.h"
 
+#include "idtypes.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol
@@ -77,6 +79,7 @@ public:
     const CGAtomID& operator[](const QString &atmname) const;
 
     const AtomInfoGroup& operator[](CutGroupID cgid) const;
+    const AtomInfoGroup& operator[](CutGroupNum cgnum) const;
    /////////////////////////////////////////////////////////
 
    ///// Querying the molecule /////////////////////////////
@@ -84,27 +87,36 @@ public:
     const CGAtomID& at(const QString &atmname) const;
 
     const AtomInfoGroup& at(CutGroupID cgid) const;
+    const AtomInfoGroup& at(CutGroupNum cgnum) const;
 
     const AtomInfo& atom(AtomID i) const;
     const AtomInfo& atom(const QString &atmname) const;
     const AtomInfo& atom(const CGAtomID &cgid) const;
+    const AtomInfo& atom(const CGNumAtomID &cgid) const;
 
     const AtomInfoGroup& atomGroup(CutGroupID cgid) const;
+    const AtomInfoGroup& atomGroup(CutGroupNum cgnum) const;
 
     QHash<CutGroupID,AtomInfoGroup> atomGroups() const;
     QHash<CutGroupID,AtomInfoGroup> atomGroups(const QSet<CutGroupID> &cgids) const;
+    QHash<CutGroupNum,AtomInfoGroup> atomGroups(const QSet<CutGroupNum> &cgnums) const;
 
     QVector<AtomInfo> atoms() const;
 
     QHash<AtomID,AtomInfo> atoms( const QSet<AtomID> &idxs ) const;
     QHash<CGAtomID,AtomInfo> atoms( const QSet<CGAtomID> &cgids ) const;
+    QHash<CGNumAtomID,AtomInfo> atoms( const QSet<CGNumAtomID> &cgids ) const;
     QHash<QString,AtomInfo> atoms( const QSet<QString> &atms ) const;
 
     QVector<AtomInfo> atoms(CutGroupID cgid) const;
+    QVector<AtomInfo> atoms(CutGroupNum cgnum) const;
+
     QHash< CutGroupID, QVector<AtomInfo> > atoms(const QSet<CutGroupID> &cgids) const;
+    QHash< CutGroupNum, QVector<AtomInfo> > atoms(const QSet<CutGroupNum> &cgnums) const;
 
     const QVector<CGAtomID>& indicies() const;
-    const QVector<CutGroupID>& cutGroupIDs() const;
+    const QSet<CutGroupID>& cutGroupIDs() const;
+    QSet<CutGroupNum> cutGroupNums() const;
 
     QString toString() const;
 
@@ -118,6 +130,7 @@ public:
 
     int nAtoms() const;
     int nAtoms(CutGroupID cgid) const;
+    int nAtoms(CutGroupNum cgnum) const;
 
     QString atomName(AtomID atomid) const;
     QHash<AtomID,QString> atomNames(const QSet<AtomID> &atomids) const;
@@ -130,9 +143,13 @@ public:
     bool contains(CutGroupID cgid) const;
     bool contains(CutGroupID cgid, AtomID atomid) const;
     bool contains(const CGAtomID &cgid) const;
+    bool contains(CutGroupNum cgnum) const;
+    bool contains(CutGroupNum cgnum, AtomID atomid) const;
+    bool contains(const CGNumAtomID &cgid) const;
 
     bool isEmpty() const;
     bool isEmpty(CutGroupID cgid) const;
+    bool isEmpty(CutGroupNum cgnum) const;
 
     void assertAtomExists(const QString &atomname) const;
     void assertAtomExists(AtomID atomid) const;
@@ -140,6 +157,7 @@ public:
     void assertSameResidue(const AtomIndex &atom) const;
     void assertSameResidue(const QSet<AtomIndex> &atoms) const;
     void assertSameResidue(CutGroupID cgid) const;
+    void assertSameResidue(CutGroupNum cgnum) const;
 
     void assertNAtoms(int n) const;
    /////////////////////////////////////////////////////////

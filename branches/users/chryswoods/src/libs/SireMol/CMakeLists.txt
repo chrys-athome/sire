@@ -19,6 +19,7 @@ set ( SIREMOL_SOURCES
       atominfogroup.cpp
       bond.cpp	     
       cgatomid.cpp
+      cgnumatomid.cpp
       convertfunction.cpp  
       cutgroup.cpp	     
       dihedral.cpp	     
