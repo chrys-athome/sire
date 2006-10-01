@@ -21,8 +21,6 @@
 #include <QSet>
 #include <QHash>
 
-#include "residuecutting.h"
-
 SIRE_BEGIN_HEADER
 
 namespace SireMol
@@ -108,9 +106,6 @@ public:
    ////// Constructors / destructor ////////////////////////
     Molecule();
 
-    Molecule(const EditMol &editmol,
-             const ConvertFunction &converter = ResidueCutting() );
-
     Molecule(const Residue &residue);
 
     Molecule(const Molecule &other);
@@ -160,8 +155,7 @@ public:
 
 
    ////// Interfacing with EditMol /////////////////////////
-    EditMol toEditMol() const;
-    void update(const EditMol &editmol, const ConvertFunction &convertfunc);
+    EditMol edit() const;
    /////////////////////////////////////////////////////////
 
 

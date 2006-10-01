@@ -75,7 +75,6 @@ class Improper;
 
 class AtomIDGroup;
 class WeightFunction;
-class ConvertFunction;
 
 class CutGroup;
 
@@ -111,9 +110,6 @@ public:
    ////// Constructors / destructor ////////////////////////
     MoleculeData();
 
-    MoleculeData(const EditMol &editmol,
-                 const ConvertFunction &convertfunc);
-
     MoleculeData(const MoleculeData &other);
 
     ~MoleculeData();
@@ -137,8 +133,7 @@ public:
 
 
    ////// Interfacing with EditMol /////////////////////////
-    EditMol toEditMol() const;
-    void update(const EditMol &editmol, const ConvertFunction &convertfunc);
+    EditMol edit() const;
    /////////////////////////////////////////////////////////
 
 

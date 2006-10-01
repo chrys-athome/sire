@@ -117,21 +117,6 @@ MoleculeData::MoleculeData()
                   _id(0), _molversion(0,0)
 {}
 
-/** Construct the molecule data from an EditMol using the conversion function
-    'converter'
-*/
-MoleculeData::MoleculeData(const EditMol &editmol,
-                                 const ConvertFunction &converter)
-                : QSharedData(),
-                  _id(0), _molversion(0,0)
-{
-    //ok - lets build everything.
-    this->update(editmol, converter);
-
-    //ok - we're done. Just have to give the molecule a new ID number :-)
-    this->setNewID();
-}
-
 /** Copy constructor */
 MoleculeData::MoleculeData(const MoleculeData &other)
                 : QSharedData(),

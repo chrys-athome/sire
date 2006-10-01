@@ -82,13 +82,6 @@ QDataStream& operator>>(QDataStream &ds, Molecule &mol)
 Molecule::Molecule() : d( MoleculeData::null() )
 {}
 
-/** Construct a molecule called 'molname' as a copy of the passed EditMol,
-    using the EditMol -> Molecule conversion function 'converter'
-*/
-Molecule::Molecule(const EditMol &editmol, const ConvertFunction &convertfunc)
-         : d( new MoleculeData(editmol, convertfunc) )
-{}
-
 /** Construct a Molecule that is a copy of the molecule that contains the
     residue 'residue' */
 Molecule::Molecule(const Residue &residue) : d( residue.d )
