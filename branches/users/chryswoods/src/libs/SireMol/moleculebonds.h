@@ -54,8 +54,13 @@ public:
     void remove(ResNum resnum, const QString &atom0, const QString &atom1);
     void remove(const Bond &bond);
 
-    void removeAll(const AtomIndex &atom);
-    void removeAll(ResNum resnum);
+    void remove(const AtomIndex &atom);
+    void remove(ResNum resnum);
+
+    void removeIntra(ResNum resnum);
+    void removeInter(ResNum resnum);
+
+    void renumberResidue(ResNum oldnum, ResNum newnum);
 
     void clear();
     void finalise();

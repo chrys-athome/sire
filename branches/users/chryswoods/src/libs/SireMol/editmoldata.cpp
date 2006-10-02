@@ -1,3 +1,17 @@
+/**
+  * @file
+  *
+  * C++ Implementation: EditMol
+  *
+  * Description:
+  * Implementation of EditMol, and private EditMol classes,
+  * EditMolData_AtomData and EditMolData_ResData
+  *
+  * Author: Christopher Woods, (C) 2006
+  *
+  * Copyright: See COPYING file that comes with this distribution
+  *
+  */
 
 #include "qhash_siremol.h"
 
@@ -13,7 +27,7 @@ namespace SireMol
         /** Null constructor */
         EditMolData_AtomData() : atomnum(0), cgnum(0), element(0), coords(0)
         {}
-        
+
         /** Copy constructor */
         EditMolData_AtomData(const EditMolData_AtomData &other)
                   : atomnum(other.atomnum),
@@ -21,11 +35,11 @@ namespace SireMol
                     element(other.element),
                     coords(other.coords)
         {}
-        
+
         /** Destructor */
         ~EditMolData_AtomData()
         {}
-        
+
         /** Assignment operator */
         EditMolData_AtomData& operator=(const EditMolData_AtomData &other)
         {
@@ -35,16 +49,16 @@ namespace SireMol
             coords = other.coords;
             return *this;
         }
-        
+
         /** Comparison operator */
         bool operator==(const EditMolData_AtomData &other) const
         {
-            return atomnum == other.atomnum and 
-                   cgnum == other.cgnum and 
+            return atomnum == other.atomnum and
+                   cgnum == other.cgnum and
                    element == other.element and
                    coords == other.coords;
         }
-        
+
         /** Comparison operator */
         bool operator!=(const EditMolData_AtomData &other) const
         {
@@ -53,17 +67,17 @@ namespace SireMol
                    element != other.element or
                    coords != other.coords;
         }
-        
+
         /** The user-supplied atom number */
         AtomNum atomnum;
-        
-        /** The user-supplied number of the CutGroup that this 
+
+        /** The user-supplied number of the CutGroup that this
             atom is within */
         CutGroupNum cgnum;
-        
+
         /** The chemical element of this atom */
         Element element;
-        
+
         /** The coordinates of this atom */
         Vector coords;
     };
@@ -76,18 +90,18 @@ namespace SireMol
         /** Empty constructor */
         EditMolData_ResData()
         {}
-        
+
         /** Copy constructor */
         EditMolData_ResData(const EditMolData_ResData &other)
                  : resname(other.resname),
                    atoms(other.atoms),
                    atomnames(other.atomnames)
         {}
-        
+
         /** Destructor */
         ~EditMolData_ResData()
         {}
-        
+
         /** Assignment operator */
         EditMolData_ResData& operator=(const EditMolData_ResData &other)
         {
@@ -96,15 +110,15 @@ namespace SireMol
             atomnames = other.atomnames;
             return *this;
         }
-        
+
         /** Comparison operator */
         bool operator==(const EditMolData_ResData &other) const
         {
-            return resname == other.resname and 
-                   atomnames == other.atomnames and 
+            return resname == other.resname and
+                   atomnames == other.atomnames and
                    atoms == other.atoms;
         }
-        
+
         /** Comparison operator */
         bool operator!=(const EditMolData_ResData &other) const
         {
@@ -112,15 +126,15 @@ namespace SireMol
                    atomnames != other.atomnames or
                    atoms != other.atoms;
         }
-        
+
         /** The name of the residue */
         QString resname;
-        
+
         /** The data for the atoms in this residue, indexed
             by their name */
         QHash<QString,EditMolData_AtomData> atoms;
-        
-        /** The names of the atoms in this residue in the 
+
+        /** The names of the atoms in this residue in the
             order in which they were added to this residue */
         QStringList atomnames;
     };
@@ -147,10 +161,10 @@ static const RegisterMetaType<EditMolData_AtomData> r_atomdata(
 /** Serialise to a binary data stream */
 QDataStream &operator<<(QDataStream &ds, const EditMolData_AtomData &atomdata)
 {
-    writeHeader(ds, r_atomdata, 1) 
+    writeHeader(ds, r_atomdata, 1)
               << atomdata.atomnum << atomdata.cgnum
               << atomdata.element << atomdata.coords;
-              
+
     return ds;
 }
 
@@ -158,27 +172,27 @@ QDataStream &operator<<(QDataStream &ds, const EditMolData_AtomData &atomdata)
 QDataStream &operator>>(QDataStream &ds, EditMolData_AtomData &atomdata)
 {
     VersionID v = readHeader(ds, r_atomdata);
-    
+
     if (v == 1)
     {
-        ds >> atomdata.atomnum >> atomdata.cgnum 
+        ds >> atomdata.atomnum >> atomdata.cgnum
            >> atomdata.element >> atomdata.coords;
     }
     else
         throw version_error(v, "1", r_atomdata, CODELOC);
-    
+
     return ds;
 }
 
 static const RegisterMetaType<EditMolData_ResData> r_resdata(
                                       "SireMol::EditMolData_ResData", MAGIC_ONLY);
-                                                             
+
 /** Serialise to a binary data stream */
 QDataStream &operator<<(QDataStream &ds, const EditMolData_ResData &resdata)
 {
-    writeHeader(ds, r_resdata, 1) 
+    writeHeader(ds, r_resdata, 1)
               << resdata.resname << resdata.atomnames << resdata.atoms;
-              
+
     return ds;
 }
 
@@ -186,17 +200,17 @@ QDataStream &operator<<(QDataStream &ds, const EditMolData_ResData &resdata)
 QDataStream &operator>>(QDataStream &ds, EditMolData_ResData &resdata)
 {
     VersionID v = readHeader(ds, r_resdata);
-    
+
     if (v == 1)
     {
         ds >> resdata.resname >> resdata.atomnames >> resdata.atoms;
     }
     else
         throw version_error(v, "1", r_resdata, CODELOC);
-    
+
     return ds;
 }
-                                                             
+
 static const RegisterMetaType<EditMolData> r_editmoldata("SireMol::EditMolData");
 
 /** Serialise an EditMolData to a datastream */
@@ -246,7 +260,7 @@ EditMolData::~EditMolData()
 
 //////// Unsafe functions ///////////////////////
 /** Return a reference to the ResData that contains the information for
-    the residue with number 'resnum' - this does not check whether this is 
+    the residue with number 'resnum' - this does not check whether this is
     a valid residue number. */
 EditMolData_ResData& EditMolData::_unsafe_resdata(ResNum resnum)
 {
@@ -254,28 +268,28 @@ EditMolData_ResData& EditMolData::_unsafe_resdata(ResNum resnum)
 }
 
 /** Return a reference to the ResData that contains the information for
-    the residue with number 'resnum' - this does not check whether this is 
+    the residue with number 'resnum' - this does not check whether this is
     a valid residue number. */
 const EditMolData_ResData& EditMolData::_unsafe_resdata(ResNum resnum) const
 {
     return atms.find(resnum).value();
 }
 
-/** Return a reference to the AtomData for the atom 'atom' - this does 
+/** Return a reference to the AtomData for the atom 'atom' - this does
     not check whether there is such an atom in this molecule */
 EditMolData_ResData& EditMolData::_unsafe_atomdata(const AtomIndex &atom)
 {
     return this->_unsafe_resdata(atom.resNum()).atoms.find(atom.name()).value();
 }
 
-/** Return a reference to the AtomData for the atom 'atom' - this does 
+/** Return a reference to the AtomData for the atom 'atom' - this does
     not check whether there is such an atom in this molecule */
 const EditMolData_ResData& EditMolData::_unsafe_atomdata(const AtomIndex &atom) const
 {
     return this->_unsafe_resdata(atom.resNum()).atoms.find(atom.name()).value();
 }
 
-/** Return a copy of the atom at index 'atm' - this does not check 
+/** Return a copy of the atom at index 'atm' - this does not check
     if this is a valid index */
 Atom EditMolData::_unsafe_atom(const AtomIndex &atm) const
 {
@@ -318,7 +332,7 @@ void EditMolData::assertResidueExists(ResID resid) const
                     .arg(resid).arg(molnme).arg(resnums.count), CODELOC );
 }
 
-/** Assert that the CutGroup with ID == 'cgid' exists in this molecule 
+/** Assert that the CutGroup with ID == 'cgid' exists in this molecule
 
     \throw SireMol::missing_cutgroup
 */
@@ -331,7 +345,7 @@ void EditMolData::assertCutGroupExists(CutGroupID cgid) const
                   .arg(cgid).arg(molnme).arg(cgnums.count()), CODELOC );
 }
 
-/** Assert that the CutGroup with number 'cgnum' exists in this molecule 
+/** Assert that the CutGroup with number 'cgnum' exists in this molecule
 
     \throw SireMol::missing_cutgroup
 */
@@ -352,7 +366,7 @@ void EditMolData::assertCutGroupExists(CutGroupNum cgnum) const
 void EditMolData::assertAtomExists(const AtomIndex &atom) const
 {
     this->assertResidueExists(atom.resNum());
-    
+
     if ( not this->_unsafe_resdata(atom.resNum()).atoms.contains(atom.name()) )
         throw SireMol::missing_atom( QObject::tr(
                 "There is no atom with name \"%1\" in residue \"%2\" in molecule \"%3\"")
@@ -369,7 +383,7 @@ ResNum EditMolData::residueNumber(ResID resid) const
     return resnums[resid];
 }
 
-/** Return the CutGroupNum of the CutGroup with ID == 'cgid' 
+/** Return the CutGroupNum of the CutGroup with ID == 'cgid'
 
     \throw SireMol::missing_cutgroup
 */
@@ -394,7 +408,7 @@ void EditMolData::assertAtomExists(AtomID atomid) const
                     .arg(atomid).arg(molnme).arg(nats), CODELOC );
 }
 
-/** Assert that the EditMol contains an atom at index 'cgatomid' 
+/** Assert that the EditMol contains an atom at index 'cgatomid'
 
     \throw SireMol::missing_cutgroup
     \throw SireError::invalid_index
@@ -402,7 +416,7 @@ void EditMolData::assertAtomExists(AtomID atomid) const
 void EditMolData::assertAtomExists(const CGAtomID &cgatomid) const
 {
     int nats = cgatoms.find(this->cutGroupNum(cgatomid.cutGroupID()))->count();
-    
+
     if (cgatomid.atomID() >= nats)
         throw SireError::invalid_index( QObject::tr(
                 "There is no atom at index \"%1\" in the CutGroup with "
@@ -420,9 +434,9 @@ void EditMolData::assertAtomExists(const CGAtomID &cgatomid) const
 void EditMolData::assertAtomExists(const CGNumAtomID &cgatomid) const
 {
     this->assertCutGroupExists(cgatomid.cutGroupNum());
-    
+
     int nats = cgatoms.find(cgatomid.cutGroupNum())->count();
-    
+
     if (cgatomid.atomID() >= nats)
         throw SireError::invalid_index( QObject::tr(
                 "There is no atom at index \"%1\" in the CutGroup with "
@@ -432,7 +446,7 @@ void EditMolData::assertAtomExists(const CGNumAtomID &cgatomid) const
                     .arg(molnme).arg(nats), CODELOC );
 }
 
-/** Assert that the EditMol contains an atom at index 'resatomid' 
+/** Assert that the EditMol contains an atom at index 'resatomid'
 
     \throw SireMol::missing_residue
     \throw SireError::invalid_index
@@ -440,9 +454,9 @@ void EditMolData::assertAtomExists(const CGNumAtomID &cgatomid) const
 void EditMolData::assertAtomExists(const ResNumAtomID &resatomid) const
 {
     this->assertResidueExists(resatomid.resNum());
-    
+
     int nats = this->_unsafe_resdata(resatomid.resNum()).atomnames.count();
-    
+
     if (resatomid.atomID() >= nats)
         throw SireError::invalid_index( QObject::tr(
               "There is no atom at index \"%1\" in the residue with "
@@ -460,7 +474,7 @@ void EditMolData::assertAtomExists(const ResIDAtomID &resatomid) const
 {
     int nats = this->_unsafe_resdata(this->residueNumber(resatomid.resID()))
                                                                   .atomnames.count();
-    
+
     if (resatomid.atomID() >= nats)
         throw SireError::invalid_index( QObject::tr(
               "There is no atom at index \"%1\" in the residue at "
@@ -502,7 +516,7 @@ EditMolData& EditMolData::operator=(const EditMolData &other)
     cgatoms = other.cgatoms;
     cgnums =  other.cgnums;
     molbnds = other.molbnds;
-    
+
     return *this;
 }
 
@@ -510,12 +524,12 @@ EditMolData& EditMolData::operator=(const EditMolData &other)
 bool EditMolData::operator==(const EditMolData &other) const
 {
     return (this == &other) or
-           ( molnme == other.molnme and 
+           ( molnme == other.molnme and
              molid == other.molid and
-             molversion == other.molversion and 
-             atms == other.atms and 
-             resnums == other.resnum and 
-             cgatoms == other.cgatoms and 
+             molversion == other.molversion and
+             atms == other.atms and
+             resnums == other.resnum and
+             cgatoms == other.cgatoms and
              cgnums == other.cgnums and
              molbnds == other.molbnds );
 }
@@ -526,9 +540,9 @@ bool EditMolData::operator!=(const EditMolData &other) const
     return not (*this == other);
 }
 
-Molecule EditMolData::commit() const
-{
-}
+// Molecule EditMolData::commit() const
+// {
+// }
 
 /** @name Indexing operators
     These indexing operators allow conversion from general indicies
@@ -538,6 +552,21 @@ Molecule EditMolData::commit() const
 /////////////////////////////////////////////////////////
 //@{
 
+/** Return the AtomIndex associated with the AtomIndex 'atm'.
+    This just checks that 'atm' is valid in this molecule
+    and then returns it - this is a useful function that
+    allows template functions to work with AtomIndex as
+    well as all of the other index types
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+AtomIndex EditMolData::operator[](const AtomIndex &atm) const
+{
+    this->assertAtomExists(atm);
+    return atm;
+}
+
 /** Return the AtomIndex of the atom at index 'atomid'
 
     \throw SireError::invalid_index
@@ -545,35 +574,35 @@ Molecule EditMolData::commit() const
 AtomIndex EditMolData::operator[](AtomID atomid) const
 {
     this->assertAtomExists(atomid);
-    
+
     //the total number of atoms passed so far...
     int nats = 0;
-    
+
     //loop through each residue, in order
     foreach (ResNum resnum, resnums)
     {
         //get the data for this residue
         const EditMolData_ResData &resdata = this->_unsafe_resdata(resnum);
-        
+
         const QStringList &atomnames = resdata.atomnames;
-        
+
         //add the number of atoms in this residue onto the total
         nats += atomnames.count();
-        
+
         //is 'nats' greater than 'atomid' - if so then the atom
         //with this index must be in this residue
         if (atomid < nats)
         {
-            //the atom is in this residue - convert 'nats' into an 
+            //the atom is in this residue - convert 'nats' into an
             //index into this residue
             return AtomIndex( atomnames[ atomnames.count() - nats + atomid ],
                               resnum );
         }
     }
-    
+
     //we should never get here!
     BOOST_ASSERT( bool we_should_never_get_here(false) );
-    
+
     return AtomIndex();
 }
 
@@ -585,7 +614,7 @@ AtomIndex EditMolData::operator[](AtomID atomid) const
 AtomIndex EditMolData::operator[](const ResNumAtomID &resatomid) const
 {
     this->assertAtomExists(resatomid);
-    
+
     return AtomIndex( this->_unsafe_resdata(resatomid.resNum())
                                 .atomnames[resatomid.atomID()],
                       resatomid.resNum() );
@@ -598,7 +627,7 @@ AtomIndex EditMolData::operator[](const ResNumAtomID &resatomid) const
 AtomIndex EditMolData::operator[](const ResIDAtomID &resatomid) const
 {
     ResNum resnum = this->residueNumber(resatomid.resID());
-    
+
     return AtomIndex( this->_unsafe_resdata(resnum).atomnames[resatomid.atomID()],
                       resnum );
 }
@@ -613,11 +642,11 @@ AtomIndex EditMolData::operator[](const CGAtomID &cgatomid) const
     this->assertAtomExists(cgatomid);
 
     CutGroupNum cgnum = this->cutGroupNum(cgatomid.cutGroupID());
-    
+
     return cgatoms.find(cgnum).at(cgatomid.atomID());
 }
 
-/** Return the AtomIndex of the atom at index 'cgatomid' 
+/** Return the AtomIndex of the atom at index 'cgatomid'
 
     \throw SireMol::missing_cutgroup
     \throw SireError::invalid_index
@@ -625,17 +654,31 @@ AtomIndex EditMolData::operator[](const CGAtomID &cgatomid) const
 AtomIndex EditMolData::operator[](const CGNumAtomID &cgatomid) const
 {
     this->assertAtomExists(cgatomid);
-    
+
     return cgatoms.find(cgatomid.cutGroupNum()).at(cgatomid.atomID());
 }
 
-/** Return the residue number of the residue at index 'resid' 
+/** Return the residue number of the residue at index 'resid'
 
     \throw SireError::invalid_index
 */
 ResNum EditMolData::operator[](ResID resid) const
 {
     return this->residueNumber(resid);
+}
+
+/** Return the ResNum associated with the ResNum 'resnum'.
+    This just checks that 'resnum' is valid in this molecule
+    and then returns it - this is a useful function that
+    allows template functions to work with ResNum as
+    well as all of the other index types
+
+    \throw SireMol::missing_residue
+*/
+ResNum EditMolData::operator[](ResNum resnum) const
+{
+    this->assertResidueExists(resnum);
+    return resnum;
 }
 
 /** Return the CutGroupNum of the CutGroup with ID == cgid
@@ -647,29 +690,118 @@ CutGroupNum EditMolData::operator[](CutGroupID cgid) const
     return this->cutGroupNum(cgid);
 }
 
+/** Return the CutGroupNum associated with the CutGroupNum 'cgnum'.
+    This just checks that 'cgnum' is valid in this molecule
+    and then returns it - this is a useful function that
+    allows template functions to work with CutGroupNum as
+    well as all of the other index types
+
+    \throw SireMol::missing_cutgroup
+*/
+CutGroupNum EditMolData::operator[](CutGroupNum cgnum) const
+{
+    this->assertCutGroupExists(cgnum);
+    return cgnum;
+}
+
 /////////////////////////////////////////////////////////
 //@}
 
 
 ///// Querying the molecule /////////////////////////////
 
-/** Return a copy of the CutGroup at ID == cgid 
+/** Synonym for operator[](CutGroupID)
 
     \throw SireMol::missing_cutgroup
 */
-CutGroup EditMolData::at(CutGroupID cgid) const
+CutGroupNum EditMolData::at(CutGroupID cgid) const
 {
-    return this->cutGroup(cgid);
+    return this->operator[](cgid);
 }
 
-/** Return the atom at index 'atm'
+/** Synonym for operator[](CutGroupNum)
+
+    \throw SireMol::missing_cutgroup
+*/
+CutGroupNum EditMolData::at(CutGroupNum cgnum) const
+{
+    return this->operator[](cgnum);
+}
+
+/** Synonym for operator[](ResID)
+
+    \throw SireError::invalid_index
+*/
+ResNum EditMolData::at(ResID resid) const
+{
+    return this->operator[](resid);
+}
+
+/** Synonym for operator[](ResNum)
+
+    \throw SireMol::missing_residue
+*/
+ResNum EditMolData::at(ResNum resnum) const
+{
+    return this->operator[](resnum);
+}
+
+/** Synonym for operator[](AtomIndex)
 
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-Atom EditMolData::at(const AtomIndex &atm) const
+AtomIndex EditMolData::at(const AtomIndex &atom) const
 {
-    return this->atom(atm);
+    return this->operator[](atom);
+}
+
+/** Synonym for operator[](AtomID)
+
+    \throw SireError::invalid_index
+*/
+AtomIndex EditMolData::at(AtomID atomid) const
+{
+    return this->operator[](atomid);
+}
+
+/** Synonym for operator[](ResNumAtomID)
+
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+*/
+AtomIndex EditMolData::at(const ResNumAtomID &resatomid) const
+{
+    return this->operator[](resatomid);
+}
+
+/** Synonym for operator[](ResIDAtomID)
+
+    \throw SireError::invalid_index
+*/
+AtomIndex EditMolData::at(const ResIDAtomID &resatomid) const
+{
+    return this->operator[](resatomid);
+}
+
+/** Synonym for operator[](CGAtomID)
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+AtomIndex EditMolData::at(const CGAtomID &cgatomid) const
+{
+    return this->operator[](cgatomid);
+}
+
+/** Synonym for operator[](CGNumAtomID)
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+AtomIndex EditMolData::at(const CGNumAtomID &cgatomid) const
+{
+    return this->operator[](cgatomid);
 }
 
 /** Return the connectivity of this molecule */
@@ -687,86 +819,86 @@ ResidueBonds EditMolData::connectivity(ResNum resnum) const
 
 /** Return the metadata for this molecule - this will be slow
     as it involves copying all of the data for this molecule */
-MoleculeInfo EditMolData::info() const
-{
-}
+// MoleculeInfo EditMolData::info() const
+// {
+// }
 
 /** Return an array of the CutGroups in this molecule, in the order
     that they appear in this molecule (CutGroupID order) */
 QVector<CutGroup> EditMolData::cutGroups() const
 {
     int ncg = cgnums.count();
-    
+
     QVector<CutGroup> cgroups;
     cgroups.reserve(ncg);
-    
+
     for (int i=0; i<ncg; ++i)
     {
         cgroups.append( this->_unsafe_cutGroup( cgnums[i] ) );
     }
-    
+
     return cgroups;
 }
 
-/** Return a copy of the CutGroups that contain atoms in the residue with 
-    number 'resnum' 
-    
+/** Return a copy of the CutGroups that contain atoms in the residue with
+    number 'resnum'
+
     \throw SireMol::missing_residue
 */
-QHash<CutGroupID,CutGroup> EditMolData::cutGroups(ResNum resnum) const
+QHash<CutGroupNum,CutGroup> EditMolData::cutGroups(ResNum resnum) const
 {
-    QSet<CutGroupID> cgids = this->cutGroupIDs(resnum);
-    
-    return this->cutGroups(cgids);
+    QSet<CutGroupNum> cgnums = this->cutGroupNums(resnum);
+
+    return this->cutGroups(cgnums);
 }
 
-/** Return a copy of the CutGroup with ID == cgid 
+/** Return a copy of the CutGroup with number 'cgnum'
 
     \throw SireMol::missing_cutgroup
 */
-CutGroup EditMolData::cutGroup(CutGroupID cgid) const
+CutGroup EditMolData::cutGroup(CutGroupNum cgnum) const
 {
-    this->assertCutGroupExists(cgid);
-    return this->_unsafe_cutGroup(cgid);
+    this->assertCutGroupExists(cgnum);
+    return this->_unsafe_cutGroup(cgnum);
 }
 
-/** Return an array containing a copy of all of the CoordGroups 
+/** Return an array containing a copy of all of the CoordGroups
     for all of the CutGroups in this molecule, in the same order
     as the CutGroups appear in this molecule (CutGroupID order) */
 QVector<CoordGroup> EditMolData::coordGroups() const
 {
     int ncg = cgnums.count();
-    
+
     QVector<CoordGroup> cgroups;
     cgroups.reserve(ncg);
-    
+
     for (int i=0; i<ncg; ++i)
         cgroups.append( this->_unsafe_coordGroup(cgnums[i]) );
-        
+
     return cgroups;
 }
 
 /** Return copies of all CoordGroups that contain coordinates from atoms
     with residue number 'resnum'
-    
+
     \throw SireMol::missing_residue
 */
-QHash<CutGroupID,CoordGroup> EditMolData::coordGroups(ResNum resnum) const
+QHash<CutGroupNum,CoordGroup> EditMolData::coordGroups(ResNum resnum) const
 {
-    return this->cutGroups( this->cutGroupIDs(resnum) );
+    return this->cutGroups( this->cutGroupNums(resnum) );
 }
 
-/** Return a copy of the CoordGroup for the CutGroup with ID == cgid 
+/** Return a copy of the CoordGroup for the CutGroup with number 'cgnum'
 
     \throw SireMol::missing_cutgroup
-*/    
-CoordGroup EditMolData::coordGroup(CutGroupID cgid) const
+*/
+CoordGroup EditMolData::coordGroup(CutGroupNum cgnum) const
 {
-    this->assertCutGroupExists(cgid);
-    return this->_unsafe_coordGroup(cgid);
+    this->assertCutGroupExists(cgnum);
+    return this->_unsafe_coordGroup(cgnum);
 }
 
-/** Return a copy of the atom with index 'atm' 
+/** Return a copy of the atom with index 'atm'
 
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
@@ -777,7 +909,7 @@ Atom EditMolData::atom(const AtomIndex &atm) const
     return this->_unsafe_atom(atm);
 }
 
-/** Return a copy of the coordinates of the atom at index 'atm' 
+/** Return a copy of the coordinates of the atom at index 'atm'
 
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
@@ -793,26 +925,26 @@ Vector EditMolData::coordinates(const AtomIndex &atm) const
 QVector<Atom> EditMolData::atoms() const
 {
     int nats = this->nAtoms();
-    
+
     QVector<Atom> allatoms;
     allatoms.reserve(nats);
-    
+
     int nres = this->nResidues();
     for (int i=0; i<nres; ++i)
     {
         ResNum resnum = resnums[i];
-    
+
         const EditMolData_ResData &resdata = this->_unsafe_resdata(resnum);
-        
+
         foreach( QString atmname, resdata.atomnames )
         {
             const EditMolData_AtomData &atomdata = resdata.atoms.find(atmname).value();
-        
+
             allatoms.append( Atom( atomdata.atomnum, AtomIndex(atmname,resnum),
                                    atomdata.element, atomdata.coords ) );
         }
     }
-    
+
     return allatoms;
 }
 
@@ -822,109 +954,567 @@ QVector<Atom> EditMolData::atoms() const
 QVector<Vector> EditMolData::coordinates() const
 {
     int nats = this->nAtoms();
-    
+
     QVector<Vector> coords;
     coords.reserve(nats);
-    
+
     int nres = this->nResidues();
     for (int i=0; i<nres; ++i)
     {
         ResNum resnum = resnums[i];
-        
+
         const EditMolData_ResData &resdata = this->_unsafe_resdata(resnum);
-        
+
         foreach( QString atmname, resdata.atomnames )
         {
             const EditMolData_AtomData &atomdata = resdata.atoms.find(atmname).value();
-            
+
             coords.append( atomdata.coords );
         }
     }
-    
+
     return coords;
 }
 
-QHash<CGAtomID,Atom> EditMolData::atoms(const QSet<CGAtomID> &cgatomids) const;
-QHash<CGNumAtomID,Atom> EditMolData::atoms(const QSet<CGNumAtomID> &cgnumatomids) const;
-QHash<ResNumAtomID,Atom> EditMolData::atoms(const QSet<ResNumAtomID> &resatomids) const;
-QHash<ResIDAtomID,Atom> EditMolData::atoms(const QSet<ResIDAtomID> &resatomids) const;
-QHash<AtomIndex,Atom> EditMolData::atoms(const QSet<AtomIndex> &atoms) const;
+/** Return an array of all of the atoms in the CutGroup with number
+    'cgnum', in the same order as the atoms appear in this CutGroup
+    (AtomID order)
 
-QVector<Atom> EditMolData::atoms(CutGroupID cgid) const;
-QHash< CutGroupID,QVector<Atom> > EditMolData::atoms(const QSet<CutGroupID> &cgids) const;
-QHash< CutGroupNum,QVector<Atom> > EditMolData::atoms(const QSet<CutGroupNum> &cgnums) const;
+    \throw SireMol::missing_cutgroup
+*/
+QVector<Atom> EditMolData::atoms(CutGroupNum cgnum) const
+{
+    this->assertCutGroupExists(cgnum);
 
-QVector<Atom> EditMolData::atoms(ResNum resnum) const;
-QHash< ResNum,QVector<Atom> > EditMolData::atoms(const QSet<ResNum> &resnums) const;
-QHash< ResID,QVector<Atom> > EditMolData::atoms(const QSet<ResID> &resids) const;
+    const QList<AtomIndex> &cgatms = cgatoms.find(cgnum).value();
 
-QHash<CGAtomID,Vector> EditMolData::coordinates(const QSet<CGAtomID> &cgatomids) const;
-QHash<CGNumAtomID,Vector> EditMolData::coordinates(const QSet<CGNumAtomID> &cgnumatomids) const;
-QHash<ResNumAtomID,Vector> EditMolData::coordinates(const QSet<ResNumAtomID> &resatomids) const;
-QHash<ResIDAtomID,Vector> EditMolData::coordinates(const QSet<ResIDAtomID> &resatomids) const;
-QHash<AtomIndex,Vector> EditMolData::coordinates(const QSet<AtomIndex> &atoms) const;
+    QVector<Atom> allatoms;
+    allatoms.reserve( cgatms.count() );
 
-QVector<Vector> EditMolData::coordinates(CutGroupID cgid) const;
-QHash< CutGroupID,QVector<Vector> >
-EditMolData::coordinates(const QSet<CutGroupID> &cgids) const;
-QHash< CutGroupNum,QVector<Vector> >
-EditMolData::coordinates(const QSet<CutGroupNum> &cgnums) const;
+    for (QList<AtomIndex>::const_iterator it = cgatms.begin();
+         it != cgatms.end();
+         ++it)
+    {
+        allatoms.append( this->_unsafe_atom(*it) );
+    }
 
-QVector<Vector> EditMolData::coordinates(ResNum resnum) const;
-QHash< ResNum,QVector<Vector> >
-EditMolData::coordinates(const QSet<ResNum> &resnums) const;
-QHash< ResID,QVector<Vector> >
-EditMolData::coordinates(const QSet<ResID> &resids) const;
+    return allatoms;
+}
 
-SireMaths::Line EditMolData::bond(const Bond &bnd) const;
-SireMaths::Triangle EditMolData::angle(const SireMol::Angle &ang) const;
-SireMaths::Torsion EditMolData::dihedral(const Dihedral &dih) const;
-SireMaths::Torsion EditMolData::improper(const Improper &improper) const;
+/** Return an array of all of the atoms in the Residue with number
+    'resnum', in the same order as the atoms appear in this residue
+    (AtomID order)
 
-double EditMolData::measure(const Bond &bnd) const;
-SireMaths::Angle EditMolData::measure(const SireMol::Angle &ang) const;
-SireMaths::Angle EditMolData::measure(const Dihedral &dih) const;
-SireMaths::Angle EditMolData::measure(const Improper &improper) const;
+    \throw SireMol::missing_residue
+*/
+QVector<Atom> EditMolData::atoms(ResNum resnum) const
+{
+    this->assertResidueExists(resnum);
 
+    const EditMolData_ResData &resdata = this->_unsafe_resdata(resnum);
+
+    QVector<Atom> allatoms;
+    allatoms.reserve( resdata.atomnames.count() );
+
+    for (QStringList::const_iterator it = resdata.atomnames.begin();
+         it != resdata.atomnames.end();
+         ++it)
+    {
+        const EditMolData_AtomData &atomdata =
+                                  resdata.atoms.find(*it).value();
+
+        allatoms.append( Atom(atomdata.atomnum,
+                              AtomIndex(*it, resnum),
+                              atomdata.element,
+                              atomdata.coords) );
+    }
+
+    return allatoms;
+}
+
+/** Return an array of all of the coordinates of the atoms in the
+    CutGroup with number 'cgnum', in the same order as the atoms
+    appear in this CutGroup (AtomID order)
+
+    \throw SireMol::missing_cutgroup
+*/
+QVector<Vector> EditMolData::coordinates(CutGroupID cgid) const
+{
+    this->assertCutGroupExists(cgid);
+
+    const QList<AtomIndex> &cgatms = cgatoms.find(cgnum).value();
+
+    QVector<Vector> allcoords;
+    allcoords.reserve( cgatms.count() );
+
+    for (QList<AtomIndex>::const_iterator it = cgatms.begin();
+         it != cgatms.end();
+         ++it)
+    {
+        allatoms.append( this->_unsafe_coordinates(*it) );
+    }
+
+    return allcoords;
+}
+
+/** Return an array of all of the coordinates of all of the atoms in the
+    Residue with number 'resnum', in the same order as the atoms appear
+    in this residue (AtomID order)
+
+    \throw SireMol::missing_residue
+*/
+QVector<Atom> EditMolData::coordinates(ResNum resnum) const
+{
+    this->assertResidueExists(resnum);
+
+    const EditMolData_ResData &resdata = this->_unsafe_resdata(resnum);
+
+    QVector<Vector> allcoords;
+    allcoords.reserve( resdata.atomnames.count() );
+
+    for (QStringList::const_iterator it = resdata.atomnames.begin();
+         it != resdata.atomnames.end();
+         ++it)
+    {
+        const EditMolData_AtomData &atomdata =
+                                  resdata.atoms.find(*it).value();
+
+        allcoords.append( atomdata.coords );
+    }
+
+    return allcoords;
+}
+
+/** Return the geometric line corresponding to the bond 'bnd'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+SireMaths::Line EditMolData::bond(const Bond &bnd) const
+{
+    return SireMaths::Line( this->coordinates(bnd.atom0()),
+                            this->coordinates(bnd.atom1()) );
+}
+
+/** Return the geometric triangle corresponding to the angle 'ang'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+SireMaths::Triangle EditMolData::angle(const SireMol::Angle &ang) const
+{
+    return SireMaths::Triangle( this->coordinates(ang.atom0()),
+                                this->coordinates(ang.atom1()),
+                                this->coordinates(ang.atom2()) );
+}
+
+/** Return the geometric torsion corresponding to the dihedral 'dih'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+SireMaths::Torsion EditMolData::dihedral(const Dihedral &dih) const
+{
+    return SireMaths::Torsion( this->coordinates(dih.atom0()),
+                               this->coordinates(dih.atom1()),
+                               this->coordinates(dih.atom2()),
+                               this->coordinates(dih.atom3()) );
+}
+
+/** Return the geometric torsion corresponding to the improper angle 'imp'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+SireMaths::Torsion EditMolData::improper(const Improper &imp) const
+{
+    return SireMaths::Torsion( this->coordinates(imp.atom0()),
+                               this->coordinates(imp.atom1()),
+                               this->coordinates(imp.atom2()),
+                               this->coordinates(imp.atom3()) );
+}
+
+/** Return the length of the bond 'bnd'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+double EditMolData::measure(const Bond &bnd) const
+{
+    return bond(bnd).length();
+}
+
+/** Return the size of the angle 'ang'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+SireMaths::Angle EditMolData::measure(const SireMol::Angle &ang) const
+{
+    return angle(ang).angle();
+}
+
+/** Return the size of the dihedral 'dih'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+SireMaths::Angle EditMolData::measure(const Dihedral &dih) const
+{
+    return dihedral(dih).angle();
+}
+
+/** Return the size of the improper angle 'imp'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+SireMaths::Angle EditMolData::measure(const Improper &imp) const
+{
+    throw SireError::incomplete_code("Need to write this!", CODELOC);
+
+    return 0.0;
+}
+
+/** Return the relative weights of 'group0' and 'group1' in this
+    molecule.
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
 double EditMolData::getWeight(const AtomIDGroup &group0, const AtomIDGroup &group1,
-                 const WeightFunction &weightfunc) const;
-/////////////////////////////////////////////////////////
+                              const WeightFunction &weightfunc) const
+{
+    //create a calculator workspace for the weight calculation
+    WeightCalculator calc(weightfunc);
 
+#warning EditMolData::getWeight() needs refactoring as it is inefficient!
 
-//////// Editing the molecule ///////////////////
-void EditMolData::setName(const QString &name);
-void EditMolData::setResidueName(ResNum resnum, const QString &name);
+    //add all of atoms in the groups to the calculator
+    foreach( AtomIndex atm, group0.atoms() )
+    {
+        calc.addToA( atom(atm) );
+    }
 
-void EditMolData::clear();
-void EditMolData::clean();
-void EditMolData::clearResidue(ResNum resnum);
+    foreach( AtomIndex atm, group1.atoms() )
+    {
+        calc.addToB( atom(atm) );
+    }
 
-void EditMolData::renumberResidue(ResNum resnum, ResNum newresnum);
+    //now add all of the residues
+    foreach( ResNum resnum, group0.residues() )
+    {
+        calc.addToA( atoms(resnum) );
+    }
 
-void EditMolData::add(const Atom &atom);
-void EditMolData::remove(const AtomIndex &atom);
+    foreach( ResNum resnum, group1.residues() )
+    {
+        calc.addToB( atoms(resnum) );
+    }
 
-void EditMolData::add(const Bond &bond);
-void EditMolData::remove(const Bond &bond);
+    return calc.weight();
+}
 
-void EditMolData::removeAllBonds(ResNum resnum);
-void EditMolData::removeAllBonds(const AtomIndex &atom);
-void EditMolData::removeAllBonds();
+/** Set the name of this molecule */
+void EditMolData::setName(const QString &name)
+{
+    molnme = name;
+}
 
-EditRes EditMolData::addResidue(ResNum resnum, const QString &resnam);
-EditRes EditMolData::addResidue(ResNum resnum, const EditRes &tmpl);
-EditRes EditMolData::addResidue(ResNum resnum, const QString &resnam, const EditRes &tmpl);
+/** Set the name of the residue with number 'resnum'
 
-void EditMolData::remove(ResNum resnum);
+    \throw SireMol::missing_residue
+*/
+void EditMolData::setResidueName(ResNum resnum, const QString &name)
+{
+    this->assertResidueExists(resnum);
+    this->_unsafe_resdata.resname = name;
+}
 
-void EditMolData::removeAllResidues(const QString &resnam);
-/////////////////////////////////////////////////
+/** Clean this molecule - this removes any empty residues */
+void EditMolData::clean()
+{
+    QList<ResNum> oldnums = resnums;
 
+    for (QList<ResNum>::const_iterator it = oldnums.begin();
+         it != oldnums.end();
+         ++it)
+    {
+        if (this->isEmpty(resnum))
+            this->remove(resnum);
+    }
+}
 
-//////// Moving the molecule ////////////////////
-void EditMolData::translate(const Vector &delta);
-void EditMolData::translate(const AtomIDGroup &group, const Vector &delta);
-void EditMolData::translate(const AtomIndex &atom, const Vector &delta);
+/** Renumber the residue with current number 'resnum' to the new number
+    'newresnum'. This will fail if there is already a residue with this
+    number.
+
+    \throw SireMol::missing_residue
+    \throw SireMol::duplicate_residue
+*/
+void EditMolData::renumberResidue(ResNum oldnum, ResNum newnum)
+{
+    this->assertResidueExists(oldnum);
+    this->assertResidueNotExists(newnum);
+
+    //move the residue in the hash...
+    EditMolData_ResData resdata = atms.take(oldnum);
+    atms.insert( newnum, resdata );
+
+    //renumber the residue in the list of residue numbers
+    resnums.replace( resnums.indexOf(oldnum), newnum );
+
+    //renumber the residue in the molecule's connectivity
+    molbnds.renumberResidue(oldnum, newnum);
+}
+
+/** Add the atom 'atom' to this molecule, and place it into the
+    CutGroup with number 'cgnum'. This will add the residue and
+    CutGroup if necessary. This will throw an exception if this
+    atom already exists.
+
+    \throw SireMol::duplicate_atom
+*/
+void EditMolData::add(const Atom &atom, CutGroupNum cgnum)
+{
+    ResNum resnum = atom.resNum();
+
+    if ( atms.contains(resnum) )
+    {
+        const EditMolData_ResData &resdata = this->_unsafe_resdata(resnum);
+
+        if ( resdata.atoms.contains(atom.name()) )
+            throw SireMol::duplicate_atom( QObject::tr(
+                    "Cannot add the atom %1 to the molecule \"%2\" as it "
+                    "already contains an atom with this name in the residue "
+                    "%3(%4)")
+                        .arg(atom.toString(), molnme, resdata.resname)
+                        .arg(resnum), CODELOC );
+    }
+    else
+    {
+        //the residue containing this atom doesn't exist -
+        //add the residue
+        atms.insert( resnum, EditMolData_ResData() );
+        resnums.append(resnum);
+    }
+
+    //add the atom to the residue data
+    EditMolData_ResData &resdata = this->_unsafe_resdata(resnum);
+
+    resdata.atoms.insert( atom.name(), EditMolData_AtomData(atom) );
+    resdata.atomnames.append( atom.name() );
+
+    //add this to the desired CutGroup
+    if (not cgatoms.contains(cgnum))
+    {
+        cgatoms.insert(cgnum, QList<AtomIndex>());
+        cgnums.append(cgnum);
+    }
+
+    cgatoms[cgnum].append(atom);
+}
+
+/** Add the atom 'atom' to this molecule. This will add the residue if
+    necessary. This will throw an exception if this atom already exists.
+
+    \throw SireMol::duplicate_atom
+*/
+void EditMolData::add(const Atom &atom)
+{
+    this->add( atom, cgfunc.getNumber(atom) );
+}
+
+/** Remove the atom 'atom' from this molecule. Note that removing
+    the last atom from a residue or CutGroup *will not* remove
+    the Residue or CutGroup. Use EditMolData::clean() if you
+    want to remove any empty residues or CutGroups.
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+// void EditMolData::remove(const AtomIndex &atom)
+// {
+// }
+
+/** Add the bond 'bnd' to this molecule - the atoms referred
+    to in the bond must exist or else an exception will be thrown.
+    This does nothing if this bond already exists.
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+void EditMolData::add(const Bond &bond)
+{
+    this->assertAtomExists(bond.atom0());
+    this->assertAtomExists(bond.atom1());
+
+    molbnds.add(bond);
+}
+
+/** Remove the bond 'bond' from this molecule - this does
+    nothing if the bond doesn't exist, but will throw an
+    exception if either of the atoms referenced in the bond
+    are not in this molecule
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+void EditMolData::remove(const Bond &bond)
+{
+    this->assertAtomExists(bond.atom0());
+    this->assertAtomExists(bond.atom1());
+
+    molbnds.remove(bond);
+}
+
+/** Remove all bonds that involve the residue with number 'resnum'.
+
+    \throw SireMol::missing_residue
+*/
+void EditMolData::removeAllBonds(ResNum resnum)
+{
+    this->assertResidueExists(resnum);
+    molbnds.remove(resnum);
+}
+
+/** Remove all bonds that involve the atom 'atom'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+void EditMolData::removeAllBonds(const AtomIndex &atom)
+{
+    this->assertAtomExists(atom);
+    molbnds.remove(atom);
+}
+
+/** Remove all intra-residue bonds in the molecule with number 'resnum'
+
+    \throw SireMol::missing_residue
+*/
+void EditMolData::removeAllIntraBonds(ResNum resnum)
+{
+    this->assertResidueExists(resnum);
+    molbnds.removeIntra(resnum);
+}
+
+/** Remove all inter-residue bonds in the molecule with number 'resnum'
+
+    \throw SireMol::missing_residue
+*/
+void EditMolData::removeAllInterBonds(ResNum resnum)
+{
+    this->assertResidueExists(resnum);
+    molbnds.removeInter(resnum);
+}
+
+/** Remove all bonds from this molecule */
+void EditMolData::removeAllBonds()
+{
+    molbnds.clear();
+}
+
+/** Add the residue with number 'resnum' and name 'resnam'. This
+    will throw an exception if a residue with this number already
+    exists.
+
+    \throw SireMol::duplicate_residue
+*/
+void EditMolData::add(ResNum resnum, const QString &resnam)
+{
+    this->assertResidueNotExists(resnum);
+
+    EditMolData_ResData resdata;
+    resdata.resname = resnam;
+
+    atms.insert( resnum, resdata );
+    resnums.append(resnum);
+}
+
+/** Add the residue with number 'resnum' and name 'resnam' using
+    the residue in 'tmpl' as a template.
+
+    \throw SireMol::duplicate_residue
+*/
+void EditMolData::add(ResNum resnum, const QString &resnam, const EditRes &tmpl)
+{
+}
+
+/** Add the residue with number 'resnum' to this molecule, using the
+    residue in 'tmpl' as a template.
+
+    \throw SireMol::duplicate_residue
+*/
+void EditMolData::add(ResNum resnum, const EditRes &tmpl)
+{
+    this->add(resnum, tmpl.name(), tmpl);
+}
+
+/** Remove the residue with number 'resnum' from this molecule.
+
+    \throw SireMol::missing_residue
+*/
+void EditMolData::remove(ResNum resnum)
+{
+    this->assertResidueExists(resnum);
+
+    molbnds.remove(resnum);
+    atms.remove(resnum);
+    resnums.removeAll(resnum);
+}
+
+/** Translate all of the atoms in the molecule by 'delta' */
+void EditMolData::translate(const Vector &delta)
+{
+    MoveWorkspace workspace(atms);
+
+    foreach( ResNum resnum, resnums )
+    {
+        workspace.translate(*it, delta);
+    }
+
+    atms = workspace.commit();
+}
+
+/** Translate the atom with AtomIndex 'atom' by 'delta'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+void EditMolData::translate(const AtomIndex &atom, const Vector &delta)
+{
+    this->assertAtomExists(atom);
+
+    MoveWorkspace workspace(atms);
+
+    workspace.translate(atom, delta);
+
+    atms = workspace.commit();
+}
+
+/** Translate all of the atoms in the group 'group' by 'delta'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+void EditMolData::translate(const AtomIDGroup &group, const Vector &delta)
+{
+    MoveWorkspace workspace(atms);
+
+    foreach( ResNum resnum, group.residues() )
+    {
+        workspace.translate( resnum, delta );
+    }
+
+    foreach( AtomIndex atom, group.atoms() )
+    {
+        workspace.translate( atom, delta );
+    }
+
+    atms = workspace.commit();
+}
+
 void EditMolData::translate(const QSet<AtomIndex> &atoms, const Vector &delta);
 void EditMolData::translate(ResNum resnum, const QStringList &atoms, const Vector &delta);
 void EditMolData::translate(ResNum resnum, const Vector &delta);

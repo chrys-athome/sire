@@ -1,5 +1,18 @@
 #ifndef SIREMOL_EDITMOLDATA_H
 #define SIREMOL_EDITMOLDATA_H
+/**
+  * @file
+  *
+  * C++ Interface: EditMol
+  *
+  * Description:
+  * Interface for EditMol
+  *
+  * Author: Christopher Woods, (C) 2006
+  *
+  * Copyright: See COPYING file that comes with this distribution
+  *
+  */
 
 #include <QSharedData>
 #include <QString>
@@ -7,7 +20,11 @@
 #include <QSet>
 #include <QMap>
 
+#include "idtypes.h"
 #include "atomindex.h"
+#include "resnum.h"
+#include "cutgroupnum.h"
+#include "moleculebonds.h"
 
 SIRE_BEGIN_HEADER
 
@@ -80,7 +97,7 @@ public:
     EditMolData(const Molecule &mol);
 
     EditMolData(const EditMolData &other);
-    
+
     ~EditMolData();
 
    ////// Dealing with the ID number and version ///////////
@@ -89,8 +106,8 @@ public:
 
      const MoleculeVersion& version() const;
    /////////////////////////////////////////////////////////
-   
-   
+
+
    //////// Operators //////////////////////////////
     EditMolData& operator=(const EditMolData &other);
 
@@ -106,21 +123,33 @@ public:
 
    ///// Transforming between ID types /////////////////////
    ///// (to natural type of EditMol, ResNum/AtomName) /////
+    AtomIndex operator[](const AtomIndex &atm) const;
     AtomIndex operator[](AtomID atomid) const;
     AtomIndex operator[](const ResNumAtomID &resatomid) const;
     AtomIndex operator[](const ResIDAtomID &resatomid) const;
     AtomIndex operator[](const CGAtomID &cgatomid) const;
     AtomIndex operator[](const CGNumAtomID &cgatomid) const;
 
+    ResNum operator[](ResNum resnum) const;
     ResNum operator[](ResID resid) const;
+
+    CutGroupNum operator[](CutGroupNum cgnum) const;
     CutGroupNum operator[](CutGroupID cgid) const;
    /////////////////////////////////////////////////////////
 
-   
-   ///// Querying the molecule /////////////////////////////
-    CutGroup at(CutGroupID cgid) const;
 
-    Atom at(const AtomIndex &atm) const;
+   ///// Querying the molecule /////////////////////////////
+    AtomIndex at(const AtomIndex &atm) const;
+    AtomIndex at(AtomID atomid) const;
+    AtomIndex at(const ResNumAtomID &resatomid) const;
+    AtomIndex at(const CGAtomID &cgatomid) const;
+    AtomIndex at(const CGNumAtomID &cgatomid) const;
+
+    ResNum at(ResID resid) const;
+    ResNum at(ResNum resnum) const;
+
+    CutGroupNum at(CutGroupID cgid) const;
+    CutGroupNum at(CutGroupNum cgnum) const;
 
     const MoleculeBonds& connectivity() const;
 
@@ -129,14 +158,14 @@ public:
     MoleculeInfo info() const;
 
     QVector<CutGroup> cutGroups() const;
-    QHash<CutGroupID,CutGroup> cutGroups(ResNum resnum) const;
+    QHash<CutGroupNum,CutGroup> cutGroups(ResNum resnum) const;
 
     CutGroup cutGroup(CutGroupID id) const;
 
     QVector<CoordGroup> coordGroups() const;
-    QHash<CutGroupID,CoordGroup> coordGroups(ResNum resnum) const;
+    QHash<CutGroupNum,CoordGroup> coordGroups(ResNum resnum) const;
 
-    CoordGroup coordGroup(CutGroupID id) const;
+    CoordGroup coordGroup(CutGroupNum cgnum) const;
 
     Atom atom(const AtomIndex &atm) const;
     Vector coordinates(const AtomIndex &atm) const;
@@ -144,37 +173,11 @@ public:
     QVector<Atom> atoms() const;
     QVector<Vector> coordinates() const;
 
-    QHash<CGAtomID,Atom> atoms(const QSet<CGAtomID> &cgatomids) const;
-    QHash<CGNumAtomID,Atom> atoms(const QSet<CGNumAtomID> &cgnumatomids) const;
-    QHash<ResNumAtomID,Atom> atoms(const QSet<ResNumAtomID> &resatomids) const;
-    QHash<ResIDAtomID,Atom> atoms(const QSet<ResIDAtomID> &resatomids) const;
-    QHash<AtomIndex,Atom> atoms(const QSet<AtomIndex> &atoms) const;
-
-    QVector<Atom> atoms(CutGroupID cgid) const;
-    QHash< CutGroupID,QVector<Atom> > atoms(const QSet<CutGroupID> &cgids) const;
-    QHash< CutGroupNum,QVector<Atom> > atoms(const QSet<CutGroupNum> &cgnums) const;
-
+    QVector<Atom> atoms(CutGroupNum cgid) const;
     QVector<Atom> atoms(ResNum resnum) const;
-    QHash< ResNum,QVector<Atom> > atoms(const QSet<ResNum> &resnums) const;
-    QHash< ResID,QVector<Atom> > atoms(const QSet<ResID> &resids) const;
 
-    QHash<CGAtomID,Vector> coordinates(const QSet<CGAtomID> &cgatomids) const;
-    QHash<CGNumAtomID,Vector> coordinates(const QSet<CGNumAtomID> &cgnumatomids) const;
-    QHash<ResNumAtomID,Vector> coordinates(const QSet<ResNumAtomID> &resatomids) const;
-    QHash<ResIDAtomID,Vector> coordinates(const QSet<ResIDAtomID> &resatomids) const;
-    QHash<AtomIndex,Vector> coordinates(const QSet<AtomIndex> &atoms) const;
-
-    QVector<Vector> coordinates(CutGroupID cgid) const;
-    QHash< CutGroupID,QVector<Vector> >
-          coordinates(const QSet<CutGroupID> &cgids) const;
-    QHash< CutGroupNum,QVector<Vector> >
-          coordinates(const QSet<CutGroupNum> &cgnums) const;
-
+    QVector<Vector> coordinates(CutGroupNum cgid) const;
     QVector<Vector> coordinates(ResNum resnum) const;
-    QHash< ResNum,QVector<Vector> >
-          coordinates(const QSet<ResNum> &resnums) const;
-    QHash< ResID,QVector<Vector> >
-          coordinates(const QSet<ResID> &resids) const;
 
     SireMaths::Line bond(const Bond &bnd) const;
     SireMaths::Triangle angle(const SireMol::Angle &ang) const;
@@ -195,9 +198,7 @@ public:
     void setName(const QString &name);
     void setResidueName(ResNum resnum, const QString &name);
 
-    void clear();
     void clean();
-    void clearResidue(ResNum resnum);
 
     void renumberResidue(ResNum resnum, ResNum newresnum);
 
@@ -211,13 +212,11 @@ public:
     void removeAllBonds(const AtomIndex &atom);
     void removeAllBonds();
 
-    EditRes addResidue(ResNum resnum, const QString &resnam);
-    EditRes addResidue(ResNum resnum, const EditRes &tmpl);
-    EditRes addResidue(ResNum resnum, const QString &resnam, const EditRes &tmpl);
+    void add(ResNum resnum, const QString &resnam);
+    void add(ResNum resnum, const EditRes &tmpl);
+    void add(ResNum resnum, const QString &resnam, const EditRes &tmpl);
 
     void remove(ResNum resnum);
-    
-    void removeAllResidues(const QString &resnam);
    /////////////////////////////////////////////////
 
 
@@ -332,7 +331,7 @@ public:
     void assertAtomExists(const CGNumAtomID &cgnumatomid) const;
     void assertAtomExists(const ResNumAtomID &resatomid) const;
     void assertAtomExists(const ResIDAtomID &resatomid) const;
-    
+
     void assertResidueExists(ResNum resnum) const;
     void assertResidueExists(ResID resid) const;
 
@@ -340,26 +339,26 @@ public:
     void assertCutGroupExists(CutGroupNum cgnum) const;
    /////////////////////////////////////////////////
 
-    
+
    //////// Unsafe functions ///////////////////////
     Atom _unsafe_atom(const AtomIndex &atm) const;
-    Vector _unsafe_coords(const AtomIndex &atm) const;
+    Vector _unsafe_coordinates(const AtomIndex &atm) const;
    /////////////////////////////////////////////////
-   
+
 
 private:
     const EditMolData_ResData& _unsafe_resdata(ResNum resnum) const;
     EditMolData_ResData& _unsafe_resdata(ResNum resnum) const;
-    
+
     const EditMolData_AtomData& _unsafe_atomdata(const AtomIndex &atom) const;
     EditMolData_AtomData& _unsafe_atomdata(const AtomIndex &atom);
-    
+
     /** The name of this molecule */
     QString molnme;
 
     /** The molecule's ID number */
     MoleculeID molid;
-    
+
     /** The molecule's version number */
     MoleculeVersion molversion;
 
@@ -367,14 +366,14 @@ private:
         by the order in which the atoms were added to the residue. */
     QHash<ResNum, EditMolData_ResData> atms;
 
-    /** Sorted list of residue numbers of residues in this molecule 
+    /** Sorted list of residue numbers of residues in this molecule
         in the order that they were added to this molecule */
     QList<ResNum> resnums;
 
     /** The atoms in each CutGroup, indexed by CutGroupNum and with the
         atoms sorted into the order in which they were added to the CutGroup */
     QHash< CutGroupNum, QList<AtomIndex> > cgatoms;
-    
+
     /** Sorted list of CutGroup numbers of CutGroups in this molecule,
         in the order that they were added to this molecule */
     QList<CutGroupNum> cgnums;
