@@ -74,8 +74,6 @@ public:
 
     QString toString() const;
 
-    MoleculeSignature signature() const;
-
     int count() const;
     int size() const;
     int nResidues() const;

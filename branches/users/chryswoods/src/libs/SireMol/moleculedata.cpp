@@ -151,26 +151,6 @@ bool MoleculeData::operator!=(const MoleculeData &other) const
            _coords != other._coords;
 }
 
-/** Build this molecule from the passed EditMol using the supplied
-    ConvertFunction. This will increment the major version number
-    of the molecule. */
-void MoleculeData::update(const EditMol &editmol,
-                          const ConvertFunction &convertfunction)
-{
-    /// \todo Need to write MoleculeData::update()!
-
-    //increment the major version number of the molecule
-    incrementMajorVersion();
-}
-
-/** Return a copy of this molecule converted to an EditMol */
-EditMol MoleculeData::toEditMol() const
-{
-   /// \todo Need to write MoleculeData::toEditMol()
-
-   return EditMol();
-}
-
 /** Return the ID number of the molecule */
 MoleculeID MoleculeData::ID() const
 {

@@ -60,7 +60,10 @@ public:
     void removeIntra(ResNum resnum);
     void removeInter(ResNum resnum);
 
-    void renumberResidue(ResNum oldnum, ResNum newnum);
+    void removeIntra(const AtomIndex &atom);
+    void removeInter(const AtomIndex &atom);
+
+    void renumber(ResNum oldnum, ResNum newnum);
 
     void clear();
     void finalise();

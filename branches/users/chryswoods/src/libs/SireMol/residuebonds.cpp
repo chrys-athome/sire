@@ -91,6 +91,14 @@ public:
     void remove(const Bond &bond);
     void remove(const QString &atom0, const QString &atom1);
 
+    void removeIntra();
+    void removeInter();
+
+    void removeIntra(const QString &atom);
+    void removeInter(const QString &atom);
+
+    void renumber(ResNum oldnum, ResNum newnum);
+
     void finalise();
     void clear();
   ///////////////////////////////////////////////////////
@@ -354,6 +362,50 @@ void ResidueBondsPvt::remove(ResNum rnum)
         this->remove(bnd);
 }
 
+/** Remove all intra-residue bonds from this residue */
+void ResidueBondsPvt::removeIntra()
+{
+    QSet<Bond> orig_intrabonds( intrabnds );
+
+    foreach (Bond bond, orig_intrabonds)
+    {
+        this->remove(bond);
+    }
+}
+
+/** Remove all inter-residue bonds from this residue */
+void ResidueBondsPvt::removeInter()
+{
+    QList<Bond> orig_interbonds = interbnds.keys();
+
+    foreach (Bond bond, orig_interbonds)
+    {
+        this->remove(bond);
+    }
+}
+
+/** Remove all intra-residue bonds that involve the atom 'atom' */
+void ResidueBondsPvt::removeIntra(const QString &atom)
+{
+    QList<Bond> bonds = this->intraBonds(atom);
+
+    foreach (Bond bond, bonds)
+    {
+        this->remove(bond);
+    }
+}
+
+/** Remove all of the inter-residue bonds that involve the atom 'atom' */
+void ResidueBondsPvt::removeInter(const QString &atom)
+{
+    QList<Bond> bonds = this->interBonds(atom);
+
+    foreach (Bond bond, bonds)
+    {
+        this->remove(bond);
+    }
+}
+
 /** Remove the bond 'bond' from this ResidueBondsPvt */
 void ResidueBondsPvt::remove(const Bond &bond)
 {
@@ -454,6 +506,89 @@ inline bool ResidueBondsPvt::contains(const QString &atom) const
 inline bool ResidueBondsPvt::contains(const Bond &bond) const
 {
     return intrabnds.contains(bond) or interbnds.contains(bond);
+}
+
+/** Renumber the residue 'oldnum' to 'newnum' */
+void ResidueBondsPvt::renumber(ResNum oldnum, ResNum newnum)
+{
+    if (resnum == oldnum)
+    {
+        //This is the residue that is being renumbered
+
+        //renumber the residue itself
+        resnum = newnum;
+
+        //now renumber all of the intra-residue bonds
+        QSet<Bond> renumbered_intrabnds;
+        renumbered_intrabnds.reserve(intrabnds.count());
+
+        for (QSet<Bond>::const_iterator it = intrabnds.constBegin();
+             it != intrabnds.constEnd();
+             ++it)
+        {
+            renumbered_intrabnds.insert( it->renumber(oldnum, newnum) );
+        }
+
+        intrabnds = renumbered_intrabnds;
+    }
+
+    if (bondedres.contains(oldnum) or resnum == oldnum)
+    {
+        //This residue is either bonded to the residue being
+        //renumbered, or is indeed the residue that is being renumbered
+        //We must thus update all of the inter-residue datait->
+
+        QHash<Bond, ResNum> renumbered_interbnds;
+        renumbered_interbnds.reserve(interbnds.count());
+
+        for (QHash<Bond,ResNum>::const_iterator it = interbnds.constBegin();
+             it != interbnds.constEnd();
+             ++it)
+        {
+            ResNum resnum = it.value();
+            if (resnum == oldnum)
+                resnum == newnum;
+
+            renumbered_interbnds.insert( it.key().renumber(oldnum,newnum), resnum );
+        }
+
+        interbnds = renumbered_interbnds;
+
+        //now renumber 'bondedres'
+        QMultiHash<ResNum,Bond> renumbered_bondedres;
+        renumbered_bondedres.reserve(bondedres.count());
+
+        for (QMultiHash<ResNum,Bond>::const_iterator it = bondedres.constBegin();
+             it != bondedres.constEnd();
+             ++it)
+        {
+            ResNum resnum = it.key();
+            if (resnum == oldnum)
+                resnum = newnum;
+
+            renumbered_bondedres.insert( resnum, it->renumber(oldnum,newnum) );
+        }
+
+        bondedres = renumbered_bondedres;
+
+        //finally, atminterbnds
+        QMultiHash<QString,AtomIndex> renumbered_atminterbnds;
+        renumbered_atminterbnds.reserve(atminterbnds.count());
+
+        for (QMultiHash<QString,AtomIndex>::const_iterator it = atminterbnds.constBegin();
+             it != atminterbnds.constEnd();
+             ++it)
+        {
+            AtomIndex atom = it.value();
+            if (atom.resNum() == oldnum)
+                atom = AtomIndex(atom.name(), newnum);
+
+            renumbered_atminterbnds.insert(it.key(), atom);
+        }
+
+        atminterbnds = renumbered_atminterbnds;
+    }
+
 }
 
 /** Finalise this ResidueBondsPvt - this cleans up any unused memory, and
@@ -814,6 +949,31 @@ void ResidueBonds::remove(const AtomIndex &atom0, const AtomIndex &atom1)
 void ResidueBonds::remove(ResNum resnum)
 {
     d->remove(resnum);
+}
+
+void ResidueBonds::removeIntra()
+{
+    d->removeIntra();
+}
+
+void ResidueBonds::removeInter()
+{
+    d->removeInter();
+}
+
+void ResidueBonds::removeIntra(const QString &atom)
+{
+    d->removeIntra(atom);
+}
+
+void ResidueBonds::removeInter(const QString &atom)
+{
+    d->removeInter(atom);
+}
+
+void ResidueBonds::renumber(ResNum oldnum, ResNum newnum)
+{
+    d->renumber(oldnum,newnum);
 }
 
 void ResidueBonds::finalise()

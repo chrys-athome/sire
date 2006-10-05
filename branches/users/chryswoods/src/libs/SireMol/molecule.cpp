@@ -290,16 +290,6 @@ QHash<ResNum,Residue> Molecule::residues(const QSet<ResNum> &resnums) const
 /////////////////////////////////////////////////////////
 //@}
 
-EditMol Molecule::toEditMol() const
-{
-    return d->toEditMol();
-}
-
-void Molecule::update(const EditMol &editmol, const ConvertFunction &convertfunc)
-{
-    d->update( editmol, convertfunc );
-}
-
 /** @name Molecule::at(...)
     Indexing type operators - return a copy of the object at the passed index.
 */

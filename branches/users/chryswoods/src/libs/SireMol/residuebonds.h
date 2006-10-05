@@ -119,6 +119,14 @@ private:
     void remove(const QString &atom0, const QString &atom1);
     void remove(const AtomIndex &atom0, const AtomIndex &atom1);
 
+    void removeIntra();
+    void removeInter();
+
+    void removeIntra(const QString &atom);
+    void removeInter(const QString &atom);
+
+    void renumber(ResNum oldnum, ResNum newnum);
+
     void finalise();
     void clear();
   ///////////////////////////////////////////////////////

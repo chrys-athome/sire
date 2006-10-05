@@ -8,6 +8,8 @@
 #include "atom.h"
 #include "bond.h"
 
+#include "SireMol/errors.h"
+
 #include "SireStream/datastream.h"
 
 using namespace SireStream;
@@ -158,7 +160,7 @@ void MoleculeBonds::remove(const Bond &bond)
 }
 
 /** Remove all bonds from the molecule that involve atom 'atom' */
-void MoleculeBonds::removeAll(const AtomIndex &atom)
+void MoleculeBonds::remove(const AtomIndex &atom)
 {
     if ( resbnds.contains(atom.resNum()) )
     {
@@ -188,7 +190,7 @@ void MoleculeBonds::removeAll(const AtomIndex &atom)
 }
 
 /** Remove all bonds to the residue with residue number 'resnum' */
-void MoleculeBonds::removeAll(ResNum resnum)
+void MoleculeBonds::remove(ResNum resnum)
 {
     if ( resbnds.contains(resnum) )
     {
@@ -209,6 +211,88 @@ void MoleculeBonds::removeAll(ResNum resnum)
             bondedres.remove(rnum);
             if (bondedres.isEmpty())
                 resbnds.remove(bondedres.resNum());
+        }
+    }
+}
+
+/** Remove all of the intra-residue bonds from the residue with number 'resnum' */
+void MoleculeBonds::removeIntra(ResNum resnum)
+{
+    if (resbnds.contains(resnum))
+        resbnds[resnum].removeIntra();
+}
+
+/** Remove all inter-residue bonds that involve the residue with number 'resnum' */
+void MoleculeBonds::removeInter(ResNum resnum)
+{
+    if (resbnds.contains(resnum))
+    {
+        ResidueBonds &residue = resbnds[resnum];
+
+        //remove all bonds involving this residue from the bonded residues
+        QSet<ResNum> bondedres = residue.bondedResidues();
+
+        for (QSet<ResNum>::const_iterator it = bondedres.constBegin();
+             it != bondedres.constEnd();
+             ++it)
+        {
+            resbnds.find(*it)->remove(resnum);
+        }
+
+        //remove the bonds from the residue itself
+        residue.removeInter();
+    }
+}
+
+/** Remove all intra-residue bonds that involve the atom 'atom' */
+void MoleculeBonds::removeIntra(const AtomIndex &atom)
+{
+    if (resbnds.contains(atom.resNum()))
+        resbnds[ atom.resNum() ].removeIntra(atom.name());
+}
+
+/** Remove all of the inter-residue bonds that involve the atom 'atom' */
+void MoleculeBonds::removeInter(const AtomIndex &atom)
+{
+    if ( resbnds.contains(atom.resNum()) )
+    {
+        ResidueBonds &residue = resbnds[ atom.resNum() ];
+
+        QSet<ResNum> bondedres = residue.residuesBondedTo(atom.name());
+
+        for (QSet<ResNum>::const_iterator it = bondedres.constBegin();
+             it != bondedres.constEnd();
+             ++it)
+        {
+            resbnds.find(*it)->remove(atom);
+        }
+
+        //remove the inter-residue bonds from the residue itself
+        residue.removeInter(atom.name());
+    }
+}
+
+/** Renumber the residue with current number 'oldnum' to 'newnum'.
+    This does nothing if there is no residue with number 'oldnum'. */
+void MoleculeBonds::renumber(ResNum oldnum, ResNum newnum)
+{
+    if (resbnds.contains(oldnum))
+    {
+        if (resbnds.contains(newnum))
+            throw SireMol::duplicate_residue( QObject::tr(
+                      "Cannot renumber the residue with number \"%1\" "
+                      "to \"%2\" as a residue with this number already exists!")
+                          .arg(oldnum).arg(newnum), CODELOC );
+
+        //move the residue...
+        resbnds.insert( newnum, resbnds.take(oldnum) );
+
+        //renumber the residue in each of the residues...
+        for (QHash<ResNum,ResidueBonds>::iterator it = resbnds.begin();
+             it != resbnds.end();
+             ++it)
+        {
+            it->renumber(oldnum,newnum);
         }
     }
 }
