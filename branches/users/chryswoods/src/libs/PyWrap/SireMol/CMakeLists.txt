@@ -26,7 +26,6 @@ set ( WRAPMOL_SOURCES
       wrap_atomset.cpp        
       wrap_atomvector.cpp       
       wrap_bonds.cpp            
-      wrap_convertmolecule.cpp  
       wrap_cutgroup.cpp         
       wrap_cutgroupset.cpp      
       wrap_dihedrals.cpp        

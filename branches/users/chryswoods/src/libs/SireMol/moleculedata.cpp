@@ -28,7 +28,6 @@
 #include "improper.h"
 #include "atomidgroup.h"
 #include "weightfunction.h"
-#include "convertfunction.h"
 #include "moleculeinfo.h"
 #include "residueinfo.h"
 #include "atominfogroup.h"
