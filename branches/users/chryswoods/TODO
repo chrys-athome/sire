@@ -63,5 +63,5 @@ SireDB
 SireMol
 -------
 
-(*) Change AtomID, ResID, CutGroupID and MoleculeID to ensure that they are not typedefs of Index, so that we can overload on them. Important for correct working of MoleculeInfo.
+(*) Change AtomID, ResID, CutGroupID and MoleculeID to ensure that they are not typedefs of Index, so that we can overload on them. Important for correct working of MoleculeInfo. **DONE**
 

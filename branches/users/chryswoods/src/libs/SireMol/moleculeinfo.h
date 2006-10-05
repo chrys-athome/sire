@@ -61,8 +61,7 @@ friend QDataStream& ::operator>>(QDataStream&, MoleculeInfo&);
 
 public:
     MoleculeInfo();
-    MoleculeInfo( const EditMol &editmol,
-                  const ConvertFunction &converter = ResidueCutting() );
+    MoleculeInfo( const EditMol &editmol );
 
     MoleculeInfo(const MoleculeInfo &other);
 

@@ -25,6 +25,7 @@
 #include "resnum.h"
 #include "cutgroupnum.h"
 #include "moleculebonds.h"
+#include "cuttingfunction.h"
 
 SIRE_BEGIN_HEADER
 
@@ -106,6 +107,8 @@ friend QDataStream& ::operator>>(QDataStream&, EditMolData&);
 
 public:
     EditMolData(const QString &molname = QObject::tr("Unnamed"));
+    EditMolData(const QString &molname, const CuttingFunction &cuttingfunc);
+    EditMolData(const CuttingFunction &cuttingfunc);
 
     EditMolData(const Molecule &mol);
 
@@ -177,6 +180,18 @@ public:
     bool isEmpty(CutGroupNum cgnum) const;
 
     const MoleculeBonds& connectivity() const;
+
+    bool contains(CutGroupNum cgnum) const;
+    bool contains(CutGroupID cgid) const;
+
+    bool contains(ResNum resnum) const;
+    bool contains(ResID resid) const;
+
+    bool contains(const AtomIndex &atom) const;
+    bool contains(const CGAtomID &atom) const;
+    bool contains(const CGNumAtomID &atom) const;
+    bool contains(const ResNumAtomID &atom) const;
+    bool contains(const ResIDAtomID &atom) const;
 
     ResidueBonds connectivity(ResNum resnum) const;
 
@@ -254,6 +269,7 @@ public:
     void add(ResNum resnum, const QString &resnam, const EditRes &tmpl);
 
     void remove(ResNum resnum);
+    void remove(CutGroupNum cgnum);
    /////////////////////////////////////////////////
 
 
@@ -434,6 +450,10 @@ private:
     /** Sorted list of CutGroup numbers of CutGroups in this molecule,
         in the order that they were added to this molecule */
     QList<CutGroupNum> cgnums;
+
+    /** The function used to work out in which CutGroup each atom should
+        be placed */
+    CuttingFunction cuttingfunc;
 
     /** The bonding within the molecule */
     MoleculeBonds molbnds;

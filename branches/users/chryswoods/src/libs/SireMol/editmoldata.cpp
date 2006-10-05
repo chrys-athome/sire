@@ -1049,6 +1049,70 @@ AtomIndex EditMolData::at(const CGNumAtomID &cgatomid) const
     return this->operator[](cgatomid);
 }
 
+/** Return whether or not the molecule contains a CutGroup with
+    number 'cgnum' */
+bool EditMolData::contains(CutGroupNum cgnum) const
+{
+    return cgatoms.contains(cgnum);
+}
+
+/** Return whether or not the molecule contains a CutGroup at
+    index 'cgid' */
+bool EditMolData::contains(CutGroupID cgid) const
+{
+    return cgnums.count() < cgid;
+}
+
+/** Return whether or not the molecule contains a residue
+    with number 'resnum' */
+bool EditMolData::contains(ResNum resnum) const
+{
+    return atms.contains(resnum);
+}
+
+/** Return whether or not the molecule contains a residue
+    at index 'resid' */
+bool EditMolData::contains(ResID resid) const
+{
+    return resnums.count() < resid;
+}
+
+/** Return whether or not the molecule contains the atom 'atom' */
+bool EditMolData::contains(const AtomIndex &atom) const
+{
+    return this->contains(atom.resNum()) and
+                this->_unsafe_resdata(atom.resNum()).atoms.contains(atom.name());
+}
+
+/** Return whether or not the molecule contains the atom 'atom' */
+bool EditMolData::contains(const CGAtomID &atom) const
+{
+    return this->contains(atom.cutGroupID()) and
+           cgatoms.find( cgnums[atom.cutGroupID()] )->count() < atom.atomID();
+}
+
+/** Return whether or not the molecule contains the atom 'atom' */
+bool EditMolData::contains(const CGNumAtomID &atom) const
+{
+    return this->contains(atom.cutGroupNum()) and
+           cgatoms.find( atom.cutGroupNum() )->count() < atom.atomID();
+}
+
+/** Return whether or not the molecule contains the atom 'atom' */
+bool EditMolData::contains(const ResNumAtomID &atom) const
+{
+    return this->contains(atom.resNum()) and
+           this->_unsafe_resdata(atom.resNum()).atomnames.count() < atom.atomID();
+}
+
+/** Return whether or not the molecule contains the atom 'atom' */
+bool EditMolData::contains(const ResIDAtomID &atom) const
+{
+    return this->contains(atom.resID()) and
+           this->_unsafe_resdata(resnums[atom.resID()])
+                              .atomnames.count() < atom.atomID();
+}
+
 /** Return the connectivity of this molecule */
 const MoleculeBonds& EditMolData::connectivity() const
 {
@@ -1578,6 +1642,14 @@ void EditMolData::clean()
         if (this->isEmpty(resnum))
             this->remove(resnum);
     }
+
+    QList<CutGroupNum> oldcgnums = cgnums;
+
+    foreach (CutGroupNum cgnum, oldcgnums)
+    {
+        if (this->isEmpty(cgnum))
+            this->remove(cgnum);
+    }
 }
 
 /** Renumber the residue with current number 'resnum' to the new number
@@ -1657,7 +1729,7 @@ void EditMolData::add(const Atom &atom, CutGroupNum cgnum)
 */
 void EditMolData::add(const Atom &atom)
 {
-//    this->add( atom, cgfunc.getNumber(atom) );
+    this->add( atom, cuttingfunc(atom, *this) );
 }
 
 /** Remove the atom 'atom' from this molecule. Note that removing
@@ -1668,9 +1740,23 @@ void EditMolData::add(const Atom &atom)
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-// void EditMolData::remove(const AtomIndex &atom)
-// {
-// }
+void EditMolData::remove(const AtomIndex &atom)
+{
+    this->assertAtomExists(atom);
+
+    //get the data for the residue in which this atom exists
+    EditMolData_ResData &resdata = this->_unsafe_resdata(atom.resNum());
+
+    //remove this atom from the CutGroup
+    cgatoms[ resdata.atoms.find(atom.name())->cgnum ].removeAll(atom.name());
+
+    //remove this atom from the bonding
+    molbnds.remove(atom);
+
+    //remove this atom
+    resdata.atomnames.removeAll(atom.name());
+    resdata.atoms.remove(atom.name());
+}
 
 /** Add the bond 'bnd' to this molecule - the atoms referred
     to in the bond must exist or else an exception will be thrown.
@@ -1793,11 +1879,50 @@ void EditMolData::add(ResNum resnum, const EditRes &tmpl)
 */
 void EditMolData::remove(ResNum resnum)
 {
-    this->assertResidueExists(resnum);
+    //get the CutGroups that have atoms involving this residue
+    QSet<CutGroupNum> rescgs = this->cutGroupNums(resnum);
+
+    //remove the atoms from all of the affected CutGroups
+    foreach (CutGroupNum cgnum, rescgs)
+    {
+        QList<AtomIndex> &cgroup = cgatoms.find(cgnum).value();
+
+        QMutableListIterator<AtomIndex> it(cgroup);
+
+        while (it.hasNext())
+        {
+            const AtomIndex &atm = it.next();
+
+            if (atm.resNum() == resnum)
+                it.remove();
+        }
+    }
 
     molbnds.remove(resnum);
     atms.remove(resnum);
     resnums.removeAll(resnum);
+}
+
+/** Remove the CutGroup with number 'cgnum' from this molecule
+    (and all of the atoms that are contained in this CutGroup)
+
+    \throw SireMol::missing_cutgroup
+*/
+void EditMolData::remove(CutGroupNum cgnum)
+{
+    this->assertCutGroupExists(cgnum);
+
+    //remove all of the atoms in the CutGroup
+    QList<AtomIndex> cgroup = cgatoms.find(cgnum).value();
+
+    foreach (AtomIndex atom, cgroup)
+    {
+        this->remove(atom);
+    }
+
+    //now remove the CutGroup itself
+    cgatoms.remove(cgnum);
+    cgnums.removeAll(cgnum);
 }
 
 namespace SireMol { namespace detail {

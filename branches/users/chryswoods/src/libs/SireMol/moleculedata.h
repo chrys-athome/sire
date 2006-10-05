@@ -63,6 +63,8 @@ class ResID;
 class CutGroupID;
 class MoleculeID;
 
+class EditMol;
+
 class ResNumAtomID;
 class ResIDAtomID;
 class CGAtomID;
@@ -89,6 +91,73 @@ using SireMaths::Line;
 using SireMaths::Triangle;
 using SireMaths::Torsion;
 
+namespace detail
+{
+
+/** This is a small class that holds the basic parts of the MoleculeData.
+    This class is used to exchange data between EditMol and Molecule.
+
+    @author Christopher Woods
+*/
+class MolData
+{
+
+friend class EditMol;  //so it can construct this object
+                       //(private, as public constructor would require
+                       //sanity checking the input)
+
+public:
+    MolData()
+    {}
+
+    MolData(const MolData &other)
+            : _info(other._info), _bonds(other._bonds), _coords(other._coords)
+    {}
+
+    ~MolData()
+    {}
+
+    MolData& operator=(const MolData &other)
+    {
+        _info = other._info;
+        _bonds = other._bonds;
+        _coords = other._coords;
+        return *this;
+    }
+
+    const MoleculeInfo& info() const
+    {
+        return _info;
+    }
+
+    const MoleculeBonds& connectivity() const
+    {
+        return _bonds;
+    }
+
+    const QVector<CoordGroup>& coordinates() const
+    {
+        return _coords;
+    }
+
+private:
+    MolData(const MoleculeInfo &molinfo, const MoleculeBonds &molbonds,
+            const QVector<CoordGroup> &coords)
+         : _info(molinfo), _bonds(molbonds), _coords(coords)
+    {}
+
+    /** The metainfo for the molecule */
+    MoleculeInfo _info;
+
+    /** The bonding in the molecule */
+    MoleculeBonds _bonds;
+
+    /** The coordinates of the atoms */
+    QVector<CoordGroup> _coords;
+};
+
+}
+
 /**
 This class holds the shared molecule data for the Molecule and Residue classes
 (which are both just views on this MolculeData class). This is very similar to
@@ -109,6 +178,7 @@ friend QDataStream& ::operator>>(QDataStream&, MoleculeData&);
 public:
    ////// Constructors / destructor ////////////////////////
     MoleculeData();
+    MoleculeData(const detail::MolData &moldata);
 
     MoleculeData(const MoleculeData &other);
 
@@ -126,6 +196,8 @@ public:
 
    ////// Operators ////////////////////////////////////////
     MoleculeData& operator=(const MoleculeData &other);
+
+    MoleculeData& operator=(const detail::MolData &moldata);
 
     bool operator==(const MoleculeData &other) const;
     bool operator!=(const MoleculeData &other) const;

@@ -117,6 +117,14 @@ MoleculeData::MoleculeData()
                   _id(0), _molversion(0,0)
 {}
 
+/** Construct from some molecule data (which comes from an EditMol) */
+MoleculeData::MoleculeData(const detail::MolData &moldata)
+             : QSharedData(),
+               _id( MoleculeData::getNewID() ), _molversion(1,0),
+               _molinfo(moldata.info()), _molbonds(moldata.connectivity()),
+               _coords(moldata.coordinates())
+{}
+
 /** Copy constructor */
 MoleculeData::MoleculeData(const MoleculeData &other)
                 : QSharedData(),
@@ -130,6 +138,31 @@ MoleculeData::MoleculeData(const MoleculeData &other)
 /** Destructor */
 MoleculeData::~MoleculeData()
 {}
+
+/** Assignment operator */
+MoleculeData& MoleculeData::operator=(const MoleculeData &other)
+{
+    _id = other._id;
+    _molversion = other._molversion;
+    _molinfo = other._molinfo;
+    _molbonds = other._molbonds;
+    _coords = other._coords;
+
+    return *this;
+}
+
+/** Assign from some molecule data (which has come from an EditMol).
+    This will increment the major version number of this molecule. */
+MoleculeData& MoleculeData::operator=(const detail::MolData &moldata)
+{
+    this->incrementMajorVersion();
+
+    _molinfo = moldata.info();
+    _molbonds = moldata.connectivity();
+    _coords = moldata.coordinates();
+
+    return *this;
+}
 
 /** Comparison operator */
 bool MoleculeData::operator==(const MoleculeData &other) const
