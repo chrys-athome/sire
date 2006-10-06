@@ -1,5 +1,18 @@
 #ifndef SIREMOL_EDITMOL_H
 #define SIREMOL_EDITMOL_H
+/**
+  * @file
+  *
+  * C++ Interface: EditMol
+  *
+  * Description:
+  * Interface for EditMol
+  *
+  * Author: Christopher Woods, (C) 2006
+  *
+  * Copyright: See COPYING file that comes with this distribution
+  *
+  */
 
 #include "editmoldata.h"
 
@@ -30,34 +43,100 @@ class EditRes;
 class Molecule;
 
 /**
-An EditMol is a molecule that may be edited. It is not based on CutGroup, but is instead optimised to have atoms and bonds easily added or removed, and its entire data structure is designed for rapid molecular editing. An EditMol represents an entire, single molecule, and it may be converted into any CutGroup that represents an entire molecule. In addition, any CutGroup that contains an entire molecule may be converted into an EditMol. This is the way that you edit molecules, convert from a CutGroup to an EditMol, edit the molecule, and then convert back again.
+An EditMol is a molecule that may be edited. It is not based on CutGroup, but is instead
+optimised to have atoms and bonds easily added or removed, and its entire data structure
+is designed for rapid molecular editing. An EditMol represents an entire, single molecule.
+This is the way that you edit molecules, convert from a Molecule to an EditMol, edit the molecule,
+and then convert back again.
 
-An EditMol consists of a set of EditRes (each representing a residue), each consisting of Atoms. The EditMol may also contain Bonds that connect Atoms together.
+An EditMol consists of a set of EditRes (each representing a residue), each consisting of Atoms.
+The EditMol may also contain Bonds that connect Atoms together.
 
 Note that the functions in this class are re-entrant, though this class is not thread-safe.
 
 The implementation of EditMol and EditRes is as views onto a common EditMolData class. This
-class is explicitly shared between the different EditRes and EditMol views. In addition, the
-data of the EditMol is implicitly shared, so even deep copying an EditMol or EditRes is
-fast.
+class is implicitly shared between the different EditRes and EditMol views. This means that
+copying an EditMol or EditRes is fast.
+
+Note that EditMols follow the rules of self-managing objects, namely it is not possible
+to change their internal state without using their own API. This means that an EditRes
+is a copy of the residue, not the actual residue. Thus changing an atom in an EditRes
+will not change it in the parent molecule! To change a molecule via the residue interface
+you would do;
+
+\code
+EditMol editmol;
+
+//populate editmol with atoms and bonds...
+
+//get a residue view of the molecule
+EditRes res = editmol[ ResNum(3) ];
+
+//edit the residue
+res.setName("HID");
+res.add( "HE1", Vector(1.0,2.0,3.0) );
+
+//copy back to the molecule
+editmol = res.molecule();
+\endcode
+
+Note that this means that you can't edit more than one residue at a time, as otherwise
+you would lose the changes in one or other of the copies;
+
+\code
+EditMol editmol;
+
+EditRes res0 = editmol[ ResNum(3) ];
+EditRes res1 = editmol[ ResNum(4) ];
+
+//res0 and res1 are independent copies of 'editmol'
+res0.setName("HID");
+
+res1.setName("ALA");
+
+//commit the changes in res0
+editmol = res0.molecule();
+
+//committing the changes in res0 will now lose the
+//changes from res0!
+editmol = res1.molecule();
+\endcode
+
+The correct way to edit in this case is to do it sequentially;
+
+\code
+EditMol editmol;
+
+EditRes res = editmol[ ResNum(3) ];
+
+res.setName("HID");
+
+editmol = res.molecule();
+
+res = editmol[ ResNum(4) ];
+
+res.setName("ALA");
+
+editmol = res.molecule();
+\endcode
 
 @author Christopher Woods
 */
 class SIREMOL_EXPORT EditMol
 {
 
-friend class EditMolData;  //friend so can call the EditMolData constructor
+friend class EditRes;  //friend so can see the EditMolData
 friend QDataStream& ::operator<<(QDataStream&, const EditMol&);
 friend QDataStream& ::operator>>(QDataStream&, EditMol&);
 
 public:
    ////// Constructors / destructor ////////////////////////
-    EditMol(const QString &name = QObject::tr("Unnamed"));
+    EditMol();
+    EditMol(const QString &name);
     EditMol(const QString &name, const CuttingFunction &cuttingfunc);
     EditMol(const CuttingFunction &cuttingfunc);
 
-    EditMol(const EditRes &residue);
-
+    EditMol(const EditRes &other);
     EditMol(const EditMol &other);
 
     ~EditMol();
@@ -329,29 +408,31 @@ public:
     void remove(const Bond &bond);
 
     void removeAllBonds(ResNum resnum);
+    void removeAllBonds(ResID resnum);
     void removeAllBonds(const AtomIndex &atom);
     void removeAllBonds();
 
     void removeAllIntraBonds(ResNum resnum);
+    void removeAllIntraBonds(ResID resid);
     void removeAllIntraBonds(const AtomIndex &atom);
     void removeAllIntraBonds();
 
     void removeAllInterBonds(ResNum resnum);
+    void removeAllInterBonds(ResID resid);
     void removeAllInterBonds(const AtomIndex &atom);
     void removeAllInterBonds();
 
     void addAutoBonds();
-    //void addAutoBonds(BondAddingFunction &bondfunc);
+    void addAutoBonds(BondAddingFunction &bondfunc);
 
     void add(ResNum resnum, const QString &resnam);
-    void add(ResNum resnum, const EditRes &tmpl);
-    void add(ResNum resnum, const QString &resnam, const EditRes &tmpl);
 
     void remove(ResNum resnum);
+    void remove(ResID resid);
 
-    void applyTemplate(const EditRes &tmpl, ResNum resnum, const TemplateFunction &tmplfunc);
-
-    void applyTemplate(const EditRes &tmpl, const QString &resnam,
+    void applyTemplate(const EditRes &tmpl, ResNum resnum,
+                       const TemplateFunction &tmplfunc);
+    void applyTemplate(const EditRes &tmpl, ResID resid,
                        const TemplateFunction &tmplfunc);
 
     void applyTemplate(const EditMol &tmpl, const TemplateFunction &tmplfunc);
@@ -369,6 +450,8 @@ public:
     void translate(ResID resid, const QStringList &atoms, const Vector &delta);
     void translate(ResID resid, const Vector &delta);
     void translate(const QSet<ResID> &resids, const Vector &delta);
+    void translate(CutGroupNum cgnum, const Vector &delta);
+    void translate(const QSet<CutGroupNum> &cgnums, const Vector &delta);
     void translate(CutGroupID cgid, const Vector &delta);
     void translate(const QSet<CutGroupID> &cgids, const Vector &delta);
 
@@ -492,12 +575,8 @@ public:
 
 
 private:
-    EditMol(const EditMolData &moldata);
-
-    void addAutoBonds(const EditRes &res0, const EditRes &res1);
-
-    /** Actual data of the molecule */
-    EditMolData moldata;
+    /** Implicitly shared pointer to the actual data of the molecule */
+    QSharedDataPointer<EditMolData> d;
 };
 
 }

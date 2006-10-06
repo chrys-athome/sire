@@ -27,8 +27,6 @@ class Residue;
 QDataStream& operator<<(QDataStream&, const SireMol::Residue&);
 QDataStream& operator>>(QDataStream&, SireMol::Residue&);
 
-uint qHash(const SireMol::Residue&);
-
 namespace SireMol
 {
 
@@ -49,7 +47,6 @@ This class represents a Residue in a Molecule.
 class SIREMOL_EXPORT Residue
 {
 
-friend class Molecule; //so it can call the MoleculeData constructor
 friend QDataStream& ::operator<<(QDataStream&, const Residue&);
 friend QDataStream& ::operator>>(QDataStream&, Residue&);
 
@@ -74,6 +71,7 @@ public:
     Atom operator[](const AtomIndex &atom) const;
 
     CutGroup operator[](CutGroupID cgid) const;
+    CutGroup operator[](CutGroupNum cgnum) const;
    /////////////////////////////////////////////////////////
 
 
@@ -164,6 +162,9 @@ public:
                      const WeightFunction &weightfunc) const;
 
     double getWeight(const QSet<AtomIndex> &group0, const QSet<AtomIndex> &group1,
+                     const WeightFunction &weightfunc) const;
+
+    double getWeight(const QStringList &group0, const QStringList &group1,
                      const WeightFunction &weightfunc) const;
    /////////////////////////////////////////////////////////
 

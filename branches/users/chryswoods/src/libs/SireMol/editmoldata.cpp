@@ -1,10 +1,10 @@
 /**
   * @file
   *
-  * C++ Implementation: EditMol
+  * C++ Implementation: EditMolData
   *
   * Description:
-  * Implementation of EditMol, and private EditMol classes,
+  * Implementation of EditMolData, and private EditMolData classes,
   * EditMolData_AtomData and EditMolData_ResData
   *
   * Author: Christopher Woods, (C) 2006
@@ -273,6 +273,13 @@ QDataStream& operator>>(QDataStream &ds, EditMolData &mol)
         throw version_error(v, "1", r_editmoldata, CODELOC);
 
     return ds;
+}
+
+static const QSharedDataPointer<EditMolData> shared_null_ptr( new EditMolData() );
+
+QSharedDataPointer<EditMolData> shared_null()
+{
+    return shared_null_ptr;
 }
 
 /** Create a new EditMol called 'molname' */

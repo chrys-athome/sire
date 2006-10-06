@@ -3,7 +3,7 @@
 /**
   * @file
   *
-  * C++ Interface: EditMol
+  * C++ Interface: EditMolData
   *
   * Description:
   * Interface for EditMol
@@ -15,6 +15,7 @@
   */
 
 #include <QSharedData>
+#include <QSharedDataPointer>
 #include <QString>
 #include <QHash>
 #include <QSet>
@@ -161,10 +162,19 @@ public:
     CutGroupNum at(CutGroupID cgid) const;
     CutGroupNum at(CutGroupNum cgnum) const;
 
-    QString residueName(ResNum renum) const;
+    QStringList atomNames(ResNum resnum) const;
+
+    QString residueName(ResNum resnum) const;
+    QStringList residueNames() const;
 
     ResNum residueNumber(ResID resid) const;
+    ResID residueID(ResNum resnum) const;
+
+    QVector<ResNum> residueNumbers() const;
+    QVector<ResNum> residueNumbers(CutGroupNum cgnum) const;
+
     CutGroupNum cutGroupNum(CutGroupID cgid) const;
+    CutGroupID cutGroupID(CutGroupNum cgnum) const;
 
     QSet<CutGroupNum> cutGroupNums(ResNum resnum) const;
 
@@ -407,6 +417,7 @@ public:
     const Vector& _unsafe_coordinates(const AtomIndex &atm) const;
    /////////////////////////////////////////////////
 
+    static QSharedDataPointer<EditMolData> shared_null();
 
 private:
     const EditMolData_ResData& _unsafe_resdata(ResNum resnum) const;
