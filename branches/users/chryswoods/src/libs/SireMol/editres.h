@@ -173,9 +173,6 @@ public:
 
     double getWeight(const QSet<AtomIndex> &group0, const QSet<AtomIndex> &group1,
                      const WeightFunction &weightfunc) const;
-
-    double getWeight(const QStringList &group0, const QStringList &group1,
-                     const WeightFunction &weightfunc) const;
    ////////////////////////////////////////////////
 
 
@@ -302,6 +299,10 @@ public:
    void assertSameResidue(const AtomIndex &atom) const;
 
 private:
+    EditRes(const QSharedDataPointer<EditMolData> &ptr, ResNum resnum);
+    
+    QHash<ResNum,Residue> getResidues(const QSet<ResNum> &resnums) const;
+    
     /** Implicitly shared pointer to the actual data of this residue */
     QSharedDataPointer<EditMolData> d;
 
