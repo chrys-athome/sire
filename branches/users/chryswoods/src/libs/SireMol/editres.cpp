@@ -12,16 +12,61 @@
   *
   */
 
+#include "qhash_siremol.h"
+
 #include "editres.h"
 
+#include "cgatomid.h"
+#include "cgnumatomid.h"
+#include "resnumatomid.h"
+#include "residatomid.h"
+
+#include "atom.h"
+#include "bond.h"
+#include "angle.h"
+#include "dihedral.h"
+#include "improper.h"
+
+#include "cutgroup.h"
+#include "editmol.h"
+
+#include "splitmolecule.h"
+#include "atomidgroup.h"
+#include "weightfunction.h"
+
+#include "molecule.h"
+#include "moleculedata.h"
+
+#include "residueinfo.h"
+
+#include "SireMol/errors.h"
+#include "SireError/errors.h"
+
+#include "SireVol/coordgroup.h"
+
+#include "SireMaths/quaternion.h"
+#include "SireMaths/matrix.h"
+#include "SireMaths/triangle.h"
+#include "SireMaths/line.h"
+#include "SireMaths/torsion.h"
+
 #include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
+using namespace SireMol;
+using namespace SireStream;
 
 static const RegisterMetaType<EditRes> r_editres("SireMol::EditRes");
 
 /** Serialise to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const EditRes &editres)
 {
-    writeHeader(ds, r_editres, 1) << editres.rnum << editres.d;
+    writeHeader(ds, r_editres, 1);
+    
+    SharedDataStream(ds) << editres.rnum << editres.d;
 
     return ds;
 }
@@ -33,10 +78,10 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, EditRes &editres)
 
     if (v == 1)
     {
-        ds >> editres.rnum >> editres.d;
+        SharedDataStream(ds) >> editres.rnum >> editres.d;
     }
     else
-        throw version_error(v, "1", , CODELOC);
+        throw version_error(v, "1", r_editres, CODELOC);
 
     return ds;
 }
@@ -290,7 +335,7 @@ QHash<CutGroupID,CoordGroup> EditRes::coordGroupsByID() const
 
     foreach (CutGroupNum cgnum, cgnums)
     {
-        cgroups.insert( d->coordGroupID(cgnum), d->coordGroup(cgnum) );
+        cgroups.insert( d->cutGroupID(cgnum), d->coordGroup(cgnum) );
     }
 
     return cgroups;
@@ -400,7 +445,7 @@ QVector<Vector> EditRes::coordinates() const
 }
 
 template<class T>
-QHash<T,Atom> getAtom(const EditRes &editres, const QSet<T> &idxs)
+QHash<T,Atom> getAtoms(const EditRes &editres, const QSet<T> &idxs)
 {
     QHash<T,Atom> atoms;
     atoms.reserve(idxs.count());
@@ -421,7 +466,7 @@ QHash<T,Atom> getAtom(const EditRes &editres, const QSet<T> &idxs)
 */
 QHash<AtomID,Atom> EditRes::atoms(const QSet<AtomID> &atomids) const
 {
-    return getAtom<AtomID>(*this, atomids);
+    return getAtoms<AtomID>(*this, atomids);
 }
 
 template<class T>
@@ -430,7 +475,7 @@ QHash<T,Vector> getCoords(const EditRes &editres, const QSet<T> &idxs)
     QHash<T,Vector> coords;
     coords.reserve(idxs.count());
     
-    for (typename QSet<T>::const_iterator = idxs.begin();
+    for (typename QSet<T>::const_iterator it = idxs.begin();
          it != idxs.end();
          ++it)
     {
@@ -591,7 +636,7 @@ int EditRes::nAtoms(CutGroupID cgid) const
 int EditRes::nAtoms(CutGroupNum cgnum) const
 {
     this->assertSameResidue(cgnum);
-    return d->nAtoms(rnum, cgnum);
+    return d->nAtoms(cgnum, rnum);
 }
 
 /** Return the total number of CutGroups that contain
@@ -632,21 +677,21 @@ QStringList EditRes::atomNames() const
     
     \throw SireMol::missing_residue
 */
-QHash<ResNum,Residue> EditRes::getResidues(const QSet<ResNum> &resnums) const
+QHash<ResNum,EditRes> EditRes::getResidues(const QSet<ResNum> &resnums) const
 {
-    QHash<ResNum,Residue> residues;
+    QHash<ResNum,EditRes> residues;
     residues.reserve(resnums.count());
     
     foreach (ResNum resnum, resnums)
     {
-        residues.insert( resnum, Residue(d,resnum) );
+        residues.insert( resnum, EditRes(d,resnum) );
     }
     
     return residues;
 }
 
 /** Return copies of the residues that are bonded to this residue */
-QHash<ResNum,Residue> EditRes::bondedResidues() const
+QHash<ResNum,EditRes> EditRes::bondedResidues() const
 {
     return this->getResidues( connectivity().bondedResidues() );
 }
@@ -656,7 +701,7 @@ QHash<ResNum,Residue> EditRes::bondedResidues() const
     
     \throw SireError::invalid_index
 */
-QHash<ResNum,Residue> EditRes::residuesBondedTo(AtomID atom) const
+QHash<ResNum,EditRes> EditRes::residuesBondedTo(AtomID atom) const
 {
     return getResidues( connectivity().residuesBondedTo( d->at(atom).name() ) );
 }
@@ -666,7 +711,7 @@ QHash<ResNum,Residue> EditRes::residuesBondedTo(AtomID atom) const
     
     \throw SireMol::missing_atom
 */
-QHash<ResNum,Residue> EditRes::residuesBondedTo(const QString &atomname) const
+QHash<ResNum,EditRes> EditRes::residuesBondedTo(const QString &atomname) const
 {
     d->assertAtomExists( AtomIndex(atomname,rnum) );
     return getResidues( connectivity().residuesBondedTo(atomname) );
@@ -677,7 +722,7 @@ QHash<ResNum,Residue> EditRes::residuesBondedTo(const QString &atomname) const
     \throw SireError::invalid_arg
     \throw SireMol::missing_atom
 */
-QHash<ResNum,Residue> EditRes::residuesBondedTo(const AtomIndex &atom) const
+QHash<ResNum,EditRes> EditRes::residuesBondedTo(const AtomIndex &atom) const
 {
     this->assertSameResidue(atom);
     return getResidues( connectivity().residuesBondedTo(atom.name()) );
@@ -822,7 +867,7 @@ double EditRes::getWeight(const QSet<AtomIndex> &group0, const QSet<AtomIndex> &
 /** Set the name of this residue to 'name' */
 void EditRes::setName(QString name)
 {
-    d->setName(rnum, name);
+    d->setResidueName(rnum, name);
 }
 
 /** Set the number of this residue to 'newnum' - note that there must
@@ -834,12 +879,6 @@ void EditRes::setNumber(ResNum newnum)
 {
     d->renumberResidue(rnum, newnum);
     rnum = newnum;
-}
-
-/** Completely clear this residue of all atoms and bonds */
-void EditRes::clear()
-{
-    d->clear(rnum);
 }
 
 /** Add an atom called 'atm' to this residue.

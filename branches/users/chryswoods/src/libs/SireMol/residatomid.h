@@ -35,7 +35,7 @@ class SIREMOL_EXPORT ResIDAtomID
 friend QDataStream& ::operator>>(QDataStream&, ResIDAtomID&);
 
 public:
-    ResIDAtomID(ResID resid = ResID(0), AtomID atmid = AtomID(0)) 
+    explicit ResIDAtomID(ResID resid = ResID(0), AtomID atmid = AtomID(0)) 
               : _resid(resid), _atmid(atmid)
     {}
 

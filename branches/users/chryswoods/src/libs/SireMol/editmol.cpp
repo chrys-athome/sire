@@ -12,9 +12,44 @@
   *
   */
 
+#include "qhash_siremol.h"
+
 #include "editmol.h"
 
+#include "cgatomid.h"
+#include "cgnumatomid.h"
+#include "resnumatomid.h"
+#include "residatomid.h"
+
+#include "atom.h"
+#include "bond.h"
+#include "angle.h"
+#include "dihedral.h"
+#include "improper.h"
+
+#include "cutgroup.h"
+#include "editres.h"
+
+#include "splitmolecule.h"
+#include "atomidgroup.h"
+#include "weightfunction.h"
+
+#include "molecule.h"
+#include "moleculedata.h"
+
+#include "SireMol/errors.h"
+#include "SireError/errors.h"
+
+#include "SireVol/coordgroup.h"
+
+#include "SireMaths/quaternion.h"
+#include "SireMaths/matrix.h"
+#include "SireMaths/triangle.h"
+#include "SireMaths/line.h"
+#include "SireMaths/torsion.h"
+
 #include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
 
 using namespace SireMol;
 using namespace SireStream;
@@ -24,7 +59,9 @@ static const RegisterMetaType<EditMol> r_editmol("SireMol::EditMol");
 /** Serialise to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const EditMol &editmol)
 {
-    writeHeader(ds, r_editmol, 1) << editmol.d;
+    writeHeader(ds, r_editmol, 1);
+     
+    SharedDataStream(ds) << editmol.d;
 
     return ds;
 }
@@ -36,7 +73,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, EditMol &editmol)
 
     if (v == 1)
     {
-        ds >> editmol.d;
+        SharedDataStream(ds) >> editmol.d;
     }
     else
         throw version_error(v, "1", r_editmol, CODELOC);
@@ -117,13 +154,13 @@ CutGroup EditMol::operator[](CutGroupNum cgnum) const
 */
 EditRes EditMol::operator[](ResID resid) const
 {
-    return EditRes(d, resid);
+    return EditRes(*this, resid);
 }
 
 /** Return a copy of the residue at index 'resnum' */
 EditRes EditMol::operator[](ResNum resnum) const
 {
-    return EditRes(d, resnum);
+    return EditRes(*this, resnum);
 }
 
 /** Return a copy of the atom at index 'atomid'
@@ -208,14 +245,14 @@ EditRes EditMol::residue(ResID resid) const
 */
 EditRes EditMol::residue(const QString &resname) const
 {
-    return EditRes(d, resname);
+    return EditRes(*this, resname);
 }
 
 /** Return a hash containing copies of all of the residues in this
     molecule, indexed by residue number */
 QHash<ResNum,EditRes> EditMol::residues() const
 {
-    QList<ResNum> resnums = d->residueNumbers();
+    QVector<ResNum> resnums = d->residueNumbers();
 
     QHash<ResNum,EditRes> allres;
     allres.reserve(resnums.count());
@@ -456,7 +493,7 @@ QHash<CutGroupID,CutGroup> EditMol::cutGroups(const QSet<CutGroupID> &cgids) con
 */
 QHash<CutGroupNum,CutGroup> EditMol::cutGroups(const QSet<CutGroupNum> &cgnums) const
 {
-    return d->cutGroups();
+    return d->cutGroups(cgnums);
 }
 
 /** Return copies of the CutGroups whose atoms are in the residues whose numbers
@@ -576,7 +613,7 @@ QHash<CutGroupID,CoordGroup> EditMol::coordGroupsByID(ResNum resnum) const
 
     foreach (CutGroupNum cgnum, cgnums)
     {
-        cgroups.insert( d->coordGroupID(cgnum), d->coordGroup(cgnum) );
+        cgroups.insert( d->cutGroupID(cgnum), d->coordGroup(cgnum) );
     }
 
     return cgroups;
@@ -635,7 +672,7 @@ QHash<CutGroupID,CoordGroup> EditMol::coordGroups(const QSet<CutGroupID> &cgids)
 */
 QHash<CutGroupNum,CoordGroup> EditMol::coordGroups(const QSet<CutGroupNum> &cgnums) const
 {
-    return d->coordGroups();
+    return d->coordGroups(cgnums);
 }
 
 /** Return copies of the CoordGroups whose atoms are in the residues whose numbers
@@ -653,7 +690,7 @@ QHash<CutGroupID,CoordGroup> EditMol::coordGroupsByID(const QSet<ResNum> &resnum
 
         foreach (CutGroupNum cgnum, cgnums)
         {
-            cgids.insert( d->coordGroupID(cgnum) );
+            cgids.insert( d->cutGroupID(cgnum) );
         }
     }
 
@@ -675,7 +712,7 @@ QHash<CutGroupID,CoordGroup> EditMol::coordGroupsByID(const QSet<ResID> &resids)
 
         foreach (CutGroupNum cgnum, cgnums)
         {
-            cgids.insert( d->coordGroupID(cgnum) );
+            cgids.insert( d->cutGroupID(cgnum) );
         }
     }
 
@@ -1282,7 +1319,7 @@ QHash< CutGroupID,QVector<Vector> > EditMol::coordinates(
     
     \throw SireMol::missing_residue
 */
-QVector<Vector> EditMol::coordinates(ResNum resnum)
+QVector<Vector> EditMol::coordinates(ResNum resnum) const
 {
     return d->coordinates(resnum);
 }
@@ -1294,7 +1331,7 @@ QVector<Vector> EditMol::coordinates(ResNum resnum)
 */
 QHash< ResNum,QVector<Vector> > EditMol::coordinates(const QSet<ResNum> &resnums) const
 {
-    return getCoordArray<ResNum>(*this, resnums);
+    return getCoordArrays<ResNum>(*this, resnums);
 }
 
 /** Return copies of the coordinates of all of the atoms in the residue
@@ -1302,7 +1339,7 @@ QHash< ResNum,QVector<Vector> > EditMol::coordinates(const QSet<ResNum> &resnums
     
     \throw SireError::invalid_index
 */
-QVector<Vector> EditMol::coordinates(ResID resid)
+QVector<Vector> EditMol::coordinates(ResID resid) const
 {
     return this->coordinates( d->at(resid) );
 }
@@ -1626,7 +1663,7 @@ int EditMol::nAtoms(ResNum resnum) const
 */
 int EditMol::nAtoms(ResID resid) const
 {
-    return d->nAtoms(resid);
+    return d->nAtoms(d->at(resid));
 }
 
 /** Return the total number of atoms in the CutGroup
@@ -1636,7 +1673,7 @@ int EditMol::nAtoms(ResID resid) const
 */
 int EditMol::nAtoms(CutGroupID cgid) const
 {
-    return d->nAtoms(cgid);
+    return d->nAtoms(d->at(cgid));
 }
 
 /** Return the total number of atoms in the CutGroup
@@ -2088,7 +2125,7 @@ void EditMol::remove(ResNum resnum)
 */
 void EditMol::remove(ResID resid)
 {
-    d->remove(resid);
+    d->remove(d->at(resid));
 }
 
 /** Apply the residue 'tmpl' as a template for the residue with number
@@ -2117,7 +2154,7 @@ void EditMol::applyTemplate(const EditRes &tmpl, ResID resid,
     the template function 'tmplfunc' */
 void EditMol::applyTemplate(const EditMol &tmpl, const TemplateFunction &tmplfunc)
 {
-    d->applyTemplate(mol, tmplfunc);
+    d->applyTemplate(tmpl, tmplfunc);
 }
 
 /** Translate the entire molecule by 'delta' */
@@ -2214,7 +2251,7 @@ void EditMol::translate(ResID resid, const Vector &delta)
 void EditMol::translate(const QSet<ResID> &resids, const Vector &delta)
 {
     QSet<ResNum> resnums;
-    resnums.reserve(resids);
+    resnums.reserve(resids.count());
 
     foreach (ResID resid, resids)
     {
@@ -2422,7 +2459,7 @@ void EditMol::rotate(CutGroupID cgid, const Quaternion &quat, const Vector &poin
 void EditMol::rotate(const QSet<CutGroupID> &cgids, const Quaternion &quat, 
                      const Vector &point)
 {
-    QSet<CGNum> cgnums;
+    QSet<CutGroupNum> cgnums;
     cgnums.reserve(cgids.count());
     
     foreach (CutGroupID cgid, cgids)
@@ -2583,7 +2620,7 @@ void EditMol::rotate(CutGroupID cgid, const Matrix &matrix, const Vector &point)
 void EditMol::rotate(const QSet<CutGroupID> &cgids, const Matrix &matrix, 
                      const Vector &point)
 {
-    QSet<CGNum> cgnums;
+    QSet<CutGroupNum> cgnums;
     cgnums.reserve(cgids.count());
     
     foreach (CutGroupID cgid, cgids)

@@ -37,6 +37,10 @@ friend QDataStream& ::operator>>(QDataStream&, AtomIDGroup&);
 
 public:
     AtomIDGroup();
+    AtomIDGroup(const QSet<AtomIndex> &atoms);
+    AtomIDGroup(const QSet<ResNum> &residues);
+    AtomIDGroup(const QSet<ResNum> &residues, const QSet<AtomIndex> &atoms);
+    
     ~AtomIDGroup();
 
     void add(ResNum resnum);

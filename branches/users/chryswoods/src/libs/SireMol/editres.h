@@ -31,6 +31,7 @@ namespace SireMol
 {
 
 class EditMol;
+class ResidueInfo;
 
 /**
 This class represents an editable residue within an EditMol. This contains functions
@@ -153,10 +154,10 @@ public:
 
     QStringList atomNames() const;
 
-    QHash<ResNum,Residue> bondedResidues() const;
-    QHash<ResNum,Residue> residuesBondedTo(AtomID atom) const;
-    QHash<ResNum,Residue> residuesBondedTo(const QString &atomname) const;
-    QHash<ResNum,Residue> residuesBondedTo(const AtomIndex &atom) const;
+    QHash<ResNum,EditRes> bondedResidues() const;
+    QHash<ResNum,EditRes> residuesBondedTo(AtomID atom) const;
+    QHash<ResNum,EditRes> residuesBondedTo(const QString &atomname) const;
+    QHash<ResNum,EditRes> residuesBondedTo(const AtomIndex &atom) const;
 
     SireMaths::Line bond(const Bond &bnd) const;
     SireMaths::Triangle angle(const SireMol::Angle &ang) const;
@@ -179,8 +180,6 @@ public:
    //// Editing functions /////////////////////////
     void setName(QString name);
     void setNumber(ResNum newnum);
-
-    void clear();
 
     void add(const QString &atm);
     void add(const Atom &atm);
@@ -296,12 +295,16 @@ public:
              const WeightFunction &func, const QSet<AtomIndex> &anchors = QSet<AtomIndex>());
    ////////////////////////////////////////////////
 
-   void assertSameResidue(const AtomIndex &atom) const;
+    void assertSameResidue(const AtomIndex &atom) const;
+    void assertSameResidue(const QSet<AtomIndex> &atoms) const;
+    void assertSameResidue(CutGroupNum cgnum) const;
+    void assertSameResidue(CutGroupID cgid) const;
+    void assertSameResidue(const Bond &bond) const;
 
 private:
     EditRes(const QSharedDataPointer<EditMolData> &ptr, ResNum resnum);
     
-    QHash<ResNum,Residue> getResidues(const QSet<ResNum> &resnums) const;
+    QHash<ResNum,EditRes> getResidues(const QSet<ResNum> &resnums) const;
     
     /** Implicitly shared pointer to the actual data of this residue */
     QSharedDataPointer<EditMolData> d;

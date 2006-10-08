@@ -33,6 +33,7 @@
 #include "atomidgroup.h"
 
 #include "editmoldata.h"
+#include "moleculedata.h"
 
 #include "weightfunction.h"
 
@@ -789,9 +790,11 @@ bool EditMolData::operator!=(const EditMolData &other) const
     return not (*this == other);
 }
 
-// Molecule EditMolData::commit() const
-// {
-// }
+detail::MolData EditMolData::commit() const
+{
+    #warning EditMolData::commit() is broken!
+    return detail::MolData();
+}
 
 /** @name Indexing operators
     These indexing operators allow conversion from general indicies
@@ -2331,20 +2334,6 @@ void EditMolData::translate(const QSet<CutGroupNum> &cgnums, const Vector &delta
     atms = workspace.commit();
 }
 
-/** Translate the atom with index 'atomid' in the residue with number
-    'resnum' by 'delta'
-
-    \throw SireMol::missing_residue
-    \throw SireError::invalid_index
-*/
-void EditMolData::translate(ResNum resnum, AtomID atomid, const Vector &delta)
-{
-    MoveWorkspace workspace(atms);
-    workspace.translate(this->at(ResNumAtomID(resnum,atomid)), delta);
-
-    atms = workspace.commit();
-}
-
 /** Translate the atoms whose indicies are in 'atomids' and who are in
     the residue with number 'resnum' by 'delta'
 
@@ -2543,21 +2532,6 @@ void EditMolData::rotate(const QSet<CutGroupNum> &cgnums,
         return;
 
     this->rotate(cgnums, quat.toMatrix(), point);
-}
-
-/** Rotate the atom at index 'atomid' in the residue with number
-    'resnum' using the quaternion 'quat' about the point 'point'.
-
-    \throw SireMol::missing_residue
-    \throw SireError::invalid_index
-*/
-void EditMolData::rotate(ResNum resnum, AtomID atomid,
-                         const Quaternion &quat, const Vector &point)
-{
-    if (quat.isIdentity())
-        return;
-
-    this->rotate(resnum, atomid, quat.toMatrix(), point);
 }
 
 /** Rotate the atoms whose indicies in the residue with number 'resnum'
@@ -2808,22 +2782,6 @@ void EditMolData::rotate(const QSet<CutGroupNum> &cgnums,
         this->assertCutGroupExists(cgnum);
         this->_pvt_rotate(cgnum, matrix, point, workspace);
     }
-
-    atms = workspace.commit();
-}
-
-/** Rotate the atom at index 'atomid' in the residue with number 'resnum'
-    using the matrix 'matrix' about the point 'point'
-
-    \throw SireMol::missing_residue
-    \throw SireError::invalid_index
-*/
-void EditMolData::rotate(ResNum resnum, AtomID atomid,
-                         const Matrix &rotmat, const Vector &point)
-{
-    MoveWorkspace workspace(atms);
-
-    workspace.rotate( this->at(ResNumAtomID(resnum,atomid)), rotmat, point );
 
     atms = workspace.commit();
 }
@@ -3181,18 +3139,6 @@ void EditMolData::setCoordinates(const ResIDAtomID &resatomid,
 void EditMolData::setCoordinates(const QHash<ResIDAtomID,Vector> &newcoords)
 {
     this->_pvt_setCoords<ResIDAtomID>(newcoords);
-}
-
-/** Set the coordinates of the atom at index 'atomid' in the residue with
-    number 'resnum' to 'newcoords'
-
-    \throw SireMol::missing_residue
-    \throw SireError::invalid_index
-*/
-void EditMolData::setCoordinates(ResNum resnum, AtomID atomid,
-                                 const Vector &newcoords)
-{
-    this->setCoordinates( ResNumAtomID(resnum, atomid), newcoords );
 }
 
 /** Set the coordinates of the specified atoms in the residue with number

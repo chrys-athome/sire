@@ -35,7 +35,7 @@ class SIREMOL_EXPORT ResNumAtomID
 friend QDataStream& ::operator>>(QDataStream&, ResNumAtomID&);
 
 public:
-    ResNumAtomID(ResNum resnum = ResNum(0), AtomID atmid = AtomID(0)) 
+    explicit ResNumAtomID(ResNum resnum = ResNum(0), AtomID atmid = AtomID(0)) 
               : _resnum(resnum), _atmid(atmid)
     {}
 

@@ -298,14 +298,14 @@ public:
           coordinates(const QSet<CutGroupID> &cgids) const;
 
     QVector<Vector> coordinates(CutGroupNum cgnum) const;
-    QHash< CutGroupID,QVector<Vector> >
+    QHash< CutGroupNum,QVector<Vector> >
           coordinates(const QSet<CutGroupNum> &cgnums) const;
 
-    QVector<Vector> coordinates(ResNum resnum);
+    QVector<Vector> coordinates(ResNum resnum) const;
     QHash< ResNum,QVector<Vector> >
           coordinates(const QSet<ResNum> &resnums) const;
 
-    QVector<Vector> coordinates(ResID resid);
+    QVector<Vector> coordinates(ResID resid) const;
     QHash< ResID,QVector<Vector> >
           coordinates(const QSet<ResID> &resids) const;
 
@@ -316,6 +316,8 @@ public:
 
     ResNum residueNumber(ResID resid) const;
     ResNum residueNumber(const QString &resname) const;
+
+    ResID residueID(ResNum resnum) const;
 
     bool isEmpty() const;
     bool isEmpty(ResNum resnum) const;

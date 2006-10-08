@@ -32,7 +32,7 @@ class SIREMOL_EXPORT CGAtomID
 friend QDataStream& ::operator>>(QDataStream&, CGAtomID&);
 
 public:
-    CGAtomID(CutGroupID cgid = CutGroupID(0), AtomID atmid = AtomID(0)) 
+    explicit CGAtomID(CutGroupID cgid = CutGroupID(0), AtomID atmid = AtomID(0)) 
           : _cgid(cgid), _atmid(atmid)
     {}
     

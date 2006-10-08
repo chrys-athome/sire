@@ -28,6 +28,7 @@ class MolCutGroupID;
 class IDBase;
 
 class CGAtomID;
+class CGNumAtomID;
 class ResNumAtomID;
 class ResIDAtomID;
 class MolCGAtomID;
@@ -49,6 +50,7 @@ uint qHash(const SireMol::ResidueID&);
 uint qHash(const SireMol::MolCutGroupID&);
 uint qHash(const SireMol::IDBase&);
 uint qHash(const SireMol::CGAtomID&);
+uint qHash(const SireMol::CGNumAtomID&);
 uint qHash(const SireMol::ResNumAtomID&);
 uint qHash(const SireMol::ResIDAtomID&);
 uint qHash(const SireMol::MolCGAtomID&);

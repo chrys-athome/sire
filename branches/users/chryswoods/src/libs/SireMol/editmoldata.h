@@ -69,6 +69,9 @@ class Angle;
 class Dihedral;
 class Improper;
 
+class BondAddingFunction;
+class CuttingFunction;
+class TemplateFunction;
 class WeightFunction;
 
 class Molecule;
@@ -91,6 +94,7 @@ using SireVol::CoordGroup;
 namespace detail
 {
 class MoveWorkspace;
+class MolData;
 }
 
 /**
@@ -127,7 +131,7 @@ public:
 
 
    ////// Interfacing with Molecule ////////////////////////
-    Molecule commit();
+    detail::MolData commit() const;
    /////////////////////////////////////////////////////////
 
 
@@ -162,6 +166,8 @@ public:
     CutGroupNum at(CutGroupID cgid) const;
     CutGroupNum at(CutGroupNum cgnum) const;
 
+    const QString& name() const;
+
     QStringList atomNames(ResNum resnum) const;
 
     QString residueName(ResNum resnum) const;
@@ -182,8 +188,12 @@ public:
     int nAtoms(ResNum resnum) const;
     int nAtoms(CutGroupNum cgnum) const;
 
+    int nAtoms(CutGroupNum cgnum, ResNum resnum) const;
+
     int nResidues() const;
+    
     int nCutGroups() const;
+    int nCutGroups(ResNum resnum) const;
 
     bool isEmpty() const;
     bool isEmpty(ResNum resnum) const;
@@ -243,6 +253,10 @@ public:
 
     double getWeight(const AtomIDGroup &group0, const AtomIDGroup &group1,
                      const WeightFunction &weightfunc) const;
+                     
+    double getWeight(ResNum resnum, const QStringList &group0,
+                     const QStringList &group1, 
+                     const WeightFunction &weightfunc) const;
    /////////////////////////////////////////////////////////
 
 
@@ -262,6 +276,15 @@ public:
     void add(const Bond &bond);
     void remove(const Bond &bond);
 
+    void addAutoBonds();
+    void addAutoBonds(const BondAddingFunction &bondfunc);
+    
+    void addAutoBonds(ResNum resnum);
+    void addAutoBonds(ResNum resnum, const BondAddingFunction &bondfunc);
+    
+    void addAutoBonds(ResNum res0, ResNum res1);
+    void addAutoBonds(ResNum res0, ResNum res1, const BondAddingFunction &bondfunc);
+
     void removeAllBonds(ResNum resnum);
     void removeAllBonds(const AtomIndex &atom);
     void removeAllBonds();
@@ -280,6 +303,10 @@ public:
 
     void remove(ResNum resnum);
     void remove(CutGroupNum cgnum);
+    
+    void applyTemplate(const EditRes &tmpl, ResNum resnum, 
+                       const TemplateFunction &tmplfunc);
+    void applyTemplate(const EditMol &tmpl, const TemplateFunction &tmplfunc);
    /////////////////////////////////////////////////
 
 
@@ -297,7 +324,6 @@ public:
     void translate(CutGroupNum cgnum, const Vector &delta);
     void translate(const QSet<CutGroupNum> &cgnums, const Vector &delta);
     void translate(ResNum resnum, const QSet<AtomID> &atomids, const Vector &delta);
-    void translate(ResNum resnum, const QStringList &atoms, const Vector &delta);
 
     void rotate(const Quaternion &quat, const Vector &point);
     void rotate(const AtomIDGroup &group, const Quaternion &quat, const Vector &point);
@@ -315,8 +341,6 @@ public:
     void rotate(const QSet<CutGroupNum> &cgnums, const Quaternion &quat, const Vector &point);
     void rotate(ResNum resnum, const QSet<AtomID> &atomids,
                 const Quaternion &quat, const Vector &point);
-    void rotate(ResNum resnum, const QStringList &atoms, 
-                const Quaternion &quat, const Vector &point);
 
     void rotate(const Matrix &matrix, const Vector &point);
     void rotate(const AtomIDGroup &group, const Matrix &matrix, const Vector &point);
@@ -333,8 +357,6 @@ public:
     void rotate(CutGroupNum cgnum, const Matrix &matrix, const Vector &point);
     void rotate(const QSet<CutGroupNum> &cgnums, const Matrix &matrix, const Vector &point);
     void rotate(ResNum resnum, const QSet<AtomID> &atomids,
-                const Matrix &matrix, const Vector &point);
-    void rotate(ResNum resnum, const QStringList &atoms, 
                 const Matrix &matrix, const Vector &point);
 
     void setCoordinates(CutGroupNum cgnum, const CoordGroup &newcoords);
