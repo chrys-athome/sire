@@ -1,5 +1,18 @@
 #ifndef SIREMOL_ATOMIDGROUP_H
 #define SIREMOL_ATOMIDGROUP_H
+/**
+  * @file
+  *
+  * C++ Interface: AtomIDGroup
+  *
+  * Description: 
+  * Interface to the AtomIDGroup class
+  * 
+  * Author: Christopher Woods, (C) 2006
+  *
+  * Copyright: See COPYING file that comes with this distribution
+  *
+  */
 
 #include <QSet>
 

@@ -1,3 +1,16 @@
+/**
+  * @file
+  *
+  * C++ Implementation: AtomIDGroup
+  *
+  * Description: 
+  * Implementation of the AtomIDGroup class
+  * 
+  * Author: Christopher Woods, (C) 2006
+  *
+  * Copyright: See COPYING file that comes with this distribution
+  *
+  */
 
 #include "qhash_siremol.h"
 
@@ -40,6 +53,32 @@ AtomIDGroup::AtomIDGroup()
 /** Destructor */
 AtomIDGroup::~AtomIDGroup()
 {}
+
+/** Construct a group that contains the atoms 'atoms' */
+AtomIDGroup::AtomIDGroup(const QSet<AtomIndex> &atoms)
+            : atms(atoms)
+{}
+
+/** Construct a group that contains the residues whose numbers
+    are in 'resnums' */
+AtomIDGroup::AtomIDGroup(const QSet<ResNum> &resnums)
+            : residus(resnums)
+{}
+
+/** Construct a group that contains the residues whose numbers
+    are in 'resnums' and the atoms in 'atoms' */
+AtomIDGroup::AtomIDGroup(const QSet<ResNum> &resnums, 
+                         const QSet<AtomIndex> &atoms)
+            : residus(resnums), atms(atoms)
+{
+    for (QSet<AtomIndex>::const_iterator it = atoms.begin();
+         it != atoms.end();
+         ++it)
+    {
+        if (residus.contains(it->resNum()))
+            atms.remove(*it);
+    }
+}
 
 /** Clear all atoms and residues from this group */
 void AtomIDGroup::clear()

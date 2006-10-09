@@ -20,6 +20,8 @@
 #include "moleculeinfo.h"
 #include "residueinfo.h"
 
+#include "editmoldata.h"
+
 #include "atominfo.h"
 #include "atominfogroup.h"
 
@@ -58,6 +60,7 @@ friend QDataStream& ::operator>>(QDataStream&, MoleculeInfoPvt&);
 
 public:
     MoleculeInfoPvt();
+    MoleculeInfoPvt(const EditMolData &moldata);
 
     MoleculeInfoPvt(const MoleculeInfoPvt &other);
 
@@ -161,6 +164,14 @@ MoleculeInfoPvt::MoleculeInfoPvt()
                 : QSharedData(),
                   molname(QObject::tr("null")), nats(0)
 {}
+
+/** Construct from an EditMolData object */
+MoleculeInfoPvt::MoleculeInfoPvt(const EditMolData &moldata)
+                : QSharedData()
+{
+    #warning Need to update MoleculeInfo to use CutGroupNums!
+}
+                  
 
 /** Copy constructor */
 MoleculeInfoPvt::MoleculeInfoPvt(const MoleculeInfoPvt &other)
@@ -418,6 +429,11 @@ static QSharedDataPointer<MoleculeInfoPvt> shared_null( new MoleculeInfoPvt() );
 
 /** Null constructor */
 MoleculeInfo::MoleculeInfo() : d(shared_null)
+{}
+
+/** Construct from the passed EditMolData */
+MoleculeInfo::MoleculeInfo(const EditMolData &moldata) 
+             : d( new MoleculeInfoPvt(moldata) )
 {}
 
 /** Copy constructor - fast as this class is implicitly shared */

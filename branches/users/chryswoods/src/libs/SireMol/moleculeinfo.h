@@ -40,7 +40,7 @@ class AtomIndex;
 class ResidueInfo;
 class AtomInfoGroup;
 
-class EditMol;
+class EditMolData;
 
 class MoleculeInfoPvt;
 
@@ -61,7 +61,7 @@ friend QDataStream& ::operator>>(QDataStream&, MoleculeInfo&);
 
 public:
     MoleculeInfo();
-    MoleculeInfo( const EditMol &editmol );
+    MoleculeInfo(const EditMolData &moldata);
 
     MoleculeInfo(const MoleculeInfo &other);
 

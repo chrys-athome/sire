@@ -102,6 +102,11 @@ EditMol::EditMol(const CuttingFunction &cuttingfunc)
         : d( new EditMolData(cuttingfunc) )
 {}
 
+/** Construct a molecule that is a copy of the molecule that contains
+    the residue 'res' */
+EditMol::EditMol(const EditRes &res) : d(res.d)
+{}
+
 /** Copy constructor */
 EditMol::EditMol(const EditMol &other)
         : d( other.d )

@@ -159,6 +159,78 @@ EditRes& EditRes::operator=(const EditRes &other)
     return *this;
 }
 
+/** Assert that the atom 'atom' is in this residue.
+
+    \throw SireError::invalid_arg
+*/
+void EditRes::assertSameResidue(const AtomIndex &atom) const
+{
+    if (atom.resNum() != rnum)
+        throw SireError::invalid_arg( QObject::tr(
+                "The atom %1 does not refer to this residue - %2(%3)")
+                    .arg(atom.toString(), name()).arg(number()), CODELOC );
+}
+
+/** Assert that all of the atoms in 'atoms' are in this residue
+
+    \throw SireError::invalid_arg
+*/
+void EditRes::assertSameResidue(const QSet<AtomIndex> &atoms) const
+{
+    for (QSet<AtomIndex>::const_iterator it = atoms.begin();
+         it != atoms.end();
+         ++it)
+    {
+        this->assertSameResidue(*it);
+    }
+}
+
+/** Assert that this residue contains atoms that are in the
+    CutGroup with number 'cgnum'
+    
+    \throw SireError::invalid_arg
+*/
+void EditRes::assertSameResidue(CutGroupNum cgnum) const
+{
+    if (not d->cutGroupNums(rnum).contains(cgnum))
+        throw SireError::invalid_arg( QObject::tr(
+                "The residue %1(%2) does not contain any atoms that are "
+                "in the CutGroup with number %3")
+                    .arg(name()).arg(number()).arg(cgnum), CODELOC );
+}
+
+/** Assert that this residue contains atoms that are in the
+    CutGroup with ID == cgid
+    
+    \throw SireError::invalid_arg
+*/
+void EditRes::assertSameResidue(CutGroupID cgid) const
+{
+    if ( cgid < d->nCutGroups() and not
+            ( d->cutGroupNums(rnum).contains(d->at(cgid)) ) )
+    {
+        throw SireError::invalid_arg( QObject::tr(
+                "The residue %1(%2) does not contain any atoms that are "
+                "in the CutGroup with ID %3")
+                    .arg(name()).arg(number()).arg(cgid), CODELOC );
+    }
+}
+
+/** Assert that both of the atoms in the bond 'bond' refer
+    to this residue 
+    
+    \throw SireError::invalid_arg
+*/
+void EditRes::assertSameResidue(const Bond &bond) const
+{
+    if (bond.resNum0() != rnum or bond.resNum1() != rnum)
+    {
+        throw SireError::invalid_arg( QObject::tr(
+                "The bond %1 does not refer to this residue - %2(%3)")
+                    .arg(bond.toString(), name()).arg(number()), CODELOC );
+    }
+}
+
 /** Return a copy of the atom at index 'atomid'
 
     \throw SireError::invalid_index

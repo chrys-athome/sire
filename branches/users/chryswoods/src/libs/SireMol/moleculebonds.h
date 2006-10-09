@@ -63,6 +63,10 @@ public:
     void removeIntra(const AtomIndex &atom);
     void removeInter(const AtomIndex &atom);
 
+    void removeAll();
+    void removeAllIntra();
+    void removeAllInter();
+
     void renumber(ResNum oldnum, ResNum newnum);
 
     void clear();
