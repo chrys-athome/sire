@@ -65,18 +65,22 @@ public:
     int nParameters(ResNum resnum) const;
     int nParameters(ResID resid) const;
     int nParameters(CutGroupID cgid) const;
+    int nParameters(CutGroupNum cgnum) const;
 
     virtual int nAssignedParameters() const;
     int nAssignedParameters(ResNum resnum) const;
     int nAssignedParameters(ResID resid) const;
     int nAssignedParameters(CutGroupID cgid) const;
+    int nAssignedParameters(CutGroupNum cgnum) const;
 
     virtual int nMissingParameters() const;
     int nMissingParameters(ResNum resnum) const;
     int nMissingParameters(ResID resid) const;
     int nMissingParameters(CutGroupID cgid) const;
+    int nMissingParameters(CutGroupNum cgnum) const;
 
     bool assignedParameter(const CGAtomID &cgatomid) const;
+    bool assignedParameter(const CGNumAtomID &cgatomid) const;
     bool assignedParameter(const ResNumAtomID &resatomid) const;
     bool assignedParameter(const ResIDAtomID &resatomid) const;
     bool assignedParameter(const AtomIndex &atom) const;
@@ -86,11 +90,13 @@ public:
     bool hasMissingParameters(ResNum resnum) const;
     bool hasMissingParameters(ResID resid) const;
     bool hasMissingParameters(CutGroupID cgid) const;
+    bool hasMissingParameters(CutGroupNum cgnum) const;
 
     virtual QSet<AtomIndex> missingParameters() const;
     QSet<AtomIndex> missingParameters(ResNum resnum) const;
     QSet<AtomIndex> missingParameters(ResID resid) const;
     QSet<AtomIndex> missingParameters(CutGroupID cgid) const;
+    QSet<AtomIndex> missingParameters(CutGroupNum cgnum) const;
 
     template<class C>
     QSet<AtomIndex> missingParameters(const C &lots) const;
@@ -98,6 +104,7 @@ public:
     virtual void clear();
 
     void clear(const CGAtomID &cgatomid);
+    void clear(const CGNumAtomID &cgatomid);
     void clear(const ResNumAtomID &resatomid);
     void clear(const ResIDAtomID &resatomid);
     void clear(const AtomIndex &atom);
@@ -106,6 +113,7 @@ public:
     void clear(ResNum resnum);
     void clear(ResID resid);
 
+    void clear(CutGroupNum cgnum);
     void clear(CutGroupID cgid);
 
     template<class C>

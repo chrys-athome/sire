@@ -87,6 +87,8 @@ int AtomTable::nParameters() const
 
     (this includes missing parameters, thus
     nParameters(resnum) = nAssignedParameters(resnum) + nMissingParameters(resnum)
+
+    \throw SireMol::missing_residue
 */
 int AtomTable::nParameters(ResNum resnum) const
 {
@@ -100,6 +102,8 @@ int AtomTable::nParameters(ResNum resnum) const
 
     (this includes missing parameters, thus
     nParameters(resid) = nAssignedParameters(resid) + nMissingParameters(resid)
+
+    \throw SireError::invalid_index
 */
 int AtomTable::nParameters(ResID resid) const
 {
@@ -113,12 +117,29 @@ int AtomTable::nParameters(ResID resid) const
 
     (this includes missing parameters, thus
     nParameters(cgid) = nAssignedParameters(cgid) + nMissingParameters(cgid)
+
+    \throw SireMol::missing_cutgroup
 */
 int AtomTable::nParameters(CutGroupID cgid) const
 {
     //the number of parameters must be the same as the number
     //of atoms
     return info().nAtoms(cgid);
+}
+
+/** Return the total number of parameters in this table
+    that are in the CutGroup with number 'cgnum'.
+
+    (this includes missing parameters, thus
+    nParameters(cgnum) = nAssignedParameters(cgnum) + nMissingParameters(cgnum)
+
+    \throw SireMol::missing_cutgroup
+*/
+int AtomTable::nParameters(CutGroupNum cgnum) const
+{
+    //the number of parameters must be the same as the number
+    //of atoms
+    return info().nAtoms(cgnum);
 }
 
 /** Return the total number of assigned parameters in this table */
@@ -164,6 +185,16 @@ int AtomTable::nAssignedParameters(CutGroupID cgid) const
     return this->_unsafe_nAssignedParameters(cgid);
 }
 
+/** Return the total number of assigned parameters in the
+    CutGroup with number 'cgnum'
+
+    \throw SireMol::missing_cutgroup
+*/
+int AtomTable::nAssignedParameters(CutGroupNum cgnum) const
+{
+    return this->_unsafe_nAssignedParameters( info().cutGroupID(cgnum) );
+}
+
 /** Return the total number of missing parameters */
 int AtomTable::nMissingParameters() const
 {
@@ -207,6 +238,16 @@ int AtomTable::nMissingParameters(CutGroupID cgid) const
     return this->_unsafe_nMissingParameters( cgid );
 }
 
+/** Return the total number of missing parameters in the CutGroup
+    with number 'cgnum'
+
+    \throw SireMol::missing_cutgroup
+*/
+int AtomTable::nMissingParameters(CutGroupNum cgnum) const
+{
+    return this->_unsafe_nMissingParameters( info().cutGroupID(cgnum) );
+}
+
 /** Return whether or not the parameter for the atom with
     index 'cgatomid' has been assigned.
 
@@ -217,6 +258,17 @@ bool AtomTable::assignedParameter(const CGAtomID &cgatomid) const
 {
     info().assertAtomExists(cgatomid);
     return this->_unsafe_assignedParameter(cgatomid);
+}
+
+/** Return whether or not the parameter for the atom with
+    index 'cgatomid' has been assigned.
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+bool AtomTable::assignedParameter(const CGNumAtomID &cgatomid) const
+{
+    return this->_unsafe_assignedParameter( info().at(cgatomid) );
 }
 
 /** Return whether or not the parameter for the atom with
@@ -305,6 +357,16 @@ bool AtomTable::hasMissingParameters(CutGroupID cgid) const
     return this->_unsafe_hasMissingParameters(cgid);
 }
 
+/** Return whether the CutGroup with number 'cgnum' has any
+    missing parameters in this table
+
+    \throw SireMol::missing_cutgroup
+*/
+bool AtomTable::hasMissingParameters(CutGroupNum cgnum) const
+{
+    return this->_unsafe_hasMissingParameters( info().cutGroupID(cgnum) );
+}
+
 /** Return the set of AtomIndexes of all atoms that are missing
     parameters in this table */
 QSet<AtomIndex> AtomTable::missingParameters() const
@@ -350,6 +412,16 @@ QSet<AtomIndex> AtomTable::missingParameters(CutGroupID cgid) const
     return this->_unsafe_missingParameters(cgid);
 }
 
+/** Return the set of AtomIndex objects of all atoms in the CutGroup
+    with number 'cgnum' that are missing parameters in this table
+
+    \throw SireMol::missing_cutgroup
+*/
+QSet<AtomIndex> AtomTable::missingParameters(CutGroupNum cgnum) const
+{
+    return this->_unsafe_missingParameters( info().cutGroupID(cgnum) );
+}
+
 /** Clear this table of all parameters. Note that this only
     clears the values of the parameters - it does not remove
     the atoms */
@@ -371,6 +443,17 @@ void AtomTable::clear(const CGAtomID &cgatomid)
 {
     info().assertAtomExists(cgatomid);
     this->_unsafe_clear(cgatomid);
+}
+
+/** Clear this table of the parameter for the atom at
+    index 'cgatomid'
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+void AtomTable::clear(const CGNumAtomID &cgatomid)
+{
+    this->_unsafe_clear( info().at(cgatomid) );
 }
 
 /** Clear this table of the parameter for the atom at
@@ -444,4 +527,14 @@ void AtomTable::clear(CutGroupID cgid)
 {
     info().assertCutGroupExists(cgid);
     this->_unsafe_clear(cgid);
+}
+
+/** Clear this table of all parameters for the atoms
+    in the CutGroup with number 'cgnum'
+
+    \throw SireMol::missing_cutgroup
+*/
+void AtomTable::clear(CutGroupNum cgnum)
+{
+    this->_unsafe_clear( info().cutGroupID(cgnum) );
 }
