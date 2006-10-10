@@ -191,7 +191,7 @@ public:
     int nAtoms(CutGroupNum cgnum, ResNum resnum) const;
 
     int nResidues() const;
-    
+
     int nCutGroups() const;
     int nCutGroups(ResNum resnum) const;
 
@@ -253,9 +253,9 @@ public:
 
     double getWeight(const AtomIDGroup &group0, const AtomIDGroup &group1,
                      const WeightFunction &weightfunc) const;
-                     
+
     double getWeight(ResNum resnum, const QStringList &group0,
-                     const QStringList &group1, 
+                     const QStringList &group1,
                      const WeightFunction &weightfunc) const;
    /////////////////////////////////////////////////////////
 
@@ -278,10 +278,10 @@ public:
 
     void addAutoBonds();
     void addAutoBonds(const BondAddingFunction &bondfunc);
-    
+
     void addAutoBonds(ResNum resnum);
     void addAutoBonds(ResNum resnum, const BondAddingFunction &bondfunc);
-    
+
     void addAutoBonds(ResNum res0, ResNum res1);
     void addAutoBonds(ResNum res0, ResNum res1, const BondAddingFunction &bondfunc);
 
@@ -303,8 +303,11 @@ public:
 
     void remove(ResNum resnum);
     void remove(CutGroupNum cgnum);
-    
-    void applyTemplate(const EditRes &tmpl, ResNum resnum, 
+
+    void applyTemplate(const EditRes &tmpl, ResNum resnum);
+    void applyTemplate(const EditMol &tmpl);
+
+    void applyTemplate(const EditRes &tmpl, ResNum resnum,
                        const TemplateFunction &tmplfunc);
     void applyTemplate(const EditMol &tmpl, const TemplateFunction &tmplfunc);
    /////////////////////////////////////////////////

@@ -272,6 +272,34 @@ void MoleculeBonds::removeInter(const AtomIndex &atom)
     }
 }
 
+/** Remove all bonds from this molecule */
+void MoleculeBonds::removeAll()
+{
+    resbnds.clear();
+}
+
+/** Remove all intra-residue bonds from all residues in this molecule */
+void MoleculeBonds::removeAllIntra()
+{
+    for (QHash<ResNum,ResidueBonds>::iterator it = resbnds.begin();
+         it != resbnds.end();
+         ++it)
+    {
+        it->removeIntra();
+    }
+}
+
+/** Remove all inter-residue bonds from all residues in this molecule */
+void MoleculeBonds::removeAllInter()
+{
+    for (QHash<ResNum,ResidueBonds>::iterator it = resbnds.begin();
+         it != resbnds.end();
+         ++it)
+    {
+        it->removeInter();
+    }
+}
+
 /** Renumber the residue with current number 'oldnum' to 'newnum'.
     This does nothing if there is no residue with number 'oldnum'. */
 void MoleculeBonds::renumber(ResNum oldnum, ResNum newnum)

@@ -195,7 +195,7 @@ static const RegisterMetaType<EditMolData_AtomData> r_atomdata(
                                       "SireMol::EditMolData_AtomData", MAGIC_ONLY);
 
 /** Serialise to a binary data stream */
-QDataStream &operator<<(QDataStream &ds, 
+QDataStream &operator<<(QDataStream &ds,
 const EditMolData_AtomData &atomdata)
 {
     writeHeader(ds, r_atomdata, 1)
@@ -287,6 +287,18 @@ QSharedDataPointer<EditMolData> EditMolData::shared_null()
 /** Create a new EditMol called 'molname' */
 EditMolData::EditMolData(const QString &molname)
             : QSharedData(), molnme(molname)
+{}
+
+/** Create a new EditMol called 'molname' that uses the CuttingFunction
+    'cutfunc' */
+EditMolData::EditMolData(const QString &molname,
+                         const CuttingFunction &cutfunc)
+            : QSharedData(), molnme(molname), cuttingfunc(cutfunc)
+{}
+
+/** Create an unnamed EditMol that uses the CuttingFunction 'cutfunc' */
+EditMolData::EditMolData(const CuttingFunction &cutfunc)
+            : QSharedData(), molnme(QObject::tr("Unnamed")), cuttingfunc(cutfunc)
 {}
 
 /** Copy constructor */
@@ -497,12 +509,12 @@ QString EditMolData::residueName(ResNum resnum) const
 QStringList EditMolData::residueNames() const
 {
     QStringList resnams;
-    
+
     foreach (ResNum resnum, resnums)
     {
         resnams.append( this->_unsafe_resdata(resnum).resname );
     }
-    
+
     return resnams;
 }
 
@@ -532,9 +544,9 @@ QVector<ResNum> EditMolData::residueNumbers() const
     return resnums.toVector();
 }
 
-/** Return the numbers of the residues that have atoms in the  
+/** Return the numbers of the residues that have atoms in the
     CutGroup with number 'cgnum'
-    
+
     \throw SireMol::missing_cutgroup
 */
 QVector<ResNum> EditMolData::residueNumbers(CutGroupNum cgnum) const
@@ -542,20 +554,20 @@ QVector<ResNum> EditMolData::residueNumbers(CutGroupNum cgnum) const
     this->assertCutGroupExists(cgnum);
 
     QSet<ResNum> cgresnums;
-    
+
     foreach (AtomIndex atm, cgatoms[cgnum])
     {
         cgresnums.insert(atm.resNum());
     }
-    
+
     QVector<ResNum> ret;
     ret.reserve(cgresnums.count());
-    
+
     foreach (ResNum resnum, cgresnums)
     {
         ret.append(resnum);
     }
-    
+
     return ret;
 }
 
@@ -569,7 +581,7 @@ CutGroupNum EditMolData::cutGroupNum(CutGroupID cgid) const
     return cgnums[cgid];
 }
 
-/** Return the ID number of the CutGroup with number 'cgnum' 
+/** Return the ID number of the CutGroup with number 'cgnum'
 
     \throw SireMol::missing_cutgroup
 */
@@ -637,6 +649,30 @@ int EditMolData::nAtoms(CutGroupNum cgnum) const
     return cgatoms.find(cgnum)->count();
 }
 
+/** Return the number of atoms in the CutGroup with number 'cgnum'
+    that are also in the residue with number 'resnum'
+
+    \throw SireMol::missing_cutgroup
+    \throw SireMol::missing_residue
+*/
+int EditMolData::nAtoms(CutGroupNum cgnum, ResNum resnum) const
+{
+    this->assertCutGroupExists(cgnum);
+    this->assertResidueExists(resnum);
+
+    const QList<AtomIndex> atoms = cgatoms.find(cgnum).value();
+
+    int nats = 0;
+
+    foreach (AtomIndex atom, atoms)
+    {
+        if (atom.resNum() == resnum)
+            ++nats;
+    }
+
+    return nats;
+}
+
 /** Return the total number of residues in this molecule */
 int EditMolData::nResidues() const
 {
@@ -651,24 +687,24 @@ int EditMolData::nCutGroups() const
 
 /** Return the total number of CutGroups that contain atoms
     that belong to the residue with number 'resnum'
-    
+
     \throw SireMol::missing_residue
 */
 int EditMolData::nCutGroups(ResNum resnum) const
 {
     this->assertResidueExists(resnum);
-    
+
     const EditMolData_ResData &resdata = this->_unsafe_resdata(resnum);
-    
+
     QSet<CutGroupNum> cgnums_in_res;
-    
+
     for (QHash<QString,EditMolData_AtomData>::const_iterator it = resdata.atoms.begin();
          it != resdata.atoms.end();
          ++it)
     {
         cgnums_in_res.insert( it->cgnum );
     }
-    
+
     return cgnums.count();
 }
 
@@ -1157,7 +1193,7 @@ const QString& EditMolData::name() const
 
 /** Return the names of the atoms in the residue with
     number 'resnum'
-    
+
     \throw SireMol::missing_residue
 */
 QStringList EditMolData::atomNames(ResNum resnum) const
@@ -1734,6 +1770,21 @@ double EditMolData::getWeight(const AtomIDGroup &group0, const AtomIDGroup &grou
     return calc.weight();
 }
 
+/** Return the relative weights of the two groups of atoms whose names
+    are in 'group0' and 'group1' in the residue with number 'resnum',
+    using the function 'weightfunc'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+*/
+double EditMolData::getWeight(ResNum resnum, const QStringList &group0,
+                            const QStringList &group1,
+                            const WeightFunction &weightfunc) const
+{
+    #warning EditMolData::getWeight(ResNum,QStringList,QStringList,WeightFunction) is a stub
+    return 0.5;
+}
+
 /** Set the name of this molecule */
 void EditMolData::setName(const QString &name)
 {
@@ -1889,6 +1940,61 @@ void EditMolData::add(const Bond &bond)
     this->assertAtomExists(bond.atom1());
 
     molbnds.add(bond);
+}
+
+/** Automatically add all bonds to this molecule using the function
+    'bondfunc' */
+void EditMolData::addAutoBonds(const BondAddingFunction &bondfunc)
+{
+#warning EditMolData::addAutoBonds(const BondAddingFunction&) is a stub
+}
+
+/** Automatically add all bonds to this molecule */
+void EditMolData::addAutoBonds()
+{
+#warning EditMolData::addAutoBonds() is a stub
+}
+
+/** Automatically add all intra-residue bonds to the residue with number
+    'resnum' using the function 'bondfunc'
+
+    \throw SireMol::missing_residue
+*/
+void EditMolData::addAutoBonds(ResNum resnum,
+                               const BondAddingFunction &bondfunc)
+{
+#warning EditMolData::addAutoBonds(ResNum,BondAddingFunction) is a stub
+}
+
+/** Automatically add all intra-residue bonds to the residue
+    with number 'resnum' in this molecule.
+
+    \throw SireMol::missing_residue
+*/
+void EditMolData::addAutoBonds(ResNum resnum)
+{
+#warning EditMolData::addAutoBonds(ResNum) is a stub
+}
+
+/** Automatically add all of the inter-residue bonds between the residues
+    with numbers 'res0' and 'res1' using the function 'bondfunc'
+
+    \throw SireMol::missing_residue
+*/
+void EditMolData::addAutoBonds(ResNum res0, ResNum res1,
+                               const BondAddingFunction &bondfunc)
+{
+#warning EditMolData::addAutoBonds(ResNum,ResNum,BondAddingFunction) is a stub
+}
+
+/** Automatically add all of the inter-residue bonds between the residues
+    with numbers 'res0' and 'res1'
+
+    \throw SireMol::missing_residue
+*/
+void EditMolData::addAutoBonds(ResNum res0, ResNum res1)
+{
+#warning EditMolData::addAutoBonds(ResNum,ResNum) is a stub
 }
 
 /** Remove the bond 'bond' from this molecule - this does
@@ -2075,6 +2181,41 @@ void EditMolData::remove(CutGroupNum cgnum)
     //now remove the CutGroup itself
     cgatoms.remove(cgnum);
     cgnums.removeAll(cgnum);
+}
+
+/** Apply the EditRes 'editres' as a template for the residue with number
+    'resnum', using the function 'tmplfunc'
+
+    \throw SireMol::missing_residue
+*/
+void EditMolData::applyTemplate(const EditRes &editres, ResNum resnum,
+                                const TemplateFunction &tmplfunc)
+{
+#warning EditMolData::applyTemplate(EditRes, ResNum, TemplateFunction) is a stub
+}
+
+/** Apply the EditMol 'editmol' to this molecule as a template, using
+    the function 'tmplfunc'
+*/
+void EditMolData::applyTemplate(const EditMol &tmpl, const TemplateFunction &tmplfunc)
+{
+#warning EditMolData::applyTemplate(EditMol, TemplateFunction) is a stub
+}
+
+/** Apply the EditRes 'editres' as a template to the residue with
+    number 'resnum'
+
+    \throw SireMol::missing_residue
+*/
+void EditMolData::applyTemplate(const EditRes &tmpl, ResNum resnum)
+{
+#warning EditMolData::applyTemplate(EditRes, ResNum) is a stub
+}
+
+/** Apply the EditMol 'editmol' as a template to this molecule. */
+void EditMolData::applyTemplate(const EditMol &tmpl)
+{
+#warning EditMolData::applyTemplate(EditMol) is a stub
 }
 
 namespace SireMol { namespace detail {
@@ -3244,7 +3385,7 @@ void EditMolData::setCoordinates(const QHash<CGAtomID,Vector> &newcoords)
 }
 
 /** Set the coordinates of the atom at index 'cgatomid' to 'newcoords'
-    
+
     \throw SireMol::missing_cutgroup
     \throw SireError::invalid_index
 */
