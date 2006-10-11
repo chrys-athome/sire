@@ -29,10 +29,12 @@ using SireMol::ResidueInfo;
 using SireMol::AtomIndex;
 
 using SireMol::CutGroupID;
+using SireMol::CutGroupNum;
 using SireMol::ResNum;
 using SireMol::ResID;
 using SireMol::AtomID;
 using SireMol::CGAtomID;
+using SireMol::CGNumAtomID;
 using SireMol::ResNumAtomID;
 using SireMol::ResIDAtomID;
 
@@ -58,6 +60,8 @@ public:
     ~AtomTable();
 
     const MoleculeInfo& info() const;
+
+    bool isCompatibleWith(const MoleculeInfo &molinfO) const;
 
     bool isEmpty() const;
 
@@ -118,6 +122,13 @@ public:
 
     template<class C>
     void clear(const C &lots);
+
+    CGAtomID assertHaveParameter(AtomID atomid) const;
+    CGAtomID assertHaveParameter(const CGAtomID &cgatomid) const;
+    CGAtomID assertHaveParameter(const CGNumAtomID &cgatomid) const;
+    CGAtomID assertHaveParameter(const ResNumAtomID &resatomid) const;
+    CGAtomID assertHaveParameter(const ResIDAtomID &resatomid) const;
+    CGAtomID assertHaveParameter(const AtomIndex &atomindex) const;
 
 private:
     virtual int _unsafe_nAssignedParameters(const ResidueInfo &resinfo) const=0;

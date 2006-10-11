@@ -11,6 +11,7 @@
 #include "SireMol/cutgroup.h"
 
 #include "SireMol/cgatomid.h"
+#include "SireMol/cgnumatomid.h"
 #include "SireMol/resnumatomid.h"
 #include "SireMol/residatomid.h"
 
@@ -64,6 +65,13 @@ AtomTable::AtomTable(const AtomTable &other)
 /** Destructor */
 AtomTable::~AtomTable()
 {}
+
+/** Return whether or not this table is compatible with the molecule info
+    'molinfo' (in other words, molinfo == this->info()) */
+bool AtomTable::isCompatibleWith(const MoleculeInfo &molinfo) const
+{
+    return molinfo == this->info();
+}
 
 /** Return whether or not this is an empty table (contains no atoms) */
 bool AtomTable::isEmpty() const

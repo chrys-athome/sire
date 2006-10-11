@@ -1,7 +1,19 @@
 #ifndef SIREDB_PARAMETERGROUP_HPP
 #define SIREDB_PARAMETERGROUP_HPP
 
+#include <QVector>
+#include <QSet>
+
 #include "atomparameter.hpp"
+
+#include "SireMol/atominfogroup.h"
+#include "SireMol/cgatomid.h"
+#include "SireMol/cgnumatomid.h"
+#include "SireMol/resnumatomid.h"
+#include "SireMol/residatomid.h"
+
+#include "SireMol/moleculeinfo.h"
+#include "SireMol/residueinfo.h"
 
 SIRE_BEGIN_HEADER
 
@@ -18,6 +30,8 @@ QDataStream& operator>>(QDataStream&, SireDB::ParameterGroup<Param>&);
 
 namespace SireDB
 {
+
+using SireMol::AtomInfoGroup;
 
 /** This class holds a group of AtomParameters. This class is the parameter
     equivalent of SireMol::CutGroup. SireMol::CutGroup holds a group of
@@ -79,6 +93,8 @@ public:
     const AtomInfoGroup& atomGroup() const;
 
 private:
+    void assertSane() const;
+
     /** The metainformation about the atoms whose parameters
         this group corresponds to */
     AtomInfoGroup atominfos;
@@ -152,9 +168,9 @@ ParameterGroup<Param>::ParameterGroup(const AtomInfoGroup &infogroup)
                       : atominfos(infogroup), params( infogroup.nAtoms() )
 {}
 
-/** Check the sanity of this ParameterGroup (that the number of parameters 
+/** Check the sanity of this ParameterGroup (that the number of parameters
     equals the number of atoms)
-    
+
     \throw SireError::incompatible_error
 */
 template<class Param>
@@ -197,7 +213,7 @@ SIRE_OUTOFLINE_TEMPLATE
 ParameterGroup<Param>::~ParameterGroup()
 {}
 
-/** Return the AtomParameter at index 'i' 
+/** Return the AtomParameter at index 'i'
 
     \throw SireError::invalid_index
 */
@@ -231,12 +247,12 @@ ParameterGroup<Param>& ParameterGroup<Param>::operator=(const ParameterGroup<Par
     return *this;
 }
 
-/** Assign the parameters for the atoms from 'params' - this must have 
+/** Assign the parameters for the atoms from 'params' - this must have
     the same number of parameters in it as there are numbers of atoms
     in this group
-    
+
     \throw SireError::incompatible_error
-*/    
+*/
 template<class Param>
 SIRE_OUTOFLINE_TEMPLATE
 ParameterGroup<Param>& ParameterGroup<Param>::operator=(const QVector<Param> &parameters)
@@ -245,11 +261,11 @@ ParameterGroup<Param>& ParameterGroup<Param>::operator=(const QVector<Param> &pa
         throw SireError::incompatible_error( QObject::tr(
                   "You cannot assign the parameters to this group because the number of "
                   "parameters (%1) is not equal to the number of atoms (%2).")
-                      .arg(parameters.count()).arg(atominfos.count()), CODELOC );
-                      
-    
+                      .arg(parameters.count()).arg(atominfos.nAtoms()), CODELOC );
+
+
     params = parameters;
-    
+
     return *this;
 }
 
@@ -283,42 +299,42 @@ SIRE_OUTOFLINE_TEMPLATE
 QString ParameterGroup<Param>::toString() const
 {
     int nats = atominfos.nAtoms();
-    
+
     QStringList lines;
-    
+
     for (AtomID i(0); i<nats; ++i)
     {
         lines.append( QString("%1: %2").arg(atominfos[i].index().toString())
                                        .arg(params[i].toString()) );
     }
-    
+
     return lines.join("\n");
 }
 
-/** Return the AtomParameters in this group in an array, ordered in the 
+/** Return the AtomParameters in this group in an array, ordered in the
     same order as this group. */
 template<class Param>
 SIRE_OUTOFLINE_TEMPLATE
 QVector< AtomParameter<Param> > ParameterGroup<Param>::atomParameters() const
 {
     QVector< AtomParameter<Param> > atomparams;
-    
+
     int nats = atominfos.nAtoms();
-    
+
     if (nats > 0)
     {
         atomparams.reserve(nats);
-    
+
         const AtomInfo *infoarray = atominfos.constData();
         const Param *paramarray = params.constData();
-    
+
         for (int i; i<nats; ++i)
         {
-            atomparams.append( AtomParameter<Param>( infoarray[i], 
+            atomparams.append( AtomParameter<Param>( infoarray[i],
                                                      paramarray[i] ) );
         }
     }
-    
+
     return atomparams;
 }
 
@@ -330,7 +346,7 @@ QVector< AtomParameter<Param> > ParameterGroup<Param>::atomParameters() const
 */
 template<class Param>
 SIRE_OUTOFLINE_TEMPLATE
-QVector< AtomParameter<Param> > ParameterGroup<Param>::atomParameters(AtomID strt, 
+QVector< AtomParameter<Param> > ParameterGroup<Param>::atomParameters(AtomID strt,
                                                                       AtomID end) const
 {
     int nats = atominfos.nAtoms();
@@ -441,10 +457,10 @@ QVector<Param> ParameterGroup<Param>::parameters(AtomID strt, AtomID end) const
     return paramslice;
 }
 
-/** Return the AtomParameter at index 'i' 
+/** Return the AtomParameter at index 'i'
 
     \throw SireError::invalid_index
-*/    
+*/
 template<class Param>
 SIRE_OUTOFLINE_TEMPLATE
 AtomParameter<Param> ParameterGroup<Param>::atomParameter(AtomID i) const
@@ -469,9 +485,9 @@ int ParameterGroup<Param>::nAtoms() const
     return atominfos.nAtoms();
 }
 
-/** Set the parameters for this group to 'newparams' - the number of 
+/** Set the parameters for this group to 'newparams' - the number of
     parameters must be the same as the number of atoms.
-    
+
     \throw SireError::incompatible_error
 */
 template<class Param>
@@ -481,7 +497,7 @@ void ParameterGroup<Param>::setParameters(const QVector<Param> &newparams)
     this->operator=(newparams);
 }
 
-/** Return the AtomInfoGroup containing the metadata of the atoms 
+/** Return the AtomInfoGroup containing the metadata of the atoms
     in this group */
 template<class Param>
 SIRE_OUTOFLINE_TEMPLATE
@@ -500,9 +516,9 @@ template<class Param>
 SIRE_OUTOFLINE_TEMPLATE
 QDataStream &operator<<(QDataStream &ds, const SireDB::ParameterGroup<Param> &group)
 {
-    writeHeader(ds, parametergroup_magic, 1)
-            << group.atominfos
-            << group.params;
+    SireStream::writeHeader(ds, SireDB::parametergroup_magic, 1)
+                  << group.atominfos
+                  << group.params;
 
     return ds;
 }
@@ -512,15 +528,15 @@ template<class Param>
 SIRE_OUTOFLINE_TEMPLATE
 QDataStream &operator>>(QDataStream &ds, SireDB::ParameterGroup<Param> &group)
 {
-    VersionID v = readHeader(ds, parametergroup_magic,
-                                 "SireDB::ParameterGroup");
+    SireStream::VersionID v = SireStream::readHeader(ds, SireDB::parametergroup_magic,
+                                                     "SireDB::ParameterGroup");
 
     if (v == 1)
     {
         ds >> group.atominfos >> group.params;
     }
     else
-        throw version_error(v, "1", "SireDB::ParameterGroup", CODELOC);
+        throw SireStream::version_error(v, "1", "SireDB::ParameterGroup", CODELOC);
 
     return ds;
 }

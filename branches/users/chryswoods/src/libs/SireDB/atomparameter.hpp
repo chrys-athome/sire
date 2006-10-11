@@ -155,9 +155,9 @@ template<class Param>
 SIRE_OUTOFLINE_TEMPLATE
 QDataStream &operator<<(QDataStream &ds, const SireDB::AtomParameter<Param> &param)
 {
-    writeHeader(ds, SireDB::atomparameter_magic, 1)
-                  << static_cast<const AtomInfo&>(param)
-                  << static_cast<const Param&>(param);
+    SireStream::writeHeader(ds, SireDB::atomparameter_magic, 1)
+                        << static_cast<const SireMol::AtomInfo&>(param)
+                        << static_cast<const Param&>(param);
 
     return ds;
 }
@@ -167,15 +167,15 @@ template<class Param>
 SIRE_OUTOFLINE_TEMPLATE
 QDataStream &operator>>(QDataStream &ds, SireDB::AtomParameter<Param> &param)
 {
-    VersionID v = readHeader(ds, SireDB::atomparameter_magic,
-                                 "SireDB::AtomParameter");
+    SireStream::VersionID v = SireStream::readHeader(ds, SireDB::atomparameter_magic,
+                                                     "SireDB::AtomParameter");
     if (v == 1)
     {
-        ds >> static_cast<AtomInfo&>(param)
+        ds >> static_cast<SireMol::AtomInfo&>(param)
            >> static_cast<Param&>(param);
     }
     else
-        throw version_error(v, "1", "SireDB::AtomParameter", CODELOC);
+        throw SireStream::version_error(v, "1", "SireDB::AtomParameter", CODELOC);
 
     return ds;
 }
