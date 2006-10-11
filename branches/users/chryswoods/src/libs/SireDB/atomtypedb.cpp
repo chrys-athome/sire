@@ -236,7 +236,7 @@ bool AtomTypeDB::assignParameter( const AtomIndex &atom, const RelateIDMap &rela
     if (found)
     {
         AtomTypeTable &table = param_table.addTable<AtomTypeTable>();
-        table.setAtomType(atom, atomtype);
+        table.setParameter(atom, atomtype);
     }
     
     return found;
