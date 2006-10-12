@@ -48,13 +48,13 @@ AngleTable::AngleTable(const MolAngleInfo &angleinfo) : AngleTableT<Expression>(
 
 /** Construct a AngleTable that holds the angles for the molecule 'mol'. Note that 
     no angles will be contained in this object initially. */
-AngleTable::AngleTable(const Molecule &mol) : AngleTableT<Expression>(mol)
+AngleTable::AngleTable(const MoleculeInfo &molinfo) : AngleTableT<Expression>(molinfo)
 {}
 
 /** Construct a AngleTable to hold the angles in the molecule 'mol' that 
     were generated using the angle generator 'generator' */
-AngleTable::AngleTable(const Molecule &mol, const AngleGeneratorBase &generator)
-          : AngleTableT<Expression>( generator.generate(mol) )
+AngleTable::AngleTable(const Molecule &molecule, const AngleGeneratorBase &generator)
+          : AngleTableT<Expression>( generator.generate(molecule) )
 {}
 
 /** Copy constructor */

@@ -95,10 +95,10 @@ void BondGenerator::generate(const Molecule &mol, MolBondInfo &bondinfo) const
         ResidueBonds resbonds = molbonds.residue(resnum);
         
         //get all of the asymmetric bonds in this residue (prevents duplication)
-        BondList asymm_bonds = resbonds.asymmetricBonds();
+        QList<Bond> asymm_bonds = resbonds.asymmetricBonds();
         
         //loop over each of the asymmetric bonds
-        for (BondList::const_iterator it = asymm_bonds.constBegin();
+        for (QList<Bond>::const_iterator it = asymm_bonds.constBegin();
              it != asymm_bonds.constEnd();
              ++it)
         {

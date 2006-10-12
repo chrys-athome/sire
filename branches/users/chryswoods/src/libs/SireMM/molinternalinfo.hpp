@@ -20,7 +20,7 @@ class SIREMM_EXPORT MolInternalInfo : public detail::InternalInfo<T>
 {
 public:
     MolInternalInfo();
-    MolInternalInfo(const Molecule &molecule);
+    MolInternalInfo(const MoleculeInfo &molinfo);
     
     MolInternalInfo(const MolInternalInfo<T> &other);
     
@@ -64,7 +64,8 @@ MolInternalInfo<T>::MolInternalInfo() : detail::InternalInfo<T>()
 /** Construct a MolInternalInfo to hold the internals for the molecule 'mol' */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-MolInternalInfo<T>::MolInternalInfo(const Molecule &mol) : detail::InternalInfo<T>(mol)
+MolInternalInfo<T>::MolInternalInfo(const MoleculeInfo &molinfo) 
+                   : detail::InternalInfo<T>(molinfo)
 {}
 
 /** Copy constructor */

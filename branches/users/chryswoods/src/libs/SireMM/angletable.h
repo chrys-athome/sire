@@ -11,6 +11,7 @@ SIRE_BEGIN_HEADER
 namespace SireMol
 {
 class Molecule;
+class MoleculeInfo;
 }
 
 namespace SireMM
@@ -27,6 +28,7 @@ namespace SireMM
 
 using SireCAS::Expression;
 using SireMol::Molecule;
+using SireMol::MoleculeInfo;
 
 /** This class is the predominant AngleTable that is used in Sire.
     This class holds the set of angles in the molecule and maps
@@ -44,8 +46,8 @@ friend QDataStream& ::operator>>(QDataStream&, AngleTable&);
 public:
     AngleTable();
     
-    AngleTable(const Molecule &mol);
-    AngleTable(const Molecule &mol, const AngleGeneratorBase &anglegenerator);
+    AngleTable(const MoleculeInfo &mol);
+    AngleTable(const Molecule &molecule, const AngleGeneratorBase &anglegenerator);
     AngleTable(const MolAngleInfo &angleinfo);
     
     AngleTable(const AngleTable &other);
@@ -57,9 +59,9 @@ public:
         return new AngleTable(*this);
     }
     
-    AngleTable* create(const Molecule &molecule) const
+    AngleTable* create(const MoleculeInfo &molinfo) const
     {
-        return new AngleTable(molecule);
+        return new AngleTable(molinfo);
     }
     
     void add(const TableBase &other);

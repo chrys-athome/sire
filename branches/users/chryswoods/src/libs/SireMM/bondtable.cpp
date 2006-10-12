@@ -48,7 +48,7 @@ BondTable::BondTable(const MolBondInfo &bondinfo) : BondTableT<Expression>(bondi
 
 /** Construct a BondTable that holds the bonds for the molecule 'mol'. Note that 
     no bonds will be contained in this object initially. */
-BondTable::BondTable(const Molecule &mol) : BondTableT<Expression>(mol)
+BondTable::BondTable(const MoleculeInfo &molinfo) : BondTableT<Expression>(molinfo)
 {}
 
 /** Construct a BondTable to hold the bonds in the molecule 'mol' that 

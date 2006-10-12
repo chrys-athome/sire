@@ -4,9 +4,15 @@
 
 #include "SireMol/molecule.h"
 #include "SireMol/residue.h"
+#include "SireMol/atom.h"
+
 #include "SireMol/moleculebonds.h"
 #include "SireMol/residuebonds.h"
-#include "SireMol/moleculecginfo.h"
+#include "SireMol/moleculeinfo.h"
+#include "SireMol/residueinfo.h"
+
+#include "SireMol/atomid.h"
+#include "SireMol/resid.h"
 
 #include "anglegenerator.h"
 #include "molangleinfo.h"
@@ -83,15 +89,15 @@ AngleGenerator::~AngleGenerator()
 
 /** Internal function used to generate all of the angles that involve
     the residue described by 'resinfo' */
-void generateAngles(const Molecule &mol, const MoleculeBonds &molbonds,
-                    const Residue &res, MolAngleInfo &angleinfo)
+void generateAngles(const MoleculeInfo &molinfo, const MoleculeBonds &molbonds,
+                    const ResidueInfo &resinfo, MolAngleInfo &angleinfo)
 {
     //loop over each atom in this residue
-    int nats = res.nAtoms();
+    int nats = resinfo.nAtoms();
     
-    for (int i=0; i<nats; ++i)
+    for (AtomID i(0); i<nats; ++i)
     {
-        const Atom &atom1 = res[i];
+        const AtomInfo &atom1 = resinfo.atom(i);
         
         //if this is a dummy atom then skip it
         if (atom1.nProtons() == 0)
@@ -124,7 +130,7 @@ void generateAngles(const Molecule &mol, const MoleculeBonds &molbonds,
         int nothers = other_atoms.count();
         for (int j=0; j<nothers-1; ++j)
         {
-            const Atom &atom0 = mol.atom(other_atoms.at(j));
+            const AtomInfo &atom0 = molinfo.atom(other_atoms.at(j));
         
             //only process this atom if it is not a dummy
             if (atom0.nProtons() == 0)
@@ -132,7 +138,7 @@ void generateAngles(const Molecule &mol, const MoleculeBonds &molbonds,
         
             for (int k=j+1; k<nothers; ++k)
             {
-                const Atom &atom2 = mol.atom(other_atoms.at(k));
+                const AtomInfo &atom2 = molinfo.atom(other_atoms.at(k));
                 //only process this atom if it is not a dummy
                 if ( atom2.nProtons() > 0 and 
                      not molbonds.bonded(atom0, atom2) )
@@ -160,18 +166,21 @@ void AngleGenerator::generate(const Molecule &mol, MolAngleInfo &angleinfo) cons
     if (molbonds.isEmpty())
         return;
     
+    const MoleculeInfo &molinfo = mol.info();
+    
     //loop over each residue of the molecule
-    int nres = mol.nResidues();
-    for (int i=0; i<nres; ++i)
+    int nres = molinfo.nResidues();
+    
+    for (ResID i(0); i<nres; ++i)
     {
         //get the ith residue
-        Residue res = mol[i];
+        const ResidueInfo &resinfo = molinfo[i];
         
         //are there any bonds that involve atoms in this residue?
-        if ( molbonds.contains(res.resNum()) )
+        if ( molbonds.contains(resinfo.resNum()) )
         {
             //get all of the angles involving this residue
-            generateAngles(mol, molbonds, res, angleinfo);
+            generateAngles(molinfo, molbonds, resinfo, angleinfo);
         }
     }
 }

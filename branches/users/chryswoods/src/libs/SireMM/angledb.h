@@ -66,13 +66,6 @@ public:
 
     const Symbol& r() const;
     const Symbol& theta() const;
-
-    bool hasTable(const ParameterTable &param_table) const;
-    
-    AngleTable& getTable(ParameterTable &param_table) const;
-    
-    AngleTable& createTable(ParameterTable &param_table, 
-                            const MolAngleInfo &angleinfo) const;
     
     bool assignParameter(const Angle &angle, 
                          const RelateIDMap &relateids,

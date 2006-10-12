@@ -401,7 +401,7 @@ QSet<IDX> ParameterStore<IDX,Param>::missingParameters(
         //are missing
         const QHash<Index,Param> &paramhash = *it;
 
-        for (int i=0; i<nexpect; ++i)
+        for (Index i(0); i<nexpect; ++i)
         {
             if ( not paramhash.contains(i) )
             {
@@ -838,7 +838,7 @@ void ParameterStore<IDX,Param>::remove(const IDX &idx)
 
     //reindex the remaining parameters
     int n = nparams.value(groupid);
-    for (i = i+1 ; i < n; ++i)
+    for (i = Index(i+1) ; i < n; ++i)
     {
         if (group_hash.contains(i))
         {
@@ -846,7 +846,7 @@ void ParameterStore<IDX,Param>::remove(const IDX &idx)
             Param param = group_hash.take(i);
 
             //insert it at the new index
-            group_hash.insert( i-1, param );
+            group_hash.insert( Index(i-1), param );
         }
     }
 

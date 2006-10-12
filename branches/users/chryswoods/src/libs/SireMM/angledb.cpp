@@ -139,32 +139,6 @@ void AngleDB::relateAngle(RelateID relateid, const Expression &anglefunc)
     //associate this relationship with the parameter
     relateParameter(relateid, paramid);
 }
-
-/** Return whether or not the ParameterTable 'param_table' contains a
-    AngleTable */
-bool AngleDB::hasTable(const ParameterTable &param_table) const
-{
-    return param_table.isA<AngleTable>();
-}
-    
-/** Return the AngleTable in 'param_table' - note that hasTable(param_table)
-    must be true or else you will get undefined results */
-AngleTable& AngleDB::getTable(ParameterTable &param_table) const
-{
-    return param_table.asA<AngleTable>();
-}
-    
-/** Create the AngleTable in the ParameterTable 'param_table' that will hold the 
-    parameters in this database, using the internals listed in 'internals'. Note
-    that this will remove any existing AngleTable that exists in 'param_table'.
-    I would thus only recommend using this function if that is indeed what you 
-    intend, or if hasTable(param_table) returns false. 
-*/
-AngleTable& AngleDB::createTable(ParameterTable &param_table, 
-                               const MolAngleInfo &angleinfo) const
-{
-    return static_cast<AngleTable&>( param_table.setTable(AngleTable(angleinfo)) );
-}
     
 /** Assign the parameter for the angle 'angle' using the relationship IDs in 
     'relateids', and place the parameter into the table 'param_table'. Return
@@ -172,7 +146,7 @@ AngleTable& AngleDB::createTable(ParameterTable &param_table,
 bool AngleDB::assignParameter(const Angle &angle, const RelateIDMap &relateids,
                              ParameterTable &param_table)
 {
-    BOOST_ASSERT(param_table.isA<AngleTable>());
+/*    BOOST_ASSERT(param_table.isA<AngleTable>());
     
     bool found;
     Expression anglefunc = this->getFunc(relateids, &found);
@@ -181,5 +155,7 @@ bool AngleDB::assignParameter(const Angle &angle, const RelateIDMap &relateids,
         //add the expression to the parameter table
         param_table.asA<AngleTable>().setParameter(angle, anglefunc);
         
-    return found;
+    return found;*/
+    
+    return false;
 }

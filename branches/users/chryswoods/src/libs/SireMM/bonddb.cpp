@@ -139,32 +139,6 @@ void BondDB::relateBond(RelateID relateid, const Expression &bondfunc)
     //associate this relationship with the parameter
     relateParameter(relateid, paramid);
 }
-
-/** Return whether or not the ParameterTable 'param_table' contains a
-    BondTable */
-bool BondDB::hasTable(const ParameterTable &param_table) const
-{
-    return param_table.isA<BondTable>();
-}
-    
-/** Return the BondTable in 'param_table' - note that hasTable(param_table)
-    must be true or else you will get undefined results */
-BondTable& BondDB::getTable(ParameterTable &param_table) const
-{
-    return param_table.asA<BondTable>();
-}
-    
-/** Create the BondTable in the ParameterTable 'param_table' that will hold the 
-    parameters in this database, using the internals listed in 'internals'. Note
-    that this will remove any existing BondTable that exists in 'param_table'.
-    I would thus only recommend using this function if that is indeed what you 
-    intend, or if hasTable(param_table) returns false. 
-*/
-BondTable& BondDB::createTable(ParameterTable &param_table, 
-                               const MolBondInfo &bondinfo) const
-{
-    return static_cast<BondTable&>( param_table.setTable(BondTable(bondinfo)) );
-}
     
 /** Assign the parameter for the bond 'bond' using the relationship IDs in 
     'relateids', and place the parameter into the table 'param_table'. Return
@@ -174,12 +148,15 @@ bool BondDB::assignParameter(const Bond &bond, const RelateIDMap &relateids,
 {
     BOOST_ASSERT(param_table.isA<BondTable>());
 
-    bool found;
+/*    bool found;
     Expression bondfunc = this->getFunc(relateids, &found);
     
     if (found)
         //add the expression to the parameter table
         param_table.asA<BondTable>().setParameter(bond, bondfunc);
         
-    return found;
+    return found;*/
+
+    return false;
 }
+

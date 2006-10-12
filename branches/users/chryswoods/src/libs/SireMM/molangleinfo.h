@@ -30,7 +30,7 @@ class SIREMM_EXPORT MolAngleInfo : public MolInternalInfo<Angle>
 {
 public:
     MolAngleInfo();
-    MolAngleInfo(const Molecule &mol);
+    MolAngleInfo(const MoleculeInfo &molinfo);
     MolAngleInfo(const Molecule &mol, 
                  const InternalGenerator<MolAngleInfo> &anglegenerator);
 
