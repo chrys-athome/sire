@@ -3,8 +3,6 @@
 
 #include "tablebase.h"
 
-#include "SireMol/moleculeinfo.h"
-
 SIRE_BEGIN_HEADER
 
 namespace SireDB
@@ -58,10 +56,6 @@ public:
     AtomTable(const AtomTable &other);
 
     ~AtomTable();
-
-    const MoleculeInfo& info() const;
-
-    bool isCompatibleWith(const MoleculeInfo &molinfO) const;
 
     bool isEmpty() const;
 
@@ -149,18 +143,7 @@ private:
     virtual void _unsafe_clear(const ResidueInfo &resinfo)=0;
     virtual void _unsafe_clear(CutGroupID cgid)=0;
     virtual void _unsafe_clear(const CGAtomID &cgatomid)=0;
-
-    /** The metadata for the molecule whose parameters
-        are in this table */
-    MoleculeInfo molinfo;
 };
-
-/** Return the metadata for the molecule whose parameters are in this
-    table */
-inline const MoleculeInfo& AtomTable::info() const
-{
-    return molinfo;
-}
 
 /** Clear all of the parameters for the objects in 'lots'. Note that
     all of the object must be in the molecule or else an exception

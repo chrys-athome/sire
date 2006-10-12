@@ -25,7 +25,7 @@ AtomTypeDB::AtomTypeDB(const AtomTypeDB &other) : AtomDB(other)
 AtomTypeDB::~AtomTypeDB()
 {}
 
-/** This function creates all of the tables in this database used to store and 
+/** This function creates all of the tables in this database used to store and
     find atom types. There is only one table in this component.
 
     (1) table giving a unique parameter ID to each atom type that has been loaded
@@ -34,7 +34,7 @@ void AtomTypeDB::initialise()
 {
     //initialise the AtomDB
     AtomDB::initialise();
-    
+
     //create table (1) - table to give a unique ID number to each atom type
     //  columns  id_number(*)   atom_type string,  element integer
     QString error = executeSQL(
@@ -44,7 +44,7 @@ void AtomTypeDB::initialise()
     if (not error.isNull())
         throw SireDB::db_error(error, CODELOC);
 }
-    
+
 /** Dump the version number of this database */
 void AtomTypeDB::prepareToDump()
 {
@@ -58,25 +58,25 @@ void AtomTypeDB::postLoad()
     AtomDB::postLoad();
 
     int v = this->loadParameter<AtomTypeDB>( "version" ).toInt();
-                            
+
     if (v != 1)
         throw version_error( v, "1", "SireDB::AtomTypeDB", CODELOC );
 }
 
-/** Add the atom type 'atomtype' to the database, returning the internal ID number of the 
+/** Add the atom type 'atomtype' to the database, returning the internal ID number of the
     atom type parameter. This will add a new parameter if this atom type does not exist, or will
     return the id number of the already existing atom type */
 ParamID AtomTypeDB::addAtomType(const AtomType &atomtype)
 {
     QSqlQuery q(database());
-    
+
     QString format_atomtype = formatField(database(), atomtype.ID());
-    
+
     q.exec( QString("select ParamID from 'AtomTypeDB' where AtomType = %1 and "
                    "Element = %2").arg(format_atomtype).arg(atomtype.element().nProtons()) );
     checkErrors(q,CODELOC);
     q.next();
-    
+
     if (q.isValid())
         //we have found the existing charge parameter - return the ID number
         return q.value(0).toUInt();
@@ -91,7 +91,7 @@ ParamID AtomTypeDB::addAtomType(const AtomType &atomtype)
     }
 }
 
-/** Return the atom type with parameter ID 'id', or record the missing parameter 
+/** Return the atom type with parameter ID 'id', or record the missing parameter
     in the log and return a dummy type */
 AtomType AtomTypeDB::retrieveAtomType(ParamID id)
 {
@@ -104,7 +104,7 @@ AtomType AtomTypeDB::retrieveAtomType(ParamID id)
                                                   "where ParamID = %1").arg(id));
         checkErrors(q,CODELOC);
         q.next();
-    
+
         if (q.isValid())
             return AtomType( q.value(0).toString(), Element(q.value(1).toInt()) );
         else
@@ -121,7 +121,7 @@ void AtomTypeDB::addAtomType(const QString &userid, const AtomType &atomtype)
 {
     //add the charge...
     ParamID paramid = addAtomType(atomtype);
-    
+
     //associate this parameter ID with the userid
     relateParameter(userid, paramid);
 }
@@ -132,21 +132,21 @@ AtomType AtomTypeDB::getAtomType(const QString &userid, bool *foundtype)
 {
     //get the parameter ID for this userid
     ParamID paramid = getParameter(userid);
-    
+
     //set the flag saying whether or not the parameter exists
     if (foundtype)
         *foundtype = (paramid != 0);
-        
+
     return retrieveAtomType(paramid);
 }
-    
-/** Relate the atom type identified by user ID string 'userid' to the atom matching 
+
+/** Relate the atom type identified by user ID string 'userid' to the atom matching
     criteria 'matchatom' */
 void AtomTypeDB::relateAtomType(const AssertMatch<1> &matchatom, const QString &userid)
 {
     //get the relationship ID of this match
     RelateID relateid = matchatom.addTo(parent());
-    
+
     //associate this relationship with the userID
     relateParameter(relateid, userid);
 }
@@ -156,10 +156,10 @@ void AtomTypeDB::relateAtomType(const AssertMatch<1> &matchatom, const AtomType 
 {
     //get the relationship ID of this match
     RelateID relateid = matchatom.addTo(parent());
-    
+
     //add the atom type
     ParamID paramid = addAtomType(atomtype);
-    
+
     //associate this relationship with the parameter
     relateParameter(relateid, paramid);
 }
@@ -182,45 +182,46 @@ void AtomTypeDB::relateAtomType(RelateID relateid, const AtomType &atomtype)
 }
 
 /** Return the atom type that matches the relationship ID 'relateid'. Returns
-    a dummy atom type if there is no such type, and sets 'foundtype' to true 
+    a dummy atom type if there is no such type, and sets 'foundtype' to true
     or false depending on whether or not a parameter was found. */
 AtomType AtomTypeDB::getAtomType(RelateID relateid, bool *foundtype)
 {
     //get the paramID of the relationship
     ParamID paramid = getParameter(relateid);
-    
+
     //set the flag saying whether or not the parameter was found
     if (foundtype)
         *foundtype = (paramid != 0);
-        
+
     //return the atom type
     return retrieveAtomType(paramid);
 }
 
 /** Return the best atom type matching the relationship IDs in 'relateids'. Returns
-    a dummy type if there is no such parameter. Sets 'foundtype' to whether or not 
+    a dummy type if there is no such parameter. Sets 'foundtype' to whether or not
     a parameter was found. */
 AtomType AtomTypeDB::getAtomType(const RelateIDMap &relateids, bool *foundtype)
 {
     //get the ParamID of the highest scoring and matching relationship
     ParamID paramid = getParameter(relateids);
-    
+
     //set the flag saying whether or not the parameter was found
     if (foundtype)
         *foundtype = (paramid != 0);
-        
+
     //return the atom type
     return retrieveAtomType(paramid);
 }
 
-/** Create a table in 'param_table' that is capable of holding the atom type 
+/** Create a table in 'param_table' that is capable of holding the atom type
     parameters - this does nothing if there is already such a table.
-     
+
     This returns a reference to the created table.
 */
-AtomTypeTable& AtomTypeDB::createTable( ParameterTable &param_table ) const
+void AtomTypeDB::createTable( ParameterTable &param_table ) const
 {
-    return param_table.addTable<AtomTypeTable>();
+    #warning Need to update to named databases and tables
+    param_table.createTable<AtomTypeTable>();
 }
 
 /** Assign the atom type parameter for the atom 'atom' using the relationship IDs
@@ -232,12 +233,12 @@ bool AtomTypeDB::assignParameter( const AtomIndex &atom, const RelateIDMap &rela
 {
     bool found;
     AtomType atomtype = getAtomType(relateids, &found);
-    
-    if (found)
-    {
-        AtomTypeTable &table = param_table.addTable<AtomTypeTable>();
-        table.setParameter(atom, atomtype);
-    }
-    
+
+    #warning Need to update to named databases and tables
+    //if (found)
+    //{
+        //table.setParameter(tablename, atom, atomtype);
+    //}
+
     return found;
 }

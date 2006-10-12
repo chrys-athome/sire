@@ -68,14 +68,13 @@ public:
     int nIntraBonds() const;
     int nInterBonds() const;
 
+    QSet<QString> anchors() const;
+
     QList<Bond> bonds(const QString &atomname) const;
     QList<Bond> interBonds(const QString &atomname) const;
     QList<Bond> intraBonds(const QString &atomname) const;
 
     QList<Bond> bonds(ResNum rnum) const;
-
-    QSet<AtomIndex> anchors() const;
-    QSet<AtomIndex> atoms() const;
 
     bool contains(const QString &atom) const;
     bool contains(const Bond &bond) const;
@@ -124,9 +123,15 @@ private:
         contained atoms */
     QMultiHash<QString, QString> atmintrabnds;
 
-    /** Multihas of all of the interresidue bonds, indexed by the
+    /** Multihash of all of the interresidue bonds, indexed by the
         atom that is in this residue */
     QMultiHash<QString, AtomIndex> atminterbnds;
+
+    /** Set of the names of all atoms that are involved in inter-residue
+        bonding - this is useful to know as these are the anchor atoms for
+        an intra-residue move, and they also provide information about
+        where in the chain the residue sits. */
+    QSet<QString> anchrs;
 };
 
 } // end of namespace SireMol
@@ -154,6 +159,19 @@ QDataStream& operator>>(QDataStream &ds, ResidueBondsPvt &bnds)
     {
         ds >> bnds.resnum >> bnds.intrabnds >> bnds.interbnds
            >> bnds.bondedres >> bnds.atmintrabnds >> bnds.atminterbnds;
+
+        //rebuild anchors
+        QSet<QString> anchors;
+
+        for (QMultiHash<QString,AtomIndex>::const_iterator it =
+                                                    bnds.atminterbnds.constBegin();
+             it != bnds.atminterbnds.constEnd();
+             ++it)
+        {
+            anchors.insert(it.key());
+        }
+
+        bnds.anchrs = anchors;
     }
     else
         throw version_error(v, "1", r_resbonds, CODELOC);
@@ -170,7 +188,8 @@ ResidueBondsPvt::ResidueBondsPvt( const ResidueBondsPvt &other )
         : QSharedData(),
           resnum( other.resnum ), intrabnds( other.intrabnds ),
           interbnds( other.interbnds ), bondedres( other.bondedres ),
-          atmintrabnds( other.atmintrabnds ), atminterbnds( other.atminterbnds )
+          atmintrabnds( other.atmintrabnds ), atminterbnds( other.atminterbnds ),
+          anchrs( other.anchrs )
 {}
 
 /** Destructor. */
@@ -227,6 +246,13 @@ ResNum ResidueBondsPvt::resNum() const
     return resnum;
 }
 
+/** Return the set of anchor atoms for this residue - these are the
+    atom names of atoms that are involved in inter-residue bonds */
+QSet<QString> ResidueBondsPvt::anchors() const
+{
+    return anchrs;
+}
+
 /** Return the residue numbers of all residues that this residue is bonded to */
 QSet<ResNum> ResidueBondsPvt::bondedResidues() const
 {
@@ -280,9 +306,15 @@ void ResidueBondsPvt::add(const Bond &bond)
         bondedres.insert(otherres, bond);
 
         if (bond.atom0().resNum() == resnum)
+        {
             atminterbnds.insert(bond.atom0().name(), bond.atom1());
+            anchrs.insert( bond.atom0().name() );
+        }
         else
+        {
             atminterbnds.insert(bond.atom1().name(), bond.atom0());
+            anchrs.insert( bond.atom1().name() );
+        }
     }
 }
 
@@ -307,6 +339,13 @@ void ResidueBondsPvt::remove(const AtomIndex &atom)
             if (bond.contains(atom))
                 intrabnds.remove(bond);
         }
+
+        //remove this atom from the list of anchors
+        anchrs.remove( atom.name() );
+
+        //remove the atom from the 'atm-' hashs
+        atmintrabnds.remove(atom.name());
+        atminterbnds.remove(atom.name());
     }
 
     //remove this atom from any of the interbonds
@@ -317,10 +356,34 @@ void ResidueBondsPvt::remove(const AtomIndex &atom)
         it.next();
         Bond bond = it.key();
 
+        BOOST_ASSERT(bond.interResidue());
+
         if (bond.contains(atom))
         {
             //we must remove this bond from interbonds
             it.remove();
+
+            //find the atom from this residue
+            const AtomIndex &myatom = bond[resnum];
+
+            //remove the bond from atminterbnds...
+            QList<AtomIndex> otheratms = atminterbnds.values(myatom.name());
+
+            if (otheratms.count() <= 1)
+            {
+                atminterbnds.remove(myatom.name());
+                anchrs.remove(myatom.name());
+            }
+            else
+            {
+                otheratms.removeAll( bond.other(resnum) );
+                atminterbnds.remove(myatom.name());
+
+                foreach (AtomIndex otheratm, otheratms)
+                {
+                    atminterbnds.insert( myatom.name(), otheratm );
+                }
+            }
 
             //now remove this value from the multihash
             QMutableHashIterator<ResNum,Bond> it2( bondedres );
@@ -328,13 +391,6 @@ void ResidueBondsPvt::remove(const AtomIndex &atom)
             while( it2.findNext(bond) )
                 it2.remove();
         }
-    }
-
-    //remove the atom from the 'atm-' hashs
-    if (atom.resNum() == resnum)
-    {
-        atmintrabnds.remove(atom.name());
-        atminterbnds.remove(atom.name());
     }
 }
 
@@ -468,31 +524,6 @@ void ResidueBondsPvt::remove(const Bond &bond)
 void ResidueBondsPvt::remove(const QString &atom0, const QString &atom1)
 {
     this->remove( Bond(atom0,atom1,resnum) );
-}
-
-/** Return the set of anchor atoms - these are the Atoms in
-    this Residue that are involved in interresidue bonds */
-QSet<AtomIndex> ResidueBondsPvt::anchors() const
-{
-    QSet<AtomIndex> ancs;
-
-    foreach( QString atmname, atminterbnds.keys() )
-        ancs.insert( AtomIndex(atmname, resnum) );
-
-    return ancs;
-}
-
-/** Return the list of all atoms that are involved in bonding in this residue */
-QSet<AtomIndex> ResidueBondsPvt::atoms() const
-{
-    //get the anchor atoms
-    QSet<AtomIndex> ancs = anchors();
-
-    //now add in all of the non-anchor atoms
-    foreach( QString atmname, atmintrabnds.keys() )
-        ancs.insert( AtomIndex(atmname, resnum) );
-
-    return ancs;
 }
 
 /** Return whether or not this contains information about the bonding to
@@ -886,14 +917,14 @@ QList<Bond> ResidueBonds::bonds(ResNum rnum) const
     return d->bonds(rnum);
 }
 
-QSet<AtomIndex> ResidueBonds::anchors() const
+QSet<QString> ResidueBonds::anchors() const
 {
     return d->anchors();
 }
 
-QSet<AtomIndex> ResidueBonds::atoms() const
+QSet<QString> ResidueBonds::interBondedAtoms() const
 {
-    return d->atoms();
+    return d->anchors();
 }
 
 bool ResidueBonds::contains(const QString &atom) const

@@ -39,7 +39,7 @@ class SIREDB_EXPORT RelateMRADB : public RelationshipDB
 public:
     RelateMRADB();
     RelateMRADB(const RelateMRADB &other);
-    
+
     ~RelateMRADB();
 
     /** Return the full name of this database component */
@@ -65,29 +65,31 @@ protected:
     void initialise();
     void prepareToDump();
     void postLoad();
-    
+
     RelateIDMap findMatches(const MatchMRAData &match, uint n);
-    RelateIDMap findMatches(const QList<AtomIndex> &atoms, 
+
+    RelateIDMap findMatches(const QList<AtomIndex> &atoms,
+                            const Molecule &molecule,
                             const ParameterTable &param_table,
                             const MatchMRData &matchmr);
-    
+
 private:
-    
+
     static QString relateTable(uint n);
     static QString queryString(const RelateIDMap &molresmap, uint i);
-    
+
     void createRelateTable(uint n);
-    
+
     RelateMRAData convert(const MatchMRA &data);
     RelateMRADataList convert(const MatchMRAData &data, uint n);
-    
+
     MatchMRA convert(const RelateMRAData &data);
     MatchMRAData convert(const RelateMRADataList &data);
-    
+
     RelateID add(const RelateMRADataList &relatedata);
     RelateID get(const RelateMRADataList &relatedata);
 
-    /** Set of values of 'n' for the relationship tables that exist 
+    /** Set of values of 'n' for the relationship tables that exist
         in this database */
     QSet<quint32> relatetables;
 

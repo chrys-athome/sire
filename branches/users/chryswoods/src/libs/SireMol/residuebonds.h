@@ -86,6 +86,9 @@ public:
     QList<Bond> asymmetricBonds() const;
     QList<Bond> bonds() const;
 
+    QSet<QString> interBondedAtoms() const;
+    QSet<QString> anchors() const;
+
     int nBonds() const;
     int nAsymmetricBonds() const;
 
@@ -97,9 +100,6 @@ public:
     QList<Bond> intraBonds(const QString &atomname) const;
 
     QList<Bond> bonds(ResNum resnum) const;
-
-    QSet<AtomIndex> anchors() const;
-    QSet<AtomIndex> atoms() const;
 
     bool contains(const QString &atom) const;
     bool contains(const Bond &bond) const;

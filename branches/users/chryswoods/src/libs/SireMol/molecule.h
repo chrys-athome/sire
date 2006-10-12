@@ -21,7 +21,7 @@
 #include <QSet>
 #include <QHash>
 
-#include "sireglobal.h"
+#include "atomindex.h"
 
 SIRE_BEGIN_HEADER
 

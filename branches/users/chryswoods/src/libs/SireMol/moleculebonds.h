@@ -103,7 +103,6 @@ public:
     QSet<ResNum> resNumsBondedTo(ResNum resnum) const;
 
     QSet<ResNum> resNums() const;
-    QSet<AtomIndex> atoms() const;
 
    ////////////////////////////////////////////////////
 

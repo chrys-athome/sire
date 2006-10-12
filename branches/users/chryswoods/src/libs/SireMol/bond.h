@@ -61,8 +61,14 @@ public:
     const AtomIndex& other(ResNum resnum) const;
     ResNum otherRes(ResNum resnum) const;
 
+    const AtomIndex& atom(ResNum resnum) const;
+
     const AtomIndex& operator[](int i) const;
     const AtomIndex& at(int i) const;
+
+    const AtomIndex& operator[](ResNum resnum) const;
+    const AtomIndex& at(ResNum resnum) const;
+
     int size() const;
     int count() const;
 

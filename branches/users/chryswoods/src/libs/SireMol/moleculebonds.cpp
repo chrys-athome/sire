@@ -527,18 +527,3 @@ QSet<ResNum> MoleculeBonds::resNums() const
 {
     return resbnds.keys().toSet();
 }
-
-/** Return the complete list of atoms that are involved in bonding in this molecule */
-QSet<AtomIndex> MoleculeBonds::atoms() const
-{
-    QSet<AtomIndex> atms;
-    QHashIterator<ResNum,ResidueBonds> it(resbnds);
-
-    while(it.hasNext())
-    {
-        it.next();
-        atms.unite(it.value().atoms());
-    }
-
-    return atms;
-}

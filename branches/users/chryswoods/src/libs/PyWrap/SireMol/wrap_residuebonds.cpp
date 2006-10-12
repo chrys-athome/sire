@@ -22,11 +22,6 @@ namespace SireMol
 void export_ResidueBonds()
 {
 
-    QList<ResNum> (ResidueBonds::*wrap_residuesBondedTo1)() const
-                      = &ResidueBonds::residuesBondedTo;
-    QList<ResNum> (ResidueBonds::*wrap_residuesBondedTo2)(const QString&) const
-                      = &ResidueBonds::residuesBondedTo;
-
     QList<Bond> (ResidueBonds::*wrap_bonds1)() const = &ResidueBonds::bonds;
     QList<Bond> (ResidueBonds::*wrap_bonds2)(ResNum) const = &ResidueBonds::bonds;
 
@@ -50,8 +45,8 @@ void export_ResidueBonds()
         .def("__str__", &ResidueBonds::toString)
         .def("isEmpty", &ResidueBonds::isEmpty)
         .def("resNum", &ResidueBonds::resNum)
-        .def("residuesBondedTo", wrap_residuesBondedTo1)
-        .def("residuesBondedTo", wrap_residuesBondedTo2)
+        .def("bondedResidues", &ResidueBonds::bondedResidues)
+        .def("residuesBondedTo", &ResidueBonds::residuesBondedTo)
         .def("bondedTo", &ResidueBonds::bondedTo)
         .def("bonded", &ResidueBonds::bonded)
         .def("interBonds", wrap_interBonds1)
@@ -64,7 +59,7 @@ void export_ResidueBonds()
         .def("nBonds", &ResidueBonds::nBonds)
         .def("nAsymmetricBonds", &ResidueBonds::nAsymmetricBonds)
         .def("anchors", &ResidueBonds::anchors)
-        .def("atoms", &ResidueBonds::atoms)
+        .def("interBondedAtoms", &ResidueBonds::interBondedAtoms)
         .def("contains", wrap_contains1)
         .def("contains", wrap_contains2)
     ;

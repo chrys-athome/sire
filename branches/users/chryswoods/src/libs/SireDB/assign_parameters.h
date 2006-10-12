@@ -44,47 +44,47 @@ friend QDataStream& ::operator>>(QDataStream&, assign_parameters&);
 
 public:
     assign_parameters();
-    
+
     assign_parameters(const AssignInstruction &i0);
-    
+
     assign_parameters(const AssignInstruction &i0, const AssignInstruction &i1);
-    
+
     assign_parameters(const AssignInstruction &i0, const AssignInstruction &i1,
                       const AssignInstruction &i2);
-    
+
     assign_parameters(const AssignInstruction &i0, const AssignInstruction &i1,
                       const AssignInstruction &i2, const AssignInstruction &i3);
-    
+
     assign_parameters(const AssignInstruction &i0, const AssignInstruction &i1,
                       const AssignInstruction &i2, const AssignInstruction &i3,
                       const AssignInstruction &i4);
-    
+
     assign_parameters(const AssignInstruction &i0, const AssignInstruction &i1,
                       const AssignInstruction &i2, const AssignInstruction &i3,
                       const AssignInstruction &i4, const AssignInstruction &i5);
-    
+
     assign_parameters(const AssignInstruction &i0, const AssignInstruction &i1,
                       const AssignInstruction &i2, const AssignInstruction &i3,
                       const AssignInstruction &i4, const AssignInstruction &i5,
                       const AssignInstruction &i6);
-    
+
     assign_parameters(const AssignInstruction &i0, const AssignInstruction &i1,
                       const AssignInstruction &i2, const AssignInstruction &i3,
                       const AssignInstruction &i4, const AssignInstruction &i5,
                       const AssignInstruction &i6, const AssignInstruction &i7);
-    
+
     assign_parameters(const AssignInstruction &i0, const AssignInstruction &i1,
                       const AssignInstruction &i2, const AssignInstruction &i3,
                       const AssignInstruction &i4, const AssignInstruction &i5,
                       const AssignInstruction &i6, const AssignInstruction &i7,
                       const AssignInstruction &i8);
-    
+
     assign_parameters(const AssignInstruction &i0, const AssignInstruction &i1,
                       const AssignInstruction &i2, const AssignInstruction &i3,
                       const AssignInstruction &i4, const AssignInstruction &i5,
                       const AssignInstruction &i6, const AssignInstruction &i7,
                       const AssignInstruction &i8, const AssignInstruction &i9);
-    
+
     assign_parameters(const assign_parameters &other);
 
     ~assign_parameters();
@@ -94,7 +94,8 @@ public:
     ParameterTable assign(const Molecule &molecule, ParameterDB &database,
                           const MatchMRData &matchmr = MatchMRData()) const;
 
-    ParameterTable assign(const ParameterTable &orig_table, ParameterDB &database,
+    ParameterTable assign(const Molecule &molecule,
+                          const ParameterTable &orig_table, ParameterDB &database,
                           const MatchMRData &matchmr = MatchMRData()) const;
 
 private:

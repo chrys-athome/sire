@@ -27,7 +27,7 @@ static const RegisterMetaType<AtomTable> r_atomtable("SireDB::AtomTable", MAGIC_
 QDataStream SIREDB_EXPORT &operator<<(QDataStream &ds, const AtomTable &table)
 {
     writeHeader(ds, r_atomtable, 1)
-            << table.molinfo << static_cast<const TableBase&>(table);
+            << static_cast<const TableBase&>(table);
 
     return ds;
 }
@@ -39,7 +39,7 @@ QDataStream SIREDB_EXPORT &operator>>(QDataStream &ds, AtomTable &table)
 
     if (v == 1)
     {
-        ds >> table.molinfo >> static_cast<TableBase&>(table);
+        ds >> static_cast<TableBase&>(table);
     }
     else
         throw version_error( v, "1", r_atomtable, CODELOC );
@@ -53,30 +53,23 @@ AtomTable::AtomTable() : TableBase()
 
 /** Construct an AtomTable to hold the parameters for the passed molecule */
 AtomTable::AtomTable(const MoleculeInfo &moleculeinfo)
-          : TableBase(), molinfo(moleculeinfo)
+          : TableBase(moleculeinfo)
 {}
 
 /** Copy constructor - this is fast as the data of this class is
     implicitly shared */
 AtomTable::AtomTable(const AtomTable &other)
-          : TableBase(other), molinfo(other.molinfo)
+          : TableBase(other)
 {}
 
 /** Destructor */
 AtomTable::~AtomTable()
 {}
 
-/** Return whether or not this table is compatible with the molecule info
-    'molinfo' (in other words, molinfo == this->info()) */
-bool AtomTable::isCompatibleWith(const MoleculeInfo &molinfo) const
-{
-    return molinfo == this->info();
-}
-
 /** Return whether or not this is an empty table (contains no atoms) */
 bool AtomTable::isEmpty() const
 {
-    return molinfo.isEmpty();
+    return info().isEmpty();
 }
 
 /** Return the total number of parameters in this table

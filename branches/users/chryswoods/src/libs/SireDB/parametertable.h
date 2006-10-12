@@ -21,6 +21,11 @@ class QDataStream;
 QDataStream& operator<<(QDataStream&, const SireDB::ParameterTable&);
 QDataStream& operator>>(QDataStream&, SireDB::ParameterTable&);
 
+namespace SireMol
+{
+class Molecule;
+}
+
 namespace SireDB
 {
 
@@ -28,6 +33,7 @@ class TableBase;
 class assign_parameters;
 class ParameterDB;
 
+using SireMol::Molecule;
 using SireMol::MoleculeInfo;
 using SireBase::DynamicSharedPtr;
 
@@ -44,11 +50,11 @@ friend QDataStream& ::operator>>(QDataStream&, ParameterTable&);
 
 public:
     ParameterTable();
-    
+
     ParameterTable(const MoleculeInfo &molinfo);
-    
+
     ParameterTable(const ParameterTable &other);
-    
+
     ~ParameterTable();
 
     bool isEmpty() const;
@@ -59,33 +65,35 @@ public:
 
     template<class T>
     bool isA() const;
-    
+
     const TableBase& asA(const QString &type_name) const;
-    
+
     const MoleculeInfo& info() const;
-    
+
     template<class T>
     const T& asA() const;
 
     void createTable(const QString &type_name);
-    
+
     template<class T>
     void createTable();
 
     void addTable(const TableBase &table);
-    
+
     void setTable(const TableBase &table);
-    
-    void assign( ParameterDB &db, const assign_parameters &assigners,
+
+    void assign( const Molecule &molecule,
+                 ParameterDB &db, const assign_parameters &assigners,
                  const MatchMRData &matchmr = MatchMRData() );
 
     template<class T>
     void removeTable();
-    
+
     void removeTable(const QString &type_name);
-    
+
     void assertTableCompatible(const TableBase &table) const;
-    
+    void assertCompatibleWith(const Molecule &molecule) const;
+
 private:
 
     /** The info for the molecule whose parameters are
@@ -98,7 +106,7 @@ private:
     hash_type tables;
 };
 
-/** Return the molecule whose parameters are stored in this table. 
+/** Return the molecule whose parameters are stored in this table.
     This will return an empty molecule if this is an empty table */
 inline const MoleculeInfo& ParameterTable::info() const
 {
@@ -110,14 +118,14 @@ template<class T>
 bool ParameterTable::isA() const
 {
     hash_type::const_iterator it = tables.find( T::typeName() );
-    
+
     return it != tables.end() and it.value().isA<T>();
 }
 
-/** Return this parameter table cast as type 'T'. Note that this 
-    will have undefined results unless isA<T> returns true. 
-    
-    Note that the referenced returned is temporary - it can be 
+/** Return this parameter table cast as type 'T'. Note that this
+    will have undefined results unless isA<T> returns true.
+
+    Note that the referenced returned is temporary - it can be
     made invalid by a call to 'removeTable' or 'setTable'
 */
 template<class T>

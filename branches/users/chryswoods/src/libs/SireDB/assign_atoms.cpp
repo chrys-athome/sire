@@ -357,7 +357,8 @@ assign_atoms::~assign_atoms()
 class assign_atoms_ws
 {
 public:
-    assign_atoms_ws(ParameterTable &param_table,
+    assign_atoms_ws(const Molecule &molecule,
+                    ParameterTable &param_table,
                     const MatchMRData &matchmr);
 
     ~assign_atoms_ws();
@@ -369,6 +370,7 @@ public:
 
 private:
 
+    const Molecule &molecule;
     ParameterTable &param_table;
     const MatchMRData &matchmr;
 
@@ -378,8 +380,9 @@ private:
 };
 
 /** Constructor */
-assign_atoms_ws::assign_atoms_ws(ParameterTable &table, const MatchMRData &match)
-                : param_table(table), matchmr(match)
+assign_atoms_ws::assign_atoms_ws(const Molecule &mol, ParameterTable &table,
+                                 const MatchMRData &match)
+                : molecule(mol), param_table(table), matchmr(match)
 {}
 
 /** Destructor */
@@ -432,7 +435,7 @@ void assign_atoms_ws::assignParameters(const AtomIndex &atom, bool overwrite)
         //get the RelateIDMap for this atom in the molecule from
         //this relationship database...
 
-        RelateIDMap relateids = relatedbs[i]->search(atom, param_table, matchmr);
+        RelateIDMap relateids = relatedbs[i]->search(atom, molecule, param_table, matchmr);
 
         if (not relateids.isEmpty())
         {
@@ -457,14 +460,15 @@ void assign_atoms_ws::assignParameters(const AtomIndex &atom, bool overwrite)
     If 'overwrite' is true then the parameters will be overwritten,
     otherwise only parameters for atoms that are currently missing
     parameters will be found. */
-void assign_atoms::assignParameters( ParameterTable &param_table,
+void assign_atoms::assignParameters( const Molecule &molecule,
+                                     ParameterTable &param_table,
                                      ParameterDB &database,
                                      const MatchMRData &matchmr ) const
 {
-    //create a workspace for this assignment operation
-    assign_atoms_ws workspace(param_table, matchmr);
+    param_table.assertCompatibleWith(molecule);
 
-    const Molecule &molecule = param_table.molecule();
+    //create a workspace for this assignment operation
+    assign_atoms_ws workspace(molecule, param_table, matchmr);
 
     //loop through each of the requested databases and see whether or
     //not they are present in the database... (we do this now to prevent
@@ -473,42 +477,44 @@ void assign_atoms::assignParameters( ParameterTable &param_table,
     {
         if (database.isA(paramdb))
         {
+            #warning Need to update assignParameters() to work with named DBs
             //cast the database as this component
-            DBBase &dbpart = database.asA(paramdb);
+            //DBBase &dbpart = database.asA(paramdb);
 
             //is this an AtomDB? (must be to hold atom parameters)
-            if (dbpart.isA<AtomDB>())
-            {
+            //if (dbpart.isA<AtomDB>())
+            //{
+
                 //get the AtomDB
-                AtomDB &atomdb = dbpart.asA<AtomDB>();
+                //AtomDB &atomdb = dbpart.asA<AtomDB>();
 
                 //now get the AtomTable that will hold the parameters
-                AtomTable &atomtable = atomdb.createTable(param_table);
+                //AtomTable &atomtable = atomdb.createTable(param_table);
 
                 //save these references to the list of parameters dbs to hunt
-                workspace.append(atomdb, atomtable);
-            }
+                //workspace.append(atomdb, atomtable);
+            //}
         }
     }
 
     //loop through the requested relationship databases and add those to the workspace
     foreach (QString relatedb, relationshipDataBases())
     {
-        if (database.isA(relatedb))
-        {
+        //if (database.isA(relatedb))
+        //{
             //cast the database as this component
-            DBBase &dbpart = database.asA(relatedb);
+            //DBBase &dbpart = database.asA(relatedb);
 
             //is this a RelationshipDB? (must be to hold relationships)
-            if (dbpart.isA<RelationshipDB>())
-            {
+            //if (dbpart.isA<RelationshipDB>())
+            //{
                 //get the RelationshipDB
-                RelationshipDB &relatedb = dbpart.asA<RelationshipDB>();
+                //RelationshipDB &relatedb = dbpart.asA<RelationshipDB>();
 
                 //save this reference
-                workspace.append(relatedb);
-            }
-        }
+                //workspace.append(relatedb);
+            //}
+        //}
     }
 
     if ( atoms_to_be_parametised.isEmpty() )

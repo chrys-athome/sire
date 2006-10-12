@@ -32,8 +32,8 @@ void export_MoleculeBonds()
     void (MoleculeBonds::*wrap_remove3)(const Bond&)
                                       = &MoleculeBonds::remove;
 
-    void (MoleculeBonds::*wrap_removeAll1)(const AtomIndex&) = &MoleculeBonds::removeAll;
-    void (MoleculeBonds::*wrap_removeAll2)(ResNum) = &MoleculeBonds::removeAll;
+    void (MoleculeBonds::*wrap_remove4)(const AtomIndex&) = &MoleculeBonds::remove;
+    void (MoleculeBonds::*wrap_remove5)(ResNum) = &MoleculeBonds::remove;
 
     QList<Bond> (MoleculeBonds::*wrap_bonds1)() const = &MoleculeBonds::bonds;
     QList<Bond> (MoleculeBonds::*wrap_bonds2)(const AtomIndex&) const = &MoleculeBonds::bonds;
@@ -60,8 +60,8 @@ void export_MoleculeBonds()
       .def("remove", wrap_remove1)
       .def("remove", wrap_remove2)
       .def("remove", wrap_remove3)
-      .def("removeAll", wrap_removeAll1)
-      .def("removeAll", wrap_removeAll2)
+      .def("remove", wrap_remove4)
+      .def("remove", wrap_remove5)
       .def("clear", &MoleculeBonds::clear)
       .def("finalise", &MoleculeBonds::finalise)
       .def("residue", &MoleculeBonds::residue)
@@ -77,7 +77,6 @@ void export_MoleculeBonds()
       .def("bonded", wrap_bonded2)
       .def("resNumsBondedTo", &MoleculeBonds::resNumsBondedTo)
       .def("resNums", &MoleculeBonds::resNums)
-      .def("atoms", &MoleculeBonds::atoms)
     ;
 
 }

@@ -84,6 +84,47 @@ QString Bond::toString() const
     return QObject::tr("%1-%2").arg(atoms[0].toString(),atoms[1].toString());
 }
 
+/** Return the atom in the bond that is in the residue with number 'resnum'.
+    If both atoms in the bond are in this residue then only the first will
+    be returned.
+
+    \throw SireMol::missing_residue
+*/
+const AtomIndex& Bond::operator[](ResNum resnum) const
+{
+    if ( atom0().resNum() == resnum )
+        return atom0();
+    else if ( atom1().resNum() != resnum )
+        throw SireMol::missing_residue( QObject::tr(
+                "The bond %1 does not contain any atoms from the residue "
+                "with number \"%2\".")
+                    .arg(toString()).arg(resnum), CODELOC );
+
+    return atom1();
+}
+
+/** Return the atom in the bond that is in the residue with number 'resnum'.
+    If both atoms in the bond are in this residue then only the first will
+    be returned.
+
+    \throw SireMol::missing_residue
+*/
+const AtomIndex& Bond::at(ResNum resnum) const
+{
+    return this->operator[](resnum);
+}
+
+/** Return the atom in the bond that is in the residue with number 'resnum'.
+    If both atoms in the bond are in this residue then only the first will
+    be returned.
+
+    \throw SireMol::missing_residue
+*/
+const AtomIndex& Bond::atom(ResNum resnum) const
+{
+    return this->operator[](resnum);
+}
+
 /** Construct the Bond between these two AtomIndexes. The atoms must not be the same,
     or else an exception will be thrown. Note that the Bond will sort the atoms
     so that the Bond between atom0-atom1 will be the same as the Bond
