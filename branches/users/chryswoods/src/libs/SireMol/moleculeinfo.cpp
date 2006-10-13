@@ -171,7 +171,7 @@ MoleculeInfoPvt::MoleculeInfoPvt(const EditMolData &moldata)
 {
     #warning Need to update MoleculeInfo to use CutGroupNums!
 }
-                  
+
 
 /** Copy constructor */
 MoleculeInfoPvt::MoleculeInfoPvt(const MoleculeInfoPvt &other)
@@ -432,7 +432,7 @@ MoleculeInfo::MoleculeInfo() : d(shared_null)
 {}
 
 /** Construct from the passed EditMolData */
-MoleculeInfo::MoleculeInfo(const EditMolData &moldata) 
+MoleculeInfo::MoleculeInfo(const EditMolData &moldata)
              : d( new MoleculeInfoPvt(moldata) )
 {}
 
@@ -531,6 +531,33 @@ const CGAtomID& MoleculeInfo::operator[](const ResIDAtomID &resatomid) const
     return this->operator[](resatomid.resID()).at(resatomid.atomID());
 }
 
+/** Return the CGAtomID index of the atom with index 'cgatomid'
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+const CGAtomID& MoleculeInfo::operator[](const CGNumAtomID &cgatomid) const
+{
+    #warning Need to write CutGroupNum into MoleculeInfo!
+    throw SireError::incomplete_code( QObject::tr(
+                      "MoleculeInfo cannot yet cope with CutGroupNum!"), CODELOC );
+
+    return this->operator[](AtomID(0));
+}
+
+/** Return the CGAtomID index of the atom with index 'cgatomid'
+    (this is a convienience function for use with templates -
+    it just returns 'cgatomid' after checking that it is valid)
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+const CGAtomID& MoleculeInfo::operator[](const CGAtomID &cgatomid) const
+{
+    this->assertAtomExists(cgatomid);
+    return cgatomid;
+}
+
 /** Return the AtomInfoGroup for the CutGroup with ID == cgid */
 const AtomInfoGroup& MoleculeInfo::at(CutGroupID cgid) const
 {
@@ -591,6 +618,28 @@ const CGAtomID& MoleculeInfo::at(const ResNumAtomID &resatomid) const
 const CGAtomID& MoleculeInfo::at(const ResIDAtomID &resatomid) const
 {
     return this->operator[](resatomid);
+}
+
+/** Return the CGAtomID index of the atom with index 'cgatomid'
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+const CGAtomID& MoleculeInfo::at(const CGNumAtomID &cgatomid) const
+{
+    return this->operator[](cgatomid);
+}
+
+/** Return the CGAtomID index of the atom with index 'cgatomid'
+    (this is a convienience function for use with templates -
+    it just returns 'cgatomid' after checking that it is valid)
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+const CGAtomID& MoleculeInfo::at(const CGAtomID &cgatomid) const
+{
+    return this->operator[](cgatomid);
 }
 
 /** Return the AtomInfo for the atom with index 'atomid'
@@ -1005,6 +1054,19 @@ ResNum MoleculeInfo::residueNumber(const QString &resname) const
     return ResNum(0);
 }
 
+/** Return the CutGroupID of the CutGroup with number 'cgnum'
+
+    \throw SireMol::missing_cutgroup
+*/
+CutGroupID MoleculeInfo::cutGroupID(CutGroupNum cgnum) const
+{
+    #warning Need to write CutGroupNum into MoleculeInfo!
+    throw SireError::incomplete_code( QObject::tr(
+                      "MoleculeInfo cannot yet cope with CutGroupNum!"), CODELOC );
+
+    return CutGroupID(0);
+}
+
 /** Return the number of residues in this molecule */
 int MoleculeInfo::nResidues() const
 {
@@ -1048,6 +1110,15 @@ int MoleculeInfo::nAtoms(ResID resid) const
 int MoleculeInfo::nAtoms(CutGroupID cgid) const
 {
     return this->at(cgid).nAtoms();
+}
+
+/** Return the number of atoms in the CutGroup with number 'cgnum'
+
+    \throw SireMol::missing_cutgroup
+*/
+int MoleculeInfo::nAtoms(CutGroupNum cgnum) const
+{
+    return this->nAtoms( this->cutGroupID(cgnum) );
 }
 
 /** Return the array of the numbers of the residues, in the order that

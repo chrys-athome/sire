@@ -14,6 +14,9 @@
 
 #include "qhash_siremol.h"
 
+#include <QHash>
+#include <QString>
+
 #include "editmol.h"
 
 #include "cgatomid.h"
@@ -60,7 +63,7 @@ static const RegisterMetaType<EditMol> r_editmol("SireMol::EditMol");
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const EditMol &editmol)
 {
     writeHeader(ds, r_editmol, 1);
-     
+
     SharedDataStream(ds) << editmol.d;
 
     return ds;
@@ -79,6 +82,12 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, EditMol &editmol)
         throw version_error(v, "1", r_editmol, CODELOC);
 
     return ds;
+}
+
+/** Hash an EditMol */
+uint qHash(const EditMol &editmol)
+{
+    return qHash(editmol.name());
 }
 
 /** Construct an empty, unnamed molecule */
@@ -1018,18 +1027,18 @@ QHash<T,Atom> getAtoms(const EditMol &mol, const QSet<T> &idxs)
 {
     QHash<T,Atom> atoms;
     atoms.reserve(idxs.count());
-    
+
     for (typename QSet<T>::const_iterator it = idxs.begin();
          it != idxs.end();
          ++it)
     {
         atoms.insert( *it, mol.atom(*it) );
     }
-    
+
     return atoms;
 }
 
-/** Return copies of the atoms whose indicies are in 'atomids' 
+/** Return copies of the atoms whose indicies are in 'atomids'
 
     \throw SireError::invalid_index
 */
@@ -1089,7 +1098,7 @@ QHash<AtomIndex,Atom> EditMol::atoms(const QSet<AtomIndex> &atoms) const
 
 /** Return copies of the atoms in the CutGroup with number 'cgnum'
     (in AtomID order)
-    
+
     \throw SireMol::missing_cutgroup
 */
 QVector<Atom> EditMol::atoms(CutGroupNum cgnum) const
@@ -1102,20 +1111,20 @@ QHash< T,QVector<Atom> > getAtomArrays(const EditMol &mol, const QSet<T> &idxs)
 {
     QHash< T,QVector<Atom> > atoms;
     atoms.reserve(idxs.count());
-    
+
     for  (typename QSet<T>::const_iterator it = idxs.begin();
           it != idxs.end();
           ++it)
     {
         atoms.insert( *it, mol.atoms(*it) );
     }
-    
+
     return atoms;
 }
 
 /** Return copies of the atoms for the CutGroups with numbers in 'cgnums'
     (in AtomID order)
-    
+
     \throw SireMol::missing_cutgroup
 */
 QHash< CutGroupNum,QVector<Atom> > EditMol::atoms(const QSet<CutGroupNum> &cgnums) const
@@ -1124,7 +1133,7 @@ QHash< CutGroupNum,QVector<Atom> > EditMol::atoms(const QSet<CutGroupNum> &cgnum
 }
 
 /** Return copies of the atoms in the CutGroup with ID == cgid (in AtomID order)
-    
+
     \throw SireMol::missing_cutgroup
 */
 QVector<Atom> EditMol::atoms(CutGroupID cgid) const
@@ -1134,7 +1143,7 @@ QVector<Atom> EditMol::atoms(CutGroupID cgid) const
 
 /** Return copies of the atoms for the CutGroups with numbers in 'cgnums'
     (in AtomID order)
-    
+
     \throw SireMol::missing_cutgroup
 */
 QHash< CutGroupID,QVector<Atom> > EditMol::atoms(const QSet<CutGroupID> &cgids) const
@@ -1144,7 +1153,7 @@ QHash< CutGroupID,QVector<Atom> > EditMol::atoms(const QSet<CutGroupID> &cgids) 
 
 /** Return copies of the atoms for the residue with number 'resnum'
     (in AtomID order)
-    
+
     \throw SireMol::missing_residue
 */
 QVector<Atom> EditMol::atoms(ResNum resnum) const
@@ -1152,9 +1161,9 @@ QVector<Atom> EditMol::atoms(ResNum resnum) const
     return d->atoms(resnum);
 }
 
-/** Return copies of the atoms for the residues whose numbers are in 
+/** Return copies of the atoms for the residues whose numbers are in
     'resnums' (in AtomID order)
-    
+
     \throw SireMol::missing_residue
 */
 QHash< ResNum,QVector<Atom> > EditMol::atoms(const QSet<ResNum> &resnums) const
@@ -1164,7 +1173,7 @@ QHash< ResNum,QVector<Atom> > EditMol::atoms(const QSet<ResNum> &resnums) const
 
 /** Return copies of the atoms for the residue at index 'resid'
     (in AtomID order)
-    
+
     \throw SireError::invalid_index
 */
 QVector<Atom> EditMol::atoms(ResID resid) const
@@ -1172,9 +1181,9 @@ QVector<Atom> EditMol::atoms(ResID resid) const
     return this->atoms( d->at(resid) );
 }
 
-/** Return copies of the atoms for the residues whose indicies are in 
+/** Return copies of the atoms for the residues whose indicies are in
     'resids' (in AtomID order)
-    
+
     \throw SireError::invalid_index
 */
 QHash< ResID,QVector<Atom> > EditMol::atoms(const QSet<ResID> &resids) const
@@ -1187,18 +1196,18 @@ QHash<T,Vector> getCoords(const EditMol &mol, const QSet<T> &idxs)
 {
     QHash<T,Vector> coords;
     coords.reserve(idxs.size());
-    
+
     for (typename QSet<T>::const_iterator it = idxs.begin();
          it != idxs.end();
          ++it)
     {
         coords.insert( *it, mol.coordinates(*it) );
     }
-    
+
     return coords;
 }
 
-/** Return copies of the coordinates of the atoms whose indicies are in 'atomids' 
+/** Return copies of the coordinates of the atoms whose indicies are in 'atomids'
 
     \throw SireError::invalid_index
 */
@@ -1207,9 +1216,9 @@ QHash<AtomID,Vector> EditMol::coordinates(const QSet<AtomID> &atomids) const
     return getCoords<AtomID>(*this, atomids);
 }
 
-/** Return copies of the coordinates of the atoms whose indicies are in 
+/** Return copies of the coordinates of the atoms whose indicies are in
     'cgatomids'
-    
+
     \throw SireMol::missing_cutgroup
     \throw SireError::invalid_index
 */
@@ -1218,9 +1227,9 @@ QHash<CGAtomID,Vector> EditMol::coordinates(const QSet<CGAtomID> &cgatomids) con
     return getCoords<CGAtomID>(*this, cgatomids);
 }
 
-/** Return copies of the coordinates of the atoms whose indicies are in 
+/** Return copies of the coordinates of the atoms whose indicies are in
     'cgatomids'
-    
+
     \throw SireMol::missing_cutgroup
     \throw SireError::invalid_index
 */
@@ -1229,9 +1238,9 @@ QHash<CGNumAtomID,Vector> EditMol::coordinates(const QSet<CGNumAtomID> &cgatomid
     return getCoords<CGNumAtomID>(*this, cgatomids);
 }
 
-/** Return copies of the coordinates of the atoms whose indicies are in 
+/** Return copies of the coordinates of the atoms whose indicies are in
     'resatomids'
-    
+
     \throw SireMol::missing_residue
     \throw SireError::invalid_index
 */
@@ -1240,9 +1249,9 @@ QHash<ResNumAtomID,Vector> EditMol::coordinates(const QSet<ResNumAtomID> &resato
     return getCoords<ResNumAtomID>(*this, resatomids);
 }
 
-/** Return copies of the coordinates of the atoms whose indicies are in 
+/** Return copies of the coordinates of the atoms whose indicies are in
     'resatomids'
-    
+
     \throw SireError::invalid_index
 */
 QHash<ResIDAtomID,Vector> EditMol::coordinates(const QSet<ResIDAtomID> &resatomids) const
@@ -1250,9 +1259,9 @@ QHash<ResIDAtomID,Vector> EditMol::coordinates(const QSet<ResIDAtomID> &resatomi
     return getCoords<ResIDAtomID>(*this, resatomids);
 }
 
-/** Return copies of the coordinates of the atoms whose AtomIndex objects are in 
+/** Return copies of the coordinates of the atoms whose AtomIndex objects are in
     'atoms'
-    
+
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
@@ -1261,9 +1270,9 @@ QHash<AtomIndex,Vector> EditMol::coordinates(const QSet<AtomIndex> &atoms) const
     return getCoords<AtomIndex>(*this, atoms);
 }
 
-/** Return copies of the coordinates of all of the atoms in the CutGroup 
+/** Return copies of the coordinates of all of the atoms in the CutGroup
     with number 'cgnum' (in AtomID order)
-    
+
     \throw SireMol::missing_cutgroup
 */
 QVector<Vector> EditMol::coordinates(CutGroupNum cgnum) const
@@ -1276,20 +1285,20 @@ QHash< T,QVector<Vector> > getCoordArrays(const EditMol &mol, const QSet<T> &idx
 {
     QHash< T,QVector<Vector> > coords;
     coords.reserve(idxs.count());
-    
+
     for (typename QSet<T>::const_iterator it = idxs.begin();
          it != idxs.end();
          ++it)
     {
         coords.insert( *it, mol.coordinates(*it) );
     }
-    
+
     return coords;
 }
 
-/** Return copies of the coordinates of the atoms that are in the 
+/** Return copies of the coordinates of the atoms that are in the
     CutGroups whose numbers are in 'cgnums' (in AtomID order)
-    
+
     \throw SireMol::missing_cutgroup
 */
 QHash< CutGroupNum,QVector<Vector> > EditMol::coordinates(
@@ -1298,9 +1307,9 @@ QHash< CutGroupNum,QVector<Vector> > EditMol::coordinates(
     return getCoordArrays<CutGroupNum>(*this, cgnums);
 }
 
-/** Return copies of the coordinates of all of the atoms in the CutGroup 
+/** Return copies of the coordinates of all of the atoms in the CutGroup
     with ID == cgid (in AtomID order)
-    
+
     \throw SireMol::missing_cutgroup
 */
 QVector<Vector> EditMol::coordinates(CutGroupID cgid) const
@@ -1308,9 +1317,9 @@ QVector<Vector> EditMol::coordinates(CutGroupID cgid) const
     return this->coordinates( d->at(cgid) );
 }
 
-/** Return copies of the coordinates of the atoms that are in the 
+/** Return copies of the coordinates of the atoms that are in the
     CutGroups whose IDs are in 'cgnums' (in AtomID order)
-    
+
     \throw SireMol::missing_cutgroup
 */
 QHash< CutGroupID,QVector<Vector> > EditMol::coordinates(
@@ -1321,7 +1330,7 @@ QHash< CutGroupID,QVector<Vector> > EditMol::coordinates(
 
 /** Return copies of the coordinates of all of the atoms in the residue
     with number 'resnum' (in AtomID order)
-    
+
     \throw SireMol::missing_residue
 */
 QVector<Vector> EditMol::coordinates(ResNum resnum) const
@@ -1329,9 +1338,9 @@ QVector<Vector> EditMol::coordinates(ResNum resnum) const
     return d->coordinates(resnum);
 }
 
-/** Return copies of the coordinates of the atoms that are in the 
+/** Return copies of the coordinates of the atoms that are in the
     residues whose numbers are in 'resnums' (in AtomID order)
-    
+
     \throw SireMol::missing_residue
 */
 QHash< ResNum,QVector<Vector> > EditMol::coordinates(const QSet<ResNum> &resnums) const
@@ -1341,7 +1350,7 @@ QHash< ResNum,QVector<Vector> > EditMol::coordinates(const QSet<ResNum> &resnums
 
 /** Return copies of the coordinates of all of the atoms in the residue
     with index 'resid' (in AtomID order)
-    
+
     \throw SireError::invalid_index
 */
 QVector<Vector> EditMol::coordinates(ResID resid) const
@@ -1349,9 +1358,9 @@ QVector<Vector> EditMol::coordinates(ResID resid) const
     return this->coordinates( d->at(resid) );
 }
 
-/** Return copies of the coordinates of the atoms that are in the 
+/** Return copies of the coordinates of the atoms that are in the
     residues whose indicies are in 'resids' (in AtomID order)
-    
+
     \throw SireError::invalid_index
 */
 QHash< ResID,QVector<Vector> > EditMol::coordinates(const QSet<ResID> &resids) const
@@ -2321,7 +2330,7 @@ void EditMol::rotate(const Quaternion &quat, const Vector &point)
 }
 
 /** Rotate the group 'group' using the quaternion 'quat' about the point 'point'
-  
+
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
@@ -2345,7 +2354,7 @@ void EditMol::rotate(const AtomIndex &atom, const Quaternion &quat, const Vector
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-void EditMol::rotate(const QSet<AtomIndex> &atoms, const Quaternion &quat, 
+void EditMol::rotate(const QSet<AtomIndex> &atoms, const Quaternion &quat,
                      const Vector &point)
 {
     d->rotate(atoms, quat, point);
@@ -2353,7 +2362,7 @@ void EditMol::rotate(const QSet<AtomIndex> &atoms, const Quaternion &quat,
 
 /** Rotate the atoms whose names are in 'atoms', that are in the residue
     with number 'resnum' using the quaternion 'quat' about the point 'point'
-    
+
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
@@ -2363,9 +2372,9 @@ void EditMol::rotate(ResNum resnum, const QStringList &atoms, const Quaternion &
     d->rotate(resnum, atoms, quat, point);
 }
 
-/** Rotate all of the atoms in the residue with number 'resnum' 
+/** Rotate all of the atoms in the residue with number 'resnum'
     using the quaternion 'quat' about the point 'point'
-    
+
     \throw SireMol::missing_residue
 */
 void EditMol::rotate(ResNum resnum, const Quaternion &quat, const Vector &point)
@@ -2375,18 +2384,18 @@ void EditMol::rotate(ResNum resnum, const Quaternion &quat, const Vector &point)
 
 /** Rotate all of the atoms that are in the residues whose numbers are
     in 'resnums' using the quaternion 'quat' about the point 'point'
-    
+
     \throw SireMol::missing_residue
 */
-void EditMol::rotate(const QSet<ResNum> &resnums, const Quaternion &quat, 
+void EditMol::rotate(const QSet<ResNum> &resnums, const Quaternion &quat,
                      const Vector &point)
 {
     d->rotate(resnums, quat, point);
 }
 
-/** Rotate the atoms whose names are in 'atoms' and that are in the  
+/** Rotate the atoms whose names are in 'atoms' and that are in the
     residue at index 'resid' using the quaternion 'quat' about the point 'point'
-    
+
     \throw SireError::invalid_index
     \throw SireMol::missing_atom
 */
@@ -2396,9 +2405,9 @@ void EditMol::rotate(ResID resid, const QStringList &atoms, const Quaternion &qu
     this->rotate( d->at(resid), atoms, quat, point );
 }
 
-/** Rotate all of the atoms of the residue at index 'resid' 
+/** Rotate all of the atoms of the residue at index 'resid'
     using the quaternion 'quat' about the point 'point'
-    
+
     \throw SireError::invalid_index
 */
 void EditMol::rotate(ResID resid, const Quaternion &quat, const Vector &point)
@@ -2408,26 +2417,26 @@ void EditMol::rotate(ResID resid, const Quaternion &quat, const Vector &point)
 
 /** Rotate all of the atoms in the residues whose indicies are in 'resids'
     using the quaternion 'quat' about the point 'point'
-    
+
     \throw SireError::invalid_index
 */
-void EditMol::rotate(const QSet<ResID> &resids, const Quaternion &quat, 
+void EditMol::rotate(const QSet<ResID> &resids, const Quaternion &quat,
                      const Vector &point)
 {
     QSet<ResNum> resnums;
     resnums.reserve(resids.count());
-    
+
     foreach (ResID resid, resids)
     {
         resnums.insert( d->at(resid) );
     }
-    
+
     this->rotate(resnums, quat, point);
 }
 
 /** Rotate all of the atoms in the CutGroup with number 'cgnum'
     using the quaternion 'quat' about the point 'point'
-    
+
     \throw SireMol::missing_cutgroup
 */
 void EditMol::rotate(CutGroupNum cgnum, const Quaternion &quat, const Vector &point)
@@ -2435,12 +2444,12 @@ void EditMol::rotate(CutGroupNum cgnum, const Quaternion &quat, const Vector &po
     d->rotate(cgnum, quat, point);
 }
 
-/** Rotate all of the atoms in the CutGroups whose numbers are in  
+/** Rotate all of the atoms in the CutGroups whose numbers are in
     'cgnums' using the quaternion 'quat' about the point 'point'
-    
+
     \throw SireMol::missing_cutgroup
 */
-void EditMol::rotate(const QSet<CutGroupNum> &cgnums, const Quaternion &quat, 
+void EditMol::rotate(const QSet<CutGroupNum> &cgnums, const Quaternion &quat,
                      const Vector &point)
 {
     d->rotate(cgnums, quat, point);
@@ -2448,7 +2457,7 @@ void EditMol::rotate(const QSet<CutGroupNum> &cgnums, const Quaternion &quat,
 
 /** Rotate all of the atoms in the CutGroup with ID == cgid
     using the quaternion 'quat' about the point 'point'
-    
+
     \throw SireMol::missing_cutgroup
 */
 void EditMol::rotate(CutGroupID cgid, const Quaternion &quat, const Vector &point)
@@ -2458,20 +2467,20 @@ void EditMol::rotate(CutGroupID cgid, const Quaternion &quat, const Vector &poin
 
 /** Rotate all of the atoms in the CutGroups whose IDs are in 'cgids'
     using the quaternion 'quat' about the point 'point'
-    
+
     \throw SireMol::missing_cutgroup
 */
-void EditMol::rotate(const QSet<CutGroupID> &cgids, const Quaternion &quat, 
+void EditMol::rotate(const QSet<CutGroupID> &cgids, const Quaternion &quat,
                      const Vector &point)
 {
     QSet<CutGroupNum> cgnums;
     cgnums.reserve(cgids.count());
-    
+
     foreach (CutGroupID cgid, cgids)
     {
         cgnums.insert( d->at(cgid) );
     }
-    
+
     this->rotate(cgnums, quat, point);
 }
 
@@ -2482,7 +2491,7 @@ void EditMol::rotate(const Matrix &matrix, const Vector &point)
 }
 
 /** Rotate the group 'group' using the matrix 'matrix' about the point 'point'
-  
+
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
@@ -2506,7 +2515,7 @@ void EditMol::rotate(const AtomIndex &atom, const Matrix &matrix, const Vector &
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-void EditMol::rotate(const QSet<AtomIndex> &atoms, const Matrix &matrix, 
+void EditMol::rotate(const QSet<AtomIndex> &atoms, const Matrix &matrix,
                      const Vector &point)
 {
     d->rotate(atoms, matrix, point);
@@ -2514,7 +2523,7 @@ void EditMol::rotate(const QSet<AtomIndex> &atoms, const Matrix &matrix,
 
 /** Rotate the atoms whose names are in 'atoms', that are in the residue
     with number 'resnum' using the matrix 'matrix' about the point 'point'
-    
+
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
@@ -2524,9 +2533,9 @@ void EditMol::rotate(ResNum resnum, const QStringList &atoms, const Matrix &matr
     d->rotate(resnum, atoms, matrix, point);
 }
 
-/** Rotate all of the atoms in the residue with number 'resnum' 
+/** Rotate all of the atoms in the residue with number 'resnum'
     using the matrix 'matrix' about the point 'point'
-    
+
     \throw SireMol::missing_residue
 */
 void EditMol::rotate(ResNum resnum, const Matrix &matrix, const Vector &point)
@@ -2536,18 +2545,18 @@ void EditMol::rotate(ResNum resnum, const Matrix &matrix, const Vector &point)
 
 /** Rotate all of the atoms that are in the residues whose numbers are
     in 'resnums' using the matrix 'matrix' about the point 'point'
-    
+
     \throw SireMol::missing_residue
 */
-void EditMol::rotate(const QSet<ResNum> &resnums, const Matrix &matrix, 
+void EditMol::rotate(const QSet<ResNum> &resnums, const Matrix &matrix,
                      const Vector &point)
 {
     d->rotate(resnums, matrix, point);
 }
 
-/** Rotate the atoms whose names are in 'atoms' and that are in the  
+/** Rotate the atoms whose names are in 'atoms' and that are in the
     residue at index 'resid' using the matrix 'matrix' about the point 'point'
-    
+
     \throw SireError::invalid_index
     \throw SireMol::missing_atom
 */
@@ -2557,9 +2566,9 @@ void EditMol::rotate(ResID resid, const QStringList &atoms, const Matrix &matrix
     this->rotate( d->at(resid), atoms, matrix, point );
 }
 
-/** Rotate all of the atoms of the residue at index 'resid' 
+/** Rotate all of the atoms of the residue at index 'resid'
     using the matrix 'matrix' about the point 'point'
-    
+
     \throw SireError::invalid_index
 */
 void EditMol::rotate(ResID resid, const Matrix &matrix, const Vector &point)
@@ -2569,26 +2578,26 @@ void EditMol::rotate(ResID resid, const Matrix &matrix, const Vector &point)
 
 /** Rotate all of the atoms in the residues whose indicies are in 'resids'
     using the matrix 'matrix' about the point 'point'
-    
+
     \throw SireError::invalid_index
 */
-void EditMol::rotate(const QSet<ResID> &resids, const Matrix &matrix, 
+void EditMol::rotate(const QSet<ResID> &resids, const Matrix &matrix,
                      const Vector &point)
 {
     QSet<ResNum> resnums;
     resnums.reserve(resids.count());
-    
+
     foreach (ResID resid, resids)
     {
         resnums.insert( d->at(resid) );
     }
-    
+
     this->rotate(resnums, matrix, point);
 }
 
 /** Rotate all of the atoms in the CutGroup with number 'cgnum'
     using the matrix 'matrix' about the point 'point'
-    
+
     \throw SireMol::missing_cutgroup
 */
 void EditMol::rotate(CutGroupNum cgnum, const Matrix &matrix, const Vector &point)
@@ -2596,12 +2605,12 @@ void EditMol::rotate(CutGroupNum cgnum, const Matrix &matrix, const Vector &poin
     d->rotate(cgnum, matrix, point);
 }
 
-/** Rotate all of the atoms in the CutGroups whose numbers are in  
+/** Rotate all of the atoms in the CutGroups whose numbers are in
     'cgnums' using the matrix 'matrix' about the point 'point'
-    
+
     \throw SireMol::missing_cutgroup
 */
-void EditMol::rotate(const QSet<CutGroupNum> &cgnums, const Matrix &matrix, 
+void EditMol::rotate(const QSet<CutGroupNum> &cgnums, const Matrix &matrix,
                      const Vector &point)
 {
     d->rotate(cgnums, matrix, point);
@@ -2609,7 +2618,7 @@ void EditMol::rotate(const QSet<CutGroupNum> &cgnums, const Matrix &matrix,
 
 /** Rotate all of the atoms in the CutGroup with ID == cgid
     using the matrix 'matrix' about the point 'point'
-    
+
     \throw SireMol::missing_cutgroup
 */
 void EditMol::rotate(CutGroupID cgid, const Matrix &matrix, const Vector &point)
@@ -2619,26 +2628,26 @@ void EditMol::rotate(CutGroupID cgid, const Matrix &matrix, const Vector &point)
 
 /** Rotate all of the atoms in the CutGroups whose IDs are in 'cgids'
     using the matrix 'matrix' about the point 'point'
-    
+
     \throw SireMol::missing_cutgroup
 */
-void EditMol::rotate(const QSet<CutGroupID> &cgids, const Matrix &matrix, 
+void EditMol::rotate(const QSet<CutGroupID> &cgids, const Matrix &matrix,
                      const Vector &point)
 {
     QSet<CutGroupNum> cgnums;
     cgnums.reserve(cgids.count());
-    
+
     foreach (CutGroupID cgid, cgids)
     {
         cgnums.insert( d->at(cgid) );
     }
-    
+
     this->rotate(cgnums, matrix, point);
 }
 
 /** Set the coordinates of the atoms in the CutGroup with number 'cgnum'
     to 'newcoords'
-    
+
     \throw SireMol::missing_cutgroup
     \throw SireError::incompatible_error
 */
@@ -2649,7 +2658,7 @@ void EditMol::setCoordinates(CutGroupNum cgnum, const CoordGroup &newcoords)
 
 /** Set the coordinates of the specified CutGroups to the values
     in 'newcoords'
-    
+
     \throw SireMol::missing_cutgroup
     \throw SireError::incompatible_error
 */
@@ -2660,7 +2669,7 @@ void EditMol::setCoordinates(const QHash<CutGroupNum,CoordGroup> &newcoords)
 
 /** Set the coordinates of the atoms in the CutGroup with ID == cgid
     to 'newcoords'
-    
+
     \throw SireMol::missing_cutgroup
     \throw SireError::incompatible_error
 */
@@ -2675,20 +2684,20 @@ QHash<Num,T> convertToNum(const QSharedDataPointer<EditMolData> &d,
 {
     QHash<Num,T> convertedcoords;
     convertedcoords.reserve(coords.size());
-    
+
     for (typename QHash<Idx,T>::const_iterator it = coords.begin();
          it != coords.end();
          ++it)
     {
         convertedcoords.insert( d->at(it.key()), it.value() );
     }
-    
+
     return convertedcoords;
 }
 
 /** Set the coordinates of the specified CutGroups to the values
     in 'newcoords'
-    
+
     \throw SireMol::missing_cutgroup
     \throw SireError::incompatible_error
 */
@@ -2706,9 +2715,9 @@ void EditMol::setCoordinates(const QVector<Vector> &newcoords)
     d->setCoordinates(newcoords);
 }
 
-/** Set the coordinates of the atoms in the CutGroup with number 
+/** Set the coordinates of the atoms in the CutGroup with number
     'cgnum' to 'newcoords'
-    
+
     \throw SireMol::missing_cutgroup
     \throw SireError::incompatible_error
 */
@@ -2717,9 +2726,9 @@ void EditMol::setCoordinates(CutGroupNum cgnum, const QVector<Vector> &newcoords
     d->setCoordinates(cgnum, newcoords);
 }
 
-/** Set the coordinates of the atoms in the specified CutGroups to 
+/** Set the coordinates of the atoms in the specified CutGroups to
     'newcoords'
-    
+
     \throw SireMol::missing_cutgroup
     \throw SireError::incompatible_error
 */
@@ -2730,7 +2739,7 @@ void EditMol::setCoordinates(const QHash< CutGroupNum,QVector<Vector> > &newcoor
 
 /** Set the coordinates of the atoms in the CutGroup with ID == cgid
     to 'newcoords'
-    
+
     \throw SireMol::missing_cutgroup
     \throw SireError::incompatible_error
 */
@@ -2739,22 +2748,22 @@ void EditMol::setCoordinates(CutGroupID cgid, const QVector<Vector> &newcoords)
     this->setCoordinates( d->at(cgid), newcoords );
 }
 
-/** Set the coordinates of the atoms in the specified CutGroups to 
+/** Set the coordinates of the atoms in the specified CutGroups to
     'newcoords'
-    
+
     \throw SireMol::missing_cutgroup
     \throw SireError::incompatible_error
 */
 void EditMol::setCoordinates(const QHash< CutGroupID,QVector<Vector> > &newcoords)
 {
-    this->setCoordinates( 
-              convertToNum< CutGroupNum,CutGroupID,QVector<Vector> >(d, newcoords) 
+    this->setCoordinates(
+              convertToNum< CutGroupNum,CutGroupID,QVector<Vector> >(d, newcoords)
                         );
 }
 
 /** Set the coordinates of all of the atoms in the residue with number 'resnum'
     to 'newcoords'
-    
+
     \throw SireMol::missing_residue
     \throw SireError::incompatible_error
 */
@@ -2775,7 +2784,7 @@ void EditMol::setCoordinates(const QHash< ResNum,QVector<Vector> > &newcoords)
 
 /** Set the coordinates of all of the atoms in the residue at index 'resid'
     to 'newcoords'
-    
+
     \throw SireError::invalid_index
     \throw SireError::incompatible_error
 */
@@ -2784,9 +2793,9 @@ void EditMol::setCoordinates(ResID resid, const QVector<Vector> &newcoords)
     this->setCoordinates( d->at(resid), newcoords );
 }
 
-/** Set the coordiates of all of the atoms in the specified residues 
+/** Set the coordiates of all of the atoms in the specified residues
     to 'newcoords'
-    
+
     \throw SireError::invalid_index
     \throw SireError::incompatible_error
 */
@@ -2815,7 +2824,7 @@ void EditMol::setCoordinates(const QHash<AtomIndex,Vector> &newcoords)
     d->setCoordinates(newcoords);
 }
 
-/** Set the coordinates of the atom with index 'cgatomid' to 'newcoords' 
+/** Set the coordinates of the atom with index 'cgatomid' to 'newcoords'
 
     \throw SireMol::missing_cutgroup
     \throw SireError::invalid_index

@@ -14,6 +14,7 @@ add_library (SireStream
 
 target_link_libraries (SireStream
                        ThirdParty
+                       SireError
                        ${QT_QTCORE_LIBRARY}
                       )
 

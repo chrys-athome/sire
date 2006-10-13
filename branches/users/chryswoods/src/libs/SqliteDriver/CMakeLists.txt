@@ -71,6 +71,7 @@ set_target_properties (SqliteDriver PROPERTIES
 # Link to other libraries
 target_link_libraries (SqliteDriver
                        ${QT_QTSQL_LIBRARY}
+                       ${QT_QTCORE_LIBRARY}
                       )
 
 # installation

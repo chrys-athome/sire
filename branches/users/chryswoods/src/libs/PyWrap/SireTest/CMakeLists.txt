@@ -31,7 +31,9 @@ set_target_properties (PyWrap_SireTest PROPERTIES
 		       
 target_link_libraries (PyWrap_SireTest
                        SireTest
+                       SireError
                        ${BOOST_PYTHON_LIBRARY}
+                       ${PYTHON_LIBRARY}
 		      )
 
 # Install the wrappers library with the other Sire libraries

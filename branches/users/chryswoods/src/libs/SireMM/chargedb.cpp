@@ -30,7 +30,7 @@ ChargeDB::ChargeDB(const ChargeDB &other) : AtomDB(other)
 ChargeDB::~ChargeDB()
 {}
 
-/** This function creates all of the tables in this database used to store and 
+/** This function creates all of the tables in this database used to store and
     find charge parameters. There is only one table in this component.
 
     (1) table giving a unique parameter ID to each *CHARGE* that has been loaded
@@ -39,7 +39,7 @@ void ChargeDB::initialise()
 {
     //create the RelateDB tables...
     AtomDB::initialise();
-    
+
     // (*) indicates column holds the primary key for the table
 
     //create table (1) - table to give a unique ID number to each charge value
@@ -51,12 +51,12 @@ void ChargeDB::initialise()
     if (not error.isNull())
         throw SireDB::db_error(error, CODELOC);
 }
-    
+
 /** Dump the version number of this database */
 void ChargeDB::prepareToDump()
 {
     AtomDB::prepareToDump();
-    
+
     this->saveParameter<ChargeDB>( "version" , 1 );
 }
 
@@ -66,7 +66,7 @@ void ChargeDB::postLoad()
     AtomDB::postLoad();
 
     int v = this->loadParameter<ChargeDB>( "version" ).toInt();
-                            
+
     if (v != 1)
         throw version_error( v, "1", "SireMM::ChargeDB", CODELOC );
 }
@@ -77,12 +77,12 @@ void ChargeDB::postLoad()
 ParamID ChargeDB::addCharge(const ChargeParameter &chg)
 {
     QSqlQuery q(database());
-    
+
     q.exec(QString("select ParamID from 'SireMM_ChargeDB' where Charge = %1")
                                           .arg(chg.charge()));
     checkErrors(q,CODELOC);
     q.next();
-    
+
     if (q.isValid())
         //we have found the existing charge parameter - return the ID number
         return q.value(0).toUInt();
@@ -97,7 +97,7 @@ ParamID ChargeDB::addCharge(const ChargeParameter &chg)
     }
 }
 
-/** Return the charge with parameter ID 'chgid', or record the missing parameter 
+/** Return the charge with parameter ID 'chgid', or record the missing parameter
     in the log and return '0.0' */
 ChargeParameter ChargeDB::retrieveCharge(ParamID chgid)
 {
@@ -110,7 +110,7 @@ ChargeParameter ChargeDB::retrieveCharge(ParamID chgid)
                                                 .arg(chgid));
         checkErrors(q,CODELOC);
         q.next();
-    
+
         if (q.isValid())
             return q.value(0).toDouble();
         else
@@ -127,33 +127,33 @@ void ChargeDB::addCharge(const QString &userid, const ChargeParameter &charge)
 {
     //add the charge...
     ParamID paramid = addCharge(charge);
-    
+
     //associate this parameter ID with the userid
     relateParameter(userid, paramid);
 }
 
 /** Return the charge with userid 'userid'. Returns '0.0' if there is no
-    such parameter, and if 'foundcharge' is not null, then it will be 
+    such parameter, and if 'foundcharge' is not null, then it will be
     set to false. */
 ChargeParameter ChargeDB::getCharge(const QString &userid, bool *foundcharge)
 {
     //get the parameter ID for this userid
     ParamID paramid = getParameter(userid);
-    
+
     //set the flag saying whether or not the parameter exists
     if (foundcharge)
         *foundcharge = (paramid != 0);
-        
+
     return retrieveCharge(paramid);
 }
-    
-/** Relate the charge identified by user ID string 'userid' to the atom matching 
+
+/** Relate the charge identified by user ID string 'userid' to the atom matching
     criteria 'matchatom' */
 void ChargeDB::relateCharge(const AssertMatch<1> &matchatom, const QString &userid)
 {
     //get the relationship ID of this match
     RelateID relateid = matchatom.addTo(parent());
-    
+
     //associate this relationship with the userID
     relateParameter(relateid, userid);
 }
@@ -163,10 +163,10 @@ void ChargeDB::relateCharge(const AssertMatch<1> &matchatom, const ChargeParamet
 {
     //get the relationship ID of this match
     RelateID relateid = matchatom.addTo(parent());
-    
+
     //add the charge
     ParamID paramid = addCharge(charge);
-    
+
     //associate this relationship with the parameter
     relateParameter(relateid, paramid);
 }
@@ -195,39 +195,39 @@ ChargeParameter ChargeDB::getCharge(RelateID relateid, bool *foundcharge)
 {
     //get the paramID of the relationship
     ParamID paramid = getParameter(relateid);
-    
+
     //set the flag saying whether or not the parameter was found
     if (foundcharge)
         *foundcharge = (paramid != 0);
-        
+
     //return the charge
     return retrieveCharge(paramid);
 }
 
 /** Return the best charge matching the relationship IDs in 'relateids'. Returns
-    0.0 if there is no such charge. Sets 'foundcharge' to whether or not 
+    0.0 if there is no such charge. Sets 'foundcharge' to whether or not
     a charge was found. */
 ChargeParameter ChargeDB::getCharge(const RelateIDMap &relateids, bool *foundcharge)
 {
     //get the ParamID of the highest scoring and matching relationship
     ParamID paramid = getParameter(relateids);
-    
+
     //set the flag saying whether or not the parameter was found
     if (foundcharge)
         *foundcharge = (paramid != 0);
-        
+
     //return the charge
     return retrieveCharge(paramid);
 }
 
-/** Create a table in 'param_table' that is capable of holding the charge 
+/** Create a table in 'param_table' that is capable of holding the charge
     parameters - this does nothing if there is already such a table.
-     
+
     This returns a reference to the created table.
 */
-ChargeTable& ChargeDB::createTable( ParameterTable &param_table ) const
+void ChargeDB::createTable( ParameterTable &param_table ) const
 {
-    return param_table.addTable<ChargeTable>();
+    param_table.createTable<ChargeTable>();
 }
 
 /** Assign the charge parameter for the atom 'atom' using the relationship IDs
@@ -237,14 +237,16 @@ ChargeTable& ChargeDB::createTable( ParameterTable &param_table ) const
 bool ChargeDB::assignParameter( const AtomIndex &atom, const RelateIDMap &relateids,
                                 ParameterTable &param_table )
 {
-    bool found;
+/*    bool found;
     ChargeParameter chg = getCharge(relateids, &found);
-    
+
     if (found)
     {
         ChargeTable &table = param_table.addTable<ChargeTable>();
         table.setCharge(atom, chg);
     }
-    
-    return found;
+
+    return found;*/
+
+    return false;
 }

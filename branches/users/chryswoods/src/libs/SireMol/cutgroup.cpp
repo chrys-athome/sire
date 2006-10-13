@@ -184,6 +184,18 @@ CutGroup::CutGroup(const CutGroup &other)
 CutGroup::~CutGroup()
 {}
 
+/** Comparison operator */
+bool CutGroup::operator==(const CutGroup &other) const
+{
+    return atominfos == other.atominfos and coords == other.coords;
+}
+
+/** Comparison operator */
+bool CutGroup::operator!=(const CutGroup &other) const
+{
+    return atominfos != other.atominfos or coords != other.coords;
+}
+
 /** Return a copy of the 'ith' atom - this will throw an exception
     if 'i' refers to an invalid index
 

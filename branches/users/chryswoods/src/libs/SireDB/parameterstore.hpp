@@ -1111,7 +1111,7 @@ QVector<Param> ParameterStore<IDX,Param>::parameters(
     {
         //copy the parameter
         BOOST_ASSERT(it.key() < n);
-        allparams[it.key().index()] = it.value();
+        allparams[it.key()] = it.value();
     }
 
     return allparams;

@@ -37,7 +37,7 @@ target_link_libraries (testlink
                        SirePy
                        SireTest
                        SireMaths
-                       Spier
+                       #Spier
                        SireStream
                        SqliteDriver
                        SireUnitTest

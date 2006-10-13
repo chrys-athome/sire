@@ -68,6 +68,7 @@ set_target_properties (PyWrap_SireQt PROPERTIES
 target_link_libraries (PyWrap_SireQt
                        ${QT_QTCORE_LIBRARY}
 		       ${BOOST_PYTHON_LIBRARY}
+                       ${PYTHON_LIBRARY}
 		      )
 
 # Install the wrappers library with the other Sire libraries

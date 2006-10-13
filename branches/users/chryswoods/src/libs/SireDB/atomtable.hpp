@@ -403,7 +403,7 @@ template<class Param>
 AtomParameter<Param> AtomTableT<Param>::_unsafe_atomParameter(
                                               const CGAtomID &cgatomid) const
 {
-    return AtomParameter<Param>( info().at(cgatomid),
+    return AtomParameter<Param>( info().atom(cgatomid),
                                  this->_unsafe_parameter(cgatomid) );
 }
 
@@ -1108,7 +1108,7 @@ AtomTableT<Param>::parameterGroups( const QSet<CutGroupNum> &cgnums) const
          it != cgnums.end();
          ++it)
     {
-        groups.insert( *it, this->parameterGroup(info().cutGrouID(*it)) );
+        groups.insert( *it, this->parameterGroup(info().cutGroupID(*it)) );
     }
 
     return groups;
@@ -1160,7 +1160,7 @@ QVector<Param> AtomTableT<Param>::parameters(ResNum resnum) const
         }
 
         //cache this result - breaks constness!
-        const_cast< AtomTableT<Param> >(*this).rescache.insert(resnum, resparams);
+        const_cast<AtomTableT<Param>&>(*this).rescache.insert(resnum, resparams);
 
         return resparams;
     }
@@ -1175,7 +1175,7 @@ QVector<Param> AtomTableT<Param>::parameters(ResNum resnum) const
 template<class Param>
 QVector<Param> AtomTableT<Param>::parameters(ResID resid) const
 {
-    return this->parameter( info().residueNumber(resid) );
+    return this->parameters( info().residueNumber(resid) );
 }
 
 /** Return an array of the parameters for the CutGroup with
@@ -1200,7 +1200,7 @@ QVector<Param> AtomTableT<Param>::parameters(CutGroupID cgid) const
             cgparams.append( this->parameter(CGAtomID(cgid,i)) );
 
         //cache this result (breaks constness of function!)
-        const_cast< AtomTableT<Param> >(*this).groupcache.insert( cgid, cgparams );
+        const_cast<AtomTableT<Param>&>(*this).groupcache.insert( cgid, cgparams );
 
         return cgparams;
     }
@@ -1229,7 +1229,7 @@ AtomTableT<Param>::_pvt_parameters( const QSet<C> &idxs ) const
 
     foreach ( C idx, idxs )
     {
-        allparams.insert( idx, this->parameter(idx) );
+        allparams.insert( idx, this->parameters(idx) );
     }
 
     return allparams;

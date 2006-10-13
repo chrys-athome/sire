@@ -150,6 +150,9 @@ add_definitions( ${QT_DEFINITIONS} )
 # Ensure that the libraries don't contain any undefined symbols
 set( SIRE_LINK_FLAGS "-Wl,--no-undefined" )
 
+# Add this to all shared libraries
+set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${SIRE_LINK_FLAGS}" )
+
 # Recurse into the src/libs and src/apps subdirectories
 add_subdirectory (src/libs)
 add_subdirectory (src/apps)

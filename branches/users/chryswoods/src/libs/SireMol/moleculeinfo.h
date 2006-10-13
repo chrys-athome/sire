@@ -83,6 +83,7 @@ public:
     const CGAtomID& operator[](const AtomIndex &atomindex) const;
     const CGAtomID& operator[](const ResNumAtomID &resatomid) const;
     const CGAtomID& operator[](const ResIDAtomID &resatomid) const;
+    const CGAtomID& operator[](const CGAtomID &cgatomid) const;
     const CGAtomID& operator[](const CGNumAtomID &cgatomid) const;
    /////////////////////////////////////////////////////////
 
@@ -98,6 +99,7 @@ public:
     const CGAtomID& at(const ResNumAtomID &resatomid) const;
     const CGAtomID& at(const ResIDAtomID &resatomid) const;
     const CGAtomID& at(const CGNumAtomID &cgatomid) const;
+    const CGAtomID& at(const CGAtomID &cgatomid) const;
 
     const AtomInfo& atom(AtomID atomid) const;
     const AtomInfo& atom(const AtomIndex &atomindex) const;

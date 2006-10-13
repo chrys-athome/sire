@@ -12,7 +12,6 @@ add_library (SireError
              getbacktrace.cpp)
 
 target_link_libraries (SireError
-                       SireStream
                        ${QT_QTCORE_LIBRARY}
                       )
 
@@ -22,3 +21,4 @@ install( TARGETS SireError
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}
        )
+

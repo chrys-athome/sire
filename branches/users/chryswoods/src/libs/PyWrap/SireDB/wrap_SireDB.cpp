@@ -33,10 +33,10 @@ void SIREDB_EXPORT export_SireDB()
     export_ParameterDB();
     export_AtomTypeDB();
     export_RelateDB();
-    export_ParameterTable();
+    //export_ParameterTable();
     export_AtomTable();
     export_AtomTypeTable();
-    
+
     export_using_database();
     export_assign_atoms();
     export_assign_parameters();

@@ -90,6 +90,10 @@ using SireMaths::Quaternion;
 
 using SireVol::CoordGroup;
 
+namespace detail
+{
+class MolData;
+}
 
 /**
 A Molecule represents a complete molecule. This class is merely a view on the underlying
@@ -126,6 +130,7 @@ public:
 
    ////// Operators ////////////////////////////////////////
     Molecule& operator=(const Molecule &other);
+    Molecule& operator=(const detail::MolData &moldata);
 
     bool operator==(const Molecule &other) const;
     bool operator!=(const Molecule &other) const;

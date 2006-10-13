@@ -5,7 +5,7 @@
 
 #include "SireMol/elementdb.h"
 
-#include "sireglobal.h"
+#include "atomparameter.hpp"
 
 SIRE_BEGIN_HEADER
 
@@ -25,7 +25,7 @@ using SireMol::Element;
 
 /**
 An AtomType represents type of atom (textual code giving the type of atom, e.g. two letter code for Amber type forcefields). The atom types are used by many forcefields to assign the intramolecular bonded terms and also to identify the type of element of the atom.
- 
+
 @author Christopher Woods
 */
 class SIREDB_EXPORT AtomType
@@ -39,30 +39,32 @@ public:
     AtomType(const QString &id);
     AtomType(const QString &id, const Element &element);
     AtomType(const Element &element);
-    
+
+    AtomType(const AtomParameter<AtomType> &atomtype);
+
     AtomType(const AtomType &other);
-    
+
     ~AtomType();
 
     QString ID() const;
     const Element& element() const;
-    
+
     bool isDummy() const;
     bool isWild() const;
     bool isWild(const Element &element) const;
-    
+
     bool isWildType() const;
     bool isWildElement() const;
-    
+
     QString toString() const;
 
     bool operator==(const AtomType &other) const;
     bool operator!=(const AtomType &other) const;
-    
+
     static AtomType dummy();
     static AtomType wild();
     static AtomType wild(const Element &element);
- 
+
 protected:
 
     /** Global wild type */
@@ -70,11 +72,11 @@ protected:
     /** Global dummy type */
     static AtomType dummy_type;
 
-    /** The atom type ID (e.g "CA" or "H3"). This is 
+    /** The atom type ID (e.g "CA" or "H3"). This is
         null for wild atom types */
     QString id;
-    
-    /** The element - this is a zero element for wild 
+
+    /** The element - this is a zero element for wild
         atom types */
     Element elmnt;
 };

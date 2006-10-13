@@ -27,6 +27,7 @@ set_target_properties (SireBase PROPERTIES
 
 # Link to other Sire libraries, and GSL
 target_link_libraries (SireBase 
+                       ThirdParty
                        SireError
                        )
 

@@ -31,8 +31,8 @@ set_target_properties (PyWrap_SireVol PROPERTIES
 		       
 target_link_libraries (PyWrap_SireVol
                        SireVol
-                       PyWrap_SireMol
                        ${BOOST_PYTHON_LIBRARY}
+                       ${PYTHON_LIBRARY}
 		      )
 
 # Install the wrappers library with the other Sire libraries

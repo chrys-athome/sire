@@ -15,6 +15,8 @@
 #include "SireMol/resnumatomid.h"
 #include "SireMol/residatomid.h"
 
+#include "SireDB/errors.h"
+
 #include "SireStream/datastream.h"
 
 using namespace SireStream;
@@ -538,4 +540,149 @@ void AtomTable::clear(CutGroupID cgid)
 void AtomTable::clear(CutGroupNum cgnum)
 {
     this->_unsafe_clear( info().cutGroupID(cgnum) );
+}
+
+/** Assert that we have assigned the parameter for the atom
+    with index 'atomid'
+
+    This returns the CGAtomID index of the parameter.
+
+    \throw SireError::invalid_index
+    \throw SireDB::missing_parameter
+*/
+const CGAtomID& AtomTable::assertHaveParameter(AtomID atomid) const
+{
+    const CGAtomID &cgatomid = info().at(atomid);
+
+    if (not this->assignedParameter(cgatomid))
+        throw SireDB::missing_parameter( QObject::tr(
+              "The parameter for the atom with index %1 in the molecule "
+              "\"%2\" has not been assigned.")
+                  .arg(atomid).arg(info().name()), CODELOC );
+
+    return cgatomid;
+}
+
+/** Assert that we have assigned the parameter for the atom
+    with index 'cgatomid'
+
+    This returns the CGAtomID index of the parameter.
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+    \throw SireDB::missing_parameter
+*/
+const CGAtomID& AtomTable::assertHaveParameter(const CGAtomID &cgatomid) const
+{
+    info().assertAtomExists(cgatomid);
+
+    if (not this->assignedParameter(cgatomid))
+        throw SireDB::missing_parameter( QObject::tr(
+              "The parameter for the atom with index %1 in the "
+              "CutGroup with ID == %2 in the molecule "
+              "\"%3\" has not been assigned.")
+                  .arg(cgatomid.atomID())
+                  .arg(cgatomid.cutGroupID())
+                  .arg(info().name()), CODELOC );
+
+    return cgatomid;
+}
+
+/** Assert that we have assigned the parameter for the atom
+    with index 'cgatomid'
+
+    This returns the CGAtomID index of the parameter.
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+    \throw SireDB::missing_parameter
+*/
+const CGAtomID& AtomTable::assertHaveParameter(const CGNumAtomID &cgatomid) const
+{
+    const CGAtomID &cgid = info().at(cgatomid);
+
+    if (not this->assignedParameter(cgid))
+        throw SireDB::missing_parameter( QObject::tr(
+              "The parameter for the atom with index %1 in the "
+              "CutGroup with number %2 in the molecule "
+              "\"%3\" has not been assigned.")
+                  .arg(cgatomid.atomID())
+                  .arg(cgatomid.cutGroupNum())
+                  .arg(info().name()), CODELOC );
+
+    return cgid;
+}
+
+/** Assert that we have assigned the parameter for the atom
+    with index 'resatomid'
+
+    This returns the CGAtomID index of the parameter.
+
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+    \throw SireDB::missing_parameter
+*/
+const CGAtomID& AtomTable::assertHaveParameter(const ResNumAtomID &resatomid) const
+{
+    const CGAtomID &cgatomid = info().at(resatomid);
+
+    if (not this->assignedParameter(cgatomid))
+        throw SireDB::missing_parameter( QObject::tr(
+              "The parameter for the atom with index %1 in the "
+              "residue with number %2 in the molecule "
+              "\"%3\" has not been assigned.")
+                  .arg(resatomid.atomID())
+                  .arg(resatomid.resNum())
+                  .arg(info().name()), CODELOC );
+
+    return cgatomid;
+}
+
+/** Assert that we have assigned the parameter for the atom
+    with index 'resatomid'
+
+    This returns the CGAtomID index of the parameter.
+
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+    \throw SireDB::missing_parameter
+*/
+const CGAtomID& AtomTable::assertHaveParameter(const ResIDAtomID &resatomid) const
+{
+    const CGAtomID &cgatomid = info().at(resatomid);
+
+    if (not this->assignedParameter(cgatomid))
+        throw SireDB::missing_parameter( QObject::tr(
+              "The parameter for the atom with index %1 in the "
+              "residue with index %2 in the molecule "
+              "\"%3\" has not been assigned.")
+                  .arg(resatomid.atomID())
+                  .arg(resatomid.resID())
+                  .arg(info().name()), CODELOC );
+
+    return cgatomid;
+}
+
+/** Assert that we have assigned the parameter for the atom
+    with AtomIndex 'atom'
+
+    This returns the CGAtomID index of the parameter.
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+    \throw SireDB::missing_parameter
+*/
+const CGAtomID& AtomTable::assertHaveParameter(const AtomIndex &atom) const
+{
+    const CGAtomID &cgatomid = info().at(atom);
+
+    if (not this->assignedParameter(cgatomid))
+        throw SireDB::missing_parameter( QObject::tr(
+              "The parameter for the atom %1 "
+              "in the molecule "
+              "\"%2\" has not been assigned.")
+                  .arg(atom.toString())
+                  .arg(info().name()), CODELOC );
+
+    return cgatomid;
 }

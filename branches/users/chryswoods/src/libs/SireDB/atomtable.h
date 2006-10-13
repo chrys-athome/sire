@@ -117,12 +117,12 @@ public:
     template<class C>
     void clear(const C &lots);
 
-    CGAtomID assertHaveParameter(AtomID atomid) const;
-    CGAtomID assertHaveParameter(const CGAtomID &cgatomid) const;
-    CGAtomID assertHaveParameter(const CGNumAtomID &cgatomid) const;
-    CGAtomID assertHaveParameter(const ResNumAtomID &resatomid) const;
-    CGAtomID assertHaveParameter(const ResIDAtomID &resatomid) const;
-    CGAtomID assertHaveParameter(const AtomIndex &atomindex) const;
+    const CGAtomID& assertHaveParameter(AtomID atomid) const;
+    const CGAtomID& assertHaveParameter(const CGAtomID &cgatomid) const;
+    const CGAtomID& assertHaveParameter(const CGNumAtomID &cgatomid) const;
+    const CGAtomID& assertHaveParameter(const ResNumAtomID &resatomid) const;
+    const CGAtomID& assertHaveParameter(const ResIDAtomID &resatomid) const;
+    const CGAtomID& assertHaveParameter(const AtomIndex &atomindex) const;
 
 private:
     virtual int _unsafe_nAssignedParameters(const ResidueInfo &resinfo) const=0;

@@ -125,6 +125,13 @@ Molecule& Molecule::operator=(const Molecule &other)
     return *this;
 }
 
+/** Assign from the MolData which is the result from a commit of an EditMol */
+Molecule& Molecule::operator=(const detail::MolData &moldata)
+{
+    *d = moldata;
+    return *this;
+}
+
 /////////////////////////////////////////////////////////
 //@}
 

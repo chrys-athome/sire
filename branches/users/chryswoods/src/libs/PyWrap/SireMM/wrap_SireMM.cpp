@@ -34,10 +34,10 @@ void export_assign_dihedrals();
 void SIREMM_EXPORT export_SireMM()
 {
     export_CLJParameter();
-    export_MMDB();
-    export_MMDB2();
-    export_ChargeTable();
-    export_LJTable();
+    //export_MMDB();
+    //export_MMDB2();
+    //export_ChargeTable();
+    //export_LJTable();
     export_BondTable();
     export_AngleTable();
     export_DihedralTable();

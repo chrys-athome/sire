@@ -126,65 +126,66 @@ def __to_table_type_name(table):
 
 # add functionality to the ParameterTable - allows easy casting
 # via use of the Python class
-__ParameterTable_old_asA = ParameterTable.asA
-__ParameterTable_old_isA = ParameterTable.isA
-__ParameterTable_old_addTable = ParameterTable.addTable
-__ParameterTable_old_setTable = ParameterTable.setTable
-__ParameterTable_old_removeTable = ParameterTable.removeTable
+#__ParameterTable_old_asA = ParameterTable.asA
+#__ParameterTable_old_isA = ParameterTable.isA
+#__ParameterTable_old_addTable = ParameterTable.addTable
+#__ParameterTable_old_setTable = ParameterTable.setTable
+#__ParameterTable_old_removeTable = ParameterTable.removeTable
+#
+#def __new_asA(table, arg):
+#    return __ParameterTable_old_asA(table, __to_table_type_name(arg))
+#
+#def __new_isA(table, arg):
+#    return __ParameterTable_old_isA(table, __to_table_type_name(arg))
+#
+#def __new_addTable(table, arg):
+#
+#    if isinstance(arg, TableBase):
+#        __ParameterTable_old_addTable(table, arg)
+#    else:
+#        __ParameterTable_old_addTable(table, __to_table_type_name(arg))
+#
+#def __new_setTable(table, arg):
+#
+#    if isinstance(arg, TableBase):
+#        __ParameterTable_old_setTable(table, arg)
+#    else:
+#        __ParameterTable_old_setTable(table, __to_table_type_name(arg))
+#
+#def __new_removeTable(table, arg):
+#    __ParameterTable_old_removeTable(table, __to_table_type_name(arg))
+#    
+#ParameterTable.asA = __new_asA
+#ParameterTable.isA = __new_isA
+#ParameterTable.removeTable = __new_removeTable
+#ParameterTable.addTable = __new_addTable
+#ParameterTable.setTable = __new_setTable
+#
+#__old_using_parameters_init = using_parameters.__init__
+#
+#def __new_using_parameters_init(self, *args):
+#    
+#    #turn the argument list into a list of class names
+#    typenames = Sire.Qt.QStringList()
+#    
+#    for arg in args:
+#        typenames.append( arg.typeName() )
+#        
+#    __old_using_parameters_init(self, typenames)
+#    
+#using_parameters.__init__ = __new_using_parameters_init
+#
+#__old_using_relationships_init = using_relationships.__init__
+#
+#def __new_using_relationships_init(self, *args):
+#    
+#    #turn the argument list into a list of class names
+#    typenames = Sire.Qt.QStringList()
+#    
+#    for arg in args:
+#        typenames.append( arg.typeName() )
+#        
+#    __old_using_relationships_init(self, typenames)
+#
+#using_relationships.__init__ = __new_using_relationships_init
 
-def __new_asA(table, arg):
-    return __ParameterTable_old_asA(table, __to_table_type_name(arg))
-
-def __new_isA(table, arg):
-    return __ParameterTable_old_isA(table, __to_table_type_name(arg))
-
-def __new_addTable(table, arg):
-
-    if isinstance(arg, TableBase):
-        __ParameterTable_old_addTable(table, arg)
-    else:
-        __ParameterTable_old_addTable(table, __to_table_type_name(arg))
-
-def __new_setTable(table, arg):
-
-    if isinstance(arg, TableBase):
-        __ParameterTable_old_setTable(table, arg)
-    else:
-        __ParameterTable_old_setTable(table, __to_table_type_name(arg))
-
-def __new_removeTable(table, arg):
-    __ParameterTable_old_removeTable(table, __to_table_type_name(arg))
-    
-ParameterTable.asA = __new_asA
-ParameterTable.isA = __new_isA
-ParameterTable.removeTable = __new_removeTable
-ParameterTable.addTable = __new_addTable
-ParameterTable.setTable = __new_setTable
-
-__old_using_parameters_init = using_parameters.__init__
-
-def __new_using_parameters_init(self, *args):
-    
-    #turn the argument list into a list of class names
-    typenames = Sire.Qt.QStringList()
-    
-    for arg in args:
-        typenames.append( arg.typeName() )
-        
-    __old_using_parameters_init(self, typenames)
-    
-using_parameters.__init__ = __new_using_parameters_init
-
-__old_using_relationships_init = using_relationships.__init__
-
-def __new_using_relationships_init(self, *args):
-    
-    #turn the argument list into a list of class names
-    typenames = Sire.Qt.QStringList()
-    
-    for arg in args:
-        typenames.append( arg.typeName() )
-        
-    __old_using_relationships_init(self, typenames)
-
-using_relationships.__init__ = __new_using_relationships_init

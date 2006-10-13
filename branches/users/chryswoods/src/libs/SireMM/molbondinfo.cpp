@@ -15,9 +15,9 @@ static const RegisterMetaType<MolBondInfo> r_molbondinfo("SireMM::MolBondInfo");
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const MolBondInfo &info)
 {
-    writeHeader(ds, r_molbondinfo, 1) 
+    writeHeader(ds, r_molbondinfo, 1)
             << static_cast<const MolInternalInfo<Bond>&>(info);
-            
+
     return ds;
 }
 
@@ -25,14 +25,14 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const MolBondInfo &info)
 QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, MolBondInfo &info)
 {
     VersionID v = readHeader(ds, r_molbondinfo);
-    
+
     if (v == 1)
     {
         ds >> static_cast<MolInternalInfo<Bond>&>(info);
     }
     else
         throw version_error(v, "1", r_molbondinfo, CODELOC);
-    
+
     return ds;
 }
 
@@ -43,15 +43,16 @@ MolBondInfo::MolBondInfo() : MolInternalInfo<Bond>()
 /** Construct a MolBondInfo that holds the bonds for the molecule 'mol'.
     Note that this will not initially contain any bonds - these need to be
     added separately. */
-MolBondInfo::MolBondInfo(const Molecule &mol) : MolInternalInfo<Bond>(mol)
+MolBondInfo::MolBondInfo(const MoleculeInfo &molinfo)
+            : MolInternalInfo<Bond>(molinfo)
 {}
 
 /** Construct a MolBondInfo that holds the bonds for the molecule 'mol',
     with the BondGenerator 'bondgenerator' used to find all of the available
     bonds in the molecule. */
-MolBondInfo::MolBondInfo(const Molecule &mol, 
+MolBondInfo::MolBondInfo(const Molecule &mol,
                          const InternalGenerator<MolBondInfo> &bondgenerator)
-            : MolInternalInfo<Bond>(mol)
+            : MolInternalInfo<Bond>(mol.info())
 {
     //generate all of the bonds using the bond generator
     bondgenerator.generate(mol, *this);
@@ -65,16 +66,16 @@ MolBondInfo::MolBondInfo(const MolBondInfo &other) : MolInternalInfo<Bond>(other
 MolBondInfo::~MolBondInfo()
 {}
 
-/** Return the bonds involving the residue 'resnum', or an 
-    empty ResBondInfo if there are no bonds listed that involve 
+/** Return the bonds involving the residue 'resnum', or an
+    empty ResBondInfo if there are no bonds listed that involve
     that residue. */
 ResBondInfo MolBondInfo::residue(ResNum resnum) const
 {
     return extractResidue(resnum);
 }
 
-/** Add the bond 'bond' to the molecule - does nothing if 
-    the bond is already in this molecule. Returns the 
+/** Add the bond 'bond' to the molecule - does nothing if
+    the bond is already in this molecule. Returns the
     GroupIndexID of the added bond. */
 GroupIndexID MolBondInfo::addBond(const Bond &bond)
 {
@@ -149,11 +150,11 @@ bool MolBondInfo::residuesBonded(ResNum res0, ResNum res1) const
     return contains( BondResID(res0,res1) );
 }
 
-/** Return an iterator over all of the bonds in the molecule. 
+/** Return an iterator over all of the bonds in the molecule.
 
-    The iterator is initially position on the first bond. 
-    Note that an invalid iterator is returned if there are no 
-    bonds in the molecule. 
+    The iterator is initially position on the first bond.
+    Note that an invalid iterator is returned if there are no
+    bonds in the molecule.
 */
 MolBondInfo::const_iterator MolBondInfo::bonds() const
 {
@@ -163,9 +164,9 @@ MolBondInfo::const_iterator MolBondInfo::bonds() const
 /** Return an iterator over all of the bonds in the
     residue with number 'resnum'.
 
-    The iterator is initially position on the first bond. 
-    Note that an invalid iterator is returned if there are no 
-    bonds in the residue. 
+    The iterator is initially position on the first bond.
+    Note that an invalid iterator is returned if there are no
+    bonds in the residue.
 */
 MolBondInfo::const_iterator MolBondInfo::bonds(ResNum resnum) const
 {
@@ -175,8 +176,8 @@ MolBondInfo::const_iterator MolBondInfo::bonds(ResNum resnum) const
 /** Return an iterator over all of the bonds between
     residues 'res0' and 'res1'.
 
-    The iterator is initially position on the first bond. 
-    Note that an invalid iterator is returned if there are no 
+    The iterator is initially position on the first bond.
+    Note that an invalid iterator is returned if there are no
     bonds between these residues.
 */
 MolBondInfo::const_iterator MolBondInfo::bonds(ResNum res0, ResNum res1) const
@@ -186,9 +187,9 @@ MolBondInfo::const_iterator MolBondInfo::bonds(ResNum res0, ResNum res1) const
 
 /** Return an iterator over all of the intra-residue bonds in the molecule.
 
-    The iterator is initially position on the first bond. 
-    Note that an invalid iterator is returned if there are no 
-    intra-residue bonds in the molecule. 
+    The iterator is initially position on the first bond.
+    Note that an invalid iterator is returned if there are no
+    intra-residue bonds in the molecule.
 */
 MolBondInfo::const_iterator MolBondInfo::intraBonds() const
 {
@@ -197,33 +198,33 @@ MolBondInfo::const_iterator MolBondInfo::intraBonds() const
 
 /** Return an iterator over all of the inter-residue bonds in the molecule.
 
-    The iterator is initially position on the first bond. 
-    Note that an invalid iterator is returned if there are no 
-    inter-residue bonds in the molecule. 
+    The iterator is initially position on the first bond.
+    Note that an invalid iterator is returned if there are no
+    inter-residue bonds in the molecule.
 */
 MolBondInfo::const_iterator MolBondInfo::interBonds() const
 {
     return interInternals();
 }
 
-/** Return an iterator over all of the intra-residue bonds 
+/** Return an iterator over all of the intra-residue bonds
     in residue 'resnum'.
 
-    The iterator is initially position on the first bond. 
-    Note that an invalid iterator is returned if there are no 
-    intra-residue bonds in the residue. 
+    The iterator is initially position on the first bond.
+    Note that an invalid iterator is returned if there are no
+    intra-residue bonds in the residue.
 */
 MolBondInfo::const_iterator MolBondInfo::intraBonds(ResNum resnum) const
 {
     return intraInternals(resnum);
 }
 
-/** Return an iterator over all of the inter-residue bonds 
+/** Return an iterator over all of the inter-residue bonds
     involving the residue 'resnum'.
 
-    The iterator is initially position on the first bond. 
-    Note that an invalid iterator is returned if there are no 
-    inter-residue bonds involving the residue. 
+    The iterator is initially position on the first bond.
+    Note that an invalid iterator is returned if there are no
+    inter-residue bonds involving the residue.
 */
 MolBondInfo::const_iterator MolBondInfo::interBonds(ResNum resnum) const
 {

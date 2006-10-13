@@ -10,11 +10,11 @@
 
 namespace SireVol
 {
-void export_SimVolume();
+void export_Space();
 
 void SIREVOL_EXPORT export_SireVol()
 {
-    export_SimVolume();
+    export_Space();
 }
 
 }

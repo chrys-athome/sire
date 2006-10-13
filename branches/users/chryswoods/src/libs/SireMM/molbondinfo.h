@@ -32,15 +32,15 @@ class SIREMM_EXPORT MolBondInfo : public MolInternalInfo<Bond>
 {
 public:
     MolBondInfo();
-    MolBondInfo(const Molecule &mol);
+    MolBondInfo(const MoleculeInfo &molinfo);
     MolBondInfo(const Molecule &mol, const InternalGenerator<MolBondInfo> &bondgenerator);
-    
+
     MolBondInfo(const MolBondInfo &other);
-    
+
     ~MolBondInfo();
 
     GroupIndexID addBond(const Bond &bond);
-    
+
     void removeBond(const Bond &bond);
     void removeBond(const GroupIndexID &id);
 
@@ -55,10 +55,10 @@ public:
     int nBonds(GroupID group) const;
     int nBonds(ResNum resnum) const;
     int nBonds(ResNum res0, ResNum res1) const;
-    
+
     int nInterBonds() const;
     int nIntraBonds() const;
-    
+
     int nIntraBonds(ResNum resnum) const;
     int nInterBonds(ResNum resnum) const;
 
@@ -67,10 +67,10 @@ public:
     const_iterator bonds() const;
     const_iterator bonds(ResNum resnum) const;
     const_iterator bonds(ResNum res0, ResNum res1) const;
-    
+
     const_iterator intraBonds() const;
     const_iterator interBonds() const;
-    
+
     const_iterator intraBonds(ResNum resnum) const;
     const_iterator interBonds(ResNum resnum) const;
 
@@ -123,7 +123,7 @@ MolBondInfo::const_iterator MolBondInfo::intraBonds(const C &resnums) const
 {
     return this->intraInternals(resnums);
 }
-    
+
 /** Return an iterator over all of the inter-residue bonds in the residues
     whose residue numbers are in 'resnums'. The iterator is
     initially positioned on the first bond, while an invalid
