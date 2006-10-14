@@ -407,6 +407,20 @@ AtomParameter<Param> AtomTableT<Param>::_unsafe_atomParameter(
                                  this->_unsafe_parameter(cgatomid) );
 }
 
+/** Internal function used to return the AtomParameter for the atom at
+    index 'cgatomid' if it has been assigned, or 'defaultValue' if 
+    it has not. */
+template<class Param>
+AtomParameter<Param> AtomTableT<Param>::_unsafe_atomParameter(
+                                              const CGAtomID &cgatomid,
+                                              const Param &defaultValue) const
+{
+    const QHash<AtomID,Param> &cgparams = params.constData()[cgatomid.cutGroupID()];
+    
+    return AtomParameter<Param>( info().atom(cgatomid),
+                                 cgparams.value(cgatomid.atomID(), defaultValue) );
+}
+
 /** Return an array of all of the parameters in the residue described by
     'resinfo'. This does not check if this residue is valid, nor if the
     parameters actually exist! The array is in AtomID order */

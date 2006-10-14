@@ -31,8 +31,10 @@ void export_EditMolList();
 void export_EditRes();
 void export_Molecule();
 void export_MoleculeBonds();
+void export_MoleculeInfo();
 void export_Residue();
 void export_ResidueBonds();
+void export_ResidueInfo();
 
 void SIREMOL_EXPORT export_SireMol()
 {
@@ -59,8 +61,10 @@ void SIREMOL_EXPORT export_SireMol()
     export_Impropers();
     //export_Molecule();
     export_MoleculeBonds();
+    export_MoleculeInfo();
     //export_Residue();
     export_ResidueBonds();
+    export_ResidueInfo();
 }
 
 }

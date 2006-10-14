@@ -43,8 +43,6 @@ void wrap_ID(const char *wrapname)
         .def( "__rlshift__", &__rlshift__QDataStream<T>,
                    return_internal_reference< 1, with_custodian_and_ward<1,2> >() )
     ;
-
-    implicitly_convertible<quint32,T>();
 }
 
 }

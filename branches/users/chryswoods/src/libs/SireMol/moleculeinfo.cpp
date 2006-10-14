@@ -1359,6 +1359,15 @@ void MoleculeInfo::assertAtomExists(const ResIDAtomID &resatomid) const
     d->assertAtomExists(resatomid);
 }
 
+/** Assert that the index is valid
+
+    \throw SireError::invalid_index
+*/
+void MoleculeInfo::assertAtomExists(AtomID atomid) const
+{
+    d->assertAtomExists(atomid);
+}
+
 /** Assert that the number of atoms in the molecule is equal
     to 'nats'
 

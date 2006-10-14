@@ -43,13 +43,14 @@ set ( WRAPMOL_SOURCES
       wrap_indexvector.cpp     
       wrap_internals.cpp       
       wrap_molecule2.cpp       
-      wrap_moleculebonds.cpp   
-      wrap_moleculecginfo.cpp  
+      wrap_moleculebonds.cpp
+      wrap_moleculeinfo.cpp
       wrap_molecule.cpp        
       wrap_moleculeset.cpp
       wrap_residue2.cpp
       wrap_residuebonds.cpp
       wrap_residue.cpp
+      wrap_residueinfo.cpp
       wrap_residueset.cpp
      )
 

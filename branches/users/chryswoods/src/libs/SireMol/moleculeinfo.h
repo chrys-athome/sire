@@ -205,6 +205,7 @@ public:
     void assertCutGroupExists(CutGroupID cgid) const;
     void assertCutGroupExists(CutGroupNum cgnum) const;
 
+    void assertAtomExists(AtomID atomid) const;
     void assertAtomExists(const AtomIndex &atom) const;
     void assertAtomExists(const CGAtomID &cgatomid) const;
     void assertAtomExists(const CGNumAtomID &cgatomid) const;
