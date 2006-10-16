@@ -31,6 +31,7 @@
 #include "cutgroupid.h"
 
 #include "cgatomid.h"
+#include "cgnumatomid.h"
 #include "resnumatomid.h"
 #include "residatomid.h"
 
@@ -473,6 +474,20 @@ const AtomInfoGroup& MoleculeInfo::operator[](CutGroupID cgid) const
     return d->_unsafe_atomInfoGroup(cgid);
 }
 
+/** Return a copy of the AtomInfoGroup for the CutGroup with number 'cgnum'
+
+    \throw SireMol::missing_cutgroup
+*/
+const AtomInfoGroup& MoleculeInfo::operator[](CutGroupNum cgnum) const
+{
+    #warning CutGroupNum broken
+    throw SireError::incomplete_code( QObject::tr(
+                          "Need to update MoleculeInfo to work with CutGroupNum"),
+                              CODELOC );
+
+    return AtomInfoGroup();
+}
+
 /** Return the ResidueInfo for the Residue at index 'resid'
 
     \throw SireError::invalid_index
@@ -538,11 +553,12 @@ const CGAtomID& MoleculeInfo::operator[](const ResIDAtomID &resatomid) const
 */
 const CGAtomID& MoleculeInfo::operator[](const CGNumAtomID &cgatomid) const
 {
-    #warning Need to write CutGroupNum into MoleculeInfo!
+    #warning CutGroupNum broken
     throw SireError::incomplete_code( QObject::tr(
-                      "MoleculeInfo cannot yet cope with CutGroupNum!"), CODELOC );
+                          "Need to update ResidueInfo to work with CutGroupNum"),
+                              CODELOC );
 
-    return this->operator[](AtomID(0));
+    return CGAtomID();
 }
 
 /** Return the CGAtomID index of the atom with index 'cgatomid'
@@ -562,6 +578,12 @@ const CGAtomID& MoleculeInfo::operator[](const CGAtomID &cgatomid) const
 const AtomInfoGroup& MoleculeInfo::at(CutGroupID cgid) const
 {
     return this->operator[](cgid);
+}
+
+/** Return the AtomInfoGroup for the CutGroup with number 'cgnum' */
+const AtomInfoGroup& MoleculeInfo::at(CutGroupNum cgnum) const
+{
+    return this->operator[](cgnum);
 }
 
 /** Return the ResidueInfo for the Residue at index 'resid'
@@ -680,14 +702,30 @@ const AtomInfo& MoleculeInfo::atom(const ResIDAtomID &rsid) const
     return d->_unsafe_atom( this->at(rsid) );
 }
 
-/** Return the AtomInfo for the atom with index 'cgid'
+/** Return the AtomInfo for the atom with index 'cgatomid'
 
     \throw SireMol::missing_cutgroup
     \throw SireError::invalid_index
 */
-const AtomInfo& MoleculeInfo::atom(const CGAtomID &cgid) const
+const AtomInfo& MoleculeInfo::atom(const CGAtomID &cgatomid) const
 {
-    return d->_unsafe_atom(cgid);
+    this->assertAtomExists(cgatomid);
+    return d->_unsafe_atom(cgatomid);
+}
+
+/** Return the AtomInfo for the atom with index 'cgatomid'
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+const AtomInfo& MoleculeInfo::atom(const CGNumAtomID &cgatomid) const
+{
+    #warning CutGroupNum broken
+    throw SireError::incomplete_code( QObject::tr(
+                          "Need to update ResidueInfo to work with CutGroupNum"),
+                              CODELOC );
+
+    return AtomInfo();
 }
 
 /** Return the AtomInfoGroup for the CutGroup with ID == cgid
@@ -697,6 +735,15 @@ const AtomInfo& MoleculeInfo::atom(const CGAtomID &cgid) const
 const AtomInfoGroup& MoleculeInfo::atomGroup(CutGroupID cgid) const
 {
     return this->at(cgid);
+}
+
+/** Return the AtomInfoGroup for the CutGroup with number 'cgnum'
+
+    \throw SireMol::missing_cutgroup
+*/
+const AtomInfoGroup& MoleculeInfo::atomGroup(CutGroupNum cgnum) const
+{
+    return this->at(cgnum);
 }
 
 /** Return the AtomInfoGroups for all CutGroups, in a hash indexed by
@@ -839,6 +886,17 @@ QVector<AtomInfo> MoleculeInfo::atoms(CutGroupID cgid) const
     return this->at(cgid).atoms();
 }
 
+/** Return an array that contains a copy of all of the AtomInfos of the
+    atoms in the CutGroup with number 'cgnum', in the same order as they
+    exist in the CutGroup
+
+    \throw SireMol::missing_cutgroup
+*/
+QVector<AtomInfo> MoleculeInfo::atoms(CutGroupNum cgnum) const
+{
+    return this->at(cgnum).atoms();
+}
+
 template<class T>
 QHash<T,AtomInfo> getAtoms(const MoleculeInfo &mol, const QSet<T> &ids)
 {
@@ -874,6 +932,18 @@ QHash<AtomID,AtomInfo> MoleculeInfo::atoms( const QSet<AtomID> &idxs ) const
 QHash<CGAtomID,AtomInfo> MoleculeInfo::atoms( const QSet<CGAtomID> &cgids ) const
 {
     return getAtoms<CGAtomID>(*this, cgids);
+}
+
+/** Return the AtomInfos for atoms whose numbers are in 'cgnums', in a hash indexed
+    by CGNumAtomID
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+QHash<CGNumAtomID,AtomInfo> MoleculeInfo::atoms( 
+                                          const QSet<CGNumAtomID> &cgnums ) const
+{
+    return getAtoms<CGNumAtomID>(*this, cgnums);
 }
 
 /** Return the AtomInfos for atoms whose IDs are in 'rsids', in a hash indexed
@@ -924,6 +994,7 @@ QHash< T, QVector<AtomInfo> > getAtomVectors(const MoleculeInfo &molinfo,
 
     return allatms;
 }
+
 /** Return the arrays of AtomInfos of the atoms in the CutGroups whose IDs are in
     'cgids', in a hash indexed by CutGroupID
 
@@ -932,6 +1003,17 @@ QHash< T, QVector<AtomInfo> > getAtomVectors(const MoleculeInfo &molinfo,
 QHash< CutGroupID, QVector<AtomInfo> > MoleculeInfo::atoms(const QSet<CutGroupID> &cgids) const
 {
     return getAtomVectors<CutGroupID>(*this, cgids);
+}
+
+/** Return the arrays of AtomInfos of the atoms in the CutGroups whose numbers are in
+    'cgnums', in a hash indexed by CutGroupNum
+
+    \throw SireMol::missing_cutgroup
+*/
+QHash< CutGroupNum, QVector<AtomInfo> > MoleculeInfo::atoms(
+                                                const QSet<CutGroupNum> &cgnums) const
+{
+    return getAtomVectors<CutGroupNum>(*this, cgnums);
 }
 
 /** Return the arrays of AtomInfos of the atoms in the residues whose numbers
@@ -1060,11 +1142,26 @@ ResNum MoleculeInfo::residueNumber(const QString &resname) const
 */
 CutGroupID MoleculeInfo::cutGroupID(CutGroupNum cgnum) const
 {
-    #warning Need to write CutGroupNum into MoleculeInfo!
+    #warning CutGroupNum broken
     throw SireError::incomplete_code( QObject::tr(
-                      "MoleculeInfo cannot yet cope with CutGroupNum!"), CODELOC );
+                          "Need to update ResidueInfo to work with CutGroupNum"),
+                              CODELOC );
 
     return CutGroupID(0);
+}
+
+/** Return the CutGroupNum of the CutGroup with ID == cgid
+
+    \throw SireMol::missing_cutgroup
+*/
+CutGroupNum MoleculeInfo::cutGroupNum(CutGroupID cgid) const
+{
+    #warning CutGroupNum broken
+    throw SireError::incomplete_code( QObject::tr(
+                          "Need to update ResidueInfo to work with CutGroupNum"),
+                              CODELOC );
+
+    return CutGroupNum(0);
 }
 
 /** Return the number of residues in this molecule */
@@ -1121,6 +1218,18 @@ int MoleculeInfo::nAtoms(CutGroupNum cgnum) const
     return this->nAtoms( this->cutGroupID(cgnum) );
 }
 
+/** Return the numbers of the CutGroups in this molecule, in  
+    CutGroupID order */
+QVector<CutGroupNum> MoleculeInfo::cutGroupNums() const
+{
+    #warning CutGroupNum broken
+    throw SireError::incomplete_code( QObject::tr(
+                          "Need to update ResidueInfo to work with CutGroupNum"),
+                              CODELOC );
+  
+    return QVector<CutGroupNum>();
+}
+
 /** Return the array of the numbers of the residues, in the order that
     they appear in the molecule */
 QVector<ResNum> MoleculeInfo::residueNumbers() const
@@ -1153,6 +1262,16 @@ QVector<ResNum> MoleculeInfo::residueNumbers(const QString &resname) const
 QVector<ResNum> MoleculeInfo::residueNumbers(CutGroupID cgid) const
 {
     return this->at(cgid).residueNumbers();
+}
+
+/** Return the residue numbers of all residues that have atoms in the
+    CutGroup with number 'cgnum'
+
+    \throw SireMol::missing_cutgroup
+*/
+QVector<ResNum> MoleculeInfo::residueNumbers(CutGroupNum cgnum) const
+{
+    return this->residueNumbers( this->cutGroupID(cgnum) );
 }
 
 /** Return the list of the names of all of the residues in this molecule,
@@ -1195,6 +1314,17 @@ bool MoleculeInfo::contains(CutGroupID cgid) const
     return cgid < this->nCutGroups();
 }
 
+/** Return whether or not this molecule contains a CutGroup with number 'cgnum' */
+bool MoleculeInfo::contains(CutGroupNum cgnum) const
+{
+    #warning CutGroupNum broken
+    throw SireError::incomplete_code( QObject::tr(
+                          "Need to update ResidueInfo to work with CutGroupNum"),
+                              CODELOC );
+
+    return false;
+}
+
 /** Return whether or not this molecule contains a residue with number 'resnum' */
 bool MoleculeInfo::contains(ResNum resnum) const
 {
@@ -1231,6 +1361,24 @@ bool MoleculeInfo::contains(CutGroupID cgid, AtomID atomid) const
 bool MoleculeInfo::contains(const CGAtomID &cgatomid) const
 {
     return this->contains(cgatomid.cutGroupID(), cgatomid.atomID());
+}
+
+/** Return whether or not the molecule contains an atom with index 'atomid' in the
+    CutGroup with number 'cgnum' */
+bool MoleculeInfo::contains(CutGroupNum cgnum, AtomID atomid) const
+{
+    #warning CutGroupNum broken
+    throw SireError::incomplete_code( QObject::tr(
+                          "Need to update ResidueInfo to work with CutGroupNum"),
+                              CODELOC );
+
+    return false;
+}
+
+/** Return whether or not the molecule contains an atom with index 'cgatomid' */
+bool MoleculeInfo::contains(const CGNumAtomID &cgatomid) const
+{
+    return this->contains(cgatomid.cutGroupNum(), cgatomid.atomID());
 }
 
 /** Return whether or not the molecule contains an atom with index 'atomid'
@@ -1292,6 +1440,15 @@ bool MoleculeInfo::isEmpty(CutGroupID cgid) const
     return this->at(cgid).isEmpty();
 }
 
+/** Return whether the CutGroup with number 'cgnum' is empty
+
+    \throw SireMol::missing_cutgroup
+*/
+bool MoleculeInfo::isEmpty(CutGroupNum cgnum) const
+{
+    return this->isEmpty( this->cutGroupID(cgnum) );
+}
+
 /** Assert that the residue 'resnum' exists - else throw an exception
 
     \throw SireMol::missing_residue
@@ -1320,6 +1477,18 @@ void MoleculeInfo::assertCutGroupExists(CutGroupID cgid) const
     d->assertCutGroupExists(cgid);
 }
 
+/** Assert the CutGroupNum is valid
+
+    \throw SireMol::missing_cutgroup
+*/
+void MoleculeInfo::assertCutGroupExists(CutGroupNum cgnum) const
+{
+    #warning CutGroupNum broken
+    throw SireError::incomplete_code( QObject::tr(
+                          "Need to update ResidueInfo to work with CutGroupNum"),
+                              CODELOC );
+}
+
 /** Assert that the AtomIndex is valid
 
     \throw SireMol::missing_residue
@@ -1338,6 +1507,19 @@ void MoleculeInfo::assertAtomExists(const AtomIndex &atom) const
 void MoleculeInfo::assertAtomExists(const CGAtomID &cgatomid) const
 {
     d->assertAtomExists(cgatomid);
+}
+
+/** Assert that the index is valid
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+void MoleculeInfo::assertAtomExists(const CGNumAtomID &cgatomid) const
+{
+    #warning CutGroupNum broken
+    throw SireError::incomplete_code( QObject::tr(
+                          "Need to update ResidueInfo to work with CutGroupNum"),
+                              CODELOC );
 }
 
 /** Assert that the index is valid

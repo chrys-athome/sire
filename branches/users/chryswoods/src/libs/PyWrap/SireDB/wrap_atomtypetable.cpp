@@ -43,13 +43,13 @@ void export_AtomTypeTable()
           >( "AtomTypeTable", init<>() )
         .def( init<const MoleculeInfo&>() )
         .def( init<const AtomTypeTable&>() )
-/*
+
         .def( "__rlshift__", &__rlshift__QDataStream<AtomTypeTable>,
                 return_internal_reference< 1, with_custodian_and_ward<1,2> >() )
         .def( "__rrshift__", &__rrshift__QDataStream<AtomTypeTable>,
                 return_internal_reference< 1, with_custodian_and_ward<1,2> >() )
 
-        .def( "typeName", &AtomTypeTable::typeName ).staticmethod("typeName")*/
+        .def( "typeName", &AtomTypeTable::typeName ).staticmethod("typeName")
     ;
 }
 
