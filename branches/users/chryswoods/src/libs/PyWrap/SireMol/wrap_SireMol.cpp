@@ -47,22 +47,21 @@ void SIREMOL_EXPORT export_SireMol()
     export_AtomNumList();
     export_CutGroup();
     export_CutGroupSet();
-    //export_EditMol();
-    export_EditMolList();
-    //export_EditRes();
+    export_EditMol();
+    export_EditRes();
     export_IndexList();
     export_IndexSet();
     export_IndexVector();
-    //export_IDTypes();
+    export_IDTypes();
     export_Internals();
     export_Bonds();
     export_Angles();
     export_Dihedrals();
     export_Impropers();
-    //export_Molecule();
+    export_Molecule();
     export_MoleculeBonds();
     export_MoleculeInfo();
-    //export_Residue();
+    export_Residue();
     export_ResidueBonds();
     export_ResidueInfo();
 }

@@ -264,6 +264,7 @@ public:
     QHash<ResNumAtomID,Atom> atoms(const QSet<ResNumAtomID> &resatomids) const;
     QHash<ResIDAtomID,Atom> atoms(const QSet<ResIDAtomID> &resatomids) const;
     QHash<AtomIndex,Atom> atoms(const QSet<AtomIndex> &atoms) const;
+    QHash<AtomID,Atom> atoms(const QSet<AtomID> &atomids) const;
 
     QVector<Atom> atoms(CutGroupID cgid) const;
     QHash< CutGroupID,QVector<Atom> > atoms(const QSet<CutGroupID> &cgids) const;
@@ -278,6 +279,7 @@ public:
     QHash<ResNumAtomID,Vector> coordinates(const QSet<ResNumAtomID> &resatomids) const;
     QHash<ResIDAtomID,Vector> coordinates(const QSet<ResIDAtomID> &resatomids) const;
     QHash<AtomIndex,Vector> coordinates(const QSet<AtomIndex> &atoms) const;
+    QHash<AtomID,Vector> coordinates(const QSet<AtomID> &atoms) const;
 
     QVector<Vector> coordinates(CutGroupID cgid) const;
     QHash< CutGroupID,QVector<Vector> >

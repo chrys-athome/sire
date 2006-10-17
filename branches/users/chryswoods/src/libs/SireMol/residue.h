@@ -3,8 +3,9 @@
 
 #include <QSharedDataPointer>
 
-#include "moleculedata.h"
 #include "resnum.h"
+#include "atomindex.h"
+#include "moleculedata.h"
 
 SIRE_BEGIN_HEADER
 
@@ -88,6 +89,7 @@ public:
     Atom at(const AtomIndex &atom) const;
 
     CutGroup at(CutGroupID cgid) const;
+    CutGroup at(CutGroupNum cgnum) const;
 
     ResidueBonds connectivity() const;
 

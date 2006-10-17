@@ -218,6 +218,16 @@ void MoleculeData::incrementMinorVersion()
     _molversion.incrementMinor();
 }
 
+/** Edit this Molecule - we do this by returning an EditMol editor */
+EditMol MoleculeData::edit() const
+{
+    #warning Editing is broken!
+    throw SireError::incomplete_code( QObject::tr(
+                  "Editing a molecule is not yet supported!"), CODELOC );
+
+    return EditMol();
+}
+
 /** Return the connectivity of this molecule */
 const MoleculeBonds& MoleculeData::connectivity() const
 {
@@ -498,6 +508,17 @@ QHash<AtomIndex,Vector> MoleculeData::coordinates(
     return copyCoords<AtomIndex>(*this, atoms);
 }
 
+/** Return the coordinates of the atoms whose indicies are in
+    'atomids', in a hash indexed by AtomID
+
+    \throw SireError::invalid_index
+*/
+QHash<AtomID,Vector> MoleculeData::coordinates(
+                            const QSet<AtomID> &atomids) const
+{
+    return copyCoords<AtomID>(*this, atomids);
+}
+
 template<class T>
 QHash< T, QVector<Vector> > copyGroupedCoords(const MoleculeData &moldata,
                                               const QSet<T> &indicies)
@@ -677,6 +698,17 @@ QHash<AtomIndex,Atom> MoleculeData::atoms(
                             const QSet<AtomIndex> &atoms) const
 {
     return copyAtoms<AtomIndex>(*this, atoms);
+}
+
+/** Return copies of the atoms whose indicies are in 'atomids',
+    in a hash indexed by AtomID
+
+    \throw SireError::invalid_index
+*/
+QHash<AtomID,Atom> MoleculeData::atoms(
+                            const QSet<AtomID> &atomids) const
+{
+    return copyAtoms<AtomID>(*this, atomids);
 }
 
 template<class T>

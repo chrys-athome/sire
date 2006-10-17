@@ -1,8 +1,9 @@
 
 #include "qhash_siremol.h"
 
-#include "atomid.h"
-#include "cutgroupid.h"
+#include "cgatomid.h"
+#include "cgnumatomid.h"
+#include "residatomid.h"
 #include "resnumatomid.h"
 
 #include "residueinfo.h"
@@ -181,6 +182,17 @@ CutGroup Residue::operator[](CutGroupID cgid) const
     return d->at( cgid );
 }
 
+/** Return a copy of the CutGroup with number 'cgnum' - this CutGroup
+    must contain atoms from this residue or an exception will be
+    thrown
+
+    \throw SireMol::missing_cutgroup
+*/
+CutGroup Residue::operator[](CutGroupNum cgnum) const
+{
+    return this->operator[]( d->info().cutGroupID(cgnum) );
+}
+
 /////////////////////////////////////////////////////////
 
 
@@ -236,6 +248,17 @@ Atom Residue::at(const AtomIndex &atom) const
 CutGroup Residue::at(CutGroupID cgid) const
 {
     return this->operator[](cgid);
+}
+
+/** Return a copy of the CutGroup with number 'cgnum' - this CutGroup
+    must contain atoms from this residue or an exception will be
+    thrown
+
+    \throw SireMol::missing_cutgroup
+*/
+CutGroup Residue::at(CutGroupNum cgnum) const
+{
+    return this->operator[](cgnum);
 }
 
 /** Return the connectivity of this residue */
