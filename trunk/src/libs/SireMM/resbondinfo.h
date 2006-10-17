@@ -3,7 +3,7 @@
 
 #include "internaldatatypes.h"
 #include "resinternalinfo.hpp"
-#include "bond.h"
+#include "SireMol/bond.h"
 
 SIRE_BEGIN_HEADER
 

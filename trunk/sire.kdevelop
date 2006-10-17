@@ -120,7 +120,7 @@
   </kdevfilecreate>
   <kdevtrollproject>
     <general>
-      <activedir>src</activedir>
+      <activedir>src/libs/SireTest</activedir>
     </general>
     <run>
       <directoryradio>executable</directoryradio>

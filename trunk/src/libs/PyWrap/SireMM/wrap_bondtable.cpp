@@ -8,8 +8,8 @@
 #include "wrapInternalTable.hpp"
 #include "wrapBondTable.hpp"
 
-#include "bondtable.h"
-#include "molbondinfo.h"
+#include "SireMM/bondtable.h"
+#include "SireMM/molbondinfo.h"
 
 #include "SireQt/qdatastream.hpp"
 

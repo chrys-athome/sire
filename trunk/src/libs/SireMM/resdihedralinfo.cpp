@@ -1,6 +1,6 @@
 
 #include "qhash_siremm.h"
-#include "qhash_siremol.h"
+#include "SireMol/qhash_siremol.h"
 
 #include "moldihedralinfo.h"
 #include "resdihedralinfo.h"

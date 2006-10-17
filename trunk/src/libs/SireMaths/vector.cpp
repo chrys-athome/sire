@@ -43,6 +43,35 @@ QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, SireMaths::Vector &vec
     return ds;
 }
 
+Vector::Vector(double val)
+{
+    for (int i=0; i<3; i++)
+        sc[i] = val;
+}
+
+Vector::Vector(double x, double y, double z)
+{
+    sc[0] = x;
+    sc[1] = y;
+    sc[2] = z;
+}
+
+Vector::Vector( const tuple<double,double,double> &pos )
+{
+    sc[0] = pos.get<0>();
+    sc[1] = pos.get<1>();
+    sc[2] = pos.get<2>();
+}
+
+Vector::Vector(const Vector& p)
+{
+    for (int i=0; i<3; i++)
+        sc[i] = p.sc[i];
+}
+
+Vector::~Vector()
+{}
+
 QString Vector::toString() const
 {
     return QObject::tr("( %1, %2, %3 )").arg(sc[0]).arg(sc[1]).arg(sc[2]);

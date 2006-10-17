@@ -225,35 +225,6 @@ protected:
     double sc[3];
 };
 
-inline Vector::Vector(double val)
-{
-    for (int i=0; i<3; i++)
-        sc[i] = val;
-}
-
-inline Vector::Vector(double x, double y, double z)
-{
-    sc[0] = x;
-    sc[1] = y;
-    sc[2] = z;
-}
-
-inline Vector::Vector( const tuple<double,double,double> &pos )
-{
-    sc[0] = pos.get<0>();
-    sc[1] = pos.get<1>();
-    sc[2] = pos.get<2>();
-}
-
-inline Vector::Vector(const Vector& p)
-{
-    for (int i=0; i<3; i++)
-        sc[i] = p.sc[i];
-}
-
-inline Vector::~Vector()
-{}
-
 inline const Vector& Vector::operator=(const Vector &other)
 {
     for (int i=0; i<3; i++)

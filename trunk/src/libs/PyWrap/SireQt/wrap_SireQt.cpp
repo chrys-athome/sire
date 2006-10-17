@@ -3,10 +3,7 @@
 #include <boost/python.hpp>
 
 #include "sireglobal.h"
-
-#ifdef BUILD_SHARED_WRAPPERS
 #include "wrap_SireQt.h"
-#endif
 
 void export_QtGlobal();
 void export_QByteArray();
@@ -47,3 +44,4 @@ void SIRE_EXPORT export_SireQt()
 }
 
 }
+
