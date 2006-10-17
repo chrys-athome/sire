@@ -362,9 +362,10 @@ assign_dihedrals::~assign_dihedrals()
     If 'overWrite()' is true then the parameters will be overwritten, 
     otherwise only parameters for dihedrals that are currently missing 
     parameters will be found. */
-void assign_dihedrals::assignParameters( ParameterTable &param_table, 
-                                     ParameterDB &database,
-                                     const MatchMRData &matchmr ) const
+void assign_dihedrals::assignParameters( const Molecule &molecule,
+                                         ParameterTable &param_table, 
+                                         ParameterDB &database,
+                                         const MatchMRData &matchmr ) const
 {
-    this->assignInternals(param_table, database, matchmr);
+    this->assignInternals(molecule, param_table, database, matchmr);
 }

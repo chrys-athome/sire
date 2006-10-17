@@ -167,7 +167,8 @@ public:
         return assign_bonds::typeName();
     }
 
-    void assignParameters( ParameterTable &param_table, 
+    void assignParameters( const Molecule &molecule,
+                           ParameterTable &param_table, 
                            ParameterDB &database,
                            const MatchMRData &matchmr = MatchMRData() ) const;
 };

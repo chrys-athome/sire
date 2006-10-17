@@ -16,9 +16,9 @@ static const RegisterMetaType<DihedralTable> r_dihedraltable("SireMM::DihedralTa
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const DihedralTable &table)
 {
-    writeHeader(ds, r_dihedraltable, 1) 
+    writeHeader(ds, r_dihedraltable, 1)
         << static_cast<const DihedralTableT<Expression>&>(table);
-        
+
     return ds;
 }
 
@@ -26,14 +26,14 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const DihedralTable &tabl
 QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, DihedralTable &table)
 {
     VersionID v = readHeader(ds, r_dihedraltable);
-    
+
     if (v == 1)
     {
         ds >> static_cast<DihedralTableT<Expression>&>(table);
     }
     else
         throw version_error(v, "1", r_dihedraltable, CODELOC);
-    
+
     return ds;
 }
 
@@ -41,17 +41,19 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, DihedralTable &table)
 DihedralTable::DihedralTable() : DihedralTableT<Expression>()
 {}
 
-/** Construct a DihedralTable to hold the expressions for the 
+/** Construct a DihedralTable to hold the expressions for the
     dihedrals in 'dihedralinfo' */
-DihedralTable::DihedralTable(const MolDihedralInfo &dihedralinfo) : DihedralTableT<Expression>(dihedralinfo)
+DihedralTable::DihedralTable(const MolDihedralInfo &dihedralinfo)
+              : DihedralTableT<Expression>(dihedralinfo)
 {}
 
-/** Construct a DihedralTable that holds the dihedrals for the molecule 'mol'. Note that 
+/** Construct a DihedralTable that holds the dihedrals for the molecule 'mol'. Note that
     no dihedrals will be contained in this object initially. */
-DihedralTable::DihedralTable(const Molecule &mol) : DihedralTableT<Expression>(mol)
+DihedralTable::DihedralTable(const MoleculeInfo &molinfo)
+              : DihedralTableT<Expression>(molinfo)
 {}
 
-/** Construct a DihedralTable to hold the dihedrals in the molecule 'mol' that 
+/** Construct a DihedralTable to hold the dihedrals in the molecule 'mol' that
     were generated using the dihedral generator 'generator' */
 DihedralTable::DihedralTable(const Molecule &mol, const DihedralGeneratorBase &generator)
           : DihedralTableT<Expression>( generator.generate(mol) )
@@ -67,10 +69,10 @@ DihedralTable::~DihedralTable()
 
 /** Add the contents of the other table 'other' to this table. This will throw
     an exception if this table is of the wrong type, or if it is incompatible
-    with this table. 
-    
+    with this table.
+
     The parameters of 'other' will overwrite the parameters in this table.
-    
+
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
@@ -80,9 +82,9 @@ void DihedralTable::add(const TableBase &other)
     if (not other.isA<DihedralTable>())
         throw SireError::invalid_cast( QObject::tr(
                     "Cannot add a %1 to a DihedralTable!").arg(other.what()), CODELOC );
-                    
+
     const DihedralTable &other_dihedral = other.asA<DihedralTable>();
-    
+
     //are these tables compatible?
     if (info().info() != other_dihedral.info().info())
         throw SireError::incompatible_error( QObject::tr(
@@ -95,7 +97,7 @@ void DihedralTable::add(const TableBase &other)
          ++it)
     {
         const Dihedral &dihedral = it.key();
-        
+
         if (other_dihedral.assignedParameter(dihedral))
             //set the parameter for this dihedral
             this->setParameter( dihedral, other_dihedral[dihedral] );

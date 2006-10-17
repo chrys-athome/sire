@@ -32,12 +32,12 @@ namespace SireMaths
 using boost::tuple;
 
 /**
-This is a simple 3D vector. 
+This is a simple 3D vector.
 
 A vector is implemented as a very simple collection of 3 doubles. It should
 thus be very efficient in terms of speed and size as there is no array. This
 does mean that the .x(), .y() and .z() functions provide faster access
-than the [] operator. 
+than the [] operator.
 
 There is a length/distance and a fastLength/fastDistance. The normal
 version uses the standard library's sqrt function, while the fast versions
@@ -53,7 +53,7 @@ distance2 took on average 148 ms
 fastDistance took on average 350 ms
 
 This shows that you should normally use 'distance2' for distance checking,
-with fastDistance if you are not concerned with total accuracy. 
+with fastDistance if you are not concerned with total accuracy.
 
 The error with fastDistance has an oscillating value, with the error having
 a maximum overestimate of 1*10-5, and maximum underestimate of 0.00065 between
@@ -92,15 +92,15 @@ public:
     double x() const;
     double y() const;
     double z() const;
-        
+
     /** Return the components via rgb */
     double r() const;
     double g() const;
     double b() const;
-    
+
     /** Assignment operator */
     const Vector& operator=(const Vector &other);
-    
+
     /** Increment, decrement, negate etc. */
     const Vector& operator+=(const Vector &other);
     const Vector& operator-=(const Vector &other);
@@ -116,16 +116,16 @@ public:
     void setR(double x);
     void setG(double y);
     void setB(double z);
-        
+
     /** Set component 'i' to the value 'v' */
     void set(int i, const double &v);
-        
+
     /** Access the elements of the array via an index operator */
     const double& operator[](unsigned int i) const;
-    
+
     unsigned int count() const;
     const double& at(unsigned int i) const;
-    
+
     /** Return the length of the vector */
     double length() const;
     /** Return the manhattan length of the vector */
@@ -144,7 +144,7 @@ public:
 
     /** Return a QString representation of the vector */
     QString toString() const;
-    
+
     /** Construct a Vector from the QString representation returned by 'toString()' */
     static Vector fromString(const QString &str);
 
@@ -152,8 +152,8 @@ public:
     static double dot(const Vector &v0, const Vector &v1);
     /** Return the cross product of v0 and v1 */
     static Vector cross(const Vector &v0, const Vector &v1);
-    
-    /** Set this Vector so that it has the maximum x/y/z components out of 
+
+    /** Set this Vector so that it has the maximum x/y/z components out of
         this and 'other' (e.g. this->x = max(this->x(),other.x() etc.) */
     void setMax(const Vector &other);
     /** Set this Vector so that it has the minimum x/y/z components */
@@ -164,7 +164,7 @@ public:
     Vector max(const Vector &other) const;
     /** Return a vector that has the minimum components */
     Vector min(const Vector &other) const;
-        
+
     /** == operator */
     bool operator==(const Vector &p1) const;
     /** != operator */
@@ -178,16 +178,16 @@ public:
     Angle bearingXZ(const Vector &v) const;
     /** Return the bearing of this vector against 'v' on the yz plane */
     Angle bearingYZ(const Vector &v) const;
-    
+
     /** Return the metric tensor of a vector, e.g.
-           
+
              | y*y + z*z,    -x*y    -x*z      |
              |    -y*x,   x*x + z*z  -y*z      |
              |    -z*x       -z*y    x*x + y*y |
-             
+
       */
     Matrix metricTensor() const;
-    
+
     /** Return the distance squared between two vectors */
     static double distance2(const Vector &v1, const Vector &v2);
     /** Return the distance between two vectors */
@@ -202,16 +202,16 @@ public:
     static Angle angle(const Vector &v0, const Vector &v1);
     /** Return the angle between v0-v1-v2 (treating the vectors as points in space) */
     static Angle angle(const Vector &v0, const Vector &v1, const Vector &v2);
-    
+
     /** Return the dihedral angle between v0-v1-v2-v3 (treating the vectors as points) */
-    static Angle dihedral(const Vector &v0, const Vector &v1, 
+    static Angle dihedral(const Vector &v0, const Vector &v1,
                           const Vector &v2, const Vector &v3);
-                
+
     /** Generate a vector, v0, that has distance 'dst' v0-v1, angle 'ang' v0-v1-v2,
         and dihedral 'dih' v0-v1-v2-v3 */
-    static Vector generate(double dst, const Vector &v1, const Angle &ang, 
+    static Vector generate(double dst, const Vector &v1, const Angle &ang,
                            const Vector &v2, const Angle &dih, const Vector &v3);
-                          
+
     friend const Vector operator+(const Vector &p1, const Vector &p2);
     friend const Vector operator-(const Vector &p1, const Vector &p2);
     friend const Vector operator*(const Vector &p1, double c);
@@ -229,8 +229,24 @@ inline const Vector& Vector::operator=(const Vector &other)
 {
     for (int i=0; i<3; i++)
       sc[i] = other.sc[i];
-    
+
     return *this;
+}
+
+/** Comparison operator */
+inline bool Vector::operator==(const Vector &other) const
+{
+    return &other == this or
+           (sc[0] == other.sc[0] and sc[1] == other.sc[1] and
+            sc[2] == other.sc[2]);
+}
+
+/** Comparison operator */
+inline bool Vector::operator!=(const Vector &other) const
+{
+    return &other != this and
+           (sc[0] != other.sc[0] or sc[1] != other.sc[1] or
+            sc[2] != other.sc[2]);
 }
 
 inline double Vector::x() const
@@ -307,8 +323,8 @@ inline void Vector::setB(double z)
 
 inline double Vector::distance2(const Vector &v1, const Vector &v2)
 {
-    return pow_2(v1.sc[0]-v2.sc[0]) + 
-           pow_2(v1.sc[1]-v2.sc[1]) + 
+    return pow_2(v1.sc[0]-v2.sc[0]) +
+           pow_2(v1.sc[1]-v2.sc[1]) +
            pow_2(v1.sc[2]-v2.sc[2]);
 }
 
@@ -324,14 +340,14 @@ inline double Vector::invDistance(const Vector &v1, const Vector &v2)
     double dist = pow_2(v1.sc[0]-v2.sc[0]) +
                   pow_2(v1.sc[1]-v2.sc[1]) +
                   pow_2(v1.sc[2]-v2.sc[2]);
-                  
+
     if (SireMaths::isZero(dist))
     {
         QString err = QObject::tr("Zero distance in Vector::invDistance! %1 and %2")
                           .arg(v1.toString(),v2.toString());
         throw SireMaths::math_error(err,CODELOC);
     }
-    
+
     return double(1.0) / std::sqrt(dist);
 }
 
@@ -340,16 +356,6 @@ inline double Vector::invDistance2(const Vector &v1, const Vector &v2)
     return double(1.0) / ( pow_2(v1.sc[0]-v2.sc[0]) +
                            pow_2(v1.sc[1]-v2.sc[1]) +
                            pow_2(v1.sc[2]-v2.sc[2]) );
-}
-
-inline bool Vector::operator==(const Vector &p1) const
-{
-    return p1.sc[0] == sc[0] and p1.sc[1] == sc[1] and p1.sc[2] == sc[2];
-}
-
-inline bool Vector::operator!=(const Vector &p1) const
-{
-    return p1.sc[0] != sc[0] or p1.sc[1] != sc[1] or p1.sc[2] != sc[2];
 }
 
 inline const double& Vector::operator[](unsigned int i) const
@@ -386,7 +392,7 @@ inline const Vector& Vector::operator/=(const double &val)
     if ( SireMaths::isZero(val) )
         throw SireMaths::math_error(QObject::tr(
             "Cannot divide a vector by zero! %1 / 0 is a error!").arg(this->toString()),CODELOC);
-            
+
     for (int i=0; i<3; i++)
         sc[i] /= val;
 
@@ -450,22 +456,22 @@ inline double Vector::length2() const
 inline double Vector::invLength() const
 {
     double lgth = length();
-    
+
     if (SireMaths::isZero(lgth))
         throw SireMaths::math_error(QObject::tr(
             "Cannot take the inverse length of a zero vector, %1").arg(this->toString()),CODELOC);
-    
+
     return double(1.0) / lgth;
 }
 
 inline double Vector::invLength2() const
 {
     double lgth2 = length2();
-    
+
     if (SireMaths::isZero(lgth2))
         throw SireMaths::math_error(QObject::tr(
             "Cannot take the inverse length of a zero vector, %1").arg(this->toString()),CODELOC);
-    
+
     return double(1.0) / lgth2;
 }
 
@@ -477,11 +483,11 @@ inline bool Vector::isZero() const
 inline Vector Vector::normalise() const
 {
     double l = length2();
-    
+
     if (SireMaths::isZero(l))
         throw SireMaths::math_error(QObject::tr(
             "Cannot normalise a zero vector, %1").arg(this->toString()),CODELOC);
-    
+
     l = 1.0 / sqrt(l);
     return Vector(sc[0]*l,sc[1]*l,sc[2]*l);
 }
@@ -501,7 +507,7 @@ inline void Vector::setMin(const Vector &other)
 {
     for (int i=0; i<3; i++)
         sc[i] = SIRE_MIN( other.sc[i], sc[i] );
-}    
+}
 
 inline Vector Vector::max(const Vector &other) const
 {
@@ -522,7 +528,7 @@ inline Matrix Vector::metricTensor() const
     double x2 = sc[0]*sc[0];
     double y2 = sc[1]*sc[1];
     double z2 = sc[2]*sc[2];
-    
+
     double xy = sc[0]*sc[1];
     double xz = sc[0]*sc[2];
     double yz = sc[1]*sc[2];

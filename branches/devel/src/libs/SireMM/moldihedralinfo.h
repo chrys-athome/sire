@@ -30,8 +30,8 @@ class SIREMM_EXPORT MolDihedralInfo : public MolInternalInfo<Dihedral>
 {
 public:
     MolDihedralInfo();
-    MolDihedralInfo(const Molecule &mol);
-    MolDihedralInfo(const Molecule &mol, 
+    MolDihedralInfo(const MoleculeInfo &molinfo);
+    MolDihedralInfo(const Molecule &mol,
                     const InternalGenerator<MolDihedralInfo> &dihedralgenerator);
 
     MolDihedralInfo(const MolDihedralInfo &other);
@@ -54,28 +54,28 @@ public:
     int nDihedrals(ResNum res0, ResNum res1, ResNum res2) const;
     int nDihedrals(ResNum res0, ResNum res1,
                    ResNum res2, ResNum res3) const;
-    
+
     int nInterDihedrals() const;
     int nIntraDihedrals() const;
-    
+
     int nIntraDihedrals(ResNum resnum) const;
     int nInterDihedrals(ResNum resnum) const;
 
     bool residuesDihedraled(ResNum res0, ResNum res1) const;
     bool residuesDihedraled(ResNum res0, ResNum res1, ResNum res2) const;
-    bool residuesDihedraled(ResNum res0, ResNum res1, 
+    bool residuesDihedraled(ResNum res0, ResNum res1,
                             ResNum res2, ResNum res3) const;
 
     const_iterator dihedrals() const;
     const_iterator dihedrals(ResNum resnum) const;
     const_iterator dihedrals(ResNum res0, ResNum res1) const;
     const_iterator dihedrals(ResNum res0, ResNum res1, ResNum res2) const;
-    const_iterator dihedrals(ResNum res0, ResNum res1, 
+    const_iterator dihedrals(ResNum res0, ResNum res1,
                              ResNum res2, ResNum res3) const;
-    
+
     const_iterator intraDihedrals() const;
     const_iterator interDihedrals() const;
-    
+
     const_iterator intraDihedrals(ResNum resnum) const;
     const_iterator interDihedrals(ResNum resnum) const;
 
@@ -116,10 +116,10 @@ void MolDihedralInfo::removeDihedrals(const C &dihedrals)
     }
 }
 
-/** Return an iterator over the dihedrals in the residues whose residue 
+/** Return an iterator over the dihedrals in the residues whose residue
     numbers are in 'resnums'.
-    
-    This returns an iterator pointing to the first dihedral, or an 
+
+    This returns an iterator pointing to the first dihedral, or an
     invalid iterator if there are no dihedrals to iterate over.
 */
 template<class C>
@@ -129,10 +129,10 @@ MolDihedralInfo::const_iterator MolDihedralInfo::dihedrals(const C &resnums) con
     return this->internals(resnums);
 }
 
-/** Return an iterator over the intra-reside dihedrals in the residues 
+/** Return an iterator over the intra-reside dihedrals in the residues
     whose residue numbers are in 'resnums'.
-    
-    This returns an iterator pointing to the first dihedral, or an 
+
+    This returns an iterator pointing to the first dihedral, or an
     invalid iterator if there are no dihedrals to iterate over.
 */
 template<class C>
@@ -142,10 +142,10 @@ MolDihedralInfo::const_iterator MolDihedralInfo::intraDihedrals(const C &resnums
     return this->intraInternals(resnums);
 }
 
-/** Return an iterator over the inter-reside dihedrals in the residues 
+/** Return an iterator over the inter-reside dihedrals in the residues
     whose residue numbers are in 'resnums'.
-    
-    This returns an iterator pointing to the first dihedral, or an 
+
+    This returns an iterator pointing to the first dihedral, or an
     invalid iterator if there are no dihedrals to iterate over.
 */
 template<class C>

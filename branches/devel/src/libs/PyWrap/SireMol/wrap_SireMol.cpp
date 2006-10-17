@@ -8,7 +8,6 @@
 
 namespace SireMol
 {
-void export_AABox();
 void export_Atom();
 void export_AtomSet();
 void export_AtomVector();
@@ -16,7 +15,6 @@ void export_AtomList();
 void export_AtomNumSet();
 void export_AtomNumVector();
 void export_AtomNumList();
-void export_ConvertMolecule();
 void export_CutGroup();
 void export_CutGroupSet();
 void export_IndexList();
@@ -33,17 +31,13 @@ void export_EditMolList();
 void export_EditRes();
 void export_Molecule();
 void export_MoleculeBonds();
-void export_MoleculeCGInfo();
-void export_MoleculeSet();
-void export_MoleculeSignature();
+void export_MoleculeInfo();
 void export_Residue();
 void export_ResidueBonds();
-void export_ResidueIDSet();
-void export_ResidueSet();
+void export_ResidueInfo();
 
 void SIREMOL_EXPORT export_SireMol()
 {
-    export_AABox();
     export_Atom();
     export_AtomList();
     export_AtomSet();
@@ -51,11 +45,9 @@ void SIREMOL_EXPORT export_SireMol()
     export_AtomNumSet();
     export_AtomNumVector();
     export_AtomNumList();
-    export_ConvertMolecule();
     export_CutGroup();
     export_CutGroupSet();
     export_EditMol();
-    export_EditMolList();
     export_EditRes();
     export_IndexList();
     export_IndexSet();
@@ -68,13 +60,10 @@ void SIREMOL_EXPORT export_SireMol()
     export_Impropers();
     export_Molecule();
     export_MoleculeBonds();
-    export_MoleculeCGInfo();
-    export_MoleculeSet();
-    export_MoleculeSignature();
+    export_MoleculeInfo();
     export_Residue();
     export_ResidueBonds();
-    export_ResidueIDSet();
-    export_ResidueSet();
+    export_ResidueInfo();
 }
 
 }

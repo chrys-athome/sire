@@ -33,7 +33,8 @@ class SIREMOL_EXPORT MolCGAtomID
 friend QDataStream& ::operator>>(QDataStream&, MolCGAtomID&);
 
 public:
-    MolCGAtomID(MoleculeID molid=0, CutGroupID cgid=0, AtomID atmid=0) 
+    MolCGAtomID(MoleculeID molid = MoleculeID(0), 
+                CutGroupID cgid = CutGroupID(0), AtomID atmid = AtomID(0)) 
               : _molid(molid), _cgid(cgid), _atmid(atmid)
     {}
     

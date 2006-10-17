@@ -1,10 +1,24 @@
 #ifndef SIREMOL_ATOMIDGROUP_H
 #define SIREMOL_ATOMIDGROUP_H
+/**
+  * @file
+  *
+  * C++ Interface: AtomIDGroup
+  *
+  * Description: 
+  * Interface to the AtomIDGroup class
+  * 
+  * Author: Christopher Woods, (C) 2006
+  *
+  * Copyright: See COPYING file that comes with this distribution
+  *
+  */
 
-#include "atomset.h"
-#include "atomindexset.h"
+#include <QSet>
 
 #include <boost/tuple/tuple.hpp>
+
+#include "atomindex.h"
 
 SIRE_BEGIN_HEADER
 
@@ -25,7 +39,7 @@ typedef boost::tuple<AtomIDGroup,AtomIDGroup> AtomIDGroupPair;
 
 /**
 This class contains the IDs of all of the atoms in a molecule that belong to this group. This class is optimised for speedy addition of atoms and querying of whether or not particular atoms or residues are contained in this group. This class is used by the functions that split molecules into groups so that the groups can be moved via the internal bond/angle/dihedral moves.
- 
+
 @author Christopher Woods
 */
 class SIREMOL_EXPORT AtomIDGroup
@@ -36,6 +50,10 @@ friend QDataStream& ::operator>>(QDataStream&, AtomIDGroup&);
 
 public:
     AtomIDGroup();
+    AtomIDGroup(const QSet<AtomIndex> &atoms);
+    AtomIDGroup(const QSet<ResNum> &residues);
+    AtomIDGroup(const QSet<ResNum> &residues, const QSet<AtomIndex> &atoms);
+    
     ~AtomIDGroup();
 
     void add(ResNum resnum);
@@ -44,27 +62,28 @@ public:
     bool contains(ResNum resnum) const;
     bool contains(const AtomIndex &atom) const;
 
-    bool intersects(const AtomIndexSet &atoms) const;
+    bool intersects(const QSet<AtomIndex> &atoms) const;
 
-    const AtomIndexSet& atoms() const;
-    const ResNumSet& residues() const;
+    const QSet<AtomIndex>& atoms() const;
+    const QSet<ResNum>& residues() const;
 
     void clear();
     void simplify();
 
     bool isEmpty() const;
-    
+
     QString inventory() const;
 
 private:
 
-    static bool intersects(const AtomIndexSet &big, const AtomIndexSet &small);
+    static bool intersects(const QSet<AtomIndex> &big,
+                           const QSet<AtomIndex> &small);
 
-    /** The list of explicitly added atoms in this group */
-    AtomIndexSet atms;
+    /** The set of explicitly added atoms in this group */
+    QSet<AtomIndex> atms;
 
-    /** The list of fully added residues in this group */
-    ResNumSet residus;
+    /** The set of fully added residues in this group */
+    QSet<ResNum> residus;
 };
 
 /** Add all of the atoms of residue 'resnum' to this group */
@@ -86,7 +105,7 @@ inline bool AtomIDGroup::contains(ResNum resnum) const
     return residus.contains(resnum);
 }
 
-/** Return whether or not this group contains the atom 'atom' 
+/** Return whether or not this group contains the atom 'atom'
     (either added explicitly, or in an added residue) */
 inline bool AtomIDGroup::contains(const AtomIndex &atom) const
 {
@@ -94,36 +113,36 @@ inline bool AtomIDGroup::contains(const AtomIndex &atom) const
 }
 
 /** Return the list of all explicitly added atoms to this group */
-inline const AtomIndexSet& AtomIDGroup::atoms() const
+inline const QSet<AtomIndex>& AtomIDGroup::atoms() const
 {
     return atms;
 }
 
 /** Return the list of all explicitly added residues to this group */
-inline const ResNumSet& AtomIDGroup::residues() const
+inline const QSet<ResNum>& AtomIDGroup::residues() const
 {
     return residus;
 }
 
-/** Small, private function, which is used to see if two AtomIndexSets intersect. 
-    For best speed, ensure that 'big' is the larger of the two sets, and 'small' is 
+/** Small, private function, which is used to see if two QSet<AtomIndex>s intersect.
+    For best speed, ensure that 'big' is the larger of the two sets, and 'small' is
     the smaller. */
-inline bool AtomIDGroup::intersects(const AtomIndexSet &big, const AtomIndexSet &small)
+inline bool AtomIDGroup::intersects(const QSet<AtomIndex> &big, const QSet<AtomIndex> &small)
 {
-    AtomIndexList contents = small.toList();
-    
+    QList<AtomIndex> contents = small.toList();
+
     foreach( AtomIndex atom, contents )
     {
         if (big.contains(atom))
             return true;
     }
-    
+
     return false;
 }
 
-/** Return whether or not this group has atoms in it that are also in 
+/** Return whether or not this group has atoms in it that are also in
     'atoms' */
-inline bool AtomIDGroup::intersects(const AtomIndexSet &atoms) const
+inline bool AtomIDGroup::intersects(const QSet<AtomIndex> &atoms) const
 {
     if (atoms.count() > atms.count())
         return intersects(atoms, atms);

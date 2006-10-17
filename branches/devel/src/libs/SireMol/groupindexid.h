@@ -32,7 +32,8 @@ class SIREMOL_EXPORT GroupIndexID
 friend QDataStream& ::operator>>(QDataStream&, GroupIndexID&);
 
 public:
-    GroupIndexID(GroupID gid=0, Index idx=0) : _gid(gid), _idx(idx)
+    GroupIndexID(GroupID gid = GroupID(0), Index idx = Index(0)) 
+              : _gid(gid), _idx(idx)
     {}
     
     GroupIndexID(const tuple<GroupID,Index> &t)

@@ -1,0 +1,67 @@
+--------
+SireBase
+--------
+
+(*) Rewrite DynamicSharedPtr so that it is like QSharedPointer,
+    rather than using a QSharedPointer to a polymorphic pointer.
+    Need to make polymorphic version of QSharedPointer, as at 
+    the moment I have a QSharedPointer to a polymorphic pointer,
+    which is slightly inefficient.
+
+----------
+SireStream
+----------
+
+(*) Write streaming code for implicitly shared objects (code
+    that preserves implicit nature of object - see 
+    ideas/qdatastream_implicit
+
+-------
+SireCAS
+-------
+
+(*) Sort out the code to allow generic-function of a generic-function,
+    so that the function substitution works correctly!
+    
+(*) Write code to allow simplification and expansion of sums and products
+
+(*) Take a stab at writing better integration code for sums and products
+    
+------
+SireDB
+------
+
+(*) Fix problem of corruption of binary data dumped into the 
+    database (see test/db/protoms_speed_test.py, and notice
+    how test.db and test2.db are not identical!)
+
+(*) Improve parameter assignment code by adding a cache for 
+    mol/res lookups (so don't lookup mol/res for every single
+    atom in the molecule multiple times)
+    
+(*) Improve parameter assignment code by adding more of a cache
+    for atom lookups, so don't lookup an atom more than once
+    when assigning internals.
+    
+(*) Add a score to residue aliases so that they are correctly sorted,
+    and can then add default residue backbones that are for residues
+    that don't contain any bonding information.
+    
+(*) Check that can override a residue alias at assignment, e.g.
+    user can specify the residue alias in the script, e.g. for 
+    residues that are from a scoop that may be incorrectly aliased.
+
+(*) Residue alias code is broken and needs fixing! Also all of the 
+    databases need to be documented on a nice web page so that I 
+    have more of a clue how they work and how they are inter-related.
+    
+(*) Dihedral-term code is not working and needs fixing - also need
+    to automatically resolve functions and recursively fix function
+    of a function
+
+-------
+SireMol
+-------
+
+(*) Change AtomID, ResID, CutGroupID and MoleculeID to ensure that they are not typedefs of Index, so that we can overload on them. Important for correct working of MoleculeInfo. **DONE**
+

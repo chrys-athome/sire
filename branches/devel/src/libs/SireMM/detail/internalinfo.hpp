@@ -2,6 +2,7 @@
 #define SIREMM_DETAIL_INTERNALINFO_HPP
 
 #include "SireMol/molecule.h"
+#include "SireMol/moleculeinfo.h"
 
 #include "SireMM/detail/internalgroup.hpp"
 #include "SireMM/detail/internalgroupiterator.hpp"
@@ -29,7 +30,7 @@ namespace SireMM
 {
 
 using SireMol::Molecule;
-using SireMol::MoleculeCGInfo;
+using SireMol::MoleculeInfo;
 using SireMol::ResNum;
 
 namespace detail
@@ -88,7 +89,7 @@ public:
 
     InternalInfo();
     
-    InternalInfo(const Molecule &mol);
+    InternalInfo(const MoleculeInfo &molinfo);
     
     InternalInfo(const InternalInfo &other);
     
@@ -96,12 +97,11 @@ public:
     
     InternalInfo<T>& operator=(const InternalInfo<T> &other);
 
-    const MoleculeCGInfo& info() const;
+    const MoleculeInfo& info() const;
 
     int nGroups() const;
 
     bool isEmpty() const;
-    bool isNull() const;
 
     const QSet<GroupID> groupIDs() const;
     const QSet<GroupID> groupIDs(ResNum resnum) const;
@@ -230,7 +230,7 @@ private:
 
     /** The MoleculeInfo object that holds the metadata about 
         the molecule */
-    MoleculeCGInfo molinfo;
+    MoleculeInfo molinfo;
 
     /** The smallest unassigned GroupID value */
     GroupID newid;
@@ -246,8 +246,8 @@ InternalInfo<T>::InternalInfo() : newid(0)
     molecule 'mol' */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-InternalInfo<T>::InternalInfo(const Molecule &mol)
-                : molinfo(mol.info()), newid(0)
+InternalInfo<T>::InternalInfo(const MoleculeInfo &moleculeinfo)
+                : molinfo(moleculeinfo), newid(0)
 {}
 
 /** Copy constructor */
@@ -291,7 +291,7 @@ InternalInfo<T>& InternalInfo<T>::operator=(const InternalInfo<T> &other)
     are described by this object */
 template<class T>
 SIRE_INLINE_TEMPLATE
-const MoleculeCGInfo& InternalInfo<T>::info() const
+const MoleculeInfo& InternalInfo<T>::info() const
 {
     return molinfo;
 }
@@ -424,14 +424,6 @@ SIRE_OUTOFLINE_TEMPLATE
 bool InternalInfo<T>::isEmpty() const
 {
     return groupids.isEmpty();
-}
-
-/** Return whether or not this is null (has no molecule!) */
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-bool InternalInfo<T>::isNull() const
-{
-    return molinfo.isNull();
 }
 
 /** Return the number of groups. The internals for each 
@@ -1338,7 +1330,7 @@ void InternalInfo<T>::removeInternals()
     resid_to_groupid.clear();
     groupid_to_group.clear();
     groupids.clear();
-    newid = 0;
+    newid = GroupID(0);
 }
 
 /** Returns the number of internals in the group with GroupID 'group'.

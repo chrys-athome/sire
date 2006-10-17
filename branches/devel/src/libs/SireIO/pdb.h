@@ -10,21 +10,22 @@ namespace SireIO
 
 /**
 This is a IOBase object that has been specialised to read and write PDB format files.
- 
+
 @author Christopher Woods
 */
 class SIREIO_EXPORT PDB : public IOBase
 {
 public:
     PDB();
-    virtual ~PDB();
+    ~PDB();
 
 protected:
-    /** Read and return some EditMols from the data */
-    virtual EditMolList readGroups(const QByteArray &data) const;
-    
+    /** Read and return some molecules from the data */
+    QList<Molecule> readMols(const QByteArray &data,
+                             const CuttingFunction &cutfunc) const;
+
     /** Write the list of molecules to a bytearray and return it */
-    virtual QByteArray writeGroups(const EditMolList &groups) const;
+    QByteArray writeMols(const QList<Molecule> &molecules) const;
 
 };
 

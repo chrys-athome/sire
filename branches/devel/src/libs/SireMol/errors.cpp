@@ -16,3 +16,4 @@ static const RegisterMetaType<duplicate_residue> r_dres("SireMol::duplicate_resi
 static const RegisterMetaType<template_error> r_tmplerr("SireMol::template_error");
 static const RegisterMetaType<anchor_error> r_ancerr("SireMol::anchor_error");
 static const RegisterMetaType<ring_error> r_ringerr("SireMol::ring_error");
+static const RegisterMetaType<incompatible_molecule> r_incompat("SireMol::incompatible_molecule");

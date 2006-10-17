@@ -63,13 +63,7 @@ public:
     Expression getBond(const RelateIDMap &relateids, bool *foundfunc = 0);
 
     const Symbol& r() const;
-
-    bool hasTable(const ParameterTable &param_table) const;
-    
-    BondTable& getTable(ParameterTable &param_table) const;
-    
-    BondTable& createTable(ParameterTable &param_table, const MolBondInfo &bondinfo) const;
-    
+        
     bool assignParameter(const Bond &bond, 
                          const RelateIDMap &relateids,
                          ParameterTable &param_table);

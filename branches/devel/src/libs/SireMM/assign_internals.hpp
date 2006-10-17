@@ -66,7 +66,8 @@ public:
     ~assign_internals();
     
 protected:
-    void assignInternals( ParameterTable &param_table, 
+    void assignInternals( const Molecule &molecule,
+                          ParameterTable &param_table, 
                           ParameterDB &database,
                           const MatchMRData &matchmr ) const;
 
@@ -300,7 +301,8 @@ void assign_internals_ws<Internals>::assignParameters(bool overwrite)
     \throw SireMol::missing_atom
 */
 template<class Internals>
-void assign_internals<Internals>::assignInternals( ParameterTable &param_table,
+void assign_internals<Internals>::assignInternals( const Molecule &molecule,
+                                                   ParameterTable &param_table,
                                                    ParameterDB &database,
                                                    const MatchMRData &matchmr ) const
 {
@@ -319,7 +321,7 @@ void assign_internals<Internals>::assignInternals( ParameterTable &param_table,
     //lots of polymorphic lookups for each and every internal!)
     QList<db_type*> dbs_missing_tables;
     
-    foreach (QString paramdb, parameterDataBases())
+/*    foreach (QString paramdb, parameterDataBases())
     {
         if (database.isA(paramdb))
         {
@@ -347,7 +349,7 @@ void assign_internals<Internals>::assignInternals( ParameterTable &param_table,
     {
         BOOST_ASSERT( generator.constData() != 0 );
     
-        Internals generated_internals( local_param_table.molecule(),
+        Internals generated_internals( molecule,
                                        *generator );
                                        
         //now go through each database and create the missing table
@@ -395,7 +397,7 @@ void assign_internals<Internals>::assignInternals( ParameterTable &param_table,
         //have to assign the parameters one-by-one (as different tables may
         //have different internals)
         workspace.assignParameters( overwriteParameters() );
-    }
+    }*/
     
     //all of the parameters have been assigned into our local copy of the 
     //parameter table - now copy it back to the original

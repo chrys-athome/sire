@@ -8,9 +8,6 @@
 ## periodic boxes - 'PeriodicBox')
 ##
 
-import Sire.FF
-import Sire.Mol
-
 # Import all of the classes and functions from the C++ library
 from Sire.Vol._Vol import *
 

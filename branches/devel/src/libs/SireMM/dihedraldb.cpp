@@ -33,12 +33,12 @@ DihedralDB::DihedralDB(const DihedralDB &other)
 /** Destructor */
 DihedralDB::~DihedralDB()
 {}
-    
+
 /** Dump the version number of this database */
 void DihedralDB::prepareToDump()
 {
     Term14DB::prepareToDump();
-    
+
     this->saveParameter<DihedralDB>( "version" , 0 );
 }
 
@@ -48,14 +48,14 @@ void DihedralDB::postLoad()
     Term14DB::postLoad();
 
     int v = this->loadParameter<DihedralDB>( "version" ).toInt();
-                            
+
     if (v != 0)
         throw version_error( v, "0", "SireMM::DihedralDB", CODELOC );
 }
 
-/** Add the dihedral function 'dihfunc' and associate it with the user identification 
+/** Add the dihedral function 'dihfunc' and associate it with the user identification
     string 'userid'. Note that 'dihfunc' must be a function of the variable
-    representing the dihedral size ("phi", obtainable via Symbol("phi") or 
+    representing the dihedral size ("phi", obtainable via Symbol("phi") or
     DihedralDB::phi()), or the distance between the 1-4 atoms, ("r", via
     Symbol("r") or DihedralDB::r()) or else it will be treated as a constant. */
 void DihedralDB::addDihedral(const QString &userid, const Expression &dihfunc)
@@ -64,7 +64,7 @@ void DihedralDB::addDihedral(const QString &userid, const Expression &dihfunc)
     {
         //evaluate this constant...
         Expression const_val = dihfunc.evaluate(Values());
-        
+
         ParamID paramid = addFunc(const_val);
         relateParameter(userid, paramid);
     }
@@ -76,22 +76,22 @@ void DihedralDB::addDihedral(const QString &userid, const Expression &dihfunc)
 }
 
 /** Return the dihedral function associated with the user identification ID 'userid',
-    or a zero function if there is no such function. founddih is set to whether 
+    or a zero function if there is no such function. founddih is set to whether
     a function was found. */
 Expression DihedralDB::getDihedral(const QString &userid, bool *founddih)
 {
     ParamID paramid = getParameter(userid);
-    
+
     if (founddih)
         *founddih = (paramid != 0);
-        
+
     return retrieveFunc(paramid);
 }
-    
-/** Add the dihedral function 'expression' and associate it with the generic function 
+
+/** Add the dihedral function 'expression' and associate it with the generic function
     'function'. This will allow other dihedral expressions to contain this function,
-    which will be expanded to 'expression' whenever the dihedral is assigned. 
-    
+    which will be expanded to 'expression' whenever the dihedral is assigned.
+
     Note that 'expression' must be a function of 'phi' or 'r' or else it will
     be treated as a constant.
 */
@@ -113,7 +113,7 @@ Expression DihedralDB::getDihedral(const Function &function, bool *founddih)
 {
     return getFunc(function, founddih);
 }
-   
+
 /** Relate the dihedral function associated with the user identification ID 'userid'
     with the relationship matching a triple of atoms 'matchdih' */
 void DihedralDB::relateDihedral(const AssertMatch<4> &matchdih, const QString &userid)
@@ -122,7 +122,7 @@ void DihedralDB::relateDihedral(const AssertMatch<4> &matchdih, const QString &u
 }
 
 /** Relate the dihedral function 'dihfunc' with the relationship matching a quad of atoms.
-    Note that the dihfunc must be a function of "phi" or "r" or else the function 
+    Note that the dihfunc must be a function of "phi" or "r" or else the function
     will be treated as a constant */
 void DihedralDB::relateDihedral(const AssertMatch<4> &matchdih, const Expression &dihfunc)
 {
@@ -134,9 +134,9 @@ void DihedralDB::relateDihedral(const AssertMatch<4> &matchdih, const Expression
     else
         relateFunc(matchdih, dihfunc);
 }
-    
-/** Return the dihedral that matches the atom-quad matching relationship 'relateid', 
-    or a zero function if there is no match. founddih is set to whether or 
+
+/** Return the dihedral that matches the atom-quad matching relationship 'relateid',
+    or a zero function if there is no match. founddih is set to whether or
     not a function was found */
 Expression DihedralDB::getDihedral(RelateID relateid, bool *founddih)
 {
@@ -168,46 +168,34 @@ void DihedralDB::relateDihedral(RelateID relateid, const Expression &dihedralfun
     relateParameter(relateid, paramid);
 }
 
-/** Return whether or not the ParameterTable 'param_table' contains a
-    DihedralTable */
-bool DihedralDB::hasTable(const ParameterTable &param_table) const
-{
-    return param_table.isA<DihedralTable>();
-}
-    
-/** Return the DihedralTable in 'param_table' - note that hasTable(param_table)
-    must be true or else you will get undefined results */
-DihedralTable& DihedralDB::getTable(ParameterTable &param_table) const
-{
-    return param_table.asA<DihedralTable>();
-}
-    
-/** Create the DihedralTable in the ParameterTable 'param_table' that will hold the 
+/** Create the DihedralTable in the ParameterTable 'param_table' that will hold the
     parameters in this database, using the internals listed in 'internals'. Note
     that this will remove any existing DihedralTable that exists in 'param_table'.
-    I would thus only recommend using this function if that is indeed what you 
-    intend, or if hasTable(param_table) returns false. 
+    I would thus only recommend using this function if that is indeed what you
+    intend, or if hasTable(param_table) returns false.
 */
-DihedralTable& DihedralDB::createTable(ParameterTable &param_table, 
-                                       const MolDihedralInfo &dihedralinfo) const
+void DihedralDB::createTable(ParameterTable &param_table,
+                             const MolDihedralInfo &dihedralinfo) const
 {
-    return static_cast<DihedralTable&>( param_table.setTable(DihedralTable(dihedralinfo)) );
+    param_table.setTable(DihedralTable(dihedralinfo));
 }
-    
-/** Assign the parameter for the dihedral 'dihedral' using the relationship IDs in 
+
+/** Assign the parameter for the dihedral 'dihedral' using the relationship IDs in
     'relateids', and place the parameter into the table 'param_table'. Return
     whether or not a parameter was found and assigned. */
 bool DihedralDB::assignParameter(const Dihedral &dihedral, const RelateIDMap &relateids,
                                  ParameterTable &param_table)
 {
-    BOOST_ASSERT(param_table.isA<DihedralTable>());
-    
+/*    BOOST_ASSERT(param_table.isA<DihedralTable>());
+
     bool found;
     Expression dihedralfunc = this->getFunc(relateids, &found);
-    
+
     if (found)
         //add the expression to the parameter table
         param_table.asA<DihedralTable>().setParameter(dihedral, dihedralfunc);
-        
-    return found;
+
+    return found;*/
+
+    return false;
 }

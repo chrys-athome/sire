@@ -1,9 +1,16 @@
 #ifndef SIREDB_ATOMTABLE_HPP
 #define SIREDB_ATOMTABLE_HPP
 
-#include "atomtable.h"
+#include <QSet>
+#include <QVector>
 
-#include <QDebug>
+#include "atomtable.h"
+#include "parametergroup.hpp"
+
+#include "SireMol/cgatomid.h"
+#include "SireMol/cgnumatomid.h"
+#include "SireMol/resnumatomid.h"
+#include "SireMol/residatomid.h"
 
 #include "SireError/errors.h"
 #include "SireDB/errors.h"
@@ -14,24 +21,23 @@ SIRE_BEGIN_HEADER
 
 namespace SireDB
 {
-template<class T>
+template<class Param>
 class AtomTableT;
 }
 
-template<class T>
-QDataStream& operator<<(QDataStream &ds, const SireDB::AtomTableT<T>&);
-template<class T>
-QDataStream& operator>>(QDataStream &ds, SireDB::AtomTableT<T>&);
+template<class Param>
+QDataStream& operator<<(QDataStream &ds, const SireDB::AtomTableT<Param>&);
+template<class Param>
+QDataStream& operator>>(QDataStream &ds, SireDB::AtomTableT<Param>&);
 
 namespace SireDB
 {
 
-using SireMol::CGAtomID;
-using SireMol::ResNumAtomID;
+using SireMol::CutGroupID;
 
-/** This template class provides the additional functionality for 
-    an AtomTable that is used to store parameters of type 'T'. 
-    
+/** This template class provides the additional functionality for
+    an AtomTable that is used to store parameters of type 'T'.
+
     @author Christopher Woods
 */
 template<class Param>
@@ -45,1374 +51,1471 @@ public:
     typedef Param parameter_type;
 
     AtomTableT();
-    AtomTableT(const Molecule &molecule);
-    
+    AtomTableT(const MoleculeInfo &molinfo);
+
     AtomTableT(const AtomTableT<Param> &other);
-    
-    virtual ~AtomTableT();
 
-    int nParameters() const;
-    int nParameters(ResNum resnum) const;
-    int nParameters(CutGroupID cgid) const;
-    
-    const Param& at(const CGAtomID &cgid) const;
-    const Param& at(const ResNumAtomID &rsid) const;
-    const Param& at(const AtomIndex &atom) const;
+    ~AtomTableT();
 
-    const Param& operator[](const CGAtomID &cgid) const;
-    const Param& operator[](const ResNumAtomID &rsid) const;
-    const Param& operator[](const AtomIndex &atom) const;
-    
-    Param& operator[](const CGAtomID &cgid);
-    Param& operator[](const ResNumAtomID &rsid);
-    Param& operator[](const AtomIndex &atom);
-    
-    Param value(const CGAtomID &cgid) const;
-    Param value(const ResNumAtomID &rsid) const;
-    Param value(const AtomIndex &atom) const;
-    
-    Param value(const CGAtomID &cgid, const Param &defaultValue) const;
-    Param value(const ResNumAtomID &rsid, const Param &defaultValue) const;
-    Param value(const AtomIndex &atom, const Param &defaultValue) const;
-    
-    const Param& getParameter(const CGAtomID &cgid) const;
-    const Param& getParameter(const ResNumAtomID &rsid) const;
-    const Param& getParameter(const AtomIndex &atom) const;
-    
-    void setParameter(const CGAtomID &cgid, const Param &param);
-    void setParameter(const ResNumAtomID &rsid, const Param &param);
+    AtomParameter<Param> at(const CGAtomID &cgatomid) const;
+    AtomParameter<Param> at(const CGNumAtomID &cgatomid) const;
+    AtomParameter<Param> at(const ResNumAtomID &resatomid) const;
+    AtomParameter<Param> at(const ResIDAtomID &resatomid) const;
+    AtomParameter<Param> at(const AtomIndex &atom) const;
+    AtomParameter<Param> at(AtomID atomid) const;
+
+    AtomParameter<Param> operator[](const CGAtomID &cgatomid) const;
+    AtomParameter<Param> operator[](const CGNumAtomID &cgatomid) const;
+    AtomParameter<Param> operator[](const ResNumAtomID &resatomid) const;
+    AtomParameter<Param> operator[](const ResIDAtomID &resatomid) const;
+    AtomParameter<Param> operator[](const AtomIndex &atom) const;
+    AtomParameter<Param> operator[](AtomID atomid) const;
+
+    AtomParameter<Param> value(const CGAtomID &cgatomid) const;
+    AtomParameter<Param> value(const CGNumAtomID &cgatomid) const;
+    AtomParameter<Param> value(const ResNumAtomID &resatomid) const;
+    AtomParameter<Param> value(const ResIDAtomID &resatomid) const;
+    AtomParameter<Param> value(const AtomIndex &atom) const;
+    AtomParameter<Param> value(AtomID atomid) const;
+
+    AtomParameter<Param> value(const CGAtomID &cgatomid, const Param &defaultValue) const;
+    AtomParameter<Param> value(const CGNumAtomID &cgatomid, const Param &defaultValue) const;
+    AtomParameter<Param> value(const ResNumAtomID &resatomid, const Param &defaultValue) const;
+    AtomParameter<Param> value(const ResIDAtomID &resatomid, const Param &defaultValue) const;
+    AtomParameter<Param> value(const AtomIndex &atom, const Param &defaultValue) const;
+    AtomParameter<Param> value(AtomID atomid, const Param &defaultValue) const;
+
+    Param parameter(const CGAtomID &cgatomid) const;
+    Param parameter(const CGNumAtomID &cgatomid) const;
+    Param parameter(const ResNumAtomID &resatomid) const;
+    Param parameter(const ResIDAtomID &resatomid) const;
+    Param parameter(const AtomIndex &atom) const;
+    Param parameter(AtomID atomid) const;
+
+    void setParameter(const CGAtomID &cgatomid, const Param &param);
+    void setParameter(const CGNumAtomID &cgatomid, const Param &param);
+    void setParameter(const ResNumAtomID &resatomid, const Param &param);
+    void setParameter(const ResIDAtomID &resatomid, const Param &param);
     void setParameter(const AtomIndex &atom, const Param &param);
-    
-    bool assignedParameter(const CGAtomID &cgid) const;
-    bool assignedParameter(const ResNumAtomID &rsid) const;
-    bool assignedParameter(const AtomIndex &atom) const;
-    
-    bool hasMissingParameters() const;
-    bool hasMissingParameters(ResNum resnum) const;
-    bool hasMissingParameters(CutGroupID cgid) const;
-    
-    QSet<AtomIndex> missingParameters() const;
-    QSet<AtomIndex> missingParameters(ResNum resnum) const;
-    QSet<AtomIndex> missingParameters(CutGroupID cgid) const;
-    
+    void setParameter(AtomID atomid, const Param &param);
+
     void add(const TableBase &table);
-    
-    void clear();
-    void clear(const CGAtomID &cgid);
-    void clear(const ResNumAtomID &rsid);
-    void clear(const AtomIndex &atom);
-    void clear(ResNum resnum);
-    void clear(CutGroupID cgid);
-    
+
+    ParameterGroup<Param> parameterGroup(CutGroupID cgid) const;
+
+    QVector< ParameterGroup<Param> > parameterGroups() const;
+
+    QHash< CutGroupID,ParameterGroup<Param> >
+        parameterGroups( const QSet<CutGroupID> &cgids ) const;
+    QHash< CutGroupNum,ParameterGroup<Param> >
+        parameterGroups( const QSet<CutGroupNum> &cgnums) const;
+
     QVector<Param> parameters() const;
     QVector<Param> parameters(ResNum resnum) const;
+    QVector<Param> parameters(ResID resid) const;
     QVector<Param> parameters(CutGroupID cgid) const;
-    
-    template<class C>
-    uint parameters( QVector<C> &param_vector, uint strt=0 ) const;
-    template<class C>
-    uint parameters( ResNum resnum, QVector<C> &param_vector, uint strt=0 ) const;
-    template<class C>
-    uint parameters( CutGroupID cgid, QVector<C> &param_vector, uint strt=0 ) const;
-    
-    GroupedVector<CGAtomID,Param> parametersByCutGroup() const;
-    GroupedVector<ResNumAtomID,Param> parametersByResidue() const;
-    GroupedVector<CGAtomID,Param> parametersByCutGroup(const QSet<CutGroupID> &cgids) const;
-    GroupedVector<ResNumAtomID,Param> parametersByResidue(const QSet<ResNum> &resnums) const;
-    
-    template<class C>
-    void parametersByCutGroup( GroupedVector<CGAtomID,C> &param_vector ) const;
-    template<class C>
-    void parametersByResidue( GroupedVector<ResNumAtomID,C> &param_vector ) const;
-    template<class C>
-    void parametersByCutGroup(const QSet<CutGroupID> &cgids, 
-                              GroupedVector<CGAtomID,C> &param_vector) const;
-    template<class C>
-    void parametersByResidue(const QSet<ResNum> &resnums,
-                             GroupedVector<ResNumAtomID,C> &param_vector) const;
-    
+    QVector<Param> parameters(CutGroupNum cgnum) const;
+
+    QHash< CutGroupID,QVector<Param> >
+          parameters(const QSet<CutGroupID> &cgids) const;
+    QHash< CutGroupNum,QVector<Param> >
+          parameters(const QSet<CutGroupNum> &cgnums) const;
+
+    QHash< ResNum,QVector<Param> >
+          parameters(const QSet<ResNum> &resnums) const;
+    QHash< ResID,QVector<Param> >
+          parameters(const QSet<ResID> &resids) const;
+
+    QVector< AtomParameter<Param> > atomParameters() const;
+    QVector< AtomParameter<Param> > atomParameters(ResNum resnum) const;
+    QVector< AtomParameter<Param> > atomParameters(ResID resid) const;
+    QVector< AtomParameter<Param> > atomParameters(CutGroupID cgid) const;
+    QVector< AtomParameter<Param> > atomParameters(CutGroupNum cgnum) const;
+
+    QHash< CutGroupID,QVector< AtomParameter<Param> > >
+          atomParameters(const QSet<CutGroupID> &cgids) const;
+    QHash< CutGroupNum,QVector< AtomParameter<Param> > >
+          atomParameters(const QSet<CutGroupNum> &cgnums) const;
+
+    QHash< ResNum,QVector< AtomParameter<Param> > >
+          atomParameters(const QSet<ResNum> &resnums) const;
+    QHash< ResID,QVector< AtomParameter<Param> > >
+          atomParameters(const QSet<ResID> &resids) const;
+
+protected:
+    int _unsafe_nAssignedParameters(const ResidueInfo &resinfo) const;
+    int _unsafe_nAssignedParameters(CutGroupID cgid) const;
+
+    int _unsafe_nMissingParameters(const ResidueInfo &resinfo) const;
+    int _unsafe_nMissingParameters(CutGroupID cgid) const;
+
+    bool _unsafe_assignedParameter(const CGAtomID &cgatomid) const;
+
+    bool _unsafe_hasMissingParameters(const ResidueInfo &resinfo) const;
+    bool _unsafe_hasMissingParameters(CutGroupID cgid) const;
+
+    QSet<AtomIndex> _unsafe_missingParameters(const ResidueInfo &resinfo) const;
+    QSet<AtomIndex> _unsafe_missingParameters(CutGroupID cgid) const;
+
+    Param _unsafe_parameter(const CGAtomID &cgatomid) const;
+    AtomParameter<Param> _unsafe_atomParameter(const CGAtomID &cgatomid) const;
+
+    AtomParameter<Param> _unsafe_atomParameter(const CGAtomID &cgatomid,
+                                               const Param &defaultValue) const;
+
+    QVector<Param> _unsafe_parameters(const ResidueInfo &resinfo) const;
+    QVector<Param> _unsafe_parameters(CutGroupID cgid) const;
+
+    QVector< AtomParameter<Param> > _unsafe_atomParameters(
+                                          const ResidueInfo &resinfo) const;
+    QVector< AtomParameter<Param> > _unsafe_atomParameters(
+                                          CutGroupID cgid) const;
+
+    ParameterGroup<Param> _unsafe_parameterGroup(CutGroupID cgid) const;
+
+    void _unsafe_clear(const ResidueInfo &resinfo);
+    void _unsafe_clear(CutGroupID cgid);
+    void _unsafe_clear(const CGAtomID &cgatomid);
+
+    void _unsafe_setParameter(const CGAtomID &cgatomid, const Param &param);
+
+    void clearCache(CutGroupID cgid);
+    void clearCache(ResNum resnum);
+
 private:
-    
-    /** The parameters in the table, indexed 
-        by CGAtomID */
-    ParameterStore<CGAtomID,Param> params;
+    template<class C>
+    QHash< C, QVector<Param> > _pvt_parameters(const QSet<C> &idxs) const;
+
+    template<class C>
+    QHash< C, QVector< AtomParameter<Param> > >
+                _pvt_atomParameters(const QSet<C> &idxs) const;
+
+    /** Array of all of the parameter hashes. The first index in
+        the CutGroupID, the second index is the AtomID (thus this
+        pair of arrays is indexed via CGAtomID) */
+    QVector< QHash<AtomID,Param> > params;
+
+    /** Cache of the completed parameter groups - these become populated
+        as the table is populated. */
+    QHash< CutGroupID, QVector<Param> > groupcache;
+
+    /** Cache of the completed parameters with respect to residue */
+    QHash< ResNum, QVector<Param> > rescache;
 };
 
-/** Empty constructor */
+/** Construct an empty AtomTableT */
 template<class Param>
-SIRE_OUTOFLINE_TEMPLATE
 AtomTableT<Param>::AtomTableT() : AtomTable()
 {}
 
-/** Construct a table to hold the parameters for 'molecule' */
+/** Construct an empty AtomTableT that will hold the parameters for
+    the atoms in 'molinfo' */
 template<class Param>
-SIRE_OUTOFLINE_TEMPLATE
-AtomTableT<Param>::AtomTableT(const Molecule &molecule) : AtomTable(molecule)
+AtomTableT<Param>::AtomTableT(const MoleculeInfo &molinfo)
+                  : AtomTable(molinfo)
 {
-    //create space for the parameters for each atom in the molecule
-    params = ParameterStore<CGAtomID,Param>( this->nAtomsPerCutGroup() );
+    //make space for the parameters
+    int ncg = this->info().nCutGroups();
+
+    params.resize(ncg);
+    groupcache.reserve(ncg);
+    rescache.reserve(this->info().nResidues());
+
+    for (CutGroupID i(0); i<ncg; ++i)
+    {
+        params[i].reserve( this->info().nAtoms(i) );
+    }
 }
 
-/** Copy constructor */
+/** Copy constructor - this is fast as the data for this object
+    is implicitly shared */
 template<class Param>
-SIRE_OUTOFLINE_TEMPLATE
 AtomTableT<Param>::AtomTableT(const AtomTableT<Param> &other)
-             : AtomTable(other), params(other.params)
+                  : AtomTable(other),
+                    params(other.params),
+                    groupcache(other.groupcache),
+                    rescache(other.rescache)
 {}
 
 /** Destructor */
 template<class Param>
-SIRE_OUTOFLINE_TEMPLATE
 AtomTableT<Param>::~AtomTableT()
 {}
 
-/** Return the number of assigned parameters - this will equal nAtoms()
-    when all of the parameters have been assigned. */
+/** Clear the cache of any extracted parameter groups associated with
+    the CutGroup with ID == cgid */
 template<class Param>
-SIRE_INLINE_TEMPLATE
-int AtomTableT<Param>::nParameters() const
+void AtomTableT<Param>::clearCache(CutGroupID cgid)
 {
-    return params.nParameters();
+    groupcache.remove(cgid);
 }
 
-/** Return the number of assigned parameters in the residue 'resnum'. This 
-    will equal nAtoms(resnum) when all of the parameters in this residue 
-    have been assigned. 
-    
-    This throws an exception if this residue is not in the molecule.
-    
-    \throw SireMol::missing_residue
-*/
+/** Clear the cache of any extracted parameter groups associated with
+    the residue with number 'resnum' */
 template<class Param>
-SIRE_OUTOFLINE_TEMPLATE
-int AtomTableT<Param>::nParameters(ResNum resnum) const
+void AtomTableT<Param>::clearCache(ResNum resnum)
 {
-    const ResidueCGInfo &resinfo = this->info().residue(resnum);
+    rescache.remove(resnum);
+}
+
+/** Internal function used to return whether or not the parameter for the
+    atom with index 'cgatomid' has been assigned. This does not check whether
+    or not this index is valid. */
+template<class Param>
+bool AtomTableT<Param>::_unsafe_assignedParameter(const CGAtomID &cgatomid) const
+{
+    return params.constData()[cgatomid.cutGroupID()]   // QHash<AtomID,Param>
+                 .contains(cgatomid.atomID());
+}
+
+/** Internal function used to return the number of assigned parameters for
+    the residue described by 'resinfo'. This does not check to see if
+    this is a valid residue. */
+template<class Param>
+int AtomTableT<Param>::_unsafe_nAssignedParameters(const ResidueInfo &resinfo) const
+{
+    int nats = resinfo.nAtoms();
+
+    int nassigned = 0;
+
+    for (AtomID i(0); i<nats; ++i)
+    {
+        if ( this->_unsafe_assignedParameter(resinfo[i]) )
+            ++nassigned;
+    }
+
+    return nassigned;
+}
+
+/** Internal function used to return the total number of assigned parameters in
+    the CutGroup with ID 'cgid'. This does not check whether or not this is
+    a valid CutGroup ID number */
+template<class Param>
+int AtomTableT<Param>::_unsafe_nAssignedParameters(CutGroupID cgid) const
+{
+    return params.constData()[cgid].count();
+}
+
+/** Return the number of missing parameters for the residue described
+    by 'resinfo' - this does not check to see whether this residue is valid. */
+template<class Param>
+int AtomTableT<Param>::_unsafe_nMissingParameters(const ResidueInfo &resinfo) const
+{
+    int nats = resinfo.nAtoms();
+
+    int nmissing = 0;
+
+    for (AtomID i(0); i<nats; ++i)
+    {
+        if ( not this->_unsafe_assignedParameter(resinfo[i]) )
+            ++nmissing;
+    }
+
+    return nmissing;
+}
+
+/** Return the number of missing parameters for the CutGroup with ID 'cgid'.
+    This does not check whether or not this is a valid CutGroupID */
+template<class Param>
+int AtomTableT<Param>::_unsafe_nMissingParameters(CutGroupID cgid) const
+{
+    return info().nAtoms(cgid) - this->_unsafe_nAssignedParameters(cgid);
+}
+
+/** Return whether or not the residue represented by 'resinfo' has any missing
+    parameters. This does not check whether or not this is a valid residue */
+template<class Param>
+bool AtomTableT<Param>::_unsafe_hasMissingParameters(const ResidueInfo &resinfo) const
+{
+    int nats = resinfo.nAtoms();
+
+    for (AtomID i(0); i<nats; ++i)
+    {
+        if ( not this->_unsafe_assignedParameter(resinfo[i]) )
+            return true;
+    }
+
+    return false;
+}
+
+/** Return whether or not the CutGroup with ID == cgid has any missing parameters.
+    This does not check whether or not this is a valid CutGroupID. */
+template<class Param>
+bool AtomTableT<Param>::_unsafe_hasMissingParameters(CutGroupID cgid) const
+{
+    return this->_unsafe_nMissingParameters(cgid) > 0;
+}
+
+/** Return the AtomIndexes of the atoms in the residue represented by 'resinfo'
+    that are missing parameters. This does not check whether this is a valid residue */
+template<class Param>
+QSet<AtomIndex> AtomTableT<Param>::_unsafe_missingParameters(
+                                                  const ResidueInfo &resinfo) const
+{
+    QSet<AtomIndex> missing;
 
     int nats = resinfo.nAtoms();
-    int nparams = 0;
-    
-    //count up the number of assigned parameters in this residue
-    for (int i=0; i<nats; ++i)
+
+    for (AtomID i(0); i<nats; ++i)
     {
-        if (params.assignedParameter( resinfo[i] ))
-            nparams++;
+        if ( not this->_unsafe_assignedParameter(resinfo[i]) )
+            missing.insert( resinfo.atom(i) );
     }
-    
-    return nparams;
+
+    return missing;
 }
 
-/** Return the number of assigned parameters in the CutGroup with ID 'cgid'.
-    This will be equal to nAtoms(cgid) if all of the parameters in this 
-    CutGroup have been assigned.
-
-    This throws an exception if this CutGroup is not in the molecule.ID()
-    
-    \throw SireMol::missing_cutgroup
-*/
+/** Return the AtomIndexes of the atoms in the CutGroup with ID == cgid
+    that are missing parameters. This does not check whether this is a valid
+    CutGroupID */
 template<class Param>
-SIRE_INLINE_TEMPLATE
-int AtomTableT<Param>::nParameters(CutGroupID cgid) const
+QSet<AtomIndex> AtomTableT<Param>::_unsafe_missingParameters(CutGroupID cgid) const
 {
-    return params.nParameters(cgid);
+    int nats = info().nAtoms(cgid);
+
+    QSet<AtomIndex> missing;
+
+    for (AtomID i(0); i<nats; ++i)
+    {
+        CGAtomID cgatomid(cgid, i);
+
+        if (not this->_unsafe_assignedParameter(cgatomid))
+            missing.insert( info().atom(cgatomid) );
+    }
+
+    return missing;
 }
 
-/** Return the parameter at index 'cgid' - this will throw
-    an exception if this is an invalid index, or if 
-    the parameter has not yet been assigned.
+/** Internal function used to return the parameter for the atom at
+    index 'cgatomid' - this does not check that this is a valid index,
+    nor does it check whether or not the parameter actually exists! */
+template<class Param>
+Param AtomTableT<Param>::_unsafe_parameter(const CGAtomID &cgatomid) const
+{
+    return params.constData()[cgatomid.cutGroupID()]   //QHash<AtomID,Param>
+                 .value(cgatomid.atomID());
+}
+
+/** Internal function used to return the AtomParameter for the atom at
+    index 'cgatomid' - this does not check that this is a valid index,
+    nor does it check whether or not the parameter actually exists! */
+template<class Param>
+AtomParameter<Param> AtomTableT<Param>::_unsafe_atomParameter(
+                                              const CGAtomID &cgatomid) const
+{
+    return AtomParameter<Param>( info().atom(cgatomid),
+                                 this->_unsafe_parameter(cgatomid) );
+}
+
+/** Internal function used to return the AtomParameter for the atom at
+    index 'cgatomid' if it has been assigned, or 'defaultValue' if 
+    it has not. */
+template<class Param>
+AtomParameter<Param> AtomTableT<Param>::_unsafe_atomParameter(
+                                              const CGAtomID &cgatomid,
+                                              const Param &defaultValue) const
+{
+    const QHash<AtomID,Param> &cgparams = params.constData()[cgatomid.cutGroupID()];
     
+    return AtomParameter<Param>( info().atom(cgatomid),
+                                 cgparams.value(cgatomid.atomID(), defaultValue) );
+}
+
+/** Return an array of all of the parameters in the residue described by
+    'resinfo'. This does not check if this residue is valid, nor if the
+    parameters actually exist! The array is in AtomID order */
+template<class Param>
+QVector<Param> AtomTableT<Param>::_unsafe_parameters(
+                                              const ResidueInfo &resinfo) const
+{
+    int nats = resinfo.nAtoms();
+
+    QVector<Param> resparams;
+    resparams.reserve(nats);
+
+    for (AtomID i(0); i<nats; ++i)
+        resparams.append( this->_unsafe_parameter(resinfo[i]) );
+
+    return resparams;
+}
+
+/** Return an array of all of the parameters of the atoms in the CutGroup
+    with ID == cgid. This does not check whether this is a valid CutGroupID,
+    nor whether the parameters actually exist. The array is in AtomID order. */
+template<class Param>
+QVector<Param> AtomTableT<Param>::_unsafe_parameters(CutGroupID cgid) const
+{
+    int nats = info().nAtoms(cgid);
+
+    const QHash<AtomID,Param> &paramhash = params.constData()[cgid];
+
+    QVector<Param> cgparams;
+    cgparams.reserve(nats);
+
+    for (AtomID i(0); i<nats; ++i)
+        cgparams.append( paramhash.value(i) );
+
+    return cgparams;
+}
+
+/** Return an array of the AtomParameters of the atoms in the residue
+    described by 'resinfo' - this does not check whether this residue is
+    valid, nor does it check whether the parameters actually exist. The
+    array is in AtomID order. */
+template<class Param>
+QVector< AtomParameter<Param> >
+AtomTableT<Param>::_unsafe_atomParameters(const ResidueInfo &resinfo) const
+{
+    int nats = resinfo.nAtoms();
+
+    QVector< AtomParameter<Param> > resparams;
+    resparams.reserve(nats);
+
+    for (AtomID i(0); i<nats; ++i)
+        resparams.append( this->_unsafe_atomParameter(resinfo[i]) );
+
+    return resparams;
+}
+
+/** Return an array of the Atom parameters for the atoms in the CutGroup
+    with ID == cgid. This does not check whether this is a valid CutGroupID,
+    nor does it check whether the parameters actually exist. The array
+    is in AtomID order. */
+template<class Param>
+QVector< AtomParameter<Param> >
+AtomTableT<Param>::_unsafe_atomParameters(CutGroupID cgid) const
+{
+    const AtomInfoGroup infogroup = info().atomGroup(cgid);
+
+    const QHash<AtomID,Param> &paramhash = params.constData()[cgid];
+
+    int nats = infogroup.nAtoms();
+
+    QVector< AtomParameter<Param> > cgparams;
+    cgparams.reserve(nats);
+
+    for (AtomID i(0); i<nats; ++i)
+        cgparams.append( AtomParameter<Param>(infogroup[i], paramhash[i]) );
+
+    return cgparams;
+}
+
+/** Return the parameter group for the CutGroup with ID == cgid. This
+    does not check whether or not this is a valid CutGroupID, nor does
+    it check whether the parameters actually exist. */
+template<class Param>
+ParameterGroup<Param> AtomTableT<Param>::_unsafe_parameterGroup(CutGroupID cgid) const
+{
+    return ParameterGroup<Param>( this->info().atomGroup(cgid),
+                                  this->_unsafe_parameters(cgid) );
+}
+
+/** Clear the parameter for the atom at index 'cgatomid'. This does
+    not check whether this is a valid index. */
+template<class Param>
+void AtomTableT<Param>::_unsafe_clear(const CGAtomID &cgatomid)
+{
+    //check that the parameter is assigned to prevent making an
+    //unnecessary copy if the parameter is not assigned.
+    if ( this->_unsafe_assignedParameter(cgatomid) )
+        params[cgatomid.cutGroupID()].remove(cgatomid.atomID());
+}
+
+/** Clear all parameters for the residue described by 'resinfo'. This does
+    not check whether this is a valid residue. */
+template<class Param>
+void AtomTableT<Param>::_unsafe_clear(const ResidueInfo &resinfo)
+{
+    int nats = resinfo.nAtoms();
+
+    for (AtomID i(0); i<nats; ++i)
+        this->_unsafe_clear( resinfo[i] );
+}
+
+/** Clear all of the parameters from the CutGroup with ID == cgid.
+    This does not check whether this is valid CutGroupID */
+template<class Param>
+void AtomTableT<Param>::_unsafe_clear(CutGroupID cgid)
+{
+    if (not params.at(cgid).isEmpty())
+        params[cgid].clear();
+}
+
+template<class Param>
+void AtomTableT<Param>::_unsafe_setParameter(const CGAtomID &cgatomid,
+                                             const Param &param)
+{
+    params.data()[cgatomid.cutGroupID()].insert(cgatomid.atomID(),param);
+
+    //clear the cache of groups associated with this atom
+    this->clearCache(cgatomid.cutGroupID());
+    this->clearCache(this->info().atom(cgatomid).resNum());
+}
+
+/** Return the AtomParameter for the atom at index 'cgatomid'
+
     \throw SireMol::missing_cutgroup
     \throw SireError::invalid_index
     \throw SireDB::missing_parameter
 */
 template<class Param>
-SIRE_INLINE_TEMPLATE
-const Param& AtomTableT<Param>::at(const CGAtomID &cgid) const
+AtomParameter<Param> AtomTableT<Param>::at(const CGAtomID &cgatomid) const
 {
-    return params.at(cgid);
+    return this->_unsafe_atomParameter( this->assertHaveParameter(cgatomid) );
 }
 
-/** Return the parameter at index 'rsid' - this will throw
-    an exception if this is an invalid index, or if 
-    the parameter has not yet been assigned.
-    
+/** Return the parameter for the atom at index 'cgatomid'
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+    \throw SireDB::missing_parameter
+*/
+template<class Param>
+AtomParameter<Param> AtomTableT<Param>::at(const CGNumAtomID &cgatomid) const
+{
+    return this->_unsafe_atomParameter( this->assertHaveParameter(cgatomid) );
+}
+
+/** Return the parameter for the atom at index 'resatomid'
+
     \throw SireMol::missing_residue
     \throw SireError::invalid_index
     \throw SireDB::missing_parameter
 */
 template<class Param>
-SIRE_INLINE_TEMPLATE
-const Param& AtomTableT<Param>::at(const ResNumAtomID &rsid) const
+AtomParameter<Param> AtomTableT<Param>::at(const ResNumAtomID &resatomid) const
 {
-    return params.at( this->info()[rsid] );
+    return this->_unsafe_atomParameter( this->assertHaveParameter(resatomid) );
 }
 
-/** Return the parameter of the atom 'atom' - this will
-    throw an exception if this atom is not in the molecule,
-    or if its parameter has yet to be assigned.
-    
+/** Return the parameter for the atom at index 'resatomid'
+
+    \throw SireError::invalid_index
+    \throw SireDB::missing_parameter
+*/
+template<class Param>
+AtomParameter<Param> AtomTableT<Param>::at(const ResIDAtomID &resatomid) const
+{
+    return this->_unsafe_atomParameter( this->assertHaveParameter(resatomid) );
+}
+
+/** Return the parameter for the atom with AtomIndex 'atom'
+
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
     \throw SireDB::missing_parameter
 */
 template<class Param>
-SIRE_INLINE_TEMPLATE
-const Param& AtomTableT<Param>::at(const AtomIndex &atom) const
+AtomParameter<Param> AtomTableT<Param>::at(const AtomIndex &atom) const
 {
-    return params.at( this->info()[atom] );
+    return this->_unsafe_atomParameter( this->assertHaveParameter(atom) );
 }
 
-/** Return the parameter at index 'cgid' - this will throw
-    an exception if this is an invalid index, or if 
-    the parameter has not yet been assigned.
-    
+/** Return the parameter for the atom at index 'atomid'
+
+    \throw SireError::invalid_index
+    \throw SireDB::missing_parameter
+*/
+template<class Param>
+AtomParameter<Param> AtomTableT<Param>::at(AtomID atomid) const
+{
+    return this->_unsafe_atomParameter( this->assertHaveParameter(atomid) );
+}
+
+/** Return the AtomParameter for the atom at index 'cgatomid'
+
     \throw SireMol::missing_cutgroup
     \throw SireError::invalid_index
     \throw SireDB::missing_parameter
 */
 template<class Param>
-SIRE_INLINE_TEMPLATE
-const Param& AtomTableT<Param>::operator[](const CGAtomID &cgid) const
+AtomParameter<Param> AtomTableT<Param>::operator[](const CGAtomID &cgatomid) const
 {
-    return this->at(cgid);
+    return this->at(cgatomid);
 }
 
-/** Return the parameter at index 'rsid' - this will throw
-    an exception if this is an invalid index, or if 
-    the parameter has not yet been assigned.
-    
+/** Return the parameter for the atom at index 'cgatomid'
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+    \throw SireDB::missing_parameter
+*/
+template<class Param>
+AtomParameter<Param> AtomTableT<Param>::operator[](const CGNumAtomID &cgatomid) const
+{
+    return this->at(cgatomid);
+}
+
+/** Return the parameter for the atom at index 'resatomid'
+
     \throw SireMol::missing_residue
     \throw SireError::invalid_index
     \throw SireDB::missing_parameter
 */
 template<class Param>
-SIRE_INLINE_TEMPLATE
-const Param& AtomTableT<Param>::operator[](const ResNumAtomID &rsid) const
+AtomParameter<Param> AtomTableT<Param>::operator[](const ResNumAtomID &resatomid) const
 {
-    return this->at(rsid);
+    return this->at(resatomid);
 }
 
-/** Return the parameter of the atom 'atom' - this will
-    throw an exception if this atom is not in the molecule,
-    or if its parameter has yet to be assigned.
-    
+/** Return the parameter for the atom at index 'resatomid'
+
+    \throw SireError::invalid_index
+    \throw SireDB::missing_parameter
+*/
+template<class Param>
+AtomParameter<Param> AtomTableT<Param>::operator[](const ResIDAtomID &resatomid) const
+{
+    return this->at(resatomid);
+}
+
+/** Return the parameter for the atom with AtomIndex 'atom'
+
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
     \throw SireDB::missing_parameter
 */
 template<class Param>
-SIRE_INLINE_TEMPLATE
-const Param& AtomTableT<Param>::operator[](const AtomIndex &atom) const
+AtomParameter<Param> AtomTableT<Param>::operator[](const AtomIndex &atom) const
 {
     return this->at(atom);
 }
 
-/** Return a modifiable reference to the parameter for the atom
-    with index 'cgid'. This will create a default-constructed
-    parameter if it has yet to be assigned. This will throw
-    an exception if this atom does not exist in the molecule.
-    
+/** Return the parameter for the atom at index 'atomid'
+
+    \throw SireError::invalid_index
+    \throw SireDB::missing_parameter
+*/
+template<class Param>
+AtomParameter<Param> AtomTableT<Param>::operator[](AtomID atomid) const
+{
+    return this->at(atomid);
+}
+
+/** Return the value of the parameter of the atom at index 'cgatomid'.
+    This will return the default constructed value if it has not yet been
+    assigned.
+
     \throw SireMol::missing_cutgroup
     \throw SireError::invalid_index
 */
 template<class Param>
-SIRE_INLINE_TEMPLATE
-Param& AtomTableT<Param>::operator[](const CGAtomID &cgid)
+AtomParameter<Param> AtomTableT<Param>::value(const CGAtomID &cgatomid) const
 {
-    return params[cgid];
+    return this->_unsafe_atomParameter(cgatomid);
 }
 
-/** Return a modifiable reference to the parameter for the atom
-    with index 'rsid'. This will create a default-constructed
-    parameter if it has yet to be assigned. This will throw
-    an exception if this atom does not exist in the molecule.
-    
-    \throw SireMol::missing_residue
-    \throw SireError::invalid_index
-*/
-template<class Param>
-SIRE_INLINE_TEMPLATE
-Param& AtomTableT<Param>::operator[](const ResNumAtomID &rsid)
-{
-    return params[ this->info()[rsid] ];
-}
+/** Return the value of the parameter of the atom at index 'cgatomid'.
+    This will return the default constructed value if it has not yet been
+    assigned.
 
-/** Return a modifiable reference to the parameter for the atom
-    'atom'. This will create a default-constructed
-    parameter if it has yet to be assigned. This will throw
-    an exception if this atom does not exist in the molecule.
-    
-    \throw SireMol::missing_residue
-    \throw SireMol::missing_atom
-*/
-template<class Param>
-SIRE_INLINE_TEMPLATE
-Param& AtomTableT<Param>::operator[](const AtomIndex &atom)
-{
-    return params[ this->info()[atom] ];
-}
-
-/** Return the value of the parameter for the atom at index 'cgid'.
-    This will return a default-constructed parameter if it has
-    yet to be assigned. This will throw an exception if this atom
-    is not in the molecule.
-    
     \throw SireMol::missing_cutgroup
     \throw SireError::invalid_index
 */
 template<class Param>
-SIRE_INLINE_TEMPLATE
-Param AtomTableT<Param>::value(const CGAtomID &cgid) const
+AtomParameter<Param> AtomTableT<Param>::value(const CGNumAtomID &cgatomid) const
 {
-    return params.value(cgid);
+    return this->_unsafe_atomParameter( info().at(cgatomid) );
 }
 
-/** Return the value of the parameter for the atom at index 'rsid'.
-    This will return a default-constructed parameter if it has
-    yet to be assigned. This will throw an exception if this atom
-    is not in the molecule.
-    
+/** Return the value of the parameter of the atom at index 'resatomid'.
+    This will return the default constructed value if it has not yet been
+    assigned.
+
     \throw SireMol::missing_residue
     \throw SireError::invalid_index
 */
 template<class Param>
-SIRE_INLINE_TEMPLATE
-Param AtomTableT<Param>::value(const ResNumAtomID &rsid) const
+AtomParameter<Param> AtomTableT<Param>::value(const ResNumAtomID &resatomid) const
 {
-    return params.value( this->info()[rsid] );
+    return this->_unsafe_atomParameter( info().at(resatomid) );
 }
 
-/** Return the value of the parameter for the atom 'atom'.
-    This will return a default-constructed parameter if it has
-    yet to be assigned. This will throw an exception if this atom
-    is not in the molecule.
-    
+/** Return the value of the parameter of the atom at index 'resatomid'.
+    This will return the default constructed value if it has not yet been
+    assigned.
+
+    \throw SireError::invalid_index
+*/
+template<class Param>
+AtomParameter<Param> AtomTableT<Param>::value(const ResIDAtomID &resatomid) const
+{
+    return this->_unsafe_atomParameter( info().at(resatomid) );
+}
+
+/** Return the value of the parameter of the atom with AtomIndex 'atom'.
+    This will return the default constructed value if it has not yet been
+    assigned.
+
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
 template<class Param>
-SIRE_INLINE_TEMPLATE
-Param AtomTableT<Param>::value(const AtomIndex &atom) const
+AtomParameter<Param> AtomTableT<Param>::value(const AtomIndex &atom) const
 {
-    return params.value( this->info()[atom] );
+    return this->_unsafe_atomParameter( info().at(atom) );
 }
 
-/** Return the value of the parameter for the atom at index 'cgid'.
-    This will return a 'defaultValue' if it has yet to be assigned. 
-    This will throw an exception if this atom is not in the molecule.
-    
+/** Return the value of the parameter of the atom at index 'atomid'.
+    This will return the default constructed value if it has not yet been
+    assigned.
+
+    \throw SireError::invalid_index
+*/
+template<class Param>
+AtomParameter<Param> AtomTableT<Param>::value(AtomID atomid) const
+{
+    return this->_unsafe_atomParameter( info().at(atomid) );
+}
+
+/** Return the value of the parameter of the atom at index 'cgatomid'.
+    This will return the defaultValue if it has not yet been
+    assigned.
+
     \throw SireMol::missing_cutgroup
     \throw SireError::invalid_index
 */
 template<class Param>
-SIRE_INLINE_TEMPLATE
-Param AtomTableT<Param>::value(const CGAtomID &cgid, const Param &defaultValue) const
+AtomParameter<Param> AtomTableT<Param>::value(const CGAtomID &cgatomid,
+                                              const Param &defaultValue) const
 {
-    return params.value( cgid, defaultValue );
+    return this->_unsafe_atomParameter(cgatomid, defaultValue);
 }
 
-/** Return the value of the parameter for the atom at index 'rsid'.
-    This will return a 'defaultValue' if it has yet to be assigned. 
-    This will throw an exception if this atom is not in the molecule.
-    
+/** Return the value of the parameter of the atom at index 'cgatomid'.
+    This will return the defaultValue if it has not yet been
+    assigned.
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+template<class Param>
+AtomParameter<Param> AtomTableT<Param>::value(const CGNumAtomID &cgatomid,
+                                              const Param &defaultValue) const
+{
+    return this->_unsafe_atomParameter( info().at(cgatomid),
+                                    defaultValue );
+}
+
+/** Return the value of the parameter of the atom at index 'resatomid'.
+    This will return the defaultValue if it has not yet been
+    assigned.
+
     \throw SireMol::missing_residue
     \throw SireError::invalid_index
 */
 template<class Param>
-SIRE_INLINE_TEMPLATE
-Param AtomTableT<Param>::value(const ResNumAtomID &rsid, const Param &defaultValue) const
+AtomParameter<Param> AtomTableT<Param>::value(const ResNumAtomID &resatomid,
+                                              const Param &defaultValue) const
 {
-    return params.value( this->info()[rsid], defaultValue );
+    return this->_unsafe_atomParameter( info().at(resatomid),
+                                    defaultValue );
 }
 
-/** Return the value of the parameter for the atom 'atom'.
-    This will return a 'defaultValue' if it has yet to be assigned. 
-    This will throw an exception if this atom is not in the molecule.
-    
+/** Return the value of the parameter of the atom at index 'resatomid'.
+    This will return the defaultValue if it has not yet been
+    assigned.
+
+    \throw SireError::invalid_index
+*/
+template<class Param>
+AtomParameter<Param> AtomTableT<Param>::value(const ResIDAtomID &resatomid,
+                                              const Param &defaultValue) const
+{
+    return this->_unsafe_atomParameter( info().at(resatomid),
+                                    defaultValue );
+}
+
+/** Return the value of the parameter of the atom with AtomIndex 'atom'.
+    This will return the defaultValue if it has not yet been
+    assigned.
+
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
 template<class Param>
-SIRE_INLINE_TEMPLATE
-Param AtomTableT<Param>::value(const AtomIndex &atom, const Param &defaultValue) const
+AtomParameter<Param> AtomTableT<Param>::value(const AtomIndex &atom,
+                                              const Param &defaultValue) const
 {
-    return params.value( this->info()[atom], defaultValue );
+    return this->_unsafe_atomParameter( info().at(atom),
+                                    defaultValue );
 }
 
-/** Return the parameter at index 'cgid' - this will throw
-    an exception if this is an invalid index, or if 
-    the parameter has not yet been assigned.
-    
+/** Return the value of the parameter of the atom at index 'atomid'.
+    This will return the defaultValue if it has not yet been
+    assigned.
+
+    \throw SireError::invalid_index
+*/
+template<class Param>
+AtomParameter<Param> AtomTableT<Param>::value(AtomID atomid,
+                                              const Param &defaultValue) const
+{
+    return this->_unsafe_atomParameter( info().at(atomid),
+                                    defaultValue );
+}
+
+/** Return the parameter of the atom with index 'cgatomid'
+
     \throw SireMol::missing_cutgroup
     \throw SireError::invalid_index
     \throw SireDB::missing_parameter
 */
 template<class Param>
-SIRE_INLINE_TEMPLATE
-const Param& AtomTableT<Param>::getParameter(const CGAtomID &cgid) const
+Param AtomTableT<Param>::parameter(const CGAtomID &cgatomid) const
 {
-    return this->at(cgid);
+    return this->_unsafe_parameter( this->assertHaveParameter(cgatomid) );
 }
 
-/** Return the parameter at index 'rsid' - this will throw
-    an exception if this is an invalid index, or if 
-    the parameter has not yet been assigned.
-    
+/** Return the parameter at index 'cgatomid'
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+    \throw SireDB::missing_parameter
+*/
+template<class Param>
+Param AtomTableT<Param>::parameter(const CGNumAtomID &cgatomid) const
+{
+    return this->_unsafe_parameter( this->assertHaveParameter(cgatomid) );
+}
+
+/** Return the parameter of the atom with index 'resatomid'
+
     \throw SireMol::missing_residue
     \throw SireError::invalid_index
     \throw SireDB::missing_parameter
 */
 template<class Param>
-SIRE_INLINE_TEMPLATE
-const Param& AtomTableT<Param>::getParameter(const ResNumAtomID &rsid) const
+Param AtomTableT<Param>::parameter(const ResNumAtomID &resatomid) const
 {
-    return this->at(rsid);
+    return this->_unsafe_parameter( this->assertHaveParameter(resatomid) );
 }
 
-/** Return the parameter of the atom 'atom' - this will
-    throw an exception if this atom is not in the molecule,
-    or if its parameter has yet to be assigned.
-    
+/** Return the parameter of the atom with index 'resatomid'
+
+    \throw SireError::invalid_index
+    \throw SireDB::missing_parameter
+*/
+template<class Param>
+Param AtomTableT<Param>::parameter(const ResIDAtomID &resatomid) const
+{
+    return this->_unsafe_parameter( this->assertHaveParameter(resatomid) );
+}
+
+/** Return the parameter of the atom with AtomIndex 'atom'
+
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
     \throw SireDB::missing_parameter
 */
 template<class Param>
-SIRE_INLINE_TEMPLATE
-const Param& AtomTableT<Param>::getParameter(const AtomIndex &atom) const
+Param AtomTableT<Param>::parameter(const AtomIndex &atom) const
 {
-    return this->at(atom);
+    return this->_unsafe_parameter( this->assertHaveParameter(atom) );
 }
 
-/** Set the value of the parameter for the atom with index 'cgid'
-    to 'param'. This will overwrite any existing value of the 
-    this atom's parameter. This will throw an exception if this 
-    atom is not in the molecule.
-    
+/** Return the parameter of the atom with index 'atomid'
+
+    \throw SireError::invalid_index
+    \throw SireDB::missing_parameter
+*/
+template<class Param>
+Param AtomTableT<Param>::parameter(AtomID atomid) const
+{
+    return this->_unsafe_parameter( this->assertHaveParameter(atomid) );
+}
+
+/** Set the parameter for the atom with index 'cgatomid' to 'param'
+
     \throw SireMol::missing_cutgroup
     \throw SireError::invalid_index
 */
 template<class Param>
-SIRE_INLINE_TEMPLATE
-void AtomTableT<Param>::setParameter(const CGAtomID &cgid, const Param &param)
+void AtomTableT<Param>::setParameter(const CGAtomID &cgatomid,
+                                     const Param &param)
 {
-    params.setParameter( cgid, param );
+    this->_unsafe_setParameter(cgatomid, param);
 }
 
-/** Set the value of the parameter for the atom with index 'rsid'
-    to 'param'. This will overwrite any existing value of the 
-    this atom's parameter. This will throw an exception if this 
-    atom is not in the molecule.
-    
+/** Set the parameter for the atom with index 'cgatomid' to 'param'
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+template<class Param>
+void AtomTableT<Param>::setParameter(const CGNumAtomID &cgatomid,
+                                     const Param &param)
+{
+    this->_unsafe_setParameter( info().at(cgatomid), param );
+}
+
+/** Set the parameter for the atom with index 'resatomid' to 'param'
+
     \throw SireMol::missing_residue
     \throw SireError::invalid_index
 */
 template<class Param>
-SIRE_INLINE_TEMPLATE
-void AtomTableT<Param>::setParameter(const ResNumAtomID &rsid, const Param &param)
+void AtomTableT<Param>::setParameter(const ResNumAtomID &resatomid,
+                                     const Param &param)
 {
-    params.setParameter( this->info()[rsid], param );
+    this->_unsafe_setParameter( info().at(resatomid), param );
 }
 
-/** Set the value of the parameter for the atom 'atom'
-    to 'param'. This will overwrite any existing value of the 
-    this atom's parameter. This will throw an exception if this 
-    atom is not in the molecule.
-    
+/** Set the parameter for the atom with index 'resatomid' to 'param'
+
+    \throw SireError::invalid_index
+*/
+template<class Param>
+void AtomTableT<Param>::setParameter(const ResIDAtomID &resatomid,
+                                     const Param &param)
+{
+    this->_unsafe_setParameter( info().at(resatomid), param );
+}
+
+/** Set the parameter of the atom with AtomIndex 'atom' to 'param'
+
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
 template<class Param>
-SIRE_INLINE_TEMPLATE
-void AtomTableT<Param>::setParameter(const AtomIndex &atom, const Param &param)
+void AtomTableT<Param>::setParameter(const AtomIndex &atom,
+                                     const Param &param)
 {
-    params.setParameter( this->info()[atom], param );
+    this->_unsafe_setParameter( info().at(atom), param );
 }
 
-/** Return whether or not the parameter for atom with index 'cgid'
-    has been assigned. This will throw an exception if this 
-    atom is not in the molecule.
-    
-    \throw SireMol::missing_cutgroup
+/** Set the parameter of the atom at index 'atomid' to 'param'
+
     \throw SireError::invalid_index
 */
 template<class Param>
-SIRE_INLINE_TEMPLATE
-bool AtomTableT<Param>::assignedParameter(const CGAtomID &cgid) const
+void AtomTableT<Param>::setParameter(AtomID atomid,
+                                     const Param &param)
 {
-    return params.assignedParameter(cgid);
+    this->_unsafe_setParameter( info().at(atomid), param );
 }
 
-/** Return whether or not the parameter for atom with index 'rsid'
-    has been assigned. This will throw an exception if this 
-    atom is not in the molecule.
-    
-    \throw SireMol::missing_residue
-    \throw SireError::invalid_index
-*/
-template<class Param>
-SIRE_INLINE_TEMPLATE
-bool AtomTableT<Param>::assignedParameter(const ResNumAtomID &rsid) const
-{
-    return params.assignedParameter( this->info()[rsid] );
-}
+/** Add the contents of 'table' into this table. Note that the
+    info() objects for both tables must be identical, and
+    'table' must be of type AtomTableT<Param>.
 
-/** Return whether or not the parameter for atom 'atom'
-    has been assigned. This will throw an exception if this 
-    atom is not in the molecule.
-    
-    \throw SireMol::missing_residue
-    \throw SireMol::missing_atom
-*/
-template<class Param>
-SIRE_INLINE_TEMPLATE
-bool AtomTableT<Param>::assignedParameter(const AtomIndex &atom) const
-{
-    return params.assignedParameter( this->info()[atom] );
-}
-
-/** Return whether or not there are any missing parameters */
-template<class Param>
-SIRE_INLINE_TEMPLATE
-bool AtomTableT<Param>::hasMissingParameters() const
-{
-    return params.hasMissingParameters();
-}
-
-/** Return whether or not there are any missing parameters in 
-    residue 'resnum'. This will throw an exception if this 
-    residue is not in the molecule.
-    
-    \throw SireMol::missing_residue
-*/
-template<class Param>
-SIRE_OUTOFLINE_TEMPLATE
-bool AtomTableT<Param>::hasMissingParameters(ResNum resnum) const
-{
-    const ResidueCGInfo &resinfo = this->info().residue(resnum);
-    
-    //loop over each atom in the residue and check that 
-    //its parameter has been assigned
-    int nats = resinfo.nAtoms();
-    for (int i=0; i<nats; ++i)
-    {
-        if (not params.assignedParameter(resinfo[i]))
-            return false;
-    }
-    
-    return true;
-}
-
-/** Return whether or not there are any missing parameters in 
-    the CutGroup with ID 'cgid'. This will throw an exception 
-    if this CutGroup is not in this molecule.
-    
-    \throw SireMol::missing_cutgroup
-*/
-template<class Param>
-SIRE_INLINE_TEMPLATE
-bool AtomTableT<Param>::hasMissingParameters(CutGroupID cgid) const
-{
-    return params.hasMissingParameters(cgid);
-}
-
-/** Return the set of all atoms that are missing parameters 
-    in the molecule. This will return an empty set if there are 
-    no missing parameters. */
-template<class Param>
-SIRE_INLINE_TEMPLATE
-QSet<AtomIndex> AtomTableT<Param>::missingParameters() const
-{
-    return this->atoms( params.missingParameters() );
-}
-
-/** Return the set of all atoms that are missing parameters 
-    in residue 'resnum'. This will return an empty set if there are 
-    no missing parameters. 
-  
-    This will throw an exception if this residue is not in the 
-    molecule.
-    
-    \throw SireMol::missing_residue
-*/
-template<class Param>
-SIRE_OUTOFLINE_TEMPLATE
-QSet<AtomIndex> AtomTableT<Param>::missingParameters(ResNum resnum) const
-{
-    const ResidueCGInfo &resinfo = this->info().residue(resnum);
-    
-    int nats = resinfo.nAtoms();
-    QSet<AtomIndex> atms;
-    
-    //loop over all atoms in the residue and find those with 
-    //missing parameters
-    for (int i=0; i<nats; ++i)
-    {
-        if ( not params.assignedParameter( resinfo[i] ) )
-            atms.insert(resinfo.atom(i));
-    }
-    
-    return atms;
-}
-
-/** Return the set of atoms with missing parameters in the CutGroup 
-    with ID 'cgid'. This will return an empty set if there are 
-    no missing parameters.
-    
-    This will throw an exception if this cutgroup is not in the 
-    molecule.
-    
-    \throw SireMol::missing_cutgroup
-*/
-template<class Param>
-SIRE_INLINE_TEMPLATE
-QSet<AtomIndex> AtomTableT<Param>::missingParameters(CutGroupID cgid) const
-{
-    return this->atoms( params.missingParameters(cgid) );
-}
-
-/** Add the parameters from 'table' to this table. Note that 'table' must
-    be of the type AtomTableT<Param> and that it must be compatible with 
-    this table or else an exception will be thrown
-    
-    \throw SireError::invalid_cast
     \throw SireError::incompatible_error
+    \throw SireError::invalid_cast
 */
 template<class Param>
-SIRE_OUTOFLINE_TEMPLATE
 void AtomTableT<Param>::add(const TableBase &table)
 {
-    const AtomTableT<Param> *param_table = dynamic_cast<const AtomTableT<Param>*>(&table);
-    
-    //is the table of the correct type?
-    if (not param_table)
-        throw SireError::invalid_cast(QObject::tr(
-                "Could not cast the table of type \"%1\" to the required type \"%2\"")
-                    .arg(table.what()).arg(this->what()), CODELOC);
+    //is the table of the right type?
+    if (not table.isA< AtomTableT<Param> >())
+        throw SireError::invalid_cast( QObject::tr(
+                  "Cannot cast from a table of type \"%1\" to a table of "
+                  "type \"%2\".")
+                      .arg(table.what()).arg(this->what()), CODELOC );
 
-    //are the tables compatible?
-    if (this->info() != param_table->info())
-        throw SireError::incompatible_error(QObject::tr(
-                "Could not add the parameters from a %1 as it is incompatible with "
-                "this table. (this->info() != table.info())")
-                    .arg(this->what()), CODELOC);
-                    
-    //is this table empty?
-    if (params.nParameters() == 0)
+    const AtomTableT<Param> &table_t = table.asA< AtomTableT<Param> >();
+
+    //is this the same object?
+    if (&table_t == this)
+        return;
+
+    //are the info() objects identical?
+    if (info() != table_t.info())
+        throw SireError::incompatible_error( QObject::tr(
+                "Cannot combine the table of type \"%1\", for the molecule "
+                "\"%2\", with the table of type \"%3\", for the molecule "
+                "\"%4\", as the info() objects are not identical.")
+                    .arg(this->what()).arg(info().name())
+                    .arg(table_t.what()).arg(table_t.info().name()), CODELOC );
+
+
+    //run through each of the parameters in 'table' and add them to
+    //this table if they have been set
+    int ncg = this->info().nCutGroups();
+
+    for (CutGroupID cgid(0); cgid<ncg; ++cgid)
     {
-        //straight copy the parameters from the other table to this table
-        params = param_table->params;
-    }
-    else
-    {
-        //ok - the table is of the correct type and is compatible. Loop
-        //through every parameter in the table and add it to this table
-        const QSet<CutGroupID> &cgroups = param_table->cutGroupIDs();
-    
-        for (QSet<CutGroupID>::const_iterator it = cgroups.begin();
-             it != cgroups.end();
-             ++it)
+        int nats = this->info().nAtoms(cgid);
+
+        for (AtomID i(0); i<nats; ++i)
         {
-            int natoms = param_table->nAtoms( *it );
-        
-            for (int i=0; i<natoms; ++i)
-            {
-                CGAtomID cgatmid( *it, i );
-                
-                if (param_table->assignedParameter(cgatmid))
-                    this->setParameter( cgatmid, param_table->getParameter(cgatmid) );
-            }
+            CGAtomID cgatomid(cgid,i);
+
+            if (table_t.assignedParameter(cgatomid))
+                this->setParameter(cgatomid, table_t.parameter(cgatomid));
         }
     }
 }
 
-/** Clear all of the parameters from this table - note that this doesn't
-    clear the atoms - it just clears the parameters. */
-template<class Param>
-SIRE_INLINE_TEMPLATE
-void AtomTableT<Param>::clear()
-{
-    params.clear();
-}
-
-/** Clear the parameter for the atom with index 'cgid'
+/** Return the parameter group for the CutGroup with ID == cgid
 
     \throw SireMol::missing_cutgroup
-    \throw SireError::invalid_index
-*/
-template<class Param>
-SIRE_INLINE_TEMPLATE
-void AtomTableT<Param>::clear(const CGAtomID &cgid)
-{
-    params.clear(cgid);
-}
-
-/** Clear the parameter for the atom with index 'cgid'
-
-    \throw SireMol::missing_residue
-    \throw SireError::invalid_index
-*/
-template<class Param>
-SIRE_INLINE_TEMPLATE
-void AtomTableT<Param>::clear(const ResNumAtomID &rsid)
-{
-    params.clear( this->info()[rsid] );
-}
-
-/** Clear the parameter for the atom 'atom'.
-
-    \throw SireMol::missing_residue
-    \throw SireMol::missing_atom
-*/
-template<class Param>
-SIRE_INLINE_TEMPLATE
-void AtomTableT<Param>::clear(const AtomIndex &atom)
-{
-    params.clear( this->info()[atom] );
-}
-
-/** Clear all of the parameters for the atoms in residue 'resnum' 
-
-    \throw SireMol::missing_residue
-*/
-template<class Param>
-SIRE_OUTOFLINE_TEMPLATE
-void AtomTableT<Param>::clear(ResNum resnum)
-{
-    const ResidueCGInfo &resinfo = this->info().residue(resnum);
-    
-    int nats = resinfo.nAtoms();
-    for (int i=0; i<nats; ++i)
-        params.clear( resinfo[i] );
-}
-
-/** Clear all of the parameters for the atoms in the CutGroup with
-    ID == cgid.
-    
-    \throw SireMol::missing_cutgroup
-*/
-template<class Param>
-SIRE_INLINE_TEMPLATE
-void AtomTableT<Param>::clear(CutGroupID cgid)
-{
-    params.clear(cgid);
-}
-
-/** Return a vector of all of the parameters in the table. The parameters
-    will be returned in the same order as the corresponding atoms that
-    are returned by AtomTable::atoms() 
-    
-    This will throw an exception if any of the parameters in the molecule
-    have not yet been assigned.
-    
     \throw SireDB::missing_parameter
 */
 template<class Param>
-SIRE_OUTOFLINE_TEMPLATE
+ParameterGroup<Param> AtomTableT<Param>::parameterGroup(CutGroupID cgid) const
+{
+    const AtomInfoGroup &atomgroup = info().at(cgid);
+
+    //is there a cached copy?
+    if (groupcache.contains(cgid))
+        return ParameterGroup<Param>( atomgroup, groupcache[cgid] );
+    else
+    {
+        //we need to buid the group
+        return ParameterGroup<Param>( atomgroup, this->parameters() );
+    }
+}
+
+/** Return an array of all of the parameter groups in this molecule.
+
+    \throw SireDB::missing_parameter
+*/
+template<class Param>
+QVector< ParameterGroup<Param> > AtomTableT<Param>::parameterGroups() const
+{
+    int ncg = info().nCutGroups();
+
+    QVector< ParameterGroup<Param> > groups;
+    groups.reserve(ncg);
+
+    for (CutGroupID cgid(0); cgid < ncg; ++cgid)
+        groups.append( this->parameterGroup(cgid) );
+
+    return groups;
+}
+
+/** Return the parameter groups for the CutGroups whose IDs are in 'cgids'
+
+    \throw SireMol::missing_cutgroup
+    \throw SireDB::missing_parameter
+*/
+template<class Param>
+QHash< CutGroupID,ParameterGroup<Param> >
+AtomTableT<Param>::parameterGroups( const QSet<CutGroupID> &cgids ) const
+{
+    QHash< CutGroupID,ParameterGroup<Param> > groups;
+    groups.reserve(cgids.count());
+
+    for (QSet<CutGroupID>::const_iterator it = cgids.begin();
+         it != cgids.end();
+         ++it)
+    {
+        groups.insert(*it, this->parameterGroup(*it));
+    }
+
+    return groups;
+}
+
+/** Return the parameter groups for the CutGroups whose numbers are in 'cgnums'
+
+    \throw SireMol::missing_cutgroup
+    \throw SireDB::missing_parameter
+*/
+template<class Param>
+QHash< CutGroupNum,ParameterGroup<Param> >
+AtomTableT<Param>::parameterGroups( const QSet<CutGroupNum> &cgnums) const
+{
+    QHash< CutGroupNum,ParameterGroup<Param> > groups;
+    groups.reserve(cgnums.count());
+
+    for (QSet<CutGroupNum>::const_iterator it = cgnums.begin();
+         it != cgnums.end();
+         ++it)
+    {
+        groups.insert( *it, this->parameterGroup(info().cutGroupID(*it)) );
+    }
+
+    return groups;
+}
+
+/** Return an array of all of the parameters in this table, in AtomID order
+
+    \throw SireDB::missing_parameter
+*/
+template<class Param>
 QVector<Param> AtomTableT<Param>::parameters() const
 {
     QVector<Param> allparams;
-    allparams.reserve( this->nAtoms() );
-    
-    //append all of the parameters for each CutGroup in turn
-    QVector<CutGroupID> cgroups = this->orderedCutGroupIDs();
-    const CutGroupID *array = cgroups.constData();
-    
-    int ncg = cgroups.count();
-    for (int i=0; i<ncg; ++i)
-    {
-        allparams += params.parameters( array[i].index() );
-    }
-    
+
+    int nats = info().nAtoms();
+
+    allparams.reserve(nats);
+
+    for (AtomID i(0); i<nats; ++i)
+        allparams.append( this->parameter(i) );
+
     return allparams;
 }
 
-/** Return a vector of all of the parameters in the residue with 
-    number 'resnum'. This will throw an exception if either the 
-    residue is not in this molecule, or if any of the parameters
-    in the residue have not been assigned.
-    
+/** Return an array of all of the parameter for the residue with number 'resnum',
+    in AtomID order
+
     \throw SireMol::missing_residue
-    \throw SireDB::mising_parameter
+    \throw SireDB::missing_parameter
 */
 template<class Param>
-SIRE_OUTOFLINE_TEMPLATE
 QVector<Param> AtomTableT<Param>::parameters(ResNum resnum) const
 {
-    const ResidueCGInfo &resinfo = this->info().residue(resnum);
-    
-    int nats = resinfo.nAtoms();
-    
-    QVector<Param> allparams;
-    allparams.reserve(nats);
-    
-    for (int i=0; i<nats; ++i)
+    const ResidueInfo &resinfo = info().at(resnum);
+
+    if (rescache.contains(resnum))
+        return rescache[resnum];
+    else
     {
-        allparams.append( params[ resinfo[i] ] );
+        QVector<Param> resparams;
+
+        int nats = resinfo.nAtoms();
+
+        resparams.reserve(nats);
+
+        for (AtomID i(0); i<nats; ++i)
+        {
+            resparams.append( this->parameter(resinfo[i]) );
+        }
+
+        //cache this result - breaks constness!
+        const_cast<AtomTableT<Param>&>(*this).rescache.insert(resnum, resparams);
+
+        return resparams;
     }
-    
-    return allparams;
 }
 
-/** Return a vector of all of the parameters in the CutGroup with 
-    ID 'cgid'. This will throw an exception if this CutGroup is
-    not in this molecule, or if any of the atoms in the CutGroup
-    are missing parameters.
-    
+/** Return an array of the parameters for the residue at index
+    'resid', in AtomID order
+
+    \throw SireError::invalid_index
+    \throw SireDB::missing_parameter
+*/
+template<class Param>
+QVector<Param> AtomTableT<Param>::parameters(ResID resid) const
+{
+    return this->parameters( info().residueNumber(resid) );
+}
+
+/** Return an array of the parameters for the CutGroup with
+    ID == 'cgid', in AtomID order.
+
     \throw SireMol::missing_cutgroup
     \throw SireDB::missing_parameter
 */
 template<class Param>
-SIRE_INLINE_TEMPLATE
 QVector<Param> AtomTableT<Param>::parameters(CutGroupID cgid) const
 {
-    return params.parameters(cgid);
-}
-
-/** Return a GroupedVector of all of the parameters in the residues whose
-    residue numbers are in 'resnums', indexed by ResNumAtomID. The indexes are 
-    the same as those contained in the metadata object returned by 
-    AtomTable::info(), and the parameters are in the same order as the 
-    corresponding atoms returned by AtomTable::atomsByResidue(resnums).
-
-    This will throw an exception if any of the atoms are missing
-    parameters, or if any of the residues are not in the molecule.
-    
-    \throw SireDB::missing_parameter
-    \throw SireMol::missing_residue
-*/
-template<class Param>
-SIRE_OUTOFLINE_TEMPLATE
-GroupedVector<ResNumAtomID,Param> 
-AtomTableT<Param>::parametersByResidue(const QSet<ResNum> &resnums) const
-{
-    int nres = resnums.count();
-    
-    GroupedVector<ResNumAtomID,Param> allparams;
-    allparams.reserve(nres);
-    
-    for (QSet<ResNum>::const_iterator it = resnums.constBegin();
-         it != resnums.constEnd();
-         ++it)
+    if (groupcache.contains(cgid))
+        return groupcache[cgid];
+    else
     {
-        allparams.insert( *it, this->parameters(*it) );
+        int nats = info().nAtoms(cgid);
+
+        QVector<Param> cgparams;
+        cgparams.reserve(nats);
+
+        for (AtomID i(0); i<nats; ++i)
+            cgparams.append( this->parameter(CGAtomID(cgid,i)) );
+
+        //cache this result (breaks constness of function!)
+        const_cast<AtomTableT<Param>&>(*this).groupcache.insert( cgid, cgparams );
+
+        return cgparams;
     }
-    
-    return allparams;
 }
 
-/** Return all of the parameters in the CutGroups whose ID numbers
-    are in 'cgids', sorted into a GroupedVector indexed by CGAtomID. 
-    This will use the same indexing as the metadata object returned 
-    by AtomTable::info(), and returns the same order as the atoms 
-    returned by AtomTable::atomsByCutGroup(cgids) 
-    
-    This will throw an exception if any of the atoms are missing
-    parameters, or if any of the CutGroups are not in this molecule.
-    
-    \throw SireDB::missing_parameter
-    \throw SireMol::missing_cutgroup
-*/
-template<class Param>
-SIRE_OUTOFLINE_TEMPLATE
-GroupedVector<CGAtomID,Param> 
-AtomTableT<Param>::parametersByCutGroup(const QSet<CutGroupID> &cgids) const
-{
-    GroupedVector<CGAtomID,Param> allparams;
-    allparams.reserve(cgids.count());
-    
-    for (QSet<CutGroupID>::const_iterator it = cgids.begin();
-         it != cgids.end();
-         ++it)
-    {
-        allparams.insert( *it, params.parameters(*it) );
-    }
-    
-    return allparams;
-}
+/** Return an array of the parameters for the atoms in the CutGroup
+    with number 'cgnum', in AtomID order.
 
-/** Return all of the parameters in this molecule sorted into a 
-    GroupedVector indexed by CGAtomID. This will use the same
-    indexing as the metadata object returned by AtomTable::info(),
-    and returns the same order as the atoms returned by 
-    AtomTable::atomsByCutGroup() 
-    
-    This will throw an exception if any of the atoms are missing
-    parameters.
-    
-    \throw SireDB::missing_parameter
-*/
-template<class Param>
-SIRE_OUTOFLINE_TEMPLATE
-GroupedVector<CGAtomID,Param> AtomTableT<Param>::parametersByCutGroup() const
-{
-    QVector<CutGroupID> cgroups = this->orderedCutGroupIDs();
-    int ngroups = cgroups.count();
-    const CutGroupID *array = cgroups.constData();
-    
-    GroupedVector<CGAtomID,Param> allparams;
-    allparams.reserve(ngroups);
-    
-    for (int i=0; i<ngroups; ++i)
-        allparams.insert( array[i], params.parameters(array[i]) );
-
-    return allparams;
-}
-
-/** Return a GroupedVector of all of the parameters in the molecule indexed
-    by ResNumAtomID. The indexes are the same as those contained in the
-    metadata object returned by AtomTable::info(), and the parameters are
-    in the same order as the corresponding atoms returned by 
-    AtomTable::atomsByResidue().
-
-    This will throw an exception if any of the atoms are missing
-    parameters.
-    
-    \throw SireDB::missing_parameter
-*/
-template<class Param>
-SIRE_INLINE_TEMPLATE
-GroupedVector<ResNumAtomID,Param> AtomTableT<Param>::parametersByResidue() const
-{
-    return parametersByResidue( this->residueNumbers() );
-}
-
-/** Copy all of the parameters intot the big vector 'param_vector', starting at
-    index 'strt'. This works identically to 'parameters()' except that it copies 
-    the parameters into an existing vector. This vector must either be sufficiently 
-    large to hold the parameters (e.g. size() >= nAtoms() + strt) or it must be 
-    empty, in which case it will be automatically dimensioned to be of the right size.
-    
-    Note that if any exceptions are thrown then 'param_vector' is not modified.
-    
-    This returns the index that is one past the index of the last parameter
-    that is copied into the array
-    
-    \throw SireError::invalid_arg
-    \throw SireDB::missing_parameter
-*/
-template<class Param>
-template<class C>
-SIRE_OUTOFLINE_TEMPLATE
-uint AtomTableT<Param>::parameters( QVector<C> &param_vector, uint strt ) const
-{
-    //are there any missing parameters? If there are then just throw an 
-    //exception
-    if (this->hasMissingParameters())
-        throw SireDB::missing_parameter(QObject::tr(
-                        "Cannot copy parameters as some are missing..."), CODELOC);
-                        
-    //is the vector of the right size?
-    uint last_index = this->nAtoms() + strt;
-    
-    if (param_vector.isEmpty())
-        //resize the vector ourselves
-        param_vector.resize(last_index);
-    else if ( uint(param_vector.size()) < last_index )
-        throw SireError::invalid_arg(QObject::tr(
-                "Cannot copy the parameters into the passed vector as it is the wrong "
-                "size. It has size() == %1, but needs to have at least size() == %2.")
-                    .arg(param_vector.size()).arg(last_index), CODELOC);
-                    
-    //ok - lets copy the parameters, one CutGroup at a time
-    //append all of the parameters for each CutGroup in turn
-    QVector<CutGroupID> cgroups = this->orderedCutGroupIDs();
-    const CutGroupID *array = cgroups.constData();
-    
-    int ncg = cgroups.count();
-    for (int i=0; i<ncg; ++i)
-    {
-        //get the parameters in this CutGroup and copy them into 
-        //the array starting at index 'strt' - this returns the 
-        //index of the start point for the next CutGroup
-        strt = params.parameters( array[i], param_vector, strt );
-    }
-    
-    return strt;
-}
-
-/** Copy all of the parameters for residue 'resnum' into the vector 'param_vector'. 
-    This works identically to 'parameters(resnum)' except that it copies the parameters 
-    into an existing vector, starting at index 'strt'. This vector must either be 
-    sufficiently large to hold the parameters (e.g. size() >= nAtoms(resnum) + strt)
-    or it must be empty, in which case it will be automatically dimensioned to 
-    be of the right size.
-    
-    Note that if any exceptions are thrown then 'param_vector' is not modified.
-    
-    This returns the index that is one past the index of the last parameter
-    that is copied into the array
-    
-    \throw SireError::invalid_arg
-    \throw SireMol::missing_residue
-    \throw SireDB::missing_parameter
-*/
-template<class Param>
-template<class C>
-SIRE_OUTOFLINE_TEMPLATE
-uint AtomTableT<Param>::parameters( ResNum resnum, QVector<C> &param_vector, 
-                                    uint strt ) const
-{
-    //are there any missing parameters? If there are then just throw an 
-    //exception
-    if (this->hasMissingParameters(resnum))
-        throw SireDB::missing_parameter(QObject::tr(
-                    "Cannot copy parameters for residue %1 as some are missing...")
-                        .arg(resnum.toString()), CODELOC);
-                        
-    //get the info object describing this residue
-    const ResidueCGInfo &resinfo = this->info().residue(resnum);
-    
-    uint nats = resinfo.nAtoms();
-    
-    //is the vector of the right size?
-    uint last_index = nats + strt;
-    
-    if (param_vector.isEmpty())
-        //resize the vector ourselves
-        param_vector.resize(last_index);
-    else if ( uint(param_vector.size()) < last_index )
-        throw SireError::invalid_arg(QObject::tr(
-                "Cannot copy the parameters into the passed vector as it is the wrong "
-                "size. It has size() == %1, but needs to have at least size() == %2.")
-                    .arg(param_vector.size()).arg(last_index), CODELOC);
-                    
-    //get a raw pointer to the array
-    C *array = param_vector.data();
-                    
-    //ok - lets copy the parameters
-    for (uint i=0; i<nats; ++i)
-    {
-        array[ i+strt ] = params[ resinfo[i] ];
-    }
-    
-    return last_index;
-}
-
-/** Copy all of the parameters for the CutGroup with ID == cgid into the vector 
-    'param_vector'. This works identically to 'parameters(cgid)' except that it 
-    copies the parameters into an existing vector, starting at index 'strt'. 
-    This vector must either be sufficiently large to hold the parameters 
-    (e.g. size() >= nAtoms(cgid) + strt) or it must be empty, in which case 
-    it will be automatically dimensioned to be of the right size.
-    
-    Note that if any exceptions are thrown then 'param_vector' is not modified.
-    
-    This returns the index that is one past the index of the last parameter
-    that is copied into the array
-    
-    \throw SireError::invalid_arg
     \throw SireMol::missing_cutgroup
     \throw SireDB::missing_parameter
 */
 template<class Param>
-template<class C>
-SIRE_OUTOFLINE_TEMPLATE
-uint AtomTableT<Param>::parameters( CutGroupID cgid, QVector<C> &param_vector, 
-                                    uint strt ) const
+QVector<Param> AtomTableT<Param>::parameters(CutGroupNum cgnum) const
 {
-    //are there any missing parameters? If there are then just throw an 
-    //exception
-    if (this->hasMissingParameters(cgid))
-        throw SireDB::missing_parameter(QObject::tr(
-                        "Cannot copy parameters for CutGroup %1 as some are missing...")
-                            .arg(cgid.toString()), CODELOC);
-                        
-    //is the vector of the right size?
-    uint last_index = this->nAtoms(cgid) + strt;
-    
-    if (param_vector.isEmpty())
-        //resize the vector ourselves
-        param_vector.resize(last_index);
-    else if ( uint(param_vector.size()) < last_index )
-        throw SireError::invalid_arg(QObject::tr(
-                "Cannot copy the parameters into the passed vector as it is the wrong "
-                "size. It has size() == %1, but needs to have at least size() == %2.")
-                    .arg(param_vector.size()).arg(last_index), CODELOC);
-                    
-    //ok - lets copy the parameters for this CutGroup
-    strt = params.parameters( cgid, param_vector, strt );
-    
-    //strt and last_index must now be equal, or my book-keeping is wrong :-)
-    BOOST_ASSERT(strt == last_index);
-
-    return last_index;
+    return this->parameters( info().cutGroupID(cgnum) );
 }
 
-/** Copy all of the parameters for the CutGroups whose IDs are in cgids 
-    into the GroupedVector 'param_vector'.  This works identically to 
-    'parametersByCutGroup(cgids)' except that it copies the parameters 
-    into an existing vector.
-    
-    This vector must either be exactly the right size to hold the parameters 
-    or it must be empty, in which case it will be automatically dimensioned 
-    to be of the right size.
-    
-    Note that if any exceptions are thrown then 'param_vector' is not modified.
-    
-    \throw SireError::invalid_arg
+/** Internal function used to return sets of parameters */
+template<class Param>
+template<class C>
+QHash< C,QVector<Param> >
+AtomTableT<Param>::_pvt_parameters( const QSet<C> &idxs ) const
+{
+    QHash< C,QVector<Param> > allparams;
+    allparams.reserve(idxs.count());
+
+    foreach ( C idx, idxs )
+    {
+        allparams.insert( idx, this->parameters(idx) );
+    }
+
+    return allparams;
+}
+
+/** Return the parameters for the atoms in the CutGroups whose IDs
+    are in 'cgids'
+
+    \throw SireMol::missing_cutgroup
     \throw SireDB::missing_parameter
 */
 template<class Param>
-template<class C>
-SIRE_OUTOFLINE_TEMPLATE
-void AtomTableT<Param>::parametersByCutGroup(const QSet<CutGroupID> &cgids,
-                                      GroupedVector<CGAtomID,C> &param_vector) const
+QHash< CutGroupID,QVector<Param> >
+AtomTableT<Param>::parameters(const QSet<CutGroupID> &cgids) const
 {
-    //are there any missing parameters? If there are then just throw an 
-    //exception
-    for (QSet<CutGroupID>::const_iterator it = cgids.begin();
-         it != cgids.end();
-         ++it)
-    {
-        if (this->hasMissingParameters(*it))
-            throw SireDB::missing_parameter(QObject::tr(
-                        "Cannot copy parameters as some are missing..."), CODELOC);
-    }
-    
-    //now check that all of the sizes are correct....
-    if (not param_vector.isEmpty())
-    {
-        for (typename GroupedVector<CGAtomID,C>::const_iterator 
-                                                it = param_vector.constBegin();
-             it != param_vector.constEnd();
-             ++it)
-        {
-            if (cgids.contains(it.key()) and it->size() != this->nAtoms(it.key()))
-                throw SireError::invalid_arg(QObject::tr("Cannot copy the parameters "
-                         "as the passed GroupedVector is of the wrong size. The vector "
-                         "for CutGroup %1 has size() == %2, while it has to have "
-                         "size() == %3.")
-                            .arg(it.key()).arg(it->size()).arg(this->nAtoms(it.key())),
-                                CODELOC);
-        }
-    }
-    
-    //everything is ok - we can now copy the parameters :-)
-    for (QSet<CutGroupID>::const_iterator it = cgids.begin();
-         it != cgids.end();
-         ++it)
-    {
-        CutGroupID cgid = *it;
-        
-        //is there space for the parameters in this CutGroup?
-        if (param_vector.contains(cgid))
-        {
-            //there is - copy in the parameters
-            params.parameters(cgid, param_vector[cgid]);
-        }
-        else
-        {
-            //create the vector and dimension it to the right size
-            QVector<C> group_params( this->nAtoms(cgid) );
-            params.parameters(cgid, group_params);
-            
-            //insert it into the GroupedVector
-            param_vector.insert(cgid, group_params);
-        }
-    }
+    return this->_pvt_parameters<CutGroupID>(cgids);
 }
 
-/** Copy all of the parameters for the residueus whose numbers are 
-    in 'resnums' into the GroupedVector 'param_vector'. 
-    This works identically to 'parametersByResidue(resnums)' except that it 
-    copies the parameters into an existing vector.
-    
-    This vector must either be exactly the right size to hold the parameters 
-    or it must be empty, in which case it will be automatically dimensioned 
-    to be of the right size.
-    
-    Note that if any exceptions are thrown then 'param_vector' is not modified.
-    
-    \throw SireError::invalid_arg
+/** Return the parameters for the atoms in the CutGroups whose numbers
+    are in 'cgnums'
+
+    \throw SireMol::missing_cutgroup
+    \throw SireDB::missing_parameter
+*/
+template<class Param>
+QHash< CutGroupNum,QVector<Param> >
+AtomTableT<Param>::parameters(const QSet<CutGroupNum> &cgnums) const
+{
+    return this->_pvt_parameters<CutGroupNum>(cgnums);
+}
+
+/** Return arrays of the parameters of atoms that are in the residues
+    whose numbers are in 'resnums'
+
     \throw SireMol::missing_residue
     \throw SireDB::missing_parameter
 */
 template<class Param>
-template<class C>
-SIRE_OUTOFLINE_TEMPLATE
-void AtomTableT<Param>::parametersByResidue(const QSet<ResNum> &resnums,
-                                    GroupedVector<ResNumAtomID,C> &param_vector) const
+QHash< ResNum,QVector<Param> >
+AtomTableT<Param>::parameters(const QSet<ResNum> &resnums) const
 {
-    //are there any missing parameters? If there are then just throw an 
-    //exception
-    for (QSet<ResNum>::const_iterator it = resnums.begin();
-         it != resnums.end();
-         ++it)
-    {
-        if (this->hasMissingParameters(*it))
-            throw SireDB::missing_parameter(QObject::tr(
-                        "Cannot copy parameters as some are missing..."), CODELOC);
-    }
-    
-    //now check that all of the sizes are correct....
-    if (not param_vector.isEmpty())
-    {
-        for (typename GroupedVector<ResNumAtomID,C>::const_iterator 
-                                                    it = param_vector.constBegin();
-             it != param_vector.constEnd();
-             ++it)
-        {
-            if (resnums.contains(it.key()) and it->size() != this->nAtoms(it.key()))
-                throw SireError::invalid_arg(QObject::tr("Cannot copy the parameters "
-                         "as the passed GroupedVector is of the wrong size. The vector "
-                         "for residue number %1 has size() == %2, while it has to have "
-                         "size() == %3.")
-                            .arg(it.key()).arg(it->size()).arg(this->nAtoms(it.key())),
-                                CODELOC);
-        }
-    }
-    
-    //everything is ok - we can now copy the parameters :-)
-    for (QSet<ResNum>::const_iterator it = resnums.begin();
-         it != resnums.end();
-         ++it)
-    {
-        ResNum resnum = *it;
-        
-        //is there space for the parameters in this residue?
-        if (param_vector.contains(resnum))
-        {
-            //there is - copy in the parameters
-            this->parameters(resnum, param_vector[resnum]);
-        }
-        else
-        {
-            //create the vector (the call to 'parameters' will
-            //correctly dimension it)
-            QVector<C> res_params;
-            this->parameters(resnum, res_params);
-            
-            //insert it into the GroupedVector
-            param_vector.insert(resnum, res_params);
-        }
-    }
+    return this->_pvt_parameters<ResNum>(resnums);
 }
 
-/** Copy all of the parameters into the GroupedVector 'param_vector'. 
-    This works identically to 'parametersByCutGroup()' except that it 
-    copies the parameters into an existing vector.
-    
-    This vector must either be exactly the right size to hold the parameters 
-    or it must be empty, in which case it will be automatically dimensioned 
-    to be of the right size.
-    
-    Note that if any exceptions are thrown then 'param_vector' is not modified.
-    
-    \throw SireError::invalid_arg
+/** Return arrays of the parameters of atoms that are in the residues
+    whose indicies are in 'resids'
+
+    \throw SireError::invalid_index
     \throw SireDB::missing_parameter
 */
 template<class Param>
-template<class C>
-SIRE_OUTOFLINE_TEMPLATE
-void AtomTableT<Param>::parametersByCutGroup( GroupedVector<CGAtomID,C> &param_vector ) const
+QHash< ResID,QVector<Param> >
+AtomTableT<Param>::parameters(const QSet<ResID> &resids) const
 {
-    //are there any missing parameters? If there are then just throw an 
-    //exception
-    if (this->hasMissingParameters())
-        throw SireDB::missing_parameter(QObject::tr(
-                        "Cannot copy parameters as some are missing..."), CODELOC);
-    
-    //now check that all of the sizes are correct....
-    if (not param_vector.isEmpty())
-    {
-        for (typename GroupedVector<CGAtomID,C>::const_iterator 
-                                        it = param_vector.constBegin();
-             it != param_vector.constEnd();
-             ++it)
-        {
-            if (it->size() != this->nAtoms(it.key()))
-                throw SireError::invalid_arg(QObject::tr("Cannot copy the parameters "
-                         "as the passed GroupedVector is of the wrong size. The vector "
-                         "for group %1 has size() == %2, while it has to have "
-                         "size() == %3.")
-                            .arg(it.key()).arg(it->size()).arg(this->nAtoms(it.key())),
-                                CODELOC);
-        }
-    }
-    
-    //everything is ok - we can now copy the parameters :-)
-    QVector<CutGroupID> cgroups = this->orderedCutGroupIDs();
-    int ngroups = cgroups.count();
-    const CutGroupID *array = cgroups.constData();
-    
-    for (int i=0; i<ngroups; ++i)
-    {
-        CutGroupID cgid = array[i];
-        
-        //is there space for the parameters for this group?
-        if (param_vector.contains(cgid))
-        {
-            //there is - copy in the parameters :-)
-            params.parameters(cgid, param_vector[cgid]);
-        }
-        else
-        {
-            //create the vector of the right size
-            QVector<C> group_params( this->nAtoms(cgid) );
-            
-            //fill it with the parameters
-            params.parameters(cgid, group_params);
-            
-            //insert it into the GroupedVector
-            param_vector.insert(cgid, group_params);
-        }
-    }
+    return this->_pvt_parameters<ResID>(resids);
 }
 
-/** Copy all of the parameters into the GroupedVector 'param_vector'. 
-    This works identically to 'parametersByResidue()' except that it 
-    copies the parameters into an existing vector.
-    
-    This vector must either be exactly the right size to hold the parameters 
-    or it must be empty, in which case it will be automatically dimensioned 
-    to be of the right size.
-    
-    Note that if any exceptions are thrown then 'param_vector' is not modified.
-    
-    \throw SireError::invalid_arg
+/** Return an array of all of the AtomParameters in this table, in
+    AtomID order.
+
     \throw SireDB::missing_parameter
 */
 template<class Param>
-template<class C>
-SIRE_OUTOFLINE_TEMPLATE
-void AtomTableT<Param>::parametersByResidue(
-                                    GroupedVector<ResNumAtomID,C> &param_vector ) const
+QVector< AtomParameter<Param> > AtomTableT<Param>::atomParameters() const
 {
-    this->parametersByResidue( this->residueNumbers(), param_vector );
+    QVector< AtomParameter<Param> > allparams;
+
+    int nats = info().nAtoms();
+
+    allparams.reserve(nats);
+
+    for (AtomID i(0); i<nats; ++i)
+    {
+        allparams.append( this->at(i) );
+    }
+
+    return allparams;
 }
 
-static const SireStream::MagicID atomtablet_magic 
+/** Return an array of all of the AtomParameters in this table for the
+    residue with number 'resnum', in AtomID order
+
+    \throw SireMol::missing_residue
+    \throw SireDB::missing_parameter
+*/
+template<class Param>
+QVector< AtomParameter<Param> >
+AtomTableT<Param>::atomParameters(ResNum resnum) const
+{
+    const ResidueInfo &resinfo = info().at(resnum);
+
+    int nats = resinfo.nAtoms();
+
+    //get the array of parameters (which could be cached)
+    QVector<Param> resparams = this->parameters(resnum);
+    const Param *paramarray = resparams.constData();
+
+    //this should always be true!
+    BOOST_ASSERT(resparams.count() == nats);
+
+    //now go through and add the AtomInfo to each parameter
+    QVector< AtomParameter<Param> > atomparams;
+    atomparams.reserve(nats);
+
+    for (AtomID i(0); i<nats; ++i)
+    {
+        atomparams.append( AtomParameter<Param>( resinfo.atom(i),
+                                                 paramarray[i] ) );
+    }
+
+    return atomparams;
+}
+
+/** Return an array of the AtomParameters for the residue at index 'resid',
+    returning the parameters in AtomID order
+
+    \throw SireError::invalid_index
+    \throw SireDB::missing_parameter
+*/
+template<class Param>
+QVector< AtomParameter<Param> >
+AtomTableT<Param>::atomParameters(ResID resid) const
+{
+    return this->atomParameters( info().residueNumber(resid) );
+}
+
+/** Return an array of the AtomParameters for the atoms in the CutGroup
+    with ID == 'cgid', in AtomID order.
+
+    \throw SireMol::missing_cutgroup
+    \throw SireDB::missing_parameter
+*/
+template<class Param>
+QVector< AtomParameter<Param> >
+AtomTableT<Param>::atomParameters(CutGroupID cgid) const
+{
+    const AtomInfoGroup &atomgroup = info().at(cgid);
+
+    int nats = atomgroup.nAtoms();
+
+    //get the array of parameters - as this may already be cached
+    QVector<Param> cgparams = this->parameters(cgid);
+    const Param *paramarray = cgparams.constData();
+
+    BOOST_ASSERT(cgparams.count() == nats);
+
+    QVector< AtomParameter<Param> > atomparams;
+    atomparams.reserve(nats);
+
+    //add these to the AtomInfo of each atom to create the
+    //AtomParameters
+    for (AtomID i(0); i<nats; ++i)
+    {
+        atomparams.append( AtomParameter<Param>( atomgroup[i], paramarray[i] ) );
+    }
+
+    return atomparams;
+}
+
+/** Return an array of the AtomParameters for the atoms in the CutGroup
+    with number 'cgnum'
+
+    \throw SireMol::missing_cutgroup
+    \throw SireDB::missing_parameter
+*/
+template<class Param>
+QVector< AtomParameter<Param> >
+AtomTableT<Param>::atomParameters(CutGroupNum cgnum) const
+{
+    return this->atomParameters( info().cutGroupID(cgnum) );
+}
+
+/** Internal function used to return the AtomParameters of groups */
+template<class Param>
+template<class C>
+QHash< C,QVector< AtomParameter<Param> > >
+AtomTableT<Param>::_pvt_atomParameters( const QSet<C> &idxs ) const
+{
+    QHash< C,QVector<AtomParameter<Param> > > allparams;
+    allparams.reserve(idxs.count());
+
+    foreach (C idx, idxs)
+    {
+        allparams.insert( idx, this->atomParameters(idx) );
+    }
+
+    return allparams;
+}
+
+/** Return arrays of the AtomParameters for the CutGroups whose
+    IDs are in 'cgids'
+
+    \throw SireMol::missing_cutgroup
+    \throw SireDB::missing_parameter
+*/
+template<class Param>
+QHash< CutGroupID,QVector< AtomParameter<Param> > >
+AtomTableT<Param>::atomParameters(const QSet<CutGroupID> &cgids) const
+{
+    return this->_pvt_atomParameters<CutGroupID>(cgids);
+}
+
+/** Return arrays of the AtomParameters for the CutGroups whose
+    numbers are in 'cgnums'
+
+    \throw SireMol::missing_cutgroup
+    \throw SireDB::missing_parameter
+*/
+template<class Param>
+QHash< CutGroupNum,QVector< AtomParameter<Param> > >
+AtomTableT<Param>::atomParameters(const QSet<CutGroupNum> &cgnums) const
+{
+    return this->_pvt_atomParameters<CutGroupNum>(cgnums);
+}
+
+/** Return arrays of the AtomParameters for the residues whose
+    numbers are in 'resnums'
+
+    \throw SireMol::missing_residue
+    \throw SireDB::missing_parameter
+*/
+template<class Param>
+QHash< ResNum,QVector< AtomParameter<Param> > >
+AtomTableT<Param>::atomParameters(const QSet<ResNum> &resnums) const
+{
+    return this->_pvt_atomParameters(resnums);
+}
+
+/** Return arrays of the AtomParameters for the residues whose
+    indicies are in 'resids'
+
+    \throw SireError::invalid_index
+    \throw SireDB::missing_parameter
+*/
+template<class Param>
+QHash< ResID,QVector< AtomParameter<Param> > >
+AtomTableT<Param>::atomParameters(const QSet<ResID> &resids) const
+{
+    return this->_pvt_atomParameters(resids);
+}
+
+static const SireStream::MagicID atomtablet_magic
                         = SireStream::getMagic("SireDB::AtomTableT");
 
 }
 
 /** Serialise an AtomTable to a binary data stream */
-template<class T>
+template<class Param>
 SIRE_OUTOFLINE_TEMPLATE
-QDataStream& operator<<(QDataStream &ds, const SireDB::AtomTableT<T> &table)
+QDataStream& operator<<(QDataStream &ds, const SireDB::AtomTableT<Param> &table)
 {
     SireStream::writeHeader(ds, SireDB::atomtablet_magic, 1)
                << table.params << static_cast<const SireDB::AtomTable&>(table);
-    
+
     return ds;
 }
 
 /** Deserialise an AtomTable from a binary data stream */
-template<class T>
+template<class Param>
 SIRE_OUTOFLINE_TEMPLATE
-QDataStream& operator>>(QDataStream &ds, SireDB::AtomTableT<T> &table)
+QDataStream& operator>>(QDataStream &ds, SireDB::AtomTableT<Param> &table)
 {
     SireStream::VersionID v = SireStream::readHeader(ds, SireDB::atomtablet_magic,
                                                      "SireDB::AtomTableT");
-                                                     
+
     if (v == 1)
     {
         ds >> table.params >> static_cast<SireDB::AtomTable&>(table);
     }
     else
         throw SireStream::version_error(v, "1", "SireDB::AtomTableT", CODELOC);
-       
+
     return ds;
 }
 

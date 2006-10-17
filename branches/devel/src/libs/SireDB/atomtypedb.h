@@ -20,13 +20,13 @@ class SIREDB_EXPORT AtomTypeDB : public AtomDB
 public:
     /** An AtomTypeDB stores AtomType objects */
     typedef AtomType parameter_type;
-    
+
     /** An AtomTypeDB will place its parameters into an AtomTypeTable */
     typedef AtomTypeTable table_type;
 
     AtomTypeDB();
     AtomTypeDB(const AtomTypeDB &other);
-    
+
     ~AtomTypeDB();
 
     /** Return the full name of this database component */
@@ -42,7 +42,7 @@ public:
 
     void addAtomType(const QString &userid, const AtomType &atomtype);
     AtomType getAtomType(const QString &userid, bool *foundtype = 0);
-    
+
     void relateAtomType(const AssertMatch<1> &matchatom, const QString &userid);
     void relateAtomType(const AssertMatch<1> &matchatom, const AtomType &atomtype);
 
@@ -52,7 +52,7 @@ public:
     AtomType getAtomType(RelateID relateid, bool *foundtype = 0);
     AtomType getAtomType(const RelateIDMap &relateids, bool *foundtype = 0);
 
-    AtomTypeTable& createTable( ParameterTable &param_table ) const;
+    void createTable( ParameterTable &param_table ) const;
 
     bool assignParameter( const AtomIndex &atom, const RelateIDMap &relateids,
                           ParameterTable &param_table );
@@ -61,10 +61,10 @@ protected:
     void initialise();
     void prepareToDump();
     void postLoad();
-    
+
     AtomType retrieveAtomType(ParamID id);
     ParamID addAtomType(const AtomType &atomtype);
-    
+
 };
 
 }

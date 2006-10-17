@@ -4,6 +4,7 @@
 #include "SireDB/errors.h"
 
 #include <QSqlQuery>
+#include <QDebug>
 
 #include "SireStream/datastream.h"
 
@@ -175,7 +176,7 @@ NameID NameDB::getName(const QString &type, const QString &name, bool add)
             ret = getNewNameID();
             
             q.exec( QString("insert into '%1' values ( %2, %3 )")
-                    .arg(tablename,format_name).arg(ret) );
+                    .arg(tablename).arg(ret).arg(format_name) );
             checkErrors(q,CODELOC);
         }
     }
@@ -193,14 +194,13 @@ NameID NameDB::getName(const QString &type, const QString &name, bool add)
             ret = q.value(0).toUInt();
         }
         else if (add)
-            //this is a new molecule name
+        {
+            //this is a new name
             ret = getNewNameID();
         
-        if (ret != 0)
-        {
             //insert this ID number into the database
             q.exec( QString("insert into '%1' values ( %2, %3 )")
-                    .arg(tablename,format_name).arg(ret) );
+                    .arg(tablename).arg(ret).arg(format_name) );
             checkErrors(q,CODELOC);
         }
     }

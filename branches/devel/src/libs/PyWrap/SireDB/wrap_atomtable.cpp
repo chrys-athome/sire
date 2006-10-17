@@ -9,24 +9,19 @@
 #include <Python.h>
 #include <boost/python.hpp>
 
-#include "SireMol/qhash_siremol.h"
-
 #include "SireDB/atomtable.h"
 
-#include "SireMol/moleculecginfo.h"
-#include "SireMol/groupedvector.hpp"
+#include "SireMol/cgatomid.h"
+#include "SireMol/cgnumatomid.h"
+#include "SireMol/resnumatomid.h"
+#include "SireMol/residatomid.h"
+
 #include "SireMol/molecule.h"
-
-#include "SireMol/wrapGroupedVector.hpp"
-
-#include "SirePy/pycontainer.hpp"
-#include "SireQt/qdatastream.hpp"
+#include "SireMol/atomindex.h"
 
 using namespace boost::python;
 
 using namespace SireMol;
-using namespace SirePy;
-using namespace SireQt;
 
 namespace SireDB
 {
@@ -34,124 +29,144 @@ namespace SireDB
 void export_AtomTable()
 {
     class_<TableBase, boost::noncopyable>("TableBase", no_init)
-          .def( "isCompatibleWith", &TableBase::isCompatibleWith )
-          
-          .def( "isEmpty", &TableBase::isEmpty )
-    
-          .def( "what", &TableBase::what )
+
+        .def( "info", (const MoleculeInfo& (TableBase::*)() const)
+                    &TableBase::info,
+                    return_value_policy<copy_const_reference>() )
+
+        .def( "isCompatibleWith", (bool (TableBase::*)(const MoleculeInfo&) const)
+                    &TableBase::isCompatibleWith)
+
+        .def( "what", (const char* (TableBase::*)() const)
+                    &TableBase::what )
+
+        .def( "isEmpty", (bool (TableBase::*)() const)
+                    &TableBase::isEmpty )
+
+        .def( "add", (void (TableBase::*)(const TableBase&))
+                    &TableBase::add )
+
+        .def( "assertCompatibleWith", (void (TableBase::*)(const Molecule&) const)
+                    &TableBase::assertCompatibleWith )
     ;
 
     class_<AtomTable, bases<TableBase>, boost::noncopyable>("AtomTable", no_init)
-        
-        .def( "__contains__", &__contains__<AtomTable,CGAtomID> )
-        .def( "__contains__", &__contains__<AtomTable,ResNumAtomID> )
-        .def( "__contains__", &__contains__<AtomTable,AtomIndex> )
-        .def( "__contains__", &__contains__<AtomTable,CutGroupID> )
-        .def( "__contains__", &__contains__<AtomTable,ResNum> )
-        
-        .def( "__rrshift__", &__rrshift__QDataStream<AtomTable>,
-                      return_internal_reference< 1, with_custodian_and_ward<1,2> >() )
-        .def( "__rlshift__", &__rlshift__QDataStream<AtomTable>,
-                      return_internal_reference< 1, with_custodian_and_ward<1,2> >() )
-    
+
+        .def( "nParameters", (int (AtomTable::*)() const)
+                    &AtomTable::nParameters )
+        .def( "nParameters", (int (AtomTable::*)(ResNum) const)
+                    &AtomTable::nParameters )
+        .def( "nParameters", (int (AtomTable::*)(ResID) const)
+                    &AtomTable::nParameters )
+        .def( "nParameters", (int (AtomTable::*)(CutGroupID) const)
+                    &AtomTable::nParameters )
+        .def( "nParameters", (int (AtomTable::*)(CutGroupNum) const)
+                    &AtomTable::nParameters )
+
+        .def( "nAssignedParameters", (int (AtomTable::*)() const)
+                    &AtomTable::nAssignedParameters )
+        .def( "nAssignedParameters", (int (AtomTable::*)(ResNum) const)
+                    &AtomTable::nAssignedParameters )
+        .def( "nAssignedParameters", (int (AtomTable::*)(ResID) const)
+                    &AtomTable::nAssignedParameters )
+        .def( "nAssignedParameters", (int (AtomTable::*)(CutGroupNum) const)
+                    &AtomTable::nAssignedParameters )
+        .def( "nAssignedParameters", (int (AtomTable::*)(CutGroupID) const)
+                    &AtomTable::nAssignedParameters )
+
+        .def( "nMissingParameters", (int (AtomTable::*)() const)
+                    &AtomTable::nMissingParameters )
+        .def( "nMissingParameters", (int (AtomTable::*)(ResNum) const)
+                    &AtomTable::nMissingParameters )
+        .def( "nMissingParameters", (int (AtomTable::*)(ResID) const)
+                    &AtomTable::nMissingParameters )
+        .def( "nMissingParameters", (int (AtomTable::*)(CutGroupNum) const)
+                    &AtomTable::nMissingParameters )
+        .def( "nMissingParameters", (int (AtomTable::*)(CutGroupID) const)
+                    &AtomTable::nMissingParameters )
+
         .def( "assignedParameter", (bool (AtomTable::*)(const CGAtomID&) const)
+                    &AtomTable::assignedParameter )
+        .def( "assignedParameter", (bool (AtomTable::*)(const CGNumAtomID&) const)
                     &AtomTable::assignedParameter )
         .def( "assignedParameter", (bool (AtomTable::*)(const ResNumAtomID&) const)
                     &AtomTable::assignedParameter )
+        .def( "assignedParameter", (bool (AtomTable::*)(const ResIDAtomID&) const)
+                    &AtomTable::assignedParameter )
         .def( "assignedParameter", (bool (AtomTable::*)(const AtomIndex&) const)
                     &AtomTable::assignedParameter )
-        
-        .def( "atom", (AtomIndex (AtomTable::*)(const CGAtomID&) const)
-                            &AtomTable::atom )
-        .def( "atom", (AtomIndex (AtomTable::*)(const ResNumAtomID&) const)
-                            &AtomTable::atom )
-    
-        .def( "atoms", (QSet<AtomIndex> (AtomTable::*)(const QSet<CGAtomID>&) const)
-                            &AtomTable::atoms )
-        .def( "atoms", (QSet<AtomIndex> (AtomTable::*)(const QSet<ResNumAtomID>&) const)
-                            &AtomTable::atoms )
-    
-        .def( "atoms", (QVector<AtomIndex> (AtomTable::*)() const)
-                            &AtomTable::atoms )
-        .def( "atoms", (QVector<AtomIndex> (AtomTable::*)(ResNum) const)
-                            &AtomTable::atoms )
-        .def( "atoms", (QVector<AtomIndex> (AtomTable::*)(CutGroupID cgid) const)
-                            &AtomTable::atoms )
-    
-        .def( "atomsByCutGroup", (GroupedVector<CGAtomID,AtomIndex> (AtomTable::*)() const)
-                            &AtomTable::atomsByCutGroup )
-        .def( "atomsByCutGroup", (GroupedVector<CGAtomID,AtomIndex> 
-                            (AtomTable::*)(const QSet<CutGroupID> &cgids) const)
-                            &AtomTable::atomsByCutGroup )
-        
-        .def( "atomsByResidue", (GroupedVector<ResNumAtomID,AtomIndex> (AtomTable::*)() const)
-                            &AtomTable::atomsByResidue )
-        .def( "atomsByResidue", (GroupedVector<ResNumAtomID,AtomIndex> 
-                            (AtomTable::*)(const QSet<ResNum> &resnums) const)
-                            &AtomTable::atomsByResidue )
-    
-        .def( "clear", (void (AtomTable::*)()) &AtomTable::clear )
-        .def( "clear", (void (AtomTable::*)(const CGAtomID&)) &AtomTable::clear )
-        .def( "clear", (void (AtomTable::*)(const ResNumAtomID&)) &AtomTable::clear )
-        .def( "clear", (void (AtomTable::*)(const AtomIndex&)) &AtomTable::clear )
-        .def( "clear", (void (AtomTable::*)(ResNum)) &AtomTable::clear )
-        .def( "clear", (void (AtomTable::*)(CutGroupID)) &AtomTable::clear )
-    
-        //template<class C>
-        //void clear(const C &lots);
-        
-        .def( "contains", (bool (AtomTable::*)(const AtomIndex&) const)
-                            &AtomTable::contains )
-        .def( "contains", (bool (AtomTable::*)(CutGroupID) const)
-                            &AtomTable::contains )
-        .def( "contains", (bool (AtomTable::*)(ResNum) const)
-                            &AtomTable::contains )
-        .def( "contains", (bool (AtomTable::*)(const CGAtomID&) const)
-                            &AtomTable::contains )
-        .def( "contains", (bool (AtomTable::*)(const ResNumAtomID&) const)
-                            &AtomTable::contains )
-        
-        .def( "count", &AtomTable::count )
+        .def( "assignedParameter", (bool (AtomTable::*)(AtomID) const)
+                    &AtomTable::assignedParameter )
 
-        .def( "cutGroupIDs", &AtomTable::cutGroupIDs )
-    
         .def( "hasMissingParameters", (bool (AtomTable::*)() const)
                     &AtomTable::hasMissingParameters )
         .def( "hasMissingParameters", (bool (AtomTable::*)(ResNum) const)
                     &AtomTable::hasMissingParameters )
+        .def( "hasMissingParameters", (bool (AtomTable::*)(ResID) const)
+                    &AtomTable::hasMissingParameters )
+        .def( "hasMissingParameters", (bool (AtomTable::*)(CutGroupNum) const)
+                    &AtomTable::hasMissingParameters )
         .def( "hasMissingParameters", (bool (AtomTable::*)(CutGroupID) const)
                     &AtomTable::hasMissingParameters )
-        
-        .def( "info", &AtomTable::info, return_value_policy<copy_const_reference>() )
-        
-        .def( "nAtoms", (int (AtomTable::*)() const)
-                            &AtomTable::nAtoms )
-        .def( "nAtoms", (int (AtomTable::*)(ResNum) const)
-                            &AtomTable::nAtoms )
-        .def( "nAtoms", (int (AtomTable::*)(CutGroupID) const)
-                            &AtomTable::nAtoms )
-        .def( "nAtoms", (int (AtomTable::*)(const QSet<ResNum> &) const)
-                            &AtomTable::nAtoms )
-        .def( "nAtoms", (int (AtomTable::*)(const QSet<CutGroupID>&) const)
-                            &AtomTable::nAtoms )
-        
-        .def( "nAtomsPerCutGroup", &AtomTable::nAtomsPerCutGroup )
-        
-        .def( "nCutGroups", &AtomTable::nCutGroups )
-        
-        .def( "nParameters", (int (AtomTable::*)() const) &AtomTable::nParameters )
-        .def( "nParameters", (int (AtomTable::*)(ResNum) const) &AtomTable::nParameters )
-        .def( "nParameters", (int (AtomTable::*)(CutGroupID) const) &AtomTable::nParameters )
-        
-        .def( "nResidues", &AtomTable::nResidues )
 
-        .def( "orderedCutGroups", &AtomTable::orderedCutGroupIDs )
-        .def( "residueNumbers", &AtomTable::residueNumbers )
-        .def( "size", &AtomTable::size )
+        .def( "missingParameters", (QSet<AtomIndex> (AtomTable::*)() const)
+                    &AtomTable::missingParameters )
+        .def( "missingParameters", (QSet<AtomIndex> (AtomTable::*)(ResNum) const)
+                    &AtomTable::missingParameters )
+        .def( "missingParameters", (QSet<AtomIndex> (AtomTable::*)(ResID) const)
+                    &AtomTable::missingParameters )
+        .def( "missingParameters", (QSet<AtomIndex> (AtomTable::*)(CutGroupNum) const)
+                    &AtomTable::missingParameters )
+        .def( "missingParameters", (QSet<AtomIndex> (AtomTable::*)(CutGroupID) const)
+                    &AtomTable::missingParameters )
+
+        .def( "clear", (void (AtomTable::*)())
+                    &AtomTable::clear )
+        .def( "clear", (void (AtomTable::*)(const CGAtomID&))
+                    &AtomTable::clear )
+        .def( "clear", (void (AtomTable::*)(const CGNumAtomID&))
+                    &AtomTable::clear )
+        .def( "clear", (void (AtomTable::*)(const ResNumAtomID&))
+                    &AtomTable::clear )
+        .def( "clear", (void (AtomTable::*)(const ResIDAtomID&))
+                    &AtomTable::clear )
+        .def( "clear", (void (AtomTable::*)(const AtomIndex&))
+                    &AtomTable::clear )
+        .def( "clear", (void (AtomTable::*)(AtomID))
+                    &AtomTable::clear )
+        .def( "clear", (void (AtomTable::*)(ResNum))
+                    &AtomTable::clear )
+        .def( "clear", (void (AtomTable::*)(ResID))
+                    &AtomTable::clear )
+        .def( "clear", (void (AtomTable::*)(CutGroupNum))
+                    &AtomTable::clear )
+        .def( "clear", (void (AtomTable::*)(CutGroupID))
+                    &AtomTable::clear )
+
+        .def( "assertHaveParameter", (const CGAtomID& (AtomTable::*)(AtomID) const)
+                    &AtomTable::assertHaveParameter,
+                    return_value_policy<copy_const_reference>() )
+        .def( "assertHaveParameter", (const CGAtomID&
+                                        (AtomTable::*)(const CGAtomID&) const)
+                    &AtomTable::assertHaveParameter,
+                    return_value_policy<copy_const_reference>() )
+        .def( "assertHaveParameter", (const CGAtomID&
+                                        (AtomTable::*)(const CGNumAtomID&) const)
+                    &AtomTable::assertHaveParameter,
+                    return_value_policy<copy_const_reference>() )
+        .def( "assertHaveParameter", (const CGAtomID&
+                                        (AtomTable::*)(const ResNumAtomID&) const)
+                    &AtomTable::assertHaveParameter,
+                    return_value_policy<copy_const_reference>() )
+        .def( "assertHaveParameter", (const CGAtomID&
+                                        (AtomTable::*)(const ResIDAtomID&) const)
+                    &AtomTable::assertHaveParameter,
+                    return_value_policy<copy_const_reference>() )
+        .def( "assertHaveParameter", (const CGAtomID&
+                                        (AtomTable::*)(const AtomIndex&) const)
+                    &AtomTable::assertHaveParameter,
+                    return_value_policy<copy_const_reference>() )
     ;
-    
-    //wrap the GroupedVector used by AtomTable
-    wrap_GroupedVector<CGAtomID,AtomIndex>("GroupedVector_AtomIndex_CGAtomID");
 }
 
 }

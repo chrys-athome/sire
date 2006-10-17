@@ -44,7 +44,7 @@ friend QDataStream& ::operator>>(QDataStream&, BondTable&);
 public:
     BondTable();
     
-    BondTable(const Molecule &mol);
+    BondTable(const MoleculeInfo &molinfo);
     BondTable(const Molecule &mol, const BondGeneratorBase &bondgenerator);
     BondTable(const MolBondInfo &bondinfo);
     
@@ -57,9 +57,9 @@ public:
         return new BondTable(*this);
     }
     
-    BondTable* create(const Molecule &molecule) const
+    BondTable* create(const MoleculeInfo &molinfo) const
     {
-        return new BondTable(molecule);
+        return new BondTable(molinfo);
     }
     
     void add(const TableBase &other);

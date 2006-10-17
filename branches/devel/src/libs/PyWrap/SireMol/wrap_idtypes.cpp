@@ -5,7 +5,7 @@
   * @author Christopher Woods
   *
   */
-  
+
 #include <Python.h>
 #include <boost/python.hpp>
 
@@ -52,10 +52,10 @@ void export_IDTypes()
                 .def(self >= self)
                 .def("__str__", &__str__<CGAtomID>)
     ;
-    
+
     convert_python_tuple_to_boost_tuple2<CutGroupID,AtomID>();
     implicitly_convertible< boost::tuple<CutGroupID,AtomID>, CGAtomID >();
-    
+
     class_<MolCutGroupID>("MolCutGroupID", init<>())
                 .def(init<MoleculeID,CutGroupID>())
                 .def(init<const MolCutGroupID&>())
@@ -72,7 +72,7 @@ void export_IDTypes()
 
     convert_python_tuple_to_boost_tuple2<MoleculeID,CutGroupID>();
     implicitly_convertible< boost::tuple<MoleculeID,CutGroupID>, MolCutGroupID >();
-    
+
     class_<MolCGAtomID>("MolCGAtomID", init<>())
                 .def(init<MoleculeID,CutGroupID,AtomID>())
                 .def(init<const MolCGAtomID&>())
@@ -87,10 +87,10 @@ void export_IDTypes()
                 .def(self >= self)
                 .def("__str__", &__str__<MolCGAtomID>)
     ;
-    
+
     convert_python_tuple_to_boost_tuple3<MoleculeID,CutGroupID,AtomID>();
     implicitly_convertible< boost::tuple<MoleculeID,CutGroupID,AtomID>, MolCGAtomID >();
-    
+
     class_<ResNumAtomID>("ResNumAtomID", init<>())
                 .def(init<ResNum,AtomID>())
                 .def(init<const ResNumAtomID&>())
@@ -106,10 +106,10 @@ void export_IDTypes()
                 .def(self >= self)
                 .def("__str__", &__str__<ResNumAtomID>)
     ;
-    
+
     convert_python_tuple_to_boost_tuple2<ResNum,AtomID>();
     implicitly_convertible< boost::tuple<ResNum,AtomID>, ResNumAtomID >();
-    
+
     class_<GroupIndexID>("GroupIndexID", init<>())
                 .def(init<GroupID,Index>())
                 .def(init<const GroupIndexID&>())
@@ -123,10 +123,10 @@ void export_IDTypes()
                 .def(self >= self)
                 .def("__str__", &__str__<GroupIndexID>)
     ;
-    
+
     convert_python_tuple_to_boost_tuple2<GroupID,Index>();
     implicitly_convertible< boost::tuple<GroupID,Index>, GroupIndexID >();
-    
+
     class_<ResNumIndexID>("ResNumIndexID", init<>())
                 .def(init<ResNum,Index>())
                 .def(init<const ResNumIndexID&>())
@@ -140,7 +140,7 @@ void export_IDTypes()
                 .def(self >= self)
                 .def("__str__", &__str__<ResNumIndexID>)
     ;
-    
+
     implicitly_convertible< boost::tuple<ResNum,Index>, ResNumIndexID >();
 }
 

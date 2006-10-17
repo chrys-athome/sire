@@ -1,0 +1,320 @@
+#ifndef SIREVOL_SPACE_H
+#define SIREVOL_SPACE_H
+
+#include "SireBase/pairmatrix.hpp"
+#include "SireBase/dynamicsharedptr.hpp"
+
+#include "SireMaths/vector.h"
+
+#include "sireglobal.h"
+
+SIRE_BEGIN_HEADER
+
+namespace SireVol
+{
+class SpaceBase;
+class Space;
+}
+
+QDataStream& operator<<(QDataStream&, const SireVol::SpaceBase&);
+QDataStream& operator>>(QDataStream&, SireVol::SpaceBase&);
+
+QDataStream& operator<<(QDataStream&, const SireVol::Space&);
+QDataStream& operator>>(QDataStream&, SireVol::Space&);
+
+namespace SireVol
+{
+
+class CoordGroup;
+
+using SireMaths::Vector;
+
+/** Define a distance matrix as being a PairMatrix of doubles */
+typedef SireBase::PairMatrix<double> DistMatrix;
+
+/**
+This pure virtual base class represents the volume of space within which a SimSystem
+resides. This class provides functions that calculate the distances between CoordGroups
+in this volume, and has most of the optimisation (since most of the hard-work
+double distance loops occur in this class!). Key overloaded classes that inherit
+SpaceBase are Cartesian, which represents infinite 3D cartesian space, and
+PeriodicBox which represents a 3D periodic box.
+
+As this class is used right in the heart of the double loop it is very important
+that it is not implemented in a way that requires a lot of virtual function calls.
+This means that the class is implemented to calculate the distances of all pairs of points
+between two CoordGroups in a single virtual function call. The results are held
+in a special matrix that can be queried via read-only, inline, non-virtual
+functions, with the items ordered in memory in the same order that you would get
+by iterating over all pairs (group1 in outer loop, group2 in inner loop). An advantage
+of this approach is that as the distances are calculated in one go, it is possible for
+the SpaceBase class to find out whether two CoordGroups are within the non-bonded cutoff
+distance before any further calculation is performed.
+
+To prevent continual reallocation, the SpaceBase class works on an already-allocated
+matrix class. This is only reallocated if it is found that it is not sufficiently
+large to hold the pair of CoordGroups.
+
+As a further optimisation, the distance matrix may be populated with the interpoint
+distances, or the square of the interatomic distances, or the 1 / distances
+or 1 / distances^2
+
+The inheritors of this class should be the only parts of this code where
+distance calculations are calculated between and within CoordGroups. This will
+allow you to change the space of the system here, and have that space used in the
+rest of the code that uses CoordGroups.
+
+This is a virtual class that is designed to be used with DynamicSharedPtr.
+
+@author Christopher Woods
+*/
+class SIREVOL_EXPORT SpaceBase
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const SpaceBase&);
+friend QDataStream& ::operator>>(QDataStream&, SpaceBase&);
+
+public:
+    SpaceBase();
+    SpaceBase(const SpaceBase &other);
+
+    virtual ~SpaceBase();
+
+    /** Return a clone of this SpaceBase - you are responsible
+        for managing the returned pointer. */
+    virtual SpaceBase* clone() const=0;
+
+    /** Return the name of this class */
+    virtual const char* what() const=0;
+
+    /** Return whether or not this is an instance of class 'T' */
+    template<class T>
+    bool isA() const
+    {
+        return dynamic_cast<const T*>(this) != 0;
+    }
+
+    /** Return this class cast as an instance of class 'T' - this will
+        have undefined results unless isA<T>() returns true. */
+    template<class T>
+    const T& asA() const
+    {
+        return dynamic_cast<const T&>(*this);
+    }
+
+    /** Return this class cast as an instance of class 'T' - this will
+        have undefined results unless isA<T>() returns true. */
+    template<class T>
+    T& asA()
+    {
+        return dynamic_cast<T&>(*this);
+    }
+
+    /** Populate the matrix 'mat' with the distances between all of the
+        points within a CoordGroup. This creates a symmetrical matrix,
+        with a 0 diagonal. This returns the shortest distance between
+        two points within the group. */
+    virtual double calcDist(const CoordGroup &group, DistMatrix &distmat) const=0;
+
+    /** Populate the matrix 'mat' with the distances^2 between all of the
+        points within a CoordGroup. This creates a symmetrical matrix,
+        with a 0 diagonal. This returns the shortest distance^2 between
+        two points within the group. */
+    virtual double calcDist2(const CoordGroup &group, DistMatrix &distmat) const=0;
+
+    /** Populate the matrix 'mat' with the inverse distances between all of the
+        points within a CoordGroup. This creates a symmetrical matrix,
+        with a 0 diagonal. This returns the the largest inverse distance between
+        two points within the group. */
+    virtual double calcInvDist(const CoordGroup &group, DistMatrix &distmat) const=0;
+
+    /** Populate the matrix 'mat' with the inverse distances^2 between all of the
+        points within a CoordGroup. This creates a symmetrical matrix,
+        with a 0 diagonal. This returns the the largest inverse distance^2 between
+        two points within the group. */
+    virtual double calcInvDist2(const CoordGroup &group, DistMatrix &distmat) const=0;
+
+    /** Populate the matrix 'mat' with the distances between all of the
+        points of the two CoordGroups. Return the shortest distance^2 between the two
+        CoordGroups. */
+    virtual double calcDist(const CoordGroup &group1, const CoordGroup &group2,
+                            DistMatrix &distmat) const=0;
+
+    /** Populate the matrix 'mat' with the distances^2 between all of the
+        points of the two CoordGroups. Return the shortest distance^2 between the
+        two CoordGroups. */
+    virtual double calcDist2(const CoordGroup &group1, const CoordGroup &group2,
+                             DistMatrix &distmat) const=0;
+
+    /** Populate the matrix 'mat' with the inverse distances between all of the
+        points of the two CoordGroups. Return the largest inverse distance between the two
+        CoordGroups. */
+    virtual double calcInvDist(const CoordGroup &group1, const CoordGroup &group2,
+                               DistMatrix &distmat) const=0;
+
+    /** Populate the matrix 'mat' with the inverse distances^2 between all of the
+        points of the two CoordGroups. Return the largest inverse distance^2 between the two
+        CoordGroups. */
+    virtual double calcInvDist2(const CoordGroup &group1, const CoordGroup &group2,
+                                DistMatrix &distmat) const=0;
+
+    /** Return whether or not these two groups are definitely beyond the distance 'dist'.
+
+        \warning Note 'beyond' does not mean definitely within the distance!
+    */
+    virtual bool beyond(double dist, const CoordGroup &group0,
+                        const CoordGroup &group1) const=0;
+};
+
+/** This is the user-handle class that is used to hold the dynanmic Space classes.
+
+    @author Christopher Woods
+*/
+class SIREVOL_EXPORT Space
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const Space&);
+friend QDataStream& ::operator>>(QDataStream&, Space&);
+
+public:
+    Space();
+    Space(const SpaceBase &other);
+
+    Space(const Space &other);
+
+    ~Space();
+
+    Space& operator=(const SpaceBase &other);
+    Space& operator=(const Space &other);
+
+    const char* what() const;
+
+    template<class T>
+    bool isA() const
+    {
+        return d->isA<T>();
+    }
+
+    template<class T>
+    const T& asA() const
+    {
+        return d->asA<T>();
+    }
+
+    template<class T>
+    T& asA()
+    {
+        return d->asA<T>();
+    }
+
+    double calcDist(const CoordGroup &group, DistMatrix &distmat) const;
+    double calcDist2(const CoordGroup &group, DistMatrix &distmat) const;
+    double calcInvDist(const CoordGroup &group, DistMatrix &distmat) const;
+    double calcInvDist2(const CoordGroup &group, DistMatrix &distmat) const;
+
+    double calcDist(const CoordGroup &group0, const CoordGroup &group1,
+                    DistMatrix &distmat) const;
+    double calcDist2(const CoordGroup &group0, const CoordGroup &group1,
+                     DistMatrix &distmat) const;
+    double calcInvDist(const CoordGroup &group0, const CoordGroup &group1,
+                       DistMatrix &distmat) const;
+    double calcInvDist2(const CoordGroup &group0, const CoordGroup &group1,
+                        DistMatrix &distmat) const;
+
+    bool beyond(double dist, const CoordGroup &group0, const CoordGroup &group1) const;
+
+private:
+    /** Dynamic shared pointer to the virtual SpaceBase class
+        that is used to perform the distance calculations. */
+    SireBase::DynamicSharedPtr<SpaceBase> d;
+};
+
+/** Populate the matrix 'mat' with the distances between all of the
+    points within a CoordGroup. This creates a symmetrical matrix,
+    with a 0 diagonal. This returns the shortest distance between
+    two points within the group. */
+inline double Space::calcDist(const CoordGroup &group, DistMatrix &distmat) const
+{
+    return d->calcDist(group, distmat);
+}
+
+/** Populate the matrix 'mat' with the distances^2 between all of the
+    points within a CoordGroup. This creates a symmetrical matrix,
+    with a 0 diagonal. This returns the shortest distance^2 between
+    two points within the group. */
+inline double Space::calcDist2(const CoordGroup &group, DistMatrix &distmat) const
+{
+    return d->calcDist2(group, distmat);
+}
+
+/** Populate the matrix 'mat' with the inverse distances^2 between all of the
+    points within a CoordGroup. This creates a symmetrical matrix,
+    with a 0 diagonal. This returns the the largest inverse distance^2 between
+    two points within the group. */
+inline double Space::calcInvDist(const CoordGroup &group, DistMatrix &distmat) const
+{
+    return d->calcInvDist(group, distmat);
+}
+
+/** Populate the matrix 'mat' with the inverse distances^2 between all of the
+    points within a CoordGroup. This creates a symmetrical matrix,
+    with a 0 diagonal. This returns the the largest inverse distance^2 between
+    two points within the group. */
+inline double Space::calcInvDist2(const CoordGroup &group, DistMatrix &distmat) const
+{
+    return d->calcInvDist2(group, distmat);
+}
+
+/** Populate the matrix 'mat' with the distances between all of the
+    points of the two CoordGroups. Return the shortest distance^2 between the two
+    CoordGroups. */
+inline double Space::calcDist(const CoordGroup &group0, const CoordGroup &group1,
+                              DistMatrix &distmat) const
+{
+    return d->calcDist(group0, group1, distmat);
+}
+
+/** Populate the matrix 'mat' with the distances^2 between all of the
+    points of the two CoordGroups. Return the shortest distance^2 between the
+    two CoordGroups. */
+inline double Space::calcDist2(const CoordGroup &group0, const CoordGroup &group1,
+                               DistMatrix &distmat) const
+{
+    return d->calcDist2(group0, group1, distmat);
+}
+
+/** Populate the matrix 'mat' with the inverse distances between all of the
+     points of the two CoordGroups. Return the largest inverse distance between the two
+    CoordGroups. */
+inline double Space::calcInvDist(const CoordGroup &group0, const CoordGroup &group1,
+                                 DistMatrix &distmat) const
+{
+    return d->calcInvDist(group0, group1, distmat);
+}
+
+/** Populate the matrix 'mat' with the inverse distances^2 between all of the
+    points of the two CoordGroups. Return the largest inverse distance^2 between the two
+    CoordGroups. */
+inline double Space::calcInvDist2(const CoordGroup &group0, const CoordGroup &group1,
+                                  DistMatrix &distmat) const
+{
+    return d->calcInvDist2(group0, group1, distmat);
+}
+
+/** Return whether or not these two groups are definitely beyond the distance 'dist'.
+
+    \warning Note 'beyond' does not mean definitely within the distance!
+*/
+inline bool Space::beyond(double dist, const CoordGroup &group0,
+                          const CoordGroup &group1) const
+{
+    return d->beyond(dist, group0, group1);
+}
+
+}
+
+Q_DECLARE_METATYPE(SireVol::Space)
+
+SIRE_END_HEADER
+
+#endif

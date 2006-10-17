@@ -28,7 +28,7 @@ class SIREDB_EXPORT AtomDB : public RelateDB
 public:
     AtomDB();
     AtomDB(const AtomDB &other);
-    
+
     ~AtomDB();
 
     static const char* typeName()
@@ -36,9 +36,9 @@ public:
         return "SireDB::AtomDB";
     }
 
-    virtual AtomTable& createTable( ParameterTable &param_table ) const=0;
+    virtual void createTable( ParameterTable &param_table ) const=0;
 
-    virtual bool assignParameter( const AtomIndex &atom, 
+    virtual bool assignParameter( const AtomIndex &atom,
                                   const RelateIDMap &relateids,
                                   ParameterTable &param_table )=0;
 

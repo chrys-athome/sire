@@ -1,6 +1,6 @@
 
 /**
-  * This file contains the boost::python wrapping of SimVolume and PairMatrix
+  * This file contains the boost::python wrapping of Space and PairMatrix
   *
   * @author Christopher Woods
   *
@@ -11,92 +11,139 @@
 
 #include "SireMol/qhash_siremol.h"
 
-#include "SireVol/simvolume.h"
+#include "SireVol/space.h"
 #include "SireVol/cartesian.h"
 #include "SireVol/periodicbox.h"
 
-#include "SireMol/cutgroup.h"
+#include "SireVol/coordgroup.h"
 
 using namespace boost::python;
-using namespace SireMol;
 
 namespace SireVol
 {
 
-//first create a shadow class to wrap the virtual base class
-struct SimVolume_PyWrap : SimVolume
+void export_Space()
 {
-    //create a shadow class to wrap up the virtual base 'SimVolume'
-    SimVolume_PyWrap(PyObject* self_) : SimVolume(), self(self_)
-    {}
+    class_<SpaceBase, boost::noncopyable>("SpaceBase", no_init)
 
-    //Wrap up the virtual functions...
-    SimVolume* clone(QObject *parent=0) const
-    {
-        return call_method<SimVolume*>(self,"clone");
-    }
-    
-    double calcDist(const CutGroup &group1, const CutGroup &group2,
-                    DistMatrix &distmat) const
-    {
-        return call_method<double>(self,"calcDist");
-    }
-    
-    double calcDist2(const CutGroup &group1, const CutGroup &group2,
-                     DistMatrix &distmat) const
-    {
-        return call_method<double>(self,"calcDist2");
-    }
-    
-    double calcInvDist(const CutGroup &group1, const CutGroup &group2,
-                       DistMatrix &distmat) const
-    {
-        return call_method<double>(self,"calcInvDist");
-    }
-    
-    double calcInvDist2(const CutGroup &group1, const CutGroup &group2,
-                        DistMatrix &distmat) const
-    {
-        return call_method<double>(self,"calcInvDist2");
-    }
+        .def( "what", (const char* (SpaceBase::*)() const)
+                          &SpaceBase::what )
 
-    bool beyond(const double &dist, const CutGroup &group0, 
-                const CutGroup &group2) const
-    {
-        return call_method<bool>(self,"beyond");
-    }
+        .def( "calcDist", (double (SpaceBase::*)(const CoordGroup&,
+                                             DistMatrix&) const)
+                          &SpaceBase::calcDist )
 
-    //pointer to the self object for this class instance
-    //(Python's 'this' pointer)
-    PyObject* self;
-};
+        .def( "calcDist2", (double (SpaceBase::*)(const CoordGroup&,
+                                              DistMatrix&) const)
+                          &SpaceBase::calcDist2 )
+        .def( "calcInvDist", (double (SpaceBase::*)(const CoordGroup&,
+                                                DistMatrix&) const)
+                          &SpaceBase::calcInvDist )
 
-void export_SimVolume()
-{
-    /**
-      * Wrapping of SimVolume. This will be wrapped so that it can
-      * be overloaded in Python (though boy would that be slow!)
-      */
-      
-    class_<SimVolume, SimVolume_PyWrap, boost::noncopyable>( "SimVolume", no_init )
-                .def("calcDist", &SimVolume::calcDist)
-                .def("calcDist2", &SimVolume::calcDist2)
-                .def("calcInvDist", &SimVolume::calcInvDist)
-                .def("calcInvDist2", &SimVolume::calcInvDist2)
-                .def("beyond", &SimVolume::beyond)
-    ;
-    
-    class_<Cartesian, bases<SimVolume> >("Cartesian", init<>())
+        .def( "calcInvDist2", (double (SpaceBase::*)(const CoordGroup&,
+                                                 DistMatrix&) const)
+                          &SpaceBase::calcInvDist2 )
+
+        .def( "calcDist", (double (SpaceBase::*)(const CoordGroup&,
+                                             const CoordGroup&,
+                                             DistMatrix&) const)
+                          &SpaceBase::calcDist )
+
+        .def( "calcDist2", (double (SpaceBase::*)(const CoordGroup&,
+                                              const CoordGroup&,
+                                              DistMatrix&) const)
+                          &SpaceBase::calcDist2 )
+
+        .def( "calcInvDist", (double (SpaceBase::*)(const CoordGroup&,
+                                                const CoordGroup&,
+                                                DistMatrix&) const)
+                          &SpaceBase::calcInvDist )
+
+        .def( "calcInvDist2", (double (SpaceBase::*)(const CoordGroup&,
+                                                 const CoordGroup&,
+                                                 DistMatrix&) const)
+                          &SpaceBase::calcInvDist2 )
+
+        .def( "beyond", (bool (SpaceBase::*)(double,
+                                         const CoordGroup&,
+                                         const CoordGroup&) const)
+                          &SpaceBase::beyond )
     ;
 
-    class_<PeriodicBox, bases<SimVolume> >("PeriodicBox", init<>())
-               .def(init<const Vector&, const Vector&>())
-               .def("setDimension", &PeriodicBox::setDimension)
-               .def("minCoords", &PeriodicBox::minCoords, 
-                        return_value_policy<copy_const_reference>())
-               .def("maxCoords", &PeriodicBox::maxCoords, 
-                        return_value_policy<copy_const_reference>())
-               .def("center", &PeriodicBox::center)
+
+    class_<Space>( "Space", init<>() )
+
+        .def( init<const Space&>() )
+        .def( init<const SpaceBase&>() )
+
+        .def( "what", (const char* (Space::*)() const)
+                          &Space::what )
+
+        .def( "calcDist", (double (Space::*)(const CoordGroup&,
+                                             DistMatrix&) const)
+                          &Space::calcDist )
+
+        .def( "calcDist2", (double (Space::*)(const CoordGroup&,
+                                              DistMatrix&) const)
+                          &Space::calcDist2 )
+        .def( "calcInvDist", (double (Space::*)(const CoordGroup&,
+                                                DistMatrix&) const)
+                          &Space::calcInvDist )
+
+        .def( "calcInvDist2", (double (Space::*)(const CoordGroup&,
+                                                 DistMatrix&) const)
+                          &Space::calcInvDist2 )
+
+        .def( "calcDist", (double (Space::*)(const CoordGroup&,
+                                             const CoordGroup&,
+                                             DistMatrix&) const)
+                          &Space::calcDist )
+
+        .def( "calcDist2", (double (Space::*)(const CoordGroup&,
+                                              const CoordGroup&,
+                                              DistMatrix&) const)
+                          &Space::calcDist2 )
+
+        .def( "calcInvDist", (double (Space::*)(const CoordGroup&,
+                                                const CoordGroup&,
+                                                DistMatrix&) const)
+                          &Space::calcInvDist )
+
+        .def( "calcInvDist2", (double (Space::*)(const CoordGroup&,
+                                                 const CoordGroup&,
+                                                 DistMatrix&) const)
+                          &Space::calcInvDist2 )
+
+        .def( "beyond", (bool (Space::*)(double,
+                                         const CoordGroup&,
+                                         const CoordGroup&) const)
+                          &Space::beyond )
+    ;
+
+
+    class_<Cartesian, bases<SpaceBase> >("Cartesian", init<>())
+        .def( init<const Cartesian&>() )
+    ;
+
+    class_<PeriodicBox, bases<SpaceBase> >("PeriodicBox", init<>())
+
+        .def(init<const Vector&, const Vector&>())
+        .def( init<const PeriodicBox&>() )
+
+        .def( "setDimension", (void (PeriodicBox::*)(const Vector&,
+                                                     const Vector&))
+                          &PeriodicBox::setDimension )
+
+        .def( "minCoords", (const Vector& (PeriodicBox::*)() const)
+                          &PeriodicBox::minCoords,
+                          return_value_policy<copy_const_reference>() )
+
+        .def( "maxCoords", (const Vector& (PeriodicBox::*)() const)
+                          &PeriodicBox::maxCoords,
+                          return_value_policy<copy_const_reference>() )
+
+        .def( "center", (Vector (PeriodicBox::*)() const)
+                          &PeriodicBox::center )
     ;
 }
 

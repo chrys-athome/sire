@@ -39,7 +39,7 @@ set_target_properties (SireMaths PROPERTIES
 
 # Link to other Sire libraries, and GSL
 target_link_libraries (SireMaths
-                       SireError
+                       SireStream
                        ${GSL_LIBRARIES}
                        ${QT_QTCORE_LIBRARY}
                        )

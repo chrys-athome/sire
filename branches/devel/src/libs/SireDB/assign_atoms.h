@@ -40,39 +40,39 @@ public:
     assign_atoms();
 
     assign_atoms(const using_database &db0);
-    
+
     assign_atoms(const using_database &db0, const using_database &db1);
-    
+
     assign_atoms(const using_database &db0, const using_database &db1,
                  const using_database &db2);
-    
+
     assign_atoms(const using_database &db0, const using_database &db1,
                  const using_database &db2, const using_database &db3);
-    
+
     assign_atoms(const using_database &db0, const using_database &db1,
                  const using_database &db2, const using_database &db3,
                  const using_database &db4);
-    
+
     assign_atoms(const using_database &db0, const using_database &db1,
                  const using_database &db2, const using_database &db3,
                  const using_database &db4, const using_database &db5);
-    
+
     assign_atoms(const using_database &db0, const using_database &db1,
                  const using_database &db2, const using_database &db3,
                  const using_database &db4, const using_database &db5,
                  const using_database &db6);
-    
+
     assign_atoms(const using_database &db0, const using_database &db1,
                  const using_database &db2, const using_database &db3,
                  const using_database &db4, const using_database &db5,
                  const using_database &db6, const using_database &db7);
-    
+
     assign_atoms(const using_database &db0, const using_database &db1,
                  const using_database &db2, const using_database &db3,
                  const using_database &db4, const using_database &db5,
                  const using_database &db6, const using_database &db7,
                  const using_database &db8);
-    
+
     assign_atoms(const using_database &db0, const using_database &db1,
                  const using_database &db2, const using_database &db3,
                  const using_database &db4, const using_database &db5,
@@ -83,47 +83,47 @@ public:
 
     assign_atoms(const QSet<AtomIndex> &atms,
                  const using_database &db0);
-    
+
     assign_atoms(const QSet<AtomIndex> &atms,
                  const using_database &db0, const using_database &db1);
-    
+
     assign_atoms(const QSet<AtomIndex> &atms,
                  const using_database &db0, const using_database &db1,
                  const using_database &db2);
-    
+
     assign_atoms(const QSet<AtomIndex> &atms,
                  const using_database &db0, const using_database &db1,
                  const using_database &db2, const using_database &db3);
-    
+
     assign_atoms(const QSet<AtomIndex> &atms,
                  const using_database &db0, const using_database &db1,
                  const using_database &db2, const using_database &db3,
                  const using_database &db4);
-    
+
     assign_atoms(const QSet<AtomIndex> &atms,
                  const using_database &db0, const using_database &db1,
                  const using_database &db2, const using_database &db3,
                  const using_database &db4, const using_database &db5);
-    
+
     assign_atoms(const QSet<AtomIndex> &atms,
                  const using_database &db0, const using_database &db1,
                  const using_database &db2, const using_database &db3,
                  const using_database &db4, const using_database &db5,
                  const using_database &db6);
-    
+
     assign_atoms(const QSet<AtomIndex> &atms,
                  const using_database &db0, const using_database &db1,
                  const using_database &db2, const using_database &db3,
                  const using_database &db4, const using_database &db5,
                  const using_database &db6, const using_database &db7);
-    
+
     assign_atoms(const QSet<AtomIndex> &atms,
                  const using_database &db0, const using_database &db1,
                  const using_database &db2, const using_database &db3,
                  const using_database &db4, const using_database &db5,
                  const using_database &db6, const using_database &db7,
                  const using_database &db8);
-    
+
     assign_atoms(const QSet<AtomIndex> &atms,
                  const using_database &db0, const using_database &db1,
                  const using_database &db2, const using_database &db3,
@@ -135,23 +135,24 @@ public:
     assign_atoms(const assign_atoms &other);
 
     ~assign_atoms();
-    
+
     assign_atoms* clone() const
     {
         return new assign_atoms(*this);
     }
-    
+
     static const char* typeName()
     {
         return "SireDB::assign_atoms";
     }
-    
+
     const char* what() const
     {
         return assign_atoms::typeName();
     }
 
-    void assignParameters( ParameterTable &param_table, 
+    void assignParameters( const Molecule &molecule,
+                           ParameterTable &param_table,
                            ParameterDB &database,
                            const MatchMRData &matchmr = MatchMRData() ) const;
 

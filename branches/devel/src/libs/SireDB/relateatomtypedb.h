@@ -25,7 +25,7 @@ class NameDB;
 class RelateAtomTypeDB;
 
 /**
-This database is to MatchAtomTypeData what RelateMRADB is to MatchMRAData. This stores the relationships that involve atom types. 
+This database is to MatchAtomTypeData what RelateMRADB is to MatchMRAData. This stores the relationships that involve atom types.
 
 @author Christopher Woods
 */
@@ -35,7 +35,7 @@ class SIREDB_EXPORT RelateAtomTypeDB : public RelationshipDB
 public:
     RelateAtomTypeDB();
     RelateAtomTypeDB(const RelateAtomTypeDB &other);
-    
+
     ~RelateAtomTypeDB();
 
     /** Return the full name of this database component */
@@ -60,7 +60,7 @@ public:
     void setCaseSensitiveAtomTypes();
     void setCaseInsensitiveAtomTypes();
     bool caseSensitiveAtomTypes();
-    
+
     NameID addAtomType(const QString &atomtype);
     NameID getAtomTypeID(const QString &atomtype);
     QString getAtomType(NameID id);
@@ -71,7 +71,9 @@ protected:
     void postLoad();
 
     RelateIDMap findMatches(const MatchAtomTypeData &match, uint n);
+
     RelateIDMap findMatches(const QList<AtomIndex> &atoms,
+                            const Molecule &molecule,
                             const ParameterTable &param_table,
                             const MatchMRData &matchmr);
 
@@ -81,7 +83,7 @@ private:
     static QString queryString(const RelateIDMap &molresmap, uint i);
 
     void createRelateTable(uint n);
-    
+
     RelateAtomTypeData convert(const MatchAtomType &match);
     RelateAtomTypeData convert(const tuple<MatchMR,MatchAtomType> &match);
     RelateAtomTypeDataList convert(const MatchAtomTypeData &match, uint n);

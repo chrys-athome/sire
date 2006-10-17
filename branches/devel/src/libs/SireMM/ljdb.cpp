@@ -30,18 +30,18 @@ LJDB::LJDB(const LJDB &other) : AtomDB(other)
 LJDB::~LJDB()
 {}
 
-/** This function creates all of the tables in this database used to store and 
+/** This function creates all of the tables in this database used to store and
     find LJ parameters.
 
     The table used to do this is;
-    
+
     table giving a unique index to each *LJ_PARAMETER* that has been loaded
 */
 void LJDB::initialise()
 {
     //create the RelateDB tables
     AtomDB::initialise();
-    
+
     // (*) indicates column holds the primary key for the table
 
     //create table - table to give a unique ID number to each LJ parameter value
@@ -49,16 +49,16 @@ void LJDB::initialise()
     QString error = executeSQL(
         "create table 'SireMM_LJDB' ( ParamID INTEGER, Sigma REAL, Epsilon REAL, "
                                      "Primary Key (ParamID), UNIQUE( Sigma, Epsilon) )");
-    
+
     if (not error.isNull())
         throw SireDB::db_error(error, CODELOC);
 }
-    
+
 /** Dump the version number of this database */
 void LJDB::prepareToDump()
 {
     AtomDB::prepareToDump();
-    
+
     this->saveParameter<LJDB>( "version" , 1 );
 }
 
@@ -68,7 +68,7 @@ void LJDB::postLoad()
     AtomDB::postLoad();
 
     int v = this->loadParameter<LJDB>( "version" ).toInt();
-                            
+
     if (v != 1)
         throw version_error( v, "1", "SireMM::LJDB", CODELOC );
 }
@@ -79,16 +79,16 @@ void LJDB::postLoad()
 ParamID LJDB::addLJ(const LJParameter &ljparam)
 {
     QSqlQuery q(database());
-    
+
     //get the sigma and epsilon parameters
     double sigma = ljparam.sigma();
     double epsilon = ljparam.epsilon();
-    
+
     q.exec( QString("select ParamID from SireMM_LJDB where Sigma = %1 and Epsilon = %2")
                   .arg(sigma).arg(epsilon) );
     checkErrors(q,CODELOC);
     q.next();
-    
+
     if (q.isValid())
         //we have found the existing parameter - return the ID number
         return q.value(0).toUInt();
@@ -96,7 +96,7 @@ ParamID LJDB::addLJ(const LJParameter &ljparam)
     {
         //we need to insert the sigma and epsilon values, and then return the ID
         ParamID paramid = getNewParamID();
-        
+
         q.exec( QString("insert into SireMM_LJDB values(%1, %2, %3)")
                     .arg(paramid).arg(sigma).arg(epsilon) );
         checkErrors(q,CODELOC);
@@ -104,7 +104,7 @@ ParamID LJDB::addLJ(const LJParameter &ljparam)
     }
 }
 
-/** Return the LJ parameter with ID 'ljid', or return a zero LJ parameter 
+/** Return the LJ parameter with ID 'ljid', or return a zero LJ parameter
     if it doesn't exist. Records in the log if there is a missing LJ parameter. */
 LJParameter LJDB::retrieveLJ(ParamID ljid)
 {
@@ -117,7 +117,7 @@ LJParameter LJDB::retrieveLJ(ParamID ljid)
                                                 .arg(ljid));
         checkErrors(q,CODELOC);
         q.next();
-    
+
         if (q.isValid())
             return LJParameter( q.value(0).toDouble(), q.value(1).toDouble() );
         else
@@ -137,25 +137,25 @@ void LJDB::addLJ(const QString &userid, const LJParameter &ljparam)
     relateParameter(userid, paramid);
 }
 
-/** return the LJ parameter corresponding to the user ID string 'userid', or 
+/** return the LJ parameter corresponding to the user ID string 'userid', or
     a zero parameter if there is no such parameter. 'foundlj' is set to whether
     or not a parameter was found. */
 LJParameter LJDB::getLJ(const QString &userid, bool *foundlj)
 {
     ParamID paramid = getParameter(userid);
-    
+
     if (foundlj)
         *foundlj = (paramid != 0);
-        
+
     return retrieveLJ(paramid);
 }
-    
+
 /** Relate the LJ parameter associated with the user ID string 'userid' with
     the atom matching criteria in 'matchatom' */
 void LJDB::relateLJ(const AssertMatch<1> &matchatom, const QString &userid)
 {
     RelateID relateid = matchatom.addTo(parent());
-    
+
     relateParameter(relateid, userid);
 }
 
@@ -163,10 +163,10 @@ void LJDB::relateLJ(const AssertMatch<1> &matchatom, const QString &userid)
 void LJDB::relateLJ(const AssertMatch<1> &matchatom, const LJParameter &ljparam)
 {
     RelateID relateid = matchatom.addTo(parent());
-    
+
     //add the parameter
     ParamID paramid = addLJ(ljparam);
-    
+
     relateParameter(relateid, paramid);
 }
 
@@ -187,16 +187,16 @@ void LJDB::relateLJ(RelateID relateid, const LJParameter &ljparam)
     relateParameter(relateid, paramid);
 }
 
-/** Return the LJ parameter associated with the relationship ID 'relateid', or a  
-    zero LJParameter if there is no such parameter. Set 'foundlj' to whether or 
+/** Return the LJ parameter associated with the relationship ID 'relateid', or a
+    zero LJParameter if there is no such parameter. Set 'foundlj' to whether or
     not a parameter was found. */
 LJParameter LJDB::getLJ(RelateID relateid, bool *foundlj)
 {
     ParamID paramid = getParameter(relateid);
-    
+
     if (foundlj)
         *foundlj = (paramid != 0);
-        
+
     return retrieveLJ(paramid);
 }
 
@@ -206,21 +206,21 @@ LJParameter LJDB::getLJ(RelateID relateid, bool *foundlj)
 LJParameter LJDB::getLJ(const RelateIDMap &relateids, bool *foundlj)
 {
     ParamID paramid = getParameter(relateids);
-    
+
     if (foundlj)
         *foundlj = (paramid != 0);
-    
+
     return retrieveLJ(paramid);
 }
 
-/** Create a table in 'param_table' that is capable of holding the LJ 
+/** Create a table in 'param_table' that is capable of holding the LJ
     parameters - this does nothing if there is already such a table.
-     
+
     This returns a reference to the created table.
 */
-LJTable& LJDB::createTable( ParameterTable &param_table ) const
+void LJDB::createTable( ParameterTable &param_table ) const
 {
-    return param_table.addTable<LJTable>();
+    param_table.createTable<LJTable>();
 }
 
 /** Assign the LJ parameter for the atom 'atom' using the relationship IDs
@@ -230,14 +230,16 @@ LJTable& LJDB::createTable( ParameterTable &param_table ) const
 bool LJDB::assignParameter( const AtomIndex &atom, const RelateIDMap &relateids,
                             ParameterTable &param_table )
 {
-    bool found;
+/*    bool found;
     LJParameter lj = getLJ(relateids, &found);
-    
+
     if (found)
     {
         LJTable &table = param_table.addTable<LJTable>();
         table.setLJ(atom, lj);
     }
-    
-    return found;
+
+    return found;*/
+
+    return false;
 }

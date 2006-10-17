@@ -39,12 +39,12 @@ public:
 
     /** Return whether or not the ParameterTable 'param_table' contains the
         right table to hold the parameters for this database */
-    virtual bool hasTable(const ParameterTable &param_table) const=0;
+//    virtual bool hasTable(const ParameterTable &param_table) const=0;
     
     /** Return the table in the ParameterTable 'param_table' that holds the 
         parameters from this database. This will have undefined results unless
         'hasTable(param_table)' returns true. */
-    virtual InternalTableBase<Internals>& getTable(ParameterTable &param_table) const=0;
+//    virtual InternalTableBase<Internals>& getTable(ParameterTable &param_table) const=0;
     
     /** Create the table in the ParameterTable 'param_table' that will hold the 
         parameters in this database, using the internals listed in 'internals'. Note
@@ -52,8 +52,8 @@ public:
         that could hold parameters for this database. I would thus only recommend
         using this function if that is indeed what you intend, or if hasTable(param_table)
         returns false. */
-    virtual InternalTableBase<Internals>& createTable(ParameterTable &param_table, 
-                                                      const Internals &internals) const=0;
+//    virtual InternalTableBase<Internals>& createTable(ParameterTable &param_table, 
+//                                                      const Internals &internals) const=0;
     
     /** Assign the parameter for the internal 'internal' into the ParameterTable 
         'param_table' using the relationship IDs in 'relateids'. Note that exceptions

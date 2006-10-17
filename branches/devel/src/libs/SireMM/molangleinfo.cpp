@@ -43,15 +43,15 @@ MolAngleInfo::MolAngleInfo() : MolInternalInfo<Angle>()
 /** Construct a MolAngleInfo that holds the angles for the molecule 'mol'.
     Note that this will not initially contain any angles - these need to be
     added separately. */
-MolAngleInfo::MolAngleInfo(const Molecule &mol) : MolInternalInfo<Angle>(mol)
+MolAngleInfo::MolAngleInfo(const MoleculeInfo &molinfo) : MolInternalInfo<Angle>(molinfo)
 {}
 
 /** Construct a MolAngleInfo that holds the angles for the molecule 'mol',
     with the AngleGenerator 'anglegenerator' used to find all of the available
     angles in the molecule. */
 MolAngleInfo::MolAngleInfo(const Molecule &mol, 
-                         const InternalGenerator<MolAngleInfo> &anglegenerator)
-            : MolInternalInfo<Angle>(mol)
+                           const InternalGenerator<MolAngleInfo> &anglegenerator)
+            : MolInternalInfo<Angle>(mol.info())
 {
     //generate all of the angles using the angle generator
     anglegenerator.generate(mol, *this);

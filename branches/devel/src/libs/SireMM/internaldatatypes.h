@@ -82,8 +82,8 @@ friend QDataStream& ::operator>>(QDataStream&, BondResID&);
 public:
     BondResID()
     {
-        id[0] = 0;
-        id[1] = 0;
+        id[0] = ResNum(0);
+        id[1] = ResNum(0);
     }
 
     BondResID(ResNum resnum)
@@ -259,9 +259,9 @@ friend QDataStream& ::operator>>(QDataStream&, AngleResID&);
 public:
     AngleResID()
     {
-        id[0] = 0;
-        id[1] = 0;
-        id[2] = 0;
+        id[0] = ResNum(0);
+        id[1] = ResNum(0);
+        id[2] = ResNum(0);
     }
 
     AngleResID(ResNum resnum)
@@ -462,10 +462,10 @@ friend QDataStream& ::operator>>(QDataStream&, DihedralResID&);
 public:
     DihedralResID()
     {
-        id[0] = 0;
-        id[1] = 0;
-        id[2] = 0;
-        id[3] = 0;
+        id[0] = ResNum(0);
+        id[1] = ResNum(0);
+        id[2] = ResNum(0);
+        id[3] = ResNum(0);
     }
 
     DihedralResID(ResNum resnum)

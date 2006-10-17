@@ -12,7 +12,6 @@
 #include "SireMol/qhash_siremol.h"
 
 #include "SireMol/atom.h"
-#include "SireMol/atomvector.h"
 
 #include "SireQt/qlist.hpp"
 

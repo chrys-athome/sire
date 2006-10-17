@@ -362,9 +362,10 @@ assign_bonds::~assign_bonds()
     If 'overWrite()' is true then the parameters will be overwritten, 
     otherwise only parameters for bonds that are currently missing 
     parameters will be found. */
-void assign_bonds::assignParameters( ParameterTable &param_table, 
+void assign_bonds::assignParameters( const Molecule &molecule,
+                                     ParameterTable &param_table, 
                                      ParameterDB &database,
                                      const MatchMRData &matchmr ) const
 {
-    this->assignInternals(param_table, database, matchmr);
+    this->assignInternals(molecule, param_table, database, matchmr);
 }

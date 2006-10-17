@@ -1,20 +1,26 @@
 #ifndef SIREMOL_CUTGROUP_H
 #define SIREMOL_CUTGROUP_H
+/**
+  * @file
+  *
+  * C++ Interface: CutGroup
+  *
+  * Description:
+  * Interface for CutGroup
+  *
+  * Author: Christopher Woods, (C) 2006
+  *
+  * Copyright: See COPYING file that comes with this distribution
+  *
+  */
 
-#include <QSharedDataPointer>
+#include <QVector>
 
-#include "atomset.h"
-#include "atomindexset.h"
-#include "idtypes.h"
+#include "SireVol/coordgroup.h"
 
-#include "SireMaths/vectorvector.h"
+#include "atominfogroup.h"
 
 SIRE_BEGIN_HEADER
-
-namespace SireMaths
-{
-class Quaternion;
-}
 
 namespace SireMol
 {
@@ -28,20 +34,35 @@ QDataStream& operator>>(QDataStream&, SireMol::CutGroup&);
 namespace SireMol
 {
 
-class CutGroupPvt;
-class AABox;
+class AtomInfoGroup;
+class AtomID;
 
-using SireMaths::VectorVector;
+using SireVol::CoordGroup;
+using SireVol::CoordGroupEditor;
+
+using SireMaths::Vector;
 using SireMaths::Quaternion;
+using SireMaths::Matrix;
 
 /**
 A CutGroup is a logical grouping of Atoms into a single group that is considered for intermolecular non-bonded cutting.
-  
-A CutGroup is implicitly shared, meaning that it is very fast to copy, with a deep copy only
-occuring on writes.
+
+The data in a CutGroup is implicitly shared, meaning that copying a CutGroup is very fast, with most of the copying occuring when the copy is modified.
 
 CutGroup is reentrant, but definitely not thread-safe! Copying a CutGroup is thread-safe.
-  
+
+You can edit the coordinates of the atoms in the CutGroup via the code;
+
+\code
+CutGroup cgroup;
+
+CoordGroupEditor editor = cgroup.coordinates().edit();
+
+editor[i] = ....
+
+cgroup = editor.commit();
+\endcode
+
 @author Christopher Woods
 */
 class SIREMOL_EXPORT CutGroup
@@ -51,66 +72,122 @@ friend QDataStream& ::operator<<(QDataStream&, const CutGroup&);
 friend QDataStream& ::operator>>(QDataStream&, CutGroup&);
 
 public:
-    
+
     CutGroup();
-    CutGroup(const AtomSet &atoms);
-    
+    CutGroup(const QVector<Atom> atoms);
+    CutGroup(const QList<Atom> atoms);
+
+    CutGroup(const AtomInfoGroup &atominfos, const CoordGroup &coords);
+    CutGroup(const AtomInfoGroup &atominfos, const QVector<Vector> &coords);
+    CutGroup(const AtomInfoGroup &atominfos);
+
     CutGroup(const CutGroup &other);
-    
+
     ~CutGroup();
 
-   //////// Managing the ID number /////////////////////////////////
-    const MolCutGroupID& ID() const;
-    void setID(const MolCutGroupID &id);
-   /////////////////////////////////////////////////////////////////
+    Atom at(AtomID i) const;
+    Atom operator[](AtomID i) const;
 
-
-   //////// Operators //////////////////////////////////////////////
-    const Atom& operator[](AtomID i) const;
-    
     bool operator==(const CutGroup &other) const;
     bool operator!=(const CutGroup &other) const;
-   
+
     CutGroup& operator=(const CutGroup &other);
-   /////////////////////////////////////////////////////////////////
+    CutGroup& operator=(const CoordGroup &other);
+    CutGroup& operator=(const QVector<Vector> &coords);
 
+    bool isEmpty() const;
 
-   //////// Query functions ////////////////////////////////////////
     QString toString() const;
 
-    const AtomSet& atoms() const;
-    AtomSet atoms(AtomID strt, AtomID end) const;
+    QVector<Atom> atoms() const;
+    QVector<Atom> atoms(AtomID strt, AtomID end) const;
 
-    const Atom& at(AtomID i) const;
-        
-    const Atom& atom(AtomID i) const;
-    const Atom& atom(const AtomIndex &atmidx) const;
+    QVector<Vector> coordinates() const;
+    QVector<Vector> coordinates(AtomID strt, AtomID end) const;
+
+    Atom atom(AtomID i) const;
+    Vector coordinates(AtomID i) const;
 
     int nAtoms() const;
-    int size() const;
-    int count() const;
 
-    const AABox& aaBox() const;
+    void setCoordinates(const QVector<Vector> &newcoords);
 
-    bool contains(const AtomIndex &atm) const;
-   /////////////////////////////////////////////////////////////////
+    const CoordGroup& coordGroup() const;
+    void setCoordGroup(const CoordGroup &newcoords);
 
+    const AtomInfoGroup& atomGroup() const;
 
-   //////// Getting and setting the coordinates of the atoms ///////
-    VectorVector coordinates() const;
-    const Vector& coordinates(const AtomIndex &atm) const;
-    const Vector& coordinates(AtomID i) const;
-    
-    void setCoordinates(const VectorVector &coords);
-    void setCoordinates(const AtomIndex &atm, const Vector &coords);
-    void setCoordinates(AtomID i, const Vector &coords);
-   /////////////////////////////////////////////////////////////////
+    void translate(const Vector &delta);
+    void rotate(const Quaternion &quat, const Vector &point);
+    void rotate(const Matrix &rotmat, const Vector &point);
 
 private:
-    
-    QSharedDataPointer<CutGroupPvt> d;
-    
+    void assertCompatible() const;
+
+    /** The AtomInfoGroup that contains the metainfo for
+        all of the atoms */
+    AtomInfoGroup atominfos;
+
+    /** The coordinates of the atoms */
+    CoordGroup coords;
 };
+
+/** Return whether or not this is empty (has no atoms) */
+inline bool CutGroup::isEmpty() const
+{
+    return coords.isEmpty();
+}
+
+/** Return the CoordGroup that contains the coordinates of the atoms */
+inline const CoordGroup& CutGroup::coordGroup() const
+{
+    return coords;
+}
+
+/** Return the AtomInfoGroup that contains the metainfo for all
+    of the atoms */
+inline const AtomInfoGroup& CutGroup::atomGroup() const
+{
+    return atominfos;
+}
+
+/** Return the number of atoms in the CutGroup */
+inline int CutGroup::nAtoms() const
+{
+    return coords.count();
+}
+
+/** Translate the CutGroup by 'delta' */
+inline void CutGroup::translate(const Vector &delta)
+{
+    CoordGroupEditor editor = coords.edit();
+
+    editor.translate(delta);
+
+    coords = editor.commit();
+}
+
+/** Rotate the Atoms in the CutGroup by the Quaternion 'quat'
+    about the point 'point' */
+inline void CutGroup::rotate(const Quaternion &quat, const Vector &point)
+{
+    CoordGroupEditor editor = coords.edit();
+
+    editor.rotate(quat, point);
+
+    coords = editor.commit();
+}
+
+/** Rotate (scale and/or shear) the Atoms in the CutGroup by the matrix
+    'rotmat' about the point 'point' */
+inline void CutGroup::rotate(const Matrix &rotmat, const Vector &point)
+{
+    CoordGroupEditor editor = coords.edit();
+
+    editor.rotate(rotmat, point);
+
+    coords = editor.commit();
+}
 
 }
 

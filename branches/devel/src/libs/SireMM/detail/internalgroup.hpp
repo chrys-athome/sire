@@ -8,6 +8,8 @@
 
 #include "SireMol/idtypes.h"
 
+#include "SireMol/groupindexid.h"
+
 #include "SireError/errors.h"
 #include "SireStream/datastream.h"
 
@@ -161,7 +163,7 @@ Index InternalGroup<T>::addInternal(const typename InternalGroup<T>::atom_id_typ
     {
         //the internals are numbered sequentially from 0 to nInternals() - 1
         //(so that the indicies can be used with an array)
-        Index newindex = index_to_atomid.count();
+        Index newindex( index_to_atomid.count() );
         atomid_to_index.insert( atomid, newindex );
         index_to_atomid.append( atomid );
         
@@ -192,18 +194,18 @@ void InternalGroup<T>::removeInternal(const typename InternalGroup<T>::atom_id_t
         
         //do we need to reindex the the internals - we will have to reindex
         //unless the index of the internal is equal to the new size of the hash
-        Index n = index_to_atomid.count();
+        Index n( index_to_atomid.count() );
         if ( atomidx + 1 < n )
         {
-            for (Index i = atomidx+1; i<n; ++i)
+            for (Index i( atomidx+1 ); i<n; ++i)
             {
                 //change the index of this internal
-                atomid_to_index[ index_to_atomid[i.index()] ] -= 1;
+                atomid_to_index[ index_to_atomid[i] ] -= 1;
             }
         }
     
         //remove the index from the reverse-lookup hash
-        index_to_atomid.removeAt(atomidx.index());
+        index_to_atomid.removeAt(atomidx);
     }
 }
 
@@ -214,7 +216,7 @@ SIRE_INLINE_TEMPLATE
 void InternalGroup<T>::removeInternal(Index idx)
 {
     if ( idx < Index(index_to_atomid.count()) )
-        this->removeInternal( index_to_atomid[idx.index()] );
+        this->removeInternal( index_to_atomid[idx] );
 }
     
 /** Return whether or not this group is empty */
@@ -251,7 +253,7 @@ T InternalGroup<T>::getInternal(Index idx) const
                     "Invalid index: requested %1, but only 0 -> %2 are valid")
                         .arg(idx.toString(),index_to_atomid.count()-1), CODELOC );
                         
-    return internal_type_data<T>::convertToInternal( resid, index_to_atomid[idx.index()] );
+    return internal_type_data<T>::convertToInternal( resid, index_to_atomid[idx] );
 }
 
 /** Return the index for the the atom_id_type 'id'. This throws 

@@ -48,6 +48,20 @@ void ProtoMS::read(const QString &filename, ParameterDB &db)
 {
     ProtoMSWS workspace( filename, db );
     
+    //ProtoMS uses a small number of default parameters - load these into
+    //the database first...
+    
+    // parameter '0' is always a dummy
+    workspace.angleDB().addAngle( "0", Expression() );
+    workspace.bondDB().addBond( "0", Expression() );
+    workspace.dihedralDB().addDihedral( "0", Expression() );
+    workspace.ureyBradleyDB().addUreyBradley( "0", Expression() );
+    workspace.chargeDB().addCharge( "0", 0.0 );
+    workspace.ljDB().addLJ( "0", LJParameter::dummy() );
+    workspace.atomTypeDB().addAtomType( "0", AtomType::dummy() );
+    
+    //now we can read in the parameters from the file
+    
     //read each line of the file
     while ( workspace.readNextLine() )
     {

@@ -9,22 +9,22 @@ namespace SireMol
 {
 
 /** This ID number is used to identify a CutGroup.
-    
+
     @author Christopher Woods
 */
-class SIREMOL_EXPORT CutGroupID : public ID<CutGroupID>
+class SIREMOL_EXPORT CutGroupID : public IDBase
 {
 
 public:
-    CutGroupID() : ID<CutGroupID>()
+    CutGroupID() : IDBase()
     {}
-    
-    CutGroupID(quint32 id) : ID<CutGroupID>(id)
+
+    explicit CutGroupID(quint32 id) : IDBase(id)
     {}
-    
-    CutGroupID(const CutGroupID &other) : ID<CutGroupID>(other)
+
+    CutGroupID(const CutGroupID &other) : IDBase(other)
     {}
-    
+
     ~CutGroupID()
     {}
 };

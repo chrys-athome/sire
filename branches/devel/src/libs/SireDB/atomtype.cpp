@@ -8,7 +8,7 @@
 using namespace SireStream;
 using namespace SireDB;
 
-AtomType AtomType::wild_type(QString::null, Element(0)); 
+AtomType AtomType::wild_type(QString::null, Element(0));
 AtomType AtomType::dummy_type("DM", Element(0));
 
 static const RegisterMetaType<AtomType> r_atomtype("SireDB::AtomType");
@@ -17,7 +17,7 @@ static const RegisterMetaType<AtomType> r_atomtype("SireDB::AtomType");
 QDataStream SIREDB_EXPORT &operator<<(QDataStream &ds, const AtomType &typ)
 {
     writeHeader(ds, r_atomtype, 1) << typ.id << typ.elmnt;
-    
+
     return ds;
 }
 
@@ -25,21 +25,21 @@ QDataStream SIREDB_EXPORT &operator<<(QDataStream &ds, const AtomType &typ)
 QDataStream SIREDB_EXPORT &operator>>(QDataStream &ds, AtomType &typ)
 {
     VersionID v = readHeader(ds, r_atomtype);
-    
+
     if (v == 1)
     {
         ds >> typ.id >> typ.elmnt;
     }
     else
         throw version_error(v, "1", r_atomtype, CODELOC);
-    
+
     return ds;
 }
 
 /** Construct an empty AtomType */
 AtomType::AtomType()
 {}
-    
+
 /** Construct an AtomType from the provided information. */
 AtomType::AtomType(const QString &typ, const Element &el) : id(typ.simplified()), elmnt(el)
 {}
@@ -51,6 +51,11 @@ AtomType::AtomType(const QString &typ) : id(typ.simplified()), elmnt(0)
 
 /** Construct an AtomType that only contains information about the element */
 AtomType::AtomType(const Element &element) : id(QString::null), elmnt(element)
+{}
+
+/** Construct from the AtomParameter */
+AtomType::AtomType(const AtomParameter<AtomType> &atomtype)
+         : id(atomtype.id), elmnt(atomtype.elmnt)
 {}
 
 /** Copy constructor */
@@ -67,7 +72,7 @@ AtomType AtomType::dummy()
     return dummy_type;
 }
 
-/** Return an AtomType that represents a wildcard (useful for matching dihedral or other 
+/** Return an AtomType that represents a wildcard (useful for matching dihedral or other
     intramolecular parameters) */
 AtomType AtomType::wild()
 {
@@ -104,7 +109,7 @@ bool AtomType::isWildType() const
     return id.isNull();
 }
 
-/** Return whether this is a wild element match (specifies only the type ID, 
+/** Return whether this is a wild element match (specifies only the type ID,
     not the element, which is wild) */
 bool AtomType::isWildElement() const
 {

@@ -8,24 +8,24 @@ SIRE_BEGIN_HEADER
 namespace SireMol
 {
 
-/** This ID number is used to represent a specific index in 
+/** This ID number is used to represent a specific index in
     an array, or the index of an item in a group.
-    
+
     @author Christopher Woods
 */
-class SIREMOL_EXPORT Index : public ID<Index>
+class SIREMOL_EXPORT Index : public IDBase
 {
 
 public:
-    Index() : ID<Index>()
+    Index() : IDBase()
     {}
-    
-    Index(quint32 id) : ID<Index>(id)
+
+    explicit Index(quint32 id) : IDBase(id)
     {}
-    
-    Index(const Index &other) : ID<Index>(other)
+
+    Index(const Index &other) : IDBase(other)
     {}
-    
+
     ~Index()
     {}
 };

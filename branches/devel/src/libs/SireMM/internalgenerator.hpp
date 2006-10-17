@@ -2,7 +2,7 @@
 #define SIREMM_INTERNALGENERATOR_HPP
 
 #include "SireMol/molecule.h"
-#include "SireMol/moleculecginfo.h"
+#include "SireMol/moleculeinfo.h"
 
 #include "SireMol/errors.h"
 #include "SireError/errors.h"
@@ -36,7 +36,7 @@ namespace SireMM
 {
 
 using SireMol::Molecule;
-using SireMol::MoleculeCGInfo;
+using SireMol::MoleculeInfo;
 
 /** This is the pure-virtual base class of all internal generators.
     Internal generators are used to generate the internals for a molecule
@@ -86,7 +86,7 @@ protected:
                     "Cannot place the internals for the molecule \"%1\" in "
                     "the info object for molecule \"%2\" as the molecule info "
                     "objects are not the same.")
-                        .arg(molecule.toString(), internalinfo.info().toString()),
+                        .arg(molecule.name(), internalinfo.info().toString()),
                             CODELOC);
     }
 };
@@ -153,7 +153,7 @@ public:
             if (not missing_atms.isEmpty())
                 throw SireMol::missing_atom( QObject::tr(
                     "Cannot add %1 as the molecule \"%2\" does not contain %3")
-                        .arg(internal.toString(), molecule.toString(),
+                        .arg(internal.toString(), molecule.name(),
                              missing_atms.join(", ")), CODELOC );
         }
         

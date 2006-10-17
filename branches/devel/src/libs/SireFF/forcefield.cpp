@@ -26,8 +26,10 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, ForceField&)
     return ds;
 }
 
+/** Constructor */
 ForceField::ForceField()
 {}
 
+/** Destructor */
 ForceField::~ForceField()
 {}

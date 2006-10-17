@@ -47,12 +47,13 @@ friend QDataStream& ::operator>>(QDataStream&, AssignBase&);
 
 public:
     AssignBase();
-    
+
     AssignBase(const AssignBase &other);
-    
+
     ~AssignBase();
 
-    virtual void assignParameters( ParameterTable &param_table, 
+    virtual void assignParameters( const Molecule &molecule,
+                                   ParameterTable &param_table,
                                    ParameterDB &database,
                                    const MatchMRData &matchmr = MatchMRData() ) const=0;
 
@@ -60,13 +61,13 @@ public:
 
     QStringList parameterDataBases() const;
     QStringList relationshipDataBases() const;
-    
+
     void addDataBase(const using_relationships_base &relationshipdbs);
     void addDataBase(const using_parameters_base &parameterdbs);
     void addDataBase(const using_database &dbs);
 
     bool overwriteParameters() const;
-  
+
     void setOverwriteParameters(bool flag);
 
 private:
@@ -75,11 +76,11 @@ private:
 
     /** The list of database classes to use to assign these parameters */
     QStringList paramdbs;
-    
+
     /** The list of database classes used to get the relationships
         between the parts of the molecule and the actual parameters */
     QStringList relatedbs;
-    
+
     /** Whether or not to overwrite */
     bool _overwrite;
 };

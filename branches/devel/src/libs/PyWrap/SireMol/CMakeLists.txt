@@ -17,7 +17,10 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs
 
 # Define the sources in SireMol
 set ( WRAPMOL_SOURCES
-      wrap_aabox.cpp          
+      editmol.py.cpp
+      editres.py.cpp
+      molecule.py.cpp
+      residue.py.cpp
       wrap_angles.cpp         
       wrap_atom.cpp           
       wrap_atomlist.cpp       
@@ -27,34 +30,19 @@ set ( WRAPMOL_SOURCES
       wrap_atomset.cpp        
       wrap_atomvector.cpp       
       wrap_bonds.cpp            
-      wrap_convertmolecule.cpp  
       wrap_cutgroup.cpp         
       wrap_cutgroupset.cpp      
       wrap_dihedrals.cpp        
-      wrap_editmol2.cpp         
-      wrap_editmol3.cpp               
-      wrap_editmol.cpp      
-      wrap_editmollist.cpp  
-      wrap_editres2.cpp     
-      wrap_editres3.cpp     
-      wrap_editres.cpp      
       wrap_idtypes.cpp      
       wrap_impropers.cpp    
       wrap_indexlist.cpp
       wrap_indexset.cpp        
       wrap_indexvector.cpp     
       wrap_internals.cpp       
-      wrap_molecule2.cpp       
-      wrap_moleculebonds.cpp   
-      wrap_moleculecginfo.cpp  
-      wrap_molecule.cpp        
-      wrap_moleculeset.cpp
-      wrap_moleculesignature.cpp
-      wrap_residue2.cpp
+      wrap_moleculebonds.cpp
+      wrap_moleculeinfo.cpp
       wrap_residuebonds.cpp
-      wrap_residue.cpp
-      wrap_residueidset.cpp
-      wrap_residueset.cpp
+      wrap_residueinfo.cpp
      )
 
 # Create the library that holds all of the class wrappers

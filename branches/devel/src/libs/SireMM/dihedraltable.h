@@ -26,13 +26,15 @@ namespace SireMM
 {
 
 using SireCAS::Expression;
+
 using SireMol::Molecule;
+using SireMol::MoleculeInfo;
 
 /** This class is the predominant DihedralTable that is used in Sire.
     This class holds the set of dihedrals in the molecule and maps
-    them to the SireCAS::Expression objects that contain the 
+    them to the SireCAS::Expression objects that contain the
     formula that is used to evaluate their energy.
-    
+
     @author Christopher Woods
 */
 class SIREDB_EXPORT DihedralTable : public DihedralTableT<Expression>
@@ -43,27 +45,27 @@ friend QDataStream& ::operator>>(QDataStream&, DihedralTable&);
 
 public:
     DihedralTable();
-    
-    DihedralTable(const Molecule &mol);
+
+    DihedralTable(const MoleculeInfo &mol);
     DihedralTable(const Molecule &mol, const DihedralGeneratorBase &dihedralgenerator);
     DihedralTable(const MolDihedralInfo &dihedralinfo);
-    
+
     DihedralTable(const DihedralTable &other);
-    
+
     ~DihedralTable();
 
     DihedralTable* clone() const
     {
         return new DihedralTable(*this);
     }
-    
-    DihedralTable* create(const Molecule &molecule) const
+
+    DihedralTable* create(const MoleculeInfo &molinfo) const
     {
-        return new DihedralTable(molecule);
+        return new DihedralTable(molinfo);
     }
-    
+
     void add(const TableBase &other);
-    
+
     static const char* typeName()
     {
         return "SireMM::DihedralTable";
@@ -73,9 +75,9 @@ public:
     {
         return DihedralTable::typeName();
     }
-    
-    
-    
+
+
+
 };
 
 }

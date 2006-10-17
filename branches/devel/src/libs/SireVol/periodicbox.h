@@ -1,11 +1,19 @@
 #ifndef SIREVOL_PERIODICBOX_H
 #define SIREVOL_PERIODICBOX_H
 
-#include "simvolume.h"
+#include "cartesian.h"
 
 #include "SireMaths/vector.h"
 
 SIRE_BEGIN_HEADER
+
+namespace SireVol
+{
+class PeriodicBox;
+}
+
+QDataStream& operator<<(QDataStream&, const SireVol::PeriodicBox&);
+QDataStream& operator>>(QDataStream&, SireVol::PeriodicBox&);
 
 namespace SireVol
 {
@@ -14,41 +22,59 @@ using SireMaths::Vector;
 
 /**
 A PeriodicBox is a volume  that represents standard periodic boundary conditions (a 3D box replicated to infinity along all three dimensions).
- 
+
 @author Christopher Woods
 */
-class SIREVOL_EXPORT PeriodicBox : public SimVolume
+class SIREVOL_EXPORT PeriodicBox : public Cartesian
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const PeriodicBox&);
+friend QDataStream& ::operator>>(QDataStream&, PeriodicBox&);
+
 public:
     PeriodicBox();
     PeriodicBox(const Vector &min, const Vector &max);
+
     PeriodicBox(const PeriodicBox &other);
-    
+
     ~PeriodicBox();
-    
+
     void setDimension(const Vector &min, const Vector &max);
-    
+
     const Vector& minCoords() const;
     const Vector& maxCoords() const;
-    
+
     Vector center() const;
-    
-    SimVolumePtr clone() const;
-    
-    double calcDist(const CutGroup &group1, const CutGroup &group2,
-                    DistMatrix &mat) const;
 
-    double calcDist2(const CutGroup &group1, const CutGroup &group2,
-                     DistMatrix &mat) const;
+    SpaceBase* clone() const
+    {
+        return new PeriodicBox(*this);
+    }
 
-    double calcInvDist(const CutGroup &group1, const CutGroup &group2,
-                       DistMatrix &mat) const;
+    static const char* typeName()
+    {
+        return "SireVol::Cartesian";
+    }
 
-    double calcInvDist2(const CutGroup &group1, const CutGroup &group2,
-                        DistMatrix &mat) const;
-    
-    bool beyond(const double &dist, const CutGroup &group0, 
-                const CutGroup &group1) const;
+    const char* what() const
+    {
+        return PeriodicBox::typeName();
+    }
+
+    double calcDist(const CoordGroup &group1, const CoordGroup &group2,
+                    DistMatrix &distmat) const;
+
+    double calcDist2(const CoordGroup &group1, const CoordGroup &group2,
+                     DistMatrix &distmat) const;
+
+    double calcInvDist(const CoordGroup &group1, const CoordGroup &group2,
+                       DistMatrix &distmat) const;
+
+    double calcInvDist2(const CoordGroup &group1, const CoordGroup &group2,
+                        DistMatrix &distmat) const;
+
+    bool beyond(double dist, const CoordGroup &group0,
+                const CoordGroup &group1) const;
 
 protected:
 
@@ -58,16 +84,16 @@ protected:
 
     /** The origin of the box (minimum coordinates) */
     Vector mincoords;
-    
+
     /** The maximum coordinates of the box */
     Vector maxcoords;
-    
+
     /** The lengths of each side of the box */
     Vector boxlength;
-    
+
     /** Half the box length */
     Vector halflength;
-    
+
     /** The inverse of the lengths of each side of the box */
     Vector invlength;
 };
@@ -110,12 +136,14 @@ inline int PeriodicBox::getWrapVal(double del, double invlgth, double halflgth)
     distances so that the molecules are all wrapped into the same periodic box */
 inline Vector PeriodicBox::wrapDelta(const Vector &v0, const Vector &v1) const
 {
-    return Vector( getWrapVal( v1.x()-v0.x(), invlength.x(), halflength.x()) * boxlength.x(), 
-                   getWrapVal( v1.y()-v0.y(), invlength.y(), halflength.y()) * boxlength.y(), 
+    return Vector( getWrapVal( v1.x()-v0.x(), invlength.x(), halflength.x()) * boxlength.x(),
+                   getWrapVal( v1.y()-v0.y(), invlength.y(), halflength.y()) * boxlength.y(),
                    getWrapVal( v1.z()-v0.z(), invlength.z(), halflength.z()) * boxlength.z() );
 }
 
 }
+
+Q_DECLARE_METATYPE(SireVol::PeriodicBox)
 
 SIRE_END_HEADER
 

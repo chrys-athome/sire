@@ -1,7 +1,7 @@
 #ifndef SIREDB_TABLEBASE_H
 #define SIREDB_TABLEBASE_H
 
-#include "sireglobal.h"
+#include "SireMol/moleculeinfo.h"
 
 SIRE_BEGIN_HEADER
 
@@ -22,6 +22,7 @@ class Molecule;
 namespace SireDB
 {
 
+using SireMol::MoleculeInfo;
 using SireMol::Molecule;
 
 /**
@@ -37,39 +38,57 @@ friend QDataStream& ::operator>>(QDataStream&, TableBase&);
 
 public:
     TableBase();
+    TableBase(const MoleculeInfo &info);
+
     TableBase(const TableBase &other);
 
     virtual ~TableBase();
 
+    const MoleculeInfo& info() const;
+
+    bool isCompatibleWith(const MoleculeInfo &molinfo) const;
+
     virtual TableBase* clone() const=0;
     virtual const char* what() const=0;
-    
-    virtual TableBase* create(const Molecule &molecule) const=0;
-    
-    virtual bool isCompatibleWith(const Molecule &molecule) const=0;
-    
+
+    virtual TableBase* create(const MoleculeInfo &molinfo) const=0;
+
     virtual bool isEmpty() const=0;
-    
+
     virtual void add(const TableBase &other)=0;
-    
+
     template<class T>
     bool isA() const
     {
         return dynamic_cast<const T*>(this) != 0;
     }
-    
+
     template<class T>
     const T& asA() const
     {
         return dynamic_cast<const T&>(*this);
     }
-    
+
     template<class T>
     T& asA()
     {
         return dynamic_cast<T&>(*this);
     }
+
+    void assertCompatibleWith(const Molecule &molecule) const;
+
+private:
+    /** The metadata for the molecule whose parameters
+        are in this table */
+    MoleculeInfo molinfo;
 };
+
+/** Return the metadata for the molecule whose parameters are in this
+    table */
+inline const MoleculeInfo& TableBase::info() const
+{
+    return molinfo;
+}
 
 }
 

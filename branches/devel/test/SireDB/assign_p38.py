@@ -7,6 +7,10 @@ from Sire.MM import *
 from Sire.Qt import *
 
 mols = PDB().read("test/io/p38.pdb")
+
+for mol in mols:
+    mol.addAutoBonds()
+
 mols = flexibleAndResidueCutting(mols)
 
 p38 = mols[0]
@@ -24,9 +28,11 @@ t = QTime()
 
 print "Assigning the parameters..."
 t.start()
-params = db.assign(p38, assign_atoms(
-                                using_parameters(ChargeDB,LJDB,AtomTypeDB), 
-                                using_relationships(RelateMRADB,RelateAtomTypeDB) )
+params = db.assign(p38, [assign_atoms(using_parameters(ChargeDB,LJDB,AtomTypeDB)),
+                         assign_bonds(using_parameters(BondDB)),
+                         assign_angles(using_parameters(AngleDB)),
+                         assign_dihedrals(using_parameters(DihedralDB)),
+                         using_relationships(RelateMRADB,RelateAtomTypeDB)]
                   )
 
 ms = t.elapsed()

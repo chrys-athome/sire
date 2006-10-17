@@ -11,16 +11,18 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the sources in SireMol
 set ( SIREMOL_SOURCES
-      aabox.cpp      
       angle.cpp	     
-      atom.cpp	     
+      atom.cpp
+      atomcutting.cpp
       atomidgroup.cpp      
       atomindex.cpp	     
-      atomset.cpp	     
+      atominfo.cpp
+      atominfogroup.cpp
       bond.cpp	     
-      cgatomid.cpp	     
-      convertmolecule.cpp  
-      cutgroup.cpp	     
+      cgatomid.cpp
+      cgnumatomid.cpp
+      cutgroup.cpp
+      cuttingfunction.cpp
       dihedral.cpp	     
       editmol.cpp	     
       editmoldata.cpp    
@@ -32,18 +34,20 @@ set ( SIREMOL_SOURCES
       indexinfo.cpp	   
       molcgatomid.cpp    
       molcutgroupid.cpp  
-      moleculebonds.cpp  
-      molecule.cpp
+      molecule.cpp  
+      moleculebonds.cpp
+      moleculecutting.cpp
       moleculedata.cpp
-      moleculesignature.cpp
-      residuebonds.cpp
+      moleculeinfo.cpp
+      moleculeversion.cpp
+      residatomid.cpp
       residue.cpp
-      residueidset.cpp
+      residuebonds.cpp
+      residuecutting.cpp
       residueinfo.cpp
       resnumatomid.cpp
       resnumindexid.cpp
       splitmolecule.cpp
-      templatefunction.cpp
       weightfunction.cpp
     )
 
@@ -52,11 +56,12 @@ add_library (SireMol ${SIREMOL_SOURCES})
 set_target_properties (SireMol PROPERTIES
                        VERSION ${SIRE_VERSION}
                        SOVERSION ${SIRE_VERSION_MAJOR}
+                       LINK_FLAGS ${SIRE_LINK_FLAGS}
                       )
 
 # Link to other Sire libraries, and GSL
 target_link_libraries (SireMol
-                       SireStream
+                       SireVol
                        )
 
 # installation

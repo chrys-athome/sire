@@ -1,155 +1,175 @@
 #ifndef SIREMOL_RESIDUEINFO_H
 #define SIREMOL_RESIDUEINFO_H
+/**
+  * @file
+  *
+  * C++ Interface: ResidueInfo
+  *
+  * Description:
+  * Interface to ResidueInfo
+  *
+  * Author: Christopher Woods, (C) 2006
+  *
+  * Copyright: See COPYING file that comes with this distribution
+  *
+  */
 
+#include <QSharedDataPointer>
 #include <QHash>
+#include <QStringList>
 
-#include "atomindexset.h"
-#include "residueidset.h"
+#include "sireglobal.h"
+
 #include "idtypes.h"
-
-#include "SireMol/errors.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
-class ResidueInfoBase;
+class ResidueInfo;
 }
 
-class QDataStream;
-QDataStream& operator<<(QDataStream&, const SireMol::ResidueInfoBase&);
-QDataStream& operator>>(QDataStream&, SireMol::ResidueInfoBase&);
+QDataStream& operator<<(QDataStream&, const SireMol::ResidueInfo&);
+QDataStream& operator>>(QDataStream&, SireMol::ResidueInfo&);
 
 namespace SireMol
 {
 
-/** 
-  * This class provides the template-independent parts of ResidueInfo.
-  * This should improve compilation time and reduce code-bloat.
+class ResidueInfoPvt;
+
+class AtomIndex;
+class AtomInfo;
+class AtomInfoGroup;
+
+class AtomID;
+class ResID;
+class ResNum;
+class CutGroupID;
+
+class CGAtomID;
+
+/**
+  * This class holds all of the metainfo for a residue. This class is designed
+  * to be used with MoleculeInfo. This holds the name and number of the residue,
+  * together with the names and metainfo for all of the atoms in the molecule.
   *
   * @author Christopher Woods
   *
   */
-class SIREMOL_EXPORT ResidueInfoBase
+class SIREMOL_EXPORT ResidueInfo
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const ResidueInfoBase&);
-friend QDataStream& ::operator>>(QDataStream&, ResidueInfoBase&);
+friend QDataStream& ::operator<<(QDataStream&, const ResidueInfo&);
+friend QDataStream& ::operator>>(QDataStream&, ResidueInfo&);
 
 public:
-    ResidueInfoBase();
-    ResidueInfoBase(const QString &resnam, ResNum resnum);
-    
-    ResidueInfoBase(const ResidueInfoBase &other);
-    
-    ~ResidueInfoBase();
-    
-    ResidueInfoBase& operator=(const ResidueInfoBase &other);
-    
-    bool operator==(const ResidueInfoBase &other) const;
-    bool operator!=(const ResidueInfoBase &other) const;
-    
+    ResidueInfo();
+
+    ResidueInfo(const ResidueInfo &other);
+
+    ~ResidueInfo();
+
+   ////// Operators ////////////////////////////////////////
+    ResidueInfo& operator=(const ResidueInfo &other);
+
+    bool operator==(const ResidueInfo &other) const;
+    bool operator!=(const ResidueInfo &other) const;
+
+    const CGAtomID& operator[](AtomID atmid) const;
+    const CGAtomID& operator[](const QString &atmname) const;
+
+    const AtomInfoGroup& operator[](CutGroupID cgid) const;
+    const AtomInfoGroup& operator[](CutGroupNum cgnum) const;
+   /////////////////////////////////////////////////////////
+
+   ///// Querying the molecule /////////////////////////////
+    const CGAtomID& at(AtomID atmid) const;
+    const CGAtomID& at(const QString &atmname) const;
+
+    const AtomInfoGroup& at(CutGroupID cgid) const;
+    const AtomInfoGroup& at(CutGroupNum cgnum) const;
+
+    const AtomInfo& atom(AtomID i) const;
+    const AtomInfo& atom(const QString &atmname) const;
+    const AtomInfo& atom(const CGAtomID &cgid) const;
+    const AtomInfo& atom(const CGNumAtomID &cgid) const;
+
+    const AtomInfoGroup& atomGroup(CutGroupID cgid) const;
+    const AtomInfoGroup& atomGroup(CutGroupNum cgnum) const;
+
+    QHash<CutGroupID,AtomInfoGroup> atomGroups() const;
+    QHash<CutGroupID,AtomInfoGroup> atomGroups(const QSet<CutGroupID> &cgids) const;
+    QHash<CutGroupNum,AtomInfoGroup> atomGroups(const QSet<CutGroupNum> &cgnums) const;
+
+    QVector<AtomInfo> atoms() const;
+
+    QHash<AtomID,AtomInfo> atoms( const QSet<AtomID> &idxs ) const;
+    QHash<CGAtomID,AtomInfo> atoms( const QSet<CGAtomID> &cgids ) const;
+    QHash<CGNumAtomID,AtomInfo> atoms( const QSet<CGNumAtomID> &cgids ) const;
+    QHash<QString,AtomInfo> atoms( const QSet<QString> &atms ) const;
+
+    QVector<AtomInfo> atoms(CutGroupID cgid) const;
+    QVector<AtomInfo> atoms(CutGroupNum cgnum) const;
+
+    QHash< CutGroupID, QVector<AtomInfo> > atoms(const QSet<CutGroupID> &cgids) const;
+    QHash< CutGroupNum, QVector<AtomInfo> > atoms(const QSet<CutGroupNum> &cgnums) const;
+
+    const QVector<CGAtomID>& indicies() const;
+    const QSet<CutGroupID>& cutGroupIDs() const;
+    QSet<CutGroupNum> cutGroupNums() const;
+
     QString toString() const;
-    
-    int size() const;
-    int nAtoms() const;
-    int count() const;
-    
+
     QString name() const;
     QString resName() const;
-    
+
     ResNum number() const;
     ResNum resNum() const;
-    
-    const ResidueID& ID() const;
-    
-    AtomIndex atom(AtomID i) const;
-    
-    const QStringList& atomNames() const;
-    
-    void setName(const QString &name);
-    void setNumber(ResNum resnum);
-    
-    void clear();
-    void squeeze();
-    
-    void reserve(int n);
-    
+
+    int nCutGroups() const;
+
+    int nAtoms() const;
+    int nAtoms(CutGroupID cgid) const;
+    int nAtoms(CutGroupNum cgnum) const;
+
+    QString atomName(AtomID atomid) const;
+    QHash<AtomID,QString> atomNames(const QSet<AtomID> &atomids) const;
+
+    QStringList atomNames() const;
+
     bool contains(const QString &atmname) const;
     bool contains(const AtomIndex &atm) const;
     bool contains(AtomID atm) const;
-    
-protected:
+    bool contains(CutGroupID cgid) const;
+    bool contains(CutGroupID cgid, AtomID atomid) const;
+    bool contains(const CGAtomID &cgid) const;
+    bool contains(CutGroupNum cgnum) const;
+    bool contains(CutGroupNum cgnum, AtomID atomid) const;
+    bool contains(const CGNumAtomID &cgid) const;
 
-    void addAtom(const QString &atm, quint32 i);
+    bool isEmpty() const;
+    bool isEmpty(CutGroupID cgid) const;
+    bool isEmpty(CutGroupNum cgnum) const;
 
-    /** The name and number of this residue */
-    ResidueID resid;
-    
-    /** Hash mapping atom names to indexes */
-    QHash<QString,qint32> name2idx;
+    void assertAtomExists(const QString &atomname) const;
+    void assertAtomExists(AtomID atomid) const;
 
-    /** List of the names of the atoms, in the order that 
-        they were added to the residue */
-    QStringList atmnames;
+    void assertSameResidue(const AtomIndex &atom) const;
+    void assertSameResidue(const QSet<AtomIndex> &atoms) const;
+    void assertSameResidue(CutGroupID cgid) const;
+    void assertSameResidue(CutGroupNum cgnum) const;
+
+    void assertNAtoms(int n) const;
+   /////////////////////////////////////////////////////////
+
+private:
+    /** Implicitly shared pointer to the data for this object */
+    QSharedDataPointer<ResidueInfoPvt> d;
 };
 
-/** Return the name of this residue */
-inline QString ResidueInfoBase::name() const
-{
-    return resid.name();
 }
 
-/** Return the name of this residue */
-inline QString ResidueInfoBase::resName() const
-{
-    return resid.name();
-}
-    
-/** Return the residue's number */
-inline ResNum ResidueInfoBase::number() const
-{
-    return resid.number();
-}
-
-/** Return the residue's number */
-inline ResNum ResidueInfoBase::resNum() const
-{
-    return resid.number();
-}
-    
-/** Return the residue's ID (combined name and number) */
-inline const ResidueID& ResidueInfoBase::ID() const
-{
-    return resid;
-}
-    
-/** Return the names of the atoms in this residue (in the order in which
-    they were added to the residue) */
-inline const QStringList& ResidueInfoBase::atomNames() const
-{
-    return atmnames;
-}
-
-/** Return whether or not this residue contains the atom with name 'atmname' */
-inline bool ResidueInfoBase::contains(const QString &atmname) const
-{
-    return name2idx.contains(atmname);
-}
-
-/** Return whether or not this residue contains the atom with index 'atm' */
-inline bool ResidueInfoBase::contains(const AtomIndex &atm) const
-{
-    return atm.resNum() == resNum() and contains(atm.name());
-}
-
-/** Return whether or not this residue contains the atom with index 'atm' */
-inline bool ResidueInfoBase::contains(AtomID atm) const
-{
-    return atm < nAtoms();
-}
-
-}
+Q_DECLARE_METATYPE(SireMol::ResidueInfo)
 
 SIRE_END_HEADER
 

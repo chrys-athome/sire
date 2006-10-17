@@ -9,21 +9,21 @@ MatchRes::MatchRes() : resnum(0)
 
 /** Copy constructor */
 MatchRes::MatchRes(const MatchRes &other)
-         : resname(other.resname), resalias(other.resalias), resnum(other.resnum), 
-           interresbonds(other.interresbonds), 
+         : resname(other.resname), resalias(other.resalias), resnum(other.resnum),
+           interresbonds(other.interresbonds),
            not_interresbonds(other.not_interresbonds)
 {}
 
-/** Destructor */  
+/** Destructor */
 MatchRes::~MatchRes()
 {}
 
 /** Comparison operator */
 bool MatchRes::operator==(const MatchRes &other) const
 {
-    return resnum == other.resnum and resname == other.resname and  
+    return resnum == other.resnum and resname == other.resname and
            resalias == other.resalias and
-           interresbonds == other.interresbonds and 
+           interresbonds == other.interresbonds and
            not_interresbonds == other.not_interresbonds;
 }
 
@@ -32,7 +32,7 @@ bool MatchRes::operator!=(const MatchRes &other) const
 {
     return resnum != other.resnum or resname != other.resname or
            resalias != other.resalias or
-           interresbonds != other.interresbonds or 
+           interresbonds != other.interresbonds or
            not_interresbonds != other.not_interresbonds;
 }
 
@@ -40,17 +40,17 @@ bool MatchRes::operator!=(const MatchRes &other) const
 QString MatchRes::toString() const
 {
     QStringList parts;
-    
+
     if (hasNameMatch())
         parts.append( QObject::tr("res_name == %1").arg(name()) );
-    
+
     if (hasNumberMatch())
         parts.append( QObject::tr("res_num == %1").arg(number().toString()) );
-    
+
     if (hasResResBonds())
         parts.append( QObject::tr("res_res_bonds_via == [%1]")
                           .arg(resResBonds().join(",")) );
-        
+
     if (hasNoResResBonds())
         parts.append( QObject::tr("no_res_res_bonds_via == [%1]")
                           .arg(noResResBonds().join(",")) );
@@ -68,17 +68,17 @@ QString MatchRes::toString() const
 QString MatchRes::toString(uint atm) const
 {
     QStringList parts;
-    
+
     if (hasNameMatch())
         parts.append( QObject::tr("res%1_name == %2").arg(atm).arg(name()) );
-    
+
     if (hasNumberMatch())
         parts.append( QObject::tr("res%1_num == %2").arg(atm).arg(number().toString()) );
-    
+
     if (hasResResBonds())
         parts.append( QObject::tr("res%1_res_bonds_via == [%2]")
                         .arg(atm).arg(resResBonds().join(",")) );
-        
+
     if (hasNoResResBonds())
         parts.append( QObject::tr("no_res%1_res_bonds_via == [%2]")
                         .arg(atm).arg(noResResBonds().join(",")) );
@@ -95,7 +95,7 @@ QString MatchRes::toString(uint atm) const
 /** Does this contain any matching criteria? This will match everything if it is empty */
 bool MatchRes::isEmpty() const
 {
-    return resname.isEmpty() and resnum == 0 and resalias.isEmpty() and 
+    return resname.isEmpty() and resnum == 0 and resalias.isEmpty() and
            interresbonds.isEmpty() and not_interresbonds.isEmpty();
 }
 
@@ -125,7 +125,7 @@ bool MatchRes::hasNoResResBonds() const
     return not not_interresbonds.isEmpty();
 }
 
-/** Set the name of the residue that must be matched */    
+/** Set the name of the residue that must be matched */
 void MatchRes::setName(const QString &name)
 {
     resname = name;
@@ -144,7 +144,7 @@ void MatchRes::setNumber(ResNum number)
     resnum = number;
 }
 
-/** Return the number of the residue that must be matched - this returns 
+/** Return the number of the residue that must be matched - this returns
     0 if this matches any residue number */
 ResNum MatchRes::number() const
 {
@@ -168,7 +168,23 @@ void MatchRes::addNoResResBond(const QString &atom)
     interresbonds.remove(atom);
     not_interresbonds.insert(atom);
 }
-    
+
+/** Add a whole load of atoms that are known to be involved in inter-residue
+    bonds. */
+void MatchRes::addResResBonds(const QSet<QString> &atoms)
+{
+    not_interresbonds.subtract(atoms);
+    interresbonds.unite(atoms);
+}
+
+/** Add a whole load of atoms that must not be involved in an inter-residue
+    bond. */
+void MatchRes::addNoResResBonds(const QSet<QString> &atoms)
+{
+    interresbonds.subtract(atoms);
+    not_interresbonds.unite(atoms);
+}
+
 /** Return the list of atoms that must be involved in inter-residue bonds. Return
     an empty list if there are no atoms specified. */
 QStringList MatchRes::resResBonds() const
@@ -201,23 +217,23 @@ QString MatchRes::alias() const
     return resalias;
 }
 
-/** and combine two sets of MatchRes criteria together. Note that  
+/** and combine two sets of MatchRes criteria together. Note that
     the second match is taken if there is any contradiction, e.g.
     res_name == "ALA" and res_name == "ASP" would return a MatchRes
     with res_name == "ASP" */
 MatchRes MatchRes::operator&&(const MatchRes &other) const
 {
     MatchRes ret(*this);
-    
+
     if (other.hasNameMatch())
         ret.setName( other.name() );
-        
+
     if (other.hasNumberMatch())
         ret.setNumber( other.number() );
 
     if (other.hasAliasMatch())
         ret.setAlias( other.alias() );
-        
+
     if (other.hasResResBonds())
     {
         for (QSet<QString>::const_iterator it = other.interresbonds.begin();
@@ -227,7 +243,7 @@ MatchRes MatchRes::operator&&(const MatchRes &other) const
             ret.addResResBond( *it );
         }
     }
-    
+
     if (other.hasNoResResBonds())
     {
         for (QSet<QString>::const_iterator it = other.not_interresbonds.begin();
@@ -237,6 +253,6 @@ MatchRes MatchRes::operator&&(const MatchRes &other) const
             ret.addNoResResBond( *it );
         }
     }
-    
+
     return ret;
 }

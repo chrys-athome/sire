@@ -17,7 +17,6 @@ set ( SIREDB_SOURCES
       assign_parameters.cpp    
       atomdb.cpp               
       atomtable.cpp            
-      atomtabledata.cpp        
       atomtype.cpp             
       atomtypedb.cpp           
       atomtypetable.cpp        
