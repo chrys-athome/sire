@@ -90,11 +90,16 @@ public:
     virtual ChangeRecordBase* moveResidue(const Residue &res);
     virtual ChangeRecordBase* moveMolecule(const Molecule &mol);
     
-    virtual ChangeRecordBase* changeMolecule(const ParameterTable &mol_and_params);
+    virtual ChangeRecordBase* changeResidue(const Residue &res, 
+                                            const ParameterTable &newparams);
+    
+    virtual ChangeRecordBase* changeMolecule(const Molecule &mol,
+                                             const ParameterTable &newparams);
     
     virtual ChangeRecordBase* removeMolecule(const Molecule &mol);
     
-    virtual ChangeRecordBase* addMolecule(const ParameterTable &mol_and_params);
+    virtual ChangeRecordBase* addMolecule(const Molecule &mol,
+                                          const ParameterTable &params);
 };
 
 }

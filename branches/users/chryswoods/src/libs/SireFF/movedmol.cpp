@@ -75,99 +75,102 @@ MovedMol::MovedMol(const MovedMol &other)
 MovedMol::~MovedMol()
 {}
 
-/** Internal function used to generate an error string for 
-    the incompatible_molecule error */
-QString MovedMol::errorString(const Molecule &mol) const
+/** Assert that 'mol' is compatible with the molecule recorded in 
+    this move record 
+    
+    \throw SireError::incompatible_error
+*/
+void MovedMol::assertCompatibleWith(const Molecule &mol) const
 {
-    return QObject::tr("Cannot combine the move record of "
-                       "incompatible molecules! %1 vs. %2")
-                    .arg(movedmol.toString(), mol.toString());
+    //check that the IDs are the same
+
+}
+
+/** Assert that 'mol' is a compatible version to be recorded in 
+    this record (i.e. the major version number is the same)
+    
+    \throw SireError::version_error
+*/
+void MovedMol::assertCompatibleVersion(const Molecule &mol) const
+{
 }
 
 /** Record that the molecule 'mol' has moved. Note that this will
     throw an exception if the molecule has been changed since being
-    added to this record (i.e. the major version number of 'mol' is
-    not the same as the major version number of 'movedmol'), or
-    if 'mol' is a different molecule to the one recorded in this
-    record.
-     
-    \throw SireMol::incompatible_molecule
+    added to this record 
+    
+    \throw SireError::incompatible_error
+    \throw SireError::version_error
 */
 ChangeRecordBase* MovedMol::moveMolecule(const Molecule &mol)
 {
-    if ( movedmol.isNull() or 
-         (movedmol.ID() == mol.ID() and 
-          movedmol.version().major() == mol.version().major())
-       )
-    {
-        movedmol = mol;
-    }
-    else if (not mol.isNull())
-        throw SireMol::incompatible_molecule(errorString(mol), CODELOC);
+    this->assertCompatibleWith(mol);
+    this->assertCompatibleVersion(mol);
+    
+    movedmol = mol;
                         
     return this;
 }
 
-/** Record that the residue 'res' has moved */
+/** Record that the residue 'res' has moved
+    
+    \throw SireError::incompatible_error
+    \throw SireError::version_error
+*/
 ChangeRecordBase* MovedMol::moveResidue(const Residue &res)
 {
-    if (movedmol.isNull())
-        //only the residue has moved
-        return new MovedParts(res);
-    else
-        //we should record the movement of the whole molecule, as
-        //it has already been moved
-        return this->moveMolecule(res.molecule());
+    //we should record the movement of the whole molecule, as
+    //it has already been moved
+    return this->moveMolecule(res.molecule());
 }
 
-/** Record that the molecule (contained with its parameters in 'mol_and_params')
-    has changed. */
-ChangeRecordBase* MovedMol::changeMolecule(const ParameterTable &mol_and_params)
-{
-    if ( movedmol.isNull() or 
-         movedmol.ID() == mol_and_params.molecule().ID() )
-    {
-        return new ChangedMol(mol_and_params);
-    }
-    else if (not mol_and_params.molecule().isNull())
-        throw SireMol::incompatible_molecule(errorString(mol_and_params.molecule()), 
-                                             CODELOC);
+/** Record that the residue 'res', with parameters 'param' has changed.
 
-    return this;
+    \throw SireError::incompatible_error
+*/
+ChangeRecordBase* MovedMol::changeResidue(const Residue &res,
+                                          const ParameterTable &params)
+{
+    this->assertCompatibleWith(res.molecule());
+    
+    return new ChangedRes(movedmol, res, params);
+}
+
+/** Record that the molecule 'mol', with parameters 'params' has changed. 
+
+    \throw SireError::incompatible_error
+*/
+ChangeRecordBase* MovedMol::changeMolecule(const Molecule &mol,
+                                           const ParameterTable &params)
+{
+    this->assertCompatibleWith(mol);
+    
+    return new ChangedMol(mol,params);
 }
 
 /** Record that the molecule 'mol' has been removed. */
 ChangeRecordBase* MovedMol::removeMolecule(const Molecule &mol)
 {
-    if (movedmol.isNull() or movedmol.ID() == mol.ID())
-        return new RemovedMol(mol);
-    else if (not mol.isNull())
-        throw SireMol::incompatible_molecule(errorString(mol), CODELOC);
+    this->assertCompatibleWith(mol);
     
-    return this;
+    return new RemovedMol(mol);
 }
     
-/** Record that the molecule 'mol' has been added. This will throw an 
-    exception as we cannot add a molecule that already exists! 
+/** Record that the molecule 'mol' has been added (with parameters  
+    'params'. 
+    
+    This will throw an exception as we cannot add a molecule that already exists! 
     
     \throw SireError::program_bug
 */
-ChangeRecordBase* MovedMol::addMolecule(const ParameterTable &mol_and_params)
+ChangeRecordBase* MovedMol::addMolecule(const Molecule &mol,
+                                        const ParameterTable &params)
 {
-    const Molecule &mol = mol_and_params.molecule();
+    this->assertCompatibleWith(mol);
     
-    if (mol.isNull())
-        //nothing to do
-        return this;
-    else if (movedmol.isNull())
-        //this is null, so lets just add the molecule
-        return new AddedMolecule(mol_and_params);
-    else if (movedmol.ID() != mol.ID())
-        throw SireMol::incompatible_molecule(errorString(mol), CODELOC);
-    else
-        throw SireError::program_bug( QObject::tr(
-                  "Cannot add a molecule that already exists! %1 vs. %2")
-                      .arg(movedmol.toString(), mol.toString()), CODELOC );
+    throw SireError::program_bug( QObject::tr(
+               "Cannot add a molecule that already exists! %1 vs. %2")
+                    .arg(movedmol.idString(), mol.idString()), CODELOC );
 
     return this;
 }

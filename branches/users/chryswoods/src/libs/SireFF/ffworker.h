@@ -1,7 +1,13 @@
 #ifndef SireFF_FFWORKER_H
 #define SireFF_FFWORKER_H
 
-#include "sireglobal.h"
+#include "SireCAS/function.h"
+#include "SireCAS/values.h"
+
+#include "SireMol/moleculeid.h"
+#include "SireMol/molresnumid.h"
+
+#include "changedmols.h"
 
 SIRE_BEGIN_HEADER
 
@@ -13,8 +19,31 @@ class FFWorker;
 QDataStream& operator<<(QDataStream&, const SireFF::FFWorker&);
 QDataStream& operator>>(QDataStream&, SireFF::FFWorker&);
 
+namespace SireMol
+{
+class Molecule;
+class Residue;
+}
+
+namespace SireDB
+{
+class ParameterTable;
+}
+
 namespace SireFF
 {
+
+class MovedMols;
+
+using SireCAS::Function;
+using SireCAS::Values;
+
+using SireMol::MoleculeID;
+using SireMol::MolResNumID;
+using SireMol::Molecule;
+using SireMol::Residue;
+
+using SireDB::ParameterTable;
 
 /**
 This class is the base class of all of the forcefield worker classes. Each forcefield has two interfaces;
@@ -36,7 +65,9 @@ friend QDataStream& ::operator<<(QDataStream&, const ForceField&);
 friend QDataStream& ::operator>>(QDataStream&, ForceField&);
 
 public:
-    FFWorker(const QString &name = QString::null);
+    FFWorker();
+    FFWorker(const QString &name);
+    
     virtual ~FFWorker();
 
     /** Return the class name of the forcefield */
@@ -45,32 +76,35 @@ public:
     /** Return a clone of this forcefield */
     virtual FFWorker* clone() const=0;
     
-    bool isDirty() const;
+    const QString& name() const;
     
-    /** Return the total energy of this forcefield. This
-        will trigger an energy calculation if any
-        molecules in this forcefield have moved or changed since
-        the last call to 'energy()' (if 'isDirty()' returns 
-        true) */
-    Energy energy();
+    double energy();
+    double energy(const Function &component);
     
-    /** Return the energy component corresponding to the symbol 'symbol' 
-         - this throws an exception if there is no such component in
-         this forcefield */
-    Energy energy(const Symbol &symbol);
+    Values energies() const;
     
-    /** Return the complete set of energy components of this forcefield */
-    QHash<Symbol, Energy> energyComponents() const;
+    const Function& total() const;
+
+    const Function& component(const QString &name) const;
+    const QHash<Function,QString>& components() const;
     
-    /** Inform the forcefield that the listed molecules / residues have moved */
-    void move(const MoveMols &movemols);
+    void move(const MovedMols &movemols);
+
+    void move(const Molecule &mol);
+    void move(const Residue &res);
+
+    void change(const ChangedMols &changemols);
+
+    void change(const Molecule &mol, const ParameterTable &params);
+    void change(const Residue &res, const ParameterTable &params);
 
 protected:
-    /** Rename the component-symbol 'symbol' to have name 'newname' */
-    void rename(const Symbol &symbol, const QString &newname);
+    void setComponent(const Function &comp, double nrg);
 
-    /** Set the energy value of the component 'comp' */
-    void setComponent(const Symbol &comp, double nrg);
+    void addToRegister(const Molecule &molecule);
+    void addToRegister(const Residue &residue);
+
+    const ChangedMols& changedMolecules() const;
 
     /** Virtual function used to trigger a recalculation of the total energy
         and of all of the component energies */
@@ -81,12 +115,17 @@ private:
         name to all of the component-symbols in this forcefield. */
     QString ffname;
 
-    /** The cached value of the total energy of this forcefield */
-    Energy totalnrg;
-
-    /** All of the energy components in this forcefield, indexed 
-        by their symbol ID number */
-    QHash<SymbolID, Energy> comps;
+    /** All of the cached energy components in this forcefield, indexed 
+        by their symbol ID number (includes the total energy) */
+    Values nrg_components;
+    
+    /** The symbols (actually, functions) representing each of the energy
+        components, together with a description of what each component
+        represents (includes the total energy) */
+    QHash< Function, QString > component_descriptions;
+    
+    /** The function representing the total energy of this forcefield */
+    Function etotal;
     
     /** Set of MoleculeID numbers of the molecules that are in this forcefield */
     QSet<MoleculeID> mols_in_ff;
@@ -101,6 +140,19 @@ private:
     ChangedMols changedmols;
 
 };
+
+/** Set the energy value of the component 'comp' */
+inline void FFWorker::setComponent(const Function &comp, double nrg)
+{
+    nrg_components.set(comp,nrg);
+}
+
+/** Return the set of molecules that have moved or changed
+    in this forcefield since the last energy or force evaluation */
+inline const ChangedMols& FFWorker::changedMolecules() const
+{
+    return changedmols;
+}
 
 }
 

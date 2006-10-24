@@ -75,11 +75,12 @@ public:
     void moveResidue(const Residue &res);
     void moveMolecule(const Molecule &mol);
     
-    void changeMolecule(const ParameterTable &mol_and_params);
+    void changeResidue(const Residue &res, const ParameterTable &newparams);
+    void changeMolecule(const Molecule &mol, const ParameterTable &newparams);
     
     void removeMolecule(const Molecule &mol);
     
-    void addMolecule(const ParameterTable &mol_and_params);
+    void addMolecule(const Molecule &mol, const ParameterTable &params);
 
 private:
     void updatePointer(ChangeRecordBase *recordpointer);
