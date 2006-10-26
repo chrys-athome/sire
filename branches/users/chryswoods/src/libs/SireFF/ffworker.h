@@ -67,36 +67,46 @@ friend QDataStream& ::operator>>(QDataStream&, ForceField&);
 public:
     FFWorker();
     FFWorker(const QString &name);
-    
+
     virtual ~FFWorker();
 
     /** Return the class name of the forcefield */
     virtual const char* what() const=0;
-    
+
     /** Return a clone of this forcefield */
     virtual FFWorker* clone() const=0;
-    
+
     const QString& name() const;
-    
+
     double energy();
     double energy(const Function &component);
-    
+
     Values energies() const;
-    
+
     const Function& total() const;
 
-    const Function& component(const QString &name) const;
+    const Function& component(int componentid) const;
     const QHash<Function,QString>& components() const;
-    
-    void move(const MovedMols &movemols);
 
-    void move(const Molecule &mol);
-    void move(const Residue &res);
+    virtual void move(const MovedMols &movemols)=0;
 
-    void change(const ChangedMols &changemols);
+    virtual void move(const Molecule &mol)=0;
+    virtual void move(const Residue &res)=0;
 
-    void change(const Molecule &mol, const ParameterTable &params);
-    void change(const Residue &res, const ParameterTable &params);
+    virtual void change(const ChangedMols &changemols)=0;
+
+    virtual void change(const Molecule &mol, const ParameterTable &params)=0;
+    virtual void change(const Residue &res, const ParameterTable &params)=0;
+
+    virtual void add(const Molecule &mol, const ParameterTable &params,
+                     int groupid)=0;
+
+    virtual void add(const Residue &res, const ParameterTable &params,
+                     int groupid)=0;
+
+    virtual void remove(const Molecule &mol)=0;
+
+    virtual void remove(const Residue &res)=0;
 
 protected:
     void setComponent(const Function &comp, double nrg);
@@ -115,30 +125,27 @@ private:
         name to all of the component-symbols in this forcefield. */
     QString ffname;
 
-    /** All of the cached energy components in this forcefield, indexed 
+    /** Hash mapping component ID numbers to their function */
+    QHash< int, Function > id_to_component;
+
+    /** All of the cached energy components in this forcefield, indexed
         by their symbol ID number (includes the total energy) */
     Values nrg_components;
-    
+
     /** The symbols (actually, functions) representing each of the energy
         components, together with a description of what each component
         represents (includes the total energy) */
     QHash< Function, QString > component_descriptions;
-    
+
     /** The function representing the total energy of this forcefield */
     Function etotal;
-    
+
     /** Set of MoleculeID numbers of the molecules that are in this forcefield */
     QSet<MoleculeID> mols_in_ff;
-    
+
     /** Set of MolResNumID numbers of residues that are in this forcefield that
         are here without their parent molecules */
     QSet<MolResNumID> res_in_ff;
-    
-    /** List of molecules/residues that have moved, changed or been
-        added or removed since the last time the energy was calculated.
-        This list contains only changes that will affect this forcefield. */
-    ChangedMols changedmols;
-
 };
 
 /** Set the energy value of the component 'comp' */

@@ -18,8 +18,8 @@ namespace SireFF
     Lennard Jones energies of all contained molecules. An InterCLJFF is perhaps
     the most expensive type of MM forcefield, as it must calculate the full
     pair-pair interactions between all pairs of molecules in the forcefield
-    that are within the cutoff distance. 
-    
+    that are within the cutoff distance.
+
     \author Christopher Woods
 */
 class InterCLJFF : public CLJFF
@@ -40,30 +40,6 @@ public:
 
 protected:
     void recalculateEnergy();
-
-    class MolCLJInfo
-    {
-    public:
-        MolCLJInfo();
-        MolCLJInfo(const Molecule &molecule);
-        
-        ~MolCLJInfo();
-        
-    private:
-        /** ID number of the molecule */
-        MoleculeID id;
-        
-        /** Version number of the molecule */
-        MoleculeVersion versn;
-    
-        /** Copy of the coordinates of the atoms in the molecule, 
-            indexed by CutGroupID */
-        QVector<CoordGroup> coords;
-        
-        /** Copy of the CLJ parameters of the atoms in the molecule,
-            indexed by CutGroupID */
-        QVector< QVector<CLJParameter> > cljparams;
-    };
 
     /** Information about every molecule contained in this forcefield */
     QVector<MolCLJInfo> mols;
