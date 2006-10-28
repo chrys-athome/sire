@@ -27,6 +27,7 @@ set ( SIREMM_SOURCES
       cljff.cpp	      
       cljpair.cpp	      
       cljparameter.cpp      
+      combiningrules.cpp
       dihedraldb.cpp        
       dihedralgenerator.cpp 
       dihedraltable.cpp     
@@ -44,6 +45,7 @@ set ( SIREMM_SOURCES
       resangleinfo.cpp
       resbondinfo.cpp
       resdihedralinfo.cpp
+      switchingfunction.cpp
       ureybradleydb.cpp
     )
 

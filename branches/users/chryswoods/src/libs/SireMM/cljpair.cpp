@@ -49,6 +49,13 @@ CLJPair::CLJPair() : chg2(0.0), sig(0.0), eps(0.0)
 CLJPair::CLJPair(double c2, double s, double e) : chg2(c2), sig(s), eps(e)
 {}
 
+/** Construct a CLJPair from the passed CLJ parameter */
+CLJPair::CLJPair(const CLJParameter &cljparam)
+        : chg2( SireMaths::pow_2(cljparam.charge()) ),
+          sig( cljparam.sigma() ),
+          eps( cljparam.epsilon() )
+{}
+
 /** Destructor */
 CLJPair::~CLJPair()
 {}

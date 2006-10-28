@@ -17,6 +17,7 @@
 #include "combiningrules.h"
 
 #include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
 
 using namespace SireMM;
 using namespace SireStream;
@@ -38,7 +39,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CombiningRuleBase&)
 /** Deserialise from a binary data stream */
 QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CombiningRuleBase&)
 {
-    VersionID v = readHeader(ds, r_combinbase);
+    VersionID v = readHeader(ds, r_combinebase);
     
     if (v != 0)
         throw version_error(v, "1", r_combinebase, CODELOC);
@@ -119,8 +120,8 @@ void ArithmeticCombiningRules::combine(const QVector<CLJParameter> &clj0,
     
     if (nclj0 > 0 and nclj1 > 0)
     {
-        const CLJParameter &clj0array = clj0.constData();
-        const CLJParameter &clj1array = clj1.constDatat();
+        const CLJParameter *clj0array = clj0.constData();
+        const CLJParameter *clj1array = clj1.constData();
         
         for (int i=0; i<nclj0; ++i)
         {
@@ -225,8 +226,8 @@ void GeometricCombiningRules::combine(const QVector<CLJParameter> &clj0,
     
     if (nclj0 > 0 and nclj1 > 0)
     {
-        const CLJParameter &clj0array = clj0.constData();
-        const CLJParameter &clj1array = clj1.constDatat();
+        const CLJParameter *clj0array = clj0.constData();
+        const CLJParameter *clj1array = clj1.constData();
         
         for (int i=0; i<nclj0; ++i)
         {
@@ -279,7 +280,10 @@ static const RegisterMetaType<CombiningRules> r_combrules("SireMM::CombiningRule
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CombiningRules &combrules)
 {
-    writeHeader(ds, r_combrules, 1) << combrules.d;
+    writeHeader(ds, r_combrules, 1);
+     
+    SharedDataStream(ds) << combrules.d;
+    
     return ds;
 }
 
@@ -290,7 +294,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CombiningRules &combrules
     
     if (v == 1)
     {
-        combrules.d;
+        SharedDataStream(ds) >> combrules.d;
     }
     else
         throw version_error(v, "1", r_combrules, CODELOC);
@@ -326,4 +330,8 @@ CombiningRules& CombiningRules::operator=(const CombiningRules &other)
     return *this;
 }
 
+/** Return the type name of these combining rules. */
+const char* CombiningRules::what() const
+{
+    return d->what();
 }

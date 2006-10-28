@@ -17,6 +17,8 @@
 #ifndef SIREMM_COMBININGRULES_H
 #define SIREMM_COMBININGRULES_H
 
+#include <QVector>
+
 #include "SireBase/dynamicsharedptr.hpp"
 
 #include "cljpair.h"
@@ -106,9 +108,9 @@ public:
         return ArithmeticCombiningRules::typeName();
     }
     
-    CombiningRuleBase* clone() const
+    ArithmeticCombiningRules* clone() const
     {
-        return ArithmeticCombiningRules(*this);
+        return new ArithmeticCombiningRules(*this);
     }
     
     void combine(const QVector<CLJParameter> &clj0,
@@ -146,9 +148,9 @@ public:
         return GeometricCombiningRules::typeName();
     }
     
-    CombiningRuleBase* clone() const
+    GeometricCombiningRules* clone() const
     {
-        return GeometricCombiningRules(*this);
+        return new GeometricCombiningRules(*this);
     }
     
     void combine(const QVector<CLJParameter> &clj0,
@@ -179,6 +181,8 @@ public:
     ~CombiningRules();
 
     CombiningRules& operator=(const CombiningRules &other);
+    
+    const char* what() const;
     
     void combine(const QVector<CLJParameter> &clj0,
                  const QVector<CLJParameter> &clj1,

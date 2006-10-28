@@ -22,6 +22,7 @@ namespace SireMM
 {
 class SwitchingFunction;
 class SwitchFuncBase;
+class NoCutoff;
 class HarmonicSwitchingFunction;
 }
 
@@ -31,11 +32,16 @@ QDataStream& operator>>(QDataStream&, SireMM::SwitchingFunction&);
 QDataStream& operator<<(QDataStream&, const SireMM::SwitchFuncBase&);
 QDataStream& operator>>(QDataStream&, SireMM::SwitchFuncBase&);
 
+QDataStream& operator<<(QDataStream&, const SireMM::NoCutoff&);
+QDataStream& operator>>(QDataStream&, SireMM::NoCutoff&);
+
 QDataStream& operator<<(QDataStream&, const SireMM::HarmonicSwitchingFunction&);
 QDataStream& operator>>(QDataStream&, SireMM::HarmonicSwitchingFunction&);
 
 namespace SireMM 
 {
+
+using SireBase::DynamicSharedPtr;
 
 /** 
 This is the virtual base class of all switching functions. These return scale factors
@@ -46,8 +52,8 @@ for based on the supplied distance
 class SIREMM_EXPORT SwitchFuncBase
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const &);
-friend QDataStream& ::operator>>(QDataStream&, &);
+friend QDataStream& ::operator<<(QDataStream&, const SwitchFuncBase&);
+friend QDataStream& ::operator>>(QDataStream&, SwitchFuncBase&);
 
 public:
     SwitchFuncBase();
@@ -57,9 +63,9 @@ public:
     
     virtual ~SwitchFuncBase();
     
-    virtual SwitchFuncBase* clone() const;
+    virtual SwitchFuncBase* clone() const=0;
     
-    virtual const char* what() const;
+    virtual const char* what() const=0;
     
     virtual double electrostaticScaleFactor(double dist) const=0;
     virtual double vdwScaleFactor(double dist) const=0;
@@ -78,6 +84,43 @@ inline double SwitchFuncBase::cutoffDistance() const
 {
     return cutdist;
 }
+
+/** 
+This class implements no cutoffs (e.g. there is no cutoff, and no switching function!).
+
+@author Christopher Woods
+*/
+class SIREMM_EXPORT NoCutoff : public SwitchFuncBase
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const NoCutoff&);
+friend QDataStream& ::operator>>(QDataStream&, NoCutoff&);
+
+public:
+    NoCutoff();
+    
+    NoCutoff(const NoCutoff &other);
+    
+    ~NoCutoff();
+    
+    static const char* typeName()
+    {
+        return "SireMM::NoCutoff";
+    }
+    
+    const char* what() const
+    {
+        return NoCutoff::typeName();
+    }
+    
+    NoCutoff* clone() const
+    {
+        return new NoCutoff(*this);
+    }
+    
+    double electrostaticScaleFactor(double dist) const;
+    double vdwScaleFactor(double dist) const;
+};
 
 /**
 This class implements harmonic switching functions - these scale the energy
@@ -115,22 +158,38 @@ public:
         return HarmonicSwitchingFunction::typeName();
     }
     
-    const SwitchFuncBase* clone() const
+    HarmonicSwitchingFunction* clone() const
     {
         return new HarmonicSwitchingFunction(*this);
     }
 
+    double electrostaticScaleFactor(double dist) const;
+    double vdwScaleFactor(double dist) const;
+
 protected:
+    
+    void set(double cutelec, double featherelec,
+             double cutvdw, double feathervdw);
     
     /** The electrostatic cutoff distance */
     double cut_elec;
     /** The electrostatic feather distance */
     double feather_elec;
     
+    /** Square of the cutoff distance */
+    double cut_elec2;
+    /** Normalisation factor for the electrostatic cutoff */
+    double norm_elec;
+    
     /** The vdw cutoff distance */
     double cut_vdw;
     /** The vdw feather distance */
     double feather_vdw;
+    
+    /** Square of the cutoff distance */
+    double cut_vdw2;
+    /** Normalisation factor for the vdw cutoff */
+    double norm_vdw;
 };
 
 /**
@@ -152,6 +211,8 @@ public:
 
     ~SwitchingFunction();
 
+    SwitchingFunction& operator=(const SwitchingFunction &other);
+
     const char* what() const;
 
     double electrostaticScaleFactor(double dist) const;
@@ -162,7 +223,7 @@ public:
 private:
     /** Dynamic shared pointer to the object implementing
         the switching function */
-    DynamicSharedPtr<SwitchFunc> d;
+    DynamicSharedPtr<SwitchFuncBase> d;
 };
 
 /** Return the scaling factor for the electrostatic energy for the 
@@ -189,6 +250,7 @@ inline double SwitchingFunction::cutoffDistance() const
 }
 
 Q_DECLARE_METATYPE(SireMM::SwitchingFunction)
+Q_DECLARE_METATYPE(SireMM::NoCutoff)
 Q_DECLARE_METATYPE(SireMM::HarmonicSwitchingFunction)
 
 SIRE_END_HEADER
