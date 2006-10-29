@@ -47,6 +47,8 @@ set ( SIREMM_SOURCES
       resdihedralinfo.cpp
       switchingfunction.cpp
       ureybradleydb.cpp
+
+      detail/molcljinfo.cpp
     )
 
 add_library (SireMM ${SIREMM_SOURCES})

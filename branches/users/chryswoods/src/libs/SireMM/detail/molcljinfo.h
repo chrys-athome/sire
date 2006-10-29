@@ -15,10 +15,13 @@
 
 #include <QSharedData>
 #include <QSharedDataPointer>
+#include <QVector>
 
 #include "SireMol/molecule.h"
 
-#include "cljparameter.h"
+#include "SireMM/cljparameter.h"
+
+#include "SireVol/coordgroup.h"
 
 SIRE_BEGIN_HEADER
 
@@ -27,17 +30,25 @@ namespace SireMM
 namespace detail
 {
 class MolCLJInfo;
+class MolCLJInfoData;
 }
 }
 
 QDataStream& operator<<(QDataStream&, const SireMM::detail::MolCLJInfo&);
 QDataStream& operator>>(QDataStream&, SireMM::detail::MolCLJInfo&);
 
+QDataStream& operator<<(QDataStream&, const SireMM::detail::MolCLJInfoData&);
+QDataStream& operator>>(QDataStream&, SireMM::detail::MolCLJInfoData&);
+
 namespace SireMM
 {
 
 namespace detail
 {
+
+using SireMol::Molecule;
+
+using SireVol::CoordGroup;
 
 /**
 This private class contains the data for MolCLJInfo
@@ -47,8 +58,8 @@ This private class contains the data for MolCLJInfo
 class MolCLJInfoData : public QSharedData
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const Mol&);
-friend QDataStream& ::operator>>(QDataStream&, &);
+friend QDataStream& ::operator<<(QDataStream&, const MolCLJInfoData&);
+friend QDataStream& ::operator>>(QDataStream&, MolCLJInfoData&);
 
 public:
     MolCLJInfoData();
@@ -59,7 +70,7 @@ public:
     /** Copy constructor */
     MolCLJInfoData(const MolCLJInfoData &other)
               : QSharedData(), molecule(other.molecule), coordinates(other.coordinates),
-                parameters(other.parameters)
+                cljparams(other.cljparams)
     {}
 
     ~MolCLJInfoData();
@@ -102,7 +113,7 @@ public:
     MolCLJInfo();
 
     MolCLJInfo(const Molecule &molecule,
-               const QVector< ParameterGroup<CLJParameter> > &parameters);
+               const QVector< QVector<CLJParameter> > &parameters);
 
     /** Copy constructor */
     MolCLJInfo(const MolCLJInfo &other) : d(other.d)

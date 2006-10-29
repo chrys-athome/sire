@@ -57,3 +57,9 @@ MoleculeVersion& MoleculeVersion::operator=(const MoleculeVersion &other)
     
     return *this;
 }
+
+/** Return a string representation of this version */
+QString MoleculeVersion::toString() const
+{
+    return QString("%1.%2").arg(majversion).arg(minversion);
+}

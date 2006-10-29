@@ -14,12 +14,54 @@
 
 #include "molcljinfo.h"
 
+#include "SireMol/moleculeid.h"
+#include "SireMol/cutgroupid.h"
+
+#include "SireMol/moleculeversion.h"
+#include "SireMol/moleculeinfo.h"
+
+#include "SireError/errors.h"
+
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
 using namespace SireMM;
 using namespace SireMM::detail;
+
+using namespace SireMol;
+using namespace SireStream;
 
 /////////
 ///////// Implementation of MolCLJInfoData
 /////////
+
+static const RegisterMetaType<MolCLJInfoData> r_moldata("SireMM::detail::MolCLJInfoData");
+
+/** Serialise to a binary data stream */
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const MolCLJInfoData &moldata)
+{
+    writeHeader(ds, r_moldata, 1) 
+        << moldata.molecule << moldata.cljparams;
+    
+    return ds;
+}
+
+/** Deserialise from a binary data stream */
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, MolCLJInfoData &moldata)
+{
+    VersionID v = readHeader(ds, r_moldata);
+    
+    if (v == 1)
+    {
+        ds >> moldata.molecule >> moldata.cljparams;
+        
+        moldata.coordinates = moldata.molecule.coordGroups();
+    }
+    else
+        throw version_error(v, "1", r_moldata, CODELOC);
+    
+    return ds;
+}
 
 /** Null constructor */
 MolCLJInfoData::MolCLJInfoData() : QSharedData()
@@ -32,7 +74,8 @@ MolCLJInfoData::MolCLJInfoData() : QSharedData()
 */
 MolCLJInfoData::MolCLJInfoData(const Molecule &mol,
                                const QVector< QVector<CLJParameter> > &params)
-               : QSharedData(), molecule(mol), parameters(params)
+               : QSharedData(), molecule(mol), coordinates(molecule.coordGroups()),
+                 cljparams(params)
 {
     this->assertCompatibleParameters(params);
 }
@@ -57,12 +100,12 @@ void MolCLJInfoData::assertSameMolecule(const Molecule &mol) const
 /** Assert that 'mol' has the same major version as the molecule contained
     in this object
 
-    \throw SireError::version_error
+    \throw SireStream::version_error
 */
 void MolCLJInfoData::assertSameMajorVersion(const Molecule &mol) const
 {
     if (molecule.version().major() != mol.version().major())
-        throw SireError::version_error( QObject::tr(
+        throw SireStream::version_error( QObject::tr(
             "The molecule \"%1\" has a different major version number (%2) "
             "than the molecule stored in this MolCLJInfo (%3, version number %4)")
                 .arg( mol.idString() ).arg(mol.version().major())
@@ -108,7 +151,7 @@ void MolCLJInfoData::assertCompatibleParameters(
 /** Record that the molecule 'movedmol' has been moved
 
     \throw SireError::incompatible_error
-    \throw SireError::version_error
+    \throw SireStream::version_error
 */
 void MolCLJInfoData::move(const Molecule &movedmol)
 {
@@ -133,7 +176,7 @@ void MolCLJInfoData::change(const Molecule &changedmol,
   molecule = changedmol;
   coordinates = molecule.coordGroups();
 
-  parameters = changedparams;
+  cljparams = changedparams;
 }
 
 /////////
@@ -141,6 +184,33 @@ void MolCLJInfoData::change(const Molecule &changedmol,
 /////////
 
 static const QSharedDataPointer<MolCLJInfoData> shared_null(new MolCLJInfoData());
+
+static const RegisterMetaType<MolCLJInfo> r_molinfo("SireMM::detail::MolCLJInfo");
+
+/** Serialise to a binary data stream */
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const MolCLJInfo &molinfo)
+{
+    writeHeader(ds, r_molinfo, 1);
+    
+    SharedDataStream(ds) << molinfo.d;
+    
+    return ds;
+}
+
+/** Deserialise from a binary data stream */
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, MolCLJInfo &molinfo)
+{
+    VersionID v = readHeader(ds, r_molinfo);
+    
+    if (v == 1)
+    {
+        SharedDataStream(ds) >> molinfo.d;
+    }
+    else
+        throw version_error(v, "1", r_molinfo, CODELOC);
+    
+    return ds;
+}
 
 /** Null constructor */
 MolCLJInfo::MolCLJInfo() : d( shared_null )
@@ -152,7 +222,7 @@ MolCLJInfo::MolCLJInfo() : d( shared_null )
     \throw SireError::incompatible_error
 */
 MolCLJInfo::MolCLJInfo(const Molecule &molecule,
-                       const QVector< ParameterGroup<CLJParameter> > &parameters)
+                       const QVector< QVector<CLJParameter> > &parameters)
            : d( new MolCLJInfoData(molecule,parameters) )
 {}
 

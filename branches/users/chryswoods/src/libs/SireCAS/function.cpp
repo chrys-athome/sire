@@ -213,6 +213,15 @@ bool Function::operator==(const ExBase &other) const
              and d == other_func->d;
 }
 
+/** Assignment operator */
+Function& Function::operator=(const Function &other)
+{
+    Symbol::operator=(other);
+    d = other.d;
+    
+    return *this;
+}
+
 /** Return whether or not this is a function of 'symbol' */
 bool Function::isFunction(const Symbol &symbol) const
 {

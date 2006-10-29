@@ -120,6 +120,14 @@ const MoleculeVersion& Molecule::version() const
     return d->version();
 }
 
+/** Return an ID string for this molecule */
+QString Molecule::idString() const
+{
+    return QObject::tr("\"%1\" : %2 : %3")
+                .arg(this->name()).arg(this->ID())
+                .arg(this->version().toString());
+}
+
 /////////////////////////////////////////////////////////
 //@}
 

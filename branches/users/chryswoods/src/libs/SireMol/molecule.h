@@ -125,6 +125,8 @@ public:
      void setNewID();
 
      const MoleculeVersion& version() const;
+     
+     QString idString() const;
    /////////////////////////////////////////////////////////
 
 

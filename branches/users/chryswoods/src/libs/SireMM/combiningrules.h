@@ -198,7 +198,7 @@ private:
 
 /** Combine the CLJ parameters in 'clj0' and 'clj1' and place the results
     in the matrix 'cljmatrix' */
-void CombiningRules::combine(const QVector<CLJParameter> &clj0,
+inline void CombiningRules::combine(const QVector<CLJParameter> &clj0,
                              const QVector<CLJParameter> &clj1,
                              CLJPairMatrix &cljmatrix) const
 {
@@ -207,7 +207,7 @@ void CombiningRules::combine(const QVector<CLJParameter> &clj0,
 
 /** Combine all pairs of the CLJ parameters in 'clj' and place the results 
     in the matrix 'cljmatrix' */
-void CombiningRules::combine(const QVector<CLJParameter> &clj,
+inline void CombiningRules::combine(const QVector<CLJParameter> &clj,
                              CLJPairMatrix &cljmatrix) const
 {
     d->combine(clj, cljmatrix);

@@ -1,28 +1,49 @@
 #ifndef SIREMM_CLJFF_H
 #define SIREMM_CLJFF_H
 
-#include "SireFF/ffworker.h"
-#include "SireMaths/maths.h"
-
-#include "SireVol/simvolume.h"
-#include "SireUnits/units.h"
+#include <QVector>
 
 #include "cljpair.h"
+#include "combiningrules.h"
+#include "switchingfunction.h"
+
+#include "SireVol/space.h"
+#include "SireFF/ffbase.h"
+
+SIRE_BEGIN_HEADER
+
+namespace SireMM
+{
+class CLJFF;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMM::CLJFF&);
+QDataStream& operator>>(QDataStream&, SireMM::CLJFF&);
 
 namespace SireMM
 {
 
-using SireFF::ForceField;
+using SireFF::FFBase;
+
+using SireCAS::Function;
+
+using SireVol::Space;
 using SireVol::DistMatrix;
+using SireVol::CoordGroup;
 
 namespace detail
 {
 
+class MolCLJInfo;
+class ResCLJInfo;
+
 class CLJWorkspace
 {
+
 public:
     CLJWorkspace();
 
+    /** Copy constructor */
     CLJWorkspace(const CLJWorkspace &other)
            : distmatrix(other.distmatrix),
              cljmatrix(other.cljmatrix),
@@ -53,16 +74,40 @@ A CLJFF is the base-class for all forcefields that implement a charge/Lennard Jo
 
 @author Christopher Woods
 */
-class CLJFF : public FFWorker
+class SIREMM_EXPORT CLJFF : public FFBase
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const CLJFF&);
+friend QDataStream& ::operator>>(QDataStream&, CLJFF&);
 
 public:
     CLJFF();
+    
+    CLJFF(const Space &space, const CombiningRules &combiningrules,
+          const SwitchingFunction &switchingfunction);
+    
     CLJFF(const CLJFF &other);
 
     ~CLJFF();
 
     const Space& space() const;
+
+    const CombiningRules& combiningRules() const;
+    
+    const SwitchingFunction& switchingFunction() const;
+
+    static int COULOMB()
+    {
+        return 1;
+    }
+    
+    static int LJ()
+    {
+        return 2;
+    }
+    
+    const Function& coulomb() const;
+    const Function& lj() const;
 
 protected:
     static void calculateEnergy(const CoordGroup &group0,
@@ -93,16 +138,65 @@ protected:
                                 const SwitchingFunction &switchfunc,
                                 detail::CLJWorkspace &workspace);
 
-    void setSpace(const Space &space);
+    detail::CLJWorkspace& workspace();
+    const detail::CLJWorkspace& workspace() const;
 
 private:
     static void calculatePairEnergy(detail::CLJWorkspace &workspace);
     static void calculateSelfEnergy(detail::CLJWorkspace &workspace);
 
+    void registerComponents();
+
+    /** The workspace in which the calculation will take place */
+    detail::CLJWorkspace wkspace;
+
     /** The space in which the calculation will be performed */
     Space spce;
+    
+    /** The combining rules used to get the parameters of 
+        mixed pairs of atoms */
+    CombiningRules combrules;
+
+    /** The switching function used to truncate the CLJ interactions */
+    SwitchingFunction switchfunc;
 };
 
+/** Return the space in which this calculation is performed (the volume
+    of space in which the molecules exist, e.g. PeriodicBox, TruncatedOctahedron
+    etc.) */
+inline const Space& CLJFF::space() const
+{
+    return spce;
 }
+
+/** Return the combining rules used to combine CLJParameters into CLJPairs */
+inline const CombiningRules& CLJFF::combiningRules() const
+{
+    return combrules;
+}
+
+/** Return the switching function used to truncate the CLJ interaction */
+inline const SwitchingFunction& CLJFF::switchingFunction() const
+{
+    return switchfunc;
+}
+
+/** Internal function used to return the workspace that is used to perform
+    the calculation */
+inline detail::CLJWorkspace& CLJFF::workspace()
+{
+    return wkspace;
+}
+
+/** Internal function used to return the workspace that is used to perform
+    the calculation */
+inline const detail::CLJWorkspace& CLJFF::workspace() const
+{
+    return wkspace;
+}
+
+}
+
+SIRE_END_HEADER
 
 #endif
