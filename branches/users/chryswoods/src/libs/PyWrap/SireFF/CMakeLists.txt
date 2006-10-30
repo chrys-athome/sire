@@ -17,6 +17,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs
 
 # Define the sources in SireFF
 set ( WRAPFF_SOURCES
+      ffbase.py.cpp
       wrap_energybase.cpp
       wrap_energy.cpp
       wrap_energypack.cpp

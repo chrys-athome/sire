@@ -14,6 +14,7 @@ void export_EnergyBase();
 void export_Energy();
 void export_EnergyPack();
 void export_EnergyType();
+void export_FFBase();
 
 void SIREFF_EXPORT export_SireFF()
 {
@@ -21,6 +22,8 @@ void SIREFF_EXPORT export_SireFF()
     export_Energy();
     export_EnergyPack();
     export_EnergyType();
+
+    export_FFBase();
 }
 
 }
