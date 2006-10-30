@@ -36,6 +36,8 @@ void export_Residue();
 void export_ResidueBonds();
 void export_ResidueInfo();
 
+void export_QList_Molecule();
+
 void SIREMOL_EXPORT export_SireMol()
 {
     export_Atom();
@@ -64,6 +66,8 @@ void SIREMOL_EXPORT export_SireMol()
     export_Residue();
     export_ResidueBonds();
     export_ResidueInfo();
+    
+    export_QList_Molecule();
 }
 
 }

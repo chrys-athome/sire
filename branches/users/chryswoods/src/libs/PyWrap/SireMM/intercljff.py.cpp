@@ -1,6 +1,8 @@
 
 #include "boost/python.hpp"
 
+#include "SireCAS/qhash_sirecas.h"
+
 #include "SireMM/intercljff.h"
 
 namespace bp = boost::python;

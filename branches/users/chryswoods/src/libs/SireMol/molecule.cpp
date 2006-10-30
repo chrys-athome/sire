@@ -50,7 +50,7 @@ using namespace SireMol;
 static const RegisterMetaType<Molecule> r_molecule("SireMol::Molecule");
 
 /** Serialise to a binary datastream */
-QDataStream& operator<<(QDataStream &ds, const Molecule &mol)
+QDataStream& SIREMOL_EXPORT operator<<(QDataStream &ds, const Molecule &mol)
 {
     writeHeader(ds, r_molecule, 1);
 
@@ -60,7 +60,7 @@ QDataStream& operator<<(QDataStream &ds, const Molecule &mol)
 }
 
 /** Deserialise from a binary datastream */
-QDataStream& operator>>(QDataStream &ds, Molecule &mol)
+QDataStream& SIREMOL_EXPORT operator>>(QDataStream &ds, Molecule &mol)
 {
     VersionID v = readHeader(ds, r_molecule);
 
@@ -72,6 +72,11 @@ QDataStream& operator>>(QDataStream &ds, Molecule &mol)
         throw version_error(v, "1", r_molecule, CODELOC);
 
     return ds;
+}
+
+uint SIREMOL_EXPORT qHash(const Molecule &molecule)
+{
+    return molecule.ID();
 }
 
 /** @name Constructors and Destructor */

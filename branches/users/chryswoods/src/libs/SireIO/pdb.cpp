@@ -43,16 +43,21 @@ QList<Molecule> PDB::readMols(const QByteArray &data,
     //read through the file and check the elements
     QTextStream ts(data,QIODevice::ReadOnly);
 
-    //create space to hold the molecules that are read in...
-    QList<Molecule> molecules;
-
     //now create an EditMol to hold the first read molecule, and
     //pass it the cutting function used to assign atoms to cutgroups
     EditMol mol(cutfunc);
 
     //use an index to map atom numbers to loaded atoms
     QHash<int,Atom> atomindex;
-    QHash<int,EditMol> molindex;
+    QHash<int,int> molindex;
+    
+    //create space to hold the loaded molecules
+    QList<EditMol> loadedmols;
+    
+    //append the first molecule to the list...
+    loadedmols.append( EditMol(QString("PDB_1")) );
+
+    EditMol &currentmol = loadedmols.first();
 
     for (QString line = ts.readLine(); not line.isNull(); line = ts.readLine())
     {
@@ -101,40 +106,37 @@ QList<Molecule> PDB::readMols(const QByteArray &data,
             Atom addatm( atmnum, AtomIndex(atmnam), elmnt, Vector(x,y,z) );
 
             //get the residue that will contain the atom...
-            if (not mol.contains(resnum))
-                mol.add(resnum, resnam);
-            else if (mol.residueName(resnum) != resnam)
+            if (not currentmol.contains(resnum))
+                currentmol.add(resnum, resnam);
+            else if (currentmol.residueName(resnum) != resnam)
                 throw SireMol::duplicate_residue(QObject::tr(
                     "Cannot have two residues with number %1 but with different names! "
-                    "(\"%1\" vs. \"%2\")").arg(resnum).arg(mol.residueName(resnum))
+                    "(\"%1\" vs. \"%2\")").arg(resnum).arg(currentmol.residueName(resnum))
                         .arg(resnam), CODELOC);
 
-            //add this atom to the residue
-            EditRes editres = mol.residue(resnum);
-
-            //try to add this atom to the residue - this may throw
+            //try to add this atom to the molecule - this may throw
             //a SireMol::duplicate_atom exception if this atom name is
             //already in use!
             try
             {
-                editres.add(addatm);
+                currentmol.add(addatm);
             }
             catch(SireMol::duplicate_atom &error)
             {
                 //come up with a new name, and try that...
                 QString newname = SireBase::increment(addatm.name());
 
-                while( editres.contains(newname) )
+                while( currentmol.contains( AtomIndex(newname,resnum) ) )
                     newname = SireBase::increment(newname);
 
                 addatm = Atom(newname,addatm);
 
-                editres.add( addatm );
+                currentmol.add( addatm );
             }
 
             //index the added atom by the pdb atom number
-            molindex.insert(atmnum,mol);
-            atomindex.insert(atmnum,addatm);
+            molindex.insert(atmnum, loadedmols.count()-1);
+            atomindex.insert(atmnum, addatm);
         }
         else if (lowline.startsWith("conect"))
         {
@@ -157,7 +159,7 @@ QList<Molecule> PDB::readMols(const QByteArray &data,
                         throw SireMol::missing_atom(err,CODELOC);
                     }
 
-                    EditMol mol = molindex.value(atm0);
+                    EditMol &mol = loadedmols[ molindex.value(atm0) ];
                     Atom atom0 = atomindex.value(atm0);
 
                     if (not mol.contains(atom0))
@@ -201,28 +203,26 @@ QList<Molecule> PDB::readMols(const QByteArray &data,
         }
         else if (lowline.startsWith("ter"))
         {
-            //this signals a new molecule
-            QStringList words = line.split(' ',QString::SkipEmptyParts);
-
-            //if the previous molecule was not empty then save it
-            if (not mol.isEmpty())
-            {
-                Molecule molecule;
-                molecule = mol.commit();
-
-                molecules.append(molecule);
-            }
-
-            mol = EditMol(cutfunc);
+            EditMol newmol( QString("PDB_%1").arg(loadedmols.count()+1) );
+        
+            loadedmols.append(newmol);
+            
+            currentmol = loadedmols.last();
         }
     }
 
-    //the last molecule loaded has not been added to the list - add it if it
-    //contains any atoms
-    if (not mol.isEmpty())
+    //convert all of the loaded EditMols to Molecules, and return the
+    //results
+    QList<Molecule> molecules;
+    
+    for (QList<EditMol>::const_iterator it = loadedmols.constBegin();
+         it != loadedmols.constEnd();
+         ++it)
     {
         Molecule molecule;
-        molecule = mol.commit();
+    
+        molecule = it->commit();
+        
         molecules.append(molecule);
     }
 

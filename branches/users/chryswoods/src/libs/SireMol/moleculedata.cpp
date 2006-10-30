@@ -62,7 +62,7 @@ static const RegisterMetaType<MoleculeData> r_pvt("SireMol::MoleculeData",
                                                   MAGIC_ONLY);
 
 /** Serialise to a binary data stream */
-QDataStream &operator<<(QDataStream &ds, const MoleculeData &moldata)
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const MoleculeData &moldata)
 {
     writeHeader(ds, r_pvt, 1) << moldata._id << moldata._molversion
                               << moldata._coords << moldata._molinfo
@@ -71,7 +71,7 @@ QDataStream &operator<<(QDataStream &ds, const MoleculeData &moldata)
 }
 
 /** Deserialise from a binary data stream */
-QDataStream &operator>>(QDataStream &ds, MoleculeData &moldata)
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MoleculeData &moldata)
 {
     VersionID v = readHeader(ds, r_pvt);
 
