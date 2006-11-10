@@ -50,14 +50,12 @@ QList<Molecule> PDB::readMols(const QByteArray &data,
     //use an index to map atom numbers to loaded atoms
     QHash<int,Atom> atomindex;
     QHash<int,int> molindex;
-    
+
     //create space to hold the loaded molecules
     QList<EditMol> loadedmols;
-    
-    //append the first molecule to the list...
-    loadedmols.append( EditMol(QString("PDB_1")) );
 
-    EditMol &currentmol = loadedmols.first();
+    //create the first molecule...
+    EditMol currentmol( QString("PDB_1") );
 
     for (QString line = ts.readLine(); not line.isNull(); line = ts.readLine())
     {
@@ -103,7 +101,7 @@ QList<Molecule> PDB::readMols(const QByteArray &data,
             Element elmnt = Element::biologicalElement(el);
 
             //turn this data into an atom
-            Atom addatm( atmnum, AtomIndex(atmnam), elmnt, Vector(x,y,z) );
+            Atom addatm( atmnum, AtomIndex(atmnam,resnum), elmnt, Vector(x,y,z) );
 
             //get the residue that will contain the atom...
             if (not currentmol.contains(resnum))
@@ -203,26 +201,32 @@ QList<Molecule> PDB::readMols(const QByteArray &data,
         }
         else if (lowline.startsWith("ter"))
         {
-            EditMol newmol( QString("PDB_%1").arg(loadedmols.count()+1) );
-        
-            loadedmols.append(newmol);
-            
-            currentmol = loadedmols.last();
+            loadedmols.append(currentmol);
+
+            qDebug() << "Now? " << currentmol.nAtoms() << " " << currentmol.nResidues();
+
+            currentmol = EditMol( QString("PDB_%1").arg(loadedmols.count()) );
         }
     }
+
+    //the last loaded molecule needs to be added to the list
+    loadedmols.append(currentmol);
 
     //convert all of the loaded EditMols to Molecules, and return the
     //results
     QList<Molecule> molecules;
-    
+
     for (QList<EditMol>::const_iterator it = loadedmols.constBegin();
          it != loadedmols.constEnd();
          ++it)
     {
         Molecule molecule;
-    
+        molecule.setNewID();
+
+        qDebug() << "What about here? " << it->nAtoms() << " " << it->nResidues();
+
         molecule = it->commit();
-        
+
         molecules.append(molecule);
     }
 

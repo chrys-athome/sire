@@ -918,8 +918,27 @@ bool EditMolData::operator!=(const EditMolData &other) const
 
 detail::MolData EditMolData::commit() const
 {
-    #warning EditMolData::commit() is broken!
-    return detail::MolData();
+    //first, copy the coordinates and atoms of the CutGroups
+    int ncg = this->nCutGroups();
+
+    QVector<CoordGroup> cgroups;
+    cgroups.reserve(ncg);
+
+    foreach (CutGroupNum cgnum, cgnums)
+    {
+        CoordGroup cgroup = this->coordGroup(cgnum);
+
+        qDebug() << "CGNum " << cgnum << cgroup.count();
+
+        cgroups.append( this->coordGroup(cgnum) );
+    }
+
+    qDebug() << "NCutGroups == " << cgroups.count() << ncg;
+
+    //now, get the MoleculeInfo for this EditMol
+    MoleculeInfo molinfo = this->info();
+
+    return detail::MolData(molinfo, this->connectivity(), cgroups);
 }
 
 /** @name Indexing operators

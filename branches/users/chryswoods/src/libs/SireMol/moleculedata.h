@@ -102,10 +102,9 @@ namespace detail
 class MolData
 {
 
-friend class EditMol;  //so it can construct this object
-                       //(private, as public constructor would require
-                       //sanity checking the input)
-
+friend class EditMolData;  //so it can construct this object
+                           //(private, as public constructor would require
+                           //sanity checking the input)
 public:
     MolData()
     {}
