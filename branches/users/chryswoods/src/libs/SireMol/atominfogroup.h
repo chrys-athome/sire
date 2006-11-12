@@ -69,6 +69,8 @@ public:
 
     const AtomInfo& atom(AtomID i) const;
 
+    AtomID indexOf(const AtomIndex &atom) const;
+
     QVector<AtomInfo> atoms() const;
 
     QHash<AtomID,AtomInfo> atoms( const QSet<AtomID> &idxs ) const;

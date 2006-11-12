@@ -31,6 +31,8 @@
 #include "cgatomid.h"
 #include "cgnumatomid.h"
 
+#include "editmoldata.h"
+
 #include "SireMol/errors.h"
 #include "SireError/errors.h"
 
@@ -57,6 +59,9 @@ friend QDataStream& ::operator>>(QDataStream&, ResidueInfoPvt&);
 
 public:
     ResidueInfoPvt();
+
+    ResidueInfoPvt(ResNum resnum, const EditMolData &moldata, 
+                   const QHash<CutGroupID,AtomInfoGroup> &atominfos);
 
     ResidueInfoPvt(const ResidueInfoPvt &other);
 
@@ -177,6 +182,46 @@ QDataStream &operator>>(QDataStream &ds, ResidueInfoPvt &resinfo)
 /** Null constructor */
 ResidueInfoPvt::ResidueInfoPvt() : QSharedData()
 {}
+
+/** Construct from the passed EditMolData and AtomInfos (arranged into CutGroups) */
+ResidueInfoPvt::ResidueInfoPvt(ResNum rnum, const EditMolData &moldata,
+                               const QHash<CutGroupID,AtomInfoGroup> &infogroups)
+               : QSharedData(),
+                 resname(moldata.residueName(rnum)), resnum(rnum),
+                 atominfos(infogroups)
+{
+    int nats = moldata.nAtoms(resnum);
+
+    atomname2atomid.reserve(nats);
+    cgidxs.reserve(nats);
+    
+    //get the names of all of the atoms in the residue
+    QStringList atomnames = moldata.atomNames(resnum);
+    
+    //add each atom name to the residue info (recording which CutGroup 
+    //they are in 
+    QSet<CutGroupID> atomcgroups;
+    
+    for (AtomID atomid(0); atomid < nats; ++atomid)
+    {
+        const QString &atomname = atomnames[atomid];
+        atomname2atomid.insert(atomname, atomid);
+        
+        AtomIndex atom(atomname,resnum);
+        
+        CutGroupID cgid = moldata.cutGroupID(atom);
+        atomcgroups.insert(cgid);
+        
+        cgidxs.append( CGAtomID(cgid, infogroups.find(cgid)->indexOf(atom)) );
+    }
+    
+    cgids.reserve(atomcgroups.count());
+    
+    foreach (CutGroupID cgid, atomcgroups)
+    {
+        cgids.append(cgid);
+    }
+}
 
 /** Copy constructor */
 ResidueInfoPvt::ResidueInfoPvt(const ResidueInfoPvt &other)
@@ -350,6 +395,13 @@ static QSharedDataPointer<ResidueInfoPvt> shared_null( new ResidueInfoPvt() );
 
 /** Null constructor */
 ResidueInfo::ResidueInfo() : d(shared_null)
+{}
+
+/** Construct from the passed EditMolData, together with the supplied 
+    atominfos arranged into CutGroups */
+ResidueInfo::ResidueInfo(ResNum resnum, const EditMolData &moldata,
+                         const QHash<CutGroupID,AtomInfoGroup> &atominfos)
+            : d( new ResidueInfoPvt(resnum,moldata,atominfos) )
 {}
 
 /** Copy constructor - this class is implicitly shared, so this is fast */

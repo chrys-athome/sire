@@ -21,7 +21,9 @@
 #include "atomid.h"
 #include "atom.h"
 
+#include "SireMol/errors.h"
 #include "SireError/errors.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
@@ -165,6 +167,30 @@ const AtomInfo& AtomInfoGroup::operator[](AtomID i) const
 const AtomInfo& AtomInfoGroup::atom(AtomID i) const
 {
     return this->at(i);
+}
+
+/** Return the index of the atom with AtomIndex 'atom' 
+
+    \throw SireMol::missing_atom
+*/
+AtomID AtomInfoGroup::indexOf(const AtomIndex &atom) const
+{
+    int nats = atms.count();
+  
+    const AtomInfo *atomarray = atms.constData();
+    
+    //slow, linear search!
+    for (AtomID i(0); i<nats; ++i)
+    {
+        if (atom == atomarray[i])
+            return i;
+    }
+    
+    throw SireMol::missing_atom( QObject::tr(
+            "There is no atom \"%1\" in this AtomInfoGroup!")
+                .arg(atom.toString()), CODELOC );
+                
+    return AtomID(0);
 }
 
 /** Return an array of all of the AtomInfos in this group, in the

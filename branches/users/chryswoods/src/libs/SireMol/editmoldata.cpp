@@ -581,6 +581,17 @@ CutGroupNum EditMolData::cutGroupNum(CutGroupID cgid) const
     return cgnums[cgid];
 }
 
+/** Return the CutGroupNum of the CutGroup that contains the Atom 'atom'
+
+    \throw SireMol::missing_atom
+*/
+CutGroupNum EditMolData::cutGroupNum(const AtomIndex &atom) const
+{
+    this->assertAtomExists(atom);
+    
+    return this->_unsafe_atomdata(atom).cgnum;
+}
+
 /** Return the ID number of the CutGroup with number 'cgnum'
 
     \throw SireMol::missing_cutgroup
@@ -589,6 +600,22 @@ CutGroupID EditMolData::cutGroupID(CutGroupNum cgnum) const
 {
     this->assertCutGroupExists(cgnum);
     return CutGroupID( cgnums.indexOf(cgnum) );
+}
+
+/** Return the ID number of the CutGroup that contains the Atom 'atom'
+
+    \throw SireMol::missing_atom
+*/
+CutGroupID EditMolData::cutGroupID(const AtomIndex &atom) const
+{
+    return CutGroupID( cgnums.indexOf(this->cutGroupNum(atom)) );
+}
+
+/** Return the list of all of the CutGroupNums of CutGroups in this residue,
+    in the order that the CutGroups were added to this residue */
+QList<CutGroupNum> EditMolData::cutGroupNums() const
+{
+    return cgnums;
 }
 
 /** Return the numbers of all CutGroups that contain atoms from
@@ -1333,6 +1360,35 @@ CutGroup EditMolData::_unsafe_cutGroup(CutGroupNum cgnum) const
     return CutGroup( AtomInfoGroup(atominfos), CoordGroup(coords) );
 }
 
+/** Internal function used to return a copy of the AtomInfoGroup 
+    containing the atom infos of the atoms in the CutGroup with number 'cgnum' */
+AtomInfoGroup EditMolData::_unsafe_atomInfoGroup(CutGroupNum cgnum) const
+{
+    const QList<AtomIndex> &atoms = cgatoms.find(cgnum).value();
+
+    //how many atoms are in this CutGroup?
+    int nats = atoms.count();
+
+    QVector<AtomInfo> atominfos;
+
+    atominfos.reserve(nats);
+
+    for (int i=0; i<nats; ++i)
+    {
+        //get a copy of the atom
+        const AtomIndex &atom = atoms[i];
+        
+        const EditMolData_AtomData &atomdata = this->_unsafe_atomdata(atom);
+        
+        AtomInfo atominfo(atomdata.atomnum, atom, atomdata.element);
+
+        //split it into the info group and coord group
+        atominfos.append(atominfo);
+    }
+
+    return AtomInfoGroup(atominfos);
+}
+
 /** Internal function used to return a copy of the CoordGroup containing
     the coordinates of the CutGroup with number 'cgnum' */
 CoordGroup EditMolData::_unsafe_coordGroup(CutGroupNum cgnum) const
@@ -1466,6 +1522,16 @@ CoordGroup EditMolData::coordGroup(CutGroupNum cgnum) const
 {
     this->assertCutGroupExists(cgnum);
     return this->_unsafe_coordGroup(cgnum);
+}
+
+/** Return a copy of the AtomInfoGroup for the CutGroup with number 'cgnum'
+
+    \throw SireMol::missing_cutgroup
+*/
+AtomInfoGroup EditMolData::atomInfoGroup(CutGroupNum cgnum) const
+{
+    this->assertCutGroupExists(cgnum);
+    return this->_unsafe_atomInfoGroup(cgnum);
 }
 
 /** Return a copy of the atom with index 'atm'

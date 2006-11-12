@@ -168,11 +168,50 @@ MoleculeInfoPvt::MoleculeInfoPvt()
 
 /** Construct from an EditMolData object */
 MoleculeInfoPvt::MoleculeInfoPvt(const EditMolData &moldata)
-                : QSharedData()
+                : QSharedData(),
+                  molname(moldata.name()),
+                  resnums(moldata.residueNumbers()),
+                  nats(moldata.nAtoms())
 {
+    //first, get the AtomInfos of all of the atoms in the CutGroups
+    int ncg = moldata.nCutGroups();
+    
+    if (ncg == 0)
+        return;
+        
+    atominfos.reserve(ncg);
+    
+    foreach (CutGroupNum cgnum, moldata.cutGroupNums())
+    {
+        atominfos.insert( moldata.cutGroupID(cgnum), moldata.atomInfoGroup(cgnum) );
+    }
+
+    //now that we have the 'atominfos' hash, we can pass it to the
+    //all of the child ResidueInfo objects that we will now create,
+    //one for each residue in the molecule
+    resinfos.reserve(resnums.count());
+    
+    //also, get the highest index of the atom in each residue
+    //so that we can locate it quickly 
+    int maxidx = -1;
+    
+    foreach (ResNum resnum, resnums)
+    {
+        ResidueInfo resinfo(resnum, moldata, atominfos);
+    
+        resinfos.insert( resnum, resinfo );
+        
+        int nats = resinfo.nAtoms();
+        
+        if (nats > 0)
+        {
+            maxidx += nats;
+            idx2resnum.insert( AtomID(maxidx), resnum );
+        }
+    }
+
     #warning Need to update MoleculeInfo to use CutGroupNums!
 }
-
 
 /** Copy constructor */
 MoleculeInfoPvt::MoleculeInfoPvt(const MoleculeInfoPvt &other)

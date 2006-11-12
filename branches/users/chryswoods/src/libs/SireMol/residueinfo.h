@@ -36,6 +36,7 @@ namespace SireMol
 {
 
 class ResidueInfoPvt;
+class MoleculeInfoPvt;
 
 class AtomIndex;
 class AtomInfo;
@@ -48,6 +49,8 @@ class CutGroupID;
 
 class CGAtomID;
 
+class EditMolData;
+
 /**
   * This class holds all of the metainfo for a residue. This class is designed
   * to be used with MoleculeInfo. This holds the name and number of the residue,
@@ -58,6 +61,8 @@ class CGAtomID;
   */
 class SIREMOL_EXPORT ResidueInfo
 {
+
+friend class MoleculeInfoPvt;  // so can call private constructor
 
 friend QDataStream& ::operator<<(QDataStream&, const ResidueInfo&);
 friend QDataStream& ::operator>>(QDataStream&, ResidueInfo&);
@@ -163,6 +168,9 @@ public:
    /////////////////////////////////////////////////////////
 
 private:
+    ResidueInfo(ResNum resnum, const EditMolData &moldata, 
+                const QHash<CutGroupID,AtomInfoGroup> &atominfos);
+
     /** Implicitly shared pointer to the data for this object */
     QSharedDataPointer<ResidueInfoPvt> d;
 };
