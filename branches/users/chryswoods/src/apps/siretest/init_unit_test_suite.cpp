@@ -19,6 +19,7 @@ using boost::unit_test_framework::test_suite;
 #include "SireUnitTest/testsirecas.h"
 #include "SireUnitTest/testmatch.h"
 #include "SireUnitTest/testffdb.h"
+#include "SireUnitTest/testsharedpolypointer.h"
 
 using namespace SireTest;
 
@@ -39,6 +40,7 @@ test_suite SIRE_EXPORT *init_unit_test_suite( int argc, char **argv )
     initialise(new TestSireCAS(), test);
     initialise(new TestMatch(), test);
     initialise(new TestFFDB(), test);
+    initialise(new TestSharedPolyPointer(), test);
     
     return test;
 }

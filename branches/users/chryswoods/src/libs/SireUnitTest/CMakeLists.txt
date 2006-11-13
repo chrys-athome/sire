@@ -20,6 +20,7 @@ set ( SIREUNITTEST_SOURCES
       testenergy.cpp
       testffdb.cpp
       testmatch.cpp
+      testsharedpolypointer.cpp
       testsirecas.cpp
       testunits.cpp
       testvector.cpp
