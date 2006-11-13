@@ -36,6 +36,7 @@ class SIREMM_EXPORT CLJPair
 {
 public:
     CLJPair();
+    CLJPair(const CLJParameter &cljparam);
     CLJPair(double chg2, double sig, double eps);
     ~CLJPair();
     

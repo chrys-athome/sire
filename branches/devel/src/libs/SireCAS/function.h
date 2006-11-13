@@ -237,6 +237,8 @@ public:
     
     bool operator==(const ExBase &other) const;
     
+    Function& operator=(const Function &other);
+    
     /** Convienient operator used to combine a function with a value */
     SymbolValue operator==(double val) const
     {

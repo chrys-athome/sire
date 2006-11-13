@@ -91,7 +91,7 @@ public:
 
     double value(const Symbol &sym) const;
 
-    const QHash<SymbolID, double> values() const;
+    const QHash<SymbolID, double>& values() const;
 
 private:
 
@@ -113,7 +113,7 @@ inline void Values::set(const Symbol &symbol, double value)
 }
 
 /** Return the hash mapping the symbol ID to a value */
-inline const QHash<SymbolID,double> Values::values() const
+inline const QHash<SymbolID,double>& Values::values() const
 {
     return vals;
 }

@@ -43,6 +43,8 @@ public:
     
     ~Symbol();
 
+    Symbol& operator=(const Symbol &other);
+
     /** Return the unique ID number of the symbol */
     SymbolID ID() const
     {

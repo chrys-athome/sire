@@ -31,6 +31,9 @@ void export_assign_bonds();
 void export_assign_angles();
 void export_assign_dihedrals();
 
+void export_CLJFF();
+void export_InterCLJFF();
+
 void SIREMM_EXPORT export_SireMM()
 {
     export_CLJParameter();
@@ -53,6 +56,9 @@ void SIREMM_EXPORT export_SireMM()
     export_assign_bonds();
     export_assign_angles();
     export_assign_dihedrals();
+
+    export_CLJFF();
+    export_InterCLJFF();
 }
 
 }

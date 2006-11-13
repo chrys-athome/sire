@@ -17,6 +17,10 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs
 
 # Define the sources in SireMM
 set ( WRAPMM_SOURCES
+
+      cljff.py.cpp
+      intercljff.py.cpp 
+
       wrap_anglegenerator.cpp    
       wrap_angletable.cpp        
       wrap_assign_angles.cpp     

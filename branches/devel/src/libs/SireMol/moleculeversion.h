@@ -38,6 +38,8 @@ public:
     
     MoleculeVersion& operator=(const MoleculeVersion &other);
 
+    QString toString() const;
+
     quint32 major() const;
     quint32 minor() const;
 

@@ -21,6 +21,9 @@ set ( WRAPMOL_SOURCES
       editres.py.cpp
       molecule.py.cpp
       residue.py.cpp
+
+      qlist_siremol.py.cpp
+
       wrap_angles.cpp         
       wrap_atom.cpp           
       wrap_atomlist.cpp       

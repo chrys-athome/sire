@@ -116,6 +116,32 @@ public:
     }
 };
 
+/** This exception is thrown when an action is requested of a non-existant molecule
+
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT missing_molecule : public siremol_error
+{
+public:
+    missing_molecule() : siremol_error()
+    {}
+    
+    missing_molecule(QString err, QString place = QString::null) 
+                    : siremol_error(err,place)
+    {}
+    
+    missing_molecule(const missing_molecule &other) : siremol_error(other)
+    {}
+    
+    ~missing_molecule() throw()
+    {}
+    
+    const char* what() const throw()
+    {
+        return "SireMol::missing_molecule";
+    }
+};
+
 /** This exception is thrown when an action is requested of a non-existant residue
 
     @author Christopher Woods

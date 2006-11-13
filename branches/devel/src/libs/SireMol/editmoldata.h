@@ -78,6 +78,7 @@ class Molecule;
 class MoleculeBonds;
 class ResidueBonds;
 class AtomIDGroup;
+class AtomInfoGroup;
 
 class MoleculeInfo;
 class CutGroup;
@@ -180,8 +181,12 @@ public:
     QVector<ResNum> residueNumbers(CutGroupNum cgnum) const;
 
     CutGroupNum cutGroupNum(CutGroupID cgid) const;
+    CutGroupNum cutGroupNum(const AtomIndex &atom) const;
+    
     CutGroupID cutGroupID(CutGroupNum cgnum) const;
+    CutGroupID cutGroupID(const AtomIndex &atom) const;
 
+    QList<CutGroupNum> cutGroupNums() const;
     QSet<CutGroupNum> cutGroupNums(ResNum resnum) const;
 
     int nAtoms() const;
@@ -228,6 +233,8 @@ public:
     QHash<CutGroupNum,CoordGroup> coordGroups(const QSet<CutGroupNum> &cgnums) const;
 
     CoordGroup coordGroup(CutGroupNum cgnum) const;
+
+    AtomInfoGroup atomInfoGroup(CutGroupNum cgnum) const;
 
     Atom atom(const AtomIndex &atm) const;
     Vector coordinates(const AtomIndex &atm) const;
@@ -457,6 +464,7 @@ private:
 
     CutGroup _unsafe_cutGroup(CutGroupNum cgnum) const;
     CoordGroup _unsafe_coordGroup(CutGroupNum cgnum) const;
+    AtomInfoGroup _unsafe_atomInfoGroup(CutGroupNum cgnum) const;
 
     void _pvt_translate(CutGroupNum cgnum, const Vector &delta,
                         detail::MoveWorkspace &workspace) const;

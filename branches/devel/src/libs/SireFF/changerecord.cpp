@@ -87,10 +87,18 @@ void ChangeRecord::moveMolecule(const Molecule &mol)
     updatePointer( d->moveMolecule(mol) );
 }
 
-/** Change the molecule that is recorded with its parameters in 'mol_and_params' */
-void ChangeRecord::changeMolecule(const ParameterTable &mol_and_params)
+/** Change the residue 'res', giving it new parameters from 'params' */
+void ChangeRecord::changeResidue(const Residue &res,
+                                 const ParameterTable &newparams)
 {
-    updatePointer( d->changeMolecule(mol_and_params) );
+    updatePointer( d->changeResidue(res,newparams) );
+}
+
+/** Change the molecule 'mol', giving it new parameters from 'params' */
+void ChangeRecord::changeMolecule(const Molecule &mol,
+                                  const ParameterTable &newparams)
+{
+    updatePointer( d->changeMolecule(mol,newparams) );
 }
 
 /** Remove the molecule 'mol' */
@@ -99,8 +107,9 @@ void ChangeRecord::removeMolecule(const Molecule &mol)
     updatePointer( d->removeMolecule(mol) );
 }
 
-/** Add the molecule 'mol' */
-void ChangeRecord::addMolecule(const ParameterTable &mol_and_params)
+/** Add the molecule 'mol', whose parameters are in 'params' */
+void ChangeRecord::addMolecule(const Molecule &mol,
+                               const ParameterTable &params)
 {
-    updatePointer( d->addMolecule(mol_and_params) );
+    updatePointer( d->addMolecule(mol,params) );
 }

@@ -17,6 +17,7 @@
 #include "movedparts.h"
 #include "movedmol.h"
 #include "changedmol.h"
+#include "changedres.h"
 #include "removedmol.h"
 #include "addedmol.h"
 
@@ -66,15 +67,26 @@ ChangeRecordBase* ChangeRecordBase::moveMolecule(const Molecule &mol)
     return new MovedMol(mol);
 }
     
-/** Record that the molecule contained with its parameters in the parameter table
-    'mol_and_params' has changed. This will append this information onto this
+/** Record that the residue 'res' has changed, giving it new parameters from
+    'newparams'. This will append this information onto this
+    record, if possible, else will create a new ChangeRecord and will append
+    onto that. You are responsible for managing the returned pointer. */ */
+ChangeRecordBase* ChangeRecordBase::changeResidue(const Residue &res,
+                                                  const ParameterTable &params)
+{
+    return new ChangedRes(res, params);
+}
+
+/** Record that the molecule 'mol' has changed, giving it new parameters from
+    'newparams'. This will append this information onto this
     record, if possible, else will create a new ChangeRecord and will append
     onto that. You are responsible for managing the returned pointer. */
-ChangeRecordBase* ChangeRecordBase::changeMolecule(const ParameterTable &mol_and_params)
+ChangeRecordBase* ChangeRecordBase::changeMolecule(const Molecule &mol,
+                                                   const ParameterTable &params)
 {
     //as we are here, this means that this is a null ChangeRecord, so
     //just return a new ChangedMol with the correct information
-    return new ChangedMol(mol_and_params);
+    return new ChangedMol(mol, params);
 }
 
 /** Record that the molecule 'mol' has been removed. This will append this information onto this
@@ -87,13 +99,14 @@ ChangeRecordBase* ChangeRecordBase::removeMolecule(const Molecule &mol)
     return new RemovedMol(mol);
 }
 
-/** Record that the molecule contained with its parameters in the parameter table
-    'mol_and_params' has been added. This will append this information onto this
-    record, if possible, else will create a new ChangeRecord and will append
+/** Record that the molecule 'mol' with parameters 'params' has been added. 
+    This will append this information onto this record, if possible, 
+    else will create a new ChangeRecord and will append
     onto that. You are responsible for managing the returned pointer. */
-ChangeRecordBase* ChangeRecordBase::addMolecule(const ParameterTable &mol_and_params)
+ChangeRecordBase* ChangeRecordBase::addMolecule(const Molecule &mol,
+                                                const ParameterTable &params)
 {
     //as we are here, this means that this is a null ChangeRecord, so
     //just return a new AddedMol with the correct information
-    return new AddedMol(mol);
+    return new AddedMol(mol,params);
 }

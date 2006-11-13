@@ -33,6 +33,8 @@ class Molecule;
 QDataStream& operator<<(QDataStream&, const SireMol::Molecule&);
 QDataStream& operator>>(QDataStream&, SireMol::Molecule&);
 
+uint qHash(const SireMol::Molecule &molecule);
+
 namespace SireMaths
 {
 class Vector;
@@ -125,6 +127,8 @@ public:
      void setNewID();
 
      const MoleculeVersion& version() const;
+     
+     QString idString() const;
    /////////////////////////////////////////////////////////
 
 

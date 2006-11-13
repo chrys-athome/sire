@@ -50,6 +50,11 @@ public:
 
     ~MovedMol();
 
+    MovedMol& operator=(const MovedMol &other);
+    
+    bool operator==(const MovedMol &other) const;
+    bool operator!=(const MovedMol &other) const;
+
     const char* what() const
     {
         return "SireFF::MovedMol";
@@ -63,14 +68,20 @@ public:
     ChangeRecordBase* moveResidue(const Residue &res);
     ChangeRecordBase* moveMolecule(const Molecule &mol);
     
-    ChangeRecordBase* changeMolecule(const ParameterTable &mol_and_params);
+    ChangeRecordBase* changeResidue(const Residue &res,
+                                    const ParameterTable &params);
+    
+    ChangeRecordBase* changeMolecule(const Molecule &mol,
+                                     const ParameterTable &params);
     
     ChangeRecordBase* removeMolecule(const Molecule &mol);
     
-    ChangeRecordBase* addMolecule(const ParameterTable &mol_and_params);
+    ChangeRecordBase* addMolecule(const Molecule &mol,
+                                  const ParameterTable &params);
 
 private:
-    QString errorString(const Molecule &mol) const;
+    void assertCompatibleWith(const Molecule &mol) const;
+    void assertCompatibleVersion(const Molecule &mol) const;
     
     /** Copy of the molecule that has been moved */
     Molecule movedmol;

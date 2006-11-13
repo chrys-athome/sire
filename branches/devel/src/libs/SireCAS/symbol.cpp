@@ -108,6 +108,14 @@ Symbol::Symbol(const Symbol &other)
 Symbol::~Symbol()
 {}
 
+/** Assignment operator */
+Symbol& Symbol::operator=(const Symbol &other)
+{
+    id = other.id;
+    stringrep = other.stringrep;
+    return *this;
+}
+
 /** Comparison operator */
 bool Symbol::operator==(const ExBase &other) const
 {

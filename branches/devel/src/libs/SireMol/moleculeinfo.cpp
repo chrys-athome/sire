@@ -168,11 +168,50 @@ MoleculeInfoPvt::MoleculeInfoPvt()
 
 /** Construct from an EditMolData object */
 MoleculeInfoPvt::MoleculeInfoPvt(const EditMolData &moldata)
-                : QSharedData()
+                : QSharedData(),
+                  molname(moldata.name()),
+                  resnums(moldata.residueNumbers()),
+                  nats(moldata.nAtoms())
 {
+    //first, get the AtomInfos of all of the atoms in the CutGroups
+    int ncg = moldata.nCutGroups();
+
+    if (ncg == 0)
+        return;
+
+    atominfos.reserve(ncg);
+
+    foreach (CutGroupNum cgnum, moldata.cutGroupNums())
+    {
+        atominfos.insert( moldata.cutGroupID(cgnum), moldata.atomInfoGroup(cgnum) );
+    }
+
+    //now that we have the 'atominfos' hash, we can pass it to the
+    //all of the child ResidueInfo objects that we will now create,
+    //one for each residue in the molecule
+    resinfos.reserve(resnums.count());
+
+    //also, get the highest index of the atom in each residue
+    //so that we can locate it quickly
+    int maxidx = -1;
+
+    foreach (ResNum resnum, resnums)
+    {
+        ResidueInfo resinfo(resnum, moldata, atominfos);
+
+        resinfos.insert( resnum, resinfo );
+
+        int nats = resinfo.nAtoms();
+
+        if (nats > 0)
+        {
+            maxidx += nats;
+            idx2resnum.insert( AtomID(maxidx), resnum );
+        }
+    }
+
     #warning Need to update MoleculeInfo to use CutGroupNums!
 }
-
 
 /** Copy constructor */
 MoleculeInfoPvt::MoleculeInfoPvt(const MoleculeInfoPvt &other)
@@ -256,15 +295,12 @@ const CGAtomID& MoleculeInfoPvt::_unsafe_index(AtomID atomid) const
     //get the ResidueInfo that contains this index
     const ResidueInfo &resinfo = this->_unsafe_residue(it.value());
 
-    //ok - it.key() contains the highest index for this residue
-    //If we subtract it.key() from atomid that will convert it into an
-    //index into the ResidueInfo
+    //ok - it.key() contains the index of the last atom in this residue
+    // The real index == atomid + nAtoms(res) - it.key() - 1;
 
-    //convert the reversed index into a real index by adding
-    //it to 'natoms' in the residue (remembering that i is
-    //negative
     atomid += resinfo.nAtoms();
     atomid -= it.key();
+    --atomid;
 
     return resinfo[atomid];
 }
@@ -283,7 +319,7 @@ void MoleculeInfoPvt::regenerateIndex()
         ResNum resnum = resarray[i];
 
         nats += _unsafe_residue(resnum).nAtoms();
-        idx2resnum.insert( AtomID(nats), resnum );
+        idx2resnum.insert( AtomID(nats-1), resnum );
     }
 }
 
@@ -940,7 +976,7 @@ QHash<CGAtomID,AtomInfo> MoleculeInfo::atoms( const QSet<CGAtomID> &cgids ) cons
     \throw SireMol::missing_cutgroup
     \throw SireError::invalid_index
 */
-QHash<CGNumAtomID,AtomInfo> MoleculeInfo::atoms( 
+QHash<CGNumAtomID,AtomInfo> MoleculeInfo::atoms(
                                           const QSet<CGNumAtomID> &cgnums ) const
 {
     return getAtoms<CGNumAtomID>(*this, cgnums);
@@ -1218,7 +1254,7 @@ int MoleculeInfo::nAtoms(CutGroupNum cgnum) const
     return this->nAtoms( this->cutGroupID(cgnum) );
 }
 
-/** Return the numbers of the CutGroups in this molecule, in  
+/** Return the numbers of the CutGroups in this molecule, in
     CutGroupID order */
 QVector<CutGroupNum> MoleculeInfo::cutGroupNums() const
 {
@@ -1226,7 +1262,7 @@ QVector<CutGroupNum> MoleculeInfo::cutGroupNums() const
     throw SireError::incomplete_code( QObject::tr(
                           "Need to update ResidueInfo to work with CutGroupNum"),
                               CODELOC );
-  
+
     return QVector<CutGroupNum>();
 }
 

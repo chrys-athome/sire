@@ -64,6 +64,7 @@ class CutGroupID;
 class MoleculeID;
 
 class EditMol;
+class EditMolData;
 
 class ResNumAtomID;
 class ResIDAtomID;
@@ -102,10 +103,9 @@ namespace detail
 class MolData
 {
 
-friend class EditMol;  //so it can construct this object
-                       //(private, as public constructor would require
-                       //sanity checking the input)
-
+friend class ::SireMol::EditMolData;  //so it can construct this object
+                                      //(private, as public constructor would require
+                                      //sanity checking the input)
 public:
     MolData()
     {}

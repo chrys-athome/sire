@@ -77,11 +77,13 @@ public:
     ChangeRecordBase* moveResidue(const Residue &res);
     ChangeRecordBase* moveMolecule(const Molecule &mol);
     
-    ChangeRecordBase* changeMolecule(const ParameterTable &mol_and_params);
+    ChangeRecordBase* changeMolecule(const Molecule &mol,
+                                     const ParameterTable &params);
     
     ChangeRecordBase* removeMolecule(const Molecule &mol);
     
-    ChangeRecordBase* addMolecule(const ParameterTable &mol_and_params);
+    ChangeRecordBase* addMolecule(const Molecule &mol,
+                                  const ParameterTable &params);
 
 private:
     /** The ID of the moved molecule */

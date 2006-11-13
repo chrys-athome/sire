@@ -63,5 +63,28 @@ SireDB
 SireMol
 -------
 
-(*) Change AtomID, ResID, CutGroupID and MoleculeID to ensure that they are not typedefs of Index, so that we can overload on them. Important for correct working of MoleculeInfo. **DONE**
+(*) Rewrite MoleculeInfo/ResidueInfo so that they are both views of MolInfoData, and
+    so that they can support CutGroupNum
+
+(*) Fix all of the broken parts of the code
+
+
+-----
+Spier
+-----
+
+(*) Fix Spier so that it works with self-managed molecules.
+
+(*) Rewrite 3D code so that it is more memory efficient (use scaling for cones and
+    spheres rather than cached display lists? Can I use non-uniform scaling on 
+    a cylinder to make all of the cones that I need for the bonds?)
+
+------
+SirePy
+------
+
+(*) Write generic code that will allow streaming of polymorphic classes that
+    are inherited by Python. Streamed class must contain Python code for the
+    class, and de-streaming must parse the stored code...
+
 

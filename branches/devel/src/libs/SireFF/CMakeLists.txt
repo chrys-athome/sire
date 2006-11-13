@@ -12,7 +12,10 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the sources in SireFF
 set ( SIREFF_SOURCES
+      changedmols.cpp
       energy.cpp
+      errors.cpp
+      ffbase.cpp
       forcefield.cpp
     )
 
