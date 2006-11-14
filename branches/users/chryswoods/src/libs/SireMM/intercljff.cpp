@@ -4,12 +4,17 @@
 
 #include "intercljff.h"
 
+#include "chargetable.h"
+#include "ljtable.h"
+
 #include "detail/molcljinfo.h"
 
 #include "SireVol/coordgroup.h"
 
 using namespace SireMM;
 using namespace SireMM::detail;
+
+using namespace SireDB;
 
 /** Constructor */
 InterCLJFF::InterCLJFF()
@@ -43,7 +48,7 @@ void InterCLJFF::recalculateEnergy()
         {
             const MolCLJInfo &mol1 = molarray[j];
 
-            CLJFF::calculateEnergy( mol0, mol1, space(), 
+            CLJFF::calculateEnergy( mol0, mol1, space(),
                                     combiningRules(), switchingFunction(),
                                     workspace() );
 
@@ -65,10 +70,51 @@ const Molecule& InterCLJFF::molecule(MoleculeID molid) const
 {
     throw SireError::incomplete_code( QObject::tr(
         "Need to write InterCLJFF::molecule(molid)"), CODELOC );
-        
+
     return mols[0].molecule();
 }
-    
+
+/** Temporary function used to add a molecule with passed charge and LJ
+    parameters */
+void InterCLJFF::add(const Molecule &mol, const ChargeTable &charges,
+                     const LJTable &ljs)
+{
+    charges.assertCompatibleWith(mol);
+    ljs.assertCompatibleWith(mol);
+
+    //extract arrays of the CLJ parameters
+    QVector< QVector<CLJParameter> > cljparams;
+
+    QVector< ParameterGroup<ChargeParameter> > chargeparams = charges.parameterGroups();
+    QVector< ParameterGroup<LJParameter> > ljparams = ljs.parameterGroups();
+
+    int ncg = chargeparams.count();
+
+    cljparams.reserve(ncg);
+
+    for (int i=0; i<ncg; ++i)
+    {
+        QVector<CLJParameter> cljs;
+
+        int nparams = chargeparams[i].parameters().count();
+
+        const ChargeParameter *chargearray = chargeparams[i].parameters().constData();
+        const LJParameter *ljarray = ljparams[i].parameters().constData();
+
+        cljs.reserve(nparams);
+
+        for (int j=0; j<nparams; ++j)
+        {
+            cljs.append( CLJParameter(chargearray[j],ljarray[j]) );
+        }
+
+        cljparams.append(cljs);
+    }
+
+    //add this molecule to the list
+    mols.append( MolCLJInfo(mol, cljparams) );
+}
+
 /** Move the molecule 'molecule' */
 void InterCLJFF::move(const Molecule &molecule)
 {}
@@ -78,7 +124,7 @@ void InterCLJFF::move(const Residue &residue)
 
 void InterCLJFF::move(const MovedMols &movedmols)
 {}
-    
+
 void InterCLJFF::change(const Molecule &molecule, const ParameterTable &params)
 {}
 
@@ -91,7 +137,7 @@ void InterCLJFF::change(const ChangedMols &changedmols)
 void InterCLJFF::add(const Molecule &molecule, const ParameterTable &params,
                      int groupid)
 {}
-                     
+
 void InterCLJFF::add(const Residue &residue, const ParameterTable &params,
                      int groupid)
 {}

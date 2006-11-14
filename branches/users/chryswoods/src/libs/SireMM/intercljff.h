@@ -14,6 +14,9 @@ QDataStream& operator>>(QDataStream&, SireMM::InterCLJFF&);
 namespace SireMM
 {
 
+class ChargeTable;
+class LJTable;
+
 using SireMol::Molecule;
 using SireMol::Residue;
 using SireMol::MoleculeID;
@@ -39,16 +42,16 @@ friend QDataStream& ::operator>>(QDataStream&, InterCLJFF&);
 
 public:
     InterCLJFF();
-    
+
     InterCLJFF(const InterCLJFF &other);
-    
+
     ~InterCLJFF();
 
     static const char* typeName()
     {
         return "SireMM::InterCLJFF";
     }
-    
+
     const char* what() const
     {
         return InterCLJFF::typeName();
@@ -60,20 +63,23 @@ public:
     }
 
     const Molecule& molecule(MoleculeID molid) const;
-    
+
     void move(const Molecule &molecule);
     void move(const Residue &residue);
     void move(const MovedMols &movedmols);
-    
+
     void change(const Molecule &molecule, const ParameterTable &params);
     void change(const Residue &residue, const ParameterTable &params);
     void change(const ChangedMols &changedmols);
-    
-    void add(const Molecule &molecule, const ParameterTable &params, 
+
+    void add(const Molecule &molecule, const ParameterTable &params,
              int groupid);
     void add(const Residue &residue, const ParameterTable &params,
              int groupid);
-    
+
+    void add(const Molecule &molecule,
+             const ChargeTable &charges, const LJTable &ljs);
+
     void remove(const Molecule &molecule);
     void remove(const Residue &residue);
 
