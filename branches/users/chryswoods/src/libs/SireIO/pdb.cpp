@@ -202,9 +202,6 @@ QList<Molecule> PDB::readMols(const QByteArray &data,
         else if (lowline.startsWith("ter"))
         {
             loadedmols.append(currentmol);
-
-            qDebug() << "Now? " << currentmol.nAtoms() << " " << currentmol.nResidues();
-
             currentmol = EditMol( QString("PDB_%1").arg(loadedmols.count()) );
         }
     }
@@ -222,8 +219,6 @@ QList<Molecule> PDB::readMols(const QByteArray &data,
     {
         Molecule molecule;
         molecule.setNewID();
-
-        qDebug() << "What about here? " << it->nAtoms() << " " << it->nResidues();
 
         molecule = it->commit();
 

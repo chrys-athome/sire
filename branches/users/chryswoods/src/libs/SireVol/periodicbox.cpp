@@ -139,7 +139,7 @@ double PeriodicBox::calcDist(const CoordGroup &group0, const CoordGroup &group1,
 }
 
 /** Populate the matrix 'mat' with the distances^2 between all of the
-    atoms of the two CoordGroups. Return the shortest distance^2 between the
+    atoms of the two CoordGroups. Return the shortest distance between the
     two CoordGroups. */
 double PeriodicBox::calcDist2(const CoordGroup &group0, const CoordGroup &group1,
                               DistMatrix &mat) const
@@ -180,12 +180,12 @@ double PeriodicBox::calcDist2(const CoordGroup &group0, const CoordGroup &group1
         }
     }
 
-    //return the minimum distance^2
-    return mindist2;
+    //return the minimum distance
+    return sqrt(mindist2);
 }
 
 /** Populate the matrix 'mat' with the inverse distances between all of the
-    atoms of the two CoordGroups. Return the shortest distance^2 between the two CoordGroups. */
+    atoms of the two CoordGroups. Return the shortest distance between the two CoordGroups. */
 double PeriodicBox::calcInvDist(const CoordGroup &group0, const CoordGroup &group1,
                                 DistMatrix &mat) const
 {
@@ -225,12 +225,12 @@ double PeriodicBox::calcInvDist(const CoordGroup &group0, const CoordGroup &grou
         }
     }
 
-    //return the inverse distance
-    return maxinvdist;
+    //return the shortest distance
+    return 1.0 / maxinvdist;
 }
 
 /** Populate the matrix 'mat' with the inverse distances^2 between all of the
-    atoms of the two CoordGroups. Return the shortest distance^2 between the two CoordGroups. */
+    atoms of the two CoordGroups. Return the shortest distance between the two CoordGroups. */
 double PeriodicBox::calcInvDist2(const CoordGroup &group0, const CoordGroup &group1,
                                  DistMatrix &mat) const
 {
@@ -271,8 +271,8 @@ double PeriodicBox::calcInvDist2(const CoordGroup &group0, const CoordGroup &gro
         }
     }
 
-    //return the maximum inverse distance^2
-    return maxinvdist2;
+    //return the shortest distance
+    return 1.0 / sqrt(maxinvdist2);
 }
 
 /** Return whether or not these two groups are definitely beyond the cutoff distance. */

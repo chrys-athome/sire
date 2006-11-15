@@ -1,99 +1,77 @@
 
 from Sire.Mol import *
 from Sire.IO import *
-from Sire.DB import *
+from Sire.Vol import *
 from Sire.MM import *
 from Sire.CAS import *
+from Sire.Maths import *
+from Sire.Qt import *
 from Sire.Units import *
 
+timer = QTime()
+
+#read in all of the molecules
+print "Loading the molecules..."
+timer.start()
 mols = PDB().read("test/io/water.pdb")
 
-#automatically generate the connectivity of the molecules
+ms = timer.elapsed()
+print "... took %d ms" % ms
+
+#specify the space in which the molecules are placed
+space = Cartesian()
+
+space = PeriodicBox(Vector(-18.3854,-18.66855,-18.4445), \
+                    Vector( 18.3854, 18.66855, 18.4445))
+
+#specify the type of combining rules to use
+combrules = ArithmeticCombiningRules()
+#combrules = GeometricCombiningRules()
+
+#specify the type of switching function to use
+switchfunc = HarmonicSwitchingFunction(80.0)
+switchfunc = HarmonicSwitchingFunction(15.0, 14.5)
+
+#create a forcefield for the molecules
+cljff = InterCLJFF( Space(space), \
+                    CombiningRules(combrules), \
+                    SwitchingFunction(switchfunc) )
+
+#parametise each molecule and add it to the forcefield
+print "Parametising the molecules..."
+
+timer.start()
 for mol in mols:
-    mol.addAutoBonds()
-#    mol.setName("Water [TIP4P]")
+      chgs = ChargeTable( mol.info() )
+      ljs = LJTable( mol.info() )
+      
+      resnum = mol.residueNumbers()[0]
+      
+      chgs.setParameter( AtomIndex("O00",resnum), 0.0 * mod_electrons )
+      chgs.setParameter( AtomIndex("H01",resnum), 0.52 * mod_electrons )
+      chgs.setParameter( AtomIndex("H02",resnum), 0.52 * mod_electrons )
+      chgs.setParameter( AtomIndex("M03",resnum), -1.04 * mod_electrons )
+      
+      ljs.setParameter( AtomIndex("O00",resnum), \
+                        LJParameter( 3.15365 * angstrom, \
+                                     0.1550 * kcal_per_mol ) )
 
-mols = flexibleAndMoleculeCutting(mols)
+      ljs.setParameter( AtomIndex("H01",resnum), LJParameter.dummy() )
+      ljs.setParameter( AtomIndex("H02",resnum), LJParameter.dummy() )
+      ljs.setParameter( AtomIndex("M03",resnum), LJParameter.dummy() )
+      
+      cljff.add(mol, chgs, ljs)
 
-tip4p = mols[0]
-print tip4p
+ms = timer.elapsed()
+print "... took %d ms" % ms
+      
+#now calculate the energy of the forcefield
+print "Calculating the energy..."
 
-#create the database and load into it the solvent parameters
-db = ParameterDB()
+timer.start()
+nrg = cljff.energy()
+ms = timer.elapsed()
 
-ProtoMS().read("test/ff/solvents.ff", db)
+print cljff.energy(), "kcal mol-1"
 
-#now assign the parameters for the water
-params = db.assign(tip4p, [ assign_atoms(
-                                 using_parameters(ChargeDB,LJDB,AtomTypeDB), 
-                                 using_relationships(RelateMRADB) ),
-                            assign_bonds(
-                                 using_parameters(BondDB),
-                                 using_relationships(RelateMRADB,
-                                                     RelateAtomTypeDB) ),
-                            assign_angles(
-                                 using_parameters(AngleDB),
-                                 using_relationships(RelateMRADB,
-                                                     RelateAtomTypeDB) ),
-                            assign_dihedrals(
-                                 using_parameters(DihedralDB),
-                                 using_relationships(RelateMRADB,
-                                                     RelateAtomTypeDB) ),
-                          ],
-                   mol_name == "T4P" 
-                  )
-             
-assert( params.isA(ChargeTable) )
-assert( params.isA(LJTable) )
-assert( params.isA(AtomTypeTable) )
-assert( params.isA(BondTable) )
-assert( params.isA(AngleTable) )
-
-chgs = params.asA(ChargeTable)
-ljs = params.asA(LJTable)
-typs = params.asA(AtomTypeTable)
-bonds = params.asA(BondTable)
-angles = params.asA(AngleTable)
-
-assert( not chgs.hasMissingParameters() )
-assert( not ljs.hasMissingParameters() )
-assert( not typs.hasMissingParameters() )
-assert( not bonds.hasMissingParameters() )
-assert( not angles.hasMissingParameters() )
-
-for atom in params.molecule().atoms():
-    print atom, chgs[atom], ljs[atom], typs[atom]
- 
-for bond in bonds.bonds():
-    print bond, bonds[bond]
-               
-for angle in angles.angles():
-    print angle, angles[angle]
-
-#check the parameters are correct
-assert( chgs[("O00",1)] == 0.0 )
-assert( chgs[("H01",1)] == 0.52 )
-assert( chgs[("H02",1)] == 0.52 )
-assert( chgs[("M03",1)] == -1.04 )
-
-assert( ljs[("O00",1)] == LJParameter(3.15363,0.155) )
-assert( ljs[("H01",1)] == LJParameter.dummy() )
-assert( ljs[("H02",1)] == LJParameter.dummy() )
-assert( ljs[("M03",1)] == LJParameter.dummy() )
-
-assert( typs[("O00",1)] == AtomType("OW","oxygen") )
-assert( typs[("H01",1)] == AtomType("HW","hydrogen") )
-assert( typs[("H02",1)] == AtomType("HW","hydrogen") )
-assert( typs[("M03",1)] == AtomType("??",0) )
-
-r = db.asA("SireMM::BondDB").r()
-print db.getLog()
-
-assert( bonds[ (("H01",1),("O00",1)) ] == 450*pow((r-0.9572),2) )
-assert( bonds[ (("H02",1),("O00",1)) ] == 450*pow((r-0.9572),2) )
-                
-theta = db.asA("SireMM::AngleDB").theta()
-
-assert( angles[ (("H01",1),("O00",1),("H02",1)) ] == 55*pow((theta - 104.52*degrees),2) )
-
-print "Done!"
+print "... to %d ms" % ms

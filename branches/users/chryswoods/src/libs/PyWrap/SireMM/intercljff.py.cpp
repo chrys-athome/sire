@@ -7,6 +7,11 @@
 #include "SireMM/chargetable.h"
 #include "SireMM/ljtable.h"
 
+#include "SireMM/switchingfunction.h"
+#include "SireMM/combiningrules.h"
+
+#include "SireVol/space.h"
+
 #include "SireMol/molecule.h"
 
 namespace bp = boost::python;
@@ -18,6 +23,9 @@ void export_InterCLJFF()
 {
     bp::class_< InterCLJFF, bp::bases< SireMM::CLJFF > >( "InterCLJFF" )
         .def( bp::init< >()[bp::default_call_policies()] )
+        .def( bp::init<const SireVol::Space&,
+                       const SireMM::CombiningRules&,
+                       const SireMM::SwitchingFunction&>()[bp::default_call_policies()] )
         .def(
             "typeName"
             , &::SireMM::InterCLJFF::typeName

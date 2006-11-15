@@ -32,7 +32,9 @@ void export_assign_angles();
 void export_assign_dihedrals();
 
 void export_CLJFF();
+void export_CombiningRules();
 void export_InterCLJFF();
+void export_SwitchingFunction();
 
 void SIREMM_EXPORT export_SireMM()
 {
@@ -58,7 +60,9 @@ void SIREMM_EXPORT export_SireMM()
     export_assign_dihedrals();
 
     export_CLJFF();
+    export_CombiningRules();
     export_InterCLJFF();
+    export_SwitchingFunction();
 }
 
 }

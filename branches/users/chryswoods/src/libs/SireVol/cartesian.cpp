@@ -2,6 +2,8 @@
 #include <limits>
 #include <cmath>
 
+#include <QDebug>
+
 #include "cartesian.h"
 #include "coordgroup.h"
 
@@ -89,7 +91,7 @@ double Cartesian::calcDist(const CoordGroup &group, DistMatrix &mat) const
 }
 
 /** Populate the matrix 'mat' with the distances^2 between all points in
-    the group 'group'. Return the shortest distance^2 between points. */
+    the group 'group'. Return the shortest distance between points. */
 double Cartesian::calcDist2(const CoordGroup &group, DistMatrix &mat) const
 {
     double mindist2(std::numeric_limits<double>::max());
@@ -123,11 +125,11 @@ double Cartesian::calcDist2(const CoordGroup &group, DistMatrix &mat) const
         }
     }
 
-    return mindist2;
+    return sqrt(mindist2);
 }
 
 /** Populate the matrix 'mat' with the inverse distances between all points in
-    the group 'group'. Return the largest inverse distance between points. */
+    the group 'group'. Return the smallest distance between points. */
 double Cartesian::calcInvDist(const CoordGroup &group, DistMatrix &mat) const
 {
     double mindist(0);
@@ -161,11 +163,11 @@ double Cartesian::calcInvDist(const CoordGroup &group, DistMatrix &mat) const
         }
     }
 
-    return mindist;
+    return 1.0 / mindist;
 }
 
 /** Populate the matrix 'mat' with the inverse distances^2 between all points in
-    the group 'group'. Return the largest inverse distance^2 between points. */
+    the group 'group'. Return the smallest distance between points. */
 double Cartesian::calcInvDist2(const CoordGroup &group, DistMatrix &mat) const
 {
     double mindist2(0);
@@ -199,7 +201,7 @@ double Cartesian::calcInvDist2(const CoordGroup &group, DistMatrix &mat) const
         }
     }
 
-    return mindist2;
+    return sqrt( 1.0 / mindist2 );
 }
 
 /** Populate the matrix 'mat' with the distances between all of the
@@ -245,7 +247,7 @@ double Cartesian::calcDist(const CoordGroup &group0, const CoordGroup &group1,
 }
 
 /** Populate the matrix 'mat' with the distances^2 between all of the
-    points of the two CoordGroups. Return the shortest distance^2 between the
+    points of the two CoordGroups. Return the shortest distance between the
     two CoordGroups. */
 double Cartesian::calcDist2(const CoordGroup &group0, const CoordGroup &group1,
                             DistMatrix &mat) const
@@ -282,12 +284,12 @@ double Cartesian::calcDist2(const CoordGroup &group0, const CoordGroup &group1,
         }
     }
 
-    //return the minimum distance^2
-    return mindist2;
+    //return the minimum distance
+    return sqrt(mindist2);
 }
 
 /** Populate the matrix 'mat' with the inverse distances between all of the
-    points of the two CoordGroups. Return the largest inverse distance between
+    points of the two CoordGroups. Return the shortest distance between
     the two CoordGroups. */
 double Cartesian::calcInvDist(const CoordGroup &group0, const CoordGroup &group1,
                               DistMatrix &mat) const
@@ -324,11 +326,11 @@ double Cartesian::calcInvDist(const CoordGroup &group0, const CoordGroup &group1
         }
     }
 
-    return maxinvdist;
+    return 1.0 / maxinvdist;
 }
 
 /** Populate the matrix 'mat' with the inverse distances^2 between all of the
-    points of the two CoordGroups. Return the largest inverse distance^2 between
+    points of the two CoordGroups. Return the shortest distance between
     the two CoordGroups. */
 double Cartesian::calcInvDist2(const CoordGroup &group0, const CoordGroup &group1,
                                DistMatrix &mat) const
@@ -365,7 +367,7 @@ double Cartesian::calcInvDist2(const CoordGroup &group0, const CoordGroup &group
         }
     }
 
-    return maxinvdist2;
+    return sqrt( 1.0 / maxinvdist2 );
 }
 
 /** Return whether or not these two groups are definitely beyond the cutoff distance. */

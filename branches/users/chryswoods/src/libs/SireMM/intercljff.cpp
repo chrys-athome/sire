@@ -17,7 +17,14 @@ using namespace SireMM::detail;
 using namespace SireDB;
 
 /** Constructor */
-InterCLJFF::InterCLJFF()
+InterCLJFF::InterCLJFF() : CLJFF()
+{}
+
+/** Construct a CLJ forcefield using the passed Space, combining rules and
+    switching function */
+InterCLJFF::InterCLJFF(const Space &space, const CombiningRules &combrules,
+                       const SwitchingFunction &switchfunc)
+           : CLJFF(space, combrules, switchfunc)
 {}
 
 /** Copy constructor */

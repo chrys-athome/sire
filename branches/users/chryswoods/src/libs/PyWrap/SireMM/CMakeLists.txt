@@ -19,7 +19,9 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs
 set ( WRAPMM_SOURCES
 
       cljff.py.cpp
-      intercljff.py.cpp 
+      combiningrules.py.cpp
+      intercljff.py.cpp
+      switchingfunction.py.cpp
 
       wrap_anglegenerator.cpp    
       wrap_angletable.cpp        

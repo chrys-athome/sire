@@ -40,9 +40,9 @@ static const RegisterMetaType<MolCLJInfoData> r_moldata("SireMM::detail::MolCLJI
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const MolCLJInfoData &moldata)
 {
-    writeHeader(ds, r_moldata, 1) 
+    writeHeader(ds, r_moldata, 1)
         << moldata.molecule << moldata.cljparams;
-    
+
     return ds;
 }
 
@@ -50,16 +50,16 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const MolCLJInfoData &mol
 QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, MolCLJInfoData &moldata)
 {
     VersionID v = readHeader(ds, r_moldata);
-    
+
     if (v == 1)
     {
         ds >> moldata.molecule >> moldata.cljparams;
-        
+
         moldata.coordinates = moldata.molecule.coordGroups();
     }
     else
         throw version_error(v, "1", r_moldata, CODELOC);
-    
+
     return ds;
 }
 
@@ -126,7 +126,7 @@ void MolCLJInfoData::assertCompatibleParameters(
 
     if (params.count() == ncg)
     {
-        const QVector<CLJParameter> *paramarray;
+        const QVector<CLJParameter> *paramarray = params.constData();
 
         for (CutGroupID i(0); i<ncg; ++i)
         {
@@ -191,9 +191,9 @@ static const RegisterMetaType<MolCLJInfo> r_molinfo("SireMM::detail::MolCLJInfo"
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const MolCLJInfo &molinfo)
 {
     writeHeader(ds, r_molinfo, 1);
-    
+
     SharedDataStream(ds) << molinfo.d;
-    
+
     return ds;
 }
 
@@ -201,14 +201,14 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const MolCLJInfo &molinfo
 QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, MolCLJInfo &molinfo)
 {
     VersionID v = readHeader(ds, r_molinfo);
-    
+
     if (v == 1)
     {
         SharedDataStream(ds) >> molinfo.d;
     }
     else
         throw version_error(v, "1", r_molinfo, CODELOC);
-    
+
     return ds;
 }
 

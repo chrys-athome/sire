@@ -23,7 +23,7 @@ using namespace SireStream;
 /** Constructor */
 CLJWorkspace::CLJWorkspace() : cnrg(0), ljnrg(0)
 {}
- 
+
 /** Destructor */
 CLJWorkspace::~CLJWorkspace()
 {}
@@ -37,10 +37,10 @@ static const RegisterMetaType<CLJFF> r_cljff("SireMM::CLJFF", MAGIC_ONLY);
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJFF &cljff)
 {
-    writeHeader(ds, r_cljff, 1) 
+    writeHeader(ds, r_cljff, 1)
               << cljff.spce << cljff.combrules << cljff.switchfunc
               << static_cast<const FFBase&>(cljff);
-    
+
     return ds;
 }
 
@@ -48,7 +48,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJFF &cljff)
 QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJFF &cljff)
 {
     VersionID v = readHeader(ds, r_cljff);
-    
+
     if (v == 1)
     {
         ds >> cljff.spce >> cljff.combrules >> cljff.switchfunc
@@ -56,7 +56,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJFF &cljff)
     }
     else
         throw version_error(v, "1", r_cljff, CODELOC);
-    
+
     return ds;
 }
 
@@ -331,11 +331,11 @@ CLJFF::CLJFF() : FFBase()
     this->registerComponents();
 }
 
-/** Construct a CLJFF using the specified space, combining rules and 
+/** Construct a CLJFF using the specified space, combining rules and
     switching function */
 CLJFF::CLJFF(const Space &space, const CombiningRules &combiningrules,
              const SwitchingFunction &switchingfunction)
-      : FFBase(), 
+      : FFBase(),
         spce(space), combrules(combiningrules), switchfunc(switchingfunction)
 {
     this->registerComponents();
@@ -362,7 +362,7 @@ void CLJFF::registerComponents()
                              QObject::tr("The total vdw (Lennard Jones) energy.") );
 }
 
-/** Return the function representing the coulomb energy component of this 
+/** Return the function representing the coulomb energy component of this
     forcefield */
 const Function& CLJFF::coulomb() const
 {
