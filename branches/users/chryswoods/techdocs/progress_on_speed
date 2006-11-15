@@ -41,3 +41,21 @@ Not calling workspace and switchingFunction() in the loop
 Compiling with -O2 rather than without any optimisation (woops!)
              809 vs. 643, Tip4PFF is 163 ms faster
 
+Compiling with -O2 on my laptop (Pentium M 1.4 GHz)
+            1304 vs. 1139, Tip4PFF is 165 ms faster
+
+This compiles to Sire(480) taking 565 ms. I thus need to improve the
+speed of Sire by at least two times!
+
+Moving cutgroup beyond() test out of function into pair loop
+            1304 vs. 1107, Tip4PFF is 197 ms faster
+
+Only storing CoordGroups and only one copy of parameters...
+            1348 vs. 1082, Tip4PFF is 266 ms faster
+
+Changing CoordGroup to have inline access to coordinate pointer (by exposing CoordGroupPvt)
+            1266 vs. 1042, Tip4PFF is 224 ms faster
+
+There is still quite a lot of work still to do...
+
+

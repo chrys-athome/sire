@@ -86,8 +86,8 @@ double calculatePairEnergy(CLJWorkspace &workspace)
     space 'space', and using the provided workspace. The total
     coulomb and LJ energies are returned in the workspace. */
 double calculateEnergy(const CoordGroup &group0,
-                       const QVector<CLJParameter> &clj0,
                        const CoordGroup &group1,
+                       const QVector<CLJParameter> &clj0,
                        const Space &space,
                        const SwitchingFunction &switchfunc,
                        CLJWorkspace &workspace)
@@ -96,23 +96,21 @@ double calculateEnergy(const CoordGroup &group0,
 
     DistMatrix &distmatrix = workspace.distmatrix;
 
-    if ( not space.beyond(15.0, group0, group1) )
+    double mindist = space.calcInvDist2(group0, group1, distmatrix);
+
+    double scl = 0;
+
+    if (mindist <= 14.5)
+        scl = 1;
+    else if (mindist < 15.0)
+        scl = (225.0 - mindist*mindist) * 0.0677966101;
+
+    if (scl != 0)
     {
-        double mindist = space.calcInvDist2(group0, group1, distmatrix);
+        double inrg = 0;
 
-        double scl = 0;
-
-        if (mindist <= 14.5)
-            scl = 1;
-        else if (mindist < 15.0)
-            scl = (225.0 - mindist*mindist) * 0.0677966101;
-
-        if (scl != 0)
-        {
-            double inrg = 0;
-
-            //get combined parameters directly...
-            workspace.cljmatrix.redimension(4,4);
+        //get combined parameters directly...
+        workspace.cljmatrix.redimension(4,4);
 
             for (int i=0; i<4; ++i)
             {
@@ -163,7 +161,6 @@ double calculateEnergy(const CoordGroup &group0,
 
             nrg += scl * inrg;
         }
-    }
 
     return nrg;
 }
@@ -171,15 +168,11 @@ double calculateEnergy(const CoordGroup &group0,
 /** Recalculate the total energy of this forcefield from scratch */
 void Tip4PFF::recalculateEnergy()
 {
-    //calculate the total CLJ energy of all molecule pairs...
-    double cnrg = 0.0;
-    double ljnrg = 0.0;
-
     int nmols = mols.count();
 
-    const MolCLJInfo *molarray = mols.constData();
+    const CoordGroup *molarray = mols.constData();
 
-    double nrg;
+    double nrg = 0;
 
     const Space &myspace = space();
     const SwitchingFunction &switchfunc = switchingFunction();
@@ -188,20 +181,20 @@ void Tip4PFF::recalculateEnergy()
     //loop over all molecule pairs
     for (int i=0; i<nmols-1; ++i)
     {
-        const MolCLJInfo &mol0 = molarray[i];
-
-        const CoordGroup &group0 = mol0.coordinates().constData()[0];
-        const QVector<CLJParameter> &cljparams = mol0.parameters().constData()[0];
+        const CoordGroup &group0 = molarray[i];
 
         for (int j=i+1; j<nmols; ++j)
         {
-            const MolCLJInfo &mol1 = molarray[j];
-
-            nrg += ::calculateEnergy( group0,
-                                      cljparams,
-                                      mol1.coordinates().constData()[0],
-                                      myspace,
-                                      switchfunc, wspace );
+            const CoordGroup &group1 = molarray[j];
+            
+            if (not myspace.beyond(15.0, group0, group1))
+            {
+                nrg += ::calculateEnergy( group0,
+                                          group1,
+                                          cljparams,
+                                          myspace,
+                                          switchfunc, wspace );
+            }
         }
     }
 
@@ -219,7 +212,7 @@ const Molecule& Tip4PFF::molecule(MoleculeID molid) const
     throw SireError::incomplete_code( QObject::tr(
         "Need to write Tip4PFF::molecule(molid)"), CODELOC );
 
-    return mols[0].molecule();
+    return Molecule();
 }
 
 /** Temporary function used to add a molecule with passed charge and LJ
@@ -227,40 +220,35 @@ const Molecule& Tip4PFF::molecule(MoleculeID molid) const
 void Tip4PFF::add(const Molecule &mol, const ChargeTable &charges,
                   const LJTable &ljs)
 {
-    charges.assertCompatibleWith(mol);
-    ljs.assertCompatibleWith(mol);
-
-    //extract arrays of the CLJ parameters
-    QVector< QVector<CLJParameter> > cljparams;
-
-    QVector< ParameterGroup<ChargeParameter> > chargeparams = charges.parameterGroups();
-    QVector< ParameterGroup<LJParameter> > ljparams = ljs.parameterGroups();
-
-    int ncg = chargeparams.count();
-
-    cljparams.reserve(ncg);
-
-    for (int i=0; i<ncg; ++i)
+    if (cljparams.isEmpty())
     {
-        QVector<CLJParameter> cljs;
+        charges.assertCompatibleWith(mol);
+        ljs.assertCompatibleWith(mol);
 
-        int nparams = chargeparams[i].parameters().count();
+        QVector< ParameterGroup<ChargeParameter> > chargeparams = charges.parameterGroups();
+        QVector< ParameterGroup<LJParameter> > ljparams = ljs.parameterGroups();
 
-        const ChargeParameter *chargearray = chargeparams[i].parameters().constData();
-        const LJParameter *ljarray = ljparams[i].parameters().constData();
+        int ncg = chargeparams.count();
+        
+        BOOST_ASSERT(ncg == 1);
 
-        cljs.reserve(nparams);
+        int nparams = chargeparams[0].parameters().count();
+        
+        BOOST_ASSERT(nparams == 4);
+
+        const ChargeParameter *chargearray = chargeparams[0].parameters().constData();
+        const LJParameter *ljarray = ljparams[0].parameters().constData();
+
+        cljparams.reserve(nparams);
 
         for (int j=0; j<nparams; ++j)
         {
-            cljs.append( CLJParameter(chargearray[j],ljarray[j]) );
+            cljparams.append( CLJParameter(chargearray[j],ljarray[j]) );
         }
-
-        cljparams.append(cljs);
     }
 
     //add this molecule to the list
-    mols.append( MolCLJInfo(mol, cljparams) );
+    mols.append( mol.coordGroups()[0] );
 }
 
 /** Move the molecule 'molecule' */

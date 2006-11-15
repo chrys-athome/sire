@@ -89,8 +89,10 @@ protected:
     void recalculateEnergy();
 
     /** Information about every molecule contained in this forcefield */
-    QVector<detail::MolCLJInfo> mols;
+    QVector<CoordGroup> mols;
 
+    /** The CLJ parameters for Tip4P */
+    QVector<CLJParameter> cljparams;
 };
 
 }
