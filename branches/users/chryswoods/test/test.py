@@ -21,8 +21,8 @@ print "... took %d ms" % ms
 #specify the space in which the molecules are placed
 space = Cartesian()
 
-space = PeriodicBox(Vector(-18.3854,-18.66855,-18.4445), \
-                    Vector( 18.3854, 18.66855, 18.4445))
+#space = PeriodicBox(Vector(-18.3854,-18.66855,-18.4445), \
+#                    Vector( 18.3854, 18.66855, 18.4445))
 
 #specify the type of combining rules to use
 combrules = ArithmeticCombiningRules()
@@ -33,11 +33,11 @@ switchfunc = HarmonicSwitchingFunction(80.0)
 switchfunc = HarmonicSwitchingFunction(15.0, 14.5)
 
 #create a forcefield for the molecules
-#cljff = InterCLJFF( Space(space), \
-#                    CombiningRules(combrules), \
-#                    SwitchingFunction(switchfunc) )
+cljff = InterCLJFF( Space(space), \
+                    CombiningRules(combrules), \
+                    SwitchingFunction(switchfunc) )
 
-cljff = Tip4PFF( Space(space), SwitchingFunction(switchfunc) )
+cljff2 = Tip4PFF( Space(space), SwitchingFunction(switchfunc) )
 
 #parametise each molecule and add it to the forcefield
 print "Parametising the molecules..."
@@ -63,6 +63,7 @@ for mol in mols:
       ljs.setParameter( AtomIndex("M03",resnum), LJParameter.dummy() )
       
       cljff.add(mol, chgs, ljs)
+      cljff2.add(mol, chgs, ljs)
 
 ms = timer.elapsed()
 print "... took %d ms" % ms
@@ -74,6 +75,16 @@ timer.start()
 nrg = cljff.energy()
 ms = timer.elapsed()
 
-print cljff.energy(), "kcal mol-1"
+print "InterCLJFF ",cljff.energy(), "kcal mol-1"
 
-print "... to %d ms" % ms
+print "... took %d ms" % ms
+
+print "Calculating the energy..."
+
+timer.start()
+nrg = cljff2.energy()
+ms = timer.elapsed()
+
+print "Tip4PFF ",cljff2.energy(), "kcal mol-1"
+
+print "... took %d ms" % ms

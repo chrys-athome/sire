@@ -1,0 +1,40 @@
+
+TIP4PFF
+
+Cumalative changes...
+
+Same as InterCLJFF Speed == 5171ms
+
+Copy CLJFF functions into Tip4PFF  Speed = 5333 ms
+
+Explicitly calculate CLJPairMatrix Speed = 5307 ms
+
+Only get CLJ for one molecule Speed = 5027
+
+Use double nrg return for accumalating energies  Speed = 5121 ms
+
+Use only a single scale factor  Speed = 5207 ms
+
+Skip mol with mol (just do cutgroup with cutgroup)  Speed = 4973
+
+Fully skipping mol with mol  Speed = 4915
+
+Using .constData()[i]  Speed = 4876
+
+Inline energy calculation  Speed = 4958
+
+Hard-coded cutoff distance  Speed = 4866
+
+Hard-coded switching function  Speed = 4831
+
+Switching over to Cartesian Space. Compare InterCLJFF with Tip4PFF
+and recording the difference in time;
+
+Benchmark:  2681 vs. 2405,  Tip4PFF is 276 ms faster
+
+Moving array access for mol0 outside inner loop:
+            2701 vs. 2355, Tip4PFF is 346 ms faster
+            
+Not calling workspace and switchingFunction() in the loop
+            2830 vs. 2452, Tip4PFF is 378 ms faster
+

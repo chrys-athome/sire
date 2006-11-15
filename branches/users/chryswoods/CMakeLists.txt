@@ -35,6 +35,7 @@ set (SIRE_LIBS "lib")
 set (SIRE_ARCHIVES "lib/static")
 
 # Uncomment for more verbose compiling/linking
+# (or run 'make VERBOSE=1')
 # set (CMAKE_VERBOSE_MAKEFILE ON)
 
 # Path to the project's extra cmake files
@@ -147,11 +148,26 @@ include_directories( ${QT_INCLUDE_DIR}
 
 add_definitions( ${QT_DEFINITIONS} )
 
+# Set compile flags for debug and release
+set( SIRE_C_FLAGS_RELEASE "-Wall -O2" )
+set( SIRE_CXX_FLAGS_RELEASE ${SIRE_C_FLAGS_RELEASE} )
+
+set( SIRE_C_FLAGS_DEBUG "-Wall -g -O2" )
+set( SIRE_CXX_FLAGS_DEBUG ${SIRE_C_FLAGS_DEBUG} )
+
+# Copy the Sire compile flags to CMake
+set( CMAKE_C_FLAGS ${SIRE_C_FLAGS_RELEASE} )
+set( CMAKE_CXX_FLAGS ${SIRE_CXX_FLAGS_RELEASE} )
+
 # Ensure that the libraries don't contain any undefined symbols
 set( SIRE_LINK_FLAGS "-Wl,--no-undefined" )
 
 # Add this to all shared libraries
 set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${SIRE_LINK_FLAGS}" )
+
+message( STATUS "Using C compiler == ${CMAKE_C_COMPILER} "
+                "and C++ compiler == ${CMAKE_CXX_COMPILER}" )
+message( STATUS "Using CFLAGS == ${CMAKE_C_FLAGS} and CXXFLAGS == ${CMAKE_CXX_FLAGS}" )
 
 # Recurse into the src/libs and src/apps subdirectories
 add_subdirectory (src/libs)
