@@ -38,3 +38,6 @@ Moving array access for mol0 outside inner loop:
 Not calling workspace and switchingFunction() in the loop
             2830 vs. 2452, Tip4PFF is 378 ms faster
 
+Compiling with -O2 rather than without any optimisation (woops!)
+             809 vs. 643, Tip4PFF is 163 ms faster
+
