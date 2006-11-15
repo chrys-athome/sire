@@ -331,6 +331,14 @@ CLJFF::CLJFF() : FFBase()
     this->registerComponents();
 }
 
+/** Construct a CLJFF using the specified space and switching function */
+CLJFF::CLJFF(const Space &space, const SwitchingFunction &switchingfunction)
+      : FFBase(),
+        spce(space), switchfunc(switchingfunction)
+{
+    this->registerComponents();
+}
+
 /** Construct a CLJFF using the specified space, combining rules and
     switching function */
 CLJFF::CLJFF(const Space &space, const CombiningRules &combiningrules,

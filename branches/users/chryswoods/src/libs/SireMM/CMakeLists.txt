@@ -46,6 +46,7 @@ set ( SIREMM_SOURCES
       resbondinfo.cpp
       resdihedralinfo.cpp
       switchingfunction.cpp
+      tip4pff.cpp
       ureybradleydb.cpp
 
       detail/molcljinfo.cpp

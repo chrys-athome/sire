@@ -29,6 +29,7 @@ InterCLJFF::InterCLJFF(const Space &space, const CombiningRules &combrules,
 
 /** Copy constructor */
 InterCLJFF::InterCLJFF(const InterCLJFF &other)
+           : CLJFF(other), mols(other.mols)
 {}
 
 /** Destructor */

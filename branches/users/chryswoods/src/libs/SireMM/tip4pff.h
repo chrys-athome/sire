@@ -1,0 +1,99 @@
+#ifndef SIREMM_TIP4P_H
+#define SIREMM_TIP4P_H
+
+#include "cljff.h"
+
+namespace SireMM
+{
+class Tip4PFF;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMM::Tip4PFF&);
+QDataStream& operator>>(QDataStream&, SireMM::Tip4PFF&);
+
+namespace SireMM
+{
+
+class ChargeTable;
+class LJTable;
+
+using SireMol::Molecule;
+using SireMol::Residue;
+using SireMol::MoleculeID;
+
+using SireFF::ChangedMols;
+using SireFF::MovedMols;
+
+using SireDB::ParameterTable;
+
+/** A Tip4PFF is a forcefield that calculates the intermolecular coulomb and
+    Lennard Jones energies of all contained TIP4P water molecules. An Tip4PFF is perhaps
+    the most expensive type of MM forcefield, as it must calculate the full
+    pair-pair interactions between all pairs of molecules in the forcefield
+    that are within the cutoff distance.
+
+    \author Christopher Woods
+*/
+class Tip4PFF : public CLJFF
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const Tip4PFF&);
+friend QDataStream& ::operator>>(QDataStream&, Tip4PFF&);
+
+public:
+    Tip4PFF();
+
+    Tip4PFF(const Space &space, const SwitchingFunction &switchfunc);
+
+    Tip4PFF(const Tip4PFF &other);
+
+    ~Tip4PFF();
+
+    static const char* typeName()
+    {
+        return "SireMM::Tip4PFF";
+    }
+
+    const char* what() const
+    {
+        return Tip4PFF::typeName();
+    }
+
+    Tip4PFF* clone() const
+    {
+        return new Tip4PFF(*this);
+    }
+
+    const Molecule& molecule(MoleculeID molid) const;
+
+    void move(const Molecule &molecule);
+    void move(const Residue &residue);
+    void move(const MovedMols &movedmols);
+
+    void change(const Molecule &molecule, const ParameterTable &params);
+    void change(const Residue &residue, const ParameterTable &params);
+    void change(const ChangedMols &changedmols);
+
+    void add(const Molecule &molecule, const ParameterTable &params,
+             int groupid);
+    void add(const Residue &residue, const ParameterTable &params,
+             int groupid);
+
+    void add(const Molecule &molecule,
+             const ChargeTable &charges, const LJTable &ljs);
+
+    void remove(const Molecule &molecule);
+    void remove(const Residue &residue);
+
+protected:
+    void recalculateEnergy();
+
+    /** Information about every molecule contained in this forcefield */
+    QVector<detail::MolCLJInfo> mols;
+
+};
+
+}
+
+
+#endif

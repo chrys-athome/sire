@@ -82,10 +82,12 @@ friend QDataStream& ::operator>>(QDataStream&, CLJFF&);
 
 public:
     CLJFF();
-    
+
     CLJFF(const Space &space, const CombiningRules &combiningrules,
           const SwitchingFunction &switchingfunction);
-    
+
+    CLJFF(const Space &space, const SwitchingFunction &switchingfunction);
+
     CLJFF(const CLJFF &other);
 
     ~CLJFF();
@@ -93,19 +95,19 @@ public:
     const Space& space() const;
 
     const CombiningRules& combiningRules() const;
-    
+
     const SwitchingFunction& switchingFunction() const;
 
     static int COULOMB()
     {
         return 1;
     }
-    
+
     static int LJ()
     {
         return 2;
     }
-    
+
     const Function& coulomb() const;
     const Function& lj() const;
 
@@ -152,8 +154,8 @@ private:
 
     /** The space in which the calculation will be performed */
     Space spce;
-    
-    /** The combining rules used to get the parameters of 
+
+    /** The combining rules used to get the parameters of
         mixed pairs of atoms */
     CombiningRules combrules;
 

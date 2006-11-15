@@ -22,6 +22,7 @@ set ( WRAPMM_SOURCES
       combiningrules.py.cpp
       intercljff.py.cpp
       switchingfunction.py.cpp
+      tip4pff.py.cpp
 
       wrap_anglegenerator.cpp    
       wrap_angletable.cpp        
