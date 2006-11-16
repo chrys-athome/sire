@@ -33,11 +33,11 @@ QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds, SpaceBase&)
 }
 
 /** Construct a SpaceBase. */
-SpaceBase::SpaceBase()
+SpaceBase::SpaceBase() : QSharedData()
 {}
 
 /** Copy constructor */
-SpaceBase::SpaceBase(const SpaceBase&)
+SpaceBase::SpaceBase(const SpaceBase&) : QSharedData()
 {}
 
 /** Destructor */
@@ -73,7 +73,7 @@ QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds, Space &space)
     return ds;
 }
 
-static DynamicSharedPtr<SpaceBase> shared_null( new Cartesian() );
+static SharedPolyPointer<SpaceBase> shared_null( new Cartesian() );
 
 /** Null constructor - this is a infinite Cartesian volume */
 Space::Space() : d( shared_null )

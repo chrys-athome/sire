@@ -341,13 +341,6 @@ inline double Vector::invDistance(const Vector &v1, const Vector &v2)
                   pow_2(v1.sc[1]-v2.sc[1]) +
                   pow_2(v1.sc[2]-v2.sc[2]);
 
-    if (SireMaths::isZero(dist))
-    {
-        QString err = QObject::tr("Zero distance in Vector::invDistance! %1 and %2")
-                          .arg(v1.toString(),v2.toString());
-        throw SireMaths::math_error(err,CODELOC);
-    }
-
     return double(1.0) / std::sqrt(dist);
 }
 

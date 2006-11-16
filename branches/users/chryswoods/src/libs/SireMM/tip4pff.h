@@ -3,6 +3,8 @@
 
 #include "cljff.h"
 
+#include "SireVol/aabox.h"
+
 namespace SireMM
 {
 class Tip4PFF;
@@ -20,6 +22,10 @@ class LJTable;
 using SireMol::Molecule;
 using SireMol::Residue;
 using SireMol::MoleculeID;
+
+using SireVol::AABox;
+
+using SireMaths::Vector;
 
 using SireFF::ChangedMols;
 using SireFF::MovedMols;
@@ -88,8 +94,16 @@ public:
 protected:
     void recalculateEnergy();
 
+    static double calculateEnergy(const Vector *array0, int nats0,
+                                  const Vector *array1, int nats1,
+                                  const CLJParameter *cljarray,
+                                  const Space &space);
+
     /** Information about every molecule contained in this forcefield */
-    QVector<CoordGroup> mols;
+    QVector< QVector<Vector> > mols;
+
+    /** Vector of all of the AABoxes */
+    QVector<AABox> aaboxes;
 
     /** The CLJ parameters for Tip4P */
     QVector<CLJParameter> cljparams;

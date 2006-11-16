@@ -16,6 +16,7 @@
 using namespace SireMM;
 using namespace SireMM::detail;
 
+using namespace SireVol;
 using namespace SireDB;
 
 /** Constructor */
@@ -37,132 +38,59 @@ Tip4PFF::Tip4PFF(const Tip4PFF &other)
 Tip4PFF::~Tip4PFF()
 {}
 
-/** This function is used to calculate the charge and LJ energy
-    of two groups based on the inter-atomic inverse-square-distances stored in 'distmatrix'
-    and using the combined CLJ parameters listed in 'cljmatrix', in the
-    passed workspace. The total coulomb and LJ energies are returned in
-    the workspace. */
-double calculatePairEnergy(CLJWorkspace &workspace)
+/** Calculate the CLJ energy of interaction of group0, with CLJ parameters
+    in 'clj0' and group1, with CLJ parameters in 'clj1', using the
+    space 'space', and using the provided workspace. The total
+    coulomb and LJ energies are returned in the workspace. */
+double Tip4PFF::calculateEnergy(const Vector *array0, int nats0,
+                                const Vector *array1, int nats1,
+                                const CLJParameter *cljarray,
+                                const Space &space)
 {
-    DistMatrix &distmatrix = workspace.distmatrix;
-    CLJPairMatrix &cljmatrix = workspace.cljmatrix;
+    double maxinvdist2(0);
+    double tmpdist;
 
-    int nats0 = distmatrix.nOuter();
-    int nats1 = distmatrix.nInner();
-
-    double nrg = 0;
+    double inrg = 0;
 
     //loop over all pairs of atoms
     for (int i=0; i<nats0; ++i)
     {
-        distmatrix.setOuterIndex(i);
-        cljmatrix.setOuterIndex(i);
+        const Vector &v0 = array0[i];
+
+        const CLJParameter &cljparam0 = cljarray[i];
 
         for (int j=0; j<nats1; ++j)
         {
-            //get the distance and CLJPair for this atom pair
-            double invdist2 = distmatrix[j];
-            const CLJPair &cljpair = cljmatrix[j];
+            const Vector &v1 = array1[j];
+
+            CLJPair cljpair = CLJPair::arithmetic(cljparam0,cljarray[j]);
+
+            double invdist2 = Vector::invDistance2(v0,v1);
+
+            maxinvdist2 = qMax(maxinvdist2, invdist2);
 
             double sig2_over_dist2 = SireMaths::pow_2(cljpair.sigma()) * invdist2;
             double sig6_over_dist6 = SireMaths::pow_3(sig2_over_dist2);
             double sig12_over_dist12 = SireMaths::pow_2(sig6_over_dist6);
 
-            //coulomb energy
-            nrg += SireUnits::one_over_four_pi_eps0 *
-                                     cljpair.charge2() * std::sqrt(invdist2);
+             //coulomb energy
+             inrg += SireUnits::one_over_four_pi_eps0 *
+                                    cljpair.charge2() * std::sqrt(invdist2);
 
-            //LJ energy
-            nrg += 4 * cljpair.epsilon() *
-                                     ( sig12_over_dist12 - sig6_over_dist6 );
+             //LJ energy
+             inrg += 4 * cljpair.epsilon() *
+                                    ( sig12_over_dist12 - sig6_over_dist6 );
         }
     }
 
-    return nrg;
-}
+    double mindist = sqrt( 1.0 / maxinvdist2 );
 
-/** Calculate the CLJ energy of interaction of group0, with CLJ parameters
-    in 'clj0' and group1, with CLJ parameters in 'clj1', using the
-    space 'space', and using the provided workspace. The total
-    coulomb and LJ energies are returned in the workspace. */
-double calculateEnergy(const CoordGroup &group0,
-                       const CoordGroup &group1,
-                       const QVector<CLJParameter> &clj0,
-                       const Space &space,
-                       const SwitchingFunction &switchfunc,
-                       CLJWorkspace &workspace)
-{
-    double nrg = 0;
-
-    DistMatrix &distmatrix = workspace.distmatrix;
-
-    double mindist = space.calcInvDist2(group0, group1, distmatrix);
-
-    double scl = 0;
-
-    if (mindist <= 14.5)
-        scl = 1;
+    if (mindist < 14.5)
+        return inrg;
     else if (mindist < 15.0)
-        scl = (225.0 - mindist*mindist) * 0.0677966101;
-
-    if (scl != 0)
-    {
-        double inrg = 0;
-
-        //get combined parameters directly...
-        workspace.cljmatrix.redimension(4,4);
-
-            for (int i=0; i<4; ++i)
-            {
-                workspace.cljmatrix.setOuterIndex(i);
-
-                const CLJParameter *cljarray = clj0.constData();
-
-                const CLJParameter &cljparam0 = cljarray[i];
-
-                for (int j=0; j<4; ++j)
-                {
-                    const CLJParameter &cljparam1 = cljarray[j];
-
-                    workspace.cljmatrix[j] = CLJPair::arithmetic(cljparam0,cljparam1);
-                }
-            }
-
-            CLJPairMatrix &cljmatrix = workspace.cljmatrix;
-
-            int nats0 = distmatrix.nOuter();
-            int nats1 = distmatrix.nInner();
-
-            //loop over all pairs of atoms
-            for (int i=0; i<nats0; ++i)
-            {
-                distmatrix.setOuterIndex(i);
-                cljmatrix.setOuterIndex(i);
-
-                for (int j=0; j<nats1; ++j)
-                {
-                    //get the distance and CLJPair for this atom pair
-                    double invdist2 = distmatrix[j];
-                    const CLJPair &cljpair = cljmatrix[j];
-
-                    double sig2_over_dist2 = SireMaths::pow_2(cljpair.sigma()) * invdist2;
-                    double sig6_over_dist6 = SireMaths::pow_3(sig2_over_dist2);
-                    double sig12_over_dist12 = SireMaths::pow_2(sig6_over_dist6);
-
-                    //coulomb energy
-                    inrg += SireUnits::one_over_four_pi_eps0 *
-                                           cljpair.charge2() * std::sqrt(invdist2);
-
-                    //LJ energy
-                    inrg += 4 * cljpair.epsilon() *
-                                           ( sig12_over_dist12 - sig6_over_dist6 );
-                }
-            }
-
-            nrg += scl * inrg;
-        }
-
-    return nrg;
+        return inrg * (225.0 - mindist*mindist) * 0.0677966101;
+    else
+        return 0;
 }
 
 /** Recalculate the total energy of this forcefield from scratch */
@@ -170,30 +98,37 @@ void Tip4PFF::recalculateEnergy()
 {
     int nmols = mols.count();
 
-    const CoordGroup *molarray = mols.constData();
+    const QVector<Vector> *molarray = mols.constData();
+    const AABox *boxarray = aaboxes.constData();
+
+    const CLJParameter *cljarray = cljparams.constData();
 
     double nrg = 0;
 
     const Space &myspace = space();
-    const SwitchingFunction &switchfunc = switchingFunction();
-    CLJWorkspace &wspace = workspace();
+
+    int nats = 4;
 
     //loop over all molecule pairs
     for (int i=0; i<nmols-1; ++i)
     {
-        const CoordGroup &group0 = molarray[i];
+        const Vector *array0 = molarray[i].constData();
+
+        const AABox &box0 = boxarray[i];
 
         for (int j=i+1; j<nmols; ++j)
         {
-            const CoordGroup &group1 = molarray[j];
-            
-            if (not myspace.beyond(15.0, group0, group1))
+            const AABox &box1 = boxarray[j];
+
+            if (not ( Vector::distance2(box0.center(),box1.center()) >
+                      SireMaths::pow_2(15.0 + box0.radius() + box1.radius())) )
             {
-                nrg += ::calculateEnergy( group0,
-                                          group1,
-                                          cljparams,
-                                          myspace,
-                                          switchfunc, wspace );
+                const Vector *array1 = molarray[j].constData();
+
+                nrg += Tip4PFF::calculateEnergy( array0, nats,
+                                                 array1, nats,
+                                                 cljarray,
+                                                 myspace);
             }
         }
     }
@@ -229,11 +164,11 @@ void Tip4PFF::add(const Molecule &mol, const ChargeTable &charges,
         QVector< ParameterGroup<LJParameter> > ljparams = ljs.parameterGroups();
 
         int ncg = chargeparams.count();
-        
+
         BOOST_ASSERT(ncg == 1);
 
         int nparams = chargeparams[0].parameters().count();
-        
+
         BOOST_ASSERT(nparams == 4);
 
         const ChargeParameter *chargearray = chargeparams[0].parameters().constData();
@@ -248,7 +183,20 @@ void Tip4PFF::add(const Molecule &mol, const ChargeTable &charges,
     }
 
     //add this molecule to the list
-    mols.append( mol.coordGroups()[0] );
+    CoordGroup cgroup = mol.coordGroups()[0];
+
+    int nats = cgroup.count();
+
+    QVector<Vector> coords;
+    coords.reserve(nats);
+
+    const Vector *array = cgroup.constData();
+
+    for (int i=0; i<nats; ++i)
+        coords.append( array[i] );
+
+    mols.append( coords );
+    aaboxes.append( cgroup.aaBox() );
 }
 
 /** Move the molecule 'molecule' */

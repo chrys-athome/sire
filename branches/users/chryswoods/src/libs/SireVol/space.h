@@ -2,7 +2,7 @@
 #define SIREVOL_SPACE_H
 
 #include "SireBase/pairmatrix.hpp"
-#include "SireBase/dynamicsharedptr.hpp"
+#include "SireBase/sharedpolypointer.hpp"
 
 #include "SireMaths/vector.h"
 
@@ -68,7 +68,7 @@ This is a virtual class that is designed to be used with DynamicSharedPtr.
 
 @author Christopher Woods
 */
-class SIREVOL_EXPORT SpaceBase
+class SIREVOL_EXPORT SpaceBase : public QSharedData
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const SpaceBase&);
@@ -226,7 +226,7 @@ public:
 private:
     /** Dynamic shared pointer to the virtual SpaceBase class
         that is used to perform the distance calculations. */
-    SireBase::DynamicSharedPtr<SpaceBase> d;
+    SireBase::SharedPolyPointer<SpaceBase> d;
 };
 
 /** Populate the matrix 'mat' with the distances between all of the

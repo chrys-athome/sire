@@ -217,7 +217,16 @@ void CLJFF::calculateEnergy(const MolCLJInfo &mol0,
     int ncg0 = mol0.coordinates().count();
     int ncg1 = mol1.coordinates().count();
 
-    if (ncg0 > 0 and ncg1 > 0)
+    if (ncg0 == 1 and ncg1 == 1)
+    {
+        calculateEnergy( mol0.coordinates().constData()[0],
+                         mol0.parameters().constData()[0],
+                         mol1.coordinates().constData()[0],
+                         mol1.parameters().constData()[0],
+
+                         space, combrules, switchfunc, workspace );
+    }
+    else if (ncg0 > 0 and ncg1 > 0)
     {
         double icnrg = 0;
         double iljnrg = 0;

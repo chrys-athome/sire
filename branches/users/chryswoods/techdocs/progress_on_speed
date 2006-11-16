@@ -58,4 +58,87 @@ Changing CoordGroup to have inline access to coordinate pointer (by exposing Coo
 
 There is still quite a lot of work still to do...
 
+Working back on my work computer again...
+
+Optimising placement of conditions...
+            838 vs. 594, Tip4PFF is 244 ms faster
+
+Optimising placement of feather factor
+            752 vs. 718, Tip4PFF is 34 ms faster
+
+Using SharedPolyPointer
+            746 vs. 709, Tip4PFF is 37 ms faster
+
+Making energy function into a static member function of Tip4PFF
+            749 vs. 653, Tip4PFF is 96 ms faster
+
+Dropping the switching function from Tip4PFF (as it is now all explicit)
+            772 vs. 562, Tip4PFF is 210 ms faster
+
+Cleaning up referencing of CLJPairMatrix
+            782 vs. 564, Tip4PFF is 218 ms faster
+
+Giving a pointer to Coordinate array in CoordGroupBase
+            725 vs. 626, Tip4PFF is 99 ms faster
+
+Giving an AABox directly to the CoordGroupBase
+            727 vs. 625, Tip4PFF is 102 ms faster
+
+Performing AABox test directly
+            772 vs. 582, Tip4PFF is 190 ms faster
+
+Copying AABoxes into their own Vector (so contiguous in memory)
+            718 vs. 513, Tip4PFF is 205 ms faster
+
+Performing all distance calculations explicitly
+            732 vs. 504, Tip4PFF is 228 ms faster
+
+Performing calculation using local copy of coordinates in a QVector
+            732 vs. 510, Tip4PFF is 222 ms faster
+
+No redimension of distmat and cljmat
+            734 vs. 485, Tip4PFF is 249 ms faster
+
+Redimension pairmatrix all of the time
+            776 vs. 541, Tip4PFF is 235 ms faster
+
+Calculate distances explicitly
+            782 vs. 502, Tip4PFF is 280 ms faster
+
+Getting rid of extraneous energy
+            782 vs. 503, Tip4PFF is 279 ms faster
+
+Calculating CLJ parameters in main pair loop
+            710 vs. 431, Tip4PFF is 279 ms faster
+
+Removed now unnecessary workspace
+            783 vs. 540, Tip4PFF is 243 ms faster
+
+Passing direct pointers to the coordinates and clj parameters
+            713 vs. 516, Tip4PFF is 197 ms faster
+
+Reverted CoordGroup back to its original state
+            734 vs. 434, Tip4PFF is 300 ms faster
+
+Added single-cutgroup block to CLJFF
+            783 vs. 515, Tip4PFF is 268 ms faster
+
+Reverted PairMatrix
+            715 vs. 517, Tip4PFF is 198 ms faster
+
+Skipping multi-cutgroup for single cutgroup
+            672 vs. 433, Tip4PFF is 239 ms faster
+
+Moving sphere cut test further up the call chain in InterCLJFF
+            682 vs. 433, Tip4PFF is 249 ms faster
+
+Reverted CLJFF and InterCLJFF
+            737 vs. 434, Tip4PFF is 303 ms faster
+
+Adding a single cutgroup block to CLJFF thus appears to be sensible
+            697 vs. 432, Tip4PFF is 265 ms faster
+            (so adding single CutGroup block has knocked ~40ms off the time)
+
+Switching both CombiningRules and SwitchingFunction over to use SharedPolyPointer
+            684 vs. 434, Tip4PFF is 250 ms faster
 

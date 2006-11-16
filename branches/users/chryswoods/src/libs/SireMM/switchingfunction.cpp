@@ -58,17 +58,17 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, SwitchFuncBase &switchbas
 
 /** Null constructor - this places the cutoff distance at
     the maximum value of a double (e.g. on cutoff) */
-SwitchFuncBase::SwitchFuncBase() : cutdist( std::numeric_limits<double>::max() )
+SwitchFuncBase::SwitchFuncBase() : QSharedData(), cutdist( std::numeric_limits<double>::max() )
 {}
 
 /** Construct, placing the ultimate cutoff distance at 'cutdistance' */
 SwitchFuncBase::SwitchFuncBase(double cutdistance)
-               : cutdist( std::abs(cutdistance) )
+               : QSharedData(), cutdist( std::abs(cutdistance) )
 {}
 
 /** Copy constructor */
 SwitchFuncBase::SwitchFuncBase(const SwitchFuncBase &other)
-               : cutdist(other.cutdist)
+               : QSharedData(), cutdist(other.cutdist)
 {}
 
 /** Destructor */
@@ -354,7 +354,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
     return ds;
 }
 
-static const DynamicSharedPtr<SwitchFuncBase> shared_null(new NoCutoff());
+static const SharedPolyPointer<SwitchFuncBase> shared_null(new NoCutoff());
 
 /** Constructor - default is NoCutoff */
 SwitchingFunction::SwitchingFunction() : d(shared_null)

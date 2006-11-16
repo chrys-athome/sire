@@ -11,6 +11,8 @@
 
 #include "SireStream/datastream.h"
 
+#include <QTime>
+
 using namespace SireFF;
 using namespace SireFF::detail;
 using namespace SireCAS;
@@ -27,9 +29,9 @@ static const RegisterMetaType<ComponentInfo> r_compinfo("SireFF::detail::Compone
 /** Serialise to a binary data stream */
 QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const ComponentInfo &compinfo)
 {
-    writeHeader(ds, r_compinfo, 1) << compinfo.nme << compinfo.desc 
+    writeHeader(ds, r_compinfo, 1) << compinfo.nme << compinfo.desc
                                    << compinfo.func;
-    
+
     return ds;
 }
 
@@ -37,14 +39,14 @@ QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const ComponentInfo &comp
 QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, ComponentInfo &compinfo)
 {
     VersionID v = readHeader(ds, r_compinfo);
-    
+
     if (v == 1)
     {
         ds >> compinfo.nme >> compinfo.desc >> compinfo.func;
     }
     else
         throw version_error(v, "1", r_compinfo, CODELOC);
-    
+
     return ds;
 }
 
@@ -52,7 +54,7 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, ComponentInfo &compinfo)
 ComponentInfo::ComponentInfo()
 {}
 
-/** Construct a component with root 'root', name 'name' and description 
+/** Construct a component with root 'root', name 'name' and description
     'description'. The function will have the form: E_{root}_{name}(x,y,z) */
 ComponentInfo::ComponentInfo(const QString &root, const QString &name,
                              const QString &description)
@@ -87,12 +89,12 @@ static const RegisterMetaType<FFBase> r_ffbase("SireFF::FFBase", MAGIC_ONLY);
 /** Serialise to a binary data stream */
 QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const FFBase &ffbase)
 {
-    writeHeader(ds, r_ffbase, 1) 
+    writeHeader(ds, r_ffbase, 1)
           << ffbase.ffname << ffbase.id_to_component
           << ffbase.nrg_components
           << ffbase.mols_in_ff // << ffbase.res_in_ff
           << ffbase.isdirty;
-    
+
     return ds;
 }
 
@@ -100,7 +102,7 @@ QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const FFBase &ffbase)
 QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, FFBase &ffbase)
 {
     VersionID v = readHeader(ds, r_ffbase);
-    
+
     if (v == 1)
     {
         ds >> ffbase.ffname >> ffbase.id_to_component
@@ -110,7 +112,7 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, FFBase &ffbase)
     }
     else
         throw version_error(v, "1", r_ffbase, CODELOC);
-    
+
     return ds;
 }
 
@@ -130,7 +132,7 @@ FFBase::FFBase(const QString &name)
 /** Copy constructor */
 FFBase::FFBase(const FFBase &other)
        : ffname(other.ffname), id_to_component(other.id_to_component),
-         nrg_components(other.nrg_components), 
+         nrg_components(other.nrg_components),
          mols_in_ff(other.mols_in_ff), //res_in_ff(other.res_in_ff),
          isdirty(other.isdirty)
 {}
@@ -138,14 +140,14 @@ FFBase::FFBase(const FFBase &other)
 /** Destructor */
 FFBase::~FFBase()
 {}
-    
+
 /** Return whether or not the forcefield is dirty (the energy
     needs to be recalculated) */
 bool FFBase::isDirty() const
 {
     return isdirty;
 }
-    
+
 /** Label the forcefield as dirty (in need of an energy recalculation) */
 void FFBase::setDirty()
 {
@@ -163,11 +165,11 @@ void FFBase::registerComponents()
 {
     //register the function representing the total energy
     //of this forcefield
-    this->registerComponent( FFBase::TOTAL(), "", 
+    this->registerComponent( FFBase::TOTAL(), "",
                              QObject::tr("The total energy of the forcefield.") );
 }
 
-/** Return the name of this forcefield - this is used as the root of all of 
+/** Return the name of this forcefield - this is used as the root of all of
     the components of the forcefield, e.g. if the name was "Ligand CLJ", then
     the "coul" component would have the function: E_{Ligand CLJ}_{coul}(x,y,z) */
 const QString& FFBase::name() const
@@ -178,14 +180,14 @@ const QString& FFBase::name() const
 /** Return the function represented by the component with ID 'componentid' */
 const Function& FFBase::component(int componentid) const
 {
-    const QHash<int,detail::ComponentInfo>::const_iterator it 
+    const QHash<int,detail::ComponentInfo>::const_iterator it
                                       = id_to_component.find(componentid);
 
     if (it == id_to_component.end())
         throw SireFF::missing_component( QObject::tr(
                 "The forcefield \"%1\" does not contain a component with "
                 "ID == %2").arg(name()).arg(componentid), CODELOC );
-                
+
     return it.value().function();
 }
 
@@ -193,30 +195,30 @@ const Function& FFBase::component(int componentid) const
 QList<Function> FFBase::components() const
 {
     QList<Function> funcs;
-    
+
     for (QHash<int,detail::ComponentInfo>::const_iterator it = id_to_component.begin();
          it != id_to_component.end();
          ++it)
     {
         funcs.append( it->function() );
     }
-    
+
     return funcs;
 }
 
-/** Return a string representation of all of the components in this 
+/** Return a string representation of all of the components in this
     forcefield */
 QString toString(const QList<Function> &components)
 {
     QStringList compstrings;
-    
+
     for (QList<Function>::const_iterator it = components.begin();
          it != components.end();
          ++it)
     {
         compstrings.append( it->toString() );
     }
-    
+
     return compstrings.join(", ");
 }
 
@@ -232,21 +234,24 @@ void FFBase::assertContains(const Function &component) const
               "by the function \"%2\" (available components = %3)")
                   .arg(name()).arg(component.toString())
                   .arg(toString(components())), CODELOC );
-        
+
 }
 
 /** Return the energy of the component represented by the function
-    'component' 
-    
+    'component'
+
     \throw SireFF::missing_component
 */
 double FFBase::energy(const Function &component)
 {
     this->assertContains(component);
-    
+
     if (isDirty())
+    {
         this->recalculateEnergy();
-        
+        this->setClean();
+    }
+
     return nrg_components.value(component);
 }
 
@@ -256,7 +261,7 @@ const Function& FFBase::total() const
     return component(FFBase::TOTAL());
 }
 
-/** Return the total energy of this forcefield. This will return the cached 
+/** Return the total energy of this forcefield. This will return the cached
     value if nothing has changed, or will recalculate if something has changed. */
 double FFBase::energy()
 {
@@ -267,8 +272,11 @@ double FFBase::energy()
 Values FFBase::energies()
 {
     if (isDirty())
+    {
         this->recalculateEnergy();
-        
+        this->setClean();
+    }
+
     return nrg_components;
 }
 
@@ -305,7 +313,7 @@ void FFBase::assertContains(const Residue &residue) const
 
 /** Assert that the molecule stored in this forcefield has the same major
     version as 'mol'
-    
+
     \throw SireMol::missing_molecule
     \throw SireStream::version_error
 */
@@ -323,7 +331,7 @@ void FFBase::assertSameMajorVersion(const Molecule &mol) const
 
 /** Assert that the residue stored in this forcefield has the same major
     version as 'res'
-    
+
     \throw SireMol::missing_residue
     \throw SireStream::version_error
 */
@@ -334,7 +342,7 @@ void FFBase::assertSameMajorVersion(const Residue &residue) const
 
 /** Assert that the molecule stored in this forcefield has the same version
     as 'mol'
-    
+
     \throw SireMol::missing_molecule
     \throw SireStream::version_error
 */
@@ -352,7 +360,7 @@ void FFBase::assertSameVersion(const Molecule &mol) const
 
 /** Assert that the residue stored in this forcefield has the same
     version as 'res'
-    
+
     \throw SireMol::missing_residue
     \throw SireStream::version_error
 */
@@ -365,7 +373,7 @@ void FFBase::assertSameVersion(const Residue &res) const
     and with description 'description'. It is a program bug to try
     to register a component with the same name or ID as an existing
     component.
-    
+
     \throw SireError::program_bug
 */
 void FFBase::registerComponent(int id, const QString &compname,
@@ -381,7 +389,7 @@ void FFBase::registerComponent(int id, const QString &compname,
                 .arg(compname), CODELOC );
 
     ComponentInfo compinfo(name(), compname, description);
-    
+
     if ( nrg_components.values().contains(compinfo.function().ID()) )
         throw SireError::program_bug( QObject::tr(
             "Cannot have two components in this forcefield with the same "

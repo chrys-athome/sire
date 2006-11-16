@@ -24,6 +24,11 @@ set (SIRE_VERSION_PATCH "1")
 
 set (SIRE_VERSION "${SIRE_VERSION_MAJOR}.${SIRE_VERSION_MINOR}.${SIRE_VERSION_PATCH}")
 
+# Ensure that the Sire's directories are searched for header files
+# before the system directories - this prevents problems in case
+# an older version of Sire is already installed on the system
+INCLUDE_DIRECTORIES( BEFORE ${SIRE_SOURCE_DIR} )
+
 # Build shared libraries by default
 set (BUILD_SHARED_LIBS ON)
 
@@ -148,12 +153,43 @@ include_directories( ${QT_INCLUDE_DIR}
 
 add_definitions( ${QT_DEFINITIONS} )
 
+# Turn on or off symbol hiding
+set( SIRE_SYMBOL_HIDING 0 )
+
 # Set compile flags for debug and release
 set( SIRE_C_FLAGS_RELEASE "-Wall -O2" )
 set( SIRE_CXX_FLAGS_RELEASE ${SIRE_C_FLAGS_RELEASE} )
 
 set( SIRE_C_FLAGS_DEBUG "-Wall -g -O2" )
 set( SIRE_CXX_FLAGS_DEBUG ${SIRE_C_FLAGS_DEBUG} )
+
+# Also set flags for size-optimised compile - this is used for
+# all of the python wrappers, which can grow to enormous sizes 
+# otherwise! (and aren't performance critical)
+set( SIRE_C_FLAGS_SMALL "-Wall -Os" )
+set( SIRE_CXX_FLAGS_SMALL ${SIRE_C_FLAGS_SMALL} )
+
+# Add compiler specific flags
+if ( CMAKE_COMPILER_IS_GNUCC )
+
+    # remove warnings about strict aliasing (lots from Qt4
+    # when compiling with GCC 4, and they are annoying!)
+    ADD_DEFINITIONS( -Wno-strict-aliasing )
+
+    # add symbol hiding if the compiler supports it and it is
+    # requested
+    if ( SIRE_SYMBOL_HIDING )
+
+      ADD_DEFINITIONS( -DSIRE_VISIBILITY_AVAILABLE )
+      ADD_DEFINITIONS( -fvisibility=hidden -fvisibility-inlines-hidden )
+
+    else ( SIRE_SYMBOL_HIDING )
+  
+      ADD_DEFINITIONS( -DSIRE_NO_VISIBILITY_AVAILABLE )
+
+    endif ( SIRE_SYMBOL_HIDING )
+
+endif ( CMAKE_COMPILER_IS_GNUCC )
 
 # Copy the Sire compile flags to CMake
 set( CMAKE_C_FLAGS ${SIRE_C_FLAGS_RELEASE} )
