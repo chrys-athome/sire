@@ -86,6 +86,7 @@ void CLJFF::calculatePairEnergy(CLJWorkspace &workspace)
         {
             //get the distance and CLJPair for this atom pair
             double invdist2 = distmatrix[j];
+
             const CLJPair &cljpair = cljmatrix[j];
 
             double sig2_over_dist2 = SireMaths::pow_2(cljpair.sigma()) * invdist2;

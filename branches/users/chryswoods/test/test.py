@@ -26,7 +26,7 @@ space = Cartesian()
 
 #specify the type of combining rules to use
 combrules = ArithmeticCombiningRules()
-#combrules = GeometricCombiningRules()
+combrules = GeometricCombiningRules()
 
 #specify the type of switching function to use
 switchfunc = HarmonicSwitchingFunction(80.0)

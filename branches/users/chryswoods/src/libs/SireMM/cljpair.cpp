@@ -17,7 +17,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJPair &cljpair)
 {
     writeHeader(ds, r_cljpair, 1) << cljpair.charge2() << cljpair.sigma()
                                   << cljpair.epsilon();
-    
+
     return ds;
 }
 
@@ -25,18 +25,18 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJPair &cljpair)
 QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJPair &cljpair)
 {
     VersionID v = readHeader(ds, r_cljpair);
-    
+
     if (v == 1)
     {
         double chg2,sig,eps;
-        
+
         ds >> chg2 >> sig >> eps;
-        
+
         cljpair = CLJPair(chg2, sig, eps);
     }
     else
         throw version_error(v, "1", r_cljpair, CODELOC);
-    
+
     return ds;
 }
 
@@ -44,7 +44,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJPair &cljpair)
 CLJPair::CLJPair() : chg2(0.0), sig(0.0), eps(0.0)
 {}
 
-/** Construct a CLJPair that has charge^2 = chg2, combined sigma = sig and combined 
+/** Construct a CLJPair that has charge^2 = chg2, combined sigma = sig and combined
     epsilon = eps */
 CLJPair::CLJPair(double c2, double s, double e) : chg2(c2), sig(s), eps(e)
 {}
@@ -60,29 +60,11 @@ CLJPair::CLJPair(const CLJParameter &cljparam)
 CLJPair::~CLJPair()
 {}
 
-/** Return a CLJPair that represents the combination of parameters clj0 and clj1 using
-    arithmetic (Lorentz-Berthelot) combining rules */
-CLJPair CLJPair::arithmetic(const CLJParameter &clj0, const CLJParameter &clj1)
-{
-    return CLJPair( clj0.charge() * clj1.charge(), 
-                    0.5 * ( clj0.sigma() + clj1.sigma() ),
-                    clj0.sqrtEpsilon() * clj1.sqrtEpsilon() );
-}
-
-/** Return the CLJPair that represents the combination of parameters clj0 and clj1 using
-    geometric (OPLS type) combining rules */
-CLJPair CLJPair::geometric(const CLJParameter &clj0, const CLJParameter &clj1)
-{
-    return CLJPair( clj0.charge() * clj1.charge(),
-                    clj0.sqrtSigma() * clj1.sqrtSigma(),
-                    clj0.sqrtEpsilon() * clj1.sqrtEpsilon() );
-}
-
 /** Return the LJ 'A' parameter */
 double CLJPair::A() const
 {
     return double(4.0) * epsilon() * SireMaths::pow_12( sigma() );
-}    
+}
 
 /** Return the LJ 'B' parameter */
 double CLJPair::B() const
@@ -91,7 +73,7 @@ double CLJPair::B() const
 }
 
 /** Return the LJ 'rmin' parameter - this is the location of the minimum.
- 
+
     rmin = 2^(1/6) * sigma
 */
 double CLJPair::rmin() const

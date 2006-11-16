@@ -142,3 +142,61 @@ Adding a single cutgroup block to CLJFF thus appears to be sensible
 Switching both CombiningRules and SwitchingFunction over to use SharedPolyPointer
             684 vs. 434, Tip4PFF is 250 ms faster
 
+Calculating distance rather that invDist2
+            733 vs. 432, Tip4PFF is 300 ms faster
+
+Calculating invDist rather than invDist2
+            776 vs. 434, Tip4PFF is 343 ms faster
+
+Calculating dist2 rather than invDist2 
+            690 vs. 434, Tip4PFF is 255 ms faster
+
+Calculating invDist2
+            677 vs. 432. Tip4PFF is 243 ms faster
+
+Calculating invDistance2() seems to be best
+
+Skipping update of pairmatrix if sizes don't change
+            674 vs. 434, Tip4PFF is 240 ms faster
+
+Inlined combining rules in CLJPair
+            647 vs. 397, TIP4PFF is 250 ms faster
+
+Testing speed of parts. Setting calculateEnergy(mol,mol) to 0.0
+means speed is 17 ms. e.g. calling calculateEnergy(mol,mol) for all
+water pairs and extracting and summing the result takes 17 ms.
+
+Changing beyond() so do beyond(0.3) now takes 131ms. This means that 
+doing sphere test for all water pairs takes 131-17 = 114 ms.
+
+Returning after calculating distances takes 279ms, so distance calculations
+for all pairs within the cutoff are taking 279-131 = 148ms
+
+Skipping the evaluation of the energy (but doing everything else, so just
+really doing combination of clj parameters) takes 437 ms, so combining
+CLJ parameters is taking 437 - 279 = 158 ms!
+
+Checking this - now returning after just calculating CLJ pairs - no 
+distance calculation, takes 389 ms, so combining CLJ takes 389-131 = 258 ms
+
+There is definitely something wrong with the CLJ parameter combination...
+
+Even with geometric combining rules I find that it takes forever...!
+
+Time for entire calculation without combining rules is 441 ms, again confirming
+about 230 ms for combining rules!
+
+Moving the cljmatrix.redimension() out of the pair loop gives 428 ms, so redimensioning
+each time is costing only 13 ms.
+
+Skipping coulomb calculation (again, no combining rules) gives 379 ms
+Skipping LJ calculation (") gives 420 ms
+Skipping both gives 349 ms
+
+Skipping coulomb calculation (with combining rules) gives 590 ms
+Skipping LJ calculation (") gives 712 ms
+Skipping both gives 559 ms
+
+removing references to CLJPairMatrix and CLJ parameters from inner loop takes
+(with no coulomb or LJ calculation) 580 ms
+
