@@ -22,7 +22,7 @@ namespace SireMM
 class CLJPair;
 
 /** Typedef a matrix to hold all of the CLJ pairs */
-typedef SireBase::PairMatrix<CLJPair> CLJPairMatrix;
+typedef SireBase::PairMatrix<CLJPair, 1024> CLJPairMatrix;
 
 /** Typedef a function pointer that may be used to combine together CLJ parameters */
 typedef CLJPair (*CLJCombineFuncPtr)(const CLJParameter&, const CLJParameter&);

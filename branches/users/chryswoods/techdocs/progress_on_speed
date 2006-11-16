@@ -200,3 +200,23 @@ Skipping both gives 559 ms
 removing references to CLJPairMatrix and CLJ parameters from inner loop takes
 (with no coulomb or LJ calculation) 580 ms
 
+Now back at home on my laptop
+(my laptop calculates the full calculation at 1126 vs. 725, so Tip4PFF is 401 ms faster)
+
+Removing the calculation of CLJ pairs reduces the calculation to 835 ms
+
+Skipping energy (just doing space.beyond()) takes 200 ms.
+
+Skipping all but distance calculation takes 575 ms  - distances thus take 375 ms.
+
+Setting beyond() to 0.2 now takes 186 ms.
+
+Tip4PFF - skip coulomb - takes 602ms
+        - skip LJ - takes 688ms
+
+Tip4PFF - faked the charge and sigma values - takes 512 ms
+
+Doing the same with InterCLJFF only reduces the time to 825 ms
+
+Setting beyond() to 0.3 for Tip4PFF reduces the time to 59 ms. 
+

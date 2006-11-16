@@ -73,13 +73,13 @@ double Tip4PFF::calculateEnergy(const Vector *array0, int nats0,
             double sig6_over_dist6 = SireMaths::pow_3(sig2_over_dist2);
             double sig12_over_dist12 = SireMaths::pow_2(sig6_over_dist6);
 
-             //coulomb energy
-             inrg += SireUnits::one_over_four_pi_eps0 *
+            //coulomb energy
+            inrg += SireUnits::one_over_four_pi_eps0 *
                                     cljpair.charge2() * std::sqrt(invdist2);
 
-             //LJ energy
-             inrg += 4 * cljpair.epsilon() *
-                                    ( sig12_over_dist12 - sig6_over_dist6 );
+            //LJ energy
+            inrg += 4 * cljpair.epsilon() *
+                                   ( sig12_over_dist12 - sig6_over_dist6 );
         }
     }
 
