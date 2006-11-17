@@ -78,9 +78,6 @@ friend QDataStream& ::operator>>(QDataStream&, CLJFF&);
 public:
     CLJFF();
 
-    CLJFF(const Space &space, const CombiningRules &combiningrules,
-          const SwitchingFunction &switchingfunction);
-
     CLJFF(const Space &space, const SwitchingFunction &switchingfunction);
 
     CLJFF(const CLJFF &other);
@@ -88,8 +85,6 @@ public:
     ~CLJFF();
 
     const Space& space() const;
-
-    const CombiningRules& combiningRules() const;
 
     const SwitchingFunction& switchingFunction() const;
 
@@ -114,7 +109,6 @@ protected:
                                 const QVector<ChargeParameter> &chg1,
                                 const QVector<LJParameter> &lj1,
                                 const Space &space,
-                                const CombiningRules &combrules,
                                 const SwitchingFunction &switchfunc,
                                 detail::CLJWorkspace &workspace);
 
@@ -122,19 +116,16 @@ protected:
                                 const QVector<ChargeParameter> &chgs,
                                 const QVector<LJParameter> &ljs,
                                 const Space &space,
-                                const CombiningRules &combrules,
                                 detail::CLJWorkspace &workspace);
 
     static void calculateEnergy(const detail::MolCLJInfo &mol0,
                                 const detail::MolCLJInfo &mol1,
                                 const Space &space,
-                                const CombiningRules &combrules,
                                 const SwitchingFunction &switchfunc,
                                 detail::CLJWorkspace &workspace);
 
     static void calculateEnergy(const detail::MolCLJInfo &mol,
                                 const Space &space,
-                                const CombiningRules &combrules,
                                 const SwitchingFunction &switchfunc,
                                 detail::CLJWorkspace &workspace);
 
@@ -160,10 +151,6 @@ private:
     /** The space in which the calculation will be performed */
     Space spce;
 
-    /** The combining rules used to get the parameters of
-        mixed pairs of atoms */
-    CombiningRules combrules;
-
     /** The switching function used to truncate the CLJ interactions */
     SwitchingFunction switchfunc;
 };
@@ -174,12 +161,6 @@ private:
 inline const Space& CLJFF::space() const
 {
     return spce;
-}
-
-/** Return the combining rules used to combine CLJParameters into CLJPairs */
-inline const CombiningRules& CLJFF::combiningRules() const
-{
-    return combrules;
 }
 
 /** Return the switching function used to truncate the CLJ interaction */

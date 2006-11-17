@@ -43,8 +43,7 @@ friend QDataStream& ::operator>>(QDataStream&, InterCLJFF&);
 public:
     InterCLJFF();
 
-    InterCLJFF(const Space &space, const CombiningRules &combrules,
-               const SwitchingFunction &switchfunc);
+    InterCLJFF(const Space &space, const SwitchingFunction &switchfunc);
 
     InterCLJFF(const InterCLJFF &other);
 

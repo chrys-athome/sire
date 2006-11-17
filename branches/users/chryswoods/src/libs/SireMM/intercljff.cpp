@@ -22,9 +22,8 @@ InterCLJFF::InterCLJFF() : CLJFF()
 
 /** Construct a CLJ forcefield using the passed Space, combining rules and
     switching function */
-InterCLJFF::InterCLJFF(const Space &space, const CombiningRules &combrules,
-                       const SwitchingFunction &switchfunc)
-           : CLJFF(space, combrules, switchfunc)
+InterCLJFF::InterCLJFF(const Space &space, const SwitchingFunction &switchfunc)
+           : CLJFF(space, switchfunc)
 {}
 
 /** Copy constructor */
@@ -57,7 +56,7 @@ void InterCLJFF::recalculateEnergy()
             const MolCLJInfo &mol1 = molarray[j];
 
             CLJFF::calculateEnergy( mol0, mol1, space(),
-                                    combiningRules(), switchingFunction(),
+                                    switchingFunction(),
                                     workspace() );
 
             cnrg += workspace().cnrg;

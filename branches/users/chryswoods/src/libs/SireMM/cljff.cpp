@@ -38,7 +38,7 @@ static const RegisterMetaType<CLJFF> r_cljff("SireMM::CLJFF", MAGIC_ONLY);
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJFF &cljff)
 {
     writeHeader(ds, r_cljff, 1)
-              << cljff.spce << cljff.combrules << cljff.switchfunc
+              << cljff.spce << cljff.switchfunc
               << static_cast<const FFBase&>(cljff);
 
     return ds;
@@ -51,7 +51,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJFF &cljff)
 
     if (v == 1)
     {
-        ds >> cljff.spce >> cljff.combrules >> cljff.switchfunc
+        ds >> cljff.spce >> cljff.switchfunc
            >> static_cast<FFBase&>(cljff);
     }
     else
@@ -90,12 +90,13 @@ void CLJFF::calculatePairEnergy(CLJWorkspace &workspace,
     {
         distmatrix.setOuterIndex(i);
 
-        const ChargeParameter &chg0param = chg0array[i];
+        double chg0param = chg0array[i].charge();
         const LJParameter &lj0param = lj0array[i];
 
         for (int j=0; j<nats1; ++j)
         {
             const LJParameter &lj1param = lj1array[j];
+            double chg2 = SireUnits::one_over_four_pi_eps0 * chg0param * chg1array[j].charge();
 
             //get the distance and CLJPair for this atom pair
             double invdist2 = distmatrix[j];
@@ -106,9 +107,7 @@ void CLJFF::calculatePairEnergy(CLJWorkspace &workspace,
             double sig12_over_dist12 = SireMaths::pow_2(sig6_over_dist6);
 
             //coulomb energy
-            icnrg += SireUnits::one_over_four_pi_eps0 *
-                                     chg0param.charge()*chg1array[j].charge() *
-                                     std::sqrt(invdist2);
+            icnrg +=  chg2 * std::sqrt(invdist2);
 
             //LJ energy
             iljnrg += 4 * lj0param.sqrtEpsilon()*lj1param.sqrtEpsilon() *
@@ -182,7 +181,6 @@ void CLJFF::calculateEnergy(const CoordGroup &group0,
                             const QVector<ChargeParameter> &chg1,
                             const QVector<LJParameter> &lj1,
                             const Space &space,
-                            const CombiningRules &combrules,
                             const SwitchingFunction &switchfunc,
                             CLJWorkspace &workspace)
 {
@@ -216,11 +214,8 @@ void CLJFF::calculateEnergy(const CoordGroup &group,
                             const QVector<ChargeParameter> &chgs,
                             const QVector<LJParameter> &ljs,
                             const Space &space,
-                            const CombiningRules &combrules,
                             CLJWorkspace &workspace)
 {
-    //combrules.combine(chgs, ljs, workspace.cljmatrix);
-
     space.calcInvDist2(group, workspace.distmatrix);
 
     CLJFF::calculateSelfEnergy(workspace, chgs, ljs);
@@ -234,7 +229,6 @@ void CLJFF::calculateEnergy(const CoordGroup &group,
 void CLJFF::calculateEnergy(const MolCLJInfo &mol0,
                             const MolCLJInfo &mol1,
                             const Space &space,
-                            const CombiningRules &combrules,
                             const SwitchingFunction &switchfunc,
                             CLJWorkspace &workspace)
 {
@@ -250,7 +244,7 @@ void CLJFF::calculateEnergy(const MolCLJInfo &mol0,
                          mol1.chargeParameters().constData()[0],
                          mol1.ljParameters().constData()[0],
 
-                         space, combrules, switchfunc, workspace );
+                         space, switchfunc, workspace );
     }
     else if (ncg0 > 0 and ncg1 > 0)
     {
@@ -279,7 +273,7 @@ void CLJFF::calculateEnergy(const MolCLJInfo &mol0,
                 const QVector<LJParameter> &lj1 = lj1array[j];
 
                 calculateEnergy(group0, chg0, lj0, group1, chg1, lj1,
-                                space, combrules, switchfunc, workspace);
+                                space, switchfunc, workspace);
 
                 icnrg += workspace.cnrg;
                 iljnrg += workspace.ljnrg;
@@ -303,7 +297,6 @@ void CLJFF::calculateEnergy(const MolCLJInfo &mol0,
     return the total coulomb and LJ energies in that workspace. */
 void CLJFF::calculateEnergy(const MolCLJInfo &mol,
                             const Space &space,
-                            const CombiningRules &combrules,
                             const SwitchingFunction &switchfunc,
                             CLJWorkspace &workspace)
 {
@@ -315,7 +308,7 @@ void CLJFF::calculateEnergy(const MolCLJInfo &mol,
         calculateEnergy(mol.coordinates().constData()[0],
                         mol.chargeParameters().constData()[0],
                         mol.ljParameters().constData()[0],
-                        space, combrules, workspace);
+                        space, workspace);
     }
     else if (ncg > 1)
     {
@@ -333,7 +326,7 @@ void CLJFF::calculateEnergy(const MolCLJInfo &mol,
             const QVector<LJParameter> &lj0 = ljarray[i];
 
             //add on the self-energy
-            calculateEnergy(group0, chg0, lj0, space, combrules, workspace);
+            calculateEnergy(group0, chg0, lj0, space, workspace);
 
             icnrg += workspace.cnrg;
             iljnrg += workspace.ljnrg;
@@ -346,7 +339,7 @@ void CLJFF::calculateEnergy(const MolCLJInfo &mol,
                 const QVector<LJParameter> &lj1 = ljarray[j];
 
                 calculateEnergy(group0,chg0, lj0, group1, chg1, lj1,
-                                space, combrules, switchfunc, workspace);
+                                space, switchfunc, workspace);
 
                 icnrg += workspace.cnrg;
                 iljnrg += workspace.ljnrg;
@@ -358,7 +351,7 @@ void CLJFF::calculateEnergy(const MolCLJInfo &mol,
         const QVector<ChargeParameter> &chg = chgarray[ncg-1];
         const QVector<LJParameter> &lj = ljarray[ncg-1];
 
-        calculateEnergy(group, chg, lj, space, combrules, workspace);
+        calculateEnergy(group, chg, lj, space, workspace);
 
         workspace.cnrg += icnrg;
         workspace.ljnrg += iljnrg;
@@ -384,20 +377,10 @@ CLJFF::CLJFF(const Space &space, const SwitchingFunction &switchingfunction)
     this->registerComponents();
 }
 
-/** Construct a CLJFF using the specified space, combining rules and
-    switching function */
-CLJFF::CLJFF(const Space &space, const CombiningRules &combiningrules,
-             const SwitchingFunction &switchingfunction)
-      : FFBase(),
-        spce(space), combrules(combiningrules), switchfunc(switchingfunction)
-{
-    this->registerComponents();
-}
-
 /** Copy constructor */
 CLJFF::CLJFF(const CLJFF &other)
       : FFBase(other),
-        spce(other.spce), combrules(other.combrules), switchfunc(other.switchfunc)
+        spce(other.spce), switchfunc(other.switchfunc)
 {}
 
 /** Destructor */

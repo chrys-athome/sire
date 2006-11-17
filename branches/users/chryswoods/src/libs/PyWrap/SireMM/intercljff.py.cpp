@@ -24,7 +24,6 @@ void export_InterCLJFF()
     bp::class_< InterCLJFF, bp::bases< SireMM::CLJFF > >( "InterCLJFF" )
         .def( bp::init< >()[bp::default_call_policies()] )
         .def( bp::init<const SireVol::Space&,
-                       const SireMM::CombiningRules&,
                        const SireMM::SwitchingFunction&>()[bp::default_call_policies()] )
         .def(
             "typeName"

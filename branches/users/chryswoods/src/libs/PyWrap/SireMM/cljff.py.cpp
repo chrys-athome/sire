@@ -29,10 +29,6 @@ void export_CLJFF()
             , &::SireMM::CLJFF::LJ
             , bp::default_call_policies() )
         .def(
-            "combiningRules"
-            , &::SireMM::CLJFF::combiningRules
-            , bp::return_value_policy< bp::copy_const_reference, bp::default_call_policies >() )
-        .def(
             "coulomb"
             , &::SireMM::CLJFF::coulomb
             , bp::return_value_policy< bp::copy_const_reference, bp::default_call_policies >() )

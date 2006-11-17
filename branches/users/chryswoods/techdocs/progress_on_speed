@@ -241,4 +241,10 @@ Calculating combined parameters with no intermediates in Tip4PFF gives
 Calculating combined parameters with no intermediates in InterCLJFF gives
         478 vs. 249, Tip4PFF is 229 ms faster
 
+Calculating chg2 gives
+        471 vs. 253, Tip4PFF is 218 ms faster
+
+Removing all references to combining rules gives
+        455 vs. 249, Tip4PFF is 206 ms faster
+
 
