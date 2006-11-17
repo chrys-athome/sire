@@ -220,3 +220,25 @@ Doing the same with InterCLJFF only reduces the time to 825 ms
 
 Setting beyond() to 0.3 for Tip4PFF reduces the time to 59 ms. 
 
+Now back at work with full Tip4PFF and InterCLJFF
+        645 vs. 396, Tip4PFF is 259 ms faster
+
+Changing InterCLJFF so that it uses separate arrays for the Charge and LJ parameters...
+        988 vs. 344, Tip4PFF is 644 ms faster
+
+Simplifying python wrapping of CombiningRules gives
+        980 vs. 396, Tip4PFF is 584 ms faster
+
+Simplifying geometric combining rules to remove intermediates gives
+        677 vs. 395, Tip4PFF is 282 ms faster
+
+Simplifying the python wrapping of SwitchingFunction gives
+        669 vs. 394, Tip4PFF is 275 ms faster
+
+Calculating combined parameters with no intermediates in Tip4PFF gives
+        662 vs. 249, Tip4PFF is 413 ms faster
+
+Calculating combined parameters with no intermediates in InterCLJFF gives
+        478 vs. 249, Tip4PFF is 229 ms faster
+
+

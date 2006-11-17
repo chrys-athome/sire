@@ -47,19 +47,22 @@ set (SIRE_ARCHIVES "lib/static")
 set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/build/cmake)
 
 # Add option to disable compilation of Spier (removes openGL dependency)
-option ( BUILD_SPIER "Build Spier molecular viewer (requires openGL)" ON )
+option ( SIRE_BUILD_SPIER "Build Spier molecular viewer (requires openGL)" ON )
+
+# Add option to turn off symbol hiding
+option ( SIRE_SYMBOL_HIDING "Turn on library symbol hiding" ON )
 
 # include the right Qt modules - what we need depends on 
 # whether any GUI apps are compiled
 set (QT_USE_QTSQL TRUE)
 
 # Don't need GUI if aren't compiling Spier
-if ( BUILD_SPIER )
+if ( SIRE_BUILD_SPIER )
    set (QT_USE_QTGUI TRUE)
    set (QT_USE_OPENGL TRUE)
-else ( BUILD_SPIER )
+else ( SIRE_BUILD_SPIER )
    set (QT_DONT_USE_QTGUI TRUE)
-endif ( BUILD_SPIER )
+endif ( SIRE_BUILD_SPIER )
 
 # Sire depends on >= Qt 4.1
 set (QT_MIN_VERSION "4.1.0")
@@ -153,9 +156,6 @@ include_directories( ${QT_INCLUDE_DIR}
 
 add_definitions( ${QT_DEFINITIONS} )
 
-# Turn on or off symbol hiding
-set( SIRE_SYMBOL_HIDING 0 )
-
 # Set compile flags for debug and release
 set( SIRE_C_FLAGS_RELEASE "-Wall -O2" )
 set( SIRE_CXX_FLAGS_RELEASE ${SIRE_C_FLAGS_RELEASE} )
@@ -172,23 +172,59 @@ set( SIRE_CXX_FLAGS_SMALL ${SIRE_C_FLAGS_SMALL} )
 # Add compiler specific flags
 if ( CMAKE_COMPILER_IS_GNUCC )
 
-    # remove warnings about strict aliasing (lots from Qt4
-    # when compiling with GCC 4, and they are annoying!)
-    ADD_DEFINITIONS( -Wno-strict-aliasing )
+    # get the compiler version (via gcc -dumpversion)
+    # (I'll assume that we are using the same version
+    # of compiler for C and C++...)
+    EXEC_PROGRAM( ${CMAKE_CXX_COMPILER}
+                  ARGS -dumpversion
+                  OUTPUT_VARIABLE exe_output )
 
-    # add symbol hiding if the compiler supports it and it is
-    # requested
-    if ( SIRE_SYMBOL_HIDING )
+    # These two regexps are copied from the Chicken CMake
+    # files (which provide a very useful cmake tutorial - thanks :-)                  
+    SET(VERSION_BUILD_REGEX "^([0-9]+)[.]([0-9]+).*$")
+    STRING(REGEX REPLACE ${VERSION_BUILD_REGEX} "\\1"
+           GCC_MAJOR_VERSION ${exe_output})
+    STRING(REGEX REPLACE ${VERSION_BUILD_REGEX} "\\2"
+           GCC_MINOR_VERSION ${exe_output})
+        
+    message( STATUS "Using GCC version "
+                    "${GCC_MAJOR_VERSION}.${GCC_MINOR_VERSION}" )
 
-      ADD_DEFINITIONS( -DSIRE_VISIBILITY_AVAILABLE )
-      ADD_DEFINITIONS( -fvisibility=hidden -fvisibility-inlines-hidden )
+    # First, we need at least GCC 3.0, as I don't think that
+    # GCC 2.x can handle the template code that I use
+    if ( GCC_MAJOR_VERSION LESS 3 )
+       message( FATAL_ERROR "Sire requires GCC >= 3.0. Please upgrade "
+                      "your version of GCC." )
+    endif ( GCC_MAJOR_VERSION LESS 3 )
 
-    else ( SIRE_SYMBOL_HIDING )
+    # Add options common to all gcc version
+    ADD_DEFINITIONS( -pipe )
+        
+    # Now gcc 4 specific options
+    if ( GCC_MAJOR_VERSION GREATER 3 )
+      # remove warnings about strict aliasing (lots from Qt4
+      # when compiling with GCC 4, and they are annoying!)
+      ADD_DEFINITIONS( -Wno-strict-aliasing )
+
+      # add symbol hiding if the compiler supports it and it is
+      # requested
+      if ( SIRE_SYMBOL_HIDING )
+
+        ADD_DEFINITIONS( -DSIRE_VISIBILITY_AVAILABLE )
+        ADD_DEFINITIONS( -fvisibility=hidden -fvisibility-inlines-hidden )
+
+      else ( SIRE_SYMBOL_HIDING )
   
+        ADD_DEFINITIONS( -DSIRE_NO_VISIBILITY_AVAILABLE )
+
+      endif ( SIRE_SYMBOL_HIDING )
+    
+    else ( GCC_MAJOR_VERSION GREATER 3 )
+    
       ADD_DEFINITIONS( -DSIRE_NO_VISIBILITY_AVAILABLE )
 
-    endif ( SIRE_SYMBOL_HIDING )
-
+    endif ( GCC_MAJOR_VERSION GREATER 3 )
+    
 endif ( CMAKE_COMPILER_IS_GNUCC )
 
 # Copy the Sire compile flags to CMake
@@ -200,10 +236,6 @@ set( SIRE_LINK_FLAGS "-Wl,--no-undefined" )
 
 # Add this to all shared libraries
 set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${SIRE_LINK_FLAGS}" )
-
-message( STATUS "Using C compiler == ${CMAKE_C_COMPILER} "
-                "and C++ compiler == ${CMAKE_CXX_COMPILER}" )
-message( STATUS "Using CFLAGS == ${CMAKE_C_FLAGS} and CXXFLAGS == ${CMAKE_CXX_FLAGS}" )
 
 # Recurse into the src/libs and src/apps subdirectories
 add_subdirectory (src/libs)

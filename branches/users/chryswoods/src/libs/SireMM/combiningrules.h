@@ -73,11 +73,14 @@ public:
 
     virtual const char* what() const=0;
 
-    virtual void combine(const QVector<CLJParameter> &clj0,
-                         const QVector<CLJParameter> &clj1,
+    virtual void combine(const QVector<ChargeParameter> &chg0,
+                         const QVector<LJParameter> &lj0,
+                         const QVector<ChargeParameter> &chg1,
+                         const QVector<LJParameter> &lj1,
                          CLJPairMatrix &cljmatrix) const=0;
 
-    virtual void combine(const QVector<CLJParameter> &clj,
+    virtual void combine(const QVector<ChargeParameter> &chgs,
+                         const QVector<LJParameter> &ljs,
                          CLJPairMatrix &cljmatrix) const=0;
 };
 
@@ -113,11 +116,14 @@ public:
         return new ArithmeticCombiningRules(*this);
     }
 
-    void combine(const QVector<CLJParameter> &clj0,
-                 const QVector<CLJParameter> &clj1,
+    void combine(const QVector<ChargeParameter> &chg0,
+                 const QVector<LJParameter> &lj0,
+                 const QVector<ChargeParameter> &chg1,
+                 const QVector<LJParameter> &lj1,
                  CLJPairMatrix &cljmatrix) const;
 
-    void combine(const QVector<CLJParameter> &clj,
+    void combine(const QVector<ChargeParameter> &chgs,
+                 const QVector<LJParameter> &ljs,
                  CLJPairMatrix &cljmatrix) const;
 };
 
@@ -153,11 +159,14 @@ public:
         return new GeometricCombiningRules(*this);
     }
 
-    void combine(const QVector<CLJParameter> &clj0,
-                 const QVector<CLJParameter> &clj1,
+    void combine(const QVector<ChargeParameter> &chg0,
+                 const QVector<LJParameter> &lj0,
+                 const QVector<ChargeParameter> &chg1,
+                 const QVector<LJParameter> &lj1,
                  CLJPairMatrix &cljmatrix) const;
 
-    void combine(const QVector<CLJParameter> &clj,
+    void combine(const QVector<ChargeParameter> &chgs,
+                 const QVector<LJParameter> &ljs,
                  CLJPairMatrix &cljmatrix) const;
 };
 
@@ -184,11 +193,14 @@ public:
 
     const char* what() const;
 
-    void combine(const QVector<CLJParameter> &clj0,
-                 const QVector<CLJParameter> &clj1,
+    void combine(const QVector<ChargeParameter> &chg0,
+                 const QVector<LJParameter> &lj0,
+                 const QVector<ChargeParameter> &chg1,
+                 const QVector<LJParameter> &lj1,
                  CLJPairMatrix &cljmatrix) const;
 
-    void combine(const QVector<CLJParameter> &clj,
+    void combine(const QVector<ChargeParameter> &chgs,
+                 const QVector<LJParameter> &ljs,
                  CLJPairMatrix &cljmatrix) const;
 
 private:
@@ -198,19 +210,22 @@ private:
 
 /** Combine the CLJ parameters in 'clj0' and 'clj1' and place the results
     in the matrix 'cljmatrix' */
-inline void CombiningRules::combine(const QVector<CLJParameter> &clj0,
-                             const QVector<CLJParameter> &clj1,
-                             CLJPairMatrix &cljmatrix) const
+inline void CombiningRules::combine(const QVector<ChargeParameter> &chg0,
+                                    const QVector<LJParameter> &lj0,
+                                    const QVector<ChargeParameter> &chg1,
+                                    const QVector<LJParameter> &lj1,
+                                    CLJPairMatrix &cljmatrix) const
 {
-    d->combine(clj0, clj1, cljmatrix);
+    d->combine(chg0, lj0, chg1, lj1, cljmatrix);
 }
 
 /** Combine all pairs of the CLJ parameters in 'clj' and place the results
     in the matrix 'cljmatrix' */
-inline void CombiningRules::combine(const QVector<CLJParameter> &clj,
-                             CLJPairMatrix &cljmatrix) const
+inline void CombiningRules::combine(const QVector<ChargeParameter> &chgs,
+                                    const QVector<LJParameter> &ljs,
+                                    CLJPairMatrix &cljmatrix) const
 {
-    d->combine(clj, cljmatrix);
+    d->combine(chgs, ljs, cljmatrix);
 }
 
 }

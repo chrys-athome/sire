@@ -41,7 +41,7 @@ static const RegisterMetaType<MolCLJInfoData> r_moldata("SireMM::detail::MolCLJI
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const MolCLJInfoData &moldata)
 {
     writeHeader(ds, r_moldata, 1)
-        << moldata.molecule << moldata.cljparams;
+        << moldata.molecule << moldata.chgparams << moldata.ljparams;
 
     return ds;
 }
@@ -53,7 +53,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, MolCLJInfoData &moldata)
 
     if (v == 1)
     {
-        ds >> moldata.molecule >> moldata.cljparams;
+        ds >> moldata.molecule >> moldata.chgparams >> moldata.ljparams;
 
         moldata.coordinates = moldata.molecule.coordGroups();
     }
@@ -73,11 +73,13 @@ MolCLJInfoData::MolCLJInfoData() : QSharedData()
     \throw SireError::incompatible_error
 */
 MolCLJInfoData::MolCLJInfoData(const Molecule &mol,
-                               const QVector< QVector<CLJParameter> > &params)
+                               const QVector< QVector<ChargeParameter> > &chgs,
+                               const QVector< QVector<LJParameter> > &ljs)
                : QSharedData(), molecule(mol), coordinates(molecule.coordGroups()),
-                 cljparams(params)
+                 chgparams(chgs), ljparams(ljs)
 {
-    this->assertCompatibleParameters(params);
+    this->assertCompatibleParameters(chgs);
+    this->assertCompatibleParameters(ljs);
 }
 
 /** Destructor */
@@ -118,7 +120,7 @@ void MolCLJInfoData::assertSameMajorVersion(const Molecule &mol) const
     \throw SireError::incompatible_error
 */
 void MolCLJInfoData::assertCompatibleParameters(
-                          const QVector< QVector<CLJParameter> > &params) const
+                          const QVector< QVector<ChargeParameter> > &params) const
 {
     const MoleculeInfo &molinfo = molecule.info();
 
@@ -126,7 +128,7 @@ void MolCLJInfoData::assertCompatibleParameters(
 
     if (params.count() == ncg)
     {
-        const QVector<CLJParameter> *paramarray = params.constData();
+        const QVector<ChargeParameter> *paramarray = params.constData();
 
         for (CutGroupID i(0); i<ncg; ++i)
         {
@@ -135,7 +137,43 @@ void MolCLJInfoData::assertCompatibleParameters(
                 throw SireError::incompatible_error( QObject::tr(
                         "The number of atoms for the CutGroup with ID == %1 "
                         "in the molecule \"%2\" does not match the number of "
-                        "CLJ parameters supplied for that CutGroup.")
+                        "charge parameters supplied for that CutGroup.")
+                            .arg(i).arg(molecule.idString()), CODELOC );
+            }
+        }
+    }
+    else
+        throw SireError::incompatible_error( QObject::tr(
+            "The number of CutGroups (%1) in the molecule \"%2\" is "
+            "not the same as the number of groups that the supplied parameters "
+            "are divided into (%3)")
+                .arg(ncg).arg(molecule.idString()).arg(params.count()), CODELOC );
+}
+
+/** Assert that the parameters in 'params' are arranged in a manner that is
+    compatible with the molecule stored in this object
+
+    \throw SireError::incompatible_error
+*/
+void MolCLJInfoData::assertCompatibleParameters(
+                          const QVector< QVector<LJParameter> > &params) const
+{
+    const MoleculeInfo &molinfo = molecule.info();
+
+    int ncg = molinfo.nCutGroups();
+
+    if (params.count() == ncg)
+    {
+        const QVector<LJParameter> *paramarray = params.constData();
+
+        for (CutGroupID i(0); i<ncg; ++i)
+        {
+            if (paramarray[i].count() != molinfo.nAtoms(i))
+            {
+                throw SireError::incompatible_error( QObject::tr(
+                        "The number of atoms for the CutGroup with ID == %1 "
+                        "in the molecule \"%2\" does not match the number of "
+                        "LJ parameters supplied for that CutGroup.")
                             .arg(i).arg(molecule.idString()), CODELOC );
             }
         }
@@ -168,15 +206,18 @@ void MolCLJInfoData::move(const Molecule &movedmol)
     \throw SireError::incompatible_error
 */
 void MolCLJInfoData::change(const Molecule &changedmol,
-                            const QVector< QVector<CLJParameter> > &changedparams)
+                            const QVector< QVector<ChargeParameter> > &chgs,
+                            const QVector< QVector<LJParameter> > &ljs)
 {
   this->assertSameMolecule(changedmol);
-  this->assertCompatibleParameters(changedparams);
+  this->assertCompatibleParameters(chgs);
+  this->assertCompatibleParameters(ljs);
 
   molecule = changedmol;
   coordinates = molecule.coordGroups();
 
-  cljparams = changedparams;
+  chgparams = chgs;
+  ljparams = ljs;
 }
 
 /////////
@@ -222,8 +263,9 @@ MolCLJInfo::MolCLJInfo() : d( shared_null )
     \throw SireError::incompatible_error
 */
 MolCLJInfo::MolCLJInfo(const Molecule &molecule,
-                       const QVector< QVector<CLJParameter> > &parameters)
-           : d( new MolCLJInfoData(molecule,parameters) )
+                       const QVector< QVector<ChargeParameter> > &chgparams,
+                       const QVector< QVector<LJParameter> > &ljparams)
+           : d( new MolCLJInfoData(molecule,chgparams,ljparams) )
 {}
 
 /** Destructor */

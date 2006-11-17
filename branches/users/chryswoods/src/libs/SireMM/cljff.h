@@ -46,7 +46,6 @@ public:
     /** Copy constructor */
     CLJWorkspace(const CLJWorkspace &other)
            : distmatrix(other.distmatrix),
-             cljmatrix(other.cljmatrix),
              cnrg(other.cnrg), ljnrg(other.ljnrg)
     {}
 
@@ -55,10 +54,6 @@ public:
     /** The distance matrix used to hold the distances
         between all atoms of two CoordGroups */
     DistMatrix distmatrix;
-
-    /** The pair matrix used to store all of the CLJ
-        parameters for a pair of atoms */
-    CLJPairMatrix cljmatrix;
 
     /** The accumulated value of the coulomb energy */
     double cnrg;
@@ -113,16 +108,19 @@ public:
 
 protected:
     static void calculateEnergy(const CoordGroup &group0,
-                                const QVector<CLJParameter> &params0,
+                                const QVector<ChargeParameter> &chg0,
+                                const QVector<LJParameter> &lj0,
                                 const CoordGroup &group1,
-                                const QVector<CLJParameter> &params1,
+                                const QVector<ChargeParameter> &chg1,
+                                const QVector<LJParameter> &lj1,
                                 const Space &space,
                                 const CombiningRules &combrules,
                                 const SwitchingFunction &switchfunc,
                                 detail::CLJWorkspace &workspace);
 
     static void calculateEnergy(const CoordGroup &group,
-                                const QVector<CLJParameter> &params,
+                                const QVector<ChargeParameter> &chgs,
+                                const QVector<LJParameter> &ljs,
                                 const Space &space,
                                 const CombiningRules &combrules,
                                 detail::CLJWorkspace &workspace);
@@ -144,8 +142,15 @@ protected:
     const detail::CLJWorkspace& workspace() const;
 
 private:
-    static void calculatePairEnergy(detail::CLJWorkspace &workspace);
-    static void calculateSelfEnergy(detail::CLJWorkspace &workspace);
+    static void calculatePairEnergy(detail::CLJWorkspace &workspace,
+                                    const QVector<ChargeParameter> &chg0,
+                                    const QVector<LJParameter> &lj0,
+                                    const QVector<ChargeParameter> &chg1,
+                                    const QVector<LJParameter> &lj1);
+
+    static void calculateSelfEnergy(detail::CLJWorkspace &workspace,
+                                    const QVector<ChargeParameter> &chgs,
+                                    const QVector<LJParameter> &ljs);
 
     void registerComponents();
 

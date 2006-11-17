@@ -65,12 +65,13 @@ public:
     MolCLJInfoData();
 
     MolCLJInfoData(const Molecule &mol,
-                   const QVector< QVector<CLJParameter> > &params);
+                   const QVector< QVector<ChargeParameter> > &chgs,
+                   const QVector< QVector<LJParameter> > &ljs);
 
     /** Copy constructor */
     MolCLJInfoData(const MolCLJInfoData &other)
               : QSharedData(), molecule(other.molecule), coordinates(other.coordinates),
-                cljparams(other.cljparams)
+                chgparams(other.chgparams), ljparams(other.ljparams)
     {}
 
     ~MolCLJInfoData();
@@ -78,12 +79,15 @@ public:
     void assertSameMolecule(const Molecule &mol) const;
     void assertSameMajorVersion(const Molecule &mol) const;
     void assertCompatibleParameters(
-                        const QVector< QVector<CLJParameter> > &params) const;
+                        const QVector< QVector<ChargeParameter> > &chgparams) const;
+    void assertCompatibleParameters(
+                        const QVector< QVector<LJParameter> > &ljparams) const;
 
     void move(const Molecule &movedmol);
 
     void change(const Molecule &changedmol,
-                const QVector< QVector<CLJParameter> > &changedparams);
+                const QVector< QVector<ChargeParameter> > &chgparams,
+                const QVector< QVector<LJParameter> > &ljparams);
 
     /** The molecule whose parameters are contained in this object */
     Molecule molecule;
@@ -92,9 +96,13 @@ public:
         an indexed by CutGroupID */
     QVector<CoordGroup> coordinates;
 
-    /** The CLJ parameters for all of the atoms in the molecule,
+    /** The Charge parameters for all of the atoms in the molecule,
         organised into groups and indexed by CutGroupID */
-    QVector< QVector<CLJParameter> > cljparams;
+    QVector< QVector<ChargeParameter> > chgparams;
+
+    /** The LJ parameters for all of the atoms in the molecule,
+        organised into groups and indexed by CutGroupID */
+    QVector< QVector<LJParameter> > ljparams;
 };
 
 /**
@@ -113,7 +121,8 @@ public:
     MolCLJInfo();
 
     MolCLJInfo(const Molecule &molecule,
-               const QVector< QVector<CLJParameter> > &parameters);
+               const QVector< QVector<ChargeParameter> > &chgs,
+               const QVector< QVector<LJParameter> > &ljs);
 
     /** Copy constructor */
     MolCLJInfo(const MolCLJInfo &other) : d(other.d)
@@ -141,11 +150,18 @@ public:
         return d->coordinates;
     }
 
-    /** Return the CLJ parameters of the atoms in the molecule,
+    /** Return the charge parameters of the atoms in the molecule,
         arranged into groups, indexed by CutGroupID */
-    const QVector< QVector<CLJParameter> >& parameters() const
+    const QVector< QVector<ChargeParameter> >& chargeParameters() const
     {
-        return d->cljparams;
+        return d->chgparams;
+    }
+
+    /** Return the LJ parameters of the atoms in the molecule,
+        arranged into groups, indexed by CutGroupID */
+    const QVector< QVector<LJParameter> >& ljParameters() const
+    {
+        return d->ljparams;
     }
 
     /** Change the record to record that the molecule
@@ -166,9 +182,10 @@ public:
         \throw SireError::incompatible_error
     */
     void change(const Molecule &molecule,
-                const QVector< QVector<CLJParameter> > &parameters)
+                const QVector< QVector<ChargeParameter> > &chgparams,
+                const QVector< QVector<LJParameter> > &ljparams)
     {
-        d->change(molecule, parameters);
+        d->change(molecule, chgparams, ljparams);
     }
 
 private:

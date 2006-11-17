@@ -63,22 +63,22 @@ double Tip4PFF::calculateEnergy(const Vector *array0, int nats0,
         {
             const Vector &v1 = array1[j];
 
-            CLJPair cljpair = CLJPair::arithmetic(cljparam0,cljarray[j]);
+            const CLJParameter &cljparam1 = cljarray[j];
 
             double invdist2 = Vector::invDistance2(v0,v1);
 
             maxinvdist2 = qMax(maxinvdist2, invdist2);
 
-            double sig2_over_dist2 = SireMaths::pow_2(cljpair.sigma()) * invdist2;
+            double sig2_over_dist2 = SireMaths::pow_2(cljparam0.sqrtSigma()*cljparam1.sqrtSigma()) * invdist2;
             double sig6_over_dist6 = SireMaths::pow_3(sig2_over_dist2);
             double sig12_over_dist12 = SireMaths::pow_2(sig6_over_dist6);
 
             //coulomb energy
             inrg += SireUnits::one_over_four_pi_eps0 *
-                                    cljpair.charge2() * std::sqrt(invdist2);
+                                    cljparam0.charge() *cljparam1.charge() * std::sqrt(invdist2);
 
             //LJ energy
-            inrg += 4 * cljpair.epsilon() *
+            inrg += 4 * cljparam0.sqrtEpsilon() * cljparam1.sqrtEpsilon() *
                                    ( sig12_over_dist12 - sig6_over_dist6 );
         }
     }

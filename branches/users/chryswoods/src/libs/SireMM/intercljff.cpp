@@ -84,43 +84,58 @@ const Molecule& InterCLJFF::molecule(MoleculeID molid) const
 
 /** Temporary function used to add a molecule with passed charge and LJ
     parameters */
-void InterCLJFF::add(const Molecule &mol, const ChargeTable &charges,
-                     const LJTable &ljs)
+void InterCLJFF::add(const Molecule &mol, const ChargeTable &chargetable,
+                     const LJTable &ljtable)
 {
-    charges.assertCompatibleWith(mol);
-    ljs.assertCompatibleWith(mol);
+    chargetable.assertCompatibleWith(mol);
+    ljtable.assertCompatibleWith(mol);
 
     //extract arrays of the CLJ parameters
-    QVector< QVector<CLJParameter> > cljparams;
+    //QVector< QVector<CLJParameter> > cljparams;
 
-    QVector< ParameterGroup<ChargeParameter> > chargeparams = charges.parameterGroups();
-    QVector< ParameterGroup<LJParameter> > ljparams = ljs.parameterGroups();
+    QVector< ParameterGroup<ChargeParameter> > chargeparams = chargetable.parameterGroups();
+    QVector< ParameterGroup<LJParameter> > ljparams = ljtable.parameterGroups();
+
+    QVector< QVector<ChargeParameter> > chgs;
+    QVector< QVector<LJParameter> >  ljs;
 
     int ncg = chargeparams.count();
+    BOOST_ASSERT(ljparams.count() == ncg);
 
-    cljparams.reserve(ncg);
+    chgs.reserve(ncg);
+    ljs.reserve(ncg);
 
     for (int i=0; i<ncg; ++i)
     {
-        QVector<CLJParameter> cljs;
-
-        int nparams = chargeparams[i].parameters().count();
-
-        const ChargeParameter *chargearray = chargeparams[i].parameters().constData();
-        const LJParameter *ljarray = ljparams[i].parameters().constData();
-
-        cljs.reserve(nparams);
-
-        for (int j=0; j<nparams; ++j)
-        {
-            cljs.append( CLJParameter(chargearray[j],ljarray[j]) );
-        }
-
-        cljparams.append(cljs);
+        chgs.append( chargeparams.constData()[i].parameters() );
+        ljs.append( ljparams.constData()[i].parameters() );
     }
 
+//     int ncg = chargeparams.count();
+//
+//     cljparams.reserve(ncg);
+//
+//     for (int i=0; i<ncg; ++i)
+//     {
+//         QVector<CLJParameter> cljs;
+//
+//         int nparams = chargeparams[i].parameters().count();
+//
+//         const ChargeParameter *chargearray = chargeparams[i].parameters().constData();
+//         const LJParameter *ljarray = ljparams[i].parameters().constData();
+//
+//         cljs.reserve(nparams);
+//
+//         for (int j=0; j<nparams; ++j)
+//         {
+//             cljs.append( CLJParameter(chargearray[j],ljarray[j]) );
+//         }
+//
+//         cljparams.append(cljs);
+//     }
+
     //add this molecule to the list
-    mols.append( MolCLJInfo(mol, cljparams) );
+    mols.append( MolCLJInfo(mol, chgs, ljs) );
 }
 
 /** Move the molecule 'molecule' */

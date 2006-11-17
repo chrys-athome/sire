@@ -106,62 +106,79 @@ ArithmeticCombiningRules::ArithmeticCombiningRules(
 ArithmeticCombiningRules::~ArithmeticCombiningRules()
 {}
 
-/** Combine the CLJ parameters in 'clj0' and 'clj1' using
+/** Combine the charge and LJ parameters using
     arithmetic combining rules and place the results
     in the matrix 'cljmatrix' */
-void ArithmeticCombiningRules::combine(const QVector<CLJParameter> &clj0,
-                                       const QVector<CLJParameter> &clj1,
+void ArithmeticCombiningRules::combine(const QVector<ChargeParameter> &chg0,
+                                       const QVector<LJParameter> &lj0,
+                                       const QVector<ChargeParameter> &chg1,
+                                       const QVector<LJParameter> &lj1,
                                        CLJPairMatrix &cljmatrix) const
 {
-    int nclj0 = clj0.count();
-    int nclj1 = clj1.count();
+    int nclj0 = chg0.count();
+    int nclj1 = chg1.count();
+
+    BOOST_ASSERT( nclj0 == lj0.count() );
+    BOOST_ASSERT( nclj1 == lj1.count() );
 
     cljmatrix.redimension(nclj0,nclj1);
 
     if (nclj0 > 0 and nclj1 > 0)
     {
-        const CLJParameter *clj0array = clj0.constData();
-        const CLJParameter *clj1array = clj1.constData();
+        const ChargeParameter *chg0array = chg0.constData();
+        const LJParameter *lj0array = lj0.constData();
+
+        const ChargeParameter *chg1array = chg1.constData();
+        const LJParameter *lj1array = lj1.constData();
 
         for (int i=0; i<nclj0; ++i)
         {
-            const CLJParameter &cljparam0 = clj0array[i];
+            CLJParameter cljparam0( chg0array[i], lj0array[i] );
+
             cljmatrix.setOuterIndex(i);
 
             for (int j=0; j<nclj1; ++j)
             {
-                cljmatrix[j] = CLJPair::arithmetic(cljparam0,clj1array[j]);
+                cljmatrix[j] = CLJPair::arithmetic( cljparam0,
+                                                    CLJParameter(chg1array[j],
+                                                                 lj1array[j]) );
             }
         }
     }
 }
 
-/** Combine all pairs of the CLJ parameters in 'clj', using arithmetic
+/** Combine all pairs of the charge and LJ parameters, using arithmetic
     combining rules, and place the results in the matrix 'cljmatrix' */
-void ArithmeticCombiningRules::combine(const QVector<CLJParameter> &clj,
+void ArithmeticCombiningRules::combine(const QVector<ChargeParameter> &chgs,
+                                       const QVector<LJParameter> &ljs,
                                        CLJPairMatrix &cljmatrix) const
 {
-    int nclj = clj.count();
+    int nclj = chgs.count();
+
+    BOOST_ASSERT( nclj == ljs.count() );
 
     cljmatrix.redimension(nclj,nclj);
 
     if (nclj > 0)
     {
-        const CLJParameter *cljarray  = clj.constData();
+        const ChargeParameter *chgarray  = chgs.constData();
+        const LJParameter *ljarray = ljs.constData();
 
         for (int i=0; i<nclj-1; ++i)
         {
-            const CLJParameter &cljparam = cljarray[i];
+            CLJParameter cljparam( chgarray[i], ljarray[i] );
 
             cljmatrix(i,i) = cljparam;
 
             for (int j=i+1; j<nclj; ++j)
             {
-                cljmatrix(i,j) = CLJPair::arithmetic(cljparam,cljarray[j]);
+                cljmatrix(i,j) = CLJPair::arithmetic( cljparam,
+                                                      CLJParameter(chgarray[j],
+                                                                   ljarray[j]) );
             }
         }
 
-        cljmatrix(nclj-1,nclj-1) = cljarray[nclj-1];
+        cljmatrix(nclj-1,nclj-1) = CLJParameter(chgarray[nclj-1], ljarray[nclj-1]);
     }
 }
 
@@ -212,62 +229,82 @@ GeometricCombiningRules::GeometricCombiningRules(
 GeometricCombiningRules::~GeometricCombiningRules()
 {}
 
-/** Combine the CLJ parameters in 'clj0' and 'clj1' using
+/** Combine the charge and LJ parameters using
     geometric combining rules and place the results
     in the matrix 'cljmatrix' */
-void GeometricCombiningRules::combine(const QVector<CLJParameter> &clj0,
-                                       const QVector<CLJParameter> &clj1,
-                                       CLJPairMatrix &cljmatrix) const
+void GeometricCombiningRules::combine(const QVector<ChargeParameter> &chg0,
+                                      const QVector<LJParameter> &lj0,
+                                      const QVector<ChargeParameter> &chg1,
+                                      const QVector<LJParameter> &lj1,
+                                      CLJPairMatrix &cljmatrix) const
 {
-    int nclj0 = clj0.count();
-    int nclj1 = clj1.count();
+    int nclj0 = chg0.count();
+    int nclj1 = chg1.count();
+
+    BOOST_ASSERT( nclj0 == lj0.count() );
+    BOOST_ASSERT( nclj1 == lj1.count() );
 
     cljmatrix.redimension(nclj0,nclj1);
 
     if (nclj0 > 0 and nclj1 > 0)
     {
-        const CLJParameter *clj0array = clj0.constData();
-        const CLJParameter *clj1array = clj1.constData();
+        const ChargeParameter *chg0array = chg0.constData();
+        const LJParameter *lj0array = lj0.constData();
+
+        const ChargeParameter *chg1array = chg1.constData();
+        const LJParameter *lj1array = lj1.constData();
 
         for (int i=0; i<nclj0; ++i)
         {
-            const CLJParameter &cljparam0 = clj0array[i];
+            const ChargeParameter &chgparam0 = chg0array[i];
+            const LJParameter &ljparam0 = lj0array[i];
+
             cljmatrix.setOuterIndex(i);
 
             for (int j=0; j<nclj1; ++j)
             {
-                cljmatrix[j] = CLJPair::geometric(cljparam0,clj1array[j]);
+                const LJParameter &ljparam1 = lj1array[j];
+
+                cljmatrix[j] = CLJPair( chgparam0.charge() * chg1array[j].charge(),
+                                        ljparam0.sqrtSigma() * ljparam1.sqrtSigma(),
+                                        ljparam0.sqrtEpsilon() * ljparam1.sqrtEpsilon() );
             }
         }
     }
 }
 
-/** Combine all pairs of the CLJ parameters in 'clj', using geometric
+/** Combine all pairs of the charge and LJ parameters, using geometric
     combining rules, and place the results in the matrix 'cljmatrix' */
-void GeometricCombiningRules::combine(const QVector<CLJParameter> &clj,
-                                       CLJPairMatrix &cljmatrix) const
+void GeometricCombiningRules::combine(const QVector<ChargeParameter> &chgs,
+                                      const QVector<LJParameter> &ljs,
+                                      CLJPairMatrix &cljmatrix) const
 {
-    int nclj = clj.count();
+    int nclj = chgs.count();
+
+    BOOST_ASSERT( nclj == ljs.count() );
 
     cljmatrix.redimension(nclj,nclj);
 
     if (nclj > 0)
     {
-        const CLJParameter *cljarray  = clj.constData();
+        const ChargeParameter *chgarray  = chgs.constData();
+        const LJParameter *ljarray = ljs.constData();
 
         for (int i=0; i<nclj-1; ++i)
         {
-            const CLJParameter &cljparam = cljarray[i];
+            CLJParameter cljparam( chgarray[i], ljarray[i] );
 
             cljmatrix(i,i) = cljparam;
 
             for (int j=i+1; j<nclj; ++j)
             {
-                cljmatrix(i,j) = CLJPair::geometric(cljparam,cljarray[j]);
+                cljmatrix(i,j) = CLJPair::geometric( cljparam,
+                                                     CLJParameter(chgarray[j],
+                                                                  ljarray[j]) );
             }
         }
 
-        cljmatrix(nclj-1,nclj-1) = cljarray[nclj-1];
+        cljmatrix(nclj-1,nclj-1) = CLJParameter(chgarray[nclj-1], ljarray[nclj-1]);
     }
 }
 
