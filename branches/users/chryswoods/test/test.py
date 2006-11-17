@@ -21,8 +21,8 @@ print "... took %d ms" % ms
 #specify the space in which the molecules are placed
 space = Cartesian()
 
-space = PeriodicBox(Vector(-18.3854,-18.66855,-18.4445), \
-                    Vector( 18.3854, 18.66855, 18.4445))
+#space = PeriodicBox(Vector(-18.3854,-18.66855,-18.4445), \
+#                    Vector( 18.3854, 18.66855, 18.4445))
 
 #specify the type of switching function to use
 switchfunc = HarmonicSwitchingFunction(80.0)
@@ -71,6 +71,8 @@ nrg = cljff.energy()
 ms = timer.elapsed()
 
 print "InterCLJFF ",cljff.energy(), "kcal mol-1"
+print "    Coulomb = ", cljff.energy(cljff.coulomb())
+print "         LJ = ", cljff.energy(cljff.lj())
 
 print "... took %d ms" % ms
 

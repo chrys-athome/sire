@@ -91,6 +91,15 @@ protected:
     /** Information about every molecule contained in this forcefield */
     QVector<detail::MolCLJInfo> mols;
 
+    /** Hash mapping MoleculeID to index in 'mols' */
+    QHash<MoleculeID, int> molid_to_molindex;
+
+    /** Information about all of the moved molecules since the last
+        energy update */
+    QVector<detail::MovedMolCLJInfo> movedmols;
+
+    /** Hash mapping MoleculeID to index in 'movedmols' */
+    QHash<MoleculeID, int> molid_to_movedindex;
 };
 
 }
