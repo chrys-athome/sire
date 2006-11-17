@@ -31,6 +31,7 @@ namespace detail
 {
 class MolCLJInfo;
 class MolCLJInfoData;
+class ChangedMolCLJInfo;
 }
 }
 
@@ -39,6 +40,9 @@ QDataStream& operator>>(QDataStream&, SireMM::detail::MolCLJInfo&);
 
 QDataStream& operator<<(QDataStream&, const SireMM::detail::MolCLJInfoData&);
 QDataStream& operator>>(QDataStream&, SireMM::detail::MolCLJInfoData&);
+
+QDataStream& operator<<(QDataStream&, const SireMM::detail::ChangedMolCLJInfo&);
+QDataStream& operator>>(QDataStream&, SireMM::detail::ChangedMolCLJInfo&);
 
 namespace SireMM
 {
@@ -192,6 +196,102 @@ private:
     /** Shared pointer to the data of this object */
     QSharedDataPointer<MolCLJInfoData> d;
 };
+
+/** This class is used to store information about changed molecules
+
+    @author Christopher Woods
+*/
+class ChangedMolCLJInfo
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const ChangedMolCLJInfo&);
+friend QDataStream& ::operator>>(QDataStream&, ChangedMolCLJInfo&);
+
+public:
+    ChangedMolCLJInfo();
+
+    ChangedMolCLJInfo( const MolCLJInfo &oldmol,
+                       const MolCLJInfo &newmol );
+
+    ChangedMolCLJInfo( const MolCLJInfo &oldmol,
+                       const MolCLJInfo &newmol,
+                       const QSet<CutGroupID> &movedparts );
+
+    ~ChangedMolCLJInfo();
+
+    const MolCLJInfo& newMol() const;
+    const MolCLJInfo& oldMol() const;
+
+    const MolCLJInfo& newParts() const;
+    const MolCLJInfo& oldParts() const;
+
+    bool movedAll() const;
+
+    void change(const MolCLJInfo &newinfo,
+                const QSet<CutGroupID> &changedparts);
+
+    void change(const MolCLJInfo &newinfo);
+
+    void assertCompatibleWith(const MolCLJInfo &molinfo);
+
+private:
+    /** Shared pointer to the data for the whole of the old configuration
+        of the molecule */
+    MolCLJInfo oldmol;
+
+    /** Shared pointer to the data for the whole of the new configuration
+        of the molecule */
+    MolCLJInfo newmol;
+
+    /** Shared pointer to the data of the old configuration of the parts of
+        the molecule that have moved */
+    MolCLJInfo oldparts;
+
+    /** Shared pointer to the data of the new configuration of the parts of
+        the molecule that have moved */
+    MolCLJInfo newparts;
+
+    /** The set of CutGroupIDs of all of the CutGroups that have changed
+        between the old and new configurations. This will be empty
+        if all of the CutGroups have changed (and thus oldmol == oldparts
+        and newmol == newparts) */
+    QSet<CutGroupID> cgids;
+};
+
+/** Return the CLJ and coordinate information for the
+    whole molecule after the change */
+inline const MolCLJInfo& ChangedMolInfo::newMol() const
+{
+    return newmol;
+}
+
+/** Return the CLJ and coordinate information for the
+    whole molecule for before the change */
+inline const MolCLJInfo& ChangedMolInfo::oldMol() const
+{
+    return oldmol;
+}
+
+/** Return the CLJ and coordinate information for the
+    parts of the molecule that changed from after the change. */
+inline const MolCLJInfo& ChangedMolInfo::newParts() const
+{
+    return newparts;
+}
+
+/** Return the CLJ and coordinate information for the
+     parts of the molecule that changed from before the change. */
+inline const MolCLJInfo& ChangedMolInfo::oldParts() const
+{
+    return oldparts;
+}
+
+/** Return whether or not the whole molecule changed, or
+    whether only part of the molecule changed */
+inline bool ChangedMolInfo::movedAll() const
+{
+    return cgids.isEmpty();
+}
 
 }
 

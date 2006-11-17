@@ -38,7 +38,7 @@ using namespace SireStream;
 static const RegisterMetaType<MolCLJInfoData> r_moldata("SireMM::detail::MolCLJInfoData");
 
 /** Serialise to a binary data stream */
-QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const MolCLJInfoData &moldata)
+QDataStream &operator<<(QDataStream &ds, const MolCLJInfoData &moldata)
 {
     writeHeader(ds, r_moldata, 1)
         << moldata.molecule << moldata.chgparams << moldata.ljparams;
@@ -47,7 +47,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const MolCLJInfoData &mol
 }
 
 /** Deserialise from a binary data stream */
-QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, MolCLJInfoData &moldata)
+QDataStream &operator>>(QDataStream &ds, MolCLJInfoData &moldata)
 {
     VersionID v = readHeader(ds, r_moldata);
 
@@ -229,7 +229,7 @@ static const QSharedDataPointer<MolCLJInfoData> shared_null(new MolCLJInfoData()
 static const RegisterMetaType<MolCLJInfo> r_molinfo("SireMM::detail::MolCLJInfo");
 
 /** Serialise to a binary data stream */
-QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const MolCLJInfo &molinfo)
+QDataStream &operator<<(QDataStream &ds, const MolCLJInfo &molinfo)
 {
     writeHeader(ds, r_molinfo, 1);
 
@@ -239,7 +239,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const MolCLJInfo &molinfo
 }
 
 /** Deserialise from a binary data stream */
-QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, MolCLJInfo &molinfo)
+QDataStream &operator>>(QDataStream &ds, MolCLJInfo &molinfo)
 {
     VersionID v = readHeader(ds, r_molinfo);
 
@@ -271,3 +271,70 @@ MolCLJInfo::MolCLJInfo(const Molecule &molecule,
 /** Destructor */
 MolCLJInfo::~MolCLJInfo()
 {}
+
+/////////
+///////// Implementation of ChangedMolCLJInfo
+/////////
+
+static const RegisterMetaType<ChangedMolCLJInfo>
+                          r_changedmol("SireMM::detail::ChangedMolCLJInfo");
+
+/** Serialise to a binary datastream */
+QDataStream &operator<<(QDataStream &ds, const ChangedMolCLJInfo &changedmol)
+{
+    writeHeader(ds, r_changedmol, 1) << changedmol.newmol << changedmol.newparts
+                                     << changedmol.oldmol << changedmol.oldparts
+                                     << changedmol.cgids;
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream &operator>>(QDataStream &ds, ChangedMolCLJInfo &changedmol)
+{
+    VersionID v = readHeader(ds, r_changedmol);
+
+    if (v == 1)
+    {
+        ds >> changedmol.newmol >> changedmol.newparts
+           >> changedmol.oldmol >> changedmol.oldparts
+           >> changedmol.cgids;
+    }
+    else
+        throw version_error(v, "1", r_changedmol, CODELOC);
+
+    return ds;
+}
+
+/** Null constructor */
+ChangedMolCLJInfo::ChangedMolCLJInfo()
+{}
+
+/** Record that the molecule is changing from 'old_molecule' to 'new_molecule'
+     - the entire molecule is recorded as changing
+
+    The old and new molecules must be compatible, i.e. they
+    must have the same MoleculeID numbers.
+
+    \throw SireError::incompatible_error
+*/
+ChangedMolCLJInfo::ChangedMolCLJInfo( const MolCLJInfo &old_molecule,
+                                      const MolCLJInfo &new_molecule )
+                  : oldmol(old_molecule), newmol(new_molecule),
+                    oldparts(old_molecule), newparts(new_molecule)
+{}
+
+ChangedMolCLJInfo::ChangedMolCLJInfo( const MolCLJInfo &oldmol,
+                   const MolCLJInfo &newmol,
+                   const QSet<CutGroupID> &movedparts );
+
+ChangedMolCLJInfo::~ChangedMolCLJInfo();
+
+/** Add additional changed parts of the molecule to this record */
+void ChangedMolCLJInfo::change(const MolCLJInfo &newinfo,
+            const QSet<CutGroupID> &changedparts);
+
+/** Change the molecule again */
+void ChangedMolCLJInfo::change(const MolCLJInfo &newinfo);
+
+void ChangedMolCLJInfo::assertCompatibleWith(const MolCLJInfo &molinfo);
