@@ -13,7 +13,7 @@ This holds the list of molecules that have changed. This includes molecules whos
 
 @author Christopher Woods
 */
-class ChangedMols
+class SIREFF_EXPORT ChangedMols
 {
 public:
     ChangedMols();

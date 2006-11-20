@@ -16,7 +16,9 @@ using namespace boost::python;
 namespace SireMM
 {
 
-void export_assign_bonds()
+void  
+SIREMM_EXPORT
+export_assign_bonds()
 {
     wrap_assign_internals<MolBondInfo>("assign_internals_MolBondInfo_");
     

@@ -8,7 +8,9 @@
 
 using namespace SireQt;
     
-void export_QHash_QString_QString()
+void  
+SIREQT_EXPORT
+export_QHash_QString_QString()
 {                            
     wrap_QHash<QString,QString>("QHash_QString_QString_");
 }

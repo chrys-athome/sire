@@ -18,7 +18,9 @@ using namespace SireFF::EnergyType;
 namespace SireFF
 {
 
-void export_EnergyType()
+void  
+SIREFF_EXPORT
+export_EnergyType()
 {
     enum_<EnergyType::EnergyType>("EnergyType")
                            .value("Coulomb", Coulomb)

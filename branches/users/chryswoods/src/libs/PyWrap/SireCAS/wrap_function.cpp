@@ -29,7 +29,9 @@ using namespace boost::python;
 namespace SireCAS
 {
 
-void export_Function()
+void  
+SIRECAS_EXPORT
+export_Function()
 {
     Function (Function::*wrap_call0)(const Symbol&
                                     ) const = &Function::operator();

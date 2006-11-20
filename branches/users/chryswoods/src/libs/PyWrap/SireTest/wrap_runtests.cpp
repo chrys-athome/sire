@@ -16,7 +16,9 @@ using namespace boost::python;
 namespace SireTest
 {
 
-void export_RunTests()
+void  
+SIRETEST_EXPORT
+export_RunTests()
 {
     class_<RunTests>("RunTests", init<>())
                 .def("run", &RunTests::run)

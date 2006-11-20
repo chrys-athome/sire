@@ -22,7 +22,9 @@ using namespace boost::python;
 namespace SireVol
 {
 
-void export_Space()
+void  
+SIREVOL_EXPORT
+export_Space()
 {
     class_<SpaceBase, boost::noncopyable>("SpaceBase", no_init)
 

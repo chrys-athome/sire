@@ -8,7 +8,9 @@ using namespace boost::python;
 namespace SireMM
 {
 
-void export_SwitchingFunction()
+void  
+SIREMM_EXPORT
+export_SwitchingFunction()
 {
     class_<SwitchFuncBase, boost::noncopyable>("SwitchFuncBase", no_init)
     ;

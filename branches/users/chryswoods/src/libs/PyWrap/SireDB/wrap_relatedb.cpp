@@ -34,7 +34,9 @@ using namespace SireMol;
 namespace SireDB
 {
 
-void export_RelateDB()
+void  
+SIREDB_EXPORT
+export_RelateDB()
 {
     class_<RelationshipDB, bases<DBBase>, boost::noncopyable>("RelationshipDB", no_init)
     

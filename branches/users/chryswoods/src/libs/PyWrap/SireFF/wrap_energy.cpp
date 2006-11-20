@@ -29,7 +29,9 @@ void wrapEnergy(const char *name)
     ;
 }
 
-void export_Energy()
+void  
+SIREFF_EXPORT
+export_Energy()
 {
     wrapEnergy<CoulombEnergy>("CoulombEnergy");
     wrapEnergy<LJEnergy>("LJEnergy");

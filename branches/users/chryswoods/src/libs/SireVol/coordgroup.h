@@ -56,7 +56,7 @@ class CoordGroupEditor;
 
     @author Christopher Woods
 */
-class CoordGroupPvt : public QSharedData
+class SIREVOL_EXPORT CoordGroupPvt : public QSharedData
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const CoordGroupPvt&);

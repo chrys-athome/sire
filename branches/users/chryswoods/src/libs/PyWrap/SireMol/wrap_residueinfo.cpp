@@ -32,7 +32,9 @@ const VALUE& __getitem__ResidueInfo(const ResidueInfo &resinfo, IDX idx)
     return resinfo[idx];
 }
 
-void export_ResidueInfo()
+void  
+SIREMOL_EXPORT
+export_ResidueInfo()
 {
 
     class_<ResidueInfo>( "ResidueInfo", init<>() )

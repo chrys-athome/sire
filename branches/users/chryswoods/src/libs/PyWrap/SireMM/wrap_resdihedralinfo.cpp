@@ -23,7 +23,9 @@ using namespace SireMol;
 namespace SireMM
 {
 
-void export_ResDihedralInfo()
+void  
+SIREMM_EXPORT
+export_ResDihedralInfo()
 {
     class_<ResDihedralInfo> wrap_ResDihedralInfo("ResDihedralInfo", init<>());
     

@@ -26,7 +26,9 @@ using namespace boost::python;
 namespace SireCAS
 {
 
-void export_ExBase_Operators(class_<ExBase, boost::noncopyable> &wrapper)
+void  
+SIRECAS_EXPORT
+export_ExBase_Operators(class_<ExBase, boost::noncopyable> &wrapper)
 {
     wrapper
         .def( -self )
@@ -69,7 +71,9 @@ void export_ExBase_Operators(class_<ExBase, boost::noncopyable> &wrapper)
     ;
 }
 
-void export_Operators(class_<Expression> &wrapper)
+void  
+SIRECAS_EXPORT
+export_Operators(class_<Expression> &wrapper)
 {
     wrapper
         .def( -self )

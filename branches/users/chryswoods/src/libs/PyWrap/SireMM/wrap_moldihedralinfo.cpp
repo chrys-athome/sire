@@ -79,7 +79,9 @@ void wrap_removeDihedrals_QSet(MolDihedralInfo &m, const QSet<Dihedral> &bonds)
     m.removeDihedrals(bonds);
 }
 
-void export_MolDihedralInfo()
+void  
+SIREMM_EXPORT
+export_MolDihedralInfo()
 {
     //wrap the iterator type
     wrap_InternalIterator<Dihedral>("DihedralInfoIterator");

@@ -19,7 +19,9 @@ using namespace SireQt;
 namespace SireMM
 {
 
-void export_AngleTable()
+void  
+SIREMM_EXPORT
+export_AngleTable()
 {
     wrap_InternalTableBase<MolAngleInfo>("InternalTableBase_MolAngleInfo_");
     wrap_InternalTable<MolAngleInfo,Expression>("InternalTable_MolAngleInfo_Expression_");

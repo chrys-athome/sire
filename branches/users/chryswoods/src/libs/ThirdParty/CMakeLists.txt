@@ -9,6 +9,9 @@ set ( THIRDPARTY_SOURCES
       md5.c
     )
 
+# Other Sire libraries
+include_directories(${CMAKE_SOURCE_DIR}/src/libs)
+
 add_library (ThirdParty ${THIRDPARTY_SOURCES})
 
 set_target_properties (ThirdParty PROPERTIES

@@ -190,6 +190,7 @@ protected:
                            const QString &description);
 
     void setComponent(const Function &comp, double nrg);
+    void changeComponent(const Function &comp, double delta);
 
     void addToRegister(const Molecule &molecule);
     void addToRegister(const Residue &residue);
@@ -232,6 +233,12 @@ private:
 inline void FFBase::setComponent(const Function &comp, double nrg)
 {
     nrg_components.set(comp,nrg);
+}
+
+/** Change the existing value of the component 'comp' by delta */
+inline void FFBase::changeComponent(const Function &comp, double delta)
+{
+    nrg_components.set( comp, delta + nrg_components.value(comp) );
 }
 
 }

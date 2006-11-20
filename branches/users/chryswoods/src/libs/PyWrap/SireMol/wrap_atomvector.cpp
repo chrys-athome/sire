@@ -19,7 +19,9 @@ using namespace SireQt;
 namespace SireMol
 {
 
-void export_AtomVector()
+void  
+SIREMOL_EXPORT
+export_AtomVector()
 {
     SireQt::wrap_QVector<Atom>("QVector_Atom_");
     SireQt::wrap_QVector<AtomIndex>("QVector_AtomIndex_");

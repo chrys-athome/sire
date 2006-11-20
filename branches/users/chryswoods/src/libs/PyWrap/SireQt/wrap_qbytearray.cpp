@@ -9,7 +9,9 @@
 using namespace boost::python;
 using namespace SireQt;
 
-void export_QByteArray()
+void  
+SIREQT_EXPORT
+export_QByteArray()
 {
     class_<QByteArray>("QByteArray", init<>())
         .def( init<const char*>() )

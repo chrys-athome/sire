@@ -35,6 +35,7 @@ namespace detail
 {
 
 class MolCLJInfo;
+class ChangedMolCLJInfo;
 class ResCLJInfo;
 
 class CLJWorkspace

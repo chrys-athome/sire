@@ -25,7 +25,9 @@ using namespace boost::python;
 namespace SireDB
 {
 
-void export_MatchMol()
+void  
+SIREDB_EXPORT
+export_MatchMol()
 {
     class_<MatchMol>("MatchMol", init<>())
         .def( self == self )

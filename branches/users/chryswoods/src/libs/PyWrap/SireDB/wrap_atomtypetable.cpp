@@ -26,7 +26,9 @@ using namespace SireQt;
 namespace SireDB
 {
 
-void export_AtomTypeTable()
+void  
+SIREDB_EXPORT
+export_AtomTypeTable()
 {
     export_AtomTable<AtomType>("AtomTableT_AtomType_");
 

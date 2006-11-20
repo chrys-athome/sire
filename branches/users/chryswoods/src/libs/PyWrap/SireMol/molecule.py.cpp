@@ -40,7 +40,9 @@ namespace bp = boost::python;
 namespace SireMol
 {
 
-void export_Molecule()
+void  
+SIREMOL_EXPORT
+export_Molecule()
 {
     bp::class_< SireMol::Molecule >( "Molecule" )    
         .def( bp::init< >()[bp::default_call_policies()] )    

@@ -24,7 +24,9 @@ using namespace boost::python;
 namespace SireCAS
 {
 
-void export_Identities()
+void  
+SIRECAS_EXPORT
+export_Identities()
 {
     void (Identities::*wrap_iadd0)(const SymbolExpression&)
                       = &Identities::add;

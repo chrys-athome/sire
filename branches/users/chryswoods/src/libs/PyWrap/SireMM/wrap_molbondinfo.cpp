@@ -79,7 +79,9 @@ void wrap_removeBonds_QSet(MolBondInfo &m, const QSet<Bond> &bonds)
     m.removeBonds(bonds);
 }
 
-void export_MolBondInfo()
+void  
+SIREMM_EXPORT
+export_MolBondInfo()
 {
     //wrap the iterator type
     wrap_InternalIterator<Bond>("BondInfoIterator");

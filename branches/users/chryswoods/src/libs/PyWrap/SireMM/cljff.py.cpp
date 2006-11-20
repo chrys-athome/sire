@@ -17,7 +17,9 @@ namespace bp = boost::python;
 namespace SireMM
 {
 
-void export_CLJFF()
+void  
+SIREMM_EXPORT
+export_CLJFF()
 {
     bp::class_< CLJFF, bp::bases<SireFF::FFBase>, boost::noncopyable >( "CLJFF", bp::no_init )
         .def(

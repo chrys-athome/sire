@@ -24,7 +24,9 @@ using namespace boost::python;
 namespace SireCAS
 {
 
-void export_Values()
+void  
+SIRECAS_EXPORT
+export_Values()
 {
     void (Values::*wrap_add0)(const SymbolValue&)
                     = &Values::add;

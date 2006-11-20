@@ -135,7 +135,9 @@ MatchMRAData mra_and_mradata(const MatchMRAData &mradata, const MatchMRA &mra)
     return mra and mradata;
 }
 
-void export_MatchMRA()
+void  
+SIREDB_EXPORT
+export_MatchMRA()
 {
     class_<MatchMRA, bases<MatchData> >("MatchMRA", init<>())
         .def( init<const MatchMR&, const MatchAtom&>() )

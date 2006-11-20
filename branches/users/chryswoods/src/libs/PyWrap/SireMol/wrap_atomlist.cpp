@@ -21,7 +21,9 @@ using namespace SireQt;
 namespace SireMol
 {
 
-void export_AtomList()
+void  
+SIREMOL_EXPORT
+export_AtomList()
 {
     wrap_QList<Atom>("QList_Atom_");
     wrap_QList<AtomIndex>("QList_AtomIndex_");

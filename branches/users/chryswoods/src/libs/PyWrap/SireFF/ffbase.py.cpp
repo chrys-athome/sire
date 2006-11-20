@@ -26,7 +26,9 @@ public:
     {}
 };
 
-void export_FFBase()
+void 
+SIREFF_EXPORT
+export_FFBase()
 {
     bp::class_< FFBase, boost::noncopyable >( "FFBase", bp::no_init )
         .def(

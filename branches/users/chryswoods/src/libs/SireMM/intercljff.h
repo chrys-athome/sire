@@ -34,7 +34,7 @@ using SireDB::ParameterTable;
 
     \author Christopher Woods
 */
-class InterCLJFF : public CLJFF
+class SIREMM_EXPORT InterCLJFF : public CLJFF
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const InterCLJFF&);
@@ -86,6 +86,9 @@ public:
     void remove(const Residue &residue);
 
 protected:
+    void recalculateViaDelta();
+    void recalculateTotalEnergy();
+    
     void recalculateEnergy();
 
     /** Information about every molecule contained in this forcefield */
@@ -94,12 +97,16 @@ protected:
     /** Hash mapping MoleculeID to index in 'mols' */
     QHash<MoleculeID, int> molid_to_molindex;
 
-    /** Information about all of the moved molecules since the last
+    /** Information about all of the changed molecules since the last
         energy update */
-    QVector<detail::MovedMolCLJInfo> movedmols;
+    QVector<detail::ChangedMolCLJInfo> movedmols;
 
     /** Hash mapping MoleculeID to index in 'movedmols' */
     QHash<MoleculeID, int> molid_to_movedindex;
+    
+    /** The IDs of all of the molecules that were removed since the last
+        energy update */
+    QSet<MoleculeID> removedmols;
 };
 
 }

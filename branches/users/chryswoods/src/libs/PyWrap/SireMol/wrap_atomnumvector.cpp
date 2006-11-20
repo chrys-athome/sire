@@ -21,7 +21,9 @@ using namespace SireQt;
 namespace SireMol
 {
 
-void export_AtomNumVector()
+void  
+SIREMOL_EXPORT
+export_AtomNumVector()
 {
     wrap_QVector<AtomNum>("QVector_AtomNum_");
     wrap_QVector<ResNum>("QVector_ResNum_");

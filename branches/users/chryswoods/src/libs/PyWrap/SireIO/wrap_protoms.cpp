@@ -18,7 +18,9 @@ using namespace boost::python;
 namespace SireIO
 {
 
-void export_ProtoMS()
+void  
+SIREIO_EXPORT
+export_ProtoMS()
 {
     class_<ProtoMS>("ProtoMS", init<>())
         .def("read", &ProtoMS::read)

@@ -28,7 +28,9 @@ using namespace SireQt;
 namespace SireMM
 {
 
-void export_LJTable()
+void  
+SIREMM_EXPORT
+export_LJTable()
 {
     export_AtomTable<LJParameter>("AtomTableT_LJParameter_");
 

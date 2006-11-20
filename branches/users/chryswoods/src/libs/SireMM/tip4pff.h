@@ -40,7 +40,7 @@ using SireDB::ParameterTable;
 
     \author Christopher Woods
 */
-class Tip4PFF : public CLJFF
+class SIREMM_EXPORT Tip4PFF : public CLJFF
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const Tip4PFF&);

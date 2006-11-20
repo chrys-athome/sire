@@ -8,7 +8,9 @@ using namespace boost::python;
 namespace SireMM
 {
 
-void export_CombiningRules()
+void  
+SIREMM_EXPORT
+export_CombiningRules()
 {
     class_<CombiningRuleBase, boost::noncopyable>("CombiningRuleBase", no_init)
     ;

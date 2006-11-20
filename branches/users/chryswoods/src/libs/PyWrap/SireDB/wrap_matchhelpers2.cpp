@@ -23,7 +23,9 @@ using namespace boost::python;
 namespace SireDB
 {
 
-void export_MatchHelpers2()
+void  
+SIREDB_EXPORT
+export_MatchHelpers2()
 {
     class_<match_single_res_name>("match_single_res_name", init<>())
         .def(self == QString())

@@ -27,7 +27,9 @@ QString get_string_representation<QChar>(const QChar &qchar)
 }
 
 /** Wrap the QChar class */
-void export_QChar()
+void  
+SIREQT_EXPORT
+export_QChar()
 {
     scope QChar_scope = class_<QChar>("QChar", init<>())
         .def( init<uchar, uchar>() )

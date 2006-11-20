@@ -16,7 +16,9 @@ using namespace SireQt;
 namespace SireMol
 {
 
-void export_Dihedrals()
+void  
+SIREMOL_EXPORT
+export_Dihedrals()
 {
     wrap_QVector<Dihedral>("QVector_Dihedral_");
     wrap_QList<Dihedral>("QList_Dihedral_");

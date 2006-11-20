@@ -19,7 +19,9 @@ namespace bp = boost::python;
 namespace SireMM
 {
 
-void export_InterCLJFF()
+void  
+SIREMM_EXPORT
+export_InterCLJFF()
 {
     bp::class_< InterCLJFF, bp::bases< SireMM::CLJFF > >( "InterCLJFF" )
         .def( bp::init< >()[bp::default_call_policies()] )

@@ -49,7 +49,9 @@ QList<Molecule> read4(const IOBase &iobase, QIODevice &iodevice,
     return iobase.read(iodevice, cutfunc);
 }
 
-void export_IOBase()
+void  
+SIREIO_EXPORT
+export_IOBase()
 {
 
     class_<IOBase, boost::noncopyable>("IOBase", no_init)

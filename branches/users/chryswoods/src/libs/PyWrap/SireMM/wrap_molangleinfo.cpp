@@ -79,7 +79,9 @@ void wrap_removeAngles_QSet(MolAngleInfo &m, const QSet<Angle> &bonds)
     m.removeAngles(bonds);
 }
 
-void export_MolAngleInfo()
+void  
+SIREMM_EXPORT
+export_MolAngleInfo()
 {
     //wrap the iterator type
     wrap_InternalIterator<Angle>("AngleInfoIterator");

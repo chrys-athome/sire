@@ -151,7 +151,9 @@ ParameterTable wrap_assign_b2(const assign_parameters &assigner,
     return assigner.assign(molecule, orig_table, database);
 }
 
-void export_assign_parameters()
+void  
+SIREDB_EXPORT
+export_assign_parameters()
 {
     //register the from-python converter for assign_parameters
     //this allow assign_parameters to be constructed from a python list

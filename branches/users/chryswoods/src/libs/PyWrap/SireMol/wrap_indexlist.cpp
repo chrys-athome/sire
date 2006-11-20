@@ -21,7 +21,9 @@ using namespace SireQt;
 namespace SireMol
 {
 
-void export_IndexList()
+void  
+SIREMOL_EXPORT
+export_IndexList()
 {
     wrap_QList<Index>("QList_Index_");
 }

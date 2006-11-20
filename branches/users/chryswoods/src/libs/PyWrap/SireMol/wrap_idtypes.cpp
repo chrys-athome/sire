@@ -30,7 +30,9 @@ namespace SireMol
 {
 
 
-void export_IDTypes()
+void  
+SIREMOL_EXPORT
+export_IDTypes()
 {
     wrap_ID<AtomNum>("AtomNum");
     wrap_ID<ResNum>("ResNum");

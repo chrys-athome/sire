@@ -37,7 +37,9 @@ Expression wrap_simplify2(const ExpressionBase &ex)
     return ex.simplify();
 }
     
-void export_ExpressionBase()
+void  
+SIRECAS_EXPORT
+export_ExpressionBase()
 {
     class_<ExpressionBase> wrapper("ExpressionBase", init<>());
     

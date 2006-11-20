@@ -310,6 +310,22 @@ QDataStream &operator>>(QDataStream &ds, ChangedMolCLJInfo &changedmol)
 ChangedMolCLJInfo::ChangedMolCLJInfo()
 {}
 
+/** Assert that 'molinfo' is compatible with the molecule in this
+    object
+    
+    \throw SireError::incompatible_error
+*/
+void ChangedMolCLJInfo::assertCompatibleWith(const MolCLJInfo &molinfo)
+{
+}
+
+/** Build the old and new parts from the old and new molecules and list 
+    of changed cutgroups */
+void ChangedMolCLJInfo::buildParts()
+{
+    #warning TODO!!!
+}
+
 /** Record that the molecule is changing from 'old_molecule' to 'new_molecule'
      - the entire molecule is recorded as changing
 
@@ -324,17 +340,44 @@ ChangedMolCLJInfo::ChangedMolCLJInfo( const MolCLJInfo &old_molecule,
                     oldparts(old_molecule), newparts(new_molecule)
 {}
 
-ChangedMolCLJInfo::ChangedMolCLJInfo( const MolCLJInfo &oldmol,
-                   const MolCLJInfo &newmol,
-                   const QSet<CutGroupID> &movedparts );
+/** Record that the molecule is changing from 'old_molecule' to 'new_molecule'
+    and that it is only the CutGroups whose IDs that are in 'movedparts'
+    that are changing */
+ChangedMolCLJInfo::ChangedMolCLJInfo( const MolCLJInfo &old_molecule,
+                                      const MolCLJInfo &new_molecule,
+                                      const QSet<CutGroupID> &movedparts )
+                  : oldmol(old_molecule), newmol(new_molecule), cgids(movedparts)
+{
+    this->buildParts();
+}
 
-ChangedMolCLJInfo::~ChangedMolCLJInfo();
+/** Destructor */
+ChangedMolCLJInfo::~ChangedMolCLJInfo()
+{}
 
 /** Add additional changed parts of the molecule to this record */
 void ChangedMolCLJInfo::change(const MolCLJInfo &newinfo,
-            const QSet<CutGroupID> &changedparts);
+                               const QSet<CutGroupID> &changedparts)
+{
+    this->assertCompatibleWith(newinfo);
+    
+    newmol = newinfo;
+    
+    //the changed parts are the union of the current changed parts
+    //with the existing changed parts
+    cgids += changedparts;
+    
+    this->buildParts();
+}
 
 /** Change the molecule again */
-void ChangedMolCLJInfo::change(const MolCLJInfo &newinfo);
+void ChangedMolCLJInfo::change(const MolCLJInfo &newinfo)
+{
+    this->assertCompatibleWith(newinfo);
 
-void ChangedMolCLJInfo::assertCompatibleWith(const MolCLJInfo &molinfo);
+    //the whole molecule has now changed
+    newmol = newinfo;
+    newparts = newinfo;
+    
+    oldparts = oldmol;
+}

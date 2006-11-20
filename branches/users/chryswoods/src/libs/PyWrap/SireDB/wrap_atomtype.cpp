@@ -21,7 +21,9 @@ using namespace SirePy;
 namespace SireDB
 {
 
-void export_AtomType()
+void  
+SIREDB_EXPORT
+export_AtomType()
 {
     
     class_<AtomType>("AtomType", init<>())

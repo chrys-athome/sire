@@ -17,7 +17,9 @@ using namespace boost::python;
 namespace SireMol
 {
 
-void export_MoleculeBonds()
+void  
+SIREMOL_EXPORT
+export_MoleculeBonds()
 {
     void (MoleculeBonds::*wrap_add1)(const AtomIndex&, const AtomIndex&)
                                       = &MoleculeBonds::add;

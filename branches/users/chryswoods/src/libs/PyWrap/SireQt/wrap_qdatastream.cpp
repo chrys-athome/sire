@@ -5,6 +5,8 @@
 #include <QDataStream>
 #include <QIODevice>
 
+#include "sireglobal.h"
+
 using namespace boost::python;
 
 template<typename T>
@@ -21,7 +23,9 @@ QDataStream& __rshift__(QDataStream &ds, T &value)
     return ds;
 }
 
-void export_QDataStream()
+void  
+SIREQT_EXPORT
+export_QDataStream()
 {
     scope QDataStream_scope = 
     class_<QDataStream, boost::noncopyable>("QDataStream", init<>())

@@ -11,6 +11,8 @@
 
 #include "SireVol/coordgroup.h"
 
+#include "SireMol/errors.h"
+
 using namespace SireMM;
 using namespace SireMM::detail;
 
@@ -67,6 +69,11 @@ void InterCLJFF::recalculateTotalEnergy()
     this->setComponent( coulomb(), cnrg );
     this->setComponent( lj(), ljnrg );
     this->setComponent( total(), cnrg+ljnrg );
+    
+    //clear the list of moved molecules
+    movedmols.clear();
+    molid_to_movedindex.clear();
+    removedmols.clear();
 }
 
 /** Recalculate the energy by using a delta from the old configuration */
@@ -83,10 +90,16 @@ void InterCLJFF::recalculateViaDelta()
     }
     else if (nmols == 0)
     {
-        //there is no old configuration - add all of the moved
-        //molecules and recalculate from scratch
-        updateChangedMolecules();
-        recalculateTotalEnergy();
+        //all of the molecules have been deleted! Set the energy to
+        //zero and clear the moved list
+        this->setComponent( coulomb(), 0 );
+        this->setComponent( lj(), 0 );
+        this->setComponent( total(), 0 );
+        
+        movedmols.clear();
+        removedmols.clear();
+        molid_to_movedindex.clear();
+        
         return;
     }
 
@@ -96,7 +109,7 @@ void InterCLJFF::recalculateViaDelta()
 
     //now loop over all of the molecules in the system
     const MolCLJInfo *molarray = mols.constData();
-    const MovedMolCLJInfo *movedarray = movedmols.constData();
+    const ChangedMolCLJInfo *movedarray = movedmols.constData();
 
     QHash<MoleculeID,int>::const_iterator it;
 
@@ -115,16 +128,16 @@ void InterCLJFF::recalculateViaDelta()
             //molecules
             for (int j=0; j<nmoved; ++j)
             {
-                const MovedMolCLJInfo &movedmol = movedmols[j];
+                const ChangedMolCLJInfo &movedmol = movedarray[j];
 
                 //calculate the energy of the new configuration
-                calculateEnergy(mol, movedmol.newPart(), space(),
+                calculateEnergy(mol, movedmol.newParts(), space(),
                                 switchingFunction(), workspace());
 
                 icnrg += workspace().cnrg;
                 iljnrg += workspace().ljnrg;
 
-                calculateEnergy(mol, movedmol.oldPart(), space(),
+                calculateEnergy(mol, movedmol.oldParts(), space(),
                                 switchingFunction(), workspace());
 
                 icnrg -= workspace().cnrg;
@@ -137,7 +150,7 @@ void InterCLJFF::recalculateViaDelta()
             //molecules that are after it in the moved mols array
             int idx = it.value();
 
-            const MovedMolCLJInfo &movedmol0 = movedmols[idx];
+            const ChangedMolCLJInfo &movedmol0 = movedarray[idx];
 
             if (movedmol0.movedAll())
             {
@@ -146,7 +159,7 @@ void InterCLJFF::recalculateViaDelta()
                 //of the other moved molecules
                 for (int j=idx+1; j<nmoved; ++j)
                 {
-                    const MovedMolCLJInfo &movedmol1 = movedmols[j];
+                    const ChangedMolCLJInfo &movedmol1 = movedarray[j];
 
                     calculateEnergy(movedmol0.newMol(), movedmol1.newMol(),
                                     space(), switchingFunction(), workspace());
@@ -166,7 +179,7 @@ void InterCLJFF::recalculateViaDelta()
                 //only part of this molecule has been moved...
                 for (int j=idx+1; j<nmoved; ++j)
                 {
-                    const MovedMolCLJInfo &movedmol1 = movedmols[j];
+                    const ChangedMolCLJInfo &movedmol1 = movedarray[j];
 
                     if (movedmol1.movedAll())
                     {
@@ -197,52 +210,83 @@ void InterCLJFF::recalculateViaDelta()
                         // otherwise be double-counted).
 
                         //ok, so first the moved part of mol0 with all of mol1
-                        calculateEnergy(movedmol0.newPart(), movedmol1.newMol(),
+                        calculateEnergy(movedmol0.newParts(), movedmol1.newMol(),
                                         space(), switchingFunction(), workspace());
 
-                        icnrg += workspace.cnrg;
-                        iljnrg += workspace.ljnrg;
+                        icnrg += workspace().cnrg;
+                        iljnrg += workspace().ljnrg;
 
-                        calculateEnergy(movedmol0.oldPart(), movedmol1.oldMol(),
+                        calculateEnergy(movedmol0.oldParts(), movedmol1.oldMol(),
                                         space(), switchingFunction(), workspace());
 
-                        icnrg -= workspace.cnrg;
-                        iljnrg -= workspace.ljnrg;
+                        icnrg -= workspace().cnrg;
+                        iljnrg -= workspace().ljnrg;
 
                         //now the moved part of mol1 with all of mol0
-                        calculateEnergy(movedmol0.newMol(), movedmol1.newPart(),
+                        calculateEnergy(movedmol0.newMol(), movedmol1.newParts(),
                                         space(), switchingFunction(), workspace());
 
-                        icnrg += workspace.cnrg;
-                        iljnrg += workspace.ljnrg;
+                        icnrg += workspace().cnrg;
+                        iljnrg += workspace().ljnrg;
 
-                        calculateEnergy(movedmol0.oldMol(), movedmol1.oldPart(),
+                        calculateEnergy(movedmol0.oldMol(), movedmol1.oldParts(),
                                         space(), switchingFunction(), workspace());
 
-                        icnrg -= workspace.cnrg;
-                        iljnrg -= workspace.ljnrg;
+                        icnrg -= workspace().cnrg;
+                        iljnrg -= workspace().ljnrg;
 
                         //finally, remove the doubly-counted contribution of the
                         //moved part of mol0 with the moved part of mol1
-                        calculateEnergy(movedmol0.newPart(), movedmol1.newPart(),
+                        calculateEnergy(movedmol0.newParts(), movedmol1.newParts(),
                                         space(), switchingFunction(), workspace());
 
-                        icnrg -= workspace.cnrg;   // subtract doubly-counted contribution
-                        iljnrg -= workspace.ljnrg;
+                        icnrg -= workspace().cnrg;   // subtract doubly-counted contribution
+                        iljnrg -= workspace().ljnrg;
 
-                        calculateEnergy(movedmol0.oldPart(), movedmol1.oldPart(),
+                        calculateEnergy(movedmol0.oldParts(), movedmol1.oldParts(),
                                         space(), switchingFunction(), workspace());
 
-                        icnrg += workspace.cnrg;
-                        iljnrg += workspace.ljnrg;
+                        icnrg += workspace().cnrg;
+                        iljnrg += workspace().ljnrg;
                     }
                 }
             }
         }
     }
 
-    //merge the moved molecules back into the main list
-    this->updateChangedMolecules();
+    //finally, loop over all of the molecules that have been removed - the energy
+    //of non-moved molecules with removed molecules has already been calculated, 
+    //as has the energy of moved molecules that are before the removed molecules
+    //in the moved list. We only now have to calculate the energy of the removed
+    //molecules with all of the molecules that lie above us in the moved list
+    for (QSet<MoleculeID>::const_iterator it = removedmols.constBegin();
+         it != removedmols.constEnd();
+         ++it)
+    {
+        //get the index of the removed molecule in the moved list
+        int idx = molid_to_movedindex.value(*it);
+        
+        const ChangedMolCLJInfo &removedmol = movedarray[idx];
+        
+        //calculate the change in energy associated with removing this molecule
+        //(only have to do the 'old' energy, as the new energy is zero)
+        
+        for (int j=idx+1; j<nmoved; ++j)
+        {
+            const ChangedMolCLJInfo &movedmol = movedarray[j];
+            
+            calculateEnergy(removedmol.oldMol(), movedmol.oldMol(),
+                            space(), switchingFunction(), workspace());
+                            
+            icnrg -= workspace().cnrg;
+            iljnrg -= workspace().ljnrg;
+        }
+    }
+
+    //clear the list of moved molecules
+    movedmols.clear();
+    molid_to_movedindex.clear();
+    removedmols.clear();
 
     //save the new total energy of this forcefield
     this->changeComponent( coulomb(), icnrg );
@@ -272,10 +316,15 @@ void InterCLJFF::recalculateEnergy()
 */
 const Molecule& InterCLJFF::molecule(MoleculeID molid) const
 {
-    throw SireError::incomplete_code( QObject::tr(
-        "Need to write InterCLJFF::molecule(molid)"), CODELOC );
-
-    return mols[0].molecule();
+    QHash<MoleculeID,int>::const_iterator it = molid_to_molindex.find(molid);
+    
+    if (it == molid_to_molindex.end())
+        throw SireMol::missing_molecule( QObject::tr(
+              "There is no molecule with ID == %1 in the forcefield "
+              "\"%2\" (of type %3)")
+                  .arg(molid).arg(this->name()).arg(this->what()), CODELOC );
+                  
+    return mols.constData()[it.value()].molecule();
 }
 
 /** Temporary function used to add a molecule with passed charge and LJ

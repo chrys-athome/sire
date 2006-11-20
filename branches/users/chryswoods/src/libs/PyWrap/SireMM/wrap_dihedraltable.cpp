@@ -19,7 +19,9 @@ using namespace SireQt;
 namespace SireMM
 {
 
-void export_DihedralTable()
+void  
+SIREMM_EXPORT
+export_DihedralTable()
 {
     wrap_InternalTableBase<MolDihedralInfo>("InternalTableBase_MolDihedralInfo_");
     wrap_InternalTable<MolDihedralInfo,Expression>("InternalTable_MolDihedralInfo_Expression_");

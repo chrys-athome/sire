@@ -1,4 +1,6 @@
     
+#include "sireglobal.h"
+
 void export_QVector_QString();
 void export_QVector_real();
     
@@ -7,7 +9,9 @@ void export_QVector_int16();
 void export_QVector_int32();
 void export_QVector_int64();
     
-void export_QVector()
+void  
+SIREQT_EXPORT
+export_QVector()
 {
     export_QVector_QString();
     export_QVector_real();

@@ -40,7 +40,9 @@ AtomType wrap_getAtomType_RelateIDMap1(AtomTypeDB &db, const RelateIDMap &relate
     return db.getAtomType(relateids);
 }
 
-void export_AtomTypeDB()
+void  
+SIREDB_EXPORT
+export_AtomTypeDB()
 {
     class_<AtomTypeDB, bases<AtomDB> >( "AtomTypeDB", init<>() )
     

@@ -23,7 +23,9 @@ using namespace SireMol;
 namespace SireMM
 {
 
-void export_ResBondInfo()
+void  
+SIREMM_EXPORT
+export_ResBondInfo()
 {
     class_<ResBondInfo> wrap_ResBondInfo("ResBondInfo", init<>());
     

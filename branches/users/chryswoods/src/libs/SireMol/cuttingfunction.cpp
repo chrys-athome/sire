@@ -73,18 +73,18 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, CuttingFunction &cutfunc
 }
 
 /** Constructor */
-CuttingFunctionBase::CuttingFunctionBase()
+CuttingFunctionBase::CuttingFunctionBase() : QSharedData()
 {}
 
 /** Copy constructor */
-CuttingFunctionBase::CuttingFunctionBase(const CuttingFunctionBase&)
+CuttingFunctionBase::CuttingFunctionBase(const CuttingFunctionBase&) : QSharedData()
 {}
 
 /** Destructor */
 CuttingFunctionBase::~CuttingFunctionBase()
 {}
 
-static const DynamicSharedPtr<CuttingFunctionBase> shared_null( new ResidueCutting() );
+static const SharedPolyPointer<CuttingFunctionBase> shared_null( new ResidueCutting() );
 
 /** Constructor - by default this provides ResidueCutting */
 CuttingFunction::CuttingFunction() : func(shared_null)
@@ -92,7 +92,7 @@ CuttingFunction::CuttingFunction() : func(shared_null)
 
 /** Construct from the passed function */
 CuttingFunction::CuttingFunction(const CuttingFunctionBase &function)
-                : func( function )
+                : func( function.clone() )
 {}
 
 /** Copy constructor */

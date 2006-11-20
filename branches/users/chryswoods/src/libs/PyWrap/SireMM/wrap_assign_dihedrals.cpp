@@ -16,7 +16,9 @@ using namespace boost::python;
 namespace SireMM
 {
 
-void export_assign_dihedrals()
+void  
+SIREMM_EXPORT
+export_assign_dihedrals()
 {
     wrap_assign_internals<MolDihedralInfo>("assign_internals_MolDihedralInfo_");
     

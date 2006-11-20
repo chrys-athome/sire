@@ -18,6 +18,7 @@
 #include <QVector>
 
 #include "SireMol/molecule.h"
+#include "SireMol/cutgroupid.h"
 
 #include "SireMM/cljparameter.h"
 
@@ -51,6 +52,7 @@ namespace detail
 {
 
 using SireMol::Molecule;
+using SireMol::CutGroupID;
 
 using SireVol::CoordGroup;
 
@@ -235,6 +237,8 @@ public:
     void assertCompatibleWith(const MolCLJInfo &molinfo);
 
 private:
+    void buildParts();
+
     /** Shared pointer to the data for the whole of the old configuration
         of the molecule */
     MolCLJInfo oldmol;
@@ -260,35 +264,35 @@ private:
 
 /** Return the CLJ and coordinate information for the
     whole molecule after the change */
-inline const MolCLJInfo& ChangedMolInfo::newMol() const
+inline const MolCLJInfo& ChangedMolCLJInfo::newMol() const
 {
     return newmol;
 }
 
 /** Return the CLJ and coordinate information for the
     whole molecule for before the change */
-inline const MolCLJInfo& ChangedMolInfo::oldMol() const
+inline const MolCLJInfo& ChangedMolCLJInfo::oldMol() const
 {
     return oldmol;
 }
 
 /** Return the CLJ and coordinate information for the
     parts of the molecule that changed from after the change. */
-inline const MolCLJInfo& ChangedMolInfo::newParts() const
+inline const MolCLJInfo& ChangedMolCLJInfo::newParts() const
 {
     return newparts;
 }
 
 /** Return the CLJ and coordinate information for the
      parts of the molecule that changed from before the change. */
-inline const MolCLJInfo& ChangedMolInfo::oldParts() const
+inline const MolCLJInfo& ChangedMolCLJInfo::oldParts() const
 {
     return oldparts;
 }
 
 /** Return whether or not the whole molecule changed, or
     whether only part of the molecule changed */
-inline bool ChangedMolInfo::movedAll() const
+inline bool ChangedMolCLJInfo::movedAll() const
 {
     return cgids.isEmpty();
 }

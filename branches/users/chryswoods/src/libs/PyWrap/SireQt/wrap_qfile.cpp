@@ -6,9 +6,13 @@
 #include <QByteArray>
 #include <QString>
 
+#include "sireglobal.h"
+
 using namespace boost::python;
 
-void export_QFile()
+void  
+SIREQT_EXPORT
+export_QFile()
 {
     scope QFile_scope = 
     class_<QFile, bases<QIODevice>, boost::noncopyable>("QFile", init<>())

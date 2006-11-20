@@ -32,7 +32,9 @@ void export_MatchMol();
 void export_MatchMR();
 void export_MatchMRA();
 
-void export_Match()
+void  
+SIREDB_EXPORT
+export_Match()
 {
     class_<MatchData, boost::noncopyable>("MatchData", no_init)
         .def( "__str__", &MatchData::toString )

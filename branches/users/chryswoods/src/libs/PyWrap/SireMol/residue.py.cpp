@@ -42,7 +42,9 @@ namespace bp = boost::python;
 namespace SireMol
 {
 
-void export_Residue()
+void  
+SIREMOL_EXPORT
+export_Residue()
 {
 
     bp::class_< SireMol::Residue >( "Residue" )

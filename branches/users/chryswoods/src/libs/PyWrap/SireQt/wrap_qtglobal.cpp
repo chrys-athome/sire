@@ -9,6 +9,8 @@
 #include <QTextDocument>
 #endif
 
+#include "sireglobal.h"
+
 using namespace boost::python;
 using namespace Qt;
 
@@ -55,7 +57,9 @@ QString wrap_convertFromPlainText1(const QString &plain)
 }
 #endif
 
-void export_QtGlobal()
+void  
+SIREQT_EXPORT
+export_QtGlobal()
 {
     def("qAbs", &qAbs<double>);
     def("qAbs", &qAbs<int>);

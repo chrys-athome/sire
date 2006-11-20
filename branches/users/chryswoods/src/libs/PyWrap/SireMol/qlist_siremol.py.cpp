@@ -12,7 +12,9 @@ using namespace SireQt;
 namespace SireMol
 {
 
-void export_QList_Molecule()
+void  
+SIREMOL_EXPORT
+export_QList_Molecule()
 {
     wrap_QList<Molecule>("QList_Molecule_");
 }

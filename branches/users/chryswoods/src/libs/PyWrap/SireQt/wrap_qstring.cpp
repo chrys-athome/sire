@@ -288,7 +288,9 @@ void export_QString3(class_<QString> &wrapper);
     
     @author Christopher Woods
 */
-void export_QString()
+void  
+SIREQT_EXPORT
+export_QString()
 {
     //code to get a QString from a python object
     QString_from_python();

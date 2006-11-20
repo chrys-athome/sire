@@ -19,7 +19,9 @@ namespace bp = boost::python;
 namespace SireMM
 {
 
-void export_Tip4PFF()
+void  
+SIREMM_EXPORT
+export_Tip4PFF()
 {
     bp::class_< Tip4PFF, bp::bases< SireMM::CLJFF > >( "Tip4PFF" )
         .def( bp::init< >()[bp::default_call_policies()] )
