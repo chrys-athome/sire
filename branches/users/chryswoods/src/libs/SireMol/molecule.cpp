@@ -2496,3 +2496,61 @@ void Molecule::set(const Improper &improper, const SireMaths::Angle &size,
 
 /////////////////////////////////////////////////////////
 //@}
+
+/** Assert that this molecule is the same as 'other' - i.e. that 
+    they both have the same MoleculeID number.
+    
+    \throw SireError::incompatible_error
+*/
+void Molecule::assertSameMolecule(const Molecule &other) const
+{
+    if (this->ID() != other.ID())
+        throw SireError::incompatible_error( QObject::tr(
+            "This molecule (\"%1\", ID == %2, Version == %3) is not "
+            "the different to the other molecule (\"%4\", ID == %5, "
+            "Version == %6)")
+                .arg(this->name()).arg(this->ID())
+                .arg(this->version().toString())
+                .arg(other.name()).arg(other.ID())
+                .arg(other.version().toString()), CODELOC );
+}
+
+/** Assert that this molecule has the same major version as 'other'
+    - this also asserts that both molecules have the same ID number.
+    
+    \throw SireError::incompatible_error
+*/
+void Molecule::assertSameMajorVersion(const Molecule &other) const
+{
+    this->assertSameMolecule(other);
+    
+    if (this->version().major() != other.version().major())
+        throw SireError::incompatible_error( QObject::tr(
+            "This molecule (\"%1\", ID == %2, Version == %3) has a "
+            "different major version to the other molecule (\"%4\", "
+            "ID == %5, Version == %6)")
+                .arg(this->name()).arg(this->ID())
+                .arg(this->version().toString())
+                .arg(other.name()).arg(other.ID())
+                .arg(other.version().toString()), CODELOC );
+}
+
+/** Assert that this molecule has the same version as 'other'
+    - this also asserts that both molecules have the same ID number.
+    
+    \throw SireError::incompatible_error
+*/
+void Molecule::assertSameVersion(const Molecule &other) const
+{
+    this->assertSameMolecule(other);
+    
+    if (this->version() != other.version())
+        throw SireError::incompatible_error( QObject::tr(
+            "This molecule (\"%1\", ID == %2, Version == %3) has a "
+            "different version to the other molecule (\"%4\", "
+            "ID == %5, Version == %6)")
+                .arg(this->name()).arg(this->ID())
+                .arg(this->version().toString())
+                .arg(other.name()).arg(other.ID())
+                .arg(other.version().toString()), CODELOC );
+}

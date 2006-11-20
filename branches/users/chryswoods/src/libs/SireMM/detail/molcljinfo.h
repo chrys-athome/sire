@@ -18,6 +18,7 @@
 #include <QVector>
 
 #include "SireMol/molecule.h"
+#include "SireMol/residue.h"
 #include "SireMol/cutgroupid.h"
 
 #include "SireMM/cljparameter.h"
@@ -52,6 +53,7 @@ namespace detail
 {
 
 using SireMol::Molecule;
+using SireMol::Residue;
 using SireMol::CutGroupID;
 
 using SireVol::CoordGroup;
@@ -233,6 +235,9 @@ public:
                 const QSet<CutGroupID> &changedparts);
 
     void change(const MolCLJInfo &newinfo);
+
+    void move(const Molecule &molecule);
+    void move(const Residue &residue);
 
     void assertCompatibleWith(const MolCLJInfo &molinfo);
 

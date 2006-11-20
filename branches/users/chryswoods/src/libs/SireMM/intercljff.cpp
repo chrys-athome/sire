@@ -359,10 +359,101 @@ void InterCLJFF::add(const Molecule &mol, const ChargeTable &chargetable,
 
 /** Move the molecule 'molecule' */
 void InterCLJFF::move(const Molecule &molecule)
-{}
+{
+    //try to find this molecule in this forcefield, 
+    //based on its ID number
+    MoleculeID molid = molecule.ID();
 
+    if ( not molid_to_movedindex.contains(molid) )
+        //the molecule has either been removed or 
+        //did not exist in this forcefield. Moving it
+        //will thus not change the energy
+        return;
+        
+    if ( molid_to_movedindex.contains(molid) )
+    {
+        //this molecule has already been changed since the
+        //last update - move it
+        movedmols[ molid_to_movedindex.value(molid) ].move(molecule);
+    }
+    else
+    {
+        //this molecule has not been moved since the last energy
+        //evaluation - create a ChangedMolCLJInfo that describes the
+        //move
+        
+        int idx = molid_to_molindex.value(molid);
+        
+        //get the existing copy of the molecule
+        MolCLJInfo& oldinfo = mols[idx];
+        
+        BOOST_ASSERT( oldinfo.molecule().ID() == molid );
+        
+        oldinfo.molecule().assertSameMajorVersion(molecule);
+        
+        MolCLJInfo newinfo( molecule, oldinfo.chargeParameters(),
+                            oldinfo.ljParameters() );
+                            
+        //save the old and new molecule
+        movedmols.append( ChangedMolCLJInfo(oldinfo,newinfo) );
+        
+        molid_to_movedindex.insert(molid, movedmols.count()-1);
+        
+        //update the current state of the molecule in the forcefield
+        oldinfo = newinfo;
+    }
+}
+
+/** Move the residue 'residue' */
 void InterCLJFF::move(const Residue &residue)
-{}
+{
+    //get the molecule containing this residue
+    Molecule molecule = residue.molecule();
+
+    //try to find this molecule in this forcefield, 
+    //based on its ID number
+    MoleculeID molid = molecule.ID();
+
+    if ( not molid_to_movedindex.contains(molid) )
+        //the molecule containing this residue has either been removed or 
+        //did not exist in this forcefield. Moving it
+        //will thus not change the energy
+        return;
+        
+    if ( molid_to_movedindex.contains(molid) )
+    {
+        //the molecule containing this residue has already been changed 
+        //since the last update - move it
+        movedmols[ molid_to_movedindex.value(molid) ].move(residue);
+    }
+    else
+    {
+        //the molecule containing this residue has not been moved since 
+        //the last energy evaluation - create a ChangedMolCLJInfo that 
+        //describes the move
+        
+        int idx = molid_to_molindex.value(molid);
+        
+        //get the existing copy of the molecule
+        MolCLJInfo& oldinfo = mols[idx];
+        
+        BOOST_ASSERT( oldinfo.molecule().ID() == molid );
+        
+        oldinfo.molecule().assertSameMajorVersion(molecule);
+        
+        MolCLJInfo newinfo( molecule, oldinfo.chargeParameters(),
+                            oldinfo.ljParameters() );
+                            
+        //save the old and new molecule
+        movedmols.append( ChangedMolCLJInfo(oldinfo,newinfo, 
+                                            residue.info().cutGroupIDs()) );
+        
+        molid_to_movedindex.insert(molid, movedmols.count()-1);
+        
+        //update the current state of the molecule in the forcefield
+        oldinfo = newinfo;
+    }
+}
 
 void InterCLJFF::move(const MovedMols &movedmols)
 {}

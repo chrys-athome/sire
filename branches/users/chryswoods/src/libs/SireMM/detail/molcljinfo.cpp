@@ -19,6 +19,7 @@
 
 #include "SireMol/moleculeversion.h"
 #include "SireMol/moleculeinfo.h"
+#include "SireMol/residueinfo.h"
 
 #include "SireError/errors.h"
 
@@ -324,6 +325,9 @@ void ChangedMolCLJInfo::assertCompatibleWith(const MolCLJInfo &molinfo)
 void ChangedMolCLJInfo::buildParts()
 {
     #warning TODO!!!
+    
+    //need to work out how this will work, and how this will 
+    //combine together...
 }
 
 /** Record that the molecule is changing from 'old_molecule' to 'new_molecule'
@@ -377,7 +381,38 @@ void ChangedMolCLJInfo::change(const MolCLJInfo &newinfo)
 
     //the whole molecule has now changed
     newmol = newinfo;
-    newparts = newinfo;
+    cgids.clear();
     
-    oldparts = oldmol;
+    this->buildParts();
+}
+
+/** Register the movement of the molecule to 'newmol' */
+void ChangedMolCLJInfo::move(const Molecule &molecule)
+{
+    oldmol.molecule().assertSameMajorVersion(molecule);
+    
+    //the whole molecule has now changed
+    newmol = MolCLJInfo( molecule, oldmol.chargeParameters(),
+                                   oldmol.ljParameters() );
+
+    //the whole molecule has now changed
+    cgids.clear();
+    
+    this->buildParts();
+}
+
+/** Register the movement of the residue to 'newres' */
+void ChangedMolCLJInfo::move(const Residue &residue)
+{
+    Molecule molecule = residue.molecule();
+    
+    oldmol.molecule().assertSameMajorVersion(molecule);
+    
+    newmol = MolCLJInfo( molecule, oldmol.chargeParameters(),
+                                   oldmol.ljParameters() );
+                                   
+    //combine the residue's ids with the existing id numbers
+    cgids += residue.info().cutGroupIDs();
+    
+    this->buildParts();
 }

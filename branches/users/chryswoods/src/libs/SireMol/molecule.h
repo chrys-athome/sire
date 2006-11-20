@@ -466,6 +466,10 @@ public:
              const QSet<AtomIndex> &anchors = QSet<AtomIndex>());
    /////////////////////////////////////////////////
 
+    void assertSameMolecule(const Molecule &other) const;
+    void assertSameMajorVersion(const Molecule &other) const;
+    void assertSameVersion(const Molecule &other) const;
+
 private:
     /** Implicitly shared pointer to the data for this molecule */
     QSharedDataPointer<MoleculeData> d;
