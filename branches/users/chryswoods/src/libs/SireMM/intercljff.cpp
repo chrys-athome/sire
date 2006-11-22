@@ -136,7 +136,7 @@ void InterCLJFF::recalculateViaDelta()
 
                 icnrg += workspace().cnrg;
                 iljnrg += workspace().ljnrg;
-
+                    
                 calculateEnergy(mol, movedmol.oldParts(), space(),
                                 switchingFunction(), workspace());
 
@@ -355,6 +355,7 @@ void InterCLJFF::add(const Molecule &mol, const ChargeTable &chargetable,
 
     //add this molecule to the list
     mols.append( MolCLJInfo(mol, chgs, ljs) );
+    molid_to_molindex.insert( mol.ID(), mols.count()-1 );
 }
 
 /** Move the molecule 'molecule' */
@@ -364,7 +365,7 @@ void InterCLJFF::move(const Molecule &molecule)
     //based on its ID number
     MoleculeID molid = molecule.ID();
 
-    if ( not molid_to_movedindex.contains(molid) )
+    if ( not molid_to_molindex.contains(molid) )
         //the molecule has either been removed or 
         //did not exist in this forcefield. Moving it
         //will thus not change the energy
@@ -402,6 +403,8 @@ void InterCLJFF::move(const Molecule &molecule)
         //update the current state of the molecule in the forcefield
         oldinfo = newinfo;
     }
+    
+    this->setDirty();
 }
 
 /** Move the residue 'residue' */

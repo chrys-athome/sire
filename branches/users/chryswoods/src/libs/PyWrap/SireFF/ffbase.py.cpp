@@ -124,12 +124,12 @@ export_FFBase()
             , bp::return_value_policy< bp::copy_const_reference, bp::default_call_policies >() )
         .def(
             "move"
-            , bp::pure_virtual( (void ( ::SireFF::FFBase::* )( ::SireFF::MovedMols const & ) )(&::SireFF::FFBase::move) )
+            , (void ( ::SireFF::FFBase::* )( ::SireFF::MovedMols const & ) )(&::SireFF::FFBase::move)
             , ( bp::arg("movemols") )
             , bp::default_call_policies() )
         .def(
             "move"
-            , bp::pure_virtual( (void ( ::SireFF::FFBase::* )( ::SireMol::Molecule const & ) )(&::SireFF::FFBase::move) )
+            , (void ( ::SireFF::FFBase::* )( ::SireMol::Molecule const & ) )(&::SireFF::FFBase::move)
             , ( bp::arg("mol") )
             , bp::default_call_policies() )
         .def(
