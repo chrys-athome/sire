@@ -68,6 +68,15 @@ endif ( SIRE_BUILD_SPIER )
 set (QT_MIN_VERSION "4.1.0")
 include( FindQt4 )
 
+# I only link to individual Qt libraries, as this way I can ensure
+# that Spier links to QtGUI, while the Sire libraries don't (as there
+# is no need for Sire to be linked to any GUI libraries).
+# However, this means that I also need to pull in the libraries on which
+# the various Qt components depend - I will do this by adding them
+# onto the end of the actual Qt libraries
+set( QT_QTCORE_LIBRARY ${QT_QTCORE_LIBRARY} ${QT_CORE_LIB_DEPENDENCIES} )
+set( QT_QTGUI_LIBRARY ${QT_QTGUI_LIBRARY} ${QT_GUI_LIB_DEPENDENCIES} )
+
 # Sire depends on >= Python 2.2
 set( PYTHON_REQUIRE_MAJOR 2 )
 set( PYTHON_REQUIRE_MINOR 2 )

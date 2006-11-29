@@ -27,6 +27,8 @@ protected:
     /** Write the list of molecules to a bytearray and return it */
     QByteArray writeMols(const QList<Molecule> &molecules) const;
 
+    QByteArray writeMols(const QList<EditMol> &molecules) const;
+
 };
 
 }

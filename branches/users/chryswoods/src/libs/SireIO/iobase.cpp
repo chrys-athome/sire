@@ -2,6 +2,7 @@
 #include "iobase.h"
 
 #include "SireMol/molecule.h"
+#include "SireMol/editmol.h"
 
 #include "SireError/errors.h"
 
@@ -78,6 +79,19 @@ void IOBase::write(const QList<Molecule> &molecules, QString filename) const
     this->write(molecules,fle);
 }
 
+void IOBase::write(const QList<EditMol> &molecules, QString filename) const
+{
+    QFile fle(filename);
+    if (not fle.open(QIODevice::WriteOnly|QIODevice::Text))
+    {
+        throw SireError::file_error(fle);
+    }
+
+    fle.setObjectName(filename);
+
+    this->write(molecules,fle);
+}
+
 void IOBase::write(const QList<Molecule> &molecules, QIODevice &dev) const
 {
     if (not dev.isWritable())
@@ -93,6 +107,19 @@ void IOBase::write(const QList<Molecule> &molecules, QIODevice &dev) const
     dev.write(data);
 }
 
+void IOBase::write(const QList<EditMol> &molecules, QIODevice &dev) const
+{
+    if (not dev.isWritable())
+    {
+        throw SireError::io_error(QObject::tr("Cannot write molecules to a read-only "
+                                              "device!"), CODELOC);
+    }
+
+    QByteArray data = this->writeMols(molecules);
+
+    dev.write(data);
+}
+
 void IOBase::write(const Molecule &mol, QString filename) const
 {
     QList<Molecule> l;
@@ -100,9 +127,23 @@ void IOBase::write(const Molecule &mol, QString filename) const
     this->write(l,filename);
 }
 
+void IOBase::write(const EditMol &mol, QString filename) const
+{
+    QList<EditMol> l;
+    l.append(mol);
+    this->write(l, filename);
+}
+
 void IOBase::write(const Molecule &mol, QIODevice &dev) const
 {
     QList<Molecule> l;
+    l.append(mol);
+    this->write(l,dev);
+}
+
+void IOBase::write(const EditMol &mol, QIODevice &dev) const
+{
+    QList<EditMol> l;
     l.append(mol);
     this->write(l,dev);
 }
