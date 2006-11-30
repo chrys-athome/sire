@@ -14,6 +14,7 @@ static const RegisterMetaType<missing_molecule> r_mmol("SireMol::missing_molecul
 static const RegisterMetaType<missing_residue> r_mres("SireMol::missing_residue");
 static const RegisterMetaType<missing_cutgroup> r_mcgrp("SireMol::missing_cutgroup");
 static const RegisterMetaType<duplicate_residue> r_dres("SireMol::duplicate_residue");
+static const RegisterMetaType<duplicate_molecule> r_dmol("SireMol::duplicate_molecule");
 static const RegisterMetaType<template_error> r_tmplerr("SireMol::template_error");
 static const RegisterMetaType<anchor_error> r_ancerr("SireMol::anchor_error");
 static const RegisterMetaType<ring_error> r_ringerr("SireMol::ring_error");

@@ -11,13 +11,13 @@ namespace SireUnits
 using SireMaths::pi;
 
 /** This file defines physical constants, in internal units of this program
- 
+
     energy = kcal mol-1  (thermal)
     length = Angstroms
     time = femtoseconds
     mass = g mol-1
     charge = unit electrons
- 
+
 */
 
 /////////////////////////////////////////////////
@@ -53,6 +53,9 @@ const double picometer = nanometer * 1000.0;
 /** Convert meters into internal units */
 const double meter = nanometer * 1.0e9;
 
+/** Convert Bohr radii into internal units */
+const double bohr_radii = 1.0 / 0.529177249;
+
 /////////////////////////////////////////////////
 // Units of time. Internal unit = femtoseconds //
 /////////////////////////////////////////////////
@@ -83,7 +86,7 @@ const double kilogram = 1000.0 * g_per_mol * mole;
 // Units of Charge. Internal unit = |electron| mol-1 //
 ///////////////////////////////////////////////////////
 
-/** Convert electron charges to internal units 
+/** Convert electron charges to internal units
     ( 1 |e| is the charge in coulombs of one mole of electrons) */
 const double mod_electrons = 1.0;
 

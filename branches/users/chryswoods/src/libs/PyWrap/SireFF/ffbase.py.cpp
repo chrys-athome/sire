@@ -26,7 +26,7 @@ public:
     {}
 };
 
-void 
+void
 SIREFF_EXPORT
 export_FFBase()
 {
@@ -34,16 +34,6 @@ export_FFBase()
         .def(
             "TOTAL"
             , &::SireFF::FFBase::TOTAL
-            , bp::default_call_policies() )
-        .def(
-            "add"
-            , bp::pure_virtual( (void ( ::SireFF::FFBase::* )( ::SireMol::Molecule const &,::SireDB::ParameterTable const &,int ) )(&::SireFF::FFBase::add) )
-            , ( bp::arg("mol"), bp::arg("params"), bp::arg("groupid") )
-            , bp::default_call_policies() )
-        .def(
-            "add"
-            , bp::pure_virtual( (void ( ::SireFF::FFBase::* )( ::SireMol::Residue const &,::SireDB::ParameterTable const &,int ) )(&::SireFF::FFBase::add) )
-            , ( bp::arg("res"), bp::arg("params"), bp::arg("groupid") )
             , bp::default_call_policies() )
         .def(
             "assertContains"
@@ -81,21 +71,6 @@ export_FFBase()
             , ( bp::arg("residue") )
             , bp::default_call_policies() )
         .def(
-            "change"
-            , bp::pure_virtual( (void ( ::SireFF::FFBase::* )( ::SireFF::ChangedMols const & ) )(&::SireFF::FFBase::change) )
-            , ( bp::arg("changemols") )
-            , bp::default_call_policies() )
-        .def(
-            "change"
-            , bp::pure_virtual( (void ( ::SireFF::FFBase::* )( ::SireMol::Molecule const &,::SireDB::ParameterTable const & ) )(&::SireFF::FFBase::change) )
-            , ( bp::arg("mol"), bp::arg("params") )
-            , bp::default_call_policies() )
-        .def(
-            "change"
-            , bp::pure_virtual( (void ( ::SireFF::FFBase::* )( ::SireMol::Residue const &,::SireDB::ParameterTable const & ) )(&::SireFF::FFBase::change) )
-            , ( bp::arg("res"), bp::arg("params") )
-            , bp::default_call_policies() )
-        .def(
             "component"
             , &::SireFF::FFBase::component
             , ( bp::arg("componentid") )
@@ -124,11 +99,6 @@ export_FFBase()
             , bp::return_value_policy< bp::copy_const_reference, bp::default_call_policies >() )
         .def(
             "move"
-            , (void ( ::SireFF::FFBase::* )( ::SireFF::MovedMols const & ) )(&::SireFF::FFBase::move)
-            , ( bp::arg("movemols") )
-            , bp::default_call_policies() )
-        .def(
-            "move"
             , (void ( ::SireFF::FFBase::* )( ::SireMol::Molecule const & ) )(&::SireFF::FFBase::move)
             , ( bp::arg("mol") )
             , bp::default_call_policies() )
@@ -141,16 +111,6 @@ export_FFBase()
             "name"
             , &::SireFF::FFBase::name
             , bp::return_value_policy< bp::copy_const_reference, bp::default_call_policies >() )
-        .def(
-            "remove"
-            , bp::pure_virtual( (void ( ::SireFF::FFBase::* )( ::SireMol::Molecule const & ) )(&::SireFF::FFBase::remove) )
-            , ( bp::arg("mol") )
-            , bp::default_call_policies() )
-        .def(
-            "remove"
-            , bp::pure_virtual( (void ( ::SireFF::FFBase::* )( ::SireMol::Residue const & ) )(&::SireFF::FFBase::remove) )
-            , ( bp::arg("res") )
-            , bp::default_call_policies() )
         .def(
             "total"
             , &::SireFF::FFBase::total

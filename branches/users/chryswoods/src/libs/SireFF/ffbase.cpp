@@ -117,21 +117,21 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, FFBase &ffbase)
 }
 
 /** Null constructor */
-FFBase::FFBase() : ffname(QObject::tr("Unnamed")), isdirty(true)
+FFBase::FFBase() : QSharedData(), ffname(QObject::tr("Unnamed")), isdirty(true)
 {
     this->registerComponents();
 }
 
 /** Construct a forcefield called 'name' */
 FFBase::FFBase(const QString &name)
-       : ffname(name), isdirty(true)
+       : QSharedData(), ffname(name), isdirty(true)
 {
     this->registerComponents();
 }
 
 /** Copy constructor */
 FFBase::FFBase(const FFBase &other)
-       : ffname(other.ffname), id_to_component(other.id_to_component),
+       : QSharedData(), ffname(other.ffname), id_to_component(other.id_to_component),
          nrg_components(other.nrg_components),
          mols_in_ff(other.mols_in_ff), //res_in_ff(other.res_in_ff),
          isdirty(other.isdirty)

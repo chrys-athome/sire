@@ -49,6 +49,10 @@ set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/build/cmake)
 # Add option to disable compilation of Spier (removes openGL dependency)
 option ( SIRE_BUILD_SPIER "Build Spier molecular viewer (requires openGL)" ON )
 
+# Add option to disable compilation of the molpro forcefield
+option ( SIRE_BUILD_MOLPRO
+         "Build the Molpro forcefield (requires MolproClient)" ON )
+
 # Add option to turn off symbol hiding
 option ( SIRE_SYMBOL_HIDING "Turn on library symbol hiding" ON )
 
