@@ -9,6 +9,9 @@
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
+# Flag to set whether or not to build squire
+set ( BUILD_SQUIRE "OFF" )
+
 # Define the sources in Squire
 #set ( SQUIRE_SOURCES
 #    )
@@ -54,7 +57,10 @@ if (SIRE_BUILD_MOLPRO)
   endif (MOLPRO_CLIENT_INCLUDE_DIR )
 
   if (MOLPRO_FOUND)
-  
+ 
+    #we definitely want to build squire
+    set ( BUILD_SQUIRE "ON" )
+
     #add the Molpro forcefield files
     set ( SQUIRE_SOURCES
           ${SQUIRE_SOURCES}
@@ -85,26 +91,31 @@ if (SIRE_BUILD_MOLPRO)
 
 endif (SIRE_BUILD_MOLPRO)
 
-#add the additional include files needed by Squire
-include_directories( ${SQUIRE_INCLUDE_DIRS} )
+if (BUILD_SQUIRE)
 
-add_library (Squire ${SQUIRE_SOURCES})
+  #add the additional include files needed by Squire
+  include_directories( ${SQUIRE_INCLUDE_DIRS} )
+  
+  add_library (Squire ${SQUIRE_SOURCES})
 
-set_target_properties (Squire PROPERTIES
-                       VERSION ${SIRE_VERSION}
-                       SOVERSION ${SIRE_VERSION_MAJOR}
-                       LINK_FLAGS ${SIRE_LINK_FLAGS}
-                      )
+  set_target_properties (Squire PROPERTIES
+                         VERSION ${SIRE_VERSION}
+                         SOVERSION ${SIRE_VERSION_MAJOR}
+                         LINK_FLAGS ${SIRE_LINK_FLAGS}
+                        )
 
-# Link to other Sire libraries
-target_link_libraries (Squire
-                       SireMM
-                       ${SQUIRE_LIBRARIES}
-                       )
+  # Link to other Sire libraries
+  target_link_libraries (Squire
+                         SireMM
+                         ${SQUIRE_LIBRARIES}
+                        )
 
-# installation
-install( TARGETS Squire
-         RUNTIME DESTINATION ${SIRE_BIN}
-         LIBRARY DESTINATION ${SIRE_LIBS}
-         ARCHIVE DESTINATION ${SIRE_ARCHIVES}
+  # installation
+  install( TARGETS Squire
+           RUNTIME DESTINATION ${SIRE_BIN}
+           LIBRARY DESTINATION ${SIRE_LIBS}
+           ARCHIVE DESTINATION ${SIRE_ARCHIVES}
        )
+
+endif (BUILD_SQUIRE)
+
