@@ -3,43 +3,127 @@
 
 #include "SireCluster/processor.h"
 
-#include "forcefield.h"
-
 SIRE_BEGIN_HEADER
+
+namespace SireMol
+{
+class Molecule;
+class MoleculeID;
+}
 
 namespace SireFF
 {
 
-class SIREFF_EXPORT FFProcessor : public SireCluster::Processor
+class ForceField;
+
+using SireMol::Molecule;
+using SireMol::MoleculeID;
+
+namespace detail
+{
+
+class SIREFF_EXPORT FFProcessorBasePvt : public SireCluster::detail::ProcessorPvt
+{
+public:
+    FFProcessorBasePvt();
+    FFProcessorBasePvt(const QString &name);
+
+    ~FFProcessorBasePvt();
+
+    virtual ForceField forcefield() const=0;
+
+    virtual void setForceField(const ForceField &forcefield) const=0;
+
+    virtual Molecule molecule(MoleculeID molid) const=0;
+};
+
+}
+
+/** This is the base class of all processors that are used to process
+    forcefields
+
+    @author Christopher Woods
+*/
+class SIREFF_EXPORT FFProcessorBase : public SireCluster::Processor
+{
+public:
+
+    ~FFProcessorBase();
+
+    ForceField forcefield() const;
+
+    void setForceField(const ForceField &forcefield);
+
+    Molecule molecule(MoleculeID molid) const;
+
+    boost::shared_ptr<FFWorkerBase> activate();
+
+protected:
+    FFProcessorBase(const boost::shared_ptr<detail::FFProcessorBasePvt> &data);
+    FFProcessorBase(const FFProcessorBase &other);
+
+    detail::FFProcessorBasePvt& data();
+    const detail::FFProcessorBasePvt& data() const;
+
+private:
+    /** Pointer to the data of this object - this is to
+        prevent excessive casting */
+    detail::FFProcessorBasePvt *d;
+};
+
+namespace detail
+{
+
+/** Private data used by FFProcessor */
+class SIREFF_EXPORT FFProcessorPvt : public FFProcessorBasePvt
+{
+public:
+    FFProcessorPvt();
+    FFProcessorPvt(const ForceField &ffield);
+
+    ~FFProcessorPvt();
+
+    ForceField forcefield() const;
+
+    void setForceField(const ForceField &forcefield) const;
+
+    Molecule molecule(MoleculeID molid) const;
+
+protected:
+    boost::shared_ptr<WorkerBase> _pvt_activate();
+
+private:
+    /** The forcefield to be evaluated */
+    ForceField ffield;
+};
+
+}
+
+/** This is a basic FFProcessor that is used to process generic forcefields
+    in a background thread.
+
+    @author Christopher Woods
+*/
+class SIREFF_EXPORT FFProcessor : public FFProcessorBase
 {
 public:
     FFProcessor();
-    FFProcessor(const QString &name);
-    
+
+    FFProcessor(const ForceField &ffield);
+
+    FFProcessor(const FFProcessor &other);
+
     ~FFProcessor();
-    
-    ForceField forcefield() const;
 
-    double energy();
-    double energy(const Function &component);
-    
-    Values energies();
+    static const char* typeName()
+    {
+        return "SireFF::FFProcessor";
+    }
 
-    const Molecule& molecule(MoleculeID molid);
-    
-    void move(const Molecule &molecule);
-    void move(const Residue &residue);
-
-protected:
-    const ForceField& ff() const;
-    ForceField& ff();
-
-    virtual void recalculateEnergy()=0; 
-
-private:
-    /** The forcefield being processed on this processor */
-    ForceField ffield;
-
+    const char* what() const
+    {
+        return FFProcessor::typeName();
+    }
 };
 
 }

@@ -9,6 +9,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the sources in SireCluster
 set ( SIRECLUSTER_SOURCES
+      errors.cpp
       processor.cpp
     )
 
@@ -21,7 +22,7 @@ set_target_properties (SireCluster PROPERTIES
 
 # Link to other libraries
 target_link_libraries (SireCluster
-                       SireBase
+                       SireStream
                       )
 
 # installation

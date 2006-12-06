@@ -35,6 +35,33 @@ using namespace SireMaths;
 using namespace SireUnits;
 using namespace SireStream;
 
+namespace SireFF
+{
+
+QHash<MoleculeID,int> index(const QVector<Molecule> &mols)
+{
+    int nmols = mols.count();
+
+    if (nmols > 0)
+    {
+        QHash<MoleculeID,int> idx;
+        idx.reserve(nmols);
+
+        const Molecule *molarray = mols.constData();
+
+        for (int i=0; i<nmols; ++i)
+        {
+            idx.insert( molarray[i].ID(), i );
+        }
+
+        return idx;
+    }
+    else
+        return QHash<MoleculeID,int>();
+}
+
+}
+
 static const RegisterMetaType<MolproFF> r_molproff("Squire::MolproFF");
 
 /** Serialise to a binary datastream */
@@ -256,8 +283,8 @@ void MolproFF::reconstructMMArray()
 void MolproFF::reconstructIndexAndArrays()
 {
     //reconstruct the ID hashes...
-    qm_molid_to_index = index(qm_molecules);
-    mm_molid_to_index = index(mm_molecules);
+    qm_molid_to_index = SireFF::index(qm_molecules);
+    mm_molid_to_index = SireFF::index(mm_molecules);
 
     this->reconstructQMArray();
     this->reconstructMMArray();
@@ -462,7 +489,7 @@ void MolproFF::move(const Residue&)
     this forcefield */
 void MolproFF::recalculateEnergy(MolproProcessor &processor)
 {
-    double nrg = processor.calculateEnergy(*this);
+    //double nrg = processor.calculateEnergy(*this);
 }
 
 /** The MolproFF forcefield is unable to recalculate its own
