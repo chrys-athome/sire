@@ -11,6 +11,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 set ( SIRECLUSTER_SOURCES
       errors.cpp
       processor.cpp
+      threadworker.cpp
     )
 
 add_library (SireCluster ${SIRECLUSTER_SOURCES})

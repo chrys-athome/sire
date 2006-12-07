@@ -1,8 +1,7 @@
 #ifndef SIREFF_FFTHREADWORKER_H
 #define SIREFF_FFTHREADWORKER_H
 
-#include "ffprocessor.h"
-
+#include "ffworker.h"
 #include "SireCluster/threadworker.h"
 
 SIRE_BEGIN_HEADER
@@ -10,7 +9,16 @@ SIRE_BEGIN_HEADER
 namespace SireFF
 {
 
-class SIREFF_EXPORT FFThreadWorker : public FFWorkerBase, public ThreadWorker
+class FFCalculator;
+
+/** This class provides a worker that can calculate the energy and
+    forces of a ForceField in a background thread (via the passed
+    FFCalculator)
+
+    @author Christopher Woods
+*/
+class SIREFF_EXPORT FFThreadWorker : public FFWorkerBase,
+                                     public SireCluster::ThreadWorker
 {
 public:
     FFThreadWorker(FFCalculator *ffcalculator);

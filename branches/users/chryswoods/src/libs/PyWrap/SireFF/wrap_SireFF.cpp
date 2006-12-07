@@ -15,6 +15,9 @@ void export_Energy();
 void export_EnergyPack();
 void export_EnergyType();
 void export_FFBase();
+void export_ForceField();
+void export_FFProcessor();
+void export_FFWorker();
 
 void SIREFF_EXPORT export_SireFF()
 {
@@ -24,6 +27,9 @@ void SIREFF_EXPORT export_SireFF()
     export_EnergyType();
 
     export_FFBase();
+    export_ForceField();
+    export_FFProcessor();
+    export_FFWorker();
 }
 
 }

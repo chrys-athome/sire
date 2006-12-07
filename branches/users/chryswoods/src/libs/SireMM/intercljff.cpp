@@ -2,6 +2,8 @@
 #include "SireCAS/qhash_sirecas.h"
 #include "SireMol/qhash_siremol.h"
 
+#include <QDebug>
+
 #include "intercljff.h"
 
 #include "chargetable.h"
@@ -40,6 +42,8 @@ InterCLJFF::~InterCLJFF()
 /** Recalculate the total energy of this forcefield from scratch */
 void InterCLJFF::recalculateTotalEnergy()
 {
+    qDebug() << "InterCLJFF::recalculateTotalEnergy() start...";
+
     //calculate the total CLJ energy of all molecule pairs...
     double cnrg = 0.0;
     double ljnrg = 0.0;
@@ -69,11 +73,13 @@ void InterCLJFF::recalculateTotalEnergy()
     this->setComponent( coulomb(), cnrg );
     this->setComponent( lj(), ljnrg );
     this->setComponent( total(), cnrg+ljnrg );
-    
+
     //clear the list of moved molecules
     movedmols.clear();
     molid_to_movedindex.clear();
     removedmols.clear();
+
+    qDebug() << "... InterCLJFF::recalculateTotalEnergy() finished!";
 }
 
 /** Recalculate the energy by using a delta from the old configuration */
@@ -95,11 +101,11 @@ void InterCLJFF::recalculateViaDelta()
         this->setComponent( coulomb(), 0 );
         this->setComponent( lj(), 0 );
         this->setComponent( total(), 0 );
-        
+
         movedmols.clear();
         removedmols.clear();
         molid_to_movedindex.clear();
-        
+
         return;
     }
 
@@ -136,7 +142,7 @@ void InterCLJFF::recalculateViaDelta()
 
                 icnrg += workspace().cnrg;
                 iljnrg += workspace().ljnrg;
-                    
+
                 calculateEnergy(mol, movedmol.oldParts(), space(),
                                 switchingFunction(), workspace());
 
@@ -255,7 +261,7 @@ void InterCLJFF::recalculateViaDelta()
     }
 
     //finally, loop over all of the molecules that have been removed - the energy
-    //of non-moved molecules with removed molecules has already been calculated, 
+    //of non-moved molecules with removed molecules has already been calculated,
     //as has the energy of moved molecules that are before the removed molecules
     //in the moved list. We only now have to calculate the energy of the removed
     //molecules with all of the molecules that lie above us in the moved list
@@ -265,19 +271,19 @@ void InterCLJFF::recalculateViaDelta()
     {
         //get the index of the removed molecule in the moved list
         int idx = molid_to_movedindex.value(*it);
-        
+
         const ChangedMolCLJInfo &removedmol = movedarray[idx];
-        
+
         //calculate the change in energy associated with removing this molecule
         //(only have to do the 'old' energy, as the new energy is zero)
-        
+
         for (int j=idx+1; j<nmoved; ++j)
         {
             const ChangedMolCLJInfo &movedmol = movedarray[j];
-            
+
             calculateEnergy(removedmol.oldMol(), movedmol.oldMol(),
                             space(), switchingFunction(), workspace());
-                            
+
             icnrg -= workspace().cnrg;
             iljnrg -= workspace().ljnrg;
         }
@@ -317,13 +323,13 @@ void InterCLJFF::recalculateEnergy()
 const Molecule& InterCLJFF::molecule(MoleculeID molid) const
 {
     QHash<MoleculeID,int>::const_iterator it = molid_to_molindex.find(molid);
-    
+
     if (it == molid_to_molindex.end())
         throw SireMol::missing_molecule( QObject::tr(
               "There is no molecule with ID == %1 in the forcefield "
               "\"%2\" (of type %3)")
                   .arg(molid).arg(this->name()).arg(this->what()), CODELOC );
-                  
+
     return mols.constData()[it.value()].molecule();
 }
 
@@ -359,18 +365,18 @@ void InterCLJFF::add(const Molecule &mol, const ChargeTable &chargetable,
 }
 
 /** Move the molecule 'molecule' */
-void InterCLJFF::move(const Molecule &molecule)
+bool InterCLJFF::move(const Molecule &molecule)
 {
-    //try to find this molecule in this forcefield, 
+    //try to find this molecule in this forcefield,
     //based on its ID number
     MoleculeID molid = molecule.ID();
 
     if ( not molid_to_molindex.contains(molid) )
-        //the molecule has either been removed or 
+        //the molecule has either been removed or
         //did not exist in this forcefield. Moving it
         //will thus not change the energy
-        return;
-        
+        return false;
+
     if ( molid_to_movedindex.contains(molid) )
     {
         //this molecule has already been changed since the
@@ -382,104 +388,82 @@ void InterCLJFF::move(const Molecule &molecule)
         //this molecule has not been moved since the last energy
         //evaluation - create a ChangedMolCLJInfo that describes the
         //move
-        
+
         int idx = molid_to_molindex.value(molid);
-        
+
         //get the existing copy of the molecule
         MolCLJInfo& oldinfo = mols[idx];
-        
+
         BOOST_ASSERT( oldinfo.molecule().ID() == molid );
-        
+
         oldinfo.molecule().assertSameMajorVersion(molecule);
-        
+
         MolCLJInfo newinfo( molecule, oldinfo.chargeParameters(),
                             oldinfo.ljParameters() );
-                            
+
         //save the old and new molecule
         movedmols.append( ChangedMolCLJInfo(oldinfo,newinfo) );
-        
+
         molid_to_movedindex.insert(molid, movedmols.count()-1);
-        
+
         //update the current state of the molecule in the forcefield
         oldinfo = newinfo;
     }
-    
+
     this->setDirty();
+    return true;
 }
 
 /** Move the residue 'residue' */
-void InterCLJFF::move(const Residue &residue)
+bool InterCLJFF::move(const Residue &residue)
 {
     //get the molecule containing this residue
     Molecule molecule = residue.molecule();
 
-    //try to find this molecule in this forcefield, 
+    //try to find this molecule in this forcefield,
     //based on its ID number
     MoleculeID molid = molecule.ID();
 
     if ( not molid_to_movedindex.contains(molid) )
-        //the molecule containing this residue has either been removed or 
+        //the molecule containing this residue has either been removed or
         //did not exist in this forcefield. Moving it
         //will thus not change the energy
-        return;
-        
+        return false;
+
     if ( molid_to_movedindex.contains(molid) )
     {
-        //the molecule containing this residue has already been changed 
+        //the molecule containing this residue has already been changed
         //since the last update - move it
         movedmols[ molid_to_movedindex.value(molid) ].move(residue);
     }
     else
     {
-        //the molecule containing this residue has not been moved since 
-        //the last energy evaluation - create a ChangedMolCLJInfo that 
+        //the molecule containing this residue has not been moved since
+        //the last energy evaluation - create a ChangedMolCLJInfo that
         //describes the move
-        
+
         int idx = molid_to_molindex.value(molid);
-        
+
         //get the existing copy of the molecule
         MolCLJInfo& oldinfo = mols[idx];
-        
+
         BOOST_ASSERT( oldinfo.molecule().ID() == molid );
-        
+
         oldinfo.molecule().assertSameMajorVersion(molecule);
-        
+
         MolCLJInfo newinfo( molecule, oldinfo.chargeParameters(),
                             oldinfo.ljParameters() );
-                            
+
         //save the old and new molecule
-        movedmols.append( ChangedMolCLJInfo(oldinfo,newinfo, 
+        movedmols.append( ChangedMolCLJInfo(oldinfo,newinfo,
                                             residue.info().cutGroupIDs()) );
-        
+
         molid_to_movedindex.insert(molid, movedmols.count()-1);
-        
+
         //update the current state of the molecule in the forcefield
         oldinfo = newinfo;
     }
+
+    this->setDirty();
+    return true;
 }
-
-void InterCLJFF::move(const MovedMols &movedmols)
-{}
-
-void InterCLJFF::change(const Molecule &molecule, const ParameterTable &params)
-{}
-
-void InterCLJFF::change(const Residue &residue, const ParameterTable &params)
-{}
-
-void InterCLJFF::change(const ChangedMols &changedmols)
-{}
-
-void InterCLJFF::add(const Molecule &molecule, const ParameterTable &params,
-                     int groupid)
-{}
-
-void InterCLJFF::add(const Residue &residue, const ParameterTable &params,
-                     int groupid)
-{}
-
-void InterCLJFF::remove(const Molecule &molecule)
-{}
-
-void InterCLJFF::remove(const Residue &residue)
-{}

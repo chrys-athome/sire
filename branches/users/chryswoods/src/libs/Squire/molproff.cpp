@@ -478,12 +478,16 @@ const Molecule& MolproFF::molecule(MoleculeID molid) const
 }
 
 /** Does nothing... */
-void MolproFF::move(const Molecule&)
-{}
+bool MolproFF::move(const Molecule&)
+{
+    return false;
+}
 
 /** Does nothing... */
-void MolproFF::move(const Residue&)
-{}
+bool MolproFF::move(const Residue&)
+{
+    return false;
+}
 
 /** Use the passed MolproProcessor to recalculate the energy of
     this forcefield */

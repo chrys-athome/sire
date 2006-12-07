@@ -2,6 +2,8 @@
 #define SIRECLUSTER_THREADWORKER_H
 
 #include <QThread>
+#include <QWaitCondition>
+#include <QMutex>
 
 #include "processor.h"
 
@@ -37,6 +39,9 @@ private:
 
     /** Whether or not to keep going */
     bool keepgoing;
+
+    /** Whether or not a job still needs to start... */
+    bool job_still_starting;
 };
 
 }

@@ -2,6 +2,9 @@
 #include "ffprocessor.h"
 #include "forcefield.h"
 
+#include "ffworker.h"
+#include "ffcalculator.h"
+
 #include "SireMol/molecule.h"
 #include "SireMol/moleculeid.h"
 
@@ -142,7 +145,7 @@ ForceField FFProcessorPvt::forcefield() const
 }
 
 /** Set the forcefield to be evaluated */
-void FFProcessorPvt::setForceField(const ForceField &forcefield) const
+void FFProcessorPvt::setForceField(const ForceField &forcefield)
 {
     ffield = forcefield;
 }
@@ -160,9 +163,7 @@ Molecule FFProcessorPvt::molecule(MoleculeID molid) const
     processor worker */
 boost::shared_ptr<WorkerBase> FFProcessorPvt::_pvt_activate()
 {
-    return boost::shared_ptr<WorkerBase>(
-                          new FFThreadWorker( new FFBasicCalculator(ffield) )
-                                        );
+    return boost::shared_ptr<WorkerBase>( new FFWorker( new FFCalculator(ffield) ) );
 }
 
 /////////

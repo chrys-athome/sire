@@ -66,29 +66,16 @@ public:
 
     const Molecule& molecule(MoleculeID molid) const;
 
-    void move(const Molecule &molecule);
-    void move(const Residue &residue);
-    void move(const MovedMols &movedmols);
+    void add(const Molecule &mol, const ChargeTable &chargetable,
+             const LJTable &ljtable);
 
-    void change(const Molecule &molecule, const ParameterTable &params);
-    void change(const Residue &residue, const ParameterTable &params);
-    void change(const ChangedMols &changedmols);
-
-    void add(const Molecule &molecule, const ParameterTable &params,
-             int groupid);
-    void add(const Residue &residue, const ParameterTable &params,
-             int groupid);
-
-    void add(const Molecule &molecule,
-             const ChargeTable &charges, const LJTable &ljs);
-
-    void remove(const Molecule &molecule);
-    void remove(const Residue &residue);
+    bool move(const Molecule &molecule);
+    bool move(const Residue &residue);
 
 protected:
     void recalculateViaDelta();
     void recalculateTotalEnergy();
-    
+
     void recalculateEnergy();
 
     /** Information about every molecule contained in this forcefield */
@@ -103,7 +90,7 @@ protected:
 
     /** Hash mapping MoleculeID to index in 'movedmols' */
     QHash<MoleculeID, int> molid_to_movedindex;
-    
+
     /** The IDs of all of the molecules that were removed since the last
         energy update */
     QSet<MoleculeID> removedmols;

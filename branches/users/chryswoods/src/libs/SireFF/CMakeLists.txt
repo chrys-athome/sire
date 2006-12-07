@@ -16,7 +16,11 @@ set ( SIREFF_SOURCES
       energy.cpp
       errors.cpp
       ffbase.cpp
+      ffcalculator.cpp
       ffprocessor.cpp
+      ffthreadprocessor.cpp
+      ffthreadworker.cpp
+      ffworker.cpp
       forcefield.cpp
     )
 

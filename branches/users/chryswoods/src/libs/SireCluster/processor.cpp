@@ -141,9 +141,15 @@ QString Processor::name() const
 
     \throw SireCluster::already_active
 */
-boost::shared_ptr<ThreadProcessor> Processor::activate()
+boost::shared_ptr<WorkerBase> Processor::activate()
 {
     return data().activate();
+}
+
+/** Return whether or not the processor is active */
+bool Processor::isActive() const
+{
+    return data().isActive();
 }
 
 /** Set the name of the processor - you may only change a processors

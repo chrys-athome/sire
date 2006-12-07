@@ -156,8 +156,11 @@ public:
     virtual const Molecule& molecule(MoleculeID molid) const=0;
     //virtual const Residue& residue(const MolResNumID &molresid) const=0;
 
-    virtual void move(const Molecule &mol)=0;
-    virtual void move(const Residue &res)=0;
+    virtual bool move(const Molecule &mol)=0;
+    virtual bool move(const Residue &res)=0;
+
+    bool isDirty() const;
+    bool isClean() const;
 
     void assertContains(const Function &component) const;
 
@@ -179,8 +182,6 @@ protected:
 
     void addToRegister(const Molecule &molecule);
     void addToRegister(const Residue &residue);
-
-    bool isDirty() const;
 
     void setDirty();
     void setClean();
@@ -226,6 +227,20 @@ inline void FFBase::setComponent(const Function &comp, double nrg)
 inline void FFBase::changeComponent(const Function &comp, double delta)
 {
     nrg_components.set( comp, delta + nrg_components.value(comp) );
+}
+
+/** Return whether or not the forcefield is dirty (the energy
+    needs to be recalculated) */
+inline bool FFBase::isDirty() const
+{
+    return isdirty;
+}
+
+/** Return whether or not the forcefield is clean (the energy
+    does not need to be recalculated) */
+inline bool FFBase::isClean() const
+{
+    return not isDirty();
 }
 
 }

@@ -141,13 +141,6 @@ FFBase::FFBase(const FFBase &other)
 FFBase::~FFBase()
 {}
 
-/** Return whether or not the forcefield is dirty (the energy
-    needs to be recalculated) */
-bool FFBase::isDirty() const
-{
-    return isdirty;
-}
-
 /** Label the forcefield as dirty (in need of an energy recalculation) */
 void FFBase::setDirty()
 {

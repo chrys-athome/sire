@@ -2,15 +2,11 @@
 from Sire.Mol import *
 from Sire.IO import *
 from Sire.Vol import *
-from Sire.FF import *
 from Sire.MM import *
 from Sire.CAS import *
-from Sire.Cluster import *
 from Sire.Maths import *
 from Sire.Qt import *
 from Sire.Units import *
-
-import time
 
 timer = QTime()
 
@@ -66,37 +62,38 @@ for mol in mols:
 
 ms = timer.elapsed()
 print "... took %d ms" % ms
+      
+#now calculate the energy of the forcefield
+print "Calculating the energy..."
 
-cljff = ForceField(cljff)
-cljff2 = ForceField(cljff2)
+timer.start()
+nrg = cljff.energy()
+ms = timer.elapsed()
 
-#create a thread processor and calculate the energy in the background
-threadproc = FFThreadProcessor(cljff)
+print "InterCLJFF ",cljff.energy(), "kcal mol-1"
+print "    Coulomb = ", cljff.energy(cljff.coulomb())
+print "         LJ = ", cljff.energy(cljff.lj())
 
-active_threadproc = threadproc.activate()
+print "... took %d ms" % ms
 
-print "Starting background calculation..."
-active_threadproc.recalculateEnergy()
+print "Calculating the energy..."
 
-print "Off it goes...."
-print "Da de da da da..."
+timer.start()
+nrg = cljff2.energy()
+ms = timer.elapsed()
 
-#create an FFProcessor, and place the cljff onto it...
-ffproc = FFProcessor(cljff)
+print "Tip4PFF ",cljff2.energy(), "kcal mol-1"
 
-print "Is active?", ffproc.isActive()
+print "... took %d ms" % ms
 
-active_ffproc = ffproc.activate()
+timer.start()
 
-print "Is active?", ffproc.isActive()
+nmoves = 1000
+for i in range(0,nmoves):
+    cljff.move( mols[0] )
+    nrg = cljff.energy()
 
-print "MAIN THREAD PROCESS"
-print "Total energy == ",active_ffproc.energy()
-print "Coulomb == %f, LJ == %f" % ( active_ffproc.energy(cljff.component(CLJFF.COULOMB())), \
-                                    active_ffproc.energy(cljff.component(CLJFF.LJ())) )
+ms = timer.elapsed()
 
-print "BACKGROUND THREAD PROCESS"
-print "Total energy == ",active_threadproc.energy()
-print "Coulomb == %f, LJ == %f" % ( active_threadproc.energy(cljff.component(CLJFF.COULOMB())), \
-                                    active_threadproc.energy(cljff.component(CLJFF.LJ())) )
-
+print "InterCLJFF ",cljff.energy(), "kcal mol-1"
+print "... took %d ms (%f moves per second)" % (ms, nmoves*1000.0/ms)

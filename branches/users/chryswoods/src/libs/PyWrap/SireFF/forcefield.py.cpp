@@ -1,125 +1,121 @@
 
 #include "boost/python.hpp"
 
-#include "SireCAS/qhash_sirecas.h"
-
+#include "SireFF/forcefield.h"
 #include "SireFF/ffbase.h"
-#include "SireFF/changedmols.h"
 
 #include "SireMol/molecule.h"
 #include "SireMol/residue.h"
-
-#include "SireDB/parametertable.h"
 
 namespace bp = boost::python;
 
 namespace SireFF
 {
 
-class MovedMols
+void export_ForceField()
 {
-public:
-    MovedMols()
-    {}
-
-    ~MovedMols()
-    {}
-};
-
-void
-SIREFF_EXPORT
-export_FFBase()
-{
-    bp::class_< FFBase, boost::noncopyable >( "FFBase", bp::no_init )
+    bp::class_< SireFF::ForceField >( "ForceField" )
+        .def( bp::init< >()[bp::default_call_policies()] )
+        .def( bp::init< SireFF::FFBase const & >(( bp::arg("ffbase") )) )
         .def(
             "TOTAL"
-            , &::SireFF::FFBase::TOTAL
+            , &::SireFF::ForceField::TOTAL
             , bp::default_call_policies() )
         .def(
             "assertContains"
-            , (void ( ::SireFF::FFBase::* )( ::SireCAS::Function const & ) const)( &::SireFF::FFBase::assertContains )
+            , (void ( ::SireFF::ForceField::* )( ::SireCAS::Function const & ) const)( &::SireFF::ForceField::assertContains )
             , ( bp::arg("component") )
             , bp::default_call_policies() )
         .def(
             "assertContains"
-            , (void ( ::SireFF::FFBase::* )( ::SireMol::Molecule const & ) const)( &::SireFF::FFBase::assertContains )
+            , (void ( ::SireFF::ForceField::* )( ::SireMol::Molecule const & ) const)( &::SireFF::ForceField::assertContains )
             , ( bp::arg("molecule") )
             , bp::default_call_policies() )
         .def(
             "assertContains"
-            , (void ( ::SireFF::FFBase::* )( ::SireMol::Residue const & ) const)( &::SireFF::FFBase::assertContains )
+            , (void ( ::SireFF::ForceField::* )( ::SireMol::Residue const & ) const)( &::SireFF::ForceField::assertContains )
             , ( bp::arg("residue") )
             , bp::default_call_policies() )
         .def(
             "assertSameMajorVersion"
-            , (void ( ::SireFF::FFBase::* )( ::SireMol::Molecule const & ) const)( &::SireFF::FFBase::assertSameMajorVersion )
+            , (void ( ::SireFF::ForceField::* )( ::SireMol::Molecule const & ) const)( &::SireFF::ForceField::assertSameMajorVersion )
             , ( bp::arg("molecule") )
             , bp::default_call_policies() )
         .def(
             "assertSameMajorVersion"
-            , (void ( ::SireFF::FFBase::* )( ::SireMol::Residue const & ) const)( &::SireFF::FFBase::assertSameMajorVersion )
+            , (void ( ::SireFF::ForceField::* )( ::SireMol::Residue const & ) const)( &::SireFF::ForceField::assertSameMajorVersion )
             , ( bp::arg("residue") )
             , bp::default_call_policies() )
         .def(
             "assertSameVersion"
-            , (void ( ::SireFF::FFBase::* )( ::SireMol::Molecule const & ) const)( &::SireFF::FFBase::assertSameVersion )
+            , (void ( ::SireFF::ForceField::* )( ::SireMol::Molecule const & ) const)( &::SireFF::ForceField::assertSameVersion )
             , ( bp::arg("molecule") )
             , bp::default_call_policies() )
         .def(
             "assertSameVersion"
-            , (void ( ::SireFF::FFBase::* )( ::SireMol::Residue const & ) const)( &::SireFF::FFBase::assertSameVersion )
+            , (void ( ::SireFF::ForceField::* )( ::SireMol::Residue const & ) const)( &::SireFF::ForceField::assertSameVersion )
             , ( bp::arg("residue") )
             , bp::default_call_policies() )
         .def(
             "component"
-            , &::SireFF::FFBase::component
+            , &::SireFF::ForceField::component
             , ( bp::arg("componentid") )
             , bp::return_value_policy< bp::copy_const_reference, bp::default_call_policies >() )
         .def(
             "components"
-            , &::SireFF::FFBase::components
+            , &::SireFF::ForceField::components
             , bp::default_call_policies() )
         .def(
             "energies"
-            , &::SireFF::FFBase::energies
+            , &::SireFF::ForceField::energies
             , bp::default_call_policies() )
         .def(
             "energy"
-            , (double ( ::SireFF::FFBase::* )(  ) )( &::SireFF::FFBase::energy )
+            , (double ( ::SireFF::ForceField::* )(  ) )( &::SireFF::ForceField::energy )
             , bp::default_call_policies() )
         .def(
             "energy"
-            , (double ( ::SireFF::FFBase::* )( ::SireCAS::Function const & ) )( &::SireFF::FFBase::energy )
+            , (double ( ::SireFF::ForceField::* )( ::SireCAS::Function const & ) )( &::SireFF::ForceField::energy )
             , ( bp::arg("component") )
             , bp::default_call_policies() )
         .def(
+            "isClean"
+            , &::SireFF::ForceField::isClean
+            , bp::default_call_policies() )
+        .def(
+            "isDirty"
+            , &::SireFF::ForceField::isDirty
+            , bp::default_call_policies() )
+        .def(
             "molecule"
-            , bp::pure_virtual( &::SireFF::FFBase::molecule )
+            , &::SireFF::ForceField::molecule
             , ( bp::arg("molid") )
             , bp::return_value_policy< bp::copy_const_reference, bp::default_call_policies >() )
         .def(
             "move"
-            , (bool ( ::SireFF::FFBase::* )( ::SireMol::Molecule const & ) )(&::SireFF::FFBase::move)
+            , (bool ( ::SireFF::ForceField::* )( ::SireMol::Molecule const & ) )( &::SireFF::ForceField::move )
             , ( bp::arg("mol") )
             , bp::default_call_policies() )
         .def(
             "move"
-            , (bool ( ::SireFF::FFBase::* )( ::SireMol::Residue const & ) )(&::SireFF::FFBase::move)
+            , (bool ( ::SireFF::ForceField::* )( ::SireMol::Residue const & ) )( &::SireFF::ForceField::move )
             , ( bp::arg("res") )
             , bp::default_call_policies() )
         .def(
             "name"
-            , &::SireFF::FFBase::name
+            , &::SireFF::ForceField::name
             , bp::return_value_policy< bp::copy_const_reference, bp::default_call_policies >() )
         .def(
             "total"
-            , &::SireFF::FFBase::total
+            , &::SireFF::ForceField::total
             , bp::return_value_policy< bp::copy_const_reference, bp::default_call_policies >() )
         .def(
             "what"
-            , bp::pure_virtual( &::SireFF::FFBase::what )
+            , &::SireFF::ForceField::what
             , bp::default_call_policies() )
         .staticmethod( "TOTAL" );
+
+    bp::implicitly_convertible< SireFF::FFBase const &, SireFF::ForceField >();
 }
 
 }

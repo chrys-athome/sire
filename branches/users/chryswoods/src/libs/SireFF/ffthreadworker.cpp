@@ -1,5 +1,8 @@
 
 #include "ffthreadworker.h"
+#include "ffcalculator.h"
+
+#include "SireMol/molecule.h"
 
 #include "SireError/errors.h"
 
@@ -8,11 +11,11 @@ using namespace SireCluster;
 
 /** Constructor */
 FFThreadWorker::FFThreadWorker(FFCalculator *calculator)
-               : FFProcessor(), ThreadProcessor(),
+               : FFWorkerBase(), ThreadWorker(),
                  ffcalculator(calculator)
 {
     if (not calculator)
-        throw SireError::program_bug( QObject::tr(
+        throw SireError::program_bug( ::QObject::tr(
                 "Cannot create an FFThreadWorker with a null FFCalculator!"),
                     CODELOC );
 }
@@ -26,7 +29,7 @@ FFThreadWorker::~FFThreadWorker()
 ForceField FFThreadWorker::forcefield() const
 {
     //wait until any running calculation has finished
-    ThreadProcessor::waitUntilReady();
+    const_cast<FFThreadWorker*>(this)->_pvt_waitUntilReady();
 
     return ffcalculator->forcefield();
 }
@@ -71,19 +74,19 @@ Molecule FFThreadWorker::molecule(MoleculeID molid) const
 void FFThreadWorker::_pvt_recalculateEnergy()
 {
     //wait until the last calculation has finished
-    ThreadProcessor::runBG();
+    ThreadWorker::runBG();
 }
 
 /** Recalculate the energy in the foreground */
 void FFThreadWorker::_pvt_recalculateEnergyFG()
 {
-    ThreadProcessor::runFG();
+    ThreadWorker::runFG();
 }
 
 /** Wait until the last calculation has finished */
 void FFThreadWorker::_pvt_waitUntilReady()
 {
-    ThreadProcessor::waitUntilReady();
+    ThreadWorker::waitUntilReady();
 }
 
 /** Get the energies from the forcefield */

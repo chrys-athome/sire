@@ -1,12 +1,35 @@
 #ifndef SIREFF_FFWORKER_H
 #define SIREFF_FFWORKER_H
 
-#include "SireCluster/workerbase.h"
+#include "SireCluster/processor.h"
+#include "SireCAS/values.h"
 
 SIRE_BEGIN_HEADER
 
+namespace SireMol
+{
+class Molecule;
+class Residue;
+class MoleculeID;
+}
+
+namespace SireCAS
+{
+class Function;
+}
+
 namespace SireFF
 {
+
+class ForceField;
+class FFCalculator;
+
+using SireMol::Molecule;
+using SireMol::Residue;
+using SireMol::MoleculeID;
+
+using SireCAS::Function;
+using SireCAS::Values;
 
 /** This is the base class of all FFWorkers - an FFWorker is a class
     that evaluates a ForceField on a (possibly) remote thread or processor.
@@ -51,8 +74,6 @@ protected:
 
     virtual double _pvt_getEnergies(Values &components)=0;
 
-    void recalculateEnergy();
-
 private:
     void checkEnergiesUpToDate();
 
@@ -79,7 +100,7 @@ private:
 
     @author Christopher Woods
 */
-class SIREFF_EXPORT FFWorker : public FFWorkerBase
+class SIREFF_EXPORT FFWorker : public FFWorkerBase, public SireCluster::WorkerBase
 {
 public:
     FFWorker(FFCalculator *ffcalculator);

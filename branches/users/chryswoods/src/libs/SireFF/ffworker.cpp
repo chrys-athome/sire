@@ -1,9 +1,20 @@
 
 #include "ffworker.h"
+#include "forcefield.h"
+#include "ffcalculator.h"
+
+#include "SireCAS/function.h"
+
+#include "SireMol/molecule.h"
+#include "SireMol/residue.h"
+#include "SireMol/moleculeid.h"
 
 #include "SireError/errors.h"
+#include "SireFF/errors.h"
 
 using namespace SireFF;
+using namespace SireMol;
+using namespace SireCAS;
 
 /////////
 ///////// Implementation of FFWorkerBase
@@ -36,7 +47,7 @@ void FFWorkerBase::waitUntilReady()
         current_state = IDLE;
 
         //get the values of the energy and its components
-        total_nrg = this->getEnergies(nrg_components);
+        total_nrg = this->_pvt_getEnergies(nrg_components);
 
         //the energy no longer needs recalculating
         needs_energy_recalculation = false;
@@ -92,7 +103,7 @@ void FFWorkerBase::checkEnergiesUpToDate()
             // until the calculation is complete
             this->_pvt_recalculateEnergyFG();
 
-            total_nrg = this->getEnergies(nrg_components);
+            total_nrg = this->_pvt_getEnergies(nrg_components);
             needs_energy_recalculation = false;
         }
         else if (current_state | CALCULATING_ENERGY)
@@ -173,13 +184,23 @@ void FFWorkerBase::move(const Residue &residue)
                                  this->_pvt_move(residue);
 }
 
+/** Assert that this forcefield contains the energy component 'component'
+
+    \throw SireFF::missing_component
+*/
+void FFWorkerBase::assertContains(const Function &component) const
+{
+    if (not nrg_components.values().contains(component.ID()))
+        this->forcefield().assertContains(component);
+}
+
 /////////
 ///////// Implementation of FFWorker
 /////////
 
 /** Constructor, specifying the FFCalculator to use */
 FFWorker::FFWorker(FFCalculator *calculator)
-         : FFWorkerBase(), ffcalculator(calculator)
+         : FFWorkerBase(), WorkerBase(), ffcalculator(calculator)
 {
     if (not calculator)
         throw SireError::program_bug( QObject::tr(
@@ -230,6 +251,7 @@ bool FFWorker::_pvt_move(const Residue &residue)
 /** Recalculate the energy is the foreground */
 void FFWorker::_pvt_recalculateEnergyFG()
 {
+    ffcalculator->calculateEnergy();
 }
 
 /** Recalculate the energy */
@@ -239,6 +261,17 @@ void FFWorker::_pvt_recalculateEnergy()
     this->_pvt_recalculateEnergyFG();
 }
 
-void FFWorker::_pvt_waitUntilReady();
+/** Wait until the calculation has completed - in this case,
+    as the calculation is in the main thread, it has already
+    finished! */
+void FFWorker::_pvt_waitUntilReady()
+{
+    return;
+}
 
-double FFWorker::_pvt_getEnergies(Values &components);
+/** Return the calculated total energy of the forcefield,
+    and the values of the components */
+double FFWorker::_pvt_getEnergies(Values &components)
+{
+    return ffcalculator->getEnergies(components);
+}

@@ -106,8 +106,8 @@ public:
 
     const Molecule& molecule(MoleculeID molid) const;
 
-    void move(const Molecule &mol);
-    void move(const Residue &res);
+    bool move(const Molecule &mol);
+    bool move(const Residue &res);
 
 protected:
     void recalculateEnergy(MolproProcessor &processor);

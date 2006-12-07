@@ -61,8 +61,11 @@ public:
     const Molecule& molecule(MoleculeID molid) const;
     //virtual const Residue& residue(const MolResNumID &molresid) const=0;
 
-    void move(const Molecule &mol);
-    void move(const Residue &res);
+    bool move(const Molecule &mol);
+    bool move(const Residue &res);
+
+    bool isDirty() const;
+    bool isClean() const;
 
     void assertContains(const Function &component) const;
 
@@ -146,15 +149,28 @@ inline const Molecule& ForceField::molecule(MoleculeID molid) const
 }
 
 /** Move the molecule 'mol' */
-inline void ForceField::move(const Molecule &mol)
+inline bool ForceField::move(const Molecule &mol)
 {
-    d->move(mol);
+    return d->move(mol);
 }
 
 /** Move the residue 'res' */
-inline void ForceField::move(const Residue &res)
+inline bool ForceField::move(const Residue &res)
 {
-    d->move(res);
+    return d->move(res);
+}
+
+/** Return whether the forcefield is dirty (requires an energy recalcualtion) */
+inline bool ForceField::isDirty() const
+{
+    return d->isDirty();
+}
+
+/** Return whether or not the forcefield is clean (does not require
+    an energy recalcualtion) */
+inline bool ForceField::isClean() const
+{
+    return d->isClean();
 }
 
 /** Assert that this forcefield contains a component represented by

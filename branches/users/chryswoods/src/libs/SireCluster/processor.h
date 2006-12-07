@@ -32,7 +32,7 @@ namespace SireCluster
 
     @author Christopher Woods
 */
-class WorkerBase : public boost::noncopyable
+class SIRECLUSTER_EXPORT WorkerBase : public boost::noncopyable
 {
 public:
     WorkerBase();
@@ -77,7 +77,7 @@ private:
 
 /** Return a pointer to the mutex that is used to serialise access to
     this object */
-QMutex* ProcessorPvt::mutex() const
+inline QMutex* ProcessorPvt::mutex() const
 {
     return const_cast<QMutex*>(&datamutex);
 }

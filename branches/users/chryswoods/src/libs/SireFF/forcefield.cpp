@@ -96,11 +96,15 @@ public:
 
     //virtual const Residue& residue(const MolResNumID &molresid) const=0;
 
-    void move(const Molecule&)
-    {}
+    bool move(const Molecule&)
+    {
+        return false;
+    }
 
-    void move(const Residue&)
-    {}
+    bool move(const Residue&)
+    {
+        return false;
+    }
 
 protected:
     void recalculateEnergy()

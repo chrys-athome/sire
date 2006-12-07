@@ -3,6 +3,8 @@
 
 #include "SireCluster/processor.h"
 
+#include "forcefield.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol
@@ -11,13 +13,20 @@ class Molecule;
 class MoleculeID;
 }
 
+namespace SireCluster
+{
+class WorkerBase;
+}
+
 namespace SireFF
 {
 
-class ForceField;
+class FFWorkerBase;
 
 using SireMol::Molecule;
 using SireMol::MoleculeID;
+
+using SireCluster::WorkerBase;
 
 namespace detail
 {
@@ -32,7 +41,7 @@ public:
 
     virtual ForceField forcefield() const=0;
 
-    virtual void setForceField(const ForceField &forcefield) const=0;
+    virtual void setForceField(const ForceField &forcefield)=0;
 
     virtual Molecule molecule(MoleculeID molid) const=0;
 };
@@ -85,7 +94,7 @@ public:
 
     ForceField forcefield() const;
 
-    void setForceField(const ForceField &forcefield) const;
+    void setForceField(const ForceField &forcefield);
 
     Molecule molecule(MoleculeID molid) const;
 
@@ -99,8 +108,8 @@ private:
 
 }
 
-/** This is a basic FFProcessor that is used to process generic forcefields
-    in a background thread.
+/** This is a basic FFProcessor that is a test processor that evaluates
+    the energy and forces in the main thread
 
     @author Christopher Woods
 */

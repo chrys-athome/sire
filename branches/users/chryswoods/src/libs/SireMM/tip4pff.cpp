@@ -200,34 +200,12 @@ void Tip4PFF::add(const Molecule &mol, const ChargeTable &charges,
 }
 
 /** Move the molecule 'molecule' */
-void Tip4PFF::move(const Molecule &molecule)
-{}
+bool Tip4PFF::move(const Molecule &molecule)
+{
+    return false;
+}
 
-void Tip4PFF::move(const Residue &residue)
-{}
-
-void Tip4PFF::move(const MovedMols &movedmols)
-{}
-
-void Tip4PFF::change(const Molecule &molecule, const ParameterTable &params)
-{}
-
-void Tip4PFF::change(const Residue &residue, const ParameterTable &params)
-{}
-
-void Tip4PFF::change(const ChangedMols &changedmols)
-{}
-
-void Tip4PFF::add(const Molecule &molecule, const ParameterTable &params,
-                     int groupid)
-{}
-
-void Tip4PFF::add(const Residue &residue, const ParameterTable &params,
-                     int groupid)
-{}
-
-void Tip4PFF::remove(const Molecule &molecule)
-{}
-
-void Tip4PFF::remove(const Residue &residue)
-{}
+bool Tip4PFF::move(const Residue &residue)
+{
+    return false;
+}
