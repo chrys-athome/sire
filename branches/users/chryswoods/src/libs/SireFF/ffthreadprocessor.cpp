@@ -53,6 +53,11 @@ FFThreadProcessor::FFThreadProcessor(const ForceField &forcefield)
                                    )
 {}
 
+/** Construct from passed data */
+FFThreadProcessor::FFThreadProcessor(const boost::shared_ptr<FFThreadProcessorPvt> &data)
+                  : FFProcessorBase(data)
+{}
+
 /** Copy constructor */
 FFThreadProcessor::FFThreadProcessor(const FFThreadProcessor &other)
                   : FFProcessorBase(other)

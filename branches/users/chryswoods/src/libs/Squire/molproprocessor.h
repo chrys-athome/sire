@@ -1,57 +1,86 @@
 #ifndef SQUIRE_MOLPROPROCESSOR_H
 #define SQUIRE_MOLPROPROCESSOR_H
 
-#include <memory>
+#include "SireFF/ffthreadprocessor.h"
 
-#include "sireglobal.h"
+#include <QDir>
 
 SIRE_BEGIN_HEADER
 
-namespace SireFF
-{
-class ForceField;
-}
-
 namespace Squire
 {
-
-class MolproFF;
 
 using SireFF::ForceField;
 
 namespace detail
 {
-class MolproProcessorPvt;
+
+/** Private implementation holding the data for MolproProcessor
+
+    @author Christopher Woods
+*/
+class MolproProcessorPvt : public SireFF::detail::FFThreadProcessorPvt
+{
+public:
+    MolproProcessorPvt();
+    MolproProcessorPvt(const ForceField &forcefield,
+                       const QString &molpro_exe,
+                       const QDir &tmpdir);
+
+    ~MolproProcessorPvt();
+
+    void setMolpro(const QString &molpro_executable);
+    void setTempDir(const QDir &temp_dir);
+
+protected:
+    boost::shared_ptr<SireCluster::WorkerBase> _pvt_activate();
+
+private:
+    /** The full name and path to the molpro executable */
+    QString molpro_exe;
+
+    /** The temp directory in which to run molpro jobs */
+    QDir tmpdir;
+};
+
 }
 
-class SQUIRE_EXPORT MolproProcessor
+/** This is the procesor that connects to an external Molpro process with
+    which QM calculations may be performed. The connection is handled by
+    a background thread, so will not block the main thread.
+
+    @author Christopher Woods
+*/
+class SQUIRE_EXPORT MolproProcessor : public SireFF::FFThreadProcessor
 {
-
-friend class MolproFF;  // so can call energy(const MolproFF &ff)
-
 public:
     MolproProcessor();
-    MolproProcessor(const ForceField &);
+    MolproProcessor(const ForceField &forcefield,
+                    const QString &molpro_exe = "molpro",
+                    const QDir &temp_dir = QDir::temp());
+
+    MolproProcessor(const MolproProcessor &other);
 
     ~MolproProcessor();
 
-    const char* what();
+    void setMolpro(const QString &molpro_exe);
+    void setTempDir(const QDir &tmpdir);
 
-    const QString& forcefieldName() const;
-    const QString& name() const;
+    static const char* typeName()
+    {
+        return "Squire::MolproProcessor";
+    }
 
-    double energy();
+    const char* what() const
+    {
+        return MolproProcessor::typeName();
+    }
 
 protected:
-    double calculateEnergy(const MolproFF &ff);
+    MolproProcessor(const boost::shared_ptr<detail::MolproProcessorPvt> &data);
 
-private:
-
-    /** Full path to the molpro executable */
-    QString molpro_exe;
-
-    /** Pointer to the class that implements this processor */
-    std::auto_ptr<detail::MolproProcessorPvt> p;
+    detail::MolproProcessorPvt& data();
+    const detail::MolproProcessorPvt& data() const;
 };
 
 }

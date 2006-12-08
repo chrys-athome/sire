@@ -53,6 +53,9 @@ public:
     {
         return FFThreadProcessor::typeName();
     }
+
+protected:
+    FFThreadProcessor( const boost::shared_ptr<detail::FFThreadProcessorPvt> &data );
 };
 
 }

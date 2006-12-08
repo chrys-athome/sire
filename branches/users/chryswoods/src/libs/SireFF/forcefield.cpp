@@ -168,6 +168,14 @@ ForceField::ForceField(const FFBase &ffield)
            : d( ffield.clone() )
 {}
 
+/** Construct from a shared pointer to a forcefield */
+ForceField::ForceField(const SharedPolyPointer<FFBase> &ffptr)
+           : d( ffptr )
+{
+    if (not d)
+        d = shared_null;
+}
+
 /** Copy constructor */
 ForceField::ForceField(const ForceField &other)
            : d(other.d)

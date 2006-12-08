@@ -9,7 +9,7 @@ SIRE_BEGIN_HEADER
 namespace SireFF
 {
 
-class FFCalculator;
+class FFCalculatorBase;
 
 /** This class provides a worker that can calculate the energy and
     forces of a ForceField in a background thread (via the passed
@@ -21,7 +21,7 @@ class SIREFF_EXPORT FFThreadWorker : public FFWorkerBase,
                                      public SireCluster::ThreadWorker
 {
 public:
-    FFThreadWorker(FFCalculator *ffcalculator);
+    FFThreadWorker(FFCalculatorBase *ffcalculator);
 
     ~FFThreadWorker();
 
@@ -47,7 +47,7 @@ private:
 
     /** Pointer to the calculator that is used to calculate the
         forcefield energies and forces */
-    std::auto_ptr<FFCalculator> ffcalculator;
+    std::auto_ptr<FFCalculatorBase> ffcalculator;
 };
 
 }

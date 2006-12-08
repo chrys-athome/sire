@@ -64,6 +64,7 @@ if (SIRE_BUILD_MOLPRO)
     #add the Molpro forcefield files
     set ( SQUIRE_SOURCES
           ${SQUIRE_SOURCES}
+          molprocalculator.cpp
           molproff.cpp
           molproprocessor.cpp
         )

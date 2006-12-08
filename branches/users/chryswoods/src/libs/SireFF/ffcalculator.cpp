@@ -84,7 +84,14 @@ bool FFCalculator::setForceField(const ForceField &forcefield)
 {
     ffield = forcefield;
 
-    return ffield.isDirty();
+    if (ffield.isDirty())
+        return true;
+    else
+    {
+        nrg_components = ffield.energies();
+        total_nrg = nrg_components.value(ffield.total());
+        return false;
+    }
 }
 
 /** Return a copy of the forcefield that is being evaluated */

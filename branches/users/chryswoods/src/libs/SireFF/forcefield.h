@@ -34,6 +34,7 @@ public:
     ForceField();
     ForceField(const ForceField &other);
     ForceField(const FFBase &ffbase);
+    ForceField(const SireBase::SharedPolyPointer<FFBase> &ffptr);
 
     ~ForceField();
 
@@ -77,6 +78,12 @@ public:
 
     void assertSameVersion(const Molecule &molecule) const;
     void assertSameVersion(const Residue &residue) const;
+
+    template<class T>
+    bool isA() const;
+
+    template<class T>
+    SireBase::SharedPolyPointer<T> asA() const;
 
 private:
     /** Shared pointer to the actual forcefield implementation */
@@ -243,6 +250,27 @@ inline void ForceField::assertSameVersion(const Molecule &molecule) const
 inline void ForceField::assertSameVersion(const Residue &residue) const
 {
     d->assertSameVersion(residue);
+}
+
+/** Return whether or not this forcefield is of type 'T' */
+template<class T>
+SIRE_INLINE_TEMPLATE
+bool ForceField::isA() const
+{
+    return d.isA<T>();
+}
+
+/** Return a copy of the forcefield cast as type T. This
+    will throw an exception if this forcefield is not derivable
+    from type T.
+
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_INLINE_TEMPLATE
+SireBase::SharedPolyPointer<T> ForceField::asA() const
+{
+    return SireBase::SharedPolyPointer<T>( d );
 }
 
 }

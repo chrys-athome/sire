@@ -42,8 +42,6 @@ InterCLJFF::~InterCLJFF()
 /** Recalculate the total energy of this forcefield from scratch */
 void InterCLJFF::recalculateTotalEnergy()
 {
-    qDebug() << "InterCLJFF::recalculateTotalEnergy() start...";
-
     //calculate the total CLJ energy of all molecule pairs...
     double cnrg = 0.0;
     double ljnrg = 0.0;
@@ -78,8 +76,6 @@ void InterCLJFF::recalculateTotalEnergy()
     movedmols.clear();
     molid_to_movedindex.clear();
     removedmols.clear();
-
-    qDebug() << "... InterCLJFF::recalculateTotalEnergy() finished!";
 }
 
 /** Recalculate the energy by using a delta from the old configuration */
@@ -375,7 +371,7 @@ bool InterCLJFF::move(const Molecule &molecule)
         //the molecule has either been removed or
         //did not exist in this forcefield. Moving it
         //will thus not change the energy
-        return false;
+        return isDirty();
 
     if ( molid_to_movedindex.contains(molid) )
     {
@@ -411,7 +407,7 @@ bool InterCLJFF::move(const Molecule &molecule)
     }
 
     this->setDirty();
-    return true;
+    return isDirty();
 }
 
 /** Move the residue 'residue' */
@@ -428,7 +424,7 @@ bool InterCLJFF::move(const Residue &residue)
         //the molecule containing this residue has either been removed or
         //did not exist in this forcefield. Moving it
         //will thus not change the energy
-        return false;
+        return isDirty();
 
     if ( molid_to_movedindex.contains(molid) )
     {
@@ -465,5 +461,5 @@ bool InterCLJFF::move(const Residue &residue)
     }
 
     this->setDirty();
-    return true;
+    return isDirty();
 }

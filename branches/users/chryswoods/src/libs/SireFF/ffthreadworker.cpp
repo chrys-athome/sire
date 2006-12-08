@@ -10,7 +10,7 @@ using namespace SireFF;
 using namespace SireCluster;
 
 /** Constructor */
-FFThreadWorker::FFThreadWorker(FFCalculator *calculator)
+FFThreadWorker::FFThreadWorker(FFCalculatorBase *calculator)
                : FFWorkerBase(), ThreadWorker(),
                  ffcalculator(calculator)
 {

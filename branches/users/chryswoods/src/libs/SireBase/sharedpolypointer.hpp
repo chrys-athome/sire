@@ -96,7 +96,7 @@ public:
     {
         if (d) d->ref.ref();
     }
-    
+
     template<class S>
     inline SharedPolyPointer(const SharedPolyPointer<S> &o)
              : d( const_cast<T*>( dynamic_cast<const T*>(o.constData()) ) )
@@ -130,10 +130,10 @@ public:
     inline SharedPolyPointer<T> & operator=(const SharedPolyPointer<S> &o)
     {
         T *x = const_cast<T*>( dynamic_cast<const T*>(o.constData()) );
-        
+
         if (x != d)
         {
-            
+
             if (o.constData())
             {
                 if (x)
@@ -142,14 +142,14 @@ public:
                     throw SireError::invalid_cast( QObject::tr(
                         "Cannot cast a SharedPolyPointer of type \"%1\".")
                             .arg( SharedPolyPointerHelper<S>::what(*o) ), CODELOC );
-                
+
                 x = qAtomicSetPtr(&d, x);
-                
+
                 if (x && !x->ref.deref())
                     delete x;
             }
         }
-        
+
         return *this;
     }
 
@@ -298,10 +298,10 @@ QDataStream& operator>>(QDataStream &ds,
             //if the pointer is not pointing to an object of the right type
             //then delete it
             if ( ptr.d != 0 and
-                 type_name != 
-                    QLatin1String( 
-                        SireBase::SharedPolyPointerHelper<T>::what( *(ptr.d)) 
-                                 ) 
+                 type_name !=
+                    QLatin1String(
+                        SireBase::SharedPolyPointerHelper<T>::what( *(ptr.d))
+                                 )
                )
             {
                 ptr = 0;
