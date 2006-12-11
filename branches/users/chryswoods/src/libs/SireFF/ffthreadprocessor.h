@@ -15,7 +15,7 @@ namespace detail
 
     @author Christopher Woods
 */
-class FFThreadProcessorPvt : public FFProcessorPvt
+class SIREFF_EXPORT FFThreadProcessorPvt : public FFProcessorPvt
 {
 public:
     FFThreadProcessorPvt();
@@ -34,7 +34,7 @@ protected:
 
     @author Christopher Woods
 */
-class FFThreadProcessor : public FFProcessorBase
+class SIREFF_EXPORT FFThreadProcessor : public FFProcessorBase
 {
 public:
     FFThreadProcessor();

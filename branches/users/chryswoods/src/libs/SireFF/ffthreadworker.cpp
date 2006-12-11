@@ -1,4 +1,6 @@
 
+#include "SireCAS/qhash_sirecas.h"
+
 #include "ffthreadworker.h"
 #include "ffcalculator.h"
 

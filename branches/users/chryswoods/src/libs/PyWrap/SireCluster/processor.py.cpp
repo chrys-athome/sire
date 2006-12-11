@@ -8,7 +8,7 @@ namespace bp = boost::python;
 namespace SireCluster
 {
 
-void export_Processor()
+void SIRECLUSTER_EXPORT export_Processor()
 {
     bp::class_< Processor, boost::noncopyable >( "Processor", bp::no_init )
         .def(

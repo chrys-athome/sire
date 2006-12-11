@@ -13,7 +13,7 @@ namespace SireCluster
 void export_Processor();
 void export_ThreadWorker();
 
-void SIREFF_EXPORT export_SireCluster()
+void SIRECLUSTER_EXPORT export_SireCluster()
 {
     export_Processor();
     export_ThreadWorker();

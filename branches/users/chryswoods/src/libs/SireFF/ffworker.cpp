@@ -1,4 +1,6 @@
 
+#include "SireCAS/qhash_sirecas.h"
+
 #include "ffworker.h"
 #include "forcefield.h"
 #include "ffcalculator.h"

@@ -1,6 +1,8 @@
 
 #include "boost/python.hpp"
 
+#include "SireCAS/qhash_sirecas.h"
+
 #include "SireFF/ffprocessor.h"
 #include "SireFF/ffthreadprocessor.h"
 #include "SireFF/forcefield.h"
@@ -14,7 +16,7 @@ namespace bp = boost::python;
 namespace SireFF
 {
 
-void export_FFProcessor()
+void SIREFF_EXPORT export_FFProcessor()
 {
     bp::class_< FFProcessorBase, bp::bases<SireCluster::Processor>,
                 boost::noncopyable >( "FFProcessorBase", bp::no_init )

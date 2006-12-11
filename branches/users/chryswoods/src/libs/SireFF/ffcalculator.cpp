@@ -1,4 +1,6 @@
 
+#include "SireCAS/qhash_sirecas.h"
+
 #include "ffcalculator.h"
 
 using namespace SireFF;

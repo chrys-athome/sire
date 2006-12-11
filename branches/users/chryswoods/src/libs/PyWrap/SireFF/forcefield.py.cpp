@@ -1,6 +1,8 @@
 
 #include "boost/python.hpp"
 
+#include "SireCAS/qhash_sirecas.h"
+
 #include "SireFF/forcefield.h"
 #include "SireFF/ffbase.h"
 
@@ -12,7 +14,7 @@ namespace bp = boost::python;
 namespace SireFF
 {
 
-void export_ForceField()
+void SIREFF_EXPORT export_ForceField()
 {
     bp::class_< SireFF::ForceField >( "ForceField" )
         .def( bp::init< >()[bp::default_call_policies()] )

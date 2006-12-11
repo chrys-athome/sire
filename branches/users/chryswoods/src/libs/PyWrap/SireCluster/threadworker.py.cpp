@@ -8,7 +8,7 @@ namespace bp = boost::python;
 namespace SireCluster
 {
 
-void export_ThreadWorker()
+void SIRECLUSTER_EXPORT export_ThreadWorker()
 {
     bp::class_< ThreadWorker, bp::bases< SireCluster::WorkerBase >,
                                 boost::noncopyable >( "ThreadWorker", bp::no_init )

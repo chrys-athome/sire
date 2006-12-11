@@ -1,6 +1,8 @@
 
 #include "boost/python.hpp"
 
+#include "SireCAS/qhash_sirecas.h"
+
 #include "SireFF/ffprocessor.h"
 #include "SireFF/forcefield.h"
 #include "SireFF/ffcalculator.h"
@@ -15,7 +17,7 @@ namespace bp = boost::python;
 namespace SireFF
 {
 
-void export_FFWorker()
+void SIREFF_EXPORT export_FFWorker()
 {
     bp::class_< FFWorkerBase, boost::noncopyable >( "FFWorkerBase", bp::no_init )
         .def(
