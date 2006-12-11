@@ -186,6 +186,8 @@ protected:
     void setDirty();
     void setClean();
 
+    Values currentEnergies() const;
+
     static QHash<MoleculeID,int> index(const QVector<Molecule> &molecules);
 
     /** Virtual function used to trigger a recalculation of the total energy

@@ -4,6 +4,7 @@
 #include <MolproClient/molproclient.h>
 #include <QProcess>
 #include <QDir>
+#include <QFileInfo>
 #include <QMutex>
 
 #include "SireFF/ffcalculator.h"
@@ -15,19 +16,23 @@ SIRE_BEGIN_HEADER
 namespace Squire
 {
 
+using SireFF::ForceField;
+
 using SireCAS::Values;
 
 /** This class represents a complete molpro session */
 class SQUIRE_EXPORT MolproSession
 {
 public:
-    MolproSession( const QString &molpro_executable,
+    MolproSession( const QFileInfo &molpro_executable,
                    const MolproFF &molproff,
                    const QDir &tmpdir = QDir::temp() );
 
     ~MolproSession();
 
     MolproConnection& connection();
+
+    bool incompatibleWith(const MolproFF &molproff);
 
 private:
 
@@ -38,7 +43,7 @@ private:
 
     /** The full name and path to the molpro executable that is
         running in this session */
-    QString molpro_exe;
+    QFileInfo molpro_exe;
 
     /** The RPC connection to the molpro process */
     MolproConnection molpro_rpc;
@@ -73,7 +78,7 @@ class SQUIRE_EXPORT MolproCalculator : public SireFF::FFCalculatorBase
 {
 public:
     MolproCalculator(const ForceField &forcefield,
-                     const QString &molpro_exe = "molpro",
+                     const QFileInfo &molpro_exe = "molpro",
                      const QDir &temp_dir = QDir::temp());
 
     ~MolproCalculator();
@@ -98,6 +103,12 @@ private:
 
     /** The Molpro forcefield being evaluated */
     SireBase::SharedPolyPointer<MolproFF> molproff;
+
+    /** The path to the molpro executable */
+    QFileInfo molpro_exe;
+
+    /** The directory that will be used to run the calculation (tmpdir) */
+    QDir temp_dir;
 
     /** The total energy of the forcefield */
     double total_nrg;

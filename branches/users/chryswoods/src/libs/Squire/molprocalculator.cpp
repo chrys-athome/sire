@@ -7,10 +7,11 @@
 #include <QTextStream>
 #include <QFileInfo>
 #include <QDateTime>
+#include <QUuid>
 
 #ifdef Q_OS_UNIX
 //Possible Unix-only header file
-#include <unistd>
+#include <unistd.h>
 #endif
 
 #include "SireMol/molecule.h"
@@ -31,7 +32,7 @@ QMutex MolproSession::starter_mutex;
 /** Construct a session that will represent the forcefield 'molproff'
     using the molpro executable whose full path and name are given in
     'molpro_executable' */
-MolproSession::MolproSession(const QString &molpro_executable,
+MolproSession::MolproSession(const QFileInfo &molpro_executable,
                              const MolproFF &molproff,
                              const QDir &tmpdir)
               : molpro_exe(molpro_executable),
@@ -90,12 +91,13 @@ MolproSession::MolproSession(const QString &molpro_executable,
         molpro_process.setEnvironment(env);
 
         //start the molpro process
-        molpro_process.start(molpro_exe, QIODevice::WriteOnly);
+        molpro_process.start(molpro_exe.absoluteFilePath(), QIODevice::WriteOnly);
 
         //wait for the process to start...
         if (not molpro_process.waitForStarted())
         {
-            throw SireError::process_error( molpro_exe, molpro_process, CODELOC );
+            throw SireError::process_error( molpro_exe.absoluteFilePath(),
+                                            molpro_process, CODELOC );
         }
 
         QTextStream ts(&molpro_process);
@@ -168,11 +170,18 @@ MolproSession::~MolproSession()
     \throw SireError::invalid_cast
 */
 MolproCalculator::MolproCalculator(const ForceField &forcefield,
-                                   const QString &molproexe)
+                                   const QFileInfo &molproexe,
+                                   const QDir &tmpdir)
                  : FFCalculatorBase(),
                    molpro_exe(molproexe),
-                   ff_id(0), ff_version(0)
+                   temp_dir(tmpdir)
 {
+    //its at this point that we ensure that the molpro executable exists and
+    //is in the path (we also resolve it in the path)
+    if ( not (molpro_exe.exists() and molpro_exe.isExecutable()) )
+    {
+    }
+
     //set the forcefield
     MolproCalculator::setForceField(forcefield);
 }
@@ -201,17 +210,17 @@ const Molecule& MolproCalculator::molecule(MoleculeID molid) const
 /** Tell the molpro forcefield to recalculate its energy */
 void MolproCalculator::calculateEnergy()
 {
-    if ( not molpro_session or molpro_session.incompatibleWith(*molproff) )
+    if ( not molpro_session or molpro_session->incompatibleWith(*molproff) )
     {
         //kill the old session (do this first to prevent having two
         //molpro jobs running simultaneously - think of the memory!)
         molpro_session.reset();
 
         //start a new session
-        molpro_session.reset( new MolproSession(molpro_exe, *molproff, tmpdir) );
+        molpro_session.reset( new MolproSession(molpro_exe, *molproff, temp_dir) );
     }
 
-    nrg_components = molproff->energies(*molpro_session);
+    nrg_components = molproff->recalculateEnergy(*molpro_session);
     total_nrg = nrg_components.value(molproff->total());
 }
 
@@ -241,11 +250,13 @@ bool MolproCalculator::setForceField(const ForceField &forcefield)
     molproff = forcefield.asA<MolproFF>();
 
     if (molproff->isDirty())
-        return false;
+        return true;
     else
     {
         nrg_components = molproff->energies();
-        total_nrg = nrg_components.value(molproff.total());
+        total_nrg = nrg_components.value(molproff->total());
+
+        return false;
     }
 }
 

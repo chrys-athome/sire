@@ -489,11 +489,29 @@ bool MolproFF::move(const Residue&)
     return false;
 }
 
-/** Use the passed MolproProcessor to recalculate the energy of
-    this forcefield */
-void MolproFF::recalculateEnergy(MolproProcessor &processor)
+/** Use the passed MolproSession to recalculate the energy of
+    this forcefield - this throws an exception if the session is
+    incompatible with this forcefield
+
+    \throw SireError::incompatible_error
+*/
+Values MolproFF::recalculateEnergy(MolproSession &session)
 {
-    //double nrg = processor.calculateEnergy(*this);
+    if (session.incompatibleWith(*this))
+        throw SireError::incompatible_error( QObject::tr(
+                  "The supplied Molpro session is incompatible with the passed "
+                  "Molpro forcefield (%1, %2.%3).")
+                      .arg(this->name()).arg(this->ID()).arg(this->version()),
+                          CODELOC );
+
+    double total_nrg = ::calculateHFEnergy(session.connection(),
+                                           qmCoordinates().constData(),
+                                           mmCoordinatesAndCharges().constData(), 0);
+
+    this->setComponent(total(), total_nrg);
+    this->setClean();
+
+    return currentEnergies();
 }
 
 /** The MolproFF forcefield is unable to recalculate its own

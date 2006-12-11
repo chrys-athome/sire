@@ -21,12 +21,13 @@
 
 #include "SireStream/versionid.h"
 
+class QTextStream;
+
 SIRE_BEGIN_HEADER
 
 namespace Squire
 {
 class MolproFF;
-class MolproProcessor;
 }
 
 QDataStream& operator<<(QDataStream&, const Squire::MolproFF&);
@@ -40,12 +41,17 @@ class ChargeTable;
 namespace Squire
 {
 
+class MolproCalculator;
+class MolproSession;
+
 using SireMol::Molecule;
 using SireMol::MoleculeID;
 using SireMol::Residue;
 
 using SireMM::ChargeTable;
 using SireMM::ChargeParameter;
+
+using SireCAS::Values;
 
 using SireStream::VersionID;
 
@@ -66,8 +72,8 @@ class SQUIRE_EXPORT MolproFF : public SireFF::FFBase
 friend QDataStream& ::operator<<(QDataStream&, const MolproFF&);
 friend QDataStream& ::operator>>(QDataStream&, MolproFF&);
 
-friend class MolproProcessor; //friend so can all protected functions
-                              //used to recalculate the energy
+friend class MolproCalculator; //friend so can all protected functions
+                               //used to recalculate the energy
 
 public:
     MolproFF();
@@ -109,10 +115,16 @@ public:
     bool move(const Molecule &mol);
     bool move(const Residue &res);
 
-protected:
-    void recalculateEnergy(MolproProcessor &processor);
+    int ID() const;
+    VersionID version() const;
 
+protected:
     void recalculateEnergy();  //throw an exception
+
+    //protected functions designed to be overloaded by child classes, and
+    //only called by MolproCalculator
+    virtual void initialise(QTextStream &ts) const;
+    virtual Values recalculateEnergy(MolproSession &session);
 
 private:
 
@@ -132,7 +144,7 @@ private:
     static int lastid;
 
     /** The QM molecules */
-    QVector<Molecule> qm_molecules;
+    QVector< detail::MolproQMMol > qm_molecules;
 
     /** The coordinates of all of the QM molecules, placed into
         a single array. The coordinates are in order of the molecules
@@ -143,11 +155,15 @@ private:
     /** Hash mapping MoleculeID to the index in qm_molecules */
     QHash<MoleculeID, int> qm_molid_to_index;
 
-    /** The MM molecules */
-    QVector<Molecule> mm_molecules;
+    /** The QM molecules that have changed since the last time the
+        qm_coords array was constructed */
+    QVector< detail::ChangedMolproQMMols > moved_qm_mols;
 
-    /** The charges on all of the atoms of the MM molecules */
-    QVector< QVector<ChargeParameter> > mm_charges;
+    /** Hash mapping MoleculeID to changed QM molecule */
+    QHash< MoleculeID, int > molid_to_moved_qm_mol;
+
+    /** The MM molecules */
+    QVector< detail::MolproMMMol > mm_molecules;
 
     /** The coordinates and charges of all of the MM molecules,
         placed into a single array. The coordinates and charges are
@@ -158,6 +174,13 @@ private:
 
     /** Hash mapping MoleculeID to the index in mm_molecules */
     QHash<MoleculeID, int> mm_molid_to_index;
+
+    /** The MM molecules that have changed since the last time the
+        mm_coords_and_charges array was constructed */
+    QVector< detail::ChangedMolproMMMols >  moved_mm_mols;
+
+    /** Hash mapping MoleculeID to changed MM molecule */
+    QHash< MoleculeID, int > molid_to_moved_mm_mol;
 
     /** An ID number that uniquely identifies this MolproFF
         (from other MolproFFs) */
@@ -186,6 +209,19 @@ inline const QVector<double>& MolproFF::qmCoordinates() const
 inline const QVector<double>& MolproFF::mmCoordsAndCharges() const
 {
     return mm_coords_and_charges;
+}
+
+/** Return the ID number of this Molpro forcefield - this should be unique */
+inline int MolproFF::ID() const
+{
+    return ffid;
+}
+
+/** Return the version number of this forcefield - this is incremented whenever
+    the molecules in this forcefield are changed (note changed - not moved!)*/
+inline VersionID MolproFF::version() const
+{
+    return ff_version;
 }
 
 }
