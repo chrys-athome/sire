@@ -23,7 +23,7 @@ class CoordGroup;
 
 /**
 An AABox is an axis-aligned bounding box that is the smallest box that is aligned with the three cartesian axes that completely encases a CoordGroup. It is trivial to obtain the bounding sphere from the AABox. The AABox is used by the distance calculators to quickly determine whether two CoordGroups are within the cutoff radius, and to obtain all CoordGroups that are within particular regions of space.
- 
+
 @author Christopher Woods
 */
 class SIREVOL_EXPORT AABox
@@ -38,18 +38,22 @@ public:
     AABox();
     AABox(const Vector &cent, const Vector &extents);
     AABox(const CoordGroup &coordgroup);
-    
+
     ~AABox();
-    
+
     const AABox& operator=(const AABox &other);
 
     bool operator==(const AABox &other) const;
     bool operator!=(const AABox &other) const;
 
+    AABox& operator+=(const AABox &other);
+
+    void add(const AABox &other);
+
     void recalculate(const CoordGroup &coordgroup);
 
     void translate(const Vector &delta);
-    
+
     const Vector& center() const;
     const Vector& halfExtents() const;
     Vector maxCoords() const;
@@ -59,19 +63,19 @@ public:
 
     bool withinDistance(double dist, const AABox &box) const;
     bool intersects(const AABox &other) const;
-    
+
 protected:
     void recalculate(const Vector *coords, int size);
-    
+
 private:
-    
+
     /** The coordinates of the center of this box */
     Vector cent;
-    
+
     /** The positive half-extents of this box along the x/y/z axes.
         The volume of this box runs from cent-halfextent to cent+halfextent */
     Vector halfextents;
-    
+
     /** The radius of the smallest sphere that completely contains this box */
     double rad;
 };

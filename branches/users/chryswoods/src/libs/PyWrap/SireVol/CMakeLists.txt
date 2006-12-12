@@ -17,6 +17,8 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs
 
 # Define the sources in SireVol
 set ( WRAPVOL_SOURCES
+      coordgroup.py.cpp
+
       wrap_aabox.cpp
       wrap_simvolume.cpp
     )

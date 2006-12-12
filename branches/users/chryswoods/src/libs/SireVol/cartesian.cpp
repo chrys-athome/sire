@@ -2,8 +2,6 @@
 #include <limits>
 #include <cmath>
 
-#include <QDebug>
-
 #include "cartesian.h"
 #include "coordgroup.h"
 
@@ -13,6 +11,8 @@
 using namespace SireVol;
 using namespace SireBase;
 using namespace SireStream;
+
+using boost::tuple;
 
 static const RegisterMetaType<Cartesian> r_cartesian("SireVol::Cartesian");
 
@@ -379,4 +379,120 @@ bool Cartesian::beyond(double dist, const CoordGroup &group0,
 
     return Vector::distance2(box0.center(),box1.center()) >
                       SireMaths::pow_2(dist + box0.radius() + box1.radius());
+}
+
+/** Return the minimum distance between the points in 'group0' and 'group1'. */
+double Cartesian::minimumDistance(const CoordGroup &group0,
+                                  const CoordGroup &group1) const
+{
+    double mindist2(std::numeric_limits<double>::max());
+
+    int n0 = group0.count();
+    int n1 = group1.count();
+
+    //get raw pointers to the arrays - this provides more efficient access
+    const Vector *array0 = group0.constData();
+    const Vector *array1 = group1.constData();
+
+    for (int i=0; i<n0; ++i)
+    {
+        const Vector& point0 = array0[i];
+
+        for (int j=0; j<n1; ++j)
+        {
+            //calculate the distance between the two points
+            double tmpdist = Vector::distance2(point0,array1[j]);
+
+            //store the minimum distance, the value expected to be the minimum
+            //value is most efficiently placed as the second argument
+            mindist2 = qMin(tmpdist,mindist2);
+        }
+    }
+
+    //return the minimum distance
+    return sqrt(mindist2);
+}
+
+/** Return the minimum distance between points within the group 'group'. */
+double Cartesian::minimumDistance(const CoordGroup &group) const
+{
+    double mindist2(std::numeric_limits<double>::max());
+
+    int n = group.count();
+    const Vector *array = group.constData();
+
+    for (int i=0; i<n; ++i)
+    {
+        const Vector &point = array[i];
+
+        for (int j=i+1; j<n; ++j)
+        {
+            //calculate the distance between the two points
+            double tmpdist2 = Vector::distance2(point,array[j]);
+
+            //store the minimum distance
+            mindist2 = qMin(tmpdist2,mindist2);
+        }
+    }
+
+    return sqrt(mindist2);
+}
+
+/** Return a copy of the passed CoordGroup that has been moved into the
+    central box. In this case, this is not a periodic space, so a copy of
+    the passed CoordGroup is returned */
+CoordGroup Cartesian::moveToCenterBox(const CoordGroup &group) const
+{
+    return group;
+}
+
+/** Return a copy of an array of passed CoordGroups that have been moved
+    into the central box. In this case, this is not a periodic space, so
+    a copy of the passed array is returned */
+QVector<CoordGroup> Cartesian::moveToCenterBox(
+                                      const QVector<CoordGroup> &groups) const
+{
+    return groups;
+}
+
+/** Return the minimum image copy of 'group' with respect to 'center'.
+    In this case, as this is not a periodic space, this just returns
+    'group' */
+CoordGroup Cartesian::getMinimumImage(const CoordGroup &group, const Vector&) const
+{
+    return group;
+}
+
+/** Return the minimum image copy of 'groups' with respect to 'center'.
+    In this case, as this is not a periodic space, this just returns
+    'groups' */
+QVector<CoordGroup> Cartesian::getMinimumImage(const QVector<CoordGroup> &groups,
+                                               const Vector&) const
+{
+    return groups;
+}
+
+/** Return a list of copies of CoordGroup 'group' that are within
+    'distance' of the CoordGroup 'center', translating 'group' so that
+    it has the right coordinates to be around 'center'. As this is not
+    a periodic space, this will merely return a copy of 'group' if
+    it is within the specified distance. */
+QList< tuple<double,CoordGroup> >
+Cartesian::getCopiesWithin(const CoordGroup &group, const CoordGroup &center,
+                           double dist) const
+{
+    QList< tuple<double,CoordGroup> > closegroups;
+
+    if (not this->beyond(dist, group, center))
+    {
+        //calculate the minimum distance - do this via the
+        double mindist = this->minimumDistance(group, center);
+
+        if (mindist <= dist)
+        {
+            closegroups.append( tuple<double,CoordGroup>(mindist,group) );
+        }
+    }
+
+    return closegroups;
 }

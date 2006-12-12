@@ -88,6 +88,7 @@ public:
     int size() const;
 
     const AABox& aaBox() const;
+    AABox& aaBox();
 
     const Vector* constData() const;
     const Vector* data() const;
@@ -143,6 +144,14 @@ inline int CoordGroupPvt::size() const
     always ensure that the box is up-to-date (e.g. 'update()' has
     been called after any editing of the coordinates) */
 inline const AABox& CoordGroupPvt::aaBox() const
+{
+    return aabox;
+}
+
+/** Return a modifiable reference to the AABox - if you change the box
+    yourself then you must be *very sure* that it exactly encloses the
+    points in the group. */
+inline AABox& CoordGroupPvt::aaBox()
 {
     return aabox;
 }
@@ -246,7 +255,13 @@ inline bool CoordGroupBase::isEmpty() const
 }
 
 /**
-This class holds a group of coordinates. This group forms the basis of the Molecular CutGroup, as defined in SireMol. A CoordGroup contains a list of coordinates, together with an AABox which provides information as to the center and extents of this group. SireVol is designed to calculate distances between points in different CoordGroups, or to calculate distances between points within a CoordGroup. A CoordGroup is implicitly shared and is designed to be fast to use, and fast to copy.
+This class holds a group of coordinates. This group forms the basis of the
+Molecular CutGroup, as defined in SireMol. A CoordGroup contains a list of
+coordinates, together with an AABox which provides information as to the
+center and extents of this group. SireVol is designed to calculate distances
+between points in different CoordGroups, or to calculate distances between
+points within a CoordGroup. A CoordGroup is implicitly shared and is
+designed to be fast to use, and fast to copy.
 
 @author Christopher Woods
 */
@@ -268,8 +283,79 @@ public:
 
     CoordGroup& operator=(const CoordGroup &other);
 
-    CoordGroupEditor edit();
+    CoordGroupEditor edit() const;
+
+    template<class T>
+    static CoordGroup combine(const T &groups);
 };
+
+/** Combine a whole load of CoordGroups into a single CoordGroup. */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+CoordGroup CoordGroup::combine(const T &groups)
+{
+    int ncg = groups.count();
+
+    if (ncg == 0)
+    {
+        return CoordGroup();
+    }
+    else if (ncg == 1)
+    {
+        return groups.first();
+    }
+    else
+    {
+        //we have at least two groups to combine together! - calculate the
+        //total number of points in all of the groups
+        int ntotal = 0;
+
+        for (typename T::const_iterator it = groups.constBegin();
+             it != groups.constEnd();
+             ++it)
+        {
+            ntotal += it->count();
+        }
+
+        if (ntotal == 0)
+            //there are no points at all - return a null CoordGroup
+            return CoordGroup();
+
+        //create an array to hold that many points
+        QSharedDataPointer<CoordGroupPvt> d( new CoordGroupPvt(ntotal) );
+
+        //get a pointer to the array of points
+        Vector *combined_array = d->data();
+
+        //now go through each CoordGroup and copy their coordinates into
+        //the new array, and combine together their AABoxes...
+        AABox &combined_box = d->aaBox();
+
+        int i = 0;
+
+        for (typename T::const_iterator it = groups.constBegin();
+             it != groups.constEnd();
+             ++it)
+        {
+            int npoints = it->count();
+            const Vector *group_array = it->constData();
+
+            //copy the coordinates
+            void *output = qMemCopy( group_array, &(combined_array[i]),
+                                     npoints*sizeof(Vector) );
+
+            i += npoints;
+
+            //combine the bounding boxes
+            combined_box += it->aaBox();
+        }
+
+        CoordGroup combined_group;
+        combined_group.d = d;
+
+        return combined_group;
+    }
+}
 
 /**
 This class is used to edit a CoordGroup. This class is used when you want to

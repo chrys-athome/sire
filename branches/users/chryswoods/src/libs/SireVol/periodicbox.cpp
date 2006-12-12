@@ -163,7 +163,7 @@ double PeriodicBox::calcDist2(const CoordGroup &group0, const CoordGroup &group1
     for (int i=0; i<n0; ++i)
     {
         //add the delta to the coordinates of atom0
-        const Vector &point0 = array0[i] + wrapdelta;
+        Vector point0 = array0[i] + wrapdelta;
         mat.setOuterIndex(i);
 
         for (int j=0; j<n1; ++j)
@@ -208,7 +208,7 @@ double PeriodicBox::calcInvDist(const CoordGroup &group0, const CoordGroup &grou
     for (int i=0; i<n0; ++i)
     {
         //add the delta to the coordinates of atom0
-        const Vector &point0 = array0[i] + wrapdelta;
+        Vector point0 = array0[i] + wrapdelta;
         mat.setOuterIndex(i);
 
         for (int j=0; j<n1; ++j)
@@ -254,7 +254,7 @@ double PeriodicBox::calcInvDist2(const CoordGroup &group0, const CoordGroup &gro
     {
         //add the delta to the coordinates of atom0
         //const Vector &point0 = array0[i] + wrapdelta;
-        const Vector &point0 = array0[i] + wrapdelta;
+        Vector point0 = array0[i] + wrapdelta;
         mat.setOuterIndex(i);
 
         for (int j=0; j<n1; ++j)
@@ -287,4 +287,274 @@ bool PeriodicBox::beyond(double dist, const CoordGroup &group0,
 
     return Vector::distance2( box0.center()+wrapdelta, box1.center() ) >
                       SireMaths::pow_2(dist + box0.radius() + box1.radius());
+}
+
+/** Return the minimum distance between the points in 'group0' and 'group1'.
+    If this is a periodic space then this uses the minimum image convention
+    (i.e. the minimum distance between the closest periodic replicas are
+    used) */
+double PeriodicBox::minimumDistance(const CoordGroup &group0,
+                                    const CoordGroup &group1) const
+{
+    double mindist2(std::numeric_limits<double>::max());
+
+    int n0 = group0.count();
+    int n1 = group1.count();
+
+    //see if we need to wrap the coordinates...
+    Vector wrapdelta = this->wrapDelta(group0.aaBox().center(), group1.aaBox().center());
+
+    //get raw pointers to the arrays - this provides more efficient access
+    const Vector *array0 = group0.constData();
+    const Vector *array1 = group1.constData();
+
+    for (int i=0; i<n0; ++i)
+    {
+        //add the delta to the coordinates of atom0
+        Vector point0 = array0[i] + wrapdelta;
+
+        for (int j=0; j<n1; ++j)
+        {
+            //calculate the distance between the two atoms
+            double tmpdist = Vector::distance2(point0,array1[j]);
+
+            //store the minimum distance, the value expected to be the minimum
+            //value is most efficiently placed as the second argument
+            mindist2 = qMin(tmpdist,mindist2);
+        }
+    }
+
+    //return the minimum distance
+    return sqrt(mindist2);
+}
+
+/** Return a copy of the passed CoordGroup that has been moved into the
+    central box. */
+CoordGroup PeriodicBox::moveToCenterBox(const CoordGroup &group) const
+{
+    //does the box contain the center of the group?
+    const Vector &group_center = group.aaBox().center();
+
+    if ( this->contains(group_center) )
+    {
+        //yes it is - just return the original group
+        return group;
+    }
+    else
+    {
+        //ok, we need to translate it... Get the vector that
+        //would translate the center into the same box as the
+        //point that lies in the center of the box
+        Vector delta = wrapDelta( center(), group_center );
+
+        CoordGroupEditor editor = group.edit();
+
+        editor.translate(delta);
+
+        return editor.commit();
+    }
+}
+
+/** Private function used to translate all of the CoordGroups in 'groups'
+    into the central box. */
+QVector<CoordGroup> PeriodicBox::_pvt_moveToCenterBox(
+                                  const QVector<CoordGroup> &groups) const
+{
+    int ncg = groups.count();
+    const CoordGroup *group_array = groups.constData();
+
+    //create a new array of the right size
+    QVector<CoordGroup> moved_groups(ncg);
+    CoordGroup *moved_array = moved_groups.data();
+
+    for (int i=0; i<ncg; ++i)
+    {
+        moved_array[i] = this->moveToCenterBox( group_array[i] );
+    }
+
+    return moved_groups;
+}
+
+/** Return a copy of an array of passed CoordGroups that have been moved
+    into the central box. */
+QVector<CoordGroup> PeriodicBox::moveToCenterBox(
+                                  const QVector<CoordGroup> &groups) const
+{
+    //run through all of the groups and see if any of them need moving...
+    int ncg = groups.count();
+
+    const CoordGroup *group_array = groups.constData();
+
+    for (int i=0; i<ncg; ++i)
+    {
+        if ( not this->contains(group_array[i].aaBox().center()) )
+        {
+            //there is at least one CoordGroup that is outside the box
+            // - look to translate them all!
+            return this->_pvt_moveToCenterBox(groups);
+        }
+    }
+
+    //all of the CoordGroups are in the box - just return the original array
+    return groups;
+}
+
+/** Return the closest periodic copy of 'group' to the point 'point',
+    according to the minimum image convention. The effect of this is
+    to move 'group' into the box which is now centered on 'point' */
+CoordGroup PeriodicBox::getMinimumImage(const CoordGroup &group,
+                                        const Vector &point) const
+{
+    Vector wrapdelta = wrapDelta(group.aaBox().center(), point);
+
+    if (wrapdelta.isZero())
+    {
+        //already got the minimum image
+        return group;
+    }
+    else
+    {
+        CoordGroupEditor editor = group.edit();
+        editor.translate(wrapdelta);
+
+        return editor.commit();
+    }
+}
+
+/** Private function used to get the minimum image of all of the
+    groups in 'groups' */
+QVector<CoordGroup> PeriodicBox::_pvt_getMinimumImage(const QVector<CoordGroup> &groups,
+                                                      const Vector &point) const
+{
+    int ncg = groups.count();
+    const CoordGroup *group_array = groups.constData();
+
+    //create a new array of the right size
+    QVector<CoordGroup> moved_groups(ncg);
+    CoordGroup *moved_array = moved_groups.data();
+
+    for (int i=0; i<ncg; ++i)
+    {
+        moved_array[i] = this->getMinimumImage( group_array[i], point );
+    }
+
+    return moved_groups;
+}
+
+/** Return the closest periodic copy of each group in 'groups' to the
+    point 'point', according to the minimum image convention.
+    The effect of this is to move each 'group' into the box which is
+    now centered on 'point' */
+QVector<CoordGroup> PeriodicBox::getMinimumImage(const QVector<CoordGroup> &groups,
+                                                 const Vector &point) const
+{
+    //run through all of the groups and see if any of them need moving...
+    int ncg = groups.count();
+
+    const CoordGroup *group_array = groups.constData();
+
+    for (int i=0; i<ncg; ++i)
+    {
+        const CoordGroup &group = group_array[i];
+
+        Vector wrapdelta = wrapDelta(point, group.aaBox().center());
+
+        if ( not wrapdelta.isZero() )
+        {
+            //there is at least one CoordGroup that needs moving
+            // - look to translate them all!
+            return this->_pvt_getMinimumImage(groups, point);
+        }
+    }
+
+    //all of the CoordGroups are in the box - just return the original array
+    return groups;
+
+}
+
+/** Return a list of copies of CoordGroup 'group' that are within
+    'distance' of the CoordGroup 'center', translating 'group' so that
+    it has the right coordinates to be around 'center'. Note that multiple
+    copies of 'group' may be returned in this is a periodic space and
+    there are multiple periodic replicas of 'group' within 'dist' of
+    'center'. The copies of 'group' are returned together with the
+    minimum distance between that periodic replica and 'center'.
+
+    If there are no periodic replicas of 'group' that are within
+    'dist' of 'center', then an empty list is returned. */
+QList< tuple<double,CoordGroup> >
+PeriodicBox::getCopiesWithin(const CoordGroup &group, const CoordGroup &center,
+                             double dist) const
+{
+    //are there any copies within range?
+    if (this->beyond(dist,group,center))
+        //yep - there are no copies that are sufficiently close
+        return QList< tuple<double,CoordGroup> >();
+
+    //ok, first move 'group' into the box that has its center at the
+    //same point as the center of the center group - this will give us
+    //the group that is closest to us (the minimum image)
+    CoordGroup minimum_image = this->getMinimumImage(group, center.aaBox().center());
+
+    //now loop over periodic boxes, moving ever outward, trying to find
+    //all copies that are within the distance
+
+    //we can work out the maximum number of layers to go out to based on
+    //the radii of the two groups, the maximum distance, and the dimensions
+    //of the box
+    const AABox &centerbox = center.aaBox();
+    const AABox &imagebox = minimum_image.aaBox();
+
+    double sum_of_radii_and_distance = centerbox.radius() +
+                                       imagebox.radius() + dist;
+
+    double sum_of_radii_and_distance2 = SireMaths::pow_2(sum_of_radii_and_distance);
+
+    //this rounds to the nearest number of box lengths, e.g.
+    // if sum_of_radii_and_distance is >= halflength.x() and < 1.5 length.x()
+    // then there is only the need to go out to the first layer in the
+    // x-dimension.
+    int nlayers_x = int( (sum_of_radii_and_distance*invlength.x()) + 0.5 );
+    int nlayers_y = int( (sum_of_radii_and_distance*invlength.y()) + 0.5 );
+    int nlayers_z = int( (sum_of_radii_and_distance*invlength.z()) + 0.5 );
+
+    QList< tuple<double,CoordGroup> > neargroups;
+
+    //loop over all cubes
+    for (int i = -nlayers_x; i <= nlayers_x; ++i)
+    {
+        for (int j = -nlayers_y; j <= nlayers_y; ++j)
+        {
+            for (int k = -nlayers_z; k <= nlayers_z; ++k)
+            {
+                //get the delta value needed to translate the minimum
+                //image into the i,j,k box
+                Vector delta( i * boxlength.x(),
+                              j * boxlength.y(),
+                              k * boxlength.z() );
+
+                //translate just the center of the minimum image...
+                Vector center_of_replica = imagebox.center() + delta;
+
+                //is the box in range?
+                if ( Vector::distance2(center_of_replica,centerbox.center())
+                                    <= sum_of_radii_and_distance2 )
+                {
+                    //yes it is! Translate the entire CoordGroup
+                    CoordGroupEditor editor = minimum_image.edit();
+                    editor.translate(delta);
+                    CoordGroup periodic_replica = editor.commit();
+
+                    //calculate the minimum distance... (using the cartesian space)
+                    double mindist = Cartesian::minimumDistance(periodic_replica, center);
+
+                    if (mindist <= dist)
+                        neargroups.append(
+                                  tuple<double,CoordGroup>(mindist,periodic_replica) );
+                }
+            }
+        }
+    }
+
+    return neargroups;
 }

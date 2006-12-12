@@ -318,14 +318,11 @@ Vector* CoordGroupPvt::data()
 /** Translate the coordinates by 'delta' */
 void CoordGroupPvt::translate(const Vector &delta)
 {
-    if (not delta.isZero())
-    {
-        for (int i=0; i<sz; ++i)
-            coords[i] += delta;
+    for (int i=0; i<sz; ++i)
+        coords[i] += delta;
 
-        //translate the AABox
-        aabox.translate(delta);
-    }
+    //translate the AABox
+    aabox.translate(delta);
 }
 
 /** Translate the 'ith' atom by 'delta' */
@@ -543,7 +540,7 @@ CoordGroup& CoordGroup::operator=(const CoordGroup &other)
 }
 
 /** Return an editor that can edit a copy of the coordinates in this group */
-CoordGroupEditor CoordGroup::edit()
+CoordGroupEditor CoordGroup::edit() const
 {
     return CoordGroupEditor(*this);
 }
@@ -592,7 +589,8 @@ Vector* CoordGroupEditor::data()
 /** Translate this CoordGroup by 'delta' */
 void CoordGroupEditor::translate(const Vector &delta)
 {
-    d->translate(delta);
+    if (not delta.isZero())
+        d->translate(delta);
 }
 
 /** Translate the 'ith' point in the group by 'delta'
@@ -601,7 +599,8 @@ void CoordGroupEditor::translate(const Vector &delta)
 */
 void CoordGroupEditor::translate(int i, const Vector &delta)
 {
-    d->translate(i, delta);
+    if (not delta.isZero())
+        d->translate(i, delta);
 }
 
 /** Rotate this group by the Quaternion 'quat' about the point 'point' */

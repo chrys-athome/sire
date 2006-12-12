@@ -127,7 +127,7 @@ public:
      void setNewID();
 
      const MoleculeVersion& version() const;
-     
+
      QString idString() const;
    /////////////////////////////////////////////////////////
 
@@ -380,6 +380,7 @@ public:
 
     void setCoordinates(CutGroupID cgid, const CoordGroup &newcoords);
     void setCoordinates(const QHash<CutGroupID,CoordGroup> &newcoords);
+    void setCoordinates(const QVector<CoordGroup> &newcoords);
 
     void setCoordinates(const QVector<Vector> &newcoords);
 

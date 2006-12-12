@@ -2711,6 +2711,48 @@ void MoleculeData::setCoordinates(const QHash<CutGroupID,CoordGroup> &newcoords)
         this->incrementMinorVersion();
 }
 
+/** Set the coordinates of all of the CutGroups from the coordinates
+    stored in the passed CoordGroups
+
+    \throw SireError::incompatible_error
+*/
+void MoleculeData::setCoordinates(const QVector<CoordGroup> &newcoords)
+{
+    //check that there are the right number of CoordGroups, with the
+    //right number of coordinates in each group...
+
+    int ncg = newcoords.count();
+    if (ncg != _coords.count())
+        throw SireError::incompatible_error( QObject::tr(
+                  "Cannot set the coordinates as the number of passed CoordGroups "
+                  "(%1) does not equal the number of CutGroups (%2) in this "
+                  "molecule (%3 : %4)")
+                      .arg(ncg).arg(_coords.count())
+                      .arg(info().name()).arg(_id), CODELOC );
+
+    //check that there are the right number of points in each group...
+    const CoordGroup *newcoords_array = newcoords.constData();
+    const CoordGroup *oldcoords_array = _coords.constData();
+
+    for (int i=0; i<ncg; ++i)
+    {
+        const CoordGroup &oldgroup = oldcoords_array[i];
+        const CoordGroup &newgroup = newcoords_array[i];
+
+        if (oldgroup.count() != newgroup.count())
+            throw SireError::incompatible_error( QObject::tr(
+                "Cannot set the coordinates as the number of points in the "
+                "passed CoordGroup (index == %1, count() == %2) does not equal "
+                "the number of atoms in the corresponding CutGroup "
+                "(nAtoms() == %3) in this molecule (%4 : %5)")
+                    .arg(i).arg(oldgroup.count()).arg(newgroup.count())
+                    .arg(info().name()).arg(_id), CODELOC );
+    }
+
+    //everything is ok - copy the coordinates
+    _coords = newcoords;
+}
+
 /** Internal function used to set the coordinates of the CutGroup with
     ID == 'cgid' to 'newcoords' as part of a larger move
 
