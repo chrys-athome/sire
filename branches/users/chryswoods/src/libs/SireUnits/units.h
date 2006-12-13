@@ -193,11 +193,11 @@ const double four_pi_eps0 = 4.0 * SireMaths::pi * epsilon0;
 /** 1 / (4 * pi * epsilon0) */
 const double one_over_four_pi_eps0 = 1.0 / four_pi_eps0;
 
-/** Gas constant (8.3143510 J mol-1 K-1) */
+/** Gas constant (8.31447215 J mol-1 K-1) */
 const double gasr = 8.31447215 * J_per_mol / kelvin;
 
 /** Boltzmann constant */
-const double k_boltz = 1.380650324e-23 * joule / kelvin;
+const double k_boltz = 1.380650524e-23 * joule / kelvin;
 
 /** Magnetic constant, mu0, 4pi * 10-7 N A-2 */
 const double mu0 = 4.0 * pi * newton / (amp*amp);

@@ -11,11 +11,11 @@ More information about GSL can be found at the project homepage, http://www.gnu.
 
 Printed copies of this manual can be purchased from Network Theory Ltd at http://www.network-theory.co.uk/gsl/manual/. The money raised from sales of the manual helps support the development of GSL.
 
-Copyright © 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006 The GSL Team.
+Copyright  1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006 The GSL Team.
 
 Permission is granted to copy, distribute and/or modify this document under the terms of the GNU Free Documentation License, Version 1.2 or any later version published by the Free Software Foundation; with the Invariant Sections being "GNU General Public License" and "Free Software Needs Free Documentation", the Front-Cover text being "A GNU Manual", and with the Back-Cover Text being (a) (see below). A copy of the license is included in the section entitled ?GNU Free Documentation License?.
 
-(a) The Back-Cover Text is: "You have freedom to copy and modify this GNU Manual, like GNU software." 
+(a) The Back-Cover Text is: "You have freedom to copy and modify this GNU Manual, like GNU software."
 
 GSL Complex
 
@@ -23,7 +23,7 @@ The functions described in this chapter provide support for complex numbers. The
 
 For multiple-valued functions the branch cuts have been chosen to follow the conventions of Abramowitz and Stegun in the Handbook of Mathematical Functions. The functions return principal values which are the same as those in GNU Calc, which in turn are the same as those in Common Lisp, The Language (Second Edition)1 and the HP-28/48 series of calculators.
 
-The complex types are defined in the header file gsl_complex.h, while the corresponding complex functions and arithmetic operations are defined in gsl_complex_math.h. 
+The complex types are defined in the header file gsl_complex.h, while the corresponding complex functions and arithmetic operations are defined in gsl_complex_math.h.
 #######################################################################
 */
 
@@ -63,26 +63,26 @@ This class represents a complex number to the same precision as 'double'. This i
 class SIREMATHS_EXPORT Complex : public gsl_complex
 {
 public:
-    
+
     /** Construct the complex number  real + imag i */
-    Complex(double r=0.0, double i=0.0) 
+    Complex(double r=0.0, double i=0.0)
             : gsl_complex( gsl_complex_rect(r,i) )
     {}
-    
+
     /** Construct from a gsl_complex struct */
     Complex(const gsl_complex &complex) : gsl_complex(complex)
     {}
-    
+
     /** Construct from a std::complex */
     template<typename T>
     Complex(const std::complex<T> &stdcomplex)
             : gsl_complex( gsl_complex_rect(stdcomplex.real(),stdcomplex.imag()) )
     {}
-    
+
     /** Copy constructor */
     Complex(const Complex &other) : gsl_complex(other)
     {}
-    
+
     /** Destructor */
     ~Complex()
     {}
@@ -92,7 +92,7 @@ public:
     {
         return GSL_REAL(*this);
     }
-    
+
     /** Return the imaginary part of this number */
     double imag() const
     {
@@ -105,7 +105,7 @@ public:
     {
         return std::complex<T>(real(),imag());
     }
-    
+
     /** Is this a real number (imag == 0) ? */
     bool isReal() const
     {
@@ -127,7 +127,7 @@ public:
         {
             double i = imag();
             double r = real();
-            
+
             if (SireMaths::isZero(r))
             {
                 if (SireMaths::areEqual(i,1.0))
@@ -144,30 +144,30 @@ public:
         }
     }
 
-    /** This function uses the rectangular cartesian components (x,y) to 
+    /** This function uses the rectangular cartesian components (x,y) to
         return the complex number z = x + i y. */
     static Complex rect(double x, double y)
     {
         return Complex( gsl_complex_rect(x,y) );
     }
-    
-    /** This function returns the complex number 
-        z = r \exp(i \theta) = r (\cos(\theta) + i \sin(\theta)) 
+
+    /** This function returns the complex number
+        z = r \exp(i \theta) = r (\cos(\theta) + i \sin(\theta))
         from the polar representation (r,theta). */
     static Complex polar(double r, double theta)
     {
        return Complex( gsl_complex_polar(r,theta) );
     }
-    
-    /** This function sets the rectangular cartesian components (x,y) to 
+
+    /** This function sets the rectangular cartesian components (x,y) to
         the complex number z = x + i y. */
     void setRectangular(double x, double y)
     {
         GSL_SET_COMPLEX(this, x, y);
     }
-    
+
     /** This function sets the complex number to
-        z = r \exp(i \theta) = r (\cos(\theta) + i \sin(\theta)) 
+        z = r \exp(i \theta) = r (\cos(\theta) + i \sin(\theta))
         from the polar representation (r,theta). */
     void setPolar(double r, double theta)
     {
@@ -179,20 +179,19 @@ public:
     {
         GSL_SET_REAL(this,x);
     }
-    
+
     /** This function set the imaginary part of the complex number */
     void setImag(double y)
     {
         GSL_SET_IMAG(this,y);
     }
-    
+
     /** Comparison operator */
     bool operator==(const Complex &other) const
     {
-        return SireMaths::areEqual(real(), other.real()) and
-               SireMaths::areEqual(imag(), other.imag());
+        return real() == other.real() and imag() == other.imag();
     }
-    
+
     /** Comparison operator */
     bool operator!=(const Complex &other) const
     {
@@ -236,125 +235,125 @@ public:
         *this = gsl_complex_add(*this,other);
         return *this;
     }
-    
+
     /** self-subtraction */
     Complex& operator-=(const Complex &other)
     {
         *this = gsl_complex_sub(*this,other);
         return *this;
     }
-    
+
     /** self-multiplication */
     Complex& operator*=(const Complex &other)
     {
         *this = gsl_complex_mul(*this,other);
         return *this;
     }
-    
+
     /** self-division */
     Complex& operator/=(const Complex &other)
     {
         *this = gsl_complex_div(*this,other);
         return *this;
     }
-    
-    /** This function returns the negative of the complex 
+
+    /** This function returns the negative of the complex
         number z, -z = (-x) + i(-y). */
     Complex operator-() const
     {
         return gsl_complex_negative(*this);
     }
-    
+
     /** Comparison operator */
     bool operator==(double r) const
     {
         return isReal() and SireMaths::areEqual(r, real());
     }
-    
+
     /** Comparison operator */
     bool operator!=(double r) const
     {
         return not operator==(r);
     }
-    
+
     /** Assignment operator */
     Complex& operator=(double r)
     {
         GSL_SET_REAL(this,r);
         return *this;
     }
-    
+
     /** self-addition */
     Complex& operator+=(double r)
     {
         *this = gsl_complex_add_real(*this, r);
         return *this;
     }
-    
+
     /** self-subtraction */
     Complex& operator-=(double r)
     {
         *this = gsl_complex_sub_real(*this, r);
         return *this;
     }
-    
+
     /** self-multiplication */
     Complex& operator*=(double r)
     {
         *this = gsl_complex_mul_real(*this,r);
         return *this;
     }
-    
+
     /** self-division */
     Complex& operator/=(double r)
     {
         *this = gsl_complex_div_real(*this,r);
         return *this;
     }
-    
-    /** This function returns the argument of the complex number z, 
+
+    /** This function returns the argument of the complex number z,
         \arg(z), where -\pi < \arg(z) <= \pi. */
     double arg() const
     {
         return gsl_complex_arg(*this);
     }
-    
+
     /** This function returns the magnitude of the complex number z, |z|. */
     double abs() const
     {
         return gsl_complex_abs(*this);
     }
-    
+
     /** This function returns the squared magnitude of the complex number z, |z|^2. */
     double abs2() const
     {
         return gsl_complex_abs2(*this);
     }
-    
+
     /** This function returns the natural logarithm of the magnitude of the
-        complex number z, \log|z|. It allows an accurate evaluation of \log|z| 
-        when |z| is close to one. The direct evaluation of log(gsl_complex_abs(z)) 
+        complex number z, \log|z|. It allows an accurate evaluation of \log|z|
+        when |z| is close to one. The direct evaluation of log(gsl_complex_abs(z))
         would lead to a loss of precision in this case. */
     double logAbs() const
     {
         return gsl_complex_logabs(*this);
     }
-    
-    /** This function returns the complex conjugate of the complex 
+
+    /** This function returns the complex conjugate of the complex
         number z, z^* = x - i y. */
     Complex conjugate() const
     {
         return gsl_complex_conjugate(*this);
     }
-    
-    /** This function returns the inverse, or reciprocal, of the 
+
+    /** This function returns the inverse, or reciprocal, of the
         complex number z, 1/z = (x - i y)/(x^2 + y^2). */
     Complex inverse() const
     {
         return gsl_complex_inverse(*this);
     }
-    
-    /** This function returns the negative of the complex 
+
+    /** This function returns the negative of the complex
         number z, -z = (-x) + i(-y). */
     Complex negative() const
     {

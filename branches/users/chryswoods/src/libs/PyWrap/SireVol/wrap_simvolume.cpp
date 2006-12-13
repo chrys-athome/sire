@@ -197,6 +197,9 @@ export_Space()
 
         .def( "center", (Vector (PeriodicBox::*)() const)
                           &PeriodicBox::center )
+
+        .def( "contains", (bool (PeriodicBox::*)(const Vector&) const)
+                          &PeriodicBox::contains )
     ;
 }
 

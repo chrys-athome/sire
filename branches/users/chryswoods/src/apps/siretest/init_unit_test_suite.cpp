@@ -20,10 +20,11 @@ using boost::unit_test_framework::test_suite;
 #include "SireUnitTest/testmatch.h"
 #include "SireUnitTest/testffdb.h"
 #include "SireUnitTest/testsharedpolypointer.h"
+#include "SireUnitTest/testperiodicbox.h"
 
 using namespace SireTest;
 
-test_suite SIRE_EXPORT *init_unit_test_suite( int argc, char **argv ) 
+test_suite SIRE_EXPORT *init_unit_test_suite( int argc, char **argv )
 {
     test_suite* test= BOOST_TEST_SUITE( "Sire Unit Test Suite" );
 
@@ -41,6 +42,7 @@ test_suite SIRE_EXPORT *init_unit_test_suite( int argc, char **argv )
     initialise(new TestMatch(), test);
     initialise(new TestFFDB(), test);
     initialise(new TestSharedPolyPointer(), test);
-    
+    initialise(new TestPeriodicBox(), test);
+
     return test;
 }

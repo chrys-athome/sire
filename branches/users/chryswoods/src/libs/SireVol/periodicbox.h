@@ -97,9 +97,6 @@ protected:
 
     Vector wrapDelta(const Vector &v0, const Vector &v1) const;
 
-    QVector<CoordGroup> _pvt_moveToCenterBox(
-                                const QVector<CoordGroup> &groups) const;
-
     QVector<CoordGroup> _pvt_getMinimumImage(
                                 const QVector<CoordGroup> &groups,
                                 const Vector &point) const;

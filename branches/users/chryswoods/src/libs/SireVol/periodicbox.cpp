@@ -328,77 +328,6 @@ double PeriodicBox::minimumDistance(const CoordGroup &group0,
     return sqrt(mindist2);
 }
 
-/** Return a copy of the passed CoordGroup that has been moved into the
-    central box. */
-CoordGroup PeriodicBox::moveToCenterBox(const CoordGroup &group) const
-{
-    //does the box contain the center of the group?
-    const Vector &group_center = group.aaBox().center();
-
-    if ( this->contains(group_center) )
-    {
-        //yes it is - just return the original group
-        return group;
-    }
-    else
-    {
-        //ok, we need to translate it... Get the vector that
-        //would translate the center into the same box as the
-        //point that lies in the center of the box
-        Vector delta = wrapDelta( center(), group_center );
-
-        CoordGroupEditor editor = group.edit();
-
-        editor.translate(delta);
-
-        return editor.commit();
-    }
-}
-
-/** Private function used to translate all of the CoordGroups in 'groups'
-    into the central box. */
-QVector<CoordGroup> PeriodicBox::_pvt_moveToCenterBox(
-                                  const QVector<CoordGroup> &groups) const
-{
-    int ncg = groups.count();
-    const CoordGroup *group_array = groups.constData();
-
-    //create a new array of the right size
-    QVector<CoordGroup> moved_groups(ncg);
-    CoordGroup *moved_array = moved_groups.data();
-
-    for (int i=0; i<ncg; ++i)
-    {
-        moved_array[i] = this->moveToCenterBox( group_array[i] );
-    }
-
-    return moved_groups;
-}
-
-/** Return a copy of an array of passed CoordGroups that have been moved
-    into the central box. */
-QVector<CoordGroup> PeriodicBox::moveToCenterBox(
-                                  const QVector<CoordGroup> &groups) const
-{
-    //run through all of the groups and see if any of them need moving...
-    int ncg = groups.count();
-
-    const CoordGroup *group_array = groups.constData();
-
-    for (int i=0; i<ncg; ++i)
-    {
-        if ( not this->contains(group_array[i].aaBox().center()) )
-        {
-            //there is at least one CoordGroup that is outside the box
-            // - look to translate them all!
-            return this->_pvt_moveToCenterBox(groups);
-        }
-    }
-
-    //all of the CoordGroups are in the box - just return the original array
-    return groups;
-}
-
 /** Return the closest periodic copy of 'group' to the point 'point',
     according to the minimum image convention. The effect of this is
     to move 'group' into the box which is now centered on 'point' */
@@ -470,6 +399,25 @@ QVector<CoordGroup> PeriodicBox::getMinimumImage(const QVector<CoordGroup> &grou
     //all of the CoordGroups are in the box - just return the original array
     return groups;
 
+}
+
+/** Return a copy of the passed CoordGroup that has been moved into the
+    central box. */
+CoordGroup PeriodicBox::moveToCenterBox(const CoordGroup &group) const
+{
+    //this is the same as getting the minimum image from the
+    //center of the box
+    return getMinimumImage(group, this->center());
+}
+
+/** Return a copy of an array of passed CoordGroups that have been moved
+    into the central box. */
+QVector<CoordGroup> PeriodicBox::moveToCenterBox(
+                                  const QVector<CoordGroup> &groups) const
+{
+    //this is the same as getting the minimum image from the
+    //center of the box
+    return getMinimumImage(groups, this->center());
 }
 
 /** Return a list of copies of CoordGroup 'group' that are within

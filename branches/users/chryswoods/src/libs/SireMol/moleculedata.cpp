@@ -2718,6 +2718,10 @@ void MoleculeData::setCoordinates(const QHash<CutGroupID,CoordGroup> &newcoords)
 */
 void MoleculeData::setCoordinates(const QVector<CoordGroup> &newcoords)
 {
+    //if the coordinates are not different, then there is nothing to do!
+    if (newcoords.constData() == _coords.constData())
+        return;
+
     //check that there are the right number of CoordGroups, with the
     //right number of coordinates in each group...
 

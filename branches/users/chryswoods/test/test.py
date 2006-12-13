@@ -10,93 +10,48 @@ from Sire.Maths import *
 from Sire.Qt import *
 from Sire.Units import *
 
-import time
+t = QTime()
 
-timer = QTime()
-
-#read in all of the molecules
-print "Loading the molecules..."
-timer.start()
+t.start()
 mols = PDB().read("test/io/water.pdb")
 
-ms = timer.elapsed()
-print "... took %d ms" % ms
+ms = t.elapsed()
 
-#specify the space in which the molecules are placed
-space = Cartesian()
+print "Reading waters took %d ms..." % ms
 
-#space = PeriodicBox(Vector(-18.3854,-18.66855,-18.4445), \
-#                    Vector( 18.3854, 18.66855, 18.4445))
+tip4p = mols[0]
 
-#specify the type of switching function to use
-switchfunc = HarmonicSwitchingFunction(80.0)
-switchfunc = HarmonicSwitchingFunction(15.0, 14.5)
+cgroups = tip4p.coordGroups()
 
-#create a forcefield for the molecules
-cljff = InterCLJFF( Space(space), \
-                    SwitchingFunction(switchfunc) )
+box = PeriodicBox( Vector(5,5,5), Vector(-5,-5,-5) )
 
-cljff2 = Tip4PFF( Space(space), SwitchingFunction(switchfunc) )
+t.start()
+PDB().write(tip4p, "water0.pdb")
+ms = t.elapsed()
 
-#parametise each molecule and add it to the forcefield
-print "Parametising the molecules..."
+print "Writing a water took %d ms..." % ms
 
-timer.start()
-for mol in mols:
-      chgs = ChargeTable( mol.info() )
-      ljs = LJTable( mol.info() )
-      
-      resnum = mol.residueNumbers()[0]
-      
-      chgs.setParameter( AtomIndex("O00",resnum), 0.0 * mod_electrons )
-      chgs.setParameter( AtomIndex("H01",resnum), 0.52 * mod_electrons )
-      chgs.setParameter( AtomIndex("H02",resnum), 0.52 * mod_electrons )
-      chgs.setParameter( AtomIndex("M03",resnum), -1.04 * mod_electrons )
-      
-      ljs.setParameter( AtomIndex("O00",resnum), \
-                        LJParameter( 3.15365 * angstrom, \
-                                     0.1550 * kcal_per_mol ) )
+t.start()
+cgroups = box.moveToCenterBox(cgroups)
+ms = t.elapsed()
 
-      ljs.setParameter( AtomIndex("H01",resnum), LJParameter.dummy() )
-      ljs.setParameter( AtomIndex("H02",resnum), LJParameter.dummy() )
-      ljs.setParameter( AtomIndex("M03",resnum), LJParameter.dummy() )
-      
-      cljff.add(mol, chgs, ljs)
-      cljff2.add(mol, chgs, ljs)
+print "Moving to central box took %d ms..." % ms
 
-ms = timer.elapsed()
-print "... took %d ms" % ms
+t.start()
+tip4p.setCoordinates(cgroups)
+ms = t.elapsed()
 
-cljff = ForceField(cljff)
-cljff2 = ForceField(cljff2)
+print "Setting the coordinates took %d ms..." % ms
 
-#create a thread processor and calculate the energy in the background
-threadproc = FFThreadProcessor(cljff)
+PDB().write(tip4p, "water1.pdb")
 
-active_threadproc = threadproc.activate()
+cgroups = box.getMinimumImage(cgroups, Vector(1025,1025,1025))
+tip4p.setCoordinates(cgroups)
 
-print "Starting background calculation..."
-active_threadproc.recalculateEnergy()
+PDB().write(tip4p, "water2.pdb")
 
-print "Off it goes...."
-print "Da de da da da..."
+tip4p_1 = mols[1]
 
-#create an FFProcessor, and place the cljff onto it...
-ffproc = FFProcessor(cljff)
-
-print "Is active?", ffproc.isActive()
-
-active_ffproc = ffproc.activate()
-
-print "Is active?", ffproc.isActive()
-
-print "MAIN THREAD PROCESS"
-print "Total energy == ",active_ffproc.energy()
-print "Coulomb == %f, LJ == %f" % ( active_ffproc.energy(cljff.component(CLJFF.COULOMB())), \
-                                    active_ffproc.energy(cljff.component(CLJFF.LJ())) )
-
-print "BACKGROUND THREAD PROCESS"
-print "Total energy == ",active_threadproc.energy()
-print "Coulomb == %f, LJ == %f" % ( active_threadproc.energy(cljff.component(CLJFF.COULOMB())), \
-                                    active_threadproc.energy(cljff.component(CLJFF.LJ())) )
+print box.minimumDistance(tip4p.coordGroups()[0], \
+                          tip4p_1.coordGroups()[0])
 
