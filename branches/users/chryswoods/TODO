@@ -1,15 +1,4 @@
 
---------
-SireBase
---------
-
-(*) Write version code (based on QAtomic?) so that each version of an object
-    uses a unique number. This will prevent obscure bugs that are caused
-    by incrementing the version, then going back, then incrementing again
-    (to the same new number). An object ID plus version ID should uniquely
-    identify an object and state, and the code should be able to rely on 
-    that!
-
 ----------
 SireStream
 ----------

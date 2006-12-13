@@ -25,6 +25,7 @@ set ( SIREUNITTEST_SOURCES
       testsirecas.cpp
       testunits.cpp
       testvector.cpp
+      testversion.cpp
     )
 
 # Add the resource files
@@ -51,6 +52,7 @@ target_link_libraries (SireUnitTest
                        SireIO
                        SireMM
                        SireCAS
+		       SireBase
                        SireUnits
                        ${BOOST_UNITTEST_LIBRARY}
                        )
