@@ -15,6 +15,7 @@
 #include <QSharedData>
 #include <QByteArray>
 #include <QDataStream>
+#include <QTime>
 
 #include "testperiodicbox.h"
 
@@ -125,6 +126,67 @@ void TestPeriodicBox::runTests()
             BOOST_CHECK_CLOSE( new_coords.at(0).at(i)[j], orig_coords.at(0).at(i)[j], 1e-6 );
         }
     }
+
+    //now get the closest copies to the original
+    Cartesian infspace;
+    
+    BOOST_CHECK( std::abs(infspace.minimumDistance(orig_coords.at(0), orig_coords.at(0))) < 1e-10 );
+    
+    new_coords = box.getMinimumImage(new_coords, orig_coords.at(0).aaBox().center());
+    
+    BOOST_CHECK( std::abs(infspace.minimumDistance(new_coords.at(0), orig_coords.at(0))) < 1e-10 );
+
+    new_coords = box.getMinimumImage(new_coords, Vector(1000.0,1000.0,0.0));
+    
+    BOOST_CHECK( std::abs(box.minimumDistance(new_coords.at(0), orig_coords.at(0))) < 1e-10 );
+    BOOST_CHECK( infspace.minimumDistance(new_coords.at(0), orig_coords.at(0)) > 1000 );
+
+    qDebug() << infspace.minimumDistance(new_coords.at(0), orig_coords.at(0));
+    qDebug() << box.minimumDistance(new_coords.at(0), orig_coords.at(0));
+
+    QList< tuple<double,CoordGroup> > closegroups;
+    
+    closegroups = box.getCopiesWithin(orig_coords.at(0), orig_coords.at(0), 5.0);
+    
+    BOOST_CHECK_EQUAL( closegroups.count(), 1 );
+    BOOST_CHECK_CLOSE( closegroups[0].get<0>(), 0.0, 1e-6 );
+
+    closegroups = box.getCopiesWithin(orig_coords.at(0), orig_coords.at(0), 10.0);
+    
+    BOOST_CHECK( closegroups.count() > 1 );
+    
+    tuple<double,CoordGroup> group;
+    
+    foreach( group, closegroups )
+    {
+        BOOST_CHECK( std::abs(box.minimumDistance(group.get<1>(),orig_coords.at(0))) < 1e-10 );
+        BOOST_CHECK( group.get<0>() <= 10.0 );
+    }
+    
+    closegroups = box.getCopiesWithin(orig_coords.at(0), orig_coords.at(0), 20.0);
+    
+    foreach( group, closegroups )
+    {
+        BOOST_CHECK( std::abs(box.minimumDistance(group.get<1>(),orig_coords.at(0))) < 1e-10 );
+        BOOST_CHECK( group.get<0>() <= 20.0 );
+    }
+    
+    QTime t;
+    t.start();
+    closegroups = box.getCopiesWithin(orig_coords.at(0), orig_coords.at(0), 500.0);
+    int ms = t.elapsed();
+    
+    qDebug() << closegroups.count() << ms;
+    
+    t.start();
+    foreach( group, closegroups )
+    {
+        BOOST_CHECK( std::abs(box.minimumDistance(group.get<1>(),orig_coords.at(0))) < 1e-10 );
+        BOOST_CHECK( group.get<0>() <= 500.0 );
+    }
+    qDebug() << t.elapsed();
+    
+    BOOST_CHECK( closegroups.count() > 1 );
 
     qDebug() << "TestPeriodicBox::runTests() complete";
 

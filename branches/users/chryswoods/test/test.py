@@ -21,6 +21,8 @@ print "Reading waters took %d ms..." % ms
 
 tip4p = mols[0]
 
+tip4p_1 = mols[1]
+
 cgroups = tip4p.coordGroups()
 
 box = PeriodicBox( Vector(5,5,5), Vector(-5,-5,-5) )
@@ -41,6 +43,9 @@ t.start()
 tip4p.setCoordinates(cgroups)
 ms = t.elapsed()
 
+print box.minimumDistance(tip4p.coordGroups()[0], \
+                          tip4p_1.coordGroups()[0])
+
 print "Setting the coordinates took %d ms..." % ms
 
 PDB().write(tip4p, "water1.pdb")
@@ -49,8 +54,6 @@ cgroups = box.getMinimumImage(cgroups, Vector(1025,1025,1025))
 tip4p.setCoordinates(cgroups)
 
 PDB().write(tip4p, "water2.pdb")
-
-tip4p_1 = mols[1]
 
 print box.minimumDistance(tip4p.coordGroups()[0], \
                           tip4p_1.coordGroups()[0])
