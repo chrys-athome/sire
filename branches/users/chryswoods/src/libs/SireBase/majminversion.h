@@ -1,10 +1,9 @@
 #ifndef SIREBASE_MAJMINVERSION_H
 #define SIREBASE_MAJMINVERSION_H
 
-#include <boost/shared_ptr.hpp>
-#include <QString>
+#include "idpair.h"
 
-#include "incremint.h"
+#include <QString>
 
 SIRE_BEGIN_HEADER
 
@@ -28,14 +27,12 @@ namespace SireBase
         
     @author Christopher Woods
 */
-class SIREBASE_EXPORT MajMinVersion
+class SIREBASE_EXPORT MajMinVersion : protected IDPair
 {
 
-private:
-    static Incremint shared_increment;
-
 public:
-    MajMinVersion(Incremint *majint = &MajMinVersion::shared_increment);
+    MajMinVersion();
+    MajMinVersion(Incremint *majint);
     
     MajMinVersion(const MajMinVersion &other);
     
@@ -66,80 +63,60 @@ private:
     void _pvt_throwMajorError(const MajMinVersion &other) const;
     void _pvt_throwMinorError(const MajMinVersion &other) const;
     void _pvt_throwVersionError(const MajMinVersion &other) const;
-
-    /** Shared pointer to the Incremint used to increment 
-        the minor version number */
-    boost::shared_ptr<Incremint> minor_incremint;
-    
-    /** Pointer to the Incremint that is used to get the 
-        major version number */
-    Incremint *major_incremint;
-    
-    /** The major number */
-    quint32 majnum;
-    
-    /** The minor number */
-    quint32 minnum;
 };
 
 /** Increment the minor version number */
 inline void MajMinVersion::incrementMinor()
 {
-    minnum = minor_incremint->increment();
+    IDPair::incrementMinor();
 }
 
 /** Increment the major version number */
 inline void MajMinVersion::incrementMajor()
 {
-    majnum = major_incremint->increment();
-    minor_incremint.reset( new Incremint(0) );
-    minnum = 0;
+    IDPair::incrementMajor();
 }
 
 /** Return the major number */
 inline quint32 MajMinVersion::major() const
 {
-    return majnum;
+    return IDPair::major();
 }
 
 /** Return the minor number */
 inline quint32 MajMinVersion::minor() const
 {
-    return minnum;
+    return IDPair::minor();
 }
 
 /** Return whether or not this has the same major version as 'other' */
 inline bool MajMinVersion::sameMajorVersion(const MajMinVersion &other) const
 {
-    return majnum == other.majnum;
+    return IDPair::sameMajorVersion(other);
 }
 
 /** Return whether or not this has the same minor version as 'other' */
 inline bool MajMinVersion::sameMinorVersion(const MajMinVersion &other) const
 {
-    return minnum == other.minnum;
+    return IDPair::sameMinorVersion(other);
 }
     
 /** Return whether or not this has the same version as 'other' */
 inline bool MajMinVersion::sameVersion(const MajMinVersion &other) const
 {
-    return majnum == other.majnum and minnum == other.minnum;
+    return IDPair::sameVersion(other);
 }
     
 /** Comparison operator */
 inline bool MajMinVersion::operator==(const MajMinVersion &other) const
 {
-    return majnum == other.majnum and minnum == other.minnum 
-                and major_incremint == other.major_incremint 
-                and minor_incremint == other.minor_incremint;
+    return IDPair::operator==(other);
 }
 
 /** Comparison operator */
 inline bool MajMinVersion::operator!=(const MajMinVersion &other) const
 {
-    return majnum != other.majnum or minnum != other.minnum
-                or major_incremint != other.major_incremint
-                or minor_incremint != other.minor_incremint;
+    return IDPair::operator!=(other);
 }
 
 /** Assert that this has the same major version as 'other' 
@@ -148,7 +125,7 @@ inline bool MajMinVersion::operator!=(const MajMinVersion &other) const
 */
 inline void MajMinVersion::assertSameMajorVersion(const MajMinVersion &other) const
 {
-    if (majnum != other.majnum)
+    if (not sameMajorVersion(other))
         this->_pvt_throwMajorError(other);
 }
 
@@ -158,7 +135,7 @@ inline void MajMinVersion::assertSameMajorVersion(const MajMinVersion &other) co
 */
 inline void MajMinVersion::assertSameMinorVersion(const MajMinVersion &other) const
 {
-    if (minnum != other.minnum)
+    if (not sameMinorVersion(other))
         this->_pvt_throwMinorError(other);
 }
 
@@ -168,7 +145,7 @@ inline void MajMinVersion::assertSameMinorVersion(const MajMinVersion &other) co
 */
 inline void MajMinVersion::assertSameVersion(const MajMinVersion &other) const
 {
-    if (majnum != other.majnum or minnum != other.minnum)
+    if (not sameVersion(other))
         this->_pvt_throwVersionError(other);
 }
 
