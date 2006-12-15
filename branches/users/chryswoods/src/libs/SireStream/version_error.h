@@ -1,7 +1,7 @@
 #ifndef SIRESTREAM_VERSION_ERROR_H
 #define SIRESTREAM_VERSION_ERROR_H
 
-#include "SireError/exception.h"
+#include "SireError/errors.h"
 
 #include "registermetatype.hpp"
 #include "versionid.h"
@@ -16,32 +16,32 @@ namespace SireStream
 
     @author Christopher Woods
 */
-class SIRESTREAM_EXPORT version_error : public SireError::exception
+class SIRESTREAM_EXPORT version_error : public SireError::version_error
 {
 public:
-    version_error() : exception()
+    version_error() : SireError::version_error()
     {}
 
     version_error(QString err, QString place = QString::null)
-                  : exception(err,place)
+                  : SireError::version_error(err,place)
     {}
 
     version_error(VersionID wrongid, QString supported_ids,
                   const RegisterMetaTypeBase &info,
                   QString place=QString::null)
-            : exception(QObject::tr(
+            : SireError::version_error(QObject::tr(
                     "Incompatible version for \"%1\". Got %2, but can only support [ %3 ].")
                         .arg(info.name()).arg(wrongid).arg(supported_ids), place)
     {}
 
     version_error(VersionID wrongid, QString supported_ids,
                   const char *type_name, QString place=QString::null)
-            : exception(QObject::tr(
+            : SireError::version_error(QObject::tr(
                     "Incompatible version for \"%1\". Got %2, but can only support [ %3 ].")
                         .arg(type_name).arg(wrongid).arg(supported_ids), place)
     {}
 
-    version_error(const version_error &other) : exception(other)
+    version_error(const version_error &other) : SireError::version_error(other)
     {}
 
     ~version_error() throw()

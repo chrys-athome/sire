@@ -14,8 +14,10 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the sources in SireBase
 set ( SIREBASE_SOURCES
+      idmajminversion.cpp
       idpair.cpp
       idtriple.cpp
+      idversion.cpp
       majminversion.cpp
       md5sum.cpp
     )

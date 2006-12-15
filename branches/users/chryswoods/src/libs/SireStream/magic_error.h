@@ -58,7 +58,6 @@ public:
 
 }
 
-Q_DECLARE_METATYPE(SireError::exception);
 Q_DECLARE_METATYPE(SireStream::magic_error);
 
 #endif

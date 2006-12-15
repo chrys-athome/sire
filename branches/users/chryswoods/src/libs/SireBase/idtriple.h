@@ -16,43 +16,46 @@ private:
 public:
     IDTriple(Incremint *idint = &shared_triple_incremint);
 
+    IDTriple(const IDTriple &other);
+
+    IDTriple& operator=(const IDTriple &other);
+
     ~IDTriple();
-    
+
     bool operator==(const IDTriple &other) const;
     bool operator!=(const IDTriple &other) const;
-    
+
 protected:
-    IDTriple(const IDTriple &other);
-    
-    IDTriple& operator=(const IDTriple &other);
-    
     void incrementID();
     void incrementMajor();
     void incrementMinor();
-    
+
     quint32 ID() const;
     quint32 major() const;
     quint32 minor() const;
-    
+
+    IDPair version() const;
+
     bool sameMajorVersion(const IDTriple &other) const;
     bool sameMinorVersion(const IDTriple &other) const;
     bool sameVersion(const IDTriple &other) const;
-    
+
     bool sameID(const IDTriple &other) const;
     bool sameIDAndVersion(const IDTriple &other) const;
-    
+    bool sameIDAndMajorVersion(const IDTriple &other) const;
+
 private:
     /** Shared pointer to the Incremint used to increment
         the major version number */
     boost::shared_ptr<Incremint> major_incremint;
-    
+
     /** Pointer to the Incremint that is used to increment
         the ID number */
     Incremint *id_incremint;
-    
+
     /** The ID number */
     quint32 idnum;
-    
+
     /** The major and minor numbers */
     IDPair versn;
 };
@@ -73,7 +76,7 @@ inline void IDTriple::incrementMajor()
 inline void IDTriple::incrementID()
 {
     idnum = id_incremint->increment();
-    
+
     //reset the ID
     major_incremint.reset( new Incremint(0) );
     versn = IDPair(major_incremint.get());
@@ -97,6 +100,12 @@ inline quint32 IDTriple::minor() const
     return versn.minor();
 }
 
+/** Return the version */
+inline IDPair IDTriple::version() const
+{
+    return versn;
+}
+
 /** Return whether or not this has the same major version as 'other' */
 inline bool IDTriple::sameMajorVersion(const IDTriple &other) const
 {
@@ -108,13 +117,13 @@ inline bool IDTriple::sameMinorVersion(const IDTriple &other) const
 {
     return versn.sameMinorVersion(other.versn);
 }
-    
+
 /** Return whether or not this has the same version as 'other' */
 inline bool IDTriple::sameVersion(const IDTriple &other) const
 {
     return versn.sameVersion(other.versn);
 }
-    
+
 /** Return whether or not this has the same ID as 'other' */
 inline bool IDTriple::sameID(const IDTriple &other) const
 {
@@ -127,17 +136,23 @@ inline bool IDTriple::sameIDAndVersion(const IDTriple &other) const
     return sameID(other) and sameVersion(other);
 }
 
+/** Return whether or not this has the same ID and major version as 'other' */
+inline bool IDTriple::sameIDAndMajorVersion(const IDTriple &other) const
+{
+    return sameID(other) and sameMajorVersion(other);
+}
+
 /** Comparison operator */
 inline bool IDTriple::operator==(const IDTriple &other) const
 {
-    return idnum == other.idnum and id_incremint == other.id_incremint  
+    return idnum == other.idnum and id_incremint == other.id_incremint
               and versn == other.versn;
 }
 
 /** Comparison operator */
 inline bool IDTriple::operator!=(const IDTriple &other) const
 {
-    return idnum != other.idnum or id_incremint != other.id_incremint 
+    return idnum != other.idnum or id_incremint != other.id_incremint
               or versn != other.versn;
 }
 

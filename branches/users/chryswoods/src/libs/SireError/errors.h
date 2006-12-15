@@ -515,10 +515,65 @@ public:
     }
 };
 
+/** This exception is thrown whenever there is an error with a
+    version number
+
+    @author Christopher Woods
+*/
+class SIREERROR_EXPORT version_error : public exception
+{
+public:
+    version_error() : exception()
+    {}
+
+    version_error(QString err, QString place = QString::null)
+                  : exception(err,place)
+    {}
+
+    version_error(const version_error &other) : exception(other)
+    {}
+
+    ~version_error() throw()
+    {}
+
+    const char* what() const throw()
+    {
+        return "SireError::version_error";
+    }
+};
+
+/** This exception is thrown whenever there is an error with an
+    ID number
+
+    @author Christopher Woods
+*/
+class SIREERROR_EXPORT id_error : public exception
+{
+public:
+    id_error() : exception()
+    {}
+
+    id_error(QString err, QString place = QString::null)
+                  : exception(err,place)
+    {}
+
+    id_error(const id_error &other) : exception(other)
+    {}
+
+    ~id_error() throw()
+    {}
+
+    const char* what() const throw()
+    {
+        return "SireError::id_error";
+    }
+};
+
 }
 
 Q_DECLARE_METATYPE(SireError::program_bug)
 Q_DECLARE_METATYPE(SireError::unsupported)
+Q_DECLARE_METATYPE(SireError::id_error)
 Q_DECLARE_METATYPE(SireError::invalid_key)
 Q_DECLARE_METATYPE(SireError::invalid_index)
 Q_DECLARE_METATYPE(SireError::invalid_cast)
@@ -533,6 +588,7 @@ Q_DECLARE_METATYPE(SireError::invalid_state)
 Q_DECLARE_METATYPE(SireError::incomplete_code)
 Q_DECLARE_METATYPE(SireError::std_exception)
 Q_DECLARE_METATYPE(SireError::unknown_exception)
+Q_DECLARE_METATYPE(SireError::version_error)
 
 SIRE_END_HEADER
 
