@@ -11,10 +11,12 @@
 namespace SireBase
 {
 void export_MD5Sum();
+void export_IDVersion();
  
 void SIREBASE_EXPORT export_SireBase()
 {
     export_MD5Sum();
+    export_IDVersion();
 }
 
 }

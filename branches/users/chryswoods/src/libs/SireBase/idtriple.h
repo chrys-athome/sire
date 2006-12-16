@@ -34,7 +34,7 @@ protected:
     quint32 major() const;
     quint32 minor() const;
 
-    IDPair version() const;
+    const IDPair& version() const;
 
     bool sameMajorVersion(const IDTriple &other) const;
     bool sameMinorVersion(const IDTriple &other) const;
@@ -101,7 +101,7 @@ inline quint32 IDTriple::minor() const
 }
 
 /** Return the version */
-inline IDPair IDTriple::version() const
+inline const IDPair& IDTriple::version() const
 {
     return versn;
 }

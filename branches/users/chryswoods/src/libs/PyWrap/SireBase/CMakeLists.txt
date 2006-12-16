@@ -17,6 +17,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs
 
 # Define the sources in SireBase
 set ( WRAPBASE_SOURCES
+      idversion.py.cpp
       wrap_md5sum.cpp
     )
 

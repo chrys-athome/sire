@@ -66,18 +66,6 @@ private:
     void _pvt_throwVersionError(const MajMinVersion &other) const;
 };
 
-/** Increment the minor version number */
-inline void MajMinVersion::incrementMinor()
-{
-    IDPair::incrementMinor();
-}
-
-/** Increment the major version number */
-inline void MajMinVersion::incrementMajor()
-{
-    IDPair::incrementMajor();
-}
-
 /** Return the major number */
 inline quint32 MajMinVersion::major() const
 {
@@ -88,6 +76,18 @@ inline quint32 MajMinVersion::major() const
 inline quint32 MajMinVersion::minor() const
 {
     return IDPair::minor();
+}
+
+/** Increment the minor version number */
+inline void MajMinVersion::incrementMinor()
+{
+    IDPair::incrementMinor();
+}
+
+/** Increment the major version number */
+inline void MajMinVersion::incrementMajor()
+{
+    IDPair::incrementMajor();
 }
 
 /** Return whether or not this has the same major version as 'other' */

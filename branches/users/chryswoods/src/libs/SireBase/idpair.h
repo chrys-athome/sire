@@ -4,6 +4,19 @@
 #include <boost/shared_ptr.hpp>
 #include <QString>
 
+#ifdef major
+//glibc #defines major == gnu_dev_major
+//This ruins any use of 'major' - this is why macros are BAD!!!
+//It does this in sys/sysmacros.h
+#undef major
+#endif
+
+#ifdef minor
+//glibc does the same thing with 'minor' as well...
+// #define minor == gnu_dev_minor
+#undef minor
+#endif
+
 #include "incremint.h"
 
 SIRE_BEGIN_HEADER
