@@ -1,7 +1,11 @@
     
+#include "sireglobal.h"
+    
 void export_QMap_QString_QString();
     
-void export_QMap()
+void  
+SIREQT_EXPORT
+export_QMap()
 {
     export_QMap_QString_QString();
 }

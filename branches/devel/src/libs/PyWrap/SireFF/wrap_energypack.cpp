@@ -18,7 +18,9 @@ using namespace SireFF::EnergyType;
 namespace SireFF
 {
 
-void export_EnergyPack()
+void  
+SIREFF_EXPORT
+export_EnergyPack()
 {
     //we can't wrap up all combinations of the EnergyPack as python doesn't have templates...
     //instead we will wrap up an EnergyPack that contains all Energy components...

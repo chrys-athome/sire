@@ -16,7 +16,9 @@ using namespace SireQt;
 namespace SireMol
 {
 
-void export_Impropers()
+void  
+SIREMOL_EXPORT
+export_Impropers()
 {
     wrap_QVector<Improper>("QVector_Improper_");
     wrap_QList<Improper>("QList_Improper_");

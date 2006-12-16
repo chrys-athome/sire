@@ -1,12 +1,18 @@
 #ifndef SIREVOL_SPACE_H
 #define SIREVOL_SPACE_H
 
+#include <QList>
+#include <QVector>
+#include <boost/tuple/tuple.hpp>
+
 #include "SireBase/pairmatrix.hpp"
-#include "SireBase/dynamicsharedptr.hpp"
+#include "SireBase/sharedpolypointer.hpp"
 
 #include "SireMaths/vector.h"
 
 #include "sireglobal.h"
+
+#include "coordgroup.h"
 
 SIRE_BEGIN_HEADER
 
@@ -24,8 +30,6 @@ QDataStream& operator>>(QDataStream&, SireVol::Space&);
 
 namespace SireVol
 {
-
-class CoordGroup;
 
 using SireMaths::Vector;
 
@@ -68,7 +72,7 @@ This is a virtual class that is designed to be used with DynamicSharedPtr.
 
 @author Christopher Woods
 */
-class SIREVOL_EXPORT SpaceBase
+class SIREVOL_EXPORT SpaceBase : public QSharedData
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const SpaceBase&);
@@ -164,6 +168,53 @@ public:
     */
     virtual bool beyond(double dist, const CoordGroup &group0,
                         const CoordGroup &group1) const=0;
+
+    /** Return the minimum distance between the points in 'group0' and 'group1'.
+        If this is a periodic space then this uses the minimum image convention
+        (i.e. the minimum distance between the closest periodic replicas are
+        used) */
+    virtual double minimumDistance(const CoordGroup &group0,
+                                   const CoordGroup &group1) const=0;
+
+    /** Return the minimum distance between points within the group 'group'. */
+    virtual double minimumDistance(const CoordGroup &group) const=0;
+
+    /** Return a copy of the passed CoordGroup that has been moved into the
+        central box. This only does something for periodic spaces. */
+    virtual CoordGroup moveToCenterBox(const CoordGroup &group) const=0;
+
+    /** Return a copy of an array of passed CoordGroups that have been moved
+        into the central box. This only does something for periodic spaces. */
+    virtual QVector<CoordGroup> moveToCenterBox(
+                                    const QVector<CoordGroup> &groups) const=0;
+
+    /** Return the minimum image copy of 'group' with respect to 'center'.
+        For periodic spaces, this translates 'group' into the box that
+        has its center at 'center' (i.e. returns the closest copy of
+        'group' to 'center' according to the minimum image convention) */
+    virtual CoordGroup getMinimumImage(const CoordGroup &group,
+                                       const Vector &center) const=0;
+
+    /** Return the minimum image copy of 'groups' with respect to 'center'.
+        For periodic spaces, this translates 'groups' into the box that
+        has its center at 'center' (i.e. returns the closest copy of
+        each 'group' to 'center' according to the minimum image convention) */
+    virtual QVector<CoordGroup> getMinimumImage(const QVector<CoordGroup> &groups,
+                                                const Vector &center) const=0;
+
+    /** Return a list of copies of CoordGroup 'group' that are within
+        'distance' of the CoordGroup 'center', translating 'group' so that
+        it has the right coordinates to be around 'center'. Note that multiple
+        copies of 'group' may be returned in this is a periodic space and
+        there are multiple periodic replicas of 'group' within 'dist' of
+        'center'. The copies of 'group' are returned together with the
+        minimum distance between that periodic replica and 'center'.
+
+        If there are no periodic replicas of 'group' that are within
+        'dist' of 'center', then an empty list is returned. */
+    virtual QList< boost::tuple<double,CoordGroup> >
+                    getCopiesWithin(const CoordGroup &group, const CoordGroup &center,
+                                    double dist) const=0;
 };
 
 /** This is the user-handle class that is used to hold the dynanmic Space classes.
@@ -223,10 +274,27 @@ public:
 
     bool beyond(double dist, const CoordGroup &group0, const CoordGroup &group1) const;
 
+    double minimumDistance(const CoordGroup &group0, const CoordGroup &group1) const;
+
+    double minimumDistance(const CoordGroup &group) const;
+
+    CoordGroup moveToCenterBox(const CoordGroup &group) const;
+
+    QVector<CoordGroup> moveToCenterBox(const QVector<CoordGroup> &groups) const;
+
+    CoordGroup getMinimumImage(const CoordGroup &group, const Vector &center) const;
+
+    QVector<CoordGroup> getMinimumImage(const QVector<CoordGroup> &groups,
+                                        const Vector &center) const;
+
+    QList< boost::tuple<double,CoordGroup> >
+                getCopiesWithin(const CoordGroup &group,
+                                const CoordGroup &center, double dist) const;
+
 private:
     /** Dynamic shared pointer to the virtual SpaceBase class
         that is used to perform the distance calculations. */
-    SireBase::DynamicSharedPtr<SpaceBase> d;
+    SireBase::SharedPolyPointer<SpaceBase> d;
 };
 
 /** Populate the matrix 'mat' with the distances between all of the
@@ -309,6 +377,74 @@ inline bool Space::beyond(double dist, const CoordGroup &group0,
                           const CoordGroup &group1) const
 {
     return d->beyond(dist, group0, group1);
+}
+
+/** Return the minimum distance between the points in 'group0' and 'group1'.
+    If this is a periodic space then this uses the minimum image convention
+    (i.e. the minimum distance between the closest periodic replicas are
+    used) */
+inline double Space::minimumDistance(const CoordGroup &group0,
+                                     const CoordGroup &group1) const
+{
+    return d->minimumDistance(group0, group1);
+}
+
+/** Return the minimum distance between points within the group 'group'. */
+inline double Space::minimumDistance(const CoordGroup &group) const
+{
+    return d->minimumDistance(group);
+}
+
+/** Return a copy of the passed CoordGroup that has been moved into the
+    central box. This only does something for periodic spaces. */
+inline CoordGroup Space::moveToCenterBox(const CoordGroup &group) const
+{
+    return d->moveToCenterBox(group);
+}
+
+/** Return a copy of an array of passed CoordGroups that have been moved
+    into the central box. This only does something for periodic spaces. */
+inline QVector<CoordGroup> Space::moveToCenterBox(
+                                      const QVector<CoordGroup> &groups) const
+{
+    return d->moveToCenterBox(groups);
+}
+
+/** Return the minimum image copy of 'group' with respect to 'center'.
+    For periodic spaces, this translates 'group' into the box that
+    has its center at 'center' (i.e. returns the closest copy of
+    'group' to 'center' according to the minimum image convention) */
+inline CoordGroup Space::getMinimumImage(const CoordGroup &group,
+                                         const Vector &center) const
+{
+    return d->getMinimumImage(group, center);
+}
+
+/** Return the minimum image copy of 'groups' with respect to 'center'.
+    For periodic spaces, this translates 'groups' into the box that
+    has its center at 'center' (i.e. returns the closest copy of
+    each 'group' to 'center' according to the minimum image convention) */
+inline QVector<CoordGroup> Space::getMinimumImage(const QVector<CoordGroup> &groups,
+                                                  const Vector &center) const
+{
+    return d->getMinimumImage(groups, center);
+}
+
+/** Return a list of copies of CoordGroup 'group' that are within
+    'distance' of the CoordGroup 'center', translating 'group' so that
+    it has the right coordinates to be around 'center'. Note that multiple
+    copies of 'group' may be returned in this is a periodic space and
+    there are multiple periodic replicas of 'group' within 'dist' of
+    'center'. The copies of 'group' are returned together with the
+    minimum distance between that periodic replica and 'center'.
+
+    If there are no periodic replicas of 'group' that are within
+    'dist' of 'center', then an empty list is returned. */
+inline QList< boost::tuple<double,CoordGroup> >
+Space::getCopiesWithin(const CoordGroup &group, const CoordGroup &center,
+                       double dist) const
+{
+    return d->getCopiesWithin(group, center, dist);
 }
 
 }

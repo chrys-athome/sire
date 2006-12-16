@@ -17,7 +17,9 @@ namespace bp = boost::python;
 namespace SireMM
 {
 
-void export_CLJFF()
+void  
+SIREMM_EXPORT
+export_CLJFF()
 {
     bp::class_< CLJFF, bp::bases<SireFF::FFBase>, boost::noncopyable >( "CLJFF", bp::no_init )
         .def(
@@ -28,10 +30,6 @@ void export_CLJFF()
             "LJ"
             , &::SireMM::CLJFF::LJ
             , bp::default_call_policies() )
-        .def(
-            "combiningRules"
-            , &::SireMM::CLJFF::combiningRules
-            , bp::return_value_policy< bp::copy_const_reference, bp::default_call_policies >() )
         .def(
             "coulomb"
             , &::SireMM::CLJFF::coulomb

@@ -17,7 +17,9 @@ using namespace boost::python;
 namespace SireIO
 {
 
-void export_IOParam()
+void  
+SIREIO_EXPORT
+export_IOParam()
 {
 /*    class_<PSF>("PSF", init<>())
            .def("read", &PSF::read)

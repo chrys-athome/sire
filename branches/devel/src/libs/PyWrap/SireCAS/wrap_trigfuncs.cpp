@@ -18,7 +18,9 @@ using namespace boost::python;
 namespace SireCAS
 {
 
-void export_TrigFuncs()
+void  
+SIRECAS_EXPORT
+export_TrigFuncs()
 {
 
     class_<SingleFunc, bases<ExBase>, boost::noncopyable>("SingleFunc", no_init)

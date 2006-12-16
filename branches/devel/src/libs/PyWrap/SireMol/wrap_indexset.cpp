@@ -21,7 +21,9 @@ using namespace SireQt;
 namespace SireMol
 {
 
-void export_IndexSet()
+void  
+SIREMOL_EXPORT
+export_IndexSet()
 {
     wrap_QSet<Index>("QSet_Index_");
 }

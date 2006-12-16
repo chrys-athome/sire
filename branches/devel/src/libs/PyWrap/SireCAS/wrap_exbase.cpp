@@ -47,7 +47,9 @@ QString wrap_what(const ExBase &ex)
 
 void export_ExBase_Operators(class_<ExBase, boost::noncopyable> &wrapper);
 
-void export_ExBase()
+void 
+SIRECAS_EXPORT
+export_ExBase()
 {
     class_<ExBase, boost::noncopyable> wrapper("ExBase", no_init);
     

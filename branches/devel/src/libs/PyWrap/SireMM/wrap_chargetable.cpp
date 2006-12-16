@@ -28,7 +28,9 @@ using namespace SireQt;
 namespace SireMM
 {
 
-void export_ChargeTable()
+void  
+SIREMM_EXPORT
+export_ChargeTable()
 {
     export_AtomTable<ChargeParameter>("AtomTableT_ChargeParameter_");
 

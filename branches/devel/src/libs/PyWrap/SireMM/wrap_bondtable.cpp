@@ -19,7 +19,9 @@ using namespace SireQt;
 namespace SireMM
 {
 
-void export_BondTable()
+void  
+SIREMM_EXPORT
+export_BondTable()
 {
     wrap_InternalTableBase<MolBondInfo>("InternalTableBase_MolBondInfo_");
     wrap_InternalTable<MolBondInfo,Expression>("InternalTable_MolBondInfo_Expression_");

@@ -20,10 +20,12 @@ set ( SIREUNITTEST_SOURCES
       testenergy.cpp
       testffdb.cpp
       testmatch.cpp
+      testperiodicbox.cpp
       testsharedpolypointer.cpp
       testsirecas.cpp
       testunits.cpp
       testvector.cpp
+      testversion.cpp
     )
 
 # Add the resource files
@@ -50,6 +52,7 @@ target_link_libraries (SireUnitTest
                        SireIO
                        SireMM
                        SireCAS
+		       SireBase
                        SireUnits
                        ${BOOST_UNITTEST_LIBRARY}
                        )

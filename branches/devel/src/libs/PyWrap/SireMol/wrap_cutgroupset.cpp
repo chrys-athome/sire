@@ -22,7 +22,9 @@ using namespace SireQt;
 namespace SireMol
 {
 
-void export_CutGroupSet()
+void  
+SIREMOL_EXPORT
+export_CutGroupSet()
 {
     /** Wrap up a CutGroupSet */
     wrap_QHash<CutGroupID,CutGroup>("QHash_CutGroupID_CutGroup_");

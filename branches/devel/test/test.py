@@ -1,99 +1,60 @@
 
 from Sire.Mol import *
 from Sire.IO import *
-from Sire.DB import *
+from Sire.Vol import *
+from Sire.FF import *
 from Sire.MM import *
 from Sire.CAS import *
+from Sire.Cluster import *
+from Sire.Maths import *
+from Sire.Qt import *
 from Sire.Units import *
 
+t = QTime()
+
+t.start()
 mols = PDB().read("test/io/water.pdb")
 
-#automatically generate the connectivity of the molecules
-for mol in mols:
-    mol.addAutoBonds()
-#    mol.setName("Water [TIP4P]")
+ms = t.elapsed()
 
-mols = flexibleAndMoleculeCutting(mols)
+print "Reading waters took %d ms..." % ms
 
 tip4p = mols[0]
-print tip4p
 
-#create the database and load into it the solvent parameters
-db = ParameterDB()
+tip4p_1 = mols[1]
 
-ProtoMS().read("test/ff/solvents.ff", db)
+cgroups = tip4p.coordGroups()
 
-#now assign the parameters for the water
-params = db.assign(tip4p, [ assign_atoms(
-                                 using_parameters(ChargeDB,LJDB,AtomTypeDB), 
-                                 using_relationships(RelateMRADB) ),
-                            assign_bonds(
-                                 using_parameters(BondDB),
-                                 using_relationships(RelateMRADB,
-                                                     RelateAtomTypeDB) ),
-                            assign_angles(
-                                 using_parameters(AngleDB),
-                                 using_relationships(RelateMRADB,
-                                                     RelateAtomTypeDB) ),
-                            assign_dihedrals(
-                                 using_parameters(DihedralDB),
-                                 using_relationships(RelateMRADB,
-                                                     RelateAtomTypeDB) ),
-                          ],
-                   mol_name == "T4P" 
-                  )
-             
-assert( params.isA(ChargeTable) )
-assert( params.isA(LJTable) )
-assert( params.isA(AtomTypeTable) )
-assert( params.isA(BondTable) )
-assert( params.isA(AngleTable) )
+box = PeriodicBox( Vector(5,5,5), Vector(-5,-5,-5) )
 
-chgs = params.asA(ChargeTable)
-ljs = params.asA(LJTable)
-typs = params.asA(AtomTypeTable)
-bonds = params.asA(BondTable)
-angles = params.asA(AngleTable)
+t.start()
+PDB().write(tip4p, "water0.pdb")
+ms = t.elapsed()
 
-assert( not chgs.hasMissingParameters() )
-assert( not ljs.hasMissingParameters() )
-assert( not typs.hasMissingParameters() )
-assert( not bonds.hasMissingParameters() )
-assert( not angles.hasMissingParameters() )
+print "Writing a water took %d ms..." % ms
 
-for atom in params.molecule().atoms():
-    print atom, chgs[atom], ljs[atom], typs[atom]
- 
-for bond in bonds.bonds():
-    print bond, bonds[bond]
-               
-for angle in angles.angles():
-    print angle, angles[angle]
+t.start()
+cgroups = box.moveToCenterBox(cgroups)
+ms = t.elapsed()
 
-#check the parameters are correct
-assert( chgs[("O00",1)] == 0.0 )
-assert( chgs[("H01",1)] == 0.52 )
-assert( chgs[("H02",1)] == 0.52 )
-assert( chgs[("M03",1)] == -1.04 )
+print "Moving to central box took %d ms..." % ms
 
-assert( ljs[("O00",1)] == LJParameter(3.15363,0.155) )
-assert( ljs[("H01",1)] == LJParameter.dummy() )
-assert( ljs[("H02",1)] == LJParameter.dummy() )
-assert( ljs[("M03",1)] == LJParameter.dummy() )
+t.start()
+tip4p.setCoordinates(cgroups)
+ms = t.elapsed()
 
-assert( typs[("O00",1)] == AtomType("OW","oxygen") )
-assert( typs[("H01",1)] == AtomType("HW","hydrogen") )
-assert( typs[("H02",1)] == AtomType("HW","hydrogen") )
-assert( typs[("M03",1)] == AtomType("??",0) )
+print box.minimumDistance(tip4p.coordGroups()[0], \
+                          tip4p_1.coordGroups()[0])
 
-r = db.asA("SireMM::BondDB").r()
-print db.getLog()
+print "Setting the coordinates took %d ms..." % ms
 
-assert( bonds[ (("H01",1),("O00",1)) ] == 450*pow((r-0.9572),2) )
-assert( bonds[ (("H02",1),("O00",1)) ] == 450*pow((r-0.9572),2) )
-                
-theta = db.asA("SireMM::AngleDB").theta()
+PDB().write(tip4p, "water1.pdb")
 
-assert( angles[ (("H01",1),("O00",1),("H02",1)) ] == 55*pow((theta - 104.52*degrees),2) )
+cgroups = box.getMinimumImage(cgroups, Vector(1025,1025,1025))
+tip4p.setCoordinates(cgroups)
 
-print "Done!"
+PDB().write(tip4p, "water2.pdb")
+
+print box.minimumDistance(tip4p.coordGroups()[0], \
+                          tip4p_1.coordGroups()[0])
+

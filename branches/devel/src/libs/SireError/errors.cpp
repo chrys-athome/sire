@@ -1,6 +1,8 @@
 
 #include <QObject>
 #include <QDataStream>
+#include <QFile>
+#include <QProcess>
 
 #include "SireError/errors.h"
 
@@ -138,6 +140,56 @@ QString SIREERROR_EXPORT fileError(const QFile &f)
         default:
             return QObject::tr("An unknown error occured while reading \"%1\".")
                                       .arg(f.fileName());
+    }
+}
+
+QString exitStatusString(QProcess::ExitStatus stat)
+{
+    switch (stat)
+    {
+        case QProcess::NormalExit:
+            return QObject::tr("Normal exit");
+
+        case QProcess::CrashExit:
+        default:
+            return QObject::tr("Crashed!");
+    }
+}
+
+QString SIREERROR_EXPORT processError(const QString &executable,
+                                      const QProcess &process)
+{
+    QString err = QObject::tr("There was an error while running the program \"%1\". ")
+                          .arg(executable);
+
+    switch (process.error())
+    {
+        case QProcess::FailedToStart:
+            return err + QObject::tr("The process failed to start.");
+
+        case QProcess::Crashed:
+            return err + QObject::tr("The process crashed! (exit code %1)")
+                                    .arg(process.exitCode());
+        case QProcess::Timedout:
+            return err + QObject::tr("The last operation timed out (something went wrong?). "
+                                     "PID == %1, Exit status == %2, Exit code == %3")
+                                        .arg(process.pid())
+                                        .arg(exitStatusString(process.exitStatus()))
+                                        .arg(process.exitCode());
+
+        case QProcess::WriteError:
+            return err + QObject::tr("There was a write error! PID == %1").arg(process.pid());
+
+        case QProcess::ReadError:
+            return err + QObject::tr("There was a read error! PID == %1").arg(process.pid());
+
+        case QProcess::UnknownError:
+        default:
+            return err + QObject::tr("There was an unknown error! ."
+                                     "PID == %1, Exit status == %2, Exit code == %3")
+                                        .arg(process.pid())
+                                        .arg(exitStatusString(process.exitStatus()))
+                                        .arg(process.exitCode());
     }
 }
 

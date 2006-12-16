@@ -21,7 +21,9 @@ using namespace SireQt;
 namespace SireMol
 {
 
-void export_IndexVector()
+void  
+SIREMOL_EXPORT
+export_IndexVector()
 {
     wrap_QVector<Index>("QVector_Index_");
 }

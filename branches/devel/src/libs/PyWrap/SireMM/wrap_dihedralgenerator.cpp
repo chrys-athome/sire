@@ -17,7 +17,9 @@ using namespace SireQt;
 namespace SireMM
 {
 
-void export_DihedralGenerator()
+void  
+SIREMM_EXPORT
+export_DihedralGenerator()
 {
     wrap_InternalGenerator<MolDihedralInfo>("InternalGenerator_MolDihedralInfo_");
     wrap_UsePassedInternals<MolDihedralInfo>("UsePassedInternals_MolDihedralInfo_");

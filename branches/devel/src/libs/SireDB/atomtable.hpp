@@ -215,7 +215,7 @@ AtomTableT<Param>::AtomTableT(const MoleculeInfo &molinfo)
                   : AtomTable(molinfo)
 {
     //make space for the parameters
-    int ncg = this->info().nCutGroups();
+    uint ncg = this->info().nCutGroups();
 
     params.resize(ncg);
     groupcache.reserve(ncg);
@@ -274,7 +274,7 @@ bool AtomTableT<Param>::_unsafe_assignedParameter(const CGAtomID &cgatomid) cons
 template<class Param>
 int AtomTableT<Param>::_unsafe_nAssignedParameters(const ResidueInfo &resinfo) const
 {
-    int nats = resinfo.nAtoms();
+    uint nats = resinfo.nAtoms();
 
     int nassigned = 0;
 
@@ -301,7 +301,7 @@ int AtomTableT<Param>::_unsafe_nAssignedParameters(CutGroupID cgid) const
 template<class Param>
 int AtomTableT<Param>::_unsafe_nMissingParameters(const ResidueInfo &resinfo) const
 {
-    int nats = resinfo.nAtoms();
+    uint nats = resinfo.nAtoms();
 
     int nmissing = 0;
 
@@ -327,7 +327,7 @@ int AtomTableT<Param>::_unsafe_nMissingParameters(CutGroupID cgid) const
 template<class Param>
 bool AtomTableT<Param>::_unsafe_hasMissingParameters(const ResidueInfo &resinfo) const
 {
-    int nats = resinfo.nAtoms();
+    uint nats = resinfo.nAtoms();
 
     for (AtomID i(0); i<nats; ++i)
     {
@@ -354,7 +354,7 @@ QSet<AtomIndex> AtomTableT<Param>::_unsafe_missingParameters(
 {
     QSet<AtomIndex> missing;
 
-    int nats = resinfo.nAtoms();
+    uint nats = resinfo.nAtoms();
 
     for (AtomID i(0); i<nats; ++i)
     {
@@ -371,7 +371,7 @@ QSet<AtomIndex> AtomTableT<Param>::_unsafe_missingParameters(
 template<class Param>
 QSet<AtomIndex> AtomTableT<Param>::_unsafe_missingParameters(CutGroupID cgid) const
 {
-    int nats = info().nAtoms(cgid);
+    uint nats = info().nAtoms(cgid);
 
     QSet<AtomIndex> missing;
 
@@ -526,7 +526,7 @@ void AtomTableT<Param>::_unsafe_clear(const CGAtomID &cgatomid)
 template<class Param>
 void AtomTableT<Param>::_unsafe_clear(const ResidueInfo &resinfo)
 {
-    int nats = resinfo.nAtoms();
+    uint nats = resinfo.nAtoms();
 
     for (AtomID i(0); i<nats; ++i)
         this->_unsafe_clear( resinfo[i] );
@@ -1030,11 +1030,11 @@ void AtomTableT<Param>::add(const TableBase &table)
 
     //run through each of the parameters in 'table' and add them to
     //this table if they have been set
-    int ncg = this->info().nCutGroups();
+    uint ncg = this->info().nCutGroups();
 
     for (CutGroupID cgid(0); cgid<ncg; ++cgid)
     {
-        int nats = this->info().nAtoms(cgid);
+        uint nats = this->info().nAtoms(cgid);
 
         for (AtomID i(0); i<nats; ++i)
         {
@@ -1073,7 +1073,7 @@ ParameterGroup<Param> AtomTableT<Param>::parameterGroup(CutGroupID cgid) const
 template<class Param>
 QVector< ParameterGroup<Param> > AtomTableT<Param>::parameterGroups() const
 {
-    int ncg = info().nCutGroups();
+    uint ncg = info().nCutGroups();
 
     QVector< ParameterGroup<Param> > groups;
     groups.reserve(ncg);
@@ -1137,7 +1137,7 @@ QVector<Param> AtomTableT<Param>::parameters() const
 {
     QVector<Param> allparams;
 
-    int nats = info().nAtoms();
+    uint nats = info().nAtoms();
 
     allparams.reserve(nats);
 
@@ -1164,7 +1164,7 @@ QVector<Param> AtomTableT<Param>::parameters(ResNum resnum) const
     {
         QVector<Param> resparams;
 
-        int nats = resinfo.nAtoms();
+        uint nats = resinfo.nAtoms();
 
         resparams.reserve(nats);
 
@@ -1205,7 +1205,7 @@ QVector<Param> AtomTableT<Param>::parameters(CutGroupID cgid) const
         return groupcache[cgid];
     else
     {
-        int nats = info().nAtoms(cgid);
+        uint nats = info().nAtoms(cgid);
 
         QVector<Param> cgparams;
         cgparams.reserve(nats);
@@ -1311,7 +1311,7 @@ QVector< AtomParameter<Param> > AtomTableT<Param>::atomParameters() const
 {
     QVector< AtomParameter<Param> > allparams;
 
-    int nats = info().nAtoms();
+    uint nats = info().nAtoms();
 
     allparams.reserve(nats);
 
@@ -1335,7 +1335,7 @@ AtomTableT<Param>::atomParameters(ResNum resnum) const
 {
     const ResidueInfo &resinfo = info().at(resnum);
 
-    int nats = resinfo.nAtoms();
+    uint nats = resinfo.nAtoms();
 
     //get the array of parameters (which could be cached)
     QVector<Param> resparams = this->parameters(resnum);
@@ -1382,7 +1382,7 @@ AtomTableT<Param>::atomParameters(CutGroupID cgid) const
 {
     const AtomInfoGroup &atomgroup = info().at(cgid);
 
-    int nats = atomgroup.nAtoms();
+    uint nats = atomgroup.nAtoms();
 
     //get the array of parameters - as this may already be cached
     QVector<Param> cgparams = this->parameters(cgid);

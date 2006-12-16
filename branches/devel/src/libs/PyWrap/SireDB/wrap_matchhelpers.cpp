@@ -25,7 +25,9 @@ namespace SireDB
 
 void export_MatchHelpers2();
 
-void export_MatchHelpers()
+void  
+SIREDB_EXPORT
+export_MatchHelpers()
 {
     class_<match_mol_name>("match_mol_name", init<>())
         .def(self == QString())

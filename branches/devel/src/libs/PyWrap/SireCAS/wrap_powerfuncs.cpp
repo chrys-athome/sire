@@ -19,7 +19,9 @@ using namespace boost::python;
 namespace SireCAS
 {
 
-void export_PowerFuncs()
+void  
+SIRECAS_EXPORT
+export_PowerFuncs()
 {
     class_<PowerFunction, bases<ExBase>, boost::noncopyable>("PowerFunction", no_init)
         .def("core", &PowerFunction::core)

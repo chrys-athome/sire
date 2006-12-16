@@ -181,7 +181,9 @@ boost::shared_ptr<TestA> createType(const QString &typ, int value)
         return boost::shared_ptr<TestA>();
 }
 
-void export_TestCast()
+void  
+SIRETEST_EXPORT
+export_TestCast()
 {
     def("castToA", &castToA);
 

@@ -37,6 +37,9 @@
   <ghost@aladdin.com>.  Other authors are noted in the change history
   that follows (in reverse chronological order):
 
+  2006-11-20 CJW Added symbol visibility decoration to all of the 
+             public visible functions
+
   2002-04-13 lpd Clarified derivation from RFC 1321; now handles byte order
 	either statically or dynamically; added missing #include <string.h>
 	in library.
@@ -127,8 +130,13 @@
 #define T63    0x2ad7d2bb
 #define T64 /* 0xeb86d391 */ (T_MASK ^ 0x14792c6e)
 
+/* CJW Mod - include sireglobal.h so have access to symbol visibility
+   decorations */
+#include "sireglobal.h"
+/* End Mod */
 
 static void
+SIRE_EXPORT
 md5_process(md5_state_t *pms, const md5_byte_t *data /*[64]*/)
 {
     md5_word_t
@@ -309,7 +317,9 @@ md5_process(md5_state_t *pms, const md5_byte_t *data /*[64]*/)
     pms->abcd[3] += d;
 }
 
-void md5_init(md5_state_t *pms)
+void 
+SIRE_EXPORT
+md5_init(md5_state_t *pms)
 {
     pms->count[0] = pms->count[1] = 0;
     pms->abcd[0] = 0x67452301;
@@ -318,7 +328,9 @@ void md5_init(md5_state_t *pms)
     pms->abcd[3] = 0x10325476;
 }
 
-void md5_append(md5_state_t *pms, const md5_byte_t *data, int nbytes)
+void 
+SIRE_EXPORT
+md5_append(md5_state_t *pms, const md5_byte_t *data, int nbytes)
 {
     const md5_byte_t *p = data;
     int left = nbytes;
@@ -355,7 +367,9 @@ void md5_append(md5_state_t *pms, const md5_byte_t *data, int nbytes)
 	memcpy(pms->buf, p, left);
 }
 
-void md5_finish(md5_state_t *pms, md5_byte_t digest[16])
+void 
+SIRE_EXPORT
+md5_finish(md5_state_t *pms, md5_byte_t digest[16])
 {
     static const md5_byte_t pad[64] = {
 	0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,

@@ -1,6 +1,8 @@
 #ifndef SireFF_FFBASE_H
 #define SireFF_FFBASE_H
 
+#include "SireBase/sharedpolypointer.hpp"
+
 #include "SireCAS/function.h"
 #include "SireCAS/values.h"
 
@@ -57,45 +59,45 @@ using SireDB::ParameterTable;
 namespace detail
 {
     /** Small internal class used to hold information about a
-        component of the forcefield 
-        
+        component of the forcefield
+
         @author Christopher Woods
     */
     class ComponentInfo
     {
-    
+
     friend QDataStream& ::operator<<(QDataStream&, const ComponentInfo&);
     friend QDataStream& ::operator>>(QDataStream&, ComponentInfo&);
-    
+
     public:
         ComponentInfo();
         ComponentInfo(const QString &root, const QString &name,
                       const QString &description);
-        
+
         ComponentInfo(const ComponentInfo &other);
-        
+
         ~ComponentInfo();
-        
+
         void setRoot(const QString &root);
-        
+
         /** Return the component's name */
         const QString& name() const
         {
             return nme;
         }
-        
+
         /** Return the component's description */
         const QString& description() const
         {
             return desc;
         }
-        
+
         /** Return the function used to represent the component */
         const Function& function() const
         {
             return func;
         }
-        
+
     private:
         /** The name of the component */
         QString nme;
@@ -109,12 +111,12 @@ namespace detail
 /**
 This class is the base class of all of the forcefield classes. The forcefields all form
 a polymorphic class hierarchy derived from this class. They are then held via
-the DynamicSharedPtr in ForceField, which provides the common user-interface to the 
+the DynamicSharedPtr in ForceField, which provides the common user-interface to the
 forcefields.
 
 @author Christopher Woods
 */
-class SIREFF_EXPORT FFBase
+class SIREFF_EXPORT FFBase : public QSharedData
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const FFBase&);
@@ -154,34 +156,20 @@ public:
     virtual const Molecule& molecule(MoleculeID molid) const=0;
     //virtual const Residue& residue(const MolResNumID &molresid) const=0;
 
-    virtual void move(const MovedMols &movemols)=0;
+    virtual bool move(const Molecule &mol)=0;
+    virtual bool move(const Residue &res)=0;
 
-    virtual void move(const Molecule &mol)=0;
-    virtual void move(const Residue &res)=0;
-
-    virtual void change(const ChangedMols &changemols)=0;
-
-    virtual void change(const Molecule &mol, const ParameterTable &params)=0;
-    virtual void change(const Residue &res, const ParameterTable &params)=0;
-
-    virtual void add(const Molecule &mol, const ParameterTable &params,
-                     int groupid)=0;
-
-    virtual void add(const Residue &res, const ParameterTable &params,
-                     int groupid)=0;
-
-    virtual void remove(const Molecule &mol)=0;
-
-    virtual void remove(const Residue &res)=0;
+    bool isDirty() const;
+    bool isClean() const;
 
     void assertContains(const Function &component) const;
 
     void assertContains(const Molecule &molecule) const;
     void assertContains(const Residue &residue) const;
-    
+
     void assertSameMajorVersion(const Molecule &molecule) const;
     void assertSameMajorVersion(const Residue &residue) const;
-    
+
     void assertSameVersion(const Molecule &molecule) const;
     void assertSameVersion(const Residue &residue) const;
 
@@ -190,14 +178,17 @@ protected:
                            const QString &description);
 
     void setComponent(const Function &comp, double nrg);
+    void changeComponent(const Function &comp, double delta);
 
     void addToRegister(const Molecule &molecule);
     void addToRegister(const Residue &residue);
 
-    bool isDirty() const;
-
     void setDirty();
     void setClean();
+
+    Values currentEnergies() const;
+
+    static QHash<MoleculeID,int> index(const QVector<Molecule> &molecules);
 
     /** Virtual function used to trigger a recalculation of the total energy
         and of all of the component energies */
@@ -205,7 +196,7 @@ protected:
 
 private:
     void registerComponents();
-    
+
     /** The name of this forcefield - this may be used to give a unique
         name to all of the component-symbols in this forcefield. */
     QString ffname;
@@ -223,7 +214,7 @@ private:
     /** Set of MolResNumID numbers of residues that are in this forcefield that
         are here without their parent molecules */
     //QSet<MolResNumID> res_in_ff;
-    
+
     /** Whether or not this forcefield is dirty (requires an update) */
     bool isdirty;
 };
@@ -232,6 +223,26 @@ private:
 inline void FFBase::setComponent(const Function &comp, double nrg)
 {
     nrg_components.set(comp,nrg);
+}
+
+/** Change the existing value of the component 'comp' by delta */
+inline void FFBase::changeComponent(const Function &comp, double delta)
+{
+    nrg_components.set( comp, delta + nrg_components.value(comp) );
+}
+
+/** Return whether or not the forcefield is dirty (the energy
+    needs to be recalculated) */
+inline bool FFBase::isDirty() const
+{
+    return isdirty;
+}
+
+/** Return whether or not the forcefield is clean (the energy
+    does not need to be recalculated) */
+inline bool FFBase::isClean() const
+{
+    return not isDirty();
 }
 
 }

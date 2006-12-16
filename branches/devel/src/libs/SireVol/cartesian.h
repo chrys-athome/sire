@@ -67,6 +67,23 @@ public:
 
     bool beyond(double dist, const CoordGroup &group0,
                 const CoordGroup &group1) const;
+
+    double minimumDistance(const CoordGroup &group0, const CoordGroup &group1) const;
+
+    double minimumDistance(const CoordGroup &group) const;
+
+    CoordGroup moveToCenterBox(const CoordGroup &group) const;
+
+    QVector<CoordGroup> moveToCenterBox(const QVector<CoordGroup> &groups) const;
+
+    CoordGroup getMinimumImage(const CoordGroup &group, const Vector &center) const;
+
+    QVector<CoordGroup> getMinimumImage(const QVector<CoordGroup> &groups,
+                                        const Vector &center) const;
+
+    QList< boost::tuple<double,CoordGroup> >
+               getCopiesWithin(const CoordGroup &group,
+                               const CoordGroup &center, double dist) const;
 };
 
 }

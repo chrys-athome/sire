@@ -19,7 +19,9 @@ using namespace boost::python;
 namespace SireMol
 {
 
-void export_ResidueBonds()
+void  
+SIREMOL_EXPORT
+export_ResidueBonds()
 {
 
     QList<Bond> (ResidueBonds::*wrap_bonds1)() const = &ResidueBonds::bonds;

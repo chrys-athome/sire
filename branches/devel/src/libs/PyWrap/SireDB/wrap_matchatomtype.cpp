@@ -120,7 +120,9 @@ MatchAtomTypeData mrdata_and_typdata(const MatchAtomTypeData &typdata,
     return mrdata and typdata;
 }
 
-void export_MatchAtomType()
+void  
+SIREDB_EXPORT
+export_MatchAtomType()
 {
     QString (MatchAtomType::*wrap_MatchAtomType_toString)(uint) const 
                                                   = &MatchAtomType::toString;

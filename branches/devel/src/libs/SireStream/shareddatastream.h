@@ -29,7 +29,7 @@ This is a streaming class that is used to help stream implicitly shared data. Th
 
 @author
 */
-class SharedDataStream
+class SIRESTREAM_EXPORT SharedDataStream
 {
 public:
     SharedDataStream(QDataStream &ds);

@@ -4,6 +4,9 @@
 #include <QDebug>
 
 #include <boost/test/unit_test.hpp>
+#include <boost/test/test_tools.hpp>
+#include <boost/test/floating_point_comparison.hpp>
+
 using boost::unit_test_framework::test_suite;
 
 #include "SireMaths/maths.h"
@@ -17,7 +20,7 @@ namespace SireTest
 
 /**
 This is the base class of all unit test classes.
- 
+
 @author Christopher Woods
 */
 class SIREUNITTEST_EXPORT TestBase
@@ -33,21 +36,6 @@ public:
 inline void initialise(TestBase *testclass, test_suite *suite)
 {
     testclass->initialise(suite);
-}
-
-/** Return true if two numbers are equal to within a tolerance of 'epsilon'
-    (normally should be 1x10-6 to 1x10-10. If 'printwarning' is true, then 
-    print out a warning if the numbers are not equal. */
-inline bool testEqual(double val0, double val1, double epsilon=1.0e-8)
-{
-    bool areequal = SireMaths::areEqual(val0,val1,epsilon);
-
-    if ( not areequal )
-        qDebug() << QObject::tr(
-            "Two values are not equal: %1 and %2")
-                .arg(val0).arg(val1);
-                
-    return areequal;
 }
 
 }

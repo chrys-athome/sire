@@ -11,10 +11,12 @@
 namespace SireVol
 {
 void export_Space();
+void export_CoordGroup();
 
 void SIREVOL_EXPORT export_SireVol()
 {
     export_Space();
+    export_CoordGroup();
 }
 
 }

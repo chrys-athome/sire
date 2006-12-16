@@ -26,7 +26,9 @@ using namespace SireMol;
 namespace SireDB
 {
 
-void export_AtomTable()
+void  
+SIREDB_EXPORT
+export_AtomTable()
 {
     class_<TableBase, boost::noncopyable>("TableBase", no_init)
 

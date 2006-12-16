@@ -33,7 +33,9 @@ ParameterTable wrap_assign2(ParameterDB &db, const Molecule &molecule,
     return db.assign(molecule, assign_instruct);
 }
 
-void export_ParameterDB()
+void  
+SIREDB_EXPORT
+export_ParameterDB()
 {
     
     class_<ParameterDB>( "ParameterDB", init<>() )

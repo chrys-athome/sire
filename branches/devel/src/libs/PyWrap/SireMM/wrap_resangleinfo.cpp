@@ -23,7 +23,9 @@ using namespace SireMol;
 namespace SireMM
 {
 
-void export_ResAngleInfo()
+void  
+SIREMM_EXPORT
+export_ResAngleInfo()
 {
     class_<ResAngleInfo> wrap_ResAngleInfo("ResAngleInfo", init<>());
     

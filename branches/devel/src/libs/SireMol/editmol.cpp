@@ -85,7 +85,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, EditMol &editmol)
 }
 
 /** Hash an EditMol */
-uint qHash(const EditMol &editmol)
+uint SIREMOL_EXPORT qHash(const EditMol &editmol)
 {
     return qHash(editmol.name());
 }

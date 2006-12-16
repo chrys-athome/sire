@@ -75,6 +75,8 @@ public:
     inline const T *data() const { return d; }
     inline const T *constData() const { return d; }
 
+    inline bool operator!() const { return !d; }
+
     inline bool operator==(const SharedPolyPointer<T> &other) const
     {
         return d == other.d;
@@ -95,6 +97,21 @@ public:
         if (d) d->ref.ref();
     }
 
+    template<class S>
+    inline SharedPolyPointer(const SharedPolyPointer<S> &o)
+             : d( const_cast<T*>( dynamic_cast<const T*>(o.constData()) ) )
+    {
+        if (o.constData())
+        {
+            if (d)
+                d->ref.ref();
+            else
+                throw SireError::invalid_cast( QObject::tr(
+                        "Cannot cast a SharedPolyPointer of type \"%1\".")
+                            .arg( SharedPolyPointerHelper<S>::what(*o) ), CODELOC );
+        }
+    }
+
     inline SharedPolyPointer<T> & operator=(const SharedPolyPointer<T> &o)
     {
         if (o.d != d)
@@ -104,6 +121,33 @@ public:
             x = qAtomicSetPtr(&d, x);
             if (x && !x->ref.deref())
                 delete x;
+        }
+
+        return *this;
+    }
+
+    template<class S>
+    inline SharedPolyPointer<T> & operator=(const SharedPolyPointer<S> &o)
+    {
+        T *x = const_cast<T*>( dynamic_cast<const T*>(o.constData()) );
+
+        if (x != d)
+        {
+
+            if (o.constData())
+            {
+                if (x)
+                    x->ref.ref();
+                else
+                    throw SireError::invalid_cast( QObject::tr(
+                        "Cannot cast a SharedPolyPointer of type \"%1\".")
+                            .arg( SharedPolyPointerHelper<S>::what(*o) ), CODELOC );
+
+                x = qAtomicSetPtr(&d, x);
+
+                if (x && !x->ref.deref())
+                    delete x;
+            }
         }
 
         return *this;
@@ -122,8 +166,6 @@ public:
 
         return *this;
     }
-
-    inline bool operator!() const { return !d; }
 
     /** CW Mod - additional member function used to return the
         type of the object */
@@ -256,10 +298,10 @@ QDataStream& operator>>(QDataStream &ds,
             //if the pointer is not pointing to an object of the right type
             //then delete it
             if ( ptr.d != 0 and
-                 type_name != 
-                    QLatin1String( 
-                        SireBase::SharedPolyPointerHelper<T>::what( *(ptr.d)) 
-                                 ) 
+                 type_name !=
+                    QLatin1String(
+                        SireBase::SharedPolyPointerHelper<T>::what( *(ptr.d))
+                                 )
                )
             {
                 ptr = 0;

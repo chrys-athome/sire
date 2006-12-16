@@ -26,7 +26,9 @@ using namespace boost::python;
 namespace SireCAS
 {
 
-void export_Symbol()
+void  
+SIRECAS_EXPORT
+export_Symbol()
 {
     class_<Symbol, bases<ExBase> >("Symbol", init<>())
         .def( init<const QString&>() )

@@ -24,7 +24,9 @@ using namespace boost::python;
 namespace SireCAS
 {
 
-void export_ComplexValues()
+void 
+SIRECAS_EXPORT
+export_ComplexValues()
 {
     void (ComplexValues::*wrap_add0)(const SymbolComplex&)
                     = &ComplexValues::add;

@@ -20,7 +20,9 @@ using namespace SirePy;
 namespace SireMM
 {
 
-void export_CLJParameter()
+void  
+SIREMM_EXPORT
+export_CLJParameter()
 {
     class_<ChargeParameter>("ChargeParameter", init<>())
         .def( init<double>() )

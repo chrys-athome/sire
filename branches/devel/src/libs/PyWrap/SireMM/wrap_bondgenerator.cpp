@@ -17,7 +17,9 @@ using namespace SireQt;
 namespace SireMM
 {
 
-void export_BondGenerator()
+void  
+SIREMM_EXPORT
+export_BondGenerator()
 {
     wrap_InternalGenerator<MolBondInfo>("InternalGenerator_MolBondInfo_");
     wrap_UsePassedInternals<MolBondInfo>("UsePassedInternals_MolBondInfo_");

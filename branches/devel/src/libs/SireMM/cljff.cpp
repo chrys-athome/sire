@@ -23,7 +23,7 @@ using namespace SireStream;
 /** Constructor */
 CLJWorkspace::CLJWorkspace() : cnrg(0), ljnrg(0)
 {}
- 
+
 /** Destructor */
 CLJWorkspace::~CLJWorkspace()
 {}
@@ -37,10 +37,10 @@ static const RegisterMetaType<CLJFF> r_cljff("SireMM::CLJFF", MAGIC_ONLY);
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJFF &cljff)
 {
-    writeHeader(ds, r_cljff, 1) 
-              << cljff.spce << cljff.combrules << cljff.switchfunc
+    writeHeader(ds, r_cljff, 1)
+              << cljff.spce << cljff.switchfunc
               << static_cast<const FFBase&>(cljff);
-    
+
     return ds;
 }
 
@@ -48,15 +48,15 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJFF &cljff)
 QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJFF &cljff)
 {
     VersionID v = readHeader(ds, r_cljff);
-    
+
     if (v == 1)
     {
-        ds >> cljff.spce >> cljff.combrules >> cljff.switchfunc
+        ds >> cljff.spce >> cljff.switchfunc
            >> static_cast<FFBase&>(cljff);
     }
     else
         throw version_error(v, "1", r_cljff, CODELOC);
-    
+
     return ds;
 }
 
@@ -65,10 +65,13 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJFF &cljff)
     and using the combined CLJ parameters listed in 'cljmatrix', in the
     passed workspace. The total coulomb and LJ energies are returned in
     the workspace. */
-void CLJFF::calculatePairEnergy(CLJWorkspace &workspace)
+void CLJFF::calculatePairEnergy(CLJWorkspace &workspace,
+                                const QVector<ChargeParameter> &chg0,
+                                const QVector<LJParameter> &lj0,
+                                const QVector<ChargeParameter> &chg1,
+                                const QVector<LJParameter> &lj1)
 {
     DistMatrix &distmatrix = workspace.distmatrix;
-    CLJPairMatrix &cljmatrix = workspace.cljmatrix;
 
     int nats0 = distmatrix.nOuter();
     int nats1 = distmatrix.nInner();
@@ -76,28 +79,38 @@ void CLJFF::calculatePairEnergy(CLJWorkspace &workspace)
     double icnrg = 0;
     double iljnrg = 0;
 
+    const ChargeParameter *chg0array = chg0.constData();
+    const LJParameter *lj0array = lj0.constData();
+
+    const ChargeParameter *chg1array = chg1.constData();
+    const LJParameter *lj1array = lj1.constData();
+
     //loop over all pairs of atoms
     for (int i=0; i<nats0; ++i)
     {
         distmatrix.setOuterIndex(i);
-        cljmatrix.setOuterIndex(i);
+
+        double chg0param = chg0array[i].charge();
+        const LJParameter &lj0param = lj0array[i];
 
         for (int j=0; j<nats1; ++j)
         {
+            const LJParameter &lj1param = lj1array[j];
+            double chg2 = SireUnits::one_over_four_pi_eps0 * chg0param * chg1array[j].charge();
+
             //get the distance and CLJPair for this atom pair
             double invdist2 = distmatrix[j];
-            const CLJPair &cljpair = cljmatrix[j];
 
-            double sig2_over_dist2 = SireMaths::pow_2(cljpair.sigma()) * invdist2;
+            double sig2_over_dist2 = SireMaths::pow_2(lj0param.sqrtSigma()*
+                                                      lj1param.sqrtSigma()) * invdist2;
             double sig6_over_dist6 = SireMaths::pow_3(sig2_over_dist2);
             double sig12_over_dist12 = SireMaths::pow_2(sig6_over_dist6);
 
             //coulomb energy
-            icnrg += SireUnits::one_over_four_pi_eps0 *
-                                     cljpair.charge2() * std::sqrt(invdist2);
+            icnrg +=  chg2 * std::sqrt(invdist2);
 
             //LJ energy
-            iljnrg += 4 * cljpair.epsilon() *
+            iljnrg += 4 * lj0param.sqrtEpsilon()*lj1param.sqrtEpsilon() *
                                      ( sig12_over_dist12 - sig6_over_dist6 );
         }
     }
@@ -109,37 +122,46 @@ void CLJFF::calculatePairEnergy(CLJWorkspace &workspace)
 /** This function is used to calculate the self-energy of a CutGroup,
     using the inverse-square-distances and parameters stored in the passed workspace.
     The total coulomb and LJ energies are returned in the workspace. */
-void CLJFF::calculateSelfEnergy(CLJWorkspace &workspace)
+void CLJFF::calculateSelfEnergy(CLJWorkspace &workspace,
+                                const QVector<ChargeParameter> &chgs,
+                                const QVector<LJParameter> &ljs)
 {
     DistMatrix &distmatrix = workspace.distmatrix;
-    CLJPairMatrix &cljmatrix = workspace.cljmatrix;
 
     int nats = distmatrix.nOuter();
 
     double icnrg = 0;
     double iljnrg = 0;
 
+    const ChargeParameter *chgarray = chgs.constData();
+    const LJParameter *ljarray = ljs.constData();
+
     for (int i=0; i<nats-1; ++i)
     {
         distmatrix.setOuterIndex(i);
-        cljmatrix.setOuterIndex(i);
+
+        const ChargeParameter &chg0param = chgarray[i];
+        const LJParameter &lj0param = ljarray[i];
 
         for (int j=i+1; j<nats; ++j)
         {
+            const LJParameter &lj1param = ljarray[j];
+
             //get the distance and CLJPair for this atom pair
             double invdist2 = distmatrix[j];
-            const CLJPair &cljpair = cljmatrix[j];
 
-            double sig2_over_dist2 = SireMaths::pow_2(cljpair.sigma()) * invdist2;
+            double sig2_over_dist2 = SireMaths::pow_2(lj0param.sqrtSigma() *
+                                                      lj1param.sqrtSigma()) * invdist2;
             double sig6_over_dist6 = SireMaths::pow_3(sig2_over_dist2);
             double sig12_over_dist12 = SireMaths::pow_2(sig6_over_dist6);
 
             //coulomb energy
             icnrg += SireUnits::one_over_four_pi_eps0 *
-                                     cljpair.charge2() * std::sqrt(invdist2);
+                                     chg0param.charge() *
+                                     chgarray[j].charge() * std::sqrt(invdist2);
 
             //LJ energy
-            iljnrg += 4 * cljpair.epsilon() *
+            iljnrg += 4 * lj0param.sqrtEpsilon() * lj1param.sqrtEpsilon() *
                                      ( sig12_over_dist12 - sig6_over_dist6 );
         }
     }
@@ -153,11 +175,12 @@ void CLJFF::calculateSelfEnergy(CLJWorkspace &workspace)
     space 'space', and using the provided workspace. The total
     coulomb and LJ energies are returned in the workspace. */
 void CLJFF::calculateEnergy(const CoordGroup &group0,
-                            const QVector<CLJParameter> &clj0,
+                            const QVector<ChargeParameter> &chg0,
+                            const QVector<LJParameter> &lj0,
                             const CoordGroup &group1,
-                            const QVector<CLJParameter> &clj1,
+                            const QVector<ChargeParameter> &chg1,
+                            const QVector<LJParameter> &lj1,
                             const Space &space,
-                            const CombiningRules &combrules,
                             const SwitchingFunction &switchfunc,
                             CLJWorkspace &workspace)
 {
@@ -170,9 +193,7 @@ void CLJFF::calculateEnergy(const CoordGroup &group0,
 
         if (sclcoul != 0 or scllj != 0)
         {
-            combrules.combine(clj0, clj1, workspace.cljmatrix);
-
-            CLJFF::calculatePairEnergy(workspace);
+            CLJFF::calculatePairEnergy(workspace, chg0, lj0, chg1, lj1);
 
             workspace.cnrg *= sclcoul;
             workspace.ljnrg *= scllj;
@@ -190,16 +211,14 @@ void CLJFF::calculateEnergy(const CoordGroup &group0,
     combining rules in 'combrules', and working in the workspace 'workspace'.
     The coulomb and LJ energies are returned in the workspace. */
 void CLJFF::calculateEnergy(const CoordGroup &group,
-                            const QVector<CLJParameter> &clj,
+                            const QVector<ChargeParameter> &chgs,
+                            const QVector<LJParameter> &ljs,
                             const Space &space,
-                            const CombiningRules &combrules,
                             CLJWorkspace &workspace)
 {
-    combrules.combine(clj, workspace.cljmatrix);
-
     space.calcInvDist2(group, workspace.distmatrix);
 
-    CLJFF::calculateSelfEnergy(workspace);
+    CLJFF::calculateSelfEnergy(workspace, chgs, ljs);
 }
 
 /** Calculate the CLJ energy of interaction between two molecules, that
@@ -210,14 +229,24 @@ void CLJFF::calculateEnergy(const CoordGroup &group,
 void CLJFF::calculateEnergy(const MolCLJInfo &mol0,
                             const MolCLJInfo &mol1,
                             const Space &space,
-                            const CombiningRules &combrules,
                             const SwitchingFunction &switchfunc,
                             CLJWorkspace &workspace)
 {
     int ncg0 = mol0.coordinates().count();
     int ncg1 = mol1.coordinates().count();
 
-    if (ncg0 > 0 and ncg1 > 0)
+    if (ncg0 == 1 and ncg1 == 1)
+    {
+        calculateEnergy( mol0.coordinates().constData()[0],
+                         mol0.chargeParameters().constData()[0],
+                         mol0.ljParameters().constData()[0],
+                         mol1.coordinates().constData()[0],
+                         mol1.chargeParameters().constData()[0],
+                         mol1.ljParameters().constData()[0],
+
+                         space, switchfunc, workspace );
+    }
+    else if (ncg0 > 0 and ncg1 > 0)
     {
         double icnrg = 0;
         double iljnrg = 0;
@@ -225,21 +254,26 @@ void CLJFF::calculateEnergy(const MolCLJInfo &mol0,
         const CoordGroup *cg0array = mol0.coordinates().constData();
         const CoordGroup *cg1array = mol1.coordinates().constData();
 
-        const QVector<CLJParameter> *clj0array = mol0.parameters().constData();
-        const QVector<CLJParameter> *clj1array = mol1.parameters().constData();
+        const QVector<ChargeParameter> *chg0array = mol0.chargeParameters().constData();
+        const QVector<LJParameter> *lj0array = mol0.ljParameters().constData();
+
+        const QVector<ChargeParameter> *chg1array = mol1.chargeParameters().constData();
+        const QVector<LJParameter> *lj1array = mol1.ljParameters().constData();
 
         for (int i=0; i<ncg0; ++i)
         {
             const CoordGroup &group0 = cg0array[i];
-            const QVector<CLJParameter> &clj0 = clj0array[i];
+            const QVector<ChargeParameter> &chg0 = chg0array[i];
+            const QVector<LJParameter> &lj0 = lj0array[i];
 
             for (int j=0; j<ncg1; ++j)
             {
                 const CoordGroup &group1 = cg1array[j];
-                const QVector<CLJParameter> &clj1 = clj1array[j];
+                const QVector<ChargeParameter> &chg1 = chg1array[j];
+                const QVector<LJParameter> &lj1 = lj1array[j];
 
-                calculateEnergy(group0, clj0, group1, clj1,
-                                space, combrules, switchfunc, workspace);
+                calculateEnergy(group0, chg0, lj0, group1, chg1, lj1,
+                                space, switchfunc, workspace);
 
                 icnrg += workspace.cnrg;
                 iljnrg += workspace.ljnrg;
@@ -263,7 +297,6 @@ void CLJFF::calculateEnergy(const MolCLJInfo &mol0,
     return the total coulomb and LJ energies in that workspace. */
 void CLJFF::calculateEnergy(const MolCLJInfo &mol,
                             const Space &space,
-                            const CombiningRules &combrules,
                             const SwitchingFunction &switchfunc,
                             CLJWorkspace &workspace)
 {
@@ -273,8 +306,9 @@ void CLJFF::calculateEnergy(const MolCLJInfo &mol,
     {
         //calculate only the self-energy of the first CutGroup
         calculateEnergy(mol.coordinates().constData()[0],
-                        mol.parameters().constData()[0],
-                        space, combrules, workspace);
+                        mol.chargeParameters().constData()[0],
+                        mol.ljParameters().constData()[0],
+                        space, workspace);
     }
     else if (ncg > 1)
     {
@@ -282,15 +316,17 @@ void CLJFF::calculateEnergy(const MolCLJInfo &mol,
         double iljnrg = 0;
 
         const CoordGroup *cgarray = mol.coordinates().constData();
-        const QVector<CLJParameter> *cljarray = mol.parameters().constData();
+        const QVector<ChargeParameter> *chgarray = mol.chargeParameters().constData();
+        const QVector<LJParameter> *ljarray = mol.ljParameters().constData();
 
         for (int i=0; i<ncg-1; ++i)
         {
             const CoordGroup &group0 = cgarray[i];
-            const QVector<CLJParameter> &clj0 = cljarray[i];
+            const QVector<ChargeParameter> &chg0 = chgarray[i];
+            const QVector<LJParameter> &lj0 = ljarray[i];
 
             //add on the self-energy
-            calculateEnergy(group0, clj0, space, combrules, workspace);
+            calculateEnergy(group0, chg0, lj0, space, workspace);
 
             icnrg += workspace.cnrg;
             iljnrg += workspace.ljnrg;
@@ -299,10 +335,11 @@ void CLJFF::calculateEnergy(const MolCLJInfo &mol,
             {
                 //calculate the group-group energy
                 const CoordGroup &group1 = cgarray[j];
-                const QVector<CLJParameter> &clj1 = cljarray[j];
+                const QVector<ChargeParameter> &chg1 = chgarray[j];
+                const QVector<LJParameter> &lj1 = ljarray[j];
 
-                calculateEnergy(group0,clj0, group1,clj1,
-                                space, combrules, switchfunc, workspace);
+                calculateEnergy(group0,chg0, lj0, group1, chg1, lj1,
+                                space, switchfunc, workspace);
 
                 icnrg += workspace.cnrg;
                 iljnrg += workspace.ljnrg;
@@ -311,9 +348,10 @@ void CLJFF::calculateEnergy(const MolCLJInfo &mol,
 
         //have to add on the self-energy of the last CutGroup of the molecule
         const CoordGroup &group = cgarray[ncg-1];
-        const QVector<CLJParameter> &clj = cljarray[ncg-1];
+        const QVector<ChargeParameter> &chg = chgarray[ncg-1];
+        const QVector<LJParameter> &lj = ljarray[ncg-1];
 
-        calculateEnergy(group, clj, space, combrules, workspace);
+        calculateEnergy(group, chg, lj, space, workspace);
 
         workspace.cnrg += icnrg;
         workspace.ljnrg += iljnrg;
@@ -331,12 +369,10 @@ CLJFF::CLJFF() : FFBase()
     this->registerComponents();
 }
 
-/** Construct a CLJFF using the specified space, combining rules and 
-    switching function */
-CLJFF::CLJFF(const Space &space, const CombiningRules &combiningrules,
-             const SwitchingFunction &switchingfunction)
-      : FFBase(), 
-        spce(space), combrules(combiningrules), switchfunc(switchingfunction)
+/** Construct a CLJFF using the specified space and switching function */
+CLJFF::CLJFF(const Space &space, const SwitchingFunction &switchingfunction)
+      : FFBase(),
+        spce(space), switchfunc(switchingfunction)
 {
     this->registerComponents();
 }
@@ -344,7 +380,7 @@ CLJFF::CLJFF(const Space &space, const CombiningRules &combiningrules,
 /** Copy constructor */
 CLJFF::CLJFF(const CLJFF &other)
       : FFBase(other),
-        spce(other.spce), combrules(other.combrules), switchfunc(other.switchfunc)
+        spce(other.spce), switchfunc(other.switchfunc)
 {}
 
 /** Destructor */
@@ -362,7 +398,7 @@ void CLJFF::registerComponents()
                              QObject::tr("The total vdw (Lennard Jones) energy.") );
 }
 
-/** Return the function representing the coulomb energy component of this 
+/** Return the function representing the coulomb energy component of this
     forcefield */
 const Function& CLJFF::coulomb() const
 {

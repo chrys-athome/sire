@@ -32,7 +32,9 @@ const VALUE& __getitem__MoleculeInfo(const MoleculeInfo &molinfo, IDX idx)
     return molinfo[idx];
 }
 
-void export_MoleculeInfo()
+void  
+SIREMOL_EXPORT
+export_MoleculeInfo()
 {
 
     class_<MoleculeInfo>( "MoleculeInfo", init<>() )

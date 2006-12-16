@@ -16,7 +16,9 @@ using namespace boost::python;
 namespace SireMM
 {
 
-void export_assign_angles()
+void  
+SIREMM_EXPORT
+export_assign_angles()
 {
     wrap_assign_internals<MolAngleInfo>("assign_internals_MolAngleInfo_");
     

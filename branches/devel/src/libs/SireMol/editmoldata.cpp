@@ -588,7 +588,7 @@ CutGroupNum EditMolData::cutGroupNum(CutGroupID cgid) const
 CutGroupNum EditMolData::cutGroupNum(const AtomIndex &atom) const
 {
     this->assertAtomExists(atom);
-    
+
     return this->_unsafe_atomdata(atom).cgnum;
 }
 
@@ -954,13 +954,8 @@ detail::MolData EditMolData::commit() const
     foreach (CutGroupNum cgnum, cgnums)
     {
         CoordGroup cgroup = this->coordGroup(cgnum);
-
-        qDebug() << "CGNum " << cgnum << cgroup.count();
-
         cgroups.append( this->coordGroup(cgnum) );
     }
-
-    qDebug() << "NCutGroups == " << cgroups.count() << ncg;
 
     //now, get the MoleculeInfo for this EditMol
     MoleculeInfo molinfo = this->info();
@@ -1360,7 +1355,7 @@ CutGroup EditMolData::_unsafe_cutGroup(CutGroupNum cgnum) const
     return CutGroup( AtomInfoGroup(atominfos), CoordGroup(coords) );
 }
 
-/** Internal function used to return a copy of the AtomInfoGroup 
+/** Internal function used to return a copy of the AtomInfoGroup
     containing the atom infos of the atoms in the CutGroup with number 'cgnum' */
 AtomInfoGroup EditMolData::_unsafe_atomInfoGroup(CutGroupNum cgnum) const
 {
@@ -1377,9 +1372,9 @@ AtomInfoGroup EditMolData::_unsafe_atomInfoGroup(CutGroupNum cgnum) const
     {
         //get a copy of the atom
         const AtomIndex &atom = atoms[i];
-        
+
         const EditMolData_AtomData &atomdata = this->_unsafe_atomdata(atom);
-        
+
         AtomInfo atominfo(atomdata.atomnum, atom, atomdata.element);
 
         //split it into the info group and coord group

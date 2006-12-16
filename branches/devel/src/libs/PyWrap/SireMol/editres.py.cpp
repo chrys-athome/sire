@@ -45,7 +45,9 @@ namespace bp = boost::python;
 namespace SireMol
 {
 
-void export_EditRes()
+void  
+SIREMOL_EXPORT
+export_EditRes()
 {
 
     bp::class_< SireMol::EditRes >( "EditRes" )

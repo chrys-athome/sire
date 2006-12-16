@@ -16,7 +16,9 @@ using namespace SireQt;
 namespace SireMol
 {
 
-void export_Angles()
+void  
+SIREMOL_EXPORT
+export_Angles()
 {
     wrap_QVector<Angle>("QVector_Angle_");
     wrap_QList<Angle>("QList_Angle_");

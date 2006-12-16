@@ -363,6 +363,7 @@ public:
     void setCoordinates(CutGroupID cgid, const CoordGroup &newcoords);
     void setCoordinates(const QHash<CutGroupID,CoordGroup> &newcoords);
 
+    void setCoordinates(const QVector<CoordGroup> &newcoords);
     void setCoordinates(const QVector<Vector> &newcoords);
 
     void setCoordinates(CutGroupID cgid, const QVector<Vector> &newcoords);

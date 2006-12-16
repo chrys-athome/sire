@@ -7,7 +7,11 @@ void export_QList_int16();
 void export_QList_int32();
 void export_QList_int64();
     
-void export_QList()
+#include "sireglobal.h"
+
+void  
+SIREQT_EXPORT
+export_QList()
 {
     export_QList_QString();
     export_QList_real();

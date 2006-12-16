@@ -16,7 +16,9 @@ using namespace SireQt;
 namespace SireMol
 {
 
-void export_Bonds()
+void  
+SIREMOL_EXPORT
+export_Bonds()
 {
     wrap_QVector<Bond>("QVector_Bond_");
     wrap_QList<Bond>("QList_Bond_");

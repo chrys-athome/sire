@@ -25,7 +25,9 @@ using namespace boost::python;
 namespace SireDB
 {
 
-void export_MatchRes()
+void  
+SIREDB_EXPORT
+export_MatchRes()
 {
     QString (MatchRes::*wrap_MatchRes_toString1)() const = &MatchRes::toString;
     QString (MatchRes::*wrap_MatchRes_toString2)(uint atm) const = &MatchRes::toString;

@@ -21,7 +21,9 @@ using namespace SireQt;
 namespace SireMol
 {
 
-void export_AtomNumSet()
+void  
+SIREMOL_EXPORT
+export_AtomNumSet()
 {
     wrap_QSet<AtomNum>("QSet_AtomNum_");
     wrap_QSet<ResNum>("QSet_ResNum_");

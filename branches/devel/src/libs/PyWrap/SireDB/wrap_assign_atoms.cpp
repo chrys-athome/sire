@@ -34,7 +34,9 @@ void wrap_assignParameters2( const AssignBase &assignbase,
     return assignbase.assignParameters(molecule, param_table, database);
 }
 
-void export_assign_atoms()
+void  
+SIREDB_EXPORT
+export_assign_atoms()
 {
 
     class_<AssignBase, bases<AssignInstruction>, boost::noncopyable>

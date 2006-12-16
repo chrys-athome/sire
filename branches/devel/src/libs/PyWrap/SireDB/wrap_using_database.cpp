@@ -15,7 +15,9 @@ using namespace SirePy;
 namespace SireDB
 {
 
-void export_using_database()
+void  
+SIREDB_EXPORT
+export_using_database()
 {
     class_<AssignInstruction, boost::noncopyable>("AssignInstruction", no_init)
     ;

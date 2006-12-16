@@ -16,6 +16,11 @@ set ( SIREFF_SOURCES
       energy.cpp
       errors.cpp
       ffbase.cpp
+      ffcalculator.cpp
+      ffprocessor.cpp
+      ffthreadprocessor.cpp
+      ffthreadworker.cpp
+      ffworker.cpp
       forcefield.cpp
     )
 
@@ -29,6 +34,7 @@ set_target_properties (SireFF PROPERTIES
 # Link to other Sire libraries
 target_link_libraries (SireFF
                        SireDB
+                       SireCluster
                        ${QT_QTSQL_LIBRARY}
                        )
 

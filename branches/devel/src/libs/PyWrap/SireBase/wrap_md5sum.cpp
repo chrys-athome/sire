@@ -18,7 +18,9 @@ using namespace boost::python;
 namespace SireBase
 {
 
-void export_MD5Sum()
+void 
+SIREBASE_EXPORT
+export_MD5Sum()
 {
     /** Wrapping up the 'MD5Sum' class */
     class_<MD5Sum>("MD5Sum",init<const QString&>())

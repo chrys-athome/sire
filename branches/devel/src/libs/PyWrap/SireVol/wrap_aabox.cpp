@@ -17,7 +17,9 @@ using namespace boost::python;
 namespace SireVol
 {
 
-void export_AABox()
+void  
+SIREVOL_EXPORT
+export_AABox()
 {
 
     class_<AABox>("AABox",init<>())

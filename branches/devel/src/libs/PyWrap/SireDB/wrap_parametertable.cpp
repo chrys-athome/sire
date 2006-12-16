@@ -28,7 +28,9 @@ using namespace SireQt;
 namespace SireDB
 {
 
-void export_ParameterTable()
+void  
+SIREDB_EXPORT
+export_ParameterTable()
 {
 
     class_<ParameterTable>( "ParameterTable", init<>() )

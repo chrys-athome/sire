@@ -65,7 +65,9 @@ QStringList& wrap_replaceInStrings2(QStringList &slist, const QString &before,
     return slist.replaceInStrings(before,after);
 }
 
-void export_QStringList()
+void  
+SIREQT_EXPORT
+export_QStringList()
 {                            
     class_<QStringList, bases< QList<QString> > >("QStringList", init<>())
         .def( init<const QString&>() )

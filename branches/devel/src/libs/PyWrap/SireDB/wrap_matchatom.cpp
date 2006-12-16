@@ -65,7 +65,9 @@ MatchMRAData mrdata_and_atom(const MatchAtom &atom, const MatchMRData &mrdata)
     return mrdata and atom;
 }
 
-void export_MatchAtom()
+void  
+SIREDB_EXPORT
+export_MatchAtom()
 {
     QString (MatchAtom::*wrap_MatchAtom_toString)(uint) const = &MatchAtom::toString;
 

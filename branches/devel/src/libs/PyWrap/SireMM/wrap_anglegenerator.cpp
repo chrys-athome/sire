@@ -17,7 +17,9 @@ using namespace SireQt;
 namespace SireMM
 {
 
-void export_AngleGenerator()
+void  
+SIREMM_EXPORT
+export_AngleGenerator()
 {
     wrap_InternalGenerator<MolAngleInfo>("InternalGenerator_MolAngleInfo_");
     wrap_UsePassedInternals<MolAngleInfo>("UsePassedInternals_MolAngleInfo_");

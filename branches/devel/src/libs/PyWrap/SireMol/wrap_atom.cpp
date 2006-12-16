@@ -26,7 +26,9 @@ using SireMaths::Vector;
 namespace SireMol
 {
 
-void export_Atom()
+void  
+SIREMOL_EXPORT
+export_Atom()
 {
     /** Wrap up the Element class */
     class_<Element>("Element",init<>())

@@ -31,7 +31,7 @@ namespace SireMaths
 typedef boost::variate_generator<boost::mt19937, boost::uniform_real<double> > UniformRand;
 typedef boost::variate_generator<boost::mt19937, boost::uniform_int<qint32> > UniformRanInt;
 
-/** Function to return a uniform double random number generator with a range 
+/** Function to return a uniform double random number generator with a range
     from 'min' to 'max' */
 inline UniformRand uniformRanGenerator(double min=0.0, double max=1.0)
 {
@@ -45,14 +45,14 @@ inline UniformRand uniformRanGenerator(double min, double max, uint32_t seed)
     return UniformRand( boost::mt19937(seed), boost::uniform_real<double>(min,max) );
 }
 
-/** Function to return a uniform int random number generate with a range from 
+/** Function to return a uniform int random number generate with a range from
     'min' to 'max' */
 inline UniformRanInt uniformRanIntGenerator(qint32 min=0, qint32 max=100)
 {
     return UniformRanInt( boost::mt19937(), boost::uniform_int<qint32>(min,max) );
 }
 
-/** Function to return a uniform int random number generate with a range from 
+/** Function to return a uniform int random number generate with a range from
     'min' to 'max' and seeded with 'seed' */
 inline UniformRanInt uniformRanIntGenerator(qint32 min, qint32 max, uint32_t seed)
 {
@@ -97,7 +97,7 @@ T pow_8(const T &x) { T x2 = x*x;   T x4 = x2*x2; return x4*x4; }
 /** Return x raised to the power 9 */
 template<typename T>
 SIRE_INLINE_TEMPLATE
-T pow_9(const T &x) { T x3 = x*x*x; return x3*x3*x3; }    
+T pow_9(const T &x) { T x3 = x*x*x; return x3*x3*x3; }
 
 /** Return x raised to the power 10 */
 template<typename T>
@@ -152,7 +152,7 @@ T pow_19(const T &x) { T x3 = x*x*x; T x9 = x3*x3*x3; return x9*x9*x; }
 /** Return x raised to the power 20 */
 template<typename T>
 SIRE_INLINE_TEMPLATE
-T pow_20(const T &x) 
+T pow_20(const T &x)
     { T x2 = x*x; T x4 = x2*x2; T x8=x4*x4; return x8*x8*x4; }
 
 /** Return x raised to the power 21 */
@@ -179,7 +179,7 @@ SIRE_INLINE_TEMPLATE
 T pow_24(const T &x)
     { T x2 = x*x; T x4 = x2*x2; T x8=x4*x4; return x8*x8*x8; }
 
-/** Internal function used by the 'pow' function - raise 'x' to 
+/** Internal function used by the 'pow' function - raise 'x' to
     the positive power 'n' */
 inline double pow_pvt(double x, int n)
 {
@@ -264,8 +264,12 @@ inline float invSqrt(float x)
     return float(1.0) / std::sqrt(x);
 }
 
-/** Return true if two numbers are equal to within a tolerance of 'epsilon'
-    (normally should be 1x10-6 to 1x10-10 */
+/** Return true if two numbers are equal. This uses gsl_fcmp
+    for the comparison, and the values must be equal to within
+    a range of 2*delta, where delta = 2^k * epsilon, where
+    k equals the maximum base-2 exponent of val0 and val1 as
+    calculated via frexp(). This should normally be a value
+    around 1e-6 */
 inline bool areEqual(double val0, double val1, double epsilon)
 {
     return not ( gsl_fcmp(val0,val1,epsilon) );
@@ -274,7 +278,7 @@ inline bool areEqual(double val0, double val1, double epsilon)
 /** Return true if two numbers are equal */
 inline bool areEqual(double val0, double val1)
 {
-    return not ( gsl_fcmp(val0,val1,1e-8) );
+    return not ( gsl_fcmp(val0,val1,1e-6) );
 }
 
 /** Return true if this number is equal to zero */

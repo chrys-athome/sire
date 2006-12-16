@@ -18,7 +18,9 @@ using namespace boost::python;
 namespace SireCAS
 {
 
-void export_HyperbolicFuncs()
+void  
+SIRECAS_EXPORT
+export_HyperbolicFuncs()
 {
 
     class_<Cosh, bases<SingleFunc> >("Cosh", init<>())

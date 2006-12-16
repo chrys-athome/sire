@@ -1,10 +1,10 @@
-/** 
+/**
   * @file
   *
   * C++ Implementation: SwitchingFunction, SwitchFuncBase,
   *                     HarmonicSwitchingFunction and NoCutoff
   *
-  * Description: 
+  * Description:
   * Implementation of SwitchingFunction, SwitchFuncBase,
   * HarmonicSwitchingFunction and NoCutoff
   *
@@ -16,7 +16,7 @@
 
 #include <numeric>
 #include <cmath>
-  
+
 #include "switchingfunction.h"
 
 #include "SireMaths/maths.h"
@@ -30,10 +30,10 @@ using namespace SireStream;
 /////////////
 ///////////// Implementation of SwitchFuncBase
 /////////////
-    
+
 static const RegisterMetaType<SwitchFuncBase> r_switchbase("SireMM::SwitchFuncBase",
                                                            MAGIC_ONLY);
-    
+
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const SwitchFuncBase &switchbase)
 {
@@ -45,30 +45,30 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const SwitchFuncBase &swi
 QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, SwitchFuncBase &switchbase)
 {
     VersionID v = readHeader(ds, r_switchbase);
-    
+
     if (v == 1)
     {
         ds >> switchbase.cutdist;
     }
     else
         throw version_error(v, "1", r_switchbase, CODELOC);
-    
+
     return ds;
 }
-    
+
 /** Null constructor - this places the cutoff distance at
-    the maximum value of a double (e.g. on cutoff) */ 
-SwitchFuncBase::SwitchFuncBase() : cutdist( std::numeric_limits<double>::max() )
+    the maximum value of a double (e.g. on cutoff) */
+SwitchFuncBase::SwitchFuncBase() : QSharedData(), cutdist( std::numeric_limits<double>::max() )
 {}
 
 /** Construct, placing the ultimate cutoff distance at 'cutdistance' */
 SwitchFuncBase::SwitchFuncBase(double cutdistance)
-               : cutdist( std::abs(cutdistance) )
+               : QSharedData(), cutdist( std::abs(cutdistance) )
 {}
 
 /** Copy constructor */
 SwitchFuncBase::SwitchFuncBase(const SwitchFuncBase &other)
-               : cutdist(other.cutdist)
+               : QSharedData(), cutdist(other.cutdist)
 {}
 
 /** Destructor */
@@ -84,9 +84,9 @@ static const RegisterMetaType<NoCutoff> r_nocutoff("SireMM::NoCutoff");
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const NoCutoff &nocutoff)
 {
-    writeHeader(ds, r_nocutoff, 1) 
+    writeHeader(ds, r_nocutoff, 1)
             << static_cast<const SwitchFuncBase&>(nocutoff);
-    
+
     return ds;
 }
 
@@ -94,14 +94,14 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const NoCutoff &nocutoff)
 QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, NoCutoff &nocutoff)
 {
     VersionID v = readHeader(ds, r_nocutoff);
-    
+
     if (v == 1)
     {
         ds >> static_cast<NoCutoff&>(nocutoff);
     }
     else
         throw version_error(v, "1", r_nocutoff, CODELOC);
-    
+
     return ds;
 }
 
@@ -136,7 +136,7 @@ double NoCutoff::vdwScaleFactor(double) const
 ///////////// Implementation of HarmonicSwitchingFunction
 /////////////
 
-static const RegisterMetaType<HarmonicSwitchingFunction> 
+static const RegisterMetaType<HarmonicSwitchingFunction>
                               r_harm("SireMM::HarmonicSwitchingFunction");
 
 /** Internal function used to set the parameters of the harmonic cutoff */
@@ -146,16 +146,16 @@ void HarmonicSwitchingFunction::set(double cutelec, double featherelec,
     cut_elec = cutelec;
     cut_elec2 = SireMaths::pow_2(cutelec);
     feather_elec = featherelec;
-    
+
     if (cut_elec != feather_elec)
         norm_elec = 1.0 / (cut_elec2 - SireMaths::pow_2(featherelec));
     else
         norm_elec = 0;
-    
+
     cut_vdw = cutvdw;
     cut_vdw2 = SireMaths::pow_2(cutvdw);
     feather_vdw = feathervdw;
-    
+
     if (cut_vdw != feather_vdw)
         norm_vdw = 1.0 / (cut_vdw2 - SireMaths::pow_2(feathervdw));
     else
@@ -163,35 +163,35 @@ void HarmonicSwitchingFunction::set(double cutelec, double featherelec,
 }
 
 /** Serialise to a binary data stream */
-QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, 
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
                                       const HarmonicSwitchingFunction &harm)
 {
-    writeHeader(ds, r_harm, 1) 
+    writeHeader(ds, r_harm, 1)
           << harm.cut_elec << harm.feather_elec
           << harm.cut_vdw << harm.feather_vdw
           << static_cast<const SwitchFuncBase&>(harm);
-    
+
     return ds;
 }
 
 /** Deserialise from a binary data stream */
-QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, 
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
                                       HarmonicSwitchingFunction &harm)
 {
     VersionID v = readHeader(ds, r_harm);
-    
+
     if (v == 1)
     {
         ds >> harm.cut_elec >> harm.feather_elec
            >> harm.cut_vdw >> harm.feather_vdw
            >> static_cast<SwitchFuncBase&>(harm);
-           
+
         harm.set( harm.cut_elec, harm.feather_elec,
                   harm.cut_vdw, harm.feather_vdw );
     }
     else
         throw version_error(v, "1", r_harm, CODELOC);
-    
+
     return ds;
 }
 
@@ -217,54 +217,54 @@ HarmonicSwitchingFunction::HarmonicSwitchingFunction(double cutoffdist)
     cutoff, with the cutoff at 'cutoffdist', but smoothed down using an
     harmonic function from 'featherdist'. If featherdist >= cutoffdist
     then this represents a hard cutoff */
-HarmonicSwitchingFunction::HarmonicSwitchingFunction(double cutoffdist, 
+HarmonicSwitchingFunction::HarmonicSwitchingFunction(double cutoffdist,
                                                      double featherdist)
                           : SwitchFuncBase(cutoffdist)
 {
     featherdist = qMin(cutdist, std::abs(featherdist));
-    
+
     this->set(cutdist,featherdist,cutdist,featherdist);
 }
 
 /** Construct an harmonic switching function which represents the smoothed
     cutoff, with the cutoff at 'cutoffdist', but with the electrostatic
-    interactions smoothed down using a harmonic function from 
+    interactions smoothed down using a harmonic function from
     'elecfeather' and the vdw interactions smoothed down using
     an harmonic function from 'vdwfeather'. If either feather distance
     is greater than the cutoff, then a hard cutoff for that interaction
     will be used. */
 HarmonicSwitchingFunction::HarmonicSwitchingFunction(double cutoffdist,
-                                                     double elecfeather, 
+                                                     double elecfeather,
                                                      double vdwfeather)
                           : SwitchFuncBase(cutoffdist)
 {
     elecfeather = qMin(cutdist, std::abs(elecfeather));
     vdwfeather = qMin(cutdist, std::abs(vdwfeather));
-    
+
     this->set(cutdist,elecfeather,cutdist,vdwfeather);
 }
 
 /** Construct an harmonic switching function which represents the smoothed
-    cutoff, with the electrostatic interactions cutoff at 'eleccutoff', and 
-    smoothed down using an harmonic function from 'elecfeather', and the 
+    cutoff, with the electrostatic interactions cutoff at 'eleccutoff', and
+    smoothed down using an harmonic function from 'elecfeather', and the
     vdw interactions cutoff at 'vdwcutoff' and smoothed down using an
     harmonic function from 'vdwfeather'. If either feather distance is
     greater than the corresponding cutoff, then a hard cutoff will be
     used for that interaction. */
-HarmonicSwitchingFunction::HarmonicSwitchingFunction(double eleccutoff, 
+HarmonicSwitchingFunction::HarmonicSwitchingFunction(double eleccutoff,
                                                      double elecfeather,
-                                                     double vdwcutoff, 
+                                                     double vdwcutoff,
                                                      double vdwfeather)
                           : SwitchFuncBase()
 {
     eleccutoff = std::abs(eleccutoff);
     vdwcutoff = std::abs(vdwcutoff);
-    
+
     cutdist = qMax(eleccutoff, vdwcutoff);
-    
+
     elecfeather = qMin(eleccutoff, std::abs(elecfeather));
     vdwfeather = qMin(vdwcutoff, std::abs(vdwfeather));
-    
+
     this->set(eleccutoff, elecfeather, vdwcutoff, vdwfeather);
 }
 
@@ -284,7 +284,7 @@ HarmonicSwitchingFunction::~HarmonicSwitchingFunction()
 
 /** Return the scale factor for the electrostatic interaction for the
     distance 'dist'. This returns;
-    
+
     dist <= feather_elec           : 1
     feather_elec < dist < cut_elec : (cut_elec^2 - dist^2) / (cut_elec^2 - feather_elec^2)
     dist >= cut_elec               : 0
@@ -301,9 +301,9 @@ double HarmonicSwitchingFunction::electrostaticScaleFactor(double dist) const
     }
 }
 
-/** Return the scale factor for the vdw interaction for the 
+/** Return the scale factor for the vdw interaction for the
     distance 'dist' This returns;
-    
+
     dist <= feather_vdw           : 1
     feather_vdw < dist < cut_vdw  : (cut_vdw^2 - dist^2) / (cut_vdw^2 - feather_vdw^2)
     dist >= cut_vdw               : 0
@@ -324,37 +324,37 @@ double HarmonicSwitchingFunction::vdwScaleFactor(double dist) const
 ///////////// Implementation of SwitchingFunction
 /////////////
 
-static const RegisterMetaType<SwitchingFunction> 
+static const RegisterMetaType<SwitchingFunction>
                               r_switchfunc("SireMM::SwitchingFunction");
 
 /** Serialise to a binary data stream */
-QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, 
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
                                       const SwitchingFunction &switchfunc)
 {
     writeHeader(ds, r_switchfunc, 1);
-     
+
     SharedDataStream(ds) << switchfunc.d;
-    
+
     return ds;
 }
 
 /** Deserialise from a binary data stream */
-QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, 
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
                                       SwitchingFunction &switchfunc)
 {
     VersionID v = readHeader(ds, r_switchfunc);
-    
+
     if (v == 1)
     {
         SharedDataStream(ds) >> switchfunc.d;
     }
     else
         throw version_error(v, "1", r_switchfunc, CODELOC);
-    
+
     return ds;
 }
 
-static const DynamicSharedPtr<SwitchFuncBase> shared_null(new NoCutoff());
+static const SharedPolyPointer<SwitchFuncBase> shared_null(new NoCutoff());
 
 /** Constructor - default is NoCutoff */
 SwitchingFunction::SwitchingFunction() : d(shared_null)

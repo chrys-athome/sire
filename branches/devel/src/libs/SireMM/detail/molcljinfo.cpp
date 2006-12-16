@@ -19,6 +19,7 @@
 
 #include "SireMol/moleculeversion.h"
 #include "SireMol/moleculeinfo.h"
+#include "SireMol/residueinfo.h"
 
 #include "SireError/errors.h"
 
@@ -38,28 +39,28 @@ using namespace SireStream;
 static const RegisterMetaType<MolCLJInfoData> r_moldata("SireMM::detail::MolCLJInfoData");
 
 /** Serialise to a binary data stream */
-QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const MolCLJInfoData &moldata)
+QDataStream &operator<<(QDataStream &ds, const MolCLJInfoData &moldata)
 {
-    writeHeader(ds, r_moldata, 1) 
-        << moldata.molecule << moldata.cljparams;
-    
+    writeHeader(ds, r_moldata, 1)
+        << moldata.molecule << moldata.chgparams << moldata.ljparams;
+
     return ds;
 }
 
 /** Deserialise from a binary data stream */
-QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, MolCLJInfoData &moldata)
+QDataStream &operator>>(QDataStream &ds, MolCLJInfoData &moldata)
 {
     VersionID v = readHeader(ds, r_moldata);
-    
+
     if (v == 1)
     {
-        ds >> moldata.molecule >> moldata.cljparams;
-        
+        ds >> moldata.molecule >> moldata.chgparams >> moldata.ljparams;
+
         moldata.coordinates = moldata.molecule.coordGroups();
     }
     else
         throw version_error(v, "1", r_moldata, CODELOC);
-    
+
     return ds;
 }
 
@@ -73,11 +74,13 @@ MolCLJInfoData::MolCLJInfoData() : QSharedData()
     \throw SireError::incompatible_error
 */
 MolCLJInfoData::MolCLJInfoData(const Molecule &mol,
-                               const QVector< QVector<CLJParameter> > &params)
+                               const QVector< QVector<ChargeParameter> > &chgs,
+                               const QVector< QVector<LJParameter> > &ljs)
                : QSharedData(), molecule(mol), coordinates(molecule.coordGroups()),
-                 cljparams(params)
+                 chgparams(chgs), ljparams(ljs)
 {
-    this->assertCompatibleParameters(params);
+    this->assertCompatibleParameters(chgs);
+    this->assertCompatibleParameters(ljs);
 }
 
 /** Destructor */
@@ -118,7 +121,7 @@ void MolCLJInfoData::assertSameMajorVersion(const Molecule &mol) const
     \throw SireError::incompatible_error
 */
 void MolCLJInfoData::assertCompatibleParameters(
-                          const QVector< QVector<CLJParameter> > &params) const
+                          const QVector< QVector<ChargeParameter> > &params) const
 {
     const MoleculeInfo &molinfo = molecule.info();
 
@@ -126,7 +129,7 @@ void MolCLJInfoData::assertCompatibleParameters(
 
     if (params.count() == ncg)
     {
-        const QVector<CLJParameter> *paramarray;
+        const QVector<ChargeParameter> *paramarray = params.constData();
 
         for (CutGroupID i(0); i<ncg; ++i)
         {
@@ -135,7 +138,43 @@ void MolCLJInfoData::assertCompatibleParameters(
                 throw SireError::incompatible_error( QObject::tr(
                         "The number of atoms for the CutGroup with ID == %1 "
                         "in the molecule \"%2\" does not match the number of "
-                        "CLJ parameters supplied for that CutGroup.")
+                        "charge parameters supplied for that CutGroup.")
+                            .arg(i).arg(molecule.idString()), CODELOC );
+            }
+        }
+    }
+    else
+        throw SireError::incompatible_error( QObject::tr(
+            "The number of CutGroups (%1) in the molecule \"%2\" is "
+            "not the same as the number of groups that the supplied parameters "
+            "are divided into (%3)")
+                .arg(ncg).arg(molecule.idString()).arg(params.count()), CODELOC );
+}
+
+/** Assert that the parameters in 'params' are arranged in a manner that is
+    compatible with the molecule stored in this object
+
+    \throw SireError::incompatible_error
+*/
+void MolCLJInfoData::assertCompatibleParameters(
+                          const QVector< QVector<LJParameter> > &params) const
+{
+    const MoleculeInfo &molinfo = molecule.info();
+
+    int ncg = molinfo.nCutGroups();
+
+    if (params.count() == ncg)
+    {
+        const QVector<LJParameter> *paramarray = params.constData();
+
+        for (CutGroupID i(0); i<ncg; ++i)
+        {
+            if (paramarray[i].count() != molinfo.nAtoms(i))
+            {
+                throw SireError::incompatible_error( QObject::tr(
+                        "The number of atoms for the CutGroup with ID == %1 "
+                        "in the molecule \"%2\" does not match the number of "
+                        "LJ parameters supplied for that CutGroup.")
                             .arg(i).arg(molecule.idString()), CODELOC );
             }
         }
@@ -168,15 +207,18 @@ void MolCLJInfoData::move(const Molecule &movedmol)
     \throw SireError::incompatible_error
 */
 void MolCLJInfoData::change(const Molecule &changedmol,
-                            const QVector< QVector<CLJParameter> > &changedparams)
+                            const QVector< QVector<ChargeParameter> > &chgs,
+                            const QVector< QVector<LJParameter> > &ljs)
 {
   this->assertSameMolecule(changedmol);
-  this->assertCompatibleParameters(changedparams);
+  this->assertCompatibleParameters(chgs);
+  this->assertCompatibleParameters(ljs);
 
   molecule = changedmol;
   coordinates = molecule.coordGroups();
 
-  cljparams = changedparams;
+  chgparams = chgs;
+  ljparams = ljs;
 }
 
 /////////
@@ -188,27 +230,27 @@ static const QSharedDataPointer<MolCLJInfoData> shared_null(new MolCLJInfoData()
 static const RegisterMetaType<MolCLJInfo> r_molinfo("SireMM::detail::MolCLJInfo");
 
 /** Serialise to a binary data stream */
-QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const MolCLJInfo &molinfo)
+QDataStream &operator<<(QDataStream &ds, const MolCLJInfo &molinfo)
 {
     writeHeader(ds, r_molinfo, 1);
-    
+
     SharedDataStream(ds) << molinfo.d;
-    
+
     return ds;
 }
 
 /** Deserialise from a binary data stream */
-QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, MolCLJInfo &molinfo)
+QDataStream &operator>>(QDataStream &ds, MolCLJInfo &molinfo)
 {
     VersionID v = readHeader(ds, r_molinfo);
-    
+
     if (v == 1)
     {
         SharedDataStream(ds) >> molinfo.d;
     }
     else
         throw version_error(v, "1", r_molinfo, CODELOC);
-    
+
     return ds;
 }
 
@@ -222,10 +264,155 @@ MolCLJInfo::MolCLJInfo() : d( shared_null )
     \throw SireError::incompatible_error
 */
 MolCLJInfo::MolCLJInfo(const Molecule &molecule,
-                       const QVector< QVector<CLJParameter> > &parameters)
-           : d( new MolCLJInfoData(molecule,parameters) )
+                       const QVector< QVector<ChargeParameter> > &chgparams,
+                       const QVector< QVector<LJParameter> > &ljparams)
+           : d( new MolCLJInfoData(molecule,chgparams,ljparams) )
 {}
 
 /** Destructor */
 MolCLJInfo::~MolCLJInfo()
 {}
+
+/////////
+///////// Implementation of ChangedMolCLJInfo
+/////////
+
+static const RegisterMetaType<ChangedMolCLJInfo>
+                          r_changedmol("SireMM::detail::ChangedMolCLJInfo");
+
+/** Serialise to a binary datastream */
+QDataStream &operator<<(QDataStream &ds, const ChangedMolCLJInfo &changedmol)
+{
+    writeHeader(ds, r_changedmol, 1) << changedmol.newmol << changedmol.newparts
+                                     << changedmol.oldmol << changedmol.oldparts
+                                     << changedmol.cgids;
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream &operator>>(QDataStream &ds, ChangedMolCLJInfo &changedmol)
+{
+    VersionID v = readHeader(ds, r_changedmol);
+
+    if (v == 1)
+    {
+        ds >> changedmol.newmol >> changedmol.newparts
+           >> changedmol.oldmol >> changedmol.oldparts
+           >> changedmol.cgids;
+    }
+    else
+        throw version_error(v, "1", r_changedmol, CODELOC);
+
+    return ds;
+}
+
+/** Null constructor */
+ChangedMolCLJInfo::ChangedMolCLJInfo()
+{}
+
+/** Assert that 'molinfo' is compatible with the molecule in this
+    object
+    
+    \throw SireError::incompatible_error
+*/
+void ChangedMolCLJInfo::assertCompatibleWith(const MolCLJInfo &molinfo)
+{
+}
+
+/** Build the old and new parts from the old and new molecules and list 
+    of changed cutgroups */
+void ChangedMolCLJInfo::buildParts()
+{
+    #warning TODO!!!
+    
+    //need to work out how this will work, and how this will 
+    //combine together...
+}
+
+/** Record that the molecule is changing from 'old_molecule' to 'new_molecule'
+     - the entire molecule is recorded as changing
+
+    The old and new molecules must be compatible, i.e. they
+    must have the same MoleculeID numbers.
+
+    \throw SireError::incompatible_error
+*/
+ChangedMolCLJInfo::ChangedMolCLJInfo( const MolCLJInfo &old_molecule,
+                                      const MolCLJInfo &new_molecule )
+                  : oldmol(old_molecule), newmol(new_molecule),
+                    oldparts(old_molecule), newparts(new_molecule)
+{}
+
+/** Record that the molecule is changing from 'old_molecule' to 'new_molecule'
+    and that it is only the CutGroups whose IDs that are in 'movedparts'
+    that are changing */
+ChangedMolCLJInfo::ChangedMolCLJInfo( const MolCLJInfo &old_molecule,
+                                      const MolCLJInfo &new_molecule,
+                                      const QSet<CutGroupID> &movedparts )
+                  : oldmol(old_molecule), newmol(new_molecule), cgids(movedparts)
+{
+    this->buildParts();
+}
+
+/** Destructor */
+ChangedMolCLJInfo::~ChangedMolCLJInfo()
+{}
+
+/** Add additional changed parts of the molecule to this record */
+void ChangedMolCLJInfo::change(const MolCLJInfo &newinfo,
+                               const QSet<CutGroupID> &changedparts)
+{
+    this->assertCompatibleWith(newinfo);
+    
+    newmol = newinfo;
+    
+    //the changed parts are the union of the current changed parts
+    //with the existing changed parts
+    cgids += changedparts;
+    
+    this->buildParts();
+}
+
+/** Change the molecule again */
+void ChangedMolCLJInfo::change(const MolCLJInfo &newinfo)
+{
+    this->assertCompatibleWith(newinfo);
+
+    //the whole molecule has now changed
+    newmol = newinfo;
+    cgids.clear();
+    
+    this->buildParts();
+}
+
+/** Register the movement of the molecule to 'newmol' */
+void ChangedMolCLJInfo::move(const Molecule &molecule)
+{
+    oldmol.molecule().assertSameMajorVersion(molecule);
+    
+    //the whole molecule has now changed
+    newmol = MolCLJInfo( molecule, oldmol.chargeParameters(),
+                                   oldmol.ljParameters() );
+
+    //the whole molecule has now changed
+    cgids.clear();
+    
+    this->buildParts();
+}
+
+/** Register the movement of the residue to 'newres' */
+void ChangedMolCLJInfo::move(const Residue &residue)
+{
+    Molecule molecule = residue.molecule();
+    
+    oldmol.molecule().assertSameMajorVersion(molecule);
+    
+    newmol = MolCLJInfo( molecule, oldmol.chargeParameters(),
+                                   oldmol.ljParameters() );
+                                   
+    //combine the residue's ids with the existing id numbers
+    cgids += residue.info().cutGroupIDs();
+    
+    this->buildParts();
+}

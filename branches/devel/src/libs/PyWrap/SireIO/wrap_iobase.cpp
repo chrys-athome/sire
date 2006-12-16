@@ -20,6 +20,7 @@
 #include <QIODevice>
 
 #include "SireMol/molecule.h"
+#include "SireMol/editmol.h"
 
 using namespace boost::python;
 using namespace SireMol;
@@ -49,7 +50,9 @@ QList<Molecule> read4(const IOBase &iobase, QIODevice &iodevice,
     return iobase.read(iodevice, cutfunc);
 }
 
-void export_IOBase()
+void
+SIREIO_EXPORT
+export_IOBase()
 {
 
     class_<IOBase, boost::noncopyable>("IOBase", no_init)
@@ -70,6 +73,20 @@ void export_IOBase()
               .def( "write", (void (IOBase::*)(const Molecule&,
                                                QIODevice&) const)
                               &IOBase::write )
+
+              .def( "write", (void (IOBase::*)(const QList<EditMol>&,
+                                               QString) const)
+                              &IOBase::write )
+              .def( "write", (void (IOBase::*)(const QList<EditMol>&,
+                                               QIODevice&) const)
+                              &IOBase::write )
+              .def( "write", (void (IOBase::*)(const EditMol&,
+                                               QString) const)
+                              &IOBase::write )
+              .def( "write", (void (IOBase::*)(const EditMol&,
+                                               QIODevice&) const)
+                              &IOBase::write )
+
     ;
 
     class_<PDB, bases<IOBase> >("PDB", init<>());

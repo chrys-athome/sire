@@ -21,7 +21,9 @@ using namespace boost::python;
 namespace SireMol
 {
 
-void export_CutGroup()
+void  
+SIREMOL_EXPORT
+export_CutGroup()
 {
 /*    const AtomSet& (CutGroup::*wrap_atoms1)() const = &CutGroup::atoms;
     AtomSet (CutGroup::*wrap_atoms2)(AtomID strt, AtomID end) const = &CutGroup::atoms;

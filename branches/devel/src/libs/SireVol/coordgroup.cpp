@@ -16,8 +16,6 @@
 #include <QSharedData>
 #include <QVector>
 
-#include <boost/scoped_array.hpp>
-
 #include "SireMaths/quaternion.h"
 #include "SireMaths/matrix.h"
 #include "SireMaths/rotate.h"
@@ -33,89 +31,6 @@ using namespace SireStream;
 
 static const RegisterMetaType<SireVol::CoordGroupPvt>
                     r_grouppvt("SireVol::CoordGroupPvt", MAGIC_ONLY);
-
-QDataStream& operator<<(QDataStream&, const SireVol::CoordGroupPvt&);
-QDataStream& operator>>(QDataStream&, SireVol::CoordGroupPvt&);
-
-namespace SireVol
-{
-
-/** Private class which holds the data for CoordGroup and CoordGroupEditor
-
-    @author Christopher Woods
-*/
-class CoordGroupPvt : public QSharedData
-{
-
-friend QDataStream& ::operator<<(QDataStream&, const CoordGroupPvt&);
-friend QDataStream& ::operator>>(QDataStream&, CoordGroupPvt&);
-
-public:
-    CoordGroupPvt();
-    CoordGroupPvt(int size);
-    CoordGroupPvt(int size, const Vector &value);
-    CoordGroupPvt(const QVector<Vector> &coords);
-
-    CoordGroupPvt(const CoordGroupPvt &other);
-
-    ~CoordGroupPvt();
-
-    CoordGroupPvt& operator=(const CoordGroupPvt &other);
-
-    bool operator==(const CoordGroupPvt &other) const;
-    bool operator!=(const CoordGroupPvt &other) const;
-
-    const Vector& at(int i) const;
-
-    const Vector& operator[](int i) const;
-    Vector& operator[](int i);
-
-    bool isEmpty() const;
-
-    int count() const;
-    int size() const;
-
-    const AABox& aaBox() const;
-
-    const Vector* constData() const;
-    const Vector* data() const;
-    Vector* data();
-
-    void translate(const Vector &delta);
-    void translate(int i, const Vector &delta);
-
-    void rotate(const Quaternion &quat, const Vector &point);
-    void rotate(const Matrix &rotmat, const Vector &point);
-
-    void rotate(int i, const Quaternion &quat, const Vector &point);
-    void rotate(int i, const Matrix &rotmat, const Vector &point);
-
-    bool needsUpdate() const;
-    void update();
-
-    void setCoordinates(const QVector<Vector> &newcoords);
-
-    void assertSameSize(const QVector<Vector> &newcoords) const;
-    void assertSameSize(const CoordGroupBase &newcoords) const;
-
-private:
-    void checkIndex(int i) const;
-
-    void assertSameSize(int n) const;
-
-    /** Pointer to the array of coordinates */
-    boost::scoped_array<Vector> coords;
-    /** The number of coordinates in the group */
-    qint32 sz;
-
-    /** Whether or not the AABox is in sync with the coordinates */
-    bool needsupdate;
-
-    /** The AABox which should completely enclose all of the points */
-    AABox aabox;
-};
-
-}
 
 /////////////
 ///////////// Implementation of CoordGroupPvt
@@ -333,7 +248,7 @@ void CoordGroupPvt::setCoordinates(const QVector<Vector> &newcoords)
 
     \throw SireError::invalid_index
 */
-inline void CoordGroupPvt::checkIndex(int i) const
+void CoordGroupPvt::checkIndex(int i) const
 {
     if (i < 0 or i >= sz)
         throw SireError::invalid_index( QObject::tr(
@@ -346,7 +261,7 @@ inline void CoordGroupPvt::checkIndex(int i) const
 
     \throw SireError::invalid_index
 */
-inline const Vector& CoordGroupPvt::at(int i) const
+const Vector& CoordGroupPvt::at(int i) const
 {
     checkIndex(i);
     return coords[i];
@@ -357,7 +272,7 @@ inline const Vector& CoordGroupPvt::at(int i) const
 
     \throw SireError::invalid_index
 */
-inline const Vector& CoordGroupPvt::operator[](int i) const
+const Vector& CoordGroupPvt::operator[](int i) const
 {
     checkIndex(i);
     return coords[i];
@@ -368,79 +283,50 @@ inline const Vector& CoordGroupPvt::operator[](int i) const
 
     \throw SireError::invalid_index
 */
-inline Vector& CoordGroupPvt::operator[](int i)
+Vector& CoordGroupPvt::operator[](int i)
 {
     checkIndex(i);
     return coords[i];
 }
 
 /** Return whether this CoordGroup is empty */
-inline bool CoordGroupPvt::isEmpty() const
+bool CoordGroupPvt::isEmpty() const
 {
     return sz == 0;
 }
 
-/** Return the number of coordinates in the group */
-inline int CoordGroupPvt::count() const
-{
-    return sz;
-}
-
-/** Return the number of coordinates in the group */
-inline int CoordGroupPvt::size() const
-{
-    return sz;
-}
-
 /** Return whether or not the AABox is out of sync with the
     coordinates */
-inline bool CoordGroupPvt::needsUpdate() const
+bool CoordGroupPvt::needsUpdate() const
 {
     return needsupdate;
 }
 
-/** Return the AABox that encloses the coordinates - you should
-    always ensure that the box is up-to-date (e.g. 'update()' has
-    been called after any editing of the coordinates) */
-inline const AABox& CoordGroupPvt::aaBox() const
-{
-    return aabox;
-}
-
 /** Return a const-pointer to the array of coordinates */
-inline const Vector* CoordGroupPvt::constData() const
-{
-    return coords.get();
-}
-
-/** Return a const-pointer to the array of coordinates */
-inline const Vector* CoordGroupPvt::data() const
+const Vector* CoordGroupPvt::data() const
 {
     return coords.get();
 }
 
 /** Return a modifiable pointer to the array of coordinates -
     *do not delete this pointer* */
-inline Vector* CoordGroupPvt::data()
+Vector* CoordGroupPvt::data()
 {
     return coords.get();
 }
 
 /** Translate the coordinates by 'delta' */
-inline void CoordGroupPvt::translate(const Vector &delta)
+void CoordGroupPvt::translate(const Vector &delta)
 {
-    if (not delta.isZero())
-    {
-        for (int i=0; i<sz; ++i)
-            coords[i] += delta;
+    for (int i=0; i<sz; ++i)
+        coords[i] += delta;
 
-        //translate the AABox
-        aabox.translate(delta);
-    }
+    //translate the AABox
+    aabox.translate(delta);
 }
 
 /** Translate the 'ith' atom by 'delta' */
-inline void CoordGroupPvt::translate(int i, const Vector &delta)
+void CoordGroupPvt::translate(int i, const Vector &delta)
 {
     checkIndex(i);
     coords[i] += delta;
@@ -449,7 +335,7 @@ inline void CoordGroupPvt::translate(int i, const Vector &delta)
 
 /** Rotate (and possibly shear and scale) the coordinates about the point 'point'
     by the matrix 'rotmat' */
-inline void CoordGroupPvt::rotate(const Matrix &rotmat, const Vector &point)
+void CoordGroupPvt::rotate(const Matrix &rotmat, const Vector &point)
 {
     for (int i=0; i<sz; ++i)
     {
@@ -463,7 +349,7 @@ inline void CoordGroupPvt::rotate(const Matrix &rotmat, const Vector &point)
 
     \throw SireError::invalid_index
 */
-inline void CoordGroupPvt::rotate(int i, const Matrix &rotmat, const Vector &point)
+void CoordGroupPvt::rotate(int i, const Matrix &rotmat, const Vector &point)
 {
     checkIndex(i);
     coords[i] = SireMaths::rotate( coords[i], rotmat, point );
@@ -471,7 +357,7 @@ inline void CoordGroupPvt::rotate(int i, const Matrix &rotmat, const Vector &poi
 }
 
 /** Rotate the coordinates about 'point' by the Quaternion 'quat' */
-inline void CoordGroupPvt::rotate(const Quaternion &quat, const Vector &point)
+void CoordGroupPvt::rotate(const Quaternion &quat, const Vector &point)
 {
     this->rotate(quat.toMatrix(), point);
 }
@@ -481,13 +367,13 @@ inline void CoordGroupPvt::rotate(const Quaternion &quat, const Vector &point)
 
     \throw SireError::invalid_index
 */
-inline void CoordGroupPvt::rotate(int i, const Quaternion &quat, const Vector &point)
+void CoordGroupPvt::rotate(int i, const Quaternion &quat, const Vector &point)
 {
     this->rotate(i, quat.toMatrix(), point);
 }
 
 /** Update the AABox so that it encloses the coordinates. */
-inline void CoordGroupPvt::update()
+void CoordGroupPvt::update()
 {
     if (needsupdate and sz > 0)
     {
@@ -503,7 +389,7 @@ inline void CoordGroupPvt::update()
 
     \throw SireError::incompatible_error
 */
-inline void CoordGroupPvt::assertSameSize(int n) const
+void CoordGroupPvt::assertSameSize(int n) const
 {
     if (sz != n)
         throw SireError::incompatible_error( QObject::tr(
@@ -517,7 +403,7 @@ inline void CoordGroupPvt::assertSameSize(int n) const
 
     \throw SireError::incompatible_error
 */
-inline void CoordGroupPvt::assertSameSize(const CoordGroupBase &other) const
+void CoordGroupPvt::assertSameSize(const CoordGroupBase &other) const
 {
     this->assertSameSize(other.size());
 }
@@ -527,7 +413,7 @@ inline void CoordGroupPvt::assertSameSize(const CoordGroupBase &other) const
 
     \throw SireError::incompatible_error
 */
-inline void CoordGroupPvt::assertSameSize(const QVector<Vector> &other) const
+void CoordGroupPvt::assertSameSize(const QVector<Vector> &other) const
 {
     this->assertSameSize(other.size());
 }
@@ -586,58 +472,6 @@ bool CoordGroupBase::operator!=(const CoordGroupBase &other) const
 {
     return d != other.d and
            *d != *(other.d);
-}
-
-/** Return the 'ith' coordinate in the group - this will throw an exception
-    if 'i' refers to an invalid index
-
-    \throw SireError::invalid_index
-*/
-const Vector& CoordGroupBase::at(int i) const
-{
-    return d->at(i);
-}
-
-/** Return the 'ith' coordinate in the group - this will throw an exception
-    if 'i' refers to an invalid index
-
-    \throw SireError::invalid_index
-*/
-const Vector& CoordGroupBase::operator[](int i) const
-{
-    return d->operator[](i);
-}
-
-/** Return whether or not this is an empty CoordGroup */
-bool CoordGroupBase::isEmpty() const
-{
-    return d->isEmpty();
-}
-
-/** Return the number of coordinates in this group */
-int CoordGroupBase::count() const
-{
-    return d->count();
-}
-
-/** Return the number of coordinates in this group */
-int CoordGroupBase::size() const
-{
-    return d->size();
-}
-
-/** Return the AABox which is guaranteed to always exactly enclose
-    the coordinates in this group */
-const AABox& CoordGroupBase::aaBox() const
-{
-    return d->aaBox();
-}
-
-/** Return a const-pointer to the array holding the coordinates in
-    this group. */
-const Vector* CoordGroupBase::constData() const
-{
-    return d->constData();
 }
 
 /////////////
@@ -706,7 +540,7 @@ CoordGroup& CoordGroup::operator=(const CoordGroup &other)
 }
 
 /** Return an editor that can edit a copy of the coordinates in this group */
-CoordGroupEditor CoordGroup::edit()
+CoordGroupEditor CoordGroup::edit() const
 {
     return CoordGroupEditor(*this);
 }
@@ -755,7 +589,8 @@ Vector* CoordGroupEditor::data()
 /** Translate this CoordGroup by 'delta' */
 void CoordGroupEditor::translate(const Vector &delta)
 {
-    d->translate(delta);
+    if (not delta.isZero())
+        d->translate(delta);
 }
 
 /** Translate the 'ith' point in the group by 'delta'
@@ -764,7 +599,8 @@ void CoordGroupEditor::translate(const Vector &delta)
 */
 void CoordGroupEditor::translate(int i, const Vector &delta)
 {
-    d->translate(i, delta);
+    if (not delta.isZero())
+        d->translate(i, delta);
 }
 
 /** Rotate this group by the Quaternion 'quat' about the point 'point' */

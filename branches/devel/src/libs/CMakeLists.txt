@@ -9,6 +9,7 @@
 add_subdirectory (PyWrap)
 add_subdirectory (SireBase)
 add_subdirectory (SireCAS)
+add_subdirectory (SireCluster)
 add_subdirectory (SireDB)
 add_subdirectory (SireError)
 add_subdirectory (SireFF)

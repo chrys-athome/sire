@@ -1,7 +1,7 @@
 #ifndef SIREMOL_CUTTINGFUNCTION_H
 #define SIREMOL_CUTTINGFUNCTION_H
 
-#include "SireBase/dynamicsharedptr.hpp"
+#include "SireBase/sharedpolypointer.hpp"
 
 SIRE_BEGIN_HEADER
 
@@ -30,7 +30,7 @@ class EditMolData;
 
     @author Christopher Woods
 */
-class CuttingFunctionBase
+class SIREMOL_EXPORT CuttingFunctionBase : public QSharedData
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const CuttingFunctionBase&);
@@ -57,7 +57,7 @@ public:
 
     @author Christopher Woods
 */
-class CuttingFunction
+class SIREMOL_EXPORT CuttingFunction
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const CuttingFunction&);
@@ -79,7 +79,7 @@ public:
 private:
     /** Shared pointer to the actual function that is used to
         calculate the CutGroupNum */
-    SireBase::DynamicSharedPtr<CuttingFunctionBase> func;
+    SireBase::SharedPolyPointer<CuttingFunctionBase> func;
 };
 
 }

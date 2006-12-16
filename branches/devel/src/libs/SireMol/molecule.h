@@ -127,7 +127,7 @@ public:
      void setNewID();
 
      const MoleculeVersion& version() const;
-     
+
      QString idString() const;
    /////////////////////////////////////////////////////////
 
@@ -380,6 +380,7 @@ public:
 
     void setCoordinates(CutGroupID cgid, const CoordGroup &newcoords);
     void setCoordinates(const QHash<CutGroupID,CoordGroup> &newcoords);
+    void setCoordinates(const QVector<CoordGroup> &newcoords);
 
     void setCoordinates(const QVector<Vector> &newcoords);
 
@@ -465,6 +466,10 @@ public:
              const WeightFunction &func,
              const QSet<AtomIndex> &anchors = QSet<AtomIndex>());
    /////////////////////////////////////////////////
+
+    void assertSameMolecule(const Molecule &other) const;
+    void assertSameMajorVersion(const Molecule &other) const;
+    void assertSameVersion(const Molecule &other) const;
 
 private:
     /** Implicitly shared pointer to the data for this molecule */

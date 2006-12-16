@@ -22,7 +22,9 @@ using namespace boost::python;
 namespace SireVol
 {
 
-void export_Space()
+void
+SIREVOL_EXPORT
+export_Space()
 {
     class_<SpaceBase, boost::noncopyable>("SpaceBase", no_init)
 
@@ -68,8 +70,33 @@ void export_Space()
                                          const CoordGroup&,
                                          const CoordGroup&) const)
                           &SpaceBase::beyond )
-    ;
 
+        .def( "minimumDistance", (double (SpaceBase::*)(const CoordGroup&,
+                                                        const CoordGroup&) const)
+                          &SpaceBase::minimumDistance )
+
+        .def( "minimumDistance", (double (SpaceBase::*)(const CoordGroup&) const)
+                          &SpaceBase::minimumDistance )
+
+        .def( "moveToCenterBox", (CoordGroup (SpaceBase::*)(const CoordGroup&) const)
+                          &SpaceBase::moveToCenterBox )
+
+        .def( "moveToCenterBox", (QVector<CoordGroup> (SpaceBase::*)(const QVector<CoordGroup>&) const)
+                          &SpaceBase::moveToCenterBox )
+
+        .def( "getMinimumImage", (CoordGroup (SpaceBase::*)(const CoordGroup&,
+                                                            const Vector&) const)
+                          &SpaceBase::getMinimumImage )
+
+        .def( "getMinimumImage", (QVector<CoordGroup> (SpaceBase::*)(const QVector<CoordGroup>&,
+                                                                     const Vector&) const)
+                          &SpaceBase::getMinimumImage )
+
+        .def( "getCopiesWithin", (QList< boost::tuple<double,CoordGroup> >
+                                  (SpaceBase::*)(const CoordGroup&, const CoordGroup&,
+                                                 double) const)
+                          &SpaceBase::getCopiesWithin )
+    ;
 
     class_<Space>( "Space", init<>() )
 
@@ -118,6 +145,32 @@ void export_Space()
                                          const CoordGroup&,
                                          const CoordGroup&) const)
                           &Space::beyond )
+
+        .def( "minimumDistance", (double (Space::*)(const CoordGroup&,
+                                                    const CoordGroup&) const)
+                          &Space::minimumDistance )
+
+        .def( "minimumDistance", (double (Space::*)(const CoordGroup&) const)
+                          &Space::minimumDistance )
+
+        .def( "moveToCenterBox", (CoordGroup (Space::*)(const CoordGroup&) const)
+                          &Space::moveToCenterBox )
+
+        .def( "moveToCenterBox", (QVector<CoordGroup> (Space::*)(const QVector<CoordGroup>&) const)
+                          &Space::moveToCenterBox )
+
+        .def( "getMinimumImage", (CoordGroup (Space::*)(const CoordGroup&,
+                                                        const Vector&) const)
+                          &Space::getMinimumImage )
+
+        .def( "getMinimumImage", (QVector<CoordGroup> (Space::*)(const QVector<CoordGroup>&,
+                                                                 const Vector&) const)
+                          &Space::getMinimumImage )
+
+        .def( "getCopiesWithin", (QList< boost::tuple<double,CoordGroup> >
+                                  (Space::*)(const CoordGroup&, const CoordGroup&,
+                                             double) const)
+                          &Space::getCopiesWithin )
     ;
 
 
@@ -144,6 +197,9 @@ void export_Space()
 
         .def( "center", (Vector (PeriodicBox::*)() const)
                           &PeriodicBox::center )
+
+        .def( "contains", (bool (PeriodicBox::*)(const Vector&) const)
+                          &PeriodicBox::contains )
     ;
 }
 

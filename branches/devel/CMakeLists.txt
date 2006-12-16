@@ -24,6 +24,11 @@ set (SIRE_VERSION_PATCH "1")
 
 set (SIRE_VERSION "${SIRE_VERSION_MAJOR}.${SIRE_VERSION_MINOR}.${SIRE_VERSION_PATCH}")
 
+# Ensure that the Sire's directories are searched for header files
+# before the system directories - this prevents problems in case
+# an older version of Sire is already installed on the system
+INCLUDE_DIRECTORIES( BEFORE ${SIRE_SOURCE_DIR} )
+
 # Build shared libraries by default
 set (BUILD_SHARED_LIBS ON)
 
@@ -35,29 +40,46 @@ set (SIRE_LIBS "lib")
 set (SIRE_ARCHIVES "lib/static")
 
 # Uncomment for more verbose compiling/linking
+# (or run 'make VERBOSE=1')
 # set (CMAKE_VERBOSE_MAKEFILE ON)
 
 # Path to the project's extra cmake files
 set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/build/cmake)
 
 # Add option to disable compilation of Spier (removes openGL dependency)
-option ( BUILD_SPIER "Build Spier molecular viewer (requires openGL)" ON )
+option ( SIRE_BUILD_SPIER "Build Spier molecular viewer (requires openGL)" ON )
+
+# Add option to disable compilation of the molpro forcefield
+option ( SIRE_BUILD_MOLPRO
+         "Build the Molpro forcefield (requires MolproClient)" ON )
+
+# Add option to turn off symbol hiding
+option ( SIRE_SYMBOL_HIDING "Turn on library symbol hiding" ON )
 
 # include the right Qt modules - what we need depends on 
 # whether any GUI apps are compiled
 set (QT_USE_QTSQL TRUE)
 
 # Don't need GUI if aren't compiling Spier
-if ( BUILD_SPIER )
+if ( SIRE_BUILD_SPIER )
    set (QT_USE_QTGUI TRUE)
    set (QT_USE_OPENGL TRUE)
-else ( BUILD_SPIER )
+else ( SIRE_BUILD_SPIER )
    set (QT_DONT_USE_QTGUI TRUE)
-endif ( BUILD_SPIER )
+endif ( SIRE_BUILD_SPIER )
 
 # Sire depends on >= Qt 4.1
 set (QT_MIN_VERSION "4.1.0")
 include( FindQt4 )
+
+# I only link to individual Qt libraries, as this way I can ensure
+# that Spier links to QtGUI, while the Sire libraries don't (as there
+# is no need for Sire to be linked to any GUI libraries).
+# However, this means that I also need to pull in the libraries on which
+# the various Qt components depend - I will do this by adding them
+# onto the end of the actual Qt libraries
+set( QT_QTCORE_LIBRARY ${QT_QTCORE_LIBRARY} ${QT_CORE_LIB_DEPENDENCIES} )
+set( QT_QTGUI_LIBRARY ${QT_QTGUI_LIBRARY} ${QT_GUI_LIB_DEPENDENCIES} )
 
 # Sire depends on >= Python 2.2
 set( PYTHON_REQUIRE_MAJOR 2 )
@@ -146,6 +168,81 @@ include_directories( ${QT_INCLUDE_DIR}
                    )
 
 add_definitions( ${QT_DEFINITIONS} )
+
+# Set compile flags for debug and release
+set( SIRE_C_FLAGS_RELEASE "-Wall -O2" )
+set( SIRE_CXX_FLAGS_RELEASE ${SIRE_C_FLAGS_RELEASE} )
+
+set( SIRE_C_FLAGS_DEBUG "-Wall -g -O2" )
+set( SIRE_CXX_FLAGS_DEBUG ${SIRE_C_FLAGS_DEBUG} )
+
+# Also set flags for size-optimised compile - this is used for
+# all of the python wrappers, which can grow to enormous sizes 
+# otherwise! (and aren't performance critical)
+set( SIRE_C_FLAGS_SMALL "-Wall -Os" )
+set( SIRE_CXX_FLAGS_SMALL ${SIRE_C_FLAGS_SMALL} )
+
+# Add compiler specific flags
+if ( CMAKE_COMPILER_IS_GNUCC )
+
+    # get the compiler version (via gcc -dumpversion)
+    # (I'll assume that we are using the same version
+    # of compiler for C and C++...)
+    EXEC_PROGRAM( ${CMAKE_CXX_COMPILER}
+                  ARGS -dumpversion
+                  OUTPUT_VARIABLE exe_output )
+
+    # These two regexps are copied from the Chicken CMake
+    # files (which provide a very useful cmake tutorial - thanks :-)                  
+    SET(VERSION_BUILD_REGEX "^([0-9]+)[.]([0-9]+).*$")
+    STRING(REGEX REPLACE ${VERSION_BUILD_REGEX} "\\1"
+           GCC_MAJOR_VERSION ${exe_output})
+    STRING(REGEX REPLACE ${VERSION_BUILD_REGEX} "\\2"
+           GCC_MINOR_VERSION ${exe_output})
+        
+    message( STATUS "Using GCC version "
+                    "${GCC_MAJOR_VERSION}.${GCC_MINOR_VERSION}" )
+
+    # First, we need at least GCC 3.0, as I don't think that
+    # GCC 2.x can handle the template code that I use
+    if ( GCC_MAJOR_VERSION LESS 3 )
+       message( FATAL_ERROR "Sire requires GCC >= 3.0. Please upgrade "
+                      "your version of GCC." )
+    endif ( GCC_MAJOR_VERSION LESS 3 )
+
+    # Add options common to all gcc version
+    ADD_DEFINITIONS( -pipe )
+        
+    # Now gcc 4 specific options
+    if ( GCC_MAJOR_VERSION GREATER 3 )
+      # remove warnings about strict aliasing (lots from Qt4
+      # when compiling with GCC 4, and they are annoying!)
+      ADD_DEFINITIONS( -Wno-strict-aliasing )
+
+      # add symbol hiding if the compiler supports it and it is
+      # requested
+      if ( SIRE_SYMBOL_HIDING )
+
+        ADD_DEFINITIONS( -DSIRE_VISIBILITY_AVAILABLE )
+        ADD_DEFINITIONS( -fvisibility=hidden -fvisibility-inlines-hidden )
+
+      else ( SIRE_SYMBOL_HIDING )
+  
+        ADD_DEFINITIONS( -DSIRE_NO_VISIBILITY_AVAILABLE )
+
+      endif ( SIRE_SYMBOL_HIDING )
+    
+    else ( GCC_MAJOR_VERSION GREATER 3 )
+    
+      ADD_DEFINITIONS( -DSIRE_NO_VISIBILITY_AVAILABLE )
+
+    endif ( GCC_MAJOR_VERSION GREATER 3 )
+    
+endif ( CMAKE_COMPILER_IS_GNUCC )
+
+# Copy the Sire compile flags to CMake
+set( CMAKE_C_FLAGS ${SIRE_C_FLAGS_RELEASE} )
+set( CMAKE_CXX_FLAGS ${SIRE_CXX_FLAGS_RELEASE} )
 
 # Ensure that the libraries don't contain any undefined symbols
 set( SIRE_LINK_FLAGS "-Wl,--no-undefined" )

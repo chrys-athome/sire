@@ -35,6 +35,7 @@ namespace detail
 {
 
 class MolCLJInfo;
+class ChangedMolCLJInfo;
 class ResCLJInfo;
 
 class CLJWorkspace
@@ -46,7 +47,6 @@ public:
     /** Copy constructor */
     CLJWorkspace(const CLJWorkspace &other)
            : distmatrix(other.distmatrix),
-             cljmatrix(other.cljmatrix),
              cnrg(other.cnrg), ljnrg(other.ljnrg)
     {}
 
@@ -55,10 +55,6 @@ public:
     /** The distance matrix used to hold the distances
         between all atoms of two CoordGroups */
     DistMatrix distmatrix;
-
-    /** The pair matrix used to store all of the CLJ
-        parameters for a pair of atoms */
-    CLJPairMatrix cljmatrix;
 
     /** The accumulated value of the coulomb energy */
     double cnrg;
@@ -82,59 +78,55 @@ friend QDataStream& ::operator>>(QDataStream&, CLJFF&);
 
 public:
     CLJFF();
-    
-    CLJFF(const Space &space, const CombiningRules &combiningrules,
-          const SwitchingFunction &switchingfunction);
-    
+
+    CLJFF(const Space &space, const SwitchingFunction &switchingfunction);
+
     CLJFF(const CLJFF &other);
 
     ~CLJFF();
 
     const Space& space() const;
 
-    const CombiningRules& combiningRules() const;
-    
     const SwitchingFunction& switchingFunction() const;
 
     static int COULOMB()
     {
         return 1;
     }
-    
+
     static int LJ()
     {
         return 2;
     }
-    
+
     const Function& coulomb() const;
     const Function& lj() const;
 
 protected:
     static void calculateEnergy(const CoordGroup &group0,
-                                const QVector<CLJParameter> &params0,
+                                const QVector<ChargeParameter> &chg0,
+                                const QVector<LJParameter> &lj0,
                                 const CoordGroup &group1,
-                                const QVector<CLJParameter> &params1,
+                                const QVector<ChargeParameter> &chg1,
+                                const QVector<LJParameter> &lj1,
                                 const Space &space,
-                                const CombiningRules &combrules,
                                 const SwitchingFunction &switchfunc,
                                 detail::CLJWorkspace &workspace);
 
     static void calculateEnergy(const CoordGroup &group,
-                                const QVector<CLJParameter> &params,
+                                const QVector<ChargeParameter> &chgs,
+                                const QVector<LJParameter> &ljs,
                                 const Space &space,
-                                const CombiningRules &combrules,
                                 detail::CLJWorkspace &workspace);
 
     static void calculateEnergy(const detail::MolCLJInfo &mol0,
                                 const detail::MolCLJInfo &mol1,
                                 const Space &space,
-                                const CombiningRules &combrules,
                                 const SwitchingFunction &switchfunc,
                                 detail::CLJWorkspace &workspace);
 
     static void calculateEnergy(const detail::MolCLJInfo &mol,
                                 const Space &space,
-                                const CombiningRules &combrules,
                                 const SwitchingFunction &switchfunc,
                                 detail::CLJWorkspace &workspace);
 
@@ -142,8 +134,15 @@ protected:
     const detail::CLJWorkspace& workspace() const;
 
 private:
-    static void calculatePairEnergy(detail::CLJWorkspace &workspace);
-    static void calculateSelfEnergy(detail::CLJWorkspace &workspace);
+    static void calculatePairEnergy(detail::CLJWorkspace &workspace,
+                                    const QVector<ChargeParameter> &chg0,
+                                    const QVector<LJParameter> &lj0,
+                                    const QVector<ChargeParameter> &chg1,
+                                    const QVector<LJParameter> &lj1);
+
+    static void calculateSelfEnergy(detail::CLJWorkspace &workspace,
+                                    const QVector<ChargeParameter> &chgs,
+                                    const QVector<LJParameter> &ljs);
 
     void registerComponents();
 
@@ -152,10 +151,6 @@ private:
 
     /** The space in which the calculation will be performed */
     Space spce;
-    
-    /** The combining rules used to get the parameters of 
-        mixed pairs of atoms */
-    CombiningRules combrules;
 
     /** The switching function used to truncate the CLJ interactions */
     SwitchingFunction switchfunc;
@@ -167,12 +162,6 @@ private:
 inline const Space& CLJFF::space() const
 {
     return spce;
-}
-
-/** Return the combining rules used to combine CLJParameters into CLJPairs */
-inline const CombiningRules& CLJFF::combiningRules() const
-{
-    return combrules;
 }
 
 /** Return the switching function used to truncate the CLJ interaction */

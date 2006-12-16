@@ -20,7 +20,9 @@ using namespace SireQt;
 namespace SireMol
 {
 
-void export_AtomSet()
+void  
+SIREMOL_EXPORT
+export_AtomSet()
 {
     wrap_QSet<Atom>("QSet_Atom_");
     wrap_QSet<AtomIndex>("QSet_AtomIndex_");

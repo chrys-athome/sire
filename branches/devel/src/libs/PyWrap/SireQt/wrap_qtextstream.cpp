@@ -9,6 +9,8 @@
 #include <QIODevice>
 #include <QChar>
 
+#include "sireglobal.h"
+
 using namespace boost::python;
 
 QString wrap_readLine1(QTextStream &ts, qint64 maxlen)
@@ -45,7 +47,9 @@ QTextStream& __rshift__(QTextStream &ts, T value)
     return ts;
 }
 
-void export_QTextStream()
+void  
+SIREQT_EXPORT
+export_QTextStream()
 {
     scope QTextStream_scope = class_<QTextStream, boost::noncopyable>
                                                             ("QTextStream", init<>())

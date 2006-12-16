@@ -53,7 +53,9 @@ bool wrap_isValid3(int h, int m, int s)
     return QTime::isValid(h,m,s);
 }
 
-void export_QTime()
+void  
+SIREQT_EXPORT
+export_QTime()
 {
     class_<QTime>("QTime", init<>() )
         .def(init<int,int,optional<int,int> >() )

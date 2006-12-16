@@ -20,7 +20,9 @@ using namespace SireFF::EnergyType;
 namespace SireFF
 {
 
-void export_EnergyBase()
+void  
+SIREFF_EXPORT
+export_EnergyBase()
 {
     class_<EnergyBase>("EnergyBase", no_init)
                   .def("toString", &EnergyBase::toString)

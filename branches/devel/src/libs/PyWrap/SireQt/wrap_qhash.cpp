@@ -1,7 +1,11 @@
     
 void export_QHash_QString_QString();
     
-void export_QHash()
+#include "sireglobal.h"
+    
+void  
+SIREQT_EXPORT
+export_QHash()
 {
     export_QHash_QString_QString();
 }

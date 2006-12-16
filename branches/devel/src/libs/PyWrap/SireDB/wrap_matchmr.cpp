@@ -75,7 +75,9 @@ MatchMRData mr_and_mrdata(const MatchMRData &mrdata, const MatchMR &mr)
     return mr and mrdata;
 }
 
-void export_MatchMR()
+void  
+SIREDB_EXPORT
+export_MatchMR()
 {
     class_<MatchMR>("MatchMR", init<>())
         .def( init<const MatchMol&>() )

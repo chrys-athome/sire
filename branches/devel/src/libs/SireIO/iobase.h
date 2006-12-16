@@ -12,12 +12,14 @@ SIRE_BEGIN_HEADER
 namespace SireMol
 {
 class Molecule;
+class EditMol;
 }
 
 namespace SireIO
 {
 
 using SireMol::Molecule;
+using SireMol::EditMol;
 using SireMol::CuttingFunction;
 using SireMol::ResidueCutting;
 
@@ -50,14 +52,21 @@ public:
         this will overwrite the contents of the file if it already exists. */
     virtual void write(const QList<Molecule> &molecules, QString filename) const;
 
+    virtual void write(const QList<EditMol> &molecules, QString filename) const;
+
     /** Write some molecules to the QIODevice 'dev'. This is the
         method to use if you want to append some molecules to a file, or
         if you want to write some molecules over a network on into another
         type of device other than a file */
     virtual void write(const QList<Molecule> &molecules, QIODevice &dev) const;
 
+    virtual void write(const QList<EditMol> &molecules, QIODevice &dev) const;
+
     virtual void write(const Molecule &molecule, QString filename) const;
     virtual void write(const Molecule &molecule, QIODevice &dev) const;
+
+    virtual void write(const EditMol &molecule, QString filename) const;
+    virtual void write(const EditMol &molecule, QIODevice &dev) const;
 
 protected:
 
@@ -73,6 +82,8 @@ protected:
 
     /** Write the list of Molecules to a QByteArray and return it */
     virtual QByteArray writeMols(const QList<Molecule> &molecules) const=0;
+
+    virtual QByteArray writeMols(const QList<EditMol> &molecules) const=0;
 
 };
 

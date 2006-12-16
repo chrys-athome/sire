@@ -14,6 +14,9 @@ QDataStream& operator>>(QDataStream&, SireMM::InterCLJFF&);
 namespace SireMM
 {
 
+class ChargeTable;
+class LJTable;
+
 using SireMol::Molecule;
 using SireMol::Residue;
 using SireMol::MoleculeID;
@@ -31,7 +34,7 @@ using SireDB::ParameterTable;
 
     \author Christopher Woods
 */
-class InterCLJFF : public CLJFF
+class SIREMM_EXPORT InterCLJFF : public CLJFF
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const InterCLJFF&);
@@ -39,16 +42,18 @@ friend QDataStream& ::operator>>(QDataStream&, InterCLJFF&);
 
 public:
     InterCLJFF();
-    
+
+    InterCLJFF(const Space &space, const SwitchingFunction &switchfunc);
+
     InterCLJFF(const InterCLJFF &other);
-    
+
     ~InterCLJFF();
 
     static const char* typeName()
     {
         return "SireMM::InterCLJFF";
     }
-    
+
     const char* what() const
     {
         return InterCLJFF::typeName();
@@ -60,29 +65,35 @@ public:
     }
 
     const Molecule& molecule(MoleculeID molid) const;
-    
-    void move(const Molecule &molecule);
-    void move(const Residue &residue);
-    void move(const MovedMols &movedmols);
-    
-    void change(const Molecule &molecule, const ParameterTable &params);
-    void change(const Residue &residue, const ParameterTable &params);
-    void change(const ChangedMols &changedmols);
-    
-    void add(const Molecule &molecule, const ParameterTable &params, 
-             int groupid);
-    void add(const Residue &residue, const ParameterTable &params,
-             int groupid);
-    
-    void remove(const Molecule &molecule);
-    void remove(const Residue &residue);
+
+    void add(const Molecule &mol, const ChargeTable &chargetable,
+             const LJTable &ljtable);
+
+    bool move(const Molecule &molecule);
+    bool move(const Residue &residue);
 
 protected:
+    void recalculateViaDelta();
+    void recalculateTotalEnergy();
+
     void recalculateEnergy();
 
     /** Information about every molecule contained in this forcefield */
     QVector<detail::MolCLJInfo> mols;
 
+    /** Hash mapping MoleculeID to index in 'mols' */
+    QHash<MoleculeID, int> molid_to_molindex;
+
+    /** Information about all of the changed molecules since the last
+        energy update */
+    QVector<detail::ChangedMolCLJInfo> movedmols;
+
+    /** Hash mapping MoleculeID to index in 'movedmols' */
+    QHash<MoleculeID, int> molid_to_movedindex;
+
+    /** The IDs of all of the molecules that were removed since the last
+        energy update */
+    QSet<MoleculeID> removedmols;
 };
 
 }

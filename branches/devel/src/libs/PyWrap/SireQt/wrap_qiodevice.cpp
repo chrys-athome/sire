@@ -4,11 +4,15 @@
 
 #include <QIODevice>
 
+#include "sireglobal.h"
+
 using namespace boost::python;
 
 /** Provide a basic wrapping of QIODevice so that it can be seen as the common
     base of the other IO device classes. */
-void export_QIODevice()
+void  
+SIREQT_EXPORT
+export_QIODevice()
 {
     scope QIODevice_scope = 
     class_<QIODevice, boost::noncopyable>("QIODevice", no_init)

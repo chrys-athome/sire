@@ -76,9 +76,30 @@ public:
     bool beyond(double dist, const CoordGroup &group0,
                 const CoordGroup &group1) const;
 
+    double minimumDistance(const CoordGroup &group0, const CoordGroup &group1) const;
+
+    CoordGroup moveToCenterBox(const CoordGroup &group) const;
+
+    QVector<CoordGroup> moveToCenterBox(const QVector<CoordGroup> &groups) const;
+
+    CoordGroup getMinimumImage(const CoordGroup &group, const Vector &center) const;
+
+    QVector<CoordGroup> getMinimumImage(const QVector<CoordGroup> &groups,
+                                        const Vector &center) const;
+
+    QList< boost::tuple<double,CoordGroup> >
+               getCopiesWithin(const CoordGroup &group,
+                               const CoordGroup &center, double dist) const;
+
+    bool contains(const Vector &point) const;
+
 protected:
 
     Vector wrapDelta(const Vector &v0, const Vector &v1) const;
+
+    QVector<CoordGroup> _pvt_getMinimumImage(
+                                const QVector<CoordGroup> &groups,
+                                const Vector &point) const;
 
     static int getWrapVal(double delta, double invlgth, double halflgth);
 
@@ -139,6 +160,19 @@ inline Vector PeriodicBox::wrapDelta(const Vector &v0, const Vector &v1) const
     return Vector( getWrapVal( v1.x()-v0.x(), invlength.x(), halflength.x()) * boxlength.x(),
                    getWrapVal( v1.y()-v0.y(), invlength.y(), halflength.y()) * boxlength.y(),
                    getWrapVal( v1.z()-v0.z(), invlength.z(), halflength.z()) * boxlength.z() );
+}
+
+/** Return whether this box contains the point 'point' (without the need
+    for periodic translation) */
+inline bool PeriodicBox::contains(const Vector &point) const
+{
+    return (point.x() >= mincoords.x() and
+            point.y() >= mincoords.y() and
+            point.z() >= mincoords.z()) and
+
+           (point.x() <= maxcoords.x() and
+            point.y() <= maxcoords.y() and
+            point.z() <= maxcoords.z());
 }
 
 }

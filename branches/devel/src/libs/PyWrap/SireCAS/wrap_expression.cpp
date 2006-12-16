@@ -67,7 +67,9 @@ Expression wrap_simplify2(const Expression &ex, int options)
     return ex.simplify(options);
 }
 
-void export_Expression()
+void  
+SIRECAS_EXPORT
+export_Expression()
 {
     Expression (Expression::*wrap_multiply1)(const Expression&) const = &Expression::multiply;
     Expression (Expression::*wrap_multiply2)(double) const = &Expression::multiply;

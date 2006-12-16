@@ -202,9 +202,6 @@ QList<Molecule> PDB::readMols(const QByteArray &data,
         else if (lowline.startsWith("ter"))
         {
             loadedmols.append(currentmol);
-
-            qDebug() << "Now? " << currentmol.nAtoms() << " " << currentmol.nResidues();
-
             currentmol = EditMol( QString("PDB_%1").arg(loadedmols.count()) );
         }
     }
@@ -222,8 +219,6 @@ QList<Molecule> PDB::readMols(const QByteArray &data,
     {
         Molecule molecule;
         molecule.setNewID();
-
-        qDebug() << "What about here? " << it->nAtoms() << " " << it->nResidues();
 
         molecule = it->commit();
 
@@ -254,6 +249,59 @@ QByteArray PDB::writeMols(const QList<Molecule> &molecules) const
         for (ResID ires(0); ires<nres; ++ires)
         {
             Residue res = mol[ires];
+
+            //now loop over each atom in the residue...
+            int nats = res.nAtoms();
+            for (AtomID iat(0); iat<nats; ++iat)
+            {
+                ++atcount;
+                const Atom &atm = res[iat];
+
+                //print out the atom info (write out coordinates in angstroms)
+                std::snprintf(line.get(),128,
+                               "ATOM  %5d %4s %4s %4d    %8.3f%8.3f%8.3f\n",
+                               atcount,
+                               qPrintable(atm.name().left(4)),
+                               qPrintable(res.name().left(4)),
+                               res.number().toInt(),
+                               convertTo(atm.x(), angstrom),
+                               convertTo(atm.y(), angstrom),
+                               convertTo(atm.z(), angstrom));
+
+                //write the line to the textstream
+                ts << line.get();
+            }
+        }
+
+        //if this is not the last molecule, then write a 'TER'
+        if (i != sz - 1)
+          ts << "TER\n";
+    }
+
+    return data;
+}
+
+QByteArray PDB::writeMols(const QList<EditMol> &molecules) const
+{
+    QByteArray data;
+
+    QTextStream ts(&data, QIODevice::WriteOnly | QIODevice::Text);
+
+    //the maximum line length for a PDB line is less than 128 characters
+    std::auto_ptr<char> line(new char[128]);
+
+    int atcount = 0;
+
+    int sz = molecules.count();
+    for (int i=0; i<sz; i++)
+    {
+        const EditMol &mol = molecules[i];
+
+        //loop over each residue in the editmol...
+        int nres = mol.nResidues();
+        for (ResID ires(0); ires<nres; ++ires)
+        {
+            EditRes res = mol[ires];
 
             //now loop over each atom in the residue...
             int nats = res.nAtoms();

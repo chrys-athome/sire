@@ -349,6 +349,52 @@ void TestSharedPolyPointer::runTests()
     BOOST_CHECK( fooptr->what() == Bar2::typeName() );
     BOOST_CHECK( fooptr.isA<Bar2>() );
     
+    //test polymorphic casting
+    SharedPolyPointer<Bar> barptr = fooptr2;
+    
+    BOOST_CHECK( barptr->value() == 15*5 );
+    BOOST_CHECK( barptr->special() == 42 );
+    BOOST_CHECK( barptr->what() == Bar::typeName() );
+    BOOST_CHECK( barptr.isA<Bar>() );
+    
+    SharedPolyPointer<Bar2> bar2ptr = fooptr;
+    
+    BOOST_CHECK( bar2ptr->value() == 35*15 );
+    BOOST_CHECK( bar2ptr->special() == 150 );
+    BOOST_CHECK( bar2ptr->what() == Bar2::typeName() );
+    BOOST_CHECK( bar2ptr.isA<Bar2>() );
+    
+    try
+    {
+        barptr = bar2ptr;
+        bool should_not_get_here(false);
+        BOOST_CHECK( should_not_get_here );
+    }
+    catch(const SireError::invalid_cast&)
+    {}
+    
+    try
+    {
+        bar2ptr = barptr;
+        bool should_not_get_here(false);
+        BOOST_CHECK( should_not_get_here );
+    }
+    catch(const SireError::invalid_cast&)
+    {}
+    
+    fooptr = barptr;
+    fooptr2 = bar2ptr;
+    
+    BOOST_CHECK( fooptr->value() == 15*5 );
+    BOOST_CHECK( fooptr->special() == 42 );
+    BOOST_CHECK( fooptr->what() == Bar::typeName() );
+    BOOST_CHECK( fooptr.isA<Bar>() );
+    
+    BOOST_CHECK( fooptr2->value() == 35*15 );
+    BOOST_CHECK( fooptr2->special() == 150 );
+    BOOST_CHECK( fooptr2->what() == Bar2::typeName() );
+    BOOST_CHECK( fooptr2.isA<Bar2>() );
+    
     qDebug() << "TestSharedPolyPointer::runTests() complete";
     
     }

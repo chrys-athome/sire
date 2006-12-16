@@ -29,7 +29,9 @@ using namespace SireQt;
 namespace SireMol
 {
 
-void export_Internals()
+void  
+SIREMOL_EXPORT
+export_Internals()
 {
     /** Wrap up the Bond class */
     class_<Bond>("Bond", init<>())

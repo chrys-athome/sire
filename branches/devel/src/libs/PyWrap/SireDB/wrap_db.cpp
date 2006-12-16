@@ -72,7 +72,9 @@ Expression wrap_getFunc_RelateIDMap1(FuncDB &db, const RelateIDMap &relateids)
     return db.getFunc(relateids);
 }
 
-void export_DB()
+void  
+SIREDB_EXPORT
+export_DB()
 {
     
     class_<DBBase, boost::noncopyable>("DBBase", no_init)
