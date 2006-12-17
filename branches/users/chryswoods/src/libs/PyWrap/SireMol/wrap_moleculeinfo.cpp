@@ -100,22 +100,10 @@ export_MoleculeInfo()
                              &MoleculeInfo::at,
                              return_value_policy<copy_const_reference>() )
 
-        .def( "atom", (const AtomInfo& (MoleculeInfo::*)(AtomID) const)
-                             &MoleculeInfo::atom,
-                             return_value_policy<copy_const_reference>() )
-        .def( "atom", (const AtomInfo& (MoleculeInfo::*)(const AtomIndex&) const)
-                             &MoleculeInfo::atom,
-                             return_value_policy<copy_const_reference>() )
-        .def( "atom", (const AtomInfo& (MoleculeInfo::*)(const ResIDAtomID&) const)
-                             &MoleculeInfo::atom,
-                             return_value_policy<copy_const_reference>() )
-        .def( "atom", (const AtomInfo& (MoleculeInfo::*)(const ResNumAtomID&) const)
-                             &MoleculeInfo::atom,
-                             return_value_policy<copy_const_reference>() )
         .def( "atom", (const AtomInfo& (MoleculeInfo::*)(const CGAtomID&) const)
                              &MoleculeInfo::atom,
                              return_value_policy<copy_const_reference>() )
-        .def( "atom", (const AtomInfo& (MoleculeInfo::*)(const CGNumAtomID&) const)
+        .def( "atom", (const AtomInfo& (MoleculeInfo::*)(const IDMolAtom&) const)
                              &MoleculeInfo::atom,
                              return_value_policy<copy_const_reference>() )
 

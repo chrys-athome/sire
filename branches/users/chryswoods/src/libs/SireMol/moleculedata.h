@@ -25,6 +25,7 @@
 #include "moleculeversion.h"
 #include "moleculeinfo.h"
 #include "moleculebonds.h"
+#include "idtypes.h"
 
 #include "SireVol/coordgroup.h"
 
@@ -212,11 +213,8 @@ public:
    ///// Querying the molecule /////////////////////////////
     CutGroup at(CutGroupID cgid) const;
 
-    Atom at(AtomID atomid) const;
-    Atom at(const ResNumAtomID &resatomid) const;
-    Atom at(const ResIDAtomID &resatomid) const;
     Atom at(const CGAtomID &cgatomid) const;
-    Atom at(const AtomIndex &atm) const;
+    Atom at(const IDMolAtom &atomid) const;
 
     const MoleculeBonds& connectivity() const;
 
@@ -237,25 +235,11 @@ public:
 
     CoordGroup coordGroup(CutGroupID id) const;
 
-    Atom atom(AtomID atomid) const;
-    Atom atom(CutGroupID cgid, AtomID atomid) const;
     Atom atom(const CGAtomID &cgatmid) const;
-    Atom atom(ResNum resnum, AtomID atomid) const;
-    Atom atom(const ResNumAtomID &resatomid) const;
-    Atom atom(ResID resid, AtomID atomid) const;
-    Atom atom(const ResIDAtomID &resatomid) const;
-    Atom atom(const AtomIndex &atm) const;
-    Atom atom(ResNum resnum, const QString &atomname) const;
+    Atom atom(const IDMolAtom &atomid) const;
 
-    Vector coordinates(AtomID atomid) const;
-    Vector coordinates(CutGroupID cgid, AtomID atomid) const;
     Vector coordinates(const CGAtomID &cgatomid) const;
-    Vector coordinates(ResNum resnum, AtomID atomid) const;
-    Vector coordinates(const ResNumAtomID &resatomid) const;
-    Vector coordinates(ResID resid, AtomID atomid) const;
-    Vector coordinates(const ResIDAtomID &resatomid) const;
-    Vector coordinates(const AtomIndex &atm) const;
-    Vector coordinates(ResNum resnum, const QString &atomname) const;
+    Vector coordinates(const IDMolAtom &atomid) const;
 
     QVector<Atom> atoms() const;
     QVector<Vector> coordinates() const;

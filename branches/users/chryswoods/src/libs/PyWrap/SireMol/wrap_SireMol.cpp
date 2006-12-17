@@ -21,6 +21,7 @@ void export_IndexList();
 void export_IndexSet();
 void export_IndexVector();
 void export_IDTypes();
+void export_IDMolAtom();
 void export_Internals();
 void export_Bonds();
 void export_Angles();
@@ -51,6 +52,7 @@ void SIREMOL_EXPORT export_SireMol()
     export_CutGroupSet();
     export_EditMol();
     export_EditRes();
+    export_IDMolAtom();
     export_IndexList();
     export_IndexSet();
     export_IndexVector();

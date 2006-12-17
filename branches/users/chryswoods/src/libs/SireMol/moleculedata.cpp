@@ -31,6 +31,7 @@
 #include "moleculeinfo.h"
 #include "residueinfo.h"
 #include "atominfogroup.h"
+#include "idmolatom.h"
 
 #include "cutgroupid.h"
 #include "resid.h"
@@ -287,34 +288,6 @@ CutGroup MoleculeData::at(CutGroupID cgid) const
     return cutGroup(cgid);
 }
 
-/** Return a copy of the atom at index 'atomid'
-
-    \throw SireError::invalid_index
-*/
-Atom MoleculeData::at(AtomID atomid) const
-{
-    return atom(atomid);
-}
-
-/** Return a copy of the atom at index 'resatomid'
-
-    \throw SireMol::missing_residue
-    \throw SireError::invalid_index
-*/
-Atom MoleculeData::at(const ResNumAtomID &resatomid) const
-{
-    return atom(resatomid);
-}
-
-/** Return a copy of the atom at index 'resatomid'
-
-    \throw SireError::invalid_index
-*/
-Atom MoleculeData::at(const ResIDAtomID &resatomid) const
-{
-    return atom(resatomid);
-}
-
 /** Return a copy of the atom at index 'cgatomid'
 
     \throw SireMol::missing_cutgroup
@@ -325,14 +298,16 @@ Atom MoleculeData::at(const CGAtomID &cgatomid) const
     return atom(cgatomid);
 }
 
-/** Return a copy of the atom at with AtomIndex 'atm'
+/** Return a copy of the atom at 'atomid'
 
     \throw SireMol::missing_residue
+    \throw SireMol::missing_cutgroup
+    \throw SireMol::missing_atom
     \throw SireMol::missing_atom
 */
-Atom MoleculeData::at(const AtomIndex &atm) const
+Atom MoleculeData::at(const IDMolAtom &atomid) const
 {
-    return atom(atm);
+    return atom(atomid);
 }
 
 /** @name MoleculeData::coordinates(....)
@@ -363,84 +338,15 @@ Vector MoleculeData::coordinates(const CGAtomID &cgatomid) const
 }
 
 /** Return a copy of the coordinates of the atom at index 'atomid'
-    in the CutGroup with ID == cgid
 
+    \throw SireMol::missing_residue
     \throw SireMol::missing_cutgroup
-    \throw SireError::invalid_index
-*/
-Vector MoleculeData::coordinates(CutGroupID cgid, AtomID atomid) const
-{
-    return coordinates( CGAtomID(cgid,atomid) );
-}
-
-/** Return the coordinates for the atom at index 'atomid'
-
-    \throw SireError::invalid_index
-*/
-Vector MoleculeData::coordinates(AtomID atomid) const
-{
-    return this->_unsafe_coordinates( info().at(atomid) );
-}
-
-/** Return the coordinates of the atom with ID 'atm'
-
-    \throw SireMol::missing_residue
     \throw SireMol::missing_atom
-*/
-Vector MoleculeData::coordinates(const AtomIndex &atm) const
-{
-    return this->_unsafe_coordinates( info().at(atm) );
-}
-
-/** Return the coordinates of the atom with name 'atomname' and
-    in residue with number 'resnum'
-
-    \throw SireMol::missing_residue
-    \throw SireMol::missing_atom
-*/
-Vector MoleculeData::coordinates(ResNum resnum, const QString &atomname) const
-{
-    return coordinates( AtomIndex(atomname,resnum) );
-}
-
-/** Return the coordinates of the atom at index 'resatomid'
-
-    \throw SireMol::missing_residue
     \throw SireError::invalid_index
 */
-Vector MoleculeData::coordinates(const ResNumAtomID &resatomid) const
+Vector MoleculeData::coordinates(const IDMolAtom &atomid) const
 {
-    return this->_unsafe_coordinates( info().at(resatomid) );
-}
-
-/** Return the coordinates of the atom at index 'atmid' in the residue
-    with number 'resnum'
-
-    \throw SireMol::missing_residue
-    \throw SireError::invalid_index
-*/
-Vector MoleculeData::coordinates(ResNum resnum, AtomID atomid) const
-{
-    return coordinates( ResNumAtomID(resnum,atomid) );
-}
-
-/** Return the coordinates of the atom at index 'resatomid'
-
-    \throw SireError::invalid_index
-*/
-Vector MoleculeData::coordinates(const ResIDAtomID &resatomid) const
-{
-    return this->_unsafe_coordinates( info().at(resatomid) );
-}
-
-/** Return the coordinates of the atom at index 'atmid' in the
-    residue at index 'resid'
-
-    \throw SireError::invalid_index
-*/
-Vector MoleculeData::coordinates(ResID resid, AtomID atomid) const
-{
-    return coordinates( ResIDAtomID(resid,atomid) );
+    return this->_unsafe_coordinates( atomid.index(info()) );
 }
 
 template<class T>
@@ -970,82 +876,16 @@ Atom MoleculeData::atom(const CGAtomID &cgatomid) const
     return this->_unsafe_atom(cgatomid);
 }
 
-/** Return a copy of the atom at index 'atomid' in the CutGroup
-    with ID == 'cgid'
+/** Return a copy of the atom at index 'atomid'
 
+    \throw SireMol::missing_residue
     \throw SireMol::missing_cutgroup
-    \throw SireError::invalid_index
-*/
-Atom MoleculeData::atom(CutGroupID cgid, AtomID atomid) const
-{
-    return this->atom( CGAtomID(cgid,atomid) );
-}
-
-/** Return the atom at index 'atomid'
-
-    \throw SireError::invalid_index
-*/
-Atom MoleculeData::atom(AtomID atomid) const
-{
-    return this->_unsafe_atom( info().at(atomid) );
-}
-
-/** Return the atom with index 'atm'
-
-    \throw SireMol::missing_residue
     \throw SireMol::missing_atom
-*/
-Atom MoleculeData::atom(const AtomIndex &atm) const
-{
-    return this->_unsafe_atom( info().at(atm) );
-}
-
-/** Return the atom called 'atomname' in the residue with number 'resnum'
-
-    \throw SireMol::missing_residue
-    \throw SireMol::missing_atom
-*/
-Atom MoleculeData::atom(ResNum resnum, const QString &atomname) const
-{
-    return atom( AtomIndex(atomname,resnum) );
-}
-
-/** Return the atom at index 'resatomid'
-
-    \throw SireMol::missing_residue
     \throw SireError::invalid_index
 */
-Atom MoleculeData::atom(const ResNumAtomID &resatomid) const
+Atom MoleculeData::atom(const IDMolAtom &atomid) const
 {
-    return this->_unsafe_atom( info().at(resatomid) );
-}
-
-/** Return the atom at index 'atmid' in the residue with number 'resnum'
-
-    \throw SireMol::missing_residue
-    \throw SireError::invalid_index
-*/
-Atom MoleculeData::atom(ResNum resnum, AtomID atmid) const
-{
-    return atom( ResNumAtomID(resnum,atmid) );
-}
-
-/** Return the atom at index 'resatomid'
-
-    \throw SireError::invalid_index
-*/
-Atom MoleculeData::atom(const ResIDAtomID &resatomid) const
-{
-    return this->_unsafe_atom( info().at(resatomid) );
-}
-
-/** Return the atom at index 'atmid' in the residue at index 'resid'
-
-    \throw SireError::invalid_index
-*/
-Atom MoleculeData::atom(ResID resid, AtomID atmid) const
-{
-    return atom( ResIDAtomID(resid,atmid) );
+    return this->_unsafe_atom( atomid.index(info()) );
 }
 
 /////////////////////////////////////////////////////////

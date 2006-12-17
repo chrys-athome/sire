@@ -19,7 +19,7 @@
 #include <QHash>
 #include <QSet>
 
-#include "idtypes.h"
+#include "idmolatom.h"
 #include "residuecutting.h"
 
 SIRE_BEGIN_HEADER
@@ -36,7 +36,6 @@ namespace SireMol
 {
 
 class AtomInfo;
-class AtomIndex;
 class ResidueInfo;
 class AtomInfoGroup;
 
@@ -85,6 +84,7 @@ public:
     const CGAtomID& operator[](const ResIDAtomID &resatomid) const;
     const CGAtomID& operator[](const CGAtomID &cgatomid) const;
     const CGAtomID& operator[](const CGNumAtomID &cgatomid) const;
+    const CGAtomID& operator[](const IDMolAtom &atomid) const;
    /////////////////////////////////////////////////////////
 
    ///// Querying the molecule /////////////////////////////
@@ -100,13 +100,10 @@ public:
     const CGAtomID& at(const ResIDAtomID &resatomid) const;
     const CGAtomID& at(const CGNumAtomID &cgatomid) const;
     const CGAtomID& at(const CGAtomID &cgatomid) const;
+    const CGAtomID& at(const IDMolAtom &atomid) const;
 
-    const AtomInfo& atom(AtomID atomid) const;
-    const AtomInfo& atom(const AtomIndex &atomindex) const;
-    const AtomInfo& atom(const ResNumAtomID &rsid) const;
-    const AtomInfo& atom(const ResIDAtomID &rsid) const;
     const AtomInfo& atom(const CGAtomID &cgid) const;
-    const AtomInfo& atom(const CGNumAtomID &cgid) const;
+    const AtomInfo& atom(const IDMolAtom &atomid) const;
 
     const AtomInfoGroup& atomGroup(CutGroupID cgid) const;
     const AtomInfoGroup& atomGroup(CutGroupNum cgnum) const;
@@ -181,9 +178,9 @@ public:
     bool contains(CutGroupNum cgnum) const;
     bool contains(ResNum resnum) const;
     bool contains(ResID resid) const;
-
+    
     bool contains(ResNum resnum, const QString &atomname) const;
-    bool contains(const AtomIndex &atm) const;
+    bool contains(const AtomIndex &atomindex) const;
     bool contains(CutGroupID cgid, AtomID atomid) const;
     bool contains(const CGAtomID &cgatomid) const;
     bool contains(CutGroupNum cgnum, AtomID atomid) const;
@@ -192,6 +189,7 @@ public:
     bool contains(const ResNumAtomID &resatomid) const;
     bool contains(ResID resid, AtomID atomid) const;
     bool contains(const ResIDAtomID &resatomid) const;
+    bool contains(const IDMolAtom &atomid) const;
 
     bool isEmpty() const;
     bool isEmpty(ResNum resnum) const;
@@ -211,6 +209,7 @@ public:
     void assertAtomExists(const CGNumAtomID &cgatomid) const;
     void assertAtomExists(const ResNumAtomID &resatomid) const;
     void assertAtomExists(const ResIDAtomID &resatomid) const;
+    void assertAtomExists(const IDMolAtom &atomid) const;
 
     void assertNAtoms(int nats) const;
    /////////////////////////////////////////////////////////

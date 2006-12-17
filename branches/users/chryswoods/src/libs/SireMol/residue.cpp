@@ -5,6 +5,7 @@
 #include "cgnumatomid.h"
 #include "residatomid.h"
 #include "resnumatomid.h"
+#include "idmolatom.h"
 
 #include "residueinfo.h"
 

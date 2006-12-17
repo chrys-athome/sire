@@ -34,6 +34,7 @@
 #include "cgnumatomid.h"
 #include "resnumatomid.h"
 #include "residatomid.h"
+#include "idmolatom.h"
 
 #include "SireMol/errors.h"
 #include "SireError/errors.h"
@@ -610,6 +611,17 @@ const CGAtomID& MoleculeInfo::operator[](const CGAtomID &cgatomid) const
     return cgatomid;
 }
 
+/** Return the CGAtomID index of the atom identified by 'atomid'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+    \throw SireError::invalid_index
+*/
+const CGAtomID& MoleculeInfo::operator[](const IDMolAtom &atomid) const
+{
+    return atomid.index(*this);
+}
+
 /** Return the AtomInfoGroup for the CutGroup with ID == cgid */
 const AtomInfoGroup& MoleculeInfo::at(CutGroupID cgid) const
 {
@@ -700,42 +712,15 @@ const CGAtomID& MoleculeInfo::at(const CGAtomID &cgatomid) const
     return this->operator[](cgatomid);
 }
 
-/** Return the AtomInfo for the atom with index 'atomid'
-
-    \throw SireError::invalid_index
-*/
-const AtomInfo& MoleculeInfo::atom(AtomID atomid) const
-{
-    return d->_unsafe_atom( this->at(atomid) );
-}
-
-/** Return the AtomInfo for the atom 'atom'
+/** Return the CGAtomID index of the atom identified by 'atomid'
 
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
-*/
-const AtomInfo& MoleculeInfo::atom(const AtomIndex &atom) const
-{
-    return d->_unsafe_atom( this->at(atom) );
-}
-
-/** Return the AtomInfo for the atom with index 'rsid'
-
-    \throw SireMol::missing_residue
     \throw SireError::invalid_index
 */
-const AtomInfo& MoleculeInfo::atom(const ResNumAtomID &rsid) const
+const CGAtomID& MoleculeInfo::at(const IDMolAtom &atomid) const
 {
-    return d->_unsafe_atom( this->at(rsid) );
-}
-
-/** Return the AtomInfo for the atom with index 'rsid'
-
-    \throw SireError::invalid_index
-*/
-const AtomInfo& MoleculeInfo::atom(const ResIDAtomID &rsid) const
-{
-    return d->_unsafe_atom( this->at(rsid) );
+    return atomid.index(*this);
 }
 
 /** Return the AtomInfo for the atom with index 'cgatomid'
@@ -749,19 +734,16 @@ const AtomInfo& MoleculeInfo::atom(const CGAtomID &cgatomid) const
     return d->_unsafe_atom(cgatomid);
 }
 
-/** Return the AtomInfo for the atom with index 'cgatomid'
+/** Return the AtomInfo for the atom with index 'atomid'
 
+    \throw SireMol::missing_residue
     \throw SireMol::missing_cutgroup
+    \throw SireMol::missing_atom
     \throw SireError::invalid_index
 */
-const AtomInfo& MoleculeInfo::atom(const CGNumAtomID &cgatomid) const
+const AtomInfo& MoleculeInfo::atom(const IDMolAtom &atomid) const
 {
-    #warning CutGroupNum broken
-    throw SireError::incomplete_code( QObject::tr(
-                          "Need to update ResidueInfo to work with CutGroupNum"),
-                              CODELOC );
-
-    return AtomInfo();
+    return d->_unsafe_atom( atomid.index(*this) );
 }
 
 /** Return the AtomInfoGroup for the CutGroup with ID == cgid
@@ -1443,6 +1425,12 @@ bool MoleculeInfo::contains(const ResIDAtomID &resatomid) const
     return this->contains(resatomid.resID(), resatomid.atomID());
 }
 
+/** Return whether or not this molecule contains the atom at 'atomid' */
+bool MoleculeInfo::contains(const IDMolAtom &atomid) const
+{
+    return atomid.contains(*this);
+}
+
 /** Return whether or not this molecule is empty (contains no atoms) */
 bool MoleculeInfo::isEmpty() const
 {
@@ -1584,6 +1572,18 @@ void MoleculeInfo::assertAtomExists(const ResIDAtomID &resatomid) const
 void MoleculeInfo::assertAtomExists(AtomID atomid) const
 {
     d->assertAtomExists(atomid);
+}
+
+/** Assert that the atom at index 'atomid' exists
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_cutgroup
+    \throw SireMol::missing_atom
+    \throw SireError::invalid_index
+*/
+void MoleculeInfo::assertAtomExists(const IDMolAtom &atomid) const
+{
+    atomid.index(*this);
 }
 
 /** Assert that the number of atoms in the molecule is equal

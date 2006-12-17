@@ -19,6 +19,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs
 set ( WRAPMOL_SOURCES
       editmol.py.cpp
       editres.py.cpp
+      idmolatom.py.cpp
       molecule.py.cpp
       residue.py.cpp
 

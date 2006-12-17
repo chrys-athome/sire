@@ -29,6 +29,10 @@ class ResIDAtomID;
 class MolResNumAtomID;
 class MolCGAtomID;
 
+class AtomIndex;
+
+class IDMolAtom;
+
 }
 
 #endif

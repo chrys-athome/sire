@@ -30,6 +30,7 @@ set ( SIREMOL_SOURCES
       elementdb.cpp	   
       errors.cpp	   
       groupindexid.cpp   
+      idmolatom.cpp
       improper.cpp	   
       indexinfo.cpp	   
       molcgatomid.cpp    
