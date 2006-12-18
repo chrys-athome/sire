@@ -38,7 +38,6 @@ set ( SIREMM_SOURCES
       ljdb.cpp
       ljparameter.cpp
       ljtable.cpp
-      mmdb.cpp
       molangleinfo.cpp
       molbondinfo.cpp
       moldihedralinfo.cpp

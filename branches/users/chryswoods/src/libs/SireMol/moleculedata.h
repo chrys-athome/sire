@@ -20,12 +20,16 @@
 #include <QHash>
 #include <QSet>
 #include <QMutex>
+#include <QVariant>
 
 #include "moleculeid.h"
 #include "moleculeversion.h"
 #include "moleculeinfo.h"
 #include "moleculebonds.h"
 #include "idtypes.h"
+
+#include "property.h"
+#include "atomsproperty.hpp"
 
 #include "SireVol/coordgroup.h"
 
@@ -207,6 +211,32 @@ public:
 
    ////// Interfacing with EditMol /////////////////////////
     EditMol edit() const;
+   /////////////////////////////////////////////////////////
+
+
+   ///// Getting and setting properties ////////////////////
+    const Property& getProperty(const QString &name) const;
+    
+    void setProperty(const QString &name, const Property &value);
+    void addProperty(const QString &name, const Property &value);
+    
+    const QVariant& getMoleculeProperty(const QString &name) const;
+    
+    void setMoleculeProperty(const QString &name, const QVariant &value);
+    void addMoleculeProperty(const QString &name, const QVariant &value);
+    
+    const AtomsProperty& getAtomsProperty(const QString &name) const;
+    
+    void setAtomsProperty(const QString &name, const AtomsProperty &value);
+    void addAtomsProperty(const QString &name, const AtomsProperty &value);
+
+    void setProperty(const QString &name, const CGAtomID &cgatomid,
+                     const QVariant &value);
+    void setProperty(const QString &name, const IDMolAtom &atomid,
+                     const QVariant &value);
+                         
+    QVariant getProperty(const QString &name, const CGAtomID &cgatomid) const;
+    QVariant getProperty(const QString &name, const IDMolAtom &atomid) const;
    /////////////////////////////////////////////////////////
 
 
@@ -557,6 +587,11 @@ private:
         of the CutGroup to which these coordinates belong. */
     QVector<CoordGroup> _coords;
 
+    /** All of the additional properties of this molecule - this includes
+        all of the molecule's forcefield parameters (for all forcefields that
+        it is to be added to) and all additional properties that may need to
+        be added to the molecule */
+    QHash< QString, Property > _properties;
 };
 
 }

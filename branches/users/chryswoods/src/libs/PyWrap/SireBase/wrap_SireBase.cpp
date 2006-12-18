@@ -12,11 +12,13 @@ namespace SireBase
 {
 void export_MD5Sum();
 void export_IDVersion();
+void export_SharedPolyPointer();
  
 void SIREBASE_EXPORT export_SireBase()
 {
     export_MD5Sum();
     export_IDVersion();
+    export_SharedPolyPointer();
 }
 
 }

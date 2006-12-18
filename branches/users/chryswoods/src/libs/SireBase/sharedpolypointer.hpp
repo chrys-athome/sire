@@ -64,6 +64,11 @@ friend QDataStream& ::operator<<<>(QDataStream&, const SharedPolyPointer<T>&);
 friend QDataStream& ::operator>><>(QDataStream&, SharedPolyPointer<T>&);
 
 public:
+    
+    typedef T element_type;
+    typedef T value_type;
+    typedef T * pointer;
+    
     inline void detach() { if (d && d->ref != 1) detach_helper(); }
     inline T &operator*() { detach(); return *d; }
     inline const T &operator*() const { return *d; }
@@ -332,6 +337,18 @@ QDataStream& operator>>(QDataStream &ds,
         throw SireStream::version_error(v, "1", "SireBase::SharedPolyPointer", CODELOC);
 
     return ds;
+}
+
+template<class T> 
+inline const T* get_pointer(SireBase::SharedPolyPointer<T> const & p)
+{
+    return p.constData();
+}
+
+template<class T>
+inline T* get_pointer(SireBase::SharedPolyPointer<T> &p)
+{
+    return p.data();
 }
 
 SIRE_END_HEADER

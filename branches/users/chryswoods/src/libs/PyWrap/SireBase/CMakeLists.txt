@@ -18,6 +18,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs
 # Define the sources in SireBase
 set ( WRAPBASE_SOURCES
       idversion.py.cpp
+      sharedpolypointer.py.cpp
       wrap_md5sum.cpp
     )
 
@@ -31,6 +32,7 @@ set_target_properties (PyWrap_SireBase PROPERTIES
 		       
 target_link_libraries (PyWrap_SireBase
                        SireBase
+		       SireStream
                        PyWrap_SireQt
                        ${BOOST_PYTHON_LIBRARY}
 		      )
