@@ -4,17 +4,21 @@
 #include "SireError/errors.h"
 #include "SireStream/datastream.h"
 
+///////////////
+/////////////// Implementation of NullProperty
+///////////////
+
 namespace SireMol
 {
 
 /** This is a null property */
-class SIREMOL_EXPORT NullProperty : public PropertyData
+class SIREMOL_EXPORT NullProperty : public PropertyBase
 {
 public:
-    NullProperty() : PropertyData()
+    NullProperty() : PropertyBase()
     {}
     
-    NullProperty(const NullProperty &other) : PropertyData(other)
+    NullProperty(const NullProperty &other) : PropertyBase(other)
     {}
     
     ~NullProperty()
@@ -35,10 +39,9 @@ public:
         return NullProperty::typeName();
     }
     
-    void assertCompatibleWith(const Molecule&) const
+    bool isCompatibleWith(const Molecule&) const
     {
-        throw SireError::incompatible_error( QObject::tr(
-                    "Null data is not compatible with anything!"), CODELOC );
+        return false;
     }
 };
 
@@ -48,30 +51,34 @@ using namespace SireMol;
 using namespace SireBase;
 using namespace SireStream;
 
+///////////////
+/////////////// Implementation of PropertyBase
+///////////////
+
 /** Constructor */
-PropertyData::PropertyData()
+PropertyBase::PropertyBase()
 {}
     
 /** Copy constructor */
-PropertyData::PropertyData(const PropertyData&)
+PropertyBase::PropertyBase(const PropertyBase&)
 {}
   
 /** Destructor */
-PropertyData::~PropertyData()
+PropertyBase::~PropertyBase()
 {}
 
-static const RegisterMetaType<PropertyData> r_propbase("SireMol::PropertyData", 
+static const RegisterMetaType<PropertyBase> r_propbase("SireMol::PropertyBase", 
                                                        MAGIC_ONLY);
 
 /** Serialise to a binary data stream */
-QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const PropertyData&)
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const PropertyBase&)
 {
     writeHeader(ds, r_propbase, 0);
     return ds;
 }
 
 /** Deserialise from a binary data stream */
-QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, PropertyData&)
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, PropertyBase&)
 {
     VersionID v = readHeader(ds, r_propbase);
     
@@ -81,16 +88,71 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, PropertyData&)
     return ds;
 }
 
-static SharedPolyPointer<PropertyData> shared_null( new NullProperty() );
+static SharedPolyPointer<PropertyBase> shared_null( new NullProperty() );
 
 /** Return a shared null property */
-Property PropertyData::null_property()
+Property PropertyBase::null_property()
 {
     return Property(shared_null);
 }
 
+///////////////
+/////////////// Implementation of VariantProperty
+///////////////
+
+static const RegisterMetaType<VariantProperty> r_varprop("SireMol::VariantProperty");
+
+/** Serialise to a binary data stream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const VariantProperty &varprop)
+{
+    writeHeader(ds, r_varprop, 1) 
+          << static_cast<const PropertyBase&>(varprop)
+          << static_cast<const QVariant&>(varprop);
+    
+    return ds;
+}
+
+/** Deserialise from a binary data stream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, VariantProperty &varprop)
+{
+    VersionID v = readHeader(ds, r_varprop);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<PropertyBase&>(varprop)
+           >> static_cast<QVariant&>(varprop);
+    }
+    else
+        throw version_error(v, "1", r_varprop, CODELOC);
+    
+    return ds;
+}
+
+/** Null constructor */
+VariantProperty::VariantProperty()
+                : PropertyBase(), QVariant()
+{}
+    
+/** Construct a property equal to 'value' */
+VariantProperty::VariantProperty(const QVariant &value)
+                : PropertyBase(), QVariant(value)
+{}
+    
+/** Copy constructor */
+VariantProperty::VariantProperty(const VariantProperty &other)
+                : PropertyBase(other), QVariant(other)
+{}
+    
+/** Destructor */
+VariantProperty::~VariantProperty()
+{}
+
+///////////////
+/////////////// Implementation of Property
+///////////////
+
 /** Null constructor - construct a null property */
-Property::Property() : SharedPolyPointer<PropertyData>( PropertyData::null_property() )
+Property::Property() : SharedPolyPointer<PropertyBase>( PropertyBase::null_property() )
 {}
     
 /** Construct from the passed pointer - this must not be null! This
@@ -99,8 +161,8 @@ Property::Property() : SharedPolyPointer<PropertyData>( PropertyData::null_prope
         
     \throw SireError::nullptr_error
 */
-Property::Property(PropertyData *ptr)
-         : SharedPolyPointer<PropertyData>(ptr)
+Property::Property(PropertyBase *ptr)
+         : SharedPolyPointer<PropertyBase>(ptr)
 {
     if (not ptr)
         throw SireError::nullptr_error( QObject::tr(
@@ -111,8 +173,8 @@ Property::Property(PropertyData *ptr)
 
     \throw SireError::nullptr_error
 */
-Property::Property(const SireBase::SharedPolyPointer<PropertyData> &ptr)
-         : SharedPolyPointer<PropertyData>(ptr)
+Property::Property(const SireBase::SharedPolyPointer<PropertyBase> &ptr)
+         : SharedPolyPointer<PropertyBase>(ptr)
 {
     if (not ptr)
         throw SireError::nullptr_error( QObject::tr(
@@ -120,14 +182,14 @@ Property::Property(const SireBase::SharedPolyPointer<PropertyData> &ptr)
 }
     
 /** Construct from the passed property */
-Property::Property(const PropertyData &property)
-         : SharedPolyPointer<PropertyData>( 
-                      SharedPolyPointerHelper<PropertyData>::clone(property) )
+Property::Property(const PropertyBase &property)
+         : SharedPolyPointer<PropertyBase>( 
+                      SharedPolyPointerHelper<PropertyBase>::clone(property) )
 {}
     
 /** Copy constructor */
 Property::Property(const Property &other)
-         : SharedPolyPointer<PropertyData>(other)
+         : SharedPolyPointer<PropertyBase>(other)
 {}
   
 /** Destructor */

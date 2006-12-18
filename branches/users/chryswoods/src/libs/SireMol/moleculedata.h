@@ -20,7 +20,6 @@
 #include <QHash>
 #include <QSet>
 #include <QMutex>
-#include <QVariant>
 
 #include "moleculeid.h"
 #include "moleculeversion.h"
@@ -29,7 +28,6 @@
 #include "idtypes.h"
 
 #include "property.h"
-#include "atomsproperty.hpp"
 
 #include "SireVol/coordgroup.h"
 
@@ -217,26 +215,16 @@ public:
    ///// Getting and setting properties ////////////////////
     const Property& getProperty(const QString &name) const;
     
+    void setProperty(const QString &name, const PropertyBase &value);
+    void addProperty(const QString &name, const PropertyBase &value);
+    
     void setProperty(const QString &name, const Property &value);
     void addProperty(const QString &name, const Property &value);
     
-    const QVariant& getMoleculeProperty(const QString &name) const;
+    void setProperty(const QString &name, const QVariant &value);
+    void addProperty(const QString &name, const QVariant &value);
     
-    void setMoleculeProperty(const QString &name, const QVariant &value);
-    void addMoleculeProperty(const QString &name, const QVariant &value);
-    
-    const AtomsProperty& getAtomsProperty(const QString &name) const;
-    
-    void setAtomsProperty(const QString &name, const AtomsProperty &value);
-    void addAtomsProperty(const QString &name, const AtomsProperty &value);
-
-    void setProperty(const QString &name, const CGAtomID &cgatomid,
-                     const QVariant &value);
-    void setProperty(const QString &name, const IDMolAtom &atomid,
-                     const QVariant &value);
-                         
-    QVariant getProperty(const QString &name, const CGAtomID &cgatomid) const;
-    QVariant getProperty(const QString &name, const IDMolAtom &atomid) const;
+    const QHash<QString,Property>& properties() const;
    /////////////////////////////////////////////////////////
 
 

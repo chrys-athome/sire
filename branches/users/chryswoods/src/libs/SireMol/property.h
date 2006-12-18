@@ -3,15 +3,21 @@
 
 #include "SireBase/sharedpolypointer.hpp"
 
+#include <QVariant>
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
-class PropertyData;
+class PropertyBase;
+class Property;
 }
 
-QDataStream& operator<<(QDataStream&, const SireMol::PropertyData&);
-QDataStream& operator>>(QDataStream&, SireMol::PropertyData&);
+QDataStream& operator<<(QDataStream&, const SireMol::PropertyBase&);
+QDataStream& operator>>(QDataStream&, SireMol::PropertyBase&);
+
+QDataStream& operator<<(QDataStream&, const SireMol::Property&);
+QDataStream& operator>>(QDataStream&, SireMol::Property&);
 
 namespace SireMol
 {
@@ -31,26 +37,68 @@ class Molecule;
     
     @author Christopher Woods
 */
-class SIREMOL_EXPORT PropertyData : public QSharedData
+class SIREMOL_EXPORT PropertyBase : public QSharedData
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const PropertyData&);
-friend QDataStream& ::operator>>(QDataStream&, PropertyData&);
+friend QDataStream& ::operator<<(QDataStream&, const PropertyBase&);
+friend QDataStream& ::operator>>(QDataStream&, PropertyBase&);
 
 public:
-    PropertyData();
+    PropertyBase();
     
-    PropertyData(const PropertyData &other);
+    PropertyBase(const PropertyBase &other);
     
-    virtual ~PropertyData();
+    virtual ~PropertyBase();
     
-    virtual PropertyData* clone() const=0;
+    virtual PropertyBase* clone() const=0;
     
     virtual const char* what() const=0;
     
     static Property null_property();
     
-    virtual void assertCompatibleWith(const Molecule &molecule) const=0;
+    virtual bool isCompatibleWith(const Molecule &molecule) const=0;
+    
+    void assertCompatibleWith(const Molecule &molecule) const;
+};
+
+/** This is a simple property that holds any value as a QVariant. This
+    is designed to be used for metadata that doesn't need any tight
+    checking (e.g. the author of the molecule file, the source of 
+    the coordinates, the 'header' lines etc.)
+
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT VariantProperty : public PropertyBase, public QVariant
+{
+public:
+    VariantProperty();
+    
+    VariantProperty(const QVariant &value);
+    
+    VariantProperty(const VariantProperty &other);
+    
+    ~VariantProperty();
+
+    static const char* typeName()
+    {
+        return "SireMol::VariantProperty";
+    }
+    
+    const char* what() const
+    {
+        return VariantProperty::typeName();
+    }
+    
+    VariantProperty* clone() const
+    {
+        return new VariantProperty(*this);
+    }
+    
+    /** A variant property is compatible with everything! */
+    bool isCompatibleWith(const Molecule&) const
+    {
+        return true;
+    }
 };
 
 /** This is the visible holder class for PropertyBase. This is just 
@@ -59,24 +107,34 @@ public:
     
     @author Christopher Woods
 */
-class SIREMOL_EXPORT Property : public SireBase::SharedPolyPointer<PropertyData>
+class SIREMOL_EXPORT Property : public SireBase::SharedPolyPointer<PropertyBase>
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const Property&);
+friend QDataStream& ::operator>>(QDataStream&, Property&);
+
 public:
     Property();
     
-    Property(const SireBase::SharedPolyPointer<PropertyData> &ptr);
+    Property(const SireBase::SharedPolyPointer<PropertyBase> &ptr);
     
-    Property(const PropertyData &property);
-    Property(PropertyData *property);
+    Property(const PropertyBase &property);
+    Property(PropertyBase *property);
     
     Property(const Property &other);
     
     ~Property();
+    
+    void assertCompatibleWith(const Molecule &molecule) const
+    {
+        constData()->assertCompatibleWith(molecule);
+    }
 };
 
 }
 
 Q_DECLARE_METATYPE(SireMol::Property);
+Q_DECLARE_METATYPE(SireMol::VariantProperty);
 
 SIRE_END_HEADER
 

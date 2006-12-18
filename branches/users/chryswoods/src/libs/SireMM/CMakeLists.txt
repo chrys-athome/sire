@@ -17,7 +17,8 @@ set ( SIREMM_SOURCES
       angletable.cpp         
       assign_angles.cpp      
       assign_bonds.cpp       
-      assign_dihedrals.cpp   
+      assign_dihedrals.cpp
+      atomiccharges.cpp
       bonddb.cpp             
       bondgenerator.cpp      
       bondtable.cpp          
