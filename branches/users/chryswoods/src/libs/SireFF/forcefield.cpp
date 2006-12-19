@@ -70,6 +70,23 @@ public:
     ~NullFF()
     {}
 
+    class SIREFF_EXPORT Parameters : public FFBase::Parameters
+    {
+    public:
+        Parameters()
+        {}
+        
+        ~Parameters()
+        {}
+        
+        static Parameters default_parameter;
+    };
+
+    const Parameters& parameters() const
+    {
+        return Parameters::default_parameter;
+    }
+
     static const char* typeName()
     {
         return "SireFF::detail::NullFF";
@@ -113,6 +130,8 @@ protected:
     /** Null molecule returned by the null forcefield */
     static Molecule null_molecule;
 };
+
+NullFF::Parameters NullFF::Parameters::default_parameter;
 
 } // detail
 } // SireFF

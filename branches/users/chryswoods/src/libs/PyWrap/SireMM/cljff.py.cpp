@@ -57,7 +57,9 @@ export_CLJFF()
         .staticmethod( "LJ" )
     ;
 
-    bp::class_<CLJFF::Components, bp::bases<FFBase::Components> >("CLJFF_Components", bp::init<>())
+    bp::class_<CLJFF::Components, bp::bases<FFBase::Components> >("CLJFF_Components")
+        
+        .def( bp::init<>() )
 
         .def( "coulomb", &CLJFF::Components::coulomb,
                 bp::return_value_policy< bp::copy_const_reference, bp::default_call_policies >() )
@@ -70,6 +72,16 @@ export_CLJFF()
         .def( "describe_lj", &CLJFF::Components::describe_lj,
                 bp::default_call_policies() ).staticmethod("describe_lj")
     ;
+    
+    bp::class_<CLJFF::Parameters, bp::bases<FFBase::Parameters> >("CLJFF_Parameters")
+        
+        .def( bp::init<>() )
+        .def( "coulomb", &CLJFF::Parameters::coulomb, 
+                            bp::return_value_policy<bp::copy_const_reference>() )
+        .def( "lj", &CLJFF::Parameters::lj,
+                            bp::return_value_policy<bp::copy_const_reference>() )
+    ;
+    
 }
 
 }

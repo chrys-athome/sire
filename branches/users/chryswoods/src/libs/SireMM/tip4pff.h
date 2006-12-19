@@ -55,6 +55,22 @@ public:
 
     ~Tip4PFF();
 
+    class SIREMM_EXPORT Components : public CLJFF::Components
+    {
+    public:
+        Components();
+        Components(const Components &other);
+        Components(const QString &basename);
+
+        ~Components();
+
+        Components* clone() const
+        {
+            return new Components(*this);
+        }
+        
+    };
+
     static const char* typeName()
     {
         return "SireMM::Tip4PFF";

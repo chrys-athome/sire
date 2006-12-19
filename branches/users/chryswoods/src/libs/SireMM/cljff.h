@@ -24,6 +24,7 @@ namespace SireMM
 {
 
 using SireFF::FFBase;
+using SireFF::ParameterName;
 
 using SireCAS::Function;
 
@@ -85,7 +86,7 @@ public:
 
     ~CLJFF();
 
-    class Components : public FFBase::Components
+    class SIREMM_EXPORT Components : public FFBase::Components
     {
     public:
         Components();
@@ -121,6 +122,39 @@ public:
         /** The LJ component */
         Function e_lj;
     };
+
+    class SIREMM_EXPORT Parameters : public FFBase::Parameters
+    {
+    public:
+        Parameters();
+        
+        ~Parameters();
+        
+        /** Return the default source of the coulomb parameters */
+        const ParameterName& coulomb() const
+        {
+            return coulomb_params;
+        }
+        
+        /** Return the default source of the LJ parameters */
+        const ParameterName& lj() const
+        {
+            return lj_params;
+        }
+        
+        static Parameters default_sources;
+        
+    private:
+        /** The name and default source of the coulomb parameters */
+        ParameterName coulomb_params;
+        /** The name and default source of the LJ parameters */
+        ParameterName lj_params;
+    };
+
+    const Parameters& parameters() const
+    {
+        return Parameters::default_sources;
+    }
 
     const Space& space() const;
 

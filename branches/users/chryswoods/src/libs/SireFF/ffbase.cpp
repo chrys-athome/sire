@@ -21,6 +21,18 @@ using namespace SireDB;
 using namespace SireStream;
 
 ///////////
+/////////// Implementation of FFBase::Parameters
+///////////
+
+/** Constructor */
+FFBase::Parameters::Parameters()
+{}
+
+/** Destructor */
+FFBase::Parameters::~Parameters()
+{}
+
+///////////
 /////////// Implementation of FFBase::Components
 ///////////
 

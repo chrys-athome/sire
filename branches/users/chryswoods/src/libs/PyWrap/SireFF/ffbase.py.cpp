@@ -116,6 +116,10 @@ export_FFBase()
             , &::SireFF::FFBase::name
             , bp::return_value_policy< bp::copy_const_reference, bp::default_call_policies >() )
         .def(
+            "parameters"
+            , &::SireFF::FFBase::parameters
+            , bp::return_internal_reference<>() )
+        .def(
             "total"
             , &::SireFF::FFBase::total
             , bp::return_value_policy< bp::copy_const_reference, bp::default_call_policies >() )
@@ -128,10 +132,14 @@ export_FFBase()
     bp::class_<FFBase::Components, boost::noncopyable>( "FFBase_Components", bp::no_init )
 
         .def( "total", &FFBase::Components::total,
-                       bp::return_value_policy< bp::copy_const_reference, bp::default_call_policies >() )
+                       bp::return_value_policy< bp::copy_const_reference,
+                       bp::default_call_policies >() )
 
         .def( "describe_total", &FFBase::Components::describe_total,
                        bp::default_call_policies() ).staticmethod("describe_total")
+    ;
+    
+    bp::class_<FFBase::Parameters, boost::noncopyable>( "FFBase_Parameters", bp::no_init )
     ;
 }
 

@@ -12,6 +12,7 @@
 //#include "SireMol/molresnumid.h"
 
 #include "changedmols.h"
+#include "parametermap.h"
 
 SIRE_BEGIN_HEADER
 
@@ -141,7 +142,7 @@ public:
     /** This encapsulated class must be derived by
         each inheriting forcefield to provide information
         about all of the components of the forcefield */
-    class Components
+    class SIREFF_EXPORT Components
     {
     friend class FFBase;
 
@@ -172,6 +173,20 @@ public:
             of the forcefield */
         Function e_total;
     };
+
+    /** This encapsulated class must be derived by all
+        inheriting classes to provide the object
+        that contains information about the parameters
+        used by the forcefield, and the default source
+        properties from which to obtain those parameters */
+    class SIREFF_EXPORT Parameters
+    {
+    public:
+        Parameters();
+        virtual ~Parameters();
+    };
+
+    virtual const Parameters& parameters() const=0;
 
     const QString& name() const;
 

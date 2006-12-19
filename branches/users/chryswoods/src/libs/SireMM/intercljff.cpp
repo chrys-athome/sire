@@ -20,6 +20,32 @@ using namespace SireMM::detail;
 
 using namespace SireDB;
 
+///////////
+/////////// Implementation of InterCLJFF::Components
+///////////
+
+/** Constructor */
+InterCLJFF::Components::Components() : CLJFF::Components()
+{}
+
+/** Copy constructor */
+InterCLJFF::Components::Components(const Components &other)
+           : CLJFF::Components(other)
+{}
+
+/** Construct with a specified name */
+InterCLJFF::Components::Components(const QString &basename)
+           : CLJFF::Components(basename)
+{}
+
+/** Destructor */
+InterCLJFF::Components::~Components()
+{}
+
+///////////
+/////////// Implementation of InterCLJFF
+///////////
+
 /** Constructor */
 InterCLJFF::InterCLJFF() : CLJFF()
 {}

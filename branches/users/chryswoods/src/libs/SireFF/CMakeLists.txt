@@ -22,6 +22,7 @@ set ( SIREFF_SOURCES
       ffthreadworker.cpp
       ffworker.cpp
       forcefield.cpp
+      parametermap.cpp
     )
 
 add_library (SireFF ${SIREFF_SOURCES})

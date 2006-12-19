@@ -19,6 +19,32 @@ using namespace SireMM::detail;
 using namespace SireVol;
 using namespace SireDB;
 
+///////////
+/////////// Implementation of Tip4PFF::Components
+///////////
+
+/** Constructor */
+Tip4PFF::Components::Components() : CLJFF::Components()
+{}
+
+/** Copy constructor */
+Tip4PFF::Components::Components(const Components &other)
+           : CLJFF::Components(other)
+{}
+
+/** Construct with a specified name */
+Tip4PFF::Components::Components(const QString &basename)
+           : CLJFF::Components(basename)
+{}
+
+/** Destructor */
+Tip4PFF::Components::~Components()
+{}
+
+///////////
+/////////// Implementation of Tip4PFF
+///////////
+
 /** Constructor */
 Tip4PFF::Tip4PFF() : CLJFF()
 {}

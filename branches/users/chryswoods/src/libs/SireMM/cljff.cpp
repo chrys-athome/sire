@@ -29,6 +29,24 @@ CLJWorkspace::~CLJWorkspace()
 {}
 
 ////////////
+//////////// Implementation of CLJFF::Parameters
+////////////
+
+/** Constructor - by default the coulomb parameters come
+    from the 'charges' property, while the LJ parameters
+    come from the 'ljs' property */
+CLJFF::Parameters::Parameters()
+      : coulomb_params("coulomb", "charges"), lj_params("lj", "ljs")
+{}
+        
+/** Destructor */
+CLJFF::Parameters::~Parameters()
+{}
+
+/** Static object returned by CLJFF::parameters() */
+CLJFF::Parameters CLJFF::Parameters::default_sources;
+
+////////////
 //////////// Implementation of CLJFF::Components
 ////////////
 
