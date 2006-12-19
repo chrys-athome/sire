@@ -23,12 +23,12 @@ namespace SireMM
 using SireMol::Molecule;
 
 /** This class is used to hold all of the atomic charges for the
-    atoms in a molecule. All of the atomic charges are held in 
+    atoms in a molecule. All of the atomic charges are held in
     groups that correspond to the CutGroups in the molecule.
-    
-    This is really just a thin-wrapper around 
+
+    This is really just a thin-wrapper around
     QVector< QVector<ChargeParameter> >
-    
+
     @author Christopher Woods
 */
 class SIREMM_EXPORT AtomicCharges : public SireMol::PropertyBase,
@@ -40,28 +40,30 @@ friend QDataStream& ::operator>>(QDataStream&, AtomicCharges&);
 
 public:
     AtomicCharges();
-    
+
     AtomicCharges(const QVector< QVector<ChargeParameter> > &charges);
-    
+
+    AtomicCharges(const QVector<ChargeParameter> &charges);
+
     AtomicCharges(const AtomicCharges &other);
-    
+
     ~AtomicCharges();
-    
+
     static const char* typeName()
     {
         return "SireMM::AtomicCharges";
     }
-    
+
     const char* what() const
     {
         return AtomicCharges::typeName();
     }
-    
+
     AtomicCharges* clone() const
     {
         return new AtomicCharges(*this);
     }
-    
+
     bool isCompatibleWith(const Molecule &molecule) const;
 };
 

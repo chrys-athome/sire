@@ -80,6 +80,10 @@ export_FFBase()
             , &::SireFF::FFBase::components
             , bp::default_call_policies() )
         .def(
+            "p_components"
+            , &::SireFF::FFBase::p_components
+            , bp::return_value_policy< bp::copy_const_reference, bp::default_call_policies >() )
+        .def(
             "energies"
             , &::SireFF::FFBase::energies
             , bp::default_call_policies() )
@@ -120,6 +124,15 @@ export_FFBase()
             , bp::pure_virtual( &::SireFF::FFBase::what )
             , bp::default_call_policies() )
         .staticmethod( "TOTAL" );
+
+    bp::class_<FFBase::Components, boost::noncopyable>( "FFBase_Components", bp::no_init )
+
+        .def( "total", &FFBase::Components::total,
+                       bp::return_value_policy< bp::copy_const_reference, bp::default_call_policies >() )
+
+        .def( "describe_total", &FFBase::Components::describe_total,
+                       bp::default_call_policies() ).staticmethod("describe_total")
+    ;
 }
 
 }

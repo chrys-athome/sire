@@ -18,6 +18,8 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs
 # Define the sources in SireMM
 set ( WRAPMM_SOURCES
 
+      atomiccharges.py.cpp
+      atomicljs.py.cpp
       cljff.py.cpp
       combiningrules.py.cpp
       intercljff.py.cpp

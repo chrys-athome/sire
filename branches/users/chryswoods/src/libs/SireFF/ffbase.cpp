@@ -21,6 +21,51 @@ using namespace SireDB;
 using namespace SireStream;
 
 ///////////
+/////////// Implementation of FFBase::Components
+///////////
+
+/** Constructor */
+FFBase::Components::Components()
+{}
+
+/** Construct using the supplied base name */
+FFBase::Components::Components(const QString &basename)
+{
+    FFBase::Components::setBaseName(basename);
+}
+
+/** Copy constructor */
+FFBase::Components::Components(const FFBase::Components &other)
+       : e_total(other.e_total)
+{}
+
+/** Destructor */
+FFBase::Components::~Components()
+{}
+
+/** Describe the 'total' component */
+QString FFBase::Components::describe_total()
+{
+    return QObject::tr("The total energy of the forcefield.");
+}
+
+/** Get the function from the root name and the
+    component name */
+Function FFBase::Components::getFunction(const QString &root,
+                                       const QString &component)
+{
+    return Function( QString("E_{%1}_{%2}").arg(root,component) )( Symbol("x"),
+                                                                   Symbol("y"),
+                                                                   Symbol("z") );
+}
+
+/** Set the names of the functions from the passed base name */
+void FFBase::Components::setBaseName(const QString &basename)
+{
+    e_total = getFunction(basename,"total");
+}
+
+///////////
 /////////// Implementation of detail::ComponentInfo
 ///////////
 
@@ -105,10 +150,15 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, FFBase &ffbase)
 
     if (v == 1)
     {
-        ds >> ffbase.ffname >> ffbase.id_to_component
+        QString newname;
+
+        ds >> newname >> ffbase.id_to_component
            >> ffbase.nrg_components
            >> ffbase.mols_in_ff // >> ffbase.res_in_ff
            >> ffbase.isdirty;
+
+        //tell the forcefield about the change in name
+        ffbase.setName(newname);
     }
     else
         throw version_error(v, "1", r_ffbase, CODELOC);
@@ -134,12 +184,21 @@ FFBase::FFBase(const FFBase &other)
        : QSharedData(), ffname(other.ffname), id_to_component(other.id_to_component),
          nrg_components(other.nrg_components),
          mols_in_ff(other.mols_in_ff), //res_in_ff(other.res_in_ff),
+         components_ptr( other.components_ptr->clone() ),
          isdirty(other.isdirty)
 {}
 
 /** Destructor */
 FFBase::~FFBase()
 {}
+
+/** Register the passed components */
+void FFBase::registerComponents(FFBase::Components *components)
+{
+    BOOST_ASSERT( components != 0 );
+
+    components_ptr.reset( components );
+}
 
 /** Label the forcefield as dirty (in need of an energy recalculation) */
 void FFBase::setDirty()
@@ -168,6 +227,17 @@ void FFBase::registerComponents()
 const QString& FFBase::name() const
 {
     return ffname;
+}
+
+/** Set the name of this forcefield - this will change the names of all
+    of the forcefield components, so beware if you are already using functions
+    that are derived from components of this forcefield */
+void FFBase::setName(const QString &name)
+{
+    ffname = name;
+
+    BOOST_ASSERT( components_ptr.get() != 0 );
+    components_ptr->setBaseName(ffname);
 }
 
 /** Return the function represented by the component with ID 'componentid' */

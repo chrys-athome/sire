@@ -16,10 +16,10 @@ static const RegisterMetaType<AtomicCharges> r_atomchgs("SireMM::AtomicCharges")
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const AtomicCharges &atomchgs)
 {
-    writeHeader(ds, r_atomchgs, 1) 
+    writeHeader(ds, r_atomchgs, 1)
             << static_cast<const PropertyBase&>(atomchgs)
             << static_cast<const QVector< QVector<ChargeParameter> >&>(atomchgs);
-    
+
     return ds;
 }
 
@@ -27,7 +27,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const AtomicCharges &atom
 QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, AtomicCharges &atomchgs)
 {
     VersionID v = readHeader(ds, r_atomchgs);
-    
+
     if (v == 1)
     {
         ds >> static_cast<PropertyBase&>(atomchgs)
@@ -35,7 +35,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, AtomicCharges &atomchgs)
     }
     else
         throw version_error(v, "1", r_atomchgs, CODELOC);
-    
+
     return ds;
 }
 
@@ -49,11 +49,16 @@ AtomicCharges::AtomicCharges(const QVector< QVector<ChargeParameter> > &charges)
               : PropertyBase(), QVector< QVector<ChargeParameter> >(charges)
 {}
 
-/** Copy constructor */   
+/** Construct charges that are copied from 'charges' (single CutGroup) */
+AtomicCharges::AtomicCharges(const QVector<ChargeParameter> &charges)
+              : PropertyBase(), QVector< QVector<ChargeParameter> >(1, charges)
+{}
+
+/** Copy constructor */
 AtomicCharges::AtomicCharges(const AtomicCharges &other)
               : PropertyBase(other), QVector< QVector<ChargeParameter> >(other)
 {}
-    
+
 /** Destructor */
 AtomicCharges::~AtomicCharges()
 {}
@@ -62,21 +67,21 @@ AtomicCharges::~AtomicCharges()
 bool AtomicCharges::isCompatibleWith(const Molecule &molecule) const
 {
     const MoleculeInfo &molinfo = molecule.info();
-    
+
     int ncg = molinfo.nCutGroups();
-    
+
     if (this->count() != ncg)
         return false;
     else
     {
         const QVector<ChargeParameter> *params = this->constData();
-        
+
         for (int i=0; i<ncg; ++i)
         {
             if ( params[i].count() != molinfo.nAtoms(CutGroupID(i)) )
                 return false;
         }
     }
-    
+
     return true;
 }

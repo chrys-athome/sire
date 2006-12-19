@@ -1,6 +1,8 @@
 #ifndef SireFF_FFBASE_H
 #define SireFF_FFBASE_H
 
+#include <boost/scoped_ptr.hpp>
+
 #include "SireBase/sharedpolypointer.hpp"
 
 #include "SireCAS/function.h"
@@ -136,7 +138,44 @@ public:
     /** Return a clone of this forcefield */
     virtual FFBase* clone() const=0;
 
+    /** This encapsulated class must be derived by
+        each inheriting forcefield to provide information
+        about all of the components of the forcefield */
+    class Components
+    {
+    friend class FFBase;
+
+    public:
+        Components();
+        Components(const QString &basename);
+        Components(const Components &other);
+
+        virtual ~Components();
+
+        virtual Components* clone() const=0;
+
+        const Function& total() const
+        {
+            return e_total;
+        }
+
+        static QString describe_total();
+
+    protected:
+        virtual void setBaseName(const QString &basename);
+
+        static Function getFunction(const QString &root,
+                                    const QString &component);
+
+    private:
+        /** The function representing the total energy
+            of the forcefield */
+        Function e_total;
+    };
+
     const QString& name() const;
+
+    void setName(const QString &name);
 
     double energy();
     double energy(const Function &component);
@@ -149,6 +188,13 @@ public:
     }
 
     const Function& total() const;
+
+    /** Return the object describing the components of this
+        forcefield */
+    const FFBase::Components& p_components() const
+    {
+        return *components_ptr;
+    }
 
     const Function& component(int componentid) const;
     QList<Function> components() const;
@@ -174,6 +220,8 @@ public:
     void assertSameVersion(const Residue &residue) const;
 
 protected:
+    void registerComponents(FFBase::Components *components);
+
     void registerComponent(int id, const QString &name,
                            const QString &description);
 
@@ -214,6 +262,10 @@ private:
     /** Set of MolResNumID numbers of residues that are in this forcefield that
         are here without their parent molecules */
     //QSet<MolResNumID> res_in_ff;
+
+    /** Active pointer to the object containing the information about all
+        of the components of this forcefield */
+    boost::scoped_ptr<FFBase::Components> components_ptr;
 
     /** Whether or not this forcefield is dirty (requires an update) */
     bool isdirty;

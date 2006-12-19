@@ -14,14 +14,21 @@
 
 namespace bp = boost::python;
 
+using namespace SireFF;
+
 namespace SireMM
 {
 
-void  
+void
 SIREMM_EXPORT
 export_CLJFF()
 {
     bp::class_< CLJFF, bp::bases<SireFF::FFBase>, boost::noncopyable >( "CLJFF", bp::no_init )
+
+        .def(
+            "p_components"
+            , &::SireMM::CLJFF::p_components
+            , bp::return_value_policy< bp::copy_const_reference, bp::default_call_policies >() )
         .def(
             "COULOMB"
             , &::SireMM::CLJFF::COULOMB
@@ -48,6 +55,20 @@ export_CLJFF()
             , bp::return_value_policy< bp::copy_const_reference, bp::default_call_policies >() )
         .staticmethod( "COULOMB" )
         .staticmethod( "LJ" )
+    ;
+
+    bp::class_<CLJFF::Components, bp::bases<FFBase::Components> >("CLJFF_Components", bp::init<>())
+
+        .def( "coulomb", &CLJFF::Components::coulomb,
+                bp::return_value_policy< bp::copy_const_reference, bp::default_call_policies >() )
+        .def( "lj", &CLJFF::Components::lj,
+                bp::return_value_policy< bp::copy_const_reference, bp::default_call_policies >() )
+
+        .def( "describe_coulomb", &CLJFF::Components::describe_coulomb,
+                bp::default_call_policies() ).staticmethod("describe_coulomb")
+
+        .def( "describe_lj", &CLJFF::Components::describe_lj,
+                bp::default_call_policies() ).staticmethod("describe_lj")
     ;
 }
 

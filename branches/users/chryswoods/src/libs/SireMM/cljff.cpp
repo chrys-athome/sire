@@ -29,6 +29,52 @@ CLJWorkspace::~CLJWorkspace()
 {}
 
 ////////////
+//////////// Implementation of CLJFF::Components
+////////////
+
+/** Constructor */
+CLJFF::Components::Components() : FFBase::Components()
+{}
+
+/** Construct using the supplied basename */
+CLJFF::Components::Components(const QString &basename) : FFBase::Components()
+{
+    CLJFF::Components::setBaseName(basename);
+}
+
+/** Copy constructor */
+CLJFF::Components::Components(const CLJFF::Components &other)
+      : FFBase::Components(other),
+        e_coulomb(other.e_coulomb),
+        e_lj(other.e_lj)
+{}
+
+/** Destructor */
+CLJFF::Components::~Components()
+{}
+
+/** Set the names of the functions from the passed base name */
+void CLJFF::Components::setBaseName(const QString &basename)
+{
+    e_coulomb = getFunction(basename, "coulomb");
+    e_lj = getFunction(basename, "lj");
+
+    FFBase::Components::setBaseName(basename);
+}
+
+/** Describe the coulomb component */
+QString CLJFF::Components::describe_coulomb()
+{
+    return QObject::tr("The total coulomb (electrostatic) energy of the forcefield.");
+}
+
+/** Describe the LJ component */
+QString CLJFF::Components::describe_lj()
+{
+    return QObject::tr("The total Lennard-Jones (van der waals) energy of the forcefield.");
+}
+
+////////////
 //////////// Implementation of CLJFF
 ////////////
 
@@ -381,7 +427,11 @@ CLJFF::CLJFF(const Space &space, const SwitchingFunction &switchingfunction)
 CLJFF::CLJFF(const CLJFF &other)
       : FFBase(other),
         spce(other.spce), switchfunc(other.switchfunc)
-{}
+{
+    //get the pointer from the base class...
+    components_ptr = dynamic_cast<const CLJFF::Components*>( &(FFBase::p_components()) );
+    BOOST_ASSERT( components_ptr != 0 );
+}
 
 /** Destructor */
 CLJFF::~CLJFF()
@@ -391,6 +441,12 @@ CLJFF::~CLJFF()
     (the Coulomb and LJ components) */
 void CLJFF::registerComponents()
 {
+    std::auto_ptr<CLJFF::Components> ptr( new CLJFF::Components(name()) );
+
+    FFBase::registerComponents(ptr.get());
+
+    components_ptr = ptr.release();
+
     this->registerComponent( CLJFF::COULOMB(), "coul",
                              QObject::tr("The total electrostatic (coulomb) energy.") );
 

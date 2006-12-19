@@ -85,6 +85,43 @@ public:
 
     ~CLJFF();
 
+    class Components : public FFBase::Components
+    {
+    public:
+        Components();
+        Components(const Components &other);
+        Components(const QString &basename);
+
+        ~Components();
+
+        Components* clone() const
+        {
+            return new Components(*this);
+        }
+
+        const Function& coulomb() const
+        {
+            return e_coulomb;
+        }
+
+        const Function& lj() const
+        {
+            return e_lj;
+        }
+
+        static QString describe_coulomb();
+        static QString describe_lj();
+
+    protected:
+        void setBaseName(const QString &basename);
+
+    private:
+        /** The coulomb component */
+        Function e_coulomb;
+        /** The LJ component */
+        Function e_lj;
+    };
+
     const Space& space() const;
 
     const SwitchingFunction& switchingFunction() const;
@@ -97,6 +134,13 @@ public:
     static int LJ()
     {
         return 2;
+    }
+
+    /** Return the object describing the components of this
+        forcefield */
+    const CLJFF::Components& p_components() const
+    {
+        return *components_ptr;
     }
 
     const Function& coulomb() const;
@@ -154,6 +198,10 @@ private:
 
     /** The switching function used to truncate the CLJ interactions */
     SwitchingFunction switchfunc;
+
+    /** Pointer to the object containing the components of
+        this forcefield */
+    const CLJFF::Components *components_ptr;
 };
 
 /** Return the space in which this calculation is performed (the volume

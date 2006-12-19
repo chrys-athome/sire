@@ -19,6 +19,7 @@ set ( SIREMM_SOURCES
       assign_bonds.cpp       
       assign_dihedrals.cpp
       atomiccharges.cpp
+      atomicljs.cpp
       bonddb.cpp             
       bondgenerator.cpp      
       bondtable.cpp          

@@ -12,12 +12,14 @@
 #include <QObject>
 
 #include "SireMol/atomnum.h"
+#include "SireMol/cutgroupnum.h"
 #include "SireMol/cgatomid.h"
 #include "SireMol/molcutgroupid.h"
 #include "SireMol/molcgatomid.h"
 #include "SireMol/resnumatomid.h"
 #include "SireMol/groupindexid.h"
 #include "SireMol/resnumindexid.h"
+#include "SireMol/residatomid.h"
 #include "SireMol/wrapID.hpp"
 
 #include "SirePy/str.hpp"
@@ -30,16 +32,19 @@ namespace SireMol
 {
 
 
-void  
+void
 SIREMOL_EXPORT
 export_IDTypes()
 {
     wrap_ID<AtomNum>("AtomNum");
     wrap_ID<ResNum>("ResNum");
+    wrap_ID<ResID>("ResID");
     wrap_ID<CutGroupID>("CutGroupID");
+    wrap_ID<CutGroupNum>("CutGroupNum");
     wrap_ID<MoleculeID>("MoleculeID");
     wrap_ID<GroupID>("GroupID");
     wrap_ID<Index>("Index");
+    wrap_ID<AtomID>("AtomID");
 
     class_<CGAtomID>("CGAtomID", init<>())
                 .def(init<CutGroupID,AtomID>())
@@ -97,7 +102,7 @@ export_IDTypes()
                 .def(init<ResNum,AtomID>())
                 .def(init<const ResNumAtomID&>())
                 .def("resNum", &ResNumAtomID::resNum)
-                .def("atomID", &CGAtomID::atomID)
+                .def("atomID", &ResNumAtomID::atomID)
                 .def(self == self)
                 .def(self != self)
                 .def(self == self)
@@ -111,6 +116,25 @@ export_IDTypes()
 
     convert_python_tuple_to_boost_tuple2<ResNum,AtomID>();
     implicitly_convertible< boost::tuple<ResNum,AtomID>, ResNumAtomID >();
+
+    class_<ResIDAtomID>("ResIDAtomID", init<>())
+                .def(init<ResID,AtomID>())
+                .def(init<const ResIDAtomID&>())
+                .def("resID", &ResIDAtomID::resID)
+                .def("atomID", &ResIDAtomID::atomID)
+                .def(self == self)
+                .def(self != self)
+                .def(self == self)
+                .def(self != self)
+                .def(self < self)
+                .def(self <= self)
+                .def(self > self)
+                .def(self >= self)
+                .def("__str__", &__str__<ResIDAtomID>)
+    ;
+
+    convert_python_tuple_to_boost_tuple2<ResID,AtomID>();
+    implicitly_convertible< boost::tuple<ResID,AtomID>, ResIDAtomID >();
 
     class_<GroupIndexID>("GroupIndexID", init<>())
                 .def(init<GroupID,Index>())
