@@ -27,8 +27,6 @@
 #include "moleculebonds.h"
 #include "idtypes.h"
 
-#include "property.h"
-
 #include "SireVol/coordgroup.h"
 
 SIRE_BEGIN_HEADER
@@ -65,6 +63,8 @@ class ResNum;
 class ResID;
 class CutGroupID;
 class MoleculeID;
+
+class Property;
 
 class EditMol;
 class EditMolData;
@@ -214,16 +214,10 @@ public:
 
    ///// Getting and setting properties ////////////////////
     const Property& getProperty(const QString &name) const;
-    
-    void setProperty(const QString &name, const PropertyBase &value);
-    void addProperty(const QString &name, const PropertyBase &value);
-    
+
     void setProperty(const QString &name, const Property &value);
     void addProperty(const QString &name, const Property &value);
-    
-    void setProperty(const QString &name, const QVariant &value);
-    void addProperty(const QString &name, const QVariant &value);
-    
+
     const QHash<QString,Property>& properties() const;
    /////////////////////////////////////////////////////////
 

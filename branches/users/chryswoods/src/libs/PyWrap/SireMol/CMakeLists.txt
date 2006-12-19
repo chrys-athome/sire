@@ -21,6 +21,7 @@ set ( WRAPMOL_SOURCES
       editres.py.cpp
       idmolatom.py.cpp
       molecule.py.cpp
+      property.py.cpp
       residue.py.cpp
 
       qlist_siremol.py.cpp

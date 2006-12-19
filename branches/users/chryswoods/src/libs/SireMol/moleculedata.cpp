@@ -33,6 +33,8 @@
 #include "atominfogroup.h"
 #include "idmolatom.h"
 
+#include "property.h"
+
 #include "cutgroupid.h"
 #include "resid.h"
 #include "resnum.h"
@@ -67,7 +69,7 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const MoleculeData &mold
 {
     writeHeader(ds, r_pvt, 1) << moldata._id << moldata._molversion
                               << moldata._coords << moldata._molinfo
-                              << moldata._molbonds;
+                              << moldata._molbonds << moldata._properties;
     return ds;
 }
 
@@ -80,7 +82,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MoleculeData &moldata)
     {
         ds >> moldata._id >> moldata._molversion
            >> moldata._coords >> moldata._molinfo
-           >> moldata._molbonds;
+           >> moldata._molbonds >> moldata._properties;
     }
     else
         throw version_error(v, "1", r_pvt, CODELOC);
@@ -132,7 +134,8 @@ MoleculeData::MoleculeData(const MoleculeData &other)
                   _molversion(other._molversion),
                   _molinfo(other._molinfo),
                   _molbonds(other._molbonds),
-                  _coords(other._coords)
+                  _coords(other._coords),
+                  _properties(other._properties)
 {}
 
 /** Destructor */
@@ -147,6 +150,7 @@ MoleculeData& MoleculeData::operator=(const MoleculeData &other)
     _molinfo = other._molinfo;
     _molbonds = other._molbonds;
     _coords = other._coords;
+    _properties = other._properties;
 
     return *this;
 }
@@ -167,21 +171,25 @@ MoleculeData& MoleculeData::operator=(const detail::MolData &moldata)
 /** Comparison operator */
 bool MoleculeData::operator==(const MoleculeData &other) const
 {
-    return _id == other._id and
-           _molversion == other._molversion and
-           _molinfo == other._molinfo and
-           _molbonds == other._molbonds and
-           _coords == other._coords;
+    return (this == &other) or
+           (_id == other._id and
+            _molversion == other._molversion and
+            _molinfo == other._molinfo and
+            _molbonds == other._molbonds and
+            _coords == other._coords and
+            _properties == other._properties);
 }
 
 /** Comparison operator */
 bool MoleculeData::operator!=(const MoleculeData &other) const
 {
-    return _id != other._id or
-           _molversion != other._molversion or
-           _molinfo != other._molinfo or
-           _molbonds != other._molbonds or
-           _coords != other._coords;
+    return (this != &other) and
+           (_id != other._id or
+            _molversion != other._molversion or
+            _molinfo != other._molinfo or
+            _molbonds != other._molbonds or
+            _coords != other._coords or
+            _properties != other._properties);
 }
 
 /** Return the ID number of the molecule */
@@ -227,6 +235,59 @@ EditMol MoleculeData::edit() const
                   "Editing a molecule is not yet supported!"), CODELOC );
 
     return EditMol();
+}
+
+/** Return the property called 'name'
+
+    \throw SireMol::missing_property
+*/
+const Property& MoleculeData::getProperty(const QString &name) const
+{
+    QHash<QString,Property>::const_iterator it = _properties.find(name);
+
+    if (it == _properties.constEnd())
+        throw SireMol::missing_property( QObject::tr(
+                "There is no property called \"%1\" in the molecule \"%2\" (%3:%4)")
+                    .arg(name, info().name()).arg(ID()).arg(version().toString()),
+                        CODELOC );
+
+    return *it;
+}
+
+/** Set the value of the property called 'name' to 'value' - this will
+    replace any existing property with that name. */
+void MoleculeData::setProperty(const QString &name, const Property &value)
+{
+    _properties.insert( name, value );
+
+    //this has changed the major version of the molecule
+    this->incrementMajorVersion();
+}
+
+/** Add a property called 'name' with value 'value'. This will only add the
+    property if there is not an already existing property with that name.
+
+    \throw SireMol::duplicate_property
+*/
+void MoleculeData::addProperty(const QString &name, const Property &value)
+{
+    if (_properties.contains(name))
+        throw SireMol::duplicate_property( QObject::tr(
+              "Cannot add the property \"%1\" to the molecule \"%2\" (%3:%4) "
+              "as this molecule already has a property with this name.")
+                  .arg(name, info().name()).arg(ID()).arg(version().toString()),
+                      CODELOC );
+
+    _properties.insert( name, value );
+
+    //this has changed the major version of the molecule
+    this->incrementMajorVersion();
+}
+
+/** Return a hash of all of the properties associated with this molecule */
+const QHash<QString,Property>& MoleculeData::properties() const
+{
+    return _properties;
 }
 
 /** Return the connectivity of this molecule */

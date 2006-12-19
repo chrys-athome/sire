@@ -20,6 +20,8 @@
 #include "cutgroup.h"
 #include "editmol.h"
 
+#include "property.h"
+
 #include "moleculeinfo.h"
 #include "moleculebonds.h"
 #include "residuebonds.h"
@@ -181,6 +183,79 @@ EditMol Molecule::edit() const
 {
     return d->edit();
 }
+
+/** Return the property called 'name'
+
+    \throw SireMol::missing_property
+*/
+const Property& Molecule::getProperty(const QString &name) const
+{
+    return d->getProperty(name);
+}
+
+/** Set the value of the property called 'name' to 'value' - this will
+    replace any existing property with that name. */
+void Molecule::setProperty(const QString &name, const Property &value)
+{
+    //this property must be compatible with this molecule
+    value->assertCompatibleWith(*this);
+
+    d->setProperty(name, value);
+}
+
+/** Add a property called 'name' with value 'value'. This will only add the
+    property if there is not an already existing property with that name.
+
+    \throw SireMol::duplicate_property
+*/
+void Molecule::addProperty(const QString &name, const Property &value)
+{
+    //this property must be compatible with this molecule
+    value->assertCompatibleWith(*this);
+
+    d->addProperty(name, value);
+}
+
+/** Set the property called 'name' to the value 'value'. This will overwrite
+    any existing property with this name. */
+void Molecule::setProperty(const QString &name, const PropertyBase &value)
+{
+    this->setProperty( name, Property(value) );
+}
+
+/** Add a property called 'name' with value 'value'. This will only add the
+    property if there is not an already existing property with that name.
+
+    \throw SireMol::duplicate_property
+*/
+void Molecule::addProperty(const QString &name, const PropertyBase &value)
+{
+    this->addProperty( name, Property(value) );
+}
+
+/** Set the property called 'name' to the value 'value'. This will overwrite
+    any existing property with this name. */
+void Molecule::setProperty(const QString &name, const QVariant &value)
+{
+    this->setProperty( name, Property( new VariantProperty(value) ) );
+}
+
+/** Add a property called 'name' with value 'value'. This will only add the
+    property if there is not an already existing property with that name.
+
+    \throw SireMol::duplicate_property
+*/
+void Molecule::addProperty(const QString &name, const QVariant &value)
+{
+    this->addProperty( name, Property( new VariantProperty(value) ) );
+}
+
+/** Return a hash of all of the properties associated with this molecule */
+const QHash<QString,Property>& Molecule::properties() const
+{
+    return d->properties();
+}
+
 
 /** @name Molecule::operator[...]
     Indexing operators used to return copies of the objects in the molecule
@@ -700,7 +775,7 @@ Atom Molecule::atom(const CGAtomID &cgatmid) const
     return d->atom(cgatmid);
 }
 
-/** Return a copy of the atom at index 'atomid' 
+/** Return a copy of the atom at index 'atomid'
 
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
@@ -731,7 +806,7 @@ Vector Molecule::coordinates(const CGAtomID &cgatmid) const
     return d->coordinates(cgatmid);
 }
 
-/** Return a copy of the coordinates of the atom at index 'atomid' 
+/** Return a copy of the coordinates of the atom at index 'atomid'
 
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom

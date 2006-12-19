@@ -17,6 +17,9 @@ include_directories( ${CMAKE_SOURCE_DIR}/src/libs
 
 # Define the sources in SireQt
 set ( WRAPQT_SOURCES
+
+      qvariant.py.cpp
+
       wrap_qbytearray.cpp            
       wrap_qchar.cpp                 
       wrap_qdatastream.cpp           

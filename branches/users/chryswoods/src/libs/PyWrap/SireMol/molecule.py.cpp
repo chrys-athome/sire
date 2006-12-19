@@ -11,6 +11,7 @@
 #include "SireMol/atom.h"
 
 #include "SireMol/editmol.h"
+#include "SireMol/property.h"
 
 #include "SireMol/atomidgroup.h"
 
@@ -50,6 +51,18 @@ export_Molecule()
         .def(
             "ID"
             , &::SireMol::Molecule::ID
+            , bp::default_call_policies() )
+        .def(
+            "addProperty"
+            , (void ( ::SireMol::Molecule::* )( ::QString const &, ::SireMol::Property const & ) )( &::SireMol::Molecule::addProperty )
+            , bp::default_call_policies() )
+        .def(
+            "addProperty"
+            , (void ( ::SireMol::Molecule::* )( ::QString const &, ::SireMol::PropertyBase const & ) )( &::SireMol::Molecule::addProperty )
+            , bp::default_call_policies() )
+        .def(
+            "addProperty"
+            , (void ( ::SireMol::Molecule::* )( ::QString const &, ::QVariant const & ) )( &::SireMol::Molecule::addProperty )
             , bp::default_call_policies() )
         .def(
             "angle"
@@ -361,6 +374,11 @@ export_Molecule()
             , &::SireMol::Molecule::edit
             , bp::default_call_policies() )
         .def(
+            "getProperty"
+            , &::SireMol::Molecule::getProperty
+            , ( bp::arg("name") )
+            , bp::return_value_policy<bp::copy_const_reference>() )
+        .def(
             "getWeight"
             , &::SireMol::Molecule::getWeight
             , ( bp::arg("group0"), bp::arg("group1"), bp::arg("weightfunc") )
@@ -513,6 +531,10 @@ export_Molecule()
             , (::SireMol::Atom ( ::SireMol::Molecule::* )( ::SireMol::IDMolAtom const & ) const)( &::SireMol::Molecule::operator[] )
             , ( bp::arg("atomid") )
             , bp::default_call_policies() )
+        .def(
+            "properties"
+            , &::SireMol::Molecule::properties
+            , bp::return_value_policy<bp::copy_const_reference>() )
         .def(
             "residue"
             , (::SireMol::Residue ( ::SireMol::Molecule::* )( ::SireMol::ResNum ) const)( &::SireMol::Molecule::residue )
@@ -848,6 +870,18 @@ export_Molecule()
         .def(
             "setNewID"
             , &::SireMol::Molecule::setNewID
+            , bp::default_call_policies() )
+        .def(
+            "setProperty"
+            , (void ( ::SireMol::Molecule::* )( ::QString const &, ::SireMol::Property const & ) )( &::SireMol::Molecule::setProperty )
+            , bp::default_call_policies() )
+        .def(
+            "setProperty"
+            , (void ( ::SireMol::Molecule::* )( ::QString const &, ::SireMol::PropertyBase const & ) )( &::SireMol::Molecule::setProperty )
+            , bp::default_call_policies() )
+        .def(
+            "setProperty"
+            , (void ( ::SireMol::Molecule::* )( ::QString const &, ::QVariant const & ) )( &::SireMol::Molecule::setProperty )
             , bp::default_call_policies() )
         .def(
             "translate"

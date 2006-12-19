@@ -19,3 +19,5 @@ static const RegisterMetaType<template_error> r_tmplerr("SireMol::template_error
 static const RegisterMetaType<anchor_error> r_ancerr("SireMol::anchor_error");
 static const RegisterMetaType<ring_error> r_ringerr("SireMol::ring_error");
 static const RegisterMetaType<incompatible_molecule> r_incompat("SireMol::incompatible_molecule");
+static const RegisterMetaType<missing_property> r_mprop("SireMol::missing_property");
+static const RegisterMetaType<duplicate_property> r_dprop("SireMol::duplicate_property");

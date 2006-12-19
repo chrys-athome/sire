@@ -69,6 +69,9 @@ class ResNum;
 class AtomIndex;
 class CutGroupID;
 
+class Property;
+class PropertyBase;
+
 class Bond;
 class Angle;
 class Dihedral;
@@ -161,6 +164,22 @@ public:
 
    ////// Interfacing with EditMol /////////////////////////
     EditMol edit() const;
+   /////////////////////////////////////////////////////////
+
+
+   ///// Getting and setting properties ////////////////////
+    const Property& getProperty(const QString &name) const;
+
+    void setProperty(const QString &name, const PropertyBase &value);
+    void addProperty(const QString &name, const PropertyBase &value);
+
+    void setProperty(const QString &name, const Property &value);
+    void addProperty(const QString &name, const Property &value);
+
+    void setProperty(const QString &name, const QVariant &value);
+    void addProperty(const QString &name, const QVariant &value);
+
+    const QHash<QString,Property>& properties() const;
    /////////////////////////////////////////////////////////
 
 
