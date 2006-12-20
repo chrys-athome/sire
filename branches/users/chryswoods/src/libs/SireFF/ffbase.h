@@ -3,15 +3,15 @@
 
 #include <boost/scoped_ptr.hpp>
 
+#include <QSet>
+
 #include "SireBase/sharedpolypointer.hpp"
 
 #include "SireCAS/function.h"
 #include "SireCAS/values.h"
 
 #include "SireMol/moleculeid.h"
-//#include "SireMol/molresnumid.h"
 
-#include "changedmols.h"
 #include "parametermap.h"
 
 SIRE_BEGIN_HEADER
@@ -19,29 +19,15 @@ SIRE_BEGIN_HEADER
 namespace SireFF
 {
 class FFBase;
-
-namespace detail
-{
-class ComponentInfo;
-}
-
 }
 
 QDataStream& operator<<(QDataStream&, const SireFF::FFBase&);
 QDataStream& operator>>(QDataStream&, SireFF::FFBase&);
 
-QDataStream& operator<<(QDataStream&, const SireFF::detail::ComponentInfo&);
-QDataStream& operator>>(QDataStream&, SireFF::detail::ComponentInfo&);
-
 namespace SireMol
 {
 class Molecule;
 class Residue;
-}
-
-namespace SireDB
-{
-class ParameterTable;
 }
 
 namespace SireFF
@@ -53,68 +39,13 @@ using SireCAS::Function;
 using SireCAS::Values;
 
 using SireMol::MoleculeID;
-//using SireMol::MolResNumID;
 using SireMol::Molecule;
 using SireMol::Residue;
-
-using SireDB::ParameterTable;
-
-namespace detail
-{
-    /** Small internal class used to hold information about a
-        component of the forcefield
-
-        @author Christopher Woods
-    */
-    class ComponentInfo
-    {
-
-    friend QDataStream& ::operator<<(QDataStream&, const ComponentInfo&);
-    friend QDataStream& ::operator>>(QDataStream&, ComponentInfo&);
-
-    public:
-        ComponentInfo();
-        ComponentInfo(const QString &root, const QString &name,
-                      const QString &description);
-
-        ComponentInfo(const ComponentInfo &other);
-
-        ~ComponentInfo();
-
-        void setRoot(const QString &root);
-
-        /** Return the component's name */
-        const QString& name() const
-        {
-            return nme;
-        }
-
-        /** Return the component's description */
-        const QString& description() const
-        {
-            return desc;
-        }
-
-        /** Return the function used to represent the component */
-        const Function& function() const
-        {
-            return func;
-        }
-
-    private:
-        /** The name of the component */
-        QString nme;
-        /** A description of the component */
-        QString desc;
-        /** The function used to represent the component */
-        Function func;
-    };
-}
 
 /**
 This class is the base class of all of the forcefield classes. The forcefields all form
 a polymorphic class hierarchy derived from this class. They are then held via
-the DynamicSharedPtr in ForceField, which provides the common user-interface to the
+the SharedPolyPointer in ForceField, which provides the common user-interface to the
 forcefields.
 
 @author Christopher Woods
@@ -162,8 +93,18 @@ public:
 
         static QString describe_total();
 
+        bool contains(const Function &function) const
+        {
+            return symbolids.contains(function.ID());
+        }
+
+        void assertContains(const Function &function) const;
+
     protected:
         virtual void setBaseName(const QString &basename);
+
+        void unregisterFunction(const Function &function);
+        void registerFunction(const Function &function);
 
         static Function getFunction(const QString &root,
                                     const QString &component);
@@ -172,7 +113,18 @@ public:
         /** The function representing the total energy
             of the forcefield */
         Function e_total;
+
+        /** The SymbolIDs of all of the functions that
+            represent the components */
+        QSet<SireCAS::SymbolID> symbolids;
     };
+
+    /** Return the object describing the components of this
+        forcefield */
+    const FFBase::Components& components() const
+    {
+        return *components_ptr;
+    }
 
     /** This encapsulated class must be derived by all
         inheriting classes to provide the object
@@ -183,13 +135,13 @@ public:
     {
     public:
         Parameters();
+        Parameters(const Parameters &other);
         virtual ~Parameters();
     };
 
-    virtual const Parameters& parameters() const=0;
+    virtual const FFBase::Parameters& parameters() const=0;
 
     const QString& name() const;
-
     void setName(const QString &name);
 
     double energy();
@@ -197,54 +149,17 @@ public:
 
     Values energies();
 
-    static int TOTAL()
-    {
-        return 0;
-    }
-
-    const Function& total() const;
-
-    /** Return the object describing the components of this
-        forcefield */
-    const FFBase::Components& p_components() const
-    {
-        return *components_ptr;
-    }
-
-    const Function& component(int componentid) const;
-    QList<Function> components() const;
-
-    virtual const Molecule& molecule(MoleculeID molid) const=0;
-    //virtual const Residue& residue(const MolResNumID &molresid) const=0;
-
     virtual bool move(const Molecule &mol)=0;
     virtual bool move(const Residue &res)=0;
 
     bool isDirty() const;
     bool isClean() const;
 
-    void assertContains(const Function &component) const;
-
-    void assertContains(const Molecule &molecule) const;
-    void assertContains(const Residue &residue) const;
-
-    void assertSameMajorVersion(const Molecule &molecule) const;
-    void assertSameMajorVersion(const Residue &residue) const;
-
-    void assertSameVersion(const Molecule &molecule) const;
-    void assertSameVersion(const Residue &residue) const;
-
 protected:
     void registerComponents(FFBase::Components *components);
 
-    void registerComponent(int id, const QString &name,
-                           const QString &description);
-
     void setComponent(const Function &comp, double nrg);
     void changeComponent(const Function &comp, double delta);
-
-    void addToRegister(const Molecule &molecule);
-    void addToRegister(const Residue &residue);
 
     void setDirty();
     void setClean();
@@ -258,25 +173,13 @@ protected:
     virtual void recalculateEnergy()=0;
 
 private:
-    void registerComponents();
-
     /** The name of this forcefield - this may be used to give a unique
         name to all of the component-symbols in this forcefield. */
     QString ffname;
 
-    /** Hash mapping component ID numbers to their function */
-    QHash< int, detail::ComponentInfo > id_to_component;
-
     /** All of the cached energy components in this forcefield, indexed
         by their symbol ID number (includes the total energy) */
     Values nrg_components;
-
-    /** Set of MoleculeID numbers of the molecules that are in this forcefield */
-    QSet<MoleculeID> mols_in_ff;
-
-    /** Set of MolResNumID numbers of residues that are in this forcefield that
-        are here without their parent molecules */
-    //QSet<MolResNumID> res_in_ff;
 
     /** Active pointer to the object containing the information about all
         of the components of this forcefield */

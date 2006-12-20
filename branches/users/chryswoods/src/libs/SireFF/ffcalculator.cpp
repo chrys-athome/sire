@@ -1,9 +1,12 @@
 
 #include "SireCAS/qhash_sirecas.h"
 
+#include "SireMol/molecule.h"
+
 #include "ffcalculator.h"
 
 using namespace SireFF;
+using namespace SireMol;
 
 /////////
 ///////// Implementation of FFCalculatorBase
@@ -33,7 +36,7 @@ FFCalculator::FFCalculator(const ForceField &forcefield)
     if (not ffield.isDirty())
     {
         nrg_components = ffield.energies();
-        total_nrg = nrg_components.value( ffield.total() );
+        total_nrg = nrg_components.value( ffield.components().total() );
     }
 }
 
@@ -56,14 +59,19 @@ double FFCalculator::getEnergies(Values &components)
 */
 const Molecule& FFCalculator::molecule(MoleculeID molid) const
 {
-    return ffield.molecule(molid);
+    //return ffield.molecule(molid);
+    #warning Broken FFCalculator::molecule()
+
+    throw SireError::incomplete_code("Missing FFCalculator::molecule()", CODELOC);
+
+    return Molecule();
 }
 
 /** Recalculate the energy of the forcefield */
 void FFCalculator::calculateEnergy()
 {
     nrg_components = ffield.energies();
-    total_nrg = nrg_components.value(ffield.total());
+    total_nrg = nrg_components.value(ffield.components().total());
 }
 
 /** Move the molecule 'molecule' and return whether the forcefield
@@ -91,7 +99,7 @@ bool FFCalculator::setForceField(const ForceField &forcefield)
     else
     {
         nrg_components = ffield.energies();
-        total_nrg = nrg_components.value(ffield.total());
+        total_nrg = nrg_components.value(ffield.components().total());
         return false;
     }
 }

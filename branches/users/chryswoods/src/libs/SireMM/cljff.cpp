@@ -36,9 +36,14 @@ CLJWorkspace::~CLJWorkspace()
     from the 'charges' property, while the LJ parameters
     come from the 'ljs' property */
 CLJFF::Parameters::Parameters()
-      : coulomb_params("coulomb", "charges"), lj_params("lj", "ljs")
+      : FFBase::Parameters(), coulomb_params("coulomb", "charges"), lj_params("lj", "ljs")
 {}
-        
+
+/** Copy constructor */
+CLJFF::Parameters::Parameters(const CLJFF::Parameters &other)
+      : FFBase::Parameters(other), coulomb_params(other.coulomb_params), lj_params(other.lj_params)
+{}
+
 /** Destructor */
 CLJFF::Parameters::~Parameters()
 {}
@@ -74,8 +79,14 @@ CLJFF::Components::~Components()
 /** Set the names of the functions from the passed base name */
 void CLJFF::Components::setBaseName(const QString &basename)
 {
+    this->unregisterFunction(e_coulomb);
+    this->unregisterFunction(e_lj);
+
     e_coulomb = getFunction(basename, "coulomb");
     e_lj = getFunction(basename, "lj");
+
+    this->registerFunction(e_coulomb);
+    this->registerFunction(e_lj);
 
     FFBase::Components::setBaseName(basename);
 }
@@ -447,7 +458,7 @@ CLJFF::CLJFF(const CLJFF &other)
         spce(other.spce), switchfunc(other.switchfunc)
 {
     //get the pointer from the base class...
-    components_ptr = dynamic_cast<const CLJFF::Components*>( &(FFBase::p_components()) );
+    components_ptr = dynamic_cast<const CLJFF::Components*>( &(FFBase::components()) );
     BOOST_ASSERT( components_ptr != 0 );
 }
 
@@ -464,24 +475,4 @@ void CLJFF::registerComponents()
     FFBase::registerComponents(ptr.get());
 
     components_ptr = ptr.release();
-
-    this->registerComponent( CLJFF::COULOMB(), "coul",
-                             QObject::tr("The total electrostatic (coulomb) energy.") );
-
-    this->registerComponent( CLJFF::LJ(), "lj",
-                             QObject::tr("The total vdw (Lennard Jones) energy.") );
-}
-
-/** Return the function representing the coulomb energy component of this
-    forcefield */
-const Function& CLJFF::coulomb() const
-{
-    return this->component(CLJFF::COULOMB());
-}
-
-/** Return the function representing the LJ energy component of this
-    forcefield */
-const Function& CLJFF::lj() const
-{
-    return this->component(CLJFF::LJ());
 }

@@ -44,40 +44,21 @@ public:
     const char* what() const;
 
     const QString& name() const;
+    void setName(const QString& name);
+
+    const FFBase::Components& components() const;
+    const FFBase::Parameters& parameters() const;
 
     double energy();
     double energy(const Function &component);
 
     Values energies();
 
-    static int TOTAL()
-    {
-        return FFBase::TOTAL();
-    }
-
-    const Function& total() const;
-    const Function& component(int componentid) const;
-    QList<Function> components() const;
-
-    const Molecule& molecule(MoleculeID molid) const;
-    //virtual const Residue& residue(const MolResNumID &molresid) const=0;
-
     bool move(const Molecule &mol);
     bool move(const Residue &res);
 
     bool isDirty() const;
     bool isClean() const;
-
-    void assertContains(const Function &component) const;
-
-    void assertContains(const Molecule &molecule) const;
-    void assertContains(const Residue &residue) const;
-
-    void assertSameMajorVersion(const Molecule &molecule) const;
-    void assertSameMajorVersion(const Residue &residue) const;
-
-    void assertSameVersion(const Molecule &molecule) const;
-    void assertSameVersion(const Residue &residue) const;
 
     template<class T>
     bool isA() const;
@@ -96,10 +77,28 @@ inline const char* ForceField::what() const
     return d->what();
 }
 
+/** Return the components in this forcefield */
+inline const FFBase::Components& ForceField::components() const
+{
+    return d->components();
+}
+
+/** Return the parameters necessary for this forcefield */
+inline const FFBase::Parameters& ForceField::parameters() const
+{
+    return d->parameters();
+}
+
 /** Return the name of the forcefield */
 inline const QString& ForceField::name() const
 {
     return d->name();
+}
+
+/** Set the name of the forcefield */
+inline void ForceField::setName(const QString &name)
+{
+    d->setName(name);
 }
 
 /** Return the total energy of the forcefield */
@@ -122,37 +121,6 @@ inline double ForceField::energy(const Function &component)
 inline Values ForceField::energies()
 {
     return d->energies();
-}
-
-/** Return the function representing the total energy of this forcefield */
-inline const Function& ForceField::total() const
-{
-    return d->total();
-}
-
-/** Return the function representing the component with ID == componentid
-
-    \throw SireFF::missing_component
-*/
-inline const Function& ForceField::component(int componentid) const
-{
-    return d->component(componentid);
-}
-
-/** Return a list of the functions representing all of the components
-    in this forcefield */
-inline QList<Function> ForceField::components() const
-{
-    return d->components();
-}
-
-/** Return the molecule in this forcefield with ID == molid
-
-    \throw SireMol::missing_molecule
-*/
-inline const Molecule& ForceField::molecule(MoleculeID molid) const
-{
-    return d->molecule(molid);
 }
 
 /** Move the molecule 'mol' */
@@ -178,78 +146,6 @@ inline bool ForceField::isDirty() const
 inline bool ForceField::isClean() const
 {
     return d->isClean();
-}
-
-/** Assert that this forcefield contains a component represented by
-    'component'
-
-    \throw SireFF::missing_component
-*/
-inline void ForceField::assertContains(const Function &component) const
-{
-    d->assertContains(component);
-}
-
-/** Assert that this forcefield contains the molecule 'molecule'
-
-    \throw SireMol::missing_molecule
-*/
-inline void ForceField::assertContains(const Molecule &molecule) const
-{
-    d->assertContains(molecule);
-}
-
-/** Assert that this forcefield contains the residue 'residue'
-
-    \throw SireMol::missing_residue
-*/
-inline void ForceField::assertContains(const Residue &residue) const
-{
-    d->assertContains(residue);
-}
-
-/** Assert that the molecule 'molecule' has the same major version as
-    the copy in this forcefield
-
-    \throw SireMol::missing_molecule
-    \throw SireError::version_error
-*/
-inline void ForceField::assertSameMajorVersion(const Molecule &molecule) const
-{
-    d->assertSameMajorVersion(molecule);
-}
-
-/** Assert that the residue 'residue' has the same major version as
-    the copy in this forcefield
-
-    \throw SireMol::missing_residue
-    \throw SireError::version_error
-*/
-inline void ForceField::assertSameMajorVersion(const Residue &residue) const
-{
-    d->assertSameMajorVersion(residue);
-}
-
-/** Assert that the molecule 'molecule' has the same version as the
-    one in this forcefield
-
-    \throw SireMol::missing_molecule
-    \throw SireError::version_error
-*/
-inline void ForceField::assertSameVersion(const Molecule &molecule) const
-{
-    d->assertSameVersion(molecule);
-}
-
-/** Assert that the residue 'residue' has the same version as the one
-    in this forcefield
-
-    \throw SireMol::missing_residue
-    \throw SireError::version_error
-*/
-inline void ForceField::assertSameVersion(const Residue &residue) const
-{
-    d->assertSameVersion(residue);
 }
 
 /** Return whether or not this forcefield is of type 'T' */

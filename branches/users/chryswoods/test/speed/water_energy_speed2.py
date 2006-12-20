@@ -71,8 +71,8 @@ nrg = cljff.energy()
 ms = timer.elapsed()
 
 print "InterCLJFF ",cljff.energy(), "kcal mol-1"
-print "    Coulomb = ", cljff.energy(cljff.coulomb())
-print "         LJ = ", cljff.energy(cljff.lj())
+print "    Coulomb = ", cljff.energy(cljff.components().coulomb())
+print "         LJ = ", cljff.energy(cljff.components().lj())
 
 print "... took %d ms" % ms
 

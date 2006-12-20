@@ -92,11 +92,11 @@ print "Is active?", ffproc.isActive()
 
 print "MAIN THREAD PROCESS"
 print "Total energy == ",active_ffproc.energy()
-print "Coulomb == %f, LJ == %f" % ( active_ffproc.energy(cljff.component(CLJFF.COULOMB())), \
-                                    active_ffproc.energy(cljff.component(CLJFF.LJ())) )
+print "Coulomb == %f, LJ == %f" % ( active_ffproc.energy(cljff.components().coulomb()), \
+                                    active_ffproc.energy(cljff.components().lj()) )
 
 print "BACKGROUND THREAD PROCESS"
 print "Total energy == ",active_threadproc.energy()
-print "Coulomb == %f, LJ == %f" % ( active_threadproc.energy(cljff.component(CLJFF.COULOMB())), \
-                                    active_threadproc.energy(cljff.component(CLJFF.LJ())) )
+print "Coulomb == %f, LJ == %f" % ( active_threadproc.energy(cljff.components().coulomb()), \
+                                    active_threadproc.energy(cljff.components().lj()) )
 

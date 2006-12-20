@@ -127,23 +127,24 @@ public:
     {
     public:
         Parameters();
-        
+        Parameters(const Parameters &other);
+
         ~Parameters();
-        
+
         /** Return the default source of the coulomb parameters */
         const ParameterName& coulomb() const
         {
             return coulomb_params;
         }
-        
+
         /** Return the default source of the LJ parameters */
         const ParameterName& lj() const
         {
             return lj_params;
         }
-        
+
         static Parameters default_sources;
-        
+
     private:
         /** The name and default source of the coulomb parameters */
         ParameterName coulomb_params;
@@ -153,32 +154,19 @@ public:
 
     const Parameters& parameters() const
     {
-        return Parameters::default_sources;
+        return CLJFF::Parameters::default_sources;
     }
 
     const Space& space() const;
 
     const SwitchingFunction& switchingFunction() const;
 
-    static int COULOMB()
-    {
-        return 1;
-    }
-
-    static int LJ()
-    {
-        return 2;
-    }
-
     /** Return the object describing the components of this
         forcefield */
-    const CLJFF::Components& p_components() const
+    const CLJFF::Components& components() const
     {
         return *components_ptr;
     }
-
-    const Function& coulomb() const;
-    const Function& lj() const;
 
 protected:
     static void calculateEnergy(const CoordGroup &group0,

@@ -193,7 +193,7 @@ void FFWorkerBase::move(const Residue &residue)
 void FFWorkerBase::assertContains(const Function &component) const
 {
     if (not nrg_components.values().contains(component.ID()))
-        this->forcefield().assertContains(component);
+        this->forcefield().components().assertContains(component);
 }
 
 /////////

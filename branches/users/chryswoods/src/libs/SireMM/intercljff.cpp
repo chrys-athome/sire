@@ -33,13 +33,25 @@ InterCLJFF::Components::Components(const Components &other)
            : CLJFF::Components(other)
 {}
 
-/** Construct with a specified name */
-InterCLJFF::Components::Components(const QString &basename)
-           : CLJFF::Components(basename)
+/** Destructor */
+InterCLJFF::Components::~Components()
+{}
+
+///////////
+/////////// Implementation of InterCLJFF::Parameters
+///////////
+
+/** Constructor */
+InterCLJFF::Parameters::Parameters() : CLJFF::Parameters()
+{}
+
+/** Copy constructor */
+InterCLJFF::Parameters::Parameters(const Parameters &other)
+           : CLJFF::Parameters(other)
 {}
 
 /** Destructor */
-InterCLJFF::Components::~Components()
+InterCLJFF::Parameters::~Parameters()
 {}
 
 ///////////
@@ -94,9 +106,9 @@ void InterCLJFF::recalculateTotalEnergy()
         }
     }
 
-    this->setComponent( coulomb(), cnrg );
-    this->setComponent( lj(), ljnrg );
-    this->setComponent( total(), cnrg+ljnrg );
+    this->setComponent( components().coulomb(), cnrg );
+    this->setComponent( components().lj(), ljnrg );
+    this->setComponent( components().total(), cnrg+ljnrg );
 
     //clear the list of moved molecules
     movedmols.clear();
@@ -120,9 +132,9 @@ void InterCLJFF::recalculateViaDelta()
     {
         //all of the molecules have been deleted! Set the energy to
         //zero and clear the moved list
-        this->setComponent( coulomb(), 0 );
-        this->setComponent( lj(), 0 );
-        this->setComponent( total(), 0 );
+        this->setComponent( components().coulomb(), 0 );
+        this->setComponent( components().lj(), 0 );
+        this->setComponent( components().total(), 0 );
 
         movedmols.clear();
         removedmols.clear();
@@ -317,9 +329,9 @@ void InterCLJFF::recalculateViaDelta()
     removedmols.clear();
 
     //save the new total energy of this forcefield
-    this->changeComponent( coulomb(), icnrg );
-    this->changeComponent( lj(), iljnrg );
-    this->changeComponent( total(), icnrg+iljnrg );
+    this->changeComponent( components().coulomb(), icnrg );
+    this->changeComponent( components().lj(), iljnrg );
+    this->changeComponent( components().total(), icnrg+iljnrg );
 }
 
 /** Calculate the total energy of this forcefield. This will either
@@ -336,23 +348,6 @@ void InterCLJFF::recalculateEnergy()
     {
         this->recalculateViaDelta();
     }
-}
-
-/** Return the molecule in this forcefield that has the ID 'molid'
-
-    \throw SireMol::missing_molecule
-*/
-const Molecule& InterCLJFF::molecule(MoleculeID molid) const
-{
-    QHash<MoleculeID,int>::const_iterator it = molid_to_molindex.find(molid);
-
-    if (it == molid_to_molindex.end())
-        throw SireMol::missing_molecule( QObject::tr(
-              "There is no molecule with ID == %1 in the forcefield "
-              "\"%2\" (of type %3)")
-                  .arg(molid).arg(this->name()).arg(this->what()), CODELOC );
-
-    return mols.constData()[it.value()].molecule();
 }
 
 /** Temporary function used to add a molecule with passed charge and LJ

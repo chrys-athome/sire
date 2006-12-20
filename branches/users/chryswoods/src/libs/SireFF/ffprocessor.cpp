@@ -158,7 +158,11 @@ void FFProcessorPvt::setForceField(const ForceField &forcefield)
 */
 Molecule FFProcessorPvt::molecule(MoleculeID molid) const
 {
-    return ffield.molecule(molid);
+    #warning Broken FFProcessorPvt::molecule()
+
+    throw SireError::incomplete_code("FFProcessorPvt::molecule()", CODELOC);
+
+    return Molecule();
 }
 
 /** Activate this forcefield and return a pointer to the active

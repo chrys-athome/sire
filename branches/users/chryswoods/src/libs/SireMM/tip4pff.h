@@ -27,11 +27,6 @@ using SireVol::AABox;
 
 using SireMaths::Vector;
 
-using SireFF::ChangedMols;
-using SireFF::MovedMols;
-
-using SireDB::ParameterTable;
-
 /** A Tip4PFF is a forcefield that calculates the intermolecular coulomb and
     Lennard Jones energies of all contained TIP4P water molecules. An Tip4PFF is perhaps
     the most expensive type of MM forcefield, as it must calculate the full
@@ -60,15 +55,17 @@ public:
     public:
         Components();
         Components(const Components &other);
-        Components(const QString &basename);
 
         ~Components();
+    };
 
-        Components* clone() const
-        {
-            return new Components(*this);
-        }
-        
+    class SIREMM_EXPORT Parameters : public CLJFF::Parameters
+    {
+    public:
+        Parameters();
+        Parameters(const Parameters &other);
+
+        ~Parameters();
     };
 
     static const char* typeName()
@@ -85,8 +82,6 @@ public:
     {
         return new Tip4PFF(*this);
     }
-
-    const Molecule& molecule(MoleculeID molid) const;
 
     bool move(const Molecule &molecule);
     bool move(const Residue &residue);

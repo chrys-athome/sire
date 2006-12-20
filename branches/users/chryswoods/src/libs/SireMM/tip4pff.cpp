@@ -32,13 +32,25 @@ Tip4PFF::Components::Components(const Components &other)
            : CLJFF::Components(other)
 {}
 
-/** Construct with a specified name */
-Tip4PFF::Components::Components(const QString &basename)
-           : CLJFF::Components(basename)
+/** Destructor */
+Tip4PFF::Components::~Components()
+{}
+
+///////////
+/////////// Implementation of Tip4PFF::Parameters
+///////////
+
+/** Constructor */
+Tip4PFF::Parameters::Parameters() : CLJFF::Parameters()
+{}
+
+/** Copy constructor */
+Tip4PFF::Parameters::Parameters(const Parameters &other)
+           : CLJFF::Parameters(other)
 {}
 
 /** Destructor */
-Tip4PFF::Components::~Components()
+Tip4PFF::Parameters::~Parameters()
 {}
 
 ///////////
@@ -52,7 +64,7 @@ Tip4PFF::Tip4PFF() : CLJFF()
 /** Construct a CLJ forcefield using the passed Space and
     switching function (combining rules don't affect TIP4P) */
 Tip4PFF::Tip4PFF(const Space &space, const SwitchingFunction &switchfunc)
-           : CLJFF(space, switchfunc)
+        : CLJFF(space, switchfunc)
 {}
 
 /** Copy constructor */
@@ -74,7 +86,6 @@ double Tip4PFF::calculateEnergy(const Vector *array0, int nats0,
                                 const Space &space)
 {
     double maxinvdist2(0);
-    double tmpdist;
 
     double inrg = 0;
 
@@ -159,21 +170,9 @@ void Tip4PFF::recalculateEnergy()
         }
     }
 
-    //this->setComponent( coulomb(), cnrg );
-    //this->setComponent( lj(), ljnrg );
-    this->setComponent( total(), nrg );
-}
-
-/** Return the molecule in this forcefield that has the ID 'molid'
-
-    \throw SireMol::missing_molecule
-*/
-const Molecule& Tip4PFF::molecule(MoleculeID molid) const
-{
-    throw SireError::incomplete_code( QObject::tr(
-        "Need to write Tip4PFF::molecule(molid)"), CODELOC );
-
-    return Molecule();
+    //this->setComponent( components().coulomb(), cnrg );
+    //this->setComponent( components().lj(), ljnrg );
+    this->setComponent( components().total(), nrg );
 }
 
 /** Temporary function used to add a molecule with passed charge and LJ

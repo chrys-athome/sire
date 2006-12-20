@@ -21,11 +21,6 @@ using SireMol::Molecule;
 using SireMol::Residue;
 using SireMol::MoleculeID;
 
-using SireFF::ChangedMols;
-using SireFF::MovedMols;
-
-using SireDB::ParameterTable;
-
 /** An InterCLJFF is a forcefield that calculates the intermolecular coulomb and
     Lennard Jones energies of all contained molecules. An InterCLJFF is perhaps
     the most expensive type of MM forcefield, as it must calculate the full
@@ -54,15 +49,17 @@ public:
     public:
         Components();
         Components(const Components &other);
-        Components(const QString &basename);
 
         ~Components();
+    };
 
-        Components* clone() const
-        {
-            return new Components(*this);
-        }
-        
+    class SIREMM_EXPORT Parameters : public CLJFF::Parameters
+    {
+    public:
+        Parameters();
+        Parameters(const Parameters &other);
+
+        ~Parameters();
     };
 
     static const char* typeName()
@@ -79,8 +76,6 @@ public:
     {
         return new InterCLJFF(*this);
     }
-
-    const Molecule& molecule(MoleculeID molid) const;
 
     void add(const Molecule &mol, const ChargeTable &chargetable,
              const LJTable &ljtable);
