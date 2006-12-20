@@ -3,6 +3,8 @@
 
 #include "cljff.h"
 
+#include "SireFF/parametermap.h"
+
 namespace SireMM
 {
 class InterCLJFF;
@@ -16,6 +18,8 @@ namespace SireMM
 
 class ChargeTable;
 class LJTable;
+
+using SireFF::ParameterMap;
 
 using SireMol::Molecule;
 using SireMol::Residue;
@@ -77,8 +81,7 @@ public:
         return new InterCLJFF(*this);
     }
 
-    void add(const Molecule &mol, const ChargeTable &chargetable,
-             const LJTable &ljtable);
+    void add(const Molecule &mol, const ParameterMap &map = ParameterMap());
 
     bool move(const Molecule &molecule);
     bool move(const Residue &residue);

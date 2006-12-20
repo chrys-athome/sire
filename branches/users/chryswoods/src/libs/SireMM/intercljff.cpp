@@ -9,6 +9,9 @@
 #include "chargetable.h"
 #include "ljtable.h"
 
+#include "atomiccharges.h"
+#include "atomicljs.h"
+
 #include "detail/molcljinfo.h"
 
 #include "SireVol/coordgroup.h"
@@ -352,29 +355,13 @@ void InterCLJFF::recalculateEnergy()
 
 /** Temporary function used to add a molecule with passed charge and LJ
     parameters */
-void InterCLJFF::add(const Molecule &mol, const ChargeTable &chargetable,
-                     const LJTable &ljtable)
+void InterCLJFF::add(const Molecule &mol, const ParameterMap &map)
 {
-    chargetable.assertCompatibleWith(mol);
-    ljtable.assertCompatibleWith(mol);
+    //get the charge and LJ parameters - these should be in
+    //AtomicCharges and AtomicLJs objects...
+    AtomicCharges chgs = mol.getProperty( map.source(parameters().coulomb()) );
 
-    QVector< ParameterGroup<ChargeParameter> > chargeparams = chargetable.parameterGroups();
-    QVector< ParameterGroup<LJParameter> > ljparams = ljtable.parameterGroups();
-
-    QVector< QVector<ChargeParameter> > chgs;
-    QVector< QVector<LJParameter> >  ljs;
-
-    int ncg = chargeparams.count();
-    BOOST_ASSERT(ljparams.count() == ncg);
-
-    chgs.reserve(ncg);
-    ljs.reserve(ncg);
-
-    for (int i=0; i<ncg; ++i)
-    {
-        chgs.append( chargeparams.constData()[i].parameters() );
-        ljs.append( ljparams.constData()[i].parameters() );
-    }
+    AtomicLJs ljs = mol.getProperty( map.source(parameters().lj()) );
 
     //add this molecule to the list
     mols.append( MolCLJInfo(mol, chgs, ljs) );
