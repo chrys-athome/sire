@@ -1,11 +1,40 @@
 
 #include "parametermap.h"
 
+#include "SireStream/datastream.h"
+
 using namespace SireFF;
+using namespace SireStream;
 
 ////////////
 //////////// Implementation of ParameterName
 ////////////
+
+static const RegisterMetaType<ParameterName> r_paramname("SireFF::ParameterName");
+
+/** Serialise to a binary datastream */
+QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const ParameterName &paramname)
+{
+    writeHeader(ds, r_paramname, 1) << paramname.param_name
+                                    << paramname.default_source;
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, ParameterName &paramname)
+{
+    VersionID v = readHeader(ds, r_paramname);
+
+    if (v == 1)
+    {
+        ds >> paramname.param_name >> paramname.default_source;
+    }
+    else
+        throw version_error(v, "1", r_paramname, CODELOC);
+
+    return ds;
+}
 
 /** Construct a ParameterName whose default source is the same as the
     name of the parameter */
@@ -28,7 +57,19 @@ ParameterName::ParameterName(const ParameterName &other)
 ParameterName::~ParameterName()
 {}
 
-/** Set the source of the parameter - return the ParameterSource with 
+/** Comparison operator */
+bool ParameterName::operator==(const ParameterName &other) const
+{
+    return param_name == other.param_name and default_source == other.default_source;
+}
+
+/** Comparison operator */
+bool ParameterName::operator!=(const ParameterName &other) const
+{
+    return param_name != other.param_name or default_source != other.default_source;
+}
+
+/** Set the source of the parameter - return the ParameterSource with
     the required information */
 ParameterSource ParameterName::operator==(const QString &source) const
 {
@@ -57,11 +98,39 @@ const QString& ParameterName::defaultSource() const
 //////////// Implementation of ParameterSource
 ////////////
 
+static const RegisterMetaType<ParameterSource> r_paramsource("SireFF::ParameterSource");
+
+/** Serialise to a binary datastream */
+QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const ParameterSource &paramsource)
+{
+    writeHeader(ds, r_paramsource, 1)
+          << static_cast<const ParameterName&>(paramsource)
+          << paramsource.param_source;
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, ParameterSource &paramsource)
+{
+    VersionID v = readHeader(ds, r_paramsource);
+
+    if (v == 1)
+    {
+        ds >> static_cast<ParameterName&>(paramsource)
+           >> paramsource.param_source;
+    }
+    else
+        throw version_error(v, "1", r_paramsource, CODELOC);
+
+    return ds;
+}
+
 /** Constructor */
 ParameterSource::ParameterSource() : ParameterName()
 {}
 
-/** Constructor used by ParameterName to associate a parameter with 
+/** Constructor used by ParameterName to associate a parameter with
     a source */
 ParameterSource::ParameterSource(const ParameterName &name,
                                  const QString &source)
@@ -77,13 +146,25 @@ ParameterSource::ParameterSource(const ParameterSource &other)
 ParameterSource::~ParameterSource()
 {}
 
+/** Comparison operator */
+bool ParameterSource::operator==(const ParameterSource &other) const
+{
+    return ParameterName::operator==(other) and param_source == other.param_source;
+}
+
+/** Comparison operator */
+bool ParameterSource::operator!=(const ParameterSource &other) const
+{
+    return ParameterName::operator!=(other) or param_source != other.param_source;
+}
+
 /** Return whether or not this contains any valid data */
 bool ParameterSource::isValid() const
 {
     return ParameterName::isValid() and not param_source.isEmpty();
 }
 
-/** Return whether this is, in fact, equal to the default 
+/** Return whether this is, in fact, equal to the default
     value of the parameter */
 bool ParameterSource::isDefault() const
 {
@@ -99,6 +180,29 @@ const QString& ParameterSource::source() const
 ////////////
 //////////// Implementation of ParameterMap
 ////////////
+
+static const RegisterMetaType<ParameterMap> r_parammap("SireFF::ParameterMap");
+
+/** Serialise to a binary datastream */
+QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const ParameterMap &parammap)
+{
+    writeHeader(ds, r_parammap, 1) << parammap.map;
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, ParameterMap &parammap)
+{
+    VersionID v = readHeader(ds, r_parammap);
+    if (v == 1)
+    {
+        ds >> parammap.map;
+    }
+    else
+        throw version_error(v, "1", r_parammap, CODELOC);
+
+    return ds;
+}
 
 /** Constructor */
 ParameterMap::ParameterMap()
@@ -154,7 +258,7 @@ ParameterMap ParameterMap::operator&&(const ParameterMap &other) const
     else
     {
         retval.map = map;
-        
+
         for (QHash<QString,QString>::const_iterator it = other.map.begin();
              it != other.map.end();
              ++it)
@@ -166,7 +270,7 @@ ParameterMap ParameterMap::operator&&(const ParameterMap &other) const
     return retval;
 }
 
-/** Return the source of the parameter 'param' - this returns the 
+/** Return the source of the parameter 'param' - this returns the
     default source if none other has been specified */
 QString ParameterMap::source(const ParameterName &param) const
 {

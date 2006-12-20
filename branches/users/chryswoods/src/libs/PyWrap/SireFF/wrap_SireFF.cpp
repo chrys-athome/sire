@@ -18,6 +18,7 @@ void export_FFBase();
 void export_ForceField();
 void export_FFProcessor();
 void export_FFWorker();
+void export_ParameterMap();
 
 void SIREFF_EXPORT export_SireFF()
 {
@@ -30,6 +31,7 @@ void SIREFF_EXPORT export_SireFF()
     export_ForceField();
     export_FFProcessor();
     export_FFWorker();
+    export_ParameterMap();
 }
 
 }
