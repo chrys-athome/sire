@@ -31,15 +31,14 @@ set_target_properties (SireBase PROPERTIES
                       )
 
 # Link to other Sire libraries, and GSL
-target_link_libraries (SireBase 
-                       ThirdParty
-                       SireError
+target_link_libraries (SireBase
+                       SireStream
                        )
 
 # installation
 install( TARGETS SireBase
          RUNTIME DESTINATION ${SIRE_BIN}
-	 LIBRARY DESTINATION ${SIRE_LIBS}
-	 ARCHIVE DESTINATION ${SIRE_ARCHIVES}
+   LIBRARY DESTINATION ${SIRE_LIBS}
+   ARCHIVE DESTINATION ${SIRE_ARCHIVES}
        )
 

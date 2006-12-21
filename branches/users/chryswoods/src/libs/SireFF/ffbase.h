@@ -6,6 +6,7 @@
 #include <QSet>
 
 #include "SireBase/sharedpolypointer.hpp"
+#include "SireBase/idmajminversion.h"
 
 #include "SireCAS/function.h"
 #include "SireCAS/values.h"
@@ -34,6 +35,9 @@ namespace SireFF
 {
 
 class MovedMols;
+
+using SireBase::Version;
+using SireBase::IDMajMinVersion;
 
 using SireCAS::Function;
 using SireCAS::Values;
@@ -155,8 +159,14 @@ public:
     bool isDirty() const;
     bool isClean() const;
 
+    quint32 ID() const;
+    const Version& version() const;
+
 protected:
     void registerComponents(FFBase::Components *components);
+
+    void incrementMajorVersion();
+    void incrementMinorVersion();
 
     void setComponent(const Function &comp, double nrg);
     void changeComponent(const Function &comp, double delta);
@@ -176,6 +186,12 @@ private:
     /** The name of this forcefield - this may be used to give a unique
         name to all of the component-symbols in this forcefield. */
     QString ffname;
+
+    /** The ID number and version numbers of this forcefield. The
+        major version number changes whenever the number of molecules
+        in the forcefield changes - the minor number changes whenever
+        the molecules themselves change (move or change parameters) */
+    IDMajMinVersion id_and_version;
 
     /** All of the cached energy components in this forcefield, indexed
         by their symbol ID number (includes the total energy) */
@@ -213,6 +229,32 @@ inline bool FFBase::isDirty() const
 inline bool FFBase::isClean() const
 {
     return not isDirty();
+}
+
+/** Internal function used by derived classes to increment the major
+    number of the forcefield */
+inline void FFBase::incrementMajorVersion()
+{
+    id_and_version.incrementMajor();
+}
+
+/** Internal function used by derived classes to increment the minor
+    number of the forcefield */
+inline void FFBase::incrementMinorVersion()
+{
+    id_and_version.incrementMinor();
+}
+
+/** Return the ID number of the forcefield */
+inline quint32 FFBase::ID() const
+{
+    return id_and_version.ID();
+}
+
+/** Return the version number of the forcefield */
+inline const Version& FFBase::version() const
+{
+    return id_and_version.version();
 }
 
 }

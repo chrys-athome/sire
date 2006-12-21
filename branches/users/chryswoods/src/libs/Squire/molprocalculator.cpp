@@ -198,15 +198,6 @@ double MolproCalculator::getEnergies(Values &values)
     return total_nrg;
 }
 
-/** Return the molecule with ID == molid
-
-    \throw SireMol::missing_molecule
-*/
-const Molecule& MolproCalculator::molecule(MoleculeID molid) const
-{
-    return molproff->molecule(molid);
-}
-
 /** Tell the molpro forcefield to recalculate its energy */
 void MolproCalculator::calculateEnergy()
 {
@@ -221,7 +212,7 @@ void MolproCalculator::calculateEnergy()
     }
 
     nrg_components = molproff->recalculateEnergy(*molpro_session);
-    total_nrg = nrg_components.value(molproff->total());
+    total_nrg = nrg_components.value(molproff->components().total());
 }
 
 /** Move the molecule 'molecule' and return whether the energy of
@@ -247,7 +238,7 @@ bool MolproCalculator::move(const Residue &residue)
 */
 bool MolproCalculator::setForceField(const ForceField &forcefield)
 {
-    molproff = forcefield.asA<MolproFF>();
+    molproff = forcefield;
 
     if (molproff->isDirty())
         return true;

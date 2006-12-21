@@ -36,6 +36,14 @@ export_FFBase()
             , ( bp::arg("component") )
             , bp::default_call_policies() )
         .def(
+            "ID"
+            , &::SireFF::FFBase::ID
+            , bp::default_call_policies() )
+        .def(
+            "version"
+            , &::SireFF::FFBase::version
+            , bp::return_value_policy< bp::copy_const_reference, bp::default_call_policies >() )
+        .def(
             "move"
             , (bool ( ::SireFF::FFBase::* )( ::SireMol::Molecule const & ) )(&::SireFF::FFBase::move)
             , ( bp::arg("mol") )

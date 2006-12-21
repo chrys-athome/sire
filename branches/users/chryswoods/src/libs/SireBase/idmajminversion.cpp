@@ -2,8 +2,36 @@
 #include "idmajminversion.h"
 
 #include "SireError/errors.h"
+#include "SireStream/datastream.h"
 
 using namespace SireBase;
+using namespace SireStream;
+
+static const RegisterMetaType<IDMajMinVersion> r_idmajmin("SireBase::IDMajMinVersion");
+
+/** Serialise to a binary datastream */
+QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds, const IDMajMinVersion &idmajmin)
+{
+    writeHeader(ds, r_idmajmin, 1)
+                << static_cast<const IDTriple&>(idmajmin);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, IDMajMinVersion &idmajmin)
+{
+    VersionID v = readHeader(ds, r_idmajmin);
+
+    if (v == 1)
+    {
+        ds >> static_cast<IDTriple&>(idmajmin);
+    }
+    else
+        throw version_error(v, "1", r_idmajmin, CODELOC);
+
+    return ds;
+}
 
 /** Constructor */
 IDMajMinVersion::IDMajMinVersion() : IDTriple()

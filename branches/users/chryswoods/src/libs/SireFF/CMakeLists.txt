@@ -36,6 +36,7 @@ set_target_properties (SireFF PROPERTIES
 target_link_libraries (SireFF
                        SireDB
                        SireCluster
+                       SireBase
                        ${QT_QTSQL_LIBRARY}
                        )
 

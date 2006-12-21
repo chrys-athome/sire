@@ -12,6 +12,7 @@
 #include "SireStream/datastream.h"
 
 using namespace SireFF;
+using namespace SireBase;
 using namespace SireCAS;
 using namespace SireMol;
 using namespace SireStream;
@@ -115,6 +116,7 @@ QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const FFBase &ffbase)
 {
     writeHeader(ds, r_ffbase, 1)
           << ffbase.ffname
+          << ffbase.id_and_version
           << ffbase.nrg_components
           << ffbase.isdirty;
 
@@ -131,6 +133,7 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, FFBase &ffbase)
         QString newname;
 
         ds >> newname
+           >> ffbase.id_and_version
            >> ffbase.nrg_components
            >> ffbase.isdirty;
 
@@ -143,19 +146,30 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, FFBase &ffbase)
     return ds;
 }
 
+/** This is the Incremint that is used to increment
+    forcefield ID numbers */
+static Incremint forcefield_incremint;
+
 /** Null constructor */
-FFBase::FFBase() : QSharedData(), ffname(QObject::tr("Unnamed")), isdirty(true)
+FFBase::FFBase() : QSharedData(),
+                   ffname(QObject::tr("Unnamed")),
+                   id_and_version(&forcefield_incremint),
+                   isdirty(true)
 {}
 
 /** Construct a forcefield called 'name' */
 FFBase::FFBase(const QString &name)
-       : QSharedData(), ffname(name), isdirty(true)
+       : QSharedData(),
+         ffname(name),
+         id_and_version(&forcefield_incremint),
+         isdirty(true)
 {}
 
 /** Copy constructor */
 FFBase::FFBase(const FFBase &other)
        : QSharedData(),
          ffname(other.ffname),
+         id_and_version(other.id_and_version),
          nrg_components(other.nrg_components),
          components_ptr( other.components_ptr->clone() ),
          isdirty(other.isdirty)

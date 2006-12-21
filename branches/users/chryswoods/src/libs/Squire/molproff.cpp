@@ -62,50 +62,98 @@ QHash<MoleculeID,int> index(const QVector<Molecule> &mols)
 
 }
 
+///////////
+/////////// Implementation of MolproFF::Parameters
+///////////
+
+/** Constructor - by default the coulomb properties come from the 'charges'
+    property */
+MolproFF::Parameters::Parameters()
+         : FFBase::Parameters(), coulomb_params("coulomb", "charges")
+{}
+
+/** Copy constructor */
+MolproFF::Parameters::Parameters(const MolproFF::Parameters &other)
+         : FFBase::Parameters(other), coulomb_params(other.coulomb_params)
+{}
+
+/** Destructor */
+MolproFF::Parameters::~Parameters()
+{}
+
+/** Static object returned by MolproFF::parameters() */
+MolproFF::Parameters MolproFF::Parameters::default_sources;
+
+///////////
+/////////// Implementation of MolproFF::Components
+///////////
+
+/** Constructor */
+MolproFF::Components::Components() : FFBase::Components()
+{}
+
+/** Construct using the supplied basename */
+MolproFF::Components::Components(const QString &basename) : FFBase::Components()
+{
+    MolproFF::Components::setBaseName(basename);
+}
+
+/** Copy constructor */
+MolproFF::Components::Components(const MolproFF::Components &other)
+      : FFBase::Components(other), e_qm(other.e_qm)
+{}
+
+/** Destructor */
+MolproFF::Components::~Components()
+{}
+
+/** Set the names of the functions from the passed base name */
+void MolproFF::Components::setBaseName(const QString &basename)
+{
+    this->unregisterFunction(e_qm);
+
+    e_qm = getFunction(basename, "qm");
+
+    this->registerFunction(e_qm);
+
+    FFBase::Components::setBaseName(basename);
+}
+
+/** Describe the coulomb component */
+QString MolproFF::Components::describe_qm()
+{
+    return QObject::tr("The total QM energy (includes the QM part of the QM/MM energy).");
+}
+
+///////////
+/////////// Implementation of MolproFF
+///////////
+
 static const RegisterMetaType<MolproFF> r_molproff("Squire::MolproFF");
 
 /** Serialise to a binary datastream */
 QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds, const MolproFF &molproff)
 {
-    writeHeader(ds, r_molproff, 1)
-              << molproff.qm_molecules << molproff.mm_molecules << molproff.mm_charges
-              << static_cast<const FFBase&>(molproff);
-
     return ds;
 }
 
 /** Deserialise from a binary datastream */
 QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, MolproFF &molproff)
 {
-    VersionID v = readHeader(ds, r_molproff);
-
-    if (v == 1)
-    {
-        ds >> molproff.qm_molecules >> molproff.mm_molecules >> molproff.mm_charges
-           >> static_cast<FFBase&>(molproff);
-
-        //rebuild the index and coord / charge arrays
-        molproff.reconstructIndexAndArrays();
-
-        //give the forcefield a new ID (since it could have completely
-        //changed
-        molproff.getNewID();
-    }
-    else
-        throw version_error(v, "1", r_molproff, CODELOC);
-
     return ds;
 }
 
 /** Construct an empty MolproFF */
 MolproFF::MolproFF() : FFBase()
 {
-    this->getNewID();
+    this->registerComponents();
 }
 
 /** Construct an empty, but named MolproFF */
 MolproFF::MolproFF(const QString &name) : FFBase(name)
-{}
+{
+    this->registerComponents();
+}
 
 /** Copy constructor */
 MolproFF::MolproFF(const MolproFF &other)
@@ -114,9 +162,12 @@ MolproFF::MolproFF(const MolproFF &other)
            qm_molid_to_index(other.qm_molid_to_index),
            mm_molecules(other.mm_molecules), mm_charges(other.mm_charges),
            mm_coords_and_charges(other.mm_coords_and_charges),
-           mm_molid_to_index(other.mm_molid_to_index),
-           ffid(other.ffid), ff_version(other.ff_version)
-{}
+           mm_molid_to_index(other.mm_molid_to_index)
+{
+    //get the pointer from the base class...
+    components_ptr = dynamic_cast<const MolproFF::Components*>( &(FFBase::components()) );
+    BOOST_ASSERT( components_ptr != 0 );
+}
 
 /** Destructor */
 MolproFF::~MolproFF()
@@ -135,29 +186,59 @@ MolproFF& MolproFF::operator=(const MolproFF &other)
       mm_charges = other.mm_charges;
       mm_coords_and_charges = other.mm_coords_and_charges;
       mm_molid_to_index = other.mm_molid_to_index;
-
-      ffid = other.ffid;
-      ff_version = other.ff_version;
    }
 
    return *this;
 }
 
-/** Mutex used to serialise access to new ID numbers */
-QMutex MolproFF::id_mutex;
-
-/** The last ID number allocated */
-int MolproFF::lastid = 0;
-
-/** Get a new, unique ID number */
-int MolproFF::getUniqueID()
+/** Register the components of this forcefield */
+void MolproFF::registerComponents()
 {
-   QMutexLocker lkr(&id_mutex);
+    std::auto_ptr<MolproFF::Components> ptr( new MolproFF::Components(name()) );
 
-   ++lastid;
+    FFBase::registerComponents(ptr.get());
 
-   return lastid;
+    components_ptr = ptr.release();
 }
+
+/** Return the array containing the coordinates of the QM atoms.
+    This will update the coordinates array to account for any
+    changes that may have occured since the QM atoms were last
+    moved
+*/
+const QVector<double>& MolproFF::qmCoordinates()
+{
+    //
+}
+
+/** Return the array containing the coordinates and charges of
+    the MM atoms - this will update the coordinates/charges
+    array to account for any changes that may have occured since the
+    QM atoms were last moved
+*/
+const QVector<double>& MolproFF::mmCoordsAndCharges()
+{
+    //
+}
+
+/** Return the vector containing the coordinates of the QM atoms,
+    arranged into an array of doubles, as
+    atom0(x,y,z), atom1(x,y,z) ... atomn(x,y,z), and with the
+    coordinates in bohr radii */
+inline const QVector<double>& MolproFF::qmCoordinates() const
+{
+    return qm_coords;
+}
+
+/** Return the vector containing the coordinates and charges of the
+    MM atoms, arranged into an array of doubles, as
+    atom0(x,y,z,q), atom1(x,y,z,q) .... atomn(x,y,z,q)
+    with coordinates in bohr radii and charges in atomic charge units */
+inline const QVector<double>& MolproFF::mmCoordsAndCharges() const
+{
+    return mm_coords_and_charges;
+}
+
 
 /** Reconstruct the QM coordinate array */
 void MolproFF::reconstructQMArray()
@@ -288,20 +369,6 @@ void MolproFF::reconstructIndexAndArrays()
 
     this->reconstructQMArray();
     this->reconstructMMArray();
-}
-
-/** Give this MolproFF a new, unique ID number - this will
-    zero the version number of this forcefield */
-void MolproFF::getNewID()
-{
-    ffid = MolproFF::getUniqueID();
-    ff_version = 0;
-}
-
-/** Increment the version of this forcefield */
-void MolproFF::incrementVersion()
-{
-    ++ff_version;
 }
 
 /** Add a molecule to the QM region

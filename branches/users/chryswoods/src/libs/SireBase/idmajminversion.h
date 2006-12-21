@@ -10,6 +10,14 @@ SIRE_BEGIN_HEADER
 
 namespace SireBase
 {
+class IDMajMinVersion;
+}
+
+QDataStream& operator<<(QDataStream&, const SireBase::IDMajMinVersion&);
+QDataStream& operator>>(QDataStream&, SireBase::IDMajMinVersion&);
+
+namespace SireBase
+{
 
 /** This class provides an ID and major:minor version number that can be
     incremented in a thread-safe manner (e.g. incrementing will
@@ -30,6 +38,9 @@ namespace SireBase
 */
 class SIREBASE_EXPORT IDMajMinVersion : protected IDTriple
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const IDMajMinVersion&);
+friend QDataStream& ::operator>>(QDataStream&, IDMajMinVersion&);
 
 public:
     IDMajMinVersion();
@@ -52,7 +63,7 @@ public:
     quint32 major() const;
     quint32 minor() const;
 
-    MajMinVersion version() const;
+    const Version& version() const;
 
     void incrementID();
 
@@ -120,9 +131,9 @@ inline quint32 IDMajMinVersion::minor() const
 }
 
 /** Return the version */
-inline MajMinVersion IDMajMinVersion::version() const
+inline const Version& IDMajMinVersion::version() const
 {
-    return MajMinVersion(IDTriple::version());
+    return IDTriple::version();
 }
 
 /** Return whether or not this has the same ID as 'other' */
@@ -236,6 +247,8 @@ inline void IDMajMinVersion::assertSameIDAndMajorVersion(const IDMajMinVersion &
 }
 
 }
+
+Q_DECLARE_METATYPE(SireBase::IDMajMinVersion);
 
 SIRE_END_HEADER
 

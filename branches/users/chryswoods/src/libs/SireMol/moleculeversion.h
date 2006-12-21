@@ -3,6 +3,19 @@
 
 #include "sireglobal.h"
 
+#ifdef major
+//glibc #defines major == gnu_dev_major
+//This ruins any use of 'major' - this is why macros are BAD!!!
+//It does this in sys/sysmacros.h
+#undef major
+#endif
+
+#ifdef minor
+//glibc does the same thing with 'minor' as well...
+// #define minor == gnu_dev_minor
+#undef minor
+#endif
+
 namespace SireMol
 {
 class MoleculeVersion;
@@ -28,14 +41,14 @@ friend QDataStream& ::operator>>(QDataStream&, MoleculeVersion&);
 public:
     MoleculeVersion();
     MoleculeVersion(quint32 major, quint32 minor);
-    
+
     MoleculeVersion(const MoleculeVersion &other);
-    
+
     ~MoleculeVersion();
 
     bool operator==(const MoleculeVersion &other) const;
     bool operator!=(const MoleculeVersion &other) const;
-    
+
     MoleculeVersion& operator=(const MoleculeVersion &other);
 
     QString toString() const;
@@ -86,7 +99,7 @@ inline void MoleculeVersion::incrementMinor()
 /** Comparison operator */
 inline bool MoleculeVersion::operator==(const MoleculeVersion &other) const
 {
-    return majversion == other.majversion and 
+    return majversion == other.majversion and
            minversion == other.minversion;
 }
 
@@ -104,7 +117,7 @@ inline bool MoleculeVersion::sameVersion(const MoleculeVersion &other) const
            minversion == other.minversion;
 }
 
-/** Return whether there are only minor differences between this version 
+/** Return whether there are only minor differences between this version
     and 'other' (e.g. minor versions only are different) */
 inline bool MoleculeVersion::minorDifference(const MoleculeVersion &other) const
 {

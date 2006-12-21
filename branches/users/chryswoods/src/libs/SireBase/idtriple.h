@@ -7,9 +7,21 @@ SIRE_BEGIN_HEADER
 
 namespace SireBase
 {
+class IDTriple;
+}
+
+QDataStream& operator<<(QDataStream&, const SireBase::IDTriple&);
+QDataStream& operator>>(QDataStream&, SireBase::IDTriple&);
+
+namespace SireBase
+{
 
 class SIREBASE_EXPORT IDTriple
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const IDTriple&);
+friend QDataStream& ::operator>>(QDataStream&, IDTriple&);
+
 private:
     static Incremint shared_triple_incremint;
 
@@ -34,7 +46,7 @@ protected:
     quint32 major() const;
     quint32 minor() const;
 
-    const IDPair& version() const;
+    const Version& version() const;
 
     bool sameMajorVersion(const IDTriple &other) const;
     bool sameMinorVersion(const IDTriple &other) const;
@@ -101,9 +113,9 @@ inline quint32 IDTriple::minor() const
 }
 
 /** Return the version */
-inline const IDPair& IDTriple::version() const
+inline const Version& IDTriple::version() const
 {
-    return versn;
+    return versn.version();
 }
 
 /** Return whether or not this has the same major version as 'other' */
@@ -157,6 +169,8 @@ inline bool IDTriple::operator!=(const IDTriple &other) const
 }
 
 }
+
+Q_DECLARE_METATYPE(SireBase::IDTriple);
 
 SIRE_END_HEADER
 

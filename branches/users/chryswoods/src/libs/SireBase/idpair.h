@@ -23,8 +23,81 @@ SIRE_BEGIN_HEADER
 
 namespace SireBase
 {
+class IDPair;
+class Version;
+}
+
+QDataStream& operator<<(QDataStream&, const SireBase::IDPair&);
+QDataStream& operator>>(QDataStream&, SireBase::IDPair&);
+
+QDataStream& operator<<(QDataStream&, const SireBase::Version&);
+QDataStream& operator>>(QDataStream&, SireBase::Version&);
+
+namespace SireBase
+{
 
 class IDTriple;
+
+class Version
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const Version&);
+friend QDataStream& ::operator>>(QDataStream&, Version&);
+
+public:
+    Version(quint32 major=0, quint32 minor=0);
+    Version(const Version &other);
+
+    ~Version();
+
+    Version& operator=(const Version &other);
+
+    bool operator==(const Version &other) const
+    {
+        return _major == other._major and _minor == other._minor;
+    }
+
+    bool operator!=(const Version &other) const
+    {
+        return _major != other._major or _minor != other._minor;
+    }
+
+    bool sameMajorVersion(const Version &other) const
+    {
+        return _major == other._major;
+    }
+
+    bool sameMinorVersion(const Version &other) const
+    {
+        return _minor == other._minor;
+    }
+
+    quint32 major() const
+    {
+        return _major;
+    }
+
+    quint32 minor() const
+    {
+        return _minor;
+    }
+
+    void setMajor(quint32 major)
+    {
+        _major = major;
+    }
+
+    void setMinor(quint32 minor)
+    {
+        _minor = minor;
+    }
+
+    QString toString() const;
+
+private:
+    quint32 _major;
+    quint32 _minor;
+};
 
 /** This class provides a two part ID number that can be
     incremented in a thread-safe manner (e.g. incrementing will
@@ -52,6 +125,9 @@ class SIREBASE_EXPORT IDPair
 
 friend class IDTriple;
 
+friend QDataStream& ::operator<<(QDataStream&, const IDPair&);
+friend QDataStream& ::operator>>(QDataStream&, IDPair&);
+
 private:
     static Incremint shared_pair_increment;
 
@@ -71,6 +147,8 @@ protected:
     quint32 major() const;
     quint32 minor() const;
 
+    const Version& version() const;
+
     void incrementMajor();
     void incrementMinor();
 
@@ -87,73 +165,80 @@ private:
         major version number */
     Incremint *major_incremint;
 
-    /** The major number */
-    quint32 majnum;
-
-    /** The minor number */
-    quint32 minnum;
+    /** The version number */
+    Version _version;
 };
 
 /** Increment the minor version number */
 inline void IDPair::incrementMinor()
 {
-    minnum = minor_incremint->increment();
+    _version.setMinor( minor_incremint->increment() );
 }
 
 /** Increment the major version number */
 inline void IDPair::incrementMajor()
 {
-    majnum = major_incremint->increment();
+    _version.setMajor( major_incremint->increment() );
+    _version.setMinor( 0 );
+
     minor_incremint.reset( new Incremint(0) );
-    minnum = 0;
 }
 
 /** Return the major number */
 inline quint32 IDPair::major() const
 {
-    return majnum;
+    return _version.major();
 }
 
 /** Return the minor number */
 inline quint32 IDPair::minor() const
 {
-    return minnum;
+    return _version.minor();
+}
+
+/** Return the version numbers */
+inline const Version& IDPair::version() const
+{
+    return _version;
 }
 
 /** Return whether or not this has the same major version as 'other' */
 inline bool IDPair::sameMajorVersion(const IDPair &other) const
 {
-    return majnum == other.majnum;
+    return _version.sameMajorVersion(other._version);
 }
 
 /** Return whether or not this has the same minor version as 'other' */
 inline bool IDPair::sameMinorVersion(const IDPair &other) const
 {
-    return minnum == other.minnum;
+    return _version.sameMinorVersion(other._version);
 }
 
 /** Return whether or not this has the same version as 'other' */
 inline bool IDPair::sameVersion(const IDPair &other) const
 {
-    return majnum == other.majnum and minnum == other.minnum;
+    return _version == other._version;
 }
 
 /** Comparison operator */
 inline bool IDPair::operator==(const IDPair &other) const
 {
-    return majnum == other.majnum and minnum == other.minnum
-                and major_incremint == other.major_incremint
-                and minor_incremint == other.minor_incremint;
+    return _version == other._version
+            and major_incremint == other.major_incremint
+            and minor_incremint == other.minor_incremint;
 }
 
 /** Comparison operator */
 inline bool IDPair::operator!=(const IDPair &other) const
 {
-    return majnum != other.majnum or minnum != other.minnum
+    return _version != other._version
                 or major_incremint != other.major_incremint
                 or minor_incremint != other.minor_incremint;
 }
 
 }
+
+Q_DECLARE_METATYPE(SireBase::IDPair);
+Q_DECLARE_METATYPE(SireBase::Version);
 
 #endif
