@@ -14,31 +14,23 @@
 
 #include "SireMol/molecule.h"
 
-namespace bp = boost::python;
+using namespace boost::python;
+using namespace SireVol;
+using namespace SireMol;
 
 namespace SireMM
 {
 
-void  
-SIREMM_EXPORT
-export_InterCLJFF()
-{
-    bp::class_< InterCLJFF, bp::bases< SireMM::CLJFF > >( "InterCLJFF" )
-        .def( bp::init< >()[bp::default_call_policies()] )
-        .def( bp::init<const SireVol::Space&,
-                       const SireMM::SwitchingFunction&>()[bp::default_call_policies()] )
-        .def(
-            "typeName"
-            , &::SireMM::InterCLJFF::typeName
-            , bp::default_call_policies() )
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(intercljff_add_overloads, add, 1, 2);
 
-        .def(
-            "add"
-            , (void (::SireMM::InterCLJFF::*)(::SireMM::Molecule const &,
-                                              ::SireMM::ChargeTable const &,
-                                              ::SireMM::LJTable const &))
-              &::SireMM::InterCLJFF::add
-            , bp::default_call_policies() )
+void SIREMM_EXPORT export_InterCLJFF()
+{
+    class_< InterCLJFF, bases< SireMM::CLJFF > >( "InterCLJFF" )
+        .def( init<>() )
+        .def( init<const Space&, const SwitchingFunction&>() )
+        .def( "typeName", &InterCLJFF::typeName )
+
+        .def( "add", &InterCLJFF::add, intercljff_add_overloads() )
 
         .staticmethod( "typeName" )
     ;

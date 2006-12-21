@@ -14,31 +14,23 @@
 
 #include "SireMol/molecule.h"
 
-namespace bp = boost::python;
+using namespace boost::python;
+using namespace SireVol;
+using namespace SireMol;
 
 namespace SireMM
 {
 
-void  
-SIREMM_EXPORT
-export_Tip4PFF()
-{
-    bp::class_< Tip4PFF, bp::bases< SireMM::CLJFF > >( "Tip4PFF" )
-        .def( bp::init< >()[bp::default_call_policies()] )
-        .def( bp::init<const SireVol::Space&,
-                       const SireMM::SwitchingFunction&>()[bp::default_call_policies()] )
-        .def(
-            "typeName"
-            , &::SireMM::Tip4PFF::typeName
-            , bp::default_call_policies() )
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(tip4pff_add_overloads, add, 1, 2);
 
-        .def(
-            "add"
-            , (void (::SireMM::Tip4PFF::*)(::SireMM::Molecule const &,
-                                              ::SireMM::ChargeTable const &,
-                                              ::SireMM::LJTable const &))
-              &::SireMM::Tip4PFF::add
-            , bp::default_call_policies() )
+void SIREMM_EXPORT export_Tip4PFF()
+{
+    class_< Tip4PFF, bases< SireMM::CLJFF > >( "Tip4PFF" )
+        .def( init<>() )
+        .def( init<const Space&, const SwitchingFunction&>() )
+        .def( "typeName", &Tip4PFF::typeName )
+
+        .def( "add", &Tip4PFF::add, tip4pff_add_overloads() )
 
         .staticmethod( "typeName" )
     ;

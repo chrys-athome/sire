@@ -32,6 +32,7 @@ void SIREMM_EXPORT export_AtomicCharges()
 
         .def( init<const QVector< QVector<ChargeParameter> >&>() )
         .def( init<const QVector<ChargeParameter>&>() )
+        .def( init<const Property&>() )
         .def( init<const AtomicCharges&>() )
     ;
 }

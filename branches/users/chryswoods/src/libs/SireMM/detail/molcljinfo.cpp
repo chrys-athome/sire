@@ -42,7 +42,8 @@ static const RegisterMetaType<MolCLJInfoData> r_moldata("SireMM::detail::MolCLJI
 QDataStream &operator<<(QDataStream &ds, const MolCLJInfoData &moldata)
 {
     writeHeader(ds, r_moldata, 1)
-        << moldata.molecule << moldata.chgparams << moldata.ljparams;
+        << moldata.molecule << moldata.chgparams
+        << moldata.ljparams;
 
     return ds;
 }
@@ -54,7 +55,8 @@ QDataStream &operator>>(QDataStream &ds, MolCLJInfoData &moldata)
 
     if (v == 1)
     {
-        ds >> moldata.molecule >> moldata.chgparams >> moldata.ljparams;
+        ds >> moldata.molecule >> moldata.chgparams
+           >> moldata.ljparams;
 
         moldata.coordinates = moldata.molecule.coordGroups();
     }
@@ -74,14 +76,12 @@ MolCLJInfoData::MolCLJInfoData() : QSharedData()
     \throw SireError::incompatible_error
 */
 MolCLJInfoData::MolCLJInfoData(const Molecule &mol,
-                               const QVector< QVector<ChargeParameter> > &chgs,
-                               const QVector< QVector<LJParameter> > &ljs)
+                               const CLJFF::Parameters &parameters,
+                               const ParameterMap &map)
                : QSharedData(), molecule(mol), coordinates(molecule.coordGroups()),
-                 chgparams(chgs), ljparams(ljs)
-{
-    this->assertCompatibleParameters(chgs);
-    this->assertCompatibleParameters(ljs);
-}
+                 chgparams( mol.getProperty(map.source(parameters.coulomb())) ),
+                 ljparams( mol.getProperty(map.source(parameters.lj())) )
+{}
 
 /** Destructor */
 MolCLJInfoData::~MolCLJInfoData()
@@ -115,78 +115,6 @@ void MolCLJInfoData::assertSameMajorVersion(const Molecule &mol) const
                 .arg( molecule.idString() ).arg(molecule.version().major()), CODELOC );
 }
 
-/** Assert that the parameters in 'params' are arranged in a manner that is
-    compatible with the molecule stored in this object
-
-    \throw SireError::incompatible_error
-*/
-void MolCLJInfoData::assertCompatibleParameters(
-                          const QVector< QVector<ChargeParameter> > &params) const
-{
-    const MoleculeInfo &molinfo = molecule.info();
-
-    int ncg = molinfo.nCutGroups();
-
-    if (params.count() == ncg)
-    {
-        const QVector<ChargeParameter> *paramarray = params.constData();
-
-        for (CutGroupID i(0); i<ncg; ++i)
-        {
-            if (paramarray[i].count() != molinfo.nAtoms(i))
-            {
-                throw SireError::incompatible_error( QObject::tr(
-                        "The number of atoms for the CutGroup with ID == %1 "
-                        "in the molecule \"%2\" does not match the number of "
-                        "charge parameters supplied for that CutGroup.")
-                            .arg(i).arg(molecule.idString()), CODELOC );
-            }
-        }
-    }
-    else
-        throw SireError::incompatible_error( QObject::tr(
-            "The number of CutGroups (%1) in the molecule \"%2\" is "
-            "not the same as the number of groups that the supplied parameters "
-            "are divided into (%3)")
-                .arg(ncg).arg(molecule.idString()).arg(params.count()), CODELOC );
-}
-
-/** Assert that the parameters in 'params' are arranged in a manner that is
-    compatible with the molecule stored in this object
-
-    \throw SireError::incompatible_error
-*/
-void MolCLJInfoData::assertCompatibleParameters(
-                          const QVector< QVector<LJParameter> > &params) const
-{
-    const MoleculeInfo &molinfo = molecule.info();
-
-    int ncg = molinfo.nCutGroups();
-
-    if (params.count() == ncg)
-    {
-        const QVector<LJParameter> *paramarray = params.constData();
-
-        for (CutGroupID i(0); i<ncg; ++i)
-        {
-            if (paramarray[i].count() != molinfo.nAtoms(i))
-            {
-                throw SireError::incompatible_error( QObject::tr(
-                        "The number of atoms for the CutGroup with ID == %1 "
-                        "in the molecule \"%2\" does not match the number of "
-                        "LJ parameters supplied for that CutGroup.")
-                            .arg(i).arg(molecule.idString()), CODELOC );
-            }
-        }
-    }
-    else
-        throw SireError::incompatible_error( QObject::tr(
-            "The number of CutGroups (%1) in the molecule \"%2\" is "
-            "not the same as the number of groups that the supplied parameters "
-            "are divided into (%3)")
-                .arg(ncg).arg(molecule.idString()).arg(params.count()), CODELOC );
-}
-
 /** Record that the molecule 'movedmol' has been moved
 
     \throw SireError::incompatible_error
@@ -202,23 +130,24 @@ void MolCLJInfoData::move(const Molecule &movedmol)
 }
 
 /** Record that the molecule 'changedmol' has been changed,
-    and now has the parameters in 'changedparams'
+    using the parameters and map to get the parameters
+    from the molecular properties.
 
     \throw SireError::incompatible_error
+    \throw SireError::invalid_cast
+    \throw SireMol::missing_property
 */
 void MolCLJInfoData::change(const Molecule &changedmol,
-                            const QVector< QVector<ChargeParameter> > &chgs,
-                            const QVector< QVector<LJParameter> > &ljs)
+                            const CLJFF::Parameters &parameters,
+                            const ParameterMap &map)
 {
   this->assertSameMolecule(changedmol);
-  this->assertCompatibleParameters(chgs);
-  this->assertCompatibleParameters(ljs);
 
   molecule = changedmol;
   coordinates = molecule.coordGroups();
 
-  chgparams = chgs;
-  ljparams = ljs;
+  chgparams = changedmol.getProperty(map.source(parameters.coulomb()));
+  ljparams = changedmol.getProperty(map.source(parameters.lj()));
 }
 
 /////////
@@ -264,9 +193,9 @@ MolCLJInfo::MolCLJInfo() : d( shared_null )
     \throw SireError::incompatible_error
 */
 MolCLJInfo::MolCLJInfo(const Molecule &molecule,
-                       const QVector< QVector<ChargeParameter> > &chgparams,
-                       const QVector< QVector<LJParameter> > &ljparams)
-           : d( new MolCLJInfoData(molecule,chgparams,ljparams) )
+                       const CLJFF::Parameters &parameters,
+                       const ParameterMap &map)
+           : d( new MolCLJInfoData(molecule,parameters,map) )
 {}
 
 /** Destructor */
@@ -313,20 +242,20 @@ ChangedMolCLJInfo::ChangedMolCLJInfo()
 
 /** Assert that 'molinfo' is compatible with the molecule in this
     object
-    
+
     \throw SireError::incompatible_error
 */
 void ChangedMolCLJInfo::assertCompatibleWith(const MolCLJInfo &molinfo)
 {
 }
 
-/** Build the old and new parts from the old and new molecules and list 
+/** Build the old and new parts from the old and new molecules and list
     of changed cutgroups */
 void ChangedMolCLJInfo::buildParts()
 {
     #warning TODO!!!
-    
-    //need to work out how this will work, and how this will 
+
+    //need to work out how this will work, and how this will
     //combine together...
 }
 
@@ -364,13 +293,13 @@ void ChangedMolCLJInfo::change(const MolCLJInfo &newinfo,
                                const QSet<CutGroupID> &changedparts)
 {
     this->assertCompatibleWith(newinfo);
-    
+
     newmol = newinfo;
-    
+
     //the changed parts are the union of the current changed parts
     //with the existing changed parts
     cgids += changedparts;
-    
+
     this->buildParts();
 }
 
@@ -382,7 +311,7 @@ void ChangedMolCLJInfo::change(const MolCLJInfo &newinfo)
     //the whole molecule has now changed
     newmol = newinfo;
     cgids.clear();
-    
+
     this->buildParts();
 }
 
@@ -390,14 +319,14 @@ void ChangedMolCLJInfo::change(const MolCLJInfo &newinfo)
 void ChangedMolCLJInfo::move(const Molecule &molecule)
 {
     oldmol.molecule().assertSameMajorVersion(molecule);
-    
+
     //the whole molecule has now changed
-    newmol = MolCLJInfo( molecule, oldmol.chargeParameters(),
-                                   oldmol.ljParameters() );
+    newmol = oldmol;
+    newmol.move(molecule);
 
     //the whole molecule has now changed
     cgids.clear();
-    
+
     this->buildParts();
 }
 
@@ -405,14 +334,12 @@ void ChangedMolCLJInfo::move(const Molecule &molecule)
 void ChangedMolCLJInfo::move(const Residue &residue)
 {
     Molecule molecule = residue.molecule();
-    
-    oldmol.molecule().assertSameMajorVersion(molecule);
-    
-    newmol = MolCLJInfo( molecule, oldmol.chargeParameters(),
-                                   oldmol.ljParameters() );
-                                   
+
+    newmol = oldmol;
+    newmol.move(molecule);
+
     //combine the residue's ids with the existing id numbers
     cgids += residue.info().cutGroupIDs();
-    
+
     this->buildParts();
 }

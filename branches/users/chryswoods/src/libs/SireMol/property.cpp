@@ -6,6 +6,8 @@
 #include "moleculeinfo.h"
 #include "moleculeversion.h"
 
+#include "SireBase/sharedpolypointer_cast.hpp"
+
 #include "SireError/errors.h"
 #include "SireStream/datastream.h"
 
@@ -71,6 +73,12 @@ PropertyBase::PropertyBase(const PropertyBase&)
 /** Destructor */
 PropertyBase::~PropertyBase()
 {}
+
+/** Assignment operator */
+PropertyBase& PropertyBase::operator=(const PropertyBase&)
+{
+    return *this;
+}
 
 /** Assert that this property is compatible with the molecule 'molecule'
 
@@ -156,6 +164,17 @@ VariantProperty::VariantProperty(const QVariant &value)
                 : PropertyBase(), QVariant(value)
 {}
 
+/** Construct from a 'Property' - the property must be able to
+    be cast to a VariantProperty
+
+    \throw SireError::invalid_cast
+*/
+VariantProperty::VariantProperty(const Property &property)
+                : PropertyBase(), QVariant()
+{
+    *this = property;
+}
+
 /** Copy constructor */
 VariantProperty::VariantProperty(const VariantProperty &other)
                 : PropertyBase(other), QVariant(other)
@@ -164,6 +183,31 @@ VariantProperty::VariantProperty(const VariantProperty &other)
 /** Destructor */
 VariantProperty::~VariantProperty()
 {}
+
+/** Assignment operator from a QVariant */
+VariantProperty& VariantProperty::operator=(const QVariant &other)
+{
+    QVariant::operator=(other);
+    return *this;
+}
+
+/** Assignment operator from a VariantProperty */
+VariantProperty& VariantProperty::operator=(const VariantProperty &other)
+{
+    QVariant::operator=(other);
+    PropertyBase::operator=(other);
+
+    return *this;
+}
+
+/** Assignment from a Property
+
+    \throw SireError::invalid_cast
+*/
+VariantProperty& VariantProperty::operator=(const Property &other)
+{
+    return VariantProperty::operator=(sharedpolypointer_cast<VariantProperty>(other));
+}
 
 ///////////////
 /////////////// Implementation of Property

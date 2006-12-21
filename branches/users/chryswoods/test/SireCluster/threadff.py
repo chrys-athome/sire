@@ -41,28 +41,27 @@ cljff2 = Tip4PFF( Space(space), SwitchingFunction(switchfunc) )
 #parametise each molecule and add it to the forcefield
 print "Parametising the molecules..."
 
+chgs = AtomicCharges( [0.0, 0.52 * mod_electrons, \
+                            0.52 * mod_electrons, \
+                           -1.04 * mod_electrons] )
+
+ljs = AtomicLJs( [ LJParameter( 3.15365 * angstrom, \
+                                0.1550 * kcal_per_mol ), \
+                   LJParameter.dummy(), \
+                   LJParameter.dummy(), \
+                   LJParameter.dummy() ] )
+
 timer.start()
 for mol in mols:
-      chgs = ChargeTable( mol.info() )
-      ljs = LJTable( mol.info() )
-      
-      resnum = mol.residueNumbers()[0]
-      
-      chgs.setParameter( AtomIndex("O00",resnum), 0.0 * mod_electrons )
-      chgs.setParameter( AtomIndex("H01",resnum), 0.52 * mod_electrons )
-      chgs.setParameter( AtomIndex("H02",resnum), 0.52 * mod_electrons )
-      chgs.setParameter( AtomIndex("M03",resnum), -1.04 * mod_electrons )
-      
-      ljs.setParameter( AtomIndex("O00",resnum), \
-                        LJParameter( 3.15365 * angstrom, \
-                                     0.1550 * kcal_per_mol ) )
 
-      ljs.setParameter( AtomIndex("H01",resnum), LJParameter.dummy() )
-      ljs.setParameter( AtomIndex("H02",resnum), LJParameter.dummy() )
-      ljs.setParameter( AtomIndex("M03",resnum), LJParameter.dummy() )
-      
-      cljff.add(mol, chgs, ljs)
-      cljff2.add(mol, chgs, ljs)
+      mol.setProperty( "charges", chgs )
+      mol.setProperty( "ljs", ljs )
+
+      cljff.add(mol, [cljff.parameters().coulomb() == "charges", \
+                      cljff.parameters().lj() == "ljs"])
+                      
+      cljff2.add(mol, [cljff2.parameters().coulomb() == "charges", \
+                       cljff2.parameters().lj() == "ljs"])
 
 ms = timer.elapsed()
 print "... took %d ms" % ms

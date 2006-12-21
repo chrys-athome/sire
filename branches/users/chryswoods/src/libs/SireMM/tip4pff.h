@@ -3,6 +3,8 @@
 
 #include "cljff.h"
 
+#include "SireFF/parametermap.h"
+
 #include "SireVol/aabox.h"
 
 namespace SireMM
@@ -18,6 +20,8 @@ namespace SireMM
 
 class ChargeTable;
 class LJTable;
+
+using SireFF::ParameterMap;
 
 using SireMol::Molecule;
 using SireMol::Residue;
@@ -86,8 +90,7 @@ public:
     bool move(const Molecule &molecule);
     bool move(const Residue &residue);
 
-    void add(const Molecule &molecule,
-             const ChargeTable &charges, const LJTable &ljs);
+    void add(const Molecule &molecule, const ParameterMap &map = ParameterMap());
 
 protected:
     void recalculateEnergy();

@@ -354,18 +354,28 @@ void InterCLJFF::recalculateEnergy()
 }
 
 /** Temporary function used to add a molecule with passed charge and LJ
-    parameters */
+    parameters
+
+    \throw SireError::invalid_cast
+*/
 void InterCLJFF::add(const Molecule &mol, const ParameterMap &map)
 {
-    //get the charge and LJ parameters - these should be in
-    //AtomicCharges and AtomicLJs objects...
-    AtomicCharges chgs = mol.getProperty( map.source(parameters().coulomb()) );
+    //get the Molecule's ID
+    MoleculeID id = mol.ID();
 
-    AtomicLJs ljs = mol.getProperty( map.source(parameters().lj()) );
-
-    //add this molecule to the list
-    mols.append( MolCLJInfo(mol, chgs, ljs) );
-    molid_to_molindex.insert( mol.ID(), mols.count()-1 );
+    //does the molecule already exist...
+    if ( molid_to_molindex.contains(id) )
+    {
+        //ok, we are changing an existing molecule
+        throw SireError::incomplete_code( QObject::tr(
+                    "We cannot yet change an existing molecule!"), CODELOC );
+    }
+    else
+    {
+        //add this molecule to the list
+        mols.append( MolCLJInfo(mol, parameters(), map) );
+        molid_to_molindex.insert( mol.ID(), mols.count()-1 );
+    }
 }
 
 /** Move the molecule 'molecule' */
@@ -395,15 +405,13 @@ bool InterCLJFF::move(const Molecule &molecule)
 
         int idx = molid_to_molindex.value(molid);
 
-        //get the existing copy of the molecule
+        //get the existing copy of the molecule (need reference
+        //as will update it in a sec...)
         MolCLJInfo& oldinfo = mols[idx];
 
-        BOOST_ASSERT( oldinfo.molecule().ID() == molid );
-
-        oldinfo.molecule().assertSameMajorVersion(molecule);
-
-        MolCLJInfo newinfo( molecule, oldinfo.chargeParameters(),
-                            oldinfo.ljParameters() );
+        //create a copy that is moved...
+        MolCLJInfo newinfo( oldinfo );
+        newinfo.move(molecule);
 
         //save the old and new molecule
         movedmols.append( ChangedMolCLJInfo(oldinfo,newinfo) );
@@ -451,12 +459,8 @@ bool InterCLJFF::move(const Residue &residue)
         //get the existing copy of the molecule
         MolCLJInfo& oldinfo = mols[idx];
 
-        BOOST_ASSERT( oldinfo.molecule().ID() == molid );
-
-        oldinfo.molecule().assertSameMajorVersion(molecule);
-
-        MolCLJInfo newinfo( molecule, oldinfo.chargeParameters(),
-                            oldinfo.ljParameters() );
+        MolCLJInfo newinfo(oldinfo);
+        newinfo.move(molecule);
 
         //save the old and new molecule
         movedmols.append( ChangedMolCLJInfo(oldinfo,newinfo,

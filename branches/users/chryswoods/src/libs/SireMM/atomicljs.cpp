@@ -1,6 +1,8 @@
 
 #include "atomicljs.h"
 
+#include "SireBase/sharedpolypointer_cast.hpp"
+
 #include "SireMol/molecule.h"
 #include "SireMol/moleculeinfo.h"
 #include "SireMol/cutgroupid.h"
@@ -9,6 +11,7 @@
 
 using namespace SireMM;
 using namespace SireMol;
+using namespace SireBase;
 using namespace SireStream;
 
 static const RegisterMetaType<AtomicLJs> r_atomljs("SireMM::AtomicLJs");
@@ -54,6 +57,16 @@ AtomicLJs::AtomicLJs(const QVector<LJParameter> &ljs)
           : PropertyBase(), QVector< QVector<LJParameter> >(1, ljs)
 {}
 
+/** Copy from a Property
+
+    \throw SireError::invalid_cast
+*/
+AtomicLJs::AtomicLJs(const Property &property)
+          : PropertyBase(), QVector< QVector<LJParameter> >()
+{
+    *this = property;
+}
+
 /** Copy constructor */
 AtomicLJs::AtomicLJs(const AtomicLJs &other)
           : PropertyBase(other), QVector< QVector<LJParameter> >(other)
@@ -62,6 +75,41 @@ AtomicLJs::AtomicLJs(const AtomicLJs &other)
 /** Destructor */
 AtomicLJs::~AtomicLJs()
 {}
+
+/** Assignment operator */
+AtomicLJs& AtomicLJs::operator=(const QVector< QVector<LJParameter> > &ljparams)
+{
+    QVector< QVector<LJParameter> >::operator=(ljparams);
+
+    return *this;
+}
+
+/** Assignment operator */
+AtomicLJs& AtomicLJs::operator=(const QVector<LJParameter> &ljparams)
+{
+    QVector< QVector<LJParameter> >::operator=(
+                  QVector< QVector<LJParameter> >(1, ljparams) );
+
+    return *this;
+}
+
+/** Assignment operator */
+AtomicLJs& AtomicLJs::operator=(const AtomicLJs &other)
+{
+    QVector< QVector<LJParameter> >::operator=(other);
+    PropertyBase::operator=(other);
+
+    return *this;
+}
+
+/** Assignment operator
+
+    \throw SireError::invalid_cast
+*/
+AtomicLJs& AtomicLJs::operator=(const Property &property)
+{
+    return AtomicLJs::operator=(sharedpolypointer_cast<AtomicLJs>(property));
+}
 
 /** Return whether or not this is compatible with 'molecule' */
 bool AtomicLJs::isCompatibleWith(const Molecule &molecule) const

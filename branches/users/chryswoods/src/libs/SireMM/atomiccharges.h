@@ -21,6 +21,7 @@ namespace SireMM
 {
 
 using SireMol::Molecule;
+using SireMol::Property;
 
 /** This class is used to hold all of the atomic charges for the
     atoms in a molecule. All of the atomic charges are held in
@@ -45,9 +46,17 @@ public:
 
     AtomicCharges(const QVector<ChargeParameter> &charges);
 
+    AtomicCharges(const Property &property);
+
     AtomicCharges(const AtomicCharges &other);
 
     ~AtomicCharges();
+
+    AtomicCharges& operator=(const QVector< QVector<ChargeParameter> > &charges);
+    AtomicCharges& operator=(const QVector<ChargeParameter> &charges);
+    AtomicCharges& operator=(const Property &property);
+
+    AtomicCharges& operator=(const AtomicCharges &other);
 
     static const char* typeName()
     {

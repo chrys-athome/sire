@@ -17,11 +17,16 @@
 #include <QSharedDataPointer>
 #include <QVector>
 
+#include "SireFF/parametermap.h"
+
 #include "SireMol/molecule.h"
 #include "SireMol/residue.h"
 #include "SireMol/cutgroupid.h"
 
+#include "SireMM/cljff.h"
 #include "SireMM/cljparameter.h"
+#include "SireMM/atomiccharges.h"
+#include "SireMM/atomicljs.h"
 
 #include "SireVol/coordgroup.h"
 
@@ -52,6 +57,8 @@ namespace SireMM
 namespace detail
 {
 
+using SireFF::ParameterMap;
+
 using SireMol::Molecule;
 using SireMol::Residue;
 using SireMol::CutGroupID;
@@ -73,8 +80,8 @@ public:
     MolCLJInfoData();
 
     MolCLJInfoData(const Molecule &mol,
-                   const QVector< QVector<ChargeParameter> > &chgs,
-                   const QVector< QVector<LJParameter> > &ljs);
+                   const CLJFF::Parameters& parameters,
+                   const ParameterMap &map);
 
     /** Copy constructor */
     MolCLJInfoData(const MolCLJInfoData &other)
@@ -86,16 +93,11 @@ public:
 
     void assertSameMolecule(const Molecule &mol) const;
     void assertSameMajorVersion(const Molecule &mol) const;
-    void assertCompatibleParameters(
-                        const QVector< QVector<ChargeParameter> > &chgparams) const;
-    void assertCompatibleParameters(
-                        const QVector< QVector<LJParameter> > &ljparams) const;
 
     void move(const Molecule &movedmol);
 
-    void change(const Molecule &changedmol,
-                const QVector< QVector<ChargeParameter> > &chgparams,
-                const QVector< QVector<LJParameter> > &ljparams);
+    void change(const Molecule &changedmol, const CLJFF::Parameters &parameters,
+                const ParameterMap &map);
 
     /** The molecule whose parameters are contained in this object */
     Molecule molecule;
@@ -104,13 +106,11 @@ public:
         an indexed by CutGroupID */
     QVector<CoordGroup> coordinates;
 
-    /** The Charge parameters for all of the atoms in the molecule,
-        organised into groups and indexed by CutGroupID */
-    QVector< QVector<ChargeParameter> > chgparams;
+    /** The Charge parameters for all of the atoms in the molecule */
+    AtomicCharges chgparams;
 
-    /** The LJ parameters for all of the atoms in the molecule,
-        organised into groups and indexed by CutGroupID */
-    QVector< QVector<LJParameter> > ljparams;
+    /** The LJ parameters for all of the atoms in the molecule */
+    AtomicLJs ljparams;
 };
 
 /**
@@ -129,8 +129,8 @@ public:
     MolCLJInfo();
 
     MolCLJInfo(const Molecule &molecule,
-               const QVector< QVector<ChargeParameter> > &chgs,
-               const QVector< QVector<LJParameter> > &ljs);
+               const CLJFF::Parameters &parameters,
+               const ParameterMap &parammap);
 
     /** Copy constructor */
     MolCLJInfo(const MolCLJInfo &other) : d(other.d)
@@ -184,16 +184,17 @@ public:
     }
 
     /** Change the record to record that the molecule
-        'molecule' has changed, and that it now has the
-        passed parameters
+        'molecule' has changed, using the passed parameter
+        types and map to extract the required parameters
+        from the properties of the molecule.
 
         \throw SireError::incompatible_error
+        \throw SireError::invalid_cast
     */
-    void change(const Molecule &molecule,
-                const QVector< QVector<ChargeParameter> > &chgparams,
-                const QVector< QVector<LJParameter> > &ljparams)
+    void change(const Molecule &molecule, const CLJFF::Parameters &parameters,
+                const ParameterMap &map)
     {
-        d->change(molecule, chgparams, ljparams);
+        d->change(molecule, parameters, map);
     }
 
 private:

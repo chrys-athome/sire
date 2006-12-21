@@ -1,6 +1,8 @@
 
 #include "atomiccharges.h"
 
+#include "SireBase/sharedpolypointer_cast.hpp"
+
 #include "SireMol/molecule.h"
 #include "SireMol/moleculeinfo.h"
 #include "SireMol/cutgroupid.h"
@@ -9,6 +11,7 @@
 
 using namespace SireMM;
 using namespace SireMol;
+using namespace SireBase;
 using namespace SireStream;
 
 static const RegisterMetaType<AtomicCharges> r_atomchgs("SireMM::AtomicCharges");
@@ -54,6 +57,16 @@ AtomicCharges::AtomicCharges(const QVector<ChargeParameter> &charges)
               : PropertyBase(), QVector< QVector<ChargeParameter> >(1, charges)
 {}
 
+/** Construct from a Property
+
+    \throw SireError::invalid_cast
+*/
+AtomicCharges::AtomicCharges(const Property &property)
+              : PropertyBase(), QVector< QVector<ChargeParameter> >()
+{
+    *this = property;
+}
+
 /** Copy constructor */
 AtomicCharges::AtomicCharges(const AtomicCharges &other)
               : PropertyBase(other), QVector< QVector<ChargeParameter> >(other)
@@ -62,6 +75,41 @@ AtomicCharges::AtomicCharges(const AtomicCharges &other)
 /** Destructor */
 AtomicCharges::~AtomicCharges()
 {}
+
+/** Assignment operator */
+AtomicCharges& AtomicCharges::operator=(
+                    const QVector< QVector<ChargeParameter> > &charges)
+{
+    QVector< QVector<ChargeParameter> >::operator=(charges);
+    return *this;
+}
+
+/** Assignment operator */
+AtomicCharges& AtomicCharges::operator=(const QVector<ChargeParameter> &charges)
+{
+    QVector< QVector<ChargeParameter> >::operator=(
+                        QVector< QVector<ChargeParameter> >(1, charges) );
+
+    return *this;
+}
+
+/** Assignment operator */
+AtomicCharges& AtomicCharges::operator=(const AtomicCharges &other)
+{
+    QVector< QVector<ChargeParameter> >::operator=(other);
+    PropertyBase::operator=(other);
+
+    return *this;
+}
+
+/** Assignment operator
+
+    \throw SireError::invalid_cast
+*/
+AtomicCharges& AtomicCharges::operator=(const Property &property)
+{
+    return AtomicCharges::operator=(sharedpolypointer_cast<AtomicCharges>(property));
+}
 
 /** Return whether or not this is compatible with 'molecule' */
 bool AtomicCharges::isCompatibleWith(const Molecule &molecule) const

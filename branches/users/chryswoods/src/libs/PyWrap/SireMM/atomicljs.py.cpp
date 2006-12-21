@@ -32,6 +32,7 @@ void SIREMM_EXPORT export_AtomicLJs()
 
         .def( init<const QVector< QVector<LJParameter> >&>() )
         .def( init<const QVector<LJParameter>&>() )
+        .def( init<const Property&>() )
         .def( init<const AtomicLJs&>() )
     ;
 }

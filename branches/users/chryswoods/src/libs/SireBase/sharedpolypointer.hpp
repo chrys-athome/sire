@@ -42,6 +42,12 @@ struct SharedPolyPointerHelper
     {
         return obj.what();
     }
+
+    /** Return the typename directly */
+    static const char* typeName()
+    {
+        return T::typeName();
+    }
 };
 
 /** This is a version of QSharedDataPointer that has been modified to
@@ -64,11 +70,11 @@ friend QDataStream& ::operator<<<>(QDataStream&, const SharedPolyPointer<T>&);
 friend QDataStream& ::operator>><>(QDataStream&, SharedPolyPointer<T>&);
 
 public:
-    
+
     typedef T element_type;
     typedef T value_type;
     typedef T * pointer;
-    
+
     inline void detach() { if (d && d->ref != 1) detach_helper(); }
     inline T &operator*() { detach(); return *d; }
     inline const T &operator*() const { return *d; }
@@ -339,7 +345,7 @@ QDataStream& operator>>(QDataStream &ds,
     return ds;
 }
 
-template<class T> 
+template<class T>
 inline const T* get_pointer(SireBase::SharedPolyPointer<T> const & p)
 {
     return p.constData();

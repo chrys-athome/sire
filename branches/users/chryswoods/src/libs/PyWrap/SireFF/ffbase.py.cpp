@@ -21,7 +21,7 @@ export_FFBase()
         .def(
             "components"
             , &::SireFF::FFBase::components
-            , bp::return_internal_reference<1,bp::with_custodian_and_ward<1, 2> >() )
+            , bp::return_internal_reference<>() )
         .def(
             "energies"
             , &::SireFF::FFBase::energies
@@ -52,7 +52,7 @@ export_FFBase()
         .def(
             "parameters"
             , &::SireFF::FFBase::parameters
-            , bp::return_internal_reference<1,bp::with_custodian_and_ward<1, 2> >() )
+            , bp::return_internal_reference<>() )
         .def(
             "setName"
             , &::SireFF::FFBase::setName

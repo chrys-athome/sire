@@ -37,23 +37,32 @@ cljff2 = Tip4PFF( Space(space), SwitchingFunction(switchfunc) )
 #parametise each molecule and add it to the forcefield
 print "Parametising the molecules..."
 
+chgs = AtomicCharges( [0.0, 0.52 * mod_electrons, \
+                            0.52 * mod_electrons, \
+                           -1.04 * mod_electrons] )
+
+ljs = AtomicLJs( [ LJParameter( 3.15365 * angstrom, \
+                                0.1550 * kcal_per_mol ), \
+                   LJParameter.dummy(), \
+                   LJParameter.dummy(), \
+                   LJParameter.dummy() ] )
+
+tip4p = False
+
 timer.start()
 for mol in mols:
-      chgs = AtomicCharges( [0.0, 0.52 * mod_electrons, \
-                                  0.52 * mod_electrons, \
-                                 -1.04 * mod_electrons] )
-
-      ljs = AtomicLJs( [ LJParameter( 3.15365 * angstrom, \
-                                      0.1550 * kcal_per_mol ), \
-                         LJParameter.dummy(), \
-                         LJParameter.dummy(), \
-                         LJParameter.dummy() ] )
       
       mol.setProperty( "charges", chgs )
       mol.setProperty( "ljs", ljs )
+
+      if (not tip4p):
+          tip4p = mol
       
-      cljff.add(mol, [cljff.charges() == "charges", cljff.ljs() == "ljs"])
-      cljff2.add(mol, [cljff2.charges() == "charges", cljff2.ljs() == "ljs"])
+      cljff.add(mol, [cljff.parameters().coulomb() == "charges", \
+                      cljff.parameters().lj() == "ljs"])
+                      
+      cljff2.add(mol, [cljff2.parameters().coulomb() == "charges", \
+                       cljff2.parameters().lj() == "ljs"])
 
 ms = timer.elapsed()
 print "... took %d ms" % ms
@@ -66,8 +75,8 @@ nrg = cljff.energy()
 ms = timer.elapsed()
 
 print "InterCLJFF ",cljff.energy(), "kcal mol-1"
-print "    Coulomb = ", cljff.energy(cljff.coulomb())
-print "         LJ = ", cljff.energy(cljff.lj())
+print "    Coulomb = ", cljff.energy(cljff.components().coulomb())
+print "         LJ = ", cljff.energy(cljff.components().lj())
 
 print "... took %d ms" % ms
 
@@ -85,7 +94,7 @@ timer.start()
 
 nmoves = 1000
 for i in range(0,nmoves):
-    cljff.move( mols[0] )
+    cljff.move( tip4p )
     nrg = cljff.energy()
 
 ms = timer.elapsed()

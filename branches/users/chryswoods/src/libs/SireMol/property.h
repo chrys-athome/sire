@@ -50,6 +50,8 @@ public:
 
     virtual ~PropertyBase();
 
+    PropertyBase& operator=(const PropertyBase &other);
+
     virtual PropertyBase* clone() const=0;
 
     virtual const char* what() const=0;
@@ -75,9 +77,15 @@ public:
 
     VariantProperty(const QVariant &value);
 
+    VariantProperty(const Property &other);
+
     VariantProperty(const VariantProperty &other);
 
     ~VariantProperty();
+
+    VariantProperty& operator=(const QVariant &value);
+    VariantProperty& operator=(const Property &property);
+    VariantProperty& operator=(const VariantProperty &other);
 
     static const char* typeName()
     {

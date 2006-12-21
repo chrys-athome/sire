@@ -175,29 +175,25 @@ void Tip4PFF::recalculateEnergy()
     this->setComponent( components().total(), nrg );
 }
 
-/** Temporary function used to add a molecule with passed charge and LJ
-    parameters */
-void Tip4PFF::add(const Molecule &mol, const ChargeTable &charges,
-                  const LJTable &ljs)
+/** Temporary function used to add a molecule getting the parameters from
+    the properties of the molecule using the passed mapping */
+void Tip4PFF::add(const Molecule &mol, const ParameterMap &map)
 {
     if (cljparams.isEmpty())
     {
-        charges.assertCompatibleWith(mol);
-        ljs.assertCompatibleWith(mol);
+        AtomicCharges charges = mol.getProperty( map.source(parameters().coulomb()) );
+        AtomicLJs ljs = mol.getProperty( map.source(parameters().lj()) );
 
-        QVector< ParameterGroup<ChargeParameter> > chargeparams = charges.parameterGroups();
-        QVector< ParameterGroup<LJParameter> > ljparams = ljs.parameterGroups();
-
-        int ncg = chargeparams.count();
+        int ncg = charges.count();
 
         BOOST_ASSERT(ncg == 1);
 
-        int nparams = chargeparams[0].parameters().count();
+        int nparams = charges[0].count();
 
         BOOST_ASSERT(nparams == 4);
 
-        const ChargeParameter *chargearray = chargeparams[0].parameters().constData();
-        const LJParameter *ljarray = ljparams[0].parameters().constData();
+        const ChargeParameter *chargearray = charges[0].constData();
+        const LJParameter *ljarray = ljs[0].constData();
 
         cljparams.reserve(nparams);
 
