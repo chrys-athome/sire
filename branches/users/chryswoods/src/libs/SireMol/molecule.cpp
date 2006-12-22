@@ -43,6 +43,8 @@
 #include "SireMaths/triangle.h"
 #include "SireMaths/torsion.h"
 
+#include "SireError/errors.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 

@@ -5,6 +5,8 @@
 
 #include "ffcalculator.h"
 
+#include "SireError/errors.h"
+
 using namespace SireFF;
 using namespace SireMol;
 
@@ -13,7 +15,7 @@ using namespace SireMol;
 /////////
 
 /** Constructor */
-FFCalculatorBase::FFCalculatorBase()
+FFCalculatorBase::FFCalculatorBase() : boost::noncopyable()
 {}
 
 /** Destructor */

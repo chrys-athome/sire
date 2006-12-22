@@ -15,6 +15,8 @@
 #include "SireMol/moleculeinfo.h"
 #include "SireMol/residueinfo.h"
 
+#include "SireError/errors.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireDB

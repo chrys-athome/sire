@@ -20,8 +20,6 @@
 #include "SireFF/ffbase.h"
 #include "SireMM/chargeparameter.h"
 
-#include "SireStream/versionid.h"
-
 class QTextStream;
 
 SIRE_BEGIN_HEADER
@@ -50,11 +48,13 @@ using SireMol::MoleculeID;
 using SireMol::Residue;
 
 using SireFF::ParameterMap;
+using SireFF::ParameterName;
 
 using SireMM::ChargeTable;
 using SireMM::ChargeParameter;
 
 using SireCAS::Values;
+using SireCAS::Function;
 
 using SireStream::VersionID;
 
@@ -82,11 +82,14 @@ public:
     MolproFF();
     MolproFF(const QString &name);
 
+    MolproFF(const ForceField &forcefield);
+
     MolproFF(const MolproFF &other);
 
     ~MolproFF();
 
     MolproFF& operator=(const MolproFF &other);
+    MolproFF& operator=(const ForceField &forcefield);
 
     class SQUIRE_EXPORT Components : public SireFF::FFBase::Components
     {
@@ -179,8 +182,7 @@ public:
 protected:
     void recalculateEnergy();  //throw an exception
 
-    const QVector<double>& qmCoordinates();
-    const QVector<double>& mmCoordsAndCharges();
+    bool updateArrays();
 
     //protected functions designed to be overloaded by child classes, and
     //only called by MolproCalculator
@@ -188,55 +190,10 @@ protected:
     virtual Values recalculateEnergy(MolproSession &session);
 
 private:
-
     void registerComponents();
 
-    FFBase::registerComponents(ptr.get());
-
-    components_ptr = ptr.release();
-
-
     void _pvt_addToQM(const Molecule &molecule);
-    void _pvt_addToMM(const Molecule &molecule, const ChargeTable &charges);
-
-    /** The QM molecules */
-    QVector< detail::MolproQMMol > qm_molecules;
-
-    /** The coordinates of all of the QM molecules, placed into
-        a single array. The coordinates are in order of the molecules
-        in qm_molecules, then the atoms in AtomID order. The coordinates
-        are stored in units of bohr radii */
-    QVector<double> qm_coords;
-
-    /** Hash mapping MoleculeID to the index in qm_molecules */
-    QHash<MoleculeID, int> qm_molid_to_index;
-
-    /** The QM molecules that have changed since the last time the
-        qm_coords array was constructed */
-    QVector< detail::ChangedMolproQMMols > moved_qm_mols;
-
-    /** Hash mapping MoleculeID to changed QM molecule */
-    QHash< MoleculeID, int > molid_to_moved_qm_mol;
-
-    /** The MM molecules */
-    QVector< detail::MolproMMMol > mm_molecules;
-
-    /** The coordinates and charges of all of the MM molecules,
-        placed into a single array. The coordinates and charges are
-        placed in the order of the molecules in mm_molecules, then
-        the atoms in AtomID order. The coordinates are in units of
-        bohr radii, while the charges are in atomic charge units */
-    QVector<double> mm_coords_and_charges;
-
-    /** Hash mapping MoleculeID to the index in mm_molecules */
-    QHash<MoleculeID, int> mm_molid_to_index;
-
-    /** The MM molecules that have changed since the last time the
-        mm_coords_and_charges array was constructed */
-    QVector< detail::ChangedMolproMMMols >  moved_mm_mols;
-
-    /** Hash mapping MoleculeID to changed MM molecule */
-    QHash< MoleculeID, int > molid_to_moved_mm_mol;
+    void _pvt_addToMM(const Molecule &molecule, const ParameterMap &map);
 
     /** Pointer to the object holding the descriptions of the
         components in this forcefield */

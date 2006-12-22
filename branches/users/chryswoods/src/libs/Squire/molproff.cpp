@@ -22,6 +22,8 @@
 
 #include "SireMaths/maths.h"
 
+#include "SireBase/sharedpolypointer_cast.hpp"
+
 #include "SireStream/datastream.h"
 
 #include "SireUnits/convert.h"
@@ -155,14 +157,19 @@ MolproFF::MolproFF(const QString &name) : FFBase(name)
     this->registerComponents();
 }
 
+/** Construct from a ForceField
+
+    \throw SireError::invalid_cast
+*/
+MolproFF::MolproFF(const ForceField &forcefield)
+         : FFBase()
+{
+    *this = sharedpolypointer_cast<MolproFF>(forcefield);
+}
+
 /** Copy constructor */
 MolproFF::MolproFF(const MolproFF &other)
-         : FFBase(other),
-           qm_molecules(other.qm_molecules), qm_coords(other.qm_coords),
-           qm_molid_to_index(other.qm_molid_to_index),
-           mm_molecules(other.mm_molecules), mm_charges(other.mm_charges),
-           mm_coords_and_charges(other.mm_coords_and_charges),
-           mm_molid_to_index(other.mm_molid_to_index)
+         : FFBase(other)
 {
     //get the pointer from the base class...
     components_ptr = dynamic_cast<const MolproFF::Components*>( &(FFBase::components()) );
@@ -178,17 +185,15 @@ MolproFF& MolproFF::operator=(const MolproFF &other)
 {
    if (this != &other)
    {
-      qm_molecules = other.qm_molecules;
-      qm_coords = other.qm_coords;
-      qm_molid_to_index = other.qm_molid_to_index;
-
-      mm_molecules = other.mm_molecules;
-      mm_charges = other.mm_charges;
-      mm_coords_and_charges = other.mm_coords_and_charges;
-      mm_molid_to_index = other.mm_molid_to_index;
    }
 
    return *this;
+}
+
+/** Assignment operator */
+MolproFF& MolproFF::operator=(const ForceField &forcefield)
+{
+    return MolproFF::operator=( sharedpolypointer_cast<MolproFF>(forcefield) );
 }
 
 /** Register the components of this forcefield */
@@ -201,175 +206,139 @@ void MolproFF::registerComponents()
     components_ptr = ptr.release();
 }
 
-/** Return the array containing the coordinates of the QM atoms.
-    This will update the coordinates array to account for any
-    changes that may have occured since the QM atoms were last
-    moved
+/** Update the QM and MM arrays so that they contain the latest
+    data, and return whether or not the arrays have changed since the
+    last update.
 */
-const QVector<double>& MolproFF::qmCoordinates()
+bool MolproFF::updateArrays()
 {
-    //
+    //if moved QM molecules
+    //  return rebuild_all
+    //else if moved MM molecules
+    //  return rebuild_mm
+
+    return false;
 }
 
-/** Return the array containing the coordinates and charges of
-    the MM atoms - this will update the coordinates/charges
-    array to account for any changes that may have occured since the
-    QM atoms were last moved
-*/
-const QVector<double>& MolproFF::mmCoordsAndCharges()
-{
-    //
-}
-
-/** Return the vector containing the coordinates of the QM atoms,
-    arranged into an array of doubles, as
-    atom0(x,y,z), atom1(x,y,z) ... atomn(x,y,z), and with the
-    coordinates in bohr radii */
-inline const QVector<double>& MolproFF::qmCoordinates() const
-{
-    return qm_coords;
-}
-
-/** Return the vector containing the coordinates and charges of the
-    MM atoms, arranged into an array of doubles, as
-    atom0(x,y,z,q), atom1(x,y,z,q) .... atomn(x,y,z,q)
-    with coordinates in bohr radii and charges in atomic charge units */
-inline const QVector<double>& MolproFF::mmCoordsAndCharges() const
-{
-    return mm_coords_and_charges;
-}
-
-
-/** Reconstruct the QM coordinate array */
-void MolproFF::reconstructQMArray()
-{
-    int nmols = qm_molecules.count();
-    const Molecule *molecule_array = qm_molecules.constData();
-
-    int nats = 0;
-
-    //get the number of atoms
-    for (int i=0; i<nmols; ++i)
-    {
-        nats += molecule_array[i].nAtoms();
-    }
-
-    if (nats == 0)
-    {
-        //clear the coordinates array
-        qm_coords.clear();
-        return;
-    }
-
-    //reserve sufficient space (3 times number of atoms)
-    QVector<double> coords( nats*3 );
-    double *coords_array = coords.data();
-
-    int atomid = 0;
-
-    //copy the atoms' coordinates, and convert to bohr radii
-    for (int i=0; i<nmols; ++i)
-    {
-        QVector<Vector> molcoords = molecule_array[i].coordinates();
-
-        int ncoords = molcoords.count();
-        const Vector *molcoords_array = molcoords.constData();
-
-        for (int j=0; j<ncoords; ++j)
-        {
-            const Vector &atmcoords = molcoords_array[j];
-
-            coords_array[atomid] = convertTo(atmcoords.x(), bohr_radii);
-            coords_array[atomid+1] = convertTo(atmcoords.y(), bohr_radii);
-            coords_array[atomid+2] = convertTo(atmcoords.z(), bohr_radii);
-
-            atomid += 3;
-        }
-    }
-
-    qm_coords = coords;
-}
-
-/** Reconstruct the MM coordinate and charge array */
-void MolproFF::reconstructMMArray()
-{
-    int nmols = mm_molecules.count();
-    const Molecule *molecule_array = mm_molecules.constData();
-    const QVector<ChargeParameter> *molcharge_array = mm_charges.constData();
-
-    //count the number of atoms that have a non-zero charge
-    //(same as the number of non-zero charge parameters...)
-    int nats = 0;
-
-    for (int i=0; i<nmols; ++i)
-    {
-        const QVector<ChargeParameter> &molcharges = molcharge_array[i];
-
-        int ncharges = molcharges.count();
-        const ChargeParameter *charge_array = molcharges.constData();
-
-        for (int j=0; j<nmols; ++j)
-        {
-            if ( not isZero(charge_array[j].charge()) )
-               ++nats;
-        }
-    }
-
-    if (nats == 0)
-    {
-        //there are no MM charges
-        mm_coords_and_charges.clear();
-        return;
-    }
-
-    //reserve sufficient space for the coordinates and charges (4*nats)
-    QVector<double> coords( nats*4 );
-    double *coords_array = coords.data();
-
-    int atomid = 0;
-
-    for (int i=0; i<nmols; ++i)
-    {
-        QVector<Vector> molcoords = molecule_array[i].coordinates();
-
-        int ncoords = molcoords.count();
-        const Vector *molcoords_array = molcoords.constData();
-
-        const ChargeParameter *charge_array = molcharge_array[i].constData();
-
-        for (int j=0; j<ncoords; ++j)
-        {
-            if ( not isZero(charge_array[j].charge()) )
-            {
-                const Vector &atmcoords = molcoords_array[j];
-
-                //copy (and convert) the coordinates
-                coords_array[atomid] = convertTo(atmcoords.x(), bohr_radii);
-                coords_array[atomid+1] = convertTo(atmcoords.y(), bohr_radii);
-                coords_array[atomid+2] = convertTo(atmcoords.z(), bohr_radii);
-
-                //copy (and convert) the charge
-                coords_array[atomid+3] = convertTo(charge_array[j].charge(),
-                                                   mod_electrons);
-
-                atomid += 4;
-            }
-        }
-    }
-
-    mm_coords_and_charges = coords;
-}
-
-/** Reconstruct all of the info arrays... */
-void MolproFF::reconstructIndexAndArrays()
-{
-    //reconstruct the ID hashes...
-    qm_molid_to_index = SireFF::index(qm_molecules);
-    mm_molid_to_index = SireFF::index(mm_molecules);
-
-    this->reconstructQMArray();
-    this->reconstructMMArray();
-}
+// /** Reconstruct the QM coordinate array */
+// void MolproFF::reconstructQMArray()
+// {
+//     int nmols = qm_molecules.count();
+//     const Molecule *molecule_array = qm_molecules.constData();
+//
+//     int nats = 0;
+//
+//     //get the number of atoms
+//     for (int i=0; i<nmols; ++i)
+//     {
+//         nats += molecule_array[i].nAtoms();
+//     }
+//
+//     if (nats == 0)
+//     {
+//         //clear the coordinates array
+//         qm_coords.clear();
+//         return;
+//     }
+//
+//     //reserve sufficient space (3 times number of atoms)
+//     QVector<double> coords( nats*3 );
+//     double *coords_array = coords.data();
+//
+//     int atomid = 0;
+//
+//     //copy the atoms' coordinates, and convert to bohr radii
+//     for (int i=0; i<nmols; ++i)
+//     {
+//         QVector<Vector> molcoords = molecule_array[i].coordinates();
+//
+//         int ncoords = molcoords.count();
+//         const Vector *molcoords_array = molcoords.constData();
+//
+//         for (int j=0; j<ncoords; ++j)
+//         {
+//             const Vector &atmcoords = molcoords_array[j];
+//
+//             coords_array[atomid] = convertTo(atmcoords.x(), bohr_radii);
+//             coords_array[atomid+1] = convertTo(atmcoords.y(), bohr_radii);
+//             coords_array[atomid+2] = convertTo(atmcoords.z(), bohr_radii);
+//
+//             atomid += 3;
+//         }
+//     }
+//
+//     qm_coords = coords;
+// }
+//
+// /** Reconstruct the MM coordinate and charge array */
+// void MolproFF::reconstructMMArray()
+// {
+//     int nmols = mm_molecules.count();
+//     const Molecule *molecule_array = mm_molecules.constData();
+//     const QVector<ChargeParameter> *molcharge_array = mm_charges.constData();
+//
+//     //count the number of atoms that have a non-zero charge
+//     //(same as the number of non-zero charge parameters...)
+//     int nats = 0;
+//
+//     for (int i=0; i<nmols; ++i)
+//     {
+//         const QVector<ChargeParameter> &molcharges = molcharge_array[i];
+//
+//         int ncharges = molcharges.count();
+//         const ChargeParameter *charge_array = molcharges.constData();
+//
+//         for (int j=0; j<nmols; ++j)
+//         {
+//             if ( not isZero(charge_array[j].charge()) )
+//                ++nats;
+//         }
+//     }
+//
+//     if (nats == 0)
+//     {
+//         //there are no MM charges
+//         mm_coords_and_charges.clear();
+//         return;
+//     }
+//
+//     //reserve sufficient space for the coordinates and charges (4*nats)
+//     QVector<double> coords( nats*4 );
+//     double *coords_array = coords.data();
+//
+//     int atomid = 0;
+//
+//     for (int i=0; i<nmols; ++i)
+//     {
+//         QVector<Vector> molcoords = molecule_array[i].coordinates();
+//
+//         int ncoords = molcoords.count();
+//         const Vector *molcoords_array = molcoords.constData();
+//
+//         const ChargeParameter *charge_array = molcharge_array[i].constData();
+//
+//         for (int j=0; j<ncoords; ++j)
+//         {
+//             if ( not isZero(charge_array[j].charge()) )
+//             {
+//                 const Vector &atmcoords = molcoords_array[j];
+//
+//                 //copy (and convert) the coordinates
+//                 coords_array[atomid] = convertTo(atmcoords.x(), bohr_radii);
+//                 coords_array[atomid+1] = convertTo(atmcoords.y(), bohr_radii);
+//                 coords_array[atomid+2] = convertTo(atmcoords.z(), bohr_radii);
+//
+//                 //copy (and convert) the charge
+//                 coords_array[atomid+3] = convertTo(charge_array[j].charge(),
+//                                                    mod_electrons);
+//
+//                 atomid += 4;
+//             }
+//         }
+//     }
+//
+//     mm_coords_and_charges = coords;
+// }
 
 /** Add a molecule to the QM region
 
@@ -379,29 +348,9 @@ void MolproFF::_pvt_addToQM(const Molecule &molecule)
 {
     MoleculeID molid = molecule.ID();
 
-    if ( mm_molid_to_index.contains(molid) )
-    {
-        const Molecule &existing_mol = mm_molecules.at(mm_molid_to_index.value(molid));
+    //check that the molecule is not in the MM region
 
-        throw SireMol::duplicate_molecule( QObject::tr(
-            "You cannot add the molecule \"%1\" (%2) to the QM region "
-            "of the Molpro forcefield \"%3\", as it already exists in "
-            "the MM region (\"%4\")")
-                .arg(molecule.name()).arg(molid)
-                .arg(this->name(), existing_mol.name()), CODELOC );
-    }
-    else if ( qm_molid_to_index.contains(molid) )
-    {
-        //replace the existing molecule
-        int idx = qm_molid_to_index.value(molid);
-
-        qm_molecules[idx] = molecule;
-    }
-    else
-    {
-        qm_molecules.append(molecule);
-        qm_molid_to_index.insert(molid, qm_molecules.count() - 1);
-    }
+    //add the molecule to the qm list, and also to the changed list
 }
 
 /** Add a molecule to the MM region.
@@ -409,38 +358,18 @@ void MolproFF::_pvt_addToQM(const Molecule &molecule)
     \throw SireMol::duplicate_molecule
     \throw SireError::incompatible_error
 */
-void MolproFF::_pvt_addToMM(const Molecule &molecule, const ChargeTable &charges)
+void MolproFF::_pvt_addToMM(const Molecule &molecule, const ParameterMap &map)
 {
-    charges.assertCompatibleWith(molecule);
+    //get the charges for this molecule from the coulomb property
+    AtomicCharges charges = molecule.getProperty( map.source(parameters().coulomb()) );
 
     MoleculeID molid = molecule.ID();
 
-    if (qm_molid_to_index.contains(molid))
-    {
-        const Molecule &existing_mol = qm_molecules.at( qm_molid_to_index.value(molid) );
+    //check that the molecule is not in the QM region
 
-        throw SireMol::duplicate_molecule( QObject::tr(
-            "You cannot add the molecule \"%1\" (%2) to the MM region "
-            "of the Molpro forcefield \"%3\", as it already exists in "
-            "the QM region (\"%4\")")
-                .arg(molecule.name()).arg(molid)
-                .arg(this->name(), existing_mol.name()), CODELOC );
-    }
-    else if (mm_molid_to_index.contains(molid))
-    {
-        //replace the existing molecule
-        int idx = mm_molid_to_index.value(molid);
 
-        mm_molecules[idx] = molecule;
-        mm_charges[idx] = charges.parameters();
-    }
-    else
-    {
-        //add the MM atom
-        mm_molecules.append( molecule );
-        mm_charges.append( charges.parameters() );
-        mm_molid_to_index.insert( molid, mm_molecules.count() - 1 );
-    }
+    //add the molecule to the list, and also add it to the changed list
+
 }
 
 /** Add a molecule to the QM region
@@ -451,8 +380,7 @@ void MolproFF::addToQM(const Molecule &molecule)
 {
     this->_pvt_addToQM(molecule);
 
-    this->reconstructQMArray();
-    this->incrementVersion();
+    this->incrementMajorVersion();
 }
 
 /** Add a load of molecules to the QM region
@@ -473,10 +401,9 @@ void MolproFF::addToQM(const QList<Molecule> &molecules)
         copy._pvt_addToQM(*it);
     }
 
-    copy.reconstructQMArray();
-    copy.incrementVersion();
+    copy.incrementMajorVersion();
 
-    //everythings ok - copy back to the original
+    //everything's ok - copy back to the original
     *this = copy;
 }
 
@@ -484,12 +411,10 @@ void MolproFF::addToQM(const QList<Molecule> &molecules)
 
     \throw SireMol::duplicate_molecule
 */
-void MolproFF::addToMM(const Molecule &molecule, const ChargeTable &charges)
+void MolproFF::addToMM(const Molecule &molecule, const ParameterMap &map)
 {
-    this->_pvt_addToMM(molecule, charges);
-
-    this->reconstructMMArray();
-    this->incrementVersion();
+    this->_pvt_addToMM(molecule, map);
+    this->incrementMajorVersion();
 }
 
 /** Add a load of molecules to the MM region
@@ -497,51 +422,24 @@ void MolproFF::addToMM(const Molecule &molecule, const ChargeTable &charges)
     \throw SireMol::duplicate_molecule
 */
 void MolproFF::addToMM(const QList<Molecule> &molecules,
-                       const QList<ChargeTable> &charges)
+                       const ParameterMap &map)
 {
-    // Add the molecules to a copy of this forcefield - this
-    // is to maintain the invariant
+    //add the Molecules to a copy of this forcefield -
+    // this maintains the invariant
 
     MolproFF copy(*this);
 
-    int nmols = molecules.count();
-
-    if (nmols != charges.count())
-        throw SireError::incompatible_error( QObject::tr(
-            "There are not the same number of molecules (%1) as there "
-            "are charge tables! (%2)").arg(nmols).arg(charges.count()), CODELOC );
-
-    for (int i=0; i<nmols; ++i)
+    for (QList<Molecule>::const_iterator it = molecules.begin();
+         it != molecules.end();
+         ++it)
     {
-        copy._pvt_addToMM( molecules[i], charges[i] );
+        copy._pvt_addToMM(*it, map);
     }
 
-    copy.reconstructMMArray();
-    copy.incrementVersion();
+    copy.incrementMajorVersion();
 
-    //everythings ok - copy back to the original
+    //everything's ok - copy back to the original
     *this = copy;
-}
-
-/** Return the molecule in this forcefield with ID == molid
-
-    \throw SireMol::missing_molecule
-*/
-const Molecule& MolproFF::molecule(MoleculeID molid) const
-{
-    QHash<MoleculeID,int>::const_iterator it = qm_molid_to_index.find(molid);
-
-    if (it != qm_molid_to_index.end())
-        return qm_molecules[ *it ];
-
-    it = mm_molid_to_index.find(molid);
-
-    if (it == mm_molid_to_index.end())
-        throw SireMol::missing_molecule( QObject::tr(
-                "There is no molecule with ID == %1 in the forcefield \"%2\"")
-                    .arg(molid).arg(this->name()), CODELOC );
-
-    return mm_molecules[ *it ];
 }
 
 /** Does nothing... */
@@ -564,19 +462,20 @@ bool MolproFF::move(const Residue&)
 */
 Values MolproFF::recalculateEnergy(MolproSession &session)
 {
-    if (session.incompatibleWith(*this))
-        throw SireError::incompatible_error( QObject::tr(
-                  "The supplied Molpro session is incompatible with the passed "
-                  "Molpro forcefield (%1, %2.%3).")
-                      .arg(this->name()).arg(this->ID()).arg(this->version()),
-                          CODELOC );
+    session.assertCompatibleWith(*this);
 
-    double total_nrg = ::calculateHFEnergy(session.connection(),
-                                           qmCoordinates().constData(),
-                                           mmCoordinatesAndCharges().constData(), 0);
+    //update the QM and MM arrays to account for any moves
+    if (this->updateArrays())
+    {
+        //the arrays have changed! - pass them to the session
+        session.setArrays(qm_coords, mm_coords_and_charges);
 
-    this->setComponent(total(), total_nrg);
-    this->setClean();
+        //calculate the HF energy of the system
+        double hf_nrg = session.calculateEnergy("hf");
+
+        setComponent( components().total(), hf_nrg );
+        setComponent( components().qm(), hf_nrg );
+    }
 
     return currentEnergies();
 }

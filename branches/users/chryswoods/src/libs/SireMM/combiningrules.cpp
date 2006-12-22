@@ -16,6 +16,8 @@
 
 #include "combiningrules.h"
 
+#include "SireError/errors.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 

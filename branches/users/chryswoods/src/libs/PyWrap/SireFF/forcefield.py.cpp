@@ -74,6 +74,8 @@ void SIREFF_EXPORT export_ForceField()
     ;
 
     bp::implicitly_convertible< SireFF::FFBase const &, SireFF::ForceField >();
+    bp::register_ptr_to_python< SireFF::ForceField >();
+
 }
 
 }

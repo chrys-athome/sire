@@ -10,6 +10,7 @@
 //#endif
 
 #include "SireError/exception.h"
+#include "SireError/version_error.h"
 
 #include <stdexcept>
 #include <QObject>
@@ -515,33 +516,6 @@ public:
     }
 };
 
-/** This exception is thrown whenever there is an error with a
-    version number
-
-    @author Christopher Woods
-*/
-class SIREERROR_EXPORT version_error : public exception
-{
-public:
-    version_error() : exception()
-    {}
-
-    version_error(QString err, QString place = QString::null)
-                  : exception(err,place)
-    {}
-
-    version_error(const version_error &other) : exception(other)
-    {}
-
-    ~version_error() throw()
-    {}
-
-    const char* what() const throw()
-    {
-        return "SireError::version_error";
-    }
-};
-
 /** This exception is thrown whenever there is an error with an
     ID number
 
@@ -588,7 +562,6 @@ Q_DECLARE_METATYPE(SireError::invalid_state)
 Q_DECLARE_METATYPE(SireError::incomplete_code)
 Q_DECLARE_METATYPE(SireError::std_exception)
 Q_DECLARE_METATYPE(SireError::unknown_exception)
-Q_DECLARE_METATYPE(SireError::version_error)
 
 SIRE_END_HEADER
 

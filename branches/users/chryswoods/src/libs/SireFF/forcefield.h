@@ -24,7 +24,7 @@ shared copy of the forcefield class.
 
 @author Christopher Woods
 */
-class SIREFF_EXPORT ForceField
+class SIREFF_EXPORT ForceField : public SireBase::SharedPolyPointer<FFBase>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const ForceField&);
@@ -60,51 +60,57 @@ public:
     bool isDirty() const;
     bool isClean() const;
 
-    template<class T>
-    bool isA() const;
-
-    template<class T>
-    SireBase::SharedPolyPointer<T> asA() const;
-
-private:
-    /** Shared pointer to the actual forcefield implementation */
-    SireBase::SharedPolyPointer<FFBase> d;
+protected:
+    const FFBase& d() const;
+    FFBase& d();
 };
+
+/** Return a reference to the FFBase base of this forcefield */
+inline const FFBase& ForceField::d() const
+{
+    return *(constData());
+}
+
+/** Return a reference to the FFBase base of this forcefield */
+inline FFBase& ForceField::d()
+{
+    return *(data());
+}
 
 /** Return a string containing the type of the forcefield */
 inline const char* ForceField::what() const
 {
-    return d->what();
+    return d().what();
 }
 
 /** Return the components in this forcefield */
 inline const FFBase::Components& ForceField::components() const
 {
-    return d->components();
+    return d().components();
 }
 
 /** Return the parameters necessary for this forcefield */
 inline const FFBase::Parameters& ForceField::parameters() const
 {
-    return d->parameters();
+    return d().parameters();
 }
 
 /** Return the name of the forcefield */
 inline const QString& ForceField::name() const
 {
-    return d->name();
+    return d().name();
 }
 
 /** Set the name of the forcefield */
 inline void ForceField::setName(const QString &name)
 {
-    d->setName(name);
+    d().setName(name);
 }
 
 /** Return the total energy of the forcefield */
 inline double ForceField::energy()
 {
-    return d->energy();
+    return d().energy();
 }
 
 /** Return the energy of the component represented by the
@@ -114,59 +120,38 @@ inline double ForceField::energy()
 */
 inline double ForceField::energy(const Function &component)
 {
-    return d->energy(component);
+    return d().energy(component);
 }
 
 /** Return the energies of all of the components */
 inline Values ForceField::energies()
 {
-    return d->energies();
+    return d().energies();
 }
 
 /** Move the molecule 'mol' */
 inline bool ForceField::move(const Molecule &mol)
 {
-    return d->move(mol);
+    return d().move(mol);
 }
 
 /** Move the residue 'res' */
 inline bool ForceField::move(const Residue &res)
 {
-    return d->move(res);
+    return d().move(res);
 }
 
 /** Return whether the forcefield is dirty (requires an energy recalcualtion) */
 inline bool ForceField::isDirty() const
 {
-    return d->isDirty();
+    return d().isDirty();
 }
 
 /** Return whether or not the forcefield is clean (does not require
     an energy recalcualtion) */
 inline bool ForceField::isClean() const
 {
-    return d->isClean();
-}
-
-/** Return whether or not this forcefield is of type 'T' */
-template<class T>
-SIRE_INLINE_TEMPLATE
-bool ForceField::isA() const
-{
-    return d.isA<T>();
-}
-
-/** Return a copy of the forcefield cast as type T. This
-    will throw an exception if this forcefield is not derivable
-    from type T.
-
-    \throw SireError::invalid_cast
-*/
-template<class T>
-SIRE_INLINE_TEMPLATE
-SireBase::SharedPolyPointer<T> ForceField::asA() const
-{
-    return SireBase::SharedPolyPointer<T>( d );
+    return d().isClean();
 }
 
 }

@@ -20,6 +20,8 @@ set ( SIREBASE_SOURCES
       idversion.cpp
       majminversion.cpp
       md5sum.cpp
+      sharedpolypointer.cpp
+      version.cpp
     )
 
 add_library (SireBase ${SIREBASE_SOURCES})

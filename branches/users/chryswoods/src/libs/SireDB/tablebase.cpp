@@ -6,6 +6,7 @@
 #include "SireMol/molecule.h"
 #include "SireMol/atomindex.h"
 
+#include "SireError/errors.h"
 #include "SireStream/datastream.h"
 
 using namespace SireMol;

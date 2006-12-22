@@ -3,6 +3,8 @@
 
 #include "forcefield.h"
 
+#include <boost/noncopyable.hpp>
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol
@@ -29,9 +31,11 @@ using SireMol::MoleculeID;
     simple classes that provide an interface to a ForceField that allows their
     use by the FFProcessor classes.
 
+    FFWorker classes are non-copyable!
+
     @author Christopher Woods
 */
-class SIREFF_EXPORT FFCalculatorBase
+class SIREFF_EXPORT FFCalculatorBase : public boost::noncopyable
 {
 public:
     FFCalculatorBase();

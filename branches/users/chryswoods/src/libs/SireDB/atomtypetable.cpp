@@ -7,6 +7,7 @@
 
 #include "SireMol/molecule.h"
 
+#include "SireError/errors.h"
 #include "SireStream/datastream.h"
 
 using namespace SireStream;

@@ -6,6 +6,8 @@
 
 #include "version_error.h"
 
+#include "SireError/errors.h"
+
 using namespace SireStream;
 using namespace SireError;
 

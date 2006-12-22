@@ -1,11 +1,10 @@
 #ifndef SQUIRE_MOLPROCALCULATOR_H
 #define SQUIRE_MOLPROCALCULATOR_H
 
-#include <MolproClient/molproclient.h>
-#include <QProcess>
-#include <QDir>
 #include <QFileInfo>
-#include <QMutex>
+#include <QDir>
+
+#include <boost/shared_ptr.hpp>
 
 #include "SireFF/ffcalculator.h"
 
@@ -16,61 +15,33 @@ SIRE_BEGIN_HEADER
 namespace Squire
 {
 
+class MolproSession;
+
 using SireFF::ForceField;
-
 using SireCAS::Values;
-
-/** This class represents a complete molpro session */
-class SQUIRE_EXPORT MolproSession
-{
-public:
-    MolproSession( const QFileInfo &molpro_executable,
-                   const MolproFF &molproff,
-                   const QDir &tmpdir = QDir::temp() );
-
-    ~MolproSession();
-
-    MolproConnection& connection();
-
-    bool incompatibleWith(const MolproFF &molproff);
-
-private:
-
-    /** Mutex used to ensure that no two molpro jobs are started simultaeneously
-        (so they don't trash each others tmp directories, or get in each others
-        way when creating ports) */
-    static QMutex starter_mutex;
-
-    /** The full name and path to the molpro executable that is
-        running in this session */
-    QFileInfo molpro_exe;
-
-    /** The RPC connection to the molpro process */
-    MolproConnection molpro_rpc;
-
-    /** The QProcess in which the molpro process is started */
-    QProcess molpro_process;
-
-    /** The current ID number of the MolproFF that has been loaded
-        onto this session */
-    int ff_id;
-
-    /** The version number of the MolproFF that has been loaded
-        onto this session */
-    VersionID ff_version;
-
-    /** The unique run directory for the molpro process */
-    QDir rundir;
-};
-
-/** Return the molpro RPC connection used to communicate with the running process */
-inline MolproConnection& MolproSession::connection()
-{
-    return molpro_rpc;
-}
 
 /** This is the calculator used to calculate energies and forces
     via an external Molpro process.
+
+    This is the main driver class behind the Molpro energy
+    evaluation. The hierarchy of Molpro classes is as follows;
+
+    MolproFF : The forcefield that uses Molpro to evaluate the QM/MM energy
+
+    MolproProcessor : Processor that can run MolproFF derived forcefields.
+                      A MolproFF derived forcefield must be placed on a
+                      MolproProcessor so that it can be evaluated.
+
+    MolproCalculator : Calculator that is used by MolproProcessor to
+                       actually evaluate the MolproFF derived forcefield.
+
+    MolproSession : An individual connection to a single running instance
+                    of Molpro - this class provides the interface to the
+                    running Molpro program that is used by MolproCalculator
+                    and MolproFF to evaluate the QM/MM energies and forces.
+
+    With this design, you will only need to override MolproFF if you wish
+    to change the type of Molpro calculation.
 
     @author Christopher Woods
 */

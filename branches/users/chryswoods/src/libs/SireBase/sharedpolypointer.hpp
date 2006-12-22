@@ -4,8 +4,6 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
-#include "SireError/errors.h"
-
 SIRE_BEGIN_HEADER
 
 namespace SireBase
@@ -50,6 +48,29 @@ struct SharedPolyPointerHelper
     }
 };
 
+/** Small base class used to abstract template-independent
+    functions away from SharedPolyPointer */
+class SIREBASE_EXPORT SharedPolyPointerBase
+{
+public:
+    SharedPolyPointerBase()
+    {}
+
+    SharedPolyPointerBase(const SharedPolyPointerBase&)
+    {}
+
+    ~SharedPolyPointerBase();
+
+    static void save(QDataStream &ds, const char *objname,
+                     const void *data);
+
+    static void* read(QDataStream &ds, void *data, const char *objname);
+
+protected:
+    static void throwInvalidCast(const QString &newtype,
+                                 const QString &oldtype);
+};
+
 /** This is a version of QSharedDataPointer that has been modified to
     work with polymorphic objects (i.e. will 'clone()' the original
     rather than using the copy constructor).
@@ -63,7 +84,7 @@ struct SharedPolyPointerHelper
 
 */
 template <class T>
-class SharedPolyPointer
+class SharedPolyPointer : private SharedPolyPointerBase
 {
 
 friend QDataStream& ::operator<<<>(QDataStream&, const SharedPolyPointer<T>&);
@@ -98,28 +119,29 @@ public:
         return d != other.d;
     }
 
-    inline SharedPolyPointer() { d = 0; }
+    inline SharedPolyPointer() : SharedPolyPointerBase() { d = 0; }
     inline ~SharedPolyPointer() { if (d && !d->ref.deref()) delete d; }
 
     explicit SharedPolyPointer(T *data);
 
-    inline SharedPolyPointer(const SharedPolyPointer<T> &o) : d(o.d)
+    inline SharedPolyPointer(const SharedPolyPointer<T> &o)
+                : SharedPolyPointerBase(), d(o.d)
     {
         if (d) d->ref.ref();
     }
 
     template<class S>
     inline SharedPolyPointer(const SharedPolyPointer<S> &o)
-             : d( const_cast<T*>( dynamic_cast<const T*>(o.constData()) ) )
+             : SharedPolyPointerBase(),
+               d( const_cast<T*>( dynamic_cast<const T*>(o.constData()) ) )
     {
         if (o.constData())
         {
             if (d)
                 d->ref.ref();
             else
-                throw SireError::invalid_cast( QObject::tr(
-                        "Cannot cast a SharedPolyPointer of type \"%1\".")
-                            .arg( SharedPolyPointerHelper<S>::what(*o) ), CODELOC );
+                throwInvalidCast( SharedPolyPointerHelper<S>::what(*o),
+                                  SharedPolyPointerHelper<T>::typeName() );
         }
     }
 
@@ -150,9 +172,8 @@ public:
                 if (x)
                     x->ref.ref();
                 else
-                    throw SireError::invalid_cast( QObject::tr(
-                        "Cannot cast a SharedPolyPointer of type \"%1\".")
-                            .arg( SharedPolyPointerHelper<S>::what(*o) ), CODELOC );
+                    throwInvalidCast( SharedPolyPointerHelper<S>::what(*o),
+                                      SharedPolyPointerHelper<T>::typeName() );
 
                 x = qAtomicSetPtr(&d, x);
 
@@ -185,27 +206,6 @@ public:
         return SharedPolyPointerHelper<T>::what(d);
     }
 
-    /** CW Mod - used to see whether or not the object is of
-        type 'D' */
-    template<class D>
-    bool isA() const
-    {
-        return dynamic_cast<const D*>(d);
-    }
-
-    /** CW Mod - used to return the function cast as type 'D' -
-        Must be non-null and 'isA<D>()' must return true */
-    template<class D>
-    inline D& asA() { detach(); return dynamic_cast<D&>(*d); }
-
-    /** CW Mod - used to return the function cast as type 'D' -
-        Must be non-null and 'isA<D>()' must return true */
-    template<class D>
-    inline const D& asA() const { return dynamic_cast<const D&>(*d); }
-
-    template<class D>
-    inline const D& constAsA() const { return dynamic_cast<const D&>(*d); }
-
 private:
     void detach_helper();
 
@@ -237,7 +237,11 @@ const SireStream::MagicID sharedpolypointer_magic = SireStream::getMagic(
                                                       "SireBase::SharedPolyPointer");
 }
 
-/** Serialise to a binary data stream */
+/** Serialise to a binary data stream
+
+    \throw SireError::unknown_type
+    \throw SireError::program_bug
+*/
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 QDataStream& operator<<(QDataStream &ds,
@@ -250,25 +254,10 @@ QDataStream& operator<<(QDataStream &ds,
     else
     {
         //get the object type name
-        QString objname = SireBase::SharedPolyPointerHelper<T>::what( *(ptr.d) );
+        QLatin1String objname( SireBase::SharedPolyPointerHelper<T>::what( *(ptr.constData()) ) );
 
-        //get the ID number of this type
-        int id = QMetaType::type( objname.toLatin1().constData() );
-
-        if ( id == 0 or not QMetaType::isRegistered(id) )
-            throw SireError::unknown_type(QObject::tr(
-                "The object with type \"%1\" does not appear to have been "
-                "registered with QMetaType. It cannot be streamed! (%2, %3)")
-                    .arg(objname).arg(id).arg(QMetaType::isRegistered(id)), CODELOC);
-
-        //save the object type name
-        ds << objname;
-
-        //use the QMetaType streaming function to save this table
-        if (not QMetaType::save(ds, id, ptr.d))
-            throw SireError::program_bug(QObject::tr(
-                "There was an error saving the table of type \"%1\"")
-                    .arg(objname), CODELOC);
+        SireBase::SharedPolyPointerBase::save(ds,
+                      SireBase::SharedPolyPointerHelper<T>::what(*(ptr.constData())), ptr.d);
     }
 
     return ds;
@@ -285,58 +274,18 @@ QDataStream& operator>>(QDataStream &ds,
 
     if (v == 1)
     {
-        //read the type name
-        QString type_name;
-        ds >> type_name;
-
-        if (type_name.isNull())
+        if (ptr.d)
         {
-            //this is a null pointer
-            ptr = 0;
+            ptr = static_cast<T*>(
+                      SireBase::SharedPolyPointerBase::read(ds, ptr.data(),
+                                     SireBase::SharedPolyPointerHelper<T>::what(*(ptr.constData()))
+                                                 )
+                                 );
         }
         else
         {
-            //get the type that represents this name
-            int id = QMetaType::type( type_name.toLatin1().constData() );
-
-            if ( id == 0 or not QMetaType::isRegistered(id) )
-                throw SireStream::version_error( QObject::tr(
-                      "Cannot deserialise an object of type \"%1\". "
-                      "Ensure that the library or module containing "
-                      "this type has been loaded and that it has been registered "
-                      "with QMetaType.").arg(type_name), CODELOC );
-
-            //if the pointer is not pointing to an object of the right type
-            //then delete it
-            if ( ptr.d != 0 and
-                 type_name !=
-                    QLatin1String(
-                        SireBase::SharedPolyPointerHelper<T>::what( *(ptr.d))
-                                 )
-               )
-            {
-                ptr = 0;
-            }
-
-            //construct a new object if one doesn't already exist
-            if (ptr.d == 0)
-            {
-                //create a default-constructed object of this type
-                ptr = static_cast<T*>(QMetaType::construct(id,0));
-
-                if (not ptr.d)
-                    throw SireError::program_bug( QObject::tr(
-                            "Could not create an object of type \"%1\" despite "
-                            "this type having been registered with QMetaType. This is "
-                            "a program bug!!!").arg(type_name), CODELOC );
-            }
-
-            //load the object from the datastream
-            if ( not QMetaType::load(ds, id, ptr.data()) )
-                throw SireError::program_bug(QObject::tr(
-                    "There was an error loading the object of type \"%1\"")
-                        .arg(type_name), CODELOC);
-
+            ptr = static_cast<T*>(
+                      SireBase::SharedPolyPointerBase::read(ds, 0, 0) );
         }
     }
     else

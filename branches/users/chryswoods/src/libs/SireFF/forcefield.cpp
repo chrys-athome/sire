@@ -75,10 +75,10 @@ public:
     public:
         Parameters()
         {}
-        
+
         ~Parameters()
         {}
-        
+
         static Parameters default_parameter;
     };
 
@@ -179,25 +179,25 @@ Molecule NullFF::null_molecule;
 static const SharedPolyPointer<FFBase> shared_null( new NullFF() );
 
 /** Constructor */
-ForceField::ForceField() : d(shared_null)
+ForceField::ForceField() : SharedPolyPointer<FFBase>(shared_null)
 {}
 
 /** Construct from the passed FFBase forcefield */
 ForceField::ForceField(const FFBase &ffield)
-           : d( ffield.clone() )
+           : SharedPolyPointer<FFBase>(ffield.clone())
 {}
 
 /** Construct from a shared pointer to a forcefield */
 ForceField::ForceField(const SharedPolyPointer<FFBase> &ffptr)
-           : d( ffptr )
+           : SharedPolyPointer<FFBase>(ffptr)
 {
-    if (not d)
-        d = shared_null;
+    if (not constData())
+        SharedPolyPointer<FFBase>::operator=(shared_null);
 }
 
 /** Copy constructor */
 ForceField::ForceField(const ForceField &other)
-           : d(other.d)
+           : SharedPolyPointer<FFBase>(other)
 {}
 
 /** Destructor */
@@ -207,13 +207,13 @@ ForceField::~ForceField()
 /** Assignment operator */
 ForceField& ForceField::operator=(const ForceField &other)
 {
-    d = other.d;
+    SharedPolyPointer<FFBase>::operator=(other);
     return *this;
 }
 
 /** Assignment operator */
 ForceField& ForceField::operator=(const FFBase &other)
 {
-    d = other.clone();
+    SharedPolyPointer<FFBase>::operator=(other.clone());
     return *this;
 }

@@ -1,7 +1,7 @@
 #ifndef SIRESTREAM_VERSION_ERROR_H
 #define SIRESTREAM_VERSION_ERROR_H
 
-#include "SireError/errors.h"
+#include "SireError/version_error.h"
 
 #include "registermetatype.hpp"
 #include "versionid.h"
