@@ -41,10 +41,11 @@ FFBase::Parameters::~Parameters()
 FFBase::Components::Components()
 {}
 
-/** Construct using the supplied base name */
-FFBase::Components::Components(const QString &basename)
+/** Construct based on the passed FFBase */
+FFBase::Components::Components(const FFBase &ffbase)
+       : e_total(ffbase)
 {
-    FFBase::Components::setBaseName(basename);
+    this->registerComponent(ffbase.ID());
 }
 
 /** Copy constructor */
@@ -56,44 +57,31 @@ FFBase::Components::Components(const FFBase::Components &other)
 FFBase::Components::~Components()
 {}
 
+/** Assignment operator */
+FFBase::Components& FFBase::Components::operator=(const FFBase::Components &other)
+{
+    e_total = other.e_total;
+    symbolids = other.symbolids;
+    
+    return *this;
+}
+
 /** Describe the 'total' component */
 QString FFBase::Components::describe_total()
 {
     return QObject::tr("The total energy of the forcefield.");
 }
 
-/** Get the function from the root name and the
-    component name */
-Function FFBase::Components::getFunction(const QString &root,
-                                       const QString &component)
-{
-    return Function( QString("E_{%1}_{%2}").arg(root,component) )( Symbol("x"),
-                                                                   Symbol("y"),
-                                                                   Symbol("z") );
-}
-
 /** Set the names of the functions from the passed base name */
-void FFBase::Components::setBaseName(const QString &basename)
+void FFBase::Components::setForceField(const FFBase &ffbase)
 {
-    //unregister the old function
-    this->unregisterFunction(e_total);
-
-    e_total = getFunction(basename,"total");
-
-    //register the new function
-    this->registerFunction(e_total);
+    *this = Components(ffbase);
 }
 
-/** Remove 'function' from the registry */
-void FFBase::Components::unregisterFunction(const Function &function)
+/** Register the component 'component' */
+void FFBase::Components::registerComponent(const FFComponent &component)
 {
-    symbolids.remove( function.ID() );
-}
-
-/** Register the function 'function' */
-void FFBase::Components::registerFunction(const Function &function)
-{
-    symbolids.insert( function.ID() );
+    symbolids.insert( component.ID() );
 }
 
 /** Assert that this contains the function 'function' */
@@ -214,7 +202,7 @@ void FFBase::setName(const QString &name)
     ffname = name;
 
     BOOST_ASSERT( components_ptr.get() != 0 );
-    components_ptr->setBaseName(ffname);
+    components_ptr->setForceField(*this);
 }
 
 /** Return the energy of the component represented by the function
@@ -252,4 +240,218 @@ Values FFBase::energies()
     }
 
     return nrg_components;
+}
+
+/** Change the molecule 'mol' (e.g. move it, or change its
+    parameters). This does nothing if the molecule is not
+    in this forcefield. Returns whether or not the forcefield
+    has been changed by this change, and thus whether the
+    energy needs to be recalculated. The same parameter map
+    that was used when this molecule was added will be used
+    to extract any necessary parameters from the molecule's
+    properties 
+    
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::invalid_operation
+*/
+bool FFBase::change(const Molecule&)
+{
+    throw SireError::invalid_operation( QObject::tr(
+                    "The forcefield \"%1\" (class %2) does not support "
+                    "the changing of molecules.")
+                        .arg(this->name()).arg(this->what()), CODELOC );
+}
+
+/** Change the residue 'res' (e.g. move it, or change its
+    parameters). This does nothing if the residue is not
+    in this forcefield. Returns whether or not the forcefield
+    has been changed by this change, and thus whether the
+    energy needs to be recalculated. 
+    
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::invalid_operation
+*/
+bool FFBase::change(const Residue &res)
+{
+    this->change(res.molecule());
+}
+
+/** Add the molecule 'molecule' to this forcefield using
+    the optional parameter map to find any necessary parameters
+    from properties of the molecule. This will replace any 
+    existing copy of the molecule that already exists in
+    this forcefield. This returns whether or not the 
+    forcefield has been changed by this addition, and therefore
+    whether its energy needs recalculating. 
+    
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::invalid_operation
+*/
+bool FFBase::add(const Molecule&, const ParameterMap&)
+{
+    throw SireError::invalid_operation( QObject::tr(
+                    "The forcefield \"%1\" (class %2) does not support "
+                    "the addition of molecules.")
+                        .arg(this->name()).arg(this->what()), CODELOC );
+}
+
+/** Add the residue 'residue' to this forcefield using
+    the optional parameter map to find any necessary parameters
+    from properties of the residue. This will replace any 
+    existing copy of the residue that already exists in
+    this forcefield. This returns whether or not the 
+    forcefield has been changed by this addition, and therefore
+    whether its energy needs recalculating.
+     
+    This will throw an exception if this forcefield does not
+    support partial molecules.
+    
+    \throw SireError::invalid_operation
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+*/
+bool FFBase::add(const Residue&, const ParameterMap&)
+{
+    throw SireError::invalid_operation( QObject::tr(
+                    "The forcefield \"%1\" (class %2) does not support "
+                    "the addition of residues.")
+                        .arg(this->name()).arg(this->what()), CODELOC );
+}
+
+/** Remove the molecule 'molecule' from this forcefield - this
+    does nothing if the molecule is not in this forcefield. This
+    returns whether this has changed the forcefield (therefore 
+    necessitating a recalculation of the energy) 
+    
+    \throw SireError::invalid_operation
+*/
+bool FFBase::remove(const Molecule&)
+{
+    throw SireError::invalid_operation( QObject::tr(
+                    "The forcefield \"%1\" (class %2) does not support "
+                    "the removal of molecules.")
+                        .arg(this->name()).arg(this->what()), CODELOC );
+}
+
+/** Remove the residue 'residue' from this forcefield - this
+    does nothing if the residue is not in this forcefield. This
+    returns whether this has changed the forcefield (therefore 
+    necessitating a recalculation of the energy)
+    
+    This will throw an exception if this forcefield does not
+    support partial molecules.
+    
+    \throw SireError::invalid_operation
+*/
+bool FFBase::remove(const Residue&)
+{
+    throw SireError::invalid_operation( QObject::tr(
+                    "The forcefield \"%1\" (class %2) does not support "
+                    "the removal of residues.")
+                        .arg(this->name()).arg(this->what()), CODELOC );
+}
+
+/** Replace the molecule 'oldmol' with 'newmol' (using 
+    the passed parameter map to find any required parameters
+    in the properties of the molecule). This is equivalent
+    to 'remove(oldmol)' followed by 'add(newmol,map)', except
+    that 'newmol' will only be added if 'oldmol' is contained
+    in this forcefield. 
+    
+    This returns whether this changes the forcefield.
+    
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+*/
+bool FFBase::replace(const Molecule &oldmol,
+                     const Molecule &newmol,
+                     const ParameterMap &map)
+{
+    if (this->remove(oldmol))
+        this->add(newmol,map);
+}
+
+/** Return whether this forcefield contains a copy of the molecule
+    'molecule' */
+bool FFBase::contains(const Molecule&) const
+{
+    return false;
+}
+
+/** Return whether this forcefield contains a copy of the
+    residue 'residue' */
+bool FFBase::contains(const Residue &residue) const
+{
+    return this->contains(residue.molecule());
+}
+
+/** Return the copy of the molecule in this forcefield that
+    has the ID == molid
+    
+    \throw SireMol::missing_molecule
+*/
+Molecule FFBase::molecule(MoleculeID molid) const
+{
+    throw SireMol::missing_molecule( QObject::tr(
+                "There is no molecule with ID == %1 in the "
+                "forcefield \"%1\"")
+                    .arg(molid).arg(this->name()), CODELOC );
+}
+
+/** Return the copy of the residue in this forcefield that
+    is in the molecule with ID == molid and with residue number
+    'resnum'
+    
+    \throw SireMol::missing_molecule
+    \throw SireMol::missing_residue
+*/
+Residue FFBase::residue(MoleculeID molid, ResNum resnum) const
+{
+    return this->molecule(molid).residue(resnum);
+}
+
+/** Return the copy of the residue in this forcefield that
+    is in the molecule with ID == molid and with residue index
+    'resid'
+    
+    \throw SireMol::missing_molecule
+    \throw SireError::invalid_index
+*/
+Residue FFBase::residue(MoleculeID molid, ResID resid) const
+{
+    return this->molecule(molid).residue(resid);
+}
+
+/** Return the copy of the residue in this forcefield that
+    is in the molecule with ID == molid and with residue 
+    called 'resname'
+    
+    \throw SireMol::missing_molecule
+    \throw SireMol::missing_residue
+*/
+Residue FFBase::residue(MoleculeID molid, const QString &resname) const
+{
+    return this->molecule(molid).residue(resname);
+}
+
+/** Return the copy of the molecule 'mol' that is in this forcefield 
+
+    \throw SireMol::missing_molecule
+*/
+Molecule FFBase::molecule(const Molecule &mol) const
+{
+    return this->molecule(mol.ID());
+}
+
+/** Return the copy of the residue 'res' that is in this forcefield
+
+    \throw SireMol::missing_molecule
+    \throw SireMol::missing_residue
+*/
+Residue FFBase::residue(const Residue &res) const
+{
+    return this->residue(res.molecule().ID(), res.resNum());
 }

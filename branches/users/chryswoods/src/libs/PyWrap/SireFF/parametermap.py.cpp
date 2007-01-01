@@ -1,6 +1,8 @@
 
 #include <boost/python.hpp>
 
+#include "SireFF/qhash_sireff.h"
+
 #include "SireFF/parametermap.h"
 
 #include "SireQt/qlist.hpp"

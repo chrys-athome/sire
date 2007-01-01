@@ -14,6 +14,7 @@
 #include "SireMol/moleculeid.h"
 
 #include "parametermap.h"
+#include "ffcomponent.h"
 
 SIRE_BEGIN_HEADER
 
@@ -29,6 +30,10 @@ namespace SireMol
 {
 class Molecule;
 class Residue;
+
+class MoleculeID;
+class ResNum;
+class ResID;
 }
 
 namespace SireFF
@@ -45,6 +50,8 @@ using SireCAS::Values;
 using SireMol::MoleculeID;
 using SireMol::Molecule;
 using SireMol::Residue;
+using SireMol::ResNum;
+using SireMol::ResID;
 
 /**
 This class is the base class of all of the forcefield classes. The forcefields all form
@@ -83,40 +90,38 @@ public:
 
     public:
         Components();
-        Components(const QString &basename);
+        Components(const FFBase &ffield);
         Components(const Components &other);
 
         virtual ~Components();
 
         virtual Components* clone() const=0;
 
-        const Function& total() const
+        Components& operator=(const Components &other);
+
+        const FFComponent& total() const
         {
             return e_total;
         }
 
         static QString describe_total();
 
-        bool contains(const Function &function) const
+        bool contains(const FFComponent &component) const
         {
-            return symbolids.contains(function.ID());
+            return symbolids.contains(component.ID());
         }
 
-        void assertContains(const Function &function) const;
+        void assertContains(const FFComponent &component) const;
 
     protected:
-        virtual void setBaseName(const QString &basename);
+        virtual void setForceField(const FFBase &ffbase);
 
-        void unregisterFunction(const Function &function);
-        void registerFunction(const Function &function);
-
-        static Function getFunction(const QString &root,
-                                    const QString &component);
+        void registerComponent(const FFComponent &component);
 
     private:
-        /** The function representing the total energy
+        /** The FFComponent representing the total energy
             of the forcefield */
-        Function e_total;
+        FFComponent e_total;
 
         /** The SymbolIDs of all of the functions that
             represent the components */
@@ -153,8 +158,32 @@ public:
 
     Values energies();
 
-    virtual bool move(const Molecule &mol)=0;
-    virtual bool move(const Residue &res)=0;
+    virtual bool change(const Molecule &mol);
+    virtual bool change(const Residue &res);
+
+    virtual bool add(const Molecule &molecule, 
+                     const ParameterMap &map = ParameterMap());
+    virtual bool add(const Residue &residue,
+                     const ParameterMap &map = ParameterMap());
+
+    virtual bool remove(const Molecule &molecule);
+    virtual bool remove(const Residue &residue);
+    
+    virtual bool replace(const Molecule &oldmol,
+                         const Molecule &newmol,
+                         const ParameterMap &map = ParameterMap());
+
+    virtual bool contains(const Molecule &molecule) const;
+    virtual bool contains(const Residue &residue) const;
+
+    virtual Molecule molecule(MoleculeID molid) const;
+    
+    virtual Residue residue(MoleculeID molid, ResNum resnum) const;
+    virtual Residue residue(MoleculeID molid, ResID resid) const;
+    virtual Residue residue(MoleculeID molid, const QString &resname) const;
+    
+    virtual Molecule molecule(const Molecule &mol) const;
+    virtual Residue residue(const Residue &res) const;
 
     bool isDirty() const;
     bool isClean() const;

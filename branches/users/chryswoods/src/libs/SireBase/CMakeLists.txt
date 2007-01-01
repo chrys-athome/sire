@@ -40,7 +40,7 @@ target_link_libraries (SireBase
 # installation
 install( TARGETS SireBase
          RUNTIME DESTINATION ${SIRE_BIN}
-   LIBRARY DESTINATION ${SIRE_LIBS}
-   ARCHIVE DESTINATION ${SIRE_ARCHIVES}
+         LIBRARY DESTINATION ${SIRE_LIBS}
+         ARCHIVE DESTINATION ${SIRE_ARCHIVES}
        )
 

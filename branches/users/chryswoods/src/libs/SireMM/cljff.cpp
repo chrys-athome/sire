@@ -59,10 +59,14 @@ CLJFF::Parameters CLJFF::Parameters::default_sources;
 CLJFF::Components::Components() : FFBase::Components()
 {}
 
-/** Construct using the supplied basename */
-CLJFF::Components::Components(const QString &basename) : FFBase::Components()
+/** Construct using the supplied forcefield */
+CLJFF::Components::Components(const FFBase &ffbase) 
+      : FFBase::Components(ffbase),
+        e_coulomb(ffbase, "coulomb"),
+        e_lj(ffbase, "lj")
 {
-    CLJFF::Components::setBaseName(basename);
+    this->registerComponent(e_coulomb);
+    this->registerComponent(e_lj);
 }
 
 /** Copy constructor */
@@ -76,19 +80,21 @@ CLJFF::Components::Components(const CLJFF::Components &other)
 CLJFF::Components::~Components()
 {}
 
-/** Set the names of the functions from the passed base name */
-void CLJFF::Components::setBaseName(const QString &basename)
+/** Assignment operator */
+CLJFF::Components& CLJFF::Components::operator=(const CLJFF::Components &other)
 {
-    this->unregisterFunction(e_coulomb);
-    this->unregisterFunction(e_lj);
+    e_coulomb = other.e_coulomb;
+    e_lj = other.e_lj;
+    
+    FFBase::Components::operator=(other);
+    
+    return *this;
+}
 
-    e_coulomb = getFunction(basename, "coulomb");
-    e_lj = getFunction(basename, "lj");
-
-    this->registerFunction(e_coulomb);
-    this->registerFunction(e_lj);
-
-    FFBase::Components::setBaseName(basename);
+/** Set the forcefield */
+void CLJFF::Components::setForceField(const FFBase &ffbase)
+{
+    *this = CLJFF::Components(ffbase);
 }
 
 /** Describe the coulomb component */
@@ -470,7 +476,7 @@ CLJFF::~CLJFF()
     (the Coulomb and LJ components) */
 void CLJFF::registerComponents()
 {
-    std::auto_ptr<CLJFF::Components> ptr( new CLJFF::Components(name()) );
+    std::auto_ptr<CLJFF::Components> ptr( new CLJFF::Components(*this) );
 
     FFBase::registerComponents(ptr.get());
 

@@ -25,8 +25,7 @@ namespace SireMM
 
 using SireFF::FFBase;
 using SireFF::ParameterName;
-
-using SireCAS::Function;
+using SireFF::FFComponent;
 
 using SireVol::Space;
 using SireVol::DistMatrix;
@@ -91,21 +90,23 @@ public:
     public:
         Components();
         Components(const Components &other);
-        Components(const QString &basename);
+        Components(const FFBase &ffbase);
 
         ~Components();
+
+        Components& operator=(const Components &other);
 
         Components* clone() const
         {
             return new Components(*this);
         }
 
-        const Function& coulomb() const
+        const FFComponent& coulomb() const
         {
             return e_coulomb;
         }
 
-        const Function& lj() const
+        const FFComponent& lj() const
         {
             return e_lj;
         }
@@ -114,13 +115,13 @@ public:
         static QString describe_lj();
 
     protected:
-        void setBaseName(const QString &basename);
+        void setForceField(const FFBase &ffbase);
 
     private:
         /** The coulomb component */
-        Function e_coulomb;
+        FFComponent e_coulomb;
         /** The LJ component */
-        Function e_lj;
+        FFComponent e_lj;
     };
 
     class SIREMM_EXPORT Parameters : public FFBase::Parameters

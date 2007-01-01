@@ -12,8 +12,9 @@ namespace SireStream
 
 /** Write a header to the data stream that describes the type and version
     of the object that is about to be written */
-QDataStream& writeHeader(QDataStream &ds, const RegisterMetaTypeBase &r_type,
-                         VersionID version)
+QDataStream SIRESTREAM_EXPORT &writeHeader(QDataStream &ds, 
+                                           const RegisterMetaTypeBase &r_type,
+                                           VersionID version)
 {
     ds << r_type.magicID() << version;
     return ds;
@@ -21,7 +22,9 @@ QDataStream& writeHeader(QDataStream &ds, const RegisterMetaTypeBase &r_type,
 
 /** Write a header to the data stream that contains the magic and version
     of the object that is about to be written */
-QDataStream& writeHeader(QDataStream &ds, MagicID magicid, VersionID version)
+QDataStream SIRESTREAM_EXPORT &writeHeader(QDataStream &ds, 
+                                           MagicID magicid, 
+                                           VersionID version)
 {
     ds << magicid << version;
     return ds;
@@ -29,7 +32,8 @@ QDataStream& writeHeader(QDataStream &ds, MagicID magicid, VersionID version)
 
 /** Read the header of the binary object to check that the type is correct
     and to obtain the binary data version */
-VersionID readHeader(QDataStream &ds, const RegisterMetaTypeBase &r_type)
+VersionID SIRESTREAM_EXPORT readHeader(QDataStream &ds, 
+                                       const RegisterMetaTypeBase &r_type)
 {
     MagicID id;
     VersionID v;
@@ -44,7 +48,9 @@ VersionID readHeader(QDataStream &ds, const RegisterMetaTypeBase &r_type)
 
 /** Read the header of the binary object to check that the type is correct
     and to obtain the binary data version */
-VersionID readHeader(QDataStream &ds, MagicID magicid, const char *type_name)
+VersionID SIRESTREAM_EXPORT readHeader(QDataStream &ds, 
+                                       MagicID magicid, 
+                                       const char *type_name)
 {
     MagicID id;
     VersionID v;

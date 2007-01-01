@@ -17,6 +17,7 @@ set ( SIREFF_SOURCES
       errors.cpp
       ffbase.cpp
       ffcalculator.cpp
+      ffcomponent.cpp
       ffprocessor.cpp
       ffthreadprocessor.cpp
       ffthreadworker.cpp

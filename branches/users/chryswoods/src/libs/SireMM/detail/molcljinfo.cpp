@@ -12,6 +12,8 @@
   *
   */
 
+#include "SireCAS/qhash_sirecas.h"
+
 #include "molcljinfo.h"
 
 #include "SireMol/moleculeid.h"

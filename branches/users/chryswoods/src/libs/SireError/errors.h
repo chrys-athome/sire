@@ -437,6 +437,31 @@ public:
     }
 };
 
+/** This exception is thrown whenever an invalid operation is requested
+
+    @author Christopher Woods
+*/
+class SIREERROR_EXPORT invalid_operation : public SireError::exception
+{
+public:
+    invalid_operation() : exception()
+    {}
+
+    invalid_operation(QString err, QString place=QString::null) : exception(err,place)
+    {}
+
+    invalid_operation(const invalid_operation &other) : exception(other)
+    {}
+
+    ~invalid_operation() throw()
+    {}
+
+    const char* what() const throw()
+    {
+        return "SireError::invalid_operation";
+    }
+};
+
 /** This exception is thrown whenever the program tries to use code that has yet
     to be written. This is definitely a programming bug, and results from the use
     of stubs that I have forgotton to expand!
