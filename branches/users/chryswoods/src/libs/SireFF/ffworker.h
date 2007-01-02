@@ -4,6 +4,8 @@
 #include "SireCluster/processor.h"
 #include "SireCAS/values.h"
 
+#include "parametermap.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol
@@ -13,22 +15,17 @@ class Residue;
 class MoleculeID;
 }
 
-namespace SireCAS
-{
-class Function;
-}
-
 namespace SireFF
 {
 
 class ForceField;
 class FFCalculator;
+class FFComponent;
 
 using SireMol::Molecule;
 using SireMol::Residue;
 using SireMol::MoleculeID;
 
-using SireCAS::Function;
 using SireCAS::Values;
 
 /** This is the base class of all FFWorkers - an FFWorker is a class
@@ -44,28 +41,47 @@ public:
     virtual ForceField forcefield() const=0;
     void setForceField(const ForceField &forcefield);
 
-    virtual Molecule molecule(MoleculeID molid) const=0;
-
     void recalculateEnergy();
     void waitUntilReady();
 
     double energy();
-    double energy(const Function &component);
+    double energy(const FFComponent &component);
 
     Values energies();
 
-    void move(const Molecule &molecule);
-    void move(const Residue &residue);
+    void add(const Molecule &molecule, const ParameterMap &map = ParameterMap());
+    void add(const Residue &residue, const ParameterMap &map = ParameterMap());
+    
+    void change(const Molecule &molecule);
+    void change(const Residue &residue);
+    
+    void remove(const Molecule &molecule);
+    void remove(const Residue &residue);
+    
+    void replace(const Molecule &oldmol,
+                 const Molecule &newmol, const ParameterMap &map = ParameterMap());
 
-    void assertContains(const Function &component) const;
+    void assertContains(const FFComponent &component) const;
 
 protected:
     FFWorkerBase();
 
     virtual bool _pvt_setForceField(const ForceField &forcefield)=0;
 
-    virtual bool _pvt_move(const Molecule &molecule)=0;
-    virtual bool _pvt_move(const Residue &residue)=0;
+    virtual bool _pvt_add(const Molecule &molecule, 
+                          const ParameterMap &map)=0;
+                          
+    virtual bool _pvt_add(const Residue &residue,
+                          const ParameterMap &map)=0;
+
+    virtual bool _pvt_change(const Molecule &molecule)=0;
+    virtual bool _pvt_change(const Residue &residue)=0;
+    
+    virtual bool _pvt_remove(const Molecule &molecule)=0;
+    virtual bool _pvt_remove(const Residue &residue)=0;
+    
+    virtual bool _pvt_replace(const Molecule &oldmol,
+                              const Molecule &newmol, const ParameterMap &map)=0;
 
     virtual void _pvt_recalculateEnergy()=0;
     virtual void _pvt_recalculateEnergyFG()=0;
@@ -109,13 +125,20 @@ public:
 
     ForceField forcefield() const;
 
-    Molecule molecule(MoleculeID molid) const;
-
 protected:
     bool _pvt_setForceField(const ForceField &forcefield);
 
-    bool _pvt_move(const Molecule &molecule);
-    bool _pvt_move(const Residue &residue);
+    bool _pvt_add(const Molecule &molecule, const ParameterMap &map);
+    bool _pvt_add(const Residue &residue, const ParameterMap &map);
+
+    bool _pvt_change(const Molecule &molecule);
+    bool _pvt_change(const Residue &residue);
+
+    bool _pvt_remove(const Molecule &molecule);
+    bool _pvt_remove(const Residue &residue);
+    
+    bool _pvt_replace(const Molecule &oldmol,
+                      const Molecule &newmol, const ParameterMap &map);
 
     void _pvt_recalculateEnergy();
     void _pvt_recalculateEnergyFG();

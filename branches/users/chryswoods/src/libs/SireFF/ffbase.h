@@ -95,7 +95,10 @@ public:
 
         virtual ~Components();
 
-        virtual Components* clone() const=0;
+        virtual Components* clone() const
+        {
+            return new Components(*this);
+        }
 
         Components& operator=(const Components &other);
 

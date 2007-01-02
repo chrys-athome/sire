@@ -55,6 +55,8 @@ public:
         Components(const Components &other);
 
         ~Components();
+        
+        Components& operator=(const Components &other);
     };
 
     class SIREMM_EXPORT Parameters : public CLJFF::Parameters
@@ -81,10 +83,12 @@ public:
         return new InterCLJFF(*this);
     }
 
-    void add(const Molecule &mol, const ParameterMap &map = ParameterMap());
+    bool change(const Molecule &molecule);
+    bool change(const Residue &residue);
+    
+    bool add(const Molecule &mol, const ParameterMap &map = ParameterMap());
 
-    bool move(const Molecule &molecule);
-    bool move(const Residue &residue);
+    bool remove(const Molecule &mol);
 
 protected:
     void recalculateViaDelta();
@@ -100,10 +104,10 @@ protected:
 
     /** Information about all of the changed molecules since the last
         energy update */
-    QVector<detail::ChangedMolCLJInfo> movedmols;
+    QVector<detail::ChangedMolCLJInfo> changedmols;
 
-    /** Hash mapping MoleculeID to index in 'movedmols' */
-    QHash<MoleculeID, int> molid_to_movedindex;
+    /** Hash mapping MoleculeID to index in 'changedmols' */
+    QHash<MoleculeID, int> molid_to_changedindex;
 
     /** The IDs of all of the molecules that were removed since the last
         energy update */

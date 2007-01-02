@@ -27,13 +27,20 @@ public:
 
     ForceField forcefield() const;
 
-    Molecule molecule(MoleculeID molid) const;
-
 protected:
     bool _pvt_setForceField(const ForceField &forcefield);
 
-    bool _pvt_move(const Molecule &molecule);
-    bool _pvt_move(const Residue &residue);
+    bool _pvt_add(const Molecule &molecule, const ParameterMap &map);
+    bool _pvt_add(const Residue &residue, const ParameterMap &map);
+
+    bool _pvt_change(const Molecule &molecule);
+    bool _pvt_change(const Residue &residue);
+
+    bool _pvt_remove(const Molecule &molecule);
+    bool _pvt_remove(const Residue &residue);
+    
+    bool _pvt_replace(const Molecule &oldmol,
+                      const Molecule &newmol, const ParameterMap &map);
 
     void _pvt_recalculateEnergy();
     void _pvt_recalculateEnergyFG();

@@ -25,11 +25,6 @@ void SIREFF_EXPORT export_FFProcessor()
             , &::SireFF::FFProcessorBase::forcefield
             , bp::default_call_policies() )
         .def(
-            "molecule"
-            , &::SireFF::FFProcessorBase::molecule
-            , ( bp::arg("molid") )
-            , bp::default_call_policies() )
-        .def(
             "setForceField"
             , &::SireFF::FFProcessorBase::setForceField
             , ( bp::arg("forcefield") )

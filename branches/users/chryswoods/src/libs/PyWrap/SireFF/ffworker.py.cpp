@@ -35,7 +35,7 @@ void SIREFF_EXPORT export_FFWorker()
             , bp::default_call_policies() )
         .def(
             "energy"
-            , (double ( ::SireFF::FFWorkerBase::* )( ::SireCAS::Function const & ) )( &::SireFF::FFWorkerBase::energy )
+            , (double ( ::SireFF::FFWorkerBase::* )( ::SireFF::FFComponent const & ) )( &::SireFF::FFWorkerBase::energy )
             , ( bp::arg("component") )
             , bp::default_call_policies() )
         .def(
@@ -43,18 +43,13 @@ void SIREFF_EXPORT export_FFWorker()
             , bp::pure_virtual( &::SireFF::FFWorkerBase::forcefield )
             , bp::default_call_policies() )
         .def(
-            "molecule"
-            , bp::pure_virtual( &::SireFF::FFWorkerBase::molecule )
-            , ( bp::arg("molid") )
-            , bp::default_call_policies() )
-        .def(
-            "move"
-            , (void ( ::SireFF::FFWorkerBase::* )( ::SireMol::Molecule const & ) )( &::SireFF::FFWorkerBase::move )
+            "change"
+            , (void ( ::SireFF::FFWorkerBase::* )( ::SireMol::Molecule const & ) )( &::SireFF::FFWorkerBase::change )
             , ( bp::arg("molecule") )
             , bp::default_call_policies() )
         .def(
-            "move"
-            , (void ( ::SireFF::FFWorkerBase::* )( ::SireMol::Residue const & ) )( &::SireFF::FFWorkerBase::move )
+            "change"
+            , (void ( ::SireFF::FFWorkerBase::* )( ::SireMol::Residue const & ) )( &::SireFF::FFWorkerBase::change )
             , ( bp::arg("residue") )
             , bp::default_call_policies() )
         .def(

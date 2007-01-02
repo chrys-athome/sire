@@ -113,9 +113,9 @@ void InterCLJFF::recalculateTotalEnergy()
     this->setComponent( components().lj(), ljnrg );
     this->setComponent( components().total(), cnrg+ljnrg );
 
-    //clear the list of moved molecules
-    movedmols.clear();
-    molid_to_movedindex.clear();
+    //clear the list of changed molecules
+    changedmols.clear();
+    molid_to_changedindex.clear();
     removedmols.clear();
 }
 
@@ -123,11 +123,11 @@ void InterCLJFF::recalculateTotalEnergy()
 void InterCLJFF::recalculateViaDelta()
 {
     int nmols = mols.count();
-    int nmoved = movedmols.count();
+    int nchanged = changedmols.count();
 
-    if (nmoved == 0)
+    if (nchanged == 0)
     {
-        //no moved molecules, so just recalculate the total energy
+        //no changed molecules, so just recalculate the total energy
         recalculateTotalEnergy();
         return;
     }
@@ -139,9 +139,9 @@ void InterCLJFF::recalculateViaDelta()
         this->setComponent( components().lj(), 0 );
         this->setComponent( components().total(), 0 );
 
-        movedmols.clear();
+        changedmols.clear();
         removedmols.clear();
-        molid_to_movedindex.clear();
+        molid_to_changedindex.clear();
 
         return;
     }
@@ -152,7 +152,7 @@ void InterCLJFF::recalculateViaDelta()
 
     //now loop over all of the molecules in the system
     const MolCLJInfo *molarray = mols.constData();
-    const ChangedMolCLJInfo *movedarray = movedmols.constData();
+    const ChangedMolCLJInfo *changedarray = changedmols.constData();
 
     QHash<MoleculeID,int>::const_iterator it;
 
@@ -161,26 +161,26 @@ void InterCLJFF::recalculateViaDelta()
         const MolCLJInfo &mol = molarray[i];
 
         //is this one of the moved molecules?
-        it = molid_to_movedindex.constFind(mol.molecule().ID());
+        it = molid_to_changedindex.constFind(mol.molecule().ID());
 
-        if (it == molid_to_movedindex.constEnd())
+        if (it == molid_to_changedindex.constEnd())
         {
-            //this isn't one of the moved molecules.
+            //this isn't one of the changed molecules.
             //Calculate the difference in energy between this molecule
-            //and the old and new configurations of all of the moved
+            //and the old and new configurations of all of the changed
             //molecules
-            for (int j=0; j<nmoved; ++j)
+            for (int j=0; j<nchanged; ++j)
             {
-                const ChangedMolCLJInfo &movedmol = movedarray[j];
+                const ChangedMolCLJInfo &changedmol = changedarray[j];
 
                 //calculate the energy of the new configuration
-                calculateEnergy(mol, movedmol.newParts(), space(),
+                calculateEnergy(mol, changedmol.newParts(), space(),
                                 switchingFunction(), workspace());
 
                 icnrg += workspace().cnrg;
                 iljnrg += workspace().ljnrg;
 
-                calculateEnergy(mol, movedmol.oldParts(), space(),
+                calculateEnergy(mol, changedmol.oldParts(), space(),
                                 switchingFunction(), workspace());
 
                 icnrg -= workspace().cnrg;
@@ -189,28 +189,30 @@ void InterCLJFF::recalculateViaDelta()
         }
         else
         {
-            //calculate the energy of the moved molecule with all moved
-            //molecules that are after it in the moved mols array
+            //this is one of the changed molecules!
+        
+            //calculate the energy of the changed molecule with all changed
+            //molecules that are after it in the changed mols array
             int idx = it.value();
 
-            const ChangedMolCLJInfo &movedmol0 = movedarray[idx];
+            const ChangedMolCLJInfo &changedmol0 = changedarray[idx];
 
-            if (movedmol0.movedAll())
+            if (changedmol0.movedAll())
             {
                 //the whole of this molecule has been moved - calculate the
                 //change in energy of the whole of this molecule with the whole
                 //of the other moved molecules
-                for (int j=idx+1; j<nmoved; ++j)
+                for (int j=idx+1; j<nchanged; ++j)
                 {
-                    const ChangedMolCLJInfo &movedmol1 = movedarray[j];
+                    const ChangedMolCLJInfo &changedmol1 = changedarray[j];
 
-                    calculateEnergy(movedmol0.newMol(), movedmol1.newMol(),
+                    calculateEnergy(changedmol0.newMol(), changedmol1.newMol(),
                                     space(), switchingFunction(), workspace());
 
                     icnrg += workspace().cnrg;
                     iljnrg += workspace().ljnrg;
 
-                    calculateEnergy(movedmol0.oldMol(), movedmol1.oldMol(),
+                    calculateEnergy(changedmol0.oldMol(), changedmol1.oldMol(),
                                     space(), switchingFunction(), workspace());
 
                     icnrg -= workspace().cnrg;
@@ -222,20 +224,20 @@ void InterCLJFF::recalculateViaDelta()
                 //only part of this molecule has been moved...
                 for (int j=idx+1; j<nmoved; ++j)
                 {
-                    const ChangedMolCLJInfo &movedmol1 = movedarray[j];
+                    const ChangedMolCLJInfo &changedmol1 = changedarray[j];
 
-                    if (movedmol1.movedAll())
+                    if (changedmol1.movedAll())
                     {
                         //the whole of the other molecule has moved, so we need
                         //to calculate the change in energy of the whole molecule
                         //with this molecule
-                        calculateEnergy(movedmol0.newMol(), movedmol1.newMol(),
+                        calculateEnergy(changedmol0.newMol(), changedmol1.newMol(),
                                         space(), switchingFunction(), workspace());
 
                         icnrg += workspace().cnrg;
                         iljnrg += workspace().ljnrg;
 
-                        calculateEnergy(movedmol0.oldMol(), movedmol1.oldMol(),
+                        calculateEnergy(changedmol0.oldMol(), changedmol1.oldMol(),
                                         space(), switchingFunction(), workspace());
 
                         icnrg -= workspace().cnrg;
@@ -245,48 +247,48 @@ void InterCLJFF::recalculateViaDelta()
                     {
                         //this is the complicated, but hopefully much rarer edge case
                         // - part of this molecule *and* part of the other molecule have
-                        // moved. For now, I will do the less efficient method of calculating
+                        // changed. For now, I will do the less efficient method of calculating
                         // the change in energy, namely calculating the energy of the part
-                        // of mol0 that moved with all of mol1, then the energy of the part
-                        // of mol1 that moved with all of mol0, then finally, subtracting the
+                        // of mol0 that changed with all of mol1, then the energy of the part
+                        // of mol1 that changed with all of mol0, then finally, subtracting the
                         // energy of the part of mol0 with the part of mol1 (which would
                         // otherwise be double-counted).
 
-                        //ok, so first the moved part of mol0 with all of mol1
-                        calculateEnergy(movedmol0.newParts(), movedmol1.newMol(),
+                        //ok, so first the changed part of mol0 with all of mol1
+                        calculateEnergy(changedmol0.newParts(), changedmol1.newMol(),
                                         space(), switchingFunction(), workspace());
 
                         icnrg += workspace().cnrg;
                         iljnrg += workspace().ljnrg;
 
-                        calculateEnergy(movedmol0.oldParts(), movedmol1.oldMol(),
+                        calculateEnergy(changedmol0.oldParts(), changedmol1.oldMol(),
                                         space(), switchingFunction(), workspace());
 
                         icnrg -= workspace().cnrg;
                         iljnrg -= workspace().ljnrg;
 
-                        //now the moved part of mol1 with all of mol0
-                        calculateEnergy(movedmol0.newMol(), movedmol1.newParts(),
+                        //now the changed part of mol1 with all of mol0
+                        calculateEnergy(changedmol0.newMol(), changedmol1.newParts(),
                                         space(), switchingFunction(), workspace());
 
                         icnrg += workspace().cnrg;
                         iljnrg += workspace().ljnrg;
 
-                        calculateEnergy(movedmol0.oldMol(), movedmol1.oldParts(),
+                        calculateEnergy(changedmol0.oldMol(), changedmol1.oldParts(),
                                         space(), switchingFunction(), workspace());
 
                         icnrg -= workspace().cnrg;
                         iljnrg -= workspace().ljnrg;
 
                         //finally, remove the doubly-counted contribution of the
-                        //moved part of mol0 with the moved part of mol1
-                        calculateEnergy(movedmol0.newParts(), movedmol1.newParts(),
+                        //changed part of mol0 with the changed part of mol1
+                        calculateEnergy(changedmol0.newParts(), changedmol1.newParts(),
                                         space(), switchingFunction(), workspace());
 
                         icnrg -= workspace().cnrg;   // subtract doubly-counted contribution
                         iljnrg -= workspace().ljnrg;
 
-                        calculateEnergy(movedmol0.oldParts(), movedmol1.oldParts(),
+                        calculateEnergy(changedmol0.oldParts(), changedmol1.oldParts(),
                                         space(), switchingFunction(), workspace());
 
                         icnrg += workspace().cnrg;
@@ -298,7 +300,7 @@ void InterCLJFF::recalculateViaDelta()
     }
 
     //finally, loop over all of the molecules that have been removed - the energy
-    //of non-moved molecules with removed molecules has already been calculated,
+    //of non-changed molecules with removed molecules has already been calculated,
     //as has the energy of moved molecules that are before the removed molecules
     //in the moved list. We only now have to calculate the energy of the removed
     //molecules with all of the molecules that lie above us in the moved list
@@ -309,16 +311,16 @@ void InterCLJFF::recalculateViaDelta()
         //get the index of the removed molecule in the moved list
         int idx = molid_to_movedindex.value(*it);
 
-        const ChangedMolCLJInfo &removedmol = movedarray[idx];
+        const ChangedMolCLJInfo &removedmol = changedarray[idx];
 
         //calculate the change in energy associated with removing this molecule
         //(only have to do the 'old' energy, as the new energy is zero)
 
-        for (int j=idx+1; j<nmoved; ++j)
+        for (int j=idx+1; j<nchanged; ++j)
         {
-            const ChangedMolCLJInfo &movedmol = movedarray[j];
+            const ChangedMolCLJInfo &changedmol = changedarray[j];
 
-            calculateEnergy(removedmol.oldMol(), movedmol.oldMol(),
+            calculateEnergy(removedmol.oldMol(), changedmol.oldMol(),
                             space(), switchingFunction(), workspace());
 
             icnrg -= workspace().cnrg;
@@ -326,9 +328,9 @@ void InterCLJFF::recalculateViaDelta()
         }
     }
 
-    //clear the list of moved molecules
-    movedmols.clear();
-    molid_to_movedindex.clear();
+    //clear the list of changed molecules
+    changedmols.clear();
+    molid_to_changedindex.clear();
     removedmols.clear();
 
     //save the new total energy of this forcefield
@@ -343,7 +345,7 @@ void InterCLJFF::recalculateViaDelta()
     the last evaluation. */
 void InterCLJFF::recalculateEnergy()
 {
-    if (movedmols.isEmpty())
+    if (changedmols.isEmpty())
     {
         this->recalculateTotalEnergy();
     }
@@ -353,125 +355,261 @@ void InterCLJFF::recalculateEnergy()
     }
 }
 
-/** Temporary function used to add a molecule with passed charge and LJ
-    parameters
+/** Save the current state of 'mol' */
+void InterCLJFF::setCurrentState(const MolCLJInfo &mol)
+{
+    MoleculeID id = mol.molecule().ID();
+    
+    if (molid_to_molindex.contains(id))
+    {
+        int idx = molid_to_molindex.value(id);
+        mols[id] = mol;
+    }
+    else
+    {
+        int idx = mols.count();
+        molid_to_molindex.insert(id, idx);
+        mols.append(mol);
+        
+        if (removedmols.contains(id))
+            removedmols.remove(id);
+    }
+}
 
+/** Remove 'mol' from the current state */
+void InterCLJFF::removeCurrentState(const Molecule &mol)
+{
+    MoleculeID id = mol.ID();
+    
+    if (molid_to_molindex.contains(id))
+    {
+        // need to remove from list, reindex hash, remove from hash
+        
+        removedmols.insert(id);
+    }
+}
+
+/** Add the molecule 'mol' to this forcefield using the optionally 
+    supplied map to find the forcefield parameters amongst the
+    molecule's properties.
+
+    \throw SireMol::missing_property
     \throw SireError::invalid_cast
 */
-void InterCLJFF::add(const Molecule &mol, const ParameterMap &map)
+bool InterCLJFF::add(const Molecule &mol, const ParameterMap &map)
 {
     //get the Molecule's ID
     MoleculeID id = mol.ID();
 
-    //does the molecule already exist...
-    if ( molid_to_molindex.contains(id) )
+    //does the molecule already exist and has been changed since
+    //the last update?
+    if ( molid_to_changedindex.contains(id) )
     {
-        //ok, we are changing an existing molecule
-        throw SireError::incomplete_code( QObject::tr(
-                    "We cannot yet change an existing molecule!"), CODELOC );
+        int idx = molid_to_changedindex.value(id);
+    
+        //get the existing change record
+        const ChangedMolCLJInfo &changerecord = changedmols.at(idx);
+        
+        //create a new record for the new state
+        MolCLJInfo newmol(mol, parameters(), map);
+        
+        //save this new molecule
+        this->setCurrentState(newmol);
+        
+        //replace this with a new change record describing the
+        //new molecule
+        changedmols[idx] = ChangedMolCLJInfo( changerecord.oldMol(), newmol );
+    }
+    //does the molecule already exist, but has not been changed yet?
+    else if ( molid_to_molindex.contains(id) )
+    {
+        //get the old molecule
+        int idx = molid_to_molindex.value(id);
+        
+        MolCLJInfo oldmol = mols.at(idx);
+        
+        //is this the same version molecule, and same parameter map?
+        if ( mol.version() == oldmol.molecule().version() and 
+             map == mol.map() )
+        {
+            //they are the same - there is nothing to do
+            return isDirty();
+        }
+    
+        //create a record for the new molecule
+        MolCLJInfo newmol( mol, parameters(), map );
+        
+        //save the new state of this molecule
+        this->setCurrentState(newmol);
+    
+        //create a change record that moved from the old state
+        //to the new state
+        idx = changedmols.count();
+        molid_to_changedindex.insert(id, idx);
+        
+        changedmols.append( ChangedMolCLJInfo(oldmol, newmol) );
     }
     else
     {
-        //add this molecule to the list
-        mols.append( MolCLJInfo(mol, parameters(), map) );
-        molid_to_molindex.insert( mol.ID(), mols.count()-1 );
-    }
-}
-
-/** Move the molecule 'molecule' */
-bool InterCLJFF::move(const Molecule &molecule)
-{
-    //try to find this molecule in this forcefield,
-    //based on its ID number
-    MoleculeID molid = molecule.ID();
-
-    if ( not molid_to_molindex.contains(molid) )
-        //the molecule has either been removed or
-        //did not exist in this forcefield. Moving it
-        //will thus not change the energy
-        return isDirty();
-
-    if ( molid_to_movedindex.contains(molid) )
-    {
-        //this molecule has already been changed since the
-        //last update - move it
-        movedmols[ molid_to_movedindex.value(molid) ].move(molecule);
-    }
-    else
-    {
-        //this molecule has not been moved since the last energy
-        //evaluation - create a ChangedMolCLJInfo that describes the
-        //move
-
-        int idx = molid_to_molindex.value(molid);
-
-        //get the existing copy of the molecule (need reference
-        //as will update it in a sec...)
-        MolCLJInfo& oldinfo = mols[idx];
-
-        //create a copy that is moved...
-        MolCLJInfo newinfo( oldinfo );
-        newinfo.move(molecule);
-
-        //save the old and new molecule
-        movedmols.append( ChangedMolCLJInfo(oldinfo,newinfo) );
-
-        molid_to_movedindex.insert(molid, movedmols.count()-1);
-
-        //update the current state of the molecule in the forcefield
-        oldinfo = newinfo;
+        MolCLJInfo newmol( mol, parameters(), map );
+        this->setCurrentState(newmol);
+        
+        idx = changedmols.count();
+        molid_to_changedindex.insert(id, idx);
+        
+        changedmols.append( ChangedMolCLJInfo(MolCLJInfo(), newmol) );
     }
 
-    this->setDirty();
+    //we've added a molecule - change the forcefield's major version number
+    this->incrementMajor();
+    
     return isDirty();
 }
 
-/** Move the residue 'residue' */
-bool InterCLJFF::move(const Residue &residue)
+/** Remove the molecule 'mol' */
+bool InterCLJFF::remove(const Molecule &molecule)
 {
-    //get the molecule containing this residue
-    Molecule molecule = residue.molecule();
+    //get the Molecule's ID
+    MoleculeID id = mol.ID();
+    
+    if ( removedmols.contains(id) )
+    {
+        //no point double-removing a molecule
+        return isDirty();
+    }
+    else if ( molid_to_changedindex.contains(id) )
+    {
+        //remove the molecule from the current state
+        this->removeCurrentState(mol);
+        
+        int idx = molid_to_changedindex.value(id);
+    
+        //this molecule exists and has been changed - remove it
+        const ChangedMolCLJInfo &changerecord = changedmols.at(id);
+        
+        //create a new record for this molecule based on the two states
+        changedmols[idx] = ChangedMolCLJInfo( changerecord.oldMol(),
+                                              MolCLJInfo() );
+                                              
+        removedmols.insert(id);
+        this->incrementMajor();
+    }
+    else if ( molid_to_molindex.contains(id) )
+    {
+        //create a record to removed from the current state
+        int idx = molid_to_molindex.value(id);
+        
+        MolCLJInfo oldmol = mols.at(idx);
+        
+        //remove the molecule from the current state
+        this->removeCurrentState(mol);
+        
+        //add a change record to record this removal
+        idx = changedmols.count();
+        molid_to_changedindex.insert(id, idx);
+        
+        changedmols.append( ChangedMolCLJInfo(oldmol, MolCLJInfo()) );
+        
+        removedmols.insert(id);
+        this->incrementMajor();
+    }
+    
+    return isDirty();
+}
 
+/** Change the molecule 'molecule' */
+bool InterCLJFF::change(const Molecule &molecule)
+{
     //try to find this molecule in this forcefield,
     //based on its ID number
-    MoleculeID molid = molecule.ID();
+    MoleculeID id = molecule.ID();
 
-    if ( not molid_to_movedindex.contains(molid) )
-        //the molecule containing this residue has either been removed or
-        //did not exist in this forcefield. Moving it
-        //will thus not change the energy
+    if ( removedmols.contains(id) )
+    {
+        //no point changing a molecule that has been removed
         return isDirty();
-
-    if ( molid_to_movedindex.contains(molid) )
-    {
-        //the molecule containing this residue has already been changed
-        //since the last update - move it
-        movedmols[ molid_to_movedindex.value(molid) ].move(residue);
     }
-    else
+    else if ( molid_to_changedindex.contains(id) )
     {
-        //the molecule containing this residue has not been moved since
-        //the last energy evaluation - create a ChangedMolCLJInfo that
-        //describes the move
-
-        int idx = molid_to_molindex.value(molid);
-
-        //get the existing copy of the molecule
-        MolCLJInfo& oldinfo = mols[idx];
-
-        MolCLJInfo newinfo(oldinfo);
-        newinfo.move(molecule);
-
-        //save the old and new molecule
-        movedmols.append( ChangedMolCLJInfo(oldinfo,newinfo,
-                                            residue.info().cutGroupIDs()) );
-
-        molid_to_movedindex.insert(molid, movedmols.count()-1);
-
-        //update the current state of the molecule in the forcefield
-        oldinfo = newinfo;
+        //the molecule has been changed since the last evaluation
+        int idx = molid_to_changedindex.value(id);
+        
+        const ChangedMolCLJInfo &changerecord = changedmols.at(idx);
+        
+        ChangedMolCLJInfo newrecord = changerecord.change(molecule,
+                                                          parameters());
+        
+        changedmols[idx] = newrecord;
+        
+        this->setCurrentState(newrecord.newMol());
+        
+        this->incrementMinor();
     }
+    else if ( molid_to_molindex.contains(id) )
+    {
+        //the molecule has not yet been changed since the last evaluation
+        int idx = molid_to_movedindex.value(id);
+        
+        MolCLJInfo oldmol = mols.at(idx);
+        
+        ChangedMolCLJInfo newrecord = oldmol.change(molecule, parameters());
+        
+        this->setCurrentState(newrecord.newMol());
+        
+        idx = changedmols.count();
+        molid_to_changedindex.insert(id, idx);
+        changedmols.append(newrecord);
+        
+        this->incrementMinor();
+    }
+    
+    return isDirty();
+}
 
-    this->setDirty();
+/** Change the residue 'residue' */
+bool InterCLJFF::change(const Residue &residue)
+{
+    Molecule molecule = residue.molecule();
+    
+    MoleculeID id = molecule.ID();
+    
+    if ( removedmols.contains(id) )
+    {
+        //no point moving a residue that has been removed
+        return isDirty();
+    }
+    else if ( molid_to_changedindex.contains(id) )
+    {
+        //changing a residue in an already-changed molecule
+        int idx = molid_to_changedindex.value(id);
+        
+        const ChangedMolCLJInfo &changerecord = changedmols.at(idx);
+        
+        ChangedMolCLJInfo newrecord = changerecord.change(residue, parameters());
+        
+        this->setCurrentState(newrecord.newMol());
+        
+        changedmols[idx] = newrecord;
+        
+        this->incrementMinor();
+    }
+    else if ( molid_to_molindex.contains(id) )
+    {
+        //changing a residue that has not yet been changed
+        int idx = molid_to_molindex.value(id);
+        
+        MolCLJInfo oldmol = mols.at(idx);
+        
+        ChangedMolCLJInfo newrecord = oldmol.change(residue, parameters());
+        
+        this->setCurrentState( newrecord.newMol() );
+        
+        idx = changedmols.count();
+        molid_to_changedindex.insert(idx);
+        changedmols.append(newrecord);
+        
+        this->incrementMinor();
+    }
+    
     return isDirty();
 }

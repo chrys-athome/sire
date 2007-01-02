@@ -4,10 +4,15 @@
 #include "ffbase.h"
 
 #include "SireMol/molecule.h"
+#include "SireMol/moleculeid.h"
 #include "SireMol/residue.h"
+#include "SireMol/resnum.h"
+#include "SireMol/resid.h"
 
 #include "SireFF/errors.h"
 #include "SireMol/errors.h"
+
+#include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
 
@@ -45,7 +50,7 @@ FFBase::Components::Components()
 FFBase::Components::Components(const FFBase &ffbase)
        : e_total(ffbase)
 {
-    this->registerComponent(ffbase.ID());
+    this->registerComponent(e_total);
 }
 
 /** Copy constructor */
@@ -84,13 +89,13 @@ void FFBase::Components::registerComponent(const FFComponent &component)
     symbolids.insert( component.ID() );
 }
 
-/** Assert that this contains the function 'function' */
-void FFBase::Components::assertContains(const Function &function) const
+/** Assert that this contains the component 'component' */
+void FFBase::Components::assertContains(const FFComponent &component) const
 {
-    if (not this->contains(function))
+    if (not this->contains(component))
         throw SireFF::missing_component( QObject::tr(
                 "The forcefield does not contain a component represented by the "
-                "function \"%1\"").arg(function.toString()), CODELOC );
+                "function \"%1\"").arg(component.toString()), CODELOC );
 }
 
 ///////////

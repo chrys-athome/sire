@@ -55,20 +55,6 @@ double FFCalculator::getEnergies(Values &components)
     return total_nrg;
 }
 
-/** Return the molecule with ID == molid
-
-    \throw SireMol::missing_molecule
-*/
-const Molecule& FFCalculator::molecule(MoleculeID molid) const
-{
-    //return ffield.molecule(molid);
-    #warning Broken FFCalculator::molecule()
-
-    throw SireError::incomplete_code("Missing FFCalculator::molecule()", CODELOC);
-
-    return Molecule();
-}
-
 /** Recalculate the energy of the forcefield */
 void FFCalculator::calculateEnergy()
 {
@@ -76,20 +62,42 @@ void FFCalculator::calculateEnergy()
     total_nrg = nrg_components.value(ffield.components().total());
 }
 
-/** Move the molecule 'molecule' and return whether the forcefield
-    energy needs recalculating */
-bool FFCalculator::move(const Molecule &molecule)
+bool FFCalculator::add(const Molecule &molecule, const ParameterMap &map)
 {
-    return ffield.move(molecule);
+    return ffield.add(molecule, map);
 }
 
-/** Move the residue 'residue' and return whether the forcefield
-    energy needs recalculating */
-bool FFCalculator::move(const Residue &residue)
+bool FFCalculator::add(const Residue &residue, const ParameterMap &map)
 {
-    return ffield.move(residue);
+    return ffield.add(residue, map);
 }
 
+bool FFCalculator::change(const Molecule &molecule)
+{
+    return ffield.change(molecule);
+}
+
+bool FFCalculator::change(const Residue &residue)
+{
+    return ffield.change(residue);
+}
+
+bool FFCalculator::remove(const Molecule &molecule)
+{
+    return ffield.remove(molecule);
+}
+
+bool FFCalculator::remove(const Residue &residue)
+{
+    return ffield.remove(residue);
+}
+
+bool FFCalculator::replace(const Molecule &oldmol, const Molecule &newmol,
+                           const ParameterMap &map)
+{
+    return ffield.replace(oldmol, newmol, map);
+}
+             
 /** Set the forcefield to be calculated and return whether its
     energy needs to be reevaluated. */
 bool FFCalculator::setForceField(const ForceField &forcefield)

@@ -33,7 +33,7 @@ void SIREFF_EXPORT export_ForceField()
             , bp::default_call_policies() )
         .def(
             "energy"
-            , (double ( ::SireFF::ForceField::* )( ::SireCAS::Function const & ) )( &::SireFF::ForceField::energy )
+            , (double ( ::SireFF::ForceField::* )( ::SireFF::FFComponent const & ) )( &::SireFF::ForceField::energy )
             , ( bp::arg("component") )
             , bp::default_call_policies() )
         .def(
@@ -49,13 +49,13 @@ void SIREFF_EXPORT export_ForceField()
             , &::SireFF::ForceField::isDirty
             , bp::default_call_policies() )
         .def(
-            "move"
-            , (bool ( ::SireFF::ForceField::* )( ::SireMol::Molecule const & ) )( &::SireFF::ForceField::move )
+            "change"
+            , (bool ( ::SireFF::ForceField::* )( ::SireMol::Molecule const & ) )( &::SireFF::ForceField::change )
             , ( bp::arg("mol") )
             , bp::default_call_policies() )
         .def(
-            "move"
-            , (bool ( ::SireFF::ForceField::* )( ::SireMol::Residue const & ) )( &::SireFF::ForceField::move )
+            "change"
+            , (bool ( ::SireFF::ForceField::* )( ::SireMol::Residue const & ) )( &::SireFF::ForceField::change )
             , ( bp::arg("res") )
             , bp::default_call_policies() )
         .def(

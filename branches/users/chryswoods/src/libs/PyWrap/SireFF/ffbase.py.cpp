@@ -44,13 +44,13 @@ export_FFBase()
             , &::SireFF::FFBase::version
             , bp::return_value_policy< bp::copy_const_reference, bp::default_call_policies >() )
         .def(
-            "move"
-            , (bool ( ::SireFF::FFBase::* )( ::SireMol::Molecule const & ) )(&::SireFF::FFBase::move)
+            "change"
+            , (bool ( ::SireFF::FFBase::* )( ::SireMol::Molecule const & ) )(&::SireFF::FFBase::change)
             , ( bp::arg("mol") )
             , bp::default_call_policies() )
         .def(
-            "move"
-            , (bool ( ::SireFF::FFBase::* )( ::SireMol::Residue const & ) )(&::SireFF::FFBase::move)
+            "change"
+            , (bool ( ::SireFF::FFBase::* )( ::SireMol::Residue const & ) )(&::SireFF::FFBase::change)
             , ( bp::arg("res") )
             , bp::default_call_policies() )
         .def(

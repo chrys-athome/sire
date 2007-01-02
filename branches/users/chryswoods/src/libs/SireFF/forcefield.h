@@ -50,7 +50,7 @@ public:
     const FFBase::Parameters& parameters() const;
 
     double energy();
-    double energy(const Function &component);
+    double energy(const FFComponent &component);
 
     Values energies();
 
@@ -142,7 +142,7 @@ inline double ForceField::energy()
 
     \throw SireFF::missing_component
 */
-inline double ForceField::energy(const Function &component)
+inline double ForceField::energy(const FFComponent &component)
 {
     return d().energy(component);
 }
@@ -277,46 +277,6 @@ inline bool ForceField::contains(const Molecule &molecule) const
 inline bool ForceField::contains(const Residue &residue) const
 {
     return d().contains(residue);
-}
-
-/** Return the copy of the molecule in this forcefield that
-    has the ID == molid
-    
-    \throw SireMol::missing_molecule
-*/
-inline Molecule ForceField::molecule(MoleculeID molid) const
-{
-    return d().molecule(molid);
-}
-
-/** Return the copy of the residue in this forcefield that
-    is in the molecule with ID == molid and with residue number
-    'resnum'
-    
-    \throw SireMol::missing_molecule
-    \throw SireMol::missing_residue
-*/
-inline Residue ForceField::residue(MoleculeID molid, ResNum resnum) const
-{
-    return d().residue(molid, resnum);
-}
-    
-/** Return the copy of the molecule 'mol' that is in this forcefield 
-
-    \throw SireMol::missing_molecule
-*/
-inline Molecule ForceField::molecule(const Molecule &mol) const
-{
-    return d().molecule(mol);
-}
-
-/** Return the copy of the residue 'res' that is in this forcefield
-
-    \throw SireMol::missing_residue
-*/
-inline Residue ForceField::residue(const Residue &res) const
-{
-    return d().residue(res);
 }
 
 /** Return whether the forcefield is dirty (requires an energy recalcualtion) */

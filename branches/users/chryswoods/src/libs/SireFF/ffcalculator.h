@@ -44,13 +44,23 @@ public:
 
     virtual double getEnergies(Values &values)=0;
 
-    virtual const Molecule& molecule(MoleculeID molid) const=0;
-
     virtual void calculateEnergy()=0;
 
-    virtual bool move(const Molecule &molecule)=0;
+    virtual bool add(const Molecule &molecule,
+                     const ParameterMap &map = ParameterMap())=0;
+                     
+    virtual bool add(const Residue &residue, 
+                     const ParameterMap &map = ParameterMap())=0;
 
-    virtual bool move(const Residue &residue)=0;
+    virtual bool change(const Molecule &molecule)=0;
+    virtual bool change(const Residue &residue)=0;
+
+    virtual bool remove(const Molecule &molecule)=0;
+    virtual bool remove(const Residue &residue)=0;
+                        
+    virtual bool replace(const Molecule &oldmol,
+                         const Molecule &newmol,
+                         const ParameterMap &map = ParameterMap())=0;
 
     virtual bool setForceField(const ForceField &forcefield)=0;
 
@@ -74,13 +84,23 @@ public:
 
     double getEnergies(Values &values);
 
-    const Molecule& molecule(MoleculeID molid) const;
-
     void calculateEnergy();
 
-    bool move(const Molecule &molecule);
+    bool add(const Molecule &molecule,
+             const ParameterMap &map = ParameterMap());
+                     
+    bool add(const Residue &residue, 
+             const ParameterMap &map = ParameterMap());
 
-    bool move(const Residue &residue);
+    bool change(const Molecule &molecule);
+    bool change(const Residue &residue);
+
+    bool remove(const Molecule &molecule);
+    bool remove(const Residue &residue);
+                        
+    bool replace(const Molecule &oldmol,
+                 const Molecule &newmol,
+                 const ParameterMap &map = ParameterMap());
 
     bool setForceField(const ForceField &forcefield);
 

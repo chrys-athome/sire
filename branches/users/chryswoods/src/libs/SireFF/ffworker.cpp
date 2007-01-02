@@ -136,7 +136,7 @@ double FFWorkerBase::energy()
 
     \throw SireFF::missing_component
 */
-double FFWorkerBase::energy(const Function &component)
+double FFWorkerBase::energy(const FFComponent &component)
 {
     this->assertContains(component);
 
@@ -166,31 +166,82 @@ void FFWorkerBase::setForceField(const ForceField &forcefield)
     needs_energy_recalculation = this->_pvt_setForceField(forcefield);
 }
 
-/** Move the molecule 'molecule' */
-void FFWorkerBase::move(const Molecule &molecule)
+/** Add the molecule 'molecule' */
+void FFWorkerBase::add(const Molecule &molecule, const ParameterMap &map)
 {
     //wait until the processor is idle
     this->waitUntilReady();
 
     needs_energy_recalculation = needs_energy_recalculation or
-                                 this->_pvt_move(molecule);
+                                 this->_pvt_add(molecule,map);
 }
 
-/** Move the residue 'residue' */
-void FFWorkerBase::move(const Residue &residue)
+/** Add the residue 'residue' */
+void FFWorkerBase::add(const Residue &residue, const ParameterMap &map)
 {
     //wait until the processor is idle
     this->waitUntilReady();
 
     needs_energy_recalculation = needs_energy_recalculation or
-                                 this->_pvt_move(residue);
+                                 this->_pvt_add(residue,map);
+}
+
+/** Change the molecule 'molecule' */
+void FFWorkerBase::change(const Molecule &molecule)
+{
+    //wait until the processor is idle
+    this->waitUntilReady();
+
+    needs_energy_recalculation = needs_energy_recalculation or
+                                 this->_pvt_change(molecule);
+}
+
+/** Change the residue 'residue' */
+void FFWorkerBase::change(const Residue &residue)
+{
+    //wait until the processor is idle
+    this->waitUntilReady();
+
+    needs_energy_recalculation = needs_energy_recalculation or
+                                 this->_pvt_change(residue);
+}
+
+/** Remove the molecule 'molecule' */
+void FFWorkerBase::remove(const Molecule &molecule)
+{
+    //wait until the processor is idle
+    this->waitUntilReady();
+
+    needs_energy_recalculation = needs_energy_recalculation or
+                                 this->_pvt_remove(molecule);
+}
+
+/** Remove the residue 'residue' */
+void FFWorkerBase::remove(const Residue &residue)
+{
+    //wait until the processor is idle
+    this->waitUntilReady();
+
+    needs_energy_recalculation = needs_energy_recalculation or
+                                 this->_pvt_remove(residue);
+}
+
+/** Replace the molecule 'oldmol' with 'newmol' */
+void FFWorkerBase::replace(const Molecule &oldmol,
+                           const Molecule &newmol, const ParameterMap &map)
+{
+    //wait until the processor is idle
+    this->waitUntilReady();
+
+    needs_energy_recalculation = needs_energy_recalculation or
+                                 this->_pvt_replace(oldmol,newmol,map);
 }
 
 /** Assert that this forcefield contains the energy component 'component'
 
     \throw SireFF::missing_component
 */
-void FFWorkerBase::assertContains(const Function &component) const
+void FFWorkerBase::assertContains(const FFComponent &component) const
 {
     if (not nrg_components.values().contains(component.ID()))
         this->forcefield().components().assertContains(component);
@@ -220,15 +271,6 @@ ForceField FFWorker::forcefield() const
     return ffcalculator->forcefield();
 }
 
-/** Return the molecule with ID == molid
-
-    \throw SireMol::missing_molecule
-*/
-Molecule FFWorker::molecule(MoleculeID molid) const
-{
-    return ffcalculator->molecule(molid);
-}
-
 /** Set the forcefield to be evaluated, returning whether it
     needs an energy recalculation */
 bool FFWorker::_pvt_setForceField(const ForceField &forcefield)
@@ -236,18 +278,54 @@ bool FFWorker::_pvt_setForceField(const ForceField &forcefield)
     return ffcalculator->setForceField(forcefield);
 }
 
-/** Move the molecule 'molecule', returning whether or not
+/** Add the molecule 'molecule', returning whether or not
     it needs an energy recalculation */
-bool FFWorker::_pvt_move(const Molecule &molecule)
+bool FFWorker::_pvt_add(const Molecule &molecule, const ParameterMap &map)
 {
-    return ffcalculator->move(molecule);
+    return ffcalculator->add(molecule, map);
 }
 
-/** Move the residue 'residue', returning whether or not
+/** Add the residue 'residue', returning whether or not
     it needs an energy recalculation */
-bool FFWorker::_pvt_move(const Residue &residue)
+bool FFWorker::_pvt_add(const Residue &residue, const ParameterMap &map)
 {
-    return ffcalculator->move(residue);
+    return ffcalculator->add(residue, map);
+}
+
+/** Change the molecule 'molecule', returning whether or not
+    it needs an energy recalculation */
+bool FFWorker::_pvt_change(const Molecule &molecule)
+{
+    return ffcalculator->change(molecule);
+}
+
+/** Change the residue 'residue', returning whether or not
+    it needs an energy recalculation */
+bool FFWorker::_pvt_change(const Residue &residue)
+{
+    return ffcalculator->change(residue);
+}
+
+/** Remove the molecule 'molecule', returning whether or not
+    it needs an energy recalculation */
+bool FFWorker::_pvt_remove(const Molecule &molecule)
+{
+    return ffcalculator->remove(molecule);
+}
+
+/** Remove the residue 'residue', returning whether or not
+    it needs an energy recalculation */
+bool FFWorker::_pvt_remove(const Residue &residue)
+{
+    return ffcalculator->remove(residue);
+}
+
+/** Replace 'oldmol' with 'newmol', returning whether or not
+    it needs an energy recalculation */
+bool FFWorker::_pvt_replace(const Molecule &oldmol,
+                            const Molecule &newmol, const ParameterMap &map)
+{
+    return ffcalculator->replace(oldmol, newmol, map);
 }
 
 /** Recalculate the energy is the foreground */
