@@ -14,6 +14,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 # Define the sources in SireUnitTest
 set ( SIREUNITTEST_SOURCES
       testangle.cpp
+      testatomselection.cpp
       testbase.cpp
       testcomplex.cpp
       testcutgroup.cpp

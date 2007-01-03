@@ -15,6 +15,7 @@ void export_AtomList();
 void export_AtomNumSet();
 void export_AtomNumVector();
 void export_AtomNumList();
+void export_AtomSelection();
 void export_CutGroup();
 void export_CutGroupSet();
 void export_IndexList();
@@ -49,6 +50,7 @@ void SIREMOL_EXPORT export_SireMol()
     export_AtomNumSet();
     export_AtomNumVector();
     export_AtomNumList();
+    export_AtomSelection();
     export_CutGroup();
     export_CutGroupSet();
     export_EditMol();

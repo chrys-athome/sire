@@ -15,6 +15,7 @@ using boost::unit_test_framework::test_suite;
 #include "SireUnitTest/testcutgroup.h"
 #include "SireUnitTest/testunits.h"
 #include "SireUnitTest/testangle.h"
+#include "SireUnitTest/testatomselection.h"
 #include "SireUnitTest/testcomplex.h"
 #include "SireUnitTest/testsirecas.h"
 #include "SireUnitTest/testmatch.h"
@@ -40,6 +41,7 @@ test_suite SIRE_EXPORT *init_unit_test_suite( int argc, char **argv )
     initialise(new TestUnits(), test);
     initialise(new TestComplex(), test);
     initialise(new TestSireCAS(), test);
+    initialise(new TestAtomSelection(), test);
     initialise(new TestMatch(), test);
     initialise(new TestFFDB(), test);
     initialise(new TestSharedPolyPointer(), test);

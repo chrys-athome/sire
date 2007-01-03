@@ -1,6 +1,8 @@
 
 #include <boost/python.hpp>
 
+#include "SireCAS/qhash_sirecas.h"
+
 #include "SireFF/ffcomponent.h"
 
 #include "SireFF/ffbase.h"
@@ -12,7 +14,7 @@ using namespace SireCAS;
 namespace SireFF
 {
 
-void export_FFComponent()
+void SIREFF_EXPORT export_FFComponent()
 {
     class_<FFComponent, bases<Function> >("FFComponent", init<>())
 

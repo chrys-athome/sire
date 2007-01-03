@@ -17,6 +17,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs
 
 # Define the sources in SireMol
 set ( WRAPMOL_SOURCES
+      atomselection.py.cpp
       editmol.py.cpp
       editmol2.py.cpp
       editres.py.cpp
