@@ -11,31 +11,32 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the sources in SireMol
 set ( SIREMOL_SOURCES
-      angle.cpp	     
+      angle.cpp
       atom.cpp
       atomcutting.cpp
-      atomidgroup.cpp      
-      atomindex.cpp	     
+      atomidgroup.cpp
+      atomindex.cpp
       atominfo.cpp
       atominfogroup.cpp
-      bond.cpp	     
+      atomselection.cpp
+      bond.cpp
       cgatomid.cpp
       cgnumatomid.cpp
       cutgroup.cpp
       cuttingfunction.cpp
-      dihedral.cpp	     
-      editmol.cpp	     
-      editmoldata.cpp    
-      editres.cpp	   
-      elementdb.cpp	   
-      errors.cpp	   
-      groupindexid.cpp   
+      dihedral.cpp
+      editmol.cpp
+      editmoldata.cpp
+      editres.cpp
+      elementdb.cpp
+      errors.cpp
+      groupindexid.cpp
       idmolatom.cpp
-      improper.cpp	   
-      indexinfo.cpp	   
-      molcgatomid.cpp    
-      molcutgroupid.cpp  
-      molecule.cpp  
+      improper.cpp
+      indexinfo.cpp
+      molcgatomid.cpp
+      molcutgroupid.cpp
+      molecule.cpp
       moleculebonds.cpp
       moleculecutting.cpp
       moleculedata.cpp
