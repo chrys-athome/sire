@@ -31,6 +31,11 @@ using namespace SireDB;
 InterCLJFF::Components::Components() : CLJFF::Components()
 {}
 
+/** Constructor that just passes its arguments up to the parent's constructor */
+InterCLJFF::Components::Components(const FFBase &ffbase, const Symbols &symbols)
+           : CLJFF::Components(ffbase,symbols)
+{}
+
 /** Copy constructor */
 InterCLJFF::Components::Components(const Components &other)
            : CLJFF::Components(other)
@@ -190,14 +195,14 @@ void InterCLJFF::recalculateViaDelta()
         else
         {
             //this is one of the changed molecules!
-        
+
             //calculate the energy of the changed molecule with all changed
             //molecules that are after it in the changed mols array
             int idx = it.value();
 
             const ChangedMolCLJInfo &changedmol0 = changedarray[idx];
 
-            if (changedmol0.movedAll())
+            if (changedmol0.changedAll())
             {
                 //the whole of this molecule has been moved - calculate the
                 //change in energy of the whole of this molecule with the whole
@@ -222,11 +227,11 @@ void InterCLJFF::recalculateViaDelta()
             else
             {
                 //only part of this molecule has been moved...
-                for (int j=idx+1; j<nmoved; ++j)
+                for (int j=idx+1; j<nchanged; ++j)
                 {
                     const ChangedMolCLJInfo &changedmol1 = changedarray[j];
 
-                    if (changedmol1.movedAll())
+                    if (changedmol1.changedAll())
                     {
                         //the whole of the other molecule has moved, so we need
                         //to calculate the change in energy of the whole molecule
@@ -309,7 +314,7 @@ void InterCLJFF::recalculateViaDelta()
          ++it)
     {
         //get the index of the removed molecule in the moved list
-        int idx = molid_to_movedindex.value(*it);
+        int idx = molid_to_changedindex.value(*it);
 
         const ChangedMolCLJInfo &removedmol = changedarray[idx];
 
@@ -359,18 +364,18 @@ void InterCLJFF::recalculateEnergy()
 void InterCLJFF::setCurrentState(const MolCLJInfo &mol)
 {
     MoleculeID id = mol.molecule().ID();
-    
+
     if (molid_to_molindex.contains(id))
     {
         int idx = molid_to_molindex.value(id);
-        mols[id] = mol;
+        mols[idx] = mol;
     }
     else
     {
         int idx = mols.count();
         molid_to_molindex.insert(id, idx);
         mols.append(mol);
-        
+
         if (removedmols.contains(id))
             removedmols.remove(id);
     }
@@ -380,16 +385,16 @@ void InterCLJFF::setCurrentState(const MolCLJInfo &mol)
 void InterCLJFF::removeCurrentState(const Molecule &mol)
 {
     MoleculeID id = mol.ID();
-    
+
     if (molid_to_molindex.contains(id))
     {
         // need to remove from list, reindex hash, remove from hash
-        
+
         removedmols.insert(id);
     }
 }
 
-/** Add the molecule 'mol' to this forcefield using the optionally 
+/** Add the molecule 'mol' to this forcefield using the optionally
     supplied map to find the forcefield parameters amongst the
     molecule's properties.
 
@@ -406,16 +411,16 @@ bool InterCLJFF::add(const Molecule &mol, const ParameterMap &map)
     if ( molid_to_changedindex.contains(id) )
     {
         int idx = molid_to_changedindex.value(id);
-    
+
         //get the existing change record
         const ChangedMolCLJInfo &changerecord = changedmols.at(idx);
-        
+
         //create a new record for the new state
         MolCLJInfo newmol(mol, parameters(), map);
-        
+
         //save this new molecule
         this->setCurrentState(newmol);
-        
+
         //replace this with a new change record describing the
         //new molecule
         changedmols[idx] = ChangedMolCLJInfo( changerecord.oldMol(), newmol );
@@ -425,44 +430,44 @@ bool InterCLJFF::add(const Molecule &mol, const ParameterMap &map)
     {
         //get the old molecule
         int idx = molid_to_molindex.value(id);
-        
+
         MolCLJInfo oldmol = mols.at(idx);
-        
+
         //is this the same version molecule, and same parameter map?
-        if ( mol.version() == oldmol.molecule().version() and 
-             map == mol.map() )
+        if ( mol.version() == oldmol.molecule().version() and
+             map == oldmol.map() )
         {
             //they are the same - there is nothing to do
             return isDirty();
         }
-    
+
         //create a record for the new molecule
         MolCLJInfo newmol( mol, parameters(), map );
-        
+
         //save the new state of this molecule
         this->setCurrentState(newmol);
-    
+
         //create a change record that moved from the old state
         //to the new state
         idx = changedmols.count();
         molid_to_changedindex.insert(id, idx);
-        
+
         changedmols.append( ChangedMolCLJInfo(oldmol, newmol) );
     }
     else
     {
         MolCLJInfo newmol( mol, parameters(), map );
         this->setCurrentState(newmol);
-        
-        idx = changedmols.count();
+
+        int idx = changedmols.count();
         molid_to_changedindex.insert(id, idx);
-        
+
         changedmols.append( ChangedMolCLJInfo(MolCLJInfo(), newmol) );
     }
 
     //we've added a molecule - change the forcefield's major version number
-    this->incrementMajor();
-    
+    this->incrementMajorVersion();
+
     return isDirty();
 }
 
@@ -470,8 +475,8 @@ bool InterCLJFF::add(const Molecule &mol, const ParameterMap &map)
 bool InterCLJFF::remove(const Molecule &molecule)
 {
     //get the Molecule's ID
-    MoleculeID id = mol.ID();
-    
+    MoleculeID id = molecule.ID();
+
     if ( removedmols.contains(id) )
     {
         //no point double-removing a molecule
@@ -480,40 +485,40 @@ bool InterCLJFF::remove(const Molecule &molecule)
     else if ( molid_to_changedindex.contains(id) )
     {
         //remove the molecule from the current state
-        this->removeCurrentState(mol);
-        
+        this->removeCurrentState(molecule);
+
         int idx = molid_to_changedindex.value(id);
-    
+
         //this molecule exists and has been changed - remove it
         const ChangedMolCLJInfo &changerecord = changedmols.at(id);
-        
+
         //create a new record for this molecule based on the two states
         changedmols[idx] = ChangedMolCLJInfo( changerecord.oldMol(),
                                               MolCLJInfo() );
-                                              
+
         removedmols.insert(id);
-        this->incrementMajor();
+        this->incrementMajorVersion();
     }
     else if ( molid_to_molindex.contains(id) )
     {
         //create a record to removed from the current state
         int idx = molid_to_molindex.value(id);
-        
+
         MolCLJInfo oldmol = mols.at(idx);
-        
+
         //remove the molecule from the current state
-        this->removeCurrentState(mol);
-        
+        this->removeCurrentState(molecule);
+
         //add a change record to record this removal
         idx = changedmols.count();
         molid_to_changedindex.insert(id, idx);
-        
+
         changedmols.append( ChangedMolCLJInfo(oldmol, MolCLJInfo()) );
-        
+
         removedmols.insert(id);
-        this->incrementMajor();
+        this->incrementMajorVersion();
     }
-    
+
     return isDirty();
 }
 
@@ -533,36 +538,36 @@ bool InterCLJFF::change(const Molecule &molecule)
     {
         //the molecule has been changed since the last evaluation
         int idx = molid_to_changedindex.value(id);
-        
+
         const ChangedMolCLJInfo &changerecord = changedmols.at(idx);
-        
+
         ChangedMolCLJInfo newrecord = changerecord.change(molecule,
                                                           parameters());
-        
+
         changedmols[idx] = newrecord;
-        
+
         this->setCurrentState(newrecord.newMol());
-        
-        this->incrementMinor();
+
+        this->incrementMinorVersion();
     }
     else if ( molid_to_molindex.contains(id) )
     {
         //the molecule has not yet been changed since the last evaluation
-        int idx = molid_to_movedindex.value(id);
-        
+        int idx = molid_to_changedindex.value(id);
+
         MolCLJInfo oldmol = mols.at(idx);
-        
+
         ChangedMolCLJInfo newrecord = oldmol.change(molecule, parameters());
-        
+
         this->setCurrentState(newrecord.newMol());
-        
+
         idx = changedmols.count();
         molid_to_changedindex.insert(id, idx);
         changedmols.append(newrecord);
-        
-        this->incrementMinor();
+
+        this->incrementMinorVersion();
     }
-    
+
     return isDirty();
 }
 
@@ -570,9 +575,9 @@ bool InterCLJFF::change(const Molecule &molecule)
 bool InterCLJFF::change(const Residue &residue)
 {
     Molecule molecule = residue.molecule();
-    
+
     MoleculeID id = molecule.ID();
-    
+
     if ( removedmols.contains(id) )
     {
         //no point moving a residue that has been removed
@@ -582,34 +587,34 @@ bool InterCLJFF::change(const Residue &residue)
     {
         //changing a residue in an already-changed molecule
         int idx = molid_to_changedindex.value(id);
-        
+
         const ChangedMolCLJInfo &changerecord = changedmols.at(idx);
-        
+
         ChangedMolCLJInfo newrecord = changerecord.change(residue, parameters());
-        
+
         this->setCurrentState(newrecord.newMol());
-        
+
         changedmols[idx] = newrecord;
-        
-        this->incrementMinor();
+
+        this->incrementMinorVersion();
     }
     else if ( molid_to_molindex.contains(id) )
     {
         //changing a residue that has not yet been changed
         int idx = molid_to_molindex.value(id);
-        
+
         MolCLJInfo oldmol = mols.at(idx);
-        
+
         ChangedMolCLJInfo newrecord = oldmol.change(residue, parameters());
-        
+
         this->setCurrentState( newrecord.newMol() );
-        
+
         idx = changedmols.count();
-        molid_to_changedindex.insert(idx);
+        molid_to_changedindex.insert(id, idx);
         changedmols.append(newrecord);
-        
-        this->incrementMinor();
+
+        this->incrementMinorVersion();
     }
-    
+
     return isDirty();
 }

@@ -18,6 +18,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs
 # Define the sources in SireFF
 set ( WRAPFF_SOURCES
       ffbase.py.cpp
+      ffcomponent.py.cpp
       ffprocessor.py.cpp
       ffworker.py.cpp
       forcefield.py.cpp

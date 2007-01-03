@@ -27,6 +27,11 @@ using namespace SireDB;
 Tip4PFF::Components::Components() : CLJFF::Components()
 {}
 
+/** Constructor that just passes its arguments up to the parent */
+Tip4PFF::Components::Components(const FFBase &ffbase, const Symbols &symbols)
+        : CLJFF::Components(ffbase,symbols)
+{}
+
 /** Copy constructor */
 Tip4PFF::Components::Components(const Components &other)
            : CLJFF::Components(other)
@@ -177,7 +182,7 @@ void Tip4PFF::recalculateEnergy()
 
 /** Temporary function used to add a molecule getting the parameters from
     the properties of the molecule using the passed mapping */
-void Tip4PFF::add(const Molecule &mol, const ParameterMap &map)
+bool Tip4PFF::add(const Molecule &mol, const ParameterMap &map)
 {
     if (cljparams.isEmpty())
     {
@@ -218,15 +223,19 @@ void Tip4PFF::add(const Molecule &mol, const ParameterMap &map)
 
     mols.append( coords );
     aaboxes.append( cgroup.aaBox() );
+
+    this->incrementMajorVersion();
+
+    return isDirty();
 }
 
 /** Move the molecule 'molecule' */
-bool Tip4PFF::move(const Molecule &molecule)
+bool Tip4PFF::change(const Molecule &molecule)
 {
     return false;
 }
 
-bool Tip4PFF::move(const Residue &residue)
+bool Tip4PFF::change(const Residue &residue)
 {
     return false;
 }

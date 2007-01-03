@@ -31,6 +31,8 @@ using SireVol::Space;
 using SireVol::DistMatrix;
 using SireVol::CoordGroup;
 
+using SireCAS::Symbols;
+
 namespace detail
 {
 
@@ -89,8 +91,9 @@ public:
     {
     public:
         Components();
+        Components(const FFBase &ffbase, const Symbols &symbols = Symbols());
+
         Components(const Components &other);
-        Components(const FFBase &ffbase);
 
         ~Components();
 

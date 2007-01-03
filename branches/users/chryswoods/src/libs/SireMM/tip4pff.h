@@ -58,6 +58,7 @@ public:
     {
     public:
         Components();
+        Components(const FFBase &ffbase, const Symbols &symbols);
         Components(const Components &other);
 
         ~Components();
@@ -87,10 +88,10 @@ public:
         return new Tip4PFF(*this);
     }
 
-    bool move(const Molecule &molecule);
-    bool move(const Residue &residue);
+    bool change(const Molecule &molecule);
+    bool change(const Residue &residue);
 
-    void add(const Molecule &molecule, const ParameterMap &map = ParameterMap());
+    bool add(const Molecule &molecule, const ParameterMap &map = ParameterMap());
 
 protected:
     void recalculateEnergy();

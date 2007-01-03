@@ -241,6 +241,13 @@ ParameterMap::ParameterMap(const ParameterMap &other) : map(other.map)
 ParameterMap::~ParameterMap()
 {}
 
+/** Assignment operator */
+ParameterMap& ParameterMap::operator=(const ParameterMap &other)
+{
+    map = other.map;
+    return *this;
+}
+
 /** "and" combine two maps together - this unites the two maps,
     overwriting the parameters in this map with the values of 'other' */
 ParameterMap ParameterMap::operator&&(const ParameterMap &other) const

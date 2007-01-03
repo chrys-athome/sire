@@ -1,0 +1,59 @@
+Sire uses a strict ID numbering scheme. The ID numbers are used
+so the code can make assumptions without having to check if they
+are true. This is done for speed...
+
+IDs are of the form IDNumber:MajorVersion.MinorVersion, e.g. 1:2.3
+
+(1) Two objects of the same broad type (e.g. Molecule, ForceField, System)
+    are identical if their ID number and Version are the same.
+
+(2) An ID number of 0 implies a null object
+    
+There are several broad types that use ID numbers. The rules for each
+type are as follows;
+
+===== Molecule ======
+
+(1) All molecules with the same ID number have the same MoleculeInfo.
+
+       - implies changing the name of an atom changes the ID number
+       - implies changing CutGroup arrangement changes the ID number
+       - implies adding or removing atoms changes the ID number
+       
+(2) All molecules with the same ID number and same Major version number
+    have identical molecular properties
+
+       - implies changing any molecular property changes the major 
+         version number
+       - implies adding or removing properties changes the major
+         version number
+         
+(3) All molecules with the same ID number and same Major and Minor 
+    version numbers are identical.
+     
+       - implies changing the coordinates changes the minor version
+         number.
+
+===== ForceField =====
+
+(1) All ForceFields with the same ID number are of the same type.
+ 
+       - Implies that the type of a ForceField cannot change once
+         its ID number has been set.
+         
+(2) All ForceFields with the same ID number and same Major version
+    number contain the same molecules (and the molecules are in the 
+    same order)
+    
+       - Implies that adding or removing a molecule changes the 
+         major version number
+         
+       - Does not say that all of the molecules have the same version
+         numbers.
+         
+(3) All ForceFields with the same ID number and major and minor version
+    numbers are identical.
+    
+       - Implies that changing anything about a contained molecule
+         must also increase the minor version number of the forcefield.
+

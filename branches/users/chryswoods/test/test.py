@@ -94,10 +94,11 @@ timer.start()
 
 nmoves = 1000
 for i in range(0,nmoves):
-    cljff.move( tip4p )
+    cljff.change( tip4p )
     nrg = cljff.energy()
 
 ms = timer.elapsed()
 
 print "InterCLJFF ",cljff.energy(), "kcal mol-1"
 print "... took %d ms (%f moves per second)" % (ms, nmoves*1000.0/ms)
+

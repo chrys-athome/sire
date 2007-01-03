@@ -26,9 +26,11 @@ QDataStream& operator>>(QDataStream&, SireCAS::Function&);
 namespace SireCAS
 {
 
-/** This is a private class that is used to hold the data of 
+class Symbols;
+
+/** This is a private class that is used to hold the data of
     Function objects.
-    
+
     \author Christopher Woods
 */
 class FunctionPvt
@@ -39,51 +41,51 @@ friend QDataStream& ::operator>>(QDataStream&, FunctionPvt&);
 
 public:
     FunctionPvt();
-    
+
     FunctionPvt(const QString &name);
-    
+
     FunctionPvt(const FunctionPvt &other);
-    
+
     ~FunctionPvt();
-    
+
     bool operator==(const FunctionPvt &other) const;
     bool operator!=(const FunctionPvt &other) const;
-    
+
     void add(const Symbol &symbol);
-    
+
     QString toString() const;
-    
+
     QString name() const
     {
         return sig.name();
     }
-    
+
     const FunctionSignature& signature() const
     {
         return sig;
     }
-    
+
     const QHash<Symbol,int>& symbols() const
     {
         return syms;
     }
-    
+
     const QSet<Function>& functions() const
     {
         return funcs;
     }
-    
+
     void differentiate(const Symbol &symbol);
     void integrate(const Symbol &symbol);
-    
+
 private:
-    
+
     /** The signature of the function */
     FunctionSignature sig;
-    
+
     /** All of the symbols in the function */
     QHash<Symbol, int> syms;
-    
+
     /** All of the functions of the function */
     QSet<Function> funcs;
 };
@@ -132,23 +134,23 @@ double val = intx.evaluate( Values( x==0.4, f(x).integ(x)==0.2, C==0.4 ) );
 
 \endcode
 
-The differential of f(x) has returned f(x') (the prime indicates that the 
+The differential of f(x) has returned f(x') (the prime indicates that the
 function has been differentiated with respect to x). Similarly, the integration
-of f(x) has resulted in f(x`) (the mark indicates that the function has been 
+of f(x) has resulted in f(x`) (the mark indicates that the function has been
 integrated with respect to x). Now the differentials of integrals of this function
 can be substituted directly when evaluating the expression.
 
 The use of primes and marks on the symbols is a bit weird, but it in response
-to the need to be able to represent complex patterns of differentiation and 
+to the need to be able to represent complex patterns of differentiation and
 integration, e.g. f(x,y') implies f(x,y) has been differentiated with respect
 to y, f(x',y') imples differentiation with respect to x and y, f(x'',y) implies
-double differentiation with respect to x etc. Similarly, f(x`,y) implies 
-integration with respect to x, f(x`,y`) implies integration with respect to 
+double differentiation with respect to x etc. Similarly, f(x`,y) implies
+integration with respect to x, f(x`,y`) implies integration with respect to
 x and y, and f(x``,y) implies double integration with respect to x.
 
 Just as symbols can be substituted in an expression, so to can functions. Functions
-however provide an additional guard that the substituting expression is truly 
-an expression of the symbols of the function, and also provides automatic 
+however provide an additional guard that the substituting expression is truly
+an expression of the symbols of the function, and also provides automatic
 substitution of the differentials and integrals, e.g.
 
 \code
@@ -171,7 +173,7 @@ Expression dx2 = dx.substitute( f(x) = Sin(x) );
 // differentiated upon substitution.
 \endcode
 
-You can also try to make a function of a function. The code will, however, 
+You can also try to make a function of a function. The code will, however,
 expand this out to a new function, e.g.
 
 \code
@@ -181,7 +183,7 @@ Function g("g");
 
 Expression ex = 3*x + f( g(x) );
 
-// ex now equals 3x + f_g(x)   - note how f( g(x) ) has been expanded 
+// ex now equals 3x + f_g(x)   - note how f( g(x) ) has been expanded
 //                               into a single combined function.
 
 Expression dx = ex.differentiate(x);
@@ -198,7 +200,7 @@ Expression dx2 = dx.substitute( f(g(x)) == Sin(x) );
 
 \endcode
 
-Note that it makes no sense to substitute for only g(x) in the above example, 
+Note that it makes no sense to substitute for only g(x) in the above example,
 as it cannot be known what the functional form of f(g(x)) will be. Also note that
 the code allow you to create repeated functions (e.g. f( g( f(x) ) ), == f_g_f(x) ).
 
@@ -230,69 +232,106 @@ friend QDataStream& ::operator>>(QDataStream&, Function&);
 public:
     Function();
     Function(const QString &name);
-    
+
+    Function(const QString &name, const Symbols &symbols);
+
+    Function(const QString &name,
+             const Symbol &sym0);
+    Function(const QString &name,
+             const Symbol &sym0, const Symbol &sym1);
+    Function(const QString &name,
+             const Symbol &sym0, const Symbol &sym1, const Symbol &sym2);
+    Function(const QString &name,
+             const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+             const Symbol &sym3);
+    Function(const QString &name,
+             const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+             const Symbol &sym3, const Symbol &sym4);
+    Function(const QString &name,
+             const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+             const Symbol &sym3, const Symbol &sym4, const Symbol &sym5);
+    Function(const QString &name,
+             const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+             const Symbol &sym3, const Symbol &sym4, const Symbol &sym5,
+             const Symbol &sym6);
+    Function(const QString &name,
+             const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+             const Symbol &sym3, const Symbol &sym4, const Symbol &sym5,
+             const Symbol &sym6, const Symbol &sym7);
+    Function(const QString &name,
+             const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+             const Symbol &sym3, const Symbol &sym4, const Symbol &sym5,
+             const Symbol &sym6, const Symbol &sym7, const Symbol &sym8);
+    Function(const QString &name,
+             const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+             const Symbol &sym3, const Symbol &sym4, const Symbol &sym5,
+             const Symbol &sym6, const Symbol &sym7, const Symbol &sym8,
+             const Symbol &sym9);
+
     Function(const Function &other);
 
     ~Function();
-    
+
     bool operator==(const ExBase &other) const;
-    
+
     Function& operator=(const Function &other);
-    
+
     /** Convienient operator used to combine a function with a value */
     SymbolValue operator==(double val) const
     {
         return SymbolValue(ID(), val);
     }
-    
+
     /** Convienient operator used to combine a function with a value */
     SymbolValue operator==(int val) const
     {
         return SymbolValue(ID(), val);
     }
-    
+
     /** Convienient operator used to combine a function with a Complex */
     SymbolComplex operator==(const Complex &val) const
     {
         return SymbolComplex(ID(), val);
     }
-    
-    /** Convieient operator used to combine a function with an equivalent 
+
+    /** Convieient operator used to combine a function with an equivalent
         expression */
     SymbolExpression operator==(const Expression &ex) const
     {
         return SymbolExpression(*this, ex);
     }
-    
+
     Expression differentiate(const Symbol &symbol) const;
     Expression integrate(const Symbol &symbol) const;
-    
+
     bool isFunction(const Symbol&) const;
-    
+
     /** Return the name of this function */
     QString name() const
     {
         return d.name();
     }
-    
+
     /** Return the signature of this function */
     FunctionSignature signature() const
     {
         return d.signature();
     }
-    
+
     uint hash() const;
 
     const char* what() const
     {
         return "SireCAS::Function";
     }
-    
+
     Expression substitute(const Identities &identities) const;
-    
+
     Symbols symbols() const;
     Functions functions() const;
-    
+
+    Function operator()(const Symbols &symbols) const;
+
     Function operator()(const Symbol &sym0) const;
     Function operator()(const Symbol &sym0, const Symbol &sym1) const;
     Function operator()(const Symbol &sym0, const Symbol &sym1, const Symbol &sym2) const;
@@ -325,7 +364,7 @@ protected:
 private:
 
     Function(const FunctionPvt &other);
-    
+
     Expression match(const Function &func, const Expression &ex) const;
 
     const FunctionPvt& data() const

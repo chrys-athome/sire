@@ -52,10 +52,13 @@ public:
     {
     public:
         Components();
+
+        Components(const FFBase &ffbase, const Symbols &symbols);
+
         Components(const Components &other);
 
         ~Components();
-        
+
         Components& operator=(const Components &other);
     };
 
@@ -85,7 +88,7 @@ public:
 
     bool change(const Molecule &molecule);
     bool change(const Residue &residue);
-    
+
     bool add(const Molecule &mol, const ParameterMap &map = ParameterMap());
 
     bool remove(const Molecule &mol);
@@ -95,6 +98,9 @@ protected:
     void recalculateTotalEnergy();
 
     void recalculateEnergy();
+
+    void setCurrentState(const detail::MolCLJInfo &mol);
+    void removeCurrentState(const Molecule &mol);
 
     /** Information about every molecule contained in this forcefield */
     QVector<detail::MolCLJInfo> mols;

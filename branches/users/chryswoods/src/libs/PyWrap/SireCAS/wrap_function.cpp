@@ -5,7 +5,7 @@
   * @author Christopher Woods
   *
   */
-  
+
 #include <Python.h>
 #include <boost/python.hpp>
 
@@ -29,10 +29,12 @@ using namespace boost::python;
 namespace SireCAS
 {
 
-void  
+void
 SIRECAS_EXPORT
 export_Function()
 {
+    Function (Function::*wrap_call)(const Symbols&) const = &Function::operator();
+
     Function (Function::*wrap_call0)(const Symbol&
                                     ) const = &Function::operator();
     Function (Function::*wrap_call1)(const Symbol&, const Symbol&
@@ -65,10 +67,17 @@ export_Function()
                                      const Symbol&, const Symbol&, const Symbol&,
                                      const Symbol&
                                     ) const = &Function::operator();
-    
+
     class_<Function, bases<Symbol> >("Function", init<>())
-        .def( init<const QString&>() )
+        .def( init<const QString&,
+                   optional<const Symbol&, const Symbol&, const Symbol&,
+                            const Symbol&, const Symbol&, const Symbol&,
+                            const Symbol&, const Symbol&, const Symbol&,
+                            const Symbol&>
+                  >() )
+        .def( init<const QString&, const Symbols&>() )
         .def( "name", &Function::name )
+        .def( "__call__", wrap_call )
         .def( "__call__", wrap_call0 )
         .def( "__call__", wrap_call1 )
         .def( "__call__", wrap_call2 )
@@ -83,7 +92,7 @@ export_Function()
 
     void (Functions::*wrap_insert1)(const Function&) = &Functions::insert;
     void (Functions::*wrap_insert2)(const Functions&) = &Functions::insert;
-    
+
     class_<Functions>("Functions", init<>())
         .def( init<const Function&>() )
         .def( "insert", wrap_insert1 )

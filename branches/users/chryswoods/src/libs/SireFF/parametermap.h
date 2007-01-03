@@ -145,7 +145,12 @@ public:
 
     ~ParameterMap();
 
+    ParameterMap& operator=(const ParameterMap &other);
+
     ParameterMap operator&&(const ParameterMap &other) const;
+
+    bool operator==(const ParameterMap &other) const;
+    bool operator!=(const ParameterMap &other) const;
 
     QString source(const ParameterName &param) const;
 
@@ -157,6 +162,18 @@ private:
         those parameters */
     QHash<QString,QString> map;
 };
+
+/** Comparison operator */
+inline bool ParameterMap::operator==(const ParameterMap &other) const
+{
+    return map == other.map;
+}
+
+/** Comparison operator */
+inline bool ParameterMap::operator!=(const ParameterMap &other) const
+{
+    return map != other.map;
+}
 
 }
 

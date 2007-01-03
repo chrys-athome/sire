@@ -42,13 +42,169 @@ FFBase::Parameters::~Parameters()
 /////////// Implementation of FFBase::Components
 ///////////
 
+/** The symbol representing the x coordinate */
+Symbol FFBase::Components::_x("x");
+
+/** The symbol representing the y coordinate */
+Symbol FFBase::Components::_y("y");
+
+/** The symbol representing the z coordinate */
+Symbol FFBase::Components::_z("z");
+
+/** Add the passed symbols to 'symbols' and return the result */
+Symbols FFBase::Components::addToSymbols(Symbols symbols,
+                          const Symbol &sym0)
+{
+    symbols.insert(sym0);
+
+    return symbols;
+}
+
+/** Add the passed symbols to 'symbols' and return the result */
+Symbols FFBase::Components::addToSymbols(Symbols symbols,
+                          const Symbol &sym0, const Symbol &sym1)
+{
+    symbols.insert(sym0);
+    symbols.insert(sym1);
+
+    return symbols;
+}
+
+/** Add the passed symbols to 'symbols' and return the result */
+Symbols FFBase::Components::addToSymbols(Symbols symbols,
+                          const Symbol &sym0, const Symbol &sym1, const Symbol &sym2)
+{
+    symbols.insert(sym0);
+    symbols.insert(sym1);
+    symbols.insert(sym2);
+
+    return symbols;
+}
+
+/** Add the passed symbols to 'symbols' and return the result */
+Symbols FFBase::Components::addToSymbols(Symbols symbols,
+                          const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+                          const Symbol &sym3)
+{
+    symbols.insert(sym0);
+    symbols.insert(sym1);
+    symbols.insert(sym2);
+    symbols.insert(sym3);
+
+    return symbols;
+}
+
+/** Add the passed symbols to 'symbols' and return the result */
+Symbols FFBase::Components::addToSymbols(Symbols symbols,
+                          const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+                          const Symbol &sym3, const Symbol &sym4)
+{
+    symbols.insert(sym0);
+    symbols.insert(sym1);
+    symbols.insert(sym2);
+    symbols.insert(sym3);
+    symbols.insert(sym4);
+
+    return symbols;
+}
+
+/** Add the passed symbols to 'symbols' and return the result */
+Symbols FFBase::Components::addToSymbols(Symbols symbols,
+                          const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+                          const Symbol &sym3, const Symbol &sym4, const Symbol &sym5)
+{
+    symbols.insert(sym0);
+    symbols.insert(sym1);
+    symbols.insert(sym2);
+    symbols.insert(sym3);
+    symbols.insert(sym4);
+    symbols.insert(sym5);
+
+    return symbols;
+}
+
+/** Add the passed symbols to 'symbols' and return the result */
+Symbols FFBase::Components::addToSymbols(Symbols symbols,
+                          const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+                          const Symbol &sym3, const Symbol &sym4, const Symbol &sym5,
+                          const Symbol &sym6)
+{
+    symbols.insert(sym0);
+    symbols.insert(sym1);
+    symbols.insert(sym2);
+    symbols.insert(sym3);
+    symbols.insert(sym4);
+    symbols.insert(sym5);
+    symbols.insert(sym6);
+
+    return symbols;
+}
+
+/** Add the passed symbols to 'symbols' and return the result */
+Symbols FFBase::Components::addToSymbols(Symbols symbols,
+                          const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+                          const Symbol &sym3, const Symbol &sym4, const Symbol &sym5,
+                          const Symbol &sym6, const Symbol &sym7)
+{
+    symbols.insert(sym0);
+    symbols.insert(sym1);
+    symbols.insert(sym2);
+    symbols.insert(sym3);
+    symbols.insert(sym4);
+    symbols.insert(sym5);
+    symbols.insert(sym6);
+    symbols.insert(sym7);
+
+    return symbols;
+}
+
+/** Add the passed symbols to 'symbols' and return the result */
+Symbols FFBase::Components::addToSymbols(Symbols symbols,
+                          const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+                          const Symbol &sym3, const Symbol &sym4, const Symbol &sym5,
+                          const Symbol &sym6, const Symbol &sym7, const Symbol &sym8)
+{
+    symbols.insert(sym0);
+    symbols.insert(sym1);
+    symbols.insert(sym2);
+    symbols.insert(sym3);
+    symbols.insert(sym4);
+    symbols.insert(sym5);
+    symbols.insert(sym6);
+    symbols.insert(sym7);
+    symbols.insert(sym8);
+
+    return symbols;
+}
+
+/** Add the passed symbols to 'symbols' and return the result */
+Symbols FFBase::Components::addToSymbols(Symbols symbols,
+                          const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+                          const Symbol &sym3, const Symbol &sym4, const Symbol &sym5,
+                          const Symbol &sym6, const Symbol &sym7, const Symbol &sym8,
+                          const Symbol &sym9)
+{
+    symbols.insert(sym0);
+    symbols.insert(sym1);
+    symbols.insert(sym2);
+    symbols.insert(sym3);
+    symbols.insert(sym4);
+    symbols.insert(sym5);
+    symbols.insert(sym6);
+    symbols.insert(sym7);
+    symbols.insert(sym8);
+    symbols.insert(sym9);
+
+    return symbols;
+}
+
 /** Constructor */
 FFBase::Components::Components()
 {}
 
 /** Construct based on the passed FFBase */
-FFBase::Components::Components(const FFBase &ffbase)
-       : e_total(ffbase)
+FFBase::Components::Components(const FFBase &ffbase, const Symbols &symbols)
+       : e_total(ffbase, symbols)
 {
     this->registerComponent(e_total);
 }
@@ -67,7 +223,7 @@ FFBase::Components& FFBase::Components::operator=(const FFBase::Components &othe
 {
     e_total = other.e_total;
     symbolids = other.symbolids;
-    
+
     return *this;
 }
 
@@ -86,6 +242,12 @@ void FFBase::Components::setForceField(const FFBase &ffbase)
 /** Register the component 'component' */
 void FFBase::Components::registerComponent(const FFComponent &component)
 {
+    if (component.symbols().isEmpty())
+        throw SireError::program_bug( QObject::tr(
+              "You cannot create a forcefield function that isn't a function "
+              "of any symbol! (add symbols to %1)")
+                  .arg(component.name()), CODELOC );
+
     symbolids.insert( component.ID() );
 }
 
@@ -254,8 +416,8 @@ Values FFBase::energies()
     energy needs to be recalculated. The same parameter map
     that was used when this molecule was added will be used
     to extract any necessary parameters from the molecule's
-    properties 
-    
+    properties
+
     \throw SireMol::missing_property
     \throw SireError::invalid_cast
     \throw SireError::invalid_operation
@@ -272,25 +434,25 @@ bool FFBase::change(const Molecule&)
     parameters). This does nothing if the residue is not
     in this forcefield. Returns whether or not the forcefield
     has been changed by this change, and thus whether the
-    energy needs to be recalculated. 
-    
+    energy needs to be recalculated.
+
     \throw SireMol::missing_property
     \throw SireError::invalid_cast
     \throw SireError::invalid_operation
 */
 bool FFBase::change(const Residue &res)
 {
-    this->change(res.molecule());
+    return this->change(res.molecule());
 }
 
 /** Add the molecule 'molecule' to this forcefield using
     the optional parameter map to find any necessary parameters
-    from properties of the molecule. This will replace any 
+    from properties of the molecule. This will replace any
     existing copy of the molecule that already exists in
-    this forcefield. This returns whether or not the 
+    this forcefield. This returns whether or not the
     forcefield has been changed by this addition, and therefore
-    whether its energy needs recalculating. 
-    
+    whether its energy needs recalculating.
+
     \throw SireMol::missing_property
     \throw SireError::invalid_cast
     \throw SireError::invalid_operation
@@ -301,19 +463,21 @@ bool FFBase::add(const Molecule&, const ParameterMap&)
                     "The forcefield \"%1\" (class %2) does not support "
                     "the addition of molecules.")
                         .arg(this->name()).arg(this->what()), CODELOC );
+
+    return false;
 }
 
 /** Add the residue 'residue' to this forcefield using
     the optional parameter map to find any necessary parameters
-    from properties of the residue. This will replace any 
+    from properties of the residue. This will replace any
     existing copy of the residue that already exists in
-    this forcefield. This returns whether or not the 
+    this forcefield. This returns whether or not the
     forcefield has been changed by this addition, and therefore
     whether its energy needs recalculating.
-     
+
     This will throw an exception if this forcefield does not
     support partial molecules.
-    
+
     \throw SireError::invalid_operation
     \throw SireMol::missing_property
     \throw SireError::invalid_cast
@@ -324,13 +488,15 @@ bool FFBase::add(const Residue&, const ParameterMap&)
                     "The forcefield \"%1\" (class %2) does not support "
                     "the addition of residues.")
                         .arg(this->name()).arg(this->what()), CODELOC );
+
+    return false;
 }
 
 /** Remove the molecule 'molecule' from this forcefield - this
     does nothing if the molecule is not in this forcefield. This
-    returns whether this has changed the forcefield (therefore 
-    necessitating a recalculation of the energy) 
-    
+    returns whether this has changed the forcefield (therefore
+    necessitating a recalculation of the energy)
+
     \throw SireError::invalid_operation
 */
 bool FFBase::remove(const Molecule&)
@@ -339,16 +505,18 @@ bool FFBase::remove(const Molecule&)
                     "The forcefield \"%1\" (class %2) does not support "
                     "the removal of molecules.")
                         .arg(this->name()).arg(this->what()), CODELOC );
+
+    return false;
 }
 
 /** Remove the residue 'residue' from this forcefield - this
     does nothing if the residue is not in this forcefield. This
-    returns whether this has changed the forcefield (therefore 
+    returns whether this has changed the forcefield (therefore
     necessitating a recalculation of the energy)
-    
+
     This will throw an exception if this forcefield does not
     support partial molecules.
-    
+
     \throw SireError::invalid_operation
 */
 bool FFBase::remove(const Residue&)
@@ -357,17 +525,19 @@ bool FFBase::remove(const Residue&)
                     "The forcefield \"%1\" (class %2) does not support "
                     "the removal of residues.")
                         .arg(this->name()).arg(this->what()), CODELOC );
+
+    return false;
 }
 
-/** Replace the molecule 'oldmol' with 'newmol' (using 
+/** Replace the molecule 'oldmol' with 'newmol' (using
     the passed parameter map to find any required parameters
     in the properties of the molecule). This is equivalent
     to 'remove(oldmol)' followed by 'add(newmol,map)', except
     that 'newmol' will only be added if 'oldmol' is contained
-    in this forcefield. 
-    
+    in this forcefield.
+
     This returns whether this changes the forcefield.
-    
+
     \throw SireMol::missing_property
     \throw SireError::invalid_cast
 */
@@ -376,7 +546,12 @@ bool FFBase::replace(const Molecule &oldmol,
                      const ParameterMap &map)
 {
     if (this->remove(oldmol))
+    {
         this->add(newmol,map);
+        return true;
+    }
+    else
+        return false;
 }
 
 /** Return whether this forcefield contains a copy of the molecule
@@ -395,7 +570,7 @@ bool FFBase::contains(const Residue &residue) const
 
 /** Return the copy of the molecule in this forcefield that
     has the ID == molid
-    
+
     \throw SireMol::missing_molecule
 */
 Molecule FFBase::molecule(MoleculeID molid) const
@@ -409,7 +584,7 @@ Molecule FFBase::molecule(MoleculeID molid) const
 /** Return the copy of the residue in this forcefield that
     is in the molecule with ID == molid and with residue number
     'resnum'
-    
+
     \throw SireMol::missing_molecule
     \throw SireMol::missing_residue
 */
@@ -421,7 +596,7 @@ Residue FFBase::residue(MoleculeID molid, ResNum resnum) const
 /** Return the copy of the residue in this forcefield that
     is in the molecule with ID == molid and with residue index
     'resid'
-    
+
     \throw SireMol::missing_molecule
     \throw SireError::invalid_index
 */
@@ -431,9 +606,9 @@ Residue FFBase::residue(MoleculeID molid, ResID resid) const
 }
 
 /** Return the copy of the residue in this forcefield that
-    is in the molecule with ID == molid and with residue 
+    is in the molecule with ID == molid and with residue
     called 'resname'
-    
+
     \throw SireMol::missing_molecule
     \throw SireMol::missing_residue
 */
@@ -442,7 +617,7 @@ Residue FFBase::residue(MoleculeID molid, const QString &resname) const
     return this->molecule(molid).residue(resname);
 }
 
-/** Return the copy of the molecule 'mol' that is in this forcefield 
+/** Return the copy of the molecule 'mol' that is in this forcefield
 
     \throw SireMol::missing_molecule
 */

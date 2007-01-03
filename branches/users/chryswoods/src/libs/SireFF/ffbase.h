@@ -46,6 +46,8 @@ using SireBase::IDMajMinVersion;
 
 using SireCAS::Function;
 using SireCAS::Values;
+using SireCAS::Symbol;
+using SireCAS::Symbols;
 
 using SireMol::MoleculeID;
 using SireMol::Molecule;
@@ -90,7 +92,7 @@ public:
 
     public:
         Components();
-        Components(const FFBase &ffield);
+        Components(const FFBase &ffield, const Symbols &symbols = Symbols());
         Components(const Components &other);
 
         virtual ~Components();
@@ -109,6 +111,54 @@ public:
 
         static QString describe_total();
 
+        static Symbol x()
+        {
+            return _x;
+        }
+
+        static Symbol y()
+        {
+            return _y;
+        }
+
+        static Symbol z()
+        {
+            return _z;
+        }
+
+        static Symbols addToSymbols(Symbols symbols,
+                            const Symbol &sym0);
+        static Symbols addToSymbols(Symbols symbols,
+                            const Symbol &sym0, const Symbol &sym1);
+        static Symbols addToSymbols(Symbols symbols,
+                            const Symbol &sym0, const Symbol &sym1, const Symbol &sym2);
+        static Symbols addToSymbols(Symbols symbols,
+                            const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+                            const Symbol &sym3);
+        static Symbols addToSymbols(Symbols symbols,
+                            const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+                            const Symbol &sym3, const Symbol &sym4);
+        static Symbols addToSymbols(Symbols symbols,
+                            const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+                            const Symbol &sym3, const Symbol &sym4, const Symbol &sym5);
+        static Symbols addToSymbols(Symbols symbols,
+                            const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+                            const Symbol &sym3, const Symbol &sym4, const Symbol &sym5,
+                            const Symbol &sym6);
+        static Symbols addToSymbols(Symbols symbols,
+                            const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+                            const Symbol &sym3, const Symbol &sym4, const Symbol &sym5,
+                            const Symbol &sym6, const Symbol &sym7);
+        static Symbols addToSymbols(Symbols symbols,
+                            const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+                            const Symbol &sym3, const Symbol &sym4, const Symbol &sym5,
+                            const Symbol &sym6, const Symbol &sym7, const Symbol &sym8);
+        static Symbols addToSymbols(Symbols symbols,
+                            const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+                            const Symbol &sym3, const Symbol &sym4, const Symbol &sym5,
+                            const Symbol &sym6, const Symbol &sym7, const Symbol &sym8,
+                            const Symbol &sym9);
+
         bool contains(const FFComponent &component) const
         {
             return symbolids.contains(component.ID());
@@ -122,6 +172,10 @@ public:
         void registerComponent(const FFComponent &component);
 
     private:
+        static Symbol _x;
+        static Symbol _y;
+        static Symbol _z;
+
         /** The FFComponent representing the total energy
             of the forcefield */
         FFComponent e_total;
@@ -164,14 +218,14 @@ public:
     virtual bool change(const Molecule &mol);
     virtual bool change(const Residue &res);
 
-    virtual bool add(const Molecule &molecule, 
+    virtual bool add(const Molecule &molecule,
                      const ParameterMap &map = ParameterMap());
     virtual bool add(const Residue &residue,
                      const ParameterMap &map = ParameterMap());
 
     virtual bool remove(const Molecule &molecule);
     virtual bool remove(const Residue &residue);
-    
+
     virtual bool replace(const Molecule &oldmol,
                          const Molecule &newmol,
                          const ParameterMap &map = ParameterMap());
@@ -180,11 +234,11 @@ public:
     virtual bool contains(const Residue &residue) const;
 
     virtual Molecule molecule(MoleculeID molid) const;
-    
+
     virtual Residue residue(MoleculeID molid, ResNum resnum) const;
     virtual Residue residue(MoleculeID molid, ResID resid) const;
     virtual Residue residue(MoleculeID molid, const QString &resname) const;
-    
+
     virtual Molecule molecule(const Molecule &mol) const;
     virtual Residue residue(const Residue &res) const;
 
@@ -200,8 +254,8 @@ protected:
     void incrementMajorVersion();
     void incrementMinorVersion();
 
-    void setComponent(const Function &comp, double nrg);
-    void changeComponent(const Function &comp, double delta);
+    void setComponent(const FFComponent &comp, double nrg);
+    void changeComponent(const FFComponent &comp, double delta);
 
     void setDirty();
     void setClean();
@@ -238,13 +292,13 @@ private:
 };
 
 /** Set the energy value of the component 'comp' */
-inline void FFBase::setComponent(const Function &comp, double nrg)
+inline void FFBase::setComponent(const FFComponent &comp, double nrg)
 {
     nrg_components.set(comp,nrg);
 }
 
 /** Change the existing value of the component 'comp' by delta */
-inline void FFBase::changeComponent(const Function &comp, double delta)
+inline void FFBase::changeComponent(const FFComponent &comp, double delta)
 {
     nrg_components.set( comp, delta + nrg_components.value(comp) );
 }
@@ -268,6 +322,7 @@ inline bool FFBase::isClean() const
 inline void FFBase::incrementMajorVersion()
 {
     id_and_version.incrementMajor();
+    setDirty();
 }
 
 /** Internal function used by derived classes to increment the minor
@@ -275,6 +330,7 @@ inline void FFBase::incrementMajorVersion()
 inline void FFBase::incrementMinorVersion()
 {
     id_and_version.incrementMinor();
+    setDirty();
 }
 
 /** Return the ID number of the forcefield */

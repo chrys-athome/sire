@@ -60,10 +60,10 @@ CLJFF::Components::Components() : FFBase::Components()
 {}
 
 /** Construct using the supplied forcefield */
-CLJFF::Components::Components(const FFBase &ffbase) 
-      : FFBase::Components(ffbase),
-        e_coulomb(ffbase, "coulomb"),
-        e_lj(ffbase, "lj")
+CLJFF::Components::Components(const FFBase &ffbase, const Symbols &symbols)
+      : FFBase::Components( ffbase, addToSymbols(symbols, x(), y(), z()) ),
+        e_coulomb(ffbase, "coulomb", x(), y(), z()),
+        e_lj(ffbase, "lj", x(), y(), z())
 {
     this->registerComponent(e_coulomb);
     this->registerComponent(e_lj);
@@ -85,9 +85,9 @@ CLJFF::Components& CLJFF::Components::operator=(const CLJFF::Components &other)
 {
     e_coulomb = other.e_coulomb;
     e_lj = other.e_lj;
-    
+
     FFBase::Components::operator=(other);
-    
+
     return *this;
 }
 
