@@ -320,7 +320,7 @@ public:
                                 MetaType<T>::typeName(),
                                 MetaType<T>::ID() )
     {
-        qRegisterMetaType<T>();
+        qRegisterMetaType<T>(this->typeName());
         qRegisterMetaTypeStreamOperators<T>(this->typeName());
     }
 
@@ -335,7 +335,7 @@ public:
                                 MetaType<T>::typeName(),
                                 MetaType<T>::ID() )
     {
-        qRegisterMetaType<T>();
+        qRegisterMetaType<T>(this->typeName());
     }
 
     /** Destructor */

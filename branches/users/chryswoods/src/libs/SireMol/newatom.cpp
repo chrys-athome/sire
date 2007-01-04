@@ -1,4 +1,6 @@
 
+#include "qhash_siremol.h"
+
 #include "newatom.h"
 
 #include "moleculedata.h"
