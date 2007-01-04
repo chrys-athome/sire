@@ -15,15 +15,15 @@ using namespace SireStream;
 using namespace SireCAS;
 
 ////////////
-//////////// Register the functions 
+//////////// Register the functions
 ////////////
 
-static const RegisterMetaType<ArcCos> r_arccos("SireCAS::ArcCos");
-static const RegisterMetaType<ArcSin> r_arcsin("SireCAS::ArcSin");
-static const RegisterMetaType<ArcTan> r_arctan("SireCAS::ArcTan");
-static const RegisterMetaType<ArcCsc> r_arccsc("SireCAS::ArcCsc");
-static const RegisterMetaType<ArcSec> r_arcsec("SireCAS::ArcSec");
-static const RegisterMetaType<ArcCot> r_arccot("SireCAS::ArcCot");
+static const RegisterMetaType<ArcCos> r_arccos;
+static const RegisterMetaType<ArcSin> r_arcsin;
+static const RegisterMetaType<ArcTan> r_arctan;
+static const RegisterMetaType<ArcCsc> r_arccsc;
+static const RegisterMetaType<ArcSec> r_arcsec;
+static const RegisterMetaType<ArcCot> r_arccot;
 
 ////////////
 //////////// Implementation of Inverse-cosine
@@ -55,7 +55,7 @@ uint ArcCos::magic() const
 bool ArcCos::operator==(const ExBase &other) const
 {
     const ArcCos *other_cos = dynamic_cast<const ArcCos*>(&other);
-    
+
     return other_cos != 0 and typeid(other).name() == typeid(*this).name()
                  and this->argument() == other_cos->argument();
 }
@@ -64,12 +64,12 @@ bool ArcCos::operator==(const ExBase &other) const
 double ArcCos::evaluate(const Values &values) const
 {
     Complex val = SireMaths::arccos_real( x().evaluate(values) );
-    
+
     if (not val.isReal())
         throw SireMaths::domain_error(QObject::tr(
             "arccos(%1) is complex (%2): %3")
                 .arg(x().evaluate(values)).arg(val.toString(), toString()), CODELOC);
-                
+
     return val.real();
 }
 
@@ -123,7 +123,7 @@ uint ArcSin::magic() const
 bool ArcSin::operator==(const ExBase &other) const
 {
     const ArcSin *other_cos = dynamic_cast<const ArcSin*>(&other);
-    
+
     return other_cos != 0 and typeid(other).name() == typeid(*this).name()
                  and this->argument() == other_cos->argument();
 }
@@ -132,12 +132,12 @@ bool ArcSin::operator==(const ExBase &other) const
 double ArcSin::evaluate(const Values &values) const
 {
     Complex val = SireMaths::arcsin_real( x().evaluate(values) );
-    
+
     if (not val.isReal())
         throw SireMaths::domain_error(QObject::tr(
             "arcsin(%1) is complex (%2): %3")
                 .arg(x().evaluate(values)).arg(val.toString(), toString()), CODELOC);
-                
+
     return val.real();
 }
 
@@ -191,7 +191,7 @@ uint ArcTan::magic() const
 bool ArcTan::operator==(const ExBase &other) const
 {
     const ArcTan *other_cos = dynamic_cast<const ArcTan*>(&other);
-    
+
     return other_cos != 0 and typeid(other).name() == typeid(*this).name()
                  and this->argument() == other_cos->argument();
 }
@@ -252,7 +252,7 @@ uint ArcCsc::magic() const
 bool ArcCsc::operator==(const ExBase &other) const
 {
     const ArcCsc *other_cos = dynamic_cast<const ArcCsc*>(&other);
-    
+
     return other_cos != 0 and typeid(other).name() == typeid(*this).name()
                  and this->argument() == other_cos->argument();
 }
@@ -261,12 +261,12 @@ bool ArcCsc::operator==(const ExBase &other) const
 double ArcCsc::evaluate(const Values &values) const
 {
     Complex val = SireMaths::arccsc_real( x().evaluate(values) );
-    
+
     if (not val.isReal())
         throw SireMaths::domain_error(QObject::tr(
             "arccsc(%1) is complex (%2): %3")
                 .arg(x().evaluate(values)).arg(val.toString(), toString()), CODELOC);
-                
+
     return val.real();
 }
 
@@ -320,7 +320,7 @@ uint ArcSec::magic() const
 bool ArcSec::operator==(const ExBase &other) const
 {
     const ArcSec *other_cos = dynamic_cast<const ArcSec*>(&other);
-    
+
     return other_cos != 0 and typeid(other).name() == typeid(*this).name()
                  and this->argument() == other_cos->argument();
 }
@@ -329,12 +329,12 @@ bool ArcSec::operator==(const ExBase &other) const
 double ArcSec::evaluate(const Values &values) const
 {
     Complex val = SireMaths::arcsec_real( x().evaluate(values) );
-    
+
     if (not val.isReal())
         throw SireMaths::domain_error(QObject::tr(
             "arcsec(%1) is complex (%2): %3")
                 .arg(x().evaluate(values)).arg(val.toString(), toString()), CODELOC);
-                
+
     return val.real();
 }
 
@@ -388,7 +388,7 @@ uint ArcCot::magic() const
 bool ArcCot::operator==(const ExBase &other) const
 {
     const ArcCot *other_cos = dynamic_cast<const ArcCot*>(&other);
-    
+
     return other_cos != 0 and typeid(other).name() == typeid(*this).name()
                  and this->argument() == other_cos->argument();
 }

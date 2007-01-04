@@ -8,7 +8,7 @@
 using namespace SireMaths;
 using namespace SireStream;
 
-static const RegisterMetaType<AxisSet> r_axisset("SireMaths::AxisSet");
+static const RegisterMetaType<AxisSet> r_axisset;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const AxisSet &ax)
@@ -21,14 +21,14 @@ QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const AxisSet &ax)
 QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, AxisSet &ax)
 {
     VersionID v = readHeader(ds, r_axisset);
-    
+
     if (v == 1)
     {
         ds >> ax.mat >> ax.invmat >> ax.orgn;
     }
     else
         throw version_error(v, "1", r_axisset, CODELOC);
-    
+
     return ds;
 }
 
@@ -38,7 +38,7 @@ AxisSet::AxisSet() : mat(), invmat(), orgn()
 {}
 
 /** Construct an AxisSet using matrix 'matrx', and origin 'orign' */
-AxisSet::AxisSet(const Matrix &matrx, Vector vec) 
+AxisSet::AxisSet(const Matrix &matrx, Vector vec)
         : mat(matrx), invmat(mat.inverse()), orgn(vec)
 {}
 

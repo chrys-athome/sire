@@ -113,7 +113,7 @@ QString CLJFF::Components::describe_lj()
 //////////// Implementation of CLJFF
 ////////////
 
-static const RegisterMetaType<CLJFF> r_cljff("SireMM::CLJFF", MAGIC_ONLY);
+static const RegisterMetaType<CLJFF> r_cljff(MAGIC_ONLY, "SireMM::CLJFF");
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJFF &cljff)

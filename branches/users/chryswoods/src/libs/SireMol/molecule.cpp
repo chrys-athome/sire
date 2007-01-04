@@ -51,7 +51,7 @@
 using namespace SireStream;
 using namespace SireMol;
 
-static const RegisterMetaType<Molecule> r_molecule("SireMol::Molecule");
+static const RegisterMetaType<Molecule> r_molecule;
 
 /** Serialise to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const Molecule &mol)

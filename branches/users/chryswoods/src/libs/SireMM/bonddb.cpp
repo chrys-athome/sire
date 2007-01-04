@@ -17,26 +17,26 @@ using namespace SireMM;
 using namespace SireCAS;
 using namespace SireDB;
 
-static const RegisterMetaType<BondDB> r_bonddb("SireMM::BondDB", NO_STREAM);
+static const RegisterMetaType<BondDB> r_bonddb(NO_STREAM);
 
 /** Constructor */
 BondDB::BondDB() : Term12DB(), InternalDB<MolBondInfo>(), _r("r")
 {}
 
 /** Copy constructor */
-BondDB::BondDB(const BondDB &other) 
+BondDB::BondDB(const BondDB &other)
        : Term12DB(other), InternalDB<MolBondInfo>(), _r(other._r)
 {}
 
 /** Destructor */
 BondDB::~BondDB()
 {}
-    
+
 /** Dump the version number of this database */
 void BondDB::prepareToDump()
 {
     Term12DB::prepareToDump();
-    
+
     this->saveParameter<BondDB>( "version" , 0 );
 }
 
@@ -46,14 +46,14 @@ void BondDB::postLoad()
     Term12DB::postLoad();
 
     int v = this->loadParameter<BondDB>( "version" ).toInt();
-                            
+
     if (v != 0)
         throw version_error( v, "0", "SireMM::BondDB", CODELOC );
 }
 
-/** Add the bond function 'bondfunc' and associate it with the user identification 
+/** Add the bond function 'bondfunc' and associate it with the user identification
     string 'userid'. Note that 'bondfunc' must be a function of the variable
-    representing the bond length ("r", obtainable via Symbol("r") or BondDB::r()) 
+    representing the bond length ("r", obtainable via Symbol("r") or BondDB::r())
     or else it will be treated as a constant. */
 void BondDB::addBond(const QString &userid, const Expression &bondfunc)
 {
@@ -61,7 +61,7 @@ void BondDB::addBond(const QString &userid, const Expression &bondfunc)
     {
         //evaluate this constant...
         Expression const_val = bondfunc.evaluate(Values());
-        
+
         ParamID paramid = addFunc(const_val);
         relateParameter(userid, paramid);
     }
@@ -73,18 +73,18 @@ void BondDB::addBond(const QString &userid, const Expression &bondfunc)
 }
 
 /** Return the bond function associated with the user identification ID 'userid',
-    or a zero function if there is no such function. foundbond is set to whether 
+    or a zero function if there is no such function. foundbond is set to whether
     a function was found. */
 Expression BondDB::getBond(const QString &userid, bool *foundbond)
 {
     ParamID paramid = getParameter(userid);
-    
+
     if (foundbond)
         *foundbond = (paramid != 0);
-        
+
     return retrieveFunc(paramid);
 }
-    
+
 /** Relate the bond function associated with the user identification ID 'userid'
     with the relationship matching a pair of atoms 'matchbond' */
 void BondDB::relateBond(const AssertMatch<2> &matchbond, const QString &userid)
@@ -94,7 +94,7 @@ void BondDB::relateBond(const AssertMatch<2> &matchbond, const QString &userid)
 
 /** Relate the bond function 'bondfunc' with the relationship matching a pair of atoms.
     Note that the bondfunc must be a function of "r" (get the symbol via
-    Symbol("r") or BondDB::r()) or else the function 
+    Symbol("r") or BondDB::r()) or else the function
     will be treated as a constant */
 void BondDB::relateBond(const AssertMatch<2> &matchbond, const Expression &bondfunc)
 {
@@ -106,9 +106,9 @@ void BondDB::relateBond(const AssertMatch<2> &matchbond, const Expression &bondf
     else
         relateFunc(matchbond, bondfunc);
 }
-    
-/** Return the bond that matches the atom-pair matching relationship 'relateid', 
-    or a zero function if there is no match. foundbond is set to whether or 
+
+/** Return the bond that matches the atom-pair matching relationship 'relateid',
+    or a zero function if there is no match. foundbond is set to whether or
     not a function was found */
 Expression BondDB::getBond(RelateID relateid, bool *foundbond)
 {
@@ -139,8 +139,8 @@ void BondDB::relateBond(RelateID relateid, const Expression &bondfunc)
     //associate this relationship with the parameter
     relateParameter(relateid, paramid);
 }
-    
-/** Assign the parameter for the bond 'bond' using the relationship IDs in 
+
+/** Assign the parameter for the bond 'bond' using the relationship IDs in
     'relateids', and place the parameter into the table 'param_table'. Return
     whether or not a parameter was found and assigned. */
 bool BondDB::assignParameter(const Bond &bond, const RelateIDMap &relateids,
@@ -150,11 +150,11 @@ bool BondDB::assignParameter(const Bond &bond, const RelateIDMap &relateids,
 
 /*    bool found;
     Expression bondfunc = this->getFunc(relateids, &found);
-    
+
     if (found)
         //add the expression to the parameter table
         param_table.asA<BondTable>().setParameter(bond, bondfunc);
-        
+
     return found;*/
 
     return false;

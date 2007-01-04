@@ -13,7 +13,7 @@
 using namespace SireMol;
 using namespace SireStream;
 
-static const RegisterMetaType<AtomSelection> r_atomselec("SireMol::AtomSelection");
+static const RegisterMetaType<AtomSelection> r_atomselec;
 
 /** Serialise to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const AtomSelection &atomselec)

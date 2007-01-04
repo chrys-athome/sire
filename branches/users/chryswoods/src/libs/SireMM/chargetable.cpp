@@ -13,7 +13,7 @@ using namespace SireDB;
 using namespace SireMol;
 
 /** Register this as a concrete class */
-static const RegisterMetaType<ChargeTable> r_chargetable("SireMM::ChargeTable");
+static const RegisterMetaType<ChargeTable> r_chargetable;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const ChargeTable &table)

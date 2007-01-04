@@ -35,9 +35,9 @@ class AngleTableT : public InternalTable<MolAngleInfo,Param>
 public:
     AngleTableT();
     AngleTableT(const MolAngleInfo &angleinfo);
-    
+
     AngleTableT(const AngleTableT<Param> &other);
-    
+
     ~AngleTableT();
 
     int nAngles() const;
@@ -47,7 +47,7 @@ public:
     int nInterAngles() const;
     int nIntraAngles(ResNum resnum) const;
     int nInterAngles(ResNum resnum) const;
-    
+
     int nAngleParameters() const;
     int nAngleParameters(ResNum resnum) const;
     int nAngleParameters(GroupID groupid) const;
@@ -55,50 +55,50 @@ public:
     int nInterAngleParameters() const;
     int nIntraAngleParameters(ResNum resnum) const;
     int nInterAngleParameters(ResNum resnum) const;
-    
+
     void addAngle(const Angle &angle);
     void addAngle(const Angle &angle, const Param &param);
-    
+
     template<class C>
     void addAngles(const C &angles);
-    
+
     void removeAngle(const Angle &angle);
-    
+
     template<class C>
     void removeAngles(const C &angles);
-    
+
     void removeAngles();
     void removeAngles(ResNum resnum);
     void removeAngles(GroupID groupid);
     void removeAngles(const QSet<GroupID> &groupids);
-    
+
     void removeIntraAngles();
     void removeIntraAngles(ResNum resnum);
-    
+
     void removeInterAngles();
     void removeInterAngles(ResNum resnum);
-    
+
     void removeMissingAngles();
     void removeMissingAngles(ResNum resnum);
     void removeMissingAngles(GroupID groupid);
     void removeMissingAngles(const QSet<GroupID> &groupids);
-    
+
     void removeMissingIntraAngles();
     void removeMissingIntraAngles(ResNum resnum);
     void removeMissingInterAngles();
     void removeMissingInterAngles(ResNum resnum);
-    
+
     void clearAngle(const Angle &angle);
     void clearAngles();
     void clearAngles(ResNum resnum);
     void clearAngles(GroupID groupid);
-    
+
     template<class C>
     void clearAngles(const C &angles);
-    
+
     void clearIntraAngles();
     void clearIntraAngles(ResNum resnum);
-    
+
     void clearInterAngles();
     void clearInterAngles(ResNum resnum);
 
@@ -110,73 +110,73 @@ public:
     QVector<Angle> angles() const;
     QVector<Angle> angles(ResNum resnum) const;
     QVector<Angle> angles(GroupID groupid) const;
-    
+
     QVector<Angle> interAngles() const;
     QVector<Angle> intraAngles() const;
     QVector<Angle> interAngles(ResNum resnum) const;
     QVector<Angle> intraAngles(ResNum resnum) const;
-    
+
     GroupedVector<GroupIndexID,Angle> anglesByGroup() const;
     GroupedVector<GroupIndexID,Angle> anglesByGroup(const QSet<GroupID> &gids) const;
     GroupedVector<ResNumIndexID,Angle> anglesByResidue() const;
     GroupedVector<ResNumIndexID,Angle> anglesByResidue(const QSet<ResNum> &resnums) const;
-    
+
     GroupedVector<ResNumIndexID,Angle> interAnglesByResidue() const;
     GroupedVector<ResNumIndexID,Angle> intraAnglesByResidue() const;
     GroupedVector<ResNumIndexID,Angle> interAnglesByResidue(const QSet<ResNum> &resnums) const;
     GroupedVector<ResNumIndexID,Angle> intraAnglesByResidue(const QSet<ResNum> &resnums) const;
-    
+
     const Param& getAngleParameter(const Angle &angle) const;
     const Param& getAngleParameter(const GroupIndexID &id) const;
-    
+
     void setAngleParameter(const Angle &angle, const Param &param);
     void setAngleParameter(const GroupIndexID &id, const Param &param);
 
     bool assignedAngleParameter(const Angle &angle) const;
     bool assignedAngleParameter(const GroupIndexID &id) const;
-    
+
     bool hasMissingAngleParameters() const;
     bool hasMissingAngleParameters(ResNum resnum) const;
     bool hasMissingAngleParameters(GroupID id) const;
-    
+
     bool hasMissingIntraAngleParameters() const;
     bool hasMissingIntraAngleParameters(ResNum resnum) const;
-    
+
     bool hasMissingInterAngleParameters() const;
     bool hasMissingInterAngleParameters(ResNum resnum) const;
-    
+
     QSet<Angle> missingAngleParameters() const;
     QSet<Angle> missingAngleParameters(ResNum resnum) const;
     QSet<Angle> missingAngleParameters(const QSet<GroupID> &groupids) const;
-    
+
     QSet<Angle> missingIntraAngleParameters() const;
     QSet<Angle> missingIntraAngleParameters(ResNum resnum) const;
-    
+
     QSet<Angle> missingInterAngleParameters() const;
     QSet<Angle> missingInterAngleParameters(ResNum resnum) const;
-    
+
     QVector<Param> angleParameters() const;
     QVector<Param> angleParameters(ResNum resnum) const;
     QVector<Param> angleParameters(GroupID groupid) const;
-    
+
     QVector<Param> interAngleParameters() const;
     QVector<Param> intraAngleParameters() const;
     QVector<Param> interAngleParameters(ResNum resnum) const;
     QVector<Param> intraAngleParameters(ResNum resnum) const;
-    
+
     GroupedVector<GroupIndexID,Param> angleParametersByGroup() const;
     GroupedVector<GroupIndexID,Param> angleParametersByGroup(
                                                 const QSet<GroupID> &gids) const;
     GroupedVector<ResNumIndexID,Param> angleParametersByResidue() const;
     GroupedVector<ResNumIndexID,Param> angleParametersByResidue(
                                                 const QSet<ResNum> &resnums) const;
-                                                    
+
     GroupedVector<ResNumIndexID,Param> interAngleParametersByResidue() const;
     GroupedVector<ResNumIndexID,Param> intraAngleParametersByResidue() const;
     GroupedVector<ResNumIndexID,Param> interAngleParametersByResidue(
                                                 const QSet<ResNum> &resnums) const;
     GroupedVector<ResNumIndexID,Param> intraAngleParametersByResidue(
-                                                const QSet<ResNum> &resnums) const;    
+                                                const QSet<ResNum> &resnums) const;
 };
 
 /** Empty constructor */
@@ -188,7 +188,7 @@ AngleTableT<Param>::AngleTableT() : InternalTable<MolAngleInfo,Param>()
 /** Create a table to hold the parameters for the angles described by 'angleinfo' */
 template<class Param>
 SIRE_OUTOFLINE_TEMPLATE
-AngleTableT<Param>::AngleTableT(const MolAngleInfo &angleinfo) 
+AngleTableT<Param>::AngleTableT(const MolAngleInfo &angleinfo)
                   : InternalTable<MolAngleInfo,Param>(angleinfo)
 {}
 
@@ -687,7 +687,7 @@ GroupedVector<ResNumIndexID,Angle> AngleTableT<Param>::intraAnglesByResidue() co
 /** Synonym for interInternalsByResidue(...) */
 template<class Param>
 SIRE_INLINE_TEMPLATE
-GroupedVector<ResNumIndexID,Angle> 
+GroupedVector<ResNumIndexID,Angle>
 AngleTableT<Param>::interAnglesByResidue(const QSet<ResNum> &resnums) const
 {
     return this->interInternalsByResidue(resnums);
@@ -696,7 +696,7 @@ AngleTableT<Param>::interAnglesByResidue(const QSet<ResNum> &resnums) const
 /** Synonym for intraInternalsByResidue(...) */
 template<class Param>
 SIRE_INLINE_TEMPLATE
-GroupedVector<ResNumIndexID,Angle> 
+GroupedVector<ResNumIndexID,Angle>
 AngleTableT<Param>::intraAnglesByResidue(const QSet<ResNum> &resnums) const
 {
     return this->intraInternalsByResidue(resnums);
@@ -929,7 +929,7 @@ GroupedVector<GroupIndexID,Param> AngleTableT<Param>::angleParametersByGroup() c
 /** Synonym for parametersByGroup(...) */
 template<class Param>
 SIRE_INLINE_TEMPLATE
-GroupedVector<GroupIndexID,Param> 
+GroupedVector<GroupIndexID,Param>
 AngleTableT<Param>::angleParametersByGroup(const QSet<GroupID> &gids) const
 {
     return this->parametersByGroup(gids);
@@ -946,7 +946,7 @@ GroupedVector<ResNumIndexID,Param> AngleTableT<Param>::angleParametersByResidue(
 /** Synonym for parametersByResidue(...) */
 template<class Param>
 SIRE_INLINE_TEMPLATE
-GroupedVector<ResNumIndexID,Param> 
+GroupedVector<ResNumIndexID,Param>
 AngleTableT<Param>::angleParametersByResidue(const QSet<ResNum> &resnums) const
 {
     return this->parametersByResidue(resnums);
@@ -971,7 +971,7 @@ GroupedVector<ResNumIndexID,Param> AngleTableT<Param>::intraAngleParametersByRes
 /** Synonym for interParametersByResidue(...) */
 template<class Param>
 SIRE_INLINE_TEMPLATE
-GroupedVector<ResNumIndexID,Param> 
+GroupedVector<ResNumIndexID,Param>
 AngleTableT<Param>::interAngleParametersByResidue(const QSet<ResNum> &resnums) const
 {
     return this->interParametersByResidue(resnums);
@@ -980,45 +980,44 @@ AngleTableT<Param>::interAngleParametersByResidue(const QSet<ResNum> &resnums) c
 /** Synonym for intraParametersByResidue(...) */
 template<class Param>
 SIRE_INLINE_TEMPLATE
-GroupedVector<ResNumIndexID,Param> 
+GroupedVector<ResNumIndexID,Param>
 AngleTableT<Param>::intraAngleParametersByResidue(const QSet<ResNum> &resnums) const
 {
     return this->intraParametersByResidue(resnums);
 }
 
-const SireStream::MagicID angletablet_magic = SireStream::getMagic(
-                                                          "SireMM::AngleTableT");
+const MagicID angletablet_magic = getMagic("SireMM::AngleTableT");
 
 }
 
 /** Serialise to a binary data stream */
 template<class Param>
 SIRE_OUTOFLINE_TEMPLATE
-QDataStream& operator<<(QDataStream &ds, 
+QDataStream& operator<<(QDataStream &ds,
                         const SireMM::AngleTableT<Param> &table)
 {
     SireStream::writeHeader(ds, SireMM::angletablet_magic, 0)
              << static_cast<const SireMM::InternalTable<SireMM::MolAngleInfo,Param>&>(table);
-             
+
     return ds;
 }
 
 /** Deserialise from a binary data stream */
 template<class Param>
 SIRE_OUTOFLINE_TEMPLATE
-QDataStream& operator>>(QDataStream &ds, 
+QDataStream& operator>>(QDataStream &ds,
                         SireMM::AngleTableT<Param> &table)
 {
     SireStream::VersionID v = SireStream::readHeader(ds, SireMM::angletablet_magic,
                                                      "SireMM::AngleTableT");
-                                                     
+
     if (v == 0)
     {
         ds >> static_cast<SireMM::InternalTable<SireMM::MolAngleInfo, Param>&>(table);
     }
     else
         throw SireStream::version_error(v, "0", "SireMM::AngleTableT", CODELOC);
-        
+
     return ds;
 }
 

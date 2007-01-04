@@ -15,7 +15,7 @@
 using namespace SireMaths;
 using namespace SireStream;
 
-static const RegisterMetaType<Matrix> r_matrix("SireMaths::Matrix");
+static const RegisterMetaType<Matrix> r_matrix;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Matrix &matrix)
@@ -23,7 +23,7 @@ QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Matrix &matrix)
     writeHeader(ds, r_matrix, 1) << matrix.xx << matrix.xy << matrix.xz
                                  << matrix.yx << matrix.yy << matrix.yz
                                  << matrix.zx << matrix.zy << matrix.zz;
-                             
+
     return ds;
 }
 
@@ -31,7 +31,7 @@ QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Matrix &matrix)
 QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, Matrix &matrix)
 {
     VersionID v = readHeader(ds, r_matrix);
-        
+
     if (v == 1)
     {
         ds >> matrix.xx >> matrix.xy >> matrix.xz
@@ -40,7 +40,7 @@ QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, Matrix &matrix)
     }
     else
         throw version_error(v, "1", r_matrix, CODELOC);
-       
+
     return ds;
 }
 
@@ -164,7 +164,7 @@ bool Matrix::isIdentity() const
     return xx == 1 and yy == xx and zz == xx and
            xy == 0 and xz == xy and yx == xy and
            yz == xy and zx == xy and zy == xy;
-           
+
 }
 
 bool Matrix::operator==(const Matrix& m)
@@ -301,25 +301,25 @@ Matrix Matrix::inverse() const
 {
     //calculate the determinant of the matrix
     double det = this->determinant();
-    
+
     //if the determinant is zero then this matrix cannot be inverted
     if (isZero(det))
     {
         throw SireMaths::math_error(QObject::tr(
                     "Matrix '%1' cannot be inverted!").arg(toString()),CODELOC);
     }
-    
+
     //take the inverse of the determinant
     det = double(1.0) / det;
-    
+
     //form the elements of the inverse matrix
     Matrix inv;
-    
+
     inv.xx = det * (yy*zz - zy*yz);
     inv.xy = det * (xz*zy - zz*xy);
     inv.xz = det * (xy*yz - yy*xz);
 
-    inv.yx = det * (zx*yz - yx*zz);  
+    inv.yx = det * (zx*yz - yx*zz);
     inv.yy = det * (xx*zz - zx*xz);
     inv.yz = det * (xz*yx - yz*xx);
 
@@ -361,26 +361,26 @@ Matrix convertGSLMatrix(gsl_matrix *mat)
 
 /** Obtain the principal axes of this matrix. This can only be performed if this
     matrix is symmetric. You should only call this function for matricies that
-    you know are symmetric, as this function will assume that the matrix is 
-    symmetric, and will thus only use the upper-right diagonal of values. 
+    you know are symmetric, as this function will assume that the matrix is
+    symmetric, and will thus only use the upper-right diagonal of values.
     The returned principal axes will be sorted from the highest eigenvalue to
     the lowest. */
 Matrix Matrix::getPrincipalAxes() const
 {
     //assume that this matrix is symmetrical - we will thus
     //only look at the values in the upper-right diagonal
-    
+
     //we first need to copy the contents of this matrix into an array...
     double *sym_mtx = new double[9];
-    
+
     sym_mtx[0] = xx;
     sym_mtx[1] = yx;
     sym_mtx[2] = zx;
-    
+
     sym_mtx[3] = yx;
     sym_mtx[4] = yy;
     sym_mtx[5] = zy;
-    
+
     sym_mtx[6] = zx;
     sym_mtx[7] = zy;
     sym_mtx[8] = zz;
@@ -389,34 +389,34 @@ Matrix Matrix::getPrincipalAxes() const
     //problem for this matrix
 
     gsl_matrix_view m = gsl_matrix_view_array(sym_mtx,3,3);
-    
+
     //allocate space for the resulting eigenvectors and eigenvalues
     gsl_vector *eig_val = gsl_vector_alloc(3);
     gsl_matrix *eig_vec = gsl_matrix_alloc(3,3);
-    
+
     //now allocate some workspace for the calculation...
     gsl_eigen_symmv_workspace *w = gsl_eigen_symmv_alloc(3);
-  
+
     //perform the calculation
     gsl_eigen_symmv(&m.matrix, eig_val, eig_vec, w);
-    
+
     //free the space used by the calculation
     gsl_eigen_symmv_free(w);
 
-    //now sort the eigenvectors from the smallest eigenvalue to 
+    //now sort the eigenvectors from the smallest eigenvalue to
     //the largest
     gsl_eigen_symmv_sort (eig_val, eig_vec, GSL_EIGEN_SORT_ABS_ASC);
-    
+
     //now copy the results back into a new Matrix
     Matrix ret = convertGSLMatrix(eig_vec);
- 
+
     //free up the memory used by the GSL data...
     gsl_vector_free(eig_val);
     gsl_matrix_free(eig_vec);
-           
+
     //free up the memory held by the copy of this matrix
     delete[] sym_mtx;
-    
+
     //finally, return the matrix of principal components
-    return ret;  
-}    
+    return ret;
+}

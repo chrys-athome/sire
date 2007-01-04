@@ -2,17 +2,15 @@
 #include <QDataStream>
 
 #include "datastream.h"
-#include "getmagic.h"
 #include "magic_error.h"
 #include "version_error.h"
-#include "registermetatype.hpp"
 
 namespace SireStream
 {
 
 /** Write a header to the data stream that describes the type and version
     of the object that is about to be written */
-QDataStream SIRESTREAM_EXPORT &writeHeader(QDataStream &ds, 
+QDataStream SIRESTREAM_EXPORT &writeHeader(QDataStream &ds,
                                            const RegisterMetaTypeBase &r_type,
                                            VersionID version)
 {
@@ -22,8 +20,8 @@ QDataStream SIRESTREAM_EXPORT &writeHeader(QDataStream &ds,
 
 /** Write a header to the data stream that contains the magic and version
     of the object that is about to be written */
-QDataStream SIRESTREAM_EXPORT &writeHeader(QDataStream &ds, 
-                                           MagicID magicid, 
+QDataStream SIRESTREAM_EXPORT &writeHeader(QDataStream &ds,
+                                           MagicID magicid,
                                            VersionID version)
 {
     ds << magicid << version;
@@ -32,7 +30,7 @@ QDataStream SIRESTREAM_EXPORT &writeHeader(QDataStream &ds,
 
 /** Read the header of the binary object to check that the type is correct
     and to obtain the binary data version */
-VersionID SIRESTREAM_EXPORT readHeader(QDataStream &ds, 
+VersionID SIRESTREAM_EXPORT readHeader(QDataStream &ds,
                                        const RegisterMetaTypeBase &r_type)
 {
     MagicID id;
@@ -48,8 +46,8 @@ VersionID SIRESTREAM_EXPORT readHeader(QDataStream &ds,
 
 /** Read the header of the binary object to check that the type is correct
     and to obtain the binary data version */
-VersionID SIRESTREAM_EXPORT readHeader(QDataStream &ds, 
-                                       MagicID magicid, 
+VersionID SIRESTREAM_EXPORT readHeader(QDataStream &ds,
+                                       MagicID magicid,
                                        const char *type_name)
 {
     MagicID id;

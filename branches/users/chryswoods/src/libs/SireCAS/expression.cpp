@@ -21,13 +21,13 @@ using namespace SireStream;
 using namespace SireCAS;
 using namespace SireMaths;
 
-static const RegisterMetaType<Expression> r_expression("SireCAS::Expression");
+static const RegisterMetaType<Expression> r_expression;
 
 /** Serialise an Expression to a binary datastream */
 QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Expression &ex)
 {
     writeHeader(ds, r_expression, 1) << ex.fac << ex.exbase;
-    
+
     return ds;
 }
 
@@ -35,21 +35,21 @@ QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Expression &ex)
 QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Expression &ex)
 {
     VersionID v = readHeader(ds, r_expression);
-    
+
     if (v == 1)
     {
         ds >> ex.fac >> ex.exbase;
     }
     else
         throw version_error(v, "1", r_expression, CODELOC);
-    
+
     return ds;
 }
 
 /** Construct an empty (zero) expression */
 Expression::Expression() : fac(0)
 {}
-    
+
 /** Construct a constant expression equal to 'constant' */
 Expression::Expression(int constant) : fac(constant)
 {}
@@ -57,11 +57,11 @@ Expression::Expression(int constant) : fac(constant)
 /** Construct a constant expression equal to 'constant' */
 Expression::Expression(double constant) : fac(constant)
 {}
-    
+
 /** Construct a constant expression equal to 'constant' */
 Expression::Expression(const Rational &constant) : fac(SireMaths::toDouble(constant))
 {}
-    
+
 /** Construct a constant expression equal to 'constant' */
 Expression::Expression(const Complex &constant)
 {
@@ -80,7 +80,7 @@ Expression::Expression(const Complex &constant)
         exbase = Sum((constant.real() / fac), I());
     }
 }
-    
+
 /** Construct an expression that is equal to 1*(base) */
 Expression::Expression(const ExpressionBase &base)
            : exbase(base), fac(1)
@@ -91,7 +91,7 @@ Expression::Expression(const ExpressionBase &base)
         fac = base.evaluate(Values());
     }
 }
-    
+
 /** Construct an expression that is equal to 1*(base) */
 Expression::Expression(const ExBase &base)
            : exbase( base.toExpressionBase() ), fac(1)
@@ -102,7 +102,7 @@ Expression::Expression(const ExBase &base)
         fac = base.evaluate(Values());
     }
 }
-    
+
 /** Copy constructor */
 Expression::Expression(const Expression &other)
            : exbase(other.exbase), fac(other.fac)
@@ -149,7 +149,7 @@ Expression& Expression::operator/=(const Expression &other)
     assumed to be equal to zero. Note that this only performs real-arithmetic,
     so an exception will be thrown if any part of this expression generates
     a complex result.
-     
+
     \throw SireMaths::domain_error
 */
 double Expression::evaluate(const Values &values) const
@@ -157,8 +157,8 @@ double Expression::evaluate(const Values &values) const
     return fac * exbase.evaluate(values);
 }
 
-/** Evaluate the numerical value of this expression using complex 
-    arithmetic. Any unidentified symbols or functions are assumed 
+/** Evaluate the numerical value of this expression using complex
+    arithmetic. Any unidentified symbols or functions are assumed
     to be equal to zero.
 */
 Complex Expression::evaluate(const ComplexValues &values) const
@@ -177,7 +177,7 @@ Complex Expression::operator()(const ComplexValues &values) const
 {
     return evaluate(values);
 }
-    
+
 /** Return this expression raised to the power 'n' */
 Expression Expression::pow(int n) const
 {
@@ -244,7 +244,7 @@ Expression Expression::squared() const
 {
     return this->pow(2);
 }
-    
+
 /** Return the cube of this expression */
 Expression Expression::cubed() const
 {
@@ -276,13 +276,13 @@ Expression Expression::add(const Expression &ex) const
 {
     return Sum(*this, ex).reduce();
 }
-    
+
 /** Return an expression that is this - ex */
 Expression Expression::subtract(const Expression &ex) const
 {
     return Sum(*this, ex.negate()).reduce();
 }
-    
+
 /** Return an expression that is this multipled by 'val' */
 Expression Expression::multiply(double val) const
 {
@@ -293,19 +293,19 @@ Expression Expression::multiply(double val) const
     else
     {
         double newfactor = fac * val;
-    
+
         if (SireMaths::isZero(newfactor))
             return Expression(0);
         else
         {
             Expression ret(*this);
             ret.fac = newfactor;
-            
+
             return ret;
         }
     }
 }
-    
+
 /** Return an expression that is this multiplied by the complex value z */
 Expression Expression::multiply(const Complex &z) const
 {
@@ -327,7 +327,7 @@ Expression Expression::multiply(const Expression &ex) const
     else
         return Product(*this, ex).reduce();
 }
-    
+
 /** Return an expression that is this divided by 'val' */
 Expression Expression::divide(double val) const
 {
@@ -336,13 +336,13 @@ Expression Expression::divide(double val) const
     else
         return multiply( double(1.0) / val );
 }
-    
+
 /** Return an expression that is divided by the complex number z */
 Expression Expression::divide(const Complex &z) const
 {
     return multiply( z.inverse() );
 }
-    
+
 /** Return an expression that is this / ex */
 Expression Expression::divide(const Expression &ex) const
 {
@@ -361,7 +361,7 @@ Expression Expression::substitute(const Identities &identities) const
     return ret;
 }
 
-/** Return an expanded form of this expression (where possible products of 
+/** Return an expanded form of this expression (where possible products of
     sums multiplied out to form sums of products) */
 Expression Expression::expand() const
 {
@@ -383,7 +383,7 @@ Expression Expression::conjugate() const
     return fac * exbase.conjugate();
 }
 
-/** Try to simplify this expression by using built-in identities. If 
+/** Try to simplify this expression by using built-in identities. If
     SireCAS::UNSAFE_COMPLEX_SIMPLIFICATIONS is passed, then allow the use
     of identities that are not necessarily true in the complex domain,
     e.g. z = sin(arcsin(z)) */
@@ -393,8 +393,8 @@ Expression Expression::simplify(int options) const
 }
 
 /** Differentiate this expression with respect to 'symbol' and return
-    the resulting expression. 
-    
+    the resulting expression.
+
     \throw SireCAS::unavailable_differential
 */
 Expression Expression::differentiate(const Symbol &symbol, int level) const
@@ -411,7 +411,7 @@ Expression Expression::differentiate(const Symbol &symbol, int level) const
         //calculate the differential of the base expression with respect
         //to symbol
         Expression diff = fac * exbase.differentiate(symbol);
-        
+
         if (not diff.isZero())
         {
             if (level == 1)
@@ -423,16 +423,16 @@ Expression Expression::differentiate(const Symbol &symbol, int level) const
             return diff;
     }
 }
-    
+
 /** Synonym for differentiate */
 Expression Expression::diff(const Symbol &symbol, int level) const
 {
     return differentiate(symbol,level);
 }
-    
-/** Integrate this expression with respect to 'symbol' and return the 
+
+/** Integrate this expression with respect to 'symbol' and return the
     resulting expression.
-    
+
     \throw SireCAS::unavailable_integral
 */
 Expression Expression::integrate(const Symbol &symbol) const

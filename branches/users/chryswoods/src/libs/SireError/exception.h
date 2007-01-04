@@ -65,6 +65,8 @@ protected:
 
 }
 
+Q_DECLARE_METATYPE(SireError::exception);
+
 SIRE_END_HEADER
 
 #endif

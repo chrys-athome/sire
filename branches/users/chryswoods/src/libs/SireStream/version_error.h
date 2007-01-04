@@ -3,7 +3,6 @@
 
 #include "SireError/version_error.h"
 
-#include "registermetatype.hpp"
 #include "versionid.h"
 
 SIRE_BEGIN_HEADER
@@ -31,7 +30,7 @@ public:
                   QString place=QString::null)
             : SireError::version_error(QObject::tr(
                     "Incompatible version for \"%1\". Got %2, but can only support [ %3 ].")
-                        .arg(info.name()).arg(wrongid).arg(supported_ids), place)
+                        .arg(info.typeName()).arg(wrongid).arg(supported_ids), place)
     {}
 
     version_error(VersionID wrongid, QString supported_ids,

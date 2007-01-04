@@ -22,7 +22,7 @@
 using namespace SireMol;
 using namespace SireStream;
 
-static const RegisterMetaType<AtomCutting> r_atmcut("SireMol::AtomCutting");
+static const RegisterMetaType<AtomCutting> r_atmcut;
 
 /** Serialise to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const AtomCutting &atmcut)

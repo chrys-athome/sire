@@ -3,9 +3,9 @@
   *
   * C++ Implementation: AtomIDGroup
   *
-  * Description: 
+  * Description:
   * Implementation of the AtomIDGroup class
-  * 
+  *
   * Author: Christopher Woods, (C) 2006
   *
   * Copyright: See COPYING file that comes with this distribution
@@ -21,7 +21,7 @@
 using namespace SireStream;
 using namespace SireMol;
 
-static const RegisterMetaType<AtomIDGroup> r_atomidgroup("SireMol::AtomIDGroup");
+static const RegisterMetaType<AtomIDGroup> r_atomidgroup;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const AtomIDGroup &group)
@@ -67,7 +67,7 @@ AtomIDGroup::AtomIDGroup(const QSet<ResNum> &resnums)
 
 /** Construct a group that contains the residues whose numbers
     are in 'resnums' and the atoms in 'atoms' */
-AtomIDGroup::AtomIDGroup(const QSet<ResNum> &resnums, 
+AtomIDGroup::AtomIDGroup(const QSet<ResNum> &resnums,
                          const QSet<AtomIndex> &atoms)
             : residus(resnums), atms(atoms)
 {

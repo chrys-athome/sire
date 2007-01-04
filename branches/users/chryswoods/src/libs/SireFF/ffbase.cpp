@@ -264,7 +264,7 @@ void FFBase::Components::assertContains(const FFComponent &component) const
 /////////// Implementation of FFBase
 ///////////
 
-static const RegisterMetaType<FFBase> r_ffbase("SireFF::FFBase", MAGIC_ONLY);
+static const RegisterMetaType<FFBase> r_ffbase(MAGIC_ONLY, "SireFF::FFBase");
 
 /** Serialise to a binary data stream */
 QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const FFBase &ffbase)

@@ -45,7 +45,7 @@ uint SIREMOL_EXPORT qHash(const Residue &res)
     return qHash(res.resNum());
 }
 
-static const RegisterMetaType<Residue> r_residue("SireMol::Residue");
+static const RegisterMetaType<Residue> r_residue;
 
 /** Serialise a Residue to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const Residue &res)

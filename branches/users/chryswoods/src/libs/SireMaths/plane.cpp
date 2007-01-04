@@ -6,13 +6,13 @@
 using namespace SireMaths;
 using namespace SireStream;
 
-static const RegisterMetaType<Plane> r_plane("SireMaths::Plane");
+static const RegisterMetaType<Plane> r_plane;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Plane &plane)
 {
     writeHeader(ds, r_plane, 1) << plane.norm << plane.dist;
-    
+
     return ds;
 }
 
@@ -20,14 +20,14 @@ QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Plane &plane)
 QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, Plane &plane)
 {
     VersionID v = readHeader(ds, r_plane);
-    
+
     if (v == 1)
     {
         ds >> plane.norm >> plane.dist;
     }
     else
         throw version_error(v, "1",  r_plane, CODELOC);
-    
+
     return ds;
 }
 
@@ -47,12 +47,12 @@ Plane::Plane(const Vector &normal, const double &distance)
     }
     catch( SireMaths::math_error& )
     {
-        //trying to normalise a zero vector 
+        //trying to normalise a zero vector
         norm.set(0.0,0.0,1.0);
     }
 }
 
-/** Construct a plane that lies perpendicular to 'normal' and that also contains 
+/** Construct a plane that lies perpendicular to 'normal' and that also contains
     the point 'contains_point' */
 Plane::Plane(const Vector &normal, const Vector &contains_point)
 {
@@ -63,7 +63,7 @@ Plane::Plane(const Vector &normal, const Vector &contains_point)
     }
     catch( SireMaths::math_error& )
     {
-        //trying to normalise a zero vector 
+        //trying to normalise a zero vector
         norm.set(0.0,0.0,1.0);
     }
 
@@ -78,7 +78,7 @@ Plane::Plane(const double &a, const double &b, const double &c, const double &d)
       : norm(a,b,c), dist(d)
 {
     double lgth = norm.length();
-    
+
     //we need to ensure that the plane normal is normalised
     try
     {
@@ -87,16 +87,16 @@ Plane::Plane(const double &a, const double &b, const double &c, const double &d)
     }
     catch( SireMaths::math_error& )
     {
-        //trying to normalise a zero vector 
+        //trying to normalise a zero vector
         norm.set(0.0,0.0,1.0);
         dist = 0.0;
     }
 }
-      
+
 /** Copy constructor */
 Plane::Plane(const Plane &other) : norm(other.norm), dist(other.dist)
 {}
-      
+
 /** Destructor */
 Plane::~Plane()
 {}

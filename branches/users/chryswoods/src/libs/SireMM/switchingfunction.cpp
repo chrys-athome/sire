@@ -31,8 +31,8 @@ using namespace SireStream;
 ///////////// Implementation of SwitchFuncBase
 /////////////
 
-static const RegisterMetaType<SwitchFuncBase> r_switchbase("SireMM::SwitchFuncBase",
-                                                           MAGIC_ONLY);
+static const RegisterMetaType<SwitchFuncBase> r_switchbase(MAGIC_ONLY,
+                                                           "SireMM::SwitchFuncBase");
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const SwitchFuncBase &switchbase)
@@ -79,7 +79,7 @@ SwitchFuncBase::~SwitchFuncBase()
 ///////////// Implementation of NoCutoff
 /////////////
 
-static const RegisterMetaType<NoCutoff> r_nocutoff("SireMM::NoCutoff");
+static const RegisterMetaType<NoCutoff> r_nocutoff;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const NoCutoff &nocutoff)
@@ -136,8 +136,7 @@ double NoCutoff::vdwScaleFactor(double) const
 ///////////// Implementation of HarmonicSwitchingFunction
 /////////////
 
-static const RegisterMetaType<HarmonicSwitchingFunction>
-                              r_harm("SireMM::HarmonicSwitchingFunction");
+static const RegisterMetaType<HarmonicSwitchingFunction> r_harm;
 
 /** Internal function used to set the parameters of the harmonic cutoff */
 void HarmonicSwitchingFunction::set(double cutelec, double featherelec,
@@ -324,8 +323,7 @@ double HarmonicSwitchingFunction::vdwScaleFactor(double dist) const
 ///////////// Implementation of SwitchingFunction
 /////////////
 
-static const RegisterMetaType<SwitchingFunction>
-                              r_switchfunc("SireMM::SwitchingFunction");
+static const RegisterMetaType<SwitchingFunction> r_switchfunc;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,

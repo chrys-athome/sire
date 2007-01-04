@@ -182,7 +182,7 @@ public:
 
     CutGroupNum cutGroupNum(CutGroupID cgid) const;
     CutGroupNum cutGroupNum(const AtomIndex &atom) const;
-    
+
     CutGroupID cutGroupID(CutGroupNum cgnum) const;
     CutGroupID cutGroupID(const AtomIndex &atom) const;
 
@@ -508,6 +508,8 @@ private:
 };
 
 }
+
+Q_DECLARE_METATYPE(SireMol::EditMolData);
 
 SIRE_END_HEADER
 

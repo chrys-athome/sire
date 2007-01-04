@@ -11,7 +11,7 @@ using namespace SireMM;
 using namespace SireMol;
 using namespace SireCAS;
 
-static const RegisterMetaType<DihedralTable> r_dihedraltable("SireMM::DihedralTable");
+static const RegisterMetaType<DihedralTable> r_dihedraltable;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const DihedralTable &table)

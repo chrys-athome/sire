@@ -23,10 +23,6 @@ set ( WRAPFF_SOURCES
       ffworker.py.cpp
       forcefield.py.cpp
       parametermap.py.cpp
-      wrap_energybase.cpp
-      wrap_energy.cpp
-      wrap_energypack.cpp
-      wrap_energytype.cpp
     )
 
 # Create the library that holds all of the class wrappers

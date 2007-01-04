@@ -14,7 +14,7 @@ using namespace SireStream;
 using namespace SireDB;
 
 //Register TableBase as a pure virtual class
-static const RegisterMetaType<TableBase> r_tablebase("SireDB::TableBase", MAGIC_ONLY);
+static const RegisterMetaType<TableBase> r_tablebase(MAGIC_ONLY, "SireDB::TableBase");
 
 /** Serialise to a binary data stream */
 QDataStream SIREDB_EXPORT &operator<<(QDataStream &ds, const SireDB::TableBase &table)

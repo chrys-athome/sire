@@ -408,7 +408,7 @@ AtomParameter<Param> AtomTableT<Param>::_unsafe_atomParameter(
 }
 
 /** Internal function used to return the AtomParameter for the atom at
-    index 'cgatomid' if it has been assigned, or 'defaultValue' if 
+    index 'cgatomid' if it has been assigned, or 'defaultValue' if
     it has not. */
 template<class Param>
 AtomParameter<Param> AtomTableT<Param>::_unsafe_atomParameter(
@@ -416,7 +416,7 @@ AtomParameter<Param> AtomTableT<Param>::_unsafe_atomParameter(
                                               const Param &defaultValue) const
 {
     const QHash<AtomID,Param> &cgparams = params.constData()[cgatomid.cutGroupID()];
-    
+
     return AtomParameter<Param>( info().atom(cgatomid),
                                  cgparams.value(cgatomid.atomID(), defaultValue) );
 }
@@ -1485,8 +1485,7 @@ AtomTableT<Param>::atomParameters(const QSet<ResID> &resids) const
     return this->_pvt_atomParameters(resids);
 }
 
-static const SireStream::MagicID atomtablet_magic
-                        = SireStream::getMagic("SireDB::AtomTableT");
+static const MagicID atomtablet_magic = getMagic("SireDB::AtomTableT");
 
 }
 

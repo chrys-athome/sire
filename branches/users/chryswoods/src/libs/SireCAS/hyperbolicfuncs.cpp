@@ -13,15 +13,15 @@ using namespace SireStream;
 using namespace SireCAS;
 
 ////////////
-//////////// Register the trig functions 
+//////////// Register the trig functions
 ////////////
 
-static const RegisterMetaType<Cosh> r_cosh("SireCAS::Cosh");
-static const RegisterMetaType<Sinh> r_sinh("SireCAS::Sinh");
-static const RegisterMetaType<Tanh> r_tanh("SireCAS::Tanh");
-static const RegisterMetaType<Csch> r_csch("SireCAS::Csch");
-static const RegisterMetaType<Sech> r_sech("SireCAS::Sech");
-static const RegisterMetaType<Coth> r_coth("SireCAS::Coth");
+static const RegisterMetaType<Cosh> r_cosh;
+static const RegisterMetaType<Sinh> r_sinh;
+static const RegisterMetaType<Tanh> r_tanh;
+static const RegisterMetaType<Csch> r_csch;
+static const RegisterMetaType<Sech> r_sech;
+static const RegisterMetaType<Coth> r_coth;
 
 ////////////
 //////////// Implementation of Hyperbolic Cosine
@@ -53,7 +53,7 @@ uint Cosh::magic() const
 bool Cosh::operator==(const ExBase &other) const
 {
     const Cosh *other_cos = dynamic_cast<const Cosh*>(&other);
-    
+
     return other_cos != 0 and typeid(other).name() == typeid(*this).name()
                  and this->argument() == other_cos->argument();
 }
@@ -114,7 +114,7 @@ uint Sinh::magic() const
 bool Sinh::operator==(const ExBase &other) const
 {
     const Sinh *other_cos = dynamic_cast<const Sinh*>(&other);
-    
+
     return other_cos != 0 and typeid(other).name() == typeid(*this).name()
                  and this->argument() == other_cos->argument();
 }
@@ -175,7 +175,7 @@ uint Tanh::magic() const
 bool Tanh::operator==(const ExBase &other) const
 {
     const Tanh *other_cos = dynamic_cast<const Tanh*>(&other);
-    
+
     return other_cos != 0 and typeid(other).name() == typeid(*this).name()
                  and this->argument() == other_cos->argument();
 }
@@ -236,7 +236,7 @@ uint Csch::magic() const
 bool Csch::operator==(const ExBase &other) const
 {
     const Csch *other_cos = dynamic_cast<const Csch*>(&other);
-    
+
     return other_cos != 0 and typeid(other).name() == typeid(*this).name()
                  and this->argument() == other_cos->argument();
 }
@@ -269,7 +269,7 @@ Expression Csch::integ() const
 static RegisterExpression<Csch> RegisterCsch;
 
 ////////////
-//////////// Implementation of hyperbolic secant 
+//////////// Implementation of hyperbolic secant
 ////////////
 
 /** Null constructor */
@@ -298,7 +298,7 @@ uint Sech::magic() const
 bool Sech::operator==(const ExBase &other) const
 {
     const Sech *other_cos = dynamic_cast<const Sech*>(&other);
-    
+
     return other_cos != 0 and typeid(other).name() == typeid(*this).name()
                  and this->argument() == other_cos->argument();
 }
@@ -360,7 +360,7 @@ uint Coth::magic() const
 bool Coth::operator==(const ExBase &other) const
 {
     const Coth *other_cos = dynamic_cast<const Coth*>(&other);
-    
+
     return other_cos != 0 and typeid(other).name() == typeid(*this).name()
                  and this->argument() == other_cos->argument();
 }

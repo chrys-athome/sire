@@ -15,7 +15,7 @@
 using namespace SireStream;
 using namespace SireMol;
 
-static const RegisterMetaType<MoleculeBonds> r_molbonds("SireMol::MoleculeBonds");
+static const RegisterMetaType<MoleculeBonds> r_molbonds;
 
 /** Serialise a MoleculeBonds */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const MoleculeBonds &molbnds)

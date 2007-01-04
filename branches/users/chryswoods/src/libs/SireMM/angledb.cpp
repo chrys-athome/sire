@@ -15,10 +15,10 @@ using namespace SireMM;
 using namespace SireDB;
 using namespace SireCAS;
 
-static const RegisterMetaType<AngleDB> r_angledb("SireMM::AngleDB", NO_STREAM);
+static const RegisterMetaType<AngleDB> r_angledb(NO_STREAM);
 
 /** Constructor */
-AngleDB::AngleDB() : Term13DB(), InternalDB<MolAngleInfo>(), 
+AngleDB::AngleDB() : Term13DB(), InternalDB<MolAngleInfo>(),
                      _theta("theta"), _r("r")
 {}
 
@@ -31,12 +31,12 @@ AngleDB::AngleDB(const AngleDB &other)
 /** Destructor */
 AngleDB::~AngleDB()
 {}
-    
+
 /** Dump the version number of this database */
 void AngleDB::prepareToDump()
 {
     Term13DB::prepareToDump();
-    
+
     this->saveParameter<AngleDB>( "version" , 0 );
 }
 
@@ -46,14 +46,14 @@ void AngleDB::postLoad()
     Term13DB::postLoad();
 
     int v = this->loadParameter<AngleDB>( "version" ).toInt();
-                            
+
     if (v != 0)
         throw version_error( v, "0", "SireMM::AngleDB", CODELOC );
 }
 
-/** Add the angle function 'anglefunc' and associate it with the user identification 
+/** Add the angle function 'anglefunc' and associate it with the user identification
     string 'userid'. Note that 'anglefunc' must be a function of the variable
-    representing the angle size ("theta", obtainable via Symbol("theta") or 
+    representing the angle size ("theta", obtainable via Symbol("theta") or
     AngleDB::theta()), or the distance between the 1-3 atoms, ("r", via
     Symbol("r") or AngleDB::r()) or else it will be treated as a constant. */
 void AngleDB::addAngle(const QString &userid, const Expression &anglefunc)
@@ -62,7 +62,7 @@ void AngleDB::addAngle(const QString &userid, const Expression &anglefunc)
     {
         //evaluate this constant...
         Expression const_val = anglefunc.evaluate(Values());
-        
+
         ParamID paramid = addFunc(const_val);
         relateParameter(userid, paramid);
     }
@@ -74,18 +74,18 @@ void AngleDB::addAngle(const QString &userid, const Expression &anglefunc)
 }
 
 /** Return the angle function associated with the user identification ID 'userid',
-    or a zero function if there is no such function. foundangle is set to whether 
+    or a zero function if there is no such function. foundangle is set to whether
     a function was found. */
 Expression AngleDB::getAngle(const QString &userid, bool *foundangle)
 {
     ParamID paramid = getParameter(userid);
-    
+
     if (foundangle)
         *foundangle = (paramid != 0);
-        
+
     return retrieveFunc(paramid);
 }
-    
+
 /** Relate the angle function associated with the user identification ID 'userid'
     with the relationship matching a triple of atoms 'matchangle' */
 void AngleDB::relateAngle(const AssertMatch<3> &matchangle, const QString &userid)
@@ -94,7 +94,7 @@ void AngleDB::relateAngle(const AssertMatch<3> &matchangle, const QString &useri
 }
 
 /** Relate the angle function 'anglefunc' with the relationship matching a triple of atoms.
-    Note that the anglefunc must be a function of "theta" or "r" or else the function 
+    Note that the anglefunc must be a function of "theta" or "r" or else the function
     will be treated as a constant */
 void AngleDB::relateAngle(const AssertMatch<3> &matchangle, const Expression &anglefunc)
 {
@@ -106,9 +106,9 @@ void AngleDB::relateAngle(const AssertMatch<3> &matchangle, const Expression &an
     else
         relateFunc(matchangle, anglefunc);
 }
-    
-/** Return the angle that matches the atom-triple matching relationship 'relateid', 
-    or a zero function if there is no match. foundangle is set to whether or 
+
+/** Return the angle that matches the atom-triple matching relationship 'relateid',
+    or a zero function if there is no match. foundangle is set to whether or
     not a function was found */
 Expression AngleDB::getAngle(RelateID relateid, bool *foundangle)
 {
@@ -139,23 +139,23 @@ void AngleDB::relateAngle(RelateID relateid, const Expression &anglefunc)
     //associate this relationship with the parameter
     relateParameter(relateid, paramid);
 }
-    
-/** Assign the parameter for the angle 'angle' using the relationship IDs in 
+
+/** Assign the parameter for the angle 'angle' using the relationship IDs in
     'relateids', and place the parameter into the table 'param_table'. Return
     whether or not a parameter was found and assigned. */
 bool AngleDB::assignParameter(const Angle &angle, const RelateIDMap &relateids,
                              ParameterTable &param_table)
 {
 /*    BOOST_ASSERT(param_table.isA<AngleTable>());
-    
+
     bool found;
     Expression anglefunc = this->getFunc(relateids, &found);
-    
+
     if (found)
         //add the expression to the parameter table
         param_table.asA<AngleTable>().setParameter(angle, anglefunc);
-        
+
     return found;*/
-    
+
     return false;
 }

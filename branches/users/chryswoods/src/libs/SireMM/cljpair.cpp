@@ -10,7 +10,7 @@
 using namespace SireStream;
 using namespace SireMM;
 
-static const RegisterMetaType<CLJPair> r_cljpair("SireMM::CLJPair");
+static const RegisterMetaType<CLJPair> r_cljpair;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJPair &cljpair)

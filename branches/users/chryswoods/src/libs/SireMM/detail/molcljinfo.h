@@ -349,6 +349,10 @@ inline const MolCLJInfo& ChangedMolCLJInfo::oldParts() const
 
 }
 
+Q_DECLARE_METATYPE(SireMM::detail::MolCLJInfo);
+Q_DECLARE_METATYPE(SireMM::detail::MolCLJInfoData);
+Q_DECLARE_METATYPE(SireMM::detail::ChangedMolCLJInfo);
+
 SIRE_END_HEADER
 
 #endif

@@ -11,7 +11,6 @@ using boost::unit_test_framework::test_suite;
 #include <QCoreApplication>
 
 #include "SireUnitTest/testvector.h"
-#include "SireUnitTest/testenergy.h"
 #include "SireUnitTest/testcutgroup.h"
 #include "SireUnitTest/testunits.h"
 #include "SireUnitTest/testangle.h"
@@ -35,7 +34,6 @@ test_suite SIRE_EXPORT *init_unit_test_suite( int argc, char **argv )
     new QCoreApplication(argc, argv);
 
     initialise(new TestVector(), test);
-    initialise(new TestEnergy(), test);
     initialise(new TestAngle(), test);
     initialise(new TestCutGroup(), test);
     initialise(new TestUnits(), test);

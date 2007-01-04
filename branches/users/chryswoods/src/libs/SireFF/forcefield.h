@@ -57,27 +57,27 @@ public:
     bool change(const Molecule &mol);
     bool change(const Residue &res);
 
-    bool add(const Molecule &molecule, 
+    bool add(const Molecule &molecule,
              const ParameterMap &map = ParameterMap());
     bool add(const Residue &residue,
              const ParameterMap &map = ParameterMap());
 
     bool remove(const Molecule &molecule);
     bool remove(const Residue &residue);
-    
+
     bool replace(const Molecule &oldmol,
                  const Molecule &newmol,
                  const ParameterMap &map = ParameterMap());
 
     bool contains(const Molecule &molecule) const;
     bool contains(const Residue &residue) const;
-    
+
     Molecule molecule(MoleculeID molid) const;
     Residue residue(MoleculeID molid, ResNum resnum) const;
-    
+
     Molecule molecule(const Molecule &mol) const;
     Residue residue(const Residue &res) const;
-    
+
     bool isDirty() const;
     bool isClean() const;
 
@@ -160,8 +160,8 @@ inline Values ForceField::energies()
     energy needs to be recalculated. The same parameter map
     that was used when this molecule was added will be used
     to extract any necessary parameters from the molecule's
-    properties 
-    
+    properties
+
     \throw SireMol::missing_property
     \throw SireError::invalid_cast
 */
@@ -174,8 +174,8 @@ inline bool ForceField::change(const Molecule &mol)
     parameters). This does nothing if the residue is not
     in this forcefield. Returns whether or not the forcefield
     has been changed by this change, and thus whether the
-    energy needs to be recalculated. 
-    
+    energy needs to be recalculated.
+
     \throw SireMol::missing_property
     \throw SireError::invalid_cast
 */
@@ -186,16 +186,16 @@ inline bool ForceField::change(const Residue &res)
 
 /** Add the molecule 'molecule' to this forcefield using
     the optional parameter map to find any necessary parameters
-    from properties of the molecule. This will replace any 
+    from properties of the molecule. This will replace any
     existing copy of the molecule that already exists in
-    this forcefield. This returns whether or not the 
+    this forcefield. This returns whether or not the
     forcefield has been changed by this addition, and therefore
-    whether its energy needs recalculating. 
-    
+    whether its energy needs recalculating.
+
     \throw SireMol::missing_property
     \throw SireError::invalid_cast
 */
-inline bool ForceField::add(const Molecule &molecule, 
+inline bool ForceField::add(const Molecule &molecule,
                             const ParameterMap &map)
 {
     return d().add(molecule,map);
@@ -203,15 +203,15 @@ inline bool ForceField::add(const Molecule &molecule,
 
 /** Add the residue 'residue' to this forcefield using
     the optional parameter map to find any necessary parameters
-    from properties of the residue. This will replace any 
+    from properties of the residue. This will replace any
     existing copy of the residue that already exists in
-    this forcefield. This returns whether or not the 
+    this forcefield. This returns whether or not the
     forcefield has been changed by this addition, and therefore
     whether its energy needs recalculating.
-     
+
     This will throw an exception if this forcefield does not
     support partial molecules.
-    
+
     \throw SireError::invalid_operation
     \throw SireMol::missing_property
     \throw SireError::invalid_cast
@@ -224,7 +224,7 @@ inline bool ForceField::add(const Residue &residue,
 
 /** Remove the molecule 'molecule' from this forcefield - this
     does nothing if the molecule is not in this forcefield. This
-    returns whether this has changed the forcefield (therefore 
+    returns whether this has changed the forcefield (therefore
     necessitating a recalculation of the energy) */
 inline bool ForceField::remove(const Molecule &molecule)
 {
@@ -233,28 +233,28 @@ inline bool ForceField::remove(const Molecule &molecule)
 
 /** Remove the residue 'residue' from this forcefield - this
     does nothing if the residue is not in this forcefield. This
-    returns whether this has changed the forcefield (therefore 
+    returns whether this has changed the forcefield (therefore
     necessitating a recalculation of the energy)
-    
+
     This will throw an exception if this forcefield does not
     support partial molecules.
-    
+
     \throw SireError::invalid_operation
 */
 inline bool ForceField::remove(const Residue &residue)
 {
     return d().remove(residue);
 }
-    
-/** Replace the molecule 'oldmol' with 'newmol' (using 
+
+/** Replace the molecule 'oldmol' with 'newmol' (using
     the passed parameter map to find any required parameters
     in the properties of the molecule). This is equivalent
     to 'remove(oldmol)' followed by 'add(newmol,map)', except
     that 'newmol' will only be added if 'oldmol' is contained
-    in this forcefield. 
-    
+    in this forcefield.
+
     This returns whether this changes the forcefield.
-    
+
     \throw SireMol::missing_property
     \throw SireError::invalid_cast
 */
@@ -305,6 +305,8 @@ inline const Version& ForceField::version() const
 }
 
 }
+
+Q_DECLARE_METATYPE(SireFF::ForceField);
 
 SIRE_END_HEADER
 

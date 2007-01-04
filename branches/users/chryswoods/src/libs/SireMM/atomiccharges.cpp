@@ -14,7 +14,7 @@ using namespace SireMol;
 using namespace SireBase;
 using namespace SireStream;
 
-static const RegisterMetaType<AtomicCharges> r_atomchgs("SireMM::AtomicCharges");
+static const RegisterMetaType<AtomicCharges> r_atomchgs;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const AtomicCharges &atomchgs)

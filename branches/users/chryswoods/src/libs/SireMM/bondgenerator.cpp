@@ -21,8 +21,8 @@ using namespace SireStream;
 using namespace SireMol;
 using namespace SireMM;
 
-static const RegisterMetaType<BondGenerator> r_bondgenerator("SireMM::BondGenerator");
-static const RegisterMetaType<UsePassedBonds> r_usepassedbonds("SireMM::UsePassedBonds");
+static const RegisterMetaType<BondGenerator> r_bondgenerator;
+static const RegisterMetaType<UsePassedBonds> r_usepassedbonds;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const BondGenerator &generator)

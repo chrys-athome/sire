@@ -6,13 +6,13 @@
 using namespace SireStream;
 using namespace SireMol;
 
-static const RegisterMetaType<AtomIndex> r_atomindex("SireMol::AtomIndex");
+static const RegisterMetaType<AtomIndex> r_atomindex;
 
 /** Function to serialise an AtomIndex to a binary data stream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const SireMol::AtomIndex &atm)
 {
     writeHeader(ds, r_atomindex, 1) << atm.nme << atm.resnum;
-    
+
     return ds;
 }
 
@@ -20,14 +20,14 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const SireMol::AtomIndex
 QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, SireMol::AtomIndex &atm)
 {
     VersionID v = readHeader(ds, r_atomindex);
-    
+
     if (v == 1)
     {
         ds >> atm.nme >> atm.resnum;
     }
     else
         throw version_error(v, "1", r_atomindex, CODELOC);
-    
+
     return ds;
 }
 

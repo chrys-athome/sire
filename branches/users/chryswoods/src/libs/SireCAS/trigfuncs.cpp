@@ -12,15 +12,15 @@ using namespace SireStream;
 using namespace SireCAS;
 
 ////////////
-//////////// Register the trig functions 
+//////////// Register the trig functions
 ////////////
 
-static const RegisterMetaType<Cos> r_cos("SireCAS::Cos");
-static const RegisterMetaType<Sin> r_sin("SireCAS::Sin");
-static const RegisterMetaType<Tan> r_tan("SireCAS::Tan");
-static const RegisterMetaType<Csc> r_csc("SireCAS::Csc");
-static const RegisterMetaType<Sec> r_sec("SireCAS::Sec");
-static const RegisterMetaType<Cot> r_cot("SireCAS::Cot");
+static const RegisterMetaType<Cos> r_cos;
+static const RegisterMetaType<Sin> r_sin;
+static const RegisterMetaType<Tan> r_tan;
+static const RegisterMetaType<Csc> r_csc;
+static const RegisterMetaType<Sec> r_sec;
+static const RegisterMetaType<Cot> r_cot;
 
 ////////////
 //////////// Implementation of Cosine
@@ -52,7 +52,7 @@ uint Cos::magic() const
 bool Cos::operator==(const ExBase &other) const
 {
     const Cos *other_cos = dynamic_cast<const Cos*>(&other);
-    
+
     return other_cos != 0 and typeid(other).name() == typeid(*this).name()
                  and this->argument() == other_cos->argument();
 }
@@ -113,7 +113,7 @@ uint Sin::magic() const
 bool Sin::operator==(const ExBase &other) const
 {
     const Sin *other_cos = dynamic_cast<const Sin*>(&other);
-    
+
     return other_cos != 0 and typeid(other).name() == typeid(*this).name()
                  and this->argument() == other_cos->argument();
 }
@@ -174,7 +174,7 @@ uint Tan::magic() const
 bool Tan::operator==(const ExBase &other) const
 {
     const Tan *other_cos = dynamic_cast<const Tan*>(&other);
-    
+
     return other_cos != 0 and typeid(other).name() == typeid(*this).name()
                  and this->argument() == other_cos->argument();
 }
@@ -235,7 +235,7 @@ uint Csc::magic() const
 bool Csc::operator==(const ExBase &other) const
 {
     const Csc *other_cos = dynamic_cast<const Csc*>(&other);
-    
+
     return other_cos != 0 and typeid(other).name() == typeid(*this).name()
                  and this->argument() == other_cos->argument();
 }
@@ -297,7 +297,7 @@ uint Sec::magic() const
 bool Sec::operator==(const ExBase &other) const
 {
     const Sec *other_cos = dynamic_cast<const Sec*>(&other);
-    
+
     return other_cos != 0 and typeid(other).name() == typeid(*this).name()
                  and this->argument() == other_cos->argument();
 }
@@ -359,7 +359,7 @@ uint Cot::magic() const
 bool Cot::operator==(const ExBase &other) const
 {
     const Cot *other_cos = dynamic_cast<const Cot*>(&other);
-    
+
     return other_cos != 0 and typeid(other).name() == typeid(*this).name()
                  and this->argument() == other_cos->argument();
 }

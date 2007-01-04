@@ -15,13 +15,13 @@
 using namespace SireMaths;
 using namespace SireStream;
 
-static const RegisterMetaType<Vector> r_vector("SireMaths::Vector");
+static const RegisterMetaType<Vector> r_vector;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const SireMaths::Vector &vec)
 {
     writeHeader(ds, r_vector, 1) << vec.x() << vec.y() << vec.z();
-    
+
     return ds;
 }
 
@@ -34,12 +34,12 @@ QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, SireMaths::Vector &vec
     {
         double x,y,z;
         ds >> x >> y >> z;
-    
+
         vec.set(x,y,z);
     }
     else
         throw version_error(v, "1", r_vector, CODELOC);
-    
+
     return ds;
 }
 
@@ -87,7 +87,7 @@ Vector Vector::fromString(const QString &str)
         return Vector(vecregexp.cap(1).toFloat(),
                       vecregexp.cap(2).toFloat(),
                       vecregexp.cap(3).toFloat());
-    
+
    }
    else
        return Vector(0.0,0.0,0.0);
@@ -159,7 +159,7 @@ Angle Vector::dihedral(const Vector &v0, const Vector &v1, const Vector &v2, con
 {
     //     v0        v3
     //      \       /
-    //      v1----v2  
+    //      v1----v2
     //
     //    Dihedral angle is the plane of intersection between the planes
     //    formed by v0,v1,v2 and v1,v2,v3.
@@ -170,28 +170,28 @@ Angle Vector::dihedral(const Vector &v0, const Vector &v1, const Vector &v2, con
     //    norm0 = cross(vec(v1->v0), vec(v2->v1))
     //    norm1 = cross(vec(v2->v1), vec(v3->v2))
 
-    //get the first plane normal...    
+    //get the first plane normal...
     Vector v0_1 = v0 - v1;
     Vector v2_1 = v2 - v1;
     Vector norm0 = Vector::cross(v0_1,v2_1);
-    
+
     //now get the second plane normal...
     Vector v1_2 = v1 - v2;
     Vector v3_2 = v3 - v2;
     Vector norm1 = Vector::cross(v1_2,v3_2);
-    
-    //now get the angle between the normals - this is based directly on the dot product 
+
+    //now get the angle between the normals - this is based directly on the dot product
     //(as the normals have unit length)
     double cos_ang = Vector::dot(norm0,norm1);
-    
+
     //ensure that cos_ang lies between -1 and 1
     cos_ang = SIRE_MIN(cos_ang,1.0);
     cos_ang = SIRE_MAX(cos_ang,-1.0);
-    
+
     //now get the angle
     Angle ang(std::acos(cos_ang));
-    
-    //this angle will only lie between 0 and 180. To work out what 
+
+    //this angle will only lie between 0 and 180. To work out what
     //side of 180 this angle is we construct the plane formed by v2_1 and norm0.
     //We then calculate the angle between this new plane and that defined by norm1.
     //If this angle is < 90 degrees, then the dihedral angle is > 180 degrees
@@ -200,7 +200,7 @@ Angle Vector::dihedral(const Vector &v0, const Vector &v1, const Vector &v2, con
     cos_ang = Vector::dot(norm1,norm2);
     cos_ang = SIRE_MIN(cos_ang,1.0);
     cos_ang = SIRE_MAX(cos_ang,-1.0);
-    
+
     Angle ang2(std::acos(cos_ang));
 
     if (ang2.toRadians() < SireMaths::pi_over_two)
@@ -218,16 +218,16 @@ Vector Vector::generate(double dst, const Vector &v1, const Angle &ang, const Ve
 //       v2---v1
 
 //    first create a set of x/y/z orthonormal vectors, with y perpendicular
-//    vec(v3-v1) and vec(v2-v1), x perpendicular to vec(v2-v1) and y, and z 
+//    vec(v3-v1) and vec(v2-v1), x perpendicular to vec(v2-v1) and y, and z
 //    perpendicular to x and y. Do this via cross products...
-      
+
       Vector v31 = v3 - v1;
       Vector v21 = v2 - v1;
-      
+
       Vector vy = Vector::cross(v31,v21);
       Vector vx = Vector::cross(v21,vy);
       Vector vz = Vector::cross(vx,vy);
-      
+
 //    now we have the x/y/z vectors, we can generate the new coordinates
 //    from this basis set...
 //    thus x/y/z in the basis set is given by
@@ -246,7 +246,7 @@ Vector Vector::generate(double dst, const Vector &v1, const Angle &ang, const Ve
 //    y = xbs*vx(2) + ybs*vy(2) + zbs*vz(2)
 //    z = xbs*vx(3) + ybs*vy(3) + zbs*vz(3)
 //
-//    These coordinates are based at the origin - they need to be based from 
+//    These coordinates are based at the origin - they need to be based from
 //    the coordinates of the bond atom by adding on v1.
 //
 //    (we combine the last two steps together for speed)
@@ -254,7 +254,7 @@ Vector Vector::generate(double dst, const Vector &v1, const Angle &ang, const Ve
       double nx = vx.x()*xbs + vy.x()*ybs + vz.x()*zbs + v1.x();
       double ny = vx.y()*xbs + vy.y()*ybs + vz.y()*zbs + v1.y();
       double nz = vx.z()*xbs + vy.z()*ybs + vz.z()*zbs + v1.z();
-      
+
       return Vector(nx,ny,nz);
 }
 
@@ -265,11 +265,11 @@ Vector Vector::cross(const Vector &v0, const Vector &v1)
     double nz = v0.sc[0]*v1.sc[1] - v0.sc[1]*v1.sc[0];
 
     Vector vec(nx,ny,nz);
-    
+
     if ( vec.isZero() )
     {
         //these two vectors are parallel - we need to choose just
-        //one perpendicular vector 
+        //one perpendicular vector
         if (v0.isZero())
         {
             if (v1.isZero())

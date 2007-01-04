@@ -11,14 +11,14 @@ using namespace SireDB;
 using namespace SireMol;
 using namespace SireStream;
 
-static const RegisterMetaType<assign_bonds> r_assign_bonds("SireMM::assign_bonds");
+static const RegisterMetaType<assign_bonds> r_assign_bonds;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const assign_bonds &bonds)
 {
-    writeHeader(ds, r_assign_bonds, 0) 
+    writeHeader(ds, r_assign_bonds, 0)
         << static_cast<const assign_internals<MolBondInfo>&>(bonds);
-        
+
     return ds;
 }
 
@@ -26,19 +26,19 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const assign_bonds &bonds
 QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, assign_bonds &bonds)
 {
     VersionID v = readHeader(ds, r_assign_bonds);
-    
+
     if (v == 0)
     {
         ds >> static_cast<assign_internals<MolBondInfo>&>(bonds);
     }
     else
         throw version_error(v, "1", r_assign_bonds, CODELOC);
-    
+
     return ds;
 }
 
 /** Constructor */
-assign_bonds::assign_bonds(const BondGeneratorBase &generator) 
+assign_bonds::assign_bonds(const BondGeneratorBase &generator)
              : assign_internals<MolBondInfo>(generator)
 {}
 
@@ -357,13 +357,13 @@ assign_bonds::assign_bonds(const assign_bonds &other)
 assign_bonds::~assign_bonds()
 {}
 
-/** Assign the parameters in the table 'param_table' using 
+/** Assign the parameters in the table 'param_table' using
     the database 'database' according to the requirements contained in this object.
-    If 'overWrite()' is true then the parameters will be overwritten, 
-    otherwise only parameters for bonds that are currently missing 
+    If 'overWrite()' is true then the parameters will be overwritten,
+    otherwise only parameters for bonds that are currently missing
     parameters will be found. */
 void assign_bonds::assignParameters( const Molecule &molecule,
-                                     ParameterTable &param_table, 
+                                     ParameterTable &param_table,
                                      ParameterDB &database,
                                      const MatchMRData &matchmr ) const
 {

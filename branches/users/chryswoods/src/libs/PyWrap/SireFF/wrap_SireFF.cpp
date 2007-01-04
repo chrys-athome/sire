@@ -10,10 +10,6 @@
 
 namespace SireFF
 {
-void export_EnergyBase();
-void export_Energy();
-void export_EnergyPack();
-void export_EnergyType();
 void export_FFBase();
 void export_ForceField();
 void export_FFComponent();
@@ -23,11 +19,6 @@ void export_ParameterMap();
 
 void SIREFF_EXPORT export_SireFF()
 {
-    export_EnergyBase();
-    export_Energy();
-    export_EnergyPack();
-    export_EnergyType();
-
     export_FFBase();
     export_FFComponent();
     export_ForceField();

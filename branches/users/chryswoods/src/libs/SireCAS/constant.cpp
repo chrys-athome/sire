@@ -13,7 +13,7 @@
 using namespace SireStream;
 using namespace SireCAS;
 
-static const RegisterMetaType<Constant> r_constant("SireCAS::Constant");
+static const RegisterMetaType<Constant> r_constant;
 
 /** Serialise a constant to a binary datastream */
 QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Constant&)
@@ -26,10 +26,10 @@ QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Constant&)
 QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Constant&)
 {
     VersionID v = readHeader(ds, r_constant);
-    
+
     if (v != 0)
         throw version_error(v, "0", r_constant, CODELOC);
-    
+
     return ds;
 }
 
@@ -59,7 +59,7 @@ Expression Constant::integrate(const Symbol &symbol) const
 {
     return *this * symbol;
 }
-        
+
 /** Comparison operator */
 bool Constant::operator==(const ExBase &other) const
 {
@@ -89,13 +89,13 @@ Complex Constant::evaluate(const ComplexValues&) const
 {
     return Complex(1,0);
 }
-    
+
 /** Can't substitute into a constant */
 Expression Constant::substitute(const Identities&) const
 {
     return this->toExpression();
 }
-    
+
 /** No symbols in a constant */
 Symbols Constant::symbols() const
 {

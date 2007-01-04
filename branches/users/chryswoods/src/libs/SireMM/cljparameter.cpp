@@ -6,15 +6,15 @@
 using namespace SireStream;
 using namespace SireMM;
 
-static const RegisterMetaType<CLJParameter> r_cljparam("SireMM::CLJParameter");
+static const RegisterMetaType<CLJParameter> r_cljparam;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJParameter &cljparam)
 {
-    writeHeader(ds, r_cljparam, 1) 
+    writeHeader(ds, r_cljparam, 1)
           << static_cast<const ChargeParameter&>(cljparam)
           << static_cast<const LJParameter&>(cljparam);
-          
+
     return ds;
 }
 
@@ -22,7 +22,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJParameter &cljpa
 QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJParameter &cljparam)
 {
     VersionID v = readHeader(ds, r_cljparam);
-    
+
     if (v == 1)
     {
         ds >> static_cast<ChargeParameter&>(cljparam)
@@ -30,7 +30,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJParameter &cljparam)
     }
     else
         throw version_error(v, "1", r_cljparam, CODELOC);
-    
+
     return ds;
 }
 

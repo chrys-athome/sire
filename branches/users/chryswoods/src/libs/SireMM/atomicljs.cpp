@@ -14,7 +14,7 @@ using namespace SireMol;
 using namespace SireBase;
 using namespace SireStream;
 
-static const RegisterMetaType<AtomicLJs> r_atomljs("SireMM::AtomicLJs");
+static const RegisterMetaType<AtomicLJs> r_atomljs;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const AtomicLJs &atomljs)

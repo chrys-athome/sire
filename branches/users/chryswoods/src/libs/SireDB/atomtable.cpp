@@ -23,7 +23,7 @@ using namespace SireStream;
 using namespace SireMol;
 using namespace SireDB;
 
-static const RegisterMetaType<AtomTable> r_atomtable("SireDB::AtomTable", MAGIC_ONLY);
+static const RegisterMetaType<AtomTable> r_atomtable(MAGIC_ONLY, "SireDB::AtomTable");
 
 /** Serialise an AtomTable to a binary data stream */
 QDataStream SIREDB_EXPORT &operator<<(QDataStream &ds, const AtomTable &table)

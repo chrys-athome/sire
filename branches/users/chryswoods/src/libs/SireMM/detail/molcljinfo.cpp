@@ -38,7 +38,7 @@ using namespace SireStream;
 ///////// Implementation of MolCLJInfoData
 /////////
 
-static const RegisterMetaType<MolCLJInfoData> r_moldata("SireMM::detail::MolCLJInfoData");
+static const RegisterMetaType<MolCLJInfoData> r_moldata;
 
 /** Serialise to a binary data stream */
 QDataStream &operator<<(QDataStream &ds, const MolCLJInfoData &moldata)
@@ -231,7 +231,7 @@ void MolCLJInfoData::setMolecule(const Molecule &newmol,
 
 static const QSharedDataPointer<MolCLJInfoData> shared_null(new MolCLJInfoData());
 
-static const RegisterMetaType<MolCLJInfo> r_molinfo("SireMM::detail::MolCLJInfo");
+static const RegisterMetaType<MolCLJInfo> r_molinfo;
 
 /** Serialise to a binary data stream */
 QDataStream &operator<<(QDataStream &ds, const MolCLJInfo &molinfo)
@@ -397,8 +397,7 @@ ChangedMolCLJInfo MolCLJInfo::change(const Residue &newres,
 ///////// Implementation of ChangedMolCLJInfo
 /////////
 
-static const RegisterMetaType<ChangedMolCLJInfo>
-                          r_changedmol("SireMM::detail::ChangedMolCLJInfo");
+static const RegisterMetaType<ChangedMolCLJInfo> r_changedmol;
 
 /** Serialise to a binary datastream */
 QDataStream &operator<<(QDataStream &ds, const ChangedMolCLJInfo &changedmol)

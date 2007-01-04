@@ -6,7 +6,7 @@
 using namespace SireBase;
 using namespace SireStream;
 
-static const RegisterMetaType<Version> r_version("SireBase::Version");
+static const RegisterMetaType<Version> r_version;
 
 /** Serialise to a binary datastream */
 QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds, const Version &version)

@@ -30,7 +30,7 @@ using namespace SireMaths;
 using namespace SireStream;
 
 static const RegisterMetaType<SireVol::CoordGroupPvt>
-                    r_grouppvt("SireVol::CoordGroupPvt", MAGIC_ONLY);
+                                  r_grouppvt(MAGIC_ONLY, "SireVol::CoordGroupPvt");
 
 /////////////
 ///////////// Implementation of CoordGroupPvt
@@ -478,7 +478,7 @@ bool CoordGroupBase::operator!=(const CoordGroupBase &other) const
 ///////////// Implementation of CoordGroup
 /////////////
 
-static const RegisterMetaType<CoordGroup> r_cgroup("SireVol::CoordGroup");
+static const RegisterMetaType<CoordGroup> r_cgroup;
 
 /** Serialise to a binary datastream */
 QDataStream SIREVOL_EXPORT &operator<<(QDataStream &ds, const CoordGroup &cgroup)

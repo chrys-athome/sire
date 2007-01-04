@@ -10,13 +10,13 @@
 using namespace SireStream;
 using namespace SireCAS;
 
-static const RegisterMetaType<Identities> r_identities("SireCAS::Identities");
+static const RegisterMetaType<Identities> r_identities;
 
 /** Serialise to a binary data stream */
 QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Identities &ids)
 {
     writeHeader(ds, r_identities, 1) << ids.idhash << ids.funchash;
-    
+
     return ds;
 }
 
@@ -24,14 +24,14 @@ QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Identities &ids)
 QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Identities &ids)
 {
     VersionID v = readHeader(ds, r_identities);
-    
+
     if (v == 1)
     {
         ds >> ids.idhash >> ids.funchash;
     }
     else
         throw version_error(v, "1", r_identities, CODELOC);
-    
+
     return ds;
 }
 
@@ -71,18 +71,18 @@ void Identities::set(const Symbol &symbol, const Expression &expression)
     {
         //do we already have an expression for this function?
         const Function &func = symbol.asA<Function>();
-        
+
         //remove any existing function with this signature
         idhash.remove( function(func).ID() );
-            
+
         //store this function in the funchash
         funchash.insert( func.signature(), func.toExpression() );
     }
-    
+
     idhash.insert(symbol.ID(), expression);
 }
 
-/** Return whether or not this set of identities contains an identity for 
+/** Return whether or not this set of identities contains an identity for
     the symbol 'symbol' */
 bool Identities::contains(const Symbol &symbol) const
 {
@@ -106,7 +106,7 @@ bool Identities::contains(const Function &func) const
     return funchash.contains( func.signature() );
 }
 
-/** Return the actual form of the function 'func' stored in this set of 
+/** Return the actual form of the function 'func' stored in this set of
     identities, or the null function if it is not present here */
 Function Identities::function(const Function &func) const
 {

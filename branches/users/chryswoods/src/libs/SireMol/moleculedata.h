@@ -578,6 +578,8 @@ private:
 
 }
 
+Q_DECLARE_METATYPE(SireMol::MoleculeData)
+
 SIRE_END_HEADER
 
 #endif

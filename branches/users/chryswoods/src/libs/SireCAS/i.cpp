@@ -11,13 +11,13 @@
 using namespace SireStream;
 using namespace SireCAS;
 
-static const RegisterMetaType<SireCAS::I> r_i("SireCAS::I");
+static const RegisterMetaType<SireCAS::I> r_i;
 
 /** Serialise to a binary datastream */
 QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const I&)
 {
     writeHeader(ds, r_i, 0);
-    
+
     return ds;
 }
 
@@ -25,10 +25,10 @@ QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const I&)
 QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, I&)
 {
     VersionID v = readHeader(ds, r_i);
-    
+
     if (v != 0)
         throw version_error(v, "0", r_i, CODELOC);
-    
+
     return ds;
 }
 
@@ -51,10 +51,10 @@ I::~I()
 bool I::operator==(const ExBase &other) const
 {
     const I *other_i = dynamic_cast<const I*>(&other);
-    
+
     return other_i != 0 and typeid(other).name() == typeid(*this).name();
 }
-  
+
 /** Return a hash of this expression */
 uint I::hash() const
 {

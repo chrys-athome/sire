@@ -30,8 +30,7 @@ const QString atomTypes = "AtomTypes";
 
 Q_DECLARE_METATYPE(QSet<quint32>)
 
-static const RegisterMetaType<RelateAtomTypeDB> r_relateatdb("SireDB::RelateAtomTypeDB",
-                                                             NO_STREAM);
+static const RegisterMetaType<RelateAtomTypeDB> r_relateatdb(NO_STREAM);
 
 /** Constructor */
 RelateAtomTypeDB::RelateAtomTypeDB()

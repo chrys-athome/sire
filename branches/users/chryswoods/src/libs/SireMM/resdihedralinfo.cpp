@@ -10,14 +10,14 @@
 using namespace SireStream;
 using namespace SireMM;
 
-static const RegisterMetaType<ResDihedralInfo> r_resdihinfo("SireMM::ResDihedralInfo");
+static const RegisterMetaType<ResDihedralInfo> r_resdihinfo;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const ResDihedralInfo &info)
 {
-    writeHeader(ds, r_resdihinfo, 1) 
+    writeHeader(ds, r_resdihinfo, 1)
           << static_cast<const ResInternalInfo<Dihedral>&>(info);
-          
+
     return ds;
 }
 
@@ -25,14 +25,14 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const ResDihedralInfo &in
 QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, ResDihedralInfo &info)
 {
     VersionID v = readHeader(ds, r_resdihinfo);
-    
+
     if (v == 1)
     {
         ds >> static_cast<ResInternalInfo<Dihedral>&>(info);
     }
     else
         throw version_error(v, "1", r_resdihinfo, CODELOC);
-    
+
     return ds;
 }
 
@@ -59,7 +59,7 @@ int ResDihedralInfo::nDihedrals() const
 {
     return nInternals();
 }
-  
+
 /** Return the number of intra-residue dihedrals in the residue */
 int ResDihedralInfo::nIntraDihedrals() const
 {
@@ -71,10 +71,10 @@ int ResDihedralInfo::nInterDihedrals() const
 {
     return nInterInternals();
 }
-    
+
 /** Return an iterator over all of the dihedrals in the residue.
-    
-    This returns an iterator pointing to the first dihedral, or an 
+
+    This returns an iterator pointing to the first dihedral, or an
     invalid iterator if there are no dihedrals to iterate over.
 */
 ResDihedralInfo::const_iterator ResDihedralInfo::dihedrals() const
@@ -83,8 +83,8 @@ ResDihedralInfo::const_iterator ResDihedralInfo::dihedrals() const
 }
 
 /** Return an iterator over all of the intra-residue dihedrals in the residue.
-    
-    This returns an iterator pointing to the first dihedral, or an 
+
+    This returns an iterator pointing to the first dihedral, or an
     invalid iterator if there are no dihedrals to iterate over.
 */
 ResDihedralInfo::const_iterator ResDihedralInfo::intraDihedrals() const
@@ -93,8 +93,8 @@ ResDihedralInfo::const_iterator ResDihedralInfo::intraDihedrals() const
 }
 
 /** Return an iterator over all of the inter-residue dihedrals in the residue.
-    
-    This returns an iterator pointing to the first dihedral, or an 
+
+    This returns an iterator pointing to the first dihedral, or an
     invalid iterator if there are no dihedrals to iterate over.
 */
 ResDihedralInfo::const_iterator ResDihedralInfo::interDihedrals() const

@@ -10,7 +10,7 @@
 using namespace SireStream;
 using namespace SireMM;
 
-static const RegisterMetaType<MolBondInfo> r_molbondinfo("SireMM::MolBondInfo");
+static const RegisterMetaType<MolBondInfo> r_molbondinfo;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const MolBondInfo &info)

@@ -16,7 +16,7 @@ using namespace SireStream;
 using namespace SireDB;
 using namespace SireStream;
 
-static const RegisterMetaType<RelateMRDB> r_relatemrdb("SireDB::RelateMRDB", NO_STREAM);
+static const RegisterMetaType<RelateMRDB> r_relatemrdb(NO_STREAM);
 
 const QString moleculeGroups = "moleculeGroups";
 const QString moleculeStates = "moleculeStates";

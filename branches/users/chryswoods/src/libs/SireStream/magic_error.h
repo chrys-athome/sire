@@ -5,8 +5,6 @@
 
 #include "SireError/exception.h"
 
-#include "registermetatype.hpp"
-
 SIRE_BEGIN_HEADER
 
 namespace SireStream
@@ -34,7 +32,7 @@ public:
                 QString place=QString::null)
             : exception(QObject::tr(
                     "Magic error for \"%1\". Got %2, but expected %3.")
-                        .arg(info.name()).arg(wrongid).arg(info.magicID()), place)
+                        .arg(info.typeName()).arg(wrongid).arg(info.magicID()), place)
     {}
 
     magic_error(MagicID wrongid, MagicID rightid, const char *type_name,

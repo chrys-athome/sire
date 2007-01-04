@@ -60,7 +60,7 @@ friend QDataStream& ::operator>>(QDataStream&, ResidueInfoPvt&);
 public:
     ResidueInfoPvt();
 
-    ResidueInfoPvt(ResNum resnum, const EditMolData &moldata, 
+    ResidueInfoPvt(ResNum resnum, const EditMolData &moldata,
                    const QHash<CutGroupID,AtomInfoGroup> &atominfos);
 
     ResidueInfoPvt(const ResidueInfoPvt &other);
@@ -110,10 +110,11 @@ public:
 
 }
 
+Q_DECLARE_METATYPE(SireMol::ResidueInfoPvt);
+
 using namespace SireMol;
 
-static const RegisterMetaType<ResidueInfoPvt> r_respvt("SireMol::ResidueInfo",
-                                                       MAGIC_ONLY);
+static const RegisterMetaType<ResidueInfoPvt> r_respvt;
 
 /** Serialise to a binary data stream */
 QDataStream &operator<<(QDataStream &ds, const ResidueInfoPvt &resinfo)
@@ -194,29 +195,29 @@ ResidueInfoPvt::ResidueInfoPvt(ResNum rnum, const EditMolData &moldata,
 
     atomname2atomid.reserve(nats);
     cgidxs.reserve(nats);
-    
+
     //get the names of all of the atoms in the residue
     QStringList atomnames = moldata.atomNames(resnum);
-    
-    //add each atom name to the residue info (recording which CutGroup 
-    //they are in 
+
+    //add each atom name to the residue info (recording which CutGroup
+    //they are in
     QSet<CutGroupID> atomcgroups;
-    
+
     for (AtomID atomid(0); atomid < nats; ++atomid)
     {
         const QString &atomname = atomnames[atomid];
         atomname2atomid.insert(atomname, atomid);
-        
+
         AtomIndex atom(atomname,resnum);
-        
+
         CutGroupID cgid = moldata.cutGroupID(atom);
         atomcgroups.insert(cgid);
-        
+
         cgidxs.append( CGAtomID(cgid, infogroups.find(cgid)->indexOf(atom)) );
     }
-    
+
     cgids.reserve(atomcgroups.count());
-    
+
     foreach (CutGroupID cgid, atomcgroups)
     {
         cgids.append(cgid);
@@ -363,7 +364,7 @@ void ResidueInfoPvt::assertNAtoms(int n) const
 /////////// Implementation of ResidueInfo
 ///////////
 
-static const RegisterMetaType<SireMol::ResidueInfo> r_resinfo("SireMol::ResidueInfo");
+static const RegisterMetaType<SireMol::ResidueInfo> r_resinfo;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const ResidueInfo &resinfo)
@@ -397,7 +398,7 @@ static QSharedDataPointer<ResidueInfoPvt> shared_null( new ResidueInfoPvt() );
 ResidueInfo::ResidueInfo() : d(shared_null)
 {}
 
-/** Construct from the passed EditMolData, together with the supplied 
+/** Construct from the passed EditMolData, together with the supplied
     atominfos arranged into CutGroups */
 ResidueInfo::ResidueInfo(ResNum resnum, const EditMolData &moldata,
                          const QHash<CutGroupID,AtomInfoGroup> &atominfos)
@@ -668,7 +669,7 @@ QHash<CutGroupID,AtomInfoGroup> ResidueInfo::atomGroups(const QSet<CutGroupID> &
     return groups;
 }
 
-/** Return copies of the AtomInfoGroups for the CutGroups whose numbers are in 
+/** Return copies of the AtomInfoGroups for the CutGroups whose numbers are in
     'cgnums' - these CutGroups must each contain atoms that are in this Residue
 
     \throw SireMol::missing_cutgroup
@@ -776,7 +777,7 @@ QVector<AtomInfo> ResidueInfo::atoms(CutGroupID cgid) const
     return d->_unsafe_atomInfoGroup(cgid).atoms();
 }
 
-/** Return the vector of AtomInfos of the atoms that are in the CutGroup 
+/** Return the vector of AtomInfos of the atoms that are in the CutGroup
     with number 'cgnum'. This CutGroup must contain atoms that are in this residue.
 
     \throw SireMol::missing_cutgroup
@@ -787,7 +788,7 @@ QVector<AtomInfo> ResidueInfo::atoms(CutGroupNum cgnum) const
     throw SireError::incomplete_code( QObject::tr(
                           "Need to update ResidueInfo to work with CutGroupNum"),
                               CODELOC );
-  
+
     return QVector<AtomInfo>();
 }
 

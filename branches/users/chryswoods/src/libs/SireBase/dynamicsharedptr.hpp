@@ -412,8 +412,7 @@ S& DynamicSharedPtr<T>::asA()
     return dynamic_cast<S&>( *(d->data()) );
 }
 
-const SireStream::MagicID dynamicsharedptr_magic = SireStream::getMagic(
-                                                          "SireBase::DynamicSharedPtr");
+const MagicID dynamicsharedptr_magic = getMagic("SireBase::DynamicSharedPtr");
 
 }
 

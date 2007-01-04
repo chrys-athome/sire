@@ -9,13 +9,13 @@ using namespace SireStream;
 using namespace SireCAS;
 
 //register the pure virtual base class
-static const RegisterMetaType<SingleFunc> r_singlefunc("SireCAS::SingleFunc", MAGIC_ONLY);
+static const RegisterMetaType<SingleFunc> r_singlefunc(MAGIC_ONLY, "SireCAS::SingleFunc");
 
 /** Serialise to a binary datastream */
 QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const SingleFunc &func)
 {
     writeHeader(ds, r_singlefunc, 1) << func.ex;
-    
+
     return ds;
 }
 
@@ -23,14 +23,14 @@ QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const SingleFunc &func)
 QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, SingleFunc &func)
 {
     VersionID v = readHeader(ds, r_singlefunc);
-    
+
     if (v == 1)
     {
         ds >> func.ex;
     }
     else
         throw version_error(v, "1", r_singlefunc, CODELOC);
-    
+
     return ds;
 }
 
@@ -43,7 +43,7 @@ SingleFunc::SingleFunc(const Expression &expression) : ExBase(), ex(expression)
 {}
 
 /** Copy constructor */
-SingleFunc::SingleFunc(const SingleFunc &other) 
+SingleFunc::SingleFunc(const SingleFunc &other)
            : ExBase(), ex(other.ex)
 {}
 
@@ -68,7 +68,7 @@ Expression SingleFunc::conjugate() const
 {
     return functionOf( ex.conjugate() );
 }
-    
+
 /** Return if this is a function of 'symbol' */
 bool SingleFunc::isFunction(const Symbol &symbol) const
 {

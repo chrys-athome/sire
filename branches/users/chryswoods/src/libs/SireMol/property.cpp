@@ -93,8 +93,8 @@ void PropertyBase::assertCompatibleWith(const Molecule &molecule) const
                     .arg(molecule.version().toString()), CODELOC );
 }
 
-static const RegisterMetaType<PropertyBase> r_propbase("SireMol::PropertyBase",
-                                                       MAGIC_ONLY);
+static const RegisterMetaType<PropertyBase> r_propbase(MAGIC_ONLY,
+                                                       "SireMol::PropertyBase");
 
 /** Serialise to a binary data stream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const PropertyBase&)
@@ -126,7 +126,7 @@ Property PropertyBase::null_property()
 /////////////// Implementation of VariantProperty
 ///////////////
 
-static const RegisterMetaType<VariantProperty> r_varprop("SireMol::VariantProperty");
+static const RegisterMetaType<VariantProperty> r_varprop;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const VariantProperty &varprop)
@@ -213,7 +213,7 @@ VariantProperty& VariantProperty::operator=(const Property &other)
 /////////////// Implementation of Property
 ///////////////
 
-static const RegisterMetaType<Property> r_prop("SireMol::Property");
+static const RegisterMetaType<Property> r_prop;
 
 /** Serialise to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const Property &property)

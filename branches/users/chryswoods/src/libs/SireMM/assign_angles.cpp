@@ -11,14 +11,14 @@ using namespace SireDB;
 using namespace SireMol;
 using namespace SireStream;
 
-static const RegisterMetaType<assign_angles> r_assign_angles("SireMM::assign_angles");
+static const RegisterMetaType<assign_angles> r_assign_angles;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const assign_angles &angles)
 {
-    writeHeader(ds, r_assign_angles, 0) 
+    writeHeader(ds, r_assign_angles, 0)
         << static_cast<const assign_internals<MolAngleInfo>&>(angles);
-        
+
     return ds;
 }
 
@@ -26,19 +26,19 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const assign_angles &angl
 QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, assign_angles &angles)
 {
     VersionID v = readHeader(ds, r_assign_angles);
-    
+
     if (v == 0)
     {
         ds >> static_cast<assign_internals<MolAngleInfo>&>(angles);
     }
     else
         throw version_error(v, "1", r_assign_angles, CODELOC);
-    
+
     return ds;
 }
 
 /** Constructor */
-assign_angles::assign_angles(const AngleGeneratorBase &generator) 
+assign_angles::assign_angles(const AngleGeneratorBase &generator)
              : assign_internals<MolAngleInfo>(generator)
 {}
 
@@ -357,13 +357,13 @@ assign_angles::assign_angles(const assign_angles &other)
 assign_angles::~assign_angles()
 {}
 
-/** Assign the parameters in the table 'param_table' using 
+/** Assign the parameters in the table 'param_table' using
     the database 'database' according to the requirements contained in this object.
-    If 'overWrite()' is true then the parameters will be overwritten, 
-    otherwise only parameters for angles that are currently missing 
+    If 'overWrite()' is true then the parameters will be overwritten,
+    otherwise only parameters for angles that are currently missing
     parameters will be found. */
-void assign_angles::assignParameters(const Molecule &molecule, 
-                                     ParameterTable &param_table, 
+void assign_angles::assignParameters(const Molecule &molecule,
+                                     ParameterTable &param_table,
                                      ParameterDB &database,
                                      const MatchMRData &matchmr ) const
 {

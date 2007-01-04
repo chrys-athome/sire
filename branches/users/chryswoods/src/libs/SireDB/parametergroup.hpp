@@ -508,8 +508,7 @@ const AtomInfoGroup& ParameterGroup<Param>::atomGroup() const
     return atominfos;
 }
 
-static const SireStream::MagicID parametergroup_magic
-                        = SireStream::getMagic("SireDB::ParameterGroup");
+static const MagicID parametergroup_magic = getMagic("SireDB::ParameterGroup");
 
 }
 

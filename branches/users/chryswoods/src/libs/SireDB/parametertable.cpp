@@ -17,7 +17,7 @@
 using namespace SireStream;
 using namespace SireDB;
 
-static const RegisterMetaType<ParameterTable> r_paramtable("SireDB::ParameterTable");
+static const RegisterMetaType<ParameterTable> r_paramtable;
 
 /** Serialise to a binary data stream */
 QDataStream SIREDB_EXPORT &operator<<(QDataStream &ds, const ParameterTable &table)

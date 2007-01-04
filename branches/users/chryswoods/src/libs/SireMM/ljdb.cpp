@@ -16,7 +16,7 @@ using namespace SireMM;
 using namespace SireDB;
 using namespace SireMol;
 
-static const RegisterMetaType<LJDB> r_ljdb("SireMM::LJDB", NO_STREAM);
+static const RegisterMetaType<LJDB> r_ljdb(NO_STREAM);
 
 /** Constructor */
 LJDB::LJDB() : AtomDB()

@@ -121,10 +121,11 @@ public:
 
 }
 
+Q_DECLARE_METATYPE(SireMol::MoleculeInfoPvt);
+
 using namespace SireMol;
 
-static const RegisterMetaType<MoleculeInfoPvt> r_molpvt("SireMol::MoleculeInfoPvt",
-                                                        MAGIC_ONLY);
+static const RegisterMetaType<MoleculeInfoPvt> r_molpvt;
 
 /** Serialise to a binary data stream */
 QDataStream &operator<<(QDataStream &ds, const MoleculeInfoPvt &molinfo)
@@ -435,7 +436,7 @@ void MoleculeInfoPvt::assertNAtoms(int n) const
 //////////// Implementation of MoleculeInfo
 ////////////
 
-static const RegisterMetaType<SireMol::MoleculeInfo> r_molinfo("SireMol::MoleculeInfo");
+static const RegisterMetaType<SireMol::MoleculeInfo> r_molinfo;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const MoleculeInfo &molinfo)

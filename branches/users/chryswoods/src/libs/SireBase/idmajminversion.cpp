@@ -7,7 +7,7 @@
 using namespace SireBase;
 using namespace SireStream;
 
-static const RegisterMetaType<IDMajMinVersion> r_idmajmin("SireBase::IDMajMinVersion");
+static const RegisterMetaType<IDMajMinVersion> r_idmajmin;
 
 /** Serialise to a binary datastream */
 QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds, const IDMajMinVersion &idmajmin)

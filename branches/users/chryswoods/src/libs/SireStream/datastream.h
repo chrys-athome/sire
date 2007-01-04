@@ -8,14 +8,11 @@
 // @author Christopher Woods
 
 #include "SireStream/version_error.h"
-#include "SireStream/registermetatype.hpp"
 
 class QDataStream;
 
 namespace SireStream
 {
-
-class RegisterMetaTypeBase;
 
 QDataStream& writeHeader(QDataStream &ds, const RegisterMetaTypeBase &r_type,
                          VersionID version);

@@ -10,7 +10,7 @@ using namespace SireStream;
 //////////// Implementation of ParameterName
 ////////////
 
-static const RegisterMetaType<ParameterName> r_paramname("SireFF::ParameterName");
+static const RegisterMetaType<ParameterName> r_paramname;
 
 /** Serialise to a binary datastream */
 QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const ParameterName &paramname)
@@ -98,7 +98,7 @@ const QString& ParameterName::defaultSource() const
 //////////// Implementation of ParameterSource
 ////////////
 
-static const RegisterMetaType<ParameterSource> r_paramsource("SireFF::ParameterSource");
+static const RegisterMetaType<ParameterSource> r_paramsource;
 
 /** Serialise to a binary datastream */
 QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const ParameterSource &paramsource)
@@ -181,7 +181,7 @@ const QString& ParameterSource::source() const
 //////////// Implementation of ParameterMap
 ////////////
 
-static const RegisterMetaType<ParameterMap> r_parammap("SireFF::ParameterMap");
+static const RegisterMetaType<ParameterMap> r_parammap;
 
 /** Serialise to a binary datastream */
 QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const ParameterMap &parammap)

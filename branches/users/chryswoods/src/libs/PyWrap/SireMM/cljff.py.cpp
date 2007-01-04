@@ -5,8 +5,6 @@
 
 #include "SireMM/cljff.h"
 
-#include "SireFF/changedmols.h"
-
 #include "SireMol/molecule.h"
 #include "SireMol/residue.h"
 

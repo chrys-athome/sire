@@ -22,7 +22,7 @@
 using namespace SireMol;
 using namespace SireStream;
 
-static const RegisterMetaType<MoleculeCutting> r_molcut("SireMol::MoleculeCutting");
+static const RegisterMetaType<MoleculeCutting> r_molcut;
 
 /** Serialise to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const MoleculeCutting &molcut)

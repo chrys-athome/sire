@@ -30,8 +30,8 @@ SymbolID lastid;
 
 static SymbolReg *registry = 0;
 
-/** Return an ID for the symbol with representation 'rep'. This 
-    creates a new ID if there is no symbol currently registered with 
+/** Return an ID for the symbol with representation 'rep'. This
+    creates a new ID if there is no symbol currently registered with
     this ID. */
 SymbolID Symbol::getNewID(const QString &rep)
 {
@@ -43,9 +43,9 @@ SymbolID Symbol::getNewID(const QString &rep)
         registry = new SymbolReg();
         registry->lastid = 0;
     }
-    
+
     QMutexLocker lkr(&(registry->idmutex));
-    
+
     if (registry->name2id.contains(rep))
         return registry->name2id.value(rep);
     else
@@ -56,7 +56,7 @@ SymbolID Symbol::getNewID(const QString &rep)
     }
 }
 
-static const RegisterMetaType<Symbol> r_symbol("SireCAS::Symbol");
+static const RegisterMetaType<Symbol> r_symbol;
 
 /** Hash a symbol */
 uint Symbol::hash() const
@@ -68,7 +68,7 @@ uint Symbol::hash() const
 QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Symbol &sym)
 {
     writeHeader(ds, r_symbol, 1) << sym.stringrep;
-    
+
     return ds;
 }
 
@@ -76,17 +76,17 @@ QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Symbol &sym)
 QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Symbol &sym)
 {
     VersionID v = readHeader(ds, r_symbol);
-    
+
     if (v == 1)
     {
         ds >> sym.stringrep;
-    
+
         //get the ID number for this symbol
         sym.id = Symbol::getNewID(sym.stringrep);
     }
     else
         throw version_error(v, "1", r_symbol, CODELOC);
-    
+
     return ds;
 }
 
@@ -95,7 +95,7 @@ Symbol::Symbol() : ExBase(), id(0), stringrep(QString::null)
 {}
 
 /** Construct a new symbol, with string representation 'rep' */
-Symbol::Symbol(const QString &rep) 
+Symbol::Symbol(const QString &rep)
        : ExBase(), id( Symbol::getNewID(rep) ), stringrep(rep)
 {}
 
@@ -120,7 +120,7 @@ Symbol& Symbol::operator=(const Symbol &other)
 bool Symbol::operator==(const ExBase &other) const
 {
     const Symbol *sym = dynamic_cast<const Symbol*>(&other);
-    
+
     return sym != 0 and typeid(other).name() == typeid(*this).name()
             and sym->ID() == this->ID();
 }
@@ -159,7 +159,7 @@ Expression Symbol::differentiate(const Symbol &sym) const
     return Expression( int( sym.ID() == ID() ) );
 }
 
-/** Integrate this symbol with respect to 'sym'. If 'sym' == this, then 
+/** Integrate this symbol with respect to 'sym'. If 'sym' == this, then
     return 0.5 sym^2, else return *this * sym */
 Expression Symbol::integrate(const Symbol &sym) const
 {
@@ -169,7 +169,7 @@ Expression Symbol::integrate(const Symbol &sym) const
         return *this * sym;
 }
 
-/** Return the expression that matches this symbol in 'identities' - or return  
+/** Return the expression that matches this symbol in 'identities' - or return
     an expression holding only this symbol if it does no exist in 'identities' */
 Expression Symbol::substitute(const Identities &identities) const
 {

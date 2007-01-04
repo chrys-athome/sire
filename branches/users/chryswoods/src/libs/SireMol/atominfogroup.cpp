@@ -30,7 +30,7 @@
 using namespace SireStream;
 using namespace SireMol;
 
-static const RegisterMetaType<AtomInfoGroup> r_aigroup("SireMol::AtomInfoGroup");
+static const RegisterMetaType<AtomInfoGroup> r_aigroup;
 
 /** Serialise to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const AtomInfoGroup &aigroup)
@@ -169,27 +169,27 @@ const AtomInfo& AtomInfoGroup::atom(AtomID i) const
     return this->at(i);
 }
 
-/** Return the index of the atom with AtomIndex 'atom' 
+/** Return the index of the atom with AtomIndex 'atom'
 
     \throw SireMol::missing_atom
 */
 AtomID AtomInfoGroup::indexOf(const AtomIndex &atom) const
 {
     int nats = atms.count();
-  
+
     const AtomInfo *atomarray = atms.constData();
-    
+
     //slow, linear search!
     for (AtomID i(0); i<nats; ++i)
     {
         if (atom == atomarray[i])
             return i;
     }
-    
+
     throw SireMol::missing_atom( QObject::tr(
             "There is no atom \"%1\" in this AtomInfoGroup!")
                 .arg(atom.toString()), CODELOC );
-                
+
     return AtomID(0);
 }
 

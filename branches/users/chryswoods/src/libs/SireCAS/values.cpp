@@ -9,13 +9,13 @@
 using namespace SireStream;
 using namespace SireCAS;
 
-static const RegisterMetaType<Values> r_values("SireCAS::Values");
+static const RegisterMetaType<Values> r_values;
 
 /** Serialise to a binary data stream */
 QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Values &values)
 {
     writeHeader(ds, r_values, 1) << values.vals;
-    
+
     return ds;
 }
 
@@ -23,14 +23,14 @@ QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Values &values)
 QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Values &values)
 {
     VersionID v = readHeader(ds, r_values);
-    
+
     if (v == 1)
     {
         ds >> values.vals;
     }
     else
         throw version_error(v, "1", r_values, CODELOC);
-    
+
     return ds;
 }
 

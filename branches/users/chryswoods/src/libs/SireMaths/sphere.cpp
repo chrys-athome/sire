@@ -6,13 +6,13 @@
 using namespace SireStream;
 using namespace SireMaths;
 
-static const RegisterMetaType<Sphere> r_sphere("SireMaths::Sphere");
+static const RegisterMetaType<Sphere> r_sphere;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Sphere &sphere)
 {
     writeHeader(ds, r_sphere, 1) << sphere._center << sphere._radius;
-    
+
     return ds;
 }
 
@@ -20,14 +20,14 @@ QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Sphere &sphere)
 QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, Sphere &sphere)
 {
     VersionID v = readHeader(ds, r_sphere);
-    
+
     if (v == 1)
     {
         ds >> sphere._center >> sphere._radius;
     }
     else
         throw version_error(v, "1", r_sphere, CODELOC);
-    
+
     return ds;
 }
 
@@ -87,7 +87,7 @@ void Sphere::setCenter(const Vector &center)
 void Sphere::setRadius(double radius)
 {
     _radius = radius;
-    
+
     if (radius < 0.0)
         _radius = 0.0;
 }

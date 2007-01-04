@@ -16,7 +16,7 @@ using namespace SireMM;
 using namespace SireDB;
 using namespace SireMol;
 
-static const RegisterMetaType<ChargeDB> r_chargedb("SireMM::ChargeDB", NO_STREAM);
+static const RegisterMetaType<ChargeDB> r_chargedb(NO_STREAM);
 
 /** Constructor */
 ChargeDB::ChargeDB() : AtomDB()

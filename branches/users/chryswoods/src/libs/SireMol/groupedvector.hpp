@@ -813,8 +813,8 @@ void GroupedVector<IDX,V>::remove(const IDX &idx)
     }
 }
 
-static const SireStream::MagicID grouped_vector_magic =
-                            SireStream::getMagic("SireMol::GroupedVector");
+static const MagicID grouped_vector_magic =
+                                    getMagic("SireMol::GroupedVector");
 
 }
 

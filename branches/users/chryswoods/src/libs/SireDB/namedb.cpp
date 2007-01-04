@@ -12,10 +12,10 @@ using namespace SireStream;
 using namespace SireDB;
 using namespace SireStream;
 
-static const RegisterMetaType< QSet<QString> > r_qset_qstring("QSet<QString>");
-Q_DECLARE_METATYPE(QSet<QString>)
+Q_DECLARE_METATYPE(QSet<QString>);
+static const RegisterMetaType< QSet<QString> > r_qset_qstring;
 
-static const RegisterMetaType<NameDB> r_namedb("SireDB::NameDB", NO_STREAM);
+static const RegisterMetaType<NameDB> r_namedb(NO_STREAM);
 
 const QString moleculeNames = "moleculeNames";
 const QString residueNames = "residueNames";
@@ -44,15 +44,15 @@ NameID NameDB::getNewNameID()
 void NameDB::initialise()
 {
     DBBase::initialise();
-    
+
     //reset the number of assigned names
     nnames = 0;
-    
+
     //only table is the table mapping name types to table names
-    QString error = executeSQL( 
+    QString error = executeSQL(
           "create table 'SireDB_NameDB_tables' "
                        "( Type TEXT, TableName TEXT, PRIMARY KEY(Type) )" );
-          
+
     if (not error.isNull())
         throw SireDB::db_error(error,CODELOC);
 }
@@ -63,7 +63,7 @@ void NameDB::prepareToDump()
     DBBase::prepareToDump();
 
     saveParameter<NameDB>( "version", 1 );
-    
+
     saveParameter<NameDB>( "nnames", nnames );
     saveParameter<NameDB>( "is_case_sensitive", QVariant::fromValue(is_case_sensitive) );
 }
@@ -74,7 +74,7 @@ void NameDB::postLoad()
     DBBase::postLoad();
 
     int v = loadParameter<NameDB>("version").toInt();
-    
+
     if ( v == 1 )
     {
         nnames = loadParameter<NameDB>( "nnames" ).toUInt();
@@ -95,12 +95,12 @@ QString NameDB::getTable(const QString &type)
     {
         //search for this table in the list of tables...
         QString format_type = formatField(database(), type);
-        
+
         QSqlQuery q(database());
         q.exec( QString("select TableName from 'SireDB_NameDB_tables' where Type = %1")
                       .arg(format_type) );
         checkErrors(q, CODELOC);
-        
+
         q.next();
         if (q.isValid())
         {
@@ -111,29 +111,29 @@ QString NameDB::getTable(const QString &type)
             QString name = formatField( database(), QString("SireDB_NameDB_%1")
                                 .arg(type.simplified().replace(" ","")) )
                                       .replace("'","");
-        
+
             //create the new table
             q.exec( QString("create table '%1' ( NameID INTEGER, Name Text, "
                                                 "PRIMARY KEY(Name) )")
                             .arg(name) );
             checkErrors(q, CODELOC);
-            
+
             //insert this entry into the database
             q.exec( QString("insert into 'SireDB_NameDB_tables' values ( %1, '%2' )")
                             .arg(format_type, name) );
             checkErrors(q, CODELOC);
-            
+
             tablename = new QString(name);
         }
-        
+
         //store the name in the cache
         tablecache.insert(type, tablename);
-        
+
         return *tablename;
     }
 }
 
-/** Get the ID number of the name 'name' in the table 'table'. If 'add' is true, then 
+/** Get the ID number of the name 'name' in the table 'table'. If 'add' is true, then
     add the name if it doesn't already exist */
 NameID NameDB::getName(const QString &type, const QString &name, bool add)
 {
@@ -159,9 +159,9 @@ NameID NameDB::getName(const QString &type, const QString &name, bool add)
     q.exec( QString("select NameID from '%1' where Name = %2")
                               .arg(tablename,format_name) );
     checkErrors(q,CODELOC);
-        
+
     NameID ret = 0;
-        
+
     q.next();
     if (q.isValid())
     {
@@ -174,7 +174,7 @@ NameID NameDB::getName(const QString &type, const QString &name, bool add)
         {
             //create a new ID number and insert that into the database
             ret = getNewNameID();
-            
+
             q.exec( QString("insert into '%1' values ( %2, %3 )")
                     .arg(tablename).arg(ret).arg(format_name) );
             checkErrors(q,CODELOC);
@@ -186,7 +186,7 @@ NameID NameDB::getName(const QString &type, const QString &name, bool add)
         q.exec( QString("select NameID from '%1' where Name like %2")
                     .arg(tablename,format_name) );
         checkErrors(q,CODELOC);
-        
+
         q.next();
         if (q.isValid())
         {
@@ -197,18 +197,18 @@ NameID NameDB::getName(const QString &type, const QString &name, bool add)
         {
             //this is a new name
             ret = getNewNameID();
-        
+
             //insert this ID number into the database
             q.exec( QString("insert into '%1' values ( %2, %3 )")
                     .arg(tablename).arg(ret).arg(format_name) );
             checkErrors(q,CODELOC);
         }
     }
-    
+
     if (ret != 0)
         //save the number in the cache
         namecache.insert( tuple<QString,QString>(type,name), new NameID(ret) );
-    
+
     return ret;
 }
 
@@ -222,7 +222,7 @@ NameID NameDB::addName(const QString &type, const QString &name)
     return getName(type, name, true);
 }
 
-/** Retrieve the NameID of 'name' in table 'tablename', or 0 if there is no such name in 
+/** Retrieve the NameID of 'name' in table 'tablename', or 0 if there is no such name in
     that table. If 'case_sensitive' is true then perform a case-sensitive search. */
 NameID NameDB::getNameID(const QString &type, const QString &name)
 {
@@ -245,7 +245,7 @@ QString NameDB::getName(const QString &type, NameID id)
         q.exec( QString("select Name from 'SireDB_NameDB_%1' where NameID = %2")
                     .arg(tablename,id) );
         checkErrors(q,CODELOC);
-        
+
         q.next();
         if (q.isValid())
             //only return the name of the first hit
@@ -268,7 +268,7 @@ void NameDB::setCaseInsensitive(const QString &type)
     is_case_sensitive.remove(type);
 }
 
-/** Return whether the name matching of the type of names 'type' is 
+/** Return whether the name matching of the type of names 'type' is
     case-sensitive */
 bool NameDB::caseSensitive(const QString &type) const
 {
@@ -292,7 +292,7 @@ void NameDB::setCaseSensitiveAtomNames()
 {
     setCaseSensitive( atomNames );
 }
-    
+
 /** Set molecule name matching to be case-insensitive */
 void NameDB::setCaseInsensitiveMoleculeNames()
 {
@@ -310,19 +310,19 @@ void NameDB::setCaseInsensitiveAtomNames()
 {
     setCaseInsensitive( atomNames );
 }
-    
+
 /** Return whether or not molecule name matching is case-sensitive */
 bool NameDB::caseSensitiveMoleculeNames() const
 {
     return caseSensitive( moleculeNames );
 }
-    
+
 /** Return whether or not residue name matching is case-sensitive */
 bool NameDB::caseSensitiveResidueNames() const
 {
     return caseSensitive( residueNames );
 }
-    
+
 /** Return whether or not atom name matching is case-sensitive */
 bool NameDB::caseSensitiveAtomNames() const
 {
@@ -352,7 +352,7 @@ NameID NameDB::addAtomName(const QString &name)
 {
     return addName( atomNames, name );
 }
-    
+
 /** Return the ID of the molecule name 'name', or 0 if it is not in the database */
 NameID NameDB::getMoleculeNameID(const QString &name)
 {

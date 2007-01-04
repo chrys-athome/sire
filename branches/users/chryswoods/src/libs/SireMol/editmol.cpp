@@ -57,7 +57,7 @@
 using namespace SireMol;
 using namespace SireStream;
 
-static const RegisterMetaType<EditMol> r_editmol("SireMol::EditMol");
+static const RegisterMetaType<EditMol> r_editmol;
 
 /** Serialise to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const EditMol &editmol)

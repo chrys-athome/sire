@@ -21,15 +21,15 @@ using namespace SireCAS;
 using namespace SireStream;
 
 ////////////
-//////////// Register the functions 
+//////////// Register the functions
 ////////////
 
-static const RegisterMetaType<ArcCosh> r_arccosh("SireCAS::ArcCosh");
-static const RegisterMetaType<ArcSinh> r_arcsinh("SireCAS::ArcSinh");
-static const RegisterMetaType<ArcTanh> r_arctanh("SireCAS::ArcTanh");
-static const RegisterMetaType<ArcCsch> r_arccsch("SireCAS::ArcCsch");
-static const RegisterMetaType<ArcSech> r_arcsech("SireCAS::ArcSech");
-static const RegisterMetaType<ArcCoth> r_arccoth("SireCAS::ArcCoth");
+static const RegisterMetaType<ArcCosh> r_arccosh;
+static const RegisterMetaType<ArcSinh> r_arcsinh;
+static const RegisterMetaType<ArcTanh> r_arctanh;
+static const RegisterMetaType<ArcCsch> r_arccsch;
+static const RegisterMetaType<ArcSech> r_arcsech;
+static const RegisterMetaType<ArcCoth> r_arccoth;
 
 ////////////
 //////////// Implementation of Inverse-hyperbolic-cosine
@@ -61,7 +61,7 @@ uint ArcCosh::magic() const
 bool ArcCosh::operator==(const ExBase &other) const
 {
     const ArcCosh *other_cos = dynamic_cast<const ArcCosh*>(&other);
-    
+
     return other_cos != 0 and typeid(other).name() == typeid(*this).name()
                  and this->argument() == other_cos->argument();
 }
@@ -70,12 +70,12 @@ bool ArcCosh::operator==(const ExBase &other) const
 double ArcCosh::evaluate(const Values &values) const
 {
     Complex val = SireMaths::arccosh_real( x().evaluate(values) );
-    
+
     if (not val.isReal())
         throw SireMaths::domain_error(QObject::tr(
             "arccosh(%1) is complex (%2): %3")
                 .arg(x().evaluate(values)).arg(val.toString(), toString()), CODELOC);
-                
+
     return val.real();
 }
 
@@ -129,7 +129,7 @@ uint ArcSinh::magic() const
 bool ArcSinh::operator==(const ExBase &other) const
 {
     const ArcSinh *other_cos = dynamic_cast<const ArcSinh*>(&other);
-    
+
     return other_cos != 0 and typeid(other).name() == typeid(*this).name()
                  and this->argument() == other_cos->argument();
 }
@@ -190,7 +190,7 @@ uint ArcTanh::magic() const
 bool ArcTanh::operator==(const ExBase &other) const
 {
     const ArcTanh *other_cos = dynamic_cast<const ArcTanh*>(&other);
-    
+
     return other_cos != 0 and typeid(other).name() == typeid(*this).name()
                  and this->argument() == other_cos->argument();
 }
@@ -199,12 +199,12 @@ bool ArcTanh::operator==(const ExBase &other) const
 double ArcTanh::evaluate(const Values &values) const
 {
     Complex val = SireMaths::arctanh_real( x().evaluate(values) );
-    
+
     if (not val.isReal())
         throw SireMaths::domain_error(QObject::tr(
             "arctanh(%1) is complex (%2): %3")
                 .arg(x().evaluate(values)).arg(val.toString(), toString()), CODELOC);
-                
+
     return val.real();
 }
 
@@ -258,7 +258,7 @@ uint ArcCsch::magic() const
 bool ArcCsch::operator==(const ExBase &other) const
 {
     const ArcCsch *other_cos = dynamic_cast<const ArcCsch*>(&other);
-    
+
     return other_cos != 0 and typeid(other).name() == typeid(*this).name()
                  and this->argument() == other_cos->argument();
 }
@@ -267,12 +267,12 @@ bool ArcCsch::operator==(const ExBase &other) const
 double ArcCsch::evaluate(const Values &values) const
 {
     Complex val = SireMaths::arccsch( Complex(x().evaluate(values), 0) );
-    
+
     if (not val.isReal())
         throw SireMaths::domain_error(QObject::tr(
             "arccsch(%1) is complex (%2): %3")
                 .arg(x().evaluate(values)).arg(val.toString(), toString()), CODELOC);
-                
+
     return val.real();
 }
 
@@ -326,7 +326,7 @@ uint ArcSech::magic() const
 bool ArcSech::operator==(const ExBase &other) const
 {
     const ArcSech *other_cos = dynamic_cast<const ArcSech*>(&other);
-    
+
     return other_cos != 0 and typeid(other).name() == typeid(*this).name()
                  and this->argument() == other_cos->argument();
 }
@@ -335,12 +335,12 @@ bool ArcSech::operator==(const ExBase &other) const
 double ArcSech::evaluate(const Values &values) const
 {
     Complex val = SireMaths::arcsech( Complex(x().evaluate(values), 0) );
-    
+
     if (not val.isReal())
         throw SireMaths::domain_error(QObject::tr(
             "arcsech(%1) is complex (%2): %3")
                 .arg(x().evaluate(values)).arg(val.toString(), toString()), CODELOC);
-                
+
     return val.real();
 }
 
@@ -394,7 +394,7 @@ uint ArcCoth::magic() const
 bool ArcCoth::operator==(const ExBase &other) const
 {
     const ArcCoth *other_cos = dynamic_cast<const ArcCoth*>(&other);
-    
+
     return other_cos != 0 and typeid(other).name() == typeid(*this).name()
                  and this->argument() == other_cos->argument();
 }
@@ -403,12 +403,12 @@ bool ArcCoth::operator==(const ExBase &other) const
 double ArcCoth::evaluate(const Values &values) const
 {
     Complex val = SireMaths::arccoth( Complex(x().evaluate(values), 0) );
-    
+
     if (not val.isReal())
         throw SireMaths::domain_error(QObject::tr(
             "arccoth(%1) is complex (%2): %3")
                 .arg(x().evaluate(values)).arg(val.toString(), toString()), CODELOC);
-                
+
     return val.real();
 }
 

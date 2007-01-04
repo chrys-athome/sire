@@ -17,8 +17,7 @@ using namespace SireStream;
 using namespace SireDB;
 using namespace SireMol;
 
-static const RegisterMetaType<assign_parameters>
-                                r_assign_params("SireDB::assign_parameters");
+static const RegisterMetaType<assign_parameters> r_assign_params;
 
 /** Serialise to a binary data stream */
 QDataStream SIREDB_EXPORT &operator<<(QDataStream &ds,

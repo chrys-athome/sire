@@ -61,8 +61,7 @@ using namespace SireStream;
 using namespace SireMol;
 using namespace SireVol;
 
-static const RegisterMetaType<MoleculeData> r_pvt("SireMol::MoleculeData",
-                                                  MAGIC_ONLY);
+static const RegisterMetaType<MoleculeData> r_pvt;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const MoleculeData &moldata)

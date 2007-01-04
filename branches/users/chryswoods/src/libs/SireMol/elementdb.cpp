@@ -11,7 +11,7 @@ using namespace SireStream;
 using namespace SireStream;
 using namespace SireMol;
 
-static const RegisterMetaType<Element> r_element("SireMol::Element");
+static const RegisterMetaType<Element> r_element;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const Element &element)
@@ -19,7 +19,7 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const Element &element)
     //this seems slightly over the top, adding magic and version to element,
     //as element has only a single quint32 data member. However, this may
     //change (e.g. perhaps to qint64 to allow negative proton numbers) and
-    //the best way to help maintain backwards compatibility is if the 
+    //the best way to help maintain backwards compatibility is if the
     //magic and version numbers are present
 
     writeHeader(ds, r_element, 1) << quint32( element.nProtons() );
@@ -30,7 +30,7 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const Element &element)
 QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, Element &element)
 {
     VersionID v = readHeader(ds, r_element);
-    
+
     if (v == 1)
     {
         quint32 nprots;
@@ -39,7 +39,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, Element &element)
     }
     else
         throw version_error(v, "1", r_element, CODELOC);
-    
+
     return ds;
 }
 
@@ -50,8 +50,8 @@ namespace SireMol
 class ElementData
 {
 public:
-    ElementData(unsigned int protnum, QString name, QString symbol, int group, 
-                int period, double covalent_radii, double bond_order_radii, 
+    ElementData(unsigned int protnum, QString name, QString symbol, int group,
+                int period, double covalent_radii, double bond_order_radii,
                 double vdw_radii, unsigned int maxbonds,
                 double mass, double elec_neg, float red, float green, float blue);
     ~ElementData();
@@ -60,7 +60,7 @@ public:
     float r, g, b;
     QString symb;
     QString name;
-    
+
     uchar protnum;  //none of these will exceed 255! (not in my lifetime, anyway!)
     uchar maxbonds;
     uchar group;
@@ -68,11 +68,11 @@ public:
 };
 }
 
-ElementData::ElementData(unsigned int pnum, QString nam, QString sym, int grp, int per, 
+ElementData::ElementData(unsigned int pnum, QString nam, QString sym, int grp, int per,
                          double crad, double brad, double vdw, unsigned int mxb,
                          double m, double elec, float rd, float grn, float blu)
         : cov_rad(crad), bond_rad(brad), vdw_rad(vdw), mss(m), electro(elec),
-        r(rd), g(grn), b(blu), symb(sym), name(nam), 
+        r(rd), g(grn), b(blu), symb(sym), name(nam),
         protnum(static_cast<uchar>(pnum)), maxbonds(static_cast<uchar>(mxb)),
         group(static_cast<uchar>(grp)), period(static_cast<uchar>(per))
 {}
@@ -155,7 +155,7 @@ int Element::period() const
 {
     return eldata->period;
 }
-    
+
 double Element::covalentRadius() const
 {
     return eldata->cov_rad;
@@ -202,11 +202,11 @@ float Element::blue() const
 }
 
 /**
-  * Now the implementation of the ElementDB class 
+  * Now the implementation of the ElementDB class
   *
   */
-  
-//use a static global variable to initialise the ElementDB at the point 
+
+//use a static global variable to initialise the ElementDB at the point
 //the SireMol library is loaded
 class EDB_loader
 {
@@ -215,13 +215,13 @@ public:
     {
         ElementDB::initialise();
     }
-    
+
     ~EDB_loader()
     {}
 };
 
 static EDB_loader loader;
-  
+
 void ElementDB::initialise()
 {
     if (db)
@@ -297,30 +297,30 @@ ElementData* ElementDB::element(const QString &s) const
 }
 
 /** Return a biological element that has been guessed from the passed name.
-    Note that if no biological element was guessed, then the nearest 
+    Note that if no biological element was guessed, then the nearest
     non-biological element match is used. A biological element is one that
     is in the first couple of rows (proton number < 18) and is not a noble gas. */
 Element Element::biologicalElement(const QString &name)
 {
     //guess an element with this name...
     Element elmnt(name);
-    
+
     //is this a biological element? - if so, return it!
     if (elmnt.biological())
         return elmnt;
 
     //try to guess the atom from just the first two letters...
     Element elmnt2(name.left(2));
-    
+
     if (elmnt2.biological())
         return elmnt2;
-        
+
     //try to guess the atom from just the first letter...
     Element elmnt3(name.left(1));
-    
+
     if (elmnt3.biological())
         return elmnt3;
-        
+
     //we couldn't find anything - return the original, non-biological guess
     return elmnt;
 }
@@ -330,14 +330,14 @@ bool Element::nobleGas() const
 {
     return group() == 18;
 }
-    
+
 /** Return whether or not this is a halogen */
 bool Element::halogen() const
 {
     return group() == 17;
 }
-    
-/** Return whether or not this is biological 
+
+/** Return whether or not this is biological
     (in first three periods and not a noble gas)
     (this does preclude iron, potassium and calcium, which are
     rather biological... :-) */
@@ -345,7 +345,7 @@ bool Element::biological() const
 {
     return period() <= 3 and not nobleGas();
 }
-    
+
 /** Return whether or not this is an alkali metal (group 1 or 2) */
 bool Element::alkaliMetal() const
 {
@@ -375,7 +375,7 @@ bool Element::actinide() const
 {
     return nProtons() >= 90 and nProtons() <= 103;
 }
-    
+
 /** Return whether or not this is a rare earth element (e.g. a lanthanide or actinide) */
 bool Element::rareEarth() const
 {
@@ -409,10 +409,10 @@ QString Element::toString() const
 
 Element Element::elementWithMass(double mass)
 {
-    //round up the mass to the nearest integer to see if we can match to 
+    //round up the mass to the nearest integer to see if we can match to
     //a core, biological type
     int i_mass = int( mass + 0.5 );    //this rounds to the nearest int
-    
+
     switch(i_mass)
     {
         case 1:  //hydrogen
@@ -426,11 +426,11 @@ Element Element::elementWithMass(double mass)
         case 32:  //sulfur
             return Element(16);
     }
-     
+
     //the quick test failed, so now we will do a long lookup
     double diff = std::numeric_limits<double>::max();
     ElementData *bestmatch = 0;
-     
+
     //loop over all of the elements...
     foreach (ElementData *element, ElementDB::db->protonindex.values())
     {
@@ -439,12 +439,12 @@ Element Element::elementWithMass(double mass)
         {
             bestmatch = element;
             diff = testdiff;
-            
+
             if (diff == 0.0)
                 return Element(bestmatch->protnum);
         }
     }
-    
+
     //return the closest match
     if (bestmatch)
         return Element(bestmatch->protnum);

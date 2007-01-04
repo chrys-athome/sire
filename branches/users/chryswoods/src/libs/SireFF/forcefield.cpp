@@ -14,7 +14,7 @@ using namespace SireStream;
 using namespace SireBase;
 using namespace SireFF;
 
-static const RegisterMetaType<ForceField> r_forcefield("SireFF::ForceField", MAGIC_ONLY);
+static const RegisterMetaType<ForceField> r_forcefield;
 
 /** Serialise to a binary data stream */
 QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const ForceField&)
@@ -124,7 +124,7 @@ Q_DECLARE_METATYPE(SireFF::detail::NullFF)
 
 using namespace SireFF::detail;
 
-static const RegisterMetaType<NullFF> r_nullff("SireFF::detail::NullFF");
+static const RegisterMetaType<NullFF> r_nullff;
 
 /** Serialise to a binary datastream */
 QDataStream &operator<<(QDataStream &ds, const NullFF &nullff)
@@ -200,7 +200,7 @@ ForceField& ForceField::operator=(const FFBase &other)
 
 /** Return the copy of the molecule in this forcefield that
     has the ID == molid
-    
+
     \throw SireMol::missing_molecule
 */
 Molecule ForceField::molecule(MoleculeID molid) const
@@ -211,7 +211,7 @@ Molecule ForceField::molecule(MoleculeID molid) const
 /** Return the copy of the residue in this forcefield that
     is in the molecule with ID == molid and with residue number
     'resnum'
-    
+
     \throw SireMol::missing_molecule
     \throw SireMol::missing_residue
 */
@@ -219,8 +219,8 @@ Residue ForceField::residue(MoleculeID molid, ResNum resnum) const
 {
     return d().residue(molid, resnum);
 }
-    
-/** Return the copy of the molecule 'mol' that is in this forcefield 
+
+/** Return the copy of the molecule 'mol' that is in this forcefield
 
     \throw SireMol::missing_molecule
 */

@@ -14,7 +14,7 @@ using namespace SireStream;
 
 using boost::tuple;
 
-static const RegisterMetaType<Cartesian> r_cartesian("SireVol::Cartesian");
+static const RegisterMetaType<Cartesian> r_cartesian;
 
 /** Serialise to a binary datastream */
 QDataStream SIREVOL_EXPORT &operator<<(QDataStream &ds, const Cartesian &cart)

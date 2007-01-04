@@ -233,8 +233,7 @@ void SharedPolyPointer<T>::detach_helper()
         delete x;
 }
 
-const SireStream::MagicID sharedpolypointer_magic = SireStream::getMagic(
-                                                      "SireBase::SharedPolyPointer");
+const MagicID sharedpolypointer_magic = getMagic("SireBase::SharedPolyPointer");
 }
 
 /** Serialise to a binary data stream

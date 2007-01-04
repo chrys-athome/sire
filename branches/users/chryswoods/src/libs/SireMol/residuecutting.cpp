@@ -22,7 +22,7 @@
 using namespace SireMol;
 using namespace SireStream;
 
-static const RegisterMetaType<ResidueCutting> r_rescut("SireMol::ResidueCutting");
+static const RegisterMetaType<ResidueCutting> r_rescut;
 
 /** Serialise to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const ResidueCutting &rescut)

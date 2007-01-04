@@ -35,9 +35,9 @@ class BondTableT : public InternalTable<MolBondInfo,Param>
 public:
     BondTableT();
     BondTableT(const MolBondInfo &bondinfo);
-    
+
     BondTableT(const BondTableT<Param> &other);
-    
+
     ~BondTableT();
 
     int nBonds() const;
@@ -47,7 +47,7 @@ public:
     int nInterBonds() const;
     int nIntraBonds(ResNum resnum) const;
     int nInterBonds(ResNum resnum) const;
-    
+
     int nBondParameters() const;
     int nBondParameters(ResNum resnum) const;
     int nBondParameters(GroupID groupid) const;
@@ -55,50 +55,50 @@ public:
     int nInterBondParameters() const;
     int nIntraBondParameters(ResNum resnum) const;
     int nInterBondParameters(ResNum resnum) const;
-    
+
     void addBond(const Bond &bond);
     void addBond(const Bond &bond, const Param &param);
-    
+
     template<class C>
     void addBonds(const C &bonds);
-    
+
     void removeBond(const Bond &bond);
-    
+
     template<class C>
     void removeBonds(const C &bonds);
-    
+
     void removeBonds();
     void removeBonds(ResNum resnum);
     void removeBonds(GroupID groupid);
     void removeBonds(const QSet<GroupID> &groupids);
-    
+
     void removeIntraBonds();
     void removeIntraBonds(ResNum resnum);
-    
+
     void removeInterBonds();
     void removeInterBonds(ResNum resnum);
-    
+
     void removeMissingBonds();
     void removeMissingBonds(ResNum resnum);
     void removeMissingBonds(GroupID groupid);
     void removeMissingBonds(const QSet<GroupID> &groupids);
-    
+
     void removeMissingIntraBonds();
     void removeMissingIntraBonds(ResNum resnum);
     void removeMissingInterBonds();
     void removeMissingInterBonds(ResNum resnum);
-    
+
     void clearBond(const Bond &bond);
     void clearBonds();
     void clearBonds(ResNum resnum);
     void clearBonds(GroupID groupid);
-    
+
     template<class C>
     void clearBonds(const C &bonds);
-    
+
     void clearIntraBonds();
     void clearIntraBonds(ResNum resnum);
-    
+
     void clearInterBonds();
     void clearInterBonds(ResNum resnum);
 
@@ -110,73 +110,73 @@ public:
     QVector<Bond> bonds() const;
     QVector<Bond> bonds(ResNum resnum) const;
     QVector<Bond> bonds(GroupID groupid) const;
-    
+
     QVector<Bond> interBonds() const;
     QVector<Bond> intraBonds() const;
     QVector<Bond> interBonds(ResNum resnum) const;
     QVector<Bond> intraBonds(ResNum resnum) const;
-    
+
     GroupedVector<GroupIndexID,Bond> bondsByGroup() const;
     GroupedVector<GroupIndexID,Bond> bondsByGroup(const QSet<GroupID> &gids) const;
     GroupedVector<ResNumIndexID,Bond> bondsByResidue() const;
     GroupedVector<ResNumIndexID,Bond> bondsByResidue(const QSet<ResNum> &resnums) const;
-    
+
     GroupedVector<ResNumIndexID,Bond> interBondsByResidue() const;
     GroupedVector<ResNumIndexID,Bond> intraBondsByResidue() const;
     GroupedVector<ResNumIndexID,Bond> interBondsByResidue(const QSet<ResNum> &resnums) const;
     GroupedVector<ResNumIndexID,Bond> intraBondsByResidue(const QSet<ResNum> &resnums) const;
-    
+
     const Param& getBondParameter(const Bond &bond) const;
     const Param& getBondParameter(const GroupIndexID &id) const;
-    
+
     void setBondParameter(const Bond &bond, const Param &param);
     void setBondParameter(const GroupIndexID &id, const Param &param);
 
     bool assignedBondParameter(const Bond &bond) const;
     bool assignedBondParameter(const GroupIndexID &id) const;
-    
+
     bool hasMissingBondParameters() const;
     bool hasMissingBondParameters(ResNum resnum) const;
     bool hasMissingBondParameters(GroupID id) const;
-    
+
     bool hasMissingIntraBondParameters() const;
     bool hasMissingIntraBondParameters(ResNum resnum) const;
-    
+
     bool hasMissingInterBondParameters() const;
     bool hasMissingInterBondParameters(ResNum resnum) const;
-    
+
     QSet<Bond> missingBondParameters() const;
     QSet<Bond> missingBondParameters(ResNum resnum) const;
     QSet<Bond> missingBondParameters(const QSet<GroupID> &groupids) const;
-    
+
     QSet<Bond> missingIntraBondParameters() const;
     QSet<Bond> missingIntraBondParameters(ResNum resnum) const;
-    
+
     QSet<Bond> missingInterBondParameters() const;
     QSet<Bond> missingInterBondParameters(ResNum resnum) const;
-    
+
     QVector<Param> bondParameters() const;
     QVector<Param> bondParameters(ResNum resnum) const;
     QVector<Param> bondParameters(GroupID groupid) const;
-    
+
     QVector<Param> interBondParameters() const;
     QVector<Param> intraBondParameters() const;
     QVector<Param> interBondParameters(ResNum resnum) const;
     QVector<Param> intraBondParameters(ResNum resnum) const;
-    
+
     GroupedVector<GroupIndexID,Param> bondParametersByGroup() const;
     GroupedVector<GroupIndexID,Param> bondParametersByGroup(
                                                 const QSet<GroupID> &gids) const;
     GroupedVector<ResNumIndexID,Param> bondParametersByResidue() const;
     GroupedVector<ResNumIndexID,Param> bondParametersByResidue(
                                                 const QSet<ResNum> &resnums) const;
-                                                    
+
     GroupedVector<ResNumIndexID,Param> interBondParametersByResidue() const;
     GroupedVector<ResNumIndexID,Param> intraBondParametersByResidue() const;
     GroupedVector<ResNumIndexID,Param> interBondParametersByResidue(
                                                 const QSet<ResNum> &resnums) const;
     GroupedVector<ResNumIndexID,Param> intraBondParametersByResidue(
-                                                const QSet<ResNum> &resnums) const;    
+                                                const QSet<ResNum> &resnums) const;
 };
 
 /** Empty constructor */
@@ -188,7 +188,7 @@ BondTableT<Param>::BondTableT() : InternalTable<MolBondInfo,Param>()
 /** Create a table to hold the parameters for the bonds described by 'bondinfo' */
 template<class Param>
 SIRE_OUTOFLINE_TEMPLATE
-BondTableT<Param>::BondTableT(const MolBondInfo &bondinfo) 
+BondTableT<Param>::BondTableT(const MolBondInfo &bondinfo)
                   : InternalTable<MolBondInfo,Param>(bondinfo)
 {}
 
@@ -687,7 +687,7 @@ GroupedVector<ResNumIndexID,Bond> BondTableT<Param>::intraBondsByResidue() const
 /** Synonym for interInternalsByResidue(...) */
 template<class Param>
 SIRE_INLINE_TEMPLATE
-GroupedVector<ResNumIndexID,Bond> 
+GroupedVector<ResNumIndexID,Bond>
 BondTableT<Param>::interBondsByResidue(const QSet<ResNum> &resnums) const
 {
     return this->interInternalsByResidue(resnums);
@@ -696,7 +696,7 @@ BondTableT<Param>::interBondsByResidue(const QSet<ResNum> &resnums) const
 /** Synonym for intraInternalsByResidue(...) */
 template<class Param>
 SIRE_INLINE_TEMPLATE
-GroupedVector<ResNumIndexID,Bond> 
+GroupedVector<ResNumIndexID,Bond>
 BondTableT<Param>::intraBondsByResidue(const QSet<ResNum> &resnums) const
 {
     return this->intraInternalsByResidue(resnums);
@@ -929,7 +929,7 @@ GroupedVector<GroupIndexID,Param> BondTableT<Param>::bondParametersByGroup() con
 /** Synonym for parametersByGroup(...) */
 template<class Param>
 SIRE_INLINE_TEMPLATE
-GroupedVector<GroupIndexID,Param> 
+GroupedVector<GroupIndexID,Param>
 BondTableT<Param>::bondParametersByGroup(const QSet<GroupID> &gids) const
 {
     return this->parametersByGroup(gids);
@@ -946,7 +946,7 @@ GroupedVector<ResNumIndexID,Param> BondTableT<Param>::bondParametersByResidue() 
 /** Synonym for parametersByResidue(...) */
 template<class Param>
 SIRE_INLINE_TEMPLATE
-GroupedVector<ResNumIndexID,Param> 
+GroupedVector<ResNumIndexID,Param>
 BondTableT<Param>::bondParametersByResidue(const QSet<ResNum> &resnums) const
 {
     return this->parametersByResidue(resnums);
@@ -971,7 +971,7 @@ GroupedVector<ResNumIndexID,Param> BondTableT<Param>::intraBondParametersByResid
 /** Synonym for interParametersByResidue(...) */
 template<class Param>
 SIRE_INLINE_TEMPLATE
-GroupedVector<ResNumIndexID,Param> 
+GroupedVector<ResNumIndexID,Param>
 BondTableT<Param>::interBondParametersByResidue(const QSet<ResNum> &resnums) const
 {
     return this->interParametersByResidue(resnums);
@@ -980,45 +980,44 @@ BondTableT<Param>::interBondParametersByResidue(const QSet<ResNum> &resnums) con
 /** Synonym for intraParametersByResidue(...) */
 template<class Param>
 SIRE_INLINE_TEMPLATE
-GroupedVector<ResNumIndexID,Param> 
+GroupedVector<ResNumIndexID,Param>
 BondTableT<Param>::intraBondParametersByResidue(const QSet<ResNum> &resnums) const
 {
     return this->intraParametersByResidue(resnums);
 }
 
-const SireStream::MagicID bondtablet_magic = SireStream::getMagic(
-                                                          "SireMM::BondTableT");
+const MagicID bondtablet_magic = getMagic("SireMM::BondTableT");
 
 }
 
 /** Serialise to a binary data stream */
 template<class Param>
 SIRE_OUTOFLINE_TEMPLATE
-QDataStream& operator<<(QDataStream &ds, 
+QDataStream& operator<<(QDataStream &ds,
                         const SireMM::BondTableT<Param> &table)
 {
     SireStream::writeHeader(ds, SireMM::bondtablet_magic, 0)
              << static_cast<const SireMM::InternalTable<SireMM::MolBondInfo,Param>&>(table);
-             
+
     return ds;
 }
 
 /** Deserialise from a binary data stream */
 template<class Param>
 SIRE_OUTOFLINE_TEMPLATE
-QDataStream& operator>>(QDataStream &ds, 
+QDataStream& operator>>(QDataStream &ds,
                         SireMM::BondTableT<Param> &table)
 {
     SireStream::VersionID v = SireStream::readHeader(ds, SireMM::bondtablet_magic,
                                                      "SireMM::BondTableT");
-                                                     
+
     if (v == 0)
     {
         ds >> static_cast<SireMM::InternalTable<SireMM::MolBondInfo, Param>&>(table);
     }
     else
         throw SireStream::version_error(v, "0", "SireMM::BondTableT", CODELOC);
-        
+
     return ds;
 }
 

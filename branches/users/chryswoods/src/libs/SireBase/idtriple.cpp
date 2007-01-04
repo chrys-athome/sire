@@ -7,7 +7,7 @@
 using namespace SireBase;
 using namespace SireStream;
 
-static const RegisterMetaType<IDTriple> r_idtriple("SireBase::IDTriple");
+static const RegisterMetaType<IDTriple> r_idtriple;
 
 /** Serialise to a binary datastream */
 QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds, const IDTriple &idtriple)

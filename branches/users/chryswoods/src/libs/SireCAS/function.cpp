@@ -16,7 +16,7 @@ using namespace SireCAS;
 //////////// Implementation of FunctionPvt
 ////////////
 
-static const RegisterMetaType<Function> r_function("SireCAS::Function");
+static const RegisterMetaType<Function> r_function;
 
 /** Serialise to a binary datastream */
 QDataStream& operator<<(QDataStream &ds, const FunctionPvt &f)

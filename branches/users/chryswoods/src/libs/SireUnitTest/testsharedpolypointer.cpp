@@ -168,10 +168,10 @@ public:
 Q_DECLARE_METATYPE(Bar);
 Q_DECLARE_METATYPE(Bar2);
 
-static const RegisterMetaType<Bar> r_bar("Bar");
-static const RegisterMetaType<Bar2> r_bar2("Bar2");
+static const RegisterMetaType<Bar> r_bar;
+static const RegisterMetaType<Bar2> r_bar2;
 
-static const RegisterMetaType<Foo> r_foo("Foo", MAGIC_ONLY);
+static const RegisterMetaType<Foo> r_foo(MAGIC_ONLY, "Foo");
 
 /** Serialise to a binary data stream */
 QDataStream &operator<<(QDataStream &ds, const Foo &foo)

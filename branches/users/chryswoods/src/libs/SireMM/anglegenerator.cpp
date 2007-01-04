@@ -23,15 +23,15 @@ using namespace SireStream;
 using namespace SireMol;
 using namespace SireMM;
 
-static const RegisterMetaType<AngleGenerator> r_anglegenerator("SireMM::AngleGenerator");
-static const RegisterMetaType<UsePassedAngles> r_usepassedangles("SireMM::UsePassedAngles");
+static const RegisterMetaType<AngleGenerator> r_anglegenerator;
+static const RegisterMetaType<UsePassedAngles> r_usepassedangles;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const AngleGenerator &generator)
 {
-    writeHeader(ds, r_anglegenerator, 0) 
+    writeHeader(ds, r_anglegenerator, 0)
           << static_cast<const AngleGeneratorBase&>(generator);
-          
+
     return ds;
 }
 
@@ -39,23 +39,23 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const AngleGenerator &gen
 QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, AngleGenerator &generator)
 {
     VersionID v = readHeader(ds, r_anglegenerator);
-    
+
     if (v == 0)
     {
         ds >> static_cast<AngleGeneratorBase&>(generator);
     }
     else
         throw version_error(v, "0", r_anglegenerator, CODELOC);
-    
+
     return ds;
 }
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const UsePassedAngles &generator)
 {
-    writeHeader(ds, r_usepassedangles, 0) 
+    writeHeader(ds, r_usepassedangles, 0)
           << static_cast<const UsePassedAnglesBase&>(generator);
-    
+
     return ds;
 }
 
@@ -63,14 +63,14 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const UsePassedAngles &ge
 QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, UsePassedAngles &generator)
 {
     VersionID v = readHeader(ds, r_usepassedangles);
-    
+
     if (v == 0)
     {
         ds >> static_cast<UsePassedAngles&>(generator);
     }
     else
         throw version_error(v, "0", r_usepassedangles, CODELOC);
-    
+
     return ds;
 }
 
@@ -94,53 +94,53 @@ void generateAngles(const MoleculeInfo &molinfo, const MoleculeBonds &molbonds,
 {
     //loop over each atom in this residue
     int nats = resinfo.nAtoms();
-    
+
     for (AtomID i(0); i<nats; ++i)
     {
         const AtomInfo &atom1 = resinfo.atom(i);
-        
+
         //if this is a dummy atom then skip it
         if (atom1.nProtons() == 0)
             continue;
-    
+
         //get all of the bonds that involve this atom
         QList<Bond> bonds = molbonds.bonds(atom1);
-        
+
         //if there are no bonds involving this atom, or there
         //is only a single bond to this atom, then it cannot
         //be involved in any angles.
         if (bonds.count() <= 1)
             continue;
-        
+
         //all of the 'other' atoms of these bonds must be
         //in angle relationships with one another, with this
         //atom as the central atom (unless the 'other' atoms
         //are bonded to one another, in which case they form a
         //triangle with this atom
-        
+
         //get the list of 'other' atoms
         QList<AtomIndex> other_atoms;
-        
+
         for (int j=0; j<bonds.count(); ++j)
             other_atoms.append( bonds.at(j).other(atom1) );
-            
+
         //loop over each pair of 'other' atoms and add the angle
-        //between them involving this atom, unless the pair of 
+        //between them involving this atom, unless the pair of
         //atoms are bonded
         int nothers = other_atoms.count();
         for (int j=0; j<nothers-1; ++j)
         {
             const AtomInfo &atom0 = molinfo.atom(other_atoms.at(j));
-        
+
             //only process this atom if it is not a dummy
             if (atom0.nProtons() == 0)
                 continue;
-        
+
             for (int k=j+1; k<nothers; ++k)
             {
                 const AtomInfo &atom2 = molinfo.atom(other_atoms.at(k));
                 //only process this atom if it is not a dummy
-                if ( atom2.nProtons() > 0 and 
+                if ( atom2.nProtons() > 0 and
                      not molbonds.bonded(atom0, atom2) )
                 {
                     //atom0-atom1-atom2 must be an angle!
@@ -161,21 +161,21 @@ void AngleGenerator::generate(const Molecule &mol, MolAngleInfo &angleinfo) cons
 
     //get the connectivity of the molecule
     MoleculeBonds molbonds = mol.connectivity();
-    
+
     //there are no angles if there are no bonds!
     if (molbonds.isEmpty())
         return;
-    
+
     const MoleculeInfo &molinfo = mol.info();
-    
+
     //loop over each residue of the molecule
     int nres = molinfo.nResidues();
-    
+
     for (ResID i(0); i<nres; ++i)
     {
         //get the ith residue
         const ResidueInfo &resinfo = molinfo[i];
-        
+
         //are there any bonds that involve atoms in this residue?
         if ( molbonds.contains(resinfo.resNum()) )
         {
@@ -192,7 +192,7 @@ void AngleGenerator::generate(const Molecule &mol, MolAngleInfo &angleinfo) cons
 /** Constructor */
 UsePassedAngles::UsePassedAngles() : UsePassedAnglesBase()
 {}
-  
+
 /** Construct to use the passed angles */
 UsePassedAngles::UsePassedAngles(const QSet<Angle> &angles)
                : UsePassedAnglesBase(angles)

@@ -7,7 +7,7 @@
 using namespace SireStream;
 using namespace SireMaths;
 
-static const RegisterMetaType<Rational> r_rational("SireMaths::Rational");
+static const RegisterMetaType<Rational> r_rational;
 
 /** Serialise a rational number to a binary datastream */
 QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Rational &val)
@@ -20,7 +20,7 @@ QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Rational &val)
 QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, Rational &val)
 {
     VersionID v = readHeader(ds, r_rational);
-    
+
     if (v == 1)
     {
         qint32 num,denom;
