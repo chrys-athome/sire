@@ -16,6 +16,7 @@
 
 #include "molecule.h"
 #include "moleculedata.h"
+#include "newatom.h"
 #include "residue.h"
 #include "cutgroup.h"
 #include "editmol.h"
@@ -94,6 +95,11 @@ Molecule::Molecule() : d( MoleculeData::null() )
 /** Construct a Molecule that is a copy of the molecule that contains the
     residue 'residue' */
 Molecule::Molecule(const Residue &residue) : d( residue.d )
+{}
+
+/** Construct a Molecule that is a copy of the molecule that contains the
+    atom 'atom' */
+Molecule::Molecule(const NewAtom &atom) : d( atom.d )
 {}
 
 /** Copy constructor - this is fast as this class is implicitly shared */

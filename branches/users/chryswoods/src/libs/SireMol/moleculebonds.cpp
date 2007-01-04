@@ -520,6 +520,29 @@ QSet<ResNum> MoleculeBonds::resNumsBondedTo(ResNum resnum) const
         return QSet<ResNum>();
 }
 
+/** Return the list of AtomIndexes of atoms that are bonded to 'atom' */
+QSet<AtomIndex> MoleculeBonds::atomsBondedTo(const AtomIndex &atom) const
+{
+    QList<Bond> bnds = this->bonds(atom);
+
+    if (bnds.count() > 0)
+    {
+        QSet<AtomIndex> bndatoms;
+        bndatoms.reserve(bnds.count());
+
+        for (QList<Bond>::const_iterator it = bnds.constBegin();
+             it != bnds.constEnd();
+             ++it)
+        {
+            bndatoms.insert( it->other(atom) );
+        }
+
+        return bndatoms;
+    }
+    else
+        return QSet<AtomIndex>();
+}
+
 /** Return the complete list of residue numbers in this molecule
     (note that this only returns the residue numbers of residues that contain
     some bonding) */

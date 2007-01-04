@@ -3,7 +3,7 @@
 
 #include <QVector>
 
-#include "SireMol/property.h"
+#include "SireMol/atomicproperties.h"
 
 #include "chargeparameter.h"
 
@@ -21,6 +21,7 @@ namespace SireMM
 {
 
 using SireMol::Molecule;
+using SireMol::CGAtomID;
 using SireMol::Property;
 
 /** This class is used to hold all of the atomic charges for the
@@ -32,7 +33,7 @@ using SireMol::Property;
 
     @author Christopher Woods
 */
-class SIREMM_EXPORT AtomicCharges : public SireMol::PropertyBase,
+class SIREMM_EXPORT AtomicCharges : public SireMol::AtomicProperties,
                                     public QVector< QVector<ChargeParameter> >
 {
 
@@ -74,6 +75,8 @@ public:
     }
 
     bool isCompatibleWith(const Molecule &molecule) const;
+
+    QVariant value(const CGAtomID &cgatomid) const;
 };
 
 }

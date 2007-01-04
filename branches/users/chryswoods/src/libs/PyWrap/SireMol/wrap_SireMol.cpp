@@ -9,6 +9,7 @@
 namespace SireMol
 {
 void export_Atom();
+void export_NewAtom();
 void export_AtomSet();
 void export_AtomVector();
 void export_AtomList();
@@ -44,6 +45,7 @@ void export_QList_Molecule();
 void SIREMOL_EXPORT export_SireMol()
 {
     export_Atom();
+    export_NewAtom();
     export_AtomList();
     export_AtomSet();
     export_AtomVector();

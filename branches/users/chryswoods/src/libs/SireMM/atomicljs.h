@@ -3,7 +3,7 @@
 
 #include <QVector>
 
-#include "SireMol/property.h"
+#include "SireMol/atomicproperties.h"
 
 #include "ljparameter.h"
 
@@ -21,10 +21,11 @@ namespace SireMM
 {
 
 using SireMol::Molecule;
+using SireMol::CGAtomID;
 using SireMol::Property;
 
-/** This class is used to hold all of the atomic charges for the
-    atoms in a molecule. All of the atomic charges are held in
+/** This class is used to hold all of the atomic LJ parameters for the
+    atoms in a molecule. All of the atomic LJ parameters are held in
     groups that correspond to the CutGroups in the molecule.
 
     This is really just a thin-wrapper around
@@ -32,7 +33,7 @@ using SireMol::Property;
 
     @author Christopher Woods
 */
-class SIREMM_EXPORT AtomicLJs : public SireMol::PropertyBase,
+class SIREMM_EXPORT AtomicLJs : public SireMol::AtomicProperties,
                                 public QVector< QVector<LJParameter> >
 {
 
@@ -75,6 +76,8 @@ public:
     }
 
     bool isCompatibleWith(const Molecule &molecule) const;
+
+    QVariant value(const CGAtomID &cgatomid) const;
 };
 
 }

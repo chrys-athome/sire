@@ -9,6 +9,7 @@
 
 #include "residueinfo.h"
 
+#include "newatom.h"
 #include "cutgroup.h"
 #include "residue.h"
 #include "molecule.h"
@@ -105,6 +106,12 @@ Residue::Residue(const Molecule &molecule, ResID resid)
 */
 Residue::Residue(const Molecule &molecule, const QString &resname)
         : d(molecule.d), rnum( d->info().residueNumber(resname) )
+{}
+
+/** Construct a residue that is a copy of the residue that contains the
+    atom 'atom' */
+Residue::Residue(const NewAtom &atom)
+        : d(atom.d), rnum(atom.info().resNum())
 {}
 
 /** Copy constructor - this is fast as this class is implicitly shared */

@@ -1,11 +1,15 @@
 
+#include <QVariant>
+
 #include "atomiccharges.h"
 
 #include "SireBase/sharedpolypointer_cast.hpp"
 
 #include "SireMol/molecule.h"
 #include "SireMol/moleculeinfo.h"
-#include "SireMol/cutgroupid.h"
+#include "SireMol/cgatomid.h"
+
+#include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
 
@@ -20,7 +24,7 @@ static const RegisterMetaType<AtomicCharges> r_atomchgs;
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const AtomicCharges &atomchgs)
 {
     writeHeader(ds, r_atomchgs, 1)
-            << static_cast<const PropertyBase&>(atomchgs)
+            << static_cast<const AtomicProperties&>(atomchgs)
             << static_cast<const QVector< QVector<ChargeParameter> >&>(atomchgs);
 
     return ds;
@@ -33,7 +37,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, AtomicCharges &atomchgs)
 
     if (v == 1)
     {
-        ds >> static_cast<PropertyBase&>(atomchgs)
+        ds >> static_cast<AtomicProperties&>(atomchgs)
            >> static_cast<QVector< QVector<ChargeParameter> >&>(atomchgs);
     }
     else
@@ -44,17 +48,17 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, AtomicCharges &atomchgs)
 
 /** Null constructor */
 AtomicCharges::AtomicCharges()
-              : PropertyBase(), QVector< QVector<ChargeParameter> >()
+              : AtomicProperties(), QVector< QVector<ChargeParameter> >()
 {}
 
 /** Construct charges that are copied from 'charges' */
 AtomicCharges::AtomicCharges(const QVector< QVector<ChargeParameter> > &charges)
-              : PropertyBase(), QVector< QVector<ChargeParameter> >(charges)
+              : AtomicProperties(), QVector< QVector<ChargeParameter> >(charges)
 {}
 
 /** Construct charges that are copied from 'charges' (single CutGroup) */
 AtomicCharges::AtomicCharges(const QVector<ChargeParameter> &charges)
-              : PropertyBase(), QVector< QVector<ChargeParameter> >(1, charges)
+              : AtomicProperties(), QVector< QVector<ChargeParameter> >(1, charges)
 {}
 
 /** Construct from a Property
@@ -62,14 +66,14 @@ AtomicCharges::AtomicCharges(const QVector<ChargeParameter> &charges)
     \throw SireError::invalid_cast
 */
 AtomicCharges::AtomicCharges(const Property &property)
-              : PropertyBase(), QVector< QVector<ChargeParameter> >()
+              : AtomicProperties(), QVector< QVector<ChargeParameter> >()
 {
     *this = property;
 }
 
 /** Copy constructor */
 AtomicCharges::AtomicCharges(const AtomicCharges &other)
-              : PropertyBase(other), QVector< QVector<ChargeParameter> >(other)
+              : AtomicProperties(other), QVector< QVector<ChargeParameter> >(other)
 {}
 
 /** Destructor */
@@ -132,4 +136,22 @@ bool AtomicCharges::isCompatibleWith(const Molecule &molecule) const
     }
 
     return true;
+}
+
+/** Return the charge as a QVariant for the atom at index 'CGAtomID'
+
+    \throw SireError::invalid_index
+*/
+QVariant AtomicCharges::value(const CGAtomID &cgatomid) const
+{
+    if (cgatomid.cutGroupID() >= this->count())
+        throwMissingCutGroup(cgatomid.cutGroupID(), this->count());
+
+    const QVector<ChargeParameter> &charges =
+                            this->constData()[cgatomid.cutGroupID()];
+
+    if (cgatomid.atomID() >= charges.count())
+        throwMissingAtom(cgatomid, charges.count());
+
+    return QVariant::fromValue( charges.constData()[cgatomid.atomID()] );
 }

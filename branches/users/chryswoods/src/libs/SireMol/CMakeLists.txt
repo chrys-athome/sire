@@ -13,6 +13,8 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 set ( SIREMOL_SOURCES
       angle.cpp
       atom.cpp
+      newatom.cpp
+      atomicproperties.cpp
       atomcutting.cpp
       atomidgroup.cpp
       atomindex.cpp

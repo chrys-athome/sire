@@ -5,7 +5,7 @@
 
 #include "SireMol/molecule.h"
 #include "SireMol/moleculeinfo.h"
-#include "SireMol/cutgroupid.h"
+#include "SireMol/cgatomid.h"
 
 #include "SireStream/datastream.h"
 
@@ -20,7 +20,7 @@ static const RegisterMetaType<AtomicLJs> r_atomljs;
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const AtomicLJs &atomljs)
 {
     writeHeader(ds, r_atomljs, 1)
-            << static_cast<const PropertyBase&>(atomljs)
+            << static_cast<const AtomicProperties&>(atomljs)
             << static_cast<const QVector< QVector<LJParameter> >&>(atomljs);
 
     return ds;
@@ -33,7 +33,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, AtomicLJs &atomljs)
 
     if (v == 1)
     {
-        ds >> static_cast<PropertyBase&>(atomljs)
+        ds >> static_cast<AtomicProperties&>(atomljs)
            >> static_cast<QVector< QVector<LJParameter> >&>(atomljs);
     }
     else
@@ -44,17 +44,17 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, AtomicLJs &atomljs)
 
 /** Null constructor */
 AtomicLJs::AtomicLJs()
-          : PropertyBase(), QVector< QVector<LJParameter> >()
+          : AtomicProperties(), QVector< QVector<LJParameter> >()
 {}
 
 /** Construct LJ parameters that are copied from 'ljs' */
 AtomicLJs::AtomicLJs(const QVector< QVector<LJParameter> > &ljs)
-          : PropertyBase(), QVector< QVector<LJParameter> >(ljs)
+          : AtomicProperties(), QVector< QVector<LJParameter> >(ljs)
 {}
 
 /** Construct LJ parameters that are copied from 'ljs' (single CutGroup) */
 AtomicLJs::AtomicLJs(const QVector<LJParameter> &ljs)
-          : PropertyBase(), QVector< QVector<LJParameter> >(1, ljs)
+          : AtomicProperties(), QVector< QVector<LJParameter> >(1, ljs)
 {}
 
 /** Copy from a Property
@@ -62,14 +62,14 @@ AtomicLJs::AtomicLJs(const QVector<LJParameter> &ljs)
     \throw SireError::invalid_cast
 */
 AtomicLJs::AtomicLJs(const Property &property)
-          : PropertyBase(), QVector< QVector<LJParameter> >()
+          : AtomicProperties(), QVector< QVector<LJParameter> >()
 {
     *this = property;
 }
 
 /** Copy constructor */
 AtomicLJs::AtomicLJs(const AtomicLJs &other)
-          : PropertyBase(other), QVector< QVector<LJParameter> >(other)
+          : AtomicProperties(other), QVector< QVector<LJParameter> >(other)
 {}
 
 /** Destructor */
@@ -97,7 +97,7 @@ AtomicLJs& AtomicLJs::operator=(const QVector<LJParameter> &ljparams)
 AtomicLJs& AtomicLJs::operator=(const AtomicLJs &other)
 {
     QVector< QVector<LJParameter> >::operator=(other);
-    PropertyBase::operator=(other);
+    AtomicProperties::operator=(other);
 
     return *this;
 }
@@ -132,4 +132,22 @@ bool AtomicLJs::isCompatibleWith(const Molecule &molecule) const
     }
 
     return true;
+}
+
+/** Return the LJ parameter as a QVariant for the atom at index 'CGAtomID'
+
+    \throw SireError::invalid_index
+*/
+QVariant AtomicLJs::value(const CGAtomID &cgatomid) const
+{
+    if (cgatomid.cutGroupID() >= this->count())
+        throwMissingCutGroup(cgatomid.cutGroupID(), this->count());
+
+    const QVector<LJParameter> &ljs =
+                            this->constData()[cgatomid.cutGroupID()];
+
+    if (cgatomid.atomID() >= ljs.count())
+        throwMissingAtom(cgatomid, ljs.count());
+
+    return QVariant::fromValue( ljs.constData()[cgatomid.atomID()] );
 }
