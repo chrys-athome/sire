@@ -30,6 +30,9 @@ namespace SireMaths
 
 typedef boost::variate_generator<boost::mt19937, boost::uniform_real<double> > UniformRand;
 typedef boost::variate_generator<boost::mt19937, boost::uniform_int<qint32> > UniformRanInt;
+typedef boost::variate_generator<boost::mt19937, boost::uniform_int<quint32> > UniformRanUInt;
+typedef boost::variate_generator<boost::mt19937, boost::uniform_int<qint64> > UniformRanInt64;
+typedef boost::variate_generator<boost::mt19937, boost::uniform_int<quint64> > UniformRanUInt64;
 
 /** Function to return a uniform double random number generator with a range
     from 'min' to 'max' */
@@ -57,6 +60,48 @@ inline UniformRanInt uniformRanIntGenerator(qint32 min=0, qint32 max=100)
 inline UniformRanInt uniformRanIntGenerator(qint32 min, qint32 max, uint32_t seed)
 {
     return UniformRanInt( boost::mt19937(seed), boost::uniform_int<qint32>(min,max) );
+}
+
+/** Function to return a uniform uint random number generate with a range from
+    'min' to 'max' */
+inline UniformRanUInt uniformRanUIntGenerator(quint32 min=0, quint32 max=100)
+{
+    return UniformRanUInt( boost::mt19937(), boost::uniform_int<quint32>(min,max) );
+}
+
+/** Function to return a uniform uint random number generate with a range from
+    'min' to 'max' and seeded with 'seed' */
+inline UniformRanUInt uniformRanUIntGenerator(quint32 min, quint32 max, uint32_t seed)
+{
+    return UniformRanUInt( boost::mt19937(seed), boost::uniform_int<quint32>(min,max) );
+}
+
+/** Function to return a uniform int random number generate with a range from
+    'min' to 'max' */
+inline UniformRanInt64 uniformRanInt64Generator(qint64 min=0, qint64 max=100)
+{
+    return UniformRanInt64( boost::mt19937(), boost::uniform_int<qint64>(min,max) );
+}
+
+/** Function to return a uniform int random number generate with a range from
+    'min' to 'max' and seeded with 'seed' */
+inline UniformRanInt64 uniformRanInt64Generator(qint64 min, qint64 max, uint32_t seed)
+{
+    return UniformRanInt64( boost::mt19937(seed), boost::uniform_int<qint64>(min,max) );
+}
+
+/** Function to return a uniform uint random number generate with a range from
+    'min' to 'max' */
+inline UniformRanUInt64 uniformRanUInt64Generator(quint64 min=0, quint64 max=100)
+{
+    return UniformRanUInt64( boost::mt19937(), boost::uniform_int<quint64>(min,max) );
+}
+
+/** Function to return a uniform uint random number generate with a range from
+    'min' to 'max' and seeded with 'seed' */
+inline UniformRanUInt64 uniformRanUInt64Generator(quint64 min, quint64 max, uint32_t seed)
+{
+    return UniformRanUInt64( boost::mt19937(seed), boost::uniform_int<quint64>(min,max) );
 }
 
 /** Return x raised to the power 2 */
