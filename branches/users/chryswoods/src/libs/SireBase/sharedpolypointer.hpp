@@ -123,6 +123,7 @@ public:
     inline ~SharedPolyPointer() { if (d && !d->ref.deref()) delete d; }
 
     explicit SharedPolyPointer(T *data);
+    explicit SharedPolyPointer(const T &obj);
 
     inline SharedPolyPointer(const SharedPolyPointer<T> &o)
                 : SharedPolyPointerBase(), d(o.d)
@@ -130,11 +131,6 @@ public:
         if (d) d->ref.ref();
     }
 
-    inline SharedPolyPointer(const T &obj)
-                : SharedPolyPointerBase(), d( SharedPolyPointerHelper<T>::clone(obj) )
-    {
-        if (d) d->ref.ref();
-    }
 
     template<class S>
     inline SharedPolyPointer(const SharedPolyPointer<S> &o)
@@ -207,7 +203,22 @@ public:
 
     inline SharedPolyPointer& operator=(const T &obj)
     {
-        return this->operator=( SharedPolyPointerHelper<T>::clone(obj) );
+        //look at the reference count - if the count is not zero
+        //then we will assume that this object is held by another
+        //SharedPolyPointer
+        if (obj.ref)
+        {
+            T &obj_held_by_ptr = const_cast<T&>(obj);
+
+            return this->operator=(&obj_held_by_ptr);
+        }
+        else
+        {
+            //this object is probably on the stack - it is
+            //not safe to point to the original so lets point
+            //to a clone
+            return this->operator=( SharedPolyPointerHelper<T>::clone(obj) );
+        }
     }
 
     inline const char* what() const
@@ -238,6 +249,40 @@ Q_INLINE_TEMPLATE
 SharedPolyPointer<T>::SharedPolyPointer(T *adata) : d(adata)
 {
     if (d) d->ref.ref();
+}
+
+template<class T>
+Q_INLINE_TEMPLATE
+SharedPolyPointer<T>::SharedPolyPointer(const T &obj)
+{
+    //if this object is already pointed to by a SharedPolyPointer
+    //then the reference count of the QSharedData part will be
+    //greater than zero
+    if (obj.ref)
+    {
+        //this is held by another SharedPolyPointer - increase its
+        //reference count and take a pointer to it
+        //(as it is held by another SharedPolyPointer then it is
+        //safe to const_cast the object, as the implicit sharing of
+        //SharedPolyPointer will prevent incorrect assignment)
+
+        T &obj_held_by_ptr = const_cast<T&>(obj);
+
+        obj_held_by_ptr.ref.ref();
+        d = &obj_held_by_ptr;
+    }
+    else
+    {
+        //the reference count is zero - this implies that
+        //this object is not held by another SharedPolyPointer,
+        //(it is probably on the stack) so it is not
+        //safe to use this object directly - point to a clone
+        //of this object.
+        d = SharedPolyPointerHelper<T>::clone(obj);
+
+        if (d)
+            d->ref.ref();
+    }
 }
 
 template <class T>

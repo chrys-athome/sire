@@ -51,7 +51,9 @@ public:
     {}
 
     Foo(const Foo &other) : d(other.d)
-    {}
+    {
+        qDebug() << "Foo is being copied!";
+    }
 
     virtual ~Foo()
     {}
@@ -92,7 +94,9 @@ public:
     {}
 
     Bar(const Bar &other) : Foo(other)
-    {}
+    {
+        qDebug() << "Bar is being copied";
+    }
 
     ~Bar()
     {}
@@ -134,7 +138,9 @@ public:
     {}
 
     Bar2(const Bar2 &other) : Foo(other)
-    {}
+    {
+        qDebug() << "Bar2 is being copied";
+    }
 
     ~Bar2()
     {}
@@ -263,13 +269,49 @@ void TestSharedPolyPointer::runTests()
 
     BOOST_CHECK( fooptr == 0 );
 
+    //see if assignment from the stack works... (it should clone
+    //an object from the stack)
+    do
+    {
+        Bar bar;
+
+        Bar *barptr = &bar;
+
+        qDebug() << "Assigning from the stack...";
+        fooptr = Bar();
+
+        BOOST_CHECK( barptr != fooptr.constData() );
+
+        qDebug() << "Construct from the stack...";
+        SharedPolyPointer<Foo> fooptr2( bar );
+
+        BOOST_CHECK( barptr != fooptr2.constData() );
+    }
+    while(false);
+
+    BOOST_CHECK( fooptr.constData() != 0 );
+
     fooptr = new Bar();
 
     BOOST_CHECK( fooptr->value() == 0 );
     BOOST_CHECK( fooptr->special() == 42 );
     BOOST_CHECK( fooptr->what() == Bar::typeName() );
 
-    SharedPolyPointer<Foo> fooptr2 = fooptr;
+    //see if assignment from another pointer reference works
+    //(it should avoid cloning)
+    qDebug() << "Construct from obj from a ptr...";
+    SharedPolyPointer<Foo> fooptr2( *fooptr );
+
+    BOOST_CHECK_EQUAL( fooptr.constData(), fooptr2.constData() );
+
+    fooptr2 = 0;
+    BOOST_CHECK( !fooptr2 );
+
+    qDebug() << "Assign from obj from a ptr...";
+    fooptr2 = *fooptr;
+    qDebug() << "Great!";
+
+    BOOST_CHECK_EQUAL( fooptr.constData(), fooptr2.constData() );
 
     BOOST_CHECK( fooptr2->value() == 0 );
     BOOST_CHECK( fooptr2->special() == 42 );
