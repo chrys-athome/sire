@@ -25,8 +25,8 @@ using namespace SireMol;
 using namespace SireBase;
 using namespace SireStream;
 
-static const RegisterMetaType<CuttingFunctionBase> r_funcbase(
-                                            "SireMol::CuttingFunctionBase", MAGIC_ONLY);
+static const RegisterMetaType<CuttingFunctionBase> r_funcbase(MAGIC_ONLY,
+                                                     "SireMol::CuttingFunctionBase");
 
 /** Serialise to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const CuttingFunctionBase&)
@@ -47,7 +47,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, CuttingFunctionBase&)
     return ds;
 }
 
-static const RegisterMetaType<CuttingFunction> r_func("SireMol::CuttingFunction");
+static const RegisterMetaType<CuttingFunction> r_func;
 
 /** Serialise to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const CuttingFunction &cutfunc)

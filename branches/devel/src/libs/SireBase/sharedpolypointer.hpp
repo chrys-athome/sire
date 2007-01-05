@@ -4,8 +4,6 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
-#include "SireError/errors.h"
-
 SIRE_BEGIN_HEADER
 
 namespace SireBase
@@ -42,6 +40,35 @@ struct SharedPolyPointerHelper
     {
         return obj.what();
     }
+
+    /** Return the typename directly */
+    static const char* typeName()
+    {
+        return T::typeName();
+    }
+};
+
+/** Small base class used to abstract template-independent
+    functions away from SharedPolyPointer */
+class SIREBASE_EXPORT SharedPolyPointerBase
+{
+public:
+    SharedPolyPointerBase()
+    {}
+
+    SharedPolyPointerBase(const SharedPolyPointerBase&)
+    {}
+
+    ~SharedPolyPointerBase();
+
+    static void save(QDataStream &ds, const char *objname,
+                     const void *data);
+
+    static void* read(QDataStream &ds, void *data, const char *objname);
+
+protected:
+    static void throwInvalidCast(const QString &newtype,
+                                 const QString &oldtype);
 };
 
 /** This is a version of QSharedDataPointer that has been modified to
@@ -57,13 +84,18 @@ struct SharedPolyPointerHelper
 
 */
 template <class T>
-class SharedPolyPointer
+class SharedPolyPointer : private SharedPolyPointerBase
 {
 
 friend QDataStream& ::operator<<<>(QDataStream&, const SharedPolyPointer<T>&);
 friend QDataStream& ::operator>><>(QDataStream&, SharedPolyPointer<T>&);
 
 public:
+
+    typedef T element_type;
+    typedef T value_type;
+    typedef T * pointer;
+
     inline void detach() { if (d && d->ref != 1) detach_helper(); }
     inline T &operator*() { detach(); return *d; }
     inline const T &operator*() const { return *d; }
@@ -87,28 +119,31 @@ public:
         return d != other.d;
     }
 
-    inline SharedPolyPointer() { d = 0; }
+    inline SharedPolyPointer() : SharedPolyPointerBase() { d = 0; }
     inline ~SharedPolyPointer() { if (d && !d->ref.deref()) delete d; }
 
     explicit SharedPolyPointer(T *data);
+    explicit SharedPolyPointer(const T &obj);
 
-    inline SharedPolyPointer(const SharedPolyPointer<T> &o) : d(o.d)
+    inline SharedPolyPointer(const SharedPolyPointer<T> &o)
+                : SharedPolyPointerBase(), d(o.d)
     {
         if (d) d->ref.ref();
     }
 
+
     template<class S>
     inline SharedPolyPointer(const SharedPolyPointer<S> &o)
-             : d( const_cast<T*>( dynamic_cast<const T*>(o.constData()) ) )
+             : SharedPolyPointerBase(),
+               d( const_cast<T*>( dynamic_cast<const T*>(o.constData()) ) )
     {
         if (o.constData())
         {
             if (d)
                 d->ref.ref();
             else
-                throw SireError::invalid_cast( QObject::tr(
-                        "Cannot cast a SharedPolyPointer of type \"%1\".")
-                            .arg( SharedPolyPointerHelper<S>::what(*o) ), CODELOC );
+                throwInvalidCast( SharedPolyPointerHelper<S>::what(*o),
+                                  SharedPolyPointerHelper<T>::typeName() );
         }
     }
 
@@ -139,9 +174,8 @@ public:
                 if (x)
                     x->ref.ref();
                 else
-                    throw SireError::invalid_cast( QObject::tr(
-                        "Cannot cast a SharedPolyPointer of type \"%1\".")
-                            .arg( SharedPolyPointerHelper<S>::what(*o) ), CODELOC );
+                    throwInvalidCast( SharedPolyPointerHelper<S>::what(*o),
+                                      SharedPolyPointerHelper<T>::typeName() );
 
                 x = qAtomicSetPtr(&d, x);
 
@@ -167,33 +201,42 @@ public:
         return *this;
     }
 
-    /** CW Mod - additional member function used to return the
-        type of the object */
+    inline SharedPolyPointer& operator=(const T &obj)
+    {
+        //look at the reference count - if the count is not zero
+        //then we will assume that this object is held by another
+        //SharedPolyPointer
+        if (obj.ref)
+        {
+            T &obj_held_by_ptr = const_cast<T&>(obj);
+
+            return this->operator=(&obj_held_by_ptr);
+        }
+        else
+        {
+            //this object is probably on the stack - it is
+            //not safe to point to the original so lets point
+            //to a clone
+            return this->operator=( SharedPolyPointerHelper<T>::clone(obj) );
+        }
+    }
+
     inline const char* what() const
     {
         return SharedPolyPointerHelper<T>::what(d);
     }
 
-    /** CW Mod - used to see whether or not the object is of
-        type 'D' */
-    template<class D>
+    template<class S>
     bool isA() const
     {
-        return dynamic_cast<const D*>(d);
+        return dynamic_cast<const S*>(this->constData()) != 0;
     }
 
-    /** CW Mod - used to return the function cast as type 'D' -
-        Must be non-null and 'isA<D>()' must return true */
-    template<class D>
-    inline D& asA() { detach(); return dynamic_cast<D&>(*d); }
-
-    /** CW Mod - used to return the function cast as type 'D' -
-        Must be non-null and 'isA<D>()' must return true */
-    template<class D>
-    inline const D& asA() const { return dynamic_cast<const D&>(*d); }
-
-    template<class D>
-    inline const D& constAsA() const { return dynamic_cast<const D&>(*d); }
+    template<class S>
+    const S& asA() const
+    {
+        return dynamic_cast<const S&>(*(this->constData()));
+    }
 
 private:
     void detach_helper();
@@ -206,6 +249,40 @@ Q_INLINE_TEMPLATE
 SharedPolyPointer<T>::SharedPolyPointer(T *adata) : d(adata)
 {
     if (d) d->ref.ref();
+}
+
+template<class T>
+Q_INLINE_TEMPLATE
+SharedPolyPointer<T>::SharedPolyPointer(const T &obj)
+{
+    //if this object is already pointed to by a SharedPolyPointer
+    //then the reference count of the QSharedData part will be
+    //greater than zero
+    if (obj.ref)
+    {
+        //this is held by another SharedPolyPointer - increase its
+        //reference count and take a pointer to it
+        //(as it is held by another SharedPolyPointer then it is
+        //safe to const_cast the object, as the implicit sharing of
+        //SharedPolyPointer will prevent incorrect assignment)
+
+        T &obj_held_by_ptr = const_cast<T&>(obj);
+
+        obj_held_by_ptr.ref.ref();
+        d = &obj_held_by_ptr;
+    }
+    else
+    {
+        //the reference count is zero - this implies that
+        //this object is not held by another SharedPolyPointer,
+        //(it is probably on the stack) so it is not
+        //safe to use this object directly - point to a clone
+        //of this object.
+        d = SharedPolyPointerHelper<T>::clone(obj);
+
+        if (d)
+            d->ref.ref();
+    }
 }
 
 template <class T>
@@ -222,11 +299,14 @@ void SharedPolyPointer<T>::detach_helper()
         delete x;
 }
 
-const SireStream::MagicID sharedpolypointer_magic = SireStream::getMagic(
-                                                      "SireBase::SharedPolyPointer");
+const MagicID sharedpolypointer_magic = getMagic("SireBase::SharedPolyPointer");
 }
 
-/** Serialise to a binary data stream */
+/** Serialise to a binary data stream
+
+    \throw SireError::unknown_type
+    \throw SireError::program_bug
+*/
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 QDataStream& operator<<(QDataStream &ds,
@@ -239,25 +319,10 @@ QDataStream& operator<<(QDataStream &ds,
     else
     {
         //get the object type name
-        QString objname = SireBase::SharedPolyPointerHelper<T>::what( *(ptr.d) );
+        QLatin1String objname( SireBase::SharedPolyPointerHelper<T>::what( *(ptr.constData()) ) );
 
-        //get the ID number of this type
-        int id = QMetaType::type( objname.toLatin1().constData() );
-
-        if ( id == 0 or not QMetaType::isRegistered(id) )
-            throw SireError::unknown_type(QObject::tr(
-                "The object with type \"%1\" does not appear to have been "
-                "registered with QMetaType. It cannot be streamed! (%2, %3)")
-                    .arg(objname).arg(id).arg(QMetaType::isRegistered(id)), CODELOC);
-
-        //save the object type name
-        ds << objname;
-
-        //use the QMetaType streaming function to save this table
-        if (not QMetaType::save(ds, id, ptr.d))
-            throw SireError::program_bug(QObject::tr(
-                "There was an error saving the table of type \"%1\"")
-                    .arg(objname), CODELOC);
+        SireBase::SharedPolyPointerBase::save(ds,
+                      SireBase::SharedPolyPointerHelper<T>::what(*(ptr.constData())), ptr.d);
     }
 
     return ds;
@@ -274,64 +339,36 @@ QDataStream& operator>>(QDataStream &ds,
 
     if (v == 1)
     {
-        //read the type name
-        QString type_name;
-        ds >> type_name;
-
-        if (type_name.isNull())
+        if (ptr.d)
         {
-            //this is a null pointer
-            ptr = 0;
+            ptr = static_cast<T*>(
+                      SireBase::SharedPolyPointerBase::read(ds, ptr.data(),
+                                     SireBase::SharedPolyPointerHelper<T>::what(*(ptr.constData()))
+                                                 )
+                                 );
         }
         else
         {
-            //get the type that represents this name
-            int id = QMetaType::type( type_name.toLatin1().constData() );
-
-            if ( id == 0 or not QMetaType::isRegistered(id) )
-                throw SireStream::version_error( QObject::tr(
-                      "Cannot deserialise an object of type \"%1\". "
-                      "Ensure that the library or module containing "
-                      "this type has been loaded and that it has been registered "
-                      "with QMetaType.").arg(type_name), CODELOC );
-
-            //if the pointer is not pointing to an object of the right type
-            //then delete it
-            if ( ptr.d != 0 and
-                 type_name !=
-                    QLatin1String(
-                        SireBase::SharedPolyPointerHelper<T>::what( *(ptr.d))
-                                 )
-               )
-            {
-                ptr = 0;
-            }
-
-            //construct a new object if one doesn't already exist
-            if (ptr.d == 0)
-            {
-                //create a default-constructed object of this type
-                ptr = static_cast<T*>(QMetaType::construct(id,0));
-
-                if (not ptr.d)
-                    throw SireError::program_bug( QObject::tr(
-                            "Could not create an object of type \"%1\" despite "
-                            "this type having been registered with QMetaType. This is "
-                            "a program bug!!!").arg(type_name), CODELOC );
-            }
-
-            //load the object from the datastream
-            if ( not QMetaType::load(ds, id, ptr.data()) )
-                throw SireError::program_bug(QObject::tr(
-                    "There was an error loading the object of type \"%1\"")
-                        .arg(type_name), CODELOC);
-
+            ptr = static_cast<T*>(
+                      SireBase::SharedPolyPointerBase::read(ds, 0, 0) );
         }
     }
     else
         throw SireStream::version_error(v, "1", "SireBase::SharedPolyPointer", CODELOC);
 
     return ds;
+}
+
+template<class T>
+inline const T* get_pointer(SireBase::SharedPolyPointer<T> const & p)
+{
+    return p.constData();
+}
+
+template<class T>
+inline T* get_pointer(SireBase::SharedPolyPointer<T> &p)
+{
+    return p.data();
 }
 
 SIRE_END_HEADER

@@ -47,29 +47,61 @@ bool FFThreadWorker::_pvt_setForceField(const ForceField &forcefield)
     return ffcalculator->setForceField(forcefield);
 }
 
-/** Move the molecule 'molecule', returning whether or not the
+/** Add the molecule 'molecule', returning whether or not the
     energy now needs to be recalculated */
-bool FFThreadWorker::_pvt_move(const Molecule &molecule)
+bool FFThreadWorker::_pvt_add(const Molecule &molecule, const ParameterMap &map)
 {
     //the FFProcessor has already waited until we are idle...
-    return ffcalculator->move(molecule);
+    return ffcalculator->add(molecule, map);
 }
 
-/** Move the residue 'residue', returning whether or not the
+/** Add the residue 'residue', returning whether or not the
     energy now needs to be recalculated */
-bool FFThreadWorker::_pvt_move(const Residue &residue)
+bool FFThreadWorker::_pvt_add(const Residue &residue, const ParameterMap &map)
 {
     //the FFProcessor has already waited until we are idle...
-    return ffcalculator->move(residue);
+    return ffcalculator->add(residue, map);
 }
 
-/** Return the molecule with ID == molid
-
-    \throw SireMol::missing_molecule
-*/
-Molecule FFThreadWorker::molecule(MoleculeID molid) const
+/** Change the molecule 'molecule', returning whether or not the
+    energy now needs to be recalculated */
+bool FFThreadWorker::_pvt_change(const Molecule &molecule)
 {
-    return ffcalculator->molecule(molid);
+    //the FFProcessor has already waited until we are idle...
+    return ffcalculator->change(molecule);
+}
+
+/** Change the residue 'residue', returning whether or not the
+    energy now needs to be recalculated */
+bool FFThreadWorker::_pvt_change(const Residue &residue)
+{
+    //the FFProcessor has already waited until we are idle...
+    return ffcalculator->change(residue);
+}
+
+/** Remove the molecule 'molecule', returning whether or not the
+    energy now needs to be recalculated */
+bool FFThreadWorker::_pvt_remove(const Molecule &molecule)
+{
+    //the FFProcessor has already waited until we are idle...
+    return ffcalculator->remove(molecule);
+}
+
+/** Remove the residue 'residue', returning whether or not the
+    energy now needs to be recalculated */
+bool FFThreadWorker::_pvt_remove(const Residue &residue)
+{
+    //the FFProcessor has already waited until we are idle...
+    return ffcalculator->remove(residue);
+}
+
+/** Replace 'oldmol' with 'newmol', returning whether or not the
+    energy now needs to be recalculated */
+bool FFThreadWorker::_pvt_replace(const Molecule &oldmol, 
+                                  const Molecule &newmol, const ParameterMap &map)
+{
+    //the FFProcessor has already waited until we are idle...
+    return ffcalculator->replace(oldmol, newmol, map);
 }
 
 /** Recalculate the energy in the background */

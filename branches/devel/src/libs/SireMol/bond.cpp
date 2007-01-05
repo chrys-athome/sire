@@ -10,7 +10,7 @@
 using namespace SireStream;
 using namespace SireMol;
 
-static const RegisterMetaType<Bond> r_bond("SireMol::Bond");
+static const RegisterMetaType<Bond> r_bond;
 
 /** Serialise a Bond to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const Bond &bond)

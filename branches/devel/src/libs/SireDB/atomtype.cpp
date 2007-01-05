@@ -11,7 +11,7 @@ using namespace SireDB;
 AtomType AtomType::wild_type(QString::null, Element(0));
 AtomType AtomType::dummy_type("DM", Element(0));
 
-static const RegisterMetaType<AtomType> r_atomtype("SireDB::AtomType");
+static const RegisterMetaType<AtomType> r_atomtype;
 
 /** Serialise to a binary data stream */
 QDataStream SIREDB_EXPORT &operator<<(QDataStream &ds, const AtomType &typ)

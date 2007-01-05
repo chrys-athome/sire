@@ -4,27 +4,14 @@
 #include "SireCAS/qhash_sirecas.h"
 
 #include "SireFF/ffbase.h"
-#include "SireFF/changedmols.h"
 
 #include "SireMol/molecule.h"
 #include "SireMol/residue.h"
-
-#include "SireDB/parametertable.h"
 
 namespace bp = boost::python;
 
 namespace SireFF
 {
-
-class MovedMols
-{
-public:
-    MovedMols()
-    {}
-
-    ~MovedMols()
-    {}
-};
 
 void
 SIREFF_EXPORT
@@ -32,53 +19,9 @@ export_FFBase()
 {
     bp::class_< FFBase, boost::noncopyable >( "FFBase", bp::no_init )
         .def(
-            "TOTAL"
-            , &::SireFF::FFBase::TOTAL
-            , bp::default_call_policies() )
-        .def(
-            "assertContains"
-            , (void ( ::SireFF::FFBase::* )( ::SireCAS::Function const & ) const)( &::SireFF::FFBase::assertContains )
-            , ( bp::arg("component") )
-            , bp::default_call_policies() )
-        .def(
-            "assertContains"
-            , (void ( ::SireFF::FFBase::* )( ::SireMol::Molecule const & ) const)( &::SireFF::FFBase::assertContains )
-            , ( bp::arg("molecule") )
-            , bp::default_call_policies() )
-        .def(
-            "assertContains"
-            , (void ( ::SireFF::FFBase::* )( ::SireMol::Residue const & ) const)( &::SireFF::FFBase::assertContains )
-            , ( bp::arg("residue") )
-            , bp::default_call_policies() )
-        .def(
-            "assertSameMajorVersion"
-            , (void ( ::SireFF::FFBase::* )( ::SireMol::Molecule const & ) const)( &::SireFF::FFBase::assertSameMajorVersion )
-            , ( bp::arg("molecule") )
-            , bp::default_call_policies() )
-        .def(
-            "assertSameMajorVersion"
-            , (void ( ::SireFF::FFBase::* )( ::SireMol::Residue const & ) const)( &::SireFF::FFBase::assertSameMajorVersion )
-            , ( bp::arg("residue") )
-            , bp::default_call_policies() )
-        .def(
-            "assertSameVersion"
-            , (void ( ::SireFF::FFBase::* )( ::SireMol::Molecule const & ) const)( &::SireFF::FFBase::assertSameVersion )
-            , ( bp::arg("molecule") )
-            , bp::default_call_policies() )
-        .def(
-            "assertSameVersion"
-            , (void ( ::SireFF::FFBase::* )( ::SireMol::Residue const & ) const)( &::SireFF::FFBase::assertSameVersion )
-            , ( bp::arg("residue") )
-            , bp::default_call_policies() )
-        .def(
-            "component"
-            , &::SireFF::FFBase::component
-            , ( bp::arg("componentid") )
-            , bp::return_value_policy< bp::copy_const_reference, bp::default_call_policies >() )
-        .def(
             "components"
             , &::SireFF::FFBase::components
-            , bp::default_call_policies() )
+            , bp::return_internal_reference<>() )
         .def(
             "energies"
             , &::SireFF::FFBase::energies
@@ -93,18 +36,21 @@ export_FFBase()
             , ( bp::arg("component") )
             , bp::default_call_policies() )
         .def(
-            "molecule"
-            , bp::pure_virtual( &::SireFF::FFBase::molecule )
-            , ( bp::arg("molid") )
+            "ID"
+            , &::SireFF::FFBase::ID
+            , bp::default_call_policies() )
+        .def(
+            "version"
+            , &::SireFF::FFBase::version
             , bp::return_value_policy< bp::copy_const_reference, bp::default_call_policies >() )
         .def(
-            "move"
-            , (bool ( ::SireFF::FFBase::* )( ::SireMol::Molecule const & ) )(&::SireFF::FFBase::move)
+            "change"
+            , (bool ( ::SireFF::FFBase::* )( ::SireMol::Molecule const & ) )(&::SireFF::FFBase::change)
             , ( bp::arg("mol") )
             , bp::default_call_policies() )
         .def(
-            "move"
-            , (bool ( ::SireFF::FFBase::* )( ::SireMol::Residue const & ) )(&::SireFF::FFBase::move)
+            "change"
+            , (bool ( ::SireFF::FFBase::* )( ::SireMol::Residue const & ) )(&::SireFF::FFBase::change)
             , ( bp::arg("res") )
             , bp::default_call_policies() )
         .def(
@@ -112,14 +58,32 @@ export_FFBase()
             , &::SireFF::FFBase::name
             , bp::return_value_policy< bp::copy_const_reference, bp::default_call_policies >() )
         .def(
-            "total"
-            , &::SireFF::FFBase::total
-            , bp::return_value_policy< bp::copy_const_reference, bp::default_call_policies >() )
+            "parameters"
+            , &::SireFF::FFBase::parameters
+            , bp::return_internal_reference<>() )
+        .def(
+            "setName"
+            , &::SireFF::FFBase::setName
+            , ( bp::arg("name") )
+            , bp::default_call_policies() )
         .def(
             "what"
             , bp::pure_virtual( &::SireFF::FFBase::what )
             , bp::default_call_policies() )
-        .staticmethod( "TOTAL" );
+    ;
+
+    bp::class_<FFBase::Components, boost::noncopyable>( "FFBase_Components", bp::no_init )
+
+        .def( "total", &FFBase::Components::total,
+                       bp::return_value_policy< bp::copy_const_reference,
+                       bp::default_call_policies >() )
+
+        .def( "describe_total", &FFBase::Components::describe_total,
+                       bp::default_call_policies() ).staticmethod("describe_total")
+    ;
+
+    bp::class_<FFBase::Parameters, boost::noncopyable>( "FFBase_Parameters", bp::no_init )
+    ;
 }
 
 }

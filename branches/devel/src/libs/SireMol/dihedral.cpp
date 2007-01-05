@@ -6,34 +6,34 @@
 
 #include "SireStream/datastream.h"
 
-using namespace SireStream;    
+using namespace SireStream;
 using namespace SireMol;
-    
-static const RegisterMetaType<Dihedral> r_dihedral("SireMol::Dihedral");
-    
+
+static const RegisterMetaType<Dihedral> r_dihedral;
+
 /** Serialise a dihedral to a datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const Dihedral &dih)
 {
-    writeHeader(ds, r_dihedral, 1) << dih.atoms[0] << dih.atoms[1] 
+    writeHeader(ds, r_dihedral, 1) << dih.atoms[0] << dih.atoms[1]
                                    << dih.atoms[2] << dih.atoms[3];
     return ds;
 }
-    
+
 /** Deserialise a dihedral from a binary datastream */
 QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, Dihedral &dih)
 {
     VersionID v = readHeader(ds, r_dihedral);
-    
+
     if (v == 1)
     {
         ds >> dih.atoms[0] >> dih.atoms[1] >> dih.atoms[2] >> dih.atoms[3];
     }
     else
         throw version_error(v, "1", r_dihedral, CODELOC);
-    
+
     return ds;
 }
-    
+
 /** Hash a dihedral */
 uint SIREMOL_EXPORT qHash(const Dihedral &dih)
 {
@@ -45,24 +45,24 @@ uint SIREMOL_EXPORT qHash(const Dihedral &dih)
 
     //assume 32bit uint
     //give 8 bits to the hash of each atom...
-    return ( atm0 << 24 ) | ( (atm1<<16) & 0x00FF0000 ) 
+    return ( atm0 << 24 ) | ( (atm1<<16) & 0x00FF0000 )
                | ( (atm2<<8) & 0x0000FF00 ) | ( atm3 & 0x000000FF );
 }
-    
+
 /** Construct a null Dihedral */
 Dihedral::Dihedral()
 {}
 
-/** Construct a Dihedral between these four AtomIndexes. The atoms must not be the same, 
+/** Construct a Dihedral between these four AtomIndexes. The atoms must not be the same,
     or else an exception will be thrown. Note that the Dihedral will sort the atoms
     so that the Dihedral between atom0-atom1-atom2-atom3 will be the same as the Dihedral
-    between atom3-atom2-atom1-atom0. 
+    between atom3-atom2-atom1-atom0.
 */
 Dihedral::Dihedral(const AtomIndex &atom0, const AtomIndex &atom1,
                    const AtomIndex &atom2, const AtomIndex &atom3)
 {
     this->create(atom0,atom1,atom2,atom3);
-}        
+}
 
 /** Construct a Dihedral from a tuple of four AtomIndex objects */
 Dihedral::Dihedral( const tuple<AtomIndex,AtomIndex,AtomIndex,AtomIndex> &tuple )
@@ -93,19 +93,19 @@ Dihedral::Dihedral(const Dihedral &other)
 {
     operator=(other);
 }
-    
+
 /** Destructor */
 Dihedral::~Dihedral()
 {}
-    
-/** Construct the Dihedral between these four AtomIndexes. The atoms must not be the same, 
+
+/** Construct the Dihedral between these four AtomIndexes. The atoms must not be the same,
     or else an exception will be thrown. Note that the Dihedral will sort the atoms
     so that the Dihedral between atom0-atom1-atom2-atom3 will be the same as the Dihedral
-    between atom3-atom2-atom1-atom0. 
-    
+    between atom3-atom2-atom1-atom0.
+
     \throw SireMol::duplicate_atoms
 */
-void Dihedral::create(const AtomIndex &atom0, const AtomIndex &atom1, 
+void Dihedral::create(const AtomIndex &atom0, const AtomIndex &atom1,
                       const AtomIndex &atom2, const AtomIndex &atom3)
 {
     if (atom0 == atom1  or  atom0 == atom2  or  atom0 == atom3)
@@ -115,7 +115,7 @@ void Dihedral::create(const AtomIndex &atom0, const AtomIndex &atom1,
                           .arg(atom0.toString(),atom1.toString())
                           .arg(atom2.toString(),atom3.toString()), CODELOC);
     }
-    
+
     if (atom0 < atom3)
     {
         atoms[0] = atom0;
@@ -135,7 +135,7 @@ void Dihedral::create(const AtomIndex &atom0, const AtomIndex &atom1,
 /** Test for equality */
 bool Dihedral::operator==(const Dihedral &other) const
 {
-    return atoms[0] == other.atoms[0] and atoms[1] == other.atoms[1] and 
+    return atoms[0] == other.atoms[0] and atoms[1] == other.atoms[1] and
            atoms[2] == other.atoms[2] and atoms[3] == other.atoms[3];
 }
 
@@ -144,42 +144,42 @@ bool Dihedral::operator!=(const Dihedral &other) const
 {
     return not operator==(other);
 }
-    
+
 /** Assignment operator */
 const Dihedral& Dihedral::operator=(const Dihedral &other)
 {
     for (int i=0; i<4; ++i)
         atoms[i] = other.atoms[i];
-    
+
     return *this;
 }
-   
+
 /** A Dihedral is greater than another if atm0 of the dihedral is greater than
     atm0 of the other dihedral. If both atm0s are equal, then the test is on atm1,
     then on atm2, then on atm3 */
 bool Dihedral::operator>(const Dihedral &other) const
 {
-    return (atoms[0] > other.atoms[0]) 
-             or ( atoms[0] == other.atoms[0] and atoms[1] > other.atoms[1] ) 
-              or (atoms[0] == other.atoms[0] and atoms[1] == other.atoms[1] 
+    return (atoms[0] > other.atoms[0])
+             or ( atoms[0] == other.atoms[0] and atoms[1] > other.atoms[1] )
+              or (atoms[0] == other.atoms[0] and atoms[1] == other.atoms[1]
                   and atoms[2] > other.atoms[2])
-              
-            or (atoms[0] == other.atoms[0] and atoms[1] == other.atoms[1] 
+
+            or (atoms[0] == other.atoms[0] and atoms[1] == other.atoms[1]
                 and atoms[2] == other.atoms[2]
                     and atoms[3] > other.atoms[3]);
 }
-    
+
 /** A Dihedral is greater than another if atm0 of the dihedral is greater than
     atm0 of the other dihedral. If both atm0s are equal, then the test is on atm1,
     then on atm2, then on atm3 */
 bool Dihedral::operator>=(const Dihedral &other) const
 {
-    return (atoms[0] > other.atoms[0]) 
-             or ( atoms[0] == other.atoms[0] and atoms[1] > other.atoms[1] ) 
-              or (atoms[0] == other.atoms[0] and atoms[1] == other.atoms[1] 
+    return (atoms[0] > other.atoms[0])
+             or ( atoms[0] == other.atoms[0] and atoms[1] > other.atoms[1] )
+              or (atoms[0] == other.atoms[0] and atoms[1] == other.atoms[1]
                   and atoms[2] > other.atoms[2])
-              
-            or (atoms[0] == other.atoms[0] and atoms[1] == other.atoms[1] 
+
+            or (atoms[0] == other.atoms[0] and atoms[1] == other.atoms[1]
                 and atoms[2] == other.atoms[2]
                     and atoms[3] >= other.atoms[3]);
 }
@@ -191,7 +191,7 @@ bool Dihedral::operator<(const Dihedral &other) const
 {
     return not operator>=(other);
 }
-    
+
 /** A Dihedral is less than another if atm0 of the dihedral is less than
     atm0 of the other dihedral. If both atm0s are equal, then the test is on atm1,
     then on atm2, then on atm3s */
@@ -199,7 +199,7 @@ bool Dihedral::operator<=(const Dihedral &other) const
 {
     return not operator>(other);
 }
-    
+
 /** Return a string representation of the Dihedral */
 QString Dihedral::toString() const
 {

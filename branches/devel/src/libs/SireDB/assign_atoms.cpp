@@ -22,7 +22,7 @@ using namespace SireStream;
 using namespace SireDB;
 using namespace SireMol;
 
-static const RegisterMetaType<assign_atoms> r_assign_atoms("SireDB::assign_atoms");
+static const RegisterMetaType<assign_atoms> r_assign_atoms;
 
 /** Serialise to a binary data stream */
 QDataStream SIREDB_EXPORT &operator<<(QDataStream &ds, const SireDB::assign_atoms &atoms)

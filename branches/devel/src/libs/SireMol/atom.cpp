@@ -8,7 +8,7 @@
 using namespace SireStream;
 using namespace SireMol;
 
-static const RegisterMetaType<Atom> r_atom("SireMol::Atom");
+static const RegisterMetaType<Atom> r_atom;
 
 /** Serialise an atom to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const Atom &atom)

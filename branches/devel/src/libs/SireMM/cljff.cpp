@@ -29,10 +29,91 @@ CLJWorkspace::~CLJWorkspace()
 {}
 
 ////////////
+//////////// Implementation of CLJFF::Parameters
+////////////
+
+/** Constructor - by default the coulomb parameters come
+    from the 'charges' property, while the LJ parameters
+    come from the 'ljs' property */
+CLJFF::Parameters::Parameters()
+      : FFBase::Parameters(), coulomb_params("coulomb", "charges"), lj_params("lj", "ljs")
+{}
+
+/** Copy constructor */
+CLJFF::Parameters::Parameters(const CLJFF::Parameters &other)
+      : FFBase::Parameters(other), coulomb_params(other.coulomb_params), lj_params(other.lj_params)
+{}
+
+/** Destructor */
+CLJFF::Parameters::~Parameters()
+{}
+
+/** Static object returned by CLJFF::parameters() */
+CLJFF::Parameters CLJFF::Parameters::default_sources;
+
+////////////
+//////////// Implementation of CLJFF::Components
+////////////
+
+/** Constructor */
+CLJFF::Components::Components() : FFBase::Components()
+{}
+
+/** Construct using the supplied forcefield */
+CLJFF::Components::Components(const FFBase &ffbase, const Symbols &symbols)
+      : FFBase::Components( ffbase, addToSymbols(symbols, x(), y(), z()) ),
+        e_coulomb(ffbase, "coulomb", x(), y(), z()),
+        e_lj(ffbase, "lj", x(), y(), z())
+{
+    this->registerComponent(e_coulomb);
+    this->registerComponent(e_lj);
+}
+
+/** Copy constructor */
+CLJFF::Components::Components(const CLJFF::Components &other)
+      : FFBase::Components(other),
+        e_coulomb(other.e_coulomb),
+        e_lj(other.e_lj)
+{}
+
+/** Destructor */
+CLJFF::Components::~Components()
+{}
+
+/** Assignment operator */
+CLJFF::Components& CLJFF::Components::operator=(const CLJFF::Components &other)
+{
+    e_coulomb = other.e_coulomb;
+    e_lj = other.e_lj;
+
+    FFBase::Components::operator=(other);
+
+    return *this;
+}
+
+/** Set the forcefield */
+void CLJFF::Components::setForceField(const FFBase &ffbase)
+{
+    *this = CLJFF::Components(ffbase);
+}
+
+/** Describe the coulomb component */
+QString CLJFF::Components::describe_coulomb()
+{
+    return QObject::tr("The total coulomb (electrostatic) energy of the forcefield.");
+}
+
+/** Describe the LJ component */
+QString CLJFF::Components::describe_lj()
+{
+    return QObject::tr("The total Lennard-Jones (van der waals) energy of the forcefield.");
+}
+
+////////////
 //////////// Implementation of CLJFF
 ////////////
 
-static const RegisterMetaType<CLJFF> r_cljff("SireMM::CLJFF", MAGIC_ONLY);
+static const RegisterMetaType<CLJFF> r_cljff(MAGIC_ONLY, "SireMM::CLJFF");
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJFF &cljff)
@@ -381,7 +462,11 @@ CLJFF::CLJFF(const Space &space, const SwitchingFunction &switchingfunction)
 CLJFF::CLJFF(const CLJFF &other)
       : FFBase(other),
         spce(other.spce), switchfunc(other.switchfunc)
-{}
+{
+    //get the pointer from the base class...
+    components_ptr = dynamic_cast<const CLJFF::Components*>( &(FFBase::components()) );
+    BOOST_ASSERT( components_ptr != 0 );
+}
 
 /** Destructor */
 CLJFF::~CLJFF()
@@ -391,23 +476,9 @@ CLJFF::~CLJFF()
     (the Coulomb and LJ components) */
 void CLJFF::registerComponents()
 {
-    this->registerComponent( CLJFF::COULOMB(), "coul",
-                             QObject::tr("The total electrostatic (coulomb) energy.") );
+    std::auto_ptr<CLJFF::Components> ptr( new CLJFF::Components(*this) );
 
-    this->registerComponent( CLJFF::LJ(), "lj",
-                             QObject::tr("The total vdw (Lennard Jones) energy.") );
-}
+    FFBase::registerComponents(ptr.get());
 
-/** Return the function representing the coulomb energy component of this
-    forcefield */
-const Function& CLJFF::coulomb() const
-{
-    return this->component(CLJFF::COULOMB());
-}
-
-/** Return the function representing the LJ energy component of this
-    forcefield */
-const Function& CLJFF::lj() const
-{
-    return this->component(CLJFF::LJ());
+    components_ptr = ptr.release();
 }

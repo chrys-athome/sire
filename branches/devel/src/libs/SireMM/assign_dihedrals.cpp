@@ -11,14 +11,14 @@ using namespace SireDB;
 using namespace SireMol;
 using namespace SireStream;
 
-static const RegisterMetaType<assign_dihedrals> r_assign_dihedrals("SireMM::assign_dihedrals");
+static const RegisterMetaType<assign_dihedrals> r_assign_dihedrals;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const assign_dihedrals &dihedrals)
 {
-    writeHeader(ds, r_assign_dihedrals, 0) 
+    writeHeader(ds, r_assign_dihedrals, 0)
         << static_cast<const assign_internals<MolDihedralInfo>&>(dihedrals);
-        
+
     return ds;
 }
 
@@ -26,19 +26,19 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const assign_dihedrals &d
 QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, assign_dihedrals &dihedrals)
 {
     VersionID v = readHeader(ds, r_assign_dihedrals);
-    
+
     if (v == 0)
     {
         ds >> static_cast<assign_internals<MolDihedralInfo>&>(dihedrals);
     }
     else
         throw version_error(v, "1", r_assign_dihedrals, CODELOC);
-    
+
     return ds;
 }
 
 /** Constructor */
-assign_dihedrals::assign_dihedrals(const DihedralGeneratorBase &generator) 
+assign_dihedrals::assign_dihedrals(const DihedralGeneratorBase &generator)
              : assign_internals<MolDihedralInfo>(generator)
 {}
 
@@ -357,13 +357,13 @@ assign_dihedrals::assign_dihedrals(const assign_dihedrals &other)
 assign_dihedrals::~assign_dihedrals()
 {}
 
-/** Assign the parameters in the table 'param_table' using 
+/** Assign the parameters in the table 'param_table' using
     the database 'database' according to the requirements contained in this object.
-    If 'overWrite()' is true then the parameters will be overwritten, 
-    otherwise only parameters for dihedrals that are currently missing 
+    If 'overWrite()' is true then the parameters will be overwritten,
+    otherwise only parameters for dihedrals that are currently missing
     parameters will be found. */
 void assign_dihedrals::assignParameters( const Molecule &molecule,
-                                         ParameterTable &param_table, 
+                                         ParameterTable &param_table,
                                          ParameterDB &database,
                                          const MatchMRData &matchmr ) const
 {

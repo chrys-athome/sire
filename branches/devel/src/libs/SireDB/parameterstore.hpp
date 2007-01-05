@@ -1185,8 +1185,7 @@ uint ParameterStore<IDX,Param>::parameters(
     return last_index;
 }
 
-const SireStream::MagicID parameterstore_magic =
-                              SireStream::getMagic("SireDB::ParameterStore");
+const MagicID parameterstore_magic = getMagic("SireDB::ParameterStore");
 
 }
 

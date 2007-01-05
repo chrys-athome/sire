@@ -14,10 +14,10 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 # Define the sources in SireUnitTest
 set ( SIREUNITTEST_SOURCES
       testangle.cpp
+      testatomselection.cpp
       testbase.cpp
       testcomplex.cpp
       testcutgroup.cpp
-      testenergy.cpp
       testffdb.cpp
       testmatch.cpp
       testperiodicbox.cpp
@@ -37,7 +37,7 @@ set ( SIREUNITTEST_RCCS
 qt4_add_resources(SIREUNITTEST_RCC_SRCS ${SIREUNITTEST_RCCS})
 
 # generate the library
-add_library (SireUnitTest 
+add_library (SireUnitTest
                     ${SIREUNITTEST_SOURCES}
                     ${SIREUNITTEST_RCC_SRCS}
             )
@@ -52,7 +52,7 @@ target_link_libraries (SireUnitTest
                        SireIO
                        SireMM
                        SireCAS
-		       SireBase
+           SireBase
                        SireUnits
                        ${BOOST_UNITTEST_LIBRARY}
                        )

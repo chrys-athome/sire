@@ -101,6 +101,7 @@ public:
     bool bonded(const AtomIndex &atom0, const AtomIndex &atom1) const;
 
     QSet<ResNum> resNumsBondedTo(ResNum resnum) const;
+    QSet<AtomIndex> atomsBondedTo(const AtomIndex &atom) const;
 
     QSet<ResNum> resNums() const;
 

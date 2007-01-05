@@ -13,14 +13,14 @@
 using namespace SireMaths;
 using namespace SireStream;
 
-static const RegisterMetaType<Quaternion> r_quat("SireMaths::Quaternion");
+static const RegisterMetaType<Quaternion> r_quat;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Quaternion &quat)
 {
     writeHeader(ds, r_quat, 1)  << quat.sc[0] << quat.sc[1]
                                 << quat.sc[2] << quat.sc[3];
-                           
+
     return ds;
 }
 
@@ -28,14 +28,14 @@ QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Quaternion &quat
 QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, Quaternion &quat)
 {
     VersionID v = readHeader(ds, r_quat);
-    
+
     if (v == 1)
     {
         ds >> quat.sc[0] >> quat.sc[1] >> quat.sc[2] >> quat.sc[3];
     }
     else
         throw version_error(v, "1", r_quat, CODELOC);
-    
+
     return ds;
 }
 
@@ -44,7 +44,7 @@ Quaternion::Quaternion()
 {
     for (int i=0; i<3; i++)
         sc[i] = 0.0;
-        
+
     sc[3] = 1.0;
 }
 
@@ -55,9 +55,9 @@ Quaternion::Quaternion(double x, double y, double z, double w)
     sc[1] = y;
     sc[2] = z;
     sc[3] = w;
-    
+
     double lgth2 = sc[0]*sc[0] + sc[1]*sc[1] + sc[2]*sc[2] + sc[3]*sc[3];
-    
+
     if (lgth2 != double(1.0))
     {
         double invlgth = 1.0 / std::sqrt(lgth2);
@@ -148,15 +148,15 @@ Vector Quaternion::rotate(const Vector &p) const
     double sx2 = sc[0]*sc[0];
     double sy2 = sc[1]*sc[1];
     double sz2 = sc[2]*sc[2];
-    
+
     double sxy = sc[0]*sc[1];
     double sxz = sc[0]*sc[2];
-    double syz = sc[1]*sc[2];    
+    double syz = sc[1]*sc[2];
 
     double swx = sc[0]*sc[3];
     double swy = sc[1]*sc[3];
     double swz = sc[2]*sc[3];
-    
+
     return Vector( 2.0*( ( 0.5 - sy2 - sz2 )*p.x()
                        + ( sxy - swz )      *p.y()
                        + ( sxz + swy )      *p.z()),
@@ -259,7 +259,7 @@ Quaternion Quaternion::fromString(const QString &str)
 Quaternion Quaternion::slerp(const Quaternion &q, double lambda) const
 {
     //slerp(q1,q2,lambda) = q1*(q1^-1*q2)^lambda
-    
+
     if (lambda <= 0.0)
       return *this;
     else if (lambda >= 1.0)
@@ -315,7 +315,7 @@ bool Quaternion::operator!=(const Quaternion &p1)
 
 bool SIREMATHS_EXPORT SireMaths::operator==(const Quaternion &p1, const Quaternion &p2)
 {
-    return p1.sc[0] == p2.sc[0] and p1.sc[1] == p2.sc[1] and 
+    return p1.sc[0] == p2.sc[0] and p1.sc[1] == p2.sc[1] and
            p1.sc[2] == p2.sc[2] and p1.sc[3] == p2.sc[3];
 }
 
@@ -325,7 +325,7 @@ bool SIREMATHS_EXPORT SireMaths::operator!=(const Quaternion &p1, const Quaterni
            p1.sc[2] != p2.sc[2] or p1.sc[3] != p2.sc[3];
 }
 
-const Quaternion SIREMATHS_EXPORT SireMaths::operator*(const Quaternion &p1, 
+const Quaternion SIREMATHS_EXPORT SireMaths::operator*(const Quaternion &p1,
                                                        const Quaternion &p2)
 {
     //quaternion multiplication - if quat = [w1, v1], then
@@ -351,17 +351,17 @@ Quaternion& Quaternion::operator=(const Quaternion &p)
 {
     for (int i=0; i<4; i++)
         sc[i] = p.sc[i];
-    
+
     return *this;
 }
 
-const Quaternion SIREMATHS_EXPORT SireMaths::operator+(const Quaternion &p1, 
+const Quaternion SIREMATHS_EXPORT SireMaths::operator+(const Quaternion &p1,
                                                        const Quaternion &p2)
 {
     return Quaternion(p1.sc[0]+p2.sc[0],p1.sc[1]+p2.sc[1],p1.sc[2]+p2.sc[2],p1.sc[3]+p2.sc[3]);
 }
 
-const Quaternion SIREMATHS_EXPORT SireMaths::operator-(const Quaternion &p1, 
+const Quaternion SIREMATHS_EXPORT SireMaths::operator-(const Quaternion &p1,
                                                        const Quaternion &p2)
 {
     return Quaternion(p1.sc[0]-p2.sc[0],p1.sc[1]-p2.sc[1],p1.sc[2]-p2.sc[2],p1.sc[3]-p2.sc[3]);

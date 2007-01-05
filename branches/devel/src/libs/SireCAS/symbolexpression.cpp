@@ -3,6 +3,8 @@
 #include "symbol.h"
 #include "function.h"
 
+#include <boost/assert.hpp>
+
 using namespace SireCAS;
 
 /** Return the symbol */
@@ -11,7 +13,7 @@ const Symbol& SymbolExpression::symbol() const
     BOOST_ASSERT( _sym.isA<Symbol>() );
     return _sym.asA<Symbol>();
 }
-    
+
 /** Return whether or not this is a function */
 bool SymbolExpression::isFunction() const
 {

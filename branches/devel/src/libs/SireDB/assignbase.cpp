@@ -13,14 +13,14 @@
 using namespace SireStream;
 using namespace SireDB;
 
-static const RegisterMetaType<AssignBase> r_assignbase("SireDB::AssignBase", MAGIC_ONLY);
+static const RegisterMetaType<AssignBase> r_assignbase(MAGIC_ONLY, "SireDB::AssignBase");
 
 /** Serialise to a binary data stream */
 QDataStream SIREDB_EXPORT &operator<<(QDataStream &ds, const SireDB::AssignBase &assign)
 {
-    writeHeader(ds, r_assignbase, 1) 
+    writeHeader(ds, r_assignbase, 1)
             << assign.paramdbs << assign.relatedbs << quint32(assign._overwrite);
-            
+
     return ds;
 }
 
@@ -28,29 +28,29 @@ QDataStream SIREDB_EXPORT &operator<<(QDataStream &ds, const SireDB::AssignBase 
 QDataStream SIREDB_EXPORT &operator>>(QDataStream &ds, SireDB::AssignBase &assign)
 {
     VersionID v = readHeader(ds, r_assignbase);
-    
+
     if (v == 1)
     {
         quint32 overwrite;
         ds >> assign.paramdbs >> assign.relatedbs >> overwrite;
-        
+
         assign._overwrite = overwrite;
     }
     else
         throw version_error(v, "1", r_assignbase, CODELOC);
-    
+
     return ds;
 }
 
-/** Construct an assigner that assigns parameters from the parameter database 
-    classes listed in parameter_databases, using the relationships stored in 
+/** Construct an assigner that assigns parameters from the parameter database
+    classes listed in parameter_databases, using the relationships stored in
     the relationship database classes listed in relationship_databases. */
 AssignBase::AssignBase() : AssignInstruction(), _overwrite(false)
 {}
 
 /** Copy constructor */
 AssignBase::AssignBase(const AssignBase &other)
-           : AssignInstruction(other), 
+           : AssignInstruction(other),
              paramdbs(other.paramdbs), relatedbs(other.relatedbs),
              _overwrite(other._overwrite)
 {}
@@ -81,37 +81,37 @@ void AssignBase::addDataBase(const using_parameters_base &parameterdbs)
 void AssignBase::addDataBase(const using_database &dbs)
 {
     //is this a set of parameter databases?
-    const using_parameters_base *parameterdbs = 
+    const using_parameters_base *parameterdbs =
                       dynamic_cast<const using_parameters_base*>(&dbs);
-    
+
     if (parameterdbs)
     {
         addDataBase( *parameterdbs );
         return;
     }
-    
+
     //is this a set of relationship databases?
-    const using_relationships_base *relatedbs = 
+    const using_relationships_base *relatedbs =
                       dynamic_cast<const using_relationships_base*>(&dbs);
-    
+
     if (relatedbs)
     {
         addDataBase( *relatedbs );
         return;
     }
-    
-    //we should never get here! (though we do get here if the 
+
+    //we should never get here! (though we do get here if the
     //class is not exported (e.g. SIREDB_EXPORT is required for SireDB
     //classes so that they can be dynamic-casted and be visible
     //outside of libSireDB
-    
+
     throw SireError::program_bug(QObject::tr(
               "Cannot work out the type of the using_database "
               "requirements (typeid == \"%1\")")
                   .arg( typeid(dbs).name() ), CODELOC);
 }
 
-/** Append a parameter database to the list - this does nothing if the 
+/** Append a parameter database to the list - this does nothing if the
     database is already in the list. */
 void AssignBase::addParameterDataBase(QString db_name)
 {
@@ -119,7 +119,7 @@ void AssignBase::addParameterDataBase(QString db_name)
         paramdbs.append(db_name);
 }
 
-/** Append a relationship database to the list - this does nothing if the 
+/** Append a relationship database to the list - this does nothing if the
     database is already in the list. */
 void AssignBase::addRelationshipDataBase(QString db_name)
 {
@@ -146,7 +146,7 @@ void AssignBase::setOverwriteParameters(bool flag)
     _overwrite = flag;
 }
 
-/** Return whether or not this instructs that the parameters 
+/** Return whether or not this instructs that the parameters
     will be overwritten on assignment. By default, they are not. */
 bool AssignBase::overwriteParameters() const
 {

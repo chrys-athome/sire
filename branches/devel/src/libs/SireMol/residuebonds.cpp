@@ -138,7 +138,7 @@ private:
 
 using namespace SireMol;
 
-static const RegisterMetaType<ResidueBonds> r_resbonds("SireMol::ResidueBonds");
+static const RegisterMetaType<ResidueBonds> r_resbonds;
 
 /** Serialise the ResidueBondsPvt to a datastream */
 QDataStream& operator<<(QDataStream &ds, const ResidueBondsPvt &bnds)

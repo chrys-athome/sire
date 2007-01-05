@@ -12,16 +12,16 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the sources in SireFF
 set ( SIREFF_SOURCES
-      changedmols.cpp
-      energy.cpp
       errors.cpp
       ffbase.cpp
       ffcalculator.cpp
+      ffcomponent.cpp
       ffprocessor.cpp
       ffthreadprocessor.cpp
       ffthreadworker.cpp
       ffworker.cpp
       forcefield.cpp
+      parametermap.cpp
     )
 
 add_library (SireFF ${SIREFF_SOURCES})
@@ -35,6 +35,7 @@ set_target_properties (SireFF PROPERTIES
 target_link_libraries (SireFF
                        SireDB
                        SireCluster
+                       SireBase
                        ${QT_QTSQL_LIBRARY}
                        )
 

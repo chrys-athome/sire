@@ -36,6 +36,9 @@ class MolResIndexID;
 class GroupIndexID;
 class MolGroupIndexID;
 
+class NewAtom;
+class Residue;
+
 class EditMol;
 class Molecule;
 
@@ -61,6 +64,8 @@ uint qHash(const SireMol::GroupIndexID&);
 uint qHash(const SireMol::MolGroupIndexID&);
 uint qHash(const SireMol::EditMol&);
 uint qHash(const SireMol::Molecule&);
+uint qHash(const SireMol::Residue&);
+uint qHash(const SireMol::NewAtom&);
 
 SIRE_END_HEADER
 

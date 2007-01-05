@@ -13,7 +13,7 @@ using namespace SireBase;
 using namespace SireMaths;
 using namespace SireStream;
 
-static const RegisterMetaType<PeriodicBox> r_box("SireVol::PeriodicBox");
+static const RegisterMetaType<PeriodicBox> r_box;
 
 /** Serialise to a binary datastream */
 QDataStream SIREVOL_EXPORT &operator<<(QDataStream &ds, const PeriodicBox &box)

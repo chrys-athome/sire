@@ -11,7 +11,7 @@ using namespace SireStream;
 using namespace SireDB;
 using namespace SireStream;
 
-static const RegisterMetaType<AtomTypeDB> r_atomtypedb("SireDB::AtomTypeDB", NO_STREAM);
+static const RegisterMetaType<AtomTypeDB> r_atomtypedb(MAGIC_ONLY, "SireDB::AtomTypeDB");
 
 /** Constructor */
 AtomTypeDB::AtomTypeDB() : AtomDB()

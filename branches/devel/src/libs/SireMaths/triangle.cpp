@@ -8,14 +8,14 @@
 using namespace SireStream;
 using namespace SireMaths;
 
-static const RegisterMetaType<Triangle> r_triangle("SireMaths::Triangle");
+static const RegisterMetaType<Triangle> r_triangle;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Triangle &triangle)
 {
-    writeHeader(ds, r_triangle, 1) 
+    writeHeader(ds, r_triangle, 1)
           << triangle.points[0] << triangle.points[1] << triangle.points[2];
-       
+
     return ds;
 }
 
@@ -23,14 +23,14 @@ QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Triangle &triang
 QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, Triangle &triangle)
 {
     VersionID v = readHeader(ds, r_triangle);
-        
+
     if (v == 1)
     {
         ds >> triangle.points[0] >> triangle.points[1] >> triangle.points[2];
     }
     else
         throw version_error(v, "1", r_triangle, CODELOC);
-        
+
     return ds;
 }
 

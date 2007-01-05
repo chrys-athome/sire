@@ -1,44 +1,39 @@
 #ifndef SireFF_FFBASE_H
 #define SireFF_FFBASE_H
 
+#include <boost/scoped_ptr.hpp>
+
+#include <QSet>
+
 #include "SireBase/sharedpolypointer.hpp"
+#include "SireBase/idmajminversion.h"
 
 #include "SireCAS/function.h"
 #include "SireCAS/values.h"
 
 #include "SireMol/moleculeid.h"
-//#include "SireMol/molresnumid.h"
 
-#include "changedmols.h"
+#include "parametermap.h"
+#include "ffcomponent.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireFF
 {
 class FFBase;
-
-namespace detail
-{
-class ComponentInfo;
-}
-
 }
 
 QDataStream& operator<<(QDataStream&, const SireFF::FFBase&);
 QDataStream& operator>>(QDataStream&, SireFF::FFBase&);
 
-QDataStream& operator<<(QDataStream&, const SireFF::detail::ComponentInfo&);
-QDataStream& operator>>(QDataStream&, SireFF::detail::ComponentInfo&);
-
 namespace SireMol
 {
 class Molecule;
 class Residue;
-}
 
-namespace SireDB
-{
-class ParameterTable;
+class MoleculeID;
+class ResNum;
+class ResID;
 }
 
 namespace SireFF
@@ -46,72 +41,24 @@ namespace SireFF
 
 class MovedMols;
 
+using SireBase::Version;
+using SireBase::IDMajMinVersion;
+
 using SireCAS::Function;
 using SireCAS::Values;
+using SireCAS::Symbol;
+using SireCAS::Symbols;
 
 using SireMol::MoleculeID;
-//using SireMol::MolResNumID;
 using SireMol::Molecule;
 using SireMol::Residue;
-
-using SireDB::ParameterTable;
-
-namespace detail
-{
-    /** Small internal class used to hold information about a
-        component of the forcefield
-
-        @author Christopher Woods
-    */
-    class ComponentInfo
-    {
-
-    friend QDataStream& ::operator<<(QDataStream&, const ComponentInfo&);
-    friend QDataStream& ::operator>>(QDataStream&, ComponentInfo&);
-
-    public:
-        ComponentInfo();
-        ComponentInfo(const QString &root, const QString &name,
-                      const QString &description);
-
-        ComponentInfo(const ComponentInfo &other);
-
-        ~ComponentInfo();
-
-        void setRoot(const QString &root);
-
-        /** Return the component's name */
-        const QString& name() const
-        {
-            return nme;
-        }
-
-        /** Return the component's description */
-        const QString& description() const
-        {
-            return desc;
-        }
-
-        /** Return the function used to represent the component */
-        const Function& function() const
-        {
-            return func;
-        }
-
-    private:
-        /** The name of the component */
-        QString nme;
-        /** A description of the component */
-        QString desc;
-        /** The function used to represent the component */
-        Function func;
-    };
-}
+using SireMol::ResNum;
+using SireMol::ResID;
 
 /**
 This class is the base class of all of the forcefield classes. The forcefields all form
 a polymorphic class hierarchy derived from this class. They are then held via
-the DynamicSharedPtr in ForceField, which provides the common user-interface to the
+the SharedPolyPointer in ForceField, which provides the common user-interface to the
 forcefields.
 
 @author Christopher Woods
@@ -136,52 +83,179 @@ public:
     /** Return a clone of this forcefield */
     virtual FFBase* clone() const=0;
 
+    /** This encapsulated class must be derived by
+        each inheriting forcefield to provide information
+        about all of the components of the forcefield */
+    class SIREFF_EXPORT Components
+    {
+    friend class FFBase;
+
+    public:
+        Components();
+        Components(const FFBase &ffield, const Symbols &symbols = Symbols());
+        Components(const Components &other);
+
+        virtual ~Components();
+
+        virtual Components* clone() const
+        {
+            return new Components(*this);
+        }
+
+        Components& operator=(const Components &other);
+
+        const FFComponent& total() const
+        {
+            return e_total;
+        }
+
+        static QString describe_total();
+
+        static Symbol x()
+        {
+            return _x;
+        }
+
+        static Symbol y()
+        {
+            return _y;
+        }
+
+        static Symbol z()
+        {
+            return _z;
+        }
+
+        static Symbols addToSymbols(Symbols symbols,
+                            const Symbol &sym0);
+        static Symbols addToSymbols(Symbols symbols,
+                            const Symbol &sym0, const Symbol &sym1);
+        static Symbols addToSymbols(Symbols symbols,
+                            const Symbol &sym0, const Symbol &sym1, const Symbol &sym2);
+        static Symbols addToSymbols(Symbols symbols,
+                            const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+                            const Symbol &sym3);
+        static Symbols addToSymbols(Symbols symbols,
+                            const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+                            const Symbol &sym3, const Symbol &sym4);
+        static Symbols addToSymbols(Symbols symbols,
+                            const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+                            const Symbol &sym3, const Symbol &sym4, const Symbol &sym5);
+        static Symbols addToSymbols(Symbols symbols,
+                            const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+                            const Symbol &sym3, const Symbol &sym4, const Symbol &sym5,
+                            const Symbol &sym6);
+        static Symbols addToSymbols(Symbols symbols,
+                            const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+                            const Symbol &sym3, const Symbol &sym4, const Symbol &sym5,
+                            const Symbol &sym6, const Symbol &sym7);
+        static Symbols addToSymbols(Symbols symbols,
+                            const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+                            const Symbol &sym3, const Symbol &sym4, const Symbol &sym5,
+                            const Symbol &sym6, const Symbol &sym7, const Symbol &sym8);
+        static Symbols addToSymbols(Symbols symbols,
+                            const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+                            const Symbol &sym3, const Symbol &sym4, const Symbol &sym5,
+                            const Symbol &sym6, const Symbol &sym7, const Symbol &sym8,
+                            const Symbol &sym9);
+
+        bool contains(const FFComponent &component) const
+        {
+            return symbolids.contains(component.ID());
+        }
+
+        void assertContains(const FFComponent &component) const;
+
+    protected:
+        virtual void setForceField(const FFBase &ffbase);
+
+        void registerComponent(const FFComponent &component);
+
+    private:
+        static Symbol _x;
+        static Symbol _y;
+        static Symbol _z;
+
+        /** The FFComponent representing the total energy
+            of the forcefield */
+        FFComponent e_total;
+
+        /** The SymbolIDs of all of the functions that
+            represent the components */
+        QSet<SireCAS::SymbolID> symbolids;
+    };
+
+    /** Return the object describing the components of this
+        forcefield */
+    const FFBase::Components& components() const
+    {
+        return *components_ptr;
+    }
+
+    /** This encapsulated class must be derived by all
+        inheriting classes to provide the object
+        that contains information about the parameters
+        used by the forcefield, and the default source
+        properties from which to obtain those parameters */
+    class SIREFF_EXPORT Parameters
+    {
+    public:
+        Parameters();
+        Parameters(const Parameters &other);
+        virtual ~Parameters();
+    };
+
+    virtual const FFBase::Parameters& parameters() const=0;
+
     const QString& name() const;
+    void setName(const QString &name);
 
     double energy();
     double energy(const Function &component);
 
     Values energies();
 
-    static int TOTAL()
-    {
-        return 0;
-    }
+    virtual bool change(const Molecule &mol);
+    virtual bool change(const Residue &res);
 
-    const Function& total() const;
+    virtual bool add(const Molecule &molecule,
+                     const ParameterMap &map = ParameterMap());
+    virtual bool add(const Residue &residue,
+                     const ParameterMap &map = ParameterMap());
 
-    const Function& component(int componentid) const;
-    QList<Function> components() const;
+    virtual bool remove(const Molecule &molecule);
+    virtual bool remove(const Residue &residue);
 
-    virtual const Molecule& molecule(MoleculeID molid) const=0;
-    //virtual const Residue& residue(const MolResNumID &molresid) const=0;
+    virtual bool replace(const Molecule &oldmol,
+                         const Molecule &newmol,
+                         const ParameterMap &map = ParameterMap());
 
-    virtual bool move(const Molecule &mol)=0;
-    virtual bool move(const Residue &res)=0;
+    virtual bool contains(const Molecule &molecule) const;
+    virtual bool contains(const Residue &residue) const;
+
+    virtual Molecule molecule(MoleculeID molid) const;
+
+    virtual Residue residue(MoleculeID molid, ResNum resnum) const;
+    virtual Residue residue(MoleculeID molid, ResID resid) const;
+    virtual Residue residue(MoleculeID molid, const QString &resname) const;
+
+    virtual Molecule molecule(const Molecule &mol) const;
+    virtual Residue residue(const Residue &res) const;
 
     bool isDirty() const;
     bool isClean() const;
 
-    void assertContains(const Function &component) const;
-
-    void assertContains(const Molecule &molecule) const;
-    void assertContains(const Residue &residue) const;
-
-    void assertSameMajorVersion(const Molecule &molecule) const;
-    void assertSameMajorVersion(const Residue &residue) const;
-
-    void assertSameVersion(const Molecule &molecule) const;
-    void assertSameVersion(const Residue &residue) const;
+    quint32 ID() const;
+    const Version& version() const;
 
 protected:
-    void registerComponent(int id, const QString &name,
-                           const QString &description);
+    void registerComponents(FFBase::Components *components);
 
-    void setComponent(const Function &comp, double nrg);
-    void changeComponent(const Function &comp, double delta);
+    void incrementMajorVersion();
+    void incrementMinorVersion();
 
-    void addToRegister(const Molecule &molecule);
-    void addToRegister(const Residue &residue);
+    void setComponent(const FFComponent &comp, double nrg);
+    void changeComponent(const FFComponent &comp, double delta);
 
     void setDirty();
     void setClean();
@@ -195,38 +269,36 @@ protected:
     virtual void recalculateEnergy()=0;
 
 private:
-    void registerComponents();
-
     /** The name of this forcefield - this may be used to give a unique
         name to all of the component-symbols in this forcefield. */
     QString ffname;
 
-    /** Hash mapping component ID numbers to their function */
-    QHash< int, detail::ComponentInfo > id_to_component;
+    /** The ID number and version numbers of this forcefield. The
+        major version number changes whenever the number of molecules
+        in the forcefield changes - the minor number changes whenever
+        the molecules themselves change (move or change parameters) */
+    IDMajMinVersion id_and_version;
 
     /** All of the cached energy components in this forcefield, indexed
         by their symbol ID number (includes the total energy) */
     Values nrg_components;
 
-    /** Set of MoleculeID numbers of the molecules that are in this forcefield */
-    QSet<MoleculeID> mols_in_ff;
-
-    /** Set of MolResNumID numbers of residues that are in this forcefield that
-        are here without their parent molecules */
-    //QSet<MolResNumID> res_in_ff;
+    /** Active pointer to the object containing the information about all
+        of the components of this forcefield */
+    boost::scoped_ptr<FFBase::Components> components_ptr;
 
     /** Whether or not this forcefield is dirty (requires an update) */
     bool isdirty;
 };
 
 /** Set the energy value of the component 'comp' */
-inline void FFBase::setComponent(const Function &comp, double nrg)
+inline void FFBase::setComponent(const FFComponent &comp, double nrg)
 {
     nrg_components.set(comp,nrg);
 }
 
 /** Change the existing value of the component 'comp' by delta */
-inline void FFBase::changeComponent(const Function &comp, double delta)
+inline void FFBase::changeComponent(const FFComponent &comp, double delta)
 {
     nrg_components.set( comp, delta + nrg_components.value(comp) );
 }
@@ -243,6 +315,34 @@ inline bool FFBase::isDirty() const
 inline bool FFBase::isClean() const
 {
     return not isDirty();
+}
+
+/** Internal function used by derived classes to increment the major
+    number of the forcefield */
+inline void FFBase::incrementMajorVersion()
+{
+    id_and_version.incrementMajor();
+    setDirty();
+}
+
+/** Internal function used by derived classes to increment the minor
+    number of the forcefield */
+inline void FFBase::incrementMinorVersion()
+{
+    id_and_version.incrementMinor();
+    setDirty();
+}
+
+/** Return the ID number of the forcefield */
+inline quint32 FFBase::ID() const
+{
+    return id_and_version.ID();
+}
+
+/** Return the version number of the forcefield */
+inline const Version& FFBase::version() const
+{
+    return id_and_version.version();
 }
 
 }

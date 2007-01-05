@@ -17,7 +17,7 @@ using namespace SireMM;
 using namespace SireDB;
 using namespace SireCAS;
 
-static const RegisterMetaType<DihedralDB> r_dihedraldb("SireMM::DihedralDB", NO_STREAM);
+static const RegisterMetaType<DihedralDB> r_dihedraldb(NO_STREAM);
 
 /** Constructor */
 DihedralDB::DihedralDB() : Term14DB(), InternalDB<MolDihedralInfo>(),

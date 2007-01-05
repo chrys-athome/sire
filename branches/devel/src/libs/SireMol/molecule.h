@@ -21,6 +21,7 @@
 #include <QSet>
 #include <QHash>
 
+#include "idtypes.h"
 #include "atomindex.h"
 
 SIRE_BEGIN_HEADER
@@ -57,6 +58,7 @@ namespace SireMol
 class EditMol;
 
 class MoleculeData;
+class NewAtom;
 class Residue;
 class CutGroup;
 class Atom;
@@ -68,14 +70,13 @@ class ResNum;
 class AtomIndex;
 class CutGroupID;
 
+class Property;
+class PropertyBase;
+
 class Bond;
 class Angle;
 class Dihedral;
 class Improper;
-
-class CGAtomID;
-class ResNumAtomID;
-class ResIDAtomID;
 
 class AtomIDGroup;
 
@@ -106,7 +107,9 @@ MoleculeData class.
 class SIREMOL_EXPORT Molecule
 {
 
+friend class NewAtom; //so it can see the MoleculeData object
 friend class Residue; //so it can call the MoleculeData constructor
+
 friend QDataStream& ::operator<<(QDataStream&, const Molecule&);
 friend QDataStream& ::operator>>(QDataStream&, Molecule&);
 
@@ -115,6 +118,7 @@ public:
     Molecule();
 
     Molecule(const Residue &residue);
+    Molecule(const NewAtom &atom);
 
     Molecule(const Molecule &other);
 
@@ -144,11 +148,8 @@ public:
     Residue operator[](ResID resid) const;
     Residue operator[](ResNum resnum) const;
 
-    Atom operator[](AtomID atomid) const;
     Atom operator[](const CGAtomID &cgatomid) const;
-    Atom operator[](const ResNumAtomID &resatomid) const;
-    Atom operator[](const ResIDAtomID &resatomid) const;
-    Atom operator[](const AtomIndex &atm) const;
+    Atom operator[](const IDMolAtom &atomid) const;
    /////////////////////////////////////////////////////////
 
 
@@ -170,14 +171,27 @@ public:
    /////////////////////////////////////////////////////////
 
 
+   ///// Getting and setting properties ////////////////////
+    const Property& getProperty(const QString &name) const;
+
+    void setProperty(const QString &name, const PropertyBase &value);
+    void addProperty(const QString &name, const PropertyBase &value);
+
+    void setProperty(const QString &name, const Property &value);
+    void addProperty(const QString &name, const Property &value);
+
+    void setProperty(const QString &name, const QVariant &value);
+    void addProperty(const QString &name, const QVariant &value);
+
+    const QHash<QString,Property>& properties() const;
+   /////////////////////////////////////////////////////////
+
+
    ///// Querying the molecule /////////////////////////////
     CutGroup at(CutGroupID cgid) const;
 
-    Atom at(AtomID atomid) const;
-    Atom at(const ResNumAtomID &resatomid) const;
-    Atom at(const ResIDAtomID &resatomid) const;
     Atom at(const CGAtomID &cgatomid) const;
-    Atom at(const AtomIndex &atm) const;
+    Atom at(const IDMolAtom &atomid) const;
 
     MoleculeBonds connectivity() const;
 
@@ -202,25 +216,11 @@ public:
 
     CoordGroup coordGroup(CutGroupID id) const;
 
-    Atom atom(AtomID atomid) const;
-    Atom atom(CutGroupID cgid, AtomID atomid) const;
     Atom atom(const CGAtomID &cgatmid) const;
-    Atom atom(ResNum resnum, AtomID atomid) const;
-    Atom atom(const ResNumAtomID &resatomid) const;
-    Atom atom(ResID resid, AtomID atomid) const;
-    Atom atom(const ResIDAtomID &resatomid) const;
-    Atom atom(const AtomIndex &atm) const;
-    Atom atom(ResNum resnum, const QString &atomname) const;
+    Atom atom(const IDMolAtom &atomid) const;
 
-    Vector coordinates(AtomID atomid) const;
-    Vector coordinates(CutGroupID cgid, AtomID atomid) const;
     Vector coordinates(const CGAtomID &cgatomid) const;
-    Vector coordinates(ResNum resnum, AtomID atomid) const;
-    Vector coordinates(const ResNumAtomID &resatomid) const;
-    Vector coordinates(ResID resid, AtomID atomid) const;
-    Vector coordinates(const ResIDAtomID &resatomid) const;
-    Vector coordinates(const AtomIndex &atm) const;
-    Vector coordinates(ResNum resnum, const QString &atomname) const;
+    Vector coordinates(const IDMolAtom &atomid) const;
 
     QVector<Atom> atoms() const;
     QVector<Vector> coordinates() const;
@@ -284,14 +284,8 @@ public:
     bool contains(ResNum resnum) const;
     bool contains(ResID resid) const;
 
-    bool contains(ResNum resnum, const QString &atomname) const;
-    bool contains(const AtomIndex &atm) const;
-    bool contains(CutGroupID cgid, AtomID atomid) const;
     bool contains(const CGAtomID &cgatomid) const;
-    bool contains(ResNum resnum, AtomID atomid) const;
-    bool contains(const ResNumAtomID &resatomid) const;
-    bool contains(ResID resid, AtomID atomid) const;
-    bool contains(const ResIDAtomID &resatomid) const;
+    bool contains(const IDMolAtom &atomid) const;
 
     bool contains(const Bond &bond) const;
 

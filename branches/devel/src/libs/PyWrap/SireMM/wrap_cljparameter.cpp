@@ -20,7 +20,7 @@ using namespace SirePy;
 namespace SireMM
 {
 
-void  
+void
 SIREMM_EXPORT
 export_CLJParameter()
 {
@@ -35,6 +35,9 @@ export_CLJParameter()
         .def( self != self )
         .def( "dummy", &ChargeParameter::dummy ).staticmethod("dummy")
     ;
+
+    //allow a double to be automatically converted into a ChargeParameter
+    implicitly_convertible<double, ChargeParameter>();
 
     class_<LJParameter>("LJParameter", init<>())
         .def(init<double, double>())
@@ -59,7 +62,7 @@ export_CLJParameter()
         .def("fromRMinAndEpsilon", &LJParameter::fromRMinAndEpsilon)
                              .staticmethod("fromRMinAndEpsilon")
     ;
-   
+
     class_<CLJParameter, bases<ChargeParameter,LJParameter> >("CLJParameter", init<>())
         .def( init<const ChargeParameter&, double, double>() )
         .def( init<double, double, double>() )
@@ -72,10 +75,7 @@ export_CLJParameter()
         .def("isDummy", &CLJParameter::isDummy)
         .def("dummy", &CLJParameter::dummy).staticmethod("dummy")
     ;
-    
-    //allow a double to be automatically converted into a ChargeParameter
-    implicitly_convertible<double, ChargeParameter>();
-    
+
     class_<CLJPair>("CLJPair", init<>())
         .def(init<double, double, double>())
         .def("__str__", &CLJPair::toString)

@@ -6,13 +6,13 @@
 using namespace SireStream;
 using namespace SireMaths;
 
-static const RegisterMetaType<Complex> r_complex("SireMaths::Complex");
+static const RegisterMetaType<Complex> r_complex;
 
 /** Serialise a Complex to a binary datastream */
 QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const SireMaths::Complex &z)
 {
     writeHeader(ds, r_complex, 1) << z.real() << z.imag();
-    
+
     return ds;
 }
 
@@ -29,6 +29,6 @@ QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, SireMaths::Complex &z)
     }
     else
         throw version_error(v, "1", r_complex, CODELOC);
-    
+
     return ds;
 }

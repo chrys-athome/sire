@@ -8,13 +8,13 @@
 using namespace SireStream;
 using namespace SireMM;
 
-static const RegisterMetaType<LJParameter> r_ljparam("SireMM::LJParameter");
+static const RegisterMetaType<LJParameter> r_ljparam;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const LJParameter &ljparam)
 {
     writeHeader(ds, r_ljparam, 1) << ljparam.sqrtsig << ljparam.sqrteps;
-    
+
     return ds;
 }
 
@@ -22,14 +22,14 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const LJParameter &ljpara
 QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, LJParameter &ljparam)
 {
     VersionID v = readHeader(ds, r_ljparam);
-    
+
     if (v == 1)
     {
         ds >> ljparam.sqrtsig >> ljparam.sqrteps;
     }
     else
         throw version_error(v, "1", r_ljparam, CODELOC);
-    
+
     return ds;
 }
 
@@ -43,7 +43,7 @@ LJParameter::LJParameter(const LJParameter &other)
 {}
 
 /** Construct a LJParameter that has the specified sigma and epsilon */
-LJParameter::LJParameter(double s, double e) 
+LJParameter::LJParameter(double s, double e)
             : sqrtsig( std::sqrt(std::abs(s)) ), sqrteps( std::sqrt(std::abs(e)) )
 {
     if ( SireMaths::isZero(sqrtsig) or SireMaths::isZero(sqrteps) )
@@ -76,7 +76,7 @@ double LJParameter::B() const
 }
 
 /** Return the LJ 'rmin' parameter - this is the location of the minimum.
- 
+
     rmin = 2^(1/6) * sigma
 */
 double LJParameter::rmin() const
@@ -92,8 +92,8 @@ QString LJParameter::toString() const
 }
 
 /** Return a LJ parameter that corresponds to the passed values of sigma and epsilon,
- 
-    E(r) = 4 epsilon [ (sigma/r)^12 - (sigma/r)^6 ] 
+
+    E(r) = 4 epsilon [ (sigma/r)^12 - (sigma/r)^6 ]
 */
 LJParameter LJParameter::fromSigmaAndEpsilon(double sigma, double epsilon)
 {
@@ -107,29 +107,29 @@ LJParameter LJParameter::fromSigmaAndEpsilon(double sigma, double epsilon)
 LJParameter LJParameter::fromAAndB(double a, double b)
 {
     // A = 4 epsilon sigma^12,  B = 4 epsilon sigma^6
-    
+
     // epsilon = A / (4 sigma^12) = B / (4 sigma^6)
     //           A / B  = (4 sigma^12) / (4 sigma^6)
     //           sigma = ( A / B )^(1/6)
-    
+
     //           epsilon = B / (4 (A/B) )
     //                   = B^2 / 4A
-    
+
     return LJParameter( std::pow( (a/b), (1.0/6.0) ),
                         (b*b) / (4.0*a) );
 }
 
-/** Return a LJ parameter that corresponds to the curve that has a minimum at 
-    rmin, and a well-depth of epsilon. 
-    
+/** Return a LJ parameter that corresponds to the curve that has a minimum at
+    rmin, and a well-depth of epsilon.
+
     E(r) = 4 epilson [ (sigma/r)^12 - (sigma/r)^6 ], where
-    
+
     rmin = 2^(1/6) sigma
 */
 LJParameter LJParameter::fromRMinAndEpsilon(double rmin, double epsilon)
 {
     //sigma = rmin / 2^(1/6) - 2^(1/6) = 1.122462048309372981439932526193103967671
-    
+
     return LJParameter( rmin / double(1.122462048309372981439932526193103967671),
                         epsilon );
 }

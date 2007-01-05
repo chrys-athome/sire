@@ -10,7 +10,7 @@
 using namespace SireStream;
 using namespace SireMM;
 
-static const RegisterMetaType<MolDihedralInfo> r_moldihinfo("SireMM::MolDihedralInfo");
+static const RegisterMetaType<MolDihedralInfo> r_moldihinfo;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const MolDihedralInfo &info)

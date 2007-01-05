@@ -10,6 +10,7 @@
 //#endif
 
 #include "SireError/exception.h"
+#include "SireError/version_error.h"
 
 #include <stdexcept>
 #include <QObject>
@@ -436,6 +437,31 @@ public:
     }
 };
 
+/** This exception is thrown whenever an invalid operation is requested
+
+    @author Christopher Woods
+*/
+class SIREERROR_EXPORT invalid_operation : public SireError::exception
+{
+public:
+    invalid_operation() : exception()
+    {}
+
+    invalid_operation(QString err, QString place=QString::null) : exception(err,place)
+    {}
+
+    invalid_operation(const invalid_operation &other) : exception(other)
+    {}
+
+    ~invalid_operation() throw()
+    {}
+
+    const char* what() const throw()
+    {
+        return "SireError::invalid_operation";
+    }
+};
+
 /** This exception is thrown whenever the program tries to use code that has yet
     to be written. This is definitely a programming bug, and results from the use
     of stubs that I have forgotton to expand!
@@ -515,33 +541,6 @@ public:
     }
 };
 
-/** This exception is thrown whenever there is an error with a
-    version number
-
-    @author Christopher Woods
-*/
-class SIREERROR_EXPORT version_error : public exception
-{
-public:
-    version_error() : exception()
-    {}
-
-    version_error(QString err, QString place = QString::null)
-                  : exception(err,place)
-    {}
-
-    version_error(const version_error &other) : exception(other)
-    {}
-
-    ~version_error() throw()
-    {}
-
-    const char* what() const throw()
-    {
-        return "SireError::version_error";
-    }
-};
-
 /** This exception is thrown whenever there is an error with an
     ID number
 
@@ -588,7 +587,6 @@ Q_DECLARE_METATYPE(SireError::invalid_state)
 Q_DECLARE_METATYPE(SireError::incomplete_code)
 Q_DECLARE_METATYPE(SireError::std_exception)
 Q_DECLARE_METATYPE(SireError::unknown_exception)
-Q_DECLARE_METATYPE(SireError::version_error)
 
 SIRE_END_HEADER
 

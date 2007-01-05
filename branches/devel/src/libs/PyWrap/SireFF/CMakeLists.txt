@@ -18,13 +18,11 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs
 # Define the sources in SireFF
 set ( WRAPFF_SOURCES
       ffbase.py.cpp
+      ffcomponent.py.cpp
       ffprocessor.py.cpp
       ffworker.py.cpp
       forcefield.py.cpp
-      wrap_energybase.cpp
-      wrap_energy.cpp
-      wrap_energypack.cpp
-      wrap_energytype.cpp
+      parametermap.py.cpp
     )
 
 # Create the library that holds all of the class wrappers
@@ -32,16 +30,16 @@ add_library (PyWrap_SireFF ${WRAPFF_SOURCES})
 
 set_target_properties (PyWrap_SireFF PROPERTIES
                        VERSION ${SIRE_VERSION}
-		           SOVERSION ${SIRE_VERSION_MAJOR}
-		       )
-		       
+               SOVERSION ${SIRE_VERSION_MAJOR}
+           )
+
 target_link_libraries (PyWrap_SireFF
                        SireFF
                        PyWrap_SireMol
                        PyWrap_SireDB
                        PyWrap_SireCAS
                        ${BOOST_PYTHON_LIBRARY}
-		      )
+          )
 
 # Install the wrappers library with the other Sire libraries
 install( TARGETS PyWrap_SireFF
@@ -73,5 +71,5 @@ install( TARGETS PythonWrapping_SireFF
        )
 
 install( FILES __init__.py
-         DESTINATION ${INSTALLDIR} 
+         DESTINATION ${INSTALLDIR}
        )

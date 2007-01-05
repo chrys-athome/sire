@@ -24,12 +24,14 @@ namespace SireMM
 {
 
 using SireFF::FFBase;
-
-using SireCAS::Function;
+using SireFF::ParameterName;
+using SireFF::FFComponent;
 
 using SireVol::Space;
 using SireVol::DistMatrix;
 using SireVol::CoordGroup;
+
+using SireCAS::Symbols;
 
 namespace detail
 {
@@ -85,22 +87,90 @@ public:
 
     ~CLJFF();
 
+    class SIREMM_EXPORT Components : public FFBase::Components
+    {
+    public:
+        Components();
+        Components(const FFBase &ffbase, const Symbols &symbols = Symbols());
+
+        Components(const Components &other);
+
+        ~Components();
+
+        Components& operator=(const Components &other);
+
+        Components* clone() const
+        {
+            return new Components(*this);
+        }
+
+        const FFComponent& coulomb() const
+        {
+            return e_coulomb;
+        }
+
+        const FFComponent& lj() const
+        {
+            return e_lj;
+        }
+
+        static QString describe_coulomb();
+        static QString describe_lj();
+
+    protected:
+        void setForceField(const FFBase &ffbase);
+
+    private:
+        /** The coulomb component */
+        FFComponent e_coulomb;
+        /** The LJ component */
+        FFComponent e_lj;
+    };
+
+    class SIREMM_EXPORT Parameters : public FFBase::Parameters
+    {
+    public:
+        Parameters();
+        Parameters(const Parameters &other);
+
+        ~Parameters();
+
+        /** Return the default source of the coulomb parameters */
+        const ParameterName& coulomb() const
+        {
+            return coulomb_params;
+        }
+
+        /** Return the default source of the LJ parameters */
+        const ParameterName& lj() const
+        {
+            return lj_params;
+        }
+
+        static Parameters default_sources;
+
+    private:
+        /** The name and default source of the coulomb parameters */
+        ParameterName coulomb_params;
+        /** The name and default source of the LJ parameters */
+        ParameterName lj_params;
+    };
+
+    const Parameters& parameters() const
+    {
+        return CLJFF::Parameters::default_sources;
+    }
+
     const Space& space() const;
 
     const SwitchingFunction& switchingFunction() const;
 
-    static int COULOMB()
+    /** Return the object describing the components of this
+        forcefield */
+    const CLJFF::Components& components() const
     {
-        return 1;
+        return *components_ptr;
     }
-
-    static int LJ()
-    {
-        return 2;
-    }
-
-    const Function& coulomb() const;
-    const Function& lj() const;
 
 protected:
     static void calculateEnergy(const CoordGroup &group0,
@@ -154,6 +224,10 @@ private:
 
     /** The switching function used to truncate the CLJ interactions */
     SwitchingFunction switchfunc;
+
+    /** Pointer to the object containing the components of
+        this forcefield */
+    const CLJFF::Components *components_ptr;
 };
 
 /** Return the space in which this calculation is performed (the volume

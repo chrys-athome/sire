@@ -20,11 +20,12 @@ void export_QHash();
 void export_QMap();
 void export_QVector();
 void export_QStringList();
+void export_QVariant();
 
 namespace SireQt
 {
 
-void SIRE_EXPORT export_SireQt()
+void SIREQT_EXPORT export_SireQt()
 {
     export_QtGlobal();
     export_QChar();
@@ -41,6 +42,7 @@ void SIRE_EXPORT export_SireQt()
     export_QMap();
     export_QVector();
     export_QStringList();
+    export_QVariant();
 }
 
 }

@@ -1,21 +1,20 @@
 
 #include "SireMol/errors.h"
 
-#include "SireStream/datastream.h"
-
-using namespace SireStream;
 using namespace SireMol;
 
-static const RegisterMetaType<siremol_error> r_mol("SireMol::siremol_error");
-static const RegisterMetaType<missing_atom> r_matom("SireMol::missing_atom");
-static const RegisterMetaType<missing_group> r_mgrp("SireMol::missing_group");
-static const RegisterMetaType<duplicate_atom> r_datom("SireMol::duplicate_atom");
-static const RegisterMetaType<missing_molecule> r_mmol("SireMol::missing_molecule");
-static const RegisterMetaType<missing_residue> r_mres("SireMol::missing_residue");
-static const RegisterMetaType<missing_cutgroup> r_mcgrp("SireMol::missing_cutgroup");
-static const RegisterMetaType<duplicate_residue> r_dres("SireMol::duplicate_residue");
-static const RegisterMetaType<duplicate_molecule> r_dmol("SireMol::duplicate_molecule");
-static const RegisterMetaType<template_error> r_tmplerr("SireMol::template_error");
-static const RegisterMetaType<anchor_error> r_ancerr("SireMol::anchor_error");
-static const RegisterMetaType<ring_error> r_ringerr("SireMol::ring_error");
-static const RegisterMetaType<incompatible_molecule> r_incompat("SireMol::incompatible_molecule");
+static const RegisterMetaType<siremol_error> r_mol;
+static const RegisterMetaType<missing_atom> r_matom;
+static const RegisterMetaType<missing_group> r_mgrp;
+static const RegisterMetaType<duplicate_atom> r_datom;
+static const RegisterMetaType<missing_molecule> r_mmol;
+static const RegisterMetaType<missing_residue> r_mres;
+static const RegisterMetaType<missing_cutgroup> r_mcgrp;
+static const RegisterMetaType<duplicate_residue> r_dres;
+static const RegisterMetaType<duplicate_molecule> r_dmol;
+static const RegisterMetaType<template_error> r_tmplerr;
+static const RegisterMetaType<anchor_error> r_ancerr;
+static const RegisterMetaType<ring_error> r_ringerr;
+static const RegisterMetaType<incompatible_molecule> r_incompat;
+static const RegisterMetaType<missing_property> r_mprop;
+static const RegisterMetaType<duplicate_property> r_dprop;

@@ -8,13 +8,13 @@
 using namespace SireMaths;
 using namespace SireStream;
 
-static const RegisterMetaType<Line> r_line("SireMaths::Line");
+static const RegisterMetaType<Line> r_line;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const SireMaths::Line &line)
 {
     writeHeader(ds, r_line, 1) << line.points[0] << line.points[1];
-    
+
     return ds;
 }
 
@@ -22,14 +22,14 @@ QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const SireMaths::Line 
 QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, SireMaths::Line &line)
 {
     VersionID v = readHeader(ds, r_line);
-    
+
     if (v == 1)
     {
         ds >> line.points[0] >> line.points[1];
     }
     else
         throw version_error(v, "1", r_line, CODELOC);
-    
+
     return ds;
 }
 

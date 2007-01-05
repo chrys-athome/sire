@@ -19,7 +19,7 @@ namespace SireMol
 
 /**
 Atom is a holds all of the data for a single atom. An Atom is designed for very fast, primarily read-only access. Atoms are grouped together into CutGroups, with the CutGroups storing the atoms in very fast AtomArrays.
- 
+
 The Atom is formed as the child of AtomIndex, Element and Vector. This is so that an Atom is implicitly casted to an AtomIndex, Element or Vector whenever it needs to use this functionality (e.g. it will cast to be a vector for geometry functions, to an AtomIndex when trying to locate it in a molecule, or as an Element whenever querying the element database). The functions 'index()', 'element()' and 'vector()' perform a static cast to explicitly cast the Atom into one of its base types.
 
 The atom also holds an 'atom number'. This number is only used to provide an identifying number to the atom, and will normally come from the coordinate file that was used to generate the coordinates of the atom (e.g. this will correspond to the number in the second column of the PDB file 'ATOM' or 'HETATM' lines). This atom number is in general *not used* within this program, and is only provided so that the atom number read in from the initial coordinates file can be returned when the atom is written out. There are a few small bits of code that use the atom number, e.g. the PSF file reader, which uses the atom number to assign parameters. In general, it is not safe to use the atom number to identify an atom, as it is not guaranteed to be unique within a molecule (unlike the AtomIndex), and there is also no guarantee that the atom numbers are contiguous or consistent within a molecule.
@@ -61,43 +61,43 @@ public:
     Atom(AtomNum atmnum, const AtomIndex &atomindex, const Element &element, const Vector &coords);
     Atom(AtomNum atmnum, const Atom &other);
     Atom(AtomNum atmnum, const Atom &other, ResNum resnum);
-    
+
     Atom(const QString &name);
     Atom(const QString &name, const QString &element);
-    
+
     Atom(const QString &name, ResNum resnum);
     Atom(const QString &name, ResNum resnum, const QString &element);
-    
+
     Atom(const AtomIndex &atm);
-    
+
     Atom(const QString &name, const Vector &coords);
     Atom(const QString &name, const QString &element, const Vector &coords);
     Atom(const QString &name, const Atom &other);
-    
+
     Atom(AtomNum num, const QString &name);
     Atom(AtomNum num, const QString &name, const QString &element);
-    
+
     Atom(AtomNum num, const QString &name, const Vector &coords);
     Atom(AtomNum num, const QString &name, const QString &element, const Vector &coords);
-        
+
     Atom(const AtomInfo &atominfo, const Vector &coords);
-        
+
     ~Atom();
 
     Atom& operator=(const Atom &other);
     Atom& operator=(const Vector &other);
-    
+
     bool operator==(const Atom &other) const;
     bool operator!=(const Atom &other) const;
-    
+
     const AtomInfo& info() const;
     AtomInfo& info();
-    
+
     const Vector& vector() const;
     Vector& vector();
-    
+
     QString toString() const;
-    
+
     static bool withinBondRadii(const Atom &atm0, const Atom &atm1, double err=0.0);
 };
 
@@ -113,10 +113,10 @@ inline bool Atom::operator!=(const Atom &other) const
 {
     return ( AtomInfo::operator!=(other) or
              Vector::operator!=(other) );
-}   
+}
 
-/** Just copy the Vector part of the atom - this is a convenience function that 
-    allows an atom to be moved (alternatively, you can modify the vector part of 
+/** Just copy the Vector part of the atom - this is a convenience function that
+    allows an atom to be moved (alternatively, you can modify the vector part of
     this atom via the reference returned by Atom::vector) */
 inline Atom& Atom::operator=(const Vector &other)
 {

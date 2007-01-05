@@ -38,9 +38,9 @@ friend QDataStream& ::operator>>(QDataStream&, Symbol&);
 public:
     Symbol();
     Symbol(const QString &rep);
-    
+
     Symbol(const Symbol &other);
-    
+
     ~Symbol();
 
     Symbol& operator=(const Symbol &other);
@@ -50,54 +50,64 @@ public:
     {
         return id;
     }
-    
+
     /** Convienient operator used to combine a symbol with a value */
     SymbolValue operator==(double val) const
     {
         return SymbolValue(ID(), val);
     }
-    
+
     /** Convienient operator used to combine a symbol with a value */
     SymbolValue operator==(int val) const
     {
         return SymbolValue(ID(), val);
     }
-    
+
     /** Convienient operator used to combine a symbol with a Complex */
     SymbolComplex operator==(const Complex &val) const
     {
         return SymbolComplex(ID(), val);
     }
-    
-    /** Convieient operator used to combine a symbol with an equivalent 
+
+    /** Convieient operator used to combine a symbol with an equivalent
         expression */
     SymbolExpression operator==(const Expression &ex) const
     {
         return SymbolExpression(*this, ex);
     }
-    
+
     Expression differentiate(const Symbol &symbol) const;
     Expression integrate(const Symbol &symbol) const;
-    
+
     bool isFunction(const Symbol&) const;
     bool isConstant() const;
 
     bool operator==(const ExBase &other) const;
-    
+
     uint hash() const;
+
+    static const char* typeName()
+    {
+        return "SireCAS::Symbol";
+    }
 
     const char* what() const
     {
-        return "SireCAS::Symbol";
+        return Symbol::typeName();
+    }
+
+    Symbol* clone() const
+    {
+        return new Symbol(*this);
     }
 
     QString toString() const;
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
-    
+
     Expression substitute(const Identities &identities) const;
-    
+
     Symbols symbols() const;
     Functions functions() const;
     Expressions children() const;
@@ -105,11 +115,6 @@ public:
 protected:
 
     static SymbolID getNewID(const QString &symbol);
-    
-    ExBase* clone() const
-    {
-        return new Symbol(*this);
-    }
 
     /** Unique ID number that is given to every symbol */
     SymbolID id;

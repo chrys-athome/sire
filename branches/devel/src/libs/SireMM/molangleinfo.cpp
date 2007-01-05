@@ -10,14 +10,14 @@
 using namespace SireStream;
 using namespace SireMM;
 
-static const RegisterMetaType<MolAngleInfo> r_molanginfo("SireMM::MolAngleInfo");
+static const RegisterMetaType<MolAngleInfo> r_molanginfo;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const MolAngleInfo &info)
 {
-    writeHeader(ds, r_molanginfo, 1) 
+    writeHeader(ds, r_molanginfo, 1)
           << static_cast<const MolInternalInfo<Angle>&>(info);
-          
+
     return ds;
 }
 
@@ -25,14 +25,14 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const MolAngleInfo &info)
 QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, MolAngleInfo &info)
 {
     VersionID v = readHeader(ds, r_molanginfo);
-    
+
     if (v == 1)
     {
         ds >> static_cast<MolInternalInfo<Angle>&>(info);
     }
     else
         throw version_error(v, "1", r_molanginfo, CODELOC);
-    
+
     return ds;
 }
 
@@ -49,7 +49,7 @@ MolAngleInfo::MolAngleInfo(const MoleculeInfo &molinfo) : MolInternalInfo<Angle>
 /** Construct a MolAngleInfo that holds the angles for the molecule 'mol',
     with the AngleGenerator 'anglegenerator' used to find all of the available
     angles in the molecule. */
-MolAngleInfo::MolAngleInfo(const Molecule &mol, 
+MolAngleInfo::MolAngleInfo(const Molecule &mol,
                            const InternalGenerator<MolAngleInfo> &anglegenerator)
             : MolInternalInfo<Angle>(mol.info())
 {
@@ -108,7 +108,7 @@ int MolAngleInfo::nAngles(ResNum resnum) const
 
 /** Return the number of angles that involve both 'res0' and 'res1'.
     This function may be slow as it requires a more complicated
-    search than the other functions (as the third residue in the 
+    search than the other functions (as the third residue in the
     angle is not defined)
 */
 int MolAngleInfo::nAngles(ResNum res0, ResNum res1) const
@@ -120,7 +120,7 @@ int MolAngleInfo::nAngles(ResNum res0, ResNum res1) const
         QSet<ResNum> resnums;
         resnums.insert(res0);
         resnums.insert(res1);
-        
+
         return nCommonInternals(resnums);
     }
 }
@@ -136,7 +136,7 @@ int MolAngleInfo::nAngles(ResNum res0, ResNum res1, ResNum res2) const
         resnums.insert(res0);
         resnums.insert(res1);
         resnums.insert(res2);
-        
+
         return nCommonInternals(resnums);
     }
     else
@@ -155,21 +155,21 @@ int MolAngleInfo::nIntraAngles() const
     return nIntraInternals();
 }
 
-/** Return the total number of intra-residue angles in the 
+/** Return the total number of intra-residue angles in the
     residue with number 'resnum' */
 int MolAngleInfo::nIntraAngles(ResNum resnum) const
 {
     return nIntraAngles(resnum);
 }
 
-/** Return the total number of inter-residue angles in the 
+/** Return the total number of inter-residue angles in the
     residue with number 'resnum' */
 int MolAngleInfo::nInterAngles(ResNum resnum) const
 {
     return nInterInternals(resnum);
 }
 
-/** Return whether or not there is an angle that connects residues 
+/** Return whether or not there is an angle that connects residues
     res0 and res1. This may be slow as it requires a more complete
     search as the angle is not totally defined. */
 bool MolAngleInfo::residuesAngled(ResNum res0, ResNum res1) const
@@ -177,11 +177,11 @@ bool MolAngleInfo::residuesAngled(ResNum res0, ResNum res1) const
     QSet<ResNum> resnums;
     resnums.insert(res0);
     resnums.insert(res1);
-    
+
     return hasCommonInternal(resnums);
 }
 
-/** Return whether or not there is a single angle that encompasses 
+/** Return whether or not there is a single angle that encompasses
     residues res0, res1 and res2 */
 bool MolAngleInfo::residuesAngled(ResNum res0, ResNum res1, ResNum res2) const
 {
@@ -189,8 +189,8 @@ bool MolAngleInfo::residuesAngled(ResNum res0, ResNum res1, ResNum res2) const
 }
 
 /** Return an iterator over all of the angles in the molecule.
-    
-    This returns an iterator pointing to the first angle, or an 
+
+    This returns an iterator pointing to the first angle, or an
     invalid iterator if there are no angles to iterate over.
 */
 MolAngleInfo::const_iterator MolAngleInfo::angles() const
@@ -199,8 +199,8 @@ MolAngleInfo::const_iterator MolAngleInfo::angles() const
 }
 
 /** Return an iterator over all of the angles in the residue 'resnum'.
-    
-    This returns an iterator pointing to the first angle, or an 
+
+    This returns an iterator pointing to the first angle, or an
     invalid iterator if there are no angles to iterate over.
 */
 MolAngleInfo::const_iterator MolAngleInfo::angles(ResNum resnum) const
@@ -208,10 +208,10 @@ MolAngleInfo::const_iterator MolAngleInfo::angles(ResNum resnum) const
     return internals(resnum);
 }
 
-/** Return an iterator over all of the angles that contain 
-    all of the residues res0 and res2. 
-    
-    This returns an iterator pointing to the first angle, or an 
+/** Return an iterator over all of the angles that contain
+    all of the residues res0 and res2.
+
+    This returns an iterator pointing to the first angle, or an
     invalid iterator if there are no angles to iterate over.
 */
 MolAngleInfo::const_iterator MolAngleInfo::angles(ResNum res0, ResNum res1) const
@@ -223,18 +223,18 @@ MolAngleInfo::const_iterator MolAngleInfo::angles(ResNum res0, ResNum res1) cons
         QSet<ResNum> resnums;
         resnums.insert(res0);
         resnums.insert(res1);
-    
+
         return commonInternals(resnums);
     }
 }
 
-/** Return an iterator over all of the angles that contain 
-    all of the residues res0, res1 and res2. 
-    
-    This returns an iterator pointing to the first angle, or an 
+/** Return an iterator over all of the angles that contain
+    all of the residues res0, res1 and res2.
+
+    This returns an iterator pointing to the first angle, or an
     invalid iterator if there are no angles to iterate over.
 */
-MolAngleInfo::const_iterator MolAngleInfo::angles(ResNum res0, ResNum res1, 
+MolAngleInfo::const_iterator MolAngleInfo::angles(ResNum res0, ResNum res1,
                                                   ResNum res2) const
 {
     if (res0 == res1 and res0 == res2)
@@ -245,17 +245,17 @@ MolAngleInfo::const_iterator MolAngleInfo::angles(ResNum res0, ResNum res1,
         resnums.insert(res0);
         resnums.insert(res1);
         resnums.insert(res2);
-        
+
         return commonInternals(resnums);
     }
     else
         return internals( AngleResID(res0,res1,res2) );
 }
 
-/** Return an iterator over all of the intra-residue angles in the 
+/** Return an iterator over all of the intra-residue angles in the
     molecule.
-    
-    This returns an iterator pointing to the first angle, or an 
+
+    This returns an iterator pointing to the first angle, or an
     invalid iterator if there are no angles to iterate over.
 */
 MolAngleInfo::const_iterator MolAngleInfo::intraAngles() const
@@ -263,10 +263,10 @@ MolAngleInfo::const_iterator MolAngleInfo::intraAngles() const
     return intraInternals();
 }
 
-/** Return an iterator over all of the inter-residue angles in the 
+/** Return an iterator over all of the inter-residue angles in the
     molecule.
-    
-    This returns an iterator pointing to the first angle, or an 
+
+    This returns an iterator pointing to the first angle, or an
     invalid iterator if there are no angles to iterate over.
 */
 MolAngleInfo::const_iterator MolAngleInfo::interAngles() const
@@ -274,10 +274,10 @@ MolAngleInfo::const_iterator MolAngleInfo::interAngles() const
     return interInternals();
 }
 
-/** Return an iterator over all of the intra-residue angles in the 
+/** Return an iterator over all of the intra-residue angles in the
     residue 'resnum'.
-    
-    This returns an iterator pointing to the first angle, or an 
+
+    This returns an iterator pointing to the first angle, or an
     invalid iterator if there are no angles to iterate over.
 */
 MolAngleInfo::const_iterator MolAngleInfo::intraAngles(ResNum resnum) const
@@ -285,10 +285,10 @@ MolAngleInfo::const_iterator MolAngleInfo::intraAngles(ResNum resnum) const
     return intraInternals(resnum);
 }
 
-/** Return an iterator over all of the inter-residue angles in the 
+/** Return an iterator over all of the inter-residue angles in the
     residue 'resnum'.
-    
-    This returns an iterator pointing to the first angle, or an 
+
+    This returns an iterator pointing to the first angle, or an
     invalid iterator if there are no angles to iterate over.
 */
 MolAngleInfo::const_iterator MolAngleInfo::interAngles(ResNum resnum) const
@@ -296,8 +296,8 @@ MolAngleInfo::const_iterator MolAngleInfo::interAngles(ResNum resnum) const
     return interInternals(resnum);
 }
 
-/** Return the metainfo about the angles in residue 'resnum'. This 
-    returns an empty object if there are no angles recorded for 
+/** Return the metainfo about the angles in residue 'resnum'. This
+    returns an empty object if there are no angles recorded for
     this residue. */
 ResAngleInfo MolAngleInfo::residue(ResNum resnum) const
 {

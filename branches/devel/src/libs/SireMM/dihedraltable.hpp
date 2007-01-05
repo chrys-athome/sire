@@ -35,9 +35,9 @@ class DihedralTableT : public InternalTable<MolDihedralInfo,Param>
 public:
     DihedralTableT();
     DihedralTableT(const MolDihedralInfo &dihedralinfo);
-    
+
     DihedralTableT(const DihedralTableT<Param> &other);
-    
+
     ~DihedralTableT();
 
     int nDihedrals() const;
@@ -47,7 +47,7 @@ public:
     int nInterDihedrals() const;
     int nIntraDihedrals(ResNum resnum) const;
     int nInterDihedrals(ResNum resnum) const;
-    
+
     int nDihedralParameters() const;
     int nDihedralParameters(ResNum resnum) const;
     int nDihedralParameters(GroupID groupid) const;
@@ -55,50 +55,50 @@ public:
     int nInterDihedralParameters() const;
     int nIntraDihedralParameters(ResNum resnum) const;
     int nInterDihedralParameters(ResNum resnum) const;
-    
+
     void addDihedral(const Dihedral &dihedral);
     void addDihedral(const Dihedral &dihedral, const Param &param);
-    
+
     template<class C>
     void addDihedrals(const C &dihedrals);
-    
+
     void removeDihedral(const Dihedral &dihedral);
-    
+
     template<class C>
     void removeDihedrals(const C &dihedrals);
-    
+
     void removeDihedrals();
     void removeDihedrals(ResNum resnum);
     void removeDihedrals(GroupID groupid);
     void removeDihedrals(const QSet<GroupID> &groupids);
-    
+
     void removeIntraDihedrals();
     void removeIntraDihedrals(ResNum resnum);
-    
+
     void removeInterDihedrals();
     void removeInterDihedrals(ResNum resnum);
-    
+
     void removeMissingDihedrals();
     void removeMissingDihedrals(ResNum resnum);
     void removeMissingDihedrals(GroupID groupid);
     void removeMissingDihedrals(const QSet<GroupID> &groupids);
-    
+
     void removeMissingIntraDihedrals();
     void removeMissingIntraDihedrals(ResNum resnum);
     void removeMissingInterDihedrals();
     void removeMissingInterDihedrals(ResNum resnum);
-    
+
     void clearDihedral(const Dihedral &dihedral);
     void clearDihedrals();
     void clearDihedrals(ResNum resnum);
     void clearDihedrals(GroupID groupid);
-    
+
     template<class C>
     void clearDihedrals(const C &dihedrals);
-    
+
     void clearIntraDihedrals();
     void clearIntraDihedrals(ResNum resnum);
-    
+
     void clearInterDihedrals();
     void clearInterDihedrals(ResNum resnum);
 
@@ -110,77 +110,77 @@ public:
     QVector<Dihedral> dihedrals() const;
     QVector<Dihedral> dihedrals(ResNum resnum) const;
     QVector<Dihedral> dihedrals(GroupID groupid) const;
-    
+
     QVector<Dihedral> interDihedrals() const;
     QVector<Dihedral> intraDihedrals() const;
     QVector<Dihedral> interDihedrals(ResNum resnum) const;
     QVector<Dihedral> intraDihedrals(ResNum resnum) const;
-    
+
     GroupedVector<GroupIndexID,Dihedral> dihedralsByGroup() const;
-    GroupedVector<GroupIndexID,Dihedral> 
+    GroupedVector<GroupIndexID,Dihedral>
                       dihedralsByGroup(const QSet<GroupID> &gids) const;
     GroupedVector<ResNumIndexID,Dihedral> dihedralsByResidue() const;
-    GroupedVector<ResNumIndexID,Dihedral> 
+    GroupedVector<ResNumIndexID,Dihedral>
                       dihedralsByResidue(const QSet<ResNum> &resnums) const;
-    
+
     GroupedVector<ResNumIndexID,Dihedral> interDihedralsByResidue() const;
     GroupedVector<ResNumIndexID,Dihedral> intraDihedralsByResidue() const;
-    GroupedVector<ResNumIndexID,Dihedral> 
+    GroupedVector<ResNumIndexID,Dihedral>
                       interDihedralsByResidue(const QSet<ResNum> &resnums) const;
-    GroupedVector<ResNumIndexID,Dihedral> 
+    GroupedVector<ResNumIndexID,Dihedral>
                       intraDihedralsByResidue(const QSet<ResNum> &resnums) const;
-    
+
     const Param& getDihedralParameter(const Dihedral &dihedral) const;
     const Param& getDihedralParameter(const GroupIndexID &id) const;
-    
+
     void setDihedralParameter(const Dihedral &dihedral, const Param &param);
     void setDihedralParameter(const GroupIndexID &id, const Param &param);
 
     bool assignedDihedralParameter(const Dihedral &dihedral) const;
     bool assignedDihedralParameter(const GroupIndexID &id) const;
-    
+
     bool hasMissingDihedralParameters() const;
     bool hasMissingDihedralParameters(ResNum resnum) const;
     bool hasMissingDihedralParameters(GroupID id) const;
-    
+
     bool hasMissingIntraDihedralParameters() const;
     bool hasMissingIntraDihedralParameters(ResNum resnum) const;
-    
+
     bool hasMissingInterDihedralParameters() const;
     bool hasMissingInterDihedralParameters(ResNum resnum) const;
-    
+
     QSet<Dihedral> missingDihedralParameters() const;
     QSet<Dihedral> missingDihedralParameters(ResNum resnum) const;
     QSet<Dihedral> missingDihedralParameters(const QSet<GroupID> &groupids) const;
-    
+
     QSet<Dihedral> missingIntraDihedralParameters() const;
     QSet<Dihedral> missingIntraDihedralParameters(ResNum resnum) const;
-    
+
     QSet<Dihedral> missingInterDihedralParameters() const;
     QSet<Dihedral> missingInterDihedralParameters(ResNum resnum) const;
-    
+
     QVector<Param> dihedralParameters() const;
     QVector<Param> dihedralParameters(ResNum resnum) const;
     QVector<Param> dihedralParameters(GroupID groupid) const;
-    
+
     QVector<Param> interDihedralParameters() const;
     QVector<Param> intraDihedralParameters() const;
     QVector<Param> interDihedralParameters(ResNum resnum) const;
     QVector<Param> intraDihedralParameters(ResNum resnum) const;
-    
+
     GroupedVector<GroupIndexID,Param> dihedralParametersByGroup() const;
     GroupedVector<GroupIndexID,Param> dihedralParametersByGroup(
                                                 const QSet<GroupID> &gids) const;
     GroupedVector<ResNumIndexID,Param> dihedralParametersByResidue() const;
     GroupedVector<ResNumIndexID,Param> dihedralParametersByResidue(
                                                 const QSet<ResNum> &resnums) const;
-                                                    
+
     GroupedVector<ResNumIndexID,Param> interDihedralParametersByResidue() const;
     GroupedVector<ResNumIndexID,Param> intraDihedralParametersByResidue() const;
     GroupedVector<ResNumIndexID,Param> interDihedralParametersByResidue(
                                                 const QSet<ResNum> &resnums) const;
     GroupedVector<ResNumIndexID,Param> intraDihedralParametersByResidue(
-                                                const QSet<ResNum> &resnums) const;    
+                                                const QSet<ResNum> &resnums) const;
 };
 
 /** Empty constructor */
@@ -192,7 +192,7 @@ DihedralTableT<Param>::DihedralTableT() : InternalTable<MolDihedralInfo,Param>()
 /** Create a table to hold the parameters for the dihedrals described by 'dihedralinfo' */
 template<class Param>
 SIRE_OUTOFLINE_TEMPLATE
-DihedralTableT<Param>::DihedralTableT(const MolDihedralInfo &dihedralinfo) 
+DihedralTableT<Param>::DihedralTableT(const MolDihedralInfo &dihedralinfo)
                   : InternalTable<MolDihedralInfo,Param>(dihedralinfo)
 {}
 
@@ -691,7 +691,7 @@ GroupedVector<ResNumIndexID,Dihedral> DihedralTableT<Param>::intraDihedralsByRes
 /** Synonym for interInternalsByResidue(...) */
 template<class Param>
 SIRE_INLINE_TEMPLATE
-GroupedVector<ResNumIndexID,Dihedral> 
+GroupedVector<ResNumIndexID,Dihedral>
 DihedralTableT<Param>::interDihedralsByResidue(const QSet<ResNum> &resnums) const
 {
     return this->interInternalsByResidue(resnums);
@@ -700,7 +700,7 @@ DihedralTableT<Param>::interDihedralsByResidue(const QSet<ResNum> &resnums) cons
 /** Synonym for intraInternalsByResidue(...) */
 template<class Param>
 SIRE_INLINE_TEMPLATE
-GroupedVector<ResNumIndexID,Dihedral> 
+GroupedVector<ResNumIndexID,Dihedral>
 DihedralTableT<Param>::intraDihedralsByResidue(const QSet<ResNum> &resnums) const
 {
     return this->intraInternalsByResidue(resnums);
@@ -933,7 +933,7 @@ GroupedVector<GroupIndexID,Param> DihedralTableT<Param>::dihedralParametersByGro
 /** Synonym for parametersByGroup(...) */
 template<class Param>
 SIRE_INLINE_TEMPLATE
-GroupedVector<GroupIndexID,Param> 
+GroupedVector<GroupIndexID,Param>
 DihedralTableT<Param>::dihedralParametersByGroup(const QSet<GroupID> &gids) const
 {
     return this->parametersByGroup(gids);
@@ -950,7 +950,7 @@ GroupedVector<ResNumIndexID,Param> DihedralTableT<Param>::dihedralParametersByRe
 /** Synonym for parametersByResidue(...) */
 template<class Param>
 SIRE_INLINE_TEMPLATE
-GroupedVector<ResNumIndexID,Param> 
+GroupedVector<ResNumIndexID,Param>
 DihedralTableT<Param>::dihedralParametersByResidue(const QSet<ResNum> &resnums) const
 {
     return this->parametersByResidue(resnums);
@@ -975,7 +975,7 @@ GroupedVector<ResNumIndexID,Param> DihedralTableT<Param>::intraDihedralParameter
 /** Synonym for interParametersByResidue(...) */
 template<class Param>
 SIRE_INLINE_TEMPLATE
-GroupedVector<ResNumIndexID,Param> 
+GroupedVector<ResNumIndexID,Param>
 DihedralTableT<Param>::interDihedralParametersByResidue(const QSet<ResNum> &resnums) const
 {
     return this->interParametersByResidue(resnums);
@@ -984,45 +984,44 @@ DihedralTableT<Param>::interDihedralParametersByResidue(const QSet<ResNum> &resn
 /** Synonym for intraParametersByResidue(...) */
 template<class Param>
 SIRE_INLINE_TEMPLATE
-GroupedVector<ResNumIndexID,Param> 
+GroupedVector<ResNumIndexID,Param>
 DihedralTableT<Param>::intraDihedralParametersByResidue(const QSet<ResNum> &resnums) const
 {
     return this->intraParametersByResidue(resnums);
 }
 
-const SireStream::MagicID dihedraltablet_magic = SireStream::getMagic(
-                                                          "SireMM::DihedralTableT");
+const MagicID dihedraltablet_magic = getMagic("SireMM::DihedralTableT");
 
 }
 
 /** Serialise to a binary data stream */
 template<class Param>
 SIRE_OUTOFLINE_TEMPLATE
-QDataStream& operator<<(QDataStream &ds, 
+QDataStream& operator<<(QDataStream &ds,
                         const SireMM::DihedralTableT<Param> &table)
 {
     SireStream::writeHeader(ds, SireMM::dihedraltablet_magic, 0)
              << static_cast<const SireMM::InternalTable<SireMM::MolDihedralInfo,Param>&>(table);
-             
+
     return ds;
 }
 
 /** Deserialise from a binary data stream */
 template<class Param>
 SIRE_OUTOFLINE_TEMPLATE
-QDataStream& operator>>(QDataStream &ds, 
+QDataStream& operator>>(QDataStream &ds,
                         SireMM::DihedralTableT<Param> &table)
 {
     SireStream::VersionID v = SireStream::readHeader(ds, SireMM::dihedraltablet_magic,
                                                      "SireMM::DihedralTableT");
-                                                     
+
     if (v == 0)
     {
         ds >> static_cast<SireMM::InternalTable<SireMM::MolDihedralInfo, Param>&>(table);
     }
     else
         throw SireStream::version_error(v, "0", "SireMM::DihedralTableT", CODELOC);
-        
+
     return ds;
 }
 

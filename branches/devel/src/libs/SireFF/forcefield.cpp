@@ -5,6 +5,7 @@
 #include "ffbase.h"
 
 #include "SireMol/molecule.h"
+#include "SireMol/residue.h"
 #include "SireMol/errors.h"
 
 #include "SireStream/datastream.h"
@@ -13,7 +14,7 @@ using namespace SireStream;
 using namespace SireBase;
 using namespace SireFF;
 
-static const RegisterMetaType<ForceField> r_forcefield("SireFF::ForceField", MAGIC_ONLY);
+static const RegisterMetaType<ForceField> r_forcefield;
 
 /** Serialise to a binary data stream */
 QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const ForceField&)
@@ -70,6 +71,23 @@ public:
     ~NullFF()
     {}
 
+    class SIREFF_EXPORT Parameters : public FFBase::Parameters
+    {
+    public:
+        Parameters()
+        {}
+
+        ~Parameters()
+        {}
+
+        static Parameters default_parameter;
+    };
+
+    const Parameters& parameters() const
+    {
+        return Parameters::default_parameter;
+    }
+
     static const char* typeName()
     {
         return "SireFF::detail::NullFF";
@@ -85,27 +103,6 @@ public:
         return new NullFF(*this);
     }
 
-    const Molecule& molecule(MoleculeID molid) const
-    {
-        throw SireMol::missing_molecule( QObject::tr(
-               "By definition, the null forcefield contains nothing!, not even "
-               "the molecule with ID == %1.").arg(molid), CODELOC );
-
-        return null_molecule;
-    }
-
-    //virtual const Residue& residue(const MolResNumID &molresid) const=0;
-
-    bool move(const Molecule&)
-    {
-        return false;
-    }
-
-    bool move(const Residue&)
-    {
-        return false;
-    }
-
 protected:
     void recalculateEnergy()
     {}
@@ -113,6 +110,8 @@ protected:
     /** Null molecule returned by the null forcefield */
     static Molecule null_molecule;
 };
+
+NullFF::Parameters NullFF::Parameters::default_parameter;
 
 } // detail
 } // SireFF
@@ -125,7 +124,7 @@ Q_DECLARE_METATYPE(SireFF::detail::NullFF)
 
 using namespace SireFF::detail;
 
-static const RegisterMetaType<NullFF> r_nullff("SireFF::detail::NullFF");
+static const RegisterMetaType<NullFF> r_nullff;
 
 /** Serialise to a binary datastream */
 QDataStream &operator<<(QDataStream &ds, const NullFF &nullff)
@@ -160,25 +159,25 @@ Molecule NullFF::null_molecule;
 static const SharedPolyPointer<FFBase> shared_null( new NullFF() );
 
 /** Constructor */
-ForceField::ForceField() : d(shared_null)
+ForceField::ForceField() : SharedPolyPointer<FFBase>(shared_null)
 {}
 
 /** Construct from the passed FFBase forcefield */
 ForceField::ForceField(const FFBase &ffield)
-           : d( ffield.clone() )
+           : SharedPolyPointer<FFBase>(ffield.clone())
 {}
 
 /** Construct from a shared pointer to a forcefield */
 ForceField::ForceField(const SharedPolyPointer<FFBase> &ffptr)
-           : d( ffptr )
+           : SharedPolyPointer<FFBase>(ffptr)
 {
-    if (not d)
-        d = shared_null;
+    if (not constData())
+        SharedPolyPointer<FFBase>::operator=(shared_null);
 }
 
 /** Copy constructor */
 ForceField::ForceField(const ForceField &other)
-           : d(other.d)
+           : SharedPolyPointer<FFBase>(other)
 {}
 
 /** Destructor */
@@ -188,13 +187,53 @@ ForceField::~ForceField()
 /** Assignment operator */
 ForceField& ForceField::operator=(const ForceField &other)
 {
-    d = other.d;
+    SharedPolyPointer<FFBase>::operator=(other);
     return *this;
 }
 
 /** Assignment operator */
 ForceField& ForceField::operator=(const FFBase &other)
 {
-    d = other.clone();
+    SharedPolyPointer<FFBase>::operator=(other.clone());
     return *this;
+}
+
+/** Return the copy of the molecule in this forcefield that
+    has the ID == molid
+
+    \throw SireMol::missing_molecule
+*/
+Molecule ForceField::molecule(MoleculeID molid) const
+{
+    return d().molecule(molid);
+}
+
+/** Return the copy of the residue in this forcefield that
+    is in the molecule with ID == molid and with residue number
+    'resnum'
+
+    \throw SireMol::missing_molecule
+    \throw SireMol::missing_residue
+*/
+Residue ForceField::residue(MoleculeID molid, ResNum resnum) const
+{
+    return d().residue(molid, resnum);
+}
+
+/** Return the copy of the molecule 'mol' that is in this forcefield
+
+    \throw SireMol::missing_molecule
+*/
+Molecule ForceField::molecule(const Molecule &mol) const
+{
+    return d().molecule(mol);
+}
+
+/** Return the copy of the residue 'res' that is in this forcefield
+
+    \throw SireMol::missing_residue
+*/
+Residue ForceField::residue(const Residue &res) const
+{
+    return d().residue(res);
 }

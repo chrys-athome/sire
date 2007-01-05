@@ -5,7 +5,7 @@
   * @author Christopher Woods
   *
   */
-  
+
 #include <Python.h>
 #include <boost/python.hpp>
 
@@ -67,30 +67,30 @@ Expression wrap_simplify2(const Expression &ex, int options)
     return ex.simplify(options);
 }
 
-void  
+void
 SIRECAS_EXPORT
 export_Expression()
 {
     Expression (Expression::*wrap_multiply1)(const Expression&) const = &Expression::multiply;
     Expression (Expression::*wrap_multiply2)(double) const = &Expression::multiply;
     Expression (Expression::*wrap_multiply3)(const Complex&) const = &Expression::multiply;
-    
+
     Expression (Expression::*wrap_divide1)(double) const = &Expression::divide;
     Expression (Expression::*wrap_divide2)(const Expression&) const = &Expression::divide;
     Expression (Expression::*wrap_divide3)(const Complex&) const = &Expression::divide;
-    
-    Expression (Expression::*wrap_pow1)(const Rational&) const = &Expression::pow;    
+
+    Expression (Expression::*wrap_pow1)(const Rational&) const = &Expression::pow;
     Expression (Expression::*wrap_pow2)(int) const = &Expression::pow;
     Expression (Expression::*wrap_pow3)(double) const = &Expression::pow;
     Expression (Expression::*wrap_pow4)(const Expression&) const = &Expression::pow;
     Expression (Expression::*wrap_pow5)(const Complex&) const = &Expression::pow;
 
     double (Expression::*wrap_evaluate1)(const Values&) const = &Expression::evaluate;
-    Complex (Expression::*wrap_evaluate2)(const ComplexValues&) const 
+    Complex (Expression::*wrap_evaluate2)(const ComplexValues&) const
                           = &Expression::evaluate;
-    
+
     class_<Expression> wrapper("Expression", init<>());
-    
+
     wrapper
         .def( init<int>() )
         .def( init<const Rational&>() )
@@ -147,7 +147,7 @@ export_Expression()
         .def( "factor", &Expression::factor )
         .def( "symbols", &Expression::symbols )
         .def( "functions", &Expression::functions )
-        .def( "children", &Expression::children )
+        .def( "children", (Expressions (Expression::*)() const)&Expression::children )
     ;
 
     Expression (*wrap_SireCAS_pow1)(const Expression&, int) = &pow;
@@ -155,21 +155,21 @@ export_Expression()
     Expression (*wrap_SireCAS_pow3)(const Expression&, double) = &pow;
     Expression (*wrap_SireCAS_pow4)(const Expression&, const Expression&) = &pow;
     Expression (*wrap_SireCAS_pow5)(const Expression&, const Complex&) = &pow;
-            
+
     def("pow", wrap_SireCAS_pow1);
     def("pow", wrap_SireCAS_pow2);
     def("pow", wrap_SireCAS_pow3);
     def("pow", wrap_SireCAS_pow4);
     def("pow", wrap_SireCAS_pow5);
-    
+
     Expression (*wrap_SireCAS_root)(const Expression&, int) = &root;
     Expression (*wrap_SireCAS_sqrt)(const Expression&) = &sqrt;
     Expression (*wrap_SireCAS_cbrt)(const Expression&) = &cbrt;
-    
+
     def("root", wrap_SireCAS_root);
     def("sqrt", wrap_SireCAS_sqrt);
     def("cbrt", wrap_SireCAS_cbrt);
-    
+
     export_Operators(wrapper);
 }
 

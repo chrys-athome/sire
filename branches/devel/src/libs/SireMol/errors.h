@@ -356,12 +356,68 @@ public:
     }
 };
 
+
+/** This exception is thrown when a request is made of a non-existant property
+
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT missing_property : public siremol_error
+{
+public:
+    missing_property() : siremol_error()
+    {}
+
+    missing_property(QString err, QString place = QString::null)
+              : siremol_error(err,place)
+    {}
+
+    missing_property(const missing_property &other) : siremol_error(other)
+    {}
+
+    ~missing_property() throw()
+    {}
+
+    const char* what() const throw()
+    {
+        return "SireMol::missing_property";
+    }
+};
+
+
+/** This exception is thrown when a request is made to duplicate a
+    property when this would be inappropriate
+
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT duplicate_property : public siremol_error
+{
+public:
+    duplicate_property() : siremol_error()
+    {}
+
+    duplicate_property(QString err, QString place = QString::null)
+              : siremol_error(err,place)
+    {}
+
+    duplicate_property(const duplicate_property &other) : siremol_error(other)
+    {}
+
+    ~duplicate_property() throw()
+    {}
+
+    const char* what() const throw()
+    {
+        return "SireMol::duplicate_property";
+    }
+};
+
 }
 
 Q_DECLARE_METATYPE(SireMol::siremol_error)
 Q_DECLARE_METATYPE(SireMol::missing_atom)
 Q_DECLARE_METATYPE(SireMol::missing_group)
 Q_DECLARE_METATYPE(SireMol::duplicate_atom)
+Q_DECLARE_METATYPE(SireMol::missing_molecule)
 Q_DECLARE_METATYPE(SireMol::missing_residue)
 Q_DECLARE_METATYPE(SireMol::missing_cutgroup)
 Q_DECLARE_METATYPE(SireMol::duplicate_residue)
@@ -370,6 +426,8 @@ Q_DECLARE_METATYPE(SireMol::template_error)
 Q_DECLARE_METATYPE(SireMol::anchor_error)
 Q_DECLARE_METATYPE(SireMol::ring_error)
 Q_DECLARE_METATYPE(SireMol::incompatible_molecule)
+Q_DECLARE_METATYPE(SireMol::missing_property)
+Q_DECLARE_METATYPE(SireMol::duplicate_property)
 
 SIRE_END_HEADER
 

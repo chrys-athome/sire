@@ -5,7 +5,6 @@
 #include "symbol.h"
 #include "symbols.h"
 #include "values.h"
-#include "registerexpression.h"
 #include "complexvalues.h"
 #include "integrationconstant.h"
 
@@ -18,13 +17,14 @@ using namespace SireCAS;
 ////////// Implementation of PowerConstant
 //////////
 
-static const RegisterMetaType<PowerConstant> r_powerconstant("SireCAS::PowerConstant");
+static const RegisterMetaType<PowerConstant> r_powerconstant;
 
 /** Serialise to a binary datastream */
 QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const PowerConstant &power)
 {
-    writeHeader(ds, r_powerconstant, 1) << power.cre << power.pwr;
-    
+    writeHeader(ds, r_powerconstant, 1)
+          << power.cre << power.pwr << static_cast<const PowerFunction&>(power);
+
     return ds;
 }
 
@@ -32,19 +32,16 @@ QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const PowerConstant &pow
 QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, PowerConstant &power)
 {
     VersionID v = readHeader(ds, r_powerconstant);
-    
+
     if (v == 1)
     {
-        ds >> power.cre >> power.pwr;
+        ds >> power.cre >> power.pwr >> static_cast<PowerFunction&>(power);
     }
     else
         throw version_error(v, "1", r_powerconstant, CODELOC);
-    
+
     return ds;
 }
-
-/** Register the PowerConstant function */
-static RegisterExpression<PowerConstant> RegisterPowerConstant;
 
 /** Create a null PowerConstant (0^0) */
 PowerConstant::PowerConstant() : PowerFunction(), cre(0), pwr(1)
@@ -54,7 +51,7 @@ PowerConstant::PowerConstant() : PowerFunction(), cre(0), pwr(1)
 PowerConstant::PowerConstant(double val, const Expression &power)
               : PowerFunction(), cre(val), pwr(power)
 {}
-    
+
 /** Copy constructor */
 PowerConstant::PowerConstant(const PowerConstant &other)
               : PowerFunction(), cre(other.cre), pwr(other.pwr)
@@ -68,17 +65,17 @@ PowerConstant::~PowerConstant()
 bool PowerConstant::operator==(const ExBase &other) const
 {
     const PowerConstant *other_power = dynamic_cast<const PowerConstant*>(&other);
-    
+
     return other_power != 0 and typeid(other).name() == typeid(*this).name()
                  and cre == other_power->cre and pwr == other_power->pwr;
 }
-    
+
 /** Return a hash of this power */
 uint PowerConstant::hash() const
 {
     return ( r_powerconstant.magicID() <<16 ) | ( pwr.hash() & 0x0000FFFF );
 }
-    
+
 /** Evaluate this function */
 double PowerConstant::evaluate(const Values &values) const
 {
@@ -92,17 +89,18 @@ Complex PowerConstant::evaluate(const ComplexValues &values) const
 }
 
 //////////
-////////// Implementation of ConstantPower 
+////////// Implementation of ConstantPower
 //////////
 
 //register a pure virtual class
-static const RegisterMetaType<ConstantPower> r_constantpower(
-                                        "SireCAS::ConstantPower", MAGIC_ONLY);
+static const RegisterMetaType<ConstantPower> r_constantpower(MAGIC_ONLY,
+                                                             "SireCAS::ConstantPower");
 
 /** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ConstantPower &power) 
+QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ConstantPower &power)
 {
-    writeHeader(ds, r_constantpower, 1) << power.ex;
+    writeHeader(ds, r_constantpower, 1)
+          << power.ex << static_cast<const PowerFunction&>(power);
 
     return ds;
 }
@@ -111,17 +109,17 @@ QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ConstantPower &pow
 QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, ConstantPower &power)
 {
     VersionID v = readHeader(ds, r_constantpower);
-    
+
     if (v == 1)
     {
-        ds >> power.ex;
+        ds >> power.ex >> static_cast<PowerFunction&>(power);
     }
     else
         throw version_error(v, "1", r_constantpower, CODELOC);
-    
+
     return ds;
 }
-    
+
 /** Return a hash of this power */
 uint ConstantPower::hash() const
 {
@@ -132,12 +130,12 @@ uint ConstantPower::hash() const
 ////////// Implementation of IntegerPower
 //////////
 
-static const RegisterMetaType<IntegerPower> r_integerpower("SireCAS::IntegerPower");
+static const RegisterMetaType<IntegerPower> r_integerpower;
 
 /** Serialise to a binary datastream */
 QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const IntegerPower &power)
 {
-    writeHeader(ds, r_integerpower, 1) << power.pwr 
+    writeHeader(ds, r_integerpower, 1) << power.pwr
                                        << static_cast<const ConstantPower&>(power);
     return ds;
 }
@@ -146,19 +144,16 @@ QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const IntegerPower &powe
 QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, IntegerPower &power)
 {
     VersionID v = readHeader(ds, r_integerpower);
-    
+
     if (v == 1)
     {
         ds >> power.pwr >> static_cast<ConstantPower&>(power);
     }
     else
         throw version_error(v, "1", r_integerpower, CODELOC);
-    
+
     return ds;
 }
-
-/** Register a IntegerPower */
-static RegisterExpression<IntegerPower> RegisterIntegerPower;
 
 /** Null constructor */
 IntegerPower::IntegerPower() : ConstantPower(), pwr(0)
@@ -168,31 +163,31 @@ IntegerPower::IntegerPower() : ConstantPower(), pwr(0)
 IntegerPower::IntegerPower(const Expression &expression, int power)
              : ConstantPower(expression), pwr(power)
 {}
-    
+
 /** Copy constructor */
 IntegerPower::IntegerPower(const IntegerPower &other)
              : ConstantPower(other), pwr(other.pwr)
 {}
-    
+
 /** Destructor */
 IntegerPower::~IntegerPower()
 {}
-    
+
 /** Comparison operator */
 bool IntegerPower::operator==(const ExBase &other) const
 {
     const IntegerPower *other_power = dynamic_cast<const IntegerPower*>(&other);
-    
+
     return other_power != 0 and typeid(other).name() == typeid(*this).name()
                  and pwr == other_power->pwr and ex == other_power->ex;
 }
-    
+
 /** Return a hash of this power */
 uint IntegerPower::hash() const
 {
     return ( r_integerpower.magicID() <<16 ) | ( ex.hash() & 0x0000FFFF );
 }
-    
+
 /** Evaluate this power */
 double IntegerPower::evaluate(const Values &values) const
 {
@@ -209,12 +204,12 @@ Complex IntegerPower::evaluate(const ComplexValues &values) const
 ////////// Implementation of RationalPower
 //////////
 
-static const RegisterMetaType<RationalPower> r_rationalpower("SireCAS::RationalPower");
+static const RegisterMetaType<RationalPower> r_rationalpower;
 
 /** Serialise to a binary datastream */
 QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const RationalPower &power)
 {
-    writeHeader(ds, r_rationalpower, 1) << power.pwr 
+    writeHeader(ds, r_rationalpower, 1) << power.pwr
                                         << static_cast<const ConstantPower&>(power);
     return ds;
 }
@@ -223,19 +218,16 @@ QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const RationalPower &pow
 QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, RationalPower &power)
 {
     VersionID v = readHeader(ds, r_rationalpower);
-    
+
     if (v == 1)
     {
         ds >> power.pwr >> static_cast<ConstantPower&>(power);
     }
     else
         throw version_error(v, "1", r_rationalpower, CODELOC);
-    
+
     return ds;
 }
-
-/** Register a RationalPower */
-static RegisterExpression<RationalPower> RegisterRationalPower;
 
 /** Null constructor */
 RationalPower::RationalPower() : ConstantPower(), pwr(0)
@@ -245,31 +237,31 @@ RationalPower::RationalPower() : ConstantPower(), pwr(0)
 RationalPower::RationalPower(const Expression &expression, const Rational &power)
               : ConstantPower(expression), pwr(power)
 {}
-    
+
 /** Copy constructor */
 RationalPower::RationalPower(const RationalPower &other)
               : ConstantPower(other), pwr(other.pwr)
 {}
-    
+
 /** Destructor */
 RationalPower::~RationalPower()
 {}
-    
+
 /** Comparison operator */
 bool RationalPower::operator==(const ExBase &other) const
 {
     const RationalPower *other_power = dynamic_cast<const RationalPower*>(&other);
-    
+
     return other_power != 0 and typeid(other).name() == typeid(*this).name()
                  and pwr == other_power->pwr and ex == other_power->ex;
 }
-    
+
 /** Return a hash of this power */
 uint RationalPower::hash() const
 {
     return ( r_rationalpower.magicID() <<16 ) | ( ex.hash() & 0x0000FFFF );
 }
-    
+
 /** Evaluate this power */
 double RationalPower::evaluate(const Values &values) const
 {
@@ -286,12 +278,12 @@ Complex RationalPower::evaluate(const ComplexValues &values) const
 ////////// Implementation of RealPower
 //////////
 
-static const RegisterMetaType<RealPower> r_realpower("SireCAS::RealPower");
+static const RegisterMetaType<RealPower> r_realpower;
 
 /** Serialise to a binary datastream */
 QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const RealPower &power)
 {
-    writeHeader(ds, r_realpower, 1) << power.pwr 
+    writeHeader(ds, r_realpower, 1) << power.pwr
                                     << static_cast<const ConstantPower&>(power);
     return ds;
 }
@@ -300,19 +292,16 @@ QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const RealPower &power)
 QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, RealPower &power)
 {
     VersionID v = readHeader(ds, r_realpower);
-    
+
     if (v == 1)
     {
         ds >> power.pwr >> static_cast<ConstantPower&>(power);
     }
     else
         throw version_error(v, "1", r_realpower, CODELOC);
-    
+
     return ds;
 }
-
-/** Register a RealPower */
-static RegisterExpression<RealPower> RegisterRealPower;
 
 /** Null constructor */
 RealPower::RealPower() : ConstantPower(), pwr(0)
@@ -322,31 +311,31 @@ RealPower::RealPower() : ConstantPower(), pwr(0)
 RealPower::RealPower(const Expression &expression, double power)
           : ConstantPower(expression), pwr(power)
 {}
-    
+
 /** Copy constructor */
 RealPower::RealPower(const RealPower &other)
           : ConstantPower(other), pwr(other.pwr)
 {}
-    
+
 /** Destructor */
 RealPower::~RealPower()
 {}
-    
+
 /** Comparison operator */
 bool RealPower::operator==(const ExBase &other) const
 {
     const RealPower *other_power = dynamic_cast<const RealPower*>(&other);
-    
+
     return other_power != 0 and typeid(other).name() == typeid(*this).name()
                  and pwr == other_power->pwr and ex == other_power->ex;
 }
-    
+
 /** Return a hash of this power */
 uint RealPower::hash() const
 {
     return ( r_realpower.magicID() <<16 ) | ( ex.hash() & 0x0000FFFF );
 }
-    
+
 /** Evaluate this power */
 double RealPower::evaluate(const Values &values) const
 {
@@ -363,12 +352,12 @@ Complex RealPower::evaluate(const ComplexValues &values) const
 ////////// Implementation of ComplexPower
 //////////
 
-static const RegisterMetaType<ComplexPower> r_complexpower("SireCAS::ComplexPower");
+static const RegisterMetaType<ComplexPower> r_complexpower;
 
 /** Serialise to a binary datastream */
 QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ComplexPower &power)
 {
-    writeHeader(ds, r_complexpower, 1) << power.pwr 
+    writeHeader(ds, r_complexpower, 1) << power.pwr
                                        << static_cast<const ConstantPower&>(power);
     return ds;
 }
@@ -384,12 +373,9 @@ QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, ComplexPower &power)
     }
     else
         throw version_error(v, "1", r_complexpower, CODELOC);
-    
+
     return ds;
 }
-
-/** Register a ComplexPower */
-static RegisterExpression<ComplexPower> RegisterComplexPower;
 
 /** Null constructor */
 ComplexPower::ComplexPower() : ConstantPower(), pwr(0)
@@ -399,37 +385,37 @@ ComplexPower::ComplexPower() : ConstantPower(), pwr(0)
 ComplexPower::ComplexPower(const Expression &expression, const Complex &power)
              : ConstantPower(expression), pwr(power)
 {}
-    
+
 /** Copy constructor */
 ComplexPower::ComplexPower(const ComplexPower &other)
              : ConstantPower(other), pwr(other.pwr)
 {}
-    
+
 /** Destructor */
 ComplexPower::~ComplexPower()
 {}
-    
+
 /** Comparison operator */
 bool ComplexPower::operator==(const ExBase &other) const
 {
     const ComplexPower *other_power = dynamic_cast<const ComplexPower*>(&other);
-    
+
     return other_power != 0 and typeid(other).name() == typeid(*this).name()
                  and pwr == other_power->pwr and ex == other_power->ex;
 }
-    
+
 /** Return a hash of this power */
 uint ComplexPower::hash() const
 {
     return ( r_complexpower.magicID() <<16 ) | ( ex.hash() & 0x0000FFFF );
 }
-    
+
 /** Evaluate this power */
 double ComplexPower::evaluate(const Values &values) const
 {
     //calculate the result...
     Complex val = SireMaths::pow( ex.evaluate(values), pwr );
-    
+
     if (not val.isReal())
         throw SireMaths::domain_error(QObject::tr(
             "Raising the expression \"%1\" to the complex power \"%2\" has "

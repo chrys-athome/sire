@@ -31,6 +31,9 @@
 #include "moleculeinfo.h"
 #include "residueinfo.h"
 #include "atominfogroup.h"
+#include "idmolatom.h"
+
+#include "property.h"
 
 #include "cutgroupid.h"
 #include "resid.h"
@@ -58,15 +61,14 @@ using namespace SireStream;
 using namespace SireMol;
 using namespace SireVol;
 
-static const RegisterMetaType<MoleculeData> r_pvt("SireMol::MoleculeData",
-                                                  MAGIC_ONLY);
+static const RegisterMetaType<MoleculeData> r_pvt;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const MoleculeData &moldata)
 {
     writeHeader(ds, r_pvt, 1) << moldata._id << moldata._molversion
                               << moldata._coords << moldata._molinfo
-                              << moldata._molbonds;
+                              << moldata._molbonds << moldata._properties;
     return ds;
 }
 
@@ -79,7 +81,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MoleculeData &moldata)
     {
         ds >> moldata._id >> moldata._molversion
            >> moldata._coords >> moldata._molinfo
-           >> moldata._molbonds;
+           >> moldata._molbonds >> moldata._properties;
     }
     else
         throw version_error(v, "1", r_pvt, CODELOC);
@@ -131,7 +133,8 @@ MoleculeData::MoleculeData(const MoleculeData &other)
                   _molversion(other._molversion),
                   _molinfo(other._molinfo),
                   _molbonds(other._molbonds),
-                  _coords(other._coords)
+                  _coords(other._coords),
+                  _properties(other._properties)
 {}
 
 /** Destructor */
@@ -146,6 +149,7 @@ MoleculeData& MoleculeData::operator=(const MoleculeData &other)
     _molinfo = other._molinfo;
     _molbonds = other._molbonds;
     _coords = other._coords;
+    _properties = other._properties;
 
     return *this;
 }
@@ -166,21 +170,25 @@ MoleculeData& MoleculeData::operator=(const detail::MolData &moldata)
 /** Comparison operator */
 bool MoleculeData::operator==(const MoleculeData &other) const
 {
-    return _id == other._id and
-           _molversion == other._molversion and
-           _molinfo == other._molinfo and
-           _molbonds == other._molbonds and
-           _coords == other._coords;
+    return (this == &other) or
+           (_id == other._id and
+            _molversion == other._molversion and
+            _molinfo == other._molinfo and
+            _molbonds == other._molbonds and
+            _coords == other._coords and
+            _properties == other._properties);
 }
 
 /** Comparison operator */
 bool MoleculeData::operator!=(const MoleculeData &other) const
 {
-    return _id != other._id or
-           _molversion != other._molversion or
-           _molinfo != other._molinfo or
-           _molbonds != other._molbonds or
-           _coords != other._coords;
+    return (this != &other) and
+           (_id != other._id or
+            _molversion != other._molversion or
+            _molinfo != other._molinfo or
+            _molbonds != other._molbonds or
+            _coords != other._coords or
+            _properties != other._properties);
 }
 
 /** Return the ID number of the molecule */
@@ -226,6 +234,59 @@ EditMol MoleculeData::edit() const
                   "Editing a molecule is not yet supported!"), CODELOC );
 
     return EditMol();
+}
+
+/** Return the property called 'name'
+
+    \throw SireMol::missing_property
+*/
+const Property& MoleculeData::getProperty(const QString &name) const
+{
+    QHash<QString,Property>::const_iterator it = _properties.find(name);
+
+    if (it == _properties.constEnd())
+        throw SireMol::missing_property( QObject::tr(
+                "There is no property called \"%1\" in the molecule \"%2\" (%3:%4)")
+                    .arg(name, info().name()).arg(ID()).arg(version().toString()),
+                        CODELOC );
+
+    return *it;
+}
+
+/** Set the value of the property called 'name' to 'value' - this will
+    replace any existing property with that name. */
+void MoleculeData::setProperty(const QString &name, const Property &value)
+{
+    _properties.insert( name, value );
+
+    //this has changed the major version of the molecule
+    this->incrementMajorVersion();
+}
+
+/** Add a property called 'name' with value 'value'. This will only add the
+    property if there is not an already existing property with that name.
+
+    \throw SireMol::duplicate_property
+*/
+void MoleculeData::addProperty(const QString &name, const Property &value)
+{
+    if (_properties.contains(name))
+        throw SireMol::duplicate_property( QObject::tr(
+              "Cannot add the property \"%1\" to the molecule \"%2\" (%3:%4) "
+              "as this molecule already has a property with this name.")
+                  .arg(name, info().name()).arg(ID()).arg(version().toString()),
+                      CODELOC );
+
+    _properties.insert( name, value );
+
+    //this has changed the major version of the molecule
+    this->incrementMajorVersion();
+}
+
+/** Return a hash of all of the properties associated with this molecule */
+const QHash<QString,Property>& MoleculeData::properties() const
+{
+    return _properties;
 }
 
 /** Return the connectivity of this molecule */
@@ -287,34 +348,6 @@ CutGroup MoleculeData::at(CutGroupID cgid) const
     return cutGroup(cgid);
 }
 
-/** Return a copy of the atom at index 'atomid'
-
-    \throw SireError::invalid_index
-*/
-Atom MoleculeData::at(AtomID atomid) const
-{
-    return atom(atomid);
-}
-
-/** Return a copy of the atom at index 'resatomid'
-
-    \throw SireMol::missing_residue
-    \throw SireError::invalid_index
-*/
-Atom MoleculeData::at(const ResNumAtomID &resatomid) const
-{
-    return atom(resatomid);
-}
-
-/** Return a copy of the atom at index 'resatomid'
-
-    \throw SireError::invalid_index
-*/
-Atom MoleculeData::at(const ResIDAtomID &resatomid) const
-{
-    return atom(resatomid);
-}
-
 /** Return a copy of the atom at index 'cgatomid'
 
     \throw SireMol::missing_cutgroup
@@ -325,14 +358,16 @@ Atom MoleculeData::at(const CGAtomID &cgatomid) const
     return atom(cgatomid);
 }
 
-/** Return a copy of the atom at with AtomIndex 'atm'
+/** Return a copy of the atom at 'atomid'
 
     \throw SireMol::missing_residue
+    \throw SireMol::missing_cutgroup
+    \throw SireMol::missing_atom
     \throw SireMol::missing_atom
 */
-Atom MoleculeData::at(const AtomIndex &atm) const
+Atom MoleculeData::at(const IDMolAtom &atomid) const
 {
-    return atom(atm);
+    return atom(atomid);
 }
 
 /** @name MoleculeData::coordinates(....)
@@ -363,84 +398,15 @@ Vector MoleculeData::coordinates(const CGAtomID &cgatomid) const
 }
 
 /** Return a copy of the coordinates of the atom at index 'atomid'
-    in the CutGroup with ID == cgid
 
+    \throw SireMol::missing_residue
     \throw SireMol::missing_cutgroup
-    \throw SireError::invalid_index
-*/
-Vector MoleculeData::coordinates(CutGroupID cgid, AtomID atomid) const
-{
-    return coordinates( CGAtomID(cgid,atomid) );
-}
-
-/** Return the coordinates for the atom at index 'atomid'
-
-    \throw SireError::invalid_index
-*/
-Vector MoleculeData::coordinates(AtomID atomid) const
-{
-    return this->_unsafe_coordinates( info().at(atomid) );
-}
-
-/** Return the coordinates of the atom with ID 'atm'
-
-    \throw SireMol::missing_residue
     \throw SireMol::missing_atom
-*/
-Vector MoleculeData::coordinates(const AtomIndex &atm) const
-{
-    return this->_unsafe_coordinates( info().at(atm) );
-}
-
-/** Return the coordinates of the atom with name 'atomname' and
-    in residue with number 'resnum'
-
-    \throw SireMol::missing_residue
-    \throw SireMol::missing_atom
-*/
-Vector MoleculeData::coordinates(ResNum resnum, const QString &atomname) const
-{
-    return coordinates( AtomIndex(atomname,resnum) );
-}
-
-/** Return the coordinates of the atom at index 'resatomid'
-
-    \throw SireMol::missing_residue
     \throw SireError::invalid_index
 */
-Vector MoleculeData::coordinates(const ResNumAtomID &resatomid) const
+Vector MoleculeData::coordinates(const IDMolAtom &atomid) const
 {
-    return this->_unsafe_coordinates( info().at(resatomid) );
-}
-
-/** Return the coordinates of the atom at index 'atmid' in the residue
-    with number 'resnum'
-
-    \throw SireMol::missing_residue
-    \throw SireError::invalid_index
-*/
-Vector MoleculeData::coordinates(ResNum resnum, AtomID atomid) const
-{
-    return coordinates( ResNumAtomID(resnum,atomid) );
-}
-
-/** Return the coordinates of the atom at index 'resatomid'
-
-    \throw SireError::invalid_index
-*/
-Vector MoleculeData::coordinates(const ResIDAtomID &resatomid) const
-{
-    return this->_unsafe_coordinates( info().at(resatomid) );
-}
-
-/** Return the coordinates of the atom at index 'atmid' in the
-    residue at index 'resid'
-
-    \throw SireError::invalid_index
-*/
-Vector MoleculeData::coordinates(ResID resid, AtomID atomid) const
-{
-    return coordinates( ResIDAtomID(resid,atomid) );
+    return this->_unsafe_coordinates( atomid.index(info()) );
 }
 
 template<class T>
@@ -970,82 +936,16 @@ Atom MoleculeData::atom(const CGAtomID &cgatomid) const
     return this->_unsafe_atom(cgatomid);
 }
 
-/** Return a copy of the atom at index 'atomid' in the CutGroup
-    with ID == 'cgid'
+/** Return a copy of the atom at index 'atomid'
 
+    \throw SireMol::missing_residue
     \throw SireMol::missing_cutgroup
-    \throw SireError::invalid_index
-*/
-Atom MoleculeData::atom(CutGroupID cgid, AtomID atomid) const
-{
-    return this->atom( CGAtomID(cgid,atomid) );
-}
-
-/** Return the atom at index 'atomid'
-
-    \throw SireError::invalid_index
-*/
-Atom MoleculeData::atom(AtomID atomid) const
-{
-    return this->_unsafe_atom( info().at(atomid) );
-}
-
-/** Return the atom with index 'atm'
-
-    \throw SireMol::missing_residue
     \throw SireMol::missing_atom
-*/
-Atom MoleculeData::atom(const AtomIndex &atm) const
-{
-    return this->_unsafe_atom( info().at(atm) );
-}
-
-/** Return the atom called 'atomname' in the residue with number 'resnum'
-
-    \throw SireMol::missing_residue
-    \throw SireMol::missing_atom
-*/
-Atom MoleculeData::atom(ResNum resnum, const QString &atomname) const
-{
-    return atom( AtomIndex(atomname,resnum) );
-}
-
-/** Return the atom at index 'resatomid'
-
-    \throw SireMol::missing_residue
     \throw SireError::invalid_index
 */
-Atom MoleculeData::atom(const ResNumAtomID &resatomid) const
+Atom MoleculeData::atom(const IDMolAtom &atomid) const
 {
-    return this->_unsafe_atom( info().at(resatomid) );
-}
-
-/** Return the atom at index 'atmid' in the residue with number 'resnum'
-
-    \throw SireMol::missing_residue
-    \throw SireError::invalid_index
-*/
-Atom MoleculeData::atom(ResNum resnum, AtomID atmid) const
-{
-    return atom( ResNumAtomID(resnum,atmid) );
-}
-
-/** Return the atom at index 'resatomid'
-
-    \throw SireError::invalid_index
-*/
-Atom MoleculeData::atom(const ResIDAtomID &resatomid) const
-{
-    return this->_unsafe_atom( info().at(resatomid) );
-}
-
-/** Return the atom at index 'atmid' in the residue at index 'resid'
-
-    \throw SireError::invalid_index
-*/
-Atom MoleculeData::atom(ResID resid, AtomID atmid) const
-{
-    return atom( ResIDAtomID(resid,atmid) );
+    return this->_unsafe_atom( atomid.index(info()) );
 }
 
 /////////////////////////////////////////////////////////

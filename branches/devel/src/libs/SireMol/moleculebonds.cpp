@@ -15,7 +15,7 @@
 using namespace SireStream;
 using namespace SireMol;
 
-static const RegisterMetaType<MoleculeBonds> r_molbonds("SireMol::MoleculeBonds");
+static const RegisterMetaType<MoleculeBonds> r_molbonds;
 
 /** Serialise a MoleculeBonds */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const MoleculeBonds &molbnds)
@@ -518,6 +518,29 @@ QSet<ResNum> MoleculeBonds::resNumsBondedTo(ResNum resnum) const
         return resbnds[resnum].bondedResidues();
     else
         return QSet<ResNum>();
+}
+
+/** Return the list of AtomIndexes of atoms that are bonded to 'atom' */
+QSet<AtomIndex> MoleculeBonds::atomsBondedTo(const AtomIndex &atom) const
+{
+    QList<Bond> bnds = this->bonds(atom);
+
+    if (bnds.count() > 0)
+    {
+        QSet<AtomIndex> bndatoms;
+        bndatoms.reserve(bnds.count());
+
+        for (QList<Bond>::const_iterator it = bnds.constBegin();
+             it != bnds.constEnd();
+             ++it)
+        {
+            bndatoms.insert( it->other(atom) );
+        }
+
+        return bndatoms;
+    }
+    else
+        return QSet<AtomIndex>();
 }
 
 /** Return the complete list of residue numbers in this molecule

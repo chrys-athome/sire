@@ -4,7 +4,7 @@
 #include <QHash>
 
 #include "exbase.h"
-#include "expressions.h"
+#include "expression.h"
 
 SIRE_BEGIN_HEADER
 
@@ -34,22 +34,22 @@ public:
     Sum();
     Sum(const Expression &ex0, const Expression &ex1);
     Sum(const Expressions &expressions);
-    
+
     Sum(const Sum &other);
-    
+
     ~Sum();
 
     Expression differentiate(const Symbol &symbol) const;
     Expression integrate(const Symbol &symbol) const;
-    
+
     Expression series(const Symbol &symbol, int n) const;
-    
+
     Expression simplify(int options=0) const;
-    
+
     Expression expand() const;
     Expression collapse() const;
     Expression conjugate() const;
-    
+
     bool isFunction(const Symbol&) const;
     bool isConstant() const;
     bool isComplex() const;
@@ -58,30 +58,34 @@ public:
     bool operator==(const ExBase &other) const;
     uint hash() const;
 
-    const char* what() const
+    static const char* typeName()
     {
         return "SireCAS::Sum";
+    }
+
+    const char* what() const
+    {
+        return Sum::typeName();
     }
 
     QString toString() const;
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
-    
+
     Expression substitute(const Identities &identities) const;
-    
+
     Symbols symbols() const;
     Functions functions() const;
     Expressions children() const;
 
     Expression reduce() const;
 
-protected:
-    ExBase* clone() const
+    Sum* clone() const
     {
         return new Sum(*this);
     }
-    
+
 private:
 
     void add(const Expression &ex);
@@ -91,7 +95,7 @@ private:
 
     /** The positive parts of the sum */
     QHash<ExpressionBase, Expression> posparts;
-    
+
     /** The negative parts of the sum */
     QHash<ExpressionBase, Expression> negparts;
 

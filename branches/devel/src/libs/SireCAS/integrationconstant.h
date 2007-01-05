@@ -29,28 +29,31 @@ friend QDataStream& ::operator>>(QDataStream&, IntegrationConstant&);
 
 public:
     IntegrationConstant();
-    
+
     IntegrationConstant(const IntegrationConstant &other);
-    
+
     ~IntegrationConstant();
 
     bool operator==(const ExBase &other) const;
-    
+
     uint hash() const;
 
-    const char* what() const
+    static const char* typeName()
     {
         return "SireCAS::IntegrationConstant";
     }
 
-    Expression integrate(const Symbol &symbol) const;
+    const char* what() const
+    {
+        return IntegrationConstant::typeName();
+    }
 
-protected:
-    ExBase* clone() const
+    IntegrationConstant* clone() const
     {
         return new IntegrationConstant(*this);
     }
 
+    Expression integrate(const Symbol &symbol) const;
 };
 
 }

@@ -7,6 +7,7 @@
 
 #include "SireMol/molecule.h"
 
+#include "SireError/errors.h"
 #include "SireStream/datastream.h"
 
 using namespace SireStream;
@@ -14,7 +15,7 @@ using namespace SireDB;
 using namespace SireMol;
 
 /** Register this class so that it can be used with QVariant */
-static const RegisterMetaType<AtomTypeTable> r_atomtypetable("SireDB::AtomTypeTable");
+static const RegisterMetaType<AtomTypeTable> r_atomtypetable;
 
 /** Serialise to a binary data stream */
 QDataStream SIREDB_EXPORT &operator<<(QDataStream &ds, const AtomTypeTable &table)

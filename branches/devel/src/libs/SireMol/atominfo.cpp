@@ -21,7 +21,7 @@
 using namespace SireStream;
 using namespace SireMol;
 
-static const RegisterMetaType<AtomInfo> r_atominfo("SireMol::AtomInfo");
+static const RegisterMetaType<AtomInfo> r_atominfo;
 
 /** Serialise an AtomInfo to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const AtomInfo &atominfo)

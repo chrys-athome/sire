@@ -19,6 +19,49 @@ using namespace SireMM::detail;
 using namespace SireVol;
 using namespace SireDB;
 
+///////////
+/////////// Implementation of Tip4PFF::Components
+///////////
+
+/** Constructor */
+Tip4PFF::Components::Components() : CLJFF::Components()
+{}
+
+/** Constructor that just passes its arguments up to the parent */
+Tip4PFF::Components::Components(const FFBase &ffbase, const Symbols &symbols)
+        : CLJFF::Components(ffbase,symbols)
+{}
+
+/** Copy constructor */
+Tip4PFF::Components::Components(const Components &other)
+           : CLJFF::Components(other)
+{}
+
+/** Destructor */
+Tip4PFF::Components::~Components()
+{}
+
+///////////
+/////////// Implementation of Tip4PFF::Parameters
+///////////
+
+/** Constructor */
+Tip4PFF::Parameters::Parameters() : CLJFF::Parameters()
+{}
+
+/** Copy constructor */
+Tip4PFF::Parameters::Parameters(const Parameters &other)
+           : CLJFF::Parameters(other)
+{}
+
+/** Destructor */
+Tip4PFF::Parameters::~Parameters()
+{}
+
+///////////
+/////////// Implementation of Tip4PFF
+///////////
+
 /** Constructor */
 Tip4PFF::Tip4PFF() : CLJFF()
 {}
@@ -26,7 +69,7 @@ Tip4PFF::Tip4PFF() : CLJFF()
 /** Construct a CLJ forcefield using the passed Space and
     switching function (combining rules don't affect TIP4P) */
 Tip4PFF::Tip4PFF(const Space &space, const SwitchingFunction &switchfunc)
-           : CLJFF(space, switchfunc)
+        : CLJFF(space, switchfunc)
 {}
 
 /** Copy constructor */
@@ -48,7 +91,6 @@ double Tip4PFF::calculateEnergy(const Vector *array0, int nats0,
                                 const Space &space)
 {
     double maxinvdist2(0);
-    double tmpdist;
 
     double inrg = 0;
 
@@ -133,46 +175,30 @@ void Tip4PFF::recalculateEnergy()
         }
     }
 
-    //this->setComponent( coulomb(), cnrg );
-    //this->setComponent( lj(), ljnrg );
-    this->setComponent( total(), nrg );
+    //this->setComponent( components().coulomb(), cnrg );
+    //this->setComponent( components().lj(), ljnrg );
+    this->setComponent( components().total(), nrg );
 }
 
-/** Return the molecule in this forcefield that has the ID 'molid'
-
-    \throw SireMol::missing_molecule
-*/
-const Molecule& Tip4PFF::molecule(MoleculeID molid) const
-{
-    throw SireError::incomplete_code( QObject::tr(
-        "Need to write Tip4PFF::molecule(molid)"), CODELOC );
-
-    return Molecule();
-}
-
-/** Temporary function used to add a molecule with passed charge and LJ
-    parameters */
-void Tip4PFF::add(const Molecule &mol, const ChargeTable &charges,
-                  const LJTable &ljs)
+/** Temporary function used to add a molecule getting the parameters from
+    the properties of the molecule using the passed mapping */
+bool Tip4PFF::add(const Molecule &mol, const ParameterMap &map)
 {
     if (cljparams.isEmpty())
     {
-        charges.assertCompatibleWith(mol);
-        ljs.assertCompatibleWith(mol);
+        AtomicCharges charges = mol.getProperty( map.source(parameters().coulomb()) );
+        AtomicLJs ljs = mol.getProperty( map.source(parameters().lj()) );
 
-        QVector< ParameterGroup<ChargeParameter> > chargeparams = charges.parameterGroups();
-        QVector< ParameterGroup<LJParameter> > ljparams = ljs.parameterGroups();
-
-        int ncg = chargeparams.count();
+        int ncg = charges.count();
 
         BOOST_ASSERT(ncg == 1);
 
-        int nparams = chargeparams[0].parameters().count();
+        int nparams = charges[0].count();
 
         BOOST_ASSERT(nparams == 4);
 
-        const ChargeParameter *chargearray = chargeparams[0].parameters().constData();
-        const LJParameter *ljarray = ljparams[0].parameters().constData();
+        const ChargeParameter *chargearray = charges[0].constData();
+        const LJParameter *ljarray = ljs[0].constData();
 
         cljparams.reserve(nparams);
 
@@ -197,15 +223,19 @@ void Tip4PFF::add(const Molecule &mol, const ChargeTable &charges,
 
     mols.append( coords );
     aaboxes.append( cgroup.aaBox() );
+
+    this->incrementMajorVersion();
+
+    return isDirty();
 }
 
 /** Move the molecule 'molecule' */
-bool Tip4PFF::move(const Molecule &molecule)
+bool Tip4PFF::change(const Molecule &molecule)
 {
     return false;
 }
 
-bool Tip4PFF::move(const Residue &residue)
+bool Tip4PFF::change(const Residue &residue)
 {
     return false;
 }

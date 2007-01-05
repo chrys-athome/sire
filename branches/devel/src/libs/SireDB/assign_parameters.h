@@ -4,7 +4,7 @@
 #include "assignbase.h"
 #include "matchmrdata.h"
 
-#include "SireBase/dynamicsharedptr.hpp"
+#include "SireBase/sharedpolypointer.hpp"
 
 #include <QList>
 
@@ -29,7 +29,7 @@ namespace SireDB
 class ParameterTable;
 
 using SireMol::Molecule;
-using SireBase::DynamicSharedPtr;
+using SireBase::SharedPolyPointer;
 
 /**
 This is the master object that is used to control the assignment and transfer of parameters from the database classes to the table classes. This object holds the instructions for parametisation as a collection of AssignInstruction objects. These instructions can either be information as to what needs to be parametised and where the parameters are stored (e.g. assign_atoms and using_parameters) or which relationships to use to assign the parameters (e.g. using_relationships).
@@ -101,7 +101,7 @@ public:
 private:
     /** The collection of assignment instructions, which will
         be processed in turn. */
-    QList< DynamicSharedPtr<AssignBase> > instrctns;
+    QList< SharedPolyPointer<AssignBase> > instrctns;
 };
 
 }

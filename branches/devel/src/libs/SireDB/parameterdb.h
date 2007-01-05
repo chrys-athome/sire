@@ -8,8 +8,6 @@
 #include <QVariant>
 #include <QHash>
 
-#include "SireBase/dynamicsharedptr.hpp"
-
 #include "relateidmap.h"
 #include "matchmrdata.h"
 

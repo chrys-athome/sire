@@ -10,9 +10,7 @@
 #include <boost/python.hpp>
 
 #include "SireIO/iobase.h"
-#include "SireIO/mct.h"
 #include "SireIO/pdb.h"
-#include "SireIO/mol2.h"
 
 #include <QByteArray>
 #include <QList>

@@ -8,7 +8,7 @@
 #include "matchmrdata.h"
 
 #include "SireMol/moleculeinfo.h"
-#include "SireBase/dynamicsharedptr.hpp"
+#include "SireBase/sharedpolypointer.hpp"
 
 SIRE_BEGIN_HEADER
 
@@ -35,7 +35,7 @@ class ParameterDB;
 
 using SireMol::Molecule;
 using SireMol::MoleculeInfo;
-using SireBase::DynamicSharedPtr;
+using SireBase::SharedPolyPointer;
 
 /**
 This class holds all of the parameter tables in a single object.
@@ -100,7 +100,7 @@ private:
         held in this table */
     MoleculeInfo molinfo;
 
-    typedef QHash< QString, DynamicSharedPtr<TableBase> > hash_type;
+    typedef QHash< QString, SharedPolyPointer<TableBase> > hash_type;
 
     /** All of the tables in this database, indexed by typename */
     hash_type tables;

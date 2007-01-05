@@ -20,7 +20,7 @@
 using namespace SireStream;
 using namespace SireDB;
 
-static const RegisterMetaType<ParameterDB> r_parameterdb("SireDB::ParameterDB");
+static const RegisterMetaType<ParameterDB> r_parameterdb;
 
 /** Serialise to a binary data stream */
 QDataStream SIREDB_EXPORT &operator<<(QDataStream &ds, const ParameterDB &db)

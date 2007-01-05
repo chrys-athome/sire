@@ -9,13 +9,13 @@ using namespace SireStream;
 using namespace SireMM;
 
 /** Register this ChargeParameter */
-static const RegisterMetaType<ChargeParameter> r_chargeparam("SireMM::ChargeParameter");
+static const RegisterMetaType<ChargeParameter> r_chargeparam;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const ChargeParameter &charge)
 {
     writeHeader(ds, r_chargeparam, 1) << charge.charge();
-       
+
     return ds;
 }
 
@@ -23,7 +23,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const ChargeParameter &ch
 QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, ChargeParameter &charge)
 {
     VersionID v = readHeader(ds, r_chargeparam);
-    
+
     if (v == 1)
     {
         double chg;
@@ -32,7 +32,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, ChargeParameter &charge)
     }
     else
         throw version_error( v, "1", r_chargeparam, CODELOC );
-        
+
     return ds;
 }
 

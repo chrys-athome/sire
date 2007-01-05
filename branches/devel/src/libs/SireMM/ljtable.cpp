@@ -13,7 +13,7 @@ using namespace SireDB;
 using namespace SireMol;
 
 /** Register this as a concrete class */
-static const RegisterMetaType<LJTable> r_ljtable("SireMM::LJTable");
+static const RegisterMetaType<LJTable> r_ljtable;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const LJTable &table)

@@ -19,10 +19,8 @@ using namespace SireStream;
 using namespace SireMol;
 using namespace SireMM;
 
-static const RegisterMetaType<DihedralGenerator>
-                        r_dihedralgenerator("SireMM::DihedralGenerator");
-static const RegisterMetaType<UsePassedDihedrals>
-                        r_usepasseddihedrals("SireMM::UsePassedDihedrals");
+static const RegisterMetaType<DihedralGenerator> r_dihedralgenerator;
+static const RegisterMetaType<UsePassedDihedrals> r_usepasseddihedrals;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const DihedralGenerator &generator)

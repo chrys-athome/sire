@@ -11,14 +11,14 @@ using namespace SireStream;
 using namespace SireMM;
 using namespace SireMol;
 
-static const RegisterMetaType<ResBondInfo> r_resbondinfo("SireMM::ResBondInfo");
+static const RegisterMetaType<ResBondInfo> r_resbondinfo;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const ResBondInfo &info)
 {
-    writeHeader(ds, r_resbondinfo, 1) 
+    writeHeader(ds, r_resbondinfo, 1)
           << static_cast<const ResInternalInfo<Bond>&>(info);
-          
+
     return ds;
 }
 
@@ -26,14 +26,14 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const ResBondInfo &info)
 QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, ResBondInfo &info)
 {
     VersionID v = readHeader(ds, r_resbondinfo);
-    
+
     if (v == 1)
     {
         ds >> static_cast<ResInternalInfo<Bond>&>(info);
     }
     else
         throw version_error(v, "1", r_resbondinfo, CODELOC);
-    
+
     return ds;
 }
 
@@ -62,7 +62,7 @@ int ResBondInfo::nBonds() const
 {
     return nInternals();
 }
-    
+
 /** Return the number of intra-residue bonds in this residue */
 int ResBondInfo::nIntraBonds() const
 {
@@ -74,7 +74,7 @@ int ResBondInfo::nInterBonds() const
 {
     return nInterInternals();
 }
-    
+
 /** Return an iterator over all of the bonds in this residue */
 ResBondInfo::const_iterator ResBondInfo::bonds() const
 {
@@ -88,7 +88,7 @@ ResBondInfo::const_iterator ResBondInfo::intraBonds() const
     return intraInternals();
 }
 
-/** Return an iterator over all of the inter-residue bonds 
+/** Return an iterator over all of the inter-residue bonds
     to this residue */
 ResBondInfo::const_iterator ResBondInfo::interBonds() const
 {

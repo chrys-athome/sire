@@ -6,14 +6,14 @@
 using namespace SireStream;
 using namespace SireMaths;
 
-static RegisterMetaType<Torsion> r_torsion("SireMaths::Torsion");
+static RegisterMetaType<Torsion> r_torsion;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Torsion &torsion)
 {
     writeHeader(ds, r_torsion, 1) << torsion.points[0] << torsion.points[1]
                                   << torsion.points[2] << torsion.points[3];
-       
+
     return ds;
 }
 
@@ -21,7 +21,7 @@ QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Torsion &torsion
 QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, Torsion &torsion)
 {
     VersionID v = readHeader(ds, r_torsion);
-        
+
     if (v == 1)
     {
         ds >> torsion.points[0] >> torsion.points[1]
@@ -29,7 +29,7 @@ QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, Torsion &torsion)
     }
     else
         throw version_error(v, "1", r_torsion, CODELOC);
-       
+
     return ds;
 }
 

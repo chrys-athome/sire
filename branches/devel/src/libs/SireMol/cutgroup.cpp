@@ -23,7 +23,7 @@ using namespace SireMol;
 using namespace SireVol;
 using namespace SireStream;
 
-static const RegisterMetaType<SireMol::CutGroup> r_cutgroup("SireMol::CutGroup");
+static const RegisterMetaType<SireMol::CutGroup> r_cutgroup;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const CutGroup &cgroup)

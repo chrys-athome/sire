@@ -24,7 +24,7 @@ shared copy of the forcefield class.
 
 @author Christopher Woods
 */
-class SIREFF_EXPORT ForceField
+class SIREFF_EXPORT ForceField : public SireBase::SharedPolyPointer<FFBase>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const ForceField&);
@@ -44,68 +44,97 @@ public:
     const char* what() const;
 
     const QString& name() const;
+    void setName(const QString& name);
+
+    const FFBase::Components& components() const;
+    const FFBase::Parameters& parameters() const;
 
     double energy();
-    double energy(const Function &component);
+    double energy(const FFComponent &component);
 
     Values energies();
 
-    static int TOTAL()
-    {
-        return FFBase::TOTAL();
-    }
+    bool change(const Molecule &mol);
+    bool change(const Residue &res);
 
-    const Function& total() const;
-    const Function& component(int componentid) const;
-    QList<Function> components() const;
+    bool add(const Molecule &molecule,
+             const ParameterMap &map = ParameterMap());
+    bool add(const Residue &residue,
+             const ParameterMap &map = ParameterMap());
 
-    const Molecule& molecule(MoleculeID molid) const;
-    //virtual const Residue& residue(const MolResNumID &molresid) const=0;
+    bool remove(const Molecule &molecule);
+    bool remove(const Residue &residue);
 
-    bool move(const Molecule &mol);
-    bool move(const Residue &res);
+    bool replace(const Molecule &oldmol,
+                 const Molecule &newmol,
+                 const ParameterMap &map = ParameterMap());
+
+    bool contains(const Molecule &molecule) const;
+    bool contains(const Residue &residue) const;
+
+    Molecule molecule(MoleculeID molid) const;
+    Residue residue(MoleculeID molid, ResNum resnum) const;
+
+    Molecule molecule(const Molecule &mol) const;
+    Residue residue(const Residue &res) const;
 
     bool isDirty() const;
     bool isClean() const;
 
-    void assertContains(const Function &component) const;
+    quint32 ID() const;
+    const Version& version() const;
 
-    void assertContains(const Molecule &molecule) const;
-    void assertContains(const Residue &residue) const;
-
-    void assertSameMajorVersion(const Molecule &molecule) const;
-    void assertSameMajorVersion(const Residue &residue) const;
-
-    void assertSameVersion(const Molecule &molecule) const;
-    void assertSameVersion(const Residue &residue) const;
-
-    template<class T>
-    bool isA() const;
-
-    template<class T>
-    SireBase::SharedPolyPointer<T> asA() const;
-
-private:
-    /** Shared pointer to the actual forcefield implementation */
-    SireBase::SharedPolyPointer<FFBase> d;
+protected:
+    const FFBase& d() const;
+    FFBase& d();
 };
+
+/** Return a reference to the FFBase base of this forcefield */
+inline const FFBase& ForceField::d() const
+{
+    return *(constData());
+}
+
+/** Return a reference to the FFBase base of this forcefield */
+inline FFBase& ForceField::d()
+{
+    return *(data());
+}
 
 /** Return a string containing the type of the forcefield */
 inline const char* ForceField::what() const
 {
-    return d->what();
+    return d().what();
+}
+
+/** Return the components in this forcefield */
+inline const FFBase::Components& ForceField::components() const
+{
+    return d().components();
+}
+
+/** Return the parameters necessary for this forcefield */
+inline const FFBase::Parameters& ForceField::parameters() const
+{
+    return d().parameters();
 }
 
 /** Return the name of the forcefield */
 inline const QString& ForceField::name() const
 {
-    return d->name();
+    return d().name();
+}
+
+/** Set the name of the forcefield */
+inline void ForceField::setName(const QString &name)
+{
+    d().setName(name);
 }
 
 /** Return the total energy of the forcefield */
 inline double ForceField::energy()
 {
-    return d->energy();
+    return d().energy();
 }
 
 /** Return the energy of the component represented by the
@@ -113,167 +142,171 @@ inline double ForceField::energy()
 
     \throw SireFF::missing_component
 */
-inline double ForceField::energy(const Function &component)
+inline double ForceField::energy(const FFComponent &component)
 {
-    return d->energy(component);
+    return d().energy(component);
 }
 
 /** Return the energies of all of the components */
 inline Values ForceField::energies()
 {
-    return d->energies();
+    return d().energies();
 }
 
-/** Return the function representing the total energy of this forcefield */
-inline const Function& ForceField::total() const
-{
-    return d->total();
-}
+/** Change the molecule 'mol' (e.g. move it, or change its
+    parameters). This does nothing if the molecule is not
+    in this forcefield. Returns whether or not the forcefield
+    has been changed by this change, and thus whether the
+    energy needs to be recalculated. The same parameter map
+    that was used when this molecule was added will be used
+    to extract any necessary parameters from the molecule's
+    properties
 
-/** Return the function representing the component with ID == componentid
-
-    \throw SireFF::missing_component
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
 */
-inline const Function& ForceField::component(int componentid) const
+inline bool ForceField::change(const Molecule &mol)
 {
-    return d->component(componentid);
+    return d().change(mol);
 }
 
-/** Return a list of the functions representing all of the components
-    in this forcefield */
-inline QList<Function> ForceField::components() const
-{
-    return d->components();
-}
+/** Change the residue 'res' (e.g. move it, or change its
+    parameters). This does nothing if the residue is not
+    in this forcefield. Returns whether or not the forcefield
+    has been changed by this change, and thus whether the
+    energy needs to be recalculated.
 
-/** Return the molecule in this forcefield with ID == molid
-
-    \throw SireMol::missing_molecule
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
 */
-inline const Molecule& ForceField::molecule(MoleculeID molid) const
+inline bool ForceField::change(const Residue &res)
 {
-    return d->molecule(molid);
+    return d().change(res);
 }
 
-/** Move the molecule 'mol' */
-inline bool ForceField::move(const Molecule &mol)
+/** Add the molecule 'molecule' to this forcefield using
+    the optional parameter map to find any necessary parameters
+    from properties of the molecule. This will replace any
+    existing copy of the molecule that already exists in
+    this forcefield. This returns whether or not the
+    forcefield has been changed by this addition, and therefore
+    whether its energy needs recalculating.
+
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+*/
+inline bool ForceField::add(const Molecule &molecule,
+                            const ParameterMap &map)
 {
-    return d->move(mol);
+    return d().add(molecule,map);
 }
 
-/** Move the residue 'res' */
-inline bool ForceField::move(const Residue &res)
+/** Add the residue 'residue' to this forcefield using
+    the optional parameter map to find any necessary parameters
+    from properties of the residue. This will replace any
+    existing copy of the residue that already exists in
+    this forcefield. This returns whether or not the
+    forcefield has been changed by this addition, and therefore
+    whether its energy needs recalculating.
+
+    This will throw an exception if this forcefield does not
+    support partial molecules.
+
+    \throw SireError::invalid_operation
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+*/
+inline bool ForceField::add(const Residue &residue,
+                            const ParameterMap &map)
 {
-    return d->move(res);
+    return d().add(residue,map);
+}
+
+/** Remove the molecule 'molecule' from this forcefield - this
+    does nothing if the molecule is not in this forcefield. This
+    returns whether this has changed the forcefield (therefore
+    necessitating a recalculation of the energy) */
+inline bool ForceField::remove(const Molecule &molecule)
+{
+    return d().remove(molecule);
+}
+
+/** Remove the residue 'residue' from this forcefield - this
+    does nothing if the residue is not in this forcefield. This
+    returns whether this has changed the forcefield (therefore
+    necessitating a recalculation of the energy)
+
+    This will throw an exception if this forcefield does not
+    support partial molecules.
+
+    \throw SireError::invalid_operation
+*/
+inline bool ForceField::remove(const Residue &residue)
+{
+    return d().remove(residue);
+}
+
+/** Replace the molecule 'oldmol' with 'newmol' (using
+    the passed parameter map to find any required parameters
+    in the properties of the molecule). This is equivalent
+    to 'remove(oldmol)' followed by 'add(newmol,map)', except
+    that 'newmol' will only be added if 'oldmol' is contained
+    in this forcefield.
+
+    This returns whether this changes the forcefield.
+
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+*/
+inline bool ForceField::replace(const Molecule &oldmol,
+                                const Molecule &newmol,
+                                const ParameterMap &map)
+{
+    return d().replace(oldmol, newmol, map);
+}
+
+/** Return whether this forcefield contains a copy of the molecule
+    'molecule' */
+inline bool ForceField::contains(const Molecule &molecule) const
+{
+    return d().contains(molecule);
+}
+
+/** Return whether this forcefield contains a copy of the
+    residue 'residue' */
+inline bool ForceField::contains(const Residue &residue) const
+{
+    return d().contains(residue);
 }
 
 /** Return whether the forcefield is dirty (requires an energy recalcualtion) */
 inline bool ForceField::isDirty() const
 {
-    return d->isDirty();
+    return d().isDirty();
 }
 
 /** Return whether or not the forcefield is clean (does not require
     an energy recalcualtion) */
 inline bool ForceField::isClean() const
 {
-    return d->isClean();
+    return d().isClean();
 }
 
-/** Assert that this forcefield contains a component represented by
-    'component'
-
-    \throw SireFF::missing_component
-*/
-inline void ForceField::assertContains(const Function &component) const
+/** Return the ID number of the forcefield */
+inline quint32 ForceField::ID() const
 {
-    d->assertContains(component);
+    return d().ID();
 }
 
-/** Assert that this forcefield contains the molecule 'molecule'
-
-    \throw SireMol::missing_molecule
-*/
-inline void ForceField::assertContains(const Molecule &molecule) const
+/** Return the version number of the forcefield */
+inline const Version& ForceField::version() const
 {
-    d->assertContains(molecule);
-}
-
-/** Assert that this forcefield contains the residue 'residue'
-
-    \throw SireMol::missing_residue
-*/
-inline void ForceField::assertContains(const Residue &residue) const
-{
-    d->assertContains(residue);
-}
-
-/** Assert that the molecule 'molecule' has the same major version as
-    the copy in this forcefield
-
-    \throw SireMol::missing_molecule
-    \throw SireError::version_error
-*/
-inline void ForceField::assertSameMajorVersion(const Molecule &molecule) const
-{
-    d->assertSameMajorVersion(molecule);
-}
-
-/** Assert that the residue 'residue' has the same major version as
-    the copy in this forcefield
-
-    \throw SireMol::missing_residue
-    \throw SireError::version_error
-*/
-inline void ForceField::assertSameMajorVersion(const Residue &residue) const
-{
-    d->assertSameMajorVersion(residue);
-}
-
-/** Assert that the molecule 'molecule' has the same version as the
-    one in this forcefield
-
-    \throw SireMol::missing_molecule
-    \throw SireError::version_error
-*/
-inline void ForceField::assertSameVersion(const Molecule &molecule) const
-{
-    d->assertSameVersion(molecule);
-}
-
-/** Assert that the residue 'residue' has the same version as the one
-    in this forcefield
-
-    \throw SireMol::missing_residue
-    \throw SireError::version_error
-*/
-inline void ForceField::assertSameVersion(const Residue &residue) const
-{
-    d->assertSameVersion(residue);
-}
-
-/** Return whether or not this forcefield is of type 'T' */
-template<class T>
-SIRE_INLINE_TEMPLATE
-bool ForceField::isA() const
-{
-    return d.isA<T>();
-}
-
-/** Return a copy of the forcefield cast as type T. This
-    will throw an exception if this forcefield is not derivable
-    from type T.
-
-    \throw SireError::invalid_cast
-*/
-template<class T>
-SIRE_INLINE_TEMPLATE
-SireBase::SharedPolyPointer<T> ForceField::asA() const
-{
-    return SireBase::SharedPolyPointer<T>( d );
+    return d().version();
 }
 
 }
+
+Q_DECLARE_METATYPE(SireFF::ForceField);
 
 SIRE_END_HEADER
 

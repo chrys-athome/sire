@@ -17,7 +17,7 @@
 using namespace SireStream;
 using namespace SireDB;
 
-static const RegisterMetaType<ParameterTable> r_paramtable("SireDB::ParameterTable");
+static const RegisterMetaType<ParameterTable> r_paramtable;
 
 /** Serialise to a binary data stream */
 QDataStream SIREDB_EXPORT &operator<<(QDataStream &ds, const ParameterTable &table)
@@ -61,7 +61,7 @@ QDataStream SIREDB_EXPORT &operator>>(QDataStream &ds, ParameterTable &table)
 
         for (uint i=0; i<ntables; ++i)
         {
-            DynamicSharedPtr<TableBase> tableptr;
+            SharedPolyPointer<TableBase> tableptr;
 
             //load the table - DynamicSharedPtr can do polymorphic loads :-)
             ds >> tableptr;
@@ -197,12 +197,12 @@ void ParameterTable::createTable(const QString &type_name)
               "this type is loaded and that it has been registered with "
               "QMetaData.").arg(type_name), CODELOC);
 
-    DynamicSharedPtr<TableBase> table_ptr =
-                        static_cast<TableBase*>(QMetaType::construct(id,0));
+    SharedPolyPointer<TableBase> table_ptr(
+                        static_cast<TableBase*>(QMetaType::construct(id,0)) );
 
     //we need to reconstruct the table so that it can
     //store the parameters for the molecule
-    table_ptr = DynamicSharedPtr<TableBase>( table_ptr->create(molinfo) );
+    table_ptr = SharedPolyPointer<TableBase>( table_ptr->create(molinfo) );
 
     if ( table_ptr.data() == 0 )
         throw SireError::program_bug(QObject::tr(
@@ -233,7 +233,7 @@ void ParameterTable::addTable(const TableBase &table)
     }
     else
     {
-        tables.insert( tabletype, DynamicSharedPtr<TableBase>(table.clone()) );
+        tables.insert( tabletype, SharedPolyPointer<TableBase>(table) );
     }
 }
 
@@ -246,7 +246,7 @@ void ParameterTable::setTable(const TableBase &table)
 {
     this->assertTableCompatible(table);
 
-    tables.insert( table.what(), DynamicSharedPtr<TableBase>(table.clone()) );
+    tables.insert( table.what(), SharedPolyPointer<TableBase>(table) );
 }
 
 /** Remove the table with type 'type_name' - this does nothing if this

@@ -59,13 +59,13 @@
 using namespace SireMol;
 using namespace SireStream;
 
-static const RegisterMetaType<EditRes> r_editres("SireMol::EditRes");
+static const RegisterMetaType<EditRes> r_editres;
 
 /** Serialise to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const EditRes &editres)
 {
     writeHeader(ds, r_editres, 1);
-    
+
     SharedDataStream(ds) << editres.rnum << editres.d;
 
     return ds;
@@ -187,7 +187,7 @@ void EditRes::assertSameResidue(const QSet<AtomIndex> &atoms) const
 
 /** Assert that this residue contains atoms that are in the
     CutGroup with number 'cgnum'
-    
+
     \throw SireError::invalid_arg
 */
 void EditRes::assertSameResidue(CutGroupNum cgnum) const
@@ -201,7 +201,7 @@ void EditRes::assertSameResidue(CutGroupNum cgnum) const
 
 /** Assert that this residue contains atoms that are in the
     CutGroup with ID == cgid
-    
+
     \throw SireError::invalid_arg
 */
 void EditRes::assertSameResidue(CutGroupID cgid) const
@@ -217,8 +217,8 @@ void EditRes::assertSameResidue(CutGroupID cgid) const
 }
 
 /** Assert that both of the atoms in the bond 'bond' refer
-    to this residue 
-    
+    to this residue
+
     \throw SireError::invalid_arg
 */
 void EditRes::assertSameResidue(const Bond &bond) const
@@ -280,7 +280,7 @@ CutGroup EditRes::operator[](CutGroupID cgid) const
 {
     this->assertSameResidue(cgid);
     CutGroupNum cgnum = d->at(cgid);
-    
+
     return d->cutGroup(cgnum);
 }
 
@@ -374,9 +374,9 @@ QHash<CutGroupNum,CutGroup> EditRes::cutGroupsByNum() const
     return d->cutGroups(rnum);
 }
 
-/** Return a copy of the CutGroup with index 'cgid' - note that 
+/** Return a copy of the CutGroup with index 'cgid' - note that
     this CutGroup must contain atoms from this residue.
-    
+
     \throw SireMol::missing_cutgroup
     \throw SireError::invalid_arg
 */
@@ -387,7 +387,7 @@ CutGroup EditRes::cutGroup(CutGroupID cgid) const
 
 /** Return a copy of the CutGroup with number 'cgnum' - note
     that this CutGroup must contain atoms from this residue
-    
+
     \throw SireMol::missing_cutgroup
     \throw SireError::invalid_arg
 */
@@ -420,22 +420,22 @@ QHash<CutGroupNum,CoordGroup> EditRes::coordGroupsByNum() const
     return d->coordGroups(rnum);
 }
 
-/** Return a copy of the CoordGroup for the CutGroup with 
+/** Return a copy of the CoordGroup for the CutGroup with
     ID == cgid
-    
+
     \throw SireMol::missing_cutgroup
     \throw SireError::invalid_arg
 */
 CoordGroup EditRes::coordGroup(CutGroupID cgid) const
 {
     this->assertSameResidue(cgid);
-    
+
     return d->coordGroup( d->at(cgid) );
 }
 
-/** Return a copy of the CoordGroup for the CutGroup with 
+/** Return a copy of the CoordGroup for the CutGroup with
     number 'cgnum'
-    
+
     \throw SireMol::missing_cutgroup
     \throw SireError::invalid_arg
 */
@@ -473,7 +473,7 @@ Atom EditRes::atom(const AtomIndex &atom) const
     return this->operator[](atom);
 }
 
-/** Return a copy of the coordinates of the atom at index 'atomid' 
+/** Return a copy of the coordinates of the atom at index 'atomid'
 
     \throw SireError::invalid_index
 */
@@ -484,7 +484,7 @@ Vector EditRes::coordinates(AtomID atomid) const
 
 /** Return a copy of the coordinates of the atom with
     name 'atomname'
-    
+
     \throw SireMol::missing_atom
 */
 Vector EditRes::coordinates(const QString &atomname) const
@@ -521,18 +521,18 @@ QHash<T,Atom> getAtoms(const EditRes &editres, const QSet<T> &idxs)
 {
     QHash<T,Atom> atoms;
     atoms.reserve(idxs.count());
-    
+
     for (typename QSet<T>::const_iterator it = idxs.begin();
          it != idxs.end();
          ++it)
     {
         atoms.insert( *it, editres.atom(*it) );
     }
-    
+
     return atoms;
 }
 
-/** Return copies of the atoms whose indicies are in 'atomids' 
+/** Return copies of the atoms whose indicies are in 'atomids'
 
     \throw SireError::invalid_index
 */
@@ -546,20 +546,20 @@ QHash<T,Vector> getCoords(const EditRes &editres, const QSet<T> &idxs)
 {
     QHash<T,Vector> coords;
     coords.reserve(idxs.count());
-    
+
     for (typename QSet<T>::const_iterator it = idxs.begin();
          it != idxs.end();
          ++it)
     {
         coords.insert( *it, editres.coordinates(*it) );
     }
-    
+
     return coords;
 }
 
-/** Return copies of the coordinates for the atoms whose indicies are 
+/** Return copies of the coordinates for the atoms whose indicies are
     in 'atomids'
-    
+
     \throw SireError::invalid_index
 */
 QHash<AtomID,Vector> EditRes::coordinates(const QSet<AtomID> &atomids) const
@@ -567,7 +567,7 @@ QHash<AtomID,Vector> EditRes::coordinates(const QSet<AtomID> &atomids) const
     return getCoords<AtomID>(*this, atomids);
 }
 
-/** Return copies of the atoms whose names are in 'atomnames' 
+/** Return copies of the atoms whose names are in 'atomnames'
 
     \throw SireMol::missing_atom
 */
@@ -578,7 +578,7 @@ QHash<QString,Atom> EditRes::atoms(const QSet<QString> &atomnames) const
 
 /** Return copies of the coordinates of the atoms whose names
     are in 'atomnames'
-    
+
     \throw SireMol::missing_atom
 */
 QHash<QString,Vector> EditRes::coordinates(const QSet<QString> &atomnames) const
@@ -686,22 +686,22 @@ int EditRes::nAtoms() const
     return d->nAtoms(rnum);
 }
 
-/** Return the total number of atoms *from this residue* 
+/** Return the total number of atoms *from this residue*
     that are in the CutGroup with ID 'cgid'
-    
+
     \throw SireError::invalid_index
     \throw SireMol::missing_cutgroup
 */
 int EditRes::nAtoms(CutGroupID cgid) const
 {
     this->assertSameResidue(cgid);
-    
+
     return this->nAtoms( d->at(cgid) );
 }
 
 /** Return the total number of atoms *from this residue*
     that are in the CutGroup with number 'cgnum'
-    
+
     \throw SireError::invalid_arg
     \throw SireMol::missing_cutgroup
 */
@@ -731,7 +731,7 @@ int EditRes::nIntraBonds() const
     return connectivity().nIntraBonds();
 }
 
-/** Return the total number of inter-residue bonds in this 
+/** Return the total number of inter-residue bonds in this
     residue */
 int EditRes::nInterBonds() const
 {
@@ -746,19 +746,19 @@ QStringList EditRes::atomNames() const
 
 /** Internal function used to return copies of the residues whose
     numbers are in 'resnums'
-    
+
     \throw SireMol::missing_residue
 */
 QHash<ResNum,EditRes> EditRes::getResidues(const QSet<ResNum> &resnums) const
 {
     QHash<ResNum,EditRes> residues;
     residues.reserve(resnums.count());
-    
+
     foreach (ResNum resnum, resnums)
     {
         residues.insert( resnum, EditRes(d,resnum) );
     }
-    
+
     return residues;
 }
 
@@ -768,9 +768,9 @@ QHash<ResNum,EditRes> EditRes::bondedResidues() const
     return this->getResidues( connectivity().bondedResidues() );
 }
 
-/** Return copies of the residues that are bonded to the atom at index  
+/** Return copies of the residues that are bonded to the atom at index
     'atomid'
-    
+
     \throw SireError::invalid_index
 */
 QHash<ResNum,EditRes> EditRes::residuesBondedTo(AtomID atom) const
@@ -779,8 +779,8 @@ QHash<ResNum,EditRes> EditRes::residuesBondedTo(AtomID atom) const
 }
 
 /** Return copies of the residues that are bonded to the atom with name
-    'atomname' 
-    
+    'atomname'
+
     \throw SireMol::missing_atom
 */
 QHash<ResNum,EditRes> EditRes::residuesBondedTo(const QString &atomname) const
@@ -858,7 +858,7 @@ SireMaths::Torsion EditRes::improper(const Improper &imp) const
 }
 
 /** Return the length of the bond 'bnd'
-    
+
     All atoms in the bond must be in this residue.
 
     \throw SireError::invalid_arg
@@ -871,7 +871,7 @@ double EditRes::measure(const Bond &bnd) const
 }
 
 /** Return the size of the angle 'ang'
-    
+
     All atoms in the angle must be in this residue.
 
     \throw SireError::invalid_arg
@@ -884,7 +884,7 @@ SireMaths::Angle EditRes::measure(const SireMol::Angle &ang) const
 }
 
 /** Return the size of the dihedral 'dih'
-    
+
     All atoms in the dihedral must be in this residue.
 
     \throw SireError::invalid_arg
@@ -897,7 +897,7 @@ SireMaths::Angle EditRes::measure(const Dihedral &dih) const
 }
 
 /** Return the size of the improper angle 'imp'
-    
+
     All atoms in the improper angle must be in this residue.
 
     \throw SireError::invalid_arg
@@ -910,9 +910,9 @@ SireMaths::Angle EditRes::measure(const Improper &improper) const
     return 0.0;
 }
 
-/** Return the relative weights of the two groups, 'group0' and 'group1' 
+/** Return the relative weights of the two groups, 'group0' and 'group1'
     using 'weightfunc' to calculate the weights.
-    
+
     \throw SireMol::missing_atom
 */
 double EditRes::getWeight(const QStringList &group0, const QStringList &group1,
@@ -921,9 +921,9 @@ double EditRes::getWeight(const QStringList &group0, const QStringList &group1,
     return d->getWeight( rnum, group0, group1, weightfunc );
 }
 
-/** Return the relative weights of the two groups, 'group0' and 'group1' 
+/** Return the relative weights of the two groups, 'group0' and 'group1'
     using 'weightfunc' to calculate the weights.
-    
+
     \throw SireError::invalid_arg
     \throw SireMol::missing_atom
 */
@@ -932,7 +932,7 @@ double EditRes::getWeight(const QSet<AtomIndex> &group0, const QSet<AtomIndex> &
 {
     this->assertSameResidue(group0);
     this->assertSameResidue(group1);
-    
+
     return d->getWeight( AtomIDGroup(group0), AtomIDGroup(group1), weightfunc );
 }
 
@@ -944,7 +944,7 @@ void EditRes::setName(QString name)
 
 /** Set the number of this residue to 'newnum' - note that there must
     not be an existing residue with this number in this molecule
-    
+
     \throw SireMol::duplicate_residue
 */
 void EditRes::setNumber(ResNum newnum)
@@ -955,7 +955,7 @@ void EditRes::setNumber(ResNum newnum)
 
 /** Add an atom called 'atm' to this residue.
     No atom with this name must exist in this residue.
-    
+
     \throw SireMol::duplicate_atom
 */
 void EditRes::add(const QString &atm)
@@ -963,9 +963,9 @@ void EditRes::add(const QString &atm)
     d->add( Atom(atm,rnum) );
 }
 
-/** Add the atom 'atm' to this residue. No atom with  
+/** Add the atom 'atm' to this residue. No atom with
     the same name must exist in this residue.
-    
+
     \throw SireMol::duplicate_atom
 */
 void EditRes::add(const Atom &atm)
@@ -976,7 +976,7 @@ void EditRes::add(const Atom &atm)
 /** Add the atom called 'atm' to this residue, and place it
     into the CutGroup with number 'cgnum'
     No atom with this name must exist in this residue.
-    
+
     \throw SireMol::duplicate_atom
 */
 void EditRes::add(const QString &atm, CutGroupNum cgnum)
@@ -984,11 +984,11 @@ void EditRes::add(const QString &atm, CutGroupNum cgnum)
     d->add( Atom(atm,rnum), cgnum );
 }
 
-/** Add the atom 'atm' to this residue, and place it 
+/** Add the atom 'atm' to this residue, and place it
     into the CutGroup with number 'cgnum'
-    
+
     No atom with this name must exist in this residue.
-    
+
     \throw SireMol::duplicate_atom
 */
 void EditRes::add(const Atom &atm, CutGroupNum cgnum)
@@ -1097,7 +1097,7 @@ void EditRes::translate(const Vector &delta)
     d->translate(delta);
 }
 
-/** Translate the atom at index 'atomid' by 'delta' 
+/** Translate the atom at index 'atomid' by 'delta'
 
     \throw SireError::invalid_index
 */
@@ -1112,7 +1112,7 @@ void EditRes::translate(const QSet<AtomID> &atomids, const Vector &delta)
     d->translate( rnum, atomids, delta );
 }
 
-/** Translate the atom called 'atom' by 'delta' 
+/** Translate the atom called 'atom' by 'delta'
 
     \throw SireMol::missing_atom
 */
@@ -1130,7 +1130,7 @@ void EditRes::translate(const QStringList &atoms, const Vector &delta)
     d->translate( rnum, atoms, delta );
 }
 
-/** Translate the atom 'atom' by 'delta' 
+/** Translate the atom 'atom' by 'delta'
 
     \throw SireError::invalid_arg
     \throw SireMol::missing_atom
@@ -1169,16 +1169,16 @@ void EditRes::rotate(AtomID atomid, const Quaternion &quat, const Vector &point)
 
 /** Rotate all of the atoms whose indicies are in 'atomids'
     using the quaternion 'quat' about the point 'point'
-    
+
     \throw SireError::invalid_index
 */
-void EditRes::rotate(const QSet<AtomID> &atomids, const Quaternion &quat, 
+void EditRes::rotate(const QSet<AtomID> &atomids, const Quaternion &quat,
                      const Vector &point)
 {
     d->rotate(rnum, atomids, quat, point);
 }
 
-/** Rotate the atom called 'atom' using the quaternion 'quat' about the point 'point' 
+/** Rotate the atom called 'atom' using the quaternion 'quat' about the point 'point'
 
     \throw SireMol::missing_atom
 */
@@ -1187,12 +1187,12 @@ void EditRes::rotate(const QString &atom, const Quaternion &quat, const Vector &
     d->rotate( AtomIndex(atom,rnum), quat, point );
 }
 
-/** Rotate all of the atoms whose names are in 'atoms' 
+/** Rotate all of the atoms whose names are in 'atoms'
     using the quaternion 'quat' about the point 'point'
-    
+
     \throw SireMol::missing_atom
 */
-void EditRes::rotate(const QStringList &atoms, const Quaternion &quat, 
+void EditRes::rotate(const QStringList &atoms, const Quaternion &quat,
                      const Vector &point)
 {
     d->rotate( rnum, atoms, quat, point );
@@ -1203,20 +1203,20 @@ void EditRes::rotate(const QStringList &atoms, const Quaternion &quat,
     \throw SireError::invalid_arg
     \throw SireMol::missing_atom
 */
-void EditRes::rotate(const AtomIndex &atom, const Quaternion &quat, 
+void EditRes::rotate(const AtomIndex &atom, const Quaternion &quat,
                      const Vector &point)
 {
     this->assertSameResidue(atom);
     d->rotate(atom, quat, point);
 }
 
-/** Rotate the atoms in 'atoms' using the quaternion 'quat' 
+/** Rotate the atoms in 'atoms' using the quaternion 'quat'
     about the point 'point'
-    
+
     \throw SireError::invalid_arg
     \throw SireMol::missing_atom
 */
-void EditRes::rotate(const QSet<AtomIndex> &atoms, const Quaternion &quat, 
+void EditRes::rotate(const QSet<AtomIndex> &atoms, const Quaternion &quat,
                      const Vector &point)
 {
     this->assertSameResidue(atoms);
@@ -1240,16 +1240,16 @@ void EditRes::rotate(AtomID atomid, const Matrix &matrix, const Vector &point)
 
 /** Rotate all of the atoms whose indicies are in 'atomids'
     using the matrix 'matrix' about the point 'point'
-    
+
     \throw SireError::invalid_index
 */
-void EditRes::rotate(const QSet<AtomID> &atomids, const Matrix &matrix, 
+void EditRes::rotate(const QSet<AtomID> &atomids, const Matrix &matrix,
                      const Vector &point)
 {
     d->rotate(rnum, atomids, matrix, point);
 }
 
-/** Rotate the atom called 'atom' using the matrix 'matrix' about the point 'point' 
+/** Rotate the atom called 'atom' using the matrix 'matrix' about the point 'point'
 
     \throw SireMol::missing_atom
 */
@@ -1258,12 +1258,12 @@ void EditRes::rotate(const QString &atom, const Matrix &matrix, const Vector &po
     d->rotate( AtomIndex(atom,rnum), matrix, point );
 }
 
-/** Rotate all of the atoms whose names are in 'atoms' 
+/** Rotate all of the atoms whose names are in 'atoms'
     using the matrix 'matrix' about the point 'point'
-    
+
     \throw SireMol::missing_atom
 */
-void EditRes::rotate(const QStringList &atoms, const Matrix &matrix, 
+void EditRes::rotate(const QStringList &atoms, const Matrix &matrix,
                      const Vector &point)
 {
     d->rotate( rnum, atoms, matrix, point );
@@ -1274,29 +1274,29 @@ void EditRes::rotate(const QStringList &atoms, const Matrix &matrix,
     \throw SireError::invalid_arg
     \throw SireMol::missing_atom
 */
-void EditRes::rotate(const AtomIndex &atom, const Matrix &matrix, 
+void EditRes::rotate(const AtomIndex &atom, const Matrix &matrix,
                      const Vector &point)
 {
     this->assertSameResidue(atom);
     d->rotate(atom, matrix, point);
 }
 
-/** Rotate the atoms in 'atoms' using the matrix 'matrix' 
+/** Rotate the atoms in 'atoms' using the matrix 'matrix'
     about the point 'point'
-    
+
     \throw SireError::invalid_arg
     \throw SireMol::missing_atom
 */
-void EditRes::rotate(const QSet<AtomIndex> &atoms, const Matrix &matrix, 
+void EditRes::rotate(const QSet<AtomIndex> &atoms, const Matrix &matrix,
                      const Vector &point)
 {
     this->assertSameResidue(atoms);
     d->rotate(atoms, matrix, point);
 }
 
-/** Set the coordinates of all of the atoms in the residue to 
+/** Set the coordinates of all of the atoms in the residue to
     'newcoords'
-    
+
     \throw SireError::incompatible_error
 */
 void EditRes::setCoordinates(const QVector<Vector> &newcoords)
@@ -1306,7 +1306,7 @@ void EditRes::setCoordinates(const QVector<Vector> &newcoords)
 
 /** Set the coordinates of the atom at index 'atomid' to
     'newcoords'
-    
+
     \throw SireError::invalid_index
 */
 void EditRes::setCoordinates(AtomID atomid, const Vector &newcoords)
@@ -1314,11 +1314,11 @@ void EditRes::setCoordinates(AtomID atomid, const Vector &newcoords)
     d->setCoordinates( d->at(ResNumAtomID(rnum,atomid)), newcoords );
 }
 
-/** Set the coordinates of the specified atoms to the values 
+/** Set the coordinates of the specified atoms to the values
     in 'newcoords'
-    
+
     \throw SireError::invalid_index
-*/    
+*/
 void EditRes::setCoordinates(const QHash<AtomID,Vector> &newcoords)
 {
     d->setCoordinates( rnum, newcoords );

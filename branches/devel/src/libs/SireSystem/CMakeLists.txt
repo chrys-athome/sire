@@ -11,10 +11,6 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the sources in SireSystem
 set ( SIRESYSTEM_SOURCES
-      ffgroupeditor.cpp
-      #system.cpp
-      #systemeditor.cpp
-      #systemview.cpp
     )
 
 add_library (SireSystem ${SIRESYSTEM_SOURCES})

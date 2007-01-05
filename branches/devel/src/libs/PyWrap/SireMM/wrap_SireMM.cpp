@@ -36,6 +36,8 @@ void export_CombiningRules();
 void export_InterCLJFF();
 void export_SwitchingFunction();
 void export_Tip4PFF();
+void export_AtomicCharges();
+void export_AtomicLJs();
 
 void SIREMM_EXPORT export_SireMM()
 {
@@ -43,6 +45,8 @@ void SIREMM_EXPORT export_SireMM()
     //export_MMDB();
     //export_MMDB2();
     export_ChargeTable();
+    export_AtomicCharges();
+    export_AtomicLJs();
     export_LJTable();
     export_BondTable();
     export_AngleTable();

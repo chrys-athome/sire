@@ -12,7 +12,7 @@ using namespace SireMaths;
 using namespace SireStream;
 using namespace SireUnits;
 
-static const RegisterMetaType<Angle> r_angle("SireMaths::Angle");
+static const RegisterMetaType<Angle> r_angle;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Angle &ang)
@@ -25,14 +25,14 @@ QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Angle &ang)
 QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, Angle &ang)
 {
     VersionID v = readHeader(ds, r_angle);
-        
+
     if (v == 1)
     {
         ds >> ang.rads;
     }
     else
         throw version_error( v, "1", r_angle, CODELOC );
-    
+
     return ds;
 }
 
@@ -56,7 +56,7 @@ Angle::Angle(double rad) : rads(rad)
     this->fixAngle();
 }
 
-/** Create an angle from the coordinates 'x' and 'y'. This angle is calculated 
+/** Create an angle from the coordinates 'x' and 'y'. This angle is calculated
     with the assumption that 0 degrees corresponds to the y-axis (12 o'clock position)
     and positive angles are clockwise, and negative angles are anti-clockwise.
 
@@ -76,7 +76,7 @@ Angle::Angle(double x, double y)
     else
     {
         rads = std::atan(x/y);
-        
+
         if (x < 0.0 and y < 0.0)
             rads -= pi;
         else if (x >= 0.0 and y <= 0.0)
@@ -100,7 +100,7 @@ double Angle::toDegrees() const
     return rads / SireUnits::degrees;
 }
 
-/** Return the smallest equivelent angle to this one (e.g. 270 degs == -90 degs, 
+/** Return the smallest equivelent angle to this one (e.g. 270 degs == -90 degs,
     so return -90) */
 Angle Angle::small() const
 {
@@ -138,17 +138,17 @@ Angle Angle::negative() const
 {
     if (rads <= 0.0)
         return *this;
-    else 
+    else
         return Angle( rads - two_pi );
 }
 
-/** Return the smallest difference between two angles. This is 
+/** Return the smallest difference between two angles. This is
     guaranteed to lie between -180 <= ang <= 180 degrees */
 Angle Angle::smallDifference(const Angle &ang) const
 {
     return (ang - *this).small();
 }
-   
+
 /** Return the largest difference between two angles. This is
     guaranteed to lie between 180 <= ang <= -180 */
 Angle Angle::largeDifference(const Angle &ang) const
@@ -182,7 +182,7 @@ void Angle::setRadians(double theta)
 QString Angle::toString() const
 {
     double deg = toDegrees();
-    
+
     if (deg == 1.0)
         return QObject::tr("1 degree");
     else

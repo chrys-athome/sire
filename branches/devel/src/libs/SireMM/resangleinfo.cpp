@@ -10,14 +10,14 @@
 using namespace SireStream;
 using namespace SireMM;
 
-static const RegisterMetaType<ResAngleInfo> r_resanginfo("SireMM::ResAngleInfo");
+static const RegisterMetaType<ResAngleInfo> r_resanginfo;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const ResAngleInfo &info)
 {
-    writeHeader(ds, r_resanginfo, 1) 
+    writeHeader(ds, r_resanginfo, 1)
         << static_cast<const ResInternalInfo<Angle>&>(info);
-        
+
     return ds;
 }
 
@@ -25,14 +25,14 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const ResAngleInfo &info)
 QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, ResAngleInfo &info)
 {
     VersionID v = readHeader(ds, r_resanginfo);
-    
+
     if (v == 1)
     {
         ds >> static_cast<ResInternalInfo<Angle>&>(info);
     }
     else
         throw version_error(v, "1", r_resanginfo, CODELOC);
-    
+
     return ds;
 }
 
@@ -59,7 +59,7 @@ int ResAngleInfo::nAngles() const
 {
     return nInternals();
 }
-  
+
 /** Return the number of intra-residue angles in the residue */
 int ResAngleInfo::nIntraAngles() const
 {
@@ -71,10 +71,10 @@ int ResAngleInfo::nInterAngles() const
 {
     return nInterInternals();
 }
-    
+
 /** Return an iterator over all of the angles in the residue.
-    
-    This returns an iterator pointing to the first angle, or an 
+
+    This returns an iterator pointing to the first angle, or an
     invalid iterator if there are no angles to iterate over.
 */
 ResAngleInfo::const_iterator ResAngleInfo::angles() const
@@ -83,8 +83,8 @@ ResAngleInfo::const_iterator ResAngleInfo::angles() const
 }
 
 /** Return an iterator over all of the intra-residue angles in the residue.
-    
-    This returns an iterator pointing to the first angle, or an 
+
+    This returns an iterator pointing to the first angle, or an
     invalid iterator if there are no angles to iterate over.
 */
 ResAngleInfo::const_iterator ResAngleInfo::intraAngles() const
@@ -93,8 +93,8 @@ ResAngleInfo::const_iterator ResAngleInfo::intraAngles() const
 }
 
 /** Return an iterator over all of the inter-residue angles in the residue.
-    
-    This returns an iterator pointing to the first angle, or an 
+
+    This returns an iterator pointing to the first angle, or an
     invalid iterator if there are no angles to iterate over.
 */
 ResAngleInfo::const_iterator ResAngleInfo::interAngles() const

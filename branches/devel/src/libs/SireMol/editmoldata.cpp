@@ -191,8 +191,8 @@ namespace SireMol
 using namespace SireStream;
 using namespace SireMol;
 
-static const RegisterMetaType<EditMolData_AtomData> r_atomdata(
-                                      "SireMol::EditMolData_AtomData", MAGIC_ONLY);
+static const RegisterMetaType<EditMolData_AtomData> r_atomdata(MAGIC_ONLY,
+                                                      "SireMol::EditMolData_AtomData");
 
 /** Serialise to a binary data stream */
 QDataStream &operator<<(QDataStream &ds,
@@ -221,8 +221,8 @@ QDataStream &operator>>(QDataStream &ds, EditMolData_AtomData &atomdata)
     return ds;
 }
 
-static const RegisterMetaType<EditMolData_ResData> r_resdata(
-                                      "SireMol::EditMolData_ResData", MAGIC_ONLY);
+static const RegisterMetaType<EditMolData_ResData> r_resdata(MAGIC_ONLY,
+                                                      "SireMol::EditMolData_ResData");
 
 /** Serialise to a binary data stream */
 QDataStream &operator<<(QDataStream &ds, const EditMolData_ResData &resdata)
@@ -248,7 +248,7 @@ QDataStream &operator>>(QDataStream &ds, EditMolData_ResData &resdata)
     return ds;
 }
 
-static const RegisterMetaType<EditMolData> r_editmoldata("SireMol::EditMolData");
+static const RegisterMetaType<EditMolData> r_editmoldata;
 
 /** Serialise an EditMolData to a datastream */
 QDataStream& operator<<(QDataStream &ds, const EditMolData &mol)

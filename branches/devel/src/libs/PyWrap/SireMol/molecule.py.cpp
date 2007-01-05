@@ -11,6 +11,7 @@
 #include "SireMol/atom.h"
 
 #include "SireMol/editmol.h"
+#include "SireMol/property.h"
 
 #include "SireMol/atomidgroup.h"
 
@@ -52,6 +53,18 @@ export_Molecule()
             , &::SireMol::Molecule::ID
             , bp::default_call_policies() )
         .def(
+            "addProperty"
+            , (void ( ::SireMol::Molecule::* )( ::QString const &, ::SireMol::Property const & ) )( &::SireMol::Molecule::addProperty )
+            , bp::default_call_policies() )
+        .def(
+            "addProperty"
+            , (void ( ::SireMol::Molecule::* )( ::QString const &, ::SireMol::PropertyBase const & ) )( &::SireMol::Molecule::addProperty )
+            , bp::default_call_policies() )
+        .def(
+            "addProperty"
+            , (void ( ::SireMol::Molecule::* )( ::QString const &, ::QVariant const & ) )( &::SireMol::Molecule::addProperty )
+            , bp::default_call_policies() )
+        .def(
             "angle"
             , &::SireMol::Molecule::angle
             , ( bp::arg("ang") )
@@ -73,38 +86,13 @@ export_Molecule()
             , bp::default_call_policies() )
         .def(
             "at"
-            , (::SireMol::Atom ( ::SireMol::Molecule::* )( ::SireMol::AtomID ) const)( &::SireMol::Molecule::at )
-            , ( bp::arg("atomid") )
-            , bp::default_call_policies() )
-        .def(
-            "at"
-            , (::SireMol::Atom ( ::SireMol::Molecule::* )( ::SireMol::ResNumAtomID const & ) const)( &::SireMol::Molecule::at )
-            , ( bp::arg("resatomid") )
-            , bp::default_call_policies() )
-        .def(
-            "at"
-            , (::SireMol::Atom ( ::SireMol::Molecule::* )( ::SireMol::ResIDAtomID const & ) const)( &::SireMol::Molecule::at )
-            , ( bp::arg("resatomid") )
-            , bp::default_call_policies() )
-        .def(
-            "at"
             , (::SireMol::Atom ( ::SireMol::Molecule::* )( ::SireMol::CGAtomID const & ) const)( &::SireMol::Molecule::at )
             , ( bp::arg("cgatomid") )
             , bp::default_call_policies() )
         .def(
             "at"
-            , (::SireMol::Atom ( ::SireMol::Molecule::* )( ::SireMol::AtomIndex const & ) const)( &::SireMol::Molecule::at )
-            , ( bp::arg("atm") )
-            , bp::default_call_policies() )
-        .def(
-            "atom"
-            , (::SireMol::Atom ( ::SireMol::Molecule::* )( ::SireMol::AtomID ) const)( &::SireMol::Molecule::atom )
+            , (::SireMol::Atom ( ::SireMol::Molecule::* )( ::SireMol::IDMolAtom const & ) const)( &::SireMol::Molecule::at )
             , ( bp::arg("atomid") )
-            , bp::default_call_policies() )
-        .def(
-            "atom"
-            , (::SireMol::Atom ( ::SireMol::Molecule::* )( ::SireMol::CutGroupID,::SireMol::AtomID ) const)( &::SireMol::Molecule::atom )
-            , ( bp::arg("cgid"), bp::arg("atomid") )
             , bp::default_call_policies() )
         .def(
             "atom"
@@ -113,33 +101,8 @@ export_Molecule()
             , bp::default_call_policies() )
         .def(
             "atom"
-            , (::SireMol::Atom ( ::SireMol::Molecule::* )( ::SireMol::ResNum,::SireMol::AtomID ) const)( &::SireMol::Molecule::atom )
-            , ( bp::arg("resnum"), bp::arg("atomid") )
-            , bp::default_call_policies() )
-        .def(
-            "atom"
-            , (::SireMol::Atom ( ::SireMol::Molecule::* )( ::SireMol::ResNumAtomID const & ) const)( &::SireMol::Molecule::atom )
-            , ( bp::arg("resatomid") )
-            , bp::default_call_policies() )
-        .def(
-            "atom"
-            , (::SireMol::Atom ( ::SireMol::Molecule::* )( ::SireMol::ResID,::SireMol::AtomID ) const)( &::SireMol::Molecule::atom )
-            , ( bp::arg("resid"), bp::arg("atomid") )
-            , bp::default_call_policies() )
-        .def(
-            "atom"
-            , (::SireMol::Atom ( ::SireMol::Molecule::* )( ::SireMol::ResIDAtomID const & ) const)( &::SireMol::Molecule::atom )
-            , ( bp::arg("resatomid") )
-            , bp::default_call_policies() )
-        .def(
-            "atom"
-            , (::SireMol::Atom ( ::SireMol::Molecule::* )( ::SireMol::AtomIndex const & ) const)( &::SireMol::Molecule::atom )
-            , ( bp::arg("atm") )
-            , bp::default_call_policies() )
-        .def(
-            "atom"
-            , (::SireMol::Atom ( ::SireMol::Molecule::* )( ::SireMol::ResNum,::QString const & ) const)( &::SireMol::Molecule::atom )
-            , ( bp::arg("resnum"), bp::arg("atomname") )
+            , (::SireMol::Atom ( ::SireMol::Molecule::* )( ::SireMol::IDMolAtom const & ) const)( &::SireMol::Molecule::atom )
+            , ( bp::arg("atomid") )
             , bp::default_call_policies() )
         .def(
             "atomNames"
@@ -280,66 +243,6 @@ export_Molecule()
             , ( bp::arg("resid") )
             , bp::default_call_policies() )
         .def(
-            "contains"
-            , (bool ( ::SireMol::Molecule::* )( ::SireMol::CutGroupID ) const)( &::SireMol::Molecule::contains )
-            , ( bp::arg("cgid") )
-            , bp::default_call_policies() )
-        .def(
-            "contains"
-            , (bool ( ::SireMol::Molecule::* )( ::SireMol::ResNum ) const)( &::SireMol::Molecule::contains )
-            , ( bp::arg("resnum") )
-            , bp::default_call_policies() )
-        .def(
-            "contains"
-            , (bool ( ::SireMol::Molecule::* )( ::SireMol::ResID ) const)( &::SireMol::Molecule::contains )
-            , ( bp::arg("resid") )
-            , bp::default_call_policies() )
-        .def(
-            "contains"
-            , (bool ( ::SireMol::Molecule::* )( ::SireMol::ResNum,::QString const & ) const)( &::SireMol::Molecule::contains )
-            , ( bp::arg("resnum"), bp::arg("atomname") )
-            , bp::default_call_policies() )
-        .def(
-            "contains"
-            , (bool ( ::SireMol::Molecule::* )( ::SireMol::AtomIndex const & ) const)( &::SireMol::Molecule::contains )
-            , ( bp::arg("atm") )
-            , bp::default_call_policies() )
-        .def(
-            "contains"
-            , (bool ( ::SireMol::Molecule::* )( ::SireMol::CutGroupID,::SireMol::AtomID ) const)( &::SireMol::Molecule::contains )
-            , ( bp::arg("cgid"), bp::arg("atomid") )
-            , bp::default_call_policies() )
-        .def(
-            "contains"
-            , (bool ( ::SireMol::Molecule::* )( ::SireMol::CGAtomID const & ) const)( &::SireMol::Molecule::contains )
-            , ( bp::arg("cgatomid") )
-            , bp::default_call_policies() )
-        .def(
-            "contains"
-            , (bool ( ::SireMol::Molecule::* )( ::SireMol::ResNum,::SireMol::AtomID ) const)( &::SireMol::Molecule::contains )
-            , ( bp::arg("resnum"), bp::arg("atomid") )
-            , bp::default_call_policies() )
-        .def(
-            "contains"
-            , (bool ( ::SireMol::Molecule::* )( ::SireMol::ResNumAtomID const & ) const)( &::SireMol::Molecule::contains )
-            , ( bp::arg("resatomid") )
-            , bp::default_call_policies() )
-        .def(
-            "contains"
-            , (bool ( ::SireMol::Molecule::* )( ::SireMol::ResID,::SireMol::AtomID ) const)( &::SireMol::Molecule::contains )
-            , ( bp::arg("resid"), bp::arg("atomid") )
-            , bp::default_call_policies() )
-        .def(
-            "contains"
-            , (bool ( ::SireMol::Molecule::* )( ::SireMol::ResIDAtomID const & ) const)( &::SireMol::Molecule::contains )
-            , ( bp::arg("resatomid") )
-            , bp::default_call_policies() )
-        .def(
-            "contains"
-            , (bool ( ::SireMol::Molecule::* )( ::SireMol::Bond const & ) const)( &::SireMol::Molecule::contains )
-            , ( bp::arg("bond") )
-            , bp::default_call_policies() )
-        .def(
             "coordGroup"
             , &::SireMol::Molecule::coordGroup
             , ( bp::arg("id") )
@@ -375,48 +278,13 @@ export_Molecule()
             , bp::default_call_policies() )
         .def(
             "coordinates"
-            , (::SireMaths::Vector ( ::SireMol::Molecule::* )( ::SireMol::AtomID ) const)( &::SireMol::Molecule::coordinates )
-            , ( bp::arg("atomid") )
-            , bp::default_call_policies() )
-        .def(
-            "coordinates"
-            , (::SireMaths::Vector ( ::SireMol::Molecule::* )( ::SireMol::CutGroupID,::SireMol::AtomID ) const)( &::SireMol::Molecule::coordinates )
-            , ( bp::arg("cgid"), bp::arg("atomid") )
-            , bp::default_call_policies() )
-        .def(
-            "coordinates"
             , (::SireMaths::Vector ( ::SireMol::Molecule::* )( ::SireMol::CGAtomID const & ) const)( &::SireMol::Molecule::coordinates )
             , ( bp::arg("cgatomid") )
             , bp::default_call_policies() )
         .def(
             "coordinates"
-            , (::SireMaths::Vector ( ::SireMol::Molecule::* )( ::SireMol::ResNum,::SireMol::AtomID ) const)( &::SireMol::Molecule::coordinates )
-            , ( bp::arg("resnum"), bp::arg("atomid") )
-            , bp::default_call_policies() )
-        .def(
-            "coordinates"
-            , (::SireMaths::Vector ( ::SireMol::Molecule::* )( ::SireMol::ResNumAtomID const & ) const)( &::SireMol::Molecule::coordinates )
-            , ( bp::arg("resatomid") )
-            , bp::default_call_policies() )
-        .def(
-            "coordinates"
-            , (::SireMaths::Vector ( ::SireMol::Molecule::* )( ::SireMol::ResID,::SireMol::AtomID ) const)( &::SireMol::Molecule::coordinates )
-            , ( bp::arg("resid"), bp::arg("atomid") )
-            , bp::default_call_policies() )
-        .def(
-            "coordinates"
-            , (::SireMaths::Vector ( ::SireMol::Molecule::* )( ::SireMol::ResIDAtomID const & ) const)( &::SireMol::Molecule::coordinates )
-            , ( bp::arg("resatomid") )
-            , bp::default_call_policies() )
-        .def(
-            "coordinates"
-            , (::SireMaths::Vector ( ::SireMol::Molecule::* )( ::SireMol::AtomIndex const & ) const)( &::SireMol::Molecule::coordinates )
-            , ( bp::arg("atm") )
-            , bp::default_call_policies() )
-        .def(
-            "coordinates"
-            , (::SireMaths::Vector ( ::SireMol::Molecule::* )( ::SireMol::ResNum,::QString const & ) const)( &::SireMol::Molecule::coordinates )
-            , ( bp::arg("resnum"), bp::arg("atomname") )
+            , (::SireMaths::Vector ( ::SireMol::Molecule::* )( ::SireMol::IDMolAtom const & ) const)( &::SireMol::Molecule::coordinates )
+            , ( bp::arg("atomid") )
             , bp::default_call_policies() )
         .def(
             "coordinates"
@@ -505,6 +373,11 @@ export_Molecule()
             "edit"
             , &::SireMol::Molecule::edit
             , bp::default_call_policies() )
+        .def(
+            "getProperty"
+            , &::SireMol::Molecule::getProperty
+            , ( bp::arg("name") )
+            , bp::return_value_policy<bp::copy_const_reference>() )
         .def(
             "getWeight"
             , &::SireMol::Molecule::getWeight
@@ -650,29 +523,18 @@ export_Molecule()
             , bp::default_call_policies() )
         .def(
             "__getitem__"
-            , (::SireMol::Atom ( ::SireMol::Molecule::* )( ::SireMol::AtomID ) const)( &::SireMol::Molecule::operator[] )
-            , ( bp::arg("atomid") )
-            , bp::default_call_policies() )
-        .def(
-            "__getitem__"
             , (::SireMol::Atom ( ::SireMol::Molecule::* )( ::SireMol::CGAtomID const & ) const)( &::SireMol::Molecule::operator[] )
             , ( bp::arg("cgatomid") )
             , bp::default_call_policies() )
         .def(
             "__getitem__"
-            , (::SireMol::Atom ( ::SireMol::Molecule::* )( ::SireMol::ResNumAtomID const & ) const)( &::SireMol::Molecule::operator[] )
-            , ( bp::arg("resatomid") )
+            , (::SireMol::Atom ( ::SireMol::Molecule::* )( ::SireMol::IDMolAtom const & ) const)( &::SireMol::Molecule::operator[] )
+            , ( bp::arg("atomid") )
             , bp::default_call_policies() )
         .def(
-            "__getitem__"
-            , (::SireMol::Atom ( ::SireMol::Molecule::* )( ::SireMol::ResIDAtomID const & ) const)( &::SireMol::Molecule::operator[] )
-            , ( bp::arg("resatomid") )
-            , bp::default_call_policies() )
-        .def(
-            "__getitem__"
-            , (::SireMol::Atom ( ::SireMol::Molecule::* )( ::SireMol::AtomIndex const & ) const)( &::SireMol::Molecule::operator[] )
-            , ( bp::arg("atm") )
-            , bp::default_call_policies() )
+            "properties"
+            , &::SireMol::Molecule::properties
+            , bp::return_value_policy<bp::copy_const_reference>() )
         .def(
             "residue"
             , (::SireMol::Residue ( ::SireMol::Molecule::* )( ::SireMol::ResNum ) const)( &::SireMol::Molecule::residue )
@@ -1008,6 +870,18 @@ export_Molecule()
         .def(
             "setNewID"
             , &::SireMol::Molecule::setNewID
+            , bp::default_call_policies() )
+        .def(
+            "setProperty"
+            , (void ( ::SireMol::Molecule::* )( ::QString const &, ::SireMol::Property const & ) )( &::SireMol::Molecule::setProperty )
+            , bp::default_call_policies() )
+        .def(
+            "setProperty"
+            , (void ( ::SireMol::Molecule::* )( ::QString const &, ::SireMol::PropertyBase const & ) )( &::SireMol::Molecule::setProperty )
+            , bp::default_call_policies() )
+        .def(
+            "setProperty"
+            , (void ( ::SireMol::Molecule::* )( ::QString const &, ::QVariant const & ) )( &::SireMol::Molecule::setProperty )
             , bp::default_call_policies() )
         .def(
             "translate"

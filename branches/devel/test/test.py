@@ -2,59 +2,103 @@
 from Sire.Mol import *
 from Sire.IO import *
 from Sire.Vol import *
-from Sire.FF import *
 from Sire.MM import *
 from Sire.CAS import *
-from Sire.Cluster import *
 from Sire.Maths import *
 from Sire.Qt import *
 from Sire.Units import *
 
-t = QTime()
+timer = QTime()
 
-t.start()
+#read in all of the molecules
+print "Loading the molecules..."
+timer.start()
 mols = PDB().read("test/io/water.pdb")
 
-ms = t.elapsed()
+ms = timer.elapsed()
+print "... took %d ms" % ms
 
-print "Reading waters took %d ms..." % ms
+#specify the space in which the molecules are placed
+space = Cartesian()
 
-tip4p = mols[0]
+#space = PeriodicBox(Vector(-18.3854,-18.66855,-18.4445), \
+#                    Vector( 18.3854, 18.66855, 18.4445))
 
-tip4p_1 = mols[1]
+#specify the type of switching function to use
+switchfunc = HarmonicSwitchingFunction(80.0)
+switchfunc = HarmonicSwitchingFunction(15.0, 14.5)
 
-cgroups = tip4p.coordGroups()
+#create a forcefield for the molecules
+cljff = InterCLJFF( Space(space), \
+                    SwitchingFunction(switchfunc) )
 
-box = PeriodicBox( Vector(5,5,5), Vector(-5,-5,-5) )
+cljff2 = Tip4PFF( Space(space), SwitchingFunction(switchfunc) )
 
-t.start()
-PDB().write(tip4p, "water0.pdb")
-ms = t.elapsed()
+#parametise each molecule and add it to the forcefield
+print "Parametising the molecules..."
 
-print "Writing a water took %d ms..." % ms
+chgs = AtomicCharges( [0.0, 0.52 * mod_electrons, \
+                            0.52 * mod_electrons, \
+                           -1.04 * mod_electrons] )
 
-t.start()
-cgroups = box.moveToCenterBox(cgroups)
-ms = t.elapsed()
+ljs = AtomicLJs( [ LJParameter( 3.15365 * angstrom, \
+                                0.1550 * kcal_per_mol ), \
+                   LJParameter.dummy(), \
+                   LJParameter.dummy(), \
+                   LJParameter.dummy() ] )
 
-print "Moving to central box took %d ms..." % ms
+tip4p = False
 
-t.start()
-tip4p.setCoordinates(cgroups)
-ms = t.elapsed()
+timer.start()
+for mol in mols:
+      
+      mol.setProperty( "charges", chgs )
+      mol.setProperty( "ljs", ljs )
 
-print box.minimumDistance(tip4p.coordGroups()[0], \
-                          tip4p_1.coordGroups()[0])
+      if (not tip4p):
+          tip4p = mol
+      
+      cljff.add(mol, [cljff.parameters().coulomb() == "charges", \
+                      cljff.parameters().lj() == "ljs"])
+                      
+      cljff2.add(mol, [cljff2.parameters().coulomb() == "charges", \
+                       cljff2.parameters().lj() == "ljs"])
 
-print "Setting the coordinates took %d ms..." % ms
+ms = timer.elapsed()
+print "... took %d ms" % ms
+      
+#now calculate the energy of the forcefield
+print "Calculating the energy..."
 
-PDB().write(tip4p, "water1.pdb")
+timer.start()
+nrg = cljff.energy()
+ms = timer.elapsed()
 
-cgroups = box.getMinimumImage(cgroups, Vector(1025,1025,1025))
-tip4p.setCoordinates(cgroups)
+print "InterCLJFF ",cljff.energy(), "kcal mol-1"
+print "    Coulomb = ", cljff.energy(cljff.components().coulomb())
+print "         LJ = ", cljff.energy(cljff.components().lj())
 
-PDB().write(tip4p, "water2.pdb")
+print "... took %d ms" % ms
 
-print box.minimumDistance(tip4p.coordGroups()[0], \
-                          tip4p_1.coordGroups()[0])
+print "Calculating the energy..."
+
+timer.start()
+nrg = cljff2.energy()
+ms = timer.elapsed()
+
+print "Tip4PFF ",cljff2.energy(), "kcal mol-1"
+
+print "... took %d ms" % ms
+
+timer.start()
+
+nmoves = 1000
+for i in range(0,nmoves):
+    cljff.change( tip4p )
+    nrg = cljff.energy()
+
+ms = timer.elapsed()
+
+print "InterCLJFF ",cljff.energy(), "kcal mol-1"
+print "... took %d ms (%f moves per second)" % (ms, nmoves*1000.0/ms)
 

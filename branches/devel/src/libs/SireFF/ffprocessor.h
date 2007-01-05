@@ -42,8 +42,6 @@ public:
     virtual ForceField forcefield() const=0;
 
     virtual void setForceField(const ForceField &forcefield)=0;
-
-    virtual Molecule molecule(MoleculeID molid) const=0;
 };
 
 }
@@ -62,8 +60,6 @@ public:
     ForceField forcefield() const;
 
     void setForceField(const ForceField &forcefield);
-
-    Molecule molecule(MoleculeID molid) const;
 
     boost::shared_ptr<FFWorkerBase> activate();
 
@@ -95,8 +91,6 @@ public:
     ForceField forcefield() const;
 
     void setForceField(const ForceField &forcefield);
-
-    Molecule molecule(MoleculeID molid) const;
 
 protected:
     boost::shared_ptr<WorkerBase> _pvt_activate();

@@ -4,95 +4,275 @@
 #include "ffbase.h"
 
 #include "SireMol/molecule.h"
+#include "SireMol/moleculeid.h"
 #include "SireMol/residue.h"
+#include "SireMol/resnum.h"
+#include "SireMol/resid.h"
 
 #include "SireFF/errors.h"
 #include "SireMol/errors.h"
 
+#include "SireError/errors.h"
+
 #include "SireStream/datastream.h"
 
-#include <QTime>
-
 using namespace SireFF;
-using namespace SireFF::detail;
+using namespace SireBase;
 using namespace SireCAS;
 using namespace SireMol;
-using namespace SireDB;
 using namespace SireStream;
 
 ///////////
-/////////// Implementation of detail::ComponentInfo
+/////////// Implementation of FFBase::Parameters
 ///////////
 
-static const RegisterMetaType<ComponentInfo> r_compinfo("SireFF::detail::ComponentInfo");
-
-/** Serialise to a binary data stream */
-QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const ComponentInfo &compinfo)
-{
-    writeHeader(ds, r_compinfo, 1) << compinfo.nme << compinfo.desc
-                                   << compinfo.func;
-
-    return ds;
-}
-
-/** Deserialise from a binary data stream */
-QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, ComponentInfo &compinfo)
-{
-    VersionID v = readHeader(ds, r_compinfo);
-
-    if (v == 1)
-    {
-        ds >> compinfo.nme >> compinfo.desc >> compinfo.func;
-    }
-    else
-        throw version_error(v, "1", r_compinfo, CODELOC);
-
-    return ds;
-}
-
-/** Null constructor */
-ComponentInfo::ComponentInfo()
+/** Constructor */
+FFBase::Parameters::Parameters()
 {}
 
-/** Construct a component with root 'root', name 'name' and description
-    'description'. The function will have the form: E_{root}_{name}(x,y,z) */
-ComponentInfo::ComponentInfo(const QString &root, const QString &name,
-                             const QString &description)
-              : nme(name), desc(description)
-{
-    this->setRoot(root);
-}
-
 /** Copy constructor */
-ComponentInfo::ComponentInfo(const ComponentInfo &other)
-              : nme(other.nme), desc(other.desc), func(other.func)
+FFBase::Parameters::Parameters( const FFBase::Parameters& )
 {}
 
 /** Destructor */
-ComponentInfo::~ComponentInfo()
+FFBase::Parameters::~Parameters()
 {}
 
-/** Set the root of the symbol - the function has the form; E_{root}_{name}(x,y,z) */
-void ComponentInfo::setRoot(const QString &root)
+///////////
+/////////// Implementation of FFBase::Components
+///////////
+
+/** The symbol representing the x coordinate */
+Symbol FFBase::Components::_x("x");
+
+/** The symbol representing the y coordinate */
+Symbol FFBase::Components::_y("y");
+
+/** The symbol representing the z coordinate */
+Symbol FFBase::Components::_z("z");
+
+/** Add the passed symbols to 'symbols' and return the result */
+Symbols FFBase::Components::addToSymbols(Symbols symbols,
+                          const Symbol &sym0)
 {
-    func = Function( QString("E_{%1}_{%2}").arg(root,name()) )( Symbol("x"),
-                                                                Symbol("y"),
-                                                                Symbol("z") );
+    symbols.insert(sym0);
+
+    return symbols;
+}
+
+/** Add the passed symbols to 'symbols' and return the result */
+Symbols FFBase::Components::addToSymbols(Symbols symbols,
+                          const Symbol &sym0, const Symbol &sym1)
+{
+    symbols.insert(sym0);
+    symbols.insert(sym1);
+
+    return symbols;
+}
+
+/** Add the passed symbols to 'symbols' and return the result */
+Symbols FFBase::Components::addToSymbols(Symbols symbols,
+                          const Symbol &sym0, const Symbol &sym1, const Symbol &sym2)
+{
+    symbols.insert(sym0);
+    symbols.insert(sym1);
+    symbols.insert(sym2);
+
+    return symbols;
+}
+
+/** Add the passed symbols to 'symbols' and return the result */
+Symbols FFBase::Components::addToSymbols(Symbols symbols,
+                          const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+                          const Symbol &sym3)
+{
+    symbols.insert(sym0);
+    symbols.insert(sym1);
+    symbols.insert(sym2);
+    symbols.insert(sym3);
+
+    return symbols;
+}
+
+/** Add the passed symbols to 'symbols' and return the result */
+Symbols FFBase::Components::addToSymbols(Symbols symbols,
+                          const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+                          const Symbol &sym3, const Symbol &sym4)
+{
+    symbols.insert(sym0);
+    symbols.insert(sym1);
+    symbols.insert(sym2);
+    symbols.insert(sym3);
+    symbols.insert(sym4);
+
+    return symbols;
+}
+
+/** Add the passed symbols to 'symbols' and return the result */
+Symbols FFBase::Components::addToSymbols(Symbols symbols,
+                          const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+                          const Symbol &sym3, const Symbol &sym4, const Symbol &sym5)
+{
+    symbols.insert(sym0);
+    symbols.insert(sym1);
+    symbols.insert(sym2);
+    symbols.insert(sym3);
+    symbols.insert(sym4);
+    symbols.insert(sym5);
+
+    return symbols;
+}
+
+/** Add the passed symbols to 'symbols' and return the result */
+Symbols FFBase::Components::addToSymbols(Symbols symbols,
+                          const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+                          const Symbol &sym3, const Symbol &sym4, const Symbol &sym5,
+                          const Symbol &sym6)
+{
+    symbols.insert(sym0);
+    symbols.insert(sym1);
+    symbols.insert(sym2);
+    symbols.insert(sym3);
+    symbols.insert(sym4);
+    symbols.insert(sym5);
+    symbols.insert(sym6);
+
+    return symbols;
+}
+
+/** Add the passed symbols to 'symbols' and return the result */
+Symbols FFBase::Components::addToSymbols(Symbols symbols,
+                          const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+                          const Symbol &sym3, const Symbol &sym4, const Symbol &sym5,
+                          const Symbol &sym6, const Symbol &sym7)
+{
+    symbols.insert(sym0);
+    symbols.insert(sym1);
+    symbols.insert(sym2);
+    symbols.insert(sym3);
+    symbols.insert(sym4);
+    symbols.insert(sym5);
+    symbols.insert(sym6);
+    symbols.insert(sym7);
+
+    return symbols;
+}
+
+/** Add the passed symbols to 'symbols' and return the result */
+Symbols FFBase::Components::addToSymbols(Symbols symbols,
+                          const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+                          const Symbol &sym3, const Symbol &sym4, const Symbol &sym5,
+                          const Symbol &sym6, const Symbol &sym7, const Symbol &sym8)
+{
+    symbols.insert(sym0);
+    symbols.insert(sym1);
+    symbols.insert(sym2);
+    symbols.insert(sym3);
+    symbols.insert(sym4);
+    symbols.insert(sym5);
+    symbols.insert(sym6);
+    symbols.insert(sym7);
+    symbols.insert(sym8);
+
+    return symbols;
+}
+
+/** Add the passed symbols to 'symbols' and return the result */
+Symbols FFBase::Components::addToSymbols(Symbols symbols,
+                          const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
+                          const Symbol &sym3, const Symbol &sym4, const Symbol &sym5,
+                          const Symbol &sym6, const Symbol &sym7, const Symbol &sym8,
+                          const Symbol &sym9)
+{
+    symbols.insert(sym0);
+    symbols.insert(sym1);
+    symbols.insert(sym2);
+    symbols.insert(sym3);
+    symbols.insert(sym4);
+    symbols.insert(sym5);
+    symbols.insert(sym6);
+    symbols.insert(sym7);
+    symbols.insert(sym8);
+    symbols.insert(sym9);
+
+    return symbols;
+}
+
+/** Constructor */
+FFBase::Components::Components()
+{}
+
+/** Construct based on the passed FFBase */
+FFBase::Components::Components(const FFBase &ffbase, const Symbols &symbols)
+       : e_total(ffbase, symbols)
+{
+    this->registerComponent(e_total);
+}
+
+/** Copy constructor */
+FFBase::Components::Components(const FFBase::Components &other)
+       : e_total(other.e_total), symbolids(other.symbolids)
+{}
+
+/** Destructor */
+FFBase::Components::~Components()
+{}
+
+/** Assignment operator */
+FFBase::Components& FFBase::Components::operator=(const FFBase::Components &other)
+{
+    e_total = other.e_total;
+    symbolids = other.symbolids;
+
+    return *this;
+}
+
+/** Describe the 'total' component */
+QString FFBase::Components::describe_total()
+{
+    return QObject::tr("The total energy of the forcefield.");
+}
+
+/** Set the names of the functions from the passed base name */
+void FFBase::Components::setForceField(const FFBase &ffbase)
+{
+    *this = Components(ffbase);
+}
+
+/** Register the component 'component' */
+void FFBase::Components::registerComponent(const FFComponent &component)
+{
+    if (component.symbols().isEmpty())
+        throw SireError::program_bug( QObject::tr(
+              "You cannot create a forcefield function that isn't a function "
+              "of any symbol! (add symbols to %1)")
+                  .arg(component.name()), CODELOC );
+
+    symbolids.insert( component.ID() );
+}
+
+/** Assert that this contains the component 'component' */
+void FFBase::Components::assertContains(const FFComponent &component) const
+{
+    if (not this->contains(component))
+        throw SireFF::missing_component( QObject::tr(
+                "The forcefield does not contain a component represented by the "
+                "function \"%1\"").arg(component.toString()), CODELOC );
 }
 
 ///////////
 /////////// Implementation of FFBase
 ///////////
 
-static const RegisterMetaType<FFBase> r_ffbase("SireFF::FFBase", MAGIC_ONLY);
+static const RegisterMetaType<FFBase> r_ffbase(MAGIC_ONLY, "SireFF::FFBase");
 
 /** Serialise to a binary data stream */
 QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const FFBase &ffbase)
 {
     writeHeader(ds, r_ffbase, 1)
-          << ffbase.ffname << ffbase.id_to_component
+          << ffbase.ffname
+          << ffbase.id_and_version
           << ffbase.nrg_components
-          << ffbase.mols_in_ff // << ffbase.res_in_ff
           << ffbase.isdirty;
 
     return ds;
@@ -105,10 +285,15 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, FFBase &ffbase)
 
     if (v == 1)
     {
-        ds >> ffbase.ffname >> ffbase.id_to_component
+        QString newname;
+
+        ds >> newname
+           >> ffbase.id_and_version
            >> ffbase.nrg_components
-           >> ffbase.mols_in_ff // >> ffbase.res_in_ff
            >> ffbase.isdirty;
+
+        //tell the forcefield about the change in name
+        ffbase.setName(newname);
     }
     else
         throw version_error(v, "1", r_ffbase, CODELOC);
@@ -116,30 +301,45 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, FFBase &ffbase)
     return ds;
 }
 
+/** This is the Incremint that is used to increment
+    forcefield ID numbers */
+static Incremint forcefield_incremint;
+
 /** Null constructor */
-FFBase::FFBase() : QSharedData(), ffname(QObject::tr("Unnamed")), isdirty(true)
-{
-    this->registerComponents();
-}
+FFBase::FFBase() : QSharedData(),
+                   ffname(QObject::tr("Unnamed")),
+                   id_and_version(&forcefield_incremint),
+                   isdirty(true)
+{}
 
 /** Construct a forcefield called 'name' */
 FFBase::FFBase(const QString &name)
-       : QSharedData(), ffname(name), isdirty(true)
-{
-    this->registerComponents();
-}
+       : QSharedData(),
+         ffname(name),
+         id_and_version(&forcefield_incremint),
+         isdirty(true)
+{}
 
 /** Copy constructor */
 FFBase::FFBase(const FFBase &other)
-       : QSharedData(), ffname(other.ffname), id_to_component(other.id_to_component),
+       : QSharedData(),
+         ffname(other.ffname),
+         id_and_version(other.id_and_version),
          nrg_components(other.nrg_components),
-         mols_in_ff(other.mols_in_ff), //res_in_ff(other.res_in_ff),
+         components_ptr( other.components_ptr->clone() ),
          isdirty(other.isdirty)
 {}
 
 /** Destructor */
 FFBase::~FFBase()
 {}
+
+/** Register the passed components */
+void FFBase::registerComponents(FFBase::Components *components)
+{
+    BOOST_ASSERT( components != 0 );
+    components_ptr.reset( components );
+}
 
 /** Label the forcefield as dirty (in need of an energy recalculation) */
 void FFBase::setDirty()
@@ -153,15 +353,6 @@ void FFBase::setClean()
     isdirty = false;
 }
 
-/** Private function used to register the components of this forcefield */
-void FFBase::registerComponents()
-{
-    //register the function representing the total energy
-    //of this forcefield
-    this->registerComponent( FFBase::TOTAL(), "",
-                             QObject::tr("The total energy of the forcefield.") );
-}
-
 /** Return the name of this forcefield - this is used as the root of all of
     the components of the forcefield, e.g. if the name was "Ligand CLJ", then
     the "coul" component would have the function: E_{Ligand CLJ}_{coul}(x,y,z) */
@@ -170,64 +361,15 @@ const QString& FFBase::name() const
     return ffname;
 }
 
-/** Return the function represented by the component with ID 'componentid' */
-const Function& FFBase::component(int componentid) const
+/** Set the name of this forcefield - this will change the names of all
+    of the forcefield components, so beware if you are already using functions
+    that are derived from components of this forcefield */
+void FFBase::setName(const QString &name)
 {
-    const QHash<int,detail::ComponentInfo>::const_iterator it
-                                      = id_to_component.find(componentid);
+    ffname = name;
 
-    if (it == id_to_component.end())
-        throw SireFF::missing_component( QObject::tr(
-                "The forcefield \"%1\" does not contain a component with "
-                "ID == %2").arg(name()).arg(componentid), CODELOC );
-
-    return it.value().function();
-}
-
-/** Return a list of all of the components of this forcefield */
-QList<Function> FFBase::components() const
-{
-    QList<Function> funcs;
-
-    for (QHash<int,detail::ComponentInfo>::const_iterator it = id_to_component.begin();
-         it != id_to_component.end();
-         ++it)
-    {
-        funcs.append( it->function() );
-    }
-
-    return funcs;
-}
-
-/** Return a string representation of all of the components in this
-    forcefield */
-QString toString(const QList<Function> &components)
-{
-    QStringList compstrings;
-
-    for (QList<Function>::const_iterator it = components.begin();
-         it != components.end();
-         ++it)
-    {
-        compstrings.append( it->toString() );
-    }
-
-    return compstrings.join(", ");
-}
-
-/** Assert that this forcefield contains the component 'component'
-
-    \throw SireFF::missing_component
-*/
-void FFBase::assertContains(const Function &component) const
-{
-    if (not nrg_components.values().contains(component.ID()))
-        throw SireFF::missing_component( QObject::tr(
-              "The forcefield \"%1\" does not contain a component represented "
-              "by the function \"%2\" (available components = %3)")
-                  .arg(name()).arg(component.toString())
-                  .arg(toString(components())), CODELOC );
-
+    BOOST_ASSERT( components_ptr.get() != 0 );
+    components_ptr->setForceField(*this);
 }
 
 /** Return the energy of the component represented by the function
@@ -237,7 +379,7 @@ void FFBase::assertContains(const Function &component) const
 */
 double FFBase::energy(const Function &component)
 {
-    this->assertContains(component);
+    components().assertContains(component);
 
     if (isDirty())
     {
@@ -248,17 +390,11 @@ double FFBase::energy(const Function &component)
     return nrg_components.value(component);
 }
 
-/** Return the function representing the total energy */
-const Function& FFBase::total() const
-{
-    return component(FFBase::TOTAL());
-}
-
 /** Return the total energy of this forcefield. This will return the cached
     value if nothing has changed, or will recalculate if something has changed. */
 double FFBase::energy()
 {
-    return energy( total() );
+    return energy( components().total() );
 }
 
 /** Return the values of all of the energy components of this forcefield */
@@ -273,134 +409,229 @@ Values FFBase::energies()
     return nrg_components;
 }
 
-/** Assert that this forcefield contains the molecule 'molecule'
+/** Change the molecule 'mol' (e.g. move it, or change its
+    parameters). This does nothing if the molecule is not
+    in this forcefield. Returns whether or not the forcefield
+    has been changed by this change, and thus whether the
+    energy needs to be recalculated. The same parameter map
+    that was used when this molecule was added will be used
+    to extract any necessary parameters from the molecule's
+    properties
+
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::invalid_operation
+*/
+bool FFBase::change(const Molecule&)
+{
+    throw SireError::invalid_operation( QObject::tr(
+                    "The forcefield \"%1\" (class %2) does not support "
+                    "the changing of molecules.")
+                        .arg(this->name()).arg(this->what()), CODELOC );
+}
+
+/** Change the residue 'res' (e.g. move it, or change its
+    parameters). This does nothing if the residue is not
+    in this forcefield. Returns whether or not the forcefield
+    has been changed by this change, and thus whether the
+    energy needs to be recalculated.
+
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::invalid_operation
+*/
+bool FFBase::change(const Residue &res)
+{
+    return this->change(res.molecule());
+}
+
+/** Add the molecule 'molecule' to this forcefield using
+    the optional parameter map to find any necessary parameters
+    from properties of the molecule. This will replace any
+    existing copy of the molecule that already exists in
+    this forcefield. This returns whether or not the
+    forcefield has been changed by this addition, and therefore
+    whether its energy needs recalculating.
+
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::invalid_operation
+*/
+bool FFBase::add(const Molecule&, const ParameterMap&)
+{
+    throw SireError::invalid_operation( QObject::tr(
+                    "The forcefield \"%1\" (class %2) does not support "
+                    "the addition of molecules.")
+                        .arg(this->name()).arg(this->what()), CODELOC );
+
+    return false;
+}
+
+/** Add the residue 'residue' to this forcefield using
+    the optional parameter map to find any necessary parameters
+    from properties of the residue. This will replace any
+    existing copy of the residue that already exists in
+    this forcefield. This returns whether or not the
+    forcefield has been changed by this addition, and therefore
+    whether its energy needs recalculating.
+
+    This will throw an exception if this forcefield does not
+    support partial molecules.
+
+    \throw SireError::invalid_operation
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+*/
+bool FFBase::add(const Residue&, const ParameterMap&)
+{
+    throw SireError::invalid_operation( QObject::tr(
+                    "The forcefield \"%1\" (class %2) does not support "
+                    "the addition of residues.")
+                        .arg(this->name()).arg(this->what()), CODELOC );
+
+    return false;
+}
+
+/** Remove the molecule 'molecule' from this forcefield - this
+    does nothing if the molecule is not in this forcefield. This
+    returns whether this has changed the forcefield (therefore
+    necessitating a recalculation of the energy)
+
+    \throw SireError::invalid_operation
+*/
+bool FFBase::remove(const Molecule&)
+{
+    throw SireError::invalid_operation( QObject::tr(
+                    "The forcefield \"%1\" (class %2) does not support "
+                    "the removal of molecules.")
+                        .arg(this->name()).arg(this->what()), CODELOC );
+
+    return false;
+}
+
+/** Remove the residue 'residue' from this forcefield - this
+    does nothing if the residue is not in this forcefield. This
+    returns whether this has changed the forcefield (therefore
+    necessitating a recalculation of the energy)
+
+    This will throw an exception if this forcefield does not
+    support partial molecules.
+
+    \throw SireError::invalid_operation
+*/
+bool FFBase::remove(const Residue&)
+{
+    throw SireError::invalid_operation( QObject::tr(
+                    "The forcefield \"%1\" (class %2) does not support "
+                    "the removal of residues.")
+                        .arg(this->name()).arg(this->what()), CODELOC );
+
+    return false;
+}
+
+/** Replace the molecule 'oldmol' with 'newmol' (using
+    the passed parameter map to find any required parameters
+    in the properties of the molecule). This is equivalent
+    to 'remove(oldmol)' followed by 'add(newmol,map)', except
+    that 'newmol' will only be added if 'oldmol' is contained
+    in this forcefield.
+
+    This returns whether this changes the forcefield.
+
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+*/
+bool FFBase::replace(const Molecule &oldmol,
+                     const Molecule &newmol,
+                     const ParameterMap &map)
+{
+    if (this->remove(oldmol))
+    {
+        this->add(newmol,map);
+        return true;
+    }
+    else
+        return false;
+}
+
+/** Return whether this forcefield contains a copy of the molecule
+    'molecule' */
+bool FFBase::contains(const Molecule&) const
+{
+    return false;
+}
+
+/** Return whether this forcefield contains a copy of the
+    residue 'residue' */
+bool FFBase::contains(const Residue &residue) const
+{
+    return this->contains(residue.molecule());
+}
+
+/** Return the copy of the molecule in this forcefield that
+    has the ID == molid
 
     \throw SireMol::missing_molecule
 */
-void FFBase::assertContains(const Molecule &molecule) const
+Molecule FFBase::molecule(MoleculeID molid) const
 {
-    if ( not mols_in_ff.contains(molecule.ID()) )
-        throw SireMol::missing_molecule( QObject::tr(
-            "The molecule \"%1\" (%2) is not in the forcefield \"%3\"")
-                .arg(molecule.name()).arg(molecule.ID())
-                .arg(name()), CODELOC );
+    throw SireMol::missing_molecule( QObject::tr(
+                "There is no molecule with ID == %1 in the "
+                "forcefield \"%1\"")
+                    .arg(molid).arg(this->name()), CODELOC );
 }
 
-/** Assert that this forcefield contains the residue 'residue'
-
-    \throw SireMol::missing_residue
-*/
-void FFBase::assertContains(const Residue &residue) const
-{
-    Molecule mol = residue.molecule();
-
-    if ( not mols_in_ff.contains(mol.ID()) )
-            // of res_in_ff.contains(residue.ID())
-        throw SireMol::missing_residue( QObject::tr(
-            "The residue \"%1 (%2)\" in the molecule \"%3\" (%4) "
-            "is not in the forcefield \"%5\"")
-                .arg(residue.name()).arg(residue.number())
-                .arg(mol.name()).arg(mol.ID())
-                .arg(name()), CODELOC );
-}
-
-/** Assert that the molecule stored in this forcefield has the same major
-    version as 'mol'
+/** Return the copy of the residue in this forcefield that
+    is in the molecule with ID == molid and with residue number
+    'resnum'
 
     \throw SireMol::missing_molecule
-    \throw SireStream::version_error
-*/
-void FFBase::assertSameMajorVersion(const Molecule &mol) const
-{
-    const MoleculeVersion &version = this->molecule(mol.ID()).version();
-
-    if (mol.version().major() != version.major())
-        throw SireStream::version_error( QObject::tr(
-              "The major version of the molecule \"%1\" (%2) in the forcefield "
-              "\"%3\" (%4) is not equal to %5.")
-                  .arg(mol.name()).arg(mol.ID()).arg(name())
-                  .arg(version.major()).arg(mol.version().major()), CODELOC );
-}
-
-/** Assert that the residue stored in this forcefield has the same major
-    version as 'res'
-
     \throw SireMol::missing_residue
-    \throw SireStream::version_error
 */
-void FFBase::assertSameMajorVersion(const Residue &residue) const
+Residue FFBase::residue(MoleculeID molid, ResNum resnum) const
 {
-    #warning TODO assertSameMajorVersion(Residue)
+    return this->molecule(molid).residue(resnum);
 }
 
-/** Assert that the molecule stored in this forcefield has the same version
-    as 'mol'
+/** Return the copy of the residue in this forcefield that
+    is in the molecule with ID == molid and with residue index
+    'resid'
 
     \throw SireMol::missing_molecule
-    \throw SireStream::version_error
+    \throw SireError::invalid_index
 */
-void FFBase::assertSameVersion(const Molecule &mol) const
+Residue FFBase::residue(MoleculeID molid, ResID resid) const
 {
-    const MoleculeVersion &version = this->molecule(mol.ID()).version();
-
-    if (mol.version() != version)
-        throw SireStream::version_error( QObject::tr(
-              "The version of the molecule \"%1\" (%2) in the forcefield "
-              "\"%3\" (%4) is not equal to %5.")
-                  .arg(mol.name()).arg(mol.ID()).arg(name())
-                  .arg(version.toString()).arg(mol.version().toString()), CODELOC );
+    return this->molecule(molid).residue(resid);
 }
 
-/** Assert that the residue stored in this forcefield has the same
-    version as 'res'
+/** Return the copy of the residue in this forcefield that
+    is in the molecule with ID == molid and with residue
+    called 'resname'
 
+    \throw SireMol::missing_molecule
     \throw SireMol::missing_residue
-    \throw SireStream::version_error
 */
-void FFBase::assertSameVersion(const Residue &res) const
+Residue FFBase::residue(MoleculeID molid, const QString &resname) const
 {
-    #warning TODO assertSameVersion(Residue)
+    return this->molecule(molid).residue(resname);
 }
 
-/** Register the forcefield component with ID number 'id', name 'compname'
-    and with description 'description'. It is a program bug to try
-    to register a component with the same name or ID as an existing
-    component.
+/** Return the copy of the molecule 'mol' that is in this forcefield
 
-    \throw SireError::program_bug
+    \throw SireMol::missing_molecule
 */
-void FFBase::registerComponent(int id, const QString &compname,
-                               const QString &description)
+Molecule FFBase::molecule(const Molecule &mol) const
 {
-    if ( id_to_component.contains(id) )
-        throw SireError::program_bug( QObject::tr(
-            "Cannot have two energy components with the same ID number (%1). "
-            "Existing component is \"%2\" (%3) - cannot replace with "
-            "\"%4\".")
-                .arg(id).arg(id_to_component[id].name())
-                .arg(id_to_component[id].function().toString())
-                .arg(compname), CODELOC );
-
-    ComponentInfo compinfo(name(), compname, description);
-
-    if ( nrg_components.values().contains(compinfo.function().ID()) )
-        throw SireError::program_bug( QObject::tr(
-            "Cannot have two components in this forcefield with the same "
-            "name (%1). Existing component is \"%2\".")
-                .arg(compname).arg(compinfo.function().toString()), CODELOC );
-
-    nrg_components.add( compinfo.function() == 0.0 );
-    id_to_component.insert( id, compinfo );
+    return this->molecule(mol.ID());
 }
 
-/** Register the addition of the molecule 'molecule' */
-void FFBase::addToRegister(const Molecule &molecule)
-{
-    mols_in_ff.insert(molecule.ID());
-}
+/** Return the copy of the residue 'res' that is in this forcefield
 
-/** Register the addition of the residue 'residue' */
-void FFBase::addToRegister(const Residue &residue)
+    \throw SireMol::missing_molecule
+    \throw SireMol::missing_residue
+*/
+Residue FFBase::residue(const Residue &res) const
 {
-    #warning TODO addToRegister(Residue)
+    return this->residue(res.molecule().ID(), res.resNum());
 }

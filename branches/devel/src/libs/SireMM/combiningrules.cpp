@@ -16,6 +16,8 @@
 
 #include "combiningrules.h"
 
+#include "SireError/errors.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
@@ -27,7 +29,7 @@ using namespace SireStream;
 ///////////
 
 static const RegisterMetaType<CombiningRuleBase>
-                          r_combinebase("SireMM::CombiningRuleBase", MAGIC_ONLY);
+                          r_combinebase(MAGIC_ONLY, "SireMM::CombiningRuleBase");
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CombiningRuleBase&)
@@ -63,8 +65,7 @@ CombiningRuleBase::~CombiningRuleBase()
 /////////// Implementation of ArithmeticCombiningRules
 ///////////
 
-static const RegisterMetaType<ArithmeticCombiningRules>
-                                    r_arith("SireMM::ArithmeticCombiningRules");
+static const RegisterMetaType<ArithmeticCombiningRules> r_arith;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
@@ -186,8 +187,7 @@ void ArithmeticCombiningRules::combine(const QVector<ChargeParameter> &chgs,
 /////////// Implementation of GeometricCombiningRules
 ///////////
 
-static const RegisterMetaType<GeometricCombiningRules>
-                                    r_geom("SireMM::GeometricCombiningRules");
+static const RegisterMetaType<GeometricCombiningRules> r_geom;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
@@ -312,7 +312,7 @@ void GeometricCombiningRules::combine(const QVector<ChargeParameter> &chgs,
 /////////// Implementation of CombiningRules
 ///////////
 
-static const RegisterMetaType<CombiningRules> r_combrules("SireMM::CombiningRules");
+static const RegisterMetaType<CombiningRules> r_combrules;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CombiningRules &combrules)

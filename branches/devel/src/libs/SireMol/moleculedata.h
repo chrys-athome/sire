@@ -25,6 +25,7 @@
 #include "moleculeversion.h"
 #include "moleculeinfo.h"
 #include "moleculebonds.h"
+#include "idtypes.h"
 
 #include "SireVol/coordgroup.h"
 
@@ -62,6 +63,8 @@ class ResNum;
 class ResID;
 class CutGroupID;
 class MoleculeID;
+
+class Property;
 
 class EditMol;
 class EditMolData;
@@ -209,14 +212,21 @@ public:
    /////////////////////////////////////////////////////////
 
 
+   ///// Getting and setting properties ////////////////////
+    const Property& getProperty(const QString &name) const;
+
+    void setProperty(const QString &name, const Property &value);
+    void addProperty(const QString &name, const Property &value);
+
+    const QHash<QString,Property>& properties() const;
+   /////////////////////////////////////////////////////////
+
+
    ///// Querying the molecule /////////////////////////////
     CutGroup at(CutGroupID cgid) const;
 
-    Atom at(AtomID atomid) const;
-    Atom at(const ResNumAtomID &resatomid) const;
-    Atom at(const ResIDAtomID &resatomid) const;
     Atom at(const CGAtomID &cgatomid) const;
-    Atom at(const AtomIndex &atm) const;
+    Atom at(const IDMolAtom &atomid) const;
 
     const MoleculeBonds& connectivity() const;
 
@@ -237,25 +247,11 @@ public:
 
     CoordGroup coordGroup(CutGroupID id) const;
 
-    Atom atom(AtomID atomid) const;
-    Atom atom(CutGroupID cgid, AtomID atomid) const;
     Atom atom(const CGAtomID &cgatmid) const;
-    Atom atom(ResNum resnum, AtomID atomid) const;
-    Atom atom(const ResNumAtomID &resatomid) const;
-    Atom atom(ResID resid, AtomID atomid) const;
-    Atom atom(const ResIDAtomID &resatomid) const;
-    Atom atom(const AtomIndex &atm) const;
-    Atom atom(ResNum resnum, const QString &atomname) const;
+    Atom atom(const IDMolAtom &atomid) const;
 
-    Vector coordinates(AtomID atomid) const;
-    Vector coordinates(CutGroupID cgid, AtomID atomid) const;
     Vector coordinates(const CGAtomID &cgatomid) const;
-    Vector coordinates(ResNum resnum, AtomID atomid) const;
-    Vector coordinates(const ResNumAtomID &resatomid) const;
-    Vector coordinates(ResID resid, AtomID atomid) const;
-    Vector coordinates(const ResIDAtomID &resatomid) const;
-    Vector coordinates(const AtomIndex &atm) const;
-    Vector coordinates(ResNum resnum, const QString &atomname) const;
+    Vector coordinates(const IDMolAtom &atomid) const;
 
     QVector<Atom> atoms() const;
     QVector<Vector> coordinates() const;
@@ -573,9 +569,16 @@ private:
         of the CutGroup to which these coordinates belong. */
     QVector<CoordGroup> _coords;
 
+    /** All of the additional properties of this molecule - this includes
+        all of the molecule's forcefield parameters (for all forcefields that
+        it is to be added to) and all additional properties that may need to
+        be added to the molecule */
+    QHash< QString, Property > _properties;
 };
 
 }
+
+Q_DECLARE_METATYPE(SireMol::MoleculeData)
 
 SIRE_END_HEADER
 

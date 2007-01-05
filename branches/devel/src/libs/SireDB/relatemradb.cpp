@@ -21,10 +21,10 @@ using namespace SireDB;
 using namespace SireMol;
 using namespace SireStream;
 
-static const RegisterMetaType< QSet<quint32> > r_qset_quint32_("QSet<quint32>");
 Q_DECLARE_METATYPE(QSet<quint32>)
+static const RegisterMetaType< QSet<quint32> > r_qset_quint32_;
 
-static const RegisterMetaType<RelateMRADB> r_relatemradb("SireDB::RelateMRADB", NO_STREAM);
+static const RegisterMetaType<RelateMRADB> r_relatemradb(NO_STREAM);
 
 /** Constructor */
 RelateMRADB::RelateMRADB()

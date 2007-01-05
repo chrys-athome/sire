@@ -17,11 +17,16 @@
 #include <QSharedDataPointer>
 #include <QVector>
 
+#include "SireFF/parametermap.h"
+
 #include "SireMol/molecule.h"
 #include "SireMol/residue.h"
 #include "SireMol/cutgroupid.h"
 
+#include "SireMM/cljff.h"
 #include "SireMM/cljparameter.h"
+#include "SireMM/atomiccharges.h"
+#include "SireMM/atomicljs.h"
 
 #include "SireVol/coordgroup.h"
 
@@ -52,11 +57,15 @@ namespace SireMM
 namespace detail
 {
 
+using SireFF::ParameterMap;
+
 using SireMol::Molecule;
 using SireMol::Residue;
 using SireMol::CutGroupID;
 
 using SireVol::CoordGroup;
+
+class ChangedMolCLJInfo;
 
 /**
 This private class contains the data for MolCLJInfo
@@ -73,44 +82,61 @@ public:
     MolCLJInfoData();
 
     MolCLJInfoData(const Molecule &mol,
-                   const QVector< QVector<ChargeParameter> > &chgs,
-                   const QVector< QVector<LJParameter> > &ljs);
+                   const CLJFF::Parameters &parameters,
+                   const ParameterMap &map,
+                   const QSet<CutGroupID> &cgids);
 
     /** Copy constructor */
     MolCLJInfoData(const MolCLJInfoData &other)
-              : QSharedData(), molecule(other.molecule), coordinates(other.coordinates),
-                chgparams(other.chgparams), ljparams(other.ljparams)
+              : QSharedData(),
+                coulombproperty(other.coulombproperty),
+                ljproperty(other.ljproperty),
+                molecule(other.molecule),
+                map(other.map),
+                cgids(other.cgids),
+                coordinates(other.coordinates),
+                chgparams(other.chgparams),
+                ljparams(other.ljparams)
     {}
 
     ~MolCLJInfoData();
 
     void assertSameMolecule(const Molecule &mol) const;
-    void assertSameMajorVersion(const Molecule &mol) const;
-    void assertCompatibleParameters(
-                        const QVector< QVector<ChargeParameter> > &chgparams) const;
-    void assertCompatibleParameters(
-                        const QVector< QVector<LJParameter> > &ljparams) const;
 
-    void move(const Molecule &movedmol);
+    void buildWhole();
+    void buildParts(const QSet<CutGroupID> &cgids);
 
-    void change(const Molecule &changedmol,
-                const QVector< QVector<ChargeParameter> > &chgparams,
-                const QVector< QVector<LJParameter> > &ljparams);
+    void setMolecule(const Molecule &mol, const CLJFF::Parameters &parameters);
+
+    /** The ParameterName used to find the coulomb parameters */
+    ParameterName coulombproperty;
+
+    /** The ParameterName used to find the LJ parameters */
+    ParameterName ljproperty;
 
     /** The molecule whose parameters are contained in this object */
     Molecule molecule;
 
-    /** The coordinates of the molecule, organised into CoordGroups
-        an indexed by CutGroupID */
+    /** The mapping used to find forcefield parameters from the
+        molecule's properties */
+    ParameterMap map;
+
+    /** The CutGroupIDs of CutGroups whose coordinates and
+        parameters are stored in this object */
+    QSet<CutGroupID> cgids;
+
+    /** The coordinates of the molecule, organised into CoordGroups,
+        of the CutGroups whose IDs are in cgids (in the iterator order that
+        they appear in cgids) */
     QVector<CoordGroup> coordinates;
 
-    /** The Charge parameters for all of the atoms in the molecule,
-        organised into groups and indexed by CutGroupID */
-    QVector< QVector<ChargeParameter> > chgparams;
+    /** The Charge parameters for the atoms in the molecule,
+        arranged identically to 'coordinates' */
+    AtomicCharges chgparams;
 
-    /** The LJ parameters for all of the atoms in the molecule,
-        organised into groups and indexed by CutGroupID */
-    QVector< QVector<LJParameter> > ljparams;
+    /** The LJ parameters for the atoms in the molecule,
+        arranged identically to 'coordinates' */
+    AtomicLJs ljparams;
 };
 
 /**
@@ -129,77 +155,105 @@ public:
     MolCLJInfo();
 
     MolCLJInfo(const Molecule &molecule,
-               const QVector< QVector<ChargeParameter> > &chgs,
-               const QVector< QVector<LJParameter> > &ljs);
+               const CLJFF::Parameters &parameters,
+               const ParameterMap &parammap,
+               const QSet<CutGroupID> &cgids = QSet<CutGroupID>());
 
-    /** Copy constructor */
-    MolCLJInfo(const MolCLJInfo &other) : d(other.d)
-    {}
+    MolCLJInfo(const MolCLJInfo &other);
 
     ~MolCLJInfo();
 
-    MolCLJInfo& operator=(const MolCLJInfo &other)
-    {
-        d = other.d;
-        return *this;
-    }
+    MolCLJInfo& operator=(const MolCLJInfo &other);
 
-    /** Return the molecule whose parameters are contained in this
-        group */
-    const Molecule& molecule() const
-    {
-        return d->molecule;
-    }
+    bool isNull() const;
 
-    /** Return the coordinates of the atoms in the molecule,
-        arranged into CoordGroups, indexed by CutGroupID */
-    const QVector<CoordGroup>& coordinates() const
-    {
-        return d->coordinates;
-    }
+    const Molecule& molecule() const;
 
-    /** Return the charge parameters of the atoms in the molecule,
-        arranged into groups, indexed by CutGroupID */
-    const QVector< QVector<ChargeParameter> >& chargeParameters() const
-    {
-        return d->chgparams;
-    }
+    const ParameterMap& map() const;
 
-    /** Return the LJ parameters of the atoms in the molecule,
-        arranged into groups, indexed by CutGroupID */
-    const QVector< QVector<LJParameter> >& ljParameters() const
-    {
-        return d->ljparams;
-    }
+    const QVector<CoordGroup>& coordinates() const;
 
-    /** Change the record to record that the molecule
-        'molecule' has moved.
+    const AtomicCharges& chargeParameters() const;
+    const AtomicLJs& ljParameters() const;
 
-        \throw SireError::incompatible_error
-        \throw SireError::version_error
-    */
-    void move(const Molecule &molecule)
-    {
-        d->move(molecule);
-    }
+    ChangedMolCLJInfo change(const Molecule &molecule,
+                             const CLJFF::Parameters &parameters) const;
 
-    /** Change the record to record that the molecule
-        'molecule' has changed, and that it now has the
-        passed parameters
+    ChangedMolCLJInfo change(const Residue &residue,
+                             const CLJFF::Parameters &parameters) const;
 
-        \throw SireError::incompatible_error
-    */
-    void change(const Molecule &molecule,
-                const QVector< QVector<ChargeParameter> > &chgparams,
-                const QVector< QVector<LJParameter> > &ljparams)
-    {
-        d->change(molecule, chgparams, ljparams);
-    }
+    bool isWholeMolecule() const;
+    const QSet<CutGroupID>& cutGroupIDs() const;
+
+    MolCLJInfo setMolecule(const Molecule &molecule,
+                           const CLJFF::Parameters &parameters) const;
+
+    void setWholeMolecule();
+    void setPartialMolecule(const QSet<CutGroupID> &cgids);
 
 private:
     /** Shared pointer to the data of this object */
     QSharedDataPointer<MolCLJInfoData> d;
 };
+
+/** Copy constructor */
+inline MolCLJInfo::MolCLJInfo(const MolCLJInfo &other) : d(other.d)
+{}
+
+inline MolCLJInfo& MolCLJInfo::operator=(const MolCLJInfo &other)
+{
+    d = other.d;
+    return *this;
+}
+
+/** Return the molecule whose parameters are contained in this
+    group */
+inline const Molecule& MolCLJInfo::molecule() const
+{
+    return d->molecule;
+}
+
+/** Return the mapping used to obtain parameters for this molecule
+    from its properties */
+inline const ParameterMap& MolCLJInfo::map() const
+{
+    return d->map;
+}
+
+/** Return the coordinates of the atoms in the molecule,
+    arranged into CoordGroups, indexed by CutGroupID */
+inline const QVector<CoordGroup>& MolCLJInfo::coordinates() const
+{
+    return d->coordinates;
+}
+
+/** Return the charge parameters of the atoms in the molecule,
+    arranged into groups, indexed by CutGroupID */
+inline const AtomicCharges& MolCLJInfo::chargeParameters() const
+{
+    return d->chgparams;
+}
+
+/** Return the LJ parameters of the atoms in the molecule,
+    arranged into groups, indexed by CutGroupID */
+inline const AtomicLJs& MolCLJInfo::ljParameters() const
+{
+    return d->ljparams;
+}
+
+/** Return the CutGroupIDs of the CutGroups that are stored in this
+    object - an empty set implies that all of the CutGroups in the
+    molecule are stored */
+inline const QSet<CutGroupID>& MolCLJInfo::cutGroupIDs() const
+{
+    return d->cgids;
+}
+
+/** Return whether or not this represents the entire molecule */
+inline bool MolCLJInfo::isWholeMolecule() const
+{
+    return d->cgids.isEmpty();
+}
 
 /** This class is used to store information about changed molecules
 
@@ -221,7 +275,11 @@ public:
                        const MolCLJInfo &newmol,
                        const QSet<CutGroupID> &movedparts );
 
+    ChangedMolCLJInfo(const ChangedMolCLJInfo &other);
+
     ~ChangedMolCLJInfo();
+
+    ChangedMolCLJInfo& operator=(const ChangedMolCLJInfo &other);
 
     const MolCLJInfo& newMol() const;
     const MolCLJInfo& oldMol() const;
@@ -229,20 +287,18 @@ public:
     const MolCLJInfo& newParts() const;
     const MolCLJInfo& oldParts() const;
 
-    bool movedAll() const;
+    bool changedAll() const;
 
-    void change(const MolCLJInfo &newinfo,
-                const QSet<CutGroupID> &changedparts);
+    const QSet<CutGroupID>& changedGroups() const;
 
-    void change(const MolCLJInfo &newinfo);
+    ChangedMolCLJInfo change(const Molecule &molecule,
+                             const CLJFF::Parameters &parameters) const;
 
-    void move(const Molecule &molecule);
-    void move(const Residue &residue);
-
-    void assertCompatibleWith(const MolCLJInfo &molinfo);
+    ChangedMolCLJInfo change(const Residue &residue,
+                             const CLJFF::Parameters &parameters) const;
 
 private:
-    void buildParts();
+    void assertSane() const;
 
     /** Shared pointer to the data for the whole of the old configuration
         of the molecule */
@@ -259,12 +315,6 @@ private:
     /** Shared pointer to the data of the new configuration of the parts of
         the molecule that have moved */
     MolCLJInfo newparts;
-
-    /** The set of CutGroupIDs of all of the CutGroups that have changed
-        between the old and new configurations. This will be empty
-        if all of the CutGroups have changed (and thus oldmol == oldparts
-        and newmol == newparts) */
-    QSet<CutGroupID> cgids;
 };
 
 /** Return the CLJ and coordinate information for the
@@ -289,22 +339,19 @@ inline const MolCLJInfo& ChangedMolCLJInfo::newParts() const
 }
 
 /** Return the CLJ and coordinate information for the
-     parts of the molecule that changed from before the change. */
+    parts of the molecule that changed from before the change. */
 inline const MolCLJInfo& ChangedMolCLJInfo::oldParts() const
 {
     return oldparts;
 }
 
-/** Return whether or not the whole molecule changed, or
-    whether only part of the molecule changed */
-inline bool ChangedMolCLJInfo::movedAll() const
-{
-    return cgids.isEmpty();
 }
 
 }
 
-}
+Q_DECLARE_METATYPE(SireMM::detail::MolCLJInfo);
+Q_DECLARE_METATYPE(SireMM::detail::MolCLJInfoData);
+Q_DECLARE_METATYPE(SireMM::detail::ChangedMolCLJInfo);
 
 SIRE_END_HEADER
 

@@ -17,7 +17,9 @@ set ( SIREMM_SOURCES
       angletable.cpp         
       assign_angles.cpp      
       assign_bonds.cpp       
-      assign_dihedrals.cpp   
+      assign_dihedrals.cpp
+      atomiccharges.cpp
+      atomicljs.cpp
       bonddb.cpp             
       bondgenerator.cpp      
       bondtable.cpp          
@@ -38,7 +40,6 @@ set ( SIREMM_SOURCES
       ljdb.cpp
       ljparameter.cpp
       ljtable.cpp
-      mmdb.cpp
       molangleinfo.cpp
       molbondinfo.cpp
       moldihedralinfo.cpp

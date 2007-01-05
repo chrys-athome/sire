@@ -17,6 +17,8 @@ SireCAS
 (*) Write code to allow simplification and expansion of sums and products
 
 (*) Take a stab at writing better integration code for sums and products
+
+(*) Move code over to using SharedPolyPointer to hold ExBase objects
     
 ------
 SireDB
@@ -60,6 +62,22 @@ SireMol
     its own parameters... (though must do this taking into account things like
     dummy atoms (e.g. TIP4P) and QM/MM link atoms.
 
+(*) Replace MoleculeVersion with SireBase::Version and use
+    IDMajMinVersion for keeping track of IDs
+
+(*) Rewrite EditMol to work with Properties
+
+(*) Set ID/Version policy - currently;
+
+         change ID if add/remove atoms,
+                   if add/remove bonds,
+                   if change element types
+
+         change Major if add/remove properties
+                         change properties
+
+         change Minor if change coordinates
+                             
 -----
 Spier
 -----

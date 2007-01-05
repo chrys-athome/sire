@@ -12,7 +12,7 @@ using namespace SireStream;
 /////////////// Implementation of SpaceBase
 ///////////////
 
-static const RegisterMetaType<SpaceBase> r_spacebase("SireVol::SpaceBase", MAGIC_ONLY);
+static const RegisterMetaType<SpaceBase> r_spacebase(MAGIC_ONLY, "SireVol::SpaceBase");
 
 /** Serialise to a binary datastream */
 QDataStream SIREVOL_EXPORT &operator<<(QDataStream &ds, const SpaceBase&)
@@ -48,7 +48,7 @@ SpaceBase::~SpaceBase()
 ////////////// Implementation of Space
 //////////////
 
-static const RegisterMetaType<Space> r_space("SireVol::Space");
+static const RegisterMetaType<Space> r_space;
 
 /** Serialise to a binary datastream */
 QDataStream SIREVOL_EXPORT &operator<<(QDataStream &ds, const Space &space)

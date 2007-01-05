@@ -13,8 +13,6 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 # Define the sources in SireIO
 set ( SIREIO_SOURCES
       iobase.cpp
-      mct.cpp
-      mol2.cpp
       pdb.cpp
       protoms.cpp
       protomsws.cpp

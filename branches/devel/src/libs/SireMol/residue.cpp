@@ -5,9 +5,11 @@
 #include "cgnumatomid.h"
 #include "residatomid.h"
 #include "resnumatomid.h"
+#include "idmolatom.h"
 
 #include "residueinfo.h"
 
+#include "newatom.h"
 #include "cutgroup.h"
 #include "residue.h"
 #include "molecule.h"
@@ -44,7 +46,7 @@ uint SIREMOL_EXPORT qHash(const Residue &res)
     return qHash(res.resNum());
 }
 
-static const RegisterMetaType<Residue> r_residue("SireMol::Residue");
+static const RegisterMetaType<Residue> r_residue;
 
 /** Serialise a Residue to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const Residue &res)
@@ -104,6 +106,12 @@ Residue::Residue(const Molecule &molecule, ResID resid)
 */
 Residue::Residue(const Molecule &molecule, const QString &resname)
         : d(molecule.d), rnum( d->info().residueNumber(resname) )
+{}
+
+/** Construct a residue that is a copy of the residue that contains the
+    atom 'atom' */
+Residue::Residue(const NewAtom &atom)
+        : d(atom.d), rnum(atom.info().resNum())
 {}
 
 /** Copy constructor - this is fast as this class is implicitly shared */

@@ -146,8 +146,7 @@ bool AtomParameter<Param>::operator!=(const AtomParameter<Param> &other) const
     return Param::operator!=(other) or AtomInfo::operator!=(other);
 }
 
-static const SireStream::MagicID atomparameter_magic
-                        = SireStream::getMagic("SireDB::AtomParameter");
+static const MagicID atomparameter_magic = getMagic("SireDB::AtomParameter");
 }
 
 /** Serialise to a binary datastream */

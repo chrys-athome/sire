@@ -1,7 +1,6 @@
 
 #include "exp.h"
 #include "values.h"
-#include "registerexpression.h"
 #include "complexvalues.h"
 #include "integrationconstant.h"
 
@@ -14,13 +13,14 @@ using namespace SireCAS;
 ///////////// Implementation of Exp
 /////////////
 
-static const RegisterMetaType<Exp> r_exp("SireCAS::Exp");
+static const RegisterMetaType<Exp> r_exp;
 
 /** Serialise an Exp to a binary datastream */
 QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Exp &exp)
 {
-    writeHeader(ds, r_exp, 1) << exp.pwr;
-    
+    writeHeader(ds, r_exp, 1)
+          << exp.pwr << static_cast<const PowerFunction&>(exp);
+
     return ds;
 }
 
@@ -28,19 +28,16 @@ QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Exp &exp)
 QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Exp &exp)
 {
     VersionID v = readHeader(ds, r_exp);
-    
+
     if (v == 1)
     {
-        ds >> exp.pwr;
+        ds >> exp.pwr >> static_cast<PowerFunction&>(exp);
     }
     else
         throw version_error(v, "1", r_exp, CODELOC);
-    
+
     return ds;
 }
-
-/** Register the Exp function */
-static RegisterExpression<Exp> RegisterExp;
 
 /** Construct an empty Exp (e^0) */
 Exp::Exp() : PowerFunction()
@@ -62,7 +59,7 @@ Exp::~Exp()
 bool Exp::operator==(const ExBase &other) const
 {
     const Exp *other_exp = dynamic_cast<const Exp*>(&other);
-    
+
     return other_exp != 0 and typeid(other).name() == typeid(*this).name()
              and pwr == other_exp->pwr;
 }
@@ -123,10 +120,30 @@ Expression Exp::power() const
 ///////////// Implementation of Ln
 /////////////
 
-static const RegisterMetaType<Ln> r_ln("SireCAS::Ln");
+static const RegisterMetaType<Ln> r_ln;
 
-/** Register the Ln function */
-static RegisterExpression<Ln> RegisterLn;
+/** Serialise to a binary datastream */
+QDataStream SIRE_EXPORT &operator<<(QDataStream &ds, const Ln &ln)
+{
+    writeHeader(ds, r_ln, 1) << static_cast<const Ln&>(ln);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIRE_EXPORT &operator>>(QDataStream &ds, Ln &ln)
+{
+    VersionID v = readHeader(ds, r_ln);
+
+    if (v == 1)
+    {
+        ds >> static_cast<SingleFunc&>(ln);
+    }
+    else
+        throw version_error(v, "1", r_ln, CODELOC);
+
+    return ds;
+}
 
 /** Construct an empty ln (ln(0)) */
 Ln::Ln() : SingleFunc()
@@ -135,7 +152,7 @@ Ln::Ln() : SingleFunc()
 /** Construct ln(expression) */
 Ln::Ln(const Expression &expression) : SingleFunc(expression)
 {}
-    
+
 /** Copy constructor */
 Ln::Ln(const Ln &other) : SingleFunc(other)
 {}
@@ -143,7 +160,7 @@ Ln::Ln(const Ln &other) : SingleFunc(other)
 /** Destructor */
 Ln::~Ln()
 {}
-    
+
 /** Comparison operator */
 bool Ln::operator==(const ExBase &other) const
 {
@@ -151,25 +168,25 @@ bool Ln::operator==(const ExBase &other) const
     return other_ln != 0 and typeid(other).name() == typeid(*this).name()
              and this->argument() == other_ln->argument();
 }
-    
+
 /** Return the magic for this function */
 uint Ln::magic() const
 {
     return r_ln.magicID();
 }
-    
+
 /** Evaluate this function */
 double Ln::evaluate(const Values &values) const
 {
     return std::log( x().evaluate(values) );
 }
-    
+
 /** Complex evaluation */
 Complex Ln::evaluate(const ComplexValues &values) const
 {
     return SireMaths::log( x().evaluate(values) );
 }
-    
+
 /** differential of ln(x) = 1/x */
 Expression Ln::diff() const
 {

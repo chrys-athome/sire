@@ -3,9 +3,9 @@
 
 #include <QString>
 
-#include <boost/shared_ptr.hpp>
+#include "exbase.h"
 
-#include "sireglobal.h"
+#include "SireBase/sharedpolypointer.hpp"
 
 SIRE_BEGIN_HEADER
 
@@ -37,11 +37,12 @@ class Values;
 class ComplexValues;
 
 using SireMaths::Complex;
+using SireBase::SharedPolyPointer;
 
-/** This class provides implicitly shared access to ExBase objects, which 
-    are a virtual class hierarchy that provide all of the functionality of 
+/** This class provides implicitly shared access to ExBase objects, which
+    are a virtual class hierarchy that provide all of the functionality of
     the expressions.
-    
+
     @author Christopher Woods
 */
 class SIRECAS_EXPORT ExpressionBase
@@ -52,28 +53,30 @@ friend QDataStream& ::operator>>(QDataStream&, ExpressionBase&);
 
 public:
     ExpressionBase();
-    
-    ExpressionBase(const boost::shared_ptr<const ExBase> &ptr);
+
     ExpressionBase(const ExBase &ex);
-    
+
+    ExpressionBase(const ExpressionBase &other);
+
     ~ExpressionBase();
 
     bool operator==(const ExpressionBase &other) const;
     bool operator!=(const ExpressionBase &other) const;
-    
+
     ExpressionBase& operator=(const ExpressionBase &other);
+    ExpressionBase& operator=(const ExBase &other);
 
     Expression differentiate(const Symbol &symbol) const;
     Expression integrate(const Symbol &symbol) const;
-    
+
     Expression series(const Symbol &symbol, int n) const;
-    
+
     Expression simplify(int options=0) const;
-    
+
     Expression expand() const;
     Expression collapse() const;
     Expression conjugate() const;
-    
+
     bool isFunction(const Symbol&) const;
     bool isConstant() const;
     bool isComplex() const;
@@ -81,14 +84,14 @@ public:
 
     uint hash() const;
 
-    QString what() const;
+    const char* what() const;
     QString toString() const;
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
-    
+
     Expression substitute(const Identities &identities) const;
-    
+
     Symbols symbols() const;
     Functions functions() const;
     Expressions children() const;
@@ -96,17 +99,18 @@ public:
     template<class T>
     bool isA() const
     {
-        return dynamic_cast<const T*>(d.get()) != 0;
+        return d->isA<T>();
     }
-    
+
     template<class T>
     const T& asA() const
     {
-        return dynamic_cast<const T&>(*d);
+        return d->asA<T>();
     }
 
 private:
-    boost::shared_ptr<const ExBase> d;
+    /** Shared pointer to the expression */
+    SharedPolyPointer<ExBase> d;
 };
 
 }

@@ -34,43 +34,48 @@ public:
     Product();
     Product(const Expression &ex0, const Expression &ex1);
     Product(const Expressions &expressions);
-    
+
     Product(const Product &other);
-    
+
     ~Product();
 
     Expression differentiate(const Symbol &symbol) const;
     Expression integrate(const Symbol &symbol) const;
-    
+
     Expression series(const Symbol &symbol, int n) const;
-    
+
     Expression simplify(int options=0) const;
-    
+
     Expression expand() const;
     Expression collapse() const;
     Expression conjugate() const;
-    
+
     bool isFunction(const Symbol&) const;
     bool isConstant() const;
     bool isComplex() const;
     bool isCompound() const;
 
     bool operator==(const ExBase &other) const;
-    
+
     uint hash() const;
+
+    static const char* typeName()
+    {
+        return "SireCAS::Product";
+    }
 
     const char* what() const
     {
-        return "SireCAS::Product";
+        return Product::typeName();
     }
 
     QString toString() const;
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
-    
+
     Expression substitute(const Identities &identities) const;
-    
+
     Symbols symbols() const;
     Functions functions() const;
     Expressions children() const;
@@ -80,8 +85,7 @@ public:
     Product numerator() const;
     Product denominator() const;
 
-protected:
-    ExBase* clone() const
+    Product* clone() const
     {
         return new Product(*this);
     }
@@ -105,7 +109,7 @@ private:
     void multiplyPvt(const Expression &ex, const Expression &power);
 
     bool isPureProduct() const;
-    
+
     static Expression productRule(Product product, const Symbol &symbol);
     static Expression quotientRule(const Product &f, const Product &g, const Symbol &symbol);
 
@@ -115,10 +119,10 @@ private:
 
     /** The expressions on the numerator, indexed by their core */
     QHash<Expression, Expression> numparts;
-    
+
     /** The expressions on the denominator, indexed by their core */
     QHash<Expression, Expression> denomparts;
-    
+
     /** Base factor */
     double strtval;
 };

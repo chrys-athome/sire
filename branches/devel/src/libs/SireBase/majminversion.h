@@ -49,6 +49,8 @@ public:
     quint32 major() const;
     quint32 minor() const;
 
+    const Version& version() const;
+
     void incrementMajor();
     void incrementMinor();
 
@@ -76,6 +78,12 @@ inline quint32 MajMinVersion::major() const
 inline quint32 MajMinVersion::minor() const
 {
     return IDPair::minor();
+}
+
+/** Return the raw version */
+inline const Version& MajMinVersion::version() const
+{
+    return IDPair::version();
 }
 
 /** Increment the minor version number */

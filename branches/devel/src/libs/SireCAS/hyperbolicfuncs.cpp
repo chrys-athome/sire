@@ -3,7 +3,6 @@
 #include "trigfuncs.h"
 #include "exp.h"
 #include "identities.h"
-#include "registerexpression.h"
 #include "expression.h"
 #include "complexvalues.h"
 
@@ -13,15 +12,157 @@ using namespace SireStream;
 using namespace SireCAS;
 
 ////////////
-//////////// Register the trig functions 
+//////////// Register the trig functions
 ////////////
 
-static const RegisterMetaType<Cosh> r_cosh("SireCAS::Cosh");
-static const RegisterMetaType<Sinh> r_sinh("SireCAS::Sinh");
-static const RegisterMetaType<Tanh> r_tanh("SireCAS::Tanh");
-static const RegisterMetaType<Csch> r_csch("SireCAS::Csch");
-static const RegisterMetaType<Sech> r_sech("SireCAS::Sech");
-static const RegisterMetaType<Coth> r_coth("SireCAS::Coth");
+static const RegisterMetaType<Cosh> r_cosh;
+static const RegisterMetaType<Sinh> r_sinh;
+static const RegisterMetaType<Tanh> r_tanh;
+static const RegisterMetaType<Csch> r_csch;
+static const RegisterMetaType<Sech> r_sech;
+static const RegisterMetaType<Coth> r_coth;
+
+////////////
+//////////// Stream the trig functions
+////////////
+
+/** Serialise to a binary datastream */
+QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Cosh &cosh)
+{
+    writeHeader(ds, r_cosh, 1) << static_cast<const SingleFunc&>(cosh);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Cosh &cosh)
+{
+    VersionID v = readHeader(ds, r_cosh);
+
+    if (v == 1)
+    {
+        ds >> static_cast<SingleFunc&>(cosh);
+    }
+    else
+        throw version_error(v, "1", r_cosh, CODELOC);
+
+    return ds;
+}
+
+/** Serialise to a binary datastream */
+QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Sinh &sinh)
+{
+    writeHeader(ds, r_sinh, 1) << static_cast<const SingleFunc&>(sinh);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Sinh &sinh)
+{
+    VersionID v = readHeader(ds, r_sinh);
+
+    if (v == 1)
+    {
+        ds >> static_cast<SingleFunc&>(sinh);
+    }
+    else
+        throw version_error(v, "1", r_sinh, CODELOC);
+
+    return ds;
+}
+
+/** Serialise to a binary datastream */
+QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Tanh &tanh)
+{
+    writeHeader(ds, r_tanh, 1) << static_cast<const SingleFunc&>(tanh);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Tanh &tanh)
+{
+    VersionID v = readHeader(ds, r_tanh);
+
+    if (v == 1)
+    {
+        ds >> static_cast<SingleFunc&>(tanh);
+    }
+    else
+        throw version_error(v, "1", r_tanh, CODELOC);
+
+    return ds;
+}
+
+/** Serialise to a binary datastream */
+QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Csch &csch)
+{
+    writeHeader(ds, r_csch, 1) << static_cast<const SingleFunc&>(csch);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Csch &csch)
+{
+    VersionID v = readHeader(ds, r_csch);
+
+    if (v == 1)
+    {
+        ds >> static_cast<SingleFunc&>(csch);
+    }
+    else
+        throw version_error(v, "1", r_csch, CODELOC);
+
+    return ds;
+}
+
+/** Serialise to a binary datastream */
+QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Sech &sech)
+{
+    writeHeader(ds, r_sech, 1) << static_cast<const SingleFunc&>(sech);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Sech &sech)
+{
+    VersionID v = readHeader(ds, r_sech);
+
+    if (v == 1)
+    {
+        ds >> static_cast<SingleFunc&>(sech);
+    }
+    else
+        throw version_error(v, "1", r_sech, CODELOC);
+
+    return ds;
+}
+
+/** Serialise to a binary datastream */
+QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Coth &coth)
+{
+    writeHeader(ds, r_coth, 1) << static_cast<const SingleFunc&>(coth);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Coth &coth)
+{
+    VersionID v = readHeader(ds, r_coth);
+
+    if (v == 1)
+    {
+        ds >> static_cast<SingleFunc&>(coth);
+    }
+    else
+        throw version_error(v, "1", r_coth, CODELOC);
+
+    return ds;
+}
 
 ////////////
 //////////// Implementation of Hyperbolic Cosine
@@ -53,7 +194,7 @@ uint Cosh::magic() const
 bool Cosh::operator==(const ExBase &other) const
 {
     const Cosh *other_cos = dynamic_cast<const Cosh*>(&other);
-    
+
     return other_cos != 0 and typeid(other).name() == typeid(*this).name()
                  and this->argument() == other_cos->argument();
 }
@@ -81,8 +222,6 @@ Expression Cosh::integ() const
 {
     return Sinh(x());
 }
-
-static RegisterExpression<Cosh> RegisterCosh;
 
 ////////////
 //////////// Implementation of hyperbolic sine
@@ -114,7 +253,7 @@ uint Sinh::magic() const
 bool Sinh::operator==(const ExBase &other) const
 {
     const Sinh *other_cos = dynamic_cast<const Sinh*>(&other);
-    
+
     return other_cos != 0 and typeid(other).name() == typeid(*this).name()
                  and this->argument() == other_cos->argument();
 }
@@ -142,8 +281,6 @@ Expression Sinh::integ() const
 {
     return  -Cosh(x());
 }
-
-static RegisterExpression<Sinh> RegisterSinh;
 
 ////////////
 //////////// Implementation of hyperbolic tangent
@@ -175,7 +312,7 @@ uint Tanh::magic() const
 bool Tanh::operator==(const ExBase &other) const
 {
     const Tanh *other_cos = dynamic_cast<const Tanh*>(&other);
-    
+
     return other_cos != 0 and typeid(other).name() == typeid(*this).name()
                  and this->argument() == other_cos->argument();
 }
@@ -203,8 +340,6 @@ Expression Tanh::integ() const
 {
     return Ln( Cosh(x()) );
 }
-
-static RegisterExpression<Tanh> RegisterTanh;
 
 ////////////
 //////////// Implementation of hyperbolic cosecant
@@ -236,7 +371,7 @@ uint Csch::magic() const
 bool Csch::operator==(const ExBase &other) const
 {
     const Csch *other_cos = dynamic_cast<const Csch*>(&other);
-    
+
     return other_cos != 0 and typeid(other).name() == typeid(*this).name()
                  and this->argument() == other_cos->argument();
 }
@@ -266,10 +401,8 @@ Expression Csch::integ() const
     return Ln( Sinh(x()/2) ) - Ln( Cosh(x()/2) );
 }
 
-static RegisterExpression<Csch> RegisterCsch;
-
 ////////////
-//////////// Implementation of hyperbolic secant 
+//////////// Implementation of hyperbolic secant
 ////////////
 
 /** Null constructor */
@@ -298,7 +431,7 @@ uint Sech::magic() const
 bool Sech::operator==(const ExBase &other) const
 {
     const Sech *other_cos = dynamic_cast<const Sech*>(&other);
-    
+
     return other_cos != 0 and typeid(other).name() == typeid(*this).name()
                  and this->argument() == other_cos->argument();
 }
@@ -327,8 +460,6 @@ Expression Sech::integ() const
 {
     return 2 * Cot( Tanh(x()/2) );
 }
-
-static RegisterExpression<Sech> RegisterSech;
 
 ////////////
 //////////// Implementation of hyperbolic cotangent
@@ -360,7 +491,7 @@ uint Coth::magic() const
 bool Coth::operator==(const ExBase &other) const
 {
     const Coth *other_cos = dynamic_cast<const Coth*>(&other);
-    
+
     return other_cos != 0 and typeid(other).name() == typeid(*this).name()
                  and this->argument() == other_cos->argument();
 }
@@ -389,5 +520,3 @@ Expression Coth::integ() const
 {
     return Ln( Sinh(x()) );
 }
-
-static RegisterExpression<Coth> RegisterCoth;

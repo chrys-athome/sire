@@ -5,7 +5,7 @@
   * @author Christopher Woods
   *
   */
-  
+
 #include <Python.h>
 #include <boost/python.hpp>
 #include <QString>
@@ -34,12 +34,12 @@ Expression wrap_simplify1(const ExBase &ex, int options)
 {
     return ex.simplify(options);
 }
-    
-Expression wrap_simplify2(const ExBase &ex) 
+
+Expression wrap_simplify2(const ExBase &ex)
 {
     return ex.simplify();
 }
-    
+
 QString wrap_what(const ExBase &ex)
 {
     return QString(ex.what());
@@ -47,23 +47,21 @@ QString wrap_what(const ExBase &ex)
 
 void export_ExBase_Operators(class_<ExBase, boost::noncopyable> &wrapper);
 
-void 
+void
 SIRECAS_EXPORT
 export_ExBase()
 {
     class_<ExBase, boost::noncopyable> wrapper("ExBase", no_init);
-    
+
     double (ExBase::*wrap_evaluate1)(const Values&) const = &ExBase::evaluate;
     Complex (ExBase::*wrap_evaluate2)(const ComplexValues&) const = &ExBase::evaluate;
-    
+
     wrapper
         .def( self == self )
         .def( self != self )
-        
+
         .def( "__str__", &__str__<ExBase> )
-        
-        .def( "toExpressionBase", &ExBase::toExpressionBase )
-        .def( "toExpression", &ExBase::toExpression )
+
         .def( "differentiate", &ExBase::differentiate )
         .def( "integrate", &ExBase::integrate )
         .def( "series", &ExBase::series )
@@ -86,29 +84,29 @@ export_ExBase()
         .def( "functions", &ExBase::functions )
         .def( "children", &ExBase::children )
     ;
-    
+
     export_ExBase_Operators(wrapper);
-    
+
     Expression (*wrap_SireCAS_pow1)(const ExBase&, int) = &pow;
     Expression (*wrap_SireCAS_pow2)(const ExBase&, const Rational&) = &pow;
     Expression (*wrap_SireCAS_pow3)(const ExBase&, double) = &pow;
     Expression (*wrap_SireCAS_pow4)(const ExBase&, const Expression&) = &pow;
     Expression (*wrap_SireCAS_pow5)(const ExBase&, const Complex&) = &pow;
     Expression (*wrap_SireCAS_pow6)(const ExBase&, const ExBase&) = &pow;
-            
+
     def("pow", wrap_SireCAS_pow1);
     def("pow", wrap_SireCAS_pow2);
     def("pow", wrap_SireCAS_pow3);
     def("pow", wrap_SireCAS_pow4);
     def("pow", wrap_SireCAS_pow5);
     def("pow", wrap_SireCAS_pow6);
-    
+
     class_<Sum, bases<ExBase> >("Sum", init<>())
         .def( init<const Expression&, const Expression&>() )
         .def( init<const Expressions&>() )
         .def( "reduce", &Sum::reduce )
     ;
-    
+
     class_<Product, bases<ExBase> >("Product", init<>())
         .def( init<const Expression&, const Expression&>() )
         .def( init<const Expressions&>() )
@@ -116,13 +114,13 @@ export_ExBase()
         .def( "numerator", &Product::numerator )
         .def( "denominator", &Product::denominator )
     ;
-    
+
     class_<Constant, bases<ExBase> >("Constant", init<>())
     ;
-    
+
     class_<I, bases<Constant> >("I", init<>())
     ;
-    
+
 }
 
 }

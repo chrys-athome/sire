@@ -9,6 +9,14 @@ SIRE_BEGIN_HEADER
 
 namespace SireCAS
 {
+class I;
+}
+
+QDataStream& operator<<(QDataStream&, const SireCAS::I&);
+QDataStream& operator>>(QDataStream&, SireCAS::I&);
+
+namespace SireCAS
+{
 
 using SireMaths::Complex;
 
@@ -19,19 +27,33 @@ This is the complex number, i
 */
 class SIRECAS_EXPORT I : public Constant
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const I&);
+friend QDataStream& ::operator>>(QDataStream&, I&);
+
 public:
     I();
     I(const I &other);
-    
+
     ~I();
 
     bool operator==(const ExBase &other) const;
-    
+
     uint hash() const;
-    
-    const char* what() const
+
+    static const char* typeName()
     {
         return "SireCAS::I";
+    }
+
+    const char* what() const
+    {
+        return I::typeName();
+    }
+
+    I* clone() const
+    {
+        return new I();
     }
 
     QString toString() const;
@@ -41,14 +63,6 @@ public:
     Expression conjugate() const;
 
     bool isComplex() const;
-
-protected:
-    
-    ExBase* clone() const
-    {
-        return new I();
-    }
-
 };
 
 }

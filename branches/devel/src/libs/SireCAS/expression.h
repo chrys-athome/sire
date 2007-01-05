@@ -4,6 +4,7 @@
 #include "SireMaths/rational.h"
 
 #include "expressionbase.h"
+#include "expressions.h"
 
 #include "sireglobal.h"
 
@@ -39,22 +40,22 @@ friend QDataStream& ::operator>>(QDataStream&, Expression&);
 
 public:
     Expression();
-    
+
     Expression(int constant);
     Expression(const Rational &constant);
     Expression(double constant);
     Expression(const Complex &constant);
-    
+
     Expression(const ExpressionBase &base);
     Expression(const ExBase &base);
-    
+
     Expression(const Expression &other);
-    
+
     ~Expression();
 
     bool operator==(const Expression &other) const;
     bool operator!=(const Expression &other) const;
-    
+
     Expression& operator=(const Expression &other);
 
     Expression& operator+=(const Expression &other);
@@ -71,17 +72,17 @@ public:
     Expression subtract(const Expression &ex) const;
     Expression multiply(const Expression &ex) const;
     Expression divide(const Expression &ex) const;
-    
+
     Expression multiply(double val) const;
     Expression divide(double val) const;
-    
+
     Expression multiply(const Complex &val) const;
     Expression divide(const Complex &val) const;
-    
+
     Expression negate() const;
     Expression invert() const;
     Expression conjugate() const;
-    
+
     Expression pow(int n) const;
     Expression squared() const;
     Expression cubed() const;
@@ -103,42 +104,66 @@ public:
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
-    
+
     Expression differentiate(const Symbol &symbol, int level=1) const;
     Expression integrate(const Symbol &symbol) const;
-    
+
     Expression diff(const Symbol &symbol, int level=1) const;
     Expression integ(const Symbol &symbol) const;
-    
+
     Expression series(const Symbol &symbol, int order) const;
-    
+
     bool isZero() const;
     bool isConstant() const;
     bool isFunction(const Symbol &symbol) const;
     bool isCompound() const;
     bool isComplex() const;
-    
+
     QString toString() const;
-    
+
     uint hash() const
     {
         return exbase.hash();
     }
-    
+
     const ExpressionBase& base() const;
 
     Symbols symbols() const;
     Functions functions() const;
     Expressions children() const;
 
+    template<class T>
+    QList<T> children() const;
+
 private:
-    
+
     /** The base of this expression */
     ExpressionBase exbase;
 
     /** The factor of the expression */
     double fac;
 };
+
+/** Return a list of all children of type 'T' in this expression */
+template<class T>
+QList<T> Expression::children() const
+{
+    Expressions exs = this->children();
+
+    QList<T> children_t;
+
+    for (Expressions::const_iterator it = exs.constBegin();
+         it != exs.constEnd();
+         ++it)
+    {
+        const ExpressionBase &base = it->base();
+
+        if (base.isA<T>())
+            children_t.append( base.asA<T>() );
+    }
+
+    return children_t;
+}
 
 /** Comparison operator */
 inline bool Expression::operator==(const Expression &other) const
@@ -153,7 +178,7 @@ inline bool Expression::operator!=(const Expression &other) const
 }
 
 /** Addition operator */
-inline Expression operator+(const Expression &ex0, 
+inline Expression operator+(const Expression &ex0,
                             const Expression &ex1)
 {
     return ex0.add(ex1);
@@ -211,7 +236,7 @@ inline Expression pow(const Expression &ex0, int n)
 }
 
 /** Raise an expression to a rational power */
-inline Expression pow(const Expression &ex0, 
+inline Expression pow(const Expression &ex0,
                       const SireMaths::Rational &n)
 {
     return ex0.pow(n);

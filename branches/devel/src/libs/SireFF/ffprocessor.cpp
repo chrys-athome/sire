@@ -93,16 +93,6 @@ void FFProcessorBase::setForceField(const ForceField &forcefield)
     data().setForceField(forcefield);
 }
 
-/** Return a copy of the molecule with MoleculeID == molid from the
-    forcefield that is being processed by this processor.
-
-    \throw SireMol::missing_molecule
-*/
-Molecule FFProcessorBase::molecule(MoleculeID molid) const
-{
-    return data().molecule(molid);
-}
-
 /** Activate this processor and return a pointer to the
     activated processor.
 
@@ -150,15 +140,6 @@ ForceField FFProcessorPvt::forcefield() const
 void FFProcessorPvt::setForceField(const ForceField &forcefield)
 {
     ffield = forcefield;
-}
-
-/** Return a copy of the molecule with ID == molid
-
-    \throw SireMol::missing_molecule
-*/
-Molecule FFProcessorPvt::molecule(MoleculeID molid) const
-{
-    return ffield.molecule(molid);
 }
 
 /** Activate this forcefield and return a pointer to the active

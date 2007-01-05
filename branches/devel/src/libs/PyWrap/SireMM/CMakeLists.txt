@@ -18,6 +18,8 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs
 # Define the sources in SireMM
 set ( WRAPMM_SOURCES
 
+      atomiccharges.py.cpp
+      atomicljs.py.cpp
       cljff.py.cpp
       combiningrules.py.cpp
       intercljff.py.cpp
@@ -32,7 +34,6 @@ set ( WRAPMM_SOURCES
       wrap_bondgenerator.cpp     
       wrap_bondtable.cpp          
       wrap_chargetable.cpp        
-      wrap_cljff.cpp              
       wrap_cljparameter.cpp       
       wrap_dihedralgenerator.cpp  
       wrap_dihedraltable.cpp      
@@ -42,7 +43,6 @@ set ( WRAPMM_SOURCES
       wrap_molangleinfo.cpp     
       wrap_molbondinfo.cpp      
       wrap_moldihedralinfo.cpp    
-      wrap_protomsdb.cpp
       wrap_resangleinfo.cpp
       wrap_resbondinfo.cpp
       wrap_resdihedralinfo.cpp

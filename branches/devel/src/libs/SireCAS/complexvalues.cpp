@@ -9,13 +9,13 @@
 using namespace SireStream;
 using namespace SireCAS;
 
-static const RegisterMetaType<ComplexValues> r_complexvals("SireCAS::ComplexValues");
+static const RegisterMetaType<ComplexValues> r_complexvals;
 
 /** Serialise to a binary data stream */
 QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ComplexValues &vals)
 {
     writeHeader(ds, r_complexvals, 1) << vals.vals;
-    
+
     return ds;
 }
 
@@ -23,14 +23,14 @@ QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ComplexValues &val
 QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, ComplexValues &vals)
 {
     VersionID v = readHeader(ds, r_complexvals);
-    
+
     if (v == 1)
     {
         ds >> vals.vals;
     }
     else
         throw version_error(v, "1", r_complexvals, CODELOC);
-        
+
     return ds;
 }
 
@@ -67,7 +67,7 @@ void ComplexValues::add(const SymbolComplex &val0, const SymbolComplex &val1)
 }
 
 /** Add the passed values */
-void ComplexValues::add(const SymbolComplex &val0, const SymbolComplex &val1, 
+void ComplexValues::add(const SymbolComplex &val0, const SymbolComplex &val1,
                         const SymbolComplex &val2)
 {
     add(val0);
@@ -76,7 +76,7 @@ void ComplexValues::add(const SymbolComplex &val0, const SymbolComplex &val1,
 }
 
 /** Add the passed values */
-void ComplexValues::add(const SymbolComplex &val0, const SymbolComplex &val1, 
+void ComplexValues::add(const SymbolComplex &val0, const SymbolComplex &val1,
                         const SymbolComplex &val2, const SymbolComplex &val3)
 {
     add(val0);
@@ -86,8 +86,8 @@ void ComplexValues::add(const SymbolComplex &val0, const SymbolComplex &val1,
 }
 
 /** Add the passed values */
-void ComplexValues::add(const SymbolComplex &val0, const SymbolComplex &val1, 
-                        const SymbolComplex &val2, const SymbolComplex &val3, 
+void ComplexValues::add(const SymbolComplex &val0, const SymbolComplex &val1,
+                        const SymbolComplex &val2, const SymbolComplex &val3,
                         const SymbolComplex &val4)
 {
     add(val0);
@@ -98,8 +98,8 @@ void ComplexValues::add(const SymbolComplex &val0, const SymbolComplex &val1,
 }
 
 /** Add the passed values */
-void ComplexValues::add(const SymbolComplex &val0, const SymbolComplex &val1, 
-                        const SymbolComplex &val2, const SymbolComplex &val3, 
+void ComplexValues::add(const SymbolComplex &val0, const SymbolComplex &val1,
+                        const SymbolComplex &val2, const SymbolComplex &val3,
                         const SymbolComplex &val4, const SymbolComplex &val5)
 {
     add(val0);
@@ -111,8 +111,8 @@ void ComplexValues::add(const SymbolComplex &val0, const SymbolComplex &val1,
 }
 
 /** Add the passed values */
-void ComplexValues::add(const SymbolComplex &val0, const SymbolComplex &val1, 
-                        const SymbolComplex &val2, const SymbolComplex &val3, 
+void ComplexValues::add(const SymbolComplex &val0, const SymbolComplex &val1,
+                        const SymbolComplex &val2, const SymbolComplex &val3,
                         const SymbolComplex &val4, const SymbolComplex &val5,
                         const SymbolComplex &val6)
 {
@@ -126,8 +126,8 @@ void ComplexValues::add(const SymbolComplex &val0, const SymbolComplex &val1,
 }
 
 /** Add the passed values */
-void ComplexValues::add(const SymbolComplex &val0, const SymbolComplex &val1, 
-                        const SymbolComplex &val2, const SymbolComplex &val3, 
+void ComplexValues::add(const SymbolComplex &val0, const SymbolComplex &val1,
+                        const SymbolComplex &val2, const SymbolComplex &val3,
                         const SymbolComplex &val4, const SymbolComplex &val5,
                         const SymbolComplex &val6, const SymbolComplex &val7)
 {
@@ -142,10 +142,10 @@ void ComplexValues::add(const SymbolComplex &val0, const SymbolComplex &val1,
 }
 
 /** Add the passed values */
-void ComplexValues::add(const SymbolComplex &val0, const SymbolComplex &val1, 
-                        const SymbolComplex &val2, const SymbolComplex &val3, 
+void ComplexValues::add(const SymbolComplex &val0, const SymbolComplex &val1,
+                        const SymbolComplex &val2, const SymbolComplex &val3,
                         const SymbolComplex &val4, const SymbolComplex &val5,
-                        const SymbolComplex &val6, const SymbolComplex &val7, 
+                        const SymbolComplex &val6, const SymbolComplex &val7,
                         const SymbolComplex &val8)
 {
     add(val0);
@@ -160,10 +160,10 @@ void ComplexValues::add(const SymbolComplex &val0, const SymbolComplex &val1,
 }
 
 /** Add the passed values */
-void ComplexValues::add(const SymbolComplex &val0, const SymbolComplex &val1, 
-                        const SymbolComplex &val2, const SymbolComplex &val3, 
+void ComplexValues::add(const SymbolComplex &val0, const SymbolComplex &val1,
+                        const SymbolComplex &val2, const SymbolComplex &val3,
                         const SymbolComplex &val4, const SymbolComplex &val5,
-                        const SymbolComplex &val6, const SymbolComplex &val7, 
+                        const SymbolComplex &val6, const SymbolComplex &val7,
                         const SymbolComplex &val8, const SymbolComplex &val9)
 {
     add(val0);
@@ -185,38 +185,38 @@ ComplexValues::ComplexValues(const SymbolComplex &val0, const SymbolComplex &val
 }
 
 /** Construct from the passed values */
-ComplexValues::ComplexValues(const SymbolComplex &val0, const SymbolComplex &val1, 
+ComplexValues::ComplexValues(const SymbolComplex &val0, const SymbolComplex &val1,
                              const SymbolComplex &val2)
 {
     add(val0,val1,val2);
 }
 
 /** Construct from the passed values */
-ComplexValues::ComplexValues(const SymbolComplex &val0, const SymbolComplex &val1, 
+ComplexValues::ComplexValues(const SymbolComplex &val0, const SymbolComplex &val1,
                              const SymbolComplex &val2, const SymbolComplex &val3)
 {
     add(val0,val1,val2,val3);
 }
 
 /** Construct from the passed values */
-ComplexValues::ComplexValues(const SymbolComplex &val0, const SymbolComplex &val1, 
-                             const SymbolComplex &val2, const SymbolComplex &val3, 
+ComplexValues::ComplexValues(const SymbolComplex &val0, const SymbolComplex &val1,
+                             const SymbolComplex &val2, const SymbolComplex &val3,
                              const SymbolComplex &val4)
 {
     add(val0,val1,val2,val3,val4);
 }
 
 /** Construct from the passed values */
-ComplexValues::ComplexValues(const SymbolComplex &val0, const SymbolComplex &val1, 
-                             const SymbolComplex &val2, const SymbolComplex &val3, 
+ComplexValues::ComplexValues(const SymbolComplex &val0, const SymbolComplex &val1,
+                             const SymbolComplex &val2, const SymbolComplex &val3,
                              const SymbolComplex &val4, const SymbolComplex &val5)
 {
     add(val0,val1,val2,val3,val4,val5);
 }
 
 /** Construct from the passed values */
-ComplexValues::ComplexValues(const SymbolComplex &val0, const SymbolComplex &val1, 
-                             const SymbolComplex &val2, const SymbolComplex &val3, 
+ComplexValues::ComplexValues(const SymbolComplex &val0, const SymbolComplex &val1,
+                             const SymbolComplex &val2, const SymbolComplex &val3,
                              const SymbolComplex &val4, const SymbolComplex &val5,
                              const SymbolComplex &val6)
 {
@@ -224,8 +224,8 @@ ComplexValues::ComplexValues(const SymbolComplex &val0, const SymbolComplex &val
 }
 
 /** Construct from the passed values */
-ComplexValues::ComplexValues(const SymbolComplex &val0, const SymbolComplex &val1, 
-                             const SymbolComplex &val2, const SymbolComplex &val3, 
+ComplexValues::ComplexValues(const SymbolComplex &val0, const SymbolComplex &val1,
+                             const SymbolComplex &val2, const SymbolComplex &val3,
                              const SymbolComplex &val4, const SymbolComplex &val5,
                              const SymbolComplex &val6, const SymbolComplex &val7)
 {
@@ -233,20 +233,20 @@ ComplexValues::ComplexValues(const SymbolComplex &val0, const SymbolComplex &val
 }
 
 /** Construct from the passed values */
-ComplexValues::ComplexValues(const SymbolComplex &val0, const SymbolComplex &val1, 
-                             const SymbolComplex &val2, const SymbolComplex &val3, 
+ComplexValues::ComplexValues(const SymbolComplex &val0, const SymbolComplex &val1,
+                             const SymbolComplex &val2, const SymbolComplex &val3,
                              const SymbolComplex &val4, const SymbolComplex &val5,
-                             const SymbolComplex &val6, const SymbolComplex &val7, 
+                             const SymbolComplex &val6, const SymbolComplex &val7,
                              const SymbolComplex &val8)
 {
     add(val0,val1,val2,val3,val4,val5,val6,val7,val8);
 }
 
 /** Construct from the passed values */
-ComplexValues::ComplexValues(const SymbolComplex &val0, const SymbolComplex &val1, 
-                             const SymbolComplex &val2, const SymbolComplex &val3, 
+ComplexValues::ComplexValues(const SymbolComplex &val0, const SymbolComplex &val1,
+                             const SymbolComplex &val2, const SymbolComplex &val3,
                              const SymbolComplex &val4, const SymbolComplex &val5,
-                             const SymbolComplex &val6, const SymbolComplex &val7, 
+                             const SymbolComplex &val6, const SymbolComplex &val7,
                              const SymbolComplex &val8, const SymbolComplex &val9)
 {
     add(val0,val1,val2,val3,val4,val5,val6,val7,val8,val9);
