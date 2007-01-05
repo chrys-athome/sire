@@ -21,7 +21,7 @@ QDataStream& operator>>(QDataStream&, SireCAS::SingleFunc&);
 namespace SireCAS
 {
 
-/** Base class of all single-expression functions (e.g. g( f(??) )) 
+/** Base class of all single-expression functions (e.g. g( f(??) ))
 
     @author Christopher Woods
 */
@@ -34,20 +34,22 @@ friend QDataStream& ::operator>>(QDataStream&, SingleFunc&);
 public:
     SingleFunc();
     SingleFunc(const Expression &ex);
-    
+
     SingleFunc(const SingleFunc &other);
-    
+
     ~SingleFunc();
-    
+
+    SingleFunc& operator=(const SingleFunc &other);
+
     uint hash() const;
-    
+
     const Expression& argument() const;
     const Expression& x() const;
-    
+
     Expression expand() const;
     Expression collapse() const;
     Expression conjugate() const;
-    
+
     bool isFunction(const Symbol &symbol) const;
     bool isConstant() const;
     bool isComplex() const;
@@ -59,19 +61,19 @@ public:
     Symbols symbols() const;
     Functions functions() const;
     Expressions children() const;
-    
+
     Expression differentiate(const Symbol &symbol) const;
     Expression integrate(const Symbol &symbol) const;
-    
+
 protected:
-    
+
     virtual Expression functionOf(const Expression &arg) const=0;
     virtual QString stringRep() const=0;
     virtual uint magic() const=0;
-    
+
     virtual Expression diff() const;
     virtual Expression integ() const;
-    
+
     /** The expression that this function operates on */
     Expression ex;
 };
@@ -82,7 +84,7 @@ inline const Expression& SingleFunc::argument() const
     return ex;
 }
 
-/** Synonym for argument() - useful when doing calculus, and viewing 
+/** Synonym for argument() - useful when doing calculus, and viewing
     the function as being a pure f(x) */
 inline const Expression& SingleFunc::x() const
 {
@@ -102,33 +104,33 @@ class MyFunc : public SingleFunc
 public:
     MyFunc();
     MyFunc(const Expression &ex);
-    
+
     MyFunc(const MyFunc &other);
-    
+
     ~MyFunc();
-    
+
     /// optional functions
     //Expression series(const Symbol &symbol, int n) const;
     //Expression simplify(int options=0) const;
-    
+
     /// required functions
     bool operator==(const ExBase &other) const;
-    
+
     const char* what() const
     {
         return "SireCAS::MyFunc";
     }
-    
+
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
-    
+
 protected:
     //required functions
     ExBase* clone() const
     {
         return new MyFunc(*this);
     }
-    
+
     Expression functionOf(const Expression &arg) const
     {
         if (arg == argument())
@@ -136,11 +138,11 @@ protected:
         else
             return MyFunc(arg).toExpression();
     }
-    
+
     //optional
     Expression diff() const;
     Expression integ() const;
-    
+
     QString stringRep() const
     {
         return "myfunc";

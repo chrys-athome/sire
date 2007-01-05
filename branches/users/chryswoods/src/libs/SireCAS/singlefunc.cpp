@@ -51,6 +51,15 @@ SingleFunc::SingleFunc(const SingleFunc &other)
 SingleFunc::~SingleFunc()
 {}
 
+/** Copy assignment */
+SingleFunc& SingleFunc::operator=(const SingleFunc &other)
+{
+    ExBase::operator=(other);
+    ex = other.ex;
+
+    return *this;
+}
+
 /** Expand this function */
 Expression SingleFunc::expand() const
 {

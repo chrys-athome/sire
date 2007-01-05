@@ -71,6 +71,12 @@ public:
     /////// Non-virtual functions
     ///////
 
+    /** Assignment operator */
+    ExBase& operator=(const ExBase&)
+    {
+        return *this;
+    }
+
     bool operator!=(const ExBase &other) const;
     Expression operator-() const;
 
@@ -165,13 +171,6 @@ public:
     /** Return the child expressions of this Expression */
     virtual Expressions children() const=0;
 
-private:
-
-    /** You cannot assign-copy an ExBase */
-    ExBase& operator=(const ExBase&)
-    {
-        return *this;
-    }
 };
 
 Expression operator+(const ExBase &base0, const ExBase &base1);
