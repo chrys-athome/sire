@@ -39,17 +39,18 @@ QDataStream SIREDB_EXPORT &operator>>(QDataStream &ds, SireDB::TableBase &table)
 }
 
 /** Constructor */
-TableBase::TableBase()
+TableBase::TableBase() : QSharedData()
 {}
 
 /** Construct a table to hold the parameters for the molecule
     described by 'moleculeinfo' */
 TableBase::TableBase(const MoleculeInfo &moleculeinfo)
-          : molinfo(moleculeinfo)
+          : QSharedData(), molinfo(moleculeinfo)
 {}
 
 /** Copy constructor */
-TableBase::TableBase(const TableBase &other) : molinfo(other.molinfo)
+TableBase::TableBase(const TableBase &other)
+          : QSharedData(), molinfo(other.molinfo)
 {}
 
 /** Destructor */

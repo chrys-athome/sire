@@ -63,9 +63,19 @@ public:
 
     uint hash() const;
 
-    const char* what() const
+    static const char* typeName()
     {
         return "SireCAS::PowerConstant";
+    }
+
+    const char* what() const
+    {
+        return PowerConstant::typeName();
+    }
+
+    PowerConstant* clone() const
+    {
+        return new PowerConstant(*this);
     }
 
     double evaluate(const Values &values) const;
@@ -79,12 +89,6 @@ public:
     Expression power() const
     {
         return pwr;
-    }
-
-protected:
-    ExBase* clone() const
-    {
-        return new PowerConstant(*this);
     }
 
 private:
@@ -155,9 +159,14 @@ public:
 
     uint hash() const;
 
-    const char* what() const
+    static const char* typeName()
     {
         return "SireCAS::IntegerPower";
+    }
+
+    const char* what() const
+    {
+        return IntegerPower::typeName();
     }
 
     double evaluate(const Values &values) const;
@@ -168,8 +177,7 @@ public:
         return Expression(pwr);
     }
 
-protected:
-    ExBase* clone() const
+    IntegerPower* clone() const
     {
         return new IntegerPower(*this);
     }
@@ -200,9 +208,14 @@ public:
 
     uint hash() const;
 
-    const char* what() const
+    static const char* typeName()
     {
         return "SireCAS::RationalPower";
+    }
+
+    const char* what() const
+    {
+        return RationalPower::typeName();
     }
 
     double evaluate(const Values &values) const;
@@ -213,8 +226,7 @@ public:
         return Expression(pwr);
     }
 
-protected:
-    ExBase* clone() const
+    RationalPower* clone() const
     {
         return new RationalPower(*this);
     }
@@ -244,9 +256,14 @@ public:
 
     uint hash() const;
 
-    const char* what() const
+    static const char* typeName()
     {
         return "SireCAS::RealPower";
+    }
+
+    const char* what() const
+    {
+        return RealPower::typeName();
     }
 
     double evaluate(const Values &values) const;
@@ -257,8 +274,7 @@ public:
         return Expression(pwr);
     }
 
-protected:
-    ExBase* clone() const
+    RealPower* clone() const
     {
         return new RealPower(*this);
     }
@@ -288,9 +304,14 @@ public:
 
     uint hash() const;
 
-    const char* what() const
+    static const char* typeName()
     {
         return "SireCAS::ComplexPower";
+    }
+
+    const char* what() const
+    {
+        return ComplexPower::typeName();
     }
 
     double evaluate(const Values &values) const;
@@ -306,8 +327,7 @@ public:
         return true;
     }
 
-protected:
-    ExBase* clone() const
+    ComplexPower* clone() const
     {
         return new ComplexPower(*this);
     }

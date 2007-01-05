@@ -5,9 +5,10 @@
 #include "identities.h"
 #include "symbols.h"
 #include "functions.h"
-#include "registerexpression.h"
 
 #include "SireStream/datastream.h"
+
+#include <boost/assert.hpp>
 
 using namespace SireStream;
 using namespace SireCAS;
@@ -16,12 +17,14 @@ using namespace SireCAS;
 //////////// Implementation of FunctionPvt
 ////////////
 
-static const RegisterMetaType<Function> r_function;
+static const RegisterMetaType<FunctionPvt> r_functionpvt(MAGIC_ONLY,
+                                                         "SireCAS::FunctionPvt");
 
 /** Serialise to a binary datastream */
 QDataStream& operator<<(QDataStream &ds, const FunctionPvt &f)
 {
-    writeHeader(ds, r_function, 1) << f.sig << f.syms << f.funcs;
+    writeHeader(ds, r_functionpvt, 1)
+              << f.sig << f.syms << f.funcs;
 
     return ds;
 }
@@ -29,14 +32,14 @@ QDataStream& operator<<(QDataStream &ds, const FunctionPvt &f)
 /** Deserialise from a binary datastream */
 QDataStream& operator>>(QDataStream &ds, FunctionPvt &f)
 {
-    VersionID v = readHeader(ds, r_function);
+    VersionID v = readHeader(ds, r_functionpvt);
 
     if (v == 1)
     {
         ds >> f.sig >> f.syms >> f.funcs;
     }
     else
-        throw version_error(v, "1", r_function, CODELOC);
+        throw version_error(v, "1", r_functionpvt, CODELOC);
 
     return ds;
 }
@@ -165,22 +168,23 @@ void FunctionPvt::integrate(const Symbol &symbol)
 ////////////// Implementation of Function
 //////////////
 
+static const RegisterMetaType<Function> r_function;
+
 /** Serialise to a binary datastream */
 QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Function &f)
 {
-    ds << f.d;
+    ds << f.d << static_cast<const Symbol&>(f);
+
     return ds;
 }
 
 /** Deserialise from a binary datastream */
 QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Function &f)
 {
-    ds >> f.d;
+    ds >> f.d >> static_cast<Symbol&>(f);
+
     return ds;
 }
-
-/** Register this expression */
-static RegisterExpression<Function> RegisterFunction;
 
 /** Null constructor */
 Function::Function() : Symbol()
@@ -460,7 +464,7 @@ Expression Function::substitute(const Identities &identities) const
 {
     if (not identities.contains(*this))
     {
-        return this->toExpression();
+        return Expression(*this);
     }
 
     //get the form of this function that is stored in the identities

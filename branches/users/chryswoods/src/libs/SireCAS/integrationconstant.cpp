@@ -1,6 +1,5 @@
 
 #include "integrationconstant.h"
-#include "registerexpression.h"
 
 #include "SireCAS/errors.h"
 
@@ -33,9 +32,6 @@ QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, IntegrationConstant &ic)
 
     return ds;
 }
-
-/** Register this expression */
-static RegisterExpression<IntegrationConstant> RegisterIntegrationConstant;
 
 /** Constructor */
 IntegrationConstant::IntegrationConstant()

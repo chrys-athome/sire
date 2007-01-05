@@ -1,7 +1,6 @@
 
 #include "exp.h"
 #include "values.h"
-#include "registerexpression.h"
 #include "complexvalues.h"
 #include "integrationconstant.h"
 
@@ -19,7 +18,8 @@ static const RegisterMetaType<Exp> r_exp;
 /** Serialise an Exp to a binary datastream */
 QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Exp &exp)
 {
-    writeHeader(ds, r_exp, 1) << exp.pwr;
+    writeHeader(ds, r_exp, 1)
+          << exp.pwr << static_cast<const PowerFunction&>(exp);
 
     return ds;
 }
@@ -31,16 +31,13 @@ QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Exp &exp)
 
     if (v == 1)
     {
-        ds >> exp.pwr;
+        ds >> exp.pwr >> static_cast<PowerFunction&>(exp);
     }
     else
         throw version_error(v, "1", r_exp, CODELOC);
 
     return ds;
 }
-
-/** Register the Exp function */
-static RegisterExpression<Exp> RegisterExp;
 
 /** Construct an empty Exp (e^0) */
 Exp::Exp() : PowerFunction()
@@ -125,8 +122,28 @@ Expression Exp::power() const
 
 static const RegisterMetaType<Ln> r_ln;
 
-/** Register the Ln function */
-static RegisterExpression<Ln> RegisterLn;
+/** Serialise to a binary datastream */
+QDataStream SIRE_EXPORT &operator<<(QDataStream &ds, const Ln &ln)
+{
+    writeHeader(ds, r_ln, 1) << static_cast<const Ln&>(ln);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIRE_EXPORT &operator>>(QDataStream &ds, Ln &ln)
+{
+    VersionID v = readHeader(ds, r_ln);
+
+    if (v == 1)
+    {
+        ds >> static_cast<SingleFunc&>(ln);
+    }
+    else
+        throw version_error(v, "1", r_ln, CODELOC);
+
+    return ds;
+}
 
 /** Construct an empty ln (ln(0)) */
 Ln::Ln() : SingleFunc()

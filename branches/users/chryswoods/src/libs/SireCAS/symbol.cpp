@@ -9,7 +9,6 @@
 #include "functions.h"
 #include "expressions.h"
 #include "identities.h"
-#include "registerexpression.h"
 #include "complexvalues.h"
 #include "values.h"
 
@@ -17,9 +16,6 @@
 
 using namespace SireStream;
 using namespace SireCAS;
-
-/** Register the 'Symbol' class */
-static RegisterExpression<Symbol> RegisterSymbol;
 
 typedef struct
 {
@@ -67,7 +63,8 @@ uint Symbol::hash() const
 /** Serialise a Symbol to a binary datastream */
 QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Symbol &sym)
 {
-    writeHeader(ds, r_symbol, 1) << sym.stringrep;
+    writeHeader(ds, r_symbol, 1) << sym.stringrep
+                                 << static_cast<const ExBase&>(sym);
 
     return ds;
 }
@@ -79,7 +76,7 @@ QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Symbol &sym)
 
     if (v == 1)
     {
-        ds >> sym.stringrep;
+        ds >> sym.stringrep >> static_cast<ExBase&>(sym);
 
         //get the ID number for this symbol
         sym.id = Symbol::getNewID(sym.stringrep);

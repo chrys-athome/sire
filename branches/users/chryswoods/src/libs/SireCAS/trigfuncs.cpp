@@ -2,7 +2,6 @@
 #include "trigfuncs.h"
 #include "exp.h"
 #include "identities.h"
-#include "registerexpression.h"
 #include "expression.h"
 #include "complexvalues.h"
 
@@ -21,6 +20,148 @@ static const RegisterMetaType<Tan> r_tan;
 static const RegisterMetaType<Csc> r_csc;
 static const RegisterMetaType<Sec> r_sec;
 static const RegisterMetaType<Cot> r_cot;
+
+////////////
+//////////// Stream the trig functions
+////////////
+
+/** Serialise to a binary datastream */
+QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Cos &cos)
+{
+    writeHeader(ds, r_cos, 1) << static_cast<const SingleFunc&>(cos);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Cos &cos)
+{
+    VersionID v = readHeader(ds, r_cos);
+
+    if (v == 1)
+    {
+        ds >> static_cast<SingleFunc&>(cos);
+    }
+    else
+        throw version_error(v, "1", r_cos, CODELOC);
+
+    return ds;
+}
+
+/** Serialise to a binary datastream */
+QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Sin &sin)
+{
+    writeHeader(ds, r_sin, 1) << static_cast<const SingleFunc&>(sin);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Sin &sin)
+{
+    VersionID v = readHeader(ds, r_sin);
+
+    if (v == 1)
+    {
+        ds >> static_cast<SingleFunc&>(sin);
+    }
+    else
+        throw version_error(v, "1", r_sin, CODELOC);
+
+    return ds;
+}
+
+/** Serialise to a binary datastream */
+QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Tan &tan)
+{
+    writeHeader(ds, r_tan, 1) << static_cast<const SingleFunc&>(tan);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Tan &tan)
+{
+    VersionID v = readHeader(ds, r_tan);
+
+    if (v == 1)
+    {
+        ds >> static_cast<SingleFunc&>(tan);
+    }
+    else
+        throw version_error(v, "1", r_tan, CODELOC);
+
+    return ds;
+}
+
+/** Serialise to a binary datastream */
+QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Csc &csc)
+{
+    writeHeader(ds, r_csc, 1) << static_cast<const SingleFunc&>(csc);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Csc &csc)
+{
+    VersionID v = readHeader(ds, r_csc);
+
+    if (v == 1)
+    {
+        ds >> static_cast<SingleFunc&>(csc);
+    }
+    else
+        throw version_error(v, "1", r_csc, CODELOC);
+
+    return ds;
+}
+
+/** Serialise to a binary datastream */
+QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Sec &sec)
+{
+    writeHeader(ds, r_sec, 1) << static_cast<const SingleFunc&>(sec);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Sec &sec)
+{
+    VersionID v = readHeader(ds, r_sec);
+
+    if (v == 1)
+    {
+        ds >> static_cast<SingleFunc&>(sec);
+    }
+    else
+        throw version_error(v, "1", r_sec, CODELOC);
+
+    return ds;
+}
+
+/** Serialise to a binary datastream */
+QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Cot &cot)
+{
+    writeHeader(ds, r_cot, 1) << static_cast<const SingleFunc&>(cot);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Cot &cot)
+{
+    VersionID v = readHeader(ds, r_cot);
+
+    if (v == 1)
+    {
+        ds >> static_cast<SingleFunc&>(cot);
+    }
+    else
+        throw version_error(v, "1", r_cot, CODELOC);
+
+    return ds;
+}
 
 ////////////
 //////////// Implementation of Cosine
@@ -81,8 +222,6 @@ Expression Cos::integ() const
     return Sin(x());
 }
 
-static RegisterExpression<Cos> RegisterCos;
-
 ////////////
 //////////// Implementation of Sine
 ////////////
@@ -142,8 +281,6 @@ Expression Sin::integ() const
     return  -Cos(x());
 }
 
-static RegisterExpression<Sin> RegisterSin;
-
 ////////////
 //////////// Implementation of Tangent
 ////////////
@@ -202,8 +339,6 @@ Expression Tan::integ() const
 {
     return Ln( Sec(x()) );
 }
-
-static RegisterExpression<Tan> RegisterTan;
 
 ////////////
 //////////// Implementation of Cosecant
@@ -265,8 +400,6 @@ Expression Csc::integ() const
     return Ln( Sin(x()/2) ) - Ln( Cos(x()/2) );
 }
 
-static RegisterExpression<Csc> RegisterCsc;
-
 ////////////
 //////////// Implementation of Secant
 ////////////
@@ -327,8 +460,6 @@ Expression Sec::integ() const
     return Ln( Cos(x()/2) + Sin(x()/2) ) - Ln( Cos(x()/2) - Sin(x()/2) );
 }
 
-static RegisterExpression<Sec> RegisterSec;
-
 ////////////
 //////////// Implementation of Cotangent
 ////////////
@@ -388,5 +519,3 @@ Expression Cot::integ() const
 {
     return Ln( Sin(x()) );
 }
-
-static RegisterExpression<Cot> RegisterCot;

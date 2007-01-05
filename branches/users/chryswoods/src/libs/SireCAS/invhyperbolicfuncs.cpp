@@ -5,7 +5,6 @@
 #include "invhyperbolicfuncs.h"
 #include "exp.h"
 #include "identities.h"
-#include "registerexpression.h"
 #include "expression.h"
 #include "complexvalues.h"
 
@@ -30,6 +29,148 @@ static const RegisterMetaType<ArcTanh> r_arctanh;
 static const RegisterMetaType<ArcCsch> r_arccsch;
 static const RegisterMetaType<ArcSech> r_arcsech;
 static const RegisterMetaType<ArcCoth> r_arccoth;
+
+////////////
+//////////// Stream the functions
+////////////
+
+/** Serialise to a binary datastream */
+QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ArcCosh &arccosh)
+{
+    writeHeader(ds, r_arccosh, 1) << static_cast<const SingleFunc&>(arccosh);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, ArcCosh &arccosh)
+{
+    VersionID v = readHeader(ds, r_arccosh);
+
+    if (v == 1)
+    {
+        ds >> static_cast<SingleFunc&>(arccosh);
+    }
+    else
+        throw version_error(v, "1", r_arccosh, CODELOC);
+
+    return ds;
+}
+
+/** Serialise to a binary datastream */
+QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ArcSinh &arcsinh)
+{
+    writeHeader(ds, r_arcsinh, 1) << static_cast<const SingleFunc&>(arcsinh);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, ArcSinh &arcsinh)
+{
+    VersionID v = readHeader(ds, r_arcsinh);
+
+    if (v == 1)
+    {
+        ds >> static_cast<SingleFunc&>(arcsinh);
+    }
+    else
+        throw version_error(v, "1", r_arcsinh, CODELOC);
+
+    return ds;
+}
+
+/** Serialise to a binary datastream */
+QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ArcTanh &arctanh)
+{
+    writeHeader(ds, r_arctanh, 1) << static_cast<const SingleFunc&>(arctanh);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, ArcTanh &arctanh)
+{
+    VersionID v = readHeader(ds, r_arctanh);
+
+    if (v == 1)
+    {
+        ds >> static_cast<SingleFunc&>(arctanh);
+    }
+    else
+        throw version_error(v, "1", r_arctanh, CODELOC);
+
+    return ds;
+}
+
+/** Serialise to a binary datastream */
+QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ArcCsch &arccsch)
+{
+    writeHeader(ds, r_arccsch, 1) << static_cast<const SingleFunc&>(arccsch);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, ArcCsch &arccsch)
+{
+    VersionID v = readHeader(ds, r_arccsch);
+
+    if (v == 1)
+    {
+        ds >> static_cast<SingleFunc&>(arccsch);
+    }
+    else
+        throw version_error(v, "1", r_arccsch, CODELOC);
+
+    return ds;
+}
+
+/** Serialise to a binary datastream */
+QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ArcSech &arcsech)
+{
+    writeHeader(ds, r_arcsech, 1) << static_cast<const SingleFunc&>(arcsech);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, ArcSech &arcsech)
+{
+    VersionID v = readHeader(ds, r_arcsech);
+
+    if (v == 1)
+    {
+        ds >> static_cast<SingleFunc&>(arcsech);
+    }
+    else
+        throw version_error(v, "1", r_arcsech, CODELOC);
+
+    return ds;
+}
+
+/** Serialise to a binary datastream */
+QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ArcCoth &arccoth)
+{
+    writeHeader(ds, r_arccoth, 1) << static_cast<const SingleFunc&>(arccoth);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, ArcCoth &arccoth)
+{
+    VersionID v = readHeader(ds, r_arccoth);
+
+    if (v == 1)
+    {
+        ds >> static_cast<SingleFunc&>(arccoth);
+    }
+    else
+        throw version_error(v, "1", r_arccoth, CODELOC);
+
+    return ds;
+}
 
 ////////////
 //////////// Implementation of Inverse-hyperbolic-cosine
@@ -97,8 +238,6 @@ Expression ArcCosh::integ() const
     return x()*ArcCosh(x()) - (1+x())*( sqrt(x()-1) / sqrt(x()+1) );
 }
 
-static RegisterExpression<ArcCosh> RegisterArcCosh;
-
 ////////////
 //////////// Implementation of Inverse-hyperbolic-sine
 ////////////
@@ -157,8 +296,6 @@ Expression ArcSinh::integ() const
 {
     return  x()*ArcSinh(x()) - sqrt( 1 + pow(x(),2) );
 }
-
-static RegisterExpression<ArcSinh> RegisterArcSinh;
 
 ////////////
 //////////// Implementation of Inverse-hyperbolic-tangent
@@ -226,8 +363,6 @@ Expression ArcTanh::integ() const
     return x()*ArcTanh(x()) + 0.5*Ln( pow(x(),2) - 1 );
 }
 
-static RegisterExpression<ArcTanh> RegisterArcTanh;
-
 ////////////
 //////////// Implementation of Inverse-hyperbolic-cosecant
 ////////////
@@ -293,8 +428,6 @@ Expression ArcCsch::integ() const
 {
     return x()*ArcCsch(x()) + Ln( x() * ( 1 + sqrt( (pow(x(),2)+1) / pow(x(),2) ) ) );
 }
-
-static RegisterExpression<ArcCsch> RegisterArcCsch;
 
 ////////////
 //////////// Implementation of inverse-secant
@@ -362,8 +495,6 @@ Expression ArcSech::integ() const
     return x()*ArcSech(x()) - ArcTan( (x()/(x()-1)) * sqrt( (1-x())/(1+x())) );
 }
 
-static RegisterExpression<ArcSech> RegisterArcSech;
-
 ////////////
 //////////// Implementation of Inverse-hyperbolic-cotangent
 ////////////
@@ -429,5 +560,3 @@ Expression ArcCoth::integ() const
 {
     return x()*ArcCoth(x()) + 0.5*Ln( pow(x(),2) - 1 );
 }
-
-static RegisterExpression<ArcCoth> RegisterArcCoth;

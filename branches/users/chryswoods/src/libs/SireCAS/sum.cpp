@@ -2,8 +2,6 @@
 #include "qhash_sirecas.h"
 
 #include "sum.h"
-#include "registerexpression.h"
-#include "expressions.h"
 #include "expression.h"
 #include "symbols.h"
 #include "functions.h"
@@ -29,7 +27,8 @@ uint Sum::hash() const
 QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Sum &sum)
 {
     writeHeader(ds, r_sum, 1) << sum.posparts.values()
-                              << sum.negparts.values() << sum.strtval;
+                              << sum.negparts.values() << sum.strtval
+                              << static_cast<const ExBase&>(sum);
     return ds;
 }
 
@@ -41,7 +40,8 @@ QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Sum &sum)
     if (v == 1)
     {
         QList<Expression> posparts, negparts;
-        ds >> posparts >> negparts >> sum.strtval;
+        ds >> posparts >> negparts >> sum.strtval
+           >> static_cast<ExBase&>(sum);
 
         foreach (Expression ex, posparts)
         {
@@ -58,9 +58,6 @@ QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Sum &sum)
 
     return ds;
 }
-
-/** Register the 'Sum' */
-static RegisterExpression<Sum> RegisterSum;
 
 /** Construct an empty (zero) sum */
 Sum::Sum() : ExBase(), strtval(0)
@@ -269,7 +266,7 @@ Expression Sum::reduce() const
         }
     }
 
-    return this->toExpression();
+    return *this;
 }
 
 /** Simplify this sum */
@@ -452,7 +449,7 @@ Expression Sum::expand() const
 Expression Sum::collapse() const
 {
     #warning - need to write Sum::collapse()
-    return this->toExpression();
+    return *this;
 }
 
 /** Return a series expansion of this sum about 'symbol' to order 'n' */

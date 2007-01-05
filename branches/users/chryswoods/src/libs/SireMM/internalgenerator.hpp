@@ -9,6 +9,7 @@
 
 #include "SireStream/datastream.h"
 
+#include <QSharedData>
 #include <QSet>
 
 SIRE_BEGIN_HEADER
@@ -45,16 +46,16 @@ using SireMol::MoleculeInfo;
     \author Christopher Woods
 */
 template<class Internals>
-class SIREMM_EXPORT InternalGenerator
+class SIREMM_EXPORT InternalGenerator : public QSharedData
 {
 public:
     typedef typename Internals::internal_type internal_type;
     typedef internal_type Internal;
 
-    InternalGenerator()
+    InternalGenerator() : QSharedData()
     {}
 
-    InternalGenerator(const InternalGenerator<Internals>&)
+    InternalGenerator(const InternalGenerator<Internals>&) : QSharedData()
     {}
 
     virtual ~InternalGenerator()

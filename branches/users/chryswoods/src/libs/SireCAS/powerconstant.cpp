@@ -5,7 +5,6 @@
 #include "symbol.h"
 #include "symbols.h"
 #include "values.h"
-#include "registerexpression.h"
 #include "complexvalues.h"
 #include "integrationconstant.h"
 
@@ -23,7 +22,8 @@ static const RegisterMetaType<PowerConstant> r_powerconstant;
 /** Serialise to a binary datastream */
 QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const PowerConstant &power)
 {
-    writeHeader(ds, r_powerconstant, 1) << power.cre << power.pwr;
+    writeHeader(ds, r_powerconstant, 1)
+          << power.cre << power.pwr << static_cast<const PowerFunction&>(power);
 
     return ds;
 }
@@ -35,16 +35,13 @@ QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, PowerConstant &power)
 
     if (v == 1)
     {
-        ds >> power.cre >> power.pwr;
+        ds >> power.cre >> power.pwr >> static_cast<PowerFunction&>(power);
     }
     else
         throw version_error(v, "1", r_powerconstant, CODELOC);
 
     return ds;
 }
-
-/** Register the PowerConstant function */
-static RegisterExpression<PowerConstant> RegisterPowerConstant;
 
 /** Create a null PowerConstant (0^0) */
 PowerConstant::PowerConstant() : PowerFunction(), cre(0), pwr(1)
@@ -102,7 +99,8 @@ static const RegisterMetaType<ConstantPower> r_constantpower(MAGIC_ONLY,
 /** Serialise to a binary datastream */
 QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ConstantPower &power)
 {
-    writeHeader(ds, r_constantpower, 1) << power.ex;
+    writeHeader(ds, r_constantpower, 1)
+          << power.ex << static_cast<const PowerFunction&>(power);
 
     return ds;
 }
@@ -114,7 +112,7 @@ QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, ConstantPower &power)
 
     if (v == 1)
     {
-        ds >> power.ex;
+        ds >> power.ex >> static_cast<PowerFunction&>(power);
     }
     else
         throw version_error(v, "1", r_constantpower, CODELOC);
@@ -156,9 +154,6 @@ QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, IntegerPower &power)
 
     return ds;
 }
-
-/** Register a IntegerPower */
-static RegisterExpression<IntegerPower> RegisterIntegerPower;
 
 /** Null constructor */
 IntegerPower::IntegerPower() : ConstantPower(), pwr(0)
@@ -234,9 +229,6 @@ QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, RationalPower &power)
     return ds;
 }
 
-/** Register a RationalPower */
-static RegisterExpression<RationalPower> RegisterRationalPower;
-
 /** Null constructor */
 RationalPower::RationalPower() : ConstantPower(), pwr(0)
 {}
@@ -311,9 +303,6 @@ QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, RealPower &power)
     return ds;
 }
 
-/** Register a RealPower */
-static RegisterExpression<RealPower> RegisterRealPower;
-
 /** Null constructor */
 RealPower::RealPower() : ConstantPower(), pwr(0)
 {}
@@ -387,9 +376,6 @@ QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, ComplexPower &power)
 
     return ds;
 }
-
-/** Register a ComplexPower */
-static RegisterExpression<ComplexPower> RegisterComplexPower;
 
 /** Null constructor */
 ComplexPower::ComplexPower() : ConstantPower(), pwr(0)

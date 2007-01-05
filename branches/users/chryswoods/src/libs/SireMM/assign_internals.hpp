@@ -9,7 +9,8 @@
 #include "SireDB/parameterdb.h"
 #include "SireDB/relationshipdb.h"
 
-#include "SireBase/dynamicsharedptr.hpp"
+#include "SireBase/sharedpolypointer.hpp"
+
 #include "SireStream/datastream.h"
 
 #include "internaldb.hpp"
@@ -38,7 +39,7 @@ using SireDB::ParameterTable;
 using SireDB::ParameterDB;
 using SireDB::RelationshipDB;
 
-using SireBase::DynamicSharedPtr;
+using SireBase::SharedPolyPointer;
 
 /** This is the base class of all of the assign_internals type classes
     (e.g. assign_bonds, assign_angles and assign_dihedrals). This allows
@@ -74,7 +75,7 @@ protected:
 private:
     /** The generator that is used to generate internals for new
         parameter tables */
-    DynamicSharedPtr< InternalGenerator<Internals> > generator;
+    SharedPolyPointer< InternalGenerator<Internals> > generator;
 
     /** The set of internals to assign */
     QSet<Internal> internals_to_assign;

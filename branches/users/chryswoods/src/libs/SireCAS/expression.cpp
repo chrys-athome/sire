@@ -72,7 +72,7 @@ Expression::Expression(const Complex &constant)
     else if (SireMaths::isZero(constant.real()))
     {
         fac = constant.imag();
-        exbase = I().toExpressionBase();
+        exbase = I();
     }
     else
     {
@@ -94,7 +94,7 @@ Expression::Expression(const ExpressionBase &base)
 
 /** Construct an expression that is equal to 1*(base) */
 Expression::Expression(const ExBase &base)
-           : exbase( base.toExpressionBase() ), fac(1)
+           : exbase(base), fac(1)
 {
     if (exbase.isConstant() and not exbase.isComplex())
     {

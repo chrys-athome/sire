@@ -10,8 +10,12 @@ SIRE_BEGIN_HEADER
 
 namespace SireCAS
 {
+class PowerFunction;
 class Power;
 }
+
+QDataStream& operator<<(QDataStream&, const SireCAS::PowerFunction&);
+QDataStream& operator>>(QDataStream&, SireCAS::PowerFunction&);
 
 QDataStream& operator<<(QDataStream&, const SireCAS::Power&);
 QDataStream& operator>>(QDataStream&, SireCAS::Power&);
@@ -26,15 +30,24 @@ This is the base class of all power expressions, e.g. x^y (all of the form core^
 */
 class SIRECAS_EXPORT PowerFunction : public ExBase
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const PowerFunction&);
+friend QDataStream& ::operator>>(QDataStream&, PowerFunction&);
+
 public:
     PowerFunction() : ExBase()
     {}
-    
+
     ~PowerFunction()
     {}
 
     virtual Expression core() const=0;
     virtual Expression power() const=0;
+
+    static const char* typeName()
+    {
+        return "SireCAS::PowerFunction";
+    }
 
     Symbols symbols() const
     {
@@ -57,17 +70,17 @@ public:
 
     QString toString() const;
     Expression substitute(const Identities &identities) const;
-    
+
     Expression differentiate(const Symbol &symbol) const;
     Expression integrate(const Symbol &symbol) const;
-    
+
     Expressions children() const;
-    
+
     bool isFunction(const Symbol &symbol) const;
     bool isConstant() const;
-    
+
     Expression reduce() const;
-};    
+};
 
 /**
 This class represents an expression raised to a generic power (e.g. x^y). This is also the route to raising expressions to real-number powers, and the base of the implementation of the exp() and invlog_10() functions.
@@ -83,42 +96,46 @@ friend QDataStream& ::operator>>(QDataStream&, Power&);
 public:
     Power();
     Power(const Expression &base, const Expression &power);
-    
+
     Power(const Power &other);
-    
+
     ~Power();
-    
+
     bool operator==(const ExBase &other) const;
-    
+
     uint hash() const;
-    
-    const char* what() const
+
+    static const char* typeName()
     {
         return "SireCAS::Power";
     }
-    
+
+    const char* what() const
+    {
+        return Power::typeName();
+    }
+
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
-    
+
     Expression core() const;
     Expression power() const;
-    
+
     bool isCompound() const
     {
         return pwr.isCompound();
     }
-    
-protected:
-    ExBase* clone() const
+
+    Power* clone() const
     {
         return new Power(*this);
     }
-    
+
 private:
 
     /** The core expression */
     Expression ex;
-    
+
     /** The power */
     Expression pwr;
 

@@ -2,7 +2,6 @@
 #include "expressionbase.h"
 #include "exbase.h"
 #include "constant.h"
-#include "factory.h"
 #include "identities.h"
 #include "symbols.h"
 #include "functions.h"
@@ -10,6 +9,7 @@
 #include "complexvalues.h"
 
 #include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
 
 using namespace SireStream;
 using namespace SireCAS;
@@ -24,7 +24,9 @@ QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ExpressionBase &ex
 {
     writeHeader(ds, r_exbase, 1);
 
-    return SireCAS::Factory::dump(ds,*(ex.d));
+    SharedDataStream(ds) << ex.d;
+
+    return ds;
 }
 
 /** Deserialise an ExpressionBase from a binary datastream */
@@ -34,7 +36,7 @@ QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, ExpressionBase &ex)
 
     if (v == 1)
     {
-        ex = SireCAS::Factory::load(ds);
+        SharedDataStream(ds) >> ex.d;
     }
     else
         throw version_error(v, "1", r_exbase, CODELOC);
@@ -47,20 +49,31 @@ ExpressionBase::ExpressionBase() : d( one.d )
 {}
 
 /** Construct an expression from an ExBase */
-ExpressionBase::ExpressionBase(const ExBase &ex) : d( ex.toExpressionBase().d )
-{
-    BOOST_ASSERT( d.get() != 0 );
-}
+ExpressionBase::ExpressionBase(const ExBase &ex) : d(ex)
+{}
 
-/** Construct from a shared_ptr */
-ExpressionBase::ExpressionBase(const boost::shared_ptr<const ExBase> &ptr) : d(ptr)
-{
-    BOOST_ASSERT( d.get() != 0 );
-}
+/** Copy constructor */
+ExpressionBase::ExpressionBase(const ExpressionBase &other)
+               : d(other.d)
+{}
 
 /** Destructor */
 ExpressionBase::~ExpressionBase()
 {}
+
+/** Assignment operator */
+ExpressionBase& ExpressionBase::operator=(const ExpressionBase &other)
+{
+    d = other.d;
+    return *this;
+}
+
+/** Assign from an ExBase object */
+ExpressionBase& ExpressionBase::operator=(const ExBase &other)
+{
+    d = other;
+    return *this;
+}
 
 /** Comparison operator */
 bool ExpressionBase::operator==(const ExpressionBase &other) const
@@ -72,13 +85,6 @@ bool ExpressionBase::operator==(const ExpressionBase &other) const
 bool ExpressionBase::operator!=(const ExpressionBase &other) const
 {
     return d != other.d and *d != *(other.d);
-}
-
-/** Assignment operator */
-ExpressionBase& ExpressionBase::operator=(const ExpressionBase &other)
-{
-    d = other.d;
-    return *this;
 }
 
 /** Return an expression that the differential of this expression
@@ -178,7 +184,7 @@ uint ExpressionBase::hash() const
 }
 
 /** Return the name of the type of this ExBase object */
-QString ExpressionBase::what() const
+const char* ExpressionBase::what() const
 {
     return d->what();
 }
@@ -186,7 +192,7 @@ QString ExpressionBase::what() const
 /** Return a string representation of this object */
 QString ExpressionBase::toString() const
 {
-    if (d.get() != 0)
+    if (d.constData() != 0)
         return d->toString();
     else
         return "WARNING: NULL EXPRESSIONBASE";

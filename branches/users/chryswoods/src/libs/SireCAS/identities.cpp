@@ -76,7 +76,7 @@ void Identities::set(const Symbol &symbol, const Expression &expression)
         idhash.remove( function(func).ID() );
 
         //store this function in the funchash
-        funchash.insert( func.signature(), func.toExpression() );
+        funchash.insert( func.signature(), func );
     }
 
     idhash.insert(symbol.ID(), expression);
@@ -96,7 +96,7 @@ Expression Identities::expression(const Symbol &symbol) const
     if ( idhash.contains(symbol.ID()) )
         return idhash[symbol.ID()];
     else
-        return symbol.toExpression();
+        return symbol;
 }
 
 /** Return whether or not this set of identities contains an identity for

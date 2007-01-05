@@ -1,6 +1,8 @@
 #ifndef SIREDB_TABLEBASE_H
 #define SIREDB_TABLEBASE_H
 
+#include <QSharedData>
+
 #include "SireMol/moleculeinfo.h"
 
 SIRE_BEGIN_HEADER
@@ -30,7 +32,7 @@ This is the virtual base class of all of the parameter tables. This class is not
 
 @author Christopher Woods
 */
-class SIREDB_EXPORT TableBase
+class SIREDB_EXPORT TableBase : public QSharedData
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const TableBase&);

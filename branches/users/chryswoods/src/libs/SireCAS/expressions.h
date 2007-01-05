@@ -12,6 +12,8 @@ SIRE_BEGIN_HEADER
 namespace SireCAS
 {
 
+class Expression;
+
 /**
 Expressions provides a list of expressions.
 
@@ -20,37 +22,16 @@ Expressions provides a list of expressions.
 class SIRECAS_EXPORT Expressions : public QList<Expression>
 {
 public:
-    Expressions() : QList<Expression>()
-    {}
-    
-    Expressions(const Expression &expression) : QList<Expression>()
-    {
-        this->append(expression);
-    }
-    
-    Expressions(const QList<Expression> &expressions)
-             : QList<Expression>(expressions)
-    {}
-    
-    ~Expressions()
-    {}
+    Expressions();
 
-    Expressions differentiate(const Symbol &symbol) const
-    {
-        Expressions diffs;
-        
-        int sz = count();
-        
-        for (int i=0; i<sz; ++i)
-        {
-            Expression diff = at(i).differentiate(symbol);
-            
-            if (not diff.isZero())
-                diffs.append(diff);
-        }
-        
-        return diffs;
-    }
+    Expressions(const Expression &expression);
+
+    Expressions(const QList<Expression> &expressions);
+
+    ~Expressions();
+
+    Expressions differentiate(const Symbol &symbol) const;
+    Expressions integrate(const Symbol &symbol) const;
 
 };
 

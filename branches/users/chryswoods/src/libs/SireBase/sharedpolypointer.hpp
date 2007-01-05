@@ -130,6 +130,12 @@ public:
         if (d) d->ref.ref();
     }
 
+    inline SharedPolyPointer(const T &obj)
+                : SharedPolyPointerBase(), d( SharedPolyPointerHelper<T>::clone(obj) )
+    {
+        if (d) d->ref.ref();
+    }
+
     template<class S>
     inline SharedPolyPointer(const SharedPolyPointer<S> &o)
              : SharedPolyPointerBase(),
@@ -199,11 +205,26 @@ public:
         return *this;
     }
 
-    /** CW Mod - additional member function used to return the
-        type of the object */
+    inline SharedPolyPointer& operator=(const T &obj)
+    {
+        return this->operator=( SharedPolyPointerHelper<T>::clone(obj) );
+    }
+
     inline const char* what() const
     {
         return SharedPolyPointerHelper<T>::what(d);
+    }
+
+    template<class S>
+    bool isA() const
+    {
+        return dynamic_cast<const S*>(this->constData()) != 0;
+    }
+
+    template<class S>
+    const S& asA() const
+    {
+        return dynamic_cast<const S&>(*(this->constData()));
     }
 
 private:

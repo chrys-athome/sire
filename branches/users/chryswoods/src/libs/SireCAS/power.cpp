@@ -17,6 +17,32 @@ using namespace SireCAS;
 //////////// Implementation of PowerFunction
 ////////////
 
+static const RegisterMetaType<PowerFunction> r_powerfunc(MAGIC_ONLY,
+                                                         "SireCAS::PowerFunction");
+
+/** Serialise to a binary datastream */
+QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const PowerFunction &powerfunc)
+{
+    writeHeader(ds, r_powerfunc, 1) << static_cast<const ExBase&>(powerfunc);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, PowerFunction &powerfunc)
+{
+    VersionID v = readHeader(ds, r_powerfunc);
+
+    if (v == 1)
+    {
+        ds >> static_cast<ExBase&>(powerfunc);
+    }
+    else
+        throw version_error(v, "1", r_powerfunc, CODELOC);
+
+    return ds;
+}
+
 /** Return a string representation of this power */
 QString PowerFunction::toString() const
 {
@@ -225,7 +251,7 @@ Expression PowerFunction::reduce() const
             }
             else if (not pwrval.isReal())
             {
-                return ComplexPower(ex, pwrval).toExpression();
+                return ComplexPower(ex, pwrval);
             }
             else
             {
@@ -236,15 +262,15 @@ Expression PowerFunction::reduce() const
                 }
                 else if (SireMaths::isInteger(realpower))
                 {
-                    return IntegerPower(ex, int(realpower)).toExpression();
+                    return IntegerPower(ex, int(realpower));
                 }
                 else if (SireMaths::isRational(realpower))
                 {
-                    return RationalPower(ex, SireMaths::toRational(realpower)).toExpression();
+                    return RationalPower(ex, SireMaths::toRational(realpower));
                 }
                 else
                 {
-                    return RealPower(ex, realpower).toExpression();
+                    return RealPower(ex, realpower);
                 }
             }
         }
@@ -262,11 +288,11 @@ Expression PowerFunction::reduce() const
                     return Expression( PowerConstant(realval, pwr) );
             }
             else
-                return this->toExpression();
+                return *this;
         }
         else
         {
-            return this->toExpression();
+            return *this;
         }
     }
 }
@@ -280,7 +306,8 @@ static const RegisterMetaType<Power> r_power;
 /** Serialise a Power to a binary datastream */
 QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Power &power)
 {
-    writeHeader(ds, r_power, 1) << power.ex << power.pwr;
+    writeHeader(ds, r_power, 1)
+          << power.ex << power.pwr << static_cast<const PowerFunction&>(power);
 
     return ds;
 }
@@ -292,7 +319,7 @@ QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Power &power)
 
     if (v == 1)
     {
-        ds >> power.ex >> power.pwr;
+        ds >> power.ex >> power.pwr >> static_cast<PowerFunction&>(power);
     }
     else
         throw version_error(v, "1", r_power, CODELOC);

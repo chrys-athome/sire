@@ -24,7 +24,7 @@ set ( SIRECAS_SOURCES
       exp.cpp
       expressionbase.cpp
       expression.cpp
-      factory.cpp
+      expressions.cpp
       function.cpp
       functions.cpp
       functionsignature.cpp
@@ -37,7 +37,6 @@ set ( SIRECAS_SOURCES
       powerconstant.cpp
       power.cpp
       product.cpp
-      registerexpression.cpp
       singlefunc.cpp
       sum.cpp
       symbol.cpp
@@ -57,6 +56,7 @@ set_target_properties (SireCAS PROPERTIES
 # Link to other Sire libraries, and GSL
 target_link_libraries (SireCAS
                        SireMaths
+                       SireBase
                        ${GSL_LIBRARIES}
                        )
 
@@ -66,4 +66,4 @@ install( TARGETS SireCAS
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}
        )
-				  
+

@@ -20,50 +20,53 @@ class SIRECAS_EXPORT Constant : public ExBase
 public:
     Constant();
     Constant(const Constant &other);
-    
+
     ~Constant();
-    
+
     ///////
     /////// Virtual functions - you may wish to override these
     /////// in your derived class
     ///////
-    
+
     Expression differentiate(const Symbol &symbol) const;
     Expression integrate(const Symbol &symbol) const;
-        
+
     ///////
     /////// Pure-virtual functions - these must be overridden
     /////// in your derived class
     ///////
 
     bool operator==(const ExBase &other) const;
-    
+
     uint hash() const;
 
-    const char* what() const
+    static const char* typeName()
     {
         return "SireCAS::Constant";
     }
-    
+
+    const char* what() const
+    {
+        return Constant::typeName();
+    }
+
+    Constant* clone() const
+    {
+        return new Constant();
+    }
+
     QString toString() const;
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
-    
+
     Expression substitute(const Identities &identities) const;
-    
+
     Symbols symbols() const;
     Functions functions() const;
 
     Expressions children() const;
-    
-protected:
 
-    ExBase* clone() const
-    {
-        return new Constant();
-    }
-    
 };
 
 }

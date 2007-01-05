@@ -3,7 +3,6 @@
 #include "invtrigfuncs.h"
 #include "exp.h"
 #include "identities.h"
-#include "registerexpression.h"
 #include "expression.h"
 #include "complexvalues.h"
 
@@ -24,6 +23,148 @@ static const RegisterMetaType<ArcTan> r_arctan;
 static const RegisterMetaType<ArcCsc> r_arccsc;
 static const RegisterMetaType<ArcSec> r_arcsec;
 static const RegisterMetaType<ArcCot> r_arccot;
+
+////////////
+//////////// Stream the functions
+////////////
+
+/** Serialise to a binary datastream */
+QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ArcCos &arccos)
+{
+    writeHeader(ds, r_arccos, 1) << static_cast<const SingleFunc&>(arccos);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, ArcCos &arccos)
+{
+    VersionID v = readHeader(ds, r_arccos);
+
+    if (v == 1)
+    {
+        ds >> static_cast<SingleFunc&>(arccos);
+    }
+    else
+        throw version_error(v, "1", r_arccos, CODELOC);
+
+    return ds;
+}
+
+/** Serialise to a binary datastream */
+QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ArcSin &arcsin)
+{
+    writeHeader(ds, r_arcsin, 1) << static_cast<const SingleFunc&>(arcsin);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, ArcSin &arcsin)
+{
+    VersionID v = readHeader(ds, r_arcsin);
+
+    if (v == 1)
+    {
+        ds >> static_cast<SingleFunc&>(arcsin);
+    }
+    else
+        throw version_error(v, "1", r_arcsin, CODELOC);
+
+    return ds;
+}
+
+/** Serialise to a binary datastream */
+QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ArcTan &arctan)
+{
+    writeHeader(ds, r_arctan, 1) << static_cast<const SingleFunc&>(arctan);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, ArcTan &arctan)
+{
+    VersionID v = readHeader(ds, r_arctan);
+
+    if (v == 1)
+    {
+        ds >> static_cast<SingleFunc&>(arctan);
+    }
+    else
+        throw version_error(v, "1", r_arctan, CODELOC);
+
+    return ds;
+}
+
+/** Serialise to a binary datastream */
+QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ArcCsc &arccsc)
+{
+    writeHeader(ds, r_arccsc, 1) << static_cast<const SingleFunc&>(arccsc);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, ArcCsc &arccsc)
+{
+    VersionID v = readHeader(ds, r_arccsc);
+
+    if (v == 1)
+    {
+        ds >> static_cast<SingleFunc&>(arccsc);
+    }
+    else
+        throw version_error(v, "1", r_arccsc, CODELOC);
+
+    return ds;
+}
+
+/** Serialise to a binary datastream */
+QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ArcSec &arcsec)
+{
+    writeHeader(ds, r_arcsec, 1) << static_cast<const SingleFunc&>(arcsec);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, ArcSec &arcsec)
+{
+    VersionID v = readHeader(ds, r_arcsec);
+
+    if (v == 1)
+    {
+        ds >> static_cast<SingleFunc&>(arcsec);
+    }
+    else
+        throw version_error(v, "1", r_arcsec, CODELOC);
+
+    return ds;
+}
+
+/** Serialise to a binary datastream */
+QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ArcCot &arccot)
+{
+    writeHeader(ds, r_arccot, 1) << static_cast<const SingleFunc&>(arccot);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, ArcCot &arccot)
+{
+    VersionID v = readHeader(ds, r_arccot);
+
+    if (v == 1)
+    {
+        ds >> static_cast<SingleFunc&>(arccot);
+    }
+    else
+        throw version_error(v, "1", r_arccot, CODELOC);
+
+    return ds;
+}
 
 ////////////
 //////////// Implementation of Inverse-cosine
@@ -91,8 +232,6 @@ Expression ArcCos::integ() const
     return x()*ArcCos(x()) - sqrt(1 - pow(x(),2));
 }
 
-static RegisterExpression<ArcCos> RegisterArcCos;
-
 ////////////
 //////////// Implementation of Inverse-sine
 ////////////
@@ -159,8 +298,6 @@ Expression ArcSin::integ() const
     return  x()*ArcSin(x()) + sqrt( 1 - pow(x(),2) );
 }
 
-static RegisterExpression<ArcSin> RegisterArcSin;
-
 ////////////
 //////////// Implementation of Inverse-tangent
 ////////////
@@ -219,8 +356,6 @@ Expression ArcTan::integ() const
 {
     return x()*ArcTan(x()) - 0.5*Ln( 1 + pow(x(),2) );
 }
-
-static RegisterExpression<ArcTan> RegisterArcTan;
 
 ////////////
 //////////// Implementation of Inverse-cosecant
@@ -288,8 +423,6 @@ Expression ArcCsc::integ() const
     return x()*ArcCsc(x()) + Ln( x() * ( 1 + sqrt( (pow(x(),2)-1) / pow(x(),2) ) ) );
 }
 
-static RegisterExpression<ArcCsc> RegisterArcCsc;
-
 ////////////
 //////////// Implementation of inverse-secant
 ////////////
@@ -356,8 +489,6 @@ Expression ArcSec::integ() const
     return x()*ArcSec(x()) - Ln( x() * ( 1 + sqrt( (pow(x(),2) - 1) / pow(x(),2) ) ) );
 }
 
-static RegisterExpression<ArcSec> RegisterArcSec;
-
 ////////////
 //////////// Implementation of Inverse-cotangent
 ////////////
@@ -416,5 +547,3 @@ Expression ArcCot::integ() const
 {
     return x()*ArcCot(x()) + 0.5 * Ln( 1 + pow(x(),2) );
 }
-
-static RegisterExpression<ArcCot> RegisterArcCot;

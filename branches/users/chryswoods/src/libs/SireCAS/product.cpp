@@ -2,7 +2,6 @@
 #include "qhash_sirecas.h"
 
 #include "product.h"
-#include "registerexpression.h"
 #include "expression.h"
 #include "expressions.h"
 #include "symbol.h"
@@ -16,6 +15,8 @@
 #include "SireCAS/errors.h"
 
 #include "SireStream/datastream.h"
+
+#include <boost/assert.hpp>
 
 using namespace SireStream;
 using namespace SireCAS;
@@ -32,7 +33,8 @@ uint Product::hash() const
 /** Serialise a Product to a binary datastream */
 QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Product &product)
 {
-    writeHeader(ds, r_product, 1) << product.powers << product.strtval;
+    writeHeader(ds, r_product, 1)
+          << product.powers << product.strtval << static_cast<const ExBase&>(product);
 
     return ds;
 }
@@ -44,7 +46,8 @@ QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Product &product)
 
     if (v == 1)
     {
-        ds >> product.powers >> product.strtval;
+        ds >> product.powers >> product.strtval
+           >> static_cast<ExBase&>(product);
 
         //rebuild numparts and denomparts from powers
         product.rebuild();
@@ -54,9 +57,6 @@ QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Product &product)
 
     return ds;
 }
-
-/** Register the 'Product' */
-static RegisterExpression<Product> RegisterProduct;
 
 /** Construct an empty, zero Product */
 Product::Product() : ExBase(), strtval(0)
@@ -920,7 +920,7 @@ Expression Product::differentiate(const Symbol &symbol) const
 Expression Product::series(const Symbol &symbol, int n) const
 {
     if (not isFunction(symbol))
-        return toExpression();
+        return *this;
     else
     {
         Product ret;
@@ -972,14 +972,14 @@ Expression Product::simplify(int options) const
 Expression Product::expand() const
 {
 #warning Need to write Product::expand()
-    return toExpression();
+    return *this;
 }
 
 /** Collapse this product down by collecting together common factors */
 Expression Product::collapse() const
 {
 #warning Need to write Product::collapse()
-    return toExpression();
+    return *this;
 }
 
 /** Return the complex conjugate of this product */

@@ -1,6 +1,5 @@
 
 #include "i.h"
-#include "registerexpression.h"
 #include "expression.h"
 #include "complexvalues.h"
 
@@ -14,26 +13,27 @@ using namespace SireCAS;
 static const RegisterMetaType<SireCAS::I> r_i;
 
 /** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const I&)
+QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const I &i)
 {
-    writeHeader(ds, r_i, 0);
+    writeHeader(ds, r_i, 1) << static_cast<const Constant&>(i);
 
     return ds;
 }
 
 /** Deserialise from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, I&)
+QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, I &i)
 {
     VersionID v = readHeader(ds, r_i);
 
-    if (v != 0)
-        throw version_error(v, "0", r_i, CODELOC);
+    if (v == 1)
+    {
+        ds >> static_cast<Constant&>(i);
+    }
+    else
+        throw version_error(v, "1", r_i, CODELOC);
 
     return ds;
 }
-
-/** Register this expression */
-static RegisterExpression<I> RegisterI;
 
 /** Constructor */
 I::I() : Constant()
@@ -83,7 +83,7 @@ Complex I::evaluate(const ComplexValues&) const
 /** Return the complex conjugate of 'i' (-i) */
 Expression I::conjugate() const
 {
-    return -1 * toExpression();
+    return -1 * I();
 }
 
 /** I is definitely complex :-) */

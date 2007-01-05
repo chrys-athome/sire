@@ -12,6 +12,7 @@
 #include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
 
 using namespace SireStream;
 using namespace SireDB;
@@ -25,38 +26,16 @@ QDataStream SIREDB_EXPORT &operator<<(QDataStream &ds,
 {
     writeHeader(ds, r_assign_params, 1);
 
+    SharedDataStream sds(ds);
+
     //save the number of instructions to the stream
     quint32 n = assign_params.instrctns.count();
-    ds << n;
+    sds << n;
 
     //use QMetaType to stream each type...
     for (uint i=0; i<n; ++i)
     {
-        const DynamicSharedPtr<AssignBase> &ptr = assign_params.instrctns.at(i);
-
-        //get the name of the class
-        const char *type_name = ptr->what();
-
-        //is this a registered QMetaType?
-        int type_id = QMetaType::type(type_name);
-
-        if (not QMetaType::isRegistered(type_id))
-        {
-            throw SireError::program_bug(QObject::tr(
-                "The instruction with type name \"%1\" (typeid == %2) has not been "
-                "registered with QMetaType. Please ensure that this type has been "
-                "loaded and has been registered.")
-                      .arg(type_name).arg(type_id), CODELOC);
-        }
-
-        //serialise the type name and the type
-        ds << QLatin1String(type_name);
-
-        if ( not QMetaType::save(ds, type_id, ptr.constData()) )
-            throw SireError::program_bug(QObject::tr(
-                "Serialisation of the instruction with type name \"%1\" (typeid == "
-                "%2) has failed, despite the type having been registered with "
-                "QMetaType!").arg(type_name).arg(type_id), CODELOC);
+        sds << assign_params.instrctns.at(i);
     }
 
     return ds;
@@ -73,48 +52,20 @@ QDataStream SIREDB_EXPORT &operator>>(QDataStream &ds,
         //clear any existing instructions
         assign_params.instrctns.clear();
 
+        SharedDataStream sds(ds);
+
         //how many instructions need to be loaded?
         quint32 n;
-        ds >> n;
+        sds >> n;
 
         //load each instruction in turn
         for (uint i=0; i<n; ++i)
         {
-            //load the type name first
-            QString type_name;
-            ds >> type_name;
+            SharedPolyPointer<AssignBase> abase;
 
-            //has this type been registered with QMetaType?
-            int type_id = QMetaType::type( qPrintable(type_name) );
+            sds >> abase;
 
-            if (not QMetaType::isRegistered(type_id))
-            {
-                throw version_error(QObject::tr(
-                    "The instruction with type name \"%1\" (typeid == %2) has not been "
-                    "registered with QMetaType. Please ensure that this type has been "
-                    "loaded and has been registered.")
-                          .arg(type_name).arg(type_id), CODELOC);
-            }
-
-            //create an object with this type
-            DynamicSharedPtr<AssignBase> ptr = static_cast<AssignBase*>
-                                          ( QMetaType::construct(type_id, 0) );
-
-            if (ptr.constData() == 0)
-                throw SireError::program_bug(QObject::tr(
-                    "Failed to construct an instruction of type name \"%1\" "
-                    "(typeid == %2), despite the type having been registered with "
-                    "QMetaType").arg(type_name).arg(type_id), CODELOC);
-
-            //now deserialise the data into this new object
-            if ( not QMetaType::load(ds, type_id, ptr) )
-                throw SireError::program_bug(QObject::tr(
-                    "Failed to deserialise an instruction of type name \"%1\" "
-                    "(typeid == %2), despite the type having been registered with "
-                    "QMetaType").arg(type_name).arg(type_id), CODELOC);
-
-            //add the instruction to the list
-            assign_params.instrctns.append(ptr);
+            assign_params.instrctns.append(abase);
         }
     }
     else
@@ -314,7 +265,7 @@ void assign_parameters::addInstruction(const AssignInstruction &instruc)
     if (assign_base)
     {
         //this is an assignment
-        instrctns.append( DynamicSharedPtr<AssignBase>(*assign_base) );
+        instrctns.append( SharedPolyPointer<AssignBase>(*assign_base) );
         return;
     }
 
@@ -324,7 +275,7 @@ void assign_parameters::addInstruction(const AssignInstruction &instruc)
     {
         //this is a using instruction - add this to all of the
         //current assignment instructions
-        for (QList< DynamicSharedPtr<AssignBase> >::iterator it = instrctns.begin();
+        for (QList< SharedPolyPointer<AssignBase> >::iterator it = instrctns.begin();
              it != instrctns.end();
              ++it)
         {
@@ -340,7 +291,7 @@ void assign_parameters::addInstruction(const AssignInstruction &instruc)
     {
         //this is an overwrite instruction - set the overwrite
         //value for all of the current assignment instructions
-        for (QList< DynamicSharedPtr<AssignBase> >::iterator it = instrctns.begin();
+        for (QList< SharedPolyPointer<AssignBase> >::iterator it = instrctns.begin();
              it != instrctns.end();
              ++it)
         {
@@ -378,7 +329,7 @@ ParameterTable assign_parameters::assign(const Molecule &molecule,
     ParameterTable new_table(orig_table);
 
     //apply each instruction in turn
-    for (QList< DynamicSharedPtr<AssignBase> >::const_iterator it = instrctns.begin();
+    for (QList< SharedPolyPointer<AssignBase> >::const_iterator it = instrctns.begin();
          it != instrctns.end();
          ++it)
     {

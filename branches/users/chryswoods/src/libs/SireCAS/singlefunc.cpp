@@ -14,7 +14,7 @@ static const RegisterMetaType<SingleFunc> r_singlefunc(MAGIC_ONLY, "SireCAS::Sin
 /** Serialise to a binary datastream */
 QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const SingleFunc &func)
 {
-    writeHeader(ds, r_singlefunc, 1) << func.ex;
+    writeHeader(ds, r_singlefunc, 1) << func.ex << static_cast<const ExBase&>(func);
 
     return ds;
 }
@@ -26,7 +26,7 @@ QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, SingleFunc &func)
 
     if (v == 1)
     {
-        ds >> func.ex;
+        ds >> func.ex >> static_cast<ExBase&>(func);
     }
     else
         throw version_error(v, "1", r_singlefunc, CODELOC);

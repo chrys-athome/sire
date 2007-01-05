@@ -7,8 +7,6 @@
 #include "symbol.h"
 #include "functionsignature.h"
 
-#include "sireglobal.h"
-
 SIRE_BEGIN_HEADER
 
 namespace SireCAS
@@ -320,9 +318,19 @@ public:
 
     uint hash() const;
 
-    const char* what() const
+    static const char* typeName()
     {
         return "SireCAS::Function";
+    }
+
+    const char* what() const
+    {
+        return Function::typeName();
+    }
+
+    Function* clone() const
+    {
+        return new Function(*this);
     }
 
     Expression substitute(const Identities &identities) const;
@@ -354,12 +362,6 @@ public:
                         const Symbol &sym3, const Symbol &sym4, const Symbol &sym5,
                         const Symbol &sym6, const Symbol &sym7, const Symbol &sym8,
                         const Symbol &sym9) const;
-
-protected:
-    ExBase* clone() const
-    {
-        return new Function(*this);
-    }
 
 private:
 
