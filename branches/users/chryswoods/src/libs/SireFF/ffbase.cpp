@@ -8,6 +8,7 @@
 #include "SireMol/residue.h"
 #include "SireMol/resnum.h"
 #include "SireMol/resid.h"
+#include "SireMol/newatom.h"
 
 #include "SireFF/errors.h"
 #include "SireMol/errors.h"
@@ -21,6 +22,33 @@ using namespace SireBase;
 using namespace SireCAS;
 using namespace SireMol;
 using namespace SireStream;
+
+///////////
+/////////// Implementation of FFBase::Groups
+///////////
+
+/** Constructor */
+FFBase::Groups::Groups() : n(0)
+{
+    mainid = this->getUniqueID();
+}
+
+/** Copy constructor */
+FFBase::Groups::Groups( const FFBase::Groups &other )
+       : mainid(other.mainid), n(other.n)
+{}
+
+/** Destructor */
+FFBase::Groups::~Groups()
+{}
+
+/** Return a new, unique ID for a group in the forcefield */
+FFBase::Group FFBase::Groups::getUniqueID()
+{
+    return FFBase::Group(n++);
+}
+
+FFBase::Groups FFBase::Groups::default_group;
 
 ///////////
 /////////// Implementation of FFBase::Parameters
@@ -445,6 +473,21 @@ bool FFBase::change(const Residue &res)
     return this->change(res.molecule());
 }
 
+/** Change the atom 'atom'  (e.g. move it, or change
+    its parameters). This does nothing if this atom
+    is not in this forcefield. Returns whether or not 
+    the forcefield has been changed by this change, and 
+    thus whether the energy needs to be recalculated.
+    
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::invalid_operation
+*/
+bool FFBase::change(const NewAtom &atom)
+{
+    return this->change(atom.molecule());
+}
+
 /** Add the molecule 'molecule' to this forcefield using
     the optional parameter map to find any necessary parameters
     from properties of the molecule. This will replace any
@@ -457,7 +500,7 @@ bool FFBase::change(const Residue &res)
     \throw SireError::invalid_cast
     \throw SireError::invalid_operation
 */
-bool FFBase::add(const Molecule&, const ParameterMap&)
+bool FFBase::add(const Molecule&, const FFBase::Group&, const ParameterMap&)
 {
     throw SireError::invalid_operation( QObject::tr(
                     "The forcefield \"%1\" (class %2) does not support "
@@ -465,6 +508,11 @@ bool FFBase::add(const Molecule&, const ParameterMap&)
                         .arg(this->name()).arg(this->what()), CODELOC );
 
     return false;
+}
+
+bool FFBase::add(const Molecule &mol, const ParameterMap &map)
+{
+    return this->add(mol, this->groups().main(), map);
 }
 
 /** Add the residue 'residue' to this forcefield using
@@ -482,7 +530,7 @@ bool FFBase::add(const Molecule&, const ParameterMap&)
     \throw SireMol::missing_property
     \throw SireError::invalid_cast
 */
-bool FFBase::add(const Residue&, const ParameterMap&)
+bool FFBase::add(const Residue&, const FFBase::Group&, const ParameterMap&)
 {
     throw SireError::invalid_operation( QObject::tr(
                     "The forcefield \"%1\" (class %2) does not support "
@@ -490,6 +538,41 @@ bool FFBase::add(const Residue&, const ParameterMap&)
                         .arg(this->name()).arg(this->what()), CODELOC );
 
     return false;
+}
+
+bool FFBase::add(const Residue &res, const ParameterMap &map)
+{
+    return this->add(res, this->groups().main(), map);
+}
+
+/** Add the atom 'atom' to this forcefield using the 
+    optional parameter map to find any necessay parameters
+    from properties of the atom. This will replace any
+    existing copy of the atom that already exists in 
+    this forcefield. This returns whether or not the 
+    forcefield has been changed by this addition, and therefore
+    whether its energy needs recalculating.
+    
+    This will throw an exception if this forcefield doens't
+    support partial molecules.
+    
+    \throw SireError::invalid_operation
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+*/
+bool FFBase::add(const NewAtom&, const FFBase::Group &group, const ParameterMap&)
+{
+    throw SireError::invalid_operation( QObject::tr(
+                    "The forcefield \"%1\" (class %2) does not support "
+                    "the addition of atoms.")
+                        .arg(this->name()).arg(this->what()), CODELOC );
+
+    return false;
+}
+
+bool FFBase::add(const NewAtom &atom, const ParameterMap &map)
+{
+    return this->add(atom, this->groups().main(), map);
 }
 
 /** Remove the molecule 'molecule' from this forcefield - this
@@ -524,6 +607,26 @@ bool FFBase::remove(const Residue&)
     throw SireError::invalid_operation( QObject::tr(
                     "The forcefield \"%1\" (class %2) does not support "
                     "the removal of residues.")
+                        .arg(this->name()).arg(this->what()), CODELOC );
+
+    return false;
+}
+
+/** Remove the atom 'atom' from this forcefield - this does 
+    nothing if the atom is not in this forcefield. This 
+    returns whether this has changed the forcefield (therefore
+    necessitating a recalculation of the energy)
+    
+    This will throw an exception if this forcefield does not
+    support partial molecules.
+
+    \throw SireError::invalid_operation
+*/
+bool FFBase::remove(const NewAtom&)
+{
+    throw SireError::invalid_operation( QObject::tr(
+                    "The forcefield \"%1\" (class %2) does not support "
+                    "the removal of atoms.")
                         .arg(this->name()).arg(this->what()), CODELOC );
 
     return false;
@@ -566,6 +669,13 @@ bool FFBase::contains(const Molecule&) const
 bool FFBase::contains(const Residue &residue) const
 {
     return this->contains(residue.molecule());
+}
+
+/** Return whether this forcefield contains a copy of the 
+    atom 'atom' */
+bool FFBase::contains(const NewAtom &atom) const
+{
+    return this->contains(atom.molecule());
 }
 
 /** Return the copy of the molecule in this forcefield that
@@ -617,6 +727,20 @@ Residue FFBase::residue(MoleculeID molid, const QString &resname) const
     return this->molecule(molid).residue(resname);
 }
 
+/** Return a copy of the atom in this forcefield that 
+    in the molecule with ID == molid and with index 'atomid'
+    
+    \throw SireMol::missing_molecule
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_cutgroup
+    \throw SireMol::missing_atom
+    \throw SireError::invalid_index
+*/
+NewAtom FFBase::atom(MoleculeID molid, const IDMolAtom &atomid) const
+{
+    return NewAtom(atomid, this->molecule(molid));
+}
+
 /** Return the copy of the molecule 'mol' that is in this forcefield
 
     \throw SireMol::missing_molecule
@@ -634,4 +758,10 @@ Molecule FFBase::molecule(const Molecule &mol) const
 Residue FFBase::residue(const Residue &res) const
 {
     return this->residue(res.molecule().ID(), res.resNum());
+}
+
+/** Return a copy of the atom 'atom' that is in this forcefield */
+NewAtom FFBase::atom(const NewAtom &atom) const
+{
+    return this->atom(atom.molecule().ID(), atom.cgAtomID());
 }

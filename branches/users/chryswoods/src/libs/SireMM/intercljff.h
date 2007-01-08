@@ -71,6 +71,15 @@ public:
         ~Parameters();
     };
 
+    class SIREMM_EXPORT Groups : public CLJFF::Groups
+    {
+    public:
+        Groups();
+        Groups(const Groups &other);
+        
+        ~Groups();
+    };
+
     static const char* typeName()
     {
         return "SireMM::InterCLJFF";

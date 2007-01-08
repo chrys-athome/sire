@@ -187,6 +187,12 @@ Vector NewAtom::coordinates() const
     return d->coordinates(cgatomid);
 }
 
+/** Return the CGAtomID of the atom */
+const CGAtomID& NewAtom::cgAtomID() const
+{
+    return cgatomid;
+}
+
 /** Allow implicit conversion to a Vector (to get the coordinates) */
 NewAtom::operator Vector() const
 {

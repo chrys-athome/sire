@@ -29,6 +29,20 @@ CLJWorkspace::~CLJWorkspace()
 {}
 
 ////////////
+//////////// Implementation of CLJFF::Groups
+////////////
+
+CLJFF::Groups::Groups() : FFBase::Groups()
+{}
+
+CLJFF::Groups::Groups(const CLJFF::Groups &other)
+      : FFBase::Groups(other)
+{}
+
+CLJFF::Groups::~Groups()
+{}
+
+////////////
 //////////// Implementation of CLJFF::Parameters
 ////////////
 

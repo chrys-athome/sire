@@ -94,6 +94,8 @@ public:
     Element element() const;
     Vector coordinates() const;
 
+    const CGAtomID& cgAtomID() const;
+
     QVariant property(const QString &name) const;
 
     template<class T>

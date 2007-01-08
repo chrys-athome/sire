@@ -59,6 +59,23 @@ Tip4PFF::Parameters::~Parameters()
 {}
 
 ///////////
+/////////// Implementation of Tip4PFF::Groups
+///////////
+
+/** Constructor */
+Tip4PFF::Groups::Groups() : CLJFF::Groups()
+{}
+
+/** Copy constructor */
+Tip4PFF::Groups::Groups(const Groups &other)
+           : CLJFF::Groups(other)
+{}
+
+/** Destructor */
+Tip4PFF::Groups::~Groups()
+{}
+
+///////////
 /////////// Implementation of Tip4PFF
 ///////////
 

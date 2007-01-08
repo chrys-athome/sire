@@ -156,10 +156,19 @@ public:
         ParameterName lj_params;
     };
 
-    const Parameters& parameters() const
+    const CLJFF::Parameters& parameters() const
     {
         return CLJFF::Parameters::default_sources;
     }
+
+    class SIREMM_EXPORT Groups : public FFBase::Groups
+    {
+    public:
+        Groups();
+        Groups(const Groups &other);
+        
+        ~Groups();
+    };
 
     const Space& space() const;
 

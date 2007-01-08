@@ -63,6 +63,23 @@ InterCLJFF::Parameters::~Parameters()
 {}
 
 ///////////
+/////////// Implementation of InterCLJFF::Groups
+///////////
+
+/** Constructor */
+InterCLJFF::Groups::Groups() : CLJFF::Groups()
+{}
+
+/** Copy constructor */
+InterCLJFF::Groups::Groups(const Groups &other)
+           : CLJFF::Groups(other)
+{}
+
+/** Destructor */
+InterCLJFF::Groups::~Groups()
+{}
+
+///////////
 /////////// Implementation of InterCLJFF
 ///////////
 

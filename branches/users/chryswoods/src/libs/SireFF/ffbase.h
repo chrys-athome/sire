@@ -12,6 +12,7 @@
 #include "SireCAS/values.h"
 
 #include "SireMol/moleculeid.h"
+#include "SireMol/idmolatom.h"
 
 #include "parametermap.h"
 #include "ffcomponent.h"
@@ -30,6 +31,7 @@ namespace SireMol
 {
 class Molecule;
 class Residue;
+class NewAtom;
 
 class MoleculeID;
 class ResNum;
@@ -54,6 +56,8 @@ using SireMol::Molecule;
 using SireMol::Residue;
 using SireMol::ResNum;
 using SireMol::ResID;
+using SireMol::NewAtom;
+using SireMol::IDMolAtom;
 
 /**
 This class is the base class of all of the forcefield classes. The forcefields all form
@@ -207,6 +211,73 @@ public:
 
     virtual const FFBase::Parameters& parameters() const=0;
 
+    /** This encapsulated class provides an ID for a group
+        within this forcefield */
+    class SIREFF_EXPORT Group
+    {
+    public:
+        explicit Group(quint32 val=0) : _val(val)
+        {}
+        
+        Group(const Group &other) : _val(other._val)
+        {}
+        
+        ~Group()
+        {}
+        
+        operator quint32() const
+        {
+            return _val;
+        }
+    
+    private:
+        quint32 _val;
+    };
+
+    /** This encapsulated class must be derived by all 
+        inheriting classes to provide the object that
+        contains information about the available groups
+        in the forcefield */
+    class SIREFF_EXPORT Groups
+    {
+    public:
+        Groups();
+        Groups(const Groups &other);
+        
+        virtual ~Groups();
+        
+        /** Return the name of the main group 
+            in the forcefield (the default group) */
+        FFBase::Group main() const
+        {
+            return mainid;
+        }
+        
+        /** Return the number of groups in this forcefield */
+        quint32 count() const
+        {
+            return n;
+        }
+        
+        static Groups default_group;
+        
+    protected:
+        FFBase::Group getUniqueID();
+        
+    private:
+        /** The ID of the main (default) group
+            of this forcefield */
+        FFBase::Group mainid;
+        
+        /** The number of groups in this forcefield */
+        quint32 n;
+    };
+
+    virtual const FFBase::Groups& groups() const
+    {
+        return FFBase::Groups::default_group;
+    }
+
     const QString& name() const;
     void setName(const QString &name);
 
@@ -217,14 +288,28 @@ public:
 
     virtual bool change(const Molecule &mol);
     virtual bool change(const Residue &res);
+    virtual bool change(const NewAtom &atom);
 
     virtual bool add(const Molecule &molecule,
                      const ParameterMap &map = ParameterMap());
     virtual bool add(const Residue &residue,
                      const ParameterMap &map = ParameterMap());
+    virtual bool add(const NewAtom &atom,
+                     const ParameterMap &map = ParameterMap());
+
+    virtual bool add(const Molecule &molecule,
+                     const FFBase::Group &group,
+                     const ParameterMap &map = ParameterMap());
+    virtual bool add(const Residue &residue,
+                     const FFBase::Group &group,
+                     const ParameterMap &map = ParameterMap());
+    virtual bool add(const NewAtom &atom,
+                     const FFBase::Group &group,
+                     const ParameterMap &map = ParameterMap());
 
     virtual bool remove(const Molecule &molecule);
     virtual bool remove(const Residue &residue);
+    virtual bool remove(const NewAtom &atom);
 
     virtual bool replace(const Molecule &oldmol,
                          const Molecule &newmol,
@@ -232,6 +317,7 @@ public:
 
     virtual bool contains(const Molecule &molecule) const;
     virtual bool contains(const Residue &residue) const;
+    virtual bool contains(const NewAtom &atom) const;
 
     virtual Molecule molecule(MoleculeID molid) const;
 
@@ -239,8 +325,11 @@ public:
     virtual Residue residue(MoleculeID molid, ResID resid) const;
     virtual Residue residue(MoleculeID molid, const QString &resname) const;
 
+    virtual NewAtom atom(MoleculeID molid, const IDMolAtom &atomid) const;
+
     virtual Molecule molecule(const Molecule &mol) const;
     virtual Residue residue(const Residue &res) const;
+    virtual NewAtom atom(const NewAtom &atom) const;
 
     bool isDirty() const;
     bool isClean() const;
