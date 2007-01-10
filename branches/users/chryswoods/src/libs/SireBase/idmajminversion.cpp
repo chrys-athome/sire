@@ -56,6 +56,14 @@ IDMajMinVersion::IDMajMinVersion(const IDMajMinVersion &other)
 IDMajMinVersion::~IDMajMinVersion()
 {}
 
+/** Copy assignment */
+IDMajMinVersion& IDMajMinVersion::operator=(const IDMajMinVersion &other)
+{
+    IDTriple::operator=(other);
+
+    return *this;
+}
+
 /** Return a string representation of this version number */
 QString IDMajMinVersion::toString() const
 {

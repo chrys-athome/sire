@@ -11,22 +11,21 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the sources in SireMove
 set ( SIREMOVE_SOURCES
-      rigidmolecules.cpp
-      flexiblemolecules.cpp
-#      zmatrixmolecules.cpp
-#      dynamicmolecules.cpp
-#
-#      volumemolecules.cpp
-#
-#      moleculesampler.cpp  # includes UniformSampler
-#      preferentialsampler.cpp
-#
-#      residuesampler.cpp # includes UniformResSampler
-#      prefressampler.cpp
-#
-#      montecarlo.cpp
-#      moleculardynamics.cpp
-#      minimisation.cpp
+      move.cpp
+
+      montecarlo.cpp
+      rigidbodymc.cpp
+
+      #zmatrixmc.cpp
+      #internalmc.cpp
+
+      #nestedmc.cpp
+      #hmc.cpp
+      #mtsmc.cpp
+
+      #moleculardynamics.cpp
+      #rigidbodymd.cpp
+      #langevinmd.cpp
     )
 
 add_library (SireMove ${SIREMOVE_SOURCES})
