@@ -174,6 +174,10 @@ public:
 
     const Molecule& molecule(MoleculeID molid) const;
 
+    const Molecule& operator[](const Molecule &molecule) const;
+    const Molecule& at(const Molecule &molecule) const;
+    const Molecule& molecule(const Molecule &molecule) const;
+
     const QString& name() const;
 
     quint32 ID() const;
@@ -230,6 +234,33 @@ inline const Molecule& MoleculeGroup::at(MoleculeID molid) const
 inline const Molecule& MoleculeGroup::molecule(MoleculeID molid) const
 {
     return d->molecule(molid);
+}
+
+/** Return the copy of 'molecule' that is held in this group
+
+    \throw SireMol::missing_molecule
+*/
+inline const Molecule& MoleculeGroup::operator[](const Molecule &molecule) const
+{
+    return d->molecule(molecule.ID());
+}
+
+/** Return the copy of 'molecule' that is held in this group
+
+    \throw SireMol::missing_molecule
+*/
+inline const Molecule& MoleculeGroup::at(const Molecule &molecule) const
+{
+    return d->molecule(molecule.ID());
+}
+
+/** Return the copy of 'molecule' that is held in this group
+
+    \throw SireMol::missing_molecule
+*/
+inline const Molecule& MoleculeGroup::molecule(const Molecule &molecule) const
+{
+    return d->molecule(molecule.ID());
 }
 
 /** Return the ID number of this group */

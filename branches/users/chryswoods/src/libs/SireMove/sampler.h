@@ -21,13 +21,14 @@ QDataStream& operator>>(QDataStream&, SireMove::Sampler&);
 
 namespace SireSystem
 {
-class SimSystem;
+class MoleculeGroup;
 }
 
 namespace SireMol
 {
 class Molecule;
-class MoleculeID;
+class Residue;
+class NewAtom;
 }
 
 namespace SireMove
@@ -35,10 +36,11 @@ namespace SireMove
 
 using boost::tuple;
 
-using SireSystem::SimSystem;
+using SireSystem::MoleculeGroup;
 
 using SireMol::Molecule;
-using SireMol::MoleculeID;
+using SireMol::Residue;
+using SireMol::NewAtom;
 
 /** This is the base class of all Samplers. A Sampler is used
     to pick a random molecule from a MoleculeGroup
@@ -68,10 +70,18 @@ public:
     virtual const char* what() const=0;
     virtual SamplerBase* clone() const=0;
 
-    virtual tuple<Molecule,double> randomMolecule(const SimSystem &system)=0;
+    virtual tuple<Molecule,double> randomMolecule(const MoleculeGroup &group)=0;
+    virtual tuple<Residue,double> randomResidue(const MoleculeGroup &group)=0;
+    virtual tuple<NewAtom,double> randomAtom(const MoleculeGroup &group)=0;
 
-    virtual double probability(const SimSystem &system,
-                               MoleculeID molid)=0;
+    virtual double probability(const MoleculeGroup &group,
+                               const Molecule &molecule)=0;
+
+    virtual double probability(const MoleculeGroup &group,
+                               const Residue &residue)=0;
+
+    virtual double probability(const MoleculeGroup &group,
+                               const NewAtom &atom)=0;
 };
 
 /** This is a convienient holder for a SharedPolyPointer<SamplerBase>
@@ -95,9 +105,13 @@ public:
 
     Sampler& operator=(const Sampler &other);
 
-    tuple<Molecule,double> randomMolecule(const SimSystem &system);
+    tuple<Molecule,double> randomMolecule(const MoleculeGroup &group);
+    tuple<Residue,double> randomResidue(const MoleculeGroup &group);
+    tuple<NewAtom,double> randomAtom(const MoleculeGroup &group);
 
-    double probability(const SimSystem &system, MoleculeID molid);
+    double probability(const MoleculeGroup &group, const Molecule &molecule);
+    double probability(const MoleculeGroup &group, const Residue &residue);
+    double probability(const MoleculeGroup &group, const NewAtom &atom);
 
 private:
     /** Implicitly shared pointer to the sampler implementation */
@@ -106,17 +120,47 @@ private:
 
 /** Return a random molecule from the group, together with the probability
     that this molecule had of being chosen. */
-tuple<Molecule,double> Sampler::randomMolecule(const SimSystem &system)
+inline tuple<Molecule,double> Sampler::randomMolecule(const MoleculeGroup &group)
 {
-    return d->randomMolecule(system);
+    return d->randomMolecule(group);
 }
 
-/** Return the probability that the molecule with ID == molid has
-    of being chosen in the System 'system' */
-double Sampler::probability(const SimSystem &system,
-                            MoleculeID molid)
+/** Return a random residue from the group, together with the probability
+    that this residue had of being chosen. */
+inline tuple<Residue,double> Sampler::randomResidue(const MoleculeGroup &group)
 {
-    return d->probability(system);
+    return d->randomResidue(group);
+}
+
+/** Return a random atom from the group, together with the probability
+    that this atom had of being chosen. */
+inline tuple<NewAtom,double> Sampler::randomAtom(const MoleculeGroup &group)
+{
+    return d->randomAtom(group);
+}
+
+/** Return the probability that the molecule 'molecule' has
+    of being chosen in the System 'system' */
+inline double Sampler::probability(const MoleculeGroup &group,
+                                   const Molecule &molecule)
+{
+    return d->probability(group, molecule);
+}
+
+/** Return the probability that the residue 'residue' has
+    of being chosen in the System 'system' */
+inline double Sampler::probability(const MoleculeGroup &group,
+                                   const Residue &residue)
+{
+    return d->probability(group, residue);
+}
+
+/** Return the probability that the atom 'atom' has
+    of being chosen in the System 'system' */
+inline double Sampler::probability(const MoleculeGroup &group,
+                                   const NewAtom &atom)
+{
+    return d->probability(group, atom);
 }
 
 }
