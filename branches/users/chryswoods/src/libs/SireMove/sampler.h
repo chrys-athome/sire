@@ -5,6 +5,8 @@
 
 #include "SireBase/sharedpolypointer.hpp"
 
+#include "SireMaths/rangenerator.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMove
@@ -38,6 +40,8 @@ using boost::tuple;
 
 using SireSystem::MoleculeGroup;
 
+using SireMaths::RanGenerator;
+
 using SireMol::Molecule;
 using SireMol::Residue;
 using SireMol::NewAtom;
@@ -55,6 +59,7 @@ friend QDataStream& ::operator>>(QDataStream&, SamplerBase&);
 
 public:
     SamplerBase();
+    SamplerBase(const RanGenerator &rangenerator);
 
     SamplerBase(const SamplerBase &other);
 
@@ -66,6 +71,9 @@ public:
     {
         return "SireMove::SamplerBase";
     }
+
+    void setGenerator(const RanGenerator &generator);
+    const RanGenerator& generator() const;
 
     virtual const char* what() const=0;
     virtual SamplerBase* clone() const=0;
@@ -82,7 +90,21 @@ public:
 
     virtual double probability(const MoleculeGroup &group,
                                const NewAtom &atom)=0;
+
+protected:
+    RanGenerator& generator();
+    
+private:
+    /** The random number generator used by the sampler */
+    RanGenerator rangen;
 };
+
+/** Internal function used to return a reference to the random 
+    number generator used by this sampler */
+inline RanGenerator& SamplerBase::generator()
+{
+    return rangen;
+}
 
 /** This is a convienient holder for a SharedPolyPointer<SamplerBase>
 
@@ -113,55 +135,13 @@ public:
     double probability(const MoleculeGroup &group, const Residue &residue);
     double probability(const MoleculeGroup &group, const NewAtom &atom);
 
+    void setGenerator(const RanGenerator &generator);
+    const RanGenerator& generator() const;
+
 private:
     /** Implicitly shared pointer to the sampler implementation */
-    SharedPolyPointer<SamplerBase> d;
+    SireBase::SharedPolyPointer<SamplerBase> d;
 };
-
-/** Return a random molecule from the group, together with the probability
-    that this molecule had of being chosen. */
-inline tuple<Molecule,double> Sampler::randomMolecule(const MoleculeGroup &group)
-{
-    return d->randomMolecule(group);
-}
-
-/** Return a random residue from the group, together with the probability
-    that this residue had of being chosen. */
-inline tuple<Residue,double> Sampler::randomResidue(const MoleculeGroup &group)
-{
-    return d->randomResidue(group);
-}
-
-/** Return a random atom from the group, together with the probability
-    that this atom had of being chosen. */
-inline tuple<NewAtom,double> Sampler::randomAtom(const MoleculeGroup &group)
-{
-    return d->randomAtom(group);
-}
-
-/** Return the probability that the molecule 'molecule' has
-    of being chosen in the System 'system' */
-inline double Sampler::probability(const MoleculeGroup &group,
-                                   const Molecule &molecule)
-{
-    return d->probability(group, molecule);
-}
-
-/** Return the probability that the residue 'residue' has
-    of being chosen in the System 'system' */
-inline double Sampler::probability(const MoleculeGroup &group,
-                                   const Residue &residue)
-{
-    return d->probability(group, residue);
-}
-
-/** Return the probability that the atom 'atom' has
-    of being chosen in the System 'system' */
-inline double Sampler::probability(const MoleculeGroup &group,
-                                   const NewAtom &atom)
-{
-    return d->probability(group, atom);
-}
 
 }
 

@@ -58,6 +58,9 @@ MoveBase& MoveBase::operator=(const MoveBase&)
 /////////// Implementation of detail::NullMove
 ///////////
 
+namespace SireSystem
+{
+
 namespace detail
 {
 
@@ -106,14 +109,18 @@ public:
     {}
 };
 
-}
+} // end of SireSystem::detail
+
+} // end of SireSystem
 
 Q_DECLARE_METATYPE(SireSystem::detail::NullMove);
 
-static const RegisterMetaType<detail::NullMove> r_nullmove;
+using namespace SireSystem::detail;
+
+static const RegisterMetaType<NullMove> r_nullmove;
 
 /** Serialise to a binary datastream */
-QDataStream &operator<<(QDataStream &ds, const detail::NullMove &nullmove)
+QDataStream &operator<<(QDataStream &ds, const NullMove &nullmove)
 {
     writeHeader(ds, r_nullmove, 1)
         << static_cast<const MoveBase&>(nullmove);
@@ -122,7 +129,7 @@ QDataStream &operator<<(QDataStream &ds, const detail::NullMove &nullmove)
 }
 
 /** Deserialise from a binary datastream */
-QDataStream &operator>>(QDataStream &ds, detail::NullMove &nullmove)
+QDataStream &operator>>(QDataStream &ds, NullMove &nullmove)
 {
     VersionID v = readHeader(ds, r_nullmove);
 
@@ -216,6 +223,6 @@ Move& Move::operator=(const SharedPolyPointer<MoveBase> &ptr)
 /** Copy assignment */
 Move& Move::operator=(const Move &other)
 {
-    d = other;
+    d = other.d;
     return *this;
 }

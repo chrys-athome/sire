@@ -25,6 +25,8 @@ class Simulation;
 namespace SireSystem
 {
 
+class SimSystem;
+
 using SireSim::Simulation;
 
 /** This is the virtual base class of all moves that
@@ -92,7 +94,7 @@ public:
 
 private:
     /** Shared pointer to the actual move object */
-    SharedPolyPointer<MoveBase> d;
+    SireBase::SharedPolyPointer<MoveBase> d;
 };
 
 /** Initialise the move to work on the Simulation system 'system' */

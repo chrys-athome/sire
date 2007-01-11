@@ -185,6 +185,8 @@ public:
 
     const QVector<Molecule>& molecules() const;
 
+    int count() const;
+
     void add(const Molecule &molecule);
     void change(const Molecule &molecule);
     void remove(const Molecule &molecule);
@@ -293,6 +295,12 @@ inline bool MoleculeGroup::contains(MoleculeID molid) const
 inline bool MoleculeGroup::contains(const Molecule &molecule) const
 {
     return d->contains(molecule.ID());
+}
+
+/** Return the number of molecules in the group */
+inline int MoleculeGroup::count() const
+{
+    return molecules().count();
 }
 
 }

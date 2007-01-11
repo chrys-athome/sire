@@ -4,7 +4,6 @@
 #include "sampler.h"
 
 #include "SireSystem/moleculegroup.h"
-#include "SireMaths/maths.h"
 
 SIRE_BEGIN_HEADER
 
@@ -13,10 +12,16 @@ namespace SireMove
 
 using SireSystem::MoleculeGroup;
 
+/** This class is used to pick contained Molecules, Residues
+    or Atoms at random (uniformly distributed).
+    
+    @author Christopher Woods
+*/
 class SIREMOVE_EXPORT UniformSampler : public SamplerBase
 {
 public:
-    UniformSampler(uint32_t seed = 47382924);
+    UniformSampler();
+    UniformSampler(const RanGenerator &rangenerator);
 
     UniformSampler(const UniformSampler &other);
 
@@ -47,30 +52,9 @@ public:
     double probability(const MoleculeGroup &group, const Residue &residue);
     double probability(const MoleculeGroup &group, const NewAtom &atom);
 
-protected:
-    uint ranint(uint nmax);
-
 private:
-
-    class RanGenerator
-    {
-    public:
-        RanGenerator(uint32_t seed);
-        ~RanGenerator();
-
-        uint ranint(uint nmax);
-
-    private:
-        /** Mutex to serialise access to the generator */
-        QMutex mutex;
-        /** Random number generator that generates random
-            numbers between 0 and 1 inclusive */
-        SireMaths::UniformRand uni_rand_0_1;
-    };
-
-    /** Shared pointer to the random number generator of
-        this class */
-
+    tuple<Molecule,double> _pvt_randomMolecule(const MoleculeGroup &group, 
+                                               uint nmols);
 };
 
 }

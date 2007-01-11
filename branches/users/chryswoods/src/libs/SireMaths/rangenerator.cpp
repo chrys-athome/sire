@@ -5,6 +5,8 @@
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_array.hpp>
 
+#include <limits>
+
 #include "rangenerator.h"
 #include "vector.h"
 
@@ -230,6 +232,30 @@ public:
         }
     }
     
+    /** Return random 32bit unsigned integer (0 -> maxval) */
+    quint32 randInt(quint32 maxval)
+    {
+        QMutexLocker lkr(&mutex);
+        return mersenne_generator.randInt(maxval);
+    }
+    
+    /** Fill the array with random 32bit unsigned integers */
+    void randInt(QVector<quint32> &array, quint32 maxval)
+    {
+        if (not array.isEmpty())
+        {
+            QMutexLocker lkr(&mutex);
+        
+            int sz = array.count();
+            quint32 *a = array.data();
+        
+            MTRand::uint32 m = maxval;
+        
+            for (int i=0; i<sz; ++i)
+                a[i] = mersenne_generator.randInt(m);
+        }
+    }
+    
 private:
     /** Return random 64bit unsigned integer (0 -> 2^64-1) */
     quint64 _randInt64()
@@ -238,6 +264,34 @@ private:
         quint64 ran1 = mersenne_generator.randInt();
         
         return (ran0 << 32) | ran1;
+    }
+
+    /** Return random 64bit unsigned integer (0 -> maxval) */
+    quint64 _randInt64(quint64 maxval)
+    {
+        if (maxval <= std::numeric_limits<quint32>::max())
+            //maxval can fit into a 32bit int - there is no
+            //point using a 64bit generator!
+            return mersenne_generator.randInt( quint32(maxval) );
+    
+        //use same algorithm in MersenneTwister.h
+        quint64 used = maxval;
+        
+        used |= used >> 1;
+        used |= used >> 2;
+        used |= used >> 4;
+        used |= used >> 8;
+        used |= used >> 16;
+        used |= used >> 32;
+        
+        quint64 i;
+        
+        do
+        {
+            i = _randInt64() & used;
+        } while ( i > maxval );
+        
+        return i;
     }
 
 public:
@@ -260,6 +314,29 @@ public:
         
             for (int i=0; i<sz; ++i)
                 a[i] = _randInt64();
+        }
+    }
+    
+    /** Return random 64bit unsigned integer (0 -> maxval) */
+    quint64 randInt64(quint64 maxval)
+    {
+        QMutexLocker lkr(&mutex);
+
+        return _randInt64(maxval);
+    }
+    
+    /** Fill the array with random 64bit unsigned integers */
+    void randInt64(QVector<quint64> &array, quint64 maxval)
+    {
+        if (not array.isEmpty())
+        {
+            QMutexLocker lkr(&mutex);
+        
+            int sz = array.count();
+            quint64 *a = array.data();
+        
+            for (int i=0; i<sz; ++i)
+                a[i] = _randInt64(maxval);
         }
     }
     
@@ -496,6 +573,13 @@ RanGenerator::RanGenerator(const RanGenerator &other)
 RanGenerator::~RanGenerator()
 {}
 
+/** Copy assignment */
+RanGenerator& RanGenerator::operator=(const RanGenerator &other)
+{
+    d = other.d;
+    return *this;
+}
+
 /** See the generator with a new, random seed - this will detach
     this explicitly shared copy of the generator */
 void RanGenerator::seed()
@@ -611,6 +695,12 @@ quint32 RanGenerator::randInt()
     return d->randInt();
 }
 
+/** Return a random 32bit unsigned integer (0 -> maxval) */
+quint32 RanGenerator::randInt(quint32 maxval)
+{
+    return d->randInt(maxval);
+}
+
 /** Return an array of random 32bit unsigned integers.
     If n == 0 then fill the array, otherwise generate
     n numbers. */
@@ -622,10 +712,27 @@ void RanGenerator::randInt(QVector<quint32> &array, uint n)
     d->randInt(array);
 }
 
+/** Return an array of random 32bit unsigned integers.
+    If n == 0 then fill the array, otherwise generate
+    n numbers. */
+void RanGenerator::randInt(QVector<quint32> &array, quint32 maxval, uint n)
+{
+    if (n)
+        array.resize(n);
+        
+    d->randInt(array, maxval);
+}
+
 /** Return a random 64bit unsigned integer (0 -> 2^64 - 1) */
 quint64 RanGenerator::randInt64()
 {
     return d->randInt64();
+}
+
+/** Return a random 64bit unsigned integer (0 -> maxval) */
+quint64 RanGenerator::randInt64(quint64 maxval)
+{
+    return d->randInt64(maxval);
 }
 
 /** Return an array of random 64bit unsigned integers.
@@ -637,6 +744,17 @@ void RanGenerator::randInt64(QVector<quint64> &array, uint n)
         array.resize(n);
         
     d->randInt64(array);
+}
+
+/** Return an array of random 64bit unsigned integers.
+    If n == 0 then fill the array, otherwise generate
+    n numbers. */
+void RanGenerator::randInt64(QVector<quint64> &array, quint64 maxval, uint n)
+{
+    if (n)
+        array.resize(n);
+        
+    d->randInt64(array, maxval);
 }
 
 /** Return the current state of the random number generator.

@@ -1,11 +1,20 @@
 #ifndef SIREMOVE_MONTECARLO_H
 #define SIREMOVE_MONTECARLO_H
 
-#include "move.h"
-
+#include "SireSystem/move.h"
 #include "SireSystem/moleculegroup.h"
 
+#include "SireMaths/rangenerator.h"
+
 SIRE_BEGIN_HEADER
+
+namespace SireMove
+{
+class MonteCarlo;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMove::MonteCarlo&);
+QDataStream& operator>>(QDataStream&, SireMove::MonteCarlo&);
 
 namespace SireSim
 {
@@ -16,7 +25,11 @@ namespace SireMove
 {
 
 using SireSim::Simulation;
+
 using SireSystem::MoleculeGroup;
+using SireSystem::MoveBase;
+
+using SireMaths::RanGenerator;
 
 /** This is the base class of all Monte Carlo moves
 
@@ -24,14 +37,22 @@ using SireSystem::MoleculeGroup;
 */
 class SIREMOVE_EXPORT MonteCarlo : public MoveBase
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const MonteCarlo&);
+friend QDataStream& ::operator>>(QDataStream&, MonteCarlo&);
+
 public:
     MonteCarlo();
+    MonteCarlo(const RanGenerator &generator);
 
     MonteCarlo(const MonteCarlo &other);
 
     ~MonteCarlo();
 
-    void setSeed(int seed);
+    MonteCarlo& operator=(const MonteCarlo &other);
+
+    void setGenerator(const RanGenerator &generator);
+    const RanGenerator& generator() const;
 
     class CheckPoint
     {
@@ -46,16 +67,20 @@ public:
     };
 
 protected:
-    Vector randomVectorOnASphere(double radius);
-
-    void rand();
+    RanGenerator& generator();
 
 private:
-
     /** The random number generator used to generate
-        random numbers between 0 and 1 (inclusive) */
-    UniformRand uni_rand_0_1;
+        and test this Monte Carlo moves */
+    RanGenerator rangen;
 };
+
+/** Internal function used to return the random number 
+    generator used by this move */
+inline RanGenerator& MonteCarlo::generator()
+{
+    return rangen;
+}
 
 }
 

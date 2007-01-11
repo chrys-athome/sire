@@ -4,18 +4,57 @@
 #include "montecarlo.h"
 #include "sampler.h"
 
+#include "SireMaths/angle.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMove
 {
+class RigidBodyMC;
+}
 
+QDataStream& operator<<(QDataStream&, const SireMove::RigidBodyMC&);
+QDataStream& operator>>(QDataStream&, SireMove::RigidBodyMC&);
+
+namespace SireSystem
+{
+class SimSystem;
+}
+
+namespace SireMol
+{
+class MoleculeID;
+}
+
+namespace SireMove
+{
+
+class Sampler;
+
+using SireSystem::SimSystem;
+
+using SireMol::MoleculeID;
+
+/** This class implements a rigid body Monte Carlo move that
+    may be applied to a random molecule within a MoleculeGroup
+    
+    @author Christopher Woods
+*/
 class SIREMOVE_EXPORT RigidBodyMC : public MonteCarlo
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const RigidBodyMC&);
+friend QDataStream& ::operator>>(QDataStream&, RigidBodyMC&);
+
 public:
     RigidBodyMC();
 
     RigidBodyMC(const MoleculeGroup &group,
-                const Sampler &sampler = UniformSampler());
+                const Sampler &sampler);
+
+    RigidBodyMC(const MoleculeGroup &group,
+                const RanGenerator &generator,
+                const Sampler &sampler);
 
     RigidBodyMC(const RigidBodyMC &other);
 
@@ -76,7 +115,7 @@ public:
     public:
         CheckPoint();
 
-        CheckPoint(const Simulation &simulation,
+        CheckPoint(const SimSystem &system,
                    const Sampler &sampler);
 
         CheckPoint(const CheckPoint &other);
@@ -102,6 +141,8 @@ public:
     {
         return new RigidBodyMC(*this);
     }
+
+    void initialise(const SimSystem &system);
 
     void move(SimSystem &system);
 
@@ -131,9 +172,15 @@ private:
     /** Hash mapping the number of attempted and accepted moves
         for each molecule */
     QHash<MoleculeID, MoveRecord> moverecord;
+    
+    /** The sampler used to select random molecules from the 
+        MoleculeGroup */
+    Sampler smplr;
 };
 
 }
+
+Q_DECLARE_METATYPE(SireMove::RigidBodyMC);
 
 SIRE_END_HEADER
 

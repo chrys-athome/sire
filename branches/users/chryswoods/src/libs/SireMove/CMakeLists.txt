@@ -12,7 +12,10 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 # Define the sources in SireMove
 set ( SIREMOVE_SOURCES
       montecarlo.cpp
+      prefsampler.cpp
+      sampler.cpp
       rigidbodymc.cpp
+      uniformsampler.cpp
 
       #zmatrixmc.cpp
       #internalmc.cpp
@@ -37,6 +40,7 @@ set_target_properties (SireMove PROPERTIES
 # Link to other Sire libraries
 target_link_libraries (SireMove
                        SireSystem
+		       SireMaths
                        )
 
 # installation

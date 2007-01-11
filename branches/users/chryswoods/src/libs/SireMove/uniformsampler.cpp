@@ -1,45 +1,57 @@
 
 #include "uniformsampler.h"
 
+#include "SireMol/molecule.h"
+#include "SireMol/residue.h"
+#include "SireMol/newatom.h"
+
+#include "SireMol/moleculeid.h"
+#include "SireMol/resid.h"
+#include "SireMol/atomid.h"
+#include "SireMol/idmolatom.h"
+
+#include "SireMol/errors.h"
+
 #include "SireStream/datastream.h"
 
+using namespace SireMol;
 using namespace SireMove;
 using namespace SireStream;
 
-static const RegisterMetaType<UniformSampler> r_unisampler;
+static const RegisterMetaType<UniformSampler> r_sampler;
 
 /** Serialise to a binary datastream */
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
-                                        const UniformSampler &unisampler)
+                                        const UniformSampler &sampler)
 {
-    writeHeader(ds, r_unisampler, 1)
-          << static_cast<const SamplerBase&>(unisampler);
+    writeHeader(ds, r_sampler, 1)
+          << static_cast<const SamplerBase&>(sampler);
 
     return ds;
 }
 
 /** Deserialise from a binary datastream */
-QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, )
+QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, UniformSampler &sampler)
 {
-    VersionID v = readHeader(ds, r_unisampler, 1);
+    VersionID v = readHeader(ds, r_sampler);
 
     if (v == 1)
     {
-        ds >> static_cast<SamplerBase&>(unisampler);
+        ds >> static_cast<SamplerBase&>(sampler);
     }
     else
-        throw version_error(v, "1", r_unisampler, CODELOC);
+        throw version_error(v, "1", r_sampler, CODELOC);
 
     return ds;
 }
 
-/** Null constructor */
+/** Constructor - uses the global random number generator */
 UniformSampler::UniformSampler() : SamplerBase()
 {}
 
-/** Create a sampler that selects molecules from 'molgroup' */
-UniformSampler::UniformSampler(const MoleculeGroup &molgroup)
-               : SamplerBase()
+/** Construct using a specified random number generator */
+UniformSampler::UniformSampler(const RanGenerator &generator)
+               : SamplerBase(generator)
 {}
 
 /** Copy constructor */
@@ -65,7 +77,7 @@ tuple<Molecule,double>
 UniformSampler::_pvt_randomMolecule(const MoleculeGroup &group, uint nmols)
 {
     return tuple<Molecule,double>(
-                      group.molecules().constData()[this->ranint(nmols)],
+                      group.molecules().constData()[generator().randInt(nmols-1)],
                       1.0 / nmols);
 }
 
@@ -115,7 +127,7 @@ UniformSampler::randomResidue(const MoleculeGroup &group)
     BOOST_ASSERT(nres != 0);
 
     return tuple<Residue,double>(
-                  molecule.residue( ResID(this->ranint(nres)) ),
+                  molecule.residue( ResID(generator().randInt(nres-1)) ),
                   randmol.get<1>() / nres );
 }
 
@@ -145,7 +157,7 @@ tuple<NewAtom,double> UniformSampler::randomAtom(const MoleculeGroup &group)
     BOOST_ASSERT(natms != 0);
 
     return tuple<NewAtom,double>(
-                NewAtom( this->ranint(natms), molecule ),
+                NewAtom( AtomID(generator().randInt(natms-1)), molecule ),
                 randmol.get<1>() / natms );
 }
 

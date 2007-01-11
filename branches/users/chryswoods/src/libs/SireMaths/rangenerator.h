@@ -72,8 +72,14 @@ public:
     quint32 randInt();
     void randInt(QVector<quint32> &array, uint n=0);
     
+    quint32 randInt(quint32 maxval);
+    void randInt(QVector<quint32> &array, quint32 maxval, uint n=0);
+    
     quint64 randInt64();
     void randInt64(QVector<quint64> &array, uint n=0);
+    
+    quint64 randInt64(quint64 maxval);
+    void randInt64(QVector<quint64> &array, quint64 maxval, uint n=0);
     
     QVector<quint32> getState();
     void setState(const QVector<quint32> &state);
