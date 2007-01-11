@@ -11,8 +11,6 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the sources in SireMove
 set ( SIREMOVE_SOURCES
-      move.cpp
-
       montecarlo.cpp
       rigidbodymc.cpp
 

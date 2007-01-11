@@ -17,6 +17,9 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs
 
 # Define the sources in SireMaths
 set ( WRAPMATHS_SOURCES
+
+      rangenerator.py.cpp
+
       wrap_angle.cpp
       wrap_axisset.cpp
       wrap_complex.cpp

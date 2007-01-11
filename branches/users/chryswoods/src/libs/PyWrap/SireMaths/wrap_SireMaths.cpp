@@ -15,6 +15,7 @@ void export_Rational();
 void export_Geometry();
 void export_Maths();
 void export_Vector();
+void export_RanGenerator();
     
 void SIREMATHS_EXPORT export_SireMaths()
 {
@@ -25,6 +26,7 @@ void SIREMATHS_EXPORT export_SireMaths()
     export_Geometry();
     export_Maths();
     export_Vector();
+    export_RanGenerator();
 }
 
 }
