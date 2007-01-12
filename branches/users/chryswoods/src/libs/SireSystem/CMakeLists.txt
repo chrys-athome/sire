@@ -13,6 +13,8 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 set ( SIRESYSTEM_SOURCES
       moleculegroup.cpp
       move.cpp
+      moves.cpp
+      simsystem.cpp
     )
 
 add_library (SireSystem ${SIRESYSTEM_SOURCES})
