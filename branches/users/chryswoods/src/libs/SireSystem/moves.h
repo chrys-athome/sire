@@ -4,6 +4,7 @@
 #include <QMutex>
 
 #include "move.h"
+#include "systemid.h"
 
 #include "SireBase/sharedpolypointer.hpp"
 
@@ -11,15 +12,6 @@ SIRE_BEGIN_HEADER
 
 namespace SireSystem
 {
-
-class SystemID
-{
-    SystemID()
-    {}
-
-    ~SystemID()
-    {}
-};
 
 /** This is the base class of all collections of moves.
     This class provides a collection of moves that will

@@ -98,3 +98,15 @@ const System& LocalSimSystem::run(quint32 nmoves)
 
     return _system;
 }
+
+/** Return the ID number of the System */
+SystemID LocalSimSystem::ID()
+{
+    return _system.ID();
+}
+
+/** Return the version number of the System */
+Version LocalSimSystem::version()
+{
+    return _system.version();
+}

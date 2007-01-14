@@ -67,6 +67,8 @@ void SIREFF_EXPORT export_ForceField()
             , &::SireFF::ForceField::setName
             , ( bp::arg("name") )
             , bp::default_call_policies() )
+        .def( 
+             "ID", &::SireFF::ForceField::ID )
         .def(
             "what"
             , &::SireFF::ForceField::what

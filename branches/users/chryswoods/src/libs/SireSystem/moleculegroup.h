@@ -5,6 +5,8 @@
 #include <QHash>
 #include <QSharedDataPointer>
 
+#include "moleculegroupid.h"
+
 #include "SireMol/molecule.h"
 #include "SireMol/moleculeid.h"
 
@@ -74,7 +76,7 @@ public:
 
     const QString& name() const;
 
-    quint32 ID() const;
+    MoleculeGroupID ID() const;
     const Version& version() const;
 
     void add(const Molecule &molecule);
@@ -116,9 +118,9 @@ inline const QString& MoleculeGroupPvt::name() const
 }
 
 /** Return the ID of the group */
-inline quint32 MoleculeGroupPvt::ID() const
+inline MoleculeGroupID MoleculeGroupPvt::ID() const
 {
-    return id_and_version.ID();
+    return MoleculeGroupID(id_and_version.ID());
 }
 
 /** Return the version of the group */
@@ -180,7 +182,7 @@ public:
 
     const QString& name() const;
 
-    quint32 ID() const;
+    MoleculeGroupID ID() const;
     const Version& version() const;
 
     const QVector<Molecule>& molecules() const;
@@ -266,7 +268,7 @@ inline const Molecule& MoleculeGroup::molecule(const Molecule &molecule) const
 }
 
 /** Return the ID number of this group */
-inline quint32 MoleculeGroup::ID() const
+inline MoleculeGroupID MoleculeGroup::ID() const
 {
     return d->ID();
 }

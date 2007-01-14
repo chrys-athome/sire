@@ -81,7 +81,7 @@ public:
     bool isDirty() const;
     bool isClean() const;
 
-    quint32 ID() const;
+    ForceFieldID ID() const;
     const Version& version() const;
 
 protected:
@@ -293,7 +293,7 @@ inline bool ForceField::isClean() const
 }
 
 /** Return the ID number of the forcefield */
-inline quint32 ForceField::ID() const
+inline ForceFieldID ForceField::ID() const
 {
     return d().ID();
 }

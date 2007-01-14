@@ -17,6 +17,8 @@
 #include "parametermap.h"
 #include "ffcomponent.h"
 
+#include "forcefieldid.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireFF
@@ -334,7 +336,7 @@ public:
     bool isDirty() const;
     bool isClean() const;
 
-    quint32 ID() const;
+    ForceFieldID ID() const;
     const Version& version() const;
 
 protected:
@@ -423,9 +425,9 @@ inline void FFBase::incrementMinorVersion()
 }
 
 /** Return the ID number of the forcefield */
-inline quint32 FFBase::ID() const
+inline ForceFieldID FFBase::ID() const
 {
-    return id_and_version.ID();
+    return ForceFieldID(id_and_version.ID());
 }
 
 /** Return the version number of the forcefield */

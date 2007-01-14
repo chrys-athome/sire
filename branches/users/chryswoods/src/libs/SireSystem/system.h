@@ -3,8 +3,24 @@
 
 #include <QString>
 
+#include "systemid.h"
+#include "moleculegroup.h"
+
+#include "SireBase/idmajminversion.h"
+#include "SireVol/space.h"
+#include "SireMol/property.h"
+
 namespace SireSystem
 {
+
+using SireBase::IDMajMinVersion;
+using SireBase::Version;
+
+using SireCAS::SymbolID;
+
+using SireVol::Space;
+
+using SireMol::Property;
 
 /** This class provides all of the metadata about a System
     (to be honest, all data except for the forcefields).
@@ -27,7 +43,7 @@ public:
     SystemID ID() const;
     const Version& version() const;
 
-    const QHash<MolGroupID,MoleculeGroup>& groups() const;
+    const QHash<MoleculeGroupID,MoleculeGroup>& groups() const;
 
     void add(const MoleculeGroup &group);
     void remove(const MoleculeGroup &group);
@@ -41,10 +57,10 @@ public:
 private:
     /** Hash mapping all of the different forcefield functions
         to their corresponding equation infos */
-    QHash<SymbolID, FFEquation> ff_equations;
+    //QHash<SymbolID, Expression> ff_equations;
 
     /** Hash mapping the groups of Molecules in this system to their ID */
-    QHash<MolGroupID, MoleculeGroup> molgroups;
+    QHash<MoleculeGroupID, MoleculeGroup> molgroups;
 
     /** Hash mapping the monitors in this system to their ID */
     //QHash<MonitorID, Monitor> mntrs;
@@ -70,7 +86,7 @@ private:
 
     @author Christopher Woods
 */
-class SIRESYSTEM_EXPORT System
+class SIRESYSTEM_EXPORT System : public SystemData
 {
 public:
     System(const QString &name = QObject::tr("Unnamed"));
@@ -100,13 +116,8 @@ public:
     void remove(const Molecule &molecule);
 
 private:
-
     /** All of the forcefields in the system, indexed by ID */
     QHash<FFID, ForceField> ffields;
-
-    /** Metadata about the forcefield, e.g. the equations giving
-        its total energy, the groups, monitors etc. */
-    SystemData sysdata;
 };
 
 }

@@ -396,7 +396,7 @@ QString FFComponent::forcefieldComponent() const
 }
 
 /** Return the ID number of the forcefield that this represents */
-quint32 FFComponent::forcefieldID() const
+ForceFieldID FFComponent::forcefieldID() const
 {
     return ffid;
 }

@@ -3,6 +3,8 @@
 
 #include "SireCAS/function.h"
 
+#include "forcefieldid.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireFF
@@ -127,11 +129,11 @@ public:
     QString forcefieldName() const;
     QString forcefieldComponent() const;
 
-    quint32 forcefieldID() const;
+    ForceFieldID forcefieldID() const;
 
 private:
     /** The ID number of the forcefield */
-    quint32 ffid;
+    ForceFieldID ffid;
 };
 
 }

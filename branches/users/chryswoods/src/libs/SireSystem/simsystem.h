@@ -34,7 +34,11 @@ public:
 
     virtual MoleculeGroup group(MolGroupID id)=0;
 
-    virtual QHash<MolGroupID,MoleculeGroups> groups()=0;
+    virtual QHash<MoleculeGroupID,MoleculeGroups> groups()=0;
+    
+    virtual SystemID ID()=0;
+    
+    virtual Version version()=0;
 };
 
 /** This class provides a SimSystem that is used to perform
@@ -55,6 +59,10 @@ public:
     double energy(const Function &component);
 
     System checkpoint();
+
+    SystemID ID();
+    
+    Version version();
 
 private:
     /** The system that is being simulated */
