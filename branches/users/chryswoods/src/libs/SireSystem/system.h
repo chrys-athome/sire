@@ -38,7 +38,7 @@ public:
 
     SystemData(const SystemData &other);
 
-    ~SystemData();
+    virtual ~SystemData();
 
     SystemID ID() const;
     const Version& version() const;
@@ -54,10 +54,53 @@ public:
 
     void updateStatistics();
 
+    double evaluate(const Function &component);
+    double evaluate(const FFComponent &component);
+
 private:
+
+    virtual Values getEnergyComponents(const QSet<ForceFieldID> &ffids);
+
+    /** Small internal class used by SystemData to hold
+        metainformation about the forcefield expressions used
+        to calculate energies */
+    class ExpressionInfo
+    {
+    public:
+        ExpressionInfo();
+
+        ExpressionInfo(const FFExpression &ex,
+                       const QHash<SymbolID,ExpressionInfo> &ff_equations);
+
+        ExpressionInfo(const ExpressionInfo &other);
+
+        ~ExpressionInfo();
+
+        const FFExpression& expression() const;
+
+    private:
+        /** This is the actual expression */
+        FFExpression ex;
+
+        /** The list of expressions on which this expression depends */
+        QVector<FFExpression> deps;
+
+        /** The complete list of ForceFieldIDs of all of the forcefields
+            on which this expression depends (includes dependencies from
+            expressions that this depends on) */
+        QSet<ForceFieldID> ffids;
+    };
+
     /** Hash mapping all of the different forcefield functions
         to their corresponding equation infos */
-    //QHash<SymbolID, Expression> ff_equations;
+    QHash<SymbolID, ExpressionInfo> ff_equations;
+
+    /** A collection of parameters of this forcefield */
+    Values ff_params;
+
+    /** A cache of component energies (this is cleared whenever the
+        system is changed) */
+    QHash<SymbolID, double> energy_cache;
 
     /** Hash mapping the groups of Molecules in this system to their ID */
     QHash<MoleculeGroupID, MoleculeGroup> molgroups;
@@ -66,7 +109,7 @@ private:
     //QHash<MonitorID, Monitor> mntrs;
 
     /** Hash mapping the properties of this system to their name */
-    QHash<QString, Property> proptys;
+    QHash<QString, Property> props;
 
     /** The Space of the System. All molecules in the System
         will be mapped to lie within this Space when they are
