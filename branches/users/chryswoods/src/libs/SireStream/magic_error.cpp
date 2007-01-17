@@ -57,6 +57,7 @@ static RegisterMetaType<invalid_arg> r_arg;
 static RegisterMetaType<invalid_state> r_state;
 static RegisterMetaType<incomplete_code> r_incomplete;
 static RegisterMetaType<std_exception> r_std;
+static RegisterMetaType<dependency_error> r_depend;
 static RegisterMetaType<unknown_exception> r_unknown;
 static RegisterMetaType<SireError::version_error> r_version;
 

@@ -52,7 +52,7 @@ public:
     bool operator==(const FFExpression &other) const;
     bool operator!=(const FFExpression &other) const;
 
-    const QSet<ForceFieldID>& forcefieldIDs() const;
+    const QSet<ForceFieldID>& forceFieldIDs() const;
     const QSet<Function>& dependencies() const;
 
     const Function& function() const;
@@ -82,7 +82,7 @@ private:
 
 /** Return the ID numbers of the forcefields that contain
     components on which this expression depends */
-inline const QSet<ForceFieldID>& FFExpression::forcefieldIDs() const
+inline const QSet<ForceFieldID>& FFExpression::forceFieldIDs() const
 {
     return ffids;
 }

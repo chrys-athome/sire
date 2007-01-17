@@ -518,6 +518,7 @@ protected:
 
 /** This exception is thrown whenever an unidentified exception needs translating into
     a SireError::exception, or when an unidentified SireError::exception is detected.
+    
     @author Christopher Woods
 */
 class SIREERROR_EXPORT unknown_exception : public SireError::exception
@@ -538,6 +539,33 @@ public:
     const char* what() const throw()
     {
         return "SireError::unknown_exception";
+    }
+};
+
+/** This exception is thrown whenever a problem is detected
+    that involves dependencies, e.g. a dependency is missing,
+    or a dependency may be about to be broken.
+    
+    @author Christopher Woods
+*/
+class SIREERROR_EXPORT dependency_error : public SireError::exception
+{
+public:
+    dependency_error() : exception()
+    {}
+
+    dependency_error(QString err, QString place=QString::null) : exception(err,place)
+    {}
+
+    dependency_error(const dependency_error &other) : exception(other)
+    {}
+
+    ~dependency_error() throw()
+    {}
+
+    const char* what() const throw()
+    {
+        return "SireError::dependency_error";
     }
 };
 
@@ -587,6 +615,7 @@ Q_DECLARE_METATYPE(SireError::invalid_state)
 Q_DECLARE_METATYPE(SireError::incomplete_code)
 Q_DECLARE_METATYPE(SireError::std_exception)
 Q_DECLARE_METATYPE(SireError::unknown_exception)
+Q_DECLARE_METATYPE(SireError::dependency_error)
 
 SIRE_END_HEADER
 

@@ -12,6 +12,18 @@ SIRE_BEGIN_HEADER
 
 namespace SireSystem
 {
+class Moves;
+class MovesBase;
+}
+
+QDataStream& operator<<(QDataStream&, const SireSystem::Moves&);
+QDataStream& operator>>(QDataStream&, SireSystem::Moves&);
+
+QDataStream& operator<<(QDataStream&, const SireSystem::MovesBase&);
+QDataStream& operator>>(QDataStream&, SireSystem::MovesBase&);
+
+namespace SireSystem
+{
 
 /** This is the base class of all collections of moves.
     This class provides a collection of moves that will
@@ -23,6 +35,10 @@ namespace SireSystem
 */
 class SIRESYSTEM_EXPORT MovesBase : public QSharedData
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const MovesBase&);
+friend QDataStream& ::operator>>(QDataStream&, MovesBase&);
+
 public:
     MovesBase();
 
@@ -61,6 +77,10 @@ public:
 */
 class SIRESYSTEM_EXPORT Moves
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const Moves&);
+friend QDataStream& ::operator>>(QDataStream&, Moves&);
+
 public:
     Moves();
 
@@ -71,6 +91,8 @@ public:
     ~Moves();
 
     Moves& operator=(const Moves &other);
+
+    void initialise(SimSystem &system);
 
     int count() const;
 

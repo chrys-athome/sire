@@ -1,19 +1,66 @@
 #ifndef SIRESYSTEM_SYSTEMDATA_H
 #define SIRESYSTEM_SYSTEMDATA_H
 
+#include <QVector>
+
 #include "systemid.h"
-#include "moleculegroup.h"
+#include "ffexpression.h"
+
+#include "SireBase/idmajminversion.h"
+
+#include "SireVol/space.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireSystem
 {
 class SystemData;
-class SystemData::ExpressionInfo;
+}
+
+QDataStream& operator<<(QDataStream&, const SireSystem::SystemData&);
+QDataStream& operator>>(QDataStream&, SireSystem::SystemData&);
+
+namespace SireCAS
+{
+class Values;
+}
+
+namespace SireFF
+{
+class FFComponent;
+}
+
+namespace SireMol
+{
+class Molecule;
+class Residue;
+class NewAtom;
+class Property;
 }
 
 namespace SireSystem
 {
+
+class FFExpression;
+class MoleculeGroup;
+class MoleculeGroupID;
+
+using SireBase::IDMajMinVersion;
+using SireBase::Version;
+
+using SireCAS::Values;
+using SireCAS::Symbol;
+using SireCAS::SymbolID;
+using SireCAS::Expression;
+
+using SireVol::Space;
+
+using SireMol::Molecule;
+using SireMol::Residue;
+using SireMol::NewAtom;
+using SireMol::Property;
+
+using SireFF::FFComponent;
 
 /** This class provides all of the metadata about a System
     (to be honest, all data except for the forcefields).
@@ -31,11 +78,18 @@ namespace SireSystem
 class SIRESYSTEM_EXPORT SystemData
 {
 
+friend QDataStream& ::operator<<(QDataStream&, const SystemData&);
+friend QDataStream& ::operator>>(QDataStream&, SystemData&);
+
 public:
+    bool operator==(const SystemData &other) const;
+    bool operator!=(const SystemData &other) const;
+    
     const QString& name() const;
     SystemID ID() const;
     const Version& version() const;
 
+    const MoleculeGroup& group(MoleculeGroupID id) const;
     const QHash<MoleculeGroupID,MoleculeGroup>& groups() const;
 
     QSet<FFExpression> equations() const;
@@ -86,8 +140,6 @@ protected:
     virtual double getEnergyComponent(const FFComponent &component)=0;
 
 private:
-
-    double energy(const ExpressionInfo &expr);
 
     /** Small internal class used by SystemData to hold
         metainformation about the forcefield expressions used
@@ -151,6 +203,8 @@ private:
         QSet<ForceFieldID> ffids;
     };
 
+    double energy(const ExpressionInfo &expr);
+    
     /** Hash mapping all of the different forcefield functions
         to their corresponding equation infos */
     QHash<SymbolID, ExpressionInfo> ff_equations;
@@ -217,12 +271,10 @@ inline const QHash<MoleculeGroupID,MoleculeGroup>& SystemData::groups() const
 /** Return all of the parameters and their in this system */
 inline const Values& SystemData::parameters() const
 {
-    return params;
+    return ff_params;
 }
 
 }
-
-Q_DECLARE_METATYPE(SireSystem::SystemData);
 
 SIRE_END_HEADER
 

@@ -38,17 +38,23 @@ FFExpression::FFExpression(const Function &function)
     deps.squeeze();
 }
 
-/** Construct an FFExpression called 'name' from the passed Expression. */
+/** Construct an FFExpression called 'name' from the passed Expression. 
+    You must supply a name for the function!
+
+    \throw SireError::invalid_arg
+*/
 FFExpression::FFExpression(const QString &name, const Expression &expression)
              : ex(expression)
 {
     if (name.isEmpty())
-        throw SireError::invalid_args( QObject::tr(
+        throw SireError::invalid_arg( QObject::tr(
                 "Cannot create an unnamed FFExpression from the expression "
                 "\"%1\"").arg(expression.toString()), CODELOC );
 
     //get all of the dependent functions
     Functions funcs = expression.functions();
+
+    Symbols props;
 
     for ( Functions::const_iterator it = funcs.constBegin();
           it != funcs.constEnd();
@@ -68,6 +74,8 @@ FFExpression::FFExpression(const QString &name, const Expression &expression)
             //be another function on which this function depends
             deps.insert( *it );
         }
+        
+        props += it->symbols();
     }
 
     //set the function that represents this expression

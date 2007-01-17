@@ -374,7 +374,7 @@ FFComponent& FFComponent::operator=(const FFComponent &other)
 }
 
 /** Return the name of the forcefield */
-QString FFComponent::forcefieldName() const
+QString FFComponent::forceFieldName() const
 {
     QRegExp rexp(ffname_regexp);
 
@@ -385,7 +385,7 @@ QString FFComponent::forcefieldName() const
 }
 
 /** Return the name of the component that this represents */
-QString FFComponent::forcefieldComponent() const
+QString FFComponent::forceFieldComponent() const
 {
     QRegExp rexp(ffname_regexp);
 
@@ -396,7 +396,7 @@ QString FFComponent::forcefieldComponent() const
 }
 
 /** Return the ID number of the forcefield that this represents */
-ForceFieldID FFComponent::forcefieldID() const
+ForceFieldID FFComponent::forceFieldID() const
 {
     return ffid;
 }

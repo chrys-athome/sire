@@ -3,24 +3,54 @@
 
 #include <boost/noncopyable.hpp>
 
+#include "sireglobal.h"
+
+SIRE_BEGIN_HEADER
+
+namespace SireBase
+{
+class Version;
+}
+
 namespace SireCAS
 {
 class Function;
 }
 
+namespace SireMol
+{
+class Molecule;
+class Residue;
+class NewAtom;
+}
+
 namespace SireFF
 {
 class FFComponent;
+class ForceField;
+class ForceFieldID;
 }
 
 namespace SireSystem
 {
 
+class SystemData;
 class System;
 class SystemID;
+class MoleculeGroup;
+class MoleculeGroupID;
 
 using SireCAS::Function;
+
+using SireMol::Molecule;
+using SireMol::Residue;
+using SireMol::NewAtom;
+
+using SireFF::ForceField;
+using SireFF::ForceFieldID;
 using SireFF::FFComponent;
+
+using SireBase::Version;
 
 /** This pure-virtual class provides the interface to a simulation
     system that is being simulated. This allows the
@@ -35,6 +65,11 @@ using SireFF::FFComponent;
 */
 class SIRESYSTEM_EXPORT SimSystem : public boost::noncopyable
 {
+
+//friend so that it can see the makeSystem function 
+//so that System can make 'makeSystem' a friend!
+friend class System;
+
 public:
     SimSystem();
 
@@ -47,13 +82,17 @@ public:
 
     virtual void rollback(const System &checkpoint)=0;
 
-    virtual MoleculeGroup group(MolGroupID id)=0;
+    virtual MoleculeGroup group(MoleculeGroupID id)=0;
 
-    virtual QHash<MoleculeGroupID,MoleculeGroups> groups()=0;
+    virtual QHash<MoleculeGroupID,MoleculeGroup> groups()=0;
 
     virtual SystemID ID()=0;
 
     virtual Version version()=0;
+
+    virtual void change(const Molecule &molecule)=0;
+    virtual void change(const Residue &residue)=0;
+    virtual void change(const NewAtom &atom)=0;
 
 protected:
     static System makeSystem(const SystemData &data,
@@ -61,5 +100,7 @@ protected:
 };
 
 }
+
+SIRE_END_HEADER
 
 #endif

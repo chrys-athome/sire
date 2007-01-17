@@ -292,6 +292,22 @@ QSet<FFExpression> SystemData::equations() const
     return eqns;
 }
 
+/** Return the MoleculeGroup with ID == id 
+
+    \throw SireSystem::missing_group
+*/
+const MoleculeGroup& SystemData::group(MoleculeGroupID id) const
+{
+    QHash<MoleculeGroupID,MoleculeGroup>::const_iterator it = molgroups.find(id);
+    
+    //if (it == molgroups.end())
+    //    throw SireSystem::missing_group( QObject::tr(
+    //        "There is no MoleculeGroup with ID == %1 in the System %2 (%3)")
+    //            .arg(id).arg(ID()).arg(version().toString()), CODELOC );
+    
+    return *it;
+}
+
 /** Add the forcefield equation represented by the expression
     'equation' to this System. Any dependencies of this function
     must already be in this system or else an exception will be

@@ -126,10 +126,10 @@ public:
     FFComponent& operator=(const FFComponent &other);
     FFComponent& operator=(const SireCAS::Function &function);
 
-    QString forcefieldName() const;
-    QString forcefieldComponent() const;
+    QString forceFieldName() const;
+    QString forceFieldComponent() const;
 
-    ForceFieldID forcefieldID() const;
+    ForceFieldID forceFieldID() const;
 
 private:
     /** The ID number of the forcefield */

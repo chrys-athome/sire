@@ -148,10 +148,12 @@ QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const Moves &moves)
     non_const_moves.pause();
 
     //serialise the moves
-    SharedDataStream sds(ds) << moves.d
-                             << moves.sysid
-                             << moves.ntotal
-                             << moves.ncomplete;
+    SharedDataStream sds(ds);
+     
+    sds << moves.d
+        << moves.sysid
+        << moves.ntotal
+        << moves.ncomplete;
 
     //we can now unpause the moves
     non_const_moves.play();
@@ -169,10 +171,12 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, Moves &moves)
         //destream into a new Moves object
         Moves new_moves;
 
-        SharedDataStream sds(ds) >> new_moves.d
-                                 >> new_moves.sysid
-                                 >> new_moves.ntotal
-                                 >> new_moves.ncomplete;
+        SharedDataStream sds(ds);
+
+        sds >> new_moves.d
+            >> new_moves.sysid
+            >> new_moves.ntotal
+            >> new_moves.ncomplete;
 
         //copy the new Moves object
         moves = new_moves;
@@ -186,7 +190,7 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, Moves &moves)
 static SharedPolyPointer<MovesBase> shared_null( new NullMoves() );
 
 /** Null constructor */
-Moves::Moves() : d(shared_null), ntotal(0), ncomplete(0), sysid(0)
+Moves::Moves() : d(shared_null), sysid(0), ntotal(0), ncomplete(0)
 {}
 
 /** Copy constructor */
@@ -244,6 +248,18 @@ Moves& Moves::operator=(const Moves &other)
     }
 
     return *this;
+}
+
+/** Initialise all of the moves with the passed System
+     - this is used to catch a lot of errors before the 
+       simulation starts, rather than while it is running
+       (or even months into it running!) */
+void Moves::initialise(SimSystem &system)
+{
+    //can only do this while the moves aren't active
+    QMutexLocker lkr(&movemutex);
+    
+    d->initialise(system);
 }
 
 /** This internal function is used to run the

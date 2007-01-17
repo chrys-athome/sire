@@ -45,6 +45,30 @@ public:
         return _major != other._major or _minor != other._minor;
     }
 
+    bool operator<(const Version &other) const
+    {
+        return _major < other._major or 
+                  (_major == other._major and _minor < other._minor);
+    }
+
+    bool operator<=(const Version &other) const
+    {
+        return _major < other._major or 
+                  (_major == other._major and _minor <= other._minor);
+    }
+
+    bool operator>(const Version &other) const
+    {
+        return _major > other._major or 
+                  (_major == other._major and _minor > other._minor);
+    }
+
+    bool operator>=(const Version &other) const
+    {
+        return _major > other._major or 
+                  (_major == other._major and _minor >= other._minor);
+    }
+
     bool sameMajorVersion(const Version &other) const
     {
         return _major == other._major;

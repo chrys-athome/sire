@@ -6,6 +6,8 @@
 #include "systemdata.h"
 #include "simsystem.h"
 
+#include "SireFF/forcefield.h"
+
 namespace SireSystem
 {
 class System;
@@ -16,6 +18,11 @@ QDataStream& operator>>(QDataStream&, SireSystem::System&);
 
 namespace SireSystem
 {
+
+class Move;
+class Moves;
+
+using SireFF::ForceField;
 
 /** This class holds all of the data necessary to specify a single
     system of molecules (including how to calculate their energy).
@@ -33,7 +40,7 @@ class SIRESYSTEM_EXPORT System : public SystemData
 friend QDataStream& ::operator<<(QDataStream&, const System&);
 friend QDataStream& ::operator>>(QDataStream&, System&);
 
-//allow access to the 'makeSystem' function of SimSystem so that
+//allow access from the 'makeSystem' function of SimSystem so that
 //SimSystems can construct a System from data and forcefields without
 //requiring any validation (as we must assume that the SimSystem is capable
 //of respecting the need to keep the forcefields and metadata in a consistent
@@ -46,6 +53,8 @@ public:
     System();
     System(const QString &name);
 
+    System(const System &other);
+
     ~System();
 
     System& operator=(const System &other);
@@ -56,14 +65,14 @@ public:
     void add(const ForceField &forcefield);
     void remove(const ForceField &forcefield);
 
-    void add(const FFEquation &ff_equation);
-    void remove(const FFEquation &ff_equation);
+    void add(const FFExpression &ff_equation);
+    void remove(const FFExpression &ff_equation);
     void remove(const Function &component);
 
-    //void recordAverage(const FFEquation &ff_equation,
+    //void recordAverage(const FFExpression &ff_equation,
     //                   const Averager &averager = MeanAndStdDev());
 
-    //void getAverage(const FFEquation &ff_equation);
+    //void getAverage(const FFExpression &ff_equation);
     //void getAverage(const Function &component);
 
     void add(const MoleculeGroup &group);
@@ -82,7 +91,7 @@ public:
 
     void remove(const Molecule &molecule);
 
-    const QHash<ForceFieldID,ForceField>& forcefields() const;
+    const QHash<ForceFieldID,ForceField>& forceFields() const;
 
     void run(const Move &move, quint32 nmoves=1);
     void run(const Moves &moves);
@@ -99,7 +108,7 @@ protected:
 
 private:
     /** All of the forcefields in the system, indexed by ID */
-    QHash<FFID, ForceField> ffields;
+    QHash<ForceFieldID, ForceField> ffields;
 
     /** The set of forcefield expressions that have been added to
         the system, but have yet to be fully resolved. */
@@ -109,7 +118,7 @@ private:
 
 /** Return the forcefields contained in this system, indexed by
     their ForceFieldID */
-inline const QHash<ForceFieldID,ForceField>& System::forcefields() const
+inline const QHash<ForceFieldID,ForceField>& System::forceFields() const
 {
     return ffields;
 }

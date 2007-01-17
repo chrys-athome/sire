@@ -16,8 +16,10 @@ QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const System &system)
 {
     writeHeader(ds, r_system, 1);
 
-    SharedDataStream(ds) << system.ffields << system.tmp_expressions
-                         << static_cast<const SystemData&>(system);
+    SharedDataStream sds(ds);
+     
+    sds << system.ffields << system.tmp_expressions
+        << static_cast<const SystemData&>(system);
 
     return ds;
 }
@@ -29,8 +31,10 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, System &system)
 
     if (v == 1)
     {
-        SharedDataStream sds(ds) >> system.ffields >> system.tmp_expressions
-                                 >> static_cast<SystemData&>(system);
+        SharedDataStream sds(ds);
+         
+        sds >> system.ffields >> system.tmp_expressions
+            >> static_cast<SystemData&>(system);
     }
     else
         throw version_error(v, "1", r_system, CODELOC);
@@ -43,7 +47,7 @@ System::System() : SystemData()
 {}
 
 /** Construct a new simulation System with a specified name */
-System::System(QString name) : SystemData(name)
+System::System(const QString &name) : SystemData(name)
 {}
 
 /** Private constructor used by SimSystem to create a System from

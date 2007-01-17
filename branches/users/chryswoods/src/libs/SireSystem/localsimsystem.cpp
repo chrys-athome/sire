@@ -1,37 +1,29 @@
 
 #include "localsimsystem.h"
 
+#include "SireMol/property.h"
+
+#include "SireError/errors.h"
+
 using namespace SireSystem;
+using namespace SireMol;
 
 /** Construct a simulation that performs the moves 'moves' on
     the system 'system' */
 LocalSimSystem::LocalSimSystem(const System &system, const Moves &moves)
-               : SimSystem(),
-                 _system(system), _moves(moves)
+               : SimSystem(), SystemData(system),
+                 mvs(moves)
 {
     //initialise the moves with the system - this ensures
     //that the moves are compatible with the system, thus
     //throwing any exceptions now, rather than after a weeks
     //fruitless simulation ;-)
-    _moves.initialise(_system);
+    mvs.initialise(*this);
 }
 
 /** Destructor */
 LocalSimSystem::~LocalSimSystem()
 {}
-
-/** Return the energy of the component 'component'
-    of the system */
-double LocalSimSystem::energy(const Function &component)
-{
-    return _system.energy(component);
-}
-
-/** Return a checkpoint of this System */
-System LocalSimSystem::checkpoint()
-{
-    return _system;
-}
 
 /** Rollback to the supplied checkpoint. The checkpoint
     must have a lower version number than the current
@@ -45,11 +37,11 @@ void LocalSimSystem::rollback(const System &checkpoint)
 {
     //the ID numbers must match - we cannot change to
     //a new system during a running simulation!
-    if (_system.ID() != checkpoint.ID())
+    if (this->ID() != checkpoint.ID())
         throw SireError::incompatible_error( QObject::tr(
             "Cannot roll back to a different simulation system! "
             "(current == \"%1\" (%2), checkpoint == \"%3\" (%4))")
-                .arg(_system.name()).arg(_system.ID())
+                .arg(this->name()).arg(this->ID())
                 .arg(checkpoint.name()).arg(checkpoint.ID()),
                     CODELOC );
 
@@ -57,35 +49,75 @@ void LocalSimSystem::rollback(const System &checkpoint)
     //to the current system, or that implies that the
     //checkpoint has been modified outside of this
     //simulation
-    else if (_system.version() < checkpoint.version())
+    else if (this->version() < checkpoint.version())
         throw SireError::version_error( QObject::tr(
             "The version number of the checkpoint (%1) is "
             "greater than that of the simulation (%2)! "
             "This implies that the checkpoint has been "
             "modified outside of this simulation.")
                 .arg(checkpoint.version().toString(),
-                     _system.version().toString()), CODELOC );
+                     this->version().toString()), CODELOC );
 
-    _system = checkpoint;
+    SystemData::operator=(checkpoint);
+    ffields = checkpoint.forceFields();
 }
 
-/** Run 'nmoves' moves on the system. Return a reference to the
-    resulting system after the moves. */
-const System& LocalSimSystem::run(quint32 nmoves)
+/** Run 'nmoves' moves on the system. Return a copy
+    of the System after the moves. */
+System LocalSimSystem::run(quint32 nmoves)
 {
-    _moves.move(system, nmoves);
+    mvs.run(*this, nmoves);
 
-    return _system;
+    return this->makeSystem(*this, ffields);
 }
 
-/** Return the ID number of the System */
-SystemID LocalSimSystem::ID()
+/** Change the molecule 'molecule' in this System */
+void LocalSimSystem::change(const Molecule &molecule)
 {
-    return _system.ID();
+    //should I make sure that this maintains the invariant?
+    
+    //change the molecule in all forcefields
+    for (QHash<ForceFieldID,ForceField>::iterator it = ffields.begin();
+         it != ffields.end();
+         ++it)
+    {
+        it->change(molecule);
+    }
+         
+    //now change the molecule in the SystemData
+    SystemData::change(molecule);
 }
 
-/** Return the version number of the System */
-Version LocalSimSystem::version()
+/** Change the residue 'residue' in this System */
+void LocalSimSystem::change(const Residue &residue)
 {
-    return _system.version();
+    //should I make sure that this maintains the invariant?
+    
+    //change the residue in all forcefields
+    for (QHash<ForceFieldID,ForceField>::iterator it = ffields.begin();
+         it != ffields.end();
+         ++it)
+    {
+        it->change(residue);
+    }
+         
+    //now change the residue in the SystemData
+    SystemData::change(residue);
+}
+
+/** Change the atom 'atom' in this System */
+void LocalSimSystem::change(const NewAtom &atom)
+{
+    //should I make sure that this maintains the invariant?
+    
+    //change the atom in all forcefields
+    for (QHash<ForceFieldID,ForceField>::iterator it = ffields.begin();
+         it != ffields.end();
+         ++it)
+    {
+        it->change(atom);
+    }
+         
+    //now change the atom in the SystemData
+    SystemData::change(atom);
 }
