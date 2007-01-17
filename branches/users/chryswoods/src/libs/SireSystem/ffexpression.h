@@ -49,6 +49,9 @@ public:
 
     ~FFExpression();
 
+    bool operator==(const FFExpression &other) const;
+    bool operator!=(const FFExpression &other) const;
+
     const QSet<ForceFieldID>& forcefieldIDs() const;
     const QSet<Function>& dependencies() const;
 
