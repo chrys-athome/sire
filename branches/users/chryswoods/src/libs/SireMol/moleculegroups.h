@@ -1,19 +1,19 @@
-#ifndef SIRESYSTEM_MOLECULEGROUPS_H
-#define SIRESYSTEM_MOLECULEGROUPS_H
+#ifndef SIREMOL_MOLECULEGROUPS_H
+#define SIREMOL_MOLECULEGROUPS_H
 
 #include "moleculegroup.h"
 
 SIRE_BEGIN_HEADER
 
-namespace SireSystem
+namespace SireMol
 {
 class MoleculeGroups;
 }
 
-QDataStream& operator<<(QDataStream&, const SireSystem::MoleculeGroups&);
-QDataStream& operator>>(QDataStream&, SireSystem::MoleculeGroups&);
+QDataStream& operator<<(QDataStream&, const SireMol::MoleculeGroups&);
+QDataStream& operator>>(QDataStream&, SireMol::MoleculeGroups&);
 
-namespace SireSystem
+namespace SireMol
 {
 
 /** This class holds a collection of MoleculeGroups, together
@@ -22,7 +22,7 @@ namespace SireSystem
     
     @author Christopher Woods
 */
-class SIRESYSTEM_EXPORT MoleculeGroups
+class SIREMOL_EXPORT MoleculeGroups
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const MoleculeGroups&);
@@ -71,6 +71,8 @@ public:
     
     int nMolecules() const;
     
+    void assertContains(MoleculeGroupID groupid) const;
+    
 private:
     void reindex();
     void synchronise(const Molecule &molecule);
@@ -89,7 +91,7 @@ private:
 
 }
 
-Q_DECLARE_METATYPE(SireSystem::MoleculeGroups);
+Q_DECLARE_METATYPE(SireMol::MoleculeGroups);
 
 SIRE_END_HEADER
 

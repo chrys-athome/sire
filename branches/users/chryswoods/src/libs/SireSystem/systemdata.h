@@ -82,6 +82,12 @@ friend QDataStream& ::operator<<(QDataStream&, const SystemData&);
 friend QDataStream& ::operator>>(QDataStream&, SystemData&);
 
 public:
+    SystemData();
+    
+    SystemData(const QString &name);
+
+    SystemData(const SystemData &other);
+    
     virtual ~SystemData();
 
     bool operator==(const SystemData &other) const;
@@ -98,33 +104,6 @@ public:
 
     const Values& parameters() const;
 
-protected:
-  
-    SystemData();
-    SystemData(const QString &name);
-
-    SystemData(const SystemData &other);
-
-    void add(const FFExpression &ff_equation);
-    void add(const QHash<Function,FFExpression> &ff_equations);
-
-    void remove(const FFExpression &ff_equation);
-    void remove(const QList<FFExpression> &ff_equations);
-    void remove(const Function &function);
-    void remove(const QSet<Function> &functions);
-
-    bool contains(const Function &function) const;
-
-    void replace(const FFExpression &newexpr);
-    void replace(const FFExpression &oldexpr, const FFExpression &newexpr);
-    void replace(const Function &oldfunc, const FFExpression &newexpr);
-
-    //void recordAverage(const FFExpression &ff_equation,
-    //                   const Averager &averager);
-
-    void add(const MoleculeGroup &group);
-    void remove(const MoleculeGroup &group);
-
     void change(const Molecule &molecule);
     void change(const Residue &residue);
     void change(const NewAtom &atom);
@@ -133,109 +112,26 @@ protected:
 
     void updateStatistics();
 
-    double energy(const FFExpression &expression);
-    double energy(const Function &component);
-    double energy(const FFComponent &component);
-
-    void setParameter(const Symbol &param, double value);
-
-    virtual Values getEnergyComponents(ForceFieldID ffid)=0;
-    virtual Values getEnergyComponents(const QSet<ForceFieldID> &ffids)=0;
-    virtual Values getEnergyComponents(const QSet<FFComponent> &components)=0;
-
-    virtual double getEnergyComponent(const FFComponent &component)=0;
+protected:
+    void setForceFields(ForceFieldsBase &forcefields);
 
     void incrementMinorVersion();
     void incrementMajorVersion();
 
 private:
 
-    /** Small internal class used by SystemData to hold
-        metainformation about the forcefield expressions used
-        to calculate energies */
-    class ExpressionInfo
-    {
+    /** All of the MoleculeGroups in the System */
+    MoleculeGroups molgroups;
 
-    friend QDataStream& ::operator<<(QDataStream&, const SystemData&);
-    friend QDataStream& ::operator>>(QDataStream&, SystemData&);
-
-    public:
-        ExpressionInfo();
-
-        ExpressionInfo(const FFExpression &ex,
-                       const QHash<SymbolID,ExpressionInfo> &ff_equations);
-
-        ExpressionInfo(const ExpressionInfo &other);
-
-        ~ExpressionInfo();
-
-        ExpressionInfo& operator=(const ExpressionInfo &other);
-
-        /** Return the expression that is described by
-            this object */
-        const FFExpression& expression() const
-        {
-            return ex;
-        }
-
-        /** Return all of the dependencies of this expression
-            (all expressions on which this one depends, and before
-            those, all that they depend on etc.) - this will
-            return them in an order such that the first
-            expressions don't depend on anything, and then
-            each subsequent expression depends only on
-            those that have come before. */
-        const QVector<FFExpression>& dependencies() const
-        {
-            return deps;
-        }
-
-        /** Return the complete set of ID numbers of forcefields
-            that contain components that are required by this
-            expression, or required by any expression on
-            which this depends. */
-        const QSet<ForceFieldID>& forcefieldIDs() const
-        {
-            return ffids;
-        }
-
-    private:
-        void validateDependencies(const FFExpression &ffexpression,
-                                  const QHash<SymbolID,ExpressionInfo> &ff_equations);
-        
-        /** This is the actual expression */
-        FFExpression ex;
-
-        /** The list of expressions on which this expression depends */
-        QVector<FFExpression> deps;
-
-        /** The complete list of ForceFieldIDs of all of the forcefields
-            on which this expression depends (includes dependencies from
-            expressions that this depends on) */
-        QSet<ForceFieldID> ffids;
-    };
-
-    double energy(const ExpressionInfo &expr);
-    
-    /** Hash mapping all of the different forcefield functions
-        to their corresponding equation infos */
-    QHash<SymbolID, ExpressionInfo> ff_equations;
+    /** Pointer to the object containing all of the forcefields
+        and forcefield equations in the System */
+    ForceFieldsBase *ffields;
 
     /** Hash mapping all of the forcefield functions that should be averaged
         to their corresponding averaging function (which includes the running
         average) */
     //QHash<SymbolID, Averager> ff_averages;
-
-    /** A collection of parameters of this forcefield */
-    Values ff_params;
-
-    /** A cache of component energies (this is cleared whenever the
-        system is changed) */
-    QHash<SymbolID, double> cached_energies;
-
-    /** Hash mapping the groups of Molecules in this system to their ID */
-    QHash<MoleculeGroupID, MoleculeGroup> molgroups;
-
+    
     /** Hash mapping the monitors in this system to their ID */
     //QHash<MonitorID, Monitor> mntrs;
 

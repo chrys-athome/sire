@@ -1,5 +1,5 @@
-#ifndef SIRESYSTEM_MOLECULEGROUP_H
-#define SIRESYSTEM_MOLECULEGROUP_H
+#ifndef SIREMOL_MOLECULEGROUP_H
+#define SIREMOL_MOLECULEGROUP_H
 
 #include <QVector>
 #include <QHash>
@@ -7,14 +7,14 @@
 
 #include "moleculegroupid.h"
 
-#include "SireMol/molecule.h"
-#include "SireMol/moleculeid.h"
+#include "molecule.h"
+#include "moleculeid.h"
 
 #include "SireBase/idmajminversion.h"
 
 SIRE_BEGIN_HEADER
 
-namespace SireSystem
+namespace SireMol
 {
 
 namespace detail
@@ -25,17 +25,14 @@ class MoleculeGroupPvt;
 class MoleculeGroup;
 }
 
-QDataStream& operator<<(QDataStream&, const SireSystem::detail::MoleculeGroupPvt&);
-QDataStream& operator>>(QDataStream&, SireSystem::detail::MoleculeGroupPvt&);
+QDataStream& operator<<(QDataStream&, const SireMol::detail::MoleculeGroupPvt&);
+QDataStream& operator>>(QDataStream&, SireMol::detail::MoleculeGroupPvt&);
 
-QDataStream& operator<<(QDataStream&, const SireSystem::MoleculeGroup&);
-QDataStream& operator>>(QDataStream&, SireSystem::MoleculeGroup&);
+QDataStream& operator<<(QDataStream&, const SireMol::MoleculeGroup&);
+QDataStream& operator>>(QDataStream&, SireMol::MoleculeGroup&);
 
-namespace SireSystem
+namespace SireMol
 {
-
-using SireMol::Molecule;
-using SireMol::MoleculeID;
 
 using SireBase::Version;
 
@@ -47,7 +44,7 @@ namespace detail
 
     @author Christopher Woods
 */
-class SIRESYSTEM_EXPORT MoleculeGroupPvt : public QSharedData
+class SIREMOL_EXPORT MoleculeGroupPvt : public QSharedData
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const MoleculeGroupPvt&);
@@ -81,15 +78,17 @@ public:
 
     void add(const Molecule &molecule);
     void change(const Molecule &molecule);
-    void remove(const Molecule &molecule);
+    bool remove(const Molecule &molecule);
 
     void add(const QVector<Molecule> &molecules);
-    void change(const QVector<Molecule> &molecules);
-    void remove(const QVector<Molecule> &molecules);
+    bool change(const QVector<Molecule> &molecules);
+    bool remove(const QVector<Molecule> &molecules);
 
     void rename(const QString &newname);
 
     bool contains(MoleculeID molid) const;
+
+    void assertContains(MoleculeID molid) const;
 
 private:
     /** Incremint used to increment that ID number */
@@ -149,7 +148,7 @@ inline bool MoleculeGroupPvt::contains(MoleculeID molid) const
 
     @author Christopher Woods
 */
-class SIRESYSTEM_EXPORT MoleculeGroup
+class SIREMOL_EXPORT MoleculeGroup
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const MoleculeGroup&);
@@ -307,8 +306,8 @@ inline int MoleculeGroup::count() const
 
 }
 
-Q_DECLARE_METATYPE(SireSystem::detail::MoleculeGroupPvt);
-Q_DECLARE_METATYPE(SireSystem::MoleculeGroup);
+Q_DECLARE_METATYPE(SireMol::detail::MoleculeGroupPvt);
+Q_DECLARE_METATYPE(SireMol::MoleculeGroup);
 
 SIRE_END_HEADER
 

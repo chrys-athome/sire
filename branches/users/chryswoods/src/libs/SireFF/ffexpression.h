@@ -1,5 +1,5 @@
-#ifndef SIRESYSTEM_FFEXPRESSION_H
-#define SIRESYSTEM_FFEXPRESSION_H
+#ifndef SIREFF_FFEXPRESSION_H
+#define SIREFF_FFEXPRESSION_H
 
 #include "SireCAS/values.h"
 #include "SireCAS/expression.h"
@@ -8,19 +8,19 @@
 #include "SireCAS/function.h"
 #include "SireCAS/functions.h"
 
-#include "SireFF/forcefieldid.h"
+#include "forcefieldid.h"
 
 SIRE_BEGIN_HEADER
 
-namespace SireSystem
+namespace SireFF
 {
 class FFExpression;
 }
 
-QDataStream& operator<<(QDataStream&, const SireSystem::FFExpression&);
-QDataStream& operator>>(QDataStream&, SireSystem::FFExpression&);
+QDataStream& operator<<(QDataStream&, const SireFF::FFExpression&);
+QDataStream& operator>>(QDataStream&, SireFF::FFExpression&);
 
-namespace SireSystem
+namespace SireFF
 {
 
 using SireCAS::Symbol;
@@ -29,14 +29,12 @@ using SireCAS::Function;
 using SireCAS::Functions;
 using SireCAS::Values;
 
-using SireFF::ForceFieldID;
-
 /** This class is used by System to hold metainformation
     about an energy expression.
 
     @author Christopher Woods
 */
-class SIRESYSTEM_EXPORT FFExpression
+class SIREFF_EXPORT FFExpression
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const FFExpression&);
@@ -120,7 +118,7 @@ inline double FFExpression::evaluate(const Values &values) const
 
 }
 
-Q_DECLARE_METATYPE(SireSystem::FFExpression);
+Q_DECLARE_METATYPE(SireFF::FFExpression);
 
 SIRE_END_HEADER
 

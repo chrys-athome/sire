@@ -3,16 +3,15 @@
 
 #include "moleculegroup.h"
 
-#include "SireMol/moleculeversion.h"
+#include "moleculeversion.h"
 #include "SireMol/errors.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
-using namespace SireSystem;
-using namespace SireSystem::detail;
-
 using namespace SireMol;
+using namespace SireMol::detail;
+
 using namespace SireStream;
 using namespace SireBase;
 
@@ -362,7 +361,7 @@ void MoleculeGroupPvt::rename(const QString &newname)
 static const RegisterMetaType<MoleculeGroup> r_group;
 
 /** Serialise to a binary data stream */
-QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const MoleculeGroup &group)
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const MoleculeGroup &group)
 {
     writeHeader(ds, r_group, 1);
 
@@ -372,7 +371,7 @@ QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const MoleculeGroup &
 }
 
 /** Deserialise from a binary data stream */
-QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, MoleculeGroup &group)
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MoleculeGroup &group)
 {
     VersionID v = readHeader(ds, r_group);
 

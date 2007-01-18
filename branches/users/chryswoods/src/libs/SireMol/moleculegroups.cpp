@@ -4,14 +4,14 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
-using namespace SireSystem;
+using namespace SireMol;
 using namespace SireStream;
 
 static const RegisterMetaType<MoleculeGroups> r_molgroups;
 
 /** Serialise to a binary data stream */
-QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, 
-                                          const MoleculeGroups &molgroups)
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, 
+                                       const MoleculeGroups &molgroups)
 {
     writeHeader(ds, r_molgroups, 1);
     
@@ -33,8 +33,8 @@ QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds,
 }
 
 /** Deserialise from a binary data stream */
-QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, 
-                                          MoleculeGroups &molgroups)
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, 
+                                       MoleculeGroups &molgroups)
 {
     VersionID v = readHeader(ds, r_molgroups);
     
@@ -208,28 +208,214 @@ bool MoleculeGroups::remove(const QString &groupname)
 /** Add the molecule 'molecule' to the group with ID == groupid. This
     throws an exception if this molecule already exists in this group.
     
+    \throw SireMol::missing_group
     \throw SireMol::duplicate_molecule
 */
-bool MoleculeGroups::add(const Molecule &molecule, MoleculeGroupID groupid)
+void MoleculeGroups::add(const Molecule &molecule, MoleculeGroupID groupid)
 {
+    this->assertContains(groupid);
     
+    molgroups[groupid].add(molecule);
+    index[molecule.ID()].insert(groupid);
 }
 
-bool MoleculeGroups::remove(const Molecule &molecule, MoleculeGroupID groupid);
+/** Remove the molecule 'molecule' from the group with ID == groupid */
+bool MoleculeGroups::remove(const Molecule &molecule, MoleculeGroupID groupid)
+{
+    if (molgroups.contains(groupid))
+    {
+        if (molgroups[groupid].remove(molecule))
+        {
+            QSet<MoleculeGroupID> groups_containing_mol = index.value(molecule.ID());
+            
+            groups_containing_mol.remove(groupid);
+            
+            if (groups_containing_mol.isEmpty())
+                index.remove(groupid);
+            else
+                index[groupid] = groups_containing_mol;
+                
+            return true;
+        }
+    }
+    
+    return false;
+}
 
-bool MoleculeGroups::change(const Molecule &molecule);
-bool MoleculeGroups::remove(const Molecule &molecule);
+/** Change the molecule 'molecule' */
+bool MoleculeGroups::change(const Molecule &molecule)
+{
+    QHash< MoleculeID, QSet<MoleculeGroupID> >::const_iterator 
+                                                  it = index.constFind(molecule.ID());
+                                                  
+    if (it != index.constEnd())
+    {
+        const QSet<MoleculeGroupID> &groupids = it.value();
+        
+        foreach (MoleculeGroupID groupid, groupids)
+        {
+            molgroups[groupid].change(molecule);
+        }
+        
+        return true;
+    }
+    else
+        return false;
+}
 
-QVector<Molecule> MoleculeGroups::molecules() const;
+/** Remove the molecule 'molecule' */
+bool MoleculeGroups::remove(const Molecule &molecule)
+{
+    QHash< MoleculeID, QSet<MoleculeGroupID> >::const_iterator 
+                                                  it = index.constFind(molecule.ID());
+                                                  
+    if (it != index.constEnd())
+    {
+        const QSet<MoleculeGroupID> &groupids = it.value();
+        
+        foreach (MoleculeGroupID groupid, groupids)
+        {
+            molgroups[groupid].remove(molecule);
+        }
+        
+        index.remove(molecule.ID());
+        
+        return true;
+    }
+    else
+        return false;
+}
 
-QVector<MoleculeGroup> MoleculeGroups::groups() const;
-QVector<MoleculeGroup> MoleculeGroups::groups(MoleculeID molid) const;
+/** Return an array of all of the molecules in the group */
+QVector<Molecule> MoleculeGroups::molecules() const
+{
+    QVector<Molecule> allmols;
+    allmols.resize(index.count());
+    
+    Molecule *mols_array = allmols.data();
 
-const MoleculeGroup& MoleculeGroups::group(MoleculeGroupID groupid) const;
-const MoleculeGroup& MoleculeGroups::group(const QString &name) const;
+    int i = 0;
 
-bool MoleculeGroups::contains(MoleculeID molid) const;
+    for (QHash< MoleculeID, QSet<MoleculeGroupID>::const_iterator it = index.begin();
+         it = index.end();
+         ++it)
+    {
+        //just get the first available copy of the molecule
+        mols_array[i] = molgroups[ *(it->begin()) ].molecule(it.key());
+        
+        ++i;
+    }
+    
+    return allmols;
+}
 
-int MoleculeGroups::count() const;
+/** Return an array of all of the groups in this set */
+QVector<MoleculeGroup> MoleculeGroups::groups() const
+{
+    if ( molgroups.count() == 0 )
+        return QVector<MoleculeGroup>();
+    else
+    {
+        QVector<MoleculeGroup> allgroups;
+        allgroups.resize(molgroups.count());
+        
+        MoleculeGroup *group_array = allgroups.data();
+    
+        int i = 0;
+    
+        for (QHash<MoleculeGroupID,MoleculeGroup>::const_iterator 
+                                                    it = molgroups.begin();
+             it != molgroups.end();
+             ++it)
+        {
+            group_array[i] = *it;
+            
+            ++i;
+        }
+        
+        return allgroups;
+    }
+}
 
-int MoleculeGroups::nMolecules() const;
+/** Return all of the MoleculeGroups that contain the molecule with 
+    ID == molid */
+QVector<MoleculeGroup> MoleculeGroups::groups(MoleculeID molid) const
+{
+    QHash< MoleculeID, QSet<MoleculeGroupID> >::const_iterator it = index.find(molid);
+    
+    if (it != index.end())
+    {
+        const QSet<MoleculeGroupID> &groupids = *it;
+        
+        QVector<MoleculeGroup> groups_containing_mol;
+        groups_containing_mol.resize(groupids.count());
+        
+        MoleculeGroup *groups_array = groups_containing_mol.data();
+        
+        int i = 0;
+        
+        foreach (MoleculeGroupID groupid, groupids)
+        {
+            groups_array[i] = molgroups[groupid];
+            ++i;
+        }
+        
+        return groups_containing_mol;
+    }
+    else
+        return QVector<MoleculeGroup>();
+}
+
+/** Return the MoleculeGroup with ID == groupid
+
+    \throw SireMol::missing_group
+*/
+const MoleculeGroup& MoleculeGroups::group(MoleculeGroupID groupid) const
+{
+    QHash<MoleculeGroupID,MoleculeGroup>::const_iterator it = molgroups.find(groupid);
+    
+    if (it == molgroups.end())
+        this->assertContains(groupid);
+        
+    return *it;
+}
+
+/** Return the first MoleculeGroup that is called 'name' 
+
+    \throw SireMol::missing_group
+*/
+const MoleculeGroup& MoleculeGroups::group(const QString &name) const
+{
+    for (QHash<MoleculeGroupID,MoleculeGroup>::const_iterator it = molgroups.begin();
+         it != molgroups.end();
+         ++it)
+    {
+        if (it->name() == name)
+            return *it;
+    }
+    
+    throw SireMol::missing_group( QObject::tr(
+              "There is no MoleculeGroup called \"%1\" in the set of MoleculeGroups")
+                  .arg(name), CODELOC );
+    
+    return *(molgroups.begin());
+}
+
+/** Return whether or not the molecule with ID == molid is in one of the
+    groups in this set. */
+bool MoleculeGroups::contains(MoleculeID molid) const
+{
+    return index.contains(molid);
+}
+
+/** Return the number of MoleculeGroups in this set */
+int MoleculeGroups::count() const
+{
+    return molgroups.count();
+}
+
+/** Return the number of molecules in this set */
+int MoleculeGroups::nMolecules() const
+{
+    return index.count();
+}

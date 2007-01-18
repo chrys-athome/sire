@@ -1,18 +1,18 @@
-#ifndef SIRESYSTEM_MOLECULEGROUPID_H
-#define SIRESYSTEM_MOLECULEGROUPID_H
+#ifndef SIREMOL_MOLECULEGROUPID_H
+#define SIREMOL_MOLECULEGROUPID_H
 
-#include "SireMol/id.h"
+#include "id.h"
 
 SIRE_BEGIN_HEADER
 
-namespace SireSystem
+namespace SireMol
 {
 
 /** This ID number is used to identify a MoleculeGroup.
 
     @author Christopher Woods
 */
-class SIRESYSTEM_EXPORT MoleculeGroupID : public SireMol::IDBase
+class SIREMOL_EXPORT MoleculeGroupID : public IDBase
 {
 
 public:
@@ -32,7 +32,7 @@ public:
 }
 
 /** This is a movable type */
-Q_DECLARE_TYPEINFO(SireSystem::MoleculeGroupID, Q_MOVABLE_TYPE);
+Q_DECLARE_TYPEINFO(SireMol::MoleculeGroupID, Q_MOVABLE_TYPE);
 
 SIRE_END_HEADER
 

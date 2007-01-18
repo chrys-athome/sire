@@ -1,6 +1,4 @@
 
-#include "SireSystem/qhash_siresystem.h"
-
 #include "ffexpression.h"
 
 #include "SireFF/ffcomponent.h"
@@ -12,19 +10,12 @@
 
 using namespace SireCAS;
 using namespace SireFF;
-using namespace SireSystem;
 using namespace SireStream;
 
 static const RegisterMetaType<FFExpression> r_ffexp;
 
-/** Hash this expression */
-uint qHash(const FFExpression &ffexp)
-{
-    return ::qHash(ffexp.function());
-}
-
 /** Serialise to a binary data stream */
-QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const FFExpression &ffexp)
+QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const FFExpression &ffexp)
 {
     writeHeader(ds, r_ffexp, 1);
     
@@ -36,7 +27,7 @@ QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const FFExpression &f
 }
 
 /** Deserialise from a binary data stream */
-QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, FFExpression &ffexp)
+QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, FFExpression &ffexp)
 {
     VersionID v = readHeader(ds, r_ffexp);
     
