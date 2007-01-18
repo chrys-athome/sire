@@ -31,9 +31,10 @@ QDataStream SIRESTREAM_EXPORT &operator<<(QDataStream &ds,
     writeHeader(ds, r_molgrouppvt, 1);
 
     SharedDataStream(ds) << molgrouppvt.mols
-                         << molgrouppvt.idx
                          << molgrouppvt.nme
                          << molgrouppvt.id_and_version;
+
+    //no need to stream the index as this can be reconstructed
 
     return ds;
 }
@@ -47,9 +48,10 @@ QDataStream SIRESTREAM_EXPORT &operator>>(QDataStream &ds,
     if (v == 1)
     {
         SharedDataStream(ds) >> molgrouppvt.mols
-                             >> molgrouppvt.idx
                              >> molgrouppvt.nme
                              >> molgrouppvt.id_and_version;
+                             
+        molgrouppvt.reindex();
     }
     else
         throw version_error(v, "1", r_molgrouppvt, CODELOC);
@@ -167,8 +169,11 @@ const Molecule& MoleculeGroupPvt::molecule(MoleculeID molid) const
     return mols.constData()[it.value()];
 }
 
-/** Add the molecule 'molecule' to this group. This replaces any existing
-    copy of the molecule */
+/** Add the molecule 'molecule' to this group. This throws an  
+    exception if this molecule already exists in this group.
+     
+    \throw SireMol::duplicate_molecule
+*/
 void MoleculeGroupPvt::add(const Molecule &molecule)
 {
     QHash<MoleculeID,int>::const_iterator it = idx.constFind(molecule.ID());
@@ -238,11 +243,18 @@ void MoleculeGroupPvt::remove(const Molecule &molecule)
     }
 }
 
-/** Add a whole load of molecules to this group - this will replace
-    any existing copies of a molecule with the copy from
-    'molecules' */
+/** Add a whole load of molecules to this group - this will 
+    throw an exception if any of the molecules already exist
+    in this group.
+     
+    \throw SireMol::duplicate_molecule
+*/
 void MoleculeGroupPvt::add(const QVector<Molecule> &molecules)
 {
+    //are there any duplicates?
+    int n = molecules.count();
+    const Molecule *molecules_array = 
+
     bool changed = false;
     bool added = false;
 

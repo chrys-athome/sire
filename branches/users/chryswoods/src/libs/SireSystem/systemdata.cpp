@@ -315,20 +315,38 @@ bool SystemData::operator!=(const SystemData &other) const
     return ID() != other.ID() or version() != other.version();
 }
 
+/** Increment the major version number of the System. The major number
+    is incremented if forcefields or groups are added or removed from 
+    the system. The minor version number is incremented if anything
+    else in the system is changed. */
+void SystemData::incrementMajorVersion()
+{
+    id_and_version.incrementMajor();
+    cached_energies.clear();
+}
+
+/** Increment the minor version number. This is incremented if any of the  
+    molecules or properties in the system are changed. */
+void SystemData::incrementMinorVersion()
+{
+    id_and_version.incrementMinor();
+    cached_energies.clear();
+}
+
 /** Return all of the equations that are part of this system */
-QSet<FFExpression> SystemData::equations() const
+QHash<Function,FFExpression> SystemData::equations() const
 {
     if (ff_equations.isEmpty())
-        return QSet<FFExpression>();
+        return QHash<Function,FFExpression>();
 
-    QSet<FFExpression> eqns;
+    QHash<Function,FFExpression> eqns;
     eqns.reserve(ff_equations.count());
 
     for (QHash<SymbolID,ExpressionInfo>::const_iterator it = ff_equations.begin();
          it != ff_equations.end();
          ++it)
     {
-        eqns.insert( it->expression() );
+        eqns.insert( it->expression().function(), it->expression() );
     }
 
     return eqns;
@@ -371,6 +389,10 @@ void SystemData::add(const FFExpression &equation)
 
     //add this to the list of expressions
     ff_equations.insert(equation.function().ID(), exprinfo);
+    
+    //changing the equations changes the major version
+    //of the system
+    this->incrementMajorVersion();
 }
 
 /** Add the set of expressions in 'equations' to the list
@@ -380,10 +402,15 @@ void SystemData::add(const FFExpression &equation)
 
     \throw SireError::dependency_error
 */
-void SystemData::add(const QSet<FFExpression> &equations)
+void SystemData::add(const QHash<Function, FFExpression> &equations)
 {
     //lots to do here... - need to resolve the right
     //order to add things....
+    #warning TODO SystemData::add
+
+    //changing the equations changes the major version
+    //of the system
+    this->incrementMajorVersion();
 }
 
 /** Remove all of the equations in 'equations'. These equations
@@ -392,7 +419,7 @@ void SystemData::add(const QSet<FFExpression> &equations)
 
     \throw SireError::dependency_error
 */
-void SystemData::remove(const QSet<FFExpression> &equations)
+void SystemData::remove(const QList<FFExpression> &equations)
 {
     //create a copy of the current list of expressions
     //so that it may be restored in something goes wrong...
@@ -401,7 +428,7 @@ void SystemData::remove(const QSet<FFExpression> &equations)
     try
     {
         //remove all of the supplied equations from the current set
-        for (QSet<FFExpression>::const_iterator it = equations.constBegin();
+        for (QList<FFExpression>::const_iterator it = equations.constBegin();
              it != equations.constEnd();
              ++it)
         {
@@ -409,7 +436,7 @@ void SystemData::remove(const QSet<FFExpression> &equations)
         }
 
         //get the list of existing functions
-        QSet<FFExpression> remaining_expressions = this->equations();
+        QHash<Function, FFExpression> remaining_expressions = this->equations();
 
         //clear all of the expressions
         ff_equations.clear();
@@ -433,8 +460,8 @@ void SystemData::remove(const QSet<FFExpression> &equations)
 */
 void SystemData::remove(const FFExpression &equation)
 {
-    QSet<FFExpression> equations;
-    equations.insert(equation);
+    QList<FFExpression> equations;
+    equations.append(equation);
 
     this->remove(equations);
 }
@@ -539,32 +566,64 @@ void SystemData::replace(const FFExpression &newexpr)
 //void recordAverage(const FFExpression &ff_equation,
 //                   const Averager &averager);
 
-//void add(const MoleculeGroup &group);
-//void remove(const MoleculeGroup &group);
+/** Add the MoleculeGroup 'group' to this System. */
+void SystemData::add(const MoleculeGroup &group)
+{
+    molgroups.add(group);
+    this->incrementMajorVersion();
+}
+
+/** Remove the MoleculeGroup 'group' from this System */
+void SystemData::remove(const MoleculeGroup &group)
+{
+    if (molgroups.remove(group))
+        this->incrementMajorVersion();
+}
+
+/** Remove the molecule 'molecule' from the system */
+bool SystemData::remove(const Molecule &molecule)
+{
+    if (molgroups.remove(molecule))
+    {
+        this->incrementMinor();
+        return true;
+    }
+    else
+        return false;
+}
 
 /** Change the molecule 'molecule' */
-void SystemData::change(const Molecule &molecule)
+bool SystemData::change(const Molecule &molecule)
 {
-    cached_energies.clear();
+    if ( molgroups.change(molecule) )
+    {
+        this->incrementMinorVersion();
+        return true;
+    }
+    else
+        return false;
 }
 
 /** Change the residue 'residue' */
-void SystemData::change(const Residue &residue)
+bool SystemData::change(const Residue &residue)
 {
-    cached_energies.clear();
+    return this->change( residue.molecule() );
 }
 
 /** Change the atom 'atom' */
-void SystemData::change(const NewAtom &atom)
+bool SystemData::change(const NewAtom &atom)
 {
-    cached_energies.clear();
+    return this->change( atom.molecule() );
 }
 
 /** Update all of the statistics of the System. This calculates
     the values of all of the properties that should be averaged
     and adds them to their respective averages. */
 void SystemData::updateStatistics()
-{}
+{
+
+    this->incrementMinorVersion();
+}
 
 /** Set the parameter 'param' to the value 'value'. */
 void SystemData::setParameter(const Symbol &param, double value)
@@ -578,6 +637,8 @@ void SystemData::setParameter(const Symbol &param, double value)
 
         //update anything that depends on this parameter
         // .... how?
+        
+        this->updateMinorVersion();
     }
     catch(...)
     {

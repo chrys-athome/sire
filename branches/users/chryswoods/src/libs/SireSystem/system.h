@@ -110,12 +110,14 @@ protected:
 private:
     ForceField& getForceField(ForceFieldID ffid);
     
+    void extractEquations();
+    
     /** All of the forcefields in the system, indexed by ID */
     QHash<ForceFieldID, ForceField> ffields;
 
     /** The set of forcefield expressions that have been added to
         the system, but have yet to be fully resolved. */
-    QSet<FFExpression> tmp_expressions;
+    QHash<Function,FFExpression> tmp_expressions;
 
 };
 

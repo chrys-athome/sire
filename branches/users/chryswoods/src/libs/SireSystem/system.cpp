@@ -261,3 +261,135 @@ Values System::getEnergyComponents(const QSet<FFComponent> &components)
 
     return vals;
 }
+
+/** Add the forcefield 'forcefield' to this System. This
+    will replace any existing copy of the forcefield */
+void System::add(const ForceField &ffield)
+{
+    ffields.insert( ffield.ID(), ffield );
+}
+
+/** Extract all of the equations from the SystemData into this object.
+    This allows them to be manipulated at a time when they don't all
+    have to resolve their dependencies on one another. */
+void System::extractEquations()
+{
+    //need to move the list of expressions into the top list...
+    QHash<Function,FFExpression> current_equations = this->equations();
+    
+    if (not current_equations.isEmpty())
+    {
+        if (tmp_expressions.isEmpty())
+            tmp_expressions = current_equations;
+        else
+        {
+            for (QHash<Function,FFExpression>::const_iterator 
+                                          it = tmp_expressions.constBegin();
+                 it != tmp_expressions.constEnd();
+                 ++it)
+            {
+                current_equations.insert( it.key(), it.value() );
+            }
+        
+            current_equations = tmp_expressions;
+          
+            SystemData::remove( tmp_expressions.keys().toSet() );
+        }
+    }
+}
+
+/** Remove the forcefield 'forcefield' from this System */
+void System::remove(const ForceField &ffield)
+{
+    ffields.remove(ffield.ID());
+    
+    extractEquations();
+}
+
+/** Add the equation 'equation', used to calculate properties of the system.
+    This will replace any other equation that has the same function as this one. */
+void System::add(const FFExpression &ffexpression)
+{
+    tmp_expressions.insert(ffexpression.function(), ffexpression);
+}
+
+/** Remove the equation represented by the function 'func' */
+void System::remove(const Function &func)
+{
+    if ( this->contains(func) )
+    {
+        extractEquations();
+        tmp_expressions.remove(func);
+    }
+}
+
+/** Remove the equation 'equation' */
+void System::remove(const FFExpression &ffexpression)
+{
+    this->remove(ffexpression.function());
+}
+
+/** Add the MoleculeGroup 'group'. This will replace any existing
+    molecule group with the same ID number. */
+void System::add(const MoleculeGroup &group)
+{
+    SystemData::add(group);
+}
+
+/** Remove the MoleculeGroup 'group'. */
+void System::remove(const MoleculeGroup &group)
+{
+    SystemData::remove(group);
+}
+
+/** Change the molecule 'molecule' */
+void System::change(const Molecule &molecule)
+{
+    for (QHash<ForceFieldID,ForceField>::iterator it = ffields.begin();
+         it != ffields.constEnd();
+         ++it)
+    {
+        it->change(molecule);
+    }
+    
+    SystemData::change(molecule);
+}
+
+/** Change the residue 'residue' */
+void System::change(const Residue &residue)
+{
+    for (QHash<ForceFieldID,ForceField>::iterator it = ffields.begin();
+         it != ffields.constEnd();
+         ++it)
+    {
+        it->change(residue);
+    }
+    
+    SystemData::change(residue);
+}
+
+/** Change the atom 'atom' */
+void System::change(const NewAtom &atom)
+{
+    for (QHash<ForceFieldID,ForceField>::iterator it = ffields.begin();
+         it != ffields.constEnd();
+         ++it)
+    {
+        it->change(atom);
+    }
+    
+    SystemData::change(atom);
+}
+
+/** Remove the molecule 'molecule' from this system */
+void System::remove(const Molecule &molecule)
+{
+    for (QHash<ForceFieldID,ForceField>::iterator it = ffields.begin();
+         it != ffields.constEnd();
+         ++it)
+    {
+        it->remove(molecule);
+    }
+    
+    SystemData::remove(molecule);
+}

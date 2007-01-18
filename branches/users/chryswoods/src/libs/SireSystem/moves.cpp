@@ -159,6 +159,11 @@ static SharedPolyPointer<MovesBase> shared_null( new SameMoves() );
 Moves::Moves() : d(shared_null), sysid(0), ntotal(0), ncomplete(0)
 {}
 
+/** Construct from the passed moves */
+Moves::Moves(const MovesBase &moves)
+      : d(moves), sysid(0), ntotal(0), ncomplete(0)
+{}
+
 /** Construct from a passed Move - all moves in the set will 
     be this move */
 Moves::Moves(const Move &move)

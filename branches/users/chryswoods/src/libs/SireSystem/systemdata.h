@@ -82,6 +82,8 @@ friend QDataStream& ::operator<<(QDataStream&, const SystemData&);
 friend QDataStream& ::operator>>(QDataStream&, SystemData&);
 
 public:
+    virtual ~SystemData();
+
     bool operator==(const SystemData &other) const;
     bool operator!=(const SystemData &other) const;
     
@@ -92,7 +94,7 @@ public:
     const MoleculeGroup& group(MoleculeGroupID id) const;
     const QHash<MoleculeGroupID,MoleculeGroup>& groups() const;
 
-    QSet<FFExpression> equations() const;
+    QHash<Function,FFExpression> equations() const;
 
     const Values& parameters() const;
 
@@ -103,15 +105,15 @@ protected:
 
     SystemData(const SystemData &other);
 
-    virtual ~SystemData();
-
     void add(const FFExpression &ff_equation);
-    void add(const QSet<FFExpression> &ff_equations);
+    void add(const QHash<Function,FFExpression> &ff_equations);
 
     void remove(const FFExpression &ff_equation);
-    void remove(const QSet<FFExpression> &ff_equations);
+    void remove(const QList<FFExpression> &ff_equations);
     void remove(const Function &function);
     void remove(const QSet<Function> &functions);
+
+    bool contains(const Function &function) const;
 
     void replace(const FFExpression &newexpr);
     void replace(const FFExpression &oldexpr, const FFExpression &newexpr);
@@ -127,6 +129,8 @@ protected:
     void change(const Residue &residue);
     void change(const NewAtom &atom);
 
+    void remove(const Molecule &molecule);
+
     void updateStatistics();
 
     double energy(const FFExpression &expression);
@@ -140,6 +144,9 @@ protected:
     virtual Values getEnergyComponents(const QSet<FFComponent> &components)=0;
 
     virtual double getEnergyComponent(const FFComponent &component)=0;
+
+    void incrementMinorVersion();
+    void incrementMajorVersion();
 
 private:
 
