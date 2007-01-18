@@ -437,6 +437,32 @@ Values FFBase::energies()
     return nrg_components;
 }
 
+/** Return the values of all of the specified energy components in this
+    forcefield
+    
+    \throw SireFF::missing_component
+*/
+Values FFBase::energies(const QSet<FFComponent> &components)
+{
+    if (components.isEmpty())
+        return Values();
+
+    Values all_vals = this->energies();
+    
+    Values specified_vals;
+    specified_vals.reserve(components.count());
+    
+    for (QSet<FFComponent>::const_iterator it = components.begin();
+         it != components.end();
+         ++it)
+    {
+        this->components().assertContains(*it);
+        specified_vals.set(*it, all_vals.value(*it));
+    }
+    
+    return specified_vals;
+}
+
 /** Change the molecule 'mol' (e.g. move it, or change its
     parameters). This does nothing if the molecule is not
     in this forcefield. Returns whether or not the forcefield

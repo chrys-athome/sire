@@ -97,8 +97,9 @@ public:
     const Values& parameters() const;
 
 protected:
-
-    SystemData(const QString &name = QObject::tr("Unnamed"));
+  
+    SystemData();
+    SystemData(const QString &name);
 
     SystemData(const SystemData &other);
 
@@ -134,6 +135,7 @@ protected:
 
     void setParameter(const Symbol &param, double value);
 
+    virtual Values getEnergyComponents(ForceFieldID ffid)=0;
     virtual Values getEnergyComponents(const QSet<ForceFieldID> &ffids)=0;
     virtual Values getEnergyComponents(const QSet<FFComponent> &components)=0;
 
@@ -191,6 +193,9 @@ private:
         }
 
     private:
+        void validateDependencies(const FFExpression &ffexpression,
+                                  const QHash<SymbolID,ExpressionInfo> &ff_equations);
+        
         /** This is the actual expression */
         FFExpression ex;
 
@@ -219,7 +224,7 @@ private:
 
     /** A cache of component energies (this is cleared whenever the
         system is changed) */
-    QHash<SymbolID, double> energy_cache;
+    QHash<SymbolID, double> cached_energies;
 
     /** Hash mapping the groups of Molecules in this system to their ID */
     QHash<MoleculeGroupID, MoleculeGroup> molgroups;

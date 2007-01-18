@@ -14,6 +14,8 @@ namespace SireSystem
 {
 class Moves;
 class MovesBase;
+
+class SameMoves;
 }
 
 QDataStream& operator<<(QDataStream&, const SireSystem::Moves&);
@@ -21,6 +23,9 @@ QDataStream& operator>>(QDataStream&, SireSystem::Moves&);
 
 QDataStream& operator<<(QDataStream&, const SireSystem::MovesBase&);
 QDataStream& operator>>(QDataStream&, SireSystem::MovesBase&);
+
+QDataStream& operator<<(QDataStream&, const SireSystem::SameMoves&);
+QDataStream& operator>>(QDataStream&, SireSystem::SameMoves&);
 
 namespace SireSystem
 {
@@ -68,6 +73,61 @@ public:
     virtual void initialise(SimSystem &system)=0;
 };
 
+/** This class represents moves which are a collection
+    of a single type of Moves
+    
+    @author Christopher Woods
+*/
+class SIRESYSTEM_EXPORT SameMoves : public MovesBase
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const SameMoves&);
+friend QDataStream& ::operator>>(QDataStream&, SameMoves&);
+
+public:
+    SameMoves();
+    
+    SameMoves(const Move &move);
+    
+    SameMoves(const SameMoves &other);
+    
+    ~SameMoves();
+    
+    static const char* typeName()
+    {
+        return "SireSystem::SameMoves";
+    }
+
+    const char* what() const
+    {
+        return SameMoves::typeName();
+    }
+    
+    SameMoves* clone() const
+    {
+        return new SameMoves(*this);
+    }
+    
+    int count() const
+    {
+        return 1;
+    }
+    
+    Move& nextMove()
+    {
+        return single_move;
+    }
+    
+    void initialise(SimSystem &system)
+    {
+        single_move.initialise(system);
+    }
+
+private:
+    /** The only move in this set */
+    Move single_move;
+};
+
 /** This is class holds a collection of moves that may
     be performed on the system, together with the
     rules on the order of how they are applied to
@@ -84,6 +144,7 @@ friend QDataStream& ::operator>>(QDataStream&, Moves&);
 public:
     Moves();
 
+    Moves(const Move &move);
     Moves(const MovesBase &moves);
 
     Moves(const Moves &other);
@@ -133,6 +194,7 @@ private:
 }
 
 Q_DECLARE_METATYPE(SireSystem::Moves);
+Q_DECLARE_METATYPE(SireSystem::SameMoves);
 
 SIRE_END_HEADER
 

@@ -101,12 +101,15 @@ protected:
     System(const SystemData &data,
            const QHash<ForceFieldID, ForceField> &forcefields);
 
+    Values getEnergyComponents(ForceFieldID ffid);
     Values getEnergyComponents(const QSet<ForceFieldID> &ffids);
     Values getEnergyComponents(const QSet<FFComponent> &components);
 
     double getEnergyComponent(const FFComponent &component);
 
 private:
+    ForceField& getForceField(ForceFieldID ffid);
+    
     /** All of the forcefields in the system, indexed by ID */
     QHash<ForceFieldID, ForceField> ffields;
 

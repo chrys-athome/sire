@@ -53,6 +53,7 @@ public:
     double energy(const FFComponent &component);
 
     Values energies();
+    Values energies(const QSet<FFComponent> &components);
 
     bool change(const Molecule &mol);
     bool change(const Residue &res);
@@ -145,6 +146,15 @@ inline double ForceField::energy()
 inline double ForceField::energy(const FFComponent &component)
 {
     return d().energy(component);
+}
+
+/** Return the energies of all of the specified components 
+
+    \throw SireFF::missing_component
+*/
+inline Values ForceField::energies(const QSet<FFComponent> &components)
+{
+    return d().energies(components);
 }
 
 /** Return the energies of all of the components */

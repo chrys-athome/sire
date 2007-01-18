@@ -37,10 +37,10 @@ void SIREFF_EXPORT export_FFComponent()
         .def( init<const Function&>() )
         .def( init<const FFComponent&>() )
 
-        .def( "forcefieldName", &FFComponent::forcefieldName )
-        .def( "forcefieldComponent", &FFComponent::forcefieldComponent )
+        .def( "forceFieldName", &FFComponent::forceFieldName )
+        .def( "forceFieldComponent", &FFComponent::forceFieldComponent )
 
-        .def( "forcefieldID", &FFComponent::forcefieldID )
+        .def( "forceFieldID", &FFComponent::forceFieldID )
     ;
 
     implicitly_convertible<Function, FFComponent>();

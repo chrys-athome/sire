@@ -1,14 +1,31 @@
 
+#include "SireSystem/qhash_siresystem.h"
+
 #include "systemdata.h"
 
 #include "SireBase/incremint.h"
 
+#include "SireMol/property.h"
+#include "SireMol/molecule.h"
+#include "SireMol/residue.h"
+#include "SireMol/newatom.h"
+
+#include "SireFF/ffcomponent.h"
+
+#include "SireSystem/moleculegroup.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
+
+#include "SireError/errors.h"
+#include "SireFF/errors.h"
 
 using namespace SireSystem;
 using namespace SireStream;
 using namespace SireBase;
+using namespace SireCAS;
+using namespace SireMol;
+using namespace SireFF;
 
 //////////
 ////////// Implementation of SystemData::ExpressionInfo
@@ -26,7 +43,7 @@ QString getString(const QSet<Function> &functions)
     {
         QSet<Function>::const_iterator it = functions.constBegin();
 
-        QString retval("[ %1").arg(it->toString());
+        QString retval = QString("[ %1").arg(it->toString());
 
         for( ++it; it != functions.constEnd(); ++it )
         {
@@ -65,7 +82,8 @@ void SystemData::ExpressionInfo::validateDependencies(const FFExpression &expres
                 "Cannot resolve all of the dependencies of the function \"%1\" "
                 "from the functions already in the System. "
                 "Missing == %2")
-                    .arg(expression.toString(), getString(missing_funcs)), CODELOC );
+                    .arg(expression.expression().toString(), 
+                         getString(missing_funcs)), CODELOC );
     }
 }
 
@@ -81,7 +99,7 @@ SystemData::ExpressionInfo::ExpressionInfo(const FFExpression &expression,
            : ex(expression)
 {
     //get all of the direct dependencies on forcefields from the expression
-    ffids = expression.forcefieldIDs();
+    ffids = expression.forceFieldIDs();
 
     //validate that ff_equations satisfies all of the expressions
     //dependencies
@@ -107,9 +125,9 @@ SystemData::ExpressionInfo::ExpressionInfo(const FFExpression &expression,
             const ExpressionInfo &dep_exprinfo = ff_equations[it->ID()];
 
             const FFExpression &dep_expr = dep_exprinfo.expression();
-            const FFExpression &dep_func = dep_expr.function();
+            const FFComponent &dep_func = dep_expr.function();
 
-            if ( done_funcs.contains(depfunc.ID()) )
+            if ( done_funcs.contains(dep_func.ID()) )
                 continue;
 
             //find the dependencies of this function, and them to the
@@ -121,7 +139,7 @@ SystemData::ExpressionInfo::ExpressionInfo(const FFExpression &expression,
 
             for (int i=0; i<ndeps; ++i)
             {
-                const FFExpression &dep_dep_func = dep_expr_deps_array[i].function();
+                const FFComponent &dep_dep_func = dep_expr_deps_array[i].function();
 
                 if ( not done_funcs.contains(dep_dep_func.ID()) )
                 {
@@ -131,8 +149,8 @@ SystemData::ExpressionInfo::ExpressionInfo(const FFExpression &expression,
             }
 
             //now add the dependent function
-            ordered_funcs.append(depfunc.ID());
-            done_funcs.insert(depfunc.ID());
+            ordered_funcs.append(dep_func.ID());
+            done_funcs.insert(dep_func.ID());
 
             //add all of the forcefield dependencies from this function
             for (QSet<ForceFieldID>::const_iterator it = dep_exprinfo.forcefieldIDs().begin();
@@ -147,7 +165,7 @@ SystemData::ExpressionInfo::ExpressionInfo(const FFExpression &expression,
         //expressions
         deps.reserve(ordered_funcs.count());
 
-        for (QList<FunctionID>::const_iterator it = ordered_funcs.constBegin();
+        for (QList<SymbolID>::const_iterator it = ordered_funcs.constBegin();
              it != ordered_funcs.constEnd();
              ++it)
         {
@@ -160,7 +178,7 @@ SystemData::ExpressionInfo::ExpressionInfo(const FFExpression &expression,
     else
     {
         //there are no dependencies
-        ffids = expression.forcefieldIDs();
+        ffids = expression.forceFieldIDs();
     }
 }
 
@@ -188,7 +206,8 @@ SystemData::ExpressionInfo& SystemData::ExpressionInfo::operator=(
 ////////// Implementation of SystemData
 //////////
 
-static const RegisterMetaType<SystemData> r_sysdata;
+static const RegisterMetaType<SystemData> r_sysdata(MAGIC_ONLY,
+                                                    "SireSystem::SystemData");
 
 /** Serialise to a binary datastream */
 QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const SystemData &sysdata)
@@ -256,6 +275,11 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, SystemData &sysdata)
 /** Static Incremint used to supply ID numbers to Systems */
 static Incremint system_incremint;
 
+/** Construct with an unspecified name */
+SystemData::SystemData() 
+           : nme( QObject::tr("Unnamed") ), id_and_version(&system_incremint)
+{}
+
 /** Construct a SystemData with a specified name */
 SystemData::SystemData(const QString &name)
            : nme(name), id_and_version(&system_incremint)
@@ -265,13 +289,31 @@ SystemData::SystemData(const QString &name)
 SystemData::SystemData(const SystemData &other)
            : ff_equations(other.ff_equations),
              ff_params(other.ff_params),
-             energy_cache(other.energy_cache),
+             cached_energies(other.cached_energies),
              molgroups(other.molgroups),
              props(other.props),
              sys_space(other.sys_space),
              nme(other.nme),
              id_and_version(other.id_and_version)
 {}
+
+/** Destructor */
+SystemData::~SystemData()
+{}
+
+/** Comparison operator - two SystemData objects are equal if they 
+    have the same ID and version */
+bool SystemData::operator==(const SystemData &other) const
+{
+    return ID() == other.ID() and version() == other.version();
+}
+
+/** Comparison operator - two SystemData objects are equal if they 
+    have the same ID and version */
+bool SystemData::operator!=(const SystemData &other) const
+{
+    return ID() != other.ID() or version() != other.version();
+}
 
 /** Return all of the equations that are part of this system */
 QSet<FFExpression> SystemData::equations() const
@@ -446,7 +488,7 @@ void SystemData::replace(const FFExpression &oldexpr, const FFExpression &newexp
 
     //replace the existing function and rebuild the entire
     //dependency tree...
-    QHash<SymbolID,FFExpression> orig_ff_equations = ff_equations;
+    QHash<SymbolID,ExpressionInfo> orig_ff_equations = ff_equations;
 
     try
     {
@@ -497,22 +539,25 @@ void SystemData::replace(const FFExpression &newexpr)
 //void recordAverage(const FFExpression &ff_equation,
 //                   const Averager &averager);
 
-void add(const MoleculeGroup &group);
-void remove(const MoleculeGroup &group);
+//void add(const MoleculeGroup &group);
+//void remove(const MoleculeGroup &group);
 
 /** Change the molecule 'molecule' */
 void SystemData::change(const Molecule &molecule)
 {
+    cached_energies.clear();
 }
 
 /** Change the residue 'residue' */
 void SystemData::change(const Residue &residue)
 {
+    cached_energies.clear();
 }
 
 /** Change the atom 'atom' */
 void SystemData::change(const NewAtom &atom)
 {
+    cached_energies.clear();
 }
 
 /** Update all of the statistics of the System. This calculates
@@ -524,12 +569,12 @@ void SystemData::updateStatistics()
 /** Set the parameter 'param' to the value 'value'. */
 void SystemData::setParameter(const Symbol &param, double value)
 {
-    double oldvalue = params.value(param);
+    double oldvalue = ff_params.value(param);
 
     try
     {
         //set the parameter
-        params.set(param, value);
+        ff_params.set(param, value);
 
         //update anything that depends on this parameter
         // .... how?
@@ -537,7 +582,7 @@ void SystemData::setParameter(const Symbol &param, double value)
     catch(...)
     {
         //maintain the invariant
-        params.set(param, oldvalue);
+        ff_params.set(param, oldvalue);
         throw;
     }
 }
@@ -569,7 +614,7 @@ double SystemData::energy(const ExpressionInfo &expr)
         //there are no dependencies - just calculate this expression
         double nrg = expr.expression().evaluate(nrg_components);
 
-        cached_energies.insert( expr.expression().function(), nrg );
+        cached_energies.insert( expr.expression().function().ID(), nrg );
 
         return nrg;
     }
@@ -584,18 +629,18 @@ double SystemData::energy(const ExpressionInfo &expr)
 
         for (int i=0; i<ndeps; ++i)
         {
-            const FFExpression &dep = deps[i];
+            const FFExpression &dep = deps_array[i];
             const Function &depfunc = dep.function();
 
             if ( cached_energies.contains(depfunc.ID()) )
             {
-                nrg_components.insert(depfunc, cached_energies.value(depfunc));
+                nrg_components.set(depfunc, cached_energies.value(depfunc.ID()));
             }
             else
             {
                 double nrg = dep.evaluate(nrg_components);
                 cached_energies.insert(depfunc.ID(), nrg);
-                nrg_components.insert(depfunc, nrg);
+                nrg_components.set(depfunc, nrg);
             }
         }
 
@@ -621,7 +666,7 @@ double SystemData::energy(const Function &component)
     QHash<SymbolID,ExpressionInfo>::const_iterator it =
                                             ff_equations.constFind(component.ID());
 
-    if ( it != exprsns.constEnd() )
+    if ( it != ff_equations.constEnd() )
     {
         //this is one of the forcefield expressions in this system
         BOOST_ASSERT( it->expression().function().ID() == component.ID() );

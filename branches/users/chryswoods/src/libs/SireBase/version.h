@@ -21,7 +21,7 @@ namespace SireBase
 
     @author Christopher Woods
 */
-class Version
+class SIREBASE_EXPORT Version
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const Version&);

@@ -25,7 +25,11 @@ void SIREFF_EXPORT export_ForceField()
             , bp::return_internal_reference<>() )
         .def(
             "energies"
-            , &::SireFF::ForceField::energies
+            , (Values ( ::SireFF::ForceField::* )( ) )( &::SireFF::ForceField::energies )
+            , bp::default_call_policies() )
+        .def(
+            "energies"
+            , (Values ( ::SireFF::ForceField::* )( const ::QSet< ::SireFF::FFComponent>& ) )( &::SireFF::ForceField::energies )
             , bp::default_call_policies() )
         .def(
             "energy"

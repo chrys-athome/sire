@@ -286,6 +286,7 @@ public:
     double energy();
     double energy(const Function &component);
 
+    Values energies(const QSet<FFComponent> &components);
     Values energies();
 
     virtual bool change(const Molecule &mol);

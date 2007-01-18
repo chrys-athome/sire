@@ -22,7 +22,7 @@ namespace SireSystem
 
     @author Christopher Woods
 */
-class LocalSimSystem : public SimSystem, protected SystemData
+class SIRESYSTEM_EXPORT LocalSimSystem : public SimSystem, protected SystemData
 {
 public:
     LocalSimSystem(const System &system, const Moves &moves);
@@ -50,7 +50,16 @@ public:
     void change(const Residue &residue);
     void change(const NewAtom &atom);
 
+protected:
+    Values getEnergyComponents(ForceFieldID ffid);
+    Values getEnergyComponents(const QSet<ForceFieldID> &ffids);
+    Values getEnergyComponents(const QSet<FFComponent> &components);
+
+    double getEnergyComponent(const FFComponent &component);
+
 private:
+    ForceField& getForceField(ForceFieldID ffid);
+
     /** The forcefields in this system */
     QHash<ForceFieldID, ForceField> ffields;
 

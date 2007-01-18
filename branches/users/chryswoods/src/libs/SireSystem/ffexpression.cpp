@@ -1,13 +1,56 @@
 
+#include "SireSystem/qhash_siresystem.h"
+
 #include "ffexpression.h"
 
 #include "SireFF/ffcomponent.h"
 
 #include "SireError/errors.h"
 
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
 using namespace SireCAS;
 using namespace SireFF;
 using namespace SireSystem;
+using namespace SireStream;
+
+static const RegisterMetaType<FFExpression> r_ffexp;
+
+/** Hash this expression */
+uint qHash(const FFExpression &ffexp)
+{
+    return ::qHash(ffexp.function());
+}
+
+/** Serialise to a binary data stream */
+QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const FFExpression &ffexp)
+{
+    writeHeader(ds, r_ffexp, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << ffexp.ex << ffexp.func << ffexp.ffids << ffexp.deps;
+    
+    return ds;
+}
+
+/** Deserialise from a binary data stream */
+QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, FFExpression &ffexp)
+{
+    VersionID v = readHeader(ds, r_ffexp);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+    
+        sds >> ffexp.ex >> ffexp.func >> ffexp.ffids >> ffexp.deps;
+    }
+    else
+        throw version_error(v, "1", r_ffexp, CODELOC);
+    
+    return ds;
+}
 
 /** Construct a null FFExpression */
 FFExpression::FFExpression()
@@ -96,4 +139,14 @@ FFExpression::FFExpression(const FFExpression &other)
 FFExpression::~FFExpression()
 {}
 
+/** Comparison operator */
+bool FFExpression::operator==(const FFExpression &other) const
+{
+    return func == other.func and ex == other.ex;
+}
 
+/** Comparison operator */
+bool FFExpression::operator!=(const FFExpression &other) const
+{
+    return func != other.func or ex != other.ex;
+}

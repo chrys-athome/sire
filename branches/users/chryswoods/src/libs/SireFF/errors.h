@@ -64,10 +64,38 @@ public:
     }
 };
 
+/** This exception is thrown when a request is made of a non-existant 
+    forcefield
+
+    @author Christopher Woods
+*/
+class SIREFF_EXPORT missing_forcefield : public sireff_error
+{
+public:
+    missing_forcefield() : sireff_error()
+    {}
+    
+    missing_forcefield(QString err, QString place = QString::null) 
+              : sireff_error(err,place)
+    {}
+    
+    missing_forcefield(const missing_forcefield &other) : sireff_error(other)
+    {}
+    
+    ~missing_forcefield() throw()
+    {}
+    
+    const char* what() const throw()
+    {
+        return "SireFF::missing_forcefield";
+    }
+};
+
 }
 
 Q_DECLARE_METATYPE(SireFF::sireff_error)
 Q_DECLARE_METATYPE(SireFF::missing_component)
+Q_DECLARE_METATYPE(SireFF::missing_forcefield)
 
 SIRE_END_HEADER
 

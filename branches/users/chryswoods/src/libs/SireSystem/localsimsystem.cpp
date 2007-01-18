@@ -3,6 +3,7 @@
 
 #include "SireMol/property.h"
 
+#include "SireFF/errors.h"
 #include "SireError/errors.h"
 
 using namespace SireSystem;
@@ -24,6 +25,12 @@ LocalSimSystem::LocalSimSystem(const System &system, const Moves &moves)
 /** Destructor */
 LocalSimSystem::~LocalSimSystem()
 {}
+
+/** Return a checkpoint of the System being simulated */
+System LocalSimSystem::checkpoint()
+{
+    return this->makeSystem(*this, ffields);
+}
 
 /** Rollback to the supplied checkpoint. The checkpoint
     must have a lower version number than the current
@@ -120,4 +127,127 @@ void LocalSimSystem::change(const NewAtom &atom)
          
     //now change the atom in the SystemData
     SystemData::change(atom);
+}
+
+inline QString getString(const QList<ForceFieldID> &ffids)
+{
+    QStringList l;
+    
+    foreach (ForceFieldID ffid, ffids)
+    {
+        l.append( QString::number(ffid) );
+    }
+    
+    return QString("[ %1 ]").arg( l.join(", ") );
+}
+
+/** Get a modifiable reference to the forcefield with ID == ffid
+ 
+    \throw SireFF::missing_forcefield
+*/
+ForceField& LocalSimSystem::getForceField(ForceFieldID ffid)
+{
+    QHash<ForceFieldID,ForceField>::iterator it = ffields.find(ffid);
+
+    if (it == ffields.constEnd())
+        throw SireFF::missing_forcefield( QObject::tr(
+            "The System \"%1\" (%2 %3) does not contain a forcefield "
+            "with ID == %4 (contained forcefields are %5)")
+                .arg(name()).arg(ID()).arg(version().toString())
+                .arg(ffid).arg( getString(ffields.keys()) ), CODELOC );
+
+    return *it;
+}
+
+/** Return the values of all of the energy components in the
+    forcefield with ID == ffid
+    
+    \throw SireFF::missing_forcefield
+*/
+Values LocalSimSystem::getEnergyComponents(ForceFieldID ffid)
+{
+    return getForceField(ffid).energies();
+}
+
+/** Return the values of all of the energy components in each of the
+    forcefields whose IDs are in 'ffids'
+    
+    \throw SireFF::missing_forcefield
+*/
+Values LocalSimSystem::getEnergyComponents(const QSet<ForceFieldID> &ffids)
+{
+    if (ffids.isEmpty())
+        return Values();
+    else if (ffids.count() == 1)
+    {
+        return this->getEnergyComponents( *(ffids.begin()) );
+    }
+    else
+    {
+        Values vals;
+        
+        for (QSet<ForceFieldID>::const_iterator it = ffids.begin();
+             it != ffids.end();
+             ++it)
+        {
+            vals += this->getEnergyComponents(*it);
+        }
+        
+        return vals;
+    }
+}
+
+/** Get the energy component 'component'
+
+    \throw SireFF::missing_forcefield
+    \throw SireFF::missing_component
+*/
+double LocalSimSystem::getEnergyComponent(const FFComponent &component)
+{
+    return getForceField(component.forceFieldID()).energy(component);
+}
+
+/** Return all of the values of the energy components in 'components' 
+
+    \throw SireFF::missing_forcefield
+    \throw SireFF::missing_component
+*/
+Values LocalSimSystem::getEnergyComponents(const QSet<FFComponent> &components)
+{
+    if (components.isEmpty())
+        return Values();
+        
+    Values vals;
+    vals.reserve(components.count());
+    
+    //sort the components by forcefield...
+    QHash< ForceFieldID,QSet<FFComponent> > sorted_components;
+    
+    for (QSet<FFComponent>::const_iterator it = components.begin();
+         it != components.end();
+         ++it)
+    {
+        sorted_components[it->forceFieldID()].insert(*it);
+    }
+    
+    //now add the energy of each component
+    for (QHash< ForceFieldID,QSet<FFComponent> >::const_iterator 
+                                    it = sorted_components.constBegin();
+         it != sorted_components.constEnd();
+         ++it)
+    {
+        const QSet<FFComponent> &ffcomps = *it;
+        
+        if (ffcomps.count() == 1)
+        {
+            const FFComponent &ffcomp = *(ffcomps.begin());
+            vals.set( ffcomp, this->getEnergyComponent(ffcomp) );
+        }
+        else
+        {
+            vals += this->getForceField(it.key()).energies(ffcomps);
+        }
+    }
+
+    return vals;
 }

@@ -31,6 +31,9 @@ set_target_properties (SireSystem PROPERTIES
 # Link to other Sire libraries
 target_link_libraries (SireSystem
                        SireFF
+                       SireMol
+                       SireCAS
+                       SireBase
                        )
 
 # installation

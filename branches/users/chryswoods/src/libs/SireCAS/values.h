@@ -92,6 +92,12 @@ public:
     double value(const Symbol &sym) const;
 
     const QHash<SymbolID, double>& values() const;
+    
+    int count() const;
+    
+    void reserve(int n);
+    
+    Values& operator+=(const Values &other);
 
 private:
 
@@ -99,6 +105,18 @@ private:
     QHash<SymbolID, double> vals;
 
 };
+
+/** Reserve space for at least 'n' items */
+inline void Values::reserve(int n)
+{
+    vals.reserve(n);
+}
+
+/** Return the number of specified values in this set */
+inline int Values::count() const
+{
+    return vals.count();
+}
 
 /** Add a SymbolValue to the set of values */
 inline void Values::add(const SymbolValue &val0)

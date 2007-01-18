@@ -38,6 +38,10 @@ using SireFF::ForceFieldID;
 */
 class SIRESYSTEM_EXPORT FFExpression
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const FFExpression&);
+friend QDataStream& ::operator>>(QDataStream&, FFExpression&);
+
 public:
     FFExpression();
 

@@ -245,3 +245,29 @@ double Values::value(const Symbol &sym) const
 {
     return vals.value(sym.ID(),0.0);
 }
+
+/** Add the contents of 'other' to this set - this overwrites any
+    existing values that are also in 'other' */
+Values& Values::operator+=(const Values &other)
+{
+    if (other.vals.isEmpty())
+        return *this;
+    else if (vals.isEmpty())
+    {
+        vals = other.vals;
+        return *this;
+    }
+    else
+    {
+        vals.reserve( vals.count() + other.vals.count() );
+    
+        for (QHash<SymbolID,double>::const_iterator it = other.vals.begin();
+             it != other.vals.end();
+             ++it)
+        {
+            vals.insert( it.key(), it.value() );
+        }
+        
+        return *this;
+    }
+}

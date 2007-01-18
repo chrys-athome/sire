@@ -44,92 +44,58 @@ MovesBase::~MovesBase()
 {}
 
 ///////////
-/////////// Implementation of detail::NullMoves
+/////////// Implementation of SameMoves
 ///////////
 
-namespace SireSystem
-{
-namespace detail
-{
-
-/** This is a null moves set used by the null Moves constructor */
-class NullMoves : public MovesBase
-{
-public:
-    NullMoves() : MovesBase()
-    {}
-
-    NullMoves(const NullMoves &other) : MovesBase(other)
-    {}
-
-    ~NullMoves()
-    {}
-
-    static const char* typeName()
-    {
-        return "SireSystem::detail::NullMoves";
-    }
-
-    const char* what() const
-    {
-        return NullMoves::typeName();
-    }
-
-    NullMoves* clone() const
-    {
-        return new NullMoves();
-    }
-
-    int count() const
-    {
-        return 0;
-    }
-
-    Move& nextMove()
-    {
-        return null_move;
-    }
-
-    void initialise(SimSystem&)
-    {}
-
-private:
-    /** A null move */
-    Move null_move;
-};
-
-}
-}
-
-Q_DECLARE_METATYPE(SireSystem::detail::NullMoves);
-
-using namespace SireSystem::detail;
-
-static const RegisterMetaType<NullMoves> r_nullmoves;
+static const RegisterMetaType<SameMoves> r_samemoves;
 
 /** Serialise to a binary datastream */
 QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds,
-                                          const NullMoves &nullmoves)
+                                          const SameMoves &samemoves)
 {
-    writeHeader(ds, r_nullmoves, 1) << static_cast<const MovesBase&>(nullmoves);
+    writeHeader(ds, r_samemoves, 1);
+     
+    SharedDataStream sds(ds);
+    
+    sds << samemoves.single_move << static_cast<const MovesBase&>(samemoves);
 
     return ds;
 }
 
 /** Deserialise from a binary datastream */
-QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, NullMoves &nullmoves)
+QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, SameMoves &samemoves)
 {
-    VersionID v = readHeader(ds, r_nullmoves);
+    VersionID v = readHeader(ds, r_samemoves);
 
     if (v == 1)
     {
-        ds >> static_cast<MovesBase&>(nullmoves);
+        SharedDataStream sds(ds);
+        
+        sds >> samemoves.single_move >> static_cast<MovesBase&>(samemoves);
     }
     else
-        throw version_error(v, "1", r_nullmoves, CODELOC);
+        throw version_error(v, "1", r_samemoves, CODELOC);
 
     return ds;
 }
+
+/** Null constructor - constructs a set of null moves */
+SameMoves::SameMoves() : MovesBase()
+{}
+
+/** Construct a set of moves where they are all 'move' */
+SameMoves::SameMoves(const Move &move) 
+          : MovesBase(), single_move(move)
+{}
+
+/** Copy constructor */
+SameMoves::SameMoves(const SameMoves &other)
+          : MovesBase(), single_move(other.single_move)
+{}
+
+/** Destructor */
+SameMoves::~SameMoves()
+{}
 
 ///////////
 /////////// Implementation of Moves
@@ -187,10 +153,16 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, Moves &moves)
     return ds;
 }
 
-static SharedPolyPointer<MovesBase> shared_null( new NullMoves() );
+static SharedPolyPointer<MovesBase> shared_null( new SameMoves() );
 
 /** Null constructor */
 Moves::Moves() : d(shared_null), sysid(0), ntotal(0), ncomplete(0)
+{}
+
+/** Construct from a passed Move - all moves in the set will 
+    be this move */
+Moves::Moves(const Move &move)
+      : d(new SameMoves(move)), sysid(0), ntotal(0), ncomplete(0)
 {}
 
 /** Copy constructor */

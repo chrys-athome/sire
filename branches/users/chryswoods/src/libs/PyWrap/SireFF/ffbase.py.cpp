@@ -24,7 +24,11 @@ export_FFBase()
             , bp::return_internal_reference<>() )
         .def(
             "energies"
-            , &::SireFF::FFBase::energies
+            , (Values ( ::SireFF::FFBase::* )( ) )( &::SireFF::FFBase::energies )
+            , bp::default_call_policies() )
+        .def(
+            "energies"
+            , (Values ( ::SireFF::FFBase::* )( const ::QSet< ::SireFF::FFComponent>& ) )( &::SireFF::FFBase::energies )
             , bp::default_call_policies() )
         .def(
             "energy"
