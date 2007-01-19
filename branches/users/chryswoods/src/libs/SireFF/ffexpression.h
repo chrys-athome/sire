@@ -9,6 +9,7 @@
 #include "SireCAS/functions.h"
 
 #include "forcefieldid.h"
+#include "ffcomponent.h"
 
 SIRE_BEGIN_HEADER
 
@@ -57,6 +58,8 @@ public:
 
     const QSet<ForceFieldID>& forceFieldIDs() const;
     const QSet<Function>& dependencies() const;
+
+    QSet<FFComponent> components() const;
 
     const Function& function() const;
 

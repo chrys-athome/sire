@@ -78,13 +78,13 @@ public:
     bool contains(const Residue &residue) const;
     bool contains(const NewAtom &atom) const;
 
-    bool contains(MoleculeID molid) const;
+    bool refersTo(const Molecule &molecule) const;
+    
+    QSet<MoleculeID> moleculeIDs() const;
 
     Molecule molecule(MoleculeID molid) const;
     Residue residue(MoleculeID molid, ResNum resnum) const;
     NewAtom atom(MoleculeID molid, const IDMolAtom &atomid) const;
-
-    QSet<MoleculeID> moleculeIDs() const;
 
     Molecule molecule(const Molecule &mol) const;
     Residue residue(const Residue &res) const;
@@ -351,53 +351,40 @@ inline bool ForceField::replace(const Molecule &oldmol,
 }
 
 /** Return whether or not this forcefield contains *any part*
-    of the molecule with ID == molid */
-inline bool ForceField::refersTo(MoleculeID molid) const
+    of any version of the molecule 'molecule' */
+inline bool ForceField::refersTo(const Molecule &molecule) const
 {
-    return d().refersTo(molid);
+    return d().refersTo(molecule);
 }
 
-/** Return whether this forcefield contains a copy of the molecule
-    'molecule' */
+/** Return the set of all of the ID numbers of all of the
+    molecules that are referred to by this forcefield
+    (i.e. all molecules that have at least some part
+     in this forcefield) */
+inline QSet<MoleculeID> ForceField::moleculeIDs() const
+{
+    return d().moleculeIDs();
+}
+
+/** Return whether this forcefield contains a complete copy of 
+    any version of the molecule 'molecule' */
 inline bool ForceField::contains(const Molecule &molecule) const
 {
-    return d().contains(molecule.ID());
+    return d().contains(molecule);
 }
 
-/** Return whether this forcefield contains a complete copy
-    of the molecule with ID == molid */
-inline bool ForceField::contains(MoleculeID molid) const
-{
-    return d().contains(molid);
-}
-
-/** Return whether this forcefield contains a complete copy of the
-    residue 'residue' */
+/** Return whether this forcefield contains a complete copy 
+    of any version of the residue 'residue' */
 inline bool ForceField::contains(const Residue &residue) const
 {
-    return d().contains(residue.ID(), residue.number());
+    return d().contains(residue);
 }
 
 /** Return whether or not this forcefield contains
-    a complete copy of the residue
-    with number 'resnum' in the molecule with ID == molid */
-inline bool ForceField::contains(MoleculeID molid, ResNum resnum) const
-{
-    return d().contains(molid, resnum);
-}
-
-/** Return whether or not this forcefield contains
-    the atom 'atom' */
+    any version of the atom 'atom' */
 inline bool ForceField::contains(const NewAtom &atom) const
 {
-    return d().contains(atom.ID(), atom.cgAtomID());
-}
-
-/** Return whether or not this forcefield contains
-    the atom in molecule with ID == molid and index 'atomid' */
-inline bool ForceField::contains(MoleculeID molid, const IDMolAtom &atomid) const
-{
-    return d().contains(molid, atomid);
+    return d().contains(atom);
 }
 
 /** Return whether the forcefield is dirty (requires an energy recalcualtion) */

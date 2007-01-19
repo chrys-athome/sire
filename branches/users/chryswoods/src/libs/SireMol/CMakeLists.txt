@@ -42,6 +42,8 @@ set ( SIREMOL_SOURCES
       moleculebonds.cpp
       moleculecutting.cpp
       moleculedata.cpp
+      moleculegroup.cpp
+      moleculegroups.cpp
       moleculeinfo.cpp
       moleculeversion.cpp
       property.cpp

@@ -346,7 +346,7 @@ QVector<FFExpression> ForceFieldsBase::expressions() const
 
     \throw SireFF::missing_function
 */
-FFExpression ForceFieldsBase::expression(const Function &func) const
+const FFExpression& ForceFieldsBase::expression(const Function &func) const
 {
     QHash<SymbolID,ExpressionInfo>::const_iterator
                                   it = ff_equations.find(func.ID());
@@ -399,6 +399,78 @@ void ForceFieldsBase::setParameter(const Symbol &param, double value)
 
     //assume that this changes all of the energies, so clear the cache
     cached_energies.clear();
+}
+
+/** Set the expression used to calculate the total energy of the set
+    of forcefields - by default this will be a simple sum of the
+    total energies of all of the forcefields. If 'expression' is
+    not already in this set then it will be added.
+    
+    \throw SireFF::missing_forcefield
+    \throw SireFF::missing_component
+    \throw SireFF::missing_function
+*/
+void ForceFieldsBase::setTotal(const FFExpression &expression)
+{
+    if (not ff_equations.contains(expression.function().ID()))
+        this->add(expression);
+        
+    total_id = expression.function().ID();
+}
+
+/** Return the expression used to calculate the total energy of 
+    the forcefields. This will throw an exception if no 
+    expression has been set (and instead the energy is
+    calculated as a simple sum of forcefields) 
+    
+    \throw SireFF::missing_function
+*/
+const FFExpression& ForceFieldsBase::total() const
+{
+    if (not total_id == 0)
+        throw SireFF::missing_function( QObject::tr(
+            "No expression to calculate the total energy of the forcefields "
+            "has been set, so instead the sum of their total energies is "
+            "being calculated."),  CODELOC );
+
+    return ff_equations[total_id].expression();
+}
+
+/** Return whether any of the forcefields contain any part of the molecule 
+    with ID == molid */
+bool ForceFieldsBase::contains(MoleculeID molid) const
+{
+    return index.contains(molid);
+}
+
+/** Return whether or not any of the forcefields contain  
+    any part of any version of the molecule 'molecule' */
+bool ForceFieldsBase::contains(const Molecule &molecule) const
+{
+    return this->contains(molecule.ID());
+}
+
+/** Return the complete set of IDs of all molecules that are 
+    in any way in any of the forcefields in this set. */
+QSet<MoleculeID> ForceFieldsBase::moleculeIDs() const
+{
+    return index.keys().toSet();
+}
+
+/** Return the set of IDs of forcefields that in any way contain
+    the molecule with ID == molid */
+QSet<ForceFieldID>
+ForceFieldsBase::forceFieldsContaining(MoleculeID molid) const
+{
+    return index[molid];
+}
+
+/** Return the set of IDs of forcefields that in any way contain
+    any version of the molecule 'molecule' */
+QSet<ForceFieldID> 
+ForceFieldsBase::forceFieldsContaining(const Molecule &molecule) const
+{
+    return this->forceFieldsContaining(molecule.ID());
 }
 
 /** Add the molecule 'molecule' to the forcefield with ID == ffid
@@ -892,6 +964,17 @@ void ForceFieldsBase::add(MoleculeID molid, ForceFieldID ffid) throw()
     index[molid].insert(ffid);
 }
 
+/** Internal function used to record that the molecules in 'molids' have
+    been added to the forcefield with ID == ffid */
+void ForceFieldsBase::add(const QSet<MoleculeID> &molids,
+                          ForceFieldID ffid) throw()
+{
+    foreach (MoleculeID molid, molids)
+    {
+        index[molid].insert(ffid);
+    }
+}
+
 /** Internal function used to record that the molecule with ID == molid
     is in the forcefields whose IDs are in ffids (a record is made
     even if only part of the molecule is in the forcefield) */
@@ -953,6 +1036,9 @@ void ForceFieldsBase::remove(ForceFieldID ffid) throw()
 /** Record that the forcefield with ID == ffid has been changed */
 void ForceFieldsBase::changed(ForceFieldID ffid) throw()
 {
+    if (cached_energies.isEmpty())
+        return;
+
     for (QHash< ForceFieldID, QSet<SymbolID> >::const_iterator
                                             it = ff_dependents.constBegin();
          it != ff_dependents.constEnd();
@@ -962,6 +1048,19 @@ void ForceFieldsBase::changed(ForceFieldID ffid) throw()
         {
             cached_energies.remove(funcid);
         }
+    }
+}
+
+/** Record that all of the forcefields whose IDs are in ffids 
+    have been changed. */
+void ForceFieldsBase::changed(const QSet<ForceFieldID> &ffids) throw()
+{
+    foreach (ForceFieldID ffid, ffids)
+    {
+        this->changed(ffid);
+        
+        if (cached_energies.isEmpty())
+            return;
     }
 }
 
@@ -1135,7 +1234,11 @@ inline bool ForceFields::_pvt_add(const T &obj, const QSet<ForceFieldID> &ffids,
 
             //record that the affected forcefields have changed
             ForceFieldsBase::changed(ffids);
+            
+            return true;
         }
+        else
+            return false;
     }
     catch(...)
     {
@@ -1146,6 +1249,8 @@ inline bool ForceFields::_pvt_add(const T &obj, const QSet<ForceFieldID> &ffids,
         //rethrow the exception
         throw;
     }
+    
+    return false;
 }
 
 /** Add the molecule 'molecule' to all of the forcefields whose ID numbers
@@ -1304,10 +1409,12 @@ inline bool ForceFields::_pvt_remove(const T &obj, QSet<ForceFieldID> ffids)
 
         if (changed)
         {
-            if ( not ffield.contains(obj.ID()) )
+            Molecule molecule(obj);
+        
+            if ( not ffield.refersTo(molecule) )
             {
                 //this forcefield no longer contains the molecule
-                ForceFieldsBase::remove(obj.ID(), ffid);
+                ForceFieldsBase::remove(molecule.ID(), ffid);
             }
 
             ForceFieldsBase::changed(ffid);
@@ -1345,12 +1452,12 @@ inline bool ForceFields::_pvt_remove(const T &obj, QSet<ForceFieldID> ffids)
         {
             //run through each forcefield again and see if they still
             //contain the molecule
-            MoleculeID molid = obj.ID();
+            Molecule molecule(obj);
 
             foreach (ForceFieldID ffid, ffids)
             {
-                if ( not ffields.constFind(ffid)->contains(molid) )
-                    ForceFieldsBase::remove(molid, ffid);
+                if ( not ffields.constFind(ffid)->refersTo(molecule) )
+                    ForceFieldsBase::remove(molecule.ID(), ffid);
             }
 
             ForceFieldsBase::changed(ffids);
@@ -1569,7 +1676,7 @@ QSet<ForceFieldID> ForceFields::getFFIDs(const QString &ffname) const
 */
 void ForceFields::assertValidComponents(const FFExpression &expression) const
 {
-    QList<FFComponent> ffcomps = this->getComponents(expression);
+    QSet<FFComponent> ffcomps = expression.components();
 
     foreach( FFComponent ffcomp, ffcomps )
     {

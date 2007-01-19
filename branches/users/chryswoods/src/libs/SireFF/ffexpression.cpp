@@ -141,3 +141,33 @@ bool FFExpression::operator!=(const FFExpression &other) const
 {
     return func != other.func or ex != other.ex;
 }
+
+/** Return the set of all FFComponents in this expression */
+QSet<FFComponent> FFExpression::components() const
+{
+    QSet<FFComponent> ffcomps;
+    
+    //get all of the dependent functions
+    Functions funcs = ex.functions();
+
+    for ( Functions::const_iterator it = funcs.constBegin();
+          it != funcs.constEnd();
+          ++it )
+    {
+        try
+        {
+            //is this function a forcefield component? If not,
+            //then the constructor will throw an incompatible_error
+            FFComponent ffcomp( *it );
+
+            ffcomps.insert(ffcomp);
+        }
+        catch (const SireError::incompatible_error&)
+        {
+            //this isn't a forcefield component - it must
+            //be another function on which this function depends
+        }
+    }
+
+    return ffcomps;
+}

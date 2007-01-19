@@ -686,32 +686,41 @@ bool FFBase::replace(const Molecule &oldmol,
         return false;
 }
 
-/** Return whether this forcefield contains a copy of the molecule
-    'molecule' */
+/** Return whether this forcefield contains a copy of 
+    any version of the molecule 'molecule' */
 bool FFBase::contains(const Molecule&) const
 {
     return false;
 }
 
 /** Return whether or not this forcefield contains *any part* of
-    the molecule with ID == molid */
-bool FFBase::contains(MoleculeID molid) const
+    any version of the molecule 'molecule' */
+bool FFBase::refersTo(const Molecule&) const
 {
     return false;
 }
 
-/** Return whether this forcefield contains a copy of the
-    residue 'residue' */
+/** Return the set of all of the ID numbers of all of the
+    molecules that are referred to by this forcefield
+    (i.e. all molecules that have at least some part
+     in this forcefield) */
+QSet<MoleculeID> FFBase::moleculeIDs() const
+{
+    return QSet<MoleculeID>();
+}
+
+/** Return whether this forcefield contains a copy of 
+    any version of the residue 'residue' */
 bool FFBase::contains(const Residue &residue) const
 {
     return this->contains(residue.molecule());
 }
 
-/** Return whether this forcefield contains a copy of the
-    atom 'atom' */
+/** Return whether this forcefield contains a copy of 
+    any version of the atom 'atom' */
 bool FFBase::contains(const NewAtom &atom) const
 {
-    return this->contains(atom.molecule());
+    return this->contains(atom.residue());
 }
 
 /** Return the copy of the molecule in this forcefield that

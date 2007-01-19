@@ -59,7 +59,7 @@ public:
 
     virtual bool contains(const Function &function) const;
 
-    FFExpression expression(const Function &function) const;
+    const FFExpression& expression(const Function &function) const;
 
     QVector<FFExpression> expressions(const QSet<Function> &functions) const;
     QVector<FFExpression> expressions() const;
@@ -142,8 +142,6 @@ protected:
     QVector<FFExpression> take(const QSet<Function> &functions);
 
     QVector<FFExpression> takeAll();
-
-    static QList<FFComponent> getComponents(const FFExpression &expression);
 
     virtual QSet<ForceFieldID> getFFIDs(const QString &ffname) const=0;
 

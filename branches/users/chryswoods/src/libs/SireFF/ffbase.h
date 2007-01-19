@@ -322,19 +322,21 @@ public:
     virtual bool contains(const Residue &residue) const;
     virtual bool contains(const NewAtom &atom) const;
 
-    virtual bool contains(MoleculeID molid) const;
+    virtual bool refersTo(const Molecule &molecule) const;
+
+    virtual QSet<MoleculeID> moleculeIDs() const;
 
     virtual Molecule molecule(MoleculeID molid) const;
 
-    virtual Residue residue(MoleculeID molid, ResNum resnum) const;
-    virtual Residue residue(MoleculeID molid, ResID resid) const;
-    virtual Residue residue(MoleculeID molid, const QString &resname) const;
+    Residue residue(MoleculeID molid, ResNum resnum) const;
+    Residue residue(MoleculeID molid, ResID resid) const;
+    Residue residue(MoleculeID molid, const QString &resname) const;
 
-    virtual NewAtom atom(MoleculeID molid, const IDMolAtom &atomid) const;
+    NewAtom atom(MoleculeID molid, const IDMolAtom &atomid) const;
 
-    virtual Molecule molecule(const Molecule &mol) const;
-    virtual Residue residue(const Residue &res) const;
-    virtual NewAtom atom(const NewAtom &atom) const;
+    Molecule molecule(const Molecule &mol) const;
+    Residue residue(const Residue &res) const;
+    NewAtom atom(const NewAtom &atom) const;
 
     bool isDirty() const;
     bool isClean() const;
