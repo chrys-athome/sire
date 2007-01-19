@@ -17,8 +17,6 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs
 
 # Define the sources in SireSystem
 set ( WRAPSYSTEM_SOURCES
-      ffexpression.py.cpp
-      moleculegroup.py.cpp
       move.py.cpp
       moves.py.cpp
       system.py.cpp

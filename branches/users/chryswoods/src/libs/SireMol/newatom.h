@@ -90,6 +90,10 @@ public:
 
     QString name() const;
 
+    MoleculeID ID() const;
+
+    QString idString() const;
+
     const AtomInfo& info() const;
     Element element() const;
     Vector coordinates() const;

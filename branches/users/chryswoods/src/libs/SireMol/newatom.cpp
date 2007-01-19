@@ -163,6 +163,23 @@ bool NewAtom::operator!=(const NewAtom &other) const
            d->version() != other.d->version();
 }
 
+/** Return the ID number of the molecule that contains this atom */
+MoleculeID NewAtom::ID() const
+{
+    return d->ID();
+}
+
+/** Return a string identifying this atom */
+QString NewAtom::idString() const
+{
+    return QObject::tr("%1 in %2 (%3) in \"%3\" (%4 %5)")
+                          .arg(name())
+                          .arg(d->info().residueName(info().resNum()))
+                          .arg(info().resNum())
+                          .arg(d->info().name()).arg(ID())
+                          .arg(d->version().toString());
+}
+
 /** Return the AtomInfo for this Atom */
 const AtomInfo& NewAtom::info() const
 {

@@ -220,23 +220,23 @@ public:
     public:
         explicit Group(quint32 val=0) : _val(val)
         {}
-        
+
         Group(const Group &other) : _val(other._val)
         {}
-        
+
         ~Group()
         {}
-        
+
         operator quint32() const
         {
             return _val;
         }
-    
+
     private:
         quint32 _val;
     };
 
-    /** This encapsulated class must be derived by all 
+    /** This encapsulated class must be derived by all
         inheriting classes to provide the object that
         contains information about the available groups
         in the forcefield */
@@ -245,32 +245,32 @@ public:
     public:
         Groups();
         Groups(const Groups &other);
-        
+
         virtual ~Groups();
-        
-        /** Return the name of the main group 
+
+        /** Return the name of the main group
             in the forcefield (the default group) */
         FFBase::Group main() const
         {
             return mainid;
         }
-        
+
         /** Return the number of groups in this forcefield */
         quint32 count() const
         {
             return n;
         }
-        
+
         static Groups default_group;
-        
+
     protected:
         FFBase::Group getUniqueID();
-        
+
     private:
         /** The ID of the main (default) group
             of this forcefield */
         FFBase::Group mainid;
-        
+
         /** The number of groups in this forcefield */
         quint32 n;
     };
@@ -322,6 +322,8 @@ public:
     virtual bool contains(const Residue &residue) const;
     virtual bool contains(const NewAtom &atom) const;
 
+    virtual bool contains(MoleculeID molid) const;
+
     virtual Molecule molecule(MoleculeID molid) const;
 
     virtual Residue residue(MoleculeID molid, ResNum resnum) const;
@@ -339,6 +341,8 @@ public:
 
     ForceFieldID ID() const;
     const Version& version() const;
+
+    void assertContains(const FFComponent &component) const;
 
 protected:
     void registerComponents(FFBase::Components *components);
@@ -435,6 +439,15 @@ inline ForceFieldID FFBase::ID() const
 inline const Version& FFBase::version() const
 {
     return id_and_version.version();
+}
+
+/** Assert that this forcefield contains the component 'component'
+
+    \throw SireFF::missing_component
+*/
+inline void FFBase::assertContains(const FFComponent &component) const
+{
+    components().assertContains(component);
 }
 
 }

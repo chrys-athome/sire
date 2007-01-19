@@ -88,6 +88,10 @@ public:
 
 
    ///// Querying the residue //////////////////////////////
+    MoleculeID ID() const;
+
+    QString idString() const;
+
     Atom at(AtomID i) const;
     Atom at(const QString &atomname) const;
     Atom at(const AtomIndex &atom) const;

@@ -51,6 +51,30 @@ public:
 
     MoleculeVersion& operator=(const MoleculeVersion &other);
 
+    bool operator<(const MoleculeVersion &other) const
+    {
+        return majversion < other.majversion or
+               (majversion == other.majversion and minversion < other.minversion);
+    }
+
+    bool operator<=(const MoleculeVersion &other) const
+    {
+        return majversion < other.majversion or
+               (majversion == other.majversion and minversion <= other.minversion);
+    }
+
+    bool operator>(const MoleculeVersion &other) const
+    {
+        return majversion > other.majversion or
+               (majversion == other.majversion and minversion > other.minversion);
+    }
+
+    bool operator>=(const MoleculeVersion &other) const
+    {
+        return majversion > other.majversion or
+               (majversion == other.majversion and minversion >= other.minversion);
+    }
+
     QString toString() const;
 
     quint32 major() const;

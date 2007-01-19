@@ -11,9 +11,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the sources in SireSystem
 set ( SIRESYSTEM_SOURCES
-      ffexpression.cpp
       localsimsystem.cpp
-      moleculegroup.cpp
       move.cpp
       moves.cpp
       simsystem.cpp

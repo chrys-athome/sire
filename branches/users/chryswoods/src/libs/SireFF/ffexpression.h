@@ -24,6 +24,7 @@ namespace SireFF
 {
 
 using SireCAS::Symbol;
+using SireCAS::SymbolID;
 using SireCAS::Expression;
 using SireCAS::Function;
 using SireCAS::Functions;
@@ -59,9 +60,13 @@ public:
 
     const Function& function() const;
 
+    SymbolID ID() const;
+
     const Expression& expression() const;
 
     double evaluate(const Values &values) const;
+
+    QString toString() const;
 
 private:
     /** Initialise this object from the expression 'expression' */
@@ -114,6 +119,18 @@ inline const Expression& FFExpression::expression() const
 inline double FFExpression::evaluate(const Values &values) const
 {
     return ex.evaluate(values);
+}
+
+/** Return a string representation of this function */
+inline QString FFExpression::toString() const
+{
+    return ex.toString();
+}
+
+/** Return the ID of the symbol representing this expression */
+inline SymbolID FFExpression::ID() const
+{
+    return func.ID();
 }
 
 }

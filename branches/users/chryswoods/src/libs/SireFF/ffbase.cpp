@@ -279,7 +279,10 @@ void FFBase::Components::registerComponent(const FFComponent &component)
     symbolids.insert( component.ID() );
 }
 
-/** Assert that this contains the component 'component' */
+/** Assert that this contains the component 'component'
+
+    \throw SireFF::missing_component
+*/
 void FFBase::Components::assertContains(const FFComponent &component) const
 {
     if (not this->contains(component))
@@ -439,7 +442,7 @@ Values FFBase::energies()
 
 /** Return the values of all of the specified energy components in this
     forcefield
-    
+
     \throw SireFF::missing_component
 */
 Values FFBase::energies(const QSet<FFComponent> &components)
@@ -448,10 +451,10 @@ Values FFBase::energies(const QSet<FFComponent> &components)
         return Values();
 
     Values all_vals = this->energies();
-    
+
     Values specified_vals;
     specified_vals.reserve(components.count());
-    
+
     for (QSet<FFComponent>::const_iterator it = components.begin();
          it != components.end();
          ++it)
@@ -459,7 +462,7 @@ Values FFBase::energies(const QSet<FFComponent> &components)
         this->components().assertContains(*it);
         specified_vals.set(*it, all_vals.value(*it));
     }
-    
+
     return specified_vals;
 }
 
@@ -501,10 +504,10 @@ bool FFBase::change(const Residue &res)
 
 /** Change the atom 'atom'  (e.g. move it, or change
     its parameters). This does nothing if this atom
-    is not in this forcefield. Returns whether or not 
-    the forcefield has been changed by this change, and 
+    is not in this forcefield. Returns whether or not
+    the forcefield has been changed by this change, and
     thus whether the energy needs to be recalculated.
-    
+
     \throw SireMol::missing_property
     \throw SireError::invalid_cast
     \throw SireError::invalid_operation
@@ -571,17 +574,17 @@ bool FFBase::add(const Residue &res, const ParameterMap &map)
     return this->add(res, this->groups().main(), map);
 }
 
-/** Add the atom 'atom' to this forcefield using the 
+/** Add the atom 'atom' to this forcefield using the
     optional parameter map to find any necessay parameters
     from properties of the atom. This will replace any
-    existing copy of the atom that already exists in 
-    this forcefield. This returns whether or not the 
+    existing copy of the atom that already exists in
+    this forcefield. This returns whether or not the
     forcefield has been changed by this addition, and therefore
     whether its energy needs recalculating.
-    
+
     This will throw an exception if this forcefield doens't
     support partial molecules.
-    
+
     \throw SireError::invalid_operation
     \throw SireMol::missing_property
     \throw SireError::invalid_cast
@@ -638,11 +641,11 @@ bool FFBase::remove(const Residue&)
     return false;
 }
 
-/** Remove the atom 'atom' from this forcefield - this does 
-    nothing if the atom is not in this forcefield. This 
+/** Remove the atom 'atom' from this forcefield - this does
+    nothing if the atom is not in this forcefield. This
     returns whether this has changed the forcefield (therefore
     necessitating a recalculation of the energy)
-    
+
     This will throw an exception if this forcefield does not
     support partial molecules.
 
@@ -690,6 +693,13 @@ bool FFBase::contains(const Molecule&) const
     return false;
 }
 
+/** Return whether or not this forcefield contains *any part* of
+    the molecule with ID == molid */
+bool FFBase::contains(MoleculeID molid) const
+{
+    return false;
+}
+
 /** Return whether this forcefield contains a copy of the
     residue 'residue' */
 bool FFBase::contains(const Residue &residue) const
@@ -697,7 +707,7 @@ bool FFBase::contains(const Residue &residue) const
     return this->contains(residue.molecule());
 }
 
-/** Return whether this forcefield contains a copy of the 
+/** Return whether this forcefield contains a copy of the
     atom 'atom' */
 bool FFBase::contains(const NewAtom &atom) const
 {
@@ -753,9 +763,9 @@ Residue FFBase::residue(MoleculeID molid, const QString &resname) const
     return this->molecule(molid).residue(resname);
 }
 
-/** Return a copy of the atom in this forcefield that 
+/** Return a copy of the atom in this forcefield that
     in the molecule with ID == molid and with index 'atomid'
-    
+
     \throw SireMol::missing_molecule
     \throw SireMol::missing_residue
     \throw SireMol::missing_cutgroup

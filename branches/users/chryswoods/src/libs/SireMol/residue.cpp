@@ -217,6 +217,21 @@ Molecule Residue::molecule() const
 
 ///// Querying the residue //////////////////////////////
 
+/** Return the ID number of the molecule that contains this residue */
+MoleculeID Residue::ID() const
+{
+    return d->ID();
+}
+
+/** Return a string identifying this residue */
+QString Residue::idString() const
+{
+    return QObject::tr("%1 (%2) in \"%3\" (%4 %5)")
+                          .arg(name()).arg(number())
+                          .arg(d->info().name()).arg(ID())
+                          .arg(d->version().toString());
+}
+
 /** Return a copy of the atom at index 'i'
 
     \throw SireError::invalid_index

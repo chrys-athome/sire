@@ -31,177 +31,6 @@ using namespace SireFF;
 ////////// Implementation of SystemData::ExpressionInfo
 //////////
 
-/** Null constructor */
-SystemData::ExpressionInfo::ExpressionInfo()
-{}
-
-QString getString(const QSet<Function> &functions)
-{
-    if (functions.isEmpty())
-        return "[ ]";
-    else
-    {
-        QSet<Function>::const_iterator it = functions.constBegin();
-
-        QString retval = QString("[ %1").arg(it->toString());
-
-        for( ++it; it != functions.constEnd(); ++it )
-        {
-            retval += QString(", %1").arg(it->toString());
-        }
-
-        return QString("%1 ]").arg(retval);
-    }
-}
-
-/** Validates that 'ff_equations' contains the dependencies of 'expression'
-
-    \throw SireError::dependency_error
-*/
-void SystemData::ExpressionInfo::validateDependencies(const FFExpression &expression,
-                      const QHash<SymbolID,ExpressionInfo> &ff_equations)
-{
-    const QSet<Function> &ex_deps = expression.dependencies();
-
-    if (ex_deps.isEmpty())
-        return;
-
-    QSet<Function> missing_funcs;
-
-    for (QSet<Function>::const_iterator it = ex_deps.constBegin();
-         it != ex_deps.constEnd();
-         ++it)
-    {
-        if ( not ff_equations.contains(it->ID()) )
-            missing_funcs.insert(*it);
-    }
-
-    if (not missing_funcs.isEmpty())
-    {
-        throw SireError::dependency_error( QObject::tr(
-                "Cannot resolve all of the dependencies of the function \"%1\" "
-                "from the functions already in the System. "
-                "Missing == %2")
-                    .arg(expression.expression().toString(), 
-                         getString(missing_funcs)), CODELOC );
-    }
-}
-
-/** Construct the info for the expression 'expression' using the info of
-    the other expressions in 'ff_equations' to resolve any
-    dependencies. This will throw an exception if there are
-    any unresolved functions in the expression.
-
-    \throw SireError::dependency_error
-*/
-SystemData::ExpressionInfo::ExpressionInfo(const FFExpression &expression,
-                       const QHash<SymbolID,ExpressionInfo> &ff_equations)
-           : ex(expression)
-{
-    //get all of the direct dependencies on forcefields from the expression
-    ffids = expression.forceFieldIDs();
-
-    //validate that ff_equations satisfies all of the expressions
-    //dependencies
-    this->validateDependencies(expression, ff_equations);
-
-    //get all of the dependencies of this expression
-    const QSet<Function> &ex_deps = expression.dependencies();
-
-    if (not ex_deps.isEmpty())
-    {
-        //resolve all of the dependencies from ff_equations...
-
-        //set used to keep track of functions we have already processed...
-        QSet<SymbolID> done_funcs;
-
-        //set used to keep track of the order of the dependencies
-        QList<SymbolID> ordered_funcs;
-
-        for (QSet<Function>::const_iterator it = ex_deps.constBegin();
-             it != ex_deps.constEnd();
-             ++it)
-        {
-            const ExpressionInfo &dep_exprinfo = ff_equations[it->ID()];
-
-            const FFExpression &dep_expr = dep_exprinfo.expression();
-            const FFComponent &dep_func = dep_expr.function();
-
-            if ( done_funcs.contains(dep_func.ID()) )
-                continue;
-
-            //find the dependencies of this function, and them to the
-            //list
-            const QVector<FFExpression> &dep_expr_deps = dep_exprinfo.dependencies();
-
-            int ndeps = dep_expr_deps.count();
-            const FFExpression *dep_expr_deps_array = dep_expr_deps.constData();
-
-            for (int i=0; i<ndeps; ++i)
-            {
-                const FFComponent &dep_dep_func = dep_expr_deps_array[i].function();
-
-                if ( not done_funcs.contains(dep_dep_func.ID()) )
-                {
-                    ordered_funcs.append(dep_dep_func.ID());
-                    done_funcs.insert(dep_dep_func.ID());
-                }
-            }
-
-            //now add the dependent function
-            ordered_funcs.append(dep_func.ID());
-            done_funcs.insert(dep_func.ID());
-
-            //add all of the forcefield dependencies from this function
-            for (QSet<ForceFieldID>::const_iterator it = dep_exprinfo.forcefieldIDs().begin();
-                 it != dep_exprinfo.forcefieldIDs().end();
-                 ++it)
-            {
-                ffids.insert(*it);
-            }
-        }
-
-        //finally(!) convert the list of dependencies into an array of dependent
-        //expressions
-        deps.reserve(ordered_funcs.count());
-
-        for (QList<SymbolID>::const_iterator it = ordered_funcs.constBegin();
-             it != ordered_funcs.constEnd();
-             ++it)
-        {
-            deps.append( ff_equations.value(*it).expression() );
-        }
-
-        deps.squeeze();
-        ffids.squeeze();
-    }
-    else
-    {
-        //there are no dependencies
-        ffids = expression.forceFieldIDs();
-    }
-}
-
-/** Copy constructor */
-SystemData::ExpressionInfo::ExpressionInfo(const ExpressionInfo &other)
-           : ex(other.ex), deps(other.deps), ffids(other.ffids)
-{}
-
-/** Destructor */
-SystemData::ExpressionInfo::~ExpressionInfo()
-{}
-
-/** Copy assignment */
-SystemData::ExpressionInfo& SystemData::ExpressionInfo::operator=(
-                                    const SystemData::ExpressionInfo &other)
-{
-    ex = other.ex;
-    deps = other.deps;
-    ffids = other.ffids;
-
-    return *this;
-}
-
 //////////
 ////////// Implementation of SystemData
 //////////
@@ -276,7 +105,7 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, SystemData &sysdata)
 static Incremint system_incremint;
 
 /** Construct with an unspecified name */
-SystemData::SystemData() 
+SystemData::SystemData()
            : nme( QObject::tr("Unnamed") ), id_and_version(&system_incremint)
 {}
 
@@ -301,14 +130,14 @@ SystemData::SystemData(const SystemData &other)
 SystemData::~SystemData()
 {}
 
-/** Comparison operator - two SystemData objects are equal if they 
+/** Comparison operator - two SystemData objects are equal if they
     have the same ID and version */
 bool SystemData::operator==(const SystemData &other) const
 {
     return ID() == other.ID() and version() == other.version();
 }
 
-/** Comparison operator - two SystemData objects are equal if they 
+/** Comparison operator - two SystemData objects are equal if they
     have the same ID and version */
 bool SystemData::operator!=(const SystemData &other) const
 {
@@ -316,7 +145,7 @@ bool SystemData::operator!=(const SystemData &other) const
 }
 
 /** Increment the major version number of the System. The major number
-    is incremented if forcefields or groups are added or removed from 
+    is incremented if forcefields or groups are added or removed from
     the system. The minor version number is incremented if anything
     else in the system is changed. */
 void SystemData::incrementMajorVersion()
@@ -325,7 +154,7 @@ void SystemData::incrementMajorVersion()
     cached_energies.clear();
 }
 
-/** Increment the minor version number. This is incremented if any of the  
+/** Increment the minor version number. This is incremented if any of the
     molecules or properties in the system are changed. */
 void SystemData::incrementMinorVersion()
 {
@@ -352,19 +181,19 @@ QHash<Function,FFExpression> SystemData::equations() const
     return eqns;
 }
 
-/** Return the MoleculeGroup with ID == id 
+/** Return the MoleculeGroup with ID == id
 
     \throw SireSystem::missing_group
 */
 const MoleculeGroup& SystemData::group(MoleculeGroupID id) const
 {
     QHash<MoleculeGroupID,MoleculeGroup>::const_iterator it = molgroups.find(id);
-    
+
     //if (it == molgroups.end())
     //    throw SireSystem::missing_group( QObject::tr(
     //        "There is no MoleculeGroup with ID == %1 in the System %2 (%3)")
     //            .arg(id).arg(ID()).arg(version().toString()), CODELOC );
-    
+
     return *it;
 }
 
@@ -389,7 +218,7 @@ void SystemData::add(const FFExpression &equation)
 
     //add this to the list of expressions
     ff_equations.insert(equation.function().ID(), exprinfo);
-    
+
     //changing the equations changes the major version
     //of the system
     this->incrementMajorVersion();
@@ -637,7 +466,7 @@ void SystemData::setParameter(const Symbol &param, double value)
 
         //update anything that depends on this parameter
         // .... how?
-        
+
         this->updateMinorVersion();
     }
     catch(...)
