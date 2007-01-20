@@ -43,12 +43,11 @@ public:
     
     void clear();
     
-    void add(const MoleculeGroup &group);
-    void change(const MoleculeGroup &group);
-    void remove(const MoleculeGroup &group);
+    bool add(const MoleculeGroup &group);
+    bool change(const MoleculeGroup &group);
+    bool remove(const MoleculeGroup &group);
     
     bool remove(MoleculeGroupID groupid);
-    bool remove(const MoleculeGroup &group);
     bool remove(const QString &groupname);
     
     bool add(const Molecule &molecule, MoleculeGroupID groupid);
@@ -59,11 +58,15 @@ public:
     
     QVector<Molecule> molecules() const;
     
+    QSet<MoleculeID> moleculeIDs() const;
+    
     QVector<MoleculeGroup> groups() const;
     QVector<MoleculeGroup> groups(MoleculeID molid) const;
     
     const MoleculeGroup& group(MoleculeGroupID groupid) const;
     const MoleculeGroup& group(const QString &name) const;
+    
+    QSet<MoleculeGroupID> groupsContaining(MoleculeID molid) const;
     
     bool contains(MoleculeID molid) const;
     
@@ -75,9 +78,11 @@ public:
     
 private:
     void reindex();
-    void synchronise(const Molecule &molecule);
-    void reindexAndSynchronise();
-    void reindexAndSynchronise(MoleculeGroupID molid);
+    void _pvt_index(const MoleculeGroup &group);
+    
+    void synchronise(MoleculeGroupID groupid);
+    void synchronise(MoleculeID molid);
+    void synchronise();
     
     Molecule getLatest(MoleculeID molid) const;
     

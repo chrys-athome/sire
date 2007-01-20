@@ -69,6 +69,8 @@ public:
     const QVector<Molecule>& molecules() const;
     const QHash<MoleculeID,int>& index() const;
 
+    QSet<MoleculeID> moleculeIDs() const;
+
     const Molecule& molecule(MoleculeID molid) const;
 
     const QString& name() const;
@@ -76,11 +78,11 @@ public:
     MoleculeGroupID ID() const;
     const Version& version() const;
 
-    void add(const Molecule &molecule);
-    void change(const Molecule &molecule);
+    bool add(const Molecule &molecule);
+    bool change(const Molecule &molecule);
     bool remove(const Molecule &molecule);
 
-    void add(const QVector<Molecule> &molecules);
+    bool add(const QVector<Molecule> &molecules);
     bool change(const QVector<Molecule> &molecules);
     bool remove(const QVector<Molecule> &molecules);
 
@@ -186,15 +188,17 @@ public:
 
     const QVector<Molecule>& molecules() const;
 
+    QSet<MoleculeID> moleculeIDs() const;
+
     int count() const;
 
-    void add(const Molecule &molecule);
-    void change(const Molecule &molecule);
-    void remove(const Molecule &molecule);
+    bool add(const Molecule &molecule);
+    bool change(const Molecule &molecule);
+    bool remove(const Molecule &molecule);
 
-    void add(const QVector<Molecule> &molecules);
-    void change(const QVector<Molecule> &molecules);
-    void remove(const QVector<Molecule> &molecules);
+    bool add(const QVector<Molecule> &molecules);
+    bool change(const QVector<Molecule> &molecules);
+    bool remove(const QVector<Molecule> &molecules);
 
     void rename(const QString &newname);
 
@@ -255,6 +259,12 @@ inline const Molecule& MoleculeGroup::operator[](const Molecule &molecule) const
 inline const Molecule& MoleculeGroup::at(const Molecule &molecule) const
 {
     return d->molecule(molecule.ID());
+}
+
+/** Return the set of IDs of all molecules in this group */
+inline QSet<MoleculeID> MoleculeGroup::moleculeIDs() const
+{
+    return d->moleculeIDs();
 }
 
 /** Return the copy of 'molecule' that is held in this group

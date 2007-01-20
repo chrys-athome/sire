@@ -1,6 +1,10 @@
 
 #include "moleculegroups.h"
 
+#include "SireMol/moleculeversion.h"
+
+#include "SireMol/errors.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
@@ -66,13 +70,43 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
             
             //now index them all
             molgroups.molgroups = groups;
-            molgroups.reindexAndSynchronise();
+            molgroups.reindex();
         }
     }
     else
         throw version_error(v, "1", r_molgroups, CODELOC);
     
     return ds;
+}
+
+/** Index all of the molecules in the passed group */
+void MoleculeGroups::_pvt_index(const MoleculeGroup &group)
+{
+    MoleculeGroupID groupid = group.ID();
+    
+    int nmols = group.molecules().count();
+    
+    const Molecule *mol_array = group.molecules().constData();
+    
+    for (int i=0; i<nmols; ++i)
+    {
+        index[mol_array[i].ID()].insert(groupid);
+    }
+}
+
+/** Completely reindex the groups */
+void MoleculeGroups::reindex()
+{
+    index.clear();
+    
+    for (QHash<MoleculeGroupID,MoleculeGroup>::const_iterator
+                                                 it = molgroups.constBegin();
+         it != molgroups.constEnd();
+         ++it)
+    {
+        //index all of the molecules in this group
+        this->_pvt_index(*it);
+    }
 }
 
 /** Create an empty set of MoleculeGroups */
@@ -83,7 +117,7 @@ MoleculeGroups::MoleculeGroups()
 MoleculeGroups::MoleculeGroups(const MoleculeGroup &group)
 {
     molgroups.insert(group.ID(), group);
-    this->reindex();
+    this->_pvt_index(group);
 }
 
 /** Copy constructor */
@@ -116,6 +150,106 @@ bool MoleculeGroups::operator!=(const MoleculeGroups &other) const
     return molgroups != other.molgroups;
 }
 
+/** Return the set of IDs of groups that contain the molecule with ID == molid */
+QSet<MoleculeGroupID> MoleculeGroups::groupsContaining(MoleculeID molid) const
+{
+    return index.value(molid);
+}
+
+/** Return the set of ID numbers of all molecules in this set */
+QSet<MoleculeID> MoleculeGroups::moleculeIDs() const
+{
+    return index.keys().toSet();
+}
+
+/** Synchronise the molecule with ID == molid so that each 
+    group has a copy of the latest version */
+void MoleculeGroups::synchronise(MoleculeID molid)
+{
+    QSet<MoleculeGroupID> groupids = this->groupsContaining(molid);
+    
+    if (groupids.isEmpty() or groupids.count() == 1)
+        //there is either no copy, or just one copy of 
+        //the molecule, so no need to synchronise
+        return;
+        
+    //record the version number of each molecule in each of the containing
+    //groups, and the groups that contain the molecule at that version
+
+    QMap< MoleculeVersion, QSet<MoleculeGroupID> > molversions;
+
+    foreach (MoleculeGroupID groupid, groupids)
+    {
+        const MoleculeGroup &group = *(molgroups.constFind(groupid));
+
+        molversions[ group.molecule(molid).version() ].insert(groupid);
+    }
+
+    if (molversions.isEmpty() or molversions.count() == 1)
+    {
+        //there is either no copy of the molecule, or there
+        //is already only a single version of the molecule
+        return;
+    }
+
+    //there is some disagreement over the version number
+    //The latest version is the last item in the map
+    QMap< MoleculeVersion, QSet<MoleculeGroupID> >::const_iterator latest;
+
+    latest = molversions.constEnd();
+    --latest;
+
+    //latest now points at the last item in the map
+    MoleculeVersion latest_version = latest.key();
+    const QSet<MoleculeGroupID> &latest_groupids = latest.value();
+
+    //get a copy of the latest version of the molecule
+    Molecule latest_mol = 
+              molgroups.constFind(*(latest_groupids.begin()))->molecule(molid);
+
+    //now loop over the forcefields that don't have this version and
+    //update them
+    molversions.remove(latest_version);
+
+    QSet<MoleculeGroupID> groupids_needing_updating;
+
+    for (QMap< MoleculeVersion, QSet<MoleculeGroupID> >::const_iterator
+                                                  it = molversions.constBegin();
+         it != molversions.constEnd();
+         ++it)
+    {
+        groupids_needing_updating += it.value();
+    }
+
+    //change the molecule in the requested MoleculeGroups
+    foreach (MoleculeGroupID groupid, groupids_needing_updating)
+    {
+        molgroups[groupid].change(latest_mol);
+    }
+}
+
+/** Synchronise all molecules in the group with ID == groupid */
+void MoleculeGroups::synchronise(MoleculeGroupID groupid)
+{
+    QSet<MoleculeID> molids = this->group(groupid).moleculeIDs();
+    
+    foreach (MoleculeID molid, molids)
+    {
+        this->synchronise(molid);
+    }
+}
+
+/** Synchronise all of the molecules in the groups */
+void MoleculeGroups::synchronise()
+{
+    QSet<MoleculeID> molids = this->moleculeIDs();
+    
+    foreach (MoleculeID molid, molids)
+    {
+        this->synchronise(molid);
+    }
+}
+
 /** Completely clear this set - this removes all groups */
 void MoleculeGroups::clear()
 {
@@ -123,29 +257,36 @@ void MoleculeGroups::clear()
     index.clear();
 }
 
-/** Add the MoleculeGroup 'group' - this throws an exception  
-    if this group is already in this set.
+/** Add the MoleculeGroup 'group' - this will only
+    add the group if it doesn't already exist,
+    or if the existing version has a lower
+    version number.
     
     All of the molecules in this set will be synchronised 
     to their latest versions.
-    
-    \throw SireMol::duplicate_group
 */
-void MoleculeGroups::add(const MoleculeGroup &group)
+bool MoleculeGroups::add(const MoleculeGroup &newgroup)
 {
-    if ( molgroups.contains(group.ID()) )
-        throw SireMol::duplicate_group( QObject::tr(
-            "Cannot add the MoleculeGroup \"%1\" (%2 %3) as "
-            "it already exists in this set (version == %3)")
-                .arg(group.name()).arg(group.ID())
-                .arg(group.version().toString(),
-                     molgroups.value(group.ID()).version().toString()),
-                        CODELOC );
-
-    molgroups.insert( group.ID(), group );
+    if (molgroups.contains(newgroup.ID()))
+    {
+        if (this->group(newgroup.ID()).version() >= newgroup.version())
+            //there is already a copy in this set, and its newer!
+            return false;
+            
+        //get rid of the existing copy
+        this->remove(newgroup.ID());
+    }
     
-    //now index and synchronise this group...
-    this->reindexAndSynchronise(group.ID());
+    //add the new group
+    molgroups.insert( newgroup.ID(), newgroup );
+    
+    //index the group
+    this->_pvt_index(newgroup);
+    
+    //now synchronise this group...
+    this->synchronise(newgroup.ID());
+    
+    return true;
 }
 
 /** Remove the group with ID == groupid */
@@ -156,10 +297,10 @@ bool MoleculeGroups::remove(MoleculeGroupID groupid)
   
         MoleculeGroup group = molgroups.take(groupid);
     
-        int nats = group.molecules().count();
+        int nmols = group.molecules().count();
         const Molecule *group_array = group.molecules().constData();
     
-        for (int i=0; i<nats; ++i)
+        for (int i=0; i<nmols; ++i)
         {
             MoleculeID molid = group_array[i].ID();
     
@@ -199,10 +340,16 @@ bool MoleculeGroups::remove(const QString &groupname)
             groupids.insert(it.key());
     }
     
+    bool changed = false;
+    
     foreach (MoleculeGroupID groupid, groupids)
     {
-        this->remove(groupid);
+        bool this_changed = this->remove(groupid);
+        
+        changed = changed or this_changed;
     }
+    
+    return changed;
 }
 
 /** Add the molecule 'molecule' to the group with ID == groupid. This
@@ -211,12 +358,21 @@ bool MoleculeGroups::remove(const QString &groupname)
     \throw SireMol::missing_group
     \throw SireMol::duplicate_molecule
 */
-void MoleculeGroups::add(const Molecule &molecule, MoleculeGroupID groupid)
+bool MoleculeGroups::add(const Molecule &molecule, MoleculeGroupID groupid)
 {
     this->assertContains(groupid);
     
-    molgroups[groupid].add(molecule);
-    index[molecule.ID()].insert(groupid);
+    if (molgroups[groupid].add(molecule))
+    {
+        index[molecule.ID()].insert(groupid);
+        
+        //synchronise this molecule across all of the groups
+        this->synchronise(molecule.ID());
+        
+        return true;
+    }
+    else
+        return false;
 }
 
 /** Remove the molecule 'molecule' from the group with ID == groupid */
@@ -224,16 +380,21 @@ bool MoleculeGroups::remove(const Molecule &molecule, MoleculeGroupID groupid)
 {
     if (molgroups.contains(groupid))
     {
+        //we contain this group...
+    
         if (molgroups[groupid].remove(molecule))
         {
+            //the group contains this molecule, and it was removed
+            
+            //now remove the molecule from the index of the group
             QSet<MoleculeGroupID> groups_containing_mol = index.value(molecule.ID());
             
             groups_containing_mol.remove(groupid);
             
             if (groups_containing_mol.isEmpty())
-                index.remove(groupid);
+                index.remove(molecule.ID());
             else
-                index[groupid] = groups_containing_mol;
+                index[molecule.ID()] = groups_containing_mol;
                 
             return true;
         }
@@ -250,14 +411,18 @@ bool MoleculeGroups::change(const Molecule &molecule)
                                                   
     if (it != index.constEnd())
     {
+        bool changed = false;
+    
         const QSet<MoleculeGroupID> &groupids = it.value();
         
         foreach (MoleculeGroupID groupid, groupids)
         {
-            molgroups[groupid].change(molecule);
+            bool this_changed = molgroups[groupid].change(molecule);
+            
+            changed = changed or this_changed;
         }
         
-        return true;
+        return changed;
     }
     else
         return false;
@@ -296,7 +461,7 @@ QVector<Molecule> MoleculeGroups::molecules() const
 
     int i = 0;
 
-    for (QHash< MoleculeID, QSet<MoleculeGroupID>::const_iterator it = index.begin();
+    for (QHash< MoleculeID, QSet<MoleculeGroupID> >::const_iterator it = index.begin();
          it = index.end();
          ++it)
     {
@@ -378,6 +543,19 @@ const MoleculeGroup& MoleculeGroups::group(MoleculeGroupID groupid) const
         this->assertContains(groupid);
         
     return *it;
+}
+
+/** Assert that the group with ID == groupid exists in this set
+
+    \throw SireMol::missing_group
+*/
+void MoleculeGroups::assertContains(MoleculeGroupID groupid) const
+{
+    if (not molgroups.contains(groupid))
+        throw SireMol::missing_group( QObject::tr(
+                  "There is no MoleculeGroup with ID == %1 in this set of "
+                  "MoleculeGroups")
+                      .arg(groupid), CODELOC );
 }
 
 /** Return the first MoleculeGroup that is called 'name' 

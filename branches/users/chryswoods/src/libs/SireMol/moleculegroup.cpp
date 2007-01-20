@@ -168,12 +168,18 @@ const Molecule& MoleculeGroupPvt::molecule(MoleculeID molid) const
     return mols.constData()[it.value()];
 }
 
-/** Add the molecule 'molecule' to this group. This throws an  
-    exception if this molecule already exists in this group.
-     
-    \throw SireMol::duplicate_molecule
+/** Return the set of IDs of all of the molecules in this group */
+QSet<MoleculeID> MoleculeGroupPvt::moleculeIDs() const
+{
+    return idx.keys().toSet();
+}
+
+/** Add the molecule 'molecule' to this group. This
+    only adds the molecule if it doesn't already exist
+    in the group, or if the original version has a 
+    lower version number.
 */
-void MoleculeGroupPvt::add(const Molecule &molecule)
+bool MoleculeGroupPvt::add(const Molecule &molecule)
 {
     QHash<MoleculeID,int>::const_iterator it = idx.constFind(molecule.ID());
 
@@ -184,19 +190,31 @@ void MoleculeGroupPvt::add(const Molecule &molecule)
         mols.append(molecule);
 
         id_and_version.incrementMajor();
+        
+        return true;
     }
     else
     {
-        //this replaces an existing copy of the molecule
-        mols.data()[it.value()] = molecule;
+        //this replaces an existing copy of the molecule, if
+        //it has a lower version
+        const Molecule &oldmol = this->molecule(molecule.ID());
+        
+        if (oldmol.version() < molecule.version())
+        {
+            mols.data()[it.value()] = molecule;
 
-        id_and_version.incrementMinor();
+            id_and_version.incrementMinor();
+            
+            return true;
+        }
     }
+    
+    return false;
 }
 
 /** Change the molecule 'molecule' - this does nothing if this
     molecule is not in this group */
-void MoleculeGroupPvt::change(const Molecule &molecule)
+bool MoleculeGroupPvt::change(const Molecule &molecule)
 {
     QHash<MoleculeID,int>::const_iterator it = idx.constFind(molecule.ID());
 
@@ -207,13 +225,16 @@ void MoleculeGroupPvt::change(const Molecule &molecule)
         {
             mols.data()[it.value()] = molecule;
             id_and_version.incrementMinor();
+            return true;
         }
     }
+    
+    return false;
 }
 
 /** Remove the molecule 'molecule' - this does nothing if this
     molecule is not in this group */
-void MoleculeGroupPvt::remove(const Molecule &molecule)
+bool MoleculeGroupPvt::remove(const Molecule &molecule)
 {
     MoleculeID molid = molecule.ID();
 
@@ -239,21 +260,19 @@ void MoleculeGroupPvt::remove(const Molecule &molecule)
         }
 
         id_and_version.incrementMajor();
+        
+        return true;
     }
+    else
+        return false;
 }
 
-/** Add a whole load of molecules to this group - this will 
-    throw an exception if any of the molecules already exist
-    in this group.
-     
-    \throw SireMol::duplicate_molecule
+/** Add a whole load of molecules to this group - this will
+    only add a molecule if it doesn't exist in the group,
+    or if the original copy has a lower version number.
 */
-void MoleculeGroupPvt::add(const QVector<Molecule> &molecules)
+bool MoleculeGroupPvt::add(const QVector<Molecule> &molecules)
 {
-    //are there any duplicates?
-    int n = molecules.count();
-    const Molecule *molecules_array = 
-
     bool changed = false;
     bool added = false;
 
@@ -275,13 +294,18 @@ void MoleculeGroupPvt::add(const QVector<Molecule> &molecules)
         }
         else
         {
-            //replace an existing molecule?
-            int index = it2.value();
-
-            if (mols.constData()[index].ID() != it->ID())
+            //replace an existing molecule if the version is older
+            const Molecule &oldmol = this->molecule(it->ID());
+            
+            if (oldmol.version() < it->version())
             {
-                mols.data()[index] = *it;
-                changed = true;
+                int index = it2.value();
+
+                if (mols.constData()[index].ID() != it->ID())
+                {
+                    mols.data()[index] = *it;
+                    changed = true;
+                }
             }
         }
     }
@@ -293,10 +317,12 @@ void MoleculeGroupPvt::add(const QVector<Molecule> &molecules)
     }
     else if (changed)
         id_and_version.incrementMinor();
+        
+    return added or changed;
 }
 
 /** Change a whole load of molecules */
-void MoleculeGroupPvt::change(const QVector<Molecule> &molecules)
+bool MoleculeGroupPvt::change(const QVector<Molecule> &molecules)
 {
     bool changed = false;
 
@@ -309,17 +335,24 @@ void MoleculeGroupPvt::change(const QVector<Molecule> &molecules)
 
         if (it2 != idx.constEnd())
         {
-            mols.data()[it2.value()] = *it;
-            changed = true;
+            const Molecule &oldmol = this->molecule(it->ID());
+            
+            if (oldmol.version() != it->version())
+            {
+                mols.data()[it2.value()] = *it;
+                changed = true;
+            }
         }
     }
 
     if (changed)
         id_and_version.incrementMinor();
+        
+    return changed;
 }
 
 /** Remove a whole load of molecules */
-void MoleculeGroupPvt::remove(const QVector<Molecule> &molecules)
+bool MoleculeGroupPvt::remove(const QVector<Molecule> &molecules)
 {
     bool removed = false;
 
@@ -342,6 +375,8 @@ void MoleculeGroupPvt::remove(const QVector<Molecule> &molecules)
         this->reindex();
         id_and_version.incrementMajor();
     }
+    
+    return removed;
 }
 
 /** Rename this group - this also changes the ID number of the group */
@@ -433,74 +468,56 @@ bool MoleculeGroup::operator!=(const MoleculeGroup &other) const
 }
 
 /** Add the molecule 'molecule' to this group. This replaces any existing
-    copy of the molecule */
-void MoleculeGroup::add(const Molecule &molecule)
+    copy of the molecule if it has a lower version number. */
+bool MoleculeGroup::add(const Molecule &molecule)
 {
-    if (not this->contains(molecule) or
-        this->molecule(molecule.ID()).version() != molecule.version())
-    {
-        d->add(molecule);
-    }
+    return d->add(molecule);
 }
 
 /** Change the molecule 'molecule' - this does nothing if this
     molecule is not in this group */
-void MoleculeGroup::change(const Molecule &molecule)
+bool MoleculeGroup::change(const Molecule &molecule)
 {
     if (this->contains(molecule) and
         this->molecule(molecule.ID()).version() != molecule.version())
     {
-        d->change(molecule);
+        return d->change(molecule);
     }
+    else
+        return false;
 }
 
 /** Remove the molecule 'molecule' - this does nothing if this
     molecule is not in this group */
-void MoleculeGroup::remove(const Molecule &molecule)
+bool MoleculeGroup::remove(const Molecule &molecule)
 {
     if (this->contains(molecule))
     {
-        d->remove(molecule);
+        return d->remove(molecule);
     }
+    else
+        return false;
 }
 
 /** Add a whole load of molecules to this group - this will replace
     any existing copies of a molecule with the copy from
-    'molecules' */
-void MoleculeGroup::add(const QVector<Molecule> &molecules)
+    'molecules' if the copy in 'molecules' has a newer 
+    version number. */
+bool MoleculeGroup::add(const QVector<Molecule> &molecules)
 {
-    d->add(molecules);
+    return d->add(molecules);
 }
 
 /** Change a whole load of molecules */
-void MoleculeGroup::change(const QVector<Molecule> &molecules)
+bool MoleculeGroup::change(const QVector<Molecule> &molecules)
 {
-    for (QVector<Molecule>::const_iterator it = molecules.constBegin();
-         it != molecules.constEnd();
-         ++it)
-    {
-        if (this->contains(*it) and
-            this->molecule(it->ID()).version() != it->version())
-        {
-            d->change(molecules);
-            return;
-        }
-    }
+    return d->change(molecules);
 }
 
 /** Remove a whole load of molecules */
-void MoleculeGroup::remove(const QVector<Molecule> &molecules)
+bool MoleculeGroup::remove(const QVector<Molecule> &molecules)
 {
-    for (QVector<Molecule>::const_iterator it = molecules.constBegin();
-         it != molecules.constEnd();
-         ++it)
-    {
-        if (this->contains(*it))
-        {
-            d->remove(molecules);
-            return;
-        }
-    }
+    return d->remove(molecules);
 }
 
 /** Rename this group - this also changes the ID number of the group */

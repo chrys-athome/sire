@@ -1712,7 +1712,7 @@ void ForceFields::synchronise(MoleculeID molid)
     if (molversions.isEmpty() or molversions.count() == 1)
     {
         //there is either no copy of the molecule, or there
-        //is already only single version of the molecule
+        //is already only a single version of the molecule
         return;
     }
 
