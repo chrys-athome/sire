@@ -1,9 +1,9 @@
 #ifndef SIRESYSTEM_SIMSYSTEM_H
 #define SIRESYSTEM_SIMSYSTEM_H
 
-#include <boost/noncopyable.hpp>
-
 #include "sireglobal.h"
+
+#include <boost/noncopyable.hpp>
 
 SIRE_BEGIN_HEADER
 
@@ -52,10 +52,8 @@ using SireFF::FFComponent;
 
 using SireBase::Version;
 
-/** This pure-virtual class provides the interface to a simulation
-    system that is being simulated. This allows the
-    System to be simulated both in the local process
-    and also on a cluster.
+/** This class holds a system that is being actively
+    simulated.
 
     While System is an implicitly-shared class,
     SimSystem is designed to be a non-copyable
@@ -66,37 +64,44 @@ using SireBase::Version;
 class SIRESYSTEM_EXPORT SimSystem : public boost::noncopyable
 {
 
-//friend so that it can see the makeSystem function 
-//so that System can make 'makeSystem' a friend!
-friend class System;
-
 public:
-    SimSystem();
+    SimSystem(System &system);
+    SimSystem(SystemData &sysdata, ForceFieldsBase &ffields);
 
     virtual ~SimSystem();
 
-    virtual double energy(const Function &component)=0;
-    virtual double energy(const FFComponent &component)=0;
+    const SystemData& info() const;
+    const ForceFieldsBase& forceFields() const;
 
-    virtual System checkpoint()=0;
+    double energy(const Function &component);
+    double energy(const FFComponent &component);
 
-    virtual void rollback(const System &checkpoint)=0;
+    System checkpoint() const;
+    void setSystem(System &newsystem);
 
-    virtual MoleculeGroup group(MoleculeGroupID id)=0;
+    const MoleculeGroup& group(MoleculeGroupID id) const;
 
-    virtual QHash<MoleculeGroupID,MoleculeGroup> groups()=0;
+    const MoleculeGroup& group(const MoleculeGroup &group) const;
 
-    virtual SystemID ID()=0;
+    const QHash<MoleculeGroupID,MoleculeGroup>& groups() const;
 
-    virtual Version version()=0;
+    SystemID ID() const;
 
-    virtual void change(const Molecule &molecule)=0;
-    virtual void change(const Residue &residue)=0;
-    virtual void change(const NewAtom &atom)=0;
+    Version version() const;
 
-protected:
-    static System makeSystem(const SystemData &data,
-                             const QHash<ForceFieldID,ForceField> &ffields);
+    void change(const Molecule &molecule);
+    void change(const Residue &residue);
+    void change(const NewAtom &atom);
+
+    void remove(const Molecule &molecule);
+
+private:
+    /** Reference to the data of the System being simulated */
+    SystemData &sysdata;
+    
+    /** Reference to the forcefields that are used to 
+        calculate the energy / forces */
+    ForceFieldsBase &ffields;
 };
 
 }

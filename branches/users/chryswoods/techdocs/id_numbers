@@ -57,3 +57,43 @@ type are as follows;
        - Implies that changing anything about a contained molecule
          must also increase the minor version number of the forcefield.
 
+===== MoleculeGroup =====
+
+(1) All MoleculeGroups with the same ID number have the same name.
+
+       - Implies that changing the name of the MoleculeGroup
+         changes its ID
+         
+(2) All MoleculeGroups with the same ID and major numbers have 
+    the same molecules, in the same order.
+    
+       - Implies that adding or removing a molecule changes the 
+         major version number
+         
+       - Does not say that all of the molecules have the same
+         version numbers
+         
+(3) All MoleculeGroups with the same ID and version numbers
+    are identical
+    
+       - Implies that changing any of the contained molecules
+         changes the minor version number
+         
+===== System/SystemData =====
+
+(1) All Systems with the same ID number have the same name
+
+       - Implies changing the name changes the ID
+
+(2) All Systems with the same ID and major numbers contain the same
+    forcefields and MoleculeGroups
+    
+       - Implies that adding or removing forcefields or MoleculeGroups
+         changes the major ID
+         
+(3) All Systems with the same ID and version numbers are identical
+
+       - Implies that changing the molecules, or adding or removing
+         molecules, or changing properties, or updating the average
+         all change the minor version number.
+

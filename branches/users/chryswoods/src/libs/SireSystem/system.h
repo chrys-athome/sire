@@ -4,9 +4,8 @@
 #include <QString>
 
 #include "systemdata.h"
-#include "simsystem.h"
 
-#include "SireFF/forcefield.h"
+#include "SireFF/forcefields.h"
 
 namespace SireSystem
 {
@@ -23,6 +22,7 @@ class Move;
 class Moves;
 
 using SireFF::ForceField;
+using SireFF::ForceFields;
 
 /** This class holds all of the data necessary to specify a single
     system of molecules (including how to calculate their energy).
@@ -34,20 +34,13 @@ using SireFF::ForceField;
 
     @author Christopher Woods
 */
-class SIRESYSTEM_EXPORT System : public SystemData
+class SIRESYSTEM_EXPORT System
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const System&);
 friend QDataStream& ::operator>>(QDataStream&, System&);
 
-//allow access from the 'makeSystem' function of SimSystem so that
-//SimSystems can construct a System from data and forcefields without
-//requiring any validation (as we must assume that the SimSystem is capable
-//of respecting the need to keep the forcefields and metadata in a consistent
-//state!) The function is able to call the protected constructor from
-//a SystemData and set of forcefields.
-friend System SimSystem::makeSystem(const SystemData &data,
-                                    const QHash<ForceFieldID,ForceField> &ffields);
+friend class SimSystem;  //friend so can mess with this System ;-)
 
 public:
     System();
@@ -97,35 +90,30 @@ public:
     void run(const Moves &moves);
     void run(const Moves &moves, quint32 nmoves);
 
-protected:
-    System(const SystemData &data,
-           const QHash<ForceFieldID, ForceField> &forcefields);
-
-    Values getEnergyComponents(ForceFieldID ffid);
-    Values getEnergyComponents(const QSet<ForceFieldID> &ffids);
-    Values getEnergyComponents(const QSet<FFComponent> &components);
-
-    double getEnergyComponent(const FFComponent &component);
+    void prepareForSimulation();
 
 private:
-    ForceField& getForceField(ForceFieldID ffid);
-    
-    void extractEquations();
-    
-    /** All of the forcefields in the system, indexed by ID */
-    QHash<ForceFieldID, ForceField> ffields;
+    System(const SystemData &sysdata, 
+           const ForceFields &ffields);
 
-    /** The set of forcefield expressions that have been added to
-        the system, but have yet to be fully resolved. */
-    QHash<Function,FFExpression> tmp_expressions;
-
+    /** The object holding information about this system */
+    SystemData sysdata;
+    
+    /** The forcefields that are used to calculate
+        energies / forces of molecules */
+    ForceFields ffields;
 };
 
-/** Return the forcefields contained in this system, indexed by
-    their ForceFieldID */
-inline const QHash<ForceFieldID,ForceField>& System::forceFields() const
+/** Return the forcefields contained in this system */
+inline const ForceFields& System::forceFields() const
 {
     return ffields;
+}
+
+/** Return the information about this system */
+inline const SystemData& System::info() const
+{
+    return sysdata;
 }
 
 }

@@ -1112,6 +1112,72 @@ QHash<ForceFieldID,ForceField> ForceFields::forceFields() const
     return ffields;
 }
 
+/** Set this ForceFields object equal to 'forcefields' */
+void ForceFields::setEqualTo(const ForceFields &forcefields)
+{
+    *this = forcefields;
+}
+    
+/** Perform a major update - this sets this ForceFields object
+    equal to 'forcefields' */
+void ForceFields::majorUpdate(const ForceFields &forcefields)
+{
+    *this = forcefields;
+}
+
+/** Return whether or not the two hashes (hash0 and hash1) have
+    different keys. */
+template<class T, class V0, class V1>
+bool differentKeys(const QHash<T,V0> &hash0, const QHash<T,V1> &hash1)
+{
+    if (hash0.count() == hash1.count())
+    {
+        for (typename QHash<T,V0>::const_iterator it = hash0.begin();
+             it != hash0.end();
+             ++it)
+        {
+            if ( not hash1.contains(it.key()) )
+                return true;
+        }
+        
+        return false;
+    }
+    else
+        return true;
+}
+
+/** Assert that this set has the same forcefield contents
+    as 'other'
+    
+    \throw SireError::incompatible_error 
+*/
+void ForceFields::assertSameContents(const ForceFields &other) const
+{
+    if (this != &other)
+    {
+        //ensure that we both have the same number of forcefields
+        if (differentKeys(ffields, other.ffields))
+            throw SireError::incompatible_error( QObject::tr(
+                    "This set of forcefields contains different forcefields to the other!"),
+                          CODELOC );
+    }
+}
+
+
+/** Perform a minor update - this sets this ForceFields object
+    equal to 'forcefields', which itself must contain exactly
+    the same forcefields as this object, though they
+    may have different versions.
+    
+    \throw SireError::incompatible_error
+*/
+void ForceFields::minorUpdate(const ForceFields &forcefields)
+{
+    this->assertSameContents(forcefields);
+    
+    *this = forcefields;
+}
+
 /** Add the forcefield 'ffield' to this set. This will synchronise
     all of the molecules in this set so that they are at the latest
     version.

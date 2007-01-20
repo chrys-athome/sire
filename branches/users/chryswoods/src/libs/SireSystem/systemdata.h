@@ -123,10 +123,6 @@ private:
     /** All of the MoleculeGroups in the System */
     MoleculeGroups molgroups;
 
-    /** Pointer to the object containing all of the forcefields
-        and forcefield equations in the System */
-    ForceFieldsBase *ffields;
-
     /** Hash mapping all of the forcefield functions that should be averaged
         to their corresponding averaging function (which includes the running
         average) */

@@ -54,6 +54,11 @@ public:
     ForceFieldsBase& operator=(const ForceFieldsBase &other);
 
     virtual QHash<ForceFieldID,ForceField> forceFields() const=0;
+    
+    virtual void setEqualTo(const ForceFields &forcefields)=0;
+    
+    virtual void minorUpdate(const ForceFields &forcefields)=0;
+    virtual void majorUpdate(const ForceFields &forcefields)=0;
 
     const Values& parameters() const;
 
@@ -300,6 +305,11 @@ public:
 
     QHash<ForceFieldID,ForceField> forceFields() const;
 
+    void setEqualTo(const ForceFields &forcefields);
+    
+    void majorUpdate(const ForceFields &forcefields);
+    void minorUpdate(const ForceFields &forcefields);
+
     void add(const ForceField &ffield);
 
     void remove(ForceFieldID ffid);
@@ -336,6 +346,8 @@ protected:
     QSet<ForceFieldID> getFFIDs(const QString &ffname) const;
 
     void assertValidComponents(const FFExpression &expression) const;
+    
+    void assertSameContents(const ForceFields &forcefields) const;
 
     void synchronise(ForceFieldID ffid);
     void synchronise(MoleculeID molid);
