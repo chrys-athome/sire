@@ -49,7 +49,7 @@ class SQUIRE_EXPORT MolproCalculator : public SireFF::FFCalculatorBase
 {
 public:
     MolproCalculator(const ForceField &forcefield,
-                     const QFileInfo &molpro_exe = "molpro",
+                     const QFileInfo &molpro_exe = QFileInfo("molpro"),
                      const QDir &temp_dir = QDir::temp());
 
     ~MolproCalculator();
@@ -60,9 +60,20 @@ public:
 
     void calculateEnergy();
 
-    bool move(const Molecule &molecule);
+    bool change(const Molecule &molecule);
+    bool change(const Residue &residue);
+    bool change(const NewAtom &atom);
 
-    bool move(const Residue &residue);
+    bool add(const Molecule &molecule, const ParameterMap &map = ParameterMap());
+    bool add(const Residue &residue, const ParameterMap &map = ParameterMap());
+    bool add(const NewAtom &atom, const ParameterMap &map = ParameterMap());
+
+    bool remove(const Molecule &molecule);
+    bool remove(const Residue &residue);
+    bool remove(const NewAtom &atom);
+    
+    bool replace(const Molecule &oldmol, const Molecule &newmol,
+                 const ParameterMap &map = ParameterMap());
 
     bool setForceField(const ForceField &forcefield);
 

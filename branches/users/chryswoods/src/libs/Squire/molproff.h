@@ -15,10 +15,10 @@
 
 #include <QVector>
 
-#include "SireFF/parametermap.h"
-
 #include "SireFF/ffbase.h"
-#include "SireMM/chargeparameter.h"
+
+#include "SireVol/space.h"
+#include "SireMM/switchingfunction.h"
 
 class QTextStream;
 
@@ -32,31 +32,27 @@ class MolproFF;
 QDataStream& operator<<(QDataStream&, const Squire::MolproFF&);
 QDataStream& operator>>(QDataStream&, Squire::MolproFF&);
 
-namespace SireMM
-{
-class ChargeTable;
-}
-
 namespace Squire
 {
 
 class MolproCalculator;
 class MolproSession;
 
+using SireCAS::Symbols;
+using SireCAS::Values;
+
 using SireMol::Molecule;
 using SireMol::MoleculeID;
 using SireMol::Residue;
+using SireMol::NewAtom;
 
+using SireFF::FFComponent;
 using SireFF::ParameterMap;
 using SireFF::ParameterName;
 
-using SireMM::ChargeTable;
-using SireMM::ChargeParameter;
+using SireVol::Space;
 
-using SireCAS::Values;
-using SireCAS::Function;
-
-using SireStream::VersionID;
+using SireMM::SwitchingFunction;
 
 /** This class implements a forcefield that calculates the QM energy
     of atoms in the QM region as they are polarised by the charges
@@ -80,45 +76,46 @@ friend class MolproCalculator; //friend so can all protected functions
 
 public:
     MolproFF();
-    MolproFF(const QString &name);
-
-    MolproFF(const ForceField &forcefield);
+    
+    MolproFF(const Space &space, 
+             const SwitchingFunction &switchfunc);
 
     MolproFF(const MolproFF &other);
 
     ~MolproFF();
 
     MolproFF& operator=(const MolproFF &other);
-    MolproFF& operator=(const ForceField &forcefield);
 
     class SQUIRE_EXPORT Components : public SireFF::FFBase::Components
     {
     public:
         Components();
-        Components(const QString &basename);
+        Components(const FFBase &ffbase, const Symbols &symbols = Symbols());
 
         Components(const Components &other);
 
         ~Components();
-
+        
+        Components& operator=(const Components &other);
+        
         Components* clone() const
         {
             return new Components(*this);
         }
 
-        const Function& qm() const
+        const FFComponent& qm() const
         {
             return e_qm;
         }
 
         static QString describe_qm();
-
+    
     protected:
-        void setBaseName(const QString &basename);
+        void setForceField(const FFBase &ffbase);
 
     private:
         /** The QM component */
-        Function e_qm;
+        FFComponent e_qm;
     };
 
     class SQUIRE_EXPORT Parameters : public SireFF::FFBase::Parameters
@@ -176,9 +173,10 @@ public:
     void addToMM(const QList<Molecule> &molecules,
                  const ParameterMap &map = ParameterMap());
 
-    bool move(const Molecule &mol);
-    bool move(const Residue &res);
-
+    bool change(const Molecule &molecule);
+    bool change(const Residue &residue);
+    bool change(const NewAtom &atom);
+    
 protected:
     void recalculateEnergy();  //throw an exception
 
@@ -195,14 +193,30 @@ private:
     void _pvt_addToQM(const Molecule &molecule);
     void _pvt_addToMM(const Molecule &molecule, const ParameterMap &map);
 
-    /** Pointer to the object holding the descriptions of the
-        components in this forcefield */
+    /** The space for this forcefield - this is used to map
+        to infinite cartesian space for the QM calculation
+        (only maps the position of the MM parts) */
+    Space spce;
+    
+    /** The switching function used to scale down the MM atom
+        charges */
+    SwitchingFunction switchfunc;
+    
+    /** Array containing all of the coordinates of the QM atoms */
+    QVector<double> qm_coords;
+    
+    /** Array containing all of the coordinates and charges 
+        of the MM atoms */
+    QVector<double> mm_coords_and_charges;
+    
+    /** Pointer to the object containing the components of 
+        this forcefield */
     const MolproFF::Components *components_ptr;
 };
 
 }
 
-Q_DECLARE_METATYPE(Squire::MolproFF)
+Q_DECLARE_METATYPE(Squire::MolproFF);
 
 SIRE_END_HEADER
 

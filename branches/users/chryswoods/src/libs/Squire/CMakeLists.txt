@@ -67,6 +67,7 @@ if (SIRE_BUILD_MOLPRO)
           molprocalculator.cpp
           molproff.cpp
           molproprocessor.cpp
+          molprosession.cpp
         )
 
     set ( SQUIRE_INCLUDE_DIRS 

@@ -13,21 +13,19 @@
 
 #include "molproff.h"
 #include "molproprocessor.h"
+#include "molprosession.h"
 
 #include "SireMol/molecule.h"
 #include "SireMol/residue.h"
-#include "SireMol/errors.h"
+#include "SireMol/newatom.h"
 
-#include "SireMM/chargetable.h"
-
-#include "SireMaths/maths.h"
-
-#include "SireBase/sharedpolypointer_cast.hpp"
-
-#include "SireStream/datastream.h"
+#include "SireMM/atomiccharges.h"
 
 #include "SireUnits/convert.h"
 #include "SireUnits/units.h"
+
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
 
 using namespace Squire;
 using namespace SireMM;
@@ -36,33 +34,6 @@ using namespace SireMol;
 using namespace SireMaths;
 using namespace SireUnits;
 using namespace SireStream;
-
-namespace SireFF
-{
-
-QHash<MoleculeID,int> index(const QVector<Molecule> &mols)
-{
-    int nmols = mols.count();
-
-    if (nmols > 0)
-    {
-        QHash<MoleculeID,int> idx;
-        idx.reserve(nmols);
-
-        const Molecule *molarray = mols.constData();
-
-        for (int i=0; i<nmols; ++i)
-        {
-            idx.insert( molarray[i].ID(), i );
-        }
-
-        return idx;
-    }
-    else
-        return QHash<MoleculeID,int>();
-}
-
-}
 
 ///////////
 /////////// Implementation of MolproFF::Parameters
@@ -94,31 +65,37 @@ MolproFF::Parameters MolproFF::Parameters::default_sources;
 MolproFF::Components::Components() : FFBase::Components()
 {}
 
-/** Construct using the supplied basename */
-MolproFF::Components::Components(const QString &basename) : FFBase::Components()
+/** Construct using the supplied forcefield */
+MolproFF::Components::Components(const FFBase &ffbase, const Symbols &symbols)
+         : FFBase::Components( ffbase, addToSymbols(symbols, x(), y(), z()) ),
+           e_qm(ffbase, "qm", x(), y(), z())
 {
-    MolproFF::Components::setBaseName(basename);
+    this->registerComponent(e_qm);
 }
 
 /** Copy constructor */
 MolproFF::Components::Components(const MolproFF::Components &other)
-      : FFBase::Components(other), e_qm(other.e_qm)
+         : FFBase::Components(other), e_qm(other.e_qm)
 {}
 
 /** Destructor */
 MolproFF::Components::~Components()
 {}
 
-/** Set the names of the functions from the passed base name */
-void MolproFF::Components::setBaseName(const QString &basename)
+/** Assignment operator */
+MolproFF::Components& MolproFF::Components::operator=(const MolproFF::Components &other)
 {
-    this->unregisterFunction(e_qm);
+    e_qm = other.e_qm;
 
-    e_qm = getFunction(basename, "qm");
+    FFBase::Components::operator=(other);
 
-    this->registerFunction(e_qm);
+    return *this;
+}
 
-    FFBase::Components::setBaseName(basename);
+/** Set the forcefield */
+void MolproFF::Components::setForceField(const FFBase &ffbase)
+{
+    *this = MolproFF::Components(ffbase);
 }
 
 /** Describe the coulomb component */
@@ -131,17 +108,42 @@ QString MolproFF::Components::describe_qm()
 /////////// Implementation of MolproFF
 ///////////
 
-static const RegisterMetaType<MolproFF> r_molproff("Squire::MolproFF");
+static const RegisterMetaType<MolproFF> r_molproff;
 
-/** Serialise to a binary datastream */
+/** Serialise to a binary data stream */
 QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds, const MolproFF &molproff)
 {
+    writeHeader(ds, r_molproff, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << molproff.spce << molproff.switchfunc
+        << static_cast<const FFBase&>(molproff);
+    
+    //don't stream qm_coords and mm_coords_and_charges as
+    //they can be rebuilt
+    
     return ds;
 }
 
-/** Deserialise from a binary datastream */
+/** Deserialise from a binary data stream */
 QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, MolproFF &molproff)
 {
+    VersionID v = readHeader(ds, r_molproff);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> molproff.spce >> molproff.switchfunc
+            >> static_cast<FFBase&>(molproff);
+    
+        //need to rebuild qm_coords and mm_coords_and_charges
+    
+    }
+    else
+        throw version_error(v, "1", r_molproff, CODELOC);
+    
     return ds;
 }
 
@@ -151,25 +153,18 @@ MolproFF::MolproFF() : FFBase()
     this->registerComponents();
 }
 
-/** Construct an empty, but named MolproFF */
-MolproFF::MolproFF(const QString &name) : FFBase(name)
+/** Construct a MolproFF with a specfied Space and switching function */
+MolproFF::MolproFF(const Space &space, const SwitchingFunction &switchingfunction)
+         : FFBase(), spce(space), switchfunc(switchingfunction)
 {
     this->registerComponents();
 }
 
-/** Construct from a ForceField
-
-    \throw SireError::invalid_cast
-*/
-MolproFF::MolproFF(const ForceField &forcefield)
-         : FFBase()
-{
-    *this = sharedpolypointer_cast<MolproFF>(forcefield);
-}
-
 /** Copy constructor */
 MolproFF::MolproFF(const MolproFF &other)
-         : FFBase(other)
+         : FFBase(other), spce(other.spce), switchfunc(other.switchfunc),
+           qm_coords(other.qm_coords), 
+           mm_coords_and_charges(other.mm_coords_and_charges)
 {
     //get the pointer from the base class...
     components_ptr = dynamic_cast<const MolproFF::Components*>( &(FFBase::components()) );
@@ -180,26 +175,10 @@ MolproFF::MolproFF(const MolproFF &other)
 MolproFF::~MolproFF()
 {}
 
-/** Assignment operator */
-MolproFF& MolproFF::operator=(const MolproFF &other)
-{
-   if (this != &other)
-   {
-   }
-
-   return *this;
-}
-
-/** Assignment operator */
-MolproFF& MolproFF::operator=(const ForceField &forcefield)
-{
-    return MolproFF::operator=( sharedpolypointer_cast<MolproFF>(forcefield) );
-}
-
 /** Register the components of this forcefield */
 void MolproFF::registerComponents()
 {
-    std::auto_ptr<MolproFF::Components> ptr( new MolproFF::Components(name()) );
+    std::auto_ptr<MolproFF::Components> ptr( new MolproFF::Components(*this) );
 
     FFBase::registerComponents(ptr.get());
 
@@ -443,13 +422,19 @@ void MolproFF::addToMM(const QList<Molecule> &molecules,
 }
 
 /** Does nothing... */
-bool MolproFF::move(const Molecule&)
+bool MolproFF::change(const Molecule&)
 {
     return false;
 }
 
 /** Does nothing... */
-bool MolproFF::move(const Residue&)
+bool MolproFF::change(const Residue&)
+{
+    return false;
+}
+
+/** Does nothing... */
+bool MolproFF::change(const NewAtom&)
 {
     return false;
 }

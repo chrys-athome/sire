@@ -1,4 +1,6 @@
 
+#include <QUuid>
+
 #include "molprosession.h"
 #include "molproff.h"
 
@@ -294,11 +296,11 @@ double MolproSession::calculateEnergy(const char *cmds)
         else
         {
             //both the QM and MM regions have changed since the last update
-            nrg = ::calculateEnergy( molpro_rpc, cmds,
-                                     const_cast<double*>(new_qm.constData()),
-                                     new_qm.count() / 3,
-                                     const_cast<double*>(new_mm.constData()),
-                                     new_mm.count() / 4 );
+            nrg = ::calculateEnergyWithNewQMMM( molpro_rpc, cmds,
+                                                const_cast<double*>(new_qm.constData()),
+                                                new_qm.count() / 3,
+                                                const_cast<double*>(new_mm.constData()),
+                                                new_mm.count() / 4 );
         }
     }
 

@@ -83,6 +83,11 @@ public:
 
     virtual ~FFBase();
 
+    static const char* typeName()
+    {
+        return "SireFF::FFBase";
+    }
+
     /** Return the class name of the forcefield */
     virtual const char* what() const=0;
 

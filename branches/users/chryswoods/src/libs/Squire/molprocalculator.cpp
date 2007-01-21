@@ -89,16 +89,23 @@ void MolproCalculator::calculateEnergy()
 
 /** Move the molecule 'molecule' and return whether the energy of
     the forcefield needs to be recalculated */
-bool MolproCalculator::move(const Molecule &molecule)
+bool MolproCalculator::change(const Molecule &molecule)
 {
-    return molproff->move(molecule);
+    return molproff->change(molecule);
 }
 
 /** Move the residue 'residue' and return whether the energy of
     the forcefield now needs to be recalculated */
-bool MolproCalculator::move(const Residue &residue)
+bool MolproCalculator::change(const Residue &residue)
 {
-    return molproff->move(residue);
+    return molproff->change(residue);
+}
+
+/** Move the atom 'atom' and return whether the energy of 
+    the forcefield now needs to be recalculated */
+bool MolproCalculator::change(const NewAtom &atom)
+{
+    return molproff->change(atom);
 }
 
 /** Set the forcefield for this calculator - this calculator is
@@ -117,7 +124,7 @@ bool MolproCalculator::setForceField(const ForceField &forcefield)
     else
     {
         nrg_components = molproff->energies();
-        total_nrg = nrg_components.value(molproff->total());
+        total_nrg = nrg_components.value(molproff->components().total());
 
         return false;
     }

@@ -6,6 +6,8 @@
 
 #include "SireFF/ffthreadworker.h"
 
+#include "SireError/errors.h"
+
 using namespace Squire;
 using namespace Squire::detail;
 
