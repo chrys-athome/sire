@@ -515,7 +515,7 @@ QVector<Molecule> MoleculeGroups::molecules() const
     int i = 0;
 
     for (QHash< MoleculeID, QSet<MoleculeGroupID> >::const_iterator it = index.begin();
-         it = index.end();
+         it != index.end();
          ++it)
     {
         //just get the first available copy of the molecule
