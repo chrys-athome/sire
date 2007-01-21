@@ -5,13 +5,13 @@
 #include "SireMol/molecule.h"
 #include "SireMol/residue.h"
 #include "SireMol/newatom.h"
+#include "SireMol/moleculegroup.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
 using namespace SireMove;
 using namespace SireBase;
-using namespace SireSystem;
 using namespace SireStream;
 
 //////////

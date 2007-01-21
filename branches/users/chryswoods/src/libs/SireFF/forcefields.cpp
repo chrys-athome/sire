@@ -322,6 +322,12 @@ bool ForceFieldsBase::contains(const Function &function) const
     return ff_equations.contains(function.ID());
 }
 
+/** Return the index */
+const QHash< MoleculeID,QSet<ForceFieldID> >& ForceFieldsBase::getIndex() const
+{
+    return index;
+}
+
 /** Return all of the expressions in this set */
 QVector<FFExpression> ForceFieldsBase::expressions() const
 {
@@ -1068,6 +1074,37 @@ void ForceFieldsBase::changed(const QSet<ForceFieldID> &ffids) throw()
 //////// Implementation of ForceFields
 ////////
 
+static const RegisterMetaType<ForceFields> r_ffields;
+
+/** Serialise to a binary data stream */
+QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const ForceFields &ffields)
+{
+    writeHeader(ds, r_ffields, 1);
+          
+    SharedDataStream sds(ds);
+    
+    sds << ffields.ffields << static_cast<const ForceFieldsBase&>(ffields);
+    
+    return ds;
+}
+
+/** Deserialise from a binary data stream */
+QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, ForceFields &ffields)
+{
+    VersionID v = readHeader(ds, r_ffields);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> ffields.ffields >> static_cast<ForceFieldsBase&>(ffields);
+    }
+    else
+        throw version_error(v, "1", r_ffields, CODELOC);
+    
+    return ds;
+}
+
 /** Empty constructor */
 ForceFields::ForceFields() : ForceFieldsBase()
 {}
@@ -1110,6 +1147,13 @@ ForceFields& ForceFields::operator=(const ForceFields &other)
 QHash<ForceFieldID,ForceField> ForceFields::forceFields() const
 {
     return ffields;
+}
+
+/** Return the complete set of IDs of all of the forcefields
+    in this set */
+QSet<ForceFieldID> ForceFields::forceFieldIDs() const
+{
+    return ffields.keys().toSet();
 }
 
 /** Set this ForceFields object equal to 'forcefields' */
@@ -1431,6 +1475,67 @@ inline bool ForceFields::_pvt_change(const T &obj)
 bool ForceFields::change(const Molecule &molecule)
 {
     return this->_pvt_change<Molecule>(molecule);
+}
+
+/** Change the molecules  in 'mols' */
+bool ForceFields::change(const QHash<MoleculeID,Molecule> &molecules)
+{
+    if (molecules.isEmpty())
+        return false;
+    else if (molecules.count() == 1)
+        return this->change( *(molecules.begin()) );
+    else
+    {
+        const QHash< MoleculeID,QSet<ForceFieldID> > &index = this->getIndex();
+    
+        //find all of the forcefields that don't contain any of these
+        //molecules
+        QSet<ForceFieldID> all_ffids = this->forceFieldIDs();
+        
+        QSet<ForceFieldID> ffids = all_ffids;
+        
+        for (QHash<MoleculeID,Molecule>::const_iterator it = molecules.begin();
+             it != molecules.end();
+             ++it)
+        {
+            //get the forcefields that contain this molecule
+            QHash< MoleculeID,QSet<ForceFieldID> >::const_iterator
+                                       ffs_with_mol = index.find(it.key());
+                                       
+            //remove all of these forcefields from ffids
+            foreach (ForceFieldID ffid, *(ffs_with_mol))
+            {
+                ffids.remove(ffid);
+            }
+            
+            if (ffids.isEmpty())
+                //all of the forcefields contain at least one
+                //of the molecules in 'molecules'
+                break;
+        }
+        
+        //ffids now contains all of the forcefields that *don't* contain
+        //any of 'molecules'. Now loop over all of the forcefields that
+        //do at least contain one of the molecules and change them
+        ffids = all_ffids.subtract(ffids);
+        
+        bool changed = false;
+        
+        foreach (ForceFieldID ffid, ffids)
+        {
+            bool this_changed = ffields[ffid].change(molecules);
+            
+            changed = changed or this_changed;
+        }
+        
+        if (changed)
+        {
+            ForceFieldsBase::changed(ffids);
+            return true;
+        }
+        else
+            return false;
+    }
 }
 
 /** Change the residue 'residue'

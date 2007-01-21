@@ -77,6 +77,10 @@ public:
     bool contains(const Molecule &molecule) const;
 
     QSet<MoleculeID> moleculeIDs() const;
+    virtual QSet<ForceFieldID> forceFieldIDs() const=0;
+
+    int nMolecules() const;
+    int nForceFields() const;
 
     QSet<ForceFieldID> forceFieldsContaining(MoleculeID molid) const;
     QSet<ForceFieldID> forceFieldsContaining(const Molecule &molecule) const;
@@ -113,6 +117,8 @@ public:
     virtual bool change(const Molecule &molecule)=0;
     virtual bool change(const Residue &residue)=0;
     virtual bool change(const NewAtom &atom)=0;
+
+    virtual bool change(const QHash<MoleculeID,Molecule> &molecules)=0;
 
     virtual bool remove(const Molecule &molecule)=0;
 
@@ -172,6 +178,8 @@ protected:
 
     void changed(ForceFieldID ffid) throw();
     void changed(const QSet<ForceFieldID> &ffids) throw();
+
+    const QHash< MoleculeID,QSet<ForceFieldID> >& getIndex() const;
 
     /////////////////////////////////////////
 
@@ -305,6 +313,8 @@ public:
 
     QHash<ForceFieldID,ForceField> forceFields() const;
 
+    QSet<ForceFieldID> forceFieldIDs() const;
+
     void setEqualTo(const ForceFields &forcefields);
     
     void majorUpdate(const ForceFields &forcefields);
@@ -327,6 +337,8 @@ public:
     bool change(const Molecule &molecule);
     bool change(const Residue &residue);
     bool change(const NewAtom &atom);
+
+    bool change(const QHash<MoleculeID,Molecule> &molecules);
 
     bool remove(const Molecule &molecule, const QSet<ForceFieldID> &ffids);
     bool remove(const Residue &residue, const QSet<ForceFieldID> &ffids);

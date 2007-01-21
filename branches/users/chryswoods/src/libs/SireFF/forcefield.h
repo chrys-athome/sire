@@ -59,6 +59,8 @@ public:
     bool change(const Residue &res);
     bool change(const NewAtom &atom);
 
+    bool change(const QHash<MoleculeID,Molecule> &molecules);
+
     bool add(const Molecule &molecule,
              const ParameterMap &map = ParameterMap());
     bool add(const Residue &residue,
@@ -191,6 +193,23 @@ inline Values ForceField::energies()
 inline bool ForceField::change(const Molecule &mol)
 {
     return d().change(mol);
+}
+
+/** Change the molecules 'molecules' (e.g. move them, or change 
+    their parameters). This does nothing if the molecules are not
+    in this forcefield. Returns whether or not the forcefield
+    has been changed by this change, and thus whether the
+    energy needs to be recalculated. The same parameter map
+    that was used when these molecules were added will be used
+    to extract any necessary parameters from the molecule's
+    properties
+
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+*/
+inline bool ForceField::change(const QHash<MoleculeID,Molecule> &molecules)
+{
+    return d().change(molecules);
 }
 
 /** Change the residue 'res' (e.g. move it, or change its

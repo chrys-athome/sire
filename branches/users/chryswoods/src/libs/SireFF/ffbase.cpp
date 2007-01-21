@@ -487,6 +487,28 @@ bool FFBase::change(const Molecule&)
                         .arg(this->name()).arg(this->what()), CODELOC );
 }
 
+/** Change a whole load of molecules
+
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::invalid_operation
+*/
+bool FFBase::change(const QHash<MoleculeID,Molecule> &molecules)
+{
+    bool changed = false;
+
+    for (QHash<MoleculeID,Molecule>::const_iterator it = molecules.begin();
+         it != molecules.end();
+         ++it)
+    {
+        bool this_changed = this->change(*it);
+        
+        changed = changed or this_changed;
+    }
+    
+    return changed;
+}
+
 /** Change the residue 'res' (e.g. move it, or change its
     parameters). This does nothing if the residue is not
     in this forcefield. Returns whether or not the forcefield

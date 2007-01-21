@@ -293,6 +293,8 @@ public:
     virtual bool change(const Residue &res);
     virtual bool change(const NewAtom &atom);
 
+    virtual bool change(const QHash<MoleculeID,Molecule> &mols);
+
     virtual bool add(const Molecule &molecule,
                      const ParameterMap &map = ParameterMap());
     virtual bool add(const Residue &residue,

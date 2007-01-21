@@ -3,14 +3,10 @@
 
 #include "sampler.h"
 
-#include "SireSystem/moleculegroup.h"
-
 SIRE_BEGIN_HEADER
 
 namespace SireMove
 {
-
-using SireSystem::MoleculeGroup;
 
 /** This class is used to pick contained Molecules, Residues
     or Atoms at random (uniformly distributed).

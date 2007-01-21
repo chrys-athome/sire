@@ -21,16 +21,12 @@ QDataStream& operator>>(QDataStream&, SireMove::SamplerBase&);
 QDataStream& operator<<(QDataStream&, const SireMove::Sampler&);
 QDataStream& operator>>(QDataStream&, SireMove::Sampler&);
 
-namespace SireSystem
-{
-class MoleculeGroup;
-}
-
 namespace SireMol
 {
 class Molecule;
 class Residue;
 class NewAtom;
+class MoleculeGroup;
 }
 
 namespace SireMove
@@ -38,13 +34,12 @@ namespace SireMove
 
 using boost::tuple;
 
-using SireSystem::MoleculeGroup;
-
 using SireMaths::RanGenerator;
 
 using SireMol::Molecule;
 using SireMol::Residue;
 using SireMol::NewAtom;
+using SireMol::MoleculeGroup;
 
 /** This is the base class of all Samplers. A Sampler is used
     to pick a random molecule from a MoleculeGroup

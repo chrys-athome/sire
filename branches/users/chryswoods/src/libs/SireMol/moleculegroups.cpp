@@ -428,6 +428,59 @@ bool MoleculeGroups::change(const Molecule &molecule)
         return false;
 }
 
+/** Change a whole load of molecules... */
+bool MoleculeGroups::change(const QHash<MoleculeID,Molecule> &molecules)
+{
+    if (molecules.isEmpty())
+        return false;
+    else if (molecules.count() == 1)
+        return this->change( *(molecules.begin()) );
+    else
+    {
+        //find all of the groups that don't contain any of these
+        //molecules
+        QSet<MoleculeGroupID> all_groupids = molgroups.keys().toSet();
+        
+        QSet<MoleculeGroupID> groupids = all_groupids;
+        
+        for (QHash<MoleculeID,Molecule>::const_iterator it = molecules.begin();
+             it != molecules.end();
+             ++it)
+        {
+            //get the groups that contain this molecule
+            QHash< MoleculeID,QSet<MoleculeGroupID> >::const_iterator
+                                       groups_with_mol = index.find(it.key());
+                                       
+            //remove all of these forcefields from ffids
+            foreach (MoleculeGroupID groupid, *(groups_with_mol))
+            {
+                groupids.remove(groupid);
+            }
+            
+            if (groupids.isEmpty())
+                //all of the groups contain at least one
+                //of the molecules in 'molecules'
+                break;
+        }
+        
+        //groupids now contains all of the MoleculeGroups that *don't* contain
+        //any of 'molecules'. Now loop over all of the MoleculeGroups that
+        //do at least contain one of the molecules and change them
+        groupids = all_groupids.subtract(groupids);
+        
+        bool changed = false;
+        
+        foreach (MoleculeGroupID groupid, groupids)
+        {
+            bool this_changed = molgroups[groupid].change(molecules);
+            
+            changed = changed or this_changed;
+        }
+        
+        return changed;
+    }
+}
+
 /** Remove the molecule 'molecule' */
 bool MoleculeGroups::remove(const Molecule &molecule)
 {

@@ -4,6 +4,7 @@
 #include "SireMol/molecule.h"
 #include "SireMol/residue.h"
 #include "SireMol/newatom.h"
+#include "SireMol/moleculegroup.h"
 
 #include "SireMol/moleculeid.h"
 #include "SireMol/resid.h"

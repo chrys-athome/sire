@@ -86,6 +86,8 @@ public:
     bool change(const QVector<Molecule> &molecules);
     bool remove(const QVector<Molecule> &molecules);
 
+    bool change(const QHash<MoleculeID,Molecule> &molecules);
+
     void rename(const QString &newname);
 
     bool contains(MoleculeID molid) const;
@@ -199,6 +201,8 @@ public:
     bool add(const QVector<Molecule> &molecules);
     bool change(const QVector<Molecule> &molecules);
     bool remove(const QVector<Molecule> &molecules);
+
+    bool change(const QHash<MoleculeID,Molecule> &molecules);
 
     void rename(const QString &newname);
 

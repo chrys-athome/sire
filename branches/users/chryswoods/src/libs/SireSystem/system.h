@@ -21,8 +21,13 @@ namespace SireSystem
 class Move;
 class Moves;
 
+using SireCAS::Function;
+
 using SireFF::ForceField;
 using SireFF::ForceFields;
+
+using SireFF::FFExpression;
+using SireFF::FFComponent;
 
 /** This class holds all of the data necessary to specify a single
     system of molecules (including how to calculate their energy).
@@ -55,42 +60,17 @@ public:
     bool operator==(const System &other) const;
     bool operator!=(const System &other) const;
 
-    void add(const ForceField &forcefield);
-    void remove(const ForceField &forcefield);
+    const ForceFields& forceFields() const;
+    const SystemData& info() const;
 
-    void add(const FFExpression &ff_equation);
-    void remove(const FFExpression &ff_equation);
-    void remove(const Function &component);
-
-    //void recordAverage(const FFExpression &ff_equation,
-    //                   const Averager &averager = MeanAndStdDev());
-
-    //void getAverage(const FFExpression &ff_equation);
-    //void getAverage(const Function &component);
-
-    void add(const MoleculeGroup &group);
-    void remove(const MoleculeGroup &group);
-
-    //void add(const Monitor &monitor);
-    //void remove(const Monitor &monitor);
-
-//    void add(const Molecule &molecule,
-//             const FFieldIDs &forcefields,
-//             const QStringList &groups);
-
-    void change(const Molecule &molecule);
-    void change(const Residue &residue);
-    void change(const NewAtom &atom);
-
-    void remove(const Molecule &molecule);
-
-    const QHash<ForceFieldID,ForceField>& forceFields() const;
-
-    void run(const Move &move, quint32 nmoves=1);
-    void run(const Moves &moves);
-    void run(const Moves &moves, quint32 nmoves);
+    Moves run(const Move &move, quint32 nmoves=1);
+    Moves run(const Moves &moves);
+    Moves run(const Moves &moves, quint32 nmoves);
 
     void prepareForSimulation();
+
+    SystemID ID() const;
+    const Version& version() const;
 
 private:
     System(const SystemData &sysdata, 
@@ -103,6 +83,18 @@ private:
         energies / forces of molecules */
     ForceFields ffields;
 };
+
+/** Return the ID number of the system */
+inline SystemID System::ID() const
+{
+    return sysdata.ID();
+}
+
+/** Return the version number of the system */
+inline const Version& System::version() const
+{
+    return sysdata.version();
+}
 
 /** Return the forcefields contained in this system */
 inline const ForceFields& System::forceFields() const

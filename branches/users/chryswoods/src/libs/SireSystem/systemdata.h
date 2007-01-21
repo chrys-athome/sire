@@ -4,9 +4,10 @@
 #include <QVector>
 
 #include "systemid.h"
-#include "ffexpression.h"
 
 #include "SireBase/idmajminversion.h"
+
+#include "SireMol/moleculegroups.h"
 
 #include "SireVol/space.h"
 
@@ -25,14 +26,10 @@ namespace SireCAS
 class Values;
 }
 
-namespace SireFF
-{
-class FFComponent;
-}
-
 namespace SireMol
 {
 class Molecule;
+class MoleculeID;
 class Residue;
 class NewAtom;
 class Property;
@@ -41,17 +38,8 @@ class Property;
 namespace SireSystem
 {
 
-class FFExpression;
-class MoleculeGroup;
-class MoleculeGroupID;
-
 using SireBase::IDMajMinVersion;
 using SireBase::Version;
-
-using SireCAS::Values;
-using SireCAS::Symbol;
-using SireCAS::SymbolID;
-using SireCAS::Expression;
 
 using SireVol::Space;
 
@@ -59,8 +47,10 @@ using SireMol::Molecule;
 using SireMol::Residue;
 using SireMol::NewAtom;
 using SireMol::Property;
-
-using SireFF::FFComponent;
+using SireMol::MoleculeID;
+using SireMol::MoleculeGroup;
+using SireMol::MoleculeGroups;
+using SireMol::MoleculeGroupID;
 
 /** This class provides all of the metadata about a System
     (to be honest, all data except for the forcefields).
@@ -97,23 +87,30 @@ public:
     SystemID ID() const;
     const Version& version() const;
 
+    void add(const MoleculeGroup &group);
+    
+    bool contains(const Molecule &molecule) const;
+    bool contains(MoleculeID molid) const;
+    
+    void remove(MoleculeGroupID groupid);
+    void remove(const MoleculeGroup &group);
+
+    //void add(const MoleculeConstraint &constraint);
+    
+    //void remove(const MoleculeConstraint &constraint);
+    //void removeConstraint(const Molecule &molecule);
+    //void removeConstraint(MoleculeID molid);
+
+    QHash<MoleculeID,Molecule> applyConstraints(const Molecule &molecule);
+
     const MoleculeGroup& group(MoleculeGroupID id) const;
-    const QHash<MoleculeGroupID,MoleculeGroup>& groups() const;
+    const MoleculeGroups& groups() const;
 
-    QHash<Function,FFExpression> equations() const;
-
-    const Values& parameters() const;
-
-    void change(const Molecule &molecule);
-    void change(const Residue &residue);
-    void change(const NewAtom &atom);
+    QHash<MoleculeID,Molecule> change(const Molecule &molecule);
+    QHash<MoleculeID,Molecule> change(const Residue &residue);
+    QHash<MoleculeID,Molecule> change(const NewAtom &atom);
 
     void remove(const Molecule &molecule);
-
-    void updateStatistics();
-
-protected:
-    void setForceFields(ForceFieldsBase &forcefields);
 
     void incrementMinorVersion();
     void incrementMajorVersion();
@@ -123,22 +120,15 @@ private:
     /** All of the MoleculeGroups in the System */
     MoleculeGroups molgroups;
 
-    /** Hash mapping all of the forcefield functions that should be averaged
-        to their corresponding averaging function (which includes the running
-        average) */
-    //QHash<SymbolID, Averager> ff_averages;
-    
-    /** Hash mapping the monitors in this system to their ID */
-    //QHash<MonitorID, Monitor> mntrs;
-
-    /** Hash mapping the properties of this system to their name */
-    QHash<QString, Property> props;
-
     /** The Space of the System. All molecules in the System
         will be mapped to lie within this Space when they are
         moved - in addition any moves that change the space
         of the system must use this space (e.g. volume moves). */
     Space sys_space;
+
+    /** The list of constraints, indexed by the molecule IDs of the 
+        molecules to which they must be applied */
+    //QHash<MoleculeID, MoleculeConstraint> mol_constraints;
 
     /** The name of the system */
     QString nme;
@@ -165,17 +155,33 @@ inline const Version& SystemData::version() const
     return id_and_version.version();
 }
 
-/** Return all of the Molecule groups in this System,
-    indexed by their MoleculeGroupID number */
-inline const QHash<MoleculeGroupID,MoleculeGroup>& SystemData::groups() const
+/** Increment the major version number of the System. The major number
+    is incremented if forcefields or groups are added or removed from
+    the system. The minor version number is incremented if anything
+    else in the system is changed. */
+inline void SystemData::incrementMajorVersion()
 {
-    return molgroups;
+    id_and_version.incrementMajor();
 }
 
-/** Return all of the parameters and their in this system */
-inline const Values& SystemData::parameters() const
+/** Increment the minor version number. This is incremented if any of the
+    molecules or properties in the system are changed. */
+inline void SystemData::incrementMinorVersion()
 {
-    return ff_params;
+    id_and_version.incrementMinor();
+}
+
+/** Return whether or not this object contains information about
+    the molecule with ID == molid */
+inline bool SystemData::contains(MoleculeID molid) const
+{
+    return molgroups.contains(molid); // or mol_constraints.contains(molid);
+}
+
+/** Return all of the Molecule groups in this System */
+inline const MoleculeGroups& SystemData::groups() const
+{
+    return molgroups;
 }
 
 }

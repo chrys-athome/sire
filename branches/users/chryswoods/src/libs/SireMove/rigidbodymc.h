@@ -1,6 +1,8 @@
 #ifndef SIREMOVE_RIGIDBODYMC_H
 #define SIREMOVE_RIGIDBODYMC_H
 
+#include <QHash>
+
 #include "montecarlo.h"
 #include "sampler.h"
 
@@ -24,6 +26,7 @@ class SimSystem;
 namespace SireMol
 {
 class MoleculeID;
+class MoleculeGroup;
 }
 
 namespace SireMove
@@ -33,6 +36,7 @@ class Sampler;
 
 using SireSystem::SimSystem;
 
+using SireMol::MoleculeGroup;
 using SireMol::MoleculeID;
 
 /** This class implements a rigid body Monte Carlo move that
@@ -167,11 +171,11 @@ protected:
 private:
     /** Hash containing the maximum amount by which
         each molecule can be translated or rotated */
-    QHash<MoleculeID, Delta> maxdelta;
+    QHash<MoleculeID, RigidBodyMC::Delta> maxdelta;
 
     /** Hash mapping the number of attempted and accepted moves
         for each molecule */
-    QHash<MoleculeID, MoveRecord> moverecord;
+    QHash<MoleculeID, RigidBodyMC::MoveRecord> moverecord;
     
     /** The sampler used to select random molecules from the 
         MoleculeGroup */

@@ -54,6 +54,8 @@ public:
     bool remove(const Molecule &molecule, MoleculeGroupID groupid);
     
     bool change(const Molecule &molecule);
+    bool change(const QHash<MoleculeID,Molecule> &molecules);
+    
     bool remove(const Molecule &molecule);
     
     QVector<Molecule> molecules() const;

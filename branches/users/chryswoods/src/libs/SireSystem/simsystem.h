@@ -22,6 +22,9 @@ namespace SireMol
 class Molecule;
 class Residue;
 class NewAtom;
+class MoleculeGroup;
+class MoleculeGroups;
+class MoleculeGroupID;
 }
 
 namespace SireFF
@@ -29,6 +32,7 @@ namespace SireFF
 class FFComponent;
 class ForceField;
 class ForceFieldID;
+class ForceFieldsBase;
 }
 
 namespace SireSystem
@@ -37,16 +41,18 @@ namespace SireSystem
 class SystemData;
 class System;
 class SystemID;
-class MoleculeGroup;
-class MoleculeGroupID;
 
 using SireCAS::Function;
 
 using SireMol::Molecule;
 using SireMol::Residue;
 using SireMol::NewAtom;
+using SireMol::MoleculeGroup;
+using SireMol::MoleculeGroups;
+using SireMol::MoleculeGroupID;
 
 using SireFF::ForceField;
+using SireFF::ForceFieldsBase;
 using SireFF::ForceFieldID;
 using SireFF::FFComponent;
 
@@ -83,11 +89,11 @@ public:
 
     const MoleculeGroup& group(const MoleculeGroup &group) const;
 
-    const QHash<MoleculeGroupID,MoleculeGroup>& groups() const;
+    const MoleculeGroups& groups() const;
 
     SystemID ID() const;
 
-    Version version() const;
+    const Version& version() const;
 
     void change(const Molecule &molecule);
     void change(const Residue &residue);
@@ -95,13 +101,22 @@ public:
 
     void remove(const Molecule &molecule);
 
+    void updateStatistics();
+
 private:
+    template<class T>
+    void _pvt_change(const T &obj);
+
     /** Reference to the data of the System being simulated */
     SystemData &sysdata;
     
     /** Reference to the forcefields that are used to 
         calculate the energy / forces */
     ForceFieldsBase &ffields;
+
+    /** Reference to the monitors that are used to monitor
+        and collect statistics about the simulation */
+    //SystemMonitors &monitors;
 };
 
 }

@@ -322,6 +322,66 @@ bool MoleculeGroupPvt::add(const QVector<Molecule> &molecules)
 }
 
 /** Change a whole load of molecules */
+bool MoleculeGroupPvt::change(const QHash<MoleculeID,Molecule> &molecules)
+{
+    bool changed = false;
+    
+    if (molecules.count() < mols.count())
+    {
+        //it will be quicker to check whether each changed molecule 
+        //is in this group
+        for (QHash<MoleculeID,Molecule>::const_iterator it = molecules.begin();
+             it != molecules.end();
+             ++it)
+        {
+            QHash<MoleculeID,int>::const_iterator index = idx.constFind(it.key());
+            
+            if (index != idx.constEnd())
+            {
+                //this molecule is in this group - change it!
+                if (mols.at(*index).version() != it->version())
+                {
+                    mols[*index] = *it;
+                    changed = true;
+                }
+            }
+        }
+    }
+    else
+    {
+        //it is quicker to loop through each molecule in this group
+        //and see whether it has changed...
+        int nmols = mols.count();
+        const Molecule *mols_array = mols.constData();
+        
+        for (int i=0; i<nmols; ++i)
+        {
+            const Molecule &testmol = mols_array[i];
+            
+            QHash<MoleculeID,Molecule>::const_iterator 
+                                  it = molecules.find(testmol.ID());
+                                  
+            if (it != molecules.end())
+            {
+                //this molecule may have changed!
+                if (testmol.version() != it->version())
+                {
+                    //it has!
+                    mols[i] = *it;
+                    changed = true;
+                    mols_array = mols.constData();
+                }
+            }
+        }
+    }
+    
+    if (changed)
+        id_and_version.incrementMinor();
+        
+    return changed;
+}
+
+/** Change a whole load of molecules */
 bool MoleculeGroupPvt::change(const QVector<Molecule> &molecules)
 {
     bool changed = false;
@@ -510,6 +570,12 @@ bool MoleculeGroup::add(const QVector<Molecule> &molecules)
 
 /** Change a whole load of molecules */
 bool MoleculeGroup::change(const QVector<Molecule> &molecules)
+{
+    return d->change(molecules);
+}
+
+/** Change a whole load of molecules */
+bool MoleculeGroup::change(const QHash<MoleculeID,Molecule> &molecules)
 {
     return d->change(molecules);
 }

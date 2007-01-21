@@ -2,7 +2,6 @@
 #define SIREMOVE_MONTECARLO_H
 
 #include "SireSystem/move.h"
-#include "SireSystem/moleculegroup.h"
 
 #include "SireMaths/rangenerator.h"
 
@@ -26,7 +25,6 @@ namespace SireMove
 
 using SireSim::Simulation;
 
-using SireSystem::MoleculeGroup;
 using SireSystem::MoveBase;
 
 using SireMaths::RanGenerator;

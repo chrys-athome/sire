@@ -5,13 +5,6 @@
 
 SIRE_BEGIN_HEADER
 
-namespace SireSystem
-{
-class FFExpression;
-}
-
-uint qHash(const SireSystem::FFExpression &ffexpression);
-
 SIRE_END_HEADER
 
 #endif
