@@ -71,13 +71,13 @@ class SQUIRE_EXPORT MolproFF : public SireFF::FFBase
 friend QDataStream& ::operator<<(QDataStream&, const MolproFF&);
 friend QDataStream& ::operator>>(QDataStream&, MolproFF&);
 
-friend class MolproCalculator; //friend so can all protected functions
-                               //used to recalculate the energy
+friend class MolproSession;    //friend so can all protected functions
+friend class MolproCalculator; //used to recalculate the energy
 
 public:
     MolproFF();
-    
-    MolproFF(const Space &space, 
+
+    MolproFF(const Space &space,
              const SwitchingFunction &switchfunc);
 
     MolproFF(const MolproFF &other);
@@ -95,9 +95,9 @@ public:
         Components(const Components &other);
 
         ~Components();
-        
+
         Components& operator=(const Components &other);
-        
+
         Components* clone() const
         {
             return new Components(*this);
@@ -109,7 +109,7 @@ public:
         }
 
         static QString describe_qm();
-    
+
     protected:
         void setForceField(const FFBase &ffbase);
 
@@ -176,7 +176,7 @@ public:
     bool change(const Molecule &molecule);
     bool change(const Residue &residue);
     bool change(const NewAtom &atom);
-    
+
 protected:
     void recalculateEnergy();  //throw an exception
 
@@ -197,19 +197,19 @@ private:
         to infinite cartesian space for the QM calculation
         (only maps the position of the MM parts) */
     Space spce;
-    
+
     /** The switching function used to scale down the MM atom
         charges */
     SwitchingFunction switchfunc;
-    
+
     /** Array containing all of the coordinates of the QM atoms */
     QVector<double> qm_coords;
-    
-    /** Array containing all of the coordinates and charges 
+
+    /** Array containing all of the coordinates and charges
         of the MM atoms */
     QVector<double> mm_coords_and_charges;
-    
-    /** Pointer to the object containing the components of 
+
+    /** Pointer to the object containing the components of
         this forcefield */
     const MolproFF::Components *components_ptr;
 };

@@ -75,7 +75,7 @@ private:
 
     /** The version number of the MolproFF that has been loaded
         onto this session */
-    Version ff_version;
+    Version ffversion;
 
     /** The unique run directory for the molpro process */
     QDir rundir;

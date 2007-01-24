@@ -1,8 +1,10 @@
 
 #include <QUuid>
 
-#include "molprosession.h"
 #include "molproff.h"
+#include "molprosession.h"
+
+#include "SireError/errors.h"
 
 using namespace Squire;
 using namespace SireBase;
@@ -17,8 +19,8 @@ MolproSession::MolproSession(const QFileInfo &molpro_executable,
                              const QDir &tmpdir)
               : boost::noncopyable(),
                 molpro_exe(molpro_executable),
-                ff_id( molproff.ID() ),
-                ff_version( molproff.version() )
+                ffid( molproff.ID() ),
+                ffversion( molproff.version() )
 {
     //only one molpro job may start at a time!
     QMutexLocker lkr(&starter_mutex);
@@ -97,8 +99,9 @@ MolproSession::MolproSession(const QFileInfo &molpro_executable,
         //read the output until we see that the molpro process has started
         //its RPC server...
         int nsecs = 0;
-        QString hostname;
+        QHostAddress serveraddress;
         int portnumber;
+        QString magic_key;
         bool rpc_has_started = false;
 
         do
@@ -126,6 +129,8 @@ MolproSession::MolproSession(const QFileInfo &molpro_executable,
 
                         hostname = words[1];
                         portnumber = words[2].toInt();
+                        magic_key = words[3];
+
                         rpc_has_started = true;
 
                         break;
@@ -159,10 +164,12 @@ MolproSession::MolproSession(const QFileInfo &molpro_executable,
 
         //ok, it has started, we no longer need to read anything from molpro
         //as all communication now is via RPC
-        molpro_process.closeReadChannel();
+        molpro_process.closeReadChannel(QProcess::StandardOutput);
+        molpro_process.closeReadChannel(QProcess::StandardError);
 
         //now try to connect to the process via RPC
-        molpro_rpc = ::connectToMolpro(hostname, portnumber);
+        molpro_rpc = ::connectToMolpro(hostname.toLatin1(), portnumber,
+                                       magic_key.toLatin1());
 
         //has the connection been successful?
         if (not molpro_rpc.client)
@@ -222,6 +229,32 @@ MolproSession::~MolproSession()
     //remove the run directory
     if (rundir.exists())
         rundir.remove(rundir.absolutePath());
+}
+
+/** Assert that this session is compatible with the
+    Molpro forcefield 'molproff'. This is only compatible
+    if the ID and major version numbers are the same as
+    those in the forcefield
+
+    \throw SireError::incompatible_error
+*/
+void MolproSession::assertCompatibleWith(const MolproFF &molproff) const
+{
+    if (molproff.ID() != ffid)
+        throw SireError::incompatible_error( QObject::tr(
+            "The passed Molpro forcefield is incompatible with this session "
+            "as it has a different ID number! (%1 vs. %2)")
+                .arg(molproff.ID()).arg(ffid), CODELOC );
+
+    else if (molproff.version().major() != ffversion.major())
+        throw SireError::incompatible_error( QObject::tr(
+            "The passed Molpro forcefield has a different major version "
+            "number to the one on this session! (%1 vs. %2)")
+                .arg(molproff.version().toString(), ffversion.toString()),
+                    CODELOC );
+
+    //what about major version number change caused by just changing
+    //MM molecules? This would still work?
 }
 
 /** Assert that the Molpro process is still running
