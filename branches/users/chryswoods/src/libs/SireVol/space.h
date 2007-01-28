@@ -233,13 +233,14 @@ public:
     /** Return a list of copies of CoordGroup 'group' that are within
         'distance' of the CoordGroup 'center', translating 'group' so that
         it has the right coordinates to be around 'center'. Note that multiple
-        copies of 'group' may be returned in this is a periodic space and
+        copies of 'group' may be returned if this is a periodic space and
         there are multiple periodic replicas of 'group' within 'dist' of
         'center'. The copies of 'group' are returned together with the
         minimum distance between that periodic replica and 'center'.
 
         If there are no periodic replicas of 'group' that are within
-        'dist' of 'center', then an empty list is returned. */
+        'dist' of 'center', then an empty list is returned. 
+    */
     virtual QList< boost::tuple<double,CoordGroup> >
                     getCopiesWithin(const CoordGroup &group, const CoordGroup &center,
                                     double dist) const=0;
@@ -318,6 +319,10 @@ public:
     QList< boost::tuple<double,CoordGroup> >
                 getCopiesWithin(const CoordGroup &group,
                                 const CoordGroup &center, double dist) const;
+
+    QList< boost::tuple<double,CoordGroup> >
+                getCopiesWithin(const CoordGroup &group,
+                                const QVector<CoordGroup> &center, double dist) const;
 
 private:
     /** Dynamic shared pointer to the virtual SpaceBase class
@@ -461,7 +466,7 @@ inline QVector<CoordGroup> Space::getMinimumImage(const QVector<CoordGroup> &gro
 /** Return a list of copies of CoordGroup 'group' that are within
     'distance' of the CoordGroup 'center', translating 'group' so that
     it has the right coordinates to be around 'center'. Note that multiple
-    copies of 'group' may be returned in this is a periodic space and
+    copies of 'group' may be returned if this is a periodic space and
     there are multiple periodic replicas of 'group' within 'dist' of
     'center'. The copies of 'group' are returned together with the
     minimum distance between that periodic replica and 'center'.

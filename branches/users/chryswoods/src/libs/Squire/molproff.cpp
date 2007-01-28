@@ -120,6 +120,460 @@ QString MolproFF::Components::describe_qm()
 }
 
 ///////////
+/////////// Implementation of MolproFF::QMMolecule
+///////////
+
+/** Null constructor */
+MolproFF::QMMolecule::QMMolecule()
+{}
+
+/** Construct a QM molecule from the passed Molecule */
+MolproFF::QMMolecule::QMMolecule(const Molecule &molecule)
+         : mol(molecule)
+{
+    //create the arrays that hold all of the element types
+    //of each atom in the molecule, and all of the indicies
+    //of each atom in the qm_coords array.
+    uint ncg = mol.nCutGroups();
+    
+    elements.reserve(ncg);
+    indicies.reserve(ncg);
+    
+    for (CutGroupID i(0); i<ncg; ++i)
+    {
+        uint natms = molecule.nAtoms(i);
+        
+        QVector<Element> group_elements(natms);
+        QVector<int> group_indicies(natms, -1);
+        
+        for (AtomID j(0); j<natms; ++j)
+        {
+            group_elements[j] = mol.atom( CGAtomID(i,j) );
+        }
+        
+        elements.append(group_elements);
+        indicies.append(group_indicies);
+    }
+}
+        
+/** Copy constructor */
+MolproFF::QMMolecule::QMMolecule(const MolproFF::QMMolecule &other)
+         : mol(other.mol), elements(other.elements), indicies(other.indicies)
+{}
+        
+/** Destructor */
+MolproFF::QMMolecule::~QMMolecule()
+{}
+
+/** Copy assignment */
+MolproFF::QMMolecule& MolproFF::QMMolecule::operator=(const MolproFF::QMMolecule &other)
+{
+    mol = other.mol;
+    elements = other.elements;
+    indicies = other.indicies;
+    
+    return *this;
+}
+
+/** Return the Molecule contained in this QMMolecule */
+const Molecule& MolproFF::QMMolecule::molecule() const
+{
+    return mol;
+}
+
+/** Change the molecule - return whether it changed */
+bool MolproFF::QMMolecule::change(const Molecule &molecule)
+{
+    BOOST_ASSERT(molecule.ID() == mol.ID());
+
+    if (molecule.version() != mol.version())
+    {
+        mol = molecule;
+        return true;
+    }
+    else
+        return false;
+}
+
+/** Change the residue in the molecule */
+bool MolproFF::QMMolecule::change(const Residue &residue)
+{
+    return this->change(residue.molecule());
+}
+
+/** Change the atom in the molecule */
+bool MolproFF::QMMolecule::change(const NewAtom &atom)
+{
+    return this->change(atom.molecule());
+}
+
+/** Add the coordinates of this QM molecule to the array 'qm_array' */
+void MolproFF::QMMolecule::addTo(QVector<double> &qm_array)
+{
+    const QVector<CoordGroup> &coordgroups = mol.coordGroups();
+    
+    int ngroups = coordgroups.count();
+    
+    BOOST_ASSERT(ngroups == elements.count());
+    BOOST_ASSERT(ngroups == indicies.count());
+    
+    const CoordGroup *groups_array = coordgroups.constData();
+    const QVector<Element> *elements_array = elements.constData();
+    QVector<int> *indicies_array = indicies.data();
+    
+    //loop over all atoms in every cutgroup
+    for (int i=0; i<ngroups; ++i)
+    {
+        int natoms = groups_array[i].count();
+        BOOST_ASSERT(natoms == elements_array[i].count());
+        BOOST_ASSERT(natoms == indicies_array[i].count());
+        
+        const Vector *coords_array = groups_array[i].constData();
+        const Element *elem_array = elements_array[i].constData();
+        int *indx_array = indicies_array[i].data();
+        
+        for (int j=0; j<natoms; ++j)
+        {
+            if (elem_array[j] != Element::dummy())
+            {
+                //add the coordinates of the atom to the qm_coords array,
+                //recording the index in the array of the x-coordinates of
+                //the atom
+                indx_array[j] = qm_array.count();
+                qm_array.append(coords_array[j].x());
+                qm_array.append(coords_array[j].y());
+                qm_array.append(coords_array[j].z());
+            }
+            else
+                //this is a dummy atom, so is not included in the QM calculation
+                indx_array[j] = -1;
+        }
+    }
+}
+
+/** Update the coordinates of the atoms in the array 'qm_array' */
+void MolproFF::QMMolecule::update(QVector<double> &qm_array) const
+{
+    const QVector<CoordGroup> &coordgroups = mol.coordGroups();
+    
+    int ncg = coordgroups.count();
+    
+    const CoordGroup *groups_array = coordgroups.constData();
+    const QVector<int> *indicies_array = indicies.constData();
+    
+    double *qm_array_array = qm_array.data();
+    int maxcoords = qm_array.count();
+    
+    for (int i=0; i<ncg; ++i)
+    {
+        int natms = groups_array[i].count();
+        
+        for (int j=0; j<natms; ++j)
+        {
+            const Vector *coords_array = groups_array[i].constData();
+            int idx = indicies_array[i].constData()[j];
+            
+            if (idx >= 0)
+            {
+                BOOST_ASSERT( idx+2 < maxcoords );
+              
+                const Vector &coord = coords_array[j];
+            
+                qm_array[idx] = coord.x();
+                qm_array[idx+1] = coord.y();
+                qm_array[idx+2] = coord.z();
+            }
+        }
+    }
+}
+
+///////////
+/////////// Implementation of MolproFF::MMMolecule
+///////////
+
+/** Null constructor */
+MolproFF::MMMolecule::MMMolecule() : idx(-1), nats(0)
+{}
+
+/** Construct an MMMolecule from the passed Molecule, using the
+    supplied ParameterMap to find the atomic charges on the atoms.
+    
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+*/
+MolproFF::MMMolecule::MMMolecule(const Molecule &molecule,
+                                 const QString &charge_property)
+         : mol(molecule), chg_property(charge_property),
+           idx(-1), nats(0), rebuild_all(true)
+{
+    //get the atomic charges...
+    chgs = mol.getProperty(chg_property);
+}
+
+/** Copy constructor */
+MolproFF::MMMolecule::MMMolecule(const MMMolecule &other)
+         : mol(other.mol), chg_property(other.chg_property),
+           chgs(other.chgs), coords(other.coords), 
+           cgids_to_be_rebuilt(other.cgids_to_be_rebuilt),
+           rebuild_all(other.rebuild_all),
+           idx(other.idx), nats(other.nats)
+{}
+
+/** Destructor */
+MolproFF::MMMolecule::~MMMolecule()
+{}
+
+/** Copy assignment */
+MolproFF::MMMolecule& MolproFF::MMMolecule::operator=(const MolproFF::MMMolecule &other)
+{
+    if (this != &other)
+    {
+        mol = other.mol;
+        chg_property = other.chg_property;
+        chgs = other.chgs;
+        coords = other.coords;
+        cgids_to_be_rebuilt = other.cgids_to_be_rebuilt;
+        rebuild_all = other.rebuild_all;
+        idx = other.idx;
+        nats = other.nats;
+    }
+    
+    return *this;
+}
+
+/** Return the actual molecule */
+const Molecule& MolproFF::MMMolecule::molecule() const
+{
+    return mol;
+}
+
+/** Change the molecule */
+bool MolproFF::MMMolecule::change(const Molecule &molecule)
+{
+    BOOST_ASSERT(molecule.ID() == mol.ID());
+    
+    if (molecule.version() != mol.version())
+    {
+        mol = molecule;
+        cgids_to_be_rebuilt.clear();
+        rebuild_all = true;
+        
+        return true;
+    }
+    else
+        return false;
+}
+
+/** Change a residue in the molecule */
+bool MolproFF::MMMolecule::change(const Residue &residue)
+{
+    BOOST_ASSERT(residue.ID() == mol.ID());
+    
+    if (rebuild_all)
+    {
+        return this->change(residue.molecule());
+    }
+    else if (residue.version() != mol.version())
+    {
+        mol = residue.molecule();
+        
+        cgids += residue.cutGroupIDs();
+        
+        if (cgids.count() == mol.nCutGroups())
+        {
+            cgids.clear();
+            rebuild_all = true;
+        }
+        
+        return true;
+    }
+    else
+        return false;
+}
+
+/** Change an atom in the molecule */
+bool MolproFF::MMMolecule::change(const NewAtom &atom)
+{
+    BOOST_ASSERT(atom.ID() == mol.ID());
+    
+    if (rebuild_all)
+    {
+        return this->change(atom.molecule());
+    }
+    else if (atom.version() != mol.version())
+    {
+        mol = atom.molecule();
+        
+        cgids.insert( atom.cgAtomID().cutGroupID() );
+        
+        if (cgids.count() == mol.nCutGroups())
+        {
+            cgids.clear();
+            rebuild_all = true;
+        }
+        
+        return true;
+    }
+    else
+        return false;
+}
+
+/** Update the MMMolecule - this finds all of the CoordGroups from
+    this molecule that are within the cutoff of the coordgroup
+    'qm_coordgroup', based on the space 'space' using the 
+    switching function 'switchfunc' */
+void MolproFF::MMMolecule::update(const CoordGroup &qm_coordgroup,
+                                  const Space &space, 
+                                  const SwitchingFunction &switchfunc)
+{
+    //zero the number of atoms of this molecule in the array...
+    nats = 0;
+
+    //loop over all of the CoordGroups in this molecule and
+    //get all copies that are within the cutoff distance of 
+    //any of the CoordGroups of the QM atoms 
+    const QVector<CoordGroup> &coordgroups = mol.coordGroups();
+    int ncg = coordgroups.count();
+    
+    coords = QVector< QList< tuple<double,CoordGroup> > >(ncg);
+    
+    for (int i=0; i<ncg; ++i)
+    {
+        //how many atoms in this CoordGroup have a charge?
+        const QVector<ChargeParameter> &chargegroup = chgs.at(i);
+        
+        int natms_with_charges = 0;
+        int natms = chargegroup.count();
+        
+        for (int j=0; j<natms; ++j)
+        {
+           natms_with_charges += (chargegroup.at(j) != 0);
+        }
+        
+        if (natms_with_charges > 0)
+        {
+            //some of the atoms in this CoordGroup have charges!
+            
+            //get all of the copies of this CoordGroup that are
+            //within the cutoff distance of any of the QM atoms
+            QList< tuple<double,CoordGroup> > copies = 
+                                    space.getCopiesWithin(coordgroups.at(i),
+                                                qm_coordgroup,
+                                                switchfunc.cutoffDistance());
+        
+            //loop through each copy and set its scale factor
+            QMutableListIterator< tuple<double,CoordGroup> > it(copies);
+            
+            while( it.hasNext() )
+            {
+                it.next();
+            
+                double scalefac = switchfunc.electrostaticScaleFactor(it->get<0>());
+                
+                if (scalefac = 0)
+                    //a zero scale factor would wipe out
+                    //all of the atoms of this copy
+                    it.remove();
+                else
+                    //update the scale factor
+                    it->get<0>() = scalefac;
+            }
+        
+            //save this list with the CutGroup
+            coords[i] = copies;
+            
+            //increment the number of atoms - this is the number
+            //of non-zero charge atoms in the group times the number
+            //of copies of this group
+            nats += natms_with_charges * copies.count();
+        }
+    }
+}
+
+/** Update the mm_coords_and_charges array with the coordinates
+    and charges of atoms in this molecule. This will either 
+    replace the existing information about this molecule in 
+    mm_coords_and_charges, or it will add its information
+    onto the end of the array. */
+void MolproFF::MMMolecule::update(QVector<double> &mm_coords_and_charges)
+{
+    if (nats == 0)
+    {
+        //we aren't in the array, and we shouldn't be
+        idx = -1;
+        
+        //There is nothing to do :-)
+        return;
+    }
+    else if (idx < 0)
+    {
+        //we are not currently in the array - allocate sufficient
+        //space for us
+        idx = mm_coords_and_charges.count();
+        
+        //reserve sufficient space (four entries per atom - coords + charge)
+        mm_coords_and_charges.resize( idx + 4*nats );
+    }
+    
+    //ok - we assume that the array from idx to 4*nats is ours...
+    int ngroups = coords.count();
+    const QList< tuple<double,CoordGroup> > *coords_array = coords.constData();
+    const QVector<ChargeParameter> *chgs_array = chgs.constData();
+    
+    int current_idx = idx;
+    
+    //add each CutGroup in turn...
+    for (int i=0; i<ngroups; ++i)
+    {
+        const QList< tuple<double,CoordGroup> > &group_coords = coords_array[i];
+        const ChargeParameter *group_charges = chgs_array[i].constData();
+        
+        //loop over each copy of the CoordGroup and add it in turn
+        for (QList< tuple<double,CoordGroup> >::const_iterator it = 
+                                                    group_coords.constBegin();
+             it != group_coords.constEnd();
+             ++it)
+        {
+            const CoordGroup &copy = it->get<1>();
+            double scalefac = it->get<2>();
+            
+            int natms = copy.count();
+            const Vector *copy_array = copy.constData();
+            
+            for (int j=0; j<natms; ++j)
+            {
+                const Vector &atom = copy_array[j];
+                double atom_charge = scalefac * group_charges[j];
+                
+                mm_coords_and_charges[current_idx] = atom.x();
+                ++current_idx;
+                mm_coords_and_charges[current_idx] = atom.y();
+                ++current_idx;
+                mm_coords_and_charges[current_idx] = atom.z();
+                ++current_idx;
+                mm_coords_and_charges[current_idx] = atom_charge;
+                ++current_idx;
+            }
+        }
+    }
+}
+
+/** Add the atoms and their charges from this molecule to the
+    end of the mm_coords_and_charges array. */
+void MolproFF::MMMolecule::addTo(QVector<double> &mm_coords_and_charges)
+{
+    idx = -1;
+    this->update(mm_coords_and_charges);
+}
+
+/** Return the current number of atoms that should
+    be in the mm_coords_and_charges array */
+int MolproFF::MMMolecule::nAtomsInArray() const
+{
+    return nats;
+}
+
+///////////
 /////////// Implementation of MolproFF
 ///////////
 
@@ -133,10 +587,38 @@ QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds, const MolproFF &molproff)
     SharedDataStream sds(ds);
     
     sds << molproff.spce << molproff.switchfunc
-        << static_cast<const FFBase&>(molproff);
+        << molproff.molpro_exe << molproff.molpro_tmpdir
+        << qm_version;
+        
+    //now stream in all of the QM molecules
+    const QHash<MoleculeID,MolproFF::QMMolecule> &qm_mols = molproff.qm_mols;
     
-    //don't stream qm_coords and mm_coords_and_charges as
-    //they can be rebuilt
+    sds << quint32( qm_mols.count() );
+    
+    for (QHash<MoleculeID,MolproFF::QMMolecule>::const_iterator it = qm_mols.begin();
+         it != qm_mols.end();
+         ++it)
+    {
+        sds << it->molecule();
+    }
+        
+    //now stream in all of the MM molecules
+    const QHash<MoleculeID,MolproFF::MMMolecule> &mm_mols = molproff.mm_mols;
+    
+    sds << quint32( mm_mols.count() );
+    
+    for (QHash<MoleculeID,MolproFF::MMMolecule>::const_iterator it = mm_mols.begin();
+         it != mm_mols.end();
+         ++it)
+    {
+        sds << it->molecule();
+    }
+        
+    //stream in the base class...
+    sds << static_cast<const FFBase&>(molproff);
+    
+    //don't stream qm_coords qm_coordgroup and 
+    //mm_coords_and_charges as they can be rebuilt
     
     return ds;
 }
@@ -151,10 +633,57 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, MolproFF &molproff)
         SharedDataStream sds(ds);
         
         sds >> molproff.spce >> molproff.switchfunc
-            >> static_cast<FFBase&>(molproff);
+            >> molproff.molpro_exe >> molproff.molpro_tmpdir
+            >> qm_version;
+            
+        //stream in all of the QM molecules
+        quint32 nmols;
+        sds >> nmols;
+        
+        QHash<MoleculeID,MolproFF::QMMolecule> qm_mols;
+        
+        if (nmols > 0)
+        {
+            qm_mols.reserve(nmols);
+            
+            for (uint i=0; i<nmols; ++i)
+            {
+                Molecule qm_mol;
+                sds >> qm_mol;
+                
+                qm_mols.insert(qm_mol.ID(), qm_mol);
+            }
+        }
+        
+        molproff.qm_mols = qm_mols;
+        
+        //stream in all of the MM molecules
+        sds >> nmols;
+        
+        QHash<MoleculeID,MolproFF::MMMolecule> mm_mols;
+        
+        if (nmols > 0)
+        {
+            mm_mols.reserve(nmols);
+            
+            for (uint i=0; i<nmols; ++i)
+            {
+                Molecule mm_mol;
+                sds >> mm_mol;
+                
+                mm_mols.insert(mm_mol.ID(), mm_mol);
+            }
+        }
+        
+        molproff.mm_mols = mm_mols;
+            
+        //read in the base class...
+        sds >> static_cast<FFBase&>(molproff);
     
-        //need to rebuild qm_coords and mm_coords_and_charges
-    
+        //need to rebuild qm_coords, qm_coordgroup 
+        //and mm_coords_and_charges
+        molproff.rebuild_all = true;
+        molproff.rebuild_mm.clear();
     }
     else
         throw version_error(v, "1", r_molproff, CODELOC);
@@ -162,24 +691,40 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, MolproFF &molproff)
     return ds;
 }
 
+/** Incremint used to version MolproFF QM regions */
+static Incremint global_molproff_qm_version;
+
 /** Construct an empty MolproFF */
-MolproFF::MolproFF() : FFBase()
+MolproFF::MolproFF() 
+         : FFBase(), 
+           molpro_exe("molpro"), molpro_tmpdir(QDir::temp()),
+           qm_version(&global_molproff_qm_version),
+           rebuild_all(true)
 {
     this->registerComponents();
 }
 
 /** Construct a MolproFF with a specfied Space and switching function */
 MolproFF::MolproFF(const Space &space, const SwitchingFunction &switchingfunction)
-         : FFBase(), spce(space), switchfunc(switchingfunction)
+         : FFBase(), 
+           spce(space), switchfunc(switchingfunction),
+           molpro_exe("molpro"), molpro_tmpdir(QDir::temp()),
+           qm_version(&global_molproff_qm_version),
+           rebuild_all(true)
 {
     this->registerComponents();
 }
 
 /** Copy constructor */
 MolproFF::MolproFF(const MolproFF &other)
-         : FFBase(other), spce(other.spce), switchfunc(other.switchfunc),
+         : FFBase(other), 
+           spce(other.spce), switchfunc(other.switchfunc),
+           molpro_exe(other.molpro_exe), molpro_tmpdir(other.molpro_tmpdir),
            qm_coords(other.qm_coords), 
-           mm_coords_and_charges(other.mm_coords_and_charges)
+           mm_coords_and_charges(other.mm_coords_and_charges),
+           qm_mols(other.qm_mols), mm_mols(other.mm_mols),
+           qm_version(other.qm_version),
+           rebuild_mm(other.rebuild_mm), rebuild_all(other.rebuild_all)
 {
     //get the pointer from the base class...
     components_ptr = dynamic_cast<const MolproFF::Components*>( &(FFBase::components()) );
@@ -200,151 +745,46 @@ void MolproFF::registerComponents()
     components_ptr = ptr.release();
 }
 
-/** Update the QM and MM arrays so that they contain the latest
-    data, and return whether or not the arrays have changed since the
-    last update.
-*/
-bool MolproFF::updateArrays()
-{
-    //if moved QM molecules
-    //  return rebuild_all
-    //else if moved MM molecules
-    //  return rebuild_mm
-
-    return false;
-}
-
-// /** Reconstruct the QM coordinate array */
-// void MolproFF::reconstructQMArray()
-// {
-//     int nmols = qm_molecules.count();
-//     const Molecule *molecule_array = qm_molecules.constData();
-//
-//     int nats = 0;
-//
-//     //get the number of atoms
-//     for (int i=0; i<nmols; ++i)
-//     {
-//         nats += molecule_array[i].nAtoms();
-//     }
-//
-//     if (nats == 0)
-//     {
-//         //clear the coordinates array
-//         qm_coords.clear();
-//         return;
-//     }
-//
-//     //reserve sufficient space (3 times number of atoms)
-//     QVector<double> coords( nats*3 );
-//     double *coords_array = coords.data();
-//
-//     int atomid = 0;
-//
-//     //copy the atoms' coordinates, and convert to bohr radii
-//     for (int i=0; i<nmols; ++i)
-//     {
-//         QVector<Vector> molcoords = molecule_array[i].coordinates();
-//
-//         int ncoords = molcoords.count();
-//         const Vector *molcoords_array = molcoords.constData();
-//
-//         for (int j=0; j<ncoords; ++j)
-//         {
-//             const Vector &atmcoords = molcoords_array[j];
-//
-//             coords_array[atomid] = convertTo(atmcoords.x(), bohr_radii);
-//             coords_array[atomid+1] = convertTo(atmcoords.y(), bohr_radii);
-//             coords_array[atomid+2] = convertTo(atmcoords.z(), bohr_radii);
-//
-//             atomid += 3;
-//         }
-//     }
-//
-//     qm_coords = coords;
-// }
-//
-// /** Reconstruct the MM coordinate and charge array */
-// void MolproFF::reconstructMMArray()
-// {
-//     int nmols = mm_molecules.count();
-//     const Molecule *molecule_array = mm_molecules.constData();
-//     const QVector<ChargeParameter> *molcharge_array = mm_charges.constData();
-//
-//     //count the number of atoms that have a non-zero charge
-//     //(same as the number of non-zero charge parameters...)
-//     int nats = 0;
-//
-//     for (int i=0; i<nmols; ++i)
-//     {
-//         const QVector<ChargeParameter> &molcharges = molcharge_array[i];
-//
-//         int ncharges = molcharges.count();
-//         const ChargeParameter *charge_array = molcharges.constData();
-//
-//         for (int j=0; j<nmols; ++j)
-//         {
-//             if ( not isZero(charge_array[j].charge()) )
-//                ++nats;
-//         }
-//     }
-//
-//     if (nats == 0)
-//     {
-//         //there are no MM charges
-//         mm_coords_and_charges.clear();
-//         return;
-//     }
-//
-//     //reserve sufficient space for the coordinates and charges (4*nats)
-//     QVector<double> coords( nats*4 );
-//     double *coords_array = coords.data();
-//
-//     int atomid = 0;
-//
-//     for (int i=0; i<nmols; ++i)
-//     {
-//         QVector<Vector> molcoords = molecule_array[i].coordinates();
-//
-//         int ncoords = molcoords.count();
-//         const Vector *molcoords_array = molcoords.constData();
-//
-//         const ChargeParameter *charge_array = molcharge_array[i].constData();
-//
-//         for (int j=0; j<ncoords; ++j)
-//         {
-//             if ( not isZero(charge_array[j].charge()) )
-//             {
-//                 const Vector &atmcoords = molcoords_array[j];
-//
-//                 //copy (and convert) the coordinates
-//                 coords_array[atomid] = convertTo(atmcoords.x(), bohr_radii);
-//                 coords_array[atomid+1] = convertTo(atmcoords.y(), bohr_radii);
-//                 coords_array[atomid+2] = convertTo(atmcoords.z(), bohr_radii);
-//
-//                 //copy (and convert) the charge
-//                 coords_array[atomid+3] = convertTo(charge_array[j].charge(),
-//                                                    mod_electrons);
-//
-//                 atomid += 4;
-//             }
-//         }
-//     }
-//
-//     mm_coords_and_charges = coords;
-// }
-
 /** Add a molecule to the QM region
 
     \throw SireMol::duplicate_molecule
 */
-void MolproFF::_pvt_addToQM(const Molecule &molecule)
+int MolproFF::_pvt_addToQM(const Molecule &molecule)
 {
     MoleculeID molid = molecule.ID();
 
     //check that the molecule is not in the MM region
+    if (mm_mols.contains(molid))
+        throw SireMol::duplicate_molecule( QObject::tr(
+            "Cannot add the molecule %1 to the QM region of the MolproFF "
+            "\"%2\" (%3 %4) as this molecule already exists in the MM region.")
+                .arg(molecule.idString(), this->name())
+                .arg(this->ID()).arg(this->version().toString()), CODELOC );
 
-    //add the molecule to the qm list, and also to the changed list
+    //do we already contain this molecule?
+    if (qm_mols.contains(molid))
+    {
+        if (this->change(molecule))
+            return MolproFF::CHANGE;
+        else
+            return MolproFF::NOCHANGE;
+    }
+    else
+    {
+        //create a QM molecule to represent this molecule
+        MolproFF::QMMolecule qmmol(molecule);
+        
+        //add the coordinates of the QM molecule to the 
+        //QM coordinates array
+        qmmol.addTo(qm_coords);
+        
+        //save the qm molecule, indexed by its ID
+        qm_mols.insert(molid, MolproFF::QMMolecule(molecule));
+        rebuild_all = true;
+        rebuild_mm.clear();
+    
+        return MolproFF::ADD;
+    }
 }
 
 /** Add a molecule to the MM region.
@@ -352,70 +792,122 @@ void MolproFF::_pvt_addToQM(const Molecule &molecule)
     \throw SireMol::duplicate_molecule
     \throw SireError::incompatible_error
 */
-void MolproFF::_pvt_addToMM(const Molecule &molecule, const ParameterMap &map)
+int MolproFF::_pvt_addToMM(const Molecule &molecule, const ParameterMap &map)
 {
-    //get the charges for this molecule from the coulomb property
-    AtomicCharges charges = molecule.getProperty( map.source(parameters().coulomb()) );
-
     MoleculeID molid = molecule.ID();
 
     //check that the molecule is not in the QM region
+    if (qm_mols.contains(molid))
+        throw SireMol::duplicate_molecule( QObject::tr(
+            "Cannot add the molecule %1 to the MM region of the MolproFF "
+            "\"%2\" (%3 %4) as this molecule already exists in the QM region.")
+                .arg(molecule.idString(), this->name())
+                .arg(this->ID()).arg(this->version().toString()), CODELOC );
 
-
-    //add the molecule to the list, and also add it to the changed list
-
+    //do we already contain this molecule?
+    if (mm_mols.contains(molid))
+    {
+        if (this->change(molecule))
+            return MolproFF::CHANGE;
+        else
+            return MolproFF::NOCHANGE;
+    }
+    else
+    {
+        //convert to an MMMolecule (gets the atomic charges) and  
+        //add to the hash of MM molecules in this forcefield
+        mm_mols.insert(molid, MolproFF::MMMolecule(molecule, 
+                                 map.source(parameters().coulomb()));
+        
+        if (not rebuild_all)
+            rebuild_mm.insert(molid);
+            
+        return MolproFF::ADD;
+    }
 }
 
 /** Add a molecule to the QM region
 
     \throw SireMol::duplicate_molecule
 */
-void MolproFF::addToQM(const Molecule &molecule)
+bool MolproFF::addToQM(const Molecule &molecule)
 {
-    this->_pvt_addToQM(molecule);
-
-    this->incrementMajorVersion();
+    int change = this->_pvt_addToQM(molecule);
+    
+    if (change & ADD)
+    {
+        this->incrementMajorVersion();
+        
+        //increment the version number tracking addition
+        //and removal from the QM region
+        qm_version.increment();
+    }
+    else if (change and CHANGE)
+        this->incrementMinorVersion();
+        
+    return isDirty();
 }
 
 /** Add a load of molecules to the QM region
 
     \throw SireMol::duplicate_molecule
 */
-void MolproFF::addToQM(const QList<Molecule> &molecules)
+bool MolproFF::addToQM(const QList<Molecule> &molecules)
 {
     // Add the molecules to a copy of this forcefield - this
     // is to maintain the invariant
 
     MolproFF copy(*this);
 
+    int change = 0;
+
     for (QList<Molecule>::const_iterator it = molecules.constBegin();
          it != molecules.constEnd();
          ++it)
     {
-        copy._pvt_addToQM(*it);
+        int added_mol = copy._pvt_addToQM(*it);
+        
+        change = change | added_mol;
     }
 
-    copy.incrementMajorVersion();
+    if (change & ADD)
+    {
+        copy.incrementMajorVersion();
+        
+        //increment the version number tracking addition
+        //and removal from the QM region
+        qm_version.increment();
+    }
+    else if (change & CHANGE)
+        copy.incrementMinorVersion();
 
     //everything's ok - copy back to the original
     *this = copy;
+    
+    return isDirty();
 }
 
 /** Add a molecule to the MM region.
 
     \throw SireMol::duplicate_molecule
 */
-void MolproFF::addToMM(const Molecule &molecule, const ParameterMap &map)
+bool MolproFF::addToMM(const Molecule &molecule, const ParameterMap &map)
 {
-    this->_pvt_addToMM(molecule, map);
-    this->incrementMajorVersion();
+    int change = this->_pvt_addToMM(molecule, map);
+    
+    if (change & ADD)
+        this->incrementMajorVersion();
+    else if (change & CHANGE)
+        this->incrementMinorVersion();
+    
+    return isDirty();
 }
 
 /** Add a load of molecules to the MM region
 
     \throw SireMol::duplicate_molecule
 */
-void MolproFF::addToMM(const QList<Molecule> &molecules,
+bool MolproFF::addToMM(const QList<Molecule> &molecules,
                        const ParameterMap &map)
 {
     //add the Molecules to a copy of this forcefield -
@@ -423,35 +915,354 @@ void MolproFF::addToMM(const QList<Molecule> &molecules,
 
     MolproFF copy(*this);
 
+    int change = 0;
+
     for (QList<Molecule>::const_iterator it = molecules.begin();
          it != molecules.end();
          ++it)
     {
-        copy._pvt_addToMM(*it, map);
+        int added_mol = copy._pvt_addToMM(*it, map);
+        
+        change = change | added_mol;
     }
 
-    copy.incrementMajorVersion();
+    if (change & ADD)
+        copy.incrementMajorVersion();
+    else if (change & CHANGE)
+        copy.incrementMinorVersion();
 
     //everything's ok - copy back to the original
     *this = copy;
+    
+    return isDirty();
 }
 
-/** Does nothing... */
-bool MolproFF::change(const Molecule&)
+/** Change the object 'obj'. Does nothing if this object
+    is not in this forcefield */
+template<class T>
+bool MolproFF::_pvt_change(const T &obj)
 {
-    return false;
+    MoleculeID molid = obj.ID();
+    
+    if (qm_mols.contains(molid))
+    {
+        //the object exists in the QM region - make the change
+        if (qm_mols[molid].change(obj))
+        {
+            //the molecule changed, so we need to rebuild
+            //all of the arrays...
+            rebuild_all = true;
+            rebuild_mm.clear();
+            
+            //increment the minor version number
+            this->incrementMinorVersion();
+        }
+    }
+    else if (mm_mols.contains(molid))
+    {
+        //the object exists in the MM region    
+        if (rebuild_all)
+        {
+            //if we already have to rebuild everything, then we 
+            //may as well just change the entire molecule
+            if ( mm_molds[molid].change( Molecule(obj) ) )
+            {
+                this->incrementMinorVersion();
+            }
+        }
+        else
+        {
+            //try to save time by just changing the object
+            if (mm_mols[molid].change(obj))
+            {
+                rebuild_mm.insert(molid);
+                this->incrementMinorVersion();
+            }
+        }
+    }
+    
+    return isDirty();
 }
 
-/** Does nothing... */
-bool MolproFF::change(const Residue&)
+/** Change the molecule 'molecule'. Does nothing if this 
+    molecule is not in this forcefield. */
+bool MolproFF::change(const Molecule &molecule)
 {
-    return false;
+    return this->_pvt_change<Molecule>(molecule);
 }
 
-/** Does nothing... */
-bool MolproFF::change(const NewAtom&)
+/** Change the residue 'residue'. Does nothing if this 
+    residue is not in this forcefield. */
+bool MolproFF::change(const Residue &residue)
 {
-    return false;
+    return this->_pvt_change<Residue>(residue);
+}
+
+/** Change the atom 'atom'. Does nothing if this 
+    atom is not in this forcefield. */
+bool MolproFF::change(const NewAtom &atom)
+{
+    return this->_pvt_change<NewAtom>(atom);
+}
+
+/** Remove the molecule 'mol'. Does nothing if this
+    molecule is not in this forcefield */
+bool MolproFF::remove(const Molecule &molecule)
+{
+    MoleculeID molid = molecule.ID();
+    
+    if (qm_mols.contains(molid))
+    {
+        //remove the molecule from the QM region
+        qm_mols.remove(molid);
+        rebuild_all = true;
+        rebuild_mm.clear();
+        
+        //we need to re-add the remaining QM molecules to the QM array
+        qm_coords.clear();
+        
+        for (QHash<MoleculeID,QMMolecule>::iterator it = qm_mols.begin();
+             it != qm_mols.end();
+             ++it)
+        {
+            it->addTo(qm_coords);
+        }
+        
+        this->incrementMajorVersion();
+        
+        //increment the version number that tracks changes in 
+        //the QM region
+        qm_version.increment();
+    }
+    else if (mm_mols.contains(molid))
+    {
+        //remove the molecule from the MM region
+        MMMolecule mm_mol = mm_mols.take(molid);
+        
+        if (mm_mol.nAtomsInArray() > 0)
+        {
+            //we need to rebuild everything as this molecule
+            //was in the mm_coords_and_charges array
+            rebuild_all = true;
+            rebuild_mm.clear();
+        }
+        
+        this->incrementMajorVersion();
+    }
+    
+    return isDirty();
+}
+
+/** Rebuild qm_coordgroup - the CoordGroup that contains all of the 
+    atoms of all of the QM molecules. */
+void MolproFF::rebuildQMCoordGroup()
+{
+    if (qm_mols.count() == 1 and 
+        qm_mols.constBegin()->molecule().nCoordGroups() == 1)
+    {
+        //take the easy route!
+        qm_coordgroup = qm_mols.constBegin().molecule()->coordGroups().at(0);
+    }
+    else
+    {
+        //how many QM atoms are there?
+        int natms = 0;
+        
+        for (QHash<MoleculeID,QMMolecule>::const_iterator it = qm_mols.constBegin();
+             it != qm_mols.constEnd();
+             ++it)
+        {
+            natms += it->molecule().nAtoms();
+        }
+        
+        //create a vector of the right size
+        QVector<Vector> all_atoms(natms);
+        
+        Vector *atoms_array = all_atoms.data();
+        
+        //now copy in the coordinates of all of the QM atoms...
+        //(this won't work if the QM molecules are in different 
+        // simulation boxes... What should I do in this case?)
+        // Maybe have CoordGroup = space.combineGroups(groups)?
+        for (QHash<MoleculeID,QMMolecule>::const_iterator it = qm_mols.constBegin();
+             it != qm_mols.constEnd();
+             ++it)
+        {
+            const QVector<CoordGroup> &groups = it->molecule().coordGroups();
+            
+            int ngroups = groups.count();
+            
+            for (int i=0; i<ngroups; ++i)
+            {
+                int ngroupatoms = groups.at(i).count();
+                const Vector *group_atoms = groups.at(i).constData();
+                
+                //use memcpy to copy the vector (possible as this
+                //is a movable class) (actually use the qMemCopy function provided by Qt
+                //in qglobal.h)
+                void *output = qMemCopy(atoms_array, group_atoms, 
+                                        natms * sizeof(Vector));
+                                        
+                BOOST_ASSERT(output == atoms_array);
+                
+                //advance the atoms_array pointer on for the next group
+                atoms_array += natms*sizeof(Vector);
+            }
+        }
+        
+        //now we have all of the atom coordinates, place them into
+        //the CoordGroup
+        qm_coordgroup = CoordGroup(all_atoms);
+    }
+}
+
+/** Update the QM and MM arrays. This should only be 
+    called by the energy routines as they use whether
+    the arrays change to decide whether or not to
+    recalculate the energy! */
+bool MolproFF::updateArrays()
+{
+    if (rebuild_all)
+    {
+        //update all of the QM arrays...
+        for (QHash<MoleculeID,QMMolecule>::const_iterator it = qm_mols.constBegin();
+             it != qm_mols.constEnd();
+             ++it)
+        {
+            it->update(qm_coords);
+        }
+        
+        //update the qm_coordgroup that contains the coordinates of 
+        //all of the atoms in the QM molecules
+        this->rebuildQMCoordGroup();
+        
+        //now update all of the MM molecules - tell them to 
+        //calculate all of the groups that are within the cutoff 
+        //distance of any of the QM coordgroups, and count up
+        //how many atoms are then going to be in the MM array...
+        int natms = 0;
+        
+        for (QHash<MoleculeID,MMMolecule>::iterator it = mm_mols.begin();
+             it != mm_mols.constEnd();
+             ++it)
+        {
+            it->update(qm_coordgroup, space(), switchingFunction());
+            natms += it->nAtomsInArray();
+        }
+        
+        //ok, all of the MM molecules have now got the list of CutGroups
+        //that they need. We also now know how may atoms there are to put
+        //in the mm_coords_and_charges array - create sufficient space
+        mm_coords_and_charges.clear();
+        
+        if (natms > 0)
+        {
+            mm_coords_and_charges.reserve(4*natms);
+            
+            for (QHash<MoleculeID,MMMolecule>::iterator it = mm_mols.constBegin();
+                 it != mm_mols.constEnd();
+                 ++it)
+            {
+                it->addTo(mm_coords_and_charges);
+            }
+        }
+        
+        rebuild_all = false;
+        rebuild_mm.clear();
+        
+        return true;
+    }
+    else if (not rebuild_mm.isEmpty())
+    {
+        //we only need to rebuild some of the MM molecules...
+                
+        //flag set if we have to rebuild the MM array (happens when
+        //the number of MM atoms changes)
+        bool rebuild_mm_array = false;
+        
+        //flag set when something has changed (e.g. when there definitely
+        //is a change to mm_coords_and_charges)
+        bool something_changed = false;
+                
+        //see if any of the MM molecules have changed...
+        for (QSet<MoleculeID>::const_iterator it = rebuild_mm.constBegin();
+             it != rebuild_mm.constEnd();
+             ++it)
+        {
+            MMMolecule &mm_mol = mm_mols[*it];
+            
+            //how many atoms does this molecule have currently in the array?
+            int natms_in_array = mm_mol.nAtomsInArray();
+            
+            //update the molecule...
+            mm_mols[*it].update(qm_coordgroup,
+                                space(), switchingFunction());
+        
+            //has something changed (i.e. has this molecule moved from outside
+            //the array to being inside the array?)
+            something_changed = something_changed or
+                                (natms_in_array != 0 or mm_mol.nAtomsInArray() != 0);
+        
+            rebuild_mm_array = rebuild_mm_array or
+                               (natms_in_array != 0 and 
+                                natms_in_array != mm_mol.nAtomsInArray());
+        }
+        
+        if (not something_changed)
+        {
+            //the change hasn't affected the mm_coords_and_charges array.
+            //There is thus no need to redo the QM calculation :-)
+            rebuild_mm.clear();
+            return false;
+        }
+        else if (rebuild_mm_array)
+        {
+            //rebuild the entire mm_coords_and_charges array - first get
+            //its new size...
+            int natms = 0;
+            
+            for (QHash<MoleculeID,MMMolecule>::const_iterator it = mm_mols.constBegin();
+                 it != mm_mols.constEnd();
+                 ++it)
+            {
+                natms += it->nAtomsInArray();
+            }
+            
+            //reserve sufficient space
+            mm_coords_and_charges.clear();
+            
+            if (natms > 0)
+            {
+                mm_coords_and_charges.reserve(4*natms);
+                
+                for (QHash<MoleculeID,MMMolecule>::iterator it = mm_mols.begin();
+                     it != mm_mols.end();
+                     ++it)
+                {
+                    it->addTo(mm_coords_and_charges);
+                }
+            }
+        }
+        else
+        {
+            //no difficult changes in the numbers of MM atoms - just change
+            //the existing ones (or add new ones onto the end!)
+            for (QSet<MoleculeID>::const_iterator it = rebuild_mm.constBegin();
+                 it != rebuild_mm.constEnd();
+                 ++it)
+            {
+                mm_mols[*it].update(mm_coords_and_charges);
+            }
+        }
+        
+        rebuild_mm.clear();
+        return true;
+    }
+    else
+    {
+        //there is nothing to rebuild
+        return false;
+    }
 }
 
 /** Use the passed MolproSession to recalculate the energy of
@@ -471,7 +1282,7 @@ Values MolproFF::recalculateEnergy(MolproSession &session)
         session.setArrays(qm_coords, mm_coords_and_charges);
 
         //calculate the HF energy of the system
-        double hf_nrg = session.calculateEnergy("hf");
+        double hf_nrg = session.calculateEnergy("HF");
 
         setComponent( components().total(), hf_nrg );
         setComponent( components().qm(), hf_nrg );
@@ -480,14 +1291,27 @@ Values MolproFF::recalculateEnergy(MolproSession &session)
     return currentEnergies();
 }
 
-/** The MolproFF forcefield is unable to recalculate its own
-    energy - it has to be placed on a MolproProcessor to be
-    able to do this. */
+/** Recalculate the energy - this starts its own Molpro
+    instance to calculate the energy. This is not as 
+    efficient as when using the MolproProcessor,
+    which uses a single instance of Molpro for
+    all energy evaluations. */
 void MolproFF::recalculateEnergy()
 {
-    throw SireError::program_bug( QObject::tr(
-            "It is not possible to calculate the energy of a MolproFF "
-            "directly. You must place the MolproFF forcefield onto a "
-            "MolproProcessor and ask the MolproProcessor to calculate "
-            "the energy."), CODELOC );
+    if (this->updateArrays())
+    {
+        //start a new molpro session for this forcefield
+        MolproSession session(*this);
+    
+        //pass the coordinates to the session
+        session.setArrays(qm_coords, mm_coords_and_charges);
+        
+        double hf_nrg = session.calculateEnergy("HF");
+        
+        setComponent( components().total(), hf_nrg );
+        setComponent( components().qm(), hf_nrg );
+        
+        //exiting destroys 'session', which closes the
+        //Molpro process
+    }
 }

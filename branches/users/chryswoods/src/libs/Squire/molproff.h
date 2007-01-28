@@ -73,8 +73,12 @@ using SireMM::SwitchingFunction;
 /** This class implements a forcefield that calculates the QM energy
     of atoms in the QM region as they are polarised by the charges
     of atoms in the MM region. This forcefield uses Molpro to perform
-    the energy calculation, and therefore must be placed on a
-    MolproProcessor to work. Note that the current version only
+    the energy calculation. It is most efficient to place this
+    forcefield on a MolproProcessor, as this allows the forcefield
+    to use a single instance of Molpro, rather than starting
+    and stopping Molpro for each energy evaluation. 
+    
+    Note that the current version only
     supports entire molecules in the QM or MM regions. Later
     versions of this forcefield will expand this support to
     include parts of molecules, and defined link atoms.
@@ -87,7 +91,7 @@ class SQUIRE_EXPORT MolproFF : public SireFF::FFBase
 friend QDataStream& ::operator<<(QDataStream&, const MolproFF&);
 friend QDataStream& ::operator>>(QDataStream&, MolproFF&);
 
-friend class MolproSession;    //friend so can all protected functions
+friend class MolproSession;    //friend so can call all protected functions
 friend class MolproCalculator; //used to recalculate the energy
 
 public:
@@ -181,17 +185,27 @@ public:
         return new MolproFF(*this);
     }
 
-    void addToQM(const Molecule &molecule);
-    void addToMM(const Molecule &molecule,
+    const QFileInfo& molproExe() const;
+    const QDir& molproTempDir() const;
+
+    const Space& space() const;
+    const SwitchingFunction& switchingFunction() const;
+
+    quint32 qmVersion() const;
+
+    bool addToQM(const Molecule &molecule);
+    bool addToMM(const Molecule &molecule,
                  const ParameterMap &map = ParameterMap());
 
-    void addToQM(const QList<Molecule> &molecules);
-    void addToMM(const QList<Molecule> &molecules,
+    bool addToQM(const QList<Molecule> &molecules);
+    bool addToMM(const QList<Molecule> &molecules,
                  const ParameterMap &map = ParameterMap());
 
     bool change(const Molecule &molecule);
     bool change(const Residue &residue);
     bool change(const NewAtom &atom);
+
+    bool remove(const Molecule &molecule);
 
 protected:
     void recalculateEnergy();  //throw an exception
@@ -206,8 +220,107 @@ protected:
 private:
     void registerComponents();
 
-    void _pvt_addToQM(const Molecule &molecule);
-    void _pvt_addToMM(const Molecule &molecule, const ParameterMap &map);
+    enum { NOCHANGE = 0x0000, CHANGE = 0x0001, ADD = 0x0010 };
+
+    int _pvt_addToQM(const Molecule &molecule);
+    int _pvt_addToMM(const Molecule &molecule, const ParameterMap &map);
+
+    class QMMolecule
+    {
+    public:
+        QMMolecule();
+        QMMolecule(const Molecule &molecule);
+        
+        QMMolecule(const QMMolecule &other);
+        
+        ~QMMolecule();
+        
+        QMMolecule& operator=(const QMMolecule &other);
+        
+        const Molecule& molecule() const;
+        
+        bool change(const Molecule &molecule);
+        bool change(const Residue &residue);
+        bool change(const NewAtom &atom);
+        
+        void addTo(QVector<double> &qm_array);
+        void update(QVector<double> &qm_array) const;
+        
+    private:
+        /** The molecule itself */
+        Molecule mol;
+        
+        /** The element types of all of the atoms */
+        QVector< QVector<Element> > elements;
+        
+        /** The index in the qm_coords array of each atom 
+            in this molecule */
+        QVector< QVector<int> > indicies;
+    };
+
+    class MMMolecule
+    {
+    public:
+        MMMolecule();
+        MMMolecule(const Molecule &molecule, 
+                   const QString &charge_property);
+        
+        MMMolecule(const MMMolecule &other);
+        
+        ~MMMolecule();
+        
+        MMMolecule& operator=(const MMMolecule &other);
+        
+        const Molecule& molecule() const;
+        
+        bool change(const Molecule &molecule);
+        bool change(const Residue &residue);
+        bool change(const NewAtom &atom);
+        
+        void update(const CoordGroup &qm_coordgroup,
+                    const Space &space, const SwitchingFunction &switchfunc);
+                    
+        void addTo(QVector<double> &mm_coords_and_charges);
+        void update(QVector<double> &mm_coords_and_charges);
+        
+        int nAtomsInArray() const;
+        
+    private:
+        /** The molecule itself */
+        Molecule mol;
+        
+        /** The name of the property containing the 
+            atomic charges of the atoms. */
+        QString chg_property;
+        
+        /** The partial charges on the atoms */
+        AtomicCharges chgs;
+        
+        /** The replicas of each CoordGroup of this molecule,
+            within the cutoff, together with their closest 
+            distance to the QM molecule */
+        QVector< QList< tuple<double,CoordGroup> > > coords;
+        
+        /** The IDs of CutGroups that need rebuilding. Empty
+            means that all of them do! */
+        QSet<CutGroupID> cgids_to_be_rebuilt;
+        
+        /** Whether or not all of the CutGroups need rebuilding */
+        bool rebuild_all;
+        
+        /** The index of the first atom
+            of this molecule in the MM coords 
+            and charges array - equals -1 if this molecule
+            is not currently in the array. */
+        int idx;
+        
+        /** The number of atoms of this molecule
+            that are in the MM coords and charges
+            array (could be more than number of atoms
+            in molecule, as multiple copies of the
+            molecule may be included... */
+        uint nats;
+    };
 
     /** The space for this forcefield - this is used to map
         to infinite cartesian space for the QM calculation
@@ -218,17 +331,71 @@ private:
         charges */
     SwitchingFunction switchfunc;
 
-    /** Array containing all of the coordinates of the QM atoms */
+    /** The full name and path to the molpro executable */
+    QFileInfo molpro_exe;
+    
+    /** The temporary directory in which to run the Molpro calculation.
+        Each calculation will be carried out within a new unique directory
+        within this directory. */
+    QDir molpro_tmpdir;
+
+    /** All of the coordinates of the QM atoms */
     QVector<double> qm_coords;
 
     /** Array containing all of the coordinates and charges
         of the MM atoms */
     QVector<double> mm_coords_and_charges;
 
+    /** Hash of all of the QM molecules in this forcefield, indexed 
+        by their MoleculeID */
+    QHash<MoleculeID, QMMolecule> qm_mols;
+
+    /** CoordGroup containing all of the atoms of all of the 
+        QM molecules... */
+    CoordGroup qm_coordgroup;
+
+    /** Hash of all of the MM molecules in this forcefield, indexed
+        by their MoleculeID */
+    QHash<MoleculeID, MMMolecule> mm_mols;
+    
+    /** Version number which tracks changes in the QM molecules.
+        This version number is incremented whenever a QM molecule
+        is added or removed. */
+    MajVersion qm_version;
+    
+    /** Set of MoleculeIDs of MM molecules that need rebuilding */
+    QSet<MoleculeID> rebuild_mm;
+    
+    /** Do we need to rebuild all of the coordinates? 
+        (we do whenever the QM coordinates change) */
+    bool rebuild_all;
+
     /** Pointer to the object containing the components of
         this forcefield */
     const MolproFF::Components *components_ptr;
 };
+
+/** Return the full name and path of the molpro executable
+    used to calculate the energy. */
+inline const QFileInfo& MolproFF::molproExe() const
+{
+    return molpro_exe;
+}
+
+/** Return the directory in which Molpro calculations
+    will be run. */
+inline const QDir& MolproFF::molproTempDir() const
+{
+    return molpro_tmpdir;
+}
+
+/** Return the version number of the qm region - this is 
+    incremented whenever molecules are added or removed from
+    the QM region */
+inline quint32 MolproFF::qmVersion() const
+{
+    return qm_version;
+}
 
 }
 

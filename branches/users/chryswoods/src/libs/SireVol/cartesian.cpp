@@ -513,6 +513,7 @@ Cartesian::getCopiesWithin(const CoordGroup &group, const CoordGroup &center,
     if (not this->beyond(dist, group, center))
     {
         //calculate the minimum distance - do this via the
+        //minimumDistance function
         double mindist = this->minimumDistance(group, center);
 
         if (mindist <= dist)

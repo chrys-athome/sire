@@ -597,19 +597,23 @@ bool InterCLJFF::change(const Molecule &molecule)
     else if ( molid_to_molindex.contains(id) )
     {
         //the molecule has not yet been changed since the last evaluation
-        int idx = molid_to_changedindex.value(id);
+        int idx = molid_to_molindex.value(id);
 
         MolCLJInfo oldmol = mols.at(idx);
 
-        ChangedMolCLJInfo newrecord = oldmol.change(molecule, parameters());
+        //only change if the version number is different...
+        if (molecule.version() != oldmol.molecule().version())
+        {
+            ChangedMolCLJInfo newrecord = oldmol.change(molecule, parameters());
 
-        this->setCurrentState(newrecord.newMol());
+            this->setCurrentState(newrecord.newMol());
 
-        idx = changedmols.count();
-        molid_to_changedindex.insert(id, idx);
-        changedmols.append(newrecord);
+            idx = changedmols.count();
+            molid_to_changedindex.insert(id, idx);
+            changedmols.append(newrecord);
 
-        this->incrementMinorVersion();
+            this->incrementMinorVersion();
+        }
     }
 
     return isDirty();

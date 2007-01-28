@@ -64,9 +64,7 @@ using SireBase::Version;
 class SQUIRE_EXPORT MolproSession : public boost::noncopyable
 {
 public:
-    MolproSession( const QFileInfo &molpro_executable,
-                   const MolproFF &molproff,
-                   const QDir &tmpdir = QDir::temp() );
+    MolproSession(const MolproFF &molproff);
 
     ~MolproSession();
 
@@ -101,9 +99,9 @@ private:
         onto this session */
     quint32 ffid;
 
-    /** The version number of the MolproFF that has been loaded
+    /** The QM version number of the MolproFF that has been loaded
         onto this session */
-    Version ffversion;
+    quint32 qm_version;
 
     /** The unique run directory for the molpro process */
     QDir rundir;

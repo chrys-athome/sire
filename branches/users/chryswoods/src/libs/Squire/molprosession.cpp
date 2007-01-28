@@ -38,14 +38,9 @@ using namespace SireBase;
 
 QMutex MolproSession::starter_mutex;
 
-/** Construct a session that will represent the forcefield 'molproff'
-    using the molpro executable whose full path and name are given in
-    'molpro_executable' */
-MolproSession::MolproSession(const QFileInfo &molpro_executable,
-                             const MolproFF &molproff,
-                             const QDir &tmpdir)
+/** Construct a session that will represent the forcefield 'molproff' */
+MolproSession::MolproSession(const MolproFF &molproff)
               : boost::noncopyable(),
-                molpro_exe(molpro_executable),
                 ffid( molproff.ID() ),
                 ffversion( molproff.version() )
 {
@@ -112,13 +107,16 @@ MolproSession::MolproSession(const QFileInfo &molpro_executable,
                                             molpro_process, CODELOC );
         }
 
+        //ok - other molpro jobs are allowed to start now
+        lkr.unlock();
+
         QTextStream ts(&molpro_process);
 
         //initialise the molpro process...
         molproff.initialise(ts);
 
         //tell the molpro process to start its RPC connection
-        ts << "user\n";
+        ts << "user\n";     //eventually will be ts << "start_rpc\n";
 
         //close the input (so that molpro starts up fully)
         molpro_process.closeWriteChannel();
