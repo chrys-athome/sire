@@ -5,6 +5,7 @@
 ########################################
 
 # Third Party dependencies of this module
+include_directories(${QT_QTNETWORK_INCLUDE_DIR})
 
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
@@ -110,6 +111,7 @@ if (BUILD_SQUIRE)
   target_link_libraries (Squire
                          SireMM
                          ${SQUIRE_LIBRARIES}
+                         ${QT_QTNETWORK_LIBRARY}
                         )
 
   # installation

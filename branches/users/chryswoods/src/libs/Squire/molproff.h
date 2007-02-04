@@ -30,10 +30,22 @@
 #define SQUIRE_MOLPROFF_H
 
 #include <QVector>
+#include <QDir>
+#include <QFileInfo>
+
+#include <boost/tuple/tuple.hpp>
+
+#include "SireBase/majversion.h"
 
 #include "SireFF/ffbase.h"
 
 #include "SireVol/space.h"
+#include "SireVol/coordgroup.h"
+
+#include "SireMol/molecule.h"
+#include "SireMol/element.h"
+
+#include "SireMM/atomiccharges.h"
 #include "SireMM/switchingfunction.h"
 
 class QTextStream;
@@ -54,6 +66,10 @@ namespace Squire
 class MolproCalculator;
 class MolproSession;
 
+using boost::tuple;
+
+using SireBase::MajVersion;
+
 using SireCAS::Symbols;
 using SireCAS::Values;
 
@@ -61,13 +77,17 @@ using SireMol::Molecule;
 using SireMol::MoleculeID;
 using SireMol::Residue;
 using SireMol::NewAtom;
+using SireMol::Element;
+using SireMol::CutGroupID;
 
 using SireFF::FFComponent;
 using SireFF::ParameterMap;
 using SireFF::ParameterName;
 
 using SireVol::Space;
+using SireVol::CoordGroup;
 
+using SireMM::AtomicCharges;
 using SireMM::SwitchingFunction;
 
 /** This class implements a forcefield that calculates the QM energy
@@ -225,6 +245,11 @@ private:
     int _pvt_addToQM(const Molecule &molecule);
     int _pvt_addToMM(const Molecule &molecule, const ParameterMap &map);
 
+    void rebuildQMCoordGroup();
+
+    template<class T>
+    bool _pvt_change(const T &obj);
+
     class QMMolecule
     {
     public:
@@ -285,6 +310,8 @@ private:
         
         int nAtomsInArray() const;
         
+        const QString& chargeProperty() const;
+        
     private:
         /** The molecule itself */
         Molecule mol;
@@ -305,9 +332,6 @@ private:
             means that all of them do! */
         QSet<CutGroupID> cgids_to_be_rebuilt;
         
-        /** Whether or not all of the CutGroups need rebuilding */
-        bool rebuild_all;
-        
         /** The index of the first atom
             of this molecule in the MM coords 
             and charges array - equals -1 if this molecule
@@ -320,6 +344,9 @@ private:
             in molecule, as multiple copies of the
             molecule may be included... */
         uint nats;
+        
+        /** Whether or not all of the CutGroups need rebuilding */
+        bool rebuild_all;
     };
 
     /** The space for this forcefield - this is used to map
@@ -395,6 +422,19 @@ inline const QDir& MolproFF::molproTempDir() const
 inline quint32 MolproFF::qmVersion() const
 {
     return qm_version;
+}
+
+/** Return the space within which the QM and MM atoms exist */
+inline const Space& MolproFF::space() const
+{
+    return spce;
+}
+
+/** Return the switching function used to scale the charges of the 
+    MM atoms */
+inline const SwitchingFunction& MolproFF::switchingFunction() const
+{
+    return switchfunc;
 }
 
 }

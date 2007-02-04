@@ -19,6 +19,7 @@ set ( SIREBASE_SOURCES
       idtriple.cpp
       idversion.cpp
       majminversion.cpp
+      majversion.cpp
       md5sum.cpp
       sharedpolypointer.cpp
       version.cpp

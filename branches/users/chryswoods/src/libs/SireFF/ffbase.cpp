@@ -392,6 +392,21 @@ FFBase::FFBase(const FFBase &other)
 FFBase::~FFBase()
 {}
 
+/** Copy assignment */
+FFBase& FFBase::operator=(const FFBase &other)
+{
+    if (this != &other)
+    {
+        ffname = other.ffname;
+        id_and_version = other.id_and_version;
+        nrg_components = other.nrg_components;
+        components_ptr.reset(other.components_ptr->clone());
+        isdirty = other.isdirty;
+    }
+    
+    return *this;
+}
+
 /** Register the passed components */
 void FFBase::registerComponents(FFBase::Components *components)
 {
@@ -409,6 +424,14 @@ void FFBase::setDirty()
 void FFBase::setClean()
 {
     isdirty = false;
+}
+
+/** Return the current values of the energy components - these may be
+    out of date if the state of the forcefield has been changed 
+    (and therefore isDirty() is true) */
+Values FFBase::currentEnergies() const
+{
+    return nrg_components;
 }
 
 /** Return the name of this forcefield - this is used as the root of all of

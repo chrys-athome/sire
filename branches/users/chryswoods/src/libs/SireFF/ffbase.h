@@ -111,6 +111,8 @@ public:
 
     virtual ~FFBase();
 
+    FFBase& operator=(const FFBase &other);
+
     static const char* typeName()
     {
         return "SireFF::FFBase";

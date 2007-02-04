@@ -250,6 +250,12 @@ MoleculeID Residue::ID() const
     return d->ID();
 }
 
+/** Return the version number of the molecule that contains this residue */
+const MoleculeVersion& Residue::version() const
+{
+    return d->version();
+}
+
 /** Return a string identifying this residue */
 QString Residue::idString() const
 {

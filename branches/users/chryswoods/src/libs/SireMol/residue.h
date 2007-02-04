@@ -60,6 +60,7 @@ namespace SireMol
 {
 
 class Molecule;
+class MoleculeVersion;
 class NewAtom;
 class ResidueBonds;
 class Bond;
@@ -117,6 +118,7 @@ public:
 
    ///// Querying the residue //////////////////////////////
     MoleculeID ID() const;
+    const MoleculeVersion& version() const;
 
     QString idString() const;
 

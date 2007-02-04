@@ -196,6 +196,12 @@ MoleculeID NewAtom::ID() const
     return d->ID();
 }
 
+/** Return the version number of the molecule that contains this atom */
+const MoleculeVersion& NewAtom::version() const
+{
+    return d->version();
+}
+
 /** Return a string identifying this atom */
 QString NewAtom::idString() const
 {

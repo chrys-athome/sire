@@ -107,7 +107,7 @@ void MolproCalculator::calculateEnergy()
         molpro_session.reset();
 
         //start a new session
-        molpro_session.reset( new MolproSession(molpro_exe, *molproff, temp_dir) );
+        molpro_session.reset( new MolproSession(*molproff) );
     }
 
     nrg_components = molproff->recalculateEnergy(*molpro_session);
@@ -133,6 +133,38 @@ bool MolproCalculator::change(const Residue &residue)
 bool MolproCalculator::change(const NewAtom &atom)
 {
     return molproff->change(atom);
+}
+
+bool MolproCalculator::add(const Molecule&, const ParameterMap&)
+{
+    return false;
+}
+
+bool MolproCalculator::add(const Residue&, const ParameterMap&)
+{
+    return false;
+}
+
+bool MolproCalculator::add(const NewAtom&, const ParameterMap&)
+{
+    return false;
+}
+
+/** Remove the molecule 'molecule', returning whether or not this
+    changes this forcefield */
+bool MolproCalculator::remove(const Molecule &molecule)
+{
+    return molproff->remove(molecule);
+}
+
+bool MolproCalculator::remove(const Residue&)
+{
+    return false;
+}
+
+bool MolproCalculator::replace(const Molecule&, const Molecule&, const ParameterMap&)
+{
+    return false;
 }
 
 /** Set the forcefield for this calculator - this calculator is

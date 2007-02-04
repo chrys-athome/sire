@@ -65,6 +65,7 @@ class MoleculeData;
 class Residue;
 class Element;
 class AtomInfo;
+class MoleculeVersion;
 
 using SireMaths::Vector;
 using SireMaths::Quaternion;
@@ -119,6 +120,7 @@ public:
     QString name() const;
 
     MoleculeID ID() const;
+    const MoleculeVersion& version() const;
 
     QString idString() const;
 

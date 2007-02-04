@@ -73,7 +73,7 @@ public:
 
     double calculateEnergy(const char *cmds);
 
-    bool incompatibleWith(const MolproFF &molproff);
+    bool incompatibleWith(const MolproFF &molproff) const;
     void assertCompatibleWith(const MolproFF &molproff) const;
 
     void assertMolproIsRunning() const;

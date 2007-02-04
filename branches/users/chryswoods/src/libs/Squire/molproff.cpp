@@ -32,12 +32,18 @@
 
 #include "SireMol/molecule.h"
 #include "SireMol/residue.h"
+#include "SireMol/residueinfo.h"
 #include "SireMol/newatom.h"
+#include "SireMol/atom.h"
+#include "SireMol/element.h"
 
 #include "SireMM/atomiccharges.h"
 
 #include "SireUnits/convert.h"
 #include "SireUnits/units.h"
+
+#include "SireMol/errors.h"
+#include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -47,6 +53,7 @@ using namespace SireMM;
 using namespace SireFF;
 using namespace SireMol;
 using namespace SireMaths;
+using namespace SireBase;
 using namespace SireUnits;
 using namespace SireStream;
 
@@ -234,15 +241,17 @@ void MolproFF::QMMolecule::addTo(QVector<double> &qm_array)
         
         for (int j=0; j<natoms; ++j)
         {
-            if (elem_array[j] != Element::dummy())
+            if (elem_array[j].nProtons() != 0)
             {
                 //add the coordinates of the atom to the qm_coords array,
                 //recording the index in the array of the x-coordinates of
                 //the atom
                 indx_array[j] = qm_array.count();
-                qm_array.append(coords_array[j].x());
-                qm_array.append(coords_array[j].y());
-                qm_array.append(coords_array[j].z());
+                
+                //need to convert from angstrom to bohr radii
+                qm_array.append( convertTo(coords_array[j].x(), bohr_radii) );
+                qm_array.append( convertTo(coords_array[j].y(), bohr_radii) );
+                qm_array.append( convertTo(coords_array[j].z(), bohr_radii) );
             }
             else
                 //this is a dummy atom, so is not included in the QM calculation
@@ -279,9 +288,10 @@ void MolproFF::QMMolecule::update(QVector<double> &qm_array) const
               
                 const Vector &coord = coords_array[j];
             
-                qm_array[idx] = coord.x();
-                qm_array[idx+1] = coord.y();
-                qm_array[idx+2] = coord.z();
+                //need to convert from angstroms to bohr radii...
+                qm_array_array[idx] = convertTo(coord.x(), bohr_radii);
+                qm_array_array[idx+1] = convertTo(coord.y(), bohr_radii);
+                qm_array_array[idx+2] = convertTo(coord.z(), bohr_radii);
             }
         }
     }
@@ -315,8 +325,8 @@ MolproFF::MMMolecule::MMMolecule(const MMMolecule &other)
          : mol(other.mol), chg_property(other.chg_property),
            chgs(other.chgs), coords(other.coords), 
            cgids_to_be_rebuilt(other.cgids_to_be_rebuilt),
-           rebuild_all(other.rebuild_all),
-           idx(other.idx), nats(other.nats)
+           idx(other.idx), nats(other.nats),
+           rebuild_all(other.rebuild_all)
 {}
 
 /** Destructor */
@@ -377,18 +387,18 @@ bool MolproFF::MMMolecule::change(const Residue &residue)
     {
         mol = residue.molecule();
         
-        cgids += residue.cutGroupIDs();
+        cgids_to_be_rebuilt += residue.info().cutGroupIDs();
         
-        if (cgids.count() == mol.nCutGroups())
+        if (cgids_to_be_rebuilt.count() == mol.nCutGroups())
         {
-            cgids.clear();
+            cgids_to_be_rebuilt.clear();
             rebuild_all = true;
         }
         
         return true;
     }
-    else
-        return false;
+            
+    return false;
 }
 
 /** Change an atom in the molecule */
@@ -404,18 +414,18 @@ bool MolproFF::MMMolecule::change(const NewAtom &atom)
     {
         mol = atom.molecule();
         
-        cgids.insert( atom.cgAtomID().cutGroupID() );
+        cgids_to_be_rebuilt.insert( atom.cgAtomID().cutGroupID() );
         
-        if (cgids.count() == mol.nCutGroups())
+        if (cgids_to_be_rebuilt.count() == mol.nCutGroups())
         {
-            cgids.clear();
+            cgids_to_be_rebuilt.clear();
             rebuild_all = true;
         }
         
         return true;
     }
-    else
-        return false;
+        
+    return false;
 }
 
 /** Update the MMMolecule - this finds all of the CoordGroups from
@@ -468,15 +478,15 @@ void MolproFF::MMMolecule::update(const CoordGroup &qm_coordgroup,
             {
                 it.next();
             
-                double scalefac = switchfunc.electrostaticScaleFactor(it->get<0>());
+                double scalefac = switchfunc.electrostaticScaleFactor(it.value().get<0>());
                 
-                if (scalefac = 0)
+                if (scalefac == 0)
                     //a zero scale factor would wipe out
                     //all of the atoms of this copy
                     it.remove();
                 else
                     //update the scale factor
-                    it->get<0>() = scalefac;
+                    it.value().get<0>() = scalefac;
             }
         
             //save this list with the CutGroup
@@ -534,8 +544,8 @@ void MolproFF::MMMolecule::update(QVector<double> &mm_coords_and_charges)
              it != group_coords.constEnd();
              ++it)
         {
+            double scalefac = it->get<0>();
             const CoordGroup &copy = it->get<1>();
-            double scalefac = it->get<2>();
             
             int natms = copy.count();
             const Vector *copy_array = copy.constData();
@@ -543,15 +553,15 @@ void MolproFF::MMMolecule::update(QVector<double> &mm_coords_and_charges)
             for (int j=0; j<natms; ++j)
             {
                 const Vector &atom = copy_array[j];
-                double atom_charge = scalefac * group_charges[j];
+                double atom_charge = scalefac * group_charges[j].charge();
                 
-                mm_coords_and_charges[current_idx] = atom.x();
+                mm_coords_and_charges[current_idx] = convertTo(atom.x(), bohr_radii);
                 ++current_idx;
-                mm_coords_and_charges[current_idx] = atom.y();
+                mm_coords_and_charges[current_idx] = convertTo(atom.y(), bohr_radii);
                 ++current_idx;
-                mm_coords_and_charges[current_idx] = atom.z();
+                mm_coords_and_charges[current_idx] = convertTo(atom.z(), bohr_radii);
                 ++current_idx;
-                mm_coords_and_charges[current_idx] = atom_charge;
+                mm_coords_and_charges[current_idx] = convertTo(atom_charge, mod_electrons);
                 ++current_idx;
             }
         }
@@ -573,6 +583,12 @@ int MolproFF::MMMolecule::nAtomsInArray() const
     return nats;
 }
 
+/** Return the name of the property containing the charges */
+const QString& MolproFF::MMMolecule::chargeProperty() const
+{
+    return chg_property;
+}
+
 ///////////
 /////////// Implementation of MolproFF
 ///////////
@@ -587,8 +603,9 @@ QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds, const MolproFF &molproff)
     SharedDataStream sds(ds);
     
     sds << molproff.spce << molproff.switchfunc
-        << molproff.molpro_exe << molproff.molpro_tmpdir
-        << qm_version;
+        << molproff.molpro_exe.absoluteFilePath()     //save the full path to the 
+        << molproff.molpro_tmpdir.absolutePath()      //molpro exe and temp dirs...
+        << molproff.qm_version;
         
     //now stream in all of the QM molecules
     const QHash<MoleculeID,MolproFF::QMMolecule> &qm_mols = molproff.qm_mols;
@@ -611,7 +628,9 @@ QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds, const MolproFF &molproff)
          it != mm_mols.end();
          ++it)
     {
-        sds << it->molecule();
+        //save the molecule and the name of the property containing
+        //the charges
+        sds << it->molecule() << it->chargeProperty();
     }
         
     //stream in the base class...
@@ -632,9 +651,24 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, MolproFF &molproff)
     {
         SharedDataStream sds(ds);
         
+        QString molpro_exe_path, molpro_tmpdir_path;
+        
         sds >> molproff.spce >> molproff.switchfunc
-            >> molproff.molpro_exe >> molproff.molpro_tmpdir
-            >> qm_version;
+            >> molpro_exe_path >> molpro_tmpdir_path
+            >> molproff.qm_version;
+            
+        //get the fileinfo for the molpro executable
+        QFileInfo molpro_exe( molpro_exe_path );
+        
+        //what should I do if this doesn't exist?
+        
+        //get the fileinfo for the molpro temp directory
+        QDir molpro_tmpdir( molpro_tmpdir_path );
+        
+        //again, what should I do if this doesn't exist?
+        
+        molproff.molpro_exe = molpro_exe;
+        molproff.molpro_tmpdir = molpro_tmpdir;
             
         //stream in all of the QM molecules
         quint32 nmols;
@@ -669,9 +703,11 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, MolproFF &molproff)
             for (uint i=0; i<nmols; ++i)
             {
                 Molecule mm_mol;
-                sds >> mm_mol;
+                QString chg_property;
                 
-                mm_mols.insert(mm_mol.ID(), mm_mol);
+                sds >> mm_mol >> chg_property;
+                
+                mm_mols.insert(mm_mol.ID(), MolproFF::MMMolecule(mm_mol,chg_property));
             }
         }
         
@@ -734,6 +770,32 @@ MolproFF::MolproFF(const MolproFF &other)
 /** Destructor */
 MolproFF::~MolproFF()
 {}
+
+/** Copy assignment */
+MolproFF& MolproFF::operator=(const MolproFF &other)
+{
+    if (this != &other)
+    {
+        FFBase::operator=(other);
+    
+        spce = other.spce;
+        switchfunc = other.switchfunc;
+        molpro_exe = other.molpro_exe;
+        molpro_tmpdir = other.molpro_tmpdir;
+        qm_coords = other.qm_coords;
+        mm_coords_and_charges = other.mm_coords_and_charges;
+        qm_mols = other.qm_mols;
+        mm_mols = other.mm_mols;
+        qm_version = other.qm_version;
+        rebuild_mm = other.rebuild_mm;
+        rebuild_all = other.rebuild_all;
+        
+        components_ptr = dynamic_cast<const MolproFF::Components*>( &(FFBase::components()) );
+        BOOST_ASSERT( components_ptr != 0 );
+    }
+    
+    return *this;
+}
 
 /** Register the components of this forcefield */
 void MolproFF::registerComponents()
@@ -816,8 +878,11 @@ int MolproFF::_pvt_addToMM(const Molecule &molecule, const ParameterMap &map)
     {
         //convert to an MMMolecule (gets the atomic charges) and  
         //add to the hash of MM molecules in this forcefield
-        mm_mols.insert(molid, MolproFF::MMMolecule(molecule, 
-                                 map.source(parameters().coulomb()));
+        mm_mols.insert(molid, 
+                       MolproFF::MMMolecule(molecule, 
+                                            map.source(parameters().coulomb())
+                                           )
+                      );
         
         if (not rebuild_all)
             rebuild_mm.insert(molid);
@@ -965,7 +1030,7 @@ bool MolproFF::_pvt_change(const T &obj)
         {
             //if we already have to rebuild everything, then we 
             //may as well just change the entire molecule
-            if ( mm_molds[molid].change( Molecule(obj) ) )
+            if ( mm_mols[molid].change( Molecule(obj) ) )
             {
                 this->incrementMinorVersion();
             }
@@ -1058,10 +1123,10 @@ bool MolproFF::remove(const Molecule &molecule)
 void MolproFF::rebuildQMCoordGroup()
 {
     if (qm_mols.count() == 1 and 
-        qm_mols.constBegin()->molecule().nCoordGroups() == 1)
+        qm_mols.constBegin().value().molecule().nCutGroups() == 1)
     {
         //take the easy route!
-        qm_coordgroup = qm_mols.constBegin().molecule()->coordGroups().at(0);
+        qm_coordgroup = qm_mols.constBegin().value().molecule().coordGroups().at(0);
     }
     else
     {
@@ -1101,12 +1166,12 @@ void MolproFF::rebuildQMCoordGroup()
                 //is a movable class) (actually use the qMemCopy function provided by Qt
                 //in qglobal.h)
                 void *output = qMemCopy(atoms_array, group_atoms, 
-                                        natms * sizeof(Vector));
+                                        ngroupatoms * sizeof(Vector));
                                         
                 BOOST_ASSERT(output == atoms_array);
                 
                 //advance the atoms_array pointer on for the next group
-                atoms_array += natms*sizeof(Vector);
+                atoms_array += ngroupatoms*sizeof(Vector);
             }
         }
         
@@ -1143,7 +1208,7 @@ bool MolproFF::updateArrays()
         int natms = 0;
         
         for (QHash<MoleculeID,MMMolecule>::iterator it = mm_mols.begin();
-             it != mm_mols.constEnd();
+             it != mm_mols.end();
              ++it)
         {
             it->update(qm_coordgroup, space(), switchingFunction());
@@ -1159,8 +1224,8 @@ bool MolproFF::updateArrays()
         {
             mm_coords_and_charges.reserve(4*natms);
             
-            for (QHash<MoleculeID,MMMolecule>::iterator it = mm_mols.constBegin();
-                 it != mm_mols.constEnd();
+            for (QHash<MoleculeID,MMMolecule>::iterator it = mm_mols.begin();
+                 it != mm_mols.end();
                  ++it)
             {
                 it->addTo(mm_coords_and_charges);
@@ -1264,6 +1329,11 @@ bool MolproFF::updateArrays()
         return false;
     }
 }
+
+/** Initialise molpro - push in the commands necessary to set this system
+    up and calculate its energy... */
+void MolproFF::initialise(QTextStream &ts) const
+{}
 
 /** Use the passed MolproSession to recalculate the energy of
     this forcefield - this throws an exception if the session is
