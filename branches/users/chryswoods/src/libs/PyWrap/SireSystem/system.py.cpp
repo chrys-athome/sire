@@ -54,19 +54,53 @@ using namespace SireCAS;
 namespace SireSystem
 {
 
+Moves system_run_1_1(System &system, const Move &move)
+{
+    return system.run(move);
+}
+
+Moves system_run_1_2(System &system, const Move &move, quint32 nmoves)
+{
+    return system.run(move, nmoves);
+}
+
 void SIRESYSTEM_EXPORT export_System()
 {
     class_<System>( "System", init<>() )
         .def( init<const QString&>() )
         .def( init<const System&>() )
-        
+
         .def( self == self )
         .def( self != self )
-        
+
         .def( "__rrshift__", &__rrshift__QDataStream<System>,
                     return_internal_reference<1, with_custodian_and_ward<1,2> >() )
         .def( "__rlshift__", &__rlshift__QDataStream<System>,
                     return_internal_reference<1, with_custodian_and_ward<1,2> >() )
+
+        .def( "forceFields", (const ForceFields& (System::*)() const)
+                    &System::forceFields, return_value_policy<copy_const_reference>() )
+
+        .def( "info", (const SystemData& (System::*)() const)
+                    &System::info, return_value_policy<copy_const_reference>() )
+
+        .def( "run", &system_run_1_1 )
+        .def( "run", &system_run_1_2 )
+
+        .def( "run", (Moves (System::*)(const Moves&))
+                    &System::run )
+        .def( "run", (Moves (System::*)(const Moves&, quint32))
+                    &System::run )
+
+        .def( "prepareForSimulation", (void (System::*)())
+                    &System::prepareForSimulation )
+
+        .def( "ID", (SystemID (System::*)() const)
+                    &System::ID )
+
+        .def( "version", (const Version& (System::*)() const)
+                    &System::version, return_value_policy<copy_const_reference>() )
+
     ;
 }
 

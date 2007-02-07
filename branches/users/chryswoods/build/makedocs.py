@@ -63,13 +63,14 @@ modules = [
             Module("SireMM", "src/libs/SireMM", "libs/SireMM"),
             Module("SireIO", "src/libs/SireIO", "libs/SireIO"),
             Module("SireSystem", "src/libs/SireSystem", "libs/SireSystem"),
+            Module("SireMove", "src/libs/SireMove", "libs/SireMove"),
+            Module("SireSim", "src/libs/SireSim", "libs/SireSim"),
             Module("Spier", "src/libs/Spier", "libs/Spier"),
             Module("Squire", "src/libs/Squire", "libs/Squire"),
             Module("SireTest", "src/libs/SireTest", "libs/SireTest"),
             Module("SireUnitTest", "src/libs/SireUnitTest", "libs/SireUnitTest"),
             Module("SirePy", "src/libs/SirePy", "libs/SirePy"),
            
-            Module("Sire", "src/apps/sire", "apps/sire"),
             Module("Spier", "src/apps/spier", "apps/spier"),
             Module("siretest", "src/apps/siretest", "apps/siretest")
           ]

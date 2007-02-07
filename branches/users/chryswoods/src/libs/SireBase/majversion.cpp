@@ -26,61 +26,100 @@
   *
 \*********************************************/
 
+#include "incremint.h"
 #include "majversion.h"
 
-#include "SireError/errors.h"
-
 #include "SireStream/datastream.h"
+#include "SireError/errors.h"
 
 using namespace SireBase;
 using namespace SireStream;
 
 static const RegisterMetaType<MajVersion> r_majver;
 
-/** Serialise to a binary data stream */
+/** Serialise to a binary datastream */
 QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds, const MajVersion &majver)
 {
     writeHeader(ds, r_majver, 1) << majver.vers;
-    
+
     return ds;
 }
 
-/** Deserialise from a binary data stream */
+/** Deserialise from a binary datastream */
 QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, MajVersion &majver)
 {
     VersionID v = readHeader(ds, r_majver);
-    
+
     if (v == 1)
     {
         ds >> majver.vers;
     }
     else
         throw version_error(v, "1", r_majver, CODELOC);
-    
+
     return ds;
 }
 
-Incremint MajVersion::shared_id_incremint;
+/** Shared global incremint used by the default constructor */
+static Incremint shared_global_incremint;
 
-MajVersion::MajVersion(Incremint *i)
-           : incremint(i)
+/** Null constructor - construct a version that
+    is incremented from the global MajVersion incremint */
+MajVersion::MajVersion() : incremint(&shared_global_incremint)
 {
-    if (!incremint)
-        throw SireError::program_bug( QObject::tr(
-                "You cannot create a MajVersion with a null Incremint pointer!"), 
-                        CODELOC );
-
-    vers = incremint->increment();
+    this->increment();
 }
 
+/** Construct using the specified incremint */
+MajVersion::MajVersion(Incremint *inc) : incremint(inc)
+{
+    this->increment();
+}
+
+/** Copy constructor */
 MajVersion::MajVersion(const MajVersion &other)
            : incremint(other.incremint), vers(other.vers)
 {}
 
+/** Destructor */
 MajVersion::~MajVersion()
 {}
 
+/** Assignment operator */
+MajVersion& MajVersion::operator=(const MajVersion &other)
+{
+    incremint = other.incremint;
+    vers = other.vers;
+
+    return *this;
+}
+
+/** Comparison operator */
+bool MajVersion::operator==(const MajVersion &other) const
+{
+    return vers == other.vers and incremint == other.incremint;
+}
+
+/** Comparison operator */
+bool MajVersion::operator!=(const MajVersion &other) const
+{
+    return vers != other.vers or incremint != other.incremint;
+}
+
+/** Increment the version number */
 void MajVersion::increment()
 {
     vers = incremint->increment();
+}
+
+/** Assert that this has the same version number as 'other'
+
+    \throw SireError::version_error
+*/
+void MajVersion::assertSameVersion(const MajVersion &other) const
+{
+    if (vers != other.vers)
+        throw SireError::version_error( QObject::tr(
+                 "Different version numbers (%1 vs. %2)")
+                      .arg(vers).arg(other.vers), CODELOC );
 }

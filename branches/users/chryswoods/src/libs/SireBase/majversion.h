@@ -29,7 +29,7 @@
 #ifndef SIREBASE_MAJVERSION_H
 #define SIREBASE_MAJVERSION_H
 
-#include "incremint.h"
+#include "sireglobal.h"
 
 SIRE_BEGIN_HEADER
 
@@ -44,6 +44,16 @@ QDataStream& operator>>(QDataStream&, SireBase::MajVersion&);
 namespace SireBase
 {
 
+class Incremint;
+
+/** This class provides a single ID or version number,
+    that can be used to version or ID an object. This
+    uses an Incremint to increment the number, so
+    thereby guaranteeing uniqueness (at least for that
+    incremint)
+
+    @author Christopher Woods
+*/
 class SIREBASE_EXPORT MajVersion
 {
 
@@ -51,23 +61,35 @@ friend QDataStream& ::operator<<(QDataStream&, const MajVersion&);
 friend QDataStream& ::operator>>(QDataStream&, MajVersion&);
 
 public:
-    MajVersion(Incremint *incremint = &MajVersion::shared_id_incremint);
-    
+    MajVersion();
+    MajVersion(Incremint *incremint);
+
     MajVersion(const MajVersion &other);
-    
+
     ~MajVersion();
-    
+
+    MajVersion& operator=(const MajVersion &other);
+
+    bool operator==(const MajVersion &other) const;
+    bool operator!=(const MajVersion &other) const;
+
     void increment();
-    
+
+    void assertSameVersion(const MajVersion &other) const;
+
+    /** Allow automatic casting to a quint32,
+        - this returns the version number */
     operator quint32() const
     {
         return vers;
     }
 
 private:
-    static Incremint shared_id_incremint;
-
+    /** Pointer to the incremint used to increment the
+        version number */
     Incremint *incremint;
+
+    /** The actual version number */
     quint32 vers;
 };
 

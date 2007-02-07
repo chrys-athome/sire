@@ -127,7 +127,7 @@ bool SystemData::operator!=(const SystemData &other) const
     return ID() != other.ID() or version() != other.version();
 }
 
-/** Return whether or not this object contains information about  
+/** Return whether or not this object contains information about
     the molecule 'mol' */
 bool SystemData::contains(const Molecule &molecule) const
 {
@@ -157,6 +157,13 @@ void SystemData::remove(const MoleculeGroup &group)
         this->incrementMajorVersion();
 }
 
+/** Remove the MoleculeGroup with ID == groupid from this System */
+void SystemData::remove(MoleculeGroupID groupid)
+{
+    if (molgroups.remove(groupid))
+        this->incrementMajorVersion();
+}
+
 /** Remove the molecule 'molecule' from the system */
 void SystemData::remove(const Molecule &molecule)
 {
@@ -167,14 +174,14 @@ void SystemData::remove(const Molecule &molecule)
 }
 
 /** Apply constraints to this molecule, and any molecules that have
-    constraints based on this molecule, and return copies of the 
-    affected changed molecules. If no molecule is affected by the 
+    constraints based on this molecule, and return copies of the
+    affected changed molecules. If no molecule is affected by the
     constraint then return an empty hash. */
 QHash<MoleculeID,Molecule> SystemData::applyConstraints(const Molecule &molecule)
 {
     //apply constraint in MoleculeConstraints...
-    
-    
+
+
     //apply space constraint on resulting molecules...
 
 
@@ -184,11 +191,11 @@ QHash<MoleculeID,Molecule> SystemData::applyConstraints(const Molecule &molecule
 /** Change the molecule 'molecule' */
 QHash<MoleculeID,Molecule> SystemData::change(const Molecule &molecule)
 {
-    QHash<MoleculeID,Molecule> constrained_mols = 
+    QHash<MoleculeID,Molecule> constrained_mols =
                             this->applyConstraints(molecule);
-                            
+
     bool changed = false;
-                            
+
     if (constrained_mols.isEmpty())
     {
         changed = molgroups.change(molecule);
@@ -201,10 +208,10 @@ QHash<MoleculeID,Molecule> SystemData::change(const Molecule &molecule)
     {
         changed = molgroups.change(constrained_mols);
     }
-    
+
     if (changed)
         this->incrementMinorVersion();
-    
+
     return constrained_mols;
 }
 
