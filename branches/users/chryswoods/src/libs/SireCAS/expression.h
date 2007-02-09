@@ -174,6 +174,7 @@ private:
 
 /** Return a list of all children of type 'T' in this expression */
 template<class T>
+SIRE_OUTOFLINE_TEMPLATE
 QList<T> Expression::children() const
 {
     Expressions exs = this->children();
@@ -186,8 +187,12 @@ QList<T> Expression::children() const
     {
         const ExpressionBase &base = it->base();
 
+        //gccxml doesn't like this section, so remove it
+        //when we are generating the python wrappers
+        #ifndef SKIP_BROKEN_GCCXML_PARTS
         if (base.isA<T>())
             children_t.append( base.asA<T>() );
+        #endif
     }
 
     return children_t;

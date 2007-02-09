@@ -60,7 +60,7 @@ SimSystem::SimSystem(System &system)
 
 /** Construct from the passed SystemData and ForceFields - this
     must be from the same System or else weird things will happen! */
-SimSystem::SimSystem(SystemData &systemdata, 
+SimSystem::SimSystem(SystemData &systemdata,
                      ForceFieldsBase &forcefields)
           : boost::noncopyable(),
             sysdata(systemdata), ffields(forcefields)
@@ -89,7 +89,7 @@ System SimSystem::checkpoint() const
 }
 
 /** Set the system to be simulated - this is used both
-    to change the system, but also to roll back to 
+    to change the system, but also to roll back to
     a previous checkpoint. */
 void SimSystem::setSystem(System &system)
 {
@@ -117,13 +117,13 @@ void SimSystem::setSystem(System &system)
         //else identical ID and version, so systems are identical
         //and there is nothing to do :-)
         return;
-    
-    //now that we have updated the forcefields, 
+
+    //now that we have updated the forcefields,
     //copy the system data.
     sysdata = system.info();
 }
 
-/** Return the molecule group with ID == groupid 
+/** Return the molecule group with ID == groupid
 
     \throw SireMol::missing_group
 */
@@ -132,9 +132,9 @@ const MoleculeGroup& SimSystem::group(MoleculeGroupID groupid) const
     return sysdata.group(groupid);
 }
 
-/** Return the copy of the group 'molgroup' that is in this 
+/** Return the copy of the group 'molgroup' that is in this
     system.
-    
+
     \throw SireMol::missing_group
 */
 const MoleculeGroup& SimSystem::group(const MoleculeGroup &molgroup) const
@@ -171,10 +171,10 @@ inline void SimSystem::_pvt_change(const T &obj)
     if (in_sysdata and in_ffields)
     {
         SystemData orig_sysdata = sysdata;
-        
-        QHash<MoleculeID,Molecule> constrained_mols = 
+
+        QHash<MoleculeID,Molecule> constrained_mols =
                                     sysdata.change( Molecule(obj) );
-        
+
         try
         {
             if (constrained_mols.isEmpty())
@@ -196,16 +196,16 @@ inline void SimSystem::_pvt_change(const T &obj)
     }
     else if (in_ffields)
     {
-        QHash<MoleculeID,Molecule> constrained_mols = 
+        QHash<MoleculeID,Molecule> constrained_mols =
                                       sysdata.applyConstraints( Molecule(obj) );
-        
+
         if (constrained_mols.isEmpty())
             ffields.change(obj);
         else if (constrained_mols.count() == 1)
             ffields.change( *(constrained_mols.constBegin()) );
         else
             ffields.change(constrained_mols);
-            
+
         sysdata.incrementMinorVersion();
     }
 }
@@ -233,13 +233,13 @@ void SimSystem::remove(const Molecule &molecule)
 {
     bool in_sysdata = sysdata.contains(molecule.ID());
     bool in_ffields = ffields.contains(molecule.ID());
-    
+
     if (in_sysdata and in_ffields)
     {
         SystemData orig_sysdata = sysdata;
-        
+
         sysdata.remove(molecule);
-        
+
         try
         {
             ffields.remove(molecule);
@@ -259,4 +259,23 @@ void SimSystem::remove(const Molecule &molecule)
         ffields.remove(molecule);
         sysdata.incrementMinorVersion();
     }
+}
+
+/** Return the forcefields that are used in this system */
+const ForceFieldsBase& SimSystem::forceFields() const
+{
+    return ffields;
+}
+
+/** Return information about the simulation system */
+const SystemData& SimSystem::info() const
+{
+    return sysdata;
+}
+
+/** Update the statistics of the Simulation - this calculates the current
+    versions of any recorded properties and increments their averages */
+void SimSystem::updateStatistics()
+{
+    //sysdata.updateStatistics();
 }

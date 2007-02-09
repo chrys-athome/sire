@@ -69,10 +69,6 @@ friend QDataStream& ::operator<<(QDataStream&, const MoveBase&);
 friend QDataStream& ::operator>>(QDataStream&, MoveBase&);
 
 public:
-    MoveBase();
-
-    MoveBase(const MoveBase &other);
-
     virtual ~MoveBase();
 
     MoveBase& operator=(const MoveBase &other);
@@ -89,6 +85,10 @@ public:
     virtual void initialise(const SimSystem &system)=0;
 
     virtual void move(SimSystem &system)=0;
+
+protected:
+    MoveBase();
+    MoveBase(const MoveBase &other);
 };
 
 /** This is a convienient wrapper for SharedPolyPointer<MoveBase>
