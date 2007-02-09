@@ -132,9 +132,6 @@ public:
 
     QVariant property(const QString &name) const;
 
-    template<class T>
-    T property(const QString &name) const;
-
     QString toString() const;
 
     Molecule molecule() const;
@@ -163,20 +160,6 @@ private:
     /** The index of this atom in the molecule */
     CGAtomID cgatomid;
 };
-
-template<class T>
-T NewAtom::property(const QString &name) const
-{
-    //get the property as a variant
-    QVariant v = this->property(name);
-
-    //can we cast this variant?
-    if (not v.canConvert<T>())
-        throw SireError::invalid_cast( QObject::tr(
-                "Cannot cast a property of type \"%1\" to a property of type \"%2\"")
-                    .arg(v.typeName()).arg(MetaType<T>::typeName()),
-                        CODELOC );
-}
 
 }
 

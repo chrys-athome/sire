@@ -40,7 +40,7 @@ def export_class(mb, classname, aliases, special_code):
 
    #provide an alias for this class
    if (classname in aliases):
-      c.alias( aliases[classname] )
+      c.alias = aliases[classname]
       
    #run any class specific code
    if (classname in special_code):
