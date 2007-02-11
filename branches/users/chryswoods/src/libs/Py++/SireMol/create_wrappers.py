@@ -12,12 +12,10 @@ from sireutils import *
 
 wrap_classes = [ "AtomIndex",
                  "Molecule",
-                 "MoleculeGroup",
-                 
-                 "QSet<SireMol::AtomIndex>"
+                 "MoleculeGroup"
                ]
 
-aliases = { "QSet<SireMol::AtomIndex>" : "QSet_AtomIndex_" }
+aliases = {}
 
 extra_includes = [ "SireMaths/angle.h",
                    "SireMaths/quaternion.h",
@@ -42,6 +40,10 @@ mb = module_builder_t( files=headerfiles,
                        include_paths=incpaths,
                        define_symbols=["SKIP_BROKEN_GCCXML_PARTS"],
                        start_with_declarations = [namespace] )
+
+#add calls to register hand-written wrappers
+mb.add_declaration_code( "#include \"QSet_AtomIndex_.py.h\"" )
+mb.add_registration_code( "register_QSet_AtomIndex_class();" )
 
 #export each class in turn
 for classname in wrap_classes:

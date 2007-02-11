@@ -25,44 +25,27 @@ set ( WRAPSYSTEM_SOURCES
       SystemData.pypp.cpp
       SystemID.pypp.cpp
       System.pypp.cpp
+    
+      _System.main.cpp
     )
 
 # Create the library that holds all of the class wrappers
-add_library (PyWrap_SireSystem ${WRAPSYSTEM_SOURCES})
+add_library (PythonWrapping_SireSystem ${WRAPSYSTEM_SOURCES})
 
-set_target_properties (PyWrap_SireSystem PROPERTIES
-                       VERSION ${SIRE_VERSION}
-                       SOVERSION ${SIRE_VERSION_MAJOR}
-           )
-
-target_link_libraries (PyWrap_SireSystem
-                       SireSystem
-                       PyWrap_SireFF
-                       PyWrap_SireMol
-                       ${BOOST_PYTHON_LIBRARY}
-          )
-
-# Install the wrappers library with the other Sire libraries
-install( TARGETS PyWrap_SireSystem
-         RUNTIME DESTINATION ${SIRE_BIN}
-         LIBRARY DESTINATION ${SIRE_LIBS}
-         ARCHIVE DESTINATION ${SIRE_ARCHIVES}
-       )
-
-# Now create the thin-wrapper python module
-add_library (PythonWrapping_SireSystem _System.main.cpp)
-
-target_link_libraries (PythonWrapping_SireSystem
-                       PyWrap_SireSystem
-                       )
-
-# Use properties to change the filename of the python module
-set_target_properties (PythonWrapping_SireSystem
+set_target_properties (PythonWrapping_SireSystem 
                        PROPERTIES
+                         VERSION ${SIRE_VERSION}
+                         SOVERSION ${SIRE_VERSION_MAJOR}
                          OUTPUT_NAME "System"
                          PREFIX "_"
                          SUFFIX ${PYTHON_MODULE_EXTENSION}
-                      )
+           )
+
+target_link_libraries (PythonWrapping_SireSystem
+                       SireSystem
+                       ${BOOST_PYTHON_LIBRARY}
+                       ${PYTHON_LIBRARY}
+          )
 
 # installation
 set( INSTALLDIR ${SIRE_PYTHON}/Sire/System )

@@ -25,19 +25,11 @@
 
 #include "MoleculeGroup.pypp.hpp"
 
-#include "QSet_AtomIndex_.pypp.hpp"
+#include "QSet_AtomIndex_.py.h"
 
 namespace bp = boost::python;
 
 BOOST_PYTHON_MODULE(_Mol){
-    register_QSet_AtomIndex__class();
-
-    bp::implicitly_convertible< QHash<SireMol::AtomIndex, QHashDummyValue>::const_iterator, QSet<SireMol::AtomIndex>::const_iterator >();
-
-    bp::implicitly_convertible< QSet<SireMol::AtomIndex>::iterator const &, QSet<SireMol::AtomIndex>::const_iterator >();
-
-    bp::implicitly_convertible< QHash<SireMol::AtomIndex, QHashDummyValue>::iterator, QSet<SireMol::AtomIndex>::iterator >();
-
     register_AtomIndex_class();
 
     bp::implicitly_convertible< boost::tuples::tuple<QString, SireMol::ResNum, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type> const &, SireMol::AtomIndex >();
@@ -49,6 +41,8 @@ BOOST_PYTHON_MODULE(_Mol){
     bp::implicitly_convertible< SireMol::NewAtom const &, SireMol::Molecule >();
 
     register_MoleculeGroup_class();
+
+    register_QSet_AtomIndex_class();
 
     bp::implicitly_convertible< QString const &, SireMol::MoleculeGroup >();
 }

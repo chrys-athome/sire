@@ -14,7 +14,7 @@
 
 namespace bp = boost::python;
 
-void register_Molecule_class(){
+void SIREMOL_EXPORT register_Molecule_class(){
 
     bp::class_< SireMol::Molecule >( "Molecule" )    
         .def( bp::init< >() )    
