@@ -118,7 +118,7 @@ This class holds the actual data for an EditMol. This class is used internally b
 
 @author Christopher Woods
 */
-class EditMolData : public QSharedData
+class SIREMOL_EXPORT EditMolData : public QSharedData
 {
 
 friend class EditMolDataPvt;

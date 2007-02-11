@@ -6,8 +6,7 @@
 ###############################
 
 # Add each library
-#add_subdirectory (PyWrap)
-add_subdirectory (Py++)
+add_subdirectory (PyWrap)
 add_subdirectory (SireBase)
 add_subdirectory (SireCAS)
 add_subdirectory (SireCluster)

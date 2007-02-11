@@ -237,6 +237,16 @@ Atom CutGroup::atom(AtomID i) const
     return this->at(i);
 }
 
+/** Return a copy of the coordinates of the 'ith' atom -  this will
+    throw an exception if 'i' refers to an invalid index. 
+    
+    \throw SireMol::invalid_index
+*/
+Vector CutGroup::coordinates(AtomID i) const
+{
+    return coords[i];
+}
+
 /** Return a copy of the 'ith' atom - this will throw an exception
     if 'i' refers to an invalid index
 

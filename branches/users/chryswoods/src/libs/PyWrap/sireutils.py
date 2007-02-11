@@ -11,12 +11,6 @@ from pygccxml import declarations
 def export_class(mb, classname, aliases, special_code):
    #find the class in the declarations
    c = mb.class_(classname)
-
-   #include all of the class in the wrapper
-   c.include()
-   
-   #exclude any "clone" functions
-   c.decls( lambda decl: 'clone' in decl.name, allow_empty=True ).exclude()
    
    #convince the code that all functions are not virtual...
    # This removes inefficient python virtual wrappers
@@ -26,11 +20,20 @@ def export_class(mb, classname, aliases, special_code):
      try:
        if (d.get_virtuality() == declarations.VIRTUALITY_TYPES.PURE_VIRTUAL):
          is_pure_virtual = True
-           
-         d.set_virtuality(declarations.VIRTUALITY_TYPES.NOT_VIRTUAL)
-
      except AttributeError:
        pass
+           
+     try:
+       d.set_virtuality(declarations.VIRTUALITY_TYPES.NOT_VIRTUAL)
+     except:
+       pass
+
+
+   #include all of the class in the wrapper
+   c.include()
+   
+   #exclude any "clone" functions
+   c.decls( "clone", allow_empty=True ).exclude()
 
    if is_pure_virtual:
      #this is a pure virtual class - remove any constructors

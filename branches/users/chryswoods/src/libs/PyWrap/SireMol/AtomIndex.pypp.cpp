@@ -14,7 +14,7 @@
 
 namespace bp = boost::python;
 
-void SIREMOL_EXPORT register_AtomIndex_class(){
+void register_AtomIndex_class(){
 
     bp::class_< SireMol::AtomIndex >( "AtomIndex", bp::init< bp::optional< QString const &, SireMol::ResNum > >(( bp::arg("nm")=QString::null, bp::arg("rnum")=::SireMol::ResNum( 1 ) )) )    
         .def( bp::init< boost::tuples::tuple<QString, SireMol::ResNum, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type> const & >(( bp::arg("tuple") )) )    

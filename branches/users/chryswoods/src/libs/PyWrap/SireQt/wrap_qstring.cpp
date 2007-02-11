@@ -322,6 +322,10 @@ export_QString()
     //code to get a QString from a python object
     QString_from_python();
 
+    //wrapper for QString::Null
+    class_<QString::Null>( "QString_Null", init<>() )
+    ;
+
     //wrapper for the C++ QString class
     class_<QString> qstring_wrapper = class_<QString>( "QString", init<>() )
         .def( init<const QChar*, int>() )

@@ -455,6 +455,41 @@ bool MoleculeGroups::change(const Molecule &molecule)
         return false;
 }
 
+/** Change a whole molecule group! */
+bool MoleculeGroups::change(const MoleculeGroup &group)
+{
+    //do we contain this group?
+    if ( not molgroups.contains(group.ID()) )
+        return false;
+        
+    //do we already have the same version?
+    Version new_version = group.version();
+    
+    Version old_version = molgroups.constFind(group.ID())->version();
+    
+    if (new_version == old_version)
+        return false;
+    else if (new_version.major() == old_version.major())
+    {
+        //they contain the same molecules, but with different
+        //versions - therefore no need to reindex - just synchronise
+        molgroups[group.ID()] = group;
+        
+        this->synchronise(group.ID());
+        
+        return true;
+    }
+    else
+    {
+        //could have changed completely! - remove the group
+        //then add it again from scratch (inefficient as this is!)
+        this->remove(group.ID());
+        this->add(group); 
+        
+        return true;
+    }
+}
+
 /** Change a whole load of molecules... */
 bool MoleculeGroups::change(const QHash<MoleculeID,Molecule> &molecules)
 {
