@@ -11,88 +11,24 @@
 
 namespace bp = boost::python;
 
-struct SameMoves_wrapper : SireSystem::SameMoves, bp::wrapper< SireSystem::SameMoves > {
-
-    SameMoves_wrapper(SireSystem::SameMoves const & arg )
-    : SireSystem::SameMoves( arg )
-      , bp::wrapper< SireSystem::SameMoves >(){
-        // copy constructor
-        
-    }
-
-    SameMoves_wrapper( )
-    : SireSystem::SameMoves( )
-      , bp::wrapper< SireSystem::SameMoves >()
-    {   // Normal constructor
-    
-    }
-
-    SameMoves_wrapper(::SireSystem::Move const & move )
-    : SireSystem::SameMoves( boost::ref(move) )
-      , bp::wrapper< SireSystem::SameMoves >()
-    {   // Normal constructor
-    
-    }
-
-    virtual int count(  ) const  {
-        if( bp::override func_count = this->get_override( "count" ) )
-            return func_count(  );
-        else
-            return SireSystem::SameMoves::count(  );
-    }
-    
-    
-    int default_count(  ) const  {
-        return SireSystem::SameMoves::count( );
-    }
-
-    virtual void initialise( ::SireSystem::SimSystem & system ) {
-        if( bp::override func_initialise = this->get_override( "initialise" ) )
-            func_initialise( boost::ref(system) );
-        else
-            SireSystem::SameMoves::initialise( boost::ref(system) );
-    }
-    
-    
-    void default_initialise( ::SireSystem::SimSystem & system ) {
-        SireSystem::SameMoves::initialise( boost::ref(system) );
-    }
-
-    virtual char const * what(  ) const  {
-        if( bp::override func_what = this->get_override( "what" ) )
-            return func_what(  );
-        else
-            return SireSystem::SameMoves::what(  );
-    }
-    
-    
-    char const * default_what(  ) const  {
-        return SireSystem::SameMoves::what( );
-    }
-
-};
-
 void register_SameMoves_class(){
 
-    bp::class_< SameMoves_wrapper, bp::bases< SireSystem::MovesBase > >( "SameMoves" )    
+    bp::class_< SireSystem::SameMoves, bp::bases< SireSystem::MovesBase > >( "SameMoves" )    
         .def( bp::init< >() )    
         .def( bp::init< SireSystem::Move const & >(( bp::arg("move") )) )    
         .def( 
             "count"
-            , &::SireSystem::SameMoves::count
-            , &SameMoves_wrapper::default_count )    
+            , &::SireSystem::SameMoves::count )    
         .def( 
             "initialise"
             , &::SireSystem::SameMoves::initialise
-            , &SameMoves_wrapper::default_initialise
             , ( bp::arg("system") ) )    
         .def( 
             "typeName"
             , &::SireSystem::SameMoves::typeName )    
         .def( 
             "what"
-            , &::SireSystem::SameMoves::what
-            , &SameMoves_wrapper::default_what )    
+            , &::SireSystem::SameMoves::what )    
         .staticmethod( "typeName" );
 
 }

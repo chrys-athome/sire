@@ -134,7 +134,6 @@
 namespace bp = boost::python;
 
 BOOST_PYTHON_MODULE(_Mol){
-
     register_QSet_AtomIndex_class();
 
     register_Angle_class();

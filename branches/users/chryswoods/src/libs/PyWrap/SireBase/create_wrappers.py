@@ -10,39 +10,33 @@ from pygccxml import declarations
 sys.path.append("..")
 from sireutils import *
 
-wrap_classes = [ "MoveBase",
-                 "Move",
-                 "MovesBase",
-                 "SameMoves",
-                 "Moves",
-                 "SimSystem",
-                 "SystemData",
-                 "System",
-                 "SystemID"
+wrap_classes = [ "IDMajMinVersion",
+                 "IDVersion",
+                 "MajMinVersion",
+                 "MajVersion",
+                 "MD5Sum",
+                 "Version"
                ]
 
 huge_classes = []
 
 aliases = {}
 
-extra_includes = [ "SireMol/molecule.h",
-                   "SireMol/residue.h",
-                   "SireMol/newatom.h" ]
+extra_includes = []
 
-def remove_next_move(c):
-    c.decls( "nextMove", allow_empty=False ).exclude()
+def remove_md5_digest(c):
+   c.decls("digest").exclude()
 
-special_code = { "MovesBase" : remove_next_move,
-                 "SameMoves" : remove_next_move }
+special_code = { "MD5Sum" : remove_md5_digest }
 
 incpaths = sys.argv[1:]
 incpaths.insert(0, "../../")
 
 #give the namespace and header files for the module to export
-namespace = "SireSystem"
-modulename = "System"
+namespace = "SireBase"
+modulename = "Base"
 
-headerfiles = ["siresystem_headers.h"]
+headerfiles = ["sirebase_headers.h"]
 
 #construct a module builder that will build the module's wrappers
 mb = module_builder_t( files=headerfiles, 
