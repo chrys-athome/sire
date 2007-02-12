@@ -20,13 +20,13 @@ void register_MolCGAtomID_class(){
         .def( bp::init< boost::tuples::tuple<SireMol::MoleculeID, SireMol::CutGroupID, SireMol::AtomID, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type> const & >(( bp::arg("t") )) )    
         .def( 
             "atomID"
-            , &::SireMol::MolCGAtomID::atomID )    
+            , (::SireMol::AtomID ( ::SireMol::MolCGAtomID::* )(  ) const)( &::SireMol::MolCGAtomID::atomID ) )    
         .def( 
             "cutGroupID"
-            , &::SireMol::MolCGAtomID::cutGroupID )    
+            , (::SireMol::CutGroupID ( ::SireMol::MolCGAtomID::* )(  ) const)( &::SireMol::MolCGAtomID::cutGroupID ) )    
         .def( 
             "moleculeID"
-            , &::SireMol::MolCGAtomID::moleculeID )    
+            , (::SireMol::MoleculeID ( ::SireMol::MolCGAtomID::* )(  ) const)( &::SireMol::MolCGAtomID::moleculeID ) )    
         .def( bp::self != bp::self )    
         .def( bp::self < bp::self )    
         .def( bp::self <= bp::self )    
@@ -35,6 +35,6 @@ void register_MolCGAtomID_class(){
         .def( bp::self >= bp::self )    
         .def( 
             "toString"
-            , &::SireMol::MolCGAtomID::toString );
+            , (::QString ( ::SireMol::MolCGAtomID::* )(  ) const)( &::SireMol::MolCGAtomID::toString ) );
 
 }

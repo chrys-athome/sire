@@ -20,7 +20,7 @@ void register_ResIDAtomID_class(){
         .def( bp::init< boost::tuples::tuple<SireMol::ResID, SireMol::AtomID, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type> const & >(( bp::arg("t") )) )    
         .def( 
             "atomID"
-            , &::SireMol::ResIDAtomID::atomID )    
+            , (::SireMol::AtomID ( ::SireMol::ResIDAtomID::* )(  ) const)( &::SireMol::ResIDAtomID::atomID ) )    
         .def( bp::self != bp::self )    
         .def( bp::self < bp::self )    
         .def( bp::self <= bp::self )    
@@ -29,9 +29,9 @@ void register_ResIDAtomID_class(){
         .def( bp::self >= bp::self )    
         .def( 
             "resID"
-            , &::SireMol::ResIDAtomID::resID )    
+            , (::SireMol::ResID ( ::SireMol::ResIDAtomID::* )(  ) const)( &::SireMol::ResIDAtomID::resID ) )    
         .def( 
             "toString"
-            , &::SireMol::ResIDAtomID::toString );
+            , (::QString ( ::SireMol::ResIDAtomID::* )(  ) const)( &::SireMol::ResIDAtomID::toString ) );
 
 }

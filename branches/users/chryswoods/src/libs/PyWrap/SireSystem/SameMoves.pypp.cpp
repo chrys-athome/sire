@@ -18,17 +18,17 @@ void register_SameMoves_class(){
         .def( bp::init< SireSystem::Move const & >(( bp::arg("move") )) )    
         .def( 
             "count"
-            , &::SireSystem::SameMoves::count )    
+            , (int ( ::SireSystem::SameMoves::* )(  ) const)( &::SireSystem::SameMoves::count ) )    
         .def( 
             "initialise"
-            , &::SireSystem::SameMoves::initialise
+            , (void ( ::SireSystem::SameMoves::* )( ::SireSystem::SimSystem & ) )( &::SireSystem::SameMoves::initialise )
             , ( bp::arg("system") ) )    
         .def( 
             "typeName"
-            , &::SireSystem::SameMoves::typeName )    
+            , (char const * (*)(  ))( &::SireSystem::SameMoves::typeName ) )    
         .def( 
             "what"
-            , &::SireSystem::SameMoves::what )    
+            , (char const * ( ::SireSystem::SameMoves::* )(  ) const)( &::SireSystem::SameMoves::what ) )    
         .staticmethod( "typeName" );
 
 }

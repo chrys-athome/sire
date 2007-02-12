@@ -15,44 +15,44 @@ void register_IDVersion_class(){
         .def( bp::init< SireBase::Incremint * >(( bp::arg("majint") )) )    
         .def( 
             "ID"
-            , &::SireBase::IDVersion::ID )    
+            , (::quint32 ( ::SireBase::IDVersion::* )(  ) const)( &::SireBase::IDVersion::ID ) )    
         .def( 
             "assertSameID"
-            , &::SireBase::IDVersion::assertSameID
+            , (void ( ::SireBase::IDVersion::* )( ::SireBase::IDVersion const & ) const)( &::SireBase::IDVersion::assertSameID )
             , ( bp::arg("other") ) )    
         .def( 
             "assertSameIDAndVersion"
-            , &::SireBase::IDVersion::assertSameIDAndVersion
+            , (void ( ::SireBase::IDVersion::* )( ::SireBase::IDVersion const & ) const)( &::SireBase::IDVersion::assertSameIDAndVersion )
             , ( bp::arg("other") ) )    
         .def( 
             "assertSameVersion"
-            , &::SireBase::IDVersion::assertSameVersion
+            , (void ( ::SireBase::IDVersion::* )( ::SireBase::IDVersion const & ) const)( &::SireBase::IDVersion::assertSameVersion )
             , ( bp::arg("other") ) )    
         .def( 
             "incrementID"
-            , &::SireBase::IDVersion::incrementID )    
+            , (void ( ::SireBase::IDVersion::* )(  ) )( &::SireBase::IDVersion::incrementID ) )    
         .def( 
             "incrementVersion"
-            , &::SireBase::IDVersion::incrementVersion )    
+            , (void ( ::SireBase::IDVersion::* )(  ) )( &::SireBase::IDVersion::incrementVersion ) )    
         .def( bp::self != bp::self )    
         .def( bp::self == bp::self )    
         .def( 
             "sameID"
-            , &::SireBase::IDVersion::sameID
+            , (bool ( ::SireBase::IDVersion::* )( ::SireBase::IDVersion const & ) const)( &::SireBase::IDVersion::sameID )
             , ( bp::arg("other") ) )    
         .def( 
             "sameIDAndVersion"
-            , &::SireBase::IDVersion::sameIDAndVersion
+            , (bool ( ::SireBase::IDVersion::* )( ::SireBase::IDVersion const & ) const)( &::SireBase::IDVersion::sameIDAndVersion )
             , ( bp::arg("other") ) )    
         .def( 
             "sameVersion"
-            , &::SireBase::IDVersion::sameVersion
+            , (bool ( ::SireBase::IDVersion::* )( ::SireBase::IDVersion const & ) const)( &::SireBase::IDVersion::sameVersion )
             , ( bp::arg("other") ) )    
         .def( 
             "toString"
-            , &::SireBase::IDVersion::toString )    
+            , (::QString ( ::SireBase::IDVersion::* )(  ) const)( &::SireBase::IDVersion::toString ) )    
         .def( 
             "version"
-            , &::SireBase::IDVersion::version );
+            , (::quint32 ( ::SireBase::IDVersion::* )(  ) const)( &::SireBase::IDVersion::version ) );
 
 }

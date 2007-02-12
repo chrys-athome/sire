@@ -25,15 +25,15 @@ void register_CutGroup_class(){
         .def( bp::init< SireMol::AtomInfoGroup const & >(( bp::arg("atominfos") )) )    
         .def( 
             "at"
-            , &::SireMol::CutGroup::at
+            , (::SireMol::Atom ( ::SireMol::CutGroup::* )( ::SireMol::AtomID ) const)( &::SireMol::CutGroup::at )
             , ( bp::arg("i") ) )    
         .def( 
             "atom"
-            , &::SireMol::CutGroup::atom
+            , (::SireMol::Atom ( ::SireMol::CutGroup::* )( ::SireMol::AtomID ) const)( &::SireMol::CutGroup::atom )
             , ( bp::arg("i") ) )    
         .def( 
             "atomGroup"
-            , &::SireMol::CutGroup::atomGroup
+            , (::SireMol::AtomInfoGroup const & ( ::SireMol::CutGroup::* )(  ) const)( &::SireMol::CutGroup::atomGroup )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "atoms"
@@ -44,7 +44,7 @@ void register_CutGroup_class(){
             , ( bp::arg("strt"), bp::arg("end") ) )    
         .def( 
             "coordGroup"
-            , &::SireMol::CutGroup::coordGroup
+            , (::SireVol::CoordGroup const & ( ::SireMol::CutGroup::* )(  ) const)( &::SireMol::CutGroup::coordGroup )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "coordinates"
@@ -59,15 +59,15 @@ void register_CutGroup_class(){
             , ( bp::arg("i") ) )    
         .def( 
             "isEmpty"
-            , &::SireMol::CutGroup::isEmpty )    
+            , (bool ( ::SireMol::CutGroup::* )(  ) const)( &::SireMol::CutGroup::isEmpty ) )    
         .def( 
             "nAtoms"
-            , &::SireMol::CutGroup::nAtoms )    
+            , (int ( ::SireMol::CutGroup::* )(  ) const)( &::SireMol::CutGroup::nAtoms ) )    
         .def( bp::self != bp::self )    
         .def( bp::self == bp::self )    
         .def( 
             "__getitem__"
-            , &::SireMol::CutGroup::operator[]
+            , (::SireMol::Atom ( ::SireMol::CutGroup::* )( ::SireMol::AtomID ) const)( &::SireMol::CutGroup::operator[] )
             , ( bp::arg("i") ) )    
         .def( 
             "rotate"
@@ -79,18 +79,18 @@ void register_CutGroup_class(){
             , ( bp::arg("rotmat"), bp::arg("point") ) )    
         .def( 
             "setCoordGroup"
-            , &::SireMol::CutGroup::setCoordGroup
+            , (void ( ::SireMol::CutGroup::* )( ::SireVol::CoordGroup const & ) )( &::SireMol::CutGroup::setCoordGroup )
             , ( bp::arg("newcoords") ) )    
         .def( 
             "setCoordinates"
-            , &::SireMol::CutGroup::setCoordinates
+            , (void ( ::SireMol::CutGroup::* )( ::QVector<SireMaths::Vector> const & ) )( &::SireMol::CutGroup::setCoordinates )
             , ( bp::arg("newcoords") ) )    
         .def( 
             "toString"
-            , &::SireMol::CutGroup::toString )    
+            , (::QString ( ::SireMol::CutGroup::* )(  ) const)( &::SireMol::CutGroup::toString ) )    
         .def( 
             "translate"
-            , &::SireMol::CutGroup::translate
+            , (void ( ::SireMol::CutGroup::* )( ::SireMaths::Vector const & ) )( &::SireMol::CutGroup::translate )
             , ( bp::arg("delta") ) );
 
 }

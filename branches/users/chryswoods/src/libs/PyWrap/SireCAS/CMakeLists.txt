@@ -17,53 +17,91 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs
 
 # Define the sources in SireCAS
 set ( WRAPCAS_SOURCES
-      wrap_complexvalues.cpp
-      wrap_exbase.cpp
-      wrap_expressionbase.cpp
-      wrap_expression.cpp
-      wrap_function.cpp
-      wrap_hyperbolicfuncs.cpp
-      wrap_identities.cpp
-      wrap_operators.cpp
-      wrap_powerfuncs.cpp
-      wrap_symbol.cpp
-      wrap_trigfuncs.cpp
-      wrap_values.cpp
+
+      _CAS.main.cpp
+
+      _CAS_free_functions.pypp.cpp
+
+      ArcCos.pypp.cpp
+      ArcCosh.pypp.cpp
+      ArcCot.pypp.cpp
+      ArcCoth.pypp.cpp
+      ArcCsc.pypp.cpp
+      ArcCsch.pypp.cpp
+      ArcSec.pypp.cpp
+      ArcSech.pypp.cpp
+      ArcSin.pypp.cpp
+      ArcSinh.pypp.cpp
+      ArcTan.pypp.cpp
+      ArcTanh.pypp.cpp
+
+      ComplexPower.pypp.cpp
+      ComplexValues.pypp.cpp
+      Constant.pypp.cpp
+      ConstantPower.pypp.cpp
+      Cos.pypp.cpp
+      Cosh.pypp.cpp
+      Cot.pypp.cpp
+      Coth.pypp.cpp
+      Csc.pypp.cpp
+      Csch.pypp.cpp
+
+      ExBase.pypp.cpp
+      Exp.pypp.cpp
+      Expression.pypp.cpp
+      ExpressionBase.pypp.cpp
+
+      Function.pypp.cpp
+
+      I.pypp.cpp
+      Identities.pypp.cpp
+      IntegerPower.pypp.cpp
+      IntegrationConstant.pypp.cpp
+
+      Ln.pypp.cpp
+
+      Power.pypp.cpp
+      PowerConstant.pypp.cpp
+      PowerFunction.pypp.cpp
+      Product.pypp.cpp
+
+      RationalPower.pypp.cpp
+      RealPower.pypp.cpp
+
+      Sec.pypp.cpp
+      Sech.pypp.cpp
+      Sin.pypp.cpp
+      SingleFunc.pypp.cpp
+      Sinh.pypp.cpp
+      Sum.pypp.cpp
+      Symbol.pypp.cpp
+      SymbolComplex.pypp.cpp
+      SymbolExpression.pypp.cpp
+      SymbolValue.pypp.cpp
+
+      Tan.pypp.cpp
+      Tanh.pypp.cpp
+
+      Values.pypp.cpp
+
     )
 
 # Create the library that holds all of the class wrappers
-add_library (PyWrap_SireCAS ${WRAPCAS_SOURCES})
+add_library (PythonWrapping_SireCAS ${WRAPCAS_SOURCES})
 
-set_target_properties (PyWrap_SireCAS PROPERTIES
-                       VERSION ${SIRE_VERSION}
-		       SOVERSION ${SIRE_VERSION_MAJOR}
-		       )
-		       
-target_link_libraries (PyWrap_SireCAS
-                       SireCAS
-		       PyWrap_SireMaths
-		      )
-
-# Install the wrappers library with the other Sire libraries
-install( TARGETS PyWrap_SireCAS
-         RUNTIME DESTINATION ${SIRE_BIN}
-         LIBRARY DESTINATION ${SIRE_LIBS}
-         ARCHIVE DESTINATION ${SIRE_ARCHIVES}
-       )
-
-# Now create the thin-wrapper python module
-add_library (PythonWrapping_SireCAS wrap_SireCAS.cpp)
-
-target_link_libraries (PythonWrapping_SireCAS
-                       PyWrap_SireCAS
-                       )
-
-# Use properties to change the filename of the python module
-set_target_properties (PythonWrapping_SireCAS
+set_target_properties (PythonWrapping_SireCAS 
                        PROPERTIES
+                         VERSION ${SIRE_VERSION}
+                         SOVERSION ${SIRE_VERSION_MAJOR}
                          OUTPUT_NAME "CAS"
                          PREFIX "_"
                          SUFFIX ${PYTHON_MODULE_EXTENSION}
+		       )
+		       
+target_link_libraries (PythonWrapping_SireCAS
+                       SireCAS
+                       ${BOOST_PYTHON_LIBRARY}
+                       ${PYTHON_LIBRARY}
                       )
 
 # installation

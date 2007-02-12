@@ -18,20 +18,20 @@ void register_System_class(){
         .def( bp::init< QString const & >(( bp::arg("name") )) )    
         .def( 
             "ID"
-            , &::SireSystem::System::ID )    
+            , (::SireSystem::SystemID ( ::SireSystem::System::* )(  ) const)( &::SireSystem::System::ID ) )    
         .def( 
             "forceFields"
-            , &::SireSystem::System::forceFields
+            , (::SireFF::ForceFields const & ( ::SireSystem::System::* )(  ) const)( &::SireSystem::System::forceFields )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "info"
-            , &::SireSystem::System::info
+            , (::SireSystem::SystemData const & ( ::SireSystem::System::* )(  ) const)( &::SireSystem::System::info )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( bp::self != bp::self )    
         .def( bp::self == bp::self )    
         .def( 
             "prepareForSimulation"
-            , &::SireSystem::System::prepareForSimulation )    
+            , (void ( ::SireSystem::System::* )(  ) )( &::SireSystem::System::prepareForSimulation ) )    
         .def( 
             "run"
             , (::SireSystem::Moves ( ::SireSystem::System::* )( ::SireSystem::Move const &,::quint32 ) )( &::SireSystem::System::run )
@@ -46,7 +46,7 @@ void register_System_class(){
             , ( bp::arg("moves"), bp::arg("nmoves") ) )    
         .def( 
             "version"
-            , &::SireSystem::System::version
+            , (::SireBase::Version const & ( ::SireSystem::System::* )(  ) const)( &::SireSystem::System::version )
             , bp::return_value_policy< bp::copy_const_reference >() );
 
 }

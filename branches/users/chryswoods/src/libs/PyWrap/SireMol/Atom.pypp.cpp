@@ -40,10 +40,10 @@ void register_Atom_class(){
         .def( bp::self == bp::self )    
         .def( 
             "toString"
-            , &::SireMol::Atom::toString )    
+            , (::QString ( ::SireMol::Atom::* )(  ) const)( &::SireMol::Atom::toString ) )    
         .def( 
             "withinBondRadii"
-            , &::SireMol::Atom::withinBondRadii
+            , (bool (*)( ::SireMol::Atom const &,::SireMol::Atom const &,double ))( &::SireMol::Atom::withinBondRadii )
             , ( bp::arg("atm0"), bp::arg("atm1"), bp::arg("err")=0.0 ) )    
         .staticmethod( "withinBondRadii" );
 

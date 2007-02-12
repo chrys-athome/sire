@@ -31,11 +31,11 @@ void register_AtomIDGroup_class(){
             , ( bp::arg("atom") ) )    
         .def( 
             "atoms"
-            , &::SireMol::AtomIDGroup::atoms
+            , (::QSet<SireMol::AtomIndex> const & ( ::SireMol::AtomIDGroup::* )(  ) const)( &::SireMol::AtomIDGroup::atoms )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "clear"
-            , &::SireMol::AtomIDGroup::clear )    
+            , (void ( ::SireMol::AtomIDGroup::* )(  ) )( &::SireMol::AtomIDGroup::clear ) )    
         .def( 
             "contains"
             , (bool ( ::SireMol::AtomIDGroup::* )( ::SireMol::ResNum ) const)( &::SireMol::AtomIDGroup::contains )
@@ -50,16 +50,16 @@ void register_AtomIDGroup_class(){
             , ( bp::arg("atoms") ) )    
         .def( 
             "inventory"
-            , &::SireMol::AtomIDGroup::inventory )    
+            , (::QString ( ::SireMol::AtomIDGroup::* )(  ) const)( &::SireMol::AtomIDGroup::inventory ) )    
         .def( 
             "isEmpty"
-            , &::SireMol::AtomIDGroup::isEmpty )    
+            , (bool ( ::SireMol::AtomIDGroup::* )(  ) const)( &::SireMol::AtomIDGroup::isEmpty ) )    
         .def( 
             "residues"
-            , &::SireMol::AtomIDGroup::residues
+            , (::QSet<SireMol::ResNum> const & ( ::SireMol::AtomIDGroup::* )(  ) const)( &::SireMol::AtomIDGroup::residues )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "simplify"
-            , &::SireMol::AtomIDGroup::simplify );
+            , (void ( ::SireMol::AtomIDGroup::* )(  ) )( &::SireMol::AtomIDGroup::simplify ) );
 
 }

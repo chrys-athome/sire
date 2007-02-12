@@ -24,20 +24,20 @@ void register_Angle_class(){
         .def( bp::init< QString const &, SireMol::ResNum, QString const &, SireMol::ResNum, QString const &, SireMol::ResNum >(( bp::arg("atm0"), bp::arg("res0"), bp::arg("atm1"), bp::arg("res1"), bp::arg("atm2"), bp::arg("res2") )) )    
         .def( 
             "at"
-            , &::SireMol::Angle::at
+            , (::SireMol::AtomIndex const & ( ::SireMol::Angle::* )( int ) const)( &::SireMol::Angle::at )
             , ( bp::arg("i") )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "atom0"
-            , &::SireMol::Angle::atom0
+            , (::SireMol::AtomIndex const & ( ::SireMol::Angle::* )(  ) const)( &::SireMol::Angle::atom0 )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "atom1"
-            , &::SireMol::Angle::atom1
+            , (::SireMol::AtomIndex const & ( ::SireMol::Angle::* )(  ) const)( &::SireMol::Angle::atom1 )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "atom2"
-            , &::SireMol::Angle::atom2
+            , (::SireMol::AtomIndex const & ( ::SireMol::Angle::* )(  ) const)( &::SireMol::Angle::atom2 )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "contains"
@@ -53,13 +53,13 @@ void register_Angle_class(){
             , ( bp::arg("resnum") ) )    
         .def( 
             "count"
-            , &::SireMol::Angle::count )    
+            , (int ( ::SireMol::Angle::* )(  ) const)( &::SireMol::Angle::count ) )    
         .def( 
             "interResidue"
-            , &::SireMol::Angle::interResidue )    
+            , (bool ( ::SireMol::Angle::* )(  ) const)( &::SireMol::Angle::interResidue ) )    
         .def( 
             "intraResidue"
-            , &::SireMol::Angle::intraResidue )    
+            , (bool ( ::SireMol::Angle::* )(  ) const)( &::SireMol::Angle::intraResidue ) )    
         .def( bp::self != bp::self )    
         .def( bp::self < bp::self )    
         .def( bp::self <= bp::self )    
@@ -68,23 +68,23 @@ void register_Angle_class(){
         .def( bp::self >= bp::self )    
         .def( 
             "__getitem__"
-            , &::SireMol::Angle::operator[]
+            , (::SireMol::AtomIndex const & ( ::SireMol::Angle::* )( int ) const)( &::SireMol::Angle::operator[] )
             , ( bp::arg("i") )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "resNum0"
-            , &::SireMol::Angle::resNum0 )    
+            , (::SireMol::ResNum ( ::SireMol::Angle::* )(  ) const)( &::SireMol::Angle::resNum0 ) )    
         .def( 
             "resNum1"
-            , &::SireMol::Angle::resNum1 )    
+            , (::SireMol::ResNum ( ::SireMol::Angle::* )(  ) const)( &::SireMol::Angle::resNum1 ) )    
         .def( 
             "resNum2"
-            , &::SireMol::Angle::resNum2 )    
+            , (::SireMol::ResNum ( ::SireMol::Angle::* )(  ) const)( &::SireMol::Angle::resNum2 ) )    
         .def( 
             "size"
-            , &::SireMol::Angle::size )    
+            , (int ( ::SireMol::Angle::* )(  ) const)( &::SireMol::Angle::size ) )    
         .def( 
             "toString"
-            , &::SireMol::Angle::toString );
+            , (::QString ( ::SireMol::Angle::* )(  ) const)( &::SireMol::Angle::toString ) );
 
 }

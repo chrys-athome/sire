@@ -18,14 +18,14 @@ void register_SystemData_class(){
         .def( bp::init< QString const & >(( bp::arg("name") )) )    
         .def( 
             "ID"
-            , &::SireSystem::SystemData::ID )    
+            , (::SireSystem::SystemID ( ::SireSystem::SystemData::* )(  ) const)( &::SireSystem::SystemData::ID ) )    
         .def( 
             "add"
-            , &::SireSystem::SystemData::add
+            , (void ( ::SireSystem::SystemData::* )( ::SireMol::MoleculeGroup const & ) )( &::SireSystem::SystemData::add )
             , ( bp::arg("group") ) )    
         .def( 
             "applyConstraints"
-            , &::SireSystem::SystemData::applyConstraints
+            , (::QHash<SireMol::MoleculeID, SireMol::Molecule> ( ::SireSystem::SystemData::* )( ::SireMol::Molecule const & ) )( &::SireSystem::SystemData::applyConstraints )
             , ( bp::arg("molecule") ) )    
         .def( 
             "change"
@@ -49,22 +49,22 @@ void register_SystemData_class(){
             , ( bp::arg("molid") ) )    
         .def( 
             "group"
-            , &::SireSystem::SystemData::group
+            , (::SireMol::MoleculeGroup const & ( ::SireSystem::SystemData::* )( ::SireMol::MoleculeGroupID ) const)( &::SireSystem::SystemData::group )
             , ( bp::arg("id") )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "groups"
-            , &::SireSystem::SystemData::groups
+            , (::SireMol::MoleculeGroups const & ( ::SireSystem::SystemData::* )(  ) const)( &::SireSystem::SystemData::groups )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "incrementMajorVersion"
-            , &::SireSystem::SystemData::incrementMajorVersion )    
+            , (void ( ::SireSystem::SystemData::* )(  ) )( &::SireSystem::SystemData::incrementMajorVersion ) )    
         .def( 
             "incrementMinorVersion"
-            , &::SireSystem::SystemData::incrementMinorVersion )    
+            , (void ( ::SireSystem::SystemData::* )(  ) )( &::SireSystem::SystemData::incrementMinorVersion ) )    
         .def( 
             "name"
-            , &::SireSystem::SystemData::name
+            , (::QString const & ( ::SireSystem::SystemData::* )(  ) const)( &::SireSystem::SystemData::name )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( bp::self != bp::self )    
         .def( bp::self == bp::self )    
@@ -82,7 +82,7 @@ void register_SystemData_class(){
             , ( bp::arg("molecule") ) )    
         .def( 
             "version"
-            , &::SireSystem::SystemData::version
+            , (::SireBase::Version const & ( ::SireSystem::SystemData::* )(  ) const)( &::SireSystem::SystemData::version )
             , bp::return_value_policy< bp::copy_const_reference >() );
 
 }

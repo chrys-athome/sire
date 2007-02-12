@@ -16,17 +16,17 @@ void register_MovesBase_class(){
     bp::class_< SireSystem::MovesBase, boost::noncopyable >( "MovesBase", bp::no_init )    
         .def( 
             "count"
-            , &::SireSystem::MovesBase::count )    
+            , (int ( ::SireSystem::MovesBase::* )(  ) const)( &::SireSystem::MovesBase::count ) )    
         .def( 
             "initialise"
-            , &::SireSystem::MovesBase::initialise
+            , (void ( ::SireSystem::MovesBase::* )( ::SireSystem::SimSystem & ) )( &::SireSystem::MovesBase::initialise )
             , ( bp::arg("system") ) )    
         .def( 
             "typeName"
-            , &::SireSystem::MovesBase::typeName )    
+            , (char const * (*)(  ))( &::SireSystem::MovesBase::typeName ) )    
         .def( 
             "what"
-            , &::SireSystem::MovesBase::what )    
+            , (char const * ( ::SireSystem::MovesBase::* )(  ) const)( &::SireSystem::MovesBase::what ) )    
         .staticmethod( "typeName" );
 
 }

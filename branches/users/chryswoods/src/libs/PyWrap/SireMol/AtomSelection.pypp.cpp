@@ -21,7 +21,7 @@ void register_AtomSelection_class(){
         .def( bp::init< SireMol::Molecule const & >(( bp::arg("molecule") )) )    
         .def( 
             "deselect"
-            , &::SireMol::AtomSelection::deselect
+            , (void ( ::SireMol::AtomSelection::* )( ::SireMol::CGAtomID const & ) )( &::SireMol::AtomSelection::deselect )
             , ( bp::arg("cgatomid") ) )    
         .def( 
             "deselectAll"
@@ -36,7 +36,7 @@ void register_AtomSelection_class(){
             , ( bp::arg("resnum") ) )    
         .def( 
             "isEmpty"
-            , &::SireMol::AtomSelection::isEmpty )    
+            , (bool ( ::SireMol::AtomSelection::* )(  ) const)( &::SireMol::AtomSelection::isEmpty ) )    
         .def( 
             "nSelected"
             , (int ( ::SireMol::AtomSelection::* )(  ) const)( &::SireMol::AtomSelection::nSelected ) )    
@@ -50,7 +50,7 @@ void register_AtomSelection_class(){
             , ( bp::arg("resnum") ) )    
         .def( 
             "select"
-            , &::SireMol::AtomSelection::select
+            , (void ( ::SireMol::AtomSelection::* )( ::SireMol::CGAtomID const & ) )( &::SireMol::AtomSelection::select )
             , ( bp::arg("cgatomid") ) )    
         .def( 
             "selectAll"
@@ -65,7 +65,7 @@ void register_AtomSelection_class(){
             , ( bp::arg("resnum") ) )    
         .def( 
             "selected"
-            , &::SireMol::AtomSelection::selected
+            , (bool ( ::SireMol::AtomSelection::* )( ::SireMol::CGAtomID const & ) const)( &::SireMol::AtomSelection::selected )
             , ( bp::arg("cgatomid") ) )    
         .def( 
             "selectedAll"

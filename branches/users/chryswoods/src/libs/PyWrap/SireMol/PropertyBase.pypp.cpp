@@ -19,18 +19,18 @@ void register_PropertyBase_class(){
     bp::class_< SireMol::PropertyBase, boost::noncopyable >( "PropertyBase", bp::no_init )    
         .def( 
             "assertCompatibleWith"
-            , &::SireMol::PropertyBase::assertCompatibleWith
+            , (void ( ::SireMol::PropertyBase::* )( ::SireMol::Molecule const & ) const)( &::SireMol::PropertyBase::assertCompatibleWith )
             , ( bp::arg("molecule") ) )    
         .def( 
             "isCompatibleWith"
-            , &::SireMol::PropertyBase::isCompatibleWith
+            , (bool ( ::SireMol::PropertyBase::* )( ::SireMol::Molecule const & ) const)( &::SireMol::PropertyBase::isCompatibleWith )
             , ( bp::arg("molecule") ) )    
         .def( 
             "null_property"
-            , &::SireMol::PropertyBase::null_property )    
+            , (::SireMol::Property (*)(  ))( &::SireMol::PropertyBase::null_property ) )    
         .def( 
             "what"
-            , &::SireMol::PropertyBase::what )    
+            , (char const * ( ::SireMol::PropertyBase::* )(  ) const)( &::SireMol::PropertyBase::what ) )    
         .staticmethod( "null_property" );
 
 }

@@ -20,14 +20,14 @@ void register_ResidueCutting_class(){
         .def( bp::init< >() )    
         .def( 
             "__call__"
-            , &::SireMol::ResidueCutting::operator()
+            , (::SireMol::CutGroupNum ( ::SireMol::ResidueCutting::* )( ::SireMol::AtomIndex const &,::SireMol::EditMolData const & ) const)( &::SireMol::ResidueCutting::operator() )
             , ( bp::arg("atom"), bp::arg("moldata") ) )    
         .def( 
             "typeName"
-            , &::SireMol::ResidueCutting::typeName )    
+            , (char const * (*)(  ))( &::SireMol::ResidueCutting::typeName ) )    
         .def( 
             "what"
-            , &::SireMol::ResidueCutting::what )    
+            , (char const * ( ::SireMol::ResidueCutting::* )(  ) const)( &::SireMol::ResidueCutting::what ) )    
         .staticmethod( "typeName" );
 
 }

@@ -24,11 +24,11 @@ void register_IDMolAtom_class(){
         .def( bp::init< SireMol::AtomID const & >(( bp::arg("atomid") )) )    
         .def( 
             "contains"
-            , &::SireMol::IDMolAtom::contains
+            , (bool ( ::SireMol::IDMolAtom::* )( ::SireMol::MoleculeInfo const & ) const)( &::SireMol::IDMolAtom::contains )
             , ( bp::arg("molinfo") ) )    
         .def( 
             "index"
-            , &::SireMol::IDMolAtom::index
+            , (::SireMol::CGAtomID const & ( ::SireMol::IDMolAtom::* )( ::SireMol::MoleculeInfo const & ) const)( &::SireMol::IDMolAtom::index )
             , ( bp::arg("molinfo") )
             , bp::return_value_policy< bp::copy_const_reference >() );
 

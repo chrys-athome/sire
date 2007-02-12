@@ -15,11 +15,11 @@ void register_MajVersion_class(){
         .def( bp::init< SireBase::Incremint * >(( bp::arg("incremint") )) )    
         .def( 
             "assertSameVersion"
-            , &::SireBase::MajVersion::assertSameVersion
+            , (void ( ::SireBase::MajVersion::* )( ::SireBase::MajVersion const & ) const)( &::SireBase::MajVersion::assertSameVersion )
             , ( bp::arg("other") ) )    
         .def( 
             "increment"
-            , &::SireBase::MajVersion::increment )    
+            , (void ( ::SireBase::MajVersion::* )(  ) )( &::SireBase::MajVersion::increment ) )    
         .def( "__int__", &SireBase::MajVersion::operator ::quint32  )    
         .def( bp::self != bp::self )    
         .def( bp::self == bp::self );

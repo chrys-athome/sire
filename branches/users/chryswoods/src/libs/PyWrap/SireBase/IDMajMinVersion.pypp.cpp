@@ -16,78 +16,78 @@ void register_IDMajMinVersion_class(){
         .def( bp::init< SireBase::IDTriple const & >(( bp::arg("other") )) )    
         .def( 
             "ID"
-            , &::SireBase::IDMajMinVersion::ID )    
+            , (::quint32 ( ::SireBase::IDMajMinVersion::* )(  ) const)( &::SireBase::IDMajMinVersion::ID ) )    
         .def( 
             "assertSameID"
-            , &::SireBase::IDMajMinVersion::assertSameID
+            , (void ( ::SireBase::IDMajMinVersion::* )( ::SireBase::IDMajMinVersion const & ) const)( &::SireBase::IDMajMinVersion::assertSameID )
             , ( bp::arg("other") ) )    
         .def( 
             "assertSameIDAndMajorVersion"
-            , &::SireBase::IDMajMinVersion::assertSameIDAndMajorVersion
+            , (void ( ::SireBase::IDMajMinVersion::* )( ::SireBase::IDMajMinVersion const & ) const)( &::SireBase::IDMajMinVersion::assertSameIDAndMajorVersion )
             , ( bp::arg("other") ) )    
         .def( 
             "assertSameIDAndVersion"
-            , &::SireBase::IDMajMinVersion::assertSameIDAndVersion
+            , (void ( ::SireBase::IDMajMinVersion::* )( ::SireBase::IDMajMinVersion const & ) const)( &::SireBase::IDMajMinVersion::assertSameIDAndVersion )
             , ( bp::arg("other") ) )    
         .def( 
             "assertSameMajorVersion"
-            , &::SireBase::IDMajMinVersion::assertSameMajorVersion
+            , (void ( ::SireBase::IDMajMinVersion::* )( ::SireBase::IDMajMinVersion const & ) const)( &::SireBase::IDMajMinVersion::assertSameMajorVersion )
             , ( bp::arg("other") ) )    
         .def( 
             "assertSameMinorVersion"
-            , &::SireBase::IDMajMinVersion::assertSameMinorVersion
+            , (void ( ::SireBase::IDMajMinVersion::* )( ::SireBase::IDMajMinVersion const & ) const)( &::SireBase::IDMajMinVersion::assertSameMinorVersion )
             , ( bp::arg("other") ) )    
         .def( 
             "assertSameVersion"
-            , &::SireBase::IDMajMinVersion::assertSameVersion
+            , (void ( ::SireBase::IDMajMinVersion::* )( ::SireBase::IDMajMinVersion const & ) const)( &::SireBase::IDMajMinVersion::assertSameVersion )
             , ( bp::arg("other") ) )    
         .def( 
             "incrementID"
-            , &::SireBase::IDMajMinVersion::incrementID )    
+            , (void ( ::SireBase::IDMajMinVersion::* )(  ) )( &::SireBase::IDMajMinVersion::incrementID ) )    
         .def( 
             "incrementMajor"
-            , &::SireBase::IDMajMinVersion::incrementMajor )    
+            , (void ( ::SireBase::IDMajMinVersion::* )(  ) )( &::SireBase::IDMajMinVersion::incrementMajor ) )    
         .def( 
             "incrementMinor"
-            , &::SireBase::IDMajMinVersion::incrementMinor )    
+            , (void ( ::SireBase::IDMajMinVersion::* )(  ) )( &::SireBase::IDMajMinVersion::incrementMinor ) )    
         .def( 
             "major"
-            , &::SireBase::IDMajMinVersion::major )    
+            , (::quint32 ( ::SireBase::IDMajMinVersion::* )(  ) const)( &::SireBase::IDMajMinVersion::major ) )    
         .def( 
             "minor"
-            , &::SireBase::IDMajMinVersion::minor )    
+            , (::quint32 ( ::SireBase::IDMajMinVersion::* )(  ) const)( &::SireBase::IDMajMinVersion::minor ) )    
         .def( bp::self != bp::self )    
         .def( bp::self == bp::self )    
         .def( 
             "sameID"
-            , &::SireBase::IDMajMinVersion::sameID
+            , (bool ( ::SireBase::IDMajMinVersion::* )( ::SireBase::IDMajMinVersion const & ) const)( &::SireBase::IDMajMinVersion::sameID )
             , ( bp::arg("other") ) )    
         .def( 
             "sameIDAndMajorVersion"
-            , &::SireBase::IDMajMinVersion::sameIDAndMajorVersion
+            , (bool ( ::SireBase::IDMajMinVersion::* )( ::SireBase::IDMajMinVersion const & ) const)( &::SireBase::IDMajMinVersion::sameIDAndMajorVersion )
             , ( bp::arg("other") ) )    
         .def( 
             "sameIDAndVersion"
-            , &::SireBase::IDMajMinVersion::sameIDAndVersion
+            , (bool ( ::SireBase::IDMajMinVersion::* )( ::SireBase::IDMajMinVersion const & ) const)( &::SireBase::IDMajMinVersion::sameIDAndVersion )
             , ( bp::arg("other") ) )    
         .def( 
             "sameMajorVersion"
-            , &::SireBase::IDMajMinVersion::sameMajorVersion
+            , (bool ( ::SireBase::IDMajMinVersion::* )( ::SireBase::IDMajMinVersion const & ) const)( &::SireBase::IDMajMinVersion::sameMajorVersion )
             , ( bp::arg("other") ) )    
         .def( 
             "sameMinorVersion"
-            , &::SireBase::IDMajMinVersion::sameMinorVersion
+            , (bool ( ::SireBase::IDMajMinVersion::* )( ::SireBase::IDMajMinVersion const & ) const)( &::SireBase::IDMajMinVersion::sameMinorVersion )
             , ( bp::arg("other") ) )    
         .def( 
             "sameVersion"
-            , &::SireBase::IDMajMinVersion::sameVersion
+            , (bool ( ::SireBase::IDMajMinVersion::* )( ::SireBase::IDMajMinVersion const & ) const)( &::SireBase::IDMajMinVersion::sameVersion )
             , ( bp::arg("other") ) )    
         .def( 
             "toString"
-            , &::SireBase::IDMajMinVersion::toString )    
+            , (::QString ( ::SireBase::IDMajMinVersion::* )(  ) const)( &::SireBase::IDMajMinVersion::toString ) )    
         .def( 
             "version"
-            , &::SireBase::IDMajMinVersion::version
+            , (::SireBase::Version const & ( ::SireBase::IDMajMinVersion::* )(  ) const)( &::SireBase::IDMajMinVersion::version )
             , bp::return_value_policy< bp::copy_const_reference >() );
 
 }

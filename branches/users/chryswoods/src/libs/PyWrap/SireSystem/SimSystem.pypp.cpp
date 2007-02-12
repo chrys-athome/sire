@@ -13,11 +13,10 @@ namespace bp = boost::python;
 
 void register_SimSystem_class(){
 
-    bp::class_< SireSystem::SimSystem, boost::noncopyable >( "SimSystem", bp::init< SireSystem::System & >(( bp::arg("system") )) )    
-        .def( bp::init< SireSystem::SystemData &, SireFF::ForceFieldsBase & >(( bp::arg("sysdata"), bp::arg("ffields") )) )    
+    bp::class_< SireSystem::SimSystem, boost::noncopyable >( "SimSystem", bp::no_init )    
         .def( 
             "ID"
-            , &::SireSystem::SimSystem::ID )    
+            , (::SireSystem::SystemID ( ::SireSystem::SimSystem::* )(  ) const)( &::SireSystem::SimSystem::ID ) )    
         .def( 
             "change"
             , (void ( ::SireSystem::SimSystem::* )( ::SireMol::Molecule const & ) )( &::SireSystem::SimSystem::change )
@@ -32,7 +31,7 @@ void register_SimSystem_class(){
             , ( bp::arg("atom") ) )    
         .def( 
             "checkpoint"
-            , &::SireSystem::SimSystem::checkpoint )    
+            , (::SireSystem::System ( ::SireSystem::SimSystem::* )(  ) const)( &::SireSystem::SimSystem::checkpoint ) )    
         .def( 
             "energy"
             , (double ( ::SireSystem::SimSystem::* )( ::SireCAS::Function const & ) )( &::SireSystem::SimSystem::energy )
@@ -43,7 +42,7 @@ void register_SimSystem_class(){
             , ( bp::arg("component") ) )    
         .def( 
             "forceFields"
-            , &::SireSystem::SimSystem::forceFields
+            , (::SireFF::ForceFieldsBase const & ( ::SireSystem::SimSystem::* )(  ) const)( &::SireSystem::SimSystem::forceFields )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "group"
@@ -57,26 +56,26 @@ void register_SimSystem_class(){
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "groups"
-            , &::SireSystem::SimSystem::groups
+            , (::SireMol::MoleculeGroups const & ( ::SireSystem::SimSystem::* )(  ) const)( &::SireSystem::SimSystem::groups )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "info"
-            , &::SireSystem::SimSystem::info
+            , (::SireSystem::SystemData const & ( ::SireSystem::SimSystem::* )(  ) const)( &::SireSystem::SimSystem::info )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "remove"
-            , &::SireSystem::SimSystem::remove
+            , (void ( ::SireSystem::SimSystem::* )( ::SireMol::Molecule const & ) )( &::SireSystem::SimSystem::remove )
             , ( bp::arg("molecule") ) )    
         .def( 
             "setSystem"
-            , &::SireSystem::SimSystem::setSystem
+            , (void ( ::SireSystem::SimSystem::* )( ::SireSystem::System & ) )( &::SireSystem::SimSystem::setSystem )
             , ( bp::arg("newsystem") ) )    
         .def( 
             "updateStatistics"
-            , &::SireSystem::SimSystem::updateStatistics )    
+            , (void ( ::SireSystem::SimSystem::* )(  ) )( &::SireSystem::SimSystem::updateStatistics ) )    
         .def( 
             "version"
-            , &::SireSystem::SimSystem::version
+            , (::SireBase::Version const & ( ::SireSystem::SimSystem::* )(  ) const)( &::SireSystem::SimSystem::version )
             , bp::return_value_policy< bp::copy_const_reference >() );
 
 }

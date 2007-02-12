@@ -14,39 +14,36 @@ namespace bp = boost::python;
 void register_Moves_class(){
 
     bp::class_< SireSystem::Moves, boost::noncopyable >( "Moves" )    
-        .def( bp::init< >() )    
-        .def( bp::init< SireSystem::Move const & >(( bp::arg("move") )) )    
-        .def( bp::init< SireSystem::MovesBase const & >(( bp::arg("moves") )) )    
         .def( 
             "count"
-            , &::SireSystem::Moves::count )    
+            , (int ( ::SireSystem::Moves::* )(  ) const)( &::SireSystem::Moves::count ) )    
         .def( 
             "initialise"
-            , &::SireSystem::Moves::initialise
+            , (void ( ::SireSystem::Moves::* )( ::SireSystem::SimSystem & ) )( &::SireSystem::Moves::initialise )
             , ( bp::arg("system") ) )    
         .def( 
             "pause"
-            , &::SireSystem::Moves::pause )    
+            , (void ( ::SireSystem::Moves::* )(  ) )( &::SireSystem::Moves::pause ) )    
         .def( 
             "percentProgress"
-            , &::SireSystem::Moves::percentProgress )    
+            , (int ( ::SireSystem::Moves::* )(  ) const)( &::SireSystem::Moves::percentProgress ) )    
         .def( 
             "play"
-            , &::SireSystem::Moves::play )    
+            , (void ( ::SireSystem::Moves::* )(  ) )( &::SireSystem::Moves::play ) )    
         .def( 
             "rerun"
-            , &::SireSystem::Moves::rerun
+            , (void ( ::SireSystem::Moves::* )( ::SireSystem::SimSystem & ) )( &::SireSystem::Moves::rerun )
             , ( bp::arg("system") ) )    
         .def( 
             "resume"
-            , &::SireSystem::Moves::resume
+            , (void ( ::SireSystem::Moves::* )( ::SireSystem::SimSystem & ) )( &::SireSystem::Moves::resume )
             , ( bp::arg("system") ) )    
         .def( 
             "run"
-            , &::SireSystem::Moves::run
+            , (void ( ::SireSystem::Moves::* )( ::SireSystem::SimSystem &,::quint32 ) )( &::SireSystem::Moves::run )
             , ( bp::arg("system"), bp::arg("nmoves") ) )    
         .def( 
             "stop"
-            , &::SireSystem::Moves::stop );
+            , (void ( ::SireSystem::Moves::* )(  ) )( &::SireSystem::Moves::stop ) );
 
 }

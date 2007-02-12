@@ -24,9 +24,9 @@ void register_IDBase_class(){
         .def( bp::self -= bp::other< quint32 >() )    
         .def( 
             "toInt"
-            , &::SireMol::IDBase::toInt )    
+            , (::quint32 ( ::SireMol::IDBase::* )(  ) const)( &::SireMol::IDBase::toInt ) )    
         .def( 
             "toString"
-            , &::SireMol::IDBase::toString );
+            , (::QString ( ::SireMol::IDBase::* )(  ) const)( &::SireMol::IDBase::toString ) );
 
 }

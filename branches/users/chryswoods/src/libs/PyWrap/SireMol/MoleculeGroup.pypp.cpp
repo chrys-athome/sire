@@ -22,7 +22,7 @@ void register_MoleculeGroup_class(){
         .def( bp::init< QString const &, QVector<SireMol::Molecule> const & >(( bp::arg("name"), bp::arg("molecules") )) )    
         .def( 
             "ID"
-            , &::SireMol::MoleculeGroup::ID )    
+            , (::SireMol::MoleculeGroupID ( ::SireMol::MoleculeGroup::* )(  ) const)( &::SireMol::MoleculeGroup::ID ) )    
         .def( 
             "add"
             , (bool ( ::SireMol::MoleculeGroup::* )( ::SireMol::Molecule const & ) )( &::SireMol::MoleculeGroup::add )
@@ -63,7 +63,7 @@ void register_MoleculeGroup_class(){
             , ( bp::arg("molid") ) )    
         .def( 
             "count"
-            , &::SireMol::MoleculeGroup::count )    
+            , (int ( ::SireMol::MoleculeGroup::* )(  ) const)( &::SireMol::MoleculeGroup::count ) )    
         .def( 
             "molecule"
             , (::SireMol::Molecule const & ( ::SireMol::MoleculeGroup::* )( ::SireMol::MoleculeID ) const)( &::SireMol::MoleculeGroup::molecule )
@@ -76,14 +76,14 @@ void register_MoleculeGroup_class(){
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "moleculeIDs"
-            , &::SireMol::MoleculeGroup::moleculeIDs )    
+            , (::QSet<SireMol::MoleculeID> ( ::SireMol::MoleculeGroup::* )(  ) const)( &::SireMol::MoleculeGroup::moleculeIDs ) )    
         .def( 
             "molecules"
-            , &::SireMol::MoleculeGroup::molecules
+            , (::QVector<SireMol::Molecule> const & ( ::SireMol::MoleculeGroup::* )(  ) const)( &::SireMol::MoleculeGroup::molecules )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "name"
-            , &::SireMol::MoleculeGroup::name
+            , (::QString const & ( ::SireMol::MoleculeGroup::* )(  ) const)( &::SireMol::MoleculeGroup::name )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( bp::self != bp::self )    
         .def( bp::self == bp::self )    
@@ -107,11 +107,11 @@ void register_MoleculeGroup_class(){
             , ( bp::arg("molecules") ) )    
         .def( 
             "rename"
-            , &::SireMol::MoleculeGroup::rename
+            , (void ( ::SireMol::MoleculeGroup::* )( ::QString const & ) )( &::SireMol::MoleculeGroup::rename )
             , ( bp::arg("newname") ) )    
         .def( 
             "version"
-            , &::SireMol::MoleculeGroup::version
+            , (::SireBase::Version const & ( ::SireMol::MoleculeGroup::* )(  ) const)( &::SireMol::MoleculeGroup::version )
             , bp::return_value_policy< bp::copy_const_reference >() );
 
 }

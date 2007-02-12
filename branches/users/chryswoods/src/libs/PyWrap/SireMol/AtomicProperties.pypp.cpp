@@ -19,10 +19,10 @@ void register_AtomicProperties_class(){
     bp::class_< SireMol::AtomicProperties, bp::bases< SireMol::PropertyBase >, boost::noncopyable >( "AtomicProperties", bp::no_init )    
         .def( 
             "typeName"
-            , &::SireMol::AtomicProperties::typeName )    
+            , (char const * (*)(  ))( &::SireMol::AtomicProperties::typeName ) )    
         .def( 
             "value"
-            , &::SireMol::AtomicProperties::value
+            , (::QVariant ( ::SireMol::AtomicProperties::* )( ::SireMol::CGAtomID const & ) const)( &::SireMol::AtomicProperties::value )
             , ( bp::arg("cgatomid") ) )    
         .staticmethod( "typeName" );
 

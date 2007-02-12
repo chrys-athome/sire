@@ -21,23 +21,23 @@ void register_MoleculeVersion_class(){
         .def( bp::init< quint32, quint32 >(( bp::arg("major"), bp::arg("minor") )) )    
         .def( 
             "incrementMajor"
-            , &::SireMol::MoleculeVersion::incrementMajor )    
+            , (void ( ::SireMol::MoleculeVersion::* )(  ) )( &::SireMol::MoleculeVersion::incrementMajor ) )    
         .def( 
             "incrementMinor"
-            , &::SireMol::MoleculeVersion::incrementMinor )    
+            , (void ( ::SireMol::MoleculeVersion::* )(  ) )( &::SireMol::MoleculeVersion::incrementMinor ) )    
         .def( 
             "major"
-            , &::SireMol::MoleculeVersion::major )    
+            , (::quint32 ( ::SireMol::MoleculeVersion::* )(  ) const)( &::SireMol::MoleculeVersion::major ) )    
         .def( 
             "majorDifference"
-            , &::SireMol::MoleculeVersion::majorDifference
+            , (bool ( ::SireMol::MoleculeVersion::* )( ::SireMol::MoleculeVersion const & ) const)( &::SireMol::MoleculeVersion::majorDifference )
             , ( bp::arg("other") ) )    
         .def( 
             "minor"
-            , &::SireMol::MoleculeVersion::minor )    
+            , (::quint32 ( ::SireMol::MoleculeVersion::* )(  ) const)( &::SireMol::MoleculeVersion::minor ) )    
         .def( 
             "minorDifference"
-            , &::SireMol::MoleculeVersion::minorDifference
+            , (bool ( ::SireMol::MoleculeVersion::* )( ::SireMol::MoleculeVersion const & ) const)( &::SireMol::MoleculeVersion::minorDifference )
             , ( bp::arg("other") ) )    
         .def( bp::self != bp::self )    
         .def( bp::self < bp::self )    
@@ -47,10 +47,10 @@ void register_MoleculeVersion_class(){
         .def( bp::self >= bp::self )    
         .def( 
             "sameVersion"
-            , &::SireMol::MoleculeVersion::sameVersion
+            , (bool ( ::SireMol::MoleculeVersion::* )( ::SireMol::MoleculeVersion const & ) const)( &::SireMol::MoleculeVersion::sameVersion )
             , ( bp::arg("other") ) )    
         .def( 
             "toString"
-            , &::SireMol::MoleculeVersion::toString );
+            , (::QString ( ::SireMol::MoleculeVersion::* )(  ) const)( &::SireMol::MoleculeVersion::toString ) );
 
 }

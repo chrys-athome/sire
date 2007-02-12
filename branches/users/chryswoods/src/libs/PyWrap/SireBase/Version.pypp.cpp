@@ -13,10 +13,10 @@ void register_Version_class(){
     bp::class_< SireBase::Version >( "Version", bp::init< bp::optional< quint32, quint32 > >(( bp::arg("major")=(unsigned int)(0), bp::arg("minor")=(unsigned int)(0) )) )    
         .def( 
             "major"
-            , &::SireBase::Version::major )    
+            , (::quint32 ( ::SireBase::Version::* )(  ) const)( &::SireBase::Version::major ) )    
         .def( 
             "minor"
-            , &::SireBase::Version::minor )    
+            , (::quint32 ( ::SireBase::Version::* )(  ) const)( &::SireBase::Version::minor ) )    
         .def( bp::self != bp::self )    
         .def( bp::self < bp::self )    
         .def( bp::self <= bp::self )    
@@ -25,22 +25,22 @@ void register_Version_class(){
         .def( bp::self >= bp::self )    
         .def( 
             "sameMajorVersion"
-            , &::SireBase::Version::sameMajorVersion
+            , (bool ( ::SireBase::Version::* )( ::SireBase::Version const & ) const)( &::SireBase::Version::sameMajorVersion )
             , ( bp::arg("other") ) )    
         .def( 
             "sameMinorVersion"
-            , &::SireBase::Version::sameMinorVersion
+            , (bool ( ::SireBase::Version::* )( ::SireBase::Version const & ) const)( &::SireBase::Version::sameMinorVersion )
             , ( bp::arg("other") ) )    
         .def( 
             "setMajor"
-            , &::SireBase::Version::setMajor
+            , (void ( ::SireBase::Version::* )( ::quint32 ) )( &::SireBase::Version::setMajor )
             , ( bp::arg("major") ) )    
         .def( 
             "setMinor"
-            , &::SireBase::Version::setMinor
+            , (void ( ::SireBase::Version::* )( ::quint32 ) )( &::SireBase::Version::setMinor )
             , ( bp::arg("minor") ) )    
         .def( 
             "toString"
-            , &::SireBase::Version::toString );
+            , (::QString ( ::SireBase::Version::* )(  ) const)( &::SireBase::Version::toString ) );
 
 }

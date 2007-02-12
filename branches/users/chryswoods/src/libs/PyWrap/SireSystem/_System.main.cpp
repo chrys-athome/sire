@@ -44,10 +44,6 @@ BOOST_PYTHON_MODULE(_System){
 
     register_Moves_class();
 
-    bp::implicitly_convertible< SireSystem::Move const &, SireSystem::Moves >();
-
-    bp::implicitly_convertible< SireSystem::MovesBase const &, SireSystem::Moves >();
-
     register_MovesBase_class();
 
     register_SameMoves_class();
@@ -55,8 +51,6 @@ BOOST_PYTHON_MODULE(_System){
     bp::implicitly_convertible< SireSystem::Move const &, SireSystem::SameMoves >();
 
     register_SimSystem_class();
-
-    bp::implicitly_convertible< SireSystem::System &, SireSystem::SimSystem >();
 
     register_System_class();
 

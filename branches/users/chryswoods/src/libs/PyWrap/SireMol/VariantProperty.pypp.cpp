@@ -22,14 +22,14 @@ void register_VariantProperty_class(){
         .def( bp::init< SireMol::Property const & >(( bp::arg("other") )) )    
         .def( 
             "isCompatibleWith"
-            , &::SireMol::VariantProperty::isCompatibleWith
+            , (bool ( ::SireMol::VariantProperty::* )( ::SireMol::Molecule const & ) const)( &::SireMol::VariantProperty::isCompatibleWith )
             , ( bp::arg("arg0") ) )    
         .def( 
             "typeName"
-            , &::SireMol::VariantProperty::typeName )    
+            , (char const * (*)(  ))( &::SireMol::VariantProperty::typeName ) )    
         .def( 
             "what"
-            , &::SireMol::VariantProperty::what )    
+            , (char const * ( ::SireMol::VariantProperty::* )(  ) const)( &::SireMol::VariantProperty::what ) )    
         .staticmethod( "typeName" );
 
 }

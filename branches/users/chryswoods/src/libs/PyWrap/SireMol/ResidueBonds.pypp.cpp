@@ -21,20 +21,20 @@ void register_ResidueBonds_class(){
         .def( bp::init< SireMol::ResNum >(( bp::arg("resnum") )) )    
         .def( 
             "anchors"
-            , &::SireMol::ResidueBonds::anchors )    
+            , (::QSet<QString> ( ::SireMol::ResidueBonds::* )(  ) const)( &::SireMol::ResidueBonds::anchors ) )    
         .def( 
             "asymmetricBonds"
-            , &::SireMol::ResidueBonds::asymmetricBonds )    
+            , (::QList<SireMol::Bond> ( ::SireMol::ResidueBonds::* )(  ) const)( &::SireMol::ResidueBonds::asymmetricBonds ) )    
         .def( 
             "bonded"
-            , &::SireMol::ResidueBonds::bonded
+            , (bool ( ::SireMol::ResidueBonds::* )( ::SireMol::AtomIndex const &,::SireMol::AtomIndex const & ) const)( &::SireMol::ResidueBonds::bonded )
             , ( bp::arg("atom0"), bp::arg("atom1") ) )    
         .def( 
             "bondedResidues"
-            , &::SireMol::ResidueBonds::bondedResidues )    
+            , (::QSet<SireMol::ResNum> ( ::SireMol::ResidueBonds::* )(  ) const)( &::SireMol::ResidueBonds::bondedResidues ) )    
         .def( 
             "bondedTo"
-            , &::SireMol::ResidueBonds::bondedTo
+            , (bool ( ::SireMol::ResidueBonds::* )( ::SireMol::ResNum ) const)( &::SireMol::ResidueBonds::bondedTo )
             , ( bp::arg("resnum") ) )    
         .def( 
             "bonds"
@@ -57,7 +57,7 @@ void register_ResidueBonds_class(){
             , ( bp::arg("bond") ) )    
         .def( 
             "interBondedAtoms"
-            , &::SireMol::ResidueBonds::interBondedAtoms )    
+            , (::QSet<QString> ( ::SireMol::ResidueBonds::* )(  ) const)( &::SireMol::ResidueBonds::interBondedAtoms ) )    
         .def( 
             "interBonds"
             , (::QList<SireMol::Bond> ( ::SireMol::ResidueBonds::* )(  ) const)( &::SireMol::ResidueBonds::interBonds ) )    
@@ -74,30 +74,30 @@ void register_ResidueBonds_class(){
             , ( bp::arg("atomname") ) )    
         .def( 
             "isEmpty"
-            , &::SireMol::ResidueBonds::isEmpty )    
+            , (bool ( ::SireMol::ResidueBonds::* )(  ) const)( &::SireMol::ResidueBonds::isEmpty ) )    
         .def( 
             "nAsymmetricBonds"
-            , &::SireMol::ResidueBonds::nAsymmetricBonds )    
+            , (int ( ::SireMol::ResidueBonds::* )(  ) const)( &::SireMol::ResidueBonds::nAsymmetricBonds ) )    
         .def( 
             "nBonds"
-            , &::SireMol::ResidueBonds::nBonds )    
+            , (int ( ::SireMol::ResidueBonds::* )(  ) const)( &::SireMol::ResidueBonds::nBonds ) )    
         .def( 
             "nInterBonds"
-            , &::SireMol::ResidueBonds::nInterBonds )    
+            , (int ( ::SireMol::ResidueBonds::* )(  ) const)( &::SireMol::ResidueBonds::nInterBonds ) )    
         .def( 
             "nIntraBonds"
-            , &::SireMol::ResidueBonds::nIntraBonds )    
+            , (int ( ::SireMol::ResidueBonds::* )(  ) const)( &::SireMol::ResidueBonds::nIntraBonds ) )    
         .def( bp::self != bp::self )    
         .def( bp::self == bp::self )    
         .def( 
             "resNum"
-            , &::SireMol::ResidueBonds::resNum )    
+            , (::SireMol::ResNum ( ::SireMol::ResidueBonds::* )(  ) const)( &::SireMol::ResidueBonds::resNum ) )    
         .def( 
             "residuesBondedTo"
-            , &::SireMol::ResidueBonds::residuesBondedTo
+            , (::QSet<SireMol::ResNum> ( ::SireMol::ResidueBonds::* )( ::QString const & ) const)( &::SireMol::ResidueBonds::residuesBondedTo )
             , ( bp::arg("atom") ) )    
         .def( 
             "toString"
-            , &::SireMol::ResidueBonds::toString );
+            , (::QString ( ::SireMol::ResidueBonds::* )(  ) const)( &::SireMol::ResidueBonds::toString ) );
 
 }

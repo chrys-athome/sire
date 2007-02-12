@@ -24,16 +24,16 @@ void register_AtomInfoGroup_class(){
         .def( bp::init< QVector<SireMol::Atom> const & >(( bp::arg("atoms") )) )    
         .def( 
             "assertAtomExists"
-            , &::SireMol::AtomInfoGroup::assertAtomExists
+            , (void ( ::SireMol::AtomInfoGroup::* )( ::SireMol::AtomID ) const)( &::SireMol::AtomInfoGroup::assertAtomExists )
             , ( bp::arg("atomid") ) )    
         .def( 
             "at"
-            , &::SireMol::AtomInfoGroup::at
+            , (::SireMol::AtomInfo const & ( ::SireMol::AtomInfoGroup::* )( ::SireMol::AtomID ) const)( &::SireMol::AtomInfoGroup::at )
             , ( bp::arg("i") )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "atom"
-            , &::SireMol::AtomInfoGroup::atom
+            , (::SireMol::AtomInfo const & ( ::SireMol::AtomInfoGroup::* )( ::SireMol::AtomID ) const)( &::SireMol::AtomInfoGroup::atom )
             , ( bp::arg("i") )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
@@ -45,15 +45,15 @@ void register_AtomInfoGroup_class(){
             , ( bp::arg("idxs") ) )    
         .def( 
             "contains"
-            , &::SireMol::AtomInfoGroup::contains
+            , (bool ( ::SireMol::AtomInfoGroup::* )( ::SireMol::AtomID ) const)( &::SireMol::AtomInfoGroup::contains )
             , ( bp::arg("atomid") ) )    
         .def( 
             "indexOf"
-            , &::SireMol::AtomInfoGroup::indexOf
+            , (::SireMol::AtomID ( ::SireMol::AtomInfoGroup::* )( ::SireMol::AtomIndex const & ) const)( &::SireMol::AtomInfoGroup::indexOf )
             , ( bp::arg("atom") ) )    
         .def( 
             "isEmpty"
-            , &::SireMol::AtomInfoGroup::isEmpty )    
+            , (bool ( ::SireMol::AtomInfoGroup::* )(  ) const)( &::SireMol::AtomInfoGroup::isEmpty ) )    
         .def( 
             "nAtoms"
             , (int ( ::SireMol::AtomInfoGroup::* )(  ) const)( &::SireMol::AtomInfoGroup::nAtoms ) )    
@@ -65,14 +65,14 @@ void register_AtomInfoGroup_class(){
         .def( bp::self == bp::self )    
         .def( 
             "__getitem__"
-            , &::SireMol::AtomInfoGroup::operator[]
+            , (::SireMol::AtomInfo const & ( ::SireMol::AtomInfoGroup::* )( ::SireMol::AtomID ) const)( &::SireMol::AtomInfoGroup::operator[] )
             , ( bp::arg("i") )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "residueNumbers"
-            , &::SireMol::AtomInfoGroup::residueNumbers )    
+            , (::QVector<SireMol::ResNum> ( ::SireMol::AtomInfoGroup::* )(  ) const)( &::SireMol::AtomInfoGroup::residueNumbers ) )    
         .def( 
             "toString"
-            , &::SireMol::AtomInfoGroup::toString );
+            , (::QString ( ::SireMol::AtomInfoGroup::* )(  ) const)( &::SireMol::AtomInfoGroup::toString ) );
 
 }

@@ -19,11 +19,11 @@ void register_Move_class(){
         .def( bp::init< SireBase::SharedPolyPointer<SireSystem::MoveBase> const & >(( bp::arg("ptr") )) )    
         .def( 
             "initialise"
-            , &::SireSystem::Move::initialise
+            , (void ( ::SireSystem::Move::* )( ::SireSystem::SimSystem const & ) )( &::SireSystem::Move::initialise )
             , ( bp::arg("system") ) )    
         .def( 
             "move"
-            , &::SireSystem::Move::move
+            , (void ( ::SireSystem::Move::* )( ::SireSystem::SimSystem & ) )( &::SireSystem::Move::move )
             , ( bp::arg("system") ) );
 
 }

@@ -19,10 +19,10 @@ void register_CuttingFunctionBase_class(){
     bp::class_< SireMol::CuttingFunctionBase, boost::noncopyable >( "CuttingFunctionBase", bp::no_init )    
         .def( 
             "__call__"
-            , &::SireMol::CuttingFunctionBase::operator()
+            , (::SireMol::CutGroupNum ( ::SireMol::CuttingFunctionBase::* )( ::SireMol::AtomIndex const &,::SireMol::EditMolData const & ) const)( &::SireMol::CuttingFunctionBase::operator() )
             , ( bp::arg("atom"), bp::arg("moldata") ) )    
         .def( 
             "what"
-            , &::SireMol::CuttingFunctionBase::what );
+            , (char const * ( ::SireMol::CuttingFunctionBase::* )(  ) const)( &::SireMol::CuttingFunctionBase::what ) );
 
 }

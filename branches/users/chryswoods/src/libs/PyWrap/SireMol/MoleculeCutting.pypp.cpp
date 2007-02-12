@@ -20,14 +20,14 @@ void register_MoleculeCutting_class(){
         .def( bp::init< >() )    
         .def( 
             "__call__"
-            , &::SireMol::MoleculeCutting::operator()
+            , (::SireMol::CutGroupNum ( ::SireMol::MoleculeCutting::* )( ::SireMol::AtomIndex const &,::SireMol::EditMolData const & ) const)( &::SireMol::MoleculeCutting::operator() )
             , ( bp::arg("atom"), bp::arg("moldata") ) )    
         .def( 
             "typeName"
-            , &::SireMol::MoleculeCutting::typeName )    
+            , (char const * (*)(  ))( &::SireMol::MoleculeCutting::typeName ) )    
         .def( 
             "what"
-            , &::SireMol::MoleculeCutting::what )    
+            , (char const * ( ::SireMol::MoleculeCutting::* )(  ) const)( &::SireMol::MoleculeCutting::what ) )    
         .staticmethod( "typeName" );
 
 }

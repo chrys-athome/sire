@@ -20,10 +20,10 @@ void register_CGAtomID_class(){
         .def( bp::init< boost::tuples::tuple<SireMol::CutGroupID, SireMol::AtomID, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type> const & >(( bp::arg("t") )) )    
         .def( 
             "atomID"
-            , &::SireMol::CGAtomID::atomID )    
+            , (::SireMol::AtomID ( ::SireMol::CGAtomID::* )(  ) const)( &::SireMol::CGAtomID::atomID ) )    
         .def( 
             "cutGroupID"
-            , &::SireMol::CGAtomID::cutGroupID )    
+            , (::SireMol::CutGroupID ( ::SireMol::CGAtomID::* )(  ) const)( &::SireMol::CGAtomID::cutGroupID ) )    
         .def( bp::self != bp::self )    
         .def( bp::self < bp::self )    
         .def( bp::self <= bp::self )    
@@ -32,6 +32,6 @@ void register_CGAtomID_class(){
         .def( bp::self >= bp::self )    
         .def( 
             "toString"
-            , &::SireMol::CGAtomID::toString );
+            , (::QString ( ::SireMol::CGAtomID::* )(  ) const)( &::SireMol::CGAtomID::toString ) );
 
 }

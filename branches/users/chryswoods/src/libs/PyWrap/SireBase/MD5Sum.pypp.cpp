@@ -19,6 +19,6 @@ void register_MD5Sum_class(){
         .def( bp::self == bp::self )    
         .def( 
             "toString"
-            , &::SireBase::MD5Sum::toString );
+            , (::QString ( ::SireBase::MD5Sum::* )(  ) const)( &::SireBase::MD5Sum::toString ) );
 
 }
