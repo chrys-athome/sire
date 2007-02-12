@@ -21,6 +21,7 @@ set ( WRAPMOL_SOURCES
       _Mol.main.cpp
 
       QSet_AtomIndex_.py.cpp
+      QList_Molecule_.py.cpp
       
       Angle.pypp.cpp
       Atom.pypp.cpp

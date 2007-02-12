@@ -118,6 +118,9 @@ mb = module_builder_t( files=headerfiles,
 mb.add_declaration_code( "#include \"QSet_AtomIndex_.py.h\"" )
 mb.add_registration_code( "register_QSet_AtomIndex_class();", tail=False )
 
+mb.add_declaration_code( "#include \"QList_Molecule_.py.h\"" )
+mb.add_registration_code( "register_QList_Molecule_class();", tail=False )
+
 #export each class in turn
 for classname in wrap_classes:
    #tell the program to write wrappers for this class
