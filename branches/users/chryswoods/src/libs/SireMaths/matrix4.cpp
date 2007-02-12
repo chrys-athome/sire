@@ -75,8 +75,21 @@ QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, Matrix4 &matrix)
     return ds;
 }
 
+/** Construct a default Matrix (identity matrix) */
+Matrix4::Matrix4()
+        : xx(1), xy(0), xz(0), xw(0),
+          yx(0), yy(1), yz(0), yw(0),
+          zx(0), zy(0), zz(1), zw(0),
+          wx(0), wy(0), wz(0), ww(1)
+{}
+
+/** Construct a matrix whose diagonal values are equal to
+    'diagonal_value' and whose off-diagonal values are zero */
+Matrix4::Matrix4(double diagonal_value)
+{}
+
 /** Construct a Matrix. Elements listed as column 1, then
-    column 2, then column 3. By default, this is an identity matrix */
+    column 2, then column 3, then column 4 */
 Matrix4::Matrix4(double sxx, double sxy, double sxz, double sxw,
                  double syx, double syy, double syz, double syw,
                  double szx, double szy, double szz, double szw,
@@ -85,14 +98,6 @@ Matrix4::Matrix4(double sxx, double sxy, double sxz, double sxw,
                yx(syx),yy(syy),yz(syz),yw(syw),
                zx(szx),zy(szy),zz(szz),zw(szw),
                wx(swx),wy(swy),wz(swz),ww(sww)
-{}
-
-/** Construct a matrix filled with 'val' */
-Matrix4::Matrix4(double val)
-               : xx(val),xy(val),xz(val),xw(val),
-                 yx(val),yy(val),yz(val),yw(val),
-                 zx(val),zy(val),zz(val),zw(val),
-                 wx(val),wy(val),wz(val),ww(val)
 {}
 
 /** Construct a matrix4 from a matrix (the extra elements are 0 for columns0-2,

@@ -116,6 +116,12 @@ void MolBondInfo::removeBond(const Bond &bond)
     removeInternal(bond);
 }
 
+/** Return the bond with the passed index */
+Bond MolBondInfo::getBond(const GroupIndexID &groupid) const
+{
+    return getInternal(groupid);
+}
+
 /** Remove a bond from the molecule that has index 'index'.
     This does nothing if there is no such bond. */
 void MolBondInfo::removeBond(const GroupIndexID &groupid)

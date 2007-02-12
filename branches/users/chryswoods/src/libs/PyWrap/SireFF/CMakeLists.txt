@@ -17,50 +17,48 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs
 
 # Define the sources in SireFF
 set ( WRAPFF_SOURCES
-      ffbase.py.cpp
-      ffcomponent.py.cpp
-      ffprocessor.py.cpp
-      ffworker.py.cpp
-      forcefield.py.cpp
-      parametermap.py.cpp
+
+      _FF.main.cpp
+
+      FFBase.pypp.cpp
+      FFCalculator.pypp.cpp
+      FFCalculatorBase.pypp.cpp
+      FFComponent.pypp.cpp
+      FFExpression.pypp.cpp
+      FFProcessor.pypp.cpp
+      FFProcessorBase.pypp.cpp
+      FFThreadProcessor.pypp.cpp
+      FFThreadWorker.pypp.cpp
+      FFWorker.pypp.cpp
+      FFWorkerBase.pypp.cpp
+
+      ForceField.pypp.cpp
+      ForceFieldID.pypp.cpp
+      ForceFields.pypp.cpp
+      ForceFieldsBase.pypp.cpp
+      ForceTable.pypp.cpp
+
+      ParameterMap.pypp.cpp
+      ParameterName.pypp.cpp
+      ParameterSource.pypp.cpp
     )
 
 # Create the library that holds all of the class wrappers
-add_library (PyWrap_SireFF ${WRAPFF_SOURCES})
+add_library (PythonWrapping_SireFF ${WRAPFF_SOURCES})
 
-set_target_properties (PyWrap_SireFF PROPERTIES
-                       VERSION ${SIRE_VERSION}
-               SOVERSION ${SIRE_VERSION_MAJOR}
-           )
-
-target_link_libraries (PyWrap_SireFF
-                       SireFF
-                       PyWrap_SireMol
-                       PyWrap_SireDB
-                       PyWrap_SireCAS
-                       ${BOOST_PYTHON_LIBRARY}
-          )
-
-# Install the wrappers library with the other Sire libraries
-install( TARGETS PyWrap_SireFF
-         RUNTIME DESTINATION ${SIRE_BIN}
-         LIBRARY DESTINATION ${SIRE_LIBS}
-         ARCHIVE DESTINATION ${SIRE_ARCHIVES}
-       )
-
-# Now create the thin-wrapper python module
-add_library (PythonWrapping_SireFF wrap_SireFF.cpp)
-
-target_link_libraries (PythonWrapping_SireFF
-                       PyWrap_SireFF
-                       )
-
-# Use properties to change the filename of the python module
-set_target_properties (PythonWrapping_SireFF
+set_target_properties (PythonWrapping_SireFF 
                        PROPERTIES
+                         VERSION ${SIRE_VERSION}
+                         SOVERSION ${SIRE_VERSION_MAJOR}
                          OUTPUT_NAME "FF"
                          PREFIX "_"
                          SUFFIX ${PYTHON_MODULE_EXTENSION}
+                      )
+
+target_link_libraries (PythonWrapping_SireFF
+                       SireFF
+                       ${BOOST_PYTHON_LIBRARY}
+                       ${PYTHON_LIBRARY}
                       )
 
 # installation

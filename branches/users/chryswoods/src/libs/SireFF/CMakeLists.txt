@@ -23,6 +23,7 @@ set ( SIREFF_SOURCES
       ffworker.cpp
       forcefield.cpp
       forcefields.cpp
+      forcetable.cpp
       parametermap.cpp
     )
 

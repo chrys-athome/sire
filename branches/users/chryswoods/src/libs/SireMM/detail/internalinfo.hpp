@@ -1305,10 +1305,12 @@ void InternalInfo<T>::removeInternals(GroupID id)
         const residue_id_type &resid = group.residueID();
 
         //remove this group for each of the residues
+        #ifndef SKIP_BROKEN_GCCXML_PARTS
         foreach (ResNum resnum, resid.residueNumbers())
         {
             resnum_to_groupid[resnum].remove(id);
         }
+        #endif
 
         //remove the group from the list of resids...
         resid_to_groupid.remove(resid);

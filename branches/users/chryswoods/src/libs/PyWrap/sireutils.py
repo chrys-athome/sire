@@ -11,15 +11,6 @@ from pygccxml import declarations
 def export_class(mb, classname, aliases, special_code):
    #find the class in the declarations
    c = mb.class_(classname)
-
-   #set all functions as non-virtual - this stops Py++ generating
-   #wrappers that allow Python overloading (which is way too 
-   #inefficient for what I need)
-   c.calldefs().virtuality = declarations.VIRTUALITY_TYPES.NOT_VIRTUAL
-
-   #ensure that all functions are wrapped with their signature
-   # - this prevents wrapper bugs and allows for future extension
-   c.calldefs().create_with_signature = True
   
    #include the class in the wrapper
    c.include()

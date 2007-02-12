@@ -65,12 +65,15 @@ friend QDataStream& ::operator<<(QDataStream&, const Matrix&);
 friend QDataStream& ::operator>>(QDataStream&, Matrix&);
 
 public:
-    Matrix(double sxx=1.0, double sxy=0.0, double sxz=0.0,
-           double syx=0.0, double syy=1.0, double syz=0.0,
-           double szx=0.0, double szy=0.0, double szz=1.0);
+    Matrix();
+
+    Matrix(double diagonal_value);
+
+    Matrix(double xx, double xy, double xz,
+           double yx, double yy, double yz,
+           double zx, double zy, double zz);
 
     Matrix(const Vector& c1, const Vector& c2, const Vector& c3);
-    Matrix(double val);
 
     Matrix(const Matrix& m);
 

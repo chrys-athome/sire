@@ -71,21 +71,29 @@ QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, Matrix &matrix)
     return ds;
 }
 
+/** Construct a default Matrix (identity matrix) */
+Matrix::Matrix()
+       : xx(1), xy(0), xz(0),
+         yx(0), yy(1), yz(0),
+         zx(0), zy(0), zz(1)
+{}
+
+/** Construct a matrix whose diagonal elements equal 'diagonal_value'
+    and whose off-diagonal elements equal zero */
+Matrix::Matrix(double diagonal_value)
+       : xx(diagonal_value), xy(0), xz(0),
+         yx(0), yy(diagonal_value), yz(0),
+         zx(0), zy(0), zz(diagonal_value)
+{}
+
 /** Construct a Matrix. Elements listed as column 1, then
-    column 2, then column 3. By default, this is an identity matrix */
+    column 2, then column 3. */
 Matrix::Matrix(double sxx, double sxy, double sxz,
                double syx, double syy, double syz,
                double szx, double szy, double szz)
              : xx(sxx),xy(sxy),xz(sxz),
                yx(syx),yy(syy),yz(syz),
                zx(szx),zy(szy),zz(szz)
-{}
-
-/** Construct a matrix filled with 'val' */
-Matrix::Matrix(double val)
-             : xx(val),xy(val),xz(val),
-               yx(val),yy(val),yz(val),
-               zx(val),zy(val),zz(val)
 {}
 
 /** Copy constructor */

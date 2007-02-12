@@ -33,6 +33,8 @@
 
 #include "SireMol/molecule.h"
 #include "SireMol/residue.h"
+#include "SireMol/newatom.h"
+
 #include "SireMol/errors.h"
 
 #include "SireStream/datastream.h"
@@ -247,6 +249,17 @@ Residue ForceField::residue(MoleculeID molid, ResNum resnum) const
     return d().residue(molid, resnum);
 }
 
+/** Return a copy of the atom in this forcefield that is
+    in the molecule with ID == molid and with atom index 'atomid'
+
+    \throw SireMol::missing_molecule
+    \throw SireMol::missing_atom
+*/
+NewAtom ForceField::atom(MoleculeID molid, const IDMolAtom &atomid) const
+{
+    return d().atom(molid, atomid);
+}
+
 /** Return the copy of the molecule 'mol' that is in this forcefield
 
     \throw SireMol::missing_molecule
@@ -263,4 +276,13 @@ Molecule ForceField::molecule(const Molecule &mol) const
 Residue ForceField::residue(const Residue &res) const
 {
     return d().residue(res);
+}
+
+/** Return a copy of the atom 'atom' that is in this forcefield
+
+    \throw SireMol::missing_atom
+*/
+NewAtom ForceField::atom(const NewAtom &atom) const
+{
+    return d().atom(atom);
 }

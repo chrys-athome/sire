@@ -343,6 +343,18 @@ const Values& ForceFieldsBase::parameters() const
     return ff_params;
 }
 
+/** Return the number of forcefields in this group */
+int ForceFieldsBase::nForceFields() const
+{
+    return this->forceFieldIDs().count();
+}
+
+/** Return the number of molecules in these forcefields */
+int ForceFieldsBase::nMolecules() const
+{
+    return index.count();
+}
+
 /** Return whether or not this contains the function 'function' */
 bool ForceFieldsBase::contains(const Function &function) const
 {
@@ -438,7 +450,7 @@ void ForceFieldsBase::setParameter(const Symbol &param, double value)
     of forcefields - by default this will be a simple sum of the
     total energies of all of the forcefields. If 'expression' is
     not already in this set then it will be added.
-    
+
     \throw SireFF::missing_forcefield
     \throw SireFF::missing_component
     \throw SireFF::missing_function
@@ -447,15 +459,15 @@ void ForceFieldsBase::setTotal(const FFExpression &expression)
 {
     if (not ff_equations.contains(expression.function().ID()))
         this->add(expression);
-        
+
     total_id = expression.function().ID();
 }
 
-/** Return the expression used to calculate the total energy of 
-    the forcefields. This will throw an exception if no 
+/** Return the expression used to calculate the total energy of
+    the forcefields. This will throw an exception if no
     expression has been set (and instead the energy is
-    calculated as a simple sum of forcefields) 
-    
+    calculated as a simple sum of forcefields)
+
     \throw SireFF::missing_function
 */
 const FFExpression& ForceFieldsBase::total() const
@@ -469,21 +481,21 @@ const FFExpression& ForceFieldsBase::total() const
     return ff_equations[total_id].expression();
 }
 
-/** Return whether any of the forcefields contain any part of the molecule 
+/** Return whether any of the forcefields contain any part of the molecule
     with ID == molid */
 bool ForceFieldsBase::contains(MoleculeID molid) const
 {
     return index.contains(molid);
 }
 
-/** Return whether or not any of the forcefields contain  
+/** Return whether or not any of the forcefields contain
     any part of any version of the molecule 'molecule' */
 bool ForceFieldsBase::contains(const Molecule &molecule) const
 {
     return this->contains(molecule.ID());
 }
 
-/** Return the complete set of IDs of all molecules that are 
+/** Return the complete set of IDs of all molecules that are
     in any way in any of the forcefields in this set. */
 QSet<MoleculeID> ForceFieldsBase::moleculeIDs() const
 {
@@ -500,7 +512,7 @@ ForceFieldsBase::forceFieldsContaining(MoleculeID molid) const
 
 /** Return the set of IDs of forcefields that in any way contain
     any version of the molecule 'molecule' */
-QSet<ForceFieldID> 
+QSet<ForceFieldID>
 ForceFieldsBase::forceFieldsContaining(const Molecule &molecule) const
 {
     return this->forceFieldsContaining(molecule.ID());
@@ -633,6 +645,33 @@ bool ForceFieldsBase::remove(const Residue &residue, const QString &ffname)
 bool ForceFieldsBase::remove(const NewAtom &atom, const QString &ffname)
 {
     return this->remove( atom, this->getFFIDs(ffname) );
+}
+
+/** Remove the molecule 'molecule' from the forcefield with ID == ffid */
+bool ForceFieldsBase::remove(const Molecule &molecule, ForceFieldID ffid)
+{
+    QSet<ForceFieldID> ffids;
+    ffids.insert(ffid);
+
+    return this->remove(molecule, ffids);
+}
+
+/** Remove the residue 'residue' from the forcefield with ID == ffid */
+bool ForceFieldsBase::remove(const Residue &residue, ForceFieldID ffid)
+{
+    QSet<ForceFieldID> ffids;
+    ffids.insert(ffid);
+
+    return this->remove(residue, ffids);
+}
+
+/** Remove the atom 'atom' from the forcefield with ID == ffid */
+bool ForceFieldsBase::remove(const NewAtom &atom, ForceFieldID ffid)
+{
+    QSet<ForceFieldID> ffids;
+    ffids.insert(ffid);
+
+    return this->remove(atom, ffids);
 }
 
 /** Return the energy of the expression described by ExpressionInfo 'expr' */
@@ -1084,14 +1123,14 @@ void ForceFieldsBase::changed(ForceFieldID ffid) throw()
     }
 }
 
-/** Record that all of the forcefields whose IDs are in ffids 
+/** Record that all of the forcefields whose IDs are in ffids
     have been changed. */
 void ForceFieldsBase::changed(const QSet<ForceFieldID> &ffids) throw()
 {
     foreach (ForceFieldID ffid, ffids)
     {
         this->changed(ffid);
-        
+
         if (cached_energies.isEmpty())
             return;
     }
@@ -1107,11 +1146,11 @@ static const RegisterMetaType<ForceFields> r_ffields;
 QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const ForceFields &ffields)
 {
     writeHeader(ds, r_ffields, 1);
-          
+
     SharedDataStream sds(ds);
-    
+
     sds << ffields.ffields << static_cast<const ForceFieldsBase&>(ffields);
-    
+
     return ds;
 }
 
@@ -1119,16 +1158,16 @@ QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const ForceFields &ff
 QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, ForceFields &ffields)
 {
     VersionID v = readHeader(ds, r_ffields);
-    
+
     if (v == 1)
     {
         SharedDataStream sds(ds);
-        
+
         sds >> ffields.ffields >> static_cast<ForceFieldsBase&>(ffields);
     }
     else
         throw version_error(v, "1", r_ffields, CODELOC);
-    
+
     return ds;
 }
 
@@ -1188,7 +1227,7 @@ void ForceFields::setEqualTo(const ForceFields &forcefields)
 {
     *this = forcefields;
 }
-    
+
 /** Perform a major update - this sets this ForceFields object
     equal to 'forcefields' */
 void ForceFields::majorUpdate(const ForceFields &forcefields)
@@ -1210,7 +1249,7 @@ bool differentKeys(const QHash<T,V0> &hash0, const QHash<T,V1> &hash1)
             if ( not hash1.contains(it.key()) )
                 return true;
         }
-        
+
         return false;
     }
     else
@@ -1219,8 +1258,8 @@ bool differentKeys(const QHash<T,V0> &hash0, const QHash<T,V1> &hash1)
 
 /** Assert that this set has the same forcefield contents
     as 'other'
-    
-    \throw SireError::incompatible_error 
+
+    \throw SireError::incompatible_error
 */
 void ForceFields::assertSameContents(const ForceFields &other) const
 {
@@ -1239,13 +1278,13 @@ void ForceFields::assertSameContents(const ForceFields &other) const
     equal to 'forcefields', which itself must contain exactly
     the same forcefields as this object, though they
     may have different versions.
-    
+
     \throw SireError::incompatible_error
 */
 void ForceFields::minorUpdate(const ForceFields &forcefields)
 {
     this->assertSameContents(forcefields);
-    
+
     *this = forcefields;
 }
 
@@ -1371,7 +1410,7 @@ inline bool ForceFields::_pvt_add(const T &obj, const QSet<ForceFieldID> &ffids,
 
             //record that the affected forcefields have changed
             ForceFieldsBase::changed(ffids);
-            
+
             return true;
         }
         else
@@ -1386,7 +1425,7 @@ inline bool ForceFields::_pvt_add(const T &obj, const QSet<ForceFieldID> &ffids,
         //rethrow the exception
         throw;
     }
-    
+
     return false;
 }
 
@@ -1514,13 +1553,13 @@ bool ForceFields::change(const QHash<MoleculeID,Molecule> &molecules)
     else
     {
         const QHash< MoleculeID,QSet<ForceFieldID> > &index = this->getIndex();
-    
+
         //find all of the forcefields that don't contain any of these
         //molecules
         QSet<ForceFieldID> all_ffids = this->forceFieldIDs();
-        
+
         QSet<ForceFieldID> ffids = all_ffids;
-        
+
         for (QHash<MoleculeID,Molecule>::const_iterator it = molecules.begin();
              it != molecules.end();
              ++it)
@@ -1528,33 +1567,33 @@ bool ForceFields::change(const QHash<MoleculeID,Molecule> &molecules)
             //get the forcefields that contain this molecule
             QHash< MoleculeID,QSet<ForceFieldID> >::const_iterator
                                        ffs_with_mol = index.find(it.key());
-                                       
+
             //remove all of these forcefields from ffids
             foreach (ForceFieldID ffid, *(ffs_with_mol))
             {
                 ffids.remove(ffid);
             }
-            
+
             if (ffids.isEmpty())
                 //all of the forcefields contain at least one
                 //of the molecules in 'molecules'
                 break;
         }
-        
+
         //ffids now contains all of the forcefields that *don't* contain
         //any of 'molecules'. Now loop over all of the forcefields that
         //do at least contain one of the molecules and change them
         ffids = all_ffids.subtract(ffids);
-        
+
         bool changed = false;
-        
+
         foreach (ForceFieldID ffid, ffids)
         {
             bool this_changed = ffields[ffid].change(molecules);
-            
+
             changed = changed or this_changed;
         }
-        
+
         if (changed)
         {
             ForceFieldsBase::changed(ffids);
@@ -1608,7 +1647,7 @@ inline bool ForceFields::_pvt_remove(const T &obj, QSet<ForceFieldID> ffids)
         if (changed)
         {
             Molecule molecule(obj);
-        
+
             if ( not ffield.refersTo(molecule) )
             {
                 //this forcefield no longer contains the molecule
