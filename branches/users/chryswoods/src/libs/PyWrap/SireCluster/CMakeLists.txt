@@ -17,45 +17,32 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs
 
 # Define the sources in SireCluster
 set ( WRAPCLUSTER_SOURCES
-      processor.py.cpp
-      threadworker.py.cpp
+      
+      _Cluster.main.cpp
+      
+      Processor.pypp.cpp
+      ThreadWorker.pypp.cpp
+      WorkerBase.pypp.cpp
+      
     )
 
 # Create the library that holds all of the class wrappers
-add_library (PyWrap_SireCluster ${WRAPCLUSTER_SOURCES})
+add_library (PythonWrapping_SireCluster ${WRAPCLUSTER_SOURCES})
 
-set_target_properties (PyWrap_SireCluster PROPERTIES
-                       VERSION ${SIRE_VERSION}
-		           SOVERSION ${SIRE_VERSION_MAJOR}
-		       )
-		       
-target_link_libraries (PyWrap_SireCluster
-                       SireCluster
-                       ${BOOST_PYTHON_LIBRARY}
-                       ${PYTHON_LIBRARY}
-		      )
-
-# Install the wrappers library with the other Sire libraries
-install( TARGETS PyWrap_SireCluster
-         RUNTIME DESTINATION ${SIRE_BIN}
-         LIBRARY DESTINATION ${SIRE_LIBS}
-         ARCHIVE DESTINATION ${SIRE_ARCHIVES}
-       )
-
-# Now create the thin-wrapper python module
-add_library (PythonWrapping_SireCluster wrap_SireCluster.cpp)
-
-target_link_libraries (PythonWrapping_SireCluster
-                       PyWrap_SireCluster
-                       )
-
-# Use properties to change the filename of the python module
-set_target_properties (PythonWrapping_SireCluster
+set_target_properties (PythonWrapping_SireCluster 
                        PROPERTIES
+                         VERSION ${SIRE_VERSION}
+		             SOVERSION ${SIRE_VERSION_MAJOR}
                          OUTPUT_NAME "Cluster"
                          PREFIX "_"
                          SUFFIX ${PYTHON_MODULE_EXTENSION}
                       )
+		       
+target_link_libraries (PythonWrapping_SireCluster
+                       SireCluster
+                       ${BOOST_PYTHON_LIBRARY}
+                       ${PYTHON_LIBRARY}
+		          )
 
 # installation
 set( INSTALLDIR ${SIRE_PYTHON}/Sire/Cluster )
