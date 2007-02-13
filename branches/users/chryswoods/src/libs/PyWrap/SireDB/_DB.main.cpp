@@ -19,6 +19,8 @@
 
 #include "AtomTable.pypp.hpp"
 
+#include "AtomTable_AtomType_.pypp.hpp"
+
 #include "AtomType.pypp.hpp"
 
 #include "AtomTypeDB.pypp.hpp"
@@ -153,6 +155,8 @@ BOOST_PYTHON_MODULE(_DB){
     register_TableBase_class();
 
     register_AtomTable_class();
+
+    register_AtomTable_AtomType__class();
 
     register_AtomType_class();
 

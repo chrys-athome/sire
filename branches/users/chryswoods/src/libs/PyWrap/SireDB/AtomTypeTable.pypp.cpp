@@ -12,7 +12,7 @@ namespace bp = boost::python;
 
 void register_AtomTypeTable_class(){
 
-    bp::class_< SireDB::AtomTypeTable >( "AtomTypeTable" )    
+    bp::class_< SireDB::AtomTypeTable, bp::bases< SireDB::AtomTableT<SireDB::AtomType> > >( "AtomTypeTable" )    
         .def( bp::init< >() )    
         .def( bp::init< SireMol::MoleculeInfo const & >(( bp::arg("molinfo") )) )    
         .def( 

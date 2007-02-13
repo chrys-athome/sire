@@ -68,12 +68,14 @@ wrap_classes = [ "assign_atoms",
                  "Term14DB",
                  "using_database",
                  "using_parameters_base",
-                 "using_relationships_base"
+                 "using_relationships_base",
+                 
+                 "AtomTableT<SireDB::AtomType>"
                ]
 
 huge_classes = []
 
-aliases = {}
+aliases = { "AtomTableT<SireDB::AtomType>" : "AtomTable_AtomType_"}
 
 extra_includes = [ "SireCAS/function.h",
                    "SireCAS/expression.h" ]
@@ -107,7 +109,14 @@ mb = module_builder_t( files=headerfiles,
                        define_symbols=["SKIP_BROKEN_GCCXML_PARTS"],
                        start_with_declarations = [namespace] )
 
-mb.calldefs().virtuality = declarations.VIRTUALITY_TYPES.NOT_VIRTUAL
+populateNamespaces(mb)
+
+for calldef in mb.calldefs():
+    try:
+      calldef.virtuality = declarations.VIRTUALITY_TYPES.NOT_VIRTUAL
+    except:
+      pass
+
 mb.calldefs().create_with_signature = True
 
 #export each class in turn

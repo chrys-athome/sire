@@ -1,6 +1,8 @@
 #ifndef SIREMM_DETAIL_INTERNALINFO_HPP
 #define SIREMM_DETAIL_INTERNALINFO_HPP
 
+#include <QSet>
+
 #include "SireMol/molecule.h"
 #include "SireMol/moleculeinfo.h"
 
@@ -187,6 +189,7 @@ protected:
 
     void removeInternals();
     void removeInternals(GroupID id);
+    void removeInternals(const QSet<GroupID> &groupids);
 
     const group_type& getGroup(GroupID id) const;
     group_type& getGroup(GroupID id);
@@ -536,6 +539,14 @@ bool InternalInfo<T>::contains(const T &internal) const
     }
     else
         return false;
+}
+
+/** Return whether or not this contains the group with ID == groupid */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool InternalInfo<T>::contains(GroupID groupid) const
+{
+    return groupids.contains(groupid);
 }
 
 /** Return whether or not there are any internals listed that involve 'resnum' */
@@ -1320,6 +1331,19 @@ void InternalInfo<T>::removeInternals(GroupID id)
 
         //now, finally, remove the group itself
         groupid_to_group.remove(id);
+    }
+}
+
+/** Remove all internals from all groups whose IDs are in 'groupids' */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void InternalInfo<T>::removeInternals(const QSet<GroupID> &groupids)
+{
+    for (typename QSet<GroupID>::const_iterator it = groupids.begin();
+         it != groupids.end();
+         ++it)
+    {
+        this->removeInternals(*it);
     }
 }
 

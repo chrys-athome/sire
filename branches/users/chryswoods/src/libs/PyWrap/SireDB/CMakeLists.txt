@@ -28,6 +28,8 @@ set ( WRAPDB_SOURCES
       AtomTypeDB.pypp.cpp
       AtomTypeTable.pypp.cpp
 
+      AtomTable_AtomType_.pypp.cpp
+
       DBBase.pypp.cpp
 
       FuncDB.pypp.cpp

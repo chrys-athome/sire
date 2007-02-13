@@ -29,6 +29,10 @@
 
 #include "ArithmeticCombiningRules.pypp.hpp"
 
+#include "AtomTable_ChargeParameter_.pypp.hpp"
+
+#include "AtomTable_LJParameter_.pypp.hpp"
+
 #include "AtomicCharges.pypp.hpp"
 
 #include "AtomicLJs.pypp.hpp"
@@ -91,6 +95,12 @@
 
 #include "InternalGenerator_MolDihedralInfo_.pypp.hpp"
 
+#include "InternalInfo_Angle_.pypp.hpp"
+
+#include "InternalInfo_Bond_.pypp.hpp"
+
+#include "InternalInfo_Dihedral_.pypp.hpp"
+
 #include "InternalTableBase_MolAngleInfo_.pypp.hpp"
 
 #include "InternalTableBase_MolBondInfo_.pypp.hpp"
@@ -114,6 +124,12 @@
 #include "MolBondInfo.pypp.hpp"
 
 #include "MolDihedralInfo.pypp.hpp"
+
+#include "MolInternalInfo_Angle_.pypp.hpp"
+
+#include "MolInternalInfo_Bond_.pypp.hpp"
+
+#include "MolInternalInfo_Dihedral_.pypp.hpp"
 
 #include "NoCutoff.pypp.hpp"
 
@@ -147,6 +163,10 @@ BOOST_PYTHON_MODULE(_MM){
     register_QVector_LJParameter_class();
 
     register_QVector_ChargeParameter_class();
+
+    register_AtomTable_ChargeParameter__class();
+
+    register_AtomTable_LJParameter__class();
 
     register_AngleAtomID_class();
 
@@ -298,13 +318,37 @@ BOOST_PYTHON_MODULE(_MM){
 
     bp::implicitly_convertible< SireMol::MoleculeInfo const &, SireMM::LJTable >();
 
+    register_InternalInfo_Angle__class();
+
+    bp::implicitly_convertible< SireMol::MoleculeInfo const &, SireMM::detail::InternalInfo<SireMol::Angle> >();
+
+    register_MolInternalInfo_Angle__class();
+
+    bp::implicitly_convertible< SireMol::MoleculeInfo const &, SireMM::MolInternalInfo<SireMol::Angle> >();
+
     register_MolAngleInfo_class();
 
     bp::implicitly_convertible< SireMol::MoleculeInfo const &, SireMM::MolAngleInfo >();
 
+    register_InternalInfo_Bond__class();
+
+    bp::implicitly_convertible< SireMol::MoleculeInfo const &, SireMM::detail::InternalInfo<SireMol::Bond> >();
+
+    register_MolInternalInfo_Bond__class();
+
+    bp::implicitly_convertible< SireMol::MoleculeInfo const &, SireMM::MolInternalInfo<SireMol::Bond> >();
+
     register_MolBondInfo_class();
 
     bp::implicitly_convertible< SireMol::MoleculeInfo const &, SireMM::MolBondInfo >();
+
+    register_InternalInfo_Dihedral__class();
+
+    bp::implicitly_convertible< SireMol::MoleculeInfo const &, SireMM::detail::InternalInfo<SireMol::Dihedral> >();
+
+    register_MolInternalInfo_Dihedral__class();
+
+    bp::implicitly_convertible< SireMol::MoleculeInfo const &, SireMM::MolInternalInfo<SireMol::Dihedral> >();
 
     register_MolDihedralInfo_class();
 

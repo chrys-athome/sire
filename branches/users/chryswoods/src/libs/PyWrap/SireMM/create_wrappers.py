@@ -61,6 +61,9 @@ wrap_classes = [ "AngleDB",
                  "Tip4PFF",
                  "UreyBradleyDB",
                  
+                 "AtomTableT<SireMM::ChargeParameter>",
+                 "AtomTableT<SireMM::LJParameter>",
+                 
                  "AngleTableT<SireCAS::Expression>",
                  "BondTableT<SireCAS::Expression>",
                  "DihedralTableT<SireCAS::Expression>",
@@ -79,13 +82,23 @@ wrap_classes = [ "AngleDB",
                  
                  "InternalTable<SireMM::MolAngleInfo, SireCAS::Expression>",
                  "InternalTable<SireMM::MolBondInfo, SireCAS::Expression>",
-                 "InternalTable<SireMM::MolDihedralInfo, SireCAS::Expression>"
+                 "InternalTable<SireMM::MolDihedralInfo, SireCAS::Expression>",
                  
+                 "MolInternalInfo<SireMol::Angle>",
+                 "MolInternalInfo<SireMol::Bond>",
+                 "MolInternalInfo<SireMol::Dihedral>",
+                 
+                 "InternalInfo<SireMol::Angle>",
+                 "InternalInfo<SireMol::Bond>",
+                 "InternalInfo<SireMol::Dihedral>"
                ]
 
 huge_classes = []
 
-aliases = { "AngleTableT<SireCAS::Expression>" : "AngleTable_Expression_",
+aliases = { "AtomTableT<SireMM::ChargeParameter>" : "AtomTable_ChargeParameter_",
+            "AtomTableT<SireMM::LJParameter>" : "AtomTable_LJParameter_",
+
+            "AngleTableT<SireCAS::Expression>" : "AngleTable_Expression_",
             "BondTableT<SireCAS::Expression>" : "BondTable_Expression_",
             "DihedralTableT<SireCAS::Expression>" : "DihedralTable_Expression_",
             
@@ -109,7 +122,16 @@ aliases = { "AngleTableT<SireCAS::Expression>" : "AngleTable_Expression_",
             "InternalTable<SireMM::MolBondInfo, SireCAS::Expression>" :
                               "InternalTable_MolBondInfo_Expression_",
             "InternalTable<SireMM::MolDihedralInfo, SireCAS::Expression>" :
-                              "InternalTable_MolDihedralInfo_Expression_"
+                              "InternalTable_MolDihedralInfo_Expression_",
+                              
+            "MolInternalInfo<SireMol::Angle>" : "MolInternalInfo_Angle_",
+            "MolInternalInfo<SireMol::Bond>" : "MolInternalInfo_Bond_",
+            "MolInternalInfo<SireMol::Dihedral>" : "MolInternalInfo_Dihedral_",
+            
+            "InternalInfo<SireMol::Angle>" : "InternalInfo_Angle_",
+            "InternalInfo<SireMol::Bond>" : "InternalInfo_Bond_",
+            "InternalInfo<SireMol::Dihedral>" : "InternalInfo_Dihedral_"
+            
           }
 
 extra_includes = [ "SireMol/molecule.h",

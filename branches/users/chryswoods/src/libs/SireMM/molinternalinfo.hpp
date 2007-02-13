@@ -40,7 +40,7 @@ namespace SireMM
 
 /** This is the base class of all classes that hold the metainformation
     about internals within a molecule (e.g. MolBondInfo, MolAngleInfo etc.)
-    
+
     @author Christopher Woods
 */
 template<class T>
@@ -49,9 +49,9 @@ class SIREMM_EXPORT MolInternalInfo : public detail::InternalInfo<T>
 public:
     MolInternalInfo();
     MolInternalInfo(const MoleculeInfo &molinfo);
-    
+
     MolInternalInfo(const MolInternalInfo<T> &other);
-    
+
     ~MolInternalInfo();
 
     MolInternalInfo& operator=(const MolInternalInfo &other);
@@ -62,11 +62,11 @@ public:
     //by derived classes, e.g. MolBondInfo should provide
     //addBond(), removeBond(), addBonds() and removeBonds()
     GroupIndexID addInternal(const T &internal);
-    
+
     void removeInternal(const T &internal);
     void removeInternal(const GroupIndexID &id);
     void removeInternal(GroupID id);
-    
+
     void removeIntraInternals(ResNum resnum);
     void removeInterInternals(ResNum resnum);
 
@@ -92,7 +92,7 @@ MolInternalInfo<T>::MolInternalInfo() : detail::InternalInfo<T>()
 /** Construct a MolInternalInfo to hold the internals for the molecule 'mol' */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-MolInternalInfo<T>::MolInternalInfo(const MoleculeInfo &molinfo) 
+MolInternalInfo<T>::MolInternalInfo(const MoleculeInfo &molinfo)
                    : detail::InternalInfo<T>(molinfo)
 {}
 
@@ -109,14 +109,25 @@ SIRE_OUTOFLINE_TEMPLATE
 MolInternalInfo<T>::~MolInternalInfo()
 {}
 
-/** Return the information about the residue 'resnum'. This will 
-    return an empty ResInternalInfo if there are no internals that 
+/** Return the information about the residue 'resnum'. This will
+    return an empty ResInternalInfo if there are no internals that
     involve this residue. */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 ResInternalInfo<T> MolInternalInfo<T>::extractResidue(ResNum resnum) const
 {
     return detail::InternalInfo<T>::extractResidue(resnum);
+}
+
+/** Return the info object for the residue with number 'resnum'
+
+    \throw SireMol::missing_residue
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+ResInternalInfo<T> MolInternalInfo<T>::residue(ResNum resnum) const
+{
+    return this->extractResidue(resnum);
 }
 
 /** Construct from residue 'resnum' in the passed molecule info - defined here so
@@ -166,6 +177,47 @@ SIRE_INLINE_TEMPLATE
 void MolInternalInfo<T>::removeInternal(GroupID id)
 {
     detail::InternalInfo<T>::removeInternals(id);
+}
+
+/** Remove all internals from the residue with number 'resnum'
+
+    \throw SireMol::missing_residue
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void MolInternalInfo<T>::removeInternals(ResNum resnum)
+{
+    QSet<GroupID> groupids = this->groupIDs(resnum);
+
+    this->removeInternals(groupids);
+}
+
+/** Remove all of the intra-residue internals from the
+    residue with number 'resnum'
+
+    \throw SireMol::missing_residue
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void MolInternalInfo<T>::removeIntraInternals(ResNum resnum)
+{
+    QSet<GroupID> groupids = this->intraGroupIDs(resnum);
+
+    this->removeInternals(groupids);
+}
+
+/** Remove all of the inter-residue internals from the
+    residue with number 'resnum'
+
+    \throw SireMol::missing_residue
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void MolInternalInfo<T>::removeInterInternals(ResNum resnum)
+{
+    QSet<GroupID> groupids = this->interGroupIDs(resnum);
+
+    this->removeInternals(groupids);
 }
 
 /** Publically expose the generic 'removeInternals' editing function */

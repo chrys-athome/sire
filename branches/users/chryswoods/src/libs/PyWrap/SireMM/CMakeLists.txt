@@ -36,6 +36,9 @@ set ( WRAPMM_SOURCES
       AtomicCharges.pypp.cpp
       AtomicLJs.pypp.cpp
 
+      AtomTable_ChargeParameter_.pypp.cpp
+      AtomTable_LJParameter_.pypp.cpp
+
       BondAtomID.pypp.cpp
       BondDB.pypp.cpp
       BondGenerator.pypp.cpp
@@ -70,6 +73,10 @@ set ( WRAPMM_SOURCES
       InternalGenerator_MolBondInfo_.pypp.cpp
       InternalGenerator_MolDihedralInfo_.pypp.cpp
       
+      InternalInfo_Angle_.pypp.cpp
+      InternalInfo_Bond_.pypp.cpp
+      InternalInfo_Dihedral_.pypp.cpp
+      
       InternalTableBase_MolAngleInfo_.pypp.cpp
       InternalTableBase_MolBondInfo_.pypp.cpp
       InternalTableBase_MolDihedralInfo_.pypp.cpp
@@ -84,6 +91,10 @@ set ( WRAPMM_SOURCES
       MolAngleInfo.pypp.cpp
       MolBondInfo.pypp.cpp
       MolDihedralInfo.pypp.cpp
+      
+      MolInternalInfo_Angle_.pypp.cpp
+      MolInternalInfo_Bond_.pypp.cpp
+      MolInternalInfo_Dihedral_.pypp.cpp
 
       NoCutoff.pypp.cpp
 

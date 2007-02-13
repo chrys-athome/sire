@@ -44,7 +44,7 @@ def populateNamespaces(mb):
 
 def withinNamespace(baseclass):
     for namespace in namespaces:
-        if baseclass in namespace.classes():
+        if baseclass in namespace.classes(allow_empty = True):
             return True
             
     return False
