@@ -14,7 +14,7 @@ namespace bp = boost::python;
 
 void register_AtomicCharges_class(){
 
-    bp::class_< SireMM::AtomicCharges >( "AtomicCharges" )    
+    bp::class_< SireMM::AtomicCharges, bp::bases< SireMol::AtomicProperties > >( "AtomicCharges" )    
         .def( bp::init< >() )    
         .def( bp::init< QVector<QVector<SireMM::ChargeParameter> > const & >(( bp::arg("charges") )) )    
         .def( bp::init< QVector<SireMM::ChargeParameter> const & >(( bp::arg("charges") )) )    

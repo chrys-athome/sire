@@ -14,7 +14,7 @@ namespace bp = boost::python;
 
 void register_MolAngleInfo_class(){
 
-    bp::class_< SireMM::MolAngleInfo >( "MolAngleInfo" )    
+    bp::class_< SireMM::MolAngleInfo, bp::bases< SireMM::MolInternalInfo<SireMol::Angle> > >( "MolAngleInfo" )    
         .def( bp::init< >() )    
         .def( bp::init< SireMol::MoleculeInfo const & >(( bp::arg("molinfo") )) )    
         .def( bp::init< SireMol::Molecule const &, SireMM::InternalGenerator<SireMM::MolAngleInfo> const & >(( bp::arg("mol"), bp::arg("anglegenerator") )) )    

@@ -14,7 +14,7 @@ namespace bp = boost::python;
 
 void register_BondDB_class(){
 
-    bp::class_< SireMM::BondDB >( "BondDB" )    
+    bp::class_< SireMM::BondDB, bp::bases< SireDB::Term12DB, SireMM::InternalDB<SireMM::MolBondInfo> > >( "BondDB" )    
         .def( bp::init< >() )    
         .def( 
             "addBond"

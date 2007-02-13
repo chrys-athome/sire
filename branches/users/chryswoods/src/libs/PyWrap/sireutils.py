@@ -4,9 +4,78 @@ import sys
 
 from pyplusplus.module_builder import module_builder_t
 from pyplusplus.decl_wrappers import calldef_wrapper
+from pyplusplus.code_creators import class_t
+from pyplusplus.code_creators import algorithm
 
 from pygccxml.declarations.matchers import access_type_matcher_t
 from pygccxml import declarations
+
+use_namespaces = [ "SireBase",
+                   "SireCAS",
+                   "SireCluster",
+                   "SireDB",
+                   "SireError",
+                   "SireFF", 
+                   "SireIO",
+                   "SireMaths",
+                   "SireMM",
+                   "SireMol",
+                   "SireMove",
+                   "SirePy",
+                   "SireSim",
+                   "SireStream",
+                   "SireSystem",
+                   "SireTest",
+                   "SireUnits",
+                   "SireUnitTest",
+                   "SireVol",
+                   "Spier",
+                   "Squire"
+                  ]
+
+namespaces = []
+
+def populateNamespaces(mb):
+    for namespace in use_namespaces:
+        try:
+            namespaces.append( mb.namespace(namespace) )
+        except:
+            pass
+
+def withinNamespace(baseclass):
+    for namespace in namespaces:
+        if baseclass in namespace.classes():
+            return True
+            
+    return False
+
+def _generate_bases(self, base_creators):
+    bases = []
+    assert isinstance( self.declaration, declarations.class_t )
+    
+    for base_desc in self.declaration.bases:
+        assert isinstance( base_desc, declarations.hierarchy_info_t )
+        if base_desc.access != declarations.ACCESS_TYPES.PUBLIC:
+            continue
+
+        #this is the annoying line - it removes the base class unless
+        #it has already been exposed to Python!
+        
+        #I will modify it so that it will work if the base class
+        #is either exported, or it belongs to one of a specified namespace,
+        #or if it is explicitly listed
+        if (base_creators.has_key( id(base_desc.related_class) ) or
+            withinNamespace(base_desc.related_class) ):
+            bases.append( algorithm.create_identifier( self, base_desc.related_class.decl_string ) )
+    
+    if not bases:
+        return None
+    
+    bases_identifier = algorithm.create_identifier( self, '::boost::python::bases' )
+    
+    return declarations.templates.join( bases_identifier, bases )
+
+class_t._generate_bases = _generate_bases    
 
 def export_class(mb, classname, aliases, special_code):
    #find the class in the declarations
@@ -18,6 +87,10 @@ def export_class(mb, classname, aliases, special_code):
    #exclude any "clone" functions
    c.decls( "clone", allow_empty=True ).exclude()
 
+   #run any class specific code
+   if (classname in special_code):
+     special_code[classname](c)
+
    #if this is a noncopyable class then remove all constructors!
    if c.noncopyable:
       c.constructors().exclude()
@@ -25,10 +98,6 @@ def export_class(mb, classname, aliases, special_code):
    #provide an alias for this class
    if (classname in aliases):
       c.alias = aliases[classname]
-      
-   #run any class specific code
-   if (classname in special_code):
-      special_code[classname](c)
 
 
 def write_wrappers(mb, modulename, 

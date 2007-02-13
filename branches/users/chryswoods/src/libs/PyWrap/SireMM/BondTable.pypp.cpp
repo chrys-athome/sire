@@ -14,7 +14,7 @@ namespace bp = boost::python;
 
 void register_BondTable_class(){
 
-    bp::class_< SireMM::BondTable >( "BondTable" )    
+    bp::class_< SireMM::BondTable, bp::bases< SireMM::BondTableT<SireCAS::Expression> > >( "BondTable" )    
         .def( bp::init< >() )    
         .def( bp::init< SireMol::MoleculeInfo const & >(( bp::arg("molinfo") )) )    
         .def( bp::init< SireMol::Molecule const &, SireMM::BondGeneratorBase const & >(( bp::arg("mol"), bp::arg("bondgenerator") )) )    

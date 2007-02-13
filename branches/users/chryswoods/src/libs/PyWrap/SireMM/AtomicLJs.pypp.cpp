@@ -14,7 +14,7 @@ namespace bp = boost::python;
 
 void register_AtomicLJs_class(){
 
-    bp::class_< SireMM::AtomicLJs >( "AtomicLJs" )    
+    bp::class_< SireMM::AtomicLJs, bp::bases< SireMol::AtomicProperties > >( "AtomicLJs" )    
         .def( bp::init< >() )    
         .def( bp::init< QVector<QVector<SireMM::LJParameter> > const & >(( bp::arg("ljparams") )) )    
         .def( bp::init< QVector<SireMM::LJParameter> const & >(( bp::arg("ljparams") )) )    

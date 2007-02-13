@@ -14,7 +14,7 @@ namespace bp = boost::python;
 
 void register_LJTable_class(){
 
-    bp::class_< SireMM::LJTable >( "LJTable" )    
+    bp::class_< SireMM::LJTable, bp::bases< SireDB::AtomTableT<SireMM::LJParameter> > >( "LJTable" )    
         .def( bp::init< >() )    
         .def( bp::init< SireMol::MoleculeInfo const & >(( bp::arg("molinfo") )) )    
         .def( 

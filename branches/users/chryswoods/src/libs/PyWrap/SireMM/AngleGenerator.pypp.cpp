@@ -14,7 +14,7 @@ namespace bp = boost::python;
 
 void register_AngleGenerator_class(){
 
-    bp::class_< SireMM::AngleGenerator >( "AngleGenerator" )    
+    bp::class_< SireMM::AngleGenerator, bp::bases< SireMM::InternalGenerator<SireMM::MolAngleInfo> > >( "AngleGenerator" )    
         .def( bp::init< >() )    
         .def( 
             "generate"

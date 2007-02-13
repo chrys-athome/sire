@@ -15,12 +15,18 @@ namespace bp = boost::python;
 void register_Tip4PFF_class(){
 
     { //::SireMM::Tip4PFF
-        typedef bp::class_< SireMM::Tip4PFF, bp::bases< SireMM::CLJFF >, boost::noncopyable > Tip4PFF_exposer_t;
+        typedef bp::class_< SireMM::Tip4PFF, bp::bases< SireMM::CLJFF > > Tip4PFF_exposer_t;
         Tip4PFF_exposer_t Tip4PFF_exposer = Tip4PFF_exposer_t( "Tip4PFF" );
         bp::scope Tip4PFF_scope( Tip4PFF_exposer );
-        bp::class_< SireMM::Tip4PFF::Components, bp::bases< SireMM::CLJFF::Components > >( "Components" );
-        bp::class_< SireMM::Tip4PFF::Groups, bp::bases< SireMM::CLJFF::Groups > >( "Groups" );
-        bp::class_< SireMM::Tip4PFF::Parameters, bp::bases< SireMM::CLJFF::Parameters > >( "Parameters" );
+        bp::class_< SireMM::Tip4PFF::Components, bp::bases< SireMM::CLJFF::Components > >( "Components" )    
+            .def( bp::init< >() )    
+            .def( bp::init< SireFF::FFBase const &, SireCAS::Symbols const & >(( bp::arg("ffbase"), bp::arg("symbols") )) );
+        bp::class_< SireMM::Tip4PFF::Groups, bp::bases< SireMM::CLJFF::Groups > >( "Groups" )    
+            .def( bp::init< >() );
+        bp::class_< SireMM::Tip4PFF::Parameters, bp::bases< SireMM::CLJFF::Parameters > >( "Parameters" )    
+            .def( bp::init< >() );
+        Tip4PFF_exposer.def( bp::init< >() );
+        Tip4PFF_exposer.def( bp::init< SireVol::Space const &, SireMM::SwitchingFunction const & >(( bp::arg("space"), bp::arg("switchfunc") )) );
         { //::SireMM::Tip4PFF::add
         
             typedef bool ( ::SireMM::Tip4PFF::*add_function_type )( ::SireMol::Molecule const &,::SireFF::ParameterMap const & ) ;

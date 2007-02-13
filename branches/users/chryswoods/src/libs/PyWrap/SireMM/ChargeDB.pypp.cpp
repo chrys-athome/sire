@@ -14,7 +14,7 @@ namespace bp = boost::python;
 
 void register_ChargeDB_class(){
 
-    bp::class_< SireMM::ChargeDB >( "ChargeDB" )    
+    bp::class_< SireMM::ChargeDB, bp::bases< SireDB::AtomDB > >( "ChargeDB" )    
         .def( bp::init< >() )    
         .def( 
             "addCharge"

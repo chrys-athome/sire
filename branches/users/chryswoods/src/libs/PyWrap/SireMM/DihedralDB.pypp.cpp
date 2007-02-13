@@ -14,7 +14,7 @@ namespace bp = boost::python;
 
 void register_DihedralDB_class(){
 
-    bp::class_< SireMM::DihedralDB >( "DihedralDB" )    
+    bp::class_< SireMM::DihedralDB, bp::bases< SireDB::Term14DB, SireMM::InternalDB<SireMM::MolDihedralInfo> > >( "DihedralDB" )    
         .def( bp::init< >() )    
         .def( 
             "addDihedral"

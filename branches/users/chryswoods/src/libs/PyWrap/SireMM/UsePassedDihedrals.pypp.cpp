@@ -14,7 +14,7 @@ namespace bp = boost::python;
 
 void register_UsePassedDihedrals_class(){
 
-    bp::class_< SireMM::UsePassedDihedrals >( "UsePassedDihedrals" )    
+    bp::class_< SireMM::UsePassedDihedrals, bp::bases< SireMM::UsePassedInternals<SireMM::MolDihedralInfo> > >( "UsePassedDihedrals" )    
         .def( bp::init< >() )    
         .def( bp::init< QSet<SireMol::Dihedral> const & >(( bp::arg("dihedrals") )) )    
         .def( 

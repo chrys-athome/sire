@@ -14,7 +14,7 @@ namespace bp = boost::python;
 
 void register_ResAngleInfo_class(){
 
-    bp::class_< SireMM::ResAngleInfo >( "ResAngleInfo" )    
+    bp::class_< SireMM::ResAngleInfo, bp::bases< SireMM::ResInternalInfo<SireMol::Angle> > >( "ResAngleInfo" )    
         .def( bp::init< >() )    
         .def( bp::init< SireMM::MolAngleInfo const &, SireMol::ResNum >(( bp::arg("molinfo"), bp::arg("resnum") )) )    
         .def( bp::init< SireMM::ResInternalInfo<SireMol::Angle> const & >(( bp::arg("other") )) )    

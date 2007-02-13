@@ -14,7 +14,7 @@ namespace bp = boost::python;
 
 void register_AngleTable_class(){
 
-    bp::class_< SireMM::AngleTable >( "AngleTable" )    
+    bp::class_< SireMM::AngleTable, bp::bases< SireMM::AngleTableT<SireCAS::Expression> > >( "AngleTable" )    
         .def( bp::init< >() )    
         .def( bp::init< SireMol::MoleculeInfo const & >(( bp::arg("mol") )) )    
         .def( bp::init< SireMol::Molecule const &, SireMM::AngleGeneratorBase const & >(( bp::arg("molecule"), bp::arg("anglegenerator") )) )    

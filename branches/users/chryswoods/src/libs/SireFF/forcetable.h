@@ -42,7 +42,7 @@ A ForceTable is a workspace within which all of the forces acting on a molecule 
 @author Christopher Woods
 
 */
-class ForceTable
+class SIREFF_EXPORT ForceTable
 {
 public:
     ForceTable();

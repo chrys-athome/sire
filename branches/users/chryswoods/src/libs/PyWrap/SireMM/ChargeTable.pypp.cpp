@@ -14,7 +14,7 @@ namespace bp = boost::python;
 
 void register_ChargeTable_class(){
 
-    bp::class_< SireMM::ChargeTable >( "ChargeTable" )    
+    bp::class_< SireMM::ChargeTable, bp::bases< SireDB::AtomTableT<SireMM::ChargeParameter> > >( "ChargeTable" )    
         .def( bp::init< >() )    
         .def( bp::init< SireMol::MoleculeInfo const & >(( bp::arg("molinfo") )) )    
         .def( 

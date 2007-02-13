@@ -20,6 +20,13 @@ set ( WRAPMM_SOURCES
 
       _MM.main.cpp
 
+      QVector_ChargeParameter_.py.cpp
+      QVector_LJParameter_.py.cpp
+
+      AngleTable_Expression_.pypp.cpp
+      BondTable_Expression_.pypp.cpp
+      DihedralTable_Expression_.pypp.cpp
+
       AngleAtomID.pypp.cpp
       AngleDB.pypp.cpp
       AngleGenerator.pypp.cpp
@@ -56,6 +63,20 @@ set ( WRAPMM_SOURCES
 
       InterCLJFF.pypp.cpp
 
+      InternalDB_MolAngleInfo_.pypp.cpp
+      InternalDB_MolBondInfo_.pypp.cpp
+      InternalDB_MolDihedralInfo_.pypp.cpp
+      InternalGenerator_MolAngleInfo_.pypp.cpp
+      InternalGenerator_MolBondInfo_.pypp.cpp
+      InternalGenerator_MolDihedralInfo_.pypp.cpp
+      
+      InternalTableBase_MolAngleInfo_.pypp.cpp
+      InternalTableBase_MolBondInfo_.pypp.cpp
+      InternalTableBase_MolDihedralInfo_.pypp.cpp
+      InternalTable_MolAngleInfo_Expression_.pypp.cpp
+      InternalTable_MolBondInfo_Expression_.pypp.cpp
+      InternalTable_MolDihedralInfo_Expression_.pypp.cpp
+            
       LJDB.pypp.cpp
       LJParameter.pypp.cpp
       LJTable.pypp.cpp

@@ -14,7 +14,7 @@ namespace bp = boost::python;
 
 void register_UreyBradleyDB_class(){
 
-    bp::class_< SireMM::UreyBradleyDB >( "UreyBradleyDB" )    
+    bp::class_< SireMM::UreyBradleyDB, bp::bases< SireDB::Term13DB > >( "UreyBradleyDB" )    
         .def( bp::init< >() )    
         .def( 
             "addUreyBradley"

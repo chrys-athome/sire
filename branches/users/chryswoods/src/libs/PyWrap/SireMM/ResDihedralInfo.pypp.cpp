@@ -14,7 +14,7 @@ namespace bp = boost::python;
 
 void register_ResDihedralInfo_class(){
 
-    bp::class_< SireMM::ResDihedralInfo >( "ResDihedralInfo" )    
+    bp::class_< SireMM::ResDihedralInfo, bp::bases< SireMM::ResInternalInfo<SireMol::Dihedral> > >( "ResDihedralInfo" )    
         .def( bp::init< >() )    
         .def( bp::init< SireMM::MolDihedralInfo const &, SireMol::ResNum >(( bp::arg("molinfo"), bp::arg("resnum") )) )    
         .def( bp::init< SireMM::ResInternalInfo<SireMol::Dihedral> const & >(( bp::arg("other") )) )    

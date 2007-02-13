@@ -15,12 +15,18 @@ namespace bp = boost::python;
 void register_InterCLJFF_class(){
 
     { //::SireMM::InterCLJFF
-        typedef bp::class_< SireMM::InterCLJFF, bp::bases< SireMM::CLJFF >, boost::noncopyable > InterCLJFF_exposer_t;
+        typedef bp::class_< SireMM::InterCLJFF, bp::bases< SireMM::CLJFF > > InterCLJFF_exposer_t;
         InterCLJFF_exposer_t InterCLJFF_exposer = InterCLJFF_exposer_t( "InterCLJFF" );
         bp::scope InterCLJFF_scope( InterCLJFF_exposer );
-        bp::class_< SireMM::InterCLJFF::Components, bp::bases< SireMM::CLJFF::Components > >( "Components" );
-        bp::class_< SireMM::InterCLJFF::Groups, bp::bases< SireMM::CLJFF::Groups > >( "Groups" );
-        bp::class_< SireMM::InterCLJFF::Parameters, bp::bases< SireMM::CLJFF::Parameters > >( "Parameters" );
+        bp::class_< SireMM::InterCLJFF::Components, bp::bases< SireMM::CLJFF::Components > >( "Components" )    
+            .def( bp::init< >() )    
+            .def( bp::init< SireFF::FFBase const &, SireCAS::Symbols const & >(( bp::arg("ffbase"), bp::arg("symbols") )) );
+        bp::class_< SireMM::InterCLJFF::Groups, bp::bases< SireMM::CLJFF::Groups > >( "Groups" )    
+            .def( bp::init< >() );
+        bp::class_< SireMM::InterCLJFF::Parameters, bp::bases< SireMM::CLJFF::Parameters > >( "Parameters" )    
+            .def( bp::init< >() );
+        InterCLJFF_exposer.def( bp::init< >() );
+        InterCLJFF_exposer.def( bp::init< SireVol::Space const &, SireMM::SwitchingFunction const & >(( bp::arg("space"), bp::arg("switchfunc") )) );
         { //::SireMM::InterCLJFF::add
         
             typedef bool ( ::SireMM::InterCLJFF::*add_function_type )( ::SireMol::Molecule const &,::SireFF::ParameterMap const & ) ;

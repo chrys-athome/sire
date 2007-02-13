@@ -14,7 +14,7 @@ namespace bp = boost::python;
 
 void register_ResBondInfo_class(){
 
-    bp::class_< SireMM::ResBondInfo >( "ResBondInfo" )    
+    bp::class_< SireMM::ResBondInfo, bp::bases< SireMM::ResInternalInfo<SireMol::Bond> > >( "ResBondInfo" )    
         .def( bp::init< >() )    
         .def( bp::init< SireMM::MolBondInfo const &, SireMol::ResNum >(( bp::arg("molinfo"), bp::arg("resnum") )) )    
         .def( bp::init< SireMM::ResInternalInfo<SireMol::Bond> const & >(( bp::arg("other") )) )    

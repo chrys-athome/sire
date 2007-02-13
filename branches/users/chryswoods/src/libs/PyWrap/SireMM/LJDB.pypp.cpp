@@ -14,7 +14,7 @@ namespace bp = boost::python;
 
 void register_LJDB_class(){
 
-    bp::class_< SireMM::LJDB >( "LJDB" )    
+    bp::class_< SireMM::LJDB, bp::bases< SireDB::AtomDB > >( "LJDB" )    
         .def( bp::init< >() )    
         .def( 
             "addLJ"

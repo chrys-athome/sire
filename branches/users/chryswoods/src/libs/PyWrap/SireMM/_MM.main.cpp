@@ -25,6 +25,8 @@
 
 #include "AngleTable.pypp.hpp"
 
+#include "AngleTable_Expression_.pypp.hpp"
+
 #include "ArithmeticCombiningRules.pypp.hpp"
 
 #include "AtomicCharges.pypp.hpp"
@@ -40,6 +42,8 @@
 #include "BondResID.pypp.hpp"
 
 #include "BondTable.pypp.hpp"
+
+#include "BondTable_Expression_.pypp.hpp"
 
 #include "CLJFF.pypp.hpp"
 
@@ -67,11 +71,37 @@
 
 #include "DihedralTable.pypp.hpp"
 
+#include "DihedralTable_Expression_.pypp.hpp"
+
 #include "GeometricCombiningRules.pypp.hpp"
 
 #include "HarmonicSwitchingFunction.pypp.hpp"
 
 #include "InterCLJFF.pypp.hpp"
+
+#include "InternalDB_MolAngleInfo_.pypp.hpp"
+
+#include "InternalDB_MolBondInfo_.pypp.hpp"
+
+#include "InternalDB_MolDihedralInfo_.pypp.hpp"
+
+#include "InternalGenerator_MolAngleInfo_.pypp.hpp"
+
+#include "InternalGenerator_MolBondInfo_.pypp.hpp"
+
+#include "InternalGenerator_MolDihedralInfo_.pypp.hpp"
+
+#include "InternalTableBase_MolAngleInfo_.pypp.hpp"
+
+#include "InternalTableBase_MolBondInfo_.pypp.hpp"
+
+#include "InternalTableBase_MolDihedralInfo_.pypp.hpp"
+
+#include "InternalTable_MolAngleInfo_Expression_.pypp.hpp"
+
+#include "InternalTable_MolBondInfo_Expression_.pypp.hpp"
+
+#include "InternalTable_MolDihedralInfo_Expression_.pypp.hpp"
 
 #include "LJDB.pypp.hpp"
 
@@ -107,14 +137,26 @@
 
 #include "UsePassedDihedrals.pypp.hpp"
 
+#include "QVector_LJParameter_.py.h"
+
+#include "QVector_ChargeParameter_.py.h"
+
 namespace bp = boost::python;
 
 BOOST_PYTHON_MODULE(_MM){
+    register_QVector_LJParameter_class();
+
+    register_QVector_ChargeParameter_class();
+
     register_AngleAtomID_class();
 
     bp::implicitly_convertible< SireMol::Angle const &, SireMM::AngleAtomID >();
 
+    register_InternalDB_MolAngleInfo__class();
+
     register_AngleDB_class();
+
+    register_InternalGenerator_MolAngleInfo__class();
 
     register_AngleGenerator_class();
 
@@ -123,6 +165,12 @@ BOOST_PYTHON_MODULE(_MM){
     bp::implicitly_convertible< SireMol::ResNum, SireMM::AngleResID >();
 
     bp::implicitly_convertible< SireMol::Angle const &, SireMM::AngleResID >();
+
+    register_InternalTableBase_MolAngleInfo__class();
+
+    register_InternalTable_MolAngleInfo_Expression__class();
+
+    register_AngleTable_Expression__class();
 
     register_AngleTable_class();
 
@@ -154,7 +202,11 @@ BOOST_PYTHON_MODULE(_MM){
 
     bp::implicitly_convertible< SireMol::Bond const &, SireMM::BondAtomID >();
 
+    register_InternalDB_MolBondInfo__class();
+
     register_BondDB_class();
+
+    register_InternalGenerator_MolBondInfo__class();
 
     register_BondGenerator_class();
 
@@ -163,6 +215,12 @@ BOOST_PYTHON_MODULE(_MM){
     bp::implicitly_convertible< SireMol::ResNum, SireMM::BondResID >();
 
     bp::implicitly_convertible< SireMol::Bond const &, SireMM::BondResID >();
+
+    register_InternalTableBase_MolBondInfo__class();
+
+    register_InternalTable_MolBondInfo_Expression__class();
+
+    register_BondTable_Expression__class();
 
     register_BondTable_class();
 
@@ -198,7 +256,11 @@ BOOST_PYTHON_MODULE(_MM){
 
     bp::implicitly_convertible< SireMol::Dihedral const &, SireMM::DihedralAtomID >();
 
+    register_InternalDB_MolDihedralInfo__class();
+
     register_DihedralDB_class();
+
+    register_InternalGenerator_MolDihedralInfo__class();
 
     register_DihedralGenerator_class();
 
@@ -207,6 +269,12 @@ BOOST_PYTHON_MODULE(_MM){
     bp::implicitly_convertible< SireMol::ResNum, SireMM::DihedralResID >();
 
     bp::implicitly_convertible< SireMol::Dihedral const &, SireMM::DihedralResID >();
+
+    register_InternalTableBase_MolDihedralInfo__class();
+
+    register_InternalTable_MolDihedralInfo_Expression__class();
+
+    register_DihedralTable_Expression__class();
 
     register_DihedralTable_class();
 

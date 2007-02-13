@@ -14,7 +14,7 @@ namespace bp = boost::python;
 
 void register_AngleDB_class(){
 
-    bp::class_< SireMM::AngleDB >( "AngleDB" )    
+    bp::class_< SireMM::AngleDB, bp::bases< SireDB::Term13DB, SireMM::InternalDB<SireMM::MolAngleInfo> > >( "AngleDB" )    
         .def( bp::init< >() )    
         .def( 
             "addAngle"

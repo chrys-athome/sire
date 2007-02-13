@@ -14,7 +14,7 @@ namespace bp = boost::python;
 
 void register_MolBondInfo_class(){
 
-    bp::class_< SireMM::MolBondInfo >( "MolBondInfo" )    
+    bp::class_< SireMM::MolBondInfo, bp::bases< SireMM::MolInternalInfo<SireMol::Bond> > >( "MolBondInfo" )    
         .def( bp::init< >() )    
         .def( bp::init< SireMol::MoleculeInfo const & >(( bp::arg("molinfo") )) )    
         .def( bp::init< SireMol::Molecule const &, SireMM::InternalGenerator<SireMM::MolBondInfo> const & >(( bp::arg("mol"), bp::arg("bondgenerator") )) )    

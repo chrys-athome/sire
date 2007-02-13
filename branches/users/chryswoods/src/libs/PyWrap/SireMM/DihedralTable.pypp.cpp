@@ -14,7 +14,7 @@ namespace bp = boost::python;
 
 void register_DihedralTable_class(){
 
-    bp::class_< SireMM::DihedralTable >( "DihedralTable" )    
+    bp::class_< SireMM::DihedralTable, bp::bases< SireMM::DihedralTableT<SireCAS::Expression> > >( "DihedralTable" )    
         .def( bp::init< >() )    
         .def( bp::init< SireMol::MoleculeInfo const & >(( bp::arg("mol") )) )    
         .def( bp::init< SireMol::Molecule const &, SireMM::DihedralGeneratorBase const & >(( bp::arg("mol"), bp::arg("dihedralgenerator") )) )    

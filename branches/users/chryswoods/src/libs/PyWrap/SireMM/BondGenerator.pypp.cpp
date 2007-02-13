@@ -14,7 +14,7 @@ namespace bp = boost::python;
 
 void register_BondGenerator_class(){
 
-    bp::class_< SireMM::BondGenerator >( "BondGenerator" )    
+    bp::class_< SireMM::BondGenerator, bp::bases< SireMM::InternalGenerator<SireMM::MolBondInfo> > >( "BondGenerator" )    
         .def( bp::init< >() )    
         .def( 
             "generate"

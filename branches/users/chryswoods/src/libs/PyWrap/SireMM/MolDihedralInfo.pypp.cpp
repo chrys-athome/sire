@@ -14,7 +14,7 @@ namespace bp = boost::python;
 
 void register_MolDihedralInfo_class(){
 
-    bp::class_< SireMM::MolDihedralInfo >( "MolDihedralInfo" )    
+    bp::class_< SireMM::MolDihedralInfo, bp::bases< SireMM::MolInternalInfo<SireMol::Dihedral> > >( "MolDihedralInfo" )    
         .def( bp::init< >() )    
         .def( bp::init< SireMol::MoleculeInfo const & >(( bp::arg("molinfo") )) )    
         .def( bp::init< SireMol::Molecule const &, SireMM::InternalGenerator<SireMM::MolDihedralInfo> const & >(( bp::arg("mol"), bp::arg("dihedralgenerator") )) )    

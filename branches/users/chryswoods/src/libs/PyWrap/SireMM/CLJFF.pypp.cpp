@@ -15,10 +15,10 @@ namespace bp = boost::python;
 void register_CLJFF_class(){
 
     { //::SireMM::CLJFF
-        typedef bp::class_< SireMM::CLJFF, boost::noncopyable > CLJFF_exposer_t;
+        typedef bp::class_< SireMM::CLJFF, bp::bases< SireFF::FFBase >, boost::noncopyable > CLJFF_exposer_t;
         CLJFF_exposer_t CLJFF_exposer = CLJFF_exposer_t( "CLJFF", bp::no_init );
         bp::scope CLJFF_scope( CLJFF_exposer );
-        bp::class_< SireMM::CLJFF::Components >( "Components" )    
+        bp::class_< SireMM::CLJFF::Components, bp::bases< SireFF::FFBase::Components > >( "Components" )    
             .def( 
                 "coulomb"
                 , (::SireFF::FFComponent const & ( ::SireMM::CLJFF::Components::* )(  ) const)( &::SireMM::CLJFF::Components::coulomb )
@@ -35,8 +35,8 @@ void register_CLJFF_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() )    
             .staticmethod( "describe_coulomb" )    
             .staticmethod( "describe_lj" );
-        bp::class_< SireMM::CLJFF::Groups >( "Groups" );
-        bp::class_< SireMM::CLJFF::Parameters >( "Parameters" )    
+        bp::class_< SireMM::CLJFF::Groups, bp::bases< SireFF::FFBase::Groups > >( "Groups" );
+        bp::class_< SireMM::CLJFF::Parameters, bp::bases< SireFF::FFBase::Parameters > >( "Parameters" )    
             .def( 
                 "coulomb"
                 , (::SireFF::ParameterName const & ( ::SireMM::CLJFF::Parameters::* )(  ) const)( &::SireMM::CLJFF::Parameters::coulomb )

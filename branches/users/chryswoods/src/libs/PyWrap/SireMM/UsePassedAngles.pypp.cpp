@@ -14,7 +14,7 @@ namespace bp = boost::python;
 
 void register_UsePassedAngles_class(){
 
-    bp::class_< SireMM::UsePassedAngles >( "UsePassedAngles" )    
+    bp::class_< SireMM::UsePassedAngles, bp::bases< SireMM::UsePassedInternals<SireMM::MolAngleInfo> > >( "UsePassedAngles" )    
         .def( bp::init< >() )    
         .def( bp::init< QSet<SireMol::Angle> const & >(( bp::arg("angles") )) )    
         .def( 

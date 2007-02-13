@@ -14,7 +14,7 @@ namespace bp = boost::python;
 
 void register_UsePassedBonds_class(){
 
-    bp::class_< SireMM::UsePassedBonds >( "UsePassedBonds" )    
+    bp::class_< SireMM::UsePassedBonds, bp::bases< SireMM::UsePassedInternals<SireMM::MolBondInfo> > >( "UsePassedBonds" )    
         .def( bp::init< >() )    
         .def( bp::init< QSet<SireMol::Bond> const & >(( bp::arg("bonds") )) )    
         .def( 

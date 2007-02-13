@@ -14,7 +14,7 @@ namespace bp = boost::python;
 
 void register_DihedralGenerator_class(){
 
-    bp::class_< SireMM::DihedralGenerator >( "DihedralGenerator" )    
+    bp::class_< SireMM::DihedralGenerator, bp::bases< SireMM::InternalGenerator<SireMM::MolDihedralInfo> > >( "DihedralGenerator" )    
         .def( bp::init< >() )    
         .def( 
             "generate"
