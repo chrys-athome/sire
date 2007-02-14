@@ -24,24 +24,24 @@ void register_Dihedral_class(){
         .def( bp::init< QString const &, SireMol::ResNum, QString const &, SireMol::ResNum, QString const &, SireMol::ResNum, QString const &, SireMol::ResNum >(( bp::arg("atm0"), bp::arg("res0"), bp::arg("atm1"), bp::arg("res1"), bp::arg("atm2"), bp::arg("res2"), bp::arg("atm3"), bp::arg("res3") )) )    
         .def( 
             "at"
-            , (::SireMol::AtomIndex const & ( ::SireMol::Dihedral::* )( int ) const)( &::SireMol::Dihedral::at )
+            , &::SireMol::Dihedral::at
             , ( bp::arg("i") )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "atom0"
-            , (::SireMol::AtomIndex const & ( ::SireMol::Dihedral::* )(  ) const)( &::SireMol::Dihedral::atom0 )
+            , &::SireMol::Dihedral::atom0
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "atom1"
-            , (::SireMol::AtomIndex const & ( ::SireMol::Dihedral::* )(  ) const)( &::SireMol::Dihedral::atom1 )
+            , &::SireMol::Dihedral::atom1
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "atom2"
-            , (::SireMol::AtomIndex const & ( ::SireMol::Dihedral::* )(  ) const)( &::SireMol::Dihedral::atom2 )
+            , &::SireMol::Dihedral::atom2
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "atom3"
-            , (::SireMol::AtomIndex const & ( ::SireMol::Dihedral::* )(  ) const)( &::SireMol::Dihedral::atom3 )
+            , &::SireMol::Dihedral::atom3
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "contains"
@@ -57,13 +57,13 @@ void register_Dihedral_class(){
             , ( bp::arg("resnum") ) )    
         .def( 
             "count"
-            , (int ( ::SireMol::Dihedral::* )(  ) const)( &::SireMol::Dihedral::count ) )    
+            , &::SireMol::Dihedral::count )    
         .def( 
             "interResidue"
-            , (bool ( ::SireMol::Dihedral::* )(  ) const)( &::SireMol::Dihedral::interResidue ) )    
+            , &::SireMol::Dihedral::interResidue )    
         .def( 
             "intraResidue"
-            , (bool ( ::SireMol::Dihedral::* )(  ) const)( &::SireMol::Dihedral::intraResidue ) )    
+            , &::SireMol::Dihedral::intraResidue )    
         .def( bp::self != bp::self )    
         .def( bp::self < bp::self )    
         .def( bp::self <= bp::self )    
@@ -72,26 +72,26 @@ void register_Dihedral_class(){
         .def( bp::self >= bp::self )    
         .def( 
             "__getitem__"
-            , (::SireMol::AtomIndex const & ( ::SireMol::Dihedral::* )( int ) const)( &::SireMol::Dihedral::operator[] )
+            , &::SireMol::Dihedral::operator[]
             , ( bp::arg("i") )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "resNum0"
-            , (::SireMol::ResNum ( ::SireMol::Dihedral::* )(  ) const)( &::SireMol::Dihedral::resNum0 ) )    
+            , &::SireMol::Dihedral::resNum0 )    
         .def( 
             "resNum1"
-            , (::SireMol::ResNum ( ::SireMol::Dihedral::* )(  ) const)( &::SireMol::Dihedral::resNum1 ) )    
+            , &::SireMol::Dihedral::resNum1 )    
         .def( 
             "resNum2"
-            , (::SireMol::ResNum ( ::SireMol::Dihedral::* )(  ) const)( &::SireMol::Dihedral::resNum2 ) )    
+            , &::SireMol::Dihedral::resNum2 )    
         .def( 
             "resNum3"
-            , (::SireMol::ResNum ( ::SireMol::Dihedral::* )(  ) const)( &::SireMol::Dihedral::resNum3 ) )    
+            , &::SireMol::Dihedral::resNum3 )    
         .def( 
             "size"
-            , (int ( ::SireMol::Dihedral::* )(  ) const)( &::SireMol::Dihedral::size ) )    
+            , &::SireMol::Dihedral::size )    
         .def( 
             "toString"
-            , (::QString ( ::SireMol::Dihedral::* )(  ) const)( &::SireMol::Dihedral::toString ) );
+            , &::SireMol::Dihedral::toString );
 
 }

@@ -19,7 +19,7 @@ namespace bp = boost::python;
 
 void register_FFWorker_class(){
 
-    bp::class_< SireFF::FFWorker, bp::bases< SireFF::FFWorkerBase >, boost::noncopyable >( "FFWorker", bp::no_init )    
+    bp::class_< SireFF::FFWorker, bp::bases< SireFF::FFWorkerBase, SireCluster::WorkerBase >, boost::noncopyable >( "FFWorker", bp::no_init )    
         .def( 
             "forcefield"
             , (::SireFF::ForceField ( ::SireFF::FFWorker::* )(  ) const)( &::SireFF::FFWorker::forcefield ) );

@@ -19,7 +19,7 @@ namespace bp = boost::python;
 
 void register_FFComponent_class(){
 
-    bp::class_< SireFF::FFComponent, bp::bases<SireCAS::Function> >( "FFComponent" )    
+    bp::class_< SireFF::FFComponent, bp::bases< SireCAS::Function > >( "FFComponent" )    
         .def( bp::init< >() )    
         .def( bp::init< SireFF::FFBase const & >(( bp::arg("ffield") )) )    
         .def( bp::init< SireFF::FFBase const &, SireCAS::Symbols const & >(( bp::arg("ffield"), bp::arg("symbols") )) )    

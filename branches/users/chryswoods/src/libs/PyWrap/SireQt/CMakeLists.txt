@@ -18,6 +18,8 @@ include_directories( ${CMAKE_SOURCE_DIR}/src/libs
 # Define the sources in SireQt
 set ( WRAPQT_SOURCES
 
+      wrap_SireQt.cpp
+
       qvariant.py.cpp
 
       wrap_qbytearray.cpp            
@@ -61,36 +63,19 @@ set ( WRAPQT_SOURCES
 
 # Create the library that holds all of the class wrappers
 # for Qt
-add_library (PyWrap_SireQt ${WRAPQT_SOURCES})
-
-set_target_properties (PyWrap_SireQt PROPERTIES
-                       VERSION ${SIRE_VERSION}
-                       SOVERSION ${SIRE_VERSION_MAJOR}
-                      )
-
-target_link_libraries (PyWrap_SireQt
-                       ${QT_QTCORE_LIBRARY}
-		       ${BOOST_PYTHON_LIBRARY}
-                       ${PYTHON_LIBRARY}
-		      )
-
-# Install the wrappers library with the other Sire libraries
-install( TARGETS PyWrap_SireQt
-         RUNTIME DESTINATION ${SIRE_BIN}
-         LIBRARY DESTINATION ${SIRE_LIBS}
-         ARCHIVE DESTINATION ${SIRE_ARCHIVES}
-       )
-       
-# now create the thin-wrapper python module
-add_library (PythonWrapping_Qt wrap_SireQt.cpp)
+add_library (PythonWrapping_Qt ${WRAPQT_SOURCES})
 
 target_link_libraries (PythonWrapping_Qt
-                       PyWrap_SireQt
-                       )
+                       ${QT_QTCORE_LIBRARY}
+                       ${BOOST_PYTHON_LIBRARY}
+                       ${PYTHON_LIBRARY}
+                      )
 
-# Use properties to change the filename of the python module
-set_target_properties (PythonWrapping_Qt
+
+set_target_properties (PythonWrapping_Qt 
                        PROPERTIES
+                         VERSION ${SIRE_VERSION}
+                         SOVERSION ${SIRE_VERSION_MAJOR}
                          OUTPUT_NAME "Qt"
                          PREFIX "_"
                          SUFFIX ${PYTHON_MODULE_EXTENSION}

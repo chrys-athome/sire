@@ -239,7 +239,7 @@ public:
         minimum distance between that periodic replica and 'center'.
 
         If there are no periodic replicas of 'group' that are within
-        'dist' of 'center', then an empty list is returned. 
+        'dist' of 'center', then an empty list is returned.
     */
     virtual QList< boost::tuple<double,CoordGroup> >
                     getCopiesWithin(const CoordGroup &group, const CoordGroup &center,
@@ -319,10 +319,6 @@ public:
     QList< boost::tuple<double,CoordGroup> >
                 getCopiesWithin(const CoordGroup &group,
                                 const CoordGroup &center, double dist) const;
-
-    QList< boost::tuple<double,CoordGroup> >
-                getCopiesWithin(const CoordGroup &group,
-                                const QVector<CoordGroup> &center, double dist) const;
 
 private:
     /** Dynamic shared pointer to the virtual SpaceBase class

@@ -24,63 +24,63 @@ void register_Element_class(){
         .def( bp::init< int >(( bp::arg("nprotons") )) )    
         .def( 
             "actinide"
-            , (bool ( ::SireMol::Element::* )(  ) const)( &::SireMol::Element::actinide ) )    
+            , &::SireMol::Element::actinide )    
         .def( 
             "alkaliEarthMetal"
-            , (bool ( ::SireMol::Element::* )(  ) const)( &::SireMol::Element::alkaliEarthMetal ) )    
+            , &::SireMol::Element::alkaliEarthMetal )    
         .def( 
             "alkaliMetal"
-            , (bool ( ::SireMol::Element::* )(  ) const)( &::SireMol::Element::alkaliMetal ) )    
+            , &::SireMol::Element::alkaliMetal )    
         .def( 
             "biological"
-            , (bool ( ::SireMol::Element::* )(  ) const)( &::SireMol::Element::biological ) )    
+            , &::SireMol::Element::biological )    
         .def( 
             "biologicalElement"
-            , (::SireMol::Element (*)( ::QString const & ))( &::SireMol::Element::biologicalElement )
+            , &::SireMol::Element::biologicalElement
             , ( bp::arg("name") ) )    
         .def( 
             "blue"
-            , (float ( ::SireMol::Element::* )(  ) const)( &::SireMol::Element::blue ) )    
+            , &::SireMol::Element::blue )    
         .def( 
             "bondOrderRadius"
-            , (double ( ::SireMol::Element::* )(  ) const)( &::SireMol::Element::bondOrderRadius ) )    
+            , &::SireMol::Element::bondOrderRadius )    
         .def( 
             "covalentRadius"
-            , (double ( ::SireMol::Element::* )(  ) const)( &::SireMol::Element::covalentRadius ) )    
+            , &::SireMol::Element::covalentRadius )    
         .def( 
             "electroNegativity"
-            , (double ( ::SireMol::Element::* )(  ) const)( &::SireMol::Element::electroNegativity ) )    
+            , &::SireMol::Element::electroNegativity )    
         .def( 
             "elementWithMass"
-            , (::SireMol::Element (*)( double ))( &::SireMol::Element::elementWithMass )
+            , &::SireMol::Element::elementWithMass
             , ( bp::arg("mass") ) )    
         .def( 
             "green"
-            , (float ( ::SireMol::Element::* )(  ) const)( &::SireMol::Element::green ) )    
+            , &::SireMol::Element::green )    
         .def( 
             "group"
-            , (int ( ::SireMol::Element::* )(  ) const)( &::SireMol::Element::group ) )    
+            , &::SireMol::Element::group )    
         .def( 
             "halogen"
-            , (bool ( ::SireMol::Element::* )(  ) const)( &::SireMol::Element::halogen ) )    
+            , &::SireMol::Element::halogen )    
         .def( 
             "lanthanide"
-            , (bool ( ::SireMol::Element::* )(  ) const)( &::SireMol::Element::lanthanide ) )    
+            , &::SireMol::Element::lanthanide )    
         .def( 
             "mass"
-            , (double ( ::SireMol::Element::* )(  ) const)( &::SireMol::Element::mass ) )    
+            , &::SireMol::Element::mass )    
         .def( 
             "maxBonds"
-            , (unsigned int ( ::SireMol::Element::* )(  ) const)( &::SireMol::Element::maxBonds ) )    
+            , &::SireMol::Element::maxBonds )    
         .def( 
             "nProtons"
-            , (unsigned int ( ::SireMol::Element::* )(  ) const)( &::SireMol::Element::nProtons ) )    
+            , &::SireMol::Element::nProtons )    
         .def( 
             "name"
-            , (::QString ( ::SireMol::Element::* )(  ) const)( &::SireMol::Element::name ) )    
+            , &::SireMol::Element::name )    
         .def( 
             "nobleGas"
-            , (bool ( ::SireMol::Element::* )(  ) const)( &::SireMol::Element::nobleGas ) )    
+            , &::SireMol::Element::nobleGas )    
         .def( bp::self != bp::self )    
         .def( bp::self < bp::self )    
         .def( bp::self <= bp::self )    
@@ -89,25 +89,25 @@ void register_Element_class(){
         .def( bp::self >= bp::self )    
         .def( 
             "period"
-            , (int ( ::SireMol::Element::* )(  ) const)( &::SireMol::Element::period ) )    
+            , &::SireMol::Element::period )    
         .def( 
             "rareEarth"
-            , (bool ( ::SireMol::Element::* )(  ) const)( &::SireMol::Element::rareEarth ) )    
+            , &::SireMol::Element::rareEarth )    
         .def( 
             "red"
-            , (float ( ::SireMol::Element::* )(  ) const)( &::SireMol::Element::red ) )    
+            , &::SireMol::Element::red )    
         .def( 
             "symbol"
-            , (::QString ( ::SireMol::Element::* )(  ) const)( &::SireMol::Element::symbol ) )    
+            , &::SireMol::Element::symbol )    
         .def( 
             "toString"
-            , (::QString ( ::SireMol::Element::* )(  ) const)( &::SireMol::Element::toString ) )    
+            , &::SireMol::Element::toString )    
         .def( 
             "transitionMetal"
-            , (bool ( ::SireMol::Element::* )(  ) const)( &::SireMol::Element::transitionMetal ) )    
+            , &::SireMol::Element::transitionMetal )    
         .def( 
             "vdwRadius"
-            , (double ( ::SireMol::Element::* )(  ) const)( &::SireMol::Element::vdwRadius ) )    
+            , &::SireMol::Element::vdwRadius )    
         .staticmethod( "biologicalElement" )    
         .staticmethod( "elementWithMass" );
 

@@ -39,7 +39,14 @@ mb = module_builder_t( files=headerfiles,
                        start_with_declarations = [namespace] )
 
 
-mb.calldefs().virtuality = declarations.VIRTUALITY_TYPES.NOT_VIRTUAL
+populateNamespaces(mb)
+
+for calldef in mb.calldefs():
+    try:
+      calldef.virtuality = declarations.VIRTUALITY_TYPES.NOT_VIRTUAL
+    except:
+      pass
+
 mb.calldefs().create_with_signature = True
 
 #export each class in turn

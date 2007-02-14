@@ -19,7 +19,7 @@ namespace bp = boost::python;
 
 void register_FFProcessorBase_class(){
 
-    bp::class_< SireFF::FFProcessorBase, boost::noncopyable >( "FFProcessorBase", bp::no_init )    
+    bp::class_< SireFF::FFProcessorBase, bp::bases< SireCluster::Processor >, boost::noncopyable >( "FFProcessorBase", bp::no_init )    
         .def( 
             "activate"
             , (::boost::shared_ptr<SireFF::FFWorkerBase> ( ::SireFF::FFProcessorBase::* )(  ) )( &::SireFF::FFProcessorBase::activate ) )    

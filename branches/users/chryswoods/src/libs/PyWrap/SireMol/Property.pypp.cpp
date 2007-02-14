@@ -23,7 +23,7 @@ void register_Property_class(){
         .def( bp::init< SireMol::PropertyBase * >(( bp::arg("property") )) )    
         .def( 
             "assertCompatibleWith"
-            , (void ( ::SireMol::Property::* )( ::SireMol::Molecule const & ) const)( &::SireMol::Property::assertCompatibleWith )
+            , &::SireMol::Property::assertCompatibleWith
             , ( bp::arg("molecule") ) );
 
 }

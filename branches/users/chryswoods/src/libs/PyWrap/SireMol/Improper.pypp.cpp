@@ -24,24 +24,24 @@ void register_Improper_class(){
         .def( bp::init< QString const &, SireMol::ResNum, QString const &, SireMol::ResNum, QString const &, SireMol::ResNum, QString const &, SireMol::ResNum >(( bp::arg("atm0"), bp::arg("res0"), bp::arg("atm1"), bp::arg("res1"), bp::arg("atm2"), bp::arg("res2"), bp::arg("atm3"), bp::arg("res3") )) )    
         .def( 
             "at"
-            , (::SireMol::AtomIndex const & ( ::SireMol::Improper::* )( int ) const)( &::SireMol::Improper::at )
+            , &::SireMol::Improper::at
             , ( bp::arg("i") )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "atom0"
-            , (::SireMol::AtomIndex const & ( ::SireMol::Improper::* )(  ) const)( &::SireMol::Improper::atom0 )
+            , &::SireMol::Improper::atom0
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "atom1"
-            , (::SireMol::AtomIndex const & ( ::SireMol::Improper::* )(  ) const)( &::SireMol::Improper::atom1 )
+            , &::SireMol::Improper::atom1
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "atom2"
-            , (::SireMol::AtomIndex const & ( ::SireMol::Improper::* )(  ) const)( &::SireMol::Improper::atom2 )
+            , &::SireMol::Improper::atom2
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "atom3"
-            , (::SireMol::AtomIndex const & ( ::SireMol::Improper::* )(  ) const)( &::SireMol::Improper::atom3 )
+            , &::SireMol::Improper::atom3
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "contains"
@@ -57,13 +57,13 @@ void register_Improper_class(){
             , ( bp::arg("resnum") ) )    
         .def( 
             "count"
-            , (int ( ::SireMol::Improper::* )(  ) const)( &::SireMol::Improper::count ) )    
+            , &::SireMol::Improper::count )    
         .def( 
             "interResidue"
-            , (bool ( ::SireMol::Improper::* )(  ) const)( &::SireMol::Improper::interResidue ) )    
+            , &::SireMol::Improper::interResidue )    
         .def( 
             "intraResidue"
-            , (bool ( ::SireMol::Improper::* )(  ) const)( &::SireMol::Improper::intraResidue ) )    
+            , &::SireMol::Improper::intraResidue )    
         .def( bp::self != bp::self )    
         .def( bp::self < bp::self )    
         .def( bp::self <= bp::self )    
@@ -72,26 +72,26 @@ void register_Improper_class(){
         .def( bp::self >= bp::self )    
         .def( 
             "__getitem__"
-            , (::SireMol::AtomIndex const & ( ::SireMol::Improper::* )( int ) const)( &::SireMol::Improper::operator[] )
+            , &::SireMol::Improper::operator[]
             , ( bp::arg("i") )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "resNum0"
-            , (::SireMol::ResNum ( ::SireMol::Improper::* )(  ) const)( &::SireMol::Improper::resNum0 ) )    
+            , &::SireMol::Improper::resNum0 )    
         .def( 
             "resNum1"
-            , (::SireMol::ResNum ( ::SireMol::Improper::* )(  ) const)( &::SireMol::Improper::resNum1 ) )    
+            , &::SireMol::Improper::resNum1 )    
         .def( 
             "resNum2"
-            , (::SireMol::ResNum ( ::SireMol::Improper::* )(  ) const)( &::SireMol::Improper::resNum2 ) )    
+            , &::SireMol::Improper::resNum2 )    
         .def( 
             "resNum3"
-            , (::SireMol::ResNum ( ::SireMol::Improper::* )(  ) const)( &::SireMol::Improper::resNum3 ) )    
+            , &::SireMol::Improper::resNum3 )    
         .def( 
             "size"
-            , (int ( ::SireMol::Improper::* )(  ) const)( &::SireMol::Improper::size ) )    
+            , &::SireMol::Improper::size )    
         .def( 
             "toString"
-            , (::QString ( ::SireMol::Improper::* )(  ) const)( &::SireMol::Improper::toString ) );
+            , &::SireMol::Improper::toString );
 
 }

@@ -20,10 +20,10 @@ void register_GroupIndexID_class(){
         .def( bp::init< boost::tuples::tuple<SireMol::GroupID, SireMol::Index, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type> const & >(( bp::arg("t") )) )    
         .def( 
             "groupID"
-            , (::SireMol::GroupID ( ::SireMol::GroupIndexID::* )(  ) const)( &::SireMol::GroupIndexID::groupID ) )    
+            , &::SireMol::GroupIndexID::groupID )    
         .def( 
             "index"
-            , (::SireMol::Index ( ::SireMol::GroupIndexID::* )(  ) const)( &::SireMol::GroupIndexID::index ) )    
+            , &::SireMol::GroupIndexID::index )    
         .def( bp::self != bp::self )    
         .def( bp::self < bp::self )    
         .def( bp::self <= bp::self )    
@@ -32,6 +32,6 @@ void register_GroupIndexID_class(){
         .def( bp::self >= bp::self )    
         .def( 
             "toString"
-            , (::QString ( ::SireMol::GroupIndexID::* )(  ) const)( &::SireMol::GroupIndexID::toString ) );
+            , &::SireMol::GroupIndexID::toString );
 
 }

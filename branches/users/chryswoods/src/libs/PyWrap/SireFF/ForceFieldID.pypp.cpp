@@ -19,7 +19,7 @@ namespace bp = boost::python;
 
 void register_ForceFieldID_class(){
 
-    bp::class_< SireFF::ForceFieldID >( "ForceFieldID" )    
+    bp::class_< SireFF::ForceFieldID, bp::bases< SireMol::IDBase > >( "ForceFieldID" )    
         .def( bp::init< >() )    
         .def( bp::init< quint32 >(( bp::arg("id") )) );
 

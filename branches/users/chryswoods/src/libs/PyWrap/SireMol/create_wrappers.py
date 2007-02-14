@@ -94,9 +94,13 @@ def fix_atom(c):
 def fix_atominfogroup(c):
     c.decls( "constData", allow_empty=True ).exclude()
 
+def remove_property_bases(c):
+    c.bases = []
+
 special_code = { "AtomInfo" : fix_atominfo,
                  "Atom" : fix_atom,
-                 "AtomInfoGroup" : fix_atominfogroup
+                 "AtomInfoGroup" : fix_atominfogroup,
+                 "Property" : remove_property_bases
                }
 
 incpaths = sys.argv[1:]
@@ -113,6 +117,14 @@ mb = module_builder_t( files=headerfiles,
                        include_paths=incpaths,
                        define_symbols=["SKIP_BROKEN_GCCXML_PARTS"],
                        start_with_declarations = [namespace] )
+
+populateNamespaces(mb)
+
+for calldef in mb.calldefs():
+    try:
+      calldef.virtuality = declarations.VIRTUALITY_TYPES.NOT_VIRTUAL
+    except:
+      pass
 
 #add calls to register hand-written wrappers
 mb.add_declaration_code( "#include \"QSet_AtomIndex_.py.h\"" )

@@ -28,7 +28,7 @@ void register_ResidueInfo_class(){
             , ( bp::arg("atomid") ) )    
         .def( 
             "assertNAtoms"
-            , (void ( ::SireMol::ResidueInfo::* )( int ) const)( &::SireMol::ResidueInfo::assertNAtoms )
+            , &::SireMol::ResidueInfo::assertNAtoms
             , ( bp::arg("n") ) )    
         .def( 
             "assertSameResidue"
@@ -109,7 +109,7 @@ void register_ResidueInfo_class(){
             , ( bp::arg("cgnums") ) )    
         .def( 
             "atomName"
-            , (::QString ( ::SireMol::ResidueInfo::* )( ::SireMol::AtomID ) const)( &::SireMol::ResidueInfo::atomName )
+            , &::SireMol::ResidueInfo::atomName
             , ( bp::arg("atomid") ) )    
         .def( 
             "atomNames"
@@ -191,14 +191,14 @@ void register_ResidueInfo_class(){
             , ( bp::arg("cgid") ) )    
         .def( 
             "cutGroupIDs"
-            , (::QSet<SireMol::CutGroupID> const & ( ::SireMol::ResidueInfo::* )(  ) const)( &::SireMol::ResidueInfo::cutGroupIDs )
+            , &::SireMol::ResidueInfo::cutGroupIDs
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "cutGroupNums"
-            , (::QSet<SireMol::CutGroupNum> ( ::SireMol::ResidueInfo::* )(  ) const)( &::SireMol::ResidueInfo::cutGroupNums ) )    
+            , &::SireMol::ResidueInfo::cutGroupNums )    
         .def( 
             "indicies"
-            , (::QVector<SireMol::CGAtomID> const & ( ::SireMol::ResidueInfo::* )(  ) const)( &::SireMol::ResidueInfo::indicies )
+            , &::SireMol::ResidueInfo::indicies
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "isEmpty"
@@ -224,13 +224,13 @@ void register_ResidueInfo_class(){
             , ( bp::arg("cgnum") ) )    
         .def( 
             "nCutGroups"
-            , (int ( ::SireMol::ResidueInfo::* )(  ) const)( &::SireMol::ResidueInfo::nCutGroups ) )    
+            , &::SireMol::ResidueInfo::nCutGroups )    
         .def( 
             "name"
-            , (::QString ( ::SireMol::ResidueInfo::* )(  ) const)( &::SireMol::ResidueInfo::name ) )    
+            , &::SireMol::ResidueInfo::name )    
         .def( 
             "number"
-            , (::SireMol::ResNum ( ::SireMol::ResidueInfo::* )(  ) const)( &::SireMol::ResidueInfo::number ) )    
+            , &::SireMol::ResidueInfo::number )    
         .def( bp::self != bp::self )    
         .def( bp::self == bp::self )    
         .def( 
@@ -255,12 +255,12 @@ void register_ResidueInfo_class(){
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "resName"
-            , (::QString ( ::SireMol::ResidueInfo::* )(  ) const)( &::SireMol::ResidueInfo::resName ) )    
+            , &::SireMol::ResidueInfo::resName )    
         .def( 
             "resNum"
-            , (::SireMol::ResNum ( ::SireMol::ResidueInfo::* )(  ) const)( &::SireMol::ResidueInfo::resNum ) )    
+            , &::SireMol::ResidueInfo::resNum )    
         .def( 
             "toString"
-            , (::QString ( ::SireMol::ResidueInfo::* )(  ) const)( &::SireMol::ResidueInfo::toString ) );
+            , &::SireMol::ResidueInfo::toString );
 
 }

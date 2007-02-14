@@ -20,7 +20,7 @@ void register_AtomIndex_class(){
         .def( bp::init< boost::tuples::tuple<QString, SireMol::ResNum, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type> const & >(( bp::arg("tuple") )) )    
         .def( 
             "name"
-            , (::QString ( ::SireMol::AtomIndex::* )(  ) const)( &::SireMol::AtomIndex::name ) )    
+            , &::SireMol::AtomIndex::name )    
         .def( bp::self != bp::self )    
         .def( bp::self < bp::self )    
         .def( bp::self <= bp::self )    
@@ -29,9 +29,9 @@ void register_AtomIndex_class(){
         .def( bp::self >= bp::self )    
         .def( 
             "resNum"
-            , (::SireMol::ResNum ( ::SireMol::AtomIndex::* )(  ) const)( &::SireMol::AtomIndex::resNum ) )    
+            , &::SireMol::AtomIndex::resNum )    
         .def( 
             "toString"
-            , (::QString ( ::SireMol::AtomIndex::* )(  ) const)( &::SireMol::AtomIndex::toString ) );
+            , &::SireMol::AtomIndex::toString );
 
 }

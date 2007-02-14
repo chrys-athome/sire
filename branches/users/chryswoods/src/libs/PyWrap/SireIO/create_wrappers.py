@@ -43,7 +43,15 @@ mb = module_builder_t( files=headerfiles,
                        define_symbols=["SKIP_BROKEN_GCCXML_PARTS"],
                        start_with_declarations = [namespace] )
 
-mb.calldefs().virtuality = declarations.VIRTUALITY_TYPES.NOT_VIRTUAL
+
+populateNamespaces(mb)
+
+for calldef in mb.calldefs():
+    try:
+      calldef.virtuality = declarations.VIRTUALITY_TYPES.NOT_VIRTUAL
+    except:
+      pass
+
 mb.calldefs().create_with_signature = True
 
 #export each class in turn

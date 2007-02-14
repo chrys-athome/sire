@@ -19,14 +19,14 @@ void register_WeightFunction_class(){
     bp::class_< SireMol::WeightFunction, boost::noncopyable >( "WeightFunction", bp::no_init )    
         .def( 
             "calculateWeight"
-            , (double ( ::SireMol::WeightFunction::* )( ::SireMol::WeightCalculator const & ) const)( &::SireMol::WeightFunction::calculateWeight )
+            , &::SireMol::WeightFunction::calculateWeight
             , ( bp::arg("calculator") ) )    
         .def( 
             "processBuffers"
-            , (void ( ::SireMol::WeightFunction::* )( ::SireMol::WeightCalculator & ) const)( &::SireMol::WeightFunction::processBuffers )
+            , &::SireMol::WeightFunction::processBuffers
             , ( bp::arg("calculator") ) )    
         .def( 
             "what"
-            , (char const * ( ::SireMol::WeightFunction::* )(  ) const)( &::SireMol::WeightFunction::what ) );
+            , &::SireMol::WeightFunction::what );
 
 }

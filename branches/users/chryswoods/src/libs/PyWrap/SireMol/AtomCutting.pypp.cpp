@@ -20,14 +20,14 @@ void register_AtomCutting_class(){
         .def( bp::init< >() )    
         .def( 
             "__call__"
-            , (::SireMol::CutGroupNum ( ::SireMol::AtomCutting::* )( ::SireMol::AtomIndex const &,::SireMol::EditMolData const & ) const)( &::SireMol::AtomCutting::operator() )
+            , &::SireMol::AtomCutting::operator()
             , ( bp::arg("atom"), bp::arg("moldata") ) )    
         .def( 
             "typeName"
-            , (char const * (*)(  ))( &::SireMol::AtomCutting::typeName ) )    
+            , &::SireMol::AtomCutting::typeName )    
         .def( 
             "what"
-            , (char const * ( ::SireMol::AtomCutting::* )(  ) const)( &::SireMol::AtomCutting::what ) )    
+            , &::SireMol::AtomCutting::what )    
         .staticmethod( "typeName" );
 
 }

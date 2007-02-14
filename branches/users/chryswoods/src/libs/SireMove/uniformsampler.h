@@ -35,14 +35,26 @@ SIRE_BEGIN_HEADER
 
 namespace SireMove
 {
+class UniformSampler;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMove::UniformSampler&);
+QDataStream& operator>>(QDataStream&, SireMove::UniformSampler&);
+
+namespace SireMove
+{
 
 /** This class is used to pick contained Molecules, Residues
     or Atoms at random (uniformly distributed).
-    
+
     @author Christopher Woods
 */
 class SIREMOVE_EXPORT UniformSampler : public SamplerBase
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const UniformSampler&);
+friend QDataStream& ::operator>>(QDataStream&, UniformSampler&);
+
 public:
     UniformSampler();
     UniformSampler(const RanGenerator &rangenerator);
@@ -77,7 +89,7 @@ public:
     double probability(const MoleculeGroup &group, const NewAtom &atom);
 
 private:
-    tuple<Molecule,double> _pvt_randomMolecule(const MoleculeGroup &group, 
+    tuple<Molecule,double> _pvt_randomMolecule(const MoleculeGroup &group,
                                                uint nmols);
 };
 

@@ -16,7 +16,7 @@ namespace bp = boost::python;
 
 void register_Atom_class(){
 
-    bp::class_< SireMol::Atom, bp::bases< SireMol::AtomInfo > >( "Atom" )    
+    bp::class_< SireMol::Atom, bp::bases< SireMol::AtomInfo, SireMaths::Vector > >( "Atom" )    
         .def( bp::init< >() )    
         .def( bp::init< SireMol::AtomIndex const &, SireMol::Element const &, SireMaths::Vector const & >(( bp::arg("atomindex"), bp::arg("element"), bp::arg("coords") )) )    
         .def( bp::init< SireMol::Atom const &, SireMol::ResNum >(( bp::arg("other"), bp::arg("resnum") )) )    
@@ -40,10 +40,10 @@ void register_Atom_class(){
         .def( bp::self == bp::self )    
         .def( 
             "toString"
-            , (::QString ( ::SireMol::Atom::* )(  ) const)( &::SireMol::Atom::toString ) )    
+            , &::SireMol::Atom::toString )    
         .def( 
             "withinBondRadii"
-            , (bool (*)( ::SireMol::Atom const &,::SireMol::Atom const &,double ))( &::SireMol::Atom::withinBondRadii )
+            , &::SireMol::Atom::withinBondRadii
             , ( bp::arg("atm0"), bp::arg("atm1"), bp::arg("err")=0.0 ) )    
         .staticmethod( "withinBondRadii" );
 

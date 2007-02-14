@@ -46,7 +46,10 @@ extra_includes = [ "SireMol/molecule.h",
                    "SireMol/moleculeid.h"
                  ]
 
-special_code = {}
+def remove_forcefield_bases(c):
+    c.bases = []
+
+special_code = { "ForceField" : remove_forcefield_bases }
 
 incpaths = sys.argv[1:]
 incpaths.insert(0, "../../")
@@ -63,7 +66,14 @@ mb = module_builder_t( files=headerfiles,
                        define_symbols=["SKIP_BROKEN_GCCXML_PARTS"],
                        start_with_declarations = [namespace] )
 
-mb.calldefs().virtuality = declarations.VIRTUALITY_TYPES.NOT_VIRTUAL
+populateNamespaces(mb)
+
+for calldef in mb.calldefs():
+    try:
+      calldef.virtuality = declarations.VIRTUALITY_TYPES.NOT_VIRTUAL
+    except:
+      pass
+
 mb.calldefs().create_with_signature = True
 
 #export each class in turn

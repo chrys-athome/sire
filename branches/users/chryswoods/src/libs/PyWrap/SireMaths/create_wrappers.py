@@ -54,6 +54,7 @@ mb = module_builder_t( files=headerfiles,
                        define_symbols=["SKIP_BROKEN_GCCXML_PARTS"],
                        start_with_declarations = [namespace] )
 
+populateNamespaces(mb)
 
 for calldef in mb.calldefs():
     try:

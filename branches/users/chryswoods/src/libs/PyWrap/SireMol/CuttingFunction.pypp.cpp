@@ -21,10 +21,10 @@ void register_CuttingFunction_class(){
         .def( bp::init< SireMol::CuttingFunctionBase const & >(( bp::arg("func") )) )    
         .def( 
             "__call__"
-            , (::SireMol::CutGroupNum ( ::SireMol::CuttingFunction::* )( ::SireMol::AtomIndex const &,::SireMol::EditMolData const & ) const)( &::SireMol::CuttingFunction::operator() )
+            , &::SireMol::CuttingFunction::operator()
             , ( bp::arg("atom"), bp::arg("moldata") ) )    
         .def( 
             "what"
-            , (char const * ( ::SireMol::CuttingFunction::* )(  ) const)( &::SireMol::CuttingFunction::what ) );
+            , &::SireMol::CuttingFunction::what );
 
 }

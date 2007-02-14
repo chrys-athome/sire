@@ -29,7 +29,7 @@ void register_MoleculeGroups_class(){
             , ( bp::arg("molecule"), bp::arg("groupid") ) )    
         .def( 
             "assertContains"
-            , (void ( ::SireMol::MoleculeGroups::* )( ::SireMol::MoleculeGroupID ) const)( &::SireMol::MoleculeGroups::assertContains )
+            , &::SireMol::MoleculeGroups::assertContains
             , ( bp::arg("groupid") ) )    
         .def( 
             "change"
@@ -45,14 +45,14 @@ void register_MoleculeGroups_class(){
             , ( bp::arg("molecules") ) )    
         .def( 
             "clear"
-            , (void ( ::SireMol::MoleculeGroups::* )(  ) )( &::SireMol::MoleculeGroups::clear ) )    
+            , &::SireMol::MoleculeGroups::clear )    
         .def( 
             "contains"
-            , (bool ( ::SireMol::MoleculeGroups::* )( ::SireMol::MoleculeID ) const)( &::SireMol::MoleculeGroups::contains )
+            , &::SireMol::MoleculeGroups::contains
             , ( bp::arg("molid") ) )    
         .def( 
             "count"
-            , (int ( ::SireMol::MoleculeGroups::* )(  ) const)( &::SireMol::MoleculeGroups::count ) )    
+            , &::SireMol::MoleculeGroups::count )    
         .def( 
             "group"
             , (::SireMol::MoleculeGroup const & ( ::SireMol::MoleculeGroups::* )( ::SireMol::MoleculeGroupID ) const)( &::SireMol::MoleculeGroups::group )
@@ -72,17 +72,17 @@ void register_MoleculeGroups_class(){
             , ( bp::arg("molid") ) )    
         .def( 
             "groupsContaining"
-            , (::QSet<SireMol::MoleculeGroupID> ( ::SireMol::MoleculeGroups::* )( ::SireMol::MoleculeID ) const)( &::SireMol::MoleculeGroups::groupsContaining )
+            , &::SireMol::MoleculeGroups::groupsContaining
             , ( bp::arg("molid") ) )    
         .def( 
             "moleculeIDs"
-            , (::QSet<SireMol::MoleculeID> ( ::SireMol::MoleculeGroups::* )(  ) const)( &::SireMol::MoleculeGroups::moleculeIDs ) )    
+            , &::SireMol::MoleculeGroups::moleculeIDs )    
         .def( 
             "molecules"
-            , (::QVector<SireMol::Molecule> ( ::SireMol::MoleculeGroups::* )(  ) const)( &::SireMol::MoleculeGroups::molecules ) )    
+            , &::SireMol::MoleculeGroups::molecules )    
         .def( 
             "nMolecules"
-            , (int ( ::SireMol::MoleculeGroups::* )(  ) const)( &::SireMol::MoleculeGroups::nMolecules ) )    
+            , &::SireMol::MoleculeGroups::nMolecules )    
         .def( bp::self != bp::self )    
         .def( bp::self == bp::self )    
         .def( 

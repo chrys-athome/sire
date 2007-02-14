@@ -20,7 +20,7 @@ void register_ResNumIndexID_class(){
         .def( bp::init< boost::tuples::tuple<SireMol::ResNum, SireMol::Index, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type> const & >(( bp::arg("t") )) )    
         .def( 
             "index"
-            , (::SireMol::Index ( ::SireMol::ResNumIndexID::* )(  ) const)( &::SireMol::ResNumIndexID::index ) )    
+            , &::SireMol::ResNumIndexID::index )    
         .def( bp::self != bp::self )    
         .def( bp::self < bp::self )    
         .def( bp::self <= bp::self )    
@@ -29,9 +29,9 @@ void register_ResNumIndexID_class(){
         .def( bp::self >= bp::self )    
         .def( 
             "resNum"
-            , (::SireMol::ResNum ( ::SireMol::ResNumIndexID::* )(  ) const)( &::SireMol::ResNumIndexID::resNum ) )    
+            , &::SireMol::ResNumIndexID::resNum )    
         .def( 
             "toString"
-            , (::QString ( ::SireMol::ResNumIndexID::* )(  ) const)( &::SireMol::ResNumIndexID::toString ) );
+            , &::SireMol::ResNumIndexID::toString );
 
 }

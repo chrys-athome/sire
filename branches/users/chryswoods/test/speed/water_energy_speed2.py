@@ -58,11 +58,11 @@ for mol in mols:
       if (not tip4p):
           tip4p = mol
       
-      cljff.add(mol, [cljff.parameters().coulomb() == "charges", \
-                      cljff.parameters().lj() == "ljs"])
+      cljff.add(mol) # [cljff.parameters().coulomb() == "charges", \
+                     # cljff.parameters().lj() == "ljs"])
                       
-      cljff2.add(mol, [cljff2.parameters().coulomb() == "charges", \
-                       cljff2.parameters().lj() == "ljs"])
+      cljff2.add(mol) # [cljff2.parameters().coulomb() == "charges", \
+                      # cljff2.parameters().lj() == "ljs"])
 
 ms = timer.elapsed()
 print "... took %d ms" % ms

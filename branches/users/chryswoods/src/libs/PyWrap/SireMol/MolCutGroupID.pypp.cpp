@@ -20,10 +20,10 @@ void register_MolCutGroupID_class(){
         .def( bp::init< boost::tuples::tuple<SireMol::MoleculeID, SireMol::CutGroupID, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type> const & >(( bp::arg("t") )) )    
         .def( 
             "cutGroupID"
-            , (::SireMol::CutGroupID ( ::SireMol::MolCutGroupID::* )(  ) const)( &::SireMol::MolCutGroupID::cutGroupID ) )    
+            , &::SireMol::MolCutGroupID::cutGroupID )    
         .def( 
             "moleculeID"
-            , (::SireMol::MoleculeID ( ::SireMol::MolCutGroupID::* )(  ) const)( &::SireMol::MolCutGroupID::moleculeID ) )    
+            , &::SireMol::MolCutGroupID::moleculeID )    
         .def( bp::self != bp::self )    
         .def( bp::self < bp::self )    
         .def( bp::self <= bp::self )    
@@ -32,6 +32,6 @@ void register_MolCutGroupID_class(){
         .def( bp::self >= bp::self )    
         .def( 
             "toString"
-            , (::QString ( ::SireMol::MolCutGroupID::* )(  ) const)( &::SireMol::MolCutGroupID::toString ) );
+            , &::SireMol::MolCutGroupID::toString );
 
 }

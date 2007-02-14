@@ -33,19 +33,19 @@ void register_AtomInfo_class(){
         .def( bp::init< SireMol::AtomNum, QString const &, QString const & >(( bp::arg("num"), bp::arg("name"), bp::arg("element") )) )    
         .def( 
             "atomNum"
-            , (::SireMol::AtomNum ( ::SireMol::AtomInfo::* )(  ) const)( &::SireMol::AtomInfo::atomNum ) )    
+            , &::SireMol::AtomInfo::atomNum )    
         .def( 
             "name"
-            , (::QString ( ::SireMol::AtomInfo::* )(  ) const)( &::SireMol::AtomInfo::name ) )    
+            , &::SireMol::AtomInfo::name )    
         .def( 
             "number"
-            , (::SireMol::AtomNum ( ::SireMol::AtomInfo::* )(  ) const)( &::SireMol::AtomInfo::number ) )    
+            , &::SireMol::AtomInfo::number )    
         .def( bp::self != bp::other< SireMol::AtomIndex >() )    
         .def( bp::self != bp::self )    
         .def( bp::self == bp::other< SireMol::AtomIndex >() )    
         .def( bp::self == bp::self )    
         .def( 
             "toString"
-            , (::QString ( ::SireMol::AtomInfo::* )(  ) const)( &::SireMol::AtomInfo::toString ) );
+            , &::SireMol::AtomInfo::toString );
 
 }

@@ -57,17 +57,14 @@ for mol in mols:
       mol.setProperty( "charges", chgs )
       mol.setProperty( "ljs", ljs )
 
-      cljff.add(mol, [cljff.parameters().coulomb() == "charges", \
-                      cljff.parameters().lj() == "ljs"])
+      cljff.add(mol) #, [cljff.parameters().coulomb() == "charges", \
+                     # cljff.parameters().lj() == "ljs"])
                       
-      cljff2.add(mol, [cljff2.parameters().coulomb() == "charges", \
-                       cljff2.parameters().lj() == "ljs"])
+      cljff2.add(mol) #, [cljff2.parameters().coulomb() == "charges", \
+                      # cljff2.parameters().lj() == "ljs"])
 
 ms = timer.elapsed()
 print "... took %d ms" % ms
-
-cljff = ForceField(cljff)
-cljff2 = ForceField(cljff2)
 
 #create a thread processor and calculate the energy in the background
 threadproc = FFThreadProcessor(cljff)

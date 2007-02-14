@@ -20,10 +20,10 @@ void register_CGNumAtomID_class(){
         .def( bp::init< boost::tuples::tuple<SireMol::CutGroupNum, SireMol::AtomID, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type> const & >(( bp::arg("t") )) )    
         .def( 
             "atomID"
-            , (::SireMol::AtomID ( ::SireMol::CGNumAtomID::* )(  ) const)( &::SireMol::CGNumAtomID::atomID ) )    
+            , &::SireMol::CGNumAtomID::atomID )    
         .def( 
             "cutGroupNum"
-            , (::SireMol::CutGroupNum ( ::SireMol::CGNumAtomID::* )(  ) const)( &::SireMol::CGNumAtomID::cutGroupNum ) )    
+            , &::SireMol::CGNumAtomID::cutGroupNum )    
         .def( bp::self != bp::self )    
         .def( bp::self < bp::self )    
         .def( bp::self <= bp::self )    
@@ -32,6 +32,6 @@ void register_CGNumAtomID_class(){
         .def( bp::self >= bp::self )    
         .def( 
             "toString"
-            , (::QString ( ::SireMol::CGNumAtomID::* )(  ) const)( &::SireMol::CGNumAtomID::toString ) );
+            , &::SireMol::CGNumAtomID::toString );
 
 }

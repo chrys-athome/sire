@@ -13,7 +13,7 @@ namespace bp = boost::python;
 
 void register_SystemID_class(){
 
-    bp::class_< SireSystem::SystemID >( "SystemID" )    
+    bp::class_< SireSystem::SystemID, bp::bases< SireMol::IDBase > >( "SystemID" )    
         .def( bp::init< >() )    
         .def( bp::init< quint32 >(( bp::arg("id") )) );
 

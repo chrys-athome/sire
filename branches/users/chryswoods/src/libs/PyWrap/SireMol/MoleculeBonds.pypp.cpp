@@ -32,7 +32,7 @@ void register_MoleculeBonds_class(){
             , ( bp::arg("bond") ) )    
         .def( 
             "atomsBondedTo"
-            , (::QSet<SireMol::AtomIndex> ( ::SireMol::MoleculeBonds::* )( ::SireMol::AtomIndex const & ) const)( &::SireMol::MoleculeBonds::atomsBondedTo )
+            , &::SireMol::MoleculeBonds::atomsBondedTo
             , ( bp::arg("atom") ) )    
         .def( 
             "bonded"
@@ -44,7 +44,7 @@ void register_MoleculeBonds_class(){
             , ( bp::arg("atom0"), bp::arg("atom1") ) )    
         .def( 
             "bondedResidues"
-            , (::QList<SireMol::ResidueBonds> ( ::SireMol::MoleculeBonds::* )( ::SireMol::ResNum ) const)( &::SireMol::MoleculeBonds::bondedResidues )
+            , &::SireMol::MoleculeBonds::bondedResidues
             , ( bp::arg("resnum") ) )    
         .def( 
             "bonds"
@@ -59,7 +59,7 @@ void register_MoleculeBonds_class(){
             , ( bp::arg("resnum") ) )    
         .def( 
             "clear"
-            , (void ( ::SireMol::MoleculeBonds::* )(  ) )( &::SireMol::MoleculeBonds::clear ) )    
+            , &::SireMol::MoleculeBonds::clear )    
         .def( 
             "contains"
             , (bool ( ::SireMol::MoleculeBonds::* )( ::SireMol::ResNum ) const)( &::SireMol::MoleculeBonds::contains )
@@ -74,22 +74,22 @@ void register_MoleculeBonds_class(){
             , ( bp::arg("bond") ) )    
         .def( 
             "finalise"
-            , (void ( ::SireMol::MoleculeBonds::* )(  ) )( &::SireMol::MoleculeBonds::finalise ) )    
+            , &::SireMol::MoleculeBonds::finalise )    
         .def( 
             "isEmpty"
-            , (bool ( ::SireMol::MoleculeBonds::* )(  ) const)( &::SireMol::MoleculeBonds::isEmpty ) )    
+            , &::SireMol::MoleculeBonds::isEmpty )    
         .def( 
             "nBonds"
-            , (int ( ::SireMol::MoleculeBonds::* )(  ) const)( &::SireMol::MoleculeBonds::nBonds ) )    
+            , &::SireMol::MoleculeBonds::nBonds )    
         .def( 
             "nInterBonds"
-            , (int ( ::SireMol::MoleculeBonds::* )(  ) const)( &::SireMol::MoleculeBonds::nInterBonds ) )    
+            , &::SireMol::MoleculeBonds::nInterBonds )    
         .def( 
             "nIntraBonds"
-            , (int ( ::SireMol::MoleculeBonds::* )(  ) const)( &::SireMol::MoleculeBonds::nIntraBonds ) )    
+            , &::SireMol::MoleculeBonds::nIntraBonds )    
         .def( 
             "nResidues"
-            , (int ( ::SireMol::MoleculeBonds::* )(  ) const)( &::SireMol::MoleculeBonds::nResidues ) )    
+            , &::SireMol::MoleculeBonds::nResidues )    
         .def( bp::self != bp::self )    
         .def( bp::self == bp::self )    
         .def( 
@@ -114,13 +114,13 @@ void register_MoleculeBonds_class(){
             , ( bp::arg("resnum") ) )    
         .def( 
             "removeAll"
-            , (void ( ::SireMol::MoleculeBonds::* )(  ) )( &::SireMol::MoleculeBonds::removeAll ) )    
+            , &::SireMol::MoleculeBonds::removeAll )    
         .def( 
             "removeAllInter"
-            , (void ( ::SireMol::MoleculeBonds::* )(  ) )( &::SireMol::MoleculeBonds::removeAllInter ) )    
+            , &::SireMol::MoleculeBonds::removeAllInter )    
         .def( 
             "removeAllIntra"
-            , (void ( ::SireMol::MoleculeBonds::* )(  ) )( &::SireMol::MoleculeBonds::removeAllIntra ) )    
+            , &::SireMol::MoleculeBonds::removeAllIntra )    
         .def( 
             "removeInter"
             , (void ( ::SireMol::MoleculeBonds::* )( ::SireMol::ResNum ) )( &::SireMol::MoleculeBonds::removeInter )
@@ -139,21 +139,21 @@ void register_MoleculeBonds_class(){
             , ( bp::arg("atom") ) )    
         .def( 
             "renumber"
-            , (void ( ::SireMol::MoleculeBonds::* )( ::SireMol::ResNum,::SireMol::ResNum ) )( &::SireMol::MoleculeBonds::renumber )
+            , &::SireMol::MoleculeBonds::renumber
             , ( bp::arg("oldnum"), bp::arg("newnum") ) )    
         .def( 
             "resNums"
-            , (::QSet<SireMol::ResNum> ( ::SireMol::MoleculeBonds::* )(  ) const)( &::SireMol::MoleculeBonds::resNums ) )    
+            , &::SireMol::MoleculeBonds::resNums )    
         .def( 
             "resNumsBondedTo"
-            , (::QSet<SireMol::ResNum> ( ::SireMol::MoleculeBonds::* )( ::SireMol::ResNum ) const)( &::SireMol::MoleculeBonds::resNumsBondedTo )
+            , &::SireMol::MoleculeBonds::resNumsBondedTo
             , ( bp::arg("resnum") ) )    
         .def( 
             "residue"
-            , (::SireMol::ResidueBonds ( ::SireMol::MoleculeBonds::* )( ::SireMol::ResNum ) const)( &::SireMol::MoleculeBonds::residue )
+            , &::SireMol::MoleculeBonds::residue
             , ( bp::arg("resnum") ) )    
         .def( 
             "toString"
-            , (::QString ( ::SireMol::MoleculeBonds::* )(  ) const)( &::SireMol::MoleculeBonds::toString ) );
+            , &::SireMol::MoleculeBonds::toString );
 
 }

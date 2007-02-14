@@ -57,7 +57,7 @@ void register_MoleculeInfo_class(){
             , ( bp::arg("cgnum") ) )    
         .def( 
             "assertNAtoms"
-            , (void ( ::SireMol::MoleculeInfo::* )( int ) const)( &::SireMol::MoleculeInfo::assertNAtoms )
+            , &::SireMol::MoleculeInfo::assertNAtoms
             , ( bp::arg("nats") ) )    
         .def( 
             "assertResidueExists"
@@ -294,15 +294,15 @@ void register_MoleculeInfo_class(){
             , ( bp::arg("atomid") ) )    
         .def( 
             "cutGroupID"
-            , (::SireMol::CutGroupID ( ::SireMol::MoleculeInfo::* )( ::SireMol::CutGroupNum ) const)( &::SireMol::MoleculeInfo::cutGroupID )
+            , &::SireMol::MoleculeInfo::cutGroupID
             , ( bp::arg("cgnum") ) )    
         .def( 
             "cutGroupNum"
-            , (::SireMol::CutGroupNum ( ::SireMol::MoleculeInfo::* )( ::SireMol::CutGroupID ) const)( &::SireMol::MoleculeInfo::cutGroupNum )
+            , &::SireMol::MoleculeInfo::cutGroupNum
             , ( bp::arg("cgid") ) )    
         .def( 
             "cutGroupNums"
-            , (::QVector<SireMol::CutGroupNum> ( ::SireMol::MoleculeInfo::* )(  ) const)( &::SireMol::MoleculeInfo::cutGroupNums ) )    
+            , &::SireMol::MoleculeInfo::cutGroupNums )    
         .def( 
             "isEmpty"
             , (bool ( ::SireMol::MoleculeInfo::* )(  ) const)( &::SireMol::MoleculeInfo::isEmpty ) )    
@@ -343,13 +343,13 @@ void register_MoleculeInfo_class(){
             , ( bp::arg("cgnum") ) )    
         .def( 
             "nCutGroups"
-            , (int ( ::SireMol::MoleculeInfo::* )(  ) const)( &::SireMol::MoleculeInfo::nCutGroups ) )    
+            , &::SireMol::MoleculeInfo::nCutGroups )    
         .def( 
             "nResidues"
-            , (int ( ::SireMol::MoleculeInfo::* )(  ) const)( &::SireMol::MoleculeInfo::nResidues ) )    
+            , &::SireMol::MoleculeInfo::nResidues )    
         .def( 
             "name"
-            , (::QString ( ::SireMol::MoleculeInfo::* )(  ) const)( &::SireMol::MoleculeInfo::name ) )    
+            , &::SireMol::MoleculeInfo::name )    
         .def( bp::self != bp::self )    
         .def( bp::self == bp::self )    
         .def( 
@@ -432,7 +432,7 @@ void register_MoleculeInfo_class(){
             , ( bp::arg("resid") ) )    
         .def( 
             "residueNames"
-            , (::QStringList ( ::SireMol::MoleculeInfo::* )(  ) const)( &::SireMol::MoleculeInfo::residueNames ) )    
+            , &::SireMol::MoleculeInfo::residueNames )    
         .def( 
             "residueNumber"
             , (::SireMol::ResNum ( ::SireMol::MoleculeInfo::* )( ::SireMol::ResID ) const)( &::SireMol::MoleculeInfo::residueNumber )
@@ -458,6 +458,6 @@ void register_MoleculeInfo_class(){
             , ( bp::arg("cgnum") ) )    
         .def( 
             "toString"
-            , (::QString ( ::SireMol::MoleculeInfo::* )(  ) const)( &::SireMol::MoleculeInfo::toString ) );
+            , &::SireMol::MoleculeInfo::toString );
 
 }

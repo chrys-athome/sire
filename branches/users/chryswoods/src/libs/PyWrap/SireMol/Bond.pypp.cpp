@@ -34,16 +34,16 @@ void register_Bond_class(){
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "atom"
-            , (::SireMol::AtomIndex const & ( ::SireMol::Bond::* )( ::SireMol::ResNum ) const)( &::SireMol::Bond::atom )
+            , &::SireMol::Bond::atom
             , ( bp::arg("resnum") )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "atom0"
-            , (::SireMol::AtomIndex const & ( ::SireMol::Bond::* )(  ) const)( &::SireMol::Bond::atom0 )
+            , &::SireMol::Bond::atom0
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "atom1"
-            , (::SireMol::AtomIndex const & ( ::SireMol::Bond::* )(  ) const)( &::SireMol::Bond::atom1 )
+            , &::SireMol::Bond::atom1
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "contains"
@@ -59,13 +59,13 @@ void register_Bond_class(){
             , ( bp::arg("resnum") ) )    
         .def( 
             "count"
-            , (int ( ::SireMol::Bond::* )(  ) const)( &::SireMol::Bond::count ) )    
+            , &::SireMol::Bond::count )    
         .def( 
             "interResidue"
-            , (bool ( ::SireMol::Bond::* )(  ) const)( &::SireMol::Bond::interResidue ) )    
+            , &::SireMol::Bond::interResidue )    
         .def( 
             "intraResidue"
-            , (bool ( ::SireMol::Bond::* )(  ) const)( &::SireMol::Bond::intraResidue ) )    
+            , &::SireMol::Bond::intraResidue )    
         .def( bp::self != bp::self )    
         .def( bp::self < bp::self )    
         .def( bp::self <= bp::self )    
@@ -94,23 +94,23 @@ void register_Bond_class(){
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "otherRes"
-            , (::SireMol::ResNum ( ::SireMol::Bond::* )( ::SireMol::ResNum ) const)( &::SireMol::Bond::otherRes )
+            , &::SireMol::Bond::otherRes
             , ( bp::arg("resnum") ) )    
         .def( 
             "renumber"
-            , (::SireMol::Bond ( ::SireMol::Bond::* )( ::SireMol::ResNum,::SireMol::ResNum ) const)( &::SireMol::Bond::renumber )
+            , &::SireMol::Bond::renumber
             , ( bp::arg("oldnum"), bp::arg("newnum") ) )    
         .def( 
             "resNum0"
-            , (::SireMol::ResNum ( ::SireMol::Bond::* )(  ) const)( &::SireMol::Bond::resNum0 ) )    
+            , &::SireMol::Bond::resNum0 )    
         .def( 
             "resNum1"
-            , (::SireMol::ResNum ( ::SireMol::Bond::* )(  ) const)( &::SireMol::Bond::resNum1 ) )    
+            , &::SireMol::Bond::resNum1 )    
         .def( 
             "size"
-            , (int ( ::SireMol::Bond::* )(  ) const)( &::SireMol::Bond::size ) )    
+            , &::SireMol::Bond::size )    
         .def( 
             "toString"
-            , (::QString ( ::SireMol::Bond::* )(  ) const)( &::SireMol::Bond::toString ) );
+            , &::SireMol::Bond::toString );
 
 }
