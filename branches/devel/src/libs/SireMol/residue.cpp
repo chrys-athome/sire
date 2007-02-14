@@ -1,3 +1,30 @@
+/********************************************\
+  *
+  *  Sire - Molecular Simulation Framework
+  *
+  *  Copyright (C) 2007  Christopher Woods
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+  *  the Free Software Foundation; either version 2 of the License, or
+  *  (at your option) any later version.
+  *
+  *  This program is distributed in the hope that it will be useful,
+  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  *  GNU General Public License for more details.
+  *
+  *  You should have received a copy of the GNU General Public License
+  *  along with this program; if not, write to the Free Software
+  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  *
+  *  For full details of the license please see the COPYING file
+  *  that should have come with this distribution.
+  *
+  *  You can contact the authors via the developer's mailing list
+  *  at http://siremol.org
+  *
+\*********************************************/
 
 #include "qhash_siremol.h"
 
@@ -216,6 +243,27 @@ Molecule Residue::molecule() const
 
 
 ///// Querying the residue //////////////////////////////
+
+/** Return the ID number of the molecule that contains this residue */
+MoleculeID Residue::ID() const
+{
+    return d->ID();
+}
+
+/** Return the version number of the molecule that contains this residue */
+const MoleculeVersion& Residue::version() const
+{
+    return d->version();
+}
+
+/** Return a string identifying this residue */
+QString Residue::idString() const
+{
+    return QObject::tr("%1 (%2) in \"%3\" (%4 %5)")
+                          .arg(name()).arg(number())
+                          .arg(d->info().name()).arg(ID())
+                          .arg(d->version().toString());
+}
 
 /** Return a copy of the atom at index 'i'
 

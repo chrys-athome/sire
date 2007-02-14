@@ -1,3 +1,30 @@
+/********************************************\
+  *
+  *  Sire - Molecular Simulation Framework
+  *
+  *  Copyright (C) 2007  Christopher Woods
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+  *  the Free Software Foundation; either version 2 of the License, or
+  *  (at your option) any later version.
+  *
+  *  This program is distributed in the hope that it will be useful,
+  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  *  GNU General Public License for more details.
+  *
+  *  You should have received a copy of the GNU General Public License
+  *  along with this program; if not, write to the Free Software
+  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  *
+  *  For full details of the license please see the COPYING file
+  *  that should have come with this distribution.
+  *
+  *  You can contact the authors via the developer's mailing list
+  *  at http://siremol.org
+  *
+\*********************************************/
 
 #include <QRegExp>
 #include <QDataStream>
@@ -85,57 +112,77 @@ ElementDB* ElementDB::db = 0;
 #include <QObject>
 #include "element-data.h"
 
-/**
-  * Now the implementation of the Element class
-  *
-  */
+///////////
+/////////// Implementation of Element
+///////////
+
+/** Construct a dummy element */
 Element::Element()
 {
     eldata = ElementDB::db->element(0);
 }
 
+/** Construct an element from the string 'element'. If the string
+    contains 1 or 2 characters, then it is interpreted as an IUPAC
+    chemical symbol (e.g. 'C', or 'Al'), else it is interpreted as
+    the name of the element in the local language of the application.
+    If the string cannot be interpreted then the element is set to
+    the dummy element. Note 'ca' is Calcium, not C-alpha! */
 Element::Element(QString element)
 {
     eldata = ElementDB::db->element(element);
 }
 
+/** Overload so that 'const char*' is interpreted as a QString, and not
+    as an unsigned int */
 Element::Element(const char *element)
 {
     eldata = ElementDB::db->element( QString(element) );
 }
 
+/** Construct an element with proton number 'nprot'. If there is no
+    element with this number of protons, or if the proton number is 0,
+    then a dummy elements is constructed */
 Element::Element(unsigned int nprots)
 {
     eldata = ElementDB::db->element(nprots);
 }
 
+/** Overload to disambiguate the call to Element(int) */
 Element::Element(int nprots)
 {
     eldata = ElementDB::db->element(nprots);
 }
 
+/** Copy constructor. This is very quick as it involves copying
+    only a single pointer. */
 Element::Element(const Element &element) : eldata(element.eldata)
 {}
 
+/** Destructor */
 Element::~Element()
 {}
 
+/** Assignment operator */
 const Element& Element::operator=(const Element &element)
 {
     eldata = element.eldata;
     return *this;
 }
 
+/** Return the number of protons in the element */    
 unsigned int Element::nProtons() const
 {
     return eldata->protnum;
 }
 
+/** Return the IUPAC symbol for the element */
 QString Element::symbol() const
 {
     return eldata->symb;
 }
 
+/** Return the name of the element in the local language */
 QString Element::name() const
 {
     return eldata->name;
@@ -156,46 +203,59 @@ int Element::period() const
     return eldata->period;
 }
 
+/** Return the element's covalent radius */
 double Element::covalentRadius() const
 {
     return eldata->cov_rad;
 }
 
+/** Return the bond order radius */
 double Element::bondOrderRadius() const
 {
     return eldata->bond_rad;
 }
 
+/** Return the van der waals radius */
 double Element::vdwRadius() const
 {
     return eldata->vdw_rad;
 }
 
+/** Return the maximum number of simultaneous bonds that this
+    element can form */
 unsigned int Element::maxBonds() const
 {
     return eldata->maxbonds;
 }
 
+/** Return the average mass of this element */
 double Element::mass() const
 {
     return eldata->mss;
 }
 
+/** Return the element's electronegativity */
 double Element::electroNegativity() const
 {
     return eldata->electro;
 }
 
+/** Return the red colour components (0.0->1.0) for
+    the colour of this element */
 float Element::red() const
 {
     return eldata->r;
 }
 
+/** Return the green colour components (0.0->1.0) for
+    the colour of this element */
 float Element::green() const
 {
     return eldata->g;
 }
 
+/** Return the blue colour components (0.0->1.0) for
+    the colour of this element */
 float Element::blue() const
 {
     return eldata->b;
@@ -382,31 +442,46 @@ bool Element::rareEarth() const
     return lanthanide() or actinide();
 }
 
+/** Sorting operators. Elements are compared based on their
+    proton numbers, with elements with greater numbers being higher.
+    The functions are also very quick. */
 bool Element::operator>(const Element &other) const
 {
     return eldata->protnum > other.eldata->protnum;
 }
 
+/** Sorting operators. Elements are compared based on their
+    proton numbers, with elements with greater numbers being higher.
+    The functions are also very quick. */
 bool Element::operator<(const Element &other) const
 {
     return eldata->protnum < other.eldata->protnum;
 }
 
+/** Sorting operators. Elements are compared based on their
+    proton numbers, with elements with greater numbers being higher.
+    The functions are also very quick. */
 bool Element::operator>=(const Element &other) const
 {
     return eldata->protnum >= other.eldata->protnum;
 }
 
+/** Sorting operators. Elements are compared based on their
+    proton numbers, with elements with greater numbers being higher.
+    The functions are also very quick. */
 bool Element::operator<=(const Element &other) const
 {
     return eldata->protnum <= other.eldata->protnum;
 }
 
+/** Return a string representation of the Element */
 QString Element::toString() const
 {
     return QObject::tr("%1 (%2, %3)").arg(name(),symbol()).arg(nProtons());
 }
 
+/** Return an element which has the closest mass to 'mass' (in atomic 
+    mass units, g mol-1) */
 Element Element::elementWithMass(double mass)
 {
     //round up the mass to the nearest integer to see if we can match to

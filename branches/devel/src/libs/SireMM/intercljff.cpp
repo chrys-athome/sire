@@ -1,3 +1,30 @@
+/********************************************\
+  *
+  *  Sire - Molecular Simulation Framework
+  *
+  *  Copyright (C) 2007  Christopher Woods
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+  *  the Free Software Foundation; either version 2 of the License, or
+  *  (at your option) any later version.
+  *
+  *  This program is distributed in the hope that it will be useful,
+  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  *  GNU General Public License for more details.
+  *
+  *  You should have received a copy of the GNU General Public License
+  *  along with this program; if not, write to the Free Software
+  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  *
+  *  For full details of the license please see the COPYING file
+  *  that should have come with this distribution.
+  *
+  *  You can contact the authors via the developer's mailing list
+  *  at http://siremol.org
+  *
+\*********************************************/
 
 #include "SireCAS/qhash_sirecas.h"
 #include "SireMol/qhash_siremol.h"
@@ -60,6 +87,23 @@ InterCLJFF::Parameters::Parameters(const Parameters &other)
 
 /** Destructor */
 InterCLJFF::Parameters::~Parameters()
+{}
+
+///////////
+/////////// Implementation of InterCLJFF::Groups
+///////////
+
+/** Constructor */
+InterCLJFF::Groups::Groups() : CLJFF::Groups()
+{}
+
+/** Copy constructor */
+InterCLJFF::Groups::Groups(const Groups &other)
+           : CLJFF::Groups(other)
+{}
+
+/** Destructor */
+InterCLJFF::Groups::~Groups()
 {}
 
 ///////////
@@ -553,19 +597,23 @@ bool InterCLJFF::change(const Molecule &molecule)
     else if ( molid_to_molindex.contains(id) )
     {
         //the molecule has not yet been changed since the last evaluation
-        int idx = molid_to_changedindex.value(id);
+        int idx = molid_to_molindex.value(id);
 
         MolCLJInfo oldmol = mols.at(idx);
 
-        ChangedMolCLJInfo newrecord = oldmol.change(molecule, parameters());
+        //only change if the version number is different...
+        if (molecule.version() != oldmol.molecule().version())
+        {
+            ChangedMolCLJInfo newrecord = oldmol.change(molecule, parameters());
 
-        this->setCurrentState(newrecord.newMol());
+            this->setCurrentState(newrecord.newMol());
 
-        idx = changedmols.count();
-        molid_to_changedindex.insert(id, idx);
-        changedmols.append(newrecord);
+            idx = changedmols.count();
+            molid_to_changedindex.insert(id, idx);
+            changedmols.append(newrecord);
 
-        this->incrementMinorVersion();
+            this->incrementMinorVersion();
+        }
     }
 
     return isDirty();

@@ -1,3 +1,30 @@
+/********************************************\
+  *
+  *  Sire - Molecular Simulation Framework
+  *
+  *  Copyright (C) 2007  Christopher Woods
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+  *  the Free Software Foundation; either version 2 of the License, or
+  *  (at your option) any later version.
+  *
+  *  This program is distributed in the hope that it will be useful,
+  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  *  GNU General Public License for more details.
+  *
+  *  You should have received a copy of the GNU General Public License
+  *  along with this program; if not, write to the Free Software
+  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  *
+  *  For full details of the license please see the COPYING file
+  *  that should have come with this distribution.
+  *
+  *  You can contact the authors via the developer's mailing list
+  *  at http://siremol.org
+  *
+\*********************************************/
 
 #include "SireCAS/qhash_sirecas.h"
 
@@ -6,6 +33,8 @@
 
 #include "SireMol/molecule.h"
 #include "SireMol/residue.h"
+#include "SireMol/newatom.h"
+
 #include "SireMol/errors.h"
 
 #include "SireStream/datastream.h"
@@ -220,6 +249,17 @@ Residue ForceField::residue(MoleculeID molid, ResNum resnum) const
     return d().residue(molid, resnum);
 }
 
+/** Return a copy of the atom in this forcefield that is
+    in the molecule with ID == molid and with atom index 'atomid'
+
+    \throw SireMol::missing_molecule
+    \throw SireMol::missing_atom
+*/
+NewAtom ForceField::atom(MoleculeID molid, const IDMolAtom &atomid) const
+{
+    return d().atom(molid, atomid);
+}
+
 /** Return the copy of the molecule 'mol' that is in this forcefield
 
     \throw SireMol::missing_molecule
@@ -236,4 +276,13 @@ Molecule ForceField::molecule(const Molecule &mol) const
 Residue ForceField::residue(const Residue &res) const
 {
     return d().residue(res);
+}
+
+/** Return a copy of the atom 'atom' that is in this forcefield
+
+    \throw SireMol::missing_atom
+*/
+NewAtom ForceField::atom(const NewAtom &atom) const
+{
+    return d().atom(atom);
 }

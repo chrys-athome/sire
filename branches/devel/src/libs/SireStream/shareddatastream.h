@@ -1,16 +1,31 @@
-/**
-  * @file
+/********************************************\
   *
-  * C++ Interface: SharedDataStream
+  *  Sire - Molecular Simulation Framework
   *
-  * Description: Implementation of SharedDataStream
+  *  Copyright (C) 2006  Christopher Woods
   *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+  *  the Free Software Foundation; either version 2 of the License, or
+  *  (at your option) any later version.
   *
-  * @author Christopher Woods, (C) 2006
+  *  This program is distributed in the hope that it will be useful,
+  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  *  GNU General Public License for more details.
   *
-  * Copyright: See COPYING file that comes with this distribution
+  *  You should have received a copy of the GNU General Public License
+  *  along with this program; if not, write to the Free Software
+  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
   *
-  */
+  *  For full details of the license please see the COPYING file
+  *  that should have come with this distribution.
+  *
+  *  You can contact the authors via the developer's mailing list
+  *  at http://siremol.org
+  *
+\*********************************************/
+
 #ifndef SIRESTREAM_SHAREDDATASTREAM_H
 #define SIRESTREAM_SHAREDDATASTREAM_H
 
@@ -18,6 +33,8 @@
 
 #include <QDataStream>
 #include <QSharedDataPointer>
+
+#include <boost/shared_ptr.hpp>
 
 SIRE_BEGIN_HEADER
 
@@ -43,10 +60,16 @@ public:
     SharedDataStream& operator<<(const QSharedDataPointer<T> &obj);
 
     template<class T>
+    SharedDataStream& operator<<(const boost::shared_ptr<T> &obj);
+
+    template<class T>
     SharedDataStream& operator>>(T &obj);
 
     template<class T>
     SharedDataStream& operator>>(QSharedDataPointer<T> &obj);
+
+    template<class T>
+    SharedDataStream& operator>>(boost::shared_ptr<T> &obj);
 
 private:
     /** Reference to the actual QDataStream that is used to
@@ -93,6 +116,29 @@ SharedDataStream& SharedDataStream::operator<<(const QSharedDataPointer<T> &objp
     data is preserved. */
 template<class T>
 SharedDataStream& SharedDataStream::operator>>(QSharedDataPointer<T> &objptr)
+{
+    ds >> *objptr;
+    return *this;
+}
+
+/** Specialisation of the serialisation function for explicitly shared
+    objects handled by boost::shared_ptr. This will stream the object
+    in a way that ensures that only a single copy of the data is passed
+    to the stream, with multiple copies being merely references to the
+    first copy. */
+template<class T>
+SharedDataStream& SharedDataStream::operator<<(const boost::shared_ptr<T> &objptr)
+{
+    ds << *objptr;
+    return *this;
+}
+
+/** Specialisation of the deserialisation function for explicitly shared
+    objects handled by boost::shared_ptr. This will destream the object
+    in a way that ensures that the explicitly shared nature of the
+    data is preserved. */
+template<class T>
+SharedDataStream& SharedDataStream::operator>>(boost::shared_ptr<T> &objptr)
 {
     ds >> *objptr;
     return *this;

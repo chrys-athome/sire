@@ -17,46 +17,36 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs
 
 # Define the sources in SireBase
 set ( WRAPBASE_SOURCES
-      idversion.py.cpp
+      
+      _Base.main.cpp
+      
       sharedpolypointer.py.cpp
-      wrap_md5sum.cpp
+      
+      IDMajMinVersion.pypp.cpp
+      IDVersion.pypp.cpp
+      MajMinVersion.pypp.cpp
+      MajVersion.pypp.cpp
+      MD5Sum.pypp.cpp
+      Version.pypp.cpp
     )
 
 # Create the library that holds all of the class wrappers
-add_library (PyWrap_SireBase ${WRAPBASE_SOURCES})
+add_library (PythonWrapping_SireBase ${WRAPBASE_SOURCES})
 
-set_target_properties (PyWrap_SireBase PROPERTIES
-                       VERSION ${SIRE_VERSION}
-                       SOVERSION ${SIRE_VERSION_MAJOR}
-		       )
-		       
-target_link_libraries (PyWrap_SireBase
-                       SireBase
-		       SireStream
-                       PyWrap_SireQt
-                       ${BOOST_PYTHON_LIBRARY}
-		      )
-
-# Install the wrappers library with the other Sire libraries
-install( TARGETS PyWrap_SireBase
-         RUNTIME DESTINATION ${SIRE_BIN}
-         LIBRARY DESTINATION ${SIRE_LIBS}
-         ARCHIVE DESTINATION ${SIRE_ARCHIVES}
-       )
-
-# Now create the thin-wrapper python module
-add_library (PythonWrapping_SireBase wrap_SireBase.cpp)
-
-target_link_libraries (PythonWrapping_SireBase
-                       PyWrap_SireBase
-                       )
-
-# Use properties to change the filename of the python module
-set_target_properties (PythonWrapping_SireBase
+set_target_properties (PythonWrapping_SireBase  
                        PROPERTIES
+                         VERSION ${SIRE_VERSION}
+                         SOVERSION ${SIRE_VERSION_MAJOR}
                          OUTPUT_NAME "Base"
                          PREFIX "_"
                          SUFFIX ${PYTHON_MODULE_EXTENSION}
+		       )
+		       
+target_link_libraries (PythonWrapping_SireBase
+                       SireBase
+   		           SireStream
+                       ${BOOST_PYTHON_LIBRARY}
+                       ${PYTHON_LIBRARY}
                       )
 
 # installation

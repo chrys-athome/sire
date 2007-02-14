@@ -17,43 +17,29 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs
 
 # Define the sources in SireError
 set ( WRAPERROR_SOURCES
+
+      wrap_SireError.cpp
+
       wrap_exceptions.cpp
+
     )
 
 # Create the library that holds all of the class wrappers
-add_library (PyWrap_SireError ${WRAPERROR_SOURCES})
+add_library (PythonWrapping_SireError ${WRAPERROR_SOURCES})
 
-set_target_properties (PyWrap_SireError PROPERTIES
-                       VERSION ${SIRE_VERSION}
-		       SOVERSION ${SIRE_VERSION_MAJOR}
-		       )
-		       
-target_link_libraries (PyWrap_SireError
-                       SireError
-                       PyWrap_SireQt
-		       ${BOOST_PYTHON_LIBRARY}
-		      )
-
-# Install the wrappers library with the other Sire libraries
-install( TARGETS PyWrap_SireError
-         RUNTIME DESTINATION ${SIRE_BIN}
-         LIBRARY DESTINATION ${SIRE_LIBS}
-         ARCHIVE DESTINATION ${SIRE_ARCHIVES}
-       )
-
-# Now create the thin-wrapper python module
-add_library (PythonWrapping_SireError wrap_SireError.cpp)
-
-target_link_libraries (PythonWrapping_SireError
-                       PyWrap_SireError
-                       )
-
-# Use properties to change the filename of the python module
-set_target_properties (PythonWrapping_SireError
+set_target_properties (PythonWrapping_SireError 
                        PROPERTIES
+                         VERSION ${SIRE_VERSION}
+		             SOVERSION ${SIRE_VERSION_MAJOR}
                          OUTPUT_NAME "Error"
                          PREFIX "_"
                          SUFFIX ${PYTHON_MODULE_EXTENSION}
+		          )
+		       
+target_link_libraries (PythonWrapping_SireError
+                       SireError
+                       ${BOOST_PYTHON_LIBRARY}
+                       ${PYTHON_LIBRARY}
                       )
 
 # installation

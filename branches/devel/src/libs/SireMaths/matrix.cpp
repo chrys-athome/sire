@@ -1,3 +1,30 @@
+/********************************************\
+  *
+  *  Sire - Molecular Simulation Framework
+  *
+  *  Copyright (C) 2007  Christopher Woods
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+  *  the Free Software Foundation; either version 2 of the License, or
+  *  (at your option) any later version.
+  *
+  *  This program is distributed in the hope that it will be useful,
+  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  *  GNU General Public License for more details.
+  *
+  *  You should have received a copy of the GNU General Public License
+  *  along with this program; if not, write to the Free Software
+  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  *
+  *  For full details of the license please see the COPYING file
+  *  that should have come with this distribution.
+  *
+  *  You can contact the authors via the developer's mailing list
+  *  at http://siremol.org
+  *
+\*********************************************/
 
 #include <QString>
 #include <boost/scoped_array.hpp>
@@ -44,21 +71,29 @@ QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, Matrix &matrix)
     return ds;
 }
 
+/** Construct a default Matrix (identity matrix) */
+Matrix::Matrix()
+       : xx(1), xy(0), xz(0),
+         yx(0), yy(1), yz(0),
+         zx(0), zy(0), zz(1)
+{}
+
+/** Construct a matrix whose diagonal elements equal 'diagonal_value'
+    and whose off-diagonal elements equal zero */
+Matrix::Matrix(double diagonal_value)
+       : xx(diagonal_value), xy(0), xz(0),
+         yx(0), yy(diagonal_value), yz(0),
+         zx(0), zy(0), zz(diagonal_value)
+{}
+
 /** Construct a Matrix. Elements listed as column 1, then
-    column 2, then column 3. By default, this is an identity matrix */
+    column 2, then column 3. */
 Matrix::Matrix(double sxx, double sxy, double sxz,
                double syx, double syy, double syz,
                double szx, double szy, double szz)
              : xx(sxx),xy(sxy),xz(sxz),
                yx(syx),yy(syy),yz(syz),
                zx(szx),zy(szy),zz(szz)
-{}
-
-/** Construct a matrix filled with 'val' */
-Matrix::Matrix(double val)
-             : xx(val),xy(val),xz(val),
-               yx(val),yy(val),yz(val),
-               zx(val),zy(val),zz(val)
 {}
 
 /** Copy constructor */

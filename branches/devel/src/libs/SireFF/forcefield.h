@@ -1,3 +1,31 @@
+/********************************************\
+  *
+  *  Sire - Molecular Simulation Framework
+  *
+  *  Copyright (C) 2006  Christopher Woods
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+  *  the Free Software Foundation; either version 2 of the License, or
+  *  (at your option) any later version.
+  *
+  *  This program is distributed in the hope that it will be useful,
+  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  *  GNU General Public License for more details.
+  *
+  *  You should have received a copy of the GNU General Public License
+  *  along with this program; if not, write to the Free Software
+  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  *
+  *  For full details of the license please see the COPYING file
+  *  that should have come with this distribution.
+  *
+  *  You can contact the authors via the developer's mailing list
+  *  at http://siremol.org
+  *
+\*********************************************/
+
 #ifndef SIREFF_FORCEFIELD_H
 #define SIREFF_FORCEFIELD_H
 
@@ -53,17 +81,24 @@ public:
     double energy(const FFComponent &component);
 
     Values energies();
+    Values energies(const QSet<FFComponent> &components);
 
     bool change(const Molecule &mol);
     bool change(const Residue &res);
+    bool change(const NewAtom &atom);
+
+    bool change(const QHash<MoleculeID,Molecule> &molecules);
 
     bool add(const Molecule &molecule,
              const ParameterMap &map = ParameterMap());
     bool add(const Residue &residue,
              const ParameterMap &map = ParameterMap());
+    bool add(const NewAtom &atom,
+             const ParameterMap &map = ParameterMap());
 
     bool remove(const Molecule &molecule);
     bool remove(const Residue &residue);
+    bool remove(const NewAtom &atom);
 
     bool replace(const Molecule &oldmol,
                  const Molecule &newmol,
@@ -71,18 +106,27 @@ public:
 
     bool contains(const Molecule &molecule) const;
     bool contains(const Residue &residue) const;
+    bool contains(const NewAtom &atom) const;
+
+    bool refersTo(const Molecule &molecule) const;
+    
+    QSet<MoleculeID> moleculeIDs() const;
 
     Molecule molecule(MoleculeID molid) const;
     Residue residue(MoleculeID molid, ResNum resnum) const;
+    NewAtom atom(MoleculeID molid, const IDMolAtom &atomid) const;
 
     Molecule molecule(const Molecule &mol) const;
     Residue residue(const Residue &res) const;
+    NewAtom atom(const NewAtom &atom) const;
 
     bool isDirty() const;
     bool isClean() const;
 
-    quint32 ID() const;
+    ForceFieldID ID() const;
     const Version& version() const;
+
+    void assertContains(const FFComponent &component) const;
 
 protected:
     const FFBase& d() const;
@@ -147,6 +191,15 @@ inline double ForceField::energy(const FFComponent &component)
     return d().energy(component);
 }
 
+/** Return the energies of all of the specified components
+
+    \throw SireFF::missing_component
+*/
+inline Values ForceField::energies(const QSet<FFComponent> &components)
+{
+    return d().energies(components);
+}
+
 /** Return the energies of all of the components */
 inline Values ForceField::energies()
 {
@@ -170,6 +223,23 @@ inline bool ForceField::change(const Molecule &mol)
     return d().change(mol);
 }
 
+/** Change the molecules 'molecules' (e.g. move them, or change 
+    their parameters). This does nothing if the molecules are not
+    in this forcefield. Returns whether or not the forcefield
+    has been changed by this change, and thus whether the
+    energy needs to be recalculated. The same parameter map
+    that was used when these molecules were added will be used
+    to extract any necessary parameters from the molecule's
+    properties
+
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+*/
+inline bool ForceField::change(const QHash<MoleculeID,Molecule> &molecules)
+{
+    return d().change(molecules);
+}
+
 /** Change the residue 'res' (e.g. move it, or change its
     parameters). This does nothing if the residue is not
     in this forcefield. Returns whether or not the forcefield
@@ -184,13 +254,31 @@ inline bool ForceField::change(const Residue &res)
     return d().change(res);
 }
 
+/** Change the atom 'atom' (e.g. move it, or change its
+    parameters). This does nothing if the atom is not
+    in this forcefield. Returns whether or not the
+    forcefield has been changed by this change, and thus
+    whether the energy needs to be recalculated.
+
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+*/
+inline bool ForceField::change(const NewAtom &atom)
+{
+    return d().change(atom);
+}
+
 /** Add the molecule 'molecule' to this forcefield using
     the optional parameter map to find any necessary parameters
-    from properties of the molecule. This will replace any
-    existing copy of the molecule that already exists in
-    this forcefield. This returns whether or not the
-    forcefield has been changed by this addition, and therefore
-    whether its energy needs recalculating.
+    from properties of the molecule.
+
+    This will add the molecule if either the
+    whole molecule does not already exist in the
+    forcefield, or if the existing copy has a lower
+    version number.
+
+    This returns whether or not the forcefield was
+    changed by this addition.
 
     \throw SireMol::missing_property
     \throw SireError::invalid_cast
@@ -203,14 +291,18 @@ inline bool ForceField::add(const Molecule &molecule,
 
 /** Add the residue 'residue' to this forcefield using
     the optional parameter map to find any necessary parameters
-    from properties of the residue. This will replace any
-    existing copy of the residue that already exists in
-    this forcefield. This returns whether or not the
-    forcefield has been changed by this addition, and therefore
-    whether its energy needs recalculating.
+    from properties of the residue.
+
+    This will add the residue if either the
+    whole residue does not already exist in the
+    forcefield, or if the existing copy has a lower
+    version number.
 
     This will throw an exception if this forcefield does not
     support partial molecules.
+
+    This returns whether or not the forcefield was
+    changed by this addition.
 
     \throw SireError::invalid_operation
     \throw SireMol::missing_property
@@ -220,6 +312,30 @@ inline bool ForceField::add(const Residue &residue,
                             const ParameterMap &map)
 {
     return d().add(residue,map);
+}
+
+/** Add the atom 'atom' to this forcefield using
+    the optional parameter map to find any necessary
+    parameters from properties of the atom.
+
+    This will add the atom if either it doesn't
+    exist in the forcefield, or if the existing
+    copy has a lower version number.
+
+    This will throw an exception if this forcefield does
+    not support partial molecules.
+
+    This returns whether or not the forcefield was
+    changed by this addition.
+
+    \throw SireError::invalid_operation
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+*/
+inline bool ForceField::add(const NewAtom &atom,
+                            const ParameterMap &map)
+{
+    return d().add(atom,map);
 }
 
 /** Remove the molecule 'molecule' from this forcefield - this
@@ -246,6 +362,22 @@ inline bool ForceField::remove(const Residue &residue)
     return d().remove(residue);
 }
 
+/** Remove the atom 'atom' from this forcefield - this
+    does nothing if the atom is not in this forcefield.
+    This returns whether this has changed the forcefield
+    (therefore necessitating a recalculation of the
+    energy)
+
+    This will throw an exception if this forcefield does
+    not support partial molecules
+
+    \throw SireError::invalid_operation
+*/
+inline bool ForceField::remove(const NewAtom &atom)
+{
+    return d().remove(atom);
+}
+
 /** Replace the molecule 'oldmol' with 'newmol' (using
     the passed parameter map to find any required parameters
     in the properties of the molecule). This is equivalent
@@ -265,18 +397,41 @@ inline bool ForceField::replace(const Molecule &oldmol,
     return d().replace(oldmol, newmol, map);
 }
 
-/** Return whether this forcefield contains a copy of the molecule
-    'molecule' */
+/** Return whether or not this forcefield contains *any part*
+    of any version of the molecule 'molecule' */
+inline bool ForceField::refersTo(const Molecule &molecule) const
+{
+    return d().refersTo(molecule);
+}
+
+/** Return the set of all of the ID numbers of all of the
+    molecules that are referred to by this forcefield
+    (i.e. all molecules that have at least some part
+     in this forcefield) */
+inline QSet<MoleculeID> ForceField::moleculeIDs() const
+{
+    return d().moleculeIDs();
+}
+
+/** Return whether this forcefield contains a complete copy of 
+    any version of the molecule 'molecule' */
 inline bool ForceField::contains(const Molecule &molecule) const
 {
     return d().contains(molecule);
 }
 
-/** Return whether this forcefield contains a copy of the
-    residue 'residue' */
+/** Return whether this forcefield contains a complete copy 
+    of any version of the residue 'residue' */
 inline bool ForceField::contains(const Residue &residue) const
 {
     return d().contains(residue);
+}
+
+/** Return whether or not this forcefield contains
+    any version of the atom 'atom' */
+inline bool ForceField::contains(const NewAtom &atom) const
+{
+    return d().contains(atom);
 }
 
 /** Return whether the forcefield is dirty (requires an energy recalcualtion) */
@@ -293,7 +448,7 @@ inline bool ForceField::isClean() const
 }
 
 /** Return the ID number of the forcefield */
-inline quint32 ForceField::ID() const
+inline ForceFieldID ForceField::ID() const
 {
     return d().ID();
 }
@@ -302,6 +457,15 @@ inline quint32 ForceField::ID() const
 inline const Version& ForceField::version() const
 {
     return d().version();
+}
+
+/** Assert that this forcefield contains the component 'component'
+
+    \throw SireFF::missing_component
+*/
+inline void ForceField::assertContains(const FFComponent &component) const
+{
+    d().assertContains(component);
 }
 
 }

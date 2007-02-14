@@ -1,22 +1,49 @@
+/********************************************\
+  *
+  *  Sire - Molecular Simulation Framework
+  *
+  *  Copyright (C) 2007  Christopher Woods
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+  *  the Free Software Foundation; either version 2 of the License, or
+  *  (at your option) any later version.
+  *
+  *  This program is distributed in the hope that it will be useful,
+  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  *  GNU General Public License for more details.
+  *
+  *  You should have received a copy of the GNU General Public License
+  *  along with this program; if not, write to the Free Software
+  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  *
+  *  For full details of the license please see the COPYING file
+  *  that should have come with this distribution.
+  *
+  *  You can contact the authors via the developer's mailing list
+  *  at http://siremol.org
+  *
+\*********************************************/
 
-#include "molprosession.h"
+#include <QUuid>
+#include <QHostInfo>
+
 #include "molproff.h"
+#include "molprosession.h"
+
+#include "SireError/errors.h"
 
 using namespace Squire;
 using namespace SireBase;
 
 QMutex MolproSession::starter_mutex;
 
-/** Construct a session that will represent the forcefield 'molproff'
-    using the molpro executable whose full path and name are given in
-    'molpro_executable' */
-MolproSession::MolproSession(const QFileInfo &molpro_executable,
-                             const MolproFF &molproff,
-                             const QDir &tmpdir)
+/** Construct a session that will represent the forcefield 'molproff' */
+MolproSession::MolproSession(const MolproFF &molproff)
               : boost::noncopyable(),
-                molpro_exe(molpro_executable),
-                ff_id( molproff.ID() ),
-                ff_version( molproff.version() )
+                ffid( molproff.ID() ),
+                qm_version( molproff.qmVersion() )
 {
     //only one molpro job may start at a time!
     QMutexLocker lkr(&starter_mutex);
@@ -44,7 +71,7 @@ MolproSession::MolproSession(const QFileInfo &molpro_executable,
                                       .arg(QUuid::createUuid().toString()).arg(n);
             #endif
 
-            rundir = QDir( tmpdir.absolutePath() + unique_dir );
+            rundir = QDir( molproff.molproTempDir().absolutePath() + unique_dir );
 
             ++n;
 
@@ -57,11 +84,12 @@ MolproSession::MolproSession(const QFileInfo &molpro_executable,
                           "Cannot create the tmp directory for molpro, \"%1\". "
                           "Check that you have permission to create directories in "
                           "\"%2\".")
-                              .arg(rundir.absolutePath(), tmpdir.absolutePath()), CODELOC );
+                              .arg(rundir.absolutePath(), 
+                                   molproff.molproTempDir().absolutePath()), CODELOC );
         }
 
         //merge the STDOUT and STDERR channels into one
-        molpro_process.setProcessChannelMode(QProcess::MergedChannels);
+        molpro_process.setReadChannelMode(QProcess::MergedChannels);
 
         //tell the process to use 'rundir' as its working directory
         molpro_process.setWorkingDirectory(rundir.absolutePath());
@@ -81,13 +109,16 @@ MolproSession::MolproSession(const QFileInfo &molpro_executable,
                                             molpro_process, CODELOC );
         }
 
+        //ok - other molpro jobs are allowed to start now
+        lkr.unlock();
+
         QTextStream ts(&molpro_process);
 
         //initialise the molpro process...
         molproff.initialise(ts);
 
         //tell the molpro process to start its RPC connection
-        ts << "user\n";
+        ts << "user\n";     //eventually will be ts << "start_rpc\n";
 
         //close the input (so that molpro starts up fully)
         molpro_process.closeWriteChannel();
@@ -95,8 +126,8 @@ MolproSession::MolproSession(const QFileInfo &molpro_executable,
         //read the output until we see that the molpro process has started
         //its RPC server...
         int nsecs = 0;
-        QString hostname;
-        int portnumber;
+        int portnumber = 0;
+        uint magic_key = 0;
         bool rpc_has_started = false;
 
         do
@@ -120,10 +151,11 @@ MolproSession::MolproSession(const QFileInfo &molpro_executable,
                         //The RPC server has started - get the hostname and port number
                         QStringList words = line.split(" ",QString::SkipEmptyParts);
 
-                        BOOST_ASSERT(words.count() == 3);
+                        BOOST_ASSERT(words.count() >= 5);
 
-                        hostname = words[1];
                         portnumber = words[2].toInt();
+                        magic_key = words[4].toUInt();
+
                         rpc_has_started = true;
 
                         break;
@@ -157,16 +189,20 @@ MolproSession::MolproSession(const QFileInfo &molpro_executable,
 
         //ok, it has started, we no longer need to read anything from molpro
         //as all communication now is via RPC
-        molpro_process.closeReadChannel();
+        molpro_process.closeReadChannel(QProcess::StandardOutput);
+        molpro_process.closeReadChannel(QProcess::StandardError);
 
         //now try to connect to the process via RPC
-        molpro_rpc = ::connectToMolpro(hostname, portnumber);
+        molpro_rpc = ::connectToMolproHost(QHostInfo::localHostName().toLatin1(), 
+                                           portnumber, magic_key, 0);
 
         //has the connection been successful?
         if (not molpro_rpc.client)
             throw SireError::process_error( QObject::tr(
                      "We failed to establish an RPC connection to the Molpro process "
-                     "at %1:%2").arg(hostname).arg(portnumber), CODELOC );
+                     "at %1:%2 (magic == %3)")
+                        .arg(QHostInfo::localHostName()).arg(portnumber)
+                        .arg(magic_key), CODELOC );
 
         //ok, everything is now complete!
     }
@@ -199,7 +235,7 @@ MolproSession::~MolproSession()
         if (molpro_rpc.client)
         {
             //use RPC to tell molpro to stop the RPC loop
-            ::exitRPC(molpro_rpc);
+            ::exitRPC(molpro_rpc,0);
 
             //wait until molpro has exited
             if (not molpro_process.waitForFinished())
@@ -220,6 +256,35 @@ MolproSession::~MolproSession()
     //remove the run directory
     if (rundir.exists())
         rundir.remove(rundir.absolutePath());
+}
+
+/** Assert that this session is compatible with the
+    Molpro forcefield 'molproff'. This is only compatible
+    if the ID and QM version numbers are the same as
+    those in the forcefield
+
+    \throw SireError::incompatible_error
+*/
+void MolproSession::assertCompatibleWith(const MolproFF &molproff) const
+{
+    if (molproff.ID() != ffid)
+        throw SireError::incompatible_error( QObject::tr(
+            "The passed Molpro forcefield is incompatible with this session "
+            "as it has a different ID number! (%1 vs. %2)")
+                .arg(molproff.ID()).arg(ffid), CODELOC );
+
+    else if (molproff.qmVersion() != qm_version)
+        throw SireError::incompatible_error( QObject::tr(
+            "The passed Molpro forcefield has a different QM version "
+            "number to the one on this session! (%1 vs. %2)")
+                .arg(molproff.qmVersion()).arg(qm_version),
+                    CODELOC );
+}
+
+/** Return whether the forcefield is incompatible with this session */
+bool MolproSession::incompatibleWith(const MolproFF &molproff) const
+{
+    return (molproff.ID() != ffid) or (molproff.qmVersion() != qm_version);
 }
 
 /** Assert that the Molpro process is still running
@@ -269,7 +334,7 @@ double MolproSession::calculateEnergy(const char *cmds)
             //the coordinates of the QM and MM regions have not changed
             //since the last evaluation - just run the commands and
             //get the energy
-            nrg = ::calculateEnergy(molpro_rpc, cmds);
+            nrg = ::calculateEnergy(molpro_rpc, cmds, 0, 0);
         }
         else
         {
@@ -277,7 +342,8 @@ double MolproSession::calculateEnergy(const char *cmds)
             nrg = ::calculateEnergyWithNewMM( molpro_rpc,
                                               cmds,
                                               const_cast<double*>(new_mm.constData()),
-                                              new_mm.count() / 4 );
+                                              new_mm.count() / 4,
+                                              0, 0 );
         }
     }
     else
@@ -289,16 +355,18 @@ double MolproSession::calculateEnergy(const char *cmds)
             nrg = ::calculateEnergyWithNewQM( molpro_rpc,
                                               cmds,
                                               const_cast<double*>(new_qm.constData()),
-                                              new_qm.count() / 3 );
+                                              new_qm.count() / 3,
+                                              0, 0 );
         }
         else
         {
             //both the QM and MM regions have changed since the last update
-            nrg = ::calculateEnergy( molpro_rpc, cmds,
-                                     const_cast<double*>(new_qm.constData()),
-                                     new_qm.count() / 3,
-                                     const_cast<double*>(new_mm.constData()),
-                                     new_mm.count() / 4 );
+            nrg = ::calculateEnergyWithNewQMMM( molpro_rpc, cmds,
+                                                const_cast<double*>(new_qm.constData()),
+                                                new_qm.count() / 3,
+                                                const_cast<double*>(new_mm.constData()),
+                                                new_mm.count() / 4,
+                                                0, 0 );
         }
     }
 

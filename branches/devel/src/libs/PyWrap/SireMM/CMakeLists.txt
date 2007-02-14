@@ -18,75 +18,137 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs
 # Define the sources in SireMM
 set ( WRAPMM_SOURCES
 
-      atomiccharges.py.cpp
-      atomicljs.py.cpp
-      cljff.py.cpp
-      combiningrules.py.cpp
-      intercljff.py.cpp
-      switchingfunction.py.cpp
-      tip4pff.py.cpp
+      _MM.main.cpp
 
-      wrap_anglegenerator.cpp    
-      wrap_angletable.cpp        
-      wrap_assign_angles.cpp     
-      wrap_assign_bonds.cpp      
-      wrap_assign_dihedrals.cpp  
-      wrap_bondgenerator.cpp     
-      wrap_bondtable.cpp          
-      wrap_chargetable.cpp        
-      wrap_cljparameter.cpp       
-      wrap_dihedralgenerator.cpp  
-      wrap_dihedraltable.cpp      
-      wrap_ljtable.cpp          
-      wrap_mmdb2.cpp            
-      wrap_mmdb.cpp             
-      wrap_molangleinfo.cpp     
-      wrap_molbondinfo.cpp      
-      wrap_moldihedralinfo.cpp    
-      wrap_resangleinfo.cpp
-      wrap_resbondinfo.cpp
-      wrap_resdihedralinfo.cpp
+      QVector_ChargeParameter_.py.cpp
+      QVector_LJParameter_.py.cpp
+
+      AngleTable_Expression_.pypp.cpp
+      BondTable_Expression_.pypp.cpp
+      DihedralTable_Expression_.pypp.cpp
+
+      assign_angles.pypp.cpp
+      assign_bonds.pypp.cpp
+      assign_dihedrals.pypp.cpp
+      
+      assign_internals_MolAngleInfo_.pypp.cpp
+      assign_internals_MolBondInfo_.pypp.cpp
+      assign_internals_MolDihedralInfo_.pypp.cpp
+
+      AngleAtomID.pypp.cpp
+      AngleDB.pypp.cpp
+      AngleGenerator.pypp.cpp
+      AngleResID.pypp.cpp
+      AngleTable.pypp.cpp
+      ArithmeticCombiningRules.pypp.cpp
+      AtomicCharges.pypp.cpp
+      AtomicLJs.pypp.cpp
+
+      AtomTable_ChargeParameter_.pypp.cpp
+      AtomTable_LJParameter_.pypp.cpp
+
+      BondAtomID.pypp.cpp
+      BondDB.pypp.cpp
+      BondGenerator.pypp.cpp
+      BondResID.pypp.cpp
+      BondTable.pypp.cpp
+
+      CLJFF.pypp.cpp
+      CLJPair.pypp.cpp
+      CLJParameter.pypp.cpp
+      ChargeDB.pypp.cpp
+      ChargeParameter.pypp.cpp
+      ChargeTable.pypp.cpp
+      CombiningRuleBase.pypp.cpp
+      CombiningRules.pypp.cpp
+
+      DihedralAtomID.pypp.cpp
+      DihedralDB.pypp.cpp
+      DihedralGenerator.pypp.cpp
+      DihedralResID.pypp.cpp
+      DihedralTable.pypp.cpp
+
+      GeometricCombiningRules.pypp.cpp
+
+      HarmonicSwitchingFunction.pypp.cpp
+
+      InterCLJFF.pypp.cpp
+
+      InternalDB_MolAngleInfo_.pypp.cpp
+      InternalDB_MolBondInfo_.pypp.cpp
+      InternalDB_MolDihedralInfo_.pypp.cpp
+      InternalGenerator_MolAngleInfo_.pypp.cpp
+      InternalGenerator_MolBondInfo_.pypp.cpp
+      InternalGenerator_MolDihedralInfo_.pypp.cpp
+      
+      InternalInfo_Angle_.pypp.cpp
+      InternalInfo_Bond_.pypp.cpp
+      InternalInfo_Dihedral_.pypp.cpp
+      
+      InternalTableBase_MolAngleInfo_.pypp.cpp
+      InternalTableBase_MolBondInfo_.pypp.cpp
+      InternalTableBase_MolDihedralInfo_.pypp.cpp
+      InternalTable_MolAngleInfo_Expression_.pypp.cpp
+      InternalTable_MolBondInfo_Expression_.pypp.cpp
+      InternalTable_MolDihedralInfo_Expression_.pypp.cpp
+            
+      LJDB.pypp.cpp
+      LJParameter.pypp.cpp
+      LJTable.pypp.cpp
+
+      MolAngleInfo.pypp.cpp
+      MolBondInfo.pypp.cpp
+      MolDihedralInfo.pypp.cpp
+      
+      MolInternalInfo_Angle_.pypp.cpp
+      MolInternalInfo_Bond_.pypp.cpp
+      MolInternalInfo_Dihedral_.pypp.cpp
+
+      NoCutoff.pypp.cpp
+
+      ResAngleInfo.pypp.cpp
+      ResBondInfo.pypp.cpp
+      ResDihedralInfo.pypp.cpp
+
+      ResInternalInfo_Angle_.pypp.cpp
+      ResInternalInfo_Bond_.pypp.cpp
+      ResInternalInfo_Dihedral_.pypp.cpp
+
+      SwitchFuncBase.pypp.cpp
+      SwitchingFunction.pypp.cpp
+
+      Tip4PFF.pypp.cpp
+
+      UreyBradleyDB.pypp.cpp
+
+      UsePassedInternals_MolAngleInfo_.pypp.cpp
+      UsePassedInternals_MolBondInfo_.pypp.cpp
+      UsePassedInternals_MolDihedralInfo_.pypp.cpp
+
+      UsePassedAngles.pypp.cpp
+      UsePassedBonds.pypp.cpp
+      UsePassedDihedrals.pypp.cpp
     )
 
 # Create the library that holds all of the class wrappers
-add_library (PyWrap_SireMM ${WRAPMM_SOURCES})
+add_library (PythonWrapping_SireMM ${WRAPMM_SOURCES})
 
-set_target_properties (PyWrap_SireMM PROPERTIES
-                       VERSION ${SIRE_VERSION}
-                       SOVERSION ${SIRE_VERSION_MAJOR}
-		       )
+set_target_properties (PythonWrapping_SireMM 
+                       PROPERTIES
+                         VERSION ${SIRE_VERSION}
+                         SOVERSION ${SIRE_VERSION_MAJOR}
+                         OUTPUT_NAME "MM"
+                         PREFIX "_"
+                         SUFFIX ${PYTHON_MODULE_EXTENSION}
+                      )
 		       
-target_link_libraries (PyWrap_SireMM
+target_link_libraries (PythonWrapping_SireMM
                        SireMM
                        SireDB
                        SireFF
                        SireMol
-                       PyWrap_SireFF
-                       PyWrap_SireDB
-                       PyWrap_SireMol
                        ${BOOST_PYTHON_LIBRARY}
-		      )
-
-# Install the wrappers library with the other Sire libraries
-install( TARGETS PyWrap_SireMM
-         RUNTIME DESTINATION ${SIRE_BIN}
-         LIBRARY DESTINATION ${SIRE_LIBS}
-         ARCHIVE DESTINATION ${SIRE_ARCHIVES}
-       )
-
-# Now create the thin-wrapper python module
-add_library (PythonWrapping_SireMM wrap_SireMM.cpp)
-
-target_link_libraries (PythonWrapping_SireMM
-                       PyWrap_SireMM
-                       )
-
-# Use properties to change the filename of the python module
-set_target_properties (PythonWrapping_SireMM
-                       PROPERTIES
-                         OUTPUT_NAME "MM"
-                         PREFIX "_"
-                         SUFFIX ${PYTHON_MODULE_EXTENSION}
+                       ${PYTHON_LIBRARY}
                       )
 
 # installation

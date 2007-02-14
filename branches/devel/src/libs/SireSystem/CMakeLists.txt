@@ -11,6 +11,12 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the sources in SireSystem
 set ( SIRESYSTEM_SOURCES
+      localsimsystem.cpp
+      move.cpp
+      moves.cpp
+      simsystem.cpp
+      system.cpp
+      systemdata.cpp
     )
 
 add_library (SireSystem ${SIRESYSTEM_SOURCES})
@@ -23,6 +29,9 @@ set_target_properties (SireSystem PROPERTIES
 # Link to other Sire libraries
 target_link_libraries (SireSystem
                        SireFF
+                       SireMol
+                       SireCAS
+                       SireBase
                        )
 
 # installation

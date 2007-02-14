@@ -1,3 +1,30 @@
+/********************************************\
+  *
+  *  Sire - Molecular Simulation Framework
+  *
+  *  Copyright (C) 2007  Christopher Woods
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+  *  the Free Software Foundation; either version 2 of the License, or
+  *  (at your option) any later version.
+  *
+  *  This program is distributed in the hope that it will be useful,
+  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  *  GNU General Public License for more details.
+  *
+  *  You should have received a copy of the GNU General Public License
+  *  along with this program; if not, write to the Free Software
+  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  *
+  *  For full details of the license please see the COPYING file
+  *  that should have come with this distribution.
+  *
+  *  You can contact the authors via the developer's mailing list
+  *  at http://siremol.org
+  *
+\*********************************************/
 
 #include "qhash_siremol.h"
 
@@ -163,6 +190,29 @@ bool NewAtom::operator!=(const NewAtom &other) const
            d->version() != other.d->version();
 }
 
+/** Return the ID number of the molecule that contains this atom */
+MoleculeID NewAtom::ID() const
+{
+    return d->ID();
+}
+
+/** Return the version number of the molecule that contains this atom */
+const MoleculeVersion& NewAtom::version() const
+{
+    return d->version();
+}
+
+/** Return a string identifying this atom */
+QString NewAtom::idString() const
+{
+    return QObject::tr("%1 in %2 (%3) in \"%3\" (%4 %5)")
+                          .arg(name())
+                          .arg(d->info().residueName(info().resNum()))
+                          .arg(info().resNum())
+                          .arg(d->info().name()).arg(ID())
+                          .arg(d->version().toString());
+}
+
 /** Return the AtomInfo for this Atom */
 const AtomInfo& NewAtom::info() const
 {
@@ -185,6 +235,12 @@ Element NewAtom::element() const
 Vector NewAtom::coordinates() const
 {
     return d->coordinates(cgatomid);
+}
+
+/** Return the CGAtomID of the atom */
+const CGAtomID& NewAtom::cgAtomID() const
+{
+    return cgatomid;
 }
 
 /** Allow implicit conversion to a Vector (to get the coordinates) */

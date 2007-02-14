@@ -1,3 +1,30 @@
+/********************************************\
+  *
+  *  Sire - Molecular Simulation Framework
+  *
+  *  Copyright (C) 2007  Christopher Woods
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+  *  the Free Software Foundation; either version 2 of the License, or
+  *  (at your option) any later version.
+  *
+  *  This program is distributed in the hope that it will be useful,
+  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  *  GNU General Public License for more details.
+  *
+  *  You should have received a copy of the GNU General Public License
+  *  along with this program; if not, write to the Free Software
+  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  *
+  *  For full details of the license please see the COPYING file
+  *  that should have come with this distribution.
+  *
+  *  You can contact the authors via the developer's mailing list
+  *  at http://siremol.org
+  *
+\*********************************************/
 
 #include "SireMol/qhash_siremol.h"
 #include "SireCAS/qhash_sirecas.h"
@@ -80,7 +107,7 @@ void MolproCalculator::calculateEnergy()
         molpro_session.reset();
 
         //start a new session
-        molpro_session.reset( new MolproSession(molpro_exe, *molproff, temp_dir) );
+        molpro_session.reset( new MolproSession(*molproff) );
     }
 
     nrg_components = molproff->recalculateEnergy(*molpro_session);
@@ -89,16 +116,55 @@ void MolproCalculator::calculateEnergy()
 
 /** Move the molecule 'molecule' and return whether the energy of
     the forcefield needs to be recalculated */
-bool MolproCalculator::move(const Molecule &molecule)
+bool MolproCalculator::change(const Molecule &molecule)
 {
-    return molproff->move(molecule);
+    return molproff->change(molecule);
 }
 
 /** Move the residue 'residue' and return whether the energy of
     the forcefield now needs to be recalculated */
-bool MolproCalculator::move(const Residue &residue)
+bool MolproCalculator::change(const Residue &residue)
 {
-    return molproff->move(residue);
+    return molproff->change(residue);
+}
+
+/** Move the atom 'atom' and return whether the energy of 
+    the forcefield now needs to be recalculated */
+bool MolproCalculator::change(const NewAtom &atom)
+{
+    return molproff->change(atom);
+}
+
+bool MolproCalculator::add(const Molecule&, const ParameterMap&)
+{
+    return false;
+}
+
+bool MolproCalculator::add(const Residue&, const ParameterMap&)
+{
+    return false;
+}
+
+bool MolproCalculator::add(const NewAtom&, const ParameterMap&)
+{
+    return false;
+}
+
+/** Remove the molecule 'molecule', returning whether or not this
+    changes this forcefield */
+bool MolproCalculator::remove(const Molecule &molecule)
+{
+    return molproff->remove(molecule);
+}
+
+bool MolproCalculator::remove(const Residue&)
+{
+    return false;
+}
+
+bool MolproCalculator::replace(const Molecule&, const Molecule&, const ParameterMap&)
+{
+    return false;
 }
 
 /** Set the forcefield for this calculator - this calculator is
@@ -117,7 +183,7 @@ bool MolproCalculator::setForceField(const ForceField &forcefield)
     else
     {
         nrg_components = molproff->energies();
-        total_nrg = nrg_components.value(molproff->total());
+        total_nrg = nrg_components.value(molproff->components().total());
 
         return false;
     }

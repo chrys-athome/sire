@@ -23,6 +23,7 @@ set ( SIREMATHS_SOURCES
       matrix.cpp
       plane.cpp
       quaternion.cpp
+      rangenerator.cpp
       rational.cpp
       sphere.cpp
       torsion.cpp

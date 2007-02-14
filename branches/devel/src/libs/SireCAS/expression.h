@@ -1,3 +1,31 @@
+/********************************************\
+  *
+  *  Sire - Molecular Simulation Framework
+  *
+  *  Copyright (C) 2006  Christopher Woods
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+  *  the Free Software Foundation; either version 2 of the License, or
+  *  (at your option) any later version.
+  *
+  *  This program is distributed in the hope that it will be useful,
+  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  *  GNU General Public License for more details.
+  *
+  *  You should have received a copy of the GNU General Public License
+  *  along with this program; if not, write to the Free Software
+  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  *
+  *  For full details of the license please see the COPYING file
+  *  that should have come with this distribution.
+  *
+  *  You can contact the authors via the developer's mailing list
+  *  at http://siremol.org
+  *
+\*********************************************/
+
 #ifndef SIRECAS_EXPRESSION_H
 #define SIRECAS_EXPRESSION_H
 
@@ -146,6 +174,7 @@ private:
 
 /** Return a list of all children of type 'T' in this expression */
 template<class T>
+SIRE_OUTOFLINE_TEMPLATE
 QList<T> Expression::children() const
 {
     Expressions exs = this->children();
@@ -158,8 +187,12 @@ QList<T> Expression::children() const
     {
         const ExpressionBase &base = it->base();
 
+        //gccxml doesn't like this section, so remove it
+        //when we are generating the python wrappers
+        #ifndef SKIP_BROKEN_GCCXML_PARTS
         if (base.isA<T>())
             children_t.append( base.asA<T>() );
+        #endif
     }
 
     return children_t;

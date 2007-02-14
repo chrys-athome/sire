@@ -1,3 +1,31 @@
+/********************************************\
+  *
+  *  Sire - Molecular Simulation Framework
+  *
+  *  Copyright (C) 2006  Christopher Woods
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+  *  the Free Software Foundation; either version 2 of the License, or
+  *  (at your option) any later version.
+  *
+  *  This program is distributed in the hope that it will be useful,
+  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  *  GNU General Public License for more details.
+  *
+  *  You should have received a copy of the GNU General Public License
+  *  along with this program; if not, write to the Free Software
+  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  *
+  *  For full details of the license please see the COPYING file
+  *  that should have come with this distribution.
+  *
+  *  You can contact the authors via the developer's mailing list
+  *  at http://siremol.org
+  *
+\*********************************************/
+
 #ifndef SIREERROR_ERRORS_H
 #define SIREERROR_ERRORS_H
 
@@ -518,6 +546,7 @@ protected:
 
 /** This exception is thrown whenever an unidentified exception needs translating into
     a SireError::exception, or when an unidentified SireError::exception is detected.
+    
     @author Christopher Woods
 */
 class SIREERROR_EXPORT unknown_exception : public SireError::exception
@@ -538,6 +567,33 @@ public:
     const char* what() const throw()
     {
         return "SireError::unknown_exception";
+    }
+};
+
+/** This exception is thrown whenever a problem is detected
+    that involves dependencies, e.g. a dependency is missing,
+    or a dependency may be about to be broken.
+    
+    @author Christopher Woods
+*/
+class SIREERROR_EXPORT dependency_error : public SireError::exception
+{
+public:
+    dependency_error() : exception()
+    {}
+
+    dependency_error(QString err, QString place=QString::null) : exception(err,place)
+    {}
+
+    dependency_error(const dependency_error &other) : exception(other)
+    {}
+
+    ~dependency_error() throw()
+    {}
+
+    const char* what() const throw()
+    {
+        return "SireError::dependency_error";
     }
 };
 
@@ -587,6 +643,7 @@ Q_DECLARE_METATYPE(SireError::invalid_state)
 Q_DECLARE_METATYPE(SireError::incomplete_code)
 Q_DECLARE_METATYPE(SireError::std_exception)
 Q_DECLARE_METATYPE(SireError::unknown_exception)
+Q_DECLARE_METATYPE(SireError::dependency_error)
 
 SIRE_END_HEADER
 

@@ -28,7 +28,7 @@
 IF (WIN32)
 
   FIND_PROGRAM(PYTHON_EXECUTABLE
-    NAMES python2.4 python2.3 python2.2 python2.1 python2.0  
+    NAMES python2.5 python2.4 python2.3 python2.2 python2.1 python2.0  
           python1.6 python1.5 python
     PATHS
     [HKEY_LOCAL_MACHINE\\SOFTWARE\\Python\\PythonCore\\2.4\\InstallPath]
@@ -45,12 +45,12 @@ ENDIF (WIN32)
 IF (UNIX)
 
   FIND_PROGRAM(PYTHON_EXECUTABLE
-    NAMES python2.4 python2.3 python2.2 python2.1 python2.0
+    NAMES python2.5 python2.4 python2.3 python2.2 python2.1 python2.0
           python1.6 python1.5 python
     PATHS
+          ENV PATH
           /usr/bin
 	  /usr/local/bin
-          ENV PATH
    )
 
 ENDIF (UNIX)

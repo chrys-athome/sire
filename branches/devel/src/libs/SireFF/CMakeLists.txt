@@ -16,11 +16,14 @@ set ( SIREFF_SOURCES
       ffbase.cpp
       ffcalculator.cpp
       ffcomponent.cpp
+      ffexpression.cpp
       ffprocessor.cpp
       ffthreadprocessor.cpp
       ffthreadworker.cpp
       ffworker.cpp
       forcefield.cpp
+      forcefields.cpp
+      forcetable.cpp
       parametermap.cpp
     )
 

@@ -17,50 +17,49 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs
 
 # Define the sources in SireMaths
 set ( WRAPMATHS_SOURCES
-      wrap_angle.cpp
-      wrap_axisset.cpp
-      wrap_complex.cpp
-      wrap_geometry.cpp
-      wrap_maths.cpp
-      wrap_rational.cpp
-      wrap_vector.cpp
+
+      _Maths.main.cpp
+      
+      Angle.pypp.cpp
+      AxisSet.pypp.cpp
+      
+      Complex.pypp.cpp
+      
+      Line.pypp.cpp
+      
+      Matrix4.pypp.cpp
+      Matrix.pypp.cpp
+      
+      Plane.pypp.cpp
+      
+      Quaternion.pypp.cpp
+      
+      RanGenerator.pypp.cpp
+      
+      Sphere.pypp.cpp
+      
+      Torsion.pypp.cpp
+      Triangle.pypp.cpp
+      
+      Vector.pypp.cpp
     )
 
 # Create the library that holds all of the class wrappers
-add_library (PyWrap_SireMaths ${WRAPMATHS_SOURCES})
+add_library (PythonWrapping_SireMaths ${WRAPMATHS_SOURCES})
 
-set_target_properties (PyWrap_SireMaths PROPERTIES
-                       VERSION ${SIRE_VERSION}
-		       SOVERSION ${SIRE_VERSION_MAJOR}
-		       )
-		       
-target_link_libraries (PyWrap_SireMaths
-                       SireMaths
-		       PyWrap_SireError
-                       PyWrap_SireQt
-		       ${BOOST_PYTHON_LIBRARY}
-		      )
-
-# Install the wrappers library with the other Sire libraries
-install( TARGETS PyWrap_SireMaths
-         RUNTIME DESTINATION ${SIRE_BIN}
-         LIBRARY DESTINATION ${SIRE_LIBS}
-         ARCHIVE DESTINATION ${SIRE_ARCHIVES}
-       )
-
-# Now create the thin-wrapper python module
-add_library (PythonWrapping_SireMaths wrap_SireMaths.cpp)
-
-target_link_libraries (PythonWrapping_SireMaths
-                       PyWrap_SireMaths
-                       )
-
-# Use properties to change the filename of the python module
-set_target_properties (PythonWrapping_SireMaths
+set_target_properties (PythonWrapping_SireMaths 
                        PROPERTIES
+                         VERSION ${SIRE_VERSION}
+                         SOVERSION ${SIRE_VERSION_MAJOR}
                          OUTPUT_NAME "Maths"
                          PREFIX "_"
                          SUFFIX ${PYTHON_MODULE_EXTENSION}
+                      ) 
+		       
+target_link_libraries (PythonWrapping_SireMaths
+                       SireMaths
+                       ${BOOST_PYTHON_LIBRARY}
+                       ${PYTHON_LIBRARY}
                       )
 
 # installation
