@@ -27,6 +27,14 @@ set ( WRAPMM_SOURCES
       BondTable_Expression_.pypp.cpp
       DihedralTable_Expression_.pypp.cpp
 
+      assign_angles.pypp.cpp
+      assign_bonds.pypp.cpp
+      assign_dihedrals.pypp.cpp
+      
+      assign_internals_MolAngleInfo_.pypp.cpp
+      assign_internals_MolBondInfo_.pypp.cpp
+      assign_internals_MolDihedralInfo_.pypp.cpp
+
       AngleAtomID.pypp.cpp
       AngleDB.pypp.cpp
       AngleGenerator.pypp.cpp
@@ -102,12 +110,21 @@ set ( WRAPMM_SOURCES
       ResBondInfo.pypp.cpp
       ResDihedralInfo.pypp.cpp
 
+      ResInternalInfo_Angle_.pypp.cpp
+      ResInternalInfo_Bond_.pypp.cpp
+      ResInternalInfo_Dihedral_.pypp.cpp
+
       SwitchFuncBase.pypp.cpp
       SwitchingFunction.pypp.cpp
 
       Tip4PFF.pypp.cpp
 
       UreyBradleyDB.pypp.cpp
+
+      UsePassedInternals_MolAngleInfo_.pypp.cpp
+      UsePassedInternals_MolBondInfo_.pypp.cpp
+      UsePassedInternals_MolDihedralInfo_.pypp.cpp
+
       UsePassedAngles.pypp.cpp
       UsePassedBonds.pypp.cpp
       UsePassedDihedrals.pypp.cpp

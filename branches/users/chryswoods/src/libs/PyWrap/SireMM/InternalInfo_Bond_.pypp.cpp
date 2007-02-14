@@ -43,7 +43,7 @@ void register_InternalInfo_Bond__class(){
         .def( 
             "contains"
             , (bool ( ::SireMM::detail::InternalInfo<SireMol::Bond>::* )( ::SireMol::GroupID ) const)( &::SireMM::detail::InternalInfo<SireMol::Bond>::contains )
-            , ( bp::arg("id") ) )    
+            , ( bp::arg("groupid") ) )    
         .def( 
             "contains"
             , (bool ( ::SireMM::detail::InternalInfo<SireMol::Bond>::* )( ::SireMol::GroupIndexID const & ) const)( &::SireMM::detail::InternalInfo<SireMol::Bond>::contains )

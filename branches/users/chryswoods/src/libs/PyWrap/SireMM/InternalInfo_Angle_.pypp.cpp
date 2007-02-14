@@ -43,7 +43,7 @@ void register_InternalInfo_Angle__class(){
         .def( 
             "contains"
             , (bool ( ::SireMM::detail::InternalInfo<SireMol::Angle>::* )( ::SireMol::GroupID ) const)( &::SireMM::detail::InternalInfo<SireMol::Angle>::contains )
-            , ( bp::arg("id") ) )    
+            , ( bp::arg("groupid") ) )    
         .def( 
             "contains"
             , (bool ( ::SireMM::detail::InternalInfo<SireMol::Angle>::* )( ::SireMol::GroupIndexID const & ) const)( &::SireMM::detail::InternalInfo<SireMol::Angle>::contains )

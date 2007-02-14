@@ -1,6 +1,12 @@
 #ifndef PYPLUSPLUS_SIREMM_HEADERS_H
 #define PYPLUSPLUS_SIREMM_HEADERS_H
 
+//need to increase the arity of boost::python
+//to allow it to cope with assign_bonds, assign_angles
+//and assign_dihedrals - do it here, so that
+//this definition is consistent across the entire module
+#define BOOST_PYTHON_MAX_ARITY 15
+
 #include "SireMol/qhash_siremol.h"
 #include "SireFF/qhash_sireff.h"
 #include "SireCAS/qhash_sirecas.h"

@@ -14,9 +14,9 @@ wrap_classes = [ "AngleDB",
                  "AngleGenerator",
                  "UsePassedAngles",
                  "AngleTable",
-                 #"assign_angles",
-                 #"assign_bonds",
-                 #"assign_dihedrals",
+                 "assign_angles",
+                 "assign_bonds",
+                 "assign_dihedrals",
                  "AtomicCharges",
                  "AtomicLJs",
                  "BondDB",
@@ -61,6 +61,10 @@ wrap_classes = [ "AngleDB",
                  "Tip4PFF",
                  "UreyBradleyDB",
                  
+                 "assign_internals<SireMM::MolAngleInfo>",
+                 "assign_internals<SireMM::MolBondInfo>",
+                 "assign_internals<SireMM::MolDihedralInfo>",
+                 
                  "AtomTableT<SireMM::ChargeParameter>",
                  "AtomTableT<SireMM::LJParameter>",
                  
@@ -88,14 +92,30 @@ wrap_classes = [ "AngleDB",
                  "MolInternalInfo<SireMol::Bond>",
                  "MolInternalInfo<SireMol::Dihedral>",
                  
+                 "ResInternalInfo<SireMol::Angle>",
+                 "ResInternalInfo<SireMol::Bond>",
+                 "ResInternalInfo<SireMol::Dihedral>",
+                 
                  "InternalInfo<SireMol::Angle>",
                  "InternalInfo<SireMol::Bond>",
-                 "InternalInfo<SireMol::Dihedral>"
+                 "InternalInfo<SireMol::Dihedral>",
+                 
+                 "UsePassedInternals<SireMM::MolAngleInfo>",
+                 "UsePassedInternals<SireMM::MolBondInfo>",
+                 "UsePassedInternals<SireMM::MolDihedralInfo>"
+                 
                ]
 
 huge_classes = []
 
-aliases = { "AtomTableT<SireMM::ChargeParameter>" : "AtomTable_ChargeParameter_",
+aliases = { "assign_internals<SireMM::MolAngleInfo>" :
+                           "assign_internals_MolAngleInfo_",
+            "assign_internals<SireMM::MolBondInfo>" :
+                           "assign_internals_MolBondInfo_",
+            "assign_internals<SireMM::MolDihedralInfo>" :
+                           "assign_internals_MolDihedralInfo_",
+            
+            "AtomTableT<SireMM::ChargeParameter>" : "AtomTable_ChargeParameter_",
             "AtomTableT<SireMM::LJParameter>" : "AtomTable_LJParameter_",
 
             "AngleTableT<SireCAS::Expression>" : "AngleTable_Expression_",
@@ -128,10 +148,20 @@ aliases = { "AtomTableT<SireMM::ChargeParameter>" : "AtomTable_ChargeParameter_"
             "MolInternalInfo<SireMol::Bond>" : "MolInternalInfo_Bond_",
             "MolInternalInfo<SireMol::Dihedral>" : "MolInternalInfo_Dihedral_",
             
+            "ResInternalInfo<SireMol::Angle>" : "ResInternalInfo_Angle_",
+            "ResInternalInfo<SireMol::Bond>" : "ResInternalInfo_Bond_",
+            "ResInternalInfo<SireMol::Dihedral>" : "ResInternalInfo_Dihedral_",
+            
             "InternalInfo<SireMol::Angle>" : "InternalInfo_Angle_",
             "InternalInfo<SireMol::Bond>" : "InternalInfo_Bond_",
-            "InternalInfo<SireMol::Dihedral>" : "InternalInfo_Dihedral_"
+            "InternalInfo<SireMol::Dihedral>" : "InternalInfo_Dihedral_",
             
+            "UsePassedInternals<SireMM::MolAngleInfo>" :
+                       "UsePassedInternals_MolAngleInfo_",
+            "UsePassedInternals<SireMM::MolBondInfo>" :
+                       "UsePassedInternals_MolBondInfo_",
+            "UsePassedInternals<SireMM::MolDihedralInfo>" :
+                       "UsePassedInternals_MolDihedralInfo_"
           }
 
 extra_includes = [ "SireMol/molecule.h",
@@ -145,7 +175,15 @@ def remove_create(c):
 def fix_noncopyable(c):
     c.noncopyable = False
 
-special_code = { "AngleTable" : remove_create,
+def fix_assigninternals(c):
+    c.add_declaration_code("#include \"SireDB/using_database.h\"")
+    c.add_declaration_code("using namespace SireMM;")
+
+special_code = { "assign_angles" : fix_assigninternals,
+                 "assign_bonds" : fix_assigninternals,
+                 "assign_dihedrals" : fix_assigninternals,
+                 
+                 "AngleTable" : remove_create,
                  "BondTable" : remove_create,
                  "ChargeTable" : remove_create,
                  "DihedralTable" : remove_create,

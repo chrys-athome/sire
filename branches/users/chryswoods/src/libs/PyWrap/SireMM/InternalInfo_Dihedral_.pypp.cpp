@@ -43,7 +43,7 @@ void register_InternalInfo_Dihedral__class(){
         .def( 
             "contains"
             , (bool ( ::SireMM::detail::InternalInfo<SireMol::Dihedral>::* )( ::SireMol::GroupID ) const)( &::SireMM::detail::InternalInfo<SireMol::Dihedral>::contains )
-            , ( bp::arg("id") ) )    
+            , ( bp::arg("groupid") ) )    
         .def( 
             "contains"
             , (bool ( ::SireMM::detail::InternalInfo<SireMol::Dihedral>::* )( ::SireMol::GroupIndexID const & ) const)( &::SireMM::detail::InternalInfo<SireMol::Dihedral>::contains )

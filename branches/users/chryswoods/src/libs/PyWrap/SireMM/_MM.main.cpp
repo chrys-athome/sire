@@ -139,6 +139,12 @@
 
 #include "ResDihedralInfo.pypp.hpp"
 
+#include "ResInternalInfo_Angle_.pypp.hpp"
+
+#include "ResInternalInfo_Bond_.pypp.hpp"
+
+#include "ResInternalInfo_Dihedral_.pypp.hpp"
+
 #include "SwitchFuncBase.pypp.hpp"
 
 #include "SwitchingFunction.pypp.hpp"
@@ -152,6 +158,24 @@
 #include "UsePassedBonds.pypp.hpp"
 
 #include "UsePassedDihedrals.pypp.hpp"
+
+#include "UsePassedInternals_MolAngleInfo_.pypp.hpp"
+
+#include "UsePassedInternals_MolBondInfo_.pypp.hpp"
+
+#include "UsePassedInternals_MolDihedralInfo_.pypp.hpp"
+
+#include "assign_angles.pypp.hpp"
+
+#include "assign_bonds.pypp.hpp"
+
+#include "assign_dihedrals.pypp.hpp"
+
+#include "assign_internals_MolAngleInfo_.pypp.hpp"
+
+#include "assign_internals_MolBondInfo_.pypp.hpp"
+
+#include "assign_internals_MolDihedralInfo_.pypp.hpp"
 
 #include "QVector_LJParameter_.py.h"
 
@@ -356,13 +380,25 @@ BOOST_PYTHON_MODULE(_MM){
 
     register_NoCutoff_class();
 
+    register_ResInternalInfo_Angle__class();
+
+    bp::implicitly_convertible< SireMM::detail::InternalInfo<SireMol::Angle> const &, SireMM::ResInternalInfo<SireMol::Angle> >();
+
     register_ResAngleInfo_class();
 
     bp::implicitly_convertible< SireMM::ResInternalInfo<SireMol::Angle> const &, SireMM::ResAngleInfo >();
 
+    register_ResInternalInfo_Bond__class();
+
+    bp::implicitly_convertible< SireMM::detail::InternalInfo<SireMol::Bond> const &, SireMM::ResInternalInfo<SireMol::Bond> >();
+
     register_ResBondInfo_class();
 
     bp::implicitly_convertible< SireMM::ResInternalInfo<SireMol::Bond> const &, SireMM::ResBondInfo >();
+
+    register_ResInternalInfo_Dihedral__class();
+
+    bp::implicitly_convertible< SireMM::detail::InternalInfo<SireMol::Dihedral> const &, SireMM::ResInternalInfo<SireMol::Dihedral> >();
 
     register_ResDihedralInfo_class();
 
@@ -376,16 +412,40 @@ BOOST_PYTHON_MODULE(_MM){
 
     register_UreyBradleyDB_class();
 
+    register_UsePassedInternals_MolAngleInfo__class();
+
     register_UsePassedAngles_class();
 
     bp::implicitly_convertible< QSet<SireMol::Angle> const &, SireMM::UsePassedAngles >();
+
+    register_UsePassedInternals_MolBondInfo__class();
 
     register_UsePassedBonds_class();
 
     bp::implicitly_convertible< QSet<SireMol::Bond> const &, SireMM::UsePassedBonds >();
 
+    register_UsePassedInternals_MolDihedralInfo__class();
+
     register_UsePassedDihedrals_class();
 
     bp::implicitly_convertible< QSet<SireMol::Dihedral> const &, SireMM::UsePassedDihedrals >();
+
+    register_assign_internals_MolAngleInfo__class();
+
+    register_assign_angles_class();
+
+    bp::implicitly_convertible< SireMM::AngleGeneratorBase const &, SireMM::assign_angles >();
+
+    register_assign_internals_MolBondInfo__class();
+
+    register_assign_bonds_class();
+
+    bp::implicitly_convertible< SireMM::BondGeneratorBase const &, SireMM::assign_bonds >();
+
+    register_assign_internals_MolDihedralInfo__class();
+
+    register_assign_dihedrals_class();
+
+    bp::implicitly_convertible< SireMM::DihedralGeneratorBase const &, SireMM::assign_dihedrals >();
 }
 
