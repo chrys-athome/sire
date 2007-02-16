@@ -129,16 +129,12 @@
 
 #include "WeightFunction.pypp.hpp"
 
-#include "QList_Molecule_.py.h"
-
-#include "QSet_AtomIndex_.py.h"
+#include "siremol_containers.h"
 
 namespace bp = boost::python;
 
 BOOST_PYTHON_MODULE(_Mol){
-    register_QList_Molecule_class();
-
-    register_QSet_AtomIndex_class();
+    register_SireMol_containers();
 
     register_Angle_class();
 

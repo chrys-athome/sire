@@ -37,11 +37,11 @@
 
 using namespace boost::python;
 
-/** This function converts a QString to a python str object 
+/** This function converts a QString to a python str object
 
     This function is copied from python-qt, placed under the GPL
     Copyright (C) 2005 by Eric Jardim.
-    
+
 */
 PyObject* convert(QString const& s)
 {
@@ -53,7 +53,7 @@ PyObject* convert(QString const& s)
     Py_UNICODE* buf = new Py_UNICODE[unichars];
     for (int i = 0; i < unichars; i++)
         buf[i] = s.at(i).unicode();
-        
+
     PyObject* tempObj = PyUnicode_FromUnicode(buf, unichars);
     delete[] buf;
     return tempObj;
@@ -62,7 +62,7 @@ PyObject* convert(QString const& s)
 #endif
 }
 
-/** This function is copied from python-qt, placed under the GPL, 
+/** This function is copied from python-qt, placed under the GPL,
     Copyright (C) 2005 by Eric Jardim. It converts a python
     string or unicode to a QString */
 void QString_from_python_str_or_unicode( PyObject* obj_ptr,
@@ -95,7 +95,7 @@ void QString_from_python_str_or_unicode( PyObject* obj_ptr,
     int unichars = PyUnicode_GET_SIZE(temp_obj_ptr);
 #if defined(Py_UNICODE_WIDE)
     //qDebug("Py_UNICODE_WIDE");
-        
+
     // Python is using a 4-byte unsigned buffer of UCS-4
     // FIXME: Qt doesn't give us any direct way to load UCS-4, so we're doing
     //        it a rather clunky way that can probably be improved.
@@ -125,9 +125,9 @@ struct QString_from_python
                                          &construct,
                                          type_id<QString>() );
     }
-    
+
     /** Can the python object pointed to by 'obj_ptr' be converted
-        to a QString? 
+        to a QString?
     */
     static void* convertible(PyObject* obj_ptr)
     {
@@ -137,7 +137,7 @@ struct QString_from_python
         else
             return 0;
     }
-    
+
     /** Perform the actual conversion */
     static void construct(  PyObject* obj_ptr,
                             converter::rvalue_from_python_stage1_data* data)
@@ -148,7 +148,7 @@ struct QString_from_python
 };
 
 template<class T>
-QString wrap_arg_str_3(const QString &string, const T &a, int fieldWidth, 
+QString wrap_arg_str_3(const QString &string, const T &a, int fieldWidth,
                      const QChar &fillChar)
 {
     return string.arg( a, fieldWidth, fillChar );
@@ -309,13 +309,13 @@ void export_QString2(class_<QString> &wrapper);
 void export_QString3(class_<QString> &wrapper);
 
 /** This exports the QString wrapper. I use the python-qt conversion to convert
-    from python to QString, then a full wrapping of QString to convert from 
+    from python to QString, then a full wrapping of QString to convert from
     QString to python. This allows me to have a fully-featured QString type
     that is visible from python.
-    
+
     @author Christopher Woods
 */
-void  
+void
 SIREQT_EXPORT
 export_QString()
 {
@@ -334,9 +334,9 @@ export_QString()
         .def( init<const char*>() )
         .def( init<const QByteArray&>() )
         .def( init<const QString&>() )
-        
+
         .def( "__str__", &convert )
-        
+
         .def( "append", (QString& (QString::*)(const QString&))
                                         &QString::append,
                             return_internal_reference< 1, with_custodian_and_ward<1,2> >() )
@@ -352,101 +352,101 @@ export_QString()
         .def( "append", (QString& (QString::*)(QChar))
                                         &QString::append,
                             return_internal_reference< 1, with_custodian_and_ward<1,2> >() )
-                                        
+
         .def( "arg", (QString (QString::*)(const QString&, const QString&) const)
                                         &QString::arg )
-        .def( "arg", (QString (QString::*)(const QString&, const QString&, 
+        .def( "arg", (QString (QString::*)(const QString&, const QString&,
                                            const QString&) const)
                                         &QString::arg )
-        .def( "arg", (QString (QString::*)(const QString&, const QString&, 
+        .def( "arg", (QString (QString::*)(const QString&, const QString&,
                                            const QString&, const QString&) const)
                                         &QString::arg )
-        
+
         .def( "arg", &wrap_arg_int_1<int> )
         .def( "arg", &wrap_arg_int_2<int> )
         .def( "arg", &wrap_arg_int_3<int> )
         .def( "arg", &wrap_arg_int_4<int> )
-        
+
         .def( "arg", &wrap_arg_int_1<uint> )
         .def( "arg", &wrap_arg_int_2<uint> )
         .def( "arg", &wrap_arg_int_3<uint> )
         .def( "arg", &wrap_arg_int_4<uint> )
-        
+
         .def( "arg", &wrap_arg_int_1<long> )
         .def( "arg", &wrap_arg_int_2<long> )
         .def( "arg", &wrap_arg_int_3<long> )
         .def( "arg", &wrap_arg_int_4<long> )
-        
+
         .def( "arg", &wrap_arg_int_1<ulong> )
         .def( "arg", &wrap_arg_int_2<ulong> )
         .def( "arg", &wrap_arg_int_3<ulong> )
         .def( "arg", &wrap_arg_int_4<ulong> )
-        
+
         .def( "arg", &wrap_arg_int_1<qlonglong> )
         .def( "arg", &wrap_arg_int_2<qlonglong> )
         .def( "arg", &wrap_arg_int_3<qlonglong> )
         .def( "arg", &wrap_arg_int_4<qlonglong> )
-        
+
         .def( "arg", &wrap_arg_int_1<qulonglong> )
         .def( "arg", &wrap_arg_int_2<qulonglong> )
         .def( "arg", &wrap_arg_int_3<qulonglong> )
         .def( "arg", &wrap_arg_int_4<qulonglong> )
-        
+
         .def( "arg", &wrap_arg_int_1<qulonglong> )
         .def( "arg", &wrap_arg_int_2<qulonglong> )
         .def( "arg", &wrap_arg_int_3<qulonglong> )
         .def( "arg", &wrap_arg_int_4<qulonglong> )
-        
+
         .def( "arg", &wrap_arg_int_1<qulonglong> )
         .def( "arg", &wrap_arg_int_2<qulonglong> )
         .def( "arg", &wrap_arg_int_3<qulonglong> )
         .def( "arg", &wrap_arg_int_4<qulonglong> )
-        
+
         .def( "arg", &wrap_arg_int_1<short> )
         .def( "arg", &wrap_arg_int_2<short> )
         .def( "arg", &wrap_arg_int_3<short> )
         .def( "arg", &wrap_arg_int_4<short> )
-        
+
         .def( "arg", &wrap_arg_int_1<ushort> )
         .def( "arg", &wrap_arg_int_2<ushort> )
         .def( "arg", &wrap_arg_int_3<ushort> )
         .def( "arg", &wrap_arg_int_4<ushort> )
-        
+
         .def( "arg", &wrap_arg_str_1<QString> )
         .def( "arg", &wrap_arg_str_2<QString> )
         .def( "arg", &wrap_arg_str_3<QString> )
-        
+
         .def( "arg", &wrap_arg_str_1<QChar> )
         .def( "arg", &wrap_arg_str_2<QChar> )
         .def( "arg", &wrap_arg_str_3<QChar> )
-        
+
         .def( "arg", &wrap_arg_str_1<char> )
         .def( "arg", &wrap_arg_str_2<char> )
         .def( "arg", &wrap_arg_str_3<char> )
-        
+
         .def( "arg", &wrap_arg_double_1<double> )
         .def( "arg", &wrap_arg_double_2<double> )
         .def( "arg", &wrap_arg_double_3<double> )
         .def( "arg", &wrap_arg_double_4<double> )
         .def( "arg", &wrap_arg_double_5<double> )
-        
+
         .def( "at", &QString::at )
         .def( "capacity", &QString::capacity )
         .def( "chop", &QString::chop )
         .def( "clear", &QString::clear )
-        
+
         .def( "compare", (int (QString::*)(const QString&) const)
                                 &QString::compare )
         .def( "compare", (int (*)(const QString&, const QString&))
                                 &QString::compare ).staticmethod("compare")
-        
+
         .def( "contains", &wrap_contains1<const QString&> )
         .def( "contains", &wrap_contains2<const QString&> )
         .def( "contains", &wrap_contains1<QChar> )
         .def( "contains", &wrap_contains2<QChar> )
         .def( "contains", (QBool (QString::*)(const QRegExp&) const)
                                 &QString::contains )
-        
+
         .def( "count", &wrap_count2<const QString&> )
         .def( "count", &wrap_count1<const QString&> )
         .def( "count", &wrap_count2<QChar> )
@@ -455,19 +455,19 @@ export_QString()
                                 &QString::count )
         .def( "count", (int (QString::*)() const)
                                 &QString::count )
-        
+
         .def( "endsWith", &wrap_endsWith2<QString> )
         .def( "endsWith", &wrap_endsWith1<QString> )
         .def( "endsWith", &wrap_endsWith2<QLatin1String> )
         .def( "endsWith", &wrap_endsWith1<QLatin1String> )
         .def( "endsWith", &wrap_endsWith2<QChar> )
         .def( "endsWith", &wrap_endsWith1<QChar> )
-        
-        .def( "fill", &wrap_fill1, 
+
+        .def( "fill", &wrap_fill1,
                     return_internal_reference< 1, with_custodian_and_ward<1,2> >() )
-        .def( "fill", &wrap_fill2, 
+        .def( "fill", &wrap_fill2,
                     return_internal_reference< 1, with_custodian_and_ward<1,2> >() )
-                    
+
         .def( "indexOf", &wrap_indexOf3<const QString&> )
         .def( "indexOf", &wrap_indexOf2<const QString&> )
         .def( "indexOf", &wrap_indexOf1<const QString&> )
@@ -476,7 +476,7 @@ export_QString()
         .def( "indexOf", &wrap_indexOf1<QChar> )
         .def( "indexOf", &wrap_indexOf2<const QRegExp&> )
         .def( "indexOf", &wrap_indexOf1<const QRegExp&> )
-        
+
         .def( "insert", (QString& (QString::*)(int, const QString&))
                                 &QString::insert,
                     return_internal_reference< 1, with_custodian_and_ward<1,2> >() )
@@ -489,10 +489,10 @@ export_QString()
         .def( "insert", (QString& (QString::*)(int, QChar))
                                 &QString::insert,
                     return_internal_reference< 1, with_custodian_and_ward<1,2> >() )
-                                
+
         .def( "isEmpty", &QString::isEmpty )
         .def( "isNull", &QString::isNull )
-        
+
         .def( "lastIndexOf", &wrap_lastIndexOf3<const QString&> )
         .def( "lastIndexOf", &wrap_lastIndexOf2<const QString&> )
         .def( "lastIndexOf", &wrap_lastIndexOf1<const QString&> )
@@ -501,12 +501,12 @@ export_QString()
         .def( "lastIndexOf", &wrap_lastIndexOf1<QChar> )
         .def( "lastIndexOf", &wrap_lastIndexOf2<const QRegExp&> )
         .def( "lastIndexOf", &wrap_lastIndexOf1<const QRegExp&> )
-        
+
         .def( "left", &QString::left )
     ;
 
-    //split this interface over multiple files to reduce 
-    //memory consumption of compiler (speed compilation 
+    //split this interface over multiple files to reduce
+    //memory consumption of compiler (speed compilation
     //on machines with 512MB of RAM)
     export_QString2(qstring_wrapper);
     export_QString3(qstring_wrapper);

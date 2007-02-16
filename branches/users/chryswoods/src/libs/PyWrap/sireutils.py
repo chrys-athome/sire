@@ -99,6 +99,14 @@ def export_class(mb, classname, aliases, special_code):
    if (classname in aliases):
       c.alias = aliases[classname]
 
+def register_implicit_conversions(mb, implicitly_convertible):
+    #remove all existing implicit conversions
+    mb.constructors().allow_implicit_conversion = False
+    
+    #add our manual implicit conversions to the declaration section
+    for conversion in implicitly_convertible:
+       mb.add_registration_code("bp::implicitly_convertible< %s, %s >();" % conversion)
+
 
 def write_wrappers(mb, modulename, 
                    extra_includes, huge_classes):

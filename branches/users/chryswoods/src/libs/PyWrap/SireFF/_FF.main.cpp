@@ -63,14 +63,14 @@
 
 #include "ParameterSource.pypp.hpp"
 
+#include "sireff_containers.h"
+
 namespace bp = boost::python;
 
 BOOST_PYTHON_MODULE(_FF){
+    register_SireFF_containers();
+
     register_ParameterMap_class();
-
-    bp::implicitly_convertible< SireFF::ParameterSource const &, SireFF::ParameterMap >();
-
-    bp::implicitly_convertible< QList<SireFF::ParameterSource> const &, SireFF::ParameterMap >();
 
     register_FFBase_class();
 
@@ -82,23 +82,13 @@ BOOST_PYTHON_MODULE(_FF){
 
     register_FFComponent_class();
 
-    bp::implicitly_convertible< SireFF::FFBase const &, SireFF::FFComponent >();
-
-    bp::implicitly_convertible< SireCAS::Function const &, SireFF::FFComponent >();
-
     register_FFExpression_class();
-
-    bp::implicitly_convertible< SireCAS::Function const &, SireFF::FFExpression >();
 
     register_FFProcessorBase_class();
 
     register_FFProcessor_class();
 
-    bp::implicitly_convertible< SireFF::ForceField const &, SireFF::FFProcessor >();
-
     register_FFThreadProcessor_class();
-
-    bp::implicitly_convertible< SireFF::ForceField const &, SireFF::FFThreadProcessor >();
 
     register_FFWorkerBase_class();
 
@@ -108,25 +98,25 @@ BOOST_PYTHON_MODULE(_FF){
 
     register_ForceField_class();
 
-    bp::implicitly_convertible< SireFF::FFBase const &, SireFF::ForceField >();
-
-    bp::implicitly_convertible< SireBase::SharedPolyPointer<SireFF::FFBase> const &, SireFF::ForceField >();
-
     register_ForceFieldID_class();
-
-    bp::implicitly_convertible< quint32, SireFF::ForceFieldID >();
 
     register_ForceFieldsBase_class();
 
     register_ForceFields_class();
 
-    bp::implicitly_convertible< SireFF::ForceFieldsBase const &, SireFF::ForceFields >();
-
     register_ForceTable_class();
 
     register_ParameterName_class();
 
-    bp::implicitly_convertible< QString const &, SireFF::ParameterName >();
+    bp::implicitly_convertible< QString, SireFF::ParameterName >();
+
+    bp::implicitly_convertible< const SireFF::FFBase&, SireFF::ForceField >();
+
+    bp::implicitly_convertible< SireCAS::Function, SireFF::FFComponent >();
+
+    bp::implicitly_convertible< SireCAS::Function, SireFF::FFExpression >();
+
+    bp::implicitly_convertible< QHash<SireFF::ParameterName,QString>, SireFF::ParameterMap >();
 
     register_ParameterSource_class();
 }

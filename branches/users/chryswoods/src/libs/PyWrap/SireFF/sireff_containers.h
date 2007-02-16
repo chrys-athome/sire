@@ -25,9 +25,10 @@
   *  at http://siremol.org
   *
 \*********************************************/
-#ifndef PYPLUSPLUS_SIREMOL_QLIST_MOLECULE_H
-#define PYPLUSPLUS_SIREMOL_QLIST_MOLECULE_H
+#ifndef PYWRAP_SIREFF_CONTAINERS_H
+#define PYWRAP_SIREFF_CONTAINERS_H
 
-void register_QList_Molecule_class();
+void register_SireFF_containers();
 
 #endif
+

@@ -43,12 +43,15 @@ namespace SirePy
 
 /** This struct provides the from-Python conversion from a dict
     to a dict or hash-like container of type 'C' (e.g. QHash, QMap) */
-template<class C, class key_type, class value_type>
-struct convert_python_to_dict
+template<class C>
+struct from_py_dict
 {
+    typedef typename C::key_type key_type;
+    typedef typename C::mapped_type mapped_type;
+
     /** Constructor - register the conversion functions
         for this type */
-    convert_python_to_dict()
+    from_py_dict()
     {
         boost::python::converter::registry::push_back(
             &convertible,
@@ -65,24 +68,24 @@ struct convert_python_to_dict
         {
             //check the tuple elements... - convert to a boost::tuple object
             boost::python::dict d( handle<>(borrowed(obj_ptr)) );
-            
+
             //check the items in the dict (items is a list of 2-tuples key-value
             list items = d.items();
-            
+
             int nitems = extract<int>(items.attr("__len__")())();
-            
+
             for (int i=0; i<nitems; ++i)
             {
                 tuple item = extract<tuple>(items[i])();
-                
-                if ( not (extract<key_type>(item[0]).check() and 
-                          extract<value_type>(item[1]).check()) )
+
+                if ( not (extract<key_type>(item[0]).check() and
+                          extract<mapped_type>(item[1]).check()) )
                 {
                     //either the key of value is wrong
                     return 0;
                 }
             }
-            
+
             //the tuple is ok!
             return obj_ptr;
         }
@@ -99,7 +102,7 @@ struct convert_python_to_dict
     {
         //convert the PyObject to a boost::python::dict
         dict d( handle<>(borrowed(obj_ptr)) );
-        
+
         //locate the storage space for the result
         void* storage =
             ( (converter::rvalue_from_python_storage<C>*)data )->storage.bytes;
@@ -112,20 +115,49 @@ struct convert_python_to_dict
         //add all of the elements from the dict - do this by converting
         //to a list and then extracting each item
         list items = d.items();
-            
+
         int nitems = extract<int>(items.attr("__len__")())();
-        
+
         for (int i=0; i<nitems; ++i)
         {
             tuple item = extract<tuple>(items[i])();
-                
+
             container->insert( extract<key_type>(item[0])(),
-                               extract<value_type>(item[1])() );
+                               extract<mapped_type>(item[1])() );
         }
 
         data->convertible = storage;
     }
 };
+
+template<class C>
+struct to_py_dict
+{
+    static PyObject* convert(const C &cpp_dict)
+    {
+        dict python_dict;
+
+        //add all items to the python dictionary
+        for (typename C::const_iterator it = cpp_dict.begin();
+             it != cpp_dict.end();
+             ++it)
+        {
+            python_dict[it.key()] = it.value();
+        }
+
+        return incref( python_dict.ptr() );
+    }
+};
+
+template<class C>
+void register_dict()
+{
+    to_python_converter< C, to_py_dict<C> >();
+
+    converter::registry::push_back( &from_py_dict<C>::convertible,
+                                    &from_py_dict<C>::construct,
+                                    type_id<C>() );
+}
 
 }
 

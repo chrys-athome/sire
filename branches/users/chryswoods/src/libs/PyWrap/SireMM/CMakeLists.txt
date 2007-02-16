@@ -20,8 +20,7 @@ set ( WRAPMM_SOURCES
 
       _MM.main.cpp
 
-      QVector_ChargeParameter_.py.cpp
-      QVector_LJParameter_.py.cpp
+      siremm_containers.cpp
 
       AngleTable_Expression_.pypp.cpp
       BondTable_Expression_.pypp.cpp

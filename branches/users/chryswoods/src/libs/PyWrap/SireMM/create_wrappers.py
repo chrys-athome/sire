@@ -218,11 +218,8 @@ for calldef in mb.calldefs():
 mb.calldefs().create_with_signature = True
 
 #add calls to register hand-written wrappers
-mb.add_declaration_code( "#include \"QVector_ChargeParameter_.py.h\"" )
-mb.add_registration_code( "register_QVector_ChargeParameter_class();", tail=False )
-
-mb.add_declaration_code( "#include \"QVector_LJParameter_.py.h\"" )
-mb.add_registration_code( "register_QVector_LJParameter_class();", tail=False )
+mb.add_declaration_code( "#include \"siremm_containers.h\"" )
+mb.add_registration_code( "register_SireMM_containers();", tail=False )
 
 #export each class in turn
 for classname in wrap_classes:

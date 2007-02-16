@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2006  Christopher Woods
+  *  Copyright (C) 2007  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -25,16 +25,10 @@
   *  at http://siremol.org
   *
 \*********************************************/
+#ifndef PYWRAP_SIREMOL_CONTAINERS_H
+#define PYWRAP_SIREMOL_CONTAINERS_H
 
-#include <Python.h>
-#include <boost/python.hpp>
+void register_SireMol_containers();
 
-#include "SireQt/qset.hpp"
+#endif
 
-using namespace SireQt;
-    
-void export_QSet_int16()
-{                            
-    wrap_QSet<qint16>("QSet_qint16_");
-    wrap_QSet<quint16>("QSet_quint16_");
-}

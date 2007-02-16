@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2006  Christopher Woods
+  *  Copyright (C) <year>  <name of author>
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -29,12 +29,27 @@
 #include <Python.h>
 #include <boost/python.hpp>
 
-#include "SireQt/qlist.hpp"
+#include <QVector>
 
-using namespace SireQt;
-    
-void export_QList_int64()
-{                            
-    wrap_QList<qint64>("QList_qint64_");
-    wrap_QList<quint64>("QList_quint64_");
+#include "SirePy/convertlist.hpp"
+#include "SirePy/convertdict.hpp"
+#include "SirePy/convertset.hpp"
+
+#include "ThirdParty/tuples.hpp"
+
+#include "siremol_headers.h"
+
+using namespace SireMol;
+using namespace SirePy;
+
+void register_SireMol_containers()
+{
+    register_list< QList<Molecule> >();
+    register_list< QVector<Molecule> >();
+
+    register_list< QList<EditMol> >();
+    register_list< QVector<EditMol> >();
+
+    register_list< QList<AtomIndex> >();
+    register_set< QSet<AtomIndex> >();
 }

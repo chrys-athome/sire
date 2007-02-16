@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2006  Christopher Woods
+  *  Copyright (C) <year>  <name of author>
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,25 +26,25 @@
   *
 \*********************************************/
 
-#include "sireglobal.h"
-    
-void export_QSet_QString();
-void export_QSet_real();
-    
-void export_QSet_int8();
-void export_QSet_int16();
-void export_QSet_int32();
-void export_QSet_int64();
-    
-void  
-SIREQT_EXPORT
-export_QSet()
-{
-    export_QSet_QString();
-    export_QSet_real();
+#include <Python.h>
+#include <boost/python.hpp>
 
-    export_QSet_int8();
-    export_QSet_int16();
-    export_QSet_int32();
-    export_QSet_int64();
+#include "SireFF/qhash_sireff.h"
+
+#include <QVector>
+
+#include "SirePy/convertlist.hpp"
+#include "SirePy/convertdict.hpp"
+#include "SirePy/convertset.hpp"
+
+#include "ThirdParty/tuples.hpp"
+
+#include "sireff_headers.h"
+
+using namespace SireFF;
+using namespace SirePy;
+
+void register_SireFF_containers()
+{
+    register_dict< QHash<ParameterName,QString> >();
 }

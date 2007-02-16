@@ -53,6 +53,9 @@ QDataStream& operator>>(QDataStream&, SireFF::ParameterSource&);
 QDataStream& operator<<(QDataStream&, const SireFF::ParameterMap&);
 QDataStream& operator>>(QDataStream&, SireFF::ParameterMap&);
 
+uint qHash(const SireFF::ParameterName&);
+uint qHash(const SireFF::ParameterSource&);
+
 namespace SireFF
 {
 
@@ -169,6 +172,8 @@ public:
     ParameterMap(const ParameterSource &source);
     ParameterMap(const QList<ParameterSource> &sources);
 
+    ParameterMap(const QHash<ParameterName,QString> &mapping);
+
     ParameterMap(const ParameterMap &other);
 
     ~ParameterMap();
@@ -206,6 +211,11 @@ inline bool ParameterMap::operator!=(const ParameterMap &other) const
 }
 
 inline uint qHash(const SireFF::ParameterSource &source)
+{
+    return qHash(source.name());
+}
+
+inline uint qHash(const SireFF::ParameterName &source)
 {
     return qHash(source.name());
 }

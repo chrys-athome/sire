@@ -32,8 +32,10 @@
 namespace SireFF
 {
 class ParameterSource;
+class ParameterName;
 }
 
 uint qHash(const SireFF::ParameterSource&);
+uint qHash(const SireFF::ParameterName&);
 
 #endif

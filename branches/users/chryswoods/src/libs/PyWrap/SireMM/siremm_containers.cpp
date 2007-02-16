@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2007  Christopher Woods
+  *  Copyright (C) <year>  <name of author>
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -29,17 +29,20 @@
 #include <Python.h>
 #include <boost/python.hpp>
 
-#include "SireMM/chargeparameter.h"
+#include <QVector>
 
-#include "SireQt/qvector.hpp"
+#include "SirePy/convertlist.hpp"
+#include "SirePy/convertdict.hpp"
 
-using namespace SireQt;
-using namespace boost::python;
+#include "ThirdParty/tuples.hpp"
+
+#include "siremm_headers.h"
+
 using namespace SireMM;
+using namespace SirePy;
 
-void register_QVector_ChargeParameter_class()
+void register_SireMM_containers()
 {
-    wrap_QVector<ChargeParameter>("QVector_ChargeParameter_");
-   
-    wrap_QVector< QVector<ChargeParameter> >("QVector_QVector_ChargeParameter__");
+    register_list< QVector<ChargeParameter> >();
+    register_list< QVector<LJParameter> >();
 }

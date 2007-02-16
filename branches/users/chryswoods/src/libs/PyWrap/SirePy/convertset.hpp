@@ -26,8 +26,8 @@
   *
 \*********************************************/
 
-#ifndef PYWRAP_SIREPY_CONVERTLIST_HPP
-#define PYWRAP_SIREPY_CONVERTLIST_HPP
+#ifndef PYWRAP_SIREPY_CONVERTSET_HPP
+#define PYWRAP_SIREPY_CONVERTSET_HPP
 
 #include "sireglobal.h"
 
@@ -42,15 +42,15 @@ namespace SirePy
 {
 
 /** This struct provides the from-Python conversion from a list or
-    tuple to a list-like container of type 'C' (e.g. QVector, QList) */
+    tuple to a list-like container of type 'C' (e.g. QSet) */
 template<class C>
-struct from_py_list
+struct from_py_set
 {
     typedef typename C::value_type T;
 
     /** Constructor - register the conversion functions
         for this type */
-    from_py_list()
+    from_py_set()
     {
         boost::python::converter::registry::push_back(
             &convertible,
@@ -130,7 +130,7 @@ struct from_py_list
 
             for (int i=0; i<n; ++i)
             {
-                container->append( extract<T>(t[i])() );
+                container->insert( extract<T>(t[i])() );
             }
 
             data->convertible = storage;
@@ -154,7 +154,7 @@ struct from_py_list
 
             for (int i=0; i<n; ++i)
             {
-                container->append( extract<T>(l[i])() );
+                container->insert( extract<T>(l[i])() );
             }
 
             data->convertible = storage;
@@ -163,31 +163,31 @@ struct from_py_list
 };
 
 template<class C>
-struct to_py_list
+struct to_py_set
 {
-    static PyObject* convert(const C &cpp_list)
+    static PyObject* convert(const C &cpp_set)
     {
-        list python_list;
+        list python_set;
 
         //add all items to the python dictionary
-        for (typename C::const_iterator it = cpp_list.begin();
-             it != cpp_list.end();
+        for (typename C::const_iterator it = cpp_set.begin();
+             it != cpp_set.end();
              ++it)
         {
-            python_list.append(*it);
+            python_set.append(*it);
         }
 
-        return incref( python_list.ptr() );
+        return incref( python_set.ptr() );
     }
 };
 
 template<class C>
-void register_list()
+void register_set()
 {
-    to_python_converter< C, to_py_list<C> >();
+    to_python_converter< C, to_py_set<C> >();
 
-    converter::registry::push_back( &from_py_list<C>::convertible,
-                                    &from_py_list<C>::construct,
+    converter::registry::push_back( &from_py_set<C>::convertible,
+                                    &from_py_set<C>::construct,
                                     type_id<C>() );
 }
 

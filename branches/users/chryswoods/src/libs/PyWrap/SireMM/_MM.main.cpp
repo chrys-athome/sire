@@ -177,16 +177,12 @@
 
 #include "assign_internals_MolDihedralInfo_.pypp.hpp"
 
-#include "QVector_LJParameter_.py.h"
-
-#include "QVector_ChargeParameter_.py.h"
+#include "siremm_containers.h"
 
 namespace bp = boost::python;
 
 BOOST_PYTHON_MODULE(_MM){
-    register_QVector_LJParameter_class();
-
-    register_QVector_ChargeParameter_class();
+    register_SireMM_containers();
 
     register_AtomTable_ChargeParameter__class();
 

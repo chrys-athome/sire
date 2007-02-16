@@ -29,7 +29,7 @@ switchfunc = HarmonicSwitchingFunction(80.0)
 switchfunc = HarmonicSwitchingFunction(15.0, 14.5)
 
 #create a forcefield for the molecules
-cljff = InterCLJFF( Space(space), \
+cljff = InterCLJFF( Space(space),
                     SwitchingFunction(switchfunc) )
 
 cljff2 = Tip4PFF( Space(space), SwitchingFunction(switchfunc) )
@@ -37,8 +37,8 @@ cljff2 = Tip4PFF( Space(space), SwitchingFunction(switchfunc) )
 #parametise each molecule and add it to the forcefield
 print "Parametising the molecules..."
 
-chgs = AtomicCharges( [0.0, 0.52 * mod_electrons, \
-                            0.52 * mod_electrons, \
+chgs = AtomicCharges( [0.0, 0.52 * mod_electrons,
+                            0.52 * mod_electrons,
                            -1.04 * mod_electrons] )
 
 ljs = AtomicLJs( [ LJParameter( 3.15365 * angstrom, \
@@ -58,11 +58,11 @@ for mol in mols:
       if (not tip4p):
           tip4p = mol
       
-      cljff.add(mol) # [cljff.parameters().coulomb() == "charges", \
-                     # cljff.parameters().lj() == "ljs"])
+      cljff.add(mol, {cljff.parameters().coulomb() : "charges",
+                      cljff.parameters().lj() : "ljs"})
                       
-      cljff2.add(mol) # [cljff2.parameters().coulomb() == "charges", \
-                      # cljff2.parameters().lj() == "ljs"])
+      cljff2.add(mol, {cljff2.parameters().coulomb() : "charges",
+                       cljff2.parameters().lj() : "ljs"})
 
 ms = timer.elapsed()
 print "... took %d ms" % ms

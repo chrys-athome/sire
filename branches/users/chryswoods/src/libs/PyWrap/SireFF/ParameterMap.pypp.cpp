@@ -23,6 +23,7 @@ void register_ParameterMap_class(){
         .def( bp::init< >() )    
         .def( bp::init< SireFF::ParameterSource const & >(( bp::arg("source") )) )    
         .def( bp::init< QList<SireFF::ParameterSource> const & >(( bp::arg("sources") )) )    
+        .def( bp::init< QHash<SireFF::ParameterName, QString> const & >(( bp::arg("mapping") )) )    
         .def( bp::self != bp::self )    
         .def( bp::self == bp::self )    
         .def( 

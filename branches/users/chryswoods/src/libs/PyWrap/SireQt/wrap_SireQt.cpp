@@ -41,12 +41,6 @@ void export_QFile();
 void export_QDataStream();
 void export_QTextStream();
 void export_QTime();
-void export_QList();
-void export_QSet();
-void export_QHash();
-void export_QMap();
-void export_QVector();
-void export_QStringList();
 void export_QVariant();
 
 namespace SireQt
@@ -63,12 +57,6 @@ void SIREQT_EXPORT export_SireQt()
     export_QDataStream();
     export_QTextStream();
     export_QTime();
-    export_QList();
-    export_QSet();
-    export_QHash();
-    export_QMap();
-    export_QVector();
-    export_QStringList();
     export_QVariant();
 }
 
