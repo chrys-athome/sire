@@ -46,5 +46,11 @@ using namespace SirePy;
 
 void register_SireFF_containers()
 {
+    #if QT_VERSION >= 0x402000
     register_dict< QHash<ParameterName,QString> >();
+    
+    #else
+    register_dict< QHash<ParameterName,QString>, ParameterName, QString >();
+    
+    #endif
 }

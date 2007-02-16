@@ -43,12 +43,9 @@ namespace SirePy
 
 /** This struct provides the from-Python conversion from a dict
     to a dict or hash-like container of type 'C' (e.g. QHash, QMap) */
-template<class C>
+template<class C, class key_type, class mapped_type>
 struct from_py_dict
 {
-    typedef typename C::key_type key_type;
-    typedef typename C::mapped_type mapped_type;
-
     /** Constructor - register the conversion functions
         for this type */
     from_py_dict()
@@ -152,10 +149,23 @@ struct to_py_dict
 template<class C>
 void register_dict()
 {
+    typedef typename C::key_type key_type;
+    typedef typename C::mapped_type mapped_type;
+
     to_python_converter< C, to_py_dict<C> >();
 
-    converter::registry::push_back( &from_py_dict<C>::convertible,
-                                    &from_py_dict<C>::construct,
+    converter::registry::push_back( &from_py_dict<C,key_type,mapped_type>::convertible,
+                                    &from_py_dict<C,key_type,mapped_type>::construct,
+                                    type_id<C>() );
+}
+
+template<class C, class key_type, class mapped_type>
+void register_dict()
+{
+    to_python_converter< C, to_py_dict<C> >();
+
+    converter::registry::push_back( &from_py_dict<C,key_type,mapped_type>::convertible,
+                                    &from_py_dict<C,key_type,mapped_type>::construct,
                                     type_id<C>() );
 }
 

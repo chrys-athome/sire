@@ -103,6 +103,61 @@ special_code = { "AtomInfo" : fix_atominfo,
                  "Property" : remove_property_bases
                }
 
+implicitly_convertible = [ ("boost::tuples::tuple<SireMol::AtomIndex,SireMol::AtomIndex,SireMol::AtomIndex>", 
+                            "SireMol::Angle"),
+                           
+                           ("boost::tuples::tuple<SireMol::AtomIndex,SireMol::AtomIndex,SireMol::AtomIndex,SireMol::AtomIndex>",
+                            "SireMol::Dihedral"),
+                            
+                           ("boost::tuples::tuple<SireMol::AtomIndex,SireMol::AtomIndex,SireMol::AtomIndex,SireMol::AtomIndex>",
+                            "SireMol::Improper"),
+
+                           ("boost::tuples::tuple<SireMol::AtomIndex,SireMol::AtomIndex>",
+                            "SireMol::Bond"),
+
+                           ("SireMol::IDBase", "quint32"),
+                           
+                           ("boost::tuples::tuple<QString,SireMol::ResNum>",
+                            "SireMol::AtomIndex"),
+                            
+                           ("QString","SireMol::Element"),
+                           ("quint32","SireMol::Element"),
+                           
+                           ("boost::tuples::tuple<SireMol::CutGroupID,SireMol::AtomID>",
+                            "SireMol::CGAtomID"),
+                           
+                           ("boost::tuples::tuple<SireMol::ResNum,SireMol::AtomID>",
+                            "SireMol::ResNumAtomID"),
+                           
+                           ("boost::tuples::tuple<SireMol::ResID,SireMol::AtomID>",
+                            "SireMol::ResIDAtomID"),
+                           
+                           ("boost::tuples::tuple<SireMol::GroupID,SireMol::Index>",
+                            "SireMol::GroupIndexID"),
+                            
+                           ("QVector<SireMol::Atom>", "SireMol::CutGroup"),
+                           
+                           ("QList<SireMol::Atom>", "SireMol::CutGroup"),
+                           
+                           ("const SireMol::CuttingFunctionBase&", "SireMol::CuttingFunction"),
+                           
+                           ("SireMol::CGAtomID", "SireMol::IDMolAtom"),
+                           ("SireMol::CGNumAtomID", "SireMol::IDMolAtom"),
+                           ("SireMol::ResNumAtomID", "SireMol::IDMolAtom"),
+                           ("SireMol::ResIDAtomID", "SireMol::IDMolAtom"),
+                           ("SireMol::AtomIndex", "SireMol::IDMolAtom"),
+                           ("SireMol::AtomID", "SireMol::IDMolAtom"),
+                           
+                           ("SireMol::MoleculeGroup", "SireMol::MoleculeGroups"),
+                           
+                           ("SireMol::NewAtom", "SireMaths::Vector"),
+                           ("SireMol::NewAtom", "SireMol::Element"),
+                           
+                           ("const SireMol::PropertyBase&", "SireMol::Property"),
+                           
+                           ("QVariant", "SireMol::VariantProperty")
+                         ]
+
 incpaths = sys.argv[1:]
 incpaths.insert(0, "../../")
 
@@ -130,10 +185,14 @@ for calldef in mb.calldefs():
 mb.add_declaration_code( "#include \"siremol_containers.h\"" )
 mb.add_registration_code( "register_SireMol_containers();", tail=False )
 
+mb.add_declaration_code( "#include <boost/tuple/tuple.hpp>" )
+
 #export each class in turn
 for classname in wrap_classes:
    #tell the program to write wrappers for this class
    export_class(mb, classname, aliases, special_code)
+
+register_implicit_conversions(mb, implicitly_convertible)
 
 #write all of the wrappers
 write_wrappers(mb, modulename, extra_includes, huge_classes)

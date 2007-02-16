@@ -29,10 +29,8 @@ switchfunc = HarmonicSwitchingFunction(80.0)
 switchfunc = HarmonicSwitchingFunction(15.0, 14.5)
 
 #create a forcefield for the molecules
-cljff = InterCLJFF( Space(space),
-                    SwitchingFunction(switchfunc) )
-
-cljff2 = Tip4PFF( Space(space), SwitchingFunction(switchfunc) )
+cljff = InterCLJFF( space, switchfunc )
+cljff2 = Tip4PFF( space, switchfunc )
 
 #parametise each molecule and add it to the forcefield
 print "Parametising the molecules..."

@@ -80,7 +80,7 @@ public:
     void setGenerator(const RanGenerator &generator);
     const RanGenerator& generator() const;
 
-    class CheckPoint
+    class SIREMOVE_EXPORT CheckPoint
     {
     public:
         CheckPoint();

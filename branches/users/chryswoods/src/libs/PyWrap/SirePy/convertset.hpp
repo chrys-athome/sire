@@ -43,11 +43,9 @@ namespace SirePy
 
 /** This struct provides the from-Python conversion from a list or
     tuple to a list-like container of type 'C' (e.g. QSet) */
-template<class C>
+template<class C, class T>
 struct from_py_set
 {
-    typedef typename C::value_type T;
-
     /** Constructor - register the conversion functions
         for this type */
     from_py_set()
@@ -186,8 +184,20 @@ void register_set()
 {
     to_python_converter< C, to_py_set<C> >();
 
-    converter::registry::push_back( &from_py_set<C>::convertible,
-                                    &from_py_set<C>::construct,
+    typedef typename C::value_type value_type;
+    
+    converter::registry::push_back( &from_py_set<C,value_type>::convertible,
+                                    &from_py_set<C,value_type>::construct,
+                                    type_id<C>() );
+}
+
+template<class C, class value_type>
+void register_set()
+{
+    to_python_converter< C, to_py_set<C> >();
+    
+    converter::registry::push_back( &from_py_set<C,value_type>::convertible,
+                                    &from_py_set<C,value_type>::construct,
                                     type_id<C>() );
 }
 

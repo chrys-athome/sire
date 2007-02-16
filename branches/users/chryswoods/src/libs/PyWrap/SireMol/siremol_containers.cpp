@@ -29,7 +29,12 @@
 #include <Python.h>
 #include <boost/python.hpp>
 
+#include "SireMol/qhash_siremol.h"
+
 #include <QVector>
+#include <QSet>
+
+#include <boost/tuple/tuple.hpp>
 
 #include "SirePy/convertlist.hpp"
 #include "SirePy/convertdict.hpp"
@@ -42,6 +47,8 @@
 using namespace SireMol;
 using namespace SirePy;
 
+using boost::python::register_tuple;
+
 void register_SireMol_containers()
 {
     register_list< QList<Molecule> >();
@@ -51,5 +58,24 @@ void register_SireMol_containers()
     register_list< QVector<EditMol> >();
 
     register_list< QList<AtomIndex> >();
+    
+    register_tuple< boost::tuple<QString,ResNum> >();
+    register_tuple< boost::tuple<AtomIndex,AtomIndex> >();
+    register_tuple< boost::tuple<AtomIndex,AtomIndex,AtomIndex> >();
+    register_tuple< boost::tuple<AtomIndex,AtomIndex,AtomIndex,AtomIndex> >();
+    
+    register_tuple< boost::tuple<CutGroupID,AtomID> >();
+    register_tuple< boost::tuple<CutGroupNum,AtomID> >();
+    register_tuple< boost::tuple<ResNum,AtomID> >();
+    register_tuple< boost::tuple<ResID,AtomID> >();
+    register_tuple< boost::tuple<ResNum,QString> >();
+    register_tuple< boost::tuple<ResID,QString> >();
+    
+    #if QT_VERSION >= 0x402000
     register_set< QSet<AtomIndex> >();
+    
+    #else
+    register_set< QSet<AtomIndex>, AtomIndex >();
+    
+    #endif
 }
