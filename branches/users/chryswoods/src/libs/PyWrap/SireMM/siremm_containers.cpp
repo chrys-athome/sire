@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) <year>  <name of author>
+  *  Copyright (C) 2007   Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -44,5 +44,11 @@ using namespace SirePy;
 void register_SireMM_containers()
 {
     register_list< QVector<ChargeParameter> >();
+    register_list< QList<ChargeParameter> >();
+    
     register_list< QVector<LJParameter> >();
+    register_list< QList<LJParameter> >();
+    
+    register_list< QVector<CLJParameter> >();
+    register_list< QList<CLJParameter> >();
 }

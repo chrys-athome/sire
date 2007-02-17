@@ -131,18 +131,16 @@
 
 #include "using_relationships_base.pypp.hpp"
 
+#include "siredb_containers.h"
+
 namespace bp = boost::python;
 
 BOOST_PYTHON_MODULE(_DB){
+    register_SireDB_containers();
+
     register_AssignInstruction_class();
 
     register_MatchMRData_class();
-
-    bp::implicitly_convertible< SireDB::MatchMol const &, SireDB::MatchMRData >();
-
-    bp::implicitly_convertible< SireDB::MatchRes const &, SireDB::MatchMRData >();
-
-    bp::implicitly_convertible< SireDB::MatchMR const &, SireDB::MatchMRData >();
 
     register_AssignBase_class();
 
@@ -160,17 +158,9 @@ BOOST_PYTHON_MODULE(_DB){
 
     register_AtomType_class();
 
-    bp::implicitly_convertible< QString const &, SireDB::AtomType >();
-
-    bp::implicitly_convertible< SireMol::Element const &, SireDB::AtomType >();
-
-    bp::implicitly_convertible< SireDB::AtomParameter<SireDB::AtomType> const &, SireDB::AtomType >();
-
     register_AtomTypeDB_class();
 
     register_AtomTypeTable_class();
-
-    bp::implicitly_convertible< SireMol::MoleculeInfo const &, SireDB::AtomTypeTable >();
 
     register_FuncDB_class();
 
@@ -180,51 +170,13 @@ BOOST_PYTHON_MODULE(_DB){
 
     register_MatchAtomType_class();
 
-    bp::implicitly_convertible< SireDB::AtomType const &, SireDB::MatchAtomType >();
-
-    bp::implicitly_convertible< SireMol::Element const &, SireDB::MatchAtomType >();
-
     register_MatchAtomTypeData_class();
-
-    bp::implicitly_convertible< SireDB::MatchMol const &, SireDB::MatchAtomTypeData >();
-
-    bp::implicitly_convertible< SireDB::MatchRes const &, SireDB::MatchAtomTypeData >();
-
-    bp::implicitly_convertible< SireDB::MatchAtomType const &, SireDB::MatchAtomTypeData >();
-
-    bp::implicitly_convertible< SireDB::MatchMR const &, SireDB::MatchAtomTypeData >();
-
-    bp::implicitly_convertible< SireDB::MatchMRData const &, SireDB::MatchAtomTypeData >();
 
     register_MatchMR_class();
 
-    bp::implicitly_convertible< SireDB::MatchMol const &, SireDB::MatchMR >();
-
-    bp::implicitly_convertible< SireDB::MatchRes const &, SireDB::MatchMR >();
-
     register_MatchMRA_class();
 
-    bp::implicitly_convertible< SireDB::MatchMol const &, SireDB::MatchMRA >();
-
-    bp::implicitly_convertible< SireDB::MatchRes const &, SireDB::MatchMRA >();
-
-    bp::implicitly_convertible< SireDB::MatchMR const &, SireDB::MatchMRA >();
-
-    bp::implicitly_convertible< SireDB::MatchAtom const &, SireDB::MatchMRA >();
-
     register_MatchMRAData_class();
-
-    bp::implicitly_convertible< SireDB::MatchMol const &, SireDB::MatchMRAData >();
-
-    bp::implicitly_convertible< SireDB::MatchRes const &, SireDB::MatchMRAData >();
-
-    bp::implicitly_convertible< SireDB::MatchAtom const &, SireDB::MatchMRAData >();
-
-    bp::implicitly_convertible< SireDB::MatchMR const &, SireDB::MatchMRAData >();
-
-    bp::implicitly_convertible< SireDB::MatchMRData const &, SireDB::MatchMRAData >();
-
-    bp::implicitly_convertible< SireDB::MatchMRA const &, SireDB::MatchMRAData >();
 
     register_MatchMol_class();
 
@@ -234,15 +186,11 @@ BOOST_PYTHON_MODULE(_DB){
 
     register_OverWriteParams_class();
 
-    bp::implicitly_convertible< bool, SireDB::OverWriteParams >();
-
     bp::implicitly_convertible< SireDB::OverWriteParams, bool >();
 
     register_ParameterDB_class();
 
     register_ParameterTable_class();
-
-    bp::implicitly_convertible< SireMol::MoleculeInfo const &, SireDB::ParameterTable >();
 
     register_RelationshipDB_class();
 
@@ -262,29 +210,15 @@ BOOST_PYTHON_MODULE(_DB){
 
     register_assign_atoms_class();
 
-    bp::implicitly_convertible< SireDB::using_database const &, SireDB::assign_atoms >();
-
-    bp::implicitly_convertible< QSet<SireMol::AtomIndex> const &, SireDB::assign_atoms >();
-
     register_assign_parameters_class();
-
-    bp::implicitly_convertible< SireDB::AssignInstruction const &, SireDB::assign_parameters >();
 
     register_match_atom_element_class();
 
-    bp::implicitly_convertible< uint, SireDB::match_atom_element >();
-
     register_match_atom_name_class();
-
-    bp::implicitly_convertible< uint, SireDB::match_atom_name >();
 
     register_match_atom_num_class();
 
-    bp::implicitly_convertible< uint, SireDB::match_atom_num >();
-
     register_match_atom_type_class();
-
-    bp::implicitly_convertible< uint, SireDB::match_atom_type >();
 
     register_match_mol_group_class();
 
@@ -294,23 +228,13 @@ BOOST_PYTHON_MODULE(_DB){
 
     register_match_no_res_res_bond_via_class();
 
-    bp::implicitly_convertible< uint, SireDB::match_no_res_res_bond_via >();
-
     register_match_res_alias_class();
-
-    bp::implicitly_convertible< uint, SireDB::match_res_alias >();
 
     register_match_res_name_class();
 
-    bp::implicitly_convertible< uint, SireDB::match_res_name >();
-
     register_match_res_num_class();
 
-    bp::implicitly_convertible< uint, SireDB::match_res_num >();
-
     register_match_res_res_bond_via_class();
-
-    bp::implicitly_convertible< uint, SireDB::match_res_res_bond_via >();
 
     register_match_single_atom_element_class();
 
@@ -334,10 +258,6 @@ BOOST_PYTHON_MODULE(_DB){
 
     register_using_parameters_base_class();
 
-    bp::implicitly_convertible< QStringList const &, SireDB::using_parameters_base >();
-
     register_using_relationships_base_class();
-
-    bp::implicitly_convertible< QStringList const &, SireDB::using_relationships_base >();
 }
 

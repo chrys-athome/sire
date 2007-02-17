@@ -10,9 +10,10 @@ namespace bp = boost::python;
 
 void register_Vector_class(){
 
-    bp::class_< SireMaths::Vector >( "Vector", bp::init< double, double, double >(( bp::arg("xpos"), bp::arg("ypos"), bp::arg("zpos") )) )    
+    bp::class_< SireMaths::Vector >( "Vector", bp::init< bp::optional< double > >(( bp::arg("val")=0.0 )) )    
+        .def( bp::init< double, double, double >(( bp::arg("xpos"), bp::arg("ypos"), bp::arg("zpos") )) )    
         .def( bp::init< boost::tuples::tuple<double, double, double, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type> const & >(( bp::arg("pos") )) )    
-        .def( bp::init< bp::optional< double > >(( bp::arg("val")=0.0 )) )    
+        .def( bp::init< QString const & >(( bp::arg("str") )) )    
         .def( 
             "angle"
             , (::SireMaths::Angle (*)( ::SireMaths::Vector const &,::SireMaths::Vector const & ))( &::SireMaths::Vector::angle )

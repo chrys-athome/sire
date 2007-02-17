@@ -71,6 +71,22 @@ extra_includes = []
 
 special_code = {}
 
+implicitly_convertible = [ ("SireCAS::SymbolComplex", 
+                            "SireCAS::ComplexValues"),
+                           ("QList<SireCAS::SymbolComplex>",
+                            "SireCAS::ComplexValues"),
+                           ("const SireCAS::ExBase&",
+                            "SireCAS::Expression"),
+                           ("QList<SireCAS::SymbolExpression>",
+                            "SireCAS::Identities"),
+                           ("SireCAS::SymbolExpression",
+                            "SireCAS::Identities"),
+                           ("QList<SireCAS::SymbolValue>",
+                            "SireCAS::Values"),
+                           ("SireCAS::SymbolValue",
+                            "SireCAS::Values")
+                         ]
+
 incpaths = sys.argv[1:]
 incpaths.insert(0, "../../")
 
@@ -94,6 +110,10 @@ for calldef in mb.calldefs():
     except:
       pass
 
+#add calls to register hand-written wrappers
+mb.add_declaration_code( "#include \"sirecas_containers.h\"" )
+mb.add_registration_code( "register_SireCAS_containers();", tail=False )
+
 mb.calldefs().create_with_signature = True
 
 #export each class in turn
@@ -103,5 +123,7 @@ for classname in wrap_classes:
 
 #wrap all of the free SireCAS functions
 mb.free_functions().include()
+
+register_implicit_conversions(mb, implicitly_convertible)
 
 write_wrappers(mb, modulename, extra_includes, huge_classes)

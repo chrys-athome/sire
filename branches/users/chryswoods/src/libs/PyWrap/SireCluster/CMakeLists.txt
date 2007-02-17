@@ -19,6 +19,8 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs
 set ( WRAPCLUSTER_SOURCES
       
       _Cluster.main.cpp
+
+      sirecluster_containers.cpp
       
       Processor.pypp.cpp
       ThreadWorker.pypp.cpp

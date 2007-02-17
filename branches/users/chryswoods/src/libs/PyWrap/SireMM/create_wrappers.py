@@ -191,6 +191,39 @@ special_code = { "assign_angles" : fix_assigninternals,
                  "InterCLJFF" : fix_noncopyable,
                  "Tip4PFF" : fix_noncopyable }
 
+implicitly_convertible = [ ("QVector< QVector<SireMM::ChargeParameter> >",
+                            "SireMM::AtomicCharges"),
+                           ("QVector< SireMM::ChargeParameter >",
+                            "SireMM::AtomicCharges"),
+                           ("QVector< QVector<SireMM::LJParameter> >",
+                            "SireMM::AtomicLJs"),
+                           ("QVector< SireMM::LJParameter >",
+                            "SireMM::AtomicLJs"),
+                           ("double", "SireMM::ChargeParameter"),
+                           ("const SireMM::CombiningRuleBase&",
+                            "SireMM::CombiningRules"),
+                           ("SireMM::SwitchFuncBase",
+                            "SireMM::SwitchingFunction"),
+                           ("QSet<SireMol::Angle>",
+                            "SireMM::UsePassedAngles"),
+                           ("const SireMM::AngleGeneratorBase&",
+                            "SireMM::assign_angles"),
+                           ("SireMM::UsePassedAngles",
+                            "SireMM::assign_angles"),
+                           ("QSet<SireMol::Bond>",
+                            "SireMM::UsePassedBonds"),
+                           ("const SireMM::BondGeneratorBase&",
+                            "SireMM::assign_bonds"),
+                           ("SireMM::UsePassedBonds",
+                            "SireMM::assign_bonds"),
+                           ("QSet<SireMol::Dihedral>",
+                            "SireMM::UsePassedDihedrals"),
+                           ("const SireMM::DihedralGeneratorBase&",
+                            "SireMM::assign_dihedrals"),
+                           ("SireMM::UsePassedDihedrals",
+                            "SireMM::assign_dihedrals")
+                         ]
+
 incpaths = sys.argv[1:]
 incpaths.insert(0, "../../")
 
@@ -225,5 +258,7 @@ mb.add_registration_code( "register_SireMM_containers();", tail=False )
 for classname in wrap_classes:
    #tell the program to write wrappers for this class
    export_class(mb, classname, aliases, special_code)
+
+register_implicit_conversions(mb, implicitly_convertible)
 
 write_wrappers(mb, modulename, extra_includes, huge_classes)

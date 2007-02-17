@@ -66,6 +66,9 @@ friend QDataStream& ::operator>>(QDataStream&, ComplexValues&);
 
 public:
     ComplexValues();
+    
+    ComplexValues(const QList<SymbolComplex> &values);
+    
     ComplexValues(const SymbolComplex &symval0);
     ComplexValues(const SymbolComplex &symval0, const SymbolComplex &symval1);
     ComplexValues(const SymbolComplex &symval0, const SymbolComplex &symval1, 

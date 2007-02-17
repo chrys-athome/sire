@@ -29,9 +29,7 @@
 #include <Python.h>
 #include <boost/python.hpp>
 
-#include "SireMol/qhash_siremol.h"
 #include "SireCAS/qhash_sirecas.h"
-#include "SireFF/qhash_sireff.h"
 
 #include <QVector>
 #include <QSet>
@@ -44,39 +42,47 @@
 
 #include "ThirdParty/tuples.hpp"
 
-#include "sireff_headers.h"
+#include "sirecas_headers.h"
 
-using namespace SireFF;
-using namespace SireMol;
+using namespace SireCAS;
 using namespace SirePy;
 
 using boost::python::register_tuple;
 
-void register_SireFF_containers()
+void register_SireCAS_containers()
 {
-    register_list< QVector<FFExpression> >();
-    register_list< QList<FFExpression> >();
-
+    register_list< QList<Expression> >();
+    register_list< QVector<Expression> >();
+    
+    register_list< QList<Function> >();
+    register_list< QVector<Function> >();
+    
+    register_list< QList<Symbol> >();
+    register_list< QVector<Symbol> >();
+    
+    register_list< QList<SymbolValue> >();
+    register_list< QList<SymbolComplex> >();
+    register_list< QList<SymbolExpression> >();    
+    
     #if QT_VERSION >= 0x402000
-    register_set< QSet<FFComponent> >();
-    register_set< QSet<ForceFieldID> >();
-    
-    register_dict< QHash<ParameterName,QString> >();
-    
-    register_dict< QHash<ForceFieldID,ForceField> >();
-    register_dict< QHash< MoleculeID,QSet<ForceFieldID> > >();
+    register_set< QSet<Function> >();
+    register_set< QSet<SymbolID> >();
+    register_set< QSet<Symbol> >();
+
+    register_dict< QHash<SymbolID,Complex> >();
+    register_dict< QHash<Symbol,int> >();
+    register_dict< QHash<SymbolID,Expression> >();
+    register_dict< QHash<SymbolID,double> >();
 
     #else
-    register_set< QSet<FFComponent>, FFComponent >();
-    register_set< QSet<ForceFieldID>, ForceFieldID >();
+    register_set< QSet<Function>, Function >();
+    register_set< QSet<SymbolID>, SymbolID >();
+    register_set< QSet<Symbol>, Symbol >();
     
-    register_dict< QHash<ParameterName,QString>, ParameterName, QString >();
+    register_dict< QHash<SymbolID,Complex>, SymbolID, Complex >();
+    register_dict< QHash<Symbol,int>, Symbol, int >();
+    register_dict< QHash<SymbolID,Expression>, SymbolID, Expression >();
+    register_dict< QHash<SymbolID,double>, SymbolID, double >();
     
-    register_dict< QHash<ForceFieldID,ForceField>, 
-                                ForceFieldID, ForceField >();
-                                
-    register_dict< QHash< MoleculeID,QSet<ForceFieldID> >,
-                                MoleculeID, QSet<ForceFieldID> >();
-
     #endif    
 }

@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2006  Christopher Woods
+  *  Copyright (C) 2007   Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -29,40 +29,30 @@
 #include <Python.h>
 #include <boost/python.hpp>
 
-#include "sireglobal.h"
-#include "wrap_SireQt.h"
+#include <QVector>
+#include <QSet>
 
-#include "sireqt_containers.h"
+#include <boost/tuple/tuple.hpp>
 
-void export_QtGlobal();
-void export_QByteArray();
-void export_QChar();
-void export_QString();
-void export_QIODevice();
-void export_QFile();
-void export_QDataStream();
-void export_QTextStream();
-void export_QTime();
-void export_QVariant();
+#include "SirePy/convertlist.hpp"
+#include "SirePy/convertdict.hpp"
+#include "SirePy/convertset.hpp"
 
-namespace SireQt
+#include "ThirdParty/tuples.hpp"
+
+#include "sireio_headers.h"
+
+using namespace SireIO;
+using namespace SirePy;
+
+using boost::python::register_tuple;
+
+void register_SireIO_containers()
 {
 
-void SIREQT_EXPORT export_SireQt()
-{
-    export_QtGlobal();
-    export_QChar();
-    export_QString();
-    export_QByteArray();
-    export_QIODevice();
-    export_QFile();
-    export_QDataStream();
-    export_QTextStream();
-    export_QTime();
-    export_QVariant();
+    #if QT_VERSION >= 0x402000
 
-    register_SireQt_containers();
+    #else
+    
+    #endif    
 }
-
-}
-

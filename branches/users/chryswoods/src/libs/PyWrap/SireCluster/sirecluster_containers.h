@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2006  Christopher Woods
+  *  Copyright (C) 2007  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -25,44 +25,10 @@
   *  at http://siremol.org
   *
 \*********************************************/
+#ifndef PYWRAP_SIRECLUSTER_CONTAINERS_H
+#define PYWRAP_SIRECLUSTER_CONTAINERS_H
 
-#include <Python.h>
-#include <boost/python.hpp>
+void register_SireCluster_containers();
 
-#include "sireglobal.h"
-#include "wrap_SireQt.h"
-
-#include "sireqt_containers.h"
-
-void export_QtGlobal();
-void export_QByteArray();
-void export_QChar();
-void export_QString();
-void export_QIODevice();
-void export_QFile();
-void export_QDataStream();
-void export_QTextStream();
-void export_QTime();
-void export_QVariant();
-
-namespace SireQt
-{
-
-void SIREQT_EXPORT export_SireQt()
-{
-    export_QtGlobal();
-    export_QChar();
-    export_QString();
-    export_QByteArray();
-    export_QIODevice();
-    export_QFile();
-    export_QDataStream();
-    export_QTextStream();
-    export_QTime();
-    export_QVariant();
-
-    register_SireQt_containers();
-}
-
-}
+#endif
 

@@ -69,6 +69,17 @@ ComplexValues::ComplexValues()
 ComplexValues::ComplexValues(const ComplexValues &other) : vals(other.vals)
 {}
 
+/** Construct from a list of values */
+ComplexValues::ComplexValues(const QList<SymbolComplex> &values)
+{
+    for (QList<SymbolComplex>::const_iterator it = values.begin();
+         it != values.end();
+         ++it)
+    {
+        add(*it);
+    }
+}
+
 /** Construct from Values */
 ComplexValues::ComplexValues(const Values &other)
 {

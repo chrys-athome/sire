@@ -20,6 +20,8 @@ set ( WRAPQT_SOURCES
 
       wrap_SireQt.cpp
 
+      sireqt_containers.cpp
+
       qvariant.py.cpp
 
       wrap_qbytearray.cpp            

@@ -19,6 +19,8 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs
 set ( WRAPIO_SOURCES
 
       _IO.main.cpp
+
+      sireio_containers.cpp
       
       IOBase.pypp.cpp
       PDB.pypp.cpp

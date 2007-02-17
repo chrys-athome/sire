@@ -34,6 +34,8 @@
 #include "SireUnits/units.h"
 #include "SireStream/datastream.h"
 
+#include "SireError/errors.h"
+
 #include <QString>
 #include <QRegExp>
 
@@ -70,12 +72,14 @@ QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, SireMaths::Vector &vec
     return ds;
 }
 
+/** Create the vector (val,val,val) */
 Vector::Vector(double val)
 {
     for (int i=0; i<3; i++)
         sc[i] = val;
 }
 
+/** Create the vector (xpos,ypos,zpos) */
 Vector::Vector(double x, double y, double z)
 {
     sc[0] = x;
@@ -83,6 +87,7 @@ Vector::Vector(double x, double y, double z)
     sc[2] = z;
 }
 
+/** Construct from a tuple of three values */
 Vector::Vector( const tuple<double,double,double> &pos )
 {
     sc[0] = pos.get<0>();
@@ -90,36 +95,115 @@ Vector::Vector( const tuple<double,double,double> &pos )
     sc[2] = pos.get<2>();
 }
 
-Vector::Vector(const Vector& p)
+/** Construct a Vector from the QString representation returned by 'toString()' 
+
+    \throw SireError::invalid_arg
+*/
+Vector Vector::fromString(const QString &str)
 {
-    for (int i=0; i<3; i++)
-        sc[i] = p.sc[i];
+    QRegExp vecregexp("([0-9.-]+)\\s*,\\s*([0-9.-]+)\\s*,\\s*([0-9.-]+)");
+
+    //use a regexp to extract the contents...
+    if (vecregexp.indexIn(str) == -1)
+    {
+        throw SireError::invalid_arg( QObject::tr(
+                "Cannot find anything that looks like a vector in the string "
+                "\"%1\"").arg(str), CODELOC );
+    }
+        
+    return Vector(vecregexp.cap(1).toFloat(),
+                  vecregexp.cap(2).toFloat(),
+                  vecregexp.cap(3).toFloat());
 }
 
+/** Construct from a QString 
+
+    \throw SireError::invalid_arg
+*/
+Vector::Vector(const QString &str)
+{
+    *this = Vector::fromString(str);
+}
+
+/** Destructor */
 Vector::~Vector()
 {}
 
+/** Return a QString representation of the vector */
 QString Vector::toString() const
 {
     return QObject::tr("( %1, %2, %3 )").arg(sc[0]).arg(sc[1]).arg(sc[2]);
 }
 
-Vector Vector::fromString(const QString &str)
+/** Return the components via rgb (limited between 0 and 1) */
+double Vector::r() const
 {
-    QRegExp vecregexp("([0-9.-]+),\\s{0,}([0-9.-]+),\\s{0,}([0-9.-]+)");
-
-    //use a regexp to extract the contents...
-    if (vecregexp.indexIn(str) != -1)
-    {
-        return Vector(vecregexp.cap(1).toFloat(),
-                      vecregexp.cap(2).toFloat(),
-                      vecregexp.cap(3).toFloat());
-
-   }
-   else
-       return Vector(0.0,0.0,0.0);
+    return std::max(0.0, std::min(1.0,sc[0]));
 }
 
+/** Return the components via rgb (limited between 0 and 1) */
+double Vector::g() const
+{
+    return std::max(0.0, std::min(1.0,sc[1]));
+}
+
+/** Return the components via rgb (limited between 0 and 1) */
+double Vector::b() const
+{
+    return std::max(0.0, std::min(1.0,sc[2]));
+}
+
+/** Set individual values of the vector */
+void Vector::set(double x, double y, double z)
+{
+    sc[0] = x;
+    sc[1] = y;
+    sc[2] = z;
+}
+
+/** Set individual values of the vector */
+void Vector::set(int i, const double &v)
+{
+    sc[i] = v;
+}
+
+/** Set individual values of the vector */
+void Vector::setX(double x)
+{
+    sc[0] = x;
+}
+
+/** Set individual values of the vector */
+void Vector::setY(double y)
+{
+    sc[1] = y;
+}
+
+/** Set individual values of the vector */
+void Vector::setZ(double z)
+{
+    sc[2] = z;
+}
+
+/** Set individual values of the vector */
+void Vector::setR(double x)
+{
+    sc[0] = x;
+}
+
+/** Set individual values of the vector */
+void Vector::setG(double y)
+{
+    sc[1] = y;
+}
+
+/** Set individual values of the vector */
+void Vector::setB(double z)
+{
+    sc[2] = z;
+}
+
+/** Return the bearing of this vector against (0,1,0) (north) on the xy plane */
 Angle Vector::bearing() const
 {
     Vector t(x(),y(),0.0);
@@ -144,6 +228,7 @@ Angle Vector::bearing() const
     }
 }
 
+/** Return the bearing of this vector against 'v' on the xy plane */
 Angle Vector::bearingXY(const Vector &v) const
 {
     Vector px( x(), y(), 0.0);
@@ -151,6 +236,7 @@ Angle Vector::bearingXY(const Vector &v) const
     return angle(px,pv);
 }
 
+/** Return the bearing of this vector against 'v' on the xz plane */
 Angle Vector::bearingXZ(const Vector &v) const
 {
     Vector px( x(), 0.0, z());
@@ -158,6 +244,7 @@ Angle Vector::bearingXZ(const Vector &v) const
     return angle(px,pv);
 }
 
+/** Return the bearing of this vector against 'v' on the yz plane */
 Angle Vector::bearingYZ(const Vector &v) const
 {
     Vector px( 0.0, y(), z());
@@ -165,6 +252,8 @@ Angle Vector::bearingYZ(const Vector &v) const
     return angle(px,pv);
 }
 
+/** Return the angle between vectors 'v0' and 'v1' - this is the smallest
+    angle, and will always lie between 0 and 180 degrees */
 Angle Vector::angle(const Vector &v0, const Vector &v1)
 {
     double d = dot(v0,v1);
@@ -177,11 +266,13 @@ Angle Vector::angle(const Vector &v0, const Vector &v1)
         return Angle( std::acos(d/lt) );
 }
 
+/** Return the angle between v0-v1-v2 (treating the vectors as points in space) */
 Angle Vector::angle(const Vector &v0, const Vector &v1, const Vector &v2)
 {
     return angle( v0-v1, v2-v1 );
 }
 
+/** Return the dihedral angle between v0-v1-v2-v3 (treating the vectors as points) */
 Angle Vector::dihedral(const Vector &v0, const Vector &v1, const Vector &v2, const Vector &v3)
 {
     //     v0        v3
@@ -235,7 +326,9 @@ Angle Vector::dihedral(const Vector &v0, const Vector &v1, const Vector &v2, con
     else
         return ang;
 }
-
+    
+/** Generate a vector, v0, that has distance 'dst' v0-v1, angle 'ang' v0-v1-v2,
+    and dihedral 'dih' v0-v1-v2-v3 */
 Vector Vector::generate(double dst, const Vector &v1, const Angle &ang, const Vector &v2,
                         const Angle &dih, const Vector &v3)
 {
@@ -285,6 +378,7 @@ Vector Vector::generate(double dst, const Vector &v1, const Angle &ang, const Ve
       return Vector(nx,ny,nz);
 }
 
+ /** Return the cross product of v0 and v1 */
 Vector Vector::cross(const Vector &v0, const Vector &v1)
 {
     double nx = v0.sc[1]*v1.sc[2] - v0.sc[2]*v1.sc[1];
@@ -324,7 +418,118 @@ Vector Vector::cross(const Vector &v0, const Vector &v1)
         return Vector(nx,ny,nz).normalise();
 }
 
+/** Return the manhattan length of the vector */
 double Vector::manhattanLength() const
 {
     return std::abs(sc[0])+std::abs(sc[1])+std::abs(sc[2]);
+}
+
+/** Return the metric tensor of a vector, i.e.
+          
+    | y*y + z*z,    -x*y    -x*z      |
+    |    -y*x,   x*x + z*z  -y*z      |
+    |    -z*x       -z*y    x*x + y*y |
+
+*/
+Matrix Vector::metricTensor() const
+{
+    double x2 = sc[0]*sc[0];
+    double y2 = sc[1]*sc[1];
+    double z2 = sc[2]*sc[2];
+
+    double xy = sc[0]*sc[1];
+    double xz = sc[0]*sc[2];
+    double yz = sc[1]*sc[2];
+
+    return Matrix( y2 + z2, -xy, -xz,
+                   -xy, x2 + z2, -yz,
+                   -xz, -yz, x2 + y2 );
+}
+
+/** Increment, decrement, negate etc. */
+const Vector& Vector::operator+=(const Vector &other)
+{
+    for (int i=0; i<3; i++)
+        sc[i] += other.sc[i];
+
+    return *this;
+}
+
+/** Increment, decrement, negate etc. */
+const Vector& Vector::operator-=(const Vector &other)
+{
+    for (int i=0; i<3; i++)
+        sc[i] -= other.sc[i];
+
+    return *this;
+}
+
+/** Increment, decrement, negate etc. */
+const Vector& Vector::operator*=(const double &val)
+{
+    for (int i=0; i<3; i++)
+        sc[i] *= val;
+
+    return *this;
+}
+
+/** Increment, decrement, negate etc. */
+const Vector& Vector::operator/=(const double &val)
+{
+    if ( SireMaths::isZero(val) )
+        throw SireMaths::math_error(QObject::tr(
+            "Cannot divide a vector by zero! %1 / 0 is a error!").arg(this->toString()),CODELOC);
+
+    for (int i=0; i<3; i++)
+        sc[i] /= val;
+
+    return *this;
+}
+
+/** Increment, decrement, negate etc. */
+Vector Vector::operator-() const
+{
+    return Vector(-sc[0],-sc[1],-sc[2]);
+}
+
+/** Increment, decrement, negate etc. */
+const Vector SIREMATHS_EXPORT SireMaths::operator+(const Vector &p1, const Vector &p2)
+{
+    return Vector(p1.sc[0]+p2.sc[0], p1.sc[1]+p2.sc[1], p1.sc[2]+p2.sc[2]);
+}
+
+/** Increment, decrement, negate etc. */
+const Vector SIREMATHS_EXPORT SireMaths::operator-(const Vector &p1, const Vector &p2)
+{
+    return Vector(p1.sc[0]-p2.sc[0], p1.sc[1]-p2.sc[1], p1.sc[2]-p2.sc[2]);
+}
+
+/** Increment, decrement, negate etc. */
+const Vector SIREMATHS_EXPORT SireMaths::operator*(const Vector &p1, double c)
+{
+    return Vector(p1.sc[0]*c, p1.sc[1]*c, p1.sc[2]*c);
+}
+
+/** Increment, decrement, negate etc. */
+const Vector SIREMATHS_EXPORT SireMaths::operator*(double c, const Vector &p1)
+{
+    return Vector(p1.sc[0]*c, p1.sc[1]*c, p1.sc[2]*c);
+}
+
+/** Increment, decrement, negate etc. */
+const Vector SIREMATHS_EXPORT SireMaths::operator/(const Vector &p1, double c)
+{
+    if (isZero(c))
+        throw SireMaths::math_error(QObject::tr(
+            "Cannot divide a vector by zero! %1 / 0 is a error!").arg(p1.toString()),CODELOC);
+
+    return Vector(p1.sc[0]/c, p1.sc[1]/c, p1.sc[2]/c);
+}
+
+/** Return the multiple of this vector with the matrix 'm' */
+const Vector SIREMATHS_EXPORT SireMaths::operator*(const Matrix &m, const Vector &p)
+{
+    return Vector(m.xx*p.sc[0] + m.yx*p.sc[1] + m.zx*p.sc[2],
+                  m.xy*p.sc[0] + m.yy*p.sc[1] + m.zy*p.sc[2],
+                  m.xz*p.sc[0] + m.yz*p.sc[1] + m.zz*p.sc[2]);
 }

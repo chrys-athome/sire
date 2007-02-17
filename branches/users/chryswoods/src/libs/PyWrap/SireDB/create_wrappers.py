@@ -94,6 +94,8 @@ special_code = { "AtomTypeTable" : fix_atomtypetable,
                  "ParameterDB" : fix_parameterdb,
                  "TableBase" : fix_tablebase }
 
+implicitly_convertible = []
+
 incpaths = sys.argv[1:]
 incpaths.insert(0, "../../")
 
@@ -117,11 +119,17 @@ for calldef in mb.calldefs():
     except:
       pass
 
+#add calls to register hand-written wrappers
+mb.add_declaration_code( "#include \"siredb_containers.h\"" )
+mb.add_registration_code( "register_SireDB_containers();", tail=False )
+
 mb.calldefs().create_with_signature = True
 
 #export each class in turn
 for classname in wrap_classes:
    #tell the program to write wrappers for this class
    export_class(mb, classname, aliases, special_code)
+
+register_implicit_conversions(mb, implicitly_convertible)
 
 write_wrappers(mb, modulename, extra_includes, huge_classes)

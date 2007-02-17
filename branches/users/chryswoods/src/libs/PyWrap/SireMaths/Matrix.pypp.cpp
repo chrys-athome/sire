@@ -14,7 +14,8 @@ void register_Matrix_class(){
         .def( bp::init< >() )    
         .def( bp::init< double >(( bp::arg("diagonal_value") )) )    
         .def( bp::init< double, double, double, double, double, double, double, double, double >(( bp::arg("xx"), bp::arg("xy"), bp::arg("xz"), bp::arg("yx"), bp::arg("yy"), bp::arg("yz"), bp::arg("zx"), bp::arg("zy"), bp::arg("zz") )) )    
-        .def( bp::init< SireMaths::Vector const &, SireMaths::Vector const &, SireMaths::Vector const & >(( bp::arg("c1"), bp::arg("c2"), bp::arg("c3") )) )    
+        .def( bp::init< SireMaths::Vector const &, SireMaths::Vector const &, SireMaths::Vector const & >(( bp::arg("r1"), bp::arg("r2"), bp::arg("r3") )) )    
+        .def( bp::init< boost::tuples::tuple<SireMaths::Vector, SireMaths::Vector, SireMaths::Vector, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type> const & >(( bp::arg("rows") )) )    
         .def( 
             "column0"
             , (::SireMaths::Vector ( ::SireMaths::Matrix::* )(  ) const)( &::SireMaths::Matrix::column0 ) )    

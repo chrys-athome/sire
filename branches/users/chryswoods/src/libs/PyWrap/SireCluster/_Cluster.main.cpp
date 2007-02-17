@@ -13,9 +13,13 @@
 
 #include "WorkerBase.pypp.hpp"
 
+#include "sirecluster_containers.h"
+
 namespace bp = boost::python;
 
 BOOST_PYTHON_MODULE(_Cluster){
+    register_SireCluster_containers();
+
     register_Processor_class();
 
     register_WorkerBase_class();

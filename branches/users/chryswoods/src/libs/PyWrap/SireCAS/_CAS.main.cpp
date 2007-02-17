@@ -111,60 +111,40 @@
 
 #include "_CAS_free_functions.pypp.hpp"
 
+#include "sirecas_containers.h"
+
 namespace bp = boost::python;
 
 BOOST_PYTHON_MODULE(_CAS){
+    register_SireCAS_containers();
+
     register_ExBase_class();
 
     register_SingleFunc_class();
 
     register_ArcCos_class();
 
-    bp::implicitly_convertible< SireCAS::Expression const &, SireCAS::ArcCos >();
-
     register_ArcCosh_class();
-
-    bp::implicitly_convertible< SireCAS::Expression const &, SireCAS::ArcCosh >();
 
     register_ArcCot_class();
 
-    bp::implicitly_convertible< SireCAS::Expression const &, SireCAS::ArcCot >();
-
     register_ArcCoth_class();
-
-    bp::implicitly_convertible< SireCAS::Expression const &, SireCAS::ArcCoth >();
 
     register_ArcCsc_class();
 
-    bp::implicitly_convertible< SireCAS::Expression const &, SireCAS::ArcCsc >();
-
     register_ArcCsch_class();
-
-    bp::implicitly_convertible< SireCAS::Expression const &, SireCAS::ArcCsch >();
 
     register_ArcSec_class();
 
-    bp::implicitly_convertible< SireCAS::Expression const &, SireCAS::ArcSec >();
-
     register_ArcSech_class();
-
-    bp::implicitly_convertible< SireCAS::Expression const &, SireCAS::ArcSech >();
 
     register_ArcSin_class();
 
-    bp::implicitly_convertible< SireCAS::Expression const &, SireCAS::ArcSin >();
-
     register_ArcSinh_class();
-
-    bp::implicitly_convertible< SireCAS::Expression const &, SireCAS::ArcSinh >();
 
     register_ArcTan_class();
 
-    bp::implicitly_convertible< SireCAS::Expression const &, SireCAS::ArcTan >();
-
     register_ArcTanh_class();
-
-    bp::implicitly_convertible< SireCAS::Expression const &, SireCAS::ArcTanh >();
 
     register_PowerFunction_class();
 
@@ -174,73 +154,33 @@ BOOST_PYTHON_MODULE(_CAS){
 
     register_ComplexValues_class();
 
-    bp::implicitly_convertible< SireCAS::SymbolComplex const &, SireCAS::ComplexValues >();
-
-    bp::implicitly_convertible< SireCAS::Values const &, SireCAS::ComplexValues >();
-
     register_Constant_class();
 
     register_Cos_class();
 
-    bp::implicitly_convertible< SireCAS::Expression const &, SireCAS::Cos >();
-
     register_Cosh_class();
-
-    bp::implicitly_convertible< SireCAS::Expression const &, SireCAS::Cosh >();
 
     register_Cot_class();
 
-    bp::implicitly_convertible< SireCAS::Expression const &, SireCAS::Cot >();
-
     register_Coth_class();
-
-    bp::implicitly_convertible< SireCAS::Expression const &, SireCAS::Coth >();
 
     register_Csc_class();
 
-    bp::implicitly_convertible< SireCAS::Expression const &, SireCAS::Csc >();
-
     register_Csch_class();
-
-    bp::implicitly_convertible< SireCAS::Expression const &, SireCAS::Csch >();
 
     register_Exp_class();
 
-    bp::implicitly_convertible< SireCAS::Expression const &, SireCAS::Exp >();
-
     register_Expression_class();
-
-    bp::implicitly_convertible< int, SireCAS::Expression >();
-
-    bp::implicitly_convertible< SireMaths::Rational const &, SireCAS::Expression >();
-
-    bp::implicitly_convertible< double, SireCAS::Expression >();
-
-    bp::implicitly_convertible< SireMaths::Complex const &, SireCAS::Expression >();
-
-    bp::implicitly_convertible< SireCAS::ExpressionBase const &, SireCAS::Expression >();
-
-    bp::implicitly_convertible< SireCAS::ExBase const &, SireCAS::Expression >();
 
     register_ExpressionBase_class();
 
-    bp::implicitly_convertible< SireCAS::ExBase const &, SireCAS::ExpressionBase >();
-
     register_Symbol_class();
 
-    bp::implicitly_convertible< QString const &, SireCAS::Symbol >();
-
     register_Function_class();
-
-    bp::implicitly_convertible< QString const &, SireCAS::Function >();
 
     register_I_class();
 
     register_Identities_class();
-
-    bp::implicitly_convertible< QList<SireCAS::SymbolExpression> const &, SireCAS::Identities >();
-
-    bp::implicitly_convertible< SireCAS::SymbolExpression const &, SireCAS::Identities >();
 
     register_IntegerPower_class();
 
@@ -248,15 +188,11 @@ BOOST_PYTHON_MODULE(_CAS){
 
     register_Ln_class();
 
-    bp::implicitly_convertible< SireCAS::Expression const &, SireCAS::Ln >();
-
     register_Power_class();
 
     register_PowerConstant_class();
 
     register_Product_class();
-
-    bp::implicitly_convertible< SireCAS::Expressions const &, SireCAS::Product >();
 
     register_RationalPower_class();
 
@@ -264,27 +200,15 @@ BOOST_PYTHON_MODULE(_CAS){
 
     register_Sec_class();
 
-    bp::implicitly_convertible< SireCAS::Expression const &, SireCAS::Sec >();
-
     register_Sech_class();
-
-    bp::implicitly_convertible< SireCAS::Expression const &, SireCAS::Sech >();
 
     register_Sin_class();
 
-    bp::implicitly_convertible< SireCAS::Expression const &, SireCAS::Sin >();
-
     register_Sinh_class();
-
-    bp::implicitly_convertible< SireCAS::Expression const &, SireCAS::Sinh >();
 
     register_Sum_class();
 
-    bp::implicitly_convertible< SireCAS::Expressions const &, SireCAS::Sum >();
-
     register_SymbolComplex_class();
-
-    bp::implicitly_convertible< SireCAS::SymbolValue const &, SireCAS::SymbolComplex >();
 
     register_SymbolExpression_class();
 
@@ -292,17 +216,23 @@ BOOST_PYTHON_MODULE(_CAS){
 
     register_Tan_class();
 
-    bp::implicitly_convertible< SireCAS::Expression const &, SireCAS::Tan >();
-
     register_Tanh_class();
-
-    bp::implicitly_convertible< SireCAS::Expression const &, SireCAS::Tanh >();
 
     register_Values_class();
 
-    bp::implicitly_convertible< QList<SireCAS::SymbolValue> const &, SireCAS::Values >();
+    bp::implicitly_convertible< SireCAS::SymbolComplex, SireCAS::ComplexValues >();
 
-    bp::implicitly_convertible< SireCAS::SymbolValue const &, SireCAS::Values >();
+    bp::implicitly_convertible< QList<SireCAS::SymbolComplex>, SireCAS::ComplexValues >();
+
+    bp::implicitly_convertible< const SireCAS::ExBase&, SireCAS::Expression >();
+
+    bp::implicitly_convertible< QList<SireCAS::SymbolExpression>, SireCAS::Identities >();
+
+    bp::implicitly_convertible< SireCAS::SymbolExpression, SireCAS::Identities >();
+
+    bp::implicitly_convertible< QList<SireCAS::SymbolValue>, SireCAS::Values >();
+
+    bp::implicitly_convertible< SireCAS::SymbolValue, SireCAS::Values >();
 
     register_free_functions();
 }

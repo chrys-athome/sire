@@ -33,54 +33,42 @@
 
 #include "Vector.pypp.hpp"
 
+#include "siremaths_containers.h"
+
 namespace bp = boost::python;
 
 BOOST_PYTHON_MODULE(_Maths){
+    register_SireMaths_containers();
+
     register_Angle_class();
 
-    bp::implicitly_convertible< double, SireMaths::Angle >();
-
     register_Vector_class();
-
-    bp::implicitly_convertible< boost::tuples::tuple<double, double, double, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type> const &, SireMaths::Vector >();
-
-    bp::implicitly_convertible< double, SireMaths::Vector >();
 
     register_AxisSet_class();
 
     register_Complex_class();
 
-    bp::implicitly_convertible< gsl_complex const &, SireMaths::Complex >();
-
     register_Line_class();
 
     register_Matrix_class();
 
-    bp::implicitly_convertible< double, SireMaths::Matrix >();
-
     register_Matrix4_class();
-
-    bp::implicitly_convertible< double, SireMaths::Matrix4 >();
-
-    bp::implicitly_convertible< SireMaths::Matrix const &, SireMaths::Matrix4 >();
 
     register_Plane_class();
 
     register_Quaternion_class();
 
-    bp::implicitly_convertible< SireMaths::Matrix const &, SireMaths::Quaternion >();
-
     register_RanGenerator_class();
-
-    bp::implicitly_convertible< quint32, SireMaths::RanGenerator >();
-
-    bp::implicitly_convertible< QVector<unsigned> const &, SireMaths::RanGenerator >();
 
     register_Sphere_class();
 
-    bp::implicitly_convertible< double const &, SireMaths::Sphere >();
-
     register_Torsion_class();
+
+    bp::implicitly_convertible< boost::tuples::tuple<double,double,double>, SireMaths::Vector >();
+
+    bp::implicitly_convertible< double, SireMaths::Angle >();
+
+    bp::implicitly_convertible< boost::tuples::tuple<SireMaths::Vector,SireMaths::Vector,SireMaths::Vector>, SireMaths::Matrix >();
 
     register_Triangle_class();
 }

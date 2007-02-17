@@ -31,7 +31,7 @@
 
 #include <QString>
 
-#include "sireglobal.h"
+#include "vector.h"
 
 SIRE_BEGIN_HEADER
 
@@ -73,7 +73,8 @@ public:
            double yx, double yy, double yz,
            double zx, double zy, double zz);
 
-    Matrix(const Vector& c1, const Vector& c2, const Vector& c3);
+    Matrix(const Vector& r1, const Vector& r2, const Vector& r3);
+    Matrix(const tuple<Vector,Vector,Vector> &rows);
 
     Matrix(const Matrix& m);
 

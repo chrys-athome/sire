@@ -20,6 +20,8 @@ set ( WRAPDB_SOURCES
 
       _DB.main.cpp
 
+      siredb_containers.cpp
+
       AssignBase.pypp.cpp
       AssignInstruction.pypp.cpp
       AtomDB.pypp.cpp
