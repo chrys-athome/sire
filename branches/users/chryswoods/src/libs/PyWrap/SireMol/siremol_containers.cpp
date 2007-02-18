@@ -106,6 +106,10 @@ void register_SireMol_containers()
     register_tuple< boost::tuple<ResNum,QString> >();
     register_tuple< boost::tuple<ResID,QString> >();
     
+    register_tuple< boost::tuple<Molecule,double> >();
+    register_tuple< boost::tuple<Residue,double> >();
+    register_tuple< boost::tuple<NewAtom,double> >();
+    
     #if QT_VERSION >= 0x402000
     register_set< QSet<AtomIndex> >();
     register_set< QSet<MoleculeID> >();
