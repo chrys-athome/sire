@@ -84,8 +84,6 @@ public:
 
     double getEnergies(Values &values);
 
-    const Molecule& molecule(MoleculeID molid) const;
-
     void calculateEnergy();
 
     bool change(const Molecule &molecule);
@@ -99,7 +97,7 @@ public:
     bool remove(const Molecule &molecule);
     bool remove(const Residue &residue);
     bool remove(const NewAtom &atom);
-    
+
     bool replace(const Molecule &oldmol, const Molecule &newmol,
                  const ParameterMap &map = ParameterMap());
 

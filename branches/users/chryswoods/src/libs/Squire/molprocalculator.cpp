@@ -128,7 +128,7 @@ bool MolproCalculator::change(const Residue &residue)
     return molproff->change(residue);
 }
 
-/** Move the atom 'atom' and return whether the energy of 
+/** Move the atom 'atom' and return whether the energy of
     the forcefield now needs to be recalculated */
 bool MolproCalculator::change(const NewAtom &atom)
 {
@@ -158,6 +158,11 @@ bool MolproCalculator::remove(const Molecule &molecule)
 }
 
 bool MolproCalculator::remove(const Residue&)
+{
+    return false;
+}
+
+bool MolproCalculator::remove(const NewAtom &atom)
 {
     return false;
 }

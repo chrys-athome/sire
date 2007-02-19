@@ -18,23 +18,37 @@ include_directories( ${CMAKE_SOURCE_DIR}/src/libs
 # Define the sources in SireQt
 set ( WRAPQT_SOURCES
 
-      wrap_SireQt.cpp
+      _Qt.main.cpp
 
       sireqt_containers.cpp
 
-      qvariant.py.cpp
+      Filters.pypp.cpp
+      NumberFlags.pypp.cpp
+      OpenMode.pypp.cpp
+      Permissions.pypp.cpp
+      
+      QByteArray.pypp.cpp
+      QChar.pypp.cpp
+      QDataStream.pypp.cpp
+      QDate.pypp.cpp
+      QDateTime.pypp.cpp
+      QDir.pypp.cpp
+      QFileInfo.pypp.cpp
+      QFile.pypp.cpp
+      QIODevice.pypp.cpp
 
-      wrap_qbytearray.cpp            
-      wrap_qchar.cpp                 
-      wrap_qdatastream.cpp           
-      wrap_qfile.cpp                 
-      wrap_qiodevice.cpp             
-      wrap_qstring2.cpp      
-      wrap_qstring3.cpp      
-      wrap_qstring.cpp       
-      wrap_qtextstream.cpp   
-      wrap_qtglobal.cpp
-      wrap_qtime.cpp      
+      QString_1.py.cpp
+      QString_2.py.cpp
+      QString_3.py.cpp
+      
+      QTextStream.pypp.cpp
+      
+      QtGlobal.py.cpp
+      
+      QTime.pypp.cpp
+      QVariant.pypp.cpp
+      
+      SortFlags.pypp.cpp
     )
 
 # Create the library that holds all of the class wrappers

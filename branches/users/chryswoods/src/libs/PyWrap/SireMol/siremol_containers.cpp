@@ -76,6 +76,9 @@ void register_SireMol_containers()
     register_list< QList<AtomInfo> >();
     register_list< QVector<AtomInfo> >();
 
+    register_list< QVector<Element> >();
+    register_list< QList<Element> >();
+
     register_list< QList<Bond> >();
     register_list< QVector<Bond> >();
     

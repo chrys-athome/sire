@@ -38,6 +38,8 @@
 #include "SirePy/convertdict.hpp"
 #include "SirePy/convertset.hpp"
 
+#include "sireqt_headers.h"
+
 #include "ThirdParty/tuples.hpp"
 
 using namespace SirePy;
@@ -64,13 +66,26 @@ void register_SireQt_containers()
     register_list< QVector<QString> >();
     register_list< QList<QString> >();
 
+    register_list< QVector<QFileInfo> >();
+    register_list< QList<QFileInfo> >();
+
+    register_list< QVector<QByteArray> >();
+    register_list< QList<QByteArray> >();
+
+    register_list< QVector<QVariant> >();
+    register_list< QList<QVariant> >();
+
     register_tuple< boost::tuple<double,double,double> >();
 
     #if QT_VERSION >= 0x402000
     register_set< QSet<QString> >();
     
+    register_dict< QMap<QString,QVariant> >();
+    
     #else
     register_set< QSet<QString>, QString >();
+    
+    register_dict< QMap<QString,QVariant>, QString, QVariant >();
     
     #endif
 }

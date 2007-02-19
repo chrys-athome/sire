@@ -96,8 +96,8 @@ using SireMM::SwitchingFunction;
     the energy calculation. It is most efficient to place this
     forcefield on a MolproProcessor, as this allows the forcefield
     to use a single instance of Molpro, rather than starting
-    and stopping Molpro for each energy evaluation. 
-    
+    and stopping Molpro for each energy evaluation.
+
     Note that the current version only
     supports entire molecules in the QM or MM regions. Later
     versions of this forcefield will expand this support to
@@ -208,6 +208,9 @@ public:
     const QFileInfo& molproExe() const;
     const QDir& molproTempDir() const;
 
+    void setMolproExe(const QFileInfo &molpro);
+    void setMolproTempDir(const QDir &tempdir);
+
     const Space& space() const;
     const SwitchingFunction& switchingFunction() const;
 
@@ -255,30 +258,30 @@ private:
     public:
         QMMolecule();
         QMMolecule(const Molecule &molecule);
-        
+
         QMMolecule(const QMMolecule &other);
-        
+
         ~QMMolecule();
-        
+
         QMMolecule& operator=(const QMMolecule &other);
-        
+
         const Molecule& molecule() const;
-        
+
         bool change(const Molecule &molecule);
         bool change(const Residue &residue);
         bool change(const NewAtom &atom);
-        
+
         void addTo(QVector<double> &qm_array);
         void update(QVector<double> &qm_array) const;
-        
+
     private:
         /** The molecule itself */
         Molecule mol;
-        
+
         /** The element types of all of the atoms */
         QVector< QVector<Element> > elements;
-        
-        /** The index in the qm_coords array of each atom 
+
+        /** The index in the qm_coords array of each atom
             in this molecule */
         QVector< QVector<int> > indicies;
     };
@@ -287,64 +290,64 @@ private:
     {
     public:
         MMMolecule();
-        MMMolecule(const Molecule &molecule, 
+        MMMolecule(const Molecule &molecule,
                    const QString &charge_property);
-        
+
         MMMolecule(const MMMolecule &other);
-        
+
         ~MMMolecule();
-        
+
         MMMolecule& operator=(const MMMolecule &other);
-        
+
         const Molecule& molecule() const;
-        
+
         bool change(const Molecule &molecule);
         bool change(const Residue &residue);
         bool change(const NewAtom &atom);
-        
+
         void update(const CoordGroup &qm_coordgroup,
                     const Space &space, const SwitchingFunction &switchfunc);
-                    
+
         void addTo(QVector<double> &mm_coords_and_charges);
         void update(QVector<double> &mm_coords_and_charges);
-        
+
         int nAtomsInArray() const;
-        
+
         const QString& chargeProperty() const;
-        
+
     private:
         /** The molecule itself */
         Molecule mol;
-        
-        /** The name of the property containing the 
+
+        /** The name of the property containing the
             atomic charges of the atoms. */
         QString chg_property;
-        
+
         /** The partial charges on the atoms */
         AtomicCharges chgs;
-        
+
         /** The replicas of each CoordGroup of this molecule,
-            within the cutoff, together with their closest 
+            within the cutoff, together with their closest
             distance to the QM molecule */
         QVector< QList< tuple<double,CoordGroup> > > coords;
-        
+
         /** The IDs of CutGroups that need rebuilding. Empty
             means that all of them do! */
         QSet<CutGroupID> cgids_to_be_rebuilt;
-        
+
         /** The index of the first atom
-            of this molecule in the MM coords 
+            of this molecule in the MM coords
             and charges array - equals -1 if this molecule
             is not currently in the array. */
         int idx;
-        
+
         /** The number of atoms of this molecule
             that are in the MM coords and charges
             array (could be more than number of atoms
             in molecule, as multiple copies of the
             molecule may be included... */
         uint nats;
-        
+
         /** Whether or not all of the CutGroups need rebuilding */
         bool rebuild_all;
     };
@@ -360,7 +363,7 @@ private:
 
     /** The full name and path to the molpro executable */
     QFileInfo molpro_exe;
-    
+
     /** The temporary directory in which to run the Molpro calculation.
         Each calculation will be carried out within a new unique directory
         within this directory. */
@@ -373,27 +376,27 @@ private:
         of the MM atoms */
     QVector<double> mm_coords_and_charges;
 
-    /** Hash of all of the QM molecules in this forcefield, indexed 
+    /** Hash of all of the QM molecules in this forcefield, indexed
         by their MoleculeID */
     QHash<MoleculeID, QMMolecule> qm_mols;
 
-    /** CoordGroup containing all of the atoms of all of the 
+    /** CoordGroup containing all of the atoms of all of the
         QM molecules... */
     CoordGroup qm_coordgroup;
 
     /** Hash of all of the MM molecules in this forcefield, indexed
         by their MoleculeID */
     QHash<MoleculeID, MMMolecule> mm_mols;
-    
+
     /** Version number which tracks changes in the QM molecules.
         This version number is incremented whenever a QM molecule
         is added or removed. */
     MajVersion qm_version;
-    
+
     /** Set of MoleculeIDs of MM molecules that need rebuilding */
     QSet<MoleculeID> rebuild_mm;
-    
-    /** Do we need to rebuild all of the coordinates? 
+
+    /** Do we need to rebuild all of the coordinates?
         (we do whenever the QM coordinates change) */
     bool rebuild_all;
 
@@ -416,7 +419,7 @@ inline const QDir& MolproFF::molproTempDir() const
     return molpro_tmpdir;
 }
 
-/** Return the version number of the qm region - this is 
+/** Return the version number of the qm region - this is
     incremented whenever molecules are added or removed from
     the QM region */
 inline quint32 MolproFF::qmVersion() const
@@ -430,7 +433,7 @@ inline const Space& MolproFF::space() const
     return spce;
 }
 
-/** Return the switching function used to scale the charges of the 
+/** Return the switching function used to scale the charges of the
     MM atoms */
 inline const SwitchingFunction& MolproFF::switchingFunction() const
 {
