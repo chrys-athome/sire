@@ -8,6 +8,8 @@
 
 namespace bp = boost::python;
 
+#include "SirePy/str.hpp"
+
 void register_Constant_class(){
 
     bp::class_< SireCAS::Constant, bp::bases< SireCAS::ExBase > >( "Constant" )    
@@ -54,6 +56,7 @@ void register_Constant_class(){
         .def( 
             "what"
             , (char const * ( ::SireCAS::Constant::* )(  ) const)( &::SireCAS::Constant::what ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__str__", &SirePy::__str__< ::SireCAS::Constant > );
 
 }

@@ -10,6 +10,8 @@
 
 namespace bp = boost::python;
 
+#include "SirePy/str.hpp"
+
 void register_NameDB_class(){
 
     bp::class_< SireDB::NameDB, bp::bases< SireDB::DBBase >, boost::noncopyable >( "NameDB" )    
@@ -109,6 +111,7 @@ void register_NameDB_class(){
         .def( 
             "what"
             , (char const * ( ::SireDB::NameDB::* )(  ) const)( &::SireDB::NameDB::what ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__str__", &SirePy::__str__< ::SireDB::NameDB > );
 
 }

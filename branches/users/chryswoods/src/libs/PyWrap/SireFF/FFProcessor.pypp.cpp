@@ -17,6 +17,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireFF::FFProcessor&){ return "SireFF::FFProcessor";}
+
 void register_FFProcessor_class(){
 
     bp::class_< SireFF::FFProcessor, bp::bases< SireFF::FFProcessorBase > >( "FFProcessor" )    
@@ -28,6 +30,7 @@ void register_FFProcessor_class(){
         .def( 
             "what"
             , (char const * ( ::SireFF::FFProcessor::* )(  ) const)( &::SireFF::FFProcessor::what ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__str__", &pvt_get_name);
 
 }

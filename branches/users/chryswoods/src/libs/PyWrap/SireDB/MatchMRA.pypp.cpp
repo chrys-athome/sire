@@ -10,6 +10,8 @@
 
 namespace bp = boost::python;
 
+#include "SirePy/str.hpp"
+
 void register_MatchMRA_class(){
 
     bp::class_< SireDB::MatchMRA, bp::bases< SireDB::MatchData > >( "MatchMRA" )    
@@ -61,6 +63,7 @@ void register_MatchMRA_class(){
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "toString"
-            , (::QString ( ::SireDB::MatchMRA::* )(  ) const)( &::SireDB::MatchMRA::toString ) );
+            , (::QString ( ::SireDB::MatchMRA::* )(  ) const)( &::SireDB::MatchMRA::toString ) )    
+        .def( "__str__", &SirePy::__str__< ::SireDB::MatchMRA > );
 
 }

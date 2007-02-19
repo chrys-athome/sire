@@ -14,6 +14,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_ResIDAtomID_class(){
 
     bp::class_< SireMol::ResIDAtomID >( "ResIDAtomID", bp::init< bp::optional< SireMol::ResID, SireMol::AtomID > >(( bp::arg("resid")=::SireMol::ResID( 0 ), bp::arg("atmid")=::SireMol::AtomID( 0 ) )) )    
@@ -32,6 +36,11 @@ void register_ResIDAtomID_class(){
             , &::SireMol::ResIDAtomID::resID )    
         .def( 
             "toString"
-            , &::SireMol::ResIDAtomID::toString );
+            , &::SireMol::ResIDAtomID::toString )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::ResIDAtomID >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::ResIDAtomID >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireMol::ResIDAtomID > );
 
 }

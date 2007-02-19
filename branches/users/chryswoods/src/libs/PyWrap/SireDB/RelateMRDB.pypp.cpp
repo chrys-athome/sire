@@ -10,6 +10,8 @@
 
 namespace bp = boost::python;
 
+#include "SirePy/str.hpp"
+
 void register_RelateMRDB_class(){
 
     bp::class_< SireDB::RelateMRDB, bp::bases< SireDB::DBBase > >( "RelateMRDB" )    
@@ -103,6 +105,7 @@ void register_RelateMRDB_class(){
         .def( 
             "what"
             , (char const * ( ::SireDB::RelateMRDB::* )(  ) const)( &::SireDB::RelateMRDB::what ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__str__", &SirePy::__str__< ::SireDB::RelateMRDB > );
 
 }

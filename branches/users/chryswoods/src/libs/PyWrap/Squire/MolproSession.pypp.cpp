@@ -11,6 +11,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const Squire::MolproSession&){ return "Squire::MolproSession";}
+
 void register_MolproSession_class(){
 
     bp::class_< Squire::MolproSession, boost::noncopyable >( "MolproSession", bp::no_init )    
@@ -32,6 +34,7 @@ void register_MolproSession_class(){
         .def( 
             "setArrays"
             , (void ( ::Squire::MolproSession::* )( ::QVector<double> const &,::QVector<double> const & ) )( &::Squire::MolproSession::setArrays )
-            , ( bp::arg("qm_array"), bp::arg("mm_array") ) );
+            , ( bp::arg("qm_array"), bp::arg("mm_array") ) )    
+        .def( "__str__", &pvt_get_name);
 
 }

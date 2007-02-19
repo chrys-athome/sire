@@ -10,6 +10,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireDB::AtomTable&){ return "SireDB::AtomTable";}
+
 void register_AtomTable_class(){
 
     bp::class_< SireDB::AtomTable, bp::bases< SireDB::TableBase >, boost::noncopyable >( "AtomTable", bp::no_init )    
@@ -207,6 +209,7 @@ void register_AtomTable_class(){
         .def( 
             "nParameters"
             , (int ( ::SireDB::AtomTable::* )( ::SireMol::CutGroupNum ) const)( &::SireDB::AtomTable::nParameters )
-            , ( bp::arg("cgnum") ) );
+            , ( bp::arg("cgnum") ) )    
+        .def( "__str__", &pvt_get_name);
 
 }

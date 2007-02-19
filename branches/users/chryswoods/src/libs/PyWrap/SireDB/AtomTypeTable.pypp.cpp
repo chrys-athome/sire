@@ -10,6 +10,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireDB::AtomTypeTable&){ return "SireDB::AtomTypeTable";}
+
 void register_AtomTypeTable_class(){
 
     bp::class_< SireDB::AtomTypeTable, bp::bases< SireDB::AtomTableT<SireDB::AtomType> > >( "AtomTypeTable" )    
@@ -21,6 +23,7 @@ void register_AtomTypeTable_class(){
         .def( 
             "what"
             , (char const * ( ::SireDB::AtomTypeTable::* )(  ) const)( &::SireDB::AtomTypeTable::what ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__str__", &pvt_get_name);
 
 }

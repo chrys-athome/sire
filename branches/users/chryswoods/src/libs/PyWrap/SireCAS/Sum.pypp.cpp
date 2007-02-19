@@ -8,6 +8,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_Sum_class(){
 
     bp::class_< SireCAS::Sum, bp::bases< SireCAS::ExBase > >( "Sum" )    
@@ -89,6 +93,11 @@ void register_Sum_class(){
         .def( 
             "what"
             , (char const * ( ::SireCAS::Sum::* )(  ) const)( &::SireCAS::Sum::what ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireCAS::Sum >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireCAS::Sum >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireCAS::Sum > );
 
 }

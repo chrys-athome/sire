@@ -10,11 +10,14 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireDB::match_res_alias&){ return "SireDB::match_res_alias";}
+
 void register_match_res_alias_class(){
 
     bp::class_< SireDB::match_res_alias >( "match_res_alias" )    
         .def( bp::init< >() )    
         .def( bp::init< uint >(( bp::arg("atmid") )) )    
-        .def( bp::self == bp::other< QString >() );
+        .def( bp::self == bp::other< QString >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

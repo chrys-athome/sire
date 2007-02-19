@@ -25,6 +25,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMol::Residue&){ return "SireMol::Residue";}
+
 void register_Residue_class(){
 
 { //::SireMol::Residue
@@ -44,6 +48,11 @@ void register_Residue_class(){
     Residue_exposer.def( bp::self == bp::self );
     register_Residue_memfuns4(Residue_exposer);
     register_Residue_memfuns5(Residue_exposer);
+    Residue_exposer.def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::Residue >,
+                        bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
+    Residue_exposer.def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::Residue >,
+                        bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
+    Residue_exposer.def( "__str__", &pvt_get_name);
 }
 
 }

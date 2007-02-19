@@ -8,10 +8,15 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireCAS::ComplexValues&){ return "SireCAS::ComplexValues";}
+
 void register_ComplexValues_class(){
 
     bp::class_< SireCAS::ComplexValues >( "ComplexValues" )    
         .def( bp::init< >() )    
+        .def( bp::init< QList<SireCAS::SymbolComplex> const & >(( bp::arg("values") )) )    
         .def( bp::init< SireCAS::SymbolComplex const & >(( bp::arg("symval0") )) )    
         .def( bp::init< SireCAS::SymbolComplex const &, SireCAS::SymbolComplex const & >(( bp::arg("symval0"), bp::arg("symval1") )) )    
         .def( bp::init< SireCAS::SymbolComplex const &, SireCAS::SymbolComplex const &, SireCAS::SymbolComplex const & >(( bp::arg("symval0"), bp::arg("symval1"), bp::arg("symval2") )) )    
@@ -74,6 +79,11 @@ void register_ComplexValues_class(){
         .def( 
             "values"
             , (::QHash<unsigned, SireMaths::Complex> const & ( ::SireCAS::ComplexValues::* )(  ) const)( &::SireCAS::ComplexValues::values )
-            , bp::return_value_policy< bp::copy_const_reference >() );
+            , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireCAS::ComplexValues >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireCAS::ComplexValues >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

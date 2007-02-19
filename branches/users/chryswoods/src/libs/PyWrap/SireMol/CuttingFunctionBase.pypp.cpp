@@ -14,6 +14,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMol::CuttingFunctionBase&){ return "SireMol::CuttingFunctionBase";}
+
 void register_CuttingFunctionBase_class(){
 
     bp::class_< SireMol::CuttingFunctionBase, boost::noncopyable >( "CuttingFunctionBase", bp::no_init )    
@@ -23,6 +27,11 @@ void register_CuttingFunctionBase_class(){
             , ( bp::arg("atom"), bp::arg("moldata") ) )    
         .def( 
             "what"
-            , &::SireMol::CuttingFunctionBase::what );
+            , &::SireMol::CuttingFunctionBase::what )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::CuttingFunctionBase >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::CuttingFunctionBase >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

@@ -14,6 +14,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_Element_class(){
 
     bp::class_< SireMol::Element >( "Element" )    
@@ -109,6 +113,11 @@ void register_Element_class(){
             "vdwRadius"
             , &::SireMol::Element::vdwRadius )    
         .staticmethod( "biologicalElement" )    
-        .staticmethod( "elementWithMass" );
+        .staticmethod( "elementWithMass" )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::Element >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::Element >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireMol::Element > );
 
 }

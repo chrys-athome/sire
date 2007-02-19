@@ -10,11 +10,14 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireDB::AssignInstruction&){ return "SireDB::AssignInstruction";}
+
 void register_AssignInstruction_class(){
 
     bp::class_< SireDB::AssignInstruction, boost::noncopyable >( "AssignInstruction", bp::no_init )    
         .def( 
             "what"
-            , (char const * ( ::SireDB::AssignInstruction::* )(  ) const)( &::SireDB::AssignInstruction::what ) );
+            , (char const * ( ::SireDB::AssignInstruction::* )(  ) const)( &::SireDB::AssignInstruction::what ) )    
+        .def( "__str__", &pvt_get_name);
 
 }

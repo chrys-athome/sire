@@ -14,6 +14,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_GroupIndexID_class(){
 
     bp::class_< SireMol::GroupIndexID >( "GroupIndexID", bp::init< bp::optional< SireMol::GroupID, SireMol::Index > >(( bp::arg("gid")=::SireMol::GroupID( 0 ), bp::arg("idx")=::SireMol::Index( 0 ) )) )    
@@ -32,6 +36,11 @@ void register_GroupIndexID_class(){
         .def( bp::self >= bp::self )    
         .def( 
             "toString"
-            , &::SireMol::GroupIndexID::toString );
+            , &::SireMol::GroupIndexID::toString )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::GroupIndexID >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::GroupIndexID >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireMol::GroupIndexID > );
 
 }

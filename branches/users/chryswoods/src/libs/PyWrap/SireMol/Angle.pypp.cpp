@@ -14,6 +14,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_Angle_class(){
 
     bp::class_< SireMol::Angle >( "Angle" )    
@@ -85,6 +89,11 @@ void register_Angle_class(){
             , &::SireMol::Angle::size )    
         .def( 
             "toString"
-            , &::SireMol::Angle::toString );
+            , &::SireMol::Angle::toString )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::Angle >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::Angle >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireMol::Angle > );
 
 }

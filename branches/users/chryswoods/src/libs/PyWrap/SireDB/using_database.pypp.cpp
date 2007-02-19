@@ -10,8 +10,11 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireDB::using_database&){ return "SireDB::using_database";}
+
 void register_using_database_class(){
 
-    bp::class_< SireDB::using_database, bp::bases< SireDB::AssignInstruction >, boost::noncopyable >( "using_database", bp::no_init );
+    bp::class_< SireDB::using_database, bp::bases< SireDB::AssignInstruction >, boost::noncopyable >( "using_database", bp::no_init )    
+        .def( "__str__", &pvt_get_name);
 
 }

@@ -10,6 +10,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireDB::MatchRes&){ return "SireDB::MatchRes";}
+
 void register_MatchRes_class(){
 
     bp::class_< SireDB::MatchRes >( "MatchRes" )    
@@ -83,6 +85,7 @@ void register_MatchRes_class(){
         .def( 
             "toString"
             , (::QString ( ::SireDB::MatchRes::* )( ::uint ) const)( &::SireDB::MatchRes::toString )
-            , ( bp::arg("atm") ) );
+            , ( bp::arg("atm") ) )    
+        .def( "__str__", &pvt_get_name);
 
 }

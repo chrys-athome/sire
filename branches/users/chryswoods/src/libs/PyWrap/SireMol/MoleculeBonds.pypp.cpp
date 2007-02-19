@@ -14,6 +14,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_MoleculeBonds_class(){
 
     bp::class_< SireMol::MoleculeBonds >( "MoleculeBonds" )    
@@ -154,6 +158,11 @@ void register_MoleculeBonds_class(){
             , ( bp::arg("resnum") ) )    
         .def( 
             "toString"
-            , &::SireMol::MoleculeBonds::toString );
+            , &::SireMol::MoleculeBonds::toString )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::MoleculeBonds >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::MoleculeBonds >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireMol::MoleculeBonds > );
 
 }

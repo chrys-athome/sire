@@ -14,6 +14,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMol::AtomSelection&){ return "SireMol::AtomSelection";}
+
 void register_AtomSelection_class(){
 
     bp::class_< SireMol::AtomSelection >( "AtomSelection" )    
@@ -77,6 +81,11 @@ void register_AtomSelection_class(){
         .def( 
             "selectedAll"
             , (bool ( ::SireMol::AtomSelection::* )( ::SireMol::ResNum ) const)( &::SireMol::AtomSelection::selectedAll )
-            , ( bp::arg("resnum") ) );
+            , ( bp::arg("resnum") ) )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::AtomSelection >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::AtomSelection >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

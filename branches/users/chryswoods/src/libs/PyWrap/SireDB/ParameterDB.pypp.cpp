@@ -10,6 +10,8 @@
 
 namespace bp = boost::python;
 
+#include "SirePy/str.hpp"
+
 void register_ParameterDB_class(){
 
     bp::class_< SireDB::ParameterDB >( "ParameterDB" )    
@@ -80,6 +82,7 @@ void register_ParameterDB_class(){
         .def( 
             "what"
             , (char const * ( ::SireDB::ParameterDB::* )(  ) const)( &::SireDB::ParameterDB::what ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__str__", &SirePy::__str__< ::SireDB::ParameterDB > );
 
 }

@@ -8,6 +8,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_ConstantPower_class(){
 
     bp::class_< SireCAS::ConstantPower, bp::bases< SireCAS::PowerFunction >, boost::noncopyable >( "ConstantPower", bp::no_init )    
@@ -16,6 +20,11 @@ void register_ConstantPower_class(){
             , (::SireCAS::Expression ( ::SireCAS::ConstantPower::* )(  ) const)( &::SireCAS::ConstantPower::core ) )    
         .def( 
             "hash"
-            , (::uint ( ::SireCAS::ConstantPower::* )(  ) const)( &::SireCAS::ConstantPower::hash ) );
+            , (::uint ( ::SireCAS::ConstantPower::* )(  ) const)( &::SireCAS::ConstantPower::hash ) )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireCAS::ConstantPower >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireCAS::ConstantPower >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireCAS::ConstantPower > );
 
 }

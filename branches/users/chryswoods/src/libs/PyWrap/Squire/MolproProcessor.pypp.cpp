@@ -11,6 +11,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const Squire::MolproProcessor&){ return "Squire::MolproProcessor";}
+
 void register_MolproProcessor_class(){
 
     bp::class_< Squire::MolproProcessor, bp::bases< SireFF::FFThreadProcessor > >( "MolproProcessor" )    
@@ -30,6 +32,7 @@ void register_MolproProcessor_class(){
         .def( 
             "what"
             , (char const * ( ::Squire::MolproProcessor::* )(  ) const)( &::Squire::MolproProcessor::what ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__str__", &pvt_get_name);
 
 }

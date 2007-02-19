@@ -14,10 +14,13 @@
 
 namespace bp = boost::python;
 
+#include "SirePy/str.hpp"
+
 void register_AtomID_class(){
 
     bp::class_< SireMol::AtomID, bp::bases< SireMol::IDBase > >( "AtomID" )    
         .def( bp::init< >() )    
-        .def( bp::init< quint32 >(( bp::arg("id") )) );
+        .def( bp::init< quint32 >(( bp::arg("id") )) )    
+        .def( "__str__", &SirePy::__str__< ::SireMol::AtomID > );
 
 }

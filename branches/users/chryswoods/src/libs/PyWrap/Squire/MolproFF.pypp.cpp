@@ -11,6 +11,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_MolproFF_class(){
 
     { //::Squire::MolproFF
@@ -220,6 +224,11 @@ void register_MolproFF_class(){
         
         }
         MolproFF_exposer.staticmethod( "typeName" );
+        MolproFF_exposer.def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::Squire::MolproFF >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
+        MolproFF_exposer.def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::Squire::MolproFF >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
+        MolproFF_exposer.def( "__str__", &SirePy::__str__< ::Squire::MolproFF > );
     }
 
 }

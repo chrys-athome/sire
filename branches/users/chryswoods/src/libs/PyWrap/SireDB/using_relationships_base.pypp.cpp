@@ -10,6 +10,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireDB::using_relationships_base&){ return "SireDB::using_relationships_base";}
+
 void register_using_relationships_base_class(){
 
     bp::class_< SireDB::using_relationships_base, bp::bases< SireDB::using_database > >( "using_relationships_base" )    
@@ -17,6 +19,7 @@ void register_using_relationships_base_class(){
         .def( bp::init< QStringList const & >(( bp::arg("typenames") )) )    
         .def( 
             "what"
-            , (char const * ( ::SireDB::using_relationships_base::* )(  ) const)( &::SireDB::using_relationships_base::what ) );
+            , (char const * ( ::SireDB::using_relationships_base::* )(  ) const)( &::SireDB::using_relationships_base::what ) )    
+        .def( "__str__", &pvt_get_name);
 
 }

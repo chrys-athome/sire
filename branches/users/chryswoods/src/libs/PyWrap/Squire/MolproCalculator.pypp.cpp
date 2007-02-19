@@ -11,6 +11,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const Squire::MolproCalculator&){ return "Squire::MolproCalculator";}
+
 void register_MolproCalculator_class(){
 
     bp::class_< Squire::MolproCalculator, bp::bases< SireFF::FFCalculatorBase >, boost::noncopyable >( "MolproCalculator", bp::no_init )    
@@ -67,6 +69,7 @@ void register_MolproCalculator_class(){
         .def( 
             "setForceField"
             , (bool ( ::Squire::MolproCalculator::* )( ::SireFF::ForceField const & ) )( &::Squire::MolproCalculator::setForceField )
-            , ( bp::arg("forcefield") ) );
+            , ( bp::arg("forcefield") ) )    
+        .def( "__str__", &pvt_get_name);
 
 }

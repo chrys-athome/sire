@@ -124,6 +124,8 @@ public:
     /** Return a clone of this forcefield */
     virtual FFBase* clone() const=0;
 
+    virtual QString toString() const;
+
     /** This encapsulated class must be derived by
         each inheriting forcefield to provide information
         about all of the components of the forcefield */

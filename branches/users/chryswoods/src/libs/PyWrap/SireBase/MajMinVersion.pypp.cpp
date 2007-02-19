@@ -8,6 +8,8 @@
 
 namespace bp = boost::python;
 
+#include "SirePy/str.hpp"
+
 void register_MajMinVersion_class(){
 
     bp::class_< SireBase::MajMinVersion >( "MajMinVersion" )    
@@ -58,6 +60,7 @@ void register_MajMinVersion_class(){
         .def( 
             "version"
             , (::SireBase::Version const & ( ::SireBase::MajMinVersion::* )(  ) const)( &::SireBase::MajMinVersion::version )
-            , bp::return_value_policy< bp::copy_const_reference >() );
+            , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( "__str__", &SirePy::__str__< ::SireBase::MajMinVersion > );
 
 }

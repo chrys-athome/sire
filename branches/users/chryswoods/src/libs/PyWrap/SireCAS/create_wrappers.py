@@ -99,8 +99,7 @@ headerfiles = ["sirecas_headers.h"]
 #construct a module builder that will build the module's wrappers
 mb = module_builder_t( files=headerfiles, 
                        include_paths=incpaths,
-                       define_symbols=["SKIP_BROKEN_GCCXML_PARTS"],
-                       start_with_declarations = [namespace] )
+                       define_symbols=["SKIP_BROKEN_GCCXML_PARTS"] )
 
 populateNamespaces(mb)
 
@@ -122,7 +121,7 @@ for classname in wrap_classes:
    export_class(mb, classname, aliases, special_code)
 
 #wrap all of the free SireCAS functions
-mb.free_functions().include()
+#mb.free_functions().include()
 
 register_implicit_conversions(mb, implicitly_convertible)
 

@@ -10,6 +10,8 @@
 
 namespace bp = boost::python;
 
+#include "SirePy/str.hpp"
+
 void register_MatchAtomTypeData_class(){
 
     bp::class_< SireDB::MatchAtomTypeData, bp::bases< SireDB::MatchData > >( "MatchAtomTypeData" )    
@@ -98,6 +100,7 @@ void register_MatchAtomTypeData_class(){
             , ( bp::arg("maxatm") ) )    
         .def( 
             "toString"
-            , (::QString ( ::SireDB::MatchAtomTypeData::* )(  ) const)( &::SireDB::MatchAtomTypeData::toString ) );
+            , (::QString ( ::SireDB::MatchAtomTypeData::* )(  ) const)( &::SireDB::MatchAtomTypeData::toString ) )    
+        .def( "__str__", &SirePy::__str__< ::SireDB::MatchAtomTypeData > );
 
 }

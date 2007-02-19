@@ -10,6 +10,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireDB::assign_parameters&){ return "SireDB::assign_parameters";}
+
 void register_assign_parameters_class(){
 
     bp::class_< SireDB::assign_parameters >( "assign_parameters" )    
@@ -35,6 +37,7 @@ void register_assign_parameters_class(){
         .def( 
             "assign"
             , (::SireDB::ParameterTable ( ::SireDB::assign_parameters::* )( ::SireMol::Molecule const &,::SireDB::ParameterTable const &,::SireDB::ParameterDB &,::SireDB::MatchMRData const & ) const)( &::SireDB::assign_parameters::assign )
-            , ( bp::arg("molecule"), bp::arg("orig_table"), bp::arg("database"), bp::arg("matchmr")=::SireDB::MatchMRData( ) ) );
+            , ( bp::arg("molecule"), bp::arg("orig_table"), bp::arg("database"), bp::arg("matchmr")=::SireDB::MatchMRData( ) ) )    
+        .def( "__str__", &pvt_get_name);
 
 }

@@ -17,6 +17,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireFF::FFProcessorBase&){ return "SireFF::FFProcessorBase";}
+
 void register_FFProcessorBase_class(){
 
     bp::class_< SireFF::FFProcessorBase, bp::bases< SireCluster::Processor >, boost::noncopyable >( "FFProcessorBase", bp::no_init )    
@@ -29,6 +31,7 @@ void register_FFProcessorBase_class(){
         .def( 
             "setForceField"
             , (void ( ::SireFF::FFProcessorBase::* )( ::SireFF::ForceField const & ) )( &::SireFF::FFProcessorBase::setForceField )
-            , ( bp::arg("forcefield") ) );
+            , ( bp::arg("forcefield") ) )    
+        .def( "__str__", &pvt_get_name);
 
 }

@@ -10,10 +10,13 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireDB::match_single_res_res_bond_via&){ return "SireDB::match_single_res_res_bond_via";}
+
 void register_match_single_res_res_bond_via_class(){
 
     bp::class_< SireDB::match_single_res_res_bond_via >( "match_single_res_res_bond_via" )    
         .def( bp::init< >() )    
-        .def( bp::self == bp::other< QString >() );
+        .def( bp::self == bp::other< QString >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

@@ -8,6 +8,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_Expression_class(){
 
     bp::class_< SireCAS::Expression >( "Expression" )    
@@ -183,6 +187,11 @@ void register_Expression_class(){
             , (::SireCAS::Symbols ( ::SireCAS::Expression::* )(  ) const)( &::SireCAS::Expression::symbols ) )    
         .def( 
             "toString"
-            , (::QString ( ::SireCAS::Expression::* )(  ) const)( &::SireCAS::Expression::toString ) );
+            , (::QString ( ::SireCAS::Expression::* )(  ) const)( &::SireCAS::Expression::toString ) )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireCAS::Expression >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireCAS::Expression >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireCAS::Expression > );
 
 }

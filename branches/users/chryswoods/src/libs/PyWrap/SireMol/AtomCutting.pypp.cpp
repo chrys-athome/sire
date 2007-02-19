@@ -14,6 +14,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMol::AtomCutting&){ return "SireMol::AtomCutting";}
+
 void register_AtomCutting_class(){
 
     bp::class_< SireMol::AtomCutting, bp::bases< SireMol::CuttingFunctionBase > >( "AtomCutting" )    
@@ -28,6 +32,11 @@ void register_AtomCutting_class(){
         .def( 
             "what"
             , &::SireMol::AtomCutting::what )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::AtomCutting >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::AtomCutting >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

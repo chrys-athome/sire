@@ -8,6 +8,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireCAS::Identities&){ return "SireCAS::Identities";}
+
 void register_Identities_class(){
 
     bp::class_< SireCAS::Identities >( "Identities" )    
@@ -82,6 +86,11 @@ void register_Identities_class(){
         .def( 
             "set"
             , (void ( ::SireCAS::Identities::* )( ::SireCAS::Symbol const &,::SireCAS::Expression const & ) )( &::SireCAS::Identities::set )
-            , ( bp::arg("symbol"), bp::arg("expression") ) );
+            , ( bp::arg("symbol"), bp::arg("expression") ) )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireCAS::Identities >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireCAS::Identities >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

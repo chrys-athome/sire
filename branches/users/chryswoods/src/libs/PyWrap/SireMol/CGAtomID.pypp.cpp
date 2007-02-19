@@ -14,6 +14,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_CGAtomID_class(){
 
     bp::class_< SireMol::CGAtomID >( "CGAtomID", bp::init< bp::optional< SireMol::CutGroupID, SireMol::AtomID > >(( bp::arg("cgid")=::SireMol::CutGroupID( 0 ), bp::arg("atmid")=::SireMol::AtomID( 0 ) )) )    
@@ -32,6 +36,11 @@ void register_CGAtomID_class(){
         .def( bp::self >= bp::self )    
         .def( 
             "toString"
-            , &::SireMol::CGAtomID::toString );
+            , &::SireMol::CGAtomID::toString )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::CGAtomID >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::CGAtomID >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireMol::CGAtomID > );
 
 }

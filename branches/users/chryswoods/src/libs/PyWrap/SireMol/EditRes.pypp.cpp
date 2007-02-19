@@ -26,6 +26,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMol::EditRes&){ return "SireMol::EditRes";}
+
 void register_EditRes_class(){
 
 { //::SireMol::EditRes
@@ -45,6 +49,11 @@ void register_EditRes_class(){
     EditRes_exposer.def( bp::self == bp::self );
     register_EditRes_memfuns5(EditRes_exposer);
     register_EditRes_memfuns6(EditRes_exposer);
+    EditRes_exposer.def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::EditRes >,
+                        bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
+    EditRes_exposer.def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::EditRes >,
+                        bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
+    EditRes_exposer.def( "__str__", &pvt_get_name);
 }
 
 }

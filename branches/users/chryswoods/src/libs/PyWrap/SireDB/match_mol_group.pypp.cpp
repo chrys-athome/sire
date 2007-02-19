@@ -10,10 +10,13 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireDB::match_mol_group&){ return "SireDB::match_mol_group";}
+
 void register_match_mol_group_class(){
 
     bp::class_< SireDB::match_mol_group >( "match_mol_group" )    
         .def( bp::init< >() )    
-        .def( bp::self == bp::other< QString >() );
+        .def( bp::self == bp::other< QString >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

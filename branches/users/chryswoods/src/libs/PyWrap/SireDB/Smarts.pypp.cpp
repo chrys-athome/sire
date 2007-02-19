@@ -10,6 +10,8 @@
 
 namespace bp = boost::python;
 
+#include "SirePy/str.hpp"
+
 void register_Smarts_class(){
 
     bp::class_< SireDB::Smarts >( "Smarts" )    
@@ -20,6 +22,7 @@ void register_Smarts_class(){
         .def( bp::self == bp::self )    
         .def( 
             "toString"
-            , (::QString ( ::SireDB::Smarts::* )(  ) const)( &::SireDB::Smarts::toString ) );
+            , (::QString ( ::SireDB::Smarts::* )(  ) const)( &::SireDB::Smarts::toString ) )    
+        .def( "__str__", &SirePy::__str__< ::SireDB::Smarts > );
 
 }

@@ -8,6 +8,8 @@
 
 namespace bp = boost::python;
 
+#include "SirePy/str.hpp"
+
 void register_IDVersion_class(){
 
     bp::class_< SireBase::IDVersion >( "IDVersion" )    
@@ -53,6 +55,7 @@ void register_IDVersion_class(){
             , (::QString ( ::SireBase::IDVersion::* )(  ) const)( &::SireBase::IDVersion::toString ) )    
         .def( 
             "version"
-            , (::quint32 ( ::SireBase::IDVersion::* )(  ) const)( &::SireBase::IDVersion::version ) );
+            , (::quint32 ( ::SireBase::IDVersion::* )(  ) const)( &::SireBase::IDVersion::version ) )    
+        .def( "__str__", &SirePy::__str__< ::SireBase::IDVersion > );
 
 }

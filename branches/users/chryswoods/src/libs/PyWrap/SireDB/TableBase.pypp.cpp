@@ -10,6 +10,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireDB::TableBase&){ return "SireDB::TableBase";}
+
 void register_TableBase_class(){
 
     bp::class_< SireDB::TableBase, boost::noncopyable >( "TableBase", bp::no_init )    
@@ -34,6 +36,7 @@ void register_TableBase_class(){
             , (bool ( ::SireDB::TableBase::* )(  ) const)( &::SireDB::TableBase::isEmpty ) )    
         .def( 
             "what"
-            , (char const * ( ::SireDB::TableBase::* )(  ) const)( &::SireDB::TableBase::what ) );
+            , (char const * ( ::SireDB::TableBase::* )(  ) const)( &::SireDB::TableBase::what ) )    
+        .def( "__str__", &pvt_get_name);
 
 }

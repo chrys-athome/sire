@@ -17,6 +17,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_FFBase_class(){
 
     { //::SireFF::FFBase
@@ -498,6 +502,15 @@ void register_FFBase_class(){
                 , ( bp::arg("name") ) );
         
         }
+        { //::SireFF::FFBase::toString
+        
+            typedef ::QString ( ::SireFF::FFBase::*toString_function_type )(  ) const;
+            
+            FFBase_exposer.def( 
+                "toString"
+                , toString_function_type( &::SireFF::FFBase::toString ) );
+        
+        }
         { //::SireFF::FFBase::typeName
         
             typedef char const * ( *typeName_function_type )(  );
@@ -527,6 +540,11 @@ void register_FFBase_class(){
         
         }
         FFBase_exposer.staticmethod( "typeName" );
+        FFBase_exposer.def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireFF::FFBase >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
+        FFBase_exposer.def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireFF::FFBase >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
+        FFBase_exposer.def( "__str__", &SirePy::__str__< ::SireFF::FFBase > );
     }
 
 }

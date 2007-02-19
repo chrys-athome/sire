@@ -17,6 +17,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireFF::ForceFieldsBase&){ return "SireFF::ForceFieldsBase";}
+
 void register_ForceFieldsBase_class(){
 
     bp::class_< SireFF::ForceFieldsBase, boost::noncopyable >( "ForceFieldsBase", bp::no_init )    
@@ -201,6 +205,11 @@ void register_ForceFieldsBase_class(){
         .def( 
             "total"
             , (::SireFF::FFExpression const & ( ::SireFF::ForceFieldsBase::* )(  ) const)( &::SireFF::ForceFieldsBase::total )
-            , bp::return_value_policy< bp::copy_const_reference >() );
+            , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireFF::ForceFieldsBase >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireFF::ForceFieldsBase >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

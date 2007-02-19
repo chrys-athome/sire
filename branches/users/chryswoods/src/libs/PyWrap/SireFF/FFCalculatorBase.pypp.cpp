@@ -17,6 +17,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireFF::FFCalculatorBase&){ return "SireFF::FFCalculatorBase";}
+
 void register_FFCalculatorBase_class(){
 
     bp::class_< SireFF::FFCalculatorBase, boost::noncopyable >( "FFCalculatorBase", bp::no_init )    
@@ -61,6 +63,7 @@ void register_FFCalculatorBase_class(){
         .def( 
             "setForceField"
             , (bool ( ::SireFF::FFCalculatorBase::* )( ::SireFF::ForceField const & ) )( &::SireFF::FFCalculatorBase::setForceField )
-            , ( bp::arg("forcefield") ) );
+            , ( bp::arg("forcefield") ) )    
+        .def( "__str__", &pvt_get_name);
 
 }

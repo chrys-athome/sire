@@ -10,12 +10,15 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireDB::match_single_atom_element&){ return "SireDB::match_single_atom_element";}
+
 void register_match_single_atom_element_class(){
 
     bp::class_< SireDB::match_single_atom_element >( "match_single_atom_element" )    
         .def( bp::init< >() )    
         .def( bp::self == bp::other< QString >() )    
         .def( bp::self == bp::other< SireMol::Element >() )    
-        .def( bp::self == bp::other< uint >() );
+        .def( bp::self == bp::other< uint >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

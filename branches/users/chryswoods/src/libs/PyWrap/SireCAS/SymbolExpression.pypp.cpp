@@ -8,6 +8,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireCAS::SymbolExpression&){ return "SireCAS::SymbolExpression";}
+
 void register_SymbolExpression_class(){
 
     bp::class_< SireCAS::SymbolExpression >( "SymbolExpression", bp::init< SireCAS::ExpressionBase const &, SireCAS::Expression const & >(( bp::arg("symbol"), bp::arg("expression") )) )    
@@ -25,6 +27,7 @@ void register_SymbolExpression_class(){
         .def( 
             "symbol"
             , (::SireCAS::Symbol const & ( ::SireCAS::SymbolExpression::* )(  ) const)( &::SireCAS::SymbolExpression::symbol )
-            , bp::return_value_policy< bp::copy_const_reference >() );
+            , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

@@ -8,6 +8,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireCluster::Processor&){ return "SireCluster::Processor";}
+
 void register_Processor_class(){
 
     bp::class_< SireCluster::Processor, boost::noncopyable >( "Processor", bp::no_init )    
@@ -26,6 +28,7 @@ void register_Processor_class(){
             , ( bp::arg("newname") ) )    
         .def( 
             "what"
-            , (char const * ( ::SireCluster::Processor::* )(  ) const)( &::SireCluster::Processor::what ) );
+            , (char const * ( ::SireCluster::Processor::* )(  ) const)( &::SireCluster::Processor::what ) )    
+        .def( "__str__", &pvt_get_name);
 
 }

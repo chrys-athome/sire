@@ -170,8 +170,7 @@ headerfiles = ["siremol_headers.h"]
 #construct a module builder that will build the module's wrappers
 mb = module_builder_t( files=headerfiles, 
                        include_paths=incpaths,
-                       define_symbols=["SKIP_BROKEN_GCCXML_PARTS"],
-                       start_with_declarations = [namespace] )
+                       define_symbols=["SKIP_BROKEN_GCCXML_PARTS"] )
 
 populateNamespaces(mb)
 

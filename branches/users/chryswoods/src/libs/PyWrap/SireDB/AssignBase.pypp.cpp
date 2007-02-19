@@ -10,6 +10,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireDB::AssignBase&){ return "SireDB::AssignBase";}
+
 void register_AssignBase_class(){
 
     bp::class_< SireDB::AssignBase, bp::bases< SireDB::AssignInstruction >, boost::noncopyable >( "AssignBase", bp::no_init )    
@@ -41,6 +43,7 @@ void register_AssignBase_class(){
         .def( 
             "setOverwriteParameters"
             , (void ( ::SireDB::AssignBase::* )( bool ) )( &::SireDB::AssignBase::setOverwriteParameters )
-            , ( bp::arg("flag") ) );
+            , ( bp::arg("flag") ) )    
+        .def( "__str__", &pvt_get_name);
 
 }

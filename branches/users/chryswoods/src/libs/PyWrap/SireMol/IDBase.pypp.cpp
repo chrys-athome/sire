@@ -14,6 +14,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_IDBase_class(){
 
     bp::class_< SireMol::IDBase >( "IDBase" )    
@@ -27,6 +31,11 @@ void register_IDBase_class(){
             , &::SireMol::IDBase::toInt )    
         .def( 
             "toString"
-            , &::SireMol::IDBase::toString );
+            , &::SireMol::IDBase::toString )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::IDBase >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::IDBase >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireMol::IDBase > );
 
 }

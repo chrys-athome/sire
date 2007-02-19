@@ -10,12 +10,15 @@
 
 namespace bp = boost::python;
 
+#include "SirePy/str.hpp"
+
 void register_Term14DB_class(){
 
     bp::class_< SireDB::Term14DB, bp::bases< SireDB::FuncDB >, boost::noncopyable >( "Term14DB", bp::no_init )    
         .def( 
             "typeName"
             , (char const * (*)(  ))( &::SireDB::Term14DB::typeName ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__str__", &SirePy::__str__< ::SireDB::Term14DB > );
 
 }

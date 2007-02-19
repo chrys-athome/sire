@@ -10,6 +10,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireDB::ParameterTable&){ return "SireDB::ParameterTable";}
+
 void register_ParameterTable_class(){
 
     bp::class_< SireDB::ParameterTable >( "ParameterTable" )    
@@ -61,6 +63,7 @@ void register_ParameterTable_class(){
             , ( bp::arg("table") ) )    
         .def( 
             "types"
-            , (::QStringList ( ::SireDB::ParameterTable::* )(  ) const)( &::SireDB::ParameterTable::types ) );
+            , (::QStringList ( ::SireDB::ParameterTable::* )(  ) const)( &::SireDB::ParameterTable::types ) )    
+        .def( "__str__", &pvt_get_name);
 
 }

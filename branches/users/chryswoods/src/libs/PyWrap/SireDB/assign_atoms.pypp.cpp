@@ -10,6 +10,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireDB::assign_atoms&){ return "SireDB::assign_atoms";}
+
 void register_assign_atoms_class(){
 
     bp::class_< SireDB::assign_atoms, bp::bases< SireDB::AssignBase > >( "assign_atoms" )    
@@ -45,6 +47,7 @@ void register_assign_atoms_class(){
         .def( 
             "what"
             , (char const * ( ::SireDB::assign_atoms::* )(  ) const)( &::SireDB::assign_atoms::what ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__str__", &pvt_get_name);
 
 }

@@ -8,6 +8,8 @@
 
 namespace bp = boost::python;
 
+#include "SirePy/str.hpp"
+
 void register_MD5Sum_class(){
 
     bp::class_< SireBase::MD5Sum >( "MD5Sum" )    
@@ -19,6 +21,7 @@ void register_MD5Sum_class(){
         .def( bp::self == bp::self )    
         .def( 
             "toString"
-            , (::QString ( ::SireBase::MD5Sum::* )(  ) const)( &::SireBase::MD5Sum::toString ) );
+            , (::QString ( ::SireBase::MD5Sum::* )(  ) const)( &::SireBase::MD5Sum::toString ) )    
+        .def( "__str__", &SirePy::__str__< ::SireBase::MD5Sum > );
 
 }
