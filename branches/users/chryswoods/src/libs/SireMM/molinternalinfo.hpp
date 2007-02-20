@@ -83,6 +83,8 @@ protected:
     ResInternalInfo<T> extractResidue(ResNum resnum) const;
 };
 
+#ifndef SKIP_TEMPLATE_DEFINITIONS
+
 /** Empty constructor */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
@@ -255,6 +257,8 @@ void MolInternalInfo<T>::removeInternals(const C &internals)
         detail::InternalInfo<T>::removeInternal(*it);
     }
 }
+
+#endif // SKIP_TEMPLATE_DEFINITIONS
 
 }
 

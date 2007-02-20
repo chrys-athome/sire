@@ -11,6 +11,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireVol::CoordGroupBase&){ return "SireVol::CoordGroupBase";}
+
 void register_CoordGroupBase_class(){
 
     bp::class_< SireVol::CoordGroupBase >( "CoordGroupBase" )    
@@ -42,6 +44,7 @@ void register_CoordGroupBase_class(){
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "size"
-            , (int ( ::SireVol::CoordGroupBase::* )(  ) const)( &::SireVol::CoordGroupBase::size ) );
+            , (int ( ::SireVol::CoordGroupBase::* )(  ) const)( &::SireVol::CoordGroupBase::size ) )    
+        .def( "__str__", &pvt_get_name);
 
 }

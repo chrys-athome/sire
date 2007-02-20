@@ -12,6 +12,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMM::DihedralTable&){ return "SireMM::DihedralTable";}
+
 void register_DihedralTable_class(){
 
     bp::class_< SireMM::DihedralTable, bp::bases< SireMM::DihedralTableT<SireCAS::Expression> > >( "DihedralTable" )    
@@ -29,6 +33,11 @@ void register_DihedralTable_class(){
         .def( 
             "what"
             , (char const * ( ::SireMM::DihedralTable::* )(  ) const)( &::SireMM::DihedralTable::what ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::DihedralTable >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::DihedralTable >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

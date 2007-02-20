@@ -8,6 +8,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_Quaternion_class(){
 
     bp::class_< SireMaths::Quaternion >( "Quaternion" )    
@@ -75,6 +79,11 @@ void register_Quaternion_class(){
             "z"
             , (double ( ::SireMaths::Quaternion::* )(  ) const)( &::SireMaths::Quaternion::z ) )    
         .staticmethod( "fromString" )    
-        .staticmethod( "identity" );
+        .staticmethod( "identity" )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMaths::Quaternion >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMaths::Quaternion >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireMaths::Quaternion > );
 
 }

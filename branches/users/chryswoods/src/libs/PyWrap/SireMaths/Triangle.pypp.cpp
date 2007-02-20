@@ -8,6 +8,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_Triangle_class(){
 
     bp::class_< SireMaths::Triangle >( "Triangle" )    
@@ -66,6 +70,11 @@ void register_Triangle_class(){
             , (::SireMaths::Vector ( ::SireMaths::Triangle::* )(  ) const)( &::SireMaths::Triangle::vector1 ) )    
         .def( 
             "vector2"
-            , (::SireMaths::Vector ( ::SireMaths::Triangle::* )(  ) const)( &::SireMaths::Triangle::vector2 ) );
+            , (::SireMaths::Vector ( ::SireMaths::Triangle::* )(  ) const)( &::SireMaths::Triangle::vector2 ) )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMaths::Triangle >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMaths::Triangle >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireMaths::Triangle > );
 
 }

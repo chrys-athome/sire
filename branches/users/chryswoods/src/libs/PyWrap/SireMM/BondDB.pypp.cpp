@@ -12,6 +12,8 @@
 
 namespace bp = boost::python;
 
+#include "SirePy/str.hpp"
+
 void register_BondDB_class(){
 
     bp::class_< SireMM::BondDB, bp::bases< SireDB::Term12DB, SireMM::InternalDB<SireMM::MolBondInfo> > >( "BondDB" )    
@@ -62,6 +64,7 @@ void register_BondDB_class(){
         .def( 
             "what"
             , (char const * ( ::SireMM::BondDB::* )(  ) const)( &::SireMM::BondDB::what ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__str__", &SirePy::__str__< ::SireMM::BondDB > );
 
 }

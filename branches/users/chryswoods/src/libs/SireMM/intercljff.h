@@ -104,7 +104,7 @@ public:
     public:
         Groups();
         Groups(const Groups &other);
-        
+
         ~Groups();
     };
 
@@ -159,5 +159,6 @@ protected:
 
 }
 
+Q_DECLARE_METATYPE(SireMM::InterCLJFF);
 
 #endif

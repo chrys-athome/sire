@@ -8,6 +8,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_Matrix_class(){
 
     bp::class_< SireMaths::Matrix >( "Matrix" )    
@@ -78,6 +82,11 @@ void register_Matrix_class(){
             "zero"
             , (::SireMaths::Matrix (*)(  ))( &::SireMaths::Matrix::zero ) )    
         .staticmethod( "identity" )    
-        .staticmethod( "zero" );
+        .staticmethod( "zero" )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMaths::Matrix >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMaths::Matrix >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireMaths::Matrix > );
 
 }

@@ -12,11 +12,15 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMM::detail::InternalInfo<SireMol::Bond>&){ return "SireMM::detail::InternalInfo<SireMol::Bond>";}
+
 void register_InternalInfo_Bond__class(){
 
     bp::class_< SireMM::detail::InternalInfo<SireMol::Bond> >( "InternalInfo_Bond_" )    
         .def( bp::init< >() )    
-        .def( bp::init< SireMol::MoleculeInfo const & >(( bp::arg("moleculeinfo") )) )    
+        .def( bp::init< SireMol::MoleculeInfo const & >(( bp::arg("molinfo") )) )    
         .def( 
             "at"
             , (::SireMol::GroupIndexID ( ::SireMM::detail::InternalInfo<SireMol::Bond>::* )( ::SireMol::Bond const & ) const)( &::SireMM::detail::InternalInfo<SireMol::Bond>::at )
@@ -43,7 +47,7 @@ void register_InternalInfo_Bond__class(){
         .def( 
             "contains"
             , (bool ( ::SireMM::detail::InternalInfo<SireMol::Bond>::* )( ::SireMol::GroupID ) const)( &::SireMM::detail::InternalInfo<SireMol::Bond>::contains )
-            , ( bp::arg("groupid") ) )    
+            , ( bp::arg("id") ) )    
         .def( 
             "contains"
             , (bool ( ::SireMM::detail::InternalInfo<SireMol::Bond>::* )( ::SireMol::GroupIndexID const & ) const)( &::SireMM::detail::InternalInfo<SireMol::Bond>::contains )
@@ -160,6 +164,11 @@ void register_InternalInfo_Bond__class(){
             , ( bp::arg("internal") ) )    
         .def( 
             "size"
-            , (::size_t ( ::SireMM::detail::InternalInfo<SireMol::Bond>::* )(  ) const)( &::SireMM::detail::InternalInfo<SireMol::Bond>::size ) );
+            , (::size_t ( ::SireMM::detail::InternalInfo<SireMol::Bond>::* )(  ) const)( &::SireMM::detail::InternalInfo<SireMol::Bond>::size ) )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::detail::InternalInfo<SireMol::Bond> >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::detail::InternalInfo<SireMol::Bond> >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

@@ -12,6 +12,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireMM::DihedralTableT<SireCAS::Expression>&){ return "SireMM::DihedralTableT<SireCAS::Expression>";}
+
 void register_DihedralTable_Expression__class(){
 
     bp::class_< SireMM::DihedralTableT<SireCAS::Expression>, bp::bases< SireMM::InternalTable<SireMM::MolDihedralInfo, SireCAS::Expression> >, boost::noncopyable >( "DihedralTable_Expression_", bp::no_init )    
@@ -345,6 +347,7 @@ void register_DihedralTable_Expression__class(){
         .def( 
             "setDihedralParameter"
             , (void ( ::SireMM::DihedralTableT<SireCAS::Expression>::* )( ::SireMol::GroupIndexID const &,::SireCAS::Expression const & ) )( &::SireMM::DihedralTableT<SireCAS::Expression>::setDihedralParameter )
-            , ( bp::arg("id"), bp::arg("param") ) );
+            , ( bp::arg("id"), bp::arg("param") ) )    
+        .def( "__str__", &pvt_get_name);
 
 }

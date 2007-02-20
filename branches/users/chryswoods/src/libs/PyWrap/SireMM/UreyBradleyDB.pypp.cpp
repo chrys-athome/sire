@@ -12,6 +12,8 @@
 
 namespace bp = boost::python;
 
+#include "SirePy/str.hpp"
+
 void register_UreyBradleyDB_class(){
 
     bp::class_< SireMM::UreyBradleyDB, bp::bases< SireDB::Term13DB > >( "UreyBradleyDB" )    
@@ -58,6 +60,7 @@ void register_UreyBradleyDB_class(){
         .def( 
             "what"
             , (char const * ( ::SireMM::UreyBradleyDB::* )(  ) const)( &::SireMM::UreyBradleyDB::what ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__str__", &SirePy::__str__< ::SireMM::UreyBradleyDB > );
 
 }

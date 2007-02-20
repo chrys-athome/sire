@@ -12,6 +12,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMM::BondAtomID&){ return "SireMM::BondAtomID";}
+
 void register_BondAtomID_class(){
 
     bp::class_< SireMM::BondAtomID >( "BondAtomID" )    
@@ -35,6 +39,11 @@ void register_BondAtomID_class(){
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "size"
-            , (int ( ::SireMM::BondAtomID::* )(  ) const)( &::SireMM::BondAtomID::size ) );
+            , (int ( ::SireMM::BondAtomID::* )(  ) const)( &::SireMM::BondAtomID::size ) )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::BondAtomID >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::BondAtomID >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

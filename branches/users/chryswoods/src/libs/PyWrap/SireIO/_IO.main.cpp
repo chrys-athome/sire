@@ -11,6 +11,8 @@
 
 #include "SireMol/editmol.h"
 
+#include "SireDB/parameterdb.h"
+
 #include "IOBase.pypp.hpp"
 
 #include "PDB.pypp.hpp"

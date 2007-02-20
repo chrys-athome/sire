@@ -12,6 +12,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMM::InternalTableBase<SireMM::MolBondInfo>&){ return "SireMM::InternalTableBase<SireMM::MolBondInfo>";}
+
 void register_InternalTableBase_MolBondInfo__class(){
 
     bp::class_< SireMM::InternalTableBase<SireMM::MolBondInfo>, bp::bases< SireDB::TableBase >, boost::noncopyable >( "InternalTableBase_MolBondInfo_", bp::no_init )    
@@ -131,7 +135,7 @@ void register_InternalTableBase_MolBondInfo__class(){
         .def( 
             "isCompatibleWith"
             , (bool ( ::SireMM::InternalTableBase<SireMM::MolBondInfo>::* )( ::SireMol::Molecule const & ) const)( &::SireMM::InternalTableBase<SireMM::MolBondInfo>::isCompatibleWith )
-            , ( bp::arg("mol") ) )    
+            , ( bp::arg("molecule") ) )    
         .def( 
             "isEmpty"
             , (bool ( ::SireMM::InternalTableBase<SireMM::MolBondInfo>::* )(  ) const)( &::SireMM::InternalTableBase<SireMM::MolBondInfo>::isEmpty ) )    
@@ -274,6 +278,11 @@ void register_InternalTableBase_MolBondInfo__class(){
             , ( bp::arg("resnum") ) )    
         .def( 
             "size"
-            , (int ( ::SireMM::InternalTableBase<SireMM::MolBondInfo>::* )(  ) const)( &::SireMM::InternalTableBase<SireMM::MolBondInfo>::size ) );
+            , (int ( ::SireMM::InternalTableBase<SireMM::MolBondInfo>::* )(  ) const)( &::SireMM::InternalTableBase<SireMM::MolBondInfo>::size ) )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::InternalTableBase<SireMM::MolBondInfo> >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::InternalTableBase<SireMM::MolBondInfo> >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

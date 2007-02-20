@@ -8,6 +8,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_Line_class(){
 
     bp::class_< SireMaths::Line >( "Line" )    
@@ -39,6 +43,11 @@ void register_Line_class(){
             , (::QString ( ::SireMaths::Line::* )(  ) const)( &::SireMaths::Line::toString ) )    
         .def( 
             "vector"
-            , (::SireMaths::Vector ( ::SireMaths::Line::* )(  ) const)( &::SireMaths::Line::vector ) );
+            , (::SireMaths::Vector ( ::SireMaths::Line::* )(  ) const)( &::SireMaths::Line::vector ) )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMaths::Line >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMaths::Line >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireMaths::Line > );
 
 }

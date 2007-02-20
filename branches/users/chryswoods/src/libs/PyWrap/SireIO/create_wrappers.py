@@ -20,7 +20,8 @@ huge_classes = []
 aliases = {}
 
 extra_includes = [ "SireMol/molecule.h",
-                   "SireMol/editmol.h"
+                   "SireMol/editmol.h",
+                   "SireDB/parameterdb.h"
                  ]
 
 def fix_iobase(c):
@@ -42,7 +43,8 @@ headerfiles = ["sireio_headers.h"]
 #construct a module builder that will build the module's wrappers
 mb = module_builder_t( files=headerfiles, 
                        include_paths=incpaths,
-                       define_symbols=["SKIP_BROKEN_GCCXML_PARTS"] )
+                       define_symbols=["SKIP_BROKEN_GCCXML_PARTS",
+                                       "SKIP_TEMPLATE_DEFINITIONS"] )
 
 
 populateNamespaces(mb)

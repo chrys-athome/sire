@@ -12,6 +12,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireMM::MolInternalInfo<SireMol::Angle>&){ return "SireMM::MolInternalInfo<SireMol::Angle>";}
+
 void register_MolInternalInfo_Angle__class(){
 
     bp::class_< SireMM::MolInternalInfo<SireMol::Angle>, bp::bases< SireMM::detail::InternalInfo<SireMol::Angle> > >( "MolInternalInfo_Angle_" )    
@@ -55,6 +57,7 @@ void register_MolInternalInfo_Angle__class(){
         .def( 
             "residue"
             , (::SireMM::ResInternalInfo<SireMol::Angle> ( ::SireMM::MolInternalInfo<SireMol::Angle>::* )( ::SireMol::ResNum ) const)( &::SireMM::MolInternalInfo<SireMol::Angle>::residue )
-            , ( bp::arg("resnum") ) );
+            , ( bp::arg("resnum") ) )    
+        .def( "__str__", &pvt_get_name);
 
 }

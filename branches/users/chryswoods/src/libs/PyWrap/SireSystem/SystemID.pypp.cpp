@@ -11,10 +11,13 @@
 
 namespace bp = boost::python;
 
+#include "SirePy/str.hpp"
+
 void register_SystemID_class(){
 
     bp::class_< SireSystem::SystemID, bp::bases< SireMol::IDBase > >( "SystemID" )    
         .def( bp::init< >() )    
-        .def( bp::init< quint32 >(( bp::arg("id") )) );
+        .def( bp::init< quint32 >(( bp::arg("id") )) )    
+        .def( "__str__", &SirePy::__str__< ::SireSystem::SystemID > );
 
 }

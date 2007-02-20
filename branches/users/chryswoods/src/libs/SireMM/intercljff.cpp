@@ -45,10 +45,14 @@
 
 #include "SireMol/errors.h"
 
+#include "SireStream/datastream.h"
+
 using namespace SireMM;
 using namespace SireMM::detail;
 
 using namespace SireDB;
+
+using namespace SireStream;
 
 ///////////
 /////////// Implementation of InterCLJFF::Components
@@ -109,6 +113,37 @@ InterCLJFF::Groups::~Groups()
 ///////////
 /////////// Implementation of InterCLJFF
 ///////////
+
+static const RegisterMetaType<InterCLJFF> r_intercljff;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
+                                      const InterCLJFF &intercljff)
+{
+    writeHeader(ds, r_intercljff, 1);
+
+    throw SireError::incomplete_code("Not written!", CODELOC);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
+                                      InterCLJFF &intercljff)
+{
+    VersionID v = readHeader(ds, r_intercljff);
+
+    throw SireError::incomplete_code("Not written!", CODELOC);
+
+    if (v == 1)
+    {
+        //ds >>
+    }
+    else
+        throw version_error(v, "1", r_intercljff, CODELOC);
+
+    return ds;
+}
 
 /** Constructor */
 InterCLJFF::InterCLJFF() : CLJFF()

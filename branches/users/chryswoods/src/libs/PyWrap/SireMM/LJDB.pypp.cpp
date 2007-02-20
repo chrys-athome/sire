@@ -12,6 +12,8 @@
 
 namespace bp = boost::python;
 
+#include "SirePy/str.hpp"
+
 void register_LJDB_class(){
 
     bp::class_< SireMM::LJDB, bp::bases< SireDB::AtomDB > >( "LJDB" )    
@@ -62,6 +64,7 @@ void register_LJDB_class(){
         .def( 
             "what"
             , (char const * ( ::SireMM::LJDB::* )(  ) const)( &::SireMM::LJDB::what ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__str__", &SirePy::__str__< ::SireMM::LJDB > );
 
 }

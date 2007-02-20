@@ -8,6 +8,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_Vector_class(){
 
     bp::class_< SireMaths::Vector >( "Vector", bp::init< bp::optional< double > >(( bp::arg("val")=0.0 )) )    
@@ -195,6 +199,11 @@ void register_Vector_class(){
         .staticmethod( "fromString" )    
         .staticmethod( "generate" )    
         .staticmethod( "invDistance" )    
-        .staticmethod( "invDistance2" );
+        .staticmethod( "invDistance2" )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMaths::Vector >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMaths::Vector >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireMaths::Vector > );
 
 }

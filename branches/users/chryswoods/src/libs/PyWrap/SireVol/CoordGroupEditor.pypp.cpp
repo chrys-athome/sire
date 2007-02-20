@@ -11,6 +11,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireVol::CoordGroupEditor&){ return "SireVol::CoordGroupEditor";}
+
 void register_CoordGroupEditor_class(){
 
     bp::class_< SireVol::CoordGroupEditor, bp::bases< SireVol::CoordGroupBase > >( "CoordGroupEditor" )    
@@ -55,6 +57,7 @@ void register_CoordGroupEditor_class(){
         .def( 
             "translate"
             , (void ( ::SireVol::CoordGroupEditor::* )( int,::SireMaths::Vector const & ) )( &::SireVol::CoordGroupEditor::translate )
-            , ( bp::arg("i"), bp::arg("delta") ) );
+            , ( bp::arg("i"), bp::arg("delta") ) )    
+        .def( "__str__", &pvt_get_name);
 
 }

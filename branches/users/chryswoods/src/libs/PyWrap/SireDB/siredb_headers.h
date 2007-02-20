@@ -1,6 +1,9 @@
 #ifndef PYPLUSPLUS_SIREDB_HEADERS_H
 #define PYPLUSPLUS_SIREDB_HEADERS_H
 
+#include "SireMol/qhash_siremol.h"
+#include "SireCAS/qhash_sirecas.h"
+
 #include "SireDB/assign_atoms.h"
 #include "SireDB/assignbase.h"
 #include "SireDB/assigninstruction.h"

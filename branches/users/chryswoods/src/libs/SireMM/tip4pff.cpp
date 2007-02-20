@@ -40,11 +40,15 @@
 
 #include "SireVol/coordgroup.h"
 
+#include "SireStream/datastream.h"
+
 using namespace SireMM;
 using namespace SireMM::detail;
 
 using namespace SireVol;
 using namespace SireDB;
+
+using namespace SireStream;
 
 ///////////
 /////////// Implementation of Tip4PFF::Components
@@ -105,6 +109,36 @@ Tip4PFF::Groups::~Groups()
 ///////////
 /////////// Implementation of Tip4PFF
 ///////////
+
+static const RegisterMetaType<Tip4PFF> r_tip4pff;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
+                                      const Tip4PFF &tip4pff)
+{
+    writeHeader(ds, r_tip4pff, 1);
+
+    throw SireError::incomplete_code("Not done!", CODELOC);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, Tip4PFF &tip4pff)
+{
+    VersionID v = readHeader(ds, r_tip4pff);
+
+    throw SireError::incomplete_code("Not done!", CODELOC);
+
+    if (v == 1)
+    {
+        //ds >>
+    }
+    else
+        throw version_error(v, "1", r_tip4pff, CODELOC);
+
+    return ds;
+}
 
 /** Constructor */
 Tip4PFF::Tip4PFF() : CLJFF()

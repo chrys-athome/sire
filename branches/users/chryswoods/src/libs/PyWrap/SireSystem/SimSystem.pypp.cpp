@@ -11,6 +11,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireSystem::SimSystem&){ return "SireSystem::SimSystem";}
+
 void register_SimSystem_class(){
 
     bp::class_< SireSystem::SimSystem, boost::noncopyable >( "SimSystem", bp::no_init )    
@@ -76,6 +78,7 @@ void register_SimSystem_class(){
         .def( 
             "version"
             , (::SireBase::Version const & ( ::SireSystem::SimSystem::* )(  ) const)( &::SireSystem::SimSystem::version )
-            , bp::return_value_policy< bp::copy_const_reference >() );
+            , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

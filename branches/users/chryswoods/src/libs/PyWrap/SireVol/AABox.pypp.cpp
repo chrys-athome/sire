@@ -11,6 +11,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireVol::AABox&){ return "SireVol::AABox";}
+
 void register_AABox_class(){
 
     bp::class_< SireVol::AABox >( "AABox" )    
@@ -56,6 +60,11 @@ void register_AABox_class(){
         .def( 
             "withinDistance"
             , (bool ( ::SireVol::AABox::* )( double,::SireVol::AABox const & ) const)( &::SireVol::AABox::withinDistance )
-            , ( bp::arg("dist"), bp::arg("box") ) );
+            , ( bp::arg("dist"), bp::arg("box") ) )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireVol::AABox >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireVol::AABox >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

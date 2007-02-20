@@ -124,6 +124,8 @@ private:
     QList<atom_id_type> index_to_atomid;
 };
 
+#ifndef SKIP_TEMPLATE_DEFINITIONS
+
 /** Null constructor */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
@@ -440,9 +442,13 @@ bool InternalGroup<T>::contains(const AtomIndex &atom) const
 
 const MagicID intgroup_magic = getMagic("SireMM::detail::InternalGroup");
 
+#endif // SKIP_TEMPLATE_DEFINITIONS
+
 } // namespace detail
 
 } // namespace SireMM
+
+#ifndef SKIP_TEMPLATE_DEFINITIONS
 
 /** Serialise to a binary data stream */
 template<class T>
@@ -472,6 +478,8 @@ QDataStream &operator>>(QDataStream &ds, SireMM::detail::InternalGroup<T> &group
 
     return ds;
 }
+
+#endif // SKIP_TEMPLATE_DEFINITIONS
 
 SIRE_END_HEADER
 

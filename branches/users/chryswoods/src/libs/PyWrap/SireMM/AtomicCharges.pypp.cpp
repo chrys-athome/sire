@@ -12,6 +12,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMM::AtomicCharges&){ return "SireMM::AtomicCharges";}
+
 void register_AtomicCharges_class(){
 
     bp::class_< SireMM::AtomicCharges, bp::bases< SireMol::AtomicProperties > >( "AtomicCharges" )    
@@ -33,6 +37,11 @@ void register_AtomicCharges_class(){
         .def( 
             "what"
             , (char const * ( ::SireMM::AtomicCharges::* )(  ) const)( &::SireMM::AtomicCharges::what ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::AtomicCharges >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::AtomicCharges >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

@@ -16,6 +16,10 @@ namespace bp = boost::python;
 
 using namespace SireMM;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMM::assign_angles&){ return "SireMM::assign_angles";}
+
 void register_assign_angles_class(){
 
     bp::class_< SireMM::assign_angles, bp::bases< SireMM::assign_internals<SireMM::MolAngleInfo> > >( "assign_angles", bp::init< bp::optional< SireMM::AngleGeneratorBase const & > >(( bp::arg("generator")=AngleGenerator() )) )    
@@ -50,6 +54,11 @@ void register_assign_angles_class(){
         .def( 
             "what"
             , (char const * ( ::SireMM::assign_angles::* )(  ) const)( &::SireMM::assign_angles::what ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::assign_angles >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::assign_angles >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

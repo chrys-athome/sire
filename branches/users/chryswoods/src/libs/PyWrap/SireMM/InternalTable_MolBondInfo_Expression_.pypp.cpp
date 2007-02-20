@@ -12,6 +12,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMM::InternalTable<SireMM::MolBondInfo, SireCAS::Expression>&){ return "SireMM::InternalTable<SireMM::MolBondInfo, SireCAS::Expression>";}
+
 void register_InternalTable_MolBondInfo_Expression__class(){
 
     bp::class_< SireMM::InternalTable<SireMM::MolBondInfo, SireCAS::Expression>, bp::bases< SireMM::InternalTableBase<SireMM::MolBondInfo> >, boost::noncopyable >( "InternalTable_MolBondInfo_Expression_", bp::no_init )    
@@ -39,7 +43,7 @@ void register_InternalTable_MolBondInfo_Expression__class(){
         .def( 
             "at"
             , (::SireCAS::Expression const & ( ::SireMM::InternalTable<SireMM::MolBondInfo, SireCAS::Expression>::* )( ::SireMol::GroupIndexID const & ) const)( &::SireMM::InternalTable<SireMM::MolBondInfo, SireCAS::Expression>::at )
-            , ( bp::arg("index") )
+            , ( bp::arg("id") )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "clear"
@@ -297,6 +301,11 @@ void register_InternalTable_MolBondInfo_Expression__class(){
         .def( 
             "value"
             , (::SireCAS::Expression ( ::SireMM::InternalTable<SireMM::MolBondInfo, SireCAS::Expression>::* )( ::SireMol::GroupIndexID const &,::SireCAS::Expression const & ) const)( &::SireMM::InternalTable<SireMM::MolBondInfo, SireCAS::Expression>::value )
-            , ( bp::arg("id"), bp::arg("defaultParam") ) );
+            , ( bp::arg("id"), bp::arg("defaultParam") ) )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::InternalTable<SireMM::MolBondInfo, SireCAS::Expression> >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::InternalTable<SireMM::MolBondInfo, SireCAS::Expression> >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

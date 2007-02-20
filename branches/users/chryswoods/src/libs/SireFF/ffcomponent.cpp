@@ -35,10 +35,12 @@
 
 #include "SireCAS/symbols.h"
 
+#include "SireStream/datastream.h"
 #include "SireError/errors.h"
 
 using namespace SireCAS;
 using namespace SireFF;
+using namespace SireStream;
 
 /** Regexp used to extract the name and number of the
     forcefield from the name of the function.
@@ -66,6 +68,35 @@ using namespace SireFF;
     Group 4  == Name of component
 */
 QRegExp ffname_regexp("E_\\{(.+)\\[(\\d+)\\]\\}(_\\{(.+)\\}){0,1}");
+
+static const RegisterMetaType<FFComponent> r_ffcomp;
+
+/** Serialise to a binary datastream */
+QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const FFComponent &ffcomp)
+{
+    writeHeader(ds, r_ffcomp, 1) << static_cast<const Function&>(ffcomp);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, FFComponent &ffcomp)
+{
+    VersionID v = readHeader(ds, r_ffcomp);
+
+    if (v == 1)
+    {
+        Function f;
+
+        ds >> f;
+
+        ffcomp = f;
+    }
+    else
+        throw version_error(v, "1", r_ffcomp, CODELOC);
+
+    return ds;
+}
 
 /** Null constructor */
 FFComponent::FFComponent()

@@ -12,12 +12,21 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMM::UsePassedInternals<SireMM::MolBondInfo>&){ return "SireMM::UsePassedInternals<SireMM::MolBondInfo>";}
+
 void register_UsePassedInternals_MolBondInfo__class(){
 
     bp::class_< SireMM::UsePassedInternals<SireMM::MolBondInfo>, bp::bases< SireMM::InternalGenerator<SireMM::MolBondInfo> >, boost::noncopyable >( "UsePassedInternals_MolBondInfo_", bp::no_init )    
         .def( 
             "generate"
             , (void ( ::SireMM::UsePassedInternals<SireMM::MolBondInfo>::* )( ::SireMol::Molecule const &,::SireMM::MolBondInfo & ) const)( &::SireMM::UsePassedInternals<SireMM::MolBondInfo>::generate )
-            , ( bp::arg("molecule"), bp::arg("internalinfo") ) );
+            , ( bp::arg("molecule"), bp::arg("internalinfo") ) )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::UsePassedInternals<SireMM::MolBondInfo> >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::UsePassedInternals<SireMM::MolBondInfo> >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

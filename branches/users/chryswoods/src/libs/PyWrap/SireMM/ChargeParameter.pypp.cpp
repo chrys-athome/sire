@@ -12,6 +12,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_ChargeParameter_class(){
 
     bp::class_< SireMM::ChargeParameter >( "ChargeParameter" )    
@@ -34,6 +38,11 @@ void register_ChargeParameter_class(){
         .def( 
             "zeroCharge"
             , (bool ( ::SireMM::ChargeParameter::* )(  ) const)( &::SireMM::ChargeParameter::zeroCharge ) )    
-        .staticmethod( "dummy" );
+        .staticmethod( "dummy" )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::ChargeParameter >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::ChargeParameter >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireMM::ChargeParameter > );
 
 }

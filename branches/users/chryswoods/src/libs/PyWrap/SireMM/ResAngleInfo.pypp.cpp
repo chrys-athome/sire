@@ -12,6 +12,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMM::ResAngleInfo&){ return "SireMM::ResAngleInfo";}
+
 void register_ResAngleInfo_class(){
 
     bp::class_< SireMM::ResAngleInfo, bp::bases< SireMM::ResInternalInfo<SireMol::Angle> > >( "ResAngleInfo" )    
@@ -35,6 +39,11 @@ void register_ResAngleInfo_class(){
             , (int ( ::SireMM::ResAngleInfo::* )(  ) const)( &::SireMM::ResAngleInfo::nInterAngles ) )    
         .def( 
             "nIntraAngles"
-            , (int ( ::SireMM::ResAngleInfo::* )(  ) const)( &::SireMM::ResAngleInfo::nIntraAngles ) );
+            , (int ( ::SireMM::ResAngleInfo::* )(  ) const)( &::SireMM::ResAngleInfo::nIntraAngles ) )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::ResAngleInfo >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::ResAngleInfo >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

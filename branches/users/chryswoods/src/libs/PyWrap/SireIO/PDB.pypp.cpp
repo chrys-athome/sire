@@ -7,12 +7,16 @@
 #include "sireio_headers.h"
 #include "SireMol/molecule.h"
 #include "SireMol/editmol.h"
+#include "SireDB/parameterdb.h"
 
 namespace bp = boost::python;
+
+const char* pvt_get_name(const SireIO::PDB&){ return "SireIO::PDB";}
 
 void register_PDB_class(){
 
     bp::class_< SireIO::PDB, bp::bases< SireIO::IOBase > >( "PDB" )    
-        .def( bp::init< >() );
+        .def( bp::init< >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

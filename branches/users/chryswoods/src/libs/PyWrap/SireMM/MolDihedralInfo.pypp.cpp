@@ -12,6 +12,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMM::MolDihedralInfo&){ return "SireMM::MolDihedralInfo";}
+
 void register_MolDihedralInfo_class(){
 
     bp::class_< SireMM::MolDihedralInfo, bp::bases< SireMM::MolInternalInfo<SireMol::Dihedral> > >( "MolDihedralInfo" )    
@@ -115,6 +119,11 @@ void register_MolDihedralInfo_class(){
         .def( 
             "residuesDihedraled"
             , (bool ( ::SireMM::MolDihedralInfo::* )( ::SireMol::ResNum,::SireMol::ResNum,::SireMol::ResNum,::SireMol::ResNum ) const)( &::SireMM::MolDihedralInfo::residuesDihedraled )
-            , ( bp::arg("res0"), bp::arg("res1"), bp::arg("res2"), bp::arg("res3") ) );
+            , ( bp::arg("res0"), bp::arg("res1"), bp::arg("res2"), bp::arg("res3") ) )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::MolDihedralInfo >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::MolDihedralInfo >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

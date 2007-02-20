@@ -12,6 +12,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireDB::AtomTableT<SireMM::LJParameter>&){ return "SireDB::AtomTableT<SireMM::LJParameter>";}
+
 void register_AtomTable_LJParameter__class(){
 
     bp::class_< SireDB::AtomTableT<SireMM::LJParameter>, bp::bases< SireDB::AtomTable >, boost::noncopyable >( "AtomTable_LJParameter_", bp::no_init )    
@@ -247,6 +251,11 @@ void register_AtomTable_LJParameter__class(){
         .def( 
             "value"
             , (::SireDB::AtomParameter<SireMM::LJParameter> ( ::SireDB::AtomTableT<SireMM::LJParameter>::* )( ::SireMol::AtomID,::SireMM::LJParameter const & ) const)( &::SireDB::AtomTableT<SireMM::LJParameter>::value )
-            , ( bp::arg("atomid"), bp::arg("defaultValue") ) );
+            , ( bp::arg("atomid"), bp::arg("defaultValue") ) )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireDB::AtomTableT<SireMM::LJParameter> >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireDB::AtomTableT<SireMM::LJParameter> >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

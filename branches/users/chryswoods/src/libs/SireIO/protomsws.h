@@ -74,7 +74,7 @@ public:
                        OVERRIDE_MODE = 7,     ///< MODE used to read in override parameters
                        INFO_MODE = 8          ///< MODE used to supply additional information
                      };
-    
+
     /** Enum describing the type of template that is being read in */
     enum ProtoMS_Tmpl { INVALID_TMPL,  ///< Invalid type of template
                         RESIDUE_TMPL,  ///< Residue template
@@ -84,7 +84,7 @@ public:
                       };
 
     ProtoMSWS(const QString &filename, SireDB::ParameterDB &paramdb);
-    
+
     ~ProtoMSWS();
 
     QString filename() const;
@@ -96,7 +96,7 @@ public:
 
     ProtoMSWS::ProtoMS_Tmpl templateType() const;
     const QString& templateName() const;
-    
+
     SireDB::RelateMRDB& relateMRDB();
     SireDB::RelateMRADB& relateMRADB();
     SireDB::RelateAtomTypeDB& relateAtomTypeDB();
@@ -109,18 +109,18 @@ public:
     SireMM::DihedralDB& dihedralDB();
 
     ProtoMS_Mode mode() const;
-    
+
     bool readNextLine();
-    
-    void relateAtom( const SireDB::AssertMatch<1> &matchdata, 
+
+    void relateAtom( const SireDB::AssertMatch<1> &matchdata,
                      const QString &parameter );
-    
+
     void addLog(const QString &message);
 
 private:
     /** The QFile object being used to access the file */
     QFile _file;
-    
+
     /** The QTextStream object being used to read the file */
     QTextStream _ts;
 
@@ -130,33 +130,33 @@ private:
     int _linenum;
     /** The words in the line */
     QStringList _words;
-    
+
     /** Lowercase form of the first word in the line */
     QString _firstword;
-    
-    /** The log of errors. The errors are collected together so that 
+
+    /** The log of errors. The errors are collected together so that
         they are added to the database all in one go when this workspace
         is deleted. */
     QStringList _log;
-    
+
     /** The current ProtoMS mode */
     ProtoMS_Mode _mode;
-    
+
     /** Hash mapping strings to modes */
     QHash<QString,ProtoMS_Mode> _modes;
-    
+
     /** The name of the current template */
     QString _tmplname;
-    
+
     /** The type of the current template */
     ProtoMS_Tmpl _tmpltype;
-    
+
     /** Hash mapping strings to template types */
     QHash<QString,ProtoMS_Tmpl> _templates;
-    
+
     /** Pointer to the database into which the parameters will be read */
     SireDB::ParameterDB &db;
-    
+
     /** Pointers to the different parts of the database - these pointers
         will be 0 if the database doesn't provide the required functionality */
     SireDB::AtomTypeDB &atomtypedb;
@@ -177,7 +177,7 @@ inline QString ProtoMSWS::filename() const
     return _file.fileName();
 }
 
-/** Return the list of words on the current line - this will be empty if 
+/** Return the list of words on the current line - this will be empty if
     the current line is empty */
 inline const QStringList& ProtoMSWS::words() const
 {
@@ -191,8 +191,8 @@ inline const QString& ProtoMSWS::firstWord() const
     return _firstword;
 }
 
-/** Return the current line (in a raw, unprocessed state). This will return 
-    a null string if we have not yet started reading the file or if we 
+/** Return the current line (in a raw, unprocessed state). This will return
+    a null string if we have not yet started reading the file or if we
     have reached the end of the file */
 inline const QString& ProtoMSWS::line() const
 {
@@ -206,7 +206,7 @@ inline int ProtoMSWS::lineNumber() const
     return _linenum;
 }
 
-/** Return the type of the currently processing template (or INVALID_TMPL if there 
+/** Return the type of the currently processing template (or INVALID_TMPL if there
     is no template currently being processed) */
 inline ProtoMSWS::ProtoMS_Tmpl ProtoMSWS::templateType() const
 {
@@ -219,50 +219,50 @@ inline const QString& ProtoMSWS::templateName() const
 {
     return _tmplname;
 }
-    
-/** Return the part of the database that store atom types - this will have 
+
+/** Return the part of the database that store atom types - this will have
     undefined results unless hasAtomTypeDB() returns true. */
 inline SireDB::AtomTypeDB& ProtoMSWS::atomTypeDB()
 {
     return atomtypedb;
 }
 
-/** Return the part of the database that store charge parameters - this will have 
+/** Return the part of the database that store charge parameters - this will have
     undefined results unless hasChargeDB() returns true. */
 inline SireMM::ChargeDB& ProtoMSWS::chargeDB()
 {
     return chargedb;
 }
 
-/** Return the part of the database that store LJ parameters - this will have 
+/** Return the part of the database that store LJ parameters - this will have
     undefined results unless hasLJDB() returns true. */
 inline SireMM::LJDB& ProtoMSWS::ljDB()
 {
     return ljdb;
 }
 
-/** Return the part of the database that store bond parameters - this will have 
+/** Return the part of the database that store bond parameters - this will have
     undefined results unless hasBondDB() returns true. */
 inline SireMM::BondDB& ProtoMSWS::bondDB()
 {
     return bonddb;
 }
 
-/** Return the part of the database that store angle parameters - this will have 
+/** Return the part of the database that store angle parameters - this will have
     undefined results unless hasAngleDB() returns true. */
 inline SireMM::AngleDB& ProtoMSWS::angleDB()
 {
     return angdb;
 }
 
-/** Return the part of the database that store dihedral parameters - this will have 
+/** Return the part of the database that store dihedral parameters - this will have
     undefined results unless hasDihedralDB() returns true. */
 inline SireMM::DihedralDB& ProtoMSWS::dihedralDB()
 {
     return dihdb;
 }
 
-/** Return the part of the database that store Urey-Bradley parameters - this will have 
+/** Return the part of the database that store Urey-Bradley parameters - this will have
     undefined results unless hasUreyBradleyDB() returns true. */
 inline SireMM::UreyBradleyDB& ProtoMSWS::ureyBradleyDB()
 {
@@ -277,7 +277,7 @@ inline SireDB::RelateMRDB& ProtoMSWS::relateMRDB()
 }
 
 /** Return the part of the database that stores relationships involving molecules,
-    residues and atoms. This will have undefined results unless hasRelateMRADB() 
+    residues and atoms. This will have undefined results unless hasRelateMRADB()
     returns true. */
 inline SireDB::RelateMRADB& ProtoMSWS::relateMRADB()
 {
@@ -285,14 +285,14 @@ inline SireDB::RelateMRADB& ProtoMSWS::relateMRADB()
 }
 
 /** Return the part of the database that stores relationships involving molecules,
-    residues and atom types. This will have undefined results unless 
+    residues and atom types. This will have undefined results unless
     hasRelateAtomTypeDB() returns true. */
 inline SireDB::RelateAtomTypeDB& ProtoMSWS::relateAtomTypeDB()
 {
     return relateatomtypedb;
 }
 
-/** Return the current reading mode of the workspace - this returns 
+/** Return the current reading mode of the workspace - this returns
     INVALID_MODE if the mode is not set of invalid. */
 inline ProtoMSWS::ProtoMS_Mode ProtoMSWS::mode() const
 {

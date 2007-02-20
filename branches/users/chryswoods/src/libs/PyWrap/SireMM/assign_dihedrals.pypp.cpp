@@ -16,6 +16,10 @@ namespace bp = boost::python;
 
 using namespace SireMM;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMM::assign_dihedrals&){ return "SireMM::assign_dihedrals";}
+
 void register_assign_dihedrals_class(){
 
     bp::class_< SireMM::assign_dihedrals, bp::bases< SireMM::assign_internals<SireMM::MolDihedralInfo> > >( "assign_dihedrals", bp::init< bp::optional< SireMM::DihedralGeneratorBase const & > >(( bp::arg("generator")=DihedralGenerator() )) )    
@@ -50,6 +54,11 @@ void register_assign_dihedrals_class(){
         .def( 
             "what"
             , (char const * ( ::SireMM::assign_dihedrals::* )(  ) const)( &::SireMM::assign_dihedrals::what ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::assign_dihedrals >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::assign_dihedrals >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

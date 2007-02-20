@@ -7,10 +7,13 @@
 #include "sireio_headers.h"
 #include "SireMol/molecule.h"
 #include "SireMol/editmol.h"
+#include "SireDB/parameterdb.h"
 
 namespace bp = boost::python;
 
 using namespace SireMol;
+
+const char* pvt_get_name(const SireIO::IOBase&){ return "SireIO::IOBase";}
 
 void register_IOBase_class(){
 
@@ -54,6 +57,7 @@ void register_IOBase_class(){
         .def( 
             "write"
             , (void ( ::SireIO::IOBase::* )( ::SireMol::EditMol const &,::QIODevice & ) const)( &::SireIO::IOBase::write )
-            , ( bp::arg("molecule"), bp::arg("dev") ) );
+            , ( bp::arg("molecule"), bp::arg("dev") ) )    
+        .def( "__str__", &pvt_get_name);
 
 }

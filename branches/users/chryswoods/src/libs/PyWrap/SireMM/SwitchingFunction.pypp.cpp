@@ -12,6 +12,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMM::SwitchingFunction&){ return "SireMM::SwitchingFunction";}
+
 void register_SwitchingFunction_class(){
 
     bp::class_< SireMM::SwitchingFunction >( "SwitchingFunction" )    
@@ -30,6 +34,11 @@ void register_SwitchingFunction_class(){
             , ( bp::arg("dist") ) )    
         .def( 
             "what"
-            , (char const * ( ::SireMM::SwitchingFunction::* )(  ) const)( &::SireMM::SwitchingFunction::what ) );
+            , (char const * ( ::SireMM::SwitchingFunction::* )(  ) const)( &::SireMM::SwitchingFunction::what ) )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::SwitchingFunction >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::SwitchingFunction >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

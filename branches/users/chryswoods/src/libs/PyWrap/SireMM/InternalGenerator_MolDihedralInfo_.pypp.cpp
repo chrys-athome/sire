@@ -12,6 +12,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireMM::InternalGenerator<SireMM::MolDihedralInfo>&){ return "SireMM::InternalGenerator<SireMM::MolDihedralInfo>";}
+
 void register_InternalGenerator_MolDihedralInfo__class(){
 
     bp::class_< SireMM::InternalGenerator<SireMM::MolDihedralInfo>, boost::noncopyable >( "InternalGenerator_MolDihedralInfo_", bp::no_init )    
@@ -25,6 +27,7 @@ void register_InternalGenerator_MolDihedralInfo__class(){
             , ( bp::arg("molecule") ) )    
         .def( 
             "what"
-            , (char const * ( ::SireMM::InternalGenerator<SireMM::MolDihedralInfo>::* )(  ) const)( &::SireMM::InternalGenerator<SireMM::MolDihedralInfo>::what ) );
+            , (char const * ( ::SireMM::InternalGenerator<SireMM::MolDihedralInfo>::* )(  ) const)( &::SireMM::InternalGenerator<SireMM::MolDihedralInfo>::what ) )    
+        .def( "__str__", &pvt_get_name);
 
 }

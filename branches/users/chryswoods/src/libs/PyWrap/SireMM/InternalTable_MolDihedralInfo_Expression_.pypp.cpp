@@ -12,6 +12,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMM::InternalTable<SireMM::MolDihedralInfo, SireCAS::Expression>&){ return "SireMM::InternalTable<SireMM::MolDihedralInfo, SireCAS::Expression>";}
+
 void register_InternalTable_MolDihedralInfo_Expression__class(){
 
     bp::class_< SireMM::InternalTable<SireMM::MolDihedralInfo, SireCAS::Expression>, bp::bases< SireMM::InternalTableBase<SireMM::MolDihedralInfo> >, boost::noncopyable >( "InternalTable_MolDihedralInfo_Expression_", bp::no_init )    
@@ -39,7 +43,7 @@ void register_InternalTable_MolDihedralInfo_Expression__class(){
         .def( 
             "at"
             , (::SireCAS::Expression const & ( ::SireMM::InternalTable<SireMM::MolDihedralInfo, SireCAS::Expression>::* )( ::SireMol::GroupIndexID const & ) const)( &::SireMM::InternalTable<SireMM::MolDihedralInfo, SireCAS::Expression>::at )
-            , ( bp::arg("index") )
+            , ( bp::arg("id") )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "clear"
@@ -297,6 +301,11 @@ void register_InternalTable_MolDihedralInfo_Expression__class(){
         .def( 
             "value"
             , (::SireCAS::Expression ( ::SireMM::InternalTable<SireMM::MolDihedralInfo, SireCAS::Expression>::* )( ::SireMol::GroupIndexID const &,::SireCAS::Expression const & ) const)( &::SireMM::InternalTable<SireMM::MolDihedralInfo, SireCAS::Expression>::value )
-            , ( bp::arg("id"), bp::arg("defaultParam") ) );
+            , ( bp::arg("id"), bp::arg("defaultParam") ) )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::InternalTable<SireMM::MolDihedralInfo, SireCAS::Expression> >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::InternalTable<SireMM::MolDihedralInfo, SireCAS::Expression> >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

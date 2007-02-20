@@ -12,6 +12,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMM::BondGenerator&){ return "SireMM::BondGenerator";}
+
 void register_BondGenerator_class(){
 
     bp::class_< SireMM::BondGenerator, bp::bases< SireMM::InternalGenerator<SireMM::MolBondInfo> > >( "BondGenerator" )    
@@ -26,6 +30,11 @@ void register_BondGenerator_class(){
         .def( 
             "what"
             , (char const * ( ::SireMM::BondGenerator::* )(  ) const)( &::SireMM::BondGenerator::what ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::BondGenerator >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::BondGenerator >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

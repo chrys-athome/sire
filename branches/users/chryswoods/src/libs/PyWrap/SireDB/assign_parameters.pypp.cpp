@@ -10,6 +10,8 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
 const char* pvt_get_name(const SireDB::assign_parameters&){ return "SireDB::assign_parameters";}
 
 void register_assign_parameters_class(){
@@ -38,6 +40,10 @@ void register_assign_parameters_class(){
             "assign"
             , (::SireDB::ParameterTable ( ::SireDB::assign_parameters::* )( ::SireMol::Molecule const &,::SireDB::ParameterTable const &,::SireDB::ParameterDB &,::SireDB::MatchMRData const & ) const)( &::SireDB::assign_parameters::assign )
             , ( bp::arg("molecule"), bp::arg("orig_table"), bp::arg("database"), bp::arg("matchmr")=::SireDB::MatchMRData( ) ) )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireDB::assign_parameters >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireDB::assign_parameters >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__str__", &pvt_get_name);
 
 }
