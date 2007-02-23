@@ -70,9 +70,12 @@ void register_SireCAS_containers()
     register_set< QSet<Symbol> >();
 
     register_dict< QHash<SymbolID,Complex> >();
-    register_dict< QHash<Symbol,int> >();
     register_dict< QHash<SymbolID,Expression> >();
     register_dict< QHash<SymbolID,double> >();
+
+    register_dict< QHash<Symbol,double> >();
+    register_dict< QHash<Symbol,Complex> >();
+    register_dict< QHash<Symbol,Expression> >();
 
     #else
     register_set< QSet<Function>, Function >();
@@ -80,9 +83,12 @@ void register_SireCAS_containers()
     register_set< QSet<Symbol>, Symbol >();
     
     register_dict< QHash<SymbolID,Complex>, SymbolID, Complex >();
-    register_dict< QHash<Symbol,int>, Symbol, int >();
     register_dict< QHash<SymbolID,Expression>, SymbolID, Expression >();
     register_dict< QHash<SymbolID,double>, SymbolID, double >();
     
+    register_dict< QHash<Symbol,double>, Symbol, double >();
+    register_dict< QHash<Symbol,Complex>, Symbol, Complex >();
+    register_dict< QHash<Symbol,Expression>, Symbol, Expression >();
+
     #endif    
 }

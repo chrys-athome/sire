@@ -66,42 +66,43 @@ friend QDataStream& ::operator>>(QDataStream&, ComplexValues&);
 
 public:
     ComplexValues();
-    
+
     ComplexValues(const QList<SymbolComplex> &values);
-    
+    ComplexValues(const QHash<Symbol,Complex> &values);
+
     ComplexValues(const SymbolComplex &symval0);
     ComplexValues(const SymbolComplex &symval0, const SymbolComplex &symval1);
-    ComplexValues(const SymbolComplex &symval0, const SymbolComplex &symval1, 
+    ComplexValues(const SymbolComplex &symval0, const SymbolComplex &symval1,
                   const SymbolComplex &symval2);
-    ComplexValues(const SymbolComplex &symval0, const SymbolComplex &symval1, 
+    ComplexValues(const SymbolComplex &symval0, const SymbolComplex &symval1,
                   const SymbolComplex &symval2, const SymbolComplex &symval3);
-    ComplexValues(const SymbolComplex &symval0, const SymbolComplex &symval1, 
-                  const SymbolComplex &symval2, const SymbolComplex &symval3, 
+    ComplexValues(const SymbolComplex &symval0, const SymbolComplex &symval1,
+                  const SymbolComplex &symval2, const SymbolComplex &symval3,
                   const SymbolComplex &symval4);
-    ComplexValues(const SymbolComplex &symval0, const SymbolComplex &symval1, 
-                  const SymbolComplex &symval2, const SymbolComplex &symval3, 
+    ComplexValues(const SymbolComplex &symval0, const SymbolComplex &symval1,
+                  const SymbolComplex &symval2, const SymbolComplex &symval3,
                   const SymbolComplex &symval4, const SymbolComplex &symval5);
-    ComplexValues(const SymbolComplex &symval0, const SymbolComplex &symval1, 
-                  const SymbolComplex &symval2, const SymbolComplex &symval3, 
+    ComplexValues(const SymbolComplex &symval0, const SymbolComplex &symval1,
+                  const SymbolComplex &symval2, const SymbolComplex &symval3,
                   const SymbolComplex &symval4, const SymbolComplex &symval5,
                   const SymbolComplex &symval6);
-    ComplexValues(const SymbolComplex &symval0, const SymbolComplex &symval1, 
-                  const SymbolComplex &symval2, const SymbolComplex &symval3, 
+    ComplexValues(const SymbolComplex &symval0, const SymbolComplex &symval1,
+                  const SymbolComplex &symval2, const SymbolComplex &symval3,
                   const SymbolComplex &symval4, const SymbolComplex &symval5,
                   const SymbolComplex &symval6, const SymbolComplex &symval7);
-    ComplexValues(const SymbolComplex &symval0, const SymbolComplex &symval1, 
-                  const SymbolComplex &symval2, const SymbolComplex &symval3, 
+    ComplexValues(const SymbolComplex &symval0, const SymbolComplex &symval1,
+                  const SymbolComplex &symval2, const SymbolComplex &symval3,
                   const SymbolComplex &symval4, const SymbolComplex &symval5,
-                  const SymbolComplex &symval6, const SymbolComplex &symval7, 
+                  const SymbolComplex &symval6, const SymbolComplex &symval7,
                   const SymbolComplex &symval8);
-    ComplexValues(const SymbolComplex &symval0, const SymbolComplex &symval1, 
-                  const SymbolComplex &symval2, const SymbolComplex &symval3, 
+    ComplexValues(const SymbolComplex &symval0, const SymbolComplex &symval1,
+                  const SymbolComplex &symval2, const SymbolComplex &symval3,
                   const SymbolComplex &symval4, const SymbolComplex &symval5,
-                  const SymbolComplex &symval6, const SymbolComplex &symval7, 
+                  const SymbolComplex &symval6, const SymbolComplex &symval7,
                   const SymbolComplex &symval8, const SymbolComplex &symval9);
-    
+
     ComplexValues(const Values &other);
-    
+
     ComplexValues(const ComplexValues &other);
 
     ~ComplexValues();
@@ -110,33 +111,33 @@ public:
 
     void add(const SymbolComplex &symval0);
     void add(const SymbolComplex &symval0, const SymbolComplex &symval1);
-    void add(const SymbolComplex &symval0, const SymbolComplex &symval1, 
+    void add(const SymbolComplex &symval0, const SymbolComplex &symval1,
              const SymbolComplex &symval2);
-    void add(const SymbolComplex &symval0, const SymbolComplex &symval1, 
+    void add(const SymbolComplex &symval0, const SymbolComplex &symval1,
              const SymbolComplex &symval2, const SymbolComplex &symval3);
-    void add(const SymbolComplex &symval0, const SymbolComplex &symval1, 
-             const SymbolComplex &symval2, const SymbolComplex &symval3, 
+    void add(const SymbolComplex &symval0, const SymbolComplex &symval1,
+             const SymbolComplex &symval2, const SymbolComplex &symval3,
              const SymbolComplex &symval4);
-    void add(const SymbolComplex &symval0, const SymbolComplex &symval1, 
-             const SymbolComplex &symval2, const SymbolComplex &symval3, 
+    void add(const SymbolComplex &symval0, const SymbolComplex &symval1,
+             const SymbolComplex &symval2, const SymbolComplex &symval3,
              const SymbolComplex &symval4, const SymbolComplex &symval5);
-    void add(const SymbolComplex &symval0, const SymbolComplex &symval1, 
-             const SymbolComplex &symval2, const SymbolComplex &symval3, 
+    void add(const SymbolComplex &symval0, const SymbolComplex &symval1,
+             const SymbolComplex &symval2, const SymbolComplex &symval3,
              const SymbolComplex &symval4, const SymbolComplex &symval5,
              const SymbolComplex &symval6);
-    void add(const SymbolComplex &symval0, const SymbolComplex &symval1, 
-             const SymbolComplex &symval2, const SymbolComplex &symval3, 
+    void add(const SymbolComplex &symval0, const SymbolComplex &symval1,
+             const SymbolComplex &symval2, const SymbolComplex &symval3,
              const SymbolComplex &symval4, const SymbolComplex &symval5,
              const SymbolComplex &symval6, const SymbolComplex &symval7);
-    void add(const SymbolComplex &symval0, const SymbolComplex &symval1, 
-             const SymbolComplex &symval2, const SymbolComplex &symval3, 
+    void add(const SymbolComplex &symval0, const SymbolComplex &symval1,
+             const SymbolComplex &symval2, const SymbolComplex &symval3,
              const SymbolComplex &symval4, const SymbolComplex &symval5,
-             const SymbolComplex &symval6, const SymbolComplex &symval7, 
+             const SymbolComplex &symval6, const SymbolComplex &symval7,
              const SymbolComplex &symval8);
-    void add(const SymbolComplex &symval0, const SymbolComplex &symval1, 
-             const SymbolComplex &symval2, const SymbolComplex &symval3, 
+    void add(const SymbolComplex &symval0, const SymbolComplex &symval1,
+             const SymbolComplex &symval2, const SymbolComplex &symval3,
              const SymbolComplex &symval4, const SymbolComplex &symval5,
-             const SymbolComplex &symval6, const SymbolComplex &symval7, 
+             const SymbolComplex &symval6, const SymbolComplex &symval7,
              const SymbolComplex &symval8, const SymbolComplex &symval9);
 
     Complex value(const Symbol &sym) const;

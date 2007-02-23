@@ -304,10 +304,34 @@ Expression Expression::add(const Expression &ex) const
     return Sum(*this, ex).reduce();
 }
 
+/** Return this expression added to 'val' */
+Expression Expression::add(double val) const
+{
+    return Sum(*this, Expression(val)).reduce();
+}
+
+/** Return this expression added to 'val' */
+Expression Expression::add(const Complex &val) const
+{
+    return Sum(*this, Expression(val)).reduce();
+}
+
 /** Return an expression that is this - ex */
 Expression Expression::subtract(const Expression &ex) const
 {
     return Sum(*this, ex.negate()).reduce();
+}
+
+/** Return an expression that is this - val */
+Expression Expression::subtract(double val) const
+{
+    return Sum(*this, -val).reduce();
+}
+
+/** Return an expression that is this - val */
+Expression Expression::subtract(const Complex &val) const
+{
+    return Sum(*this, -val).reduce();
 }
 
 /** Return an expression that is this multipled by 'val' */
@@ -531,7 +555,12 @@ QString Expression::toString() const
         if ( SireMaths::areEqual(fac,1.0) )
             return basestr;
         else if ( SireMaths::areEqual(fac,-1.0) )
-            return QString("-%1").arg(basestr);
+        {
+            if (this->isCompound())
+                return QString("-[%1]").arg(basestr);
+            else
+                return QString("-%1").arg(basestr);
+        }
         else if (this->isCompound())
             return QString("%1 [%2]").arg(fac).arg(basestr);
         else

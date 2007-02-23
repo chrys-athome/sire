@@ -220,13 +220,19 @@ BOOST_PYTHON_MODULE(_CAS){
 
     bp::implicitly_convertible< QList<SireCAS::SymbolComplex>, SireCAS::ComplexValues >();
 
+    bp::implicitly_convertible< QHash<SireCAS::Symbol,SireMaths::Complex>, SireCAS::ComplexValues >();
+
     bp::implicitly_convertible< const SireCAS::ExBase&, SireCAS::Expression >();
 
     bp::implicitly_convertible< QList<SireCAS::SymbolExpression>, SireCAS::Identities >();
 
+    bp::implicitly_convertible< QHash<SireCAS::Symbol,SireCAS::Expression>, SireCAS::Identities >();
+
     bp::implicitly_convertible< SireCAS::SymbolExpression, SireCAS::Identities >();
 
     bp::implicitly_convertible< QList<SireCAS::SymbolValue>, SireCAS::Values >();
+
+    bp::implicitly_convertible< QHash<SireCAS::Symbol,double>, SireCAS::Values >();
 
     bp::implicitly_convertible< SireCAS::SymbolValue, SireCAS::Values >();
 

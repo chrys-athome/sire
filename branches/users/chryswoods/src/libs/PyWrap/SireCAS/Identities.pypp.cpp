@@ -17,6 +17,7 @@ void register_Identities_class(){
     bp::class_< SireCAS::Identities >( "Identities" )    
         .def( bp::init< >() )    
         .def( bp::init< QList<SireCAS::SymbolExpression> const & >(( bp::arg("expressions") )) )    
+        .def( bp::init< QHash<SireCAS::Symbol, SireCAS::Expression> const & >(( bp::arg("expressions") )) )    
         .def( bp::init< SireCAS::SymbolExpression const & >(( bp::arg("symex0") )) )    
         .def( bp::init< SireCAS::SymbolExpression const &, SireCAS::SymbolExpression const & >(( bp::arg("symex0"), bp::arg("symex1") )) )    
         .def( bp::init< SireCAS::SymbolExpression const &, SireCAS::SymbolExpression const &, SireCAS::SymbolExpression const & >(( bp::arg("symex0"), bp::arg("symex1"), bp::arg("symex2") )) )    

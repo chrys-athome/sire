@@ -17,6 +17,7 @@ void register_Values_class(){
     bp::class_< SireCAS::Values >( "Values" )    
         .def( bp::init< >() )    
         .def( bp::init< QList<SireCAS::SymbolValue> const & >(( bp::arg("values") )) )    
+        .def( bp::init< QHash<SireCAS::Symbol, double> const & >(( bp::arg("values") )) )    
         .def( bp::init< SireCAS::SymbolValue const & >(( bp::arg("symval0") )) )    
         .def( bp::init< SireCAS::SymbolValue const &, SireCAS::SymbolValue const & >(( bp::arg("symval0"), bp::arg("symval1") )) )    
         .def( bp::init< SireCAS::SymbolValue const &, SireCAS::SymbolValue const &, SireCAS::SymbolValue const & >(( bp::arg("symval0"), bp::arg("symval1"), bp::arg("symval2") )) )    

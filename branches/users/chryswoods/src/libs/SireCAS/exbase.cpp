@@ -183,9 +183,69 @@ Expression SIRECAS_EXPORT operator+(const ExBase &base0, const ExBase &base1)
     return Expression(base0) + Expression(base1);
 }
 
+Expression SIRECAS_EXPORT operator+(const Expression &ex, const ExBase &base)
+{
+    return ex.add(base);
+}
+
+Expression SIRECAS_EXPORT operator+(const ExBase &base, const Expression &ex)
+{
+    return ex.add(base);
+}
+
+Expression SIRECAS_EXPORT operator+(double val, const ExBase &base)
+{
+    return Expression(base).add(val);
+}
+
+Expression SIRECAS_EXPORT operator+(const ExBase &base, double val)
+{
+    return Expression(base).add(val);
+}
+
+Expression SIRECAS_EXPORT operator+(const Complex &val, const ExBase &base)
+{
+    return Expression(base).add(val);
+}
+
+Expression SIRECAS_EXPORT operator+(const ExBase &base, const Complex &val)
+{
+    return Expression(base).add(val);
+}
+
 Expression SIRECAS_EXPORT operator-(const ExBase &base0, const ExBase &base1)
 {
     return Expression(base0) - Expression(base1);
+}
+
+Expression SIRECAS_EXPORT operator-(const Expression &ex, const ExBase &base)
+{
+    return ex.subtract(base);
+}
+
+Expression SIRECAS_EXPORT operator-(const ExBase &base, const Expression &ex)
+{
+    return Expression(base).subtract(ex);
+}
+
+Expression SIRECAS_EXPORT operator-(double val, const ExBase &base)
+{
+    return Expression(val).subtract(base);
+}
+
+Expression SIRECAS_EXPORT operator-(const ExBase &base, double val)
+{
+    return Expression(base).subtract(val);
+}
+
+Expression SIRECAS_EXPORT operator-(const Complex &val, const ExBase &base)
+{
+    return Expression(val).subtract(base);
+}
+
+Expression SIRECAS_EXPORT operator-(const ExBase &base, const Complex &val)
+{
+    return Expression(base).subtract(val);
 }
 
 Expression SIRECAS_EXPORT operator*(const ExBase &base0, const ExBase &base1)
@@ -193,14 +253,14 @@ Expression SIRECAS_EXPORT operator*(const ExBase &base0, const ExBase &base1)
     return Expression(base0) * Expression(base1);
 }
 
-Expression SIRECAS_EXPORT operator/(const ExBase &base0, const ExBase &base1)
+Expression SIRECAS_EXPORT operator*(const Expression &ex, const ExBase &base)
 {
-    return Expression(base0) / Expression(base1);
+    return ex.multiply(base);
 }
 
-Expression SIRECAS_EXPORT operator*(const ExBase &base, double val)
+Expression SIRECAS_EXPORT operator*(const ExBase &base, const Expression &ex)
 {
-    return Expression(base).multiply(val);
+    return ex.multiply(base);
 }
 
 Expression SIRECAS_EXPORT operator*(double val, const ExBase &base)
@@ -208,7 +268,7 @@ Expression SIRECAS_EXPORT operator*(double val, const ExBase &base)
     return Expression(base).multiply(val);
 }
 
-Expression SIRECAS_EXPORT operator*(const ExBase &base, const Complex &val)
+Expression SIRECAS_EXPORT operator*(const ExBase &base, double val)
 {
     return Expression(base).multiply(val);
 }
@@ -218,44 +278,44 @@ Expression SIRECAS_EXPORT operator*(const Complex &val, const ExBase &base)
     return Expression(base).multiply(val);
 }
 
-Expression SIRECAS_EXPORT operator+(const ExBase &base, const Expression &ex)
+Expression SIRECAS_EXPORT operator*(const ExBase &base, const Complex &val)
 {
-    return Expression(base) + ex;
+    return Expression(base).multiply(val);
 }
 
-Expression SIRECAS_EXPORT operator-(const ExBase &base, const Expression &ex)
+Expression SIRECAS_EXPORT operator/(const ExBase &base0, const ExBase &base1)
 {
-    return Expression(base) - ex;
-}
-
-Expression SIRECAS_EXPORT operator*(const ExBase &base, const Expression &ex)
-{
-    return Expression(base) * ex;
-}
-
-Expression SIRECAS_EXPORT operator/(const ExBase &base, const Expression &ex)
-{
-    return  Expression(base) / ex;
-}
-
-Expression SIRECAS_EXPORT operator+(const Expression &ex, const ExBase &base)
-{
-    return ex + Expression(base);
-}
-
-Expression SIRECAS_EXPORT operator-(const Expression &ex, const ExBase &base)
-{
-    return ex - Expression(base);
-}
-
-Expression SIRECAS_EXPORT operator*(const Expression &ex, const ExBase &base)
-{
-    return ex * Expression(base);
+    return Expression(base0) / Expression(base1);
 }
 
 Expression SIRECAS_EXPORT operator/(const Expression &ex, const ExBase &base)
 {
-    return ex / Expression(base);
+    return ex.divide(base);
+}
+
+Expression SIRECAS_EXPORT operator/(const ExBase &base, const Expression &ex)
+{
+    return Expression(base).divide(ex);
+}
+
+Expression SIRECAS_EXPORT operator/(double val, const ExBase &base)
+{
+    return Expression(val).divide(base);
+}
+
+Expression SIRECAS_EXPORT operator/(const ExBase &base, double val)
+{
+    return Expression(base).divide(val);
+}
+
+Expression SIRECAS_EXPORT operator/(const Complex &val, const ExBase &base)
+{
+    return Expression(val).divide(base);
+}
+
+Expression SIRECAS_EXPORT operator/(const ExBase &base, const Complex &val)
+{
+    return Expression(base).divide(val);
 }
 
 Expression SIRECAS_EXPORT pow(const ExBase &base, int n)

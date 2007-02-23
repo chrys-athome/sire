@@ -153,7 +153,11 @@ void TestSireCAS::runTests()
         BOOST_CHECK( testEqual( ex7(vals), 2.5*xval*yval - zval - 6.4 ) );
         BOOST_CHECK( testEqual( ex8(vals), 6.8*xval + yval + zval + 3.2*xval ) );
         BOOST_CHECK( testEqual( ex9(vals), 9.2*xval + 3.1*yval + 5.4*zval - 3.2*xval ) );
+
+        BOOST_CHECK( testEqual( (x+y).negate().add(3).evaluate(vals),
+                                (3 - x - y).evaluate(vals) ) );
     }
+
 
     //test trig functions
     for (int i=0; i<500; ++i)

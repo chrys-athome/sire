@@ -76,6 +76,17 @@ Values::Values(const QList<SymbolValue> &values)
     }
 }
 
+/** Construct from a hash of values indexed by symbols */
+Values::Values(const QHash<Symbol,double> &values)
+{
+    for (QHash<Symbol,double>::const_iterator it = values.begin();
+         it != values.end();
+         ++it)
+    {
+        vals.insert( it.key().ID(), it.value() );
+    }
+}
+
 /** Copy constructor */
 Values::Values(const Values &other) : vals(other.vals)
 {}
@@ -287,14 +298,14 @@ Values& Values::operator+=(const Values &other)
     else
     {
         vals.reserve( vals.count() + other.vals.count() );
-    
+
         for (QHash<SymbolID,double>::const_iterator it = other.vals.begin();
              it != other.vals.end();
              ++it)
         {
             vals.insert( it.key(), it.value() );
         }
-        
+
         return *this;
     }
 }

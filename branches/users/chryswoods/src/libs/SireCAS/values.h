@@ -65,6 +65,7 @@ friend QDataStream& ::operator>>(QDataStream&, Values&);
 public:
     Values();
     Values(const QList<SymbolValue> &values);
+    Values(const QHash<Symbol,double> &values);
     Values(const SymbolValue &symval0);
     Values(const SymbolValue &symval0, const SymbolValue &symval1);
     Values(const SymbolValue &symval0, const SymbolValue &symval1, const SymbolValue &symval2);
@@ -87,7 +88,7 @@ public:
            const SymbolValue &symval3, const SymbolValue &symval4, const SymbolValue &symval5,
            const SymbolValue &symval6, const SymbolValue &symval7, const SymbolValue &symval8,
            const SymbolValue &symval9);
-    
+
     Values(const Values &other);
 
     ~Values();
@@ -120,11 +121,11 @@ public:
     double value(const Symbol &sym) const;
 
     const QHash<SymbolID, double>& values() const;
-    
+
     int count() const;
-    
+
     void reserve(int n);
-    
+
     Values& operator+=(const Values &other);
 
 private:

@@ -17,6 +17,7 @@ void register_ComplexValues_class(){
     bp::class_< SireCAS::ComplexValues >( "ComplexValues" )    
         .def( bp::init< >() )    
         .def( bp::init< QList<SireCAS::SymbolComplex> const & >(( bp::arg("values") )) )    
+        .def( bp::init< QHash<SireCAS::Symbol, SireMaths::Complex> const & >(( bp::arg("values") )) )    
         .def( bp::init< SireCAS::SymbolComplex const & >(( bp::arg("symval0") )) )    
         .def( bp::init< SireCAS::SymbolComplex const &, SireCAS::SymbolComplex const & >(( bp::arg("symval0"), bp::arg("symval1") )) )    
         .def( bp::init< SireCAS::SymbolComplex const &, SireCAS::SymbolComplex const &, SireCAS::SymbolComplex const & >(( bp::arg("symval0"), bp::arg("symval1"), bp::arg("symval2") )) )    

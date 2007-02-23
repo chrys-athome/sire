@@ -27,6 +27,14 @@ void register_Expression_class(){
             , (::SireCAS::Expression ( ::SireCAS::Expression::* )( ::SireCAS::Expression const & ) const)( &::SireCAS::Expression::add )
             , ( bp::arg("ex") ) )    
         .def( 
+            "add"
+            , (::SireCAS::Expression ( ::SireCAS::Expression::* )( double ) const)( &::SireCAS::Expression::add )
+            , ( bp::arg("val") ) )    
+        .def( 
+            "add"
+            , (::SireCAS::Expression ( ::SireCAS::Expression::* )( ::SireMaths::Complex const & ) const)( &::SireCAS::Expression::add )
+            , ( bp::arg("val") ) )    
+        .def( 
             "base"
             , (::SireCAS::ExpressionBase const & ( ::SireCAS::Expression::* )(  ) const)( &::SireCAS::Expression::base )
             , bp::return_value_policy< bp::copy_const_reference >() )    
@@ -183,11 +191,47 @@ void register_Expression_class(){
             , (::SireCAS::Expression ( ::SireCAS::Expression::* )( ::SireCAS::Expression const & ) const)( &::SireCAS::Expression::subtract )
             , ( bp::arg("ex") ) )    
         .def( 
+            "subtract"
+            , (::SireCAS::Expression ( ::SireCAS::Expression::* )( double ) const)( &::SireCAS::Expression::subtract )
+            , ( bp::arg("val") ) )    
+        .def( 
+            "subtract"
+            , (::SireCAS::Expression ( ::SireCAS::Expression::* )( ::SireMaths::Complex const & ) const)( &::SireCAS::Expression::subtract )
+            , ( bp::arg("val") ) )    
+        .def( 
             "symbols"
             , (::SireCAS::Symbols ( ::SireCAS::Expression::* )(  ) const)( &::SireCAS::Expression::symbols ) )    
         .def( 
             "toString"
             , (::QString ( ::SireCAS::Expression::* )(  ) const)( &::SireCAS::Expression::toString ) )    
+        .def( self + self )    
+        .def( self - self )    
+        .def( self * self )    
+        .def( self / self )    
+        .def( other<double>() + self )    
+        .def( other<double>() - self )    
+        .def( other<double>() * self )    
+        .def( other<double>() / self )    
+        .def( self + other<double>() )    
+        .def( self - other<double>() )    
+        .def( self * other<double>() )    
+        .def( self / other<double>() )    
+        .def( other<SireMaths::Complex>() + self )    
+        .def( other<SireMaths::Complex>() - self )    
+        .def( other<SireMaths::Complex>() * self )    
+        .def( other<SireMaths::Complex>() / self )    
+        .def( self + other<SireMaths::Complex>() )    
+        .def( self - other<SireMaths::Complex>() )    
+        .def( self * other<SireMaths::Complex>() )    
+        .def( self / other<SireMaths::Complex>() )    
+        .def( other<SireCAS::ExBase>() + self )    
+        .def( other<SireCAS::ExBase>() - self )    
+        .def( other<SireCAS::ExBase>() * self )    
+        .def( other<SireCAS::ExBase>() / self )    
+        .def( self + other<SireCAS::ExBase>() )    
+        .def( self - other<SireCAS::ExBase>() )    
+        .def( self * other<SireCAS::ExBase>() )    
+        .def( self / other<SireCAS::ExBase>() )    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireCAS::Expression >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireCAS::Expression >,
