@@ -8,6 +8,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const QFile&){ return "QFile";}
+
 void register_QFile_class(){
 
     { //::QFile
@@ -239,6 +241,25 @@ void register_QFile_class(){
                 , ( bp::arg("filename") ) );
         
         }
+        { //::QFile::readLink
+        
+            typedef ::QString ( ::QFile::*readLink_function_type )(  ) const;
+            
+            QFile_exposer.def( 
+                "readLink"
+                , readLink_function_type( &::QFile::readLink ) );
+        
+        }
+        { //::QFile::readLink
+        
+            typedef ::QString ( *readLink_function_type )( ::QString const & );
+            
+            QFile_exposer.def( 
+                "readLink"
+                , readLink_function_type( &::QFile::readLink )
+                , ( bp::arg("fileName") ) );
+        
+        }
         { //::QFile::remove
         
             typedef bool ( ::QFile::*remove_function_type )(  ) ;
@@ -337,25 +358,6 @@ void register_QFile_class(){
                 , size_function_type( &::QFile::size ) );
         
         }
-        { //::QFile::symLinkTarget
-        
-            typedef ::QString ( ::QFile::*symLinkTarget_function_type )(  ) const;
-            
-            QFile_exposer.def( 
-                "symLinkTarget"
-                , symLinkTarget_function_type( &::QFile::symLinkTarget ) );
-        
-        }
-        { //::QFile::symLinkTarget
-        
-            typedef ::QString ( *symLinkTarget_function_type )( ::QString const & );
-            
-            QFile_exposer.def( 
-                "symLinkTarget"
-                , symLinkTarget_function_type( &::QFile::symLinkTarget )
-                , ( bp::arg("fileName") ) );
-        
-        }
         { //::QFile::unsetError
         
             typedef void ( ::QFile::*unsetError_function_type )(  ) ;
@@ -371,11 +373,12 @@ void register_QFile_class(){
         QFile_exposer.staticmethod( "exists" );
         QFile_exposer.staticmethod( "link" );
         QFile_exposer.staticmethod( "permissions" );
+        QFile_exposer.staticmethod( "readLink" );
         QFile_exposer.staticmethod( "remove" );
         QFile_exposer.staticmethod( "rename" );
         QFile_exposer.staticmethod( "resize" );
         QFile_exposer.staticmethod( "setPermissions" );
-        QFile_exposer.staticmethod( "symLinkTarget" );
+        QFile_exposer.def( "__str__", &pvt_get_name);
     }
 
 }

@@ -152,6 +152,8 @@ mb = module_builder_t( files=headerfiles,
 
 populateNamespaces(mb)
 
+mb.namespace(namespace).free_functions().include()
+
 for calldef in mb.calldefs():
     try:
       calldef.virtuality = declarations.VIRTUALITY_TYPES.NOT_VIRTUAL

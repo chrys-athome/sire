@@ -8,6 +8,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const QByteArray&){ return "QByteArray";}
+
 void register_QByteArray_class(){
 
     bp::class_< QByteArray >( "QByteArray" )    
@@ -301,6 +305,11 @@ void register_QByteArray_class(){
             , ( bp::arg("pos") ) )    
         .staticmethod( "fromBase64" )    
         .staticmethod( "fromRawData" )    
-        .staticmethod( "number" );
+        .staticmethod( "number" )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::QByteArray >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::QByteArray >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

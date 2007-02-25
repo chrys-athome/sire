@@ -8,6 +8,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const QFlags<QFile::Permission>&){ return "QFlags<QFile::Permission>";}
+
 void register_Permissions_class(){
 
     bp::class_< QFlags<QFile::Permission> >( "Permissions", bp::init< QFile::Permission >(( bp::arg("f") )) )    
@@ -29,9 +31,6 @@ void register_Permissions_class(){
         .def( bp::self |= bp::self )    
         .def( bp::self |= bp::other< QFile::Permission >() )    
         .def( ~bp::self )    
-        .def( 
-            "testFlag"
-            , (bool ( ::QFlags<QFile::Permission>::* )( ::QFile::Permission ) const)( &::QFlags<QFile::Permission>::testFlag )
-            , ( bp::arg("f") ) );
+        .def( "__str__", &pvt_get_name);
 
 }

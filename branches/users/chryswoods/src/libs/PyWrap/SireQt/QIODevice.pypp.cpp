@@ -8,6 +8,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const QIODevice&){ return "QIODevice";}
+
 void register_QIODevice_class(){
 
     { //::QIODevice
@@ -329,6 +331,7 @@ void register_QIODevice_class(){
                 , ( bp::arg("data") ) );
         
         }
+        QIODevice_exposer.def( "__str__", &pvt_get_name);
     }
 
 }

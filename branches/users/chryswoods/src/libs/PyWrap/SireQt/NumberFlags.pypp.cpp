@@ -8,6 +8,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const QFlags<QTextStream::NumberFlag>&){ return "QFlags<QTextStream::NumberFlag>";}
+
 void register_NumberFlags_class(){
 
     bp::class_< QFlags<QTextStream::NumberFlag> >( "NumberFlags", bp::init< QTextStream::NumberFlag >(( bp::arg("f") )) )    
@@ -29,9 +31,6 @@ void register_NumberFlags_class(){
         .def( bp::self |= bp::self )    
         .def( bp::self |= bp::other< QTextStream::NumberFlag >() )    
         .def( ~bp::self )    
-        .def( 
-            "testFlag"
-            , (bool ( ::QFlags<QTextStream::NumberFlag>::* )( ::QTextStream::NumberFlag ) const)( &::QFlags<QTextStream::NumberFlag>::testFlag )
-            , ( bp::arg("f") ) );
+        .def( "__str__", &pvt_get_name);
 
 }

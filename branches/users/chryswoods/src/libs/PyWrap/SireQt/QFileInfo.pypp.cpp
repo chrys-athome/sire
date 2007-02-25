@@ -8,6 +8,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const QFileInfo&){ return "QFileInfo";}
+
 void register_QFileInfo_class(){
 
     bp::class_< QFileInfo >( "QFileInfo" )    
@@ -123,6 +125,9 @@ void register_QFileInfo_class(){
             "permissions"
             , (::QFlags<QFile::Permission> ( ::QFileInfo::* )(  ) const)( &::QFileInfo::permissions ) )    
         .def( 
+            "readLink"
+            , (::QString ( ::QFileInfo::* )(  ) const)( &::QFileInfo::readLink ) )    
+        .def( 
             "refresh"
             , (void ( ::QFileInfo::* )(  ) )( &::QFileInfo::refresh ) )    
         .def( 
@@ -147,8 +152,6 @@ void register_QFileInfo_class(){
         .def( 
             "suffix"
             , (::QString ( ::QFileInfo::* )(  ) const)( &::QFileInfo::suffix ) )    
-        .def( 
-            "symLinkTarget"
-            , (::QString ( ::QFileInfo::* )(  ) const)( &::QFileInfo::symLinkTarget ) );
+        .def( "__str__", &pvt_get_name);
 
 }

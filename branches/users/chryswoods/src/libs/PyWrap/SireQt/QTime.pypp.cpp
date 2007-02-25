@@ -8,6 +8,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const QTime&){ return "QTime";}
+
 void register_QTime_class(){
 
     bp::class_< QTime >( "QTime" )    
@@ -91,6 +95,11 @@ void register_QTime_class(){
             , ( bp::arg("format") ) )    
         .staticmethod( "currentTime" )    
         .staticmethod( "fromString" )    
-        .staticmethod( "isValid" );
+        .staticmethod( "isValid" )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::QTime >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::QTime >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

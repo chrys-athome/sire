@@ -109,6 +109,8 @@
 
 #include "Values.pypp.hpp"
 
+#include "_CAS_free_functions.pypp.hpp"
+
 #include "sirecas_containers.h"
 
 namespace bp = boost::python;
@@ -216,6 +218,8 @@ BOOST_PYTHON_MODULE(_CAS){
 
     register_Tanh_class();
 
+    register_Values_class();
+
     bp::implicitly_convertible< SireCAS::SymbolComplex, SireCAS::ComplexValues >();
 
     bp::implicitly_convertible< QList<SireCAS::SymbolComplex>, SireCAS::ComplexValues >();
@@ -236,6 +240,6 @@ BOOST_PYTHON_MODULE(_CAS){
 
     bp::implicitly_convertible< SireCAS::SymbolValue, SireCAS::Values >();
 
-    register_Values_class();
+    register_free_functions();
 }
 

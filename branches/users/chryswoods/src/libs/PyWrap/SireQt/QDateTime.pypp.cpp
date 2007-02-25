@@ -8,6 +8,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const QDateTime&){ return "QDateTime";}
+
 void register_QDateTime_class(){
 
     bp::class_< QDateTime >( "QDateTime" )    
@@ -52,10 +56,6 @@ void register_QDateTime_class(){
             "fromString"
             , (::QDateTime (*)( ::QString const &,::QString const & ))( &::QDateTime::fromString )
             , ( bp::arg("s"), bp::arg("format") ) )    
-        .def( 
-            "fromTime_t"
-            , (::QDateTime (*)( ::uint ))( &::QDateTime::fromTime_t )
-            , ( bp::arg("secsSince1Jan1970UTC") ) )    
         .def( 
             "isNull"
             , (bool ( ::QDateTime::* )(  ) const)( &::QDateTime::isNull ) )    
@@ -117,6 +117,10 @@ void register_QDateTime_class(){
             , (::QDateTime ( ::QDateTime::* )(  ) const)( &::QDateTime::toUTC ) )    
         .staticmethod( "currentDateTime" )    
         .staticmethod( "fromString" )    
-        .staticmethod( "fromTime_t" );
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::QDateTime >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::QDateTime >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

@@ -8,6 +8,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const QDate&){ return "QDate";}
+
 void register_QDate_class(){
 
     bp::class_< QDate >( "QDate" )    
@@ -91,9 +95,9 @@ void register_QDate_class(){
         .def( bp::self > bp::self )    
         .def( bp::self >= bp::self )    
         .def( 
-            "setDate"
-            , (bool ( ::QDate::* )( int,int,int ) )( &::QDate::setDate )
-            , ( bp::arg("year"), bp::arg("month"), bp::arg("date") ) )    
+            "setYMD"
+            , (bool ( ::QDate::* )( int,int,int ) )( &::QDate::setYMD )
+            , ( bp::arg("y"), bp::arg("m"), bp::arg("d") ) )    
         .def( 
             "shortDayName"
             , (::QString (*)( int ))( &::QDate::shortDayName )
@@ -128,6 +132,11 @@ void register_QDate_class(){
         .staticmethod( "longDayName" )    
         .staticmethod( "longMonthName" )    
         .staticmethod( "shortDayName" )    
-        .staticmethod( "shortMonthName" );
+        .staticmethod( "shortMonthName" )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::QDate >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::QDate >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

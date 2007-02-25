@@ -39,13 +39,13 @@
 
 using namespace SireMM;
 
-QDataStream& operator<<(QDataStream &ds, const BondResID &id)
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const BondResID &id)
 {
     ds << id.resNum0() << id.resNum1();
     return ds;
 }
 
-QDataStream& operator>>(QDataStream &ds, BondResID &id)
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, BondResID &id)
 {
     ds >> id.id[0] >> id.id[1];
     return ds;
@@ -60,13 +60,13 @@ uint SIREMM_EXPORT qHash(const BondResID &id)
     return (qHash(id.resNum0()) << 16) | (qHash(id.resNum1()) & 0x0000FFFF);
 }
 
-QDataStream& operator<<(QDataStream &ds, const BondAtomID &id)
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const BondAtomID &id)
 {
     ds << id.atom0() << id.atom1();
     return ds;
 }
 
-QDataStream& operator>>(QDataStream &ds, BondAtomID &id)
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, BondAtomID &id)
 {
     ds >> id.atms[0] >> id.atms[1];
     return ds;
@@ -81,13 +81,13 @@ uint SIREMM_EXPORT qHash(const BondAtomID &id)
     return ( qHash(id.atom0()) << 16 ) | ( qHash(id.atom1()) & 0x0000FFFF );
 }
 
-QDataStream& operator<<(QDataStream &ds, const AngleResID &id)
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const AngleResID &id)
 {
     ds << id.resNum0() << id.resNum1() << id.resNum2();
     return ds;
 }
 
-QDataStream& operator>>(QDataStream &ds, AngleResID &id)
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, AngleResID &id)
 {
     ds >> id.id[0] >> id.id[1] >> id.id[2];
     return ds;
@@ -104,13 +104,13 @@ uint SIREMM_EXPORT qHash(const AngleResID &id)
               (qHash(id.resNum2()) & 0x000003FF);
 }
 
-QDataStream& operator<<(QDataStream &ds, const AngleAtomID &id)
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const AngleAtomID &id)
 {
     ds << id.atom0() << id.atom1() << id.atom2();
     return ds;
 }
 
-QDataStream& operator>>(QDataStream &ds, AngleAtomID &id)
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, AngleAtomID &id)
 {
     ds >> id.atms[0] >> id.atms[1] >> id.atms[2];
     return ds;
@@ -126,13 +126,13 @@ uint SIREMM_EXPORT qHash(const AngleAtomID &id)
                     (qHash(id.atom2()) & 0x000003FF);
 }
 
-QDataStream& operator<<(QDataStream &ds, const DihedralResID &id)
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const DihedralResID &id)
 {
     ds << id.resNum0() << id.resNum1() << id.resNum2() << id.resNum3();
     return ds;
 }
 
-QDataStream& operator>>(QDataStream &ds, DihedralResID &id)
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, DihedralResID &id)
 {
     ds >> id.id[0] >> id.id[1] >> id.id[2] >> id.id[3];
     return ds;
@@ -151,13 +151,13 @@ uint SIREMM_EXPORT qHash(const DihedralResID &id)
                     (qHash(id.resNum3()) & 0x000000FF);
 }
 
-QDataStream& operator<<(QDataStream &ds, const DihedralAtomID &id)
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const DihedralAtomID &id)
 {
     ds << id.atom0() << id.atom1() << id.atom2() << id.atom3();
     return ds;
 }
 
-QDataStream& operator>>(QDataStream &ds, DihedralAtomID &id)
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, DihedralAtomID &id)
 {
     ds >> id.atms[0] >> id.atms[1] >> id.atms[2] >> id.atms[3];
     return ds;

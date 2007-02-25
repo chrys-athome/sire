@@ -492,7 +492,7 @@ Expression Expression::integrate(const Symbol &symbol) const
         return Expression(0);
     else if (not exbase.isFunction(symbol))
         //exbase is constant with respect to 'symbol' - return symbol*exbase + C
-        return fac * exbase + IntegrationConstant();
+        return fac*exbase*symbol + IntegrationConstant();
     else
         //calculate the integral with respect to the symbol (add integration constant)
         return fac * exbase.integrate(symbol) + IntegrationConstant();

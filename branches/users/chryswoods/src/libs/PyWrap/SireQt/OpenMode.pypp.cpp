@@ -8,6 +8,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const QFlags<QIODevice::OpenModeFlag>&){ return "QFlags<QIODevice::OpenModeFlag>";}
+
 void register_OpenMode_class(){
 
     bp::class_< QFlags<QIODevice::OpenModeFlag> >( "OpenMode", bp::init< QIODevice::OpenModeFlag >(( bp::arg("f") )) )    
@@ -29,9 +31,6 @@ void register_OpenMode_class(){
         .def( bp::self |= bp::self )    
         .def( bp::self |= bp::other< QIODevice::OpenModeFlag >() )    
         .def( ~bp::self )    
-        .def( 
-            "testFlag"
-            , (bool ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QIODevice::OpenModeFlag ) const)( &::QFlags<QIODevice::OpenModeFlag>::testFlag )
-            , ( bp::arg("f") ) );
+        .def( "__str__", &pvt_get_name);
 
 }

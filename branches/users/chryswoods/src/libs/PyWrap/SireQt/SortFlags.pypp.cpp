@@ -8,6 +8,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const QFlags<QDir::SortFlag>&){ return "QFlags<QDir::SortFlag>";}
+
 void register_SortFlags_class(){
 
     bp::class_< QFlags<QDir::SortFlag> >( "SortFlags", bp::init< QDir::SortFlag >(( bp::arg("f") )) )    
@@ -29,9 +31,6 @@ void register_SortFlags_class(){
         .def( bp::self |= bp::self )    
         .def( bp::self |= bp::other< QDir::SortFlag >() )    
         .def( ~bp::self )    
-        .def( 
-            "testFlag"
-            , (bool ( ::QFlags<QDir::SortFlag>::* )( ::QDir::SortFlag ) const)( &::QFlags<QDir::SortFlag>::testFlag )
-            , ( bp::arg("f") ) );
+        .def( "__str__", &pvt_get_name);
 
 }

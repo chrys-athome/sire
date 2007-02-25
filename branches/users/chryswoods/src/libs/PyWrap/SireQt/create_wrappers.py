@@ -94,7 +94,6 @@ def expose_QDir(c):
               "current",
               "currentPath",
               "drives",
-              "fromNativeSeparators",
               "home",
               "homePath",
               "isAbsolutePath",
@@ -105,8 +104,7 @@ def expose_QDir(c):
               "separator",
               "setCurrent",
               "temp",
-              "tempPath",
-              "toNativeSeparators"
+              "tempPath"
             ]
 
     exposeFunctions(c,funcs)
@@ -159,12 +157,12 @@ def expose_QFileInfo(c):
               "path",
               "permission",
               "permissions",
+              "readLink",
               "refresh",
               "setCaching",
               "setFile",
               "size",
               "suffix",
-              "symLinkTarget",
               "operator!=",
               "operator=="
             ]
@@ -196,7 +194,6 @@ def expose_QFile(c):
               "setFileName",
               "setPermissions",
               "size",
-              "symLinkTarget",
               "unsetError",
               "copy",
               "decodeName",
@@ -204,13 +201,10 @@ def expose_QFile(c):
               "exists",
               "link",
               "permissions",
-              "remove",
-              "rename",
-              "size",
+              "readLink",
               "setDecodingFunction",
               "setEncodingFunction",
-              "setPermissions",
-              "symLinkTarget"
+              "setPermissions"
             ]
 
     exposeFunctions(c,funcs)
@@ -421,7 +415,6 @@ def expose_QTextStream(c):
               "integerBase",
               "numberFlags",
               "padChar",
-              "pos",
               "read",
               "readAll",
               "readLine",
@@ -490,8 +483,7 @@ def expose_QDateTime(c):
               "operator>",
               "operator>=",
               "currentDateTime",
-              "fromString",
-              "fromTime_t"
+              "fromString"
             ]
 
     exposeFunctions(c,funcs)
@@ -516,7 +508,7 @@ def expose_QDate(c):
               "isNull",
               "isValid",
               "month",
-              "setDate",
+              "setYMD",
               "toJulianDay",
               "toString",
               "weekNumber",
@@ -655,7 +647,7 @@ implicitly_convertible = [ ("QDir::SortFlag", "QFlags<QDir::SortFlag>"),
                            ("QIODevice::OpenModeFlag", "QFlags<QIODevice::OpenModeFlag>"),
                            ("QTextStream::NumberFlag", "QFlags<QTextStream::NumberFlag>"),
                            ("QString", "QFileInfo"),
-                           ("QString", "QFileInfo"),
+                           ("QString", "QFile"),
                            ("QString", "QDir")
                          ]
 

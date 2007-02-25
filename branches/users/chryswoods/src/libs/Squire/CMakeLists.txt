@@ -10,89 +10,35 @@ include_directories(${QT_QTNETWORK_INCLUDE_DIR})
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
-# Flag to set whether or not to build squire
 set ( BUILD_SQUIRE "OFF" )
 
-# Define the sources in Squire
-#set ( SQUIRE_SOURCES
-#    )
-
-if (SIRE_BUILD_MOLPRO)
-
-  set ( MOLPRO_FOUND "OFF" )
-
-  #try to find the directory containing the 
-  #molproclient.h header file
-  FIND_PATH( MOLPRO_CLIENT_INCLUDE_DIR
-                MolproClient/molproclient.h
-             PATHS
-                $ENV{MOLPROCLIENTDIR}/include
-                $ENV{MOLPRODIR}/include
-             DOC
-                Path to the molproclient.h and molproclient_cpp.h include files.
-           )
-  
-  if ( MOLPRO_CLIENT_INCLUDE_DIR )
-
-    #try to find the MolproClient library...
-    FIND_LIBRARY ( MOLPRO_CLIENT_C_LIBRARY
-                     MolproClient
-                   PATHS
-                     ENV LD_LIBRARY_PATH
-                 )
-  
-    if ( MOLPRO_CLIENT_C_LIBRARY )
-
-      get_filename_component( MOLPRO_CLIENT_LIBRARY_PATH
-                              ${MOLPRO_CLIENT_C_LIBRARY}
-                              PATH CACHE )
-    
-      set ( MOLPRO_CLIENT_LIBRARIES 
-            "-L${MOLPRO_CLIENT_LIBRARY_PATH} -lMolproClient -lMolproClient_cpp"
-          )
-                             
-      set ( MOLPRO_FOUND "ON" )
-
-    endif ( MOLPRO_CLIENT_C_LIBRARY )
-
-  endif (MOLPRO_CLIENT_INCLUDE_DIR )
-
-  if (MOLPRO_FOUND)
+if (MOLPRO_FOUND)
  
-    #we definitely want to build squire
-    set ( BUILD_SQUIRE "ON" )
+  #we definitely want to build squire
+  set ( BUILD_SQUIRE "ON" )
 
-    #add the Molpro forcefield files
-    set ( SQUIRE_SOURCES
-          ${SQUIRE_SOURCES}
-          molprocalculator.cpp
-          molproff.cpp
-          molproprocessor.cpp
-          molprosession.cpp
-        )
-
-    set ( SQUIRE_INCLUDE_DIRS 
-                 ${SQUIRE_INCLUDE_DIRS} 
-                 ${MOLPRO_CLIENT_INCLUDE_DIR} 
-        )
-
-    set ( SQUIRE_LIBRARIES
-                 ${SQUIRE_LIBRARIES}
-                 ${MOLPRO_CLIENT_LIBRARIES}
-        )
- 
-    message ( STATUS "MolproClient paths ${MOLPRO_CLIENT_LIBRARIES} | "
-                     "${MOLPRO_CLIENT_INCLUDE_DIR}" )
-
-  else (MOLPRO_FOUND)
+  #add the Molpro forcefield files
+  set ( SQUIRE_SOURCES
   
-    message( STATUS "The MolproClient library was not found! "
-                    "Compilation of the Molpro-based forcefields "
-                    "has been disabled." )
+        ${SQUIRE_SOURCES}
+  
+        molprocalculator.cpp
+        molproff.cpp
+        molproprocessor.cpp
+        molprosession.cpp
+      )
 
-  endif (MOLPRO_FOUND)
+  set ( SQUIRE_INCLUDE_DIRS 
+               ${SQUIRE_INCLUDE_DIRS} 
+               ${MOLPRO_CLIENT_INCLUDE_DIR} 
+      )
 
-endif (SIRE_BUILD_MOLPRO)
+  set ( SQUIRE_LIBRARIES
+               ${SQUIRE_LIBRARIES}
+               ${MOLPRO_CLIENT_LIBRARIES}
+      )
+ 
+endif (MOLPRO_FOUND)
 
 if (BUILD_SQUIRE)
 

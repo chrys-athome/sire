@@ -107,13 +107,12 @@ BOOST_PYTHON_MODULE(_Qt){
     bp::implicitly_convertible< QIODevice::OpenModeFlag, QFlags<QIODevice::OpenModeFlag> >();
 
     bp::implicitly_convertible< QTextStream::NumberFlag, QFlags<QTextStream::NumberFlag> >();
-    
+
     bp::implicitly_convertible< QString, QFileInfo >();
-    
+
     bp::implicitly_convertible< QString, QFile >();
-    
+
     bp::implicitly_convertible< QString, QDir >();
-    
 
     register_QVariant_class();
 }

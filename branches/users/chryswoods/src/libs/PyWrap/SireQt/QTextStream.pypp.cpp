@@ -8,6 +8,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const QTextStream&){ return "QTextStream";}
+
 void register_QTextStream_class(){
 
     { //::QTextStream
@@ -120,15 +122,6 @@ void register_QTextStream_class(){
             QTextStream_exposer.def( 
                 "padChar"
                 , padChar_function_type( &::QTextStream::padChar ) );
-        
-        }
-        { //::QTextStream::pos
-        
-            typedef ::qint64 ( ::QTextStream::*pos_function_type )(  ) const;
-            
-            QTextStream_exposer.def( 
-                "pos"
-                , pos_function_type( &::QTextStream::pos ) );
         
         }
         { //::QTextStream::read
@@ -364,6 +357,7 @@ void register_QTextStream_class(){
                 , status_function_type( &::QTextStream::status ) );
         
         }
+        QTextStream_exposer.def( "__str__", &pvt_get_name);
     }
 
 }

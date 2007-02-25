@@ -8,6 +8,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const QChar&){ return "QChar";}
+
 void register_QChar_class(){
 
     { //::QChar
@@ -396,6 +400,11 @@ void register_QChar_class(){
         }
         QChar_exposer.staticmethod( "fromAscii" );
         QChar_exposer.staticmethod( "fromLatin1" );
+        QChar_exposer.def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::QChar >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
+        QChar_exposer.def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::QChar >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
+        QChar_exposer.def( "__str__", &pvt_get_name);
     }
 
 }

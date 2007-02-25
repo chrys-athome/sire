@@ -8,6 +8,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const QDataStream&){ return "QDataStream";}
+
 void register_QDataStream_class(){
 
     { //::QDataStream
@@ -34,7 +36,6 @@ void register_QDataStream_class(){
             .value("Qt_3_3", QDataStream::Qt_3_3)
             .value("Qt_4_0", QDataStream::Qt_4_0)
             .value("Qt_4_1", QDataStream::Qt_4_1)
-            .value("Qt_4_2", QDataStream::Qt_4_2)
             .export_values()
             ;
         { //::QDataStream::atEnd
@@ -151,6 +152,7 @@ void register_QDataStream_class(){
                 , version_function_type( &::QDataStream::version ) );
         
         }
+        QDataStream_exposer.def( "__str__", &pvt_get_name);
     }
 
 }

@@ -8,6 +8,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_QVariant_class(){
 
     { //::QVariant
@@ -43,7 +47,6 @@ void register_QVariant_class(){
             .value("Point", QVariant::Point)
             .value("PointF", QVariant::PointF)
             .value("RegExp", QVariant::RegExp)
-            .value("LastCoreType", QVariant::LastCoreType)
             .value("Font", QVariant::Font)
             .value("Pixmap", QVariant::Pixmap)
             .value("Brush", QVariant::Brush)
@@ -60,14 +63,11 @@ void register_QVariant_class(){
             .value("Pen", QVariant::Pen)
             .value("TextLength", QVariant::TextLength)
             .value("TextFormat", QVariant::TextFormat)
-            .value("Matrix", QVariant::Matrix)
-            .value("LastGuiType", QVariant::LastGuiType)
             .value("UserType", QVariant::UserType)
             .value("LastType", QVariant::LastType)
             .export_values()
             ;
         QVariant_exposer.def( bp::init< QVariant::Type >(( bp::arg("type") )) );
-        QVariant_exposer.def( bp::init< int, void const * >(( bp::arg("typeOrUserType"), bp::arg("copy") )) );
         QVariant_exposer.def( bp::init< QDataStream & >(( bp::arg("s") )) );
         QVariant_exposer.def( bp::init< int >(( bp::arg("i") )) );
         QVariant_exposer.def( bp::init< uint >(( bp::arg("ui") )) );
@@ -98,7 +98,6 @@ void register_QVariant_class(){
         QVariant_exposer.def( bp::init< QUrl const & >(( bp::arg("url") )) );
         QVariant_exposer.def( bp::init< QLocale const & >(( bp::arg("locale") )) );
         QVariant_exposer.def( bp::init< QRegExp const & >(( bp::arg("regExp") )) );
-        QVariant_exposer.def( bp::init< Qt::GlobalColor >(( bp::arg("color") )) );
         QVariant_exposer.def( bp::init< >() );
         { //::QVariant::canConvert
         
@@ -437,6 +436,11 @@ void register_QVariant_class(){
         }
         QVariant_exposer.staticmethod( "nameToType" );
         QVariant_exposer.staticmethod( "typeToName" );
+        QVariant_exposer.def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::QVariant >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
+        QVariant_exposer.def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::QVariant >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
+        QVariant_exposer.def( "__str__", &SirePy::__str__< ::QVariant > );
     }
 
 }

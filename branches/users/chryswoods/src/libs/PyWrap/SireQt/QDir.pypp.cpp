@@ -8,6 +8,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const QDir&){ return "QDir";}
+
 void register_QDir_class(){
 
     { //::QDir
@@ -206,7 +208,7 @@ void register_QDir_class(){
                 "entryList"
                 , entryList_function_type( &::QDir::entryList )
                 , ( bp::arg("nameFilters"), bp::arg("filters")=QDir::NoFilter,
-                    bp::arg("sort")=QDir::NoSort ) );
+                bp::arg("sort")=QDir::NoSort ) );
         
         }
         { //::QDir::exists
@@ -245,16 +247,6 @@ void register_QDir_class(){
             QDir_exposer.def( 
                 "filter"
                 , filter_function_type( &::QDir::filter ) );
-        
-        }
-        { //::QDir::fromNativeSeparators
-        
-            typedef ::QString ( *fromNativeSeparators_function_type )( ::QString const & );
-            
-            QDir_exposer.def( 
-                "fromNativeSeparators"
-                , fromNativeSeparators_function_type( &::QDir::fromNativeSeparators )
-                , ( bp::arg("pathName") ) );
         
         }
         { //::QDir::home
@@ -573,22 +565,11 @@ void register_QDir_class(){
                 , tempPath_function_type( &::QDir::tempPath ) );
         
         }
-        { //::QDir::toNativeSeparators
-        
-            typedef ::QString ( *toNativeSeparators_function_type )( ::QString const & );
-            
-            QDir_exposer.def( 
-                "toNativeSeparators"
-                , toNativeSeparators_function_type( &::QDir::toNativeSeparators )
-                , ( bp::arg("pathName") ) );
-        
-        }
         QDir_exposer.staticmethod( "addResourceSearchPath" );
         QDir_exposer.staticmethod( "cleanPath" );
         QDir_exposer.staticmethod( "current" );
         QDir_exposer.staticmethod( "currentPath" );
         QDir_exposer.staticmethod( "drives" );
-        QDir_exposer.staticmethod( "fromNativeSeparators" );
         QDir_exposer.staticmethod( "home" );
         QDir_exposer.staticmethod( "homePath" );
         QDir_exposer.staticmethod( "isAbsolutePath" );
@@ -600,7 +581,7 @@ void register_QDir_class(){
         QDir_exposer.staticmethod( "setCurrent" );
         QDir_exposer.staticmethod( "temp" );
         QDir_exposer.staticmethod( "tempPath" );
-        QDir_exposer.staticmethod( "toNativeSeparators" );
+        QDir_exposer.def( "__str__", &pvt_get_name);
     }
 
 }

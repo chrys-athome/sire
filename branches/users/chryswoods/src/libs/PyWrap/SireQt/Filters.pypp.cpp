@@ -8,6 +8,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const QFlags<QDir::Filter>&){ return "QFlags<QDir::Filter>";}
+
 void register_Filters_class(){
 
     bp::class_< QFlags<QDir::Filter> >( "Filters", bp::init< QDir::Filter >(( bp::arg("f") )) )    
@@ -29,9 +31,6 @@ void register_Filters_class(){
         .def( bp::self |= bp::self )    
         .def( bp::self |= bp::other< QDir::Filter >() )    
         .def( ~bp::self )    
-        .def( 
-            "testFlag"
-            , (bool ( ::QFlags<QDir::Filter>::* )( ::QDir::Filter ) const)( &::QFlags<QDir::Filter>::testFlag )
-            , ( bp::arg("f") ) );
+        .def( "__str__", &pvt_get_name);
 
 }
