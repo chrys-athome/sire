@@ -9,4 +9,4 @@
 #add_subdirectory (sire)
 add_subdirectory (siretest)
 #add_subdirectory (spier)
-add_subdirectory (testlink)
+#add_subdirectory (testlink)

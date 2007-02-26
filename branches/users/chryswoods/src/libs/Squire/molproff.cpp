@@ -515,16 +515,17 @@ void MolproFF::MMMolecule::update(QVector<double> &mm_coords_and_charges)
         //There is nothing to do :-)
         return;
     }
-    else if (idx < 0)
+    
+    //make sure that there is sufficient space in the array
+    if (idx + this->nAtomsInArray() > mm_coords_and_charges.count())
     {
-        //we are not currently in the array - allocate sufficient
-        //space for us
-        idx = mm_coords_and_charges.count();
-
-        //reserve sufficient space (four entries per atom - coords + charge)
-        mm_coords_and_charges.resize( idx + 4*nats );
+        throw SireError::program_bug( QObject::tr(
+            "There is insufficient space for this MM molecule in the "
+            "mm_coords_and_charges array! (Have %1 but need %2)")
+                  .arg(mm_coords_and_charges.count())
+                  .arg(idx + this->nAtomsInArray()), CODELOC );
     }
-
+    
     //ok - we assume that the array from idx to 4*nats is ours...
     int ngroups = coords.count();
     const QList< tuple<double,CoordGroup> > *coords_array = coords.constData();
@@ -570,9 +571,10 @@ void MolproFF::MMMolecule::update(QVector<double> &mm_coords_and_charges)
 
 /** Add the atoms and their charges from this molecule to the
     end of the mm_coords_and_charges array. */
-void MolproFF::MMMolecule::addTo(QVector<double> &mm_coords_and_charges)
+void MolproFF::MMMolecule::addTo(QVector<double> &mm_coords_and_charges,
+                                 int start_idx)
 {
-    idx = -1;
+    idx = start_idx;
     this->update(mm_coords_and_charges);
 }
 
@@ -1241,19 +1243,22 @@ bool MolproFF::updateArrays()
 
         if (natms > 0)
         {
-            mm_coords_and_charges.reserve(4*natms);
+            mm_coords_and_charges.resize(4*natms);
+            
+            int idx = 0;
 
             for (QHash<MoleculeID,MMMolecule>::iterator it = mm_mols.begin();
                  it != mm_mols.end();
                  ++it)
             {
-                it->addTo(mm_coords_and_charges);
+                it->addTo(mm_coords_and_charges, idx);
+                idx += it->nAtomsInArray();
             }
         }
 
         rebuild_all = false;
         rebuild_mm.clear();
-
+        
         return true;
     }
     else if (not rebuild_mm.isEmpty())
@@ -1318,12 +1323,15 @@ bool MolproFF::updateArrays()
             if (natms > 0)
             {
                 mm_coords_and_charges.reserve(4*natms);
+                
+                int idx = 0;
 
                 for (QHash<MoleculeID,MMMolecule>::iterator it = mm_mols.begin();
                      it != mm_mols.end();
                      ++it)
                 {
-                    it->addTo(mm_coords_and_charges);
+                    it->addTo(mm_coords_and_charges, idx);
+                    idx += it->nAtomsInArray();
                 }
             }
         }

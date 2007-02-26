@@ -308,7 +308,7 @@ private:
         void update(const CoordGroup &qm_coordgroup,
                     const Space &space, const SwitchingFunction &switchfunc);
 
-        void addTo(QVector<double> &mm_coords_and_charges);
+        void addTo(QVector<double> &mm_coords_and_charges, int start_idx);
         void update(QVector<double> &mm_coords_and_charges);
 
         int nAtomsInArray() const;

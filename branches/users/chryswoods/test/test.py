@@ -7,6 +7,7 @@ from Sire.CAS import *
 from Sire.Maths import *
 from Sire.Qt import *
 from Sire.Units import *
+from Sire.Squire import *
 
 timer = QTime()
 
@@ -29,8 +30,9 @@ switchfunc = HarmonicSwitchingFunction(80.0)
 switchfunc = HarmonicSwitchingFunction(15.0, 14.5)
 
 #create a forcefield for the molecules
-cljff = InterCLJFF( space, switchfunc )
-cljff2 = Tip4PFF( space, switchfunc )
+molpro = MolproFF()
+
+molpro.setMolproExe("../../../../../software/molpro/devel/molpro")
 
 #parametise each molecule and add it to the forcefield
 print "Parametising the molecules..."
@@ -45,22 +47,17 @@ ljs = AtomicLJs( [ LJParameter( 3.15365 * angstrom, \
                    LJParameter.dummy(), \
                    LJParameter.dummy() ] )
 
-tip4p = False
-
 timer.start()
 for mol in mols:
       
       mol.setProperty( "charges", chgs )
       mol.setProperty( "ljs", ljs )
 
-      if (not tip4p):
-          tip4p = mol
-      
-      cljff.add(mol, {cljff.parameters().coulomb() : "charges",
-                      cljff.parameters().lj() : "ljs"})
-                      
-      cljff2.add(mol, {cljff2.parameters().coulomb() : "charges",
-                       cljff2.parameters().lj() : "ljs"})
+qm_mol = mols[0]
+mm_mols = mols[1:]
+
+molpro.addToMM(mm_mols)
+molpro.addToQM(qm_mol)
 
 ms = timer.elapsed()
 print "... took %d ms" % ms
@@ -68,35 +65,5 @@ print "... took %d ms" % ms
 #now calculate the energy of the forcefield
 print "Calculating the energy..."
 
-timer.start()
-nrg = cljff.energy()
-ms = timer.elapsed()
-
-print "InterCLJFF ",cljff.energy(), "kcal mol-1"
-print "    Coulomb = ", cljff.energy(cljff.components().coulomb())
-print "         LJ = ", cljff.energy(cljff.components().lj())
-
-print "... took %d ms" % ms
-
-print "Calculating the energy..."
-
-timer.start()
-nrg = cljff2.energy()
-ms = timer.elapsed()
-
-print "Tip4PFF ",cljff2.energy(), "kcal mol-1"
-
-print "... took %d ms" % ms
-
-timer.start()
-
-nmoves = 1000
-for i in range(0,nmoves):
-    cljff.change( tip4p )
-    nrg = cljff.energy()
-
-ms = timer.elapsed()
-
-print "InterCLJFF ",cljff.energy(), "kcal mol-1"
-print "... took %d ms (%f moves per second)" % (ms, nmoves*1000.0/ms)
+nrg = molpro.energy()
 
