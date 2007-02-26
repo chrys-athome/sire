@@ -65,5 +65,8 @@ print "... took %d ms" % ms
 #now calculate the energy of the forcefield
 print "Calculating the energy..."
 
+timer.start()
 nrg = molpro.energy()
+ms = timer.elapsed()
 
+print "Energy = %f kcal mol-1, took %d ms" % (nrg, ms)

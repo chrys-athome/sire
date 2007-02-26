@@ -80,6 +80,8 @@ public:
 
 private:
 
+    static void removeDirectory(QDir dir);
+
     /** Mutex used to ensure that no two molpro jobs are started simultaeneously
         (so they don't trash each others tmp directories, or get in each others
         way when creating ports) */

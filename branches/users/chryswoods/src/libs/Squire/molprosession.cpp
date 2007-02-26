@@ -27,6 +27,7 @@
 \*********************************************/
 
 #include <QUuid>
+#include <QRegExp>
 #include <QHostInfo>
 
 #include "molproff.h"
@@ -42,9 +43,16 @@ QMutex MolproSession::starter_mutex;
 /** Construct a session that will represent the forcefield 'molproff' */
 MolproSession::MolproSession(const MolproFF &molproff)
               : boost::noncopyable(),
+                molpro_exe( molproff.molproExe() ),
                 ffid( molproff.ID() ),
                 qm_version( molproff.qmVersion() )
 {
+    if (not molpro_exe.isExecutable())
+        throw SireError::process_error( QObject::tr(
+            "Cannot start a separate Molpro process as the molpro file \"%1\" "
+            "is not executable, or does not exist!")
+                .arg(molpro_exe.absoluteFilePath()), CODELOC );
+
     //only one molpro job may start at a time!
     QMutexLocker lkr(&starter_mutex);
 
@@ -63,28 +71,29 @@ MolproSession::MolproSession(const MolproFF &molproff)
                                       .arg(getlogin()).arg(getpid())
                                       .arg(QUuid::createUuid().toString())
                                       .arg(n);
+
             #else
 
             //need to find the non-unix equivalent of the above... using
             // /molpro_UUID_IDNUMBER
             QString unique_dir = QString("/molpro_%1_%2")
                                       .arg(QUuid::createUuid().toString()).arg(n);
+
             #endif
 
             rundir = QDir( molproff.molproTempDir().absolutePath() + unique_dir );
-
             ++n;
 
         } while (rundir.exists());
 
         //ok, the directory doesn't exist - create it!
-        if ( not rundir.mkdir(rundir.absolutePath()) )
+        if ( not rundir.mkpath(rundir.absolutePath()) )
         {
             throw SireError::file_error( QObject::tr(
                           "Cannot create the tmp directory for molpro, \"%1\". "
                           "Check that you have permission to create directories in "
                           "\"%2\".")
-                              .arg(rundir.absolutePath(), 
+                              .arg(rundir.absolutePath(),
                                    molproff.molproTempDir().absolutePath()), CODELOC );
         }
 
@@ -95,8 +104,21 @@ MolproSession::MolproSession(const MolproFF &molproff)
         molpro_process.setWorkingDirectory(rundir.absolutePath());
 
         //as the process is now in 'rundir', we can set '.' as the TMPDIR
-        QStringList env = molpro_process.environment();
-        env.append( "TMPDIR=." );
+        QStringList env = QProcess::systemEnvironment();
+
+        //remove any existing TMPDIR=
+        QRegExp find_tmpdir_regexp("\\s*TMPDIR\\s*=\\s*.*", Qt::CaseInsensitive);
+
+        int idx = env.indexOf(find_tmpdir_regexp);
+
+        while (idx != -1)
+        {
+            env.removeAt(idx);
+            idx = env.indexOf(find_tmpdir_regexp);
+        }
+
+        //add the new TMPDIR location
+        env.append( QString("TMPDIR=%1").arg(rundir.absolutePath()) );
         molpro_process.setEnvironment(env);
 
         //start the molpro process
@@ -112,13 +134,11 @@ MolproSession::MolproSession(const MolproFF &molproff)
         //ok - other molpro jobs are allowed to start now
         lkr.unlock();
 
-        QTextStream ts(&molpro_process);
-
         //initialise the molpro process...
-        molproff.initialise(ts);
+        molpro_process.write( molproff.initialisationString().toLatin1() );
 
         //tell the molpro process to start its RPC connection
-        ts << "user\n";     //eventually will be ts << "start_rpc\n";
+        molpro_process.write("user\n");  //eventually will be write("start_rpc\n");
 
         //close the input (so that molpro starts up fully)
         molpro_process.closeWriteChannel();
@@ -140,9 +160,8 @@ MolproSession::MolproSession(const MolproFF &molproff)
 
                 while (molpro_process.canReadLine())
                 {
-                    //there is a line of text available to read - read it now
-                    //using the QTextStream
-                    QString line = ts.readLine();
+                    //there is a line of text available to read
+                    QString line = molpro_process.readLine();
 
                     //does the line contain the magic strings that say
                     //whether the RPC server has started?
@@ -193,7 +212,7 @@ MolproSession::MolproSession(const MolproFF &molproff)
         molpro_process.closeReadChannel(QProcess::StandardError);
 
         //now try to connect to the process via RPC
-        molpro_rpc = ::connectToMolproHost(QHostInfo::localHostName().toLatin1(), 
+        molpro_rpc = ::connectToMolproHost(QHostInfo::localHostName().toLatin1(),
                                            portnumber, magic_key, 0);
 
         //has the connection been successful?
@@ -217,8 +236,7 @@ MolproSession::MolproSession(const MolproFF &molproff)
         }
 
         //remove the directory
-        if (rundir.exists())
-            rundir.remove(rundir.absolutePath());
+        removeDirectory(rundir);
 
         //re-throw the exception
         throw;
@@ -254,8 +272,26 @@ MolproSession::~MolproSession()
     }
 
     //remove the run directory
-    if (rundir.exists())
-        rundir.remove(rundir.absolutePath());
+    removeDirectory(rundir);
+}
+
+/** Completely remove the passed directory (and all of its contents)
+      - USE WITH CARE!!! */
+void MolproSession::removeDirectory(QDir dir)
+{
+    foreach (QFileInfo file, dir.entryInfoList(QDir::NoDotAndDotDot))
+    {
+        if (file.isDir())
+        {
+            removeDirectory(file.absoluteFilePath());
+        }
+        else
+        {
+            dir.remove(file.absoluteFilePath());
+        }
+    }
+
+    dir.rmdir(dir.absolutePath());
 }
 
 /** Assert that this session is compatible with the
@@ -321,6 +357,10 @@ double MolproSession::calculateEnergy(const char *cmds)
     this->assertMolproIsRunning();
 
     double nrg;
+
+    nrg = ::calculateEnergy(molpro_rpc, cmds, 0, 0);
+
+    return nrg;
 
     if ( new_qm.isEmpty() )
     {

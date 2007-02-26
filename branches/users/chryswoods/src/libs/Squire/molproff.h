@@ -230,6 +230,8 @@ public:
 
     bool remove(const Molecule &molecule);
 
+    virtual QString initialisationString() const;
+
 protected:
     void recalculateEnergy();  //throw an exception
 
@@ -237,7 +239,6 @@ protected:
 
     //protected functions designed to be overloaded by child classes, and
     //only called by MolproCalculator
-    virtual void initialise(QTextStream &ts) const;
     virtual Values recalculateEnergy(MolproSession &session);
 
 private:

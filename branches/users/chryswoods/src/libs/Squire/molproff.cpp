@@ -48,6 +48,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QDebug>
+
 using namespace Squire;
 using namespace SireMM;
 using namespace SireFF;
@@ -515,7 +517,7 @@ void MolproFF::MMMolecule::update(QVector<double> &mm_coords_and_charges)
         //There is nothing to do :-)
         return;
     }
-    
+
     //make sure that there is sufficient space in the array
     if (idx + this->nAtomsInArray() > mm_coords_and_charges.count())
     {
@@ -525,7 +527,7 @@ void MolproFF::MMMolecule::update(QVector<double> &mm_coords_and_charges)
                   .arg(mm_coords_and_charges.count())
                   .arg(idx + this->nAtomsInArray()), CODELOC );
     }
-    
+
     //ok - we assume that the array from idx to 4*nats is ours...
     int ngroups = coords.count();
     const QList< tuple<double,CoordGroup> > *coords_array = coords.constData();
@@ -1244,7 +1246,7 @@ bool MolproFF::updateArrays()
         if (natms > 0)
         {
             mm_coords_and_charges.resize(4*natms);
-            
+
             int idx = 0;
 
             for (QHash<MoleculeID,MMMolecule>::iterator it = mm_mols.begin();
@@ -1258,7 +1260,7 @@ bool MolproFF::updateArrays()
 
         rebuild_all = false;
         rebuild_mm.clear();
-        
+
         return true;
     }
     else if (not rebuild_mm.isEmpty())
@@ -1323,7 +1325,7 @@ bool MolproFF::updateArrays()
             if (natms > 0)
             {
                 mm_coords_and_charges.reserve(4*natms);
-                
+
                 int idx = 0;
 
                 for (QHash<MoleculeID,MMMolecule>::iterator it = mm_mols.begin();
@@ -1357,10 +1359,30 @@ bool MolproFF::updateArrays()
     }
 }
 
-/** Initialise molpro - push in the commands necessary to set this system
-    up and calculate its energy... */
-void MolproFF::initialise(QTextStream &ts) const
-{}
+/** Return the commands used to initialise Molpro with this system */
+QString MolproFF::initialisationString() const
+{
+    return "geomtyp=xyz\n"
+           "geometry={ NOSYM, NOORIENT,\n"
+           "6 ! number of atoms\n"
+           "This is an example of geometry input for a water dimer with an XYZ file\n"
+           "O ,0.0000000000,0.0000000000,-0.1302052882\n"
+           "H ,1.4891244004,0.0000000000, 1.0332262019\n"
+           "H,-1.4891244004,0.0000000000, 1.0332262019\n"
+           "O ,0.0000000000,50.0000000000,-0.1302052882\n"
+           "H ,1.4891244004,50.0000000000, 1.0332262019\n"
+           "H,-1.4891244004,50.0000000000, 1.0332262019\n"
+           "}\n"
+
+          "lattice, NUCONLY\n"
+          "BEGIN_DATA\n"
+          "0.0, 0.0, 0.0, 1.0\n"
+          "5.0, 0.0, 0.0, -1.0\n"
+          "END\n"
+
+          "START\n"
+          "HF\n";
+}
 
 /** Use the passed MolproSession to recalculate the energy of
     this forcefield - this throws an exception if the session is
