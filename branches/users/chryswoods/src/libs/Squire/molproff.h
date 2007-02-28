@@ -230,7 +230,7 @@ public:
 
     bool remove(const Molecule &molecule);
 
-    virtual QString initialisationString() const;
+    virtual QString molproCommandInput();
 
 protected:
     void recalculateEnergy();  //throw an exception
@@ -243,6 +243,14 @@ protected:
 
 private:
     void registerComponents();
+
+    QString energyCmdString() const;
+    QString qmCoordString() const;
+    QString mmCoordAndChargesString() const;
+
+    int nQMAtomsInArray() const;
+    int nMMAtomsInArray() const;
+    int nAtomsInArray() const;
 
     enum { NOCHANGE = 0x0000, CHANGE = 0x0001, ADD = 0x0010 };
 
@@ -274,6 +282,10 @@ private:
 
         void addTo(QVector<double> &qm_array);
         void update(QVector<double> &qm_array) const;
+
+        QString coordString() const;
+
+        int nAtomsInArray() const;
 
     private:
         /** The molecule itself */
@@ -315,6 +327,8 @@ private:
         int nAtomsInArray() const;
 
         const QString& chargeProperty() const;
+
+        QString coordAndChargesString() const;
 
     private:
         /** The molecule itself */
@@ -400,6 +414,10 @@ private:
     /** Do we need to rebuild all of the coordinates?
         (we do whenever the QM coordinates change) */
     bool rebuild_all;
+
+    /** Do we really need to recalculate the QM/MM energy? We
+        only need to do so if the QM or MM arrays change */
+    bool need_recalculate_qmmm;
 
     /** Pointer to the object containing the components of
         this forcefield */

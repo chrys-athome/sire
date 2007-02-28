@@ -28,6 +28,9 @@ void register_MolproSession_class(){
             , (double ( ::Squire::MolproSession::* )( char const * ) )( &::Squire::MolproSession::calculateEnergy )
             , ( bp::arg("cmds") ) )    
         .def( 
+            "getCurrentEnergy"
+            , (double ( ::Squire::MolproSession::* )(  ) )( &::Squire::MolproSession::getCurrentEnergy ) )    
+        .def( 
             "incompatibleWith"
             , (bool ( ::Squire::MolproSession::* )( ::Squire::MolproFF const & ) const)( &::Squire::MolproSession::incompatibleWith )
             , ( bp::arg("molproff") ) )    

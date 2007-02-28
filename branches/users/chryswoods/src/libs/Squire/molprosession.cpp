@@ -35,13 +35,15 @@
 
 #include "SireError/errors.h"
 
+#include <QDebug>
+
 using namespace Squire;
 using namespace SireBase;
 
 QMutex MolproSession::starter_mutex;
 
 /** Construct a session that will represent the forcefield 'molproff' */
-MolproSession::MolproSession(const MolproFF &molproff)
+MolproSession::MolproSession(MolproFF &molproff)
               : boost::noncopyable(),
                 molpro_exe( molproff.molproExe() ),
                 ffid( molproff.ID() ),
@@ -135,10 +137,12 @@ MolproSession::MolproSession(const MolproFF &molproff)
         lkr.unlock();
 
         //initialise the molpro process...
-        molpro_process.write( molproff.initialisationString().toLatin1() );
+        int nbytes = molpro_process.write( molproff.molproCommandInput().toLatin1() );
+        BOOST_ASSERT(nbytes != -1);
 
         //tell the molpro process to start its RPC connection
-        molpro_process.write("user\n");  //eventually will be write("start_rpc\n");
+        nbytes = molpro_process.write("user\n");  //eventually will be write("start_rpc\n");
+        BOOST_ASSERT(nbytes != -1);
 
         //close the input (so that molpro starts up fully)
         molpro_process.closeWriteChannel();
@@ -162,6 +166,8 @@ MolproSession::MolproSession(const MolproFF &molproff)
                 {
                     //there is a line of text available to read
                     QString line = molpro_process.readLine();
+
+                    qDebug() << line;
 
                     //does the line contain the magic strings that say
                     //whether the RPC server has started?
@@ -206,14 +212,20 @@ MolproSession::MolproSession(const MolproFF &molproff)
 
         } while(not rpc_has_started);
 
+        qDebug() << CODELOC;
+
         //ok, it has started, we no longer need to read anything from molpro
         //as all communication now is via RPC
         molpro_process.closeReadChannel(QProcess::StandardOutput);
         molpro_process.closeReadChannel(QProcess::StandardError);
 
+        qDebug() << CODELOC;
+
         //now try to connect to the process via RPC
         molpro_rpc = ::connectToMolproHost(QHostInfo::localHostName().toLatin1(),
                                            portnumber, magic_key, 0);
+
+        qDebug() << CODELOC;
 
         //has the connection been successful?
         if (not molpro_rpc.client)
@@ -223,6 +235,7 @@ MolproSession::MolproSession(const MolproFF &molproff)
                         .arg(QHostInfo::localHostName()).arg(portnumber)
                         .arg(magic_key), CODELOC );
 
+        qDebug() << CODELOC;
         //ok, everything is now complete!
     }
     catch(...)
@@ -342,6 +355,14 @@ void MolproSession::setArrays(const QVector<double> &qm_array,
     //arrays now, but wait until the next evaluation
     new_qm = qm_array;
     new_mm = mm_array;
+}
+
+/** Return the current value of the energy */
+double MolproSession::getCurrentEnergy()
+{
+    qDebug() << CODELOC;
+    //return ::get_scalar(molpro_rpc, "ENERGY", 0);
+    return 0;
 }
 
 /** Calculate the energy of the current system using the

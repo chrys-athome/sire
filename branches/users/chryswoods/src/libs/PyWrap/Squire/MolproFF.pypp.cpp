@@ -116,6 +116,15 @@ void register_MolproFF_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        { //::Squire::MolproFF::molproCommandInput
+        
+            typedef ::QString ( ::Squire::MolproFF::*molproCommandInput_function_type )(  ) ;
+            
+            MolproFF_exposer.def( 
+                "molproCommandInput"
+                , molproCommandInput_function_type( &::Squire::MolproFF::molproCommandInput ) );
+        
+        }
         { //::Squire::MolproFF::molproExe
         
             typedef ::QFileInfo const & ( ::Squire::MolproFF::*molproExe_function_type )(  ) const;

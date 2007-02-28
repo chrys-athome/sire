@@ -62,6 +62,8 @@ molpro.addToQM(qm_mol)
 ms = timer.elapsed()
 print "... took %d ms" % ms
       
+print molpro.molproCommandInput()
+      
 #now calculate the energy of the forcefield
 print "Calculating the energy..."
 

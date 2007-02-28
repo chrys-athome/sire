@@ -216,6 +216,31 @@ bool MolproFF::QMMolecule::change(const NewAtom &atom)
     return this->change(atom.molecule());
 }
 
+/** Return the number of atoms in the array */
+int MolproFF::QMMolecule::nAtomsInArray() const
+{
+    int nqmatoms = 0;
+
+    int ngroups = elements.count();
+    const QVector<Element> *elements_array = elements.constData();
+
+    for (int i=0; i<ngroups; ++i)
+    {
+        const QVector<Element> &elements_vector = elements_array[i];
+
+        int nats = elements_vector.count();
+        const Element *elem_array = elements_vector.constData();
+
+        for (int j=0; j<nats; ++j)
+        {
+            if (elem_array[j].nProtons() != 0)
+                ++nqmatoms;
+        }
+    }
+
+    return nqmatoms;
+}
+
 /** Add the coordinates of this QM molecule to the array 'qm_array' */
 void MolproFF::QMMolecule::addTo(QVector<double> &qm_array)
 {
@@ -260,6 +285,48 @@ void MolproFF::QMMolecule::addTo(QVector<double> &qm_array)
                 indx_array[j] = -1;
         }
     }
+}
+
+/** Return Molpro format strings that describe the geometry of this molecule */
+QString MolproFF::QMMolecule::coordString() const
+{
+    QString qmcoords = "";
+
+    const QVector<CoordGroup> &coordgroups = mol.coordGroups();
+
+    int ngroups = coordgroups.count();
+
+    BOOST_ASSERT(ngroups == elements.count());
+
+    const CoordGroup *groups_array = coordgroups.constData();
+    const QVector<Element> *elements_array = elements.constData();
+
+    //loop over all atoms in every cutgroup
+    for (int i=0; i<ngroups; ++i)
+    {
+        int natoms = groups_array[i].count();
+        BOOST_ASSERT(natoms == elements_array[i].count());
+
+        const Vector *coords_array = groups_array[i].constData();
+        const Element *elem_array = elements_array[i].constData();
+
+        for (int j=0; j<natoms; ++j)
+        {
+            const Element &element = elem_array[j];
+
+            if (element.nProtons() != 0)
+            {
+                //this is not a dummy atom - add it to the list of QM atoms
+                qmcoords += QString("%1,%2,%3,%4\n")
+                                .arg(element.symbol())
+                                .arg( convertTo(coords_array[j].x(), angstrom) )
+                                .arg( convertTo(coords_array[j].y(), angstrom) )
+                                .arg( convertTo(coords_array[j].z(), angstrom) );
+            }
+        }
+    }
+
+    return qmcoords;
 }
 
 /** Update the coordinates of the atoms in the array 'qm_array' */
@@ -571,6 +638,55 @@ void MolproFF::MMMolecule::update(QVector<double> &mm_coords_and_charges)
     }
 }
 
+/** Return a Molpro format string providing the coordinates and charges of atoms
+    in this molecule that are within the electrostatic cutoff of the QM atoms. */
+QString MolproFF::MMMolecule::coordAndChargesString() const
+{
+    QString mmcoords = "";
+
+    if (nats == 0)
+        //There is nothing to do :-)
+        return mmcoords;
+
+    int ngroups = coords.count();
+    const QList< tuple<double,CoordGroup> > *coords_array = coords.constData();
+    const QVector<ChargeParameter> *chgs_array = chgs.constData();
+
+    //add each CutGroup in turn...
+    for (int i=0; i<ngroups; ++i)
+    {
+        const QList< tuple<double,CoordGroup> > &group_coords = coords_array[i];
+        const ChargeParameter *group_charges = chgs_array[i].constData();
+
+        //loop over each copy of the CoordGroup and add it in turn
+        for (QList< tuple<double,CoordGroup> >::const_iterator it =
+                                                    group_coords.constBegin();
+             it != group_coords.constEnd();
+             ++it)
+        {
+            double scalefac = it->get<0>();
+            const CoordGroup &copy = it->get<1>();
+
+            int natms = copy.count();
+            const Vector *copy_array = copy.constData();
+
+            for (int j=0; j<natms; ++j)
+            {
+                const Vector &atom = copy_array[j];
+                double atom_charge = scalefac * group_charges[j].charge();
+
+                mmcoords += QString("%1, %2, %3, %4\n")
+                              .arg( convertTo(atom.x(), angstrom) )
+                              .arg( convertTo(atom.y(), angstrom) )
+                              .arg( convertTo(atom.z(), angstrom) )
+                              .arg( convertTo(atom_charge, mod_electrons) );
+            }
+        }
+    }
+
+    return mmcoords;
+}
+
 /** Add the atoms and their charges from this molecule to the
     end of the mm_coords_and_charges array. */
 void MolproFF::MMMolecule::addTo(QVector<double> &mm_coords_and_charges,
@@ -723,6 +839,7 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, MolproFF &molproff)
         //need to rebuild qm_coords, qm_coordgroup
         //and mm_coords_and_charges
         molproff.rebuild_all = true;
+        molproff.need_recalculate_qmmm = true;
         molproff.rebuild_mm.clear();
     }
     else
@@ -739,7 +856,7 @@ MolproFF::MolproFF()
          : FFBase(),
            molpro_exe("molpro"), molpro_tmpdir(QDir::temp()),
            qm_version(&global_molproff_qm_version),
-           rebuild_all(true)
+           rebuild_all(true), need_recalculate_qmmm(true)
 {
     this->registerComponents();
 }
@@ -750,7 +867,7 @@ MolproFF::MolproFF(const Space &space, const SwitchingFunction &switchingfunctio
            spce(space), switchfunc(switchingfunction),
            molpro_exe("molpro"), molpro_tmpdir(QDir::temp()),
            qm_version(&global_molproff_qm_version),
-           rebuild_all(true)
+           rebuild_all(true), need_recalculate_qmmm(true)
 {
     this->registerComponents();
 }
@@ -764,7 +881,8 @@ MolproFF::MolproFF(const MolproFF &other)
            mm_coords_and_charges(other.mm_coords_and_charges),
            qm_mols(other.qm_mols), mm_mols(other.mm_mols),
            qm_version(other.qm_version),
-           rebuild_mm(other.rebuild_mm), rebuild_all(other.rebuild_all)
+           rebuild_mm(other.rebuild_mm), rebuild_all(other.rebuild_all),
+           need_recalculate_qmmm(other.need_recalculate_qmmm)
 {
     //get the pointer from the base class...
     components_ptr = dynamic_cast<const MolproFF::Components*>( &(FFBase::components()) );
@@ -793,6 +911,7 @@ MolproFF& MolproFF::operator=(const MolproFF &other)
         qm_version = other.qm_version;
         rebuild_mm = other.rebuild_mm;
         rebuild_all = other.rebuild_all;
+        need_recalculate_qmmm = other.need_recalculate_qmmm;
 
         components_ptr = dynamic_cast<const MolproFF::Components*>( &(FFBase::components()) );
         BOOST_ASSERT( components_ptr != 0 );
@@ -1260,8 +1379,7 @@ bool MolproFF::updateArrays()
 
         rebuild_all = false;
         rebuild_mm.clear();
-
-        return true;
+        need_recalculate_qmmm = true;
     }
     else if (not rebuild_mm.isEmpty())
     {
@@ -1304,7 +1422,6 @@ bool MolproFF::updateArrays()
             //the change hasn't affected the mm_coords_and_charges array.
             //There is thus no need to redo the QM calculation :-)
             rebuild_mm.clear();
-            return false;
         }
         else if (rebuild_mm_array)
         {
@@ -1350,38 +1467,104 @@ bool MolproFF::updateArrays()
         }
 
         rebuild_mm.clear();
-        return true;
+        need_recalculate_qmmm = true;
     }
-    else
-    {
-        //there is nothing to rebuild
-        return false;
-    }
+
+    return need_recalculate_qmmm;
 }
 
-/** Return the commands used to initialise Molpro with this system */
-QString MolproFF::initialisationString() const
+/** Return the string of commands used to calculate the energy */
+QString MolproFF::energyCmdString() const
 {
-    return "geomtyp=xyz\n"
-           "geometry={ NOSYM, NOORIENT,\n"
-           "6 ! number of atoms\n"
-           "This is an example of geometry input for a water dimer with an XYZ file\n"
-           "O ,0.0000000000,0.0000000000,-0.1302052882\n"
-           "H ,1.4891244004,0.0000000000, 1.0332262019\n"
-           "H,-1.4891244004,0.0000000000, 1.0332262019\n"
-           "O ,0.0000000000,50.0000000000,-0.1302052882\n"
-           "H ,1.4891244004,50.0000000000, 1.0332262019\n"
-           "H,-1.4891244004,50.0000000000, 1.0332262019\n"
-           "}\n"
+    return "HF";
+}
 
-          "lattice, NUCONLY\n"
-          "BEGIN_DATA\n"
-          "0.0, 0.0, 0.0, 1.0\n"
-          "5.0, 0.0, 0.0, -1.0\n"
-          "END\n"
+/** Return Molpro format strings used to specify the QM geometry */
+QString MolproFF::qmCoordString() const
+{
+    QString qmcoords = "";
 
-          "START\n"
-          "HF\n";
+    for ( QHash<MoleculeID,QMMolecule>::const_iterator it = qm_mols.begin();
+          it != qm_mols.end();
+          ++it )
+    {
+        qmcoords += it->coordString();
+    }
+
+    return qmcoords;
+}
+
+/** Return Molpro format strings used to specify the MM geometry and charges */
+QString MolproFF::mmCoordAndChargesString() const
+{
+    QString mmcoords = "";
+
+    for (QHash<MoleculeID,MMMolecule>::const_iterator it = mm_mols.begin();
+         it != mm_mols.end();
+         ++it)
+    {
+        mmcoords += it->coordAndChargesString();
+    }
+
+    return mmcoords;
+}
+
+/** Return the number of QM atoms in the array */
+int MolproFF::nQMAtomsInArray() const
+{
+    int nats = 0;
+
+    for (QHash<MoleculeID,QMMolecule>::const_iterator it = qm_mols.begin();
+         it != qm_mols.end();
+         ++it)
+    {
+        nats += it->nAtomsInArray();
+    }
+
+    return nats;
+}
+
+/** Return the number of MM atoms in the array */
+int MolproFF::nMMAtomsInArray() const
+{
+    int nats = 0;
+
+    for (QHash<MoleculeID,MMMolecule>::const_iterator it = mm_mols.begin();
+         it != mm_mols.end();
+         ++it)
+    {
+        nats += it->nAtomsInArray();
+    }
+
+    return nats;
+}
+
+/** Return the total number of atoms in both the QM and MM arrays */
+int MolproFF::nAtomsInArray() const
+{
+    return nQMAtomsInArray() + nMMAtomsInArray();
+}
+
+/** Return the commands used to initialise Molpro with this system
+    and calculate the required energy */
+QString MolproFF::molproCommandInput()
+{
+    this->updateArrays();
+
+    return QString("geomtyp=xyz\n"
+                   "geometry={ NOSYM, NOORIENT,\n"
+                   "%1 ! number of atoms\n"
+                   "This is an auto-generated molpro command file generated using Sire\n"
+                   "%2}\n"
+                   "lattice, NUCONLY\n"
+                   "BEGIN_DATA\n"
+                   "%3\n"
+                   "END\n"
+                   "START\n"
+                   "%4")
+              .arg( nQMAtomsInArray() )
+              .arg( qmCoordString(), mmCoordAndChargesString(),
+                    energyCmdString() );
 }
 
 /** Use the passed MolproSession to recalculate the energy of
@@ -1403,6 +1586,8 @@ Values MolproFF::recalculateEnergy(MolproSession &session)
         //calculate the HF energy of the system
         double hf_nrg = session.calculateEnergy("HF");
 
+        need_recalculate_qmmm = false;
+
         setComponent( components().total(), hf_nrg );
         setComponent( components().qm(), hf_nrg );
     }
@@ -1420,13 +1605,15 @@ void MolproFF::recalculateEnergy()
     if (this->updateArrays())
     {
         //start a new molpro session for this forcefield
+        //(this calculates the energy)
         MolproSession session(*this);
 
-        //pass the coordinates to the session
-        session.setArrays(qm_coords, mm_coords_and_charges);
+        //obtain the calculated energy from molpro
+        double hf_nrg = session.getCurrentEnergy();
 
-        double hf_nrg = session.calculateEnergy("HF");
+        need_recalculate_qmmm = false;
 
+        //save the energy in the right components
         setComponent( components().total(), hf_nrg );
         setComponent( components().qm(), hf_nrg );
 

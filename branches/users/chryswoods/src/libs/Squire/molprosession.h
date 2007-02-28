@@ -64,7 +64,7 @@ using SireBase::Version;
 class SQUIRE_EXPORT MolproSession : public boost::noncopyable
 {
 public:
-    MolproSession(const MolproFF &molproff);
+    MolproSession(MolproFF &molproff);
 
     ~MolproSession();
 
@@ -72,6 +72,8 @@ public:
                    const QVector<double> &mm_array);
 
     double calculateEnergy(const char *cmds);
+
+    double getCurrentEnergy();
 
     bool incompatibleWith(const MolproFF &molproff) const;
     void assertCompatibleWith(const MolproFF &molproff) const;
