@@ -99,8 +99,8 @@ MolproSession::MolproSession(MolproFF &molproff)
                                    molproff.molproTempDir().absolutePath()), CODELOC );
         }
 
-        //merge the STDOUT and STDERR channels into one
-        molpro_process.setReadChannelMode(QProcess::MergedChannels);
+        //ignore the STDERR channel
+        molpro_process.closeReadChannel(QProcess::StandardError);
 
         //tell the process to use 'rundir' as its working directory
         molpro_process.setWorkingDirectory(rundir.absolutePath());
@@ -167,8 +167,6 @@ MolproSession::MolproSession(MolproFF &molproff)
                     //there is a line of text available to read
                     QString line = molpro_process.readLine();
 
-                    qDebug() << line;
-
                     //does the line contain the magic strings that say
                     //whether the RPC server has started?
                     if (line.startsWith("MOLPRO_RPC_STARTED"))
@@ -201,8 +199,8 @@ MolproSession::MolproSession(MolproFF &molproff)
                 //waited without having any output from Molpro...
                 ++nsecs;
 
-                if (nsecs > 60)
-                    //60 seconds without any output suggests
+                if (nsecs > 3600)
+                    //one hour without any output suggests
                     //that something has gone wrong...
                     throw SireError::process_error( QObject::tr(
                             "We have gone more than %d seconds without any contact "
@@ -212,20 +210,13 @@ MolproSession::MolproSession(MolproFF &molproff)
 
         } while(not rpc_has_started);
 
-        qDebug() << CODELOC;
-
         //ok, it has started, we no longer need to read anything from molpro
         //as all communication now is via RPC
         molpro_process.closeReadChannel(QProcess::StandardOutput);
-        molpro_process.closeReadChannel(QProcess::StandardError);
-
-        qDebug() << CODELOC;
 
         //now try to connect to the process via RPC
         molpro_rpc = ::connectToMolproHost(QHostInfo::localHostName().toLatin1(),
                                            portnumber, magic_key, 0);
-
-        qDebug() << CODELOC;
 
         //has the connection been successful?
         if (not molpro_rpc.client)
@@ -235,7 +226,13 @@ MolproSession::MolproSession(MolproFF &molproff)
                         .arg(QHostInfo::localHostName()).arg(portnumber)
                         .arg(magic_key), CODELOC );
 
-        qDebug() << CODELOC;
+        //save the qm and mm arrays that are now loaded into the process
+        current_mm = molproff.mmCoordsAndChargesArray();
+        current_qm = molproff.qmCoordsArray();
+
+        new_mm = current_mm;
+        new_qm = current_qm;
+
         //ok, everything is now complete!
     }
     catch(...)
@@ -360,9 +357,22 @@ void MolproSession::setArrays(const QVector<double> &qm_array,
 /** Return the current value of the energy */
 double MolproSession::getCurrentEnergy()
 {
-    qDebug() << CODELOC;
-    //return ::get_scalar(molpro_rpc, "ENERGY", 0);
-    return 0;
+    char *error = 0;
+
+    double nrg = ::get_scalar(molpro_rpc, "ENERGY", &error);
+
+    if (error)
+    {
+        QString qerror( error );
+
+        delete error;
+
+        throw SireError::process_error( QObject::tr(
+                "There was an error obtaining the current energy from Molpro: %1")
+                    .arg(qerror), CODELOC );
+    }
+
+    return nrg;
 }
 
 /** Calculate the energy of the current system using the
@@ -370,18 +380,17 @@ double MolproSession::getCurrentEnergy()
 
     \throw SireError::process_error
 */
-double MolproSession::calculateEnergy(const char *cmds)
+double MolproSession::calculateEnergy(const QString &qcmds)
 {
-    BOOST_ASSERT( cmds != 0 );
+    QByteArray bcmds = qcmds.toLatin1();
+    BOOST_ASSERT( not bcmds.isEmpty() );
+    const char *cmds = bcmds.constData();
 
     //molpro still needs to be running!
     this->assertMolproIsRunning();
 
     double nrg;
-
-    nrg = ::calculateEnergy(molpro_rpc, cmds, 0, 0);
-
-    return nrg;
+    char *error = 0;
 
     if ( new_qm.isEmpty() )
     {
@@ -395,7 +404,8 @@ double MolproSession::calculateEnergy(const char *cmds)
             //the coordinates of the QM and MM regions have not changed
             //since the last evaluation - just run the commands and
             //get the energy
-            nrg = ::calculateEnergy(molpro_rpc, cmds, 0, 0);
+            //nrg = ::run_hf(molpro_rpc, &error);
+            nrg = ::calculateEnergy( molpro_rpc, "HF", 0, &error );
         }
         else
         {
@@ -404,7 +414,7 @@ double MolproSession::calculateEnergy(const char *cmds)
                                               cmds,
                                               const_cast<double*>(new_mm.constData()),
                                               new_mm.count() / 4,
-                                              0, 0 );
+                                              0, &error );
         }
     }
     else
@@ -417,7 +427,7 @@ double MolproSession::calculateEnergy(const char *cmds)
                                               cmds,
                                               const_cast<double*>(new_qm.constData()),
                                               new_qm.count() / 3,
-                                              0, 0 );
+                                              0, &error );
         }
         else
         {
@@ -427,8 +437,20 @@ double MolproSession::calculateEnergy(const char *cmds)
                                                 new_qm.count() / 3,
                                                 const_cast<double*>(new_mm.constData()),
                                                 new_mm.count() / 4,
-                                                0, 0 );
+                                                0, &error );
         }
+    }
+
+    if (error)
+    {
+        //something went wrong!
+        QString qerror(error);
+        delete error;
+
+        throw SireError::process_error( QObject::tr(
+                "Error detected while running the Molpro commands \"%1\" : %2")
+                    .arg(qcmds, qerror), CODELOC );
+
     }
 
     //ok - copy the new arrays to old as they are now definitely

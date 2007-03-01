@@ -25,10 +25,12 @@ extra_includes = [ "SireMol/molecule.h",
                    "SireMol/newatom.h"
                  ]
 
-special_code = {}
+def fix_MolproFF(c):
+    c.noncopyable = False
+
+special_code = { "MolproFF" : fix_MolproFF }
 
 implicitly_convertible = []
-                           
 
 incpaths = sys.argv[1:]
 incpaths.insert(0, "../../")
@@ -43,7 +45,6 @@ headerfiles = ["squire_headers.h"]
 mb = module_builder_t( files=headerfiles, 
                        include_paths=incpaths,
                        define_symbols=["SKIP_BROKEN_GCCXML_PARTS"] )
-#                       start_with_declarations = [namespace] )
 
 populateNamespaces(mb)
 

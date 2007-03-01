@@ -232,8 +232,11 @@ public:
 
     virtual QString molproCommandInput();
 
+    const QVector<double>& mmCoordsAndChargesArray() const;
+    const QVector<double>& qmCoordsArray() const;
+
 protected:
-    void recalculateEnergy();  //throw an exception
+    void recalculateEnergy();
 
     bool updateArrays();
 
@@ -246,7 +249,7 @@ private:
 
     QString energyCmdString() const;
     QString qmCoordString() const;
-    QString mmCoordAndChargesString() const;
+    QString mmCoordAndChargesString();
 
     int nQMAtomsInArray() const;
     int nMMAtomsInArray() const;
@@ -457,6 +460,22 @@ inline const Space& MolproFF::space() const
 inline const SwitchingFunction& MolproFF::switchingFunction() const
 {
     return switchfunc;
+}
+
+/** Return the current array containing MM coordinates and charges. Call
+    updateArrays() before this function to ensure that the returned
+    array is up to date. */
+inline const QVector<double>& MolproFF::mmCoordsAndChargesArray() const
+{
+    return mm_coords_and_charges;
+}
+
+/** Return the current array containing QM coordinates. Call
+    updateArrays() before this function to ensure that the returned
+    array is up to date. */
+inline const QVector<double>& MolproFF::qmCoordsArray() const
+{
+    return qm_coords;
 }
 
 }

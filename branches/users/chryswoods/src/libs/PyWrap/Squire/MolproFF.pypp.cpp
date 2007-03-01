@@ -18,10 +18,12 @@ namespace bp = boost::python;
 void register_MolproFF_class(){
 
     { //::Squire::MolproFF
-        typedef bp::class_< Squire::MolproFF, bp::bases< SireFF::FFBase >, boost::noncopyable > MolproFF_exposer_t;
+        typedef bp::class_< Squire::MolproFF, bp::bases< SireFF::FFBase > > MolproFF_exposer_t;
         MolproFF_exposer_t MolproFF_exposer = MolproFF_exposer_t( "MolproFF" );
         bp::scope MolproFF_scope( MolproFF_exposer );
         bp::class_< Squire::MolproFF::Components, bp::bases< SireFF::FFBase::Components > >( "Components" )    
+            .def( bp::init< >() )    
+            .def( bp::init< SireFF::FFBase const &, bp::optional< SireCAS::Symbols const & > >(( bp::arg("ffbase"), bp::arg("symbols")=::SireCAS::Symbols( ) )) )    
             .def( 
                 "describe_qm"
                 , (::QString (*)(  ))( &::Squire::MolproFF::Components::describe_qm ) )    
@@ -31,11 +33,14 @@ void register_MolproFF_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() )    
             .staticmethod( "describe_qm" );
         bp::class_< Squire::MolproFF::Parameters, bp::bases< SireFF::FFBase::Parameters > >( "Parameters" )    
+            .def( bp::init< >() )    
             .def( 
                 "coulomb"
                 , (::SireFF::ParameterName const & ( ::Squire::MolproFF::Parameters::* )(  ) const)( &::Squire::MolproFF::Parameters::coulomb )
                 , bp::return_value_policy< bp::copy_const_reference >() )    
             .def_readonly( "default_sources", Squire::MolproFF::Parameters::default_sources );
+        MolproFF_exposer.def( bp::init< >() );
+        MolproFF_exposer.def( bp::init< SireVol::Space const &, SireMM::SwitchingFunction const & >(( bp::arg("space"), bp::arg("switchfunc") )) );
         { //::Squire::MolproFF::addToMM
         
             typedef bool ( ::Squire::MolproFF::*addToMM_function_type )( ::SireMol::Molecule const &,::SireFF::ParameterMap const & ) ;
@@ -116,6 +121,16 @@ void register_MolproFF_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        { //::Squire::MolproFF::mmCoordsAndChargesArray
+        
+            typedef ::QVector<double> const & ( ::Squire::MolproFF::*mmCoordsAndChargesArray_function_type )(  ) const;
+            
+            MolproFF_exposer.def( 
+                "mmCoordsAndChargesArray"
+                , mmCoordsAndChargesArray_function_type( &::Squire::MolproFF::mmCoordsAndChargesArray )
+                , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
         { //::Squire::MolproFF::molproCommandInput
         
             typedef ::QString ( ::Squire::MolproFF::*molproCommandInput_function_type )(  ) ;
@@ -152,6 +167,16 @@ void register_MolproFF_class(){
             MolproFF_exposer.def( 
                 "parameters"
                 , parameters_function_type( &::Squire::MolproFF::parameters )
+                , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
+        { //::Squire::MolproFF::qmCoordsArray
+        
+            typedef ::QVector<double> const & ( ::Squire::MolproFF::*qmCoordsArray_function_type )(  ) const;
+            
+            MolproFF_exposer.def( 
+                "qmCoordsArray"
+                , qmCoordsArray_function_type( &::Squire::MolproFF::qmCoordsArray )
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }

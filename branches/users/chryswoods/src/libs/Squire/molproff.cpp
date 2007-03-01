@@ -623,16 +623,20 @@ void MolproFF::MMMolecule::update(QVector<double> &mm_coords_and_charges)
             for (int j=0; j<natms; ++j)
             {
                 const Vector &atom = copy_array[j];
-                double atom_charge = scalefac * group_charges[j].charge();
+                double atom_charge = group_charges[j].charge();
 
-                mm_coords_and_charges[current_idx] = convertTo(atom.x(), bohr_radii);
-                ++current_idx;
-                mm_coords_and_charges[current_idx] = convertTo(atom.y(), bohr_radii);
-                ++current_idx;
-                mm_coords_and_charges[current_idx] = convertTo(atom.z(), bohr_radii);
-                ++current_idx;
-                mm_coords_and_charges[current_idx] = convertTo(atom_charge, mod_electrons);
-                ++current_idx;
+                if (atom_charge != 0)
+                {
+                    mm_coords_and_charges[current_idx] = convertTo(atom.x(), bohr_radii);
+                    ++current_idx;
+                    mm_coords_and_charges[current_idx] = convertTo(atom.y(), bohr_radii);
+                    ++current_idx;
+                    mm_coords_and_charges[current_idx] = convertTo(atom.z(), bohr_radii);
+                    ++current_idx;
+                    mm_coords_and_charges[current_idx] = convertTo(scalefac*atom_charge,
+                                                                   mod_electrons);
+                    ++current_idx;
+                }
             }
         }
     }
@@ -673,13 +677,17 @@ QString MolproFF::MMMolecule::coordAndChargesString() const
             for (int j=0; j<natms; ++j)
             {
                 const Vector &atom = copy_array[j];
-                double atom_charge = scalefac * group_charges[j].charge();
+                double atom_charge = group_charges[j].charge();
 
-                mmcoords += QString("%1, %2, %3, %4\n")
-                              .arg( convertTo(atom.x(), angstrom) )
-                              .arg( convertTo(atom.y(), angstrom) )
-                              .arg( convertTo(atom.z(), angstrom) )
-                              .arg( convertTo(atom_charge, mod_electrons) );
+                if (atom_charge != 0)
+                {
+                    mmcoords += QString("%1, %2, %3, %4\n")
+                                  .arg( convertTo(atom.x(), angstrom) )
+                                  .arg( convertTo(atom.y(), angstrom) )
+                                  .arg( convertTo(atom.z(), angstrom) )
+                                  .arg( convertTo(scalefac*atom_charge,
+                                                  mod_electrons) );
+                }
             }
         }
     }
@@ -1495,8 +1503,11 @@ QString MolproFF::qmCoordString() const
 }
 
 /** Return Molpro format strings used to specify the MM geometry and charges */
-QString MolproFF::mmCoordAndChargesString() const
+QString MolproFF::mmCoordAndChargesString()
 {
+    //need to ensure that the MM array is up to date
+    this->updateArrays();
+
     QString mmcoords = "";
 
     for (QHash<MoleculeID,MMMolecule>::const_iterator it = mm_mols.begin();
@@ -1549,8 +1560,6 @@ int MolproFF::nAtomsInArray() const
     and calculate the required energy */
 QString MolproFF::molproCommandInput()
 {
-    this->updateArrays();
-
     return QString("geomtyp=xyz\n"
                    "geometry={ NOSYM, NOORIENT,\n"
                    "%1 ! number of atoms\n"
@@ -1561,7 +1570,7 @@ QString MolproFF::molproCommandInput()
                    "%3\n"
                    "END\n"
                    "START\n"
-                   "%4")
+                   "%4\n")
               .arg( nQMAtomsInArray() )
               .arg( qmCoordString(), mmCoordAndChargesString(),
                     energyCmdString() );
@@ -1584,7 +1593,7 @@ Values MolproFF::recalculateEnergy(MolproSession &session)
         session.setArrays(qm_coords, mm_coords_and_charges);
 
         //calculate the HF energy of the system
-        double hf_nrg = session.calculateEnergy("HF");
+        double hf_nrg = session.calculateEnergy(this->energyCmdString());
 
         need_recalculate_qmmm = false;
 
@@ -1609,7 +1618,7 @@ void MolproFF::recalculateEnergy()
         MolproSession session(*this);
 
         //obtain the calculated energy from molpro
-        double hf_nrg = session.getCurrentEnergy();
+        double hf_nrg = session.calculateEnergy("HF");
 
         need_recalculate_qmmm = false;
 

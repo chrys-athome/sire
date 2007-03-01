@@ -71,7 +71,7 @@ public:
     void setArrays(const QVector<double> &qm_array,
                    const QVector<double> &mm_array);
 
-    double calculateEnergy(const char *cmds);
+    double calculateEnergy(const QString &cmds);
 
     double getCurrentEnergy();
 
