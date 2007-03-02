@@ -82,6 +82,8 @@ public:
 
 private:
 
+    void captureErrorLog();
+
     static void removeDirectory(QDir dir);
 
     /** Mutex used to ensure that no two molpro jobs are started simultaeneously
@@ -123,6 +125,9 @@ private:
     /** The new MM array that needs to be loaded into molpro before
         the next evaluation */
     QVector<double> new_mm;
+
+    /** The errors that have occured during the session */
+    QStringList errorlog;
 };
 
 }

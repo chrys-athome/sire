@@ -1618,7 +1618,7 @@ void MolproFF::recalculateEnergy()
         MolproSession session(*this);
 
         //obtain the calculated energy from molpro
-        double hf_nrg = session.calculateEnergy("HF");
+        double hf_nrg = session.calculateEnergy(this->energyCmdString());
 
         need_recalculate_qmmm = false;
 

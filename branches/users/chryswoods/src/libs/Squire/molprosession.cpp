@@ -99,8 +99,28 @@ MolproSession::MolproSession(MolproFF &molproff)
                                    molproff.molproTempDir().absolutePath()), CODELOC );
         }
 
-        //ignore the STDERR channel
-        molpro_process.closeReadChannel(QProcess::StandardError);
+        //Read the STDERR channel - this is the channel to which the RPC port and magic
+        //numbers will be written, and it also contains any molpro errors. In addition,
+        //I use STDERR as Molpro is highly talkative on STDOUT and I don't want to
+        //waste time processing lots of unnecessary text.
+        molpro_process.setReadChannel(QProcess::StandardError);
+
+        //ignore the STDOUT channel
+        // The STDOUT channel must be ignored or else it may lead to deadlock.
+        // This process uses the RPC client call to request an energy calculation.
+        // The Molpro server carries out the calculation, then writes a lot of output
+        // to STDOUT. However, the pipe buffer is small, and the output is greater
+        // than the size of the pipe buffer. This means that Molpro will block
+        // until the pipe buffer is read or cleared. However, this process cannot
+        // clear or read the pipe buffer because it is itself blocked waiting for
+        // molpro to complete the calculation. Eventually the RPC timeout kicks in,
+        // and the call has failed. Note that I've only seen this behaviour for
+        // Qt >= 4.2, and indeed this fix is only valid for Qt >= 4.2
+        #if QT_VERSION >= 0x040200
+          molpro_process.setStandardOutputFile("/dev/null");
+        #else
+          molpro_process.closeReadChannel(QProcess::StandardOutput);
+        #endif
 
         //tell the process to use 'rundir' as its working directory
         molpro_process.setWorkingDirectory(rundir.absolutePath());
@@ -212,7 +232,7 @@ MolproSession::MolproSession(MolproFF &molproff)
 
         //ok, it has started, we no longer need to read anything from molpro
         //as all communication now is via RPC
-        molpro_process.closeReadChannel(QProcess::StandardOutput);
+        //molpro_process.closeReadChannel(QProcess::StandardOutput);
 
         //now try to connect to the process via RPC
         molpro_rpc = ::connectToMolproHost(QHostInfo::localHostName().toLatin1(),
@@ -354,6 +374,16 @@ void MolproSession::setArrays(const QVector<double> &qm_array,
     new_mm = mm_array;
 }
 
+/** Capture the output to STDERR and append to the log */
+void MolproSession::captureErrorLog()
+{
+    while (molpro_process.canReadLine())
+    {
+        QString error = molpro_process.readLine();
+        errorlog.append(error);
+    }
+}
+
 /** Return the current value of the energy */
 double MolproSession::getCurrentEnergy()
 {
@@ -361,15 +391,17 @@ double MolproSession::getCurrentEnergy()
 
     double nrg = ::get_scalar(molpro_rpc, "ENERGY", &error);
 
+    this->captureErrorLog();
+
     if (error)
     {
         QString qerror( error );
-
-        delete error;
+        free(error);
 
         throw SireError::process_error( QObject::tr(
-                "There was an error obtaining the current energy from Molpro: %1")
-                    .arg(qerror), CODELOC );
+                "There was an error obtaining the current energy from Molpro: %1.\n"
+                "Errors reported from Molpro:\n%2")
+                    .arg(qerror, errorlog.join("")), CODELOC );
     }
 
     return nrg;
@@ -405,7 +437,7 @@ double MolproSession::calculateEnergy(const QString &qcmds)
             //since the last evaluation - just run the commands and
             //get the energy
             //nrg = ::run_hf(molpro_rpc, &error);
-            nrg = ::calculateEnergy( molpro_rpc, "HF", 0, &error );
+            nrg = ::calculateEnergy( molpro_rpc, cmds, 0, &error );
         }
         else
         {
@@ -441,15 +473,19 @@ double MolproSession::calculateEnergy(const QString &qcmds)
         }
     }
 
+    //capture any errors
+    this->captureErrorLog();
+
     if (error)
     {
         //something went wrong!
         QString qerror(error);
-        delete error;
+        free(error);
 
         throw SireError::process_error( QObject::tr(
-                "Error detected while running the Molpro commands \"%1\" : %2")
-                    .arg(qcmds, qerror), CODELOC );
+                "Error detected while running the Molpro commands \"%1\" : %2\n"
+                "Molpro error log:\n%3")
+                    .arg(qcmds, qerror, errorlog.join("")), CODELOC );
 
     }
 
