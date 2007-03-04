@@ -22,12 +22,12 @@ print "... took %d ms" % ms
 #specify the space in which the molecules are placed
 space = Cartesian()
 
-space = PeriodicBox(Vector(-18.3854,-18.66855,-18.4445), \
-                    Vector( 18.3854, 18.66855, 18.4445))
+#space = PeriodicBox(Vector(-18.3854,-18.66855,-18.4445), \
+#                    Vector( 18.3854, 18.66855, 18.4445))
 
 #specify the type of switching function to use
 switchfunc = HarmonicSwitchingFunction(80.0)
-switchfunc = HarmonicSwitchingFunction(15.0, 14.5)
+switchfunc = HarmonicSwitchingFunction(10.0, 9.5)
 
 #create a forcefield for the molecules
 molpro = MolproFF(space, switchfunc)
@@ -59,7 +59,7 @@ mm_mols = mols[1:]
 molpro.addToMM(mm_mols)
 molpro.addToQM(qm_mol)
 
-f = open("/home/chzcjw/test.cmd","w")
+f = open("/home/chris/test.cmd","w")
 
 f.write( str(molpro.molproCommandInput()) )
 

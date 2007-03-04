@@ -42,6 +42,21 @@ using namespace SireBase;
 
 QMutex MolproSession::starter_mutex;
 
+/** Return the path to the null file (/dev/null on unix, NUL on windows) */
+QString devNull()
+{
+    #ifdef Q_OS_UNIX
+      return "/dev/null";
+    #else
+      #ifdef Q_OS_WIN32
+        return "NUL";
+      #else
+        #error You need to supply the path to the null device on this platform!
+        return "";
+      #endif
+    #endif
+}
+
 /** Construct a session that will represent the forcefield 'molproff' */
 MolproSession::MolproSession(MolproFF &molproff)
               : boost::noncopyable(),
@@ -114,12 +129,13 @@ MolproSession::MolproSession(MolproFF &molproff)
         // until the pipe buffer is read or cleared. However, this process cannot
         // clear or read the pipe buffer because it is itself blocked waiting for
         // molpro to complete the calculation. Eventually the RPC timeout kicks in,
-        // and the call has failed. Note that I've only seen this behaviour for
-        // Qt >= 4.2, and indeed this fix is only valid for Qt >= 4.2
+        // and the call has failed. I have seen this occur with both Qt 4.1 and 4.2,
+        // though only 4.2 has the ability to fix it!
         #if QT_VERSION >= 0x040200
-          molpro_process.setStandardOutputFile("/dev/null");
+          molpro_process.setStandardOutputFile( devNull() );
         #else
-          molpro_process.closeReadChannel(QProcess::StandardOutput);
+          #error Qt >= 4.2 is required to ensure a robust connection to Molpro. \
+                 Please upgrade to at least Qt 4.2
         #endif
 
         //tell the process to use 'rundir' as its working directory
@@ -225,7 +241,7 @@ MolproSession::MolproSession(MolproFF &molproff)
                     throw SireError::process_error( QObject::tr(
                             "We have gone more than %d seconds without any contact "
                             "from Molpro and it still hasn't started its RPC server!")
-                                .arg(60), CODELOC );
+                                .arg(nsecs), CODELOC );
             }
 
         } while(not rpc_has_started);
