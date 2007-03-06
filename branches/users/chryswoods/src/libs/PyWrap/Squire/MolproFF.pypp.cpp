@@ -199,6 +199,16 @@ void register_MolproFF_class(){
                 , ( bp::arg("molecule") ) );
         
         }
+        { //::Squire::MolproFF::setEnergyOrigin
+        
+            typedef void ( ::Squire::MolproFF::*setEnergyOrigin_function_type )( double ) ;
+            
+            MolproFF_exposer.def( 
+                "setEnergyOrigin"
+                , setEnergyOrigin_function_type( &::Squire::MolproFF::setEnergyOrigin )
+                , ( bp::arg("nrg_zero") ) );
+        
+        }
         { //::Squire::MolproFF::setMolproExe
         
             typedef void ( ::Squire::MolproFF::*setMolproExe_function_type )( ::QFileInfo const & ) ;

@@ -733,7 +733,7 @@ QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds, const MolproFF &molproff)
     sds << molproff.spce << molproff.switchfunc
         << molproff.molpro_exe.absoluteFilePath()     //save the full path to the
         << molproff.molpro_tmpdir.absolutePath()      //molpro exe and temp dirs...
-        << molproff.qm_version;
+        << molproff.qm_version << molproff.zero_nrg;
 
     //now stream in all of the QM molecules
     const QHash<MoleculeID,MolproFF::QMMolecule> &qm_mols = molproff.qm_mols;
@@ -783,7 +783,7 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, MolproFF &molproff)
 
         sds >> molproff.spce >> molproff.switchfunc
             >> molpro_exe_path >> molpro_tmpdir_path
-            >> molproff.qm_version;
+            >> molproff.qm_version >> molproff.zero_nrg;
 
         //get the fileinfo for the molpro executable
         QFileInfo molpro_exe( molpro_exe_path );
@@ -863,7 +863,7 @@ static Incremint global_molproff_qm_version;
 MolproFF::MolproFF()
          : FFBase(),
            molpro_exe("molpro"), molpro_tmpdir(QDir::temp()),
-           qm_version(&global_molproff_qm_version),
+           qm_version(&global_molproff_qm_version), zero_nrg(0),
            rebuild_all(true), need_recalculate_qmmm(true)
 {
     this->registerComponents();
@@ -874,7 +874,7 @@ MolproFF::MolproFF(const Space &space, const SwitchingFunction &switchingfunctio
          : FFBase(),
            spce(space), switchfunc(switchingfunction),
            molpro_exe("molpro"), molpro_tmpdir(QDir::temp()),
-           qm_version(&global_molproff_qm_version),
+           qm_version(&global_molproff_qm_version), zero_nrg(0),
            rebuild_all(true), need_recalculate_qmmm(true)
 {
     this->registerComponents();
@@ -888,7 +888,7 @@ MolproFF::MolproFF(const MolproFF &other)
            qm_coords(other.qm_coords),
            mm_coords_and_charges(other.mm_coords_and_charges),
            qm_mols(other.qm_mols), mm_mols(other.mm_mols),
-           qm_version(other.qm_version),
+           qm_version(other.qm_version), zero_nrg(other.zero_nrg),
            rebuild_mm(other.rebuild_mm), rebuild_all(other.rebuild_all),
            need_recalculate_qmmm(other.need_recalculate_qmmm)
 {
@@ -917,6 +917,7 @@ MolproFF& MolproFF::operator=(const MolproFF &other)
         qm_mols = other.qm_mols;
         mm_mols = other.mm_mols;
         qm_version = other.qm_version;
+        zero_nrg = other.zero_nrg;
         rebuild_mm = other.rebuild_mm;
         rebuild_all = other.rebuild_all;
         need_recalculate_qmmm = other.need_recalculate_qmmm;
@@ -1576,6 +1577,43 @@ QString MolproFF::molproCommandInput()
                     energyCmdString() );
 }
 
+/** Set the origin of the energy scale - this is the absolute
+    energy which corresponds to zero. The supplied energy
+    must be in kcal mol, and the energies returned by
+    this forcefield will be the QM energy minus this
+    origin energy. The purpose of this is to bring
+    the QM energies down to the same sort of magnitude
+    as the other MM energies, thereby minimising numerical
+    errors when calculating energy differences. */
+void MolproFF::setEnergyOrigin(double nrg)
+{
+    //what is the change in origin?
+    double delta = (zero_nrg * hartree) - nrg;
+
+    //add this change onto the current energy
+    if (not isZero(delta))
+    {
+        //we need to know if this forcefield is already dirty
+        bool is_already_dirty = this->isDirty();
+
+        //we need to increment the minor version as the forcefield
+        //is undergoing a change that will alter the energy. This
+        //will set the forcefield as dirty if it isn't already
+        this->incrementMinorVersion();
+
+        this->changeComponent( components().total(), delta );
+        this->changeComponent( components().qm(), delta );
+
+        //now save the new zero energy in hartrees
+        zero_nrg = convertTo(nrg, hartree);
+
+        //if the forcefield was originally clean, then we need to
+        //restore the clean status
+        if (not is_already_dirty)
+            this->setClean();
+    }
+}
+
 /** Use the passed MolproSession to recalculate the energy of
     this forcefield - this throws an exception if the session is
     incompatible with this forcefield
@@ -1594,6 +1632,8 @@ Values MolproFF::recalculateEnergy(MolproSession &session)
 
         //calculate the HF energy of the system
         double hf_nrg = session.calculateEnergy(this->energyCmdString());
+
+        hf_nrg = (hf_nrg - zero_nrg) * hartree;
 
         need_recalculate_qmmm = false;
 
@@ -1619,6 +1659,9 @@ void MolproFF::recalculateEnergy()
 
         //obtain the calculated energy from molpro
         double hf_nrg = session.calculateEnergy(this->energyCmdString());
+
+        //subtract the zero energy and convert to kcal mol-1
+        hf_nrg = (hf_nrg - zero_nrg) * hartree;
 
         need_recalculate_qmmm = false;
 

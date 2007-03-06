@@ -9,6 +9,8 @@ from Sire.Qt import *
 from Sire.Units import *
 from Sire.Squire import *
 
+import os
+
 timer = QTime()
 
 #read in all of the molecules
@@ -22,8 +24,8 @@ print "... took %d ms" % ms
 #specify the space in which the molecules are placed
 space = Cartesian()
 
-#space = PeriodicBox(Vector(-18.3854,-18.66855,-18.4445), \
-#                    Vector( 18.3854, 18.66855, 18.4445))
+space = PeriodicBox(Vector(-18.3854,-18.66855,-18.4445), \
+                    Vector( 18.3854, 18.66855, 18.4445))
 
 #specify the type of switching function to use
 switchfunc = HarmonicSwitchingFunction(80.0)
@@ -59,17 +61,44 @@ mm_mols = mols[1:]
 molpro.addToMM(mm_mols)
 molpro.addToQM(qm_mol)
 
-f = open("/home/chris/test.cmd","w")
-
-f.write( str(molpro.molproCommandInput()) )
-
-f.close()
-
 ms = timer.elapsed()
 print "... took %d ms" % ms
       
 #now calculate the energy of the forcefield
 print "Calculating the energy..."
+
+timer.start()
+nrg = molpro.energy()
+ms = timer.elapsed()
+
+print "Energy = %f kcal mol-1, took %d ms" % (nrg, ms)
+
+# set the origin of the QM energy
+molpro.setEnergyOrigin(nrg)
+
+nrg = molpro.energy()
+print "Scaled energy = %f kcal mol-1" % nrg
+
+#lets translate the QM molecule by 0.1 A
+qm_mol.translate( (-5.0,0.0,0.0) )
+
+molpro.change(qm_mol)
+
+
+f = open( os.path.join(os.getenv("HOME"),"test.cmd"), "w" )
+f.write( str(molpro.molproCommandInput()) )
+f.close()
+
+timer.start()
+nrg = molpro.energy()
+ms = timer.elapsed()
+
+print "Energy = %f kcal mol-1, took %d ms" % (nrg, ms)
+
+#now lets translate the QM molecule back again
+qm_mol.translate( (5.0,0.0,0.0) )
+
+molpro.change(qm_mol)
 
 timer.start()
 nrg = molpro.energy()

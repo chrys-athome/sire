@@ -211,6 +211,8 @@ public:
     void setMolproExe(const QFileInfo &molpro);
     void setMolproTempDir(const QDir &tempdir);
 
+    virtual void setEnergyOrigin(double nrg_zero);
+
     const Space& space() const;
     const SwitchingFunction& switchingFunction() const;
 
@@ -410,6 +412,12 @@ private:
         This version number is incremented whenever a QM molecule
         is added or removed. */
     MajVersion qm_version;
+
+    /** The 'zero' energy - this is held in hartrees and is subtracted
+        from the energy returned by Molpro before it is converted
+        to kcal mol-1. This is to help avoid numerical instability
+        caused by taking the difference of very large kcal mol-1 values. */
+    double zero_nrg;
 
     /** Set of MoleculeIDs of MM molecules that need rebuilding */
     QSet<MoleculeID> rebuild_mm;
