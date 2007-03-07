@@ -50,6 +50,8 @@ namespace SireMol
 {
 
 class Molecule;
+class Residue;
+class NewAtom;
 
 /** This class holds information about a selection of atoms in a Molecule.
     The selection is held in the most memory-efficient manner possible,
@@ -67,10 +69,17 @@ public:
     AtomSelection();
 
     AtomSelection(const Molecule &molecule);
+    AtomSelection(const Residue &residue);
+    AtomSelection(const NewAtom &atom);
 
     AtomSelection(const AtomSelection &other);
 
     ~AtomSelection();
+
+    AtomSelection& operator=(const AtomSelection &other);
+
+    bool operator==(const AtomSelection &other) const;
+    bool operator!=(const AtomSelection &other) const;
 
     bool isEmpty() const;
 
@@ -79,12 +88,20 @@ public:
     int nSelected(CutGroupID cgid) const;
     int nSelected(ResNum resnum) const;
 
+    int nSelectedCutGroups() const;
+    int nSelectedResidues() const;
+
     bool selected(const CGAtomID &cgatomid) const;
 
     bool selectedAll() const;
 
     bool selectedAll(CutGroupID cgid) const;
     bool selectedAll(ResNum resnum) const;
+
+    bool selectedNone() const;
+
+    bool selectedNone(CutGroupID cgid) const;
+    bool selectedNone(ResNum resnum) const;
 
     void selectAll();
     void deselectAll();
@@ -97,6 +114,15 @@ public:
 
     void select(const CGAtomID &cgatomid);
     void deselect(const CGAtomID &cgatomid);
+
+    void invert();
+
+    void applyMask(const QSet<CutGroupID> &cgids);
+    void applyMask(const QSet<ResNum> &resnums);
+    void applyMask(const AtomSelection &other);
+
+    void assertCompatibleWith(const MoleculeInfo &molinfo) const;
+    void assertCompatibleWith(const Molecule &molecule) const;
 
 private:
     bool _pvt_selected(const CGAtomID &cgatomid) const;

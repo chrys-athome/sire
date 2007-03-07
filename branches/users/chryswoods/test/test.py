@@ -73,6 +73,10 @@ ms = timer.elapsed()
 
 print "Energy = %f kcal mol-1, took %d ms" % (nrg, ms)
 
+f = open( os.path.join(os.getenv("HOME"),"test.cmd"), "w" )
+f.write( str(molpro.molproCommandInput()) )
+f.close()
+
 # set the origin of the QM energy
 molpro.setEnergyOrigin(nrg)
 
@@ -83,11 +87,6 @@ print "Scaled energy = %f kcal mol-1" % nrg
 qm_mol.translate( (-5.0,0.0,0.0) )
 
 molpro.change(qm_mol)
-
-
-f = open( os.path.join(os.getenv("HOME"),"test.cmd"), "w" )
-f.write( str(molpro.molproCommandInput()) )
-f.close()
 
 timer.start()
 nrg = molpro.energy()

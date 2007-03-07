@@ -30,6 +30,7 @@
 
 #include "molecule.h"
 #include "residue.h"
+#include "newatom.h"
 #include "moleculeinfo.h"
 #include "residueinfo.h"
 #include "resnum.h"
@@ -81,6 +82,27 @@ AtomSelection::AtomSelection(const Molecule &molecule)
                 nselected(molecule.nAtoms())
 {}
 
+/** Construct a selection which initially represents the selection
+    of all of the atoms in 'residue' */
+AtomSelection::AtomSelection(const Residue &residue)
+              : molinfo(residue.molecule().info()),
+                nselected(0)
+
+{
+    this->deselectAll();
+    this->selectAll(residue.number());
+}
+
+/** Construct a selection which initially represents the selection
+    of the atom 'atom' */
+AtomSelection::AtomSelection(const NewAtom &atom)
+              : molinfo(atom.molecule().info()),
+                nselected(0)
+{
+    this->deselectAll();
+    this->select(atom.cgAtomID());
+}
+
 /** Copy constructor */
 AtomSelection::AtomSelection(const AtomSelection &other)
               : selected_atoms(other.selected_atoms),
@@ -104,11 +126,57 @@ int AtomSelection::nSelected() const
     return nselected;
 }
 
+/** Return the total number of CutGroups that contain at least
+    one selected atom */
+int AtomSelection::nSelectedCutGroups() const
+{
+    if (this->selectedAll())
+        return molinfo.nCutGroups();
+    else
+        return selected_atoms.count();
+}
+
+/** Return the total number of residues that contain at least
+    one selected atom */
+int AtomSelection::nSelectedResidues() const
+{
+    if (this->selectedAll())
+        return molinfo.nResidues();
+    else
+    {
+        int nselected = 0;
+
+        uint nres = molinfo.nResidues();
+
+        for (ResID i(0); i<nres; ++i)
+        {
+            QSet<CutGroupID> cgids = molinfo[i].cutGroupIDs();
+
+            foreach (CutGroupID cgid, cgids)
+            {
+                if (selected_atoms.contains(cgid))
+                {
+                    ++nres;
+                    break;
+                }
+            }
+        }
+
+        return nres;
+    }
+}
+
 /** Return whether or not all atoms in the molecule have
     been selected. */
 bool AtomSelection::selectedAll() const
 {
     return nselected != 0 and selected_atoms.isEmpty();
+}
+
+/** Return whether or not no atoms have been selected */
+bool AtomSelection::selectedNone() const
+{
+    return nselected == 0;
 }
 
 /** Return the total number of selected atoms in the
@@ -190,6 +258,26 @@ bool AtomSelection::selectedAll(CutGroupID cgid) const
 bool AtomSelection::selectedAll(ResNum resnum) const
 {
     return nSelected(resnum) == molinfo.nAtoms(resnum);
+}
+
+/** Return whether or not no atoms in the CutGroup with ID == cgid
+    have been selected
+
+    \throw SireError::invalid_index
+*/
+bool AtomSelection::selectedNone(CutGroupID cgid) const
+{
+    return nSelected(cgid) == 0;
+}
+
+/** Return whether or not no atoms in the residue with
+    number 'resnum' have been selected
+
+    \throw SireMol::missing_residue
+*/
+bool AtomSelection::selectedNone(ResNum resnum) const
+{
+    return nSelected(resnum) == 0;
 }
 
 /** Return whether or not the atom with the index 'cgatomid'
@@ -512,4 +600,124 @@ void AtomSelection::deselect(const CGAtomID &cgatomid)
 {
     molinfo.assertAtomExists(cgatomid);
     this->_pvt_deselect(cgatomid);
+}
+
+/** Invert the current selection */
+void AtomSelection::invert()
+{
+    if (this->selectedAll())
+    {
+        this->deselectAll();
+        return;
+    }
+
+    if (this->selectedNone())
+    {
+        this->selectAll();
+        return;
+    }
+
+    uint ncg = molinfo.nCutGroups();
+
+    for (CutGroupID i(0); i<ncg; ++i)
+    {
+        if (this->selectedAll(i))
+            this->deselectAll(i);
+        else if (this->selectedNone(i))
+            this->selectAll(i);
+        else
+        {
+            uint nats = molinfo.nAtoms(i);
+
+            for (AtomID j(0); j<nats; ++j)
+            {
+                CGAtomID cgatomid(i,j);
+
+                if (this->selected(cgatomid))
+                    this->deselect(cgatomid);
+                else
+                    this->select(cgatomid);
+            }
+        }
+    }
+}
+
+/** Apply the mask of CutGroupIDs to this selection - this deselects
+    every CutGroup that does not have its ID in 'cgids' */
+void AtomSelection::applyMask(const QSet<CutGroupID> &cgids)
+{
+    uint ncg = molinfo.nCutGroups();
+
+    for (CutGroupID i(0); i<ncg; ++i)
+    {
+        if (not cgids.contains(i))
+            this->deselectAll(i);
+    }
+}
+
+/** Apply the mask of residue numbers to this selection - this
+    deselects every residue that does not have its number in 'resnums' */
+void AtomSelection::applyMask(const QSet<ResNum> &resnums)
+{
+    foreach (ResNum resnum, molinfo.residueNumbers())
+    {
+        if (not resnums.contains(resnum))
+            this->deselectAll(resnum);
+    }
+}
+
+/** Apply the mask of one AtomSelection to the other - this creates
+    the union of the two AtomSelections
+
+    \throw SireError::incompatible_error
+*/
+void AtomSelection::applyMask(const AtomSelection &other)
+{
+    this->assertCompatibleWith(other.molinfo);
+
+    if (other.selectedAll())
+        return;
+
+    if (other.selectedNone())
+        this->deselectAll();
+
+    uint ncg = molinfo.nCutGroups();
+
+    for (CutGroupID i(0); i<ncg; ++i)
+    {
+        if (other.selectedAll(i))
+            continue;
+        else if (other.selectedNone(i))
+            this->deselectAll(i);
+        else
+        {
+            uint nats = molinfo.nAtoms(i);
+
+            for (AtomID j(0); j<nats; ++j)
+            {
+                CGAtomID cgatomid(i,j);
+
+                if (not other.selected(cgatomid))
+                    this->deselect(cgatomid);
+            }
+        }
+    }
+}
+
+/** Assert that 'info' is compatible with this selection. This
+    will throw an exception unless info == molinfo
+
+    \throw SireError::incompatible_error
+*/
+void AtomSelection::assertCompatibleWith(const MoleculeInfo &info) const
+{
+    if (info != molinfo)
+        throw SireError::incompatible_error( QObject::tr(
+                "The passed Molecule is not compatible with this selection!"), CODELOC );
+}
+
+/** Assert that 'molecule' is compatible with this selection */
+void AtomSelection::assertCompatibleWith(const Molecule &molecule) const
+{
+    this->assertCompatibleWith(molecule.info());
 }
