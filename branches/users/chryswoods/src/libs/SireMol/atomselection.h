@@ -134,6 +134,9 @@ public:
 
     QList<AtomIndex> selected() const;
 
+    QSet<CutGroupID> selectedCutGroups() const;
+    QSet<ResNum> selectedResidues() const;
+
 private:
     bool _pvt_selected(const CGAtomID &cgatomid) const;
 

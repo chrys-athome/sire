@@ -36,6 +36,7 @@ set ( SIREMM_SOURCES
       errors.cpp	      
       intercljff.cpp        
       intergroupcljff.cpp   
+      interljff.cpp
       internaldatatypes.cpp 
       ljdb.cpp
       ljff.cpp

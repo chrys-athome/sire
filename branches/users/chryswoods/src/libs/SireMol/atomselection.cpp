@@ -872,3 +872,59 @@ QList<AtomIndex> AtomSelection::selected() const
     
     return all_atoms;
 }
+
+/** Return the CutGroupIDs of any CutGroups that have at least one
+    selected atom */
+QSet<CutGroupID> AtomSelection::selectedCutGroups() const
+{
+    if (this->selectedAll())
+    {
+        QSet<CutGroupID> cgids;
+        
+        uint ncg = molinfo.nCutGroups();
+        
+        if (ncg > 0)
+        {
+            cgids.reserve(ncg);
+            
+            for (CutGroupID i(0); i<ncg; ++i)
+                cgids.insert(i);
+        }
+        
+        return cgids;
+    }
+    else if (this->selectedNone())
+    {
+        return QSet<CutGroupID>();
+    }
+    else
+        return selected_atoms.keys().toSet();
+}
+
+/** Return the residue numbers of any residues that have at least
+    one selected atom */
+QSet<ResNum> AtomSelection::selectedResidues() const
+{
+    if (this->selectedAll())
+    {
+        return QList<ResNum>::fromVector(molinfo.residueNumbers()).toSet();
+    }
+    else if (this->selectedNone())
+    {
+        return QSet<ResNum>();
+    }
+    else
+    {
+        QVector<ResNum> resnums = molinfo.residueNumbers();
+        
+        QSet<ResNum> selected_res;
+        
+        foreach (ResNum resnum, resnums)
+        {
+            if (this->nSelected(resnum) > 0)
+                selected_res.insert(resnum);
+        }
+        
+        return selected_res;
+    }
+}

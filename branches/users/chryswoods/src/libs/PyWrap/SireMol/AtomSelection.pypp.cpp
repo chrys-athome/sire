@@ -139,6 +139,9 @@ void register_AtomSelection_class(){
             , (bool ( ::SireMol::AtomSelection::* )( ::SireMol::ResNum ) const)( &::SireMol::AtomSelection::selectedAll )
             , ( bp::arg("resnum") ) )    
         .def( 
+            "selectedCutGroups"
+            , &::SireMol::AtomSelection::selectedCutGroups )    
+        .def( 
             "selectedNone"
             , (bool ( ::SireMol::AtomSelection::* )(  ) const)( &::SireMol::AtomSelection::selectedNone ) )    
         .def( 
@@ -149,6 +152,9 @@ void register_AtomSelection_class(){
             "selectedNone"
             , (bool ( ::SireMol::AtomSelection::* )( ::SireMol::ResNum ) const)( &::SireMol::AtomSelection::selectedNone )
             , ( bp::arg("resnum") ) )    
+        .def( 
+            "selectedResidues"
+            , &::SireMol::AtomSelection::selectedResidues )    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::AtomSelection >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::AtomSelection >,

@@ -34,6 +34,7 @@
 #include "SireMM/dihedralgenerator.h"
 #include "SireMM/dihedraltable.h"
 #include "SireMM/intercljff.h"
+#include "SireMM/interljff.h"
 #include "SireMM/intergroupcljff.h"
 #include "SireMM/internaldatatypes.h"
 #include "SireMM/ljdb.h"

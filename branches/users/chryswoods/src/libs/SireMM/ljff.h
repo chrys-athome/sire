@@ -98,6 +98,10 @@ public:
 
     ~LJFF();
 
+    class LJMolecule;
+    class LJMoleculeData;  //private implementation of LJMolecule
+    class ChangedLJMolecule;
+    
     class SIREMM_EXPORT Components : public FFBase::Components
     {
     public:
@@ -176,143 +180,21 @@ public:
         return *components_ptr;
     }
 
+    static double calculateEnergy(const LJMolecule &mol0,
+                                  const LJMolecule &mol1,
+                                  const Space &space,
+                                  const SwitchingFunction &switchfunc,
+                                  DistMatrix &distmatrix,
+                                  LJMatrix &ljmatrix);
+
+    static double calculateEnergy(const LJMolecule &mol,
+                                  const Space &space,
+                                  const SwitchingFunction &switchfunc,
+                                  DistMatrix &distmatrix,
+                                  LJMatrix &ljmatrix);
+
 protected:
-
-    class LJMoleculeData;
-    class ChangedLJMolecule;
-
-    /** This class is used to represent a Molecule or part of a Molecule
-        in this forcefield. It contains all of the coordinates of the molecule,
-        together with the LJ parameters of the atoms. */
-    class SIREMM_EXPORT LJMolecule
-    {
-    public:
-        LJMolecule();
-
-        LJMolecule(const Molecule &molecule, const QString &ljproperty);
-        LJMolecule(const Residue &residue, const QString &ljproperty);
-        LJMolecule(const NewAtom &atom, const QString &ljproperty);
-
-        LJMolecule(const Molecule &molecule, const AtomSelection &selected_atoms,
-                   const QString &ljproperty);
-
-        LJMolecule(const LJMolecule &other, const QSet<CutGroupID> &groups);
-
-        LJMolecule(const LJMolecule &other);
-
-        ~LJMolecule();
-
-        LJMolecule& operator=(const LJMolecule &other);
-
-        bool operator==(const LJMolecule &other) const;
-        bool operator!=(const LJMolecule &other) const;
-
-        bool isEmpty() const;
-
-        const Molecule& molecule() const;
-
-        ChangedLJMolecule change(const Molecule &molecule) const;
-        ChangedLJMolecule change(const Residue &residue) const;
-        ChangedLJMolecule change(const NewAtom &newatom) const;
-
-        ChangedLJMolecule add(const Molecule &molecule) const;
-        ChangedLJMolecule add(const Residue &residue) const;
-        ChangedLJMolecule add(const NewAtom &newatom) const;
-        ChangedLJMolecule add(const AtomSelection &selected_atoms) const;
-
-        ChangedLJMolecule remove(const Molecule &molecule) const;
-        ChangedLJMolecule remove(const Residue &residue) const;
-        ChangedLJMolecule remove(const NewAtom &atom) const;
-        ChangedLJMolecule remove(const AtomSelection &selected_atoms) const;
-
-        const QString& ljProperty() const;
-
-        const QVector<CoordGroup>& coordinates() const;
-        const AtomicLJs& ljParameters() const;
-
-        bool isWholeMolecule() const;
-        const AtomSelection& selectedAtoms() const;
-
-    private:
-        ChangedLJMolecule _pvt_change(const Molecule &molecule, 
-                                      const QSet<CutGroupID> &cgids) const;
-        
-        ChangedLJMolecule _pvt_change(const Molecule &molecule,
-                                      const QSet<CutGroupID> &cgids,
-                                      const AtomSelection &selected_atoms) const;
     
-        /** Implicitly shared pointer to the data of this class */
-        QSharedDataPointer<LJMoleculeData> d;
-    };
-
-    /** This class holds information on how a molecule has changed
-        since the last energy evaluation.
-    */
-    class SIREMM_EXPORT ChangedLJMolecule
-    {
-    public:
-        ChangedLJMolecule();
-
-        ChangedLJMolecule(const LJMolecule &oldmol, const LJMolecule &newmol);
-
-        ChangedLJMolecule(const LJMolecule &oldmol, const LJMolecule &newmol,
-                          const QSet<CutGroupID> &changed_groups);
-
-        ChangedLJMolecule(const ChangedLJMolecule &other);
-
-        ~ChangedLJMolecule();
-
-        ChangedLJMolecule& operator=(const ChangedLJMolecule &other);
-
-        bool operator==(const ChangedLJMolecule &other) const;
-        bool operator!=(const ChangedLJMolecule &other) const;
-
-        bool isEmpty() const;
-
-        ChangedLJMolecule change(const Molecule &molecule) const;
-        ChangedLJMolecule change(const Residue &residue) const;
-        ChangedLJMolecule change(const NewAtom &atom) const;
-
-        ChangedLJMolecule add(const Molecule &molecule) const;
-        ChangedLJMolecule add(const Residue &residue) const;
-        ChangedLJMolecule add(const NewAtom &atom) const;
-        ChangedLJMolecule add(const AtomSelection &selected_atoms) const;
-
-        ChangedLJMolecule remove(const Molecule &molecule) const;
-        ChangedLJMolecule remove(const Residue &residue) const;
-        ChangedLJMolecule remove(const NewAtom &atom) const;
-        ChangedLJMolecule remove(const AtomSelection &selected_atoms) const;
-
-        bool changedAll() const;
-
-        const QSet<CutGroupID>& changedGroups() const;
-
-        const LJMolecule& oldMolecule() const;
-        const LJMolecule& newMolecule() const;
-
-        const LJMolecule& oldParts() const;
-        const LJMolecule& newParts() const;
-
-    private:
-        /** The old version of the molecule */
-        LJMolecule oldmol;
-
-        /** The new version of the molecule */
-        LJMolecule newmol;
-
-        /** The old version of the parts of the molecule that have
-            changed */
-        LJMolecule oldparts;
-
-        /** The new version of the parts of the molecule that have
-            changed */
-        LJMolecule newparts;
-
-        /** The CutGroupIDs of all of the CutGroups that have changed.
-            This is empty if all of the CutGroups have changed */
-        QSet<CutGroupID> changed_cgids;
-    };
-
     static double calculateEnergy(const CoordGroup &group0,
                                   const QVector<LJParameter> &lj0,
                                   const CoordGroup &group1,
@@ -325,19 +207,6 @@ protected:
     static double calculateEnergy(const CoordGroup &group,
                                   const QVector<LJParameter> &ljs,
                                   const Space &space,
-                                  DistMatrix &distmatrix,
-                                  LJMatrix &ljmatrix);
-
-    static double calculateEnergy(const LJMolecule &mol0,
-                                  const LJMolecule &mol1,
-                                  const Space &space,
-                                  const SwitchingFunction &switchfunc,
-                                  DistMatrix &distmatrix,
-                                  LJMatrix &ljmatrix);
-
-    static double calculateEnergy(const LJMolecule &mol,
-                                  const Space &space,
-                                  const SwitchingFunction &switchfunc,
                                   DistMatrix &distmatrix,
                                   LJMatrix &ljmatrix);
 
@@ -371,6 +240,170 @@ private:
     const LJFF::Components *components_ptr;
 };
 
+} // end of namespace SireMM
+
+QDataStream& operator<<(QDataStream&, const SireMM::LJFF::LJMolecule&);
+QDataStream& operator>>(QDataStream&, SireMM::LJFF::LJMolecule&);
+
+QDataStream& operator<<(QDataStream&, const SireMM::LJFF::ChangedLJMolecule&);
+QDataStream& operator>>(QDataStream&, SireMM::LJFF::ChangedLJMolecule&);
+
+namespace SireMM
+{
+
+/** This class is used to represent a Molecule or part of a Molecule
+    in this forcefield. It contains all of the coordinates of the molecule,
+    together with the LJ parameters of the atoms. */
+class SIREMM_EXPORT LJFF::LJMolecule
+{
+    
+friend QDataStream& ::operator<<(QDataStream&, const LJFF::LJMolecule&);
+friend QDataStream& ::operator>>(QDataStream&, LJFF::LJMolecule&);
+    
+public:
+    LJMolecule();
+
+    LJMolecule(const Molecule &molecule, const QString &ljproperty);
+    LJMolecule(const Residue &residue, const QString &ljproperty);
+    LJMolecule(const NewAtom &atom, const QString &ljproperty);
+
+    LJMolecule(const Molecule &molecule, const AtomSelection &selected_atoms,
+               const QString &ljproperty);
+
+    LJMolecule(const LJMolecule &other, const QSet<CutGroupID> &groups);
+
+    LJMolecule(const LJMolecule &other);
+
+    ~LJMolecule();
+
+    LJMolecule& operator=(const LJMolecule &other);
+
+    bool operator==(const LJMolecule &other) const;
+    bool operator!=(const LJMolecule &other) const;
+
+    bool isEmpty() const;
+
+    const Molecule& molecule() const;
+
+    ChangedLJMolecule change(const Molecule &molecule) const;
+    ChangedLJMolecule change(const Residue &residue) const;
+    ChangedLJMolecule change(const NewAtom &newatom) const;
+
+    ChangedLJMolecule add(const Molecule &molecule, 
+                          const QString &ljproperty = QString::null) const;
+    ChangedLJMolecule add(const Residue &residue, 
+                          const QString &ljproperty = QString::null) const;
+    ChangedLJMolecule add(const NewAtom &newatom, 
+                          const QString &ljproperty = QString::null) const;
+    ChangedLJMolecule add(const AtomSelection &selected_atoms,
+                          const QString &ljproperty = QString::null) const;
+
+    ChangedLJMolecule remove(const Molecule &molecule) const;
+    ChangedLJMolecule remove(const Residue &residue) const;
+    ChangedLJMolecule remove(const NewAtom &atom) const;
+    ChangedLJMolecule remove(const AtomSelection &selected_atoms) const;
+
+    const QString& ljProperty() const;
+
+    const QVector<CoordGroup>& coordinates() const;
+    const AtomicLJs& ljParameters() const;
+
+    bool isWholeMolecule() const;
+    const AtomSelection& selectedAtoms() const;
+
+private:
+    ChangedLJMolecule _pvt_change(const Molecule &molecule, 
+                                  const QSet<CutGroupID> &cgids,
+                                  const QString &ljproperty = QString::null) const;
+    
+    ChangedLJMolecule _pvt_change(const Molecule &molecule,
+                                  const QSet<CutGroupID> &cgids,
+                                  const AtomSelection &selected_atoms,
+                                  const QString &ljproperty = QString::null) const;
+
+    /** Implicitly shared pointer to the data of this class */
+    QSharedDataPointer<LJMoleculeData> d;
+};
+
+/** This class holds information on how a molecule has changed
+    since the last energy evaluation.
+*/
+class SIREMM_EXPORT LJFF::ChangedLJMolecule
+{
+    
+friend QDataStream& ::operator<<(QDataStream&, const LJFF::ChangedLJMolecule&);
+friend QDataStream& ::operator>>(QDataStream&, LJFF::ChangedLJMolecule&);
+    
+public:
+    ChangedLJMolecule();
+
+    ChangedLJMolecule(const LJMolecule &mol);
+
+    ChangedLJMolecule(const LJMolecule &oldmol, const LJMolecule &newmol);
+
+    ChangedLJMolecule(const LJMolecule &oldmol, const LJMolecule &newmol,
+                      const QSet<CutGroupID> &changed_groups);
+
+    ChangedLJMolecule(const ChangedLJMolecule &other);
+
+    ~ChangedLJMolecule();
+
+    ChangedLJMolecule& operator=(const ChangedLJMolecule &other);
+
+    bool operator==(const ChangedLJMolecule &other) const;
+    bool operator!=(const ChangedLJMolecule &other) const;
+
+    bool isEmpty() const;
+
+    ChangedLJMolecule change(const Molecule &molecule) const;
+    ChangedLJMolecule change(const Residue &residue) const;
+    ChangedLJMolecule change(const NewAtom &atom) const;
+
+    ChangedLJMolecule add(const Molecule &molecule, 
+                          const QString &ljproperty = QString::null) const;
+    ChangedLJMolecule add(const Residue &residue, 
+                          const QString &ljproperty = QString::null) const;
+    ChangedLJMolecule add(const NewAtom &atom, 
+                          const QString &ljproperty = QString::null) const;
+    ChangedLJMolecule add(const AtomSelection &selected_atoms, 
+                          const QString &ljproperty = QString::null) const;
+
+    ChangedLJMolecule remove(const Molecule &molecule) const;
+    ChangedLJMolecule remove(const Residue &residue) const;
+    ChangedLJMolecule remove(const NewAtom &atom) const;
+    ChangedLJMolecule remove(const AtomSelection &selected_atoms) const;
+
+    bool changedAll() const;
+
+    const QSet<CutGroupID>& changedGroups() const;
+
+    const LJMolecule& oldMolecule() const;
+    const LJMolecule& newMolecule() const;
+
+    const LJMolecule& oldParts() const;
+    const LJMolecule& newParts() const;
+
+private:
+    /** The old version of the molecule */
+    LJMolecule oldmol;
+
+    /** The new version of the molecule */
+    LJMolecule newmol;
+
+    /** The old version of the parts of the molecule that have
+        changed */
+    LJMolecule oldparts;
+
+    /** The new version of the parts of the molecule that have
+        changed */
+    LJMolecule newparts;
+
+    /** The CutGroupIDs of all of the CutGroups that have changed.
+        This is empty if all of the CutGroups have changed */
+    QSet<CutGroupID> changed_cgids;
+};
+
+
 /** Return the space within which the LJ energy is calculated */
 inline const Space& LJFF::space() const
 {
@@ -396,7 +429,10 @@ inline LJMatrix& LJFF::ljMatrix()
     return ljmat;
 }
 
-}
+} // end of namespace SireMM
+
+Q_DECLARE_METATYPE(SireMM::LJFF::LJMolecule);
+Q_DECLARE_METATYPE(SireMM::LJFF::ChangedLJMolecule);
 
 SIRE_END_HEADER
 
