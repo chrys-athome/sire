@@ -31,9 +31,11 @@
 #include "molecule.h"
 #include "residue.h"
 #include "newatom.h"
+#include "atominfo.h"
 #include "moleculeinfo.h"
 #include "residueinfo.h"
 #include "resnum.h"
+#include "residatomid.h"
 #include "cgatomid.h"
 
 #include "SireStream/datastream.h"
@@ -114,6 +116,35 @@ AtomSelection::AtomSelection(const AtomSelection &other)
 AtomSelection::~AtomSelection()
 {}
 
+/** Assignment operator */
+AtomSelection& AtomSelection::operator=(const AtomSelection &other)
+{
+    if (this != &other)
+    {
+        selected_atoms = other.selected_atoms;
+        molinfo = other.molinfo;
+        nselected = other.nselected;
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool AtomSelection::operator==(const AtomSelection &other) const
+{
+    return nselected == other.nselected and 
+           molinfo == other.molinfo and
+           selected_atoms == other.selected_atoms;
+}
+
+/** Comparison operator */
+bool AtomSelection::operator!=(const AtomSelection &other) const
+{
+    return nselected != other.nselected or
+           molinfo != other.molinfo or
+           selected_atoms != other.selected_atoms;
+}
+
 /** Is this an empty selection (selected no atoms, nSelected() == 0) */
 bool AtomSelection::isEmpty() const
 {
@@ -156,13 +187,13 @@ int AtomSelection::nSelectedResidues() const
             {
                 if (selected_atoms.contains(cgid))
                 {
-                    ++nres;
+                    ++nselected;
                     break;
                 }
             }
         }
 
-        return nres;
+        return nselected;
     }
 }
 
@@ -290,6 +321,12 @@ bool AtomSelection::selected(const CGAtomID &cgatomid) const
     molinfo.assertAtomExists(cgatomid);
 
     return _pvt_selected(cgatomid);
+}
+
+/** Return whether or not the atom with index 'atomid' is selected */
+bool AtomSelection::selected(const IDMolAtom &atomid) const
+{
+    return _pvt_selected( atomid.index(molinfo) );
 }
 
 /** Select all of the atoms in the molecule */
@@ -582,6 +619,84 @@ void AtomSelection::deselectAll(ResNum resnum)
     }
 }
 
+/** Select all of the atoms selected in 'selection'
+
+    \throw SireError::incompatible_error
+*/
+void AtomSelection::selectAll(const AtomSelection &selection)
+{
+    this->assertCompatibleWith( selection.molinfo );
+    
+    if (selection.selectedAll())
+    {
+        this->selectAll();
+        return;
+    }
+    else if (selection.selectedNone())
+    {
+        return;
+    }
+    
+    uint ncg = molinfo.nCutGroups();
+    
+    for (CutGroupID i(0); i<ncg; ++i)
+    {
+        if (selection.selectedAll(i))
+            this->selectAll(i);
+        else
+        {
+            uint nats = molinfo.nAtoms(i);
+            
+            for (AtomID j(0); j<nats; ++j)
+            {
+                CGAtomID cgatomid(i,j);
+                
+                if (selection.selected(cgatomid))
+                    this->select(cgatomid);
+            }
+        }
+    }
+}
+
+/** Deselect all of the atoms selected in 'selection'
+
+    \throw SireError::incompatible_error
+*/
+void AtomSelection::deselectAll(const AtomSelection &selection)
+{
+    this->assertCompatibleWith( selection.molinfo );
+    
+    if (selection.selectedAll())
+    {
+        this->deselectAll();
+        return;
+    }
+    else if (selection.selectedNone() or this->selectedNone())
+    {
+        return;
+    }
+    
+    uint ncg = molinfo.nCutGroups();
+    
+    for (CutGroupID i(0); i<ncg; ++i)
+    {
+        if (selection.selectedAll(i))
+            this->deselectAll(i);
+        else if (not this->selectedNone(i))
+        {
+            uint nats = molinfo.nAtoms(i);
+            
+            for (AtomID j(0); j<nats; ++j)
+            {
+                CGAtomID cgatomid(i,j);
+                
+                if (selection.selected(cgatomid))
+                    this->deselect(cgatomid);
+            }
+        }
+    }
+}
+
 /** Select the atom at index 'cgatomid'
 
     \throw SireError::invalid_index
@@ -592,6 +707,12 @@ void AtomSelection::select(const CGAtomID &cgatomid)
     this->_pvt_select(cgatomid);
 }
 
+/** Select the atom with index 'atomid' */
+void AtomSelection::select(const IDMolAtom &atomid)
+{
+    this->_pvt_select( atomid.index(molinfo) );
+}
+
 /** Deselect the atom at index 'cgatomid'
 
     \throw SireError::invalid_index
@@ -600,6 +721,12 @@ void AtomSelection::deselect(const CGAtomID &cgatomid)
 {
     molinfo.assertAtomExists(cgatomid);
     this->_pvt_deselect(cgatomid);
+}
+
+/** Deselect the atom at index 'atomid' */
+void AtomSelection::deselect(const IDMolAtom &atomid)
+{
+    this->_pvt_deselect( atomid.index(molinfo) );
 }
 
 /** Invert the current selection */
@@ -720,4 +847,28 @@ void AtomSelection::assertCompatibleWith(const MoleculeInfo &info) const
 void AtomSelection::assertCompatibleWith(const Molecule &molecule) const
 {
     this->assertCompatibleWith(molecule.info());
+}
+
+/** Return a list of all of the atoms that are contained in the this selection */
+QList<AtomIndex> AtomSelection::selected() const
+{
+    QList<AtomIndex> all_atoms;
+
+    //do this in residue/atom order - this is more natural for the user
+    uint nres = molinfo.nResidues();
+    
+    for (ResID i(0); i<nres; ++i)
+    {
+        uint nats = molinfo.nAtoms(i);
+        
+        for (AtomID j(0); j<nats; ++j)
+        {
+            CGAtomID cgatomid = molinfo[ ResIDAtomID(i,j) ];
+            
+            if (this->selected(cgatomid))
+                all_atoms.append( molinfo.atom(cgatomid) );
+        }
+    }
+    
+    return all_atoms;
 }

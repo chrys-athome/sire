@@ -26,26 +26,110 @@
   *
 \*********************************************/
 
-#include "qhash_siremol.h"
-#include "qhash_sirecas.h"
+#include "SireMol/qhash_siremol.h"
+#include "SireCAS/qhash_sirecas.h"
 
 #include <QSharedData>
 
 #include "ljff.h"
 
+#include "SireMol/residueinfo.h"
+#include "SireMol/cgatomid.h"
+
+#include "SireMol/errors.h"
+#include "SireError/errors.h"
+
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
 using namespace SireFF;
+using namespace SireMM;
+using namespace SireMol;
+using namespace SireStream;
 
 /////////////
 ///////////// Implementation of LJFF::Components
 /////////////
 
+/** Constructor */
+LJFF::Components::Components() : FFBase::Components()
+{}
+
+/** Construct using the supplied forcefield */
+LJFF::Components::Components(const FFBase &ffbase, const Symbols &symbols)
+     : FFBase::Components( ffbase, addToSymbols(symbols, x(), y(), z()) ),
+       e_lj(ffbase, "lj", x(), y(), z())
+{
+    this->registerComponent(e_lj);
+}
+
+/** Copy constructor */
+LJFF::Components::Components(const LJFF::Components &other)
+     : FFBase::Components(other),
+       e_lj(other.e_lj)
+{}
+
+/** Destructor */
+LJFF::Components::~Components()
+{}
+
+/** Assignment operator */
+LJFF::Components& LJFF::Components::operator=(const LJFF::Components &other)
+{
+    e_lj = other.e_lj;
+
+    FFBase::Components::operator=(other);
+
+    return *this;
+}
+
+/** Set the forcefield */
+void LJFF::Components::setForceField(const FFBase &ffbase)
+{
+    *this = LJFF::Components(ffbase);
+}
+
+/** Describe the LJ component */
+QString LJFF::Components::describe_lj()
+{
+    return QObject::tr("The total Lennard-Jones (van der waals) energy of the forcefield.");
+}
+
 /////////////
 ///////////// Implementation of LJFF::Parameters
 /////////////
 
+/** Constructor - by default the LJ parameters
+    come from the 'ljs' property */
+LJFF::Parameters::Parameters()
+     : FFBase::Parameters(), lj_params("lj", "ljs")
+{}
+
+/** Copy constructor */
+LJFF::Parameters::Parameters(const LJFF::Parameters &other)
+     : FFBase::Parameters(other), lj_params(other.lj_params)
+{}
+
+/** Destructor */
+LJFF::Parameters::~Parameters()
+{}
+
+/** Static object returned by CLJFF::parameters() */
+LJFF::Parameters LJFF::Parameters::default_sources;
+
 /////////////
 ///////////// Implementation of LJFF::Groups
 /////////////
+
+LJFF::Groups::Groups() : FFBase::Groups()
+{}
+
+LJFF::Groups::Groups(const LJFF::Groups &other)
+     : FFBase::Groups(other)
+{}
+
+LJFF::Groups::~Groups()
+{}
 
 /////////////
 ///////////// Implementation of LJFF::LJMoleculeData
@@ -69,6 +153,9 @@ public:
     LJMoleculeData(const LJMoleculeData &other);
 
     ~LJMoleculeData();
+
+    bool operator==(const LJMoleculeData &other) const;
+    bool operator!=(const LJMoleculeData &other) const;
 
     void rebuildAll();
     void rebuildCoordinates();
@@ -99,6 +186,8 @@ public:
         coords. Atoms that are not selected for this forcefield
         have a zero LJ parameter. */
     AtomicLJs ljs;
+
+    static QSharedDataPointer<LJMoleculeData> shared_null;
 };
 
 /** Constructor */
@@ -169,6 +258,24 @@ LJFF::LJMoleculeData::LJMoleculeData(const LJFF::LJMoleculeData &other)
 LJFF::LJMoleculeData::~LJMoleculeData()
 {}
 
+/** Comparison operator */
+bool LJFF::LJMoleculeData::operator==(const LJFF::LJMoleculeData &other) const
+{
+    return molecule == other.molecule and 
+           lj_property == other.lj_property and
+           selected_atoms == other.selected_atoms and
+           cg_index == other.cg_index;
+}
+
+/** Comparison operator */
+bool LJFF::LJMoleculeData::operator!=(const LJFF::LJMoleculeData &other) const
+{
+    return molecule != other.molecule or 
+           lj_property != other.lj_property or
+           selected_atoms != other.selected_atoms or
+           cg_index != other.cg_index;
+}
+
 /** Rebuild all of the coordinate and LJ data from scratch
 
     \throw SireMol::missing_property
@@ -202,7 +309,7 @@ void LJFF::LJMoleculeData::rebuildAll()
     if (nselectedgroups == ngroups)
     {
         coords = molecule.coordGroups();
-        all_ljs = molecule.getProperty(lj_property);
+        ljs = molecule.getProperty(lj_property);
         cg_index.clear();
 
         //loop through all CutGroups and zero the parameters of any
@@ -293,9 +400,9 @@ void LJFF::LJMoleculeData::rebuildCoordinates()
         return;
     }
 
-    BOOST_ASSERT( nselectedgroups == cg_index.count() );
-    BOOST_ASSERT( nselectedgroups == coords.count() );
-    BOOST_ASSERT( nselectedgroups == ljs.count() );
+    BOOST_ASSERT( nselectedgroups == uint(cg_index.count()) );
+    BOOST_ASSERT( nselectedgroups == uint(coords.count()) );
+    BOOST_ASSERT( nselectedgroups == uint(ljs.count()) );
 
     const QVector<CoordGroup> &new_coords = molecule.coordGroups();
 
@@ -327,9 +434,9 @@ bool LJFF::LJMoleculeData::rebuildCoordinates(const QSet<CutGroupID> &cgids)
         return true;
     }
 
-    BOOST_ASSERT( nselectedgroups == cg_index.count() );
-    BOOST_ASSERT( nselectedgroups == coords.count() );
-    BOOST_ASSERT( nselectedgroups == ljs.count() );
+    BOOST_ASSERT( nselectedgroups == uint(cg_index.count()) );
+    BOOST_ASSERT( nselectedgroups == uint(coords.count()) );
+    BOOST_ASSERT( nselectedgroups == uint(ljs.count()) );
 
     const QVector<CoordGroup> &new_coords = molecule.coordGroups();
 
@@ -351,17 +458,18 @@ bool LJFF::LJMoleculeData::rebuildCoordinates(const QSet<CutGroupID> &cgids)
     return cutgroups_in_selection;
 }
 
+/** Shared null LJMoleculeData */
+QSharedDataPointer<LJFF::LJMoleculeData> LJFF::LJMoleculeData::shared_null(
+                                                    new LJFF::LJMoleculeData() );
+
+} // end of namespace SireMM
 
 /////////////
 ///////////// Implementation of LJFF::LJMolecule
 /////////////
 
-/** Shared null LJMoleculeData */
-static QSharedDataPointer<LJFF::LJMoleculeData> shared_null(
-                                                    new LJFF::LJMoleculeData() );
-
 /** Null constructor - creates an empty LJMolecule */
-LJFF::LJMolecule::LJMolecule() : d(shared_null)
+LJFF::LJMolecule::LJMolecule() : d(LJFF::LJMoleculeData::shared_null)
 {}
 
 /** Construct from the passed molecule, using 'ljproperty' to find the
@@ -371,7 +479,7 @@ LJFF::LJMolecule::LJMolecule() : d(shared_null)
     \throw SireError::invalid_cast
 */
 LJFF::LJMolecule::LJMolecule(const Molecule &molecule, const QString &ljproperty)
-                 : d( new LJFF:LJMoleculeData(molecule,ljproperty) )
+                 : d( new LJFF::LJMoleculeData(molecule,ljproperty) )
 {}
 
 /** Construct from the passed residue, using 'ljproperty' to find the
@@ -422,7 +530,7 @@ LJFF::LJMolecule::LJMolecule(const LJMolecule &other, const QSet<CutGroupID> &gr
 
         int ngroups = groups.count();
 
-        AtomicLJs new_ljs(ngroups);
+        QVector< QVector<LJParameter> > new_ljs(ngroups);
         QVector<CoordGroup> new_coords(ngroups);
 
         QHash<CutGroupID,int> new_index;
@@ -430,19 +538,19 @@ LJFF::LJMolecule::LJMolecule(const LJMolecule &other, const QSet<CutGroupID> &gr
 
         int i = 0;
 
-        foreach (CutGroupID cgid, groups)
+        for (QSet<CutGroupID>::const_iterator it = groups.begin();
+             it != groups.end();
+             ++it)
         {
-            int idx = index[cgid];
+            new_coords[i] = coords[*it];
+            new_ljs[i] = ljs[*it];
 
-            new_coords[i] = coords[idx];
-            new_ljs[i] = ljs[i];
-
-            new_index.insert(cgid,i);
+            new_index.insert(*it,i);
             ++i;
         }
 
         d->coords = new_coords;
-        d->ljs = new_ljs;
+        d->ljs = AtomicLJs(new_ljs);
         d->cg_index = new_index;
 
         d->selected_atoms.applyMask(groups);
@@ -462,7 +570,7 @@ LJFF::LJMolecule::LJMolecule(const LJMolecule &other, const QSet<CutGroupID> &gr
                 //this CutGroup will be masked - deselect it and
                 //record the index of its coordinates and LJ parameters
                 d->selected_atoms.deselectAll(it.key());
-                indicies_to_be_removed.insert(it.value());
+                indicies_to_be_removed.append(it.value());
             }
         }
 
@@ -470,10 +578,10 @@ LJFF::LJMolecule::LJMolecule(const LJMolecule &other, const QSet<CutGroupID> &gr
         qSort(indicies_to_be_removed.begin(), indicies_to_be_removed.end(),
               qGreater<int>());
 
-        foreach (idx, indicies_to_be_removed)
+        foreach (int idx, indicies_to_be_removed)
         {
-            d->coords.removeAt(idx);
-            d->ljs.removeAt(idx);
+            d->coords.remove(idx);
+            d->ljs.remove(idx);
         }
     }
 }
@@ -488,10 +596,22 @@ LJFF::LJMolecule::~LJMolecule()
 {}
 
 /** Assignment operator */
-LJMolecule& LJFF::LJMolecule::operator=(const LJMolecule &other)
+LJFF::LJMolecule& LJFF::LJMolecule::operator=(const LJMolecule &other)
 {
     d = other.d;
     return *this;
+}
+
+/** Comparison operator */
+bool LJFF::LJMolecule::operator==(const LJFF::LJMolecule &other) const
+{
+    return d == other.d or (*d == *(other.d));
+}
+
+/** Comparison operator */
+bool LJFF::LJMolecule::operator!=(const LJFF::LJMolecule &other) const
+{
+    return d != other.d and (*d != *(other.d));
 }
 
 /** Return whether or not this is empty (has no atoms selected */
@@ -513,8 +633,8 @@ const Molecule& LJFF::LJMolecule::molecule() const
 
     \throw SireError::incompatible_error
 */
-ChangedLJMolecule LJFF::LJMolecule::_pvt_change(const Molecule &molecule,
-                                                const QSet<CutGroupID> &cgids) const
+LJFF::ChangedLJMolecule LJFF::LJMolecule::_pvt_change(const Molecule &molecule,
+                                                      const QSet<CutGroupID> &cgids) const
 {
     //assert that this is the same molecule
     d->molecule.assertSameMolecule(molecule);
@@ -527,21 +647,21 @@ ChangedLJMolecule LJFF::LJMolecule::_pvt_change(const Molecule &molecule,
     //the molecule may have changed
     LJMolecule newmol(*this);
 
-    newmol.molecule = molecule;
+    newmol.d->molecule = molecule;
 
     if (cgids.isEmpty())
     {
         //the whole molecule has changed
 
-        if (molecule.majorVersion() != d->molecule.majorVersion())
+        if (molecule.version().major() != d->molecule.version().major())
         {
             //there has been a major change
-            newmol.rebuildAll();
+            newmol.d->rebuildAll();
         }
         else
         {
             //only the coordinates have changed
-            newmol.rebuildCoordinates();
+            newmol.d->rebuildCoordinates();
         }
 
         return ChangedLJMolecule(*this, newmol);
@@ -549,11 +669,11 @@ ChangedLJMolecule LJFF::LJMolecule::_pvt_change(const Molecule &molecule,
     else
     {
         //only part of the molecule has changed
-        if (molecule.majorVersion() != d->molecule.majorVersion())
+        if (molecule.version().major() != d->molecule.version().major())
         {
             //there has been a major change
 
-            if (newmol.rebuildAll(cgids))
+            if (newmol.d->rebuildAll(cgids))
                 //the part of the molecule in this forcefield has changed!
                 return ChangedLJMolecule(*this, newmol, cgids);
             else
@@ -564,7 +684,7 @@ ChangedLJMolecule LJFF::LJMolecule::_pvt_change(const Molecule &molecule,
         {
             //only the coordinates have changed
 
-            if (newmol.rebuildCoordinates(cgids))
+            if (newmol.d->rebuildCoordinates(cgids))
                 //the part of the molecule in this forcefield has moved
                 return ChangedLJMolecule(*this, newmol, cgids);
             else
@@ -580,7 +700,7 @@ ChangedLJMolecule LJFF::LJMolecule::_pvt_change(const Molecule &molecule,
 
     \throw SireError::incompatible_error
 */
-ChangedLJMolecule LJFF::LJMolecule::change(const Molecule &molecule) const
+LJFF::ChangedLJMolecule LJFF::LJMolecule::change(const Molecule &molecule) const
 {
     return this->_pvt_change(molecule, QSet<CutGroupID>());
 }
@@ -590,9 +710,9 @@ ChangedLJMolecule LJFF::LJMolecule::change(const Molecule &molecule) const
 
     \throw SireError::incompatible_error
 */
-ChangedLJMolecule LJFF::LJMolecule::change(const Residue &residue) const
+LJFF::ChangedLJMolecule LJFF::LJMolecule::change(const Residue &residue) const
 {
-    return this->_pvt_change(residue.molecule(), residue.cutGroupIDs());
+    return this->_pvt_change(residue.molecule(), residue.info().cutGroupIDs());
 }
 
 /** Return a ChangedLJMolecule that represents the change from
@@ -600,10 +720,10 @@ ChangedLJMolecule LJFF::LJMolecule::change(const Residue &residue) const
 
     \throw SireError::incompatible_error
 */
-ChangedLJMolecule LJFF::LJMolecule::change(const NewAtom &newatom) const
+LJFF::ChangedLJMolecule LJFF::LJMolecule::change(const NewAtom &atom) const
 {
     QSet<CutGroupID> cgid;
-    cgid.insert(newatom.cutGroupID());
+    cgid.insert(atom.cgAtomID().cutGroupID());
 
     return this->_pvt_change(atom.molecule(), cgid);
 }
@@ -616,7 +736,7 @@ ChangedLJMolecule LJFF::LJMolecule::change(const NewAtom &newatom) const
 
     \throw SireError::incompatible_error
 */
-ChangedLJMolecule LJFF::LJMolecule::_pvt_change(const Molecule &molecule,
+LJFF::ChangedLJMolecule LJFF::LJMolecule::_pvt_change(const Molecule &molecule,
                                                 const QSet<CutGroupID> &cgids,
                                                 const AtomSelection &selected_atoms) const
 {
@@ -628,20 +748,20 @@ ChangedLJMolecule LJFF::LJMolecule::_pvt_change(const Molecule &molecule,
 
     LJMolecule newmol(*this);
 
-    newmol.molecule = molecule;
-    newmol.selected_atoms = selected_atoms;
+    newmol.d->molecule = molecule;
+    newmol.d->selected_atoms = selected_atoms;
 
     if (cgids.isEmpty())
     {
         //the entire molecule has changed
-        newmol.rebuildAll();
+        newmol.d->rebuildAll();
 
         return ChangedLJMolecule(*this, newmol);
     }
     else
     {
         //only parts of the molecule have changed
-        newmol.rebuildAll(cgids);
+        newmol.d->rebuildAll(cgids);
 
         return ChangedLJMolecule(*this, newmol, cgids);
     }
@@ -653,7 +773,7 @@ ChangedLJMolecule LJFF::LJMolecule::_pvt_change(const Molecule &molecule,
 
     \throw SireError::incompatible_error
 */
-ChangedLJMolecule LJFF::LJMolecule::add(const Molecule &molecule) const
+LJFF::ChangedLJMolecule LJFF::LJMolecule::add(const Molecule &molecule) const
 {
     return this->_pvt_change(molecule, QSet<CutGroupID>(), AtomSelection(molecule));
 }
@@ -664,13 +784,14 @@ ChangedLJMolecule LJFF::LJMolecule::add(const Molecule &molecule) const
 
     \throw SireError::incompatible_error
 */
-ChangedLJMolecule LJFF::LJMolecule::add(const Residue &residue) const
+LJFF::ChangedLJMolecule LJFF::LJMolecule::add(const Residue &residue) const
 {
     AtomSelection new_selection = d->selected_atoms;
 
     new_selection.selectAll(residue.number());
 
-    return this->_pvt_change(residue.molecule(), residue.cutGroupIDs(), new_selection);
+    return this->_pvt_change(residue.molecule(), residue.info().cutGroupIDs(), 
+                             new_selection);
 }
 
 /** Return a ChangedLJMolecule that represents the change from the LJMolecule
@@ -679,14 +800,14 @@ ChangedLJMolecule LJFF::LJMolecule::add(const Residue &residue) const
 
     \throw SireError::incompatible_error
 */
-ChangedLJMolecule LJFF::LJMolecule::add(const NewAtom &newatom) const
+LJFF::ChangedLJMolecule LJFF::LJMolecule::add(const NewAtom &atom) const
 {
     AtomSelection new_selection = d->selected_atoms;
 
-    new_selection.select(newatom.cgAtomID());
+    new_selection.select(atom.cgAtomID());
 
     QSet<CutGroupID> cgid;
-    cgid.insert(newatom.cutGroupID());
+    cgid.insert(atom.cgAtomID().cutGroupID());
 
     return this->_pvt_change(atom.molecule(), cgid, new_selection);
 }
@@ -696,7 +817,7 @@ ChangedLJMolecule LJFF::LJMolecule::add(const NewAtom &newatom) const
 
     \throw SireError::incompatible_error
 */
-ChangedLJMolecule LJFF::LJMolecule::add(const AtomSelection &selected_atoms) const
+LJFF::ChangedLJMolecule LJFF::LJMolecule::add(const AtomSelection &selected_atoms) const
 {
     AtomSelection new_selection = d->selected_atoms;
 
@@ -713,7 +834,7 @@ ChangedLJMolecule LJFF::LJMolecule::add(const AtomSelection &selected_atoms) con
 
     \throw SireError::incompatible_error
 */
-ChangedLJMolecule LJFF::LJMolecule::remove(const Molecule &molecule) const
+LJFF::ChangedLJMolecule LJFF::LJMolecule::remove(const Molecule &molecule) const
 {
     AtomSelection new_selection = d->selected_atoms;
     new_selection.deselectAll();
@@ -727,12 +848,12 @@ ChangedLJMolecule LJFF::LJMolecule::remove(const Molecule &molecule) const
 
     \throw SireError::incompatible_error
 */
-ChangedLJMolecule LJFF::LJMolecule::remove(const Residue &residue) const
+LJFF::ChangedLJMolecule LJFF::LJMolecule::remove(const Residue &residue) const
 {
     AtomSelection new_selection = d->selected_atoms;
     new_selection.deselectAll(residue.number());
 
-    return this->_pvt_change(residue.molecule(), residue.cutGroupIDs(), new_selection);
+    return this->_pvt_change(residue.molecule(), residue.info().cutGroupIDs(), new_selection);
 }
 
 /** Return a ChangedLJMolecule that represents the change from the LJMolecule
@@ -741,13 +862,13 @@ ChangedLJMolecule LJFF::LJMolecule::remove(const Residue &residue) const
 
     \throw SireError::incompatible_error
 */
-ChangedLJMolecule LJFF::LJMolecule::remove(const NewAtom &atom) const
+LJFF::ChangedLJMolecule LJFF::LJMolecule::remove(const NewAtom &atom) const
 {
     AtomSelection new_selection = d->selected_atoms;
     new_selection.deselect(atom.cgAtomID());
 
     QSet<CutGroupID> cgid;
-    cgid.insert(atom.cutGroupID());
+    cgid.insert(atom.cgAtomID().cutGroupID());
 
     return this->_pvt_change(atom.molecule(), cgid, new_selection);
 }
@@ -757,7 +878,7 @@ ChangedLJMolecule LJFF::LJMolecule::remove(const NewAtom &atom) const
 
     \throw SireError::incompatible_error
 */
-ChangedLJMolecule LJFF::LJMolecule::remove(const AtomSelection &selected_atoms) const
+LJFF::ChangedLJMolecule LJFF::LJMolecule::remove(const AtomSelection &selected_atoms) const
 {
     AtomSelection new_selection = d->selected_atoms;
     new_selection.deselectAll(selected_atoms);
@@ -832,7 +953,7 @@ LJFF::ChangedLJMolecule::ChangedLJMolecule(const LJMolecule &old_molecule,
                           newmol(new_molecule),
                           changed_cgids(changed_groups)
 {
-    if (changed_groups.count() == old_molecule.nCutGroups())
+    if (changed_groups.count() == old_molecule.molecule().nCutGroups())
     {
         //the entire molecule has changed
         oldparts = oldmol;
@@ -860,7 +981,7 @@ LJFF::ChangedLJMolecule::~ChangedLJMolecule()
 {}
 
 /** Assignment operator */
-ChangedLJMolecule&
+LJFF::ChangedLJMolecule&
 LJFF::ChangedLJMolecule::operator=(const LJFF::ChangedLJMolecule &other)
 {
     oldmol = other.oldmol;
@@ -909,34 +1030,34 @@ const QSet<CutGroupID>& LJFF::ChangedLJMolecule::changedGroups() const
 }
 
 /** Return the whole LJMolecule as it was in the old state */
-const LJMolecule& LJFF::ChangedLJMolecule::oldMolecule() const
+const LJFF::LJMolecule& LJFF::ChangedLJMolecule::oldMolecule() const
 {
     return oldmol;
 }
 
 /** Return the whole LJMolecule as it is in the new state */
-const LJMolecule& LJFF::ChangedLJMolecule::newMolecule() const
+const LJFF::LJMolecule& LJFF::ChangedLJMolecule::newMolecule() const
 {
     return newmol;
 }
 
 /** Return the parts of the LJMolecule in the old state that
     have changed compared to the new state */
-const LJMolecule& LJFF::ChangedLJMolecule::oldParts() const
+const LJFF::LJMolecule& LJFF::ChangedLJMolecule::oldParts() const
 {
     return oldparts;
 }
 
 /** Return the parts of the LJMolecule in the new state that
     have changed compared to the old state */
-const LJMolecule& LJFF::ChangedLJMolecule::newParts() const
+const LJFF::LJMolecule& LJFF::ChangedLJMolecule::newParts() const
 {
     return newparts;
 }
 
 /** Return the ChangedLJMolecule that represents the change from the old molecule
     to 'molecule' */
-ChangedLJMolecule LJFF::ChangedLJMolecule::change(const Molecule &molecule) const
+LJFF::ChangedLJMolecule LJFF::ChangedLJMolecule::change(const Molecule &molecule) const
 {
     //calculate the change from newmol to molecule...
     ChangedLJMolecule next_change = newmol.change(molecule);
@@ -949,9 +1070,17 @@ ChangedLJMolecule LJFF::ChangedLJMolecule::change(const Molecule &molecule) cons
         return ChangedLJMolecule(oldmol, next_change.newMolecule());
 }
 
+QSet<CutGroupID> operator+(const QSet<CutGroupID> &set0, const QSet<CutGroupID> &set1)
+{
+    QSet<CutGroupID> ret(set0);
+    ret.unite(set1);
+    
+    return ret;
+}
+
 /** Return the ChangedLJMolecule that represents the change from the old molecule
     to 'residue' */
-ChangedLJMolecule LJFF::ChangedLJMolecule::change(const Residue &residue) const
+LJFF::ChangedLJMolecule LJFF::ChangedLJMolecule::change(const Residue &residue) const
 {
     if (this->changedAll())
         return this->change(residue.molecule());
@@ -968,7 +1097,7 @@ ChangedLJMolecule LJFF::ChangedLJMolecule::change(const Residue &residue) const
 
 /** Return the ChangedLJMolecule that represents the change from the old molecule
     to 'residue' */
-ChangedLJMolecule LJFF::ChangedLJMolecule::change(const NewAtom &atom) const
+LJFF::ChangedLJMolecule LJFF::ChangedLJMolecule::change(const NewAtom &atom) const
 {
     if (this->changedAll())
         return this->change(atom.molecule());
@@ -984,7 +1113,7 @@ ChangedLJMolecule LJFF::ChangedLJMolecule::change(const NewAtom &atom) const
 
 /** Return the ChangedLJMolecule that represents the addition of all atoms
     in the molecule 'molecule' */
-ChangedLJMolecule LJFF::ChangedLJMolecule::add(const Molecule &molecule) const
+LJFF::ChangedLJMolecule LJFF::ChangedLJMolecule::add(const Molecule &molecule) const
 {
     ChangedLJMolecule next_change = newmol.add(molecule);
 
@@ -996,7 +1125,7 @@ ChangedLJMolecule LJFF::ChangedLJMolecule::add(const Molecule &molecule) const
 
 /** Return the ChangedLJMolecule that represents the addition of all atoms
     in the residue 'residue' */
-ChangedLJMolecule LJFF::ChangedLJMolecule::add(const Residue &residue) const
+LJFF::ChangedLJMolecule LJFF::ChangedLJMolecule::add(const Residue &residue) const
 {
     ChangedLJMolecule next_change = newmol.add(residue);
 
@@ -1010,7 +1139,7 @@ ChangedLJMolecule LJFF::ChangedLJMolecule::add(const Residue &residue) const
 }
 
 /** Return the ChangedLJMolecule that represents the addition of the atom 'atom' */
-ChangedLJMolecule LJFF::ChangedLJMolecule::add(const NewAtom &atom) const
+LJFF::ChangedLJMolecule LJFF::ChangedLJMolecule::add(const NewAtom &atom) const
 {
     ChangedLJMolecule next_change = newmol.add(atom);
 
@@ -1024,7 +1153,7 @@ ChangedLJMolecule LJFF::ChangedLJMolecule::add(const NewAtom &atom) const
 }
 
 /** Return the ChangedLJMolecule that represents the addition of the selected atoms */
-ChangedLJMolecule LJFF::ChangedLJMolecule::add(
+LJFF::ChangedLJMolecule LJFF::ChangedLJMolecule::add(
                                       const AtomSelection &selected_atoms) const
 {
     ChangedLJMolecule next_change = newmol.add(selected_atoms);
@@ -1039,7 +1168,7 @@ ChangedLJMolecule LJFF::ChangedLJMolecule::add(
 }
 
 /** Return the ChangedLJMolecule that represents the removal of the entire molecule! */
-ChangedLJMolecule LJFF::ChangedLJMolecule::remove(const Molecule &molecule) const
+LJFF::ChangedLJMolecule LJFF::ChangedLJMolecule::remove(const Molecule &molecule) const
 {
     ChangedLJMolecule next_change = newmol.remove(molecule);
 
@@ -1050,7 +1179,7 @@ ChangedLJMolecule LJFF::ChangedLJMolecule::remove(const Molecule &molecule) cons
 }
 
 /** Return the ChangedLJMolecule that represents the removal of the residue 'residue' */
-ChangedLJMolecule LJFF::ChangedLJMolecule::remove(const Residue &residue) const
+LJFF::ChangedLJMolecule LJFF::ChangedLJMolecule::remove(const Residue &residue) const
 {
     ChangedLJMolecule next_change = newmol.remove(residue);
 
@@ -1064,7 +1193,7 @@ ChangedLJMolecule LJFF::ChangedLJMolecule::remove(const Residue &residue) const
 }
 
 /** Return the ChangedLJMolecule that represents the removal of 'atom' */
-ChangedLJMolecule LJFF::ChangedLJMolecule::remove(const NewAtom &atom) const
+LJFF::ChangedLJMolecule LJFF::ChangedLJMolecule::remove(const NewAtom &atom) const
 {
     ChangedLJMolecule next_change = newmol.remove(atom);
 
@@ -1073,13 +1202,13 @@ ChangedLJMolecule LJFF::ChangedLJMolecule::remove(const NewAtom &atom) const
     else if (this->changedAll() or next_change.changedAll())
         return ChangedLJMolecule(oldmol, next_change.newMolecule());
     else
-        return ChangedLJMolecule(oldmol, next_change.changedMolecule(),
+        return ChangedLJMolecule(oldmol, next_change.newMolecule(),
                                  changed_cgids + next_change.changed_cgids);
 }
 
 /** Return the ChangedLJMolecule that represents the removal of the
     selected atoms. */
-ChangedLJMolecule LJFF::ChangedLJMolecule::remove(
+LJFF::ChangedLJMolecule LJFF::ChangedLJMolecule::remove(
                                       const AtomSelection &selected_atoms) const
 {
     ChangedLJMolecule next_change = newmol.remove(selected_atoms);
@@ -1089,10 +1218,364 @@ ChangedLJMolecule LJFF::ChangedLJMolecule::remove(
     else if (this->changedAll() or next_change.changedAll())
         return ChangedLJMolecule(oldmol, next_change.newMolecule());
     else
-        return ChangedLJMolecule(oldmol, next_change.changedMolecule(),
+        return ChangedLJMolecule(oldmol, next_change.newMolecule(),
                                  changed_cgids + next_change.changed_cgids);
 }
 
 /////////////
 ///////////// Implementation of LJFF
 /////////////
+
+/** This function returns the LJ energy of two groups based on the 
+    inter-atomic inverse-square-distances stored in 'distmatrix'
+    and using the LJ parameters 'ljmatrix'. */
+double LJFF::calculatePairEnergy(DistMatrix &distmatrix,
+                                 LJMatrix &ljmatrix)
+{
+    uint nats0 = distmatrix.nOuter();
+    uint nats1 = distmatrix.nInner();
+
+    BOOST_ASSERT( ljmatrix.nOuter() == nats0 );
+    BOOST_ASSERT( ljmatrix.nInner() == nats1 );
+
+    double ljnrg = 0;
+    
+    //loop over all pairs of atoms
+    for (uint i=0; i<nats0; ++i)
+    {
+        distmatrix.setOuterIndex(i);
+        ljmatrix.setOuterIndex(i);
+
+        for (uint j=0; j<nats1; ++j)
+        {
+            //get the distance and LJPair for this atom pair
+            double invdist2 = distmatrix[j];
+            const LJPair &ljpair = ljmatrix[j];
+
+            double sig2_over_dist2 = SireMaths::pow_2(ljpair.sigma()) * invdist2;
+            double sig6_over_dist6 = SireMaths::pow_3(sig2_over_dist2);
+            double sig12_over_dist12 = SireMaths::pow_2(sig6_over_dist6);
+
+            //LJ energy
+            ljnrg += double(4) * ljpair.epsilon() *
+                                    ( sig12_over_dist12 - sig6_over_dist6 );
+        }
+    }
+
+    return ljnrg;
+}
+
+/** This function is used to calculate and return the self-energy of a group,
+    using the inverse-square-distances and parameters stored
+    in the passed distance and LJ matricies. */
+double LJFF::calculateSelfEnergy(DistMatrix &distmatrix,
+                                 LJMatrix &ljmatrix)
+{
+    uint nats = distmatrix.nOuter();
+    
+    BOOST_ASSERT( distmatrix.nInner() == nats );
+    BOOST_ASSERT( ljmatrix.nInner() == nats );
+    BOOST_ASSERT( ljmatrix.nOuter() == nats );
+
+    double ljnrg = 0;
+
+    for (uint i=0; i<nats-1; ++i)
+    {
+        distmatrix.setOuterIndex(i);
+        ljmatrix.setOuterIndex(i);
+
+        for (uint j=i+1; j<nats; ++j)
+        {
+            //get the distance and LJPair for this atom pair
+            double invdist2 = distmatrix[j];
+            const LJPair &ljpair = ljmatrix[j];
+
+            double sig2_over_dist2 = SireMaths::pow_2(ljpair.sigma()) * invdist2;
+            double sig6_over_dist6 = SireMaths::pow_3(sig2_over_dist2);
+            double sig12_over_dist12 = SireMaths::pow_2(sig6_over_dist6);
+
+            //LJ energy
+            ljnrg += double(4) * ljpair.epsilon() *
+                                    ( sig12_over_dist12 - sig6_over_dist6 );
+        }
+    }
+
+    return ljnrg;
+}
+
+/** Calculate and return the LJ energy of interaction of group0, with LJ parameters
+    in 'lj0' and group1, with LJ parameters in 'lj1', using the
+    space 'space', and using the provided distance and LJ matricies as
+    temporary workspace. */
+double LJFF::calculateEnergy(const CoordGroup &group0,
+                             const QVector<LJParameter> &lj0,
+                             const CoordGroup &group1,
+                             const QVector<LJParameter> &lj1,
+                             const Space &space,
+                             const SwitchingFunction &switchfunc,
+                             DistMatrix &distmatrix,
+                             LJMatrix &ljmatrix)
+{
+    if ( not space.beyond(switchfunc.cutoffDistance(), group0, group1) )
+    {
+        double mindist = space.calcInvDist2(group0, group1, distmatrix);
+
+        double scllj = switchfunc.vdwScaleFactor(mindist);
+
+        if (scllj != 0)
+        {
+            //combine the LJ parameters together
+            int nats0 = lj0.count();
+            int nats1 = lj1.count();
+            
+            BOOST_ASSERT( group0.count() == nats0 );
+            BOOST_ASSERT( group1.count() == nats1 );
+            
+            ljmatrix.redimension(nats0, nats1);
+            
+            const LJParameter *lj0_array = lj0.constData();
+            const LJParameter *lj1_array = lj1.constData();
+            
+            for (int i=0; i<nats0; ++i)
+            {
+                ljmatrix.setOuterIndex(i);
+                
+                const LJParameter &lj0param = lj0_array[i];
+                
+                for (int j=0; j<nats1; ++j)
+                {
+                    ljmatrix[j] = LJPair::geometric( lj1_array[j], lj0param );
+                }
+            }
+        
+            return scllj * LJFF::calculatePairEnergy(distmatrix, ljmatrix);
+        }
+    }
+
+    return 0;
+}
+
+/** Calculate the LJ energy of interaction of the atoms within the
+    group 'group', with LJ parameters in 'ljs', using the space 'space',
+    combining rules in 'combrules', and working in the temporary
+    workspace provided by the passed distance and LJ matricies */
+double LJFF::calculateEnergy(const CoordGroup &group,
+                             const QVector<LJParameter> &ljs,
+                             const Space &space,
+                             DistMatrix &distmatrix,
+                             LJMatrix &ljmatrix)
+{
+    space.calcInvDist2(group, distmatrix);
+
+    //combine together the LJ parameters
+    int nats = ljs.count();
+    
+    BOOST_ASSERT(group.count() == nats);
+    
+    ljmatrix.redimension(nats,nats);
+    
+    const LJParameter *lj_array = ljs.constData();
+    
+    //we only need to fill in the top left diagonal
+    //(and we don't need to do matrix(i,i) as we never
+    // calculate a self-interaction!)
+    for (int i=0; i<nats-1; ++i)
+    {
+        ljmatrix.setOuterIndex(i);
+        
+        const LJParameter &lj0param = lj_array[i];
+        
+        for (int j=i+1; j<nats; ++j)
+        {
+            ljmatrix[j] = LJPair::geometric( lj_array[j], lj0param );
+        }
+    }
+
+    return LJFF::calculateSelfEnergy(distmatrix, ljmatrix);
+}
+
+/** Calculate and return the LJ energy of interaction between two 
+    LJMolecules, using the space 'space', combining rules 'combrules' 
+    and switching function 'switchfunc'. The calculation will use 
+    the provided distance and LJ matricies as a temporary workspace */
+double LJFF::calculateEnergy(const LJFF::LJMolecule &mol0,
+                             const LJFF::LJMolecule &mol1,
+                             const Space &space,
+                             const SwitchingFunction &switchfunc,
+                             DistMatrix &distmatrix,
+                             LJMatrix &ljmatrix)
+{
+    int ncg0 = mol0.coordinates().count();
+    int ncg1 = mol1.coordinates().count();
+
+    if (ncg0 == 1 and ncg1 == 1)
+    {
+        return calculateEnergy( mol0.coordinates().constData()[0],
+                                mol0.ljParameters().constData()[0],
+                                mol1.coordinates().constData()[0],
+                                mol1.ljParameters().constData()[0],
+
+                                space, switchfunc, 
+                                distmatrix, ljmatrix);
+    }
+    else if (ncg0 > 0 and ncg1 > 0)
+    {
+        double ljnrg = 0;
+
+        const CoordGroup *cg0array = mol0.coordinates().constData();
+        const CoordGroup *cg1array = mol1.coordinates().constData();
+
+        const QVector<LJParameter> *lj0array = mol0.ljParameters().constData();
+        const QVector<LJParameter> *lj1array = mol1.ljParameters().constData();
+
+        for (int i=0; i<ncg0; ++i)
+        {
+            const CoordGroup &group0 = cg0array[i];
+            const QVector<LJParameter> &lj0 = lj0array[i];
+
+            for (int j=0; j<ncg1; ++j)
+            {
+                const CoordGroup &group1 = cg1array[j];
+                const QVector<LJParameter> &lj1 = lj1array[j];
+
+                ljnrg += calculateEnergy(group0, lj0, group1, lj1,
+                                         space, switchfunc, 
+                                         distmatrix, ljmatrix);
+            }
+        }
+
+        return ljnrg;
+    }
+    else
+        return 0;
+}
+
+/** Calculate and return the LJ energy of interaction between the pairs
+    of atoms within a single LJMolecule, using the space 'space', 
+    combining rules 'combrules' and switching function
+    'switchfunc'. The calculation will use the provided
+    distance and LJ matricies as a temporary workspace  */
+double LJFF::calculateEnergy(const LJFF::LJMolecule &mol,
+                             const Space &space,
+                             const SwitchingFunction &switchfunc,
+                             DistMatrix &distmatrix,
+                             LJMatrix &ljmatrix)
+{
+    int ncg = mol.coordinates().count();
+
+    if (ncg == 1)
+    {
+        //calculate only the self-energy of the first CutGroup
+        return calculateEnergy(mol.coordinates().constData()[0],
+                               mol.ljParameters().constData()[0],
+                               space, distmatrix, ljmatrix);
+    }
+    else if (ncg > 1)
+    {
+        double ljnrg = 0;
+
+        const CoordGroup *cgarray = mol.coordinates().constData();
+        const QVector<LJParameter> *ljarray = mol.ljParameters().constData();
+
+        for (int i=0; i<ncg-1; ++i)
+        {
+            const CoordGroup &group0 = cgarray[i];
+            const QVector<LJParameter> &lj0 = ljarray[i];
+
+            //add on the self-energy
+            ljnrg += calculateEnergy(group0, lj0, space, distmatrix, ljmatrix);
+
+            for (int j=i+1; j<ncg; ++j)
+            {
+                //calculate the group-group energy
+                const CoordGroup &group1 = cgarray[j];
+                const QVector<LJParameter> &lj1 = ljarray[j];
+
+                ljnrg += calculateEnergy(group0, lj0, group1, lj1,
+                                         space, switchfunc, 
+                                         distmatrix, ljmatrix);
+            }
+        }
+
+        //have to add on the self-energy of the last CutGroup of the molecule
+        const CoordGroup &group = cgarray[ncg-1];
+        const QVector<LJParameter> &lj = ljarray[ncg-1];
+
+        ljnrg += calculateEnergy(group, lj, space, distmatrix, ljmatrix);
+    
+        return ljnrg;
+    }
+    else
+        return 0;
+}
+
+static const RegisterMetaType<LJFF> r_ljff(MAGIC_ONLY, "SireMM::LJFF");
+
+/** Serialise to a binary data stream */
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const LJFF &ljff)
+{
+    writeHeader(ds, r_ljff, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << ljff.spce << ljff.switchfunc
+        << static_cast<const FFBase&>(ljff);
+    
+    return ds;
+}
+
+/** Deserialise from a binary data stream */
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, LJFF &ljff)
+{
+    VersionID v = readHeader(ds, r_ljff);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+    
+        sds >> ljff.spce >> ljff.switchfunc
+            >> static_cast<FFBase&>(ljff);
+    }
+    else
+        throw version_error(v, "1", r_ljff, CODELOC);
+    
+    return ds;
+}
+
+/** Null constructor */
+LJFF::LJFF() : FFBase()
+{
+    this->registerComponents();
+}
+
+/** Construct a LJFF using the specified space and switching function */
+LJFF::LJFF(const Space &space, const SwitchingFunction &switchingfunction)
+     : FFBase(),
+       spce(space), switchfunc(switchingfunction)
+{
+    this->registerComponents();
+}
+
+/** Copy constructor */
+LJFF::LJFF(const LJFF &other)
+     : FFBase(other),
+       spce(other.spce), switchfunc(other.switchfunc)
+{
+    //get the pointer from the base class...
+    components_ptr = dynamic_cast<const LJFF::Components*>( &(FFBase::components()) );
+    BOOST_ASSERT( components_ptr != 0 );
+}
+
+/** Destructor */
+LJFF::~LJFF()
+{}
+
+/** Register the energy components associated with this forcefield */
+void LJFF::registerComponents()
+{
+    std::auto_ptr<LJFF::Components> ptr( new LJFF::Components(*this) );
+
+    FFBase::registerComponents(ptr.get());
+
+    components_ptr = ptr.release();
+}

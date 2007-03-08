@@ -29,7 +29,21 @@
 #ifndef SIREMM_LJFF_H
 #define SIREMM_LJFF_H
 
+#include <QSharedDataPointer>
+
+#include "ljpair.h"
+#include "combiningrules.h"
+#include "switchingfunction.h"
+
+#include "atomicljs.h"
+
+#include "SireVol/space.h"
 #include "SireFF/ffbase.h"
+
+#include "SireMol/molecule.h"
+#include "SireMol/residue.h"
+#include "SireMol/newatom.h"
+#include "SireMol/atomselection.h"
 
 SIRE_BEGIN_HEADER
 
@@ -43,6 +57,26 @@ QDataStream& operator>>(QDataStream&, SireMM::LJFF&);
 
 namespace SireMM
 {
+
+/** Define the PairMatrix used to hold LJ parameters */
+typedef SireBase::PairMatrix<LJPair> LJMatrix;
+
+using SireMol::Molecule;
+using SireMol::Residue;
+using SireMol::NewAtom;
+using SireMol::AtomSelection;
+
+using SireMol::CutGroupID;
+
+using SireVol::Space;
+using SireVol::CoordGroup;
+using SireVol::DistMatrix;
+
+using SireFF::FFBase;
+using SireFF::ParameterName;
+using SireFF::FFComponent;
+
+using SireCAS::Symbols;
 
 /** This is the base class of all forcefields that provide only
     the LJ energy of molecules.
@@ -170,8 +204,8 @@ protected:
 
         LJMolecule& operator=(const LJMolecule &other);
 
-        bool operator==(const LJMolecule &other);
-        bool operator!=(const LJMolecule &other);
+        bool operator==(const LJMolecule &other) const;
+        bool operator!=(const LJMolecule &other) const;
 
         bool isEmpty() const;
 
@@ -200,8 +234,15 @@ protected:
         const AtomSelection& selectedAtoms() const;
 
     private:
+        ChangedLJMolecule _pvt_change(const Molecule &molecule, 
+                                      const QSet<CutGroupID> &cgids) const;
+        
+        ChangedLJMolecule _pvt_change(const Molecule &molecule,
+                                      const QSet<CutGroupID> &cgids,
+                                      const AtomSelection &selected_atoms) const;
+    
         /** Implicitly shared pointer to the data of this class */
-        QSharedDataPtr<LJMoleculeData> d;
+        QSharedDataPointer<LJMoleculeData> d;
     };
 
     /** This class holds information on how a molecule has changed
@@ -272,7 +313,88 @@ protected:
         QSet<CutGroupID> changed_cgids;
     };
 
+    static double calculateEnergy(const CoordGroup &group0,
+                                  const QVector<LJParameter> &lj0,
+                                  const CoordGroup &group1,
+                                  const QVector<LJParameter> &lj1,
+                                  const Space &space,
+                                  const SwitchingFunction &switchfunc,
+                                  DistMatrix &distmatrix,
+                                  LJMatrix &ljmatrix);
+
+    static double calculateEnergy(const CoordGroup &group,
+                                  const QVector<LJParameter> &ljs,
+                                  const Space &space,
+                                  DistMatrix &distmatrix,
+                                  LJMatrix &ljmatrix);
+
+    static double calculateEnergy(const LJMolecule &mol0,
+                                  const LJMolecule &mol1,
+                                  const Space &space,
+                                  const SwitchingFunction &switchfunc,
+                                  DistMatrix &distmatrix,
+                                  LJMatrix &ljmatrix);
+
+    static double calculateEnergy(const LJMolecule &mol,
+                                  const Space &space,
+                                  const SwitchingFunction &switchfunc,
+                                  DistMatrix &distmatrix,
+                                  LJMatrix &ljmatrix);
+
+    DistMatrix& distanceMatrix();
+    LJMatrix& ljMatrix();
+
+private:
+
+    static double calculatePairEnergy(DistMatrix &distmatrix,
+                                      LJMatrix &ljmatrix);
+
+    static double calculateSelfEnergy(DistMatrix &distmatrix,
+                                      LJMatrix &ljmatrix);
+
+    void registerComponents();
+    
+    /** Workspace for the distance calculations */
+    DistMatrix distmat;
+    
+    /** Workspace for the combination of LJ parameters */
+    LJMatrix ljmat;
+
+    /** The space in which the molecules in this forcefield reside */
+    Space spce;
+    
+    /** The switching function used to truncate the LJ interactions */
+    SwitchingFunction switchfunc;
+
+    /** Pointer to the object containing the components of
+        this forcefield */
+    const LJFF::Components *components_ptr;
 };
+
+/** Return the space within which the LJ energy is calculated */
+inline const Space& LJFF::space() const
+{
+    return spce;
+}
+
+/** Return the switching function that is used to apply the non-bonded
+    cutoff */
+inline const SwitchingFunction& LJFF::switchingFunction() const
+{
+    return switchfunc;
+}
+
+/** Return a reference to the workspace used for the distance calculations */
+inline DistMatrix& LJFF::distanceMatrix()
+{
+    return distmat;
+}
+
+/** Return a reference to the workspace used for the LJ parameter combination */
+inline LJMatrix& LJFF::ljMatrix()
+{
+    return ljmat;
+}
 
 }
 

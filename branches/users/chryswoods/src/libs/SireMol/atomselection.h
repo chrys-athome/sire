@@ -35,6 +35,7 @@
 #include "moleculeinfo.h"
 #include "cutgroupid.h"
 #include "atomid.h"
+#include "idmolatom.h"
 
 SIRE_BEGIN_HEADER
 
@@ -92,6 +93,7 @@ public:
     int nSelectedResidues() const;
 
     bool selected(const CGAtomID &cgatomid) const;
+    bool selected(const IDMolAtom &atomid) const;
 
     bool selectedAll() const;
 
@@ -112,8 +114,14 @@ public:
     void selectAll(ResNum resnum);
     void deselectAll(ResNum resnum);
 
+    void selectAll(const AtomSelection &selection);
+    void deselectAll(const AtomSelection &selection);
+
     void select(const CGAtomID &cgatomid);
     void deselect(const CGAtomID &cgatomid);
+
+    void select(const IDMolAtom &atomid);
+    void deselect(const IDMolAtom &atomid);
 
     void invert();
 
@@ -123,6 +131,8 @@ public:
 
     void assertCompatibleWith(const MoleculeInfo &molinfo) const;
     void assertCompatibleWith(const Molecule &molecule) const;
+
+    QList<AtomIndex> selected() const;
 
 private:
     bool _pvt_selected(const CGAtomID &cgatomid) const;

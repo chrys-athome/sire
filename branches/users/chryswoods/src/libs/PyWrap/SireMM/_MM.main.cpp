@@ -115,6 +115,10 @@
 
 #include "LJDB.pypp.hpp"
 
+#include "LJFF.pypp.hpp"
+
+#include "LJPair.pypp.hpp"
+
 #include "LJParameter.pypp.hpp"
 
 #include "LJTable.pypp.hpp"
@@ -281,6 +285,10 @@ BOOST_PYTHON_MODULE(_MM){
     register_InterCLJFF_class();
 
     register_LJDB_class();
+
+    register_LJFF_class();
+
+    register_LJPair_class();
 
     register_LJTable_class();
 

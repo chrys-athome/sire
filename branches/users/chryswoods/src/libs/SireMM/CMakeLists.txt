@@ -38,6 +38,8 @@ set ( SIREMM_SOURCES
       intergroupcljff.cpp   
       internaldatatypes.cpp 
       ljdb.cpp
+      ljff.cpp
+      ljpair.cpp
       ljparameter.cpp
       ljtable.cpp
       molangleinfo.cpp

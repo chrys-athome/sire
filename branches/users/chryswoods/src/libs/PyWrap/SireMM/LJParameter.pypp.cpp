@@ -21,6 +21,7 @@ void register_LJParameter_class(){
     bp::class_< SireMM::LJParameter >( "LJParameter" )    
         .def( bp::init< >() )    
         .def( bp::init< double, double >(( bp::arg("sigma"), bp::arg("epsilon") )) )    
+        .def( bp::init< SireMM::LJPair const & >(( bp::arg("ljpair") )) )    
         .def( 
             "A"
             , (double ( ::SireMM::LJParameter::* )(  ) const)( &::SireMM::LJParameter::A ) )    

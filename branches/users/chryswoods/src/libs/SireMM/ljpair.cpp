@@ -26,101 +26,142 @@
   *
 \*********************************************/
 
-#include "ljparameter.h"
 #include "ljpair.h"
+#include "ljparameter.h"
 
 #include "SireMaths/maths.h"
 
 #include "SireStream/datastream.h"
 
-using namespace SireStream;
 using namespace SireMM;
+using namespace SireMaths;
+using namespace SireStream;
 
-static const RegisterMetaType<LJParameter> r_ljparam;
+static const RegisterMetaType<LJPair> r_ljpair;
 
 /** Serialise to a binary data stream */
-QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const LJParameter &ljparam)
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const LJPair &ljpair)
 {
-    writeHeader(ds, r_ljparam, 1) << ljparam.sqrtsig << ljparam.sqrteps;
-
+    writeHeader(ds, r_ljpair, 1) << ljpair.sig << ljpair.eps;
+    
     return ds;
 }
 
 /** Deserialise from a binary data stream */
-QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, LJParameter &ljparam)
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, LJPair &ljpair)
 {
-    VersionID v = readHeader(ds, r_ljparam);
-
+    VersionID v = readHeader(ds, r_ljpair);
+    
     if (v == 1)
     {
-        ds >> ljparam.sqrtsig >> ljparam.sqrteps;
+        ds >> ljpair.sig >> ljpair.eps;
     }
     else
-        throw version_error(v, "1", r_ljparam, CODELOC);
-
+        throw version_error(v, "1", r_ljpair, CODELOC);
+    
     return ds;
 }
 
-/** Construct a dummy LJ parameter */
-LJParameter::LJParameter() : sqrtsig(0.0), sqrteps(0.0)
+/** Construct a dummy LJPair */
+LJPair::LJPair() : sig(0), eps(0)
 {}
 
-/** Construct from an LJPair */
-LJParameter::LJParameter(const LJPair &ljpair)
-            : sqrtsig(ljpair.sqrtSigma()),
-              sqrteps(ljpair.sqrtEpsilon())
+/** Construct from an LJParameter */
+LJPair::LJPair(const LJParameter &ljparam)
+            : sig(ljparam.sigma()),
+              eps(ljparam.epsilon())
 {}
 
 /** Copy constructor */
-LJParameter::LJParameter(const LJParameter &other)
-            : sqrtsig(other.sqrtsig), sqrteps(other.sqrteps)
+LJPair::LJPair(const LJPair &other)
+            : sig(other.sig), eps(other.eps)
 {}
 
-/** Construct a LJParameter that has the specified sigma and epsilon */
-LJParameter::LJParameter(double s, double e)
-            : sqrtsig( std::sqrt(std::abs(s)) ), sqrteps( std::sqrt(std::abs(e)) )
+/** Construct a LJPair that has the specified sigma and epsilon */
+LJPair::LJPair(double sigma, double epsilon)
+            : sig( std::abs(sigma) ), eps( std::abs(epsilon) )
 {
-    if ( SireMaths::isZero(sqrtsig) or SireMaths::isZero(sqrteps) )
+    if ( SireMaths::isZero(sig) or SireMaths::isZero(eps) )
     {
-        sqrtsig = 0.0;
-        sqrteps = 0.0;
+        sig = 0;
+        eps = 0;
     }
 }
 
 /** Destructor */
-LJParameter::~LJParameter()
+LJPair::~LJPair()
 {}
 
-/** Return a dummy CLJParameter */
-LJParameter LJParameter::dummy()
+/** Return a dummy CLJPair */
+LJPair LJPair::dummy()
 {
-    return LJParameter(0.0,0.0);
+    return LJPair(0,0);
+}
+
+/** Return whether or not two LJPairs are equal */
+bool LJPair::operator==(const LJPair &other) const
+{
+    return sig == other.sig and eps == other.eps;
+}
+
+/** Return whether or not two LJPairs are different */
+bool LJPair::operator!=(const LJPair &other) const
+{
+    return not operator==(other);
+}
+
+/** Return whether or not this is a dummy LJ parameter */
+bool LJPair::isDummy() const
+{
+    //we only need to compare sigma as this will be set to zero if 
+    //epsilon is zero
+    return sig == 0.0;
+}
+
+/** Return whether or not this parameter has non-zero LJ parameters */
+bool LJPair::zeroLJ() const
+{
+    //we only need to compare sigma as this will be set to zero if 
+    //epsilon is zero
+    return sig == 0.0;
+}
+
+/** Return sqrt(sigma) */
+double LJPair::sqrtSigma() const
+{
+    return std::sqrt(sig);
+}
+
+/** Return sqrt(epsilon) */
+double LJPair::sqrtEpsilon() const
+{
+    return std::sqrt(eps);
 }
 
 /** Return the LJ 'A' parameter */
-double LJParameter::A() const
+double LJPair::A() const
 {
-    return double(4.0) * epsilon() * SireMaths::pow_12( sigma() );
+    return double(4) * epsilon() * SireMaths::pow_12( sigma() );
 }
 
 /** Return the LJ 'B' parameter */
-double LJParameter::B() const
+double LJPair::B() const
 {
-    return double(4.0) * epsilon() * SireMaths::pow_6( sigma() );
+    return double(4) * epsilon() * SireMaths::pow_6( sigma() );
 }
 
 /** Return the LJ 'rmin' parameter - this is the location of the minimum.
 
     rmin = 2^(1/6) * sigma
 */
-double LJParameter::rmin() const
+double LJPair::rmin() const
 {
     // 2.0 ^ (1/6) = 1.122462048309372981439932526193103967671
     return sigma() * double(1.122462048309372981439932526193103967671);
 }
 
 /** Return a string representation of the CLJ parameter */
-QString LJParameter::toString() const
+QString LJPair::toString() const
 {
     return QString("LJ( sigma = %1 A, epsilon = %2 kcal mol-1 )").arg(sigma()).arg(epsilon());
 }
@@ -129,16 +170,16 @@ QString LJParameter::toString() const
 
     E(r) = 4 epsilon [ (sigma/r)^12 - (sigma/r)^6 ]
 */
-LJParameter LJParameter::fromSigmaAndEpsilon(double sigma, double epsilon)
+LJPair LJPair::fromSigmaAndEpsilon(double sigma, double epsilon)
 {
-    return LJParameter(sigma,epsilon);
+    return LJPair(sigma,epsilon);
 }
 
 /** Return a LJ parameter that corresponds to the passed LJ parameters A and B,
 
     E(r) = A r-12  - B r-6
 */
-LJParameter LJParameter::fromAAndB(double a, double b)
+LJPair LJPair::fromAAndB(double a, double b)
 {
     // A = 4 epsilon sigma^12,  B = 4 epsilon sigma^6
 
@@ -149,7 +190,7 @@ LJParameter LJParameter::fromAAndB(double a, double b)
     //           epsilon = B / (4 (A/B) )
     //                   = B^2 / 4A
 
-    return LJParameter( std::pow( (a/b), (1.0/6.0) ),
+    return LJPair( std::pow( (a/b), (1.0/6.0) ),
                         (b*b) / (4.0*a) );
 }
 
@@ -160,10 +201,11 @@ LJParameter LJParameter::fromAAndB(double a, double b)
 
     rmin = 2^(1/6) sigma
 */
-LJParameter LJParameter::fromRMinAndEpsilon(double rmin, double epsilon)
+LJPair LJPair::fromRMinAndEpsilon(double rmin, double epsilon)
 {
     //sigma = rmin / 2^(1/6) - 2^(1/6) = 1.122462048309372981439932526193103967671
 
-    return LJParameter( rmin / double(1.122462048309372981439932526193103967671),
+    return LJPair( rmin / double(1.122462048309372981439932526193103967671),
                         epsilon );
 }
+

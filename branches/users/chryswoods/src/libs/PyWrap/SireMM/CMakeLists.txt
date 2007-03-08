@@ -92,6 +92,8 @@ set ( WRAPMM_SOURCES
       InternalTable_MolDihedralInfo_Expression_.pypp.cpp
             
       LJDB.pypp.cpp
+      LJFF.pypp.cpp
+      LJPair.pypp.cpp
       LJParameter.pypp.cpp
       LJTable.pypp.cpp
 

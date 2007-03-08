@@ -37,6 +37,8 @@
 #include "SireMM/intergroupcljff.h"
 #include "SireMM/internaldatatypes.h"
 #include "SireMM/ljdb.h"
+#include "SireMM/ljff.h"
+#include "SireMM/ljpair.h"
 #include "SireMM/ljparameter.h"
 #include "SireMM/ljtable.h"
 #include "SireMM/molangleinfo.h"
