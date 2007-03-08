@@ -7,9 +7,6 @@ from Sire.CAS import *
 from Sire.Maths import *
 from Sire.Qt import *
 from Sire.Units import *
-from Sire.Squire import *
-
-import os
 
 timer = QTime()
 
@@ -29,12 +26,14 @@ space = PeriodicBox(Vector(-18.3854,-18.66855,-18.4445), \
 
 #specify the type of switching function to use
 switchfunc = HarmonicSwitchingFunction(80.0)
-switchfunc = HarmonicSwitchingFunction(10.0, 9.5)
+switchfunc = HarmonicSwitchingFunction(15.0, 14.5)
 
 #create a forcefield for the molecules
-molpro = MolproFF(space, switchfunc)
+cljff = InterCLJFF(space, switchfunc)
 
-molpro.setMolproExe("../../../../../software/molpro/devel/molpro")
+cljff2 = Tip4PFF(space, switchfunc)
+
+ljff = InterLJFF(space, switchfunc)
 
 #parametise each molecule and add it to the forcefield
 print "Parametising the molecules..."
@@ -49,17 +48,24 @@ ljs = AtomicLJs( [ LJParameter( 3.15365 * angstrom, \
                    LJParameter.dummy(), \
                    LJParameter.dummy() ] )
 
+tip4p = False
+
 timer.start()
 for mol in mols:
       
       mol.setProperty( "charges", chgs )
       mol.setProperty( "ljs", ljs )
 
-qm_mol = mols[0]
-mm_mols = mols[1:]
+      if (not tip4p):
+          tip4p = mol
+      
+      cljff.add(mol, {cljff.parameters().coulomb() : "charges",
+                      cljff.parameters().lj() : "ljs"})
+                      
+      cljff2.add(mol, {cljff2.parameters().coulomb() : "charges",
+                       cljff2.parameters().lj() : "ljs"})
 
-molpro.addToMM(mm_mols)
-molpro.addToQM(qm_mol)
+      ljff.add(mol, {ljff.parameters().lj() : "ljs"})
 
 ms = timer.elapsed()
 print "... took %d ms" % ms
@@ -68,39 +74,105 @@ print "... took %d ms" % ms
 print "Calculating the energy..."
 
 timer.start()
-nrg = molpro.energy()
+nrg = cljff.energy()
 ms = timer.elapsed()
 
-print "Energy = %f kcal mol-1, took %d ms" % (nrg, ms)
+print "InterCLJFF ",cljff.energy(), "kcal mol-1"
+print "    Coulomb = ", cljff.energy(cljff.components().coulomb())
+print "         LJ = ", cljff.energy(cljff.components().lj())
 
-f = open( os.path.join(os.getenv("HOME"),"test.cmd"), "w" )
-f.write( str(molpro.molproCommandInput()) )
-f.close()
-
-# set the origin of the QM energy
-molpro.setEnergyOrigin(nrg)
-
-nrg = molpro.energy()
-print "Scaled energy = %f kcal mol-1" % nrg
-
-#lets translate the QM molecule by 0.1 A
-qm_mol.translate( (-5.0,0.0,0.0) )
-
-molpro.change(qm_mol)
+print "... took %d ms" % ms
 
 timer.start()
-nrg = molpro.energy()
+nrg = ljff.energy()
 ms = timer.elapsed()
 
-print "Energy = %f kcal mol-1, took %d ms" % (nrg, ms)
+print "InterLJFF ",ljff.energy(), "kcal mol-1"
+print "         LJ = ", ljff.energy(ljff.components().lj())
 
-#now lets translate the QM molecule back again
-qm_mol.translate( (5.0,0.0,0.0) )
+print "... took %d ms" % ms
 
-molpro.change(qm_mol)
+print "Calculating the energy..."
 
 timer.start()
-nrg = molpro.energy()
+nrg = cljff2.energy()
 ms = timer.elapsed()
 
-print "Energy = %f kcal mol-1, took %d ms" % (nrg, ms)
+print "Tip4PFF ",cljff2.energy(), "kcal mol-1"
+
+print "... took %d ms" % ms
+
+timer.start()
+
+nmoves = 1000
+for i in range(0,nmoves):
+    cljff.change( tip4p )
+    nrg = cljff.energy()
+
+ms = timer.elapsed()
+
+print "InterCLJFF ",cljff.energy(), "kcal mol-1"
+print "... took %d ms (%f moves per second)" % (ms, nmoves*1000.0/ms)
+
+tip4p.translate( (1.0,0.0,0.0) )
+
+timer.start()
+
+cljff.change(tip4p)
+ljff.change(tip4p)
+cljff2.change(tip4p)
+
+ms = timer.elapsed()
+
+print "Changing took %d ms" % ms
+
+timer.start()
+nrg = cljff.energy()
+ms = timer.elapsed()
+
+print "InterCLJFF ",cljff.energy(), "kcal mol-1"
+print "    Coulomb = ", cljff.energy(cljff.components().coulomb())
+print "         LJ = ", cljff.energy(cljff.components().lj())
+
+print "... took %d ms" % ms
+
+timer.start()
+nrg = ljff.energy()
+ms = timer.elapsed()
+
+print "InterLJFF ",ljff.energy(), "kcal mol-1"
+print "         LJ = ", ljff.energy(ljff.components().lj())
+
+print "... took %d ms" % ms
+
+timer.start()
+nrg = cljff2.energy()
+ms = timer.elapsed()
+
+print "Tip4PFF ",cljff2.energy(), "kcal mol-1"
+
+print "... took %d ms" % ms
+
+timer.start()
+
+nmoves = 1000
+for i in range(0,nmoves):
+    tip4p.translate( (0.00001,0,0) )
+    cljff.change( tip4p )
+    nrg = cljff.energy()
+
+ms = timer.elapsed()
+
+print "%d moves of InterCLJFF took %d ms" % (nmoves, ms)
+
+timer.start()
+
+nmoves = 1000
+for i in range(0,nmoves):
+    tip4p.translate( (0.00001,0,0) )
+    ljff.change( tip4p )
+    nrg = ljff.energy()
+
+ms = timer.elapsed()
+
+print "%d moves of InterLJFF took %d ms" % (nmoves, ms)

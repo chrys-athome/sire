@@ -190,6 +190,7 @@ special_code = { "assign_angles" : fix_assigninternals,
                  "ChargeTable" : remove_create,
                  "DihedralTable" : remove_create,
                  "LJTable" : remove_create,
+                 "InterLJFF" : fix_noncopyable,
                  "InterCLJFF" : fix_noncopyable,
                  "Tip4PFF" : fix_noncopyable }
 

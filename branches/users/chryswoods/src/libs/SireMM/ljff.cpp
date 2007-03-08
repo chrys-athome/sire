@@ -897,8 +897,11 @@ LJFF::ChangedLJMolecule LJFF::LJMolecule::_pvt_change(const Molecule &molecule,
 LJFF::ChangedLJMolecule LJFF::LJMolecule::add(const Molecule &molecule,
                                               const QString &ljproperty) const
 {
-    return this->_pvt_change(molecule, QSet<CutGroupID>(), 
-                             AtomSelection(molecule), ljproperty);
+    if (d->molecule.ID() == 0)
+        return ChangedLJMolecule(*this, LJMolecule(molecule,ljproperty));
+    else
+        return this->_pvt_change(molecule, QSet<CutGroupID>(), 
+                                 AtomSelection(molecule), ljproperty);
 }
 
 /** Return a ChangedLJMolecule that represents the change from the LJMolecule
@@ -910,12 +913,17 @@ LJFF::ChangedLJMolecule LJFF::LJMolecule::add(const Molecule &molecule,
 LJFF::ChangedLJMolecule LJFF::LJMolecule::add(const Residue &residue,
                                               const QString &ljproperty) const
 {
-    AtomSelection new_selection = d->selected_atoms;
+    if (d->molecule.ID() == 0)
+        return ChangedLJMolecule(*this, LJMolecule(residue,ljproperty));
+    else
+    {
+        AtomSelection new_selection = d->selected_atoms;
 
-    new_selection.selectAll(residue.number());
-
-    return this->_pvt_change(residue.molecule(), residue.info().cutGroupIDs(), 
-                             new_selection, ljproperty);
+        new_selection.selectAll(residue.number());
+  
+        return this->_pvt_change(residue.molecule(), residue.info().cutGroupIDs(), 
+                                 new_selection, ljproperty);
+    }
 }
 
 /** Return a ChangedLJMolecule that represents the change from the LJMolecule
@@ -927,15 +935,20 @@ LJFF::ChangedLJMolecule LJFF::LJMolecule::add(const Residue &residue,
 LJFF::ChangedLJMolecule LJFF::LJMolecule::add(const NewAtom &atom,
                                               const QString &ljproperty) const
 {
-    AtomSelection new_selection = d->selected_atoms;
+    if (d->molecule.ID() == 0)
+        return ChangedLJMolecule(*this, LJMolecule(atom,ljproperty));
+    else
+    {
+        AtomSelection new_selection = d->selected_atoms;
 
-    new_selection.select(atom.cgAtomID());
+        new_selection.select(atom.cgAtomID());
 
-    QSet<CutGroupID> cgid;
-    cgid.insert(atom.cgAtomID().cutGroupID());
+        QSet<CutGroupID> cgid;
+        cgid.insert(atom.cgAtomID().cutGroupID());
 
-    return this->_pvt_change(atom.molecule(), cgid, new_selection,
-                             ljproperty);
+        return this->_pvt_change(atom.molecule(), cgid, new_selection,
+                                 ljproperty);
+    }
 }
 
 /** Return a ChangedLJMolecule that represents the change from the LJMolecule
