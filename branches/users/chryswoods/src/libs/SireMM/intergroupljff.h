@@ -44,9 +44,16 @@ QDataStream& operator>>(QDataStream&, SireMM::InterGroupLJFF&);
 namespace SireMM
 {
 
+using SireMol::Molecule;
+using SireMol::Residue;
+using SireMol::NewAtom;
+using SireMol::MoleculeID;
+
+using SireFF::ParameterMap;
+
 /** This forcefield is used to calculate the LJ interaction energy
-    between two groups of molecules. 
-    
+    between two groups of molecules.
+
     @author Christopher Woods
 */
 class SIREMM_EXPORT InterGroupLJFF : public LJFF
@@ -57,15 +64,15 @@ friend QDataStream& ::operator>>(QDataStream&, InterGroupLJFF&);
 
 public:
     InterGroupLJFF();
-    
+
     InterGroupLJFF(const Space &space, const SwitchingFunction &switchfunc);
-    
+
     InterGroupLJFF(const InterGroupLJFF &other);
-    
+
     ~InterGroupLJFF();
 
     InterGroupLJFF& operator=(const InterGroupLJFF &other);
-    
+
     class SIREMM_EXPORT Components : public LJFF::Components
     {
     public:
@@ -96,12 +103,12 @@ public:
         Groups(const Groups &other);
 
         ~Groups();
-        
+
         int A() const
         {
             return 0;
         }
-        
+
         int B() const
         {
             return 1;
@@ -134,17 +141,21 @@ public:
     bool add(const Molecule &mol, const AtomSelection &selected_atoms,
              const ParameterMap &map = ParameterMap());
 
-    bool addTo(int group, const Molecule &mol,
+    bool addTo(int group, const Molecule &molecule,
                const ParameterMap &map = ParameterMap());
-    bool addTo(int group, const Residue &res,
+    bool addTo(int group, const Residue &residue,
                const ParameterMap &map = ParameterMap());
     bool addTo(int group, const NewAtom &atom,
+               const ParameterMap &map = ParameterMap());
+
+    bool addTo(int group, const Molecule &molecule,
+               const AtomSelection &selected_atoms,
                const ParameterMap &map = ParameterMap());
 
     bool remove(const Molecule &molecule);
     bool remove(const Residue &residue);
     bool remove(const NewAtom &atom);
-    
+
     bool remove(const Molecule &mol, const AtomSelection &selected_atoms);
 
 protected:
@@ -157,32 +168,54 @@ protected:
 
     bool applyChange(MoleculeID molid,
                      const ChangedLJMolecule &new_molecule);
-    
-private:
 
-    /** All of the molecules that have at least one molecule in 
+    int otherGroup(int group_id) const;
+
+    void assertValidGroup(int group_id, MoleculeID molid) const;
+
+private:
+    double recalculateWithTwoChangedGroups();
+    double recalculateWithOneChangedGroup(int changed_idx);
+    double recalculateChangedWithUnchanged(int unchanged_idx, int changed_idx);
+    double recalculateChangedWithChanged();
+
+    void recordChange(int group_idx, MoleculeID molid,
+                      const ChangedLJMolecule &new_molecule);
+
+    void addToCurrentState(int group_idx, const LJMolecule &new_molecule);
+    void removeFromCurrentState(int group_idx, MoleculeID molid);
+    void updateCurrentState(int group_idx, const LJMolecule &molecule);
+
+    template<class T>
+    bool _pvt_add(const T &mol, const ParameterMap &map);
+    template<class T>
+    bool _pvt_addTo(int group_idx, const T &mol, const ParameterMap &map);
+    template<class T>
+    bool _pvt_change(const T &mol);
+    template<class T>
+    bool _pvt_remove(const T &mol);
+
+
+    /** All of the molecules that have at least one molecule in
         for forcefield, divided into their two groups */
     QVector<LJMolecule> mols[2];
-   
+
     /** Hash mapping the MoleculeID to the index of the molecules
         in the forcefield - one index for each group */
     QHash<MoleculeID,uint> molid_to_index[2];
 
-    /** Information about all of the changed molecules since the 
+    /** Information about all of the changed molecules since the
         last energy calculation, for both of the groups */
     QVector<LJFF::ChangedLJMolecule> changed_mols[2];
-    
+
     /** Hash mapping the MoleculeID of a changed molecule to its
         index in changed_mols, for both of the groups */
     QHash<MoleculeID, uint> molid_to_changedindex[2];
-    
-    /** MoleculeIDs of all molecules that have been removed since
-        the last energy evaluation */
-    QSet<MoleculeID> removed_mols;
-
 };
 
 }
+
+Q_DECLARE_METATYPE(SireMM::InterGroupLJFF);
 
 SIRE_END_HEADER
 
