@@ -168,10 +168,35 @@ print "%d moves of InterCLJFF took %d ms" % (nmoves, ms)
 timer.start()
 
 nmoves = 1000
+
+delta = 0
+
+old_nrg = ljff.energy()
+old_version = ljff.version()
+
 for i in range(0,nmoves):
     tip4p.translate( (0.00001,0,0) )
+    
+    old_ljff = InterLJFF(ljff)
+    
     ljff.change( tip4p )
     nrg = ljff.energy()
+
+    if (nrg == old_nrg):
+       print "Energies are wrongly the same!!!"
+    
+    if (ljff.version() == old_version):
+       print "Versions are wrongly the same!!!"
+    
+    ljff = old_ljff
+    
+    nrg = ljff.energy()
+    
+    if (nrg != old_nrg):
+       print "Energies are wrongly different!!!"
+
+    if (ljff.version() != old_version):
+       print "Versions are wrongly different!!!"
 
 ms = timer.elapsed()
 

@@ -30,6 +30,7 @@ void register_InterLJFF_class(){
         bp::class_< SireMM::InterLJFF::Parameters, bp::bases< SireMM::LJFF::Parameters > >( "Parameters" )    
             .def( bp::init< >() );
         InterLJFF_exposer.def( bp::init< >() );
+        InterLJFF_exposer.def( bp::init< const SireMM::InterLJFF& >() );
         InterLJFF_exposer.def( bp::init< SireVol::Space const &, SireMM::SwitchingFunction const & >(( bp::arg("space"), bp::arg("switchingfunction") )) );
         { //::SireMM::InterLJFF::add
         
