@@ -94,13 +94,17 @@ def fix_atom(c):
 def fix_atominfogroup(c):
     c.decls( "constData", allow_empty=True ).exclude()
 
+def fix_molecule(c):
+    c.add_registration_code( "def( bp::init<const SireMol::Molecule&>() )" )
+
 def remove_property_bases(c):
     c.bases = []
 
 special_code = { "AtomInfo" : fix_atominfo,
                  "Atom" : fix_atom,
                  "AtomInfoGroup" : fix_atominfogroup,
-                 "Property" : remove_property_bases
+                 "Property" : remove_property_bases,
+                 "Molecule" : fix_molecule
                }
 
 implicitly_convertible = [ ("boost::tuples::tuple<SireMol::AtomIndex,SireMol::AtomIndex,SireMol::AtomIndex>", 

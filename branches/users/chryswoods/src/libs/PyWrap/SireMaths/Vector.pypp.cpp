@@ -200,6 +200,17 @@ void register_Vector_class(){
         .staticmethod( "generate" )    
         .staticmethod( "invDistance" )    
         .staticmethod( "invDistance2" )    
+        .def(self + self)    
+        .def(self - self)    
+        .def(self * other<double>())    
+        .def(self / other<double>())    
+        .def(self += self)    
+        .def(self -= self)    
+        .def(self *= other<double>())    
+        .def(self /= other<double>())    
+        .def(-self)    
+        .def(self == self)    
+        .def(self != self)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMaths::Vector >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMaths::Vector >,
