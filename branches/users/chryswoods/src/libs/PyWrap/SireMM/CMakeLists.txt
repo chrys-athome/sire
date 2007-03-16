@@ -74,6 +74,7 @@ set ( WRAPMM_SOURCES
 
       InterCLJFF.pypp.cpp
       InterCoulombFF.pypp.cpp
+      InterGroupCLJFF.pypp.cpp
       InterGroupCoulombFF.pypp.cpp
       InterGroupLJFF.pypp.cpp
       InterLJFF.pypp.cpp

@@ -87,6 +87,8 @@
 
 #include "InterCoulombFF.pypp.hpp"
 
+#include "InterGroupCLJFF.pypp.hpp"
+
 #include "InterGroupCoulombFF.pypp.hpp"
 
 #include "InterGroupLJFF.pypp.hpp"
@@ -162,8 +164,6 @@
 #include "SwitchFuncBase.pypp.hpp"
 
 #include "SwitchingFunction.pypp.hpp"
-
-#include "Tip4PFF.pypp.hpp"
 
 #include "UreyBradleyDB.pypp.hpp"
 
@@ -298,6 +298,8 @@ BOOST_PYTHON_MODULE(_MM){
 
     register_InterCoulombFF_class();
 
+    register_InterGroupCLJFF_class();
+
     register_InterGroupCoulombFF_class();
 
     register_LJFF_class();
@@ -345,8 +347,6 @@ BOOST_PYTHON_MODULE(_MM){
     register_ResDihedralInfo_class();
 
     register_SwitchingFunction_class();
-
-    register_Tip4PFF_class();
 
     register_UreyBradleyDB_class();
 

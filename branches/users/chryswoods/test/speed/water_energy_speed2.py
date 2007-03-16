@@ -32,8 +32,6 @@ switchfunc = HarmonicSwitchingFunction(15.0, 14.5)
 cljff = InterCLJFF( Space(space),
                     SwitchingFunction(switchfunc) )
 
-cljff2 = Tip4PFF( Space(space), SwitchingFunction(switchfunc) )
-
 #parametise each molecule and add it to the forcefield
 print "Parametising the molecules..."
 
@@ -60,9 +58,6 @@ for mol in mols:
       
       cljff.add(mol, {cljff.parameters().coulomb() : "charges",
                       cljff.parameters().lj() : "ljs"})
-                      
-      cljff2.add(mol, {cljff2.parameters().coulomb() : "charges",
-                       cljff2.parameters().lj() : "ljs"})
 
 ms = timer.elapsed()
 print "... took %d ms" % ms
@@ -77,16 +72,6 @@ ms = timer.elapsed()
 print "InterCLJFF ",cljff.energy(), "kcal mol-1"
 print "    Coulomb = ", cljff.energy(cljff.components().coulomb())
 print "         LJ = ", cljff.energy(cljff.components().lj())
-
-print "... took %d ms" % ms
-
-print "Calculating the energy..."
-
-timer.start()
-nrg = cljff2.energy()
-ms = timer.elapsed()
-
-print "Tip4PFF ",cljff2.energy(), "kcal mol-1"
 
 print "... took %d ms" % ms
 

@@ -26,20 +26,20 @@
   *
 \*********************************************/
 
-#ifndef SIREMM_INTERGROUPLJFF_H
-#define SIREMM_INTERGROUPLJFF_H
+#ifndef SIREMM_INTERGROUPCLJFF_H
+#define SIREMM_INTERGROUPCLJFF_H
 
-#include "ljff.h"
+#include "cljff.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireMM
 {
-class InterGroupLJFF;
+class InterGroupCLJFF;
 }
 
-QDataStream& operator<<(QDataStream&, const SireMM::InterGroupLJFF&);
-QDataStream& operator>>(QDataStream&, SireMM::InterGroupLJFF&);
+QDataStream& operator<<(QDataStream&, const SireMM::InterGroupCLJFF&);
+QDataStream& operator>>(QDataStream&, SireMM::InterGroupCLJFF&);
 
 namespace SireMM
 {
@@ -56,24 +56,24 @@ using SireFF::ParameterMap;
 
     @author Christopher Woods
 */
-class SIREMM_EXPORT InterGroupLJFF : public LJFF
+class SIREMM_EXPORT InterGroupCLJFF : public CLJFF
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const InterGroupLJFF&);
-friend QDataStream& ::operator>>(QDataStream&, InterGroupLJFF&);
+friend QDataStream& ::operator<<(QDataStream&, const InterGroupCLJFF&);
+friend QDataStream& ::operator>>(QDataStream&, InterGroupCLJFF&);
 
 public:
-    InterGroupLJFF();
+    InterGroupCLJFF();
 
-    InterGroupLJFF(const Space &space, const SwitchingFunction &switchfunc);
+    InterGroupCLJFF(const Space &space, const SwitchingFunction &switchfunc);
 
-    InterGroupLJFF(const InterGroupLJFF &other);
+    InterGroupCLJFF(const InterGroupCLJFF &other);
 
-    ~InterGroupLJFF();
+    ~InterGroupCLJFF();
 
-    InterGroupLJFF& operator=(const InterGroupLJFF &other);
+    InterGroupCLJFF& operator=(const InterGroupCLJFF &other);
 
-    class SIREMM_EXPORT Components : public LJFF::Components
+    class SIREMM_EXPORT Components : public CLJFF::Components
     {
     public:
         Components();
@@ -87,7 +87,7 @@ public:
         Components& operator=(const Components &other);
     };
 
-    class SIREMM_EXPORT Parameters : public LJFF::Parameters
+    class SIREMM_EXPORT Parameters : public CLJFF::Parameters
     {
     public:
         Parameters();
@@ -96,9 +96,9 @@ public:
         ~Parameters();
     };
 
-    class SIREMM_EXPORT Groups : public LJFF::Groups
+    class SIREMM_EXPORT Groups : public CLJFF::Groups
     {
-    friend class InterGroupLJFF;
+    friend class InterGroupCLJFF;
 
     public:
         Groups();
@@ -126,24 +126,24 @@ public:
         FFBase::Group b;
     };
 
-    const InterGroupLJFF::Groups& groups() const
+    const InterGroupCLJFF::Groups& groups() const
     {
-        return InterGroupLJFF::Groups::default_group;
+        return InterGroupCLJFF::Groups::default_group;
     }
 
     static const char* typeName()
     {
-        return "SireMM::InterGroupLJFF";
+        return "SireMM::InterGroupCLJFF";
     }
 
     const char* what() const
     {
-        return InterGroupLJFF::typeName();
+        return InterGroupCLJFF::typeName();
     }
 
-    InterGroupLJFF* clone() const
+    InterGroupCLJFF* clone() const
     {
-        return new InterGroupLJFF(*this);
+        return new InterGroupCLJFF(*this);
     }
 
     bool change(const Molecule &molecule);
@@ -180,10 +180,10 @@ protected:
 
     void recalculateEnergy();
 
-    ChangedLJMolecule changeRecord(MoleculeID molid) const;
+    ChangedCLJMolecule changeRecord(MoleculeID molid) const;
 
     bool applyChange(MoleculeID molid,
-                     const ChangedLJMolecule &new_molecule);
+                     const ChangedCLJMolecule &new_molecule);
 
     int groupIndex(FFBase::Group group) const;
 
@@ -192,17 +192,17 @@ protected:
     void assertValidGroup(int group_id, MoleculeID molid) const;
 
 private:
-    double recalculateWithTwoChangedGroups();
-    double recalculateWithOneChangedGroup(int changed_idx);
-    double recalculateChangedWithUnchanged(int unchanged_idx, int changed_idx);
-    double recalculateChangedWithChanged();
+    CLJEnergy recalculateWithTwoChangedGroups();
+    CLJEnergy recalculateWithOneChangedGroup(int changed_idx);
+    CLJEnergy recalculateChangedWithUnchanged(int unchanged_idx, int changed_idx);
+    CLJEnergy recalculateChangedWithChanged();
 
     void recordChange(int group_idx, MoleculeID molid,
-                      const ChangedLJMolecule &new_molecule);
+                      const ChangedCLJMolecule &new_molecule);
 
-    void addToCurrentState(int group_idx, const LJMolecule &new_molecule);
+    void addToCurrentState(int group_idx, const CLJMolecule &new_molecule);
     void removeFromCurrentState(int group_idx, MoleculeID molid);
-    void updateCurrentState(int group_idx, const LJMolecule &molecule);
+    void updateCurrentState(int group_idx, const CLJMolecule &molecule);
 
     template<class T>
     bool _pvt_add(const T &mol, const ParameterMap &map);
@@ -216,7 +216,7 @@ private:
 
     /** All of the molecules that have at least one molecule in
         for forcefield, divided into their two groups */
-    QVector<LJMolecule> mols[2];
+    QVector<CLJMolecule> mols[2];
 
     /** Hash mapping the MoleculeID to the index of the molecules
         in the forcefield - one index for each group */
@@ -224,7 +224,7 @@ private:
 
     /** Information about all of the changed molecules since the
         last energy calculation, for both of the groups */
-    QVector<LJFF::ChangedLJMolecule> changed_mols[2];
+    QVector<CLJFF::ChangedCLJMolecule> changed_mols[2];
 
     /** Hash mapping the MoleculeID of a changed molecule to its
         index in changed_mols, for both of the groups */
@@ -233,7 +233,7 @@ private:
 
 }
 
-Q_DECLARE_METATYPE(SireMM::InterGroupLJFF);
+Q_DECLARE_METATYPE(SireMM::InterGroupCLJFF);
 
 SIRE_END_HEADER
 

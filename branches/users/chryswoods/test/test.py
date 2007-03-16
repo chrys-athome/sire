@@ -23,8 +23,8 @@ print "... took %d ms" % ms
 #specify the space in which the molecules are placed
 space = Cartesian()
 
-space = PeriodicBox(Vector(-18.3854,-18.66855,-18.4445), \
-                    Vector( 18.3854, 18.66855, 18.4445))
+space = PeriodicBox( (-18.3854,-18.66855,-18.4445),
+                     ( 18.3854, 18.66855, 18.4445) )
 
 #specify the type of switching function to use
 switchfunc = HarmonicSwitchingFunction(80.0)
@@ -33,11 +33,13 @@ switchfunc = HarmonicSwitchingFunction(15.0, 14.5)
 #create a forcefield for the molecules
 cljff = InterCLJFF(space, switchfunc)
 
-cljff2 = Tip4PFF(space, switchfunc)
-
+coulff = InterCoulombFF(space, switchfunc)
 ljff = InterLJFF(space, switchfunc)
 
-coulff = InterCoulombFF(space, switchfunc)
+cljff_a = InterCLJFF(space, switchfunc)
+cljff_b = InterCLJFF(space, switchfunc)
+
+cljff_a_b = InterGroupCLJFF(space, switchfunc)
 
 ljff_a = InterLJFF(space, switchfunc)
 ljff_b = InterLJFF(space, switchfunc)
@@ -80,7 +82,14 @@ for mol in mols:
           tip4p = mol
 
       #randomly divide the molecules into the two groups
-      if (rand.rand() < 0.5):          
+      if (rand.rand() < 0.5):
+          cljff_a.add(mol, {cljff_a.parameters().coulomb() : "charges",
+                            cljff_a.parameters().lj() : "ljs"})
+                            
+          cljff_a_b.addTo(cljff_a_b.groups().A(),
+                          mol, {cljff_a_b.parameters().coulomb() : "charges",
+                                cljff_a_b.parameters().lj() : "ljs"})
+      
           ljff_a.add(mol, {ljff_a.parameters().lj() : "ljs"})
           ljff_a_b.addTo(ljff_a_b.groups().A(),
                          mol, {ljff_a_b.parameters().lj() : "ljs"})
@@ -91,6 +100,13 @@ for mol in mols:
                          
           n_in_a = n_in_a + 1
       else:
+          cljff_b.add(mol, {cljff_b.parameters().coulomb() : "charges",
+                            cljff_b.parameters().lj() : "ljs"})
+                            
+          cljff_a_b.addTo(cljff_a_b.groups().B(),
+                          mol, {cljff_a_b.parameters().coulomb() : "charges",
+                                cljff_a_b.parameters().lj() : "ljs"})
+      
           ljff_b.add(mol, {ljff_b.parameters().lj() : "ljs"})
           ljff_a_b.addTo(ljff_a_b.groups().B(),
                          mol, {ljff_a_b.parameters().lj() : "ljs"})
@@ -104,9 +120,6 @@ for mol in mols:
       cljff.add(mol, {cljff.parameters().coulomb() : "charges",
                       cljff.parameters().lj() : "ljs"})
                       
-      cljff2.add(mol, {cljff2.parameters().coulomb() : "charges",
-                       cljff2.parameters().lj() : "ljs"})
-
       coulff.add(mol, {coulff.parameters().coulomb() : "charges"})
 
       ljff.add(mol, {ljff.parameters().lj() : "ljs"})
@@ -150,15 +163,22 @@ print "... took %d ms" % ms
 
 print "Calculating the energy..."
 
+# sum up the partial forcefields
 timer.start()
-nrg = cljff2.energy()
+nrg = cljff_a.energy() + cljff_b.energy() + cljff_a_b.energy()
 ms = timer.elapsed()
 
-print "Tip4PFF ",cljff2.energy(), "kcal mol-1"
+print "CLJ_partials ",nrg,"kcal mol-1"
+print "   Coulomb = ",cljff_a.energy(cljff_a.components().coulomb()) + \
+                      cljff_b.energy(cljff_b.components().coulomb()) + \
+                      cljff_a_b.energy(cljff_a_b.components().coulomb())
+                      
+print "        LJ = ",cljff_a.energy(cljff_a.components().lj()) + \
+                      cljff_b.energy(cljff_b.components().lj()) + \
+                      cljff_a_b.energy(cljff_a_b.components().lj())
 
 print "... took %d ms" % ms
 
-# sum up the partial forcefields
 timer.start()
 nrg = ljff_a.energy() + ljff_b.energy() + ljff_a_b.energy()
 ms = timer.elapsed()
@@ -191,7 +211,6 @@ timer.start()
 
 cljff.change(tip4p)
 ljff.change(tip4p)
-cljff2.change(tip4p)
 
 ms = timer.elapsed()
 
@@ -213,14 +232,6 @@ ms = timer.elapsed()
 
 print "InterLJFF ",ljff.energy(), "kcal mol-1"
 print "         LJ = ", ljff.energy(ljff.components().lj())
-
-print "... took %d ms" % ms
-
-timer.start()
-nrg = cljff2.energy()
-ms = timer.elapsed()
-
-print "Tip4PFF ",cljff2.energy(), "kcal mol-1"
 
 print "... took %d ms" % ms
 
@@ -272,6 +283,43 @@ for i in range(0,nmoves):
 ms = timer.elapsed()
 
 print "%d moves of InterLJFF took %d ms" % (nmoves, ms)
+
+timer.start()
+
+nmoves = 1000
+
+delta = 0
+
+old_nrg = cljff_a.energy() + cljff_b.energy() + cljff_a_b.energy()
+
+for i in range(0,nmoves):
+    tip4p.translate( (0.00001,0,0) )
+    
+    old_cljff_a = copy.copy(cljff_a)
+    old_cljff_b = copy.copy(cljff_b)
+    old_cljff_a_b = copy.copy(cljff_a_b)
+    
+    cljff_a.change( tip4p )
+    cljff_b.change( tip4p )
+    cljff_a_b.change( tip4p )
+    
+    nrg = cljff_a.energy() + cljff_b.energy() + cljff_a_b.energy()
+
+    if (nrg == old_nrg):
+       print "Energies are wrongly the same!!!"
+    
+    cljff_a = old_cljff_a
+    cljff_b = old_cljff_b
+    cljff_a_b = old_cljff_a_b
+    
+    nrg = cljff_a.energy() + cljff_b.energy() + cljff_a_b.energy()
+    
+    if (nrg != old_nrg):
+       print "Energies are wrongly different!!!"
+
+ms = timer.elapsed()
+
+print "%d moves of CLJ_partials took %d ms" % (nmoves, ms)
 
 timer.start()
 

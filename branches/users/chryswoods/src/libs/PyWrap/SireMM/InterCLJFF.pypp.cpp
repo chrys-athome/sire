@@ -32,7 +32,7 @@ void register_InterCLJFF_class(){
         bp::class_< SireMM::InterCLJFF::Parameters, bp::bases< SireMM::CLJFF::Parameters > >( "Parameters" )    
             .def( bp::init< >() );
         InterCLJFF_exposer.def( bp::init< >() );
-        InterCLJFF_exposer.def( bp::init< SireVol::Space const &, SireMM::SwitchingFunction const & >(( bp::arg("space"), bp::arg("switchfunc") )) );
+        InterCLJFF_exposer.def( bp::init< SireVol::Space const &, SireMM::SwitchingFunction const & >(( bp::arg("space"), bp::arg("switchingfunction") )) );
         { //::SireMM::InterCLJFF::add
         
             typedef bool ( ::SireMM::InterCLJFF::*add_function_type )( ::SireMol::Molecule const &,::SireFF::ParameterMap const & ) ;
@@ -41,6 +41,36 @@ void register_InterCLJFF_class(){
                 "add"
                 , add_function_type( &::SireMM::InterCLJFF::add )
                 , ( bp::arg("mol"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
+        
+        }
+        { //::SireMM::InterCLJFF::add
+        
+            typedef bool ( ::SireMM::InterCLJFF::*add_function_type )( ::SireMol::Residue const &,::SireFF::ParameterMap const & ) ;
+            
+            InterCLJFF_exposer.def( 
+                "add"
+                , add_function_type( &::SireMM::InterCLJFF::add )
+                , ( bp::arg("res"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
+        
+        }
+        { //::SireMM::InterCLJFF::add
+        
+            typedef bool ( ::SireMM::InterCLJFF::*add_function_type )( ::SireMol::NewAtom const &,::SireFF::ParameterMap const & ) ;
+            
+            InterCLJFF_exposer.def( 
+                "add"
+                , add_function_type( &::SireMM::InterCLJFF::add )
+                , ( bp::arg("atom"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
+        
+        }
+        { //::SireMM::InterCLJFF::add
+        
+            typedef bool ( ::SireMM::InterCLJFF::*add_function_type )( ::SireMol::Molecule const &,::SireMol::AtomSelection const &,::SireFF::ParameterMap const & ) ;
+            
+            InterCLJFF_exposer.def( 
+                "add"
+                , add_function_type( &::SireMM::InterCLJFF::add )
+                , ( bp::arg("mol"), bp::arg("selected_atoms"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
         
         }
         { //::SireMM::InterCLJFF::change
@@ -63,6 +93,16 @@ void register_InterCLJFF_class(){
                 , ( bp::arg("residue") ) );
         
         }
+        { //::SireMM::InterCLJFF::change
+        
+            typedef bool ( ::SireMM::InterCLJFF::*change_function_type )( ::SireMol::NewAtom const & ) ;
+            
+            InterCLJFF_exposer.def( 
+                "change"
+                , change_function_type( &::SireMM::InterCLJFF::change )
+                , ( bp::arg("atom") ) );
+        
+        }
         { //::SireMM::InterCLJFF::remove
         
             typedef bool ( ::SireMM::InterCLJFF::*remove_function_type )( ::SireMol::Molecule const & ) ;
@@ -70,7 +110,37 @@ void register_InterCLJFF_class(){
             InterCLJFF_exposer.def( 
                 "remove"
                 , remove_function_type( &::SireMM::InterCLJFF::remove )
-                , ( bp::arg("mol") ) );
+                , ( bp::arg("molecule") ) );
+        
+        }
+        { //::SireMM::InterCLJFF::remove
+        
+            typedef bool ( ::SireMM::InterCLJFF::*remove_function_type )( ::SireMol::Residue const & ) ;
+            
+            InterCLJFF_exposer.def( 
+                "remove"
+                , remove_function_type( &::SireMM::InterCLJFF::remove )
+                , ( bp::arg("residue") ) );
+        
+        }
+        { //::SireMM::InterCLJFF::remove
+        
+            typedef bool ( ::SireMM::InterCLJFF::*remove_function_type )( ::SireMol::NewAtom const & ) ;
+            
+            InterCLJFF_exposer.def( 
+                "remove"
+                , remove_function_type( &::SireMM::InterCLJFF::remove )
+                , ( bp::arg("atom") ) );
+        
+        }
+        { //::SireMM::InterCLJFF::remove
+        
+            typedef bool ( ::SireMM::InterCLJFF::*remove_function_type )( ::SireMol::Molecule const &,::SireMol::AtomSelection const & ) ;
+            
+            InterCLJFF_exposer.def( 
+                "remove"
+                , remove_function_type( &::SireMM::InterCLJFF::remove )
+                , ( bp::arg("mol"), bp::arg("selected_atoms") ) );
         
         }
         { //::SireMM::InterCLJFF::typeName
