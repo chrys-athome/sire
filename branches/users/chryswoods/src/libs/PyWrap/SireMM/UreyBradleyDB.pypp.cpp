@@ -12,6 +12,8 @@
 
 namespace bp = boost::python;
 
+SireMM::UreyBradleyDB __copy__(const SireMM::UreyBradleyDB &other){ return SireMM::UreyBradleyDB(other); }
+
 #include "SirePy/str.hpp"
 
 void register_UreyBradleyDB_class(){
@@ -61,6 +63,7 @@ void register_UreyBradleyDB_class(){
             "what"
             , (char const * ( ::SireMM::UreyBradleyDB::* )(  ) const)( &::SireMM::UreyBradleyDB::what ) )    
         .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
         .def( "__str__", &SirePy::__str__< ::SireMM::UreyBradleyDB > );
 
 }

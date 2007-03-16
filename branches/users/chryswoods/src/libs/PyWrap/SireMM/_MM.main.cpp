@@ -83,6 +83,8 @@
 
 #include "InterCLJFF.pypp.hpp"
 
+#include "InterGroupLJFF.pypp.hpp"
+
 #include "InterLJFF.pypp.hpp"
 
 #include "InternalDB_MolAngleInfo_.pypp.hpp"
@@ -287,6 +289,8 @@ BOOST_PYTHON_MODULE(_MM){
     register_InterCLJFF_class();
 
     register_LJFF_class();
+
+    register_InterGroupLJFF_class();
 
     register_InterLJFF_class();
 

@@ -14,6 +14,8 @@
 
 namespace bp = boost::python;
 
+SireMol::Property __copy__(const SireMol::Property &other){ return SireMol::Property(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 const char* pvt_get_name(const SireMol::Property&){ return "SireMol::Property";}
@@ -29,6 +31,7 @@ void register_Property_class(){
             "assertCompatibleWith"
             , &::SireMol::Property::assertCompatibleWith
             , ( bp::arg("molecule") ) )    
+        .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::Property >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::Property >,

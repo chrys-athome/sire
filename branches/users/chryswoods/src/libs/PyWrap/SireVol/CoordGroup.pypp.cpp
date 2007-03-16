@@ -11,6 +11,8 @@
 
 namespace bp = boost::python;
 
+SireVol::CoordGroup __copy__(const SireVol::CoordGroup &other){ return SireVol::CoordGroup(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 const char* pvt_get_name(const SireVol::CoordGroup&){ return "SireVol::CoordGroup";}
@@ -26,6 +28,7 @@ void register_CoordGroup_class(){
         .def( 
             "edit"
             , (::SireVol::CoordGroupEditor ( ::SireVol::CoordGroup::* )(  ) const)( &::SireVol::CoordGroup::edit ) )    
+        .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireVol::CoordGroup >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireVol::CoordGroup >,

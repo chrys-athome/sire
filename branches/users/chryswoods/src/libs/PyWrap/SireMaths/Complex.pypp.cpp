@@ -8,6 +8,8 @@
 
 namespace bp = boost::python;
 
+SireMaths::Complex __copy__(const SireMaths::Complex &other){ return SireMaths::Complex(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 #include "SirePy/str.hpp"
@@ -91,6 +93,7 @@ void register_Complex_class(){
             , (::QString ( ::SireMaths::Complex::* )(  ) const)( &::SireMaths::Complex::toString ) )    
         .staticmethod( "polar" )    
         .staticmethod( "rect" )    
+        .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMaths::Complex >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMaths::Complex >,

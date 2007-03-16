@@ -10,6 +10,8 @@
 
 namespace bp = boost::python;
 
+SireDB::RelateMRADB __copy__(const SireDB::RelateMRADB &other){ return SireDB::RelateMRADB(other); }
+
 #include "SirePy/str.hpp"
 
 void register_RelateMRADB_class(){
@@ -43,6 +45,7 @@ void register_RelateMRADB_class(){
             "what"
             , (char const * ( ::SireDB::RelateMRADB::* )(  ) const)( &::SireDB::RelateMRADB::what ) )    
         .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
         .def( "__str__", &SirePy::__str__< ::SireDB::RelateMRADB > );
 
 }

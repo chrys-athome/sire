@@ -11,6 +11,8 @@
 
 namespace bp = boost::python;
 
+SireVol::Cartesian __copy__(const SireVol::Cartesian &other){ return SireVol::Cartesian(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 const char* pvt_get_name(const SireVol::Cartesian&){ return "SireVol::Cartesian";}
@@ -90,6 +92,7 @@ void register_Cartesian_class(){
             "what"
             , (char const * ( ::SireVol::Cartesian::* )(  ) const)( &::SireVol::Cartesian::what ) )    
         .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireVol::Cartesian >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireVol::Cartesian >,

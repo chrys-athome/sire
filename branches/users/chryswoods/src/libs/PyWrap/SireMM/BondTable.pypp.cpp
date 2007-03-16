@@ -12,6 +12,8 @@
 
 namespace bp = boost::python;
 
+SireMM::BondTable __copy__(const SireMM::BondTable &other){ return SireMM::BondTable(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 const char* pvt_get_name(const SireMM::BondTable&){ return "SireMM::BondTable";}
@@ -34,6 +36,7 @@ void register_BondTable_class(){
             "what"
             , (char const * ( ::SireMM::BondTable::* )(  ) const)( &::SireMM::BondTable::what ) )    
         .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::BondTable >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::BondTable >,

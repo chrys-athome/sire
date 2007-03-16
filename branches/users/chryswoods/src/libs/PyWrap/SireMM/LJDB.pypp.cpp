@@ -12,6 +12,8 @@
 
 namespace bp = boost::python;
 
+SireMM::LJDB __copy__(const SireMM::LJDB &other){ return SireMM::LJDB(other); }
+
 #include "SirePy/str.hpp"
 
 void register_LJDB_class(){
@@ -65,6 +67,7 @@ void register_LJDB_class(){
             "what"
             , (char const * ( ::SireMM::LJDB::* )(  ) const)( &::SireMM::LJDB::what ) )    
         .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
         .def( "__str__", &SirePy::__str__< ::SireMM::LJDB > );
 
 }

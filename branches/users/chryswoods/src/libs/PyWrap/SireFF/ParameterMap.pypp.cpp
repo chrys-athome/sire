@@ -17,6 +17,8 @@
 
 namespace bp = boost::python;
 
+SireFF::ParameterMap __copy__(const SireFF::ParameterMap &other){ return SireFF::ParameterMap(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 const char* pvt_get_name(const SireFF::ParameterMap&){ return "SireFF::ParameterMap";}
@@ -34,6 +36,7 @@ void register_ParameterMap_class(){
             "source"
             , (::QString ( ::SireFF::ParameterMap::* )( ::SireFF::ParameterName const & ) const)( &::SireFF::ParameterMap::source )
             , ( bp::arg("param") ) )    
+        .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireFF::ParameterMap >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireFF::ParameterMap >,

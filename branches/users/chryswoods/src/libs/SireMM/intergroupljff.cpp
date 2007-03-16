@@ -87,16 +87,22 @@ InterGroupLJFF::Parameters::~Parameters()
 
 /** Constructor */
 InterGroupLJFF::Groups::Groups() : LJFF::Groups()
-{}
+{
+    a = this->getUniqueID();
+    b = this->getUniqueID();
+}
 
 /** Copy constructor */
 InterGroupLJFF::Groups::Groups(const Groups &other)
-               : LJFF::Groups(other)
+               : LJFF::Groups(other), a(other.a), b(other.b)
 {}
 
 /** Destructor */
 InterGroupLJFF::Groups::~Groups()
 {}
+
+/** Static instance of this class returned by all InterGroupLJFF objects */
+InterGroupLJFF::Groups InterGroupLJFF::Groups::default_group;
 
 ///////////
 /////////// Implementation of InterGroupLJFF
@@ -244,14 +250,7 @@ InterGroupLJFF& InterGroupLJFF::operator=(const InterGroupLJFF &other)
 */
 int InterGroupLJFF::otherGroup(int group_id) const
 {
-    if ( not (group_id == 0 or group_id == 1) )
-    {
-        throw SireFF::invalid_group( QObject::tr(
-              "There is no group with ID == %1 in an InterGroupLJFF - only "
-              "IDs 0 and 1 are allowed!")
-                  .arg(group_id), CODELOC );
-    }
-
+    BOOST_ASSERT( group_id == 0 or group_id == 1 );
     return (group_id == 0);
 }
 
@@ -265,10 +264,19 @@ void InterGroupLJFF::assertValidGroup(int group_id, MoleculeID molid) const
 {
     if ( molid_to_index[ otherGroup(group_id) ].contains(molid) )
     {
+        QString newgroup = "A";
+        QString oldgroup = "B";
+
+        if ( FFBase::Group(group_id) == groups().B() )
+        {
+            newgroup = "B";
+            oldgroup = "A";
+        }
+
         throw SireFF::invalid_group( QObject::tr(
-              "The molecule with ID == %1 cannot be put in the group with "
-              "ID == %2 as group %3 already contains a molecule with this ID number.")
-                  .arg(molid).arg(group_id).arg(otherGroup(group_id)), CODELOC );
+              "The molecule with ID == %1 cannot be put in the group %2 "
+              "as group %3 already contains a molecule with this ID number.")
+                  .arg(molid).arg(newgroup,oldgroup), CODELOC );
     }
 }
 
@@ -921,16 +929,38 @@ bool InterGroupLJFF::add(const Molecule &molecule, const AtomSelection &selected
         return isDirty();
 }
 
+/** Return the index of the group in this forcefield
+
+    \throw SireFF::invalid_group
+*/
+int InterGroupLJFF::groupIndex(FFBase::Group group) const
+{
+    if (group == groups().A())
+        return 0;
+    else if (group == groups().B())
+        return 1;
+    else
+    {
+        throw SireFF::invalid_group( QObject::tr(
+                    "InterGroupLJFF can only place molecules into group A or B! %1")
+                          .arg(group), CODELOC );
+
+        return -1;
+    }
+}
+
 /** Private class used by the "addTo" functions to actually add the
     molecule or part of molecule */
 template<class T>
-bool InterGroupLJFF::_pvt_addTo(int group, const T &mol, const ParameterMap &map)
+bool InterGroupLJFF::_pvt_addTo(FFBase::Group group, const T &mol, const ParameterMap &map)
 {
+    //get the index for this group
+    int group_idx = this->groupIndex(group);
+
     //get the molecule's ID
     MoleculeID molid = mol.ID();
 
-    //assert that this a valid group for this molecule
-    this->assertValidGroup(group, molid);
+    this->assertValidGroup(group_idx, molid);
 
     ChangedLJMolecule new_molecule = changeRecord(molid);
 
@@ -940,8 +970,8 @@ bool InterGroupLJFF::_pvt_addTo(int group, const T &mol, const ParameterMap &map
                         LJMolecule(mol, map.source(parameters().lj())) );
 
         //this is a freshly added molecule - add it to the current state
-        this->addToCurrentState(group, new_molecule.newMolecule());
-        this->recordChange(group, molid, new_molecule);
+        this->addToCurrentState(group_idx, new_molecule.newMolecule());
+        this->recordChange(group_idx, molid, new_molecule);
 
         this->incrementMajorVersion();
 
@@ -970,7 +1000,7 @@ bool InterGroupLJFF::_pvt_addTo(int group, const T &mol, const ParameterMap &map
     \throw SireMol::invalid_cast
     \throw SireFF::invalid_group
 */
-bool InterGroupLJFF::addTo(int group, const Molecule &molecule,
+bool InterGroupLJFF::addTo(FFBase::Group group, const Molecule &molecule,
                            const ParameterMap &map)
 {
     return this->_pvt_addTo<Molecule>(group, molecule, map);
@@ -987,7 +1017,7 @@ bool InterGroupLJFF::addTo(int group, const Molecule &molecule,
     \throw SireMol::invalid_cast
     \throw SireFF::invalid_group
 */
-bool InterGroupLJFF::addTo(int group, const Residue &residue,
+bool InterGroupLJFF::addTo(FFBase::Group group, const Residue &residue,
                            const ParameterMap &map)
 {
     return this->_pvt_addTo<Residue>(group, residue, map);
@@ -1004,7 +1034,7 @@ bool InterGroupLJFF::addTo(int group, const Residue &residue,
     \throw SireMol::invalid_cast
     \throw SireFF::invalid_group
 */
-bool InterGroupLJFF::addTo(int group, const NewAtom &atom,
+bool InterGroupLJFF::addTo(FFBase::Group group, const NewAtom &atom,
                            const ParameterMap &map)
 {
     return this->_pvt_addTo<NewAtom>(group, atom, map);
@@ -1021,15 +1051,17 @@ bool InterGroupLJFF::addTo(int group, const NewAtom &atom,
     \throw SireMol::invalid_cast
     \throw SireFF::invalid_group
 */
-bool InterGroupLJFF::addTo(int group, const Molecule &molecule,
+bool InterGroupLJFF::addTo(FFBase::Group group, const Molecule &molecule,
                            const AtomSelection &selected_atoms,
                            const ParameterMap &map)
 {
+    //get the index for this group
+    int group_idx = this->groupIndex(group);
+
     //get the molecule's ID
     MoleculeID molid = molecule.ID();
 
-    //assert that this a valid group for this molecule
-    this->assertValidGroup(group, molid);
+    this->assertValidGroup(group_idx, molid);
 
     ChangedLJMolecule new_molecule = changeRecord(molid);
 
@@ -1040,10 +1072,10 @@ bool InterGroupLJFF::addTo(int group, const Molecule &molecule,
                                               map.source(this->parameters().lj()) ) );
 
         //this is a freshly added molecule - add it to the current state
-        this->addToCurrentState(group, new_molecule.newMolecule());
+        this->addToCurrentState(group_idx, new_molecule.newMolecule());
 
         //record the change
-        this->recordChange(group, molid, new_molecule);
+        this->recordChange(group_idx, molid, new_molecule);
 
         this->incrementMajorVersion();
 

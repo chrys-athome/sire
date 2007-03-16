@@ -8,6 +8,8 @@
 
 namespace bp = boost::python;
 
+SireMaths::Angle __copy__(const SireMaths::Angle &other){ return SireMaths::Angle(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 #include "SirePy/str.hpp"
@@ -81,6 +83,7 @@ void register_Angle_class(){
         .def(self - self)    
         .def(self * other<double>())    
         .def(self / other<double>())    
+        .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMaths::Angle >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMaths::Angle >,

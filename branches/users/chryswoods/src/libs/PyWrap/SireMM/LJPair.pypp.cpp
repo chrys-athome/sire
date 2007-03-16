@@ -12,6 +12,8 @@
 
 namespace bp = boost::python;
 
+SireMM::LJPair __copy__(const SireMM::LJPair &other){ return SireMM::LJPair(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 #include "SirePy/str.hpp"
@@ -83,6 +85,7 @@ void register_LJPair_class(){
         .staticmethod( "fromRMinAndEpsilon" )    
         .staticmethod( "fromSigmaAndEpsilon" )    
         .staticmethod( "geometric" )    
+        .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::LJPair >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::LJPair >,

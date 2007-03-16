@@ -8,6 +8,8 @@
 
 namespace bp = boost::python;
 
+SireCAS::SymbolValue __copy__(const SireCAS::SymbolValue &other){ return SireCAS::SymbolValue(other); }
+
 const char* pvt_get_name(const SireCAS::SymbolValue&){ return "SireCAS::SymbolValue";}
 
 void register_SymbolValue_class(){
@@ -19,6 +21,7 @@ void register_SymbolValue_class(){
         .def( 
             "value"
             , (double ( ::SireCAS::SymbolValue::* )(  ) const)( &::SireCAS::SymbolValue::value ) )    
+        .def( "__copy__", &__copy__)    
         .def( "__str__", &pvt_get_name);
 
 }

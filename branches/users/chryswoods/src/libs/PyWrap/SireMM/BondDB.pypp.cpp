@@ -12,6 +12,8 @@
 
 namespace bp = boost::python;
 
+SireMM::BondDB __copy__(const SireMM::BondDB &other){ return SireMM::BondDB(other); }
+
 #include "SirePy/str.hpp"
 
 void register_BondDB_class(){
@@ -65,6 +67,7 @@ void register_BondDB_class(){
             "what"
             , (char const * ( ::SireMM::BondDB::* )(  ) const)( &::SireMM::BondDB::what ) )    
         .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
         .def( "__str__", &SirePy::__str__< ::SireMM::BondDB > );
 
 }

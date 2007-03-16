@@ -14,12 +14,15 @@
 
 namespace bp = boost::python;
 
+SireMol::BondAddingFunction __copy__(const SireMol::BondAddingFunction &other){ return SireMol::BondAddingFunction(other); }
+
 const char* pvt_get_name(const SireMol::BondAddingFunction&){ return "SireMol::BondAddingFunction";}
 
 void register_BondAddingFunction_class(){
 
     bp::class_< SireMol::BondAddingFunction >( "BondAddingFunction" )    
         .def( bp::init< >() )    
+        .def( "__copy__", &__copy__)    
         .def( "__str__", &pvt_get_name);
 
 }

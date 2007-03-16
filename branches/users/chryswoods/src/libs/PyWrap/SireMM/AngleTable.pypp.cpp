@@ -12,6 +12,8 @@
 
 namespace bp = boost::python;
 
+SireMM::AngleTable __copy__(const SireMM::AngleTable &other){ return SireMM::AngleTable(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 const char* pvt_get_name(const SireMM::AngleTable&){ return "SireMM::AngleTable";}
@@ -34,6 +36,7 @@ void register_AngleTable_class(){
             "what"
             , (char const * ( ::SireMM::AngleTable::* )(  ) const)( &::SireMM::AngleTable::what ) )    
         .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::AngleTable >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::AngleTable >,

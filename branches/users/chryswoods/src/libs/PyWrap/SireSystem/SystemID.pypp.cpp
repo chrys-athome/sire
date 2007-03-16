@@ -11,6 +11,8 @@
 
 namespace bp = boost::python;
 
+SireSystem::SystemID __copy__(const SireSystem::SystemID &other){ return SireSystem::SystemID(other); }
+
 #include "SirePy/str.hpp"
 
 void register_SystemID_class(){
@@ -18,6 +20,7 @@ void register_SystemID_class(){
     bp::class_< SireSystem::SystemID, bp::bases< SireMol::IDBase > >( "SystemID" )    
         .def( bp::init< >() )    
         .def( bp::init< quint32 >(( bp::arg("id") )) )    
+        .def( "__copy__", &__copy__)    
         .def( "__str__", &SirePy::__str__< ::SireSystem::SystemID > );
 
 }

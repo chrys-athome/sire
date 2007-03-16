@@ -12,6 +12,8 @@
 
 namespace bp = boost::python;
 
+SireMM::InterLJFF __copy__(const SireMM::InterLJFF &other){ return SireMM::InterLJFF(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 #include "SirePy/str.hpp"
@@ -30,7 +32,6 @@ void register_InterLJFF_class(){
         bp::class_< SireMM::InterLJFF::Parameters, bp::bases< SireMM::LJFF::Parameters > >( "Parameters" )    
             .def( bp::init< >() );
         InterLJFF_exposer.def( bp::init< >() );
-        InterLJFF_exposer.def( bp::init< const SireMM::InterLJFF& >() );
         InterLJFF_exposer.def( bp::init< SireVol::Space const &, SireMM::SwitchingFunction const & >(( bp::arg("space"), bp::arg("switchingfunction") )) );
         { //::SireMM::InterLJFF::add
         
@@ -161,6 +162,7 @@ void register_InterLJFF_class(){
         
         }
         InterLJFF_exposer.staticmethod( "typeName" );
+        InterLJFF_exposer.def( "__copy__", &__copy__);
         InterLJFF_exposer.def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::InterLJFF >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         InterLJFF_exposer.def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::InterLJFF >,

@@ -14,6 +14,8 @@
 
 namespace bp = boost::python;
 
+SireMol::AtomInfo __copy__(const SireMol::AtomInfo &other){ return SireMol::AtomInfo(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 #include "SirePy/str.hpp"
@@ -51,6 +53,7 @@ void register_AtomInfo_class(){
         .def( 
             "toString"
             , &::SireMol::AtomInfo::toString )    
+        .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::AtomInfo >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::AtomInfo >,

@@ -12,6 +12,8 @@
 
 namespace bp = boost::python;
 
+SireMM::detail::InternalInfo<SireMol::Angle> __copy__(const SireMM::detail::InternalInfo<SireMol::Angle> &other){ return SireMM::detail::InternalInfo<SireMol::Angle>(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 const char* pvt_get_name(const SireMM::detail::InternalInfo<SireMol::Angle>&){ return "SireMM::detail::InternalInfo<SireMol::Angle>";}
@@ -165,6 +167,7 @@ void register_InternalInfo_Angle__class(){
         .def( 
             "size"
             , (::size_t ( ::SireMM::detail::InternalInfo<SireMol::Angle>::* )(  ) const)( &::SireMM::detail::InternalInfo<SireMol::Angle>::size ) )    
+        .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::detail::InternalInfo<SireMol::Angle> >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::detail::InternalInfo<SireMol::Angle> >,

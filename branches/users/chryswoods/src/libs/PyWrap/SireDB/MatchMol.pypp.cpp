@@ -10,6 +10,8 @@
 
 namespace bp = boost::python;
 
+SireDB::MatchMol __copy__(const SireDB::MatchMol &other){ return SireDB::MatchMol(other); }
+
 #include "SirePy/str.hpp"
 
 void register_MatchMol_class(){
@@ -54,6 +56,7 @@ void register_MatchMol_class(){
         .def( 
             "toString"
             , (::QString ( ::SireDB::MatchMol::* )(  ) const)( &::SireDB::MatchMol::toString ) )    
+        .def( "__copy__", &__copy__)    
         .def( "__str__", &SirePy::__str__< ::SireDB::MatchMol > );
 
 }

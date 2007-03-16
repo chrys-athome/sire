@@ -98,22 +98,38 @@ public:
 
     class SIREMM_EXPORT Groups : public LJFF::Groups
     {
+    friend class InterGroupLJFF;
+
     public:
         Groups();
         Groups(const Groups &other);
 
         ~Groups();
 
-        int A() const
+        FFBase::Group A() const
         {
-            return 0;
+            return a;
         }
 
-        int B() const
+        FFBase::Group B() const
         {
-            return 1;
+            return b;
         }
+
+    protected:
+        static Groups default_group;
+
+    private:
+        /** The ID of group 'A' */
+        FFBase::Group a;
+        /** The ID of group 'B' */
+        FFBase::Group b;
     };
+
+    const InterGroupLJFF::Groups& groups() const
+    {
+        return InterGroupLJFF::Groups::default_group;
+    }
 
     static const char* typeName()
     {
@@ -141,14 +157,14 @@ public:
     bool add(const Molecule &mol, const AtomSelection &selected_atoms,
              const ParameterMap &map = ParameterMap());
 
-    bool addTo(int group, const Molecule &molecule,
+    bool addTo(FFBase::Group group, const Molecule &molecule,
                const ParameterMap &map = ParameterMap());
-    bool addTo(int group, const Residue &residue,
+    bool addTo(FFBase::Group group, const Residue &residue,
                const ParameterMap &map = ParameterMap());
-    bool addTo(int group, const NewAtom &atom,
+    bool addTo(FFBase::Group group, const NewAtom &atom,
                const ParameterMap &map = ParameterMap());
 
-    bool addTo(int group, const Molecule &molecule,
+    bool addTo(FFBase::Group group, const Molecule &molecule,
                const AtomSelection &selected_atoms,
                const ParameterMap &map = ParameterMap());
 
@@ -168,6 +184,8 @@ protected:
 
     bool applyChange(MoleculeID molid,
                      const ChangedLJMolecule &new_molecule);
+
+    int groupIndex(FFBase::Group group) const;
 
     int otherGroup(int group_id) const;
 
@@ -189,7 +207,7 @@ private:
     template<class T>
     bool _pvt_add(const T &mol, const ParameterMap &map);
     template<class T>
-    bool _pvt_addTo(int group_idx, const T &mol, const ParameterMap &map);
+    bool _pvt_addTo(FFBase::Group group, const T &mol, const ParameterMap &map);
     template<class T>
     bool _pvt_change(const T &mol);
     template<class T>

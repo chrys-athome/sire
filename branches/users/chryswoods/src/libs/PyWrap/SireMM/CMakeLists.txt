@@ -72,6 +72,7 @@ set ( WRAPMM_SOURCES
       HarmonicSwitchingFunction.pypp.cpp
 
       InterCLJFF.pypp.cpp
+      InterGroupLJFF.pypp.cpp
       InterLJFF.pypp.cpp
 
       InternalDB_MolAngleInfo_.pypp.cpp

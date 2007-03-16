@@ -11,12 +11,15 @@
 
 namespace bp = boost::python;
 
+SireIO::PDB __copy__(const SireIO::PDB &other){ return SireIO::PDB(other); }
+
 const char* pvt_get_name(const SireIO::PDB&){ return "SireIO::PDB";}
 
 void register_PDB_class(){
 
     bp::class_< SireIO::PDB, bp::bases< SireIO::IOBase > >( "PDB" )    
         .def( bp::init< >() )    
+        .def( "__copy__", &__copy__)    
         .def( "__str__", &pvt_get_name);
 
 }

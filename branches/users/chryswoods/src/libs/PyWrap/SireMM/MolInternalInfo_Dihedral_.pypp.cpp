@@ -12,6 +12,8 @@
 
 namespace bp = boost::python;
 
+SireMM::MolInternalInfo<SireMol::Dihedral> __copy__(const SireMM::MolInternalInfo<SireMol::Dihedral> &other){ return SireMM::MolInternalInfo<SireMol::Dihedral>(other); }
+
 const char* pvt_get_name(const SireMM::MolInternalInfo<SireMol::Dihedral>&){ return "SireMM::MolInternalInfo<SireMol::Dihedral>";}
 
 void register_MolInternalInfo_Dihedral__class(){
@@ -58,6 +60,7 @@ void register_MolInternalInfo_Dihedral__class(){
             "residue"
             , (::SireMM::ResInternalInfo<SireMol::Dihedral> ( ::SireMM::MolInternalInfo<SireMol::Dihedral>::* )( ::SireMol::ResNum ) const)( &::SireMM::MolInternalInfo<SireMol::Dihedral>::residue )
             , ( bp::arg("resnum") ) )    
+        .def( "__copy__", &__copy__)    
         .def( "__str__", &pvt_get_name);
 
 }

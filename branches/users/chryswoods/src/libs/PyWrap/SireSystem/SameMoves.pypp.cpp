@@ -11,6 +11,8 @@
 
 namespace bp = boost::python;
 
+SireSystem::SameMoves __copy__(const SireSystem::SameMoves &other){ return SireSystem::SameMoves(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 const char* pvt_get_name(const SireSystem::SameMoves&){ return "SireSystem::SameMoves";}
@@ -34,6 +36,7 @@ void register_SameMoves_class(){
             "what"
             , (char const * ( ::SireSystem::SameMoves::* )(  ) const)( &::SireSystem::SameMoves::what ) )    
         .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireSystem::SameMoves >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireSystem::SameMoves >,

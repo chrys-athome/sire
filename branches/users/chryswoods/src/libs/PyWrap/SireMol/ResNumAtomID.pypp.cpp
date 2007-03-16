@@ -14,6 +14,8 @@
 
 namespace bp = boost::python;
 
+SireMol::ResNumAtomID __copy__(const SireMol::ResNumAtomID &other){ return SireMol::ResNumAtomID(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 #include "SirePy/str.hpp"
@@ -37,6 +39,7 @@ void register_ResNumAtomID_class(){
         .def( 
             "toString"
             , &::SireMol::ResNumAtomID::toString )    
+        .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::ResNumAtomID >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::ResNumAtomID >,

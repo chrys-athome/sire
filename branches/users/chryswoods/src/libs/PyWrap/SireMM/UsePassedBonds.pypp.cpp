@@ -12,6 +12,8 @@
 
 namespace bp = boost::python;
 
+SireMM::UsePassedBonds __copy__(const SireMM::UsePassedBonds &other){ return SireMM::UsePassedBonds(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 const char* pvt_get_name(const SireMM::UsePassedBonds&){ return "SireMM::UsePassedBonds";}
@@ -32,6 +34,7 @@ void register_UsePassedBonds_class(){
             "what"
             , (char const * ( ::SireMM::UsePassedBonds::* )(  ) const)( &::SireMM::UsePassedBonds::what ) )    
         .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::UsePassedBonds >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::UsePassedBonds >,

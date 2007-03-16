@@ -14,6 +14,8 @@
 
 namespace bp = boost::python;
 
+SireMol::AtomID __copy__(const SireMol::AtomID &other){ return SireMol::AtomID(other); }
+
 #include "SirePy/str.hpp"
 
 void register_AtomID_class(){
@@ -21,6 +23,7 @@ void register_AtomID_class(){
     bp::class_< SireMol::AtomID, bp::bases< SireMol::IDBase > >( "AtomID" )    
         .def( bp::init< >() )    
         .def( bp::init< quint32 >(( bp::arg("id") )) )    
+        .def( "__copy__", &__copy__)    
         .def( "__str__", &SirePy::__str__< ::SireMol::AtomID > );
 
 }

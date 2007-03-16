@@ -14,6 +14,8 @@
 
 namespace bp = boost::python;
 
+SireMol::MoleculeCutting __copy__(const SireMol::MoleculeCutting &other){ return SireMol::MoleculeCutting(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 const char* pvt_get_name(const SireMol::MoleculeCutting&){ return "SireMol::MoleculeCutting";}
@@ -33,6 +35,7 @@ void register_MoleculeCutting_class(){
             "what"
             , &::SireMol::MoleculeCutting::what )    
         .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::MoleculeCutting >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::MoleculeCutting >,

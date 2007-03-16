@@ -10,6 +10,8 @@
 
 namespace bp = boost::python;
 
+SireDB::Smarts __copy__(const SireDB::Smarts &other){ return SireDB::Smarts(other); }
+
 #include "SirePy/str.hpp"
 
 void register_Smarts_class(){
@@ -23,6 +25,7 @@ void register_Smarts_class(){
         .def( 
             "toString"
             , (::QString ( ::SireDB::Smarts::* )(  ) const)( &::SireDB::Smarts::toString ) )    
+        .def( "__copy__", &__copy__)    
         .def( "__str__", &SirePy::__str__< ::SireDB::Smarts > );
 
 }

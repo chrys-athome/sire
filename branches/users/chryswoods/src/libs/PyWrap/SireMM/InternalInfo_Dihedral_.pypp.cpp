@@ -12,6 +12,8 @@
 
 namespace bp = boost::python;
 
+SireMM::detail::InternalInfo<SireMol::Dihedral> __copy__(const SireMM::detail::InternalInfo<SireMol::Dihedral> &other){ return SireMM::detail::InternalInfo<SireMol::Dihedral>(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 const char* pvt_get_name(const SireMM::detail::InternalInfo<SireMol::Dihedral>&){ return "SireMM::detail::InternalInfo<SireMol::Dihedral>";}
@@ -165,6 +167,7 @@ void register_InternalInfo_Dihedral__class(){
         .def( 
             "size"
             , (::size_t ( ::SireMM::detail::InternalInfo<SireMol::Dihedral>::* )(  ) const)( &::SireMM::detail::InternalInfo<SireMol::Dihedral>::size ) )    
+        .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::detail::InternalInfo<SireMol::Dihedral> >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::detail::InternalInfo<SireMol::Dihedral> >,

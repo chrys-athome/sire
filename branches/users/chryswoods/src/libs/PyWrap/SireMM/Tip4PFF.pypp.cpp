@@ -12,6 +12,8 @@
 
 namespace bp = boost::python;
 
+SireMM::Tip4PFF __copy__(const SireMM::Tip4PFF &other){ return SireMM::Tip4PFF(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 #include "SirePy/str.hpp"
@@ -80,6 +82,7 @@ void register_Tip4PFF_class(){
         
         }
         Tip4PFF_exposer.staticmethod( "typeName" );
+        Tip4PFF_exposer.def( "__copy__", &__copy__);
         Tip4PFF_exposer.def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::Tip4PFF >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         Tip4PFF_exposer.def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::Tip4PFF >,

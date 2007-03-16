@@ -14,6 +14,8 @@
 
 namespace bp = boost::python;
 
+SireMol::CutGroupID __copy__(const SireMol::CutGroupID &other){ return SireMol::CutGroupID(other); }
+
 #include "SirePy/str.hpp"
 
 void register_CutGroupID_class(){
@@ -21,6 +23,7 @@ void register_CutGroupID_class(){
     bp::class_< SireMol::CutGroupID, bp::bases< SireMol::IDBase > >( "CutGroupID" )    
         .def( bp::init< >() )    
         .def( bp::init< quint32 >(( bp::arg("id") )) )    
+        .def( "__copy__", &__copy__)    
         .def( "__str__", &SirePy::__str__< ::SireMol::CutGroupID > );
 
 }

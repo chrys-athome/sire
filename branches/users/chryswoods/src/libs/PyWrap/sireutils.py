@@ -1,6 +1,7 @@
 
 import os
 import sys
+import re
 
 from pyplusplus.module_builder import module_builder_t
 from pyplusplus.decl_wrappers import calldef_wrapper
@@ -96,9 +97,6 @@ def has_datastream_operators(mb, c):
 
    try:
        d = mb.operators(arg_types=["::QDataStream &","%s &" % c.decl_string])
-                        
-      
-   
        return len(d) > 0
 
    except:
@@ -137,6 +135,28 @@ def export_class(mb, classname, aliases, special_code):
    #if this is a noncopyable class then remove all constructors!
    if c.noncopyable:
       c.constructors().exclude()
+   else:
+      #if there is a copy-constructor then ensure that
+      #it is exposed!
+      decls = c.decls()
+      
+      for decl in decls:
+          try:
+              if decl.is_copy_constructor:
+                  #create a __copy__ function
+                  class_name = re.sub(r"\s\[class\]","",str(c))
+                  
+                  c.add_declaration_code( \
+                       "%s __copy__(const %s &other){ return %s(other); }" \
+                          % (class_name, class_name, class_name) )
+                       
+                  c.add_registration_code( "def( \"__copy__\", &__copy__)" )
+                  
+                  #only do this once for the class
+                  break
+                  
+          except AttributeError:
+              pass
 
    #if this class can be streamed to a QDataStream then add
    #streaming operators

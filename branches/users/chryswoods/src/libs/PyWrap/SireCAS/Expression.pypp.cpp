@@ -8,6 +8,8 @@
 
 namespace bp = boost::python;
 
+SireCAS::Expression __copy__(const SireCAS::Expression &other){ return SireCAS::Expression(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 #include "SirePy/str.hpp"
@@ -232,6 +234,7 @@ void register_Expression_class(){
         .def( self - other<SireCAS::ExBase>() )    
         .def( self * other<SireCAS::ExBase>() )    
         .def( self / other<SireCAS::ExBase>() )    
+        .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireCAS::Expression >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireCAS::Expression >,

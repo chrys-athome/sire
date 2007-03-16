@@ -10,6 +10,8 @@
 
 namespace bp = boost::python;
 
+SireDB::MatchAtomType __copy__(const SireDB::MatchAtomType &other){ return SireDB::MatchAtomType(other); }
+
 #include "SirePy/str.hpp"
 
 void register_MatchAtomType_class(){
@@ -71,6 +73,7 @@ void register_MatchAtomType_class(){
             "type"
             , (::SireDB::AtomType const & ( ::SireDB::MatchAtomType::* )(  ) const)( &::SireDB::MatchAtomType::type )
             , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( "__copy__", &__copy__)    
         .def( "__str__", &SirePy::__str__< ::SireDB::MatchAtomType > );
 
 }

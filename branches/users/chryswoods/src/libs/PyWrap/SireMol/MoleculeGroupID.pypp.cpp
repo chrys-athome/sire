@@ -14,6 +14,8 @@
 
 namespace bp = boost::python;
 
+SireMol::MoleculeGroupID __copy__(const SireMol::MoleculeGroupID &other){ return SireMol::MoleculeGroupID(other); }
+
 #include "SirePy/str.hpp"
 
 void register_MoleculeGroupID_class(){
@@ -21,6 +23,7 @@ void register_MoleculeGroupID_class(){
     bp::class_< SireMol::MoleculeGroupID, bp::bases< SireMol::IDBase > >( "MoleculeGroupID" )    
         .def( bp::init< >() )    
         .def( bp::init< quint32 >(( bp::arg("id") )) )    
+        .def( "__copy__", &__copy__)    
         .def( "__str__", &SirePy::__str__< ::SireMol::MoleculeGroupID > );
 
 }

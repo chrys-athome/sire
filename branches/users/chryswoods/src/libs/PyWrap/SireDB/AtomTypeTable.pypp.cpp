@@ -10,6 +10,8 @@
 
 namespace bp = boost::python;
 
+SireDB::AtomTypeTable __copy__(const SireDB::AtomTypeTable &other){ return SireDB::AtomTypeTable(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 const char* pvt_get_name(const SireDB::AtomTypeTable&){ return "SireDB::AtomTypeTable";}
@@ -26,6 +28,7 @@ void register_AtomTypeTable_class(){
             "what"
             , (char const * ( ::SireDB::AtomTypeTable::* )(  ) const)( &::SireDB::AtomTypeTable::what ) )    
         .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireDB::AtomTypeTable >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireDB::AtomTypeTable >,

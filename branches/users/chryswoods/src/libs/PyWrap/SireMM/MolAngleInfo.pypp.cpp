@@ -12,6 +12,8 @@
 
 namespace bp = boost::python;
 
+SireMM::MolAngleInfo __copy__(const SireMM::MolAngleInfo &other){ return SireMM::MolAngleInfo(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 const char* pvt_get_name(const SireMM::MolAngleInfo&){ return "SireMM::MolAngleInfo";}
@@ -108,6 +110,7 @@ void register_MolAngleInfo_class(){
             "residuesAngled"
             , (bool ( ::SireMM::MolAngleInfo::* )( ::SireMol::ResNum,::SireMol::ResNum,::SireMol::ResNum ) const)( &::SireMM::MolAngleInfo::residuesAngled )
             , ( bp::arg("res0"), bp::arg("res1"), bp::arg("res2") ) )    
+        .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::MolAngleInfo >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::MolAngleInfo >,

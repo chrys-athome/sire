@@ -29,6 +29,8 @@
 
 namespace bp = boost::python;
 
+SireMol::Molecule __copy__(const SireMol::Molecule &other){ return SireMol::Molecule(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 const char* pvt_get_name(const SireMol::Molecule&){ return "SireMol::Molecule";}
@@ -55,6 +57,7 @@ void register_Molecule_class(){
     register_Molecule_memfuns8(Molecule_exposer);
     register_Molecule_memfuns9(Molecule_exposer);
     Molecule_exposer.def( bp::init<const SireMol::Molecule&>() );
+    Molecule_exposer.def( "__copy__", &__copy__);
     Molecule_exposer.def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::Molecule >,
                         bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
     Molecule_exposer.def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::Molecule >,

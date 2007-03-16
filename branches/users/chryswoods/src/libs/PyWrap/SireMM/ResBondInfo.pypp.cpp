@@ -12,6 +12,8 @@
 
 namespace bp = boost::python;
 
+SireMM::ResBondInfo __copy__(const SireMM::ResBondInfo &other){ return SireMM::ResBondInfo(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 const char* pvt_get_name(const SireMM::ResBondInfo&){ return "SireMM::ResBondInfo";}
@@ -40,6 +42,7 @@ void register_ResBondInfo_class(){
         .def( 
             "nIntraBonds"
             , (int ( ::SireMM::ResBondInfo::* )(  ) const)( &::SireMM::ResBondInfo::nIntraBonds ) )    
+        .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::ResBondInfo >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::ResBondInfo >,

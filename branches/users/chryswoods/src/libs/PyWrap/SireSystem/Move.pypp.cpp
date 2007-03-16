@@ -11,6 +11,8 @@
 
 namespace bp = boost::python;
 
+SireSystem::Move __copy__(const SireSystem::Move &other){ return SireSystem::Move(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 const char* pvt_get_name(const SireSystem::Move&){ return "SireSystem::Move";}
@@ -29,6 +31,7 @@ void register_Move_class(){
             "move"
             , (void ( ::SireSystem::Move::* )( ::SireSystem::SimSystem & ) )( &::SireSystem::Move::move )
             , ( bp::arg("system") ) )    
+        .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireSystem::Move >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireSystem::Move >,

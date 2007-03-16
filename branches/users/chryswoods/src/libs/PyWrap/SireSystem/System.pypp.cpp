@@ -11,6 +11,8 @@
 
 namespace bp = boost::python;
 
+SireSystem::System __copy__(const SireSystem::System &other){ return SireSystem::System(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 const char* pvt_get_name(const SireSystem::System&){ return "SireSystem::System";}
@@ -52,6 +54,7 @@ void register_System_class(){
             "version"
             , (::SireBase::Version const & ( ::SireSystem::System::* )(  ) const)( &::SireSystem::System::version )
             , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireSystem::System >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireSystem::System >,

@@ -10,6 +10,8 @@
 
 namespace bp = boost::python;
 
+SireDB::AtomTypeDB __copy__(const SireDB::AtomTypeDB &other){ return SireDB::AtomTypeDB(other); }
+
 #include "SirePy/str.hpp"
 
 void register_AtomTypeDB_class(){
@@ -63,6 +65,7 @@ void register_AtomTypeDB_class(){
             "what"
             , (char const * ( ::SireDB::AtomTypeDB::* )(  ) const)( &::SireDB::AtomTypeDB::what ) )    
         .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
         .def( "__str__", &SirePy::__str__< ::SireDB::AtomTypeDB > );
 
 }

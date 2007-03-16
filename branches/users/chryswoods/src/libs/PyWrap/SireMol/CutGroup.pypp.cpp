@@ -14,6 +14,8 @@
 
 namespace bp = boost::python;
 
+SireMol::CutGroup __copy__(const SireMol::CutGroup &other){ return SireMol::CutGroup(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 #include "SirePy/str.hpp"
@@ -96,6 +98,7 @@ void register_CutGroup_class(){
             "translate"
             , &::SireMol::CutGroup::translate
             , ( bp::arg("delta") ) )    
+        .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::CutGroup >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::CutGroup >,

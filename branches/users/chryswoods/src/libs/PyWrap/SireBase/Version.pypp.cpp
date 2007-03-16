@@ -8,6 +8,8 @@
 
 namespace bp = boost::python;
 
+SireBase::Version __copy__(const SireBase::Version &other){ return SireBase::Version(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 #include "SirePy/str.hpp"
@@ -46,6 +48,7 @@ void register_Version_class(){
         .def( 
             "toString"
             , (::QString ( ::SireBase::Version::* )(  ) const)( &::SireBase::Version::toString ) )    
+        .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireBase::Version >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireBase::Version >,

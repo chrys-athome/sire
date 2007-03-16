@@ -12,6 +12,8 @@
 
 namespace bp = boost::python;
 
+SireMM::NoCutoff __copy__(const SireMM::NoCutoff &other){ return SireMM::NoCutoff(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 const char* pvt_get_name(const SireMM::NoCutoff&){ return "SireMM::NoCutoff";}
@@ -35,6 +37,7 @@ void register_NoCutoff_class(){
             "what"
             , (char const * ( ::SireMM::NoCutoff::* )(  ) const)( &::SireMM::NoCutoff::what ) )    
         .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::NoCutoff >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::NoCutoff >,

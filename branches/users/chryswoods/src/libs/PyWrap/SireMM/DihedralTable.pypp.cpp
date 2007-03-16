@@ -12,6 +12,8 @@
 
 namespace bp = boost::python;
 
+SireMM::DihedralTable __copy__(const SireMM::DihedralTable &other){ return SireMM::DihedralTable(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 const char* pvt_get_name(const SireMM::DihedralTable&){ return "SireMM::DihedralTable";}
@@ -34,6 +36,7 @@ void register_DihedralTable_class(){
             "what"
             , (char const * ( ::SireMM::DihedralTable::* )(  ) const)( &::SireMM::DihedralTable::what ) )    
         .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::DihedralTable >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::DihedralTable >,

@@ -279,6 +279,8 @@ public:
         in the forcefield */
     class SIREFF_EXPORT Groups
     {
+    friend class FFBase;
+
     public:
         Groups();
         Groups(const Groups &other);
@@ -298,9 +300,9 @@ public:
             return n;
         }
 
+    protected:
         static Groups default_group;
 
-    protected:
         FFBase::Group getUniqueID();
 
     private:

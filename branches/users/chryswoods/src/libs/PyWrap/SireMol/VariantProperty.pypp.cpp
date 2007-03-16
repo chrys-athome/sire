@@ -14,6 +14,8 @@
 
 namespace bp = boost::python;
 
+SireMol::VariantProperty __copy__(const SireMol::VariantProperty &other){ return SireMol::VariantProperty(other); }
+
 #include "SirePy/str.hpp"
 
 void register_VariantProperty_class(){
@@ -33,6 +35,7 @@ void register_VariantProperty_class(){
             "what"
             , &::SireMol::VariantProperty::what )    
         .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
         .def( "__str__", &SirePy::__str__< ::SireMol::VariantProperty > );
 
 }

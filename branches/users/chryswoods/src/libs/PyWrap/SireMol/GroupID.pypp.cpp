@@ -14,6 +14,8 @@
 
 namespace bp = boost::python;
 
+SireMol::GroupID __copy__(const SireMol::GroupID &other){ return SireMol::GroupID(other); }
+
 #include "SirePy/str.hpp"
 
 void register_GroupID_class(){
@@ -21,6 +23,7 @@ void register_GroupID_class(){
     bp::class_< SireMol::GroupID, bp::bases< SireMol::IDBase > >( "GroupID" )    
         .def( bp::init< >() )    
         .def( bp::init< quint32 >(( bp::arg("id") )) )    
+        .def( "__copy__", &__copy__)    
         .def( "__str__", &SirePy::__str__< ::SireMol::GroupID > );
 
 }

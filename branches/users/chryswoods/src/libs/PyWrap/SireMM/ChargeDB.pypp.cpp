@@ -12,6 +12,8 @@
 
 namespace bp = boost::python;
 
+SireMM::ChargeDB __copy__(const SireMM::ChargeDB &other){ return SireMM::ChargeDB(other); }
+
 #include "SirePy/str.hpp"
 
 void register_ChargeDB_class(){
@@ -65,6 +67,7 @@ void register_ChargeDB_class(){
             "what"
             , (char const * ( ::SireMM::ChargeDB::* )(  ) const)( &::SireMM::ChargeDB::what ) )    
         .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
         .def( "__str__", &SirePy::__str__< ::SireMM::ChargeDB > );
 
 }

@@ -14,6 +14,8 @@
 
 namespace bp = boost::python;
 
+SireMol::ResNum __copy__(const SireMol::ResNum &other){ return SireMol::ResNum(other); }
+
 #include "SirePy/str.hpp"
 
 void register_ResNum_class(){
@@ -21,6 +23,7 @@ void register_ResNum_class(){
     bp::class_< SireMol::ResNum, bp::bases< SireMol::IDBase > >( "ResNum" )    
         .def( bp::init< >() )    
         .def( bp::init< quint32 >(( bp::arg("id") )) )    
+        .def( "__copy__", &__copy__)    
         .def( "__str__", &SirePy::__str__< ::SireMol::ResNum > );
 
 }

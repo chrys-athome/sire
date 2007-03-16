@@ -8,6 +8,8 @@
 
 namespace bp = boost::python;
 
+SireCAS::I __copy__(const SireCAS::I &other){ return SireCAS::I(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 #include "SirePy/str.hpp"
@@ -44,6 +46,7 @@ void register_I_class(){
             "what"
             , (char const * ( ::SireCAS::I::* )(  ) const)( &::SireCAS::I::what ) )    
         .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireCAS::I >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireCAS::I >,

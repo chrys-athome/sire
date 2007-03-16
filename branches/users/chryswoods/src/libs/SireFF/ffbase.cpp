@@ -72,7 +72,8 @@ FFBase::Groups::~Groups()
 /** Return a new, unique ID for a group in the forcefield */
 FFBase::Group FFBase::Groups::getUniqueID()
 {
-    return FFBase::Group(n++);
+    ++n;
+    return FFBase::Group(n);
 }
 
 FFBase::Groups FFBase::Groups::default_group;

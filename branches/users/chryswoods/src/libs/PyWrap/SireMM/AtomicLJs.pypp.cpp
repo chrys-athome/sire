@@ -12,6 +12,8 @@
 
 namespace bp = boost::python;
 
+SireMM::AtomicLJs __copy__(const SireMM::AtomicLJs &other){ return SireMM::AtomicLJs(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 const char* pvt_get_name(const SireMM::AtomicLJs&){ return "SireMM::AtomicLJs";}
@@ -38,6 +40,7 @@ void register_AtomicLJs_class(){
             "what"
             , (char const * ( ::SireMM::AtomicLJs::* )(  ) const)( &::SireMM::AtomicLJs::what ) )    
         .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::AtomicLJs >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::AtomicLJs >,

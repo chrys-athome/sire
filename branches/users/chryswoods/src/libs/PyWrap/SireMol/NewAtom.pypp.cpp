@@ -20,6 +20,8 @@
 
 namespace bp = boost::python;
 
+SireMol::NewAtom __copy__(const SireMol::NewAtom &other){ return SireMol::NewAtom(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 #include "SirePy/str.hpp"
@@ -43,6 +45,7 @@ void register_NewAtom_class(){
     NewAtom_exposer.def( bp::self += bp::other< SireMaths::Vector >() );
     NewAtom_exposer.def( bp::self -= bp::other< SireMaths::Vector >() );
     NewAtom_exposer.def( bp::self == bp::self );
+    NewAtom_exposer.def( "__copy__", &__copy__);
     NewAtom_exposer.def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::NewAtom >,
                         bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
     NewAtom_exposer.def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::NewAtom >,

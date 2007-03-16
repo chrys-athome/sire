@@ -105,8 +105,7 @@ void register_FFBase_class(){
                 , (::quint32 ( ::SireFF::FFBase::Groups::* )(  ) const)( &::SireFF::FFBase::Groups::count ) )    
             .def( 
                 "main"
-                , (::SireFF::FFBase::Group ( ::SireFF::FFBase::Groups::* )(  ) const)( &::SireFF::FFBase::Groups::main ) )    
-            .def_readonly( "default_group", SireFF::FFBase::Groups::default_group );
+                , (::SireFF::FFBase::Group ( ::SireFF::FFBase::Groups::* )(  ) const)( &::SireFF::FFBase::Groups::main ) );
         bp::class_< SireFF::FFBase::Parameters >( "Parameters" );
         { //::SireFF::FFBase::ID
         

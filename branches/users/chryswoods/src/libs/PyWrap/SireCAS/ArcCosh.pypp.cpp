@@ -8,6 +8,8 @@
 
 namespace bp = boost::python;
 
+SireCAS::ArcCosh __copy__(const SireCAS::ArcCosh &other){ return SireCAS::ArcCosh(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 #include "SirePy/str.hpp"
@@ -33,6 +35,7 @@ void register_ArcCosh_class(){
             "what"
             , (char const * ( ::SireCAS::ArcCosh::* )(  ) const)( &::SireCAS::ArcCosh::what ) )    
         .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireCAS::ArcCosh >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireCAS::ArcCosh >,

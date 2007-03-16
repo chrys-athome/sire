@@ -10,6 +10,8 @@
 
 namespace bp = boost::python;
 
+SireDB::match_single_atom_num __copy__(const SireDB::match_single_atom_num &other){ return SireDB::match_single_atom_num(other); }
+
 const char* pvt_get_name(const SireDB::match_single_atom_num&){ return "SireDB::match_single_atom_num";}
 
 void register_match_single_atom_num_class(){
@@ -17,6 +19,7 @@ void register_match_single_atom_num_class(){
     bp::class_< SireDB::match_single_atom_num >( "match_single_atom_num" )    
         .def( bp::init< >() )    
         .def( bp::self == bp::other< SireMol::AtomNum >() )    
+        .def( "__copy__", &__copy__)    
         .def( "__str__", &pvt_get_name);
 
 }

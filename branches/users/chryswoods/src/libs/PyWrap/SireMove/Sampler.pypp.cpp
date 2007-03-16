@@ -13,6 +13,8 @@
 
 namespace bp = boost::python;
 
+SireMove::Sampler __copy__(const SireMove::Sampler &other){ return SireMove::Sampler(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 const char* pvt_get_name(const SireMove::Sampler&){ return "SireMove::Sampler";}
@@ -54,6 +56,7 @@ void register_Sampler_class(){
             "setGenerator"
             , (void ( ::SireMove::Sampler::* )( ::SireMaths::RanGenerator const & ) )( &::SireMove::Sampler::setGenerator )
             , ( bp::arg("generator") ) )    
+        .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMove::Sampler >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMove::Sampler >,

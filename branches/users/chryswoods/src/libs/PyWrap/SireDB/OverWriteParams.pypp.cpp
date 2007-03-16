@@ -10,6 +10,8 @@
 
 namespace bp = boost::python;
 
+SireDB::OverWriteParams __copy__(const SireDB::OverWriteParams &other){ return SireDB::OverWriteParams(other); }
+
 #include "SirePy/str.hpp"
 
 void register_OverWriteParams_class(){
@@ -26,6 +28,7 @@ void register_OverWriteParams_class(){
         .def( 
             "what"
             , (char const * ( ::SireDB::OverWriteParams::* )(  ) const)( &::SireDB::OverWriteParams::what ) )    
+        .def( "__copy__", &__copy__)    
         .def( "__str__", &SirePy::__str__< ::SireDB::OverWriteParams > );
 
 }
