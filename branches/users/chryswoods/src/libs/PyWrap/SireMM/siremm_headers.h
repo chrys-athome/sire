@@ -53,7 +53,6 @@
 #include "SireMM/resbondinfo.h"
 #include "SireMM/resdihedralinfo.h"
 #include "SireMM/switchingfunction.h"
-#include "SireMM/tip4pff.h"
 #include "SireMM/ureybradleydb.h"
 
 

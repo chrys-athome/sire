@@ -64,7 +64,6 @@ wrap_classes = [ "AngleDB",
                  "NoCutoff",
                  "HarmonicSwitchingFunction",
                  "SwitchingFunction",
-                 "Tip4PFF",
                  "UreyBradleyDB",
                  
                  "assign_internals<SireMM::MolAngleInfo>",
@@ -198,8 +197,8 @@ special_code = { "assign_angles" : fix_assigninternals,
                  "InterLJFF" : fix_noncopyable,
                  "InterGroupCoulombFF" : fix_noncopyable,
                  "InterGroupLJFF" : fix_noncopyable,
-                 "InterCLJFF" : fix_noncopyable,
-                 "Tip4PFF" : fix_noncopyable }
+                 "InterCLJFF" : fix_noncopyable
+               }
 
 implicitly_convertible = [ ("QVector< QVector<SireMM::ChargeParameter> >",
                             "SireMM::AtomicCharges"),

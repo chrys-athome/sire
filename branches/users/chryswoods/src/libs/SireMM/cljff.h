@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2006  Christopher Woods
+  *  Copyright (C) 2007  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -29,14 +29,22 @@
 #ifndef SIREMM_CLJFF_H
 #define SIREMM_CLJFF_H
 
-#include <QVector>
+#include <QSharedDataPointer>
 
 #include "cljpair.h"
 #include "combiningrules.h"
 #include "switchingfunction.h"
 
+#include "atomiccharges.h"
+#include "atomicljs.h"
+
 #include "SireVol/space.h"
 #include "SireFF/ffbase.h"
+
+#include "SireMol/molecule.h"
+#include "SireMol/residue.h"
+#include "SireMol/newatom.h"
+#include "SireMol/atomselection.h"
 
 SIRE_BEGIN_HEADER
 
@@ -51,54 +59,30 @@ QDataStream& operator>>(QDataStream&, SireMM::CLJFF&);
 namespace SireMM
 {
 
+/** Define the PairMatrix used to hold CLJ parameters */
+typedef SireBase::PairMatrix<CLJPair> CLJMatrix;
+
+using SireMol::Molecule;
+using SireMol::Residue;
+using SireMol::NewAtom;
+using SireMol::AtomSelection;
+
+using SireMol::CutGroupID;
+
+using SireVol::Space;
+using SireVol::CoordGroup;
+using SireVol::DistMatrix;
+
 using SireFF::FFBase;
 using SireFF::ParameterName;
 using SireFF::FFComponent;
 
-using SireVol::Space;
-using SireVol::DistMatrix;
-using SireVol::CoordGroup;
-
 using SireCAS::Symbols;
 
-namespace detail
-{
+/** This is the base class of all forcefields that provide only
+    the LJ energy of molecules.
 
-class MolCLJInfo;
-class ChangedMolCLJInfo;
-class ResCLJInfo;
-
-class CLJWorkspace
-{
-
-public:
-    CLJWorkspace();
-
-    /** Copy constructor */
-    CLJWorkspace(const CLJWorkspace &other)
-           : distmatrix(other.distmatrix),
-             cnrg(other.cnrg), ljnrg(other.ljnrg)
-    {}
-
-    ~CLJWorkspace();
-
-    /** The distance matrix used to hold the distances
-        between all atoms of two CoordGroups */
-    DistMatrix distmatrix;
-
-    /** The accumulated value of the coulomb energy */
-    double cnrg;
-
-    /** The accumulated value of the LJ energy */
-    double ljnrg;
-};
-
-}
-
-/**
-A CLJFF is the base-class for all forcefields that implement a charge/Lennard Jones (CLJ) forcefield. This provides basic functions for calculating the CLJ energy of pairs of CutGroups.
-
-@author Christopher Woods
+    @author Christopher Woods
 */
 class SIREMM_EXPORT CLJFF : public FFBase
 {
@@ -109,11 +93,15 @@ friend QDataStream& ::operator>>(QDataStream&, CLJFF&);
 public:
     CLJFF();
 
-    CLJFF(const Space &space, const SwitchingFunction &switchingfunction);
+    CLJFF(const Space &space, const SwitchingFunction &switchfunc);
 
     CLJFF(const CLJFF &other);
 
     ~CLJFF();
+
+    class CLJMolecule;
+    class CLJMoleculeData;  //private implementation of CLJMolecule
+    class ChangedCLJMolecule;
 
     class SIREMM_EXPORT Components : public FFBase::Components
     {
@@ -134,7 +122,7 @@ public:
 
         const FFComponent& coulomb() const
         {
-            return e_coulomb;
+            return e_coul;
         }
 
         const FFComponent& lj() const
@@ -150,7 +138,7 @@ public:
 
     private:
         /** The coulomb component */
-        FFComponent e_coulomb;
+        FFComponent e_coul;
         /** The LJ component */
         FFComponent e_lj;
     };
@@ -166,7 +154,7 @@ public:
         /** Return the default source of the coulomb parameters */
         const ParameterName& coulomb() const
         {
-            return coulomb_params;
+            return chg_params;
         }
 
         /** Return the default source of the LJ parameters */
@@ -179,7 +167,7 @@ public:
 
     private:
         /** The name and default source of the coulomb parameters */
-        ParameterName coulomb_params;
+        ParameterName chg_params;
         /** The name and default source of the LJ parameters */
         ParameterName lj_params;
     };
@@ -194,7 +182,7 @@ public:
     public:
         Groups();
         Groups(const Groups &other);
-        
+
         ~Groups();
     };
 
@@ -209,57 +197,107 @@ public:
         return *components_ptr;
     }
 
+    class SIREMM_EXPORT CLJEnergy
+    {
+    public:
+        CLJEnergy(double cnrg=0, double ljnrg=0)
+        {
+            icnrg = cnrg;
+            iljnrg = ljnrg;
+        }
+
+        CLJEnergy(const CLJEnergy &other)
+                   : icnrg(other.icnrg), iljnrg(other.iljnrg)
+        {}
+
+        ~CLJEnergy()
+        {}
+
+        CLJEnergy& operator+=(const CLJEnergy &other)
+        {
+            icnrg += other.icnrg;
+            iljnrg += other.iljnrg;
+            return *this;
+        }
+
+        CLJEnergy& operator-=(const CLJEnergy &other)
+        {
+            icnrg -= other.icnrg;
+            iljnrg -= other.iljnrg;
+            return *this;
+        }
+
+        double coulomb() const
+        {
+            return icnrg;
+        }
+
+        double lj() const
+        {
+            return iljnrg;
+        }
+
+    private:
+        double icnrg;
+        double iljnrg;
+    };
+
+    static CLJEnergy calculateEnergy(const CLJMolecule &mol0,
+                                     const CLJMolecule &mol1,
+                                     const Space &space,
+                                     const SwitchingFunction &switchfunc,
+                                     DistMatrix &distmatrix,
+                                     CLJMatrix &cljmatrix);
+
+    static CLJEnergy calculateEnergy(const CLJMolecule &mol,
+                                     const Space &space,
+                                     const SwitchingFunction &switchfunc,
+                                     DistMatrix &distmatrix,
+                                     CLJMatrix &cljmatrix);
+
 protected:
-    static void calculateEnergy(const CoordGroup &group0,
-                                const QVector<ChargeParameter> &chg0,
-                                const QVector<LJParameter> &lj0,
-                                const CoordGroup &group1,
-                                const QVector<ChargeParameter> &chg1,
-                                const QVector<LJParameter> &lj1,
-                                const Space &space,
-                                const SwitchingFunction &switchfunc,
-                                detail::CLJWorkspace &workspace);
 
-    static void calculateEnergy(const CoordGroup &group,
-                                const QVector<ChargeParameter> &chgs,
-                                const QVector<LJParameter> &ljs,
-                                const Space &space,
-                                detail::CLJWorkspace &workspace);
+    static CLJEnergy calculateEnergy(const CoordGroup &group0,
+                                     const QVector<ChargeParameter> &chg0,
+                                     const QVector<LJParameter> &lj0,
+                                     const CoordGroup &group1,
+                                     const QVector<ChargeParameter> &chg1,
+                                     const QVector<LJParameter> &lj1,
+                                     const Space &space,
+                                     const SwitchingFunction &switchfunc,
+                                     DistMatrix &distmatrix,
+                                     CLJMatrix &cljmatrix);
 
-    static void calculateEnergy(const detail::MolCLJInfo &mol0,
-                                const detail::MolCLJInfo &mol1,
-                                const Space &space,
-                                const SwitchingFunction &switchfunc,
-                                detail::CLJWorkspace &workspace);
+    static CLJEnergy calculateEnergy(const CoordGroup &group,
+                                     const QVector<ChargeParameter> &chgs,
+                                     const QVector<LJParameter> &ljs,
+                                     const Space &space,
+                                     DistMatrix &distmatrix,
+                                     CLJMatrix &cljmatrix);
 
-    static void calculateEnergy(const detail::MolCLJInfo &mol,
-                                const Space &space,
-                                const SwitchingFunction &switchfunc,
-                                detail::CLJWorkspace &workspace);
-
-    detail::CLJWorkspace& workspace();
-    const detail::CLJWorkspace& workspace() const;
+    DistMatrix& distanceMatrix();
+    CLJMatrix& cljMatrix();
 
 private:
-    static void calculatePairEnergy(detail::CLJWorkspace &workspace,
-                                    const QVector<ChargeParameter> &chg0,
-                                    const QVector<LJParameter> &lj0,
-                                    const QVector<ChargeParameter> &chg1,
-                                    const QVector<LJParameter> &lj1);
 
-    static void calculateSelfEnergy(detail::CLJWorkspace &workspace,
-                                    const QVector<ChargeParameter> &chgs,
-                                    const QVector<LJParameter> &ljs);
+    static CLJEnergy calculatePairEnergy(DistMatrix &distmatrix,
+                                         CLJMatrix &cljmatrix);
+
+    static CLJEnergy calculateSelfEnergy(DistMatrix &distmatrix,
+                                         CLJMatrix &cljmatrix);
 
     void registerComponents();
 
-    /** The workspace in which the calculation will take place */
-    detail::CLJWorkspace wkspace;
+    /** Workspace for the distance calculations */
+    DistMatrix distmat;
 
-    /** The space in which the calculation will be performed */
+    /** Workspace for the combination of CLJ parameters */
+    CLJMatrix cljmat;
+
+    /** The space in which the molecules in this forcefield reside */
     Space spce;
 
-    /** The switching function used to truncate the CLJ interactions */
+    /** The switching function used to truncate the LJ interactions */
     SwitchingFunction switchfunc;
 
     /** Pointer to the object containing the components of
@@ -267,35 +305,215 @@ private:
     const CLJFF::Components *components_ptr;
 };
 
-/** Return the space in which this calculation is performed (the volume
-    of space in which the molecules exist, e.g. PeriodicBox, TruncatedOctahedron
-    etc.) */
+} // end of namespace SireMM
+
+QDataStream& operator<<(QDataStream&, const SireMM::CLJFF::CLJMolecule&);
+QDataStream& operator>>(QDataStream&, SireMM::CLJFF::CLJMolecule&);
+
+QDataStream& operator<<(QDataStream&, const SireMM::CLJFF::ChangedCLJMolecule&);
+QDataStream& operator>>(QDataStream&, SireMM::CLJFF::ChangedCLJMolecule&);
+
+namespace SireMM
+{
+
+/** This class is used to represent a Molecule or part of a Molecule
+    in this forcefield. It contains all of the coordinates of the molecule,
+    together with the LJ parameters of the atoms. */
+class SIREMM_EXPORT CLJFF::CLJMolecule
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const CLJFF::CLJMolecule&);
+friend QDataStream& ::operator>>(QDataStream&, CLJFF::CLJMolecule&);
+
+public:
+    CLJMolecule();
+
+    CLJMolecule(const Molecule &molecule,
+                const QString &chgproperty, const QString &ljproperty);
+    CLJMolecule(const Residue &residue,
+                const QString &chgproperty, const QString &ljproperty);
+    CLJMolecule(const NewAtom &atom,
+                const QString &chgproperty, const QString &ljproperty);
+
+    CLJMolecule(const Molecule &molecule, const AtomSelection &selected_atoms,
+                const QString &chgproperty, const QString &ljproperty);
+
+    CLJMolecule(const CLJMolecule &other, const QSet<CutGroupID> &groups);
+
+    CLJMolecule(const CLJMolecule &other);
+
+    ~CLJMolecule();
+
+    CLJMolecule& operator=(const CLJMolecule &other);
+
+    bool operator==(const CLJMolecule &other) const;
+    bool operator!=(const CLJMolecule &other) const;
+
+    bool isEmpty() const;
+
+    const Molecule& molecule() const;
+
+    ChangedCLJMolecule change(const Molecule &molecule) const;
+    ChangedCLJMolecule change(const Residue &residue) const;
+    ChangedCLJMolecule change(const NewAtom &newatom) const;
+
+    ChangedCLJMolecule add(const Molecule &molecule,
+                           const QString &chgproperty = QString::null,
+                           const QString &ljproperty = QString::null) const;
+    ChangedCLJMolecule add(const Residue &residue,
+                           const QString &chgproperty = QString::null,
+                           const QString &ljproperty = QString::null) const;
+    ChangedCLJMolecule add(const NewAtom &newatom,
+                           const QString &chgproperty = QString::null,
+                           const QString &ljproperty = QString::null) const;
+    ChangedCLJMolecule add(const AtomSelection &selected_atoms,
+                           const QString &chgproperty = QString::null,
+                           const QString &ljproperty = QString::null) const;
+
+    ChangedCLJMolecule remove(const Molecule &molecule) const;
+    ChangedCLJMolecule remove(const Residue &residue) const;
+    ChangedCLJMolecule remove(const NewAtom &atom) const;
+    ChangedCLJMolecule remove(const AtomSelection &selected_atoms) const;
+
+    const QString& chgProperty() const;
+    const QString& ljProperty() const;
+
+    const QVector<CoordGroup>& coordinates() const;
+
+    const AtomicCharges& charges() const;
+    const AtomicLJs& ljParameters() const;
+
+    bool isWholeMolecule() const;
+    const AtomSelection& selectedAtoms() const;
+
+private:
+    ChangedCLJMolecule _pvt_change(const Molecule &molecule,
+                                   const QSet<CutGroupID> &cgids,
+                                   const QString &chgproperty = QString::null,
+                                   const QString &ljproperty = QString::null) const;
+
+    ChangedCLJMolecule _pvt_change(const Molecule &molecule,
+                                   const QSet<CutGroupID> &cgids,
+                                   const AtomSelection &selected_atoms,
+                                   const QString &chgproperty = QString::null,
+                                   const QString &ljproperty = QString::null) const;
+
+    /** Implicitly shared pointer to the data of this class */
+    QSharedDataPointer<CLJMoleculeData> d;
+};
+
+/** This class holds information on how a molecule has changed
+    since the last energy evaluation.
+*/
+class SIREMM_EXPORT CLJFF::ChangedCLJMolecule
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const CLJFF::ChangedCLJMolecule&);
+friend QDataStream& ::operator>>(QDataStream&, CLJFF::ChangedCLJMolecule&);
+
+public:
+    ChangedCLJMolecule();
+
+    ChangedCLJMolecule(const CLJMolecule &mol);
+
+    ChangedCLJMolecule(const CLJMolecule &oldmol, const CLJMolecule &newmol);
+
+    ChangedCLJMolecule(const CLJMolecule &oldmol, const CLJMolecule &newmol,
+                       const QSet<CutGroupID> &changed_groups);
+
+    ChangedCLJMolecule(const ChangedCLJMolecule &other);
+
+    ~ChangedCLJMolecule();
+
+    ChangedCLJMolecule& operator=(const ChangedCLJMolecule &other);
+
+    bool operator==(const ChangedCLJMolecule &other) const;
+    bool operator!=(const ChangedCLJMolecule &other) const;
+
+    bool isEmpty() const;
+
+    ChangedCLJMolecule change(const Molecule &molecule) const;
+    ChangedCLJMolecule change(const Residue &residue) const;
+    ChangedCLJMolecule change(const NewAtom &atom) const;
+
+    ChangedCLJMolecule add(const Molecule &molecule,
+                           const QString &chgproperty = QString::null,
+                           const QString &ljproperty = QString::null) const;
+    ChangedCLJMolecule add(const Residue &residue,
+                           const QString &chgproperty = QString::null,
+                           const QString &ljproperty = QString::null) const;
+    ChangedCLJMolecule add(const NewAtom &atom,
+                           const QString &chgproperty = QString::null,
+                           const QString &ljproperty = QString::null) const;
+    ChangedCLJMolecule add(const AtomSelection &selected_atoms,
+                           const QString &chgproperty = QString::null,
+                           const QString &ljproperty = QString::null) const;
+
+    ChangedCLJMolecule remove(const Molecule &molecule) const;
+    ChangedCLJMolecule remove(const Residue &residue) const;
+    ChangedCLJMolecule remove(const NewAtom &atom) const;
+    ChangedCLJMolecule remove(const AtomSelection &selected_atoms) const;
+
+    bool changedAll() const;
+
+    const QSet<CutGroupID>& changedGroups() const;
+
+    const CLJMolecule& oldMolecule() const;
+    const CLJMolecule& newMolecule() const;
+
+    const CLJMolecule& oldParts() const;
+    const CLJMolecule& newParts() const;
+
+private:
+    /** The old version of the molecule */
+    CLJMolecule oldmol;
+
+    /** The new version of the molecule */
+    CLJMolecule newmol;
+
+    /** The old version of the parts of the molecule that have
+        changed */
+    CLJMolecule oldparts;
+
+    /** The new version of the parts of the molecule that have
+        changed */
+    CLJMolecule newparts;
+
+    /** The CutGroupIDs of all of the CutGroups that have changed.
+        This is empty if all of the CutGroups have changed */
+    QSet<CutGroupID> changed_cgids;
+};
+
+
+/** Return the space within which the LJ energy is calculated */
 inline const Space& CLJFF::space() const
 {
     return spce;
 }
 
-/** Return the switching function used to truncate the CLJ interaction */
+/** Return the switching function that is used to apply the non-bonded
+    cutoff */
 inline const SwitchingFunction& CLJFF::switchingFunction() const
 {
     return switchfunc;
 }
 
-/** Internal function used to return the workspace that is used to perform
-    the calculation */
-inline detail::CLJWorkspace& CLJFF::workspace()
+/** Return a reference to the workspace used for the distance calculations */
+inline DistMatrix& CLJFF::distanceMatrix()
 {
-    return wkspace;
+    return distmat;
 }
 
-/** Internal function used to return the workspace that is used to perform
-    the calculation */
-inline const detail::CLJWorkspace& CLJFF::workspace() const
+/** Return a reference to the workspace used for the CLJ parameter combination */
+inline CLJMatrix& CLJFF::cljMatrix()
 {
-    return wkspace;
+    return cljmat;
 }
 
-}
+} // end of namespace SireMM
+
+Q_DECLARE_METATYPE(SireMM::CLJFF::CLJMolecule);
+Q_DECLARE_METATYPE(SireMM::CLJFF::ChangedCLJMolecule);
 
 SIRE_END_HEADER
 

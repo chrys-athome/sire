@@ -123,8 +123,6 @@ set ( WRAPMM_SOURCES
       SwitchFuncBase.pypp.cpp
       SwitchingFunction.pypp.cpp
 
-      Tip4PFF.pypp.cpp
-
       UreyBradleyDB.pypp.cpp
 
       UsePassedInternals_MolAngleInfo_.pypp.cpp
