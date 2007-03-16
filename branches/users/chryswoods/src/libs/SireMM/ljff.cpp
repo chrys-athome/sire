@@ -1266,7 +1266,7 @@ LJFF::ChangedLJMolecule LJFF::ChangedLJMolecule::change(const Molecule &molecule
         return ChangedLJMolecule(oldmol, next_change.newMolecule());
 }
 
-QSet<CutGroupID> operator+(const QSet<CutGroupID> &set0, const QSet<CutGroupID> &set1)
+static QSet<CutGroupID> operator+(const QSet<CutGroupID> &set0, const QSet<CutGroupID> &set1)
 {
     QSet<CutGroupID> ret(set0);
     ret.unite(set1);

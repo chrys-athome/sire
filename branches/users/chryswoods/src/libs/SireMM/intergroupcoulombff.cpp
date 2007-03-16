@@ -29,7 +29,7 @@
 #include "SireCAS/qhash_sirecas.h"
 #include "SireMol/qhash_siremol.h"
 
-#include "intergroupljff.h"
+#include "intergroupcoulombff.h"
 
 #include "SireMol/errors.h"
 #include "SireFF/errors.h"
@@ -43,138 +43,140 @@ using namespace SireFF;
 using namespace SireStream;
 
 ///////////
-/////////// Implementation of InterGroupLJFF::Components
+/////////// Implementation of InterGroupCoulombFF::Components
 ///////////
 
 /** Constructor */
-InterGroupLJFF::Components::Components() : LJFF::Components()
+InterGroupCoulombFF::Components::Components() : CoulombFF::Components()
 {}
 
 /** Constructor that just passes its arguments up to the parent's constructor */
-InterGroupLJFF::Components::Components(const FFBase &ffbase, const Symbols &symbols)
-               : LJFF::Components(ffbase,symbols)
+InterGroupCoulombFF::Components::Components(const FFBase &ffbase,
+                                            const Symbols &symbols)
+                    : CoulombFF::Components(ffbase,symbols)
 {}
 
 /** Copy constructor */
-InterGroupLJFF::Components::Components(const Components &other)
-               : LJFF::Components(other)
+InterGroupCoulombFF::Components::Components(const Components &other)
+                    : CoulombFF::Components(other)
 {}
 
 /** Destructor */
-InterGroupLJFF::Components::~Components()
+InterGroupCoulombFF::Components::~Components()
 {}
 
 ///////////
-/////////// Implementation of InterGroupLJFF::Parameters
+/////////// Implementation of InterGroupCoulombFF::Parameters
 ///////////
 
 /** Constructor */
-InterGroupLJFF::Parameters::Parameters() : LJFF::Parameters()
+InterGroupCoulombFF::Parameters::Parameters() : CoulombFF::Parameters()
 {}
 
 /** Copy constructor */
-InterGroupLJFF::Parameters::Parameters(const Parameters &other)
-               : LJFF::Parameters(other)
+InterGroupCoulombFF::Parameters::Parameters(const Parameters &other)
+                    : CoulombFF::Parameters(other)
 {}
 
 /** Destructor */
-InterGroupLJFF::Parameters::~Parameters()
+InterGroupCoulombFF::Parameters::~Parameters()
 {}
 
 ///////////
-/////////// Implementation of InterGroupLJFF::Groups
+/////////// Implementation of InterGroupCoulombFF::Groups
 ///////////
 
 /** Constructor */
-InterGroupLJFF::Groups::Groups() : LJFF::Groups()
+InterGroupCoulombFF::Groups::Groups() : CoulombFF::Groups()
 {
     a = this->getUniqueID();
     b = this->getUniqueID();
 }
 
 /** Copy constructor */
-InterGroupLJFF::Groups::Groups(const Groups &other)
-               : LJFF::Groups(other), a(other.a), b(other.b)
+InterGroupCoulombFF::Groups::Groups(const Groups &other)
+                    : CoulombFF::Groups(other), a(other.a), b(other.b)
 {}
 
 /** Destructor */
-InterGroupLJFF::Groups::~Groups()
+InterGroupCoulombFF::Groups::~Groups()
 {}
 
-/** Static instance of this class returned by all InterGroupLJFF objects */
-InterGroupLJFF::Groups InterGroupLJFF::Groups::default_group;
+/** Static instance of this class returned by all InterGroupCoulombFF objects */
+InterGroupCoulombFF::Groups InterGroupCoulombFF::Groups::default_group;
 
 ///////////
-/////////// Implementation of InterGroupLJFF
+/////////// Implementation of InterGroupCoulombFF
 ///////////
 
-static const RegisterMetaType<InterGroupLJFF> r_interljff;
+static const RegisterMetaType<InterGroupCoulombFF> r_intercoulff;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
-                                      const InterGroupLJFF &interljff)
+                                      const InterGroupCoulombFF &intercoulff)
 {
-    writeHeader(ds, r_interljff, 1);
+    writeHeader(ds, r_intercoulff, 1);
 
     SharedDataStream sds(ds);
 
-    sds << interljff.mols[0]
-        << interljff.mols[1]
-        << interljff.changed_mols[0]
-        << interljff.changed_mols[1]
-        << static_cast<const LJFF&>(interljff);
+    sds << intercoulff.mols[0]
+        << intercoulff.mols[1]
+        << intercoulff.changed_mols[0]
+        << intercoulff.changed_mols[1]
+        << static_cast<const CoulombFF&>(intercoulff);
 
     return ds;
 }
 
 /** Deserialise from a binary data stream */
 QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
-                                      InterGroupLJFF &interljff)
+                                      InterGroupCoulombFF &intercoulff)
 {
-    VersionID v = readHeader(ds, r_interljff);
+    VersionID v = readHeader(ds, r_intercoulff);
 
     if (v == 1)
     {
         SharedDataStream sds(ds);
 
-        sds >> interljff.mols[0]
-            >> interljff.mols[1]
-            >> interljff.changed_mols[0]
-            >> interljff.changed_mols[1]
-            >> static_cast<LJFF&>(interljff);
+        sds >> intercoulff.mols[0]
+            >> intercoulff.mols[1]
+            >> intercoulff.changed_mols[0]
+            >> intercoulff.changed_mols[1]
+            >> static_cast<CoulombFF&>(intercoulff);
 
         //rebuild mols and changed_mols
 
         for (int group=0; group<2; ++group)
         {
-            uint nmols = interljff.mols[group].count();
+            uint nmols = intercoulff.mols[group].count();
 
             if (nmols > 0)
             {
                 QHash<MoleculeID,uint> molid_to_index;
                 molid_to_index.reserve(nmols);
 
-                const LJFF::LJMolecule *mol_array = interljff.mols[group].constData();
+                const CoulombFF::CoulombMolecule *mol_array =
+                                            intercoulff.mols[group].constData();
 
                 for (uint i=0; i<nmols; ++i)
                 {
                     molid_to_index.insert( mol_array[i].molecule().ID(), i );
                 }
 
-                interljff.molid_to_index[group] = molid_to_index;
+                intercoulff.molid_to_index[group] = molid_to_index;
             }
             else
-                interljff.molid_to_index[group].clear();
+                intercoulff.molid_to_index[group].clear();
 
-            nmols = interljff.changed_mols[group].count();
+            nmols = intercoulff.changed_mols[group].count();
 
             if (nmols > 0)
             {
                 QHash<MoleculeID,uint> molid_to_changedindex;
                 molid_to_changedindex.reserve(nmols);
 
-                const LJFF::ChangedLJMolecule *mol_array
-                                = interljff.changed_mols[group].constData();
+                const CoulombFF::ChangedCoulombMolecule *mol_array
+                                = intercoulff.changed_mols[group].constData();
 
                 for (uint i=0; i<nmols; ++i)
                 {
@@ -188,32 +190,32 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
                     molid_to_changedindex.insert( molid, i );
                 }
 
-                interljff.molid_to_changedindex[group] = molid_to_changedindex;
+                intercoulff.molid_to_changedindex[group] = molid_to_changedindex;
             }
             else
-                interljff.molid_to_changedindex[group].clear();
+                intercoulff.molid_to_changedindex[group].clear();
         }
     }
     else
-        throw version_error(v, "1", r_interljff, CODELOC);
+        throw version_error(v, "1", r_intercoulff, CODELOC);
 
     return ds;
 }
 
 /** Constructor */
-InterGroupLJFF::InterGroupLJFF() : LJFF()
+InterGroupCoulombFF::InterGroupCoulombFF() : CoulombFF()
 {}
 
-/** Construct a LJ forcefield using the passed Space, combining rules and
+/** Construct a Coulomb forcefield using the passed Space, combining rules and
     switching function */
-InterGroupLJFF::InterGroupLJFF(const Space &space,
-                               const SwitchingFunction &switchfunc)
-               : LJFF(space, switchfunc)
+InterGroupCoulombFF::InterGroupCoulombFF(const Space &space,
+                                         const SwitchingFunction &switchfunc)
+                    : CoulombFF(space, switchfunc)
 {}
 
 /** Copy constructor */
-InterGroupLJFF::InterGroupLJFF(const InterGroupLJFF &other)
-               : LJFF(other)
+InterGroupCoulombFF::InterGroupCoulombFF(const InterGroupCoulombFF &other)
+                    : CoulombFF(other)
 {
     for (int i=0; i<2; ++i)
     {
@@ -226,11 +228,11 @@ InterGroupLJFF::InterGroupLJFF(const InterGroupLJFF &other)
 }
 
 /** Destructor */
-InterGroupLJFF::~InterGroupLJFF()
+InterGroupCoulombFF::~InterGroupCoulombFF()
 {}
 
 /** Assignment operator */
-InterGroupLJFF& InterGroupLJFF::operator=(const InterGroupLJFF &other)
+InterGroupCoulombFF& InterGroupCoulombFF::operator=(const InterGroupCoulombFF &other)
 {
     for (int i=0; i<2; ++i)
     {
@@ -248,7 +250,7 @@ InterGroupLJFF& InterGroupLJFF::operator=(const InterGroupLJFF &other)
 
     \throw SireFF::invalid_group
 */
-int InterGroupLJFF::otherGroup(int group_id) const
+int InterGroupCoulombFF::otherGroup(int group_id) const
 {
     BOOST_ASSERT( group_id == 0 or group_id == 1 );
     return (group_id == 0);
@@ -260,7 +262,7 @@ int InterGroupLJFF::otherGroup(int group_id) const
 
     \throw SireFF::invalid_group
 */
-void InterGroupLJFF::assertValidGroup(int group_id, MoleculeID molid) const
+void InterGroupCoulombFF::assertValidGroup(int group_id, MoleculeID molid) const
 {
     if ( molid_to_index[ otherGroup(group_id) ].contains(molid) )
     {
@@ -281,40 +283,39 @@ void InterGroupLJFF::assertValidGroup(int group_id, MoleculeID molid) const
 }
 
 /** Recalculate the total energy of this forcefield from scratch */
-void InterGroupLJFF::recalculateTotalEnergy()
+void InterGroupCoulombFF::recalculateTotalEnergy()
 {
-    //calculate the total LJ energy between pairs of
+    //calculate the total Coulomb energy between pairs of
     //molecules between the two groups
 
-    double ljnrg = 0;
+    double cnrg = 0;
 
     int nmols0 = mols[0].count();
     int nmols1 = mols[1].count();
 
     if (nmols0 > 0 and nmols1 > 0)
     {
-        const LJMolecule *mols0_array = mols[0].constData();
-        const LJMolecule *mols1_array = mols[1].constData();
+        const CoulombMolecule *mols0_array = mols[0].constData();
+        const CoulombMolecule *mols1_array = mols[1].constData();
 
         for (int i=0; i<nmols0; ++i)
         {
-            const LJMolecule &mol0 = mols0_array[i];
+            const CoulombMolecule &mol0 = mols0_array[i];
 
             for (int j=0; j<nmols1; ++j)
             {
-                const LJMolecule &mol1 = mols1_array[j];
+                const CoulombMolecule &mol1 = mols1_array[j];
 
-                ljnrg += LJFF::calculateEnergy( mol0, mol1,
-                                                space(),
-                                                switchingFunction(),
-                                                distanceMatrix(),
-                                                ljMatrix() );
+                cnrg += CoulombFF::calculateEnergy( mol0, mol1,
+                                                    space(),
+                                                    switchingFunction(),
+                                                    distanceMatrix() );
             }
         }
     }
 
-    this->setComponent( components().lj(), ljnrg );
-    this->setComponent( components().total(), ljnrg );
+    this->setComponent( components().coulomb(), cnrg );
+    this->setComponent( components().total(), cnrg );
 
     //clear the list of changed molecules
     for (int i=0; i<2; ++i)
@@ -326,7 +327,7 @@ void InterGroupLJFF::recalculateTotalEnergy()
 
 /** Recalculate the energy knowing that only the group at index 'changed_idx'
     has changed */
-double InterGroupLJFF::recalculateWithOneChangedGroup(int changed_idx)
+double InterGroupCoulombFF::recalculateWithOneChangedGroup(int changed_idx)
 {
     BOOST_ASSERT(changed_idx == 0 or changed_idx == 1);
 
@@ -340,56 +341,56 @@ double InterGroupLJFF::recalculateWithOneChangedGroup(int changed_idx)
     BOOST_ASSERT(unchanged_idx == 0 or unchanged_idx == 1);
 
     int nchanged = changed_mols[changed_idx].count();
-    const ChangedLJMolecule *changed_array = changed_mols[changed_idx].constData();
+    const ChangedCoulombMolecule *changed_array = changed_mols[changed_idx].constData();
 
     int nmols = mols[unchanged_idx].count();
-    const LJMolecule *mols_array = mols[unchanged_idx].constData();
+    const CoulombMolecule *mols_array = mols[unchanged_idx].constData();
 
-    double ljnrg = 0;
+    double cnrg = 0;
 
     for (int i=0; i<nchanged; ++i)
     {
-        const ChangedLJMolecule &changedmol = changed_array[i];
+        const ChangedCoulombMolecule &changedmol = changed_array[i];
 
         for (int j=0; j<nmols; ++j)
         {
-            const LJMolecule &mol = mols_array[j];
+            const CoulombMolecule &mol = mols_array[j];
 
             //calculate the change in energy between this molecule and the changed
             //parts of the changed molecule
-            ljnrg += calculateEnergy(mol, changedmol.newParts(),
-                                     space(), switchingFunction(),
-                                     distanceMatrix(), ljMatrix());
+            cnrg += calculateEnergy(mol, changedmol.newParts(),
+                                    space(), switchingFunction(),
+                                    distanceMatrix());
 
-            ljnrg -= calculateEnergy(mol, changedmol.oldParts(),
-                                     space(), switchingFunction(),
-                                     distanceMatrix(), ljMatrix());
+            cnrg -= calculateEnergy(mol, changedmol.oldParts(),
+                                    space(), switchingFunction(),
+                                    distanceMatrix());
         }
     }
 
-    return ljnrg;
+    return cnrg;
 }
 
 /** Recalculate the energy of the unchanged parts of group 'unchanged_idx'
     with the changed parts of group 'changed_idx' */
-double InterGroupLJFF::recalculateChangedWithUnchanged(int unchanged_idx,
-                                                       int changed_idx)
+double InterGroupCoulombFF::recalculateChangedWithUnchanged(int unchanged_idx,
+                                                            int changed_idx)
 {
     BOOST_ASSERT( ( unchanged_idx == 0 or unchanged_idx == 1 ) and
                   ( changed_idx == 0 or changed_idx == 1) and
                   ( unchanged_idx != changed_idx ) );
 
     int nchanged = changed_mols[changed_idx].count();
-    const ChangedLJMolecule *changed_array = changed_mols[changed_idx].constData();
+    const ChangedCoulombMolecule *changed_array = changed_mols[changed_idx].constData();
 
     int nmols = mols[unchanged_idx].count();
-    const LJMolecule *mols_array = mols[unchanged_idx].constData();
+    const CoulombMolecule *mols_array = mols[unchanged_idx].constData();
 
-    double ljnrg = 0;
+    double cnrg = 0;
 
     for (int i=0; i<nmols; ++i)
     {
-        const LJMolecule &mol = mols_array[i];
+        const CoulombMolecule &mol = mols_array[i];
 
         //has this molecule changed? if so, then skip it
         if ( molid_to_changedindex[unchanged_idx].contains(mol.molecule().ID()) )
@@ -401,36 +402,36 @@ double InterGroupLJFF::recalculateChangedWithUnchanged(int unchanged_idx,
         //the changed molecules in the other group
         for (int j=0; j<nchanged; ++j)
         {
-            const ChangedLJMolecule &changedmol = changed_array[j];
+            const ChangedCoulombMolecule &changedmol = changed_array[j];
 
-            ljnrg += calculateEnergy( mol, changedmol.newParts(),
-                                      space(), switchingFunction(),
-                                      distanceMatrix(), ljMatrix() );
+            cnrg += calculateEnergy( mol, changedmol.newParts(),
+                                     space(), switchingFunction(),
+                                     distanceMatrix() );
 
-            ljnrg -= calculateEnergy( mol, changedmol.oldParts(),
-                                      space(), switchingFunction(),
-                                      distanceMatrix(), ljMatrix() );
+            cnrg -= calculateEnergy( mol, changedmol.oldParts(),
+                                     space(), switchingFunction(),
+                                     distanceMatrix() );
         }
     }
 
-    return ljnrg;
+    return cnrg;
 }
 
 /** Recalculate the energy of the changed parts of one group with the
     changed parts of the other group */
-double InterGroupLJFF::recalculateChangedWithChanged()
+double InterGroupCoulombFF::recalculateChangedWithChanged()
 {
     int nchanged0 = changed_mols[0].count();
     int nchanged1 = changed_mols[1].count();
 
-    const ChangedLJMolecule *changed_array0 = changed_mols[0].constData();
-    const ChangedLJMolecule *changed_array1 = changed_mols[1].constData();
+    const ChangedCoulombMolecule *changed_array0 = changed_mols[0].constData();
+    const ChangedCoulombMolecule *changed_array1 = changed_mols[1].constData();
 
-    double ljnrg = 0;
+    double cnrg = 0;
 
     for (int i=0; i<nchanged0; ++i)
     {
-        const ChangedLJMolecule &changedmol0 = changed_array0[i];
+        const ChangedCoulombMolecule &changedmol0 = changed_array0[i];
 
         if (changedmol0.changedAll())
         {
@@ -439,17 +440,17 @@ double InterGroupLJFF::recalculateChangedWithChanged()
             //in group 1
             for (int j=0; j<nchanged1; ++j)
             {
-                const ChangedLJMolecule &changedmol1 = changed_array1[j];
+                const ChangedCoulombMolecule &changedmol1 = changed_array1[j];
 
-                ljnrg += calculateEnergy( changedmol0.newMolecule(),
-                                          changedmol1.newMolecule(),
-                                          space(), switchingFunction(),
-                                          distanceMatrix(), ljMatrix() );
+                cnrg += calculateEnergy( changedmol0.newMolecule(),
+                                         changedmol1.newMolecule(),
+                                         space(), switchingFunction(),
+                                         distanceMatrix() );
 
-                ljnrg -= calculateEnergy( changedmol0.oldMolecule(),
-                                          changedmol1.oldMolecule(),
-                                          space(), switchingFunction(),
-                                          distanceMatrix(), ljMatrix() );
+                cnrg -= calculateEnergy( changedmol0.oldMolecule(),
+                                         changedmol1.oldMolecule(),
+                                         space(), switchingFunction(),
+                                         distanceMatrix() );
             }
         }
         else
@@ -458,21 +459,21 @@ double InterGroupLJFF::recalculateChangedWithChanged()
             //the molecules in the other group have changed...
             for (int j=0; j<nchanged1; ++j)
             {
-                const ChangedLJMolecule &changedmol1 = changed_array1[j];
+                const ChangedCoulombMolecule &changedmol1 = changed_array1[j];
 
                 if (changedmol1.changedAll())
                 {
                     //all of mol1 has changed - calculate the change in energy
                     //of the whole of this molecule with the whole of mol0
-                    ljnrg += calculateEnergy( changedmol0.newMolecule(),
-                                              changedmol1.newMolecule(),
-                                              space(), switchingFunction(),
-                                              distanceMatrix(), ljMatrix() );
+                    cnrg += calculateEnergy( changedmol0.newMolecule(),
+                                             changedmol1.newMolecule(),
+                                             space(), switchingFunction(),
+                                             distanceMatrix() );
 
-                    ljnrg -= calculateEnergy( changedmol0.oldMolecule(),
-                                              changedmol1.oldMolecule(),
-                                              space(), switchingFunction(),
-                                              distanceMatrix(), ljMatrix() );
+                    cnrg -= calculateEnergy( changedmol0.oldMolecule(),
+                                             changedmol1.oldMolecule(),
+                                             space(), switchingFunction(),
+                                             distanceMatrix() );
                 }
                 else
                 {
@@ -486,63 +487,63 @@ double InterGroupLJFF::recalculateChangedWithChanged()
                     // otherwise be double-counted).
 
                     //first, the changed parts of mol0 with all of mol1
-                    ljnrg += calculateEnergy( changedmol0.newParts(),
-                                              changedmol1.newMolecule(),
-                                              space(), switchingFunction(),
-                                              distanceMatrix(), ljMatrix() );
+                    cnrg += calculateEnergy( changedmol0.newParts(),
+                                             changedmol1.newMolecule(),
+                                             space(), switchingFunction(),
+                                             distanceMatrix() );
 
-                    ljnrg -= calculateEnergy( changedmol0.oldParts(),
-                                              changedmol1.oldMolecule(),
-                                              space(), switchingFunction(),
-                                              distanceMatrix(), ljMatrix() );
+                    cnrg -= calculateEnergy( changedmol0.oldParts(),
+                                             changedmol1.oldMolecule(),
+                                             space(), switchingFunction(),
+                                             distanceMatrix() );
 
                     //now the changed parts of mol1 with the whole of mol0
-                    ljnrg += calculateEnergy( changedmol0.newMolecule(),
-                                              changedmol1.newParts(),
-                                              space(), switchingFunction(),
-                                              distanceMatrix(), ljMatrix() );
+                    cnrg += calculateEnergy( changedmol0.newMolecule(),
+                                             changedmol1.newParts(),
+                                             space(), switchingFunction(),
+                                             distanceMatrix() );
 
-                    ljnrg -= calculateEnergy( changedmol0.oldMolecule(),
-                                              changedmol1.oldParts(),
-                                              space(), switchingFunction(),
-                                              distanceMatrix(), ljMatrix() );
+                    cnrg -= calculateEnergy( changedmol0.oldMolecule(),
+                                             changedmol1.oldParts(),
+                                             space(), switchingFunction(),
+                                             distanceMatrix() );
 
                     //finally, remove the double-counted interaction of the parts
                     //of mol0 that changed with the parts of mol1 that changed
-                    ljnrg -= calculateEnergy( changedmol0.newParts(),
-                                              changedmol1.newParts(),
-                                              space(), switchingFunction(),
-                                              distanceMatrix(), ljMatrix() );
+                    cnrg -= calculateEnergy( changedmol0.newParts(),
+                                             changedmol1.newParts(),
+                                             space(), switchingFunction(),
+                                             distanceMatrix() );
 
-                    ljnrg += calculateEnergy( changedmol0.oldParts(),
-                                              changedmol1.oldParts(),
-                                              space(), switchingFunction(),
-                                              distanceMatrix(), ljMatrix() );
+                    cnrg += calculateEnergy( changedmol0.oldParts(),
+                                             changedmol1.oldParts(),
+                                             space(), switchingFunction(),
+                                             distanceMatrix() );
                 }
             }
         }
     }
 
-    return ljnrg;
+    return cnrg;
 }
 
 /** Recalculate the energy knowing that both of the groups have changes */
-double InterGroupLJFF::recalculateWithTwoChangedGroups()
+double InterGroupCoulombFF::recalculateWithTwoChangedGroups()
 {
     //first calculate the energy of the changed parts
     //of each group with the unchanged parts of the other group
-    double ljnrg = recalculateChangedWithUnchanged(0,1);
-    ljnrg += recalculateChangedWithUnchanged(1,0);
+    double cnrg = recalculateChangedWithUnchanged(0,1);
+    cnrg += recalculateChangedWithUnchanged(1,0);
 
     //now calculate the change in energy between the two changed
     //parts of each group
-    ljnrg += recalculateChangedWithChanged();
+    cnrg += recalculateChangedWithChanged();
 
-    return ljnrg;
+    return cnrg;
 }
 
 /** Recalculate the energy by using a delta from the old configuration */
-void InterGroupLJFF::recalculateViaDelta()
+void InterGroupCoulombFF::recalculateViaDelta()
 {
     int nmols0 = mols[0].count();
     int nmols1 = mols[1].count();
@@ -558,24 +559,24 @@ void InterGroupLJFF::recalculateViaDelta()
         return;
     }
 
-    double ljnrg = 0;
+    double cnrg = 0;
 
     //calculate the change in energy of group 0 with group 1
     if ( nchanged0 == 0 )
     {
-        ljnrg = this->recalculateWithOneChangedGroup(1);
+        cnrg = this->recalculateWithOneChangedGroup(1);
     }
     else if ( nchanged1 == 0 )
     {
-        ljnrg = this->recalculateWithOneChangedGroup(0);
+        cnrg = this->recalculateWithOneChangedGroup(0);
     }
     else
     {
-        ljnrg = this->recalculateWithTwoChangedGroups();
+        cnrg = this->recalculateWithTwoChangedGroups();
     }
 
-    this->setComponent( components().lj(), ljnrg );
-    this->setComponent( components().total(), ljnrg );
+    this->setComponent( components().coulomb(), cnrg );
+    this->setComponent( components().total(), cnrg );
 
     //clear the list of changed molecules
     for (int i=0; i<2; ++i)
@@ -589,7 +590,7 @@ void InterGroupLJFF::recalculateViaDelta()
     calculate the energy from scratch, or it will calculate it as a
     delta based on the parts of the forcefield that have moved since
     the last evaluation. */
-void InterGroupLJFF::recalculateEnergy()
+void InterGroupCoulombFF::recalculateEnergy()
 {
     if (changed_mols[0].isEmpty() and changed_mols[1].isEmpty())
     {
@@ -602,8 +603,8 @@ void InterGroupLJFF::recalculateEnergy()
 }
 
 /** Update the current state of 'molecule' in the forcefield */
-void InterGroupLJFF::updateCurrentState(int group_idx,
-                                        const LJFF::LJMolecule &molecule)
+void InterGroupCoulombFF::updateCurrentState(int group_idx,
+                                             const CoulombFF::CoulombMolecule &molecule)
 {
     MoleculeID molid = molecule.molecule().ID();
 
@@ -619,8 +620,8 @@ void InterGroupLJFF::updateCurrentState(int group_idx,
 }
 
 /** Add the 'molecule' to the current state of group 'group_idx' */
-void InterGroupLJFF::addToCurrentState(int group_idx,
-                                       const LJFF::LJMolecule &molecule)
+void InterGroupCoulombFF::addToCurrentState(int group_idx,
+                                            const CoulombFF::CoulombMolecule &molecule)
 {
     BOOST_ASSERT( group_idx == 0 or group_idx == 1 );
 
@@ -636,7 +637,7 @@ void InterGroupLJFF::addToCurrentState(int group_idx,
 
 /** Remove the molecule with ID == molid from the current state
     of the forcefield */
-void InterGroupLJFF::removeFromCurrentState(int group_idx, MoleculeID molid)
+void InterGroupCoulombFF::removeFromCurrentState(int group_idx, MoleculeID molid)
 {
     BOOST_ASSERT( group_idx == 0 or group_idx == 1 );
 
@@ -657,7 +658,7 @@ void InterGroupLJFF::removeFromCurrentState(int group_idx, MoleculeID molid)
         {
             molid_to_index[group_idx].reserve(nmols);
 
-            const LJMolecule *mols_array = mols[group_idx].constData();
+            const CoulombMolecule *mols_array = mols[group_idx].constData();
 
             for (uint i=0; i<nmols; ++i)
             {
@@ -672,7 +673,7 @@ void InterGroupLJFF::removeFromCurrentState(int group_idx, MoleculeID molid)
 
 /** Return the change record for the molecule with ID == molid. This
     returns an empty record if this molecule is not in this forcefield */
-LJFF::ChangedLJMolecule InterGroupLJFF::changeRecord(MoleculeID molid) const
+CoulombFF::ChangedCoulombMolecule InterGroupCoulombFF::changeRecord(MoleculeID molid) const
 {
     for (int i=0; i<2; ++i)
     {
@@ -685,17 +686,17 @@ LJFF::ChangedLJMolecule InterGroupLJFF::changeRecord(MoleculeID molid) const
             if (molid_to_changedindex[i].contains(molid))
                 return changed_mols[i].at( molid_to_changedindex[i][molid] );
             else
-                return ChangedLJMolecule( mols[i].at(molid_to_index[i][molid]) );
+                return ChangedCoulombMolecule( mols[i].at(molid_to_index[i][molid]) );
         }
     }
 
     //the molecule is not in this forcefield
-    return ChangedLJMolecule();
+    return ChangedCoulombMolecule();
 }
 
 /** Record the change described by 'changed_mol' */
-void InterGroupLJFF::recordChange(int group_idx, MoleculeID molid,
-                                  const ChangedLJMolecule &changed_mol)
+void InterGroupCoulombFF::recordChange(int group_idx, MoleculeID molid,
+                                       const ChangedCoulombMolecule &changed_mol)
 {
     //save the change
     QHash<MoleculeID,uint>::const_iterator it
@@ -717,8 +718,8 @@ void InterGroupLJFF::recordChange(int group_idx, MoleculeID molid,
 }
 
 /** Apply the change described by 'changed_mol' */
-bool InterGroupLJFF::applyChange(MoleculeID molid,
-                                 const ChangedLJMolecule &changed_mol)
+bool InterGroupCoulombFF::applyChange(MoleculeID molid,
+                                      const ChangedCoulombMolecule &changed_mol)
 {
     if (changed_mol.isEmpty())
         return false;
@@ -758,11 +759,11 @@ bool InterGroupLJFF::applyChange(MoleculeID molid,
 /** Private class used by the "change" functions to actually change the
     molecule or part of molecule */
 template<class T>
-bool InterGroupLJFF::_pvt_change(const T &mol)
+bool InterGroupCoulombFF::_pvt_change(const T &mol)
 {
     MoleculeID molid = mol.ID();
 
-    ChangedLJMolecule new_molecule = this->changeRecord(molid).change(mol);
+    ChangedCoulombMolecule new_molecule = this->changeRecord(molid).change(mol);
 
     if (this->applyChange(molid, new_molecule))
     {
@@ -774,19 +775,19 @@ bool InterGroupLJFF::_pvt_change(const T &mol)
 }
 
 /** Change the molecule 'molecule' */
-bool InterGroupLJFF::change(const Molecule &molecule)
+bool InterGroupCoulombFF::change(const Molecule &molecule)
 {
     return this->_pvt_change<Molecule>(molecule);
 }
 
 /** Change the residue 'residue' */
-bool InterGroupLJFF::change(const Residue &residue)
+bool InterGroupCoulombFF::change(const Residue &residue)
 {
     return this->_pvt_change<Residue>(residue);
 }
 
 /** Change the atom 'atom' */
-bool InterGroupLJFF::change(const NewAtom &atom)
+bool InterGroupCoulombFF::change(const NewAtom &atom)
 {
     return this->_pvt_change<NewAtom>(atom);
 }
@@ -794,11 +795,11 @@ bool InterGroupLJFF::change(const NewAtom &atom)
 /** Private class used by the "remove" functions to actually remove the
     molecule or part of molecule */
 template<class T>
-bool InterGroupLJFF::_pvt_remove(const T &mol)
+bool InterGroupCoulombFF::_pvt_remove(const T &mol)
 {
     MoleculeID molid = mol.ID();
 
-    ChangedLJMolecule new_molecule = changeRecord(molid).remove(mol);
+    ChangedCoulombMolecule new_molecule = changeRecord(molid).remove(mol);
 
     if (this->applyChange(molid, new_molecule))
     {
@@ -810,29 +811,29 @@ bool InterGroupLJFF::_pvt_remove(const T &mol)
 }
 
 /** Remove the molecule 'molecule' */
-bool InterGroupLJFF::remove(const Molecule &molecule)
+bool InterGroupCoulombFF::remove(const Molecule &molecule)
 {
     return this->_pvt_remove<Molecule>(molecule);
 }
 
 /** Remove the residue 'residue' */
-bool InterGroupLJFF::remove(const Residue &residue)
+bool InterGroupCoulombFF::remove(const Residue &residue)
 {
     return this->_pvt_remove<Residue>(residue);
 }
 
 /** Remove the atom 'atom' */
-bool InterGroupLJFF::remove(const NewAtom &atom)
+bool InterGroupCoulombFF::remove(const NewAtom &atom)
 {
     return this->_pvt_remove<NewAtom>(atom);
 }
 
 /** Remove the selected atoms from 'molecule' from this forcefield */
-bool InterGroupLJFF::remove(const Molecule &molecule, const AtomSelection &selected_atoms)
+bool InterGroupCoulombFF::remove(const Molecule &molecule, const AtomSelection &selected_atoms)
 {
     MoleculeID molid = molecule.ID();
 
-    ChangedLJMolecule new_molecule = changeRecord(molid).remove(selected_atoms);
+    ChangedCoulombMolecule new_molecule = changeRecord(molid).remove(selected_atoms);
 
     if (this->applyChange(molid, new_molecule))
     {
@@ -846,13 +847,13 @@ bool InterGroupLJFF::remove(const Molecule &molecule, const AtomSelection &selec
 /** Private class used by the "add" functions to actually add the
     molecule or part of molecule */
 template<class T>
-bool InterGroupLJFF::_pvt_add(const T &mol, const ParameterMap &map)
+bool InterGroupCoulombFF::_pvt_add(const T &mol, const ParameterMap &map)
 {
     //get the molecule's ID
     MoleculeID molid = mol.ID();
 
-    ChangedLJMolecule new_molecule =
-                changeRecord(molid).add( mol, map.source(this->parameters().lj()) );
+    ChangedCoulombMolecule new_molecule =
+                changeRecord(molid).add( mol, map.source(this->parameters().coulomb()) );
 
     if (this->applyChange(molid, new_molecule))
     {
@@ -870,7 +871,7 @@ bool InterGroupLJFF::_pvt_add(const T &mol, const ParameterMap &map)
     \throw SireMol::missing_property
     \throw SireError::invalid_cast
 */
-bool InterGroupLJFF::add(const Molecule &molecule, const ParameterMap &map)
+bool InterGroupCoulombFF::add(const Molecule &molecule, const ParameterMap &map)
 {
     return this->_pvt_add<Molecule>(molecule, map);
 }
@@ -883,7 +884,7 @@ bool InterGroupLJFF::add(const Molecule &molecule, const ParameterMap &map)
     \throw SireMol::missing_property
     \throw SireMol::invalid_cast
 */
-bool InterGroupLJFF::add(const Residue &residue, const ParameterMap &map)
+bool InterGroupCoulombFF::add(const Residue &residue, const ParameterMap &map)
 {
     return this->_pvt_add<Residue>(residue, map);
 }
@@ -896,7 +897,7 @@ bool InterGroupLJFF::add(const Residue &residue, const ParameterMap &map)
     \throw SireMol::missing_property
     \throw SireMol::invalid_cast
 */
-bool InterGroupLJFF::add(const NewAtom &atom, const ParameterMap &map)
+bool InterGroupCoulombFF::add(const NewAtom &atom, const ParameterMap &map)
 {
     return this->_pvt_add<NewAtom>(atom, map);
 }
@@ -910,15 +911,16 @@ bool InterGroupLJFF::add(const NewAtom &atom, const ParameterMap &map)
     \throw SireMol::missing_property
     \throw SireMol::invalid_cast
 */
-bool InterGroupLJFF::add(const Molecule &molecule, const AtomSelection &selected_atoms,
-                         const ParameterMap &map)
+bool InterGroupCoulombFF::add(const Molecule &molecule,
+                              const AtomSelection &selected_atoms,
+                              const ParameterMap &map)
 {
     //get the molecule's ID
     MoleculeID molid = molecule.ID();
 
-    ChangedLJMolecule new_molecule =
+    ChangedCoulombMolecule new_molecule =
                 changeRecord(molid).add( selected_atoms,
-                                         map.source(this->parameters().lj()) );
+                                         map.source(this->parameters().coulomb()) );
 
     if (this->applyChange(molid, new_molecule))
     {
@@ -933,7 +935,7 @@ bool InterGroupLJFF::add(const Molecule &molecule, const AtomSelection &selected
 
     \throw SireFF::invalid_group
 */
-int InterGroupLJFF::groupIndex(FFBase::Group group) const
+int InterGroupCoulombFF::groupIndex(FFBase::Group group) const
 {
     if (group == groups().A())
         return 0;
@@ -942,7 +944,7 @@ int InterGroupLJFF::groupIndex(FFBase::Group group) const
     else
     {
         throw SireFF::invalid_group( QObject::tr(
-                    "InterGroupLJFF can only place molecules into group A or B! %1")
+                    "InterGroupCoulombFF can only place molecules into group A or B! %1")
                           .arg(group), CODELOC );
 
         return -1;
@@ -952,7 +954,9 @@ int InterGroupLJFF::groupIndex(FFBase::Group group) const
 /** Private class used by the "addTo" functions to actually add the
     molecule or part of molecule */
 template<class T>
-bool InterGroupLJFF::_pvt_addTo(FFBase::Group group, const T &mol, const ParameterMap &map)
+bool InterGroupCoulombFF::_pvt_addTo(FFBase::Group group,
+                                     const T &mol,
+                                     const ParameterMap &map)
 {
     //get the index for this group
     int group_idx = this->groupIndex(group);
@@ -962,12 +966,12 @@ bool InterGroupLJFF::_pvt_addTo(FFBase::Group group, const T &mol, const Paramet
 
     this->assertValidGroup(group_idx, molid);
 
-    ChangedLJMolecule new_molecule = changeRecord(molid);
+    ChangedCoulombMolecule new_molecule = changeRecord(molid);
 
     if (new_molecule.oldMolecule().isEmpty())
     {
-        new_molecule = ChangedLJMolecule( LJMolecule(),
-                        LJMolecule(mol, map.source(parameters().lj())) );
+        new_molecule = ChangedCoulombMolecule( CoulombMolecule(),
+                        CoulombMolecule(mol, map.source(parameters().coulomb())) );
 
         //this is a freshly added molecule - add it to the current state
         this->addToCurrentState(group_idx, new_molecule.newMolecule());
@@ -979,7 +983,7 @@ bool InterGroupLJFF::_pvt_addTo(FFBase::Group group, const T &mol, const Paramet
     }
     else
     {
-        new_molecule = new_molecule.add( mol, map.source(parameters().lj()) );
+        new_molecule = new_molecule.add( mol, map.source(parameters().coulomb()) );
 
         if (this->applyChange(molid, new_molecule))
         {
@@ -1000,8 +1004,8 @@ bool InterGroupLJFF::_pvt_addTo(FFBase::Group group, const T &mol, const Paramet
     \throw SireMol::invalid_cast
     \throw SireFF::invalid_group
 */
-bool InterGroupLJFF::addTo(FFBase::Group group, const Molecule &molecule,
-                           const ParameterMap &map)
+bool InterGroupCoulombFF::addTo(FFBase::Group group, const Molecule &molecule,
+                                const ParameterMap &map)
 {
     return this->_pvt_addTo<Molecule>(group, molecule, map);
 }
@@ -1017,8 +1021,8 @@ bool InterGroupLJFF::addTo(FFBase::Group group, const Molecule &molecule,
     \throw SireMol::invalid_cast
     \throw SireFF::invalid_group
 */
-bool InterGroupLJFF::addTo(FFBase::Group group, const Residue &residue,
-                           const ParameterMap &map)
+bool InterGroupCoulombFF::addTo(FFBase::Group group, const Residue &residue,
+                                const ParameterMap &map)
 {
     return this->_pvt_addTo<Residue>(group, residue, map);
 }
@@ -1034,8 +1038,8 @@ bool InterGroupLJFF::addTo(FFBase::Group group, const Residue &residue,
     \throw SireMol::invalid_cast
     \throw SireFF::invalid_group
 */
-bool InterGroupLJFF::addTo(FFBase::Group group, const NewAtom &atom,
-                           const ParameterMap &map)
+bool InterGroupCoulombFF::addTo(FFBase::Group group, const NewAtom &atom,
+                                const ParameterMap &map)
 {
     return this->_pvt_addTo<NewAtom>(group, atom, map);
 }
@@ -1051,9 +1055,9 @@ bool InterGroupLJFF::addTo(FFBase::Group group, const NewAtom &atom,
     \throw SireMol::invalid_cast
     \throw SireFF::invalid_group
 */
-bool InterGroupLJFF::addTo(FFBase::Group group, const Molecule &molecule,
-                           const AtomSelection &selected_atoms,
-                           const ParameterMap &map)
+bool InterGroupCoulombFF::addTo(FFBase::Group group, const Molecule &molecule,
+                                const AtomSelection &selected_atoms,
+                                const ParameterMap &map)
 {
     //get the index for this group
     int group_idx = this->groupIndex(group);
@@ -1063,13 +1067,13 @@ bool InterGroupLJFF::addTo(FFBase::Group group, const Molecule &molecule,
 
     this->assertValidGroup(group_idx, molid);
 
-    ChangedLJMolecule new_molecule = changeRecord(molid);
+    ChangedCoulombMolecule new_molecule = changeRecord(molid);
 
     if (new_molecule.oldMolecule().isEmpty())
     {
-        new_molecule = ChangedLJMolecule( LJMolecule(),
-                                  LJMolecule( molecule, selected_atoms,
-                                              map.source(this->parameters().lj()) ) );
+        new_molecule = ChangedCoulombMolecule( CoulombMolecule(),
+                          CoulombMolecule( molecule, selected_atoms,
+                                           map.source(this->parameters().coulomb()) ) );
 
         //this is a freshly added molecule - add it to the current state
         this->addToCurrentState(group_idx, new_molecule.newMolecule());
@@ -1084,7 +1088,7 @@ bool InterGroupLJFF::addTo(FFBase::Group group, const Molecule &molecule,
     else
     {
         new_molecule = new_molecule.add( selected_atoms,
-                                         map.source(this->parameters().lj()) );
+                                         map.source(this->parameters().coulomb()) );
 
         if (this->applyChange(molid, new_molecule))
         {

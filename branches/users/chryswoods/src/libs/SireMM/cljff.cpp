@@ -212,13 +212,13 @@ void CLJFF::calculatePairEnergy(CLJWorkspace &workspace,
     {
         distmatrix.setOuterIndex(i);
 
-        double chg0param = chg0array[i].charge();
+        double chg0param = SireUnits::one_over_four_pi_eps0 * chg0array[i].charge();
         const LJParameter &lj0param = lj0array[i];
 
         for (int j=0; j<nats1; ++j)
         {
             const LJParameter &lj1param = lj1array[j];
-            double chg2 = SireUnits::one_over_four_pi_eps0 * chg0param * chg1array[j].charge();
+            double chg2 = chg0param * chg1array[j].charge();
 
             //get the distance and CLJPair for this atom pair
             double invdist2 = distmatrix[j];

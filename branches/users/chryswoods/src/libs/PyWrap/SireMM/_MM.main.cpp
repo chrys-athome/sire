@@ -65,6 +65,8 @@
 
 #include "CombiningRules.pypp.hpp"
 
+#include "CoulombFF.pypp.hpp"
+
 #include "DihedralAtomID.pypp.hpp"
 
 #include "DihedralDB.pypp.hpp"
@@ -82,6 +84,10 @@
 #include "HarmonicSwitchingFunction.pypp.hpp"
 
 #include "InterCLJFF.pypp.hpp"
+
+#include "InterCoulombFF.pypp.hpp"
+
+#include "InterGroupCoulombFF.pypp.hpp"
 
 #include "InterGroupLJFF.pypp.hpp"
 
@@ -260,6 +266,8 @@ BOOST_PYTHON_MODULE(_MM){
 
     register_CombiningRules_class();
 
+    register_CoulombFF_class();
+
     register_DihedralAtomID_class();
 
     register_InternalDB_MolDihedralInfo__class();
@@ -287,6 +295,10 @@ BOOST_PYTHON_MODULE(_MM){
     register_HarmonicSwitchingFunction_class();
 
     register_InterCLJFF_class();
+
+    register_InterCoulombFF_class();
+
+    register_InterGroupCoulombFF_class();
 
     register_LJFF_class();
 

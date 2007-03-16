@@ -60,6 +60,7 @@ set ( WRAPMM_SOURCES
       ChargeTable.pypp.cpp
       CombiningRuleBase.pypp.cpp
       CombiningRules.pypp.cpp
+      CoulombFF.pypp.cpp
 
       DihedralAtomID.pypp.cpp
       DihedralDB.pypp.cpp
@@ -72,6 +73,8 @@ set ( WRAPMM_SOURCES
       HarmonicSwitchingFunction.pypp.cpp
 
       InterCLJFF.pypp.cpp
+      InterCoulombFF.pypp.cpp
+      InterGroupCoulombFF.pypp.cpp
       InterGroupLJFF.pypp.cpp
       InterLJFF.pypp.cpp
 
