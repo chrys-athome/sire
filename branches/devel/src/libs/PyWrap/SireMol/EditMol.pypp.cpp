@@ -34,6 +34,12 @@
 
 namespace bp = boost::python;
 
+SireMol::EditMol __copy__(const SireMol::EditMol &other){ return SireMol::EditMol(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMol::EditMol&){ return "SireMol::EditMol";}
+
 void register_EditMol_class(){
 
 { //::SireMol::EditMol
@@ -62,6 +68,12 @@ void register_EditMol_class(){
     register_EditMol_memfuns12(EditMol_exposer);
     register_EditMol_memfuns13(EditMol_exposer);
     register_EditMol_memfuns14(EditMol_exposer);
+    EditMol_exposer.def( "__copy__", &__copy__);
+    EditMol_exposer.def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::EditMol >,
+                        bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
+    EditMol_exposer.def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::EditMol >,
+                        bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
+    EditMol_exposer.def( "__str__", &pvt_get_name);
 }
 
 }

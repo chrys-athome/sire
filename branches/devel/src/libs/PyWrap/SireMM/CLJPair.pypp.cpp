@@ -12,6 +12,12 @@
 
 namespace bp = boost::python;
 
+SireMM::CLJPair __copy__(const SireMM::CLJPair &other){ return SireMM::CLJPair(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_CLJPair_class(){
 
     bp::class_< SireMM::CLJPair >( "CLJPair" )    
@@ -48,6 +54,12 @@ void register_CLJPair_class(){
             "toString"
             , (::QString ( ::SireMM::CLJPair::* )(  ) const)( &::SireMM::CLJPair::toString ) )    
         .staticmethod( "arithmetic" )    
-        .staticmethod( "geometric" );
+        .staticmethod( "geometric" )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::CLJPair >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::CLJPair >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireMM::CLJPair > );
 
 }

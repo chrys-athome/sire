@@ -12,6 +12,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireMM::AngleTableT<SireCAS::Expression>&){ return "SireMM::AngleTableT<SireCAS::Expression>";}
+
 void register_AngleTable_Expression__class(){
 
     bp::class_< SireMM::AngleTableT<SireCAS::Expression>, bp::bases< SireMM::InternalTable<SireMM::MolAngleInfo, SireCAS::Expression> >, boost::noncopyable >( "AngleTable_Expression_", bp::no_init )    
@@ -345,6 +347,7 @@ void register_AngleTable_Expression__class(){
         .def( 
             "setAngleParameter"
             , (void ( ::SireMM::AngleTableT<SireCAS::Expression>::* )( ::SireMol::GroupIndexID const &,::SireCAS::Expression const & ) )( &::SireMM::AngleTableT<SireCAS::Expression>::setAngleParameter )
-            , ( bp::arg("id"), bp::arg("param") ) );
+            , ( bp::arg("id"), bp::arg("param") ) )    
+        .def( "__str__", &pvt_get_name);
 
 }

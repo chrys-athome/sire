@@ -10,10 +10,16 @@
 
 namespace bp = boost::python;
 
+SireDB::match_mol_state __copy__(const SireDB::match_mol_state &other){ return SireDB::match_mol_state(other); }
+
+const char* pvt_get_name(const SireDB::match_mol_state&){ return "SireDB::match_mol_state";}
+
 void register_match_mol_state_class(){
 
     bp::class_< SireDB::match_mol_state >( "match_mol_state" )    
         .def( bp::init< >() )    
-        .def( bp::self == bp::other< QString >() );
+        .def( bp::self == bp::other< QString >() )    
+        .def( "__copy__", &__copy__)    
+        .def( "__str__", &pvt_get_name);
 
 }

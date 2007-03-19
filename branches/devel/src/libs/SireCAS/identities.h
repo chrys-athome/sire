@@ -64,6 +64,7 @@ friend QDataStream& ::operator>>(QDataStream&, Identities&);
 public:
     Identities();
     Identities(const QList<SymbolExpression> &expressions);
+    Identities(const QHash<Symbol,Expression> &expressions);
     Identities(const SymbolExpression &symex0);
     Identities(const SymbolExpression &symex0, const SymbolExpression &symex1);
     Identities(const SymbolExpression &symex0, const SymbolExpression &symex1,
@@ -94,9 +95,9 @@ public:
                const SymbolExpression &symex4, const SymbolExpression &symex5,
                const SymbolExpression &symex6, const SymbolExpression &symex7,
                const SymbolExpression &symex8, const SymbolExpression &symex9);
-    
+
     Identities(const Identities &other);
-    
+
     ~Identities();
 
     void add(const SymbolExpression &symex0);
@@ -132,7 +133,7 @@ public:
 
     bool contains(const Symbol &sym) const;
     Expression expression(const Symbol &sym) const;
-    
+
     bool contains(const Function &func) const;
     Function function(const Function &func) const;
 
@@ -142,7 +143,7 @@ private:
 
     /** Hash mapping a symbol to an expression */
     QHash<SymbolID, Expression> idhash;
-    
+
     /** Hash mapping the signatures of functions to the actual function
         stored in this collection of identities */
     QHash<FunctionSignature, Expression> funchash;

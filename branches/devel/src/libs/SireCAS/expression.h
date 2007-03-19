@@ -97,14 +97,19 @@ public:
     Expression operator-() const;
 
     Expression add(const Expression &ex) const;
+    Expression add(double val) const;
+    Expression add(const Complex &val) const;
+
     Expression subtract(const Expression &ex) const;
+    Expression subtract(double val) const;
+    Expression subtract(const Complex &val) const;
+
     Expression multiply(const Expression &ex) const;
-    Expression divide(const Expression &ex) const;
-
     Expression multiply(double val) const;
-    Expression divide(double val) const;
-
     Expression multiply(const Complex &val) const;
+
+    Expression divide(const Expression &ex) const;
+    Expression divide(double val) const;
     Expression divide(const Complex &val) const;
 
     Expression negate() const;
@@ -217,12 +222,55 @@ inline Expression operator+(const Expression &ex0,
     return ex0.add(ex1);
 }
 
+/** Addition operator */
+inline Expression operator+(const Expression &ex,
+                            double val)
+{
+    return ex.add(val);
+}
+
+/** Addition operator */
+inline Expression operator+(double val,
+                            const Expression &ex)
+{
+    return ex.add(val);
+}
+
+/** Addition operator */
+inline Expression operator+(const Expression &ex,
+                            const Complex &val)
+{
+    return ex.add(val);
+}
+
+/** Addition operator */
+inline Expression operator+(const Complex &val,
+                            const Expression &ex)
+{
+    return ex.add(val);
+}
+
 /** Subtraction operator */
 inline Expression operator-(const Expression &ex0,
                             const Expression &ex1)
 {
     return ex0.subtract(ex1);
 }
+
+/** Subtraction operator */
+inline Expression operator-(const Expression &ex,
+                            double val)
+{
+    return ex.subtract(val);
+}
+
+/** Subtraction operator */
+inline Expression operator-(double val,
+                            const Expression &ex)
+{
+    return ex.negate().add(val);
+}
+
 
 /** Multiplication operator */
 inline Expression operator*(const Expression &ex0,
@@ -260,6 +308,34 @@ inline Expression operator/(const Expression &ex0,
                             const Expression &ex1)
 {
     return ex0.divide(ex1);
+}
+
+/** Division operator */
+inline Expression operator/(const Expression &ex,
+                            double val)
+{
+    return ex.divide(val);
+}
+
+/** Division operator */
+inline Expression operator/(double val,
+                            const Expression &ex)
+{
+    return ex.invert().multiply(val);
+}
+
+/** Division operator */
+inline Expression operator/(const Expression &ex,
+                            const Complex &val)
+{
+    return ex.divide(val);
+}
+
+/** Division operator */
+inline Expression operator/(const Complex &val,
+                            const Expression &ex)
+{
+    return ex.invert().multiply(val);
 }
 
 /** Raise an expression to the nth power */

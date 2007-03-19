@@ -227,6 +227,8 @@ private:
     SireDB::ParameterStore<GroupIndexID,Param> params;
 };
 
+#ifndef SKIP_TEMPLATE_DEFINITIONS
+
 /** Empty constructor */
 template<class Internals, class Param>
 SIRE_OUTOFLINE_TEMPLATE
@@ -1390,7 +1392,11 @@ InternalTable<Internals,Param>::intraParametersByResidue() const
 
 const MagicID internaltable_magic = getMagic("SireMM::InternalTable");
 
+#endif // SKIP_TEMPLATE_DEFINITIONS
+
 }
+
+#ifndef SKIP_TEMPLATE_DEFINITIONS
 
 /** Serialise to a binary data stream */
 template<class Internals, class Param>
@@ -1424,6 +1430,8 @@ QDataStream& operator>>(QDataStream &ds,
 
     return ds;
 }
+
+#endif // SKIP_TEMPLATE_DEFINITIONS
 
 SIRE_END_HEADER
 

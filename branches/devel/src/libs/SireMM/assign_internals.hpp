@@ -109,6 +109,8 @@ private:
     QSet<Internal> internals_to_assign;
 };
 
+#ifndef SKIP_TEMPLATE_DEFINITIONS
+
 /** Construct to parametise all of the internals in the molecule, using
     'internal_generator' to generate the internals of new tables */
 template<class Internals>
@@ -140,6 +142,8 @@ assign_internals<Internals>::assign_internals(const assign_internals &other)
 template<class Internals>
 assign_internals<Internals>::~assign_internals()
 {}
+
+#endif // SKIP_TEMPLATE_DEFINITIONS
 
 /** This private class is used as a workspace by assign_internals during
     the assignment of internal parameters. This class should not be used by
@@ -179,6 +183,8 @@ private:
     QList<table_type*> tables;
     QList<RelationshipDB*> relatedbs;
 };
+
+#ifndef SKIP_TEMPLATE_DEFINITIONS
 
 /** Constructor */
 template<class Internals>
@@ -435,7 +441,11 @@ void assign_internals<Internals>::assignInternals( const Molecule &molecule,
 
 const MagicID assign_internals_magic = getMagic("SireMM::assign_internals");
 
+#endif // SKIP_TEMPLATE_DEFINITIONS
+
 }
+
+#ifndef SKIP_TEMPLATE_DEFINITIONS
 
 /** Serialise to a binary data stream */
 template<class Internals>
@@ -469,6 +479,8 @@ QDataStream& operator>>(QDataStream &ds,
 
     return ds;
 }
+
+#endif // SKIP_TEMPLATE_DEFINITIONS
 
 SIRE_END_HEADER
 

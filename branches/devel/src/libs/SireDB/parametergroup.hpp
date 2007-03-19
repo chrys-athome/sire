@@ -133,6 +133,8 @@ private:
     QVector<Param> params;
 };
 
+#ifndef SKIP_TEMPLATE_DEFINITIONS
+
 /** Null constructor */
 template<class Param>
 SIRE_OUTOFLINE_TEMPLATE
@@ -538,7 +540,11 @@ const AtomInfoGroup& ParameterGroup<Param>::atomGroup() const
 
 static const MagicID parametergroup_magic = getMagic("SireDB::ParameterGroup");
 
+#endif // SKIP_TEMPLATE_DEFINITIONS
+
 }
+
+#ifndef SKIP_TEMPLATE_DEFINITIONS
 
 /** Serialise to a binary datastream */
 template<class Param>
@@ -569,6 +575,8 @@ QDataStream &operator>>(QDataStream &ds, SireDB::ParameterGroup<Param> &group)
 
     return ds;
 }
+
+#endif // SKIP_TEMPLATE_DEFINITIONS
 
 SIRE_END_HEADER
 

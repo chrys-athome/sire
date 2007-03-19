@@ -12,12 +12,15 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireMM::InternalDB<SireMM::MolDihedralInfo>&){ return "SireMM::InternalDB<SireMM::MolDihedralInfo>";}
+
 void register_InternalDB_MolDihedralInfo__class(){
 
     bp::class_< SireMM::InternalDB<SireMM::MolDihedralInfo>, boost::noncopyable >( "InternalDB_MolDihedralInfo_", bp::no_init )    
         .def( 
             "assignParameter"
             , (bool ( ::SireMM::InternalDB<SireMM::MolDihedralInfo>::* )( ::SireMol::Dihedral const &,::QMap<int, unsigned> const &,::SireDB::ParameterTable & ) )( &::SireMM::InternalDB<SireMM::MolDihedralInfo>::assignParameter )
-            , ( bp::arg("internal"), bp::arg("relateids"), bp::arg("param_table") ) );
+            , ( bp::arg("internal"), bp::arg("relateids"), bp::arg("param_table") ) )    
+        .def( "__str__", &pvt_get_name);
 
 }

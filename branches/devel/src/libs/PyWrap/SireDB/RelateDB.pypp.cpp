@@ -10,12 +10,15 @@
 
 namespace bp = boost::python;
 
+#include "SirePy/str.hpp"
+
 void register_RelateDB_class(){
 
     bp::class_< SireDB::RelateDB, bp::bases< SireDB::DBBase >, boost::noncopyable >( "RelateDB", bp::no_init )    
         .def( 
             "typeName"
             , (char const * (*)(  ))( &::SireDB::RelateDB::typeName ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__str__", &SirePy::__str__< ::SireDB::RelateDB > );
 
 }

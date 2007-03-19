@@ -83,7 +83,7 @@ AtomIDGroup::AtomIDGroup(const QSet<ResNum> &resnums)
     are in 'resnums' and the atoms in 'atoms' */
 AtomIDGroup::AtomIDGroup(const QSet<ResNum> &resnums,
                          const QSet<AtomIndex> &atoms)
-            : residus(resnums), atms(atoms)
+            : atms(atoms), residus(resnums)
 {
     for (QSet<AtomIndex>::const_iterator it = atoms.begin();
          it != atoms.end();

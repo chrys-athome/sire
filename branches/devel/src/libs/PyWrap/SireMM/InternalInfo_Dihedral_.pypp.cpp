@@ -12,11 +12,17 @@
 
 namespace bp = boost::python;
 
+SireMM::detail::InternalInfo<SireMol::Dihedral> __copy__(const SireMM::detail::InternalInfo<SireMol::Dihedral> &other){ return SireMM::detail::InternalInfo<SireMol::Dihedral>(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMM::detail::InternalInfo<SireMol::Dihedral>&){ return "SireMM::detail::InternalInfo<SireMol::Dihedral>";}
+
 void register_InternalInfo_Dihedral__class(){
 
     bp::class_< SireMM::detail::InternalInfo<SireMol::Dihedral> >( "InternalInfo_Dihedral_" )    
         .def( bp::init< >() )    
-        .def( bp::init< SireMol::MoleculeInfo const & >(( bp::arg("moleculeinfo") )) )    
+        .def( bp::init< SireMol::MoleculeInfo const & >(( bp::arg("molinfo") )) )    
         .def( 
             "at"
             , (::SireMol::GroupIndexID ( ::SireMM::detail::InternalInfo<SireMol::Dihedral>::* )( ::SireMol::Dihedral const & ) const)( &::SireMM::detail::InternalInfo<SireMol::Dihedral>::at )
@@ -43,7 +49,7 @@ void register_InternalInfo_Dihedral__class(){
         .def( 
             "contains"
             , (bool ( ::SireMM::detail::InternalInfo<SireMol::Dihedral>::* )( ::SireMol::GroupID ) const)( &::SireMM::detail::InternalInfo<SireMol::Dihedral>::contains )
-            , ( bp::arg("groupid") ) )    
+            , ( bp::arg("id") ) )    
         .def( 
             "contains"
             , (bool ( ::SireMM::detail::InternalInfo<SireMol::Dihedral>::* )( ::SireMol::GroupIndexID const & ) const)( &::SireMM::detail::InternalInfo<SireMol::Dihedral>::contains )
@@ -160,6 +166,12 @@ void register_InternalInfo_Dihedral__class(){
             , ( bp::arg("internal") ) )    
         .def( 
             "size"
-            , (::size_t ( ::SireMM::detail::InternalInfo<SireMol::Dihedral>::* )(  ) const)( &::SireMM::detail::InternalInfo<SireMol::Dihedral>::size ) );
+            , (::size_t ( ::SireMM::detail::InternalInfo<SireMol::Dihedral>::* )(  ) const)( &::SireMM::detail::InternalInfo<SireMol::Dihedral>::size ) )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::detail::InternalInfo<SireMol::Dihedral> >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::detail::InternalInfo<SireMol::Dihedral> >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

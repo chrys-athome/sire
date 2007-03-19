@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2006  Christopher Woods
+  *  Copyright (C) 2007  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,169 +26,215 @@
   *
 \*********************************************/
 
-// #ifndef SIREFF_INTERGROUPCLJFF_H
-// #define SIREFF_INTERGROUPCLJFF_H
-// 
-// #include "cljff.h"
-// #include "ffwrapperptr.h"
-// 
-// #include "SireMol/moleculeptr.h"
-// #include "SireMol/moleculeset.h"
-// #include "SireMol/residueptr.h"
-// #include "SireMol/residueset.h"
-// 
-// #include <QSet>
-// 
-// namespace SireFF
-// {
-// class InterGroupCLJFF;
-// }
-// 
-// QDataStream& operator<<(QDataStream&, const SireFF::InterGroupCLJFF&);
-// QDataStream& operator>>(QDataStream&, SireFF::InterGroupCLJFF&);
-// 
-// namespace SireFF
-// {
-// 
-// using SireMol::MoleculePtr;
-// using SireMol::MoleculeSet;
-// using SireMol::MoleculeID;
-// using SireMol::ResiduePtr;
-// using SireMol::ResidueSet;
-// 
-// /**
-// This forcefield is used to calculate the CLJ (charge / Lennard Jones) interaction energy between two groups. It does not calculate the energy within the groups - just the energy between the groups. Note that a single molecule *may not* be split over the two groups - they are strictly intermolecular groups.
-//  
-// The two groups are labelled 'A' and 'B' (imaginative). Molecules or residues can be added to group A via the "addToA" series of functions, or can be added to group B via the "addToB" series of functions. 
-//  
-// @author Christopher Woods
-// */
-// class InterGroupCLJFF : public CLJFF
-// {
-// 
-// friend QDataStream& ::operator<<(QDataStream&, const InterGroupCLJFF&);
-// friend QDataStream& ::operator>>(QDataStream&, InterGroupCLJFF&);
-// 
-// public:
-//     InterGroupCLJFF();
-//     InterGroupCLJFF(const InterGroupCLJFF &other);
-//     ~InterGroupCLJFF();
-// 
-//     const char* what() const
-//     {
-//         return "SireFF::InterGroupCLJFF";
-//     }
-// 
-//     CutGroupSet cutGroups() const;
-//  
-//     const CutGroupSet& groupA() const;
-//     const CutGroupSet& groupB() const;
-//  
-//     void addToA( const MoleculePtr &mol, const CLJTable &cljtable );
-//     void addToA( const MoleculePtr &mol, const CLJMutator &mutator );    
-//     void addToA( const MoleculeSet &mols, const CLJTable &cljtable );
-//     void addToA( const MoleculeSet &mols, const CLJMutator &mutator );
-//     
-//     void addToA( const ResiduePtr &res, const CLJTable &cljtable );
-//     void addToA( const ResiduePtr &res, const CLJMutator &mutator );
-//     void addToA( const ResidueSet &ress, const CLJTable &cljtable );
-//     void addToA( const ResidueSet &ress, const CLJMutator &mutator );
-//  
-//     void addToB( const MoleculePtr &mol, const CLJTable &cljtable );
-//     void addToB( const MoleculePtr &mol, const CLJMutator &mutator );    
-//     void addToB( const MoleculeSet &mols, const CLJTable &cljtable );
-//     void addToB( const MoleculeSet &mols, const CLJMutator &mutator );
-//     
-//     void addToB( const ResiduePtr &res, const CLJTable &cljtable );
-//     void addToB( const ResiduePtr &res, const CLJMutator &mutator );
-//     void addToB( const ResidueSet &ress, const CLJTable &cljtable );
-//     void addToB( const ResidueSet &ress, const CLJMutator &mutator );
-//     
-//     CLJEnergy energy() const;
-//     CLJEnergy energy(const LambdaState &stat) const;
-//  
-//     CLJEnergy energy(const CutGroupSet &groups) const;
-//     CLJEnergy energy(const CutGroupSet &groups, const LambdaState &stat) const;
-//  
-//     CLJEnergy deltaEnergy(const LambdaState &stat0, const LambdaState &stat1) const;
-//     CLJEnergy deltaEnergy(const CutGroupSet &groups, const LambdaState &stat0,
-//                           const LambdaState &stat1) const;
-// 
-// //     void addForce(double scl, ForceTableSet &workspace) const;
-// //     void addForce(double scl, ForceTableSet &workspace, const LambdaState &stat) const;
-// //     
-// //     void addForce(double scl, ForceTableSet &workspace, const CutGroupSet &groups) const;
-// //     void addForce(double scl, ForceTableSet &workspace, const CutGroupSet &groups,
-// //                   const LambdaState &stat) const;
-// 
-//     operator FFWrapperPtr() const;
-// 
-// protected:
-// 
-//     void checkNotInGroupA(const MoleculePtr &mol) const;
-//     void checkNotInGroupB(const MoleculePtr &mol) const;
-//     
-//     CLJEnergy groupGroupEnergy(const CutGroupSet &groups0, const CutGroupSet &groups1,
-//                                const LambdaState &stat) const;
-//     
-//     void addToA( const CutGroupPtr &cgroup, const CLJTable &cljtable );
-//     void addToA( const CutGroupPtr &cgroup, const CLJMutator &mutator );
-//     void addToA( const CutGroupSet &cgroups, const CLJTable &cljtable );
-//     void addToA( const CutGroupSet &cgroups, const CLJMutator &mutator );
-//     
-//     void addToB( const CutGroupPtr &cgroup, const CLJTable &cljtable );
-//     void addToB( const CutGroupPtr &cgroup, const CLJMutator &mutator );
-//     void addToB( const CutGroupSet &cgroups, const CLJTable &cljtable );
-//     void addToB( const CutGroupSet &cgroups, const CLJMutator &mutator );
-// 
-//     /** The set of CutGroups in group A */
-//     CutGroupSet group_a;
-//     /** The set of CutGroups in group B */
-//     CutGroupSet group_b;
-//     
-//     /** The set of perturbable CutGroups in group A */
-//     CutGroupSet pertgroups_a;
-//     /** The set of perturbable CutGroups in group B */
-//     CutGroupSet pertgroups_b;
-//     
-//     /** ID numbers of the molecules in group A */
-//     QSet<MoleculeID> group_a_mols;
-//     /** ID numbers of the molecules in group B */
-//     QSet<MoleculeID> group_b_mols;
-// 
-// };
-// 
-// /** Return the total energy of this forcefield at the reference state */
-// inline CLJEnergy InterGroupCLJFF::energy() const
-// {
-//     return energy(LAM_REFERENCE);
-// }
-// 
-// /** Return the total energy of 'groups' in this forcefield at the reference state. 
-//     This will only return the energy of those CutGroups that have been added to this forcefield */
-// inline CLJEnergy InterGroupCLJFF::energy(const CutGroupSet &groups) const
-// {
-//     return energy(groups, LAM_REFERENCE);
-// }
-// 
-// /** Return the set of CutGroups in group A */
-// inline const CutGroupSet& InterGroupCLJFF::groupA() const
-// {
-//     return group_a;
-// }
-// 
-// /** Return the set of CutGroups in group B */
-// inline const CutGroupSet& InterGroupCLJFF::groupB() const
-// {
-//     return group_b;
-// }
-// 
-// /** Return the set of all CutGroups in this forcefield */
-// inline CutGroupSet InterGroupCLJFF::cutGroups() const
-// {
-//     return group_a + group_b;
-// }
-// 
-// }
-// 
-// #endif
+#ifndef SIREMM_INTERGROUPCLJFF_H
+#define SIREMM_INTERGROUPCLJFF_H
+
+#include "cljff.h"
+
+SIRE_BEGIN_HEADER
+
+namespace SireMM
+{
+class InterGroupCLJFF;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMM::InterGroupCLJFF&);
+QDataStream& operator>>(QDataStream&, SireMM::InterGroupCLJFF&);
+
+namespace SireMM
+{
+
+using SireMol::Molecule;
+using SireMol::Residue;
+using SireMol::NewAtom;
+using SireMol::MoleculeID;
+
+using SireFF::ParameterMap;
+
+/** This forcefield is used to calculate the LJ interaction energy
+    between two groups of molecules.
+
+    @author Christopher Woods
+*/
+class SIREMM_EXPORT InterGroupCLJFF : public CLJFF
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const InterGroupCLJFF&);
+friend QDataStream& ::operator>>(QDataStream&, InterGroupCLJFF&);
+
+public:
+    InterGroupCLJFF();
+
+    InterGroupCLJFF(const Space &space, const SwitchingFunction &switchfunc);
+
+    InterGroupCLJFF(const InterGroupCLJFF &other);
+
+    ~InterGroupCLJFF();
+
+    InterGroupCLJFF& operator=(const InterGroupCLJFF &other);
+
+    class SIREMM_EXPORT Components : public CLJFF::Components
+    {
+    public:
+        Components();
+
+        Components(const FFBase &ffbase, const Symbols &symbols);
+
+        Components(const Components &other);
+
+        ~Components();
+
+        Components& operator=(const Components &other);
+    };
+
+    class SIREMM_EXPORT Parameters : public CLJFF::Parameters
+    {
+    public:
+        Parameters();
+        Parameters(const Parameters &other);
+
+        ~Parameters();
+    };
+
+    class SIREMM_EXPORT Groups : public CLJFF::Groups
+    {
+    friend class InterGroupCLJFF;
+
+    public:
+        Groups();
+        Groups(const Groups &other);
+
+        ~Groups();
+
+        FFBase::Group A() const
+        {
+            return a;
+        }
+
+        FFBase::Group B() const
+        {
+            return b;
+        }
+
+    protected:
+        static Groups default_group;
+
+    private:
+        /** The ID of group 'A' */
+        FFBase::Group a;
+        /** The ID of group 'B' */
+        FFBase::Group b;
+    };
+
+    const InterGroupCLJFF::Groups& groups() const
+    {
+        return InterGroupCLJFF::Groups::default_group;
+    }
+
+    static const char* typeName()
+    {
+        return "SireMM::InterGroupCLJFF";
+    }
+
+    const char* what() const
+    {
+        return InterGroupCLJFF::typeName();
+    }
+
+    InterGroupCLJFF* clone() const
+    {
+        return new InterGroupCLJFF(*this);
+    }
+
+    bool change(const Molecule &molecule);
+    bool change(const Residue &residue);
+    bool change(const NewAtom &atom);
+
+    bool add(const Molecule &mol, const ParameterMap &map = ParameterMap());
+    bool add(const Residue &res, const ParameterMap &map = ParameterMap());
+    bool add(const NewAtom &atom, const ParameterMap &map = ParameterMap());
+
+    bool add(const Molecule &mol, const AtomSelection &selected_atoms,
+             const ParameterMap &map = ParameterMap());
+
+    bool addTo(FFBase::Group group, const Molecule &molecule,
+               const ParameterMap &map = ParameterMap());
+    bool addTo(FFBase::Group group, const Residue &residue,
+               const ParameterMap &map = ParameterMap());
+    bool addTo(FFBase::Group group, const NewAtom &atom,
+               const ParameterMap &map = ParameterMap());
+
+    bool addTo(FFBase::Group group, const Molecule &molecule,
+               const AtomSelection &selected_atoms,
+               const ParameterMap &map = ParameterMap());
+
+    bool remove(const Molecule &molecule);
+    bool remove(const Residue &residue);
+    bool remove(const NewAtom &atom);
+
+    bool remove(const Molecule &mol, const AtomSelection &selected_atoms);
+
+protected:
+    void recalculateViaDelta();
+    void recalculateTotalEnergy();
+
+    void recalculateEnergy();
+
+    ChangedCLJMolecule changeRecord(MoleculeID molid) const;
+
+    bool applyChange(MoleculeID molid,
+                     const ChangedCLJMolecule &new_molecule);
+
+    int groupIndex(FFBase::Group group) const;
+
+    int otherGroup(int group_id) const;
+
+    void assertValidGroup(int group_id, MoleculeID molid) const;
+
+private:
+    CLJEnergy recalculateWithTwoChangedGroups();
+    CLJEnergy recalculateWithOneChangedGroup(int changed_idx);
+    CLJEnergy recalculateChangedWithUnchanged(int unchanged_idx, int changed_idx);
+    CLJEnergy recalculateChangedWithChanged();
+
+    void recordChange(int group_idx, MoleculeID molid,
+                      const ChangedCLJMolecule &new_molecule);
+
+    void addToCurrentState(int group_idx, const CLJMolecule &new_molecule);
+    void removeFromCurrentState(int group_idx, MoleculeID molid);
+    void updateCurrentState(int group_idx, const CLJMolecule &molecule);
+
+    template<class T>
+    bool _pvt_add(const T &mol, const ParameterMap &map);
+    template<class T>
+    bool _pvt_addTo(FFBase::Group group, const T &mol, const ParameterMap &map);
+    template<class T>
+    bool _pvt_change(const T &mol);
+    template<class T>
+    bool _pvt_remove(const T &mol);
+
+
+    /** All of the molecules that have at least one molecule in
+        for forcefield, divided into their two groups */
+    QVector<CLJMolecule> mols[2];
+
+    /** Hash mapping the MoleculeID to the index of the molecules
+        in the forcefield - one index for each group */
+    QHash<MoleculeID,uint> molid_to_index[2];
+
+    /** Information about all of the changed molecules since the
+        last energy calculation, for both of the groups */
+    QVector<CLJFF::ChangedCLJMolecule> changed_mols[2];
+
+    /** Hash mapping the MoleculeID of a changed molecule to its
+        index in changed_mols, for both of the groups */
+    QHash<MoleculeID, uint> molid_to_changedindex[2];
+};
+
+}
+
+Q_DECLARE_METATYPE(SireMM::InterGroupCLJFF);
+
+SIRE_END_HEADER
+
+#endif

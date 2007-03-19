@@ -14,6 +14,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireMol::AtomicProperties&){ return "SireMol::AtomicProperties";}
+
 void register_AtomicProperties_class(){
 
     bp::class_< SireMol::AtomicProperties, bp::bases< SireMol::PropertyBase >, boost::noncopyable >( "AtomicProperties", bp::no_init )    
@@ -24,6 +26,7 @@ void register_AtomicProperties_class(){
             "value"
             , &::SireMol::AtomicProperties::value
             , ( bp::arg("cgatomid") ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__str__", &pvt_get_name);
 
 }

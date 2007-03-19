@@ -12,6 +12,10 @@
 
 namespace bp = boost::python;
 
+SireMM::AngleDB __copy__(const SireMM::AngleDB &other){ return SireMM::AngleDB(other); }
+
+#include "SirePy/str.hpp"
+
 void register_AngleDB_class(){
 
     bp::class_< SireMM::AngleDB, bp::bases< SireDB::Term13DB, SireMM::InternalDB<SireMM::MolAngleInfo> > >( "AngleDB" )    
@@ -66,6 +70,8 @@ void register_AngleDB_class(){
         .def( 
             "what"
             , (char const * ( ::SireMM::AngleDB::* )(  ) const)( &::SireMM::AngleDB::what ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
+        .def( "__str__", &SirePy::__str__< ::SireMM::AngleDB > );
 
 }

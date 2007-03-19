@@ -17,6 +17,12 @@
 
 namespace bp = boost::python;
 
+SireFF::FFExpression __copy__(const SireFF::FFExpression &other){ return SireFF::FFExpression(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_FFExpression_class(){
 
     bp::class_< SireFF::FFExpression >( "FFExpression" )    
@@ -53,6 +59,12 @@ void register_FFExpression_class(){
         .def( bp::self == bp::self )    
         .def( 
             "toString"
-            , (::QString ( ::SireFF::FFExpression::* )(  ) const)( &::SireFF::FFExpression::toString ) );
+            , (::QString ( ::SireFF::FFExpression::* )(  ) const)( &::SireFF::FFExpression::toString ) )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireFF::FFExpression >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireFF::FFExpression >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireFF::FFExpression > );
 
 }

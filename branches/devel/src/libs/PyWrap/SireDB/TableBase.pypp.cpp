@@ -10,6 +10,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireDB::TableBase&){ return "SireDB::TableBase";}
+
 void register_TableBase_class(){
 
     bp::class_< SireDB::TableBase, boost::noncopyable >( "TableBase", bp::no_init )    
@@ -34,6 +38,11 @@ void register_TableBase_class(){
             , (bool ( ::SireDB::TableBase::* )(  ) const)( &::SireDB::TableBase::isEmpty ) )    
         .def( 
             "what"
-            , (char const * ( ::SireDB::TableBase::* )(  ) const)( &::SireDB::TableBase::what ) );
+            , (char const * ( ::SireDB::TableBase::* )(  ) const)( &::SireDB::TableBase::what ) )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireDB::TableBase >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireDB::TableBase >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

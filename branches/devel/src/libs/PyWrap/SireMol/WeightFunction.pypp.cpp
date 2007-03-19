@@ -14,6 +14,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireMol::WeightFunction&){ return "SireMol::WeightFunction";}
+
 void register_WeightFunction_class(){
 
     bp::class_< SireMol::WeightFunction, boost::noncopyable >( "WeightFunction", bp::no_init )    
@@ -27,6 +29,7 @@ void register_WeightFunction_class(){
             , ( bp::arg("calculator") ) )    
         .def( 
             "what"
-            , &::SireMol::WeightFunction::what );
+            , &::SireMol::WeightFunction::what )    
+        .def( "__str__", &pvt_get_name);
 
 }

@@ -224,7 +224,7 @@ void Sum::add(const Expression &ex)
         return;
     else if (ex.base().isA<I>())
     {
-        //this is a multipe of the complex number 'i'
+        //this is a multiple of the complex number 'i'
         add(ex.factor(), ex.base());
     }
     else if (ex.isConstant())
@@ -243,24 +243,36 @@ void Sum::add(const Expression &ex)
 
         if (posparts.count() == 0 and negparts.count() == 0)
         {
-            posparts = sum.posparts;
-            negparts = sum.negparts;
+            if (ex.factor() == 1)
+            {
+                posparts = sum.posparts;
+                negparts = sum.negparts;
+                strtval += sum.strtval;
+                
+                return;
+            }
+            else if (ex.factor() == -1)
+            {
+                posparts = sum.negparts;
+                negparts = sum.posparts;
+                strtval -= sum.strtval;
+                
+                return;
+            }
         }
-        else
+            
+        for (QHash<ExpressionBase,Expression>::const_iterator it = sum.posparts.begin();
+             it != sum.posparts.end();
+             ++it)
         {
-            for (QHash<ExpressionBase,Expression>::const_iterator it = sum.posparts.begin();
-                 it != sum.posparts.end();
-                 ++it)
-            {
-                this->add( ex.factor()*it->factor(), it->base() );
-            }
+           this->add( ex.factor()*it->factor(), it->base() );
+        }
 
-            for (QHash<ExpressionBase,Expression>::const_iterator it = sum.negparts.begin();
-                 it != sum.negparts.end();
-                 ++it)
-            {
-                this->add( -(ex.factor()*it->factor()), it->base() );
-            }
+        for (QHash<ExpressionBase,Expression>::const_iterator it = sum.negparts.begin();
+             it != sum.negparts.end();
+             ++it)
+        {
+            this->add( -(ex.factor()*it->factor()), it->base() );
         }
 
         //add the start value to the sum

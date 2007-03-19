@@ -242,6 +242,8 @@ private:
 
 };
 
+#ifndef SKIP_TEMPLATE_DEFINITIONS
+
 /** Empty constructor */
 template<class Internals>
 SIRE_OUTOFLINE_TEMPLATE
@@ -768,7 +770,11 @@ void InternalTableBase<Internals>::clearInter(const C &internals)
 
 const MagicID internaltablebase_magic = getMagic("SireMM::InternalTableBase");
 
+#endif // SKIP_TEMPLATE_DEFINITIONS
+
 }
+
+#ifndef SKIP_TEMPLATE_DEFINITIONS
 
 /** Serialise to a binary data stream */
 template<class Internals>
@@ -802,6 +808,8 @@ QDataStream& operator>>(QDataStream &ds,
 
     return ds;
 }
+
+#endif // SKIP_TEMPLATE_DEFINITIONS
 
 SIRE_END_HEADER
 

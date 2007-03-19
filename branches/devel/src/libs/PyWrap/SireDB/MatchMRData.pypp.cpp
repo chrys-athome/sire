@@ -10,6 +10,10 @@
 
 namespace bp = boost::python;
 
+SireDB::MatchMRData __copy__(const SireDB::MatchMRData &other){ return SireDB::MatchMRData(other); }
+
+#include "SirePy/str.hpp"
+
 void register_MatchMRData_class(){
 
     bp::class_< SireDB::MatchMRData >( "MatchMRData" )    
@@ -45,6 +49,8 @@ void register_MatchMRData_class(){
             , ( bp::arg("maxatm") ) )    
         .def( 
             "toString"
-            , (::QString ( ::SireDB::MatchMRData::* )(  ) const)( &::SireDB::MatchMRData::toString ) );
+            , (::QString ( ::SireDB::MatchMRData::* )(  ) const)( &::SireDB::MatchMRData::toString ) )    
+        .def( "__copy__", &__copy__)    
+        .def( "__str__", &SirePy::__str__< ::SireDB::MatchMRData > );
 
 }

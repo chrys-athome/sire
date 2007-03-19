@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2006  Christopher Woods
+  *  Copyright (C) 2007  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -31,7 +31,9 @@
 
 #include "cljff.h"
 
-#include "SireFF/parametermap.h"
+#include "SireMol/moleculeid.h"
+
+SIRE_BEGIN_HEADER
 
 namespace SireMM
 {
@@ -44,22 +46,14 @@ QDataStream& operator>>(QDataStream&, SireMM::InterCLJFF&);
 namespace SireMM
 {
 
-class ChargeTable;
-class LJTable;
-
+using SireMol::MoleculeID;
 using SireFF::ParameterMap;
 
-using SireMol::Molecule;
-using SireMol::Residue;
-using SireMol::MoleculeID;
+/** An InterCLJFF is used to calculate the
+    intermolecular coulomb and LJ
+    energy of a group of molecules.
 
-/** An InterCLJFF is a forcefield that calculates the intermolecular coulomb and
-    Lennard Jones energies of all contained molecules. An InterCLJFF is perhaps
-    the most expensive type of MM forcefield, as it must calculate the full
-    pair-pair interactions between all pairs of molecules in the forcefield
-    that are within the cutoff distance.
-
-    \author Christopher Woods
+    @author Christopher Woods
 */
 class SIREMM_EXPORT InterCLJFF : public CLJFF
 {
@@ -70,11 +64,13 @@ friend QDataStream& ::operator>>(QDataStream&, InterCLJFF&);
 public:
     InterCLJFF();
 
-    InterCLJFF(const Space &space, const SwitchingFunction &switchfunc);
+    InterCLJFF(const Space &space, const SwitchingFunction &switchingfunction);
 
     InterCLJFF(const InterCLJFF &other);
 
     ~InterCLJFF();
+
+    InterCLJFF& operator=(const InterCLJFF &other);
 
     class SIREMM_EXPORT Components : public CLJFF::Components
     {
@@ -104,7 +100,7 @@ public:
     public:
         Groups();
         Groups(const Groups &other);
-        
+
         ~Groups();
     };
 
@@ -125,10 +121,20 @@ public:
 
     bool change(const Molecule &molecule);
     bool change(const Residue &residue);
+    bool change(const NewAtom &atom);
 
     bool add(const Molecule &mol, const ParameterMap &map = ParameterMap());
+    bool add(const Residue &res, const ParameterMap &map = ParameterMap());
+    bool add(const NewAtom &atom, const ParameterMap &map = ParameterMap());
 
-    bool remove(const Molecule &mol);
+    bool add(const Molecule &mol, const AtomSelection &selected_atoms,
+             const ParameterMap &map = ParameterMap());
+
+    bool remove(const Molecule &molecule);
+    bool remove(const Residue &residue);
+    bool remove(const NewAtom &atom);
+
+    bool remove(const Molecule &mol, const AtomSelection &selected_atoms);
 
 protected:
     void recalculateViaDelta();
@@ -136,28 +142,48 @@ protected:
 
     void recalculateEnergy();
 
-    void setCurrentState(const detail::MolCLJInfo &mol);
-    void removeCurrentState(const Molecule &mol);
+    ChangedCLJMolecule changeRecord(MoleculeID molid) const;
 
-    /** Information about every molecule contained in this forcefield */
-    QVector<detail::MolCLJInfo> mols;
+    bool applyChange(MoleculeID molid,
+                     const ChangedCLJMolecule &new_molecule);
 
-    /** Hash mapping MoleculeID to index in 'mols' */
-    QHash<MoleculeID, int> molid_to_molindex;
+private:
+    void updateCurrentState(const CLJMolecule &new_molecule);
+    void removeFromCurrentState(MoleculeID molid);
 
-    /** Information about all of the changed molecules since the last
-        energy update */
-    QVector<detail::ChangedMolCLJInfo> changedmols;
+    template<class T>
+    bool _pvt_add(const T &mol, const ParameterMap &map);
 
-    /** Hash mapping MoleculeID to index in 'changedmols' */
-    QHash<MoleculeID, int> molid_to_changedindex;
+    template<class T>
+    bool _pvt_remove(const T &mol);
 
-    /** The IDs of all of the molecules that were removed since the last
-        energy update */
-    QSet<MoleculeID> removedmols;
+    template<class T>
+    bool _pvt_change(const T &mol);
+
+    /** All of the molecules that have at least one atom
+        in this forcefield */
+    QVector<CLJFF::CLJMolecule> mols;
+
+    /** Hash mapping the MoleculeID to the index of the molecule in 'mols' */
+    QHash<MoleculeID, uint> molid_to_index;
+
+    /** Information about all of the changed molecules since the
+        last energy calculation */
+    QVector<CLJFF::ChangedCLJMolecule> changed_mols;
+
+    /** Hash mapping the MoleculeID of a changed molecule to its
+        index in changed_mols */
+    QHash<MoleculeID, uint> molid_to_changedindex;
+
+    /** MoleculeIDs of all molecules that have been removed since
+        the last energy evaluation */
+    QSet<MoleculeID> removed_mols;
 };
 
 }
 
+Q_DECLARE_METATYPE(SireMM::InterCLJFF);
+
+SIRE_END_HEADER
 
 #endif

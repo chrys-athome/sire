@@ -8,6 +8,12 @@
 
 namespace bp = boost::python;
 
+SireMaths::Plane __copy__(const SireMaths::Plane &other){ return SireMaths::Plane(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMaths::Plane&){ return "SireMaths::Plane";}
+
 void register_Plane_class(){
 
     bp::class_< SireMaths::Plane >( "Plane" )    
@@ -38,6 +44,12 @@ void register_Plane_class(){
         .def( 
             "normal"
             , (::SireMaths::Vector const & ( ::SireMaths::Plane::* )(  ) const)( &::SireMaths::Plane::normal )
-            , bp::return_value_policy< bp::copy_const_reference >() );
+            , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMaths::Plane >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMaths::Plane >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

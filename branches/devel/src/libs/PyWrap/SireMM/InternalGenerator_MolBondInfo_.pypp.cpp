@@ -12,6 +12,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireMM::InternalGenerator<SireMM::MolBondInfo>&){ return "SireMM::InternalGenerator<SireMM::MolBondInfo>";}
+
 void register_InternalGenerator_MolBondInfo__class(){
 
     bp::class_< SireMM::InternalGenerator<SireMM::MolBondInfo>, boost::noncopyable >( "InternalGenerator_MolBondInfo_", bp::no_init )    
@@ -25,6 +27,7 @@ void register_InternalGenerator_MolBondInfo__class(){
             , ( bp::arg("molecule") ) )    
         .def( 
             "what"
-            , (char const * ( ::SireMM::InternalGenerator<SireMM::MolBondInfo>::* )(  ) const)( &::SireMM::InternalGenerator<SireMM::MolBondInfo>::what ) );
+            , (char const * ( ::SireMM::InternalGenerator<SireMM::MolBondInfo>::* )(  ) const)( &::SireMM::InternalGenerator<SireMM::MolBondInfo>::what ) )    
+        .def( "__str__", &pvt_get_name);
 
 }

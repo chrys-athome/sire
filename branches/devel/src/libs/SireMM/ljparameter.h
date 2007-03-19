@@ -30,7 +30,6 @@
 #define SIREMM_LJPARAMETER_H
 
 #include <QString>
-#include <QHash>
 
 #include "sireglobal.h"
 
@@ -48,6 +47,8 @@ QDataStream& operator>>(QDataStream&, SireMM::LJParameter&);
 namespace SireMM
 {
 
+class LJPair;
+
 /**
 An LJParameter holds Lennard Jones parameters (sigma and epsilon)
 
@@ -62,7 +63,10 @@ friend QDataStream& ::operator>>(QDataStream&, LJParameter&);
 public:
     LJParameter();
     LJParameter(double sigma, double epsilon);
+    LJParameter(const LJPair &ljpair);
+    
     LJParameter(const LJParameter &param);
+    
     ~LJParameter();
     
     bool isDummy() const;
@@ -153,7 +157,7 @@ inline double LJParameter::sqrtEpsilon() const
 }
 
 Q_DECLARE_TYPEINFO(SireMM::LJParameter, Q_MOVABLE_TYPE);
-Q_DECLARE_METATYPE(SireMM::LJParameter)
+Q_DECLARE_METATYPE(SireMM::LJParameter);
 
 SIRE_END_HEADER
 

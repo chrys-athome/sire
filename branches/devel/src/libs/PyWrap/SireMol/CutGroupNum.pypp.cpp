@@ -14,10 +14,16 @@
 
 namespace bp = boost::python;
 
+SireMol::CutGroupNum __copy__(const SireMol::CutGroupNum &other){ return SireMol::CutGroupNum(other); }
+
+#include "SirePy/str.hpp"
+
 void register_CutGroupNum_class(){
 
     bp::class_< SireMol::CutGroupNum, bp::bases< SireMol::IDBase > >( "CutGroupNum" )    
         .def( bp::init< >() )    
-        .def( bp::init< quint32 >(( bp::arg("id") )) );
+        .def( bp::init< quint32 >(( bp::arg("id") )) )    
+        .def( "__copy__", &__copy__)    
+        .def( "__str__", &SirePy::__str__< ::SireMol::CutGroupNum > );
 
 }

@@ -10,6 +10,8 @@
 
 namespace bp = boost::python;
 
+#include "SirePy/str.hpp"
+
 void register_AtomDB_class(){
 
     bp::class_< SireDB::AtomDB, bp::bases< SireDB::RelateDB >, boost::noncopyable >( "AtomDB", bp::no_init )    
@@ -24,6 +26,7 @@ void register_AtomDB_class(){
         .def( 
             "typeName"
             , (char const * (*)(  ))( &::SireDB::AtomDB::typeName ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__str__", &SirePy::__str__< ::SireDB::AtomDB > );
 
 }

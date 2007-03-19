@@ -8,13 +8,20 @@
 
 namespace bp = boost::python;
 
+SireMaths::Matrix __copy__(const SireMaths::Matrix &other){ return SireMaths::Matrix(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_Matrix_class(){
 
     bp::class_< SireMaths::Matrix >( "Matrix" )    
         .def( bp::init< >() )    
         .def( bp::init< double >(( bp::arg("diagonal_value") )) )    
         .def( bp::init< double, double, double, double, double, double, double, double, double >(( bp::arg("xx"), bp::arg("xy"), bp::arg("xz"), bp::arg("yx"), bp::arg("yy"), bp::arg("yz"), bp::arg("zx"), bp::arg("zy"), bp::arg("zz") )) )    
-        .def( bp::init< SireMaths::Vector const &, SireMaths::Vector const &, SireMaths::Vector const & >(( bp::arg("c1"), bp::arg("c2"), bp::arg("c3") )) )    
+        .def( bp::init< SireMaths::Vector const &, SireMaths::Vector const &, SireMaths::Vector const & >(( bp::arg("r1"), bp::arg("r2"), bp::arg("r3") )) )    
+        .def( bp::init< boost::tuples::tuple<SireMaths::Vector, SireMaths::Vector, SireMaths::Vector, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type> const & >(( bp::arg("rows") )) )    
         .def( 
             "column0"
             , (::SireMaths::Vector ( ::SireMaths::Matrix::* )(  ) const)( &::SireMaths::Matrix::column0 ) )    
@@ -77,6 +84,25 @@ void register_Matrix_class(){
             "zero"
             , (::SireMaths::Matrix (*)(  ))( &::SireMaths::Matrix::zero ) )    
         .staticmethod( "identity" )    
-        .staticmethod( "zero" );
+        .staticmethod( "zero" )    
+        .def(self + self)    
+        .def(self - self)    
+        .def(self * self)    
+        .def(self += self)    
+        .def(self -= self)    
+        .def(self *= self)    
+        .def(self *= other<double>())    
+        .def(self * other<double>())    
+        .def(other<double>() * self)    
+        .def(self * other<SireMaths::Vector>())    
+        .def(other<SireMaths::Vector>() * self)    
+        .def(self == self)    
+        .def(self != self)    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMaths::Matrix >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMaths::Matrix >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireMaths::Matrix > );
 
 }

@@ -8,6 +8,10 @@
 
 namespace bp = boost::python;
 
+SireCAS::SymbolComplex __copy__(const SireCAS::SymbolComplex &other){ return SireCAS::SymbolComplex(other); }
+
+const char* pvt_get_name(const SireCAS::SymbolComplex&){ return "SireCAS::SymbolComplex";}
+
 void register_SymbolComplex_class(){
 
     bp::class_< SireCAS::SymbolComplex >( "SymbolComplex", bp::init< SireCAS::SymbolID, SireMaths::Complex const & >(( bp::arg("id"), bp::arg("val") )) )    
@@ -19,6 +23,8 @@ void register_SymbolComplex_class(){
         .def( 
             "value"
             , (::SireMaths::Complex const & ( ::SireCAS::SymbolComplex::* )(  ) const)( &::SireCAS::SymbolComplex::value )
-            , bp::return_value_policy< bp::copy_const_reference >() );
+            , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( "__copy__", &__copy__)    
+        .def( "__str__", &pvt_get_name);
 
 }

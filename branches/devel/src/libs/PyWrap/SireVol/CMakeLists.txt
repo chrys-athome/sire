@@ -19,6 +19,8 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs
 set ( WRAPVOL_SOURCES
       
       _Vol.main.cpp
+
+      sirevol_containers.cpp
       
       AABox.pypp.cpp
       

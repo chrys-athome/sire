@@ -44,13 +44,13 @@ namespace SirePy
 /** This struct provides the from-Python conversion from a list or
     tuple to a list-like container of type 'C' (e.g. QVector, QList) */
 template<class C>
-struct convert_python_to_list
+struct from_py_list
 {
     typedef typename C::value_type T;
 
     /** Constructor - register the conversion functions
         for this type */
-    convert_python_to_list()
+    from_py_list()
     {
         boost::python::converter::registry::push_back(
             &convertible,
@@ -67,17 +67,17 @@ struct convert_python_to_list
         {
             //check the tuple elements... - convert to a boost::tuple object
             boost::python::tuple t( handle<>(borrowed(obj_ptr)) );
-            
+
             //how many elements are there?
             int n = PyTuple_Size(obj_ptr);
-            
+
             //can they all be converted to type 'T'?
             for (int i=0; i<n; ++i)
             {
                 if (not boost::python::extract<T>(t[i]).check())
                     return 0;
             }
-            
+
             //the tuple is ok!
             return obj_ptr;
         }
@@ -86,17 +86,17 @@ struct convert_python_to_list
         {
             //check that all of the list elements can be converted to the right type
             boost::python::list l( handle<>(borrowed(obj_ptr)) );
-            
+
             //how many elements are there?
             int n = PyList_Size(obj_ptr);
-            
+
             //can all of the elements be converted to type 'T'?
             for (int i=0; i<n; ++i)
             {
                 if (not boost::python::extract<T>(l[i]).check())
                     return 0;
             }
-            
+
             //the list is ok!
             return obj_ptr;
         }
@@ -161,6 +161,35 @@ struct convert_python_to_list
         }
     }
 };
+
+template<class C>
+struct to_py_list
+{
+    static PyObject* convert(const C &cpp_list)
+    {
+        list python_list;
+
+        //add all items to the python dictionary
+        for (typename C::const_iterator it = cpp_list.begin();
+             it != cpp_list.end();
+             ++it)
+        {
+            python_list.append(*it);
+        }
+
+        return incref( python_list.ptr() );
+    }
+};
+
+template<class C>
+void register_list()
+{
+    to_python_converter< C, to_py_list<C> >();
+
+    converter::registry::push_back( &from_py_list<C>::convertible,
+                                    &from_py_list<C>::construct,
+                                    type_id<C>() );
+}
 
 }
 

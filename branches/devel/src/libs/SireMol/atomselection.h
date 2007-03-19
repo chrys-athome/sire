@@ -35,6 +35,7 @@
 #include "moleculeinfo.h"
 #include "cutgroupid.h"
 #include "atomid.h"
+#include "idmolatom.h"
 
 SIRE_BEGIN_HEADER
 
@@ -50,6 +51,8 @@ namespace SireMol
 {
 
 class Molecule;
+class Residue;
+class NewAtom;
 
 /** This class holds information about a selection of atoms in a Molecule.
     The selection is held in the most memory-efficient manner possible,
@@ -67,10 +70,17 @@ public:
     AtomSelection();
 
     AtomSelection(const Molecule &molecule);
+    AtomSelection(const Residue &residue);
+    AtomSelection(const NewAtom &atom);
 
     AtomSelection(const AtomSelection &other);
 
     ~AtomSelection();
+
+    AtomSelection& operator=(const AtomSelection &other);
+
+    bool operator==(const AtomSelection &other) const;
+    bool operator!=(const AtomSelection &other) const;
 
     bool isEmpty() const;
 
@@ -79,12 +89,21 @@ public:
     int nSelected(CutGroupID cgid) const;
     int nSelected(ResNum resnum) const;
 
+    int nSelectedCutGroups() const;
+    int nSelectedResidues() const;
+
     bool selected(const CGAtomID &cgatomid) const;
+    bool selected(const IDMolAtom &atomid) const;
 
     bool selectedAll() const;
 
     bool selectedAll(CutGroupID cgid) const;
     bool selectedAll(ResNum resnum) const;
+
+    bool selectedNone() const;
+
+    bool selectedNone(CutGroupID cgid) const;
+    bool selectedNone(ResNum resnum) const;
 
     void selectAll();
     void deselectAll();
@@ -95,8 +114,28 @@ public:
     void selectAll(ResNum resnum);
     void deselectAll(ResNum resnum);
 
+    void selectAll(const AtomSelection &selection);
+    void deselectAll(const AtomSelection &selection);
+
     void select(const CGAtomID &cgatomid);
     void deselect(const CGAtomID &cgatomid);
+
+    void select(const IDMolAtom &atomid);
+    void deselect(const IDMolAtom &atomid);
+
+    void invert();
+
+    void applyMask(const QSet<CutGroupID> &cgids);
+    void applyMask(const QSet<ResNum> &resnums);
+    void applyMask(const AtomSelection &other);
+
+    void assertCompatibleWith(const MoleculeInfo &molinfo) const;
+    void assertCompatibleWith(const Molecule &molecule) const;
+
+    QList<AtomIndex> selected() const;
+
+    QSet<CutGroupID> selectedCutGroups() const;
+    QSet<ResNum> selectedResidues() const;
 
 private:
     bool _pvt_selected(const CGAtomID &cgatomid) const;

@@ -10,6 +10,12 @@
 
 namespace bp = boost::python;
 
+SireDB::assign_atoms __copy__(const SireDB::assign_atoms &other){ return SireDB::assign_atoms(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireDB::assign_atoms&){ return "SireDB::assign_atoms";}
+
 void register_assign_atoms_class(){
 
     bp::class_< SireDB::assign_atoms, bp::bases< SireDB::AssignBase > >( "assign_atoms" )    
@@ -45,6 +51,12 @@ void register_assign_atoms_class(){
         .def( 
             "what"
             , (char const * ( ::SireDB::assign_atoms::* )(  ) const)( &::SireDB::assign_atoms::what ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireDB::assign_atoms >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireDB::assign_atoms >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

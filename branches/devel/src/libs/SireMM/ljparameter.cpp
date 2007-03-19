@@ -27,6 +27,7 @@
 \*********************************************/
 
 #include "ljparameter.h"
+#include "ljpair.h"
 
 #include "SireMaths/maths.h"
 
@@ -62,6 +63,12 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, LJParameter &ljparam)
 
 /** Construct a dummy LJ parameter */
 LJParameter::LJParameter() : sqrtsig(0.0), sqrteps(0.0)
+{}
+
+/** Construct from an LJPair */
+LJParameter::LJParameter(const LJPair &ljpair)
+            : sqrtsig(ljpair.sqrtSigma()),
+              sqrteps(ljpair.sqrtEpsilon())
 {}
 
 /** Copy constructor */

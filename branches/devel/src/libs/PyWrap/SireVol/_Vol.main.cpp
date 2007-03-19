@@ -29,12 +29,14 @@
 
 #include "SpaceBase.pypp.hpp"
 
+#include "sirevol_containers.h"
+
 namespace bp = boost::python;
 
 BOOST_PYTHON_MODULE(_Vol){
-    register_AABox_class();
+    register_SireVol_containers();
 
-    bp::implicitly_convertible< SireVol::CoordGroup const &, SireVol::AABox >();
+    register_AABox_class();
 
     register_SpaceBase_class();
 
@@ -42,26 +44,16 @@ BOOST_PYTHON_MODULE(_Vol){
 
     register_CoordGroupBase_class();
 
-    bp::implicitly_convertible< int, SireVol::CoordGroupBase >();
-
-    bp::implicitly_convertible< QVector<SireMaths::Vector> const &, SireVol::CoordGroupBase >();
-
     register_CoordGroup_class();
-
-    bp::implicitly_convertible< int, SireVol::CoordGroup >();
-
-    bp::implicitly_convertible< QVector<SireMaths::Vector> const &, SireVol::CoordGroup >();
-
-    bp::implicitly_convertible< SireVol::CoordGroupBase const &, SireVol::CoordGroup >();
 
     register_CoordGroupEditor_class();
 
-    bp::implicitly_convertible< SireVol::CoordGroupBase const &, SireVol::CoordGroupEditor >();
-
     register_PeriodicBox_class();
 
-    register_Space_class();
+    bp::implicitly_convertible< QVector<SireMaths::Vector>, SireVol::CoordGroup >();
 
-    bp::implicitly_convertible< SireVol::SpaceBase const &, SireVol::Space >();
+    bp::implicitly_convertible< const SireVol::SpaceBase&, SireVol::Space >();
+
+    register_Space_class();
 }
 

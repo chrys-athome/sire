@@ -94,14 +94,73 @@ def fix_atom(c):
 def fix_atominfogroup(c):
     c.decls( "constData", allow_empty=True ).exclude()
 
+def fix_molecule(c):
+    c.add_registration_code( "def( bp::init<const SireMol::Molecule&>() )" )
+
 def remove_property_bases(c):
     c.bases = []
 
 special_code = { "AtomInfo" : fix_atominfo,
                  "Atom" : fix_atom,
                  "AtomInfoGroup" : fix_atominfogroup,
-                 "Property" : remove_property_bases
+                 "Property" : remove_property_bases,
+                 "Molecule" : fix_molecule
                }
+
+implicitly_convertible = [ ("boost::tuples::tuple<SireMol::AtomIndex,SireMol::AtomIndex,SireMol::AtomIndex>", 
+                            "SireMol::Angle"),
+                           
+                           ("boost::tuples::tuple<SireMol::AtomIndex,SireMol::AtomIndex,SireMol::AtomIndex,SireMol::AtomIndex>",
+                            "SireMol::Dihedral"),
+                            
+                           ("boost::tuples::tuple<SireMol::AtomIndex,SireMol::AtomIndex,SireMol::AtomIndex,SireMol::AtomIndex>",
+                            "SireMol::Improper"),
+
+                           ("boost::tuples::tuple<SireMol::AtomIndex,SireMol::AtomIndex>",
+                            "SireMol::Bond"),
+
+                           ("SireMol::IDBase", "quint32"),
+                           
+                           ("boost::tuples::tuple<QString,SireMol::ResNum>",
+                            "SireMol::AtomIndex"),
+                            
+                           ("QString","SireMol::Element"),
+                           ("quint32","SireMol::Element"),
+                           
+                           ("boost::tuples::tuple<SireMol::CutGroupID,SireMol::AtomID>",
+                            "SireMol::CGAtomID"),
+                           
+                           ("boost::tuples::tuple<SireMol::ResNum,SireMol::AtomID>",
+                            "SireMol::ResNumAtomID"),
+                           
+                           ("boost::tuples::tuple<SireMol::ResID,SireMol::AtomID>",
+                            "SireMol::ResIDAtomID"),
+                           
+                           ("boost::tuples::tuple<SireMol::GroupID,SireMol::Index>",
+                            "SireMol::GroupIndexID"),
+                            
+                           ("QVector<SireMol::Atom>", "SireMol::CutGroup"),
+                           
+                           ("QList<SireMol::Atom>", "SireMol::CutGroup"),
+                           
+                           ("const SireMol::CuttingFunctionBase&", "SireMol::CuttingFunction"),
+                           
+                           ("SireMol::CGAtomID", "SireMol::IDMolAtom"),
+                           ("SireMol::CGNumAtomID", "SireMol::IDMolAtom"),
+                           ("SireMol::ResNumAtomID", "SireMol::IDMolAtom"),
+                           ("SireMol::ResIDAtomID", "SireMol::IDMolAtom"),
+                           ("SireMol::AtomIndex", "SireMol::IDMolAtom"),
+                           ("SireMol::AtomID", "SireMol::IDMolAtom"),
+                           
+                           ("SireMol::MoleculeGroup", "SireMol::MoleculeGroups"),
+                           
+                           ("SireMol::NewAtom", "SireMaths::Vector"),
+                           ("SireMol::NewAtom", "SireMol::Element"),
+                           
+                           ("const SireMol::PropertyBase&", "SireMol::Property"),
+                           
+                           ("QVariant", "SireMol::VariantProperty")
+                         ]
 
 incpaths = sys.argv[1:]
 incpaths.insert(0, "../../")
@@ -115,8 +174,8 @@ headerfiles = ["siremol_headers.h"]
 #construct a module builder that will build the module's wrappers
 mb = module_builder_t( files=headerfiles, 
                        include_paths=incpaths,
-                       define_symbols=["SKIP_BROKEN_GCCXML_PARTS"],
-                       start_with_declarations = [namespace] )
+                       define_symbols=["SKIP_BROKEN_GCCXML_PARTS",
+                                       "SKIP_TEMPLATE_DEFINITIONS"] )
 
 populateNamespaces(mb)
 
@@ -127,16 +186,17 @@ for calldef in mb.calldefs():
       pass
 
 #add calls to register hand-written wrappers
-mb.add_declaration_code( "#include \"QSet_AtomIndex_.py.h\"" )
-mb.add_registration_code( "register_QSet_AtomIndex_class();", tail=False )
+mb.add_declaration_code( "#include \"siremol_containers.h\"" )
+mb.add_registration_code( "register_SireMol_containers();", tail=False )
 
-mb.add_declaration_code( "#include \"QList_Molecule_.py.h\"" )
-mb.add_registration_code( "register_QList_Molecule_class();", tail=False )
+mb.add_declaration_code( "#include <boost/tuple/tuple.hpp>" )
 
 #export each class in turn
 for classname in wrap_classes:
    #tell the program to write wrappers for this class
    export_class(mb, classname, aliases, special_code)
+
+register_implicit_conversions(mb, implicitly_convertible)
 
 #write all of the wrappers
 write_wrappers(mb, modulename, extra_includes, huge_classes)

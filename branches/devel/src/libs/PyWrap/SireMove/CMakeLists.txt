@@ -19,6 +19,8 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs
 set ( WRAPMOVE_SOURCES
 
       _Move.main.cpp
+
+      siremove_containers.cpp
       
       MonteCarlo.pypp.cpp
       

@@ -239,6 +239,8 @@ private:
     GroupID newid;
 };
 
+#ifndef SKIP_TEMPLATE_DEFINITIONS
+
 /** Construct an empty InternalInfo object */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
@@ -1740,9 +1742,13 @@ InternalInfo<T>::commonInternals(const QSet<ResNum> &resnums) const
 
 const MagicID intinfo_magic = getMagic("SireMM::detail::InternalInfo");
 
+#endif // SKIP_TEMPLATE_DEFINITIONS
+
 }
 
 }
+
+#ifndef SKIP_TEMPLATE_DEFINITIONS
 
 /** Serialise to a binary data stream */
 template<class T>
@@ -1774,6 +1780,8 @@ QDataStream &operator>>(QDataStream &ds, SireMM::detail::InternalInfo<T> &info)
 
     return ds;
 }
+
+#endif // SKIP_TEMPLATE_DEFINITIONS
 
 SIRE_END_HEADER
 

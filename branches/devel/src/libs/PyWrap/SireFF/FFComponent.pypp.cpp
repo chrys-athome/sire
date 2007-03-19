@@ -17,6 +17,12 @@
 
 namespace bp = boost::python;
 
+SireFF::FFComponent __copy__(const SireFF::FFComponent &other){ return SireFF::FFComponent(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_FFComponent_class(){
 
     bp::class_< SireFF::FFComponent, bp::bases< SireCAS::Function > >( "FFComponent" )    
@@ -54,6 +60,12 @@ void register_FFComponent_class(){
             , (::SireFF::ForceFieldID ( ::SireFF::FFComponent::* )(  ) const)( &::SireFF::FFComponent::forceFieldID ) )    
         .def( 
             "forceFieldName"
-            , (::QString ( ::SireFF::FFComponent::* )(  ) const)( &::SireFF::FFComponent::forceFieldName ) );
+            , (::QString ( ::SireFF::FFComponent::* )(  ) const)( &::SireFF::FFComponent::forceFieldName ) )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireFF::FFComponent >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireFF::FFComponent >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireFF::FFComponent > );
 
 }

@@ -14,6 +14,12 @@
 
 namespace bp = boost::python;
 
+SireMol::MoleculeGroup __copy__(const SireMol::MoleculeGroup &other){ return SireMol::MoleculeGroup(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMol::MoleculeGroup&){ return "SireMol::MoleculeGroup";}
+
 void register_MoleculeGroup_class(){
 
     bp::class_< SireMol::MoleculeGroup >( "MoleculeGroup" )    
@@ -112,6 +118,12 @@ void register_MoleculeGroup_class(){
         .def( 
             "version"
             , &::SireMol::MoleculeGroup::version
-            , bp::return_value_policy< bp::copy_const_reference >() );
+            , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::MoleculeGroup >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::MoleculeGroup >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

@@ -12,6 +12,12 @@
 
 namespace bp = boost::python;
 
+SireMM::DihedralAtomID __copy__(const SireMM::DihedralAtomID &other){ return SireMM::DihedralAtomID(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMM::DihedralAtomID&){ return "SireMM::DihedralAtomID";}
+
 void register_DihedralAtomID_class(){
 
     bp::class_< SireMM::DihedralAtomID >( "DihedralAtomID" )    
@@ -43,6 +49,12 @@ void register_DihedralAtomID_class(){
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "size"
-            , (int ( ::SireMM::DihedralAtomID::* )(  ) const)( &::SireMM::DihedralAtomID::size ) );
+            , (int ( ::SireMM::DihedralAtomID::* )(  ) const)( &::SireMM::DihedralAtomID::size ) )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::DihedralAtomID >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::DihedralAtomID >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

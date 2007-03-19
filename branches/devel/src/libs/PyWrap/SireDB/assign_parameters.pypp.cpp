@@ -10,6 +10,12 @@
 
 namespace bp = boost::python;
 
+SireDB::assign_parameters __copy__(const SireDB::assign_parameters &other){ return SireDB::assign_parameters(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireDB::assign_parameters&){ return "SireDB::assign_parameters";}
+
 void register_assign_parameters_class(){
 
     bp::class_< SireDB::assign_parameters >( "assign_parameters" )    
@@ -35,6 +41,12 @@ void register_assign_parameters_class(){
         .def( 
             "assign"
             , (::SireDB::ParameterTable ( ::SireDB::assign_parameters::* )( ::SireMol::Molecule const &,::SireDB::ParameterTable const &,::SireDB::ParameterDB &,::SireDB::MatchMRData const & ) const)( &::SireDB::assign_parameters::assign )
-            , ( bp::arg("molecule"), bp::arg("orig_table"), bp::arg("database"), bp::arg("matchmr")=::SireDB::MatchMRData( ) ) );
+            , ( bp::arg("molecule"), bp::arg("orig_table"), bp::arg("database"), bp::arg("matchmr")=::SireDB::MatchMRData( ) ) )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireDB::assign_parameters >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireDB::assign_parameters >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

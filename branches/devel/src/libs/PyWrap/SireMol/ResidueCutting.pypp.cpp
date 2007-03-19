@@ -14,6 +14,12 @@
 
 namespace bp = boost::python;
 
+SireMol::ResidueCutting __copy__(const SireMol::ResidueCutting &other){ return SireMol::ResidueCutting(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMol::ResidueCutting&){ return "SireMol::ResidueCutting";}
+
 void register_ResidueCutting_class(){
 
     bp::class_< SireMol::ResidueCutting, bp::bases< SireMol::CuttingFunctionBase > >( "ResidueCutting" )    
@@ -28,6 +34,12 @@ void register_ResidueCutting_class(){
         .def( 
             "what"
             , &::SireMol::ResidueCutting::what )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::ResidueCutting >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::ResidueCutting >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

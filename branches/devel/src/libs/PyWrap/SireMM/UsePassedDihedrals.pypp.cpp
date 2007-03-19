@@ -12,6 +12,12 @@
 
 namespace bp = boost::python;
 
+SireMM::UsePassedDihedrals __copy__(const SireMM::UsePassedDihedrals &other){ return SireMM::UsePassedDihedrals(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMM::UsePassedDihedrals&){ return "SireMM::UsePassedDihedrals";}
+
 void register_UsePassedDihedrals_class(){
 
     bp::class_< SireMM::UsePassedDihedrals, bp::bases< SireMM::UsePassedInternals<SireMM::MolDihedralInfo> > >( "UsePassedDihedrals" )    
@@ -27,6 +33,12 @@ void register_UsePassedDihedrals_class(){
         .def( 
             "what"
             , (char const * ( ::SireMM::UsePassedDihedrals::* )(  ) const)( &::SireMM::UsePassedDihedrals::what ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::UsePassedDihedrals >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::UsePassedDihedrals >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

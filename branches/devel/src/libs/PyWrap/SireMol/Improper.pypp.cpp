@@ -14,6 +14,12 @@
 
 namespace bp = boost::python;
 
+SireMol::Improper __copy__(const SireMol::Improper &other){ return SireMol::Improper(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_Improper_class(){
 
     bp::class_< SireMol::Improper >( "Improper" )    
@@ -92,6 +98,12 @@ void register_Improper_class(){
             , &::SireMol::Improper::size )    
         .def( 
             "toString"
-            , &::SireMol::Improper::toString );
+            , &::SireMol::Improper::toString )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::Improper >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::Improper >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireMol::Improper > );
 
 }

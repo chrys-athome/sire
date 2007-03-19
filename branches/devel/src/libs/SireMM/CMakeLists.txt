@@ -30,14 +30,21 @@ set ( SIREMM_SOURCES
       cljpair.cpp	      
       cljparameter.cpp      
       combiningrules.cpp
+      coulombff.cpp
       dihedraldb.cpp        
       dihedralgenerator.cpp 
       dihedraltable.cpp     
       errors.cpp	      
       intercljff.cpp        
+      intercoulombff.cpp
+      intergroupcoulombff.cpp
       intergroupcljff.cpp   
+      intergroupljff.cpp
+      interljff.cpp
       internaldatatypes.cpp 
       ljdb.cpp
+      ljff.cpp
+      ljpair.cpp
       ljparameter.cpp
       ljtable.cpp
       molangleinfo.cpp
@@ -47,10 +54,7 @@ set ( SIREMM_SOURCES
       resbondinfo.cpp
       resdihedralinfo.cpp
       switchingfunction.cpp
-      tip4pff.cpp
       ureybradleydb.cpp
-
-      detail/molcljinfo.cpp
     )
 
 add_library (SireMM ${SIREMM_SOURCES})

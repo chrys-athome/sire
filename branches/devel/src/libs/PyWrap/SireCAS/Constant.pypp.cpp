@@ -8,6 +8,10 @@
 
 namespace bp = boost::python;
 
+SireCAS::Constant __copy__(const SireCAS::Constant &other){ return SireCAS::Constant(other); }
+
+#include "SirePy/str.hpp"
+
 void register_Constant_class(){
 
     bp::class_< SireCAS::Constant, bp::bases< SireCAS::ExBase > >( "Constant" )    
@@ -54,6 +58,8 @@ void register_Constant_class(){
         .def( 
             "what"
             , (char const * ( ::SireCAS::Constant::* )(  ) const)( &::SireCAS::Constant::what ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
+        .def( "__str__", &SirePy::__str__< ::SireCAS::Constant > );
 
 }

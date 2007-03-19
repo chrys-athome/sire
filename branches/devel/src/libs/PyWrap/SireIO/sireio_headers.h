@@ -7,7 +7,7 @@
 #include "SireIO/iobase.h"
 #include "SireIO/pdb.h"
 #include "SireIO/protoms.h"
-#include "SireIO/protomsws.h"
+//#include "SireIO/protomsws.h"
 #include "SireIO/psf.h"
 
 #endif

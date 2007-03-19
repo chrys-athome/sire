@@ -72,7 +72,8 @@ FFBase::Groups::~Groups()
 /** Return a new, unique ID for a group in the forcefield */
 FFBase::Group FFBase::Groups::getUniqueID()
 {
-    return FFBase::Group(n++);
+    ++n;
+    return FFBase::Group(n);
 }
 
 FFBase::Groups FFBase::Groups::default_group;
@@ -403,8 +404,18 @@ FFBase& FFBase::operator=(const FFBase &other)
         components_ptr.reset(other.components_ptr->clone());
         isdirty = other.isdirty;
     }
-    
+
     return *this;
+}
+
+/** Return a string representation of this forcefield */
+QString FFBase::toString() const
+{
+    return QString("%1(%2, %3:%4)")
+              .arg(this->what())
+              .arg(this->name())
+              .arg(this->ID())
+              .arg(this->version().toString());
 }
 
 /** Register the passed components */
@@ -427,7 +438,7 @@ void FFBase::setClean()
 }
 
 /** Return the current values of the energy components - these may be
-    out of date if the state of the forcefield has been changed 
+    out of date if the state of the forcefield has been changed
     (and therefore isDirty() is true) */
 Values FFBase::currentEnergies() const
 {
@@ -552,10 +563,10 @@ bool FFBase::change(const QHash<MoleculeID,Molecule> &molecules)
          ++it)
     {
         bool this_changed = this->change(*it);
-        
+
         changed = changed or this_changed;
     }
-    
+
     return changed;
 }
 
@@ -758,7 +769,7 @@ bool FFBase::replace(const Molecule &oldmol,
         return false;
 }
 
-/** Return whether this forcefield contains a copy of 
+/** Return whether this forcefield contains a copy of
     any version of the molecule 'molecule' */
 bool FFBase::contains(const Molecule&) const
 {
@@ -781,14 +792,14 @@ QSet<MoleculeID> FFBase::moleculeIDs() const
     return QSet<MoleculeID>();
 }
 
-/** Return whether this forcefield contains a copy of 
+/** Return whether this forcefield contains a copy of
     any version of the residue 'residue' */
 bool FFBase::contains(const Residue &residue) const
 {
     return this->contains(residue.molecule());
 }
 
-/** Return whether this forcefield contains a copy of 
+/** Return whether this forcefield contains a copy of
     any version of the atom 'atom' */
 bool FFBase::contains(const NewAtom &atom) const
 {

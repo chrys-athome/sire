@@ -115,9 +115,24 @@ Quaternion::Quaternion(const Angle &angle, const Vector &axis)
     double sintheta = sin(ang);
 
     sc[3] = costheta;
-    sc[0] = sintheta * axis.x();
-    sc[1] = sintheta * axis.y();
-    sc[2] = sintheta * axis.z();
+
+    //the vector must be normalised
+    double lngth2 = axis.length2();
+
+    if (lngth2 != 1)
+    {
+        Vector a2 = axis.normalise();
+
+        sc[0] = sintheta * a2.x();
+        sc[1] = sintheta * a2.y();
+        sc[2] = sintheta * a2.z();
+    }
+    else
+    {
+        sc[0] = sintheta * axis.x();
+        sc[1] = sintheta * axis.y();
+        sc[2] = sintheta * axis.z();
+    }
 
     renormalise();
 }

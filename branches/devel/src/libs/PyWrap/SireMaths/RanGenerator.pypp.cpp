@@ -8,6 +8,12 @@
 
 namespace bp = boost::python;
 
+SireMaths::RanGenerator __copy__(const SireMaths::RanGenerator &other){ return SireMaths::RanGenerator(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMaths::RanGenerator&){ return "SireMaths::RanGenerator";}
+
 void register_RanGenerator_class(){
 
     bp::class_< SireMaths::RanGenerator >( "RanGenerator" )    
@@ -94,6 +100,12 @@ void register_RanGenerator_class(){
         .def( 
             "vectorOnSphere"
             , (void ( ::SireMaths::RanGenerator::* )( ::QVector<SireMaths::Vector> &,::uint ) )( &::SireMaths::RanGenerator::vectorOnSphere )
-            , ( bp::arg("array"), bp::arg("n")=(unsigned int)(0) ) );
+            , ( bp::arg("array"), bp::arg("n")=(unsigned int)(0) ) )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMaths::RanGenerator >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMaths::RanGenerator >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

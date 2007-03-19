@@ -10,10 +10,16 @@
 
 namespace bp = boost::python;
 
+SireDB::match_single_res_name __copy__(const SireDB::match_single_res_name &other){ return SireDB::match_single_res_name(other); }
+
+const char* pvt_get_name(const SireDB::match_single_res_name&){ return "SireDB::match_single_res_name";}
+
 void register_match_single_res_name_class(){
 
     bp::class_< SireDB::match_single_res_name >( "match_single_res_name" )    
         .def( bp::init< >() )    
-        .def( bp::self == bp::other< QString >() );
+        .def( bp::self == bp::other< QString >() )    
+        .def( "__copy__", &__copy__)    
+        .def( "__str__", &pvt_get_name);
 
 }

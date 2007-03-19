@@ -11,15 +11,21 @@
 
 #include "SireMol/editmol.h"
 
+#include "SireDB/parameterdb.h"
+
 #include "IOBase.pypp.hpp"
 
 #include "PDB.pypp.hpp"
 
 #include "ProtoMS.pypp.hpp"
 
+#include "sireio_containers.h"
+
 namespace bp = boost::python;
 
 BOOST_PYTHON_MODULE(_IO){
+    register_SireIO_containers();
+
     register_IOBase_class();
 
     register_PDB_class();

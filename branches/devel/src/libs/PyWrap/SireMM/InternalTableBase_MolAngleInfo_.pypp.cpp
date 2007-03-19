@@ -12,6 +12,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMM::InternalTableBase<SireMM::MolAngleInfo>&){ return "SireMM::InternalTableBase<SireMM::MolAngleInfo>";}
+
 void register_InternalTableBase_MolAngleInfo__class(){
 
     bp::class_< SireMM::InternalTableBase<SireMM::MolAngleInfo>, bp::bases< SireDB::TableBase >, boost::noncopyable >( "InternalTableBase_MolAngleInfo_", bp::no_init )    
@@ -131,7 +135,7 @@ void register_InternalTableBase_MolAngleInfo__class(){
         .def( 
             "isCompatibleWith"
             , (bool ( ::SireMM::InternalTableBase<SireMM::MolAngleInfo>::* )( ::SireMol::Molecule const & ) const)( &::SireMM::InternalTableBase<SireMM::MolAngleInfo>::isCompatibleWith )
-            , ( bp::arg("mol") ) )    
+            , ( bp::arg("molecule") ) )    
         .def( 
             "isEmpty"
             , (bool ( ::SireMM::InternalTableBase<SireMM::MolAngleInfo>::* )(  ) const)( &::SireMM::InternalTableBase<SireMM::MolAngleInfo>::isEmpty ) )    
@@ -274,6 +278,11 @@ void register_InternalTableBase_MolAngleInfo__class(){
             , ( bp::arg("resnum") ) )    
         .def( 
             "size"
-            , (int ( ::SireMM::InternalTableBase<SireMM::MolAngleInfo>::* )(  ) const)( &::SireMM::InternalTableBase<SireMM::MolAngleInfo>::size ) );
+            , (int ( ::SireMM::InternalTableBase<SireMM::MolAngleInfo>::* )(  ) const)( &::SireMM::InternalTableBase<SireMM::MolAngleInfo>::size ) )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::InternalTableBase<SireMM::MolAngleInfo> >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::InternalTableBase<SireMM::MolAngleInfo> >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

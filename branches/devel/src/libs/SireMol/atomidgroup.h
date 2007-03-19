@@ -53,7 +53,11 @@ class AtomIDGroup;
 typedef boost::tuple<AtomIDGroup,AtomIDGroup> AtomIDGroupPair;
 
 /**
-This class contains the IDs of all of the atoms in a molecule that belong to this group. This class is optimised for speedy addition of atoms and querying of whether or not particular atoms or residues are contained in this group. This class is used by the functions that split molecules into groups so that the groups can be moved via the internal bond/angle/dihedral moves.
+This class contains the IDs of all of the atoms in a molecule that belong to this group.
+This class is optimised for speedy addition of atoms and querying of whether or not
+particular atoms or residues are contained in this group. This class is used by the
+functions that split molecules into groups so that the groups can be moved via
+the internal bond/angle/dihedral moves.
 
 @author Christopher Woods
 */
@@ -68,7 +72,7 @@ public:
     AtomIDGroup(const QSet<AtomIndex> &atoms);
     AtomIDGroup(const QSet<ResNum> &residues);
     AtomIDGroup(const QSet<ResNum> &residues, const QSet<AtomIndex> &atoms);
-    
+
     ~AtomIDGroup();
 
     void add(ResNum resnum);

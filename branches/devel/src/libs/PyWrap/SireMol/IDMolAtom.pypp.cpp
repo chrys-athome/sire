@@ -14,6 +14,10 @@
 
 namespace bp = boost::python;
 
+SireMol::IDMolAtom __copy__(const SireMol::IDMolAtom &other){ return SireMol::IDMolAtom(other); }
+
+const char* pvt_get_name(const SireMol::IDMolAtom&){ return "SireMol::IDMolAtom";}
+
 void register_IDMolAtom_class(){
 
     bp::class_< SireMol::IDMolAtom >( "IDMolAtom", bp::init< SireMol::CGAtomID const & >(( bp::arg("cgatomid") )) )    
@@ -30,6 +34,8 @@ void register_IDMolAtom_class(){
             "index"
             , &::SireMol::IDMolAtom::index
             , ( bp::arg("molinfo") )
-            , bp::return_value_policy< bp::copy_const_reference >() );
+            , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( "__copy__", &__copy__)    
+        .def( "__str__", &pvt_get_name);
 
 }

@@ -12,6 +12,12 @@
 
 namespace bp = boost::python;
 
+SireMM::DihedralResID __copy__(const SireMM::DihedralResID &other){ return SireMM::DihedralResID(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMM::DihedralResID&){ return "SireMM::DihedralResID";}
+
 void register_DihedralResID_class(){
 
     bp::class_< SireMM::DihedralResID >( "DihedralResID" )    
@@ -48,6 +54,12 @@ void register_DihedralResID_class(){
             , (::QSet<SireMol::ResNum> ( ::SireMM::DihedralResID::* )(  ) const)( &::SireMM::DihedralResID::residueNumbers ) )    
         .def( 
             "size"
-            , (int ( ::SireMM::DihedralResID::* )(  ) const)( &::SireMM::DihedralResID::size ) );
+            , (int ( ::SireMM::DihedralResID::* )(  ) const)( &::SireMM::DihedralResID::size ) )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::DihedralResID >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::DihedralResID >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

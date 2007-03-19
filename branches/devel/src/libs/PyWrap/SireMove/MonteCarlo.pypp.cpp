@@ -13,6 +13,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMove::MonteCarlo&){ return "SireMove::MonteCarlo";}
+
 void register_MonteCarlo_class(){
 
     { //::SireMove::MonteCarlo
@@ -40,6 +44,11 @@ void register_MonteCarlo_class(){
                 , ( bp::arg("generator") ) );
         
         }
+        MonteCarlo_exposer.def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMove::MonteCarlo >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
+        MonteCarlo_exposer.def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMove::MonteCarlo >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
+        MonteCarlo_exposer.def( "__str__", &pvt_get_name);
     }
 
 }

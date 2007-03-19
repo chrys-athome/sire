@@ -12,6 +12,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireMM::InternalGenerator<SireMM::MolAngleInfo>&){ return "SireMM::InternalGenerator<SireMM::MolAngleInfo>";}
+
 void register_InternalGenerator_MolAngleInfo__class(){
 
     bp::class_< SireMM::InternalGenerator<SireMM::MolAngleInfo>, boost::noncopyable >( "InternalGenerator_MolAngleInfo_", bp::no_init )    
@@ -25,6 +27,7 @@ void register_InternalGenerator_MolAngleInfo__class(){
             , ( bp::arg("molecule") ) )    
         .def( 
             "what"
-            , (char const * ( ::SireMM::InternalGenerator<SireMM::MolAngleInfo>::* )(  ) const)( &::SireMM::InternalGenerator<SireMM::MolAngleInfo>::what ) );
+            , (char const * ( ::SireMM::InternalGenerator<SireMM::MolAngleInfo>::* )(  ) const)( &::SireMM::InternalGenerator<SireMM::MolAngleInfo>::what ) )    
+        .def( "__str__", &pvt_get_name);
 
 }

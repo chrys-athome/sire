@@ -14,6 +14,12 @@
 
 namespace bp = boost::python;
 
+SireMol::MolCutGroupID __copy__(const SireMol::MolCutGroupID &other){ return SireMol::MolCutGroupID(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_MolCutGroupID_class(){
 
     bp::class_< SireMol::MolCutGroupID >( "MolCutGroupID", bp::init< bp::optional< SireMol::MoleculeID, SireMol::CutGroupID > >(( bp::arg("molid")=::SireMol::MoleculeID( 0 ), bp::arg("cgid")=::SireMol::CutGroupID( 0 ) )) )    
@@ -32,6 +38,12 @@ void register_MolCutGroupID_class(){
         .def( bp::self >= bp::self )    
         .def( 
             "toString"
-            , &::SireMol::MolCutGroupID::toString );
+            , &::SireMol::MolCutGroupID::toString )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::MolCutGroupID >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::MolCutGroupID >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireMol::MolCutGroupID > );
 
 }

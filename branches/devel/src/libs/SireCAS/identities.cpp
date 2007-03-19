@@ -77,6 +77,18 @@ Identities::Identities(const QList<SymbolExpression> &expressions)
     }
 }
 
+/** Construct with a hash of expressions indexed by symbol */
+Identities::Identities(const QHash<Symbol,Expression> &expressions)
+{
+    for (QHash<Symbol,Expression>::const_iterator it = expressions.begin();
+         it != expressions.end();
+         ++it)
+    {
+        set(it.key(), it.value());
+    }
+}
+
+
 /** Construct with the passed expressions */
 Identities::Identities(const SymbolExpression &symex0)
 {

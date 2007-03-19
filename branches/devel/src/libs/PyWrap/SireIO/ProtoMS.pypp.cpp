@@ -7,8 +7,13 @@
 #include "sireio_headers.h"
 #include "SireMol/molecule.h"
 #include "SireMol/editmol.h"
+#include "SireDB/parameterdb.h"
 
 namespace bp = boost::python;
+
+SireIO::ProtoMS __copy__(const SireIO::ProtoMS &other){ return SireIO::ProtoMS(other); }
+
+const char* pvt_get_name(const SireIO::ProtoMS&){ return "SireIO::ProtoMS";}
 
 void register_ProtoMS_class(){
 
@@ -17,6 +22,8 @@ void register_ProtoMS_class(){
         .def( 
             "read"
             , (void ( ::SireIO::ProtoMS::* )( ::QString const &,::SireDB::ParameterDB & ) )( &::SireIO::ProtoMS::read )
-            , ( bp::arg("filename"), bp::arg("ffdb") ) );
+            , ( bp::arg("filename"), bp::arg("ffdb") ) )    
+        .def( "__copy__", &__copy__)    
+        .def( "__str__", &pvt_get_name);
 
 }

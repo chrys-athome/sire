@@ -12,6 +12,12 @@
 
 namespace bp = boost::python;
 
+SireMM::BondResID __copy__(const SireMM::BondResID &other){ return SireMM::BondResID(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMM::BondResID&){ return "SireMM::BondResID";}
+
 void register_BondResID_class(){
 
     bp::class_< SireMM::BondResID >( "BondResID" )    
@@ -42,6 +48,12 @@ void register_BondResID_class(){
             , (::QSet<SireMol::ResNum> ( ::SireMM::BondResID::* )(  ) const)( &::SireMM::BondResID::residueNumbers ) )    
         .def( 
             "size"
-            , (int ( ::SireMM::BondResID::* )(  ) const)( &::SireMM::BondResID::size ) );
+            , (int ( ::SireMM::BondResID::* )(  ) const)( &::SireMM::BondResID::size ) )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::BondResID >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::BondResID >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

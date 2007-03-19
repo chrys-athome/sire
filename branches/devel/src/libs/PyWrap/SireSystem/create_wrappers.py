@@ -35,6 +35,11 @@ def remove_next_move(c):
 special_code = { "MovesBase" : remove_next_move,
                  "SameMoves" : remove_next_move }
 
+implicitly_convertible = [ ("const SireSystem::MoveBase&",
+                            "SireSystem::Move"),
+                           ("SireSystem::Move", "SireSystem::SameMoves")
+                         ]
+
 incpaths = sys.argv[1:]
 incpaths.insert(0, "../../")
 
@@ -47,8 +52,8 @@ headerfiles = ["siresystem_headers.h"]
 #construct a module builder that will build the module's wrappers
 mb = module_builder_t( files=headerfiles, 
                        include_paths=incpaths,
-                       define_symbols=["SKIP_BROKEN_GCCXML_PARTS"],
-                       start_with_declarations = [namespace] )
+                       define_symbols=["SKIP_BROKEN_GCCXML_PARTS",
+                                       "SKIP_TEMPLATE_DEFINITIONS"] )
 
 populateNamespaces(mb)
 
@@ -58,11 +63,17 @@ for calldef in mb.calldefs():
     except:
       pass
 
+#add calls to register hand-written wrappers
+mb.add_declaration_code( "#include \"siresystem_containers.h\"" )
+mb.add_registration_code( "register_SireSystem_containers();", tail=False )
+
 mb.calldefs().create_with_signature = True
 
 #export each class in turn
 for classname in wrap_classes:
    #tell the program to write wrappers for this class
    export_class(mb, classname, aliases, special_code)
+
+register_implicit_conversions(mb, implicitly_convertible)
 
 write_wrappers(mb, modulename, extra_includes, huge_classes)

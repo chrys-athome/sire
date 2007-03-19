@@ -18,47 +18,37 @@ include_directories( ${CMAKE_SOURCE_DIR}/src/libs
 # Define the sources in SireQt
 set ( WRAPQT_SOURCES
 
-      wrap_SireQt.cpp
+      _Qt.main.cpp
 
-      qvariant.py.cpp
+      sireqt_containers.cpp
 
-      wrap_qbytearray.cpp            
-      wrap_qchar.cpp                 
-      wrap_qdatastream.cpp           
-      wrap_qfile.cpp                 
-      wrap_qhash.cpp                 
-      wrap_qhash_qstring_qstring.cpp 
-      wrap_qiodevice.cpp             
-      wrap_qlist.cpp                 
-      wrap_qlist_int16.cpp            
-      wrap_qlist_int32.cpp            
-      wrap_qlist_int64.cpp           
-      wrap_qlist_int8.cpp            
-      wrap_qlist_qstring.cpp         
-      wrap_qlist_real.cpp            
-      wrap_qmap.cpp                  
-      wrap_qmap_qstring_qstring.cpp  
-      wrap_qset.cpp                  
-      wrap_qset_int16.cpp            
-      wrap_qset_int32.cpp            
-      wrap_qset_int64.cpp                  
-      wrap_qset_int8.cpp     
-      wrap_qset_qstring.cpp  
-      wrap_qset_real.cpp     
-      wrap_qstring2.cpp      
-      wrap_qstring3.cpp      
-      wrap_qstring.cpp       
-      wrap_qstringlist.cpp   
-      wrap_qtextstream.cpp   
-      wrap_qtglobal.cpp
-      wrap_qtime.cpp      
-      wrap_qvector.cpp
-      wrap_qvector_int16.cpp
-      wrap_qvector_int32.cpp
-      wrap_qvector_int64.cpp
-      wrap_qvector_int8.cpp
-      wrap_qvector_qstring.cpp
-      wrap_qvector_real.cpp
+      Filters.pypp.cpp
+      NumberFlags.pypp.cpp
+      OpenMode.pypp.cpp
+      Permissions.pypp.cpp
+      
+      QByteArray.pypp.cpp
+      QChar.pypp.cpp
+      QDataStream.pypp.cpp
+      QDate.pypp.cpp
+      QDateTime.pypp.cpp
+      QDir.pypp.cpp
+      QFileInfo.pypp.cpp
+      QFile.pypp.cpp
+      QIODevice.pypp.cpp
+
+      QString_1.py.cpp
+      QString_2.py.cpp
+      QString_3.py.cpp
+      
+      QTextStream.pypp.cpp
+      
+      QtGlobal.py.cpp
+      
+      QTime.pypp.cpp
+      QVariant.pypp.cpp
+      
+      SortFlags.pypp.cpp
     )
 
 # Create the library that holds all of the class wrappers

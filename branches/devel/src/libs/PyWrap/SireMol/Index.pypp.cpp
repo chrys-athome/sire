@@ -14,10 +14,16 @@
 
 namespace bp = boost::python;
 
+SireMol::Index __copy__(const SireMol::Index &other){ return SireMol::Index(other); }
+
+#include "SirePy/str.hpp"
+
 void register_Index_class(){
 
     bp::class_< SireMol::Index, bp::bases< SireMol::IDBase > >( "Index" )    
         .def( bp::init< >() )    
-        .def( bp::init< quint32 >(( bp::arg("id") )) );
+        .def( bp::init< quint32 >(( bp::arg("id") )) )    
+        .def( "__copy__", &__copy__)    
+        .def( "__str__", &SirePy::__str__< ::SireMol::Index > );
 
 }

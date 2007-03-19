@@ -14,6 +14,12 @@
 
 namespace bp = boost::python;
 
+SireMol::Dihedral __copy__(const SireMol::Dihedral &other){ return SireMol::Dihedral(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_Dihedral_class(){
 
     bp::class_< SireMol::Dihedral >( "Dihedral" )    
@@ -92,6 +98,12 @@ void register_Dihedral_class(){
             , &::SireMol::Dihedral::size )    
         .def( 
             "toString"
-            , &::SireMol::Dihedral::toString );
+            , &::SireMol::Dihedral::toString )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::Dihedral >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::Dihedral >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireMol::Dihedral > );
 
 }

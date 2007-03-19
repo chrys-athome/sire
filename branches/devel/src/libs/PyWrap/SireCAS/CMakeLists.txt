@@ -20,6 +20,8 @@ set ( WRAPCAS_SOURCES
 
       _CAS.main.cpp
 
+      sirecas_containers.cpp
+
       _CAS_free_functions.pypp.cpp
 
       ArcCos.pypp.cpp

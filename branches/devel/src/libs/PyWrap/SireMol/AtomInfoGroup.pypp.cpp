@@ -14,6 +14,12 @@
 
 namespace bp = boost::python;
 
+SireMol::AtomInfoGroup __copy__(const SireMol::AtomInfoGroup &other){ return SireMol::AtomInfoGroup(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_AtomInfoGroup_class(){
 
     bp::class_< SireMol::AtomInfoGroup >( "AtomInfoGroup" )    
@@ -73,6 +79,12 @@ void register_AtomInfoGroup_class(){
             , &::SireMol::AtomInfoGroup::residueNumbers )    
         .def( 
             "toString"
-            , &::SireMol::AtomInfoGroup::toString );
+            , &::SireMol::AtomInfoGroup::toString )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::AtomInfoGroup >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::AtomInfoGroup >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireMol::AtomInfoGroup > );
 
 }

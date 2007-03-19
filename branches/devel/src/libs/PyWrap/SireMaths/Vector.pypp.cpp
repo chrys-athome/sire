@@ -8,11 +8,18 @@
 
 namespace bp = boost::python;
 
+SireMaths::Vector __copy__(const SireMaths::Vector &other){ return SireMaths::Vector(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_Vector_class(){
 
-    bp::class_< SireMaths::Vector >( "Vector", bp::init< double, double, double >(( bp::arg("xpos"), bp::arg("ypos"), bp::arg("zpos") )) )    
+    bp::class_< SireMaths::Vector >( "Vector", bp::init< bp::optional< double > >(( bp::arg("val")=0.0 )) )    
+        .def( bp::init< double, double, double >(( bp::arg("xpos"), bp::arg("ypos"), bp::arg("zpos") )) )    
         .def( bp::init< boost::tuples::tuple<double, double, double, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type> const & >(( bp::arg("pos") )) )    
-        .def( bp::init< bp::optional< double > >(( bp::arg("val")=0.0 )) )    
+        .def( bp::init< QString const & >(( bp::arg("str") )) )    
         .def( 
             "angle"
             , (::SireMaths::Angle (*)( ::SireMaths::Vector const &,::SireMaths::Vector const & ))( &::SireMaths::Vector::angle )
@@ -194,6 +201,23 @@ void register_Vector_class(){
         .staticmethod( "fromString" )    
         .staticmethod( "generate" )    
         .staticmethod( "invDistance" )    
-        .staticmethod( "invDistance2" );
+        .staticmethod( "invDistance2" )    
+        .def(self + self)    
+        .def(self - self)    
+        .def(self * other<double>())    
+        .def(self / other<double>())    
+        .def(self += self)    
+        .def(self -= self)    
+        .def(self *= other<double>())    
+        .def(self /= other<double>())    
+        .def(-self)    
+        .def(self == self)    
+        .def(self != self)    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMaths::Vector >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMaths::Vector >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireMaths::Vector > );
 
 }

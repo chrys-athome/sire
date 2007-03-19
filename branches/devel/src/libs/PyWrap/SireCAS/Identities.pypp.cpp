@@ -8,11 +8,18 @@
 
 namespace bp = boost::python;
 
+SireCAS::Identities __copy__(const SireCAS::Identities &other){ return SireCAS::Identities(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireCAS::Identities&){ return "SireCAS::Identities";}
+
 void register_Identities_class(){
 
     bp::class_< SireCAS::Identities >( "Identities" )    
         .def( bp::init< >() )    
         .def( bp::init< QList<SireCAS::SymbolExpression> const & >(( bp::arg("expressions") )) )    
+        .def( bp::init< QHash<SireCAS::Symbol, SireCAS::Expression> const & >(( bp::arg("expressions") )) )    
         .def( bp::init< SireCAS::SymbolExpression const & >(( bp::arg("symex0") )) )    
         .def( bp::init< SireCAS::SymbolExpression const &, SireCAS::SymbolExpression const & >(( bp::arg("symex0"), bp::arg("symex1") )) )    
         .def( bp::init< SireCAS::SymbolExpression const &, SireCAS::SymbolExpression const &, SireCAS::SymbolExpression const & >(( bp::arg("symex0"), bp::arg("symex1"), bp::arg("symex2") )) )    
@@ -82,6 +89,12 @@ void register_Identities_class(){
         .def( 
             "set"
             , (void ( ::SireCAS::Identities::* )( ::SireCAS::Symbol const &,::SireCAS::Expression const & ) )( &::SireCAS::Identities::set )
-            , ( bp::arg("symbol"), bp::arg("expression") ) );
+            , ( bp::arg("symbol"), bp::arg("expression") ) )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireCAS::Identities >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireCAS::Identities >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

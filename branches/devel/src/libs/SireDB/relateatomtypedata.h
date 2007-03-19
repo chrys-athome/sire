@@ -53,20 +53,20 @@ class SIREDB_EXPORT RelateAtomTypeData
 {
 public:
     RelateAtomTypeData();
-    
+
     RelateAtomTypeData(RelateID molresid, NameID atype, uint nprotons);
     RelateAtomTypeData(const tuple<RelateID,int> &idscore, NameID atype, uint nprotons);
-    
+
     RelateAtomTypeData(const RelateAtomTypeData &other);
-    
+
     ~RelateAtomTypeData();
 
     int score() const;
-    
+
     RelateID molResID() const;
     NameID atomType() const;
     uint nprotons() const;
-    
+
     QString toQueryString(uint n) const;
     QString toInsertString() const;
 
@@ -78,7 +78,7 @@ private:
 
     /** The NameID of the atom type ID string */
     NameID atomid;
-    /** The number of protons in the element of the atom 
+    /** The number of protons in the element of the atom
         type (0 if this is a wild element match) */
     uint nprtns;
 

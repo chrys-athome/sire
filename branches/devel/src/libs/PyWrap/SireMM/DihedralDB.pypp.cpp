@@ -12,6 +12,10 @@
 
 namespace bp = boost::python;
 
+SireMM::DihedralDB __copy__(const SireMM::DihedralDB &other){ return SireMM::DihedralDB(other); }
+
+#include "SirePy/str.hpp"
+
 void register_DihedralDB_class(){
 
     bp::class_< SireMM::DihedralDB, bp::bases< SireDB::Term14DB, SireMM::InternalDB<SireMM::MolDihedralInfo> > >( "DihedralDB" )    
@@ -78,6 +82,8 @@ void register_DihedralDB_class(){
         .def( 
             "what"
             , (char const * ( ::SireMM::DihedralDB::* )(  ) const)( &::SireMM::DihedralDB::what ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
+        .def( "__str__", &SirePy::__str__< ::SireMM::DihedralDB > );
 
 }

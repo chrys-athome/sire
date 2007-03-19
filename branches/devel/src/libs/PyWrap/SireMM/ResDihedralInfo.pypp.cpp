@@ -12,6 +12,12 @@
 
 namespace bp = boost::python;
 
+SireMM::ResDihedralInfo __copy__(const SireMM::ResDihedralInfo &other){ return SireMM::ResDihedralInfo(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMM::ResDihedralInfo&){ return "SireMM::ResDihedralInfo";}
+
 void register_ResDihedralInfo_class(){
 
     bp::class_< SireMM::ResDihedralInfo, bp::bases< SireMM::ResInternalInfo<SireMol::Dihedral> > >( "ResDihedralInfo" )    
@@ -35,6 +41,12 @@ void register_ResDihedralInfo_class(){
             , (int ( ::SireMM::ResDihedralInfo::* )(  ) const)( &::SireMM::ResDihedralInfo::nInterDihedrals ) )    
         .def( 
             "nIntraDihedrals"
-            , (int ( ::SireMM::ResDihedralInfo::* )(  ) const)( &::SireMM::ResDihedralInfo::nIntraDihedrals ) );
+            , (int ( ::SireMM::ResDihedralInfo::* )(  ) const)( &::SireMM::ResDihedralInfo::nIntraDihedrals ) )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::ResDihedralInfo >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::ResDihedralInfo >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

@@ -14,6 +14,12 @@
 
 namespace bp = boost::python;
 
+SireMol::ResidueInfo __copy__(const SireMol::ResidueInfo &other){ return SireMol::ResidueInfo(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_ResidueInfo_class(){
 
     bp::class_< SireMol::ResidueInfo >( "ResidueInfo" )    
@@ -261,6 +267,12 @@ void register_ResidueInfo_class(){
             , &::SireMol::ResidueInfo::resNum )    
         .def( 
             "toString"
-            , &::SireMol::ResidueInfo::toString );
+            , &::SireMol::ResidueInfo::toString )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::ResidueInfo >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::ResidueInfo >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireMol::ResidueInfo > );
 
 }

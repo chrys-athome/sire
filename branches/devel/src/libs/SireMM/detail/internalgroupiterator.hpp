@@ -16,9 +16,9 @@ namespace detail
     subsets of the internals, rather than all of them. Also note
     that this takes an implicit copy of the data, so if you modify
     the original InternalInfo<T> then that will not be reflected
-    in this iterator, which will continue to iterate over the 
+    in this iterator, which will continue to iterate over the
     old version of the data.
-    
+
     @author Christopher Woods
 */
 template<class T>
@@ -28,7 +28,7 @@ public:
     /** Define the type of index used by this container */
     typedef typename internal_type_data<T>::residue_id_type residue_id_type;
     typedef typename internal_type_data<T>::atom_id_type atom_id_type;
-    
+
     /** Define the type of exception to throw if we can't find
         an internal */
     typedef typename internal_type_data<T>::missing_error_type missing_error_type;
@@ -38,10 +38,10 @@ public:
 
     /** The type of the internals data */
     typedef QHash<GroupID,group_type> internals_type;
-    
+
     InternalGroupIterator();
 
-    InternalGroupIterator(const QSet<GroupID> &groupids, 
+    InternalGroupIterator(const QSet<GroupID> &groupids,
                           const internals_type &internals);
 
     InternalGroupIterator(const InternalGroupIterator<T> &other);
@@ -65,7 +65,7 @@ public:
 
     void next();
     void prev();
-    
+
     void nextGroup();
     void prevGroup();
 
@@ -80,7 +80,7 @@ public:
 
     void toBegin();
     void toEnd();
-    
+
     void toFirst();
     void toLast();
 
@@ -96,7 +96,7 @@ private:
 
     /** Pointer to the current group being iterated over */
     const group_type *current_group;
-    
+
     /** The iterator over the internals within the group */
     typename QHash<atom_id_type,Index>::const_iterator current_internal;
 
@@ -104,13 +104,15 @@ private:
     QHash<GroupID,group_type> internals;
 };
 
+#ifndef SKIP_TEMPLATE_DEFINITIONS
+
 /** Null constructor - do not use a null iterator as you will get undefined results :-) */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 InternalGroupIterator<T>::InternalGroupIterator() : current_group(0)
 {}
 
-/** Construct an iterator to iterate over the internals contained in the groups 
+/** Construct an iterator to iterate over the internals contained in the groups
     contained in 'all_internals', whose ID numbers are stored in group_ids */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
@@ -124,7 +126,7 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 InternalGroupIterator<T>::InternalGroupIterator( const InternalGroupIterator<T> &other )
                          : groups(other.groups), groupid_iterator(other.groupid_iterator),
-                           current_group(0), current_internal(other.current_internal), 
+                           current_group(0), current_internal(other.current_internal),
                            internals(other.internals)
 {
     //get the pointer to the current group
@@ -138,7 +140,7 @@ SIRE_OUTOFLINE_TEMPLATE
 InternalGroupIterator<T>::~InternalGroupIterator()
 {}
 
-/** Return whether or not the iterator is currently pointing 
+/** Return whether or not the iterator is currently pointing
     to a valid position. Attempts to dereference an invalid
     iterator will lead to undefined results! */
 template<class T>
@@ -192,17 +194,17 @@ InternalGroupIterator<T>& InternalGroupIterator<T>::operator++()
         if ( groupid_iterator != groups.constEnd() )
         {
             //get the next group over which to iterate
-            typename internals_type::const_iterator it = 
+            typename internals_type::const_iterator it =
                                         internals.constFind(*groupid_iterator);
             BOOST_ASSERT( it != internals.constEnd() );
-            
+
             //get a pointer to the current group
             current_group = it.operator->();
 
             //reset the internal iterator to iterator over
             //the internals of the new group
             current_internal = current_group->constBegin();
-            
+
             //ensure that this is valid...
             BOOST_ASSERT( current_internal != current_group->constEnd() );
         }
@@ -231,7 +233,7 @@ InternalGroupIterator<T> InternalGroupIterator<T>::operator++(int)
     return it;
 }
 
-/** Move the iterator back to the first item in the list. If this 
+/** Move the iterator back to the first item in the list. If this
     is empty, then the iterator will remain invalid. */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
@@ -241,15 +243,15 @@ void InternalGroupIterator<T>::toBegin()
     {
         //move to the first group
         groupid_iterator = groups.constBegin();
-        
+
         typename internals_type::const_iterator it = internals.constFind(*groupid_iterator);
         BOOST_ASSERT( it != internals.constEnd() );
-        
+
         //get a pointer to the current group
         current_group = it.operator->();
-        
+
         BOOST_ASSERT( current_group->nInternals() != 0 );
-        
+
         current_internal = current_group->constBegin();
     }
     else
@@ -264,7 +266,7 @@ void InternalGroupIterator<T>::toEnd()
 {
     current_group = 0;
 }
-    
+
 /** Move this iterator back to the first internal in the list - this does
     the same as toBegin() */
 template<class T>
@@ -274,13 +276,13 @@ void InternalGroupIterator<T>::toFirst()
     toBegin();
 }
 
-/** Move the iterator to the last internal in the list - note that this 
+/** Move the iterator to the last internal in the list - note that this
     will make the iterator invalid if there are no internals in the list! */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 void InternalGroupIterator<T>::toLast()
 {
-    //we can only move to the last item if there is 
+    //we can only move to the last item if there is
     //an item to move to!
     if ( groups.count() > 0 )
     {
@@ -290,11 +292,11 @@ void InternalGroupIterator<T>::toLast()
 
         typename internals_type::const_iterator it = internals.constFind(*groupid_iterator);
         BOOST_ASSERT( it != internals.constEnd() );
-        
+
         current_group = it.operator->();
 
         BOOST_ASSERT(current_group->nInternals() != 0);
-        
+
         current_internal = current_group->constEnd();
         --current_internal;
     }
@@ -309,7 +311,7 @@ SIRE_OUTOFLINE_TEMPLATE
 void InternalGroupIterator<T>::find(const T &internal)
 {
     residue_id_type resid = internal;
-    
+
     //iterate over all of the groups...
     for (groupid_iterator = groups.constBegin();
          groupid_iterator != groups.constEnd();
@@ -318,31 +320,31 @@ void InternalGroupIterator<T>::find(const T &internal)
         //get the group...
         typename internals_type::const_iterator it = internals.constFind(*groupid_iterator);
         BOOST_ASSERT( it != internals.constEnd() );
-        
+
         current_group = it.operator->();
         BOOST_ASSERT(current_group->nInternals() != 0);
-    
+
         //does the group's residue-ID match resid?
         if (current_group->residueID() == resid)
         {
             //the internal must be in this group, if it is in this set...
             atom_id_type atmid = internal;
-            
+
             current_internal = current_group->find(atmid);
-            
+
             if (current_internal == current_group->constEnd())
                 //we didn't find the internal - move this iterator to the end
                 this->toEnd();
-                
+
             return;
         }
     }
-    
+
     //move the iterator to the end as we didn't find the internal
     this->toEnd();
 }
 
-/** Move the iterator back to the previous internal, and return an iterator to the 
+/** Move the iterator back to the previous internal, and return an iterator to the
     previous internal. Note that this will return an iterator to the first item
     in the list if this is called on the first item */
 template<class T>
@@ -370,10 +372,10 @@ InternalGroupIterator<T>& InternalGroupIterator<T>::operator--()
         //get the new current group
         typename internals_type::const_iterator it = internals.constFind(*groupid_iterator);
         BOOST_ASSERT( it != internals.constEnd() );
-        
+
         current_group = it.operator->();
         BOOST_ASSERT( current_group->nInternals() != 0 );
-        
+
         current_internal = current_group->constEnd();
         --current_internal;
     }
@@ -383,7 +385,7 @@ InternalGroupIterator<T>& InternalGroupIterator<T>::operator--()
     return *this;
 }
 
-/** Move the iterator back to the previous internal, and return an iterator to 
+/** Move the iterator back to the previous internal, and return an iterator to
     the current internal. */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
@@ -458,7 +460,7 @@ InternalGroupIterator<T> InternalGroupIterator<T>::operator-(int jump) const
     return it;
 }
 
-/** Return the current key - this is the internal that is at this position. 
+/** Return the current key - this is the internal that is at this position.
     Note that this will have undefined results if called on an invalid iterator */
 template<class T>
 SIRE_INLINE_TEMPLATE
@@ -468,7 +470,7 @@ T InternalGroupIterator<T>::key() const
     return current_group->getInternal( current_internal.key() );
 }
 
-/** Return the current value of the iterator - this is the GroupIndexID of the 
+/** Return the current value of the iterator - this is the GroupIndexID of the
     internal in the set. Calling this on an invalid iterator will yield undefined
     results. */
 template<class T>
@@ -476,7 +478,7 @@ SIRE_INLINE_TEMPLATE
 GroupIndexID InternalGroupIterator<T>::value() const
 {
     BOOST_ASSERT( current_group != 0 );
-    
+
     return GroupIndexID( *groupid_iterator,
                          current_internal.value() );
 }
@@ -496,7 +498,7 @@ void InternalGroupIterator<T>::prev()
 {
     this->operator--();
 }
-    
+
 /** Move the iterator forward to the first internal of the next group.
     Makes the iterator invalid if we are already at the last group. */
 template<class T>
@@ -510,17 +512,17 @@ void InternalGroupIterator<T>::nextGroup()
     if ( groupid_iterator != groups.constEnd() )
     {
         //get the next group over which to iterate
-        typename internals_type::const_iterator it = 
+        typename internals_type::const_iterator it =
                                     internals.constFind(*groupid_iterator);
         BOOST_ASSERT( it != internals.constEnd() );
-            
+
         //get a pointer to the current group
         current_group = it.operator->();
 
         //reset the internal iterator to iterator over
         //the internals of the new group
         current_internal = current_group->constBegin();
-            
+
         //ensure that this is valid...
         BOOST_ASSERT( current_internal != current_group->constEnd() );
     }
@@ -532,7 +534,7 @@ void InternalGroupIterator<T>::nextGroup()
 }
 
 /** Move the iterator back to the first internal of the previous group.
-    This moves back to the first internal to be iterated over if 
+    This moves back to the first internal to be iterated over if
     we are already in the first group. */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
@@ -541,10 +543,10 @@ void InternalGroupIterator<T>::prevGroup()
     if ( current_group == 0 )
     {
         toLast();
-        
+
         if (this->isValid())
         {
-            //we are at the last internal in the last group - 
+            //we are at the last internal in the last group -
             //move to the first internal of the last group
             current_internal = current_group->constBegin();
         }
@@ -554,7 +556,7 @@ void InternalGroupIterator<T>::prevGroup()
         //move to the previous group
         if (groupid_iterator == groups.constBegin())
         {
-            //we are at the first group already - move to the 
+            //we are at the first group already - move to the
             //first internal in the first group
             current_internal = current_group->constBegin();
         }
@@ -565,10 +567,10 @@ void InternalGroupIterator<T>::prevGroup()
             //get the new current group
             typename internals_type::const_iterator it = internals.constFind(*groupid_iterator);
             BOOST_ASSERT( it != internals.constEnd() );
-            
+
             current_group = it.operator->();
             BOOST_ASSERT( current_group->nInternals() != 0 );
-        
+
             //move to the first internal in the new group
             current_internal = current_group->constBegin();
         }
@@ -590,17 +592,17 @@ InternalGroupIterator<T> InternalGroupIterator<T>::currentGroup() const
         //get the current group's ID number
         QSet<GroupID> gid;
         gid.insert( *groupid_iterator );
-        
+
         InternalGroupIterator<T> it(gid, internals);
         it.toBegin();
-        
+
         return it;
     }
 }
 
 /** Return the set of residue numbers of the current group. If you want
-    to know the order of the residue numbers then look at one of 
-    the internals in the group, as they will all have exactly the 
+    to know the order of the residue numbers then look at one of
+    the internals in the group, as they will all have exactly the
     same order of residue numbers. */
 template<class T>
 SIRE_INLINE_TEMPLATE
@@ -612,10 +614,12 @@ QSet<ResNum> InternalGroupIterator<T>::residueNumbers() const
         return QSet<ResNum>();
 }
 
+#endif // SKIP_TEMPLATE_DEFINITIONS
+
+}
+
+}
+
 SIRE_END_HEADER
-
-}
-
-}
 
 #endif

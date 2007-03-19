@@ -10,6 +10,8 @@
 
 namespace bp = boost::python;
 
+#include "SirePy/str.hpp"
+
 void register_MatchData_class(){
 
     bp::class_< SireDB::MatchData, boost::noncopyable >( "MatchData", bp::no_init )    
@@ -29,6 +31,7 @@ void register_MatchData_class(){
             , (int ( ::SireDB::MatchData::* )(  ) const)( &::SireDB::MatchData::nMatches ) )    
         .def( 
             "toString"
-            , (::QString ( ::SireDB::MatchData::* )(  ) const)( &::SireDB::MatchData::toString ) );
+            , (::QString ( ::SireDB::MatchData::* )(  ) const)( &::SireDB::MatchData::toString ) )    
+        .def( "__str__", &SirePy::__str__< ::SireDB::MatchData > );
 
 }

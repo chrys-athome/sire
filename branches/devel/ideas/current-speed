@@ -103,3 +103,38 @@ for the 80.0 A cutoff, which is 2529ms for gas-phase boundaries, and
 necessity some cost for periodic boundaries, I would say that 200ms
 is a reasonable cost for all 1679*1678/2 interactions (so periodic
 boundaries cost 0.14ns per water-water interaction).
+
+More testing: 9/3/07
+
+Box of water, periodic boundaries, time to complete 1000 MC moves
+(Sire is still using semi-fake moves, though is calculating the 
+ change in energy correctly)
+
+Test conducted on my work desktop (PentiumD 3.4GHz)
+
+(version numbers for Sire are the gcode respository numbers)
+ 
+Cutoff  Sire(209)              ProtoMS2.1(724)    Relative speed
+        cljff     ljff                           cljff    ljff
+5.0     1269      1378         448                35%     32%
+10.0    1717      1871         892                51%     47%
+15.0    2845      2990         1832               64%     61%
+20.0    4601      5036         3350               72%     66%
+40.0    5660      6256         8772              154%    140%
+80.0    5824      6413         9665              165%    150%
+
+These results show that Sire is within the same ballpark as ProtoMS,
+but that optimisation work still needs to be performed. In addition,
+this also suggests that there may be some inefficiencies in the 
+cutoff with Sire, as it rapidly overtakes ProtoMS when fewer
+interactions are discarded. Also, LJFF is consistently slower than
+CLJFF despite it doing less work! (though LJFF does not use hard
+coded geometric combining rules)
+
+Part of the reason for the poor performance is that the energy calculations
+are much slower than they could be. My optimised Tip4PFF can calculate
+the energy for the water box in 250ms, while InterCLJFF takes 1055ms and
+InterLJFF takes 1182ms. There is thus a theoretical 4x improvement
+possible (though all of this will not be realised in a general forcefield).
+
+ So there is light at the end of the tunnel!

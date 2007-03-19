@@ -8,6 +8,12 @@
 
 namespace bp = boost::python;
 
+SireCAS::Exp __copy__(const SireCAS::Exp &other){ return SireCAS::Exp(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_Exp_class(){
 
     bp::class_< SireCAS::Exp, bp::bases< SireCAS::PowerFunction > >( "Exp" )    
@@ -48,6 +54,12 @@ void register_Exp_class(){
         .def( 
             "what"
             , (char const * ( ::SireCAS::Exp::* )(  ) const)( &::SireCAS::Exp::what ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireCAS::Exp >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireCAS::Exp >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireCAS::Exp > );
 
 }

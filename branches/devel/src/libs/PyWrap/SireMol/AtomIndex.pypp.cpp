@@ -14,6 +14,12 @@
 
 namespace bp = boost::python;
 
+SireMol::AtomIndex __copy__(const SireMol::AtomIndex &other){ return SireMol::AtomIndex(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_AtomIndex_class(){
 
     bp::class_< SireMol::AtomIndex >( "AtomIndex", bp::init< bp::optional< QString const &, SireMol::ResNum > >(( bp::arg("nm")=QString::null, bp::arg("rnum")=::SireMol::ResNum( 1 ) )) )    
@@ -32,6 +38,12 @@ void register_AtomIndex_class(){
             , &::SireMol::AtomIndex::resNum )    
         .def( 
             "toString"
-            , &::SireMol::AtomIndex::toString );
+            , &::SireMol::AtomIndex::toString )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::AtomIndex >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::AtomIndex >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireMol::AtomIndex > );
 
 }

@@ -14,6 +14,12 @@
 
 namespace bp = boost::python;
 
+SireMol::ResidueBonds __copy__(const SireMol::ResidueBonds &other){ return SireMol::ResidueBonds(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_ResidueBonds_class(){
 
     bp::class_< SireMol::ResidueBonds >( "ResidueBonds" )    
@@ -98,6 +104,12 @@ void register_ResidueBonds_class(){
             , ( bp::arg("atom") ) )    
         .def( 
             "toString"
-            , &::SireMol::ResidueBonds::toString );
+            , &::SireMol::ResidueBonds::toString )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::ResidueBonds >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::ResidueBonds >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireMol::ResidueBonds > );
 
 }

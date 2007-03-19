@@ -8,6 +8,12 @@
 
 namespace bp = boost::python;
 
+SireMaths::Torsion __copy__(const SireMaths::Torsion &other){ return SireMaths::Torsion(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_Torsion_class(){
 
     bp::class_< SireMaths::Torsion >( "Torsion" )    
@@ -54,6 +60,12 @@ void register_Torsion_class(){
             , (::SireMaths::Vector ( ::SireMaths::Torsion::* )(  ) const)( &::SireMaths::Torsion::vector03 ) )    
         .def( 
             "vector12"
-            , (::SireMaths::Vector ( ::SireMaths::Torsion::* )(  ) const)( &::SireMaths::Torsion::vector12 ) );
+            , (::SireMaths::Vector ( ::SireMaths::Torsion::* )(  ) const)( &::SireMaths::Torsion::vector12 ) )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMaths::Torsion >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMaths::Torsion >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireMaths::Torsion > );
 
 }

@@ -65,6 +65,8 @@
 
 #include "CombiningRules.pypp.hpp"
 
+#include "CoulombFF.pypp.hpp"
+
 #include "DihedralAtomID.pypp.hpp"
 
 #include "DihedralDB.pypp.hpp"
@@ -82,6 +84,16 @@
 #include "HarmonicSwitchingFunction.pypp.hpp"
 
 #include "InterCLJFF.pypp.hpp"
+
+#include "InterCoulombFF.pypp.hpp"
+
+#include "InterGroupCLJFF.pypp.hpp"
+
+#include "InterGroupCoulombFF.pypp.hpp"
+
+#include "InterGroupLJFF.pypp.hpp"
+
+#include "InterLJFF.pypp.hpp"
 
 #include "InternalDB_MolAngleInfo_.pypp.hpp"
 
@@ -114,6 +126,10 @@
 #include "InternalTable_MolDihedralInfo_Expression_.pypp.hpp"
 
 #include "LJDB.pypp.hpp"
+
+#include "LJFF.pypp.hpp"
+
+#include "LJPair.pypp.hpp"
 
 #include "LJParameter.pypp.hpp"
 
@@ -149,8 +165,6 @@
 
 #include "SwitchingFunction.pypp.hpp"
 
-#include "Tip4PFF.pypp.hpp"
-
 #include "UreyBradleyDB.pypp.hpp"
 
 #include "UsePassedAngles.pypp.hpp"
@@ -177,24 +191,18 @@
 
 #include "assign_internals_MolDihedralInfo_.pypp.hpp"
 
-#include "QVector_LJParameter_.py.h"
-
-#include "QVector_ChargeParameter_.py.h"
+#include "siremm_containers.h"
 
 namespace bp = boost::python;
 
 BOOST_PYTHON_MODULE(_MM){
-    register_QVector_LJParameter_class();
-
-    register_QVector_ChargeParameter_class();
+    register_SireMM_containers();
 
     register_AtomTable_ChargeParameter__class();
 
     register_AtomTable_LJParameter__class();
 
     register_AngleAtomID_class();
-
-    bp::implicitly_convertible< SireMol::Angle const &, SireMM::AngleAtomID >();
 
     register_InternalDB_MolAngleInfo__class();
 
@@ -206,10 +214,6 @@ BOOST_PYTHON_MODULE(_MM){
 
     register_AngleResID_class();
 
-    bp::implicitly_convertible< SireMol::ResNum, SireMM::AngleResID >();
-
-    bp::implicitly_convertible< SireMol::Angle const &, SireMM::AngleResID >();
-
     register_InternalTableBase_MolAngleInfo__class();
 
     register_InternalTable_MolAngleInfo_Expression__class();
@@ -218,33 +222,15 @@ BOOST_PYTHON_MODULE(_MM){
 
     register_AngleTable_class();
 
-    bp::implicitly_convertible< SireMol::MoleculeInfo const &, SireMM::AngleTable >();
-
-    bp::implicitly_convertible< SireMM::MolAngleInfo const &, SireMM::AngleTable >();
-
     register_CombiningRuleBase_class();
 
     register_ArithmeticCombiningRules_class();
 
     register_AtomicCharges_class();
 
-    bp::implicitly_convertible< QVector<QVector<SireMM::ChargeParameter> > const &, SireMM::AtomicCharges >();
-
-    bp::implicitly_convertible< QVector<SireMM::ChargeParameter> const &, SireMM::AtomicCharges >();
-
-    bp::implicitly_convertible< SireMol::Property const &, SireMM::AtomicCharges >();
-
     register_AtomicLJs_class();
 
-    bp::implicitly_convertible< QVector<QVector<SireMM::LJParameter> > const &, SireMM::AtomicLJs >();
-
-    bp::implicitly_convertible< QVector<SireMM::LJParameter> const &, SireMM::AtomicLJs >();
-
-    bp::implicitly_convertible< SireMol::Property const &, SireMM::AtomicLJs >();
-
     register_BondAtomID_class();
-
-    bp::implicitly_convertible< SireMol::Bond const &, SireMM::BondAtomID >();
 
     register_InternalDB_MolBondInfo__class();
 
@@ -256,10 +242,6 @@ BOOST_PYTHON_MODULE(_MM){
 
     register_BondResID_class();
 
-    bp::implicitly_convertible< SireMol::ResNum, SireMM::BondResID >();
-
-    bp::implicitly_convertible< SireMol::Bond const &, SireMM::BondResID >();
-
     register_InternalTableBase_MolBondInfo__class();
 
     register_InternalTable_MolBondInfo_Expression__class();
@@ -268,19 +250,11 @@ BOOST_PYTHON_MODULE(_MM){
 
     register_BondTable_class();
 
-    bp::implicitly_convertible< SireMol::MoleculeInfo const &, SireMM::BondTable >();
-
-    bp::implicitly_convertible< SireMM::MolBondInfo const &, SireMM::BondTable >();
-
     register_CLJFF_class();
 
     register_CLJPair_class();
 
-    bp::implicitly_convertible< SireMM::CLJParameter const &, SireMM::CLJPair >();
-
     register_ChargeParameter_class();
-
-    bp::implicitly_convertible< double, SireMM::ChargeParameter >();
 
     register_LJParameter_class();
 
@@ -290,15 +264,11 @@ BOOST_PYTHON_MODULE(_MM){
 
     register_ChargeTable_class();
 
-    bp::implicitly_convertible< SireMol::MoleculeInfo const &, SireMM::ChargeTable >();
-
     register_CombiningRules_class();
 
-    bp::implicitly_convertible< SireMM::CombiningRuleBase const &, SireMM::CombiningRules >();
+    register_CoulombFF_class();
 
     register_DihedralAtomID_class();
-
-    bp::implicitly_convertible< SireMol::Dihedral const &, SireMM::DihedralAtomID >();
 
     register_InternalDB_MolDihedralInfo__class();
 
@@ -310,10 +280,6 @@ BOOST_PYTHON_MODULE(_MM){
 
     register_DihedralResID_class();
 
-    bp::implicitly_convertible< SireMol::ResNum, SireMM::DihedralResID >();
-
-    bp::implicitly_convertible< SireMol::Dihedral const &, SireMM::DihedralResID >();
-
     register_InternalTableBase_MolDihedralInfo__class();
 
     register_InternalTable_MolDihedralInfo_Expression__class();
@@ -322,93 +288,65 @@ BOOST_PYTHON_MODULE(_MM){
 
     register_DihedralTable_class();
 
-    bp::implicitly_convertible< SireMol::MoleculeInfo const &, SireMM::DihedralTable >();
-
-    bp::implicitly_convertible< SireMM::MolDihedralInfo const &, SireMM::DihedralTable >();
-
     register_GeometricCombiningRules_class();
 
     register_SwitchFuncBase_class();
 
     register_HarmonicSwitchingFunction_class();
 
-    bp::implicitly_convertible< double, SireMM::HarmonicSwitchingFunction >();
-
     register_InterCLJFF_class();
+
+    register_InterCoulombFF_class();
+
+    register_InterGroupCLJFF_class();
+
+    register_InterGroupCoulombFF_class();
+
+    register_LJFF_class();
+
+    register_InterGroupLJFF_class();
+
+    register_InterLJFF_class();
 
     register_LJDB_class();
 
-    register_LJTable_class();
+    register_LJPair_class();
 
-    bp::implicitly_convertible< SireMol::MoleculeInfo const &, SireMM::LJTable >();
+    register_LJTable_class();
 
     register_InternalInfo_Angle__class();
 
-    bp::implicitly_convertible< SireMol::MoleculeInfo const &, SireMM::detail::InternalInfo<SireMol::Angle> >();
-
     register_MolInternalInfo_Angle__class();
-
-    bp::implicitly_convertible< SireMol::MoleculeInfo const &, SireMM::MolInternalInfo<SireMol::Angle> >();
 
     register_MolAngleInfo_class();
 
-    bp::implicitly_convertible< SireMol::MoleculeInfo const &, SireMM::MolAngleInfo >();
-
     register_InternalInfo_Bond__class();
-
-    bp::implicitly_convertible< SireMol::MoleculeInfo const &, SireMM::detail::InternalInfo<SireMol::Bond> >();
 
     register_MolInternalInfo_Bond__class();
 
-    bp::implicitly_convertible< SireMol::MoleculeInfo const &, SireMM::MolInternalInfo<SireMol::Bond> >();
-
     register_MolBondInfo_class();
-
-    bp::implicitly_convertible< SireMol::MoleculeInfo const &, SireMM::MolBondInfo >();
 
     register_InternalInfo_Dihedral__class();
 
-    bp::implicitly_convertible< SireMol::MoleculeInfo const &, SireMM::detail::InternalInfo<SireMol::Dihedral> >();
-
     register_MolInternalInfo_Dihedral__class();
 
-    bp::implicitly_convertible< SireMol::MoleculeInfo const &, SireMM::MolInternalInfo<SireMol::Dihedral> >();
-
     register_MolDihedralInfo_class();
-
-    bp::implicitly_convertible< SireMol::MoleculeInfo const &, SireMM::MolDihedralInfo >();
 
     register_NoCutoff_class();
 
     register_ResInternalInfo_Angle__class();
 
-    bp::implicitly_convertible< SireMM::detail::InternalInfo<SireMol::Angle> const &, SireMM::ResInternalInfo<SireMol::Angle> >();
-
     register_ResAngleInfo_class();
-
-    bp::implicitly_convertible< SireMM::ResInternalInfo<SireMol::Angle> const &, SireMM::ResAngleInfo >();
 
     register_ResInternalInfo_Bond__class();
 
-    bp::implicitly_convertible< SireMM::detail::InternalInfo<SireMol::Bond> const &, SireMM::ResInternalInfo<SireMol::Bond> >();
-
     register_ResBondInfo_class();
-
-    bp::implicitly_convertible< SireMM::ResInternalInfo<SireMol::Bond> const &, SireMM::ResBondInfo >();
 
     register_ResInternalInfo_Dihedral__class();
 
-    bp::implicitly_convertible< SireMM::detail::InternalInfo<SireMol::Dihedral> const &, SireMM::ResInternalInfo<SireMol::Dihedral> >();
-
     register_ResDihedralInfo_class();
 
-    bp::implicitly_convertible< SireMM::ResInternalInfo<SireMol::Dihedral> const &, SireMM::ResDihedralInfo >();
-
     register_SwitchingFunction_class();
-
-    bp::implicitly_convertible< SireMM::SwitchFuncBase const &, SireMM::SwitchingFunction >();
-
-    register_Tip4PFF_class();
 
     register_UreyBradleyDB_class();
 
@@ -416,36 +354,56 @@ BOOST_PYTHON_MODULE(_MM){
 
     register_UsePassedAngles_class();
 
-    bp::implicitly_convertible< QSet<SireMol::Angle> const &, SireMM::UsePassedAngles >();
-
     register_UsePassedInternals_MolBondInfo__class();
 
     register_UsePassedBonds_class();
-
-    bp::implicitly_convertible< QSet<SireMol::Bond> const &, SireMM::UsePassedBonds >();
 
     register_UsePassedInternals_MolDihedralInfo__class();
 
     register_UsePassedDihedrals_class();
 
-    bp::implicitly_convertible< QSet<SireMol::Dihedral> const &, SireMM::UsePassedDihedrals >();
-
     register_assign_internals_MolAngleInfo__class();
 
     register_assign_angles_class();
-
-    bp::implicitly_convertible< SireMM::AngleGeneratorBase const &, SireMM::assign_angles >();
 
     register_assign_internals_MolBondInfo__class();
 
     register_assign_bonds_class();
 
-    bp::implicitly_convertible< SireMM::BondGeneratorBase const &, SireMM::assign_bonds >();
-
     register_assign_internals_MolDihedralInfo__class();
 
-    register_assign_dihedrals_class();
+    bp::implicitly_convertible< QVector< QVector<SireMM::ChargeParameter> >, SireMM::AtomicCharges >();
 
-    bp::implicitly_convertible< SireMM::DihedralGeneratorBase const &, SireMM::assign_dihedrals >();
+    bp::implicitly_convertible< QVector< SireMM::ChargeParameter >, SireMM::AtomicCharges >();
+
+    bp::implicitly_convertible< QVector< QVector<SireMM::LJParameter> >, SireMM::AtomicLJs >();
+
+    bp::implicitly_convertible< QVector< SireMM::LJParameter >, SireMM::AtomicLJs >();
+
+    bp::implicitly_convertible< double, SireMM::ChargeParameter >();
+
+    bp::implicitly_convertible< const SireMM::CombiningRuleBase&, SireMM::CombiningRules >();
+
+    bp::implicitly_convertible< SireMM::SwitchFuncBase, SireMM::SwitchingFunction >();
+
+    bp::implicitly_convertible< QSet<SireMol::Angle>, SireMM::UsePassedAngles >();
+
+    bp::implicitly_convertible< const SireMM::AngleGeneratorBase&, SireMM::assign_angles >();
+
+    bp::implicitly_convertible< SireMM::UsePassedAngles, SireMM::assign_angles >();
+
+    bp::implicitly_convertible< QSet<SireMol::Bond>, SireMM::UsePassedBonds >();
+
+    bp::implicitly_convertible< const SireMM::BondGeneratorBase&, SireMM::assign_bonds >();
+
+    bp::implicitly_convertible< SireMM::UsePassedBonds, SireMM::assign_bonds >();
+
+    bp::implicitly_convertible< QSet<SireMol::Dihedral>, SireMM::UsePassedDihedrals >();
+
+    bp::implicitly_convertible< const SireMM::DihedralGeneratorBase&, SireMM::assign_dihedrals >();
+
+    bp::implicitly_convertible< SireMM::UsePassedDihedrals, SireMM::assign_dihedrals >();
+
+    register_assign_dihedrals_class();
 }
 

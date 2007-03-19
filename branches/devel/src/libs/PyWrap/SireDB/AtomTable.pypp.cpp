@@ -10,6 +10,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireDB::AtomTable&){ return "SireDB::AtomTable";}
+
 void register_AtomTable_class(){
 
     bp::class_< SireDB::AtomTable, bp::bases< SireDB::TableBase >, boost::noncopyable >( "AtomTable", bp::no_init )    
@@ -207,6 +211,11 @@ void register_AtomTable_class(){
         .def( 
             "nParameters"
             , (int ( ::SireDB::AtomTable::* )( ::SireMol::CutGroupNum ) const)( &::SireDB::AtomTable::nParameters )
-            , ( bp::arg("cgnum") ) );
+            , ( bp::arg("cgnum") ) )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireDB::AtomTable >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireDB::AtomTable >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

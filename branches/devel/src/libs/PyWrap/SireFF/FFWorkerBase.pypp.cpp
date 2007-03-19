@@ -17,6 +17,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireFF::FFWorkerBase&){ return "SireFF::FFWorkerBase";}
+
 void register_FFWorkerBase_class(){
 
     { //::SireFF::FFWorkerBase
@@ -169,6 +171,7 @@ void register_FFWorkerBase_class(){
         
         }
         bp::register_ptr_to_python< boost::shared_ptr< SireFF::FFWorkerBase > >();
+        FFWorkerBase_exposer.def( "__str__", &pvt_get_name);
     }
 
 }

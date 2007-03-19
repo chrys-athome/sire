@@ -8,11 +8,18 @@
 
 namespace bp = boost::python;
 
+SireCAS::Values __copy__(const SireCAS::Values &other){ return SireCAS::Values(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireCAS::Values&){ return "SireCAS::Values";}
+
 void register_Values_class(){
 
     bp::class_< SireCAS::Values >( "Values" )    
         .def( bp::init< >() )    
         .def( bp::init< QList<SireCAS::SymbolValue> const & >(( bp::arg("values") )) )    
+        .def( bp::init< QHash<SireCAS::Symbol, double> const & >(( bp::arg("values") )) )    
         .def( bp::init< SireCAS::SymbolValue const & >(( bp::arg("symval0") )) )    
         .def( bp::init< SireCAS::SymbolValue const &, SireCAS::SymbolValue const & >(( bp::arg("symval0"), bp::arg("symval1") )) )    
         .def( bp::init< SireCAS::SymbolValue const &, SireCAS::SymbolValue const &, SireCAS::SymbolValue const & >(( bp::arg("symval0"), bp::arg("symval1"), bp::arg("symval2") )) )    
@@ -82,6 +89,12 @@ void register_Values_class(){
         .def( 
             "values"
             , (::QHash<unsigned, double> const & ( ::SireCAS::Values::* )(  ) const)( &::SireCAS::Values::values )
-            , bp::return_value_policy< bp::copy_const_reference >() );
+            , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireCAS::Values >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireCAS::Values >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

@@ -19,6 +19,8 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs
 set ( WRAPBASE_SOURCES
       
       _Base.main.cpp
+
+      sirebase_containers.cpp
       
       sharedpolypointer.py.cpp
       

@@ -129,56 +129,30 @@
 
 #include "WeightFunction.pypp.hpp"
 
-#include "QList_Molecule_.py.h"
+#include <boost/tuple/tuple.hpp>
 
-#include "QSet_AtomIndex_.py.h"
+#include "siremol_containers.h"
 
 namespace bp = boost::python;
 
 BOOST_PYTHON_MODULE(_Mol){
-    register_QList_Molecule_class();
-
-    register_QSet_AtomIndex_class();
+    register_SireMol_containers();
 
     register_Angle_class();
 
-    bp::implicitly_convertible< boost::tuples::tuple<SireMol::AtomIndex, SireMol::AtomIndex, SireMol::AtomIndex, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type> const &, SireMol::Angle >();
-
     register_IDBase_class();
-
-    bp::implicitly_convertible< quint32, SireMol::IDBase >();
 
     bp::implicitly_convertible< SireMol::IDBase, quint32 >();
 
     register_ResNum_class();
 
-    bp::implicitly_convertible< quint32, SireMol::ResNum >();
-
     register_AtomIndex_class();
-
-    bp::implicitly_convertible< boost::tuples::tuple<QString, SireMol::ResNum, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type> const &, SireMol::AtomIndex >();
 
     register_Element_class();
 
-    bp::implicitly_convertible< QString, SireMol::Element >();
-
-    bp::implicitly_convertible< char const *, SireMol::Element >();
-
-    bp::implicitly_convertible< unsigned int, SireMol::Element >();
-
-    bp::implicitly_convertible< int, SireMol::Element >();
-
     register_AtomInfo_class();
 
-    bp::implicitly_convertible< QString const &, SireMol::AtomInfo >();
-
-    bp::implicitly_convertible< SireMol::AtomIndex const &, SireMol::AtomInfo >();
-
     register_Atom_class();
-
-    bp::implicitly_convertible< QString const &, SireMol::Atom >();
-
-    bp::implicitly_convertible< SireMol::AtomIndex const &, SireMol::Atom >();
 
     register_CuttingFunctionBase_class();
 
@@ -186,29 +160,13 @@ BOOST_PYTHON_MODULE(_Mol){
 
     register_AtomID_class();
 
-    bp::implicitly_convertible< quint32, SireMol::AtomID >();
-
     register_AtomIDGroup_class();
-
-    bp::implicitly_convertible< QSet<SireMol::AtomIndex> const &, SireMol::AtomIDGroup >();
-
-    bp::implicitly_convertible< QSet<SireMol::ResNum> const &, SireMol::AtomIDGroup >();
 
     register_AtomInfoGroup_class();
 
-    bp::implicitly_convertible< int, SireMol::AtomInfoGroup >();
-
-    bp::implicitly_convertible< QVector<SireMol::AtomInfo> const &, SireMol::AtomInfoGroup >();
-
-    bp::implicitly_convertible< QVector<SireMol::Atom> const &, SireMol::AtomInfoGroup >();
-
     register_AtomNum_class();
 
-    bp::implicitly_convertible< quint32, SireMol::AtomNum >();
-
     register_AtomSelection_class();
-
-    bp::implicitly_convertible< SireMol::Molecule const &, SireMol::AtomSelection >();
 
     register_PropertyBase_class();
 
@@ -216,99 +174,43 @@ BOOST_PYTHON_MODULE(_Mol){
 
     register_Bond_class();
 
-    bp::implicitly_convertible< boost::tuples::tuple<SireMol::AtomIndex, SireMol::AtomIndex, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type> const &, SireMol::Bond >();
-
     register_BondAddingFunction_class();
 
     register_CutGroupID_class();
 
-    bp::implicitly_convertible< quint32, SireMol::CutGroupID >();
-
     register_CGAtomID_class();
-
-    bp::implicitly_convertible< boost::tuples::tuple<SireMol::CutGroupID, SireMol::AtomID, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type> const &, SireMol::CGAtomID >();
 
     register_CutGroupNum_class();
 
-    bp::implicitly_convertible< quint32, SireMol::CutGroupNum >();
-
     register_CGNumAtomID_class();
-
-    bp::implicitly_convertible< boost::tuples::tuple<SireMol::CutGroupNum, SireMol::AtomID, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type> const &, SireMol::CGNumAtomID >();
 
     register_CutGroup_class();
 
-    bp::implicitly_convertible< QVector<SireMol::Atom> const, SireMol::CutGroup >();
-
-    bp::implicitly_convertible< QList<SireMol::Atom> const, SireMol::CutGroup >();
-
-    bp::implicitly_convertible< SireMol::AtomInfoGroup const &, SireMol::CutGroup >();
-
     register_CuttingFunction_class();
-
-    bp::implicitly_convertible< SireMol::CuttingFunctionBase const &, SireMol::CuttingFunction >();
 
     register_Dihedral_class();
 
-    bp::implicitly_convertible< boost::tuples::tuple<SireMol::AtomIndex, SireMol::AtomIndex, SireMol::AtomIndex, SireMol::AtomIndex, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type> const &, SireMol::Dihedral >();
-
     register_EditMol_class();
-
-    bp::implicitly_convertible< QString const &, SireMol::EditMol >();
-
-    bp::implicitly_convertible< SireMol::CuttingFunction const &, SireMol::EditMol >();
-
-    bp::implicitly_convertible< SireMol::EditRes const &, SireMol::EditMol >();
 
     register_EditRes_class();
 
     register_GroupID_class();
 
-    bp::implicitly_convertible< quint32, SireMol::GroupID >();
-
     register_Index_class();
-
-    bp::implicitly_convertible< quint32, SireMol::Index >();
 
     register_GroupIndexID_class();
 
-    bp::implicitly_convertible< boost::tuples::tuple<SireMol::GroupID, SireMol::Index, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type> const &, SireMol::GroupIndexID >();
-
     register_IDMolAtom_class();
-
-    bp::implicitly_convertible< SireMol::CGAtomID const &, SireMol::IDMolAtom >();
-
-    bp::implicitly_convertible< SireMol::CGNumAtomID const &, SireMol::IDMolAtom >();
-
-    bp::implicitly_convertible< SireMol::ResNumAtomID const &, SireMol::IDMolAtom >();
-
-    bp::implicitly_convertible< SireMol::ResIDAtomID const &, SireMol::IDMolAtom >();
-
-    bp::implicitly_convertible< SireMol::AtomIndex const &, SireMol::IDMolAtom >();
-
-    bp::implicitly_convertible< SireMol::AtomID const &, SireMol::IDMolAtom >();
 
     register_Improper_class();
 
-    bp::implicitly_convertible< boost::tuples::tuple<SireMol::AtomIndex, SireMol::AtomIndex, SireMol::AtomIndex, SireMol::AtomIndex, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type> const &, SireMol::Improper >();
-
     register_MoleculeID_class();
-
-    bp::implicitly_convertible< quint32, SireMol::MoleculeID >();
 
     register_MolCGAtomID_class();
 
-    bp::implicitly_convertible< boost::tuples::tuple<SireMol::MoleculeID, SireMol::CutGroupID, SireMol::AtomID, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type> const &, SireMol::MolCGAtomID >();
-
     register_MolCutGroupID_class();
 
-    bp::implicitly_convertible< boost::tuples::tuple<SireMol::MoleculeID, SireMol::CutGroupID, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type> const &, SireMol::MolCutGroupID >();
-
     register_Molecule_class();
-
-    bp::implicitly_convertible< SireMol::Residue const &, SireMol::Molecule >();
-
-    bp::implicitly_convertible< SireMol::NewAtom const &, SireMol::Molecule >();
 
     register_MoleculeBonds_class();
 
@@ -316,19 +218,11 @@ BOOST_PYTHON_MODULE(_Mol){
 
     register_MoleculeGroup_class();
 
-    bp::implicitly_convertible< QString const &, SireMol::MoleculeGroup >();
-
     register_MoleculeGroupID_class();
-
-    bp::implicitly_convertible< quint32, SireMol::MoleculeGroupID >();
 
     register_MoleculeGroups_class();
 
-    bp::implicitly_convertible< SireMol::MoleculeGroup const &, SireMol::MoleculeGroups >();
-
     register_MoleculeInfo_class();
-
-    bp::implicitly_convertible< SireMol::EditMolData const &, SireMol::MoleculeInfo >();
 
     register_MoleculeVersion_class();
 
@@ -340,35 +234,17 @@ BOOST_PYTHON_MODULE(_Mol){
 
     register_Property_class();
 
-    bp::implicitly_convertible< SireBase::SharedPolyPointer<SireMol::PropertyBase> const &, SireMol::Property >();
-
-    bp::implicitly_convertible< SireMol::PropertyBase const &, SireMol::Property >();
-
-    bp::implicitly_convertible< SireMol::PropertyBase *, SireMol::Property >();
-
     register_ResID_class();
-
-    bp::implicitly_convertible< quint32, SireMol::ResID >();
 
     register_ResIDAtomID_class();
 
-    bp::implicitly_convertible< boost::tuples::tuple<SireMol::ResID, SireMol::AtomID, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type> const &, SireMol::ResIDAtomID >();
-
     register_ResNumAtomID_class();
-
-    bp::implicitly_convertible< boost::tuples::tuple<SireMol::ResNum, SireMol::AtomID, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type> const &, SireMol::ResNumAtomID >();
 
     register_ResNumIndexID_class();
 
-    bp::implicitly_convertible< boost::tuples::tuple<SireMol::ResNum, SireMol::Index, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type> const &, SireMol::ResNumIndexID >();
-
     register_Residue_class();
 
-    bp::implicitly_convertible< SireMol::NewAtom const &, SireMol::Residue >();
-
     register_ResidueBonds_class();
-
-    bp::implicitly_convertible< SireMol::ResNum, SireMol::ResidueBonds >();
 
     register_ResidueCutting_class();
 
@@ -376,9 +252,57 @@ BOOST_PYTHON_MODULE(_Mol){
 
     register_VariantProperty_class();
 
-    bp::implicitly_convertible< QVariant const &, SireMol::VariantProperty >();
+    bp::implicitly_convertible< boost::tuples::tuple<SireMol::AtomIndex,SireMol::AtomIndex,SireMol::AtomIndex>, SireMol::Angle >();
 
-    bp::implicitly_convertible< SireMol::Property const &, SireMol::VariantProperty >();
+    bp::implicitly_convertible< boost::tuples::tuple<SireMol::AtomIndex,SireMol::AtomIndex,SireMol::AtomIndex,SireMol::AtomIndex>, SireMol::Dihedral >();
+
+    bp::implicitly_convertible< boost::tuples::tuple<SireMol::AtomIndex,SireMol::AtomIndex,SireMol::AtomIndex,SireMol::AtomIndex>, SireMol::Improper >();
+
+    bp::implicitly_convertible< boost::tuples::tuple<SireMol::AtomIndex,SireMol::AtomIndex>, SireMol::Bond >();
+
+    bp::implicitly_convertible< SireMol::IDBase, quint32 >();
+
+    bp::implicitly_convertible< boost::tuples::tuple<QString,SireMol::ResNum>, SireMol::AtomIndex >();
+
+    bp::implicitly_convertible< QString, SireMol::Element >();
+
+    bp::implicitly_convertible< quint32, SireMol::Element >();
+
+    bp::implicitly_convertible< boost::tuples::tuple<SireMol::CutGroupID,SireMol::AtomID>, SireMol::CGAtomID >();
+
+    bp::implicitly_convertible< boost::tuples::tuple<SireMol::ResNum,SireMol::AtomID>, SireMol::ResNumAtomID >();
+
+    bp::implicitly_convertible< boost::tuples::tuple<SireMol::ResID,SireMol::AtomID>, SireMol::ResIDAtomID >();
+
+    bp::implicitly_convertible< boost::tuples::tuple<SireMol::GroupID,SireMol::Index>, SireMol::GroupIndexID >();
+
+    bp::implicitly_convertible< QVector<SireMol::Atom>, SireMol::CutGroup >();
+
+    bp::implicitly_convertible< QList<SireMol::Atom>, SireMol::CutGroup >();
+
+    bp::implicitly_convertible< const SireMol::CuttingFunctionBase&, SireMol::CuttingFunction >();
+
+    bp::implicitly_convertible< SireMol::CGAtomID, SireMol::IDMolAtom >();
+
+    bp::implicitly_convertible< SireMol::CGNumAtomID, SireMol::IDMolAtom >();
+
+    bp::implicitly_convertible< SireMol::ResNumAtomID, SireMol::IDMolAtom >();
+
+    bp::implicitly_convertible< SireMol::ResIDAtomID, SireMol::IDMolAtom >();
+
+    bp::implicitly_convertible< SireMol::AtomIndex, SireMol::IDMolAtom >();
+
+    bp::implicitly_convertible< SireMol::AtomID, SireMol::IDMolAtom >();
+
+    bp::implicitly_convertible< SireMol::MoleculeGroup, SireMol::MoleculeGroups >();
+
+    bp::implicitly_convertible< SireMol::NewAtom, SireMaths::Vector >();
+
+    bp::implicitly_convertible< SireMol::NewAtom, SireMol::Element >();
+
+    bp::implicitly_convertible< const SireMol::PropertyBase&, SireMol::Property >();
+
+    bp::implicitly_convertible< QVariant, SireMol::VariantProperty >();
 
     register_WeightFunction_class();
 }

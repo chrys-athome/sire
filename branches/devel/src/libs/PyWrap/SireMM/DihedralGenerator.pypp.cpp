@@ -12,6 +12,12 @@
 
 namespace bp = boost::python;
 
+SireMM::DihedralGenerator __copy__(const SireMM::DihedralGenerator &other){ return SireMM::DihedralGenerator(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMM::DihedralGenerator&){ return "SireMM::DihedralGenerator";}
+
 void register_DihedralGenerator_class(){
 
     bp::class_< SireMM::DihedralGenerator, bp::bases< SireMM::InternalGenerator<SireMM::MolDihedralInfo> > >( "DihedralGenerator" )    
@@ -26,6 +32,12 @@ void register_DihedralGenerator_class(){
         .def( 
             "what"
             , (char const * ( ::SireMM::DihedralGenerator::* )(  ) const)( &::SireMM::DihedralGenerator::what ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::DihedralGenerator >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::DihedralGenerator >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

@@ -12,6 +12,10 @@
 
 namespace bp = boost::python;
 
+SireMM::MolInternalInfo<SireMol::Bond> __copy__(const SireMM::MolInternalInfo<SireMol::Bond> &other){ return SireMM::MolInternalInfo<SireMol::Bond>(other); }
+
+const char* pvt_get_name(const SireMM::MolInternalInfo<SireMol::Bond>&){ return "SireMM::MolInternalInfo<SireMol::Bond>";}
+
 void register_MolInternalInfo_Bond__class(){
 
     bp::class_< SireMM::MolInternalInfo<SireMol::Bond>, bp::bases< SireMM::detail::InternalInfo<SireMol::Bond> > >( "MolInternalInfo_Bond_" )    
@@ -55,6 +59,8 @@ void register_MolInternalInfo_Bond__class(){
         .def( 
             "residue"
             , (::SireMM::ResInternalInfo<SireMol::Bond> ( ::SireMM::MolInternalInfo<SireMol::Bond>::* )( ::SireMol::ResNum ) const)( &::SireMM::MolInternalInfo<SireMol::Bond>::residue )
-            , ( bp::arg("resnum") ) );
+            , ( bp::arg("resnum") ) )    
+        .def( "__copy__", &__copy__)    
+        .def( "__str__", &pvt_get_name);
 
 }

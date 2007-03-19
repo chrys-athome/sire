@@ -10,6 +10,8 @@
 
 namespace bp = boost::python;
 
+#include "SirePy/str.hpp"
+
 void register_RelationshipDB_class(){
 
     bp::class_< SireDB::RelationshipDB, bp::bases< SireDB::DBBase >, boost::noncopyable >( "RelationshipDB", bp::no_init )    
@@ -20,6 +22,7 @@ void register_RelationshipDB_class(){
         .def( 
             "typeName"
             , (char const * (*)(  ))( &::SireDB::RelationshipDB::typeName ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__str__", &SirePy::__str__< ::SireDB::RelationshipDB > );
 
 }

@@ -11,6 +11,12 @@
 
 namespace bp = boost::python;
 
+SireVol::PeriodicBox __copy__(const SireVol::PeriodicBox &other){ return SireVol::PeriodicBox(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireVol::PeriodicBox&){ return "SireVol::PeriodicBox";}
+
 void register_PeriodicBox_class(){
 
     bp::class_< SireVol::PeriodicBox, bp::bases< SireVol::Cartesian > >( "PeriodicBox" )    
@@ -85,6 +91,12 @@ void register_PeriodicBox_class(){
         .def( 
             "what"
             , (char const * ( ::SireVol::PeriodicBox::* )(  ) const)( &::SireVol::PeriodicBox::what ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireVol::PeriodicBox >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireVol::PeriodicBox >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

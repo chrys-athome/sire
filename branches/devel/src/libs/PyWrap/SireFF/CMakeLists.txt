@@ -20,6 +20,8 @@ set ( WRAPFF_SOURCES
 
       _FF.main.cpp
 
+      sireff_containers.cpp
+
       FFBase.pypp.cpp
       FFCalculator.pypp.cpp
       FFCalculatorBase.pypp.cpp

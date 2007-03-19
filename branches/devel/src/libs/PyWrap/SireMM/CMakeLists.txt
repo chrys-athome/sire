@@ -20,8 +20,7 @@ set ( WRAPMM_SOURCES
 
       _MM.main.cpp
 
-      QVector_ChargeParameter_.py.cpp
-      QVector_LJParameter_.py.cpp
+      siremm_containers.cpp
 
       AngleTable_Expression_.pypp.cpp
       BondTable_Expression_.pypp.cpp
@@ -61,6 +60,7 @@ set ( WRAPMM_SOURCES
       ChargeTable.pypp.cpp
       CombiningRuleBase.pypp.cpp
       CombiningRules.pypp.cpp
+      CoulombFF.pypp.cpp
 
       DihedralAtomID.pypp.cpp
       DihedralDB.pypp.cpp
@@ -73,6 +73,11 @@ set ( WRAPMM_SOURCES
       HarmonicSwitchingFunction.pypp.cpp
 
       InterCLJFF.pypp.cpp
+      InterCoulombFF.pypp.cpp
+      InterGroupCLJFF.pypp.cpp
+      InterGroupCoulombFF.pypp.cpp
+      InterGroupLJFF.pypp.cpp
+      InterLJFF.pypp.cpp
 
       InternalDB_MolAngleInfo_.pypp.cpp
       InternalDB_MolBondInfo_.pypp.cpp
@@ -93,6 +98,8 @@ set ( WRAPMM_SOURCES
       InternalTable_MolDihedralInfo_Expression_.pypp.cpp
             
       LJDB.pypp.cpp
+      LJFF.pypp.cpp
+      LJPair.pypp.cpp
       LJParameter.pypp.cpp
       LJTable.pypp.cpp
 
@@ -116,8 +123,6 @@ set ( WRAPMM_SOURCES
 
       SwitchFuncBase.pypp.cpp
       SwitchingFunction.pypp.cpp
-
-      Tip4PFF.pypp.cpp
 
       UreyBradleyDB.pypp.cpp
 

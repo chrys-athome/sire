@@ -10,11 +10,17 @@
 
 namespace bp = boost::python;
 
+SireDB::match_res_num __copy__(const SireDB::match_res_num &other){ return SireDB::match_res_num(other); }
+
+const char* pvt_get_name(const SireDB::match_res_num&){ return "SireDB::match_res_num";}
+
 void register_match_res_num_class(){
 
     bp::class_< SireDB::match_res_num >( "match_res_num" )    
         .def( bp::init< >() )    
         .def( bp::init< uint >(( bp::arg("atmid") )) )    
-        .def( bp::self == bp::other< SireMol::ResNum >() );
+        .def( bp::self == bp::other< SireMol::ResNum >() )    
+        .def( "__copy__", &__copy__)    
+        .def( "__str__", &pvt_get_name);
 
 }

@@ -8,6 +8,12 @@
 
 namespace bp = boost::python;
 
+SireCAS::Sinh __copy__(const SireCAS::Sinh &other){ return SireCAS::Sinh(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_Sinh_class(){
 
     bp::class_< SireCAS::Sinh, bp::bases< SireCAS::SingleFunc > >( "Sinh" )    
@@ -28,6 +34,12 @@ void register_Sinh_class(){
         .def( 
             "what"
             , (char const * ( ::SireCAS::Sinh::* )(  ) const)( &::SireCAS::Sinh::what ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireCAS::Sinh >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireCAS::Sinh >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireCAS::Sinh > );
 
 }

@@ -133,7 +133,7 @@ inline RanGenerator& SamplerBase::generator()
 
     @author Christopher Woods
 */
-class Sampler
+class SIREMOVE_EXPORT Sampler
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const Sampler&);

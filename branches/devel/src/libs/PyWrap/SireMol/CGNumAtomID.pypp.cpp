@@ -14,6 +14,12 @@
 
 namespace bp = boost::python;
 
+SireMol::CGNumAtomID __copy__(const SireMol::CGNumAtomID &other){ return SireMol::CGNumAtomID(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_CGNumAtomID_class(){
 
     bp::class_< SireMol::CGNumAtomID >( "CGNumAtomID", bp::init< bp::optional< SireMol::CutGroupNum, SireMol::AtomID > >(( bp::arg("cgid")=::SireMol::CutGroupNum( 0 ), bp::arg("atmid")=::SireMol::AtomID( 0 ) )) )    
@@ -32,6 +38,12 @@ void register_CGNumAtomID_class(){
         .def( bp::self >= bp::self )    
         .def( 
             "toString"
-            , &::SireMol::CGNumAtomID::toString );
+            , &::SireMol::CGNumAtomID::toString )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::CGNumAtomID >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::CGNumAtomID >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireMol::CGNumAtomID > );
 
 }

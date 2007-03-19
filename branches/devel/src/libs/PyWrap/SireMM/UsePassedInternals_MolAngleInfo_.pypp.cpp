@@ -12,12 +12,21 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMM::UsePassedInternals<SireMM::MolAngleInfo>&){ return "SireMM::UsePassedInternals<SireMM::MolAngleInfo>";}
+
 void register_UsePassedInternals_MolAngleInfo__class(){
 
     bp::class_< SireMM::UsePassedInternals<SireMM::MolAngleInfo>, bp::bases< SireMM::InternalGenerator<SireMM::MolAngleInfo> >, boost::noncopyable >( "UsePassedInternals_MolAngleInfo_", bp::no_init )    
         .def( 
             "generate"
             , (void ( ::SireMM::UsePassedInternals<SireMM::MolAngleInfo>::* )( ::SireMol::Molecule const &,::SireMM::MolAngleInfo & ) const)( &::SireMM::UsePassedInternals<SireMM::MolAngleInfo>::generate )
-            , ( bp::arg("molecule"), bp::arg("internalinfo") ) );
+            , ( bp::arg("molecule"), bp::arg("internalinfo") ) )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::UsePassedInternals<SireMM::MolAngleInfo> >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::UsePassedInternals<SireMM::MolAngleInfo> >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

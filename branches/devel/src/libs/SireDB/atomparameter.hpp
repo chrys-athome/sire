@@ -94,6 +94,8 @@ public:
     bool operator!=(const AtomParameter<Param> &other) const;
 };
 
+#ifndef SKIP_TEMPLATE_DEFINITIONS
+
 /** Null constructor */
 template<class Param>
 SIRE_OUTOFLINE_TEMPLATE
@@ -175,7 +177,12 @@ bool AtomParameter<Param>::operator!=(const AtomParameter<Param> &other) const
 }
 
 static const MagicID atomparameter_magic = getMagic("SireDB::AtomParameter");
+
+#endif // SKIP_TEMPLATE_DEFINITIONS
+
 }
+
+#ifndef SKIP_TEMPLATE_DEFINITIONS
 
 /** Serialise to a binary datastream */
 template<class Param>
@@ -206,6 +213,8 @@ QDataStream &operator>>(QDataStream &ds, SireDB::AtomParameter<Param> &param)
 
     return ds;
 }
+
+#endif // SKIP_TEMPLATE_DEFINITIONS
 
 SIRE_END_HEADER
 

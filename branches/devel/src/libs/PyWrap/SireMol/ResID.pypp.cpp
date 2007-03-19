@@ -14,10 +14,16 @@
 
 namespace bp = boost::python;
 
+SireMol::ResID __copy__(const SireMol::ResID &other){ return SireMol::ResID(other); }
+
+#include "SirePy/str.hpp"
+
 void register_ResID_class(){
 
     bp::class_< SireMol::ResID, bp::bases< SireMol::IDBase > >( "ResID" )    
         .def( bp::init< >() )    
-        .def( bp::init< quint32 >(( bp::arg("id") )) );
+        .def( bp::init< quint32 >(( bp::arg("id") )) )    
+        .def( "__copy__", &__copy__)    
+        .def( "__str__", &SirePy::__str__< ::SireMol::ResID > );
 
 }

@@ -34,7 +34,7 @@ add_subdirectory (SireUnits)
 #add_subdirectory (SireUnitTest)
 add_subdirectory (SireVol)
 #add_subdirectory (Spier)
-#add_subdirectory (Squire)
+add_subdirectory (Squire)
 #add_subdirectory (ThirdParty)
 
 # Install main Sire __init__.py file

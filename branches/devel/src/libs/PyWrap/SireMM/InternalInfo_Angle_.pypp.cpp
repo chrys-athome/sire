@@ -12,11 +12,17 @@
 
 namespace bp = boost::python;
 
+SireMM::detail::InternalInfo<SireMol::Angle> __copy__(const SireMM::detail::InternalInfo<SireMol::Angle> &other){ return SireMM::detail::InternalInfo<SireMol::Angle>(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMM::detail::InternalInfo<SireMol::Angle>&){ return "SireMM::detail::InternalInfo<SireMol::Angle>";}
+
 void register_InternalInfo_Angle__class(){
 
     bp::class_< SireMM::detail::InternalInfo<SireMol::Angle> >( "InternalInfo_Angle_" )    
         .def( bp::init< >() )    
-        .def( bp::init< SireMol::MoleculeInfo const & >(( bp::arg("moleculeinfo") )) )    
+        .def( bp::init< SireMol::MoleculeInfo const & >(( bp::arg("molinfo") )) )    
         .def( 
             "at"
             , (::SireMol::GroupIndexID ( ::SireMM::detail::InternalInfo<SireMol::Angle>::* )( ::SireMol::Angle const & ) const)( &::SireMM::detail::InternalInfo<SireMol::Angle>::at )
@@ -43,7 +49,7 @@ void register_InternalInfo_Angle__class(){
         .def( 
             "contains"
             , (bool ( ::SireMM::detail::InternalInfo<SireMol::Angle>::* )( ::SireMol::GroupID ) const)( &::SireMM::detail::InternalInfo<SireMol::Angle>::contains )
-            , ( bp::arg("groupid") ) )    
+            , ( bp::arg("id") ) )    
         .def( 
             "contains"
             , (bool ( ::SireMM::detail::InternalInfo<SireMol::Angle>::* )( ::SireMol::GroupIndexID const & ) const)( &::SireMM::detail::InternalInfo<SireMol::Angle>::contains )
@@ -160,6 +166,12 @@ void register_InternalInfo_Angle__class(){
             , ( bp::arg("internal") ) )    
         .def( 
             "size"
-            , (::size_t ( ::SireMM::detail::InternalInfo<SireMol::Angle>::* )(  ) const)( &::SireMM::detail::InternalInfo<SireMol::Angle>::size ) );
+            , (::size_t ( ::SireMM::detail::InternalInfo<SireMol::Angle>::* )(  ) const)( &::SireMM::detail::InternalInfo<SireMol::Angle>::size ) )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::detail::InternalInfo<SireMol::Angle> >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::detail::InternalInfo<SireMol::Angle> >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

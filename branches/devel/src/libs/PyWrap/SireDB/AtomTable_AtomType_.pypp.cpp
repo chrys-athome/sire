@@ -10,6 +10,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireDB::AtomTableT<SireDB::AtomType>&){ return "SireDB::AtomTableT<SireDB::AtomType>";}
+
 void register_AtomTable_AtomType__class(){
 
     bp::class_< SireDB::AtomTableT<SireDB::AtomType>, bp::bases< SireDB::AtomTable >, boost::noncopyable >( "AtomTable_AtomType_", bp::no_init )    
@@ -245,6 +249,11 @@ void register_AtomTable_AtomType__class(){
         .def( 
             "value"
             , (::SireDB::AtomParameter<SireDB::AtomType> ( ::SireDB::AtomTableT<SireDB::AtomType>::* )( ::SireMol::AtomID,::SireDB::AtomType const & ) const)( &::SireDB::AtomTableT<SireDB::AtomType>::value )
-            , ( bp::arg("atomid"), bp::arg("defaultValue") ) );
+            , ( bp::arg("atomid"), bp::arg("defaultValue") ) )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireDB::AtomTableT<SireDB::AtomType> >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireDB::AtomTableT<SireDB::AtomType> >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

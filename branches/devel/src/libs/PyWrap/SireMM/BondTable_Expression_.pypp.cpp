@@ -12,6 +12,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireMM::BondTableT<SireCAS::Expression>&){ return "SireMM::BondTableT<SireCAS::Expression>";}
+
 void register_BondTable_Expression__class(){
 
     bp::class_< SireMM::BondTableT<SireCAS::Expression>, bp::bases< SireMM::InternalTable<SireMM::MolBondInfo, SireCAS::Expression> >, boost::noncopyable >( "BondTable_Expression_", bp::no_init )    
@@ -345,6 +347,7 @@ void register_BondTable_Expression__class(){
         .def( 
             "setBondParameter"
             , (void ( ::SireMM::BondTableT<SireCAS::Expression>::* )( ::SireMol::GroupIndexID const &,::SireCAS::Expression const & ) )( &::SireMM::BondTableT<SireCAS::Expression>::setBondParameter )
-            , ( bp::arg("id"), bp::arg("param") ) );
+            , ( bp::arg("id"), bp::arg("param") ) )    
+        .def( "__str__", &pvt_get_name);
 
 }

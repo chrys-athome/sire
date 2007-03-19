@@ -39,7 +39,6 @@ class QString;
 #include "SireMaths/errors.h"
 
 #include "maths.h"
-#include "matrix.h"
 
 #include "sireglobal.h"
 
@@ -56,6 +55,9 @@ QDataStream& operator>>(QDataStream&, SireMaths::Vector&);
 
 namespace SireMaths
 {
+
+class Quaternion;
+class Matrix;
 
 using boost::tuple;
 
@@ -106,37 +108,35 @@ friend QDataStream& ::operator>>(QDataStream&, Vector&);
 public:
     typedef double value_type;
 
-    /** Create the vector (xpos,ypos,zpos) */
-    Vector(double xpos, double ypos, double zpos);
-    /** Construct from a tuple of three values */
+    Vector( double val=0.0 );
+    Vector( double xpos, double ypos, double zpos );
     Vector( const tuple<double,double,double> &pos );
-    /** Create the vector (val,val,val) */
-    Vector(double val=0.0);
-    /** Copy constructor */
-    Vector(const Vector& p1);
+    
+    Vector( const QString &str );
+    
+    Vector(const Vector &other);
+    
     ~Vector();
 
-    /** Return the x/y/z components of the vector */
     double x() const;
     double y() const;
     double z() const;
 
-    /** Return the components via rgb */
     double r() const;
     double g() const;
     double b() const;
 
-    /** Assignment operator */
     const Vector& operator=(const Vector &other);
 
-    /** Increment, decrement, negate etc. */
+    bool operator==(const Vector &p1) const;
+    bool operator!=(const Vector &p1) const;
+    
     const Vector& operator+=(const Vector &other);
     const Vector& operator-=(const Vector &other);
     const Vector& operator*=(const double &other);
     const Vector& operator/=(const double &other);
     Vector operator-() const;
 
-    /** Set individual values of the vector */
     void set(double x, double y, double z);
     void setX(double x);
     void setY(double y);
@@ -145,118 +145,83 @@ public:
     void setG(double y);
     void setB(double z);
 
-    /** Set component 'i' to the value 'v' */
     void set(int i, const double &v);
 
-    /** Access the elements of the array via an index operator */
     const double& operator[](unsigned int i) const;
 
     unsigned int count() const;
     const double& at(unsigned int i) const;
 
-    /** Return the length of the vector */
-    double length() const;
-    /** Return the manhattan length of the vector */
     double manhattanLength() const;
-    /** Return the length^2 of the vector */
+    
+    double length() const;
     double length2() const;
-    /** Return the inverse of the length of the vector */
+    
     double invLength() const;
-    /** Return the inverse length squared */
     double invLength2() const;
-    /** Return a normalised form of the vector */
+    
     Vector normalise() const;
 
-    /** Return whether or not this is a zero length vector */
     bool isZero() const;
 
-    /** Return a QString representation of the vector */
     QString toString() const;
 
-    /** Construct a Vector from the QString representation returned by 'toString()' */
     static Vector fromString(const QString &str);
 
-    /** Return the dot product of v0 and v1 */
     static double dot(const Vector &v0, const Vector &v1);
-    /** Return the cross product of v0 and v1 */
     static Vector cross(const Vector &v0, const Vector &v1);
 
-    /** Set this Vector so that it has the maximum x/y/z components out of
-        this and 'other' (e.g. this->x = max(this->x(),other.x() etc.) */
     void setMax(const Vector &other);
-    /** Set this Vector so that it has the minimum x/y/z components */
     void setMin(const Vector &other);
 
-    /** Return a vector that has the maximum x/y/z components out of this
-        and 'other' */
     Vector max(const Vector &other) const;
-    /** Return a vector that has the minimum components */
     Vector min(const Vector &other) const;
 
-    /** == operator */
-    bool operator==(const Vector &p1) const;
-    /** != operator */
-    bool operator!=(const Vector &p1) const;
-
-    /** Return the bearing of this vector against (0,1,0) (north) on the xy plane */
     Angle bearing() const;
-    /** Return the bearing of this vector against 'v' on the xy plane */
     Angle bearingXY(const Vector &v) const;
-    /** Return the bearing of this vector against 'v' on the xz plane */
     Angle bearingXZ(const Vector &v) const;
-    /** Return the bearing of this vector against 'v' on the yz plane */
     Angle bearingYZ(const Vector &v) const;
 
-    /** Return the metric tensor of a vector, e.g.
-
-             | y*y + z*z,    -x*y    -x*z      |
-             |    -y*x,   x*x + z*z  -y*z      |
-             |    -z*x       -z*y    x*x + y*y |
-
-      */
     Matrix metricTensor() const;
 
-    /** Return the distance squared between two vectors */
     static double distance2(const Vector &v1, const Vector &v2);
-    /** Return the distance between two vectors */
     static double distance(const Vector &v1, const Vector &v2);
-    /** Return the 1 / distance between two vectors */
+    
     static double invDistance(const Vector &v1, const Vector &v2);
-    /** Return 1 / distance2 between two vectors */
     static double invDistance2(const Vector &v1, const Vector &v2);
 
-    /** Return the angle between vectors 'v0' and 'v1' - this is the smallest
-        angle, and will always lie between 0 and 180 degrees */
     static Angle angle(const Vector &v0, const Vector &v1);
-    /** Return the angle between v0-v1-v2 (treating the vectors as points in space) */
     static Angle angle(const Vector &v0, const Vector &v1, const Vector &v2);
 
-    /** Return the dihedral angle between v0-v1-v2-v3 (treating the vectors as points) */
     static Angle dihedral(const Vector &v0, const Vector &v1,
                           const Vector &v2, const Vector &v3);
 
-    /** Generate a vector, v0, that has distance 'dst' v0-v1, angle 'ang' v0-v1-v2,
-        and dihedral 'dih' v0-v1-v2-v3 */
     static Vector generate(double dst, const Vector &v1, const Angle &ang,
                            const Vector &v2, const Angle &dih, const Vector &v3);
 
-    friend const Vector operator+(const Vector &p1, const Vector &p2);
-    friend const Vector operator-(const Vector &p1, const Vector &p2);
-    friend const Vector operator*(const Vector &p1, double c);
-    friend const Vector operator*(double c, const Vector &p1);
-    friend const Vector operator/(const Vector &p1, double c);
-    friend const Quaternion operator*(const Vector &p1, const Quaternion &p2);
-    friend const Quaternion operator*(const Quaternion &p1, const Vector &p2);
-    friend const Vector operator*(const Matrix &m, const Vector &p);
+    friend const Vector SireMaths::operator+(const Vector &p1, const Vector &p2);
+    friend const Vector SireMaths::operator-(const Vector &p1, const Vector &p2);
+    friend const Vector SireMaths::operator*(const Vector &p1, double c);
+    friend const Vector SireMaths::operator*(double c, const Vector &p1);
+    friend const Vector SireMaths::operator/(const Vector &p1, double c);
+    friend const Quaternion SireMaths::operator*(const Vector &p1, const Quaternion &p2);
+    friend const Quaternion SireMaths::operator*(const Quaternion &p1, const Vector &p2);
+    friend const Vector SireMaths::operator*(const Matrix &m, const Vector &p);
 
 protected:
     double sc[3];
 };
 
+/** Copy constructor */
+inline Vector::Vector(const Vector& other)
+{
+    qMemCopy(sc, other.sc, 3*sizeof(double));
+}
+
+/** Copy assignment operator */
 inline const Vector& Vector::operator=(const Vector &other)
 {
-    for (int i=0; i<3; i++)
-      sc[i] = other.sc[i];
+    qMemCopy(sc, other.sc, 3*sizeof(double));
 
     return *this;
 }
@@ -277,78 +242,25 @@ inline bool Vector::operator!=(const Vector &other) const
             sc[2] != other.sc[2]);
 }
 
+/** Return the x component of the vector */
 inline double Vector::x() const
 {
     return sc[0];
 }
 
+/** Return the y component of the vector */
 inline double Vector::y() const
 {
     return sc[1];
 }
 
+/** Return the z component of the vector */
 inline double Vector::z() const
 {
     return sc[2];
 }
 
-inline double Vector::r() const
-{
-    return std::max(0.0, std::min(1.0,sc[0]));
-}
-
-inline double Vector::g() const
-{
-    return std::max(0.0, std::min(1.0,sc[1]));
-}
-
-inline double Vector::b() const
-{
-    return std::max(0.0, std::min(1.0,sc[2]));
-}
-
-inline void Vector::set(double x, double y, double z)
-{
-    sc[0] = x;
-    sc[1] = y;
-    sc[2] = z;
-}
-
-inline void Vector::set(int i, const double &v)
-{
-    sc[i] = v;
-}
-
-inline void Vector::setX(double x)
-{
-    sc[0] = x;
-}
-
-inline void Vector::setY(double y)
-{
-    sc[1] = y;
-}
-
-inline void Vector::setZ(double z)
-{
-    sc[2] = z;
-}
-
-inline void Vector::setR(double x)
-{
-    sc[0] = x;
-}
-
-inline void Vector::setG(double y)
-{
-    sc[1] = y;
-}
-
-inline void Vector::setB(double z)
-{
-    sc[2] = z;
-}
-
+/** Return the distance squared between two vectors */
 inline double Vector::distance2(const Vector &v1, const Vector &v2)
 {
     return pow_2(v1.sc[0]-v2.sc[0]) +
@@ -356,6 +268,7 @@ inline double Vector::distance2(const Vector &v1, const Vector &v2)
            pow_2(v1.sc[2]-v2.sc[2]);
 }
 
+/** Return the distance between two vectors */
 inline double Vector::distance(const Vector &v1, const Vector &v2)
 {
     return std::sqrt( pow_2(v1.sc[0]-v2.sc[0]) +
@@ -363,6 +276,7 @@ inline double Vector::distance(const Vector &v1, const Vector &v2)
                       pow_2(v1.sc[2]-v2.sc[2]) );
 }
 
+/** Return the 1 / distance between two vectors */
 inline double Vector::invDistance(const Vector &v1, const Vector &v2)
 {
     double dist = pow_2(v1.sc[0]-v2.sc[0]) +
@@ -372,6 +286,7 @@ inline double Vector::invDistance(const Vector &v1, const Vector &v2)
     return double(1.0) / std::sqrt(dist);
 }
 
+/** Return 1 / distance2 between two vectors */
 inline double Vector::invDistance2(const Vector &v1, const Vector &v2)
 {
     return double(1.0) / ( pow_2(v1.sc[0]-v2.sc[0]) +
@@ -379,128 +294,56 @@ inline double Vector::invDistance2(const Vector &v1, const Vector &v2)
                            pow_2(v1.sc[2]-v2.sc[2]) );
 }
 
+/** Access the elements of the array via an index operator */
 inline const double& Vector::operator[](unsigned int i) const
 {
-    return sc[i];
+    return sc[i%3];
 }
 
-inline const Vector& Vector::operator+=(const Vector &other)
-{
-    for (int i=0; i<3; i++)
-        sc[i] += other.sc[i];
-
-    return *this;
-}
-
-inline const Vector& Vector::operator-=(const Vector &other)
-{
-    for (int i=0; i<3; i++)
-        sc[i] -= other.sc[i];
-
-    return *this;
-}
-
-inline const Vector& Vector::operator*=(const double &val)
-{
-    for (int i=0; i<3; i++)
-        sc[i] *= val;
-
-    return *this;
-}
-
-inline const Vector& Vector::operator/=(const double &val)
-{
-    if ( SireMaths::isZero(val) )
-        throw SireMaths::math_error(QObject::tr(
-            "Cannot divide a vector by zero! %1 / 0 is a error!").arg(this->toString()),CODELOC);
-
-    for (int i=0; i<3; i++)
-        sc[i] /= val;
-
-    return *this;
-}
-
-inline Vector Vector::operator-() const
-{
-    return Vector(-sc[0],-sc[1],-sc[2]);
-}
-
+/** Return the size of the Vector (always 3 - unless you disagree
+    with me that we should be living in a 3-dimensional space!) */
 inline unsigned int Vector::count() const
 {
     return 3;
 }
 
+/** Access elements by index */
 inline const double& Vector::at(unsigned int i) const
 {
     return this->operator[](i);
 }
 
-inline const Vector operator+(const Vector &p1, const Vector &p2)
-{
-    return Vector(p1.sc[0]+p2.sc[0], p1.sc[1]+p2.sc[1], p1.sc[2]+p2.sc[2]);
-}
-
-inline const Vector operator-(const Vector &p1, const Vector &p2)
-{
-    return Vector(p1.sc[0]-p2.sc[0], p1.sc[1]-p2.sc[1], p1.sc[2]-p2.sc[2]);
-}
-
-inline const Vector operator*(const Vector &p1, double c)
-{
-    return Vector(p1.sc[0]*c, p1.sc[1]*c, p1.sc[2]*c);
-}
-
-inline const Vector operator*(double c, const Vector &p1)
-{
-    return Vector(p1.sc[0]*c, p1.sc[1]*c, p1.sc[2]*c);
-}
-
-inline const Vector operator/(const Vector &p1, double c)
-{
-    if (isZero(c))
-        throw SireMaths::math_error(QObject::tr(
-            "Cannot divide a vector by zero! %1 / 0 is a error!").arg(p1.toString()),CODELOC);
-
-    return Vector(p1.sc[0]/c, p1.sc[1]/c, p1.sc[2]/c);
-}
-
+/** Return the length of the vector */
 inline double Vector::length() const
 {
-    return sqrt(sc[0]*sc[0] + sc[1]*sc[1] + sc[2]*sc[2]);
+    return sqrt( pow_2(sc[0]) + pow_2(sc[1]) + pow_2(sc[2]) );
 }
 
+/** Return the length^2 of the vector */
 inline double Vector::length2() const
 {
-    return (sc[0]*sc[0]+sc[1]*sc[1]+sc[2]*sc[2]);
+    return pow_2(sc[0]) + pow_2(sc[1]) + pow_2(sc[2]);
 }
 
+/** Return the inverse of the length of the vector */
 inline double Vector::invLength() const
 {
-    double lgth = length();
-
-    if (SireMaths::isZero(lgth))
-        throw SireMaths::math_error(QObject::tr(
-            "Cannot take the inverse length of a zero vector, %1").arg(this->toString()),CODELOC);
-
-    return double(1.0) / lgth;
+    return double(1) / sqrt( pow_2(sc[0]) + pow_2(sc[1]) + pow_2(sc[2]) );
 }
 
+/** Return the inverse length squared */
 inline double Vector::invLength2() const
 {
-    double lgth2 = length2();
-
-    if (SireMaths::isZero(lgth2))
-        throw SireMaths::math_error(QObject::tr(
-            "Cannot take the inverse length of a zero vector, %1").arg(this->toString()),CODELOC);
-
-    return double(1.0) / lgth2;
+    return double(1) / ( pow_2(sc[0]) + pow_2(sc[1]) + pow_2(sc[2]) );
 }
 
+/** Return whether or not this is a zero length vector */
 inline bool Vector::isZero() const
 {
     return SireMaths::isZero(sc[0]) and SireMaths::isZero(sc[1]) and SireMaths::isZero(sc[2]);
 }
 
+/** Return a normalised form of the vector */
 inline Vector Vector::normalise() const
 {
     double l = length2();
@@ -509,27 +352,33 @@ inline Vector Vector::normalise() const
         throw SireMaths::math_error(QObject::tr(
             "Cannot normalise a zero vector, %1").arg(this->toString()),CODELOC);
 
-    l = 1.0 / sqrt(l);
+    l = double(1) / sqrt(l);
     return Vector(sc[0]*l,sc[1]*l,sc[2]*l);
 }
 
+/** Return the dot product of v0 and v1 */
 inline double Vector::dot(const Vector &v0, const Vector &v1)
 {
     return (v0.sc[0]*v1.sc[0] + v0.sc[1]*v1.sc[1] + v0.sc[2]*v1.sc[2]);
 }
 
+/** Set this Vector so that it has the maximum x/y/z components out of
+    this and 'other' (e.g. this->x = max(this->x(),other.x() etc.) */
 inline void Vector::setMax(const Vector &other)
 {
     for (int i=0; i<3; i++)
         sc[i] = SIRE_MAX( other.sc[i], sc[i] );
 }
 
+/** Set this Vector so that it has the minimum x/y/z components */
 inline void Vector::setMin(const Vector &other)
 {
     for (int i=0; i<3; i++)
         sc[i] = SIRE_MIN( other.sc[i], sc[i] );
 }
 
+/** Return a vector that has the maximum x/y/z components out of this
+    and 'other' */
 inline Vector Vector::max(const Vector &other) const
 {
     Vector v(*this);
@@ -537,33 +386,12 @@ inline Vector Vector::max(const Vector &other) const
     return v;
 }
 
+/** Return a vector that has the minimum components */
 inline Vector Vector::min(const Vector &other) const
 {
     Vector v(*this);
     v.setMin(other);
     return v;
-}
-
-inline Matrix Vector::metricTensor() const
-{
-    double x2 = sc[0]*sc[0];
-    double y2 = sc[1]*sc[1];
-    double z2 = sc[2]*sc[2];
-
-    double xy = sc[0]*sc[1];
-    double xz = sc[0]*sc[2];
-    double yz = sc[1]*sc[2];
-
-    return Matrix( y2 + z2, -xy, -xz,
-                   -xy, x2 + z2, -yz,
-                   -xz, -yz, x2 + y2 );
-}
-
-inline const Vector operator*(const Matrix &m, const Vector &p)
-{
-    return Vector(m.xx*p.sc[0] + m.yx*p.sc[1] + m.zx*p.sc[2],
-                  m.xy*p.sc[0] + m.yy*p.sc[1] + m.zy*p.sc[2],
-                  m.xz*p.sc[0] + m.yz*p.sc[1] + m.zz*p.sc[2]);
 }
 
 }

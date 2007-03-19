@@ -8,8 +8,11 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireCluster::ThreadWorker&){ return "SireCluster::ThreadWorker";}
+
 void register_ThreadWorker_class(){
 
-    bp::class_< SireCluster::ThreadWorker, bp::bases< SireCluster::WorkerBase >, boost::noncopyable >( "ThreadWorker", bp::no_init );
+    bp::class_< SireCluster::ThreadWorker, bp::bases< SireCluster::WorkerBase >, boost::noncopyable >( "ThreadWorker", bp::no_init )    
+        .def( "__str__", &pvt_get_name);
 
 }

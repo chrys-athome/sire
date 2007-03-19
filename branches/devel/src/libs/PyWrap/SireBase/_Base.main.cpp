@@ -19,34 +19,22 @@
 
 #include "Version.pypp.hpp"
 
+#include "sirebase_containers.h"
+
 namespace bp = boost::python;
 
 BOOST_PYTHON_MODULE(_Base){
+    register_SireBase_containers();
+
     register_IDMajMinVersion_class();
-
-    bp::implicitly_convertible< SireBase::Incremint *, SireBase::IDMajMinVersion >();
-
-    bp::implicitly_convertible< SireBase::IDTriple const &, SireBase::IDMajMinVersion >();
 
     register_IDVersion_class();
 
-    bp::implicitly_convertible< SireBase::Incremint *, SireBase::IDVersion >();
-
     register_MD5Sum_class();
-
-    bp::implicitly_convertible< QByteArray const &, SireBase::MD5Sum >();
-
-    bp::implicitly_convertible< QString const &, SireBase::MD5Sum >();
 
     register_MajMinVersion_class();
 
-    bp::implicitly_convertible< SireBase::Incremint *, SireBase::MajMinVersion >();
-
-    bp::implicitly_convertible< SireBase::IDPair const &, SireBase::MajMinVersion >();
-
     register_MajVersion_class();
-
-    bp::implicitly_convertible< SireBase::Incremint *, SireBase::MajVersion >();
 
     bp::implicitly_convertible< SireBase::MajVersion, quint32 >();
 

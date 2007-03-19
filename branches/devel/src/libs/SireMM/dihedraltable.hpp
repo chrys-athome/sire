@@ -211,6 +211,8 @@ public:
                                                 const QSet<ResNum> &resnums) const;
 };
 
+#ifndef SKIP_TEMPLATE_DEFINITIONS
+
 /** Empty constructor */
 template<class Param>
 SIRE_OUTOFLINE_TEMPLATE
@@ -1020,7 +1022,11 @@ DihedralTableT<Param>::intraDihedralParametersByResidue(const QSet<ResNum> &resn
 
 const MagicID dihedraltablet_magic = getMagic("SireMM::DihedralTableT");
 
+#endif // SKIP_TEMPLATE_DEFINITIONS
+
 }
+
+#ifndef SKIP_TEMPLATE_DEFINITIONS
 
 /** Serialise to a binary data stream */
 template<class Param>
@@ -1052,6 +1058,8 @@ QDataStream& operator>>(QDataStream &ds,
 
     return ds;
 }
+
+#endif // SKIP_TEMPLATE_DEFINITIONS
 
 SIRE_END_HEADER
 

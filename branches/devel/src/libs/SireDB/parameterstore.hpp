@@ -35,8 +35,6 @@
 #include <QSet>
 #include <QDataStream>
 
-#include <boost/tuple/tuple.hpp>
-
 #include "SireMol/groupedvector.hpp"
 
 #include "SireDB/errors.h"
@@ -180,6 +178,8 @@ private:
     /** The expected number of parameters in each group */
     nhash_type nparams;
 };
+
+#ifndef SKIP_TEMPLATE_DEFINITIONS
 
 /** Empty constructor */
 template<class IDX, class Param>
@@ -1215,7 +1215,11 @@ uint ParameterStore<IDX,Param>::parameters(
 
 const MagicID parameterstore_magic = getMagic("SireDB::ParameterStore");
 
+#endif // SKIP_TEMPLATE_DEFINITIONS
+
 }
+
+#ifndef SKIP_TEMPLATE_DEFINITIONS
 
 /** Serialise to a binary data stream */
 template<class IDX, class Param>
@@ -1246,6 +1250,8 @@ QDataStream& operator>>(QDataStream &ds, SireDB::ParameterStore<IDX,Param> &stor
 
     return ds;
 }
+
+#endif // SKIP_TEMPLATE_DEFINITIONS
 
 SIRE_END_HEADER
 

@@ -12,12 +12,15 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireMM::InternalDB<SireMM::MolBondInfo>&){ return "SireMM::InternalDB<SireMM::MolBondInfo>";}
+
 void register_InternalDB_MolBondInfo__class(){
 
     bp::class_< SireMM::InternalDB<SireMM::MolBondInfo>, boost::noncopyable >( "InternalDB_MolBondInfo_", bp::no_init )    
         .def( 
             "assignParameter"
             , (bool ( ::SireMM::InternalDB<SireMM::MolBondInfo>::* )( ::SireMol::Bond const &,::QMap<int, unsigned> const &,::SireDB::ParameterTable & ) )( &::SireMM::InternalDB<SireMM::MolBondInfo>::assignParameter )
-            , ( bp::arg("internal"), bp::arg("relateids"), bp::arg("param_table") ) );
+            , ( bp::arg("internal"), bp::arg("relateids"), bp::arg("param_table") ) )    
+        .def( "__str__", &pvt_get_name);
 
 }

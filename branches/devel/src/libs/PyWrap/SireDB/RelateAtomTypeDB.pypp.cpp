@@ -10,6 +10,10 @@
 
 namespace bp = boost::python;
 
+SireDB::RelateAtomTypeDB __copy__(const SireDB::RelateAtomTypeDB &other){ return SireDB::RelateAtomTypeDB(other); }
+
+#include "SirePy/str.hpp"
+
 void register_RelateAtomTypeDB_class(){
 
     bp::class_< SireDB::RelateAtomTypeDB, bp::bases< SireDB::RelationshipDB > >( "RelateAtomTypeDB" )    
@@ -61,6 +65,8 @@ void register_RelateAtomTypeDB_class(){
         .def( 
             "what"
             , (char const * ( ::SireDB::RelateAtomTypeDB::* )(  ) const)( &::SireDB::RelateAtomTypeDB::what ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
+        .def( "__str__", &SirePy::__str__< ::SireDB::RelateAtomTypeDB > );
 
 }

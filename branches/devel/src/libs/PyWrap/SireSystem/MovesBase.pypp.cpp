@@ -11,6 +11,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireSystem::MovesBase&){ return "SireSystem::MovesBase";}
+
 void register_MovesBase_class(){
 
     bp::class_< SireSystem::MovesBase, boost::noncopyable >( "MovesBase", bp::no_init )    
@@ -27,6 +31,11 @@ void register_MovesBase_class(){
         .def( 
             "what"
             , (char const * ( ::SireSystem::MovesBase::* )(  ) const)( &::SireSystem::MovesBase::what ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireSystem::MovesBase >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireSystem::MovesBase >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

@@ -8,6 +8,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_ExBase_class(){
 
     bp::class_< SireCAS::ExBase, boost::noncopyable >( "ExBase", bp::no_init )    
@@ -85,6 +89,31 @@ void register_ExBase_class(){
         .def( 
             "what"
             , (char const * ( ::SireCAS::ExBase::* )(  ) const)( &::SireCAS::ExBase::what ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( self + self )    
+        .def( self - self )    
+        .def( self * self )    
+        .def( self / self )    
+        .def( other<double>() + self )    
+        .def( other<double>() - self )    
+        .def( other<double>() * self )    
+        .def( other<double>() / self )    
+        .def( self + other<double>() )    
+        .def( self - other<double>() )    
+        .def( self * other<double>() )    
+        .def( self / other<double>() )    
+        .def( other<SireMaths::Complex>() + self )    
+        .def( other<SireMaths::Complex>() - self )    
+        .def( other<SireMaths::Complex>() * self )    
+        .def( other<SireMaths::Complex>() / self )    
+        .def( self + other<SireMaths::Complex>() )    
+        .def( self - other<SireMaths::Complex>() )    
+        .def( self * other<SireMaths::Complex>() )    
+        .def( self / other<SireMaths::Complex>() )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireCAS::ExBase >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireCAS::ExBase >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireCAS::ExBase > );
 
 }

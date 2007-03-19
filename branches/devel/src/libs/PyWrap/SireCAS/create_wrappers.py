@@ -69,7 +69,71 @@ aliases = {}
 
 extra_includes = []
 
-special_code = {}
+def add_expression_operators(c):
+    
+    c.add_registration_code("def( self + self )")
+    c.add_registration_code("def( self - self )")
+    c.add_registration_code("def( self * self )")
+    c.add_registration_code("def( self / self )")
+    
+    c.add_registration_code("def( other<double>() + self )")
+    c.add_registration_code("def( other<double>() - self )")
+    c.add_registration_code("def( other<double>() * self )")
+    c.add_registration_code("def( other<double>() / self )")
+    c.add_registration_code("def( self + other<double>() )")
+    c.add_registration_code("def( self - other<double>() )")
+    c.add_registration_code("def( self * other<double>() )")
+    c.add_registration_code("def( self / other<double>() )")
+    
+    c.add_registration_code("def( other<SireMaths::Complex>() + self )")
+    c.add_registration_code("def( other<SireMaths::Complex>() - self )")
+    c.add_registration_code("def( other<SireMaths::Complex>() * self )")
+    c.add_registration_code("def( other<SireMaths::Complex>() / self )")
+    
+    c.add_registration_code("def( self + other<SireMaths::Complex>() )")
+    c.add_registration_code("def( self - other<SireMaths::Complex>() )")
+    c.add_registration_code("def( self * other<SireMaths::Complex>() )")
+    c.add_registration_code("def( self / other<SireMaths::Complex>() )")
+
+def fix_expression(c):
+    add_expression_operators(c)
+    
+    c.add_registration_code("def( other<SireCAS::ExBase>() + self )")
+    c.add_registration_code("def( other<SireCAS::ExBase>() - self )")
+    c.add_registration_code("def( other<SireCAS::ExBase>() * self )")
+    c.add_registration_code("def( other<SireCAS::ExBase>() / self )")
+    c.add_registration_code("def( self + other<SireCAS::ExBase>() )")
+    c.add_registration_code("def( self - other<SireCAS::ExBase>() )")
+    c.add_registration_code("def( self * other<SireCAS::ExBase>() )")
+    c.add_registration_code("def( self / other<SireCAS::ExBase>() )")
+    
+def fix_exbase(c):
+    add_expression_operators(c)
+
+special_code = { "Expression" : fix_expression,
+                 "ExBase" : fix_exbase }
+
+implicitly_convertible = [ ("SireCAS::SymbolComplex", 
+                            "SireCAS::ComplexValues"),
+                           ("QList<SireCAS::SymbolComplex>",
+                            "SireCAS::ComplexValues"),
+                           ("QHash<SireCAS::Symbol,SireMaths::Complex>",
+                            "SireCAS::ComplexValues"),
+                           ("const SireCAS::ExBase&",
+                            "SireCAS::Expression"),
+                           ("QList<SireCAS::SymbolExpression>",
+                            "SireCAS::Identities"),
+                           ("QHash<SireCAS::Symbol,SireCAS::Expression>",
+                            "SireCAS::Identities"),
+                           ("SireCAS::SymbolExpression",
+                            "SireCAS::Identities"),
+                           ("QList<SireCAS::SymbolValue>",
+                            "SireCAS::Values"),
+                           ("QHash<SireCAS::Symbol,double>",
+                            "SireCAS::Values"),
+                           ("SireCAS::SymbolValue",
+                            "SireCAS::Values")
+                         ]
 
 incpaths = sys.argv[1:]
 incpaths.insert(0, "../../")
@@ -83,16 +147,22 @@ headerfiles = ["sirecas_headers.h"]
 #construct a module builder that will build the module's wrappers
 mb = module_builder_t( files=headerfiles, 
                        include_paths=incpaths,
-                       define_symbols=["SKIP_BROKEN_GCCXML_PARTS"],
-                       start_with_declarations = [namespace] )
+                       define_symbols=["SKIP_BROKEN_GCCXML_PARTS",
+                                       "SKIP_TEMPLATE_DEFINITIONS"] )
 
 populateNamespaces(mb)
+
+mb.namespace(namespace).free_functions().include()
 
 for calldef in mb.calldefs():
     try:
       calldef.virtuality = declarations.VIRTUALITY_TYPES.NOT_VIRTUAL
     except:
       pass
+
+#add calls to register hand-written wrappers
+mb.add_declaration_code( "#include \"sirecas_containers.h\"" )
+mb.add_registration_code( "register_SireCAS_containers();", tail=False )
 
 mb.calldefs().create_with_signature = True
 
@@ -102,6 +172,8 @@ for classname in wrap_classes:
    export_class(mb, classname, aliases, special_code)
 
 #wrap all of the free SireCAS functions
-mb.free_functions().include()
+#mb.free_functions().include()
+
+register_implicit_conversions(mb, implicitly_convertible)
 
 write_wrappers(mb, modulename, extra_includes, huge_classes)

@@ -17,11 +17,14 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireFF::FFThreadWorker&){ return "SireFF::FFThreadWorker";}
+
 void register_FFThreadWorker_class(){
 
     bp::class_< SireFF::FFThreadWorker, bp::bases< SireFF::FFWorkerBase, SireCluster::ThreadWorker >, boost::noncopyable >( "FFThreadWorker", bp::no_init )    
         .def( 
             "forcefield"
-            , (::SireFF::ForceField ( ::SireFF::FFThreadWorker::* )(  ) const)( &::SireFF::FFThreadWorker::forcefield ) );
+            , (::SireFF::ForceField ( ::SireFF::FFThreadWorker::* )(  ) const)( &::SireFF::FFThreadWorker::forcefield ) )    
+        .def( "__str__", &pvt_get_name);
 
 }

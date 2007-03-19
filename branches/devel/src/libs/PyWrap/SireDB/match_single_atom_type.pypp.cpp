@@ -10,11 +10,17 @@
 
 namespace bp = boost::python;
 
+SireDB::match_single_atom_type __copy__(const SireDB::match_single_atom_type &other){ return SireDB::match_single_atom_type(other); }
+
+const char* pvt_get_name(const SireDB::match_single_atom_type&){ return "SireDB::match_single_atom_type";}
+
 void register_match_single_atom_type_class(){
 
     bp::class_< SireDB::match_single_atom_type >( "match_single_atom_type" )    
         .def( bp::init< >() )    
         .def( bp::self == bp::other< QString >() )    
-        .def( bp::self == bp::other< SireDB::AtomType >() );
+        .def( bp::self == bp::other< SireDB::AtomType >() )    
+        .def( "__copy__", &__copy__)    
+        .def( "__str__", &pvt_get_name);
 
 }

@@ -17,9 +17,15 @@
 
 namespace bp = boost::python;
 
+SireFF::ForceTable __copy__(const SireFF::ForceTable &other){ return SireFF::ForceTable(other); }
+
+const char* pvt_get_name(const SireFF::ForceTable&){ return "SireFF::ForceTable";}
+
 void register_ForceTable_class(){
 
     bp::class_< SireFF::ForceTable >( "ForceTable" )    
-        .def( bp::init< >() );
+        .def( bp::init< >() )    
+        .def( "__copy__", &__copy__)    
+        .def( "__str__", &pvt_get_name);
 
 }

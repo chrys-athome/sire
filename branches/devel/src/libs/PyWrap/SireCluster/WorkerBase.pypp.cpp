@@ -8,6 +8,8 @@
 
 namespace bp = boost::python;
 
+const char* pvt_get_name(const SireCluster::WorkerBase&){ return "SireCluster::WorkerBase";}
+
 void register_WorkerBase_class(){
 
     { //::SireCluster::WorkerBase
@@ -17,6 +19,7 @@ void register_WorkerBase_class(){
         bp::register_ptr_to_python< boost::shared_ptr< SireCluster::WorkerBase > >();
         bp::implicitly_convertible< boost::shared_ptr< SireCluster::WorkerBase >, boost::shared_ptr< boost::noncopyable_::noncopyable > >();
         bp::implicitly_convertible< boost::shared_ptr< SireCluster::ThreadWorker >, boost::shared_ptr< SireCluster::WorkerBase > >();
+        WorkerBase_exposer.def( "__str__", &pvt_get_name);
     }
 
 }

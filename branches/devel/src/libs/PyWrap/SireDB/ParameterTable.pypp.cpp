@@ -10,6 +10,12 @@
 
 namespace bp = boost::python;
 
+SireDB::ParameterTable __copy__(const SireDB::ParameterTable &other){ return SireDB::ParameterTable(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireDB::ParameterTable&){ return "SireDB::ParameterTable";}
+
 void register_ParameterTable_class(){
 
     bp::class_< SireDB::ParameterTable >( "ParameterTable" )    
@@ -61,6 +67,12 @@ void register_ParameterTable_class(){
             , ( bp::arg("table") ) )    
         .def( 
             "types"
-            , (::QStringList ( ::SireDB::ParameterTable::* )(  ) const)( &::SireDB::ParameterTable::types ) );
+            , (::QStringList ( ::SireDB::ParameterTable::* )(  ) const)( &::SireDB::ParameterTable::types ) )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireDB::ParameterTable >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireDB::ParameterTable >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

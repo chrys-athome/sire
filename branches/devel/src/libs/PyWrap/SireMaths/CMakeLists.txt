@@ -19,6 +19,8 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs
 set ( WRAPMATHS_SOURCES
 
       _Maths.main.cpp
+
+      siremaths_containers.cpp
       
       Angle.pypp.cpp
       AxisSet.pypp.cpp

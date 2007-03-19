@@ -10,6 +10,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireDB::AssignBase&){ return "SireDB::AssignBase";}
+
 void register_AssignBase_class(){
 
     bp::class_< SireDB::AssignBase, bp::bases< SireDB::AssignInstruction >, boost::noncopyable >( "AssignBase", bp::no_init )    
@@ -41,6 +45,11 @@ void register_AssignBase_class(){
         .def( 
             "setOverwriteParameters"
             , (void ( ::SireDB::AssignBase::* )( bool ) )( &::SireDB::AssignBase::setOverwriteParameters )
-            , ( bp::arg("flag") ) );
+            , ( bp::arg("flag") ) )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireDB::AssignBase >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireDB::AssignBase >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

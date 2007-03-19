@@ -14,6 +14,12 @@
 
 namespace bp = boost::python;
 
+SireMol::AtomIDGroup __copy__(const SireMol::AtomIDGroup &other){ return SireMol::AtomIDGroup(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMol::AtomIDGroup&){ return "SireMol::AtomIDGroup";}
+
 void register_AtomIDGroup_class(){
 
     bp::class_< SireMol::AtomIDGroup >( "AtomIDGroup" )    
@@ -60,6 +66,12 @@ void register_AtomIDGroup_class(){
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "simplify"
-            , &::SireMol::AtomIDGroup::simplify );
+            , &::SireMol::AtomIDGroup::simplify )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::AtomIDGroup >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::AtomIDGroup >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

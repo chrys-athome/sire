@@ -69,6 +69,28 @@ ComplexValues::ComplexValues()
 ComplexValues::ComplexValues(const ComplexValues &other) : vals(other.vals)
 {}
 
+/** Construct from a list of values */
+ComplexValues::ComplexValues(const QList<SymbolComplex> &values)
+{
+    for (QList<SymbolComplex>::const_iterator it = values.begin();
+         it != values.end();
+         ++it)
+    {
+        add(*it);
+    }
+}
+
+/** Construct from a hash of values indexed by symbol */
+ComplexValues::ComplexValues(const QHash<Symbol,Complex> &values)
+{
+    for (QHash<Symbol,Complex>::const_iterator it = values.begin();
+         it != values.end();
+         ++it)
+    {
+        vals.insert(it.key().ID(), it.value());
+    }
+}
+
 /** Construct from Values */
 ComplexValues::ComplexValues(const Values &other)
 {

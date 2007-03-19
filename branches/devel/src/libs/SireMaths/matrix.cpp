@@ -42,6 +42,8 @@
 using namespace SireMaths;
 using namespace SireStream;
 
+using boost::tuple;
+
 static const RegisterMetaType<Matrix> r_matrix;
 
 /** Serialise to a binary data stream */
@@ -86,8 +88,8 @@ Matrix::Matrix(double diagonal_value)
          zx(0), zy(0), zz(diagonal_value)
 {}
 
-/** Construct a Matrix. Elements listed as column 1, then
-    column 2, then column 3. */
+/** Construct a Matrix. Elements listed as row 1, then
+    row 2, then row 3. */
 Matrix::Matrix(double sxx, double sxy, double sxz,
                double syx, double syy, double syz,
                double szx, double szy, double szz)
@@ -103,12 +105,25 @@ Matrix::Matrix(const Matrix &m)
          zx(m.zx),zy(m.zy),zz(m.zz)
 {}
 
-/** Construct a matrix from three vectors - each vector is a column */
-Matrix::Matrix(const Vector &c1, const Vector &c2, const Vector &c3)
-      : xx(c1.x()),xy(c1.y()),xz(c1.z()),
-        yx(c2.x()),yy(c2.y()),yz(c2.z()),
-        zx(c3.x()),zy(c3.y()),zz(c3.z())
+/** Construct a matrix from three vectors - each vector is a row */
+Matrix::Matrix(const Vector &r1, const Vector &r2, const Vector &r3)
+      : xx(r1.x()),xy(r1.y()),xz(r1.z()),
+        yx(r2.x()),yy(r2.y()),yz(r2.z()),
+        zx(r3.x()),zy(r3.y()),zz(r3.z())
 {}
+
+/** Construct a matrix from a tuple of three vectors - each
+    vector is a row */
+Matrix::Matrix(const tuple<Vector,Vector,Vector> &rows)
+{
+    const Vector &r1 = rows.get<0>();
+    const Vector &r2 = rows.get<1>();
+    const Vector &r3 = rows.get<2>();
+    
+    xx = r1.x(); xy = r1.y(); xz = r1.z();
+    yx = r2.x(); yy = r2.y(); yz = r2.z();
+    zx = r3.x(); zy = r3.y(); zz = r3.z();
+}
 
 /** Destructor */
 Matrix::~Matrix()

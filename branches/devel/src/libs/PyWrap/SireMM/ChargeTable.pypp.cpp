@@ -12,6 +12,12 @@
 
 namespace bp = boost::python;
 
+SireMM::ChargeTable __copy__(const SireMM::ChargeTable &other){ return SireMM::ChargeTable(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMM::ChargeTable&){ return "SireMM::ChargeTable";}
+
 void register_ChargeTable_class(){
 
     bp::class_< SireMM::ChargeTable, bp::bases< SireDB::AtomTableT<SireMM::ChargeParameter> > >( "ChargeTable" )    
@@ -23,6 +29,12 @@ void register_ChargeTable_class(){
         .def( 
             "what"
             , (char const * ( ::SireMM::ChargeTable::* )(  ) const)( &::SireMM::ChargeTable::what ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::ChargeTable >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::ChargeTable >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

@@ -30,6 +30,7 @@ wrap_classes = [ "AngleDB",
                  "CLJPair",
                  "CLJParameter",
                  "CombiningRuleBase",
+                 "CoulombFF",
                  "ArithmeticCombiningRules",
                  "GeometricCombiningRules",
                  "CombiningRules",
@@ -38,6 +39,11 @@ wrap_classes = [ "AngleDB",
                  "UsePassedDihedrals",
                  "DihedralTable",
                  "InterCLJFF",
+                 "InterCoulombFF",
+                 "InterGroupCLJFF",
+                 "InterGroupCoulombFF",
+                 "InterGroupLJFF",
+                 "InterLJFF",
                  "BondResID",
                  "BondAtomID",
                  "AngleResID",
@@ -45,11 +51,12 @@ wrap_classes = [ "AngleDB",
                  "DihedralResID",
                  "DihedralAtomID",
                  "LJDB",
+                 "LJFF",
+                 "LJPair",
                  "LJParameter",
                  "LJTable",
                  "MolAngleInfo",
                  "MolBondInfo",
-                 "MolAngleInfo",
                  "MolDihedralInfo",
                  "ResAngleInfo",
                  "ResBondInfo",
@@ -58,7 +65,6 @@ wrap_classes = [ "AngleDB",
                  "NoCutoff",
                  "HarmonicSwitchingFunction",
                  "SwitchingFunction",
-                 "Tip4PFF",
                  "UreyBradleyDB",
                  
                  "assign_internals<SireMM::MolAngleInfo>",
@@ -188,8 +194,46 @@ special_code = { "assign_angles" : fix_assigninternals,
                  "ChargeTable" : remove_create,
                  "DihedralTable" : remove_create,
                  "LJTable" : remove_create,
-                 "InterCLJFF" : fix_noncopyable,
-                 "Tip4PFF" : fix_noncopyable }
+                 "InterCoulombFF" : fix_noncopyable,
+                 "InterLJFF" : fix_noncopyable,
+                 "InterGroupCLJFF" : fix_noncopyable,
+                 "InterGroupCoulombFF" : fix_noncopyable,
+                 "InterGroupLJFF" : fix_noncopyable,
+                 "InterCLJFF" : fix_noncopyable
+               }
+
+implicitly_convertible = [ ("QVector< QVector<SireMM::ChargeParameter> >",
+                            "SireMM::AtomicCharges"),
+                           ("QVector< SireMM::ChargeParameter >",
+                            "SireMM::AtomicCharges"),
+                           ("QVector< QVector<SireMM::LJParameter> >",
+                            "SireMM::AtomicLJs"),
+                           ("QVector< SireMM::LJParameter >",
+                            "SireMM::AtomicLJs"),
+                           ("double", "SireMM::ChargeParameter"),
+                           ("const SireMM::CombiningRuleBase&",
+                            "SireMM::CombiningRules"),
+                           ("SireMM::SwitchFuncBase",
+                            "SireMM::SwitchingFunction"),
+                           ("QSet<SireMol::Angle>",
+                            "SireMM::UsePassedAngles"),
+                           ("const SireMM::AngleGeneratorBase&",
+                            "SireMM::assign_angles"),
+                           ("SireMM::UsePassedAngles",
+                            "SireMM::assign_angles"),
+                           ("QSet<SireMol::Bond>",
+                            "SireMM::UsePassedBonds"),
+                           ("const SireMM::BondGeneratorBase&",
+                            "SireMM::assign_bonds"),
+                           ("SireMM::UsePassedBonds",
+                            "SireMM::assign_bonds"),
+                           ("QSet<SireMol::Dihedral>",
+                            "SireMM::UsePassedDihedrals"),
+                           ("const SireMM::DihedralGeneratorBase&",
+                            "SireMM::assign_dihedrals"),
+                           ("SireMM::UsePassedDihedrals",
+                            "SireMM::assign_dihedrals")
+                         ]
 
 incpaths = sys.argv[1:]
 incpaths.insert(0, "../../")
@@ -203,8 +247,8 @@ headerfiles = ["siremm_headers.h"]
 #construct a module builder that will build the module's wrappers
 mb = module_builder_t( files=headerfiles, 
                        include_paths=incpaths,
-                       define_symbols=["SKIP_BROKEN_GCCXML_PARTS"],
-                       start_with_declarations = [namespace] )
+                       define_symbols=["SKIP_BROKEN_GCCXML_PARTS",
+                                       "SKIP_TEMPLATE_DEFINITIONS"] )
 
 
 populateNamespaces(mb)
@@ -218,15 +262,14 @@ for calldef in mb.calldefs():
 mb.calldefs().create_with_signature = True
 
 #add calls to register hand-written wrappers
-mb.add_declaration_code( "#include \"QVector_ChargeParameter_.py.h\"" )
-mb.add_registration_code( "register_QVector_ChargeParameter_class();", tail=False )
-
-mb.add_declaration_code( "#include \"QVector_LJParameter_.py.h\"" )
-mb.add_registration_code( "register_QVector_LJParameter_class();", tail=False )
+mb.add_declaration_code( "#include \"siremm_containers.h\"" )
+mb.add_registration_code( "register_SireMM_containers();", tail=False )
 
 #export each class in turn
 for classname in wrap_classes:
    #tell the program to write wrappers for this class
    export_class(mb, classname, aliases, special_code)
+
+register_implicit_conversions(mb, implicitly_convertible)
 
 write_wrappers(mb, modulename, extra_includes, huge_classes)

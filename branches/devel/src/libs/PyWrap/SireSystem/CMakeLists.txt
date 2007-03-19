@@ -12,21 +12,27 @@ include_directories( ${BOOST_INCLUDE_DIR}
 include(${QT_USE_FILE})
 
 # Other Sire libraries
-include_directories(${CMAKE_SOURCE_DIR}/src/libs)
+include_directories(${CMAKE_SOURCE_DIR}/src/libs
+                    ${CMAKE_SOURCE_DIR}/src/libs/PyWrap)
 
 # Define the sources in SireSystem
 set ( WRAPSYSTEM_SOURCES
+
+      _System.main.cpp
+
+      siresystem_containers.cpp
+
       MoveBase.pypp.cpp
       Move.pypp.cpp
       MovesBase.pypp.cpp
       Moves.pypp.cpp
+
       SameMoves.pypp.cpp
       SimSystem.pypp.cpp
       SystemData.pypp.cpp
       SystemID.pypp.cpp
       System.pypp.cpp
     
-      _System.main.cpp
     )
 
 # Create the library that holds all of the class wrappers

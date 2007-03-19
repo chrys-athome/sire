@@ -12,11 +12,17 @@
 
 namespace bp = boost::python;
 
+SireMM::ResInternalInfo<SireMol::Dihedral> __copy__(const SireMM::ResInternalInfo<SireMol::Dihedral> &other){ return SireMM::ResInternalInfo<SireMol::Dihedral>(other); }
+
+const char* pvt_get_name(const SireMM::ResInternalInfo<SireMol::Dihedral>&){ return "SireMM::ResInternalInfo<SireMol::Dihedral>";}
+
 void register_ResInternalInfo_Dihedral__class(){
 
     bp::class_< SireMM::ResInternalInfo<SireMol::Dihedral>, bp::bases< SireMM::detail::InternalInfo<SireMol::Dihedral> > >( "ResInternalInfo_Dihedral_" )    
         .def( bp::init< >() )    
+        .def( bp::init< SireMM::MolInternalInfo<SireMol::Dihedral> const &, SireMol::ResNum >(( bp::arg("molinfo"), bp::arg("resnum") )) )    
         .def( bp::init< SireMM::detail::InternalInfo<SireMol::Dihedral> const & >(( bp::arg("other") )) )    
-        .def( bp::init< SireMM::MolInternalInfo<SireMol::Dihedral> const &, SireMol::ResNum >(( bp::arg("molinfo"), bp::arg("resnum") )) );
+        .def( "__copy__", &__copy__)    
+        .def( "__str__", &pvt_get_name);
 
 }

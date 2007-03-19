@@ -8,6 +8,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_SingleFunc_class(){
 
     bp::class_< SireCAS::SingleFunc, bp::bases< SireCAS::ExBase >, boost::noncopyable >( "SingleFunc", bp::no_init )    
@@ -67,6 +71,11 @@ void register_SingleFunc_class(){
         .def( 
             "x"
             , (::SireCAS::Expression const & ( ::SireCAS::SingleFunc::* )(  ) const)( &::SireCAS::SingleFunc::x )
-            , bp::return_value_policy< bp::copy_const_reference >() );
+            , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireCAS::SingleFunc >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireCAS::SingleFunc >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireCAS::SingleFunc > );
 
 }

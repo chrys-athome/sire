@@ -10,6 +10,8 @@
 
 namespace bp = boost::python;
 
+#include "SirePy/str.hpp"
+
 void register_FuncDB_class(){
 
     bp::class_< SireDB::FuncDB, bp::bases< SireDB::RelateDB >, boost::noncopyable >( "FuncDB", bp::no_init )    
@@ -36,6 +38,7 @@ void register_FuncDB_class(){
         .def( 
             "typeName"
             , (char const * (*)(  ))( &::SireDB::FuncDB::typeName ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__str__", &SirePy::__str__< ::SireDB::FuncDB > );
 
 }

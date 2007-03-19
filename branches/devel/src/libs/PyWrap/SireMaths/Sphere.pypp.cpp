@@ -8,6 +8,12 @@
 
 namespace bp = boost::python;
 
+SireMaths::Sphere __copy__(const SireMaths::Sphere &other){ return SireMaths::Sphere(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMaths::Sphere&){ return "SireMaths::Sphere";}
+
 void register_Sphere_class(){
 
     bp::class_< SireMaths::Sphere >( "Sphere" )    
@@ -38,6 +44,12 @@ void register_Sphere_class(){
         .def( 
             "setRadius"
             , (void ( ::SireMaths::Sphere::* )( double ) )( &::SireMaths::Sphere::setRadius )
-            , ( bp::arg("radius") ) );
+            , ( bp::arg("radius") ) )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMaths::Sphere >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMaths::Sphere >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

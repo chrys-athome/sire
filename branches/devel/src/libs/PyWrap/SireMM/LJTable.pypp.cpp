@@ -12,6 +12,12 @@
 
 namespace bp = boost::python;
 
+SireMM::LJTable __copy__(const SireMM::LJTable &other){ return SireMM::LJTable(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMM::LJTable&){ return "SireMM::LJTable";}
+
 void register_LJTable_class(){
 
     bp::class_< SireMM::LJTable, bp::bases< SireDB::AtomTableT<SireMM::LJParameter> > >( "LJTable" )    
@@ -23,6 +29,12 @@ void register_LJTable_class(){
         .def( 
             "what"
             , (char const * ( ::SireMM::LJTable::* )(  ) const)( &::SireMM::LJTable::what ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::LJTable >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::LJTable >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

@@ -12,6 +12,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMM::InternalTableBase<SireMM::MolDihedralInfo>&){ return "SireMM::InternalTableBase<SireMM::MolDihedralInfo>";}
+
 void register_InternalTableBase_MolDihedralInfo__class(){
 
     bp::class_< SireMM::InternalTableBase<SireMM::MolDihedralInfo>, bp::bases< SireDB::TableBase >, boost::noncopyable >( "InternalTableBase_MolDihedralInfo_", bp::no_init )    
@@ -131,7 +135,7 @@ void register_InternalTableBase_MolDihedralInfo__class(){
         .def( 
             "isCompatibleWith"
             , (bool ( ::SireMM::InternalTableBase<SireMM::MolDihedralInfo>::* )( ::SireMol::Molecule const & ) const)( &::SireMM::InternalTableBase<SireMM::MolDihedralInfo>::isCompatibleWith )
-            , ( bp::arg("mol") ) )    
+            , ( bp::arg("molecule") ) )    
         .def( 
             "isEmpty"
             , (bool ( ::SireMM::InternalTableBase<SireMM::MolDihedralInfo>::* )(  ) const)( &::SireMM::InternalTableBase<SireMM::MolDihedralInfo>::isEmpty ) )    
@@ -274,6 +278,11 @@ void register_InternalTableBase_MolDihedralInfo__class(){
             , ( bp::arg("resnum") ) )    
         .def( 
             "size"
-            , (int ( ::SireMM::InternalTableBase<SireMM::MolDihedralInfo>::* )(  ) const)( &::SireMM::InternalTableBase<SireMM::MolDihedralInfo>::size ) );
+            , (int ( ::SireMM::InternalTableBase<SireMM::MolDihedralInfo>::* )(  ) const)( &::SireMM::InternalTableBase<SireMM::MolDihedralInfo>::size ) )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::InternalTableBase<SireMM::MolDihedralInfo> >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::InternalTableBase<SireMM::MolDihedralInfo> >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

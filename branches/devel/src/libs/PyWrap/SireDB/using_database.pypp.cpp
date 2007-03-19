@@ -10,8 +10,17 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireDB::using_database&){ return "SireDB::using_database";}
+
 void register_using_database_class(){
 
-    bp::class_< SireDB::using_database, bp::bases< SireDB::AssignInstruction >, boost::noncopyable >( "using_database", bp::no_init );
+    bp::class_< SireDB::using_database, bp::bases< SireDB::AssignInstruction >, boost::noncopyable >( "using_database", bp::no_init )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireDB::using_database >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireDB::using_database >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

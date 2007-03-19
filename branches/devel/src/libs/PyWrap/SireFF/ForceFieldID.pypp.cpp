@@ -17,10 +17,16 @@
 
 namespace bp = boost::python;
 
+SireFF::ForceFieldID __copy__(const SireFF::ForceFieldID &other){ return SireFF::ForceFieldID(other); }
+
+#include "SirePy/str.hpp"
+
 void register_ForceFieldID_class(){
 
     bp::class_< SireFF::ForceFieldID, bp::bases< SireMol::IDBase > >( "ForceFieldID" )    
         .def( bp::init< >() )    
-        .def( bp::init< quint32 >(( bp::arg("id") )) );
+        .def( bp::init< quint32 >(( bp::arg("id") )) )    
+        .def( "__copy__", &__copy__)    
+        .def( "__str__", &SirePy::__str__< ::SireFF::ForceFieldID > );
 
 }

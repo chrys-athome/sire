@@ -8,6 +8,12 @@
 
 namespace bp = boost::python;
 
+SireBase::IDMajMinVersion __copy__(const SireBase::IDMajMinVersion &other){ return SireBase::IDMajMinVersion(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_IDMajMinVersion_class(){
 
     bp::class_< SireBase::IDMajMinVersion >( "IDMajMinVersion" )    
@@ -88,6 +94,12 @@ void register_IDMajMinVersion_class(){
         .def( 
             "version"
             , (::SireBase::Version const & ( ::SireBase::IDMajMinVersion::* )(  ) const)( &::SireBase::IDMajMinVersion::version )
-            , bp::return_value_policy< bp::copy_const_reference >() );
+            , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireBase::IDMajMinVersion >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireBase::IDMajMinVersion >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireBase::IDMajMinVersion > );
 
 }

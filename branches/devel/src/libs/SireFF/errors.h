@@ -227,6 +227,33 @@ public:
     }
 };
 
+/** This exception is thrown when an invalid forcefield group
+    is selected or used
+
+    @author Christopher Woods
+*/
+class SIREFF_EXPORT invalid_group : public sireff_error
+{
+public:
+    invalid_group() : sireff_error()
+    {}
+
+    invalid_group(QString err, QString place = QString::null)
+              : sireff_error(err,place)
+    {}
+
+    invalid_group(const invalid_group &other) : sireff_error(other)
+    {}
+
+    ~invalid_group() throw()
+    {}
+
+    const char* what() const throw()
+    {
+        return "SireFF::invalid_group";
+    }
+};
+
 }
 
 Q_DECLARE_METATYPE(SireFF::sireff_error)

@@ -260,6 +260,18 @@ ParameterMap::ParameterMap(const QList<ParameterSource> &sources)
     }
 }
 
+/** Construct from an assignment map - where each parameter source is
+    associated with a named property */
+ParameterMap::ParameterMap(const QHash<ParameterName,QString> &map)
+{
+    for (QHash<ParameterName,QString>::const_iterator it = map.begin();
+         it != map.end();
+         ++it)
+    {
+        add( it.key() == it.value() );
+    }
+}
+
 /** Copy constructor */
 ParameterMap::ParameterMap(const ParameterMap &other) : map(other.map)
 {}

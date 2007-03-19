@@ -14,10 +14,16 @@
 
 namespace bp = boost::python;
 
+SireMol::AtomNum __copy__(const SireMol::AtomNum &other){ return SireMol::AtomNum(other); }
+
+#include "SirePy/str.hpp"
+
 void register_AtomNum_class(){
 
     bp::class_< SireMol::AtomNum, bp::bases< SireMol::IDBase > >( "AtomNum" )    
         .def( bp::init< >() )    
-        .def( bp::init< quint32 >(( bp::arg("id") )) );
+        .def( bp::init< quint32 >(( bp::arg("id") )) )    
+        .def( "__copy__", &__copy__)    
+        .def( "__str__", &SirePy::__str__< ::SireMol::AtomNum > );
 
 }

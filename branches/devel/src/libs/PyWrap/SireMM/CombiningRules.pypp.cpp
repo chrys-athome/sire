@@ -12,6 +12,12 @@
 
 namespace bp = boost::python;
 
+SireMM::CombiningRules __copy__(const SireMM::CombiningRules &other){ return SireMM::CombiningRules(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMM::CombiningRules&){ return "SireMM::CombiningRules";}
+
 void register_CombiningRules_class(){
 
     bp::class_< SireMM::CombiningRules >( "CombiningRules" )    
@@ -27,6 +33,12 @@ void register_CombiningRules_class(){
             , ( bp::arg("chgs"), bp::arg("ljs"), bp::arg("cljmatrix") ) )    
         .def( 
             "what"
-            , (char const * ( ::SireMM::CombiningRules::* )(  ) const)( &::SireMM::CombiningRules::what ) );
+            , (char const * ( ::SireMM::CombiningRules::* )(  ) const)( &::SireMM::CombiningRules::what ) )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::CombiningRules >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::CombiningRules >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

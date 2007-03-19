@@ -31,14 +31,14 @@
 
 #include "SystemID.pypp.hpp"
 
+#include "siresystem_containers.h"
+
 namespace bp = boost::python;
 
 BOOST_PYTHON_MODULE(_System){
+    register_SireSystem_containers();
+
     register_Move_class();
-
-    bp::implicitly_convertible< SireSystem::MoveBase const &, SireSystem::Move >();
-
-    bp::implicitly_convertible< SireBase::SharedPolyPointer<SireSystem::MoveBase> const &, SireSystem::Move >();
 
     register_MoveBase_class();
 
@@ -48,20 +48,16 @@ BOOST_PYTHON_MODULE(_System){
 
     register_SameMoves_class();
 
-    bp::implicitly_convertible< SireSystem::Move const &, SireSystem::SameMoves >();
-
     register_SimSystem_class();
 
     register_System_class();
 
-    bp::implicitly_convertible< QString const &, SireSystem::System >();
-
     register_SystemData_class();
 
-    bp::implicitly_convertible< QString const &, SireSystem::SystemData >();
+    bp::implicitly_convertible< const SireSystem::MoveBase&, SireSystem::Move >();
+
+    bp::implicitly_convertible< SireSystem::Move, SireSystem::SameMoves >();
 
     register_SystemID_class();
-
-    bp::implicitly_convertible< quint32, SireSystem::SystemID >();
 }
 

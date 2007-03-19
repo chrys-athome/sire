@@ -12,6 +12,12 @@
 
 namespace bp = boost::python;
 
+SireMM::HarmonicSwitchingFunction __copy__(const SireMM::HarmonicSwitchingFunction &other){ return SireMM::HarmonicSwitchingFunction(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMM::HarmonicSwitchingFunction&){ return "SireMM::HarmonicSwitchingFunction";}
+
 void register_HarmonicSwitchingFunction_class(){
 
     bp::class_< SireMM::HarmonicSwitchingFunction, bp::bases< SireMM::SwitchFuncBase > >( "HarmonicSwitchingFunction" )    
@@ -34,6 +40,12 @@ void register_HarmonicSwitchingFunction_class(){
         .def( 
             "what"
             , (char const * ( ::SireMM::HarmonicSwitchingFunction::* )(  ) const)( &::SireMM::HarmonicSwitchingFunction::what ) )    
-        .staticmethod( "typeName" );
+        .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::HarmonicSwitchingFunction >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::HarmonicSwitchingFunction >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

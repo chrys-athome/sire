@@ -17,6 +17,12 @@
 
 namespace bp = boost::python;
 
+SireFF::ParameterSource __copy__(const SireFF::ParameterSource &other){ return SireFF::ParameterSource(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireFF::ParameterSource&){ return "SireFF::ParameterSource";}
+
 void register_ParameterSource_class(){
 
     bp::class_< SireFF::ParameterSource, bp::bases< SireFF::ParameterName > >( "ParameterSource" )    
@@ -32,6 +38,12 @@ void register_ParameterSource_class(){
         .def( 
             "source"
             , (::QString const & ( ::SireFF::ParameterSource::* )(  ) const)( &::SireFF::ParameterSource::source )
-            , bp::return_value_policy< bp::copy_const_reference >() );
+            , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireFF::ParameterSource >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireFF::ParameterSource >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

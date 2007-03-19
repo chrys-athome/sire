@@ -11,6 +11,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireVol::SpaceBase&){ return "SireVol::SpaceBase";}
+
 void register_SpaceBase_class(){
 
     bp::class_< SireVol::SpaceBase, boost::noncopyable >( "SpaceBase", bp::no_init )    
@@ -80,6 +84,11 @@ void register_SpaceBase_class(){
             , ( bp::arg("groups") ) )    
         .def( 
             "what"
-            , (char const * ( ::SireVol::SpaceBase::* )(  ) const)( &::SireVol::SpaceBase::what ) );
+            , (char const * ( ::SireVol::SpaceBase::* )(  ) const)( &::SireVol::SpaceBase::what ) )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireVol::SpaceBase >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireVol::SpaceBase >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

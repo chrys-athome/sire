@@ -202,23 +202,36 @@ public:
 };
 
 Expression operator+(const ExBase &base0, const ExBase &base1);
-Expression operator-(const ExBase &base0, const ExBase &base1);
-Expression operator*(const ExBase &base0, const ExBase &base1);
-Expression operator/(const ExBase &base0, const ExBase &base1);
+Expression operator+(const ExBase &base, const Expression &ex);
+Expression operator+(const Expression &ex, const ExBase &base);
+Expression operator+(const ExBase &base, double val);
+Expression operator+(double val, const ExBase &base);
+Expression operator+(const ExBase &base, const Complex &val);
+Expression operator+(const Complex &val, const ExBase &base);
 
+Expression operator-(const ExBase &base0, const ExBase &base1);
+Expression operator-(const ExBase &base, const Expression &ex);
+Expression operator-(const Expression &ex, const ExBase &base);
+Expression operator-(const ExBase &base, double val);
+Expression operator-(double val, const ExBase &base);
+Expression operator-(const ExBase &base, const Complex &val);
+Expression operator-(const Complex &val, const ExBase &base);
+
+Expression operator*(const ExBase &base0, const ExBase &base1);
+Expression operator*(const ExBase &base, const Expression &ex);
+Expression operator*(const Expression &ex, const ExBase &base);
 Expression operator*(const ExBase &base, double val);
 Expression operator*(double val, const ExBase &base);
 Expression operator*(const ExBase &base, const Complex &val);
 Expression operator*(const Complex &val, const ExBase &base);
 
-Expression operator+(const ExBase &base, const Expression &ex);
-Expression operator-(const ExBase &base, const Expression &ex);
-Expression operator*(const ExBase &base, const Expression &ex);
+Expression operator/(const ExBase &base0, const ExBase &base1);
 Expression operator/(const ExBase &base, const Expression &ex);
-Expression operator+(const Expression &ex, const ExBase &base);
-Expression operator-(const Expression &ex, const ExBase &base);
-Expression operator*(const Expression &ex, const ExBase &base);
 Expression operator/(const Expression &ex, const ExBase &base);
+Expression operator/(const ExBase &base, double val);
+Expression operator/(double val, const ExBase &base);
+Expression operator/(const ExBase &base, const Complex &val);
+Expression operator/(const Complex &val, const ExBase &base);
 
 Expression pow(const ExBase &base, int n);
 Expression pow(const ExBase &base, const Rational &n);

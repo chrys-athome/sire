@@ -14,6 +14,10 @@
 
 namespace bp = boost::python;
 
+#include "SireQt/qdatastream.hpp"
+
+const char* pvt_get_name(const SireMol::PropertyBase&){ return "SireMol::PropertyBase";}
+
 void register_PropertyBase_class(){
 
     bp::class_< SireMol::PropertyBase, boost::noncopyable >( "PropertyBase", bp::no_init )    
@@ -31,6 +35,11 @@ void register_PropertyBase_class(){
         .def( 
             "what"
             , &::SireMol::PropertyBase::what )    
-        .staticmethod( "null_property" );
+        .staticmethod( "null_property" )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::PropertyBase >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::PropertyBase >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

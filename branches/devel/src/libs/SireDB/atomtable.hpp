@@ -231,6 +231,8 @@ private:
     QHash< ResNum, QVector<Param> > rescache;
 };
 
+#ifndef SKIP_TEMPLATE_DEFINITIONS
+
 /** Construct an empty AtomTableT */
 template<class Param>
 AtomTableT<Param>::AtomTableT() : AtomTable()
@@ -1515,7 +1517,11 @@ AtomTableT<Param>::atomParameters(const QSet<ResID> &resids) const
 
 static const MagicID atomtablet_magic = getMagic("SireDB::AtomTableT");
 
+#endif // SKIP_TEMPLATE_DEFINITIONS
+
 }
+
+#ifndef SKIP_TEMPLATE_DEFINITIONS
 
 /** Serialise an AtomTable to a binary data stream */
 template<class Param>
@@ -1545,6 +1551,8 @@ QDataStream& operator>>(QDataStream &ds, SireDB::AtomTableT<Param> &table)
 
     return ds;
 }
+
+#endif // SKIP_TEMPLATE_DEFINITIONS
 
 SIRE_END_HEADER
 

@@ -8,6 +8,12 @@
 
 namespace bp = boost::python;
 
+SireMaths::AxisSet __copy__(const SireMaths::AxisSet &other){ return SireMaths::AxisSet(other); }
+
+#include "SireQt/qdatastream.hpp"
+
+#include "SirePy/str.hpp"
+
 void register_AxisSet_class(){
 
     bp::class_< SireMaths::AxisSet >( "AxisSet" )    
@@ -43,6 +49,12 @@ void register_AxisSet_class(){
             , ( bp::arg("vec") ) )    
         .def( 
             "toString"
-            , (::QString ( ::SireMaths::AxisSet::* )(  ) const)( &::SireMaths::AxisSet::toString ) );
+            , (::QString ( ::SireMaths::AxisSet::* )(  ) const)( &::SireMaths::AxisSet::toString ) )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMaths::AxisSet >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMaths::AxisSet >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireMaths::AxisSet > );
 
 }

@@ -25,19 +25,21 @@
 
 #include "UniformSampler.pypp.hpp"
 
+#include "siremove_containers.h"
+
 namespace bp = boost::python;
 
 BOOST_PYTHON_MODULE(_Move){
+    register_SireMove_containers();
+
     register_MonteCarlo_class();
 
     register_Sampler_class();
 
-    bp::implicitly_convertible< SireMove::SamplerBase const &, SireMove::Sampler >();
-
     register_SamplerBase_class();
 
-    register_UniformSampler_class();
+    bp::implicitly_convertible< const SireMove::SamplerBase&, SireMove::Sampler >();
 
-    bp::implicitly_convertible< SireMaths::RanGenerator const &, SireMove::UniformSampler >();
+    register_UniformSampler_class();
 }
 

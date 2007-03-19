@@ -49,7 +49,7 @@ namespace SireDB
 /** This is the base class of 'using_parameters' which is a utility
     class that allows for the easy specification of the database
     classes to use for parameter assignment.
-    
+
     @author Christopher Woods
 */
 class SIREDB_EXPORT using_parameters_base : public using_database
@@ -58,44 +58,46 @@ public:
     /** Constructor */
     using_parameters_base() : using_database()
     {}
-    
+
     /** Construct from a list of typenames */
-    using_parameters_base(const QStringList &typenames) 
+    using_parameters_base(const QStringList &typenames)
                     : using_database(typenames)
     {}
-    
+
     /** Copy constructor */
-    using_parameters_base(const using_parameters_base &other) 
+    using_parameters_base(const using_parameters_base &other)
                     : using_database(other)
     {}
-    
+
     /** Destructor */
     ~using_parameters_base()
     {}
-    
+
     using_parameters_base* clone() const
     {
         return new using_parameters_base(*this);
     }
-    
+
     const char* what() const
     {
         return "SireDB::using_parameters_base";
     }
 };
 
-/** This class is used to specify which classes to use to 
+#ifndef SKIP_TEMPLATE_DEFINITIONS
+
+/** This class is used to specify which classes to use to
     obtain paramters.
-    
+
     You use this class by adding the databases to use onto
     the list of templates.
-    
+
     @author Christopher Woods
 */
-template<class T0, class T1=detail::unspecified, class T2=detail::unspecified, 
-         class T3=detail::unspecified, class T4=detail::unspecified, 
+template<class T0, class T1=detail::unspecified, class T2=detail::unspecified,
+         class T3=detail::unspecified, class T4=detail::unspecified,
          class T5=detail::unspecified, class T6=detail::unspecified,
-         class T7=detail::unspecified, class T8=detail::unspecified, 
+         class T7=detail::unspecified, class T8=detail::unspecified,
          class T9=detail::unspecified>
 class SIREDB_EXPORT using_parameters : public using_parameters_base
 {
@@ -119,11 +121,11 @@ public:
     /** Copy constructor */
     using_parameters(const using_parameters &other) : using_parameters_base(other)
     {}
-    
+
     /** Destructor */
     ~using_parameters()
     {}
-    
+
 private:
     /** Add the name of the type to the list */
     void addType(const char *type_name)
@@ -132,6 +134,8 @@ private:
             this->append( type_name );
     }
 };
+
+#endif // SKIP_TEMPLATE_DEFINITIONS
 
 }
 

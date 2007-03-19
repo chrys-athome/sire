@@ -30,6 +30,7 @@
 #define SIREDB_ATOMTYPETABLE_H
 
 #include "atomtype.h"
+
 #include "atomtable.hpp"
 
 SIRE_BEGIN_HEADER
