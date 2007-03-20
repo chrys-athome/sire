@@ -574,8 +574,8 @@ void InterGroupLJFF::recalculateViaDelta()
         ljnrg = this->recalculateWithTwoChangedGroups();
     }
 
-    this->setComponent( components().lj(), ljnrg );
-    this->setComponent( components().total(), ljnrg );
+    this->changeComponent( components().lj(), ljnrg );
+    this->changeComponent( components().total(), ljnrg );
 
     //clear the list of changed molecules
     for (int i=0; i<2; ++i)

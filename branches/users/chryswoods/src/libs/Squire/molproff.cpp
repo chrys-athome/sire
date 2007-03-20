@@ -576,7 +576,7 @@ void MolproFF::MMMolecule::update(const CoordGroup &qm_coordgroup,
     onto the end of the array. */
 void MolproFF::MMMolecule::update(QVector<double> &mm_coords_and_charges)
 {
-    if (nats == 0)
+    if (nAtomsInArray() == 0)
     {
         //we aren't in the array, and we shouldn't be
         idx = -1;
@@ -590,9 +590,10 @@ void MolproFF::MMMolecule::update(QVector<double> &mm_coords_and_charges)
     {
         throw SireError::program_bug( QObject::tr(
             "There is insufficient space for this MM molecule in the "
-            "mm_coords_and_charges array! (Have %1 but need %2)")
+            "mm_coords_and_charges array! (Have %1 but need %2) (%3, %4)")
                   .arg(mm_coords_and_charges.count())
-                  .arg(idx + this->nAtomsInArray()), CODELOC );
+                  .arg(idx + this->nAtomsInArray())
+                  .arg(idx).arg(nAtomsInArray()), CODELOC );
     }
 
     //ok - we assume that the array from idx to 4*nats is ours...
@@ -648,7 +649,7 @@ QString MolproFF::MMMolecule::coordAndChargesString() const
 {
     QString mmcoords = "";
 
-    if (nats == 0)
+    if (nAtomsInArray() == 0)
         //There is nothing to do :-)
         return mmcoords;
 
@@ -682,9 +683,9 @@ QString MolproFF::MMMolecule::coordAndChargesString() const
                 if (atom_charge != 0)
                 {
                     mmcoords += QString("%1, %2, %3, %4\n")
-                                  .arg( convertTo(atom.x(), angstrom) )
-                                  .arg( convertTo(atom.y(), angstrom) )
-                                  .arg( convertTo(atom.z(), angstrom) )
+                                  .arg( convertTo(atom.x(), bohr_radii) )
+                                  .arg( convertTo(atom.y(), bohr_radii) )
+                                  .arg( convertTo(atom.z(), bohr_radii) )
                                   .arg( convertTo(scalefac*atom_charge,
                                                   mod_electrons) );
                 }
@@ -1417,13 +1418,17 @@ bool MolproFF::updateArrays()
                                 space(), switchingFunction());
 
             //has something changed (i.e. has this molecule moved from outside
-            //the array to being inside the array?)
+            //the array to being inside the array?) - if natms_in_array == 0 and
+            // mm_mol.nAtomsInArray() == 0 then the molecule may have moved, but
+            // it was not in the array, and is still not in the array, so the move
+            // has not changed the QM/MM energy
             something_changed = something_changed or
                                 (natms_in_array != 0 or mm_mol.nAtomsInArray() != 0);
 
+            //has the move changed the number of atoms in the array from this molecule?
+            // This occurs when natms_in_array != mm_mol.nAtomsInArray()
             rebuild_mm_array = rebuild_mm_array or
-                               (natms_in_array != 0 and
-                                natms_in_array != mm_mol.nAtomsInArray());
+                               natms_in_array != mm_mol.nAtomsInArray();
         }
 
         if (not something_changed)
@@ -1450,7 +1455,7 @@ bool MolproFF::updateArrays()
 
             if (natms > 0)
             {
-                mm_coords_and_charges.reserve(4*natms);
+                mm_coords_and_charges.resize(4*natms);
 
                 int idx = 0;
 

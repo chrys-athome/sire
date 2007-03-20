@@ -373,7 +373,7 @@ CLJFF::CLJEnergy InterGroupCLJFF::recalculateWithOneChangedGroup(int changed_idx
 
 /** Recalculate the energy of the unchanged parts of group 'unchanged_idx'
     with the changed parts of group 'changed_idx' */
-CLJFF::CLJEnergy 
+CLJFF::CLJEnergy
 InterGroupCLJFF::recalculateChangedWithUnchanged(int unchanged_idx,
                                                  int changed_idx)
 {
@@ -576,9 +576,9 @@ void InterGroupCLJFF::recalculateViaDelta()
         cljnrg = this->recalculateWithTwoChangedGroups();
     }
 
-    this->setComponent( components().coulomb(), cljnrg.coulomb() );
-    this->setComponent( components().lj(), cljnrg.lj() );
-    this->setComponent( components().total(), cljnrg.coulomb() + cljnrg.lj() );
+    this->changeComponent( components().coulomb(), cljnrg.coulomb() );
+    this->changeComponent( components().lj(), cljnrg.lj() );
+    this->changeComponent( components().total(), cljnrg.coulomb() + cljnrg.lj() );
 
     //clear the list of changed molecules
     for (int i=0; i<2; ++i)
@@ -855,7 +855,7 @@ bool InterGroupCLJFF::_pvt_add(const T &mol, const ParameterMap &map)
     MoleculeID molid = mol.ID();
 
     ChangedCLJMolecule new_molecule =
-                changeRecord(molid).add( mol, 
+                changeRecord(molid).add( mol,
                                          map.source(this->parameters().coulomb()),
                                          map.source(this->parameters().lj()) );
 
@@ -915,7 +915,7 @@ bool InterGroupCLJFF::add(const NewAtom &atom, const ParameterMap &map)
     \throw SireMol::missing_property
     \throw SireMol::invalid_cast
 */
-bool InterGroupCLJFF::add(const Molecule &molecule, 
+bool InterGroupCLJFF::add(const Molecule &molecule,
                           const AtomSelection &selected_atoms,
                           const ParameterMap &map)
 {
@@ -959,7 +959,7 @@ int InterGroupCLJFF::groupIndex(FFBase::Group group) const
 /** Private class used by the "addTo" functions to actually add the
     molecule or part of molecule */
 template<class T>
-bool InterGroupCLJFF::_pvt_addTo(FFBase::Group group, const T &mol, 
+bool InterGroupCLJFF::_pvt_addTo(FFBase::Group group, const T &mol,
                                  const ParameterMap &map)
 {
     //get the index for this group
@@ -975,7 +975,7 @@ bool InterGroupCLJFF::_pvt_addTo(FFBase::Group group, const T &mol,
     if (new_molecule.oldMolecule().isEmpty())
     {
         new_molecule = ChangedCLJMolecule( CLJMolecule(),
-                                           CLJMolecule(mol, 
+                                           CLJMolecule(mol,
                                               map.source(parameters().coulomb()),
                                               map.source(parameters().lj())) );
 

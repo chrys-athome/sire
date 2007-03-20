@@ -66,7 +66,7 @@ picometer = nanometer * 1000.0
 meter = nanometer * 1.0e9
 
 # Convert bohr radii into internal units
-bohr_radii = 1.0 / 0.529177249
+bohr_radii = 0.529177249
 
 #/////////////////////////////////////////////////
 #// Units of time. Internal unit = femtoseconds //

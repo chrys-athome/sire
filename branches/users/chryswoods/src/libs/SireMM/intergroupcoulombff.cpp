@@ -575,8 +575,8 @@ void InterGroupCoulombFF::recalculateViaDelta()
         cnrg = this->recalculateWithTwoChangedGroups();
     }
 
-    this->setComponent( components().coulomb(), cnrg );
-    this->setComponent( components().total(), cnrg );
+    this->changeComponent( components().coulomb(), cnrg );
+    this->changeComponent( components().total(), cnrg );
 
     //clear the list of changed molecules
     for (int i=0; i<2; ++i)
