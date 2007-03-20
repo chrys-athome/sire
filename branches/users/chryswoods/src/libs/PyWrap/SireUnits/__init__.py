@@ -3,7 +3,7 @@
 # This module contains a collection
 # of units.
 #
-# The units are copied from 
+# The units are copied from
 # SireUnits/units.h
 #
 ########################
@@ -11,10 +11,29 @@
 import math
 
 #/////////////////////////////////////////////////
+#// Conversion functions                        //
+#/////////////////////////////////////////////////
+
+def convert( value, from_units, to_units ):
+    """Convert 'value' from units of 'from_units' to
+       units of 'to_units' """
+    return value * (from_units / to_units)
+
+def convertFrom( value, from_units ):
+    """Convert 'value' from units of 'from_units' to
+       the internal units used by Sire"""
+    return value * from_units
+
+def convertTo( value, to_units ):
+    """Convert 'value' from the internal units used
+       by Sire to units of 'to_units' """
+    return value / to_units
+
+#/////////////////////////////////////////////////
 #// First, basic, dimensionless constants       //
 #/////////////////////////////////////////////////
 
-# Avogadro's number 
+# Avogadro's number
 mole = 6.0221419947e23
 
 #/////////////////////////////////////////////////
@@ -24,27 +43,30 @@ mole = 6.0221419947e23
 # define pi
 pi = math.pi
 
-# Convert radians into internal units 
+# Convert radians into internal units
 radians = 1.0
 
-# Convert degrees into internal units 
+# Convert degrees into internal units
 degrees = pi / 180.0
 
 #/////////////////////////////////////////////////
 #// Units of length. Internal unit = Angstroms  //
 #/////////////////////////////////////////////////
 
-# Convert angstroms into internal units 
+# Convert angstroms into internal units
 angstrom = 1.0
 
 # Convert nanometers into internal units
 nanometer = angstrom * 10.0
 
-# Convert picometers into internal units 
+# Convert picometers into internal units
 picometer = nanometer * 1000.0
 
-# Convert meters into internal units 
+# Convert meters into internal units
 meter = nanometer * 1.0e9
+
+# Convert bohr radii into internal units
+bohr_radii = 1.0 / 0.529177249
 
 #/////////////////////////////////////////////////
 #// Units of time. Internal unit = femtoseconds //
@@ -76,11 +98,11 @@ kilogram = 1000.0 * g_per_mol * mole
 #// Units of Charge. Internal unit = |electron| mol-1 //
 #///////////////////////////////////////////////////////
 
-# Convert electron charges to internal units 
+# Convert electron charges to internal units
 # ( 1 |e| is the charge in coulombs of one mole of electrons)
 mod_electrons = 1.0
 
-# Convert Coulombs to internal units 
+# Convert Coulombs to internal units
 coulomb = mod_electrons / 1.60217646263e-19
 
 #/////////////////////////////////////////////////
@@ -111,7 +133,7 @@ kilojoule = kJ_per_mol * mole
 # Convert from J
 joule = 0.001 * kilojoule
 
-# Conversion factor from international kcal mol-1 to internal units 
+# Conversion factor from international kcal mol-1 to internal units
 int_kcal_per_mol = 4.1868 * kJ_per_mol
 
 # Conversion factor from international cal mol-1 to internal units (kcal mol-1).
@@ -224,4 +246,4 @@ faraday = 96485.341539 * coulomb / mole
 
 # Molar volume of an ideal gas
 molar_volume = 22.41399639e-3 * meter*meter*meter / mole
-	
+
