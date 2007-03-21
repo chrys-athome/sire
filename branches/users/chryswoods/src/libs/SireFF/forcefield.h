@@ -52,7 +52,7 @@ shared copy of the forcefield class.
 
 @author Christopher Woods
 */
-class SIREFF_EXPORT ForceField : public SireBase::SharedPolyPointer<FFBase>
+class SIREFF_EXPORT ForceField
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const ForceField&);
@@ -69,6 +69,8 @@ public:
     ForceField& operator=(const ForceField &other);
     ForceField& operator=(const FFBase &ffbase);
 
+    const FFBase& base() const;
+
     const char* what() const;
 
     const QString& name() const;
@@ -83,11 +85,13 @@ public:
     Values energies();
     Values energies(const QSet<FFComponent> &components);
 
-    bool change(const Molecule &mol);
-    bool change(const Residue &res);
+    bool change(const Molecule &molecule);
+    bool change(const Residue &residue);
     bool change(const NewAtom &atom);
+    bool change(const PartialMolecule &molecule);
 
     bool change(const QHash<MoleculeID,Molecule> &molecules);
+    bool change(const QHash<MoleculeID,PartialMolecule> &molecules);
 
     bool add(const Molecule &molecule,
              const ParameterMap &map = ParameterMap());
@@ -95,8 +99,7 @@ public:
              const ParameterMap &map = ParameterMap());
     bool add(const NewAtom &atom,
              const ParameterMap &map = ParameterMap());
-    bool add(const Molecule &molecule,
-             const AtomSelection &selected_atoms,
+    bool add(const PartialMolecule &molecule,
              const ParameterMap &map = ParameterMap());
 
     bool add(const QList<Molecule> &molecules,
@@ -105,6 +108,8 @@ public:
              const ParameterMap &map = ParameterMap());
     bool add(const QList<NewAtom> &atoms,
              const ParameterMap &map = ParameterMap());
+    bool add(const QList<PartialMolecule> &molecules,
+             const ParameterMap &map = ParameterMap());
 
     bool addTo(const FFBase::Group &group, const Molecule &molecule,
                const ParameterMap &map = ParameterMap());
@@ -112,8 +117,7 @@ public:
                const ParameterMap &map = ParameterMap());
     bool addTo(const FFBase::Group &group, const NewAtom &atom,
                const ParameterMap &map = ParameterMap());
-    bool addTo(const FFBase::Group &group, const Molecule &molecule,
-               const AtomSelection &selected_atoms,
+    bool addTo(const FFBase::Group &group, const PartialMolecule &molecule,
                const ParameterMap &map = ParameterMap());
 
     bool addTo(const FFBase::Group &group,
@@ -125,24 +129,36 @@ public:
     bool addTo(const FFBase::Group &group,
                const QList<NewAtom> &atoms,
                const ParameterMap &map = ParameterMap());
+    bool addTo(const FFBase::Group &group,
+               const QList<PartialMolecule> &molecules,
+               const ParameterMap &map = ParameterMap());
 
     bool remove(const Molecule &molecule);
     bool remove(const Residue &residue);
     bool remove(const NewAtom &atom);
-    bool remove(const Molecule &molecule,
-                const AtomSelection &selected_atoms);
+    bool remove(const PartialMolecule &molecule);
 
     bool remove(const QList<Molecule> &molecules);
     bool remove(const QList<Residue> &residues);
     bool remove(const QList<NewAtom> &atoms);
+    bool remove(const QList<PartialMolecule> &molecules);
 
     bool contains(const Molecule &molecule) const;
     bool contains(const Residue &residue) const;
     bool contains(const NewAtom &atom) const;
+    bool contains(const PartialMolecule &molecule) const;
 
-    bool refersTo(const Molecule &molecule) const;
+    bool contains(const Molecule &molecule, const FFBase::Group &group) const;
+    bool contains(const Residue &residue, const FFBase::Group &group) const;
+    bool contains(const NewAtom &atom, const FFBase::Group &group) const;
+    bool contains(const PartialMolecule &molecule, 
+                  const FFBase::Group &group) const;
+
+    bool refersTo(MoleculeID molid) const;
+    bool refersTo(MoleculeID molid, const FFBase::Group &group) const;
 
     QSet<MoleculeID> moleculeIDs() const;
+    QSet<MoleculeID> moleculeIDs(const FFBase::Group &group) const;
 
     Molecule molecule(MoleculeID molid) const;
     Residue residue(MoleculeID molid, ResNum resnum) const;
@@ -154,6 +170,11 @@ public:
     Residue residue(const Residue &res) const;
     NewAtom atom(const NewAtom &atom) const;
 
+    PartialMolecule contents(MoleculeID molid) const;
+    
+    QHash<MoleculeID,PartialMolecule> contents(const FFBase::Group &group) const;
+    QHash<MoleculeID,PartialMolecule> contents() const;
+
     bool isDirty() const;
     bool isClean() const;
 
@@ -162,9 +183,9 @@ public:
 
     void assertContains(const FFComponent &component) const;
 
-protected:
-    const FFBase& d() const;
-    FFBase& d();
+private:
+    /** Shared pointer to the actual forcefield */
+    SharedPolyPointer<FFBase> d;
 };
 
 }

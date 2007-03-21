@@ -156,6 +156,7 @@ public:
     virtual QSet<MoleculeID> moleculeIDs(const FFBase::Group &group)=0;
 
     virtual PartialMolecule contents(MoleculeID molid)=0;
+    
     virtual QHash<MoleculeID,PartialMolecule> contents(const FFGroup::Group group)=0;
     virtual QHash<MoleculeID,PartialMolecule> contents()=0;
 
@@ -237,6 +238,7 @@ public:
     bool change(const Molecule &molecule);
     bool change(const Residue &residue);
     bool change(const NewAtom &atom);
+    bool change(const PartialMolecule &molecule);
 
     bool change(const QHash<MoleculeID,Molecule> &molecules);
     bool change(const QHash<MoleculeID,PartialMolecule> &molecules);
@@ -267,6 +269,7 @@ public:
     QSet<MoleculeID> moleculeIDs(const FFBase::Group &group);
 
     PartialMolecule contents(MoleculeID molid);
+    
     QHash<MoleculeID,PartialMolecule> contents(const FFGroup::Group group);
     QHash<MoleculeID,PartialMolecule> contents();
 

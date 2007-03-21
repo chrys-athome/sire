@@ -332,9 +332,6 @@ public:
     Values energies(const QSet<FFComponent> &components);
     Values energies();
 
-    // Pure virtual functions used to provide the interface to
-    // all of the forcefields
-
     /** Change the molecule 'mol' (e.g. move it, or change its
         parameters). This does nothing if the molecule is not
         in this forcefield. Returns whether or not the forcefield
@@ -373,6 +370,19 @@ public:
         \throw SireError::invalid_operation
     */
     virtual bool change(const NewAtom &atom)=0;
+
+    /** Change the partial molecule 'molecule' (e.g. move
+        it or change its parameters). This does nothing
+        if none of this partial molecule is in this 
+        forcefield. Returns whether or not the forcefield 
+        has been changed by this change, and thus whether
+        the energy needs to be recalculated.
+        
+        \throw SireMol::missing_property
+        \throw SireError::invalid_cast
+        \throw SireError::invalid_operation
+    */
+    virtual bool change(const PartialMolecule &molecule)=0;
 
     /** Change a whole load of molecules
 
@@ -622,9 +632,19 @@ public:
     virtual Residue residue(const Residue &res) const;
     virtual NewAtom atom(const NewAtom &atom) const;
 
+    /** Return the contents of the molecule with ID == molid in this 
+        forcefield
+        
+        \throw SireMol::missing_molecule
+    */
     virtual PartialMolecule contents(MoleculeID molid) const=0;
+    
+    /** Return the contents of the group 'group' in this forcefield */
     virtual QHash<MoleculeID,PartialMolecule> contents(
-                                        const FFGroup::Group group) const=0;
+                                        const FFBase::Group group) const=0;
+    
+    /** Return all of the molecules (and parts of molecules) that
+        are in this forcefield */
     virtual QHash<MoleculeID,PartialMolecule> contents() const=0;
 
     bool isDirty() const;
