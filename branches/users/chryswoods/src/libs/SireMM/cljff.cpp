@@ -1970,6 +1970,20 @@ CLJFF::CLJFF(const CLJFF &other)
     BOOST_ASSERT( components_ptr != 0 );
 }
 
+/** Copy assignment function used by derived classes */
+CLJFF& CLJFF::operator=(const CLJFF &other)
+{
+    FFBase::copy(other);
+
+    spce = other.spce;
+    switchfunc = other.switchfunc;
+
+    components_ptr = dynamic_cast<const CLJFF::Components*>( &(FFBase::components()) );
+    BOOST_ASSERT( components_ptr != 0 );
+
+    return *this;
+}
+
 /** Destructor */
 CLJFF::~CLJFF()
 {}

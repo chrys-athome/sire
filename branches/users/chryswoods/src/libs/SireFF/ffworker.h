@@ -77,17 +77,91 @@ public:
 
     Values energies();
 
-    void add(const Molecule &molecule, const ParameterMap &map = ParameterMap());
-    void add(const Residue &residue, const ParameterMap &map = ParameterMap());
-    
-    void change(const Molecule &molecule);
-    void change(const Residue &residue);
-    
-    void remove(const Molecule &molecule);
-    void remove(const Residue &residue);
-    
-    void replace(const Molecule &oldmol,
-                 const Molecule &newmol, const ParameterMap &map = ParameterMap());
+    bool add(const Molecule &molecule,
+             const ParameterMap &map = ParameterMap());
+    bool add(const Residue &residue,
+             const ParameterMap &map = ParameterMap());
+    bool add(const NewAtom &atom,
+             const ParameterMap &map = ParameterMap());
+    bool add(const PartialMolecule &molecule,
+             const ParameterMap &map = ParameterMap());
+
+    bool add(const QList<Molecule> &molecules,
+             const ParameterMap &map = ParameterMap());
+    bool add(const QList<Residue> &residues,
+             const ParameterMap &map = ParameterMap());
+    bool add(const QList<NewAtom> &atoms,
+             const ParameterMap &map = ParameterMap());
+    bool add(const QList<PartialMolecule> &molecules,
+             const ParameterMap &map = ParameterMap());
+
+    bool addTo(const FFBase::FFGroup &group,
+               const Molecule &molecule,
+               const ParameterMap &map = ParameterMap());
+    bool addTo(const FFBase::FFGroup &group,
+               const Residue &residue,
+               const ParameterMap &map = ParameterMap());
+    bool addTo(const FFBase::FFGroup &group,
+               const NewAtom &atom,
+               const ParameterMap &map = ParameterMap());
+    bool addTo(const FFBase::FFGroup &group,
+               const PartialMolecule &molecule,
+               const ParameterMap &map = ParameterMap());
+
+    bool addTo(const FFBase::FFGroup &group,
+               const QList<Molecule> &molecules,
+               const ParameterMap &map = ParameterMap());
+    bool addTo(const FFBase::FFGroup &group,
+               const QList<Residue> &residues,
+               const ParameterMap &map = ParameterMap());
+    bool addTo(const FFBase::FFGroup &group,
+               const QList<NewAtom> &atoms,
+               const ParameterMap &map = ParameterMap());
+    bool addTo(const FFBase::FFGroup &group,
+               const QList<PartialMolecule> &molecules,
+               const ParameterMap &map = ParameterMap());
+
+    bool change(const Molecule &molecule);
+    bool change(const Residue &residue);
+    bool change(const NewAtom &atom);
+
+    bool change(const QHash<MoleculeID,Molecule> &molecules);
+    bool change(const QHash<MoleculeID,PartialMolecule> &molecules);
+
+    bool remove(const Molecule &molecule);
+    bool remove(const Residue &residue);
+    bool remove(const NewAtom &atom);
+    bool remove(const PartialMolecule &molecule);
+
+    bool contains(const Molecule &molecule);
+    bool contains(const Residue &residue);
+    bool contains(const NewAtom &atom);
+    bool contains(const PartialMolecule &molecule);
+
+    bool contains(const Molecule &molecule,
+                  const FFBase::Group &group);
+    bool contains(const Residue &residue,
+                  const FFBase::Group &group);
+    bool contains(const NewAtom &atom,
+                  const FFBase::Group &group);
+    bool contains(const PartialMolecule &molecule,
+                  const FFBase::Group &group);
+
+    bool refersTo(MoleculeID molid)=0;
+    bool refersTo(MoleculeID molid, const FFBase::Group &group);
+
+    QSet<MoleculeID> moleculeIDs();
+    QSet<MoleculeID> moleculeIDs(const FFBase::Group &group);
+
+    PartialMolecule contents(MoleculeID molid);
+    QHash<MoleculeID,PartialMolecule> contents(const FFGroup::Group group);
+    QHash<MoleculeID,PartialMolecule> contents();
+
+    bool isDirty();
+    bool isClean();
+
+    ForceFieldID ID();
+    Version version();
 
     void assertContains(const FFComponent &component) const;
 
@@ -96,18 +170,18 @@ protected:
 
     virtual bool _pvt_setForceField(const ForceField &forcefield)=0;
 
-    virtual bool _pvt_add(const Molecule &molecule, 
+    virtual bool _pvt_add(const Molecule &molecule,
                           const ParameterMap &map)=0;
-                          
+
     virtual bool _pvt_add(const Residue &residue,
                           const ParameterMap &map)=0;
 
     virtual bool _pvt_change(const Molecule &molecule)=0;
     virtual bool _pvt_change(const Residue &residue)=0;
-    
+
     virtual bool _pvt_remove(const Molecule &molecule)=0;
     virtual bool _pvt_remove(const Residue &residue)=0;
-    
+
     virtual bool _pvt_replace(const Molecule &oldmol,
                               const Molecule &newmol, const ParameterMap &map)=0;
 
@@ -164,7 +238,7 @@ protected:
 
     bool _pvt_remove(const Molecule &molecule);
     bool _pvt_remove(const Residue &residue);
-    
+
     bool _pvt_replace(const Molecule &oldmol,
                       const Molecule &newmol, const ParameterMap &map);
 

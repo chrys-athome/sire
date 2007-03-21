@@ -82,9 +82,9 @@ public:
     ForceFieldsBase& operator=(const ForceFieldsBase &other);
 
     virtual QHash<ForceFieldID,ForceField> forceFields() const=0;
-    
+
     virtual void setEqualTo(const ForceFields &forcefields)=0;
-    
+
     virtual void minorUpdate(const ForceFields &forcefields)=0;
     virtual void majorUpdate(const ForceFields &forcefields)=0;
 
@@ -115,55 +115,16 @@ public:
 
     const FFExpression& total() const;
 
-    virtual bool add(const Molecule &molecule, const QSet<ForceFieldID> &ffids,
-                     const ParameterMap &map)=0;
-
-    virtual bool add(const Residue &residue, const QSet<ForceFieldID> &ffids,
-                     const ParameterMap &map)=0;
-
-    virtual bool add(const NewAtom &atom, const QSet<ForceFieldID> &ffids,
-                     const ParameterMap &map)=0;
-
-    bool add(const Molecule &molecule, ForceFieldID ffid,
-             const ParameterMap &map = ParameterMap());
-
-    bool add(const Residue &residue, ForceFieldID ffid,
-             const ParameterMap &map = ParameterMap());
-
-    bool add(const NewAtom &atom, ForceFieldID ffid,
-             const ParameterMap &map = ParameterMap());
-
-    bool add(const Molecule &molecule, const QString &ffname,
-             const ParameterMap &map = ParameterMap());
-
-    bool add(const Residue &residue, const QString &ffname,
-             const ParameterMap &map = ParameterMap());
-
-    bool add(const NewAtom &atom, const QString &ffname,
-             const ParameterMap &map = ParameterMap());
-
     virtual bool change(const Molecule &molecule)=0;
     virtual bool change(const Residue &residue)=0;
     virtual bool change(const NewAtom &atom)=0;
 
     virtual bool change(const QHash<MoleculeID,Molecule> &molecules)=0;
 
-    virtual bool remove(const Molecule &molecule)=0;
-
-    virtual bool remove(const Molecule &molecule, const QSet<ForceFieldID> &ffids)=0;
-    virtual bool remove(const Residue &residue, const QSet<ForceFieldID> &ffids)=0;
-    virtual bool remove(const NewAtom &atom, const QSet<ForceFieldID> &ffids)=0;
-
-    bool remove(const Molecule &molecule, ForceFieldID ffid);
-    bool remove(const Residue &residue, ForceFieldID ffid);
-    bool remove(const NewAtom &atom, ForceFieldID ffid);
-
-    bool remove(const Molecule &molecule, const QString &ffname);
-    bool remove(const Residue &residue, const QString &ffname);
-    bool remove(const NewAtom &atom, const QString &ffname);
-
+    double energy(const Expression &expression);
     double energy(const FFExpression &expression);
     double energy(const Function &component);
+
     double energy(const FFComponent &component);
 
     double energy();
@@ -194,8 +155,6 @@ protected:
 
     virtual void assertValidComponents(const FFExpression &expression) const=0;
 
-    ///indexing functions below /////////////
-
     void add(MoleculeID molid, ForceFieldID ffid) throw();
     void add(MoleculeID molid, const QSet<ForceFieldID> &ffids) throw();
     void add(const QSet<MoleculeID> &molids, ForceFieldID ffid) throw();
@@ -208,8 +167,6 @@ protected:
     void changed(const QSet<ForceFieldID> &ffids) throw();
 
     const QHash< MoleculeID,QSet<ForceFieldID> >& getIndex() const;
-
-    /////////////////////////////////////////
 
 private:
 
@@ -290,7 +247,7 @@ private:
         QSet<ForceFieldID> ffids;
     };
 
-    double energy(const ExpressionInfo &expr);
+    double energy(const ExpressionInfo &expr, bool cache_result=true);
 
     /** An index that maps the ID of each molecule in the forcefields
         to the IDs of the force fields that contain that molecule */
@@ -344,7 +301,7 @@ public:
     QSet<ForceFieldID> forceFieldIDs() const;
 
     void setEqualTo(const ForceFields &forcefields);
-    
+
     void majorUpdate(const ForceFields &forcefields);
     void minorUpdate(const ForceFields &forcefields);
 
@@ -353,26 +310,11 @@ public:
     void remove(ForceFieldID ffid);
     void remove(const QString &ffname);
 
-    bool add(const Molecule &molecule, const QSet<ForceFieldID> &ffids,
-             const ParameterMap &map = ParameterMap());
-
-    bool add(const Residue &residue, const QSet<ForceFieldID> &ffids,
-             const ParameterMap &map = ParameterMap());
-
-    bool add(const NewAtom &atom, const QSet<ForceFieldID> &ffids,
-             const ParameterMap &map = ParameterMap());
-
     bool change(const Molecule &molecule);
     bool change(const Residue &residue);
     bool change(const NewAtom &atom);
 
     bool change(const QHash<MoleculeID,Molecule> &molecules);
-
-    bool remove(const Molecule &molecule, const QSet<ForceFieldID> &ffids);
-    bool remove(const Residue &residue, const QSet<ForceFieldID> &ffids);
-    bool remove(const NewAtom &atom, const QSet<ForceFieldID> &ffids);
-
-    bool remove(const Molecule &molecule);
 
 protected:
     Values getEnergies(ForceFieldID ffid);
@@ -386,7 +328,7 @@ protected:
     QSet<ForceFieldID> getFFIDs(const QString &ffname) const;
 
     void assertValidComponents(const FFExpression &expression) const;
-    
+
     void assertSameContents(const ForceFields &forcefields) const;
 
     void synchronise(ForceFieldID ffid);

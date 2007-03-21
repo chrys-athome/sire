@@ -253,17 +253,6 @@ void FFWorkerBase::remove(const Residue &residue)
                                  this->_pvt_remove(residue);
 }
 
-/** Replace the molecule 'oldmol' with 'newmol' */
-void FFWorkerBase::replace(const Molecule &oldmol,
-                           const Molecule &newmol, const ParameterMap &map)
-{
-    //wait until the processor is idle
-    this->waitUntilReady();
-
-    needs_energy_recalculation = needs_energy_recalculation or
-                                 this->_pvt_replace(oldmol,newmol,map);
-}
-
 /** Assert that this forcefield contains the energy component 'component'
 
     \throw SireFF::missing_component

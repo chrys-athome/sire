@@ -275,6 +275,8 @@ protected:
                                      DistMatrix &distmatrix,
                                      CLJMatrix &cljmatrix);
 
+    CLJFF& copy(const CLJFF &other);
+
     DistMatrix& distanceMatrix();
     CLJMatrix& cljMatrix();
 

@@ -76,19 +76,96 @@ public:
 
     virtual bool add(const Molecule &molecule,
                      const ParameterMap &map = ParameterMap())=0;
-                     
-    virtual bool add(const Residue &residue, 
+    virtual bool add(const Residue &residue,
                      const ParameterMap &map = ParameterMap())=0;
+    virtual bool add(const NewAtom &atom,
+                     const ParameterMap &map = ParameterMap())=0;
+    virtual bool add(const PartialMolecule &molecule,
+                     const ParameterMap &map = ParameterMap())=0;
+
+    virtual bool add(const QList<Molecule> &molecules,
+                     const ParameterMap &map = ParameterMap())=0;
+    virtual bool add(const QList<Residue> &residues,
+                     const ParameterMap &map = ParameterMap())=0;
+    virtual bool add(const QList<NewAtom> &atoms,
+                     const ParameterMap &map = ParameterMap())=0;
+    virtual bool add(const QList<PartialMolecule> &molecules,
+                     const ParameterMap &map = ParameterMap())=0;
+
+    virtual bool addTo(const FFBase::Group &group,
+                       const Molecule &molecule,
+                       const ParameterMap &map = ParameterMap())=0;
+    virtual bool addTo(const FFBase::Group &group,
+                       const Residue &residue,
+                       const ParameterMap &map = ParameterMap())=0;
+    virtual bool addTo(const FFBase::Group &group,
+                       const NewAtom &atom,
+                       const ParameterMap &map = ParameterMap())=0;
+    virtual bool addTo(const FFBase::Group &group,
+                       const PartialMolecule &molecule,
+                       const ParameterMap &map = ParameterMap())=0;
+
+    virtual bool addTo(const FFBase::Group &group,
+                       const QList<Molecule> &molecules,
+                       const ParameterMap &map = ParameterMap())=0;
+    virtual bool addTo(const FFBase::Group &group,
+                       const QList<Residue> &residues,
+                       const ParameterMap &map = ParameterMap())=0;
+    virtual bool addTo(const FFBase::Group &group,
+                       const QList<NewAtom> &atoms,
+                       const ParameterMap &map = ParameterMap())=0;
+    virtual bool addTo(const FFBase::Group &group,
+                       const QList<PartialMolecule> &molecules,
+                       const ParameterMap &map = ParameterMap())=0;
 
     virtual bool change(const Molecule &molecule)=0;
     virtual bool change(const Residue &residue)=0;
+    virtual bool change(const NewAtom &atom)=0;
+
+    virtual bool change(const QHash<MoleculeID,Molecule> &molecules)=0;
+    virtual bool change(const QHash<MoleculeID,PartialMolecule> &molecules)=0;
 
     virtual bool remove(const Molecule &molecule)=0;
     virtual bool remove(const Residue &residue)=0;
-                        
-    virtual bool replace(const Molecule &oldmol,
-                         const Molecule &newmol,
-                         const ParameterMap &map = ParameterMap())=0;
+    virtual bool remove(const NewAtom &atom)=0;
+    virtual bool remove(const PartialMolecule &molecule)=0;
+
+    virtual bool remove(const QList<Molecule> &molecules)=0;
+    virtual bool remove(const QList<Residue> &residues)=0;
+    virtual bool remove(const QList<NewAtom> &atoms)=0;
+    virtual bool remove(const QList<PartialMolecule> &molecules)=0;
+
+    virtual bool contains(const Molecule &molecule)=0;
+    virtual bool contains(const Residue &residue)=0;
+    virtual bool contains(const NewAtom &atom)=0;
+    virtual bool contains(const PartialMolecule &molecule)=0;
+
+    virtual bool contains(const Molecule &molecule,
+                          const FFBase::Group &group)=0;
+    virtual bool contains(const Residue &residue,
+                          const FFBase::Group &group)=0;
+    virtual bool contains(const NewAtom &atom,
+                          const FFBase::Group &group)=0;
+    virtual bool contains(const PartialMolecule &molecule,
+                          const FFBase::Group &group)=0;
+
+    virtual bool refersTo(MoleculeID molid)=0;
+    virtual bool refersTo(MoleculeID molid, const FFBase::Group &group)=0;
+
+    virtual QSet<MoleculeID> moleculeIDs()=0;
+    virtual QSet<MoleculeID> moleculeIDs(const FFBase::Group &group)=0;
+
+    virtual PartialMolecule contents(MoleculeID molid)=0;
+    virtual QHash<MoleculeID,PartialMolecule> contents(const FFGroup::Group group)=0;
+    virtual QHash<MoleculeID,PartialMolecule> contents()=0;
+
+    virtual bool isDirty()=0;
+    virtual bool isClean()=0;
+
+    virtual ForceFieldID ID()=0;
+    virtual Version version()=0;
+
+    virtual void assertContains(const FFComponent &component)=0;
 
     virtual bool setForceField(const ForceField &forcefield)=0;
 
@@ -97,8 +174,7 @@ public:
 
 /** This is the default, and most simple, FFCalculator. This will
     work with any forcefield that can be used from the command line
-    (pretty much all of them). The only exceptions are forcefields
-    which require special calculators, e.g. MolproFF.
+    (pretty much all of them).
 
     @author Christopher Woods
 */
@@ -116,19 +192,91 @@ public:
 
     bool add(const Molecule &molecule,
              const ParameterMap &map = ParameterMap());
-                     
-    bool add(const Residue &residue, 
+    bool add(const Residue &residue,
              const ParameterMap &map = ParameterMap());
+    bool add(const NewAtom &atom,
+             const ParameterMap &map = ParameterMap());
+    bool add(const PartialMolecule &molecule,
+             const ParameterMap &map = ParameterMap());
+
+    bool add(const QList<Molecule> &molecules,
+             const ParameterMap &map = ParameterMap());
+    bool add(const QList<Residue> &residues,
+             const ParameterMap &map = ParameterMap());
+    bool add(const QList<NewAtom> &atoms,
+             const ParameterMap &map = ParameterMap());
+    bool add(const QList<PartialMolecule> &molecules,
+             const ParameterMap &map = ParameterMap());
+
+    bool addTo(const FFBase::FFGroup &group,
+               const Molecule &molecule,
+               const ParameterMap &map = ParameterMap());
+    bool addTo(const FFBase::FFGroup &group,
+               const Residue &residue,
+               const ParameterMap &map = ParameterMap());
+    bool addTo(const FFBase::FFGroup &group,
+               const NewAtom &atom,
+               const ParameterMap &map = ParameterMap());
+    bool addTo(const FFBase::FFGroup &group,
+               const PartialMolecule &molecule,
+               const ParameterMap &map = ParameterMap());
+
+    bool addTo(const FFBase::FFGroup &group,
+               const QList<Molecule> &molecules,
+               const ParameterMap &map = ParameterMap());
+    bool addTo(const FFBase::FFGroup &group,
+               const QList<Residue> &residues,
+               const ParameterMap &map = ParameterMap());
+    bool addTo(const FFBase::FFGroup &group,
+               const QList<NewAtom> &atoms,
+               const ParameterMap &map = ParameterMap());
+    bool addTo(const FFBase::FFGroup &group,
+               const QList<PartialMolecule> &molecules,
+               const ParameterMap &map = ParameterMap());
 
     bool change(const Molecule &molecule);
     bool change(const Residue &residue);
+    bool change(const NewAtom &atom);
+
+    bool change(const QHash<MoleculeID,Molecule> &molecules);
+    bool change(const QHash<MoleculeID,PartialMolecule> &molecules);
 
     bool remove(const Molecule &molecule);
     bool remove(const Residue &residue);
-                        
-    bool replace(const Molecule &oldmol,
-                 const Molecule &newmol,
-                 const ParameterMap &map = ParameterMap());
+    bool remove(const NewAtom &atom);
+    bool remove(const PartialMolecule &molecule);
+
+    bool contains(const Molecule &molecule);
+    bool contains(const Residue &residue);
+    bool contains(const NewAtom &atom);
+    bool contains(const PartialMolecule &molecule);
+
+    bool contains(const Molecule &molecule,
+                  const FFBase::Group &group);
+    bool contains(const Residue &residue,
+                  const FFBase::Group &group);
+    bool contains(const NewAtom &atom,
+                  const FFBase::Group &group);
+    bool contains(const PartialMolecule &molecule,
+                  const FFBase::Group &group);
+
+    bool refersTo(MoleculeID molid)=0;
+    bool refersTo(MoleculeID molid, const FFBase::Group &group);
+
+    QSet<MoleculeID> moleculeIDs();
+    QSet<MoleculeID> moleculeIDs(const FFBase::Group &group);
+
+    PartialMolecule contents(MoleculeID molid);
+    QHash<MoleculeID,PartialMolecule> contents(const FFGroup::Group group);
+    QHash<MoleculeID,PartialMolecule> contents();
+
+    bool isDirty();
+    bool isClean();
+
+    ForceFieldID ID();
+    Version version();
+
+    void assertContains(const FFComponent &component);
 
     bool setForceField(const ForceField &forcefield);
 

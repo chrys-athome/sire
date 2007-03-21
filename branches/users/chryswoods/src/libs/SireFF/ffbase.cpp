@@ -29,6 +29,7 @@
 #include "SireCAS/qhash_sirecas.h"
 
 #include "ffbase.h"
+#include "forcefield.h"
 
 #include "SireMol/molecule.h"
 #include "SireMol/moleculeid.h"
@@ -36,6 +37,7 @@
 #include "SireMol/resnum.h"
 #include "SireMol/resid.h"
 #include "SireMol/newatom.h"
+#include "SireMol/atomselection.h"
 
 #include "SireFF/errors.h"
 #include "SireMol/errors.h"
@@ -393,8 +395,9 @@ FFBase::FFBase(const FFBase &other)
 FFBase::~FFBase()
 {}
 
-/** Copy assignment */
-FFBase& FFBase::operator=(const FFBase &other)
+/** Protected function used to copy one FFBase to another - this
+    is used by the assignment operator of derived classes. */
+FFBase& FFBase::copy(const FFBase &other)
 {
     if (this != &other)
     {
@@ -406,6 +409,12 @@ FFBase& FFBase::operator=(const FFBase &other)
     }
 
     return *this;
+}
+
+/** Copy assignment from a forcefield */
+FFBase& FFBase::operator=(const ForceField &ffield)
+{
+    return this->operator=( *(ffield.constData()) );
 }
 
 /** Return a string representation of this forcefield */
@@ -527,137 +536,72 @@ Values FFBase::energies(const QSet<FFComponent> &components)
     return specified_vals;
 }
 
-/** Change the molecule 'mol' (e.g. move it, or change its
-    parameters). This does nothing if the molecule is not
-    in this forcefield. Returns whether or not the forcefield
-    has been changed by this change, and thus whether the
-    energy needs to be recalculated. The same parameter map
-    that was used when this molecule was added will be used
-    to extract any necessary parameters from the molecule's
-    properties
-
-    \throw SireMol::missing_property
-    \throw SireError::invalid_cast
-    \throw SireError::invalid_operation
-*/
-bool FFBase::change(const Molecule&)
+template<class T>
+bool FFBase::_pvt_add(const QList<T> &objs, const ParameterMap &map)
 {
-    throw SireError::invalid_operation( QObject::tr(
-                    "The forcefield \"%1\" (class %2) does not support "
-                    "the changing of molecules.")
-                        .arg(this->name()).arg(this->what()), CODELOC );
-}
-
-/** Change a whole load of molecules
-
-    \throw SireMol::missing_property
-    \throw SireError::invalid_cast
-    \throw SireError::invalid_operation
-*/
-bool FFBase::change(const QHash<MoleculeID,Molecule> &molecules)
-{
-    bool changed = false;
-
-    for (QHash<MoleculeID,Molecule>::const_iterator it = molecules.begin();
-         it != molecules.end();
-         ++it)
+    if (objs.count() == 0)
+        return false;
+    else if (objs.count() == 1)
+        return this->add(objs.at(0), map);
+    else
     {
-        bool this_changed = this->change(*it);
+        //maintain the invariant
+        ForceField ffield(*this);
 
-        changed = changed or this_changed;
+        bool changed = false;
+
+        for (typename QList<T>::const_iterator it = objs.begin();
+             it != objs.end();
+             ++it)
+        {
+            bool added = ffield.add(*it, map);
+            changed = changed or added;
+        }
+
+        //everything went well!
+        if (changed)
+            *this = ffield;
+
+        return changed;
     }
-
-    return changed;
 }
 
-/** Change the residue 'res' (e.g. move it, or change its
-    parameters). This does nothing if the residue is not
-    in this forcefield. Returns whether or not the forcefield
-    has been changed by this change, and thus whether the
-    energy needs to be recalculated.
-
-    \throw SireMol::missing_property
-    \throw SireError::invalid_cast
-    \throw SireError::invalid_operation
-*/
-bool FFBase::change(const Residue &res)
+/** Add lots of molecules */
+bool FFBase::add(const QList<Molecule> &molecules, const ParameterMap &map)
 {
-    return this->change(res.molecule());
+    return this->_pvt_add<Molecule>(molecules, map);
 }
 
-/** Change the atom 'atom'  (e.g. move it, or change
-    its parameters). This does nothing if this atom
-    is not in this forcefield. Returns whether or not
-    the forcefield has been changed by this change, and
-    thus whether the energy needs to be recalculated.
-
-    \throw SireMol::missing_property
-    \throw SireError::invalid_cast
-    \throw SireError::invalid_operation
-*/
-bool FFBase::change(const NewAtom &atom)
+/** Add lots of residues */
+bool FFBase::add(const QList<Residue> &residues, const ParameterMap &map)
 {
-    return this->change(atom.molecule());
+    return this->_pvt_add<Residue>(residues, map);
 }
 
-/** Add the molecule 'molecule' to this forcefield using
-    the optional parameter map to find any necessary parameters
-    from properties of the molecule. This will replace any
-    existing copy of the molecule that already exists in
-    this forcefield. This returns whether or not the
-    forcefield has been changed by this addition, and therefore
-    whether its energy needs recalculating.
-
-    \throw SireMol::missing_property
-    \throw SireError::invalid_cast
-    \throw SireError::invalid_operation
-*/
-bool FFBase::add(const Molecule&, const FFBase::Group&, const ParameterMap&)
+/** Add lots of atoms */
+bool FFBase::add(const QList<NewAtom> &atoms, const ParameterMap &map)
 {
-    throw SireError::invalid_operation( QObject::tr(
-                    "The forcefield \"%1\" (class %2) does not support "
-                    "the addition of molecules.")
-                        .arg(this->name()).arg(this->what()), CODELOC );
-
-    return false;
+    return this->_pvt_add<NewAtom>(atoms, map);
 }
 
-bool FFBase::add(const Molecule &mol, const ParameterMap &map)
+template<class T>
+bool FFBase::_pvt_addTo(const FFBase::Group &group,
+                        const T &obj, const ParameterMap &map)
 {
-    return this->add(mol, this->groups().main(), map);
+    if (group == this->groups().main())
+        return this->add(obj, map);
+    else
+    {
+        throw SireFF::invalid_group( QObject::tr(
+                "Cannot add to %1(%2) (ID == %3) as there is no such group!")
+                    .arg(this->what()).arg(this->name())
+                    .arg(this->ID()), CODELOC );
+
+        return false;
+    }
 }
 
-/** Add the residue 'residue' to this forcefield using
-    the optional parameter map to find any necessary parameters
-    from properties of the residue. This will replace any
-    existing copy of the residue that already exists in
-    this forcefield. This returns whether or not the
-    forcefield has been changed by this addition, and therefore
-    whether its energy needs recalculating.
-
-    This will throw an exception if this forcefield does not
-    support partial molecules.
-
-    \throw SireError::invalid_operation
-    \throw SireMol::missing_property
-    \throw SireError::invalid_cast
-*/
-bool FFBase::add(const Residue&, const FFBase::Group&, const ParameterMap&)
-{
-    throw SireError::invalid_operation( QObject::tr(
-                    "The forcefield \"%1\" (class %2) does not support "
-                    "the addition of residues.")
-                        .arg(this->name()).arg(this->what()), CODELOC );
-
-    return false;
-}
-
-bool FFBase::add(const Residue &res, const ParameterMap &map)
-{
-    return this->add(res, this->groups().main(), map);
-}
-
-/** Add the atom 'atom' to this forcefield using the
+/** Add the selected atoms 'selected_atoms' to this forcefield using the
     optional parameter map to find any necessay parameters
     from properties of the atom. This will replace any
     existing copy of the atom that already exists in
@@ -672,151 +616,185 @@ bool FFBase::add(const Residue &res, const ParameterMap &map)
     \throw SireMol::missing_property
     \throw SireError::invalid_cast
 */
-bool FFBase::add(const NewAtom&, const FFBase::Group &group, const ParameterMap&)
+bool FFBase::addTo(const FFBase::Group &group, const Molecule &molecule,
+                   const AtomSelection &selected_atoms, const ParameterMap &map)
 {
-    throw SireError::invalid_operation( QObject::tr(
-                    "The forcefield \"%1\" (class %2) does not support "
-                    "the addition of atoms.")
-                        .arg(this->name()).arg(this->what()), CODELOC );
+    if (group == groups().main())
+        return this->add(molecule, selected_atoms, map);
+    else
+    {
+        throw SireFF::invalid_group( QObject::tr(
+                "Cannot add to %1(%2) (ID == %3) as there is no such group!")
+                    .arg(this->what()).arg(this->name())
+                    .arg(this->ID()), CODELOC );
 
-    return false;
+        return false;
+    }
 }
 
-bool FFBase::add(const NewAtom &atom, const ParameterMap &map)
-{
-    return this->add(atom, this->groups().main(), map);
-}
-
-/** Remove the molecule 'molecule' from this forcefield - this
-    does nothing if the molecule is not in this forcefield. This
-    returns whether this has changed the forcefield (therefore
-    necessitating a recalculation of the energy)
-
-    \throw SireError::invalid_operation
-*/
-bool FFBase::remove(const Molecule&)
-{
-    throw SireError::invalid_operation( QObject::tr(
-                    "The forcefield \"%1\" (class %2) does not support "
-                    "the removal of molecules.")
-                        .arg(this->name()).arg(this->what()), CODELOC );
-
-    return false;
-}
-
-/** Remove the residue 'residue' from this forcefield - this
-    does nothing if the residue is not in this forcefield. This
-    returns whether this has changed the forcefield (therefore
-    necessitating a recalculation of the energy)
-
-    This will throw an exception if this forcefield does not
-    support partial molecules.
-
-    \throw SireError::invalid_operation
-*/
-bool FFBase::remove(const Residue&)
-{
-    throw SireError::invalid_operation( QObject::tr(
-                    "The forcefield \"%1\" (class %2) does not support "
-                    "the removal of residues.")
-                        .arg(this->name()).arg(this->what()), CODELOC );
-
-    return false;
-}
-
-/** Remove the atom 'atom' from this forcefield - this does
-    nothing if the atom is not in this forcefield. This
-    returns whether this has changed the forcefield (therefore
-    necessitating a recalculation of the energy)
-
-    This will throw an exception if this forcefield does not
-    support partial molecules.
-
-    \throw SireError::invalid_operation
-*/
-bool FFBase::remove(const NewAtom&)
-{
-    throw SireError::invalid_operation( QObject::tr(
-                    "The forcefield \"%1\" (class %2) does not support "
-                    "the removal of atoms.")
-                        .arg(this->name()).arg(this->what()), CODELOC );
-
-    return false;
-}
-
-/** Replace the molecule 'oldmol' with 'newmol' (using
-    the passed parameter map to find any required parameters
-    in the properties of the molecule). This is equivalent
-    to 'remove(oldmol)' followed by 'add(newmol,map)', except
-    that 'newmol' will only be added if 'oldmol' is contained
-    in this forcefield.
-
-    This returns whether this changes the forcefield.
+/** Add the molecule 'molecule' to the group 'group' in this forcefield using
+    the optional parameter map to find any necessary parameters
+    from properties of the molecule. This will replace any
+    existing copy of the molecule that already exists in
+    this forcefield. This returns whether or not the
+    forcefield has been changed by this addition, and therefore
+    whether its energy needs recalculating.
 
     \throw SireMol::missing_property
     \throw SireError::invalid_cast
+    \throw SireError::invalid_operation
 */
-bool FFBase::replace(const Molecule &oldmol,
-                     const Molecule &newmol,
-                     const ParameterMap &map)
+bool FFBase::addTo(const FFBase::Group &group,
+                   const Molecule &molecule, const ParameterMap &map)
 {
-    if (this->remove(oldmol))
-    {
-        this->add(newmol,map);
-        return true;
-    }
-    else
+    return this->_pvt_addTo<Molecule>(group, molecule, map);
+}
+
+/** Add the residue 'residue' to the group 'group'
+    in this forcefield using
+    the optional parameter map to find any necessary parameters
+    from properties of the residue. This will replace any
+    existing copy of the residue that already exists in
+    this forcefield. This returns whether or not the
+    forcefield has been changed by this addition, and therefore
+    whether its energy needs recalculating.
+
+    This will throw an exception if this forcefield does not
+    support partial molecules.
+
+    \throw SireError::invalid_operation
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+*/
+bool FFBase::addTo(const FFBase::Group &group,
+                   const Residue &residue, const ParameterMap &map)
+{
+    return this->_pvt_addTo<Residue>(group, residue, map);
+}
+
+/** Add the atom 'atom' to the group 'group'
+    in this forcefield using the
+    optional parameter map to find any necessay parameters
+    from properties of the atom. This will replace any
+    existing copy of the atom that already exists in
+    this forcefield. This returns whether or not the
+    forcefield has been changed by this addition, and therefore
+    whether its energy needs recalculating.
+
+    This will throw an exception if this forcefield doens't
+    support partial molecules.
+
+    \throw SireError::invalid_operation
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+*/
+bool FFBase::addTo(const FFBase::Group &group,
+                   const NewAtom &atom, const ParameterMap &map)
+{
+    return this->_pvt_addTo<NewAtom>(group, atom, map);
+}
+
+template<class T>
+bool FFBase::_pvt_addTo(const FFBase::Group &group,
+                        const QList<T> &objs,
+                        const ParameterMap &map)
+{
+    if (objs.count() == 0)
         return false;
+    else if (objs.count() == 1)
+        return this->addTo(group, objs.at(0), map);
+    else
+    {
+        //maintain the invariant
+        ForceField ffield(*this);
+
+        bool changed = false;
+
+        for (typename QList<T>::const_iterator it = objs.begin();
+             it != objs.end();
+             ++it)
+        {
+            bool added = ffield.addTo(group, *it, map);
+            changed = changed or added;
+        }
+
+        //everything went well!
+        if (changed)
+            *this = ffield;
+
+        return changed;
+    }
 }
 
-/** Return whether this forcefield contains a copy of
-    any version of the molecule 'molecule' */
-bool FFBase::contains(const Molecule&) const
+/** Adds lots of molecules to the group 'group' */
+bool FFBase::addTo(const FFBase::Group &group,
+                   const QList<Molecule> &molecules,
+                   const ParameterMap &map)
 {
-    return false;
+    return this->_pvt_addTo<Molecule>(group, molecules, map);
 }
 
-/** Return whether or not this forcefield contains *any part* of
-    any version of the molecule 'molecule' */
-bool FFBase::refersTo(const Molecule&) const
+/** Adds lots of residues to the group 'group' */
+bool FFBase::addTo(const FFBase::Group &group,
+                   const QList<Residue> &residues,
+                   const ParameterMap &map)
 {
-    return false;
+    return this->_pvt_addTo<Residue>(group, residues, map);
 }
 
-/** Return the set of all of the ID numbers of all of the
-    molecules that are referred to by this forcefield
-    (i.e. all molecules that have at least some part
-     in this forcefield) */
-QSet<MoleculeID> FFBase::moleculeIDs() const
+/** Adds lots of atoms to the group 'group' */
+bool FFBase::addTo(const FFBase::Group &group,
+                   const QList<NewAtom> &atoms,
+                   const ParameterMap &map)
 {
-    return QSet<MoleculeID>();
+    return this->_pvt_addTo<NewAtom>(group, atoms, map);
 }
 
-/** Return whether this forcefield contains a copy of
-    any version of the residue 'residue' */
-bool FFBase::contains(const Residue &residue) const
+template<class T>
+bool FFBase::_pvt_remove(const QList<T> &objs)
 {
-    return this->contains(residue.molecule());
+    if (objs.count() == 0)
+        return false;
+    else if (objs.count() == 1)
+        return this->remove(objs.at(0));
+    else
+    {
+        //maintain the invariant
+        ForceField ffield(*this);
+
+        bool changed = false;
+
+        for (typename QList<T>::const_iterator it = objs.begin();
+             it != objs.end();
+             ++it)
+        {
+            bool removed = ffield.remove(*it);
+            changed = changed or removed;
+        }
+
+        if (changed)
+            *this = ffield;
+
+        return changed;
+    }
 }
 
-/** Return whether this forcefield contains a copy of
-    any version of the atom 'atom' */
-bool FFBase::contains(const NewAtom &atom) const
+/** Remove a whole load of molecules */
+bool FFBase::remove(const QList<Molecule> &molecules)
 {
-    return this->contains(atom.residue());
+    return this->_pvt_remove<Molecule>(molecules);
 }
 
-/** Return the copy of the molecule in this forcefield that
-    has the ID == molid
-
-    \throw SireMol::missing_molecule
-*/
-Molecule FFBase::molecule(MoleculeID molid) const
+/** Remove a whole load of residues */
+bool FFBase::remove(const QList<Residue> &residues)
 {
-    throw SireMol::missing_molecule( QObject::tr(
-                "There is no molecule with ID == %1 in the "
-                "forcefield \"%1\"")
-                    .arg(molid).arg(this->name()), CODELOC );
+    return this->_pvt_remove<Residue>(residues);
+}
+
+/** Remove a whole load of atoms */
+bool FFBase::remove(const QList<NewAtom> &atoms)
+{
+    return this->_pvt_remove<NewAtom>(atoms);
 }
 
 /** Return the copy of the residue in this forcefield that

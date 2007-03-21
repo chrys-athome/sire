@@ -59,6 +59,7 @@ QDataStream& operator>>(QDataStream&, SireFF::FFBase&);
 
 namespace SireMol
 {
+class PartialMolecule;
 class Molecule;
 class Residue;
 class NewAtom;
@@ -71,6 +72,7 @@ class ResID;
 namespace SireFF
 {
 
+class ForceField;
 class MovedMols;
 
 using SireBase::Version;
@@ -88,6 +90,7 @@ using SireMol::ResNum;
 using SireMol::ResID;
 using SireMol::NewAtom;
 using SireMol::IDMolAtom;
+using SireMol::PartialMolecule;
 
 /**
 This class is the base class of all of the forcefield classes. The forcefields all form
@@ -111,7 +114,8 @@ public:
 
     virtual ~FFBase();
 
-    FFBase& operator=(const FFBase &other);
+    virtual FFBase& operator=(const FFBase &other)=0;
+    FFBase& operator=(const ForceField &ffield);
 
     static const char* typeName()
     {
@@ -328,56 +332,300 @@ public:
     Values energies(const QSet<FFComponent> &components);
     Values energies();
 
-    virtual bool change(const Molecule &mol);
-    virtual bool change(const Residue &res);
-    virtual bool change(const NewAtom &atom);
+    // Pure virtual functions used to provide the interface to
+    // all of the forcefields
 
-    virtual bool change(const QHash<MoleculeID,Molecule> &mols);
+    /** Change the molecule 'mol' (e.g. move it, or change its
+        parameters). This does nothing if the molecule is not
+        in this forcefield. Returns whether or not the forcefield
+        has been changed by this change, and thus whether the
+        energy needs to be recalculated. The same parameter map
+        that was used when this molecule was added will be used
+        to extract any necessary parameters from the molecule's
+        properties
 
+        \throw SireMol::missing_property
+        \throw SireError::invalid_cast
+        \throw SireError::invalid_operation
+    */
+    virtual bool change(const Molecule &mol)=0;
+
+    /** Change the residue 'res' (e.g. move it, or change its
+        parameters). This does nothing if the residue is not
+        in this forcefield. Returns whether or not the forcefield
+        has been changed by this change, and thus whether the
+        energy needs to be recalculated.
+
+        \throw SireMol::missing_property
+        \throw SireError::invalid_cast
+        \throw SireError::invalid_operation
+    */
+    virtual bool change(const Residue &res)=0;
+
+    /** Change the atom 'atom'  (e.g. move it, or change
+        its parameters). This does nothing if this atom
+        is not in this forcefield. Returns whether or not
+        the forcefield has been changed by this change, and
+        thus whether the energy needs to be recalculated.
+
+        \throw SireMol::missing_property
+        \throw SireError::invalid_cast
+        \throw SireError::invalid_operation
+    */
+    virtual bool change(const NewAtom &atom)=0;
+
+    /** Change a whole load of molecules
+
+        \throw SireMol::missing_property
+        \throw SireError::invalid_cast
+        \throw SireError::invalid_operation
+    */
+    virtual bool change(const QHash<MoleculeID,Molecule> &mols)=0;
+
+    /** Change a whole load of partial molecules
+
+        \throw SireMol::missing_property
+        \throw SireError::invalid_cast
+        \throw SireError::invalid_operation
+    */
+    virtual bool change(const QHash<MoleculeID,PartialMolecule> &mols)=0;
+
+    /** Add the molecule 'molecule' to this forcefield using
+        the optional parameter map to find any necessary parameters
+        from properties of the molecule. This will replace any
+        existing copy of the molecule that already exists in
+        this forcefield. This returns whether or not the
+        forcefield has been changed by this addition, and therefore
+        whether its energy needs recalculating.
+
+        \throw SireMol::missing_property
+        \throw SireError::invalid_cast
+        \throw SireError::invalid_operation
+    */
     virtual bool add(const Molecule &molecule,
-                     const ParameterMap &map = ParameterMap());
+                     const ParameterMap &map = ParameterMap())=0;
+
+    /** Add the residue 'residue' to this forcefield using
+        the optional parameter map to find any necessary parameters
+        from properties of the residue. This will replace any
+        existing copy of the residue that already exists in
+        this forcefield. This returns whether or not the
+        forcefield has been changed by this addition, and therefore
+        whether its energy needs recalculating.
+
+        This will throw an exception if this forcefield does not
+        support partial molecules.
+
+        \throw SireError::invalid_operation
+        \throw SireMol::missing_property
+        \throw SireError::invalid_cast
+    */
     virtual bool add(const Residue &residue,
                      const ParameterMap &map = ParameterMap());
+
+    /** Add the atom 'atom' to this forcefield using the
+        optional parameter map to find any necessay parameters
+        from properties of the atom. This will replace any
+        existing copy of the atom that already exists in
+        this forcefield. This returns whether or not the
+        forcefield has been changed by this addition, and therefore
+        whether its energy needs recalculating.
+
+        This will throw an exception if this forcefield doens't
+        support partial molecules.
+
+        \throw SireError::invalid_operation
+        \throw SireMol::missing_property
+        \throw SireError::invalid_cast
+    */
     virtual bool add(const NewAtom &atom,
                      const ParameterMap &map = ParameterMap());
 
-    virtual bool add(const Molecule &molecule,
-                     const FFBase::Group &group,
+    /** Add the partial molecule 'molecule' to this forcefield using the
+        optional parameter map to find any necessay parameters
+        from properties of the atom. This will replace any
+        existing copy of the atom that already exists in
+        this forcefield. This returns whether or not the
+        forcefield has been changed by this addition, and therefore
+        whether its energy needs recalculating.
+
+        This will throw an exception if this forcefield doens't
+        support partial molecules.
+
+        \throw SireError::invalid_operation
+        \throw SireMol::missing_property
+        \throw SireError::invalid_cast
+    */
+    virtual bool add(const PartialMolecule &molecule,
+                     const ParameterMap &map = ParameterMap())=0;
+
+    virtual bool addTo(const FFBase::Group &group,
+                       const Molecule &molecule,
+                       const ParameterMap &map = ParameterMap());
+
+    virtual bool addTo(const FFBase::Group &group,
+                       const Residue &residue,
+                       const ParameterMap &map = ParameterMap());
+
+    virtual bool addTo(const FFBase::Group &group,
+                       const NewAtom &atom,
+                       const ParameterMap &map = ParameterMap());
+
+    virtual bool addTo(const FFBase::Group &group,
+                       const PartialMolecule &molecule,
+                       const ParameterMap &map = ParameterMap());
+
+    virtual bool add(const QList<Molecule> &molecules,
                      const ParameterMap &map = ParameterMap());
-    virtual bool add(const Residue &residue,
-                     const FFBase::Group &group,
+    virtual bool add(const QList<Residue> &residues,
                      const ParameterMap &map = ParameterMap());
-    virtual bool add(const NewAtom &atom,
-                     const FFBase::Group &group,
+    virtual bool add(const QList<NewAtom> &atoms,
+                     const ParameterMap &map = ParameterMap());
+    virtual bool add(const QList<PartialMolecule> &molecules,
                      const ParameterMap &map = ParameterMap());
 
-    virtual bool remove(const Molecule &molecule);
-    virtual bool remove(const Residue &residue);
-    virtual bool remove(const NewAtom &atom);
+    virtual bool addTo(const FFBase::Group &group,
+                       const QList<Molecule> &molecules,
+                       const ParameterMap &map = ParameterMap());
+    virtual bool addTo(const FFBase::Group &group,
+                       const QList<Residue> &residues,
+                       const ParameterMap &map = ParameterMap());
+    virtual bool addTo(const FFBase::Group &group,
+                       const QList<NewAtom> &atoms,
+                       const ParameterMap &map = ParameterMap());
+    virtual bool addTo(const FFBase::Group &group,
+                       const QList<PartialMolecule> &molecules,
+                       const ParameterMap &map = ParameterMap());
 
-    virtual bool replace(const Molecule &oldmol,
-                         const Molecule &newmol,
-                         const ParameterMap &map = ParameterMap());
+    /** Remove the molecule 'molecule' from this forcefield - this
+        does nothing if the molecule is not in this forcefield. This
+        returns whether this has changed the forcefield (therefore
+        necessitating a recalculation of the energy)
 
-    virtual bool contains(const Molecule &molecule) const;
-    virtual bool contains(const Residue &residue) const;
-    virtual bool contains(const NewAtom &atom) const;
+        \throw SireError::invalid_operation
+    */
+    virtual bool remove(const Molecule &molecule)=0;
 
-    virtual bool refersTo(const Molecule &molecule) const;
+    /** Remove the residue 'residue' from this forcefield - this
+        does nothing if the residue is not in this forcefield. This
+        returns whether this has changed the forcefield (therefore
+        necessitating a recalculation of the energy)
 
-    virtual QSet<MoleculeID> moleculeIDs() const;
+        This will throw an exception if this forcefield does not
+        support partial molecules.
 
-    virtual Molecule molecule(MoleculeID molid) const;
+        \throw SireError::invalid_operation
+    */
+    virtual bool remove(const Residue &residue)=0;
 
-    Residue residue(MoleculeID molid, ResNum resnum) const;
-    Residue residue(MoleculeID molid, ResID resid) const;
-    Residue residue(MoleculeID molid, const QString &resname) const;
+    /** Remove the atom 'atom' from this forcefield - this does
+        nothing if the atom is not in this forcefield. This
+        returns whether this has changed the forcefield (therefore
+        necessitating a recalculation of the energy)
 
-    NewAtom atom(MoleculeID molid, const IDMolAtom &atomid) const;
+        This will throw an exception if this forcefield does not
+        support partial molecules.
 
-    Molecule molecule(const Molecule &mol) const;
-    Residue residue(const Residue &res) const;
-    NewAtom atom(const NewAtom &atom) const;
+        \throw SireError::invalid_operation
+    */
+    virtual bool remove(const NewAtom &atom)=0;
+
+    /** Remove the partial molecule 'molecule' from
+        the molecule 'molecule' from this forcefield - this does
+        nothing if the atoms are not in this forcefield. This
+        returns whether this has changed the forcefield (therefore
+        necessitating a recalculation of the energy)
+
+        This will throw an exception if this forcefield does not
+        support partial molecules.
+
+        \throw SireError::invalid_operation
+    */
+    virtual bool remove(const PartialMolecule &molecule)=0;
+
+    virtual bool remove(const QList<Molecule> &molecules);
+    virtual bool remove(const QList<Residue> &residues);
+    virtual bool remove(const QList<NewAtom> &atoms);
+    virtual bool remove(const QList<PartialMolecule> &molecules);
+
+    /** Return whether this forcefield contains a complete copy of
+        any version of the Molecule 'molecule' */
+    virtual bool contains(const Molecule &molecule) const=0;
+
+    /** Return whether this forcefield contains a complete copy of
+        any version of the Residue 'residue' */
+    virtual bool contains(const Residue &residue) const=0;
+
+    /** Return whether this forcefield contains a complete copy of
+        any version of the Atom 'atom' */
+    virtual bool contains(const NewAtom &atom) const=0;
+
+    /** Return whether this forcefield contains a complete copy of
+        any version of the partial molecule 'molecule' */
+    virtual bool contains(const PartialMolecule &molecule) const=0;
+
+    /** Return whether this forcefield contains a complete copy of
+        any version of the Molecule 'molecule' in the group 'group' */
+    virtual bool contains(const Molecule &molecule,
+                          const FFBase::Group &group) const=0;
+
+    /** Return whether this forcefield contains a complete copy of
+        any version of the Residue 'residue' in the group 'group' */
+    virtual bool contains(const Residue &residue,
+                          const FFBase::Group &group) const=0;
+
+    /** Return whether this forcefield contains a complete copy of
+        any version of the Atom 'atom' in the group 'group' */
+    virtual bool contains(const NewAtom &atom,
+                          const FFBase::Group &group) const=0;
+
+    /** Return whether this forcefield contains a complete copy of
+        any version of the partial molecule 'molecule' in the group 'group' */
+    virtual bool contains(const PartialMolecule &molecule,
+                          const FFBase::Group &group) const=0;
+
+    /** Return whether or not this forcefield contains *any part* of
+        any version of the molecule with ID 'molid' */
+    virtual bool refersTo(MoleculeID molid) const=0;
+
+    /** Return whether or not the group 'group' in this forcefield
+        contains *any part* of any version of the molecule with ID
+        'molid' */
+    virtual bool refersTo(MoleculeID molid, const FFBase::Group &group) const=0;
+
+    /** Return the set of all of the ID numbers of all of the
+        molecules that are referred to by this forcefield
+        (i.e. all molecules that have at least some part
+        in this forcefield) */
+    virtual QSet<MoleculeID> moleculeIDs() const=0;
+
+    /** Return the set of all of the ID numbers of all of the
+        molecules that are referred to by group 'group' in
+        this forcefield (i.e. all molecules that have at least
+        some part in this group in this forcefield) */
+    virtual QSet<MoleculeID> moleculeIDs(const FFBase::Group &group) const=0;
+
+    /** Return the copy of the molecule in this forcefield that
+        has the ID == molid
+
+        \throw SireMol::missing_molecule
+    */
+    virtual Molecule molecule(MoleculeID molid) const=0;
+
+    virtual Residue residue(MoleculeID molid, ResNum resnum) const;
+    virtual Residue residue(MoleculeID molid, ResID resid) const;
+    virtual Residue residue(MoleculeID molid, const QString &resname) const;
+
+    virtual NewAtom atom(MoleculeID molid, const IDMolAtom &atomid) const;
+
+    virtual Molecule molecule(const Molecule &mol) const;
+    virtual Residue residue(const Residue &res) const;
+    virtual NewAtom atom(const NewAtom &atom) const;
+
+    virtual PartialMolecule contents(MoleculeID molid) const=0;
+    virtual QHash<MoleculeID,PartialMolecule> contents(
+                                        const FFGroup::Group group) const=0;
+    virtual QHash<MoleculeID,PartialMolecule> contents() const=0;
 
     bool isDirty() const;
     bool isClean() const;
@@ -389,6 +637,8 @@ public:
 
 protected:
     void registerComponents(FFBase::Components *components);
+
+    FFBase& copy(const FFBase &other);
 
     void incrementMajorVersion();
     void incrementMinorVersion();
@@ -407,7 +657,28 @@ protected:
         and of all of the component energies */
     virtual void recalculateEnergy()=0;
 
+    /** Virtual function used to return the current copy of the molecule 'mol'.
+        The entire molecule is returned even if the forcefield contains only
+        a part of the molecule */
+    virtual Molecule getMolecule(MoleculeID molid) const=0;
+
 private:
+    template<class T>
+    bool _pvt_add(const QList<T> &objs,
+                  const ParameterMap &map);
+
+    template<class T>
+    bool _pvt_addTo(const FFBase::Group &group, const T &obj,
+                    const ParameterMap &map);
+
+    template<class T>
+    bool _pvt_addTo(const FFBase::Group &group,
+                    const QList<T> &objs,
+                    const ParameterMap &map);
+
+    template<class T>
+    bool _pvt_remove(const QList<T> &objs);
+
     /** The name of this forcefield - this may be used to give a unique
         name to all of the component-symbols in this forcefield. */
     QString ffname;
