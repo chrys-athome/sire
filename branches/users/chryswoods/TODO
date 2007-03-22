@@ -57,6 +57,8 @@ SireMol
 
 (*) Fix all of the broken parts of the code
 
+(*) Implement PartialMolecule fully, and better integrate
+    PartialMolecule with the rest of the code
 
 (*) Integrate ParameterTable into Molecule as a Molecule should contain all of 
     its own parameters... (though must do this taking into account things like
@@ -96,4 +98,9 @@ SirePy
     are inherited by Python. Streamed class must contain Python code for the
     class, and de-streaming must parse the stored code...
 
+-----------
+SireCluster
+-----------
 
+(*) Write PoolProcessor and FFPoolProcessor that can distribute
+    multiple forcefields over a worker pool of threads

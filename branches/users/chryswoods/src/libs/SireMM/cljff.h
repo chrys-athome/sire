@@ -187,8 +187,11 @@ public:
     };
 
     const Space& space() const;
-
     const SwitchingFunction& switchingFunction() const;
+
+    bool setProperty(const QString &name, const Property &value);
+    Property getProperty(const QString &name) const;
+    bool containsProperty(const QString &name) const;
 
     /** Return the object describing the components of this
         forcefield */

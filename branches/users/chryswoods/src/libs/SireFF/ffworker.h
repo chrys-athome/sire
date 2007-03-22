@@ -81,74 +81,34 @@ public:
 
     Values energies();
 
-    bool add(const Molecule &molecule,
-             const ParameterMap &map = ParameterMap());
-    bool add(const Residue &residue,
-             const ParameterMap &map = ParameterMap());
-    bool add(const NewAtom &atom,
-             const ParameterMap &map = ParameterMap());
-    bool add(const PartialMolecule &molecule,
-             const ParameterMap &map = ParameterMap());
+    bool setProperty(const QString &name, const Property &value);
+    Property getProperty(const QString &name);
+    bool containsProperty(const QString &name);
 
-    bool add(const QList<Molecule> &molecules,
-             const ParameterMap &map = ParameterMap());
-    bool add(const QList<Residue> &residues,
-             const ParameterMap &map = ParameterMap());
-    bool add(const QList<NewAtom> &atoms,
+    bool add(const PartialMolecule &molecule,
              const ParameterMap &map = ParameterMap());
     bool add(const QList<PartialMolecule> &molecules,
              const ParameterMap &map = ParameterMap());
 
     bool addTo(const FFBase::FFGroup &group,
-               const Molecule &molecule,
-               const ParameterMap &map = ParameterMap());
-    bool addTo(const FFBase::FFGroup &group,
-               const Residue &residue,
-               const ParameterMap &map = ParameterMap());
-    bool addTo(const FFBase::FFGroup &group,
-               const NewAtom &atom,
-               const ParameterMap &map = ParameterMap());
-    bool addTo(const FFBase::FFGroup &group,
                const PartialMolecule &molecule,
-               const ParameterMap &map = ParameterMap());
-
-    bool addTo(const FFBase::FFGroup &group,
-               const QList<Molecule> &molecules,
-               const ParameterMap &map = ParameterMap());
-    bool addTo(const FFBase::FFGroup &group,
-               const QList<Residue> &residues,
-               const ParameterMap &map = ParameterMap());
-    bool addTo(const FFBase::FFGroup &group,
-               const QList<NewAtom> &atoms,
                const ParameterMap &map = ParameterMap());
     bool addTo(const FFBase::FFGroup &group,
                const QList<PartialMolecule> &molecules,
                const ParameterMap &map = ParameterMap());
 
-    bool change(const Molecule &molecule);
-    bool change(const Residue &residue);
-    bool change(const NewAtom &atom);
     bool change(const PartialMolecule &molecule);
-
-    bool change(const QHash<MoleculeID,Molecule> &molecules);
     bool change(const QHash<MoleculeID,PartialMolecule> &molecules);
 
-    bool remove(const Molecule &molecule);
-    bool remove(const Residue &residue);
-    bool remove(const NewAtom &atom);
     bool remove(const PartialMolecule &molecule);
+    bool remove(const QList<PartialMolecule> &molecules);
 
-    bool contains(const Molecule &molecule);
-    bool contains(const Residue &residue);
-    bool contains(const NewAtom &atom);
+    bool removeFrom(const FFBase::Group &group,
+                    const PartialMolecule &molecule);
+    bool removeFrom(const FFBase::Group &group,
+                    const QList<PartialMolecule> &molecules);
+
     bool contains(const PartialMolecule &molecule);
-
-    bool contains(const Molecule &molecule,
-                  const FFBase::Group &group);
-    bool contains(const Residue &residue,
-                  const FFBase::Group &group);
-    bool contains(const NewAtom &atom,
-                  const FFBase::Group &group);
     bool contains(const PartialMolecule &molecule,
                   const FFBase::Group &group);
 
@@ -158,8 +118,8 @@ public:
     QSet<MoleculeID> moleculeIDs();
     QSet<MoleculeID> moleculeIDs(const FFBase::Group &group);
 
-    PartialMolecule contents(MoleculeID molid);
-    
+    PartialMolecule molecule(MoleculeID molid);
+
     QHash<MoleculeID,PartialMolecule> contents(const FFGroup::Group group);
     QHash<MoleculeID,PartialMolecule> contents();
 
@@ -176,70 +136,39 @@ protected:
 
     virtual bool _pvt_setForceField(const ForceField &forcefield)=0;
 
-    virtual bool _pvt_add(const Molecule &molecule, const ParameterMap &map)=0;
-    virtual bool _pvt_add(const Residue &residue, const ParameterMap &map)=0;
-    virtual bool _pvt_add(const NewAtom &atom, const ParameterMap &map)=0;
-    virtual bool _pvt_add(const PartialMolecule &molecule, const ParameterMap &map)=0;
+    virtual void _pvt_recalculateEnergy()=0;
+    virtual void _pvt_recalculateEnergyFG()=0;
 
-    virtual bool _pvt_add(const QList<Molecule> &molecules,
-                          const ParameterMap &map)=0;
-    virtual bool _pvt_add(const QList<Residue> &residues,
-                          const ParameterMap &map)=0;
-    virtual bool _pvt_add(const QList<NewAtom> &atoms,
-                          const ParameterMap &map)=0;
+    virtual void _pvt_waitUntilReady()=0;
+
+    virtual double _pvt_getEnergies(Values &components)=0;
+    virtual bool _pvt_setProperty(const QString &name, const Property &property)=0;
+    virtual Property _pvt_getProperty(const QString &name)=0;
+    virtual bool _pvt_containsProperty(const QString &name)=0;
+
+    virtual bool _pvt_add(const PartialMolecule &molecule, const ParameterMap &map)=0;
     virtual bool _pvt_add(const QList<PartialMolecule> &molecules,
                           const ParameterMap &map)=0;
 
     virtual bool _pvt_addTo(const FFBase::FFGroup &group,
-                            const Molecule &molecule,
-                            const ParameterMap &map)=0;
-    virtual bool _pvt_addTo(const FFBase::FFGroup &group,
-                            const Residue &residue,
-                            const ParameterMap &map)=0;
-    virtual bool _pvt_addTo(const FFBase::FFGroup &group,
-                            const NewAtom &atom,
-                            const ParameterMap &map)=0;
-    virtual bool _pvt_addTo(const FFBase::FFGroup &group,
                             const PartialMolecule &molecule,
-                            const ParameterMap &map)=0;
-
-    virtual bool _pvt_addTo(const FFBase::FFGroup &group,
-                            const QList<Molecule> &molecules,
-                            const ParameterMap &map)=0;
-    virtual bool _pvt_addTo(const FFBase::FFGroup &group,
-                            const QList<Residue> &residues,
-                            const ParameterMap &map)=0;
-    virtual bool _pvt_addTo(const FFBase::FFGroup &group,
-                            const QList<NewAtom> &atoms,
                             const ParameterMap &map)=0;
     virtual bool _pvt_addTo(const FFBase::FFGroup &group,
                             const QList<PartialMolecule> &molecules,
                             const ParameterMap &map)=0;
 
-    virtual bool _pvt_change(const Molecule &molecule)=0;
-    virtual bool _pvt_change(const Residue &residue)=0;
-    virtual bool _pvt_change(const NewAtom &atom)=0;
     virtual bool _pvt_change(const PartialMolecule &molecule)=0;
-
-    virtual bool _pvt_change(const QHash<MoleculeID,Molecule> &molecules)=0;
     virtual bool _pvt_change(const QHash<MoleculeID,PartialMolecule> &molecules)=0;
 
-    virtual bool _pvt_remove(const Molecule &molecule)=0;
-    virtual bool _pvt_remove(const Residue &residue)=0;
-    virtual bool _pvt_remove(const NewAtom &atom)=0;
     virtual bool _pvt_remove(const PartialMolecule &molecule)=0;
+    virtual bool _pvt_remove(const QList<PartialMolecule> &molecule)=0;
 
-    virtual bool _pvt_contains(const Molecule &molecule)=0;
-    virtual bool _pvt_contains(const Residue &residue)=0;
-    virtual bool _pvt_contains(const NewAtom &atom)=0;
+    virtual bool _pvt_removeFrom(const FFBase::Group &group,
+                                 const PartialMolecule &molecule)=0;
+    virtual bool _pvt_removeFrom(const FFBase::Group &group,
+                                 const QList<PartialMolecule> &molecules)=0;
+
     virtual bool _pvt_contains(const PartialMolecule &molecule)=0;
-
-    virtual bool _pvt_contains(const Molecule &molecule,
-                               const FFBase::Group &group)=0;
-    virtual bool _pvt_contains(const Residue &residue,
-                               const FFBase::Group &group)=0;
-    virtual bool _pvt_contains(const NewAtom &atom,
-                               const FFBase::Group &group)=0;
     virtual bool _pvt_contains(const PartialMolecule &molecule,
                                const FFBase::Group &group)=0;
 
@@ -249,11 +178,12 @@ protected:
     virtual QSet<MoleculeID> _pvt_moleculeIDs()=0;
     virtual QSet<MoleculeID> _pvt_moleculeIDs(const FFBase::Group &group)=0;
 
-    virtual PartialMolecule _pvt_contents(MoleculeID molid)=0;
-    
-    virtual QHash<MoleculeID,PartialMolecule> _pvt_contents(
-                                                    const FFGroup::Group group)=0;
-    virtual QHash<MoleculeID,PartialMolecule> _pvt_contents()=0;
+    virtual PartialMolecule _pvt_molecule(MoleculeID molid)=0;
+
+    virtual QHash<MoleculeID,PartialMolecule>
+                _pvt_contents(const FFGroup::Group group)=0;
+    virtual QHash<MoleculeID,PartialMolecule>
+                _pvt_contents()=0;
 
     virtual bool _pvt_isDirty()=0;
     virtual bool _pvt_isClean()=0;
@@ -262,13 +192,6 @@ protected:
     virtual Version _pvt_version()=0;
 
     virtual void _pvt_assertContains(const FFComponent &component) const=0;
-
-    virtual void _pvt_recalculateEnergy()=0;
-    virtual void _pvt_recalculateEnergyFG()=0;
-
-    virtual void _pvt_waitUntilReady()=0;
-
-    virtual double _pvt_getEnergies(Values &components)=0;
 
 private:
     void checkEnergiesUpToDate();
@@ -300,70 +223,35 @@ class SIREFF_EXPORT FFLocalWorker : public FFWorkerBase
 {
 public:
     FFLocalWorker(FFCalculator *ffcalculator);
-    
+
     ~FFLocalWorker();
-    
+
     ForceField forcefield() const;
 
 protected:
     bool _pvt_setForceField(const ForceField &forcefield);
 
-    bool _pvt_add(const Molecule &molecule, const ParameterMap &map);
-    bool _pvt_add(const Residue &residue, const ParameterMap &map);
-    bool _pvt_add(const NewAtom &atom, const ParameterMap &map);
     bool _pvt_add(const PartialMolecule &molecule, const ParameterMap &map);
-
-    bool _pvt_add(const QList<Molecule> &molecules, const ParameterMap &map);
-    bool _pvt_add(const QList<Residue> &residues, const ParameterMap &map);
-    bool _pvt_add(const QList<NewAtom> &atoms, const ParameterMap &map);
     bool _pvt_add(const QList<PartialMolecule> &molecules, const ParameterMap &map);
 
-    bool _pvt_addTo(const FFBase::FFGroup &group, const Molecule &molecule,
-                            const ParameterMap &map);
-    bool _pvt_addTo(const FFBase::FFGroup &group, const Residue &residue,
-                            const ParameterMap &map);
-    bool _pvt_addTo(const FFBase::FFGroup &group, const NewAtom &atom,
-                            const ParameterMap &map);
     bool _pvt_addTo(const FFBase::FFGroup &group, const PartialMolecule &molecule,
-                            const ParameterMap &map);
+                    const ParameterMap &map);
+    bool _pvt_addTo(const FFBase::FFGroup &group,
+                    const QList<PartialMolecule> &molecules,
+                    const ParameterMap &map);
 
-    bool _pvt_addTo(const FFBase::FFGroup &group,
-                            const QList<Molecule> &molecules,
-                            const ParameterMap &map);
-    bool _pvt_addTo(const FFBase::FFGroup &group,
-                            const QList<Residue> &residues,
-                            const ParameterMap &map);
-    bool _pvt_addTo(const FFBase::FFGroup &group,
-                            const QList<NewAtom> &atoms,
-                            const ParameterMap &map);
-    bool _pvt_addTo(const FFBase::FFGroup &group,
-                            const QList<PartialMolecule> &molecules,
-                            const ParameterMap &map);
-
-    bool _pvt_change(const Molecule &molecule);
-    bool _pvt_change(const Residue &residue);
-    bool _pvt_change(const NewAtom &atom);
     bool _pvt_change(const PartialMolecule &molecule);
-
-    bool _pvt_change(const QHash<MoleculeID,Molecule> &molecules);
     bool _pvt_change(const QHash<MoleculeID,PartialMolecule> &molecules);
 
-    bool _pvt_remove(const Molecule &molecule);
-    bool _pvt_remove(const Residue &residue);
-    bool _pvt_remove(const NewAtom &atom);
     bool _pvt_remove(const PartialMolecule &molecule);
+    bool _pvt_remove(const QList<PartialMolecule> &molecules);
 
-    bool _pvt_contains(const Molecule &molecule);
-    bool _pvt_contains(const Residue &residue);
-    bool _pvt_contains(const NewAtom &atom);
+    bool _pvt_removeFrom(const FFBase::Group &group,
+                         const PartialMolecule &molecule);
+    bool _pvt_removeFrom(const FFBase::Group &group,
+                         const QList<PartialMolecule> &molecules);
+
     bool _pvt_contains(const PartialMolecule &molecule);
-
-    bool _pvt_contains(const Molecule &molecule,
-                       const FFBase::Group &group);
-    bool _pvt_contains(const Residue &residue,
-                       const FFBase::Group &group);
-    bool _pvt_contains(const NewAtom &atom,
-                       const FFBase::Group &group);
     bool _pvt_contains(const PartialMolecule &molecule,
                        const FFBase::Group &group);
 
@@ -373,8 +261,8 @@ protected:
     QSet<MoleculeID> _pvt_moleculeIDs();
     QSet<MoleculeID> _pvt_moleculeIDs(const FFBase::Group &group);
 
-    PartialMolecule _pvt_contents(MoleculeID molid);
-    
+    PartialMolecule _pvt_molecule(MoleculeID molid);
+
     QHash<MoleculeID,PartialMolecule> _pvt_contents(const FFGroup::Group group);
     QHash<MoleculeID,PartialMolecule> _pvt_contents();
 
@@ -385,6 +273,9 @@ protected:
     Version _pvt_version();
 
     void _pvt_assertContains(const FFComponent &component) const;
+
+    /** The calculator used to evaluate the forcefield */
+    std::auto_ptr<FFCalculatorBase> ffcalculator;
 };
 
 /** This is a test class which calculates the forcefield energy in the main thread.
@@ -407,10 +298,6 @@ protected:
     void _pvt_waitUntilReady();
 
     double _pvt_getEnergies(Values &components);
-
-private:
-    /** The calculator used to evaluate the forcefield */
-    std::auto_ptr<FFCalculator> ffcalculator;
 };
 
 }

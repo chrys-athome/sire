@@ -1988,6 +1988,60 @@ CLJFF& CLJFF::operator=(const CLJFF &other)
 CLJFF::~CLJFF()
 {}
 
+/** Set the property 'name' to the value 'value'. This
+    returns whether or not this changes the forcefield,
+    and therefore the energy of the forcefield will need
+    to be recalculated
+
+    Note that you can only set pre-defined properties
+    of forcefields - an exception will be thrown if
+    you try to set the value of a property that does
+    not exist in this forcefield.
+
+    \throw SireMol::missing_property
+*/
+bool CLJFF::setProperty(const QString &name, const Property &property)
+{
+    if ( name == QLatin1String("space") )
+    {
+        this->setSpace(property);
+        return this->isDirty();
+    }
+    else if ( name == QLatin1String("switching function") )
+    {
+        this->setSwitchingFunction(property);
+        return this->isDirty();
+    }
+    else
+        return FFBase::setProperty(name, property);
+}
+
+/** Return the property associated with the name 'name'
+
+    \throw SireMol::missing_property
+*/
+Property CLJFF::getProperty(const QString &name) const
+{
+    if ( name == QLatin1String("space") )
+    {
+        return this->space();
+    }
+    else if ( name == QLatin1String("switching function") )
+    {
+        return this->switchingFunction();
+    }
+    else
+        return FFBase::getProperty(name);
+}
+
+/** Return whether or not this contains a property with the name 'name' */
+bool CLJFF::containsProperty(const QString &name) const
+{
+    return ( name == QLatin1String("space") ) or
+           ( name == QLatin1String("switching function") ) or
+           FFBase::containsProperty(name);
+}
+
 /** Register the energy components associated with this forcefield */
 void CLJFF::registerComponents()
 {

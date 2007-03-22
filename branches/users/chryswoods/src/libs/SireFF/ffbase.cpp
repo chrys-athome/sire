@@ -37,6 +37,7 @@
 #include "SireMol/resnum.h"
 #include "SireMol/resid.h"
 #include "SireMol/newatom.h"
+#include "SireMol/partialmolecule.h"
 #include "SireMol/atomselection.h"
 
 #include "SireFF/errors.h"
@@ -469,6 +470,9 @@ void FFBase::setName(const QString &name)
 {
     ffname = name;
 
+    //changing the name also changes the ID number of the forcefield
+    id_and_version.incrementID();
+
     BOOST_ASSERT( components_ptr.get() != 0 );
     components_ptr->setForceField(*this);
 }
@@ -520,6 +524,13 @@ Values FFBase::energies(const QSet<FFComponent> &components)
     if (components.isEmpty())
         return Values();
 
+    for (QSet<FFComponent>::const_iterator it = components.begin();
+         it != components.end();
+         ++it)
+    {
+        this->components().assertContains(*it);
+    }
+
     Values all_vals = this->energies();
 
     Values specified_vals;
@@ -529,20 +540,65 @@ Values FFBase::energies(const QSet<FFComponent> &components)
          it != components.end();
          ++it)
     {
-        this->components().assertContains(*it);
         specified_vals.set(*it, all_vals.value(*it));
     }
 
     return specified_vals;
 }
 
-template<class T>
-bool FFBase::_pvt_add(const QList<T> &objs, const ParameterMap &map)
+/** Set the property 'name' to the value 'value'. This
+    returns whether or not this changes the forcefield,
+    and therefore the energy of the forcefield will need
+    to be recalculated
+
+    Note that you can only set pre-defined properties
+    of forcefields - an exception will be thrown if
+    you try to set the value of a property that does
+    not exist in this forcefield.
+
+    \throw SireMol::missing_property
+*/
+bool FFBase::setProperty(const QString &name, const Property&)
 {
-    if (objs.count() == 0)
+    //if we are here then we are in error!
+    throw SireMol::missing_property( QObject::tr(
+                "There is no property called \"%1\" in the forcefield "
+                "%2(%3 : %4)")
+                    .arg(name).arg(this->what())
+                    .arg(this->name()).arg(this->ID()), CODELOC );
+
+    return false;
+}
+
+/** Return the property associated with the name 'name'
+
+    \throw SireMol::missing_property
+*/
+Property FFBase::getProperty(const QString &name) const
+{
+    //if we are here then we are in error!
+    throw SireMol::missing_property( QObject::tr(
+                "There is no property called \"%1\" in the forcefield "
+                "%2(%3 : %4)")
+                    .arg(name).arg(this->what())
+                    .arg(this->name()).arg(this->ID()), CODELOC );
+
+    return false;
+}
+
+/** Return whether or not this contains a property with the name 'name' */
+bool FFBase::containsProperty(const QString &name) const
+{
+    return false;
+}
+
+/** Add lots of molecules */
+bool FFBase::add(const QList<PartialMolecule> &molecules, const ParameterMap &map)
+{
+    if (molecules.count() == 0)
         return false;
-    else if (objs.count() == 1)
-        return this->add(objs.at(0), map);
+    else if (molecules.count() == 1)
+        return this->add(molecules.at(0), map);
     else
     {
         //maintain the invariant
@@ -550,8 +606,8 @@ bool FFBase::_pvt_add(const QList<T> &objs, const ParameterMap &map)
 
         bool changed = false;
 
-        for (typename QList<T>::const_iterator it = objs.begin();
-             it != objs.end();
+        for (QList<PartialMolecule>::const_iterator it = molecules.begin();
+             it != molecules.end();
              ++it)
         {
             bool added = ffield.add(*it, map);
@@ -563,72 +619,6 @@ bool FFBase::_pvt_add(const QList<T> &objs, const ParameterMap &map)
             *this = ffield;
 
         return changed;
-    }
-}
-
-/** Add lots of molecules */
-bool FFBase::add(const QList<Molecule> &molecules, const ParameterMap &map)
-{
-    return this->_pvt_add<Molecule>(molecules, map);
-}
-
-/** Add lots of residues */
-bool FFBase::add(const QList<Residue> &residues, const ParameterMap &map)
-{
-    return this->_pvt_add<Residue>(residues, map);
-}
-
-/** Add lots of atoms */
-bool FFBase::add(const QList<NewAtom> &atoms, const ParameterMap &map)
-{
-    return this->_pvt_add<NewAtom>(atoms, map);
-}
-
-template<class T>
-bool FFBase::_pvt_addTo(const FFBase::Group &group,
-                        const T &obj, const ParameterMap &map)
-{
-    if (group == this->groups().main())
-        return this->add(obj, map);
-    else
-    {
-        throw SireFF::invalid_group( QObject::tr(
-                "Cannot add to %1(%2) (ID == %3) as there is no such group!")
-                    .arg(this->what()).arg(this->name())
-                    .arg(this->ID()), CODELOC );
-
-        return false;
-    }
-}
-
-/** Add the selected atoms 'selected_atoms' to this forcefield using the
-    optional parameter map to find any necessay parameters
-    from properties of the atom. This will replace any
-    existing copy of the atom that already exists in
-    this forcefield. This returns whether or not the
-    forcefield has been changed by this addition, and therefore
-    whether its energy needs recalculating.
-
-    This will throw an exception if this forcefield doens't
-    support partial molecules.
-
-    \throw SireError::invalid_operation
-    \throw SireMol::missing_property
-    \throw SireError::invalid_cast
-*/
-bool FFBase::addTo(const FFBase::Group &group, const Molecule &molecule,
-                   const AtomSelection &selected_atoms, const ParameterMap &map)
-{
-    if (group == groups().main())
-        return this->add(molecule, selected_atoms, map);
-    else
-    {
-        throw SireFF::invalid_group( QObject::tr(
-                "Cannot add to %1(%2) (ID == %3) as there is no such group!")
-                    .arg(this->what()).arg(this->name())
-                    .arg(this->ID()), CODELOC );
-
-        return false;
     }
 }
 
@@ -645,64 +635,30 @@ bool FFBase::addTo(const FFBase::Group &group, const Molecule &molecule,
     \throw SireError::invalid_operation
 */
 bool FFBase::addTo(const FFBase::Group &group,
-                   const Molecule &molecule, const ParameterMap &map)
+                   const PartialMolecule &molecule, const ParameterMap &map)
 {
-    return this->_pvt_addTo<Molecule>(group, molecule, map);
-}
+    if (group == this->groups().main())
+        return this->add(molecule, map);
+    else
+    {
+        throw SireFF::invalid_group( QObject::tr(
+                "Cannot add to %1(%2) (ID == %3) as there is no such group!")
+                    .arg(this->what()).arg(this->name())
+                    .arg(this->ID()), CODELOC );
 
-/** Add the residue 'residue' to the group 'group'
-    in this forcefield using
-    the optional parameter map to find any necessary parameters
-    from properties of the residue. This will replace any
-    existing copy of the residue that already exists in
-    this forcefield. This returns whether or not the
-    forcefield has been changed by this addition, and therefore
-    whether its energy needs recalculating.
-
-    This will throw an exception if this forcefield does not
-    support partial molecules.
-
-    \throw SireError::invalid_operation
-    \throw SireMol::missing_property
-    \throw SireError::invalid_cast
-*/
-bool FFBase::addTo(const FFBase::Group &group,
-                   const Residue &residue, const ParameterMap &map)
-{
-    return this->_pvt_addTo<Residue>(group, residue, map);
-}
-
-/** Add the atom 'atom' to the group 'group'
-    in this forcefield using the
-    optional parameter map to find any necessay parameters
-    from properties of the atom. This will replace any
-    existing copy of the atom that already exists in
-    this forcefield. This returns whether or not the
-    forcefield has been changed by this addition, and therefore
-    whether its energy needs recalculating.
-
-    This will throw an exception if this forcefield doens't
-    support partial molecules.
-
-    \throw SireError::invalid_operation
-    \throw SireMol::missing_property
-    \throw SireError::invalid_cast
-*/
-bool FFBase::addTo(const FFBase::Group &group,
-                   const NewAtom &atom, const ParameterMap &map)
-{
-    return this->_pvt_addTo<NewAtom>(group, atom, map);
-}
-
-template<class T>
-bool FFBase::_pvt_addTo(const FFBase::Group &group,
-                        const QList<T> &objs,
-                        const ParameterMap &map)
-{
-    if (objs.count() == 0)
         return false;
-    else if (objs.count() == 1)
-        return this->addTo(group, objs.at(0), map);
+    }
+}
+
+/** Adds lots of molecules to the group 'group' */
+bool FFBase::addTo(const FFBase::Group &group,
+                   const QList<PartialMolecule> &molecules,
+                   const ParameterMap &map)
+{
+    if (molecules.count() == 0)
+        return false;
+    else if (molecules.count() == 1)
+        return this->addTo(group, molecules.at(0), map);
     else
     {
         //maintain the invariant
@@ -710,8 +666,8 @@ bool FFBase::_pvt_addTo(const FFBase::Group &group,
 
         bool changed = false;
 
-        for (typename QList<T>::const_iterator it = objs.begin();
-             it != objs.end();
+        for (QList<PartialMolecule>::const_iterator it = molecules.begin();
+             it != molecules.end();
              ++it)
         {
             bool added = ffield.addTo(group, *it, map);
@@ -726,37 +682,13 @@ bool FFBase::_pvt_addTo(const FFBase::Group &group,
     }
 }
 
-/** Adds lots of molecules to the group 'group' */
-bool FFBase::addTo(const FFBase::Group &group,
-                   const QList<Molecule> &molecules,
-                   const ParameterMap &map)
+/** Remove a whole load of molecules */
+bool FFBase::remove(const QList<PartialMolecule> &molecules)
 {
-    return this->_pvt_addTo<Molecule>(group, molecules, map);
-}
-
-/** Adds lots of residues to the group 'group' */
-bool FFBase::addTo(const FFBase::Group &group,
-                   const QList<Residue> &residues,
-                   const ParameterMap &map)
-{
-    return this->_pvt_addTo<Residue>(group, residues, map);
-}
-
-/** Adds lots of atoms to the group 'group' */
-bool FFBase::addTo(const FFBase::Group &group,
-                   const QList<NewAtom> &atoms,
-                   const ParameterMap &map)
-{
-    return this->_pvt_addTo<NewAtom>(group, atoms, map);
-}
-
-template<class T>
-bool FFBase::_pvt_remove(const QList<T> &objs)
-{
-    if (objs.count() == 0)
+    if (molecules.count() == 0)
         return false;
-    else if (objs.count() == 1)
-        return this->remove(objs.at(0));
+    else if (molecules.count() == 1)
+        return this->remove(molecules.at(0));
     else
     {
         //maintain the invariant
@@ -764,8 +696,8 @@ bool FFBase::_pvt_remove(const QList<T> &objs)
 
         bool changed = false;
 
-        for (typename QList<T>::const_iterator it = objs.begin();
-             it != objs.end();
+        for (QList<PartialMolecule>::const_iterator it = molecules.begin();
+             it != molecules.end();
              ++it)
         {
             bool removed = ffield.remove(*it);
@@ -779,95 +711,48 @@ bool FFBase::_pvt_remove(const QList<T> &objs)
     }
 }
 
-/** Remove a whole load of molecules */
-bool FFBase::remove(const QList<Molecule> &molecules)
+/** Remove the molecule 'molecule' from the group 'group' */
+bool FFBase::removeFrom(const FFBase::Group &group,
+                        const PartialMolecule &molecule)
 {
-    return this->_pvt_remove<Molecule>(molecules);
+    if (group == groups().main())
+        return this->remove(molecule);
+    else
+    {
+        throw SireFF::invalid_group( QObject::tr(
+                "Cannot remove from %1(%2) (ID == %3) as there is no such group!")
+                    .arg(this->what()).arg(this->name())
+                    .arg(this->ID()), CODELOC );
+
+        return false;
+    }
 }
 
-/** Remove a whole load of residues */
-bool FFBase::remove(const QList<Residue> &residues)
+/** Remove lots of molecules from the group 'group' */
+bool FFBase::removeFrom(const FFBase::Group &group,
+                        const QList<PartialMolecule> &molecules)
 {
-    return this->_pvt_remove<Residue>(residues);
-}
+    if (molecules.count() == 0)
+        return false;
+    else if (molecules.count() == 1)
+        return this->removeFrom(group, molecules.at(0));
+    else
+    {
+        ForceField ffield(*this);
 
-/** Remove a whole load of atoms */
-bool FFBase::remove(const QList<NewAtom> &atoms)
-{
-    return this->_pvt_remove<NewAtom>(atoms);
-}
+        bool changed = false;
 
-/** Return the copy of the residue in this forcefield that
-    is in the molecule with ID == molid and with residue number
-    'resnum'
+        for (QList<PartialMolecule>::const_iterator it = molecules.begin();
+             it != molecules.end();
+             ++it)
+        {
+            bool removed = this->removeFrom(group, *it);
+            changed = changed or removed;
+        }
 
-    \throw SireMol::missing_molecule
-    \throw SireMol::missing_residue
-*/
-Residue FFBase::residue(MoleculeID molid, ResNum resnum) const
-{
-    return this->molecule(molid).residue(resnum);
-}
+        if (changed)
+            *this = ffield;
 
-/** Return the copy of the residue in this forcefield that
-    is in the molecule with ID == molid and with residue index
-    'resid'
-
-    \throw SireMol::missing_molecule
-    \throw SireError::invalid_index
-*/
-Residue FFBase::residue(MoleculeID molid, ResID resid) const
-{
-    return this->molecule(molid).residue(resid);
-}
-
-/** Return the copy of the residue in this forcefield that
-    is in the molecule with ID == molid and with residue
-    called 'resname'
-
-    \throw SireMol::missing_molecule
-    \throw SireMol::missing_residue
-*/
-Residue FFBase::residue(MoleculeID molid, const QString &resname) const
-{
-    return this->molecule(molid).residue(resname);
-}
-
-/** Return a copy of the atom in this forcefield that
-    in the molecule with ID == molid and with index 'atomid'
-
-    \throw SireMol::missing_molecule
-    \throw SireMol::missing_residue
-    \throw SireMol::missing_cutgroup
-    \throw SireMol::missing_atom
-    \throw SireError::invalid_index
-*/
-NewAtom FFBase::atom(MoleculeID molid, const IDMolAtom &atomid) const
-{
-    return NewAtom(atomid, this->molecule(molid));
-}
-
-/** Return the copy of the molecule 'mol' that is in this forcefield
-
-    \throw SireMol::missing_molecule
-*/
-Molecule FFBase::molecule(const Molecule &mol) const
-{
-    return this->molecule(mol.ID());
-}
-
-/** Return the copy of the residue 'res' that is in this forcefield
-
-    \throw SireMol::missing_molecule
-    \throw SireMol::missing_residue
-*/
-Residue FFBase::residue(const Residue &res) const
-{
-    return this->residue(res.molecule().ID(), res.resNum());
-}
-
-/** Return a copy of the atom 'atom' that is in this forcefield */
-NewAtom FFBase::atom(const NewAtom &atom) const
-{
-    return this->atom(atom.molecule().ID(), atom.cgAtomID());
+        return changed;
+    }
 }
