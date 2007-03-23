@@ -101,44 +101,43 @@ friend QDataStream& ::operator>>(QDataStream&, SystemData&);
 
 public:
     SystemData();
-    
+
     SystemData(const QString &name);
 
     SystemData(const SystemData &other);
-    
+
     virtual ~SystemData();
 
     bool operator==(const SystemData &other) const;
     bool operator!=(const SystemData &other) const;
-    
+
     const QString& name() const;
     SystemID ID() const;
     const Version& version() const;
 
     void add(const MoleculeGroup &group);
-    
-    bool contains(const Molecule &molecule) const;
+
     bool contains(MoleculeID molid) const;
-    
+
     void remove(MoleculeGroupID groupid);
     void remove(const MoleculeGroup &group);
 
     //void add(const MoleculeConstraint &constraint);
-    
+
     //void remove(const MoleculeConstraint &constraint);
     //void removeConstraint(const Molecule &molecule);
     //void removeConstraint(MoleculeID molid);
 
-    QHash<MoleculeID,Molecule> applyConstraints(const Molecule &molecule);
+    QHash<MoleculeID,PartialMolecule>
+    applyConstraints(const PartialMolecule &molecule);
 
     const MoleculeGroup& group(MoleculeGroupID id) const;
     const MoleculeGroups& groups() const;
 
-    QHash<MoleculeID,Molecule> change(const Molecule &molecule);
-    QHash<MoleculeID,Molecule> change(const Residue &residue);
-    QHash<MoleculeID,Molecule> change(const NewAtom &atom);
+    QHash<MoleculeID,PartialMolecule>
+    change(const PartialMolecule &molecule);
 
-    void remove(const Molecule &molecule);
+    void remove(MoleculeID molid);
 
     void incrementMinorVersion();
     void incrementMajorVersion();
@@ -154,7 +153,7 @@ private:
         of the system must use this space (e.g. volume moves). */
     Space sys_space;
 
-    /** The list of constraints, indexed by the molecule IDs of the 
+    /** The list of constraints, indexed by the molecule IDs of the
         molecules to which they must be applied */
     //QHash<MoleculeID, MoleculeConstraint> mol_constraints;
 

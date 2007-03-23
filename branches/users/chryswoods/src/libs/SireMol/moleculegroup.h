@@ -35,7 +35,7 @@
 
 #include "moleculegroupid.h"
 
-#include "molecule.h"
+#include "partialmolecule.h"
 #include "moleculeid.h"
 
 #include "SireBase/idmajminversion.h"
@@ -83,7 +83,7 @@ public:
     MoleculeGroupPvt(const QString &name);
 
     MoleculeGroupPvt(const QString &name,
-                     const QVector<Molecule> &molecules);
+                     const QVector<PartialMolecule> &molecules);
 
     MoleculeGroupPvt(const MoleculeGroupPvt &other);
 
@@ -94,31 +94,35 @@ public:
     bool operator==(const MoleculeGroupPvt &other) const;
     bool operator!=(const MoleculeGroupPvt &other) const;
 
-    const QVector<Molecule>& molecules() const;
+    const QVector<PartialMolecule>& molecules() const;
     const QHash<MoleculeID,int>& index() const;
 
     QSet<MoleculeID> moleculeIDs() const;
 
-    const Molecule& molecule(MoleculeID molid) const;
+    const PartialMolecule& molecule(MoleculeID molid) const;
 
     const QString& name() const;
 
     MoleculeGroupID ID() const;
     const Version& version() const;
 
-    bool add(const Molecule &molecule);
-    bool change(const Molecule &molecule);
-    bool remove(const Molecule &molecule);
+    bool add(const PartialMolecule &molecule);
+    bool change(const PartialMolecule &molecule);
+    bool remove(const PartialMolecule &molecule);
 
-    bool add(const QVector<Molecule> &molecules);
-    bool change(const QVector<Molecule> &molecules);
-    bool remove(const QVector<Molecule> &molecules);
+    bool remove(MoleculeID molid);
+    bool remove(const QSet<MoleculeID> &molids);
 
-    bool change(const QHash<MoleculeID,Molecule> &molecules);
+    bool add(const QVector<PartialMolecule> &molecules);
+    bool change(const QVector<PartialMolecule> &molecules);
+    bool remove(const QVector<PartialMolecule> &molecules);
+
+    bool change(const QHash<MoleculeID,PartialMolecule> &molecules);
 
     void rename(const QString &newname);
 
     bool contains(MoleculeID molid) const;
+    bool contains(const PartialMolecule &molecule) const;
 
     void assertContains(MoleculeID molid) const;
 
@@ -129,7 +133,7 @@ private:
     void reindex();
 
     /** The array of all of the molecules in this group */
-    QVector<Molecule> mols;
+    QVector<PartialMolecule> mols;
 
     /** Hash indexing the molecules in the array, allowing
         rapid lookup by MoleculeID */
@@ -161,7 +165,7 @@ inline const Version& MoleculeGroupPvt::version() const
 }
 
 /** Return the array of all molecules in the group */
-inline const QVector<Molecule>& MoleculeGroupPvt::molecules() const
+inline const QVector<PartialMolecule>& MoleculeGroupPvt::molecules() const
 {
     return mols;
 }
@@ -190,7 +194,8 @@ public:
     MoleculeGroup();
 
     MoleculeGroup(const QString &name);
-    MoleculeGroup(const QString &name, const QVector<Molecule> &molecules);
+    MoleculeGroup(const QString &name,
+                  const QVector<PartialMolecule> &molecules);
 
     MoleculeGroup(const MoleculeGroup &other);
 
@@ -201,40 +206,40 @@ public:
     bool operator==(const MoleculeGroup &other) const;
     bool operator!=(const MoleculeGroup &other) const;
 
-    const Molecule& operator[](MoleculeID molid) const;
+    const PartialMolecule& operator[](MoleculeID molid) const;
 
-    const Molecule& at(MoleculeID molid) const;
+    const PartialMolecule& at(MoleculeID molid) const;
 
-    const Molecule& molecule(MoleculeID molid) const;
-
-    const Molecule& operator[](const Molecule &molecule) const;
-    const Molecule& at(const Molecule &molecule) const;
-    const Molecule& molecule(const Molecule &molecule) const;
+    const PartialMolecule& molecule(MoleculeID molid) const;
 
     const QString& name() const;
 
     MoleculeGroupID ID() const;
     const Version& version() const;
 
-    const QVector<Molecule>& molecules() const;
+    const QVector<PartialMolecule>& molecules() const;
 
     QSet<MoleculeID> moleculeIDs() const;
 
     int count() const;
 
-    bool add(const Molecule &molecule);
-    bool change(const Molecule &molecule);
-    bool remove(const Molecule &molecule);
+    bool add(const PartialMolecule &molecule);
+    bool change(const PartialMolecule &molecule);
+    bool remove(const PartialMolecule &molecule);
 
-    bool add(const QVector<Molecule> &molecules);
-    bool change(const QVector<Molecule> &molecules);
-    bool remove(const QVector<Molecule> &molecules);
+    bool remove(MoleculeID molid);
 
-    bool change(const QHash<MoleculeID,Molecule> &molecules);
+    bool add(const QVector<PartialMolecule> &molecules);
+    bool change(const QVector<PartialMolecule> &molecules);
+    bool remove(const QVector<PartialMolecule> &molecules);
+
+    bool remove(const QSet<MoleculeID> &molids);
+
+    bool change(const QHash<MoleculeID,PartialMolecule> &molecules);
 
     void rename(const QString &newname);
 
-    bool contains(const Molecule &molecule) const;
+    bool contains(const PartialMolecule &molecule) const;
     bool contains(MoleculeID molid) const;
 
 private:
@@ -275,39 +280,6 @@ inline const Molecule& MoleculeGroup::molecule(MoleculeID molid) const
     return d->molecule(molid);
 }
 
-/** Return the copy of 'molecule' that is held in this group
-
-    \throw SireMol::missing_molecule
-*/
-inline const Molecule& MoleculeGroup::operator[](const Molecule &molecule) const
-{
-    return d->molecule(molecule.ID());
-}
-
-/** Return the copy of 'molecule' that is held in this group
-
-    \throw SireMol::missing_molecule
-*/
-inline const Molecule& MoleculeGroup::at(const Molecule &molecule) const
-{
-    return d->molecule(molecule.ID());
-}
-
-/** Return the set of IDs of all molecules in this group */
-inline QSet<MoleculeID> MoleculeGroup::moleculeIDs() const
-{
-    return d->moleculeIDs();
-}
-
-/** Return the copy of 'molecule' that is held in this group
-
-    \throw SireMol::missing_molecule
-*/
-inline const Molecule& MoleculeGroup::molecule(const Molecule &molecule) const
-{
-    return d->molecule(molecule.ID());
-}
-
 /** Return the ID number of this group */
 inline MoleculeGroupID MoleculeGroup::ID() const
 {
@@ -321,7 +293,7 @@ inline const Version& MoleculeGroup::version() const
 }
 
 /** Return the array of all molecules in this group */
-inline const QVector<Molecule>& MoleculeGroup::molecules() const
+inline const QVector<PartialMolecule>& MoleculeGroup::molecules() const
 {
     return d->molecules();
 }
@@ -335,9 +307,9 @@ inline bool MoleculeGroup::contains(MoleculeID molid) const
 
 /** Return whether or not this group contains the molecule
     'molecule' */
-inline bool MoleculeGroup::contains(const Molecule &molecule) const
+inline bool MoleculeGroup::contains(const PartialMolecule &molecule) const
 {
-    return d->contains(molecule.ID());
+    return d->contains(molecule);
 }
 
 /** Return the number of molecules in the group */
