@@ -121,10 +121,9 @@ public:
 
     void rename(const QString &newname);
 
-    bool contains(MoleculeID molid) const;
-    bool contains(const PartialMolecule &molecule) const;
+    bool refersTo(MoleculeID molid) const;
 
-    void assertContains(MoleculeID molid) const;
+    bool contains(const PartialMolecule &molecule) const;
 
 private:
     /** Incremint used to increment that ID number */
@@ -171,7 +170,7 @@ inline const QVector<PartialMolecule>& MoleculeGroupPvt::molecules() const
 }
 
 /** Return whether or not we contain the molecule 'molecule' */
-inline bool MoleculeGroupPvt::contains(MoleculeID molid) const
+inline bool MoleculeGroupPvt::refersTo(MoleculeID molid) const
 {
     return idx.contains(molid);
 }
@@ -239,8 +238,9 @@ public:
 
     void rename(const QString &newname);
 
+    bool refersTo(MoleculeID molid) const;
+
     bool contains(const PartialMolecule &molecule) const;
-    bool contains(MoleculeID molid) const;
 
 private:
     /** Implicit pointer to the data of this object */
@@ -257,7 +257,7 @@ inline const QString& MoleculeGroup::name() const
 
     \throw SireMol::missing_molecule
 */
-inline const Molecule& MoleculeGroup::operator[](MoleculeID molid) const
+inline const PartialMolecule& MoleculeGroup::operator[](MoleculeID molid) const
 {
     return d->molecule(molid);
 }
@@ -266,7 +266,7 @@ inline const Molecule& MoleculeGroup::operator[](MoleculeID molid) const
 
     \throw SireMol::missing_molecule
 */
-inline const Molecule& MoleculeGroup::at(MoleculeID molid) const
+inline const PartialMolecule& MoleculeGroup::at(MoleculeID molid) const
 {
     return d->molecule(molid);
 }
@@ -275,7 +275,7 @@ inline const Molecule& MoleculeGroup::at(MoleculeID molid) const
 
     \throw SireMol::missing_molecule
 */
-inline const Molecule& MoleculeGroup::molecule(MoleculeID molid) const
+inline const PartialMolecule& MoleculeGroup::molecule(MoleculeID molid) const
 {
     return d->molecule(molid);
 }
@@ -298,15 +298,15 @@ inline const QVector<PartialMolecule>& MoleculeGroup::molecules() const
     return d->molecules();
 }
 
-/** Return whether or not this group contains the molecule
-    with ID == molid */
-inline bool MoleculeGroup::contains(MoleculeID molid) const
+/** Return whether or not this group contains any part
+    of the molecule with ID == molid */
+inline bool MoleculeGroup::refersTo(MoleculeID molid) const
 {
-    return d->contains(molid);
+    return d->refersTo(molid);
 }
 
-/** Return whether or not this group contains the molecule
-    'molecule' */
+/** Return whether or not this group contains all of
+    any version of the molecule 'molecule' */
 inline bool MoleculeGroup::contains(const PartialMolecule &molecule) const
 {
     return d->contains(molecule);

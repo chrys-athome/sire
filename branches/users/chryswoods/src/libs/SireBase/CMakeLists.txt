@@ -21,6 +21,7 @@ set ( SIREBASE_SOURCES
       majminversion.cpp
       majversion.cpp
       md5sum.cpp
+      property.cpp
       sharedpolypointer.cpp
       version.cpp
     )
