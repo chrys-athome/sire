@@ -10,6 +10,7 @@
 #include "SireBase/majminversion.h"
 #include "SireBase/majversion.h"
 #include "SireBase/md5sum.h"
+#include "SireBase/property.h"
 #include "SireBase/version.h"
 
 #endif

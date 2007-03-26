@@ -14,28 +14,28 @@
 
 namespace bp = boost::python;
 
-SireMol::VariantProperty __copy__(const SireMol::VariantProperty &other){ return SireMol::VariantProperty(other); }
+SireBase::VariantProperty __copy__(const SireBase::VariantProperty &other){ return SireBase::VariantProperty(other); }
 
 #include "SirePy/str.hpp"
 
 void register_VariantProperty_class(){
 
-    bp::class_< SireMol::VariantProperty, bp::bases< SireMol::PropertyBase > >( "VariantProperty" )    
+    bp::class_< SireBase::VariantProperty, bp::bases< SireBase::PropertyBase > >( "VariantProperty" )    
         .def( bp::init< >() )    
         .def( bp::init< QVariant const & >(( bp::arg("value") )) )    
-        .def( bp::init< SireMol::Property const & >(( bp::arg("other") )) )    
+        .def( bp::init< SireBase::Property const & >(( bp::arg("other") )) )    
         .def( 
             "isCompatibleWith"
-            , &::SireMol::VariantProperty::isCompatibleWith
+            , &::SireBase::VariantProperty::isCompatibleWith
             , ( bp::arg("arg0") ) )    
         .def( 
             "typeName"
-            , &::SireMol::VariantProperty::typeName )    
+            , &::SireBase::VariantProperty::typeName )    
         .def( 
             "what"
-            , &::SireMol::VariantProperty::what )    
+            , &::SireBase::VariantProperty::what )    
         .staticmethod( "typeName" )    
         .def( "__copy__", &__copy__)    
-        .def( "__str__", &SirePy::__str__< ::SireMol::VariantProperty > );
+        .def( "__str__", &SirePy::__str__< ::SireBase::VariantProperty > );
 
 }

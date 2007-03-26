@@ -15,6 +15,8 @@ wrap_classes = [ "IDMajMinVersion",
                  "MajMinVersion",
                  "MajVersion",
                  "MD5Sum",
+                 "PropertyBase",
+                 "Property",
                  "Version"
                ]
 

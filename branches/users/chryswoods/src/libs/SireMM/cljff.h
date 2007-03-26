@@ -59,9 +59,6 @@ QDataStream& operator>>(QDataStream&, SireMM::CLJFF&);
 namespace SireMM
 {
 
-/** Define the PairMatrix used to hold CLJ parameters */
-typedef SireBase::PairMatrix<CLJPair> CLJMatrix;
-
 using SireMol::Molecule;
 using SireMol::Residue;
 using SireMol::NewAtom;

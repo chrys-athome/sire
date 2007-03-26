@@ -99,13 +99,11 @@
 
 #include "MoleculeInfo.pypp.hpp"
 
+#include "MoleculeProperty.pypp.hpp"
+
 #include "MoleculeVersion.pypp.hpp"
 
 #include "NewAtom.pypp.hpp"
-
-#include "Property.pypp.hpp"
-
-#include "PropertyBase.pypp.hpp"
 
 #include "ResID.pypp.hpp"
 
@@ -138,6 +136,8 @@ namespace bp = boost::python;
 BOOST_PYTHON_MODULE(_Mol){
     register_SireMol_containers();
 
+    register_VariantProperty_class();
+
     register_Angle_class();
 
     register_IDBase_class();
@@ -168,7 +168,7 @@ BOOST_PYTHON_MODULE(_Mol){
 
     register_AtomSelection_class();
 
-    register_PropertyBase_class();
+    register_MoleculeProperty_class();
 
     register_AtomicProperties_class();
 
@@ -232,8 +232,6 @@ BOOST_PYTHON_MODULE(_Mol){
 
     bp::implicitly_convertible< SireMol::NewAtom, SireMol::Element >();
 
-    register_Property_class();
-
     register_ResID_class();
 
     register_ResIDAtomID_class();
@@ -249,8 +247,6 @@ BOOST_PYTHON_MODULE(_Mol){
     register_ResidueCutting_class();
 
     register_ResidueInfo_class();
-
-    register_VariantProperty_class();
 
     bp::implicitly_convertible< boost::tuples::tuple<SireMol::AtomIndex,SireMol::AtomIndex,SireMol::AtomIndex>, SireMol::Angle >();
 

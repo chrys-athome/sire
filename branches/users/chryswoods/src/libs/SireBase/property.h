@@ -26,28 +26,28 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_PROPERTY_H
-#define SIREMOL_PROPERTY_H
+#ifndef SIREBASE_PROPERTY_H
+#define SIREBASE_PROPERTY_H
 
-#include "SireBase/sharedpolypointer.hpp"
+#include "sharedpolypointer.hpp"
 
 #include <QVariant>
 
 SIRE_BEGIN_HEADER
 
-namespace SireMol
+namespace SireBase
 {
 class PropertyBase;
 class Property;
 }
 
-QDataStream& operator<<(QDataStream&, const SireMol::PropertyBase&);
-QDataStream& operator>>(QDataStream&, SireMol::PropertyBase&);
+QDataStream& operator<<(QDataStream&, const SireBase::PropertyBase&);
+QDataStream& operator>>(QDataStream&, SireBase::PropertyBase&);
 
-QDataStream& operator<<(QDataStream&, const SireMol::Property&);
-QDataStream& operator>>(QDataStream&, SireMol::Property&);
+QDataStream& operator<<(QDataStream&, const SireBase::Property&);
+QDataStream& operator>>(QDataStream&, SireBase::Property&);
 
-namespace SireMol
+namespace SireBase
 {
 
 class Property;
@@ -65,7 +65,7 @@ class Molecule;
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT PropertyBase : public QSharedData
+class SIREBASE_EXPORT PropertyBase : public QSharedData
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const PropertyBase&);
@@ -89,6 +89,18 @@ public:
     virtual bool isCompatibleWith(const Molecule &molecule) const=0;
 
     void assertCompatibleWith(const Molecule &molecule) const;
+
+    template<class T>
+    bool isA() const
+    {
+        return dynamic_cast<const T*>(this) != 0;
+    }
+
+    template<class T>
+    const T& asA() const
+    {
+        return dynamic_cast<const T&>(*this);
+    }
 };
 
 /** This is a simple property that holds any value as a QVariant. This
@@ -98,7 +110,7 @@ public:
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT VariantProperty : public PropertyBase, public QVariant
+class SIREBASE_EXPORT VariantProperty : public PropertyBase, public QVariant
 {
 public:
     VariantProperty();
@@ -117,7 +129,7 @@ public:
 
     static const char* typeName()
     {
-        return "SireMol::VariantProperty";
+        return "SireBase::VariantProperty";
     }
 
     const char* what() const
@@ -143,7 +155,7 @@ public:
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT Property : public SireBase::SharedPolyPointer<PropertyBase>
+class SIREBASE_EXPORT Property
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const Property&);
@@ -161,16 +173,34 @@ public:
 
     ~Property();
 
-    void assertCompatibleWith(const Molecule &molecule) const
+    Property& operator=(const Property &other);
+
+    const PropertyBase& base() const
     {
-        constData()->assertCompatibleWith(molecule);
+        return *d;
     }
+
+    template<class T>
+    bool isA() const
+    {
+        return d->isA<T>();
+    }
+
+    template<class T>
+    const T& asA() const
+    {
+        return d->asA<T>();
+    }
+
+private:
+    /** Shared pointer to the actual property */
+    SharedPolyPointer<PropertyBase> d;
 };
 
 }
 
-Q_DECLARE_METATYPE(SireMol::Property);
-Q_DECLARE_METATYPE(SireMol::VariantProperty);
+Q_DECLARE_METATYPE(SireBase::Property);
+Q_DECLARE_METATYPE(SireBase::VariantProperty);
 
 SIRE_END_HEADER
 

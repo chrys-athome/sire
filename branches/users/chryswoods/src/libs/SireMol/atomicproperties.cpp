@@ -30,17 +30,46 @@
 
 #include "cgatomid.h"
 
+#include "SireStream/datastream.h"
 #include "SireError/errors.h"
 
 using namespace SireMol;
+using namespace SireStream;
+
+static const RegisterMetaType<AtomicProperties> r_atomprops(MAGIC_ONLY,
+                                                        "SireMol::AtomicProperties");
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
+                                       const AtomicProperties &atomprops)
+{
+    writeHeader(ds, r_atomprops, 1) << static_cast<const MoleculeProperty&>(atomprops);
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
+                                       AtomicProperties &atomprops)
+{
+    VersionID v = readHeader(ds, r_atomprops);
+
+    if (v == 1)
+    {
+        ds >> static_cast<MoleculeProperty&>(atomprops);
+    }
+    else
+        throw version_error(v, "1", r_atomprops, CODELOC);
+
+    return ds;
+}
 
 /** Constructor */
-AtomicProperties::AtomicProperties() : PropertyBase()
+AtomicProperties::AtomicProperties() : MoleculeProperty()
 {}
 
 /** Copy constructor */
 AtomicProperties::AtomicProperties(const AtomicProperties &other)
-                 : PropertyBase(other)
+                 : MoleculeProperty(other)
 {}
 
 /** Destructor */

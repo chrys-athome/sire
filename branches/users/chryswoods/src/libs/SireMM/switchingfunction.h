@@ -30,6 +30,7 @@
 #define SIREMM_SWITCHINGFUNCTION_H
 
 #include "SireBase/sharedpolypointer.hpp"
+#include "SireBase/property.h"
 
 SIRE_BEGIN_HEADER
 
@@ -64,7 +65,7 @@ for based on the supplied distance
 
 @author Christopher Woods
 */
-class SIREMM_EXPORT SwitchFuncBase : public QSharedData
+class SIREMM_EXPORT SwitchFuncBase : public SireBase::PropertyBase
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const SwitchFuncBase&);
@@ -76,11 +77,7 @@ public:
 
     SwitchFuncBase(const SwitchFuncBase &other);
 
-    virtual ~SwitchFuncBase();
-
-    virtual SwitchFuncBase* clone() const=0;
-
-    virtual const char* what() const=0;
+    ~SwitchFuncBase();
 
     virtual double electrostaticScaleFactor(double dist) const=0;
     virtual double vdwScaleFactor(double dist) const=0;
@@ -222,18 +219,45 @@ public:
     SwitchingFunction();
     SwitchingFunction(const SwitchFuncBase &switchingfunction);
 
+    SwitchingFunction(const SireBase::Property &property);
+
     SwitchingFunction(const SwitchingFunction &other);
 
     ~SwitchingFunction();
 
     SwitchingFunction& operator=(const SwitchingFunction &other);
+    SwitchingFunction& operator=(const SwitchFuncBase &other);
+    SwitchingFunction& operator=(const SireBase::Property &property);
 
     const char* what() const;
+
+    const SwitchFuncBase& base() const
+    {
+        return *d;
+    }
 
     double electrostaticScaleFactor(double dist) const;
     double vdwScaleFactor(double dist) const;
 
     double cutoffDistance() const;
+
+    template<class T>
+    bool isA() const
+    {
+        return d->isA<T>();
+    }
+
+    template<class T>
+    const T& asA() const
+    {
+        return d->asA<T>();
+    }
+
+    /** Allow implicit conversion to a Property */
+    operator Property() const
+    {
+        return Property(*d);
+    }
 
 private:
     /** Dynamic shared pointer to the object implementing

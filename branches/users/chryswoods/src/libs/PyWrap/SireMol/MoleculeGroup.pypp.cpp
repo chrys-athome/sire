@@ -25,60 +25,46 @@ void register_MoleculeGroup_class(){
     bp::class_< SireMol::MoleculeGroup >( "MoleculeGroup" )    
         .def( bp::init< >() )    
         .def( bp::init< QString const & >(( bp::arg("name") )) )    
-        .def( bp::init< QString const &, QVector<SireMol::Molecule> const & >(( bp::arg("name"), bp::arg("molecules") )) )    
+        .def( bp::init< QString const &, QVector<SireMol::PartialMolecule> const & >(( bp::arg("name"), bp::arg("molecules") )) )    
         .def( 
             "ID"
             , &::SireMol::MoleculeGroup::ID )    
         .def( 
             "add"
-            , (bool ( ::SireMol::MoleculeGroup::* )( ::SireMol::Molecule const & ) )( &::SireMol::MoleculeGroup::add )
+            , (bool ( ::SireMol::MoleculeGroup::* )( ::SireMol::PartialMolecule const & ) )( &::SireMol::MoleculeGroup::add )
             , ( bp::arg("molecule") ) )    
         .def( 
             "add"
-            , (bool ( ::SireMol::MoleculeGroup::* )( ::QVector<SireMol::Molecule> const & ) )( &::SireMol::MoleculeGroup::add )
+            , (bool ( ::SireMol::MoleculeGroup::* )( ::QVector<SireMol::PartialMolecule> const & ) )( &::SireMol::MoleculeGroup::add )
             , ( bp::arg("molecules") ) )    
         .def( 
             "at"
-            , (::SireMol::Molecule const & ( ::SireMol::MoleculeGroup::* )( ::SireMol::MoleculeID ) const)( &::SireMol::MoleculeGroup::at )
+            , &::SireMol::MoleculeGroup::at
             , ( bp::arg("molid") )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
-            "at"
-            , (::SireMol::Molecule const & ( ::SireMol::MoleculeGroup::* )( ::SireMol::Molecule const & ) const)( &::SireMol::MoleculeGroup::at )
-            , ( bp::arg("molecule") )
-            , bp::return_value_policy< bp::copy_const_reference >() )    
-        .def( 
             "change"
-            , (bool ( ::SireMol::MoleculeGroup::* )( ::SireMol::Molecule const & ) )( &::SireMol::MoleculeGroup::change )
+            , (bool ( ::SireMol::MoleculeGroup::* )( ::SireMol::PartialMolecule const & ) )( &::SireMol::MoleculeGroup::change )
             , ( bp::arg("molecule") ) )    
         .def( 
             "change"
-            , (bool ( ::SireMol::MoleculeGroup::* )( ::QVector<SireMol::Molecule> const & ) )( &::SireMol::MoleculeGroup::change )
+            , (bool ( ::SireMol::MoleculeGroup::* )( ::QVector<SireMol::PartialMolecule> const & ) )( &::SireMol::MoleculeGroup::change )
             , ( bp::arg("molecules") ) )    
         .def( 
             "change"
-            , (bool ( ::SireMol::MoleculeGroup::* )( ::QHash<SireMol::MoleculeID,SireMol::Molecule> const & ) )( &::SireMol::MoleculeGroup::change )
+            , (bool ( ::SireMol::MoleculeGroup::* )( ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> const & ) )( &::SireMol::MoleculeGroup::change )
             , ( bp::arg("molecules") ) )    
         .def( 
             "contains"
-            , (bool ( ::SireMol::MoleculeGroup::* )( ::SireMol::Molecule const & ) const)( &::SireMol::MoleculeGroup::contains )
+            , &::SireMol::MoleculeGroup::contains
             , ( bp::arg("molecule") ) )    
-        .def( 
-            "contains"
-            , (bool ( ::SireMol::MoleculeGroup::* )( ::SireMol::MoleculeID ) const)( &::SireMol::MoleculeGroup::contains )
-            , ( bp::arg("molid") ) )    
         .def( 
             "count"
             , &::SireMol::MoleculeGroup::count )    
         .def( 
             "molecule"
-            , (::SireMol::Molecule const & ( ::SireMol::MoleculeGroup::* )( ::SireMol::MoleculeID ) const)( &::SireMol::MoleculeGroup::molecule )
+            , &::SireMol::MoleculeGroup::molecule
             , ( bp::arg("molid") )
-            , bp::return_value_policy< bp::copy_const_reference >() )    
-        .def( 
-            "molecule"
-            , (::SireMol::Molecule const & ( ::SireMol::MoleculeGroup::* )( ::SireMol::Molecule const & ) const)( &::SireMol::MoleculeGroup::molecule )
-            , ( bp::arg("molecule") )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "moleculeIDs"
@@ -95,22 +81,29 @@ void register_MoleculeGroup_class(){
         .def( bp::self == bp::self )    
         .def( 
             "__getitem__"
-            , (::SireMol::Molecule const & ( ::SireMol::MoleculeGroup::* )( ::SireMol::MoleculeID ) const)( &::SireMol::MoleculeGroup::operator[] )
+            , &::SireMol::MoleculeGroup::operator[]
             , ( bp::arg("molid") )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
-            "__getitem__"
-            , (::SireMol::Molecule const & ( ::SireMol::MoleculeGroup::* )( ::SireMol::Molecule const & ) const)( &::SireMol::MoleculeGroup::operator[] )
-            , ( bp::arg("molecule") )
-            , bp::return_value_policy< bp::copy_const_reference >() )    
+            "refersTo"
+            , &::SireMol::MoleculeGroup::refersTo
+            , ( bp::arg("molid") ) )    
         .def( 
             "remove"
-            , (bool ( ::SireMol::MoleculeGroup::* )( ::SireMol::Molecule const & ) )( &::SireMol::MoleculeGroup::remove )
+            , (bool ( ::SireMol::MoleculeGroup::* )( ::SireMol::PartialMolecule const & ) )( &::SireMol::MoleculeGroup::remove )
             , ( bp::arg("molecule") ) )    
         .def( 
             "remove"
-            , (bool ( ::SireMol::MoleculeGroup::* )( ::QVector<SireMol::Molecule> const & ) )( &::SireMol::MoleculeGroup::remove )
+            , (bool ( ::SireMol::MoleculeGroup::* )( ::SireMol::MoleculeID ) )( &::SireMol::MoleculeGroup::remove )
+            , ( bp::arg("molid") ) )    
+        .def( 
+            "remove"
+            , (bool ( ::SireMol::MoleculeGroup::* )( ::QVector<SireMol::PartialMolecule> const & ) )( &::SireMol::MoleculeGroup::remove )
             , ( bp::arg("molecules") ) )    
+        .def( 
+            "remove"
+            , (bool ( ::SireMol::MoleculeGroup::* )( ::QSet<SireMol::MoleculeID> const & ) )( &::SireMol::MoleculeGroup::remove )
+            , ( bp::arg("molids") ) )    
         .def( 
             "rename"
             , &::SireMol::MoleculeGroup::rename

@@ -32,8 +32,10 @@
 #include <QVector>
 
 #include "SireBase/sharedpolypointer.hpp"
+#include "SireBase/property.h"
 
 #include "cljpair.h"
+#include "ljpair.h"
 
 SIRE_BEGIN_HEADER
 
@@ -69,7 +71,7 @@ calculations.
 
 @author Christopher Woods
 */
-class SIREMM_EXPORT CombiningRuleBase : public QSharedData
+class SIREMM_EXPORT CombiningRuleBase : public SireBase::PropertyBase
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const CombiningRuleBase&);
@@ -79,11 +81,14 @@ public:
     CombiningRuleBase();
     CombiningRuleBase(const CombiningRuleBase&);
 
-    virtual ~CombiningRuleBase();
+    ~CombiningRuleBase();
 
-    virtual CombiningRuleBase* clone() const=0;
+    virtual void combine(const QVector<CLJParameter> &clj0,
+                         const QVector<CLJParameter> &clj1,
+                         CLJPairMatrix &cljmatrix) const=0;
 
-    virtual const char* what() const=0;
+    virtual void combine(const QVector<CLJParameter> &cljs,
+                         CLJPairMatrix &cljmatrix) const=0;
 
     virtual void combine(const QVector<ChargeParameter> &chg0,
                          const QVector<LJParameter> &lj0,
@@ -94,6 +99,13 @@ public:
     virtual void combine(const QVector<ChargeParameter> &chgs,
                          const QVector<LJParameter> &ljs,
                          CLJPairMatrix &cljmatrix) const=0;
+
+    virtual void combine(const QVector<LJParameter> &lj0,
+                         const QVector<LJParameter> &lj1,
+                         LJPairMatrix &ljmatrix) const=0;
+
+    virtual void combine(const QVector<LJParameter> &ljs,
+                         LJPairMatrix &ljmatrix) const=0;
 };
 
 /**
@@ -128,6 +140,13 @@ public:
         return new ArithmeticCombiningRules(*this);
     }
 
+    void combine(const CLJParameter &clj0,
+                 const CLJParameter &clj1,
+                 CLJPairMatrix &cljmatrix) const;
+
+    void combine(const CLJParameter &cljs,
+                 CLJPairMatrix &cljmatrix) const;
+
     void combine(const QVector<ChargeParameter> &chg0,
                  const QVector<LJParameter> &lj0,
                  const QVector<ChargeParameter> &chg1,
@@ -137,6 +156,13 @@ public:
     void combine(const QVector<ChargeParameter> &chgs,
                  const QVector<LJParameter> &ljs,
                  CLJPairMatrix &cljmatrix) const;
+
+    void combine(const LJParameter &lj0,
+                 const LJParameter &lj1,
+                 LJPairMatrix &ljmatrix) const;
+
+    void combine(const LJParameter &ljs,
+                 LJPairMatrix &ljmatrix) const;
 };
 
 /**
@@ -171,6 +197,13 @@ public:
         return new GeometricCombiningRules(*this);
     }
 
+    void combine(const CLJParameter &clj0,
+                 const CLJParameter &clj1,
+                 CLJPairMatrix &cljmatrix) const;
+
+    void combine(const CLJParameter &cljs,
+                 CLJPairMatrix &cljmatrix) const;
+
     void combine(const QVector<ChargeParameter> &chg0,
                  const QVector<LJParameter> &lj0,
                  const QVector<ChargeParameter> &chg1,
@@ -180,6 +213,13 @@ public:
     void combine(const QVector<ChargeParameter> &chgs,
                  const QVector<LJParameter> &ljs,
                  CLJPairMatrix &cljmatrix) const;
+
+    void combine(const LJParameter &lj0,
+                 const LJParameter &lj1,
+                 LJPairMatrix &ljmatrix) const;
+
+    void combine(const LJParameter &ljs,
+                 LJPairMatrix &ljmatrix) const;
 };
 
 /**
@@ -196,14 +236,24 @@ friend QDataStream& ::operator>>(QDataStream&, CombiningRules&);
 public:
     CombiningRules();
     CombiningRules(const CombiningRuleBase &rules);
+    CombiningRules(const SireBase::Property &property);
 
     CombiningRules(const CombiningRules &other);
 
     ~CombiningRules();
 
     CombiningRules& operator=(const CombiningRules &other);
+    CombiningRules& operator=(const CombiningRuleBase &other);
+    CombiningRules& operator=(const SireBase::Property &property);
 
     const char* what() const;
+
+    void combine(const CLJParameter &clj0,
+                 const CLJParameter &clj1,
+                 CLJPairMatrix &cljmatrix) const;
+
+    void combine(const CLJParameter &cljs,
+                 CLJPairMatrix &cljmatrix) const;
 
     void combine(const QVector<ChargeParameter> &chg0,
                  const QVector<LJParameter> &lj0,
@@ -215,6 +265,31 @@ public:
                  const QVector<LJParameter> &ljs,
                  CLJPairMatrix &cljmatrix) const;
 
+    void combine(const LJParameter &lj0,
+                 const LJParameter &lj1,
+                 LJPairMatrix &ljmatrix) const;
+
+    void combine(const LJParameter &ljs,
+                 LJPairMatrix &ljmatrix) const;
+
+    template<class T>
+    bool isA() const
+    {
+        return d->isA<T>();
+    }
+
+    template<class T>
+    const T& asA() const
+    {
+        return d->asA<T>();
+    }
+
+    /** Allow implicit conversion to a Property */
+    operator Property() const
+    {
+        return Property(*d);
+    }
+
 private:
     /** Shared pointer to the combining rules themselves */
     SharedPolyPointer<CombiningRuleBase> d;
@@ -222,6 +297,23 @@ private:
 
 /** Combine the CLJ parameters in 'clj0' and 'clj1' and place the results
     in the matrix 'cljmatrix' */
+inline void CombiningRules::combine(const QVector<CLJParameter> &clj0,
+                                    const QVector<CLJParameter> &clj1,
+                                    CLJPairMatrix &cljmatrix) const
+{
+    d->combine(clj0, clj1, cljmatrix);
+}
+
+/** Combine all pairs of the CLJ parameters in 'cljs' and place the results
+    in the matrix 'cljmatrix' */
+inline void CombiningRules::combine(const QVector<CLJParameter> &cljs,
+                                    CLJPairMatrix &cljmatrix) const
+{
+    d->combine(cljs, cljmatrix);
+}
+
+/** Combine the charge parameters in chg0 and chg1 and the LJ parameters
+    in lj0 and lj1 and place the results in the matrix 'cljmatrix' */
 inline void CombiningRules::combine(const QVector<ChargeParameter> &chg0,
                                     const QVector<LJParameter> &lj0,
                                     const QVector<ChargeParameter> &chg1,
@@ -231,13 +323,30 @@ inline void CombiningRules::combine(const QVector<ChargeParameter> &chg0,
     d->combine(chg0, lj0, chg1, lj1, cljmatrix);
 }
 
-/** Combine all pairs of the CLJ parameters in 'clj' and place the results
-    in the matrix 'cljmatrix' */
+/** Combine all pairs of the charge parameters in 'chgs' and the LJ
+    parameters in 'ljs' and place the results in the matrix 'cljmatrix' */
 inline void CombiningRules::combine(const QVector<ChargeParameter> &chgs,
                                     const QVector<LJParameter> &ljs,
                                     CLJPairMatrix &cljmatrix) const
 {
     d->combine(chgs, ljs, cljmatrix);
+}
+
+/** Combine the LJ parameters in 'lj0' and 'lj1' and place the results
+    in the matrix 'ljmatrix' */
+inline void CombiningRules::combine(const QVector<LJParameter> &lj0,
+                                    const QVector<LJParameter> &lj1,
+                                    LJPairMatrix &ljmatrix) const
+{
+    d->combine(lj0, lj1, ljmatrix);
+}
+
+/** Combine all pairs of the LJ parameters in 'ljs' and place the results
+    in the matrix 'ljmatrix' */
+inline void CombiningRules::combine(const QVector<LJParameter> &ljs,
+                                    LJPairMatrix &ljmatrix) const
+{
+    d->combine(ljs, ljmatrix);
 }
 
 }

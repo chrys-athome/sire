@@ -58,9 +58,6 @@ QDataStream& operator>>(QDataStream&, SireMM::LJFF&);
 namespace SireMM
 {
 
-/** Define the PairMatrix used to hold LJ parameters */
-typedef SireBase::PairMatrix<LJPair> LJMatrix;
-
 using SireMol::Molecule;
 using SireMol::Residue;
 using SireMol::NewAtom;
@@ -101,7 +98,7 @@ public:
     class LJMolecule;
     class LJMoleculeData;  //private implementation of LJMolecule
     class ChangedLJMolecule;
-    
+
     class SIREMM_EXPORT Components : public FFBase::Components
     {
     public:
@@ -194,7 +191,7 @@ public:
                                   LJMatrix &ljmatrix);
 
 protected:
-    
+
     static double calculateEnergy(const CoordGroup &group0,
                                   const QVector<LJParameter> &lj0,
                                   const CoordGroup &group1,
@@ -222,16 +219,16 @@ private:
                                       LJMatrix &ljmatrix);
 
     void registerComponents();
-    
+
     /** Workspace for the distance calculations */
     DistMatrix distmat;
-    
+
     /** Workspace for the combination of LJ parameters */
     LJMatrix ljmat;
 
     /** The space in which the molecules in this forcefield reside */
     Space spce;
-    
+
     /** The switching function used to truncate the LJ interactions */
     SwitchingFunction switchfunc;
 
@@ -256,10 +253,10 @@ namespace SireMM
     together with the LJ parameters of the atoms. */
 class SIREMM_EXPORT LJFF::LJMolecule
 {
-    
+
 friend QDataStream& ::operator<<(QDataStream&, const LJFF::LJMolecule&);
 friend QDataStream& ::operator>>(QDataStream&, LJFF::LJMolecule&);
-    
+
 public:
     LJMolecule();
 
@@ -289,11 +286,11 @@ public:
     ChangedLJMolecule change(const Residue &residue) const;
     ChangedLJMolecule change(const NewAtom &newatom) const;
 
-    ChangedLJMolecule add(const Molecule &molecule, 
+    ChangedLJMolecule add(const Molecule &molecule,
                           const QString &ljproperty = QString::null) const;
-    ChangedLJMolecule add(const Residue &residue, 
+    ChangedLJMolecule add(const Residue &residue,
                           const QString &ljproperty = QString::null) const;
-    ChangedLJMolecule add(const NewAtom &newatom, 
+    ChangedLJMolecule add(const NewAtom &newatom,
                           const QString &ljproperty = QString::null) const;
     ChangedLJMolecule add(const AtomSelection &selected_atoms,
                           const QString &ljproperty = QString::null) const;
@@ -312,10 +309,10 @@ public:
     const AtomSelection& selectedAtoms() const;
 
 private:
-    ChangedLJMolecule _pvt_change(const Molecule &molecule, 
+    ChangedLJMolecule _pvt_change(const Molecule &molecule,
                                   const QSet<CutGroupID> &cgids,
                                   const QString &ljproperty = QString::null) const;
-    
+
     ChangedLJMolecule _pvt_change(const Molecule &molecule,
                                   const QSet<CutGroupID> &cgids,
                                   const AtomSelection &selected_atoms,
@@ -330,10 +327,10 @@ private:
 */
 class SIREMM_EXPORT LJFF::ChangedLJMolecule
 {
-    
+
 friend QDataStream& ::operator<<(QDataStream&, const LJFF::ChangedLJMolecule&);
 friend QDataStream& ::operator>>(QDataStream&, LJFF::ChangedLJMolecule&);
-    
+
 public:
     ChangedLJMolecule();
 
@@ -359,13 +356,13 @@ public:
     ChangedLJMolecule change(const Residue &residue) const;
     ChangedLJMolecule change(const NewAtom &atom) const;
 
-    ChangedLJMolecule add(const Molecule &molecule, 
+    ChangedLJMolecule add(const Molecule &molecule,
                           const QString &ljproperty = QString::null) const;
-    ChangedLJMolecule add(const Residue &residue, 
+    ChangedLJMolecule add(const Residue &residue,
                           const QString &ljproperty = QString::null) const;
-    ChangedLJMolecule add(const NewAtom &atom, 
+    ChangedLJMolecule add(const NewAtom &atom,
                           const QString &ljproperty = QString::null) const;
-    ChangedLJMolecule add(const AtomSelection &selected_atoms, 
+    ChangedLJMolecule add(const AtomSelection &selected_atoms,
                           const QString &ljproperty = QString::null) const;
 
     ChangedLJMolecule remove(const Molecule &molecule) const;

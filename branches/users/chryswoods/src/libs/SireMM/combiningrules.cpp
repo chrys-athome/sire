@@ -34,6 +34,7 @@
 #include "SireStream/shareddatastream.h"
 
 using namespace SireMM;
+using namespace SireBase;
 using namespace SireStream;
 
 ///////////
@@ -44,29 +45,38 @@ static const RegisterMetaType<CombiningRuleBase>
                           r_combinebase(MAGIC_ONLY, "SireMM::CombiningRuleBase");
 
 /** Serialise to a binary data stream */
-QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CombiningRuleBase&)
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
+                                      const CombiningRuleBase &combinebase)
 {
-    writeHeader(ds, r_combinebase, 0);
+    writeHeader(ds, r_combinebase, 1)
+               << static_cast<const PropertyBase&>(combinebase);
+
     return ds;
 }
 
 /** Deserialise from a binary data stream */
-QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CombiningRuleBase&)
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
+                                      CombiningRuleBase &combinebase)
 {
     VersionID v = readHeader(ds, r_combinebase);
 
-    if (v != 0)
+    if (v == 1)
+    {
+        ds >> static_cast<PropertyBase&>(combinebase);
+    }
+    else
         throw version_error(v, "1", r_combinebase, CODELOC);
 
     return ds;
 }
 
 /** Constructor */
-CombiningRuleBase::CombiningRuleBase() : QSharedData()
+CombiningRuleBase::CombiningRuleBase() : PropertyBase()
 {}
 
 /** Copy constructor */
-CombiningRuleBase::CombiningRuleBase(const CombiningRuleBase&) : QSharedData()
+CombiningRuleBase::CombiningRuleBase(const CombiningRuleBase &other)
+                  : PropertyBase(other)
 {}
 
 /** Destructor */
@@ -118,6 +128,130 @@ ArithmeticCombiningRules::ArithmeticCombiningRules(
 /** Destructor */
 ArithmeticCombiningRules::~ArithmeticCombiningRules()
 {}
+
+/** Combine the LJ paramters using arithmetic combining
+    rules and place the results in the matrix 'ljmatrix' */
+void ArithmeticCombiningRules::combine(const QVector<LJParameter> &lj0,
+                                        const QVector<LJParameter> &lj1,
+                                        LJPairMatrix &ljmatrix) const
+{
+    int nlj0 = lj0.count();
+    int nlj1 = lj1.count();
+
+    ljmatrix.redimension(nlj0, nlj1);
+
+    if (nlj0 > 0 and nlj1 > 0)
+    {
+        const LJParameter *lj0array = lj0.constData();
+        const LJParameter *lj1array = lj1.constData();
+
+        for (int i=0; i<nlj0; ++i)
+        {
+            const LJParameter &lj0param = lj0array[i];
+
+            ljmatrix.setOuterIndex(i);
+
+            for (int j=0; j<nlj1; ++j)
+            {
+                ljmatrix[j] = LJPair::arithmetic(lj0param, lj1array[j]);
+            }
+        }
+    }
+}
+
+/** Combine the LJ paramters using arithmetic combining
+    rules and place the results in the matrix 'ljmatrix' */
+void ArithmeticCombiningRules::combine(const QVector<LJParameter> &ljs,
+                                       LJPairMatrix &ljmatrix) const
+{
+    int nljs = ljs.count();
+
+    ljmatrix.redimension(nljs,nljs);
+
+    if (nljs > 0)
+    {
+        const LJParameter *ljarray = ljs.constData();
+
+        for (int i=0; i<nljs-1; ++i)
+        {
+            const LJParameter &ljparam = ljarray[i];
+
+            ljmatrix.setOuterIndex(i);
+
+            ljmatrix[i] = ljparam;
+
+            for (int j=i+1; j<nljs; ++j)
+            {
+                ljmatrix[j] = LJPair::arithmetic(ljparam, ljarray[j]);
+            }
+        }
+
+        ljmatrix(nljs-1,nljs-1) = ljarray[nljs-1];
+    }
+}
+
+/** Combine the charge and LJ parameters using
+    arithmetic combining rules and place the results
+    in the matrix 'cljmatrix' */
+void ArithmeticCombiningRules::combine(const QVector<CLJParameter> &clj0,
+                                       const QVector<CLJParameter> &clj1,
+                                       CLJPairMatrix &cljmatrix) const
+{
+    int nclj0 = clj0.count();
+    int nclj1 = clj1.count();
+
+    cljmatrix.redimension(nclj0, nclj1);
+
+    if (nclj0 > 0 and nclj1 > 0)
+    {
+        const CLJParameter *clj0array = clj0.constData();
+        const CLJParameter *clj1array = clj1.constData();
+
+        for (int i=0; i<nclj0; ++i)
+        {
+            const CLJParameter &clj0param = clj0array[i];
+
+            cljmatrix.setOuterIndex(i);
+
+            for (int j=0; j<nclj1; ++j)
+            {
+                cljmatrix[j] = CLJPair::Arithmetic(clj0param, clj1array[j]);
+            }
+        }
+    }
+}
+
+/** Combine the charge and LJ parameters using
+    arithmetic combining rules and place the results
+    in the matrix 'cljmatrix' */
+void ArithmeticCombiningRules::combine(const QVector<CLJParameter> &cljs,
+                                        CLJPairMatrix &cljmatrix) const
+{
+    int ncljs = cljs.count();
+
+    cljmatrix.redimension(ncljs,ncljs);
+
+    if (ncljs > 0)
+    {
+        const CLJParameter *cljarray = cljs.constData();
+
+        for (int i=0; i<ncljs-1; ++i)
+        {
+            const CLJParameter &cljparam = cljarray[i];
+
+            cljmatrix.setOuterIndex(i);
+
+            cljmatrix[i] = cljparam;
+
+            for (int j=i+1; j<ncljs; ++j)
+            {
+                cljmatrix[i] = CLJPair::arithmetric(cljparam, cljarray[j]);
+            }
+        }
+
+        cljmatrix(ncljs-1,ncljs-1) = cljarray[ncljs-1];
+    }
+}
 
 /** Combine the charge and LJ parameters using
     arithmetic combining rules and place the results
@@ -241,6 +375,130 @@ GeometricCombiningRules::GeometricCombiningRules(
 GeometricCombiningRules::~GeometricCombiningRules()
 {}
 
+/** Combine the LJ paramters using geometric combining
+    rules and place the results in the matrix 'ljmatrix' */
+void GeometricCombiningRules::combine(const QVector<LJParameter> &lj0,
+                                      const QVector<LJParameter> &lj1,
+                                      LJPairMatrix &ljmatrix) const
+{
+    int nlj0 = lj0.count();
+    int nlj1 = lj1.count();
+
+    ljmatrix.redimension(nlj0, nlj1);
+
+    if (nlj0 > 0 and nlj1 > 0)
+    {
+        const LJParameter *lj0array = lj0.constData();
+        const LJParameter *lj1array = lj1.constData();
+
+        for (int i=0; i<nlj0; ++i)
+        {
+            const LJParameter &lj0param = lj0array[i];
+
+            ljmatrix.setOuterIndex(i);
+
+            for (int j=0; j<nlj1; ++j)
+            {
+                ljmatrix[j] = LJPair::geometric(lj0param, lj1array[j]);
+            }
+        }
+    }
+}
+
+/** Combine the LJ paramters using geometric combining
+    rules and place the results in the matrix 'ljmatrix' */
+void GeometricCombiningRules::combine(const QVector<LJParameter> &ljs,
+                                      LJPairMatrix &ljmatrix) const
+{
+    int nljs = ljs.count();
+
+    ljmatrix.redimension(nljs,nljs);
+
+    if (nljs > 0)
+    {
+        const LJParameter *ljarray = ljs.constData();
+
+        for (int i=0; i<nljs-1; ++i)
+        {
+            const LJParameter &ljparam = ljarray[i];
+
+            ljmatrix.setOuterIndex(i);
+
+            ljmatrix[i] = ljparam;
+
+            for (int j=i+1; j<nljs; ++j)
+            {
+                ljmatrix[j] = LJPair::geometric(ljparam, ljarray[j]);
+            }
+        }
+
+        ljmatrix(nljs-1,nljs-1) = ljarray[nljs-1];
+    }
+}
+
+/** Combine the charge and LJ parameters using
+    geometric combining rules and place the results
+    in the matrix 'cljmatrix' */
+void GeometricCombiningRules::combine(const QVector<CLJParameter> &clj0,
+                                      const QVector<CLJParameter> &clj1,
+                                      CLJPairMatrix &cljmatrix) const
+{
+    int nclj0 = clj0.count();
+    int nclj1 = clj1.count();
+
+    cljmatrix.redimension(nclj0, nclj1);
+
+    if (nclj0 > 0 and nclj1 > 0)
+    {
+        const CLJParameter *clj0array = clj0.constData();
+        const CLJParameter *clj1array = clj1.constData();
+
+        for (int i=0; i<nclj0; ++i)
+        {
+            const CLJParameter &clj0param = clj0array[i];
+
+            cljmatrix.setOuterIndex(i);
+
+            for (int j=0; j<nclj1; ++j)
+            {
+                cljmatrix[j] = CLJPair::geometric(clj0param, clj1array[j]);
+            }
+        }
+    }
+}
+
+/** Combine the charge and LJ parameters using
+    geometric combining rules and place the results
+    in the matrix 'cljmatrix' */
+void GeometricCombiningRules::combine(const QVector<CLJParameter> &cljs,
+                                      CLJPairMatrix &cljmatrix) const
+{
+    int ncljs = cljs.count();
+
+    cljmatrix.redimension(ncljs,ncljs);
+
+    if (ncljs > 0)
+    {
+        const CLJParameter *cljarray = cljs.constData();
+
+        for (int i=0; i<ncljs-1; ++i)
+        {
+            const CLJParameter &cljparam = cljarray[i];
+
+            cljmatrix.setOuterIndex(i);
+
+            cljmatrix[i] = cljparam;
+
+            for (int j=i+1; j<ncljs; ++j)
+            {
+                cljmatrix[i] = CLJPair::geometric(cljparam, cljarray[j]);
+            }
+        }
+
+        cljmatrix(ncljs-1,ncljs-1) = cljarray[ncljs-1];
+    }
+}
+
 /** Combine the charge and LJ parameters using
     geometric combining rules and place the results
     in the matrix 'cljmatrix' */
@@ -331,7 +589,8 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CombiningRules &com
 {
     writeHeader(ds, r_combrules, 1);
 
-    SharedDataStream(ds) << combrules.d;
+    SharedDataStream sds(ds);
+    sds << combrules.d;
 
     return ds;
 }
@@ -343,7 +602,8 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CombiningRules &combrules
 
     if (v == 1)
     {
-        SharedDataStream(ds) >> combrules.d;
+        SharedDataStream sds(ds);
+        sds >> combrules.d;
     }
     else
         throw version_error(v, "1", r_combrules, CODELOC);
@@ -360,7 +620,12 @@ CombiningRules::CombiningRules() : d(shared_null)
 
 /** Construct from the passed combining rules */
 CombiningRules::CombiningRules(const CombiningRuleBase &rules)
-               : d( rules.clone() )
+               : d(rules)
+{}
+
+/** Construct from a Property */
+CombiningRules::CombiningRules(const Property &property)
+               : d(property.base())
 {}
 
 /** Copy constructor */
@@ -376,6 +641,20 @@ CombiningRules::~CombiningRules()
 CombiningRules& CombiningRules::operator=(const CombiningRules &other)
 {
     d = other.d;
+    return *this;
+}
+
+/** Assignment operator */
+CombiningRules& CombiningRules::operator=(const CombiningRuleBase &other)
+{
+    d = other;
+    return *this;
+}
+
+/** Assign from a property */
+CombiningRules& CombiningRules::operator=(const Property &property)
+{
+    d = property.base();
     return *this;
 }
 

@@ -69,13 +69,11 @@ set ( WRAPMOL_SOURCES
       MoleculeGroups.pypp.cpp
       MoleculeID.pypp.cpp
       MoleculeInfo.pypp.cpp
+      MoleculeProperty.pypp.cpp
       MoleculeVersion.pypp.cpp
 
       NewAtom.pypp.cpp
-
-      Property.pypp.cpp
-      PropertyBase.pypp.cpp
-      
+     
       ResID.pypp.cpp
       ResIDAtomID.pypp.cpp
       ResNum.pypp.cpp

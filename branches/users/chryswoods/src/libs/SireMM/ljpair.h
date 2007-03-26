@@ -29,6 +29,8 @@
 #ifndef SIREMM_LJPAIR_H
 #define SIREMM_LJPAIR_H
 
+#include "SireBase/pairmatrix.h"
+
 #include "ljparameter.h"
 
 SIRE_BEGIN_HEADER
@@ -45,7 +47,11 @@ QDataStream& operator>>(QDataStream&, SireMM::LJPair&);
 namespace SireMM
 {
 
+class LJPair;
 class LJParameter;
+
+/** Typedef a matrix to hold all of the LJ pairs */
+typedef SireBase::PairMatrix<LJPair, 64> LJPairMatrix;
 
 /**
 An LJPair holds a combined pair of Lennard Jones parameters
@@ -63,14 +69,14 @@ public:
     LJPair();
     LJPair(double sigma, double epsilon);
     LJPair(const LJParameter &ljparam);
-    
+
     LJPair(const LJPair &other);
-    
+
     ~LJPair();
 
     bool isDummy() const;
     bool zeroLJ() const;
-    
+
     double sigma() const;
     double epsilon() const;
     double sqrtEpsilon() const;
@@ -97,7 +103,7 @@ public:
 private:
     /** the sigma parameter, in Angstroms */
     double sig;
-    
+
     /** the epsilon parameter in kcal mol-1 */
     double eps;
 };
@@ -114,15 +120,15 @@ inline double LJPair::epsilon() const
     return eps;
 }
 
-/** Return an LJPair that represents the geometric combination of 
+/** Return an LJPair that represents the geometric combination of
     two LJParameters (sigma = sqrt(sig0*sig1), epsilon = sqrt(eps0*eps1) */
 inline LJPair LJPair::geometric(const LJParameter &lj0, const LJParameter &lj1)
 {
     LJPair ljpair;
-    
+
     ljpair.sig = lj0.sqrtSigma() * lj1.sqrtSigma();
     ljpair.eps = lj0.sqrtEpsilon() * lj1.sqrtEpsilon();
-    
+
     return ljpair;
 }
 
@@ -132,10 +138,10 @@ inline LJPair LJPair::geometric(const LJParameter &lj0, const LJParameter &lj1)
 inline LJPair LJPair::arithmetic(const LJParameter &lj0, const LJParameter &lj1)
 {
     LJPair ljpair;
-    
+
     ljpair.sig = 0.5 * (lj0.sigma() + lj1.sigma());
     ljpair.eps = lj0.sqrtEpsilon() * lj1.sqrtEpsilon();
-    
+
     return ljpair;
 }
 

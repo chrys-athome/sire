@@ -2,7 +2,7 @@
 
 // (C) Christopher Woods, GPL >=2 License
 
-#include "PropertyBase.pypp.hpp"
+#include "MoleculeProperty.pypp.hpp"
 #include "boost/python.hpp"
 #include "siremol_headers.h"
 #include "SireMaths/angle.h"
@@ -16,29 +16,22 @@ namespace bp = boost::python;
 
 #include "SireQt/qdatastream.hpp"
 
-const char* pvt_get_name(const SireMol::PropertyBase&){ return "SireMol::PropertyBase";}
+const char* pvt_get_name(const SireMol::MoleculeProperty&){ return "SireMol::MoleculeProperty";}
 
-void register_PropertyBase_class(){
+void register_MoleculeProperty_class(){
 
-    bp::class_< SireMol::PropertyBase, boost::noncopyable >( "PropertyBase", bp::no_init )    
+    bp::class_< SireMol::MoleculeProperty, bp::bases< SireBase::PropertyBase >, boost::noncopyable >( "MoleculeProperty", bp::no_init )    
         .def( 
             "assertCompatibleWith"
-            , &::SireMol::PropertyBase::assertCompatibleWith
+            , &::SireMol::MoleculeProperty::assertCompatibleWith
             , ( bp::arg("molecule") ) )    
         .def( 
             "isCompatibleWith"
-            , &::SireMol::PropertyBase::isCompatibleWith
+            , &::SireMol::MoleculeProperty::isCompatibleWith
             , ( bp::arg("molecule") ) )    
-        .def( 
-            "null_property"
-            , &::SireMol::PropertyBase::null_property )    
-        .def( 
-            "what"
-            , &::SireMol::PropertyBase::what )    
-        .staticmethod( "null_property" )    
-        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::PropertyBase >,
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::MoleculeProperty >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
-        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::PropertyBase >,
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::MoleculeProperty >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__str__", &pvt_get_name);
 
