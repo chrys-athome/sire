@@ -111,6 +111,10 @@ public:
     SpaceBase();
     SpaceBase(const SpaceBase &other);
 
+    ~SpaceBase();
+
+    virtual SpaceBase* clone() const=0;
+
     /** Populate the matrix 'mat' with the distances between all of the
         points within a CoordGroup. This creates a symmetrical matrix,
         with a 0 diagonal. This returns the shortest distance between
@@ -238,6 +242,9 @@ public:
     Space& operator=(const Space &other);
     Space& operator=(const SireBase::Property &property);
 
+    bool operator==(const Space &other) const;
+    bool operator!=(const Space &other) const;
+
     const char* what() const;
 
     const SpaceBase& base() const
@@ -291,9 +298,9 @@ public:
                                 const CoordGroup &center, double dist) const;
 
     /** Allow implicit conversion to a Property */
-    operator Property() const
+    operator SireBase::Property() const
     {
-        return Property(*d);
+        return SireBase::Property(*d);
     }
 
 private:

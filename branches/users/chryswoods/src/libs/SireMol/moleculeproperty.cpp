@@ -27,6 +27,10 @@
 \*********************************************/
 
 #include "moleculeproperty.h"
+#include "molecule.h"
+#include "moleculeinfo.h"
+#include "moleculeid.h"
+#include "moleculeversion.h"
 
 #include "SireError/errors.h"
 
@@ -36,7 +40,7 @@ using namespace SireMol;
 using namespace SireBase;
 using namespace SireStream;
 
-static const RegisterMetaType<MoleculeProperty> r_molprop(MAGIC_ONLY
+static const RegisterMetaType<MoleculeProperty> r_molprop(MAGIC_ONLY,
                                                           "SireMol::MoleculeProperty");
 
 /** Serialise to a binary datastream */

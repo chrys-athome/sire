@@ -175,6 +175,12 @@ public:
         }
     }
 
+    template<class S>
+    explicit SharedPolyPointer(S *data);
+
+    template<class S>
+    explicit SharedPolyPointer(const S &obj);
+
     inline SharedPolyPointer<T> & operator=(const SharedPolyPointer<T> &o)
     {
         if (o.d != d)
@@ -214,6 +220,12 @@ public:
 
         return *this;
     }
+
+    template<class S>
+    SharedPolyPointer& operator=(const S &obj);
+
+    template<class S>
+    SharedPolyPointer& operator=(S *obj);
 
     inline SharedPolyPointer &operator=(T *o)
     {
@@ -311,6 +323,55 @@ SharedPolyPointer<T>::SharedPolyPointer(const T &obj)
         if (d)
             d->ref.ref();
     }
+}
+
+template<class T>
+template<class S>
+SIRE_OUTOFLINE_TEMPLATE
+SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(const S &obj)
+{
+    const T *obj_ptr = dynamic_cast<const T*>(&obj);
+
+    if (not obj_ptr)
+        throwInvalidCast( SharedPolyPointerHelper<S>::what(obj),
+                          SharedPolyPointerHelper<T>::typeName() );
+
+    return this->operator=(*obj_ptr);
+}
+
+template<class T>
+template<class S>
+SIRE_OUTOFLINE_TEMPLATE
+SharedPolyPointer<T>::SharedPolyPointer(const S &obj)
+{
+    this->operator=<S>(obj);
+}
+
+template<class T>
+template<class S>
+SIRE_OUTOFLINE_TEMPLATE
+SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(S *obj)
+{
+    if (obj == 0)
+        return this->operator=<T>(0);
+    else
+    {
+        T *obj_ptr = dynamic_cast<T*>(obj);
+
+        if (not obj_ptr)
+            throwInvalidCast( SharedPolyPointerHelper<S>::what(*obj),
+                              SharedPolyPointerHelper<T>::typeName() );
+
+        return this->operator=<T>(obj_ptr);
+    }
+}
+
+template<class T>
+template<class S>
+SIRE_OUTOFLINE_TEMPLATE
+SharedPolyPointer<T>::SharedPolyPointer( S *obj )
+{
+    this->operator=<S>(obj);
 }
 
 template <class T>

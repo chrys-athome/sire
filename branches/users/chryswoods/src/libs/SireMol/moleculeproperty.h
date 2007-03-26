@@ -44,6 +44,8 @@ QDataStream& operator>>(QDataStream&, SireMol::MoleculeProperty&);
 namespace SireMol
 {
 
+class Molecule;
+
 /** This is the base class of all properties that are specifically
     attached to molecules (e.g. AtomicProperties, BondProperties
     etc.)

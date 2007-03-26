@@ -270,8 +270,14 @@ NewAtom::operator const AtomInfo&() const
 */
 QVariant NewAtom::property(const QString &name) const
 {
-    return sharedpolypointer_cast<AtomicProperties>
-                            (d->getProperty(name)).value(cgatomid);
+    Property property = d->getProperty(name);
+
+    if (not property.isA<AtomicProperties>())
+        throw SireError::invalid_cast( QObject::tr(
+            "Cannot convert a property of type \"%1\" to an atomic property!")
+                .arg(property.what()), CODELOC );
+
+    return property.asA<AtomicProperties>().value(cgatomid);
 }
 
 /** Return a string describing this atom */

@@ -51,7 +51,6 @@ namespace SireBase
 {
 
 class Property;
-class Molecule;
 
 /** This is the base class of all properties that may be attached to a
     molecule. Properties are used to assign extra information to a molecule,
@@ -80,15 +79,19 @@ public:
 
     PropertyBase& operator=(const PropertyBase &other);
 
+    bool operator==(const PropertyBase &other) const;
+    bool operator!=(const PropertyBase &other) const;
+
     virtual PropertyBase* clone() const=0;
 
     virtual const char* what() const=0;
 
     static Property null_property();
 
-    virtual bool isCompatibleWith(const Molecule &molecule) const=0;
-
-    void assertCompatibleWith(const Molecule &molecule) const;
+    static const char* typeName()
+    {
+        return "SireBase::PropertyBase";
+    }
 
     template<class T>
     bool isA() const
@@ -101,6 +104,12 @@ public:
     {
         return dynamic_cast<const T&>(*this);
     }
+
+protected:
+    /** Return whether this property is equal to 'other'. This
+        function will only be called after a test has been made
+        to ensure that both properties are of the same type */
+    virtual bool _pvt_isEqual(const PropertyBase &other) const=0;
 };
 
 /** This is a simple property that holds any value as a QVariant. This
@@ -142,11 +151,8 @@ public:
         return new VariantProperty(*this);
     }
 
-    /** A variant property is compatible with everything! */
-    bool isCompatibleWith(const Molecule&) const
-    {
-        return true;
-    }
+protected:
+    bool _pvt_isEqual(const PropertyBase &other) const;
 };
 
 /** This is the visible holder class for PropertyBase. This is just
@@ -175,9 +181,17 @@ public:
 
     Property& operator=(const Property &other);
 
+    bool operator==(const Property &other) const;
+    bool operator!=(const Property &other) const;
+
     const PropertyBase& base() const
     {
         return *d;
+    }
+
+    const char* what() const
+    {
+        return d->what();
     }
 
     template<class T>

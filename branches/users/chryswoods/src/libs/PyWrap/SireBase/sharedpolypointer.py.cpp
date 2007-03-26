@@ -44,18 +44,25 @@ public:
     {
         qDebug() << "SharedBase::SharedBase()";
     }
-    
+
     SharedBase(const SharedBase&) : QSharedData()
     {
         qDebug() << "SharedBase::SharedBase(const SharedBase&)";
     }
-    
+
     virtual ~SharedBase()
     {}
-    
+
     virtual void helloWorld() const=0;
-    
+
     virtual SharedBase* clone() const=0;
+
+    virtual const char* what() const=0;
+
+    static const char* typeName()
+    {
+        return "SireBase::SharedBase";
+    }
 };
 
 class SharedFoo : public SharedBase
@@ -65,23 +72,33 @@ public:
     {
         qDebug() << "SharedFoo::SharedFoo";
     }
-    
+
     SharedFoo(const SharedFoo &other) :  SharedBase(other)
     {
         qDebug() << "SharedFoo::SharedFoo(const SharedFoo&)";
     }
-    
+
     ~SharedFoo()
     {}
-    
+
     void helloWorld() const
     {
         qDebug() << "Hello World from Foo!";
     }
-    
+
     SharedFoo* clone() const
     {
         return new SharedFoo(*this);
+    }
+
+    static const char* typeName()
+    {
+        return "SireBase::SharedFoo";
+    }
+
+    const char* what() const
+    {
+        return SharedFoo::typeName();
     }
 };
 
@@ -92,28 +109,38 @@ public:
     {
         qDebug() << "SharedBar::SharedBar";
     }
-    
+
     SharedBar(const SharedBar &other) :  SharedBase(other)
     {
         qDebug() << "SharedBar::SharedBar(const SharedBar&)";
     }
-    
+
     ~SharedBar()
     {}
-    
+
     void helloWorld() const
     {
         qDebug() << "Hello World from Bar!";
     }
-    
+
     SharedBar* clone() const
     {
         return new SharedBar(*this);
     }
-    
+
     void goodbye() const
     {
         qDebug() << "See ya!";
+    }
+
+    static const char* typeName()
+    {
+        return "SireBase::SharedBar";
+    }
+
+    const char* what() const
+    {
+        return SharedBar::typeName();
     }
 };
 
@@ -137,15 +164,15 @@ void SIREBASE_EXPORT export_SharedPolyPointer()
     class_<SharedFoo, bases<SharedBase> >("SharedFoo", init<>() )
         .def( init<const SharedFoo&>() )
     ;
-    
+
     class_<SharedBar, bases<SharedBase> >("SharedBar", init<>() )
         .def( init<const SharedBar&>() )
         .def( "goodbye", &SharedBar::goodbye )
     ;
-    
+
     def( "createFoo", &createFoo );
     def( "createBar", &createBar );
-    
+
     register_ptr_to_python< SharedPolyPointer<SharedBase> >();
 }
 

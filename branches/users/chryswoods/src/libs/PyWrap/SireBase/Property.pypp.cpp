@@ -25,6 +25,11 @@ void register_Property_class(){
             "base"
             , (::SireBase::PropertyBase const & ( ::SireBase::Property::* )(  ) const)( &::SireBase::Property::base )
             , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( bp::self != bp::self )    
+        .def( bp::self == bp::self )    
+        .def( 
+            "what"
+            , (char const * ( ::SireBase::Property::* )(  ) const)( &::SireBase::Property::what ) )    
         .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireBase::Property >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    

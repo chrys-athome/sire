@@ -16,20 +16,18 @@ void register_PropertyBase_class(){
 
     bp::class_< SireBase::PropertyBase, boost::noncopyable >( "PropertyBase", bp::no_init )    
         .def( 
-            "assertCompatibleWith"
-            , (void ( ::SireBase::PropertyBase::* )( ::SireBase::Molecule const & ) const)( &::SireBase::PropertyBase::assertCompatibleWith )
-            , ( bp::arg("molecule") ) )    
-        .def( 
-            "isCompatibleWith"
-            , (bool ( ::SireBase::PropertyBase::* )( ::SireBase::Molecule const & ) const)( &::SireBase::PropertyBase::isCompatibleWith )
-            , ( bp::arg("molecule") ) )    
-        .def( 
             "null_property"
             , (::SireBase::Property (*)(  ))( &::SireBase::PropertyBase::null_property ) )    
+        .def( bp::self != bp::self )    
+        .def( bp::self == bp::self )    
+        .def( 
+            "typeName"
+            , (char const * (*)(  ))( &::SireBase::PropertyBase::typeName ) )    
         .def( 
             "what"
             , (char const * ( ::SireBase::PropertyBase::* )(  ) const)( &::SireBase::PropertyBase::what ) )    
         .staticmethod( "null_property" )    
+        .staticmethod( "typeName" )    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireBase::PropertyBase >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireBase::PropertyBase >,

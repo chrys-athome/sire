@@ -74,6 +74,11 @@ public:
     virtual CutGroupNum operator()(const AtomIndex &atom,
                                    const EditMolData &moldata) const=0;
 
+    static const char* typeName()
+    {
+        return "SireMol::CuttingFunctionBase";
+    }
+
     virtual const char* what() const=0;
 
     virtual CuttingFunctionBase* clone() const=0;

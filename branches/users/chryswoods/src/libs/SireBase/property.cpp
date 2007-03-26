@@ -65,6 +65,14 @@ public:
     {
         return NullProperty::typeName();
     }
+
+protected:
+    bool _pvt_isEqual(const PropertyBase &other) const
+    {
+        BOOST_ASSERT( other.isA<NullProperty>() );
+
+        return true;
+    }
 };
 
 }
@@ -93,6 +101,26 @@ PropertyBase::~PropertyBase()
 PropertyBase& PropertyBase::operator=(const PropertyBase&)
 {
     return *this;
+}
+
+/** Comparison operator */
+bool PropertyBase::operator==(const PropertyBase &other) const
+{
+    if (this == &other)
+        return true;
+    else
+    {
+        if (QLatin1String(this->what()) == QLatin1String(other.what()))
+            return this->_pvt_isEqual(other);
+        else
+            return false;
+    }
+}
+
+/** Comparison operator */
+bool PropertyBase::operator!=(const PropertyBase &other) const
+{
+    return not this->operator==(other);
 }
 
 static const RegisterMetaType<PropertyBase> r_propbase(MAGIC_ONLY,
@@ -208,7 +236,20 @@ VariantProperty& VariantProperty::operator=(const VariantProperty &other)
 */
 VariantProperty& VariantProperty::operator=(const Property &other)
 {
-    return VariantProperty::operator=(sharedpolypointer_cast<VariantProperty>(other));
+    if (not other.isA<VariantProperty>())
+        throw SireError::invalid_cast( QObject::tr(
+                "Cannot cast from a \"%1\" to a VariantProperty!")
+                    .arg(other.what()), CODELOC );
+
+    return this->operator=(other.asA<VariantProperty>());
+}
+
+/** Comparison function */
+bool VariantProperty::_pvt_isEqual(const PropertyBase &other) const
+{
+    BOOST_ASSERT(other.isA<VariantProperty>());
+
+    return QVariant::operator==( other.asA<VariantProperty>() );
 }
 
 ///////////////
@@ -220,8 +261,10 @@ static const RegisterMetaType<Property> r_prop;
 /** Serialise to a binary datastream */
 QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds, const Property &property)
 {
-    writeHeader(ds, r_prop, 1)
-          << static_cast<const SharedPolyPointer<PropertyBase>&>(property);
+    writeHeader(ds, r_prop, 1);
+
+    SharedDataStream sds(ds);
+    sds << property.d;
 
     return ds;
 }
@@ -233,7 +276,8 @@ QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, Property &property)
 
     if (v == 1)
     {
-        ds >> static_cast<SharedPolyPointer<PropertyBase>&>(property);
+        SharedDataStream sds(ds);
+        sds >> property.d;
     }
     else
         throw version_error(v, "1", r_prop, CODELOC);
@@ -242,7 +286,7 @@ QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, Property &property)
 }
 
 /** Null constructor - construct a null property */
-Property::Property() : d( PropertyBase::null_property )
+Property::Property() : d( PropertyBase::null_property().d )
 {}
 
 /** Construct from the passed pointer - this must not be null! This
@@ -289,4 +333,16 @@ Property& Property::operator=(const Property &other)
 {
     d = other.d;
     return *this;
+}
+
+/** Comparison operator */
+bool Property::operator==(const Property &other) const
+{
+    return (d == other.d) and *d == *(other.d);
+}
+
+/** Comparison operator */
+bool Property::operator!=(const Property &other) const
+{
+    return (d != other.d) or *d != *(other.d);
 }

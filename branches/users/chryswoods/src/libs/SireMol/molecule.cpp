@@ -35,7 +35,7 @@
 #include "cutgroup.h"
 #include "editmol.h"
 
-#include "property.h"
+#include "moleculeproperty.h"
 
 #include "moleculeinfo.h"
 #include "moleculebonds.h"
@@ -64,6 +64,7 @@
 #include "SireStream/shareddatastream.h"
 
 using namespace SireStream;
+using namespace SireBase;
 using namespace SireMol;
 
 static const RegisterMetaType<Molecule> r_molecule;
@@ -219,8 +220,10 @@ const Property& Molecule::getProperty(const QString &name) const
     replace any existing property with that name. */
 void Molecule::setProperty(const QString &name, const Property &value)
 {
-    //this property must be compatible with this molecule
-    value->assertCompatibleWith(*this);
+    //if this is a molecule property then this property
+    //must be compatible with this molecule
+    if (value.isA<MoleculeProperty>())
+        value.asA<MoleculeProperty>().assertCompatibleWith(*this);
 
     d->setProperty(name, value);
 }
@@ -232,8 +235,10 @@ void Molecule::setProperty(const QString &name, const Property &value)
 */
 void Molecule::addProperty(const QString &name, const Property &value)
 {
-    //this property must be compatible with this molecule
-    value->assertCompatibleWith(*this);
+    //if this is a molecule property then this property
+    //must be compatible with this molecule
+    if (value.isA<MoleculeProperty>())
+        value.asA<MoleculeProperty>().assertCompatibleWith(*this);
 
     d->addProperty(name, value);
 }

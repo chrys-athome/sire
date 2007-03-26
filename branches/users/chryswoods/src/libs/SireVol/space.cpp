@@ -52,7 +52,8 @@ QDataStream SIREVOL_EXPORT &operator<<(QDataStream &ds,
 }
 
 /** Deserialise from a binary datastream */
-QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds, SpaceBase&)
+QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds,
+                                       SpaceBase &spacebase)
 {
     VersionID v = readHeader(ds, r_spacebase);
 
@@ -156,6 +157,18 @@ Space& Space::operator=(const Property &property)
 {
     d = property.base();
     return *this;
+}
+
+/** Comparison operator */
+bool Space::operator==(const Space &other) const
+{
+    return d == other.d or *d == *(other.d);
+}
+
+/** Comparison operator */
+bool Space::operator!=(const Space &other) const
+{
+    return d != other.d and *d != *(other.d);
 }
 
 /** Return the type of Space */

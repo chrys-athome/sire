@@ -48,7 +48,7 @@
 #include "atominfogroup.h"
 #include "idmolatom.h"
 
-#include "property.h"
+#include "moleculeproperty.h"
 
 #include "cutgroupid.h"
 #include "resid.h"
@@ -73,6 +73,7 @@
 #include "SireStream/datastream.h"
 
 using namespace SireStream;
+using namespace SireBase;
 using namespace SireMol;
 using namespace SireVol;
 

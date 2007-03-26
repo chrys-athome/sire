@@ -83,6 +83,9 @@ public:
     bool operator==(const PartialMolecule &other) const;
     bool operator!=(const PartialMolecule &other) const;
 
+    MoleculeID ID() const;
+    const MoleculeVersion& version() const;
+
     const MoleculeInfo& info() const;
 
     const ResidueInfo& info(ResNum resnum) const;
@@ -97,6 +100,65 @@ public:
     NewAtom atom(const IDMolAtom &atomid) const;
 
     const AtomSelection& selection() const;
+
+    bool change(const PartialMolecule &molecule) const;
+    bool add(const PartialMolecule &molecule) const;
+    bool remove(const PartialMolecule &molecule) const;
+
+    bool contains(const PartialMolecule &molecule) const;
+
+    // Interface from AtomSelection
+
+    bool isEmpty() const;
+
+    int nSelected() const;
+    int nSelected(CutGroupID cgid) const;
+    int nSelected(ResNum resnum) const;
+
+    int nSelectedCutGroups() const;
+    int nSelectedResidues() const;
+
+    bool selected(const CGAtomID &cgatomid) const;
+    bool selected(const IDMolAtom &atomid) const;
+
+    bool selectedAll() const;
+
+    bool selectedAll(CutGroupID cgid) const;
+    bool selectedAll(ResNum resnum) const;
+
+    bool selectedNone() const;
+
+    bool selectedNone(CutGroupID cgid) const;
+    bool selectedNone(ResNum resnum) const;
+
+    void selectAll();
+    void deselectAll();
+
+    void selectAll(CutGroupID cgid);
+    void deselectAll(CutGroupID cgid);
+
+    void selectAll(ResNum resnum);
+    void deselectAll(ResNum resnum);
+
+    void selectAll(const AtomSelection &selection);
+    void deselectAll(const AtomSelection &selection);
+
+    void select(const CGAtomID &cgatomid);
+    void deselect(const CGAtomID &cgatomid);
+
+    void select(const IDMolAtom &atomid);
+    void deselect(const IDMolAtom &atomid);
+
+    void invert();
+
+    void applyMask(const QSet<CutGroupID> &cgids);
+    void applyMask(const QSet<ResNum> &resnums);
+    void applyMask(const AtomSelection &other);
+
+    QList<AtomIndex> selected() const;
+
+    QSet<CutGroupID> selectedCutGroups() const;
+    QSet<ResNum> selectedResidues() const;
 
 private:
     /** The actual molecular data */

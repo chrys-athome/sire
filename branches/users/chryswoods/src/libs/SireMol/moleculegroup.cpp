@@ -385,7 +385,7 @@ bool MoleculeGroupPvt::change(const QVector<PartialMolecule> &molecules)
 {
     bool changed = false;
 
-    for (QVector<Molecule>::const_iterator it = molecules.constBegin();
+    for (QVector<PartialMolecule>::const_iterator it = molecules.constBegin();
          it != molecules.constEnd();
          ++it)
     {
@@ -397,37 +397,6 @@ bool MoleculeGroupPvt::change(const QVector<PartialMolecule> &molecules)
             const PartialMolecule &oldmol = mols.constData()[it2.value()];
 
             if (oldmol.version() != it->version())
-            {
-                bool mol_changed = mols.data()[it2.value()].change(*it);
-                changed = changed or mol_changed;
-            }
-        }
-    }
-
-    if (changed)
-        id_and_version.incrementMinor();
-
-    return changed;
-}
-
-/** Change a whole load of molecules */
-bool MoleculeGroupPvt::change(const QHash<MoleculeID,PartialMolecule> &molecules)
-{
-    bool changed = false;
-
-    for (QHash<MoleculeID,PartialMolecule>::const_iterator it = molecules.begin();
-         it != molecules.end();
-         ++it)
-    {
-        BOOST_ASSERT( it.key() == it.value().ID() );
-
-        QHash<MoleculeID,int>::const_iterator it2 = idx.constFind(it.key());
-
-        if (it2 != idx.constEnd())
-        {
-            const PartialMolecule &oldmol = mols.constData()[it2.value()];
-
-            if (oldmol.version() != it.value().version())
             {
                 bool mol_changed = mols.data()[it2.value()].change(*it);
                 changed = changed or mol_changed;

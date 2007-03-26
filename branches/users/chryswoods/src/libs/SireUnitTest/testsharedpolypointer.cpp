@@ -441,6 +441,9 @@ void TestSharedPolyPointer::runTests()
     BOOST_CHECK( fooptr2->special() == 150 );
     BOOST_CHECK( fooptr2->what() == Bar2::typeName() );
 
+    barptr = fooptr;
+    bar2ptr = fooptr2;
+
     qDebug() << "TestSharedPolyPointer::runTests() complete";
 
     }

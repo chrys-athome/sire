@@ -62,6 +62,12 @@ class Triangle;
 class Torsion;
 }
 
+namespace SireBase
+{
+class Property;
+class PropertyBase;
+}
+
 namespace SireVol
 {
 class CoordGroup;
@@ -85,8 +91,7 @@ class ResNum;
 class AtomIndex;
 class CutGroupID;
 
-class Property;
-class PropertyBase;
+class MoleculeProperty;
 
 class Bond;
 class Angle;
@@ -105,6 +110,9 @@ class WeightFunction;
 using SireMaths::Vector;
 using SireMaths::Matrix;
 using SireMaths::Quaternion;
+
+using SireBase::Property;
+using SireBase::PropertyBase;
 
 using SireVol::CoordGroup;
 

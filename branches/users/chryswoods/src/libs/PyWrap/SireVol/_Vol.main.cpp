@@ -50,10 +50,12 @@ BOOST_PYTHON_MODULE(_Vol){
 
     register_PeriodicBox_class();
 
+    register_Space_class();
+
     bp::implicitly_convertible< QVector<SireMaths::Vector>, SireVol::CoordGroup >();
 
     bp::implicitly_convertible< const SireVol::SpaceBase&, SireVol::Space >();
 
-    register_Space_class();
+    bp::implicitly_convertible< SireVol::Space, SireBase::Property >();
 }
 

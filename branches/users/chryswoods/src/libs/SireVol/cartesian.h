@@ -112,6 +112,9 @@ public:
     QList< boost::tuple<double,CoordGroup> >
                getCopiesWithin(const CoordGroup &group,
                                const CoordGroup &center, double dist) const;
+
+protected:
+    bool _pvt_isEqual(const SireBase::PropertyBase &other) const;
 };
 
 }
