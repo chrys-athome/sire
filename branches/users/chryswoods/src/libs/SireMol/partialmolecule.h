@@ -29,7 +29,10 @@
 #ifndef SIREMOL_PARTIALMOLECULE_H
 #define SIREMOL_PARTIALMOLECULE_H
 
-#include "moleculedata.h"
+#include <QSharedDataPointer>
+
+#include "idtypes.h"
+#include "atomindex.h"
 #include "atomselection.h"
 
 SIRE_BEGIN_HEADER
@@ -45,9 +48,12 @@ QDataStream& operator>>(QDataStream&, SireMol::PartialMolecule&);
 namespace SireMol
 {
 
+class MoleculeData;
 class Molecule;
 class Residue;
 class NewAtom;
+
+class MoleculeVersion;
 
 /** This class provides a view to an arbitrary part of a molecule
     (which can range from just a single atom all the way through to
@@ -101,11 +107,10 @@ public:
 
     const AtomSelection& selection() const;
 
-    bool change(const PartialMolecule &molecule) const;
-    bool add(const PartialMolecule &molecule) const;
-    bool remove(const PartialMolecule &molecule) const;
+    bool change(const PartialMolecule &molecule);
 
-    bool contains(const PartialMolecule &molecule) const;
+    bool add(const AtomSelection &atoms);
+    bool remove(const AtomSelection &atoms);
 
     // Interface from AtomSelection
 
@@ -151,6 +156,13 @@ public:
 
     void invert();
 
+    bool intersects(const AtomSelection &other) const;
+    bool contains(const AtomSelection &other) const;
+
+    PartialMolecule intersect(const AtomSelection &other) const;
+    PartialMolecule unite(const AtomSelection &other) const;
+    PartialMolecule subtract(const AtomSelection &other) const;
+
     void applyMask(const QSet<CutGroupID> &cgids);
     void applyMask(const QSet<ResNum> &resnums);
     void applyMask(const AtomSelection &other);
@@ -162,10 +174,10 @@ public:
 
 private:
     /** The actual molecular data */
-    MoleculeData moldata;
+    QSharedDataPointer<MoleculeData> d;
 
     /** The atoms which have been selected */
-    AtomSelection slctd_atms;
+    AtomSelection selected_atoms;
 };
 
 }

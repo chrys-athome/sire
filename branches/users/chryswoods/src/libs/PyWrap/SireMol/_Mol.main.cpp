@@ -123,8 +123,6 @@
 
 #include "ResidueInfo.pypp.hpp"
 
-#include "VariantProperty.pypp.hpp"
-
 #include "WeightFunction.pypp.hpp"
 
 #include <boost/tuple/tuple.hpp>
@@ -135,8 +133,6 @@ namespace bp = boost::python;
 
 BOOST_PYTHON_MODULE(_Mol){
     register_SireMol_containers();
-
-    register_VariantProperty_class();
 
     register_Angle_class();
 
@@ -295,10 +291,6 @@ BOOST_PYTHON_MODULE(_Mol){
     bp::implicitly_convertible< SireMol::NewAtom, SireMaths::Vector >();
 
     bp::implicitly_convertible< SireMol::NewAtom, SireMol::Element >();
-
-    bp::implicitly_convertible< const SireMol::PropertyBase&, SireMol::Property >();
-
-    bp::implicitly_convertible< QVariant, SireMol::VariantProperty >();
 
     register_WeightFunction_class();
 }

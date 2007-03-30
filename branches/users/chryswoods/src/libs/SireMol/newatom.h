@@ -62,6 +62,7 @@ namespace SireMol
 
 class Molecule;
 class MoleculeData;
+class PartialMolecule;
 class Residue;
 class Element;
 class AtomInfo;
@@ -90,6 +91,7 @@ class SIREMOL_EXPORT NewAtom
 {
 
 friend class Molecule;
+friend class PartialMolecule;
 friend class Residue;
 
 friend QDataStream& ::operator<<(QDataStream&, const NewAtom&);

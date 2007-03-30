@@ -125,12 +125,20 @@ public:
 
     void invert();
 
+    bool intersects(const AtomSelection &other) const;
+    bool contains(const AtomSelection &other) const;
+
+    AtomSelection intersect(const AtomSelection &other) const;
+    AtomSelection unite(const AtomSelection &other) const;
+    AtomSelection subtract(const AtomSelection &other) const;
+
     void applyMask(const QSet<CutGroupID> &cgids);
     void applyMask(const QSet<ResNum> &resnums);
     void applyMask(const AtomSelection &other);
 
     void assertCompatibleWith(const MoleculeInfo &molinfo) const;
     void assertCompatibleWith(const Molecule &molecule) const;
+    void assertCompatibleWith(const AtomSelection &other) const;
 
     QList<AtomIndex> selected() const;
 

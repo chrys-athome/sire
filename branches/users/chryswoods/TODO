@@ -57,6 +57,10 @@ SireMol
 
 (*) Fix all of the broken parts of the code
 
+(*) Add version numbers to MoleculeProperty so that code can
+    see if a property has changed when the molecule's major version
+    number has changed.
+
 (*) Implement PartialMolecule fully, and better integrate
     PartialMolecule with the rest of the code
 

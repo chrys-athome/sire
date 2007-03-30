@@ -125,14 +125,14 @@ AtomSelection& AtomSelection::operator=(const AtomSelection &other)
         molinfo = other.molinfo;
         nselected = other.nselected;
     }
-    
+
     return *this;
 }
 
 /** Comparison operator */
 bool AtomSelection::operator==(const AtomSelection &other) const
 {
-    return nselected == other.nselected and 
+    return nselected == other.nselected and
            molinfo == other.molinfo and
            selected_atoms == other.selected_atoms;
 }
@@ -626,7 +626,7 @@ void AtomSelection::deselectAll(ResNum resnum)
 void AtomSelection::selectAll(const AtomSelection &selection)
 {
     this->assertCompatibleWith( selection.molinfo );
-    
+
     if (selection.selectedAll())
     {
         this->selectAll();
@@ -636,9 +636,9 @@ void AtomSelection::selectAll(const AtomSelection &selection)
     {
         return;
     }
-    
+
     uint ncg = molinfo.nCutGroups();
-    
+
     for (CutGroupID i(0); i<ncg; ++i)
     {
         if (selection.selectedAll(i))
@@ -646,11 +646,11 @@ void AtomSelection::selectAll(const AtomSelection &selection)
         else
         {
             uint nats = molinfo.nAtoms(i);
-            
+
             for (AtomID j(0); j<nats; ++j)
             {
                 CGAtomID cgatomid(i,j);
-                
+
                 if (selection.selected(cgatomid))
                     this->select(cgatomid);
             }
@@ -665,7 +665,7 @@ void AtomSelection::selectAll(const AtomSelection &selection)
 void AtomSelection::deselectAll(const AtomSelection &selection)
 {
     this->assertCompatibleWith( selection.molinfo );
-    
+
     if (selection.selectedAll())
     {
         this->deselectAll();
@@ -675,9 +675,9 @@ void AtomSelection::deselectAll(const AtomSelection &selection)
     {
         return;
     }
-    
+
     uint ncg = molinfo.nCutGroups();
-    
+
     for (CutGroupID i(0); i<ncg; ++i)
     {
         if (selection.selectedAll(i))
@@ -685,11 +685,11 @@ void AtomSelection::deselectAll(const AtomSelection &selection)
         else if (not this->selectedNone(i))
         {
             uint nats = molinfo.nAtoms(i);
-            
+
             for (AtomID j(0); j<nats; ++j)
             {
                 CGAtomID cgatomid(i,j);
-                
+
                 if (selection.selected(cgatomid))
                     this->deselect(cgatomid);
             }
@@ -794,7 +794,7 @@ void AtomSelection::applyMask(const QSet<ResNum> &resnums)
 }
 
 /** Apply the mask of one AtomSelection to the other - this creates
-    the union of the two AtomSelections
+    the intersection of the two AtomSelections
 
     \throw SireError::incompatible_error
 */
@@ -831,6 +831,139 @@ void AtomSelection::applyMask(const AtomSelection &other)
     }
 }
 
+/** Return whether or not this selection contains any of the atoms
+    selected in 'other'
+
+    \throw SireError::incompatible_error
+*/
+bool AtomSelection::intersects(const AtomSelection &other) const
+{
+    this->assertCompatibleWith(other);
+
+    if (this->selectedAll() or other.selectedAll())
+        return true;
+    else if (this->selectedNone() or other.selectedNone())
+        return false;
+    else
+    {
+        QSet<CutGroupID> cgids = this->selectedCutGroups();
+
+        foreach (CutGroupID cgid, cgids)
+        {
+            if (other.selectedAll(cgid))
+            {
+                if (not other.selectedNone(cgid))
+                    return true;
+            }
+            else if (not other.selectedNone(cgid))
+            {
+                uint nats = molinfo.nAtoms(cgid);
+
+                for (AtomID i(0); i<nats; ++i)
+                {
+                    CGAtomID cgatomid(cgid,i);
+
+                    if (other.selected(cgatomid) and this->selected(cgatomid))
+                        return true;
+                }
+            }
+        }
+
+        return false;
+    }
+}
+
+/** Return whether or not this selection contains all of the atoms that
+    are contained in the 'other' selection
+
+    \throw SireError::incompatible_error
+*/
+bool AtomSelection::contains(const AtomSelection &other) const
+{
+    this->assertCompatibleWith(other);
+
+    if (this->selectedAll())
+        return true;
+    else if (this->selectedNone())
+        return other.selectedNone();
+    else if (this->nSelected() < other.nSelected())
+        return false;
+    else
+    {
+        QSet<CutGroupID> cgids = other.selectedCutGroups();
+
+        foreach (CutGroupID cgid, cgids)
+        {
+            if (other.selectedAll(cgid))
+            {
+                if (not this->selectedAll(cgid))
+                    return false;
+            }
+            else
+            {
+                uint nats = molinfo.nAtoms(cgid);
+
+                for (AtomID j(0); j<nats; ++j)
+                {
+                    CGAtomID cgatomid(cgid,j);
+
+                    if (other.selected(cgatomid))
+                    {
+                        if (not this->selected(cgatomid))
+                            return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+}
+
+/** Return the intersection of this selection with 'other'. The
+    returned selection will contain all atoms that are selected
+    by both groups.
+
+    \throw SireError::incompatible_error
+*/
+AtomSelection AtomSelection::intersect(const AtomSelection &other) const
+{
+    AtomSelection intersection(*this);
+
+    intersection.applyMask(other);
+
+    return intersection;
+}
+
+/** Return the union of this selection with 'other'. The
+    returned selection will contain all atoms that are in
+    either or the two selections.
+
+    \throw SireError::incompatible_error
+*/
+AtomSelection AtomSelection::unite(const AtomSelection &other) const
+{
+    AtomSelection u(*this);
+
+    u.selectAll(other);
+
+    return u;
+}
+
+/** Return this selection minus 'other' - this will return
+    the atoms that are in this selection that are not in 'other'.
+
+    \throw SireError::incompatible_error
+*/
+AtomSelection AtomSelection::subtract(const AtomSelection &other) const
+{
+    AtomSelection s(*this);
+
+    s.deselectAll(other);
+
+    return s;
+}
+
 /** Assert that 'info' is compatible with this selection. This
     will throw an exception unless info == molinfo
 
@@ -849,6 +982,14 @@ void AtomSelection::assertCompatibleWith(const Molecule &molecule) const
     this->assertCompatibleWith(molecule.info());
 }
 
+/** Assert that 'other' is compatible with this selection */
+void AtomSelection::assertCompatibleWith(const AtomSelection &other) const
+{
+    if (other.molinfo != molinfo)
+        throw SireError::incompatible_error( QObject::tr(
+                "The passed selection is not compatible with this selection!"), CODELOC );
+}
+
 /** Return a list of all of the atoms that are contained in the this selection */
 QList<AtomIndex> AtomSelection::selected() const
 {
@@ -856,20 +997,20 @@ QList<AtomIndex> AtomSelection::selected() const
 
     //do this in residue/atom order - this is more natural for the user
     uint nres = molinfo.nResidues();
-    
+
     for (ResID i(0); i<nres; ++i)
     {
         uint nats = molinfo.nAtoms(i);
-        
+
         for (AtomID j(0); j<nats; ++j)
         {
             CGAtomID cgatomid = molinfo[ ResIDAtomID(i,j) ];
-            
+
             if (this->selected(cgatomid))
                 all_atoms.append( molinfo.atom(cgatomid) );
         }
     }
-    
+
     return all_atoms;
 }
 
@@ -880,17 +1021,17 @@ QSet<CutGroupID> AtomSelection::selectedCutGroups() const
     if (this->selectedAll())
     {
         QSet<CutGroupID> cgids;
-        
+
         uint ncg = molinfo.nCutGroups();
-        
+
         if (ncg > 0)
         {
             cgids.reserve(ncg);
-            
+
             for (CutGroupID i(0); i<ncg; ++i)
                 cgids.insert(i);
         }
-        
+
         return cgids;
     }
     else if (this->selectedNone())
@@ -916,15 +1057,15 @@ QSet<ResNum> AtomSelection::selectedResidues() const
     else
     {
         QVector<ResNum> resnums = molinfo.residueNumbers();
-        
+
         QSet<ResNum> selected_res;
-        
+
         foreach (ResNum resnum, resnums)
         {
             if (this->nSelected(resnum) > 0)
                 selected_res.insert(resnum);
         }
-        
+
         return selected_res;
     }
 }

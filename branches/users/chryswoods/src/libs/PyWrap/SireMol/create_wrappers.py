@@ -62,7 +62,6 @@ wrap_classes = [ "Angle",
                  "ResNum",
                  "ResNumAtomID",
                  "ResNumIndexID",
-                 "VariantProperty",
                  "WeightFunction"
                ]
 
@@ -96,13 +95,9 @@ def fix_atominfogroup(c):
 def fix_molecule(c):
     c.add_registration_code( "def( bp::init<const SireMol::Molecule&>() )" )
 
-def remove_property_bases(c):
-    c.bases = []
-
 special_code = { "AtomInfo" : fix_atominfo,
                  "Atom" : fix_atom,
                  "AtomInfoGroup" : fix_atominfogroup,
-                 "Property" : remove_property_bases,
                  "Molecule" : fix_molecule
                }
 
@@ -154,11 +149,7 @@ implicitly_convertible = [ ("boost::tuples::tuple<SireMol::AtomIndex,SireMol::At
                            ("SireMol::MoleculeGroup", "SireMol::MoleculeGroups"),
                            
                            ("SireMol::NewAtom", "SireMaths::Vector"),
-                           ("SireMol::NewAtom", "SireMol::Element"),
-                           
-                           ("const SireMol::PropertyBase&", "SireMol::Property"),
-                           
-                           ("QVariant", "SireMol::VariantProperty")
+                           ("SireMol::NewAtom", "SireMol::Element")
                          ]
 
 incpaths = sys.argv[1:]

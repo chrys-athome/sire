@@ -226,7 +226,7 @@ void register_Molecule_memfuns8( Molecule_exposer_t& Molecule_exposer ){
 
     { //::SireMol::Molecule::setProperty
     
-        typedef void ( ::SireMol::Molecule::*setProperty_function_type )( ::QString const &,::SireMol::PropertyBase const & ) ;
+        typedef void ( ::SireMol::Molecule::*setProperty_function_type )( ::QString const &,::SireBase::PropertyBase const & ) ;
         
         Molecule_exposer.def( 
             "setProperty"

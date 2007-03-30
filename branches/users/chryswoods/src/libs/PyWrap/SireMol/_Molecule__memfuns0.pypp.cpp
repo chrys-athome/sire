@@ -28,7 +28,7 @@ void register_Molecule_memfuns0( Molecule_exposer_t& Molecule_exposer ){
 
     { //::SireMol::Molecule::addProperty
     
-        typedef void ( ::SireMol::Molecule::*addProperty_function_type )( ::QString const &,::SireMol::PropertyBase const & ) ;
+        typedef void ( ::SireMol::Molecule::*addProperty_function_type )( ::QString const &,::SireBase::PropertyBase const & ) ;
         
         Molecule_exposer.def( 
             "addProperty"
@@ -39,7 +39,7 @@ void register_Molecule_memfuns0( Molecule_exposer_t& Molecule_exposer ){
 
     { //::SireMol::Molecule::addProperty
     
-        typedef void ( ::SireMol::Molecule::*addProperty_function_type )( ::QString const &,::SireMol::Property const & ) ;
+        typedef void ( ::SireMol::Molecule::*addProperty_function_type )( ::QString const &,::SireBase::Property const & ) ;
         
         Molecule_exposer.def( 
             "addProperty"

@@ -84,7 +84,6 @@ set ( WRAPMOL_SOURCES
       ResidueCutting.pypp.cpp
       ResidueInfo.pypp.cpp
 
-      VariantProperty.pypp.cpp
       WeightFunction.pypp.cpp
 
       _EditMol__classes.pypp.cpp

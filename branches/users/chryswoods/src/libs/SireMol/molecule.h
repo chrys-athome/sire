@@ -81,6 +81,7 @@ class EditMol;
 class MoleculeData;
 class NewAtom;
 class Residue;
+class PartialMolecule;
 class CutGroup;
 class Atom;
 
@@ -131,7 +132,8 @@ class SIREMOL_EXPORT Molecule
 {
 
 friend class NewAtom; //so it can see the MoleculeData object
-friend class Residue; //so it can call the MoleculeData constructor
+friend class Residue; //so it can see the MoleculeData object
+friend class PartialMolecule; //so it can see the MoleculeData object
 
 friend QDataStream& ::operator<<(QDataStream&, const Molecule&);
 friend QDataStream& ::operator>>(QDataStream&, Molecule&);

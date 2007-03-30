@@ -48,6 +48,14 @@ void register_AtomSelection_class(){
             , (void ( ::SireMol::AtomSelection::* )( ::SireMol::Molecule const & ) const)( &::SireMol::AtomSelection::assertCompatibleWith )
             , ( bp::arg("molecule") ) )    
         .def( 
+            "assertCompatibleWith"
+            , (void ( ::SireMol::AtomSelection::* )( ::SireMol::AtomSelection const & ) const)( &::SireMol::AtomSelection::assertCompatibleWith )
+            , ( bp::arg("other") ) )    
+        .def( 
+            "contains"
+            , &::SireMol::AtomSelection::contains
+            , ( bp::arg("other") ) )    
+        .def( 
             "deselect"
             , (void ( ::SireMol::AtomSelection::* )( ::SireMol::CGAtomID const & ) )( &::SireMol::AtomSelection::deselect )
             , ( bp::arg("cgatomid") ) )    
@@ -70,6 +78,14 @@ void register_AtomSelection_class(){
             "deselectAll"
             , (void ( ::SireMol::AtomSelection::* )( ::SireMol::AtomSelection const & ) )( &::SireMol::AtomSelection::deselectAll )
             , ( bp::arg("selection") ) )    
+        .def( 
+            "intersect"
+            , &::SireMol::AtomSelection::intersect
+            , ( bp::arg("other") ) )    
+        .def( 
+            "intersects"
+            , &::SireMol::AtomSelection::intersects
+            , ( bp::arg("other") ) )    
         .def( 
             "invert"
             , &::SireMol::AtomSelection::invert )    
@@ -157,6 +173,14 @@ void register_AtomSelection_class(){
         .def( 
             "selectedResidues"
             , &::SireMol::AtomSelection::selectedResidues )    
+        .def( 
+            "subtract"
+            , &::SireMol::AtomSelection::subtract
+            , ( bp::arg("other") ) )    
+        .def( 
+            "unite"
+            , &::SireMol::AtomSelection::unite
+            , ( bp::arg("other") ) )    
         .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::AtomSelection >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
