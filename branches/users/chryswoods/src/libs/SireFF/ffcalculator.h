@@ -116,7 +116,7 @@ public:
 
     virtual PartialMolecule molecule(MoleculeID molid)=0;
 
-    virtual QHash<MoleculeID,PartialMolecule> contents(const FFGroup::Group group)=0;
+    virtual QHash<MoleculeID,PartialMolecule> contents(const FFBase::Group group)=0;
     virtual QHash<MoleculeID,PartialMolecule> contents()=0;
 
     virtual bool isDirty()=0;
@@ -157,10 +157,10 @@ public:
     bool add(const QList<PartialMolecule> &molecules,
              const ParameterMap &map = ParameterMap());
 
-    bool addTo(const FFBase::FFGroup &group,
+    bool addTo(const FFBase::Group &group,
                const PartialMolecule &molecule,
                const ParameterMap &map = ParameterMap());
-    bool addTo(const FFBase::FFGroup &group,
+    bool addTo(const FFBase::Group &group,
                const QList<PartialMolecule> &molecules,
                const ParameterMap &map = ParameterMap());
 
@@ -179,7 +179,7 @@ public:
     bool contains(const PartialMolecule &molecule,
                   const FFBase::Group &group);
 
-    bool refersTo(MoleculeID molid)=0;
+    bool refersTo(MoleculeID molid);
     bool refersTo(MoleculeID molid, const FFBase::Group &group);
 
     QSet<MoleculeID> moleculeIDs();
@@ -187,7 +187,7 @@ public:
 
     PartialMolecule molecule(MoleculeID molid);
 
-    QHash<MoleculeID,PartialMolecule> contents(const FFGroup::Group group);
+    QHash<MoleculeID,PartialMolecule> contents(const FFBase::Group group);
     QHash<MoleculeID,PartialMolecule> contents();
 
     bool isDirty();

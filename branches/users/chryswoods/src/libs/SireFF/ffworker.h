@@ -32,6 +32,7 @@
 #include "SireCluster/processor.h"
 #include "SireCAS/values.h"
 
+#include "ffbase.h"
 #include "parametermap.h"
 
 SIRE_BEGIN_HEADER
@@ -45,11 +46,17 @@ class PartialMolecule;
 class MoleculeID;
 }
 
+namespace SireBase
+{
+class Property;
+}
+
 namespace SireFF
 {
 
 class ForceField;
 class FFCalculator;
+class FFCalculatorBase;
 class FFComponent;
 
 using SireMol::Molecule;
@@ -59,6 +66,8 @@ using SireMol::PartialMolecule;
 using SireMol::MoleculeID;
 
 using SireCAS::Values;
+
+using SireBase::Property;
 
 /** This is the base class of all FFWorkers - an FFWorker is a class
     that evaluates a ForceField on a (possibly) remote thread or processor.
@@ -90,10 +99,10 @@ public:
     bool add(const QList<PartialMolecule> &molecules,
              const ParameterMap &map = ParameterMap());
 
-    bool addTo(const FFBase::FFGroup &group,
+    bool addTo(const FFBase::Group &group,
                const PartialMolecule &molecule,
                const ParameterMap &map = ParameterMap());
-    bool addTo(const FFBase::FFGroup &group,
+    bool addTo(const FFBase::Group &group,
                const QList<PartialMolecule> &molecules,
                const ParameterMap &map = ParameterMap());
 
@@ -120,7 +129,7 @@ public:
 
     PartialMolecule molecule(MoleculeID molid);
 
-    QHash<MoleculeID,PartialMolecule> contents(const FFGroup::Group group);
+    QHash<MoleculeID,PartialMolecule> contents(const FFBase::Group group);
     QHash<MoleculeID,PartialMolecule> contents();
 
     bool isDirty();
@@ -150,10 +159,10 @@ protected:
     virtual bool _pvt_add(const QList<PartialMolecule> &molecules,
                           const ParameterMap &map)=0;
 
-    virtual bool _pvt_addTo(const FFBase::FFGroup &group,
+    virtual bool _pvt_addTo(const FFBase::Group &group,
                             const PartialMolecule &molecule,
                             const ParameterMap &map)=0;
-    virtual bool _pvt_addTo(const FFBase::FFGroup &group,
+    virtual bool _pvt_addTo(const FFBase::Group &group,
                             const QList<PartialMolecule> &molecules,
                             const ParameterMap &map)=0;
 
@@ -181,7 +190,7 @@ protected:
     virtual PartialMolecule _pvt_molecule(MoleculeID molid)=0;
 
     virtual QHash<MoleculeID,PartialMolecule>
-                _pvt_contents(const FFGroup::Group group)=0;
+                _pvt_contents(const FFBase::Group group)=0;
     virtual QHash<MoleculeID,PartialMolecule>
                 _pvt_contents()=0;
 
@@ -222,7 +231,7 @@ private:
 class SIREFF_EXPORT FFLocalWorker : public FFWorkerBase
 {
 public:
-    FFLocalWorker(FFCalculator *ffcalculator);
+    FFLocalWorker(FFCalculatorBase *ffcalculator);
 
     ~FFLocalWorker();
 
@@ -231,12 +240,18 @@ public:
 protected:
     bool _pvt_setForceField(const ForceField &forcefield);
 
+    double _pvt_getEnergies(Values &components);
+    
+    bool _pvt_setProperty(const QString &name, const Property &property);
+    Property _pvt_getProperty(const QString &name);
+    bool _pvt_containsProperty(const QString &name);
+    
     bool _pvt_add(const PartialMolecule &molecule, const ParameterMap &map);
     bool _pvt_add(const QList<PartialMolecule> &molecules, const ParameterMap &map);
 
-    bool _pvt_addTo(const FFBase::FFGroup &group, const PartialMolecule &molecule,
+    bool _pvt_addTo(const FFBase::Group &group, const PartialMolecule &molecule,
                     const ParameterMap &map);
-    bool _pvt_addTo(const FFBase::FFGroup &group,
+    bool _pvt_addTo(const FFBase::Group &group,
                     const QList<PartialMolecule> &molecules,
                     const ParameterMap &map);
 
@@ -263,7 +278,7 @@ protected:
 
     PartialMolecule _pvt_molecule(MoleculeID molid);
 
-    QHash<MoleculeID,PartialMolecule> _pvt_contents(const FFGroup::Group group);
+    QHash<MoleculeID,PartialMolecule> _pvt_contents(const FFBase::Group group);
     QHash<MoleculeID,PartialMolecule> _pvt_contents();
 
     bool _pvt_isDirty();
@@ -285,19 +300,15 @@ protected:
 class SIREFF_EXPORT FFWorker : public FFLocalWorker, public SireCluster::WorkerBase
 {
 public:
-    FFWorker(FFCalculator *ffcalculator);
+    FFWorker(FFCalculatorBase *ffcalculator);
 
     ~FFWorker();
-
-    ForceField forcefield() const;
 
 protected:
     void _pvt_recalculateEnergy();
     void _pvt_recalculateEnergyFG();
 
     void _pvt_waitUntilReady();
-
-    double _pvt_getEnergies(Values &components);
 };
 
 }

@@ -89,40 +89,19 @@ void FFCalculator::calculateEnergy()
     total_nrg = nrg_components.value(ffield.components().total());
 }
 
-bool FFCalculator::add(const Molecule &molecule, const ParameterMap &map)
+bool FFCalculator::add(const PartialMolecule &molecule, const ParameterMap &map)
 {
     return ffield.add(molecule, map);
 }
 
-bool FFCalculator::add(const Residue &residue, const ParameterMap &map)
-{
-    return ffield.add(residue, map);
-}
-
-bool FFCalculator::change(const Molecule &molecule)
+bool FFCalculator::change(const PartialMolecule &molecule)
 {
     return ffield.change(molecule);
 }
 
-bool FFCalculator::change(const Residue &residue)
-{
-    return ffield.change(residue);
-}
-
-bool FFCalculator::remove(const Molecule &molecule)
+bool FFCalculator::remove(const PartialMolecule &molecule)
 {
     return ffield.remove(molecule);
-}
-
-bool FFCalculator::remove(const Residue &residue)
-{
-    return ffield.remove(residue);
-}
-
-bool FFCalculator::replace(const Molecule &oldmol, const Molecule &newmol,
-                           const ParameterMap &map)
-{
-    return ffield.replace(oldmol, newmol, map);
 }
              
 /** Set the forcefield to be calculated and return whether its

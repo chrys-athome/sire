@@ -31,6 +31,8 @@
 
 #include "SireBase/sharedpolypointer.hpp"
 
+#include "ffbase.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireFF
@@ -55,8 +57,6 @@ class ResID;
 
 namespace SireFF
 {
-
-class FFBase;
 
 using SireMol::MoleculeID;
 using SireMol::Molecule;
@@ -99,6 +99,7 @@ public:
 
     const FFBase::Components& components() const;
     const FFBase::Parameters& parameters() const;
+    const FFBase::Groups& groups() const;
 
     double energy();
     double energy(const FFComponent &component);
@@ -109,6 +110,8 @@ public:
     bool setProperty(const QString &name, const Property &value);
     Property getProperty(const QString &name) const;
     bool containsProperty(const QString &name) const;
+
+    QHash<QString,Property> properties() const;
 
     bool change(const PartialMolecule &molecule);
 
@@ -148,6 +151,7 @@ public:
     QSet<MoleculeID> moleculeIDs(const FFBase::Group &group) const;
 
     PartialMolecule molecule(MoleculeID molid) const;
+    QHash<MoleculeID,PartialMolecule> molecules(const QSet<MoleculeID> &molids) const;
 
     QHash<MoleculeID,PartialMolecule> contents(const FFBase::Group &group) const;
     QHash<MoleculeID,PartialMolecule> contents() const;

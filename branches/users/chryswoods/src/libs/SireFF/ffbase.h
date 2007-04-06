@@ -57,6 +57,11 @@ class FFBase;
 QDataStream& operator<<(QDataStream&, const SireFF::FFBase&);
 QDataStream& operator>>(QDataStream&, SireFF::FFBase&);
 
+namespace SireBase
+{
+class Property;
+}
+
 namespace SireMol
 {
 class PartialMolecule;
@@ -76,6 +81,7 @@ class ForceField;
 class MovedMols;
 
 using SireBase::Version;
+using SireBase::Property;
 using SireBase::IDMajMinVersion;
 
 using SireCAS::Function;
@@ -114,8 +120,11 @@ public:
 
     virtual ~FFBase();
 
-    virtual FFBase& operator=(const FFBase &other)=0;
+    FFBase& operator=(const FFBase &other);
     FFBase& operator=(const ForceField &ffield);
+
+    bool operator==(const FFBase &other) const;
+    bool operator!=(const FFBase &other) const;
 
     static const char* typeName()
     {
@@ -252,6 +261,8 @@ public:
         virtual ~Parameters();
     };
 
+    /** Return the object containing the names of the parameters
+        used by this forcefield */
     virtual const FFBase::Parameters& parameters() const=0;
 
     /** This encapsulated class provides an ID for a group
@@ -318,6 +329,8 @@ public:
         quint32 n;
     };
 
+    /** Return the object containing the names of the 
+        groups used by this forcefield */
     virtual const FFBase::Groups& groups() const
     {
         return FFBase::Groups::default_group;
@@ -336,9 +349,9 @@ public:
 
     virtual Property getProperty(const QString &name) const;
 
-    /** Return whether or not this forcefield contains the property
-        called 'name' */
     virtual bool containsProperty(const QString &name) const;
+
+    virtual QHash<QString,Property> properties() const;
 
     /** Change the molecule 'molecule' (e.g. move it, or change its
         parameters). This does nothing if the molecule is not
@@ -355,13 +368,7 @@ public:
     */
     virtual bool change(const PartialMolecule &molecule)=0;
 
-    /** Change a whole load of partial molecules
-
-        \throw SireMol::missing_property
-        \throw SireError::invalid_cast
-        \throw SireError::invalid_operation
-    */
-    virtual bool change(const QHash<MoleculeID,PartialMolecule> &mols)=0;
+    virtual bool change(const QHash<MoleculeID,PartialMolecule> &mols);
 
     /** Add the molecule 'molecule' to this forcefield using the
         optional parameter map to find any necessay parameters
@@ -403,16 +410,8 @@ public:
 
     virtual bool remove(const QList<PartialMolecule> &molecules);
 
-    /** Remove the molecule 'molecule' from the group 'group'
-        from this forcefield - this does nothing if the molecule
-        is not in this forcefield. This returns whether or not
-        this has changed the forcefield (therefore necessitating
-        a recalculation of the energy)
-
-        \throw SireError::invalid_operation
-    */
     virtual bool removeFrom(const FFBase::Group &group,
-                            const PartialMolecule &molecule)=0;
+                            const PartialMolecule &molecule);
 
     virtual bool removeFrom(const FFBase::Group &group,
                             const QList<PartialMolecule> &molecules);
@@ -421,19 +420,14 @@ public:
         any version of the partial molecule 'molecule' */
     virtual bool contains(const PartialMolecule &molecule) const=0;
 
-    /** Return whether this forcefield contains a complete copy of
-        any version of the partial molecule 'molecule' in the group 'group' */
     virtual bool contains(const PartialMolecule &molecule,
-                          const FFBase::Group &group) const=0;
+                          const FFBase::Group &group) const;
 
     /** Return whether or not this forcefield contains *any part* of
         any version of the molecule with ID 'molid' */
     virtual bool refersTo(MoleculeID molid) const=0;
 
-    /** Return whether or not the group 'group' in this forcefield
-        contains *any part* of any version of the molecule with ID
-        'molid' */
-    virtual bool refersTo(MoleculeID molid, const FFBase::Group &group) const=0;
+    virtual bool refersTo(MoleculeID molid, const FFBase::Group &group) const;
 
     /** Return the set of all of the ID numbers of all of the
         molecules that are referred to by this forcefield
@@ -441,11 +435,7 @@ public:
         in this forcefield) */
     virtual QSet<MoleculeID> moleculeIDs() const=0;
 
-    /** Return the set of all of the ID numbers of all of the
-        molecules that are referred to by group 'group' in
-        this forcefield (i.e. all molecules that have at least
-        some part in this group in this forcefield) */
-    virtual QSet<MoleculeID> moleculeIDs(const FFBase::Group &group) const=0;
+    virtual QSet<MoleculeID> moleculeIDs(const FFBase::Group &group) const;
 
     /** Return the copy of the molecule in this forcefield that
         has the ID == molid
@@ -454,9 +444,11 @@ public:
     */
     virtual PartialMolecule molecule(MoleculeID molid) const=0;
 
-    /** Return the contents of the group 'group' in this forcefield */
+    virtual QHash<MoleculeID,PartialMolecule> 
+                  molecules(const QSet<MoleculeID> &molids) const;
+
     virtual QHash<MoleculeID,PartialMolecule> contents(
-                                        const FFBase::Group group) const=0;
+                                        const FFBase::Group &group) const;
 
     /** Return all of the molecules (and parts of molecules) that
         are in this forcefield */
@@ -492,10 +484,9 @@ protected:
         and of all of the component energies */
     virtual void recalculateEnergy()=0;
 
-    /** Virtual function used to return the current copy of the molecule 'mol'.
-        The entire molecule is returned even if the forcefield contains only
-        a part of the molecule */
-    virtual Molecule getMolecule(MoleculeID molid) const=0;
+    /** Virtual function used to copy one FFBase to another.
+        'other' is guaranteed to be of the same type as this class */
+    virtual void _pvt_copy(const FFBase &other)=0;
 
 private:
     /** The name of this forcefield - this may be used to give a unique

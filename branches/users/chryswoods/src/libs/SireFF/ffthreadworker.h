@@ -53,15 +53,11 @@ public:
 
     ~FFThreadWorker();
 
-    ForceField forcefield() const;
-
 protected:
     void _pvt_recalculateEnergy();
     void _pvt_recalculateEnergyFG();
 
     void _pvt_waitUntilReady();
-
-    double _pvt_getEnergies(Values &nrg_components);
 
 private:
     void calculate();
