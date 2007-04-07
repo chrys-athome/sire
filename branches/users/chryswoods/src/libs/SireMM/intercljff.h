@@ -121,22 +121,9 @@ public:
         return new InterCLJFF(*this);
     }
 
-    bool change(const Molecule &molecule);
-    bool change(const Residue &residue);
-    bool change(const NewAtom &atom);
-
-    bool add(const Molecule &mol, const ParameterMap &map = ParameterMap());
-    bool add(const Residue &res, const ParameterMap &map = ParameterMap());
-    bool add(const NewAtom &atom, const ParameterMap &map = ParameterMap());
-
-    bool add(const Molecule &mol, const AtomSelection &selected_atoms,
-             const ParameterMap &map = ParameterMap());
-
-    bool remove(const Molecule &molecule);
-    bool remove(const Residue &residue);
-    bool remove(const NewAtom &atom);
-
-    bool remove(const Molecule &mol, const AtomSelection &selected_atoms);
+    bool change(const PartialMolecule &molecule);
+    bool add(const PartialMolecule &mol, const ParameterMap &map = ParameterMap());
+    bool remove(const PartialMolecule &molecule);
 
 protected:
     void recalculateViaDelta();
@@ -152,15 +139,6 @@ protected:
 private:
     void updateCurrentState(const CLJMolecule &new_molecule);
     void removeFromCurrentState(MoleculeID molid);
-
-    template<class T>
-    bool _pvt_add(const T &mol, const ParameterMap &map);
-
-    template<class T>
-    bool _pvt_remove(const T &mol);
-
-    template<class T>
-    bool _pvt_change(const T &mol);
 
     /** All of the molecules that have at least one atom
         in this forcefield */

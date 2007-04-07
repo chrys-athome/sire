@@ -29,8 +29,6 @@
 #ifndef SIREBASE_PAIRMATRIX_HPP
 #define SIREBASE_PAIRMATRIX_HPP
 
-#include <QVarLengthArray>
-
 #include "sireglobal.h"
 
 SIRE_BEGIN_HEADER
@@ -43,7 +41,7 @@ This provides a 2D matrix that contains information about all pairs of two group
 
 @author Christopher Woods
 */
-template<class T, int N=1024>
+template<class T>
 class PairMatrix
 {
 public:
@@ -73,15 +71,14 @@ public:
     const T& operator[](unsigned int j) const;
     T& operator[](unsigned int j);
 
-    /** Return a const reference to the element at index 'i,j'. This is used by
-        the Python wrapping... */
+    /** Return a const reference to the element at index 'i,j'. */
     const T& at(unsigned int i, unsigned int j) const;
 
     /** Redimension this PairMatrix to n_outer by n_inner elements. This
-        function is very quick if the total number of elements does not change
+        function is very quick if the total number of elements does not increase
         as the existing array is just reinterpreted. Reallocation will only
         occur if the number of elements becomes greater than n_elements. Note
-        that you should clear or repopulate the PairMatrix after it has been
+        that you should repopulate the PairMatrix after it has been
         redimensioned. Also note that both i and j should be greater than 0,
         and that any index set using 'setOuterIndex' will now be invalid. */
     void redimension(unsigned int i, unsigned int j);
@@ -95,12 +92,9 @@ public:
         inner loop */
     void setOuterIndex(unsigned int i);
 
-    /** Clear the PairMatrix. Sets all values to 0.0 */
-    void clear();
-
 private:
     /** Pointer to the array of entries in this PairMatrix */
-    QVarLengthArray<T,N> array;
+    T *array;
 
     /** The current outer index (multiplied by n_outer) */
     unsigned int outer_index;
@@ -112,118 +106,113 @@ private:
     unsigned int n_elements;
 };
 
-template<class T, int N>
+template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-PairMatrix<T,N>::PairMatrix() : array(0), n_outer(0), n_inner(0), n_elements(0)
+PairMatrix<T>::PairMatrix() : array(0), n_outer(0), n_inner(0), n_elements(0)
 {}
 
-template<class T, int N>
+template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-PairMatrix<T,N>::PairMatrix(unsigned int i, unsigned int j)
+PairMatrix<T>::PairMatrix(unsigned int i, unsigned int j)
               : n_outer(i), n_inner(j), n_elements(0)
 {
     n_elements = n_outer * n_inner;
-    array.resize(n_elements);
+    array = new T[n_elements];
 }
 
-template<class T, int N>
+template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-PairMatrix<T,N>::~PairMatrix()
-{}
+PairMatrix<T>::~PairMatrix()
+{
+    delete[] array;
+}
 
-template<class T, int N>
+template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-unsigned int PairMatrix<T,N>::nOuter() const
+unsigned int PairMatrix<T>::nOuter() const
 {
     return n_outer;
 }
 
-template<class T, int N>
+template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-unsigned int PairMatrix<T,N>::nInner() const
+unsigned int PairMatrix<T>::nInner() const
 {
     return n_inner;
 }
 
-template<class T, int N>
-SIRE_OUTOFLINE_TEMPLATE
-void PairMatrix<T,N>::clear()
+template<class T>
+SIRE_INLINE_TEMPLATE
+const T& PairMatrix<T>::operator()(unsigned int i, unsigned int j) const
 {
-    array.resize(0);
-    array.resize(n_elements);
+    return array[i*n_outer + j];
 }
 
-template<class T, int N>
+template<class T>
 SIRE_INLINE_TEMPLATE
-const T& PairMatrix<T,N>::operator()(unsigned int i, unsigned int j) const
+T& PairMatrix<T>::operator()(unsigned int i, unsigned int j)
 {
-    return array.constData()[i*n_outer + j];
+    return array[i*n_outer + j];
 }
 
-template<class T, int N>
+template<class T>
 SIRE_INLINE_TEMPLATE
-T& PairMatrix<T,N>::operator()(unsigned int i, unsigned int j)
+const T& PairMatrix<T>::operator()(unsigned int j) const
 {
-    return array.data()[i*n_outer + j];
+    return array[outer_index + j];
 }
 
-template<class T, int N>
+template<class T>
 SIRE_INLINE_TEMPLATE
-const T& PairMatrix<T,N>::operator()(unsigned int j) const
+T& PairMatrix<T>::operator()(unsigned int j)
 {
-    return array.constData()[outer_index + j];
+    return array[outer_index + j];
 }
 
-template<class T, int N>
+template<class T>
 SIRE_INLINE_TEMPLATE
-T& PairMatrix<T,N>::operator()(unsigned int j)
+const T& PairMatrix<T>::operator[](unsigned int j) const
 {
-    return array.data()[outer_index + j];
+    return array[outer_index + j];
 }
 
-template<class T, int N>
+template<class T>
 SIRE_INLINE_TEMPLATE
-const T& PairMatrix<T,N>::operator[](unsigned int j) const
+T& PairMatrix<T>::operator[](unsigned int j)
 {
-    return operator()(j);
+    return array[outer_index + j];
 }
 
-template<class T, int N>
+template<class T>
 SIRE_INLINE_TEMPLATE
-T& PairMatrix<T,N>::operator[](unsigned int j)
-{
-    return operator()(j);
-}
-
-template<class T, int N>
-SIRE_INLINE_TEMPLATE
-void PairMatrix<T,N>::setOuterIndex(unsigned int i)
+void PairMatrix<T>::setOuterIndex(unsigned int i)
 {
     outer_index = n_outer * i;
 }
 
-template<class T, int N>
+template<class T>
 SIRE_INLINE_TEMPLATE
-const T& PairMatrix<T,N>::at(unsigned int i, unsigned int j) const
+const T& PairMatrix<T>::at(unsigned int i, unsigned int j) const
 {
     return PairMatrix::operator()(i,j);
 }
 
-template<class T, int N>
+template<class T>
 SIRE_INLINE_TEMPLATE
-void PairMatrix<T,N>::redimension(unsigned int i, unsigned int j)
+void PairMatrix<T>::redimension(unsigned int i, unsigned int j)
 {
-    if (i != n_inner or j != n_outer)
-    {
-        n_inner = i;
-        n_outer = j;
+    n_inner = i;
+    n_outer = j;
 
-        unsigned int new_n_elements = n_inner * n_outer;
-        if (new_n_elements > n_elements)
-        {
-            n_elements = new_n_elements;
-            array.resize(n_elements);
-        }
+    outer_index = 0;
+
+    unsigned int new_n_elements = n_inner * n_outer;
+    if (new_n_elements > n_elements)
+    {
+        n_elements = new_n_elements;
+           
+        delete[] array;
+        array = new T[n_elements];
     }
 }
 

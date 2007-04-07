@@ -275,10 +275,7 @@ protected:
                                      DistMatrix &distmatrix,
                                      CLJMatrix &cljmatrix);
 
-    CLJFF& copy(const CLJFF &other);
-
-    DistMatrix& distanceMatrix();
-    CLJMatrix& cljMatrix();
+    void _pvt_copy(const FFBase &other);
 
 private:
 
@@ -289,12 +286,6 @@ private:
                                          CLJMatrix &cljmatrix);
 
     void registerComponents();
-
-    /** Workspace for the distance calculations */
-    DistMatrix distmat;
-
-    /** Workspace for the combination of CLJ parameters */
-    CLJMatrix cljmat;
 
     /** The space in which the molecules in this forcefield reside */
     Space spce;
@@ -330,14 +321,7 @@ friend QDataStream& ::operator>>(QDataStream&, CLJFF::CLJMolecule&);
 public:
     CLJMolecule();
 
-    CLJMolecule(const Molecule &molecule,
-                const QString &chgproperty, const QString &ljproperty);
-    CLJMolecule(const Residue &residue,
-                const QString &chgproperty, const QString &ljproperty);
-    CLJMolecule(const NewAtom &atom,
-                const QString &chgproperty, const QString &ljproperty);
-
-    CLJMolecule(const Molecule &molecule, const AtomSelection &selected_atoms,
+    CLJMolecule(const PartialMolecule &molecule,
                 const QString &chgproperty, const QString &ljproperty);
 
     CLJMolecule(const CLJMolecule &other, const QSet<CutGroupID> &groups);
@@ -353,29 +337,15 @@ public:
 
     bool isEmpty() const;
 
-    const Molecule& molecule() const;
+    const PartialMolecule& molecule() const;
 
-    ChangedCLJMolecule change(const Molecule &molecule) const;
-    ChangedCLJMolecule change(const Residue &residue) const;
-    ChangedCLJMolecule change(const NewAtom &newatom) const;
+    ChangedCLJMolecule change(const PartialMolecule &molecule) const;
 
-    ChangedCLJMolecule add(const Molecule &molecule,
-                           const QString &chgproperty = QString::null,
-                           const QString &ljproperty = QString::null) const;
-    ChangedCLJMolecule add(const Residue &residue,
-                           const QString &chgproperty = QString::null,
-                           const QString &ljproperty = QString::null) const;
-    ChangedCLJMolecule add(const NewAtom &newatom,
-                           const QString &chgproperty = QString::null,
-                           const QString &ljproperty = QString::null) const;
-    ChangedCLJMolecule add(const AtomSelection &selected_atoms,
+    ChangedCLJMolecule add(const PartialMolecule &molecule,
                            const QString &chgproperty = QString::null,
                            const QString &ljproperty = QString::null) const;
 
-    ChangedCLJMolecule remove(const Molecule &molecule) const;
-    ChangedCLJMolecule remove(const Residue &residue) const;
-    ChangedCLJMolecule remove(const NewAtom &atom) const;
-    ChangedCLJMolecule remove(const AtomSelection &selected_atoms) const;
+    ChangedCLJMolecule remove(const PartialMolecule &molecule) const;
 
     const QString& chgProperty() const;
     const QString& ljProperty() const;
@@ -386,20 +356,8 @@ public:
     const AtomicLJs& ljParameters() const;
 
     bool isWholeMolecule() const;
-    const AtomSelection& selectedAtoms() const;
 
 private:
-    ChangedCLJMolecule _pvt_change(const Molecule &molecule,
-                                   const QSet<CutGroupID> &cgids,
-                                   const QString &chgproperty = QString::null,
-                                   const QString &ljproperty = QString::null) const;
-
-    ChangedCLJMolecule _pvt_change(const Molecule &molecule,
-                                   const QSet<CutGroupID> &cgids,
-                                   const AtomSelection &selected_atoms,
-                                   const QString &chgproperty = QString::null,
-                                   const QString &ljproperty = QString::null) const;
-
     /** Implicitly shared pointer to the data of this class */
     QSharedDataPointer<CLJMoleculeData> d;
 };
@@ -434,27 +392,13 @@ public:
 
     bool isEmpty() const;
 
-    ChangedCLJMolecule change(const Molecule &molecule) const;
-    ChangedCLJMolecule change(const Residue &residue) const;
-    ChangedCLJMolecule change(const NewAtom &atom) const;
+    ChangedCLJMolecule change(const PartialMolecule &molecule) const;
 
-    ChangedCLJMolecule add(const Molecule &molecule,
-                           const QString &chgproperty = QString::null,
-                           const QString &ljproperty = QString::null) const;
-    ChangedCLJMolecule add(const Residue &residue,
-                           const QString &chgproperty = QString::null,
-                           const QString &ljproperty = QString::null) const;
-    ChangedCLJMolecule add(const NewAtom &atom,
-                           const QString &chgproperty = QString::null,
-                           const QString &ljproperty = QString::null) const;
-    ChangedCLJMolecule add(const AtomSelection &selected_atoms,
+    ChangedCLJMolecule add(const PartialMolecule &molecule,
                            const QString &chgproperty = QString::null,
                            const QString &ljproperty = QString::null) const;
 
-    ChangedCLJMolecule remove(const Molecule &molecule) const;
-    ChangedCLJMolecule remove(const Residue &residue) const;
-    ChangedCLJMolecule remove(const NewAtom &atom) const;
-    ChangedCLJMolecule remove(const AtomSelection &selected_atoms) const;
+    ChangedCLJMolecule remove(const PartialMolecule &molecule) const;
 
     bool changedAll() const;
 
@@ -498,18 +442,6 @@ inline const Space& CLJFF::space() const
 inline const SwitchingFunction& CLJFF::switchingFunction() const
 {
     return switchfunc;
-}
-
-/** Return a reference to the workspace used for the distance calculations */
-inline DistMatrix& CLJFF::distanceMatrix()
-{
-    return distmat;
-}
-
-/** Return a reference to the workspace used for the CLJ parameter combination */
-inline CLJMatrix& CLJFF::cljMatrix()
-{
-    return cljmat;
 }
 
 } // end of namespace SireMM

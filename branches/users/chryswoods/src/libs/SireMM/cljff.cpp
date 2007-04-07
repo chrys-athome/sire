@@ -158,13 +158,7 @@ class CLJFF::CLJMoleculeData : public QSharedData
 public:
     CLJMoleculeData();
 
-    CLJMoleculeData(const Molecule &mol,
-                    const QString &chgproperty, const QString &ljproperty);
-    CLJMoleculeData(const Residue &residue,
-                    const QString &chgproperty, const QString &ljproperty);
-    CLJMoleculeData(const NewAtom &atom,
-                    const QString &chgproperty, const QString &ljproperty);
-    CLJMoleculeData(const Molecule &mol, const AtomSelection &selectedatoms,
+    CLJMoleculeData(const PartialMolecule &molecule,
                     const QString &chgproperty, const QString &ljproperty);
 
     CLJMoleculeData(const CLJMoleculeData &other);
@@ -183,16 +177,13 @@ public:
     bool rebuildCoordinates(const QSet<CutGroupID> &cgids);
 
     /** The actual molecule */
-    Molecule molecule;
+    PartialMolecule molecule;
 
     /** The name of the property associated with the atomic partial charges */
     QString chg_property;
 
     /** The name of the property associated with the LJ parameters */
     QString lj_property;
-
-    /** The atoms selected for inclusion in this forcefield */
-    AtomSelection selected_atoms;
 
     /** Hash mapping the CutGroupID of a selected cutgroup to
         the index in the coords and ljs array for its coordinates
@@ -222,59 +213,14 @@ CLJFF::CLJMoleculeData::CLJMoleculeData() : QSharedData()
 {}
 
 /** Construct to represent all of the molecule 'mol' */
-CLJFF::CLJMoleculeData::CLJMoleculeData(const Molecule &mol,
+CLJFF::CLJMoleculeData::CLJMoleculeData(const PartialMolecule &mol,
                                         const QString &chgproperty,
                                         const QString &ljproperty)
                      : QSharedData(),
                        molecule(mol),
                        chg_property(chgproperty),
-                       lj_property(ljproperty),
-                       selected_atoms(mol)
+                       lj_property(ljproperty)
 {
-    this->rebuildAll();
-}
-
-/** Construct to represent all of the residue 'residue' */
-CLJFF::CLJMoleculeData::CLJMoleculeData(const Residue &residue,
-                                        const QString &chgproperty,
-                                        const QString &ljproperty)
-                     : QSharedData(),
-                       molecule(residue.molecule()),
-                       chg_property(chgproperty),
-                       lj_property(ljproperty),
-                       selected_atoms(residue)
-{
-    this->rebuildAll();
-}
-
-/** Construct to represent the atom 'atom' */
-CLJFF::CLJMoleculeData::CLJMoleculeData(const NewAtom &atom,
-                                        const QString &chgproperty,
-                                        const QString &ljproperty)
-                     : QSharedData(),
-                       molecule(atom.molecule()),
-                       chg_property(chgproperty),
-                       lj_property(ljproperty),
-                       selected_atoms(atom)
-{
-    this->rebuildAll();
-}
-
-/** Construct to represent the selected atoms from 'selectatoms' that are
-    in the molecule 'mol' */
-CLJFF::CLJMoleculeData::CLJMoleculeData(const Molecule &mol,
-                                        const AtomSelection &selectatoms,
-                                        const QString &chgproperty,
-                                        const QString &ljproperty)
-                     : QSharedData(),
-                       molecule(mol),
-                       chg_property(chgproperty),
-                       lj_property(ljproperty),
-                       selected_atoms(selectatoms)
-{
-    //ensure that the selected atoms and the molecule are compatible
-    selected_atoms.assertCompatibleWith(molecule);
-
     this->rebuildAll();
 }
 
@@ -284,7 +230,6 @@ CLJFF::CLJMoleculeData::CLJMoleculeData(const CLJFF::CLJMoleculeData &other)
                          molecule(other.molecule),
                          chg_property(other.chg_property),
                          lj_property(other.lj_property),
-                         selected_atoms(other.selected_atoms),
                          cg_index(other.cg_index),
                          coords(other.coords),
                          chgs(other.chgs),
@@ -303,7 +248,6 @@ CLJFF::CLJMoleculeData& CLJFF::CLJMoleculeData::operator=(const CLJFF::CLJMolecu
         molecule = other.molecule;
         lj_property = other.lj_property;
         chg_property = other.chg_property;
-        selected_atoms = other.selected_atoms;
         cg_index = other.cg_index;
         coords = other.coords;
         chgs = other.chgs;
@@ -319,7 +263,6 @@ bool CLJFF::CLJMoleculeData::operator==(const CLJFF::CLJMoleculeData &other) con
     return molecule == other.molecule and
            chg_property == other.chg_property and
            lj_property == other.lj_property and
-           selected_atoms == other.selected_atoms and
            cg_index == other.cg_index;
 }
 
@@ -329,7 +272,6 @@ bool CLJFF::CLJMoleculeData::operator!=(const CLJFF::CLJMoleculeData &other) con
     return molecule != other.molecule or
            chg_property != other.chg_property or
            lj_property != other.lj_property or
-           selected_atoms != other.selected_atoms or
            cg_index != other.cg_index;
 }
 
@@ -340,7 +282,7 @@ bool CLJFF::CLJMoleculeData::operator!=(const CLJFF::CLJMoleculeData &other) con
 */
 void CLJFF::CLJMoleculeData::rebuildAll()
 {
-    if (selected_atoms.selectedAll())
+    if (molecule.selectedAll())
     {
         //all atoms are selected - we can therefore short-circuit everything!
         chgs = molecule.getProperty(chg_property);
@@ -351,7 +293,7 @@ void CLJFF::CLJMoleculeData::rebuildAll()
         return;
     }
 
-    if (selected_atoms.isEmpty())
+    if (molecule.isEmpty())
     {
         //there has been nothing selected!
         coords.clear();
@@ -376,7 +318,7 @@ void CLJFF::CLJMoleculeData::rebuildAll()
         //atoms that are not selected
         for (CutGroupID i(0); i<ngroups; ++i)
         {
-            if ( not selected_atoms.selectedAll(i) )
+            if ( not molecule.selectedAll(i) )
             {
                 QVector<ChargeParameter> &chgparams = chgs[i];
                 QVector<LJParameter> &ljparams = ljs[i];
@@ -386,7 +328,7 @@ void CLJFF::CLJMoleculeData::rebuildAll()
 
                 for (AtomID j(0); j<nats; ++j)
                 {
-                    if ( not selected_atoms.selected(CGAtomID(i,j)) )
+                    if ( not molecule.selected(CGAtomID(i,j)) )
                     {
                         //this atom has not been selected
                         // - zero its charge and LJ parameter
@@ -415,7 +357,7 @@ void CLJFF::CLJMoleculeData::rebuildAll()
 
     for (CutGroupID i(0); i<ngroups; ++i)
     {
-        if (not selected_atoms.selectedNone(i))
+        if (not molecule.selectedNone(i))
         {
             coords[idx] = all_coords[i];
             chgs[idx] = all_chgs[i];
@@ -424,7 +366,7 @@ void CLJFF::CLJMoleculeData::rebuildAll()
             cg_index.insert(i, idx);
             ++idx;
 
-            if (not selected_atoms.selectedAll(i))
+            if (not molecule.selectedAll(i))
             {
                 uint nats = molecule.nAtoms(i);
 
@@ -433,7 +375,7 @@ void CLJFF::CLJMoleculeData::rebuildAll()
 
                 for (AtomID j(0); j<nats; ++j)
                 {
-                    if ( not selected_atoms.selected(CGAtomID(i,j)) )
+                    if ( not molecule.selected(CGAtomID(i,j)) )
                     {
                         chgparams[j] = ChargeParameter::dummy();
                         ljparams[j] = LJParameter::dummy();
@@ -457,13 +399,13 @@ bool CLJFF::CLJMoleculeData::rebuildAll(const QSet<CutGroupID>&)
 /** Rebuild all of the coordinate data from scratch */
 void CLJFF::CLJMoleculeData::rebuildCoordinates()
 {
-    if (selected_atoms.selectedAll())
+    if (molecule.selectedAll())
     {
         coords = molecule.coordGroups();
         return;
     }
 
-    uint nselectedgroups = selected_atoms.nSelectedCutGroups();
+    uint nselectedgroups = molecule.nSelectedCutGroups();
     uint ngroups = molecule.nCutGroups();
 
     if (nselectedgroups == ngroups)
@@ -552,8 +494,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
 
     sds << cljmoldata.molecule
         << cljmoldata.chg_property
-        << cljmoldata.lj_property
-        << cljmoldata.selected_atoms;
+        << cljmoldata.lj_property;
 
     return ds;
 }
@@ -568,14 +509,13 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
     {
         SharedDataStream sds(ds);
 
-        Molecule mol;
+        PartialMolecule molecule;
         QString chg_property;
         QString lj_property;
-        AtomSelection selected_atoms;
 
-        sds >> mol >> chg_property >> lj_property >> selected_atoms;
+        sds >> mol >> chg_property >> lj_property;
 
-        cljmoldata = CLJFF::CLJMoleculeData(mol, selected_atoms,
+        cljmoldata = CLJFF::CLJMoleculeData(molecule,
                                             chg_property, lj_property);
     }
     else
@@ -629,54 +569,10 @@ CLJFF::CLJMolecule::CLJMolecule() : d(CLJFF::CLJMoleculeData::shared_null)
     \throw SireMol::missing_property
     \throw SireError::invalid_cast
 */
-CLJFF::CLJMolecule::CLJMolecule(const Molecule &molecule,
+CLJFF::CLJMolecule::CLJMolecule(const PartialMolecule &molecule,
                                 const QString &chgproperty,
                                 const QString &ljproperty)
                    : d( new CLJFF::CLJMoleculeData(molecule,
-                                                   chgproperty,
-                                                   ljproperty) )
-{}
-
-/** Construct from the passed residue, using 'ljproperty' to find the
-    residue's LJ parameters.
-
-    \throw SireMol::missing_property
-    \throw SireError::invalid_cast
-*/
-CLJFF::CLJMolecule::CLJMolecule(const Residue &residue,
-                                const QString &chgproperty,
-                                const QString &ljproperty)
-                   : d( new CLJFF::CLJMoleculeData(residue,
-                                                   chgproperty,
-                                                   ljproperty) )
-{}
-
-/** Construct from the passed atom, using 'ljproperty' to find the
-    atom's LJ parameters.
-
-    \throw SireMol::missing_property
-    \throw SireError::invalid_cast
-*/
-CLJFF::CLJMolecule::CLJMolecule(const NewAtom &atom,
-                                const QString &chgproperty,
-                                const QString &ljproperty)
-                   : d( new CLJFF::CLJMoleculeData(atom,
-                                                   chgproperty,
-                                                   ljproperty) )
-{}
-
-/** Construct from the selected atoms of the passed molecule, using
-    'ljproperty' to find the atoms' LJ parameters.
-
-    \throw SireMol::missing_property
-    \throw SireError::invalid_cast
-*/
-CLJFF::CLJMolecule::CLJMolecule(const Molecule &molecule,
-                                const AtomSelection &selected_atoms,
-                                const QString &chgproperty,
-                                const QString &ljproperty)
-                   : d( new CLJFF::CLJMoleculeData(molecule,
-                                                   selected_atoms,
                                                    chgproperty,
                                                    ljproperty) )
 {}
@@ -725,7 +621,7 @@ CLJFF::CLJMolecule::CLJMolecule(const CLJMolecule &other,
         d->ljs = AtomicLJs(new_ljs);
         d->cg_index = new_index;
 
-        d->selected_atoms.applyMask(groups);
+        d->molecule.applyMask(groups);
     }
     else
     {
@@ -741,7 +637,7 @@ CLJFF::CLJMolecule::CLJMolecule(const CLJMolecule &other,
             {
                 //this CutGroup will be masked - deselect it and
                 //record the index of its coordinates and LJ parameters
-                d->selected_atoms.deselectAll(it.key());
+                d->molecule.deselectAll(it.key());
                 indicies_to_be_removed.append(it.value());
             }
         }
@@ -790,27 +686,24 @@ bool CLJFF::CLJMolecule::operator!=(const CLJFF::CLJMolecule &other) const
 /** Return whether or not this is empty (has no atoms selected */
 bool CLJFF::CLJMolecule::isEmpty() const
 {
-    return d->selected_atoms.isEmpty();
+    return d->molecule.isEmpty();
 }
 
 /** Return the actual molecule */
-const Molecule& CLJFF::CLJMolecule::molecule() const
+const PartialMolecule& CLJFF::CLJMolecule::molecule() const
 {
     return d->molecule;
 }
 
 /** Return a ChangedCLJMolecule that represents the change from the
-    CLJMolecule in its current state to 'molecule', where only the
-    CutGroups whose IDs are in 'cgids' have changed. (if cgids is
-    empty then all CutGroups have changed)
+    CLJMolecule in its current state to 'molecule'. Note that
+    the new state must have the same MoleculeID as the current state!
 
     \throw SireError::incompatible_error
 */
-CLJFF::ChangedCLJMolecule
-CLJFF::CLJMolecule::_pvt_change(const Molecule &molecule,
-                                const QSet<CutGroupID> &cgids,
-                                const QString &chgproperty,
-                                const QString &ljproperty) const
+CLJFF::ChangedCLJMolecule CLJFF::CLJMolecule::change(const PartialMolecule &molecule,
+                                                     const QString &chgproperty,
+                                                     const QString &ljproperty) const
 {
     if (d->molecule.ID() == 0)
         //this is a null Molecule
@@ -822,59 +715,36 @@ CLJFF::CLJMolecule::_pvt_change(const Molecule &molecule,
     if ( (chgproperty.isNull() or chgproperty == d->chg_property) and
          (ljproperty.isNull() or ljproperty == d->lj_property) )
     {
-        //has there been a change?
-        if ( d->molecule.version() == molecule.version() )
-            //no - there hasn't!
-            return ChangedCLJMolecule();
-
-        //the molecule may have changed
-        CLJMolecule newmol(*this);
-
-        newmol.d->molecule = molecule;
-
-        if (cgids.isEmpty())
+        if ( d->molecule.version().major() != molecule.version().major() )
         {
-            //the whole molecule has changed
-
-            if (molecule.version().major() != d->molecule.version().major())
-            {
-                //there has been a major change
-                newmol.d->rebuildAll();
-            }
-            else
-            {
-                //only the coordinates have changed
-                newmol.d->rebuildCoordinates();
-            }
-
+            CLJMolecule newmol(*this);
+            newmol.d->molecule.change(molecule);
+            newmol.d->rebuildAll();
+            
             return ChangedCLJMolecule(*this, newmol);
         }
-        else
+        else if ( d->molecule.version().minor() != molecule.version().minor() )
         {
-            //only part of the molecule has changed
-            if (molecule.version().major() != d->molecule.version().major())
+            CLJMolecule newmol(*this);
+            
+            if (newmol.d->molecule.change(molecule))
             {
-                //there has been a major change
-
-                if (newmol.d->rebuildAll(cgids))
-                    //the part of the molecule in this forcefield has changed!
-                    return ChangedCLJMolecule(*this, newmol, cgids);
+                if (molecule.selectedAll())
+                {
+                    newmol.d->rebuildCoordinates();
+                    return ChangedCLJMolecule(*this, newmol);
+                }
                 else
-                    //no part of the molecule that was in this forcefield has changed
-                    return ChangedCLJMolecule();
-            }
-            else
-            {
-                //only the coordinates have changed
-
-                if (newmol.d->rebuildCoordinates(cgids))
-                    //the part of the molecule in this forcefield has moved
+                {
+                    QSet<CutGroupID> cgids = molecule.selectedCutGroups();
+                    newmol.d->rebuildCoordinates(cgids);
                     return ChangedCLJMolecule(*this, newmol, cgids);
-                else
-                    //no part of the molecule in this forcefield has moved
-                    return ChangedCLJMolecule();
+                }
             }
         }
+        else
+            //there has been no change
+            return ChangedCLJMolecule();
     }
     else
     {
@@ -882,7 +752,8 @@ CLJFF::CLJMolecule::_pvt_change(const Molecule &molecule,
         //needs to be rebuilt
         CLJMolecule newmol(*this);
 
-        newmol.d->molecule = molecule;
+        newmol.d->molecule.change(molecule);
+        
         newmol.d->chg_property = chgproperty;
         newmol.d->lj_property = ljproperty;
 
@@ -890,43 +761,6 @@ CLJFF::CLJMolecule::_pvt_change(const Molecule &molecule,
 
         return ChangedCLJMolecule(*this, newmol);
     }
-}
-
-/** Return a ChangedCLJMolecule that represents the change from the
-    CLJMolecule in its current state to 'molecule'. Note that
-    the new state must have the same MoleculeID as the current state!
-
-    \throw SireError::incompatible_error
-*/
-CLJFF::ChangedCLJMolecule
-CLJFF::CLJMolecule::change(const Molecule &molecule) const
-{
-    return this->_pvt_change(molecule, QSet<CutGroupID>());
-}
-
-/** Return a ChangedCLJMolecule that represents the change from the
-    CLJMolecule in its current state to include the changes in 'residue'
-
-    \throw SireError::incompatible_error
-*/
-CLJFF::ChangedCLJMolecule
-CLJFF::CLJMolecule::change(const Residue &residue) const
-{
-    return this->_pvt_change(residue.molecule(), residue.info().cutGroupIDs());
-}
-
-/** Return a ChangedCLJMolecule that represents the change from
-    the CLJMolecule in its current state to include the changes in 'atom'
-
-    \throw SireError::incompatible_error
-*/
-CLJFF::ChangedCLJMolecule
-CLJFF::CLJMolecule::change(const NewAtom &atom) const
-{
-    QSet<CutGroupID> cgid;
-    cgid.insert(atom.cgAtomID().cutGroupID());
-
-    return this->_pvt_change(atom.molecule(), cgid);
 }
 
 /** Private function used to return the ChangedCLJMolecule that represents
@@ -938,55 +772,10 @@ CLJFF::CLJMolecule::change(const NewAtom &atom) const
     \throw SireError::incompatible_error
 */
 CLJFF::ChangedCLJMolecule
-CLJFF::CLJMolecule::_pvt_change(const Molecule &molecule,
-                                const QSet<CutGroupID> &cgids,
-                                const AtomSelection &selected_atoms,
-                                const QString &chgproperty,
-                                const QString &ljproperty) const
+CLJFF::CLJMolecule::changeSelection(const PartialMolecule &molecule,
+                                    const QString &chgproperty,
+                                    const QString &ljproperty) const
 {
-    if (d->molecule.ID() == 0)
-        return ChangedCLJMolecule();
-
-    if (selected_atoms == d->selected_atoms)
-        //there has been no change in the atom selections
-        return this->_pvt_change(molecule, cgids, chgproperty, ljproperty);
-
-    d->molecule.assertSameMolecule(molecule);
-
-    CLJMolecule newmol(*this);
-
-    newmol.d->molecule = molecule;
-    newmol.d->selected_atoms = selected_atoms;
-
-    if ( (chgproperty.isNull() or chgproperty == d->chg_property) and
-         (ljproperty.isNull() or ljproperty == d->lj_property) )
-    {
-        //there is no change in the property used to get the LJ parameters
-        if (cgids.isEmpty())
-        {
-            //the entire molecule has changed
-            newmol.d->rebuildAll();
-
-            return ChangedCLJMolecule(*this, newmol);
-        }
-        else
-        {
-            //only parts of the molecule have changed
-            newmol.d->rebuildAll(cgids);
-
-            return ChangedCLJMolecule(*this, newmol, cgids);
-        }
-    }
-    else
-    {
-        //there has been a change of property - we need to rebuild
-        //the entire molecule
-        newmol.d->chg_property = chgproperty;
-        newmol.d->lj_property = ljproperty;
-        newmol.d->rebuildAll();
-
-        return ChangedCLJMolecule(*this, newmol);
-    }
 }
 
 /** Return a ChangedCLJMolecule that represents the change from the CLJMolecule
@@ -995,95 +784,54 @@ CLJFF::CLJMolecule::_pvt_change(const Molecule &molecule,
 
     \throw SireError::incompatible_error
 */
-CLJFF::ChangedCLJMolecule
-CLJFF::CLJMolecule::add(const Molecule &molecule,
-                        const QString &chgproperty,
-                        const QString &ljproperty) const
+CLJFF::ChangedCLJMolecule CLJFF::CLJMolecule::add(const PartialMolecule &molecule,
+                                                  const QString &chgproperty,
+                                                  const QString &ljproperty) const
 {
     if (d->molecule.ID() == 0)
         return ChangedCLJMolecule(*this, CLJMolecule(molecule,
                                                      chgproperty,
                                                      ljproperty));
-    else
-        return this->_pvt_change(molecule, QSet<CutGroupID>(),
-                                 AtomSelection(molecule),
-                                 chgproperty,
-                                 ljproperty);
-}
-
-/** Return a ChangedCLJMolecule that represents the change from the CLJMolecule
-    in its current state to include as well the passed residue, which itself may
-    have changed
-
-    \throw SireError::incompatible_error
-*/
-CLJFF::ChangedCLJMolecule
-CLJFF::CLJMolecule::add(const Residue &residue,
-                        const QString &chgproperty,
-                        const QString &ljproperty) const
-{
-    if (d->molecule.ID() == 0)
-        return ChangedCLJMolecule(*this, CLJMolecule(residue,
-                                                     chgproperty,
-                                                     ljproperty));
+    
+    else if (molecule.selectedAtoms() == d->molecule.selectedAtoms())
+        //there has been no change in the atom selections
+        return this->change(molecule, chgproperty, ljproperty);
     else
     {
-        AtomSelection new_selection = d->selected_atoms;
+        d->molecule.assertSameMolecule(molecule);
 
-        new_selection.selectAll(residue.number());
+        CLJMolecule newmol(*this);
 
-        return this->_pvt_change(residue.molecule(), residue.info().cutGroupIDs(),
-                                 new_selection, chgproperty, ljproperty);
+        if ( (chgproperty.isNull() or chgproperty == d->chg_property) and
+             (ljproperty.isNull() or ljproperty == d->lj_property) )
+        {
+            if (molecule.version() != d->molecule.version())
+            {
+                newmol.d->molecule.add(molecule);
+                newmol.d->rebuildAll();
+                return ChangedCLJMolecule(*this, newmol);
+            }
+            else if (newmol.d->molecule.add(molecule))
+            {
+                newmol.d->rebuildAll();
+                return ChangedCLJMolecule(*this, newmol, molecule.selectedCutGroups());
+            }
+            else
+                //there has been no change
+                return ChangedCLJMolecule();
+        }
+        else
+        {
+            //there has been a change of property - we need to rebuild
+            //the entire molecule
+            newmol.d->molecule.add(molecule);
+            newmol.d->chg_property = chgproperty;
+            newmol.d->lj_property = ljproperty;
+            newmol.d->rebuildAll();
+    
+            return ChangedCLJMolecule(*this, newmol);
+        }
     }
-}
-
-/** Return a ChangedCLJMolecule that represents the change from the CLJMolecule
-    in its current state to include as well the passed atom, which itself may
-    have changed
-
-    \throw SireError::incompatible_error
-*/
-CLJFF::ChangedCLJMolecule
-CLJFF::CLJMolecule::add(const NewAtom &atom,
-                        const QString &chgproperty,
-                        const QString &ljproperty) const
-{
-    if (d->molecule.ID() == 0)
-        return ChangedCLJMolecule(*this, CLJMolecule(atom,
-                                                     chgproperty,
-                                                     ljproperty));
-    else
-    {
-        AtomSelection new_selection = d->selected_atoms;
-
-        new_selection.select(atom.cgAtomID());
-
-        QSet<CutGroupID> cgid;
-        cgid.insert(atom.cgAtomID().cutGroupID());
-
-        return this->_pvt_change(atom.molecule(), cgid, new_selection,
-                                 chgproperty, ljproperty);
-    }
-}
-
-/** Return a ChangedCLJMolecule that represents the change from the CLJMolecule
-    in its current state to include as well the passed selection
-
-    \throw SireError::incompatible_error
-*/
-CLJFF::ChangedCLJMolecule
-CLJFF::CLJMolecule::add(const AtomSelection &selected_atoms,
-                        const QString &chgproperty,
-                        const QString &ljproperty) const
-{
-    AtomSelection new_selection = d->selected_atoms;
-
-    new_selection.selectAll(selected_atoms);
-
-    Molecule oldmol = d->molecule;
-
-    return this->_pvt_change(oldmol, selected_atoms.selectedCutGroups(),
-                             new_selection, chgproperty, ljproperty);
 }
 
 /** Return a ChangedCLJMolecule that represents the change from the CLJMolecule
@@ -1092,59 +840,39 @@ CLJFF::CLJMolecule::add(const AtomSelection &selected_atoms,
 
     \throw SireError::incompatible_error
 */
-CLJFF::ChangedCLJMolecule CLJFF::CLJMolecule::remove(const Molecule &molecule) const
+CLJFF::ChangedCLJMolecule CLJFF::CLJMolecule::remove(
+                                            const PartialMolecule &molecule) const
 {
-    AtomSelection new_selection = d->selected_atoms;
-    new_selection.deselectAll();
+    if (d->molecule.ID() == 0)
+    {
+        return ChangedCLJMolecule();
+    }
+    else if (molecule.selectedAtoms().contains(d->molecule.selectedAtoms())
+    {
+        //we have removed the entire molecule!
+        return ChangedCLJMolecule(*this, CLJMolecule());
+    }
+    else
+    {
+        d->molecule.assertSameMolecule(molecule);
 
-    return this->_pvt_change(molecule, QSet<CutGroupID>(), new_selection);
-}
+        CLJMolecule newmol(*this);
 
-/** Return a ChangedCLJMolecule that represents the change from the CLJMolecule
-    in its current state to remove the passed residue, which itself may
-    have changed
-
-    \throw SireError::incompatible_error
-*/
-CLJFF::ChangedCLJMolecule CLJFF::CLJMolecule::remove(const Residue &residue) const
-{
-    AtomSelection new_selection = d->selected_atoms;
-    new_selection.deselectAll(residue.number());
-
-    return this->_pvt_change(residue.molecule(), residue.info().cutGroupIDs(), new_selection);
-}
-
-/** Return a ChangedCLJMolecule that represents the change from the CLJMolecule
-    in its current state to remove the passed atom, which itself may
-    have changed
-
-    \throw SireError::incompatible_error
-*/
-CLJFF::ChangedCLJMolecule CLJFF::CLJMolecule::remove(const NewAtom &atom) const
-{
-    AtomSelection new_selection = d->selected_atoms;
-    new_selection.deselect(atom.cgAtomID());
-
-    QSet<CutGroupID> cgid;
-    cgid.insert(atom.cgAtomID().cutGroupID());
-
-    return this->_pvt_change(atom.molecule(), cgid, new_selection);
-}
-
-/** Return a ChangedCLJMolecule that represents the change from the CLJMolecule
-    in its current state to remove the passed atom selection
-
-    \throw SireError::incompatible_error
-*/
-CLJFF::ChangedCLJMolecule CLJFF::CLJMolecule::remove(const AtomSelection &selected_atoms) const
-{
-    AtomSelection new_selection = d->selected_atoms;
-    new_selection.deselectAll(selected_atoms);
-
-    Molecule oldmol = d->molecule;
-
-    return this->_pvt_change(oldmol, selected_atoms.selectedCutGroups(),
-                             new_selection);
+        if (molecule.version() != d->molecule.version())
+        {
+            newmol.d->molecule.remove(molecule);
+            newmol.d->rebuildAll();
+            return ChangedCLJMolecule(*this, newmol);
+        }
+        else if (newmol.d->molecule.remove(molecule))
+        {
+            newmol.d->rebuildAll();
+            return ChangedCLJMolecule(*this, newmol, molecule.selectedCutGroups());
+        }
+        else
+            //there was no change
+            return ChangedCLJMolecule();
+    }
 }
 
 /** Return the name of the property used to get the partial charges */
@@ -1192,14 +920,7 @@ const AtomicLJs& CLJFF::CLJMolecule::ljParameters() const
     of the molecule */
 bool CLJFF::CLJMolecule::isWholeMolecule() const
 {
-    return d->selected_atoms.selectedAll();
-}
-
-/** Return the selection of atoms that are present from this
-    molecule in the forcefield */
-const AtomSelection& CLJFF::CLJMolecule::selectedAtoms() const
-{
-    return d->selected_atoms;
+    return d->molecule.selectedAll();
 }
 
 /////////////
@@ -1377,22 +1098,6 @@ const CLJFF::CLJMolecule& CLJFF::ChangedCLJMolecule::newParts() const
     return newparts;
 }
 
-/** Return the ChangedCLJMolecule that represents the change from the old molecule
-    to 'molecule' */
-CLJFF::ChangedCLJMolecule
-CLJFF::ChangedCLJMolecule::change(const Molecule &molecule) const
-{
-    //calculate the change from newmol to molecule...
-    ChangedCLJMolecule next_change = newmol.change(molecule);
-
-    if (next_change.isEmpty())
-        //there was no further change
-        return ChangedCLJMolecule();
-    else
-        //now return the change from oldmol to newmol
-        return ChangedCLJMolecule(oldmol, next_change.newMolecule());
-}
-
 static QSet<CutGroupID> operator+(const QSet<CutGroupID> &set0, const QSet<CutGroupID> &set1)
 {
     QSet<CutGroupID> ret(set0);
@@ -1402,44 +1107,30 @@ static QSet<CutGroupID> operator+(const QSet<CutGroupID> &set0, const QSet<CutGr
 }
 
 /** Return the ChangedCLJMolecule that represents the change from the old molecule
-    to 'residue' */
+    to 'molecule' */
 CLJFF::ChangedCLJMolecule
-CLJFF::ChangedCLJMolecule::change(const Residue &residue) const
+CLJFF::ChangedCLJMolecule::change(const PartialMolecule &molecule) const
 {
-    if (this->changedAll())
-        return this->change(residue.molecule());
-
-    //calculate the change from newmol to 'residue'...
-    ChangedCLJMolecule next_change = newmol.change(residue);
+    //calculate the change from newmol to molecule...
+    ChangedCLJMolecule next_change = newmol.change(molecule);
 
     if (next_change.isEmpty())
+        //there was no further change
         return ChangedCLJMolecule();
+    else if (this->changedAll() or next_change.changedAll())
+        return ChangedCLJMolecule(oldmol, next_change.newMolecule());
     else
+    {
+        //now return the change from oldmol to newmol
         return ChangedCLJMolecule(oldmol, next_change.newMolecule(),
-                                 changed_cgids + next_change.changed_cgids);
-}
-
-/** Return the ChangedCLJMolecule that represents the change from the old molecule
-    to 'residue' */
-CLJFF::ChangedCLJMolecule
-CLJFF::ChangedCLJMolecule::change(const NewAtom &atom) const
-{
-    if (this->changedAll())
-        return this->change(atom.molecule());
-
-    ChangedCLJMolecule next_change = newmol.change(atom);
-
-    if (next_change.isEmpty())
-        return ChangedCLJMolecule();
-    else
-        return ChangedCLJMolecule(oldmol, next_change.newMolecule(),
-                                 changed_cgids + next_change.changed_cgids);
+                                  changed_cgids + next_change.changed_cgids);
+    }
 }
 
 /** Return the ChangedCLJMolecule that represents the addition of all atoms
     in the molecule 'molecule' */
 CLJFF::ChangedCLJMolecule
-CLJFF::ChangedCLJMolecule::add(const Molecule &molecule,
+CLJFF::ChangedCLJMolecule::add(const PartialMolecule &molecule,
                                const QString &chgproperty,
                                const QString &ljproperty) const
 {
@@ -1449,124 +1140,28 @@ CLJFF::ChangedCLJMolecule::add(const Molecule &molecule,
 
     if (next_change.isEmpty())
         return ChangedCLJMolecule();
-    else
-        return ChangedCLJMolecule(oldmol, next_change.newMolecule());
-}
-
-/** Return the ChangedCLJMolecule that represents the addition of all atoms
-    in the residue 'residue' */
-CLJFF::ChangedCLJMolecule
-CLJFF::ChangedCLJMolecule::add(const Residue &residue,
-                               const QString &chgproperty,
-                               const QString &ljproperty) const
-{
-    ChangedCLJMolecule next_change = newmol.add(residue,
-                                                chgproperty,
-                                                ljproperty);
-
-    if (next_change.isEmpty())
-        return ChangedCLJMolecule();
     else if (this->changedAll() or next_change.changedAll())
         return ChangedCLJMolecule(oldmol, next_change.newMolecule());
     else
+    {
         return ChangedCLJMolecule(oldmol, next_change.newMolecule(),
-                                 changed_cgids + next_change.changed_cgids);
-}
-
-/** Return the ChangedCLJMolecule that represents the addition of the atom 'atom' */
-CLJFF::ChangedCLJMolecule
-CLJFF::ChangedCLJMolecule::add(const NewAtom &atom,
-                               const QString &chgproperty,
-                               const QString &ljproperty) const
-{
-    ChangedCLJMolecule next_change = newmol.add(atom,
-                                                chgproperty,
-                                                ljproperty);
-
-    if (next_change.isEmpty())
-        return ChangedCLJMolecule();
-    else if (this->changedAll() or next_change.changedAll())
-        return ChangedCLJMolecule(oldmol, next_change.newMolecule());
-    else
-        return ChangedCLJMolecule(oldmol, next_change.newMolecule(),
-                                 changed_cgids + next_change.changed_cgids);
-}
-
-/** Return the ChangedCLJMolecule that represents the addition of the selected atoms */
-CLJFF::ChangedCLJMolecule
-CLJFF::ChangedCLJMolecule::add(const AtomSelection &selected_atoms,
-                               const QString &chgproperty,
-                               const QString &ljproperty) const
-{
-    ChangedCLJMolecule next_change = newmol.add(selected_atoms,
-                                                chgproperty,
-                                                ljproperty);
-
-    if (next_change.isEmpty())
-        return ChangedCLJMolecule();
-    else if (this->changedAll() or next_change.changedAll())
-        return ChangedCLJMolecule(oldmol, next_change.newMolecule());
-    else
-        return ChangedCLJMolecule(oldmol, next_change.newMolecule(),
-                                 changed_cgids + next_change.changed_cgids);
+                                  changed_cgids + next_change.changed_cgids);
+    }
 }
 
 /** Return the ChangedCLJMolecule that represents the removal of the entire molecule! */
 CLJFF::ChangedCLJMolecule
-CLJFF::ChangedCLJMolecule::remove(const Molecule &molecule) const
+CLJFF::ChangedCLJMolecule::remove(const PartialMolecule &molecule) const
 {
     ChangedCLJMolecule next_change = newmol.remove(molecule);
 
     if (next_change.isEmpty())
         return ChangedCLJMolecule();
-    else
-        return ChangedCLJMolecule(oldmol, next_change.newMolecule());
-}
-
-/** Return the ChangedCLJMolecule that represents the removal of the residue 'residue' */
-CLJFF::ChangedCLJMolecule
-CLJFF::ChangedCLJMolecule::remove(const Residue &residue) const
-{
-    ChangedCLJMolecule next_change = newmol.remove(residue);
-
-    if (next_change.isEmpty())
-        return ChangedCLJMolecule();
     else if (this->changedAll() or next_change.changedAll())
         return ChangedCLJMolecule(oldmol, next_change.newMolecule());
     else
         return ChangedCLJMolecule(oldmol, next_change.newMolecule(),
                                   changed_cgids + next_change.changed_cgids);
-}
-
-/** Return the ChangedCLJMolecule that represents the removal of 'atom' */
-CLJFF::ChangedCLJMolecule
-CLJFF::ChangedCLJMolecule::remove(const NewAtom &atom) const
-{
-    ChangedCLJMolecule next_change = newmol.remove(atom);
-
-    if (next_change.isEmpty())
-        return ChangedCLJMolecule();
-    else if (this->changedAll() or next_change.changedAll())
-        return ChangedCLJMolecule(oldmol, next_change.newMolecule());
-    else
-        return ChangedCLJMolecule(oldmol, next_change.newMolecule(),
-                                  changed_cgids + next_change.changed_cgids);
-}
-
-/** Return the ChangedCLJMolecule that represents the removal of the
-    selected atoms. */
-CLJFF::ChangedCLJMolecule
-CLJFF::ChangedCLJMolecule::remove(const AtomSelection &selected_atoms) const
-{
-    ChangedCLJMolecule next_change = newmol.remove(selected_atoms);
-
-    if (next_change.isEmpty())
-        return ChangedCLJMolecule();
-    else if (this->changedAll() or next_change.changedAll())
-        return ChangedCLJMolecule(oldmol, next_change.newMolecule());
-    else
-        return ChangedCLJMolecule(oldmol, next_change.newMolecule(),
-                                 changed_cgids + next_change.changed_cgids);
 }
 
 /////////////
@@ -1971,9 +1566,9 @@ CLJFF::CLJFF(const CLJFF &other)
 }
 
 /** Copy assignment function used by derived classes */
-CLJFF& CLJFF::operator=(const CLJFF &other)
+void CLJFF::_pvt_copy(const FFBase &ffbase)
 {
-    FFBase::copy(other);
+    const CLJFF &cljff = dynamic_cast<const CLJFF&>(ffbase);
 
     spce = other.spce;
     switchfunc = other.switchfunc;
@@ -1981,7 +1576,7 @@ CLJFF& CLJFF::operator=(const CLJFF &other)
     components_ptr = dynamic_cast<const CLJFF::Components*>( &(FFBase::components()) );
     BOOST_ASSERT( components_ptr != 0 );
 
-    return *this;
+    FFBase::_pvt_copy(other);
 }
 
 /** Destructor */
