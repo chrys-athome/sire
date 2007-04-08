@@ -110,10 +110,10 @@ public:
     QSet<MoleculeID> moleculeIDs() const;
     virtual QSet<ForceFieldID> forceFieldIDs() const=0;
 
-    virtual QHash<MoleculeID,PartialMolecule> molecules() const=0;
+    virtual QHash<MoleculeID,PartialMolecule> molecules() const;
     virtual QHash<MoleculeID,PartialMolecule> molecules(ForceFieldID ffid) const=0;
     virtual QHash<MoleculeID,PartialMolecule> 
-                  molecules(const QSet<ForceFieldID> &ffids) const=0;
+                  molecules(const QSet<ForceFieldID> &ffids) const;
 
     int nMolecules() const;
     int nForceFields() const;
@@ -227,6 +227,15 @@ public:
     bool refersTo(MoleculeID molid) const;
     bool refersTo(MoleculeID molid, ForceFieldID ffid) const;
     bool refersTo(MoleculeID molid, const QSet<ForceFieldID> &ffids) const;
+    
+    virtual bool refersTo(MoleculeID molid, ForceFieldID ffid,
+                          const FFBase::Group &group) const=0;
+
+    bool refersTo(MoleculeID molid, const FFGroupID &ffgroupid) const;
+    bool refersTo(MoleculeID molid, const QSet<FFGroupID> &ffgroupids) const;
+
+    QSet<ForceFieldID> forceFieldsReferringTo(MoleculeID molid) const;
+    virtual QSet<FFGroupID> forceFieldGroupsReferringTo(MoleculeID molid) const=0;
 
     virtual bool contains(const PartialMolecule &molecule) const;
     
@@ -235,7 +244,7 @@ public:
                           const QSet<ForceFieldID> &ffids) const;
     
     virtual bool contains(const PartialMolecule &molecule,
-                          ForceFieldID ffid, const FFBase::Group &group) const=0;
+                          ForceFieldID ffid, const FFBase::Group &group) const;
 
     virtual bool contains(const PartialMolecule &molecule,
                           const FFGroupID &ffgroupid) const;
@@ -249,32 +258,31 @@ public:
     virtual QSet<FFGroupID> forceFieldGroupsContaining(
                                     const PartialMolecule &molecule) const=0;
 
-    virtual bool refersTo(MoleculeID molid) const=0;
-    virtual bool refersTo(MoleculeID molid, ForceFieldID ffid) const=0;
-    virtual bool refersTo(MoleculeID molid, ForceFieldID ffid,
-                          const FFBase::Group &group) const=0;
-    
-    virtual bool refersTo(MoleculeID molid, const FFGroupID &ffgroupid) const;
-
-    virtual QSet<ForceFieldID> forceFieldsReferringTo(MoleculeID molid) const;
-    virtual QSet<FFGroupID> forceFieldGroupsReferringTo(MoleculeID molid) const=0;
-
-    virtual QSet<MoleculeID> moleculeIDs() const=0;
-    virtual QSet<MoleculeID> moleculeIDs(ForceFieldID ffid) const=0;
+    QSet<MoleculeID> moleculeIDs() const;
+    virtual QSet<MoleculeID> moleculeIDs(ForceFieldID ffid) const;
     virtual QSet<MoleculeID> moleculeIDs(ForceFieldID ffid,
                                          const FFBase::Group &group) const=0;
 
-    virtual QSet<MoleculeID> moleculeIDs(const FFGroupID &ffgroupid) const;
+    QSet<MoleculeID> moleculeIDs(const FFGroupID &ffgroupid) const;
 
-    PartialMolecule molecule(MoleculeID molid, ForceFieldID ffid) const=0;
-    PartialMolecule molecule(MoleculeID molid,
-                             ForceFieldID ffid, const FFBase::Group &group) const=0;
+    virtual PartialMolecule molecule(MoleculeID molid) const;
+    virtual PartialMolecule molecule(MoleculeID molid, ForceFieldID ffid) const;
+    virtual PartialMolecule molecule(MoleculeID molid, 
+                                     const QSet<ForceFieldID> &ffids) const;
+    
+    virtual PartialMolecule molecule(MoleculeID molid, ForceFieldID ffid, 
+                                     const FFBase::Group &group) const=0;
+    
     PartialMolecule molecule(MoleculeID molid, const FFGroupID &ffgroupid) const;
 
-    QHash<MoleculeID,PartialMolecule> contents() const=0;
-    QHash<MoleculeID,PartialMolecule> contents(ForceFieldID ffid) const=0;
-    QHash<MoleculeID,PartialMolecule> contents(ForceFieldID ffid,
-                                               const FFBase::Group &group) const=0;
+    virtual PartialMolecule molecule(MoleculeID molid,
+                                     const QSet<FFGroupID> &ffgroupids) const;
+
+    virtual QHash<MoleculeID,PartialMolecule> contents() const;
+    virtual QHash<MoleculeID,PartialMolecule> contents(ForceFieldID ffid) const;
+    virtual QHash<MoleculeID,PartialMolecule> 
+                      contents(ForceFieldID ffid, const FFBase::Group &group) const;
+    
     QHash<MoleculeID,PartialMolecule> contents(const FFGroupID &ffgroupid) const;
 
 protected:

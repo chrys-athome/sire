@@ -304,7 +304,7 @@ public:
 
         /** Return the name of the main group
             in the forcefield (the default group) */
-        FFBase::Group main() const
+        static FFBase::Group main()
         {
             return mainid;
         }
@@ -323,7 +323,7 @@ public:
     private:
         /** The ID of the main (default) group
             of this forcefield */
-        FFBase::Group mainid;
+        static FFBase::Group mainid;
 
         /** The number of groups in this forcefield */
         quint32 n;

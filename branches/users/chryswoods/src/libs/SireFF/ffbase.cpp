@@ -60,19 +60,19 @@ using namespace SireStream;
 ///////////
 
 /** Constructor */
-FFBase::Groups::Groups() : n(0)
-{
-    mainid = this->getUniqueID();
-}
+FFBase::Groups::Groups() : n(1)
+{}
 
 /** Copy constructor */
 FFBase::Groups::Groups( const FFBase::Groups &other )
-       : mainid(other.mainid), n(other.n)
+       : n(other.n)
 {}
 
 /** Destructor */
 FFBase::Groups::~Groups()
 {}
+
+FFBase::Group FFBase::Groups::mainid(0);
 
 /** Return a new, unique ID for a group in the forcefield */
 FFBase::Group FFBase::Groups::getUniqueID()
