@@ -868,7 +868,7 @@ bool InterGroupCoulombFF::_pvt_add(const T &mol, const ParameterMap &map)
     supplied map to find the forcefield parameters amongst the
     molecule's properties.
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
 bool InterGroupCoulombFF::add(const Molecule &molecule, const ParameterMap &map)
@@ -881,7 +881,7 @@ bool InterGroupCoulombFF::add(const Molecule &molecule, const ParameterMap &map)
     residue's properties. Note that the property used must agree
     with the rest of the molecule if it is already in this forcefield.
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
     \throw SireMol::invalid_cast
 */
 bool InterGroupCoulombFF::add(const Residue &residue, const ParameterMap &map)
@@ -894,7 +894,7 @@ bool InterGroupCoulombFF::add(const Residue &residue, const ParameterMap &map)
     atom's properties. Note that the property used must agree
     with the rest of the molecule if it is already in this forcefield.
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
     \throw SireMol::invalid_cast
 */
 bool InterGroupCoulombFF::add(const NewAtom &atom, const ParameterMap &map)
@@ -908,7 +908,7 @@ bool InterGroupCoulombFF::add(const NewAtom &atom, const ParameterMap &map)
     used must agree with the rest of the molecule if it is already
     in this forcefield.
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
     \throw SireMol::invalid_cast
 */
 bool InterGroupCoulombFF::add(const Molecule &molecule,
@@ -1000,7 +1000,7 @@ bool InterGroupCoulombFF::_pvt_addTo(FFBase::Group group,
     properties. Note that it is an error to try to add this to more than
     one group in the forcefield
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
     \throw SireMol::invalid_cast
     \throw SireFF::invalid_group
 */
@@ -1017,7 +1017,7 @@ bool InterGroupCoulombFF::addTo(FFBase::Group group, const Molecule &molecule,
     used must agree with the rest of the molecule if it is already
     in this forcefield.
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
     \throw SireMol::invalid_cast
     \throw SireFF::invalid_group
 */
@@ -1034,7 +1034,7 @@ bool InterGroupCoulombFF::addTo(FFBase::Group group, const Residue &residue,
     used must agree with the rest of the molecule if it is already
     in this forcefield.
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
     \throw SireMol::invalid_cast
     \throw SireFF::invalid_group
 */
@@ -1051,7 +1051,7 @@ bool InterGroupCoulombFF::addTo(FFBase::Group group, const NewAtom &atom,
     used must agree with the rest of the molecule if it is already
     in this forcefield.
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
     \throw SireMol::invalid_cast
     \throw SireFF::invalid_group
 */

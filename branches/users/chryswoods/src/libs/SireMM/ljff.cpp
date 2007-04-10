@@ -296,7 +296,7 @@ bool LJFF::LJMoleculeData::operator!=(const LJFF::LJMoleculeData &other) const
 
 /** Rebuild all of the coordinate and LJ data from scratch
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
 void LJFF::LJMoleculeData::rebuildAll()
@@ -565,7 +565,7 @@ LJFF::LJMolecule::LJMolecule() : d(LJFF::LJMoleculeData::shared_null)
 /** Construct from the passed molecule, using 'ljproperty' to find the
     molecule's LJ parameters.
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
 LJFF::LJMolecule::LJMolecule(const Molecule &molecule, const QString &ljproperty)
@@ -575,7 +575,7 @@ LJFF::LJMolecule::LJMolecule(const Molecule &molecule, const QString &ljproperty
 /** Construct from the passed residue, using 'ljproperty' to find the
     residue's LJ parameters.
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
 LJFF::LJMolecule::LJMolecule(const Residue &residue, const QString &ljproperty)
@@ -585,7 +585,7 @@ LJFF::LJMolecule::LJMolecule(const Residue &residue, const QString &ljproperty)
 /** Construct from the passed atom, using 'ljproperty' to find the
     atom's LJ parameters.
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
 LJFF::LJMolecule::LJMolecule(const NewAtom &atom, const QString &ljproperty)
@@ -595,7 +595,7 @@ LJFF::LJMolecule::LJMolecule(const NewAtom &atom, const QString &ljproperty)
 /** Construct from the selected atoms of the passed molecule, using
     'ljproperty' to find the atoms' LJ parameters.
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
 LJFF::LJMolecule::LJMolecule(const Molecule &molecule,

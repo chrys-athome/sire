@@ -142,6 +142,7 @@ public:
    ////// Constructors / destructor ////////////////////////
     Molecule();
 
+    Molecule(const PartialMolecule &molecule);
     Molecule(const Residue &residue);
     Molecule(const NewAtom &atom);
 

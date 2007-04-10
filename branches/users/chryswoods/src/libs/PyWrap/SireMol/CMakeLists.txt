@@ -73,6 +73,8 @@ set ( WRAPMOL_SOURCES
       MoleculeVersion.pypp.cpp
 
       NewAtom.pypp.cpp
+
+      PartialMolecule.pypp.cpp
      
       ResID.pypp.cpp
       ResIDAtomID.pypp.cpp
@@ -138,6 +140,16 @@ set ( WRAPMOL_SOURCES
       _Molecule__memfuns_virtual.pypp.cpp
       _Molecule__protected_memfuns.pypp.cpp
       _Molecule__unnamed_enums.pypp.cpp
+
+      _PartialMolecule__classes.pypp.cpp
+      _PartialMolecule__enums.pypp.cpp
+      _PartialMolecule__memfuns0.pypp.cpp
+      _PartialMolecule__memfuns1.pypp.cpp
+      _PartialMolecule__memfuns2.pypp.cpp
+      _PartialMolecule__memfuns_pvirtual.pypp.cpp
+      _PartialMolecule__memfuns_virtual.pypp.cpp
+      _PartialMolecule__protected_memfuns.pypp.cpp
+      _PartialMolecule__unnamed_enums.pypp.cpp
 
       _NewAtom__classes.pypp.cpp
       _NewAtom__enums.pypp.cpp

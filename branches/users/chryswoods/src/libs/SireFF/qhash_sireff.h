@@ -29,13 +29,18 @@
 #ifndef SIREFF_QHASH_SIREFF_H
 #define SIREFF_QHASH_SIREFF_H
 
+#include "sireglobal.h"
+
 namespace SireFF
 {
 class ParameterSource;
 class ParameterName;
+class FFGroupID;
 }
 
 uint qHash(const SireFF::ParameterSource&);
 uint qHash(const SireFF::ParameterName&);
+
+uint qHash(const SireFF::FFGroupID&);
 
 #endif

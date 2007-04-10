@@ -105,6 +105,8 @@
 
 #include "NewAtom.pypp.hpp"
 
+#include "PartialMolecule.pypp.hpp"
+
 #include "ResID.pypp.hpp"
 
 #include "ResIDAtomID.pypp.hpp"
@@ -228,6 +230,8 @@ BOOST_PYTHON_MODULE(_Mol){
 
     bp::implicitly_convertible< SireMol::NewAtom, SireMol::Element >();
 
+    register_PartialMolecule_class();
+
     register_ResID_class();
 
     register_ResIDAtomID_class();
@@ -291,6 +295,18 @@ BOOST_PYTHON_MODULE(_Mol){
     bp::implicitly_convertible< SireMol::NewAtom, SireMaths::Vector >();
 
     bp::implicitly_convertible< SireMol::NewAtom, SireMol::Element >();
+
+    bp::implicitly_convertible< SireMol::NewAtom, SireMol::PartialMolecule >();
+
+    bp::implicitly_convertible< SireMol::Residue, SireMol::PartialMolecule >();
+
+    bp::implicitly_convertible< SireMol::Molecule, SireMol::PartialMolecule >();
+
+    bp::implicitly_convertible< SireMol::PartialMolecule, SireMol::Molecule >();
+
+    bp::implicitly_convertible< SireMol::Residue, SireMol::Molecule >();
+
+    bp::implicitly_convertible< SireMol::NewAtom, SireMol::Molecule >();
 
     register_WeightFunction_class();
 }

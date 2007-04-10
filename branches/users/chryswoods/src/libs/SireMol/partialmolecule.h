@@ -66,6 +66,8 @@ class MoleculeVersion;
 class SIREMOL_EXPORT PartialMolecule
 {
 
+friend class Molecule;
+
 friend QDataStream& ::operator<<(QDataStream&, const PartialMolecule&);
 friend QDataStream& ::operator>>(QDataStream&, PartialMolecule&);
 

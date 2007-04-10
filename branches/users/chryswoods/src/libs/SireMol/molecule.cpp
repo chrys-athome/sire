@@ -32,6 +32,7 @@
 #include "moleculedata.h"
 #include "newatom.h"
 #include "residue.h"
+#include "partialmolecule.h"
 #include "cutgroup.h"
 #include "editmol.h"
 
@@ -105,6 +106,11 @@ uint SIREMOL_EXPORT qHash(const Molecule &molecule)
 
 /** Create an empty molecule */
 Molecule::Molecule() : d( MoleculeData::null() )
+{}
+
+/** Construct a Molecule that is a copy of the molecule that contains the
+    partial molecule 'Molecule */
+Molecule::Molecule(const PartialMolecule &molecule) : d( molecule.d )
 {}
 
 /** Construct a Molecule that is a copy of the molecule that contains the
@@ -209,7 +215,7 @@ EditMol Molecule::edit() const
 
 /** Return the property called 'name'
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
 */
 const Property& Molecule::getProperty(const QString &name) const
 {
@@ -231,7 +237,7 @@ void Molecule::setProperty(const QString &name, const Property &value)
 /** Add a property called 'name' with value 'value'. This will only add the
     property if there is not an already existing property with that name.
 
-    \throw SireMol::duplicate_property
+    \throw SireBase::duplicate_property
 */
 void Molecule::addProperty(const QString &name, const Property &value)
 {
@@ -253,7 +259,7 @@ void Molecule::setProperty(const QString &name, const PropertyBase &value)
 /** Add a property called 'name' with value 'value'. This will only add the
     property if there is not an already existing property with that name.
 
-    \throw SireMol::duplicate_property
+    \throw SireBase::duplicate_property
 */
 void Molecule::addProperty(const QString &name, const PropertyBase &value)
 {
@@ -270,7 +276,7 @@ void Molecule::setProperty(const QString &name, const QVariant &value)
 /** Add a property called 'name' with value 'value'. This will only add the
     property if there is not an already existing property with that name.
 
-    \throw SireMol::duplicate_property
+    \throw SireBase::duplicate_property
 */
 void Molecule::addProperty(const QString &name, const QVariant &value)
 {

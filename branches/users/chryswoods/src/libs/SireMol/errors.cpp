@@ -43,5 +43,3 @@ static const RegisterMetaType<template_error> r_tmplerr;
 static const RegisterMetaType<anchor_error> r_ancerr;
 static const RegisterMetaType<ring_error> r_ringerr;
 static const RegisterMetaType<incompatible_molecule> r_incompat;
-static const RegisterMetaType<missing_property> r_mprop;
-static const RegisterMetaType<duplicate_property> r_dprop;

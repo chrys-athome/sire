@@ -105,7 +105,8 @@ void register_FFBase_class(){
                 , (::quint32 ( ::SireFF::FFBase::Groups::* )(  ) const)( &::SireFF::FFBase::Groups::count ) )    
             .def( 
                 "main"
-                , (::SireFF::FFBase::Group ( ::SireFF::FFBase::Groups::* )(  ) const)( &::SireFF::FFBase::Groups::main ) );
+                , (::SireFF::FFBase::Group (*)(  ))( &::SireFF::FFBase::Groups::main ) )    
+            .staticmethod( "main" );
         bp::class_< SireFF::FFBase::Parameters >( "Parameters" );
         { //::SireFF::FFBase::ID
         
@@ -118,7 +119,7 @@ void register_FFBase_class(){
         }
         { //::SireFF::FFBase::add
         
-            typedef bool ( ::SireFF::FFBase::*add_function_type )( ::SireMol::Molecule const &,::SireFF::ParameterMap const & ) ;
+            typedef bool ( ::SireFF::FFBase::*add_function_type )( ::SireMol::PartialMolecule const &,::SireFF::ParameterMap const & ) ;
             
             FFBase_exposer.def( 
                 "add"
@@ -128,52 +129,32 @@ void register_FFBase_class(){
         }
         { //::SireFF::FFBase::add
         
-            typedef bool ( ::SireFF::FFBase::*add_function_type )( ::SireMol::Residue const &,::SireFF::ParameterMap const & ) ;
+            typedef bool ( ::SireFF::FFBase::*add_function_type )( ::QList<SireMol::PartialMolecule> const &,::SireFF::ParameterMap const & ) ;
             
             FFBase_exposer.def( 
                 "add"
                 , add_function_type( &::SireFF::FFBase::add )
-                , ( bp::arg("residue"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
+                , ( bp::arg("molecules"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
         
         }
-        { //::SireFF::FFBase::add
+        { //::SireFF::FFBase::addTo
         
-            typedef bool ( ::SireFF::FFBase::*add_function_type )( ::SireMol::NewAtom const &,::SireFF::ParameterMap const & ) ;
+            typedef bool ( ::SireFF::FFBase::*addTo_function_type )( ::SireFF::FFBase::Group const &,::SireMol::PartialMolecule const &,::SireFF::ParameterMap const & ) ;
             
             FFBase_exposer.def( 
-                "add"
-                , add_function_type( &::SireFF::FFBase::add )
-                , ( bp::arg("atom"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
+                "addTo"
+                , addTo_function_type( &::SireFF::FFBase::addTo )
+                , ( bp::arg("group"), bp::arg("molecule"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
         
         }
-        { //::SireFF::FFBase::add
+        { //::SireFF::FFBase::addTo
         
-            typedef bool ( ::SireFF::FFBase::*add_function_type )( ::SireMol::Molecule const &,::SireFF::FFBase::Group const &,::SireFF::ParameterMap const & ) ;
+            typedef bool ( ::SireFF::FFBase::*addTo_function_type )( ::SireFF::FFBase::Group const &,::QList<SireMol::PartialMolecule> const &,::SireFF::ParameterMap const & ) ;
             
             FFBase_exposer.def( 
-                "add"
-                , add_function_type( &::SireFF::FFBase::add )
-                , ( bp::arg("molecule"), bp::arg("group"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
-        
-        }
-        { //::SireFF::FFBase::add
-        
-            typedef bool ( ::SireFF::FFBase::*add_function_type )( ::SireMol::Residue const &,::SireFF::FFBase::Group const &,::SireFF::ParameterMap const & ) ;
-            
-            FFBase_exposer.def( 
-                "add"
-                , add_function_type( &::SireFF::FFBase::add )
-                , ( bp::arg("residue"), bp::arg("group"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
-        
-        }
-        { //::SireFF::FFBase::add
-        
-            typedef bool ( ::SireFF::FFBase::*add_function_type )( ::SireMol::NewAtom const &,::SireFF::FFBase::Group const &,::SireFF::ParameterMap const & ) ;
-            
-            FFBase_exposer.def( 
-                "add"
-                , add_function_type( &::SireFF::FFBase::add )
-                , ( bp::arg("atom"), bp::arg("group"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
+                "addTo"
+                , addTo_function_type( &::SireFF::FFBase::addTo )
+                , ( bp::arg("group"), bp::arg("molecules"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
         
         }
         { //::SireFF::FFBase::assertContains
@@ -186,59 +167,19 @@ void register_FFBase_class(){
                 , ( bp::arg("component") ) );
         
         }
-        { //::SireFF::FFBase::atom
-        
-            typedef ::SireMol::NewAtom ( ::SireFF::FFBase::*atom_function_type )( ::SireMol::MoleculeID,::SireMol::IDMolAtom const & ) const;
-            
-            FFBase_exposer.def( 
-                "atom"
-                , atom_function_type( &::SireFF::FFBase::atom )
-                , ( bp::arg("molid"), bp::arg("atomid") ) );
-        
-        }
-        { //::SireFF::FFBase::atom
-        
-            typedef ::SireMol::NewAtom ( ::SireFF::FFBase::*atom_function_type )( ::SireMol::NewAtom const & ) const;
-            
-            FFBase_exposer.def( 
-                "atom"
-                , atom_function_type( &::SireFF::FFBase::atom )
-                , ( bp::arg("atom") ) );
-        
-        }
         { //::SireFF::FFBase::change
         
-            typedef bool ( ::SireFF::FFBase::*change_function_type )( ::SireMol::Molecule const & ) ;
+            typedef bool ( ::SireFF::FFBase::*change_function_type )( ::SireMol::PartialMolecule const & ) ;
             
             FFBase_exposer.def( 
                 "change"
                 , change_function_type( &::SireFF::FFBase::change )
-                , ( bp::arg("mol") ) );
+                , ( bp::arg("molecule") ) );
         
         }
         { //::SireFF::FFBase::change
         
-            typedef bool ( ::SireFF::FFBase::*change_function_type )( ::SireMol::Residue const & ) ;
-            
-            FFBase_exposer.def( 
-                "change"
-                , change_function_type( &::SireFF::FFBase::change )
-                , ( bp::arg("res") ) );
-        
-        }
-        { //::SireFF::FFBase::change
-        
-            typedef bool ( ::SireFF::FFBase::*change_function_type )( ::SireMol::NewAtom const & ) ;
-            
-            FFBase_exposer.def( 
-                "change"
-                , change_function_type( &::SireFF::FFBase::change )
-                , ( bp::arg("atom") ) );
-        
-        }
-        { //::SireFF::FFBase::change
-        
-            typedef bool ( ::SireFF::FFBase::*change_function_type )( ::QHash<SireMol::MoleculeID, SireMol::Molecule> const & ) ;
+            typedef bool ( ::SireFF::FFBase::*change_function_type )( ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> const & ) ;
             
             FFBase_exposer.def( 
                 "change"
@@ -258,7 +199,7 @@ void register_FFBase_class(){
         }
         { //::SireFF::FFBase::contains
         
-            typedef bool ( ::SireFF::FFBase::*contains_function_type )( ::SireMol::Molecule const & ) const;
+            typedef bool ( ::SireFF::FFBase::*contains_function_type )( ::SireMol::PartialMolecule const & ) const;
             
             FFBase_exposer.def( 
                 "contains"
@@ -268,22 +209,41 @@ void register_FFBase_class(){
         }
         { //::SireFF::FFBase::contains
         
-            typedef bool ( ::SireFF::FFBase::*contains_function_type )( ::SireMol::Residue const & ) const;
+            typedef bool ( ::SireFF::FFBase::*contains_function_type )( ::SireMol::PartialMolecule const &,::SireFF::FFBase::Group const & ) const;
             
             FFBase_exposer.def( 
                 "contains"
                 , contains_function_type( &::SireFF::FFBase::contains )
-                , ( bp::arg("residue") ) );
+                , ( bp::arg("molecule"), bp::arg("group") ) );
         
         }
-        { //::SireFF::FFBase::contains
+        { //::SireFF::FFBase::containsProperty
         
-            typedef bool ( ::SireFF::FFBase::*contains_function_type )( ::SireMol::NewAtom const & ) const;
+            typedef bool ( ::SireFF::FFBase::*containsProperty_function_type )( ::QString const & ) const;
             
             FFBase_exposer.def( 
-                "contains"
-                , contains_function_type( &::SireFF::FFBase::contains )
-                , ( bp::arg("atom") ) );
+                "containsProperty"
+                , containsProperty_function_type( &::SireFF::FFBase::containsProperty )
+                , ( bp::arg("name") ) );
+        
+        }
+        { //::SireFF::FFBase::contents
+        
+            typedef ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::FFBase::*contents_function_type )(  ) const;
+            
+            FFBase_exposer.def( 
+                "contents"
+                , contents_function_type( &::SireFF::FFBase::contents ) );
+        
+        }
+        { //::SireFF::FFBase::contents
+        
+            typedef ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::FFBase::*contents_function_type )( ::SireFF::FFBase::Group const & ) const;
+            
+            FFBase_exposer.def( 
+                "contents"
+                , contents_function_type( &::SireFF::FFBase::contents )
+                , ( bp::arg("group") ) );
         
         }
         { //::SireFF::FFBase::energies
@@ -324,6 +284,16 @@ void register_FFBase_class(){
                 , ( bp::arg("component") ) );
         
         }
+        { //::SireFF::FFBase::getProperty
+        
+            typedef ::SireBase::Property ( ::SireFF::FFBase::*getProperty_function_type )( ::QString const & ) const;
+            
+            FFBase_exposer.def( 
+                "getProperty"
+                , getProperty_function_type( &::SireFF::FFBase::getProperty )
+                , ( bp::arg("name") ) );
+        
+        }
         { //::SireFF::FFBase::groups
         
             typedef ::SireFF::FFBase::Groups const & ( ::SireFF::FFBase::*groups_function_type )(  ) const;
@@ -354,7 +324,7 @@ void register_FFBase_class(){
         }
         { //::SireFF::FFBase::molecule
         
-            typedef ::SireMol::Molecule ( ::SireFF::FFBase::*molecule_function_type )( ::SireMol::MoleculeID ) const;
+            typedef ::SireMol::PartialMolecule ( ::SireFF::FFBase::*molecule_function_type )( ::SireMol::MoleculeID ) const;
             
             FFBase_exposer.def( 
                 "molecule"
@@ -364,12 +334,12 @@ void register_FFBase_class(){
         }
         { //::SireFF::FFBase::molecule
         
-            typedef ::SireMol::Molecule ( ::SireFF::FFBase::*molecule_function_type )( ::SireMol::Molecule const & ) const;
+            typedef ::SireMol::PartialMolecule ( ::SireFF::FFBase::*molecule_function_type )( ::SireMol::MoleculeID,::SireFF::FFBase::Group const & ) const;
             
             FFBase_exposer.def( 
                 "molecule"
                 , molecule_function_type( &::SireFF::FFBase::molecule )
-                , ( bp::arg("mol") ) );
+                , ( bp::arg("molid"), bp::arg("group") ) );
         
         }
         { //::SireFF::FFBase::moleculeIDs
@@ -379,6 +349,45 @@ void register_FFBase_class(){
             FFBase_exposer.def( 
                 "moleculeIDs"
                 , moleculeIDs_function_type( &::SireFF::FFBase::moleculeIDs ) );
+        
+        }
+        { //::SireFF::FFBase::moleculeIDs
+        
+            typedef ::QSet<SireMol::MoleculeID> ( ::SireFF::FFBase::*moleculeIDs_function_type )( ::SireFF::FFBase::Group const & ) const;
+            
+            FFBase_exposer.def( 
+                "moleculeIDs"
+                , moleculeIDs_function_type( &::SireFF::FFBase::moleculeIDs )
+                , ( bp::arg("group") ) );
+        
+        }
+        { //::SireFF::FFBase::molecules
+        
+            typedef ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::FFBase::*molecules_function_type )( ::QSet<SireMol::MoleculeID> const & ) const;
+            
+            FFBase_exposer.def( 
+                "molecules"
+                , molecules_function_type( &::SireFF::FFBase::molecules )
+                , ( bp::arg("molids") ) );
+        
+        }
+        { //::SireFF::FFBase::molecules
+        
+            typedef ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::FFBase::*molecules_function_type )(  ) const;
+            
+            FFBase_exposer.def( 
+                "molecules"
+                , molecules_function_type( &::SireFF::FFBase::molecules ) );
+        
+        }
+        { //::SireFF::FFBase::molecules
+        
+            typedef ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::FFBase::*molecules_function_type )( ::SireFF::FFBase::Group const & ) const;
+            
+            FFBase_exposer.def( 
+                "molecules"
+                , molecules_function_type( &::SireFF::FFBase::molecules )
+                , ( bp::arg("group") ) );
         
         }
         { //::SireFF::FFBase::name
@@ -391,6 +400,8 @@ void register_FFBase_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        FFBase_exposer.def( bp::self != bp::self );
+        FFBase_exposer.def( bp::self == bp::self );
         { //::SireFF::FFBase::parameters
         
             typedef ::SireFF::FFBase::Parameters const & ( ::SireFF::FFBase::*parameters_function_type )(  ) const;
@@ -401,19 +412,38 @@ void register_FFBase_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        { //::SireFF::FFBase::properties
+        
+            typedef ::QHash<QString,SireBase::Property> ( ::SireFF::FFBase::*properties_function_type )(  ) const;
+            
+            FFBase_exposer.def( 
+                "properties"
+                , properties_function_type( &::SireFF::FFBase::properties ) );
+        
+        }
         { //::SireFF::FFBase::refersTo
         
-            typedef bool ( ::SireFF::FFBase::*refersTo_function_type )( ::SireMol::Molecule const & ) const;
+            typedef bool ( ::SireFF::FFBase::*refersTo_function_type )( ::SireMol::MoleculeID ) const;
             
             FFBase_exposer.def( 
                 "refersTo"
                 , refersTo_function_type( &::SireFF::FFBase::refersTo )
-                , ( bp::arg("molecule") ) );
+                , ( bp::arg("molid") ) );
+        
+        }
+        { //::SireFF::FFBase::refersTo
+        
+            typedef bool ( ::SireFF::FFBase::*refersTo_function_type )( ::SireMol::MoleculeID,::SireFF::FFBase::Group const & ) const;
+            
+            FFBase_exposer.def( 
+                "refersTo"
+                , refersTo_function_type( &::SireFF::FFBase::refersTo )
+                , ( bp::arg("molid"), bp::arg("group") ) );
         
         }
         { //::SireFF::FFBase::remove
         
-            typedef bool ( ::SireFF::FFBase::*remove_function_type )( ::SireMol::Molecule const & ) ;
+            typedef bool ( ::SireFF::FFBase::*remove_function_type )( ::SireMol::PartialMolecule const & ) ;
             
             FFBase_exposer.def( 
                 "remove"
@@ -423,72 +453,32 @@ void register_FFBase_class(){
         }
         { //::SireFF::FFBase::remove
         
-            typedef bool ( ::SireFF::FFBase::*remove_function_type )( ::SireMol::Residue const & ) ;
+            typedef bool ( ::SireFF::FFBase::*remove_function_type )( ::QList<SireMol::PartialMolecule> const & ) ;
             
             FFBase_exposer.def( 
                 "remove"
                 , remove_function_type( &::SireFF::FFBase::remove )
-                , ( bp::arg("residue") ) );
+                , ( bp::arg("molecules") ) );
         
         }
-        { //::SireFF::FFBase::remove
+        { //::SireFF::FFBase::removeFrom
         
-            typedef bool ( ::SireFF::FFBase::*remove_function_type )( ::SireMol::NewAtom const & ) ;
+            typedef bool ( ::SireFF::FFBase::*removeFrom_function_type )( ::SireFF::FFBase::Group const &,::SireMol::PartialMolecule const & ) ;
             
             FFBase_exposer.def( 
-                "remove"
-                , remove_function_type( &::SireFF::FFBase::remove )
-                , ( bp::arg("atom") ) );
+                "removeFrom"
+                , removeFrom_function_type( &::SireFF::FFBase::removeFrom )
+                , ( bp::arg("group"), bp::arg("molecule") ) );
         
         }
-        { //::SireFF::FFBase::replace
+        { //::SireFF::FFBase::removeFrom
         
-            typedef bool ( ::SireFF::FFBase::*replace_function_type )( ::SireMol::Molecule const &,::SireMol::Molecule const &,::SireFF::ParameterMap const & ) ;
+            typedef bool ( ::SireFF::FFBase::*removeFrom_function_type )( ::SireFF::FFBase::Group const &,::QList<SireMol::PartialMolecule> const & ) ;
             
             FFBase_exposer.def( 
-                "replace"
-                , replace_function_type( &::SireFF::FFBase::replace )
-                , ( bp::arg("oldmol"), bp::arg("newmol"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
-        
-        }
-        { //::SireFF::FFBase::residue
-        
-            typedef ::SireMol::Residue ( ::SireFF::FFBase::*residue_function_type )( ::SireMol::MoleculeID,::SireMol::ResNum ) const;
-            
-            FFBase_exposer.def( 
-                "residue"
-                , residue_function_type( &::SireFF::FFBase::residue )
-                , ( bp::arg("molid"), bp::arg("resnum") ) );
-        
-        }
-        { //::SireFF::FFBase::residue
-        
-            typedef ::SireMol::Residue ( ::SireFF::FFBase::*residue_function_type )( ::SireMol::MoleculeID,::SireMol::ResID ) const;
-            
-            FFBase_exposer.def( 
-                "residue"
-                , residue_function_type( &::SireFF::FFBase::residue )
-                , ( bp::arg("molid"), bp::arg("resid") ) );
-        
-        }
-        { //::SireFF::FFBase::residue
-        
-            typedef ::SireMol::Residue ( ::SireFF::FFBase::*residue_function_type )( ::SireMol::MoleculeID,::QString const & ) const;
-            
-            FFBase_exposer.def( 
-                "residue"
-                , residue_function_type( &::SireFF::FFBase::residue )
-                , ( bp::arg("molid"), bp::arg("resname") ) );
-        
-        }
-        { //::SireFF::FFBase::residue
-        
-            typedef ::SireMol::Residue ( ::SireFF::FFBase::*residue_function_type )( ::SireMol::Residue const & ) const;
-            
-            FFBase_exposer.def( 
-                "residue"
-                , residue_function_type( &::SireFF::FFBase::residue )
-                , ( bp::arg("res") ) );
+                "removeFrom"
+                , removeFrom_function_type( &::SireFF::FFBase::removeFrom )
+                , ( bp::arg("group"), bp::arg("molecules") ) );
         
         }
         { //::SireFF::FFBase::setName
@@ -499,6 +489,16 @@ void register_FFBase_class(){
                 "setName"
                 , setName_function_type( &::SireFF::FFBase::setName )
                 , ( bp::arg("name") ) );
+        
+        }
+        { //::SireFF::FFBase::setProperty
+        
+            typedef bool ( ::SireFF::FFBase::*setProperty_function_type )( ::QString const &,::SireBase::Property const & ) ;
+            
+            FFBase_exposer.def( 
+                "setProperty"
+                , setProperty_function_type( &::SireFF::FFBase::setProperty )
+                , ( bp::arg("name"), bp::arg("value") ) );
         
         }
         { //::SireFF::FFBase::toString

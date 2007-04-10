@@ -53,6 +53,7 @@ wrap_classes = [ "Angle",
                  "MoleculeProperty",
                  "MoleculeVersion",
                  "NewAtom",
+		 "PartialMolecule",
                  "ResID",
                  "ResIDAtomID",
                  "Residue",
@@ -69,6 +70,7 @@ huge_classes = [ "EditMol",
                  "EditRes",
                  "Molecule",
                  "NewAtom",
+		 "PartialMolecule",
                  "Residue" ]
 
 aliases = {}
@@ -149,7 +151,15 @@ implicitly_convertible = [ ("boost::tuples::tuple<SireMol::AtomIndex,SireMol::At
                            ("SireMol::MoleculeGroup", "SireMol::MoleculeGroups"),
                            
                            ("SireMol::NewAtom", "SireMaths::Vector"),
-                           ("SireMol::NewAtom", "SireMol::Element")
+                           ("SireMol::NewAtom", "SireMol::Element"),
+
+			   ("SireMol::NewAtom", "SireMol::PartialMolecule"),
+			   ("SireMol::Residue", "SireMol::PartialMolecule"),
+			   ("SireMol::Molecule", "SireMol::PartialMolecule"),
+
+                           ("SireMol::PartialMolecule", "SireMol::Molecule"),
+			   ("SireMol::Residue", "SireMol::Molecule"),
+			   ("SireMol::NewAtom", "SireMol::Molecule")
                          ]
 
 incpaths = sys.argv[1:]

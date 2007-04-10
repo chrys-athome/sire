@@ -114,7 +114,7 @@ public:
     QHash<QString,Property> properties() const;
 
     bool change(const PartialMolecule &molecule);
-
+    bool change(const QList<PartialMolecule> &molecules);
     bool change(const QHash<MoleculeID,PartialMolecule> &molecules);
 
     bool add(const PartialMolecule &molecule,
@@ -147,10 +147,15 @@ public:
     bool refersTo(MoleculeID molid) const;
     bool refersTo(MoleculeID molid, const FFBase::Group &group) const;
 
+    QSet<FFBase::Group> groupsReferringTo(MoleculeID molid) const;
+
     QSet<MoleculeID> moleculeIDs() const;
     QSet<MoleculeID> moleculeIDs(const FFBase::Group &group) const;
 
     PartialMolecule molecule(MoleculeID molid) const;
+    PartialMolecule molecule(MoleculeID molid, const FFBase::Group &group) const;
+    
+    QHash<MoleculeID,PartialMolecule> molecules() const;
     QHash<MoleculeID,PartialMolecule> molecules(const QSet<MoleculeID> &molids) const;
 
     QHash<MoleculeID,PartialMolecule> contents(const FFBase::Group &group) const;

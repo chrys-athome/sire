@@ -620,7 +620,7 @@ bool InterLJFF::_pvt_add(const T &mol, const ParameterMap &map)
     supplied map to find the forcefield parameters amongst the
     molecule's properties.
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
 bool InterLJFF::add(const Molecule &molecule, const ParameterMap &map)
@@ -633,7 +633,7 @@ bool InterLJFF::add(const Molecule &molecule, const ParameterMap &map)
     residue's properties. Note that the property used must agree
     with the rest of the molecule if it is already in this forcefield.
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
     \throw SireMol::invalid_cast
 */
 bool InterLJFF::add(const Residue &residue, const ParameterMap &map)
@@ -646,7 +646,7 @@ bool InterLJFF::add(const Residue &residue, const ParameterMap &map)
     atom's properties. Note that the property used must agree
     with the rest of the molecule if it is already in this forcefield.
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
     \throw SireMol::invalid_cast
 */
 bool InterLJFF::add(const NewAtom &atom, const ParameterMap &map)
@@ -660,7 +660,7 @@ bool InterLJFF::add(const NewAtom &atom, const ParameterMap &map)
     used must agree with the rest of the molecule if it is already
     in this forcefield.
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
     \throw SireMol::invalid_cast
 */
 bool InterLJFF::add(const Molecule &molecule, const AtomSelection &selected_atoms,

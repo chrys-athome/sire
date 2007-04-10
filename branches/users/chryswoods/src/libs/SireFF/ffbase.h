@@ -279,6 +279,12 @@ public:
         ~Group()
         {}
 
+        Group& operator=(const Group &other)
+        {
+            _val = other._val;
+            return *this;
+        }
+
         operator quint32() const
         {
             return _val;
@@ -362,12 +368,13 @@ public:
         to extract any necessary parameters from the molecule's
         properties
 
-        \throw SireMol::missing_property
+        \throw SireBase::missing_property
         \throw SireError::invalid_cast
         \throw SireError::invalid_operation
     */
     virtual bool change(const PartialMolecule &molecule)=0;
 
+    virtual bool change(const QList<PartialMolecule> &mols);
     virtual bool change(const QHash<MoleculeID,PartialMolecule> &mols);
 
     /** Add the molecule 'molecule' to this forcefield using the
@@ -382,7 +389,7 @@ public:
         support partial molecules.
 
         \throw SireError::invalid_operation
-        \throw SireMol::missing_property
+        \throw SireBase::missing_property
         \throw SireError::invalid_cast
     */
     virtual bool add(const PartialMolecule &molecule,
@@ -429,6 +436,12 @@ public:
 
     virtual bool refersTo(MoleculeID molid, const FFBase::Group &group) const;
 
+    /** Return the groups that refer to the molecule with ID == molid
+    
+        \throw SireMol::missing_molecule
+    */
+    virtual QSet<FFBase::Group> groupsReferringTo(MoleculeID molid) const=0;
+
     /** Return the set of all of the ID numbers of all of the
         molecules that are referred to by this forcefield
         (i.e. all molecules that have at least some part
@@ -437,22 +450,28 @@ public:
 
     virtual QSet<MoleculeID> moleculeIDs(const FFBase::Group &group) const;
 
+    virtual PartialMolecule molecule(MoleculeID molid) const;
+
     /** Return the copy of the molecule in this forcefield that
-        has the ID == molid
+        has the ID == molid in the group 'group'
 
         \throw SireMol::missing_molecule
     */
-    virtual PartialMolecule molecule(MoleculeID molid) const=0;
+    virtual PartialMolecule molecule(MoleculeID molid, 
+                                     const FFBase::Group &group) const=0;
 
     virtual QHash<MoleculeID,PartialMolecule> 
                   molecules(const QSet<MoleculeID> &molids) const;
 
-    virtual QHash<MoleculeID,PartialMolecule> contents(
-                                        const FFBase::Group &group) const;
+    QHash<MoleculeID,PartialMolecule> molecules() const;
+    QHash<MoleculeID,PartialMolecule> molecules(const FFBase::Group &group) const;
 
     /** Return all of the molecules (and parts of molecules) that
         are in this forcefield */
     virtual QHash<MoleculeID,PartialMolecule> contents() const=0;
+
+    virtual QHash<MoleculeID,PartialMolecule> contents(
+                                        const FFBase::Group &group) const;
 
     bool isDirty() const;
     bool isClean() const;

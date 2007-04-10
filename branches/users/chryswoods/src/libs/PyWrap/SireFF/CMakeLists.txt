@@ -27,6 +27,7 @@ set ( WRAPFF_SOURCES
       FFCalculatorBase.pypp.cpp
       FFComponent.pypp.cpp
       FFExpression.pypp.cpp
+      FFGroupID.pypp.cpp
       FFProcessor.pypp.cpp
       FFProcessorBase.pypp.cpp
       FFThreadProcessor.pypp.cpp

@@ -277,7 +277,7 @@ bool CLJFF::CLJMoleculeData::operator!=(const CLJFF::CLJMoleculeData &other) con
 
 /** Rebuild all of the coordinate and LJ data from scratch
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
 void CLJFF::CLJMoleculeData::rebuildAll()
@@ -566,7 +566,7 @@ CLJFF::CLJMolecule::CLJMolecule() : d(CLJFF::CLJMoleculeData::shared_null)
 /** Construct from the passed molecule, using 'ljproperty' to find the
     molecule's LJ parameters.
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
 CLJFF::CLJMolecule::CLJMolecule(const PartialMolecule &molecule,
@@ -1593,7 +1593,7 @@ CLJFF::~CLJFF()
     you try to set the value of a property that does
     not exist in this forcefield.
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
 */
 bool CLJFF::setProperty(const QString &name, const Property &property)
 {
@@ -1613,7 +1613,7 @@ bool CLJFF::setProperty(const QString &name, const Property &property)
 
 /** Return the property associated with the name 'name'
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
 */
 Property CLJFF::getProperty(const QString &name) const
 {

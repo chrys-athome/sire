@@ -611,7 +611,7 @@ CLJFF::ChangedCLJMolecule InterCLJFF::changeRecord(MoleculeID molid) const
     supplied map to find the forcefield parameters amongst the
     molecule's properties.
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
 bool InterCLJFF::add(const PartialMolecule &molecule, const ParameterMap &map)

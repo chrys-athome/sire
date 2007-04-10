@@ -44,6 +44,7 @@
 
 #include "SireFF/errors.h"
 #include "SireMol/errors.h"
+#include "SireBase/errors.h"
 
 #include "SireError/errors.h"
 
@@ -593,12 +594,12 @@ Values FFBase::energies(const QSet<FFComponent> &components)
     you try to set the value of a property that does
     not exist in this forcefield.
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
 */
 bool FFBase::setProperty(const QString &name, const Property&)
 {
     //if we are here then we are in error!
-    throw SireMol::missing_property( QObject::tr(
+    throw SireBase::missing_property( QObject::tr(
                 "There is no property called \"%1\" in the forcefield "
                 "%2(%3 : %4)")
                     .arg(name).arg(this->what())
@@ -609,12 +610,12 @@ bool FFBase::setProperty(const QString &name, const Property&)
 
 /** Return the property associated with the name 'name'
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
 */
 Property FFBase::getProperty(const QString &name) const
 {
     //if we are here then we are in error!
-    throw SireMol::missing_property( QObject::tr(
+    throw SireBase::missing_property( QObject::tr(
                 "There is no property called \"%1\" in the forcefield "
                 "%2(%3 : %4)")
                     .arg(name).arg(this->what())
@@ -637,7 +638,7 @@ QHash<QString,Property> FFBase::properties() const
 
 /** Change a whole load of partial molecules
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
     \throw SireError::invalid_cast
     \throw SireError::invalid_operation
 */
@@ -673,10 +674,43 @@ bool FFBase::change(const QHash<MoleculeID,PartialMolecule> &molecules)
     }
 }
 
+/** Change a whole load of partial molecules
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::invalid_operation
+*/
+bool FFBase::change(const QList<PartialMolecule> &molecules)
+{
+    if (molecules.count() == 0)
+        return false;
+    else if (molecules.count() == 1)
+    {
+        return this->change(molecules[0]);
+    }
+    else
+    {
+        //maintain the invariant
+        ForceField ffield(*this);
+    
+        for (QList<PartialMolecule>::const_iterator it = molecules.begin();
+             it != molecules.end();
+             ++it)
+        {
+            ffield.change(*it);
+        }
+        
+        //everything went well
+        *this = ffield;
+        
+        return isDirty();
+    }
+}
+
 /** Add lots of molecules 
 
     \throw SireError::invalid_operation
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
 bool FFBase::add(const QList<PartialMolecule> &molecules, const ParameterMap &map)
@@ -712,7 +746,7 @@ bool FFBase::add(const QList<PartialMolecule> &molecules, const ParameterMap &ma
     forcefield has been changed by this addition, and therefore
     whether its energy needs recalculating.
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
     \throw SireError::invalid_cast
     \throw SireError::invalid_operation
     \throw SireFF::invalid_group
@@ -735,7 +769,7 @@ bool FFBase::addTo(const FFBase::Group &group,
 
 /** Adds lots of molecules to the group 'group' 
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
     \throw SireMol::invalid_cast
     \throw SireMol::invalid_operation
     \throw SireFF::invalid_group
@@ -919,6 +953,15 @@ QSet<MoleculeID> FFBase::moleculeIDs(const FFBase::Group &group) const
     }
 }
 
+/** Return a copy of the molecule with ID == molid
+
+    \throw SireMol::missing_molecule
+*/
+PartialMolecule FFBase::molecule(MoleculeID molid) const
+{
+    return this->molecule(molid, FFBase::Groups::main());
+}
+
 /** Return copies of the molecules in this forcefield whose IDs 
     are in 'molids'
     
@@ -956,4 +999,20 @@ QHash<MoleculeID,PartialMolecule> FFBase::contents(const FFBase::Group &group) c
 
         return QHash<MoleculeID,PartialMolecule>();
     }
+}
+
+/** Return copies of all of the molecules that are in this forcefield */
+QHash<MoleculeID,PartialMolecule> FFBase::molecules() const
+{
+    return this->contents();
+}
+
+/** Return copies of all of the molecules that are in the group 'group'
+    in this forcefield 
+    
+    \throw SireFF::missing_group
+*/
+QHash<MoleculeID,PartialMolecule> FFBase::molecules(const FFBase::Group &group) const
+{
+    return this->contents(group);
 }

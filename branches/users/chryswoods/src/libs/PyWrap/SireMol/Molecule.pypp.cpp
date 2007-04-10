@@ -42,6 +42,7 @@ void register_Molecule_class(){
     Molecule_exposer_t Molecule_exposer = Molecule_exposer_t( "Molecule" );
     bp::scope Molecule_scope( Molecule_exposer );
     Molecule_exposer.def( bp::init< >() );
+    Molecule_exposer.def( bp::init< SireMol::PartialMolecule const & >(( bp::arg("molecule") )) );
     Molecule_exposer.def( bp::init< SireMol::Residue const & >(( bp::arg("residue") )) );
     Molecule_exposer.def( bp::init< SireMol::NewAtom const & >(( bp::arg("atom") )) );
     register_Molecule_memfuns0(Molecule_exposer);

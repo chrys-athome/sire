@@ -35,6 +35,8 @@
 
 #include "FFExpression.pypp.hpp"
 
+#include "FFGroupID.pypp.hpp"
+
 #include "FFProcessor.pypp.hpp"
 
 #include "FFProcessorBase.pypp.hpp"
@@ -84,17 +86,19 @@ BOOST_PYTHON_MODULE(_FF){
 
     register_FFExpression_class();
 
+    register_FFGroupID_class();
+
     register_FFProcessorBase_class();
 
     register_FFProcessor_class();
 
     register_FFThreadProcessor_class();
 
-    register_FFWorkerBase_class();
-
     register_FFThreadWorker_class();
 
     register_FFWorker_class();
+
+    register_FFWorkerBase_class();
 
     register_ForceField_class();
 

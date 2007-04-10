@@ -60,6 +60,7 @@
 #include "residatomid.h"
 
 #include "SireMol/errors.h"
+#include "SireBase/errors.h"
 #include "SireError/errors.h"
 
 #include "SireMaths/angle.h"
@@ -254,14 +255,14 @@ EditMol MoleculeData::edit() const
 
 /** Return the property called 'name'
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
 */
 const Property& MoleculeData::getProperty(const QString &name) const
 {
     QHash<QString,Property>::const_iterator it = _properties.find(name);
 
     if (it == _properties.constEnd())
-        throw SireMol::missing_property( QObject::tr(
+        throw SireBase::missing_property( QObject::tr(
                 "There is no property called \"%1\" in the molecule \"%2\" (%3:%4)")
                     .arg(name, info().name()).arg(ID()).arg(version().toString()),
                         CODELOC );
@@ -282,12 +283,12 @@ void MoleculeData::setProperty(const QString &name, const Property &value)
 /** Add a property called 'name' with value 'value'. This will only add the
     property if there is not an already existing property with that name.
 
-    \throw SireMol::duplicate_property
+    \throw SireBase::duplicate_property
 */
 void MoleculeData::addProperty(const QString &name, const Property &value)
 {
     if (_properties.contains(name))
-        throw SireMol::duplicate_property( QObject::tr(
+        throw SireBase::duplicate_property( QObject::tr(
               "Cannot add the property \"%1\" to the molecule \"%2\" (%3:%4) "
               "as this molecule already has a property with this name.")
                   .arg(name, info().name()).arg(ID()).arg(version().toString()),

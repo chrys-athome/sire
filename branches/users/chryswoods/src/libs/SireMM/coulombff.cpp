@@ -302,7 +302,7 @@ bool CoulombFF::CoulombMoleculeData::operator!=(
 
 /** Rebuild all of the coordinate and Coulomb data from scratch
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
 void CoulombFF::CoulombMoleculeData::rebuildAll()
@@ -576,7 +576,7 @@ CoulombFF::CoulombMolecule::CoulombMolecule()
 /** Construct from the passed molecule, using 'chgproperty' to find the
     molecule's partial charges.
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
 CoulombFF::CoulombMolecule::CoulombMolecule(const Molecule &molecule,
@@ -587,7 +587,7 @@ CoulombFF::CoulombMolecule::CoulombMolecule(const Molecule &molecule,
 /** Construct from the passed residue, using 'chgproperty' to find the
     molecule's partial charges.
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
 CoulombFF::CoulombMolecule::CoulombMolecule(const Residue &residue,
@@ -598,7 +598,7 @@ CoulombFF::CoulombMolecule::CoulombMolecule(const Residue &residue,
 /** Construct from the passed atom, using 'chgproperty' to find the
     molecule's partial charges.
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
 CoulombFF::CoulombMolecule::CoulombMolecule(const NewAtom &atom,
@@ -609,7 +609,7 @@ CoulombFF::CoulombMolecule::CoulombMolecule(const NewAtom &atom,
 /** Construct from the selected atoms of the passed molecule, using
     'chgproperty' to find the molecule's partial charges.
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
 CoulombFF::CoulombMolecule::CoulombMolecule(const Molecule &molecule,

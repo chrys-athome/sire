@@ -50,6 +50,7 @@
 #include "SireMol/moleculeproperty.h"
 #include "SireMol/moleculeversion.h"
 #include "SireMol/newatom.h"
+#include "SireMol/partialmolecule.h"
 #include "SireMol/residatomid.h"
 #include "SireMol/resid.h"
 #include "SireMol/residuebonds.h"

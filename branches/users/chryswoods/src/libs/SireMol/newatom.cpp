@@ -265,7 +265,7 @@ NewAtom::operator const AtomInfo&() const
     atom. Note that this must be an AtomProperty class or
     an exception will be thrown
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
 QVariant NewAtom::property(const QString &name) const
