@@ -94,6 +94,8 @@ public:
     Property getProperty(const QString &name);
     bool containsProperty(const QString &name);
 
+    QHash<QString,Property> properties();
+
     bool add(const PartialMolecule &molecule,
              const ParameterMap &map = ParameterMap());
     bool add(const QList<PartialMolecule> &molecules,
@@ -108,6 +110,7 @@ public:
 
     bool change(const PartialMolecule &molecule);
     bool change(const QHash<MoleculeID,PartialMolecule> &molecules);
+    bool change(const QList<PartialMolecule> &molecules);
 
     bool remove(const PartialMolecule &molecule);
     bool remove(const QList<PartialMolecule> &molecules);
@@ -124,10 +127,17 @@ public:
     bool refersTo(MoleculeID molid);
     bool refersTo(MoleculeID molid, const FFBase::Group &group);
 
+    QSet<FFBase::Group> groupsReferringTo(MoleculeID molid);
+
     QSet<MoleculeID> moleculeIDs();
     QSet<MoleculeID> moleculeIDs(const FFBase::Group &group);
 
     PartialMolecule molecule(MoleculeID molid);
+    PartialMolecule molecule(MoleculeID molid, const FFBase::Group &group);
+    
+    QHash<MoleculeID,PartialMolecule> molecules();
+    QHash<MoleculeID,PartialMolecule> molecules(const FFBase::Group &group);
+    QHash<MoleculeID,PartialMolecule> molecules(const QSet<MoleculeID> &molids);
 
     QHash<MoleculeID,PartialMolecule> contents(const FFBase::Group group);
     QHash<MoleculeID,PartialMolecule> contents();
@@ -155,6 +165,8 @@ protected:
     virtual Property _pvt_getProperty(const QString &name)=0;
     virtual bool _pvt_containsProperty(const QString &name)=0;
 
+    virtual QHash<QString,Property> _pvt_properties()=0;
+
     virtual bool _pvt_add(const PartialMolecule &molecule, const ParameterMap &map)=0;
     virtual bool _pvt_add(const QList<PartialMolecule> &molecules,
                           const ParameterMap &map)=0;
@@ -168,6 +180,7 @@ protected:
 
     virtual bool _pvt_change(const PartialMolecule &molecule)=0;
     virtual bool _pvt_change(const QHash<MoleculeID,PartialMolecule> &molecules)=0;
+    virtual bool _pvt_change(const QList<PartialMolecule> &molecules)=0;
 
     virtual bool _pvt_remove(const PartialMolecule &molecule)=0;
     virtual bool _pvt_remove(const QList<PartialMolecule> &molecule)=0;
@@ -184,13 +197,24 @@ protected:
     virtual bool _pvt_refersTo(MoleculeID molid)=0;
     virtual bool _pvt_refersTo(MoleculeID molid, const FFBase::Group &group)=0;
 
+    virtual QSet<FFBase::Group> groupsReferringTo(MoleculeID molid)=0;
+
     virtual QSet<MoleculeID> _pvt_moleculeIDs()=0;
     virtual QSet<MoleculeID> _pvt_moleculeIDs(const FFBase::Group &group)=0;
 
     virtual PartialMolecule _pvt_molecule(MoleculeID molid)=0;
+    virtual PartialMolecule _pvt_molecule(MoleculeID molid, 
+                                          const FFBase::Group &group)=0;
 
     virtual QHash<MoleculeID,PartialMolecule>
-                _pvt_contents(const FFBase::Group group)=0;
+                _pvt_molecules()=0;
+    virtual QHash<MoleculeID,PartialMolecule>
+                _pvt_molecules(const FFBase::Group &group)=0;
+    virtual QHash<MoleculeID,PartialMolecule>
+                _pvt_molecules(const QSet<MoleculeID> &molids)=0;
+
+    virtual QHash<MoleculeID,PartialMolecule>
+                _pvt_contents(const FFBase::Group &group)=0;
     virtual QHash<MoleculeID,PartialMolecule>
                 _pvt_contents()=0;
 

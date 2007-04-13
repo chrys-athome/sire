@@ -80,6 +80,12 @@ public:
     virtual Property getProperty(const QString &name)=0;
     virtual bool containsProperty(const QString &name)=0;
 
+    virtual QHash<QString,Property> properties()=0;
+
+    virtual bool change(const PartialMolecule &molecule)=0;
+    virtual bool change(const QHash<MoleculeID,PartialMolecule> &molecules)=0;
+    virtual bool change(const QList<PartialMolecule> &molecules)=0;
+
     virtual bool add(const PartialMolecule &molecule,
                      const ParameterMap &map = ParameterMap())=0;
     virtual bool add(const QList<PartialMolecule> &molecules,
@@ -91,9 +97,6 @@ public:
     virtual bool addTo(const FFBase::Group &group,
                        const QList<PartialMolecule> &molecules,
                        const ParameterMap &map = ParameterMap())=0;
-
-    virtual bool change(const PartialMolecule &molecule)=0;
-    virtual bool change(const QHash<MoleculeID,PartialMolecule> &molecules)=0;
 
     virtual bool remove(const PartialMolecule &molecule)=0;
     virtual bool remove(const QList<PartialMolecule> &molecules)=0;
@@ -111,12 +114,20 @@ public:
     virtual bool refersTo(MoleculeID molid)=0;
     virtual bool refersTo(MoleculeID molid, const FFBase::Group &group)=0;
 
+    virtual QSet<FFBase::Group> groupsReferringTo(MoleculeID molid)=0;
+
     virtual QSet<MoleculeID> moleculeIDs()=0;
     virtual QSet<MoleculeID> moleculeIDs(const FFBase::Group &group)=0;
 
     virtual PartialMolecule molecule(MoleculeID molid)=0;
+    virtual PartialMolecule molecule(MoleculeID molid, const FFBase::Group &group)=0;
 
-    virtual QHash<MoleculeID,PartialMolecule> contents(const FFBase::Group group)=0;
+    virtual QHash<MoleculeID,PartialMolecule> molecules()=0;
+    virtual QHash<MoleculeID,PartialMolecule> molecules(const FFBase::Group &group)=0;
+    virtual QHash<MoleculeID,PartialMolecule> 
+                              molecules(const QSet<MoleculeID> &molids)=0;
+
+    virtual QHash<MoleculeID,PartialMolecule> contents(const FFBase::Group &group)=0;
     virtual QHash<MoleculeID,PartialMolecule> contents()=0;
 
     virtual bool isDirty()=0;
@@ -152,6 +163,12 @@ public:
     Property getProperty(const QString &name);
     bool containsProperty(const QString &name);
 
+    QHash<QString,Property> properties();
+
+    bool change(const PartialMolecule &molecule);
+    bool change(const QHash<MoleculeID,PartialMolecule> &molecules);
+    bool change(const QList<PartialMolecule> &molecules);
+
     bool add(const PartialMolecule &molecule,
              const ParameterMap &map = ParameterMap());
     bool add(const QList<PartialMolecule> &molecules,
@@ -163,9 +180,6 @@ public:
     bool addTo(const FFBase::Group &group,
                const QList<PartialMolecule> &molecules,
                const ParameterMap &map = ParameterMap());
-
-    bool change(const PartialMolecule &molecule);
-    bool change(const QHash<MoleculeID,PartialMolecule> &molecules);
 
     bool remove(const PartialMolecule &molecule);
     bool remove(const QList<PartialMolecule> &molecules);
@@ -182,12 +196,19 @@ public:
     bool refersTo(MoleculeID molid);
     bool refersTo(MoleculeID molid, const FFBase::Group &group);
 
+    QSet<FFBase::Group> groupsReferringTo(MoleculeID molid);
+
     QSet<MoleculeID> moleculeIDs();
     QSet<MoleculeID> moleculeIDs(const FFBase::Group &group);
 
     PartialMolecule molecule(MoleculeID molid);
+    PartialMolecule molecule(MoleculeID molid, const FFBase::Group &group);
 
-    QHash<MoleculeID,PartialMolecule> contents(const FFBase::Group group);
+    QHash<MoleculeID,PartialMolecule> molecules();
+    QHash<MoleculeID,PartialMolecule> molecules(const QSet<MoleculeID> &molids);
+    QHash<MoleculeID,PartialMolecule> molecules(const FFBase::Group &group);
+
+    QHash<MoleculeID,PartialMolecule> contents(const FFBase::Group &group);
     QHash<MoleculeID,PartialMolecule> contents();
 
     bool isDirty();

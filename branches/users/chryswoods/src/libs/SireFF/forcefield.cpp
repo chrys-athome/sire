@@ -650,6 +650,16 @@ QHash<MoleculeID,PartialMolecule> ForceField::molecules(
     return d->molecules(molids);
 }
 
+/** Return copies of all of the molecules that are in the group 'group'
+
+    \throw SireFF::missing_group
+*/
+QHash<MoleculeID,PartialMolecule> 
+ForceField::molecules(const FFBase::Group &group) const
+{
+    return d->molecules(group);
+}
+
 /** Return copies of all of the molecules that are in this forcefield */
 QHash<MoleculeID,PartialMolecule> ForceField::molecules() const
 {

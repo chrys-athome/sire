@@ -156,6 +156,7 @@ public:
     PartialMolecule molecule(MoleculeID molid, const FFBase::Group &group) const;
     
     QHash<MoleculeID,PartialMolecule> molecules() const;
+    QHash<MoleculeID,PartialMolecule> molecules(const FFBase::Group &group) const;
     QHash<MoleculeID,PartialMolecule> molecules(const QSet<MoleculeID> &molids) const;
 
     QHash<MoleculeID,PartialMolecule> contents(const FFBase::Group &group) const;
