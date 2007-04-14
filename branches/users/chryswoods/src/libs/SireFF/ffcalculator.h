@@ -71,7 +71,7 @@ public:
     virtual ~FFCalculatorBase();
 
     virtual bool setForceField(const ForceField &forcefield)=0;
-    virtual ForceField forcefield() const=0;
+    virtual ForceField forceField() const=0;
 
     virtual double getEnergies(Values &values)=0;
     virtual void calculateEnergy()=0;
@@ -157,7 +157,7 @@ public:
     void calculateEnergy();
 
     bool setForceField(const ForceField &forcefield);
-    ForceField forcefield() const;
+    ForceField forceField() const;
 
     bool setProperty(const QString &name, const Property &property);
     Property getProperty(const QString &name);

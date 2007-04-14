@@ -28,7 +28,11 @@ void register_MoleculeProperty_class(){
         .def( 
             "isCompatibleWith"
             , &::SireMol::MoleculeProperty::isCompatibleWith
-            , ( bp::arg("molecule") ) )    
+            , ( bp::arg("molinfo") ) )    
+        .def( 
+            "mask"
+            , &::SireMol::MoleculeProperty::mask
+            , ( bp::arg("selected_atoms") ) )    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::MoleculeProperty >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::MoleculeProperty >,

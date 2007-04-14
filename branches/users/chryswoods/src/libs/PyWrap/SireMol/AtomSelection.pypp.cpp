@@ -79,6 +79,10 @@ void register_AtomSelection_class(){
             , (void ( ::SireMol::AtomSelection::* )( ::SireMol::AtomSelection const & ) )( &::SireMol::AtomSelection::deselectAll )
             , ( bp::arg("selection") ) )    
         .def( 
+            "info"
+            , &::SireMol::AtomSelection::info
+            , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( 
             "intersect"
             , &::SireMol::AtomSelection::intersect
             , ( bp::arg("other") ) )    

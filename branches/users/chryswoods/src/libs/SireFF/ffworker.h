@@ -29,224 +29,12 @@
 #ifndef SIREFF_FFWORKER_H
 #define SIREFF_FFWORKER_H
 
-#include "SireCluster/processor.h"
-#include "SireCAS/values.h"
-
-#include "ffbase.h"
-#include "parametermap.h"
+#include "ffworkerbase.h"
 
 SIRE_BEGIN_HEADER
 
-namespace SireMol
-{
-class Molecule;
-class Residue;
-class NewAtom;
-class PartialMolecule;
-class MoleculeID;
-}
-
-namespace SireBase
-{
-class Property;
-}
-
 namespace SireFF
 {
-
-class ForceField;
-class FFCalculator;
-class FFCalculatorBase;
-class FFComponent;
-
-using SireMol::Molecule;
-using SireMol::Residue;
-using SireMol::NewAtom;
-using SireMol::PartialMolecule;
-using SireMol::MoleculeID;
-
-using SireCAS::Values;
-
-using SireBase::Property;
-
-/** This is the base class of all FFWorkers - an FFWorker is a class
-    that evaluates a ForceField on a (possibly) remote thread or processor.
-
-    @author Christopher Woods
-*/
-class SIREFF_EXPORT FFWorkerBase
-{
-public:
-    virtual ~FFWorkerBase();
-
-    virtual ForceField forcefield() const=0;
-    void setForceField(const ForceField &forcefield);
-
-    void recalculateEnergy();
-    void waitUntilReady();
-
-    double energy();
-    double energy(const FFComponent &component);
-
-    Values energies();
-
-    bool setProperty(const QString &name, const Property &value);
-    Property getProperty(const QString &name);
-    bool containsProperty(const QString &name);
-
-    QHash<QString,Property> properties();
-
-    bool add(const PartialMolecule &molecule,
-             const ParameterMap &map = ParameterMap());
-    bool add(const QList<PartialMolecule> &molecules,
-             const ParameterMap &map = ParameterMap());
-
-    bool addTo(const FFBase::Group &group,
-               const PartialMolecule &molecule,
-               const ParameterMap &map = ParameterMap());
-    bool addTo(const FFBase::Group &group,
-               const QList<PartialMolecule> &molecules,
-               const ParameterMap &map = ParameterMap());
-
-    bool change(const PartialMolecule &molecule);
-    bool change(const QHash<MoleculeID,PartialMolecule> &molecules);
-    bool change(const QList<PartialMolecule> &molecules);
-
-    bool remove(const PartialMolecule &molecule);
-    bool remove(const QList<PartialMolecule> &molecules);
-
-    bool removeFrom(const FFBase::Group &group,
-                    const PartialMolecule &molecule);
-    bool removeFrom(const FFBase::Group &group,
-                    const QList<PartialMolecule> &molecules);
-
-    bool contains(const PartialMolecule &molecule);
-    bool contains(const PartialMolecule &molecule,
-                  const FFBase::Group &group);
-
-    bool refersTo(MoleculeID molid);
-    bool refersTo(MoleculeID molid, const FFBase::Group &group);
-
-    QSet<FFBase::Group> groupsReferringTo(MoleculeID molid);
-
-    QSet<MoleculeID> moleculeIDs();
-    QSet<MoleculeID> moleculeIDs(const FFBase::Group &group);
-
-    PartialMolecule molecule(MoleculeID molid);
-    PartialMolecule molecule(MoleculeID molid, const FFBase::Group &group);
-    
-    QHash<MoleculeID,PartialMolecule> molecules();
-    QHash<MoleculeID,PartialMolecule> molecules(const FFBase::Group &group);
-    QHash<MoleculeID,PartialMolecule> molecules(const QSet<MoleculeID> &molids);
-
-    QHash<MoleculeID,PartialMolecule> contents(const FFBase::Group group);
-    QHash<MoleculeID,PartialMolecule> contents();
-
-    bool isDirty();
-    bool isClean();
-
-    ForceFieldID ID();
-    Version version();
-
-    void assertContains(const FFComponent &component) const;
-
-protected:
-    FFWorkerBase();
-
-    virtual bool _pvt_setForceField(const ForceField &forcefield)=0;
-
-    virtual void _pvt_recalculateEnergy()=0;
-    virtual void _pvt_recalculateEnergyFG()=0;
-
-    virtual void _pvt_waitUntilReady()=0;
-
-    virtual double _pvt_getEnergies(Values &components)=0;
-    virtual bool _pvt_setProperty(const QString &name, const Property &property)=0;
-    virtual Property _pvt_getProperty(const QString &name)=0;
-    virtual bool _pvt_containsProperty(const QString &name)=0;
-
-    virtual QHash<QString,Property> _pvt_properties()=0;
-
-    virtual bool _pvt_add(const PartialMolecule &molecule, const ParameterMap &map)=0;
-    virtual bool _pvt_add(const QList<PartialMolecule> &molecules,
-                          const ParameterMap &map)=0;
-
-    virtual bool _pvt_addTo(const FFBase::Group &group,
-                            const PartialMolecule &molecule,
-                            const ParameterMap &map)=0;
-    virtual bool _pvt_addTo(const FFBase::Group &group,
-                            const QList<PartialMolecule> &molecules,
-                            const ParameterMap &map)=0;
-
-    virtual bool _pvt_change(const PartialMolecule &molecule)=0;
-    virtual bool _pvt_change(const QHash<MoleculeID,PartialMolecule> &molecules)=0;
-    virtual bool _pvt_change(const QList<PartialMolecule> &molecules)=0;
-
-    virtual bool _pvt_remove(const PartialMolecule &molecule)=0;
-    virtual bool _pvt_remove(const QList<PartialMolecule> &molecule)=0;
-
-    virtual bool _pvt_removeFrom(const FFBase::Group &group,
-                                 const PartialMolecule &molecule)=0;
-    virtual bool _pvt_removeFrom(const FFBase::Group &group,
-                                 const QList<PartialMolecule> &molecules)=0;
-
-    virtual bool _pvt_contains(const PartialMolecule &molecule)=0;
-    virtual bool _pvt_contains(const PartialMolecule &molecule,
-                               const FFBase::Group &group)=0;
-
-    virtual bool _pvt_refersTo(MoleculeID molid)=0;
-    virtual bool _pvt_refersTo(MoleculeID molid, const FFBase::Group &group)=0;
-
-    virtual QSet<FFBase::Group> groupsReferringTo(MoleculeID molid)=0;
-
-    virtual QSet<MoleculeID> _pvt_moleculeIDs()=0;
-    virtual QSet<MoleculeID> _pvt_moleculeIDs(const FFBase::Group &group)=0;
-
-    virtual PartialMolecule _pvt_molecule(MoleculeID molid)=0;
-    virtual PartialMolecule _pvt_molecule(MoleculeID molid, 
-                                          const FFBase::Group &group)=0;
-
-    virtual QHash<MoleculeID,PartialMolecule>
-                _pvt_molecules()=0;
-    virtual QHash<MoleculeID,PartialMolecule>
-                _pvt_molecules(const FFBase::Group &group)=0;
-    virtual QHash<MoleculeID,PartialMolecule>
-                _pvt_molecules(const QSet<MoleculeID> &molids)=0;
-
-    virtual QHash<MoleculeID,PartialMolecule>
-                _pvt_contents(const FFBase::Group &group)=0;
-    virtual QHash<MoleculeID,PartialMolecule>
-                _pvt_contents()=0;
-
-    virtual bool _pvt_isDirty()=0;
-    virtual bool _pvt_isClean()=0;
-
-    virtual ForceFieldID _pvt_ID()=0;
-    virtual Version _pvt_version()=0;
-
-    virtual void _pvt_assertContains(const FFComponent &component) const=0;
-
-private:
-    void checkEnergiesUpToDate();
-
-    /** The total energy of the forcefield */
-    double total_nrg;
-
-    /** The values of the energy components */
-    Values nrg_components;
-
-    /** The different states of this processor */
-    enum FF_STATE{ IDLE  = 0x00000000,  ///< The processor is idle
-                   CALCULATING_ENERGY = 0x00000001,  ///< Energy recalculation is underway
-                   CALCULATING_FORCE = 0x00000002   ///< Force recalculation is underway
-                 };
-
-    /** The current status of this processor */
-    FF_STATE current_state;
-
-    /** Whether or not the energy needs recalculating */
-    bool needs_energy_recalculation;
-};
 
 /** This is a basic class that provides a local FFWorker
 
@@ -259,9 +47,8 @@ public:
 
     ~FFLocalWorker();
 
-    ForceField forcefield() const;
-
 protected:
+    ForceField _pvt_forceField();
     bool _pvt_setForceField(const ForceField &forcefield);
 
     double _pvt_getEnergies(Values &components);
@@ -269,6 +56,8 @@ protected:
     bool _pvt_setProperty(const QString &name, const Property &property);
     Property _pvt_getProperty(const QString &name);
     bool _pvt_containsProperty(const QString &name);
+    
+    QHash<QString,Property> _pvt_properties();
     
     bool _pvt_add(const PartialMolecule &molecule, const ParameterMap &map);
     bool _pvt_add(const QList<PartialMolecule> &molecules, const ParameterMap &map);
@@ -281,6 +70,7 @@ protected:
 
     bool _pvt_change(const PartialMolecule &molecule);
     bool _pvt_change(const QHash<MoleculeID,PartialMolecule> &molecules);
+    bool _pvt_change(const QList<PartialMolecule> &molecules);
 
     bool _pvt_remove(const PartialMolecule &molecule);
     bool _pvt_remove(const QList<PartialMolecule> &molecules);
@@ -297,12 +87,19 @@ protected:
     bool _pvt_refersTo(MoleculeID molid);
     bool _pvt_refersTo(MoleculeID molid, const FFBase::Group &group);
 
+    QSet<FFBase::Group> _pvt_groupsReferringTo(MoleculeID molid);
+
     QSet<MoleculeID> _pvt_moleculeIDs();
     QSet<MoleculeID> _pvt_moleculeIDs(const FFBase::Group &group);
 
     PartialMolecule _pvt_molecule(MoleculeID molid);
+    PartialMolecule _pvt_molecule(MoleculeID molid, const FFBase::Group &group);
 
-    QHash<MoleculeID,PartialMolecule> _pvt_contents(const FFBase::Group group);
+    QHash<MoleculeID,PartialMolecule> _pvt_molecules();
+    QHash<MoleculeID,PartialMolecule> _pvt_molecules(const FFBase::Group &group);
+    QHash<MoleculeID,PartialMolecule> _pvt_molecules(const QSet<MoleculeID> &molids);
+
+    QHash<MoleculeID,PartialMolecule> _pvt_contents(const FFBase::Group &group);
     QHash<MoleculeID,PartialMolecule> _pvt_contents();
 
     bool _pvt_isDirty();
@@ -311,7 +108,7 @@ protected:
     ForceFieldID _pvt_ID();
     Version _pvt_version();
 
-    void _pvt_assertContains(const FFComponent &component) const;
+    void _pvt_assertContains(const FFComponent &component);
 
     /** The calculator used to evaluate the forcefield */
     std::auto_ptr<FFCalculatorBase> ffcalculator;

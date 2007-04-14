@@ -420,6 +420,18 @@ SwitchingFunction& SwitchingFunction::operator=(const Property &property)
     return *this;
 }
 
+/** Comparison operator */
+bool SwitchingFunction::operator==(const SwitchingFunction &other) const
+{
+    return d == other.d or *d == *(other.d);
+}
+
+/** Comparison operator */
+bool SwitchingFunction::operator!=(const SwitchingFunction &other) const
+{
+    return d != other.d and *d != *(other.d);
+}
+
 /** Return the type name of this switching function */
 const char* SwitchingFunction::what() const
 {

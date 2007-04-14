@@ -83,6 +83,8 @@ public:
 
     ~CombiningRuleBase();
 
+    virtual CombiningRuleBase* clone() const=0;
+
     virtual void combine(const QVector<CLJParameter> &clj0,
                          const QVector<CLJParameter> &clj1,
                          CLJPairMatrix &cljmatrix) const=0;
@@ -140,11 +142,11 @@ public:
         return new ArithmeticCombiningRules(*this);
     }
 
-    void combine(const CLJParameter &clj0,
-                 const CLJParameter &clj1,
+    void combine(const QVector<CLJParameter> &clj0,
+                 const QVector<CLJParameter> &clj1,
                  CLJPairMatrix &cljmatrix) const;
 
-    void combine(const CLJParameter &cljs,
+    void combine(const QVector<CLJParameter> &cljs,
                  CLJPairMatrix &cljmatrix) const;
 
     void combine(const QVector<ChargeParameter> &chg0,
@@ -157,12 +159,15 @@ public:
                  const QVector<LJParameter> &ljs,
                  CLJPairMatrix &cljmatrix) const;
 
-    void combine(const LJParameter &lj0,
-                 const LJParameter &lj1,
+    void combine(const QVector<LJParameter> &lj0,
+                 const QVector<LJParameter> &lj1,
                  LJPairMatrix &ljmatrix) const;
 
-    void combine(const LJParameter &ljs,
+    void combine(const QVector<LJParameter> &ljs,
                  LJPairMatrix &ljmatrix) const;
+
+protected:
+    bool _pvt_isEqual(const SireBase::PropertyBase &other) const;
 };
 
 /**
@@ -197,11 +202,11 @@ public:
         return new GeometricCombiningRules(*this);
     }
 
-    void combine(const CLJParameter &clj0,
-                 const CLJParameter &clj1,
+    void combine(const QVector<CLJParameter> &clj0,
+                 const QVector<CLJParameter> &clj1,
                  CLJPairMatrix &cljmatrix) const;
 
-    void combine(const CLJParameter &cljs,
+    void combine(const QVector<CLJParameter> &cljs,
                  CLJPairMatrix &cljmatrix) const;
 
     void combine(const QVector<ChargeParameter> &chg0,
@@ -214,12 +219,15 @@ public:
                  const QVector<LJParameter> &ljs,
                  CLJPairMatrix &cljmatrix) const;
 
-    void combine(const LJParameter &lj0,
-                 const LJParameter &lj1,
+    void combine(const QVector<LJParameter> &lj0,
+                 const QVector<LJParameter> &lj1,
                  LJPairMatrix &ljmatrix) const;
 
-    void combine(const LJParameter &ljs,
+    void combine(const QVector<LJParameter> &ljs,
                  LJPairMatrix &ljmatrix) const;
+
+protected:
+    bool _pvt_isEqual(const SireBase::PropertyBase &other) const;
 };
 
 /**
@@ -248,11 +256,11 @@ public:
 
     const char* what() const;
 
-    void combine(const CLJParameter &clj0,
-                 const CLJParameter &clj1,
+    void combine(const QVector<CLJParameter> &clj0,
+                 const QVector<CLJParameter> &clj1,
                  CLJPairMatrix &cljmatrix) const;
 
-    void combine(const CLJParameter &cljs,
+    void combine(const QVector<CLJParameter> &cljs,
                  CLJPairMatrix &cljmatrix) const;
 
     void combine(const QVector<ChargeParameter> &chg0,
@@ -265,11 +273,11 @@ public:
                  const QVector<LJParameter> &ljs,
                  CLJPairMatrix &cljmatrix) const;
 
-    void combine(const LJParameter &lj0,
-                 const LJParameter &lj1,
+    void combine(const QVector<LJParameter> &lj0,
+                 const QVector<LJParameter> &lj1,
                  LJPairMatrix &ljmatrix) const;
 
-    void combine(const LJParameter &ljs,
+    void combine(const QVector<LJParameter> &ljs,
                  LJPairMatrix &ljmatrix) const;
 
     template<class T>
@@ -285,9 +293,9 @@ public:
     }
 
     /** Allow implicit conversion to a Property */
-    operator Property() const
+    operator SireBase::Property() const
     {
-        return Property(*d);
+        return SireBase::Property(*d);
     }
 
 private:

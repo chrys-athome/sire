@@ -60,6 +60,7 @@ namespace SireMM
 {
 
 using SireMol::Molecule;
+using SireMol::PartialMolecule;
 using SireMol::Residue;
 using SireMol::NewAtom;
 using SireMol::AtomSelection;
@@ -186,6 +187,9 @@ public:
     const Space& space() const;
     const SwitchingFunction& switchingFunction() const;
 
+    virtual bool setSpace(const Space &space);
+    virtual bool setSwitchingFunction(const SwitchingFunction &switchfunc);
+
     bool setProperty(const QString &name, const Property &value);
     Property getProperty(const QString &name) const;
     bool containsProperty(const QString &name) const;
@@ -247,13 +251,13 @@ public:
                                      const Space &space,
                                      const SwitchingFunction &switchfunc,
                                      DistMatrix &distmatrix,
-                                     CLJMatrix &cljmatrix);
+                                     CLJPairMatrix &cljmatrix);
 
     static CLJEnergy calculateEnergy(const CLJMolecule &mol,
                                      const Space &space,
                                      const SwitchingFunction &switchfunc,
                                      DistMatrix &distmatrix,
-                                     CLJMatrix &cljmatrix);
+                                     CLJPairMatrix &cljmatrix);
 
 protected:
 
@@ -266,24 +270,24 @@ protected:
                                      const Space &space,
                                      const SwitchingFunction &switchfunc,
                                      DistMatrix &distmatrix,
-                                     CLJMatrix &cljmatrix);
+                                     CLJPairMatrix &cljmatrix);
 
     static CLJEnergy calculateEnergy(const CoordGroup &group,
                                      const QVector<ChargeParameter> &chgs,
                                      const QVector<LJParameter> &ljs,
                                      const Space &space,
                                      DistMatrix &distmatrix,
-                                     CLJMatrix &cljmatrix);
+                                     CLJPairMatrix &cljmatrix);
 
     void _pvt_copy(const FFBase &other);
 
 private:
 
     static CLJEnergy calculatePairEnergy(DistMatrix &distmatrix,
-                                         CLJMatrix &cljmatrix);
+                                         CLJPairMatrix &cljmatrix);
 
     static CLJEnergy calculateSelfEnergy(DistMatrix &distmatrix,
-                                         CLJMatrix &cljmatrix);
+                                         CLJPairMatrix &cljmatrix);
 
     void registerComponents();
 
@@ -339,7 +343,9 @@ public:
 
     const PartialMolecule& molecule() const;
 
-    ChangedCLJMolecule change(const PartialMolecule &molecule) const;
+    ChangedCLJMolecule change(const PartialMolecule &molecule,
+                              const QString &chgproperty = QString::null,
+                              const QString &ljproperty = QString::null) const;
 
     ChangedCLJMolecule add(const PartialMolecule &molecule,
                            const QString &chgproperty = QString::null,

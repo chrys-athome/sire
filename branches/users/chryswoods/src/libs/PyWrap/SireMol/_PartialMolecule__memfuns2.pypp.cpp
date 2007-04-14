@@ -48,6 +48,17 @@ void register_PartialMolecule_memfuns2( PartialMolecule_exposer_t& PartialMolecu
     
     }
 
+    { //::SireMol::PartialMolecule::selectedAtoms
+    
+        typedef ::SireMol::AtomSelection const & ( ::SireMol::PartialMolecule::*selectedAtoms_function_type )(  ) const;
+        
+        PartialMolecule_exposer.def( 
+            "selectedAtoms"
+            , selectedAtoms_function_type( &::SireMol::PartialMolecule::selectedAtoms )
+            , bp::return_value_policy< bp::copy_const_reference >() );
+    
+    }
+
     { //::SireMol::PartialMolecule::selectedCutGroups
     
         typedef ::QSet<SireMol::CutGroupID> ( ::SireMol::PartialMolecule::*selectedCutGroups_function_type )(  ) const;

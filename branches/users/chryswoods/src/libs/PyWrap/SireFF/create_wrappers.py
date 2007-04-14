@@ -37,6 +37,7 @@ huge_classes = []
 aliases = {}
 
 extra_includes = [ "SireMol/molecule.h",
+                   "SireMol/partialmolecule.h",
                    "SireMol/residue.h",
                    "SireMol/newatom.h",
                    "SireMol/atom.h",
@@ -44,7 +45,8 @@ extra_includes = [ "SireMol/molecule.h",
                    "SireMol/cutgroupnum.h",
                    "SireMol/resnumatomid.h",
                    "SireMol/resid.h",
-                   "SireMol/moleculeid.h"
+                   "SireMol/moleculeid.h",
+		   "SireBase/property.h"
                  ]
 
 def remove_forcefield_bases(c):

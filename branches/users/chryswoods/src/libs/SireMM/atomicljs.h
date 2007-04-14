@@ -48,9 +48,11 @@ QDataStream& operator>>(QDataStream&, SireMM::AtomicLJs&);
 namespace SireMM
 {
 
-using SireMol::Molecule;
+using SireMol::MoleculeInfo;
+using SireMol::AtomSelection;
 using SireMol::CGAtomID;
-using SireMol::Property;
+
+using SireBase::Property;
 
 /** This class is used to hold all of the atomic LJ parameters for the
     atoms in a molecule. All of the atomic LJ parameters are held in
@@ -88,6 +90,9 @@ public:
 
     AtomicLJs& operator=(const AtomicLJs &other);
 
+    bool operator==(const AtomicLJs &other) const;
+    bool operator!=(const AtomicLJs &other) const;
+
     static const char* typeName()
     {
         return "SireMM::AtomicLJs";
@@ -103,9 +108,14 @@ public:
         return new AtomicLJs(*this);
     }
 
-    bool isCompatibleWith(const Molecule &molecule) const;
+    Property mask(const AtomSelection &selected_atoms) const;
+
+    bool isCompatibleWith(const MoleculeInfo &molinfo) const;
 
     QVariant value(const CGAtomID &cgatomid) const;
+
+protected:
+    bool _pvt_isEqual(const PropertyBase &other) const;
 };
 
 }

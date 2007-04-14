@@ -82,6 +82,8 @@ public:
     bool operator==(const AtomSelection &other) const;
     bool operator!=(const AtomSelection &other) const;
 
+    const MoleculeInfo& info() const;
+
     bool isEmpty() const;
 
     int nSelected() const;
@@ -161,6 +163,13 @@ private:
     /** The total number of selected atoms */
     int nselected;
 };
+
+/** Return the info object that describes the molecule whose atoms
+    this selection can select */
+inline const MoleculeInfo& AtomSelection::info() const
+{
+    return molinfo;
+}
 
 }
 

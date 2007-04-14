@@ -44,7 +44,11 @@ QDataStream& operator>>(QDataStream&, SireMol::MoleculeProperty&);
 namespace SireMol
 {
 
+using SireBase::Property;
+
 class Molecule;
+class MoleculeInfo;
+class AtomSelection;
 
 /** This is the base class of all properties that are specifically
     attached to molecules (e.g. AtomicProperties, BondProperties
@@ -65,7 +69,9 @@ public:
 
     ~MoleculeProperty();
 
-    virtual bool isCompatibleWith(const Molecule &molecule) const=0;
+    virtual bool isCompatibleWith(const MoleculeInfo &molinfo) const=0;
+
+    virtual Property mask(const AtomSelection &selected_atoms) const=0;
 
     void assertCompatibleWith(const Molecule &molecule) const;
 };

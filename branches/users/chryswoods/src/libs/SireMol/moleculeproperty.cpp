@@ -87,7 +87,7 @@ MoleculeProperty::~MoleculeProperty()
 */
 void MoleculeProperty::assertCompatibleWith(const Molecule &molecule) const
 {
-    if (not this->isCompatibleWith(molecule))
+    if (not this->isCompatibleWith(molecule.info()))
         throw SireError::incompatible_error( QObject::tr(
                 "This property is incompatible with the molecule \"%1\" (%2:%3)")
                     .arg(molecule.info().name()).arg(molecule.ID())

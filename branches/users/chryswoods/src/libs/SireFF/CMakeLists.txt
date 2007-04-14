@@ -21,6 +21,7 @@ set ( SIREFF_SOURCES
       ffprocessor.cpp
       ffthreadprocessor.cpp
       ffthreadworker.cpp
+      ffworkerbase.cpp
       ffworker.cpp
       forcefield.cpp
       forcefieldsbase.cpp

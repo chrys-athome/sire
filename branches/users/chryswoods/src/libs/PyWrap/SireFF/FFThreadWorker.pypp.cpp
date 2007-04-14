@@ -6,6 +6,7 @@
 #include "boost/python.hpp"
 #include "sireff_headers.h"
 #include "SireMol/molecule.h"
+#include "SireMol/partialmolecule.h"
 #include "SireMol/residue.h"
 #include "SireMol/newatom.h"
 #include "SireMol/atom.h"
@@ -14,6 +15,7 @@
 #include "SireMol/resnumatomid.h"
 #include "SireMol/resid.h"
 #include "SireMol/moleculeid.h"
+#include "SireBase/property.h"
 
 namespace bp = boost::python;
 

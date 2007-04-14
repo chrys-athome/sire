@@ -215,7 +215,7 @@ void ArithmeticCombiningRules::combine(const QVector<CLJParameter> &clj0,
 
             for (int j=0; j<nclj1; ++j)
             {
-                cljmatrix[j] = CLJPair::Arithmetic(clj0param, clj1array[j]);
+                cljmatrix[j] = CLJPair::arithmetic(clj0param, clj1array[j]);
             }
         }
     }
@@ -245,7 +245,7 @@ void ArithmeticCombiningRules::combine(const QVector<CLJParameter> &cljs,
 
             for (int j=i+1; j<ncljs; ++j)
             {
-                cljmatrix[i] = CLJPair::arithmetric(cljparam, cljarray[j]);
+                cljmatrix[i] = CLJPair::arithmetic(cljparam, cljarray[j]);
             }
         }
 

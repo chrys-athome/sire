@@ -34,6 +34,7 @@
 #include "cljff.h"
 #include "ljpair.h"
 
+#include "SireMol/partialmolecule.h"
 #include "SireMol/residueinfo.h"
 #include "SireMol/cgatomid.h"
 
@@ -185,12 +186,6 @@ public:
     /** The name of the property associated with the LJ parameters */
     QString lj_property;
 
-    /** Hash mapping the CutGroupID of a selected cutgroup to
-        the index in the coords and ljs array for its coordinates
-        and LJ parameters. If this is empty then all of the
-        CutGroups in the molecule have been selected. */
-    QHash<CutGroupID,int> cg_index;
-
     /** The coordinates of the CutGroups that contain atoms that
         are selected for inclusion in the LJ forcefield.  */
     QVector<CoordGroup> coords;
@@ -230,7 +225,6 @@ CLJFF::CLJMoleculeData::CLJMoleculeData(const CLJFF::CLJMoleculeData &other)
                          molecule(other.molecule),
                          chg_property(other.chg_property),
                          lj_property(other.lj_property),
-                         cg_index(other.cg_index),
                          coords(other.coords),
                          chgs(other.chgs),
                          ljs(other.ljs)
@@ -248,7 +242,6 @@ CLJFF::CLJMoleculeData& CLJFF::CLJMoleculeData::operator=(const CLJFF::CLJMolecu
         molecule = other.molecule;
         lj_property = other.lj_property;
         chg_property = other.chg_property;
-        cg_index = other.cg_index;
         coords = other.coords;
         chgs = other.chgs;
         ljs = other.ljs;
@@ -262,8 +255,7 @@ bool CLJFF::CLJMoleculeData::operator==(const CLJFF::CLJMoleculeData &other) con
 {
     return molecule == other.molecule and
            chg_property == other.chg_property and
-           lj_property == other.lj_property and
-           cg_index == other.cg_index;
+           lj_property == other.lj_property;
 }
 
 /** Comparison operator */
@@ -271,8 +263,7 @@ bool CLJFF::CLJMoleculeData::operator!=(const CLJFF::CLJMoleculeData &other) con
 {
     return molecule != other.molecule or
            chg_property != other.chg_property or
-           lj_property != other.lj_property or
-           cg_index != other.cg_index;
+           lj_property != other.lj_property;
 }
 
 /** Rebuild all of the coordinate and LJ data from scratch
@@ -282,108 +273,9 @@ bool CLJFF::CLJMoleculeData::operator!=(const CLJFF::CLJMoleculeData &other) con
 */
 void CLJFF::CLJMoleculeData::rebuildAll()
 {
-    if (molecule.selectedAll())
-    {
-        //all atoms are selected - we can therefore short-circuit everything!
-        chgs = molecule.getProperty(chg_property);
-        ljs = molecule.getProperty(lj_property);
-        cg_index.clear();
-        coords = molecule.coordGroups();
-
-        return;
-    }
-
-    if (molecule.isEmpty())
-    {
-        //there has been nothing selected!
-        coords.clear();
-        chgs.clear();
-        ljs.clear();
-        cg_index.clear();
-
-        return;
-    }
-
-    uint nselectedgroups = selected_atoms.nSelectedCutGroups();
-    uint ngroups = molecule.nCutGroups();
-
-    if (nselectedgroups == ngroups)
-    {
-        coords = molecule.coordGroups();
-        chgs = molecule.getProperty(chg_property);
-        ljs = molecule.getProperty(lj_property);
-        cg_index.clear();
-
-        //loop through all CutGroups and zero the parameters of any
-        //atoms that are not selected
-        for (CutGroupID i(0); i<ngroups; ++i)
-        {
-            if ( not molecule.selectedAll(i) )
-            {
-                QVector<ChargeParameter> &chgparams = chgs[i];
-                QVector<LJParameter> &ljparams = ljs[i];
-
-                //there are some missing parameters to zero!
-                uint nats = molecule.nAtoms(i);
-
-                for (AtomID j(0); j<nats; ++j)
-                {
-                    if ( not molecule.selected(CGAtomID(i,j)) )
-                    {
-                        //this atom has not been selected
-                        // - zero its charge and LJ parameter
-                        chgparams[j] = ChargeParameter::dummy();
-                        ljparams[j] = LJParameter::dummy();
-                    }
-                }
-            }
-        }
-
-        return;
-    }
-
-    const QVector<CoordGroup> &all_coords = molecule.coordGroups();
-    AtomicCharges all_chgs = molecule.getProperty(chg_property);
-    AtomicLJs all_ljs = molecule.getProperty(lj_property);
-
-    coords = QVector<CoordGroup>( nselectedgroups );
-    chgs = AtomicCharges( QVector<ChargeParameter>( nselectedgroups ) );
-    ljs = AtomicLJs( QVector<LJParameter>( nselectedgroups ) );
-
-    cg_index.clear();
-    cg_index.reserve(nselectedgroups);
-
-    int idx = 0;
-
-    for (CutGroupID i(0); i<ngroups; ++i)
-    {
-        if (not molecule.selectedNone(i))
-        {
-            coords[idx] = all_coords[i];
-            chgs[idx] = all_chgs[i];
-            ljs[idx] = all_ljs[i];
-
-            cg_index.insert(i, idx);
-            ++idx;
-
-            if (not molecule.selectedAll(i))
-            {
-                uint nats = molecule.nAtoms(i);
-
-                QVector<ChargeParameter> &chgparams = chgs[idx];
-                QVector<LJParameter> &ljparams = ljs[idx];
-
-                for (AtomID j(0); j<nats; ++j)
-                {
-                    if ( not molecule.selected(CGAtomID(i,j)) )
-                    {
-                        chgparams[j] = ChargeParameter::dummy();
-                        ljparams[j] = LJParameter::dummy();
-                    }
-                }
-            }
-        }
-    }
+    chgs = molecule.getProperty(chg_property);
+    ljs = molecule.getProperty(lj_property);
+    coords = molecule.coordGroups();
 }
 
 /** Rebuild all of the coordinates and LJ data for the CutGroups whose
@@ -399,79 +291,17 @@ bool CLJFF::CLJMoleculeData::rebuildAll(const QSet<CutGroupID>&)
 /** Rebuild all of the coordinate data from scratch */
 void CLJFF::CLJMoleculeData::rebuildCoordinates()
 {
-    if (molecule.selectedAll())
-    {
-        coords = molecule.coordGroups();
-        return;
-    }
-
-    uint nselectedgroups = molecule.nSelectedCutGroups();
-    uint ngroups = molecule.nCutGroups();
-
-    if (nselectedgroups == ngroups)
-    {
-        coords = molecule.coordGroups();
-        return;
-    }
-
-    BOOST_ASSERT( nselectedgroups == uint(cg_index.count()) );
-    BOOST_ASSERT( nselectedgroups == uint(coords.count()) );
-    BOOST_ASSERT( nselectedgroups == uint(chgs.count()) );
-    BOOST_ASSERT( nselectedgroups == uint(ljs.count()) );
-
-    const QVector<CoordGroup> &new_coords = molecule.coordGroups();
-
-    for (QHash<CutGroupID,int>::const_iterator it = cg_index.constBegin();
-         it != cg_index.constEnd();
-         ++it)
-    {
-        coords[ it.value() ] = new_coords[it.key()];
-    }
+    coords = molecule.coordGroups();
 }
 
 /** Rebuild all of the coordinate data for the CutGroups whose IDs are
     in 'cgids'. Return whether or not the passed CutGroups are actually
     part of the selected parts of the molecule. */
-bool CLJFF::CLJMoleculeData::rebuildCoordinates(const QSet<CutGroupID> &cgids)
+bool CLJFF::CLJMoleculeData::rebuildCoordinates(const QSet<CutGroupID>&)
 {
-    if (selected_atoms.selectedAll())
-    {
-        coords = molecule.coordGroups();
-        return true;
-    }
-
-    uint nselectedgroups = selected_atoms.nSelectedCutGroups();
-    uint ngroups = molecule.nCutGroups();
-
-    if (nselectedgroups == ngroups)
-    {
-        coords = molecule.coordGroups();
-        return true;
-    }
-
-    BOOST_ASSERT( nselectedgroups == uint(cg_index.count()) );
-    BOOST_ASSERT( nselectedgroups == uint(coords.count()) );
-    BOOST_ASSERT( nselectedgroups == uint(chgs.count()) );
-    BOOST_ASSERT( nselectedgroups == uint(ljs.count()) );
-
-    const QVector<CoordGroup> &new_coords = molecule.coordGroups();
-
-    bool cutgroups_in_selection = false;
-
-    for (QSet<CutGroupID>::const_iterator it = cgids.begin();
-         it != cgids.end();
-         ++it)
-    {
-        QHash<CutGroupID,int>::const_iterator idx = cg_index.constFind(*it);
-
-        if (idx != cg_index.constEnd())
-        {
-            cutgroups_in_selection = true;
-            coords[idx.value()] = new_coords[idx.key()];
-        }
-    }
-
-    return cutgroups_in_selection;
+    //this too could be optimised!
+    this->rebuildCoordinates();
+    return true;
 }
 
 /** Shared null CLJMoleculeData */
@@ -513,7 +343,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
         QString chg_property;
         QString lj_property;
 
-        sds >> mol >> chg_property >> lj_property;
+        sds >> molecule >> chg_property >> lj_property;
 
         cljmoldata = CLJFF::CLJMoleculeData(molecule,
                                             chg_property, lj_property);
@@ -582,77 +412,8 @@ CLJFF::CLJMolecule::CLJMolecule(const CLJMolecule &other,
                                 const QSet<CutGroupID> &groups)
                    : d( other.d )
 {
-    //get the index of which CutGroups are already selected
-    const QHash<CutGroupID,int> index = other.d->cg_index;
-
-    if (index.isEmpty())
-    {
-        //an empty index implies that the entire molecule is selected
-        // - we therefore need only select the CutGroups in 'groups'
-        const AtomicCharges &chgs = other.d->chgs;
-        const AtomicLJs &ljs = other.d->ljs;
-        const QVector<CoordGroup> &coords = other.d->coords;
-
-        int ngroups = groups.count();
-
-        QVector< QVector<ChargeParameter> > new_chgs(ngroups);
-        QVector< QVector<LJParameter> > new_ljs(ngroups);
-        QVector<CoordGroup> new_coords(ngroups);
-
-        QHash<CutGroupID,int> new_index;
-        new_index.reserve(ngroups);
-
-        int i = 0;
-
-        for (QSet<CutGroupID>::const_iterator it = groups.begin();
-             it != groups.end();
-             ++it)
-        {
-            new_coords[i] = coords[*it];
-            new_chgs[i] = chgs[*it];
-            new_ljs[i] = ljs[*it];
-
-            new_index.insert(*it,i);
-            ++i;
-        }
-
-        d->coords = new_coords;
-        d->chgs = AtomicCharges(new_chgs);
-        d->ljs = AtomicLJs(new_ljs);
-        d->cg_index = new_index;
-
-        d->molecule.applyMask(groups);
-    }
-    else
-    {
-        //run through the CutGroups in the molecule and see which ones need to
-        //be removed
-        QList<int> indicies_to_be_removed;
-
-        for (QHash<CutGroupID,int>::const_iterator it = index.constBegin();
-             it != index.constEnd();
-             ++it)
-        {
-            if ( not groups.contains(it.key()) )
-            {
-                //this CutGroup will be masked - deselect it and
-                //record the index of its coordinates and LJ parameters
-                d->molecule.deselectAll(it.key());
-                indicies_to_be_removed.append(it.value());
-            }
-        }
-
-        //remove the identified CutGroups (from back to front)
-        qSort(indicies_to_be_removed.begin(), indicies_to_be_removed.end(),
-              qGreater<int>());
-
-        foreach (int idx, indicies_to_be_removed)
-        {
-            d->coords.remove(idx);
-            d->chgs.remove(idx);
-            d->ljs.remove(idx);
-        }
-    }
+    d->molecule.applyMask(groups);
+    d->rebuildAll();
 }
 
 /** Copy constructor */
@@ -741,6 +502,9 @@ CLJFF::ChangedCLJMolecule CLJFF::CLJMolecule::change(const PartialMolecule &mole
                     return ChangedCLJMolecule(*this, newmol, cgids);
                 }
             }
+            else
+                //there has been no change
+                return ChangedCLJMolecule();
         }
         else
             //there has been no change
@@ -761,21 +525,6 @@ CLJFF::ChangedCLJMolecule CLJFF::CLJMolecule::change(const PartialMolecule &mole
 
         return ChangedCLJMolecule(*this, newmol);
     }
-}
-
-/** Private function used to return the ChangedCLJMolecule that represents
-    the change from the CLJMolecule in its current state to 'molecule', with
-    the new selection 'selected_atoms', with the guarantee that only the CutGroups
-    whose IDs are in 'cgids' have changed. (if cgids is empty then all of the
-    CutGroups have changed)
-
-    \throw SireError::incompatible_error
-*/
-CLJFF::ChangedCLJMolecule
-CLJFF::CLJMolecule::changeSelection(const PartialMolecule &molecule,
-                                    const QString &chgproperty,
-                                    const QString &ljproperty) const
-{
 }
 
 /** Return a ChangedCLJMolecule that represents the change from the CLJMolecule
@@ -807,11 +556,12 @@ CLJFF::ChangedCLJMolecule CLJFF::CLJMolecule::add(const PartialMolecule &molecul
         {
             if (molecule.version() != d->molecule.version())
             {
-                newmol.d->molecule.add(molecule);
+                newmol.d->molecule.change(molecule);
+                newmol.d->molecule.add(molecule.selectedAtoms());
                 newmol.d->rebuildAll();
                 return ChangedCLJMolecule(*this, newmol);
             }
-            else if (newmol.d->molecule.add(molecule))
+            else if (newmol.d->molecule.add(molecule.selectedAtoms()))
             {
                 newmol.d->rebuildAll();
                 return ChangedCLJMolecule(*this, newmol, molecule.selectedCutGroups());
@@ -824,7 +574,8 @@ CLJFF::ChangedCLJMolecule CLJFF::CLJMolecule::add(const PartialMolecule &molecul
         {
             //there has been a change of property - we need to rebuild
             //the entire molecule
-            newmol.d->molecule.add(molecule);
+            newmol.d->molecule.change(molecule);
+            newmol.d->molecule.add(molecule.selectedAtoms());
             newmol.d->chg_property = chgproperty;
             newmol.d->lj_property = ljproperty;
             newmol.d->rebuildAll();
@@ -847,7 +598,7 @@ CLJFF::ChangedCLJMolecule CLJFF::CLJMolecule::remove(
     {
         return ChangedCLJMolecule();
     }
-    else if (molecule.selectedAtoms().contains(d->molecule.selectedAtoms())
+    else if (molecule.selectedAtoms().contains(d->molecule.selectedAtoms()))
     {
         //we have removed the entire molecule!
         return ChangedCLJMolecule(*this, CLJMolecule());
@@ -858,13 +609,7 @@ CLJFF::ChangedCLJMolecule CLJFF::CLJMolecule::remove(
 
         CLJMolecule newmol(*this);
 
-        if (molecule.version() != d->molecule.version())
-        {
-            newmol.d->molecule.remove(molecule);
-            newmol.d->rebuildAll();
-            return ChangedCLJMolecule(*this, newmol);
-        }
-        else if (newmol.d->molecule.remove(molecule))
+        if (newmol.d->molecule.remove(molecule.selectedAtoms()))
         {
             newmol.d->rebuildAll();
             return ChangedCLJMolecule(*this, newmol, molecule.selectedCutGroups());
@@ -996,7 +741,7 @@ CLJFF::ChangedCLJMolecule::ChangedCLJMolecule(const CLJMolecule &old_molecule,
                             newmol(new_molecule),
                             changed_cgids(changed_groups)
 {
-    if (changed_groups.count() == old_molecule.molecule().nCutGroups())
+    if (changed_groups.count() == old_molecule.molecule().info().nCutGroups())
     {
         //the entire molecule has changed
         oldparts = oldmol;
@@ -1172,7 +917,7 @@ CLJFF::ChangedCLJMolecule::remove(const PartialMolecule &molecule) const
     inter-atomic inverse-square-distances stored in 'distmatrix'
     and using the CLJ parameters in 'cljmatrix'. */
 CLJFF::CLJEnergy CLJFF::calculatePairEnergy(DistMatrix &distmatrix,
-                                            CLJMatrix &cljmatrix)
+                                            CLJPairMatrix &cljmatrix)
 {
     uint nats0 = distmatrix.nOuter();
     uint nats1 = distmatrix.nInner();
@@ -1215,7 +960,7 @@ CLJFF::CLJEnergy CLJFF::calculatePairEnergy(DistMatrix &distmatrix,
     using the inverse-square-distances and parameters stored
     in the passed distance and CLJ matricies. */
 CLJFF::CLJEnergy CLJFF::calculateSelfEnergy(DistMatrix &distmatrix,
-                                            CLJMatrix &cljmatrix)
+                                            CLJPairMatrix &cljmatrix)
 {
     uint nats = distmatrix.nOuter();
 
@@ -1267,7 +1012,7 @@ CLJFF::CLJEnergy CLJFF::calculateEnergy(const CoordGroup &group0,
                                         const Space &space,
                                         const SwitchingFunction &switchfunc,
                                         DistMatrix &distmatrix,
-                                        CLJMatrix &cljmatrix)
+                                        CLJPairMatrix &cljmatrix)
 {
     if ( not space.beyond(switchfunc.cutoffDistance(), group0, group1) )
     {
@@ -1334,7 +1079,7 @@ CLJFF::CLJEnergy CLJFF::calculateEnergy(const CoordGroup &group,
                                         const QVector<LJParameter> &ljs,
                                         const Space &space,
                                         DistMatrix &distmatrix,
-                                        CLJMatrix &cljmatrix)
+                                        CLJPairMatrix &cljmatrix)
 {
     space.calcInvDist2(group, distmatrix);
 
@@ -1381,7 +1126,7 @@ CLJFF::CLJEnergy CLJFF::calculateEnergy(const CLJFF::CLJMolecule &mol0,
                                         const Space &space,
                                         const SwitchingFunction &switchfunc,
                                         DistMatrix &distmatrix,
-                                        CLJMatrix &cljmatrix)
+                                        CLJPairMatrix &cljmatrix)
 {
     int ncg0 = mol0.coordinates().count();
     int ncg1 = mol1.coordinates().count();
@@ -1447,7 +1192,7 @@ CLJFF::CLJEnergy CLJFF::calculateEnergy(const CLJFF::CLJMolecule &mol,
                                         const Space &space,
                                         const SwitchingFunction &switchfunc,
                                         DistMatrix &distmatrix,
-                                        CLJMatrix &cljmatrix)
+                                        CLJPairMatrix &cljmatrix)
 {
     int ncg = mol.coordinates().count();
 
@@ -1570,18 +1315,42 @@ void CLJFF::_pvt_copy(const FFBase &ffbase)
 {
     const CLJFF &cljff = dynamic_cast<const CLJFF&>(ffbase);
 
-    spce = other.spce;
-    switchfunc = other.switchfunc;
+    spce = cljff.spce;
+    switchfunc = cljff.switchfunc;
 
     components_ptr = dynamic_cast<const CLJFF::Components*>( &(FFBase::components()) );
     BOOST_ASSERT( components_ptr != 0 );
 
-    FFBase::_pvt_copy(other);
+    FFBase::_pvt_copy(ffbase);
 }
 
 /** Destructor */
 CLJFF::~CLJFF()
 {}
+
+/** Set the space within which the molecules interact */
+bool CLJFF::setSpace(const Space &space)
+{
+    if (space != spce)
+    {
+        spce = space;
+        this->incrementMajorVersion();
+    }
+        
+    return isDirty();
+}
+
+/** Set the switching function used to apply the non-bonded cutoff */
+bool CLJFF::setSwitchingFunction(const SwitchingFunction &sfunc)
+{
+    if (sfunc != switchfunc)
+    {
+        switchfunc = sfunc;
+        this->incrementMajorVersion();
+    }
+
+    return isDirty();
+}
 
 /** Set the property 'name' to the value 'value'. This
     returns whether or not this changes the forcefield,

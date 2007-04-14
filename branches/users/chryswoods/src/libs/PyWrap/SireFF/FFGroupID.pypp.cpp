@@ -6,6 +6,7 @@
 #include "boost/python.hpp"
 #include "sireff_headers.h"
 #include "SireMol/molecule.h"
+#include "SireMol/partialmolecule.h"
 #include "SireMol/residue.h"
 #include "SireMol/newatom.h"
 #include "SireMol/atom.h"
@@ -14,6 +15,7 @@
 #include "SireMol/resnumatomid.h"
 #include "SireMol/resid.h"
 #include "SireMol/moleculeid.h"
+#include "SireBase/property.h"
 
 namespace bp = boost::python;
 
@@ -36,6 +38,8 @@ void register_FFGroupID_class(){
             "group"
             , (::SireFF::FFBase::Group const & ( ::SireFF::FFGroupID::* )(  ) const)( &::SireFF::FFGroupID::group )
             , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( bp::self != bp::self )    
+        .def( bp::self == bp::self )    
         .def( 
             "toString"
             , (::QString ( ::SireFF::FFGroupID::* )(  ) const)( &::SireFF::FFGroupID::toString ) )    

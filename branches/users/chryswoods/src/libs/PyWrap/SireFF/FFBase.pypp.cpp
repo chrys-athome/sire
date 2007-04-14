@@ -6,6 +6,7 @@
 #include "boost/python.hpp"
 #include "sireff_headers.h"
 #include "SireMol/molecule.h"
+#include "SireMol/partialmolecule.h"
 #include "SireMol/residue.h"
 #include "SireMol/newatom.h"
 #include "SireMol/atom.h"
@@ -14,6 +15,7 @@
 #include "SireMol/resnumatomid.h"
 #include "SireMol/resid.h"
 #include "SireMol/moleculeid.h"
+#include "SireBase/property.h"
 
 namespace bp = boost::python;
 
@@ -179,6 +181,16 @@ void register_FFBase_class(){
         }
         { //::SireFF::FFBase::change
         
+            typedef bool ( ::SireFF::FFBase::*change_function_type )( ::QList<SireMol::PartialMolecule> const & ) ;
+            
+            FFBase_exposer.def( 
+                "change"
+                , change_function_type( &::SireFF::FFBase::change )
+                , ( bp::arg("mols") ) );
+        
+        }
+        { //::SireFF::FFBase::change
+        
             typedef bool ( ::SireFF::FFBase::*change_function_type )( ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> const & ) ;
             
             FFBase_exposer.def( 
@@ -302,6 +314,16 @@ void register_FFBase_class(){
                 "groups"
                 , groups_function_type( &::SireFF::FFBase::groups )
                 , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
+        { //::SireFF::FFBase::groupsReferringTo
+        
+            typedef ::QSet<SireFF::FFBase::Group> ( ::SireFF::FFBase::*groupsReferringTo_function_type )( ::SireMol::MoleculeID ) const;
+            
+            FFBase_exposer.def( 
+                "groupsReferringTo"
+                , groupsReferringTo_function_type( &::SireFF::FFBase::groupsReferringTo )
+                , ( bp::arg("molid") ) );
         
         }
         { //::SireFF::FFBase::isClean

@@ -203,7 +203,7 @@ bool MoleculeGroupPvt::contains(const PartialMolecule &molecule) const
 
     if (it != idx.end())
     {
-        return mols.constData()[it.value()].contains(molecule.selection());
+        return mols.constData()[it.value()].contains(molecule.selectedAtoms());
     }
     else
         return false;
@@ -242,7 +242,7 @@ bool MoleculeGroupPvt::add(const PartialMolecule &molecule)
 
         if (oldmol != molecule)
         {
-            if (mols.data()[it.value()].add(molecule.selection()))
+            if (mols.data()[it.value()].add(molecule.selectedAtoms()))
             {
                 id_and_version.incrementMinor();
                 return true;
@@ -289,7 +289,7 @@ bool MoleculeGroupPvt::remove(const PartialMolecule &molecule)
         int index = it.value();
 
         //remove the parts of the molecule
-        if (mols.data()[index].remove(molecule.selection()))
+        if (mols.data()[index].remove(molecule.selectedAtoms()))
         {
             if (mols.data()[index].selectedNone())
             {
@@ -427,7 +427,7 @@ bool MoleculeGroupPvt::remove(const QVector<PartialMolecule> &molecules)
         {
             PartialMolecule &oldmol = mols[it2.value()];
 
-            bool mol_removed = oldmol.remove(it->selection());
+            bool mol_removed = oldmol.remove(it->selectedAtoms());
 
             if (oldmol.selectedNone())
             {

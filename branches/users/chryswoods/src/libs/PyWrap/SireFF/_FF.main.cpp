@@ -9,6 +9,8 @@
 
 #include "SireMol/molecule.h"
 
+#include "SireMol/partialmolecule.h"
+
 #include "SireMol/residue.h"
 
 #include "SireMol/newatom.h"
@@ -24,6 +26,8 @@
 #include "SireMol/resid.h"
 
 #include "SireMol/moleculeid.h"
+
+#include "SireBase/property.h"
 
 #include "FFBase.pypp.hpp"
 

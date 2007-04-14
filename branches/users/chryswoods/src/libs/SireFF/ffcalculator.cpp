@@ -109,7 +109,7 @@ bool FFCalculator::setForceField(const ForceField &forcefield)
 }
 
 /** Return a copy of the forcefield that is being evaluated */
-ForceField FFCalculator::forcefield() const
+ForceField FFCalculator::forceField() const
 {
     return ffield;
 }

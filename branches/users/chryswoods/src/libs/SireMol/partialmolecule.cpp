@@ -36,6 +36,11 @@
 #include "resid.h"
 #include "resnum.h"
 #include "cgatomid.h"
+#include "moleculeproperty.h"
+
+#include "SireBase/property.h"
+
+#include "SireVol/coordgroup.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -175,93 +180,12 @@ bool PartialMolecule::operator!=(const PartialMolecule &other) const
            selected_atoms != other.selected_atoms;
 }
 
-/** Return the ID of the molecule */
-MoleculeID PartialMolecule::ID() const
-{
-    return d->ID();
-}
-
-/** Return the molecule's version */
-const MoleculeVersion& PartialMolecule::version() const
-{
-    return d->version();
-}
-
-/** Return the info object describing the data-structure of the molecule */
-const MoleculeInfo& PartialMolecule::info() const
-{
-    return d->info();
-}
-
-/** Return the info object describing the data-structure of the
-    residue with number 'resnum'
-
-    \throw SireMol::missing_residue
-*/
-const ResidueInfo& PartialMolecule::info(ResNum resnum) const
-{
-    return d->info().residue(resnum);
-}
-
-/** Return the info object describing the data-structure of the
-    residue at index 'resid'
-
-    \throw SireError::invalid_index
-*/
-const ResidueInfo& PartialMolecule::info(ResID resid) const
-{
-    return d->info().residue(resid);
-}
-
 /** Return the PartialMolecule as a Molecule */
 Molecule PartialMolecule::molecule() const
 {
     Molecule mol;
     mol.d = d;
     return mol;
-}
-
-/** Return the PartialMolecule as a Residue
-
-    \throw SireMol::missing_residue
-*/
-Residue PartialMolecule::residue(ResNum resnum) const
-{
-    return molecule().residue(resnum);
-}
-
-/** Return the PartialMolecule as a Residue
-
-    \throw SireError::invalid_index
-*/
-Residue PartialMolecule::residue(ResID resid) const
-{
-    return molecule().residue(resid);
-}
-
-/** Return the PartialMolecule as a Residue
-
-    \throw SireMol::missing_residue
-*/
-Residue PartialMolecule::residue(const QString &resname) const
-{
-    return molecule().residue(resname);
-}
-
-/** Return the PartialMolecule as an Atom
-
-    \throw SireMol::missing_atom
-*/
-NewAtom PartialMolecule::atom(const IDMolAtom &atomid) const
-{
-    return NewAtom( atomid, this->molecule() );
-}
-
-/** Return the selection representing the atoms that are
-    part of this PartialMolecule */
-const AtomSelection& PartialMolecule::selection() const
-{
-    return selected_atoms;
 }
 
 /** Change this PartialMolecule to match 'molecule'.
@@ -626,6 +550,31 @@ QList<AtomIndex> PartialMolecule::selected() const
 {
     return selected_atoms.selected();
 }
+    
+/** Return the name of the molecule. */
+QString PartialMolecule::name() const
+{
+    return info().name();
+}
+
+/** Return the ID number of this molecule */
+MoleculeID PartialMolecule::ID() const
+{
+    return d->ID();
+}
+
+/** Return the MoleculeInfo that holds the metainfo for this
+    molecule */
+const MoleculeInfo& PartialMolecule::info() const
+{
+    return d->info();
+}
+
+/** Return the version number of this molecule. */
+const MoleculeVersion& PartialMolecule::version() const
+{
+    return d->version();
+}
 
 /** Return the CutGroupIDs of any CutGroups that have at least one
     selected atom */
@@ -639,4 +588,109 @@ QSet<CutGroupID> PartialMolecule::selectedCutGroups() const
 QSet<ResNum> PartialMolecule::selectedResidues() const
 {
     return selected_atoms.selectedResidues();
+}
+
+/** Return the property with the name 'name'. If this is a molecular
+    property then this property will be masked by the atom selection
+    (e.g. AtomicProperties will only be returned for selected atoms,
+     with the order the same as that returned by coordGroups() )
+     
+    \throw SireBase::missing_property
+*/
+Property PartialMolecule::getProperty(const QString &name) const
+{
+    Property property = d->getProperty(name);
+    
+    if (this->selectedAll() or not property.isA<MoleculeProperty>())
+    {
+        return property;
+    }
+    
+    //mask this property by the current selection
+    return property.asA<MoleculeProperty>().mask(selected_atoms);
+}
+
+/** Return the CoordGroups that contain the coordinates of atoms that
+    have been selected. Only CoordGroups that contain selected atoms
+    will be returned. */
+QVector<CoordGroup> PartialMolecule::coordGroups() const
+{
+    QVector<CoordGroup> coords = d->coordGroups();
+    
+    if (this->nSelectedCutGroups() == info().nCutGroups())
+        return coords;
+    else
+    {
+        QSet<CutGroupID> cgids = selected_atoms.selectedCutGroups();
+        QVector<CoordGroup> selected_coords( cgids.count() );
+        
+        const CoordGroup *coords_array = coords.constData();
+        CoordGroup *selected_coords_array = selected_coords.data();
+        
+        int i=0;
+        
+        foreach (CutGroupID cgid, cgids)
+        {
+            selected_coords_array[i] = coords_array[cgid];
+            ++i;
+        }
+        
+        return selected_coords;
+    }
+}
+
+/** Assert that this is the same molecule as 'other'
+ 
+    \throw SireError::incompatible_error
+*/
+void PartialMolecule::assertSameMolecule(const PartialMolecule &other) const
+{
+    if (this->ID() != other.ID())
+        throw SireError::incompatible_error( QObject::tr(
+            "This molecule (\"%1\", ID == %2, Version == %3) is not "
+            "the different to the other molecule (\"%4\", ID == %5, "
+            "Version == %6)")
+                .arg(this->name()).arg(this->ID())
+                .arg(this->version().toString())
+                .arg(other.name()).arg(other.ID())
+                .arg(other.version().toString()), CODELOC );
+}
+/** Assert that this molecule has the same major version as 'other'
+    - this also asserts that both molecules have the same ID number.
+
+    \throw SireError::incompatible_error
+*/
+void PartialMolecule::assertSameMajorVersion(const PartialMolecule &other) const
+{
+    this->assertSameMolecule(other);
+
+    if (this->version().major() != other.version().major())
+        throw SireError::incompatible_error( QObject::tr(
+            "This molecule (\"%1\", ID == %2, Version == %3) has a "
+            "different major version to the other molecule (\"%4\", "
+            "ID == %5, Version == %6)")
+                .arg(this->name()).arg(this->ID())
+                .arg(this->version().toString())
+                .arg(other.name()).arg(other.ID())
+                .arg(other.version().toString()), CODELOC );
+}
+
+/** Assert that this molecule has the same version as 'other'
+    - this also asserts that both molecules have the same ID number.
+
+    \throw SireError::incompatible_error
+*/
+void PartialMolecule::assertSameVersion(const PartialMolecule &other) const
+{
+    this->assertSameMolecule(other);
+
+    if (this->version() != other.version())
+        throw SireError::incompatible_error( QObject::tr(
+            "This molecule (\"%1\", ID == %2, Version == %3) has a "
+            "different version to the other molecule (\"%4\", "
+            "ID == %5, Version == %6)")
+                .arg(this->name()).arg(this->ID())
+                .arg(this->version().toString())
+                .arg(other.name()).arg(other.ID())
+                .arg(other.version().toString()), CODELOC );
 }

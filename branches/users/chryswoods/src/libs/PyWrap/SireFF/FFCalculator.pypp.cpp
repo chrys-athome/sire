@@ -6,6 +6,7 @@
 #include "boost/python.hpp"
 #include "sireff_headers.h"
 #include "SireMol/molecule.h"
+#include "SireMol/partialmolecule.h"
 #include "SireMol/residue.h"
 #include "SireMol/newatom.h"
 #include "SireMol/atom.h"
@@ -14,6 +15,7 @@
 #include "SireMol/resnumatomid.h"
 #include "SireMol/resid.h"
 #include "SireMol/moleculeid.h"
+#include "SireBase/property.h"
 
 namespace bp = boost::python;
 
@@ -57,6 +59,10 @@ void register_FFCalculator_class(){
             , (bool ( ::SireFF::FFCalculator::* )( ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> const & ) )( &::SireFF::FFCalculator::change )
             , ( bp::arg("molecules") ) )    
         .def( 
+            "change"
+            , (bool ( ::SireFF::FFCalculator::* )( ::QList<SireMol::PartialMolecule> const & ) )( &::SireFF::FFCalculator::change )
+            , ( bp::arg("molecules") ) )    
+        .def( 
             "contains"
             , (bool ( ::SireFF::FFCalculator::* )( ::SireMol::PartialMolecule const & ) )( &::SireFF::FFCalculator::contains )
             , ( bp::arg("molecule") ) )    
@@ -70,14 +76,14 @@ void register_FFCalculator_class(){
             , ( bp::arg("name") ) )    
         .def( 
             "contents"
-            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::FFCalculator::* )( ::SireFF::FFBase::Group const ) )( &::SireFF::FFCalculator::contents )
+            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::FFCalculator::* )( ::SireFF::FFBase::Group const & ) )( &::SireFF::FFCalculator::contents )
             , ( bp::arg("group") ) )    
         .def( 
             "contents"
             , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::FFCalculator::* )(  ) )( &::SireFF::FFCalculator::contents ) )    
         .def( 
-            "forcefield"
-            , (::SireFF::ForceField ( ::SireFF::FFCalculator::* )(  ) const)( &::SireFF::FFCalculator::forcefield ) )    
+            "forceField"
+            , (::SireFF::ForceField ( ::SireFF::FFCalculator::* )(  ) const)( &::SireFF::FFCalculator::forceField ) )    
         .def( 
             "getEnergies"
             , (double ( ::SireFF::FFCalculator::* )( ::SireCAS::Values & ) )( &::SireFF::FFCalculator::getEnergies )
@@ -86,6 +92,10 @@ void register_FFCalculator_class(){
             "getProperty"
             , (::SireBase::Property ( ::SireFF::FFCalculator::* )( ::QString const & ) )( &::SireFF::FFCalculator::getProperty )
             , ( bp::arg("name") ) )    
+        .def( 
+            "groupsReferringTo"
+            , (::QSet<SireFF::FFBase::Group> ( ::SireFF::FFCalculator::* )( ::SireMol::MoleculeID ) )( &::SireFF::FFCalculator::groupsReferringTo )
+            , ( bp::arg("molid") ) )    
         .def( 
             "isClean"
             , (bool ( ::SireFF::FFCalculator::* )(  ) )( &::SireFF::FFCalculator::isClean ) )    
@@ -97,12 +107,30 @@ void register_FFCalculator_class(){
             , (::SireMol::PartialMolecule ( ::SireFF::FFCalculator::* )( ::SireMol::MoleculeID ) )( &::SireFF::FFCalculator::molecule )
             , ( bp::arg("molid") ) )    
         .def( 
+            "molecule"
+            , (::SireMol::PartialMolecule ( ::SireFF::FFCalculator::* )( ::SireMol::MoleculeID,::SireFF::FFBase::Group const & ) )( &::SireFF::FFCalculator::molecule )
+            , ( bp::arg("molid"), bp::arg("group") ) )    
+        .def( 
             "moleculeIDs"
             , (::QSet<SireMol::MoleculeID> ( ::SireFF::FFCalculator::* )(  ) )( &::SireFF::FFCalculator::moleculeIDs ) )    
         .def( 
             "moleculeIDs"
             , (::QSet<SireMol::MoleculeID> ( ::SireFF::FFCalculator::* )( ::SireFF::FFBase::Group const & ) )( &::SireFF::FFCalculator::moleculeIDs )
             , ( bp::arg("group") ) )    
+        .def( 
+            "molecules"
+            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::FFCalculator::* )(  ) )( &::SireFF::FFCalculator::molecules ) )    
+        .def( 
+            "molecules"
+            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::FFCalculator::* )( ::QSet<SireMol::MoleculeID> const & ) )( &::SireFF::FFCalculator::molecules )
+            , ( bp::arg("molids") ) )    
+        .def( 
+            "molecules"
+            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::FFCalculator::* )( ::SireFF::FFBase::Group const & ) )( &::SireFF::FFCalculator::molecules )
+            , ( bp::arg("group") ) )    
+        .def( 
+            "properties"
+            , (::QHash<QString,SireBase::Property> ( ::SireFF::FFCalculator::* )(  ) )( &::SireFF::FFCalculator::properties ) )    
         .def( 
             "refersTo"
             , (bool ( ::SireFF::FFCalculator::* )( ::SireMol::MoleculeID ) )( &::SireFF::FFCalculator::refersTo )

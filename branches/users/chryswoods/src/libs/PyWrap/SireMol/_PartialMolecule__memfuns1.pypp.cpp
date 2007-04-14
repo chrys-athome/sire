@@ -16,6 +16,27 @@ namespace bp = boost::python;
 
 void register_PartialMolecule_memfuns1( PartialMolecule_exposer_t& PartialMolecule_exposer ){
 
+    { //::SireMol::PartialMolecule::intersects
+    
+        typedef bool ( ::SireMol::PartialMolecule::*intersects_function_type )( ::SireMol::AtomSelection const & ) const;
+        
+        PartialMolecule_exposer.def( 
+            "intersects"
+            , intersects_function_type( &::SireMol::PartialMolecule::intersects )
+            , ( bp::arg("other") ) );
+    
+    }
+
+    { //::SireMol::PartialMolecule::invert
+    
+        typedef void ( ::SireMol::PartialMolecule::*invert_function_type )(  ) ;
+        
+        PartialMolecule_exposer.def( 
+            "invert"
+            , invert_function_type( &::SireMol::PartialMolecule::invert ) );
+    
+    }
+
     { //::SireMol::PartialMolecule::isEmpty
     
         typedef bool ( ::SireMol::PartialMolecule::*isEmpty_function_type )(  ) const;
@@ -88,6 +109,16 @@ void register_PartialMolecule_memfuns1( PartialMolecule_exposer_t& PartialMolecu
     
     }
 
+    { //::SireMol::PartialMolecule::name
+    
+        typedef ::QString ( ::SireMol::PartialMolecule::*name_function_type )(  ) const;
+        
+        PartialMolecule_exposer.def( 
+            "name"
+            , name_function_type( &::SireMol::PartialMolecule::name ) );
+    
+    }
+
     { //::SireMol::PartialMolecule::remove
     
         typedef bool ( ::SireMol::PartialMolecule::*remove_function_type )( ::SireMol::AtomSelection const & ) ;
@@ -96,39 +127,6 @@ void register_PartialMolecule_memfuns1( PartialMolecule_exposer_t& PartialMolecu
             "remove"
             , remove_function_type( &::SireMol::PartialMolecule::remove )
             , ( bp::arg("atoms") ) );
-    
-    }
-
-    { //::SireMol::PartialMolecule::residue
-    
-        typedef ::SireMol::Residue ( ::SireMol::PartialMolecule::*residue_function_type )( ::SireMol::ResNum ) const;
-        
-        PartialMolecule_exposer.def( 
-            "residue"
-            , residue_function_type( &::SireMol::PartialMolecule::residue )
-            , ( bp::arg("resnum") ) );
-    
-    }
-
-    { //::SireMol::PartialMolecule::residue
-    
-        typedef ::SireMol::Residue ( ::SireMol::PartialMolecule::*residue_function_type )( ::SireMol::ResID ) const;
-        
-        PartialMolecule_exposer.def( 
-            "residue"
-            , residue_function_type( &::SireMol::PartialMolecule::residue )
-            , ( bp::arg("resid") ) );
-    
-    }
-
-    { //::SireMol::PartialMolecule::residue
-    
-        typedef ::SireMol::Residue ( ::SireMol::PartialMolecule::*residue_function_type )( ::QString const & ) const;
-        
-        PartialMolecule_exposer.def( 
-            "residue"
-            , residue_function_type( &::SireMol::PartialMolecule::residue )
-            , ( bp::arg("resname") ) );
     
     }
 

@@ -45,6 +45,16 @@ class PartialMolecule;
 QDataStream& operator<<(QDataStream&, const SireMol::PartialMolecule&);
 QDataStream& operator>>(QDataStream&, SireMol::PartialMolecule&);
 
+namespace SireBase
+{
+class Property;
+}
+
+namespace SireVol
+{
+class CoordGroup;
+}
+
 namespace SireMol
 {
 
@@ -54,6 +64,9 @@ class Residue;
 class NewAtom;
 
 class MoleculeVersion;
+
+using SireBase::Property;
+using SireVol::CoordGroup;
 
 /** This class provides a view to an arbitrary part of a molecule
     (which can range from just a single atom all the way through to
@@ -91,28 +104,30 @@ public:
     bool operator==(const PartialMolecule &other) const;
     bool operator!=(const PartialMolecule &other) const;
 
-    MoleculeID ID() const;
-    const MoleculeVersion& version() const;
-
-    const MoleculeInfo& info() const;
-
-    const ResidueInfo& info(ResNum resnum) const;
-    const ResidueInfo& info(ResID resid) const;
-
     Molecule molecule() const;
-
-    Residue residue(ResNum resnum) const;
-    Residue residue(ResID resid) const;
-    Residue residue(const QString &resname) const;
-
-    NewAtom atom(const IDMolAtom &atomid) const;
-
     const AtomSelection& selection() const;
+    const AtomSelection& selectedAtoms() const;
 
     bool change(const PartialMolecule &molecule);
 
     bool add(const AtomSelection &atoms);
     bool remove(const AtomSelection &atoms);
+
+    // Interface from Molecule
+    
+    QString name() const;
+    MoleculeID ID() const;
+    const MoleculeVersion& version() const;
+    
+    const MoleculeInfo& info() const;
+    
+    Property getProperty(const QString &name) const;
+    
+    QVector<CoordGroup> coordGroups() const;
+    
+    void assertSameMolecule(const PartialMolecule &other) const;
+    void assertSameMajorVersion(const PartialMolecule &other) const;
+    void assertSameVersion(const PartialMolecule &other) const;
 
     // Interface from AtomSelection
 
@@ -181,6 +196,20 @@ private:
     /** The atoms which have been selected */
     AtomSelection selected_atoms;
 };
+
+/** Return the selection representing the atoms that are
+    part of this PartialMolecule */
+inline const AtomSelection& PartialMolecule::selectedAtoms() const
+{
+    return selected_atoms;
+}
+
+/** Return the selection representing the atoms that are
+    part of this PartialMolecule */
+inline const AtomSelection& PartialMolecule::selection() const
+{
+    return selected_atoms;
+}
 
 }
 

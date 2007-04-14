@@ -29,7 +29,7 @@
 #ifndef SIREMM_LJPAIR_H
 #define SIREMM_LJPAIR_H
 
-#include "SireBase/pairmatrix.h"
+#include "SireBase/pairmatrix.hpp"
 
 #include "ljparameter.h"
 
@@ -51,7 +51,7 @@ class LJPair;
 class LJParameter;
 
 /** Typedef a matrix to hold all of the LJ pairs */
-typedef SireBase::PairMatrix<LJPair, 64> LJPairMatrix;
+typedef SireBase::PairMatrix<LJPair> LJPairMatrix;
 
 /**
 An LJPair holds a combined pair of Lennard Jones parameters

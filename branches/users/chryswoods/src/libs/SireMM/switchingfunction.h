@@ -132,6 +132,9 @@ public:
 
     double electrostaticScaleFactor(double dist) const;
     double vdwScaleFactor(double dist) const;
+
+protected:
+    bool _pvt_isEqual(const SireBase::PropertyBase &other) const;
 };
 
 /**
@@ -179,6 +182,7 @@ public:
     double vdwScaleFactor(double dist) const;
 
 protected:
+    bool _pvt_isEqual(const SireBase::PropertyBase &other) const;
 
     void set(double cutelec, double featherelec,
              double cutvdw, double feathervdw);
@@ -229,6 +233,9 @@ public:
     SwitchingFunction& operator=(const SwitchFuncBase &other);
     SwitchingFunction& operator=(const SireBase::Property &property);
 
+    bool operator==(const SwitchingFunction &other) const;
+    bool operator!=(const SwitchingFunction &other) const;
+
     const char* what() const;
 
     const SwitchFuncBase& base() const
@@ -254,9 +261,9 @@ public:
     }
 
     /** Allow implicit conversion to a Property */
-    operator Property() const
+    operator SireBase::Property() const
     {
-        return Property(*d);
+        return SireBase::Property(*d);
     }
 
 private:
