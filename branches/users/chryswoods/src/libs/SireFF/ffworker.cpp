@@ -190,6 +190,13 @@ bool FFLocalWorker::_pvt_addTo(const FFBase::Group &group,
     return ffcalculator->addTo(group,molecules,map);
 }
 
+/** Tell the forcefield that it has to recalculate everything from
+    scratch */
+void FFLocalWorker::_pvt_mustNowRecalculateFromScratch()
+{
+    ffcalculator->mustNowRecalculateFromScratch();
+}
+
 /** Change the molecule 'molecule' (e.g. move it, or change its
     parameters). This does nothing if the molecule is not
     in this forcefield. Returns whether or not the forcefield

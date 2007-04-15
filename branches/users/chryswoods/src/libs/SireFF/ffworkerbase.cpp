@@ -311,6 +311,15 @@ bool FFWorkerBase::addTo(const FFBase::Group &group,
     return needsRecalculation( this->_pvt_addTo(group,molecules,map) );
 }
 
+/** Tell the forcefield that it has to recalculate everything from
+    scratch */
+void FFWorkerBase::mustNowRecalculateFromScratch()
+{
+    this->waitUntilReady();
+    this->_pvt_mustNowRecalculateFromScratch();
+    needs_energy_recalculation = true;
+}
+
 /** Change the molecule 'molecule' (e.g. move it, or change its
     parameters). This does nothing if the molecule is not
     in this forcefield. Returns whether or not the forcefield

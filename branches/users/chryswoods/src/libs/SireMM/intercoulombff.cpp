@@ -31,6 +31,10 @@
 
 #include "intercoulombff.h"
 
+#include "SireMol/partialmolecule.h"
+
+#include "SireMol/errors.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
@@ -112,6 +116,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
     sds << intercoulff.mols
         << intercoulff.changed_mols
         << intercoulff.removed_mols
+        << intercoulff.need_total_recalc
         << static_cast<const CoulombFF&>(intercoulff);
 
     return ds;
@@ -130,6 +135,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
         sds >> intercoulff.mols
             >> intercoulff.changed_mols
             >> intercoulff.removed_mols
+            >> intercoulff.need_total_recalc
             >> static_cast<CoulombFF&>(intercoulff);
 
         //rebuild molid_to_index and molid_to_changedindex
@@ -187,13 +193,13 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
 }
 
 /** Constructor */
-InterCoulombFF::InterCoulombFF() : CoulombFF()
+InterCoulombFF::InterCoulombFF() : CoulombFF(), need_total_recalc(true)
 {}
 
 /** Construct a Coulomb forcefield using the passed Space, combining rules and
     switching function */
 InterCoulombFF::InterCoulombFF(const Space &space, const SwitchingFunction &switchfunc)
-               : CoulombFF(space, switchfunc)
+               : CoulombFF(space, switchfunc), need_total_recalc(true)
 {}
 
 /** Copy constructor */
@@ -203,16 +209,21 @@ InterCoulombFF::InterCoulombFF(const InterCoulombFF &other)
                  molid_to_index(other.molid_to_index),
                  changed_mols(other.changed_mols),
                  molid_to_changedindex(other.molid_to_changedindex),
-                 removed_mols(other.removed_mols)
+                 removed_mols(other.removed_mols),
+                 need_total_recalc(other.need_total_recalc)
 {}
 
 /** Destructor */
 InterCoulombFF::~InterCoulombFF()
 {}
 
-/** Assignment operator */
-InterCoulombFF& InterCoulombFF::operator=(const InterCoulombFF &other)
+/** Copy assignment function used by derived classes */
+void InterCoulombFF::_pvt_copy(const FFBase &ffbase)
 {
+    CoulombFF::_pvt_copy(ffbase);
+    
+    const InterCoulombFF &other = dynamic_cast<const InterCoulombFF&>(ffbase);
+    
     mols = other.mols;
     molid_to_index = other.molid_to_index;
 
@@ -221,7 +232,20 @@ InterCoulombFF& InterCoulombFF::operator=(const InterCoulombFF &other)
 
     removed_mols = other.removed_mols;
 
-    return *this;
+    need_total_recalc = other.need_total_recalc;
+}
+
+/** Tell the forcefield that it has to recalculate everything from
+    scratch */
+void InterCoulombFF::mustNowRecalculateFromScratch()
+{
+    if (not need_total_recalc)
+    {
+        need_total_recalc = true;
+        changed_mols.clear();
+        molid_to_changedindex.clear();
+        removed_mols.clear();
+    }
 }
 
 /** Recalculate the total energy of this forcefield from scratch */
@@ -234,6 +258,8 @@ void InterCoulombFF::recalculateTotalEnergy()
 
     const CoulombMolecule *mols_array = mols.constData();
 
+    DistMatrix distmat(30,30);
+    
     //loop over all molecule pairs
     for (int i=0; i<nmols-1; ++i)
     {
@@ -246,7 +272,7 @@ void InterCoulombFF::recalculateTotalEnergy()
             cnrg += CoulombFF::calculateEnergy( mol0, mol1,
                                                 space(),
                                                 switchingFunction(),
-                                                distanceMatrix() );
+                                                distmat );
         }
     }
 
@@ -257,6 +283,7 @@ void InterCoulombFF::recalculateTotalEnergy()
     changed_mols.clear();
     molid_to_changedindex.clear();
     removed_mols.clear();
+    need_total_recalc = false;
 }
 
 /** Recalculate the energy by using a delta from the old configuration */
@@ -265,7 +292,7 @@ void InterCoulombFF::recalculateViaDelta()
     int nmols = mols.count();
     int nchanged = changed_mols.count();
 
-    if (nchanged == 0)
+    if (need_total_recalc or nchanged == 0)
     {
         //no changed molecules, so just recalculate the total energy
         recalculateTotalEnergy();
@@ -292,6 +319,8 @@ void InterCoulombFF::recalculateViaDelta()
     const CoulombMolecule *mols_array = mols.constData();
     const ChangedCoulombMolecule *changed_array = changed_mols.constData();
 
+    DistMatrix distmat(30,30);
+    
     QHash<MoleculeID,uint>::const_iterator it;
 
     for (int i=0; i<nmols; ++i)
@@ -314,12 +343,12 @@ void InterCoulombFF::recalculateViaDelta()
                 //calculate the energy of the new configuration
                 cnrg += calculateEnergy(mol, changed_mol.newParts(),
                                         space(), switchingFunction(),
-                                        distanceMatrix());
+                                        distmat);
 
                 //subtract the energy of the old configuration
                 cnrg -= calculateEnergy(mol, changed_mol.oldParts(),
                                         space(), switchingFunction(),
-                                        distanceMatrix());
+                                        distmat);
             }
         }
         else
@@ -345,13 +374,13 @@ void InterCoulombFF::recalculateViaDelta()
                     cnrg += calculateEnergy(changed_mol0.newMolecule(),
                                             changed_mol1.newMolecule(),
                                             space(), switchingFunction(),
-                                            distanceMatrix());
+                                            distmat);
 
                     //subtract the old interaction energy
                     cnrg -= calculateEnergy(changed_mol0.oldMolecule(),
                                             changed_mol1.oldMolecule(),
                                             space(), switchingFunction(),
-                                            distanceMatrix());
+                                            distmat);
                 }
             }
             else
@@ -369,13 +398,13 @@ void InterCoulombFF::recalculateViaDelta()
                         cnrg += calculateEnergy(changed_mol0.newMolecule(),
                                                 changed_mol1.newMolecule(),
                                                 space(), switchingFunction(),
-                                                distanceMatrix());
+                                                distmat);
 
                         //subtract the old energy
                         cnrg -= calculateEnergy(changed_mol0.oldMolecule(),
                                                 changed_mol1.oldMolecule(),
                                                 space(), switchingFunction(),
-                                                distanceMatrix());
+                                                distmat);
                     }
                     else
                     {
@@ -392,24 +421,24 @@ void InterCoulombFF::recalculateViaDelta()
                         cnrg += calculateEnergy(changed_mol0.newParts(),
                                                 changed_mol1.newMolecule(),
                                                 space(), switchingFunction(),
-                                                distanceMatrix());
+                                                distmat);
 
 
                         cnrg -= calculateEnergy(changed_mol0.oldParts(),
                                                 changed_mol1.oldMolecule(),
                                                 space(), switchingFunction(),
-                                                distanceMatrix());
+                                                distmat);
 
                         //now the changed part of mol1 with all of mol0
                         cnrg += calculateEnergy(changed_mol0.newMolecule(),
                                                 changed_mol1.newParts(),
                                                 space(), switchingFunction(),
-                                                distanceMatrix());
+                                                distmat);
 
                         cnrg -= calculateEnergy(changed_mol0.oldMolecule(),
                                                 changed_mol1.oldParts(),
                                                 space(), switchingFunction(),
-                                                distanceMatrix());
+                                                distmat);
 
                         //finally, remove the doubly-counted contribution of the
                         //changed part of mol0 with the changed part of mol1
@@ -418,12 +447,12 @@ void InterCoulombFF::recalculateViaDelta()
                         cnrg -= calculateEnergy(changed_mol0.newParts(),
                                                 changed_mol1.newParts(),
                                                 space(), switchingFunction(),
-                                                distanceMatrix());
+                                                distmat);
 
                         cnrg += calculateEnergy(changed_mol0.oldParts(),
                                                 changed_mol1.oldParts(),
                                                 space(), switchingFunction(),
-                                                distanceMatrix());
+                                                distmat);
                     }
                 }
             }
@@ -454,7 +483,7 @@ void InterCoulombFF::recalculateViaDelta()
             cnrg -= calculateEnergy(removed_mol.oldMolecule(),
                                     changed_mol.oldMolecule(),
                                     space(), switchingFunction(),
-                                    distanceMatrix());
+                                    distmat);
         }
     }
 
@@ -462,6 +491,7 @@ void InterCoulombFF::recalculateViaDelta()
     changed_mols.clear();
     molid_to_changedindex.clear();
     removed_mols.clear();
+    need_total_recalc = false;
 
     //save the new total energy of this forcefield
     this->changeComponent( components().coulomb(), cnrg );
@@ -474,7 +504,7 @@ void InterCoulombFF::recalculateViaDelta()
     the last evaluation. */
 void InterCoulombFF::recalculateEnergy()
 {
-    if (changed_mols.isEmpty())
+    if (need_total_recalc or changed_mols.isEmpty())
     {
         this->recalculateTotalEnergy();
     }
@@ -500,7 +530,7 @@ void InterCoulombFF::updateCurrentState(const CoulombFF::CoulombMolecule &mol)
         molid_to_index.insert(id, idx);
         mols.append(mol);
 
-        if (removed_mols.contains(id))
+        if ( not (need_total_recalc) and removed_mols.contains(id) )
             removed_mols.remove(id);
     }
 }
@@ -533,7 +563,8 @@ void InterCoulombFF::removeFromCurrentState(MoleculeID molid)
             }
         }
 
-        removed_mols.insert(molid);
+        if (not need_total_recalc)
+            removed_mols.insert(molid);
     }
 }
 
@@ -555,21 +586,24 @@ bool InterCoulombFF::applyChange(MoleculeID molid, const ChangedCoulombMolecule 
         this->updateCurrentState(changed_mol.newMolecule());
     }
 
-    //save the change
-    QHash<MoleculeID,uint>::const_iterator it = molid_to_changedindex.constFind(molid);
-
-    if (it != molid_to_changedindex.constEnd())
+    if (not need_total_recalc)
     {
-        //the molecule has been changed before
-        changed_mols[it.value()] = changed_mol;
-    }
-    else
-    {
-        //this is a new change
-        uint idx = changed_mols.count();
+        //save the change
+        QHash<MoleculeID,uint>::const_iterator it = molid_to_changedindex.constFind(molid);
 
-        changed_mols.append(changed_mol);
-        molid_to_changedindex.insert(molid, idx);
+        if (it != molid_to_changedindex.constEnd())
+        {
+            //the molecule has been changed before
+            changed_mols[it.value()] = changed_mol;
+        }
+        else
+        {
+            //this is a new change
+            uint idx = changed_mols.count();
+
+            changed_mols.append(changed_mol);
+            molid_to_changedindex.insert(molid, idx);
+        }
     }
 
     return true;
@@ -578,17 +612,23 @@ bool InterCoulombFF::applyChange(MoleculeID molid, const ChangedCoulombMolecule 
 /** Get the current change record for a molecule */
 CoulombFF::ChangedCoulombMolecule InterCoulombFF::changeRecord(MoleculeID molid) const
 {
-    if (molid_to_changedindex.contains(molid))
+    if ( not need_total_recalc )
     {
-        //this molecule has been changed before - return the record
-        //of that change
-        return changed_mols.at( molid_to_changedindex[molid] );
+        QHash<MoleculeID,uint>::const_iterator it = molid_to_changedindex.find(molid);
+         
+        if (it != molid_to_changedindex.end())
+            //this molecule has been changed before - return the record
+            //of that change
+            return changed_mols.constData()[ *it ];
     }
-    else if (molid_to_index.contains(molid))
+    
+    QHash<MoleculeID,uint>::const_iterator it = molid_to_index.find(molid);
+    
+    if (it != molid_to_index.end())
     {
         //this molecule has not been changed before - return a change
         //record that has the state, but doesn't change it
-        return ChangedCoulombMolecule( mols.at(molid_to_index[molid]) );
+        return ChangedCoulombMolecule( mols.constData()[*it] );
     }
     else
     {
@@ -598,27 +638,6 @@ CoulombFF::ChangedCoulombMolecule InterCoulombFF::changeRecord(MoleculeID molid)
     }
 }
 
-/** Private class used by the "add" functions to actually add the
-    molecule or part of molecule */
-template<class T>
-bool InterCoulombFF::_pvt_add(const T &mol, const ParameterMap &map)
-{
-    //get the molecule's ID
-    MoleculeID molid = mol.ID();
-
-    ChangedCoulombMolecule new_molecule =
-                changeRecord(molid).add( mol,
-                                         map.source(this->parameters().coulomb()) );
-
-    if (this->applyChange(molid, new_molecule))
-    {
-        this->incrementMajorVersion();
-        return true;
-    }
-    else
-        return isDirty();
-}
-
 /** Add the molecule 'molecule' to this forcefield using the optionally
     supplied map to find the forcefield parameters amongst the
     molecule's properties.
@@ -626,84 +645,15 @@ bool InterCoulombFF::_pvt_add(const T &mol, const ParameterMap &map)
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-bool InterCoulombFF::add(const Molecule &molecule, const ParameterMap &map)
-{
-    return this->_pvt_add<Molecule>(molecule, map);
-}
-
-/** Add the residue 'residue' to this forcefield using the optionally
-    supplied map to find the forcefield parameters amongst the
-    residue's properties. Note that the property used must agree
-    with the rest of the molecule if it is already in this forcefield.
-
-    \throw SireBase::missing_property
-    \throw SireMol::invalid_cast
-*/
-bool InterCoulombFF::add(const Residue &residue, const ParameterMap &map)
-{
-    return this->_pvt_add<Residue>(residue, map);
-}
-
-/** Add the atom 'atom' to this forcefield using the optionally
-    supplied map to find the forcefield parameters amongst the
-    atom's properties. Note that the property used must agree
-    with the rest of the molecule if it is already in this forcefield.
-
-    \throw SireBase::missing_property
-    \throw SireMol::invalid_cast
-*/
-bool InterCoulombFF::add(const NewAtom &atom, const ParameterMap &map)
-{
-    return this->_pvt_add<NewAtom>(atom, map);
-}
-
-/** Add the selected atoms from 'molecule' to this forcefield
-    using the supplied map to find the forcefield parameters
-    amongst the molecule's properties. Note that the property
-    used must agree with the rest of the molecule if it is already
-    in this forcefield.
-
-    \throw SireBase::missing_property
-    \throw SireMol::invalid_cast
-*/
-bool InterCoulombFF::add(const Molecule &molecule, const AtomSelection &selected_atoms,
-                    const ParameterMap &map)
+bool InterCoulombFF::add(const PartialMolecule &molecule, const ParameterMap &map)
 {
     //get the molecule's ID
     MoleculeID molid = molecule.ID();
 
-    ChangedCoulombMolecule new_molecule = changeRecord(molid);
-
-    if (new_molecule.oldMolecule().isEmpty())
-    {
-        new_molecule = ChangedCoulombMolecule( CoulombMolecule(),
-                                          CoulombMolecule( molecule, selected_atoms,
-                                          map.source(this->parameters().coulomb()) ) );
-    }
-    else
-    {
-        new_molecule = new_molecule.add( selected_atoms,
-                                         map.source(this->parameters().coulomb()) );
-    }
-
-    if (this->applyChange(molid, new_molecule))
-    {
-        this->incrementMajorVersion();
-        return true;
-    }
-    else
-        return isDirty();
-}
-
-/** Private class used by the "remove" functions to actually remove the
-    molecule or part of molecule */
-template<class T>
-bool InterCoulombFF::_pvt_remove(const T &mol)
-{
-    MoleculeID molid = mol.ID();
-
-    ChangedCoulombMolecule new_molecule = changeRecord(molid).remove(mol);
-
+    ChangedCoulombMolecule new_molecule =
+                    changeRecord(molid).add( molecule,
+                                             map.source(this->parameters().coulomb()) );
+    
     if (this->applyChange(molid, new_molecule))
     {
         this->incrementMajorVersion();
@@ -714,30 +664,12 @@ bool InterCoulombFF::_pvt_remove(const T &mol)
 }
 
 /** Remove the molecule 'molecule' */
-bool InterCoulombFF::remove(const Molecule &molecule)
-{
-    return this->_pvt_remove<Molecule>(molecule);
-}
-
-/** Remove the residue 'residue' */
-bool InterCoulombFF::remove(const Residue &residue)
-{
-    return this->_pvt_remove<Residue>(residue);
-}
-
-/** Remove the atom 'atom' */
-bool InterCoulombFF::remove(const NewAtom &atom)
-{
-    return this->_pvt_remove<NewAtom>(atom);
-}
-
-/** Remove the selected atoms from 'molecule' from this forcefield */
-bool InterCoulombFF::remove(const Molecule &molecule, const AtomSelection &selected_atoms)
+bool InterCoulombFF::remove(const PartialMolecule &molecule)
 {
     MoleculeID molid = molecule.ID();
-
-    ChangedCoulombMolecule new_molecule = changeRecord(molid).remove(selected_atoms);
-
+    
+    ChangedCoulombMolecule new_molecule = changeRecord(molid).remove(molecule);
+       
     if (this->applyChange(molid, new_molecule))
     {
         this->incrementMajorVersion();
@@ -747,14 +679,12 @@ bool InterCoulombFF::remove(const Molecule &molecule, const AtomSelection &selec
         return isDirty();
 }
 
-/** Private class used by the "change" functions to actually change the
-    molecule or part of molecule */
-template<class T>
-bool InterCoulombFF::_pvt_change(const T &mol)
+/** Change the molecule 'molecule' */
+bool InterCoulombFF::change(const PartialMolecule &molecule)
 {
-    MoleculeID molid = mol.ID();
+    MoleculeID molid = molecule.ID();
 
-    ChangedCoulombMolecule new_molecule = this->changeRecord(molid).change(mol);
+    ChangedCoulombMolecule new_molecule = this->changeRecord(molid).change(molecule);
 
     if (this->applyChange(molid, new_molecule))
     {
@@ -765,20 +695,91 @@ bool InterCoulombFF::_pvt_change(const T &mol)
         return this->isDirty();
 }
 
-/** Change the molecule 'molecule' */
-bool InterCoulombFF::change(const Molecule &molecule)
+/** Return whether this forcefield contains a complete copy of
+    any version of the partial molecule 'molecule' */
+bool InterCoulombFF::contains(const PartialMolecule &molecule) const
 {
-    return this->_pvt_change<Molecule>(molecule);
+    QHash<MoleculeID,uint>::const_iterator it = molid_to_index.find(molecule.ID());
+    
+    if (it == molid_to_index.end())
+        return false;
+        
+    return mols.constData()[it.value()].molecule().contains(molecule.selectedAtoms());
 }
 
-/** Change the residue 'residue' */
-bool InterCoulombFF::change(const Residue &residue)
+/** Return whether or not this forcefield contains *any part* of
+    any version of the molecule with ID 'molid' */
+bool InterCoulombFF::refersTo(MoleculeID molid) const
 {
-    return this->_pvt_change<Residue>(residue);
+    return molid_to_index.contains(molid);
 }
 
-/** Change the atom 'atom' */
-bool InterCoulombFF::change(const NewAtom &atom)
+/** Return the groups that refer to the molecule with ID == molid
+
+    \throw SireMol::missing_molecule
+*/
+QSet<FFBase::Group> InterCoulombFF::groupsReferringTo(MoleculeID molid) const
 {
-    return this->_pvt_change<NewAtom>(atom);
+    QSet<FFBase::Group> groups;
+
+    if (this->refersTo(molid))
+    {
+        groups.insert(this->groups().main());
+    }
+    
+    return groups;
+}
+
+/** Return the set of all of the ID numbers of all of the
+    molecules that are referred to by this forcefield
+    (i.e. all molecules that have at least some part
+    in this forcefield) */
+QSet<MoleculeID> InterCoulombFF::moleculeIDs() const
+{
+    return molid_to_index.keys().toSet();
+}
+
+/** Return the copy of the molecule in this forcefield that
+    has the ID == molid
+
+    \throw SireMol::missing_molecule
+*/
+PartialMolecule InterCoulombFF::molecule(MoleculeID molid) const
+{
+    QHash<MoleculeID,uint>::const_iterator it = molid_to_index.find(molid);
+    
+    if (it == molid_to_index.end())
+        throw SireMol::missing_molecule( QObject::tr(
+            "The InterCoulombFF forcefield (%1, %2 : %3) does not contain the "
+            "molecule with ID == %4.")
+                .arg(this->name()).arg(this->ID())
+                .arg(this->version().toString()).arg(molid),
+                    CODELOC );
+    
+    return mols.constData()[it.value()].molecule();
+}
+
+/** Return all of the molecules (and parts of molecules) that
+    are in this forcefield */
+QHash<MoleculeID,PartialMolecule> InterCoulombFF::contents() const
+{
+    QHash<MoleculeID,PartialMolecule> all_mols;
+    
+    int nmols = mols.count();
+    
+    if (nmols > 0)
+    {
+        all_mols.reserve(nmols);
+        
+        const CoulombMolecule *mols_array = mols.constData();
+        
+        for (int i=0; i<nmols; ++i)
+        {
+            const PartialMolecule &mol = mols_array[i].molecule();
+            
+            all_mols.insert( mol.ID(), mol );
+        }
+    }
+    
+    return all_mols;
 }

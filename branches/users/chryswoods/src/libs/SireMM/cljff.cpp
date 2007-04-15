@@ -1315,6 +1315,10 @@ CLJFF::CLJFF(const CLJFF &other)
     BOOST_ASSERT( components_ptr != 0 );
 }
 
+/** Destructor */
+CLJFF::~CLJFF()
+{}
+
 /** Copy assignment function used by derived classes */
 void CLJFF::_pvt_copy(const FFBase &ffbase)
 {
@@ -1325,13 +1329,7 @@ void CLJFF::_pvt_copy(const FFBase &ffbase)
 
     components_ptr = dynamic_cast<const CLJFF::Components*>( &(FFBase::components()) );
     BOOST_ASSERT( components_ptr != 0 );
-
-    FFBase::_pvt_copy(ffbase);
 }
-
-/** Destructor */
-CLJFF::~CLJFF()
-{}
 
 /** Set the space within which the molecules interact */
 bool CLJFF::setSpace(const Space &space)

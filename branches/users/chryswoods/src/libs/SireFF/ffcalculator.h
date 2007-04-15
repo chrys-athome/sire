@@ -82,6 +82,8 @@ public:
 
     virtual QHash<QString,Property> properties()=0;
 
+    virtual void mustNowRecalculateFromScratch()=0;
+
     virtual bool change(const PartialMolecule &molecule)=0;
     virtual bool change(const QHash<MoleculeID,PartialMolecule> &molecules)=0;
     virtual bool change(const QList<PartialMolecule> &molecules)=0;
@@ -164,6 +166,8 @@ public:
     bool containsProperty(const QString &name);
 
     QHash<QString,Property> properties();
+
+    void mustNowRecalculateFromScratch();
 
     bool change(const PartialMolecule &molecule);
     bool change(const QHash<MoleculeID,PartialMolecule> &molecules);

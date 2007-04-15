@@ -118,22 +118,23 @@ public:
         return new InterLJFF(*this);
     }
 
-    bool change(const Molecule &molecule);
-    bool change(const Residue &residue);
-    bool change(const NewAtom &atom);
+    void mustNowRecalculateFromScratch();
 
-    bool add(const Molecule &mol, const ParameterMap &map = ParameterMap());
-    bool add(const Residue &res, const ParameterMap &map = ParameterMap());
-    bool add(const NewAtom &atom, const ParameterMap &map = ParameterMap());
+    bool change(const PartialMolecule &molecule);
+    bool add(const PartialMolecule &mol, const ParameterMap &map = ParameterMap());
+    bool remove(const PartialMolecule &molecule);
 
-    bool add(const Molecule &mol, const AtomSelection &selected_atoms,
-             const ParameterMap &map = ParameterMap());
-
-    bool remove(const Molecule &molecule);
-    bool remove(const Residue &residue);
-    bool remove(const NewAtom &atom);
+    bool contains(const PartialMolecule &molecule) const;
     
-    bool remove(const Molecule &mol, const AtomSelection &selected_atoms);
+    bool refersTo(MoleculeID molid) const;
+
+    QSet<FFBase::Group> groupsReferringTo(MoleculeID molid) const;
+    
+    QSet<MoleculeID> moleculeIDs() const;
+    
+    PartialMolecule molecule(MoleculeID molid) const;
+    
+    QHash<MoleculeID,PartialMolecule> contents() const;
 
 protected:
     void recalculateViaDelta();
@@ -146,18 +147,11 @@ protected:
     bool applyChange(MoleculeID molid,
                      const ChangedLJMolecule &new_molecule);
 
+    void _pvt_copy(const FFBase &other);
+
 private:
     void updateCurrentState(const LJMolecule &new_molecule);
     void removeFromCurrentState(MoleculeID molid);
-
-    template<class T>
-    bool _pvt_add(const T &mol, const ParameterMap &map);
-
-    template<class T>
-    bool _pvt_remove(const T &mol);
-    
-    template<class T>
-    bool _pvt_change(const T &mol);
 
     /** All of the molecules that have at least one atom
         in this forcefield */
@@ -177,6 +171,9 @@ private:
     /** MoleculeIDs of all molecules that have been removed since
         the last energy evaluation */
     QSet<MoleculeID> removed_mols;
+    
+    /** Whether or not a total energy recalculation is required */
+    bool need_total_recalc;
 };
 
 }

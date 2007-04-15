@@ -207,7 +207,7 @@ protected:
                                   const Space &space,
                                   DistMatrix &distmatrix);
 
-    DistMatrix& distanceMatrix();
+    void _pvt_copy(const FFBase &other);
 
 private:
 

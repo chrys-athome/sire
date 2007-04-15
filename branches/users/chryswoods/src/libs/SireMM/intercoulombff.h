@@ -118,13 +118,12 @@ public:
         return new InterCoulombFF(*this);
     }
 
+    void mustNowRecalculateFromScratch();
+
     bool change(const PartialMolecule &molecule);
-
-    bool add(const PartialMolecule &mol, 
-             const ParameterMap &map = ParameterMap());
-
+    bool add(const PartialMolecule &mol, const ParameterMap &map = ParameterMap());
     bool remove(const PartialMolecule &molecule);
-                    
+
     bool contains(const PartialMolecule &molecule) const;
     
     bool refersTo(MoleculeID molid) const;
@@ -148,18 +147,11 @@ protected:
     bool applyChange(MoleculeID molid,
                      const ChangedCoulombMolecule &new_molecule);
 
+    void _pvt_copy(const FFBase &other);
+
 private:
     void updateCurrentState(const CoulombMolecule &new_molecule);
     void removeFromCurrentState(MoleculeID molid);
-
-    template<class T>
-    bool _pvt_add(const T &mol, const ParameterMap &map);
-
-    template<class T>
-    bool _pvt_remove(const T &mol);
-
-    template<class T>
-    bool _pvt_change(const T &mol);
 
     /** All of the molecules that have at least one atom
         in this forcefield */
@@ -179,6 +171,9 @@ private:
     /** MoleculeIDs of all molecules that have been removed since
         the last energy evaluation */
     QSet<MoleculeID> removed_mols;
+    
+    /** Whether or not a total energy recalculation is required */
+    bool need_total_recalc;
 };
 
 }

@@ -1160,6 +1160,20 @@ CoulombFF::CoulombFF(const CoulombFF &other)
 CoulombFF::~CoulombFF()
 {}
 
+/** Copy assignment function used by derived classes */
+void CoulombFF::_pvt_copy(const FFBase &ffbase)
+{
+    const CoulombFF &coulff = dynamic_cast<const CoulombFF&>(ffbase);
+
+    spce = coulff.spce;
+    switchfunc = coulff.switchfunc;
+
+    components_ptr = 
+          dynamic_cast<const CoulombFF::Components*>( &(FFBase::components()) );
+          
+    BOOST_ASSERT( components_ptr != 0 );
+}
+
 /** Set the space within which the molecules interact */
 bool CoulombFF::setSpace(const Space &space)
 {
@@ -1167,6 +1181,7 @@ bool CoulombFF::setSpace(const Space &space)
     {
         spce = space;
         this->incrementMajorVersion();
+        this->mustNowRecalculateFromScratch();
     }
         
     return isDirty();
@@ -1179,6 +1194,7 @@ bool CoulombFF::setSwitchingFunction(const SwitchingFunction &sfunc)
     {
         switchfunc = sfunc;
         this->incrementMajorVersion();
+        this->mustNowRecalculateFromScratch();
     }
 
     return isDirty();

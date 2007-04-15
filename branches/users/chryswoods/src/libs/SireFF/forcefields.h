@@ -85,6 +85,8 @@ public:
                      
     QHash< QString, QHash<ForceFieldID,Property> > properties() const;
     
+    void mustNowRecalculateFromScratch();
+    
     void change(const PartialMolecule &molecule);
     void change(const QHash<MoleculeID,PartialMolecule> &molecules);
 

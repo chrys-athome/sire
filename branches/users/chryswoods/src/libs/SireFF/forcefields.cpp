@@ -385,6 +385,20 @@ QHash< QString, QHash<ForceFieldID,Property> > ForceFields::properties() const
     return props;
 }
 
+/** Tell all of the forcefields that they have to recalculate everything from
+    scratch */
+void ForceFields::mustNowRecalculateFromScratch()
+{
+    for (QHash<ForceFieldID,ForceField>::iterator it = ffields.begin();
+         it != ffields.end();
+         ++it)
+    {
+        it->mustNowRecalculateFromScratch();
+    }
+    
+    ForceFieldsBase::changedAll();
+}
+
 /** Change the molecule 'molecule'
 
     \throw SireBase::missing_property

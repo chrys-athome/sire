@@ -488,8 +488,6 @@ public:
 protected:
     void registerComponents(FFBase::Components *components);
 
-    FFBase& copy(const FFBase &other);
-
     void incrementMajorVersion();
     void incrementMinorVersion();
 

@@ -195,6 +195,13 @@ bool FFCalculator::addTo(const FFBase::Group &group,
     return ffield.addTo(group, molecules, map);
 }
 
+/** Tell the forcefield that it has to recalculate everything from
+    scratch */
+void FFCalculator::mustNowRecalculateFromScratch()
+{
+    ffield.mustNowRecalculateFromScratch();
+}
+
 /** Change the molecule 'molecule'
 
     \throw SireBase::missing_property

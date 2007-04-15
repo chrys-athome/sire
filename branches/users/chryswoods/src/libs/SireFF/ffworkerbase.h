@@ -96,6 +96,8 @@ public:
 
     QHash<QString,Property> properties();
 
+    void mustNowRecalculateFromScratch();
+
     bool add(const PartialMolecule &molecule,
              const ParameterMap &map = ParameterMap());
     bool add(const QList<PartialMolecule> &molecules,
@@ -167,6 +169,8 @@ protected:
     virtual bool _pvt_containsProperty(const QString &name)=0;
 
     virtual QHash<QString,Property> _pvt_properties()=0;
+
+    virtual void _pvt_mustNowRecalculateFromScratch()=0;
 
     virtual bool _pvt_add(const PartialMolecule &molecule, const ParameterMap &map)=0;
     virtual bool _pvt_add(const QList<PartialMolecule> &molecules,

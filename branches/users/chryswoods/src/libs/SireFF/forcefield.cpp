@@ -408,6 +408,13 @@ QHash<QString,Property> ForceField::properties() const
     return d->properties();
 }
 
+/** Tell the forcefield that it has to recalculate everything from
+    scratch */
+void ForceField::mustNowRecalculateFromScratch()
+{
+    d->mustNowRecalculateFromScratch();
+}
+
 /** Change the molecule 'molecule' (e.g. move it, or change its
     parameters). This does nothing if the molecule is not
     in this forcefield. Returns whether or not the forcefield

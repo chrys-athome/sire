@@ -2532,3 +2532,9 @@ void ForceFieldsBase::changed(const QSet<ForceFieldID> &ffids) throw()
             return;
     }
 }
+
+/** Record that all of the forcefields have changed */
+void ForceFieldsBase::changedAll() throw()
+{
+    cached_energies.clear();
+}

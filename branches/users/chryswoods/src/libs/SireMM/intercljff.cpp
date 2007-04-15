@@ -116,6 +116,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
     sds << intercljff.mols
         << intercljff.changed_mols
         << intercljff.removed_mols
+        << intercljff.need_total_recalc
         << static_cast<const CLJFF&>(intercljff);
 
     return ds;
@@ -134,6 +135,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
         sds >> intercljff.mols
             >> intercljff.changed_mols
             >> intercljff.removed_mols
+            >> intercljff.need_total_recalc
             >> static_cast<CLJFF&>(intercljff);
 
         //rebuild molid_to_index and molid_to_changedindex
@@ -190,7 +192,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
 }
 
 /** Constructor */
-InterCLJFF::InterCLJFF() : CLJFF()
+InterCLJFF::InterCLJFF() : CLJFF(), need_total_recalc(true)
 {}
 
 /** Construct a LJ forcefield using the passed Space, combining rules and
@@ -214,9 +216,13 @@ InterCLJFF::InterCLJFF(const InterCLJFF &other)
 InterCLJFF::~InterCLJFF()
 {}
 
-/** Assignment operator */
-InterCLJFF& InterCLJFF::operator=(const InterCLJFF &other)
+/** Copy assignment function used by derived classes */
+void InterCLJFF::_pvt_copy(const FFBase &ffbase)
 {
+    CLJFF::_pvt_copy(ffbase);
+    
+    const InterCLJFF &other = dynamic_cast<const InterCLJFF&>(ffbase);
+    
     mols = other.mols;
     molid_to_index = other.molid_to_index;
 
@@ -226,8 +232,6 @@ InterCLJFF& InterCLJFF::operator=(const InterCLJFF &other)
     removed_mols = other.removed_mols;
 
     need_total_recalc = other.need_total_recalc;
-
-    return *this;
 }
 
 /** Tell the forcefield that it has to recalculate everything from
@@ -588,40 +592,49 @@ bool InterCLJFF::applyChange(MoleculeID molid, const ChangedCLJMolecule &changed
         this->updateCurrentState(changed_mol.newMolecule());
     }
 
-    //save the change
-    QHash<MoleculeID,uint>::const_iterator it = molid_to_changedindex.constFind(molid);
-
-    if (it != molid_to_changedindex.constEnd())
+    if (not need_total_recalc)
     {
-        //the molecule has been changed before
-        changed_mols[it.value()] = changed_mol;
-    }
-    else
-    {
-        //this is a new change
-        uint idx = changed_mols.count();
+        //save the change
+        QHash<MoleculeID,uint>::const_iterator it = molid_to_changedindex.constFind(molid);
 
-        changed_mols.append(changed_mol);
-        molid_to_changedindex.insert(molid, idx);
-    }
+        if (it != molid_to_changedindex.constEnd())
+        {
+            //the molecule has been changed before
+            changed_mols[it.value()] = changed_mol;
+        }
+        else
+        {
+            //this is a new change
+            uint idx = changed_mols.count();
 
+            changed_mols.append(changed_mol);
+            molid_to_changedindex.insert(molid, idx);
+        }
+    }
+    
     return true;
 }
 
 /** Get the current change record for a molecule */
 CLJFF::ChangedCLJMolecule InterCLJFF::changeRecord(MoleculeID molid) const
 {
-    if (molid_to_changedindex.contains(molid))
+    if ( not need_total_recalc )
     {
-        //this molecule has been changed before - return the record
-        //of that change
-        return changed_mols.at( molid_to_changedindex[molid] );
+        QHash<MoleculeID,uint>::const_iterator it = molid_to_changedindex.find(molid);
+         
+        if (it != molid_to_changedindex.end())
+            //this molecule has been changed before - return the record
+            //of that change
+            return changed_mols.constData()[ *it ];
     }
-    else if (molid_to_index.contains(molid))
+    
+    QHash<MoleculeID,uint>::const_iterator it = molid_to_index.find(molid);
+    
+    if (it != molid_to_index.end())
     {
         //this molecule has not been changed before - return a change
         //record that has the state, but doesn't change it
-        return ChangedCLJMolecule( mols.at(molid_to_index[molid]) );
+        return ChangedCLJMolecule( mols.constData()[*it] );
     }
     else
     {
@@ -643,62 +656,27 @@ bool InterCLJFF::add(const PartialMolecule &molecule, const ParameterMap &map)
     //get the molecule's ID
     MoleculeID molid = molecule.ID();
 
-    if (need_total_recalc)
-    {
-        //apply the change directly to the current state
-        if (this->refersTo(molid))
-        {
-            CLJMolecule old_molecule = this->molecule(molid);
-        
-            CLJMolecule new_molecule = old_molecule.add(molecule,
-                                             map.source(this->parameters().coulomb()),
-                                             map.source(this->parameters().lj()) );
-        
-            if (new_molecule != old_molecule)
-            {
-                this->updateCurrentState(new_molecule);
-                this->incrementMajorVersion();
-                return true;
-            }
-            else
-                return isDirty();
-        }
-        else
-        {
-            CLJMolecule new_molecule( molecule, 
-                                      map.source(this->parameters().coulomb()),
-                                      map.source(this->parameters().lj()) );
-                                      
-            this->updateCurrentState(new_molecule);
-            
-            this->incrementMajorVersion();
-            return true;
-        }
-    }
-    else
-    {
-        ChangedCLJMolecule new_molecule =
+    ChangedCLJMolecule new_molecule =
                     changeRecord(molid).add( molecule,
                                              map.source(this->parameters().coulomb()),
                                              map.source(this->parameters().lj()) );
-
-        if (this->applyChange(molid, new_molecule))
-        {
-            this->incrementMajorVersion();
-            return true;
-        }
-        else
-            return isDirty();
+    
+    if (this->applyChange(molid, new_molecule))
+    {
+        this->incrementMajorVersion();
+        return true;
     }
+    else
+        return isDirty();
 }
 
 /** Remove the molecule 'molecule' */
 bool InterCLJFF::remove(const PartialMolecule &molecule)
 {
     MoleculeID molid = molecule.ID();
-#warning need_total_recalc
+    
     ChangedCLJMolecule new_molecule = changeRecord(molid).remove(molecule);
-
+       
     if (this->applyChange(molid, new_molecule))
     {
         this->incrementMajorVersion();
@@ -712,7 +690,6 @@ bool InterCLJFF::remove(const PartialMolecule &molecule)
 bool InterCLJFF::change(const PartialMolecule &molecule)
 {
     MoleculeID molid = molecule.ID();
-#warning need_total_recalc
 
     ChangedCLJMolecule new_molecule = this->changeRecord(molid).change(molecule);
 

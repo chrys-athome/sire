@@ -150,6 +150,8 @@ protected:
     bool applyChange(MoleculeID molid,
                      const ChangedCLJMolecule &new_molecule);
 
+    void _pvt_copy(const FFBase &other);
+
 private:
     void updateCurrentState(const CLJMolecule &new_molecule);
     void removeFromCurrentState(MoleculeID molid);

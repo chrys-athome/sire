@@ -165,8 +165,14 @@ public:
     };
 
     const Space& space() const;
-
     const SwitchingFunction& switchingFunction() const;
+
+    virtual bool setSpace(const Space &space);
+    virtual bool setSwitchingFunction(const SwitchingFunction &switchfunc);
+
+    bool setProperty(const QString &name, const Property &value);
+    Property getProperty(const QString &name) const;
+    bool containsProperty(const QString &name) const;
 
     /** Return the object describing the components of this
         forcefield */
@@ -180,13 +186,13 @@ public:
                                   const Space &space,
                                   const SwitchingFunction &switchfunc,
                                   DistMatrix &distmatrix,
-                                  LJMatrix &ljmatrix);
+                                  LJPairMatrix &ljmatrix);
 
     static double calculateEnergy(const LJMolecule &mol,
                                   const Space &space,
                                   const SwitchingFunction &switchfunc,
                                   DistMatrix &distmatrix,
-                                  LJMatrix &ljmatrix);
+                                  LJPairMatrix &ljmatrix);
 
 protected:
 
@@ -197,32 +203,25 @@ protected:
                                   const Space &space,
                                   const SwitchingFunction &switchfunc,
                                   DistMatrix &distmatrix,
-                                  LJMatrix &ljmatrix);
+                                  LJPairMatrix &ljmatrix);
 
     static double calculateEnergy(const CoordGroup &group,
                                   const QVector<LJParameter> &ljs,
                                   const Space &space,
                                   DistMatrix &distmatrix,
-                                  LJMatrix &ljmatrix);
+                                  LJPairMatrix &ljmatrix);
 
-    DistMatrix& distanceMatrix();
-    LJMatrix& ljMatrix();
+    void _pvt_copy(const FFBase &other);
 
 private:
 
     static double calculatePairEnergy(DistMatrix &distmatrix,
-                                      LJMatrix &ljmatrix);
+                                      LJPairMatrix &ljmatrix);
 
     static double calculateSelfEnergy(DistMatrix &distmatrix,
-                                      LJMatrix &ljmatrix);
+                                      LJPairMatrix &ljmatrix);
 
     void registerComponents();
-
-    /** Workspace for the distance calculations */
-    DistMatrix distmat;
-
-    /** Workspace for the combination of LJ parameters */
-    LJMatrix ljmat;
 
     /** The space in which the molecules in this forcefield reside */
     Space spce;
@@ -258,12 +257,7 @@ friend QDataStream& ::operator>>(QDataStream&, LJFF::LJMolecule&);
 public:
     LJMolecule();
 
-    LJMolecule(const Molecule &molecule, const QString &ljproperty);
-    LJMolecule(const Residue &residue, const QString &ljproperty);
-    LJMolecule(const NewAtom &atom, const QString &ljproperty);
-
-    LJMolecule(const Molecule &molecule, const AtomSelection &selected_atoms,
-               const QString &ljproperty);
+    LJMolecule(const PartialMolecule &molecule, const QString &ljproperty);
 
     LJMolecule(const LJMolecule &other, const QSet<CutGroupID> &groups);
 
@@ -278,25 +272,15 @@ public:
 
     bool isEmpty() const;
 
-    const Molecule& molecule() const;
+    const PartialMolecule& molecule() const;
 
-    ChangedLJMolecule change(const Molecule &molecule) const;
-    ChangedLJMolecule change(const Residue &residue) const;
-    ChangedLJMolecule change(const NewAtom &newatom) const;
+    ChangedLJMolecule change(const PartialMolecule &molecule,
+                             const QString &ljproperty = QString::null) const;
 
-    ChangedLJMolecule add(const Molecule &molecule,
-                          const QString &ljproperty = QString::null) const;
-    ChangedLJMolecule add(const Residue &residue,
-                          const QString &ljproperty = QString::null) const;
-    ChangedLJMolecule add(const NewAtom &newatom,
-                          const QString &ljproperty = QString::null) const;
-    ChangedLJMolecule add(const AtomSelection &selected_atoms,
+    ChangedLJMolecule add(const PartialMolecule &molecule,
                           const QString &ljproperty = QString::null) const;
 
-    ChangedLJMolecule remove(const Molecule &molecule) const;
-    ChangedLJMolecule remove(const Residue &residue) const;
-    ChangedLJMolecule remove(const NewAtom &atom) const;
-    ChangedLJMolecule remove(const AtomSelection &selected_atoms) const;
+    ChangedLJMolecule remove(const PartialMolecule &molecule) const;
 
     const QString& ljProperty() const;
 
@@ -304,18 +288,8 @@ public:
     const AtomicLJs& ljParameters() const;
 
     bool isWholeMolecule() const;
-    const AtomSelection& selectedAtoms() const;
 
 private:
-    ChangedLJMolecule _pvt_change(const Molecule &molecule,
-                                  const QSet<CutGroupID> &cgids,
-                                  const QString &ljproperty = QString::null) const;
-
-    ChangedLJMolecule _pvt_change(const Molecule &molecule,
-                                  const QSet<CutGroupID> &cgids,
-                                  const AtomSelection &selected_atoms,
-                                  const QString &ljproperty = QString::null) const;
-
     /** Implicitly shared pointer to the data of this class */
     QSharedDataPointer<LJMoleculeData> d;
 };
@@ -350,23 +324,13 @@ public:
 
     bool isEmpty() const;
 
-    ChangedLJMolecule change(const Molecule &molecule) const;
-    ChangedLJMolecule change(const Residue &residue) const;
-    ChangedLJMolecule change(const NewAtom &atom) const;
+    ChangedLJMolecule change(const PartialMolecule &molecule,
+                             const QString &ljproperty = QString::null) const;
 
-    ChangedLJMolecule add(const Molecule &molecule,
-                          const QString &ljproperty = QString::null) const;
-    ChangedLJMolecule add(const Residue &residue,
-                          const QString &ljproperty = QString::null) const;
-    ChangedLJMolecule add(const NewAtom &atom,
-                          const QString &ljproperty = QString::null) const;
-    ChangedLJMolecule add(const AtomSelection &selected_atoms,
+    ChangedLJMolecule add(const PartialMolecule &molecule,
                           const QString &ljproperty = QString::null) const;
 
-    ChangedLJMolecule remove(const Molecule &molecule) const;
-    ChangedLJMolecule remove(const Residue &residue) const;
-    ChangedLJMolecule remove(const NewAtom &atom) const;
-    ChangedLJMolecule remove(const AtomSelection &selected_atoms) const;
+    ChangedLJMolecule remove(const PartialMolecule &molecule) const;
 
     bool changedAll() const;
 
@@ -410,18 +374,6 @@ inline const Space& LJFF::space() const
 inline const SwitchingFunction& LJFF::switchingFunction() const
 {
     return switchfunc;
-}
-
-/** Return a reference to the workspace used for the distance calculations */
-inline DistMatrix& LJFF::distanceMatrix()
-{
-    return distmat;
-}
-
-/** Return a reference to the workspace used for the LJ parameter combination */
-inline LJMatrix& LJFF::ljMatrix()
-{
-    return ljmat;
 }
 
 } // end of namespace SireMM

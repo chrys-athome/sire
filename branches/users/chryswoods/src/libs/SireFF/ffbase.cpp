@@ -399,22 +399,6 @@ FFBase::FFBase(const FFBase &other)
 FFBase::~FFBase()
 {}
 
-/** Protected function used to copy one FFBase to another - this
-    is used by the assignment operator of derived classes. */
-FFBase& FFBase::copy(const FFBase &other)
-{
-    if (this != &other)
-    {
-        ffname = other.ffname;
-        id_and_version = other.id_and_version;
-        nrg_components = other.nrg_components;
-        components_ptr.reset(other.components_ptr->clone());
-        isdirty = other.isdirty;
-    }
-
-    return *this;
-}
-
 /** Copy assignment from another forcefield */
 FFBase& FFBase::operator=(const FFBase &other)
 {
@@ -431,6 +415,14 @@ FFBase& FFBase::operator=(const FFBase &other)
                     .arg(this->what()).arg(other.what()), CODELOC );
     }
     
+    //copy the 'FFBase' part of the object...
+    ffname = other.ffname;
+    id_and_version = other.id_and_version;
+    nrg_components = other.nrg_components;
+    components_ptr.reset(other.components_ptr->clone());
+    isdirty = other.isdirty;
+    
+    //now copy the rest of the object
     this->_pvt_copy(other);
     
     return *this;

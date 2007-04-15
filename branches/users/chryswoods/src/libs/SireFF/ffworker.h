@@ -68,6 +68,8 @@ protected:
                     const QList<PartialMolecule> &molecules,
                     const ParameterMap &map);
 
+    void _pvt_mustNowRecalculateFromScratch();
+
     bool _pvt_change(const PartialMolecule &molecule);
     bool _pvt_change(const QHash<MoleculeID,PartialMolecule> &molecules);
     bool _pvt_change(const QList<PartialMolecule> &molecules);

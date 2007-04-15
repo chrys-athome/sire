@@ -146,6 +146,8 @@ public:
     virtual bool containsProperty(ForceFieldID ffid, const QString &name) const;
     virtual QSet<ForceFieldID> forceFieldsWithProperty(const QString &name) const;
 
+    virtual void mustNowRecalculateFromScratch()=0;
+
     virtual void change(const PartialMolecule &molecule)=0;
     virtual void change(const QList<PartialMolecule> &molecules);
     virtual void change(const QHash<MoleculeID,PartialMolecule> &molecules);
@@ -334,6 +336,7 @@ protected:
 
     virtual void changed(ForceFieldID ffid) throw();
     virtual void changed(const QSet<ForceFieldID> &ffids) throw();
+    virtual void changedAll() throw();
 
 private:
 

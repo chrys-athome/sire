@@ -113,6 +113,8 @@ public:
 
     QHash<QString,Property> properties() const;
 
+    void mustNowRecalculateFromScratch();
+
     bool change(const PartialMolecule &molecule);
     bool change(const QList<PartialMolecule> &molecules);
     bool change(const QHash<MoleculeID,PartialMolecule> &molecules);
