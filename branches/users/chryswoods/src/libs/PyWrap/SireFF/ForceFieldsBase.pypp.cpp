@@ -300,6 +300,9 @@ void register_ForceFieldsBase_class(){
             , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::ForceFieldsBase::* )( ::QSet<SireFF::FFGroupID> const & ) const)( &::SireFF::ForceFieldsBase::molecules )
             , ( bp::arg("ffgroupids") ) )    
         .def( 
+            "mustNowRecalculateFromScratch"
+            , (void ( ::SireFF::ForceFieldsBase::* )(  ) )( &::SireFF::ForceFieldsBase::mustNowRecalculateFromScratch ) )    
+        .def( 
             "nForceFields"
             , (int ( ::SireFF::ForceFieldsBase::* )(  ) const)( &::SireFF::ForceFieldsBase::nForceFields ) )    
         .def( 

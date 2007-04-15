@@ -129,6 +129,9 @@ void register_FFCalculator_class(){
             , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::FFCalculator::* )( ::SireFF::FFBase::Group const & ) )( &::SireFF::FFCalculator::molecules )
             , ( bp::arg("group") ) )    
         .def( 
+            "mustNowRecalculateFromScratch"
+            , (void ( ::SireFF::FFCalculator::* )(  ) )( &::SireFF::FFCalculator::mustNowRecalculateFromScratch ) )    
+        .def( 
             "properties"
             , (::QHash<QString,SireBase::Property> ( ::SireFF::FFCalculator::* )(  ) )( &::SireFF::FFCalculator::properties ) )    
         .def( 

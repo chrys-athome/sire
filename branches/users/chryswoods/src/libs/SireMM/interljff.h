@@ -69,8 +69,6 @@ public:
     
     ~InterLJFF();
     
-    InterLJFF& operator=(const InterLJFF &other);
-    
     class SIREMM_EXPORT Components : public LJFF::Components
     {
     public:

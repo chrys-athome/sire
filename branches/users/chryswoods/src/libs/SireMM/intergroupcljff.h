@@ -71,8 +71,6 @@ public:
 
     ~InterGroupCLJFF();
 
-    InterGroupCLJFF& operator=(const InterGroupCLJFF &other);
-
     class SIREMM_EXPORT Components : public CLJFF::Components
     {
     public:

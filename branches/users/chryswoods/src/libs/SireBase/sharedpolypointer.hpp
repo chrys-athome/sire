@@ -221,6 +221,12 @@ public:
         return *this;
     }
 
+    /** Allow ptr = 0 to set to zero */
+    inline SharedPolyPointer<T>& operator=(int)
+    {
+        return this->operator=( SharedPolyPointer<T>() );
+    }
+
     template<class S>
     SharedPolyPointer& operator=(const S &obj);
 

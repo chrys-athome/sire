@@ -152,6 +152,9 @@ void register_ForceField_class(){
             , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::ForceField::* )( ::QSet<SireMol::MoleculeID> const & ) const)( &::SireFF::ForceField::molecules )
             , ( bp::arg("molids") ) )    
         .def( 
+            "mustNowRecalculateFromScratch"
+            , (void ( ::SireFF::ForceField::* )(  ) )( &::SireFF::ForceField::mustNowRecalculateFromScratch ) )    
+        .def( 
             "name"
             , (::QString const & ( ::SireFF::ForceField::* )(  ) const)( &::SireFF::ForceField::name )
             , bp::return_value_policy< bp::copy_const_reference >() )    

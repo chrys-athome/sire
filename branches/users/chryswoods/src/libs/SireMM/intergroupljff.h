@@ -45,6 +45,7 @@ namespace SireMM
 {
 
 using SireMol::Molecule;
+using SireMol::PartialMolecule;
 using SireMol::Residue;
 using SireMol::NewAtom;
 using SireMol::MoleculeID;
@@ -70,8 +71,6 @@ public:
     InterGroupLJFF(const InterGroupLJFF &other);
 
     ~InterGroupLJFF();
-
-    InterGroupLJFF& operator=(const InterGroupLJFF &other);
 
     class SIREMM_EXPORT Components : public LJFF::Components
     {
@@ -146,33 +145,53 @@ public:
         return new InterGroupLJFF(*this);
     }
 
-    bool change(const Molecule &molecule);
-    bool change(const Residue &residue);
-    bool change(const NewAtom &atom);
+    void mustNowRecalculateFromScratch();
+    
+    bool change(const PartialMolecule &molecule);
 
-    bool add(const Molecule &mol, const ParameterMap &map = ParameterMap());
-    bool add(const Residue &res, const ParameterMap &map = ParameterMap());
-    bool add(const NewAtom &atom, const ParameterMap &map = ParameterMap());
+    bool add(const PartialMolecule &mol, const ParameterMap &map = ParameterMap());
 
-    bool add(const Molecule &mol, const AtomSelection &selected_atoms,
-             const ParameterMap &map = ParameterMap());
-
-    bool addTo(FFBase::Group group, const Molecule &molecule,
-               const ParameterMap &map = ParameterMap());
-    bool addTo(FFBase::Group group, const Residue &residue,
-               const ParameterMap &map = ParameterMap());
-    bool addTo(FFBase::Group group, const NewAtom &atom,
+    bool addTo(const FFBase::Group &group, const PartialMolecule &molecule,
                const ParameterMap &map = ParameterMap());
 
-    bool addTo(FFBase::Group group, const Molecule &molecule,
-               const AtomSelection &selected_atoms,
-               const ParameterMap &map = ParameterMap());
+    bool addToA(const PartialMolecule &molecule,
+                const ParameterMap &map = ParameterMap());
+                
+    bool addToB(const PartialMolecule &molecule,
+                const ParameterMap &map = ParameterMap());
 
-    bool remove(const Molecule &molecule);
-    bool remove(const Residue &residue);
-    bool remove(const NewAtom &atom);
+    bool remove(const PartialMolecule &molecule);
 
-    bool remove(const Molecule &mol, const AtomSelection &selected_atoms);
+    bool removeFrom(const FFBase::Group &group,
+                    const PartialMolecule &molecule);
+                    
+    bool removeFromA(const PartialMolecule &molecule);
+    bool removeFromB(const PartialMolecule &molecule);
+
+    bool contains(const PartialMolecule &molecule) const;
+    
+    bool contains(const PartialMolecule &molecule,
+                  const FFBase::Group &group) const;
+    
+    bool refersTo(MoleculeID molid) const;
+
+    bool refersTo(MoleculeID molid,
+                  const FFBase::Group &group) const;
+
+    QSet<FFBase::Group> groupsReferringTo(MoleculeID molid) const;
+    
+    QSet<MoleculeID> moleculeIDs() const;
+    
+    QSet<MoleculeID> moleculeIDs(const FFBase::Group &group) const;
+    
+    PartialMolecule molecule(MoleculeID molid) const;
+    
+    PartialMolecule molecule(MoleculeID molid,
+                             const FFBase::Group &group) const;
+    
+    QHash<MoleculeID,PartialMolecule> contents() const;
+
+    QHash<MoleculeID,PartialMolecule> contents(const FFBase::Group &group) const;
 
 protected:
     void recalculateViaDelta();
@@ -191,6 +210,8 @@ protected:
 
     void assertValidGroup(int group_id, MoleculeID molid) const;
 
+    void _pvt_copy(const FFBase &other);
+
 private:
     double recalculateWithTwoChangedGroups();
     double recalculateWithOneChangedGroup(int changed_idx);
@@ -203,16 +224,6 @@ private:
     void addToCurrentState(int group_idx, const LJMolecule &new_molecule);
     void removeFromCurrentState(int group_idx, MoleculeID molid);
     void updateCurrentState(int group_idx, const LJMolecule &molecule);
-
-    template<class T>
-    bool _pvt_add(const T &mol, const ParameterMap &map);
-    template<class T>
-    bool _pvt_addTo(FFBase::Group group, const T &mol, const ParameterMap &map);
-    template<class T>
-    bool _pvt_change(const T &mol);
-    template<class T>
-    bool _pvt_remove(const T &mol);
-
 
     /** All of the molecules that have at least one molecule in
         for forcefield, divided into their two groups */
@@ -229,6 +240,9 @@ private:
     /** Hash mapping the MoleculeID of a changed molecule to its
         index in changed_mols, for both of the groups */
     QHash<MoleculeID, uint> molid_to_changedindex[2];
+
+    /** Whether or not a total energy recalculation is required */
+    bool need_total_recalc;
 };
 
 }

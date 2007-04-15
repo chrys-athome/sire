@@ -943,7 +943,9 @@ bool InterGroupCLJFF::addTo(const FFBase::Group &group,
     }
     else
     {
-        new_molecule = new_molecule.add( molecule, map.source(parameters().lj()) );
+        new_molecule = new_molecule.add( molecule, 
+                                         map.source(parameters().coulomb()),
+                                         map.source(parameters().lj()) );
 
         if (this->applyChange(molid, new_molecule))
         {

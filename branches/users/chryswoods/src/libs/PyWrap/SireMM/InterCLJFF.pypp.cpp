@@ -35,7 +35,7 @@ void register_InterCLJFF_class(){
         InterCLJFF_exposer.def( bp::init< SireVol::Space const &, SireMM::SwitchingFunction const & >(( bp::arg("space"), bp::arg("switchingfunction") )) );
         { //::SireMM::InterCLJFF::add
         
-            typedef bool ( ::SireMM::InterCLJFF::*add_function_type )( ::SireMol::Molecule const &,::SireFF::ParameterMap const & ) ;
+            typedef bool ( ::SireMM::InterCLJFF::*add_function_type )( ::SireMol::PartialMolecule const &,::SireFF::ParameterMap const & ) ;
             
             InterCLJFF_exposer.def( 
                 "add"
@@ -43,39 +43,9 @@ void register_InterCLJFF_class(){
                 , ( bp::arg("mol"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
         
         }
-        { //::SireMM::InterCLJFF::add
-        
-            typedef bool ( ::SireMM::InterCLJFF::*add_function_type )( ::SireMol::Residue const &,::SireFF::ParameterMap const & ) ;
-            
-            InterCLJFF_exposer.def( 
-                "add"
-                , add_function_type( &::SireMM::InterCLJFF::add )
-                , ( bp::arg("res"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
-        
-        }
-        { //::SireMM::InterCLJFF::add
-        
-            typedef bool ( ::SireMM::InterCLJFF::*add_function_type )( ::SireMol::NewAtom const &,::SireFF::ParameterMap const & ) ;
-            
-            InterCLJFF_exposer.def( 
-                "add"
-                , add_function_type( &::SireMM::InterCLJFF::add )
-                , ( bp::arg("atom"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
-        
-        }
-        { //::SireMM::InterCLJFF::add
-        
-            typedef bool ( ::SireMM::InterCLJFF::*add_function_type )( ::SireMol::Molecule const &,::SireMol::AtomSelection const &,::SireFF::ParameterMap const & ) ;
-            
-            InterCLJFF_exposer.def( 
-                "add"
-                , add_function_type( &::SireMM::InterCLJFF::add )
-                , ( bp::arg("mol"), bp::arg("selected_atoms"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
-        
-        }
         { //::SireMM::InterCLJFF::change
         
-            typedef bool ( ::SireMM::InterCLJFF::*change_function_type )( ::SireMol::Molecule const & ) ;
+            typedef bool ( ::SireMM::InterCLJFF::*change_function_type )( ::SireMol::PartialMolecule const & ) ;
             
             InterCLJFF_exposer.def( 
                 "change"
@@ -83,64 +53,81 @@ void register_InterCLJFF_class(){
                 , ( bp::arg("molecule") ) );
         
         }
-        { //::SireMM::InterCLJFF::change
+        { //::SireMM::InterCLJFF::contains
         
-            typedef bool ( ::SireMM::InterCLJFF::*change_function_type )( ::SireMol::Residue const & ) ;
+            typedef bool ( ::SireMM::InterCLJFF::*contains_function_type )( ::SireMol::PartialMolecule const & ) const;
             
             InterCLJFF_exposer.def( 
-                "change"
-                , change_function_type( &::SireMM::InterCLJFF::change )
-                , ( bp::arg("residue") ) );
+                "contains"
+                , contains_function_type( &::SireMM::InterCLJFF::contains )
+                , ( bp::arg("molecule") ) );
         
         }
-        { //::SireMM::InterCLJFF::change
+        { //::SireMM::InterCLJFF::contents
         
-            typedef bool ( ::SireMM::InterCLJFF::*change_function_type )( ::SireMol::NewAtom const & ) ;
+            typedef ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireMM::InterCLJFF::*contents_function_type )(  ) const;
             
             InterCLJFF_exposer.def( 
-                "change"
-                , change_function_type( &::SireMM::InterCLJFF::change )
-                , ( bp::arg("atom") ) );
+                "contents"
+                , contents_function_type( &::SireMM::InterCLJFF::contents ) );
+        
+        }
+        { //::SireMM::InterCLJFF::groupsReferringTo
+        
+            typedef ::QSet<SireFF::FFBase::Group> ( ::SireMM::InterCLJFF::*groupsReferringTo_function_type )( ::SireMol::MoleculeID ) const;
+            
+            InterCLJFF_exposer.def( 
+                "groupsReferringTo"
+                , groupsReferringTo_function_type( &::SireMM::InterCLJFF::groupsReferringTo )
+                , ( bp::arg("molid") ) );
+        
+        }
+        { //::SireMM::InterCLJFF::molecule
+        
+            typedef ::SireMol::PartialMolecule ( ::SireMM::InterCLJFF::*molecule_function_type )( ::SireMol::MoleculeID ) const;
+            
+            InterCLJFF_exposer.def( 
+                "molecule"
+                , molecule_function_type( &::SireMM::InterCLJFF::molecule )
+                , ( bp::arg("molid") ) );
+        
+        }
+        { //::SireMM::InterCLJFF::moleculeIDs
+        
+            typedef ::QSet<SireMol::MoleculeID> ( ::SireMM::InterCLJFF::*moleculeIDs_function_type )(  ) const;
+            
+            InterCLJFF_exposer.def( 
+                "moleculeIDs"
+                , moleculeIDs_function_type( &::SireMM::InterCLJFF::moleculeIDs ) );
+        
+        }
+        { //::SireMM::InterCLJFF::mustNowRecalculateFromScratch
+        
+            typedef void ( ::SireMM::InterCLJFF::*mustNowRecalculateFromScratch_function_type )(  ) ;
+            
+            InterCLJFF_exposer.def( 
+                "mustNowRecalculateFromScratch"
+                , mustNowRecalculateFromScratch_function_type( &::SireMM::InterCLJFF::mustNowRecalculateFromScratch ) );
+        
+        }
+        { //::SireMM::InterCLJFF::refersTo
+        
+            typedef bool ( ::SireMM::InterCLJFF::*refersTo_function_type )( ::SireMol::MoleculeID ) const;
+            
+            InterCLJFF_exposer.def( 
+                "refersTo"
+                , refersTo_function_type( &::SireMM::InterCLJFF::refersTo )
+                , ( bp::arg("molid") ) );
         
         }
         { //::SireMM::InterCLJFF::remove
         
-            typedef bool ( ::SireMM::InterCLJFF::*remove_function_type )( ::SireMol::Molecule const & ) ;
+            typedef bool ( ::SireMM::InterCLJFF::*remove_function_type )( ::SireMol::PartialMolecule const & ) ;
             
             InterCLJFF_exposer.def( 
                 "remove"
                 , remove_function_type( &::SireMM::InterCLJFF::remove )
                 , ( bp::arg("molecule") ) );
-        
-        }
-        { //::SireMM::InterCLJFF::remove
-        
-            typedef bool ( ::SireMM::InterCLJFF::*remove_function_type )( ::SireMol::Residue const & ) ;
-            
-            InterCLJFF_exposer.def( 
-                "remove"
-                , remove_function_type( &::SireMM::InterCLJFF::remove )
-                , ( bp::arg("residue") ) );
-        
-        }
-        { //::SireMM::InterCLJFF::remove
-        
-            typedef bool ( ::SireMM::InterCLJFF::*remove_function_type )( ::SireMol::NewAtom const & ) ;
-            
-            InterCLJFF_exposer.def( 
-                "remove"
-                , remove_function_type( &::SireMM::InterCLJFF::remove )
-                , ( bp::arg("atom") ) );
-        
-        }
-        { //::SireMM::InterCLJFF::remove
-        
-            typedef bool ( ::SireMM::InterCLJFF::*remove_function_type )( ::SireMol::Molecule const &,::SireMol::AtomSelection const & ) ;
-            
-            InterCLJFF_exposer.def( 
-                "remove"
-                , remove_function_type( &::SireMM::InterCLJFF::remove )
-                , ( bp::arg("mol"), bp::arg("selected_atoms") ) );
         
         }
         { //::SireMM::InterCLJFF::typeName

@@ -75,6 +75,9 @@ void register_ForceFields_class(){
             , (::QSet<SireMol::MoleculeID> ( ::SireFF::ForceFields::* )( ::SireFF::ForceFieldID,::SireFF::FFBase::Group const & ) const)( &::SireFF::ForceFields::moleculeIDs )
             , ( bp::arg("ffid"), bp::arg("group") ) )    
         .def( 
+            "mustNowRecalculateFromScratch"
+            , (void ( ::SireFF::ForceFields::* )(  ) )( &::SireFF::ForceFields::mustNowRecalculateFromScratch ) )    
+        .def( 
             "properties"
             , (::QHash<QString,QHash<SireFF::ForceFieldID, SireBase::Property> > ( ::SireFF::ForceFields::* )(  ) const)( &::SireFF::ForceFields::properties ) )    
         .def( 

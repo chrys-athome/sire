@@ -308,6 +308,15 @@ void register_FFWorkerBase_class(){
                 , ( bp::arg("molids") ) );
         
         }
+        { //::SireFF::FFWorkerBase::mustNowRecalculateFromScratch
+        
+            typedef void ( ::SireFF::FFWorkerBase::*mustNowRecalculateFromScratch_function_type )(  ) ;
+            
+            FFWorkerBase_exposer.def( 
+                "mustNowRecalculateFromScratch"
+                , mustNowRecalculateFromScratch_function_type( &::SireFF::FFWorkerBase::mustNowRecalculateFromScratch ) );
+        
+        }
         { //::SireFF::FFWorkerBase::properties
         
             typedef ::QHash<QString,SireBase::Property> ( ::SireFF::FFWorkerBase::*properties_function_type )(  ) ;

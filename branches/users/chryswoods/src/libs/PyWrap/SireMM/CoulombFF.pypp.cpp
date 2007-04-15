@@ -25,32 +25,12 @@ void register_CoulombFF_class(){
         bp::class_< SireMM::CoulombFF::ChangedCoulombMolecule >( "ChangedCoulombMolecule" )    
             .def( 
                 "add"
-                , (::SireMM::CoulombFF::ChangedCoulombMolecule ( ::SireMM::CoulombFF::ChangedCoulombMolecule::* )( ::SireMol::Molecule const &,::QString const & ) const)( &::SireMM::CoulombFF::ChangedCoulombMolecule::add )
+                , (::SireMM::CoulombFF::ChangedCoulombMolecule ( ::SireMM::CoulombFF::ChangedCoulombMolecule::* )( ::SireMol::PartialMolecule const &,::QString const & ) const)( &::SireMM::CoulombFF::ChangedCoulombMolecule::add )
                 , ( bp::arg("molecule"), bp::arg("chgproperty")=QString::null ) )    
             .def( 
-                "add"
-                , (::SireMM::CoulombFF::ChangedCoulombMolecule ( ::SireMM::CoulombFF::ChangedCoulombMolecule::* )( ::SireMol::Residue const &,::QString const & ) const)( &::SireMM::CoulombFF::ChangedCoulombMolecule::add )
-                , ( bp::arg("residue"), bp::arg("chgproperty")=QString::null ) )    
-            .def( 
-                "add"
-                , (::SireMM::CoulombFF::ChangedCoulombMolecule ( ::SireMM::CoulombFF::ChangedCoulombMolecule::* )( ::SireMol::NewAtom const &,::QString const & ) const)( &::SireMM::CoulombFF::ChangedCoulombMolecule::add )
-                , ( bp::arg("atom"), bp::arg("chgproperty")=QString::null ) )    
-            .def( 
-                "add"
-                , (::SireMM::CoulombFF::ChangedCoulombMolecule ( ::SireMM::CoulombFF::ChangedCoulombMolecule::* )( ::SireMol::AtomSelection const &,::QString const & ) const)( &::SireMM::CoulombFF::ChangedCoulombMolecule::add )
-                , ( bp::arg("selected_atoms"), bp::arg("chgproperty")=QString::null ) )    
-            .def( 
                 "change"
-                , (::SireMM::CoulombFF::ChangedCoulombMolecule ( ::SireMM::CoulombFF::ChangedCoulombMolecule::* )( ::SireMol::Molecule const & ) const)( &::SireMM::CoulombFF::ChangedCoulombMolecule::change )
-                , ( bp::arg("molecule") ) )    
-            .def( 
-                "change"
-                , (::SireMM::CoulombFF::ChangedCoulombMolecule ( ::SireMM::CoulombFF::ChangedCoulombMolecule::* )( ::SireMol::Residue const & ) const)( &::SireMM::CoulombFF::ChangedCoulombMolecule::change )
-                , ( bp::arg("residue") ) )    
-            .def( 
-                "change"
-                , (::SireMM::CoulombFF::ChangedCoulombMolecule ( ::SireMM::CoulombFF::ChangedCoulombMolecule::* )( ::SireMol::NewAtom const & ) const)( &::SireMM::CoulombFF::ChangedCoulombMolecule::change )
-                , ( bp::arg("atom") ) )    
+                , (::SireMM::CoulombFF::ChangedCoulombMolecule ( ::SireMM::CoulombFF::ChangedCoulombMolecule::* )( ::SireMol::PartialMolecule const &,::QString const & ) const)( &::SireMM::CoulombFF::ChangedCoulombMolecule::change )
+                , ( bp::arg("molecule"), bp::arg("chgproperty")=QString::null ) )    
             .def( 
                 "changedAll"
                 , (bool ( ::SireMM::CoulombFF::ChangedCoulombMolecule::* )(  ) const)( &::SireMM::CoulombFF::ChangedCoulombMolecule::changedAll ) )    
@@ -81,20 +61,8 @@ void register_CoulombFF_class(){
             .def( bp::self == bp::self )    
             .def( 
                 "remove"
-                , (::SireMM::CoulombFF::ChangedCoulombMolecule ( ::SireMM::CoulombFF::ChangedCoulombMolecule::* )( ::SireMol::Molecule const & ) const)( &::SireMM::CoulombFF::ChangedCoulombMolecule::remove )
-                , ( bp::arg("molecule") ) )    
-            .def( 
-                "remove"
-                , (::SireMM::CoulombFF::ChangedCoulombMolecule ( ::SireMM::CoulombFF::ChangedCoulombMolecule::* )( ::SireMol::Residue const & ) const)( &::SireMM::CoulombFF::ChangedCoulombMolecule::remove )
-                , ( bp::arg("residue") ) )    
-            .def( 
-                "remove"
-                , (::SireMM::CoulombFF::ChangedCoulombMolecule ( ::SireMM::CoulombFF::ChangedCoulombMolecule::* )( ::SireMol::NewAtom const & ) const)( &::SireMM::CoulombFF::ChangedCoulombMolecule::remove )
-                , ( bp::arg("atom") ) )    
-            .def( 
-                "remove"
-                , (::SireMM::CoulombFF::ChangedCoulombMolecule ( ::SireMM::CoulombFF::ChangedCoulombMolecule::* )( ::SireMol::AtomSelection const & ) const)( &::SireMM::CoulombFF::ChangedCoulombMolecule::remove )
-                , ( bp::arg("selected_atoms") ) );
+                , (::SireMM::CoulombFF::ChangedCoulombMolecule ( ::SireMM::CoulombFF::ChangedCoulombMolecule::* )( ::SireMol::PartialMolecule const & ) const)( &::SireMM::CoulombFF::ChangedCoulombMolecule::remove )
+                , ( bp::arg("molecule") ) );
         bp::class_< SireMM::CoulombFF::Components, bp::bases< SireFF::FFBase::Components > >( "Components" )    
             .def( 
                 "coulomb"
@@ -107,32 +75,12 @@ void register_CoulombFF_class(){
         bp::class_< SireMM::CoulombFF::CoulombMolecule >( "CoulombMolecule" )    
             .def( 
                 "add"
-                , (::SireMM::CoulombFF::ChangedCoulombMolecule ( ::SireMM::CoulombFF::CoulombMolecule::* )( ::SireMol::Molecule const &,::QString const & ) const)( &::SireMM::CoulombFF::CoulombMolecule::add )
+                , (::SireMM::CoulombFF::ChangedCoulombMolecule ( ::SireMM::CoulombFF::CoulombMolecule::* )( ::SireMol::PartialMolecule const &,::QString const & ) const)( &::SireMM::CoulombFF::CoulombMolecule::add )
                 , ( bp::arg("molecule"), bp::arg("chgproperty")=QString::null ) )    
             .def( 
-                "add"
-                , (::SireMM::CoulombFF::ChangedCoulombMolecule ( ::SireMM::CoulombFF::CoulombMolecule::* )( ::SireMol::Residue const &,::QString const & ) const)( &::SireMM::CoulombFF::CoulombMolecule::add )
-                , ( bp::arg("residue"), bp::arg("chgproperty")=QString::null ) )    
-            .def( 
-                "add"
-                , (::SireMM::CoulombFF::ChangedCoulombMolecule ( ::SireMM::CoulombFF::CoulombMolecule::* )( ::SireMol::NewAtom const &,::QString const & ) const)( &::SireMM::CoulombFF::CoulombMolecule::add )
-                , ( bp::arg("newatom"), bp::arg("chgproperty")=QString::null ) )    
-            .def( 
-                "add"
-                , (::SireMM::CoulombFF::ChangedCoulombMolecule ( ::SireMM::CoulombFF::CoulombMolecule::* )( ::SireMol::AtomSelection const &,::QString const & ) const)( &::SireMM::CoulombFF::CoulombMolecule::add )
-                , ( bp::arg("selected_atoms"), bp::arg("chgproperty")=QString::null ) )    
-            .def( 
                 "change"
-                , (::SireMM::CoulombFF::ChangedCoulombMolecule ( ::SireMM::CoulombFF::CoulombMolecule::* )( ::SireMol::Molecule const & ) const)( &::SireMM::CoulombFF::CoulombMolecule::change )
-                , ( bp::arg("molecule") ) )    
-            .def( 
-                "change"
-                , (::SireMM::CoulombFF::ChangedCoulombMolecule ( ::SireMM::CoulombFF::CoulombMolecule::* )( ::SireMol::Residue const & ) const)( &::SireMM::CoulombFF::CoulombMolecule::change )
-                , ( bp::arg("residue") ) )    
-            .def( 
-                "change"
-                , (::SireMM::CoulombFF::ChangedCoulombMolecule ( ::SireMM::CoulombFF::CoulombMolecule::* )( ::SireMol::NewAtom const & ) const)( &::SireMM::CoulombFF::CoulombMolecule::change )
-                , ( bp::arg("newatom") ) )    
+                , (::SireMM::CoulombFF::ChangedCoulombMolecule ( ::SireMM::CoulombFF::CoulombMolecule::* )( ::SireMol::PartialMolecule const &,::QString const & ) const)( &::SireMM::CoulombFF::CoulombMolecule::change )
+                , ( bp::arg("molecule"), bp::arg("chgproperty")=QString::null ) )    
             .def( 
                 "chargeProperty"
                 , (::QString const & ( ::SireMM::CoulombFF::CoulombMolecule::* )(  ) const)( &::SireMM::CoulombFF::CoulombMolecule::chargeProperty )
@@ -153,30 +101,14 @@ void register_CoulombFF_class(){
                 , (bool ( ::SireMM::CoulombFF::CoulombMolecule::* )(  ) const)( &::SireMM::CoulombFF::CoulombMolecule::isWholeMolecule ) )    
             .def( 
                 "molecule"
-                , (::SireMol::Molecule const & ( ::SireMM::CoulombFF::CoulombMolecule::* )(  ) const)( &::SireMM::CoulombFF::CoulombMolecule::molecule )
+                , (::SireMol::PartialMolecule const & ( ::SireMM::CoulombFF::CoulombMolecule::* )(  ) const)( &::SireMM::CoulombFF::CoulombMolecule::molecule )
                 , bp::return_value_policy< bp::copy_const_reference >() )    
             .def( bp::self != bp::self )    
             .def( bp::self == bp::self )    
             .def( 
                 "remove"
-                , (::SireMM::CoulombFF::ChangedCoulombMolecule ( ::SireMM::CoulombFF::CoulombMolecule::* )( ::SireMol::Molecule const & ) const)( &::SireMM::CoulombFF::CoulombMolecule::remove )
-                , ( bp::arg("molecule") ) )    
-            .def( 
-                "remove"
-                , (::SireMM::CoulombFF::ChangedCoulombMolecule ( ::SireMM::CoulombFF::CoulombMolecule::* )( ::SireMol::Residue const & ) const)( &::SireMM::CoulombFF::CoulombMolecule::remove )
-                , ( bp::arg("residue") ) )    
-            .def( 
-                "remove"
-                , (::SireMM::CoulombFF::ChangedCoulombMolecule ( ::SireMM::CoulombFF::CoulombMolecule::* )( ::SireMol::NewAtom const & ) const)( &::SireMM::CoulombFF::CoulombMolecule::remove )
-                , ( bp::arg("atom") ) )    
-            .def( 
-                "remove"
-                , (::SireMM::CoulombFF::ChangedCoulombMolecule ( ::SireMM::CoulombFF::CoulombMolecule::* )( ::SireMol::AtomSelection const & ) const)( &::SireMM::CoulombFF::CoulombMolecule::remove )
-                , ( bp::arg("selected_atoms") ) )    
-            .def( 
-                "selectedAtoms"
-                , (::SireMol::AtomSelection const & ( ::SireMM::CoulombFF::CoulombMolecule::* )(  ) const)( &::SireMM::CoulombFF::CoulombMolecule::selectedAtoms )
-                , bp::return_value_policy< bp::copy_const_reference >() );
+                , (::SireMM::CoulombFF::ChangedCoulombMolecule ( ::SireMM::CoulombFF::CoulombMolecule::* )( ::SireMol::PartialMolecule const & ) const)( &::SireMM::CoulombFF::CoulombMolecule::remove )
+                , ( bp::arg("molecule") ) );
         bp::class_< SireMM::CoulombFF::Groups, bp::bases< SireFF::FFBase::Groups > >( "Groups" );
         bp::class_< SireMM::CoulombFF::Parameters, bp::bases< SireFF::FFBase::Parameters > >( "Parameters" )    
             .def( 
@@ -214,6 +146,26 @@ void register_CoulombFF_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        { //::SireMM::CoulombFF::containsProperty
+        
+            typedef bool ( ::SireMM::CoulombFF::*containsProperty_function_type )( ::QString const & ) const;
+            
+            CoulombFF_exposer.def( 
+                "containsProperty"
+                , containsProperty_function_type( &::SireMM::CoulombFF::containsProperty )
+                , ( bp::arg("name") ) );
+        
+        }
+        { //::SireMM::CoulombFF::getProperty
+        
+            typedef ::SireBase::Property ( ::SireMM::CoulombFF::*getProperty_function_type )( ::QString const & ) const;
+            
+            CoulombFF_exposer.def( 
+                "getProperty"
+                , getProperty_function_type( &::SireMM::CoulombFF::getProperty )
+                , ( bp::arg("name") ) );
+        
+        }
         { //::SireMM::CoulombFF::parameters
         
             typedef ::SireMM::CoulombFF::Parameters const & ( ::SireMM::CoulombFF::*parameters_function_type )(  ) const;
@@ -222,6 +174,36 @@ void register_CoulombFF_class(){
                 "parameters"
                 , parameters_function_type( &::SireMM::CoulombFF::parameters )
                 , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
+        { //::SireMM::CoulombFF::setProperty
+        
+            typedef bool ( ::SireMM::CoulombFF::*setProperty_function_type )( ::QString const &,::SireBase::Property const & ) ;
+            
+            CoulombFF_exposer.def( 
+                "setProperty"
+                , setProperty_function_type( &::SireMM::CoulombFF::setProperty )
+                , ( bp::arg("name"), bp::arg("value") ) );
+        
+        }
+        { //::SireMM::CoulombFF::setSpace
+        
+            typedef bool ( ::SireMM::CoulombFF::*setSpace_function_type )( ::SireVol::Space const & ) ;
+            
+            CoulombFF_exposer.def( 
+                "setSpace"
+                , setSpace_function_type( &::SireMM::CoulombFF::setSpace )
+                , ( bp::arg("space") ) );
+        
+        }
+        { //::SireMM::CoulombFF::setSwitchingFunction
+        
+            typedef bool ( ::SireMM::CoulombFF::*setSwitchingFunction_function_type )( ::SireMM::SwitchingFunction const & ) ;
+            
+            CoulombFF_exposer.def( 
+                "setSwitchingFunction"
+                , setSwitchingFunction_function_type( &::SireMM::CoulombFF::setSwitchingFunction )
+                , ( bp::arg("switchfunc") ) );
         
         }
         { //::SireMM::CoulombFF::space

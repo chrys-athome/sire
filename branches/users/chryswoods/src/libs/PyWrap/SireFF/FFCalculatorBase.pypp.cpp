@@ -129,6 +129,9 @@ void register_FFCalculatorBase_class(){
             , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::FFCalculatorBase::* )( ::QSet<SireMol::MoleculeID> const & ) )( &::SireFF::FFCalculatorBase::molecules )
             , ( bp::arg("molids") ) )    
         .def( 
+            "mustNowRecalculateFromScratch"
+            , (void ( ::SireFF::FFCalculatorBase::* )(  ) )( &::SireFF::FFCalculatorBase::mustNowRecalculateFromScratch ) )    
+        .def( 
             "properties"
             , (::QHash<QString,SireBase::Property> ( ::SireFF::FFCalculatorBase::* )(  ) )( &::SireFF::FFCalculatorBase::properties ) )    
         .def( 

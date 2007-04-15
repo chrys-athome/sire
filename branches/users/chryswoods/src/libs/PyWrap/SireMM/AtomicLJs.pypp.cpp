@@ -24,11 +24,17 @@ void register_AtomicLJs_class(){
         .def( bp::init< >() )    
         .def( bp::init< QVector<QVector<SireMM::LJParameter> > const & >(( bp::arg("ljparams") )) )    
         .def( bp::init< QVector<SireMM::LJParameter> const & >(( bp::arg("ljparams") )) )    
-        .def( bp::init< SireMol::Property const & >(( bp::arg("property") )) )    
+        .def( bp::init< SireBase::Property const & >(( bp::arg("property") )) )    
         .def( 
             "isCompatibleWith"
-            , (bool ( ::SireMM::AtomicLJs::* )( ::SireMol::Molecule const & ) const)( &::SireMM::AtomicLJs::isCompatibleWith )
-            , ( bp::arg("molecule") ) )    
+            , (bool ( ::SireMM::AtomicLJs::* )( ::SireMol::MoleculeInfo const & ) const)( &::SireMM::AtomicLJs::isCompatibleWith )
+            , ( bp::arg("molinfo") ) )    
+        .def( 
+            "mask"
+            , (::SireBase::Property ( ::SireMM::AtomicLJs::* )( ::SireMol::AtomSelection const & ) const)( &::SireMM::AtomicLJs::mask )
+            , ( bp::arg("selected_atoms") ) )    
+        .def( bp::self != bp::self )    
+        .def( bp::self == bp::self )    
         .def( 
             "typeName"
             , (char const * (*)(  ))( &::SireMM::AtomicLJs::typeName ) )    

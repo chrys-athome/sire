@@ -138,6 +138,13 @@ NoCutoff::NoCutoff(const NoCutoff &other)
 NoCutoff::~NoCutoff()
 {}
 
+/** Comparison function used by derived classes */
+bool NoCutoff::_pvt_isEqual(const PropertyBase &other) const
+{
+    BOOST_ASSERT( other.isA<NoCutoff>() );
+    return true;
+}
+
 /** Return the scale factor for the electrostatic energies - this
     will always be 1.0, as there are no cutoffs */
 double NoCutoff::electrostaticScaleFactor(double) const
@@ -301,6 +308,16 @@ HarmonicSwitchingFunction::HarmonicSwitchingFunction(
 HarmonicSwitchingFunction::~HarmonicSwitchingFunction()
 {}
 
+/** Comparison function used by derived classes */
+bool HarmonicSwitchingFunction::_pvt_isEqual(const PropertyBase &prop) const
+{
+    BOOST_ASSERT( prop.isA<HarmonicSwitchingFunction>() );
+    
+    const HarmonicSwitchingFunction &other = prop.asA<HarmonicSwitchingFunction>();
+    
+    return cut_elec == other.cut_elec and cut_vdw == other.cut_vdw;
+}
+
 /** Return the scale factor for the electrostatic interaction for the
     distance 'dist'. This returns;
 
@@ -351,7 +368,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
 {
     writeHeader(ds, r_switchfunc, 1);
 
-    SharedDataStream sds(ds)
+    SharedDataStream sds(ds);
     sds << switchfunc.d;
 
     return ds;
@@ -365,7 +382,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
 
     if (v == 1)
     {
-        SharedDataStream sds(ds)
+        SharedDataStream sds(ds);
         sds >> switchfunc.d;
     }
     else

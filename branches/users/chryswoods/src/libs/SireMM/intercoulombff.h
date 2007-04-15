@@ -69,8 +69,6 @@ public:
 
     ~InterCoulombFF();
 
-    InterCoulombFF& operator=(const InterCoulombFF &other);
-
     class SIREMM_EXPORT Components : public CoulombFF::Components
     {
     public:

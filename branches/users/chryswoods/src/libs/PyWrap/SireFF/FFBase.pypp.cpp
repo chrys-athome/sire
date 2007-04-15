@@ -412,6 +412,15 @@ void register_FFBase_class(){
                 , ( bp::arg("group") ) );
         
         }
+        { //::SireFF::FFBase::mustNowRecalculateFromScratch
+        
+            typedef void ( ::SireFF::FFBase::*mustNowRecalculateFromScratch_function_type )(  ) ;
+            
+            FFBase_exposer.def( 
+                "mustNowRecalculateFromScratch"
+                , mustNowRecalculateFromScratch_function_type( &::SireFF::FFBase::mustNowRecalculateFromScratch ) );
+        
+        }
         { //::SireFF::FFBase::name
         
             typedef ::QString const & ( ::SireFF::FFBase::*name_function_type )(  ) const;

@@ -70,10 +70,6 @@ public:
 
     ~InterCLJFF();
 
-    virtual InterCLJFF& operator=(const InterCLJFF &other);
-
-    FFBase& operator=(const FFBase &other);
-
     class SIREMM_EXPORT Components : public CLJFF::Components
     {
     public:

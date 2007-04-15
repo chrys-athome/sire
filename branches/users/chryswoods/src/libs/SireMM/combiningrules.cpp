@@ -129,6 +129,13 @@ ArithmeticCombiningRules::ArithmeticCombiningRules(
 ArithmeticCombiningRules::~ArithmeticCombiningRules()
 {}
 
+/** Comparison function used by derived classes */
+bool ArithmeticCombiningRules::_pvt_isEqual(const PropertyBase &other) const
+{
+    BOOST_ASSERT( other.isA<ArithmeticCombiningRules>() );
+    return true;
+}
+
 /** Combine the LJ paramters using arithmetic combining
     rules and place the results in the matrix 'ljmatrix' */
 void ArithmeticCombiningRules::combine(const QVector<LJParameter> &lj0,
@@ -374,6 +381,13 @@ GeometricCombiningRules::GeometricCombiningRules(
 /** Destructor */
 GeometricCombiningRules::~GeometricCombiningRules()
 {}
+
+/** Comparison function used by derived classes */
+bool GeometricCombiningRules::_pvt_isEqual(const PropertyBase &other) const
+{
+    BOOST_ASSERT( other.isA<GeometricCombiningRules>() );
+    return true;
+}
 
 /** Combine the LJ paramters using geometric combining
     rules and place the results in the matrix 'ljmatrix' */

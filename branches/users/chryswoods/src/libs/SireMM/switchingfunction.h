@@ -79,6 +79,8 @@ public:
 
     ~SwitchFuncBase();
 
+    virtual SwitchFuncBase* clone() const=0;
+
     virtual double electrostaticScaleFactor(double dist) const=0;
     virtual double vdwScaleFactor(double dist) const=0;
 
