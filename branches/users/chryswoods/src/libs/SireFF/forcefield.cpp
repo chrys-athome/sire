@@ -135,6 +135,9 @@ public:
         return new NullFF(*this);
     }
 
+    void mustNowRecalculateFromScratch()
+    {}
+
     bool change(const PartialMolecule&)
     {
         return false;
@@ -173,7 +176,7 @@ public:
         return QSet<MoleculeID>();
     }
 
-    PartialMolecule molecule(MoleculeID molid, const FFBase::Group&) const
+    PartialMolecule molecule(MoleculeID molid) const
     {
         throw SireMol::missing_molecule( QObject::tr(
                   "There is no molecule with ID == %1 in the Null ForceField!")

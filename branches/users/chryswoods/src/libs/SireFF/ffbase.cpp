@@ -754,9 +754,7 @@ bool FFBase::add(const QList<PartialMolecule> &molecules, const ParameterMap &ma
 bool FFBase::addTo(const FFBase::Group &group,
                    const PartialMolecule &molecule, const ParameterMap &map)
 {
-    if (group == this->groups().main())
-        return this->add(molecule, map);
-    else
+    if (group != this->groups().main())
     {
         throw SireFF::invalid_group( QObject::tr(
                 "Cannot add to %1(%2) (ID == %3) as there is no such group!")
@@ -765,6 +763,8 @@ bool FFBase::addTo(const FFBase::Group &group,
 
         return false;
     }
+
+    return this->add(molecule, map);
 }
 
 /** Adds lots of molecules to the group 'group' 
@@ -845,17 +845,15 @@ bool FFBase::remove(const QList<PartialMolecule> &molecules)
 bool FFBase::removeFrom(const FFBase::Group &group,
                         const PartialMolecule &molecule)
 {
-    if (group == this->groups().main())
-        return this->remove(molecule);
-    else
+    if (group != this->groups().main())
     {
         throw SireFF::invalid_group( QObject::tr(
                 "Cannot remove from %1(%2) (ID == %3) as there is no such group!")
                     .arg(this->what()).arg(this->name())
                     .arg(this->ID()), CODELOC );
-
-        return false;
     }
+    
+    return this->remove(molecule);
 }
 
 /** Remove lots of molecules from the group 'group' 
@@ -897,17 +895,15 @@ bool FFBase::removeFrom(const FFBase::Group &group,
 */
 bool FFBase::contains(const PartialMolecule &molecule, const FFBase::Group &group) const
 {
-    if (group == this->groups().main())
-        return this->contains(molecule);
-    else
+    if (group != this->groups().main())
     {
         throw SireFF::invalid_group( QObject::tr(
                 "Cannot query %1(%2) (ID == %3) as there is no such group!")
                     .arg(this->what()).arg(this->name())
                     .arg(this->ID()), CODELOC );
-
-        return false;
     }
+
+    return this->contains(molecule);
 }
 
 /** Return whether or not the group 'group' in this forcefield
@@ -918,17 +914,15 @@ bool FFBase::contains(const PartialMolecule &molecule, const FFBase::Group &grou
 */
 bool FFBase::refersTo(MoleculeID molid, const FFBase::Group &group) const
 {
-    if (group == this->groups().main())
-        return this->refersTo(molid);
-    else
+    if (group != this->groups().main())
     {
         throw SireFF::invalid_group( QObject::tr(
                 "Cannot query %1(%2) (ID == %3) as there is no such group!")
                     .arg(this->what()).arg(this->name())
                     .arg(this->ID()), CODELOC );
-
-        return false;
     }
+
+    return this->refersTo(molid);
 }
 
 /** Return the set of all of the ID numbers of all of the
@@ -940,26 +934,33 @@ bool FFBase::refersTo(MoleculeID molid, const FFBase::Group &group) const
 */
 QSet<MoleculeID> FFBase::moleculeIDs(const FFBase::Group &group) const
 {
-    if (group == this->groups().main())
-        return this->moleculeIDs();
-    else
+    if (group != this->groups().main())
     {
         throw SireFF::invalid_group( QObject::tr(
                 "Cannot query %1(%2) (ID == %3) as there is no such group!")
                     .arg(this->what()).arg(this->name())
                     .arg(this->ID()), CODELOC );
-
-        return QSet<MoleculeID>();
     }
+
+    return this->moleculeIDs();
 }
 
-/** Return a copy of the molecule with ID == molid
+/** Return a copy of the molecule with ID == molid in the 
+    group 'group'
 
     \throw SireMol::missing_molecule
 */
-PartialMolecule FFBase::molecule(MoleculeID molid) const
+PartialMolecule FFBase::molecule(MoleculeID molid, const FFBase::Group &group) const
 {
-    return this->molecule(molid, FFBase::Groups::main());
+    if (group != this->groups().main())
+    {
+        throw SireFF::invalid_group( QObject::tr(
+                "Cannot query %1(%2) (ID == %3) as there is no such group!")
+                    .arg(this->what()).arg(this->name())
+                    .arg(this->ID()), CODELOC );
+    }
+
+    return this->molecule(molid);
 }
 
 /** Return copies of the molecules in this forcefield whose IDs 
@@ -988,17 +989,15 @@ QHash<MoleculeID,PartialMolecule> FFBase::molecules(
 */
 QHash<MoleculeID,PartialMolecule> FFBase::contents(const FFBase::Group &group) const
 {
-    if (group == this->groups().main())
-        return this->contents();
-    else
+    if (group != this->groups().main())
     {
         throw SireFF::invalid_group( QObject::tr(
                 "Cannot query %1(%2) (ID == %3) as there is no such group!")
                     .arg(this->what()).arg(this->name())
                     .arg(this->ID()), CODELOC );
-
-        return QHash<MoleculeID,PartialMolecule>();
     }
+
+    return this->contents();
 }
 
 /** Return copies of all of the molecules that are in this forcefield */

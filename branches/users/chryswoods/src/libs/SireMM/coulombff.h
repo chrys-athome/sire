@@ -40,10 +40,7 @@
 #include "SireVol/space.h"
 #include "SireFF/ffbase.h"
 
-#include "SireMol/molecule.h"
-#include "SireMol/residue.h"
-#include "SireMol/newatom.h"
-#include "SireMol/atomselection.h"
+#include "SireMol/partialmolecule.h"
 
 SIRE_BEGIN_HEADER
 
@@ -59,6 +56,7 @@ namespace SireMM
 {
 
 using SireMol::Molecule;
+using SireMol::PartialMolecule;
 using SireMol::Residue;
 using SireMol::NewAtom;
 using SireMol::AtomSelection;
@@ -167,8 +165,14 @@ public:
     };
 
     const Space& space() const;
-
     const SwitchingFunction& switchingFunction() const;
+
+    virtual bool setSpace(const Space &space);
+    virtual bool setSwitchingFunction(const SwitchingFunction &switchfunc);
+
+    bool setProperty(const QString &name, const Property &value);
+    Property getProperty(const QString &name) const;
+    bool containsProperty(const QString &name) const;
 
     /** Return the object describing the components of this
         forcefield */
@@ -216,9 +220,6 @@ private:
 
     void registerComponents();
 
-    /** Workspace for the distance calculations */
-    DistMatrix distmat;
-
     /** The space in which the molecules in this forcefield reside */
     Space spce;
 
@@ -253,12 +254,7 @@ friend QDataStream& ::operator>>(QDataStream&, CoulombFF::CoulombMolecule&);
 public:
     CoulombMolecule();
 
-    CoulombMolecule(const Molecule &molecule, const QString &chgproperty);
-    CoulombMolecule(const Residue &residue, const QString &chgproperty);
-    CoulombMolecule(const NewAtom &atom, const QString &chgproperty);
-
-    CoulombMolecule(const Molecule &molecule, const AtomSelection &selected_atoms,
-                    const QString &chgproperty);
+    CoulombMolecule(const PartialMolecule &molecule, const QString &chgproperty);
 
     CoulombMolecule(const CoulombMolecule &other, const QSet<CutGroupID> &groups);
 
@@ -273,25 +269,15 @@ public:
 
     bool isEmpty() const;
 
-    const Molecule& molecule() const;
+    const PartialMolecule& molecule() const;
 
-    ChangedCoulombMolecule change(const Molecule &molecule) const;
-    ChangedCoulombMolecule change(const Residue &residue) const;
-    ChangedCoulombMolecule change(const NewAtom &newatom) const;
+    ChangedCoulombMolecule change(const PartialMolecule &molecule,
+                                  const QString &chgproperty = QString::null) const;
 
-    ChangedCoulombMolecule add(const Molecule &molecule,
-                               const QString &chgproperty = QString::null) const;
-    ChangedCoulombMolecule add(const Residue &residue,
-                               const QString &chgproperty = QString::null) const;
-    ChangedCoulombMolecule add(const NewAtom &newatom,
-                               const QString &chgproperty = QString::null) const;
-    ChangedCoulombMolecule add(const AtomSelection &selected_atoms,
+    ChangedCoulombMolecule add(const PartialMolecule &molecule,
                                const QString &chgproperty = QString::null) const;
 
-    ChangedCoulombMolecule remove(const Molecule &molecule) const;
-    ChangedCoulombMolecule remove(const Residue &residue) const;
-    ChangedCoulombMolecule remove(const NewAtom &atom) const;
-    ChangedCoulombMolecule remove(const AtomSelection &selected_atoms) const;
+    ChangedCoulombMolecule remove(const PartialMolecule &molecule) const;
 
     const QString& chargeProperty() const;
 
@@ -299,18 +285,8 @@ public:
     const AtomicCharges& charges() const;
 
     bool isWholeMolecule() const;
-    const AtomSelection& selectedAtoms() const;
 
 private:
-    ChangedCoulombMolecule _pvt_change(const Molecule &molecule,
-                                       const QSet<CutGroupID> &cgids,
-                                       const QString &chgproperty = QString::null) const;
-
-    ChangedCoulombMolecule _pvt_change(const Molecule &molecule,
-                                       const QSet<CutGroupID> &cgids,
-                                       const AtomSelection &selected_atoms,
-                                       const QString &chgproperty = QString::null) const;
-
     /** Implicitly shared pointer to the data of this class */
     QSharedDataPointer<CoulombMoleculeData> d;
 };
@@ -345,23 +321,13 @@ public:
 
     bool isEmpty() const;
 
-    ChangedCoulombMolecule change(const Molecule &molecule) const;
-    ChangedCoulombMolecule change(const Residue &residue) const;
-    ChangedCoulombMolecule change(const NewAtom &atom) const;
+    ChangedCoulombMolecule change(const PartialMolecule &molecule,
+                                  const QString &chgproperty = QString::null) const;
 
-    ChangedCoulombMolecule add(const Molecule &molecule,
-                               const QString &chgproperty = QString::null) const;
-    ChangedCoulombMolecule add(const Residue &residue,
-                               const QString &chgproperty = QString::null) const;
-    ChangedCoulombMolecule add(const NewAtom &atom,
-                               const QString &chgproperty = QString::null) const;
-    ChangedCoulombMolecule add(const AtomSelection &selected_atoms,
+    ChangedCoulombMolecule add(const PartialMolecule &molecule,
                                const QString &chgproperty = QString::null) const;
 
-    ChangedCoulombMolecule remove(const Molecule &molecule) const;
-    ChangedCoulombMolecule remove(const Residue &residue) const;
-    ChangedCoulombMolecule remove(const NewAtom &atom) const;
-    ChangedCoulombMolecule remove(const AtomSelection &selected_atoms) const;
+    ChangedCoulombMolecule remove(const PartialMolecule &molecule) const;
 
     bool changedAll() const;
 
@@ -405,12 +371,6 @@ inline const Space& CoulombFF::space() const
 inline const SwitchingFunction& CoulombFF::switchingFunction() const
 {
     return switchfunc;
-}
-
-/** Return a reference to the workspace used for the distance calculations */
-inline DistMatrix& CoulombFF::distanceMatrix()
-{
-    return distmat;
 }
 
 } // end of namespace SireMM

@@ -398,7 +398,9 @@ public:
 
     bool isEmpty() const;
 
-    ChangedCLJMolecule change(const PartialMolecule &molecule) const;
+    ChangedCLJMolecule change(const PartialMolecule &molecule,
+                              const QString &chgproperty = QString::null,
+                              const QString &ljproperty = QString::null) const;
 
     ChangedCLJMolecule add(const PartialMolecule &molecule,
                            const QString &chgproperty = QString::null,

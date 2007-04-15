@@ -359,6 +359,10 @@ public:
 
     virtual QHash<QString,Property> properties() const;
 
+    /** Tell the forcefield that it has to recalculate everything from 
+        scratch */
+    virtual void mustNowRecalculateFromScratch()=0;
+
     /** Change the molecule 'molecule' (e.g. move it, or change its
         parameters). This does nothing if the molecule is not
         in this forcefield. Returns whether or not the forcefield
@@ -450,15 +454,15 @@ public:
 
     virtual QSet<MoleculeID> moleculeIDs(const FFBase::Group &group) const;
 
-    virtual PartialMolecule molecule(MoleculeID molid) const;
-
     /** Return the copy of the molecule in this forcefield that
-        has the ID == molid in the group 'group'
+        has the ID == molid
 
         \throw SireMol::missing_molecule
     */
+    virtual PartialMolecule molecule(MoleculeID molid) const=0;
+
     virtual PartialMolecule molecule(MoleculeID molid, 
-                                     const FFBase::Group &group) const=0;
+                                     const FFBase::Group &group) const;
 
     virtual QHash<MoleculeID,PartialMolecule> 
                   molecules(const QSet<MoleculeID> &molids) const;

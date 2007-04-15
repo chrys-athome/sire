@@ -33,8 +33,9 @@
 
 #include "coulombff.h"
 
-#include "SireMol/residueinfo.h"
 #include "SireMol/cgatomid.h"
+#include "SireMol/moleculeversion.h"
+#include "SireMol/moleculeinfo.h"
 
 #include "SireUnits/units.h"
 
@@ -146,11 +147,7 @@ class CoulombFF::CoulombMoleculeData : public QSharedData
 public:
     CoulombMoleculeData();
 
-    CoulombMoleculeData(const Molecule &mol, const QString &chgproperty);
-    CoulombMoleculeData(const Residue &residue, const QString &chgproperty);
-    CoulombMoleculeData(const NewAtom &atom, const QString &chgproperty);
-    CoulombMoleculeData(const Molecule &mol, const AtomSelection &selectedatoms,
-                        const QString &chgproperty);
+    CoulombMoleculeData(const PartialMolecule &mol, const QString &chgproperty);
 
     CoulombMoleculeData(const CoulombMoleculeData &other);
 
@@ -168,19 +165,10 @@ public:
     bool rebuildCoordinates(const QSet<CutGroupID> &cgids);
 
     /** The actual molecule */
-    Molecule molecule;
+    PartialMolecule molecule;
 
     /** The name of the property associated with the charge parameters */
     QString chg_property;
-
-    /** The atoms selected for inclusion in this forcefield */
-    AtomSelection selected_atoms;
-
-    /** Hash mapping the CutGroupID of a selected cutgroup to
-        the index in the coords and ljs array for its coordinates
-        and Coulomb parameters. If this is empty then all of the
-        CutGroups in the molecule have been selected. */
-    QHash<CutGroupID,int> cg_index;
 
     /** The coordinates of the CutGroups that contain atoms that
         are selected for inclusion in the Coulomb forcefield.  */
@@ -199,51 +187,12 @@ CoulombFF::CoulombMoleculeData::CoulombMoleculeData() : QSharedData()
 {}
 
 /** Construct to represent all of the molecule 'mol' */
-CoulombFF::CoulombMoleculeData::CoulombMoleculeData(const Molecule &mol,
+CoulombFF::CoulombMoleculeData::CoulombMoleculeData(const PartialMolecule &mol,
                                                     const QString &chgproperty)
                      : QSharedData(),
                        molecule(mol),
-                       chg_property(chgproperty),
-                       selected_atoms(mol)
+                       chg_property(chgproperty)
 {
-    this->rebuildAll();
-}
-
-/** Construct to represent all of the residue 'residue' */
-CoulombFF::CoulombMoleculeData::CoulombMoleculeData(const Residue &residue,
-                                                    const QString &chgproperty)
-                     : QSharedData(),
-                       molecule(residue.molecule()),
-                       chg_property(chgproperty),
-                       selected_atoms(residue)
-{
-    this->rebuildAll();
-}
-
-/** Construct to represent the atom 'atom' */
-CoulombFF::CoulombMoleculeData::CoulombMoleculeData(const NewAtom &atom,
-                                                    const QString &chgproperty)
-                     : QSharedData(),
-                       molecule(atom.molecule()),
-                       chg_property(chgproperty),
-                       selected_atoms(atom)
-{
-    this->rebuildAll();
-}
-
-/** Construct to represent the selected atoms from 'selectatoms' that are
-    in the molecule 'mol' */
-CoulombFF::CoulombMoleculeData::CoulombMoleculeData(const Molecule &mol,
-                                                    const AtomSelection &selectatoms,
-                                                    const QString &chgproperty)
-                     : QSharedData(),
-                       molecule(mol),
-                       chg_property(chgproperty),
-                       selected_atoms(selectatoms)
-{
-    //ensure that the selected atoms and the molecule are compatible
-    selected_atoms.assertCompatibleWith(molecule);
-
     this->rebuildAll();
 }
 
@@ -253,8 +202,6 @@ CoulombFF::CoulombMoleculeData::CoulombMoleculeData(
                      : QSharedData(),
                        molecule(other.molecule),
                        chg_property(other.chg_property),
-                       selected_atoms(other.selected_atoms),
-                       cg_index(other.cg_index),
                        coords(other.coords),
                        chgs(other.chgs)
 {}
@@ -271,8 +218,6 @@ CoulombFF::CoulombMoleculeData::operator=(const CoulombFF::CoulombMoleculeData &
     {
         molecule = other.molecule;
         chg_property = other.chg_property;
-        selected_atoms = other.selected_atoms;
-        cg_index = other.cg_index;
         coords = other.coords;
         chgs = other.chgs;
     }
@@ -285,9 +230,7 @@ bool CoulombFF::CoulombMoleculeData::operator==(
                             const CoulombFF::CoulombMoleculeData &other) const
 {
     return molecule == other.molecule and
-           chg_property == other.chg_property and
-           selected_atoms == other.selected_atoms and
-           cg_index == other.cg_index;
+           chg_property == other.chg_property;
 }
 
 /** Comparison operator */
@@ -295,9 +238,7 @@ bool CoulombFF::CoulombMoleculeData::operator!=(
                             const CoulombFF::CoulombMoleculeData &other) const
 {
     return molecule != other.molecule or
-           chg_property != other.chg_property or
-           selected_atoms != other.selected_atoms or
-           cg_index != other.cg_index;
+           chg_property != other.chg_property;
 }
 
 /** Rebuild all of the coordinate and Coulomb data from scratch
@@ -307,93 +248,8 @@ bool CoulombFF::CoulombMoleculeData::operator!=(
 */
 void CoulombFF::CoulombMoleculeData::rebuildAll()
 {
-    if (selected_atoms.selectedAll())
-    {
-        //all atoms are selected - we can therefore short-circuit everything!
-        chgs = molecule.getProperty(chg_property);
-        cg_index.clear();
-        coords = molecule.coordGroups();
-
-        return;
-    }
-
-    if (selected_atoms.isEmpty())
-    {
-        //there has been nothing selected!
-        coords.clear();
-        chgs.clear();
-        cg_index.clear();
-
-        return;
-    }
-
-    uint nselectedgroups = selected_atoms.nSelectedCutGroups();
-    uint ngroups = molecule.nCutGroups();
-
-    if (nselectedgroups == ngroups)
-    {
-        coords = molecule.coordGroups();
-        chgs = molecule.getProperty(chg_property);
-        cg_index.clear();
-
-        //loop through all CutGroups and zero the parameters of any
-        //atoms that are not selected
-        for (CutGroupID i(0); i<ngroups; ++i)
-        {
-            if ( not selected_atoms.selectedAll(i) )
-            {
-                QVector<ChargeParameter> &chgparams = chgs[i];
-
-                //there are some missing parameters to zero!
-                uint nats = molecule.nAtoms(i);
-
-                for (AtomID j(0); j<nats; ++j)
-                {
-                    if ( not selected_atoms.selected(CGAtomID(i,j)) )
-                        //this atom has not been selected - zero its Coulomb parameter
-                        chgparams[j] = ChargeParameter::dummy();
-                }
-            }
-        }
-
-        return;
-    }
-
-    const QVector<CoordGroup> &all_coords = molecule.coordGroups();
-    AtomicCharges all_chgs = molecule.getProperty(chg_property);
-
-    coords = QVector<CoordGroup>( nselectedgroups );
-    chgs = AtomicCharges( QVector<ChargeParameter>( nselectedgroups ) );
-
-    cg_index.clear();
-    cg_index.reserve(nselectedgroups);
-
-    int idx = 0;
-
-    for (CutGroupID i(0); i<ngroups; ++i)
-    {
-        if (not selected_atoms.selectedNone(i))
-        {
-            coords[idx] = all_coords[i];
-            chgs[idx] = all_chgs[i];
-
-            cg_index.insert(i, idx);
-            ++idx;
-
-            if (not selected_atoms.selectedAll(i))
-            {
-                uint nats = molecule.nAtoms(i);
-
-                QVector<ChargeParameter> &chgparams = chgs[idx];
-
-                for (AtomID j(0); j<nats; ++j)
-                {
-                    if ( not selected_atoms.selected(CGAtomID(i,j)) )
-                        chgparams[j] = ChargeParameter::dummy();
-                }
-            }
-        }
-    }
+    chgs = molecule.getProperty(chg_property);
+    coords = molecule.coordGroups();
 }
 
 /** Rebuild all of the coordinates and Coulomb data for the CutGroups whose
@@ -409,33 +265,7 @@ bool CoulombFF::CoulombMoleculeData::rebuildAll(const QSet<CutGroupID>&)
 /** Rebuild all of the coordinate data from scratch */
 void CoulombFF::CoulombMoleculeData::rebuildCoordinates()
 {
-    if (selected_atoms.selectedAll())
-    {
-        coords = molecule.coordGroups();
-        return;
-    }
-
-    uint nselectedgroups = selected_atoms.nSelectedCutGroups();
-    uint ngroups = molecule.nCutGroups();
-
-    if (nselectedgroups == ngroups)
-    {
-        coords = molecule.coordGroups();
-        return;
-    }
-
-    BOOST_ASSERT( nselectedgroups == uint(cg_index.count()) );
-    BOOST_ASSERT( nselectedgroups == uint(coords.count()) );
-    BOOST_ASSERT( nselectedgroups == uint(chgs.count()) );
-
-    const QVector<CoordGroup> &new_coords = molecule.coordGroups();
-
-    for (QHash<CutGroupID,int>::const_iterator it = cg_index.constBegin();
-         it != cg_index.constEnd();
-         ++it)
-    {
-        coords[ it.value() ] = new_coords[it.key()];
-    }
+    coords = molecule.coordGroups();
 }
 
 /** Rebuild all of the coordinate data for the CutGroups whose IDs are
@@ -443,43 +273,9 @@ void CoulombFF::CoulombMoleculeData::rebuildCoordinates()
     part of the selected parts of the molecule. */
 bool CoulombFF::CoulombMoleculeData::rebuildCoordinates(const QSet<CutGroupID> &cgids)
 {
-    if (selected_atoms.selectedAll())
-    {
-        coords = molecule.coordGroups();
-        return true;
-    }
-
-    uint nselectedgroups = selected_atoms.nSelectedCutGroups();
-    uint ngroups = molecule.nCutGroups();
-
-    if (nselectedgroups == ngroups)
-    {
-        coords = molecule.coordGroups();
-        return true;
-    }
-
-    BOOST_ASSERT( nselectedgroups == uint(cg_index.count()) );
-    BOOST_ASSERT( nselectedgroups == uint(coords.count()) );
-    BOOST_ASSERT( nselectedgroups == uint(chgs.count()) );
-
-    const QVector<CoordGroup> &new_coords = molecule.coordGroups();
-
-    bool cutgroups_in_selection = false;
-
-    for (QSet<CutGroupID>::const_iterator it = cgids.begin();
-         it != cgids.end();
-         ++it)
-    {
-        QHash<CutGroupID,int>::const_iterator idx = cg_index.constFind(*it);
-
-        if (idx != cg_index.constEnd())
-        {
-            cutgroups_in_selection = true;
-            coords[idx.value()] = new_coords[idx.key()];
-        }
-    }
-
-    return cutgroups_in_selection;
+    //This can be heavily optimised - I just don't have the time now!
+    this->rebuildCoordinates();
+    return true;
 }
 
 /** Shared null CoulombMoleculeData */
@@ -501,8 +297,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
     SharedDataStream sds(ds);
 
     sds << coulmoldata.molecule
-        << coulmoldata.chg_property
-        << coulmoldata.selected_atoms;
+        << coulmoldata.chg_property;
 
     return ds;
 }
@@ -517,14 +312,12 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
     {
         SharedDataStream sds(ds);
 
-        Molecule mol;
+        PartialMolecule mol;
         QString chg_property;
-        AtomSelection selected_atoms;
 
-        sds >> mol >> chg_property >> selected_atoms;
+        sds >> mol >> chg_property;
 
-        coulmoldata = CoulombFF::CoulombMoleculeData(mol, selected_atoms,
-                                                     chg_property);
+        coulmoldata = CoulombFF::CoulombMoleculeData(mol,chg_property);
     }
     else
         throw version_error(v, "1", r_coulmoldata, CODELOC);
@@ -579,45 +372,9 @@ CoulombFF::CoulombMolecule::CoulombMolecule()
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-CoulombFF::CoulombMolecule::CoulombMolecule(const Molecule &molecule,
+CoulombFF::CoulombMolecule::CoulombMolecule(const PartialMolecule &molecule,
                                             const QString &chgproperty)
           : d( new CoulombFF::CoulombMoleculeData(molecule,chgproperty) )
-{}
-
-/** Construct from the passed residue, using 'chgproperty' to find the
-    molecule's partial charges.
-
-    \throw SireBase::missing_property
-    \throw SireError::invalid_cast
-*/
-CoulombFF::CoulombMolecule::CoulombMolecule(const Residue &residue,
-                                            const QString &chgproperty)
-          : d( new CoulombFF::CoulombMoleculeData(residue,chgproperty) )
-{}
-
-/** Construct from the passed atom, using 'chgproperty' to find the
-    molecule's partial charges.
-
-    \throw SireBase::missing_property
-    \throw SireError::invalid_cast
-*/
-CoulombFF::CoulombMolecule::CoulombMolecule(const NewAtom &atom,
-                                            const QString &chgproperty)
-          : d( new CoulombFF::CoulombMoleculeData(atom,chgproperty) )
-{}
-
-/** Construct from the selected atoms of the passed molecule, using
-    'chgproperty' to find the molecule's partial charges.
-
-    \throw SireBase::missing_property
-    \throw SireError::invalid_cast
-*/
-CoulombFF::CoulombMolecule::CoulombMolecule(const Molecule &molecule,
-                                            const AtomSelection &selected_atoms,
-                                            const QString &chgproperty)
-          : d( new CoulombFF::CoulombMoleculeData(molecule,
-                                                  selected_atoms,
-                                                  chgproperty) )
 {}
 
 /** Construct a copy of 'other', but masked by the CutGroups in 'groups' */
@@ -625,72 +382,8 @@ CoulombFF::CoulombMolecule::CoulombMolecule(const CoulombMolecule &other,
                                             const QSet<CutGroupID> &groups)
           : d( other.d )
 {
-    //get the index of which CutGroups are already selected
-    const QHash<CutGroupID,int> index = other.d->cg_index;
-
-    if (index.isEmpty())
-    {
-        //an empty index implies that the entire molecule is selected
-        // - we therefore need only select the CutGroups in 'groups'
-        const AtomicCharges &chgs = other.d->chgs;
-        const QVector<CoordGroup> &coords = other.d->coords;
-
-        int ngroups = groups.count();
-
-        QVector< QVector<ChargeParameter> > new_chgs(ngroups);
-        QVector<CoordGroup> new_coords(ngroups);
-
-        QHash<CutGroupID,int> new_index;
-        new_index.reserve(ngroups);
-
-        int i = 0;
-
-        for (QSet<CutGroupID>::const_iterator it = groups.begin();
-             it != groups.end();
-             ++it)
-        {
-            new_coords[i] = coords[*it];
-            new_chgs[i] = chgs[*it];
-
-            new_index.insert(*it,i);
-            ++i;
-        }
-
-        d->coords = new_coords;
-        d->chgs = AtomicCharges(new_chgs);
-        d->cg_index = new_index;
-
-        d->selected_atoms.applyMask(groups);
-    }
-    else
-    {
-        //run through the CutGroups in the molecule and see which ones need to
-        //be removed
-        QList<int> indicies_to_be_removed;
-
-        for (QHash<CutGroupID,int>::const_iterator it = index.constBegin();
-             it != index.constEnd();
-             ++it)
-        {
-            if ( not groups.contains(it.key()) )
-            {
-                //this CutGroup will be masked - deselect it and
-                //record the index of its coordinates and Coulomb parameters
-                d->selected_atoms.deselectAll(it.key());
-                indicies_to_be_removed.append(it.value());
-            }
-        }
-
-        //remove the identified CutGroups (from back to front)
-        qSort(indicies_to_be_removed.begin(), indicies_to_be_removed.end(),
-              qGreater<int>());
-
-        foreach (int idx, indicies_to_be_removed)
-        {
-            d->coords.remove(idx);
-            d->chgs.remove(idx);
-        }
-    }
+    d->molecule.applyMask(groups);
+    d->rebuildAll();
 }
 
 /** Copy constructor */
@@ -727,11 +420,11 @@ bool CoulombFF::CoulombMolecule::operator!=(
 /** Return whether or not this is empty (has no atoms selected */
 bool CoulombFF::CoulombMolecule::isEmpty() const
 {
-    return d->selected_atoms.isEmpty();
+    return d->molecule.isEmpty();
 }
 
 /** Return the actual molecule */
-const Molecule& CoulombFF::CoulombMolecule::molecule() const
+const PartialMolecule& CoulombFF::CoulombMolecule::molecule() const
 {
     return d->molecule;
 }
@@ -744,9 +437,8 @@ const Molecule& CoulombFF::CoulombMolecule::molecule() const
     \throw SireError::incompatible_error
 */
 CoulombFF::ChangedCoulombMolecule
-CoulombFF::CoulombMolecule::_pvt_change(const Molecule &molecule,
-                                        const QSet<CutGroupID> &cgids,
-                                        const QString &chgproperty) const
+CoulombFF::CoulombMolecule::change(const PartialMolecule &molecule,
+                                   const QString &chgproperty) const
 {
     if (d->molecule.ID() == 0)
         //this is a null Molecule
@@ -757,59 +449,39 @@ CoulombFF::CoulombMolecule::_pvt_change(const Molecule &molecule,
 
     if (chgproperty.isNull() or chgproperty == d->chg_property)
     {
-        //has there been a change?
-        if ( d->molecule.version() == molecule.version() )
-            //no - there hasn't!
-            return ChangedCoulombMolecule();
-
-        //the molecule may have changed
-        CoulombMolecule newmol(*this);
-
-        newmol.d->molecule = molecule;
-
-        if (cgids.isEmpty())
+        if ( d->molecule.version().major() != molecule.version().major() )
         {
-            //the whole molecule has changed
-
-            if (molecule.version().major() != d->molecule.version().major())
-            {
-                //there has been a major change
-                newmol.d->rebuildAll();
-            }
-            else
-            {
-                //only the coordinates have changed
-                newmol.d->rebuildCoordinates();
-            }
-
+            CoulombMolecule newmol(*this);
+            newmol.d->molecule.change(molecule);
+            newmol.d->rebuildAll();
+            
             return ChangedCoulombMolecule(*this, newmol);
         }
-        else
+        else if ( d->molecule.version().minor() != molecule.version().minor() )
         {
-            //only part of the molecule has changed
-            if (molecule.version().major() != d->molecule.version().major())
+            CoulombMolecule newmol(*this);
+            
+            if (newmol.d->molecule.change(molecule))
             {
-                //there has been a major change
-
-                if (newmol.d->rebuildAll(cgids))
-                    //the part of the molecule in this forcefield has changed!
-                    return ChangedCoulombMolecule(*this, newmol, cgids);
+                if (molecule.selectedAll())
+                {
+                    newmol.d->rebuildCoordinates();
+                    return ChangedCoulombMolecule(*this, newmol);
+                }
                 else
-                    //no part of the molecule that was in this forcefield has changed
-                    return ChangedCoulombMolecule();
+                {
+                    QSet<CutGroupID> cgids = molecule.selectedCutGroups();
+                    newmol.d->rebuildCoordinates(cgids);
+                    return ChangedCoulombMolecule(*this, newmol, cgids);
+                }
             }
             else
-            {
-                //only the coordinates have changed
-
-                if (newmol.d->rebuildCoordinates(cgids))
-                    //the part of the molecule in this forcefield has moved
-                    return ChangedCoulombMolecule(*this, newmol, cgids);
-                else
-                    //no part of the molecule in this forcefield has moved
-                    return ChangedCoulombMolecule();
-            }
+                //there has been no change
+                return ChangedCoulombMolecule();
         }
+        else
+            //there has been no change
+            return ChangedCoulombMolecule();
     }
     else
     {
@@ -817,102 +489,7 @@ CoulombFF::CoulombMolecule::_pvt_change(const Molecule &molecule,
         //needs to be rebuilt
         CoulombMolecule newmol(*this);
 
-        newmol.d->molecule = molecule;
-        newmol.d->chg_property = chgproperty;
-
-        newmol.d->rebuildAll();
-
-        return ChangedCoulombMolecule(*this, newmol);
-    }
-}
-
-/** Return a ChangedCoulombMolecule that represents the change from the
-    CoulombMolecule in its current state to 'molecule'. Note that
-    the new state must have the same MoleculeID as the current state!
-
-    \throw SireError::incompatible_error
-*/
-CoulombFF::ChangedCoulombMolecule
-CoulombFF::CoulombMolecule::change(const Molecule &molecule) const
-{
-    return this->_pvt_change(molecule, QSet<CutGroupID>());
-}
-
-/** Return a ChangedCoulombMolecule that represents the change from the
-    CoulombMolecule in its current state to include the changes in 'residue'
-
-    \throw SireError::incompatible_error
-*/
-CoulombFF::ChangedCoulombMolecule
-CoulombFF::CoulombMolecule::change(const Residue &residue) const
-{
-    return this->_pvt_change(residue.molecule(), residue.info().cutGroupIDs());
-}
-
-/** Return a ChangedCoulombMolecule that represents the change from
-    the CoulombMolecule in its current state to include the changes in 'atom'
-
-    \throw SireError::incompatible_error
-*/
-CoulombFF::ChangedCoulombMolecule
-CoulombFF::CoulombMolecule::change(const NewAtom &atom) const
-{
-    QSet<CutGroupID> cgid;
-    cgid.insert(atom.cgAtomID().cutGroupID());
-
-    return this->_pvt_change(atom.molecule(), cgid);
-}
-
-/** Private function used to return the ChangedCoulombMolecule that represents
-    the change from the CoulombMolecule in its current state to 'molecule', with
-    the new selection 'selected_atoms', with the guarantee that only the CutGroups
-    whose IDs are in 'cgids' have changed. (if cgids is empty then all of the
-    CutGroups have changed)
-
-    \throw SireError::incompatible_error
-*/
-CoulombFF::ChangedCoulombMolecule
-CoulombFF::CoulombMolecule::_pvt_change(const Molecule &molecule,
-                                        const QSet<CutGroupID> &cgids,
-                                        const AtomSelection &selected_atoms,
-                                        const QString &chgproperty) const
-{
-    if (d->molecule.ID() == 0)
-        return ChangedCoulombMolecule();
-
-    if (selected_atoms == d->selected_atoms)
-        //there has been no change in the atom selections
-        return this->_pvt_change(molecule, cgids, chgproperty);
-
-    d->molecule.assertSameMolecule(molecule);
-
-    CoulombMolecule newmol(*this);
-
-    newmol.d->molecule = molecule;
-    newmol.d->selected_atoms = selected_atoms;
-
-    if (chgproperty.isNull() or chgproperty == d->chg_property)
-    {
-        //there is no change in the property used to get the Coulomb parameters
-        if (cgids.isEmpty())
-        {
-            //the entire molecule has changed
-            newmol.d->rebuildAll();
-
-            return ChangedCoulombMolecule(*this, newmol);
-        }
-        else
-        {
-            //only parts of the molecule have changed
-            newmol.d->rebuildAll(cgids);
-
-            return ChangedCoulombMolecule(*this, newmol, cgids);
-        }
-    }
-    else
-    {
-        //there has been a change of property - we need to rebuild
-        //the entire molecule
+        newmol.d->molecule.change(molecule);
         newmol.d->chg_property = chgproperty;
         newmol.d->rebuildAll();
 
@@ -926,85 +503,54 @@ CoulombFF::CoulombMolecule::_pvt_change(const Molecule &molecule,
 
     \throw SireError::incompatible_error
 */
-CoulombFF::ChangedCoulombMolecule
-CoulombFF::CoulombMolecule::add(const Molecule &molecule,
+CoulombFF::ChangedCoulombMolecule 
+CoulombFF::CoulombMolecule::add(const PartialMolecule &molecule,
                                 const QString &chgproperty) const
 {
     if (d->molecule.ID() == 0)
-        return ChangedCoulombMolecule(*this,
-                                      CoulombMolecule(molecule,chgproperty));
-    else
-        return this->_pvt_change(molecule, QSet<CutGroupID>(),
-                                 AtomSelection(molecule), chgproperty);
-}
-
-/** Return a ChangedCoulombMolecule that represents the change from the CoulombMolecule
-    in its current state to include as well the passed residue, which itself may
-    have changed
-
-    \throw SireError::incompatible_error
-*/
-CoulombFF::ChangedCoulombMolecule
-CoulombFF::CoulombMolecule::add(const Residue &residue,
-                                const QString &chgproperty) const
-{
-    if (d->molecule.ID() == 0)
-        return ChangedCoulombMolecule(*this,
-                                      CoulombMolecule(residue,chgproperty));
+        return ChangedCoulombMolecule(*this, CoulombMolecule(molecule,
+                                                             chgproperty));
+    
+    else if (molecule.selectedAtoms() == d->molecule.selectedAtoms())
+        //there has been no change in the atom selections
+        return this->change(molecule, chgproperty);
     else
     {
-        AtomSelection new_selection = d->selected_atoms;
+        d->molecule.assertSameMolecule(molecule);
 
-        new_selection.selectAll(residue.number());
+        CoulombMolecule newmol(*this);
 
-        return this->_pvt_change(residue.molecule(), residue.info().cutGroupIDs(),
-                                 new_selection, chgproperty);
+        if ( chgproperty.isNull() or chgproperty == d->chg_property )
+        {
+            if (molecule.version() != d->molecule.version())
+            {
+                newmol.d->molecule.change(molecule);
+                newmol.d->molecule.add(molecule.selectedAtoms());
+                newmol.d->rebuildAll();
+                return ChangedCoulombMolecule(*this, newmol);
+            }
+            else if (newmol.d->molecule.add(molecule.selectedAtoms()))
+            {
+                newmol.d->rebuildAll();
+                return ChangedCoulombMolecule(*this, newmol, 
+                                              molecule.selectedCutGroups());
+            }
+            else
+                //there has been no change
+                return ChangedCoulombMolecule();
+        }
+        else
+        {
+            //there has been a change of property - we need to rebuild
+            //the entire molecule
+            newmol.d->molecule.change(molecule);
+            newmol.d->molecule.add(molecule.selectedAtoms());
+            newmol.d->chg_property = chgproperty;
+            newmol.d->rebuildAll();
+    
+            return ChangedCoulombMolecule(*this, newmol);
+        }
     }
-}
-
-/** Return a ChangedCoulombMolecule that represents the change from the CoulombMolecule
-    in its current state to include as well the passed atom, which itself may
-    have changed
-
-    \throw SireError::incompatible_error
-*/
-CoulombFF::ChangedCoulombMolecule
-CoulombFF::CoulombMolecule::add(const NewAtom &atom,
-                                const QString &chgproperty) const
-{
-    if (d->molecule.ID() == 0)
-        return ChangedCoulombMolecule(*this, CoulombMolecule(atom,chgproperty));
-    else
-    {
-        AtomSelection new_selection = d->selected_atoms;
-
-        new_selection.select(atom.cgAtomID());
-
-        QSet<CutGroupID> cgid;
-        cgid.insert(atom.cgAtomID().cutGroupID());
-
-        return this->_pvt_change(atom.molecule(), cgid, new_selection,
-                                 chgproperty);
-    }
-}
-
-/** Return a ChangedCoulombMolecule that represents the change from the CoulombMolecule
-    in its current state to include as well the passed selection
-
-    \throw SireError::incompatible_error
-*/
-CoulombFF::ChangedCoulombMolecule
-CoulombFF::CoulombMolecule::add(const AtomSelection &selected_atoms,
-                                const QString &chgproperty) const
-{
-    AtomSelection new_selection = d->selected_atoms;
-
-    new_selection.selectAll(selected_atoms);
-
-    Molecule oldmol = d->molecule;
-
-    return this->_pvt_change(oldmol, selected_atoms.selectedCutGroups(),
-                             new_selection, chgproperty);
 }
 
 /** Return a ChangedCoulombMolecule that represents the change from the CoulombMolecule
@@ -1013,63 +559,34 @@ CoulombFF::CoulombMolecule::add(const AtomSelection &selected_atoms,
 
     \throw SireError::incompatible_error
 */
-CoulombFF::ChangedCoulombMolecule
-CoulombFF::CoulombMolecule::remove(const Molecule &molecule) const
+CoulombFF::ChangedCoulombMolecule 
+CoulombFF::CoulombMolecule::remove(const PartialMolecule &molecule) const
 {
-    AtomSelection new_selection = d->selected_atoms;
-    new_selection.deselectAll();
+    if (d->molecule.ID() == 0)
+    {
+        return ChangedCoulombMolecule();
+    }
+    else if (molecule.selectedAtoms().contains(d->molecule.selectedAtoms()))
+    {
+        //we have removed the entire molecule!
+        return ChangedCoulombMolecule(*this, CoulombMolecule());
+    }
+    else
+    {
+        d->molecule.assertSameMolecule(molecule);
 
-    return this->_pvt_change(molecule, QSet<CutGroupID>(), new_selection);
-}
+        CoulombMolecule newmol(*this);
 
-/** Return a ChangedCoulombMolecule that represents the change from the CoulombMolecule
-    in its current state to remove the passed residue, which itself may
-    have changed
-
-    \throw SireError::incompatible_error
-*/
-CoulombFF::ChangedCoulombMolecule
-CoulombFF::CoulombMolecule::remove(const Residue &residue) const
-{
-    AtomSelection new_selection = d->selected_atoms;
-    new_selection.deselectAll(residue.number());
-
-    return this->_pvt_change(residue.molecule(), residue.info().cutGroupIDs(), new_selection);
-}
-
-/** Return a ChangedCoulombMolecule that represents the change from the CoulombMolecule
-    in its current state to remove the passed atom, which itself may
-    have changed
-
-    \throw SireError::incompatible_error
-*/
-CoulombFF::ChangedCoulombMolecule
-CoulombFF::CoulombMolecule::remove(const NewAtom &atom) const
-{
-    AtomSelection new_selection = d->selected_atoms;
-    new_selection.deselect(atom.cgAtomID());
-
-    QSet<CutGroupID> cgid;
-    cgid.insert(atom.cgAtomID().cutGroupID());
-
-    return this->_pvt_change(atom.molecule(), cgid, new_selection);
-}
-
-/** Return a ChangedCoulombMolecule that represents the change from the CoulombMolecule
-    in its current state to remove the passed atom selection
-
-    \throw SireError::incompatible_error
-*/
-CoulombFF::ChangedCoulombMolecule
-CoulombFF::CoulombMolecule::remove(const AtomSelection &selected_atoms) const
-{
-    AtomSelection new_selection = d->selected_atoms;
-    new_selection.deselectAll(selected_atoms);
-
-    Molecule oldmol = d->molecule;
-
-    return this->_pvt_change(oldmol, selected_atoms.selectedCutGroups(),
-                             new_selection);
+        if (newmol.d->molecule.remove(molecule.selectedAtoms()))
+        {
+            newmol.d->rebuildAll();
+            return ChangedCoulombMolecule(*this, newmol, 
+                                          molecule.selectedCutGroups());
+        }
+        else
+            //there was no change
+            return ChangedCoulombMolecule();
+    }
 }
 
 /** Return the name of the property used to get the partial charges */
@@ -1101,14 +618,7 @@ const AtomicCharges& CoulombFF::CoulombMolecule::charges() const
     of the molecule */
 bool CoulombFF::CoulombMolecule::isWholeMolecule() const
 {
-    return d->selected_atoms.selectedAll();
-}
-
-/** Return the selection of atoms that are present from this
-    molecule in the forcefield */
-const AtomSelection& CoulombFF::CoulombMolecule::selectedAtoms() const
-{
-    return d->selected_atoms;
+    return d->molecule.selectedAll();
 }
 
 /////////////
@@ -1187,7 +697,7 @@ CoulombFF::ChangedCoulombMolecule::ChangedCoulombMolecule(
             newmol(new_molecule),
             changed_cgids(changed_groups)
 {
-    if (changed_groups.count() == old_molecule.molecule().nCutGroups())
+    if (changed_groups.count() == old_molecule.molecule().info().nCutGroups())
     {
         //the entire molecule has changed
         oldparts = oldmol;
@@ -1297,23 +807,8 @@ CoulombFF::ChangedCoulombMolecule::newParts() const
     return newparts;
 }
 
-/** Return the ChangedCoulombMolecule that represents the change from the old molecule
-    to 'molecule' */
-CoulombFF::ChangedCoulombMolecule
-CoulombFF::ChangedCoulombMolecule::change(const Molecule &molecule) const
-{
-    //calculate the change from newmol to molecule...
-    ChangedCoulombMolecule next_change = newmol.change(molecule);
-
-    if (next_change.isEmpty())
-        //there was no further change
-        return ChangedCoulombMolecule();
-    else
-        //now return the change from oldmol to newmol
-        return ChangedCoulombMolecule(oldmol, next_change.newMolecule());
-}
-
-static QSet<CutGroupID> operator+(const QSet<CutGroupID> &set0, const QSet<CutGroupID> &set1)
+static QSet<CutGroupID> operator+(const QSet<CutGroupID> &set0, 
+                                  const QSet<CutGroupID> &set1)
 {
     QSet<CutGroupID> ret(set0);
     ret.unite(set1);
@@ -1322,151 +817,53 @@ static QSet<CutGroupID> operator+(const QSet<CutGroupID> &set0, const QSet<CutGr
 }
 
 /** Return the ChangedCoulombMolecule that represents the change from the old molecule
-    to 'residue' */
+    to 'molecule' */
 CoulombFF::ChangedCoulombMolecule
-CoulombFF::ChangedCoulombMolecule::change(const Residue &residue) const
+CoulombFF::ChangedCoulombMolecule::change(const PartialMolecule &molecule,
+                                          const QString &chgproperty) const
 {
-    if (this->changedAll())
-        return this->change(residue.molecule());
-
-    //calculate the change from newmol to 'residue'...
-    ChangedCoulombMolecule next_change = newmol.change(residue);
+    //calculate the change from newmol to molecule...
+    ChangedCoulombMolecule next_change = newmol.change(molecule,
+                                                       chgproperty);
 
     if (next_change.isEmpty())
+        //there was no further change
         return ChangedCoulombMolecule();
+    else if (this->changedAll() or next_change.changedAll())
+        return ChangedCoulombMolecule(oldmol, next_change.newMolecule());
     else
+    {
+        //now return the change from oldmol to newmol
         return ChangedCoulombMolecule(oldmol, next_change.newMolecule(),
                                       changed_cgids + next_change.changed_cgids);
-}
-
-/** Return the ChangedCoulombMolecule that represents the change from the old molecule
-    to 'residue' */
-CoulombFF::ChangedCoulombMolecule
-CoulombFF::ChangedCoulombMolecule::change(const NewAtom &atom) const
-{
-    if (this->changedAll())
-        return this->change(atom.molecule());
-
-    ChangedCoulombMolecule next_change = newmol.change(atom);
-
-    if (next_change.isEmpty())
-        return ChangedCoulombMolecule();
-    else
-        return ChangedCoulombMolecule(oldmol, next_change.newMolecule(),
-                                      changed_cgids + next_change.changed_cgids);
+    }
 }
 
 /** Return the ChangedCoulombMolecule that represents the addition of all atoms
     in the molecule 'molecule' */
 CoulombFF::ChangedCoulombMolecule
-CoulombFF::ChangedCoulombMolecule::add(const Molecule &molecule,
+CoulombFF::ChangedCoulombMolecule::add(const PartialMolecule &molecule,
                                        const QString &chgproperty) const
 {
-    ChangedCoulombMolecule next_change = newmol.add(molecule, chgproperty);
-
-    if (next_change.isEmpty())
-        return ChangedCoulombMolecule();
-    else
-        return ChangedCoulombMolecule(oldmol, next_change.newMolecule());
-}
-
-/** Return the ChangedCoulombMolecule that represents the addition of all atoms
-    in the residue 'residue' */
-CoulombFF::ChangedCoulombMolecule
-CoulombFF::ChangedCoulombMolecule::add(const Residue &residue,
-                                       const QString &chgproperty) const
-{
-    ChangedCoulombMolecule next_change = newmol.add(residue, chgproperty);
+    ChangedCoulombMolecule next_change = newmol.add(molecule,
+                                                    chgproperty);
 
     if (next_change.isEmpty())
         return ChangedCoulombMolecule();
     else if (this->changedAll() or next_change.changedAll())
         return ChangedCoulombMolecule(oldmol, next_change.newMolecule());
     else
+    {
         return ChangedCoulombMolecule(oldmol, next_change.newMolecule(),
                                       changed_cgids + next_change.changed_cgids);
-}
-
-/** Return the ChangedCoulombMolecule that represents the addition of the atom 'atom' */
-CoulombFF::ChangedCoulombMolecule
-CoulombFF::ChangedCoulombMolecule::add(const NewAtom &atom,
-                                       const QString &chgproperty) const
-{
-    ChangedCoulombMolecule next_change = newmol.add(atom, chgproperty);
-
-    if (next_change.isEmpty())
-        return ChangedCoulombMolecule();
-    else if (this->changedAll() or next_change.changedAll())
-        return ChangedCoulombMolecule(oldmol, next_change.newMolecule());
-    else
-        return ChangedCoulombMolecule(oldmol, next_change.newMolecule(),
-                                      changed_cgids + next_change.changed_cgids);
-}
-
-/** Return the ChangedCoulombMolecule that represents the addition of the selected atoms */
-CoulombFF::ChangedCoulombMolecule
-CoulombFF::ChangedCoulombMolecule::add(const AtomSelection &selected_atoms,
-                                       const QString &chgproperty) const
-{
-    ChangedCoulombMolecule next_change = newmol.add(selected_atoms, chgproperty);
-
-    if (next_change.isEmpty())
-        return ChangedCoulombMolecule();
-    else if (this->changedAll() or next_change.changedAll())
-        return ChangedCoulombMolecule(oldmol, next_change.newMolecule());
-    else
-        return ChangedCoulombMolecule(oldmol, next_change.newMolecule(),
-                                      changed_cgids + next_change.changed_cgids);
+    }
 }
 
 /** Return the ChangedCoulombMolecule that represents the removal of the entire molecule! */
 CoulombFF::ChangedCoulombMolecule
-CoulombFF::ChangedCoulombMolecule::remove(const Molecule &molecule) const
+CoulombFF::ChangedCoulombMolecule::remove(const PartialMolecule &molecule) const
 {
     ChangedCoulombMolecule next_change = newmol.remove(molecule);
-
-    if (next_change.isEmpty())
-        return ChangedCoulombMolecule();
-    else
-        return ChangedCoulombMolecule(oldmol, next_change.newMolecule());
-}
-
-/** Return the ChangedCoulombMolecule that represents the removal of the residue 'residue' */
-CoulombFF::ChangedCoulombMolecule
-CoulombFF::ChangedCoulombMolecule::remove(const Residue &residue) const
-{
-    ChangedCoulombMolecule next_change = newmol.remove(residue);
-
-    if (next_change.isEmpty())
-        return ChangedCoulombMolecule();
-    else if (this->changedAll() or next_change.changedAll())
-        return ChangedCoulombMolecule(oldmol, next_change.newMolecule());
-    else
-        return ChangedCoulombMolecule(oldmol, next_change.newMolecule(),
-                                      changed_cgids + next_change.changed_cgids);
-}
-
-/** Return the ChangedCoulombMolecule that represents the removal of 'atom' */
-CoulombFF::ChangedCoulombMolecule
-CoulombFF::ChangedCoulombMolecule::remove(const NewAtom &atom) const
-{
-    ChangedCoulombMolecule next_change = newmol.remove(atom);
-
-    if (next_change.isEmpty())
-        return ChangedCoulombMolecule();
-    else if (this->changedAll() or next_change.changedAll())
-        return ChangedCoulombMolecule(oldmol, next_change.newMolecule());
-    else
-        return ChangedCoulombMolecule(oldmol, next_change.newMolecule(),
-                                      changed_cgids + next_change.changed_cgids);
-}
-
-/** Return the ChangedCoulombMolecule that represents the removal of the
-    selected atoms. */
-CoulombFF::ChangedCoulombMolecule
-CoulombFF::ChangedCoulombMolecule::remove(const AtomSelection &selected_atoms) const
-{
-    ChangedCoulombMolecule next_change = newmol.remove(selected_atoms);
 
     if (next_change.isEmpty())
         return ChangedCoulombMolecule();
@@ -1762,6 +1159,84 @@ CoulombFF::CoulombFF(const CoulombFF &other)
 /** Destructor */
 CoulombFF::~CoulombFF()
 {}
+
+/** Set the space within which the molecules interact */
+bool CoulombFF::setSpace(const Space &space)
+{
+    if (space != spce)
+    {
+        spce = space;
+        this->incrementMajorVersion();
+    }
+        
+    return isDirty();
+}
+
+/** Set the switching function used to apply the non-bonded cutoff */
+bool CoulombFF::setSwitchingFunction(const SwitchingFunction &sfunc)
+{
+    if (sfunc != switchfunc)
+    {
+        switchfunc = sfunc;
+        this->incrementMajorVersion();
+    }
+
+    return isDirty();
+}
+
+/** Set the property 'name' to the value 'value'. This
+    returns whether or not this changes the forcefield,
+    and therefore the energy of the forcefield will need
+    to be recalculated
+
+    Note that you can only set pre-defined properties
+    of forcefields - an exception will be thrown if
+    you try to set the value of a property that does
+    not exist in this forcefield.
+
+    \throw SireBase::missing_property
+*/
+bool CoulombFF::setProperty(const QString &name, const Property &property)
+{
+    if ( name == QLatin1String("space") )
+    {
+        this->setSpace(property);
+        return this->isDirty();
+    }
+    else if ( name == QLatin1String("switching function") )
+    {
+        this->setSwitchingFunction(property);
+        return this->isDirty();
+    }
+    else
+        return FFBase::setProperty(name, property);
+}
+
+/** Return the property associated with the name 'name'
+
+    \throw SireBase::missing_property
+*/
+Property CoulombFF::getProperty(const QString &name) const
+{
+    if ( name == QLatin1String("space") )
+    {
+        return this->space();
+    }
+    else if ( name == QLatin1String("switching function") )
+    {
+        return this->switchingFunction();
+    }
+    else
+        return FFBase::getProperty(name);
+}
+
+/** Return whether or not this contains a property with the name 'name' */
+bool CoulombFF::containsProperty(const QString &name) const
+{
+    return ( name == QLatin1String("space") ) or
+           ( name == QLatin1String("switching function") ) or
+           FFBase::containsProperty(name);
+}
 
 /** Register the energy components associated with this forcefield */
 void CoulombFF::registerComponents()

@@ -40,10 +40,7 @@
 #include "SireVol/space.h"
 #include "SireFF/ffbase.h"
 
-#include "SireMol/molecule.h"
-#include "SireMol/residue.h"
-#include "SireMol/newatom.h"
-#include "SireMol/atomselection.h"
+#include "SireMol/partialmolecule.h"
 
 SIRE_BEGIN_HEADER
 
@@ -59,6 +56,7 @@ namespace SireMM
 {
 
 using SireMol::Molecule;
+using SireMol::PartialMolecule;
 using SireMol::Residue;
 using SireMol::NewAtom;
 using SireMol::AtomSelection;

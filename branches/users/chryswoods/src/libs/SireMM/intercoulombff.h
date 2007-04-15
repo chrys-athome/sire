@@ -118,22 +118,24 @@ public:
         return new InterCoulombFF(*this);
     }
 
-    bool change(const Molecule &molecule);
-    bool change(const Residue &residue);
-    bool change(const NewAtom &atom);
+    bool change(const PartialMolecule &molecule);
 
-    bool add(const Molecule &mol, const ParameterMap &map = ParameterMap());
-    bool add(const Residue &res, const ParameterMap &map = ParameterMap());
-    bool add(const NewAtom &atom, const ParameterMap &map = ParameterMap());
-
-    bool add(const Molecule &mol, const AtomSelection &selected_atoms,
+    bool add(const PartialMolecule &mol, 
              const ParameterMap &map = ParameterMap());
 
-    bool remove(const Molecule &molecule);
-    bool remove(const Residue &residue);
-    bool remove(const NewAtom &atom);
+    bool remove(const PartialMolecule &molecule);
+                    
+    bool contains(const PartialMolecule &molecule) const;
+    
+    bool refersTo(MoleculeID molid) const;
 
-    bool remove(const Molecule &mol, const AtomSelection &selected_atoms);
+    QSet<FFBase::Group> groupsReferringTo(MoleculeID molid) const;
+    
+    QSet<MoleculeID> moleculeIDs() const;
+    
+    PartialMolecule molecule(MoleculeID molid) const;
+    
+    QHash<MoleculeID,PartialMolecule> contents() const;
 
 protected:
     void recalculateViaDelta();

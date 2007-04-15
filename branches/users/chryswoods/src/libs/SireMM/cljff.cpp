@@ -843,7 +843,8 @@ const CLJFF::CLJMolecule& CLJFF::ChangedCLJMolecule::newParts() const
     return newparts;
 }
 
-static QSet<CutGroupID> operator+(const QSet<CutGroupID> &set0, const QSet<CutGroupID> &set1)
+static QSet<CutGroupID> operator+(const QSet<CutGroupID> &set0, 
+                                  const QSet<CutGroupID> &set1)
 {
     QSet<CutGroupID> ret(set0);
     ret.unite(set1);
@@ -854,10 +855,14 @@ static QSet<CutGroupID> operator+(const QSet<CutGroupID> &set0, const QSet<CutGr
 /** Return the ChangedCLJMolecule that represents the change from the old molecule
     to 'molecule' */
 CLJFF::ChangedCLJMolecule
-CLJFF::ChangedCLJMolecule::change(const PartialMolecule &molecule) const
+CLJFF::ChangedCLJMolecule::change(const PartialMolecule &molecule,
+                                  const QString &chgproperty,
+                                  const QString &ljproperty) const
 {
     //calculate the change from newmol to molecule...
-    ChangedCLJMolecule next_change = newmol.change(molecule);
+    ChangedCLJMolecule next_change = newmol.change(molecule,
+                                                   chgproperty,
+                                                   ljproperty);
 
     if (next_change.isEmpty())
         //there was no further change
@@ -1335,6 +1340,7 @@ bool CLJFF::setSpace(const Space &space)
     {
         spce = space;
         this->incrementMajorVersion();
+        this->mustNowRecalculateFromScratch();
     }
         
     return isDirty();
@@ -1347,6 +1353,7 @@ bool CLJFF::setSwitchingFunction(const SwitchingFunction &sfunc)
     {
         switchfunc = sfunc;
         this->incrementMajorVersion();
+        this->mustNowRecalculateFromScratch();
     }
 
     return isDirty();
