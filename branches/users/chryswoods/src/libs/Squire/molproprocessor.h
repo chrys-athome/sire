@@ -51,24 +51,12 @@ class MolproProcessorPvt : public SireFF::detail::FFThreadProcessorPvt
 {
 public:
     MolproProcessorPvt();
-    MolproProcessorPvt(const ForceField &forcefield,
-                       const QString &molpro_exe,
-                       const QDir &tmpdir);
+    MolproProcessorPvt(const ForceField &forcefield);
 
     ~MolproProcessorPvt();
 
-    void setMolpro(const QString &molpro_executable);
-    void setTempDir(const QDir &temp_dir);
-
 protected:
     boost::shared_ptr<SireCluster::WorkerBase> _pvt_activate();
-
-private:
-    /** The full name and path to the molpro executable */
-    QString molpro_exe;
-
-    /** The temp directory in which to run molpro jobs */
-    QDir tmpdir;
 };
 
 }
@@ -83,16 +71,11 @@ class SQUIRE_EXPORT MolproProcessor : public SireFF::FFThreadProcessor
 {
 public:
     MolproProcessor();
-    MolproProcessor(const ForceField &forcefield,
-                    const QString &molpro_exe = "molpro",
-                    const QDir &temp_dir = QDir::temp());
+    MolproProcessor(const ForceField &forcefield);
 
     MolproProcessor(const MolproProcessor &other);
 
     ~MolproProcessor();
-
-    void setMolpro(const QString &molpro_exe);
-    void setTempDir(const QDir &tmpdir);
 
     static const char* typeName()
     {

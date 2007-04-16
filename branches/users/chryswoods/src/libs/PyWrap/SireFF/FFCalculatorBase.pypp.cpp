@@ -83,7 +83,7 @@ void register_FFCalculatorBase_class(){
             , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::FFCalculatorBase::* )(  ) )( &::SireFF::FFCalculatorBase::contents ) )    
         .def( 
             "forceField"
-            , (::SireFF::ForceField ( ::SireFF::FFCalculatorBase::* )(  ) const)( &::SireFF::FFCalculatorBase::forceField ) )    
+            , (::SireFF::ForceField ( ::SireFF::FFCalculatorBase::* )(  ) )( &::SireFF::FFCalculatorBase::forceField ) )    
         .def( 
             "getEnergies"
             , (double ( ::SireFF::FFCalculatorBase::* )( ::SireCAS::Values & ) )( &::SireFF::FFCalculatorBase::getEnergies )

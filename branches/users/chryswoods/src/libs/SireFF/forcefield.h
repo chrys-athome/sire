@@ -91,6 +91,24 @@ public:
     ForceField& operator=(const FFBase &ffbase);
 
     const FFBase& base() const;
+    
+    template<class T>
+    bool isA() const
+    {
+        return d.isA<T>();
+    }
+    
+    template<class T>
+    const T& asA() const
+    {
+        return d.asA<T>();
+    }
+    
+    template<class T>
+    T& asA()
+    {
+        return d.asA<T>();
+    }
 
     const char* what() const;
 

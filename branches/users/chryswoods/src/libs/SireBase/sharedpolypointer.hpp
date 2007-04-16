@@ -283,6 +283,12 @@ public:
     {
         return dynamic_cast<const S&>(*(this->constData()));
     }
+    
+    template<class S>
+    S& asA()
+    {
+        return dynamic_cast<S&>(*(this->data()));
+    }
 
 private:
     void detach_helper();

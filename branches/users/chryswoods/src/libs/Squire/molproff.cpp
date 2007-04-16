@@ -48,7 +48,7 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
-#include <QDebug>
+#include <QFile>
 
 using namespace Squire;
 using namespace SireMM;
@@ -66,7 +66,9 @@ using namespace SireStream;
 /** Constructor - by default the coulomb properties come from the 'charges'
     property */
 MolproFF::Parameters::Parameters()
-         : FFBase::Parameters(), coulomb_params("coulomb", "charges")
+         : FFBase::Parameters(), 
+           coulomb_params("coulomb", "charges"),
+           link_atoms("link_atoms", "link_atoms")
 {}
 
 /** Copy constructor */
@@ -129,6 +131,29 @@ QString MolproFF::Components::describe_qm()
 }
 
 ///////////
+/////////// Implementation of MolproFF::Groups
+///////////
+
+/** Constructor */
+MolproFF::Groups::Groups() : FFBase::Groups()
+{
+    _qm = this->getUniqueID();
+    _mm = this->getUniqueID();
+}
+
+/** Copy constructor */
+MolproFF::Groups::Groups(const Groups &other)
+                : FFBase::Groups(other), _qm(other._qm), _mm(other._mm)
+{}
+
+/** Destructor */
+MolproFF::Groups::~Groups()
+{}
+
+/** Static instance of this class returned by all MolproFF objects */
+MolproFF::Groups MolproFF::Groups::default_group;
+
+///////////
 /////////// Implementation of MolproFF::QMMolecule
 ///////////
 
@@ -137,8 +162,9 @@ MolproFF::QMMolecule::QMMolecule()
 {}
 
 /** Construct a QM molecule from the passed Molecule */
-MolproFF::QMMolecule::QMMolecule(const Molecule &molecule)
-         : mol(molecule)
+MolproFF::QMMolecule::QMMolecule(const PartialMolecule &molecule,  
+                                 const QString &linkatoms)
+         : mol(molecule), linkatoms_property(linkatoms)
 {
     //create the arrays that hold all of the element types
     //of each atom in the molecule, and all of the indicies
@@ -902,34 +928,6 @@ MolproFF::MolproFF(const MolproFF &other)
 MolproFF::~MolproFF()
 {}
 
-/** Copy assignment */
-MolproFF& MolproFF::operator=(const MolproFF &other)
-{
-    if (this != &other)
-    {
-        FFBase::operator=(other);
-
-        spce = other.spce;
-        switchfunc = other.switchfunc;
-        molpro_exe = other.molpro_exe;
-        molpro_tmpdir = other.molpro_tmpdir;
-        qm_coords = other.qm_coords;
-        mm_coords_and_charges = other.mm_coords_and_charges;
-        qm_mols = other.qm_mols;
-        mm_mols = other.mm_mols;
-        qm_version = other.qm_version;
-        zero_nrg = other.zero_nrg;
-        rebuild_mm = other.rebuild_mm;
-        rebuild_all = other.rebuild_all;
-        need_recalculate_qmmm = other.need_recalculate_qmmm;
-
-        components_ptr = dynamic_cast<const MolproFF::Components*>( &(FFBase::components()) );
-        BOOST_ASSERT( components_ptr != 0 );
-    }
-
-    return *this;
-}
-
 /** Register the components of this forcefield */
 void MolproFF::registerComponents()
 {
@@ -940,10 +938,45 @@ void MolproFF::registerComponents()
     components_ptr = ptr.release();
 }
 
+/** Copy assignment function used by derived classes */
+void MolproFF::_pvt_copy(const FFBase &ffbase)
+{
+    const MolproFF &other = dynamic_cast<const MolproFF&>(ffbase);
+    
+    spce = other.spce;
+    switchfunc = other.switchfunc;
+    molpro_exe = other.molpro_exe;
+    molpro_tmpdir = other.molpro_tmpdir;
+    qm_coords = other.qm_coords;
+    mm_coords_and_charges = other.mm_coords_and_charges;
+    qm_mols = other.qm_mols;
+    mm_mols = other.mm_mols;
+    qm_version = other.qm_version;
+    zero_nrg = other.zero_nrg;
+    rebuild_mm = other.rebuild_mm;
+    rebuild_all = other.rebuild_all;
+    need_recalculate_qmmm = other.need_recalculate_qmmm;
+
+    components_ptr = dynamic_cast<const MolproFF::Components*>( &(FFBase::components()) );
+    BOOST_ASSERT( components_ptr != 0 );
+}
+
+/** Tell the forcefield that it has to recalculate everything from
+    scratch */
+void MolproFF::mustNowRecalculateFromScratch()
+{
+    if (not rebuild_all)
+    {
+        rebuild_all = true;
+        need_recalculate_qmmm = true;
+        rebuild_mm.clear();
+    }
+}
+
 /** Set the Molpro executable to use to calculate the energy
      - this increments the major version number if this changes
      the Molpro executable */
-void MolproFF::setMolproExe(const QFileInfo &molpro)
+bool MolproFF::setMolproExe(const QFileInfo &molpro)
 {
     if (molpro_exe != molpro)
     {
@@ -951,19 +984,267 @@ void MolproFF::setMolproExe(const QFileInfo &molpro)
         this->incrementMajorVersion();
         qm_version.increment();
     }
+    
+    return isDirty();
 }
 
 /** Change the temporary directory in which the molpro job is run */
-void MolproFF::setMolproTempDir(const QDir &tempdir)
+bool MolproFF::setMolproTempDir(const QDir &tempdir)
 {
-    molpro_tmpdir = tempdir;
+    if (molpro_tmpdir != tempdir)
+    {
+        molpro_tmpdir = tempdir;
+        this->incrementMajorVersion();
+        qm_version.increment();
+    }
+    
+    return isDirty();
+}
+
+/** Set the origin of the energy scale - this is the absolute
+    energy which corresponds to zero. The supplied energy
+    must be in kcal mol, and the energies returned by
+    this forcefield will be the QM energy minus this
+    origin energy. The purpose of this is to bring
+    the QM energies down to the same sort of magnitude
+    as the other MM energies, thereby minimising numerical
+    errors when calculating energy differences. */
+bool MolproFF::setEnergyOrigin(double nrg)
+{
+    //what is the change in origin?
+    double delta = (zero_nrg * hartree) - nrg;
+
+    //add this change onto the current energy
+    if (not isZero(delta))
+    {
+        //we need to know if this forcefield is already dirty
+        bool is_already_dirty = this->isDirty();
+
+        //we need to increment the minor version as the forcefield
+        //is undergoing a change that will alter the energy. This
+        //will set the forcefield as dirty if it isn't already
+        this->incrementMinorVersion();
+
+        this->changeComponent( components().total(), delta );
+        this->changeComponent( components().qm(), delta );
+
+        //now save the new zero energy in hartrees
+        zero_nrg = convertTo(nrg, hartree);
+
+        //if the forcefield was originally clean, then we need to
+        //restore the clean status
+        if (not is_already_dirty)
+            this->setClean();
+    }
+    
+    return isDirty();
+}
+
+/** Return the zero energy of the forcefield, in internal
+    units (kcal mol-1) */
+double MolproFF::energyOrigin() const
+{
+    return zero_nrg * hartree;
+}
+
+/** Set the space within which the molecules exist */
+bool MolproFF::setSpace(const Space &space)
+{
+    if (spce != space)
+    {
+        spce = space;
+        this->incrementMajorVersion();
+        this->mustNowRecalculateFromScratch();
+    }
+    
+    return isDirty();
+}
+
+/** Set the switching function used to evaluate the electrostatic
+    cutoff between the QM and MM atoms */
+bool MolproFF::setSwitchingFunction(const SwitchingFunction &switchingfunction)
+{
+    if (switchfunc != switchingfunction)
+    {
+        switchfunc = switchingfunction;
+        this->incrementMajorVersion();
+        this->mustNowRecalculateFromScratch();
+    }
+    
+    return isDirty();
+}
+
+/** Set the property 'name' to the value 'value'. This
+    returns whether or not this changes the forcefield,
+    and therefore the energy of the forcefield will need
+    to be recalculated
+
+    Note that you can only set pre-defined properties
+    of forcefields - an exception will be thrown if
+    you try to set the value of a property that does
+    not exist in this forcefield.
+
+    \throw SireBase::missing_property
+*/
+bool MolproFF::setProperty(const QString &name, const Property &value)
+{
+    if ( name == QLatin1String("space") )
+    {
+        this->setSpace(value);
+        return this->isDirty();
+    }
+    else if ( name == QLatin1String("switching function") )
+    {
+        this->setSwitchingFunction(value);
+        return this->isDirty();
+    }
+    else if ( name == QLatin1String("energy origin") )
+    {
+        if (not value.isA<VariantProperty>())
+            throw SireError::invalid_cast( QObject::tr(
+                "You must set the energy origin via a double (which will "
+                "implicitly convert to a VariantProperty). You cannot "
+                "set the energy origin from a %1!").arg(value.what()),
+                      CODELOC )
+    
+        bool ok;
+         
+        double nrg = value.asA<VariantProperty>().toDouble(&ok);
+        
+        if (not ok)
+            throw SireError::invalid_cast( QObject::tr(
+                "You must set the energy origin to a number!"),
+                    CODELOC );
+    
+        this->setEnergyOrigin(nrg);
+        
+        return this->isDirty();
+    }
+    else if ( name == QLatin1String("molpro") )
+    {
+        if (not value.isA<VariantProperty>())
+            throw SireError::invalid_cast( QObject::tr(
+                "You must set location of the Molpro executable "
+                "via a string or file object (which will "
+                "implicitly convert to a VariantProperty). You cannot "
+                "set the energy origin from a %1!").arg(value.what()),
+                      CODELOC )
+    
+        bool ok;
+        
+        const VariantProperty &varprop = value.asA<VariantProperty>();
+        
+        if (varprop.canConvert<QFileInfo>())
+            this->setMolproExe( varprop.value<QFileInfo>() );
+        else if (varprop.canConvert<QFile>())
+            this->setMolproExe( QFileInfo( varprop.value<QFile>() ) );
+        else if (varprop.canConvert<QString>())
+            this->setMolproExe( QFileInfo( varprop.value<QString>() ) );
+        else
+            throw SireError::invalid_cast( QObject::tr(
+                "You must set the Molpro executable to a valid file path!"),
+                    CODELOC );
+                    
+        return this->isDirty();
+    }
+    else if ( name == QLatin1String("molpro temporary directory") )
+    {
+        if (not value.isA<VariantProperty>())
+            throw SireError::invalid_cast( QObject::tr(
+                "You must set location of the Molpro temporary directory "
+                "via a string or file object (which will "
+                "implicitly convert to a VariantProperty). You cannot "
+                "set the energy origin from a %1!").arg(value.what()),
+                      CODELOC )
+    
+        bool ok;
+        
+        const VariantProperty &varprop = value.asA<VariantProperty>();
+        
+        if (varprop.canConvert<QFileInfo>())
+            this->setMolproTempDir( varprop.value<QFileInfo>() );
+        else if (varprop.canConvert<QDir>())
+            this->setMolproTempDir( QFileInfo( varprop.value<QDir>() ) );
+        else if (varprop.canConvert<QString>())
+            this->setMolproTempDir( QFileInfo( varprop.value<QString>() ) );
+        else
+            throw SireError::invalid_cast( QObject::tr(
+                "You must set the Molpro temporary directory to a "
+                "valid directory path!"),
+                    CODELOC );
+                    
+        return this->isDirty();
+    }
+    else
+        return FFBase::setProperty(name, value);
+}
+
+/** Return the property associated with the name 'name'
+
+    \throw SireBase::missing_property
+*/
+Property MolproFF::getProperty(const QString &name) const
+{
+    if ( name == QLatin1String("space") )
+    {
+        return this->space();
+    }
+    else if ( name == QLatin1String("switching function") )
+    {
+        return this->switchingFunction();
+    }
+    else if ( name == QLatin1String("energy origin") )
+    {
+        return VariantProperty(this->energyOrigin());
+    }
+    else if ( name == QLatin1String("molpro") )
+    {
+        return VariantProperty(this->molproExe());
+    }
+    else if ( name == QLatin1String("molpro temporary directory") )
+    {
+        return VariantProperty(this->molproTempDir());
+    }
+    else
+        return FFBase::getProperty(name);
+}
+
+/** Return whether or not this contains a property with the name 'name' */
+bool MolproFF::containsProperty(const QString &name) const
+{
+    return ( name == QLatin1String("space") ) or
+           ( name == QLatin1String("switching function") ) or
+           ( name == QLatin1String("energy origin") ) or
+           ( name == QLatin1String("molpro") ) or
+           ( name == QLatin1String("molpro temporary directory") ) or
+           FFBase::containsProperty(name);
+}
+
+/** Return all of the properties of this forcefield, indexed by name */
+QHash<QString,Property> MolproFF::properties() const
+{
+    QHash<QString,Property> props;
+    
+    props.insert( QLatin1String("space"), this->space() );
+    props.insert( QLatin1String("switching function"), this->switchingFunction() );
+    props.insert( QLatin1String("energy origin"),
+                    VariantProperty(this->energyOrigin()) );
+    props.insert( QLatin1String("molpro"),
+                    VariantProperty(this->molproExe()) );
+    props.insert( QLatin1String("molpro temporary directory"),
+                    VariantProperty(this->molproTempDir()) );
+    
+    props.unite( FFBase::properties() );
+    
+    return props;
 }
 
 /** Add a molecule to the QM region
 
     \throw SireMol::duplicate_molecule
 */
-int MolproFF::_pvt_addToQM(const Molecule &molecule)
+bool MolproFF::_pvt_addToQM(const PartialMolecule &molecule,
+                           const ParameterMap &map)
 {
     MoleculeID molid = molecule.ID();
 
@@ -978,26 +1259,27 @@ int MolproFF::_pvt_addToQM(const Molecule &molecule)
     //do we already contain this molecule?
     if (qm_mols.contains(molid))
     {
-        if (this->change(molecule))
-            return MolproFF::CHANGE;
+        if ( qm_mols[molid].add(molecule, map.source(parameters().linkAtoms())) )
+        {
+            rebuild_all = true;
+            rebuild_mm.clear();
+            return true;
+        }
         else
-            return MolproFF::NOCHANGE;
+            return false;
     }
     else
     {
         //create a QM molecule to represent this molecule
-        MolproFF::QMMolecule qmmol(molecule);
-
-        //add the coordinates of the QM molecule to the
-        //QM coordinates array
-        qmmol.addTo(qm_coords);
+        MolproFF::QMMolecule qmmol(molecule,
+                                   map.source(parameters().linkAtoms()));
 
         //save the qm molecule, indexed by its ID
-        qm_mols.insert(molid, MolproFF::QMMolecule(molecule));
+        qm_mols.insert(molid, qmmol);
         rebuild_all = true;
         rebuild_mm.clear();
 
-        return MolproFF::ADD;
+        return true
     }
 }
 
@@ -1006,7 +1288,8 @@ int MolproFF::_pvt_addToQM(const Molecule &molecule)
     \throw SireMol::duplicate_molecule
     \throw SireError::incompatible_error
 */
-int MolproFF::_pvt_addToMM(const Molecule &molecule, const ParameterMap &map)
+int MolproFF::_pvt_addToMM(const PartialMolecule &molecule, 
+                           const ParameterMap &map)
 {
     MoleculeID molid = molecule.ID();
 
@@ -1021,10 +1304,16 @@ int MolproFF::_pvt_addToMM(const Molecule &molecule, const ParameterMap &map)
     //do we already contain this molecule?
     if (mm_mols.contains(molid))
     {
-        if (this->change(molecule))
-            return MolproFF::CHANGE;
+        if (mm_mols[molid].add(molecule,
+                               map.source(parameters().coulomb())))
+        {
+            if (not rebuild_all)
+                rebuild_mm.insert(molid);
+                
+            return true;
+        }
         else
-            return MolproFF::NOCHANGE;
+            return false;
     }
     else
     {
@@ -1039,7 +1328,7 @@ int MolproFF::_pvt_addToMM(const Molecule &molecule, const ParameterMap &map)
         if (not rebuild_all)
             rebuild_mm.insert(molid);
 
-        return MolproFF::ADD;
+        return true;
     }
 }
 
@@ -1047,11 +1336,10 @@ int MolproFF::_pvt_addToMM(const Molecule &molecule, const ParameterMap &map)
 
     \throw SireMol::duplicate_molecule
 */
-bool MolproFF::addToQM(const Molecule &molecule)
+bool MolproFF::addToQM(const PartialMolecule &molecule,
+                       const ParameterMap &map)
 {
-    int change = this->_pvt_addToQM(molecule);
-
-    if (change & ADD)
+    if (this->_pvt_addToQM(molecule,map))
     {
         this->incrementMajorVersion();
 
@@ -1059,8 +1347,6 @@ bool MolproFF::addToQM(const Molecule &molecule)
         //and removal from the QM region
         qm_version.increment();
     }
-    else if (change and CHANGE)
-        this->incrementMinorVersion();
 
     return isDirty();
 }
@@ -1069,37 +1355,36 @@ bool MolproFF::addToQM(const Molecule &molecule)
 
     \throw SireMol::duplicate_molecule
 */
-bool MolproFF::addToQM(const QList<Molecule> &molecules)
+bool MolproFF::addToQM(const QList<PartialMolecule> &molecules,
+                       const ParameterMap &map)
 {
     // Add the molecules to a copy of this forcefield - this
     // is to maintain the invariant
 
     MolproFF copy(*this);
 
-    int change = 0;
+    bool added = false;
 
     for (QList<Molecule>::const_iterator it = molecules.constBegin();
          it != molecules.constEnd();
          ++it)
     {
-        int added_mol = copy._pvt_addToQM(*it);
+        bool this_added = copy._pvt_addToQM(*it, map);
 
-        change = change | added_mol;
+        added = added or this_added;
     }
 
-    if (change & ADD)
+    if (added)
     {
         copy.incrementMajorVersion();
 
         //increment the version number tracking addition
         //and removal from the QM region
         qm_version.increment();
-    }
-    else if (change & CHANGE)
-        copy.incrementMinorVersion();
 
-    //everything's ok - copy back to the original
-    *this = copy;
+        //everything's ok - copy back to the original
+        *this = copy;
+    }
 
     return isDirty();
 }
@@ -1108,14 +1393,13 @@ bool MolproFF::addToQM(const QList<Molecule> &molecules)
 
     \throw SireMol::duplicate_molecule
 */
-bool MolproFF::addToMM(const Molecule &molecule, const ParameterMap &map)
+bool MolproFF::addToMM(const PartialMolecule &molecule, 
+                       const ParameterMap &map)
 {
-    int change = this->_pvt_addToMM(molecule, map);
-
-    if (change & ADD)
+    if (this->_pvt_addToMM(molecule, map))
+    {
         this->incrementMajorVersion();
-    else if (change & CHANGE)
-        this->incrementMinorVersion();
+    }
 
     return isDirty();
 }
@@ -1124,7 +1408,7 @@ bool MolproFF::addToMM(const Molecule &molecule, const ParameterMap &map)
 
     \throw SireMol::duplicate_molecule
 */
-bool MolproFF::addToMM(const QList<Molecule> &molecules,
+bool MolproFF::addToMM(const QList<PartialMolecule> &molecules,
                        const ParameterMap &map)
 {
     //add the Molecules to a copy of this forcefield -
@@ -1132,94 +1416,119 @@ bool MolproFF::addToMM(const QList<Molecule> &molecules,
 
     MolproFF copy(*this);
 
-    int change = 0;
+    bool added = false;
 
     for (QList<Molecule>::const_iterator it = molecules.begin();
          it != molecules.end();
          ++it)
     {
-        int added_mol = copy._pvt_addToMM(*it, map);
+        bool this_added = copy._pvt_addToMM(*it, map);
 
-        change = change | added_mol;
+        added = added or this_added;
     }
 
-    if (change & ADD)
+    if (added)
+    {
         copy.incrementMajorVersion();
-    else if (change & CHANGE)
-        copy.incrementMinorVersion();
 
-    //everything's ok - copy back to the original
-    *this = copy;
+        //everything's ok - copy back to the original
+        *this = copy;
+    }
 
     return isDirty();
 }
 
-/** Change the object 'obj'. Does nothing if this object
-    is not in this forcefield */
-template<class T>
-bool MolproFF::_pvt_change(const T &obj)
+/** Change the molecule 'molecule' */
+bool MolproFF::_pvt_change(const PartialMolecule &molecule)
 {
-    MoleculeID molid = obj.ID();
+    MoleculeID molid = molecule.ID();
 
     if (qm_mols.contains(molid))
     {
         //the object exists in the QM region - make the change
-        if (qm_mols[molid].change(obj))
+        if (qm_mols[molid].change(molecule))
         {
             //the molecule changed, so we need to rebuild
             //all of the arrays...
             rebuild_all = true;
             rebuild_mm.clear();
-
-            //increment the minor version number
-            this->incrementMinorVersion();
+            
+            return true;
         }
     }
     else if (mm_mols.contains(molid))
     {
         //the object exists in the MM region
-        if (rebuild_all)
+        if (mm_mols[molid].change(molecule))
         {
-            //if we already have to rebuild everything, then we
-            //may as well just change the entire molecule
-            if ( mm_mols[molid].change( Molecule(obj) ) )
-            {
-                this->incrementMinorVersion();
-            }
-        }
-        else
-        {
-            //try to save time by just changing the object
-            if (mm_mols[molid].change(obj))
-            {
+            if (not rebuild_all)
                 rebuild_mm.insert(molid);
-                this->incrementMinorVersion();
-            }
+            
+            return true;
         }
     }
 
-    return isDirty();
+    return false;
 }
 
 /** Change the molecule 'molecule'. Does nothing if this
     molecule is not in this forcefield. */
-bool MolproFF::change(const Molecule &molecule)
+bool MolproFF::change(const PartialMolecule &molecule)
 {
-    return this->_pvt_change<Molecule>(molecule);
+    if (this->_pvt_change(molecule))
+        this->incrementMinorVersion();
+        
+    return true;
 }
 
-/** Change the residue 'residue'. Does nothing if this
-    residue is not in this forcefield. */
-bool MolproFF::change(const Residue &residue)
+/** Change a whole load of molecules */
+bool MolproFF::change(const QHash<MoleculeID,PartialMolecule> &molecules)
 {
-    return this->_pvt_change<Residue>(residue);
+    MolproFF copy(*this);
+    
+    bool changed = false;
+    
+    for (QHash<MoleculeID,PartialMolecule>::const_iterator it = molecules.begin();
+         it != molecules.end();
+         ++it)
+    {
+        bool this_changed = copy._pvt_change(it.value());
+        
+        changed = changed or this_changed;
+    }
+    
+    if (changed)
+    {
+        copy.incrementMinorVersion();
+        *this = copy;
+    }
+    
+    return isDirty();
 }
 
-/** Change the atom 'atom'. Does nothing if this
-    atom is not in this forcefield. */
-bool MolproFF::change(const NewAtom &atom)
+/** Change a whole load of molecules */
+bool MolproFF::change(const QHash<MoleculeID,PartialMolecule> &molecules)
 {
-    return this->_pvt_change<NewAtom>(atom);
+    MolproFF copy(*this);
+    
+    bool changed = false;
+    
+    for (QHash<MoleculeID,PartialMolecule>::const_iterator it = molecules.begin();
+         it != molecules.end();
+         ++it)
+    {
+        bool this_changed = copy._pvt_change(it.value());
+        
+        changed = changed or this_changed;
+    }
+    
+    if (changed)
+    {
+        copy.incrementMinorVersion();
+        *this = copy;
+    }
+    
+    return isDirty();
 }
 
 /** Remove the molecule 'mol'. Does nothing if this
@@ -1580,43 +1889,6 @@ QString MolproFF::molproCommandInput()
               .arg( nQMAtomsInArray() )
               .arg( qmCoordString(), mmCoordAndChargesString(),
                     energyCmdString() );
-}
-
-/** Set the origin of the energy scale - this is the absolute
-    energy which corresponds to zero. The supplied energy
-    must be in kcal mol, and the energies returned by
-    this forcefield will be the QM energy minus this
-    origin energy. The purpose of this is to bring
-    the QM energies down to the same sort of magnitude
-    as the other MM energies, thereby minimising numerical
-    errors when calculating energy differences. */
-void MolproFF::setEnergyOrigin(double nrg)
-{
-    //what is the change in origin?
-    double delta = (zero_nrg * hartree) - nrg;
-
-    //add this change onto the current energy
-    if (not isZero(delta))
-    {
-        //we need to know if this forcefield is already dirty
-        bool is_already_dirty = this->isDirty();
-
-        //we need to increment the minor version as the forcefield
-        //is undergoing a change that will alter the energy. This
-        //will set the forcefield as dirty if it isn't already
-        this->incrementMinorVersion();
-
-        this->changeComponent( components().total(), delta );
-        this->changeComponent( components().qm(), delta );
-
-        //now save the new zero energy in hartrees
-        zero_nrg = convertTo(nrg, hartree);
-
-        //if the forcefield was originally clean, then we need to
-        //restore the clean status
-        if (not is_already_dirty)
-            this->setClean();
-    }
 }
 
 /** Use the passed MolproSession to recalculate the energy of

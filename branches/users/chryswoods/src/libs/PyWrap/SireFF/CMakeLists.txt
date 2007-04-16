@@ -28,6 +28,8 @@ set ( WRAPFF_SOURCES
       FFComponent.pypp.cpp
       FFExpression.pypp.cpp
       FFGroupID.pypp.cpp
+      FFLocalCalculator.pypp.cpp
+      FFLocalWorker.pypp.cpp
       FFProcessor.pypp.cpp
       FFProcessorBase.pypp.cpp
       FFThreadProcessor.pypp.cpp

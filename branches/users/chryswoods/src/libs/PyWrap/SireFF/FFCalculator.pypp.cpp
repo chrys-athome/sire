@@ -23,152 +23,21 @@ const char* pvt_get_name(const SireFF::FFCalculator&){ return "SireFF::FFCalcula
 
 void register_FFCalculator_class(){
 
-    bp::class_< SireFF::FFCalculator, bp::bases< SireFF::FFCalculatorBase >, boost::noncopyable >( "FFCalculator" )    
-        .def( 
-            "ID"
-            , (::SireFF::ForceFieldID ( ::SireFF::FFCalculator::* )(  ) )( &::SireFF::FFCalculator::ID ) )    
-        .def( 
-            "add"
-            , (bool ( ::SireFF::FFCalculator::* )( ::SireMol::PartialMolecule const &,::SireFF::ParameterMap const & ) )( &::SireFF::FFCalculator::add )
-            , ( bp::arg("molecule"), bp::arg("map")=::SireFF::ParameterMap( ) ) )    
-        .def( 
-            "add"
-            , (bool ( ::SireFF::FFCalculator::* )( ::QList<SireMol::PartialMolecule> const &,::SireFF::ParameterMap const & ) )( &::SireFF::FFCalculator::add )
-            , ( bp::arg("molecules"), bp::arg("map")=::SireFF::ParameterMap( ) ) )    
-        .def( 
-            "addTo"
-            , (bool ( ::SireFF::FFCalculator::* )( ::SireFF::FFBase::Group const &,::SireMol::PartialMolecule const &,::SireFF::ParameterMap const & ) )( &::SireFF::FFCalculator::addTo )
-            , ( bp::arg("group"), bp::arg("molecule"), bp::arg("map")=::SireFF::ParameterMap( ) ) )    
-        .def( 
-            "addTo"
-            , (bool ( ::SireFF::FFCalculator::* )( ::SireFF::FFBase::Group const &,::QList<SireMol::PartialMolecule> const &,::SireFF::ParameterMap const & ) )( &::SireFF::FFCalculator::addTo )
-            , ( bp::arg("group"), bp::arg("molecules"), bp::arg("map")=::SireFF::ParameterMap( ) ) )    
-        .def( 
-            "assertContains"
-            , (void ( ::SireFF::FFCalculator::* )( ::SireFF::FFComponent const & ) )( &::SireFF::FFCalculator::assertContains )
-            , ( bp::arg("component") ) )    
+    bp::class_< SireFF::FFCalculator, bp::bases< SireFF::FFLocalCalculator >, boost::noncopyable >( "FFCalculator" )    
         .def( 
             "calculateEnergy"
             , (void ( ::SireFF::FFCalculator::* )(  ) )( &::SireFF::FFCalculator::calculateEnergy ) )    
         .def( 
-            "change"
-            , (bool ( ::SireFF::FFCalculator::* )( ::SireMol::PartialMolecule const & ) )( &::SireFF::FFCalculator::change )
-            , ( bp::arg("molecule") ) )    
-        .def( 
-            "change"
-            , (bool ( ::SireFF::FFCalculator::* )( ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> const & ) )( &::SireFF::FFCalculator::change )
-            , ( bp::arg("molecules") ) )    
-        .def( 
-            "change"
-            , (bool ( ::SireFF::FFCalculator::* )( ::QList<SireMol::PartialMolecule> const & ) )( &::SireFF::FFCalculator::change )
-            , ( bp::arg("molecules") ) )    
-        .def( 
-            "contains"
-            , (bool ( ::SireFF::FFCalculator::* )( ::SireMol::PartialMolecule const & ) )( &::SireFF::FFCalculator::contains )
-            , ( bp::arg("molecule") ) )    
-        .def( 
-            "contains"
-            , (bool ( ::SireFF::FFCalculator::* )( ::SireMol::PartialMolecule const &,::SireFF::FFBase::Group const & ) )( &::SireFF::FFCalculator::contains )
-            , ( bp::arg("molecule"), bp::arg("group") ) )    
-        .def( 
-            "containsProperty"
-            , (bool ( ::SireFF::FFCalculator::* )( ::QString const & ) )( &::SireFF::FFCalculator::containsProperty )
-            , ( bp::arg("name") ) )    
-        .def( 
-            "contents"
-            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::FFCalculator::* )( ::SireFF::FFBase::Group const & ) )( &::SireFF::FFCalculator::contents )
-            , ( bp::arg("group") ) )    
-        .def( 
-            "contents"
-            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::FFCalculator::* )(  ) )( &::SireFF::FFCalculator::contents ) )    
-        .def( 
             "forceField"
-            , (::SireFF::ForceField ( ::SireFF::FFCalculator::* )(  ) const)( &::SireFF::FFCalculator::forceField ) )    
+            , (::SireFF::ForceField ( ::SireFF::FFCalculator::* )(  ) )( &::SireFF::FFCalculator::forceField ) )    
         .def( 
             "getEnergies"
             , (double ( ::SireFF::FFCalculator::* )( ::SireCAS::Values & ) )( &::SireFF::FFCalculator::getEnergies )
             , ( bp::arg("values") ) )    
         .def( 
-            "getProperty"
-            , (::SireBase::Property ( ::SireFF::FFCalculator::* )( ::QString const & ) )( &::SireFF::FFCalculator::getProperty )
-            , ( bp::arg("name") ) )    
-        .def( 
-            "groupsReferringTo"
-            , (::QSet<SireFF::FFBase::Group> ( ::SireFF::FFCalculator::* )( ::SireMol::MoleculeID ) )( &::SireFF::FFCalculator::groupsReferringTo )
-            , ( bp::arg("molid") ) )    
-        .def( 
-            "isClean"
-            , (bool ( ::SireFF::FFCalculator::* )(  ) )( &::SireFF::FFCalculator::isClean ) )    
-        .def( 
-            "isDirty"
-            , (bool ( ::SireFF::FFCalculator::* )(  ) )( &::SireFF::FFCalculator::isDirty ) )    
-        .def( 
-            "molecule"
-            , (::SireMol::PartialMolecule ( ::SireFF::FFCalculator::* )( ::SireMol::MoleculeID ) )( &::SireFF::FFCalculator::molecule )
-            , ( bp::arg("molid") ) )    
-        .def( 
-            "molecule"
-            , (::SireMol::PartialMolecule ( ::SireFF::FFCalculator::* )( ::SireMol::MoleculeID,::SireFF::FFBase::Group const & ) )( &::SireFF::FFCalculator::molecule )
-            , ( bp::arg("molid"), bp::arg("group") ) )    
-        .def( 
-            "moleculeIDs"
-            , (::QSet<SireMol::MoleculeID> ( ::SireFF::FFCalculator::* )(  ) )( &::SireFF::FFCalculator::moleculeIDs ) )    
-        .def( 
-            "moleculeIDs"
-            , (::QSet<SireMol::MoleculeID> ( ::SireFF::FFCalculator::* )( ::SireFF::FFBase::Group const & ) )( &::SireFF::FFCalculator::moleculeIDs )
-            , ( bp::arg("group") ) )    
-        .def( 
-            "molecules"
-            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::FFCalculator::* )(  ) )( &::SireFF::FFCalculator::molecules ) )    
-        .def( 
-            "molecules"
-            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::FFCalculator::* )( ::QSet<SireMol::MoleculeID> const & ) )( &::SireFF::FFCalculator::molecules )
-            , ( bp::arg("molids") ) )    
-        .def( 
-            "molecules"
-            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::FFCalculator::* )( ::SireFF::FFBase::Group const & ) )( &::SireFF::FFCalculator::molecules )
-            , ( bp::arg("group") ) )    
-        .def( 
-            "mustNowRecalculateFromScratch"
-            , (void ( ::SireFF::FFCalculator::* )(  ) )( &::SireFF::FFCalculator::mustNowRecalculateFromScratch ) )    
-        .def( 
-            "properties"
-            , (::QHash<QString,SireBase::Property> ( ::SireFF::FFCalculator::* )(  ) )( &::SireFF::FFCalculator::properties ) )    
-        .def( 
-            "refersTo"
-            , (bool ( ::SireFF::FFCalculator::* )( ::SireMol::MoleculeID ) )( &::SireFF::FFCalculator::refersTo )
-            , ( bp::arg("molid") ) )    
-        .def( 
-            "refersTo"
-            , (bool ( ::SireFF::FFCalculator::* )( ::SireMol::MoleculeID,::SireFF::FFBase::Group const & ) )( &::SireFF::FFCalculator::refersTo )
-            , ( bp::arg("molid"), bp::arg("group") ) )    
-        .def( 
-            "remove"
-            , (bool ( ::SireFF::FFCalculator::* )( ::SireMol::PartialMolecule const & ) )( &::SireFF::FFCalculator::remove )
-            , ( bp::arg("molecule") ) )    
-        .def( 
-            "remove"
-            , (bool ( ::SireFF::FFCalculator::* )( ::QList<SireMol::PartialMolecule> const & ) )( &::SireFF::FFCalculator::remove )
-            , ( bp::arg("molecules") ) )    
-        .def( 
-            "removeFrom"
-            , (bool ( ::SireFF::FFCalculator::* )( ::SireFF::FFBase::Group const &,::SireMol::PartialMolecule const & ) )( &::SireFF::FFCalculator::removeFrom )
-            , ( bp::arg("group"), bp::arg("molecule") ) )    
-        .def( 
-            "removeFrom"
-            , (bool ( ::SireFF::FFCalculator::* )( ::SireFF::FFBase::Group const &,::QList<SireMol::PartialMolecule> const & ) )( &::SireFF::FFCalculator::removeFrom )
-            , ( bp::arg("group"), bp::arg("molecules") ) )    
-        .def( 
             "setForceField"
             , (bool ( ::SireFF::FFCalculator::* )( ::SireFF::ForceField const & ) )( &::SireFF::FFCalculator::setForceField )
             , ( bp::arg("forcefield") ) )    
-        .def( 
-            "setProperty"
-            , (bool ( ::SireFF::FFCalculator::* )( ::QString const &,::SireBase::Property const & ) )( &::SireFF::FFCalculator::setProperty )
-            , ( bp::arg("name"), bp::arg("property") ) )    
-        .def( 
-            "version"
-            , (::SireBase::Version ( ::SireFF::FFCalculator::* )(  ) )( &::SireFF::FFCalculator::version ) )    
         .def( "__str__", &pvt_get_name);
 
 }

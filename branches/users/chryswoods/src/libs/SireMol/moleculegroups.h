@@ -79,24 +79,33 @@ public:
     bool remove(const QString &groupname);
 
     bool add(const PartialMolecule &molecule, MoleculeGroupID groupid);
-    bool add(const QVector<PartialMolecule> &molecules, MoleculeGroupID groupid);
+    bool add(const QList<PartialMolecule> &molecules, MoleculeGroupID groupid);
 
     bool remove(const PartialMolecule &molecule, MoleculeGroupID groupid);
-    bool remove(const QVector<PartialMolecule> &molecules, MoleculeGroupID groupid);
+    bool remove(const QList<PartialMolecule> &molecules, MoleculeGroupID groupid);
 
     bool change(const PartialMolecule &molecule);
-    bool change(const QVector<PartialMolecule> &molecules);
+    bool change(const QList<PartialMolecule> &molecules);
     bool change(const QHash<MoleculeID,PartialMolecule> &molecules);
 
     bool remove(const PartialMolecule &molecule);
-    bool remove(const QVector<PartialMolecule> &molecules);
+    bool remove(const QList<PartialMolecule> &molecules);
 
-    QVector<PartialMolecule> molecules() const;
+    PartialMolecule molecule(MoleculeID molid) const;
+    PartialMolecule molecule(MoleculeID molid, MoleculeGroupID groupid) const;
+    PartialMolecule molecule(MoleculeID molid, 
+                             const QSet<MoleculeGroupID> &groupids) const;
+
+    QHash<MoleculeID,PartialMolecule> molecules() const;
 
     QSet<MoleculeID> moleculeIDs() const;
 
-    QVector<MoleculeGroup> groups() const;
-    QVector<MoleculeGroup> groups(MoleculeID molid) const;
+    QHash<MoleculeGroupID,MoleculeGroup> groups() const;
+    QHash<MoleculeGroupID,MoleculeGroup> 
+                      groups(const QSet<MoleculeGroupID> &groupids) const;
+    
+    QHash<MoleculeGroupID,MoleculeGroup> groups(MoleculeID molid) const;
+    QHash<MoleculeGroupID,MoleculeGroup> groups(const PartialMolecule &molecule) const;
 
     const MoleculeGroup& group(MoleculeGroupID groupid) const;
     const MoleculeGroup& group(const QString &name) const;
@@ -116,10 +125,6 @@ public:
 private:
     void reindex();
     void _pvt_index(const MoleculeGroup &group);
-
-    void synchronise(MoleculeGroupID groupid);
-    void synchronise(MoleculeID molid);
-    void synchronise();
 
     Molecule getLatest(MoleculeID molid) const;
 

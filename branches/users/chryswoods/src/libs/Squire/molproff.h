@@ -42,7 +42,7 @@
 #include "SireVol/space.h"
 #include "SireVol/coordgroup.h"
 
-#include "SireMol/molecule.h"
+#include "SireMol/partialmolecule.h"
 #include "SireMol/element.h"
 
 #include "SireMM/atomiccharges.h"
@@ -73,10 +73,9 @@ using SireBase::MajVersion;
 using SireCAS::Symbols;
 using SireCAS::Values;
 
-using SireMol::Molecule;
+using SireMol::PartialMolecule;
+using SireMol::AtomSelection;
 using SireMol::MoleculeID;
-using SireMol::Residue;
-using SireMol::NewAtom;
 using SireMol::Element;
 using SireMol::CutGroupID;
 
@@ -90,6 +89,8 @@ using SireVol::CoordGroup;
 using SireMM::AtomicCharges;
 using SireMM::SwitchingFunction;
 
+using SireBase::Property;
+
 /** This class implements a forcefield that calculates the QM energy
     of atoms in the QM region as they are polarised by the charges
     of atoms in the MM region. This forcefield uses Molpro to perform
@@ -97,11 +98,6 @@ using SireMM::SwitchingFunction;
     forcefield on a MolproProcessor, as this allows the forcefield
     to use a single instance of Molpro, rather than starting
     and stopping Molpro for each energy evaluation.
-
-    Note that the current version only
-    supports entire molecules in the QM or MM regions. Later
-    versions of this forcefield will expand this support to
-    include parts of molecules, and defined link atoms.
 
     @author Christopher Woods
 */
@@ -123,8 +119,6 @@ public:
     MolproFF(const MolproFF &other);
 
     ~MolproFF();
-
-    MolproFF& operator=(const MolproFF &other);
 
     class SQUIRE_EXPORT Components : public SireFF::FFBase::Components
     {
@@ -172,12 +166,54 @@ public:
             return coulomb_params;
         }
 
+        /** Return the default source of the link atom parameters
+            (used if we have a partial molecule in the QM region) */
+        const ParameterName& linkAtoms() const
+        {
+            return link_atoms;
+        }
+
         static Parameters default_sources;
 
      private:
         /** The name and default source property of the coulomb parameters
             of the MM region */
         ParameterName coulomb_params;
+        
+        /** The name and default source property of the link atom parameters,
+            which are used to add link atoms when only parts of the molecule
+            are added to the QM region */
+        ParameterName link_atoms;
+    };
+
+    class SIREMM_EXPORT Groups : public FFBase::Groups
+    {
+    friend class MolproFF;
+
+    public:
+        Groups();
+        Groups(const Groups &other);
+
+        ~Groups();
+
+        FFBase::Group qm() const
+        {
+            return _qm;
+        }
+
+        FFBase::Group mm() const
+        {
+            return _mm;
+        }
+
+    protected:
+        static Groups default_group;
+
+    private:
+        /** The ID of the QM group */
+        FFBase::Group _qm;
+        /** The ID of the MM group */
+        FFBase::Group _mm;
     };
 
     const Parameters& parameters() const
@@ -188,6 +224,11 @@ public:
     const MolproFF::Components& components() const
     {
         return *components_ptr;
+    }
+
+    const MolproFF::Groups& groups() const
+    {
+        return MolproFF::Groups::default_group;
     }
 
     static const char* typeName()
@@ -208,34 +249,80 @@ public:
     const QFileInfo& molproExe() const;
     const QDir& molproTempDir() const;
 
-    void setMolproExe(const QFileInfo &molpro);
-    void setMolproTempDir(const QDir &tempdir);
+    virtual bool setMolproExe(const QFileInfo &molpro);
+    virtual bool setMolproTempDir(const QDir &tempdir);
 
-    virtual void setEnergyOrigin(double nrg_zero);
+    double energyOrigin() const;
+
+    virtual bool setEnergyOrigin(double nrg_zero);
 
     const Space& space() const;
     const SwitchingFunction& switchingFunction() const;
+    
+    virtual bool setSpace(const Space &space);
+    virtual bool setSwitchingFunction(const SwitchingFunction &switchfunc);
+
+    bool setProperty(const QString &name, const Property &value);
+    Property getProperty(const QString &name) const;
+    bool containsProperty(const QString &name) const;
 
     quint32 qmVersion() const;
-
-    bool addToQM(const Molecule &molecule);
-    bool addToMM(const Molecule &molecule,
-                 const ParameterMap &map = ParameterMap());
-
-    bool addToQM(const QList<Molecule> &molecules);
-    bool addToMM(const QList<Molecule> &molecules,
-                 const ParameterMap &map = ParameterMap());
-
-    bool change(const Molecule &molecule);
-    bool change(const Residue &residue);
-    bool change(const NewAtom &atom);
-
-    bool remove(const Molecule &molecule);
 
     virtual QString molproCommandInput();
 
     const QVector<double>& mmCoordsAndChargesArray() const;
     const QVector<double>& qmCoordsArray() const;
+
+    void mustNowRecalculateFromScratch();
+    
+    bool change(const PartialMolecule &molecule);
+
+    bool change(const QHash<MoleculeID,PartialMolecule> &molecules);
+    bool change(const QList<PartialMolecule> &molecules);
+
+    bool add(const PartialMolecule &mol, const ParameterMap &map = ParameterMap());
+
+    bool addTo(const FFBase::Group &group, const PartialMolecule &molecule,
+               const ParameterMap &map = ParameterMap());
+
+    bool addToQM(const PartialMolecule &molecule,
+                 const ParameterMap &map = ParameterMap());
+                
+    bool addToMM(const PartialMolecule &molecule,
+                 const ParameterMap &map = ParameterMap());
+
+    bool remove(const PartialMolecule &molecule);
+
+    bool removeFrom(const FFBase::Group &group,
+                    const PartialMolecule &molecule);
+                    
+    bool removeFromQM(const PartialMolecule &molecule);
+    bool removeFromMM(const PartialMolecule &molecule);
+
+    bool contains(const PartialMolecule &molecule) const;
+    
+    bool contains(const PartialMolecule &molecule,
+                  const FFBase::Group &group) const;
+    
+    bool refersTo(MoleculeID molid) const;
+
+    bool refersTo(MoleculeID molid,
+                  const FFBase::Group &group) const;
+
+    QSet<FFBase::Group> groupsReferringTo(MoleculeID molid) const;
+    
+    QSet<MoleculeID> moleculeIDs() const;
+    
+    QSet<MoleculeID> moleculeIDs(const FFBase::Group &group) const;
+    
+    PartialMolecule molecule(MoleculeID molid) const;
+    
+    PartialMolecule molecule(MoleculeID molid,
+                             const FFBase::Group &group) const;
+    
+    QHash<MoleculeID,PartialMolecule> contents() const;
+
+    QHash<MoleculeID,PartialMolecule> contents(const FFBase::Group &group) const;
 
 protected:
     void recalculateEnergy();
@@ -245,6 +332,8 @@ protected:
     //protected functions designed to be overloaded by child classes, and
     //only called by MolproCalculator
     virtual Values recalculateEnergy(MolproSession &session);
+
+    void _pvt_copy(const FFBase &other);
 
 private:
     void registerComponents();
@@ -257,21 +346,22 @@ private:
     int nMMAtomsInArray() const;
     int nAtomsInArray() const;
 
-    enum { NOCHANGE = 0x0000, CHANGE = 0x0001, ADD = 0x0010 };
-
-    int _pvt_addToQM(const Molecule &molecule);
-    int _pvt_addToMM(const Molecule &molecule, const ParameterMap &map);
+    bool _pvt_addToQM(const PartialMolecule &molecule,
+                      const ParameterMap &map);
+    
+    bool _pvt_addToMM(const PartialMolecule &molecule, 
+                      const ParameterMap &map);
 
     void rebuildQMCoordGroup();
 
-    template<class T>
-    bool _pvt_change(const T &obj);
+    bool _pvt_change(const PartialMolecule &molecule);
 
     class QMMolecule
     {
     public:
         QMMolecule();
-        QMMolecule(const Molecule &molecule);
+        QMMolecule(const PartialMolecule &molecule,
+                   const QString &link_atoms);
 
         QMMolecule(const QMMolecule &other);
 
@@ -279,11 +369,15 @@ private:
 
         QMMolecule& operator=(const QMMolecule &other);
 
-        const Molecule& molecule() const;
+        const PartialMolecule& molecule() const;
 
-        bool change(const Molecule &molecule);
-        bool change(const Residue &residue);
-        bool change(const NewAtom &atom);
+        bool add(const PartialMolecule &molecule,
+                 const QString &link_atoms = QString::null);
+
+        bool change(const PartialMolecule &molecule,
+                    const QString &link_atoms = QString::null);
+
+        bool remove(const AtomSelection &selected_atoms);
 
         void addTo(QVector<double> &qm_array);
         void update(QVector<double> &qm_array) const;
@@ -294,7 +388,11 @@ private:
 
     private:
         /** The molecule itself */
-        Molecule mol;
+        PartialMolecule mol;
+
+        /** The name of the property that contains the link
+            atoms for this molecule */
+        QString linkatoms_property;
 
         /** The element types of all of the atoms */
         QVector< QVector<Element> > elements;
@@ -308,7 +406,7 @@ private:
     {
     public:
         MMMolecule();
-        MMMolecule(const Molecule &molecule,
+        MMMolecule(const PartialMolecule &molecule,
                    const QString &charge_property);
 
         MMMolecule(const MMMolecule &other);
@@ -317,11 +415,15 @@ private:
 
         MMMolecule& operator=(const MMMolecule &other);
 
-        const Molecule& molecule() const;
+        const PartialMolecule& molecule() const;
 
-        bool change(const Molecule &molecule);
-        bool change(const Residue &residue);
-        bool change(const NewAtom &atom);
+        bool add(const PartialMolecule &molecule,
+                 const QString &chgproperty = QString::null);
+        
+        bool change(const PartialMolecule &molecule,
+                    const QString &chgproperty = QString::null);
+
+        bool remove(const AtomSelection &selected_atoms);
 
         void update(const CoordGroup &qm_coordgroup,
                     const Space &space, const SwitchingFunction &switchfunc);
@@ -337,7 +439,7 @@ private:
 
     private:
         /** The molecule itself */
-        Molecule mol;
+        PartialMolecule mol;
 
         /** The name of the property containing the
             atomic charges of the atoms. */

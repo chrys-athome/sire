@@ -35,7 +35,7 @@ void register_MoleculeGroups_class(){
             , ( bp::arg("molecule"), bp::arg("groupid") ) )    
         .def( 
             "add"
-            , (bool ( ::SireMol::MoleculeGroups::* )( ::QVector<SireMol::PartialMolecule> const &,::SireMol::MoleculeGroupID ) )( &::SireMol::MoleculeGroups::add )
+            , (bool ( ::SireMol::MoleculeGroups::* )( ::QList<SireMol::PartialMolecule> const &,::SireMol::MoleculeGroupID ) )( &::SireMol::MoleculeGroups::add )
             , ( bp::arg("molecules"), bp::arg("groupid") ) )    
         .def( 
             "assertContains"
@@ -51,7 +51,7 @@ void register_MoleculeGroups_class(){
             , ( bp::arg("molecule") ) )    
         .def( 
             "change"
-            , (bool ( ::SireMol::MoleculeGroups::* )( ::QVector<SireMol::PartialMolecule> const & ) )( &::SireMol::MoleculeGroups::change )
+            , (bool ( ::SireMol::MoleculeGroups::* )( ::QList<SireMol::PartialMolecule> const & ) )( &::SireMol::MoleculeGroups::change )
             , ( bp::arg("molecules") ) )    
         .def( 
             "change"
@@ -79,11 +79,19 @@ void register_MoleculeGroups_class(){
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "groups"
-            , (::QVector<SireMol::MoleculeGroup> ( ::SireMol::MoleculeGroups::* )(  ) const)( &::SireMol::MoleculeGroups::groups ) )    
+            , (::QHash<SireMol::MoleculeGroupID, SireMol::MoleculeGroup> ( ::SireMol::MoleculeGroups::* )(  ) const)( &::SireMol::MoleculeGroups::groups ) )    
         .def( 
             "groups"
-            , (::QVector<SireMol::MoleculeGroup> ( ::SireMol::MoleculeGroups::* )( ::SireMol::MoleculeID ) const)( &::SireMol::MoleculeGroups::groups )
+            , (::QHash<SireMol::MoleculeGroupID, SireMol::MoleculeGroup> ( ::SireMol::MoleculeGroups::* )( ::QSet<SireMol::MoleculeGroupID> const & ) const)( &::SireMol::MoleculeGroups::groups )
+            , ( bp::arg("groupids") ) )    
+        .def( 
+            "groups"
+            , (::QHash<SireMol::MoleculeGroupID, SireMol::MoleculeGroup> ( ::SireMol::MoleculeGroups::* )( ::SireMol::MoleculeID ) const)( &::SireMol::MoleculeGroups::groups )
             , ( bp::arg("molid") ) )    
+        .def( 
+            "groups"
+            , (::QHash<SireMol::MoleculeGroupID, SireMol::MoleculeGroup> ( ::SireMol::MoleculeGroups::* )( ::SireMol::PartialMolecule const & ) const)( &::SireMol::MoleculeGroups::groups )
+            , ( bp::arg("molecule") ) )    
         .def( 
             "groupsContaining"
             , &::SireMol::MoleculeGroups::groupsContaining
@@ -92,6 +100,18 @@ void register_MoleculeGroups_class(){
             "groupsReferringTo"
             , &::SireMol::MoleculeGroups::groupsReferringTo
             , ( bp::arg("molid") ) )    
+        .def( 
+            "molecule"
+            , (::SireMol::PartialMolecule ( ::SireMol::MoleculeGroups::* )( ::SireMol::MoleculeID ) const)( &::SireMol::MoleculeGroups::molecule )
+            , ( bp::arg("molid") ) )    
+        .def( 
+            "molecule"
+            , (::SireMol::PartialMolecule ( ::SireMol::MoleculeGroups::* )( ::SireMol::MoleculeID,::SireMol::MoleculeGroupID ) const)( &::SireMol::MoleculeGroups::molecule )
+            , ( bp::arg("molid"), bp::arg("groupid") ) )    
+        .def( 
+            "molecule"
+            , (::SireMol::PartialMolecule ( ::SireMol::MoleculeGroups::* )( ::SireMol::MoleculeID,::QSet<SireMol::MoleculeGroupID> const & ) const)( &::SireMol::MoleculeGroups::molecule )
+            , ( bp::arg("molid"), bp::arg("groupids") ) )    
         .def( 
             "moleculeIDs"
             , &::SireMol::MoleculeGroups::moleculeIDs )    
@@ -125,7 +145,7 @@ void register_MoleculeGroups_class(){
             , ( bp::arg("molecule"), bp::arg("groupid") ) )    
         .def( 
             "remove"
-            , (bool ( ::SireMol::MoleculeGroups::* )( ::QVector<SireMol::PartialMolecule> const &,::SireMol::MoleculeGroupID ) )( &::SireMol::MoleculeGroups::remove )
+            , (bool ( ::SireMol::MoleculeGroups::* )( ::QList<SireMol::PartialMolecule> const &,::SireMol::MoleculeGroupID ) )( &::SireMol::MoleculeGroups::remove )
             , ( bp::arg("molecules"), bp::arg("groupid") ) )    
         .def( 
             "remove"
@@ -133,7 +153,7 @@ void register_MoleculeGroups_class(){
             , ( bp::arg("molecule") ) )    
         .def( 
             "remove"
-            , (bool ( ::SireMol::MoleculeGroups::* )( ::QVector<SireMol::PartialMolecule> const & ) )( &::SireMol::MoleculeGroups::remove )
+            , (bool ( ::SireMol::MoleculeGroups::* )( ::QList<SireMol::PartialMolecule> const & ) )( &::SireMol::MoleculeGroups::remove )
             , ( bp::arg("molecules") ) )    
         .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::MoleculeGroups >,

@@ -41,6 +41,10 @@
 
 #include "FFGroupID.pypp.hpp"
 
+#include "FFLocalCalculator.pypp.hpp"
+
+#include "FFLocalWorker.pypp.hpp"
+
 #include "FFProcessor.pypp.hpp"
 
 #include "FFProcessorBase.pypp.hpp"
@@ -84,6 +88,8 @@ BOOST_PYTHON_MODULE(_FF){
 
     register_FFCalculatorBase_class();
 
+    register_FFLocalCalculator_class();
+
     register_FFCalculator_class();
 
     register_FFComponent_class();
@@ -91,6 +97,10 @@ BOOST_PYTHON_MODULE(_FF){
     register_FFExpression_class();
 
     register_FFGroupID_class();
+
+    register_FFWorkerBase_class();
+
+    register_FFLocalWorker_class();
 
     register_FFProcessorBase_class();
 
@@ -101,8 +111,6 @@ BOOST_PYTHON_MODULE(_FF){
     register_FFThreadWorker_class();
 
     register_FFWorker_class();
-
-    register_FFWorkerBase_class();
 
     register_ForceField_class();
 

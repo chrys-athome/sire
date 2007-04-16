@@ -14,6 +14,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 set ( SIREFF_SOURCES
       errors.cpp
       ffbase.cpp
+      ffcalculatorbase.cpp
       ffcalculator.cpp
       ffcomponent.cpp
       ffexpression.cpp

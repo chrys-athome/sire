@@ -31,7 +31,9 @@
 #include "moleculegroup.h"
 
 #include "moleculeversion.h"
+
 #include "SireMol/errors.h"
+#include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -46,9 +48,131 @@ using namespace SireBase;
 /////////// Implementation of MoleculeGroupPvt
 ///////////
 
+namespace SireMol
+{
+
+using SireBase::Version;
+
+namespace detail
+{
+
+/** This is the private implementation of MoleculeGroup - this
+    allows the MoleculeGroup class to be implicitly shared.
+
+    @author Christopher Woods
+*/
+class MoleculeGroupPvt : public QSharedData
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const MoleculeGroupPvt&);
+friend QDataStream& ::operator>>(QDataStream&, MoleculeGroupPvt&);
+
+public:
+    MoleculeGroupPvt();
+    MoleculeGroupPvt(const QString &name);
+
+    MoleculeGroupPvt(const QString &name,
+                     const QHash<MoleculeID,PartialMolecule> &molecules);
+
+    MoleculeGroupPvt(const QString &name,
+                     const QList<PartialMolecule> &molecules);
+
+    MoleculeGroupPvt(const MoleculeGroupPvt &other);
+
+    ~MoleculeGroupPvt();
+
+    MoleculeGroupPvt& operator=(const MoleculeGroupPvt &other);
+
+    bool operator==(const MoleculeGroupPvt &other) const;
+    bool operator!=(const MoleculeGroupPvt &other) const;
+
+    const QHash<MoleculeID,PartialMolecule>& molecules() const;
+
+    QSet<MoleculeID> moleculeIDs() const;
+
+    const PartialMolecule& molecule(MoleculeID molid) const;
+
+    const QString& name() const;
+
+    MoleculeGroupID ID() const;
+    const Version& version() const;
+
+    bool add(const PartialMolecule &molecule);
+    bool change(const PartialMolecule &molecule);
+    bool remove(const PartialMolecule &molecule);
+
+    bool remove(MoleculeID molid);
+    bool remove(const QSet<MoleculeID> &molids);
+
+    bool add(const QList<PartialMolecule> &molecules);
+    bool change(const QList<PartialMolecule> &molecules);
+    bool remove(const QList<PartialMolecule> &molecules);
+
+    bool change(const QHash<MoleculeID,PartialMolecule> &molecules);
+
+    void rename(const QString &newname);
+
+    bool refersTo(MoleculeID molid) const;
+
+    bool contains(const PartialMolecule &molecule) const;
+
+private:
+    bool _pvt_add(const PartialMolecule &molecule);
+    bool _pvt_remove(const PartialMolecule &molecule);
+    bool _pvt_remove(MoleculeID molid);
+    bool _pvt_change(const PartialMolecule &molecule);
+
+    /** Incremint used to increment that ID number */
+    static SireBase::Incremint molgroup_incremint;
+
+    /** All of the molecules in this group */
+    QHash<MoleculeID,PartialMolecule> mols;
+
+    /** The name of this group */
+    QString nme;
+
+    /** The ID and version number of this group */
+    SireBase::IDMajMinVersion id_and_version;
+};
+
+/** Return the name of the group */
+inline const QString& MoleculeGroupPvt::name() const
+{
+    return nme;
+}
+
+/** Return the ID of the group */
+inline MoleculeGroupID MoleculeGroupPvt::ID() const
+{
+    return MoleculeGroupID(id_and_version.ID());
+}
+
+/** Return the version of the group */
+inline const Version& MoleculeGroupPvt::version() const
+{
+    return id_and_version.version();
+}
+
+/** Return the array of all molecules in the group */
+inline const QHash<MoleculeID,PartialMolecule>& MoleculeGroupPvt::molecules() const
+{
+    return mols;
+}
+
+/** Return whether or not we contain the molecule 'molecule' */
+inline bool MoleculeGroupPvt::refersTo(MoleculeID molid) const
+{
+    return mols.contains(molid);
+}
+
+} //end of namespace detail
+
+} //end of namespace SireMol
+
 Incremint MoleculeGroupPvt::molgroup_incremint;
 
-static const RegisterMetaType<MoleculeGroupPvt> r_molgrouppvt;
+static const RegisterMetaType<MoleculeGroupPvt> r_molgrouppvt( MAGIC_ONLY,
+                                            "SireMol::detail::MoleculeGroupPvt" );
 
 /** Serialise to a binary data stream */
 QDataStream SIRESTREAM_EXPORT &operator<<(QDataStream &ds,
@@ -76,8 +200,6 @@ QDataStream SIRESTREAM_EXPORT &operator>>(QDataStream &ds,
         SharedDataStream(ds) >> molgrouppvt.mols
                              >> molgrouppvt.nme
                              >> molgrouppvt.id_and_version;
-
-        molgrouppvt.reindex();
     }
     else
         throw version_error(v, "1", r_molgrouppvt, CODELOC);
@@ -95,22 +217,26 @@ MoleculeGroupPvt::MoleculeGroupPvt(const QString &name)
                  : QSharedData(), nme(name), id_and_version(&molgroup_incremint)
 {}
 
-/** Reindex this group */
-void MoleculeGroupPvt::reindex()
+/** Construct a named group that contains 'molecules'
+
+    \throw SireMol::duplicate_molecule
+*/
+MoleculeGroupPvt::MoleculeGroupPvt(const QString &name,
+                                   const QHash<MoleculeID,PartialMolecule> &molecules)
+                 : QSharedData(),
+                   mols(molecules),
+                   nme(name),
+                   id_and_version(&molgroup_incremint)
 {
-    idx.clear();
-
-    int nmols = mols.count();
-
-    if (nmols > 0)
+    for (QHash<MoleculeID,PartialMolecule>::const_iterator it = molecules.begin();
+         it != molecules.end();
+         ++it)
     {
-        idx.reserve(nmols);
-
-        const PartialMolecule *molarray = mols.constData();
-
-        for (int i=0; i<nmols; ++i)
+        if (it.key() != it->ID())
         {
-            idx.insert(molarray[i].ID(), i);
+            throw SireError::invalid_arg( QObject::tr(
+                "You must supply a consistent hash of molecules!!!"),
+                      CODELOC );
         }
     }
 }
@@ -120,20 +246,18 @@ void MoleculeGroupPvt::reindex()
     \throw SireMol::duplicate_molecule
 */
 MoleculeGroupPvt::MoleculeGroupPvt(const QString &name,
-                                   const QVector<PartialMolecule> &molecules)
+                                   const QList<PartialMolecule> &molecules)
                  : QSharedData(),
-                   mols(molecules),
                    nme(name),
                    id_and_version(&molgroup_incremint)
 {
-    this->reindex();
+    this->add(molecules);
 }
 
 /** Copy constructor */
 MoleculeGroupPvt::MoleculeGroupPvt(const MoleculeGroupPvt &other)
                   : QSharedData(),
                     mols(other.mols),
-                    idx(other.idx),
                     nme(other.nme),
                     id_and_version(other.id_and_version)
 {}
@@ -146,7 +270,6 @@ MoleculeGroupPvt::~MoleculeGroupPvt()
 MoleculeGroupPvt& MoleculeGroupPvt::operator=(const MoleculeGroupPvt &other)
 {
     mols = other.mols;
-    idx = other.idx;
     nme = other.nme;
     id_and_version = other.id_and_version;
 
@@ -171,39 +294,33 @@ bool MoleculeGroupPvt::operator!=(const MoleculeGroupPvt &other) const
             this->version() != other.version());
 }
 
-/** Return the index */
-const QHash<MoleculeID,int>& MoleculeGroupPvt::index() const
-{
-    return idx;
-}
-
 /** Return the molecule with ID == molid
 
     \throw SireMol::missing_molecule
 */
 const PartialMolecule& MoleculeGroupPvt::molecule(MoleculeID molid) const
 {
-    QHash<MoleculeID,int>::const_iterator it = idx.find(molid);
+    QHash<MoleculeID,PartialMolecule>::const_iterator it = mols.find(molid);
 
-    if (it == idx.end())
+    if (it == mols.end())
         throw SireMol::missing_molecule( QObject::tr(
                 "There is no molecule with ID == %1 in the group "
                 "\"%2\" (%3)")
                     .arg(molid).arg(this->name(), id_and_version.toString()),
                         CODELOC );
 
-    return mols.constData()[it.value()];
+    return *it;
 }
 
 /** Return whether or not this group contains all of any version
     of the molecule 'molecule' */
 bool MoleculeGroupPvt::contains(const PartialMolecule &molecule) const
 {
-    QHash<MoleculeID,int>::const_iterator it = idx.find(molecule.ID());
+    QHash<MoleculeID,PartialMolecule>::const_iterator it = mols.find(molecule.ID());
 
-    if (it != idx.end())
+    if (it != mols.end())
     {
-        return mols.constData()[it.value()].contains(molecule.selectedAtoms());
+        return it->contains(molecule.selectedAtoms());
     }
     else
         return false;
@@ -212,7 +329,26 @@ bool MoleculeGroupPvt::contains(const PartialMolecule &molecule) const
 /** Return the set of IDs of all of the molecules in this group */
 QSet<MoleculeID> MoleculeGroupPvt::moleculeIDs() const
 {
-    return idx.keys().toSet();
+    return mols.keys().toSet();
+}
+
+bool MoleculeGroupPvt::_pvt_add(const PartialMolecule &molecule)
+{
+    if (not this->refersTo(molecule.ID()))
+    {
+        mols.insert(molecule.ID(), molecule);
+        return true;
+    }
+    else
+    {
+        //this updates an existing copy of the molecule
+        PartialMolecule &oldmol = mols[molecule.ID()];
+        
+        bool changed = oldmol.change(molecule);
+        bool added = oldmol.add(molecule.selectedAtoms());
+        
+        return changed or added;
+    }
 }
 
 /** Add the molecule 'molecule' to this group.
@@ -223,30 +359,22 @@ QSet<MoleculeID> MoleculeGroupPvt::moleculeIDs() const
 */
 bool MoleculeGroupPvt::add(const PartialMolecule &molecule)
 {
-    QHash<MoleculeID,int>::const_iterator it = idx.constFind(molecule.ID());
-
-    if (it == idx.constEnd())
+    if (this->_pvt_add(molecule))
     {
-        //this is a new molecule
-        idx.insert(molecule.ID(), mols.count());
-        mols.append(molecule);
-
         id_and_version.incrementMajor();
-
         return true;
     }
     else
-    {
-        //this updates an existing copy of the molecule
-        const PartialMolecule &oldmol = this->molecule(molecule.ID());
+        return false;
+}
 
-        if (oldmol != molecule)
+bool MoleculeGroupPvt::_pvt_change(const PartialMolecule &molecule)
+{
+    if (mols.contains(molecule.ID()))
+    {
+        if (mols[molecule.ID()].change(molecule))
         {
-            if (mols.data()[it.value()].add(molecule.selectedAtoms()))
-            {
-                id_and_version.incrementMinor();
-                return true;
-            }
+            return true;
         }
     }
 
@@ -257,18 +385,52 @@ bool MoleculeGroupPvt::add(const PartialMolecule &molecule)
     molecule is not in this group */
 bool MoleculeGroupPvt::change(const PartialMolecule &molecule)
 {
-    QHash<MoleculeID,int>::const_iterator it = idx.constFind(molecule.ID());
-
-    if (it != idx.constEnd())
+    if (this->_pvt_change(molecule))
     {
-        //replace the existing molecule (if it has indeed changed)
-        if (molecule.version() != mols.constData()[it.value()].version())
+        id_and_version.incrementMinor();
+        return true;
+    }
+    else
+        return false;
+}
+
+bool MoleculeGroupPvt::_pvt_remove(MoleculeID molid)
+{
+    if (mols.contains(molid))
+    {
+        mols.remove(molid);
+        return true;
+    }
+    else
+        return false;
+}
+
+/** Completely remove the molecule with ID == molid */
+bool MoleculeGroupPvt::remove(MoleculeID molid)
+{
+    if (this->_pvt_remove(molid))
+    {
+        id_and_version.incrementMajor();
+        return true;
+    }
+    else
+        return false;
+}
+
+bool MoleculeGroupPvt::_pvt_remove(const PartialMolecule &molecule)
+{
+    MoleculeID molid = molecule.ID();
+
+    if ( mols.contains(molid) )
+    {
+        PartialMolecule &oldmol = mols[molid];
+        
+        if ( oldmol.remove(molecule.selectedAtoms()) )
         {
-            if (mols.data()[it.value()].change(molecule))
-            {
-                id_and_version.incrementMinor();
-                return true;
-            }
+            if (oldmol.selectedNone())
+                mols.remove(molid);
+            
+            return true;
         }
     }
 
@@ -280,64 +442,58 @@ bool MoleculeGroupPvt::change(const PartialMolecule &molecule)
     parts of the molecule in 'molecule' */
 bool MoleculeGroupPvt::remove(const PartialMolecule &molecule)
 {
-    MoleculeID molid = molecule.ID();
-
-    QHash<MoleculeID,int>::const_iterator it = idx.constFind(molid);
-
-    if ( it != idx.constEnd() )
+    if (this->_pvt_remove(molecule))
     {
-        int index = it.value();
-
-        //remove the parts of the molecule
-        if (mols.data()[index].remove(molecule.selectedAtoms()))
-        {
-            if (mols.data()[index].selectedNone())
-            {
-                //remove the molecule from this list
-                mols.remove(index);
-
-                //remove the molecule from the index
-                idx.remove(molid);
-
-                //reindex the remaining molecules
-                for (QHash<MoleculeID,int>::iterator it = idx.begin();
-                     it != idx.end();
-                     ++it)
-                {
-                    if (it.value() > index)
-                        it.value() = it.value() - 1;
-                }
-            }
-
-            id_and_version.incrementMajor();
-            return true;
-        }
+        id_and_version.incrementMajor();
+        return true;
     }
-
-    return false;
+    else
+        return false;
 }
 
 /** Add a whole load of molecules to this group */
-bool MoleculeGroupPvt::add(const QVector<PartialMolecule> &molecules)
+bool MoleculeGroupPvt::add(const QList<PartialMolecule> &molecules)
 {
+    if (molecules.count() == 0)
+        return false;
+    else if (molecules.count() == 1)
+        return this->add(molecules.first());
+  
+    MoleculeGroupPvt copy(*this);
+    
     bool changed = false;
 
-    for (QVector<PartialMolecule>::const_iterator it = molecules.begin();
+    for (QList<PartialMolecule>::const_iterator it = molecules.begin();
          it != molecules.end();
          ++it)
     {
-        bool added = this->add(*it);
+        bool added = copy._pvt_add(*it);
         changed = changed or added;
     }
 
-    return changed;
+    if (changed)
+    {
+        copy.id_and_version.incrementMajor();
+        *this = copy;
+        
+        return true;
+    }
+    else
+        return false;
 }
 
 /** Change a whole load of molecules */
 bool MoleculeGroupPvt::change(const QHash<MoleculeID,PartialMolecule> &molecules)
 {
+    if (molecules.count() == 0)
+        return false;
+    else if (molecules.count() == 1)
+        return this->change( *(molecules.begin()) );
+
     bool changed = false;
 
+    MoleculeGroupPvt copy(*this);
+    
     if (molecules.count() < mols.count())
     {
         //it will be quicker to check whether each changed molecule
@@ -346,109 +502,124 @@ bool MoleculeGroupPvt::change(const QHash<MoleculeID,PartialMolecule> &molecules
              it != molecules.end();
              ++it)
         {
-            QHash<MoleculeID,int>::const_iterator index = idx.constFind(it.key());
-
-            if (index != idx.constEnd())
-            {
-                bool mol_changed = mols[*index].change(*it);
-                changed = changed or mol_changed;
-            }
+            bool mol_changed = copy._pvt_change(*it);
+            changed = changed or mol_changed;
         }
     }
     else
     {
         //it is quicker to loop through each molecule in this group
         //and see whether it has changed...
-        int nmols = mols.count();
-        const PartialMolecule *mols_array = mols.constData();
-
-        for (int i=0; i<nmols; ++i)
+        
+        foreach (MoleculeID molid, mols.keys())
         {
-            const PartialMolecule &testmol = mols_array[i];
-
-            QHash<MoleculeID,PartialMolecule>::const_iterator
-                                      it = molecules.find(testmol.ID());
-
-            if (it != molecules.end())
+            if (molecules.contains(molid))
             {
-                bool mol_changed = mols[i].change(*it);
+                bool mol_changed = copy._pvt_change( molecules[molid] );
                 changed = changed or mol_changed;
             }
         }
     }
-
-    return changed;
+    
+    if (changed)
+    {
+        copy.id_and_version.incrementMinor();
+        *this = copy;
+        return true;
+    }
+    else
+        return false;
 }
 
 /** Change a whole load of molecules */
-bool MoleculeGroupPvt::change(const QVector<PartialMolecule> &molecules)
+bool MoleculeGroupPvt::change(const QList<PartialMolecule> &molecules)
 {
+    if (molecules.count() == 0)
+        return false;
+    else if (molecules.count() == 1)
+        return this->change(molecules.first());
+
     bool changed = false;
 
-    for (QVector<PartialMolecule>::const_iterator it = molecules.constBegin();
+    MoleculeGroupPvt copy(*this);
+
+    for (QList<PartialMolecule>::const_iterator it = molecules.constBegin();
          it != molecules.constEnd();
          ++it)
     {
-        //change the molecule
-        QHash<MoleculeID,int>::const_iterator it2 = idx.constFind(it->ID());
-
-        if (it2 != idx.constEnd())
-        {
-            const PartialMolecule &oldmol = mols.constData()[it2.value()];
-
-            if (oldmol.version() != it->version())
-            {
-                bool mol_changed = mols.data()[it2.value()].change(*it);
-                changed = changed or mol_changed;
-            }
-        }
+        bool mol_changed = copy._pvt_change(*it);
+        changed = changed or mol_changed;
     }
 
     if (changed)
-        id_and_version.incrementMinor();
+    {
+        copy.id_and_version.incrementMinor();
+        *this = copy;
+        return true;
+    }
+    else
+        return false;
+}
 
-    return changed;
+/** Remove all molecules whose IDs are in 'molids' */
+bool MoleculeGroupPvt::remove(const QSet<MoleculeID> &molids)
+{
+    if (molids.count() == 0)
+        return false;
+    else if (molids.count() == 1)
+    {
+        return this->remove( *(molids.begin()) );
+    }
+
+    MoleculeGroupPvt copy(*this);
+    
+    bool changed = false;
+    
+    foreach (MoleculeID molid, molids)
+    {
+        bool removed = copy._pvt_remove(molid);
+        
+        changed = changed or removed;
+    }
+    
+    if (changed)
+    {
+        copy.id_and_version.incrementMajor();
+        *this = copy;
+        return true;
+    }
+    else
+        return false;
 }
 
 /** Remove a whole load of molecules */
-bool MoleculeGroupPvt::remove(const QVector<PartialMolecule> &molecules)
+bool MoleculeGroupPvt::remove(const QList<PartialMolecule> &molecules)
 {
-    bool removed = false;
-    bool needs_reindex = false;
+    if (molecules.count() == 0)
+        return false;
+    else if (molecules.count() == 1)
+        return this->remove(molecules.first());
+        
+    bool changed = false;
 
-    for (QVector<PartialMolecule>::const_iterator it = molecules.constBegin();
+    MoleculeGroupPvt copy(*this);
+
+    for (QList<PartialMolecule>::const_iterator it = molecules.constBegin();
          it != molecules.constEnd();
          ++it)
     {
-        //remove the molecule
-        QHash<MoleculeID,int>::const_iterator it2 = idx.constFind(it->ID());
-
-        if (it2 != idx.constEnd())
-        {
-            PartialMolecule &oldmol = mols[it2.value()];
-
-            bool mol_removed = oldmol.remove(it->selectedAtoms());
-
-            if (oldmol.selectedNone())
-            {
-                //completely remove the molecule
-                mols.remove(it2.value());
-                needs_reindex = true;
-            }
-
-            removed = removed or mol_removed;
-        }
+        bool removed = copy._pvt_remove(*it);
+        changed = changed or removed;
     }
 
-    if (removed)
+    if (changed)
     {
-        if (needs_reindex)
-            this->reindex();
-
-        id_and_version.incrementMajor();
+        copy.id_and_version.incrementMajor();
+        *this = copy;
+        return true;
     }
-
-    return removed;
+    else
+        return false;
 }
 
 /** Rename this group - this also changes the ID number of the group */
@@ -505,7 +676,13 @@ MoleculeGroup::MoleculeGroup(const QString &name)
 
 /** Construct a named group that contains the passed molecules */
 MoleculeGroup::MoleculeGroup(const QString &name,
-                             const QVector<PartialMolecule> &molecules)
+                             const QHash<MoleculeID,PartialMolecule> &molecules)
+              : d( new MoleculeGroupPvt(name,molecules) )
+{}
+
+/** Construct a named group that contains the passed molecules */
+MoleculeGroup::MoleculeGroup(const QString &name,
+                             const QList<PartialMolecule> &molecules)
               : d( new MoleculeGroupPvt(name,molecules) )
 {}
 
@@ -537,6 +714,77 @@ bool MoleculeGroup::operator==(const MoleculeGroup &other) const
 bool MoleculeGroup::operator!=(const MoleculeGroup &other) const
 {
     return d != other.d and *d != *(other.d);
+}
+
+/** Return the name of the group */
+const QString& MoleculeGroup::name() const
+{
+    return d->name();
+}
+
+/** Return the molecule with ID == molid
+
+    \throw SireMol::missing_molecule
+*/
+const PartialMolecule& MoleculeGroup::operator[](MoleculeID molid) const
+{
+    return d->molecule(molid);
+}
+
+/** Return the molecule with ID == molid
+
+    \throw SireMol::missing_molecule
+*/
+const PartialMolecule& MoleculeGroup::at(MoleculeID molid) const
+{
+    return d->molecule(molid);
+}
+
+/** Return the molecule with ID == molid
+
+    \throw SireMol::missing_molecule
+*/
+const PartialMolecule& MoleculeGroup::molecule(MoleculeID molid) const
+{
+    return d->molecule(molid);
+}
+
+/** Return the ID number of this group */
+MoleculeGroupID MoleculeGroup::ID() const
+{
+    return d->ID();
+}
+
+/** Return the version of this group */
+const Version& MoleculeGroup::version() const
+{
+    return d->version();
+}
+
+/** Return the array of all molecules in this group */
+const QHash<MoleculeID,PartialMolecule>& MoleculeGroup::molecules() const
+{
+    return d->molecules();
+}
+
+/** Return whether or not this group contains any part
+    of the molecule with ID == molid */
+bool MoleculeGroup::refersTo(MoleculeID molid) const
+{
+    return d->refersTo(molid);
+}
+
+/** Return whether or not this group contains all of
+    any version of the molecule 'molecule' */
+bool MoleculeGroup::contains(const PartialMolecule &molecule) const
+{
+    return d->contains(molecule);
+}
+
+/** Return the number of molecules in the group */
+int MoleculeGroup::count() const
+{
+    return molecules().count();
 }
 
 /** Add the molecule 'molecule' to this group. */
@@ -574,13 +822,13 @@ bool MoleculeGroup::remove(const PartialMolecule &molecule)
     any existing copies of a molecule with the copy from
     'molecules' if the copy in 'molecules' has a newer
     version number. */
-bool MoleculeGroup::add(const QVector<PartialMolecule> &molecules)
+bool MoleculeGroup::add(const QList<PartialMolecule> &molecules)
 {
     return d->add(molecules);
 }
 
 /** Change a whole load of molecules */
-bool MoleculeGroup::change(const QVector<PartialMolecule> &molecules)
+bool MoleculeGroup::change(const QList<PartialMolecule> &molecules)
 {
     return d->change(molecules);
 }
@@ -592,9 +840,21 @@ bool MoleculeGroup::change(const QHash<MoleculeID,PartialMolecule> &molecules)
 }
 
 /** Remove a whole load of molecules */
-bool MoleculeGroup::remove(const QVector<PartialMolecule> &molecules)
+bool MoleculeGroup::remove(const QList<PartialMolecule> &molecules)
 {
     return d->remove(molecules);
+}
+
+/** Remove all parts of the molecule whose ID == molid */
+bool MoleculeGroup::remove(MoleculeID molid)
+{
+    return d->remove(molid);
+}
+
+/** Remove all parts of all molecules whose IDs are in 'molids' */
+bool MoleculeGroup::remove(const QSet<MoleculeID> &molids)
+{
+    return d->remove(molids);
 }
 
 /** Rename this group - this also changes the ID number of the group */

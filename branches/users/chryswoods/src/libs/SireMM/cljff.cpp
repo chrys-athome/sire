@@ -1369,20 +1369,20 @@ bool CLJFF::setSwitchingFunction(const SwitchingFunction &sfunc)
 
     \throw SireBase::missing_property
 */
-bool CLJFF::setProperty(const QString &name, const Property &property)
+bool CLJFF::setProperty(const QString &name, const Property &value)
 {
     if ( name == QLatin1String("space") )
     {
-        this->setSpace(property);
+        this->setSpace(value);
         return this->isDirty();
     }
     else if ( name == QLatin1String("switching function") )
     {
-        this->setSwitchingFunction(property);
+        this->setSwitchingFunction(value);
         return this->isDirty();
     }
     else
-        return FFBase::setProperty(name, property);
+        return FFBase::setProperty(name, value);
 }
 
 /** Return the property associated with the name 'name'
@@ -1409,6 +1409,19 @@ bool CLJFF::containsProperty(const QString &name) const
     return ( name == QLatin1String("space") ) or
            ( name == QLatin1String("switching function") ) or
            FFBase::containsProperty(name);
+}
+
+/** Return all of the properties of this forcefield, indexed by name */
+QHash<QString,Property> CLJFF::properties() const
+{
+    QHash<QString,Property> props;
+    
+    props.insert( QLatin1String("space"), this->space() );
+    props.insert( QLatin1String("switching function"), this->switchingFunction() );
+    
+    props.unite( FFBase::properties() );
+    
+    return props;
 }
 
 /** Register the energy components associated with this forcefield */

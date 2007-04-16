@@ -5,6 +5,7 @@
 #include "SireFF/qhash_sireff.h"
 
 #include "SireFF/ffbase.h"
+#include "SireFF/ffcalculatorbase.h"
 #include "SireFF/ffcalculator.h"
 #include "SireFF/ffcomponent.h"
 #include "SireFF/ffexpression.h"

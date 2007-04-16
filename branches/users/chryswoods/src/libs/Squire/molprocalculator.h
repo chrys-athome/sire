@@ -46,7 +46,6 @@ namespace Squire
 class MolproSession;
 
 using SireFF::ForceField;
-using SireCAS::Values;
 
 /** This is the calculator used to calculate energies and forces
     via an external Molpro process.
@@ -54,14 +53,18 @@ using SireCAS::Values;
     This is the main driver class behind the Molpro energy
     evaluation. The hierarchy of Molpro classes is as follows;
 
-    MolproFF : The forcefield that uses Molpro to evaluate the QM/MM energy
+    MolproFF : The forcefield that uses Molpro to evaluate the QM/MM energy.
+               Can evaluate the Molpro energy using a one-shot Molpro process
 
-    MolproProcessor : Processor that can run MolproFF derived forcefields.
-                      A MolproFF derived forcefield must be placed on a
-                      MolproProcessor so that it can be evaluated.
+    MolproCalculator : Calculator that can be used to allow MolproFF to 
+                       evaluate the energy using a single Molpro process
 
-    MolproCalculator : Calculator that is used by MolproProcessor to
-                       actually evaluate the MolproFF derived forcefield.
+    MolproProcessor : Processor that can run MolproFF derived forcefields
+                      by using MolproCalculator - a single MolproProcessor
+                      starts up a single MolproCalculator in a background
+                      thread, thus allowing a background thread to use
+                      a single running Molpro process to calculate all
+                      of the energies.
 
     MolproSession : An individual connection to a single running instance
                     of Molpro - this class provides the interface to the
@@ -73,50 +76,21 @@ using SireCAS::Values;
 
     @author Christopher Woods
 */
-class SQUIRE_EXPORT MolproCalculator : public SireFF::FFCalculatorBase
+class SQUIRE_EXPORT MolproCalculator : public SireFF::FFLocalCalculator
 {
 public:
-    MolproCalculator(const ForceField &forcefield,
-                     const QFileInfo &molpro_exe = QFileInfo("molpro"),
-                     const QDir &temp_dir = QDir::temp());
+    MolproCalculator(const ForceField &forcefield);
 
     ~MolproCalculator();
 
     double getEnergies(Values &values);
-
     void calculateEnergy();
 
-    bool change(const Molecule &molecule);
-    bool change(const Residue &residue);
-    bool change(const NewAtom &atom);
-
-    bool add(const Molecule &molecule, const ParameterMap &map = ParameterMap());
-    bool add(const Residue &residue, const ParameterMap &map = ParameterMap());
-    bool add(const NewAtom &atom, const ParameterMap &map = ParameterMap());
-
-    bool remove(const Molecule &molecule);
-    bool remove(const Residue &residue);
-    bool remove(const NewAtom &atom);
-
-    bool replace(const Molecule &oldmol, const Molecule &newmol,
-                 const ParameterMap &map = ParameterMap());
-
     bool setForceField(const ForceField &forcefield);
-
-    ForceField forcefield() const;
+    ForceField forceField();
 
 private:
-
     void restartMolpro();
-
-    /** The Molpro forcefield being evaluated */
-    SireBase::SharedPolyPointer<MolproFF> molproff;
-
-    /** The path to the molpro executable */
-    QFileInfo molpro_exe;
-
-    /** The directory that will be used to run the calculation (tmpdir) */
-    QDir temp_dir;
 
     /** The total energy of the forcefield */
     double total_nrg;

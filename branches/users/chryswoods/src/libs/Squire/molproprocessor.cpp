@@ -49,8 +49,7 @@ using namespace SireCluster;
 
 /** Null constructor - the resulting worker will not be able to work! */
 MolproProcessorPvt::MolproProcessorPvt()
-                   : FFThreadProcessorPvt(),
-                     molpro_exe("molpro"), tmpdir(QDir::temp())
+                   : FFThreadProcessorPvt()
 {}
 
 /** Construct with a specified forcefield (which must be derived from MolproFF),
@@ -58,12 +57,8 @@ MolproProcessorPvt::MolproProcessorPvt()
 
     \throw SireError::incompatible_error
 */
-MolproProcessorPvt::MolproProcessorPvt(const ForceField &forcefield,
-                                       const QString &molpro_executable,
-                                       const QDir &temp_dir)
-                   : FFThreadProcessorPvt(forcefield),
-                     molpro_exe(molpro_executable),
-                     tmpdir(temp_dir)
+MolproProcessorPvt::MolproProcessorPvt(const ForceField &forcefield)
+                   : FFThreadProcessorPvt(forcefield)
 {
     if (not forcefield.isA<MolproFF>())
     {
@@ -77,26 +72,12 @@ MolproProcessorPvt::MolproProcessorPvt(const ForceField &forcefield,
 MolproProcessorPvt::~MolproProcessorPvt()
 {}
 
-/** Set the full name and path to the molpro executable */
-void MolproProcessorPvt::setMolpro(const QString &molpro_executable)
-{
-    molpro_exe = molpro_executable;
-}
-
-/** Set the location of the temporary directory in which to run molpro */
-void MolproProcessorPvt::setTempDir(const QDir &temp_dir)
-{
-    tmpdir = temp_dir;
-}
-
 /** Activate this processor, returning a pointer to the worker */
 boost::shared_ptr<WorkerBase> MolproProcessorPvt::_pvt_activate()
 {
     return boost::shared_ptr<WorkerBase>(
                   new FFThreadWorker(
-                      new MolproCalculator(
-                              forcefield(), molpro_exe, tmpdir
-                                          )
+                      new MolproCalculator(forcefield())
                                     )
                                         );
 }
@@ -114,13 +95,9 @@ MolproProcessor::MolproProcessor()
 
 /** Construct for a specified forcefield (which must be derived from MolproFF),
     molpro executable and temp dir */
-MolproProcessor::MolproProcessor(const ForceField &forcefield,
-                                 const QString &molpro_executable,
-                                 const QDir &temp_dir)
+MolproProcessor::MolproProcessor(const ForceField &forcefield)
                 : FFThreadProcessor( boost::shared_ptr<FFThreadProcessorPvt>(
-                                               new MolproProcessorPvt(forcefield,
-                                                                      molpro_executable,
-                                                                      temp_dir)
+                                               new MolproProcessorPvt(forcefield)
                                                                             )
                                    )
 {}
@@ -149,17 +126,4 @@ MolproProcessorPvt& MolproProcessor::data()
 const MolproProcessorPvt& MolproProcessor::data() const
 {
     return dynamic_cast<const MolproProcessorPvt&>( FFThreadProcessor::data() );
-}
-
-/** Set the full path and name of the molpro executable to use to
-    evaluate QM energies */
-void MolproProcessor::setMolpro(const QString &molpro_exe)
-{
-    data().setMolpro(molpro_exe);
-}
-
-/** Set the directory used as the temporary directory */
-void MolproProcessor::setTempDir(const QDir &tmpdir)
-{
-    data().setTempDir(tmpdir);
 }
