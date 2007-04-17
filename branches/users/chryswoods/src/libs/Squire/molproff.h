@@ -166,24 +166,12 @@ public:
             return coulomb_params;
         }
 
-        /** Return the default source of the link atom parameters
-            (used if we have a partial molecule in the QM region) */
-        const ParameterName& linkAtoms() const
-        {
-            return link_atoms;
-        }
-
         static Parameters default_sources;
 
      private:
         /** The name and default source property of the coulomb parameters
             of the MM region */
         ParameterName coulomb_params;
-        
-        /** The name and default source property of the link atom parameters,
-            which are used to add link atoms when only parts of the molecule
-            are added to the QM region */
-        ParameterName link_atoms;
     };
 
     class SIREMM_EXPORT Groups : public FFBase::Groups
@@ -258,7 +246,7 @@ public:
 
     const Space& space() const;
     const SwitchingFunction& switchingFunction() const;
-    
+
     virtual bool setSpace(const Space &space);
     virtual bool setSwitchingFunction(const SwitchingFunction &switchfunc);
 
@@ -274,7 +262,7 @@ public:
     const QVector<double>& qmCoordsArray() const;
 
     void mustNowRecalculateFromScratch();
-    
+
     bool change(const PartialMolecule &molecule);
 
     bool change(const QHash<MoleculeID,PartialMolecule> &molecules);
@@ -287,7 +275,7 @@ public:
 
     bool addToQM(const PartialMolecule &molecule,
                  const ParameterMap &map = ParameterMap());
-                
+
     bool addToMM(const PartialMolecule &molecule,
                  const ParameterMap &map = ParameterMap());
 
@@ -295,31 +283,31 @@ public:
 
     bool removeFrom(const FFBase::Group &group,
                     const PartialMolecule &molecule);
-                    
+
     bool removeFromQM(const PartialMolecule &molecule);
     bool removeFromMM(const PartialMolecule &molecule);
 
     bool contains(const PartialMolecule &molecule) const;
-    
+
     bool contains(const PartialMolecule &molecule,
                   const FFBase::Group &group) const;
-    
+
     bool refersTo(MoleculeID molid) const;
 
     bool refersTo(MoleculeID molid,
                   const FFBase::Group &group) const;
 
     QSet<FFBase::Group> groupsReferringTo(MoleculeID molid) const;
-    
+
     QSet<MoleculeID> moleculeIDs() const;
-    
+
     QSet<MoleculeID> moleculeIDs(const FFBase::Group &group) const;
-    
+
     PartialMolecule molecule(MoleculeID molid) const;
-    
+
     PartialMolecule molecule(MoleculeID molid,
                              const FFBase::Group &group) const;
-    
+
     QHash<MoleculeID,PartialMolecule> contents() const;
 
     QHash<MoleculeID,PartialMolecule> contents(const FFBase::Group &group) const;
@@ -348,20 +336,21 @@ private:
 
     bool _pvt_addToQM(const PartialMolecule &molecule,
                       const ParameterMap &map);
-    
-    bool _pvt_addToMM(const PartialMolecule &molecule, 
+
+    bool _pvt_addToMM(const PartialMolecule &molecule,
                       const ParameterMap &map);
 
     void rebuildQMCoordGroup();
 
     bool _pvt_change(const PartialMolecule &molecule);
 
+    bool _pvt_remove(const PartialMolecule &molecule);
+
     class QMMolecule
     {
     public:
         QMMolecule();
-        QMMolecule(const PartialMolecule &molecule,
-                   const QString &link_atoms);
+        QMMolecule(const PartialMolecule &molecule);
 
         QMMolecule(const QMMolecule &other);
 
@@ -371,35 +360,32 @@ private:
 
         const PartialMolecule& molecule() const;
 
-        bool add(const PartialMolecule &molecule,
-                 const QString &link_atoms = QString::null);
+        bool add(const PartialMolecule &molecule);
 
-        bool change(const PartialMolecule &molecule,
-                    const QString &link_atoms = QString::null);
+        bool change(const PartialMolecule &molecule);
 
         bool remove(const AtomSelection &selected_atoms);
 
-        void addTo(QVector<double> &qm_array);
-        void update(QVector<double> &qm_array) const;
+        int update(QVector<double> &qm_array, int i) const;
 
         QString coordString() const;
 
         int nAtomsInArray() const;
 
     private:
+        static int countElements(const QVector< QVector<Element> > &elements);
+
         /** The molecule itself */
         PartialMolecule mol;
 
-        /** The name of the property that contains the link
-            atoms for this molecule */
-        QString linkatoms_property;
+        /** The coordinates of all of the QM atoms */
+        QVector< CoordGroup > coords;
 
         /** The element types of all of the atoms */
         QVector< QVector<Element> > elements;
 
-        /** The index in the qm_coords array of each atom
-            in this molecule */
-        QVector< QVector<int> > indicies;
+        /** The number of QM atoms in the calculation */
+        int nats;
     };
 
     class MMMolecule
@@ -419,17 +405,17 @@ private:
 
         bool add(const PartialMolecule &molecule,
                  const QString &chgproperty = QString::null);
-        
+
         bool change(const PartialMolecule &molecule,
                     const QString &chgproperty = QString::null);
 
         bool remove(const AtomSelection &selected_atoms);
 
-        void update(const CoordGroup &qm_coordgroup,
-                    const Space &space, const SwitchingFunction &switchfunc);
+        int update(const CoordGroup &qm_coordgroup,
+                   const Space &space, const SwitchingFunction &switchfunc,
+                   bool qm_region_changed=false);
 
-        void addTo(QVector<double> &mm_coords_and_charges, int start_idx);
-        void update(QVector<double> &mm_coords_and_charges);
+        int update(QVector<double> &mm_coords_and_charges, int i) const;
 
         int nAtomsInArray() const;
 
@@ -448,6 +434,9 @@ private:
         /** The partial charges on the atoms */
         AtomicCharges chgs;
 
+        /** The raw coordinates of the molecule */
+        QVector< CoordGroup> mol_coords;
+
         /** The replicas of each CoordGroup of this molecule,
             within the cutoff, together with their closest
             distance to the QM molecule */
@@ -456,12 +445,6 @@ private:
         /** The IDs of CutGroups that need rebuilding. Empty
             means that all of them do! */
         QSet<CutGroupID> cgids_to_be_rebuilt;
-
-        /** The index of the first atom
-            of this molecule in the MM coords
-            and charges array - equals -1 if this molecule
-            is not currently in the array. */
-        int idx;
 
         /** The number of atoms of this molecule
             that are in the MM coords and charges
@@ -506,6 +489,10 @@ private:
         QM molecules... */
     CoordGroup qm_coordgroup;
 
+    /** The index of the first atom of each MM molecule in the
+        mm_coords_and_charges array (indexed by the molecule's ID) */
+    QHash<MoleculeID,quint32> mm_array_index;
+
     /** Hash of all of the MM molecules in this forcefield, indexed
         by their MoleculeID */
     QHash<MoleculeID, MMMolecule> mm_mols;
@@ -524,13 +511,17 @@ private:
     /** Set of MoleculeIDs of MM molecules that need rebuilding */
     QSet<MoleculeID> rebuild_mm;
 
-    /** Do we need to rebuild all of the coordinates?
-        (we do whenever the QM coordinates change) */
-    bool rebuild_all;
+    enum { UP2DATE = 0x0000,          // The forcefield is clean
+           NEED_ENERGY_CALC = 0x0001, // We need to recalculate the energy
+           NEED_UPDATE_MM = 0x0010,   // Some or all of the MM region needs updating
+           NEED_REBUILD_MM = 0x0020,  // The MM array needs to be rebuilt
+           NEED_UPDATE_QM = 0x0100,   // All of the QM region needs updating
+           NEED_REBUILD_QM = 0x0200,  // The QM array needs to be rebuilt
+           NEED_REBUILD_ALL = 0xffff  // All of everything needs rebuilding!
+         };
 
-    /** Do we really need to recalculate the QM/MM energy? We
-        only need to do so if the QM or MM arrays change */
-    bool need_recalculate_qmmm;
+    /** The rebuild status of this forcefield */
+    qint32 ff_status;
 
     /** Pointer to the object containing the components of
         this forcefield */

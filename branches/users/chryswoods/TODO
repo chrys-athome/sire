@@ -19,6 +19,16 @@ SireCAS
 (*) Take a stab at writing better integration code for sums and products
 
 (*) Move code over to using SharedPolyPointer to hold ExBase objects
+
+
+------
+SireFF
+------
+
+(*) Remove components_ptr from all of the forcefields and instead
+    use a QSharedDataPointer and accept the dynamic_cast whenever
+    we return the components! This is to remove the stupid dynamic_cast
+    and clone on *every* forcefield copy!
     
 ------
 SireDB
