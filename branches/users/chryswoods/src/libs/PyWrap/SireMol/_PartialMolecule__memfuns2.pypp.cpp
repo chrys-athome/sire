@@ -5,6 +5,7 @@
 #include "_PartialMolecule__memfuns2.pypp.hpp"
 #include "boost/python.hpp"
 #include "siremol_headers.h"
+#include "SireMol/moleculedata.h"
 #include "SireMaths/angle.h"
 #include "SireMaths/quaternion.h"
 #include "SireMaths/matrix.h"
@@ -18,33 +19,32 @@ void register_PartialMolecule_memfuns2( PartialMolecule_exposer_t& PartialMolecu
 
     { //::SireMol::PartialMolecule::selectedAll
     
-        typedef bool ( ::SireMol::PartialMolecule::*selectedAll_function_type )(  ) const;
-        
-        PartialMolecule_exposer.def( 
-            "selectedAll"
-            , selectedAll_function_type( &::SireMol::PartialMolecule::selectedAll ) );
-    
-    }
-
-    { //::SireMol::PartialMolecule::selectedAll
-    
-        typedef bool ( ::SireMol::PartialMolecule::*selectedAll_function_type )( ::SireMol::CutGroupID ) const;
-        
-        PartialMolecule_exposer.def( 
-            "selectedAll"
-            , selectedAll_function_type( &::SireMol::PartialMolecule::selectedAll )
-            , ( bp::arg("cgid") ) );
-    
-    }
-
-    { //::SireMol::PartialMolecule::selectedAll
-    
         typedef bool ( ::SireMol::PartialMolecule::*selectedAll_function_type )( ::SireMol::ResNum ) const;
         
         PartialMolecule_exposer.def( 
             "selectedAll"
             , selectedAll_function_type( &::SireMol::PartialMolecule::selectedAll )
             , ( bp::arg("resnum") ) );
+    
+    }
+
+    { //::SireMol::PartialMolecule::selectedAllCutGroups
+    
+        typedef bool ( ::SireMol::PartialMolecule::*selectedAllCutGroups_function_type )(  ) const;
+        
+        PartialMolecule_exposer.def( 
+            "selectedAllCutGroups"
+            , selectedAllCutGroups_function_type( &::SireMol::PartialMolecule::selectedAllCutGroups ) );
+    
+    }
+
+    { //::SireMol::PartialMolecule::selectedAllResidues
+    
+        typedef bool ( ::SireMol::PartialMolecule::*selectedAllResidues_function_type )(  ) const;
+        
+        PartialMolecule_exposer.def( 
+            "selectedAllResidues"
+            , selectedAllResidues_function_type( &::SireMol::PartialMolecule::selectedAllResidues ) );
     
     }
 

@@ -4,6 +4,7 @@
 
 #include "boost/python.hpp"
 #include "siremol_headers.h"
+#include "SireMol/moleculedata.h"
 #include "SireMaths/angle.h"
 #include "SireMaths/quaternion.h"
 #include "SireMaths/matrix.h"
@@ -31,7 +32,7 @@ const char* pvt_get_name(const SireMol::PartialMolecule&){ return "SireMol::Part
 void register_PartialMolecule_class(){
 
 { //::SireMol::PartialMolecule
-    typedef bp::class_< SireMol::PartialMolecule > PartialMolecule_exposer_t;
+    typedef bp::class_< SireMol::PartialMolecule, bp::bases< SireMol::MoleculeView > > PartialMolecule_exposer_t;
     PartialMolecule_exposer_t PartialMolecule_exposer = PartialMolecule_exposer_t( "PartialMolecule" );
     bp::scope PartialMolecule_scope( PartialMolecule_exposer );
     PartialMolecule_exposer.def( bp::init< >() );

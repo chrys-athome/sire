@@ -30,10 +30,11 @@
 #define SIREMOL_NEWATOM_H
 
 #include <QVariant>
-#include <QSharedDataPointer>
 
 #include "idtypes.h"
 #include "cgatomid.h"
+
+#include "moleculeview.h"
 
 #include "SireMaths/vector.h"
 
@@ -61,7 +62,6 @@ namespace SireMol
 {
 
 class Molecule;
-class MoleculeData;
 class PartialMolecule;
 class Residue;
 class Element;
@@ -76,23 +76,19 @@ using SireMaths::Matrix;
     Atom that is in context with its containing molecule.
 
     The main difference to the old Atom class is that this
-    one contains a pointer to the MoleculeData of the
+    one is the MoleculeView of the
     Molecule that contains this Atom, and that therefore,
     the editing functions available are more limited than
     Atom (which can be heavily edited due to its
     use of multiple inheritance)
 
-    This is a view on a MoleculeData in the same way that
-    Residue and Molecule are views of MoleculeData
+    This is a MoleculeView in the same way that
+    Residue and Molecule are MoleculeViews
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT NewAtom
+class SIREMOL_EXPORT NewAtom : public MoleculeView
 {
-
-friend class Molecule;
-friend class PartialMolecule;
-friend class Residue;
 
 friend QDataStream& ::operator<<(QDataStream&, const NewAtom&);
 friend QDataStream& ::operator>>(QDataStream&, NewAtom&);
@@ -156,9 +152,6 @@ public:
     bool withinBondRadii(const NewAtom &other, double err=0) const;
 
 private:
-    /** Pointer to the MoleculeData containing the data for this atom */
-    QSharedDataPointer<MoleculeData> d;
-
     /** The index of this atom in the molecule */
     CGAtomID cgatomid;
 };

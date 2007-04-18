@@ -5,6 +5,7 @@
 #include "_PartialMolecule__memfuns1.pypp.hpp"
 #include "boost/python.hpp"
 #include "siremol_headers.h"
+#include "SireMol/moleculedata.h"
 #include "SireMaths/angle.h"
 #include "SireMaths/quaternion.h"
 #include "SireMaths/matrix.h"
@@ -15,17 +16,6 @@
 namespace bp = boost::python;
 
 void register_PartialMolecule_memfuns1( PartialMolecule_exposer_t& PartialMolecule_exposer ){
-
-    { //::SireMol::PartialMolecule::intersects
-    
-        typedef bool ( ::SireMol::PartialMolecule::*intersects_function_type )( ::SireMol::AtomSelection const & ) const;
-        
-        PartialMolecule_exposer.def( 
-            "intersects"
-            , intersects_function_type( &::SireMol::PartialMolecule::intersects )
-            , ( bp::arg("other") ) );
-    
-    }
 
     { //::SireMol::PartialMolecule::invert
     
@@ -44,16 +34,6 @@ void register_PartialMolecule_memfuns1( PartialMolecule_exposer_t& PartialMolecu
         PartialMolecule_exposer.def( 
             "isEmpty"
             , isEmpty_function_type( &::SireMol::PartialMolecule::isEmpty ) );
-    
-    }
-
-    { //::SireMol::PartialMolecule::molecule
-    
-        typedef ::SireMol::Molecule ( ::SireMol::PartialMolecule::*molecule_function_type )(  ) const;
-        
-        PartialMolecule_exposer.def( 
-            "molecule"
-            , molecule_function_type( &::SireMol::PartialMolecule::molecule ) );
     
     }
 
@@ -224,6 +204,27 @@ void register_PartialMolecule_memfuns1( PartialMolecule_exposer_t& PartialMolecu
         PartialMolecule_exposer.def( 
             "selected"
             , selected_function_type( &::SireMol::PartialMolecule::selected ) );
+    
+    }
+
+    { //::SireMol::PartialMolecule::selectedAll
+    
+        typedef bool ( ::SireMol::PartialMolecule::*selectedAll_function_type )(  ) const;
+        
+        PartialMolecule_exposer.def( 
+            "selectedAll"
+            , selectedAll_function_type( &::SireMol::PartialMolecule::selectedAll ) );
+    
+    }
+
+    { //::SireMol::PartialMolecule::selectedAll
+    
+        typedef bool ( ::SireMol::PartialMolecule::*selectedAll_function_type )( ::SireMol::CutGroupID ) const;
+        
+        PartialMolecule_exposer.def( 
+            "selectedAll"
+            , selectedAll_function_type( &::SireMol::PartialMolecule::selectedAll )
+            , ( bp::arg("cgid") ) );
     
     }
 

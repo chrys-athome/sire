@@ -157,6 +157,13 @@ int AtomSelection::nSelected() const
     return nselected;
 }
 
+/** Return whether or not all atoms in the molecule have
+    been selected. */
+bool AtomSelection::selectedAll() const
+{
+    return nselected != 0 and selected_atoms.isEmpty();
+}
+
 /** Return the total number of CutGroups that contain at least
     one selected atom */
 int AtomSelection::nSelectedCutGroups() const
@@ -181,11 +188,11 @@ int AtomSelection::nSelectedResidues() const
 
         for (ResID i(0); i<nres; ++i)
         {
-            QSet<CutGroupID> cgids = molinfo[i].cutGroupIDs();
+            uint nats = molinfo.nAtoms(i);
 
-            foreach (CutGroupID cgid, cgids)
+            for (AtomID j(0); j<nats; ++j)
             {
-                if (selected_atoms.contains(cgid))
+                if ( this->selected(ResIDAtomID(i,j)) )
                 {
                     ++nselected;
                     break;
@@ -197,11 +204,43 @@ int AtomSelection::nSelectedResidues() const
     }
 }
 
-/** Return whether or not all atoms in the molecule have
-    been selected. */
-bool AtomSelection::selectedAll() const
+/** Return whether all CutGroups contain at least one selected atom */
+bool AtomSelection::selectedAllCutGroups() const
 {
-    return nselected != 0 and selected_atoms.isEmpty();
+    return this->selectedAll() or
+           this->nSelectedCutGroups() == molinfo.nCutGroups();
+}
+
+/** Return whether all Residues contain at least one selected atom */
+bool AtomSelection::selectedAllResidues() const
+{
+    if (this->selectedAll())
+        return true;
+    else
+    {
+        uint nres = molinfo.nResidues();
+
+        for (ResID i(0); i<nres; ++i)
+        {
+            uint nats = molinfo.nAtoms(i);
+
+            bool selected_this_residue = false;
+
+            for (AtomID j(0); j<nats; ++j)
+            {
+                if ( this->selected(ResIDAtomID(i,j)) )
+                {
+                    selected_this_residue = true;
+                    break;
+                }
+            }
+
+            if (not selected_this_residue)
+                return false;
+        }
+
+        return true;
+    }
 }
 
 /** Return whether or not no atoms have been selected */

@@ -4,6 +4,7 @@
 
 #include "boost/python.hpp"
 #include "siremol_headers.h"
+#include "SireMol/moleculedata.h"
 #include "SireMaths/angle.h"
 #include "SireMaths/quaternion.h"
 #include "SireMaths/matrix.h"
@@ -38,13 +39,11 @@ const char* pvt_get_name(const SireMol::Molecule&){ return "SireMol::Molecule";}
 void register_Molecule_class(){
 
 { //::SireMol::Molecule
-    typedef bp::class_< SireMol::Molecule > Molecule_exposer_t;
+    typedef bp::class_< SireMol::Molecule, bp::bases< SireMol::MoleculeView > > Molecule_exposer_t;
     Molecule_exposer_t Molecule_exposer = Molecule_exposer_t( "Molecule" );
     bp::scope Molecule_scope( Molecule_exposer );
     Molecule_exposer.def( bp::init< >() );
-    Molecule_exposer.def( bp::init< SireMol::PartialMolecule const & >(( bp::arg("molecule") )) );
-    Molecule_exposer.def( bp::init< SireMol::Residue const & >(( bp::arg("residue") )) );
-    Molecule_exposer.def( bp::init< SireMol::NewAtom const & >(( bp::arg("atom") )) );
+    Molecule_exposer.def( bp::init< SireMol::MoleculeView const & >(( bp::arg("molecule") )) );
     register_Molecule_memfuns0(Molecule_exposer);
     register_Molecule_memfuns1(Molecule_exposer);
     register_Molecule_memfuns2(Molecule_exposer);

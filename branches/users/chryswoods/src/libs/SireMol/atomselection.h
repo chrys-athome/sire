@@ -94,6 +94,9 @@ public:
     int nSelectedCutGroups() const;
     int nSelectedResidues() const;
 
+    bool selectedAllCutGroups() const;
+    bool selectedAllResidues() const;
+
     bool selected(const CGAtomID &cgatomid) const;
     bool selected(const IDMolAtom &atomid) const;
 

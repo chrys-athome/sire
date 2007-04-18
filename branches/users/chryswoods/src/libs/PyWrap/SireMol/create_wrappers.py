@@ -52,8 +52,10 @@ wrap_classes = [ "Angle",
                  "MoleculeInfo",
                  "MoleculeProperty",
                  "MoleculeVersion",
+                 "MoleculeView",
                  "NewAtom",
 		 "PartialMolecule",
+                 "PropertyExtractor",
                  "ResID",
                  "ResIDAtomID",
                  "Residue",
@@ -75,7 +77,8 @@ huge_classes = [ "EditMol",
 
 aliases = {}
 
-extra_includes = [ "SireMaths/angle.h",
+extra_includes = [ "SireMol/moleculedata.h",
+                   "SireMaths/angle.h",
                    "SireMaths/quaternion.h",
                    "SireMaths/matrix.h",
                    "SireMaths/triangle.h",
@@ -157,9 +160,7 @@ implicitly_convertible = [ ("boost::tuples::tuple<SireMol::AtomIndex,SireMol::At
 			   ("SireMol::Residue", "SireMol::PartialMolecule"),
 			   ("SireMol::Molecule", "SireMol::PartialMolecule"),
 
-                           ("SireMol::PartialMolecule", "SireMol::Molecule"),
-			   ("SireMol::Residue", "SireMol::Molecule"),
-			   ("SireMol::NewAtom", "SireMol::Molecule")
+                           ("SireMol::MoleculeView", "SireMol::Molecule")
                          ]
 
 incpaths = sys.argv[1:]

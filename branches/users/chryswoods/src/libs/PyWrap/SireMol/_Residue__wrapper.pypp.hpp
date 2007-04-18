@@ -9,6 +9,7 @@
 
 #include "boost/python.hpp"
 #include "siremol_headers.h"
+#include "SireMol/moleculedata.h"
 #include "SireMaths/angle.h"
 #include "SireMaths/quaternion.h"
 #include "SireMaths/matrix.h"
@@ -18,6 +19,6 @@
 
 namespace bp = boost::python;
 
-typedef bp::class_< SireMol::Residue > Residue_exposer_t;
+typedef bp::class_< SireMol::Residue, bp::bases< SireMol::MoleculeView > > Residue_exposer_t;
 
 #endif//_Residue__wrapper_hpp__pyplusplus_wrapper

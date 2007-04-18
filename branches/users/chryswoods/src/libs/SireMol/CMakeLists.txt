@@ -47,7 +47,9 @@ set ( SIREMOL_SOURCES
       moleculeinfo.cpp
       moleculeproperty.cpp
       moleculeversion.cpp
+      moleculeview.cpp
       partialmolecule.cpp
+      propertyextractor.cpp
       residatomid.cpp
       residue.cpp
       residuebonds.cpp

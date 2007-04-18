@@ -184,28 +184,22 @@ MoleculeData& MoleculeData::operator=(const detail::MolData &moldata)
     return *this;
 }
 
-/** Comparison operator */
+/** Comparison operator - two molecules are the same if they have
+    the same ID and version numbers. */
 bool MoleculeData::operator==(const MoleculeData &other) const
 {
     return (this == &other) or
            (_id == other._id and
-            _molversion == other._molversion and
-            _molinfo == other._molinfo and
-            _molbonds == other._molbonds and
-            _coords == other._coords and
-            _properties == other._properties);
+            _molversion == other._molversion);
 }
 
-/** Comparison operator */
+/** Comparison operator - two molecules are the same if they have
+    the same ID and version numbers. */
 bool MoleculeData::operator!=(const MoleculeData &other) const
 {
     return (this != &other) and
            (_id != other._id or
-            _molversion != other._molversion or
-            _molinfo != other._molinfo or
-            _molbonds != other._molbonds or
-            _coords != other._coords or
-            _properties != other._properties);
+            _molversion != other._molversion);
 }
 
 /** Return the ID number of the molecule */

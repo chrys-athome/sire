@@ -4,6 +4,7 @@
 
 #include "boost/python.hpp"
 #include "siremol_headers.h"
+#include "SireMol/moleculedata.h"
 #include "SireMaths/angle.h"
 #include "SireMaths/quaternion.h"
 #include "SireMaths/matrix.h"
@@ -34,7 +35,7 @@ const char* pvt_get_name(const SireMol::Residue&){ return "SireMol::Residue";}
 void register_Residue_class(){
 
 { //::SireMol::Residue
-    typedef bp::class_< SireMol::Residue > Residue_exposer_t;
+    typedef bp::class_< SireMol::Residue, bp::bases< SireMol::MoleculeView > > Residue_exposer_t;
     Residue_exposer_t Residue_exposer = Residue_exposer_t( "Residue" );
     bp::scope Residue_scope( Residue_exposer );
     Residue_exposer.def( bp::init< >() );

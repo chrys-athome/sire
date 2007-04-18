@@ -71,10 +71,12 @@ set ( WRAPMOL_SOURCES
       MoleculeInfo.pypp.cpp
       MoleculeProperty.pypp.cpp
       MoleculeVersion.pypp.cpp
+      MoleculeView.pypp.cpp
 
       NewAtom.pypp.cpp
 
       PartialMolecule.pypp.cpp
+      PropertyExtractor.pypp.cpp
      
       ResID.pypp.cpp
       ResIDAtomID.pypp.cpp

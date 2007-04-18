@@ -390,13 +390,13 @@ MolproFF::MMMolecule::MMMolecule(const Molecule &molecule,
            nats(0), rebuild_all(true)
 {
     //get the atomic charges...
-    chgs = mol.getProperty(chg_property);
+    chgs = mol.extract().property(chg_property);
 }
 
 /** Copy constructor */
 MolproFF::MMMolecule::MMMolecule(const MMMolecule &other)
          : mol(other.mol), chg_property(other.chg_property),
-           chgs(other.chgs), mol_coords(other.mol_coords),
+           chgs(other.chgs),
            coords(other.coords),
            cgids_to_be_rebuilt(other.cgids_to_be_rebuilt),
            nats(other.nats), rebuild_all(other.rebuild_all)
@@ -414,7 +414,6 @@ MolproFF::MMMolecule& MolproFF::MMMolecule::operator=(const MolproFF::MMMolecule
         mol = other.mol;
         chg_property = other.chg_property;
         chgs = other.chgs;
-        mol_coords = other.mol_coords;
         coords = other.coords;
         cgids_to_be_rebuilt = other.cgids_to_be_rebuilt;
         nats = other.nats;
@@ -440,8 +439,7 @@ bool MolproFF::MMMolecule::change(const PartialMolecule &molecule,
         {
             //the charges may have changed - change the whole molecule
             mol.change(molecule);
-            mol_coords = mol.coordGroups();
-            chgs = mol.getProperty(chg_property);
+            chgs = mol.extract().property(chg_property);
             cgids_to_be_rebuilt.clear();
             rebuild_all = true;
             return true;
@@ -449,8 +447,6 @@ bool MolproFF::MMMolecule::change(const PartialMolecule &molecule,
         else if (mol.change(molecule))
         {
             //the molecule has been changed
-            mol_coords = mol.coordGroups();
-
             if (not rebuild_all)
             {
                 if (molecule.nSelectedCutGroups() == molecule.info().nCutGroups())
@@ -482,8 +478,7 @@ bool MolproFF::MMMolecule::change(const PartialMolecule &molecule,
         mol.change(molecule);
         chg_property = chg_property;
 
-        mol_coords = mol.coordGroups();
-        chgs = mol.getProperty(chg_property);
+        chgs = mol.extract().property(chg_property);
 
         rebuild_all = true;
         cgids_to_be_rebuilt.clear();
@@ -500,8 +495,7 @@ bool MolproFF::MMMolecule::add(const PartialMolecule &molecule,
 
     if (mol.add(molecule.selectedAtoms()))
     {
-        mol_coords = mol.coordGroups();
-        chgs = mol.getProperty(chg_property);
+        chgs = mol.extract().property(chg_property);
 
         if (not rebuild_all)
         {
@@ -525,11 +519,194 @@ bool MolproFF::MMMolecule::remove(const AtomSelection &selected_atoms)
 {
     if (mol.remove(selected_atoms))
     {
-        mol = mol.coordGroups();
-        #warning Have screwed up the coordGroups() and getProperty() of
-        #warning PartialMolecule. Code assumes consistent CutGroupID, but
-        #warning changing atom selections make CutGroupID inconsistent!!!
+        chgs = mol.extract().property(chg_property);
+
+        if (not rebuild_all)
+        {
+            cgids_to_be_rebuilt.unite(selected_atoms.selectedCutGroups());
+
+            if (cgids_to_be_rebuilt.count() == mol.info().nCutGroups())
+            {
+                rebuild_all = true;
+                cgids_to_be_rebuilt.clear();
+            }
+        }
+
+        return true;
     }
+    else
+        return false;
+}
+
+/** Return a list of all of the copies of 'group' that are close to 'center',
+    together with the non-bonded scale factor for that group */
+static QList< tuple<double,CoordGroup> >
+getCloseGroups(const CoordGroup &group, const CoordGroup &center,
+               const Space &space, const SwitchingFunction &switchfunc)
+{
+    QList< tuple<double,CoordGroup> > groups
+                    = space.getCopiesWithin(group, center,
+                                            switchfunc.cutoffDistance());
+
+    //loop through each copy and set its scale factor
+    QMutableListIterator< tuple<double,CoordGroup> > it(groups);
+
+    while( it.hasNext() )
+    {
+        it.next();
+
+        double scalefac = switchfunc.electrostaticScaleFactor(it.value().get<0>());
+
+        if (scalefac == 0)
+            //a zero scale factor would wipe out
+            //all of the atoms of this copy
+            it.remove();
+        else
+            //update the scale factor
+            it.value().get<0>() = scalefac;
+    }
+
+    return groups;
+}
+
+/** Count the number of non-zero charges in the array of charges */
+static int nCharges(const QVector<ChargeParameter> &chgs)
+{
+    int nchgs = 0;
+
+    int n = chgs.count();
+    const ChargeParameter *chgs_array = chgs.constData();
+
+    for (int i=0; i<n; ++i)
+    {
+        if (chgs_array[i] != 0)
+            ++nchgs;
+    }
+
+    return nchgs;
+}
+
+/** Convert the list of CoordGroup copies and charges into a single array
+    containing the coordinates and charges together */
+static QVector<double>
+getCoordsAndCharges( const QList< tuple<double,CoordGroup> > &close_groups,
+                     const QVector<ChargeParameter> &group_chgs )
+{
+    if (close_groups.isEmpty())
+        return QVector<double>();
+
+    //get the indicies of groups that have a non-zero charge
+    QHash<int, ChargeParameter> non_zero_charges;
+
+    int nchgs = group_chgs.count();
+    const ChargeParameter *group_chgs_array = group_chgs.constData();
+
+    for (int i=0; i<nchgs; ++i)
+    {
+        const ChargeParameter &chg = group_chgs_array[i];
+
+        if (chg != 0)
+            non_zero_charges.insert(i, chg);
+    }
+
+    //count the number of atoms - equals the number of copies of the
+    //group times the number atoms in the group that have a non-zero charge
+    int nats = close_groups.count() * non_zero_charges.count();
+
+    if (nats == 0)
+        return QVector<double>();
+
+    //reserve sufficient space for the coordinates and charges
+    QVector<double> coords_and_chgs(4 * nats);
+
+    double *coords_and_chgs_array = coords_and_chgs.data();
+
+    int i = 0;
+
+    for ( QList< tuple<double,CoordGroup> >::const_iterator it = close_groups.begin();
+          it != close_groups.end();
+          ++it )
+    {
+        double scale_fac = it->get<0>();
+        const Vector *group_coords = it->get<1>().constData();
+
+        for (QHash<int, ChargeParameter>::const_iterator
+                                          it2 = non_zero_charges.constBegin();
+             it2 != non_zero_charges.constEnd();
+             ++it2)
+        {
+            int idx = it2.key();
+            double chg =
+
+            const Vector &coord = group_coords[idx];
+
+            //store the x, y and z coordinates (in bohr radii)
+            coords_and_chgs_array[i] = convertTo(coord.x(), bohr_radii);
+            ++i;
+
+            coords_and_chgs_array[i] = convertTo(coord.y(), bohr_radii);
+            ++i;
+
+            coords_and_chgs_array[i] = convertTo(coord.z(), bohr_radii);
+            ++i;
+
+            //also store the charge (in absolute electron charges)
+            coords_and_chgs_array[i] = convertTo(scale_fac * it2.value(),
+                                                 mod_electrons);
+            ++i;
+        }
+    }
+
+    BOOST_ASSERT( i == nats );
+
+    return coords_and_chgs;
+}
+
+/** Update the current state of the CutGroup with ID == cgid to
+    have the coordinates from 'group_coords', charges from 'group_chgs',
+    and to be in the space 'space' with the QM atoms from 'qm_coordgroup',
+    using the cutoff defined in 'switchfunc' */
+void MolproFF::MMMolecule::updateGroup(CutGroupID cgid,
+                                       const CoordGroup &group_coords,
+                                       const QVector<ChargeParameter> &group_chgs,
+                                       const CoordGroup &qm_coordgroup,
+                                       const Space &space,
+                                       const SwitchingFunction &switchfunc)
+{
+    //remove the curent entry for this molecule
+    QVector<double> mol_coords_and_charges = coords_and_charges.take(cgid);
+    int old_nats_times_four = mol_coords_and_charges.count();
+
+    //count up how many atoms have a non-zero charge
+    int ncharges = nCharges(group_chgs);
+
+    if (ncharges == 0 or qm_coordgroup.nAtoms() == 0)
+    {
+        //there are no QM or MM atoms
+        nats -= (old_nats_times_four / 4);
+        return;
+    }
+
+    //get copies of this CoordGroup that are within the cutoff distance
+    //of the QM CoordGroup
+    QList< tuple<double,CoordGroup> > close_groups
+                               = getCloseGroups( group_coords,
+                                                 qm_coordgroup,
+                                                 space, switchfunc );
+
+    //convert these groups into the array of coordinates and charges
+    mol_coords_and_chgs = getCoordsAndCharges( close_groups, group_chgs );
+
+    int new_nats_times_four = mol_coords_and_chgs.count();
+
+    if (new_nats_times_four > 0)
+    {
+        //save these coordinates and charges
+        coords_and_charges.insert(cgid, mol_coords_and_charges);
+    }
+
+    //update the number of atoms
+    nats += ( (new_nats_times_four - old_nats_times_four) / 4 );
 }
 
 /** Update the MMMolecule - this finds all of the CoordGroups from
@@ -538,70 +715,97 @@ bool MolproFF::MMMolecule::remove(const AtomSelection &selected_atoms)
     switching function 'switchfunc' */
 void MolproFF::MMMolecule::update(const CoordGroup &qm_coordgroup,
                                   const Space &space,
-                                  const SwitchingFunction &switchfunc)
+                                  const SwitchingFunction &switchfunc,
+                                  bool must_rebuild_all)
 {
-    //zero the number of atoms of this molecule in the array...
-    nats = 0;
-
-    //loop over all of the CoordGroups in this molecule and
-    //get all copies that are within the cutoff distance of
-    //any of the CoordGroups of the QM atoms
-    const QVector<CoordGroup> &coordgroups = mol.coordGroups();
-    int ncg = coordgroups.count();
-
-    coords = QVector< QList< tuple<double,CoordGroup> > >(ncg);
-
-    for (int i=0; i<ncg; ++i)
+    if (rebuild_all or must_rebuild_all)
     {
-        //how many atoms in this CoordGroup have a charge?
-        const QVector<ChargeParameter> &chargegroup = chgs.at(i);
+        //the entire MM molecule must be rebuilt...
+        coords_and_chgs.clear();
 
-        int natms_with_charges = 0;
-        int natms = chargegroup.count();
+        //zero the number of atoms of this molecule in the array...
+        nats = 0;
 
-        for (int j=0; j<natms; ++j)
+        //loop over all of the CoordGroups in this molecule and
+        //get all copies that are within the cutoff distance of
+        //any of the CoordGroups of the QM atoms
+        QVector<CoordGroup> mol_coords = mol.coordGroups();
+        AtomicCharges mol_charges = mol.extract().property(chg_property);
+
+        if (mol.selectedAllCutGroups())
         {
-           natms_with_charges += (chargegroup.at(j) != 0);
-        }
-
-        if (natms_with_charges > 0)
-        {
-            //some of the atoms in this CoordGroup have charges!
-
-            //get all of the copies of this CoordGroup that are
-            //within the cutoff distance of any of the QM atoms
-            QList< tuple<double,CoordGroup> > copies =
-                                    space.getCopiesWithin(coordgroups.at(i),
-                                                qm_coordgroup,
-                                                switchfunc.cutoffDistance());
-
-            //loop through each copy and set its scale factor
-            QMutableListIterator< tuple<double,CoordGroup> > it(copies);
-
-            while( it.hasNext() )
+            for (CutGroupID i(0); i<ncg; ++i)
             {
-                it.next();
-
-                double scalefac = switchfunc.electrostaticScaleFactor(it.value().get<0>());
-
-                if (scalefac == 0)
-                    //a zero scale factor would wipe out
-                    //all of the atoms of this copy
-                    it.remove();
-                else
-                    //update the scale factor
-                    it.value().get<0>() = scalefac;
+                this->updateGroup(i, mol_coords.at(i),
+                                     mol_charges.at(i),
+                                     qm_coordgroup,
+                                     space, switchfunc);
             }
+        }
+        else
+        {
+            //get the index that maps from CutGroupID to index...
+            QHash<CutGroupID,quint32> cg_index = mol.extract().cutGroupIndex();
 
-            //save this list with the CutGroup
-            coords[i] = copies;
+            for (QHash<CutGroupID,quint32>::const_iterator it = cg_index.constBegin();
+                 it != cg_index.constEnd();
+                 ++it)
+            {
+                CutGroupID cgid = it.key();
+                quint32 idx = *it;
 
-            //increment the number of atoms - this is the number
-            //of non-zero charge atoms in the group times the number
-            //of copies of this group
-            nats += natms_with_charges * copies.count();
+                this->updateGroup(cgid, mol_coords.at(idx),
+                                        mol_charges.at(idx),
+                                        qm_coordgroup,
+                                        space, switchfunc);
+            }
         }
     }
+    else
+    {
+        QVector<CoordGroup> mol_coords = mol.coordGroups();
+        AtomicCharges mol_charges = mol.extract().property(chg_property);
+
+        if (mol.selectedAllCutGroups())
+        {
+            foreach (CutGroupID cgid, cgids_to_be_rebuilt)
+            {
+                this->updateGroup(cgid, mol_coords.at(cgid),
+                                        mol_charges.at(cgid),
+                                        qm_coordgroup,
+                                        space, switchfunc);
+            }
+        }
+        else
+        {
+            //get the mapping from CutGroupID to array index
+            QHash<CutGroupID,quint32> cg_index = mol.extract().cutGroupIndex();
+
+            //we need to rebuild the specified CoordGroups...
+            foreach (CutGroupID cgid, cgids_to_be_rebuilt)
+            {
+                if (cg_index.contains(cgid))
+                {
+                    quint32 idx = cg_index.value(cgid);
+
+                    this->updateGroup(cgid, mol_coords.at(idx),
+                                            mol_charges.at(idx),
+                                            qm_coordgroup,
+                                            space, switchfunc);
+                }
+                else
+                {
+                    //this CutGroup has been removed
+                    QVector<double> gcoords = coords_and_charges.take(cgid);
+
+                    nats -= (gcoords.count() / 4);
+                }
+            }
+        }
+    }
+
+    rebuild_all = false;
+    cgids_to_be_rebuilt.clear();
 }
 
 /** Update the mm_coords_and_charges array with the coordinates
@@ -609,19 +813,19 @@ void MolproFF::MMMolecule::update(const CoordGroup &qm_coordgroup,
     replace the existing information about this molecule in
     mm_coords_and_charges, or it will add its information
     onto the end of the array. */
-void MolproFF::MMMolecule::update(QVector<double> &mm_coords_and_charges)
+int MolproFF::MMMolecule::update(QVector<double> &mm_coords_and_charges,
+                                 int i) const
 {
     if (nAtomsInArray() == 0)
     {
-        //we aren't in the array, and we shouldn't be
-        idx = -1;
-
         //There is nothing to do :-)
-        return;
+        return i;
     }
 
+    int new_i = i + this->nAtomsInArray();
+
     //make sure that there is sufficient space in the array
-    if (idx + this->nAtomsInArray() > mm_coords_and_charges.count())
+    if (new_i > mm_coords_and_charges.count())
     {
         throw SireError::program_bug( QObject::tr(
             "There is insufficient space for this MM molecule in the "
@@ -632,56 +836,29 @@ void MolproFF::MMMolecule::update(QVector<double> &mm_coords_and_charges)
     }
 
     //ok - we assume that the array from idx to 4*nats is ours...
-    int ngroups = coords.count();
-    const QList< tuple<double,CoordGroup> > *coords_array = coords.constData();
-    const QVector<ChargeParameter> *chgs_array = chgs.constData();
+    double *start = &(mm_coords_and_charges[i]);
 
-    int current_idx = idx;
-
-    //add each CutGroup in turn...
-    for (int i=0; i<ngroups; ++i)
+    //copy in each CutGroup in turn
+    for (QHash< CutGroupID,QVector<double> >::const_iterator
+                                            it = coords_and_chgs.constBegin();
+         it != coords_and_chgs.constEnd();
+         ++it)
     {
-        const QList< tuple<double,CoordGroup> > &group_coords = coords_array[i];
-        const ChargeParameter *group_charges = chgs_array[i].constData();
+        void *output = qMemCopy(start, it->constData(), it->count() * sizeof(double));
+        BOOST_ASSERT( output == start );
 
-        //loop over each copy of the CoordGroup and add it in turn
-        for (QList< tuple<double,CoordGroup> >::const_iterator it =
-                                                    group_coords.constBegin();
-             it != group_coords.constEnd();
-             ++it)
-        {
-            double scalefac = it->get<0>();
-            const CoordGroup &copy = it->get<1>();
-
-            int natms = copy.count();
-            const Vector *copy_array = copy.constData();
-
-            for (int j=0; j<natms; ++j)
-            {
-                const Vector &atom = copy_array[j];
-                double atom_charge = group_charges[j].charge();
-
-                if (atom_charge != 0)
-                {
-                    mm_coords_and_charges[current_idx] = convertTo(atom.x(), bohr_radii);
-                    ++current_idx;
-                    mm_coords_and_charges[current_idx] = convertTo(atom.y(), bohr_radii);
-                    ++current_idx;
-                    mm_coords_and_charges[current_idx] = convertTo(atom.z(), bohr_radii);
-                    ++current_idx;
-                    mm_coords_and_charges[current_idx] = convertTo(scalefac*atom_charge,
-                                                                   mod_electrons);
-                    ++current_idx;
-                }
-            }
-        }
+        start += it->count();
     }
+
+    return new_i;
 }
 
 /** Return a Molpro format string providing the coordinates and charges of atoms
     in this molecule that are within the electrostatic cutoff of the QM atoms. */
 QString MolproFF::MMMolecule::coordAndChargesString() const
 {
+    #warning Needs major overhaul!
+
     QString mmcoords = "";
 
     if (nAtomsInArray() == 0)

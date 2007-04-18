@@ -7,6 +7,8 @@
 
 #include "siremol_headers.h"
 
+#include "SireMol/moleculedata.h"
+
 #include "SireMaths/angle.h"
 
 #include "SireMaths/quaternion.h"
@@ -103,9 +105,13 @@
 
 #include "MoleculeVersion.pypp.hpp"
 
+#include "MoleculeView.pypp.hpp"
+
 #include "NewAtom.pypp.hpp"
 
 #include "PartialMolecule.pypp.hpp"
+
+#include "PropertyExtractor.pypp.hpp"
 
 #include "ResID.pypp.hpp"
 
@@ -208,6 +214,8 @@ BOOST_PYTHON_MODULE(_Mol){
 
     register_MolCutGroupID_class();
 
+    register_MoleculeView_class();
+
     register_Molecule_class();
 
     register_MoleculeBonds_class();
@@ -231,6 +239,8 @@ BOOST_PYTHON_MODULE(_Mol){
     bp::implicitly_convertible< SireMol::NewAtom, SireMol::Element >();
 
     register_PartialMolecule_class();
+
+    register_PropertyExtractor_class();
 
     register_ResID_class();
 
@@ -302,11 +312,7 @@ BOOST_PYTHON_MODULE(_Mol){
 
     bp::implicitly_convertible< SireMol::Molecule, SireMol::PartialMolecule >();
 
-    bp::implicitly_convertible< SireMol::PartialMolecule, SireMol::Molecule >();
-
-    bp::implicitly_convertible< SireMol::Residue, SireMol::Molecule >();
-
-    bp::implicitly_convertible< SireMol::NewAtom, SireMol::Molecule >();
+    bp::implicitly_convertible< SireMol::MoleculeView, SireMol::Molecule >();
 
     register_WeightFunction_class();
 }

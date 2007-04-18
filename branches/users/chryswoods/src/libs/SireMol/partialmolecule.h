@@ -29,11 +29,11 @@
 #ifndef SIREMOL_PARTIALMOLECULE_H
 #define SIREMOL_PARTIALMOLECULE_H
 
-#include <QSharedDataPointer>
-
 #include "idtypes.h"
 #include "atomindex.h"
 #include "atomselection.h"
+
+#include "moleculeview.h"
 
 SIRE_BEGIN_HEADER
 
@@ -58,7 +58,7 @@ class CoordGroup;
 namespace SireMol
 {
 
-class MoleculeData;
+class PropertyExtractor;
 class Molecule;
 class Residue;
 class NewAtom;
@@ -76,10 +76,10 @@ using SireVol::CoordGroup;
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT PartialMolecule
+class SIREMOL_EXPORT PartialMolecule : public MoleculeView
 {
 
-friend class Molecule;
+friend class PropertyExtractor;
 
 friend QDataStream& ::operator<<(QDataStream&, const PartialMolecule&);
 friend QDataStream& ::operator>>(QDataStream&, PartialMolecule&);
@@ -96,17 +96,15 @@ public:
 
     ~PartialMolecule();
 
-    PartialMolecule& operator=(const Molecule &molecule);
-    PartialMolecule& operator=(const Residue &residue);
-    PartialMolecule& operator=(const NewAtom &atom);
     PartialMolecule& operator=(const PartialMolecule &other);
 
     bool operator==(const PartialMolecule &other) const;
     bool operator!=(const PartialMolecule &other) const;
 
-    Molecule molecule() const;
     const AtomSelection& selection() const;
     const AtomSelection& selectedAtoms() const;
+
+    PropertyExtractor extract() const;
 
     bool change(const PartialMolecule &molecule);
 
@@ -114,20 +112,18 @@ public:
     bool remove(const AtomSelection &atoms);
 
     // Interface from Molecule
-    
+
     QString name() const;
     MoleculeID ID() const;
     const MoleculeVersion& version() const;
-    
+
     const MoleculeInfo& info() const;
-    
+
     Property getProperty(const QString &name) const;
-    
+
     QVector<CoordGroup> coordGroups() const;
-    
-    void assertSameMolecule(const PartialMolecule &other) const;
-    void assertSameMajorVersion(const PartialMolecule &other) const;
-    void assertSameVersion(const PartialMolecule &other) const;
+
+    QHash<CutGroupID,quint32> cutGroupIndex() const;
 
     // Interface from AtomSelection
 
@@ -139,6 +135,9 @@ public:
 
     int nSelectedCutGroups() const;
     int nSelectedResidues() const;
+
+    bool selectedAllCutGroups() const;
+    bool selectedAllResidues() const;
 
     bool selected(const CGAtomID &cgatomid) const;
     bool selected(const IDMolAtom &atomid) const;
@@ -190,9 +189,6 @@ public:
     QSet<ResNum> selectedResidues() const;
 
 private:
-    /** The actual molecular data */
-    QSharedDataPointer<MoleculeData> d;
-
     /** The atoms which have been selected */
     AtomSelection selected_atoms;
 };

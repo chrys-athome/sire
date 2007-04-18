@@ -5,6 +5,7 @@
 #include "AtomSelection.pypp.hpp"
 #include "boost/python.hpp"
 #include "siremol_headers.h"
+#include "SireMol/moleculedata.h"
 #include "SireMaths/angle.h"
 #include "SireMaths/quaternion.h"
 #include "SireMaths/matrix.h"
@@ -160,6 +161,12 @@ void register_AtomSelection_class(){
             "selectedAll"
             , (bool ( ::SireMol::AtomSelection::* )( ::SireMol::ResNum ) const)( &::SireMol::AtomSelection::selectedAll )
             , ( bp::arg("resnum") ) )    
+        .def( 
+            "selectedAllCutGroups"
+            , &::SireMol::AtomSelection::selectedAllCutGroups )    
+        .def( 
+            "selectedAllResidues"
+            , &::SireMol::AtomSelection::selectedAllResidues )    
         .def( 
             "selectedCutGroups"
             , &::SireMol::AtomSelection::selectedCutGroups )    

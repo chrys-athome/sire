@@ -5,6 +5,7 @@
 #include "_Residue__memfuns2.pypp.hpp"
 #include "boost/python.hpp"
 #include "siremol_headers.h"
+#include "SireMol/moleculedata.h"
 #include "SireMaths/angle.h"
 #include "SireMaths/quaternion.h"
 #include "SireMaths/matrix.h"
@@ -178,16 +179,6 @@ void register_Residue_memfuns2( Residue_exposer_t& Residue_exposer ){
     
     }
 
-    { //::SireMol::Residue::molecule
-    
-        typedef ::SireMol::Molecule ( ::SireMol::Residue::*molecule_function_type )(  ) const;
-        
-        Residue_exposer.def( 
-            "molecule"
-            , molecule_function_type( &::SireMol::Residue::molecule ) );
-    
-    }
-
     { //::SireMol::Residue::nAtoms
     
         typedef int ( ::SireMol::Residue::*nAtoms_function_type )(  ) const;
@@ -226,6 +217,16 @@ void register_Residue_memfuns2( Residue_exposer_t& Residue_exposer ){
         Residue_exposer.def( 
             "nCutGroups"
             , nCutGroups_function_type( &::SireMol::Residue::nCutGroups ) );
+    
+    }
+
+    { //::SireMol::Residue::nInterBonds
+    
+        typedef int ( ::SireMol::Residue::*nInterBonds_function_type )(  ) const;
+        
+        Residue_exposer.def( 
+            "nInterBonds"
+            , nInterBonds_function_type( &::SireMol::Residue::nInterBonds ) );
     
     }
 

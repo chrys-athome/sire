@@ -413,7 +413,7 @@ private:
 
         int update(const CoordGroup &qm_coordgroup,
                    const Space &space, const SwitchingFunction &switchfunc,
-                   bool qm_region_changed=false);
+                   bool must_rebuild_all=false);
 
         int update(QVector<double> &mm_coords_and_charges, int i) const;
 
@@ -431,16 +431,10 @@ private:
             atomic charges of the atoms. */
         QString chg_property;
 
-        /** The partial charges on the atoms */
-        AtomicCharges chgs;
-
-        /** The raw coordinates of the molecule */
-        QVector< CoordGroup> mol_coords;
-
         /** The replicas of each CoordGroup of this molecule,
             within the cutoff, together with their closest
             distance to the QM molecule */
-        QVector< QList< tuple<double,CoordGroup> > > coords;
+        QHash< CutGroupID, QVector<double> > coords_and_chgs;
 
         /** The IDs of CutGroups that need rebuilding. Empty
             means that all of them do! */

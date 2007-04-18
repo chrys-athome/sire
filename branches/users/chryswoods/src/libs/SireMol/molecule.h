@@ -29,8 +29,6 @@
 #ifndef SIREMOL_MOLECULE_H
 #define SIREMOL_MOLECULE_H
 
-#include <QSharedDataPointer>
-
 #include <QList>
 #include <QVector>
 #include <QSet>
@@ -38,6 +36,7 @@
 
 #include "idtypes.h"
 #include "atomindex.h"
+#include "moleculeview.h"
 
 SIRE_BEGIN_HEADER
 
@@ -78,7 +77,6 @@ namespace SireMol
 
 class EditMol;
 
-class MoleculeData;
 class NewAtom;
 class Residue;
 class PartialMolecule;
@@ -124,16 +122,12 @@ class MolData;
 
 /**
 A Molecule represents a complete molecule. This class is merely a view on the underlying
-MoleculeData class.
+MoleculeView class.
 
 @author Christopher Woods
 */
-class SIREMOL_EXPORT Molecule
+class SIREMOL_EXPORT Molecule : public MoleculeView
 {
-
-friend class NewAtom; //so it can see the MoleculeData object
-friend class Residue; //so it can see the MoleculeData object
-friend class PartialMolecule; //so it can see the MoleculeData object
 
 friend QDataStream& ::operator<<(QDataStream&, const Molecule&);
 friend QDataStream& ::operator>>(QDataStream&, Molecule&);
@@ -142,9 +136,7 @@ public:
    ////// Constructors / destructor ////////////////////////
     Molecule();
 
-    Molecule(const PartialMolecule &molecule);
-    Molecule(const Residue &residue);
-    Molecule(const NewAtom &atom);
+    Molecule(const MoleculeView &molecule);
 
     Molecule(const Molecule &other);
 
@@ -163,7 +155,7 @@ public:
 
 
    ////// Operators ////////////////////////////////////////
-    Molecule& operator=(const Molecule &other);
+    Molecule& operator=(const MoleculeView &other);
     Molecule& operator=(const detail::MolData &moldata);
 
     bool operator==(const Molecule &other) const;
@@ -490,10 +482,6 @@ public:
     void assertSameMolecule(const Molecule &other) const;
     void assertSameMajorVersion(const Molecule &other) const;
     void assertSameVersion(const Molecule &other) const;
-
-private:
-    /** Implicitly shared pointer to the data for this molecule */
-    QSharedDataPointer<MoleculeData> d;
 };
 
 }

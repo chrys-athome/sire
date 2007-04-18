@@ -28,9 +28,12 @@
 
 #include "partialmolecule.h"
 
+#include "moleculeview_inlines.h"
 #include "molecule.h"
 #include "residue.h"
 #include "newatom.h"
+
+#include "propertyextractor.h"
 
 #include "atom.h"
 #include "resid.h"
@@ -58,7 +61,8 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
 
     SharedDataStream sds(ds);
 
-    sds << partialmol.d << partialmol.selected_atoms;
+    sds << partialmol.selected_atoms
+        << static_cast<const MoleculeView&>(partialmol);
 
     return ds;
 }
@@ -73,7 +77,8 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
     {
         SharedDataStream sds(ds);
 
-        sds >> partialmol.d >> partialmol.selected_atoms;
+        sds >> partialmol.selected_atoms
+            >> static_cast<MoleculeView&>(partialmol);
     }
     else
         throw version_error(v, "1", r_partialmol, CODELOC);
@@ -82,13 +87,13 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 }
 
 /** Empty constructor */
-PartialMolecule::PartialMolecule() : d(MoleculeData::null())
+PartialMolecule::PartialMolecule() : MoleculeView()
 {}
 
 /** Construct a PartialMolecule that represents the entire
     Molecule 'molecule' */
 PartialMolecule::PartialMolecule(const Molecule &molecule)
-                : d(molecule.d),
+                : MoleculeView(molecule),
                   selected_atoms(molecule)
 {}
 
@@ -101,7 +106,7 @@ PartialMolecule::PartialMolecule(const Molecule &molecule)
 */
 PartialMolecule::PartialMolecule(const Molecule &molecule,
                                  const AtomSelection &selection)
-                : d(molecule.d),
+                : MoleculeView(molecule),
                   selected_atoms(selection)
 {
     selected_atoms.assertCompatibleWith(molecule);
@@ -110,19 +115,19 @@ PartialMolecule::PartialMolecule(const Molecule &molecule,
 /** Construct a PartialMolecule that represents the whole
     of the residue 'residue' */
 PartialMolecule::PartialMolecule(const Residue &residue)
-                : d(residue.d),
+                : MoleculeView(residue),
                   selected_atoms(residue)
 {}
 
 /** Construct a PartialMolecule that represents the atom 'atom' */
 PartialMolecule::PartialMolecule(const NewAtom &atom)
-                : d(atom.d),
+                : MoleculeView(atom),
                   selected_atoms(atom)
 {}
 
 /** Copy constructor */
 PartialMolecule::PartialMolecule(const PartialMolecule &other)
-                : d(other.d),
+                : MoleculeView(other),
                   selected_atoms(other.selected_atoms)
 {}
 
@@ -131,37 +136,10 @@ PartialMolecule::~PartialMolecule()
 {}
 
 /** Copy assignment - make equal to a Molecule */
-PartialMolecule& PartialMolecule::operator=(const Molecule &molecule)
+PartialMolecule& PartialMolecule::operator=(const PartialMolecule &molecule)
 {
-    d = molecule.d;
-    selected_atoms = AtomSelection(molecule);
-
-    return *this;
-}
-
-/** Copy assignment - make equal to a Residue */
-PartialMolecule& PartialMolecule::operator=(const Residue &residue)
-{
-    d = residue.d;
-    selected_atoms = AtomSelection(residue);
-
-    return *this;
-}
-
-/** Copy assignment - make equal to a Atom */
-PartialMolecule& PartialMolecule::operator=(const NewAtom &atom)
-{
-    d = atom.d;
-    selected_atoms = AtomSelection(atom);
-
-    return *this;
-}
-
-/** Copy assignment */
-PartialMolecule& PartialMolecule::operator=(const PartialMolecule &other)
-{
-    d = other.d;
-    selected_atoms = other.selected_atoms;
+    MoleculeView::operator=(molecule);
+    selected_atoms = molecule.selected_atoms;
 
     return *this;
 }
@@ -169,23 +147,24 @@ PartialMolecule& PartialMolecule::operator=(const PartialMolecule &other)
 /** Comparison operator */
 bool PartialMolecule::operator==(const PartialMolecule &other) const
 {
-    return ( d == other.d or *d == *(other.d) ) and
+    return MoleculeView::operator==(other) and
            selected_atoms == other.selected_atoms;
 }
 
 /** Comparison operator */
 bool PartialMolecule::operator!=(const PartialMolecule &other) const
 {
-    return ( d != other.d and *d != *(other.d) ) or
+    return MoleculeView::operator!=(other) or
            selected_atoms != other.selected_atoms;
 }
 
-/** Return the PartialMolecule as a Molecule */
-Molecule PartialMolecule::molecule() const
+/** Return a PropertyExtractor object that can be used to
+    extract various properties from this molecule
+    (e.g. arrays containing all of the atom elements of
+     selected atoms) */
+PropertyExtractor PartialMolecule::extract() const
 {
-    Molecule mol;
-    mol.d = d;
-    return mol;
+    return PropertyExtractor(*this);
 }
 
 /** Change this PartialMolecule to match 'molecule'.
@@ -199,7 +178,7 @@ bool PartialMolecule::change(const PartialMolecule &molecule)
 {
     selected_atoms.assertCompatibleWith(molecule.selected_atoms);
 
-    d = molecule.d;
+    MoleculeView::operator=(molecule);
 
     return selected_atoms.intersects(molecule.selected_atoms);
 }
@@ -284,6 +263,20 @@ int PartialMolecule::nSelectedCutGroups() const
 int PartialMolecule::nSelectedResidues() const
 {
     return selected_atoms.nSelectedResidues();
+}
+
+/** Return whether all of the CutGroups contain at least
+    one selected atom */
+bool PartialMolecule::selectedAllCutGroups() const
+{
+    return selected_atoms.selectedAllCutGroups();
+}
+
+/** Return whether all of the Residues contain at least
+    one selected atom */
+bool PartialMolecule::selectedAllResidues() const
+{
+    return selected_atoms.selectedAllResidues();
 }
 
 /** Return whether or not the atom with the index 'cgatomid'
@@ -550,7 +543,14 @@ QList<AtomIndex> PartialMolecule::selected() const
 {
     return selected_atoms.selected();
 }
-    
+
+/** Return the MoleculeInfo that holds the metainfo for this
+    molecule */
+const MoleculeInfo& PartialMolecule::info() const
+{
+    return data().info();
+}
+
 /** Return the name of the molecule. */
 QString PartialMolecule::name() const
 {
@@ -560,20 +560,13 @@ QString PartialMolecule::name() const
 /** Return the ID number of this molecule */
 MoleculeID PartialMolecule::ID() const
 {
-    return d->ID();
-}
-
-/** Return the MoleculeInfo that holds the metainfo for this
-    molecule */
-const MoleculeInfo& PartialMolecule::info() const
-{
-    return d->info();
+    return data().ID();
 }
 
 /** Return the version number of this molecule. */
 const MoleculeVersion& PartialMolecule::version() const
 {
-    return d->version();
+    return data().version();
 }
 
 /** Return the CutGroupIDs of any CutGroups that have at least one
@@ -594,18 +587,18 @@ QSet<ResNum> PartialMolecule::selectedResidues() const
     property then this property will be masked by the atom selection
     (e.g. AtomicProperties will only be returned for selected atoms,
      with the order the same as that returned by coordGroups() )
-     
+
     \throw SireBase::missing_property
 */
 Property PartialMolecule::getProperty(const QString &name) const
 {
-    Property property = d->getProperty(name);
-    
+    Property property = data().getProperty(name);
+
     if (this->selectedAll() or not property.isA<MoleculeProperty>())
     {
         return property;
     }
-    
+
     //mask this property by the current selection
     return property.asA<MoleculeProperty>().mask(selected_atoms);
 }
@@ -615,82 +608,76 @@ Property PartialMolecule::getProperty(const QString &name) const
     will be returned. */
 QVector<CoordGroup> PartialMolecule::coordGroups() const
 {
-    QVector<CoordGroup> coords = d->coordGroups();
-    
-    if (this->nSelectedCutGroups() == info().nCutGroups())
+    QVector<CoordGroup> coords = data().coordGroups();
+
+    if (this->selectedAllCutGroups())
         return coords;
     else
     {
         QSet<CutGroupID> cgids = selected_atoms.selectedCutGroups();
         QVector<CoordGroup> selected_coords( cgids.count() );
-        
+
         const CoordGroup *coords_array = coords.constData();
         CoordGroup *selected_coords_array = selected_coords.data();
-        
+
         int i=0;
-        
+
         foreach (CutGroupID cgid, cgids)
         {
             selected_coords_array[i] = coords_array[cgid];
             ++i;
         }
-        
+
         return selected_coords;
     }
 }
 
-/** Assert that this is the same molecule as 'other'
- 
-    \throw SireError::incompatible_error
-*/
-void PartialMolecule::assertSameMolecule(const PartialMolecule &other) const
+/** Return the index of CutGroupID into the CoordGroup, AtomicProperty
+    or CutGroup arrays. This is necessary as while CutGroupID corresponds
+    exactly to the array index for a whole molecule, it does not
+    correspond exactly for a partial molecule (as CutGroups that don't contain
+    any selected atoms are left out, and the order of the CutGroups in the
+    array may change). This function returns the index that maps CutGroupID
+    to the location of the CutGroup in the arrays returned by coordGroups(),
+    getProperty() and all of the extract() functions. */
+QHash<CutGroupID,quint32> PartialMolecule::cutGroupIndex() const
 {
-    if (this->ID() != other.ID())
-        throw SireError::incompatible_error( QObject::tr(
-            "This molecule (\"%1\", ID == %2, Version == %3) is not "
-            "the different to the other molecule (\"%4\", ID == %5, "
-            "Version == %6)")
-                .arg(this->name()).arg(this->ID())
-                .arg(this->version().toString())
-                .arg(other.name()).arg(other.ID())
-                .arg(other.version().toString()), CODELOC );
-}
-/** Assert that this molecule has the same major version as 'other'
-    - this also asserts that both molecules have the same ID number.
+    if (this->selectedAllCutGroups())
+    {
+        //all CutGroups are selected, so CutGroupID => index into array
+        // - this is a pretty pointless index!
+        QHash<CutGroupID,quint32> index;
+        uint ncg = info().nCutGroups();
+        index.reserve(ncg);
 
-    \throw SireError::incompatible_error
-*/
-void PartialMolecule::assertSameMajorVersion(const PartialMolecule &other) const
-{
-    this->assertSameMolecule(other);
+        for (CutGroupID i(0); i<ncg; ++i)
+        {
+            index.insert( i, i );
+        }
 
-    if (this->version().major() != other.version().major())
-        throw SireError::incompatible_error( QObject::tr(
-            "This molecule (\"%1\", ID == %2, Version == %3) has a "
-            "different major version to the other molecule (\"%4\", "
-            "ID == %5, Version == %6)")
-                .arg(this->name()).arg(this->ID())
-                .arg(this->version().toString())
-                .arg(other.name()).arg(other.ID())
-                .arg(other.version().toString()), CODELOC );
-}
+        return index;
+    }
+    else
+    {
+        //there are some missing CutGroups - the arrays are ordered
+        //using the iterator order of selectedCutGroups()
+        QSet<CutGroupID> cgids = selected_atoms.selectedCutGroups();
 
-/** Assert that this molecule has the same version as 'other'
-    - this also asserts that both molecules have the same ID number.
+        QHash<CutGroupID,quint32> index;
 
-    \throw SireError::incompatible_error
-*/
-void PartialMolecule::assertSameVersion(const PartialMolecule &other) const
-{
-    this->assertSameMolecule(other);
+        if (not cgids.isEmpty())
+        {
+            index.reserve(cgids.count());
 
-    if (this->version() != other.version())
-        throw SireError::incompatible_error( QObject::tr(
-            "This molecule (\"%1\", ID == %2, Version == %3) has a "
-            "different version to the other molecule (\"%4\", "
-            "ID == %5, Version == %6)")
-                .arg(this->name()).arg(this->ID())
-                .arg(this->version().toString())
-                .arg(other.name()).arg(other.ID())
-                .arg(other.version().toString()), CODELOC );
+            quint32 i = 0;
+
+            foreach (CutGroupID cgid, cgids)
+            {
+                index.insert( cgid, i );
+                ++i;
+            }
+        }
+
+        return index;
+    }
 }

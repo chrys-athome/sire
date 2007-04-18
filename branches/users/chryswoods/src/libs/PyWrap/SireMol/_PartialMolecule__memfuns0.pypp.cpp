@@ -5,6 +5,7 @@
 #include "_PartialMolecule__memfuns0.pypp.hpp"
 #include "boost/python.hpp"
 #include "siremol_headers.h"
+#include "SireMol/moleculedata.h"
 #include "SireMaths/angle.h"
 #include "SireMaths/quaternion.h"
 #include "SireMaths/matrix.h"
@@ -70,39 +71,6 @@ void register_PartialMolecule_memfuns0( PartialMolecule_exposer_t& PartialMolecu
     
     }
 
-    { //::SireMol::PartialMolecule::assertSameMajorVersion
-    
-        typedef void ( ::SireMol::PartialMolecule::*assertSameMajorVersion_function_type )( ::SireMol::PartialMolecule const & ) const;
-        
-        PartialMolecule_exposer.def( 
-            "assertSameMajorVersion"
-            , assertSameMajorVersion_function_type( &::SireMol::PartialMolecule::assertSameMajorVersion )
-            , ( bp::arg("other") ) );
-    
-    }
-
-    { //::SireMol::PartialMolecule::assertSameMolecule
-    
-        typedef void ( ::SireMol::PartialMolecule::*assertSameMolecule_function_type )( ::SireMol::PartialMolecule const & ) const;
-        
-        PartialMolecule_exposer.def( 
-            "assertSameMolecule"
-            , assertSameMolecule_function_type( &::SireMol::PartialMolecule::assertSameMolecule )
-            , ( bp::arg("other") ) );
-    
-    }
-
-    { //::SireMol::PartialMolecule::assertSameVersion
-    
-        typedef void ( ::SireMol::PartialMolecule::*assertSameVersion_function_type )( ::SireMol::PartialMolecule const & ) const;
-        
-        PartialMolecule_exposer.def( 
-            "assertSameVersion"
-            , assertSameVersion_function_type( &::SireMol::PartialMolecule::assertSameVersion )
-            , ( bp::arg("other") ) );
-    
-    }
-
     { //::SireMol::PartialMolecule::change
     
         typedef bool ( ::SireMol::PartialMolecule::*change_function_type )( ::SireMol::PartialMolecule const & ) ;
@@ -132,6 +100,16 @@ void register_PartialMolecule_memfuns0( PartialMolecule_exposer_t& PartialMolecu
         PartialMolecule_exposer.def( 
             "coordGroups"
             , coordGroups_function_type( &::SireMol::PartialMolecule::coordGroups ) );
+    
+    }
+
+    { //::SireMol::PartialMolecule::cutGroupIndex
+    
+        typedef ::QHash<SireMol::CutGroupID,unsigned int> ( ::SireMol::PartialMolecule::*cutGroupIndex_function_type )(  ) const;
+        
+        PartialMolecule_exposer.def( 
+            "cutGroupIndex"
+            , cutGroupIndex_function_type( &::SireMol::PartialMolecule::cutGroupIndex ) );
     
     }
 
@@ -200,6 +178,16 @@ void register_PartialMolecule_memfuns0( PartialMolecule_exposer_t& PartialMolecu
     
     }
 
+    { //::SireMol::PartialMolecule::extract
+    
+        typedef ::SireMol::PropertyExtractor ( ::SireMol::PartialMolecule::*extract_function_type )(  ) const;
+        
+        PartialMolecule_exposer.def( 
+            "extract"
+            , extract_function_type( &::SireMol::PartialMolecule::extract ) );
+    
+    }
+
     { //::SireMol::PartialMolecule::getProperty
     
         typedef ::SireBase::Property ( ::SireMol::PartialMolecule::*getProperty_function_type )( ::QString const & ) const;
@@ -229,6 +217,17 @@ void register_PartialMolecule_memfuns0( PartialMolecule_exposer_t& PartialMolecu
         PartialMolecule_exposer.def( 
             "intersect"
             , intersect_function_type( &::SireMol::PartialMolecule::intersect )
+            , ( bp::arg("other") ) );
+    
+    }
+
+    { //::SireMol::PartialMolecule::intersects
+    
+        typedef bool ( ::SireMol::PartialMolecule::*intersects_function_type )( ::SireMol::AtomSelection const & ) const;
+        
+        PartialMolecule_exposer.def( 
+            "intersects"
+            , intersects_function_type( &::SireMol::PartialMolecule::intersects )
             , ( bp::arg("other") ) );
     
     }
