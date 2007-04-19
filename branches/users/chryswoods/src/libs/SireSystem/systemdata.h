@@ -108,6 +108,8 @@ public:
 
     virtual ~SystemData();
 
+    SystemData& operator=(const SystemData &other);
+
     bool operator==(const SystemData &other) const;
     bool operator!=(const SystemData &other) const;
 
@@ -122,22 +124,32 @@ public:
     void remove(MoleculeGroupID groupid);
     void remove(const MoleculeGroup &group);
 
-    //void add(const MoleculeConstraint &constraint);
-
-    //void remove(const MoleculeConstraint &constraint);
-    //void removeConstraint(const Molecule &molecule);
-    //void removeConstraint(MoleculeID molid);
+    PartialMolecule mapIntoSystemSpace(const PartialMolecule &molecule) const;
 
     QHash<MoleculeID,PartialMolecule>
-    applyConstraints(const PartialMolecule &molecule);
+    mapIntoSystemSpace(const QHash<MoleculeID,PartialMolecule> &molecules) const;
+
+    QHash<MoleculeID,PartialMolecule>
+    mapIntoSystemSpace(const QList<PartialMolecule> &molecules) const;
 
     const MoleculeGroup& group(MoleculeGroupID id) const;
     const MoleculeGroups& groups() const;
 
-    QHash<MoleculeID,PartialMolecule>
-    change(const PartialMolecule &molecule);
+    void change(const PartialMolecule &molecule);
+    void change(const QList<PartialMolecule> &molecules);
+    void change(const QHash<MoleculeID,PartialMolecule> &molecules);
 
-    void remove(MoleculeID molid);
+    void add(const PartialMolecule &molecule,
+             const QSet<MoleculeGroupID> &groupids);
+
+    void add(const QHash<MoleculeID,PartialMolecule> &molecules,
+             const QSet<MoleculeGroupID> &groupids);
+
+    void add(const QList<PartialMolecule> &molecules,
+             const QSet<MoleculeGroupID> &groupids);
+
+    void remove(const PartialMolecule &molecule,
+                const QSet<MoleculeGroupID> &groupids);
 
     void incrementMinorVersion();
     void incrementMajorVersion();

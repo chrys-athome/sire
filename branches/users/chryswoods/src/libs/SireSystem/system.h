@@ -79,6 +79,9 @@ public:
     System();
     System(const QString &name);
 
+    System(const QString &name,
+           const
+
     System(const System &other);
 
     ~System();
@@ -101,12 +104,12 @@ public:
     const Version& version() const;
 
 private:
-    System(const SystemData &sysdata, 
+    System(const SystemData &sysdata,
            const ForceFields &ffields);
 
     /** The object holding information about this system */
     SystemData sysdata;
-    
+
     /** The forcefields that are used to calculate
         energies / forces of molecules */
     ForceFields ffields;

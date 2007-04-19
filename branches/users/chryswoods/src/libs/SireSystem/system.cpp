@@ -48,7 +48,7 @@ QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const System &system)
     writeHeader(ds, r_system, 1);
 
     SharedDataStream sds(ds);
-     
+
     sds << system.sysdata << system.ffields;
 
     return ds;
@@ -62,7 +62,7 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, System &system)
     if (v == 1)
     {
         SharedDataStream sds(ds);
-         
+
         sds >> system.sysdata >> system.ffields;
     }
     else
@@ -137,30 +137,17 @@ void System::prepareForSimulation()
 */
 Moves System::run(const Moves &moves, quint32 nmoves)
 {
-    //store the original version of the system 
-    //in case something goes wrong...
-    System orig_system = *this;
-    
-    try
-    {
-        SimSystem simsystem(*this);
-        
-        //work with a copy of the Moves
-        Moves runmoves(moves);
-        
-        runmoves.run(simsystem, nmoves);
-        
-        //return the moves from after the simulation
-        return runmoves;
-    }
-    catch(...)
-    {
-        //restore this system
-        *this = orig_system;
-        
-        //rethrow the exception
-        throw;
-    }
+    LocalSimSystem simsystem(*this);
+
+    //work with a copy of the moves
+    Moves run_moves(moves);
+
+    runmoves.run(simsystem, nmoves);
+
+    //everything went well - copy back into this system
+    *this = simsystem.checkpoint();
+
+    return runmoves;
 }
 
 /** Run this system in the local thread - this will only work

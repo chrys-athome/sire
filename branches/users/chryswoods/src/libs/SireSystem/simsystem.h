@@ -29,62 +29,12 @@
 #ifndef SIRESYSTEM_SIMSYSTEM_H
 #define SIRESYSTEM_SIMSYSTEM_H
 
-#include "sireglobal.h"
-
-#include <boost/noncopyable.hpp>
+#include "querysystem.h"
 
 SIRE_BEGIN_HEADER
 
-namespace SireBase
-{
-class Version;
-}
-
-namespace SireCAS
-{
-class Function;
-}
-
-namespace SireMol
-{
-class Molecule;
-class Residue;
-class NewAtom;
-class MoleculeGroup;
-class MoleculeGroups;
-class MoleculeGroupID;
-}
-
-namespace SireFF
-{
-class FFComponent;
-class ForceField;
-class ForceFieldID;
-class ForceFieldsBase;
-}
-
 namespace SireSystem
 {
-
-class SystemData;
-class System;
-class SystemID;
-
-using SireCAS::Function;
-
-using SireMol::Molecule;
-using SireMol::Residue;
-using SireMol::NewAtom;
-using SireMol::MoleculeGroup;
-using SireMol::MoleculeGroups;
-using SireMol::MoleculeGroupID;
-
-using SireFF::ForceField;
-using SireFF::ForceFieldsBase;
-using SireFF::ForceFieldID;
-using SireFF::FFComponent;
-
-using SireBase::Version;
 
 /** This class holds a system that is being actively
     simulated.
@@ -95,112 +45,72 @@ using SireBase::Version;
 
     @author Christopher Woods
 */
-class SIRESYSTEM_EXPORT SimSystem : public boost::noncopyable
+class SIRESYSTEM_EXPORT SimSystem : public QuerySystem
 {
 
 public:
-    SimSystem(System &system);
-    SimSystem(SystemData &sysdata, ForceFieldsBase &ffields);
+    ~SimSystem();
 
-    virtual ~SimSystem();
+    virtual void rollback(const CheckPoint &checkpoint)=0;
 
-    const SystemData& info() const;
-    const ForceFieldsBase& forceFields() const;
+    void commit();
 
-    System checkpoint() const;
-    void setSystem(System &newsystem);
-
-    const MoleculeGroup& group(MoleculeGroupID id) const;
-
-    const MoleculeGroup& group(const MoleculeGroup &group) const;
-
-    const MoleculeGroups& groups() const;
-
-    SystemID ID() const;
-
-    const Version& version() const;
-
-    void updateStatistics();
-
-    //interface to ForceFields
-    double energy(const Function &component);
-    double energy(const FFComponent &component);
-
-    void setProperty(const QString &name, const Property &property)=0;
+    void setProperty(const QString &name, const Property &property);
     void setProperty(ForceFieldID ffid, const QString &name, const Property &property);
 
     void setProperty(const QSet<ForceFieldID> &ffids,
                      const QString &name, const Property &property);
 
-    QSet<ForceFieldID,Property> getProperty(const QString &name) const;
-
-    Property getProperty(ForceFieldID ffid, const QString &name) const;
-    QSet<ForceFieldID,Property> getProperty(const QSet<ForceFieldID> &ffids,
-                                            const QString &name) const;
-
-    bool containsProperty(const QString &name) const;
-    bool containsProperty(ForceFieldID ffid, const QString &name) const;
-    QSet<ForceFieldID> forceFieldsWithProperty(const QString &name) const;
-
     void change(const PartialMolecule &molecule);
     void change(const QHash<MoleculeID,PartialMolecule> &molecules);
+    void change(const QList<PartialMolecule> &molecules);
 
-    void add(ForceFieldID ffid, const PartialMolecule &molecule);
-    void add(ForceFieldID ffid, const QList<PartialMolecule> &molecules);
+    void add(const PartialMolecule &molecule,
+             const QSet<MoleculeGroupID> &molgroupids);
 
-    void addTo(ForceFieldID ffid, const FFBase::Group &group,
-               const PartialMolecule &molecule);
-    void addTo(ForceFieldID ffid, const FFBase::Group &group,
-               const QList<PartialMolecule> &molecules);
+    void add(const PartialMolecule &molecule,
+             const QSet<FFGroupID> &ffgroupids,
+             const QSet<MoleculeGroupID> &molgroupids = QSet<MoleculeGroupID>());
+
+    void add(const QHash<MoleculeID,PartialMolecule> &molecules,
+             const QSet<MoleculeGroupID> &molgroupids);
+
+    void add(const QHash<MoleculeID,PartialMolecule> &molecules,
+             const QSet<FFGroupID> &ffgroupids,
+             const QSet<MoleculeGroupID> &molgroupids = QSet<MoleculeGroupID>());
+
+    void add(const QHash<MoleculeID,PartialMolecule> &molecules,
+             const QSet<MoleculeGroupID> &molgroupids);
+
+    void add(const QHash<MoleculeID,PartialMolecule> &molecules,
+             const QSet<FFGroupID> &ffgroupids,
+             const QSet<MoleculeGroupID> &molgroupids = QSet<MoleculeGroupID>());
 
     void remove(const PartialMolecule &molecule);
     void remove(const QList<PartialMolecule> &molecules);
-    void remove(ForceFieldID ffid, const PartialMolecule &molecule);
-    void remove(ForceFieldID ffid, const QList<PartialMolecule> &molecules);
 
-    void removeFrom(ForceFieldID ffid, const FFBase::Group &group,
-                    const PartialMolecule &molecule);
-    void removeFrom(ForceFieldID ffid, const FFBase::Group &group,
-                    const QList<PartialMolecule> &molecules);
+    void remove(const PartialMolecule &molecule,
+                const QSet<MoleculeGroupID> &molgroupids);
 
-    bool contains(const PartialMolecule &molecule, ForceFieldID ffid) const;
-    bool contains(const PartialMolecule &molecule,
-                  ForceFieldID ffid, const FFBase::Group &group) const;
+    void remove(const PartialMolecule &molecule,
+                const QSet<FFGroupID> &ffgroupids,
+                const QSet<MoleculeGroupID> &molgroupids = QSet<MoleculeGroupID>());
 
-    QSet<ForceFieldID> forceFieldsContaining(const PartialMolecule &molecule) const;
+    void remove(const QList<PartialMolecule> &molecules,
+                const QSet<MoleculeGroupID> &molgroupids);
 
-    bool refersTo(MoleculeID molid) const;
-    bool refersTo(MoleculeID molid, ForceFieldID ffid) const;
-    bool refersTo(MoleculeID molid, ForceFieldID ffid,
-                  const FFBase::Group &group) const;
+    void remove(const QList<PartialMolecule> &molecules,
+                const QSet<FFGroupID> &ffgroupids,
+                const QSet<MoleculeGroupID> &molgroupids = QSet<MoleculeGroupID>());
 
-    QSet<ForceFieldID> forceFieldsReferringTo(MoleculeID molid) const;
+protected:
+    SimSystem(SystemData &sysdata,
+              ForceFieldsBase &ffields,
+              SystemMonitors &monitors);
 
-    QSet<MoleculeID> moleculeIDs() const;
-    QSet<MoleculeID> moleculeIDs(ForceFieldID ffid) const;
-    QSet<MoleculeID> moleculeIDs(ForceFieldID ffid, const FFBase::Group &group) const;
-
-    PartialMolecule molecule(MoleculeID molid, ForceFieldID ffid) const;
-
-    QHash<MoleculeID,PartialMolecule> contents() const;
-    QHash<MoleculeID,PartialMolecule> contents(ForceFieldID ffid) const;
-    QHash<MoleculeID,PartialMolecule> contents(ForceFieldID ffid,
-                                               const FFBase::Group &group) const;
-
-private:
-    template<class T>
-    void _pvt_change(const T &obj);
-
-    /** Reference to the data of the System being simulated */
-    SystemData &sysdata;
-
-    /** Reference to the forcefields that are used to
-        calculate the energy / forces */
-    ForceFieldsBase &ffields;
-
-    /** Reference to the monitors that are used to monitor
-        and collect statistics about the simulation */
-    //SystemMonitors &monitors;
+    void setSystem(SystemData &sysdata,
+                   ForceFieldsBase &ffields,
+                   SystemMonitors &monitors);
 };
 
 }
