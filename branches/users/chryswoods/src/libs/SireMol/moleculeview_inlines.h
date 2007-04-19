@@ -37,15 +37,6 @@ SIRE_BEGIN_HEADER
 namespace SireMol
 {
 
-/** Copy assignment operator */
-inline MoleculeView& MoleculeView::operator=(const MoleculeView &other)
-{
-    if (d != other.d)
-        d = other.d;
-
-    return *this;
-}
-
 /** Comparison operator */
 inline bool MoleculeView::operator==(const MoleculeView &other) const
 {

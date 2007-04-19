@@ -175,6 +175,8 @@ public:
     Property(const PropertyBase &property);
     Property(PropertyBase *property);
 
+    Property(const QVariant &value);
+
     Property(const Property &other);
 
     ~Property();

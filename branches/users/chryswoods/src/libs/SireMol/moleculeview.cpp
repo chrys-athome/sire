@@ -83,6 +83,15 @@ MoleculeView::MoleculeView(const MoleculeView &other)
 MoleculeView::~MoleculeView()
 {}
 
+/** Copy assignment operator */
+MoleculeView& MoleculeView::operator=(const MoleculeView &other)
+{
+    if (d != other.d)
+        d = other.d;
+
+    return *this;
+}
+
 /** Return a complete view of this molecule */
 Molecule MoleculeView::molecule() const
 {

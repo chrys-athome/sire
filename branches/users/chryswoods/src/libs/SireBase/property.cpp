@@ -319,6 +319,11 @@ Property::Property(const PropertyBase &property)
          : d(property)
 {}
 
+/** Construct from a QVariant */
+Property::Property(const QVariant &value)
+         : d(new VariantProperty(value))
+{}
+
 /** Copy constructor */
 Property::Property(const Property &other)
          : d(other.d)

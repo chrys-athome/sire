@@ -31,6 +31,7 @@
 
 #include <QVector>
 #include <QDir>
+#include <QFlags>
 #include <QFileInfo>
 
 #include <boost/tuple/tuple.hpp>
@@ -254,6 +255,8 @@ public:
     Property getProperty(const QString &name) const;
     bool containsProperty(const QString &name) const;
 
+    QHash<QString,Property> properties() const;
+
     quint32 qmVersion() const;
 
     virtual QString molproCommandInput();
@@ -268,7 +271,8 @@ public:
     bool change(const QHash<MoleculeID,PartialMolecule> &molecules);
     bool change(const QList<PartialMolecule> &molecules);
 
-    bool add(const PartialMolecule &mol, const ParameterMap &map = ParameterMap());
+    bool add(const PartialMolecule &molecule,
+             const ParameterMap &map = ParameterMap());
 
     bool addTo(const FFBase::Group &group, const PartialMolecule &molecule,
                const ParameterMap &map = ParameterMap());
@@ -279,6 +283,19 @@ public:
     bool addToMM(const PartialMolecule &molecule,
                  const ParameterMap &map = ParameterMap());
 
+    bool add(const QList<PartialMolecule> &molecules,
+             const ParameterMap &map = ParameterMap());
+
+    bool addTo(const FFBase::Group &group,
+               const QList<PartialMolecule> &molecules,
+               const ParameterMap &map = ParameterMap());
+
+    bool addToQM(const QList<PartialMolecule> &molecules,
+                 const ParameterMap &map = ParameterMap());
+
+    bool addToMM(const QList<PartialMolecule> &molecules,
+                 const ParameterMap &map = ParameterMap());
+
     bool remove(const PartialMolecule &molecule);
 
     bool removeFrom(const FFBase::Group &group,
@@ -286,6 +303,14 @@ public:
 
     bool removeFromQM(const PartialMolecule &molecule);
     bool removeFromMM(const PartialMolecule &molecule);
+
+    bool remove(const QList<PartialMolecule> &molecules);
+
+    bool removeFrom(const FFBase::Group &group,
+                    const QList<PartialMolecule> &molecules);
+
+    bool removeFromQM(const QList<PartialMolecule> &molecules);
+    bool removeFromMM(const QList<PartialMolecule> &molecules);
 
     bool contains(const PartialMolecule &molecule) const;
 
@@ -308,20 +333,46 @@ public:
     PartialMolecule molecule(MoleculeID molid,
                              const FFBase::Group &group) const;
 
-    QHash<MoleculeID,PartialMolecule> contents() const;
+    QHash<MoleculeID,PartialMolecule> qmMolecules() const;
+    QHash<MoleculeID,PartialMolecule> mmMolecules() const;
 
+    QHash<MoleculeID,PartialMolecule> contents() const;
     QHash<MoleculeID,PartialMolecule> contents(const FFBase::Group &group) const;
 
 protected:
     void recalculateEnergy();
-
-    bool updateArrays();
 
     //protected functions designed to be overloaded by child classes, and
     //only called by MolproCalculator
     virtual Values recalculateEnergy(MolproSession &session);
 
     void _pvt_copy(const FFBase &other);
+
+    enum QMMMStatusFlag
+    {
+        UP2DATE = 0x0000,          // The forcefield is clean
+        NEED_ENERGY_CALC = 0x0001, // We need to recalculate the energy
+        NEED_UPDATE_MM = 0x0010,   // Some or all of the MM region needs updating
+        NEED_REBUILD_MM = 0x0020,  // The MM array needs to be rebuilt
+        NEED_UPDATE_QM = 0x0100,   // All of the QM region needs updating
+        NEED_REBUILD_QM = 0x0200,  // The QM array needs to be rebuilt
+        NEED_REBUILD_ALL = 0xffff  // All of everything needs rebuilding!
+    };
+
+    Q_DECLARE_FLAGS(QMMMStatus, QMMMStatusFlag);
+
+    void mustNowRebuildQM();
+    void mustNowUpdateQM();
+    void mustNowRebuildMM();
+    void mustNowUpdateMM(MoleculeID molid);
+
+    void clearStatus(QMMMStatus stat);
+
+    bool needEnergyCalc() const;
+    bool needRebuildQM() const;
+    bool needUpdateQM() const;
+    bool needRebuildMM() const;
+    bool needUpdateMM() const;
 
 private:
     void registerComponents();
@@ -330,9 +381,12 @@ private:
     QString qmCoordString() const;
     QString mmCoordAndChargesString();
 
-    int nQMAtomsInArray() const;
-    int nMMAtomsInArray() const;
-    int nAtomsInArray() const;
+    int nQMAtomsInArray();
+    int nMMAtomsInArray();
+    int nAtomsInArray();
+
+    bool _pvt_add(const PartialMolecule &molecule,
+                  const ParameterMap &map);
 
     bool _pvt_addToQM(const PartialMolecule &molecule,
                       const ParameterMap &map);
@@ -340,11 +394,21 @@ private:
     bool _pvt_addToMM(const PartialMolecule &molecule,
                       const ParameterMap &map);
 
-    void rebuildQMCoordGroup();
-
     bool _pvt_change(const PartialMolecule &molecule);
 
     bool _pvt_remove(const PartialMolecule &molecule);
+
+    bool _pvt_removeFromQM(const PartialMolecule &molecule);
+    bool _pvt_removeFromMM(const PartialMolecule &molecule);
+
+    void rebuildQMCoordGroup();
+
+    void updateArrays();
+
+    void rebuildQMArray();
+    void updateQMArray();
+    void rebuildMMArray();
+    void updateMMArray();
 
     class QMMolecule
     {
@@ -424,12 +488,23 @@ private:
         QString coordAndChargesString() const;
 
     private:
+        void updateGroup(CutGroupID cgid, const CoordGroup &group_coords,
+                         const QVector<SireMM::ChargeParameter> &group_chgs,
+                         const CoordGroup &qm_coordgroup,
+                         const Space &space, const SwitchingFunction &switchfunc);
+
         /** The molecule itself */
         PartialMolecule mol;
 
         /** The name of the property containing the
             atomic charges of the atoms. */
         QString chg_property;
+
+        /** The coordinates of the selected atoms */
+        QVector<CoordGroup> coords;
+
+        /** The charges on all of the selected atoms */
+        AtomicCharges chgs;
 
         /** The replicas of each CoordGroup of this molecule,
             within the cutoff, together with their closest
@@ -505,17 +580,8 @@ private:
     /** Set of MoleculeIDs of MM molecules that need rebuilding */
     QSet<MoleculeID> rebuild_mm;
 
-    enum { UP2DATE = 0x0000,          // The forcefield is clean
-           NEED_ENERGY_CALC = 0x0001, // We need to recalculate the energy
-           NEED_UPDATE_MM = 0x0010,   // Some or all of the MM region needs updating
-           NEED_REBUILD_MM = 0x0020,  // The MM array needs to be rebuilt
-           NEED_UPDATE_QM = 0x0100,   // All of the QM region needs updating
-           NEED_REBUILD_QM = 0x0200,  // The QM array needs to be rebuilt
-           NEED_REBUILD_ALL = 0xffff  // All of everything needs rebuilding!
-         };
-
     /** The rebuild status of this forcefield */
-    qint32 ff_status;
+    QMMMStatus ff_status;
 
     /** Pointer to the object containing the components of
         this forcefield */

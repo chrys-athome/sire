@@ -11,21 +11,15 @@
 
 namespace bp = boost::python;
 
+Squire::MolproProcessor __copy__(const Squire::MolproProcessor &other){ return Squire::MolproProcessor(other); }
+
 const char* pvt_get_name(const Squire::MolproProcessor&){ return "Squire::MolproProcessor";}
 
 void register_MolproProcessor_class(){
 
     bp::class_< Squire::MolproProcessor, bp::bases< SireFF::FFThreadProcessor > >( "MolproProcessor" )    
         .def( bp::init< >() )    
-        .def( bp::init< SireFF::ForceField const &, bp::optional< QString const &, QDir const & > >(( bp::arg("forcefield"), bp::arg("molpro_exe")="molpro", bp::arg("temp_dir")=QDir::temp( ) )) )    
-        .def( 
-            "setMolpro"
-            , (void ( ::Squire::MolproProcessor::* )( ::QString const & ) )( &::Squire::MolproProcessor::setMolpro )
-            , ( bp::arg("molpro_exe") ) )    
-        .def( 
-            "setTempDir"
-            , (void ( ::Squire::MolproProcessor::* )( ::QDir const & ) )( &::Squire::MolproProcessor::setTempDir )
-            , ( bp::arg("tmpdir") ) )    
+        .def( bp::init< SireFF::ForceField const & >(( bp::arg("forcefield") )) )    
         .def( 
             "typeName"
             , (char const * (*)(  ))( &::Squire::MolproProcessor::typeName ) )    
@@ -33,6 +27,7 @@ void register_MolproProcessor_class(){
             "what"
             , (char const * ( ::Squire::MolproProcessor::* )(  ) const)( &::Squire::MolproProcessor::what ) )    
         .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
         .def( "__str__", &pvt_get_name);
 
 }

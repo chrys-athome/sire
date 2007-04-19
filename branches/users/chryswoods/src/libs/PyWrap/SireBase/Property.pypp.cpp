@@ -21,6 +21,7 @@ void register_Property_class(){
         .def( bp::init< SireBase::SharedPolyPointer<SireBase::PropertyBase> const & >(( bp::arg("ptr") )) )    
         .def( bp::init< SireBase::PropertyBase const & >(( bp::arg("property") )) )    
         .def( bp::init< SireBase::PropertyBase * >(( bp::arg("property") )) )    
+        .def( bp::init< QVariant const & >(( bp::arg("value") )) )    
         .def( 
             "base"
             , (::SireBase::PropertyBase const & ( ::SireBase::Property::* )(  ) const)( &::SireBase::Property::base )
