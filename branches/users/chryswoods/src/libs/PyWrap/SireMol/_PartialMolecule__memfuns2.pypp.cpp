@@ -122,6 +122,17 @@ void register_PartialMolecule_memfuns2( PartialMolecule_exposer_t& PartialMolecu
     
     }
 
+    { //::SireMol::PartialMolecule::setSelection
+    
+        typedef void ( ::SireMol::PartialMolecule::*setSelection_function_type )( ::SireMol::AtomSelection const & ) ;
+        
+        PartialMolecule_exposer.def( 
+            "setSelection"
+            , setSelection_function_type( &::SireMol::PartialMolecule::setSelection )
+            , ( bp::arg("other") ) );
+    
+    }
+
     { //::SireMol::PartialMolecule::subtract
     
         typedef ::SireMol::PartialMolecule ( ::SireMol::PartialMolecule::*subtract_function_type )( ::SireMol::AtomSelection const & ) const;

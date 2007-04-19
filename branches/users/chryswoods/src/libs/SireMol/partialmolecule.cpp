@@ -538,6 +538,16 @@ void PartialMolecule::applyMask(const AtomSelection &other)
     selected_atoms.applyMask(other);
 }
 
+/** Set the selection from 'selection'
+
+    \throw SireError::incompatible_error
+*/
+void PartialMolecule::setSelection(const AtomSelection &selection)
+{
+    selected_atoms.assertCompatibleWith(selection);
+    selected_atoms = selection;
+}
+
 /** Return a list of all of the atoms that are contained in the this selection */
 QList<AtomIndex> PartialMolecule::selected() const
 {

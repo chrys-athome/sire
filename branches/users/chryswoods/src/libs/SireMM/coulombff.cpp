@@ -35,6 +35,7 @@
 
 #include "SireMol/cgatomid.h"
 #include "SireMol/moleculeversion.h"
+#include "SireMol/molecule.h"
 #include "SireMol/moleculeinfo.h"
 
 #include "SireUnits/units.h"
@@ -513,7 +514,7 @@ CoulombFF::CoulombMolecule::add(const PartialMolecule &molecule,
     
     else if (molecule.selectedAtoms() == d->molecule.selectedAtoms())
         //there has been no change in the atom selections
-        return this->change(molecule, chgproperty);
+        return this->change(molecule.molecule(), chgproperty);
     else
     {
         d->molecule.assertSameMolecule(molecule);
@@ -524,7 +525,7 @@ CoulombFF::CoulombMolecule::add(const PartialMolecule &molecule,
         {
             if (molecule.version() != d->molecule.version())
             {
-                newmol.d->molecule.change(molecule);
+                newmol.d->molecule.change(molecule.molecule());
                 newmol.d->molecule.add(molecule.selectedAtoms());
                 newmol.d->rebuildAll();
                 return ChangedCoulombMolecule(*this, newmol);
@@ -543,7 +544,7 @@ CoulombFF::CoulombMolecule::add(const PartialMolecule &molecule,
         {
             //there has been a change of property - we need to rebuild
             //the entire molecule
-            newmol.d->molecule.change(molecule);
+            newmol.d->molecule.change(molecule.molecule());
             newmol.d->molecule.add(molecule.selectedAtoms());
             newmol.d->chg_property = chgproperty;
             newmol.d->rebuildAll();

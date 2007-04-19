@@ -183,6 +183,8 @@ public:
     void applyMask(const QSet<ResNum> &resnums);
     void applyMask(const AtomSelection &other);
 
+    void setSelection(const AtomSelection &other);
+
     QList<AtomIndex> selected() const;
 
     QSet<CutGroupID> selectedCutGroups() const;

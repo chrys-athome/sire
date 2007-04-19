@@ -126,7 +126,7 @@ void register_Molecule_memfuns5( Molecule_exposer_t& Molecule_exposer ){
 
     { //::SireMol::Molecule::properties
     
-        typedef ::QHash<QString,SireBase::Property> const & ( ::SireMol::Molecule::*properties_function_type )(  ) const;
+        typedef ::QHash<QString, SireBase::Property> const & ( ::SireMol::Molecule::*properties_function_type )(  ) const;
         
         Molecule_exposer.def( 
             "properties"

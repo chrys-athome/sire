@@ -61,31 +61,56 @@ public:
     void setProperty(const QSet<ForceFieldID> &ffids,
                      const QString &name, const Property &property);
 
-    void change(const PartialMolecule &molecule);
-    void change(const QHash<MoleculeID,PartialMolecule> &molecules);
-    void change(const QList<PartialMolecule> &molecules);
+    PartialMolecule change(const PartialMolecule &molecule);
+    
+    QHash<MoleculeID,PartialMolecule>
+    change(const QHash<MoleculeID,PartialMolecule> &molecules);
+    
+    QHash<MoleculeID,PartialMolecule>
+    change(const QList<PartialMolecule> &molecules);
 
-    void add(const PartialMolecule &molecule,
-             const QSet<MoleculeGroupID> &molgroupids);
+    PartialMolecule add(const PartialMolecule &molecule,
+                        const QSet<MoleculeGroupID> &molgroupids);
 
-    void add(const PartialMolecule &molecule,
-             const QSet<FFGroupID> &ffgroupids,
-             const QSet<MoleculeGroupID> &molgroupids = QSet<MoleculeGroupID>());
+    PartialMolecule add(const PartialMolecule &molecule,
+                        const QSet<FFGroupID> &ffgroupids,
+                        const ParameterMap &map = ParameterMap());
+             
+    PartialMolecule add(const PartialMolecule &molecule,
+                        const QSet<FFGroupID> &ffgroupids,
+                        const QSet<MoleculeGroupID> &molgroupids,
+                        const ParameterMap &map = ParameterMap());
 
-    void add(const QHash<MoleculeID,PartialMolecule> &molecules,
-             const QSet<MoleculeGroupID> &molgroupids);
+    QHash<MoleculeID,PartialMolecule>
+    add(const QHash<MoleculeID,PartialMolecule> &molecules,
+        const QSet<MoleculeGroupID> &molgroupids);
 
-    void add(const QHash<MoleculeID,PartialMolecule> &molecules,
-             const QSet<FFGroupID> &ffgroupids,
-             const QSet<MoleculeGroupID> &molgroupids = QSet<MoleculeGroupID>());
+    QHash<MoleculeID,PartialMolecule>
+    add(const QHash<MoleculeID,PartialMolecule> &molecules,
+        const QSet<FFGroupID> &ffgroupids,
+        const ParameterMap &map = ParameterMap());
+             
+    QHash<MoleculeID,PartialMolecule>
+    add(const QHash<MoleculeID,PartialMolecule> &molecules,
+        const QSet<FFGroupID> &ffgroupids,
+        const QSet<MoleculeGroupID> &molgroupids,
+        const ParameterMap &map = ParameterMap());
 
-    void add(const QHash<MoleculeID,PartialMolecule> &molecules,
-             const QSet<MoleculeGroupID> &molgroupids);
+    QHash<MoleculeID,PartialMolecule>
+    add(const QList<PartialMolecule> &molecules,
+        const QSet<MoleculeGroupID> &molgroupids);
 
-    void add(const QHash<MoleculeID,PartialMolecule> &molecules,
-             const QSet<FFGroupID> &ffgroupids,
-             const QSet<MoleculeGroupID> &molgroupids = QSet<MoleculeGroupID>());
-
+    QHash<MoleculeID,PartialMolecule>
+    add(const QList<PartialMolecule> &molecules,
+        const QSet<FFGroupID> &ffgroupids,
+        const ParameterMap &map = ParameterMap());
+             
+    QHash<MoleculeID,PartialMolecule>
+    add(const QList<PartialMolecule> &molecules,
+        const QSet<FFGroupID> &ffgroupids,
+        const QSet<MoleculeGroupID> &molgroupids,
+        const ParameterMap &map = ParameterMap());
+    
     void remove(const PartialMolecule &molecule);
     void remove(const QList<PartialMolecule> &molecules);
 

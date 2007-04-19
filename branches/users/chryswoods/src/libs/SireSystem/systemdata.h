@@ -117,9 +117,12 @@ public:
     SystemID ID() const;
     const Version& version() const;
 
-    void add(const MoleculeGroup &group);
+    const MoleculeGroup& group(MoleculeGroupID id) const;
+    const MoleculeGroups& groups() const;
 
-    bool contains(MoleculeID molid) const;
+    bool contains(MoleculeGroupID groupid) const;
+
+    void add(const MoleculeGroup &group);
 
     void remove(MoleculeGroupID groupid);
     void remove(const MoleculeGroup &group);
@@ -132,24 +135,37 @@ public:
     QHash<MoleculeID,PartialMolecule>
     mapIntoSystemSpace(const QList<PartialMolecule> &molecules) const;
 
-    const MoleculeGroup& group(MoleculeGroupID id) const;
-    const MoleculeGroups& groups() const;
+    PartialMolecule change(const PartialMolecule &molecule);
+    
+    QHash<MoleculeID,PartialMolecule> 
+    change(const QList<PartialMolecule> &molecules);
+    
+    QHash<MoleculeID,PartialMolecule>
+    change(const QHash<MoleculeID,PartialMolecule> &molecules);
 
-    void change(const PartialMolecule &molecule);
-    void change(const QList<PartialMolecule> &molecules);
-    void change(const QHash<MoleculeID,PartialMolecule> &molecules);
+    PartialMolecule add(const PartialMolecule &molecule,
+                        const QSet<MoleculeGroupID> &groupids);
 
-    void add(const PartialMolecule &molecule,
-             const QSet<MoleculeGroupID> &groupids);
+    QHash<MoleculeID,PartialMolecule>
+    add(const QHash<MoleculeID,PartialMolecule> &molecules,
+        const QSet<MoleculeGroupID> &groupids);
 
-    void add(const QHash<MoleculeID,PartialMolecule> &molecules,
-             const QSet<MoleculeGroupID> &groupids);
-
-    void add(const QList<PartialMolecule> &molecules,
-             const QSet<MoleculeGroupID> &groupids);
+    QHash<MoleculeID,PartialMolecule>
+    add(const QList<PartialMolecule> &molecules,
+        const QSet<MoleculeGroupID> &groupids);
 
     void remove(const PartialMolecule &molecule,
                 const QSet<MoleculeGroupID> &groupids);
+
+    void remove(const QHash<MoleculeID,PartialMolecule> &molecules,
+                const QSet<MoleculeGroupID> &groupids);
+                
+    void remove(const QList<PartialMolecule> &molecules,
+                const QSet<MoleculeGroupID> &groupids);
+
+    void remove(const PartialMolecule &molecule);
+    void remove(const QHash<MoleculeID,PartialMolecule> &molecules);
+    void remove(const QList<PartialMolecule> &molecules);
 
     void incrementMinorVersion();
     void incrementMajorVersion();
@@ -208,13 +224,6 @@ inline void SystemData::incrementMajorVersion()
 inline void SystemData::incrementMinorVersion()
 {
     id_and_version.incrementMinor();
-}
-
-/** Return whether or not this object contains information about
-    the molecule with ID == molid */
-inline bool SystemData::contains(MoleculeID molid) const
-{
-    return molgroups.contains(molid); // or mol_constraints.contains(molid);
 }
 
 /** Return all of the Molecule groups in this System */

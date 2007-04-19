@@ -35,6 +35,7 @@
 #include "ljpair.h"
 
 #include "SireMol/partialmolecule.h"
+#include "SireMol/molecule.h"
 #include "SireMol/residueinfo.h"
 #include "SireMol/cgatomid.h"
 
@@ -544,7 +545,7 @@ CLJFF::ChangedCLJMolecule CLJFF::CLJMolecule::add(const PartialMolecule &molecul
     
     else if (molecule.selectedAtoms() == d->molecule.selectedAtoms())
         //there has been no change in the atom selections
-        return this->change(molecule, chgproperty, ljproperty);
+        return this->change(molecule.molecule(), chgproperty, ljproperty);
     else
     {
         d->molecule.assertSameMolecule(molecule);
@@ -556,7 +557,7 @@ CLJFF::ChangedCLJMolecule CLJFF::CLJMolecule::add(const PartialMolecule &molecul
         {
             if (molecule.version() != d->molecule.version())
             {
-                newmol.d->molecule.change(molecule);
+                newmol.d->molecule.change(molecule.molecule());
                 newmol.d->molecule.add(molecule.selectedAtoms());
                 newmol.d->rebuildAll();
                 return ChangedCLJMolecule(*this, newmol);
@@ -574,7 +575,7 @@ CLJFF::ChangedCLJMolecule CLJFF::CLJMolecule::add(const PartialMolecule &molecul
         {
             //there has been a change of property - we need to rebuild
             //the entire molecule
-            newmol.d->molecule.change(molecule);
+            newmol.d->molecule.change(molecule.molecule());
             newmol.d->molecule.add(molecule.selectedAtoms());
             newmol.d->chg_property = chgproperty;
             newmol.d->lj_property = ljproperty;

@@ -111,21 +111,19 @@ void SimSystem::setProperty(const QSet<ForceFieldID> &ffids,
 /** Change the molecule 'molecule' in this system */
 void SimSystem::change(const PartialMolecule &molecule)
 {
-    //map the molecule into the Space of this system
-    PartialMolecule &mapped_mol = sysdata.mapIntoSystemSpace(molecule);
-
     //change the molecule in a copy of the SystemData
     //(this is to maintain the invariant if something goes
     // wrong when we change the molecule in the forcefields)
     SystemData new_data(sysdata);
 
-    new_data.change(mapped_mol);
+    //change the molecule in the data - this also maps it
+    //into the system space
+    PartialMolecule mapped_mol = new_data.change(molecule);
 
     //change the molecule in the forcefields
-    ffields.change(mapped_mol);
-
-    //increment the version of the system
-    new_data.incrementMinorVersion();
+    if (ffields.change(mapped_mol))
+        //increment the version of the system
+        new_data.incrementMinorVersion();
 
     //everything was ok - copy the new data to the original
     sysdata = new_data;
@@ -136,23 +134,23 @@ void SimSystem::change(const QHash<MoleculeID,PartialMolecule> &molecules)
 {
     if (molecules.isEmpty())
         return;
-
-    //map the molecule into the Space of this system
-    QHash<MoleculeID,PartialMolecule> &mapped_mols
-                            = sysdata.mapIntoSystemSpace(molecules);
+    else if (molecules.count() == 1)
+    {
+        this->change( *(molecules.constBegin()) );
+        return;
+    }
 
     //change the molecules in a copy of the SystemData
     //(this is to maintain the invariant if something goes
     // wrong when we change the molecules in the forcefields)
     SystemData new_data(sysdata);
 
-    new_data.change(mapped_mols);
+    QHash<MoleculeID,PartialMolecule> mapped_mols = new_data.change(molecules);
 
     //change the molecules in the forcefields
-    ffields.change(mapped_mols);
-
-    //increment the version of the system
-    new_data.incrementMinorVersion();
+    if (ffields.change(mapped_mols))
+        //increment the version of the system
+        new_data.incrementMinorVersion();
 
     //everything was ok - copy the new data to the original
     sysdata = new_data;
@@ -163,23 +161,23 @@ void SimSystem::change(const QList<PartialMolecule> &molecules)
 {
     if (molecules.isEmpty())
         return;
-
-    //map the molecule into the Space of this system
-    QHash<MoleculeID,PartialMolecule> &mapped_mols
-                            = sysdata.mapIntoSystemSpace(molecules);
+    else if (molecules.count() == 1)
+    {
+        this->change( molecules.first() );
+        return;
+    }
 
     //change the molecules in a copy of the SystemData
     //(this is to maintain the invariant if something goes
     // wrong when we change the molecules in the forcefields)
     SystemData new_data(sysdata);
 
-    new_data.change(mapped_mols);
+    QHash<MoleculeID,PartialMolecule> mapped_mols = new_data.change(molecules);
 
     //change the molecules in the forcefields
-    ffields.change(mapped_mols);
-
-    //increment the version of the system
-    new_data.incrementMinorVersion();
+    if (ffields.change(mapped_mols))
+        //increment the version of the system
+        new_data.incrementMinorVersion();
 
     //everything was ok - copy the new data to the original
     sysdata = new_data;
@@ -193,12 +191,19 @@ void SimSystem::change(const QList<PartialMolecule> &molecules)
 void SimSystem::add(const PartialMolecule &molecule,
                     const QSet<MoleculeGroupID> &molgroupids)
 {
+#warning - I am here, ready to update to the new new add functions!
+
     if (not molgroupids.isEmpty())
     {
         //map this molecule into the System space
         PartialMolecule mapped_mol = sysdata.mapIntoSystemSpace(molecule);
 
-        sysdata.addThenChange(molecule, molgroupids, mapped_mol);
+        //select only the atoms to be added - the API of MoleculeGroup and
+        //forcefield will ensure that the whole molecule is changed if
+        //it has been mapped
+        mapped_mol.setSelection(molecules.selectedAtoms()); 
+
+        sysdata.add(mapped_mol, molgroupids);
         sysdata.incrementMinorVersion();
     }
 }
@@ -221,10 +226,97 @@ void SimSystem::add(const PartialMolecule &molecule,
     {
         PartialMolecule mapped_mol = sysdata.mapIntoSystemSpace(molecule);
 
+        //select only the atoms to be added - the API of MoleculeGroup and
+        //forcefield will ensure that the whole molecule is changed if
+        //it has been mapped
+        mapped_mol.setSelection(molecules.selectedAtoms()); 
+
         SystemData new_data(sysdata);
 
-        new_data.addThenChange(molecule, molgroupids, mapped_mol);
-        ffields.addThenChange(molecule, ffgroupids, mapped_mol);
+        new_data.add(mapped_mol, molgroupids);
+        ffields.add(mapped_mol, ffgroupids);
+
+        new_data.incrementMinorVersion();
+        sysdata = new_data;
+    }
+}
+
+/** Add lots of molecules to the molecule groups whose
+    IDs are in 'molgroupids'
+
+    \throw SireMol::missing_group
+*/
+void SimSystem::add(const QHash<MoleculeID,PartialMolecule> &molecules,
+                    const QSet<MoleculeGroupID> &molgroupids)
+{
+    if ( not (molgroupids.isEmpty() or molecules.isEmpty()) )
+    {
+        if (molecules.count() == 1)
+        {
+            this->add( *(molecules.constBegin()), molgroupids );
+            return;
+        }
+        
+        //map this molecule into the System space
+        QHash<MoleculeID,PartialMolecule> mapped_mols
+                          = sysdata.mapIntoSystemSpace(molecules);
+
+        //select only the atoms to be added - the API of MoleculeGroup and
+        //forcefield will ensure that the whole molecule is changed if
+        //it has been mapped
+        for (QHash<MoleculeID,PartialMolecule>::iterator it = mapped_mols.begin();
+             it != mapped_mols.end();
+             ++it)
+        {
+            BOOST_ASSERT( molecules.contains(it.key()) );
+        
+            it->setSelection( molecules.constFind(it.key())->selectedAtoms() );
+        }
+        
+        sysdata.add(mapped_mols, molgroupids);
+        sysdata.incrementMinorVersion();
+    }
+}
+
+/** Add lots of molecules to the molecule groups whose
+    IDs are in 'molgroupids' and to the forcefield groups
+    whose IDs are in ffgroupids
+
+    \throw SireMol::missing_group
+    \throw SireFF::missing_forcefield
+    \throw SireFF::invalid_group
+*/
+void SimSystem::add(const QHash<MoleculeID,PartialMolecule> &molecules,
+                    const QSet<FFGroupID> &ffgroupids,
+                    const QSet<MoleculeGroupID> &molgroupids)
+{
+    if (molecules.isEmpty())
+        return;
+    else if (ffgroupids.isEmpty())
+        this->add(molecule, molgroupids);
+    else if (molecules.count() == 1)
+        this->add( *(molecules.constBegin()), ffgroupids, molgroupids );
+    else
+    {
+        QHash<MoleculeID,PartialMolecule> mapped_mols
+                          = sysdata.mapIntoSystemSpace(molecules);
+
+        SystemData new_data(sysdata);
+
+        //select only the atoms to be added - the API of MoleculeGroup and
+        //forcefield will ensure that the whole molecule is changed if
+        //it has been mapped
+        for (QHash<MoleculeID,PartialMolecule>::iterator it = mapped_mols.begin();
+             it != mapped_mols.end();
+             ++it)
+        {
+            BOOST_ASSERT( molecules.contains(it.key()) );
+            
+            it->setSelection( molecules.constFind(it.key())->selectedAtoms() );
+        }
+        
+        new_data.add( mapped_mols, molgroupids );
+        ffields.add( mapped_mols, ffgroupids );
 
         new_data.incrementMinorVersion();
         sysdata = new_data;
@@ -241,12 +333,25 @@ void SimSystem::add(const QList<PartialMolecule> &molecules,
 {
     if ( not (molgroupids.isEmpty() or molecules.isEmpty()) )
     {
-        //map this molecule into the System space
-        QHash<MoleculeID,PartialMolecule> mapped_mols
-                          = sysdata.mapIntoSystemSpace(molecules);
-
-        sysdata.addThenChange(molecules, molgroupids, mapped_mols);
-        sysdata.incrementMinorVersion();
+        if (molecules.count() == 1)
+        {
+            this->add(molecules.first(), molgroupids);
+        }
+        else
+        {
+            //convert the list into a hash and add that
+            QHash<MoleculeID,PartialMolecule> mols;
+            mols.reserve(molecules.count());
+        
+            for (QList<PartialMolecule>::const_iterator it = molecules.begin();
+                 it != molecules.end();
+                 ++it)
+            {
+                mols.insert( it->key(), *it );
+            }
+            
+            this->add(mols, molgroupids);
+        }
     }
 }
 
@@ -268,66 +373,25 @@ void SimSystem::add(const QList<PartialMolecule> &molecules,
         this->add(molecule, molgroupids);
     else
     {
-        QHash<MoleculeID,PartialMolecule> mapped_mols
-                          = sysdata.mapIntoSystemSpace(molecules);
-
-        SystemData new_data(sysdata);
-
-        new_data.addThenChange(molecules, molgroupids, mapped_mols);
-        ffields.addThenChange(molecules, ffgroupids, mapped_mols);
-
-        new_data.incrementMinorVersion();
-        sysdata = new_data;
-    }
-}
-
-/** Add lots of molecules to the molecule groups whose
-    IDs are in 'molgroupids'
-
-    \throw SireMol::missing_group
-*/
-void SimSystem::add(const QHash<MoleculeID,PartialMolecule> &molecules,
-                    const QSet<MoleculeGroupID> &molgroupids)
-{
-    if ( not (molgroupids.isEmpty() or molecules.isEmpty()) )
-    {
-        //map this molecule into the System space
-        QHash<MoleculeID,PartialMolecule> mapped_mols
-                          = sysdata.mapIntoSystemSpace(molecules);
-
-        sysdata.addThenChange(molecules, molgroupids, mapped_mols);
-        sysdata.incrementMinorVersion();
-    }
-}
-
-/** Add lots of molecules to the molecule groups whose
-    IDs are in 'molgroupids' and to the forcefield groups
-    whose IDs are in ffgroupids
-
-    \throw SireMol::missing_group
-    \throw SireFF::missing_forcefield
-    \throw SireFF::invalid_group
-*/
-void SimSystem::add(const QHash<MoleculeID,PartialMolecule> &molecules,
-                    const QSet<FFGroupID> &ffgroupids,
-                    const QSet<MoleculeGroupID> &molgroupids)
-{
-    if (molecules.isEmpty())
-        return;
-    else if (ffgroupids.isEmpty())
-        this->add(molecule, molgroupids);
-    else
-    {
-        QHash<MoleculeID,PartialMolecule> mapped_mols
-                          = sysdata.mapIntoSystemSpace(molecules);
-
-        SystemData new_data(sysdata);
-
-        new_data.addThenChange(molecules, molgroupids, mapped_mols);
-        ffields.addThenChange(molecules, ffgroupids, mapped_mols);
-
-        new_data.incrementMinorVersion();
-        sysdata = new_data;
+        if (molecules.count() == 1)
+        {
+            this->add(molecules.first(), ffgroupids, molgroupids);
+        }
+        else
+        {
+            //convert the list into a hash and add that
+            QHash<MoleculeID,PartialMolecule> mols;
+            mols.reserve(molecules.count());
+        
+            for (QList<PartialMolecule>::const_iterator it = molecules.begin();
+                 it != molecules.end();
+                 ++it)
+            {
+                mols.insert( it->key(), *it );
+            }
+            
+            this->add(mols, ffgroupids, molgroupids);
+        }
     }
 }
 

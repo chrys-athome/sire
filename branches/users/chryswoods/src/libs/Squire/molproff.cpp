@@ -237,7 +237,7 @@ bool MolproFF::QMMolecule::change(const PartialMolecule &molecule)
 /** Add parts to the molecule - record whether it changed */
 bool MolproFF::QMMolecule::add(const PartialMolecule &molecule)
 {
-    bool changed = mol.change(molecule);
+    bool changed = mol.change(molecule.molecule());
 
     bool added = mol.add(molecule.selectedAtoms());
 
@@ -524,7 +524,7 @@ bool MolproFF::MMMolecule::change(const PartialMolecule &molecule,
 bool MolproFF::MMMolecule::add(const PartialMolecule &molecule,
                                const QString &chgproperty)
 {
-    bool changed = this->change(molecule,chgproperty);
+    bool changed = this->change(molecule.molecule(),chgproperty);
 
     if (mol.add(molecule.selectedAtoms()))
     {
