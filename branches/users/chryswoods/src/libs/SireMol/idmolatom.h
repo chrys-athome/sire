@@ -83,7 +83,10 @@ private:
     /** The type of index held */
     IndexType indextype;
 
-    /** Pointer to the index */
+    /** Pointer to the index
+        (cannot use the actual object as classes
+         with non-default constructors or destructors
+         cannot be placed in a union!) */
     union
     {
         const CGAtomID *cgatomid;

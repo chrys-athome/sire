@@ -32,6 +32,7 @@ set ( WRAPMOL_SOURCES
       AtomInfoGroup.pypp.cpp
       AtomNum.pypp.cpp
       AtomSelection.pypp.cpp
+      AtomSelector.pypp.cpp
       AtomicProperties.pypp.cpp
       
       Bond.pypp.cpp
@@ -61,6 +62,7 @@ set ( WRAPMOL_SOURCES
       
       MolCGAtomID.pypp.cpp
       MolCutGroupID.pypp.cpp
+      MolDataView.pypp.cpp
       Molecule.pypp.cpp
       MoleculeBonds.pypp.cpp
       MoleculeCutting.pypp.cpp
@@ -70,6 +72,7 @@ set ( WRAPMOL_SOURCES
       MoleculeID.pypp.cpp
       MoleculeInfo.pypp.cpp
       MoleculeProperty.pypp.cpp
+      MoleculeMover.pypp.cpp
       MoleculeVersion.pypp.cpp
       MoleculeView.pypp.cpp
 
@@ -87,6 +90,8 @@ set ( WRAPMOL_SOURCES
       ResidueBonds.pypp.cpp
       ResidueCutting.pypp.cpp
       ResidueInfo.pypp.cpp
+
+      SelectionFromMol.pypp.cpp
 
       WeightFunction.pypp.cpp
 

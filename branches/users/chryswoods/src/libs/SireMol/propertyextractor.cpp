@@ -54,8 +54,7 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
                                        const PropertyExtractor &propex)
 {
     writeHeader(ds, r_propex, 1)
-          << propex.selected_atoms
-          << static_cast<const MoleculeView&>(propex);
+          << static_cast<const MolDataView&>(propex);
 
     return ds;
 }
@@ -67,8 +66,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, PropertyExtractor &prope
 
     if (v == 1)
     {
-        ds >> propex.selected_atoms
-           >> static_cast<MoleculeView&>(propex);
+        ds >> static_cast<MolDataView&>(propex);
     }
     else
         throw version_error(v, "1", r_propex, CODELOC);
@@ -77,29 +75,29 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, PropertyExtractor &prope
 }
 
 /** Null constructor */
-PropertyExtractor::PropertyExtractor() : MoleculeView()
+PropertyExtractor::PropertyExtractor() : MolDataView()
 {}
 
 /** Construct the extractor to extract properties from 'molecule' */
-PropertyExtractor::PropertyExtractor(const PartialMolecule &molecule)
-                  : MoleculeView(molecule),
-                    selected_atoms(molecule.selectedAtoms())
+PropertyExtractor::PropertyExtractor(const MoleculeView &molecule)
+                  : MolDataView(molecule)
 {}
 
 /** Copy constructor */
 PropertyExtractor::PropertyExtractor(const PropertyExtractor &other)
-                  : MoleculeView(other),
-                    selected_atoms(other.selected_atoms)
+                  : MolDataView(other)
 {}
 
 /** Copy assignment operator */
 PropertyExtractor& PropertyExtractor::operator=(const PropertyExtractor &other)
 {
-    MoleculeView::operator=(other);
-    selected_atoms = other.selected_atoms;
+    MolDataView::operator=(other);
     return *this;
 }
 
+/** Destructor */
+PropertyExtractor::~PropertyExtractor()
+{}
 
 /** Return the index of CutGroupID into the CoordGroup, AtomicProperty
     or CutGroup arrays. This is necessary as while CutGroupID corresponds
@@ -111,6 +109,8 @@ PropertyExtractor& PropertyExtractor::operator=(const PropertyExtractor &other)
     getProperty() and all of the extract() functions. */
 QHash<CutGroupID,quint32> PropertyExtractor::cutGroupIndex() const
 {
+    const AtomSelection &selected_atoms = selectedAtoms();
+
     if (selected_atoms.selectedAllCutGroups())
     {
         //all CutGroups are selected, so CutGroupID => index into array
@@ -160,6 +160,8 @@ QHash<CutGroupID,quint32> PropertyExtractor::cutGroupIndex() const
 */
 Property PropertyExtractor::property(const QString &name) const
 {
+    const AtomSelection &selected_atoms = selectedAtoms();
+
     Property property = data().getProperty(name);
 
     if (selected_atoms.selectedAll() or not property.isA<MoleculeProperty>())
@@ -176,6 +178,8 @@ Property PropertyExtractor::property(const QString &name) const
     will be returned. */
 QVector<CoordGroup> PropertyExtractor::coordGroups() const
 {
+    const AtomSelection &selected_atoms = selectedAtoms();
+
     QVector<CoordGroup> coords = data().coordGroups();
 
     if (selected_atoms.selectedAllCutGroups())
@@ -205,6 +209,8 @@ QVector<CoordGroup> PropertyExtractor::coordGroups() const
     will be returned. */
 QVector<CutGroup> PropertyExtractor::cutGroups() const
 {
+    const AtomSelection &selected_atoms = selectedAtoms();
+
     if (selected_atoms.selectedAllCutGroups())
         return data().cutGroups();
     else
@@ -233,6 +239,8 @@ QVector<CutGroup> PropertyExtractor::cutGroups() const
     not been selected will be set to dummy atoms. */
 QVector< QVector<Element> > PropertyExtractor::elements() const
 {
+    const AtomSelection &selected_atoms = selectedAtoms();
+
     QHash<CutGroupID,AtomInfoGroup> atominfos = data().info().atomGroups();
 
     if (selected_atoms.selectedAllCutGroups())

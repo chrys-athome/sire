@@ -23,7 +23,7 @@ const char* pvt_get_name(const SireMol::MoleculeView&){ return "SireMol::Molecul
 
 void register_MoleculeView_class(){
 
-    bp::class_< SireMol::MoleculeView >( "MoleculeView" )    
+    bp::class_< SireMol::MoleculeView, bp::bases< SireMol::MolDataView > >( "MoleculeView" )    
         .def( bp::init< >() )    
         .def( 
             "assertSameMajorVersion"
@@ -38,8 +38,33 @@ void register_MoleculeView_class(){
             , &::SireMol::MoleculeView::assertSameVersion
             , ( bp::arg("other") ) )    
         .def( 
+            "extract"
+            , (::SireMol::PropertyExtractor ( ::SireMol::MoleculeView::* )(  ) const)( &::SireMol::MoleculeView::extract ) )    
+        .def( 
+            "extract"
+            , (::SireMol::PropertyExtractor ( ::SireMol::MoleculeView::* )( ::SireMol::SelectionFromMol const & ) const)( &::SireMol::MoleculeView::extract )
+            , ( bp::arg("selected_atoms") ) )    
+        .def( 
             "molecule"
             , &::SireMol::MoleculeView::molecule )    
+        .def( 
+            "move"
+            , (::SireMol::MoleculeMover ( ::SireMol::MoleculeView::* )(  ) const)( &::SireMol::MoleculeView::move ) )    
+        .def( 
+            "move"
+            , (::SireMol::MoleculeMover ( ::SireMol::MoleculeView::* )( ::SireMol::SelectionFromMol const & ) const)( &::SireMol::MoleculeView::move )
+            , ( bp::arg("selection") ) )    
+        .def( 
+            "selectedAtoms"
+            , &::SireMol::MoleculeView::selectedAtoms
+            , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( 
+            "selection"
+            , (::SireMol::AtomSelector ( ::SireMol::MoleculeView::* )(  ) const)( &::SireMol::MoleculeView::selection ) )    
+        .def( 
+            "selection"
+            , (::SireMol::AtomSelector ( ::SireMol::MoleculeView::* )( ::SireMol::SelectionFromMol const & ) const)( &::SireMol::MoleculeView::selection )
+            , ( bp::arg("selected_atoms") ) )    
         .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::MoleculeView >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    

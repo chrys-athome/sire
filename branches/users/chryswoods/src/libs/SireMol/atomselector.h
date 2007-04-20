@@ -26,8 +26,8 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_PROPERTYEXTRACTOR_H
-#define SIREMOL_PROPERTYEXTRACTOR_H
+#ifndef SIREMOL_ATOMSELECTOR_H
+#define SIREMOL_ATOMSELECTOR_H
 
 #include <QVector>
 #include <QHash>
@@ -38,75 +38,58 @@ SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
-class PropertyExtractor;
+class AtomSelector;
 }
 
-QDataStream& operator<<(QDataStream&, const SireMol::PropertyExtractor&);
-QDataStream& operator>>(QDataStream&, SireMol::PropertyExtractor&);
-
-namespace SireBase
-{
-class Property;
-}
-
-namespace SireVol
-{
-class CoordGroup;
-}
+QDataStream& operator<<(QDataStream&, const SireMol::AtomSelector&);
+QDataStream& operator>>(QDataStream&, SireMol::AtomSelector&);
 
 namespace SireMol
 {
 
-class CutGroup;
-class CutGroupID;
-class Element;
-class PartialMolecule;
-
-using SireBase::Property;
-using SireVol::CoordGroup;
-
 /** This class is used to add a nice API to the MoleculeView based classes to
-    allow the extraction of various properties of the molecule (without the
-    need to clutter up the moleculeview classes APIs).
+    allow the selection of parts of the molecule.
 
-    e.g. can type mol.extract().elements() rather than mol.elements().
+    e.g. can type mol.selection().add( ResNum(4) )
 
-    In addition, this allows me to have the property extraction code
+    In addition, this allows me to have the atom selection code
     all in one place, without the need to update multiple MoleculeView
     derived classes APIs
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT PropertyExtractor : public MolDataView
+class SIREMOL_EXPORT AtomSelector : public MolDataView
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const PropertyExtractor&);
-friend QDataStream& ::operator>>(QDataStream&, PropertyExtractor&);
+friend QDataStream& ::operator<<(QDataStream&, const AtomSelector&);
+friend QDataStream& ::operator>>(QDataStream&, AtomSelector&);
 
 public:
-    PropertyExtractor();
+    AtomSelector();
 
-    PropertyExtractor(const MoleculeView &molecule);
+    AtomSelector(const MoleculeView &molecule);
+    AtomSelector(const MoleculeView &molecule,
+                 const SelectionFromMol &selected_atoms);
 
-    PropertyExtractor(const PropertyExtractor &other);
+    AtomSelector(const AtomSelector &other);
 
-    ~PropertyExtractor();
+    ~AtomSelector();
 
-    PropertyExtractor& operator=(const PropertyExtractor &other);
+    AtomSelector& operator=(const AtomSelector &other);
 
-    QHash<CutGroupID,quint32> cutGroupIndex() const;
+    AtomSelector selectAll() const;
+    AtomSelector deselectAll() const;
+    AtomSelector selectNone() const;
 
-    QVector< CutGroup > cutGroups() const;
-    QVector< CoordGroup > coordGroups() const;
+    AtomSelector add(const SelectionFromMol &selection) const;
+    AtomSelector remove(const SelectionFromMol &selection) const;
 
-    QVector< QVector<Element> > elements() const;
-
-    Property property(const QString &name) const;
+    AtomSelector invert() const;
 };
 
 }
 
-Q_DECLARE_METATYPE(SireMol::PropertyExtractor)
+Q_DECLARE_METATYPE(SireMol::AtomSelector)
 
 SIRE_END_HEADER
 

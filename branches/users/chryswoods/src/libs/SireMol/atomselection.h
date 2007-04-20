@@ -37,6 +37,8 @@
 #include "atomid.h"
 #include "idmolatom.h"
 
+#include "selectionfrommol.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol
@@ -51,12 +53,14 @@ namespace SireMol
 {
 
 class Molecule;
-class Residue;
-class NewAtom;
+class MoleculeView;
 
 /** This class holds information about a selection of atoms in a Molecule.
     The selection is held in the most memory-efficient manner possible,
     and takes advantage of the CutGroup-based layout of Molecule objects.
+
+    This is a const-class, which returns new AtomSelections that
+    represent any change.
 
     @author Christopher Woods
 */
@@ -66,12 +70,13 @@ class SIREMOL_EXPORT AtomSelection
 friend QDataStream& ::operator<<(QDataStream&, const AtomSelection&);
 friend QDataStream& ::operator>>(QDataStream&, AtomSelection&);
 
+friend class SelectionFromMol; //so can modify a single AtomSelection!
+
 public:
     AtomSelection();
 
-    AtomSelection(const Molecule &molecule);
-    AtomSelection(const Residue &residue);
-    AtomSelection(const NewAtom &atom);
+    AtomSelection(const MoleculeView &molecule);
+    AtomSelection(const MoleculeInfo &molinfo);
 
     AtomSelection(const AtomSelection &other);
 
@@ -90,6 +95,8 @@ public:
 
     int nSelected(CutGroupID cgid) const;
     int nSelected(ResNum resnum) const;
+    int nSelected(const AtomSelection &selection) const;
+    int nSelected(const SelectionFromMol &selection) const;
 
     int nSelectedCutGroups() const;
     int nSelectedResidues() const;
@@ -105,56 +112,129 @@ public:
     bool selectedAll(CutGroupID cgid) const;
     bool selectedAll(ResNum resnum) const;
 
+    bool selectedAll(const AtomSelection &selection) const;
+    bool selectedAll(const SelectionFromMol &selection) const;
+
     bool selectedNone() const;
 
     bool selectedNone(CutGroupID cgid) const;
     bool selectedNone(ResNum resnum) const;
 
-    void selectAll();
-    void deselectAll();
+    bool selectedNone(const AtomSelection &selection) const;
+    bool selectedNone(const SelectionFromMol &selection) const;
 
-    void selectAll(CutGroupID cgid);
-    void deselectAll(CutGroupID cgid);
+    AtomSelection selectAll() const;
+    AtomSelection deselectAll() const;
+    AtomSelection selectNone() const;
 
-    void selectAll(ResNum resnum);
-    void deselectAll(ResNum resnum);
+    AtomSelection selectAll(CutGroupID cgid) const;
+    AtomSelection deselectAll(CutGroupID cgid) const;
 
-    void selectAll(const AtomSelection &selection);
-    void deselectAll(const AtomSelection &selection);
+    AtomSelection selectAll(ResNum resnum) const;
+    AtomSelection deselectAll(ResNum resnum) const;
 
-    void select(const CGAtomID &cgatomid);
-    void deselect(const CGAtomID &cgatomid);
+    AtomSelection selectAll(const AtomSelection &selection) const;
+    AtomSelection deselectAll(const AtomSelection &selection) const;
 
-    void select(const IDMolAtom &atomid);
-    void deselect(const IDMolAtom &atomid);
+    AtomSelection selectAll(const SelectionFromMol &selection) const;
+    AtomSelection deselectAll(const SelectionFromMol &selection) const;
 
-    void invert();
+    AtomSelection select(CutGroupID cgid) const;
+    AtomSelection deselect(CutGroupID cgid) const;
+    AtomSelection selectOnly(CutGroupID cgid) const;
 
-    bool intersects(const AtomSelection &other) const;
-    bool contains(const AtomSelection &other) const;
+    AtomSelection select(ResNum resnum) const;
+    AtomSelection deselect(ResNum resnum) const;
+    AtomSelection selectOnly(ResNum resnum) const;
 
-    AtomSelection intersect(const AtomSelection &other) const;
-    AtomSelection unite(const AtomSelection &other) const;
-    AtomSelection subtract(const AtomSelection &other) const;
+    AtomSelection select(const CGAtomID &cgatomid) const;
+    AtomSelection deselect(const CGAtomID &cgatomid) const;
+    AtomSelection selectOnly(const CGAtomID &cgatomid) const;
 
-    void applyMask(const QSet<CutGroupID> &cgids);
-    void applyMask(const QSet<ResNum> &resnums);
-    void applyMask(const AtomSelection &other);
+    AtomSelection select(const IDMolAtom &atomid) const;
+    AtomSelection deselect(const IDMolAtom &atomid) const;
+    AtomSelection selectOnly(const IDMolAtom &atomid) const;
+
+    AtomSelection select(const AtomSelection &selection) const;
+    AtomSelection deselect(const AtomSelection &selection) const;
+    AtomSelection selectOnly(const AtomSelection &selection) const;
+
+    AtomSelection select(const SelectionFromMol &selection) const;
+    AtomSelection deselect(const SelectionFromMol &selection) const;
+    AtomSelection selectOnly(const SelectionFromMol &selection) const;
+
+    AtomSelection invert() const;
+
+    bool intersects(const AtomSelection &selection) const;
+    bool intersects(const SelectionFromMol &selection) const;
+
+    bool contains(const AtomSelection &selection) const;
+    bool contains(const SelectionFromMol &selection) const;
+
+    AtomSelection intersect(const AtomSelection &selection) const;
+    AtomSelection intersect(const SelectionFromMol &selection) const;
+
+    AtomSelection unite(const AtomSelection &selection) const;
+    AtomSelection unite(const SelectionFromMol &selection) const;
+
+    AtomSelection subtract(const AtomSelection &selection) const;
+    AtomSelection subtract(const SelectionFromMol &selection) const;
+
+    AtomSelection applyMask(const QSet<CutGroupID> &cgids) const;
+    AtomSelection applyMask(const QSet<ResNum> &resnums) const;
+    AtomSelection applyMask(const AtomSelection &selection) const;
+    AtomSelection applyMask(const SelectionFromMol &selection) const;
 
     void assertCompatibleWith(const MoleculeInfo &molinfo) const;
     void assertCompatibleWith(const Molecule &molecule) const;
     void assertCompatibleWith(const AtomSelection &other) const;
+    void assertCompatibleWith(const SelectionFromMol &other) const;
 
     QList<AtomIndex> selected() const;
 
     QSet<CutGroupID> selectedCutGroups() const;
     QSet<ResNum> selectedResidues() const;
 
+    bool isSingleAtom() const;
+    bool isSingleCutGroup() const;
+    bool isSingleResidue() const;
+
+    CGAtomID asSingleAtom() const;
+    CutGroupID asSingleCutGroup() const;
+    ResNum asSingleResidue() const;
+
 private:
     bool _pvt_selected(const CGAtomID &cgatomid) const;
 
+    void _unsafe_select(const CGAtomID &cgatomid);
+    void _unsafe_deselect(const CGAtomID &cgatomid);
+
+    void _pvt_selectAll();
+    void _pvt_deselectAll();
+
+    void _pvt_select(CutGroupID cgid);
+    void _pvt_deselect(CutGroupID cgid);
+
+    void _pvt_select(ResNum resnum);
+    void _pvt_deselect(ResNum resnum);
+
+    void _pvt_select(const AtomSelection &selection);
+    void _pvt_deselect(const AtomSelection &selection);
+
+    void _pvt_select(const SelectionFromMol &selection);
+    void _pvt_deselect(const SelectionFromMol &selection);
+
     void _pvt_select(const CGAtomID &cgatomid);
     void _pvt_deselect(const CGAtomID &cgatomid);
+
+    void _pvt_select(const IDMolAtom &atomid);
+    void _pvt_deselect(const IDMolAtom &atomid);
+
+    void _pvt_invert();
+
+    void _pvt_applyMask(const QSet<CutGroupID> &cgids);
+    void _pvt_applyMask(const QSet<ResNum> &resnums);
+    void _pvt_applyMask(const AtomSelection &selection);
 
     /** The AtomIDs of selected atoms, arranged by CutGroupID */
     QHash< CutGroupID, QSet<AtomID> > selected_atoms;
@@ -164,7 +244,7 @@ private:
     MoleculeInfo molinfo;
 
     /** The total number of selected atoms */
-    int nselected;
+    quint32 nselected;
 };
 
 /** Return the info object that describes the molecule whose atoms

@@ -23,9 +23,9 @@ const char* pvt_get_name(const SireMol::PropertyExtractor&){ return "SireMol::Pr
 
 void register_PropertyExtractor_class(){
 
-    bp::class_< SireMol::PropertyExtractor, bp::bases< SireMol::MoleculeView > >( "PropertyExtractor" )    
+    bp::class_< SireMol::PropertyExtractor, bp::bases< SireMol::MolDataView > >( "PropertyExtractor" )    
         .def( bp::init< >() )    
-        .def( bp::init< SireMol::PartialMolecule const & >(( bp::arg("molecule") )) )    
+        .def( bp::init< SireMol::MoleculeView const & >(( bp::arg("molecule") )) )    
         .def( 
             "coordGroups"
             , &::SireMol::PropertyExtractor::coordGroups )    

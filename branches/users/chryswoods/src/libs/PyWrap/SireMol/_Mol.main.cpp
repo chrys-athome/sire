@@ -41,6 +41,8 @@
 
 #include "AtomSelection.pypp.hpp"
 
+#include "AtomSelector.pypp.hpp"
+
 #include "AtomicProperties.pypp.hpp"
 
 #include "Bond.pypp.hpp"
@@ -85,6 +87,8 @@
 
 #include "MolCutGroupID.pypp.hpp"
 
+#include "MolDataView.pypp.hpp"
+
 #include "Molecule.pypp.hpp"
 
 #include "MoleculeBonds.pypp.hpp"
@@ -100,6 +104,8 @@
 #include "MoleculeID.pypp.hpp"
 
 #include "MoleculeInfo.pypp.hpp"
+
+#include "MoleculeMover.pypp.hpp"
 
 #include "MoleculeProperty.pypp.hpp"
 
@@ -130,6 +136,8 @@
 #include "ResidueCutting.pypp.hpp"
 
 #include "ResidueInfo.pypp.hpp"
+
+#include "SelectionFromMol.pypp.hpp"
 
 #include "WeightFunction.pypp.hpp"
 
@@ -171,6 +179,10 @@ BOOST_PYTHON_MODULE(_Mol){
     register_AtomNum_class();
 
     register_AtomSelection_class();
+
+    register_MolDataView_class();
+
+    register_AtomSelector_class();
 
     register_MoleculeProperty_class();
 
@@ -230,6 +242,8 @@ BOOST_PYTHON_MODULE(_Mol){
 
     register_MoleculeInfo_class();
 
+    register_MoleculeMover_class();
+
     register_MoleculeVersion_class();
 
     register_NewAtom_class();
@@ -257,6 +271,8 @@ BOOST_PYTHON_MODULE(_Mol){
     register_ResidueCutting_class();
 
     register_ResidueInfo_class();
+
+    register_SelectionFromMol_class();
 
     bp::implicitly_convertible< boost::tuples::tuple<SireMol::AtomIndex,SireMol::AtomIndex,SireMol::AtomIndex>, SireMol::Angle >();
 

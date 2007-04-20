@@ -37,34 +37,63 @@ SIRE_BEGIN_HEADER
 namespace SireMol
 {
 
-/** Comparison operator */
-inline bool MoleculeView::operator==(const MoleculeView &other) const
+///////////
+/////////// MolDataPvt inlines
+///////////
+
+namespace detail
 {
-    return d == other.d or *d == *(other.d);
-}
 
 /** Comparison operator */
-inline bool MoleculeView::operator!=(const MoleculeView &other) const
+inline bool MolDataViewPvt::operator==(const MolDataViewPvt &other) const
 {
-    return d != other.d and *d != *(other.d);
+    return this == &other or
+           (*d == *(other.d) and selected_atoms == other.selected_atoms);
 }
 
-/** Return the underlying MoleculeData object */
-inline const MoleculeData& MoleculeView::data() const
+/** Comparison operator */
+inline bool MolDataViewPvt::operator!=(const MolDataViewPvt &other) const
 {
-    return *d;
+    return this != &other and
+           (*d != *(other.d) or selected_atoms != other.selected_atoms);
 }
 
-/** Return the underlying MoleculeData object */
-inline const MoleculeData& MoleculeView::constData() const
-{
-    return *d;
 }
 
-/** Return the underlying MoleculeData object */
-inline MoleculeData& MoleculeView::data()
+///////////
+/////////// MolDataView inlines
+///////////
+
+/** Comparison operator */
+inline bool MolDataView::operator==(const MolDataView &other) const
 {
-    return *d;
+    return d == other.d or
+           *d == *(other.d);
+}
+
+/** Comparison operator */
+inline bool MolDataView::operator!=(const MolDataView &other) const
+{
+    return d != other.d and
+           *d != *(other.d);
+}
+
+/** Return the molecule's data */
+inline const MoleculeData& MolDataView::data() const
+{
+    return *(d->d);
+}
+
+/** Return the molecule's data */
+inline const MoleculeData& MolDataView::constData() const
+{
+    return *(d->d);
+}
+
+/** Return the molecule's data */
+inline MoleculeData& MolDataView::data()
+{
+    return *(d->d);
 }
 
 }
