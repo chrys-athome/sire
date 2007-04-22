@@ -165,6 +165,15 @@ MolDataView::MolDataView(const MolDataView &other)
 MolDataView::~MolDataView()
 {}
 
+/** Copy assignment operator */
+MolDataView& MolDataView::operator=(const MolDataView &other)
+{
+    if (this != &other)
+        d = other.d;
+
+    return *this;
+}
+
 /** Comparison function */
 bool MolDataView::_pvt_isEqual(const MolDataView &other) const
 {

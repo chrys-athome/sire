@@ -71,6 +71,15 @@ PartialMolecule::PartialMolecule(const MolDataView &molecule)
                 : MoleculeView(molecule)
 {}
 
+/** Construct a PartialMolecule that represents 'molecule', with 
+    the atoms in 'selection' additionally selected */
+PartialMolecule::PartialMolecule(const MolDataView &molecule,
+                                 const SelectionFromMol &selection)
+                : MoleculeView(molecule)
+{
+    _pvt_selection() = selectedAtoms().intersect(selection);
+}
+
 /** Copy constructor */
 PartialMolecule::PartialMolecule(const PartialMolecule &other)
                 : MoleculeView(other)

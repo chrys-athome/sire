@@ -44,10 +44,8 @@
 #include "SireMol/errors.h"
 #include "SireError/errors.h"
 
-#include "SireMol/molecule.h"
 #include "SireMol/partialmolecule.h"
-#include "SireMol/residue.h"
-#include "SireMol/newatom.h"
+#include "SireMol/atomselector.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -1722,7 +1720,8 @@ bool ForceFieldsBase::contains(const PartialMolecule &molecule) const
 {
     if ( this->refersTo(molecule.ID()) )
     {
-        return this->molecule(molecule.ID()).selection().contains(molecule.selection());
+        return this->molecule(molecule.ID()).selectedAtoms()
+                              .contains(molecule.selectedAtoms());
     }
     else
         return false;
@@ -1739,8 +1738,8 @@ bool ForceFieldsBase::contains(const PartialMolecule &molecule,
 {
     if ( this->refersTo(molecule.ID(),ffid) )
     {
-        return this->molecule(molecule.ID(),ffid)
-                          .selection().contains(molecule.selection());
+        return this->molecule(molecule.ID(),ffid).selectedAtoms()
+                          .contains(molecule.selectedAtoms());
     }
     else
         return false;
@@ -1767,7 +1766,7 @@ bool ForceFieldsBase::contains(const PartialMolecule &molecule,
         return false;
         
     return this->molecule(molecule.ID(),ffids)
-                    .selection().contains(molecule.selection());
+                    .selectedAtoms().contains(molecule.selectedAtoms());
 }
 
 /** Return whether or not the group 'group' in the forcefield with ID == ffid
@@ -1783,7 +1782,7 @@ bool ForceFieldsBase::contains(const PartialMolecule &molecule,
     if (this->refersTo(molecule.ID(), ffid, group))
     {
         return this->molecule(molecule.ID(),ffid,group)
-                        .selection().contains(molecule.selection());
+                        .selectedAtoms().contains(molecule.selectedAtoms());
     }
     else
         return false;
@@ -1823,7 +1822,7 @@ bool ForceFieldsBase::contains(const PartialMolecule &molecule,
         return false;
 
     return this->molecule(molecule.ID(),groups_referring_to_mol)
-                        .selection().contains(molecule.selection());
+                        .selectedAtoms().contains(molecule.selectedAtoms());
 }
 
 /** Return all of the IDs of forcefields that contain at least all of the
@@ -1908,9 +1907,9 @@ PartialMolecule ForceFieldsBase::molecule(MoleculeID molid) const
     
     ++it;
     
-    while (it != ffids.constEnd() and not mol.selectedAll())
+    while (it != ffids.constEnd() and not mol.selectedAtoms().selectedAll())
     {
-        mol = mol.unite( this->molecule(molid, *it).selection() );
+        mol = mol.selection().add( this->molecule(molid, *it).selectedAtoms() );
         ++it;
     }
     
@@ -1952,9 +1951,10 @@ PartialMolecule ForceFieldsBase::molecule(MoleculeID molid,
     
     ++it;
     
-    while (it != ffids_referring_to_mol.constEnd() and not mol.selectedAll())
+    while (it != ffids_referring_to_mol.constEnd() and 
+                    not mol.selectedAtoms().selectedAll())
     {
-        mol = mol.unite( this->molecule(molid, *it).selection() );
+        mol = mol.selection().add( this->molecule(molid, *it).selectedAtoms() );
         ++it;
     }
     
@@ -2028,9 +2028,10 @@ PartialMolecule ForceFieldsBase::molecule(MoleculeID molid,
     
     ++it;
     
-    while (it != groups_referring_to_mol.constEnd() and not mol.selectedAll())
+    while (it != groups_referring_to_mol.constEnd() and 
+                  not mol.selectedAtoms().selectedAll())
     {
-        mol = mol.unite( this->molecule(molid, *it).selection() );
+        mol = mol.selection().add( this->molecule(molid, *it).selectedAtoms() );
         ++it;
     }
     
@@ -2095,7 +2096,9 @@ ForceFieldsBase::contents(const QSet<ForceFieldID> &ffids) const
         {
             if (mols.contains(it.key()))
             {
-                mols[it.key()].unite(it.value().selection());
+                PartialMolecule &mol = mols[it.key()];
+                
+                mol = mol.selection().add(it->selectedAtoms());
             }
             else
                 mols.insert( it.key(), it.value() );
@@ -2160,7 +2163,8 @@ ForceFieldsBase::contents(const QSet<FFGroupID> &ffgroupids) const
         {
             if (mols.contains(it.key()))
             {
-                mols[it.key()].unite(it.value().selection());
+                PartialMolecule &mol = mols[it.key()];
+                mol = mol.selection().add(it->selectedAtoms());
             }
             else
                 mols.insert( it.key(), it.value() );

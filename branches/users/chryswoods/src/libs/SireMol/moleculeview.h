@@ -132,13 +132,7 @@ protected:
 
     MolDataView(const MolDataView &other);
 
-    MolDataView& operator=(const MolDataView &other)
-    {
-        if (this != &other)
-            d = other.d;
-
-        return *this;
-    }
+    MolDataView& operator=(const MolDataView &other);
 
     bool operator==(const MolDataView &other) const;
     bool operator!=(const MolDataView &other) const;
