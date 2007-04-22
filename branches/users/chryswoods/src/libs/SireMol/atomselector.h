@@ -51,8 +51,33 @@ namespace SireMol
     allow the selection of parts of the molecule.
 
     e.g. can type mol.selection().add( ResNum(4) )
+                  not_res = res.selection().invert()
+                  
+    This will eventually scale into a complete selection syntax, e.g.
+    to select atoms called CA or HA
+    
+    ca_or_ha = mol.selection().set(AtomName("CA")).add(AtomName("HA"))
+    
+    or in shorthand...
+    
+    ca_or_ha = mol.selection().set(AtomName("CA")).add(AtomName("HA"))
+    
+    CA in ASP residues
+    
+    asp_ca = mol.selection().set(ResName("ASP")).unite(AtomName("CA"))
+    
+    not HIS residues
+    
+    not_his = mol.selection().set(ResName("HIS")).invert()
 
-    In addition, this allows me to have the atom selection code
+    Eventually I will expand this further by creating a compound
+    expression type, so that I can type phrases directly, e.g.
+    
+    ca_or_ha = mol.selection().set( AtomName("CA") or AtomName("HA") )
+    asp_ca = mol.selection().set(ResName("ASP") and AtomName("CA"))
+    not_his = mol.selection().set(not ResName("HIS"))
+
+    This class allows me to have the atom selection code
     all in one place, without the need to update multiple MoleculeView
     derived classes APIs
 
@@ -78,13 +103,60 @@ public:
     AtomSelector& operator=(const AtomSelector &other);
 
     AtomSelector selectAll() const;
+    
     AtomSelector deselectAll() const;
     AtomSelector selectNone() const;
+    AtomSelector clear() const;
+    
+    AtomSelector selectAll(const SelectionFromMol &selection) const;
+    
+    AtomSelector deselectAll(const SelectionFromMol &selection) const;
+    AtomSelector selectNone(const SelectionFromMol &selection) const;
+    AtomSelector clear(const SelectionFromMol &selection) const;
+
+    AtomSelector set(const SelectionFromMol &selection) const;
+    AtomSelector setSelection(const SelectionFromMol &selection) const;
 
     AtomSelector add(const SelectionFromMol &selection) const;
     AtomSelector remove(const SelectionFromMol &selection) const;
 
+    AtomSelector select(const SelectionFromMol &selection) const;
+    AtomSelector deselect(const SelectionFromMol &selection) const;
+
     AtomSelector invert() const;
+
+    AtomSelector intersect(const SelectionFromMol &selection) const;
+    AtomSelector unite(const SelectionFromMol &selection) const;
+    AtomSelector subtract(const SelectionFromMol &selection) const;
+
+    AtomSelector applyMask(const SelectionFromMol &selection) const;
+
+    bool isEmpty() const;
+    bool isComplete() const;
+
+    int nSelected() const;
+    int nSelected(const SelectionFromMol &selection) const;
+
+    int nSelectedCutGroups() const;
+    int nSelectedResidues() const;
+
+    bool selectedAllCutGroups() const;
+    bool selectedAllResidues() const;
+
+    bool selected(const SelectionFromMol &selection) const;
+    bool selectedAll(const SelectionFromMol &selection) const;
+
+    bool selectedAll() const;
+    
+    bool selectedNone() const;
+    bool selectedNone(const SelectionFromMol &selection) const;
+
+    bool intersects(const SelectionFromMol &selection) const;
+    bool contains(const SelectionFromMol &selection) const;
+
+    QSet<AtomIndex> atomIndexes() const;
+    QSet<CutGroupID> cutGroupIDs() const;
+    QSet<ResNum> residueNumbers() const;
 };
 
 }

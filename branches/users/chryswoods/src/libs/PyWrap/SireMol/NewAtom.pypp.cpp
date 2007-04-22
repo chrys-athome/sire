@@ -11,6 +11,7 @@
 #include "SireMaths/triangle.h"
 #include "SireMaths/line.h"
 #include "SireMaths/torsion.h"
+#include "SireVol/space.h"
 #include "_NewAtom__enums.pypp.hpp"
 #include "_NewAtom__unnamed_enums.pypp.hpp"
 #include "_NewAtom__classes.pypp.hpp"

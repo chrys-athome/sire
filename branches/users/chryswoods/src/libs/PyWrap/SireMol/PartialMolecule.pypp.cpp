@@ -2,6 +2,7 @@
 
 // (C) Christopher Woods, GPL >=2 License
 
+#include "PartialMolecule.pypp.hpp"
 #include "boost/python.hpp"
 #include "siremol_headers.h"
 #include "SireMol/moleculedata.h"
@@ -11,15 +12,7 @@
 #include "SireMaths/triangle.h"
 #include "SireMaths/line.h"
 #include "SireMaths/torsion.h"
-#include "_PartialMolecule__enums.pypp.hpp"
-#include "_PartialMolecule__unnamed_enums.pypp.hpp"
-#include "_PartialMolecule__classes.pypp.hpp"
-#include "_PartialMolecule__memfuns0.pypp.hpp"
-#include "_PartialMolecule__memfuns1.pypp.hpp"
-#include "_PartialMolecule__memfuns2.pypp.hpp"
-#include "_PartialMolecule__memfuns_virtual.pypp.hpp"
-#include "_PartialMolecule__memfuns_pvirtual.pypp.hpp"
-#include "_PartialMolecule__protected_memfuns.pypp.hpp"
+#include "SireVol/space.h"
 
 namespace bp = boost::python;
 
@@ -31,26 +24,35 @@ const char* pvt_get_name(const SireMol::PartialMolecule&){ return "SireMol::Part
 
 void register_PartialMolecule_class(){
 
-{ //::SireMol::PartialMolecule
-    typedef bp::class_< SireMol::PartialMolecule, bp::bases< SireMol::MoleculeView > > PartialMolecule_exposer_t;
-    PartialMolecule_exposer_t PartialMolecule_exposer = PartialMolecule_exposer_t( "PartialMolecule" );
-    bp::scope PartialMolecule_scope( PartialMolecule_exposer );
-    PartialMolecule_exposer.def( bp::init< >() );
-    PartialMolecule_exposer.def( bp::init< SireMol::Molecule const & >(( bp::arg("molecule") )) );
-    PartialMolecule_exposer.def( bp::init< SireMol::Molecule const &, SireMol::AtomSelection const & >(( bp::arg("molecule"), bp::arg("selected_atoms") )) );
-    PartialMolecule_exposer.def( bp::init< SireMol::Residue const & >(( bp::arg("residue") )) );
-    PartialMolecule_exposer.def( bp::init< SireMol::NewAtom const & >(( bp::arg("atom") )) );
-    register_PartialMolecule_memfuns0(PartialMolecule_exposer);
-    register_PartialMolecule_memfuns1(PartialMolecule_exposer);
-    PartialMolecule_exposer.def( bp::self != bp::self );
-    PartialMolecule_exposer.def( bp::self == bp::self );
-    register_PartialMolecule_memfuns2(PartialMolecule_exposer);
-    PartialMolecule_exposer.def( "__copy__", &__copy__);
-    PartialMolecule_exposer.def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::PartialMolecule >,
-                        bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
-    PartialMolecule_exposer.def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::PartialMolecule >,
-                        bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
-    PartialMolecule_exposer.def( "__str__", &pvt_get_name);
-}
+    bp::class_< SireMol::PartialMolecule, bp::bases< SireMol::MoleculeView > >( "PartialMolecule" )    
+        .def( bp::init< >() )    
+        .def( bp::init< SireMol::MolDataView const & >(( bp::arg("molecule") )) )    
+        .def( bp::init< SireMol::MolDataView const &, SireMol::SelectionFromMol const & >(( bp::arg("molecule"), bp::arg("selection") )) )    
+        .def( 
+            "ID"
+            , &::SireMol::PartialMolecule::ID )    
+        .def( 
+            "change"
+            , &::SireMol::PartialMolecule::change
+            , ( bp::arg("other") ) )    
+        .def( 
+            "info"
+            , &::SireMol::PartialMolecule::info
+            , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( 
+            "name"
+            , &::SireMol::PartialMolecule::name )    
+        .def( bp::self != bp::self )    
+        .def( bp::self == bp::self )    
+        .def( 
+            "version"
+            , &::SireMol::PartialMolecule::version
+            , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::PartialMolecule >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::PartialMolecule >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

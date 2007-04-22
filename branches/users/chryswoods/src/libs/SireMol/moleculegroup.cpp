@@ -29,6 +29,7 @@
 #include "SireMol/qhash_siremol.h"
 
 #include "moleculegroup.h"
+#include "atomselector.h"
 
 #include "moleculeversion.h"
 
@@ -320,7 +321,7 @@ bool MoleculeGroupPvt::contains(const PartialMolecule &molecule) const
 
     if (it != mols.end())
     {
-        return it->contains(molecule.selectedAtoms());
+        return it->selectedAtoms().contains(molecule.selectedAtoms());
     }
     else
         return false;
@@ -344,8 +345,15 @@ bool MoleculeGroupPvt::_pvt_add(const PartialMolecule &molecule)
         //this updates an existing copy of the molecule
         PartialMolecule &oldmol = mols[molecule.ID()];
         
-        bool changed = oldmol.change(molecule);
-        bool added = oldmol.add(molecule.selectedAtoms());
+        bool changed = oldmol.version() != molecule.version();
+        
+        if (changed)
+            oldmol = oldmol.change(molecule);
+        
+        bool added = not oldmol.selectedAtoms().contains(molecule.selectedAtoms());
+        
+        if (added)
+            oldmol = oldmol.selection().add(molecule.selectedAtoms());
         
         return changed or added;
     }
@@ -372,8 +380,11 @@ bool MoleculeGroupPvt::_pvt_change(const PartialMolecule &molecule)
 {
     if (mols.contains(molecule.ID()))
     {
-        if (mols[molecule.ID()].change(molecule))
+        PartialMolecule &oldmol = mols[molecule.ID()];
+        
+        if (oldmol.version() != molecule.version())
         {
+            oldmol = oldmol.change(molecule);
             return true;
         }
     }
@@ -425,9 +436,11 @@ bool MoleculeGroupPvt::_pvt_remove(const PartialMolecule &molecule)
     {
         PartialMolecule &oldmol = mols[molid];
         
-        if ( oldmol.remove(molecule.selectedAtoms()) )
+        if ( oldmol.selectedAtoms().intersects(molecule.selectedAtoms()) )
         {
-            if (oldmol.selectedNone())
+            oldmol = oldmol.selection().remove(molecule.selectedAtoms());
+        
+            if (oldmol.selectedAtoms().selectedNone())
                 mols.remove(molid);
             
             return true;

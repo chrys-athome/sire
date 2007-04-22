@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#include "SireMol/qhash_siremol.h"
+
 #include "atomselection.h"
 
 #include "molecule.h"
@@ -313,7 +315,7 @@ int AtomSelection::nSelected(const AtomSelection &selection) const
 */
 int AtomSelection::nSelected(const SelectionFromMol &selection) const
 {
-    return this->intersect( this->selectOnly(selection) ).nSelected();
+    return this->intersect( this->setSelection(selection) ).nSelected();
 }
 
 /** Return whether or not all atoms in the CutGroup with
@@ -566,7 +568,7 @@ AtomSelection AtomSelection::deselect(CutGroupID cgid) const
 
     \throw SireError::invalid_index
 */
-AtomSelection AtomSelection::selectOnly(CutGroupID cgid) const
+AtomSelection AtomSelection::setSelection(CutGroupID cgid) const
 {
     return this->selectNone().select(cgid);
 }
@@ -837,7 +839,7 @@ AtomSelection AtomSelection::deselect(ResNum resnum) const
 
     \throw SireMol::missing_residue
 */
-AtomSelection AtomSelection::selectOnly(ResNum resnum) const
+AtomSelection AtomSelection::setSelection(ResNum resnum) const
 {
     return this->selectNone().select(resnum);
 }
@@ -964,7 +966,7 @@ AtomSelection AtomSelection::deselect(const AtomSelection &selection) const
 
     \throw SireError::invalid_index
 */
-AtomSelection AtomSelection::selectOnly(const AtomSelection &selection) const
+AtomSelection AtomSelection::setSelection(const AtomSelection &selection) const
 {
     return this->selectNone().select(selection);
 }
@@ -1009,7 +1011,7 @@ AtomSelection AtomSelection::deselect(const SelectionFromMol &selection) const
 
     \throw SireError::invalid_index
 */
-AtomSelection AtomSelection::selectOnly(const SelectionFromMol &selection) const
+AtomSelection AtomSelection::setSelection(const SelectionFromMol &selection) const
 {
     return this->selectNone().select(selection);
 }
@@ -1066,7 +1068,7 @@ AtomSelection AtomSelection::deselect(const CGAtomID &cgatomid) const
 
     \throw SireError::invalid_index
 */
-AtomSelection AtomSelection::selectOnly(const CGAtomID &cgatomid) const
+AtomSelection AtomSelection::setSelection(const CGAtomID &cgatomid) const
 {
     return this->selectNone().select(cgatomid);
 }
@@ -1089,7 +1091,7 @@ AtomSelection AtomSelection::deselect(const IDMolAtom &atomid) const
 
     \throw SireError::invalid_index
 */
-AtomSelection AtomSelection::selectOnly(const IDMolAtom &atomid) const
+AtomSelection AtomSelection::setSelection(const IDMolAtom &atomid) const
 {
     return this->selectNone().select(atomid);
 }
@@ -1244,7 +1246,7 @@ AtomSelection AtomSelection::applyMask(const AtomSelection &selection) const
 */
 AtomSelection AtomSelection::applyMask(const SelectionFromMol &selection) const
 {
-    return this->applyMask( this->selectOnly(selection) );
+    return this->applyMask( this->setSelection(selection) );
 }
 
 /** Return whether or not this selection contains any of the atoms
@@ -1296,7 +1298,7 @@ bool AtomSelection::intersects(const AtomSelection &selection) const
 */
 bool AtomSelection::intersects(const SelectionFromMol &selection) const
 {
-    return this->intersects( this->selectOnly(selection) );
+    return this->intersects( this->setSelection(selection) );
 }
 
 /** Return whether or not this selection contains all of the atoms that
@@ -1353,7 +1355,7 @@ bool AtomSelection::contains(const AtomSelection &selection) const
 */
 bool AtomSelection::contains(const SelectionFromMol &selection) const
 {
-    return this->contains( this->selectOnly(selection) );
+    return this->contains( this->setSelection(selection) );
 }
 
 /** Return the intersection of this selection with 'selection'. The
@@ -1375,7 +1377,7 @@ AtomSelection AtomSelection::intersect(const AtomSelection &selection) const
 */
 AtomSelection AtomSelection::intersect(const SelectionFromMol &selection) const
 {
-    return this->intersect( this->selectOnly(selection) );
+    return this->intersect( this->setSelection(selection) );
 }
 
 /** Return the union of this selection with 'selection'. The
@@ -1397,7 +1399,7 @@ AtomSelection AtomSelection::unite(const AtomSelection &selection) const
 */
 AtomSelection AtomSelection::unite(const SelectionFromMol &selection) const
 {
-    return this->unite( this->selectOnly(selection) );
+    return this->unite( this->setSelection(selection) );
 }
 
 /** Return this selection minus 'selection' - this will return
@@ -1417,7 +1419,7 @@ AtomSelection AtomSelection::subtract(const AtomSelection &selection) const
 */
 AtomSelection AtomSelection::subtract(const SelectionFromMol &selection) const
 {
-    return this->subtract( this->selectOnly(selection) );
+    return this->subtract( this->setSelection(selection) );
 }
 
 /** Assert that 'info' is compatible with this selection. This
@@ -1453,7 +1455,7 @@ void AtomSelection::assertCompatibleWith(const SelectionFromMol &selection) cons
 {
     try
     {
-        this->selectOnly(selection);
+        this->setSelection(selection);
     }
     catch(...)
     {
@@ -1464,9 +1466,9 @@ void AtomSelection::assertCompatibleWith(const SelectionFromMol &selection) cons
 }
 
 /** Return a list of all of the atoms that are contained in the this selection */
-QList<AtomIndex> AtomSelection::selected() const
+QSet<AtomIndex> AtomSelection::selected() const
 {
-    QList<AtomIndex> all_atoms;
+    QSet<AtomIndex> all_atoms;
 
     //do this in residue/atom order - this is more natural for the user
     uint nres = molinfo.nResidues();
@@ -1480,7 +1482,7 @@ QList<AtomIndex> AtomSelection::selected() const
             CGAtomID cgatomid = molinfo[ ResIDAtomID(i,j) ];
 
             if (this->selected(cgatomid))
-                all_atoms.append( molinfo.atom(cgatomid) );
+                all_atoms.insert( molinfo.atom(cgatomid) );
         }
     }
 
@@ -1637,5 +1639,5 @@ ResNum AtomSelection::asSingleResidue() const
         //there is only one Residue in the molecule
         return info().residueNumber( ResID(0) );
     else
-        return this->selected().first().resNum();
+        return this->selected().constBegin()->resNum();
 }

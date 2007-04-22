@@ -21,6 +21,8 @@
 
 #include "SireMaths/torsion.h"
 
+#include "SireVol/space.h"
+
 #include "Angle.pypp.hpp"
 
 #include "Atom.pypp.hpp"

@@ -11,6 +11,7 @@
 #include "SireMaths/triangle.h"
 #include "SireMaths/line.h"
 #include "SireMaths/torsion.h"
+#include "SireVol/space.h"
 #include "_Molecule__enums.pypp.hpp"
 #include "_Molecule__unnamed_enums.pypp.hpp"
 #include "_Molecule__classes.pypp.hpp"

@@ -29,6 +29,7 @@
 #include "moleculegroups.h"
 #include "moleculeversion.h"
 #include "partialmolecule.h"
+#include "atomselector.h"
 
 #include "SireError/errors.h"
 #include "SireMol/errors.h"
@@ -875,8 +876,8 @@ PartialMolecule MoleculeGroups::molecule(MoleculeID molid,
         
         for ( ++it ; it != groupids.end(); ++it )
         {
-            if (not mol.selectedAll())
-                mol.selectAll( this->molecule(molid,*it).selectedAtoms() );
+            if (not mol.selectedAtoms().selectedAll())
+                mol = mol.selection().add(this->molecule(molid,*it).selectedAtoms());
             else
                 this->assertContains(*it);
         }
@@ -914,13 +915,19 @@ QHash<MoleculeID,PartialMolecule> MoleculeGroups::molecules() const
              it2 != groupmols.constEnd();
              ++it2)
         {
-            if (allmols.contains(it2.key()))
+            const PartialMolecule &groupmol = *it2;
+            MoleculeID molid = it2.key();
+            
+            if (allmols.contains(molid))
             {
-                allmols[it2.key()].selectAll(it2->selectedAtoms());
+                PartialMolecule &mol = allmols[molid];
+                
+                if (not mol.selectedAtoms().selectedAll())
+                    mol = mol.selection().add(groupmol.selectedAtoms());
             }
             else
             {
-                allmols.insert(it2.key(),it2.value());
+                allmols.insert(molid, groupmol);
             }
         }
     }
@@ -1042,7 +1049,7 @@ bool MoleculeGroups::refersTo(MoleculeID molid) const
     molecule 'mol' are contained in these groups */
 bool MoleculeGroups::contains(const PartialMolecule &mol) const
 {
-    return this->molecule(mol.ID()).contains(mol.selectedAtoms());
+    return this->molecule(mol.ID()).selectedAtoms().contains(mol.selectedAtoms());
 }
 
 /** Return the number of MoleculeGroups in this set */

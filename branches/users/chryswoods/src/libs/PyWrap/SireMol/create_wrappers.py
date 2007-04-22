@@ -76,7 +76,6 @@ huge_classes = [ "EditMol",
                  "EditRes",
                  "Molecule",
                  "NewAtom",
-                 "PartialMolecule",
                  "Residue" ]
 
 aliases = {}
@@ -87,7 +86,8 @@ extra_includes = [ "SireMol/moleculedata.h",
                    "SireMaths/matrix.h",
                    "SireMaths/triangle.h",
                    "SireMaths/line.h",
-                   "SireMaths/torsion.h" ]
+                   "SireMaths/torsion.h",
+		   "SireVol/space.h" ]
 
 def fix_atominfo(c):
     c.decls( "element", allow_empty=True ).exclude()

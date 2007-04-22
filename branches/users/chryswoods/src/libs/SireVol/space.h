@@ -97,7 +97,7 @@ distance calculations are calculated between and within CoordGroups. This will
 allow you to change the space of the system here, and have that space used in the
 rest of the code that uses CoordGroups.
 
-This is a virtual class that is designed to be used with DynamicSharedPtr.
+This is a virtual class that is designed to be used with SharedPolyPointer.
 
 @author Christopher Woods
 */

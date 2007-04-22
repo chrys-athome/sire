@@ -87,20 +87,21 @@ public:
 
     MoleculeMover(const MoleculeView &molecule);
 
+    MoleculeMover(const MoleculeView &molecule,
+                  const SelectionFromMol &selection);
+
     MoleculeMover(const MoleculeMover &other);
 
     ~MoleculeMover();
 
     MoleculeMover& operator=(const MoleculeMover &other);
 
-    MoleculeMover mapInto(const Space &space,
-                          QSet<CutGroupID> *moved_cgids=0) const;
+    MoleculeMover mapInto(const Space &space) const;
 
-//     MoleculeMover translate(const Vector &delta,
-//                             QSet<CutGroupID> *moved_cgids=0) const;
+//     MoleculeMover translate(const Vector &delta) const;
 //
 //     MoleculeMover bond(const AtomIndex &atom0, const AtomIndex &atom1,
-//                        double delta, QSet<CutGroupID> *moved_cgids=0) const;
+//                        double delta) const;
 };
 
 }

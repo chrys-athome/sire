@@ -197,6 +197,8 @@ public:
     bool operator==(const CoordGroupBase &other) const;
     bool operator!=(const CoordGroupBase &other) const;
 
+    bool maybeDifferent(const CoordGroupBase &other) const;
+
     const Vector& at(int i) const;
     const Vector& operator[](int i) const;
 
@@ -241,6 +243,16 @@ inline const AABox& CoordGroupBase::aaBox() const
 inline const Vector* CoordGroupBase::constData() const
 {
     return d->constData();
+}
+
+/** Return whether this CoordGroup may be different to 'other'.
+    This uses a very fast test to see if 'other' may
+    be different to this group, thereby allowing the 
+    code to quickly check if there may have been a change
+    in coordinates. */
+inline bool CoordGroupBase::maybeDifferent(const CoordGroupBase &other) const
+{
+    return this->constData() != other.constData();
 }
 
 /** Return the 'ith' coordinate in the group - this will throw an exception

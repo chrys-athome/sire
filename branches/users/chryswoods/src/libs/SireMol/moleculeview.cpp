@@ -30,6 +30,7 @@
 #include "moleculeview_inlines.h"
 
 #include "molecule.h"
+#include "partialmolecule.h"
 #include "atomselector.h"
 #include "moleculemover.h"
 #include "propertyextractor.h"
@@ -164,11 +165,43 @@ MolDataView::MolDataView(const MolDataView &other)
 MolDataView::~MolDataView()
 {}
 
+/** Comparison function */
+bool MolDataView::_pvt_isEqual(const MolDataView &other) const
+{
+    return *this == other;
+}
+
+/** Change this molecule so that it is at the same state as 'other'.
+    This changes the actual molecule data to match 'other', but preserves
+    the current selection 
+    
+    \throw SireError::incompatible_error
+*/
+void MolDataView::_pvt_change(const MolDataView &other)
+{
+    if (other.data().ID() != this->data().ID())
+    {
+        throw SireError::incompatible_error( QObject::tr(
+            "You can only change a molecule to another version of itself. "
+            "This molecule has ID == %1, but you are trying to change it "
+            "into a molecule with ID == %2!")
+                .arg(this->data().ID())
+                .arg(other.data().ID()),
+                    CODELOC );
+    }
+    else if (other.data().version() != this->data().version())
+    {
+        //there has been a change
+        d->d = other.d->d;
+    }
+}
+
 ///////////////
 /////////////// Implementation of MoleculeView
 ///////////////
 
-static const RegisterMetaType<MoleculeView> r_molview;
+static const RegisterMetaType<MoleculeView> r_molview(MAGIC_ONLY,
+                                                      "SireMol::MoleculeView");
 
 /** Serialise to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,

@@ -87,6 +87,9 @@ public:
     PropertyExtractor();
 
     PropertyExtractor(const MoleculeView &molecule);
+    
+    PropertyExtractor(const MoleculeView &molecule,
+                      const SelectionFromMol &selection);
 
     PropertyExtractor(const PropertyExtractor &other);
 

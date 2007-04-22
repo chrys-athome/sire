@@ -12,10 +12,9 @@
 #include "SireMaths/triangle.h"
 #include "SireMaths/line.h"
 #include "SireMaths/torsion.h"
+#include "SireVol/space.h"
 
 namespace bp = boost::python;
-
-SireMol::MoleculeView __copy__(const SireMol::MoleculeView &other){ return SireMol::MoleculeView(other); }
 
 #include "SireQt/qdatastream.hpp"
 
@@ -23,8 +22,7 @@ const char* pvt_get_name(const SireMol::MoleculeView&){ return "SireMol::Molecul
 
 void register_MoleculeView_class(){
 
-    bp::class_< SireMol::MoleculeView, bp::bases< SireMol::MolDataView > >( "MoleculeView" )    
-        .def( bp::init< >() )    
+    bp::class_< SireMol::MoleculeView, bp::bases< SireMol::MolDataView >, boost::noncopyable >( "MoleculeView", bp::no_init )    
         .def( 
             "assertSameMajorVersion"
             , &::SireMol::MoleculeView::assertSameMajorVersion
@@ -65,7 +63,6 @@ void register_MoleculeView_class(){
             "selection"
             , (::SireMol::AtomSelector ( ::SireMol::MoleculeView::* )( ::SireMol::SelectionFromMol const & ) const)( &::SireMol::MoleculeView::selection )
             , ( bp::arg("selected_atoms") ) )    
-        .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::MoleculeView >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::MoleculeView >,

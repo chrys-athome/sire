@@ -12,6 +12,7 @@
 #include "SireMaths/triangle.h"
 #include "SireMaths/line.h"
 #include "SireMaths/torsion.h"
+#include "SireVol/space.h"
 
 namespace bp = boost::python;
 
@@ -26,10 +27,11 @@ void register_MoleculeMover_class(){
     bp::class_< SireMol::MoleculeMover, bp::bases< SireMol::MolDataView > >( "MoleculeMover" )    
         .def( bp::init< >() )    
         .def( bp::init< SireMol::MoleculeView const & >(( bp::arg("molecule") )) )    
+        .def( bp::init< SireMol::MoleculeView const &, SireMol::SelectionFromMol const & >(( bp::arg("molecule"), bp::arg("selection") )) )    
         .def( 
             "mapInto"
             , &::SireMol::MoleculeMover::mapInto
-            , ( bp::arg("space"), bp::arg("moved_cgids")=bp::object() ) )    
+            , ( bp::arg("space") ) )    
         .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::MoleculeMover >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    

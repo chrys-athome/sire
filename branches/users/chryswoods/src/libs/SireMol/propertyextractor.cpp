@@ -83,6 +83,18 @@ PropertyExtractor::PropertyExtractor(const MoleculeView &molecule)
                   : MolDataView(molecule)
 {}
 
+/** Construct the extractor to extract properties from the 'selection'
+    within the molecule 'molecule' 
+    
+    \throw SireError::incompatible_error
+*/
+PropertyExtractor::PropertyExtractor(const MoleculeView &molecule,
+                                     const SelectionFromMol &selection)
+                  : MolDataView(molecule)
+{
+    _pvt_selection() = selectedAtoms().intersect(selection);
+}
+
 /** Copy constructor */
 PropertyExtractor::PropertyExtractor(const PropertyExtractor &other)
                   : MolDataView(other)

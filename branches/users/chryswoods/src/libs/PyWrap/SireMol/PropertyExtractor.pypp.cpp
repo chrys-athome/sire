@@ -12,6 +12,7 @@
 #include "SireMaths/triangle.h"
 #include "SireMaths/line.h"
 #include "SireMaths/torsion.h"
+#include "SireVol/space.h"
 
 namespace bp = boost::python;
 
@@ -26,6 +27,7 @@ void register_PropertyExtractor_class(){
     bp::class_< SireMol::PropertyExtractor, bp::bases< SireMol::MolDataView > >( "PropertyExtractor" )    
         .def( bp::init< >() )    
         .def( bp::init< SireMol::MoleculeView const & >(( bp::arg("molecule") )) )    
+        .def( bp::init< SireMol::MoleculeView const &, SireMol::SelectionFromMol const & >(( bp::arg("molecule"), bp::arg("selection") )) )    
         .def( 
             "coordGroups"
             , &::SireMol::PropertyExtractor::coordGroups )    

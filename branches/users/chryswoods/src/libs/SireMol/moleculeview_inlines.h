@@ -47,15 +47,15 @@ namespace detail
 /** Comparison operator */
 inline bool MolDataViewPvt::operator==(const MolDataViewPvt &other) const
 {
-    return this == &other or
-           (*d == *(other.d) and selected_atoms == other.selected_atoms);
+    return ( (d == other.d) or (*d == *(other.d)) ) and
+           selected_atoms == other.selected_atoms;
 }
 
 /** Comparison operator */
 inline bool MolDataViewPvt::operator!=(const MolDataViewPvt &other) const
 {
-    return this != &other and
-           (*d != *(other.d) or selected_atoms != other.selected_atoms);
+    return ( (d != other.d) and (*d != *(other.d)) ) or
+           selected_atoms != other.selected_atoms;
 }
 
 }

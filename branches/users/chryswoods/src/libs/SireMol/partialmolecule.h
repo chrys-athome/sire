@@ -29,10 +29,6 @@
 #ifndef SIREMOL_PARTIALMOLECULE_H
 #define SIREMOL_PARTIALMOLECULE_H
 
-#include "idtypes.h"
-#include "atomindex.h"
-#include "atomselection.h"
-
 #include "moleculeview.h"
 
 SIRE_BEGIN_HEADER
@@ -45,28 +41,10 @@ class PartialMolecule;
 QDataStream& operator<<(QDataStream&, const SireMol::PartialMolecule&);
 QDataStream& operator>>(QDataStream&, SireMol::PartialMolecule&);
 
-namespace SireBase
-{
-class Property;
-}
-
-namespace SireVol
-{
-class CoordGroup;
-}
-
 namespace SireMol
 {
 
-class PropertyExtractor;
-class Molecule;
-class Residue;
-class NewAtom;
-
 class MoleculeVersion;
-
-using SireBase::Property;
-using SireVol::CoordGroup;
 
 /** This class provides a view to an arbitrary part of a molecule
     (which can range from just a single atom all the way through to
@@ -86,128 +64,28 @@ friend QDataStream& ::operator>>(QDataStream&, PartialMolecule&);
 
 public:
     PartialMolecule();
-    PartialMolecule(const Molecule &molecule);
-    PartialMolecule(const Molecule &molecule,
-                    const AtomSelection &selected_atoms);
-    PartialMolecule(const Residue &residue);
-    PartialMolecule(const NewAtom &atom);
+    PartialMolecule(const MolDataView &molecule);
+    PartialMolecule(const MolDataView &molecule,
+                    const SelectionFromMol &selection);
 
     PartialMolecule(const PartialMolecule &other);
 
     ~PartialMolecule();
 
-    PartialMolecule& operator=(const PartialMolecule &other);
+    PartialMolecule& operator=(const MolDataView &other);
 
     bool operator==(const PartialMolecule &other) const;
     bool operator!=(const PartialMolecule &other) const;
 
-    const AtomSelection& selection() const;
-    const AtomSelection& selectedAtoms() const;
-
-    PropertyExtractor extract() const;
-
-    bool change(const PartialMolecule &molecule);
-
-    bool add(const AtomSelection &atoms);
-    bool remove(const AtomSelection &atoms);
+    PartialMolecule change(const MoleculeView &other) const;
 
     // Interface from Molecule
-
     QString name() const;
     MoleculeID ID() const;
     const MoleculeVersion& version() const;
 
     const MoleculeInfo& info() const;
-
-    Property getProperty(const QString &name) const;
-
-    QVector<CoordGroup> coordGroups() const;
-
-    QHash<CutGroupID,quint32> cutGroupIndex() const;
-
-    // Interface from AtomSelection
-
-    bool isEmpty() const;
-
-    int nSelected() const;
-    int nSelected(CutGroupID cgid) const;
-    int nSelected(ResNum resnum) const;
-
-    int nSelectedCutGroups() const;
-    int nSelectedResidues() const;
-
-    bool selectedAllCutGroups() const;
-    bool selectedAllResidues() const;
-
-    bool selected(const CGAtomID &cgatomid) const;
-    bool selected(const IDMolAtom &atomid) const;
-
-    bool selectedAll() const;
-
-    bool selectedAll(CutGroupID cgid) const;
-    bool selectedAll(ResNum resnum) const;
-
-    bool selectedNone() const;
-
-    bool selectedNone(CutGroupID cgid) const;
-    bool selectedNone(ResNum resnum) const;
-
-    void selectAll();
-    void deselectAll();
-
-    void selectAll(CutGroupID cgid);
-    void deselectAll(CutGroupID cgid);
-
-    void selectAll(ResNum resnum);
-    void deselectAll(ResNum resnum);
-
-    void selectAll(const AtomSelection &selection);
-    void deselectAll(const AtomSelection &selection);
-
-    void select(const CGAtomID &cgatomid);
-    void deselect(const CGAtomID &cgatomid);
-
-    void select(const IDMolAtom &atomid);
-    void deselect(const IDMolAtom &atomid);
-
-    void invert();
-
-    bool intersects(const AtomSelection &other) const;
-    bool contains(const AtomSelection &other) const;
-
-    PartialMolecule intersect(const AtomSelection &other) const;
-    PartialMolecule unite(const AtomSelection &other) const;
-    PartialMolecule subtract(const AtomSelection &other) const;
-
-    void applyMask(const QSet<CutGroupID> &cgids);
-    void applyMask(const QSet<ResNum> &resnums);
-    void applyMask(const AtomSelection &other);
-
-    void setSelection(const AtomSelection &other);
-
-    QList<AtomIndex> selected() const;
-
-    QSet<CutGroupID> selectedCutGroups() const;
-    QSet<ResNum> selectedResidues() const;
-
-private:
-    /** The atoms which have been selected */
-    AtomSelection selected_atoms;
 };
-
-/** Return the selection representing the atoms that are
-    part of this PartialMolecule */
-inline const AtomSelection& PartialMolecule::selectedAtoms() const
-{
-    return selected_atoms;
-}
-
-/** Return the selection representing the atoms that are
-    part of this PartialMolecule */
-inline const AtomSelection& PartialMolecule::selection() const
-{
-    return selected_atoms;
-}
 
 }
 

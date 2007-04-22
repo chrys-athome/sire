@@ -12,6 +12,7 @@
 #include "SireMaths/triangle.h"
 #include "SireMaths/line.h"
 #include "SireMaths/torsion.h"
+#include "SireVol/space.h"
 
 namespace bp = boost::python;
 
@@ -228,30 +229,6 @@ void register_AtomSelection_class(){
             "selectNone"
             , &::SireMol::AtomSelection::selectNone )    
         .def( 
-            "selectOnly"
-            , (::SireMol::AtomSelection ( ::SireMol::AtomSelection::* )( ::SireMol::CutGroupID ) const)( &::SireMol::AtomSelection::selectOnly )
-            , ( bp::arg("cgid") ) )    
-        .def( 
-            "selectOnly"
-            , (::SireMol::AtomSelection ( ::SireMol::AtomSelection::* )( ::SireMol::ResNum ) const)( &::SireMol::AtomSelection::selectOnly )
-            , ( bp::arg("resnum") ) )    
-        .def( 
-            "selectOnly"
-            , (::SireMol::AtomSelection ( ::SireMol::AtomSelection::* )( ::SireMol::CGAtomID const & ) const)( &::SireMol::AtomSelection::selectOnly )
-            , ( bp::arg("cgatomid") ) )    
-        .def( 
-            "selectOnly"
-            , (::SireMol::AtomSelection ( ::SireMol::AtomSelection::* )( ::SireMol::IDMolAtom const & ) const)( &::SireMol::AtomSelection::selectOnly )
-            , ( bp::arg("atomid") ) )    
-        .def( 
-            "selectOnly"
-            , (::SireMol::AtomSelection ( ::SireMol::AtomSelection::* )( ::SireMol::AtomSelection const & ) const)( &::SireMol::AtomSelection::selectOnly )
-            , ( bp::arg("selection") ) )    
-        .def( 
-            "selectOnly"
-            , (::SireMol::AtomSelection ( ::SireMol::AtomSelection::* )( ::SireMol::SelectionFromMol const & ) const)( &::SireMol::AtomSelection::selectOnly )
-            , ( bp::arg("selection") ) )    
-        .def( 
             "selected"
             , (bool ( ::SireMol::AtomSelection::* )( ::SireMol::CGAtomID const & ) const)( &::SireMol::AtomSelection::selected )
             , ( bp::arg("cgatomid") ) )    
@@ -261,7 +238,7 @@ void register_AtomSelection_class(){
             , ( bp::arg("atomid") ) )    
         .def( 
             "selected"
-            , (::QList<SireMol::AtomIndex> ( ::SireMol::AtomSelection::* )(  ) const)( &::SireMol::AtomSelection::selected ) )    
+            , (::QSet<SireMol::AtomIndex> ( ::SireMol::AtomSelection::* )(  ) const)( &::SireMol::AtomSelection::selected ) )    
         .def( 
             "selectedAll"
             , (bool ( ::SireMol::AtomSelection::* )(  ) const)( &::SireMol::AtomSelection::selectedAll ) )    
@@ -312,6 +289,30 @@ void register_AtomSelection_class(){
         .def( 
             "selectedResidues"
             , &::SireMol::AtomSelection::selectedResidues )    
+        .def( 
+            "setSelection"
+            , (::SireMol::AtomSelection ( ::SireMol::AtomSelection::* )( ::SireMol::CutGroupID ) const)( &::SireMol::AtomSelection::setSelection )
+            , ( bp::arg("cgid") ) )    
+        .def( 
+            "setSelection"
+            , (::SireMol::AtomSelection ( ::SireMol::AtomSelection::* )( ::SireMol::ResNum ) const)( &::SireMol::AtomSelection::setSelection )
+            , ( bp::arg("resnum") ) )    
+        .def( 
+            "setSelection"
+            , (::SireMol::AtomSelection ( ::SireMol::AtomSelection::* )( ::SireMol::CGAtomID const & ) const)( &::SireMol::AtomSelection::setSelection )
+            , ( bp::arg("cgatomid") ) )    
+        .def( 
+            "setSelection"
+            , (::SireMol::AtomSelection ( ::SireMol::AtomSelection::* )( ::SireMol::IDMolAtom const & ) const)( &::SireMol::AtomSelection::setSelection )
+            , ( bp::arg("atomid") ) )    
+        .def( 
+            "setSelection"
+            , (::SireMol::AtomSelection ( ::SireMol::AtomSelection::* )( ::SireMol::AtomSelection const & ) const)( &::SireMol::AtomSelection::setSelection )
+            , ( bp::arg("selection") ) )    
+        .def( 
+            "setSelection"
+            , (::SireMol::AtomSelection ( ::SireMol::AtomSelection::* )( ::SireMol::SelectionFromMol const & ) const)( &::SireMol::AtomSelection::setSelection )
+            , ( bp::arg("selection") ) )    
         .def( 
             "subtract"
             , (::SireMol::AtomSelection ( ::SireMol::AtomSelection::* )( ::SireMol::AtomSelection const & ) const)( &::SireMol::AtomSelection::subtract )

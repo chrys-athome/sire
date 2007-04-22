@@ -12,6 +12,7 @@
 #include "SireMaths/triangle.h"
 #include "SireMaths/line.h"
 #include "SireMaths/torsion.h"
+#include "SireVol/space.h"
 
 namespace bp = boost::python;
 
@@ -26,26 +27,138 @@ void register_AtomSelector_class(){
     bp::class_< SireMol::AtomSelector, bp::bases< SireMol::MolDataView > >( "AtomSelector" )    
         .def( bp::init< >() )    
         .def( bp::init< SireMol::MoleculeView const & >(( bp::arg("molecule") )) )    
+        .def( bp::init< SireMol::MoleculeView const &, SireMol::SelectionFromMol const & >(( bp::arg("molecule"), bp::arg("selected_atoms") )) )    
         .def( 
             "add"
             , &::SireMol::AtomSelector::add
             , ( bp::arg("selection") ) )    
         .def( 
+            "applyMask"
+            , &::SireMol::AtomSelector::applyMask
+            , ( bp::arg("selection") ) )    
+        .def( 
+            "atomIndexes"
+            , &::SireMol::AtomSelector::atomIndexes )    
+        .def( 
+            "clear"
+            , (::SireMol::AtomSelector ( ::SireMol::AtomSelector::* )(  ) const)( &::SireMol::AtomSelector::clear ) )    
+        .def( 
+            "clear"
+            , (::SireMol::AtomSelector ( ::SireMol::AtomSelector::* )( ::SireMol::SelectionFromMol const & ) const)( &::SireMol::AtomSelector::clear )
+            , ( bp::arg("selection") ) )    
+        .def( 
+            "contains"
+            , &::SireMol::AtomSelector::contains
+            , ( bp::arg("selection") ) )    
+        .def( 
+            "cutGroupIDs"
+            , &::SireMol::AtomSelector::cutGroupIDs )    
+        .def( 
+            "deselect"
+            , &::SireMol::AtomSelector::deselect
+            , ( bp::arg("selection") ) )    
+        .def( 
             "deselectAll"
-            , &::SireMol::AtomSelector::deselectAll )    
+            , (::SireMol::AtomSelector ( ::SireMol::AtomSelector::* )(  ) const)( &::SireMol::AtomSelector::deselectAll ) )    
+        .def( 
+            "deselectAll"
+            , (::SireMol::AtomSelector ( ::SireMol::AtomSelector::* )( ::SireMol::SelectionFromMol const & ) const)( &::SireMol::AtomSelector::deselectAll )
+            , ( bp::arg("selection") ) )    
+        .def( 
+            "intersect"
+            , &::SireMol::AtomSelector::intersect
+            , ( bp::arg("selection") ) )    
+        .def( 
+            "intersects"
+            , &::SireMol::AtomSelector::intersects
+            , ( bp::arg("selection") ) )    
         .def( 
             "invert"
             , &::SireMol::AtomSelector::invert )    
+        .def( 
+            "isComplete"
+            , &::SireMol::AtomSelector::isComplete )    
+        .def( 
+            "isEmpty"
+            , &::SireMol::AtomSelector::isEmpty )    
+        .def( 
+            "nSelected"
+            , (int ( ::SireMol::AtomSelector::* )(  ) const)( &::SireMol::AtomSelector::nSelected ) )    
+        .def( 
+            "nSelected"
+            , (int ( ::SireMol::AtomSelector::* )( ::SireMol::SelectionFromMol const & ) const)( &::SireMol::AtomSelector::nSelected )
+            , ( bp::arg("selection") ) )    
+        .def( 
+            "nSelectedCutGroups"
+            , &::SireMol::AtomSelector::nSelectedCutGroups )    
+        .def( 
+            "nSelectedResidues"
+            , &::SireMol::AtomSelector::nSelectedResidues )    
         .def( 
             "remove"
             , &::SireMol::AtomSelector::remove
             , ( bp::arg("selection") ) )    
         .def( 
+            "residueNumbers"
+            , &::SireMol::AtomSelector::residueNumbers )    
+        .def( 
+            "select"
+            , &::SireMol::AtomSelector::select
+            , ( bp::arg("selection") ) )    
+        .def( 
             "selectAll"
-            , &::SireMol::AtomSelector::selectAll )    
+            , (::SireMol::AtomSelector ( ::SireMol::AtomSelector::* )(  ) const)( &::SireMol::AtomSelector::selectAll ) )    
+        .def( 
+            "selectAll"
+            , (::SireMol::AtomSelector ( ::SireMol::AtomSelector::* )( ::SireMol::SelectionFromMol const & ) const)( &::SireMol::AtomSelector::selectAll )
+            , ( bp::arg("selection") ) )    
         .def( 
             "selectNone"
-            , &::SireMol::AtomSelector::selectNone )    
+            , (::SireMol::AtomSelector ( ::SireMol::AtomSelector::* )(  ) const)( &::SireMol::AtomSelector::selectNone ) )    
+        .def( 
+            "selectNone"
+            , (::SireMol::AtomSelector ( ::SireMol::AtomSelector::* )( ::SireMol::SelectionFromMol const & ) const)( &::SireMol::AtomSelector::selectNone )
+            , ( bp::arg("selection") ) )    
+        .def( 
+            "selected"
+            , &::SireMol::AtomSelector::selected
+            , ( bp::arg("selection") ) )    
+        .def( 
+            "selectedAll"
+            , (bool ( ::SireMol::AtomSelector::* )( ::SireMol::SelectionFromMol const & ) const)( &::SireMol::AtomSelector::selectedAll )
+            , ( bp::arg("selection") ) )    
+        .def( 
+            "selectedAll"
+            , (bool ( ::SireMol::AtomSelector::* )(  ) const)( &::SireMol::AtomSelector::selectedAll ) )    
+        .def( 
+            "selectedAllCutGroups"
+            , &::SireMol::AtomSelector::selectedAllCutGroups )    
+        .def( 
+            "selectedAllResidues"
+            , &::SireMol::AtomSelector::selectedAllResidues )    
+        .def( 
+            "selectedNone"
+            , (bool ( ::SireMol::AtomSelector::* )(  ) const)( &::SireMol::AtomSelector::selectedNone ) )    
+        .def( 
+            "selectedNone"
+            , (bool ( ::SireMol::AtomSelector::* )( ::SireMol::SelectionFromMol const & ) const)( &::SireMol::AtomSelector::selectedNone )
+            , ( bp::arg("selection") ) )    
+        .def( 
+            "set"
+            , &::SireMol::AtomSelector::set
+            , ( bp::arg("selection") ) )    
+        .def( 
+            "setSelection"
+            , &::SireMol::AtomSelector::setSelection
+            , ( bp::arg("selection") ) )    
+        .def( 
+            "subtract"
+            , &::SireMol::AtomSelector::subtract
+            , ( bp::arg("selection") ) )    
+        .def( 
+            "unite"
+            , &::SireMol::AtomSelector::unite
+            , ( bp::arg("selection") ) )    
         .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::AtomSelector >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    

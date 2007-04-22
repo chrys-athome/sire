@@ -58,6 +58,7 @@ class PropertyExtractor;
 
 class MoleculeData;
 class Molecule;
+class PartialMolecule;
 
 namespace detail
 {
@@ -118,6 +119,9 @@ class SIREMOL_EXPORT MolDataView
 friend QDataStream& ::operator<<(QDataStream&, const MolDataView&);
 friend QDataStream& ::operator>>(QDataStream&, MolDataView&);
 
+public:
+    ~MolDataView();
+
 protected:
     MolDataView();
 
@@ -127,8 +131,6 @@ protected:
                 const AtomSelection &selected_atoms);
 
     MolDataView(const MolDataView &other);
-
-    ~MolDataView();
 
     MolDataView& operator=(const MolDataView &other)
     {
@@ -141,10 +143,14 @@ protected:
     bool operator==(const MolDataView &other) const;
     bool operator!=(const MolDataView &other) const;
 
+    bool _pvt_isEqual(const MolDataView &other) const;
+
     const MoleculeData& data() const;
     const MoleculeData& constData() const;
 
     MoleculeData& data();
+
+    void _pvt_change(const MolDataView &other);
 
     const AtomSelection& _pvt_selection() const
     {
@@ -185,14 +191,6 @@ friend QDataStream& ::operator<<(QDataStream&, const MoleculeView&);
 friend QDataStream& ::operator>>(QDataStream&, MoleculeView&);
 
 public:
-    /** Null constructor */
-    MoleculeView()
-    {}
-
-    /** Copy constructor */
-    MoleculeView(const MoleculeView &other) : MolDataView(other)
-    {}
-
     ~MoleculeView();
 
     Molecule molecule() const;
@@ -217,6 +215,18 @@ public:
     void assertSameVersion(const MoleculeView &other) const;
 
 protected:
+    /** Null constructor */
+    MoleculeView() : MolDataView()
+    {}
+
+    /** Copy(ish) constructor */
+    MoleculeView(const MolDataView &other) : MolDataView(other)
+    {}
+
+    /** Copy constructor */
+    MoleculeView(const MoleculeView &other) : MolDataView(other)
+    {}
+    
     MoleculeView(const MoleculeData &moldata);
     MoleculeView(const MoleculeData &moldata,
                  const AtomSelection &selected_atoms);
@@ -227,11 +237,16 @@ protected:
         MolDataView::operator=(other);
         return *this;
     }
+
+    /** Copy assignment operator */
+    MoleculeView& operator=(const MolDataView &other)
+    {
+        MolDataView::operator=(other);
+        return *this;
+    }
 };
 
 }
-
-Q_DECLARE_METATYPE(SireMol::MoleculeView);
 
 SIRE_END_HEADER
 

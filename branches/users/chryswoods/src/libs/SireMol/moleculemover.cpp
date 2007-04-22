@@ -70,10 +70,22 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 MoleculeMover::MoleculeMover() : MolDataView()
 {}
 
-/** Construct the extractor to extract properties from 'molecule' */
+/** Construct the mover to move atoms from 'molecule' */
 MoleculeMover::MoleculeMover(const MoleculeView &molecule)
              : MolDataView(molecule)
 {}
+
+/** Construct the mover to move atoms from the 'selection'
+    within the molecule 'molecule' 
+    
+    \throw SireError::incompatible_error
+*/
+MoleculeMover::MoleculeMover(const MoleculeView &molecule,
+                             const SelectionFromMol &selection)
+              : MolDataView(molecule)
+{
+    _pvt_selection() = selectedAtoms().intersect(selection);
+}
 
 /** Copy constructor */
 MoleculeMover::MoleculeMover(const MoleculeMover &other)
@@ -94,8 +106,7 @@ MoleculeMover::~MoleculeMover()
 /** Map the whole of this molecule into the Space 'space'. This move
     is unusual in that it will move the entire molecule, regardless of
     how much is currently selected */
-MoleculeMover MoleculeMover::mapInto(const Space &space,
-                                     QSet<CutGroupID> *moved_cgids) const
+MoleculeMover MoleculeMover::mapInto(const Space &space) const
 {
     //get the CoordGroups containing the current coordinates
     QVector<CoordGroup> coords = data().coordGroups();
@@ -114,23 +125,6 @@ MoleculeMover MoleculeMover::mapInto(const Space &space,
         //update the molecule
         MoleculeMover newmol = *this;
         newmol.data().setCoordinates(mapped_coords);
-
-        //do we care which CutGroups have changed?
-        if (moved_cgids)
-        {
-            //yes we do - lets find out what has changed
-            uint ngroups = mapped_coords.count();
-
-            const CoordGroup *coords_array = coords.constData();
-            const CoordGroup *mapped_array = mapped_coords.constData();
-
-            for (CutGroupID i(0); i<ngroups; ++i)
-            {
-                if (coords_array[i] != mapped_array[i])
-                    //this coordgroup has changed
-                    moved_cgids->insert(i);
-            }
-        }
 
         return newmol;
     }
