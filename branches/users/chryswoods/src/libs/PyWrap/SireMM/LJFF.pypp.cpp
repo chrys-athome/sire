@@ -35,10 +35,6 @@ void register_LJFF_class(){
                 "changedAll"
                 , (bool ( ::SireMM::LJFF::ChangedLJMolecule::* )(  ) const)( &::SireMM::LJFF::ChangedLJMolecule::changedAll ) )    
             .def( 
-                "changedGroups"
-                , (::QSet<SireMol::CutGroupID> const & ( ::SireMM::LJFF::ChangedLJMolecule::* )(  ) const)( &::SireMM::LJFF::ChangedLJMolecule::changedGroups )
-                , bp::return_value_policy< bp::copy_const_reference >() )    
-            .def( 
                 "isEmpty"
                 , (bool ( ::SireMM::LJFF::ChangedLJMolecule::* )(  ) const)( &::SireMM::LJFF::ChangedLJMolecule::isEmpty ) )    
             .def( 
@@ -49,6 +45,9 @@ void register_LJFF_class(){
                 "newParts"
                 , (::SireMM::LJFF::LJMolecule const & ( ::SireMM::LJFF::ChangedLJMolecule::* )(  ) const)( &::SireMM::LJFF::ChangedLJMolecule::newParts )
                 , bp::return_value_policy< bp::copy_const_reference >() )    
+            .def( 
+                "nothingChanged"
+                , (bool ( ::SireMM::LJFF::ChangedLJMolecule::* )(  ) const)( &::SireMM::LJFF::ChangedLJMolecule::nothingChanged ) )    
             .def( 
                 "oldMolecule"
                 , (::SireMM::LJFF::LJMolecule const & ( ::SireMM::LJFF::ChangedLJMolecule::* )(  ) const)( &::SireMM::LJFF::ChangedLJMolecule::oldMolecule )
@@ -76,16 +75,20 @@ void register_LJFF_class(){
         bp::class_< SireMM::LJFF::LJMolecule >( "LJMolecule" )    
             .def( 
                 "add"
-                , (::SireMM::LJFF::ChangedLJMolecule ( ::SireMM::LJFF::LJMolecule::* )( ::SireMol::PartialMolecule const &,::QString const & ) const)( &::SireMM::LJFF::LJMolecule::add )
+                , (::SireMM::LJFF::LJMolecule ( ::SireMM::LJFF::LJMolecule::* )( ::SireMol::PartialMolecule const &,::QString const & ) const)( &::SireMM::LJFF::LJMolecule::add )
                 , ( bp::arg("molecule"), bp::arg("ljproperty")=QString::null ) )    
             .def( 
                 "change"
-                , (::SireMM::LJFF::ChangedLJMolecule ( ::SireMM::LJFF::LJMolecule::* )( ::SireMol::PartialMolecule const &,::QString const & ) const)( &::SireMM::LJFF::LJMolecule::change )
+                , (::SireMM::LJFF::LJMolecule ( ::SireMM::LJFF::LJMolecule::* )( ::SireMol::PartialMolecule const &,::QString const & ) const)( &::SireMM::LJFF::LJMolecule::change )
                 , ( bp::arg("molecule"), bp::arg("ljproperty")=QString::null ) )    
             .def( 
                 "coordinates"
                 , (::QVector<SireVol::CoordGroup> const & ( ::SireMM::LJFF::LJMolecule::* )(  ) const)( &::SireMM::LJFF::LJMolecule::coordinates )
                 , bp::return_value_policy< bp::copy_const_reference >() )    
+            .def( 
+                "getDifferences"
+                , (::SireMM::LJFF::LJMolecule ( ::SireMM::LJFF::LJMolecule::* )( ::SireMM::LJFF::LJMolecule const & ) const)( &::SireMM::LJFF::LJMolecule::getDifferences )
+                , ( bp::arg("newmol") ) )    
             .def( 
                 "isEmpty"
                 , (bool ( ::SireMM::LJFF::LJMolecule::* )(  ) const)( &::SireMM::LJFF::LJMolecule::isEmpty ) )    
@@ -108,7 +111,7 @@ void register_LJFF_class(){
             .def( bp::self == bp::self )    
             .def( 
                 "remove"
-                , (::SireMM::LJFF::ChangedLJMolecule ( ::SireMM::LJFF::LJMolecule::* )( ::SireMol::PartialMolecule const & ) const)( &::SireMM::LJFF::LJMolecule::remove )
+                , (::SireMM::LJFF::LJMolecule ( ::SireMM::LJFF::LJMolecule::* )( ::SireMol::PartialMolecule const & ) const)( &::SireMM::LJFF::LJMolecule::remove )
                 , ( bp::arg("molecule") ) );
         bp::class_< SireMM::LJFF::Parameters, bp::bases< SireFF::FFBase::Parameters > >( "Parameters" )    
             .def( 

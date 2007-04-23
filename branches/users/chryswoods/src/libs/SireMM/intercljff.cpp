@@ -220,9 +220,9 @@ InterCLJFF::~InterCLJFF()
 void InterCLJFF::_pvt_copy(const FFBase &ffbase)
 {
     CLJFF::_pvt_copy(ffbase);
-    
+
     const InterCLJFF &other = dynamic_cast<const InterCLJFF&>(ffbase);
-    
+
     mols = other.mols;
     molid_to_index = other.molid_to_index;
 
@@ -574,7 +574,8 @@ void InterCLJFF::removeFromCurrentState(MoleculeID molid)
     }
 }
 
-/** Apply the change described by 'changed_mol' */
+/** Apply the change described by 'changed_mol' - return whether or not
+    this changed anything */
 bool InterCLJFF::applyChange(MoleculeID molid, const ChangedCLJMolecule &changed_mol)
 {
     if (changed_mol.isEmpty())
@@ -599,10 +600,30 @@ bool InterCLJFF::applyChange(MoleculeID molid, const ChangedCLJMolecule &changed
 
         if (it != molid_to_changedindex.constEnd())
         {
+            MoleculeID molid = it.key();
+            uint idx = *it;
+
             //the molecule has been changed before
-            changed_mols[it.value()] = changed_mol;
+            if (changed_mols[idx].oldMolecule() == changed_mol.newMolecule())
+            {
+                //we have changed back to the old state!
+                changed_mols[idx] = ChangedCLJMolecule();
+                molid_to_changedindex.remove(molid);
+                removed_mols.remove(molid);
+
+                if (molid_to_changedindex.isEmpty())
+                {
+                    //no molecules have now changed - the forcefield is clean again
+                    molid_to_changedindex.clear();
+                    changed_mols.clear();
+                    removed_mols.clear();
+                    this->setClean();
+                }
+            }
+            else
+                changed_mols[it.value()] = changed_mol;
         }
-        else
+        else if (not changed_mol.nothingChanged())
         {
             //this is a new change
             uint idx = changed_mols.count();
@@ -610,8 +631,10 @@ bool InterCLJFF::applyChange(MoleculeID molid, const ChangedCLJMolecule &changed
             changed_mols.append(changed_mol);
             molid_to_changedindex.insert(molid, idx);
         }
+        else
+            return false;
     }
-    
+
     return true;
 }
 
@@ -621,15 +644,15 @@ CLJFF::ChangedCLJMolecule InterCLJFF::changeRecord(MoleculeID molid) const
     if ( not need_total_recalc )
     {
         QHash<MoleculeID,uint>::const_iterator it = molid_to_changedindex.find(molid);
-         
+
         if (it != molid_to_changedindex.end())
             //this molecule has been changed before - return the record
             //of that change
             return changed_mols.constData()[ *it ];
     }
-    
+
     QHash<MoleculeID,uint>::const_iterator it = molid_to_index.find(molid);
-    
+
     if (it != molid_to_index.end())
     {
         //this molecule has not been changed before - return a change
@@ -660,7 +683,7 @@ bool InterCLJFF::add(const PartialMolecule &molecule, const ParameterMap &map)
                     changeRecord(molid).add( molecule,
                                              map.source(this->parameters().coulomb()),
                                              map.source(this->parameters().lj()) );
-    
+
     if (this->applyChange(molid, new_molecule))
     {
         this->incrementMajorVersion();
@@ -674,9 +697,9 @@ bool InterCLJFF::add(const PartialMolecule &molecule, const ParameterMap &map)
 bool InterCLJFF::remove(const PartialMolecule &molecule)
 {
     MoleculeID molid = molecule.ID();
-    
+
     ChangedCLJMolecule new_molecule = changeRecord(molid).remove(molecule);
-       
+
     if (this->applyChange(molid, new_molecule))
     {
         this->incrementMajorVersion();
@@ -707,11 +730,12 @@ bool InterCLJFF::change(const PartialMolecule &molecule)
 bool InterCLJFF::contains(const PartialMolecule &molecule) const
 {
     QHash<MoleculeID,uint>::const_iterator it = molid_to_index.find(molecule.ID());
-    
+
     if (it == molid_to_index.end())
         return false;
-        
-    return mols.constData()[it.value()].molecule().contains(molecule.selectedAtoms());
+
+    return mols.constData()[it.value()].molecule()
+                             .selectedAtoms().contains(molecule.selectedAtoms());
 }
 
 /** Return whether or not this forcefield contains *any part* of
@@ -733,7 +757,7 @@ QSet<FFBase::Group> InterCLJFF::groupsReferringTo(MoleculeID molid) const
     {
         groups.insert(this->groups().main());
     }
-    
+
     return groups;
 }
 
@@ -754,7 +778,7 @@ QSet<MoleculeID> InterCLJFF::moleculeIDs() const
 PartialMolecule InterCLJFF::molecule(MoleculeID molid) const
 {
     QHash<MoleculeID,uint>::const_iterator it = molid_to_index.find(molid);
-    
+
     if (it == molid_to_index.end())
         throw SireMol::missing_molecule( QObject::tr(
             "The InterCLJFF forcefield (%1, %2 : %3) does not contain the "
@@ -762,7 +786,7 @@ PartialMolecule InterCLJFF::molecule(MoleculeID molid) const
                 .arg(this->name()).arg(this->ID())
                 .arg(this->version().toString()).arg(molid),
                     CODELOC );
-    
+
     return mols.constData()[it.value()].molecule();
 }
 
@@ -771,22 +795,22 @@ PartialMolecule InterCLJFF::molecule(MoleculeID molid) const
 QHash<MoleculeID,PartialMolecule> InterCLJFF::contents() const
 {
     QHash<MoleculeID,PartialMolecule> all_mols;
-    
+
     int nmols = mols.count();
-    
+
     if (nmols > 0)
     {
         all_mols.reserve(nmols);
-        
+
         const CLJMolecule *mols_array = mols.constData();
-        
+
         for (int i=0; i<nmols; ++i)
         {
             const PartialMolecule &mol = mols_array[i].molecule();
-            
+
             all_mols.insert( mol.ID(), mol );
         }
     }
-    
+
     return all_mols;
 }

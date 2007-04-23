@@ -256,11 +256,7 @@ friend QDataStream& ::operator>>(QDataStream&, LJFF::LJMolecule&);
 
 public:
     LJMolecule();
-
     LJMolecule(const PartialMolecule &molecule, const QString &ljproperty);
-
-    LJMolecule(const LJMolecule &other, const QSet<CutGroupID> &groups);
-
     LJMolecule(const LJMolecule &other);
 
     ~LJMolecule();
@@ -274,13 +270,15 @@ public:
 
     const PartialMolecule& molecule() const;
 
-    ChangedLJMolecule change(const PartialMolecule &molecule,
-                             const QString &ljproperty = QString::null) const;
+    LJMolecule change(const PartialMolecule &molecule,
+                      const QString &ljproperty = QString::null) const;
 
-    ChangedLJMolecule add(const PartialMolecule &molecule,
-                          const QString &ljproperty = QString::null) const;
+    LJMolecule add(const PartialMolecule &molecule,
+                   const QString &ljproperty = QString::null) const;
 
-    ChangedLJMolecule remove(const PartialMolecule &molecule) const;
+    LJMolecule remove(const PartialMolecule &molecule) const;
+
+    LJMolecule getDifferences(const LJMolecule &newmol) const;
 
     const QString& ljProperty() const;
 
@@ -310,9 +308,6 @@ public:
 
     ChangedLJMolecule(const LJMolecule &oldmol, const LJMolecule &newmol);
 
-    ChangedLJMolecule(const LJMolecule &oldmol, const LJMolecule &newmol,
-                      const QSet<CutGroupID> &changed_groups);
-
     ChangedLJMolecule(const ChangedLJMolecule &other);
 
     ~ChangedLJMolecule();
@@ -323,6 +318,7 @@ public:
     bool operator!=(const ChangedLJMolecule &other) const;
 
     bool isEmpty() const;
+    bool nothingChanged() const;
 
     ChangedLJMolecule change(const PartialMolecule &molecule,
                              const QString &ljproperty = QString::null) const;
@@ -333,8 +329,6 @@ public:
     ChangedLJMolecule remove(const PartialMolecule &molecule) const;
 
     bool changedAll() const;
-
-    const QSet<CutGroupID>& changedGroups() const;
 
     const LJMolecule& oldMolecule() const;
     const LJMolecule& newMolecule() const;
@@ -356,10 +350,6 @@ private:
     /** The new version of the parts of the molecule that have
         changed */
     LJMolecule newparts;
-
-    /** The CutGroupIDs of all of the CutGroups that have changed.
-        This is empty if all of the CutGroups have changed */
-    QSet<CutGroupID> changed_cgids;
 };
 
 

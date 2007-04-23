@@ -259,7 +259,7 @@ void InterGroupCLJFF::mustNowRecalculateFromScratch()
     if (not need_total_recalc)
     {
         need_total_recalc = true;
-    
+
         for (int i=0; i<2; ++i)
         {
             changed_mols[i].clear();
@@ -350,7 +350,7 @@ void InterGroupCLJFF::recalculateTotalEnergy()
         changed_mols[i].clear();
         molid_to_changedindex[i].clear();
     }
-    
+
     need_total_recalc = false;
 }
 
@@ -624,7 +624,7 @@ void InterGroupCLJFF::recalculateViaDelta()
         changed_mols[i].clear();
         molid_to_changedindex[i].clear();
     }
-    
+
     need_total_recalc = false;
 }
 
@@ -634,7 +634,7 @@ void InterGroupCLJFF::recalculateViaDelta()
     the last evaluation. */
 void InterGroupCLJFF::recalculateEnergy()
 {
-    if ( need_total_recalc or (changed_mols[0].isEmpty() and 
+    if ( need_total_recalc or (changed_mols[0].isEmpty() and
                                changed_mols[1].isEmpty()) )
     {
         this->recalculateTotalEnergy();
@@ -912,7 +912,7 @@ int InterGroupCLJFF::groupIndex(FFBase::Group group) const
     \throw SireMol::invalid_cast
     \throw SireFF::invalid_group
 */
-bool InterGroupCLJFF::addTo(const FFBase::Group &group, 
+bool InterGroupCLJFF::addTo(const FFBase::Group &group,
                             const PartialMolecule &molecule,
                             const ParameterMap &map)
 {
@@ -943,7 +943,7 @@ bool InterGroupCLJFF::addTo(const FFBase::Group &group,
     }
     else
     {
-        new_molecule = new_molecule.add( molecule, 
+        new_molecule = new_molecule.add( molecule,
                                          map.source(parameters().coulomb()),
                                          map.source(parameters().lj()) );
 
@@ -992,7 +992,8 @@ bool InterGroupCLJFF::addToB(const PartialMolecule &molecule,
 bool InterGroupCLJFF::contains(const PartialMolecule &mol) const
 {
     if ( this->refersTo(mol.ID()) )
-        return this->molecule(mol.ID()).contains(mol.selectedAtoms());
+        return this->molecule(mol.ID())
+                  .selectedAtoms().contains(mol.selectedAtoms());
     else
         return false;
 }
@@ -1000,29 +1001,30 @@ bool InterGroupCLJFF::contains(const PartialMolecule &mol) const
 /** Return whether or not this forcefield contains a complete copy
     of any version of the partial molecule 'molecule' in the
     group 'group'
-    
+
     \throw SireFF::missing_group
 */
 bool InterGroupCLJFF::contains(const PartialMolecule &mol,
                                const FFBase::Group &group) const
 {
     if ( this->refersTo(mol.ID(),group) )
-        return this->molecule(mol.ID(),group).contains(mol.selectedAtoms());
+        return this->molecule(mol.ID(),group)
+                        .selectedAtoms().contains(mol.selectedAtoms());
     else
         return false;
 }
 
-/** Return whether or not this forcefield refers to the molecule 
+/** Return whether or not this forcefield refers to the molecule
     with ID == molid */
 bool InterGroupCLJFF::refersTo(MoleculeID molid) const
 {
-    return molid_to_index[0].contains(molid) or 
+    return molid_to_index[0].contains(molid) or
            molid_to_index[1].contains(molid);
 }
 
 /** Return whether or not the group 'group' refers to the molecule
-    with ID == molid 
-    
+    with ID == molid
+
     \throw SireFF::missing_group
 */
 bool InterGroupCLJFF::refersTo(MoleculeID molid,
@@ -1035,12 +1037,12 @@ bool InterGroupCLJFF::refersTo(MoleculeID molid,
 QSet<FFBase::Group> InterGroupCLJFF::groupsReferringTo(MoleculeID molid) const
 {
     QSet<FFBase::Group> molgroups;
-    
+
     if (molid_to_index[0].contains(molid))
         molgroups.insert(this->groups().A());
     else if (molid_to_index[1].contains(molid))
         molgroups.insert(this->groups().B());
-        
+
     return molgroups;
 }
 
@@ -1059,14 +1061,14 @@ QSet<MoleculeID> InterGroupCLJFF::moleculeIDs(const FFBase::Group &group) const
     return molid_to_index[groupIndex(group)].keys().toSet();
 }
 
-/** Return the molecule with ID == molid 
+/** Return the molecule with ID == molid
 
     \throw SireMol::missing_molecule
 */
 PartialMolecule InterGroupCLJFF::molecule(MoleculeID molid) const
 {
     QHash<MoleculeID,uint>::const_iterator it = molid_to_index[0].find(molid);
-    
+
     if (it != molid_to_index[0].end())
     {
         return mols[0].constData()[*it].molecule();
@@ -1074,18 +1076,18 @@ PartialMolecule InterGroupCLJFF::molecule(MoleculeID molid) const
     else
     {
         it = molid_to_index[1].find(molid);
-        
+
         if (it != molid_to_index[1].end())
             return mols[1].constData()[*it].molecule();
     }
-    
+
     throw SireMol::missing_molecule( QObject::tr(
             "There is no molecule with ID == %1 in the forcefield "
             "\"%2\" (%3 : %4).")
                 .arg(molid).arg(this->name())
                 .arg(this->ID()).arg(this->version().toString()),
                     CODELOC );
-    
+
     return PartialMolecule();
 }
 
@@ -1100,7 +1102,7 @@ PartialMolecule InterGroupCLJFF::molecule(MoleculeID molid,
     int idx = groupIndex(group);
 
     QHash<MoleculeID,uint>::const_iterator it = molid_to_index[idx].find(molid);
-    
+
     if (it == molid_to_index[idx].end())
         throw SireMol::missing_molecule( QObject::tr(
             "There is no molecule with ID == %1 in the forcefield "
@@ -1116,27 +1118,27 @@ PartialMolecule InterGroupCLJFF::molecule(MoleculeID molid,
 QHash<MoleculeID,PartialMolecule> InterGroupCLJFF::contents() const
 {
     QHash<MoleculeID,PartialMolecule> all_mols;
-    
+
     int nmols = mols[0].count() + mols[1].count();
-    
+
     if (nmols > 0)
     {
         all_mols.reserve(nmols);
-        
+
         for (int i=0; i<2; ++i)
         {
             nmols = mols[i].count();
             const CLJMolecule *mols_array = mols[i].constData();
-            
+
             for (int j=0; j<nmols; ++j)
             {
                 const PartialMolecule &mol = mols_array[j].molecule();
-                
+
                 all_mols.insert(mol.ID(),mol);
             }
         }
     }
-    
+
     return all_mols;
 }
 
@@ -1144,28 +1146,28 @@ QHash<MoleculeID,PartialMolecule> InterGroupCLJFF::contents() const
 
     \throw SireFF::missing_group
 */
-QHash<MoleculeID,PartialMolecule> 
+QHash<MoleculeID,PartialMolecule>
 InterGroupCLJFF::contents(const FFBase::Group &group) const
 {
     int idx = groupIndex(group);
-    
+
     QHash<MoleculeID,PartialMolecule> all_mols;
-    
+
     int nmols = mols[idx].count();
-    
+
     if (nmols > 0)
     {
         all_mols.reserve(nmols);
-        
+
         const CLJMolecule *mols_array = mols[idx].constData();
-        
+
         for (int i=0; i<nmols; ++i)
         {
             const PartialMolecule &mol = mols_array[i].molecule();
-            
+
             all_mols.insert(mol.ID(),mol);
         }
     }
-    
+
     return all_mols;
 }

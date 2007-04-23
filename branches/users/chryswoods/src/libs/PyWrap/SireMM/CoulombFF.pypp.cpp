@@ -35,10 +35,6 @@ void register_CoulombFF_class(){
                 "changedAll"
                 , (bool ( ::SireMM::CoulombFF::ChangedCoulombMolecule::* )(  ) const)( &::SireMM::CoulombFF::ChangedCoulombMolecule::changedAll ) )    
             .def( 
-                "changedGroups"
-                , (::QSet<SireMol::CutGroupID> const & ( ::SireMM::CoulombFF::ChangedCoulombMolecule::* )(  ) const)( &::SireMM::CoulombFF::ChangedCoulombMolecule::changedGroups )
-                , bp::return_value_policy< bp::copy_const_reference >() )    
-            .def( 
                 "isEmpty"
                 , (bool ( ::SireMM::CoulombFF::ChangedCoulombMolecule::* )(  ) const)( &::SireMM::CoulombFF::ChangedCoulombMolecule::isEmpty ) )    
             .def( 
@@ -49,6 +45,9 @@ void register_CoulombFF_class(){
                 "newParts"
                 , (::SireMM::CoulombFF::CoulombMolecule const & ( ::SireMM::CoulombFF::ChangedCoulombMolecule::* )(  ) const)( &::SireMM::CoulombFF::ChangedCoulombMolecule::newParts )
                 , bp::return_value_policy< bp::copy_const_reference >() )    
+            .def( 
+                "nothingChanged"
+                , (bool ( ::SireMM::CoulombFF::ChangedCoulombMolecule::* )(  ) const)( &::SireMM::CoulombFF::ChangedCoulombMolecule::nothingChanged ) )    
             .def( 
                 "oldMolecule"
                 , (::SireMM::CoulombFF::CoulombMolecule const & ( ::SireMM::CoulombFF::ChangedCoulombMolecule::* )(  ) const)( &::SireMM::CoulombFF::ChangedCoulombMolecule::oldMolecule )
@@ -75,11 +74,11 @@ void register_CoulombFF_class(){
         bp::class_< SireMM::CoulombFF::CoulombMolecule >( "CoulombMolecule" )    
             .def( 
                 "add"
-                , (::SireMM::CoulombFF::ChangedCoulombMolecule ( ::SireMM::CoulombFF::CoulombMolecule::* )( ::SireMol::PartialMolecule const &,::QString const & ) const)( &::SireMM::CoulombFF::CoulombMolecule::add )
+                , (::SireMM::CoulombFF::CoulombMolecule ( ::SireMM::CoulombFF::CoulombMolecule::* )( ::SireMol::PartialMolecule const &,::QString const & ) const)( &::SireMM::CoulombFF::CoulombMolecule::add )
                 , ( bp::arg("molecule"), bp::arg("chgproperty")=QString::null ) )    
             .def( 
                 "change"
-                , (::SireMM::CoulombFF::ChangedCoulombMolecule ( ::SireMM::CoulombFF::CoulombMolecule::* )( ::SireMol::PartialMolecule const &,::QString const & ) const)( &::SireMM::CoulombFF::CoulombMolecule::change )
+                , (::SireMM::CoulombFF::CoulombMolecule ( ::SireMM::CoulombFF::CoulombMolecule::* )( ::SireMol::PartialMolecule const &,::QString const & ) const)( &::SireMM::CoulombFF::CoulombMolecule::change )
                 , ( bp::arg("molecule"), bp::arg("chgproperty")=QString::null ) )    
             .def( 
                 "chargeProperty"
@@ -94,6 +93,10 @@ void register_CoulombFF_class(){
                 , (::QVector<SireVol::CoordGroup> const & ( ::SireMM::CoulombFF::CoulombMolecule::* )(  ) const)( &::SireMM::CoulombFF::CoulombMolecule::coordinates )
                 , bp::return_value_policy< bp::copy_const_reference >() )    
             .def( 
+                "getDifferences"
+                , (::SireMM::CoulombFF::CoulombMolecule ( ::SireMM::CoulombFF::CoulombMolecule::* )( ::SireMM::CoulombFF::CoulombMolecule const & ) const)( &::SireMM::CoulombFF::CoulombMolecule::getDifferences )
+                , ( bp::arg("newmol") ) )    
+            .def( 
                 "isEmpty"
                 , (bool ( ::SireMM::CoulombFF::CoulombMolecule::* )(  ) const)( &::SireMM::CoulombFF::CoulombMolecule::isEmpty ) )    
             .def( 
@@ -107,7 +110,7 @@ void register_CoulombFF_class(){
             .def( bp::self == bp::self )    
             .def( 
                 "remove"
-                , (::SireMM::CoulombFF::ChangedCoulombMolecule ( ::SireMM::CoulombFF::CoulombMolecule::* )( ::SireMol::PartialMolecule const & ) const)( &::SireMM::CoulombFF::CoulombMolecule::remove )
+                , (::SireMM::CoulombFF::CoulombMolecule ( ::SireMM::CoulombFF::CoulombMolecule::* )( ::SireMol::PartialMolecule const & ) const)( &::SireMM::CoulombFF::CoulombMolecule::remove )
                 , ( bp::arg("molecule") ) );
         bp::class_< SireMM::CoulombFF::Groups, bp::bases< SireFF::FFBase::Groups > >( "Groups" );
         bp::class_< SireMM::CoulombFF::Parameters, bp::bases< SireFF::FFBase::Parameters > >( "Parameters" )    

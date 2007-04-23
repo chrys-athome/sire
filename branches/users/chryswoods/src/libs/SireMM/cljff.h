@@ -330,8 +330,6 @@ public:
     CLJMolecule(const PartialMolecule &molecule,
                 const QString &chgproperty, const QString &ljproperty);
 
-    CLJMolecule(const CLJMolecule &other, const QSet<CutGroupID> &groups);
-
     CLJMolecule(const CLJMolecule &other);
 
     ~CLJMolecule();
@@ -345,17 +343,19 @@ public:
 
     const PartialMolecule& molecule() const;
 
-    ChangedCLJMolecule change(const PartialMolecule &molecule,
-                              const QString &chgproperty = QString::null,
-                              const QString &ljproperty = QString::null) const;
+    CLJMolecule change(const PartialMolecule &molecule,
+                       const QString &chgproperty = QString::null,
+                       const QString &ljproperty = QString::null) const;
 
-    ChangedCLJMolecule add(const PartialMolecule &molecule,
-                           const QString &chgproperty = QString::null,
-                           const QString &ljproperty = QString::null) const;
+    CLJMolecule add(const PartialMolecule &molecule,
+                    const QString &chgproperty = QString::null,
+                    const QString &ljproperty = QString::null) const;
 
-    ChangedCLJMolecule remove(const PartialMolecule &molecule) const;
+    CLJMolecule remove(const PartialMolecule &molecule) const;
 
-    const QString& chgProperty() const;
+    CLJMolecule getDifferences(const CLJMolecule &other) const;
+
+    const QString& chargeProperty() const;
     const QString& ljProperty() const;
 
     const QVector<CoordGroup>& coordinates() const;
@@ -386,9 +386,6 @@ public:
 
     ChangedCLJMolecule(const CLJMolecule &oldmol, const CLJMolecule &newmol);
 
-    ChangedCLJMolecule(const CLJMolecule &oldmol, const CLJMolecule &newmol,
-                       const QSet<CutGroupID> &changed_groups);
-
     ChangedCLJMolecule(const ChangedCLJMolecule &other);
 
     ~ChangedCLJMolecule();
@@ -411,8 +408,7 @@ public:
     ChangedCLJMolecule remove(const PartialMolecule &molecule) const;
 
     bool changedAll() const;
-
-    const QSet<CutGroupID>& changedGroups() const;
+    bool nothingChanged() const;
 
     const CLJMolecule& oldMolecule() const;
     const CLJMolecule& newMolecule() const;
@@ -434,10 +430,6 @@ private:
     /** The new version of the parts of the molecule that have
         changed */
     CLJMolecule newparts;
-
-    /** The CutGroupIDs of all of the CutGroups that have changed.
-        This is empty if all of the CutGroups have changed */
-    QSet<CutGroupID> changed_cgids;
 };
 
 

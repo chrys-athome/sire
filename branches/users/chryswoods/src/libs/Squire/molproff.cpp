@@ -37,6 +37,7 @@
 #include "SireMol/atom.h"
 #include "SireMol/element.h"
 #include "SireMol/propertyextractor.h"
+#include "SireMol/atomselector.h"
 
 #include "SireMM/atomiccharges.h"
 
@@ -191,7 +192,7 @@ int MolproFF::QMMolecule::countElements(const QVector< QVector<Element> > &eleme
 MolproFF::QMMolecule::QMMolecule(const PartialMolecule &molecule)
          : mol(molecule)
 {
-    coords = mol.coordGroups();
+    coords = mol.extract().coordGroups();
     elements = mol.extract().elements();
     nats = countElements(elements);
 }
@@ -225,10 +226,36 @@ const PartialMolecule& MolproFF::QMMolecule::molecule() const
 /** Change the molecule - return whether it changed */
 bool MolproFF::QMMolecule::change(const PartialMolecule &molecule)
 {
-    if (mol.change(molecule))
+    if (molecule.version() != mol.version())
     {
-        coords = mol.coordGroups();
-        return true;
+        //have the coordinates of the atoms changed?
+        QVector<CoordGroup> new_coords = molecule.extract().coordGroups();
+
+        bool something_changed = new_coords.count() != coords.count();
+
+        if (not something_changed)
+        {
+            int ngroups = coords.count();
+            const CoordGroup *old_coords_array = coords.constData();
+            const CoordGroup *new_coords_array = new_coords.constData();
+
+            if (old_coords_array != new_coords_array)
+            {
+                for (int i=0; i<ngroups; ++i)
+                {
+                    if (old_coords_array[i] != new_coords_array[i])
+                    {
+                        something_changed = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        mol = mol.change(molecule);
+        coords = new_coords;
+
+        return something_changed;
     }
     else
         return false;
@@ -237,28 +264,29 @@ bool MolproFF::QMMolecule::change(const PartialMolecule &molecule)
 /** Add parts to the molecule - record whether it changed */
 bool MolproFF::QMMolecule::add(const PartialMolecule &molecule)
 {
-    bool changed = mol.change(molecule.molecule());
-
-    bool added = mol.add(molecule.selectedAtoms());
-
-    if (changed or added)
+    if (mol.selectedAtoms().contains(molecule.selectedAtoms()))
+        //there is nothing to add - maybe something to change
+        return this->change(molecule);
+    else
     {
-        coords = mol.coordGroups();
+        mol = mol.change(molecule).selection().add(molecule.selectedAtoms());
+
+        coords = mol.extract().coordGroups();
         elements = mol.extract().elements();
         nats = countElements(elements);
 
         return true;
     }
-    else
-        return false;
 }
 
 /** Remove some atoms from the molecule */
 bool MolproFF::QMMolecule::remove(const AtomSelection &selected_atoms)
 {
-    if (mol.remove(selected_atoms))
+    if (mol.selectedAtoms().intersects(selected_atoms))
     {
-        coords = mol.coordGroups();
+        mol = mol.selection().remove(selected_atoms);
+
+        coords = mol.extract().coordGroups();
         elements = mol.extract().elements();
         nats = countElements(elements);
 
@@ -282,13 +310,11 @@ QString MolproFF::QMMolecule::coordString() const
 
     QString qmcoords = "";
 
-    QVector<CoordGroup> coordgroups = mol.coordGroups();
-
-    int ngroups = coordgroups.count();
+    int ngroups = coords.count();
 
     BOOST_ASSERT(ngroups == elements.count());
 
-    const CoordGroup *groups_array = coordgroups.constData();
+    const CoordGroup *groups_array = coords.constData();
     const QVector<Element> *elements_array = elements.constData();
 
     //loop over all atoms in every cutgroup
@@ -325,13 +351,11 @@ int MolproFF::QMMolecule::update(QVector<double> &qm_array, int strtidx) const
     if (nats == 0)
         return strtidx;
 
-    QVector<CoordGroup> coordgroups = mol.coordGroups();
-
-    int ncg = coordgroups.count();
+    int ncg = coords.count();
 
     BOOST_ASSERT(ncg == elements.count());
 
-    const CoordGroup *groups_array = coordgroups.constData();
+    const CoordGroup *groups_array = coords.constData();
     const QVector<Element> *elements_array = elements.constData();
 
     double *qm_array_array = qm_array.data();
@@ -449,91 +473,162 @@ const QString& MolproFF::MMMolecule::chargeProperty() const
 bool MolproFF::MMMolecule::change(const PartialMolecule &molecule,
                                   const QString &chgproperty)
 {
-    if (chgproperty == QString::null or chgproperty == chg_property)
+    if (rebuild_all or mol.selectedAtoms().isEmpty())
     {
-        if (mol.version().major() != molecule.version().major())
-        {
-            //the charges may have changed - change the whole molecule
-            mol.change(molecule);
+        //just update the molecule
+        MoleculeVersion oldversion = mol.version();
 
-            //get the new coordinates and charges
-            coords = mol.coordGroups();
+        mol = mol.change(molecule);
+        coords = mol.extract().coordGroups();
+
+        if ( not chgproperty.isNull() and chgproperty != chg_property )
+        {
+            chg_property = chgproperty;
             chgs = mol.extract().property(chg_property);
-
-            //trigger all of the molecule to be rebuilt
-            cgids_to_be_rebuilt.clear();
-            rebuild_all = true;
-            return true;
         }
-        else if (mol.change(molecule))
+        else if (oldversion.major() != molecule.version().major())
         {
-            //the molecule has been changed
-
-            //get the new coordinates (the charges should
-            //not have changed)
-            coords = mol.coordGroups();
-
-            if (not rebuild_all)
-            {
-                //record which parts of the molecule have changed
-                if (molecule.nSelectedCutGroups() == molecule.info().nCutGroups())
-                {
-                    //the entire molecule has changed
-                    cgids_to_be_rebuilt.clear();
-                    rebuild_all = true;
-                }
-                else
-                {
-                    //add on the parts of the molecule that changed
-                    cgids_to_be_rebuilt.unite( molecule.selectedCutGroups() );
-
-                    if (cgids_to_be_rebuilt.count() == molecule.info().nCutGroups())
-                    {
-                        //the entire molecule has now been moved
-                        cgids_to_be_rebuilt.clear();
-                        rebuild_all = true;
-                    }
-                }
-            }
-
-            return true;
+            chgs = mol.extract().property(chg_property);
         }
-        else
-            return false;
-    }
-    else
-    {
-        //the property has changed - must assume that the entire
-        //molecule has changed
-        mol.change(molecule);
-        chg_property = chg_property;
-
-        //get the new coordinates and charges
-        coords = mol.coordGroups();
-        chgs = mol.extract().property(chg_property);
-
-        //record that the entire molecule should change
-        rebuild_all = true;
-        cgids_to_be_rebuilt.clear();
 
         return true;
     }
+
+    //save the old coordinates and charges
+    QVector<CoordGroup> old_coords = coords;
+    AtomicCharges old_chgs = chgs;
+
+    //record whether there has been any change
+    bool changed = false;
+    bool major_change = mol.version().major() != molecule.version().major();
+
+    if ( not chgproperty.isNull() and chgproperty != chg_property )
+    {
+        chg_property = chgproperty;
+        major_change = true;
+    }
+
+    //update the molecule, coords and charges
+    if (mol.version() != molecule.version())
+    {
+        mol = mol.change(molecule);
+        coords = mol.extract().coordGroups();
+        changed = true;
+    }
+
+    if (major_change)
+    {
+        chgs = mol.extract().property(chg_property);
+        changed = true;
+    }
+
+    if (not changed)
+        //nothing at all has changed
+        return rebuild_all or not cgids_to_be_rebuilt.isEmpty();
+
+    //lets see what has changed...
+    uint ngroups = mol.info().nCutGroups();
+    int ngroups_minus_one = ngroups - 1;
+
+    //get raw pointers to the old and new coordinate and charge arrays
+    const CoordGroup *old_coords_array = old_coords.constData();
+    const CoordGroup *new_coords_array = coords.constData();
+
+    const QVector<ChargeParameter> *old_chgs_array = old_chgs.constData();
+    const QVector<ChargeParameter> *new_chgs_array = chgs.constData();
+
+    if (mol.selectedAtoms().selectedAllCutGroups())
+    {
+        //this is the easy case - all CutGroups have been selected,
+        //so the coords and charges arrays are for all groups, and
+        //are ordered by CutGroupID
+
+        for (CutGroupID i(0); i<ngroups; ++i)
+        {
+            if ( (not cgids_to_be_rebuilt.contains(i)) and
+                 (
+                    ( old_coords_array != new_coords_array and
+                      old_coords_array[i] != new_coords_array[i] ) or
+
+                    ( old_chgs_array != new_chgs_array and
+                      old_chgs_array[i] != new_chgs_array[i] )
+                 )
+               )
+            {
+                //there is some difference with this CutGroup
+                if (cgids_to_be_rebuilt.count() == ngroups_minus_one)
+                {
+                    //all of the CutGroups have changed
+                    //therefore the entire molecule has changed
+                    rebuild_all = true;
+                    cgids_to_be_rebuilt.clear();
+                    break;
+                }
+
+                cgids_to_be_rebuilt.insert(i);
+                changed = true;
+            }
+        }
+    }
+    else
+    {
+        //this is the harder case - only some of the CutGroups have been
+        //selected - get the ones that have...
+        QHash<CutGroupID,quint32> cg_index = mol.extract().cutGroupIndex();
+
+        for (QHash<CutGroupID,quint32>::const_iterator it = cg_index.constBegin();
+             it != cg_index.constEnd();
+             ++it)
+        {
+            CutGroupID cgid = it.key();
+            int i = *it;
+
+            if ( (not cgids_to_be_rebuilt.contains(cgid)) and
+                 (
+                    ( old_coords_array != new_coords_array and
+                      old_coords_array[i] != new_coords_array[i] ) or
+
+                    ( old_chgs_array != new_chgs_array and
+                      old_chgs_array[i] != new_chgs_array[i] )
+                 )
+               )
+            {
+                //there is some difference with this CutGroup
+                if (cgids_to_be_rebuilt.count() == ngroups_minus_one)
+                {
+                    //all of the CutGroups have changed
+                    //therefore the entire molecule has changed
+                    rebuild_all = true;
+                    cgids_to_be_rebuilt.clear();
+                    break;
+                }
+
+                cgids_to_be_rebuilt.insert(cgid);
+                changed = true;
+            }
+        }
+    }
+
+    return changed or rebuild_all or not cgids_to_be_rebuilt.isEmpty();
 }
 
 /** Add parts to this molecule */
 bool MolproFF::MMMolecule::add(const PartialMolecule &molecule,
                                const QString &chgproperty)
 {
-    bool changed = this->change(molecule.molecule(),chgproperty);
+    //first see if the molecule needs to be changed...
+    bool changed = this->change(molecule,chgproperty);
 
-    if (mol.add(molecule.selectedAtoms()))
+    if ( not mol.selectedAtoms().contains(molecule.selectedAtoms()) )
     {
-        coords = mol.coordGroups();
+        mol = mol.selection().add(molecule.selectedAtoms());
+
+        coords = mol.extract().coordGroups();
         chgs = mol.extract().property(chg_property);
 
         if (not rebuild_all)
         {
-            cgids_to_be_rebuilt.unite( molecule.selectedCutGroups() );
+            cgids_to_be_rebuilt.unite( molecule.selectedAtoms().selectedCutGroups() );
 
             if (cgids_to_be_rebuilt.count() == mol.info().nCutGroups())
             {
@@ -551,9 +646,11 @@ bool MolproFF::MMMolecule::add(const PartialMolecule &molecule,
 /** Remove parts of the molecule */
 bool MolproFF::MMMolecule::remove(const AtomSelection &selected_atoms)
 {
-    if (mol.remove(selected_atoms))
+    if (mol.selectedAtoms().intersects(selected_atoms))
     {
-        coords = mol.coordGroups();
+        mol = mol.selection().remove(selected_atoms);
+
+        coords = mol.extract().coordGroups();
         chgs = mol.extract().property(chg_property);
 
         if (not rebuild_all)
@@ -570,7 +667,7 @@ bool MolproFF::MMMolecule::remove(const AtomSelection &selected_atoms)
         return true;
     }
     else
-        return false;
+        return rebuild_all or not cgids_to_be_rebuilt.isEmpty();
 }
 
 /** Return a list of all of the copies of 'group' that are close to 'center',
@@ -751,18 +848,13 @@ int MolproFF::MMMolecule::update(const CoordGroup &qm_coordgroup,
                                  const SwitchingFunction &switchfunc,
                                  bool must_rebuild_all)
 {
-    //extract the coordinates and charges of this molecule
-    QVector<CoordGroup> mol_coords = mol.coordGroups();
-
-    if (mol_coords.isEmpty())
+    if (coords.isEmpty())
     {
         //nothing to do with an empty molecule!
         coords_and_chgs.clear();
         nats = 0;
         return 0;
     }
-
-    AtomicCharges mol_charges = mol.extract().property(chg_property);
 
     if (rebuild_all or must_rebuild_all)
     {
@@ -774,14 +866,14 @@ int MolproFF::MMMolecule::update(const CoordGroup &qm_coordgroup,
 
         //loop over all of the CoordGroups in this molecule and
         //tell them to update their array of coords and charges
-        if (mol.selectedAllCutGroups())
+        if (mol.selectedAtoms().selectedAllCutGroups())
         {
             uint ncg = mol.info().nCutGroups();
 
             for (CutGroupID i(0); i<ncg; ++i)
             {
-                this->updateGroup(i, mol_coords.at(i),
-                                     mol_charges.at(i),
+                this->updateGroup(i, coords.at(i),
+                                     chgs.at(i),
                                      qm_coordgroup,
                                      space, switchfunc);
             }
@@ -800,8 +892,8 @@ int MolproFF::MMMolecule::update(const CoordGroup &qm_coordgroup,
                 CutGroupID cgid = it.key();
                 quint32 idx = *it;
 
-                this->updateGroup(cgid, mol_coords.at(idx),
-                                        mol_charges.at(idx),
+                this->updateGroup(cgid, coords.at(idx),
+                                        chgs.at(idx),
                                         qm_coordgroup,
                                         space, switchfunc);
             }
@@ -809,17 +901,14 @@ int MolproFF::MMMolecule::update(const CoordGroup &qm_coordgroup,
     }
     else
     {
-        QVector<CoordGroup> mol_coords = mol.coordGroups();
-        AtomicCharges mol_charges = mol.extract().property(chg_property);
-
-        if (mol.selectedAllCutGroups())
+        if (mol.selectedAtoms().selectedAllCutGroups())
         {
             //loop over all of the CoordGroups in this molecule and
             //tell them to update their array of coords and charges
             foreach (CutGroupID cgid, cgids_to_be_rebuilt)
             {
-                this->updateGroup(cgid, mol_coords.at(cgid),
-                                        mol_charges.at(cgid),
+                this->updateGroup(cgid, coords.at(cgid),
+                                        chgs.at(cgid),
                                         qm_coordgroup,
                                         space, switchfunc);
             }
@@ -836,8 +925,8 @@ int MolproFF::MMMolecule::update(const CoordGroup &qm_coordgroup,
                 {
                     quint32 idx = cg_index.value(cgid);
 
-                    this->updateGroup(cgid, mol_coords.at(idx),
-                                            mol_charges.at(idx),
+                    this->updateGroup(cgid, coords.at(idx),
+                                            chgs.at(idx),
                                             qm_coordgroup,
                                             space, switchfunc);
                 }
@@ -1527,7 +1616,8 @@ bool MolproFF::_pvt_addToQM(const PartialMolecule &molecule,
     //check that parts of this molecule are not in the MM region
     if (mm_mols.contains(molid))
     {
-        if (mm_mols.constFind(molid)->molecule().contains(molecule.selectedAtoms()))
+        if (mm_mols.constFind(molid)->molecule()
+                        .selectedAtoms().contains(molecule.selectedAtoms()))
             throw SireMol::duplicate_molecule( QObject::tr(
                 "Cannot add the molecule %1 to the QM region of the MolproFF "
                 "\"%2\" (%3 %4) as parts of this molecule already exist "
@@ -1574,7 +1664,8 @@ bool MolproFF::_pvt_addToMM(const PartialMolecule &molecule,
     //check that parts of this molecule are not in the QM region
     if (qm_mols.contains(molid))
     {
-        if (qm_mols.constFind(molid)->molecule().contains(molecule.selectedAtoms()))
+        if (qm_mols.constFind(molid)->molecule()
+                      .selectedAtoms().contains(molecule.selectedAtoms()))
             throw SireMol::duplicate_molecule( QObject::tr(
                 "Cannot add the molecule %1 to the MM region of the MolproFF "
                 "\"%2\" (%3 %4) as parts of this molecule already exist "
@@ -1964,7 +2055,7 @@ bool MolproFF::_pvt_removeFromQM(const PartialMolecule &molecule)
 
         if (qm_mol.remove(molecule.selectedAtoms()))
         {
-            if (qm_mol.molecule().selectedNone())
+            if (qm_mol.molecule().selectedAtoms().selectedNone())
                 //the entire molecule has been removed
                 qm_mols.remove(molid);
 
@@ -1989,7 +2080,7 @@ bool MolproFF::_pvt_removeFromMM(const PartialMolecule &molecule)
         {
             int nats = mm_mol.nAtomsInArray();
 
-            if (mm_mol.molecule().selectedNone())
+            if (mm_mol.molecule().selectedAtoms().selectedNone())
                 //the entire molecule has been removed
                 mm_mols.remove(molid);
 
@@ -2205,7 +2296,7 @@ void MolproFF::rebuildQMCoordGroup()
              qm_mols.constBegin().value().molecule().info().nCutGroups() == 1)
     {
         //take the easy route!
-        qm_coordgroup = qm_mols.constBegin().value().molecule().coordGroups().at(0);
+        qm_coordgroup = qm_mols.constBegin()->molecule().extract().coordGroups().at(0);
     }
     else
     {
@@ -2232,7 +2323,7 @@ void MolproFF::rebuildQMCoordGroup()
              it != qm_mols.constEnd();
              ++it)
         {
-            const QVector<CoordGroup> &groups = it->molecule().coordGroups();
+            const QVector<CoordGroup> &groups = it->molecule().extract().coordGroups();
 
             int ngroups = groups.count();
 
@@ -2828,7 +2919,8 @@ PartialMolecule MolproFF::molecule(MoleculeID molid) const
         PartialMolecule mol = qm_mols.constFind(molid)->molecule();
 
         if (mm_mols.contains(molid))
-            mol.add(mm_mols.constFind(molid)->molecule().selectedAtoms());
+            mol = mol.selection().add(
+                      mm_mols.constFind(molid)->molecule().selectedAtoms());
 
         return mol;
     }
@@ -2895,7 +2987,8 @@ PartialMolecule MolproFF::molecule(MoleculeID molid,
     of any version of the molecule 'molecule' */
 bool MolproFF::contains(const PartialMolecule &mol) const
 {
-    return this->molecule(mol.ID()).contains(mol.selectedAtoms());
+    return this->molecule(mol.ID())
+                  .selectedAtoms().contains(mol.selectedAtoms());
 }
 
 /** Return whether or not this forcefield contains all of the
@@ -2906,7 +2999,8 @@ bool MolproFF::contains(const PartialMolecule &mol) const
 bool MolproFF::contains(const PartialMolecule &mol,
                         const FFBase::Group &group) const
 {
-    return this->molecule(mol.ID(),group).contains(mol.selectedAtoms());
+    return this->molecule(mol.ID(),group)
+                .selectedAtoms().contains(mol.selectedAtoms());
 }
 
 /** Return copies of all of the molecules that are in this forcefield */
@@ -2934,7 +3028,7 @@ QHash<MoleculeID,PartialMolecule> MolproFF::contents() const
     {
         if ( mols.contains(it.key()) )
         {
-            mols[it.key()].add(it->molecule().selectedAtoms());
+            mols[it.key()] = mols[it.key()].selection().add(it->molecule().selectedAtoms());
         }
         else
             mols.insert( it.key(), it->molecule() );

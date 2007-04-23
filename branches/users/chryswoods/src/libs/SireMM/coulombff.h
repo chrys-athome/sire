@@ -253,11 +253,7 @@ friend QDataStream& ::operator>>(QDataStream&, CoulombFF::CoulombMolecule&);
 
 public:
     CoulombMolecule();
-
     CoulombMolecule(const PartialMolecule &molecule, const QString &chgproperty);
-
-    CoulombMolecule(const CoulombMolecule &other, const QSet<CutGroupID> &groups);
-
     CoulombMolecule(const CoulombMolecule &other);
 
     ~CoulombMolecule();
@@ -271,13 +267,15 @@ public:
 
     const PartialMolecule& molecule() const;
 
-    ChangedCoulombMolecule change(const PartialMolecule &molecule,
-                                  const QString &chgproperty = QString::null) const;
+    CoulombMolecule change(const PartialMolecule &molecule,
+                           const QString &chgproperty = QString::null) const;
 
-    ChangedCoulombMolecule add(const PartialMolecule &molecule,
-                               const QString &chgproperty = QString::null) const;
+    CoulombMolecule add(const PartialMolecule &molecule,
+                        const QString &chgproperty = QString::null) const;
 
-    ChangedCoulombMolecule remove(const PartialMolecule &molecule) const;
+    CoulombMolecule remove(const PartialMolecule &molecule) const;
+
+    CoulombMolecule getDifferences(const CoulombMolecule &newmol) const;
 
     const QString& chargeProperty() const;
 
@@ -307,9 +305,6 @@ public:
 
     ChangedCoulombMolecule(const CoulombMolecule &oldmol, const CoulombMolecule &newmol);
 
-    ChangedCoulombMolecule(const CoulombMolecule &oldmol, const CoulombMolecule &newmol,
-                           const QSet<CutGroupID> &changed_groups);
-
     ChangedCoulombMolecule(const ChangedCoulombMolecule &other);
 
     ~ChangedCoulombMolecule();
@@ -330,8 +325,7 @@ public:
     ChangedCoulombMolecule remove(const PartialMolecule &molecule) const;
 
     bool changedAll() const;
-
-    const QSet<CutGroupID>& changedGroups() const;
+    bool nothingChanged() const;
 
     const CoulombMolecule& oldMolecule() const;
     const CoulombMolecule& newMolecule() const;
@@ -353,10 +347,6 @@ private:
     /** The new version of the parts of the molecule that have
         changed */
     CoulombMolecule newparts;
-
-    /** The CutGroupIDs of all of the CutGroups that have changed.
-        This is empty if all of the CutGroups have changed */
-    QSet<CutGroupID> changed_cgids;
 };
 
 

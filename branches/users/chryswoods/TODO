@@ -59,6 +59,15 @@ SireDB
     of a function
 
 -------
+SireVol
+-------
+
+(*) Update the CoordGroup classes to use placement new to allocate
+    the data (so that the shared pointer is also the pointer to 
+    the array of coordinates, thereby removing the need for pointer
+    to a pointer lookups) - see techdocs/testplacementnew.cpp
+
+-------
 SireMol
 -------
 

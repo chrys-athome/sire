@@ -37,6 +37,8 @@
 #include "SireMol/moleculeversion.h"
 #include "SireMol/molecule.h"
 #include "SireMol/moleculeinfo.h"
+#include "SireMol/propertyextractor.h"
+#include "SireMol/atomselector.h"
 
 #include "SireMol/errors.h"
 #include "SireError/errors.h"
@@ -160,9 +162,6 @@ public:
     void rebuildAll();
     void rebuildCoordinates();
 
-    bool rebuildAll(const QSet<CutGroupID> &cgids);
-    bool rebuildCoordinates(const QSet<CutGroupID> &cgids);
-
     /** The actual molecule */
     PartialMolecule molecule;
 
@@ -243,34 +242,14 @@ bool LJFF::LJMoleculeData::operator!=(const LJFF::LJMoleculeData &other) const
 */
 void LJFF::LJMoleculeData::rebuildAll()
 {
-    ljs = molecule.getProperty(lj_property);
-    coords = molecule.coordGroups();
-}
-
-/** Rebuild all of the coordinates and LJ data for the CutGroups whose
-    IDs are in 'cgids'. Return whether or not there are any atoms
-    from these CutGroups that are in the molecule selection */
-bool LJFF::LJMoleculeData::rebuildAll(const QSet<CutGroupID>&)
-{
-    //This can be heavily optimised - I just don't have the time now!
-    this->rebuildAll();
-    return true;
+    ljs = molecule.extract().property(lj_property);
+    coords = molecule.extract().coordGroups();
 }
 
 /** Rebuild all of the coordinate data from scratch */
 void LJFF::LJMoleculeData::rebuildCoordinates()
 {
-    coords = molecule.coordGroups();
-}
-
-/** Rebuild all of the coordinate data for the CutGroups whose IDs are
-    in 'cgids'. Return whether or not the passed CutGroups are actually
-    part of the selected parts of the molecule. */
-bool LJFF::LJMoleculeData::rebuildCoordinates(const QSet<CutGroupID>&)
-{
-    //This can be heavily optimised - I just don't have the time now!
-    this->rebuildCoordinates();
-    return true;
+    coords = molecule.extract().coordGroups();
 }
 
 /** Shared null LJMoleculeData */
@@ -363,18 +342,10 @@ LJFF::LJMolecule::LJMolecule() : d(LJFF::LJMoleculeData::shared_null)
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-LJFF::LJMolecule::LJMolecule(const PartialMolecule &molecule, 
+LJFF::LJMolecule::LJMolecule(const PartialMolecule &molecule,
                              const QString &ljproperty)
                  : d( new LJFF::LJMoleculeData(molecule,ljproperty) )
 {}
-
-/** Construct a copy of 'other', but masked by the CutGroups in 'groups' */
-LJFF::LJMolecule::LJMolecule(const LJMolecule &other, const QSet<CutGroupID> &groups)
-                 : d( other.d )
-{
-    d->molecule.applyMask(groups);
-    d->rebuildAll();
-}
 
 /** Copy constructor */
 LJFF::LJMolecule::LJMolecule(const LJMolecule &other)
@@ -407,7 +378,7 @@ bool LJFF::LJMolecule::operator!=(const LJFF::LJMolecule &other) const
 /** Return whether or not this is empty (has no atoms selected */
 bool LJFF::LJMolecule::isEmpty() const
 {
-    return d->molecule.isEmpty();
+    return d->molecule.selectedAtoms().isEmpty();
 }
 
 /** Return the actual molecule */
@@ -421,51 +392,35 @@ const PartialMolecule& LJFF::LJMolecule::molecule() const
 
     \throw SireError::incompatible_error
 */
-LJFF::ChangedLJMolecule LJFF::LJMolecule::change(const PartialMolecule &molecule,
-                                                 const QString &ljproperty) const
+LJFF::LJMolecule LJFF::LJMolecule::change(const PartialMolecule &molecule,
+                                          const QString &ljproperty) const
 {
     if (d->molecule.ID() == 0)
         //this is a null Molecule
-        return ChangedLJMolecule();
+        return LJMolecule();
 
     //assert that this is the same molecule
     d->molecule.assertSameMolecule(molecule);
 
-    if (ljproperty.isNull() or ljproperty == d->lj_property)
+    if ( ljproperty.isNull() or ljproperty == d->lj_property )
     {
-        if ( d->molecule.version().major() != molecule.version().major() )
-        {
-            LJMolecule newmol(*this);
-            newmol.d->molecule.change(molecule);
-            newmol.d->rebuildAll();
-            
-            return ChangedLJMolecule(*this, newmol);
-        }
-        else if ( d->molecule.version().minor() != molecule.version().minor() )
-        {
-            LJMolecule newmol(*this);
-            
-            if (newmol.d->molecule.change(molecule))
-            {
-                if (molecule.selectedAll())
-                {
-                    newmol.d->rebuildCoordinates();
-                    return ChangedLJMolecule(*this, newmol);
-                }
-                else
-                {
-                    QSet<CutGroupID> cgids = molecule.selectedCutGroups();
-                    newmol.d->rebuildCoordinates(cgids);
-                    return ChangedLJMolecule(*this, newmol, cgids);
-                }
-            }
-            else
-                //there has been no change
-                return ChangedLJMolecule();
-        }
-        else
+        if ( d->molecule.version() == molecule.version() )
             //there has been no change
-            return ChangedLJMolecule();
+            return *this;
+        else
+        {
+            LJMolecule newmol(*this);
+
+            PartialMolecule &mol = newmol.d->molecule;
+            mol = mol.change(molecule);
+
+            if ( d->molecule.version().major() != molecule.version().major() )
+                newmol.d->rebuildAll();
+            else
+                newmol.d->rebuildCoordinates();
+
+            return newmol;
+        }
     }
     else
     {
@@ -473,11 +428,14 @@ LJFF::ChangedLJMolecule LJFF::LJMolecule::change(const PartialMolecule &molecule
         //needs to be rebuilt
         LJMolecule newmol(*this);
 
-        newmol.d->molecule.change(molecule);
+        PartialMolecule &mol = newmol.d->molecule;
+        mol = mol.change(molecule);
+
         newmol.d->lj_property = ljproperty;
+
         newmol.d->rebuildAll();
 
-        return ChangedLJMolecule(*this, newmol);
+        return newmol;
     }
 }
 
@@ -487,52 +445,26 @@ LJFF::ChangedLJMolecule LJFF::LJMolecule::change(const PartialMolecule &molecule
 
     \throw SireError::incompatible_error
 */
-LJFF::ChangedLJMolecule 
-LJFF::LJMolecule::add(const PartialMolecule &molecule,
-                      const QString &ljproperty) const
+LJFF::LJMolecule LJFF::LJMolecule::add(const PartialMolecule &mol,
+                                       const QString &ljproperty) const
 {
     if (d->molecule.ID() == 0)
-        return ChangedLJMolecule(*this, LJMolecule(molecule,ljproperty));
-    
-    else if (molecule.selectedAtoms() == d->molecule.selectedAtoms())
-        //there has been no change in the atom selections
-        return this->change(molecule.molecule(), ljproperty);
+        return LJMolecule(mol, ljproperty);
+
+    else if (molecule().selectedAtoms().contains(mol.selectedAtoms()))
+        //there will be no change in the atom selections
+        return this->change(mol, ljproperty);
     else
     {
-        d->molecule.assertSameMolecule(molecule);
+        PartialMolecule mol = molecule().change(mol)
+                                  .selection().add(mol.selectedAtoms());
 
-        LJMolecule newmol(*this);
+        QString lj_property = ljproperty;
 
-        if ( ljproperty.isNull() or ljproperty == d->lj_property )
-        {
-            if (molecule.version() != d->molecule.version())
-            {
-                newmol.d->molecule.change(molecule.molecule());
-                newmol.d->molecule.add(molecule.selectedAtoms());
-                newmol.d->rebuildAll();
-                return ChangedLJMolecule(*this, newmol);
-            }
-            else if (newmol.d->molecule.add(molecule.selectedAtoms()))
-            {
-                newmol.d->rebuildAll();
-                return ChangedLJMolecule(*this, newmol, 
-                                         molecule.selectedCutGroups());
-            }
-            else
-                //there has been no change
-                return ChangedLJMolecule();
-        }
-        else
-        {
-            //there has been a change of property - we need to rebuild
-            //the entire molecule
-            newmol.d->molecule.change(molecule.molecule());
-            newmol.d->molecule.add(molecule.selectedAtoms());
-            newmol.d->lj_property = ljproperty;
-            newmol.d->rebuildAll();
-    
-            return ChangedLJMolecule(*this, newmol);
-        }
+        if (ljproperty.isNull())
+            lj_property = ljProperty();
+
+        return LJMolecule(mol, lj_property);
     }
 }
 
@@ -542,34 +474,201 @@ LJFF::LJMolecule::add(const PartialMolecule &molecule,
 
     \throw SireError::incompatible_error
 */
-LJFF::ChangedLJMolecule 
-LJFF::LJMolecule::remove(const PartialMolecule &molecule) const
+LJFF::LJMolecule LJFF::LJMolecule::remove(const PartialMolecule &mol) const
 {
     if (d->molecule.ID() == 0)
     {
-        return ChangedLJMolecule();
+        return LJMolecule();
     }
-    else if (molecule.selectedAtoms().contains(d->molecule.selectedAtoms()))
+    else if (molecule().selectedAtoms().intersects(mol.selectedAtoms()))
     {
-        //we have removed the entire molecule!
-        return ChangedLJMolecule(*this, LJMolecule());
+        LJMolecule newmol(*this);
+
+        PartialMolecule &mol = newmol.d->molecule;
+        mol = mol.selection().remove(mol.selectedAtoms());
+
+        newmol.d->rebuildAll();
+
+        return newmol;
+    }
+    else
+        //there has been no change
+        return *this;
+}
+
+/** Return a LJMolecule that contains the CutGroups of 'oldmol'
+    that appear to have changed in 'newmol' */
+LJFF::LJMolecule LJFF::LJMolecule::getDifferences(const LJFF::LJMolecule &newmol) const
+{
+    const PartialMolecule &old_molecule = this->molecule();
+    const PartialMolecule &new_molecule = newmol.molecule();
+
+    old_molecule.assertSameMolecule(new_molecule);
+
+    uint ngroups = old_molecule.selectedAtoms().nSelectedCutGroups();
+    int ngroups_minus_one = ngroups - 1;
+
+    if (ngroups == 0)
+        //the molecule is empty - all of none of it has changed :-)
+        return *this;
+
+    QSet<CutGroupID> cgids_that_change;
+
+    const CoordGroup* old_coords_array = this->coordinates().constData();
+    const CoordGroup* new_coords_array = newmol.coordinates().constData();
+
+    const QVector<LJParameter>* old_ljs_array = this->ljParameters().constData();
+    const QVector<LJParameter>* new_ljs_array = newmol.ljParameters().constData();
+
+    if (old_molecule.selectedAtoms().selectedAllCutGroups() and
+        new_molecule.selectedAtoms().selectedAllCutGroups())
+    {
+        //easy comparison - each CutGroup is represented and
+        //they are in the same order in each state of the molecule
+
+        //see if the coordinates have changed
+        if (old_coords_array != new_coords_array)
+        {
+            if (old_ljs_array != new_ljs_array)
+            {
+                //potentially the coordinates or LJ parameters
+                //may have changed
+
+                for (CutGroupID i(0); i<ngroups; ++i)
+                {
+                    if (old_coords_array[i] != new_coords_array[i] or
+                        old_ljs_array[i] != new_ljs_array[i])
+                    {
+                        if (cgids_that_change.count() == ngroups_minus_one)
+                            //all of the CutGroups have changed - therefore all
+                            //of the molecule has changed
+                            return *this;
+
+                        cgids_that_change.insert(i);
+                    }
+                }
+            }
+            else
+            {
+                //only the coordinates may have changed
+                for (CutGroupID i(0); i<ngroups; ++i)
+                {
+                    if (old_coords_array[i] != new_coords_array[i])
+                    {
+                        if (cgids_that_change.count() == ngroups_minus_one)
+                            //all of the CutGroups have changed - therefore all
+                            //of the molecule has changed
+                            return *this;
+
+                        cgids_that_change.insert(i);
+                    }
+                }
+            }
+        }
+        else if (old_ljs_array != new_ljs_array)
+        {
+            //only the charges or LJ parameters may have changed
+            for (CutGroupID i(0); i<ngroups; ++i)
+            {
+                if (old_ljs_array[i] != new_ljs_array[i])
+                {
+                    if (cgids_that_change.count() == ngroups_minus_one)
+                        //all of the CutGroups have now changed
+                        return *this;
+
+                    cgids_that_change.insert(i);
+                }
+            }
+        }
+    }
+    else if (old_molecule.selectedAtoms().selectedAllCutGroups())
+    {
+        //next most easy - all CutGroups in this molecule have been selected
+
+        //get the index of the coordgroups in newmol
+        QHash<CutGroupID,quint32> new_index = new_molecule.extract().cutGroupIndex();
+
+        for (CutGroupID i(0); i<ngroups; ++i)
+        {
+            QHash<CutGroupID,quint32>::const_iterator it = new_index.constFind(i);
+
+            if (it == new_index.constEnd())
+            {
+                //this CutGroup is missing in newmol - add it to the list of
+                //things that have changed
+                if (cgids_that_change.count() == ngroups_minus_one)
+                    //all groups have now changed, so the entire molecule
+                    //has changed
+                    return *this;
+
+                cgids_that_change.insert(i);
+            }
+            else
+            {
+                quint32 newidx = *it;
+
+                if (old_coords_array[i] != new_coords_array[newidx] or
+                    old_ljs_array[i] != new_ljs_array[newidx])
+                {
+                    if (cgids_that_change.count() == ngroups_minus_one)
+                        //all of the groups have changed, so the entire
+                        //molecule has changed
+                        return *this;
+
+                    cgids_that_change.insert(i);
+                }
+            }
+        }
     }
     else
     {
-        d->molecule.assertSameMolecule(molecule);
+        //all CutGroups are not selected - get the index that maps the
+        //ID of the CutGroup to the location in the coords, chgs and ljs arrays
+        QHash<CutGroupID,quint32> old_index = old_molecule.extract().cutGroupIndex();
+        QHash<CutGroupID,quint32> new_index = new_molecule.extract().cutGroupIndex();
 
-        LJMolecule newmol(*this);
-
-        if (newmol.d->molecule.remove(molecule.selectedAtoms()))
+        for (QHash<CutGroupID,quint32>::const_iterator it = old_index.constBegin();
+             it != old_index.constEnd();
+             ++it)
         {
-            newmol.d->rebuildAll();
-            return ChangedLJMolecule(*this, newmol, 
-                                          molecule.selectedCutGroups());
+            if (not new_index.contains(it.key()))
+            {
+                //this CutGroup is missing in newmol - add it to the list of
+                //things that have changed
+                if (cgids_that_change.count() == ngroups_minus_one)
+                    //all groups have now changed, so the entire molecule
+                    //has changed
+                    return *this;
+
+                cgids_that_change.insert(it.key());
+            }
+            else
+            {
+                quint32 oldidx = *it;
+                quint32 newidx = new_index.value(it.key());
+
+                if (old_coords_array[oldidx] != new_coords_array[newidx] or
+                    old_ljs_array[oldidx] != new_ljs_array[newidx])
+                {
+                    if (cgids_that_change.count() == ngroups_minus_one)
+                        //all of the groups have changed, so the entire
+                        //molecule has changed
+                        return *this;
+
+                    cgids_that_change.insert(it.key());
+                }
+            }
         }
-        else
-            //there was no change
-            return ChangedLJMolecule();
     }
+
+    if (cgids_that_change.isEmpty())
+        //none of oldmol has changed!
+        return LJMolecule();
+    else
+        //cgids_that_change contains the IDs of all of the CutGroups
+        //that change - create a CLJMolecule to represent this change
+        return LJMolecule( old_molecule.selection().applyMask(cgids_that_change),
+                           ljProperty() );
 }
 
 /** Return the name of the property used to get the LJ parameters */
@@ -601,7 +700,7 @@ const AtomicLJs& LJFF::LJMolecule::ljParameters() const
     of the molecule */
 bool LJFF::LJMolecule::isWholeMolecule() const
 {
-    return d->molecule.selectedAll();
+    return d->molecule.selectedAtoms().selectedAll();
 }
 
 /////////////
@@ -619,8 +718,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
     SharedDataStream sds(ds);
 
     sds << changedmol.oldmol << changedmol.newmol
-        << changedmol.oldparts << changedmol.newparts
-        << changedmol.changed_cgids;
+        << changedmol.oldparts << changedmol.newparts;
 
     return ds;
 }
@@ -636,8 +734,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
         SharedDataStream sds(ds);
 
         sds >> changedmol.oldmol >> changedmol.newmol
-            >> changedmol.oldparts >> changedmol.newparts
-            >> changedmol.changed_cgids;
+            >> changedmol.oldparts >> changedmol.newparts;
     }
     else
         throw version_error(v, "1", r_changedmol, CODELOC);
@@ -655,39 +752,24 @@ LJFF::ChangedLJMolecule::ChangedLJMolecule()
 LJFF::ChangedLJMolecule::ChangedLJMolecule(const LJMolecule &molecule)
                         : oldmol(molecule),
                           newmol(molecule)
-{
-    //oldparts, newparts and changed_cgids are empty as there is no change!
-}
+{}
 
 /** Construct the change of all of 'old_molecule' to all of 'new_molecule' */
 LJFF::ChangedLJMolecule::ChangedLJMolecule(const LJMolecule &old_molecule,
                                            const LJMolecule &new_molecule)
                         : oldmol(old_molecule),
-                          newmol(new_molecule),
-                          oldparts(old_molecule),
-                          newparts(new_molecule)
-{}
-
-/** Construct the change of 'old_molecule' to 'new_molecule', where only the
-    CutGroups whose IDs are in 'cgids' are known to change */
-LJFF::ChangedLJMolecule::ChangedLJMolecule(const LJMolecule &old_molecule,
-                                           const LJMolecule &new_molecule,
-                                           const QSet<CutGroupID> &changed_groups)
-                        : oldmol(old_molecule),
-                          newmol(new_molecule),
-                          changed_cgids(changed_groups)
+                          newmol(new_molecule)
 {
-    if (changed_groups.count() == old_molecule.molecule().info().nCutGroups())
+    //work out the different CutGroups between the two states
+    if (oldmol.isEmpty() or newmol.isEmpty())
     {
-        //the entire molecule has changed
         oldparts = oldmol;
         newparts = newmol;
-        changed_cgids.clear();
     }
     else
     {
-        oldparts = LJMolecule(oldmol, changed_cgids);
-        newparts = LJMolecule(newmol, changed_cgids);
+        oldparts = oldmol.getDifferences(newmol);
+        newparts = newmol.getDifferences(oldmol);
     }
 }
 
@@ -696,8 +778,7 @@ LJFF::ChangedLJMolecule::ChangedLJMolecule(const LJFF::ChangedLJMolecule &other)
                         : oldmol(other.oldmol),
                           newmol(other.newmol),
                           oldparts(other.oldparts),
-                          newparts(other.newparts),
-                          changed_cgids(other.changed_cgids)
+                          newparts(other.newparts)
 {}
 
 /** Destructor */
@@ -712,7 +793,6 @@ LJFF::ChangedLJMolecule::operator=(const LJFF::ChangedLJMolecule &other)
     newmol = other.newmol;
     oldparts = other.oldparts;
     newparts = other.newparts;
-    changed_cgids = other.changed_cgids;
 
     return *this;
 }
@@ -722,7 +802,8 @@ bool LJFF::ChangedLJMolecule::operator==(const LJFF::ChangedLJMolecule &other) c
 {
     return oldmol == other.oldmol and
            newmol == other.newmol and
-           changed_cgids == other.changed_cgids;
+           oldparts == other.oldparts and
+           newparts == other.newparts;
 }
 
 /** Comparison operator */
@@ -730,7 +811,8 @@ bool LJFF::ChangedLJMolecule::operator!=(const LJFF::ChangedLJMolecule &other) c
 {
     return oldmol != other.oldmol or
            newmol != other.newmol or
-           changed_cgids != other.changed_cgids;
+           oldparts != other.oldparts or
+           newparts != other.newparts;
 }
 
 /** Return whether or not this is empty (both old and new are empty) */
@@ -739,18 +821,16 @@ bool LJFF::ChangedLJMolecule::isEmpty() const
     return oldmol.isEmpty() and newmol.isEmpty();
 }
 
+/** Return whether nothing has changed - this will be when oldmol == newmol */
+bool LJFF::ChangedLJMolecule::nothingChanged() const
+{
+    return oldmol == newmol;
+}
+
 /** Return whether the entire molecule has changed */
 bool LJFF::ChangedLJMolecule::changedAll() const
 {
-    //everything has changed if changed_cgids is empty
-    return changed_cgids.isEmpty();
-}
-
-/** Return the CutGroupIDs of all CutGroups that have changed since the
-    last energy evaluation. */
-const QSet<CutGroupID>& LJFF::ChangedLJMolecule::changedGroups() const
-{
-    return changed_cgids;
+    return oldparts == oldmol or newparts == newmol;
 }
 
 /** Return the whole LJMolecule as it was in the old state */
@@ -779,70 +859,29 @@ const LJFF::LJMolecule& LJFF::ChangedLJMolecule::newParts() const
     return newparts;
 }
 
-static QSet<CutGroupID> operator+(const QSet<CutGroupID> &set0, const QSet<CutGroupID> &set1)
-{
-    QSet<CutGroupID> ret(set0);
-    ret.unite(set1);
-
-    return ret;
-}
-
 /** Return the ChangedLJMolecule that represents the change from the old molecule
     to 'molecule' */
-LJFF::ChangedLJMolecule 
+LJFF::ChangedLJMolecule
 LJFF::ChangedLJMolecule::change(const PartialMolecule &molecule,
                                 const QString &ljproperty) const
 {
-    //calculate the change from newmol to molecule...
-    ChangedLJMolecule next_change = newmol.change(molecule,
-                                                  ljproperty);
-
-    if (next_change.isEmpty())
-        //there was no further change
-        return ChangedLJMolecule();
-    else if (this->changedAll() or next_change.changedAll())
-        return ChangedLJMolecule(oldmol, next_change.newMolecule());
-    else
-    {
-        //now return the change from oldmol to newmol
-        return ChangedLJMolecule(oldmol, next_change.newMolecule(),
-                                 changed_cgids + next_change.changed_cgids);
-    }
+    return ChangedLJMolecule( oldmol, newmol.change(molecule, ljproperty) );
 }
 
 /** Return the ChangedLJMolecule that represents the addition of all atoms
     in the molecule 'molecule' */
-LJFF::ChangedLJMolecule 
+LJFF::ChangedLJMolecule
 LJFF::ChangedLJMolecule::add(const PartialMolecule &molecule,
                              const QString &ljproperty) const
 {
-    ChangedLJMolecule next_change = newmol.add(molecule,
-                                               ljproperty);
-
-    if (next_change.isEmpty())
-        return ChangedLJMolecule();
-    else if (this->changedAll() or next_change.changedAll())
-        return ChangedLJMolecule(oldmol, next_change.newMolecule());
-    else
-    {
-        return ChangedLJMolecule(oldmol, next_change.newMolecule(),
-                                 changed_cgids + next_change.changed_cgids);
-    }
+    return ChangedLJMolecule( oldmol, newmol.add(molecule, ljproperty) );
 }
 
 /** Return the ChangedLJMolecule that represents the removal the molecule! */
-LJFF::ChangedLJMolecule 
+LJFF::ChangedLJMolecule
 LJFF::ChangedLJMolecule::remove(const PartialMolecule &molecule) const
 {
-    ChangedLJMolecule next_change = newmol.remove(molecule);
-
-    if (next_change.isEmpty())
-        return ChangedLJMolecule();
-    else if (this->changedAll() or next_change.changedAll())
-        return ChangedLJMolecule(oldmol, next_change.newMolecule());
-    else
-        return ChangedLJMolecule(oldmol, next_change.newMolecule(),
-                                 changed_cgids + next_change.changed_cgids);
+    return ChangedLJMolecule( oldmol, newmol.remove(molecule) );
 }
 
 /////////////
@@ -1201,9 +1240,9 @@ void LJFF::_pvt_copy(const FFBase &ffbase)
     spce = ljff.spce;
     switchfunc = ljff.switchfunc;
 
-    components_ptr = 
+    components_ptr =
           dynamic_cast<const LJFF::Components*>( &(FFBase::components()) );
-          
+
     BOOST_ASSERT( components_ptr != 0 );
 }
 
@@ -1216,7 +1255,7 @@ bool LJFF::setSpace(const Space &space)
         this->incrementMajorVersion();
         this->mustNowRecalculateFromScratch();
     }
-        
+
     return isDirty();
 }
 
