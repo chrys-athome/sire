@@ -79,8 +79,8 @@ public:
     System();
     System(const QString &name);
 
-    System(const QString &name,
-           const
+    //System(const QString &name,
+    //       const
 
     System(const System &other);
 
@@ -93,6 +93,7 @@ public:
 
     const ForceFields& forceFields() const;
     const SystemData& info() const;
+    const SystemMonitors& monitors() const;
 
     Moves run(const Move &move, quint32 nmoves=1);
     Moves run(const Moves &moves);
@@ -113,6 +114,10 @@ private:
     /** The forcefields that are used to calculate
         energies / forces of molecules */
     ForceFields ffields;
+
+    /** The monitors that are used to monitor properties of
+        this system */
+    SystemMonitors sysmonitors;
 };
 
 /** Return the ID number of the system */
@@ -137,6 +142,13 @@ inline const ForceFields& System::forceFields() const
 inline const SystemData& System::info() const
 {
     return sysdata;
+}
+
+/** Return the monitors that are used to monitor properties
+    of this system */
+inline const SystemMonitors& System::monitors() const
+{
+    return sysmonitors;
 }
 
 }

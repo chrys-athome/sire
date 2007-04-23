@@ -28,14 +28,18 @@
 
 #include "querysystem.h"
 
-#include "forcefields.h"
+#include "checkpoint.h"
 #include "systemdata.h"
 #include "systemmonitors.h"
+
+#include "SireBase/property.h"
+#include "SireFF/forcefields.h"
 
 using namespace SireSystem;
 using namespace SireMol;
 using namespace SireFF;
 using namespace SireCAS;
+using namespace SireBase;
 
 /** Protected constructor used to construct the QuerySystem
     from the passed components of a System */
@@ -226,7 +230,7 @@ QSet<ForceFieldID> QuerySystem::forceFieldsWithProperty(const QString &name)
 
 /** Return all of the properties of all of the forcefields, indexed
     by name, then forcefield ID */
-QHash< ForceFieldID,QHash<QString,Property> > QuerySystem::properties()
+QHash< QString,QHash<ForceFieldID,Property> > QuerySystem::properties()
 {
     return ffields.properties();
 }

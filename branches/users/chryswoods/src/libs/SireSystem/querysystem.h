@@ -38,6 +38,7 @@ SIRE_BEGIN_HEADER
 namespace SireBase
 {
 class Version;
+class Property;
 }
 
 namespace SireCAS
@@ -55,11 +56,6 @@ class MoleculeGroups;
 class MoleculeGroupID;
 }
 
-namespace SireBase
-{
-class Property;
-}
-
 namespace SireFF
 {
 class FFComponent;
@@ -75,6 +71,8 @@ namespace SireSystem
 class SystemData;
 class System;
 class SystemID;
+class CheckPoint;
+class SystemMonitors;
 
 using SireCAS::Function;
 using SireCAS::Expression;
@@ -154,14 +152,13 @@ public:
     bool containsProperty(ForceFieldID ffid, const QString &name);
     QSet<ForceFieldID> forceFieldsWithProperty(const QString &name);
 
-    QHash< ForceFieldID,QHash<QString,Property> > properties();
+    QHash< QString,QHash<ForceFieldID,Property> > properties();
 
 protected:
     QuerySystem(SystemData &sysdata,
                 ForceFieldsBase &ffields,
                 SystemMonitors &monitors);
 
-private:
     /** Reference to the data of the System being simulated */
     SystemData &sysdata;
 
@@ -182,7 +179,7 @@ inline const SystemData& QuerySystem::info() const
 
 /** Return the forcefields that describe the potential energy
     surface */
-inline const ForceFieldsBase& QuerySystem::forceFields()
+inline const ForceFieldsBase& QuerySystem::forceFields() const
 {
     return ffields;
 }

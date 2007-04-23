@@ -46,7 +46,7 @@ QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds,
 {
     writeHeader(ds, r_checkpoint, 1);
 
-    SharedDataStream sds;
+    SharedDataStream sds(ds);
 
     sds << checkpoint.sysdata
         << checkpoint.ffields
@@ -124,8 +124,8 @@ CheckPoint& CheckPoint::operator=(const System &system)
     copy.prepareForSimulation();
 
     sysdata = copy.info();
-    sysdata = copy.forceFields();
-    sysdata = copy.monitors();
+    ffields = copy.forceFields();
+    sysmonitors = copy.monitors();
 
     return *this;
 }
@@ -144,7 +144,7 @@ CheckPoint& CheckPoint::operator=(const QuerySystem &system)
     have the same ID and version */
 bool CheckPoint::operator==(const CheckPoint &other) const
 {
-    return (this = &other) or
+    return (this == &other) or
            ( ID() == other.ID() and version() == other.version() );
 }
 

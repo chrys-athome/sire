@@ -57,9 +57,17 @@ class Values;
 namespace SireMol
 {
 class Molecule;
+class PartialMolecule;
 class MoleculeID;
-class Residue;
-class NewAtom;
+}
+
+namespace SireFF
+{
+class ForceFields;
+}
+
+namespace SireBase
+{
 class Property;
 }
 
@@ -68,13 +76,14 @@ namespace SireSystem
 
 using SireBase::IDMajMinVersion;
 using SireBase::Version;
+using SireBase::Property;
 
 using SireVol::Space;
 
+using SireFF::ForceFields;
+
 using SireMol::Molecule;
-using SireMol::Residue;
-using SireMol::NewAtom;
-using SireMol::Property;
+using SireMol::PartialMolecule;
 using SireMol::MoleculeID;
 using SireMol::MoleculeGroup;
 using SireMol::MoleculeGroups;
@@ -136,10 +145,10 @@ public:
     mapIntoSystemSpace(const QList<PartialMolecule> &molecules) const;
 
     PartialMolecule change(const PartialMolecule &molecule);
-    
-    QHash<MoleculeID,PartialMolecule> 
+
+    QHash<MoleculeID,PartialMolecule>
     change(const QList<PartialMolecule> &molecules);
-    
+
     QHash<MoleculeID,PartialMolecule>
     change(const QHash<MoleculeID,PartialMolecule> &molecules);
 
@@ -159,7 +168,7 @@ public:
 
     void remove(const QHash<MoleculeID,PartialMolecule> &molecules,
                 const QSet<MoleculeGroupID> &groupids);
-                
+
     void remove(const QList<PartialMolecule> &molecules,
                 const QSet<MoleculeGroupID> &groupids);
 

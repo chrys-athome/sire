@@ -31,10 +31,20 @@
 
 #include "querysystem.h"
 
+#include "SireFF/parametermap.h"
+
 SIRE_BEGIN_HEADER
+
+namespace SireFF
+{
+class FFGroupID;
+}
 
 namespace SireSystem
 {
+
+using SireFF::FFGroupID;
+using SireFF::ParameterMap;
 
 /** This class holds a system that is being actively
     simulated.
@@ -62,10 +72,10 @@ public:
                      const QString &name, const Property &property);
 
     PartialMolecule change(const PartialMolecule &molecule);
-    
+
     QHash<MoleculeID,PartialMolecule>
     change(const QHash<MoleculeID,PartialMolecule> &molecules);
-    
+
     QHash<MoleculeID,PartialMolecule>
     change(const QList<PartialMolecule> &molecules);
 
@@ -75,7 +85,7 @@ public:
     PartialMolecule add(const PartialMolecule &molecule,
                         const QSet<FFGroupID> &ffgroupids,
                         const ParameterMap &map = ParameterMap());
-             
+
     PartialMolecule add(const PartialMolecule &molecule,
                         const QSet<FFGroupID> &ffgroupids,
                         const QSet<MoleculeGroupID> &molgroupids,
@@ -89,7 +99,7 @@ public:
     add(const QHash<MoleculeID,PartialMolecule> &molecules,
         const QSet<FFGroupID> &ffgroupids,
         const ParameterMap &map = ParameterMap());
-             
+
     QHash<MoleculeID,PartialMolecule>
     add(const QHash<MoleculeID,PartialMolecule> &molecules,
         const QSet<FFGroupID> &ffgroupids,
@@ -104,13 +114,13 @@ public:
     add(const QList<PartialMolecule> &molecules,
         const QSet<FFGroupID> &ffgroupids,
         const ParameterMap &map = ParameterMap());
-             
+
     QHash<MoleculeID,PartialMolecule>
     add(const QList<PartialMolecule> &molecules,
         const QSet<FFGroupID> &ffgroupids,
         const QSet<MoleculeGroupID> &molgroupids,
         const ParameterMap &map = ParameterMap());
-    
+
     void remove(const PartialMolecule &molecule);
     void remove(const QList<PartialMolecule> &molecules);
 
