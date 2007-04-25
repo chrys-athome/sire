@@ -32,6 +32,7 @@
 #include <QString>
 
 #include "systemdata.h"
+#include "systemmonitors.h"
 
 #include "SireFF/forcefields.h"
 
@@ -48,6 +49,8 @@ namespace SireSystem
 
 class Move;
 class Moves;
+
+class CheckPoint;
 
 using SireCAS::Function;
 
@@ -76,17 +79,43 @@ friend QDataStream& ::operator>>(QDataStream&, System&);
 friend class SimSystem;  //friend so can mess with this System ;-)
 
 public:
-    System();
-    System(const QString &name);
+    System(const MoleculeGroups &groups = MoleculeGroups(),
+           const ForceFields &forcefields = ForceFields(),
+           const SystemMonitors &monitors = SystemMonitors());
 
-    //System(const QString &name,
-    //       const
+    System(const QString &name,
+           const MoleculeGroups &groups = MoleculeGroups(),
+           const ForceFields &forcefields = ForceFields(),
+           const SystemMonitors &monitors = SystemMonitors());
+
+    System(const MoleculeGroups &groups,
+           const SystemMonitors &monitors);
+           
+    System(const QString &name,
+           const MoleculeGroups &groups,
+           const SystemMonitors &monitors);
+           
+    System(const ForceFields &forcefields,
+           const SystemMonitors &monitors = SystemMonitors());
+          
+    System(const QString &name,
+           const ForceFields &forcefields,
+           const SystemMonitors &monitors = SystemMonitors());
+    
+    System(const SystemMonitors &monitors);
+    System(const QString &name, const SystemMonitors &monitors);
+
+    System(const CheckPoint &checkpoint);
+
+    System(QuerySystem &simsystem);
 
     System(const System &other);
 
     ~System();
 
     System& operator=(const System &other);
+    System& operator=(const CheckPoint &checkpoint);
+    System& operator=(QuerySystem &simsystem);
 
     bool operator==(const System &other) const;
     bool operator!=(const System &other) const;
@@ -99,10 +128,12 @@ public:
     Moves run(const Moves &moves);
     Moves run(const Moves &moves, quint32 nmoves);
 
-    void prepareForSimulation();
-
     SystemID ID() const;
     const Version& version() const;
+
+    void prepareForSimulation();
+
+    CheckPoint checkPoint();
 
 private:
     System(const SystemData &sysdata,
@@ -118,6 +149,9 @@ private:
     /** The monitors that are used to monitor properties of
         this system */
     SystemMonitors sysmonitors;
+    
+    /** Whether or not the system is in a consistent state */
+    bool is_consistent;
 };
 
 /** Return the ID number of the system */

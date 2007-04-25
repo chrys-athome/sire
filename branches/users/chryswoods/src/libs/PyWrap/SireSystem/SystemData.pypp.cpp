@@ -30,29 +30,37 @@ void register_SystemData_class(){
             , (void ( ::SireSystem::SystemData::* )( ::SireMol::MoleculeGroup const & ) )( &::SireSystem::SystemData::add )
             , ( bp::arg("group") ) )    
         .def( 
-            "applyConstraints"
-            , (::QHash<SireMol::MoleculeID, SireMol::Molecule> ( ::SireSystem::SystemData::* )( ::SireMol::Molecule const & ) )( &::SireSystem::SystemData::applyConstraints )
+            "add"
+            , (void ( ::SireSystem::SystemData::* )( ::SireMol::MoleculeGroups const & ) )( &::SireSystem::SystemData::add )
+            , ( bp::arg("groups") ) )    
+        .def( 
+            "add"
+            , (::SireMol::PartialMolecule ( ::SireSystem::SystemData::* )( ::SireMol::PartialMolecule const &,::QSet<SireMol::MoleculeGroupID> const & ) )( &::SireSystem::SystemData::add )
+            , ( bp::arg("molecule"), bp::arg("groupids") ) )    
+        .def( 
+            "add"
+            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireSystem::SystemData::* )( ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> const &,::QSet<SireMol::MoleculeGroupID> const & ) )( &::SireSystem::SystemData::add )
+            , ( bp::arg("molecules"), bp::arg("groupids") ) )    
+        .def( 
+            "add"
+            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireSystem::SystemData::* )( ::QList<SireMol::PartialMolecule> const &,::QSet<SireMol::MoleculeGroupID> const & ) )( &::SireSystem::SystemData::add )
+            , ( bp::arg("molecules"), bp::arg("groupids") ) )    
+        .def( 
+            "change"
+            , (::SireMol::PartialMolecule ( ::SireSystem::SystemData::* )( ::SireMol::PartialMolecule const & ) )( &::SireSystem::SystemData::change )
             , ( bp::arg("molecule") ) )    
         .def( 
             "change"
-            , (::QHash<SireMol::MoleculeID, SireMol::Molecule> ( ::SireSystem::SystemData::* )( ::SireMol::Molecule const & ) )( &::SireSystem::SystemData::change )
-            , ( bp::arg("molecule") ) )    
+            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireSystem::SystemData::* )( ::QList<SireMol::PartialMolecule> const & ) )( &::SireSystem::SystemData::change )
+            , ( bp::arg("molecules") ) )    
         .def( 
             "change"
-            , (::QHash<SireMol::MoleculeID, SireMol::Molecule> ( ::SireSystem::SystemData::* )( ::SireMol::Residue const & ) )( &::SireSystem::SystemData::change )
-            , ( bp::arg("residue") ) )    
-        .def( 
-            "change"
-            , (::QHash<SireMol::MoleculeID, SireMol::Molecule> ( ::SireSystem::SystemData::* )( ::SireMol::NewAtom const & ) )( &::SireSystem::SystemData::change )
-            , ( bp::arg("atom") ) )    
+            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireSystem::SystemData::* )( ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> const & ) )( &::SireSystem::SystemData::change )
+            , ( bp::arg("molecules") ) )    
         .def( 
             "contains"
-            , (bool ( ::SireSystem::SystemData::* )( ::SireMol::Molecule const & ) const)( &::SireSystem::SystemData::contains )
-            , ( bp::arg("molecule") ) )    
-        .def( 
-            "contains"
-            , (bool ( ::SireSystem::SystemData::* )( ::SireMol::MoleculeID ) const)( &::SireSystem::SystemData::contains )
-            , ( bp::arg("molid") ) )    
+            , (bool ( ::SireSystem::SystemData::* )( ::SireMol::MoleculeGroupID ) const)( &::SireSystem::SystemData::contains )
+            , ( bp::arg("groupid") ) )    
         .def( 
             "group"
             , (::SireMol::MoleculeGroup const & ( ::SireSystem::SystemData::* )( ::SireMol::MoleculeGroupID ) const)( &::SireSystem::SystemData::group )
@@ -69,6 +77,18 @@ void register_SystemData_class(){
             "incrementMinorVersion"
             , (void ( ::SireSystem::SystemData::* )(  ) )( &::SireSystem::SystemData::incrementMinorVersion ) )    
         .def( 
+            "mapIntoSystemSpace"
+            , (::SireMol::PartialMolecule ( ::SireSystem::SystemData::* )( ::SireMol::PartialMolecule const & ) const)( &::SireSystem::SystemData::mapIntoSystemSpace )
+            , ( bp::arg("molecule") ) )    
+        .def( 
+            "mapIntoSystemSpace"
+            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireSystem::SystemData::* )( ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> const & ) const)( &::SireSystem::SystemData::mapIntoSystemSpace )
+            , ( bp::arg("molecules") ) )    
+        .def( 
+            "mapIntoSystemSpace"
+            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireSystem::SystemData::* )( ::QList<SireMol::PartialMolecule> const & ) const)( &::SireSystem::SystemData::mapIntoSystemSpace )
+            , ( bp::arg("molecules") ) )    
+        .def( 
             "name"
             , (::QString const & ( ::SireSystem::SystemData::* )(  ) const)( &::SireSystem::SystemData::name )
             , bp::return_value_policy< bp::copy_const_reference >() )    
@@ -84,8 +104,28 @@ void register_SystemData_class(){
             , ( bp::arg("group") ) )    
         .def( 
             "remove"
-            , (void ( ::SireSystem::SystemData::* )( ::SireMol::Molecule const & ) )( &::SireSystem::SystemData::remove )
+            , (void ( ::SireSystem::SystemData::* )( ::SireMol::PartialMolecule const &,::QSet<SireMol::MoleculeGroupID> const & ) )( &::SireSystem::SystemData::remove )
+            , ( bp::arg("molecule"), bp::arg("groupids") ) )    
+        .def( 
+            "remove"
+            , (void ( ::SireSystem::SystemData::* )( ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> const &,::QSet<SireMol::MoleculeGroupID> const & ) )( &::SireSystem::SystemData::remove )
+            , ( bp::arg("molecules"), bp::arg("groupids") ) )    
+        .def( 
+            "remove"
+            , (void ( ::SireSystem::SystemData::* )( ::QList<SireMol::PartialMolecule> const &,::QSet<SireMol::MoleculeGroupID> const & ) )( &::SireSystem::SystemData::remove )
+            , ( bp::arg("molecules"), bp::arg("groupids") ) )    
+        .def( 
+            "remove"
+            , (void ( ::SireSystem::SystemData::* )( ::SireMol::PartialMolecule const & ) )( &::SireSystem::SystemData::remove )
             , ( bp::arg("molecule") ) )    
+        .def( 
+            "remove"
+            , (void ( ::SireSystem::SystemData::* )( ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> const & ) )( &::SireSystem::SystemData::remove )
+            , ( bp::arg("molecules") ) )    
+        .def( 
+            "remove"
+            , (void ( ::SireSystem::SystemData::* )( ::QList<SireMol::PartialMolecule> const & ) )( &::SireSystem::SystemData::remove )
+            , ( bp::arg("molecules") ) )    
         .def( 
             "version"
             , (::SireBase::Version const & ( ::SireSystem::SystemData::* )(  ) const)( &::SireSystem::SystemData::version )

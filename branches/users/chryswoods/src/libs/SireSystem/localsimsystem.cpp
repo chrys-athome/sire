@@ -26,3 +26,31 @@
   *
 \*********************************************/
 
+#include "localsimsystem.h"
+#include "checkpoint.h"
+
+using namespace SireSystem;
+
+/** Construct a simulation that will simulate a copy of a
+    system at the checkpoint 'checkpoint' */
+LocalSimSystem::LocalSimSystem(const CheckPoint &checkpoint)
+               : SimSystem()
+{
+    this->rollback(checkpoint);
+}
+
+/** Destructor */
+LocalSimSystem::~LocalSimSystem()
+{}
+
+/** Roll this simulation back to a previous checkpoint */
+void LocalSimSystem::rollback(const CheckPoint &checkpoint)
+{
+    local_sysdata = checkpoint.info();
+    local_ffields = checkpoint.forceFields();
+    local_monitors = checkpoint.monitors();
+    
+    SimSystem::setSystem(local_sysdata,
+                         local_ffields,
+                         local_monitors);
+}

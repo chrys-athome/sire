@@ -41,6 +41,18 @@ using namespace SireFF;
 using namespace SireCAS;
 using namespace SireBase;
 
+static SystemData null_sysdata;
+static ForceFields null_ffields;
+static SystemMonitors null_monitors;
+
+/** Protected null constructor - the results system is invalid
+    and dangerous to use!!! */
+QuerySystem::QuerySystem()
+            : sysdata(null_sysdata),
+              ffields(null_ffields),
+              sysmonitors(null_monitors)
+{}
+
 /** Protected constructor used to construct the QuerySystem
     from the passed components of a System */
 QuerySystem::QuerySystem(SystemData &system_data,
@@ -56,7 +68,7 @@ QuerySystem::~QuerySystem()
 {}
 
 /** Checkpoint this System */
-CheckPoint QuerySystem::checkpoint()
+CheckPoint QuerySystem::checkPoint()
 {
     return CheckPoint(*this);
 }

@@ -132,6 +132,7 @@ public:
     bool contains(MoleculeGroupID groupid) const;
 
     void add(const MoleculeGroup &group);
+    void add(const MoleculeGroups &groups);
 
     void remove(MoleculeGroupID groupid);
     void remove(const MoleculeGroup &group);

@@ -99,8 +99,8 @@ public:
     QHash<Function,FFExpression> expressions(const QSet<Function> &functions) const;
     QHash<Function,FFExpression> expressions() const;
 
-    void setParameter(const Symbol &param, double value);
-    void setTotal(const FFExpression &expression);
+    bool setParameter(const Symbol &param, double value);
+    bool setTotal(const FFExpression &expression);
 
     virtual bool contains(const Function &function) const;
     virtual bool contains(const ForceFieldID ffid) const;
@@ -124,11 +124,11 @@ public:
     Values energies(const QSet<FFComponent> &components);
     Values energies(const QSet<Function> &components);
 
-    virtual void setProperty(const QString &name, const Property &property);
-    virtual void setProperty(ForceFieldID ffid,
+    virtual bool setProperty(const QString &name, const Property &property);
+    virtual bool setProperty(ForceFieldID ffid,
                              const QString &name, const Property &property)=0;
 
-    virtual void setProperty(const QSet<ForceFieldID> &ffids,
+    virtual bool setProperty(const QSet<ForceFieldID> &ffids,
                              const QString &name, const Property &property);
 
     virtual QHash<ForceFieldID,Property> getProperty(const QString &name) const;
@@ -148,75 +148,79 @@ public:
 
     virtual void mustNowRecalculateFromScratch()=0;
 
-    virtual void change(const PartialMolecule &molecule)=0;
-    virtual void change(const QList<PartialMolecule> &molecules);
-    virtual void change(const QHash<MoleculeID,PartialMolecule> &molecules);
+    virtual bool change(const PartialMolecule &molecule)=0;
+    virtual bool change(const QList<PartialMolecule> &molecules);
+    virtual bool change(const QHash<MoleculeID,PartialMolecule> &molecules);
 
-    virtual void add( ForceFieldID ffid, 
+    virtual bool add( ForceFieldID ffid, 
                       const PartialMolecule &molecule,
                       const ParameterMap &map = ParameterMap() );
     
-    virtual void add( ForceFieldID ffid,
+    virtual bool add( ForceFieldID ffid,
                       const QList<PartialMolecule> &molecules,
                       const ParameterMap &map = ParameterMap() );
 
-    virtual void add( const QSet<ForceFieldID> &ffids,
+    virtual bool add( const QSet<ForceFieldID> &ffids,
                       const PartialMolecule &molecule,
                       const ParameterMap &map = ParameterMap() );
                       
-    virtual void add( const QSet<ForceFieldID> &ffids,
+    virtual bool add( const QSet<ForceFieldID> &ffids,
                       const QList<PartialMolecule> &molecules,
                       const ParameterMap &map = ParameterMap() );
                       
-    virtual void addTo( ForceFieldID ffid, const FFBase::Group &group,
+    virtual bool addTo( ForceFieldID ffid, const FFBase::Group &group,
                         const PartialMolecule &molecule,
                         const ParameterMap &map = ParameterMap() )=0;
                         
-    virtual void addTo( ForceFieldID ffid, const FFBase::Group &group,
+    virtual bool addTo( ForceFieldID ffid, const FFBase::Group &group,
                         const QList<PartialMolecule> &molecules,
                         const ParameterMap &map = ParameterMap() );
 
-    virtual void addTo( const FFGroupID &ffgroupid,
+    virtual bool addTo( const FFGroupID &ffgroupid,
                         const PartialMolecule &molecule,
                         const ParameterMap &map = ParameterMap() );
                         
-    virtual void addTo( const FFGroupID &ffgroupid,
+    virtual bool addTo( const FFGroupID &ffgroupid,
                         const QList<PartialMolecule> &molecules,
                         const ParameterMap &map = ParameterMap() );
                         
-    virtual void addTo( const QSet<FFGroupID> &ffgroupids,
+    virtual bool addTo( const QSet<FFGroupID> &ffgroupids,
                         const PartialMolecule &molecule,
                         const ParameterMap &map = ParameterMap() );
                         
-    virtual void addTo( const QSet<FFGroupID> &ffgroupids,
+    virtual bool addTo( const QSet<FFGroupID> &ffgroupids,
                         const QList<PartialMolecule> &molecules,
                         const ParameterMap &map = ParameterMap() );
 
-    virtual void remove(const PartialMolecule &molecule);
-    virtual void remove(const QList<PartialMolecule> &molecules);
+    virtual bool addTo( const QSet<FFGroupID> &ffgroupids,
+                        const QHash<MoleculeID,PartialMolecule> &molecules,
+                        const ParameterMap &map = ParameterMap() );
+
+    virtual bool remove(const PartialMolecule &molecule);
+    virtual bool remove(const QList<PartialMolecule> &molecules);
     
-    virtual void remove(ForceFieldID ffid, const PartialMolecule &molecule);
-    virtual void remove(ForceFieldID ffid,
+    virtual bool remove(ForceFieldID ffid, const PartialMolecule &molecule);
+    virtual bool remove(ForceFieldID ffid,
                         const QList<PartialMolecule> &molecules);
 
-    virtual void remove(const QSet<ForceFieldID> &ffids,
+    virtual bool remove(const QSet<ForceFieldID> &ffids,
                         const PartialMolecule &molecule);
-    virtual void remove(const QSet<ForceFieldID> &ffids,
+    virtual bool remove(const QSet<ForceFieldID> &ffids,
                         const QList<PartialMolecule> &molecules);
 
-    virtual void removeFrom(ForceFieldID ffid, const FFBase::Group &group,
+    virtual bool removeFrom(ForceFieldID ffid, const FFBase::Group &group,
                             const PartialMolecule &molecule)=0;
-    virtual void removeFrom(ForceFieldID ffid, const FFBase::Group &group,
+    virtual bool removeFrom(ForceFieldID ffid, const FFBase::Group &group,
                             const QList<PartialMolecule> &molecules);
 
-    virtual void removeFrom(const FFGroupID &ffgroupid,
+    virtual bool removeFrom(const FFGroupID &ffgroupid,
                             const PartialMolecule &molecule);
-    virtual void removeFrom(const FFGroupID &ffgroupid,
+    virtual bool removeFrom(const FFGroupID &ffgroupid,
                             const QList<PartialMolecule> &molecules);
                             
-    virtual void removeFrom(const QSet<FFGroupID> &ffgroupids,
+    virtual bool removeFrom(const QSet<FFGroupID> &ffgroupids,
                             const PartialMolecule &molecule);
-    virtual void removeFrom(const QSet<FFGroupID> &ffgroupids,
+    virtual bool removeFrom(const QSet<FFGroupID> &ffgroupids,
                             const QList<PartialMolecule> &molecules);
 
     bool refersTo(MoleculeID molid) const;

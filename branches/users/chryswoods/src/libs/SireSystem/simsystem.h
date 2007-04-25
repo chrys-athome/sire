@@ -139,6 +139,8 @@ public:
                 const QSet<MoleculeGroupID> &molgroupids = QSet<MoleculeGroupID>());
 
 protected:
+    SimSystem();
+
     SimSystem(SystemData &sysdata,
               ForceFieldsBase &ffields,
               SystemMonitors &monitors);

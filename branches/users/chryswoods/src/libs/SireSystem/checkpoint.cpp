@@ -117,11 +117,10 @@ CheckPoint& CheckPoint::operator=(const CheckPoint &other)
 }
 
 /** Copy assignment from a System */
-CheckPoint& CheckPoint::operator=(const System &system)
+CheckPoint& CheckPoint::operator=(System &system)
 {
-    System copy(system);
-
-    copy.prepareForSimulation();
+    //must ensure that the system is consistent
+    system.prepareForSimulation();
 
     sysdata = copy.info();
     ffields = copy.forceFields();

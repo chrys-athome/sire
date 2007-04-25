@@ -31,6 +31,8 @@
 #include "system.h"
 #include "simsystem.h"
 #include "moves.h"
+#include "checkpoint.h"
+#include "localsimsystem.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -49,7 +51,10 @@ QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const System &system)
 
     SharedDataStream sds(ds);
 
-    sds << system.sysdata << system.ffields;
+    sds << system.sysdata 
+        << system.ffields 
+        << system.sysmonitors
+        << system.is_consistent;
 
     return ds;
 }
@@ -63,7 +68,10 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, System &system)
     {
         SharedDataStream sds(ds);
 
-        sds >> system.sysdata >> system.ffields;
+        sds >> system.sysdata 
+            >> system.ffields 
+            >> system.sysmonitors
+            >> system.is_consistent;
     }
     else
         throw version_error(v, "1", r_system, CODELOC);
@@ -71,26 +79,85 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, System &system)
     return ds;
 }
 
-/** Create a new, unnamed System */
-System::System()
+/** Construct a System containing the groups 'groups',
+    the forcefields in 'forcefields' and the using the 
+    monitors 'monitors' */
+System::System(const MoleculeGroups &groups, const ForceFields &forcefields,
+               const SystemMonitors &monitors)
+       : ffields(forcefields), sysmonitors(monitors), is_consistent(false)
+{
+    sysdata.add(groups);
+}
+
+/** Construct a System called 'name' containing the groups 'groups',
+    the forcefields in 'forcefields' and the using the monitors 'monitors' */
+System::System(const QString &name,
+               const MoleculeGroups &groups, const ForceFields &forcefields,
+               const SystemMonitors &monitors)
+       : sysdata(name), ffields(forcefields),
+         sysmonitors(monitors), is_consistent(false)
+{
+    sysdata.add(groups);
+}
+
+/** Construct a System containing the groups 'groups' and using
+    the monitors 'monitors' */
+System::System(const MoleculeGroups &groups, const SystemMonitors &monitors)
+       : sysmonitors(monitors), is_consistent(false)
+{
+    sysdata.add(groups);
+}
+
+/** Construct a System called 'name' containing the groups 'groups' 
+    and using the monitors 'monitors' */
+System::System(const QString &name, const MoleculeGroups &groups,
+               const SystemMonitors &monitors)
+       : sysdata(name), sysmonitors(monitors), is_consistent(false)
+{
+    sysdata.add(groups);
+}
+
+/** Construct a System containing the forcefields 'forcefields' 
+    and using the monitors 'monitors' */
+System::System(const ForceFields &forcefields, const SystemMonitors &monitors)
+       : ffields(forcefields), sysmonitors(monitors), is_consistent(false)
 {}
 
-/** Construct a new simulation System with a specified name */
-System::System(const QString &name)
-       : sysdata(name)
+/** Construct a System called 'name' containing the forcefields 
+    'forcefields' and using the monitors 'monitors' */
+System::System(const QString &name, const ForceFields &forcefields,
+               const SystemMonitors &monitors)
+       : sysdata(name), ffields(forcefields), 
+         sysmonitors(monitors), is_consistent(false)
 {}
 
-/** Private constructor used by SimSystem to create a System from
-    a SystemData and a collection of forcefields - it is up to
-    you to ensure that the metadata and the forcefields are compatible! */
-System::System(const SystemData &data,
-               const ForceFields &forcefields)
-       : sysdata(data), ffields(forcefields)
+/** Construct a System that consists only of the passed monitors */
+System::System(const SystemMonitors &monitors)
+       : sysmonitors(monitors), is_consistent(false)
 {}
+
+/** Construct a System called 'name' that consists of just
+    the passed monitors */
+System::System(const QString &name, const SystemMonitors &monitors)
+       : sysdata(name), sysmonitors(monitors), is_consistent(false)
+{}
+
+/** Construct from a CheckPoint */
+System::System(const CheckPoint &checkpoint)
+{
+    *this = checkpoint;
+}
+
+/** Construct from a running simulation */
+System::System(QuerySystem &simsystem)
+{
+    *this = simsystem.checkPoint();
+}
 
 /** Copy constructor */
 System::System(const System &other)
-       : sysdata(other.sysdata), ffields(other.ffields)
+       : sysdata(other.sysdata), ffields(other.ffields),
+         sysmonitors(other.sysmonitors), is_consistent(other.is_consistent)
 {}
 
 /** Destructor. This will delete everything in this system unless it is
@@ -105,9 +172,28 @@ System& System::operator=(const System &other)
     {
         sysdata = other.sysdata;
         ffields = other.ffields;
+        sysmonitors = other.sysmonitors;
+        is_consistent = other.is_consistent;
     }
 
     return *this;
+}
+
+/** Assignment operator from a CheckPoint */
+System& System::operator=(const CheckPoint &checkpoint)
+{
+    sysdata = checkpoint.info();
+    ffields = checkpoint.forceFields();
+    sysmonitors = checkpoint.monitors();
+    is_consistent = true;
+    
+    return *this;
+}
+
+/** Assignment operator from a running simulation */
+System& System::operator=(QuerySystem &simsystem)
+{
+    return this->operator=(simsystem.checkPoint());
 }
 
 /** Comparison operator - two systems are equal if they have the
@@ -128,6 +214,21 @@ bool System::operator!=(const System &other) const
 void System::prepareForSimulation()
 {
     //resolve all expressions etc.
+    if (not is_consistent)
+    {
+    
+    
+    
+        is_consistent = true;
+    }
+}
+
+/** Return a checkpoint of this System - this will update
+    the system and set it in a completely consistent state */
+CheckPoint System::checkPoint()
+{
+    this->prepareForSimulation();
+    return CheckPoint(*this);
 }
 
 /** Run this system in the local thread - this will only work
@@ -137,17 +238,17 @@ void System::prepareForSimulation()
 */
 Moves System::run(const Moves &moves, quint32 nmoves)
 {
-    LocalSimSystem simsystem(*this);
+    LocalSimSystem simsystem(this->checkPoint());
 
     //work with a copy of the moves
     Moves run_moves(moves);
 
-    runmoves.run(simsystem, nmoves);
+    run_moves.run(simsystem, nmoves);
 
     //everything went well - copy back into this system
-    *this = simsystem.checkpoint();
+    *this = simsystem.checkPoint();
 
-    return runmoves;
+    return run_moves;
 }
 
 /** Run this system in the local thread - this will only work

@@ -80,21 +80,21 @@ public:
 
     QSet<ForceFieldID> forceFieldIDs() const;
 
-    void setProperty(ForceFieldID ffid, const QString &name, 
+    bool setProperty(ForceFieldID ffid, const QString &name, 
                      const Property &property);
                      
     QHash< QString, QHash<ForceFieldID,Property> > properties() const;
     
     void mustNowRecalculateFromScratch();
     
-    void change(const PartialMolecule &molecule);
-    void change(const QHash<MoleculeID,PartialMolecule> &molecules);
+    bool change(const PartialMolecule &molecule);
+    bool change(const QHash<MoleculeID,PartialMolecule> &molecules);
 
-    void addTo( ForceFieldID ffid, const FFBase::Group &group,
+    bool addTo( ForceFieldID ffid, const FFBase::Group &group,
                 const PartialMolecule &molecule,
                 const ParameterMap &map = ParameterMap() );
 
-    void removeFrom(ForceFieldID ffid, const FFBase::Group &group,
+    bool removeFrom(ForceFieldID ffid, const FFBase::Group &group,
                     const PartialMolecule &molecule);
 
     bool refersTo(MoleculeID molid, ForceFieldID ffid,

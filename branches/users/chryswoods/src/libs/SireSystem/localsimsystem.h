@@ -26,3 +26,51 @@
   *
 \*********************************************/
 
+#ifndef SIRESYSTEM_LOCALSIMSYSTEM_H
+#define SIRESYSTEM_LOCALSIMSYSTEM_H
+
+#include "simsystem.h"
+
+#include "systemdata.h"
+#include "systemmonitors.h"
+
+#include "SireFF/forcefields.h"
+
+SIRE_BEGIN_HEADER
+
+namespace SireSystem
+{
+
+class CheckPoint;
+
+/** This is a simulation system that performs the entire simulation
+    in the local thread.
+    
+    @author Christopher Woods
+*/
+class SIRESYSTEM_EXPORT LocalSimSystem : public SimSystem
+{
+public:
+    LocalSimSystem(const CheckPoint &checkpoint);
+    
+    ~LocalSimSystem();
+    
+    void rollback(const CheckPoint &checkpoint);
+    
+private:
+    /** The metadata for this system */
+    SystemData local_sysdata;
+    
+    /** The monitors that monitor properties of this system */
+    SystemMonitors local_monitors;
+    
+    /** The forcefields that describe the potential
+        energy surface */
+    ForceFields local_ffields;
+};
+
+}
+
+SIRE_END_HEADER
+
+#endif

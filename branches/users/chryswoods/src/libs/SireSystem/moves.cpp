@@ -29,11 +29,14 @@
 #include "moves.h"
 #include "simsystem.h"
 
+#include "SireMol/moleculegroupid.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
 using namespace SireSystem;
 using namespace SireBase;
+using namespace SireMol;
 using namespace SireStream;
 
 ///////////
@@ -81,9 +84,9 @@ QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds,
                                           const SameMoves &samemoves)
 {
     writeHeader(ds, r_samemoves, 1);
-     
+
     SharedDataStream sds(ds);
-    
+
     sds << samemoves.single_move << static_cast<const MovesBase&>(samemoves);
 
     return ds;
@@ -97,7 +100,7 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, SameMoves &samemoves)
     if (v == 1)
     {
         SharedDataStream sds(ds);
-        
+
         sds >> samemoves.single_move >> static_cast<MovesBase&>(samemoves);
     }
     else
@@ -111,7 +114,7 @@ SameMoves::SameMoves() : MovesBase()
 {}
 
 /** Construct a set of moves where they are all 'move' */
-SameMoves::SameMoves(const Move &move) 
+SameMoves::SameMoves(const Move &move)
           : MovesBase(), single_move(move)
 {}
 
@@ -142,7 +145,7 @@ QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const Moves &moves)
 
     //serialise the moves
     SharedDataStream sds(ds);
-     
+
     sds << moves.d
         << moves.sysid
         << moves.ntotal
@@ -191,7 +194,7 @@ Moves::Moves(const MovesBase &moves)
       : d(moves), sysid(0), ntotal(0), ncomplete(0)
 {}
 
-/** Construct from a passed Move - all moves in the set will 
+/** Construct from a passed Move - all moves in the set will
     be this move */
 Moves::Moves(const Move &move)
       : d(new SameMoves(move)), sysid(0), ntotal(0), ncomplete(0)
@@ -255,14 +258,14 @@ Moves& Moves::operator=(const Moves &other)
 }
 
 /** Initialise all of the moves with the passed System
-     - this is used to catch a lot of errors before the 
+     - this is used to catch a lot of errors before the
        simulation starts, rather than while it is running
        (or even months into it running!) */
 void Moves::initialise(SimSystem &system)
 {
     //can only do this while the moves aren't active
     QMutexLocker lkr(&movemutex);
-    
+
     d->initialise(system);
 }
 

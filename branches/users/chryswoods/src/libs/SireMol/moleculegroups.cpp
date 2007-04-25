@@ -263,6 +263,39 @@ bool MoleculeGroups::add(const MoleculeGroup &newgroup)
     return true;
 }
 
+/** Add lots of groups */
+bool MoleculeGroups::add(const MoleculeGroups &groups)
+{
+    if (molgroups.isEmpty())
+    {
+        //this is empty, so just copy 'groups'
+        *this = groups;
+        return true;
+    }
+    else
+    {
+        bool changed = false;
+        MoleculeGroups orig_groups = *this;
+      
+        try
+        {
+            //add each group in turn
+            foreach (MoleculeGroup group, groups.groups())
+            {
+                bool this_changed = this->add(group);
+                changed = changed or this_changed;
+            }
+        }
+        catch(...)
+        {
+            *this = orig_groups;
+            throw;
+        }
+        
+        return changed;
+    }
+}
+
 /** Remove the group with ID == groupid */
 bool MoleculeGroups::remove(MoleculeGroupID groupid)
 {
@@ -311,6 +344,30 @@ bool MoleculeGroups::remove(MoleculeGroupID groupid)
 bool MoleculeGroups::remove(const MoleculeGroup &group)
 {
     return this->remove(group.ID());
+}
+
+/** Remove lots of groups */
+bool MoleculeGroups::remove(const MoleculeGroups &groups)
+{
+    bool changed = false;
+
+    MoleculeGroups orig_groups = *this;
+    
+    try
+    {
+        foreach (MoleculeGroupID groupid, groups.groups().keys())
+        {
+            bool this_changed = this->remove(groupid);
+            changed = changed or this_changed;
+        }
+    }
+    catch(...)
+    {
+        *this = orig_groups;
+        throw;
+    }
+    
+    return changed;
 }
 
 /** Remove all groups from this set that are called 'groupname' */
@@ -562,6 +619,39 @@ bool MoleculeGroups::change(const MoleculeGroup &group)
         }
 
         return true;
+    }
+}
+
+/** Change lots of MoleculeGroups */
+bool MoleculeGroups::change(const MoleculeGroups &newgroups)
+{
+    if (molgroups.keys() == newgroups.groups().keys())
+    {
+        //we have the same groups - just do a copy
+        *this = newgroups;
+        return true;
+    }
+    else
+    {
+        MoleculeGroups orig_groups = *this;
+        
+        bool changed = false;
+        
+        try
+        {
+            foreach (MoleculeGroup group, newgroups.groups())
+            {
+                bool this_changed = this->change(group);
+                changed = changed or this_changed;
+            }
+        }
+        catch(...)
+        {
+            *this = orig_groups;
+            throw;
+        }
+        
+        return changed;
     }
 }
 

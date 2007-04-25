@@ -33,6 +33,10 @@ void register_MoleculeGroups_class(){
             , ( bp::arg("group") ) )    
         .def( 
             "add"
+            , (bool ( ::SireMol::MoleculeGroups::* )( ::SireMol::MoleculeGroups const & ) )( &::SireMol::MoleculeGroups::add )
+            , ( bp::arg("groups") ) )    
+        .def( 
+            "add"
             , (bool ( ::SireMol::MoleculeGroups::* )( ::SireMol::PartialMolecule const &,::SireMol::MoleculeGroupID ) )( &::SireMol::MoleculeGroups::add )
             , ( bp::arg("molecule"), bp::arg("groupid") ) )    
         .def( 
@@ -47,6 +51,10 @@ void register_MoleculeGroups_class(){
             "change"
             , (bool ( ::SireMol::MoleculeGroups::* )( ::SireMol::MoleculeGroup const & ) )( &::SireMol::MoleculeGroups::change )
             , ( bp::arg("group") ) )    
+        .def( 
+            "change"
+            , (bool ( ::SireMol::MoleculeGroups::* )( ::SireMol::MoleculeGroups const & ) )( &::SireMol::MoleculeGroups::change )
+            , ( bp::arg("groups") ) )    
         .def( 
             "change"
             , (bool ( ::SireMol::MoleculeGroups::* )( ::SireMol::PartialMolecule const & ) )( &::SireMol::MoleculeGroups::change )
@@ -133,6 +141,10 @@ void register_MoleculeGroups_class(){
             "remove"
             , (bool ( ::SireMol::MoleculeGroups::* )( ::SireMol::MoleculeGroup const & ) )( &::SireMol::MoleculeGroups::remove )
             , ( bp::arg("group") ) )    
+        .def( 
+            "remove"
+            , (bool ( ::SireMol::MoleculeGroups::* )( ::SireMol::MoleculeGroups const & ) )( &::SireMol::MoleculeGroups::remove )
+            , ( bp::arg("groups") ) )    
         .def( 
             "remove"
             , (bool ( ::SireMol::MoleculeGroups::* )( ::SireMol::MoleculeGroupID ) )( &::SireMol::MoleculeGroups::remove )

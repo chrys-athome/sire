@@ -117,7 +117,7 @@ friend class SimSystem; //so can see private references
 public:
     virtual ~QuerySystem();
 
-    CheckPoint checkpoint();
+    CheckPoint checkPoint();
 
     SystemID ID() const;
     const Version& version() const;
@@ -155,6 +155,8 @@ public:
     QHash< QString,QHash<ForceFieldID,Property> > properties();
 
 protected:
+    QuerySystem();
+    
     QuerySystem(SystemData &sysdata,
                 ForceFieldsBase &ffields,
                 SystemMonitors &monitors);

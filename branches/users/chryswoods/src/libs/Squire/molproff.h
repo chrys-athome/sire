@@ -339,15 +339,6 @@ public:
     QHash<MoleculeID,PartialMolecule> contents() const;
     QHash<MoleculeID,PartialMolecule> contents(const FFBase::Group &group) const;
 
-protected:
-    void recalculateEnergy();
-
-    //protected functions designed to be overloaded by child classes, and
-    //only called by MolproCalculator
-    virtual Values recalculateEnergy(MolproSession &session);
-
-    void _pvt_copy(const FFBase &other);
-
     enum QMMMStatusFlag
     {
         UP2DATE = 0x0000,          // The forcefield is clean
@@ -360,6 +351,15 @@ protected:
     };
 
     Q_DECLARE_FLAGS(QMMMStatus, QMMMStatusFlag);
+
+protected:
+    void recalculateEnergy();
+
+    //protected functions designed to be overloaded by child classes, and
+    //only called by MolproCalculator
+    virtual Values recalculateEnergy(MolproSession &session);
+
+    void _pvt_copy(const FFBase &other);
 
     void mustNowRebuildQM();
     void mustNowUpdateQM();

@@ -357,10 +357,10 @@ QSet<ForceFieldID> ForceFields::forceFieldIDs() const
     \throw SireFF::missing_forcefield
     \throw SireBase::missing_property
 */
-void ForceFields::setProperty(ForceFieldID ffid, const QString &name,
+bool ForceFields::setProperty(ForceFieldID ffid, const QString &name,
                               const Property &value)
 {
-    this->getForceField(ffid).setProperty(name, value);
+    return this->getForceField(ffid).setProperty(name, value);
 }
 
 /** Return all of the properties of all of the forcefields indexed
@@ -405,7 +405,7 @@ void ForceFields::mustNowRecalculateFromScratch()
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-void ForceFields::change(const PartialMolecule &molecule)
+bool ForceFields::change(const PartialMolecule &molecule)
 {
     const QSet<ForceFieldID> ffids = this->forceFieldsReferringTo(molecule.ID());
 
@@ -420,7 +420,7 @@ void ForceFields::change(const PartialMolecule &molecule)
                      == molecule.version())
         {
             //we already contain this version of the molecule
-            return;
+            return false;
         }
 
         //we contain this molecule!
@@ -456,18 +456,21 @@ void ForceFields::change(const PartialMolecule &molecule)
                 throw;
             }
         }
+        
+        return true;
     }
+    else
+        return false;
 }
 
 /** Change the molecules  in 'mols' */
-void ForceFields::change(const QHash<MoleculeID,PartialMolecule> &molecules)
+bool ForceFields::change(const QHash<MoleculeID,PartialMolecule> &molecules)
 {
     if (molecules.isEmpty())
-        return;
+        return false;
     else if (molecules.count() == 1)
     {
-        this->change( *(molecules.begin()) );
-        return;
+        return this->change( *(molecules.begin()) );
     }
     else
     {
@@ -509,11 +512,10 @@ void ForceFields::change(const QHash<MoleculeID,PartialMolecule> &molecules)
         }
 
         if (mols_in_ffields.count() == 0)
-            return;
+            return false;
         else if (mols_in_ffields.count() == 1)
         {
-            this->change( *(mols_in_ffields.constBegin()) );
-            return;
+            return this->change( *(mols_in_ffields.constBegin()) );
         }
 
         //must maintain the invariant
@@ -535,6 +537,8 @@ void ForceFields::change(const QHash<MoleculeID,PartialMolecule> &molecules)
             *this = ffields_orig;
             throw;
         }
+        
+        return true;
     }
 }
 
@@ -547,7 +551,7 @@ void ForceFields::change(const QHash<MoleculeID,PartialMolecule> &molecules)
     \throw SireError::invalid_cast
     \throw SireBase::missing_property
 */
-void ForceFields::addTo( ForceFieldID ffid, const FFBase::Group &group,
+bool ForceFields::addTo( ForceFieldID ffid, const FFBase::Group &group,
                          const PartialMolecule &mol,
                          const ParameterMap &map )
 {
@@ -558,6 +562,7 @@ void ForceFields::addTo( ForceFieldID ffid, const FFBase::Group &group,
         //we don't yet have this molecule - add it now
         this->getForceField(ffid).addTo(group, mol, map);
         ForceFieldsBase::addToIndex(mol.ID(), ffid);
+        return true;
     }
     else
     {
@@ -565,15 +570,17 @@ void ForceFields::addTo( ForceFieldID ffid, const FFBase::Group &group,
         PartialMolecule old_mol = ForceFieldsBase::molecule( mol.ID(),
                                                              *(ffids.constBegin()) );
 
+        bool changed = false;
+
         //update all forcefields to match the new molecule version
         if (old_mol.version() != mol.version())
-            this->change(mol);
+            changed = this->change(mol);
 
         //add the molecule
         try
         {
-            this->getForceField(ffid).addTo(group, mol, map);
-            ForceFieldsBase::addToIndex(mol.ID(), ffid);
+            bool this_changed = this->getForceField(ffid).addTo(group, mol, map);
+            changed = changed or this_changed;
         }
         catch(...)
         {
@@ -583,6 +590,8 @@ void ForceFields::addTo( ForceFieldID ffid, const FFBase::Group &group,
 
             throw;
         }
+        
+        return changed;
     }
 }
 
@@ -592,7 +601,7 @@ void ForceFields::addTo( ForceFieldID ffid, const FFBase::Group &group,
     \throw SireFF::missing_forcefield
     \throw SireFF::missing_group
 */
-void ForceFields::removeFrom(ForceFieldID ffid, const FFBase::Group &group,
+bool ForceFields::removeFrom(ForceFieldID ffid, const FFBase::Group &group,
                              const PartialMolecule &mol)
 {
     if (ForceFieldsBase::refersTo(mol.ID(), ffid))
@@ -603,8 +612,12 @@ void ForceFields::removeFrom(ForceFieldID ffid, const FFBase::Group &group,
         {
             if (not ffield.refersTo(mol.ID()))
                 ForceFieldsBase::removeFromIndex(mol.ID(), ffid);
+                
+            return true;
         }
     }
+    
+    return false;
 }
 
 /** Return whether or not the group 'group' in the forcefield 'ffid'

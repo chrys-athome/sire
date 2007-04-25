@@ -63,7 +63,7 @@ friend QDataStream& ::operator>>(QDataStream&, CheckPoint&);
 public:
     CheckPoint();
 
-    CheckPoint(const System &system);
+    CheckPoint(System &system);
     CheckPoint(const QuerySystem &system);
 
     CheckPoint(const CheckPoint &other);
@@ -71,7 +71,7 @@ public:
     ~CheckPoint();
 
     CheckPoint& operator=(const CheckPoint &other);
-    CheckPoint& operator=(const System &system);
+    CheckPoint& operator=(System &system);
     CheckPoint& operator=(const QuerySystem &system);
 
     bool operator==(const CheckPoint &other) const;
@@ -85,6 +85,9 @@ public:
     const SystemMonitors& monitors() const;
 
 private:
+    /** The name of the system */
+    QString nme;
+
     /** Metainfo about the system */
     SystemData sysdata;
 

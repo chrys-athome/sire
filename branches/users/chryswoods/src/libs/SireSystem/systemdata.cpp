@@ -154,6 +154,12 @@ void SystemData::add(const MoleculeGroup &group)
     this->incrementMajorVersion();
 }
 
+/** Add lots of MoleculeGroups to this System */
+void SystemData::add(const MoleculeGroups &groups)
+{
+    molgroups.add(groups);
+}
+
 /** Return whether we contain a group with ID == groupid */
 bool SystemData::contains(MoleculeGroupID groupid) const
 {

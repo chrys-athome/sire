@@ -75,6 +75,10 @@ public:
     bool change(const MoleculeGroup &group);
     bool remove(const MoleculeGroup &group);
 
+    bool add(const MoleculeGroups &groups);
+    bool change(const MoleculeGroups &groups);
+    bool remove(const MoleculeGroups &groups);
+
     bool remove(MoleculeGroupID groupid);
     bool remove(const QString &groupname);
 
@@ -125,8 +129,6 @@ public:
 private:
     void reindex();
     void _pvt_index(const MoleculeGroup &group);
-
-    Molecule getLatest(MoleculeID molid) const;
 
     /** The collection of groups in this object, indexed
         by their MoleculeGroupID */
