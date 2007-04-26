@@ -126,10 +126,12 @@ public:
     SystemID ID() const;
     const Version& version() const;
 
+    const Space& space() const;
+
     const MoleculeGroup& group(MoleculeGroupID id) const;
     const MoleculeGroups& groups() const;
 
-    bool contains(MoleculeGroupID groupid) const;
+    bool refersTo(MoleculeGroupID groupid) const;
 
     void add(const MoleculeGroup &group);
     void add(const MoleculeGroups &groups);
@@ -234,6 +236,13 @@ inline void SystemData::incrementMajorVersion()
 inline void SystemData::incrementMinorVersion()
 {
     id_and_version.incrementMinor();
+}
+
+/** Return the space into which the coordinates of all molecules will
+    be mapped. */
+inline const Space& SystemData::space() const
+{
+    return sys_space;
 }
 
 /** Return all of the Molecule groups in this System */

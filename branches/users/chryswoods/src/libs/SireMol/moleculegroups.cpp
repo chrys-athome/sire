@@ -179,14 +179,14 @@ bool MoleculeGroups::operator!=(const MoleculeGroups &other) const
     return molgroups != other.molgroups;
 }
 
-/** Return the set of IDs of groups that contain the molecule with ID == molid 
+/** Return the set of IDs of groups that contain the molecule with ID == molid
 
     \throw SireMol::missing_molecule
 */
 QSet<MoleculeGroupID> MoleculeGroups::groupsReferringTo(MoleculeID molid) const
 {
     QSet<MoleculeGroupID> groupids = index.value(molid);
-    
+
     if (groupids.isEmpty())
         throw SireMol::missing_molecule( QObject::tr(
               "There is no molecule with ID == %1 in any of the MoleculeGroups!")
@@ -195,21 +195,21 @@ QSet<MoleculeGroupID> MoleculeGroups::groupsReferringTo(MoleculeID molid) const
     return groupids;
 }
 
-/** Return the set of IDs of groups that contain at least tall of the atoms 
+/** Return the set of IDs of groups that contain at least tall of the atoms
     of any version of the molecule 'molecule' */
-QSet<MoleculeGroupID> 
+QSet<MoleculeGroupID>
 MoleculeGroups::groupsContaining(const PartialMolecule &mol) const
 {
     QSet<MoleculeGroupID> groupids = this->groupsReferringTo(mol.ID());
-    
+
     QSet<MoleculeGroupID> groups_with_mol = groupids;
-    
+
     foreach (MoleculeGroupID groupid, groupids)
     {
         if (not this->group(groupid).contains(mol))
             groups_with_mol.remove(groupid);
     }
-    
+
     return groups_with_mol;
 }
 
@@ -244,7 +244,7 @@ bool MoleculeGroups::add(const MoleculeGroup &newgroup)
             this->remove(newgroup.ID());
         }
 
-        //synchronise the other groups so that they have the 
+        //synchronise the other groups so that they have the
         //same version of the molecules as 'newgroup'
         this->change(newgroup.molecules());
 
@@ -276,7 +276,7 @@ bool MoleculeGroups::add(const MoleculeGroups &groups)
     {
         bool changed = false;
         MoleculeGroups orig_groups = *this;
-      
+
         try
         {
             //add each group in turn
@@ -291,7 +291,7 @@ bool MoleculeGroups::add(const MoleculeGroups &groups)
             *this = orig_groups;
             throw;
         }
-        
+
         return changed;
     }
 }
@@ -310,7 +310,7 @@ bool MoleculeGroups::remove(MoleculeGroupID groupid)
 
             QHash<MoleculeID,PartialMolecule> mols = group.molecules();
 
-            for (QHash<MoleculeID,PartialMolecule>::const_iterator 
+            for (QHash<MoleculeID,PartialMolecule>::const_iterator
                                                         it = mols.constBegin();
                  it != mols.constEnd();
                  ++it)
@@ -352,7 +352,7 @@ bool MoleculeGroups::remove(const MoleculeGroups &groups)
     bool changed = false;
 
     MoleculeGroups orig_groups = *this;
-    
+
     try
     {
         foreach (MoleculeGroupID groupid, groups.groups().keys())
@@ -366,7 +366,7 @@ bool MoleculeGroups::remove(const MoleculeGroups &groups)
         *this = orig_groups;
         throw;
     }
-    
+
     return changed;
 }
 
@@ -422,14 +422,15 @@ bool MoleculeGroups::add(const PartialMolecule &molecule,
     try
     {
         //change this molecule in all groups...
-        this->change(molecule);
-        
+        bool changed = this->change(molecule);
+
         if (molgroups[groupid].add(molecule))
         {
             index[molecule.ID()].insert(groupid);
-
-            return true;
+            changed = true;
         }
+
+        return changed;
    }
    catch(...)
    {
@@ -438,6 +439,151 @@ bool MoleculeGroups::add(const PartialMolecule &molecule,
    }
 
    return false;
+}
+
+/** Add the molecule 'molecule' to the groups whose IDs are in 'groupids'
+
+    \throw SireMol::missing_group
+*/
+bool MoleculeGroups::add(const PartialMolecule &molecule,
+                         const QSet<MoleculeGroupID> &groupids)
+{
+    if (groupids.isEmpty())
+        return false;
+    else if (groupids.count() == 1)
+        return this->add( molecule, *(groupids.begin()) );
+    else
+    {
+        MoleculeGroups orig_groups = *this;
+
+        try
+        {
+            bool changed = this->change(molecule);
+
+            foreach (MoleculeGroupID groupid, groupids)
+            {
+                this->assertContains(groupid);
+
+                if (molgroups[groupid].add(molecule))
+                {
+                    index[molecule.ID()].insert(groupid);
+                    changed = true;
+                }
+            }
+
+            return changed;
+        }
+        catch(...)
+        {
+            *this = orig_groups;
+            throw;
+            return false;
+        }
+    }
+}
+
+/** Add the molecules in 'molecules' to the group with ID == groupid.
+
+    \throw SireMol::missing_group
+*/
+bool MoleculeGroups::add(const QHash<MoleculeID,PartialMolecule> &molecules,
+                         MoleculeGroupID groupid)
+{
+    if (molecules.isEmpty())
+        return false;
+    else if (molecules.count() == 1)
+        return this->add( *(molecules.begin()), groupid );
+    else
+    {
+        this->assertContains(groupid);
+
+        MoleculeGroups orig_groups(*this);
+
+        bool changed = false;
+
+        try
+        {
+            //change these molecules in all groups...
+            changed = this->change(molecules);
+
+            for (QHash<MoleculeID,PartialMolecule>::const_iterator
+                                                    it = molecules.begin();
+                 it != molecules.end();
+                 ++it)
+            {
+                const PartialMolecule &molecule = *it;
+
+                if (molgroups[groupid].add(molecule))
+                {
+                    index[molecule.ID()].insert(groupid);
+
+                    changed = true;
+                }
+            }
+        }
+        catch(...)
+        {
+            *this = orig_groups;
+            throw;
+        }
+
+        return changed;
+    }
+}
+
+/** Add the molecules in 'molecules' to the groups whose IDs are in 'groupids'
+
+    \throw SireMol::missing_group
+*/
+bool MoleculeGroups::add(const QList<PartialMolecule> &molecules,
+                         const QSet<MoleculeGroupID> &groupids)
+{
+    if (molecules.isEmpty() or groupids.isEmpty())
+        return false;
+    else if (molecules.count() == 1)
+        return this->add( molecules.first(), groupids );
+    else
+    {
+        MoleculeGroups orig_groups = *this;
+
+        try
+        {
+            bool changed = this->change(molecules);
+
+            foreach (MoleculeGroupID groupid, groupids)
+            {
+                this->assertContains(groupid);
+
+                if (molgroups[groupid].add(molecules))
+                {
+                    foreach (const PartialMolecule &molecule, molecules)
+                    {
+                        index[molecule.ID()].insert(groupid);
+                    }
+
+                    changed = true;
+                }
+            }
+
+            return changed;
+        }
+        catch(...)
+        {
+            *this = orig_groups;
+            throw;
+            return false;
+        }
+    }
+}
+
+/** Add the molecules in 'molecules' to the groups whose IDs are in 'groupids'
+
+    \throw SireMol::missing_group
+*/
+bool MoleculeGroups::add(const QHash<MoleculeID,PartialMolecule> &molecules,
+                         const QSet<MoleculeGroupID> &groupids)
+{
+    return this->add(molecules.values(), groupids);
 }
 
 /** Add the molecules in 'molecules' to the group with ID == groupid.
@@ -463,7 +609,7 @@ bool MoleculeGroups::add(const QList<PartialMolecule> &molecules,
         {
             //change these molecules in all groups...
             changed = this->change(molecules);
-        
+
             for (QList<PartialMolecule>::const_iterator it = molecules.begin();
                  it != molecules.end();
                  ++it)
@@ -531,6 +677,44 @@ bool MoleculeGroups::remove(const PartialMolecule &molecule,
     }
 
     return false;
+}
+
+/** Remove the molecule 'molecule' from all of the groups whose IDs are in 'groupids'
+
+    \throw SireMol::missing_group
+*/
+bool MoleculeGroups::remove(const PartialMolecule &molecule,
+                            const QSet<MoleculeGroupID> &groupids)
+{
+    if (groupids.isEmpty())
+        return false;
+    else if (groupids.count() == 1)
+        return this->remove(molecule, *(groupids.begin()));
+    else
+    {
+        MoleculeGroups orig_groups = *this;
+
+        bool changed = false;
+
+        try
+        {
+            foreach (MoleculeGroupID groupid, groupids)
+            {
+                this->assertContains(groupid);
+
+                bool this_changed = molgroups[groupid].remove(molecule);
+                changed = changed or this_changed;
+            }
+
+            return changed;
+        }
+        catch(...)
+        {
+            *this = orig_groups;
+            throw;
+            return false;
+        }
+    }
 }
 
 /** Change the molecule 'molecule' */
@@ -634,9 +818,9 @@ bool MoleculeGroups::change(const MoleculeGroups &newgroups)
     else
     {
         MoleculeGroups orig_groups = *this;
-        
+
         bool changed = false;
-        
+
         try
         {
             foreach (MoleculeGroup group, newgroups.groups())
@@ -650,7 +834,7 @@ bool MoleculeGroups::change(const MoleculeGroups &newgroups)
             *this = orig_groups;
             throw;
         }
-        
+
         return changed;
     }
 }
@@ -883,7 +1067,13 @@ bool MoleculeGroups::remove(const QList<PartialMolecule> &molecules)
     }
 }
 
-/** Remove lots of molecules from the group with ID == groupid 
+/** Remove lots of molecules */
+bool MoleculeGroups::remove(const QHash<MoleculeID,PartialMolecule> &molecules)
+{
+    return this->remove(molecules.values());
+}
+
+/** Remove lots of molecules from the group with ID == groupid
 
     \throw SireMol::missing_group
 */
@@ -891,9 +1081,9 @@ bool MoleculeGroups::remove(const QList<PartialMolecule> &molecules,
                             MoleculeGroupID groupid)
 {
     this->assertContains(groupid);
-                
+
     MoleculeGroup &group = molgroups[groupid];
-    
+
     if (group.remove(molecules))
     {
         for (QList<PartialMolecule>::const_iterator it = molecules.begin();
@@ -901,7 +1091,7 @@ bool MoleculeGroups::remove(const QList<PartialMolecule> &molecules,
              ++it)
         {
             const PartialMolecule &molecule = *it;
-        
+
             //the group contains this molecule, and it was removed
             // - has it been removed completely?
             if ( not molgroups[groupid].refersTo(molecule.ID()) )
@@ -917,16 +1107,90 @@ bool MoleculeGroups::remove(const QList<PartialMolecule> &molecules,
                     index[molecule.ID()] = groups_containing_mol;
             }
         }
-        
+
         return true;
     }
     else
         return false;
 }
 
-/** Return a copy of the molecule with ID == molid in the group 
+/** Remove lots of molecules from the group with ID == groupid
+
+    \throw SireMol::missing_group
+*/
+bool MoleculeGroups::remove(const QHash<MoleculeID,PartialMolecule> &molecules,
+                            MoleculeGroupID groupid)
+{
+    return this->remove(molecules.values(),groupid);
+}
+
+/** Remove lots of molecules from the group with ID == groupid
+
+    \throw SireMol::missing_group
+*/
+bool MoleculeGroups::remove(const QList<PartialMolecule> &molecules,
+                            const QSet<MoleculeGroupID> &groupids)
+{
+    MoleculeGroups orig_groups = *this;
+
+    try
+    {
+        bool changed = false;
+
+        foreach (MoleculeGroupID groupid, groupids)
+        {
+            MoleculeGroup &group = molgroups[groupid];
+
+            if (group.remove(molecules))
+            {
+                for (QList<PartialMolecule>::const_iterator it = molecules.begin();
+                     it != molecules.end();
+                     ++it)
+                {
+                    const PartialMolecule &molecule = *it;
+
+                    //the group contains this molecule, and it was removed
+                    // - has it been removed completely?
+                    if ( not molgroups[groupid].refersTo(molecule.ID()) )
+                    {
+                        //now remove the molecule from the index of the group
+                        QSet<MoleculeGroupID> groups_containing_mol
+                                                      = index.value(molecule.ID());
+
+                        groups_containing_mol.remove(groupid);
+
+                        if (groups_containing_mol.isEmpty())
+                            index.remove(molecule.ID());
+                        else
+                            index[molecule.ID()] = groups_containing_mol;
+                    }
+                }
+
+                changed = true;
+            }
+        }
+
+        return changed;
+    }
+    catch(...)
+    {
+        //restore the invariant
+        *this = orig_groups;
+        throw;
+        return false;
+    }
+}
+
+/** Remove lots of molecules from lots of groups */
+bool MoleculeGroups::remove(const QHash<MoleculeID,PartialMolecule> &molecules,
+                            const QSet<MoleculeGroupID> &groupids)
+{
+    return this->remove(molecules.values(), groupids);
+}
+
+/** Return a copy of the molecule with ID == molid in the group
     with ID == groupid
-    
+
     \throw SireMol::missing_molecule
     \throw SireMol::missing_group
 */
@@ -938,7 +1202,7 @@ PartialMolecule MoleculeGroups::molecule(MoleculeID molid,
 
 /** Return the molecule with ID == molid from the groups whose
     IDs are in 'groupids'
-    
+
     \throw SireMol::missing_molecule
     \throw SireMol::missing_group
     \throw SireError::invalid_arg
@@ -952,7 +1216,7 @@ PartialMolecule MoleculeGroups::molecule(MoleculeID molid,
             "You must request the molecule from at least one MoleculeGroup!"),
                   CODELOC );
     }
-    
+
     if (groupids.count() == 1)
     {
         return this->molecule(molid, *(groupids.begin()));
@@ -960,10 +1224,10 @@ PartialMolecule MoleculeGroups::molecule(MoleculeID molid,
     else
     {
         QSet<MoleculeGroupID>::const_iterator it = groupids.begin();
-        
+
         //get the first group's version of the molecule
         PartialMolecule mol = this->molecule(molid,*it);
-        
+
         for ( ++it ; it != groupids.end(); ++it )
         {
             if (not mol.selectedAtoms().selectedAll())
@@ -971,20 +1235,20 @@ PartialMolecule MoleculeGroups::molecule(MoleculeID molid,
             else
                 this->assertContains(*it);
         }
-        
+
         return mol;
     }
 }
 
 /** Return the molecule with ID == molid from this group - this
     returns all atoms that are in any group
-    
+
     \throw SireMol::missing_molecule
 */
 PartialMolecule MoleculeGroups::molecule(MoleculeID molid) const
 {
     QSet<MoleculeGroupID> groupids = this->groupsReferringTo(molid);
-    
+
     return this->molecule(molid, groupids);
 }
 
@@ -999,19 +1263,19 @@ QHash<MoleculeID,PartialMolecule> MoleculeGroups::molecules() const
          ++it)
     {
         QHash<MoleculeID,PartialMolecule> groupmols = it->molecules();
-        
-        for (QHash<MoleculeID,PartialMolecule>::const_iterator 
+
+        for (QHash<MoleculeID,PartialMolecule>::const_iterator
                                                 it2 = groupmols.constBegin();
              it2 != groupmols.constEnd();
              ++it2)
         {
             const PartialMolecule &groupmol = *it2;
             MoleculeID molid = it2.key();
-            
+
             if (allmols.contains(molid))
             {
                 PartialMolecule &mol = allmols[molid];
-                
+
                 if (not mol.selectedAtoms().selectedAll())
                     mol = mol.selection().add(groupmol.selectedAtoms());
             }
@@ -1021,7 +1285,7 @@ QHash<MoleculeID,PartialMolecule> MoleculeGroups::molecules() const
             }
         }
     }
-    
+
     return allmols;
 }
 
@@ -1042,37 +1306,37 @@ MoleculeGroups::groups(const QSet<MoleculeGroupID> &groupids) const
     {
         this->assertContains(groupid);
     }
-    
+
     if (groupids.count() == molgroups.count())
         //selected all of the groups
         return molgroups;
     else
     {
         QHash<MoleculeGroupID,MoleculeGroup> groups = molgroups;
-        
+
         foreach (MoleculeGroupID groupid, groups.keys())
         {
             if (not groupids.contains(groupid))
                 groups.remove(groupid);
         }
-        
+
         return groups;
     }
 }
 
-/** Return all of the MoleculeGroups that contain the molecule 'molecule' 
+/** Return all of the MoleculeGroups that contain the molecule 'molecule'
 
     \throw SireMol::missing_molecule
 */
-QHash<MoleculeGroupID,MoleculeGroup> 
+QHash<MoleculeGroupID,MoleculeGroup>
 MoleculeGroups::groups(const PartialMolecule &molecule) const
 {
     return this->groups( this->groupsContaining(molecule) );
 }
 
 /** Return all of the MoleculeGroups that refer to the molecule with
-    ID == molid 
-    
+    ID == molid
+
     \throw SireMol::missing_molecule
 */
 QHash<MoleculeGroupID,MoleculeGroup> MoleculeGroups::groups(MoleculeID molid) const
@@ -1135,7 +1399,13 @@ bool MoleculeGroups::refersTo(MoleculeID molid) const
     return index.contains(molid);
 }
 
-/** Return whether or not at least all of the atoms of any version of the 
+/** Return whether or not there is a group with ID == groupid in this set */
+bool MoleculeGroups::refersTo(MoleculeGroupID groupid) const
+{
+    return molgroups.contains(groupid);
+}
+
+/** Return whether or not at least all of the atoms of any version of the
     molecule 'mol' are contained in these groups */
 bool MoleculeGroups::contains(const PartialMolecule &mol) const
 {

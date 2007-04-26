@@ -13,6 +13,8 @@
 
 #include "SireMol/newatom.h"
 
+#include "SireFF/ffgroupid.h"
+
 #include "Move.pypp.hpp"
 
 #include "MoveBase.pypp.hpp"

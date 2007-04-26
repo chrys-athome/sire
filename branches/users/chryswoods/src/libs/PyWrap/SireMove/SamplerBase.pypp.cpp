@@ -54,10 +54,11 @@ void register_SamplerBase_class(){
             , ( bp::arg("generator") ) )    
         .def( 
             "typeName"
-            , (char const * ( ::SireMove::SamplerBase::* )(  ) )( &::SireMove::SamplerBase::typeName ) )    
+            , (char const * (*)(  ))( &::SireMove::SamplerBase::typeName ) )    
         .def( 
             "what"
             , (char const * ( ::SireMove::SamplerBase::* )(  ) const)( &::SireMove::SamplerBase::what ) )    
+        .staticmethod( "typeName" )    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMove::SamplerBase >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMove::SamplerBase >,

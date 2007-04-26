@@ -27,8 +27,11 @@
 \*********************************************/
 
 #include "systemmonitors.h"
+#include "querysystem.h"
 
 #include "SireStream/datastream.h"
+
+#include <boost/assert.hpp>
 
 using namespace SireStream;
 using namespace SireSystem;

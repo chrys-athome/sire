@@ -90,7 +90,7 @@ public:
 
     SamplerBase& operator=(const SamplerBase &other);
 
-    const char* typeName()
+    static const char* typeName()
     {
         return "SireMove::SamplerBase";
     }
@@ -116,13 +116,13 @@ public:
 
 protected:
     RanGenerator& generator();
-    
+
 private:
     /** The random number generator used by the sampler */
     RanGenerator rangen;
 };
 
-/** Internal function used to return a reference to the random 
+/** Internal function used to return a reference to the random
     number generator used by this sampler */
 inline RanGenerator& SamplerBase::generator()
 {

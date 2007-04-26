@@ -104,9 +104,10 @@ UniformSampler& UniformSampler::operator=(const UniformSampler &other)
 tuple<Molecule,double>
 UniformSampler::_pvt_randomMolecule(const MoleculeGroup &group, uint nmols)
 {
-    return tuple<Molecule,double>(
-                      group.molecules().constData()[generator().randInt(nmols-1)],
-                      1.0 / nmols);
+    return Molecule();
+//    return tuple<Molecule,double>(
+//                      group.molecules().constData()[generator().randInt(nmols-1)],
+//                      1.0 / nmols);
 }
 
 /** Return a random molecule that is in the group 'group'. This

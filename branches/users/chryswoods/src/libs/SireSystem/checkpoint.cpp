@@ -80,7 +80,7 @@ CheckPoint::CheckPoint()
 {}
 
 /** Construct a checkpoint of 'system' */
-CheckPoint::CheckPoint(const System &system)
+CheckPoint::CheckPoint(System &system)
 {
     this->operator=(system);
 }
@@ -122,9 +122,9 @@ CheckPoint& CheckPoint::operator=(System &system)
     //must ensure that the system is consistent
     system.prepareForSimulation();
 
-    sysdata = copy.info();
-    ffields = copy.forceFields();
-    sysmonitors = copy.monitors();
+    sysdata = system.info();
+    ffields = system.forceFields();
+    sysmonitors = system.monitors();
 
     return *this;
 }

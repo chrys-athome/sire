@@ -8,6 +8,7 @@
 #include "SireMol/molecule.h"
 #include "SireMol/residue.h"
 #include "SireMol/newatom.h"
+#include "SireFF/ffgroupid.h"
 
 namespace bp = boost::python;
 
@@ -58,10 +59,6 @@ void register_SystemData_class(){
             , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireSystem::SystemData::* )( ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> const & ) )( &::SireSystem::SystemData::change )
             , ( bp::arg("molecules") ) )    
         .def( 
-            "contains"
-            , (bool ( ::SireSystem::SystemData::* )( ::SireMol::MoleculeGroupID ) const)( &::SireSystem::SystemData::contains )
-            , ( bp::arg("groupid") ) )    
-        .def( 
             "group"
             , (::SireMol::MoleculeGroup const & ( ::SireSystem::SystemData::* )( ::SireMol::MoleculeGroupID ) const)( &::SireSystem::SystemData::group )
             , ( bp::arg("id") )
@@ -95,6 +92,10 @@ void register_SystemData_class(){
         .def( bp::self != bp::self )    
         .def( bp::self == bp::self )    
         .def( 
+            "refersTo"
+            , (bool ( ::SireSystem::SystemData::* )( ::SireMol::MoleculeGroupID ) const)( &::SireSystem::SystemData::refersTo )
+            , ( bp::arg("groupid") ) )    
+        .def( 
             "remove"
             , (void ( ::SireSystem::SystemData::* )( ::SireMol::MoleculeGroupID ) )( &::SireSystem::SystemData::remove )
             , ( bp::arg("groupid") ) )    
@@ -126,6 +127,10 @@ void register_SystemData_class(){
             "remove"
             , (void ( ::SireSystem::SystemData::* )( ::QList<SireMol::PartialMolecule> const & ) )( &::SireSystem::SystemData::remove )
             , ( bp::arg("molecules") ) )    
+        .def( 
+            "space"
+            , (::SireVol::Space const & ( ::SireSystem::SystemData::* )(  ) const)( &::SireSystem::SystemData::space )
+            , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "version"
             , (::SireBase::Version const & ( ::SireSystem::SystemData::* )(  ) const)( &::SireSystem::SystemData::version )
