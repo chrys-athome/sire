@@ -254,6 +254,8 @@ public:
         //SharedPolyPointer
         if (obj.ref)
         {
+            return this->operator=( SharedPolyPointerHelper<T>::clone(obj) );
+            
             T &obj_held_by_ptr = const_cast<T&>(obj);
 
             return this->operator=(&obj_held_by_ptr);

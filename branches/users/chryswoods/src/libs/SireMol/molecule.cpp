@@ -186,10 +186,16 @@ Molecule& Molecule::operator=(const MoleculeView &other)
     return *this;
 }
 
+#include <QDebug>
+
 /** Assign from the MolData which is the result from a commit of an EditMol */
 Molecule& Molecule::operator=(const detail::MolData &moldata)
 {
     data() = moldata;
+    _pvt_selection() = AtomSelection(data().info());
+    
+    qDebug() << "Here" <<  data().info().nAtoms() << _pvt_selection().nSelected();
+    
     return *this;
 }
 

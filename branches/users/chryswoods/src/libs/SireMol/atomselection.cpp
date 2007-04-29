@@ -249,7 +249,20 @@ int AtomSelection::nSelected(CutGroupID cgid) const
     if (this->selectedAll())
         return molinfo.nAtoms(cgid);
     else
-        return selected_atoms.value(cgid).count();
+    {
+        const QHash< CutGroupID,QSet<AtomID> >::const_iterator 
+                                              it = selected_atoms.find(cgid);
+                                              
+        if (it != selected_atoms.end())
+        {
+            if (it->isEmpty())
+                return molinfo.nAtoms(cgid);
+            else
+                return it->count();
+        }
+        else
+            return 0;
+    }
 }
 
 /** Internal function used to see if the atom with index
@@ -543,7 +556,7 @@ AtomSelection AtomSelection::deselectAll(CutGroupID cgid) const
     AtomSelection retval = *this;
     retval._pvt_deselect(cgid);
 
-    return *this;
+    return retval;
 }
 
 /** Select all of the atoms in the CutGroup with ID == cgid
@@ -596,7 +609,7 @@ void AtomSelection::_unsafe_select(const CGAtomID &cgatomid)
                 {
                     //adding this atom will complete the set of all
                     //atoms in this selected
-                    this->selectAll(cgatomid.cutGroupID());
+                    this->_pvt_select(cgatomid.cutGroupID());
                     return;
                 }
                 else
@@ -614,7 +627,7 @@ void AtomSelection::_unsafe_select(const CGAtomID &cgatomid)
             {
                 //there is only one atom in this CutGroup, and it has
                 //just been selected!
-                this->selectAll(cgatomid.cutGroupID());
+                this->_pvt_select(cgatomid.cutGroupID());
                 return;
             }
             else
@@ -648,7 +661,7 @@ void AtomSelection::_unsafe_deselect(const CGAtomID &cgatomid)
         if (this->nSelected() == 1)
         {
             //we are deselecting the only selected atom!
-            this->deselectAll();
+            this->_pvt_deselectAll();
             return;
         }
         else if (this->selectedAll())
@@ -687,15 +700,16 @@ void AtomSelection::_unsafe_deselect(const CGAtomID &cgatomid)
             }
 
             --nselected;
+            
             return;
         }
         else
         {
-            if (this->nSelected(cgatomid.cutGroupID()) - 1 == 0)
+            if (this->nSelected(cgatomid.cutGroupID()) == 1)
             {
                 //deselecting this atom will remove all atoms from
                 //this CutGroup
-                this->deselectAll(cgatomid.cutGroupID());
+                this->_pvt_deselect(cgatomid.cutGroupID());
                 return;
             }
             else
@@ -777,6 +791,8 @@ AtomSelection AtomSelection::selectAll(ResNum resnum) const
     return retval;
 }
 
+#include <QDebug>
+
 /** Deselect all of the atoms that are in the residue with number 'resnum'
 
     \throw SireMol::missing_residue
@@ -785,8 +801,6 @@ void AtomSelection::_pvt_deselect(ResNum resnum)
 {
     if ( not (this->isEmpty() or this->selectedNone(resnum)) )
     {
-        ResidueInfo resinfo = molinfo[resnum];
-
         if (molinfo.nResidues() == 1)
         {
             //we are deselecting the only residue in the molecule!
@@ -795,11 +809,13 @@ void AtomSelection::_pvt_deselect(ResNum resnum)
         }
         else
         {
+            ResidueInfo resinfo = molinfo[resnum];
+
             uint nats = resinfo.nAtoms();
 
             for (AtomID i(0); i<nats; ++i)
             {
-                this->_pvt_deselect( resinfo[i] );
+                this->_unsafe_deselect( resinfo[i] );
             }
         }
     }
