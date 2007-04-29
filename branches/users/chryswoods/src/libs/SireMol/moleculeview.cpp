@@ -49,8 +49,12 @@ using namespace SireStream;
 ///////////////
 
 /** Null constructor */
-MolDataViewPvt::MolDataViewPvt() : QSharedData()
-{}
+MolDataViewPvt::MolDataViewPvt() 
+               : QSharedData(),
+                 d( new MoleculeData() )
+{
+    selected_atoms = AtomSelection(d->info());
+}
 
 /** Construct from a passed MoleculeData */
 MolDataViewPvt::MolDataViewPvt(const MoleculeData &moldata)

@@ -365,7 +365,7 @@ SIRE_OUTOFLINE_TEMPLATE
 SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(S *obj)
 {
     if (obj == 0)
-        return this->operator=<T>(0);
+        return this->operator=(0);
     else
     {
         T *obj_ptr = dynamic_cast<T*>(obj);
@@ -374,7 +374,7 @@ SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(S *obj)
             throwInvalidCast( SharedPolyPointerHelper<S>::what(*obj),
                               SharedPolyPointerHelper<T>::typeName() );
 
-        return this->operator=<T>(obj_ptr);
+        return this->operator=(obj_ptr);
     }
 }
 
