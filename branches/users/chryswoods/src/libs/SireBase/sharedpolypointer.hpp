@@ -394,7 +394,15 @@ Q_INLINE_TEMPLATE
 SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(T *ptr)
 {
     if (d != ptr)
-        qAtomicAssign(d, ptr);
+    {
+        if (d)
+            qAtomicAssign(d, ptr);
+        else
+        {
+            d = ptr;
+            d->ref.ref();
+        }
+    }
     
     return *this;
 }
@@ -407,8 +415,6 @@ template<class T>
 Q_INLINE_TEMPLATE
 SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(const T &obj)
 {
-    qDebug() << CODELOC;
-    
     if (d != &obj)
     {
         //increment the reference count of this object - this 
@@ -452,7 +458,6 @@ SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(const T &obj)
         }
     }
     
-    qDebug() << CODELOC;
     return *this;
 }
 
@@ -550,8 +555,6 @@ template<class S>
 Q_INLINE_TEMPLATE
 SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(const S &obj)
 {
-    qDebug() << CODELOC;
-
     if (d != &obj)
     {
         //increment the reference count of this object - this 
@@ -564,15 +567,11 @@ SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(const S &obj)
         
         obj_ptr->ref.ref();
     
-        qDebug() << CODELOC;
-    
         //if this object is already pointed to by a SharedPolyPointer
         //then the reference count of the QSharedData part will now be
         //greater than one
         if ( int(obj_ptr->ref) > 1 )
         {
-            qDebug() << CODELOC;
-            
             //this is held by another SharedPolyPointer
             if (d)
             {
@@ -589,7 +588,6 @@ SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(const S &obj)
         }
         else
         {
-            qDebug() << CODELOC;
             //the reference count was zero - this implies that
             //this object is not held by another SharedPolyPointer,
             //(it is probably on the stack) so it is not
@@ -598,11 +596,8 @@ SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(const S &obj)
             obj_ptr->ref.deref();
             obj_ptr = SharedPolyPointerHelper<T>::clone(obj);
             
-            qDebug() << CODELOC << obj_ptr;
             if (d)
             {
-                qDebug() << CODELOC << d->ref << obj_ptr->ref;
-            
                 qAtomicAssign(d, obj_ptr);
             }
             else
@@ -610,12 +605,8 @@ SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(const S &obj)
                 d = obj_ptr;
                 d->ref.ref();
             }
-            
-            qDebug() << CODELOC;
         }
     }
-    
-    qDebug() << CODELOC;
     
     return *this;
 }
@@ -768,10 +759,10 @@ QDataStream& operator<<(QDataStream &ds,
     else
     {
         //get the object type name
-        QLatin1String objname( SireBase::SharedPolyPointerHelper<T>::what( *(ptr.constData()) ) );
+        QLatin1String objname( SireBase::SharedPolyPointerHelper<T>::what(*(ptr.d)) );
 
         SireBase::SharedPolyPointerBase::save(ds,
-                      SireBase::SharedPolyPointerHelper<T>::what(*(ptr.constData())), ptr.d);
+                      SireBase::SharedPolyPointerHelper<T>::what(*(ptr.d)), ptr.d);
     }
 
     return ds;
@@ -790,10 +781,13 @@ QDataStream& operator>>(QDataStream &ds,
     {
         if (ptr.d)
         {
+            //detach this pointer
+            ptr.detach();
+        
             ptr = static_cast<T*>(
-                      SireBase::SharedPolyPointerBase::read(ds, ptr.data(),
-                                     SireBase::SharedPolyPointerHelper<T>::what(*(ptr.constData()))
-                                                 )
+                      SireBase::SharedPolyPointerBase::read(ds, ptr.d,
+                            SireBase::SharedPolyPointerHelper<T>::what(*(ptr.d))
+                                                           )
                                  );
         }
         else

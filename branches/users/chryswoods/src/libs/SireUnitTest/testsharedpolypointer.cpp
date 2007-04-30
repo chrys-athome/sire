@@ -400,15 +400,15 @@ void TestSharedPolyPointer::runTests()
     QDataStream ds2(bytedata);
 
     qDebug() << "Reading from a bytearray...";
-//     ds2 >> fooptr2 >> fooptr;
-// 
-//     BOOST_CHECK( fooptr2->value() == 15*5 );
-//     BOOST_CHECK( fooptr2->special() == 42 );
-//     BOOST_CHECK( fooptr2->what() == Bar::typeName() );
-// 
-//     BOOST_CHECK( fooptr->value() == 35*15 );
-//     BOOST_CHECK( fooptr->special() == 150 );
-//     BOOST_CHECK( fooptr->what() == Bar2::typeName() );
+    ds2 >> fooptr2 >> fooptr;
+
+    BOOST_CHECK( fooptr2->value() == 15*5 );
+    BOOST_CHECK( fooptr2->special() == 42 );
+    BOOST_CHECK( fooptr2->what() == Bar::typeName() );
+
+    BOOST_CHECK( fooptr->value() == 35*15 );
+    BOOST_CHECK( fooptr->special() == 150 );
+    BOOST_CHECK( fooptr->what() == Bar2::typeName() );
 
     //test polymorphic casting
     qDebug() << "Testing polymorphic casting...";
