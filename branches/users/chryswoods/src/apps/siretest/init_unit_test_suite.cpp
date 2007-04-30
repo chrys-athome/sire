@@ -33,18 +33,18 @@ test_suite SIRE_EXPORT *init_unit_test_suite( int argc, char **argv )
     //(we will just have to accept the memory loss...)
     new QCoreApplication(argc, argv);
 
-    initialise(new TestVector(), test);
-    initialise(new TestAngle(), test);
-    initialise(new TestCutGroup(), test);
-    initialise(new TestUnits(), test);
-    initialise(new TestComplex(), test);
-    initialise(new TestSireCAS(), test);
-    initialise(new TestAtomSelection(), test);
-    initialise(new TestMatch(), test);
-    initialise(new TestFFDB(), test);
+//     initialise(new TestVector(), test);
+//     initialise(new TestAngle(), test);
+//     initialise(new TestCutGroup(), test);
+//     initialise(new TestUnits(), test);
+//     initialise(new TestComplex(), test);
+//     initialise(new TestSireCAS(), test);
+//     initialise(new TestAtomSelection(), test);
+//     initialise(new TestMatch(), test);
+//     initialise(new TestFFDB(), test);
     initialise(new TestSharedPolyPointer(), test);
-    initialise(new TestPeriodicBox(), test);
-    initialise(new TestVersion(), test);
+//     initialise(new TestPeriodicBox(), test);
+//     initialise(new TestVersion(), test);
 
     return test;
 }
