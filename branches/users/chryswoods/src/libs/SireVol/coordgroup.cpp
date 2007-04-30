@@ -128,91 +128,67 @@ CoordGroupData* CoordGroupData::getSharedNull()
 /** Completely destroy the group at 'storage' */
 void CoordGroupBase::destroy(CoordGroupData *group_ptr)
 {
-    qDebug() << CODELOC;
     char *storage = (char*)group_ptr;
     
-    qDebug() << CODELOC;
     int sz = group_ptr->count();
     
-    qDebug() << CODELOC;
     Vector *array = (Vector*)( storage + sizeof(CoordGroupData) );
     
     //destroy all elements in the array (in reverse order
     //to preserve the C++ canonical order)
-    qDebug() << CODELOC;
     for (int i=sz-1; i>=0; --i)
     {
         array[i].~Vector();
     }
     
     //destroy the CoordGroupData
-    qDebug() << CODELOC;
     group_ptr->~CoordGroupData();
     
     //finally, delete the memory
-    qDebug() << CODELOC;
     delete[] storage;
 }
 
 /** Detach this object from shared storage */
 void CoordGroupBase::detach()
 {
-    qDebug() << CODELOC;
     CoordGroupData *group_ptr = (CoordGroupData*)(storage);
 
     if (group_ptr->ref != 1)
     {
-    qDebug() << CODELOC;
         //we need to clone the memory - get the size of the 
         //memory to be cloned
         int mem_size = sizeof(CoordGroupData) + 
                           group_ptr->count() * sizeof(Vector);
                           
-    qDebug() << CODELOC;
         //create a new array of this size
         char *new_storage = new char[mem_size];
         
-    qDebug() << CODELOC;
         //copy the data...
         void *output = qMemCopy( new_storage, storage, mem_size * sizeof(char) );
         
-    qDebug() << CODELOC;
         BOOST_ASSERT( output == new_storage );
         
-    qDebug() << CODELOC;
         //copy the new storage to the old pointer - the first
         //part of this memory is the CoordGroupData object...
         CoordGroupData *new_group_ptr = (CoordGroupData*)(new_storage);
         new_group_ptr->ref.ref();
         
-    qDebug() << CODELOC;
         CoordGroupData *old_group_ptr = (CoordGroupData*)(storage);
         
-    qDebug() << CODELOC;
         new_group_ptr = qAtomicSetPtr(&old_group_ptr, new_group_ptr);
         
-    qDebug() << CODELOC;
         storage = (char*)(old_group_ptr);
         
-    qDebug() << CODELOC;
         if (!new_group_ptr->ref.deref())
             //we need to delete the original...
             destroy(new_group_ptr);
     }
 }
 
-/** Return a reference to the CoordGroupData that contains the 
-    metadata about this group */
-const CoordGroupData& CoordGroupBase::_pvt_group() const
-{
-    return *( (CoordGroupData*)(memory()) );
-}
-
 /** Return a modifiable reference to the CoordGroupData that contains the 
     metadata about this group */
 CoordGroupData& CoordGroupBase::_pvt_group()
 {
-    qDebug() << CODELOC;
     return *( (CoordGroupData*)(memory()) );
 }
 
@@ -244,40 +220,6 @@ CoordGroupBase& CoordGroupBase::operator=(const CoordGroupBase &other)
     }
     
     return *this;
-}
-
-/** Return whether this group is empty (has no coordinates) */
-bool CoordGroupBase::isEmpty() const
-{
-    return _pvt_group().isEmpty();
-}
-
-/** Return a raw pointer to the array of coordinates */
-const Vector* CoordGroupBase::_pvt_data() const
-{
-    qDebug() << CODELOC;
-    
-    if (not isEmpty())
-        return (Vector*)( constMemory() + sizeof(CoordGroupData) );
-    else
-        return 0;
-}
-
-/** Return a modifiable raw pointer to the array of 
-    coordinates */
-Vector* CoordGroupBase::_pvt_data()
-{
-    if (not isEmpty())
-        return (Vector*)( memory() + sizeof(CoordGroupData) );
-    else
-        return 0;
-}
-
-/** Return a raw pointer to the array of coordinates */
-const Vector* CoordGroupBase::_pvt_constData() const
-{
-    qDebug() << CODELOC;
-    return _pvt_data();
 }
 
 /** Null constructor */
@@ -474,12 +416,6 @@ const Vector& CoordGroupBase::operator[](quint32 i) const
     return _pvt_data()[i];
 }
     
-/** Return whether or not this group needs to be updated */
-bool CoordGroupBase::needsUpdate() const
-{
-    return _pvt_group().needsUpdate();
-}
-    
 /** Set that the AABox needs to be updated */
 void CoordGroupBase::setNeedsUpdate()
 {
@@ -489,40 +425,7 @@ void CoordGroupBase::setNeedsUpdate()
 /** Update the AABox with the current coordinates */
 void CoordGroupBase::update()
 {
-    qDebug() << CODELOC;
     _pvt_group().update( AABox(*this) );
-}
-
-/** Return the enclosing AABox */
-const AABox& CoordGroupBase::aaBox() const
-{
-    return _pvt_group().aaBox();
-}
-
-/** Return a raw pointer to the array containing all
-    of the coordinates */
-const Vector* CoordGroupBase::constData() const
-{
-    return _pvt_data();
-}
-
-/** Return a raw pointer to the array containing all
-    of the coordinates */
-const Vector* CoordGroupBase::data() const
-{
-    return _pvt_data();
-}
-
-/** Return the number of coordinates in this group */
-quint32 CoordGroupBase::count() const
-{
-    return _pvt_group().count(); 
-}
-
-/** Return the number of coordinates in this group */
-quint32 CoordGroupBase::size() const
-{
-    return _pvt_group().count();
 }
 
 //////////////
@@ -805,13 +708,9 @@ void CoordGroupEditor::setCoordinates(const CoordGroupBase &newcoords)
     CoordGroup is consistent with its coordinates. */
 CoordGroup CoordGroupEditor::commit()
 {
-    qDebug() << CODELOC;
-
     if (this->needsUpdate())
         //update the AABox
         this->update();
-
-    qDebug() << CODELOC;
 
     //return a copy of this CoordGroup
     return CoordGroup(*this);

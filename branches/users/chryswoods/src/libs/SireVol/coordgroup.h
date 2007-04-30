@@ -32,7 +32,8 @@
 #include <QSharedData>
 #include <QVector>
 
-#include "SireVol/aabox.h"
+#include "aabox.h"
+
 #include "SireMaths/vector.h"
 
 namespace SireMaths
@@ -278,6 +279,82 @@ inline const char* CoordGroupBase::constMemory() const
     return storage;
 }
 
+/** Return a reference to the CoordGroupData that contains the 
+    metadata about this group */
+inline const detail::CoordGroupData& CoordGroupBase::_pvt_group() const
+{
+    return *( (detail::CoordGroupData*)(memory()) );
+}
+
+/** Return whether this group is empty (has no coordinates) */
+inline bool CoordGroupBase::isEmpty() const
+{
+    return _pvt_group().isEmpty();
+}
+
+/** Return a raw pointer to the array of coordinates */
+inline const Vector* CoordGroupBase::_pvt_data() const
+{
+    if (not isEmpty())
+        return (Vector*)( constMemory() + sizeof(detail::CoordGroupData) );
+    else
+        return 0;
+}
+
+/** Return a modifiable raw pointer to the array of 
+    coordinates */
+inline Vector* CoordGroupBase::_pvt_data()
+{
+    if (not isEmpty())
+        return (Vector*)( memory() + sizeof(detail::CoordGroupData) );
+    else
+        return 0;
+}
+
+/** Return a raw pointer to the array of coordinates */
+inline const Vector* CoordGroupBase::_pvt_constData() const
+{
+    return _pvt_data();
+}
+    
+/** Return whether or not this group needs to be updated */
+inline bool CoordGroupBase::needsUpdate() const
+{
+    return _pvt_group().needsUpdate();
+}
+
+/** Return the enclosing AABox */
+inline const AABox& CoordGroupBase::aaBox() const
+{
+    return _pvt_group().aaBox();
+}
+
+/** Return a raw pointer to the array containing all
+    of the coordinates */
+inline const Vector* CoordGroupBase::constData() const
+{
+    return _pvt_data();
+}
+
+/** Return a raw pointer to the array containing all
+    of the coordinates */
+inline const Vector* CoordGroupBase::data() const
+{
+    return _pvt_data();
+}
+
+/** Return the number of coordinates in this group */
+inline quint32 CoordGroupBase::count() const
+{
+    return _pvt_group().count(); 
+}
+
+/** Return the number of coordinates in this group */
+inline quint32 CoordGroupBase::size() const
+{
+    return _pvt_group().count();
+}
+
 /**
 This class holds a group of coordinates. This group forms the basis of the
 Molecular CutGroup, as defined in SireMol. A CoordGroup contains a list of
@@ -436,9 +513,6 @@ public:
     void setCoordinates(const CoordGroupBase &newcoords);
 
     CoordGroup commit();
-
-protected:
-    bool needsUpdate() const;
 };
 
 }

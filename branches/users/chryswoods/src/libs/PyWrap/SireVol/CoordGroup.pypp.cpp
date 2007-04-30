@@ -21,8 +21,8 @@ void register_CoordGroup_class(){
 
     bp::class_< SireVol::CoordGroup, bp::bases< SireVol::CoordGroupBase > >( "CoordGroup" )    
         .def( bp::init< >() )    
-        .def( bp::init< int >(( bp::arg("size") )) )    
-        .def( bp::init< int, SireMaths::Vector const & >(( bp::arg("size"), bp::arg("value") )) )    
+        .def( bp::init< quint32 >(( bp::arg("size") )) )    
+        .def( bp::init< quint32, SireMaths::Vector const & >(( bp::arg("size"), bp::arg("value") )) )    
         .def( bp::init< QVector<SireMaths::Vector> const & >(( bp::arg("points") )) )    
         .def( bp::init< SireVol::CoordGroupBase const & >(( bp::arg("other") )) )    
         .def( 

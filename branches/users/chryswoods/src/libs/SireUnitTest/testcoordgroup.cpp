@@ -30,7 +30,7 @@
 
 #include "testcoordgroup.h"
 
-#include "coordgroup.h"
+#include "SireVol/coordgroup.h"
 
 using namespace SireTest;
 using namespace SireVol;

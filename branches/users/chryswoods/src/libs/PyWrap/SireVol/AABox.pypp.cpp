@@ -21,8 +21,10 @@ void register_AABox_class(){
 
     bp::class_< SireVol::AABox >( "AABox" )    
         .def( bp::init< >() )    
+        .def( bp::init< SireMaths::Vector const & >(( bp::arg("point") )) )    
         .def( bp::init< SireMaths::Vector const &, SireMaths::Vector const & >(( bp::arg("cent"), bp::arg("extents") )) )    
-        .def( bp::init< SireVol::CoordGroup const & >(( bp::arg("coordgroup") )) )    
+        .def( bp::init< QVector<SireMaths::Vector> const & >(( bp::arg("coordinates") )) )    
+        .def( bp::init< SireVol::CoordGroupBase const & >(( bp::arg("coordgroup") )) )    
         .def( 
             "add"
             , (void ( ::SireVol::AABox::* )( ::SireVol::AABox const & ) )( &::SireVol::AABox::add )
@@ -31,6 +33,18 @@ void register_AABox_class(){
             "center"
             , (::SireMaths::Vector const & ( ::SireVol::AABox::* )(  ) const)( &::SireVol::AABox::center )
             , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( 
+            "from"
+            , (::SireVol::AABox (*)( ::SireMaths::Vector const & ))( &::SireVol::AABox::from )
+            , ( bp::arg("point") ) )    
+        .def( 
+            "from"
+            , (::SireVol::AABox (*)( ::SireVol::CoordGroupBase const & ))( &::SireVol::AABox::from )
+            , ( bp::arg("coordgroup") ) )    
+        .def( 
+            "from"
+            , (::SireVol::AABox (*)( ::QVector<SireMaths::Vector> const & ))( &::SireVol::AABox::from )
+            , ( bp::arg("coords") ) )    
         .def( 
             "halfExtents"
             , (::SireMaths::Vector const & ( ::SireVol::AABox::* )(  ) const)( &::SireVol::AABox::halfExtents )
@@ -53,8 +67,12 @@ void register_AABox_class(){
             , (double ( ::SireVol::AABox::* )(  ) const)( &::SireVol::AABox::radius ) )    
         .def( 
             "recalculate"
-            , (void ( ::SireVol::AABox::* )( ::SireVol::CoordGroup const & ) )( &::SireVol::AABox::recalculate )
+            , (void ( ::SireVol::AABox::* )( ::SireVol::CoordGroupBase const & ) )( &::SireVol::AABox::recalculate )
             , ( bp::arg("coordgroup") ) )    
+        .def( 
+            "recalculate"
+            , (void ( ::SireVol::AABox::* )( ::QVector<SireMaths::Vector> const & ) )( &::SireVol::AABox::recalculate )
+            , ( bp::arg("coordinates") ) )    
         .def( 
             "translate"
             , (void ( ::SireVol::AABox::* )( ::SireMaths::Vector const & ) )( &::SireVol::AABox::translate )
@@ -63,6 +81,7 @@ void register_AABox_class(){
             "withinDistance"
             , (bool ( ::SireVol::AABox::* )( double,::SireVol::AABox const & ) const)( &::SireVol::AABox::withinDistance )
             , ( bp::arg("dist"), bp::arg("box") ) )    
+        .staticmethod( "from" )    
         .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireVol::AABox >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
