@@ -27,8 +27,6 @@ set ( SIREUNITTEST_SOURCES
       testunits.cpp
       testvector.cpp
       testversion.cpp
-      
-      coordgroup.cpp
     )
 
 # Add the resource files
