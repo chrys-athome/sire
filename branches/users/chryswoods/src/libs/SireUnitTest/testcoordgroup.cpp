@@ -52,7 +52,7 @@ void TestCoordGroup::runTests()
     
     qDebug() << "Checking the null CoordGroup...";
     
-    CoordGroupBase cgroup;
+    CoordGroup cgroup;
     
     BOOST_CHECK_EQUAL( cgroup.count(), quint32(0) );
     BOOST_CHECK_EQUAL( cgroup.count(), cgroup.size() );
@@ -69,7 +69,7 @@ void TestCoordGroup::runTests()
     coordinates.append( Vector(2) );
     coordinates.append( Vector(3) );
     
-    cgroup = CoordGroupBase( coordinates );
+    cgroup = CoordGroup( coordinates );
     
     BOOST_CHECK_EQUAL( cgroup.count(), quint32(3) );
     BOOST_CHECK_EQUAL( cgroup.count(), cgroup.size() );
@@ -85,7 +85,7 @@ void TestCoordGroup::runTests()
     BOOST_CHECK( not cgroup.isEmpty() );
     
     qDebug() << "Checking implicit copying...";
-    CoordGroupBase cgroup2 = cgroup;
+    CoordGroup cgroup2 = cgroup;
     
     BOOST_CHECK_EQUAL( cgroup.constData(), cgroup2.constData() );
     
@@ -106,7 +106,7 @@ void TestCoordGroup::runTests()
     
     qDebug() << "Checking some advanced copying...";
     
-    cgroup2 = CoordGroupBase(coordinates);
+    cgroup2 = CoordGroup(coordinates);
     
     BOOST_CHECK_EQUAL( cgroup2.count(), quint32(3) );
     
@@ -118,7 +118,7 @@ void TestCoordGroup::runTests()
     
     coordinates.append( Vector(4) );
     
-    cgroup2 = CoordGroupBase(coordinates);
+    cgroup2 = CoordGroup(coordinates);
     
     BOOST_CHECK_EQUAL( cgroup2.count(), quint32(4) );
     
@@ -128,6 +128,36 @@ void TestCoordGroup::runTests()
     BOOST_CHECK( cgroup2[3] == coordinates[3] );
     
     BOOST_CHECK( cgroup != cgroup2 );
+    
+    qDebug() << "Testing CoordGroupEditor...";
+    
+    CoordGroupEditor editor = cgroup.edit();
+    
+    BOOST_CHECK_EQUAL( editor.constData(), cgroup.constData() );
+    
+    cgroup = editor.commit();
+    
+    BOOST_CHECK_EQUAL( editor.constData(), cgroup.constData() );
+    
+    editor.translate( Vector(1) );
+    
+    BOOST_CHECK( editor[0] == coordinates[0] + Vector(1) );
+    BOOST_CHECK( editor[1] == coordinates[1] + Vector(1) );
+    BOOST_CHECK( editor[2] == coordinates[2] + Vector(1) );
+    
+    BOOST_CHECK( editor != cgroup );
+    
+    qDebug() << "Testing commiting the CoordGroupEditor...";
+    cgroup2 = editor.commit();
+    qDebug() << "Good!";
+    
+    BOOST_CHECK_EQUAL( cgroup2.constData(), editor.constData() );
+    
+    BOOST_CHECK( cgroup2.aaBox().center() == cgroup.aaBox().center() + Vector(1) );
+    
+    cgroup = cgroup2;
+    
+    BOOST_CHECK_EQUAL( cgroup.constData(), editor.constData() );
     
     qDebug() << "Finished TestCoordGroup tests...";
 }

@@ -190,15 +190,6 @@ class SIREVOL_EXPORT CoordGroupBase
 {
 
 public:
-    CoordGroupBase();
-    
-    CoordGroupBase(quint32 size);
-    CoordGroupBase(quint32 size, const Vector &value);
-    
-    CoordGroupBase(const QVector<Vector> &coordinates);
-    
-    CoordGroupBase(const CoordGroupBase &other);
-    
     ~CoordGroupBase();
     
     bool operator==(const CoordGroupBase &other) const;
@@ -218,10 +209,27 @@ public:
 
     quint32 count() const;
     quint32 size() const;
+
+    void assertValidIndex(quint32 i) const;
     
-    CoordGroupBase& operator=(const CoordGroupBase &other);
+    void assertSameSize(const QVector<Vector> &coordinates) const;
+    void assertSameSize(const CoordGroupBase &other) const;
 
 protected:
+    CoordGroupBase();
+    
+    CoordGroupBase(quint32 size, const Vector &value = Vector());
+    
+    CoordGroupBase(const QVector<Vector> &coordinates);
+    
+    CoordGroupBase(const CoordGroupBase &other);
+    
+    CoordGroupBase& operator=(const CoordGroupBase &other);
+    
+    void setNeedsUpdate();
+    bool needsUpdate() const;
+    void update();
+    
     const char* memory() const;
     char* memory();
 
@@ -236,8 +244,6 @@ protected:
     Vector* _pvt_data();
     
     const Vector* _pvt_constData() const;
-
-    void assertValidIndex(quint32 i) const;
 
 private:
     void detach();
@@ -272,8 +278,171 @@ inline const char* CoordGroupBase::constMemory() const
     return storage;
 }
 
+/**
+This class holds a group of coordinates. This group forms the basis of the
+Molecular CutGroup, as defined in SireMol. A CoordGroup contains a list of
+coordinates, together with an AABox which provides information as to the
+center and extents of this group. SireVol is designed to calculate distances
+between points in different CoordGroups, or to calculate distances between
+points within a CoordGroup. A CoordGroup is implicitly shared and is
+designed to be fast to use, and fast to copy.
+
+@author Christopher Woods
+*/
+class SIREVOL_EXPORT CoordGroup : public CoordGroupBase
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const CoordGroup&);
+friend QDataStream& ::operator>>(QDataStream&, CoordGroup&);
+
+public:
+    CoordGroup();
+    CoordGroup(quint32 size);
+    CoordGroup(quint32 size, const Vector &value);
+    CoordGroup(const QVector<Vector> &points);
+
+    CoordGroup(const CoordGroupBase &other);
+    CoordGroup(const CoordGroup &other);
+
+    ~CoordGroup();
+
+    CoordGroup& operator=(const CoordGroup &other);
+    CoordGroup& operator=(const CoordGroupBase &other);
+
+    CoordGroupEditor edit() const;
+
+    template<class T>
+    static CoordGroup combine(const T &groups);
+};
+
+/** Combine a whole load of CoordGroups into a single CoordGroup. */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+CoordGroup CoordGroup::combine(const T &groups)
+{
+    int ncg = groups.count();
+
+    if (ncg == 0)
+    {
+        return CoordGroup();
+    }
+    else if (ncg == 1)
+    {
+        return groups.first();
+    }
+    else
+    {
+        //we have at least two groups to combine together! - calculate the
+        //total number of points in all of the groups
+        int ntotal = 0;
+
+        for (typename T::const_iterator it = groups.constBegin();
+             it != groups.constEnd();
+             ++it)
+        {
+            ntotal += it->count();
+        }
+
+        if (ntotal == 0)
+            //there are no points at all - return a null CoordGroup
+            return CoordGroup();
+
+        //create an array to hold that many points
+        CoordGroup combined_group(ntotal);
+
+        //get a pointer to the array of points
+        Vector *combined_array = combined_group._pvt_data();
+
+        //now go through each CoordGroup and copy their coordinates into
+        //the new array, and combine together their AABoxes...
+        AABox combined_box;
+
+        int i = 0;
+
+        for (typename T::const_iterator it = groups.constBegin();
+             it != groups.constEnd();
+             ++it)
+        {
+            int npoints = it->count();
+            const Vector *group_array = it->constData();
+
+            //copy the coordinates
+            void *output = qMemCopy( group_array, &(combined_array[i]),
+                                     npoints*sizeof(Vector) );
+
+            i += npoints;
+
+            //combine the bounding boxes
+            combined_box += it->aaBox();
+        }
+
+        combined_group._pvt_group().update(combined_box);
+
+        return combined_group;
+    }
 }
 
-//Q_DECLARE_METATYPE(SireVol::CoordGroup);
+/**
+This class is used to edit a CoordGroup. This class is used when you want to
+make several small changes to a CoordGroup, but do not want the CoordGroup to
+update its internal state after each change (e.g. you are moving each point in
+turn, and do not want the AABox to be updated for every step!)
+
+You use a CoordGroupEditor like this;
+
+\code
+
+//create a CoordGroup with space for 100 coordinates
+CoordGroup coordgroup(100);
+
+//create an editor for this group
+CoordGroupEditor editor = coordgroup.edit();
+
+//manipulate each coordinate in turn
+for (int i=0; i<100; ++i)
+    editor[i] = Vector(i,i+1,i+2);
+
+//commit the changes
+coordgroup = editor.commit();
+
+\endcode
+
+@author Christopher Woods
+*/
+class SIREVOL_EXPORT CoordGroupEditor : public CoordGroupBase
+{
+public:
+    CoordGroupEditor();
+    CoordGroupEditor(const CoordGroupBase &other);
+
+    ~CoordGroupEditor();
+
+    CoordGroupEditor& operator=(const CoordGroupBase &other);
+
+    Vector& operator[](quint32 i);
+
+    Vector* data();
+
+    void translate(const Vector &delta);
+    void translate(quint32 i, const Vector &delta);
+
+    void rotate(const Quaternion &quat, const Vector &point);
+    void rotate(const Matrix &rotmat, const Vector &point);
+
+    void rotate(quint32 i, const Quaternion &quat, const Vector &point);
+    void rotate(quint32 i, const Matrix &rotmat, const Vector &point);
+
+    void setCoordinates(const QVector<Vector> &newcoords);
+    void setCoordinates(const CoordGroupBase &newcoords);
+
+    CoordGroup commit();
+
+protected:
+    bool needsUpdate() const;
+};
+
+}
+
+Q_DECLARE_METATYPE(SireVol::CoordGroup);
 
 #endif

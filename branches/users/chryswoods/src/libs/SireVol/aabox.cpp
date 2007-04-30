@@ -29,6 +29,8 @@
 #include "aabox.h"
 #include "coordgroup.h"
 
+#include <QDebug>
+
 #include "SireStream/datastream.h"
 
 using namespace SireStream;
@@ -76,6 +78,7 @@ AABox::AABox(const Vector &c, const Vector &extents) : cent(c), halfextents(exte
 /** Construct an AABox that completely encases the CoordGroup 'coordgroup' */
 AABox::AABox(const CoordGroupBase &coordgroup)
 {
+    qDebug() << CODELOC;
     recalculate(coordgroup);
 }
 
@@ -107,12 +110,15 @@ bool AABox::operator!=(const AABox &other) const
     array 'coords' (which has size 'sz') */
 void AABox::recalculate(const Vector *coords, int sz)
 {
+    qDebug() << CODELOC;
     if (sz > 0)
     {
         //set the initial max and min coords from the first coordinate in the group
+    qDebug() << CODELOC << coords;
         Vector maxcoords( coords[0] );
         Vector mincoords( maxcoords );
 
+    qDebug() << CODELOC;
         //loop through all of the remaining coordinates in the group
         for (int i=1; i < sz; ++i)
         {
@@ -122,6 +128,7 @@ void AABox::recalculate(const Vector *coords, int sz)
             mincoords.setMin( coord );
         }
 
+    qDebug() << CODELOC;
         //now calculate the center as half the maximum and minimum coordinates
         cent = 0.5 * (maxcoords + mincoords);
 
@@ -129,11 +136,13 @@ void AABox::recalculate(const Vector *coords, int sz)
         //coordinates and the center
         halfextents = maxcoords - cent;
 
+    qDebug() << CODELOC;
         //the radius is the length of 'halfextents'
         rad = halfextents.length();
     }
     else
     {
+    qDebug() << CODELOC;
         cent = Vector(0);
         halfextents = Vector(0);
         sz = 0;
@@ -143,6 +152,7 @@ void AABox::recalculate(const Vector *coords, int sz)
 /** Recalculate the AABox so that it completely encloses the CoordGroup 'coordgroup' */
 void AABox::recalculate(const CoordGroupBase &coordgroup)
 {
+    qDebug() << CODELOC;
     this->recalculate( coordgroup.constData(), coordgroup.size() );
 }
 
