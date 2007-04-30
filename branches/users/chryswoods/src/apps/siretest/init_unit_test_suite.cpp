@@ -11,6 +11,7 @@ using boost::unit_test_framework::test_suite;
 #include <QCoreApplication>
 
 #include "SireUnitTest/testvector.h"
+#include "SireUnitTest/testcoordgroup.h"
 #include "SireUnitTest/testcutgroup.h"
 #include "SireUnitTest/testunits.h"
 #include "SireUnitTest/testangle.h"
@@ -29,12 +30,14 @@ test_suite SIRE_EXPORT *init_unit_test_suite( int argc, char **argv )
 {
     test_suite* test= BOOST_TEST_SUITE( "Sire Unit Test Suite" );
 
-    //first, set the ID of the main thread - to do this we need to have a QCoreApplication object..
+    //first, set the ID of the main thread - to do this we need to 
+    //have a QCoreApplication object..
     //(we will just have to accept the memory loss...)
     new QCoreApplication(argc, argv);
 
     initialise(new TestVector(), test);
     initialise(new TestAngle(), test);
+    initialise(new TestCoordGroup(), test);
     initialise(new TestCutGroup(), test);
     initialise(new TestUnits(), test);
     initialise(new TestComplex(), test);

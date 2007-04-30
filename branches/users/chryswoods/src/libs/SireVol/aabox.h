@@ -29,6 +29,8 @@
 #ifndef SIREVOL_AABOX_H
 #define SIREVOL_AABOX_H
 
+#include <QVector>
+
 #include "SireMaths/vector.h"
 
 SIRE_BEGIN_HEADER
@@ -47,7 +49,7 @@ namespace SireVol
 
 using SireMaths::Vector;
 
-class CoordGroup;
+class CoordGroupBase;
 
 /**
 An AABox is an axis-aligned bounding box that is the smallest box that is aligned with the three cartesian axes that completely encases a CoordGroup. It is trivial to obtain the bounding sphere from the AABox. The AABox is used by the distance calculators to quickly determine whether two CoordGroups are within the cutoff radius, and to obtain all CoordGroups that are within particular regions of space.
@@ -57,15 +59,17 @@ An AABox is an axis-aligned bounding box that is the smallest box that is aligne
 class SIREVOL_EXPORT AABox
 {
 
-friend class CoordGroupPvt; //so it can call protected 'recalculate' function
-
 friend QDataStream& ::operator<<(QDataStream&, const AABox&);
 friend QDataStream& ::operator>>(QDataStream&, AABox&);
 
+friend class CoordGroupPvt;
+
 public:
     AABox();
+    AABox(const Vector &point);
     AABox(const Vector &cent, const Vector &extents);
-    AABox(const CoordGroup &coordgroup);
+    AABox(const QVector<Vector> &coordinates);
+    AABox(const CoordGroupBase &coordgroup);
 
     ~AABox();
 
@@ -78,7 +82,8 @@ public:
 
     void add(const AABox &other);
 
-    void recalculate(const CoordGroup &coordgroup);
+    void recalculate(const CoordGroupBase &coordgroup);
+    void recalculate(const QVector<Vector> &coordinates);
 
     void translate(const Vector &delta);
 
@@ -91,6 +96,10 @@ public:
 
     bool withinDistance(double dist, const AABox &box) const;
     bool intersects(const AABox &other) const;
+
+    static AABox from(const Vector &point);
+    static AABox from(const CoordGroupBase &coordgroup);
+    static AABox from(const QVector<Vector> &coords);
 
 protected:
     void recalculate(const Vector *coords, int size);

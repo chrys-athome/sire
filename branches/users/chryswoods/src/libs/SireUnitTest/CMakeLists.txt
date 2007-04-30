@@ -17,6 +17,7 @@ set ( SIREUNITTEST_SOURCES
       testatomselection.cpp
       testbase.cpp
       testcomplex.cpp
+      testcoordgroup.cpp
       testcutgroup.cpp
       testffdb.cpp
       testmatch.cpp
@@ -26,6 +27,8 @@ set ( SIREUNITTEST_SOURCES
       testunits.cpp
       testvector.cpp
       testversion.cpp
+      
+      coordgroup.cpp
     )
 
 # Add the resource files
