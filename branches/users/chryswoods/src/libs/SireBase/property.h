@@ -170,8 +170,6 @@ friend QDataStream& ::operator>>(QDataStream&, Property&);
 public:
     Property();
 
-    Property(const SireBase::SharedPolyPointer<PropertyBase> &ptr);
-
     Property(const PropertyBase &property);
     Property(PropertyBase *property);
 

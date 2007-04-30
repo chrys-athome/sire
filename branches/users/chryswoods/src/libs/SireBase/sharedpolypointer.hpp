@@ -356,7 +356,7 @@ SharedPolyPointer<T>::SharedPolyPointer(const S &obj)
         //(it is probably on the stack) so it is not
         //safe to use this object directly - point to a clone
         //of this object.
-        d = SharedPolyPointerHelper<T>::clone(obj);
+        d = SharedPolyPointerHelper<T>::clone(*obj_ptr);
         d->ref.ref();
     
         //reduce the reference count of the original object
@@ -559,7 +559,7 @@ SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(const S &obj)
     {
         //increment the reference count of this object - this 
         //stops if from being deleted
-        T *obj_ptr = dynamic_cast<const T*>( const_cast<S*>(&obj) );
+        T *obj_ptr = dynamic_cast<T*>( const_cast<S*>(&obj) );
         
         if (!obj_ptr)
             throwInvalidCast( SharedPolyPointerHelper<S>::what(obj),
@@ -594,7 +594,7 @@ SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(const S &obj)
             //safe to use this object directly - point to a clone
             //of this object.
             obj_ptr->ref.deref();
-            obj_ptr = SharedPolyPointerHelper<T>::clone(obj);
+            obj_ptr = SharedPolyPointerHelper<T>::clone(*obj_ptr);
             
             if (d)
             {

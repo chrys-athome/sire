@@ -302,18 +302,6 @@ Property::Property(PropertyBase *ptr) : d(ptr)
                   "Cannot construct a Property from a null pointer!"), CODELOC );
 }
 
-/** Construct from the passed pointer - this must not be null!
-
-    \throw SireError::nullptr_error
-*/
-Property::Property(const SireBase::SharedPolyPointer<PropertyBase> &ptr)
-         : d(ptr)
-{
-    if (not ptr)
-        throw SireError::nullptr_error( QObject::tr(
-                  "Cannot construct a Property from a null pointer!"), CODELOC );
-}
-
 /** Construct from the passed property */
 Property::Property(const PropertyBase &property)
          : d(property)

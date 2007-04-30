@@ -194,8 +194,6 @@ Molecule& Molecule::operator=(const detail::MolData &moldata)
     data() = moldata;
     _pvt_selection() = AtomSelection(data().info());
     
-    qDebug() << "Here" <<  data().info().nAtoms() << _pvt_selection().nSelected();
-    
     return *this;
 }
 

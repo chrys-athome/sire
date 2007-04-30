@@ -13,19 +13,19 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the sources in SireUnitTest
 set ( SIREUNITTEST_SOURCES
-      #testangle.cpp
-      #testatomselection.cpp
+      testangle.cpp
+      testatomselection.cpp
       testbase.cpp
-      #testcomplex.cpp
-      #testcutgroup.cpp
-      #testffdb.cpp
-      #testmatch.cpp
-      #testperiodicbox.cpp
+      testcomplex.cpp
+      testcutgroup.cpp
+      testffdb.cpp
+      testmatch.cpp
+      testperiodicbox.cpp
       testsharedpolypointer.cpp
-      #testsirecas.cpp
-      #testunits.cpp
-      #testvector.cpp
-      #testversion.cpp
+      testsirecas.cpp
+      testunits.cpp
+      testvector.cpp
+      testversion.cpp
     )
 
 # Add the resource files
@@ -49,11 +49,11 @@ set_target_properties (SireUnitTest PROPERTIES
 
 # Link to other Sire libraries
 target_link_libraries (SireUnitTest
-                       #SireIO
-                       #SireMM
-                       #SireCAS
+                       SireIO
+                       SireMM
+                       SireCAS
                        SireBase
-                       #SireUnits
+                       SireUnits
                        ${BOOST_UNITTEST_LIBRARY}
                        )
 
