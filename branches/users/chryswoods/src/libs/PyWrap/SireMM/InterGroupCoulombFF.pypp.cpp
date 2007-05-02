@@ -59,6 +59,16 @@ void register_InterGroupCoulombFF_class(){
                 , ( bp::arg("group"), bp::arg("molecule"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
         
         }
+        { //::SireMM::InterGroupCoulombFF::addTo
+        
+            typedef bool ( ::SireMM::InterGroupCoulombFF::*addTo_function_type )( ::SireFF::FFBase::Group const &,::QList<SireMol::PartialMolecule> const &,::SireFF::ParameterMap const & ) ;
+            
+            InterGroupCoulombFF_exposer.def( 
+                "addTo"
+                , addTo_function_type( &::SireMM::InterGroupCoulombFF::addTo )
+                , ( bp::arg("group"), bp::arg("molecules"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
+        
+        }
         { //::SireMM::InterGroupCoulombFF::addToA
         
             typedef bool ( ::SireMM::InterGroupCoulombFF::*addToA_function_type )( ::SireMol::PartialMolecule const &,::SireFF::ParameterMap const & ) ;
@@ -69,6 +79,16 @@ void register_InterGroupCoulombFF_class(){
                 , ( bp::arg("molecule"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
         
         }
+        { //::SireMM::InterGroupCoulombFF::addToA
+        
+            typedef bool ( ::SireMM::InterGroupCoulombFF::*addToA_function_type )( ::QList<SireMol::PartialMolecule> const &,::SireFF::ParameterMap const & ) ;
+            
+            InterGroupCoulombFF_exposer.def( 
+                "addToA"
+                , addToA_function_type( &::SireMM::InterGroupCoulombFF::addToA )
+                , ( bp::arg("molecules"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
+        
+        }
         { //::SireMM::InterGroupCoulombFF::addToB
         
             typedef bool ( ::SireMM::InterGroupCoulombFF::*addToB_function_type )( ::SireMol::PartialMolecule const &,::SireFF::ParameterMap const & ) ;
@@ -77,6 +97,16 @@ void register_InterGroupCoulombFF_class(){
                 "addToB"
                 , addToB_function_type( &::SireMM::InterGroupCoulombFF::addToB )
                 , ( bp::arg("molecule"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
+        
+        }
+        { //::SireMM::InterGroupCoulombFF::addToB
+        
+            typedef bool ( ::SireMM::InterGroupCoulombFF::*addToB_function_type )( ::QList<SireMol::PartialMolecule> const &,::SireFF::ParameterMap const & ) ;
+            
+            InterGroupCoulombFF_exposer.def( 
+                "addToB"
+                , addToB_function_type( &::SireMM::InterGroupCoulombFF::addToB )
+                , ( bp::arg("molecules"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
         
         }
         { //::SireMM::InterGroupCoulombFF::change

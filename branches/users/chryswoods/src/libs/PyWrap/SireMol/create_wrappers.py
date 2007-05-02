@@ -160,11 +160,8 @@ implicitly_convertible = [ ("boost::tuples::tuple<SireMol::AtomIndex,SireMol::At
                            ("SireMol::NewAtom", "SireMaths::Vector"),
                            ("SireMol::NewAtom", "SireMol::Element"),
 
-                           ("SireMol::NewAtom", "SireMol::PartialMolecule"),
-                           ("SireMol::Residue", "SireMol::PartialMolecule"),
-                           ("SireMol::Molecule", "SireMol::PartialMolecule"),
-
-                           ("SireMol::MoleculeView", "SireMol::Molecule")
+                           ("SireMol::MoleculeView", "SireMol::Molecule"),
+                           ("SireMol::MolDataView", "SireMol::PartialMolecule")
                          ]
 
 incpaths = sys.argv[1:]

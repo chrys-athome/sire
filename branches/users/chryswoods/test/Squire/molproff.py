@@ -2,6 +2,7 @@
 from Sire.Mol import *
 from Sire.IO import *
 from Sire.Vol import *
+from Sire.FF import *
 from Sire.MM import *
 from Sire.CAS import *
 from Sire.Maths import *
@@ -29,7 +30,7 @@ space = PeriodicBox(Vector(-18.3854,-18.66855,-18.4445), \
 
 #specify the type of switching function to use
 switchfunc = HarmonicSwitchingFunction(80.0)
-switchfunc = HarmonicSwitchingFunction(10.0, 9.5)
+switchfunc = HarmonicSwitchingFunction(15.0, 14.5)
 
 #create a forcefield for the molecules
 molpro = MolproFF(space, switchfunc)
@@ -62,12 +63,14 @@ for mol in mols:
 qm_mol = mols[0]
 mm_mols = mols[1:]
 
+print "Adding the QM molecule..."
 molpro.addToQM(qm_mol)
-
-for mol in mm_mols:
-    coulff.addTo( coulff.groups().B(), mol )
+print "...done"    
     
 coulff.addTo( coulff.groups().A(), qm_mol )
+
+print "Adding the MM molecules..."
+coulff.addTo( coulff.groups().B(), mm_mols )
 
 ms = timer.elapsed()
 print "... took %d ms" % ms
@@ -85,7 +88,11 @@ print "Energy = %f kcal mol-1, took %d ms" % (nrg, ms)
 molpro.setEnergyOrigin(nrg)
 
 # add the MM molecules
+print "Adding the MM atoms to the QM forcefield..."
 molpro.addToMM(mm_mols)
+
+#write out the molpro command file to a file
+open("test.cmd", "w").write( str(molpro.molproCommandInput()) )
 
 print "Energy = %f kcal mol-1" % molpro.energy()
 

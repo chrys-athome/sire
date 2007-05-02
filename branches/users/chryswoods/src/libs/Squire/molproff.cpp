@@ -52,6 +52,7 @@
 #include "SireStream/shareddatastream.h"
 
 #include <QFile>
+#include <QDebug>
 
 using namespace Squire;
 using namespace SireMM;
@@ -167,7 +168,7 @@ MolproFF::QMMolecule::QMMolecule() : nats(0)
 
 int MolproFF::QMMolecule::countElements(const QVector< QVector<Element> > &elements)
 {
-    int nats = 0;
+    int natoms = 0;
 
     //count up the number of non-dummy atoms
     int ngroups = elements.count();
@@ -177,15 +178,18 @@ int MolproFF::QMMolecule::countElements(const QVector< QVector<Element> > &eleme
         const QVector<Element> &group_elements = elements.at(i);
 
         int nats = group_elements.count();
+        const Element *elements_array = group_elements.constData();
 
         for (int j=0; j<nats; ++j)
         {
-            if (group_elements.at(j).nProtons() > 0)
-                ++nats;
+            if (elements_array[j].nProtons() > 0)
+            {
+                ++natoms;
+            }
         }
     }
 
-    return nats;
+    return natoms;
 }
 
 /** Construct a QM molecule from the passed Molecule */
@@ -199,7 +203,8 @@ MolproFF::QMMolecule::QMMolecule(const PartialMolecule &molecule)
 
 /** Copy constructor */
 MolproFF::QMMolecule::QMMolecule(const MolproFF::QMMolecule &other)
-         : mol(other.mol), coords(other.coords), elements(other.elements)
+         : mol(other.mol), coords(other.coords),
+           elements(other.elements), nats(other.nats)
 {}
 
 /** Destructor */
@@ -417,6 +422,7 @@ MolproFF::MMMolecule::MMMolecule(const PartialMolecule &molecule,
 {
     //get the atomic charges...
     chgs = mol.extract().property(chg_property);
+    coords = mol.extract().coordGroups();
 }
 
 /** Copy constructor */
@@ -787,7 +793,7 @@ getCoordsAndCharges( const QList< tuple<double,CoordGroup> > &close_groups,
         }
     }
 
-    BOOST_ASSERT( i == nats );
+    BOOST_ASSERT( i == 4*nats );
 
     return coords_and_chgs;
 }
@@ -803,9 +809,9 @@ void MolproFF::MMMolecule::updateGroup(CutGroupID cgid,
                                        const Space &space,
                                        const SwitchingFunction &switchfunc)
 {
-    //remove the curent entry for this molecule
-    QVector<double> mol_coords_and_chgs = coords_and_chgs.take(cgid);
-    int old_nats_times_four = mol_coords_and_chgs.count();
+    //remove the curent entry for this CutGroup
+    QVector<double> group_coords_and_chgs = coords_and_chgs.take(cgid);
+    int old_nats_times_four = group_coords_and_chgs.count();
 
     //count up how many atoms have a non-zero charge
     int ncharges = nCharges(group_chgs);
@@ -825,14 +831,14 @@ void MolproFF::MMMolecule::updateGroup(CutGroupID cgid,
                                                  space, switchfunc );
 
     //convert these groups into the array of coordinates and charges
-    mol_coords_and_chgs = getCoordsAndCharges( close_groups, group_chgs );
+    group_coords_and_chgs = getCoordsAndCharges( close_groups, group_chgs );
 
-    int new_nats_times_four = mol_coords_and_chgs.count();
+    int new_nats_times_four = group_coords_and_chgs.count();
 
     if (new_nats_times_four > 0)
     {
-        //save these coordinates and charges
-        coords_and_chgs.insert(cgid, mol_coords_and_chgs);
+        //save these coordinates and charges for this group
+        coords_and_chgs.insert(cgid, group_coords_and_chgs);
     }
 
     //update the number of atoms
@@ -973,20 +979,20 @@ int MolproFF::MMMolecule::update(QVector<double> &mm_coords_and_charges,
                   .arg(i).arg(nats), CODELOC );
     }
 
-    //ok - we assume that the array from idx to 4*nats is ours...
-    double *start = &(mm_coords_and_charges[i]);
-
     //copy in each CutGroup in turn
+    double *mm_coords_and_charges_array = mm_coords_and_charges.data();
+
     for (QHash< CutGroupID,QVector<double> >::const_iterator
                                             it = coords_and_chgs.constBegin();
          it != coords_and_chgs.constEnd();
          ++it)
     {
+        double *start = &(mm_coords_and_charges_array[i]);
+
         void *output = qMemCopy(start, it->constData(), it->count() * sizeof(double));
         BOOST_ASSERT( output == start );
 
         i += it->count();
-        start = &(mm_coords_and_charges[i]);
     }
 
     BOOST_ASSERT(i == new_i);
@@ -1000,7 +1006,7 @@ QString MolproFF::MMMolecule::coordAndChargesString() const
 {
     if (nats == 0)
         //There is nothing to do :-)
-        return "";
+        return QString::null;
 
     //create a string list containing each atom from coords_and_chgs
     //(which has the coordinates in bohr_radii and charges in mod electrons)
@@ -1016,13 +1022,20 @@ QString MolproFF::MMMolecule::coordAndChargesString() const
         int ngroup_atoms = group_coords_chgs.count();
         const double *group_coords_chgs_array = group_coords_chgs.constData();
 
-        for (int i=0; i<ngroup_atoms; ++i)
+        for (int i=0; i<ngroup_atoms; i+=4)
         {
-            lines.append( QString("%1, %2, %3, %4")
-                              .arg( group_coords_chgs_array[i] )
-                              .arg( group_coords_chgs_array[i+1] )
-                              .arg( group_coords_chgs_array[i+2] )
-                              .arg( group_coords_chgs_array[i+3] ) );
+            QString atomline;
+            QTextStream ts(&atomline, QIODevice::WriteOnly);
+
+            ts.setRealNumberNotation(QTextStream::FixedNotation);
+            ts.setRealNumberPrecision(10);
+
+            ts << group_coords_chgs_array[i] << ", "
+               << group_coords_chgs_array[i+1] << ", "
+               << group_coords_chgs_array[i+2] << ", "
+               << group_coords_chgs_array[i+3];
+
+            lines.append(atomline);
         }
     }
 
@@ -1645,6 +1658,7 @@ bool MolproFF::_pvt_addToQM(const PartialMolecule &molecule,
 
         //save the qm molecule, indexed by its ID
         qm_mols.insert(molid, qmmol);
+
         this->mustNowRecalculateFromScratch();
 
         return true;
@@ -2675,16 +2689,19 @@ QString MolproFF::mmCoordAndChargesString()
     //need to ensure that the MM array is up to date
     this->updateArrays();
 
-    QString mmcoords = "";
+    QStringList mmcoords;
 
     for (QHash<MoleculeID,MMMolecule>::const_iterator it = mm_mols.begin();
          it != mm_mols.end();
          ++it)
     {
-        mmcoords += it->coordAndChargesString();
+        QString mol_string = it->coordAndChargesString();
+
+        if (not mol_string.isEmpty())
+            mmcoords.append(mol_string);
     }
 
-    return mmcoords;
+    return mmcoords.join("\n");
 }
 
 /** Return the number of QM atoms in the array */

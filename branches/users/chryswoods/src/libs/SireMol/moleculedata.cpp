@@ -331,15 +331,6 @@ const MoleculeInfo& MoleculeData::info() const
     return _molinfo;
 }
 
-/** Return the CutGroup with CutGroupID == id
-
-    \throw SireMol::missing_cutgroup
-*/
-CutGroup MoleculeData::cutGroup(CutGroupID id) const
-{
-    return CutGroup( info().atomGroup(id), coordinates(id) );
-}
-
 /** Return the coordinates for the CutGroup with CutGroupID == id
 
     \throw SireMol::missing_cutgroup
@@ -348,6 +339,15 @@ CoordGroup MoleculeData::coordGroup(CutGroupID id) const
 {
     info().assertCutGroupExists(id);
     return _coords.at(id);
+}
+
+/** Return the CutGroup with CutGroupID == id
+
+    \throw SireMol::missing_cutgroup
+*/
+CutGroup MoleculeData::cutGroup(CutGroupID id) const
+{
+    return CutGroup( info().atomGroup(id), coordGroup(id) );
 }
 
 /** Return a copy of the CutGroup with ID == cgid
@@ -521,7 +521,25 @@ QHash< T, QVector<Vector> > copyGroupedCoords(const MoleculeData &moldata,
 */
 QVector<Vector> MoleculeData::coordinates(CutGroupID cgid) const
 {
-    return cutGroup(cgid).coordinates();
+    CoordGroup cgroup = coordGroup(cgid);
+
+    //create an array to hold the coordinates...
+    int ncoords = cgroup.count();
+
+    if (ncoords > 0)
+    {
+        QVector<Vector> coords(ncoords);
+
+        //copy the CoordGroup coordinates into the array
+        void *output = qMemCopy(coords.data(), cgroup.constData(),
+                                ncoords * sizeof(Vector));
+
+        BOOST_ASSERT( output == coords.constData() );
+
+        return coords;
+    }
+    else
+        return QVector<Vector>();
 }
 
 /** Return an array of the coordinates for the atoms in the CutGroups

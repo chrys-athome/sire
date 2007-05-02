@@ -55,6 +55,9 @@ void register_SireMol_containers()
     register_list< QList<Molecule> >();
     register_list< QVector<Molecule> >();
 
+    register_list< QList<PartialMolecule> >();
+    register_list< QVector<PartialMolecule> >();
+
     register_list< QList<EditMol> >();
     register_list< QVector<EditMol> >();
 

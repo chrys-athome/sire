@@ -146,7 +146,7 @@ public:
     }
 
     void mustNowRecalculateFromScratch();
-    
+
     bool change(const PartialMolecule &molecule);
 
     bool add(const PartialMolecule &mol, const ParameterMap &map = ParameterMap());
@@ -154,41 +154,51 @@ public:
     bool addTo(const FFBase::Group &group, const PartialMolecule &molecule,
                const ParameterMap &map = ParameterMap());
 
+    bool addTo(const FFBase::Group &group,
+               const QList<PartialMolecule> &molecules,
+               const ParameterMap &map = ParameterMap());
+
     bool addToA(const PartialMolecule &molecule,
                 const ParameterMap &map = ParameterMap());
-                
+
+    bool addToA(const QList<PartialMolecule> &molecules,
+                const ParameterMap &map = ParameterMap());
+
     bool addToB(const PartialMolecule &molecule,
+                const ParameterMap &map = ParameterMap());
+
+    bool addToB(const QList<PartialMolecule> &molecules,
                 const ParameterMap &map = ParameterMap());
 
     bool remove(const PartialMolecule &molecule);
 
     bool removeFrom(const FFBase::Group &group,
                     const PartialMolecule &molecule);
-                    
+
     bool removeFromA(const PartialMolecule &molecule);
     bool removeFromB(const PartialMolecule &molecule);
 
     bool contains(const PartialMolecule &molecule) const;
-    
+
     bool contains(const PartialMolecule &molecule,
                   const FFBase::Group &group) const;
-    
+
     bool refersTo(MoleculeID molid) const;
 
     bool refersTo(MoleculeID molid,
                   const FFBase::Group &group) const;
 
     QSet<FFBase::Group> groupsReferringTo(MoleculeID molid) const;
-    
+
     QSet<MoleculeID> moleculeIDs() const;
-    
+
     QSet<MoleculeID> moleculeIDs(const FFBase::Group &group) const;
-    
+
     PartialMolecule molecule(MoleculeID molid) const;
-    
+
     PartialMolecule molecule(MoleculeID molid,
                              const FFBase::Group &group) const;
-    
+
     QHash<MoleculeID,PartialMolecule> contents() const;
 
     QHash<MoleculeID,PartialMolecule> contents(const FFBase::Group &group) const;

@@ -22,11 +22,14 @@ set ( SIREUNITTEST_SOURCES
       testffdb.cpp
       testmatch.cpp
       testperiodicbox.cpp
+      testpropertyextractor.cpp
       testsharedpolypointer.cpp
       testsirecas.cpp
       testunits.cpp
       testvector.cpp
       testversion.cpp
+
+      runall.cpp
     )
 
 # Add the resource files
