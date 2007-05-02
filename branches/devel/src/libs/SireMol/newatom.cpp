@@ -30,7 +30,7 @@
 
 #include "newatom.h"
 
-#include "moleculedata.h"
+#include "moleculeview_inlines.h"
 #include "molecule.h"
 #include "residue.h"
 #include "cgatomid.h"
@@ -61,7 +61,8 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const NewAtom &atom)
 {
     writeHeader(ds, r_newatom, 1);
 
-    SharedDataStream(ds) << atom.d << atom.cgatomid;
+    SharedDataStream(ds) << atom.cgatomid
+                         << static_cast<const MoleculeView&>(atom);
 
     return ds;
 }
@@ -73,7 +74,8 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, NewAtom &atom)
 
     if (v == 1)
     {
-        SharedDataStream(ds) >> atom.d >> atom.cgatomid;
+        ds >> atom.cgatomid
+           >> static_cast<MoleculeView&>(atom);
     }
     else
         throw version_error(v, "1", r_newatom, CODELOC);
@@ -87,7 +89,7 @@ uint SIREMOL_EXPORT qHash(const NewAtom &atom)
 }
 
 /** Null constructor */
-NewAtom::NewAtom() : d(MoleculeData::null())
+NewAtom::NewAtom() : MoleculeView()
 {}
 
 /** Construct an Atom that represents the atom at index 'i' in the
@@ -96,9 +98,9 @@ NewAtom::NewAtom() : d(MoleculeData::null())
     \throw SireError::invalid_index
 */
 NewAtom::NewAtom(const CGAtomID &i, const Molecule &molecule)
-        : d( molecule.d ), cgatomid(i)
+        : MoleculeView(molecule), cgatomid(i)
 {
-    d->info().assertAtomExists(i);
+    constData().info().assertAtomExists(i);
 }
 
 /** Construct an Atom that represents the atom at index 'i' in the
@@ -109,7 +111,7 @@ NewAtom::NewAtom(const CGAtomID &i, const Molecule &molecule)
     \throw SireError::invalid_index
 */
 NewAtom::NewAtom(const IDMolAtom &i, const Molecule &molecule)
-        : d( molecule.d ), cgatomid( i.index(molecule.info()) )
+        : MoleculeView(molecule), cgatomid( i.index(molecule.info()) )
 {}
 
 /** Construct an Atom that represents the atom called 'name' in
@@ -118,7 +120,7 @@ NewAtom::NewAtom(const IDMolAtom &i, const Molecule &molecule)
     \throw SireMol::missing_atom
 */
 NewAtom::NewAtom(const QString &name, const Residue &residue)
-        : d( residue.d ), cgatomid( residue.info().at(name) )
+        : MoleculeView(residue), cgatomid( residue.info().at(name) )
 {}
 
 /** Construct an Atom that represents the atom at index 'i'
@@ -127,12 +129,12 @@ NewAtom::NewAtom(const QString &name, const Residue &residue)
     \throw SireError::invalid_index
 */
 NewAtom::NewAtom(AtomID i, const Residue &residue)
-        : d( residue.d ), cgatomid( residue.info().at(i) )
+        : MoleculeView(residue), cgatomid( residue.info().at(i) )
 {}
 
 /** Copy constructor */
 NewAtom::NewAtom(const NewAtom &other)
-        : d( other.d ), cgatomid(other.cgatomid)
+        : MoleculeView(other), cgatomid(other.cgatomid)
 {}
 
 /** Destructor */
@@ -142,11 +144,8 @@ NewAtom::~NewAtom()
 /** Copy assignment operator */
 NewAtom& NewAtom::operator=(const NewAtom &other)
 {
-    if (this != &other)
-    {
-        d = other.d;
-        cgatomid = other.cgatomid;
-    }
+    MoleculeView::operator=(other);
+    cgatomid = other.cgatomid;
 
     return *this;
 }
@@ -177,8 +176,7 @@ NewAtom& NewAtom::operator-=(const Vector &delta)
 bool NewAtom::operator==(const NewAtom &other) const
 {
     return cgatomid == other.cgatomid and
-           d->ID() == other.d->ID() and
-           d->version() == other.d->version();
+           MoleculeView::operator==(other);
 }
 
 /** Are these different? They are different if they point
@@ -186,20 +184,25 @@ bool NewAtom::operator==(const NewAtom &other) const
 bool NewAtom::operator!=(const NewAtom &other) const
 {
     return cgatomid != other.cgatomid or
-           d->ID() != other.d->ID() or
-           d->version() != other.d->version();
+           MoleculeView::operator!=(other);
 }
 
 /** Return the ID number of the molecule that contains this atom */
 MoleculeID NewAtom::ID() const
 {
-    return d->ID();
+    return data().ID();
 }
 
 /** Return the version number of the molecule that contains this atom */
 const MoleculeVersion& NewAtom::version() const
 {
-    return d->version();
+    return data().version();
+}
+
+/** Return the AtomInfo for this Atom */
+const AtomInfo& NewAtom::info() const
+{
+    return data().info().atom(cgatomid);
 }
 
 /** Return a string identifying this atom */
@@ -207,16 +210,10 @@ QString NewAtom::idString() const
 {
     return QObject::tr("%1 in %2 (%3) in \"%3\" (%4 %5)")
                           .arg(name())
-                          .arg(d->info().residueName(info().resNum()))
+                          .arg(data().info().residueName(info().resNum()))
                           .arg(info().resNum())
-                          .arg(d->info().name()).arg(ID())
-                          .arg(d->version().toString());
-}
-
-/** Return the AtomInfo for this Atom */
-const AtomInfo& NewAtom::info() const
-{
-    return d->info().atom(cgatomid);
+                          .arg(data().info().name()).arg(ID())
+                          .arg(data().version().toString());
 }
 
 /** Return the name of this atom */
@@ -234,7 +231,7 @@ Element NewAtom::element() const
 /** Return a reference to the coordinates of this atom */
 Vector NewAtom::coordinates() const
 {
-    return d->coordinates(cgatomid);
+    return data().coordinates(cgatomid);
 }
 
 /** Return the CGAtomID of the atom */
@@ -265,13 +262,19 @@ NewAtom::operator const AtomInfo&() const
     atom. Note that this must be an AtomProperty class or
     an exception will be thrown
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
 QVariant NewAtom::property(const QString &name) const
 {
-    return sharedpolypointer_cast<AtomicProperties>
-                            (d->getProperty(name)).value(cgatomid);
+    Property property = data().getProperty(name);
+
+    if (not property.isA<AtomicProperties>())
+        throw SireError::invalid_cast( QObject::tr(
+            "Cannot convert a property of type \"%1\" to an atomic property!")
+                .arg(property.what()), CODELOC );
+
+    return property.asA<AtomicProperties>().value(cgatomid);
 }
 
 /** Return a string describing this atom */
@@ -282,8 +285,8 @@ QString NewAtom::toString() const
     return QString("%1 : %2(%3) : %4 (%5 - %6)")
                  .arg(this->name())
                  .arg(res.name()).arg(res.number())
-                 .arg(d->info().name()).arg(d->ID())
-                 .arg(d->version().major()).arg(d->version().minor());
+                 .arg(data().info().name()).arg(data().ID())
+                 .arg(data().version().major()).arg(data().version().minor());
 }
 
 /** Return a copy of the molecule that contains this atom */
@@ -301,7 +304,7 @@ Residue NewAtom::residue() const
 /** Return the set of all atoms that are bonded to this atom */
 QSet<NewAtom> NewAtom::bondedAtoms() const
 {
-    QSet<AtomIndex> bondedatms = d->connectivity().atomsBondedTo(*this);
+    QSet<AtomIndex> bondedatms = data().connectivity().atomsBondedTo(*this);
 
     QSet<NewAtom> atoms;
     atoms.reserve(bondedatms.count());
@@ -322,7 +325,7 @@ QSet<Residue> NewAtom::bondedResidues() const
 {
     Residue res = this->residue();
 
-    QSet<ResNum> bondedres = d->connectivity().resNumsBondedTo(res.number());
+    QSet<ResNum> bondedres = data().connectivity().resNumsBondedTo(res.number());
 
     QSet<Residue> allres;
     allres.reserve( bondedres.count() + 1 );
@@ -342,7 +345,7 @@ QSet<Residue> NewAtom::bondedResidues() const
 /** Set the coordinates of this atom to 'newcoords' */
 void NewAtom::setCoordinates(const Vector &newcoords)
 {
-    d->setCoordinates(cgatomid, newcoords);
+    data().setCoordinates(cgatomid, newcoords);
 }
 
 /** Set the coordinates of this atom to (x,y,z) */

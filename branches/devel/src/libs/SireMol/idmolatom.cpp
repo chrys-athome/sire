@@ -78,19 +78,19 @@ IDMolAtom::IDMolAtom(const AtomID &atomid)
 {
     d.atomid = &atomid;
 }
-    
+
 /** Copy constructor */
 IDMolAtom::IDMolAtom(const IDMolAtom &other)
-          : indextype(other.indextype)
+          : indextype(other.indextype), d(other.d)
 {}
-    
+
 /** Destructor */
 IDMolAtom::~IDMolAtom()
 {}
-   
+
 /** Return the equivalent CGAtomID index for the index held in this
     IDMolAtom in the passed MoleculeInfo.
-    
+
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
     \throw SireError::invalid_index
@@ -134,6 +134,6 @@ bool IDMolAtom::contains(const MoleculeInfo &molinfo) const
         case ATOMID:
             return molinfo.contains( *(d.atomid) );
     }
-    
+
     return false;
 }

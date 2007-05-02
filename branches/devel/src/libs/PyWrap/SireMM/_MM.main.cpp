@@ -266,6 +266,8 @@ BOOST_PYTHON_MODULE(_MM){
 
     register_CombiningRules_class();
 
+    bp::implicitly_convertible< SireMM::CombiningRules, SireBase::Property >();
+
     register_CoulombFF_class();
 
     register_DihedralAtomID_class();
@@ -347,6 +349,8 @@ BOOST_PYTHON_MODULE(_MM){
     register_ResDihedralInfo_class();
 
     register_SwitchingFunction_class();
+
+    bp::implicitly_convertible< SireMM::SwitchingFunction, SireBase::Property >();
 
     register_UreyBradleyDB_class();
 

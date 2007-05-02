@@ -11,12 +11,15 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the sources in SireSystem
 set ( SIRESYSTEM_SOURCES
+      checkpoint.cpp
       localsimsystem.cpp
       move.cpp
       moves.cpp
+      querysystem.cpp
       simsystem.cpp
       system.cpp
       systemdata.cpp
+      systemmonitors.cpp
     )
 
 add_library (SireSystem ${SIRESYSTEM_SOURCES})

@@ -34,44 +34,28 @@ void register_CLJFF_class(){
         bp::class_< SireMM::CLJFF::CLJMolecule >( "CLJMolecule" )    
             .def( 
                 "add"
-                , (::SireMM::CLJFF::ChangedCLJMolecule ( ::SireMM::CLJFF::CLJMolecule::* )( ::SireMol::Molecule const &,::QString const &,::QString const & ) const)( &::SireMM::CLJFF::CLJMolecule::add )
+                , (::SireMM::CLJFF::CLJMolecule ( ::SireMM::CLJFF::CLJMolecule::* )( ::SireMol::PartialMolecule const &,::QString const &,::QString const & ) const)( &::SireMM::CLJFF::CLJMolecule::add )
                 , ( bp::arg("molecule"), bp::arg("chgproperty")=QString::null, bp::arg("ljproperty")=QString::null ) )    
             .def( 
-                "add"
-                , (::SireMM::CLJFF::ChangedCLJMolecule ( ::SireMM::CLJFF::CLJMolecule::* )( ::SireMol::Residue const &,::QString const &,::QString const & ) const)( &::SireMM::CLJFF::CLJMolecule::add )
-                , ( bp::arg("residue"), bp::arg("chgproperty")=QString::null, bp::arg("ljproperty")=QString::null ) )    
-            .def( 
-                "add"
-                , (::SireMM::CLJFF::ChangedCLJMolecule ( ::SireMM::CLJFF::CLJMolecule::* )( ::SireMol::NewAtom const &,::QString const &,::QString const & ) const)( &::SireMM::CLJFF::CLJMolecule::add )
-                , ( bp::arg("newatom"), bp::arg("chgproperty")=QString::null, bp::arg("ljproperty")=QString::null ) )    
-            .def( 
-                "add"
-                , (::SireMM::CLJFF::ChangedCLJMolecule ( ::SireMM::CLJFF::CLJMolecule::* )( ::SireMol::AtomSelection const &,::QString const &,::QString const & ) const)( &::SireMM::CLJFF::CLJMolecule::add )
-                , ( bp::arg("selected_atoms"), bp::arg("chgproperty")=QString::null, bp::arg("ljproperty")=QString::null ) )    
-            .def( 
                 "change"
-                , (::SireMM::CLJFF::ChangedCLJMolecule ( ::SireMM::CLJFF::CLJMolecule::* )( ::SireMol::Molecule const & ) const)( &::SireMM::CLJFF::CLJMolecule::change )
-                , ( bp::arg("molecule") ) )    
+                , (::SireMM::CLJFF::CLJMolecule ( ::SireMM::CLJFF::CLJMolecule::* )( ::SireMol::PartialMolecule const &,::QString const &,::QString const & ) const)( &::SireMM::CLJFF::CLJMolecule::change )
+                , ( bp::arg("molecule"), bp::arg("chgproperty")=QString::null, bp::arg("ljproperty")=QString::null ) )    
             .def( 
-                "change"
-                , (::SireMM::CLJFF::ChangedCLJMolecule ( ::SireMM::CLJFF::CLJMolecule::* )( ::SireMol::Residue const & ) const)( &::SireMM::CLJFF::CLJMolecule::change )
-                , ( bp::arg("residue") ) )    
-            .def( 
-                "change"
-                , (::SireMM::CLJFF::ChangedCLJMolecule ( ::SireMM::CLJFF::CLJMolecule::* )( ::SireMol::NewAtom const & ) const)( &::SireMM::CLJFF::CLJMolecule::change )
-                , ( bp::arg("newatom") ) )    
+                "chargeProperty"
+                , (::QString const & ( ::SireMM::CLJFF::CLJMolecule::* )(  ) const)( &::SireMM::CLJFF::CLJMolecule::chargeProperty )
+                , bp::return_value_policy< bp::copy_const_reference >() )    
             .def( 
                 "charges"
                 , (::SireMM::AtomicCharges const & ( ::SireMM::CLJFF::CLJMolecule::* )(  ) const)( &::SireMM::CLJFF::CLJMolecule::charges )
                 , bp::return_value_policy< bp::copy_const_reference >() )    
             .def( 
-                "chgProperty"
-                , (::QString const & ( ::SireMM::CLJFF::CLJMolecule::* )(  ) const)( &::SireMM::CLJFF::CLJMolecule::chgProperty )
-                , bp::return_value_policy< bp::copy_const_reference >() )    
-            .def( 
                 "coordinates"
                 , (::QVector<SireVol::CoordGroup> const & ( ::SireMM::CLJFF::CLJMolecule::* )(  ) const)( &::SireMM::CLJFF::CLJMolecule::coordinates )
                 , bp::return_value_policy< bp::copy_const_reference >() )    
+            .def( 
+                "getDifferences"
+                , (::SireMM::CLJFF::CLJMolecule ( ::SireMM::CLJFF::CLJMolecule::* )( ::SireMM::CLJFF::CLJMolecule const & ) const)( &::SireMM::CLJFF::CLJMolecule::getDifferences )
+                , ( bp::arg("other") ) )    
             .def( 
                 "isEmpty"
                 , (bool ( ::SireMM::CLJFF::CLJMolecule::* )(  ) const)( &::SireMM::CLJFF::CLJMolecule::isEmpty ) )    
@@ -88,66 +72,26 @@ void register_CLJFF_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() )    
             .def( 
                 "molecule"
-                , (::SireMol::Molecule const & ( ::SireMM::CLJFF::CLJMolecule::* )(  ) const)( &::SireMM::CLJFF::CLJMolecule::molecule )
+                , (::SireMol::PartialMolecule const & ( ::SireMM::CLJFF::CLJMolecule::* )(  ) const)( &::SireMM::CLJFF::CLJMolecule::molecule )
                 , bp::return_value_policy< bp::copy_const_reference >() )    
             .def( bp::self != bp::self )    
             .def( bp::self == bp::self )    
             .def( 
                 "remove"
-                , (::SireMM::CLJFF::ChangedCLJMolecule ( ::SireMM::CLJFF::CLJMolecule::* )( ::SireMol::Molecule const & ) const)( &::SireMM::CLJFF::CLJMolecule::remove )
-                , ( bp::arg("molecule") ) )    
-            .def( 
-                "remove"
-                , (::SireMM::CLJFF::ChangedCLJMolecule ( ::SireMM::CLJFF::CLJMolecule::* )( ::SireMol::Residue const & ) const)( &::SireMM::CLJFF::CLJMolecule::remove )
-                , ( bp::arg("residue") ) )    
-            .def( 
-                "remove"
-                , (::SireMM::CLJFF::ChangedCLJMolecule ( ::SireMM::CLJFF::CLJMolecule::* )( ::SireMol::NewAtom const & ) const)( &::SireMM::CLJFF::CLJMolecule::remove )
-                , ( bp::arg("atom") ) )    
-            .def( 
-                "remove"
-                , (::SireMM::CLJFF::ChangedCLJMolecule ( ::SireMM::CLJFF::CLJMolecule::* )( ::SireMol::AtomSelection const & ) const)( &::SireMM::CLJFF::CLJMolecule::remove )
-                , ( bp::arg("selected_atoms") ) )    
-            .def( 
-                "selectedAtoms"
-                , (::SireMol::AtomSelection const & ( ::SireMM::CLJFF::CLJMolecule::* )(  ) const)( &::SireMM::CLJFF::CLJMolecule::selectedAtoms )
-                , bp::return_value_policy< bp::copy_const_reference >() );
+                , (::SireMM::CLJFF::CLJMolecule ( ::SireMM::CLJFF::CLJMolecule::* )( ::SireMol::PartialMolecule const & ) const)( &::SireMM::CLJFF::CLJMolecule::remove )
+                , ( bp::arg("molecule") ) );
         bp::class_< SireMM::CLJFF::ChangedCLJMolecule >( "ChangedCLJMolecule" )    
             .def( 
                 "add"
-                , (::SireMM::CLJFF::ChangedCLJMolecule ( ::SireMM::CLJFF::ChangedCLJMolecule::* )( ::SireMol::Molecule const &,::QString const &,::QString const & ) const)( &::SireMM::CLJFF::ChangedCLJMolecule::add )
+                , (::SireMM::CLJFF::ChangedCLJMolecule ( ::SireMM::CLJFF::ChangedCLJMolecule::* )( ::SireMol::PartialMolecule const &,::QString const &,::QString const & ) const)( &::SireMM::CLJFF::ChangedCLJMolecule::add )
                 , ( bp::arg("molecule"), bp::arg("chgproperty")=QString::null, bp::arg("ljproperty")=QString::null ) )    
             .def( 
-                "add"
-                , (::SireMM::CLJFF::ChangedCLJMolecule ( ::SireMM::CLJFF::ChangedCLJMolecule::* )( ::SireMol::Residue const &,::QString const &,::QString const & ) const)( &::SireMM::CLJFF::ChangedCLJMolecule::add )
-                , ( bp::arg("residue"), bp::arg("chgproperty")=QString::null, bp::arg("ljproperty")=QString::null ) )    
-            .def( 
-                "add"
-                , (::SireMM::CLJFF::ChangedCLJMolecule ( ::SireMM::CLJFF::ChangedCLJMolecule::* )( ::SireMol::NewAtom const &,::QString const &,::QString const & ) const)( &::SireMM::CLJFF::ChangedCLJMolecule::add )
-                , ( bp::arg("atom"), bp::arg("chgproperty")=QString::null, bp::arg("ljproperty")=QString::null ) )    
-            .def( 
-                "add"
-                , (::SireMM::CLJFF::ChangedCLJMolecule ( ::SireMM::CLJFF::ChangedCLJMolecule::* )( ::SireMol::AtomSelection const &,::QString const &,::QString const & ) const)( &::SireMM::CLJFF::ChangedCLJMolecule::add )
-                , ( bp::arg("selected_atoms"), bp::arg("chgproperty")=QString::null, bp::arg("ljproperty")=QString::null ) )    
-            .def( 
                 "change"
-                , (::SireMM::CLJFF::ChangedCLJMolecule ( ::SireMM::CLJFF::ChangedCLJMolecule::* )( ::SireMol::Molecule const & ) const)( &::SireMM::CLJFF::ChangedCLJMolecule::change )
-                , ( bp::arg("molecule") ) )    
-            .def( 
-                "change"
-                , (::SireMM::CLJFF::ChangedCLJMolecule ( ::SireMM::CLJFF::ChangedCLJMolecule::* )( ::SireMol::Residue const & ) const)( &::SireMM::CLJFF::ChangedCLJMolecule::change )
-                , ( bp::arg("residue") ) )    
-            .def( 
-                "change"
-                , (::SireMM::CLJFF::ChangedCLJMolecule ( ::SireMM::CLJFF::ChangedCLJMolecule::* )( ::SireMol::NewAtom const & ) const)( &::SireMM::CLJFF::ChangedCLJMolecule::change )
-                , ( bp::arg("atom") ) )    
+                , (::SireMM::CLJFF::ChangedCLJMolecule ( ::SireMM::CLJFF::ChangedCLJMolecule::* )( ::SireMol::PartialMolecule const &,::QString const &,::QString const & ) const)( &::SireMM::CLJFF::ChangedCLJMolecule::change )
+                , ( bp::arg("molecule"), bp::arg("chgproperty")=QString::null, bp::arg("ljproperty")=QString::null ) )    
             .def( 
                 "changedAll"
                 , (bool ( ::SireMM::CLJFF::ChangedCLJMolecule::* )(  ) const)( &::SireMM::CLJFF::ChangedCLJMolecule::changedAll ) )    
-            .def( 
-                "changedGroups"
-                , (::QSet<SireMol::CutGroupID> const & ( ::SireMM::CLJFF::ChangedCLJMolecule::* )(  ) const)( &::SireMM::CLJFF::ChangedCLJMolecule::changedGroups )
-                , bp::return_value_policy< bp::copy_const_reference >() )    
             .def( 
                 "isEmpty"
                 , (bool ( ::SireMM::CLJFF::ChangedCLJMolecule::* )(  ) const)( &::SireMM::CLJFF::ChangedCLJMolecule::isEmpty ) )    
@@ -160,6 +104,9 @@ void register_CLJFF_class(){
                 , (::SireMM::CLJFF::CLJMolecule const & ( ::SireMM::CLJFF::ChangedCLJMolecule::* )(  ) const)( &::SireMM::CLJFF::ChangedCLJMolecule::newParts )
                 , bp::return_value_policy< bp::copy_const_reference >() )    
             .def( 
+                "nothingChanged"
+                , (bool ( ::SireMM::CLJFF::ChangedCLJMolecule::* )(  ) const)( &::SireMM::CLJFF::ChangedCLJMolecule::nothingChanged ) )    
+            .def( 
                 "oldMolecule"
                 , (::SireMM::CLJFF::CLJMolecule const & ( ::SireMM::CLJFF::ChangedCLJMolecule::* )(  ) const)( &::SireMM::CLJFF::ChangedCLJMolecule::oldMolecule )
                 , bp::return_value_policy< bp::copy_const_reference >() )    
@@ -171,20 +118,8 @@ void register_CLJFF_class(){
             .def( bp::self == bp::self )    
             .def( 
                 "remove"
-                , (::SireMM::CLJFF::ChangedCLJMolecule ( ::SireMM::CLJFF::ChangedCLJMolecule::* )( ::SireMol::Molecule const & ) const)( &::SireMM::CLJFF::ChangedCLJMolecule::remove )
-                , ( bp::arg("molecule") ) )    
-            .def( 
-                "remove"
-                , (::SireMM::CLJFF::ChangedCLJMolecule ( ::SireMM::CLJFF::ChangedCLJMolecule::* )( ::SireMol::Residue const & ) const)( &::SireMM::CLJFF::ChangedCLJMolecule::remove )
-                , ( bp::arg("residue") ) )    
-            .def( 
-                "remove"
-                , (::SireMM::CLJFF::ChangedCLJMolecule ( ::SireMM::CLJFF::ChangedCLJMolecule::* )( ::SireMol::NewAtom const & ) const)( &::SireMM::CLJFF::ChangedCLJMolecule::remove )
-                , ( bp::arg("atom") ) )    
-            .def( 
-                "remove"
-                , (::SireMM::CLJFF::ChangedCLJMolecule ( ::SireMM::CLJFF::ChangedCLJMolecule::* )( ::SireMol::AtomSelection const & ) const)( &::SireMM::CLJFF::ChangedCLJMolecule::remove )
-                , ( bp::arg("selected_atoms") ) );
+                , (::SireMM::CLJFF::ChangedCLJMolecule ( ::SireMM::CLJFF::ChangedCLJMolecule::* )( ::SireMol::PartialMolecule const & ) const)( &::SireMM::CLJFF::ChangedCLJMolecule::remove )
+                , ( bp::arg("molecule") ) );
         bp::class_< SireMM::CLJFF::Components, bp::bases< SireFF::FFBase::Components > >( "Components" )    
             .def( 
                 "coulomb"
@@ -215,7 +150,7 @@ void register_CLJFF_class(){
             .def_readonly( "default_sources", SireMM::CLJFF::Parameters::default_sources );
         { //::SireMM::CLJFF::calculateEnergy
         
-            typedef ::SireMM::CLJFF::CLJEnergy ( *calculateEnergy_function_type )( ::SireMM::CLJFF::CLJMolecule const &,::SireMM::CLJFF::CLJMolecule const &,::SireVol::Space const &,::SireMM::SwitchingFunction const &,::SireVol::DistMatrix &,::SireMM::CLJMatrix & );
+            typedef ::SireMM::CLJFF::CLJEnergy ( *calculateEnergy_function_type )( ::SireMM::CLJFF::CLJMolecule const &,::SireMM::CLJFF::CLJMolecule const &,::SireVol::Space const &,::SireMM::SwitchingFunction const &,::SireVol::DistMatrix &,::SireMM::CLJPairMatrix & );
             
             CLJFF_exposer.def( 
                 "calculateEnergy"
@@ -225,7 +160,7 @@ void register_CLJFF_class(){
         }
         { //::SireMM::CLJFF::calculateEnergy
         
-            typedef ::SireMM::CLJFF::CLJEnergy ( *calculateEnergy_function_type )( ::SireMM::CLJFF::CLJMolecule const &,::SireVol::Space const &,::SireMM::SwitchingFunction const &,::SireVol::DistMatrix &,::SireMM::CLJMatrix & );
+            typedef ::SireMM::CLJFF::CLJEnergy ( *calculateEnergy_function_type )( ::SireMM::CLJFF::CLJMolecule const &,::SireVol::Space const &,::SireMM::SwitchingFunction const &,::SireVol::DistMatrix &,::SireMM::CLJPairMatrix & );
             
             CLJFF_exposer.def( 
                 "calculateEnergy"
@@ -243,6 +178,26 @@ void register_CLJFF_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        { //::SireMM::CLJFF::containsProperty
+        
+            typedef bool ( ::SireMM::CLJFF::*containsProperty_function_type )( ::QString const & ) const;
+            
+            CLJFF_exposer.def( 
+                "containsProperty"
+                , containsProperty_function_type( &::SireMM::CLJFF::containsProperty )
+                , ( bp::arg("name") ) );
+        
+        }
+        { //::SireMM::CLJFF::getProperty
+        
+            typedef ::SireBase::Property ( ::SireMM::CLJFF::*getProperty_function_type )( ::QString const & ) const;
+            
+            CLJFF_exposer.def( 
+                "getProperty"
+                , getProperty_function_type( &::SireMM::CLJFF::getProperty )
+                , ( bp::arg("name") ) );
+        
+        }
         { //::SireMM::CLJFF::parameters
         
             typedef ::SireMM::CLJFF::Parameters const & ( ::SireMM::CLJFF::*parameters_function_type )(  ) const;
@@ -251,6 +206,45 @@ void register_CLJFF_class(){
                 "parameters"
                 , parameters_function_type( &::SireMM::CLJFF::parameters )
                 , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
+        { //::SireMM::CLJFF::properties
+        
+            typedef ::QHash<QString,SireBase::Property> ( ::SireMM::CLJFF::*properties_function_type )(  ) const;
+            
+            CLJFF_exposer.def( 
+                "properties"
+                , properties_function_type( &::SireMM::CLJFF::properties ) );
+        
+        }
+        { //::SireMM::CLJFF::setProperty
+        
+            typedef bool ( ::SireMM::CLJFF::*setProperty_function_type )( ::QString const &,::SireBase::Property const & ) ;
+            
+            CLJFF_exposer.def( 
+                "setProperty"
+                , setProperty_function_type( &::SireMM::CLJFF::setProperty )
+                , ( bp::arg("name"), bp::arg("value") ) );
+        
+        }
+        { //::SireMM::CLJFF::setSpace
+        
+            typedef bool ( ::SireMM::CLJFF::*setSpace_function_type )( ::SireVol::Space const & ) ;
+            
+            CLJFF_exposer.def( 
+                "setSpace"
+                , setSpace_function_type( &::SireMM::CLJFF::setSpace )
+                , ( bp::arg("space") ) );
+        
+        }
+        { //::SireMM::CLJFF::setSwitchingFunction
+        
+            typedef bool ( ::SireMM::CLJFF::*setSwitchingFunction_function_type )( ::SireMM::SwitchingFunction const & ) ;
+            
+            CLJFF_exposer.def( 
+                "setSwitchingFunction"
+                , setSwitchingFunction_function_type( &::SireMM::CLJFF::setSwitchingFunction )
+                , ( bp::arg("switchfunc") ) );
         
         }
         { //::SireMM::CLJFF::space

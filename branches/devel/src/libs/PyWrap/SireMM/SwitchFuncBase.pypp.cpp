@@ -18,7 +18,7 @@ const char* pvt_get_name(const SireMM::SwitchFuncBase&){ return "SireMM::SwitchF
 
 void register_SwitchFuncBase_class(){
 
-    bp::class_< SireMM::SwitchFuncBase, boost::noncopyable >( "SwitchFuncBase", bp::no_init )    
+    bp::class_< SireMM::SwitchFuncBase, bp::bases< SireBase::PropertyBase >, boost::noncopyable >( "SwitchFuncBase", bp::no_init )    
         .def( 
             "cutoffDistance"
             , (double ( ::SireMM::SwitchFuncBase::* )(  ) const)( &::SireMM::SwitchFuncBase::cutoffDistance ) )    
@@ -30,9 +30,6 @@ void register_SwitchFuncBase_class(){
             "vdwScaleFactor"
             , (double ( ::SireMM::SwitchFuncBase::* )( double ) const)( &::SireMM::SwitchFuncBase::vdwScaleFactor )
             , ( bp::arg("dist") ) )    
-        .def( 
-            "what"
-            , (char const * ( ::SireMM::SwitchFuncBase::* )(  ) const)( &::SireMM::SwitchFuncBase::what ) )    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::SwitchFuncBase >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::SwitchFuncBase >,

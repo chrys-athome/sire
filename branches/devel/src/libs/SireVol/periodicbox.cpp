@@ -98,6 +98,16 @@ PeriodicBox::PeriodicBox(const PeriodicBox &other)
 PeriodicBox::~PeriodicBox()
 {}
 
+/** Comparison operator */
+bool PeriodicBox::_pvt_isEqual(const PropertyBase &other) const
+{
+    BOOST_ASSERT( other.isA<PeriodicBox>() );
+
+    const PeriodicBox &other_box = other.asA<PeriodicBox>();
+
+    return mincoords == other_box.mincoords and maxcoords == other_box.maxcoords;
+}
+
 /** Set the dimensions of this box so that it is the smallest possible that contains
     the points 'min' and 'max'. The minimum coordinates of this box will be set to
     the minimum of the coordinates of these two points, and the maximum coordinates

@@ -9,6 +9,8 @@
 
 #include "SireMol/molecule.h"
 
+#include "SireMol/partialmolecule.h"
+
 #include "SireMol/residue.h"
 
 #include "SireMol/newatom.h"
@@ -25,6 +27,8 @@
 
 #include "SireMol/moleculeid.h"
 
+#include "SireBase/property.h"
+
 #include "FFBase.pypp.hpp"
 
 #include "FFCalculator.pypp.hpp"
@@ -34,6 +38,12 @@
 #include "FFComponent.pypp.hpp"
 
 #include "FFExpression.pypp.hpp"
+
+#include "FFGroupID.pypp.hpp"
+
+#include "FFLocalCalculator.pypp.hpp"
+
+#include "FFLocalWorker.pypp.hpp"
 
 #include "FFProcessor.pypp.hpp"
 
@@ -78,19 +88,25 @@ BOOST_PYTHON_MODULE(_FF){
 
     register_FFCalculatorBase_class();
 
+    register_FFLocalCalculator_class();
+
     register_FFCalculator_class();
 
     register_FFComponent_class();
 
     register_FFExpression_class();
 
+    register_FFGroupID_class();
+
+    register_FFWorkerBase_class();
+
+    register_FFLocalWorker_class();
+
     register_FFProcessorBase_class();
 
     register_FFProcessor_class();
 
     register_FFThreadProcessor_class();
-
-    register_FFWorkerBase_class();
 
     register_FFThreadWorker_class();
 

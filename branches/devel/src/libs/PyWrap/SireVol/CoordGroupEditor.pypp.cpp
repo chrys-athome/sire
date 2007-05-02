@@ -25,7 +25,7 @@ void register_CoordGroupEditor_class(){
             , (::SireVol::CoordGroup ( ::SireVol::CoordGroupEditor::* )(  ) )( &::SireVol::CoordGroupEditor::commit ) )    
         .def( 
             "__getitem__"
-            , (::SireMaths::Vector & ( ::SireVol::CoordGroupEditor::* )( int ) )( &::SireVol::CoordGroupEditor::operator[] )
+            , (::SireMaths::Vector & ( ::SireVol::CoordGroupEditor::* )( ::quint32 ) )( &::SireVol::CoordGroupEditor::operator[] )
             , ( bp::arg("i") )
             , bp::return_internal_reference< 1 >() )    
         .def( 
@@ -38,11 +38,11 @@ void register_CoordGroupEditor_class(){
             , ( bp::arg("rotmat"), bp::arg("point") ) )    
         .def( 
             "rotate"
-            , (void ( ::SireVol::CoordGroupEditor::* )( int,::SireMaths::Quaternion const &,::SireMaths::Vector const & ) )( &::SireVol::CoordGroupEditor::rotate )
+            , (void ( ::SireVol::CoordGroupEditor::* )( ::quint32,::SireMaths::Quaternion const &,::SireMaths::Vector const & ) )( &::SireVol::CoordGroupEditor::rotate )
             , ( bp::arg("i"), bp::arg("quat"), bp::arg("point") ) )    
         .def( 
             "rotate"
-            , (void ( ::SireVol::CoordGroupEditor::* )( int,::SireMaths::Matrix const &,::SireMaths::Vector const & ) )( &::SireVol::CoordGroupEditor::rotate )
+            , (void ( ::SireVol::CoordGroupEditor::* )( ::quint32,::SireMaths::Matrix const &,::SireMaths::Vector const & ) )( &::SireVol::CoordGroupEditor::rotate )
             , ( bp::arg("i"), bp::arg("rotmat"), bp::arg("point") ) )    
         .def( 
             "setCoordinates"
@@ -58,7 +58,7 @@ void register_CoordGroupEditor_class(){
             , ( bp::arg("delta") ) )    
         .def( 
             "translate"
-            , (void ( ::SireVol::CoordGroupEditor::* )( int,::SireMaths::Vector const & ) )( &::SireVol::CoordGroupEditor::translate )
+            , (void ( ::SireVol::CoordGroupEditor::* )( ::quint32,::SireMaths::Vector const & ) )( &::SireVol::CoordGroupEditor::translate )
             , ( bp::arg("i"), bp::arg("delta") ) )    
         .def( "__copy__", &__copy__)    
         .def( "__str__", &pvt_get_name);

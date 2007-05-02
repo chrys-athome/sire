@@ -34,6 +34,7 @@
 #include <boost/tuple/tuple.hpp>
 
 #include "SireBase/pairmatrix.hpp"
+#include "SireBase/property.h"
 #include "SireBase/sharedpolypointer.hpp"
 
 #include "SireMaths/vector.h"
@@ -96,11 +97,11 @@ distance calculations are calculated between and within CoordGroups. This will
 allow you to change the space of the system here, and have that space used in the
 rest of the code that uses CoordGroups.
 
-This is a virtual class that is designed to be used with DynamicSharedPtr.
+This is a virtual class that is designed to be used with SharedPolyPointer.
 
 @author Christopher Woods
 */
-class SIREVOL_EXPORT SpaceBase : public QSharedData
+class SIREVOL_EXPORT SpaceBase : public SireBase::PropertyBase
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const SpaceBase&);
@@ -110,37 +111,9 @@ public:
     SpaceBase();
     SpaceBase(const SpaceBase &other);
 
-    virtual ~SpaceBase();
+    ~SpaceBase();
 
-    /** Return a clone of this SpaceBase - you are responsible
-        for managing the returned pointer. */
     virtual SpaceBase* clone() const=0;
-
-    /** Return the name of this class */
-    virtual const char* what() const=0;
-
-    /** Return whether or not this is an instance of class 'T' */
-    template<class T>
-    bool isA() const
-    {
-        return dynamic_cast<const T*>(this) != 0;
-    }
-
-    /** Return this class cast as an instance of class 'T' - this will
-        have undefined results unless isA<T>() returns true. */
-    template<class T>
-    const T& asA() const
-    {
-        return dynamic_cast<const T&>(*this);
-    }
-
-    /** Return this class cast as an instance of class 'T' - this will
-        have undefined results unless isA<T>() returns true. */
-    template<class T>
-    T& asA()
-    {
-        return dynamic_cast<T&>(*this);
-    }
 
     /** Populate the matrix 'mat' with the distances between all of the
         points within a CoordGroup. This creates a symmetrical matrix,
@@ -259,6 +232,7 @@ friend QDataStream& ::operator>>(QDataStream&, Space&);
 public:
     Space();
     Space(const SpaceBase &other);
+    Space(const SireBase::Property &property);
 
     Space(const Space &other);
 
@@ -266,8 +240,17 @@ public:
 
     Space& operator=(const SpaceBase &other);
     Space& operator=(const Space &other);
+    Space& operator=(const SireBase::Property &property);
+
+    bool operator==(const Space &other) const;
+    bool operator!=(const Space &other) const;
 
     const char* what() const;
+
+    const SpaceBase& base() const
+    {
+        return *d;
+    }
 
     template<class T>
     bool isA() const
@@ -277,12 +260,6 @@ public:
 
     template<class T>
     const T& asA() const
-    {
-        return d->asA<T>();
-    }
-
-    template<class T>
-    T& asA()
     {
         return d->asA<T>();
     }
@@ -319,6 +296,12 @@ public:
     QList< boost::tuple<double,CoordGroup> >
                 getCopiesWithin(const CoordGroup &group,
                                 const CoordGroup &center, double dist) const;
+
+    /** Allow implicit conversion to a Property */
+    operator SireBase::Property() const
+    {
+        return SireBase::Property(*d);
+    }
 
 private:
     /** Dynamic shared pointer to the virtual SpaceBase class

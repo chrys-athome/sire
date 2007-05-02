@@ -40,6 +40,9 @@
 #include "moleculeversion.h"
 #include "moleculeinfo.h"
 #include "moleculebonds.h"
+#include "residuebonds.h"
+#include "resnum.h"
+
 #include "idtypes.h"
 
 #include "SireVol/coordgroup.h"
@@ -55,6 +58,12 @@ class Line;
 class Triangle;
 class Torsion;
 class Angle;
+}
+
+namespace SireBase
+{
+class Property;
+class PropertyBase;
 }
 
 namespace SireMol
@@ -79,7 +88,8 @@ class ResID;
 class CutGroupID;
 class MoleculeID;
 
-class Property;
+using SireBase::Property;
+using SireBase::PropertyBase;
 
 class EditMol;
 class EditMolData;

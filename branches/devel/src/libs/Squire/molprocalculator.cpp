@@ -26,35 +26,13 @@
   *
 \*********************************************/
 
-#include "SireMol/qhash_siremol.h"
-#include "SireCAS/qhash_sirecas.h"
-
 #include "molprocalculator.h"
 #include "molprosession.h"
-
-#include <QTextStream>
-#include <QFileInfo>
-#include <QDateTime>
-#include <QUuid>
-
-#ifdef Q_OS_UNIX
-//Possible Unix-only header file
-#include <unistd.h>
-#endif
-
-#include "SireMol/molecule.h"
-#include "SireMol/residue.h"
 
 #include "SireError/errors.h"
 
 using namespace Squire;
 using namespace SireFF;
-using namespace SireMol;
-
-
-//////////
-////////// Implementation of MolproCalculator
-//////////
 
 /** Construct a calculator that evaluates the forcefield 'forcefield'
     using the molpro executable called 'molproexe'. Note that
@@ -64,25 +42,11 @@ using namespace SireMol;
     \throw SireError::invalid_cast
     \throw SireError::process_error
 */
-MolproCalculator::MolproCalculator(const ForceField &forcefield,
-                                   const QFileInfo &molproexe,
-                                   const QDir &tmpdir)
-                 : FFCalculatorBase(),
-                   molpro_exe(molproexe),
-                   temp_dir(tmpdir)
+MolproCalculator::MolproCalculator(const ForceField &ffield)
+                 : FFLocalCalculator(ffield)
 {
-    //its at this point that we ensure that the molpro executable exists and
-    //is in the path (we also resolve it in the path)
-    if ( not (molpro_exe.exists() and molpro_exe.isExecutable()) )
-    {
-        throw SireError::process_error( QObject::tr(
-                  "Could not find the Molpro executable \"%1\" - please "
-                  "ensure that this file exists and is executable.")
-                      .arg(molpro_exe.absoluteFilePath()), CODELOC );
-    }
-
     //set the forcefield
-    MolproCalculator::setForceField(forcefield);
+    MolproCalculator::setForceField(ffield);
 }
 
 /** Destructor */
@@ -100,76 +64,22 @@ double MolproCalculator::getEnergies(Values &values)
 /** Tell the molpro forcefield to recalculate its energy */
 void MolproCalculator::calculateEnergy()
 {
-    if ( not molpro_session or molpro_session->incompatibleWith(*molproff) )
+    BOOST_ASSERT( ffield.isA<MolproFF>() );
+
+    MolproFF &molproff = ffield.asA<MolproFF>();
+
+    if ( not molpro_session or molpro_session->incompatibleWith(molproff) )
     {
         //kill the old session (do this first to prevent having two
         //molpro jobs running simultaneously - think of the memory!)
         molpro_session.reset();
 
         //start a new session
-        molpro_session.reset( new MolproSession(*molproff) );
+        molpro_session.reset( new MolproSession(molproff) );
     }
 
-    nrg_components = molproff->recalculateEnergy(*molpro_session);
-    total_nrg = nrg_components.value(molproff->components().total());
-}
-
-/** Move the molecule 'molecule' and return whether the energy of
-    the forcefield needs to be recalculated */
-bool MolproCalculator::change(const Molecule &molecule)
-{
-    return molproff->change(molecule);
-}
-
-/** Move the residue 'residue' and return whether the energy of
-    the forcefield now needs to be recalculated */
-bool MolproCalculator::change(const Residue &residue)
-{
-    return molproff->change(residue);
-}
-
-/** Move the atom 'atom' and return whether the energy of
-    the forcefield now needs to be recalculated */
-bool MolproCalculator::change(const NewAtom &atom)
-{
-    return molproff->change(atom);
-}
-
-bool MolproCalculator::add(const Molecule&, const ParameterMap&)
-{
-    return false;
-}
-
-bool MolproCalculator::add(const Residue&, const ParameterMap&)
-{
-    return false;
-}
-
-bool MolproCalculator::add(const NewAtom&, const ParameterMap&)
-{
-    return false;
-}
-
-/** Remove the molecule 'molecule', returning whether or not this
-    changes this forcefield */
-bool MolproCalculator::remove(const Molecule &molecule)
-{
-    return molproff->remove(molecule);
-}
-
-bool MolproCalculator::remove(const Residue&)
-{
-    return false;
-}
-
-bool MolproCalculator::remove(const NewAtom &atom)
-{
-    return false;
-}
-
-bool MolproCalculator::replace(const Molecule&, const Molecule&, const ParameterMap&)
-{
-    return false;
+    nrg_components = molproff.recalculateEnergy(*molpro_session);
+    total_nrg = nrg_components.value(molproff.components().total());
 }
 
 /** Set the forcefield for this calculator - this calculator is
@@ -181,21 +91,28 @@ bool MolproCalculator::replace(const Molecule&, const Molecule&, const Parameter
 */
 bool MolproCalculator::setForceField(const ForceField &forcefield)
 {
-    molproff = forcefield;
+    if (not forcefield.isA<MolproFF>())
+        throw SireError::invalid_cast( QObject::tr(
+            "A MolproCalculator can only be used to evaluate forcefields "
+            "that are derived from Squire::MolproFF. You cannot place "
+            "a %1 on it!")
+                .arg(forcefield.what()), CODELOC );
 
-    if (molproff->isDirty())
+    ffield = forcefield;
+    
+    if (ffield.isDirty())
         return true;
     else
     {
-        nrg_components = molproff->energies();
-        total_nrg = nrg_components.value(molproff->components().total());
+        nrg_components = ffield.energies();
+        total_nrg = nrg_components.value(ffield.components().total());
 
         return false;
     }
 }
 
 /** Return a copy of the forcefield being evaluated */
-ForceField MolproCalculator::forcefield() const
+ForceField MolproCalculator::forceField()
 {
-    return ForceField(molproff);
+    return ffield;
 }

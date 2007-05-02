@@ -24,11 +24,17 @@ void register_AtomicCharges_class(){
         .def( bp::init< >() )    
         .def( bp::init< QVector<QVector<SireMM::ChargeParameter> > const & >(( bp::arg("charges") )) )    
         .def( bp::init< QVector<SireMM::ChargeParameter> const & >(( bp::arg("charges") )) )    
-        .def( bp::init< SireMol::Property const & >(( bp::arg("property") )) )    
+        .def( bp::init< SireBase::Property const & >(( bp::arg("property") )) )    
         .def( 
             "isCompatibleWith"
-            , (bool ( ::SireMM::AtomicCharges::* )( ::SireMol::Molecule const & ) const)( &::SireMM::AtomicCharges::isCompatibleWith )
-            , ( bp::arg("molecule") ) )    
+            , (bool ( ::SireMM::AtomicCharges::* )( ::SireMol::MoleculeInfo const & ) const)( &::SireMM::AtomicCharges::isCompatibleWith )
+            , ( bp::arg("molinfo") ) )    
+        .def( 
+            "mask"
+            , (::SireBase::Property ( ::SireMM::AtomicCharges::* )( ::SireMol::AtomSelection const & ) const)( &::SireMM::AtomicCharges::mask )
+            , ( bp::arg("selected_atoms") ) )    
+        .def( bp::self != bp::self )    
+        .def( bp::self == bp::self )    
         .def( 
             "typeName"
             , (char const * (*)(  ))( &::SireMM::AtomicCharges::typeName ) )    

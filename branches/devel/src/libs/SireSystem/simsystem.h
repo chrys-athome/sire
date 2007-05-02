@@ -29,62 +29,22 @@
 #ifndef SIRESYSTEM_SIMSYSTEM_H
 #define SIRESYSTEM_SIMSYSTEM_H
 
-#include "sireglobal.h"
+#include "querysystem.h"
 
-#include <boost/noncopyable.hpp>
+#include "SireFF/parametermap.h"
 
 SIRE_BEGIN_HEADER
 
-namespace SireBase
-{
-class Version;
-}
-
-namespace SireCAS
-{
-class Function;
-}
-
-namespace SireMol
-{
-class Molecule;
-class Residue;
-class NewAtom;
-class MoleculeGroup;
-class MoleculeGroups;
-class MoleculeGroupID;
-}
-
 namespace SireFF
 {
-class FFComponent;
-class ForceField;
-class ForceFieldID;
-class ForceFieldsBase;
+class FFGroupID;
 }
 
 namespace SireSystem
 {
 
-class SystemData;
-class System;
-class SystemID;
-
-using SireCAS::Function;
-
-using SireMol::Molecule;
-using SireMol::Residue;
-using SireMol::NewAtom;
-using SireMol::MoleculeGroup;
-using SireMol::MoleculeGroups;
-using SireMol::MoleculeGroupID;
-
-using SireFF::ForceField;
-using SireFF::ForceFieldsBase;
-using SireFF::ForceFieldID;
-using SireFF::FFComponent;
-
-using SireBase::Version;
+using SireFF::FFGroupID;
+using SireFF::ParameterMap;
 
 /** This class holds a system that is being actively
     simulated.
@@ -95,56 +55,99 @@ using SireBase::Version;
 
     @author Christopher Woods
 */
-class SIRESYSTEM_EXPORT SimSystem : public boost::noncopyable
+class SIRESYSTEM_EXPORT SimSystem : public QuerySystem
 {
 
 public:
-    SimSystem(System &system);
-    SimSystem(SystemData &sysdata, ForceFieldsBase &ffields);
+    ~SimSystem();
 
-    virtual ~SimSystem();
+    virtual void rollback(const CheckPoint &checkpoint)=0;
 
-    const SystemData& info() const;
-    const ForceFieldsBase& forceFields() const;
+    void commit();
 
-    double energy(const Function &component);
-    double energy(const FFComponent &component);
+    void setProperty(const QString &name, const Property &property);
+    void setProperty(ForceFieldID ffid, const QString &name, const Property &property);
 
-    System checkpoint() const;
-    void setSystem(System &newsystem);
+    void setProperty(const QSet<ForceFieldID> &ffids,
+                     const QString &name, const Property &property);
 
-    const MoleculeGroup& group(MoleculeGroupID id) const;
+    PartialMolecule change(const PartialMolecule &molecule);
 
-    const MoleculeGroup& group(const MoleculeGroup &group) const;
+    QHash<MoleculeID,PartialMolecule>
+    change(const QHash<MoleculeID,PartialMolecule> &molecules);
 
-    const MoleculeGroups& groups() const;
+    QHash<MoleculeID,PartialMolecule>
+    change(const QList<PartialMolecule> &molecules);
 
-    SystemID ID() const;
+    PartialMolecule add(const PartialMolecule &molecule,
+                        const QSet<MoleculeGroupID> &molgroupids);
 
-    const Version& version() const;
+    PartialMolecule add(const PartialMolecule &molecule,
+                        const QSet<FFGroupID> &ffgroupids,
+                        const ParameterMap &map = ParameterMap());
 
-    void change(const Molecule &molecule);
-    void change(const Residue &residue);
-    void change(const NewAtom &atom);
+    PartialMolecule add(const PartialMolecule &molecule,
+                        const QSet<FFGroupID> &ffgroupids,
+                        const QSet<MoleculeGroupID> &molgroupids,
+                        const ParameterMap &map = ParameterMap());
 
-    void remove(const Molecule &molecule);
+    QHash<MoleculeID,PartialMolecule>
+    add(const QHash<MoleculeID,PartialMolecule> &molecules,
+        const QSet<MoleculeGroupID> &molgroupids);
 
-    void updateStatistics();
+    QHash<MoleculeID,PartialMolecule>
+    add(const QHash<MoleculeID,PartialMolecule> &molecules,
+        const QSet<FFGroupID> &ffgroupids,
+        const ParameterMap &map = ParameterMap());
 
-private:
-    template<class T>
-    void _pvt_change(const T &obj);
+    QHash<MoleculeID,PartialMolecule>
+    add(const QHash<MoleculeID,PartialMolecule> &molecules,
+        const QSet<FFGroupID> &ffgroupids,
+        const QSet<MoleculeGroupID> &molgroupids,
+        const ParameterMap &map = ParameterMap());
 
-    /** Reference to the data of the System being simulated */
-    SystemData &sysdata;
-    
-    /** Reference to the forcefields that are used to 
-        calculate the energy / forces */
-    ForceFieldsBase &ffields;
+    QHash<MoleculeID,PartialMolecule>
+    add(const QList<PartialMolecule> &molecules,
+        const QSet<MoleculeGroupID> &molgroupids);
 
-    /** Reference to the monitors that are used to monitor
-        and collect statistics about the simulation */
-    //SystemMonitors &monitors;
+    QHash<MoleculeID,PartialMolecule>
+    add(const QList<PartialMolecule> &molecules,
+        const QSet<FFGroupID> &ffgroupids,
+        const ParameterMap &map = ParameterMap());
+
+    QHash<MoleculeID,PartialMolecule>
+    add(const QList<PartialMolecule> &molecules,
+        const QSet<FFGroupID> &ffgroupids,
+        const QSet<MoleculeGroupID> &molgroupids,
+        const ParameterMap &map = ParameterMap());
+
+    void remove(const PartialMolecule &molecule);
+    void remove(const QList<PartialMolecule> &molecules);
+
+    void remove(const PartialMolecule &molecule,
+                const QSet<MoleculeGroupID> &molgroupids);
+
+    void remove(const PartialMolecule &molecule,
+                const QSet<FFGroupID> &ffgroupids,
+                const QSet<MoleculeGroupID> &molgroupids = QSet<MoleculeGroupID>());
+
+    void remove(const QList<PartialMolecule> &molecules,
+                const QSet<MoleculeGroupID> &molgroupids);
+
+    void remove(const QList<PartialMolecule> &molecules,
+                const QSet<FFGroupID> &ffgroupids,
+                const QSet<MoleculeGroupID> &molgroupids = QSet<MoleculeGroupID>());
+
+protected:
+    SimSystem();
+
+    SimSystem(SystemData &sysdata,
+              ForceFieldsBase &ffields,
+              SystemMonitors &monitors);
+
+    void setSystem(SystemData &sysdata,
+                   ForceFieldsBase &ffields,
+                   SystemMonitors &monitors);
 };
 
 }

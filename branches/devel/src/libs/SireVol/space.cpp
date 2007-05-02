@@ -42,29 +42,37 @@ using namespace SireStream;
 static const RegisterMetaType<SpaceBase> r_spacebase(MAGIC_ONLY, "SireVol::SpaceBase");
 
 /** Serialise to a binary datastream */
-QDataStream SIREVOL_EXPORT &operator<<(QDataStream &ds, const SpaceBase&)
+QDataStream SIREVOL_EXPORT &operator<<(QDataStream &ds,
+                                       const SpaceBase &spacebase)
 {
-    writeHeader(ds, r_spacebase, 0);
+    writeHeader(ds, r_spacebase, 1)
+            << static_cast<const PropertyBase&>(spacebase);
+
     return ds;
 }
 
 /** Deserialise from a binary datastream */
-QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds, SpaceBase&)
+QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds,
+                                       SpaceBase &spacebase)
 {
     VersionID v = readHeader(ds, r_spacebase);
 
-    if (v != 0)
-        throw version_error(v, "0", r_spacebase, CODELOC);
+    if (v == 1)
+    {
+        ds >> static_cast<PropertyBase&>(spacebase);
+    }
+    else
+        throw version_error(v, "1", r_spacebase, CODELOC);
 
     return ds;
 }
 
 /** Construct a SpaceBase. */
-SpaceBase::SpaceBase() : QSharedData()
+SpaceBase::SpaceBase() : PropertyBase()
 {}
 
 /** Copy constructor */
-SpaceBase::SpaceBase(const SpaceBase&) : QSharedData()
+SpaceBase::SpaceBase(const SpaceBase &other) : PropertyBase(other)
 {}
 
 /** Destructor */
@@ -80,7 +88,11 @@ static const RegisterMetaType<Space> r_space;
 /** Serialise to a binary datastream */
 QDataStream SIREVOL_EXPORT &operator<<(QDataStream &ds, const Space &space)
 {
-    writeHeader(ds, r_space, 1) << space.d;
+    writeHeader(ds, r_space, 1);
+
+    SharedDataStream sds(ds);
+
+    sds << space.d;
 
     return ds;
 }
@@ -92,7 +104,8 @@ QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds, Space &space)
 
     if (v == 1)
     {
-        ds >> space.d;
+        SharedDataStream sds(ds);
+        sds >> space.d;
     }
     else
         throw version_error(v, "1", r_space, CODELOC);
@@ -111,6 +124,11 @@ Space::Space(const SpaceBase &other)
       : d( other.clone() )
 {}
 
+/** Construct from a property */
+Space::Space(const Property &property)
+      : d( property.base() )
+{}
+
 /** Copy constructor - fast as this class is implicitly shared */
 Space::Space(const Space &other)
       : d( other.d )
@@ -123,7 +141,7 @@ Space::~Space()
 /** Assign from the base class */
 Space& Space::operator=(const SpaceBase &other)
 {
-    d = other.clone();
+    d = other;
     return *this;
 }
 
@@ -132,6 +150,25 @@ Space& Space::operator=(const Space &other)
 {
     d = other.d;
     return *this;
+}
+
+/** Assign from a Property */
+Space& Space::operator=(const Property &property)
+{
+    d = property.base();
+    return *this;
+}
+
+/** Comparison operator */
+bool Space::operator==(const Space &other) const
+{
+    return d == other.d or *d == *(other.d);
+}
+
+/** Comparison operator */
+bool Space::operator!=(const Space &other) const
+{
+    return d != other.d and *d != *(other.d);
 }
 
 /** Return the type of Space */

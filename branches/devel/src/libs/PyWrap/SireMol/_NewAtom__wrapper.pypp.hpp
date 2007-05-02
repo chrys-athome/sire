@@ -9,15 +9,17 @@
 
 #include "boost/python.hpp"
 #include "siremol_headers.h"
+#include "SireMol/moleculedata.h"
 #include "SireMaths/angle.h"
 #include "SireMaths/quaternion.h"
 #include "SireMaths/matrix.h"
 #include "SireMaths/triangle.h"
 #include "SireMaths/line.h"
 #include "SireMaths/torsion.h"
+#include "SireVol/space.h"
 
 namespace bp = boost::python;
 
-typedef bp::class_< SireMol::NewAtom > NewAtom_exposer_t;
+typedef bp::class_< SireMol::NewAtom, bp::bases< SireMol::MoleculeView > > NewAtom_exposer_t;
 
 #endif//_NewAtom__wrapper_hpp__pyplusplus_wrapper

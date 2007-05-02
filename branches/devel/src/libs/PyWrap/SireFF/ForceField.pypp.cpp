@@ -6,6 +6,7 @@
 #include "boost/python.hpp"
 #include "sireff_headers.h"
 #include "SireMol/molecule.h"
+#include "SireMol/partialmolecule.h"
 #include "SireMol/residue.h"
 #include "SireMol/newatom.h"
 #include "SireMol/atom.h"
@@ -14,6 +15,7 @@
 #include "SireMol/resnumatomid.h"
 #include "SireMol/resid.h"
 #include "SireMol/moleculeid.h"
+#include "SireBase/property.h"
 
 namespace bp = boost::python;
 
@@ -34,43 +36,39 @@ void register_ForceField_class(){
             , (::SireFF::ForceFieldID ( ::SireFF::ForceField::* )(  ) const)( &::SireFF::ForceField::ID ) )    
         .def( 
             "add"
-            , (bool ( ::SireFF::ForceField::* )( ::SireMol::Molecule const &,::SireFF::ParameterMap const & ) )( &::SireFF::ForceField::add )
+            , (bool ( ::SireFF::ForceField::* )( ::SireMol::PartialMolecule const &,::SireFF::ParameterMap const & ) )( &::SireFF::ForceField::add )
             , ( bp::arg("molecule"), bp::arg("map")=::SireFF::ParameterMap( ) ) )    
         .def( 
             "add"
-            , (bool ( ::SireFF::ForceField::* )( ::SireMol::Residue const &,::SireFF::ParameterMap const & ) )( &::SireFF::ForceField::add )
-            , ( bp::arg("residue"), bp::arg("map")=::SireFF::ParameterMap( ) ) )    
+            , (bool ( ::SireFF::ForceField::* )( ::QList<SireMol::PartialMolecule> const &,::SireFF::ParameterMap const & ) )( &::SireFF::ForceField::add )
+            , ( bp::arg("molecules"), bp::arg("map")=::SireFF::ParameterMap( ) ) )    
         .def( 
-            "add"
-            , (bool ( ::SireFF::ForceField::* )( ::SireMol::NewAtom const &,::SireFF::ParameterMap const & ) )( &::SireFF::ForceField::add )
-            , ( bp::arg("atom"), bp::arg("map")=::SireFF::ParameterMap( ) ) )    
+            "addTo"
+            , (bool ( ::SireFF::ForceField::* )( ::SireFF::FFBase::Group const &,::SireMol::PartialMolecule const &,::SireFF::ParameterMap const & ) )( &::SireFF::ForceField::addTo )
+            , ( bp::arg("group"), bp::arg("molecule"), bp::arg("map")=::SireFF::ParameterMap( ) ) )    
+        .def( 
+            "addTo"
+            , (bool ( ::SireFF::ForceField::* )( ::SireFF::FFBase::Group const &,::QList<SireMol::PartialMolecule> const &,::SireFF::ParameterMap const & ) )( &::SireFF::ForceField::addTo )
+            , ( bp::arg("group"), bp::arg("molecules"), bp::arg("map")=::SireFF::ParameterMap( ) ) )    
         .def( 
             "assertContains"
             , (void ( ::SireFF::ForceField::* )( ::SireFF::FFComponent const & ) const)( &::SireFF::ForceField::assertContains )
             , ( bp::arg("component") ) )    
         .def( 
-            "atom"
-            , (::SireMol::NewAtom ( ::SireFF::ForceField::* )( ::SireMol::MoleculeID,::SireMol::IDMolAtom const & ) const)( &::SireFF::ForceField::atom )
-            , ( bp::arg("molid"), bp::arg("atomid") ) )    
-        .def( 
-            "atom"
-            , (::SireMol::NewAtom ( ::SireFF::ForceField::* )( ::SireMol::NewAtom const & ) const)( &::SireFF::ForceField::atom )
-            , ( bp::arg("atom") ) )    
+            "base"
+            , (::SireFF::FFBase const & ( ::SireFF::ForceField::* )(  ) const)( &::SireFF::ForceField::base )
+            , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "change"
-            , (bool ( ::SireFF::ForceField::* )( ::SireMol::Molecule const & ) )( &::SireFF::ForceField::change )
-            , ( bp::arg("mol") ) )    
+            , (bool ( ::SireFF::ForceField::* )( ::SireMol::PartialMolecule const & ) )( &::SireFF::ForceField::change )
+            , ( bp::arg("molecule") ) )    
         .def( 
             "change"
-            , (bool ( ::SireFF::ForceField::* )( ::SireMol::Residue const & ) )( &::SireFF::ForceField::change )
-            , ( bp::arg("res") ) )    
+            , (bool ( ::SireFF::ForceField::* )( ::QList<SireMol::PartialMolecule> const & ) )( &::SireFF::ForceField::change )
+            , ( bp::arg("molecules") ) )    
         .def( 
             "change"
-            , (bool ( ::SireFF::ForceField::* )( ::SireMol::NewAtom const & ) )( &::SireFF::ForceField::change )
-            , ( bp::arg("atom") ) )    
-        .def( 
-            "change"
-            , (bool ( ::SireFF::ForceField::* )( ::QHash<SireMol::MoleculeID, SireMol::Molecule> const & ) )( &::SireFF::ForceField::change )
+            , (bool ( ::SireFF::ForceField::* )( ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> const & ) )( &::SireFF::ForceField::change )
             , ( bp::arg("molecules") ) )    
         .def( 
             "components"
@@ -78,16 +76,23 @@ void register_ForceField_class(){
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "contains"
-            , (bool ( ::SireFF::ForceField::* )( ::SireMol::Molecule const & ) const)( &::SireFF::ForceField::contains )
+            , (bool ( ::SireFF::ForceField::* )( ::SireMol::PartialMolecule const & ) const)( &::SireFF::ForceField::contains )
             , ( bp::arg("molecule") ) )    
         .def( 
             "contains"
-            , (bool ( ::SireFF::ForceField::* )( ::SireMol::Residue const & ) const)( &::SireFF::ForceField::contains )
-            , ( bp::arg("residue") ) )    
+            , (bool ( ::SireFF::ForceField::* )( ::SireMol::PartialMolecule const &,::SireFF::FFBase::Group const & ) const)( &::SireFF::ForceField::contains )
+            , ( bp::arg("molecule"), bp::arg("group") ) )    
         .def( 
-            "contains"
-            , (bool ( ::SireFF::ForceField::* )( ::SireMol::NewAtom const & ) const)( &::SireFF::ForceField::contains )
-            , ( bp::arg("atom") ) )    
+            "containsProperty"
+            , (bool ( ::SireFF::ForceField::* )( ::QString const & ) const)( &::SireFF::ForceField::containsProperty )
+            , ( bp::arg("name") ) )    
+        .def( 
+            "contents"
+            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::ForceField::* )( ::SireFF::FFBase::Group const & ) const)( &::SireFF::ForceField::contents )
+            , ( bp::arg("group") ) )    
+        .def( 
+            "contents"
+            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::ForceField::* )(  ) const)( &::SireFF::ForceField::contents ) )    
         .def( 
             "energies"
             , (::SireCAS::Values ( ::SireFF::ForceField::* )(  ) )( &::SireFF::ForceField::energies ) )    
@@ -103,6 +108,18 @@ void register_ForceField_class(){
             , (double ( ::SireFF::ForceField::* )( ::SireFF::FFComponent const & ) )( &::SireFF::ForceField::energy )
             , ( bp::arg("component") ) )    
         .def( 
+            "getProperty"
+            , (::SireBase::Property ( ::SireFF::ForceField::* )( ::QString const & ) const)( &::SireFF::ForceField::getProperty )
+            , ( bp::arg("name") ) )    
+        .def( 
+            "groups"
+            , (::SireFF::FFBase::Groups const & ( ::SireFF::ForceField::* )(  ) const)( &::SireFF::ForceField::groups )
+            , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( 
+            "groupsReferringTo"
+            , (::QSet<SireFF::FFBase::Group> ( ::SireFF::ForceField::* )( ::SireMol::MoleculeID ) const)( &::SireFF::ForceField::groupsReferringTo )
+            , ( bp::arg("molid") ) )    
+        .def( 
             "isClean"
             , (bool ( ::SireFF::ForceField::* )(  ) const)( &::SireFF::ForceField::isClean ) )    
         .def( 
@@ -110,15 +127,33 @@ void register_ForceField_class(){
             , (bool ( ::SireFF::ForceField::* )(  ) const)( &::SireFF::ForceField::isDirty ) )    
         .def( 
             "molecule"
-            , (::SireMol::Molecule ( ::SireFF::ForceField::* )( ::SireMol::MoleculeID ) const)( &::SireFF::ForceField::molecule )
+            , (::SireMol::PartialMolecule ( ::SireFF::ForceField::* )( ::SireMol::MoleculeID ) const)( &::SireFF::ForceField::molecule )
             , ( bp::arg("molid") ) )    
         .def( 
             "molecule"
-            , (::SireMol::Molecule ( ::SireFF::ForceField::* )( ::SireMol::Molecule const & ) const)( &::SireFF::ForceField::molecule )
-            , ( bp::arg("mol") ) )    
+            , (::SireMol::PartialMolecule ( ::SireFF::ForceField::* )( ::SireMol::MoleculeID,::SireFF::FFBase::Group const & ) const)( &::SireFF::ForceField::molecule )
+            , ( bp::arg("molid"), bp::arg("group") ) )    
         .def( 
             "moleculeIDs"
             , (::QSet<SireMol::MoleculeID> ( ::SireFF::ForceField::* )(  ) const)( &::SireFF::ForceField::moleculeIDs ) )    
+        .def( 
+            "moleculeIDs"
+            , (::QSet<SireMol::MoleculeID> ( ::SireFF::ForceField::* )( ::SireFF::FFBase::Group const & ) const)( &::SireFF::ForceField::moleculeIDs )
+            , ( bp::arg("group") ) )    
+        .def( 
+            "molecules"
+            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::ForceField::* )(  ) const)( &::SireFF::ForceField::molecules ) )    
+        .def( 
+            "molecules"
+            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::ForceField::* )( ::SireFF::FFBase::Group const & ) const)( &::SireFF::ForceField::molecules )
+            , ( bp::arg("group") ) )    
+        .def( 
+            "molecules"
+            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::ForceField::* )( ::QSet<SireMol::MoleculeID> const & ) const)( &::SireFF::ForceField::molecules )
+            , ( bp::arg("molids") ) )    
+        .def( 
+            "mustNowRecalculateFromScratch"
+            , (void ( ::SireFF::ForceField::* )(  ) )( &::SireFF::ForceField::mustNowRecalculateFromScratch ) )    
         .def( 
             "name"
             , (::QString const & ( ::SireFF::ForceField::* )(  ) const)( &::SireFF::ForceField::name )
@@ -128,37 +163,40 @@ void register_ForceField_class(){
             , (::SireFF::FFBase::Parameters const & ( ::SireFF::ForceField::* )(  ) const)( &::SireFF::ForceField::parameters )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
+            "properties"
+            , (::QHash<QString,SireBase::Property> ( ::SireFF::ForceField::* )(  ) const)( &::SireFF::ForceField::properties ) )    
+        .def( 
             "refersTo"
-            , (bool ( ::SireFF::ForceField::* )( ::SireMol::Molecule const & ) const)( &::SireFF::ForceField::refersTo )
+            , (bool ( ::SireFF::ForceField::* )( ::SireMol::MoleculeID ) const)( &::SireFF::ForceField::refersTo )
+            , ( bp::arg("molid") ) )    
+        .def( 
+            "refersTo"
+            , (bool ( ::SireFF::ForceField::* )( ::SireMol::MoleculeID,::SireFF::FFBase::Group const & ) const)( &::SireFF::ForceField::refersTo )
+            , ( bp::arg("molid"), bp::arg("group") ) )    
+        .def( 
+            "remove"
+            , (bool ( ::SireFF::ForceField::* )( ::SireMol::PartialMolecule const & ) )( &::SireFF::ForceField::remove )
             , ( bp::arg("molecule") ) )    
         .def( 
             "remove"
-            , (bool ( ::SireFF::ForceField::* )( ::SireMol::Molecule const & ) )( &::SireFF::ForceField::remove )
-            , ( bp::arg("molecule") ) )    
+            , (bool ( ::SireFF::ForceField::* )( ::QList<SireMol::PartialMolecule> const & ) )( &::SireFF::ForceField::remove )
+            , ( bp::arg("molecules") ) )    
         .def( 
-            "remove"
-            , (bool ( ::SireFF::ForceField::* )( ::SireMol::Residue const & ) )( &::SireFF::ForceField::remove )
-            , ( bp::arg("residue") ) )    
+            "removeFrom"
+            , (bool ( ::SireFF::ForceField::* )( ::SireFF::FFBase::Group const &,::SireMol::PartialMolecule const & ) )( &::SireFF::ForceField::removeFrom )
+            , ( bp::arg("group"), bp::arg("molecule") ) )    
         .def( 
-            "remove"
-            , (bool ( ::SireFF::ForceField::* )( ::SireMol::NewAtom const & ) )( &::SireFF::ForceField::remove )
-            , ( bp::arg("atom") ) )    
-        .def( 
-            "replace"
-            , (bool ( ::SireFF::ForceField::* )( ::SireMol::Molecule const &,::SireMol::Molecule const &,::SireFF::ParameterMap const & ) )( &::SireFF::ForceField::replace )
-            , ( bp::arg("oldmol"), bp::arg("newmol"), bp::arg("map")=::SireFF::ParameterMap( ) ) )    
-        .def( 
-            "residue"
-            , (::SireMol::Residue ( ::SireFF::ForceField::* )( ::SireMol::MoleculeID,::SireMol::ResNum ) const)( &::SireFF::ForceField::residue )
-            , ( bp::arg("molid"), bp::arg("resnum") ) )    
-        .def( 
-            "residue"
-            , (::SireMol::Residue ( ::SireFF::ForceField::* )( ::SireMol::Residue const & ) const)( &::SireFF::ForceField::residue )
-            , ( bp::arg("res") ) )    
+            "removeFrom"
+            , (bool ( ::SireFF::ForceField::* )( ::SireFF::FFBase::Group const &,::QList<SireMol::PartialMolecule> const & ) )( &::SireFF::ForceField::removeFrom )
+            , ( bp::arg("group"), bp::arg("molecules") ) )    
         .def( 
             "setName"
             , (void ( ::SireFF::ForceField::* )( ::QString const & ) )( &::SireFF::ForceField::setName )
             , ( bp::arg("name") ) )    
+        .def( 
+            "setProperty"
+            , (bool ( ::SireFF::ForceField::* )( ::QString const &,::SireBase::Property const & ) )( &::SireFF::ForceField::setProperty )
+            , ( bp::arg("name"), bp::arg("value") ) )    
         .def( 
             "version"
             , (::SireBase::Version const & ( ::SireFF::ForceField::* )(  ) const)( &::SireFF::ForceField::version )

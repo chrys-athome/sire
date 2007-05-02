@@ -35,7 +35,7 @@ void register_InterCoulombFF_class(){
         InterCoulombFF_exposer.def( bp::init< SireVol::Space const &, SireMM::SwitchingFunction const & >(( bp::arg("space"), bp::arg("switchingfunction") )) );
         { //::SireMM::InterCoulombFF::add
         
-            typedef bool ( ::SireMM::InterCoulombFF::*add_function_type )( ::SireMol::Molecule const &,::SireFF::ParameterMap const & ) ;
+            typedef bool ( ::SireMM::InterCoulombFF::*add_function_type )( ::SireMol::PartialMolecule const &,::SireFF::ParameterMap const & ) ;
             
             InterCoulombFF_exposer.def( 
                 "add"
@@ -43,39 +43,9 @@ void register_InterCoulombFF_class(){
                 , ( bp::arg("mol"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
         
         }
-        { //::SireMM::InterCoulombFF::add
-        
-            typedef bool ( ::SireMM::InterCoulombFF::*add_function_type )( ::SireMol::Residue const &,::SireFF::ParameterMap const & ) ;
-            
-            InterCoulombFF_exposer.def( 
-                "add"
-                , add_function_type( &::SireMM::InterCoulombFF::add )
-                , ( bp::arg("res"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
-        
-        }
-        { //::SireMM::InterCoulombFF::add
-        
-            typedef bool ( ::SireMM::InterCoulombFF::*add_function_type )( ::SireMol::NewAtom const &,::SireFF::ParameterMap const & ) ;
-            
-            InterCoulombFF_exposer.def( 
-                "add"
-                , add_function_type( &::SireMM::InterCoulombFF::add )
-                , ( bp::arg("atom"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
-        
-        }
-        { //::SireMM::InterCoulombFF::add
-        
-            typedef bool ( ::SireMM::InterCoulombFF::*add_function_type )( ::SireMol::Molecule const &,::SireMol::AtomSelection const &,::SireFF::ParameterMap const & ) ;
-            
-            InterCoulombFF_exposer.def( 
-                "add"
-                , add_function_type( &::SireMM::InterCoulombFF::add )
-                , ( bp::arg("mol"), bp::arg("selected_atoms"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
-        
-        }
         { //::SireMM::InterCoulombFF::change
         
-            typedef bool ( ::SireMM::InterCoulombFF::*change_function_type )( ::SireMol::Molecule const & ) ;
+            typedef bool ( ::SireMM::InterCoulombFF::*change_function_type )( ::SireMol::PartialMolecule const & ) ;
             
             InterCoulombFF_exposer.def( 
                 "change"
@@ -83,64 +53,81 @@ void register_InterCoulombFF_class(){
                 , ( bp::arg("molecule") ) );
         
         }
-        { //::SireMM::InterCoulombFF::change
+        { //::SireMM::InterCoulombFF::contains
         
-            typedef bool ( ::SireMM::InterCoulombFF::*change_function_type )( ::SireMol::Residue const & ) ;
+            typedef bool ( ::SireMM::InterCoulombFF::*contains_function_type )( ::SireMol::PartialMolecule const & ) const;
             
             InterCoulombFF_exposer.def( 
-                "change"
-                , change_function_type( &::SireMM::InterCoulombFF::change )
-                , ( bp::arg("residue") ) );
+                "contains"
+                , contains_function_type( &::SireMM::InterCoulombFF::contains )
+                , ( bp::arg("molecule") ) );
         
         }
-        { //::SireMM::InterCoulombFF::change
+        { //::SireMM::InterCoulombFF::contents
         
-            typedef bool ( ::SireMM::InterCoulombFF::*change_function_type )( ::SireMol::NewAtom const & ) ;
+            typedef ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireMM::InterCoulombFF::*contents_function_type )(  ) const;
             
             InterCoulombFF_exposer.def( 
-                "change"
-                , change_function_type( &::SireMM::InterCoulombFF::change )
-                , ( bp::arg("atom") ) );
+                "contents"
+                , contents_function_type( &::SireMM::InterCoulombFF::contents ) );
+        
+        }
+        { //::SireMM::InterCoulombFF::groupsReferringTo
+        
+            typedef ::QSet<SireFF::FFBase::Group> ( ::SireMM::InterCoulombFF::*groupsReferringTo_function_type )( ::SireMol::MoleculeID ) const;
+            
+            InterCoulombFF_exposer.def( 
+                "groupsReferringTo"
+                , groupsReferringTo_function_type( &::SireMM::InterCoulombFF::groupsReferringTo )
+                , ( bp::arg("molid") ) );
+        
+        }
+        { //::SireMM::InterCoulombFF::molecule
+        
+            typedef ::SireMol::PartialMolecule ( ::SireMM::InterCoulombFF::*molecule_function_type )( ::SireMol::MoleculeID ) const;
+            
+            InterCoulombFF_exposer.def( 
+                "molecule"
+                , molecule_function_type( &::SireMM::InterCoulombFF::molecule )
+                , ( bp::arg("molid") ) );
+        
+        }
+        { //::SireMM::InterCoulombFF::moleculeIDs
+        
+            typedef ::QSet<SireMol::MoleculeID> ( ::SireMM::InterCoulombFF::*moleculeIDs_function_type )(  ) const;
+            
+            InterCoulombFF_exposer.def( 
+                "moleculeIDs"
+                , moleculeIDs_function_type( &::SireMM::InterCoulombFF::moleculeIDs ) );
+        
+        }
+        { //::SireMM::InterCoulombFF::mustNowRecalculateFromScratch
+        
+            typedef void ( ::SireMM::InterCoulombFF::*mustNowRecalculateFromScratch_function_type )(  ) ;
+            
+            InterCoulombFF_exposer.def( 
+                "mustNowRecalculateFromScratch"
+                , mustNowRecalculateFromScratch_function_type( &::SireMM::InterCoulombFF::mustNowRecalculateFromScratch ) );
+        
+        }
+        { //::SireMM::InterCoulombFF::refersTo
+        
+            typedef bool ( ::SireMM::InterCoulombFF::*refersTo_function_type )( ::SireMol::MoleculeID ) const;
+            
+            InterCoulombFF_exposer.def( 
+                "refersTo"
+                , refersTo_function_type( &::SireMM::InterCoulombFF::refersTo )
+                , ( bp::arg("molid") ) );
         
         }
         { //::SireMM::InterCoulombFF::remove
         
-            typedef bool ( ::SireMM::InterCoulombFF::*remove_function_type )( ::SireMol::Molecule const & ) ;
+            typedef bool ( ::SireMM::InterCoulombFF::*remove_function_type )( ::SireMol::PartialMolecule const & ) ;
             
             InterCoulombFF_exposer.def( 
                 "remove"
                 , remove_function_type( &::SireMM::InterCoulombFF::remove )
                 , ( bp::arg("molecule") ) );
-        
-        }
-        { //::SireMM::InterCoulombFF::remove
-        
-            typedef bool ( ::SireMM::InterCoulombFF::*remove_function_type )( ::SireMol::Residue const & ) ;
-            
-            InterCoulombFF_exposer.def( 
-                "remove"
-                , remove_function_type( &::SireMM::InterCoulombFF::remove )
-                , ( bp::arg("residue") ) );
-        
-        }
-        { //::SireMM::InterCoulombFF::remove
-        
-            typedef bool ( ::SireMM::InterCoulombFF::*remove_function_type )( ::SireMol::NewAtom const & ) ;
-            
-            InterCoulombFF_exposer.def( 
-                "remove"
-                , remove_function_type( &::SireMM::InterCoulombFF::remove )
-                , ( bp::arg("atom") ) );
-        
-        }
-        { //::SireMM::InterCoulombFF::remove
-        
-            typedef bool ( ::SireMM::InterCoulombFF::*remove_function_type )( ::SireMol::Molecule const &,::SireMol::AtomSelection const & ) ;
-            
-            InterCoulombFF_exposer.def( 
-                "remove"
-                , remove_function_type( &::SireMM::InterCoulombFF::remove )
-                , ( bp::arg("mol"), bp::arg("selected_atoms") ) );
         
         }
         { //::SireMM::InterCoulombFF::typeName

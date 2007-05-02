@@ -31,6 +31,10 @@
 
 #include "interljff.h"
 
+#include "SireMol/partialmolecule.h"
+
+#include "SireMol/errors.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
@@ -111,6 +115,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const InterLJFF &interljf
     sds << interljff.mols
         << interljff.changed_mols
         << interljff.removed_mols
+        << interljff.need_total_recalc
         << static_cast<const LJFF&>(interljff);
 
     return ds;
@@ -128,6 +133,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, InterLJFF &interljff)
         sds >> interljff.mols
             >> interljff.changed_mols
             >> interljff.removed_mols
+            >> interljff.need_total_recalc
             >> static_cast<LJFF&>(interljff);
 
         //rebuild molid_to_index and molid_to_changedindex
@@ -184,13 +190,13 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, InterLJFF &interljff)
 }
 
 /** Constructor */
-InterLJFF::InterLJFF() : LJFF()
+InterLJFF::InterLJFF() : LJFF(), need_total_recalc(true)
 {}
 
 /** Construct a LJ forcefield using the passed Space, combining rules and
     switching function */
 InterLJFF::InterLJFF(const Space &space, const SwitchingFunction &switchfunc)
-          : LJFF(space, switchfunc)
+          : LJFF(space, switchfunc), need_total_recalc(true)
 {}
 
 /** Copy constructor */
@@ -200,16 +206,21 @@ InterLJFF::InterLJFF(const InterLJFF &other)
             molid_to_index(other.molid_to_index),
             changed_mols(other.changed_mols),
             molid_to_changedindex(other.molid_to_changedindex),
-            removed_mols(other.removed_mols)
+            removed_mols(other.removed_mols),
+            need_total_recalc(other.need_total_recalc)
 {}
 
 /** Destructor */
 InterLJFF::~InterLJFF()
 {}
 
-/** Assignment operator */
-InterLJFF& InterLJFF::operator=(const InterLJFF &other)
+/** Copy assignment function used by derived classes */
+void InterLJFF::_pvt_copy(const FFBase &ffbase)
 {
+    LJFF::_pvt_copy(ffbase);
+
+    const InterLJFF &other = dynamic_cast<const InterLJFF&>(ffbase);
+
     mols = other.mols;
     molid_to_index = other.molid_to_index;
 
@@ -218,7 +229,20 @@ InterLJFF& InterLJFF::operator=(const InterLJFF &other)
 
     removed_mols = other.removed_mols;
 
-    return *this;
+    need_total_recalc = other.need_total_recalc;
+}
+
+/** Tell the forcefield that it has to recalculate everything from
+    scratch */
+void InterLJFF::mustNowRecalculateFromScratch()
+{
+    if (not need_total_recalc)
+    {
+        need_total_recalc = true;
+        changed_mols.clear();
+        molid_to_changedindex.clear();
+        removed_mols.clear();
+    }
 }
 
 /** Recalculate the total energy of this forcefield from scratch */
@@ -230,6 +254,9 @@ void InterLJFF::recalculateTotalEnergy()
     int nmols = mols.count();
 
     const LJMolecule *mols_array = mols.constData();
+
+    DistMatrix distmat(30,30);
+    LJPairMatrix ljmatrix(30,30);
 
     //loop over all molecule pairs
     for (int i=0; i<nmols-1; ++i)
@@ -243,8 +270,8 @@ void InterLJFF::recalculateTotalEnergy()
             ljnrg += LJFF::calculateEnergy( mol0, mol1,
                                             space(),
                                             switchingFunction(),
-                                            distanceMatrix(),
-                                            ljMatrix() );
+                                            distmat,
+                                            ljmatrix );
         }
     }
 
@@ -255,6 +282,7 @@ void InterLJFF::recalculateTotalEnergy()
     changed_mols.clear();
     molid_to_changedindex.clear();
     removed_mols.clear();
+    need_total_recalc = false;
 }
 
 /** Recalculate the energy by using a delta from the old configuration */
@@ -263,7 +291,7 @@ void InterLJFF::recalculateViaDelta()
     int nmols = mols.count();
     int nchanged = changed_mols.count();
 
-    if (nchanged == 0)
+    if (need_total_recalc or nchanged == 0)
     {
         //no changed molecules, so just recalculate the total energy
         recalculateTotalEnergy();
@@ -290,6 +318,9 @@ void InterLJFF::recalculateViaDelta()
     const LJMolecule *mols_array = mols.constData();
     const ChangedLJMolecule *changed_array = changed_mols.constData();
 
+    DistMatrix distmat(30,30);
+    LJPairMatrix ljmatrix(30,30);
+
     QHash<MoleculeID,uint>::const_iterator it;
 
     for (int i=0; i<nmols; ++i)
@@ -312,12 +343,12 @@ void InterLJFF::recalculateViaDelta()
                 //calculate the energy of the new configuration
                 ljnrg += calculateEnergy(mol, changed_mol.newParts(),
                                          space(), switchingFunction(),
-                                         distanceMatrix(), ljMatrix());
+                                         distmat, ljmatrix);
 
                 //subtract the energy of the old configuration
                 ljnrg -= calculateEnergy(mol, changed_mol.oldParts(),
                                          space(), switchingFunction(),
-                                         distanceMatrix(), ljMatrix());
+                                         distmat, ljmatrix);
             }
         }
         else
@@ -343,13 +374,13 @@ void InterLJFF::recalculateViaDelta()
                     ljnrg += calculateEnergy(changed_mol0.newMolecule(),
                                              changed_mol1.newMolecule(),
                                              space(), switchingFunction(),
-                                             distanceMatrix(), ljMatrix());
+                                             distmat, ljmatrix);
 
                     //subtract the old interaction energy
                     ljnrg -= calculateEnergy(changed_mol0.oldMolecule(),
                                              changed_mol1.oldMolecule(),
                                              space(), switchingFunction(),
-                                             distanceMatrix(), ljMatrix());
+                                             distmat, ljmatrix);
                 }
             }
             else
@@ -367,13 +398,13 @@ void InterLJFF::recalculateViaDelta()
                         ljnrg += calculateEnergy(changed_mol0.newMolecule(),
                                                  changed_mol1.newMolecule(),
                                                  space(), switchingFunction(),
-                                                 distanceMatrix(), ljMatrix());
+                                                 distmat, ljmatrix);
 
                         //subtract the old energy
                         ljnrg -= calculateEnergy(changed_mol0.oldMolecule(),
                                                  changed_mol1.oldMolecule(),
                                                  space(), switchingFunction(),
-                                                 distanceMatrix(), ljMatrix());
+                                                 distmat, ljmatrix);
                     }
                     else
                     {
@@ -390,24 +421,24 @@ void InterLJFF::recalculateViaDelta()
                         ljnrg += calculateEnergy(changed_mol0.newParts(),
                                                  changed_mol1.newMolecule(),
                                                  space(), switchingFunction(),
-                                                 distanceMatrix(), ljMatrix());
+                                                 distmat, ljmatrix);
 
 
                         ljnrg -= calculateEnergy(changed_mol0.oldParts(),
                                                  changed_mol1.oldMolecule(),
                                                  space(), switchingFunction(),
-                                                 distanceMatrix(), ljMatrix());
+                                                 distmat, ljmatrix);
 
                         //now the changed part of mol1 with all of mol0
                         ljnrg += calculateEnergy(changed_mol0.newMolecule(),
                                                  changed_mol1.newParts(),
                                                  space(), switchingFunction(),
-                                                 distanceMatrix(), ljMatrix());
+                                                 distmat, ljmatrix);
 
                         ljnrg -= calculateEnergy(changed_mol0.oldMolecule(),
                                                  changed_mol1.oldParts(),
                                                  space(), switchingFunction(),
-                                                 distanceMatrix(), ljMatrix());
+                                                 distmat, ljmatrix);
 
                         //finally, remove the doubly-counted contribution of the
                         //changed part of mol0 with the changed part of mol1
@@ -416,12 +447,12 @@ void InterLJFF::recalculateViaDelta()
                         ljnrg -= calculateEnergy(changed_mol0.newParts(),
                                                  changed_mol1.newParts(),
                                                  space(), switchingFunction(),
-                                                 distanceMatrix(), ljMatrix());
+                                                 distmat, ljmatrix);
 
                         ljnrg += calculateEnergy(changed_mol0.oldParts(),
                                                  changed_mol1.oldParts(),
                                                  space(), switchingFunction(),
-                                                 distanceMatrix(), ljMatrix());
+                                                 distmat, ljmatrix);
                     }
                 }
             }
@@ -452,7 +483,7 @@ void InterLJFF::recalculateViaDelta()
             ljnrg -= calculateEnergy(removed_mol.oldMolecule(),
                                      changed_mol.oldMolecule(),
                                      space(), switchingFunction(),
-                                     distanceMatrix(), ljMatrix());
+                                     distmat, ljmatrix);
         }
     }
 
@@ -460,6 +491,7 @@ void InterLJFF::recalculateViaDelta()
     changed_mols.clear();
     molid_to_changedindex.clear();
     removed_mols.clear();
+    need_total_recalc = false;
 
     //save the new total energy of this forcefield
     this->changeComponent( components().lj(), ljnrg );
@@ -472,7 +504,7 @@ void InterLJFF::recalculateViaDelta()
     the last evaluation. */
 void InterLJFF::recalculateEnergy()
 {
-    if (changed_mols.isEmpty())
+    if (need_total_recalc or changed_mols.isEmpty())
     {
         this->recalculateTotalEnergy();
     }
@@ -498,7 +530,7 @@ void InterLJFF::updateCurrentState(const LJFF::LJMolecule &mol)
         molid_to_index.insert(id, idx);
         mols.append(mol);
 
-        if (removed_mols.contains(id))
+        if ( not (need_total_recalc) and removed_mols.contains(id) )
             removed_mols.remove(id);
     }
 }
@@ -531,7 +563,8 @@ void InterLJFF::removeFromCurrentState(MoleculeID molid)
             }
         }
 
-        removed_mols.insert(molid);
+        if (not need_total_recalc)
+            removed_mols.insert(molid);
     }
 }
 
@@ -553,21 +586,46 @@ bool InterLJFF::applyChange(MoleculeID molid, const ChangedLJMolecule &changed_m
         this->updateCurrentState(changed_mol.newMolecule());
     }
 
-    //save the change
-    QHash<MoleculeID,uint>::const_iterator it = molid_to_changedindex.constFind(molid);
-
-    if (it != molid_to_changedindex.constEnd())
+    if (not need_total_recalc)
     {
-        //the molecule has been changed before
-        changed_mols[it.value()] = changed_mol;
-    }
-    else
-    {
-        //this is a new change
-        uint idx = changed_mols.count();
+        //save the change
+        QHash<MoleculeID,uint>::const_iterator it = molid_to_changedindex.constFind(molid);
 
-        changed_mols.append(changed_mol);
-        molid_to_changedindex.insert(molid, idx);
+        if (it != molid_to_changedindex.constEnd())
+        {
+            MoleculeID molid = it.key();
+            uint idx = *it;
+
+            //the molecule has been changed before
+            if (changed_mols[idx].oldMolecule() == changed_mol.newMolecule())
+            {
+                //we have changed back to the old state!
+                changed_mols[idx] = ChangedLJMolecule();
+                molid_to_changedindex.remove(molid);
+                removed_mols.remove(molid);
+
+                if (molid_to_changedindex.isEmpty())
+                {
+                    //no molecules have now changed - the forcefield is clean again
+                    molid_to_changedindex.clear();
+                    changed_mols.clear();
+                    removed_mols.clear();
+                    this->setClean();
+                }
+            }
+            else
+                changed_mols[it.value()] = changed_mol;
+        }
+        else if (not changed_mol.nothingChanged())
+        {
+            //this is a new change
+            uint idx = changed_mols.count();
+
+            changed_mols.append(changed_mol);
+            molid_to_changedindex.insert(molid, idx);
+        }
+        else
+            return false;
     }
 
     return true;
@@ -576,17 +634,23 @@ bool InterLJFF::applyChange(MoleculeID molid, const ChangedLJMolecule &changed_m
 /** Get the current change record for a molecule */
 LJFF::ChangedLJMolecule InterLJFF::changeRecord(MoleculeID molid) const
 {
-    if (molid_to_changedindex.contains(molid))
+    if ( not need_total_recalc )
     {
-        //this molecule has been changed before - return the record
-        //of that change
-        return changed_mols.at( molid_to_changedindex[molid] );
+        QHash<MoleculeID,uint>::const_iterator it = molid_to_changedindex.find(molid);
+
+        if (it != molid_to_changedindex.end())
+            //this molecule has been changed before - return the record
+            //of that change
+            return changed_mols.constData()[ *it ];
     }
-    else if (molid_to_index.contains(molid))
+
+    QHash<MoleculeID,uint>::const_iterator it = molid_to_index.find(molid);
+
+    if (it != molid_to_index.end())
     {
         //this molecule has not been changed before - return a change
         //record that has the state, but doesn't change it
-        return ChangedLJMolecule( mols.at(molid_to_index[molid]) );
+        return ChangedLJMolecule( mols.constData()[*it] );
     }
     else
     {
@@ -596,110 +660,21 @@ LJFF::ChangedLJMolecule InterLJFF::changeRecord(MoleculeID molid) const
     }
 }
 
-/** Private class used by the "add" functions to actually add the
-    molecule or part of molecule */
-template<class T>
-bool InterLJFF::_pvt_add(const T &mol, const ParameterMap &map)
-{
-    //get the molecule's ID
-    MoleculeID molid = mol.ID();
-
-    ChangedLJMolecule new_molecule =
-                changeRecord(molid).add( mol, map.source(this->parameters().lj()) );
-
-    if (this->applyChange(molid, new_molecule))
-    {
-        this->incrementMajorVersion();
-        return true;
-    }
-    else
-        return isDirty();
-}
-
 /** Add the molecule 'molecule' to this forcefield using the optionally
     supplied map to find the forcefield parameters amongst the
     molecule's properties.
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-bool InterLJFF::add(const Molecule &molecule, const ParameterMap &map)
-{
-    return this->_pvt_add<Molecule>(molecule, map);
-}
-
-/** Add the residue 'residue' to this forcefield using the optionally
-    supplied map to find the forcefield parameters amongst the
-    residue's properties. Note that the property used must agree
-    with the rest of the molecule if it is already in this forcefield.
-
-    \throw SireMol::missing_property
-    \throw SireMol::invalid_cast
-*/
-bool InterLJFF::add(const Residue &residue, const ParameterMap &map)
-{
-    return this->_pvt_add<Residue>(residue, map);
-}
-
-/** Add the atom 'atom' to this forcefield using the optionally
-    supplied map to find the forcefield parameters amongst the
-    atom's properties. Note that the property used must agree
-    with the rest of the molecule if it is already in this forcefield.
-
-    \throw SireMol::missing_property
-    \throw SireMol::invalid_cast
-*/
-bool InterLJFF::add(const NewAtom &atom, const ParameterMap &map)
-{
-    return this->_pvt_add<NewAtom>(atom, map);
-}
-
-/** Add the selected atoms from 'molecule' to this forcefield
-    using the supplied map to find the forcefield parameters
-    amongst the molecule's properties. Note that the property
-    used must agree with the rest of the molecule if it is already
-    in this forcefield.
-
-    \throw SireMol::missing_property
-    \throw SireMol::invalid_cast
-*/
-bool InterLJFF::add(const Molecule &molecule, const AtomSelection &selected_atoms,
-                    const ParameterMap &map)
+bool InterLJFF::add(const PartialMolecule &molecule, const ParameterMap &map)
 {
     //get the molecule's ID
     MoleculeID molid = molecule.ID();
 
-    ChangedLJMolecule new_molecule = changeRecord(molid);
-
-    if (new_molecule.oldMolecule().isEmpty())
-    {
-        new_molecule = ChangedLJMolecule( LJMolecule(),
-                                          LJMolecule( molecule, selected_atoms,
-                                          map.source(this->parameters().lj()) ) );
-    }
-    else
-    {
-        new_molecule = new_molecule.add( selected_atoms,
-                                         map.source(this->parameters().lj()) );
-    }
-
-    if (this->applyChange(molid, new_molecule))
-    {
-        this->incrementMajorVersion();
-        return true;
-    }
-    else
-        return isDirty();
-}
-
-/** Private class used by the "remove" functions to actually remove the
-    molecule or part of molecule */
-template<class T>
-bool InterLJFF::_pvt_remove(const T &mol)
-{
-    MoleculeID molid = mol.ID();
-
-    ChangedLJMolecule new_molecule = changeRecord(molid).remove(mol);
+    ChangedLJMolecule new_molecule =
+                    changeRecord(molid).add( molecule,
+                                             map.source(this->parameters().lj()) );
 
     if (this->applyChange(molid, new_molecule))
     {
@@ -711,29 +686,11 @@ bool InterLJFF::_pvt_remove(const T &mol)
 }
 
 /** Remove the molecule 'molecule' */
-bool InterLJFF::remove(const Molecule &molecule)
-{
-    return this->_pvt_remove<Molecule>(molecule);
-}
-
-/** Remove the residue 'residue' */
-bool InterLJFF::remove(const Residue &residue)
-{
-    return this->_pvt_remove<Residue>(residue);
-}
-
-/** Remove the atom 'atom' */
-bool InterLJFF::remove(const NewAtom &atom)
-{
-    return this->_pvt_remove<NewAtom>(atom);
-}
-
-/** Remove the selected atoms from 'molecule' from this forcefield */
-bool InterLJFF::remove(const Molecule &molecule, const AtomSelection &selected_atoms)
+bool InterLJFF::remove(const PartialMolecule &molecule)
 {
     MoleculeID molid = molecule.ID();
 
-    ChangedLJMolecule new_molecule = changeRecord(molid).remove(selected_atoms);
+    ChangedLJMolecule new_molecule = changeRecord(molid).remove(molecule);
 
     if (this->applyChange(molid, new_molecule))
     {
@@ -744,14 +701,12 @@ bool InterLJFF::remove(const Molecule &molecule, const AtomSelection &selected_a
         return isDirty();
 }
 
-/** Private class used by the "change" functions to actually change the
-    molecule or part of molecule */
-template<class T>
-bool InterLJFF::_pvt_change(const T &mol)
+/** Change the molecule 'molecule' */
+bool InterLJFF::change(const PartialMolecule &molecule)
 {
-    MoleculeID molid = mol.ID();
+    MoleculeID molid = molecule.ID();
 
-    ChangedLJMolecule new_molecule = this->changeRecord(molid).change(mol);
+    ChangedLJMolecule new_molecule = this->changeRecord(molid).change(molecule);
 
     if (this->applyChange(molid, new_molecule))
     {
@@ -762,20 +717,92 @@ bool InterLJFF::_pvt_change(const T &mol)
         return this->isDirty();
 }
 
-/** Change the molecule 'molecule' */
-bool InterLJFF::change(const Molecule &molecule)
+/** Return whether this forcefield contains a complete copy of
+    any version of the partial molecule 'molecule' */
+bool InterLJFF::contains(const PartialMolecule &molecule) const
 {
-    return this->_pvt_change<Molecule>(molecule);
+    QHash<MoleculeID,uint>::const_iterator it = molid_to_index.find(molecule.ID());
+
+    if (it == molid_to_index.end())
+        return false;
+
+    return mols.constData()[it.value()].molecule()
+                  .selectedAtoms().contains(molecule.selectedAtoms());
 }
 
-/** Change the residue 'residue' */
-bool InterLJFF::change(const Residue &residue)
+/** Return whether or not this forcefield contains *any part* of
+    any version of the molecule with ID 'molid' */
+bool InterLJFF::refersTo(MoleculeID molid) const
 {
-    return this->_pvt_change<Residue>(residue);
+    return molid_to_index.contains(molid);
 }
 
-/** Change the atom 'atom' */
-bool InterLJFF::change(const NewAtom &atom)
+/** Return the groups that refer to the molecule with ID == molid
+
+    \throw SireMol::missing_molecule
+*/
+QSet<FFBase::Group> InterLJFF::groupsReferringTo(MoleculeID molid) const
 {
-    return this->_pvt_change<NewAtom>(atom);
+    QSet<FFBase::Group> groups;
+
+    if (this->refersTo(molid))
+    {
+        groups.insert(this->groups().main());
+    }
+
+    return groups;
+}
+
+/** Return the set of all of the ID numbers of all of the
+    molecules that are referred to by this forcefield
+    (i.e. all molecules that have at least some part
+    in this forcefield) */
+QSet<MoleculeID> InterLJFF::moleculeIDs() const
+{
+    return molid_to_index.keys().toSet();
+}
+
+/** Return the copy of the molecule in this forcefield that
+    has the ID == molid
+
+    \throw SireMol::missing_molecule
+*/
+PartialMolecule InterLJFF::molecule(MoleculeID molid) const
+{
+    QHash<MoleculeID,uint>::const_iterator it = molid_to_index.find(molid);
+
+    if (it == molid_to_index.end())
+        throw SireMol::missing_molecule( QObject::tr(
+            "The InterLJFF forcefield (%1, %2 : %3) does not contain the "
+            "molecule with ID == %4.")
+                .arg(this->name()).arg(this->ID())
+                .arg(this->version().toString()).arg(molid),
+                    CODELOC );
+
+    return mols.constData()[it.value()].molecule();
+}
+
+/** Return all of the molecules (and parts of molecules) that
+    are in this forcefield */
+QHash<MoleculeID,PartialMolecule> InterLJFF::contents() const
+{
+    QHash<MoleculeID,PartialMolecule> all_mols;
+
+    int nmols = mols.count();
+
+    if (nmols > 0)
+    {
+        all_mols.reserve(nmols);
+
+        const LJMolecule *mols_array = mols.constData();
+
+        for (int i=0; i<nmols; ++i)
+        {
+            const PartialMolecule &mol = mols_array[i].molecule();
+
+            all_mols.insert( mol.ID(), mol );
+        }
+    }
+
+    return all_mols;
 }

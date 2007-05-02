@@ -35,6 +35,7 @@
 #include "SireMol/molecule.h"
 #include "SireMol/moleculeinfo.h"
 #include "SireMol/cgatomid.h"
+#include "SireMol/atomselection.h"
 
 #include "SireError/errors.h"
 
@@ -137,16 +138,40 @@ AtomicCharges& AtomicCharges::operator=(const AtomicCharges &other)
 
     \throw SireError::invalid_cast
 */
-AtomicCharges& AtomicCharges::operator=(const Property &property)
+AtomicCharges& AtomicCharges::operator=(const Property &other)
 {
-    return AtomicCharges::operator=(sharedpolypointer_cast<AtomicCharges>(property));
+    if (not other.isA<AtomicCharges>())
+        throw SireError::invalid_cast( QObject::tr(
+                "Cannot cast from a \"%1\" to AtomicCharges!")
+                    .arg(other.what()), CODELOC );
+
+    return this->operator=(other.asA<AtomicCharges>());
 }
 
-/** Return whether or not this is compatible with 'molecule' */
-bool AtomicCharges::isCompatibleWith(const Molecule &molecule) const
+/** Comparison operator */
+bool AtomicCharges::operator==(const AtomicCharges &other) const
 {
-    const MoleculeInfo &molinfo = molecule.info();
+    return QVector< QVector<ChargeParameter> >::operator==(other);
+}
 
+/** Comparison operator */
+bool AtomicCharges::operator!=(const AtomicCharges &other) const
+{
+    return QVector< QVector<ChargeParameter> >::operator!=(other);
+}
+
+/** Compare two objects - 'other' is guaranteed to be of type 'AtomicCharges' */
+bool AtomicCharges::_pvt_isEqual(const PropertyBase &other) const
+{
+    BOOST_ASSERT( other.isA<AtomicCharges>() );
+    
+    return this->operator==( other.asA<AtomicCharges>() );
+}
+
+/** Return whether or not this is compatible with the molecule
+    described by 'molinfo' */
+bool AtomicCharges::isCompatibleWith(const MoleculeInfo &molinfo) const
+{
     int ncg = molinfo.nCutGroups();
 
     if (this->count() != ncg)
@@ -171,14 +196,93 @@ bool AtomicCharges::isCompatibleWith(const Molecule &molecule) const
 */
 QVariant AtomicCharges::value(const CGAtomID &cgatomid) const
 {
-    if (cgatomid.cutGroupID() >= this->count())
+    if ( cgatomid.cutGroupID() >= uint(this->count()) )
         throwMissingCutGroup(cgatomid.cutGroupID(), this->count());
 
     const QVector<ChargeParameter> &charges =
                             this->constData()[cgatomid.cutGroupID()];
 
-    if (cgatomid.atomID() >= charges.count())
+    if ( cgatomid.atomID() >= uint(charges.count()) )
         throwMissingAtom(cgatomid, charges.count());
 
     return QVariant::fromValue( charges.constData()[cgatomid.atomID()] );
+}
+
+/** Return the charges just for the atoms that are selected in 'selected_atoms'.
+    This still returns the charges in group, but only returns groups that
+    contain at least one selected atom. Atoms that are not selected are
+    returned with zero charge.
+    
+    \throw SireError::incompatible_error
+*/
+Property AtomicCharges::mask(const AtomSelection &selected_atoms) const
+{
+    if (not this->isCompatibleWith(selected_atoms.info()))
+    {
+        throw SireError::incompatible_error( QObject::tr(
+            "Cannot mask using an incompatible molecule's atom selection!"),
+                CODELOC );
+    }
+    
+    if (selected_atoms.selectedAll())
+        return *this;
+    else if (selected_atoms.nSelectedCutGroups() == this->count())
+    {
+        //just need to mask some atoms in some CutGroups...
+        AtomicCharges selected_charges(*this);
+        
+        uint ncg = this->count();
+        
+        for (CutGroupID i(0); i<ncg; ++i)
+        {
+            if (not selected_atoms.selectedAll(i))
+            {
+                QVector<ChargeParameter> &group_chgs = selected_charges[i];
+                
+                uint nats = group_chgs.count();
+                ChargeParameter *group_chgs_array = group_chgs.data();
+                
+                for (AtomID j(0); j<nats; ++j)
+                {
+                    if (not selected_atoms.selected(CGAtomID(i,j)))
+                        //this atom is not selected - zero its charge!
+                        group_chgs_array[j] = ChargeParameter(0);
+                }
+            }
+        }
+        
+        return selected_charges;
+    }
+    else
+    {
+        //there are whole CutGroups that aren't selected - return only
+        //the groups that contain at least one selected atom
+        
+        QSet<CutGroupID> cgids = selected_atoms.selectedCutGroups();
+        
+        QVector< QVector<ChargeParameter> > selected_charges(cgids.count());
+        
+        int i=0;
+        
+        foreach (CutGroupID cgid, cgids)
+        {
+            QVector<ChargeParameter> group_chgs = this->at(cgid);
+            
+            ChargeParameter *group_chgs_array = group_chgs.data();
+            
+            uint nats = group_chgs.count();
+            
+            for (AtomID j(0); j<nats; ++j)
+            {
+                if (not selected_atoms.selected(CGAtomID(cgid,j)))
+                    //this atom is not selected - zero its charge!
+                    group_chgs_array[j] = ChargeParameter(0);
+            }
+            
+            selected_charges[i] = group_chgs;
+            ++i;
+        }
+        
+        return AtomicCharges(selected_charges);
+    }
 }

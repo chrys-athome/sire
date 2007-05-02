@@ -31,6 +31,8 @@
 
 #include "intergroupcoulombff.h"
 
+#include "SireMol/partialmolecule.h"
+
 #include "SireMol/errors.h"
 #include "SireFF/errors.h"
 
@@ -123,6 +125,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
         << intercoulff.mols[1]
         << intercoulff.changed_mols[0]
         << intercoulff.changed_mols[1]
+        << intercoulff.need_total_recalc
         << static_cast<const CoulombFF&>(intercoulff);
 
     return ds;
@@ -142,6 +145,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
             >> intercoulff.mols[1]
             >> intercoulff.changed_mols[0]
             >> intercoulff.changed_mols[1]
+            >> intercoulff.need_total_recalc
             >> static_cast<CoulombFF&>(intercoulff);
 
         //rebuild mols and changed_mols
@@ -203,19 +207,19 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
 }
 
 /** Constructor */
-InterGroupCoulombFF::InterGroupCoulombFF() : CoulombFF()
+InterGroupCoulombFF::InterGroupCoulombFF() : CoulombFF(), need_total_recalc(true)
 {}
 
 /** Construct a Coulomb forcefield using the passed Space, combining rules and
     switching function */
 InterGroupCoulombFF::InterGroupCoulombFF(const Space &space,
                                          const SwitchingFunction &switchfunc)
-                    : CoulombFF(space, switchfunc)
+                    : CoulombFF(space, switchfunc), need_total_recalc(true)
 {}
 
 /** Copy constructor */
 InterGroupCoulombFF::InterGroupCoulombFF(const InterGroupCoulombFF &other)
-                    : CoulombFF(other)
+                    : CoulombFF(other), need_total_recalc(other.need_total_recalc)
 {
     for (int i=0; i<2; ++i)
     {
@@ -231,9 +235,13 @@ InterGroupCoulombFF::InterGroupCoulombFF(const InterGroupCoulombFF &other)
 InterGroupCoulombFF::~InterGroupCoulombFF()
 {}
 
-/** Assignment operator */
-InterGroupCoulombFF& InterGroupCoulombFF::operator=(const InterGroupCoulombFF &other)
+/** Copy assignment function used by derived classes */
+void InterGroupCoulombFF::_pvt_copy(const FFBase &ffbase)
 {
+    CoulombFF::_pvt_copy(ffbase);
+
+    const InterGroupCoulombFF &other = dynamic_cast<const InterGroupCoulombFF&>(ffbase);
+
     for (int i=0; i<2; ++i)
     {
         mols[i] = other.mols[i];
@@ -243,7 +251,23 @@ InterGroupCoulombFF& InterGroupCoulombFF::operator=(const InterGroupCoulombFF &o
         molid_to_changedindex[i] = other.molid_to_changedindex[i];
     }
 
-    return *this;
+    need_total_recalc = other.need_total_recalc;
+}
+
+/** Tell the forcefield that it has to recalculate everything from
+    scratch */
+void InterGroupCoulombFF::mustNowRecalculateFromScratch()
+{
+    if (not need_total_recalc)
+    {
+        need_total_recalc = true;
+
+        for (int i=0; i<2; ++i)
+        {
+            changed_mols[i].clear();
+            molid_to_changedindex[i].clear();
+        }
+    }
 }
 
 /** Return the ID of the other group
@@ -293,6 +317,8 @@ void InterGroupCoulombFF::recalculateTotalEnergy()
     int nmols0 = mols[0].count();
     int nmols1 = mols[1].count();
 
+    DistMatrix distmat(30,30);
+
     if (nmols0 > 0 and nmols1 > 0)
     {
         const CoulombMolecule *mols0_array = mols[0].constData();
@@ -309,7 +335,7 @@ void InterGroupCoulombFF::recalculateTotalEnergy()
                 cnrg += CoulombFF::calculateEnergy( mol0, mol1,
                                                     space(),
                                                     switchingFunction(),
-                                                    distanceMatrix() );
+                                                    distmat );
             }
         }
     }
@@ -323,6 +349,8 @@ void InterGroupCoulombFF::recalculateTotalEnergy()
         changed_mols[i].clear();
         molid_to_changedindex[i].clear();
     }
+
+    need_total_recalc = false;
 }
 
 /** Recalculate the energy knowing that only the group at index 'changed_idx'
@@ -348,6 +376,8 @@ double InterGroupCoulombFF::recalculateWithOneChangedGroup(int changed_idx)
 
     double cnrg = 0;
 
+    DistMatrix distmat(30,30);
+
     for (int i=0; i<nchanged; ++i)
     {
         const ChangedCoulombMolecule &changedmol = changed_array[i];
@@ -360,11 +390,11 @@ double InterGroupCoulombFF::recalculateWithOneChangedGroup(int changed_idx)
             //parts of the changed molecule
             cnrg += calculateEnergy(mol, changedmol.newParts(),
                                     space(), switchingFunction(),
-                                    distanceMatrix());
+                                    distmat);
 
             cnrg -= calculateEnergy(mol, changedmol.oldParts(),
                                     space(), switchingFunction(),
-                                    distanceMatrix());
+                                    distmat);
         }
     }
 
@@ -388,6 +418,8 @@ double InterGroupCoulombFF::recalculateChangedWithUnchanged(int unchanged_idx,
 
     double cnrg = 0;
 
+    DistMatrix distmat(30,30);
+
     for (int i=0; i<nmols; ++i)
     {
         const CoulombMolecule &mol = mols_array[i];
@@ -406,11 +438,11 @@ double InterGroupCoulombFF::recalculateChangedWithUnchanged(int unchanged_idx,
 
             cnrg += calculateEnergy( mol, changedmol.newParts(),
                                      space(), switchingFunction(),
-                                     distanceMatrix() );
+                                     distmat );
 
             cnrg -= calculateEnergy( mol, changedmol.oldParts(),
                                      space(), switchingFunction(),
-                                     distanceMatrix() );
+                                     distmat );
         }
     }
 
@@ -429,6 +461,8 @@ double InterGroupCoulombFF::recalculateChangedWithChanged()
 
     double cnrg = 0;
 
+    DistMatrix distmat(30,30);
+
     for (int i=0; i<nchanged0; ++i)
     {
         const ChangedCoulombMolecule &changedmol0 = changed_array0[i];
@@ -445,12 +479,12 @@ double InterGroupCoulombFF::recalculateChangedWithChanged()
                 cnrg += calculateEnergy( changedmol0.newMolecule(),
                                          changedmol1.newMolecule(),
                                          space(), switchingFunction(),
-                                         distanceMatrix() );
+                                         distmat );
 
                 cnrg -= calculateEnergy( changedmol0.oldMolecule(),
                                          changedmol1.oldMolecule(),
                                          space(), switchingFunction(),
-                                         distanceMatrix() );
+                                         distmat );
             }
         }
         else
@@ -468,12 +502,12 @@ double InterGroupCoulombFF::recalculateChangedWithChanged()
                     cnrg += calculateEnergy( changedmol0.newMolecule(),
                                              changedmol1.newMolecule(),
                                              space(), switchingFunction(),
-                                             distanceMatrix() );
+                                             distmat );
 
                     cnrg -= calculateEnergy( changedmol0.oldMolecule(),
                                              changedmol1.oldMolecule(),
                                              space(), switchingFunction(),
-                                             distanceMatrix() );
+                                             distmat );
                 }
                 else
                 {
@@ -490,35 +524,35 @@ double InterGroupCoulombFF::recalculateChangedWithChanged()
                     cnrg += calculateEnergy( changedmol0.newParts(),
                                              changedmol1.newMolecule(),
                                              space(), switchingFunction(),
-                                             distanceMatrix() );
+                                             distmat );
 
                     cnrg -= calculateEnergy( changedmol0.oldParts(),
                                              changedmol1.oldMolecule(),
                                              space(), switchingFunction(),
-                                             distanceMatrix() );
+                                             distmat );
 
                     //now the changed parts of mol1 with the whole of mol0
                     cnrg += calculateEnergy( changedmol0.newMolecule(),
                                              changedmol1.newParts(),
                                              space(), switchingFunction(),
-                                             distanceMatrix() );
+                                             distmat );
 
                     cnrg -= calculateEnergy( changedmol0.oldMolecule(),
                                              changedmol1.oldParts(),
                                              space(), switchingFunction(),
-                                             distanceMatrix() );
+                                             distmat );
 
                     //finally, remove the double-counted interaction of the parts
                     //of mol0 that changed with the parts of mol1 that changed
                     cnrg -= calculateEnergy( changedmol0.newParts(),
                                              changedmol1.newParts(),
                                              space(), switchingFunction(),
-                                             distanceMatrix() );
+                                             distmat );
 
                     cnrg += calculateEnergy( changedmol0.oldParts(),
                                              changedmol1.oldParts(),
                                              space(), switchingFunction(),
-                                             distanceMatrix() );
+                                             distmat );
                 }
             }
         }
@@ -575,8 +609,8 @@ void InterGroupCoulombFF::recalculateViaDelta()
         cnrg = this->recalculateWithTwoChangedGroups();
     }
 
-    this->setComponent( components().coulomb(), cnrg );
-    this->setComponent( components().total(), cnrg );
+    this->changeComponent( components().coulomb(), cnrg );
+    this->changeComponent( components().total(), cnrg );
 
     //clear the list of changed molecules
     for (int i=0; i<2; ++i)
@@ -584,6 +618,8 @@ void InterGroupCoulombFF::recalculateViaDelta()
         changed_mols[i].clear();
         molid_to_changedindex[i].clear();
     }
+
+    need_total_recalc = false;
 }
 
 /** Calculate the total energy of this forcefield. This will either
@@ -592,7 +628,8 @@ void InterGroupCoulombFF::recalculateViaDelta()
     the last evaluation. */
 void InterGroupCoulombFF::recalculateEnergy()
 {
-    if (changed_mols[0].isEmpty() and changed_mols[1].isEmpty())
+    if ( need_total_recalc or (changed_mols[0].isEmpty() and
+                               changed_mols[1].isEmpty()) )
     {
         this->recalculateTotalEnergy();
     }
@@ -751,19 +788,18 @@ bool InterGroupCoulombFF::applyChange(MoleculeID molid,
         this->updateCurrentState(group_idx, changed_mol.newMolecule());
     }
 
-    this->recordChange(group_idx, molid, changed_mol);
+    if (not need_total_recalc)
+        this->recordChange(group_idx, molid, changed_mol);
 
     return true;
 }
 
-/** Private class used by the "change" functions to actually change the
-    molecule or part of molecule */
-template<class T>
-bool InterGroupCoulombFF::_pvt_change(const T &mol)
+/** Change the molecule 'molecule' */
+bool InterGroupCoulombFF::change(const PartialMolecule &molecule)
 {
-    MoleculeID molid = mol.ID();
+    MoleculeID molid = molecule.ID();
 
-    ChangedCoulombMolecule new_molecule = this->changeRecord(molid).change(mol);
+    ChangedCoulombMolecule new_molecule = this->changeRecord(molid).change(molecule);
 
     if (this->applyChange(molid, new_molecule))
     {
@@ -774,66 +810,12 @@ bool InterGroupCoulombFF::_pvt_change(const T &mol)
         return isDirty();
 }
 
-/** Change the molecule 'molecule' */
-bool InterGroupCoulombFF::change(const Molecule &molecule)
-{
-    return this->_pvt_change<Molecule>(molecule);
-}
-
-/** Change the residue 'residue' */
-bool InterGroupCoulombFF::change(const Residue &residue)
-{
-    return this->_pvt_change<Residue>(residue);
-}
-
-/** Change the atom 'atom' */
-bool InterGroupCoulombFF::change(const NewAtom &atom)
-{
-    return this->_pvt_change<NewAtom>(atom);
-}
-
-/** Private class used by the "remove" functions to actually remove the
-    molecule or part of molecule */
-template<class T>
-bool InterGroupCoulombFF::_pvt_remove(const T &mol)
-{
-    MoleculeID molid = mol.ID();
-
-    ChangedCoulombMolecule new_molecule = changeRecord(molid).remove(mol);
-
-    if (this->applyChange(molid, new_molecule))
-    {
-        this->incrementMajorVersion();
-        return true;
-    }
-    else
-        return isDirty();
-}
-
 /** Remove the molecule 'molecule' */
-bool InterGroupCoulombFF::remove(const Molecule &molecule)
-{
-    return this->_pvt_remove<Molecule>(molecule);
-}
-
-/** Remove the residue 'residue' */
-bool InterGroupCoulombFF::remove(const Residue &residue)
-{
-    return this->_pvt_remove<Residue>(residue);
-}
-
-/** Remove the atom 'atom' */
-bool InterGroupCoulombFF::remove(const NewAtom &atom)
-{
-    return this->_pvt_remove<NewAtom>(atom);
-}
-
-/** Remove the selected atoms from 'molecule' from this forcefield */
-bool InterGroupCoulombFF::remove(const Molecule &molecule, const AtomSelection &selected_atoms)
+bool InterGroupCoulombFF::remove(const PartialMolecule &molecule)
 {
     MoleculeID molid = molecule.ID();
 
-    ChangedCoulombMolecule new_molecule = changeRecord(molid).remove(selected_atoms);
+    ChangedCoulombMolecule new_molecule = changeRecord(molid).remove(molecule);
 
     if (this->applyChange(molid, new_molecule))
     {
@@ -844,82 +826,45 @@ bool InterGroupCoulombFF::remove(const Molecule &molecule, const AtomSelection &
         return isDirty();
 }
 
-/** Private class used by the "add" functions to actually add the
-    molecule or part of molecule */
-template<class T>
-bool InterGroupCoulombFF::_pvt_add(const T &mol, const ParameterMap &map)
+/** Remove the molecule 'molecule' from the group 'group'
+
+    \throw SireFF::missing_group
+*/
+bool InterGroupCoulombFF::removeFrom(const FFBase::Group &group,
+                                     const PartialMolecule &molecule)
 {
-    //get the molecule's ID
-    MoleculeID molid = mol.ID();
-
-    ChangedCoulombMolecule new_molecule =
-                changeRecord(molid).add( mol, map.source(this->parameters().coulomb()) );
-
-    if (this->applyChange(molid, new_molecule))
-    {
-        this->incrementMajorVersion();
-        return true;
-    }
+    if (this->refersTo(molecule.ID(),group))
+        return this->remove(molecule);
     else
-        return isDirty();
+        return false;
+}
+
+/** Remove the molecule 'molecule' from group 'A' */
+bool InterGroupCoulombFF::removeFromA(const PartialMolecule &molecule)
+{
+    return this->removeFrom(groups().A(), molecule);
+}
+
+/** Remove the molecule 'molecule' from group 'B' */
+bool InterGroupCoulombFF::removeFromB(const PartialMolecule &molecule)
+{
+    return this->removeFrom(groups().B(), molecule);
 }
 
 /** Add the molecule 'molecule' to this forcefield using the optionally
     supplied map to find the forcefield parameters amongst the
     molecule's properties.
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-bool InterGroupCoulombFF::add(const Molecule &molecule, const ParameterMap &map)
-{
-    return this->_pvt_add<Molecule>(molecule, map);
-}
-
-/** Add the residue 'residue' to this forcefield using the optionally
-    supplied map to find the forcefield parameters amongst the
-    residue's properties. Note that the property used must agree
-    with the rest of the molecule if it is already in this forcefield.
-
-    \throw SireMol::missing_property
-    \throw SireMol::invalid_cast
-*/
-bool InterGroupCoulombFF::add(const Residue &residue, const ParameterMap &map)
-{
-    return this->_pvt_add<Residue>(residue, map);
-}
-
-/** Add the atom 'atom' to this forcefield using the optionally
-    supplied map to find the forcefield parameters amongst the
-    atom's properties. Note that the property used must agree
-    with the rest of the molecule if it is already in this forcefield.
-
-    \throw SireMol::missing_property
-    \throw SireMol::invalid_cast
-*/
-bool InterGroupCoulombFF::add(const NewAtom &atom, const ParameterMap &map)
-{
-    return this->_pvt_add<NewAtom>(atom, map);
-}
-
-/** Add the selected atoms from 'molecule' to this forcefield
-    using the supplied map to find the forcefield parameters
-    amongst the molecule's properties. Note that the property
-    used must agree with the rest of the molecule if it is already
-    in this forcefield.
-
-    \throw SireMol::missing_property
-    \throw SireMol::invalid_cast
-*/
-bool InterGroupCoulombFF::add(const Molecule &molecule,
-                              const AtomSelection &selected_atoms,
-                              const ParameterMap &map)
+bool InterGroupCoulombFF::add(const PartialMolecule &molecule, const ParameterMap &map)
 {
     //get the molecule's ID
     MoleculeID molid = molecule.ID();
 
     ChangedCoulombMolecule new_molecule =
-                changeRecord(molid).add( selected_atoms,
+                changeRecord(molid).add( molecule,
                                          map.source(this->parameters().coulomb()) );
 
     if (this->applyChange(molid, new_molecule))
@@ -951,112 +896,17 @@ int InterGroupCoulombFF::groupIndex(FFBase::Group group) const
     }
 }
 
-/** Private class used by the "addTo" functions to actually add the
-    molecule or part of molecule */
-template<class T>
-bool InterGroupCoulombFF::_pvt_addTo(FFBase::Group group,
-                                     const T &mol,
-                                     const ParameterMap &map)
-{
-    //get the index for this group
-    int group_idx = this->groupIndex(group);
-
-    //get the molecule's ID
-    MoleculeID molid = mol.ID();
-
-    this->assertValidGroup(group_idx, molid);
-
-    ChangedCoulombMolecule new_molecule = changeRecord(molid);
-
-    if (new_molecule.oldMolecule().isEmpty())
-    {
-        new_molecule = ChangedCoulombMolecule( CoulombMolecule(),
-                        CoulombMolecule(mol, map.source(parameters().coulomb())) );
-
-        //this is a freshly added molecule - add it to the current state
-        this->addToCurrentState(group_idx, new_molecule.newMolecule());
-        this->recordChange(group_idx, molid, new_molecule);
-
-        this->incrementMajorVersion();
-
-        return true;
-    }
-    else
-    {
-        new_molecule = new_molecule.add( mol, map.source(parameters().coulomb()) );
-
-        if (this->applyChange(molid, new_molecule))
-        {
-            this->incrementMajorVersion();
-            return true;
-        }
-        else
-            return this->isDirty();
-    }
-}
-
 /** Add the molecule 'molecule' to the group with index 'group' using the
     supplied map to find the forcefield parameters amongst the molecule's
     properties. Note that it is an error to try to add this to more than
     one group in the forcefield
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
     \throw SireMol::invalid_cast
     \throw SireFF::invalid_group
 */
-bool InterGroupCoulombFF::addTo(FFBase::Group group, const Molecule &molecule,
-                                const ParameterMap &map)
-{
-    return this->_pvt_addTo<Molecule>(group, molecule, map);
-}
-
-/** Add the residue 'residue' to the group with index 'group' using the
-    supplied map to find the forcefield parameters amongst the residue's
-    properties. Note that it is an error to try to add this to more than
-    one group in the forcefield. Note that the property
-    used must agree with the rest of the molecule if it is already
-    in this forcefield.
-
-    \throw SireMol::missing_property
-    \throw SireMol::invalid_cast
-    \throw SireFF::invalid_group
-*/
-bool InterGroupCoulombFF::addTo(FFBase::Group group, const Residue &residue,
-                                const ParameterMap &map)
-{
-    return this->_pvt_addTo<Residue>(group, residue, map);
-}
-
-/** Add the atom 'atom' to the group with index 'group' using the
-    supplied map to find the forcefield parameters amongst the atom's
-    properties. Note that it is an error to try to add this to more than
-    one group in the forcefield. Note that the property
-    used must agree with the rest of the molecule if it is already
-    in this forcefield.
-
-    \throw SireMol::missing_property
-    \throw SireMol::invalid_cast
-    \throw SireFF::invalid_group
-*/
-bool InterGroupCoulombFF::addTo(FFBase::Group group, const NewAtom &atom,
-                                const ParameterMap &map)
-{
-    return this->_pvt_addTo<NewAtom>(group, atom, map);
-}
-
-/** Add the selected atoms of 'molecule' to the group with index 'group' using the
-    supplied map to find the forcefield parameters amongst the molecule's
-    properties. Note that it is an error to try to add this to more than
-    one group in the forcefield. Note that the property
-    used must agree with the rest of the molecule if it is already
-    in this forcefield.
-
-    \throw SireMol::missing_property
-    \throw SireMol::invalid_cast
-    \throw SireFF::invalid_group
-*/
-bool InterGroupCoulombFF::addTo(FFBase::Group group, const Molecule &molecule,
-                                const AtomSelection &selected_atoms,
+bool InterGroupCoulombFF::addTo(const FFBase::Group &group,
+                                const PartialMolecule &molecule,
                                 const ParameterMap &map)
 {
     //get the index for this group
@@ -1072,13 +922,13 @@ bool InterGroupCoulombFF::addTo(FFBase::Group group, const Molecule &molecule,
     if (new_molecule.oldMolecule().isEmpty())
     {
         new_molecule = ChangedCoulombMolecule( CoulombMolecule(),
-                          CoulombMolecule( molecule, selected_atoms,
-                                           map.source(this->parameters().coulomb()) ) );
+                                               CoulombMolecule(molecule,
+                                                  map.source(parameters().coulomb())
+                                                              )
+                                             );
 
         //this is a freshly added molecule - add it to the current state
         this->addToCurrentState(group_idx, new_molecule.newMolecule());
-
-        //record the change
         this->recordChange(group_idx, molid, new_molecule);
 
         this->incrementMajorVersion();
@@ -1087,8 +937,8 @@ bool InterGroupCoulombFF::addTo(FFBase::Group group, const Molecule &molecule,
     }
     else
     {
-        new_molecule = new_molecule.add( selected_atoms,
-                                         map.source(this->parameters().coulomb()) );
+        new_molecule = new_molecule.add( molecule,
+                                         map.source(parameters().coulomb()) );
 
         if (this->applyChange(molid, new_molecule))
         {
@@ -1096,6 +946,267 @@ bool InterGroupCoulombFF::addTo(FFBase::Group group, const Molecule &molecule,
             return true;
         }
         else
-            return isDirty();
+            return this->isDirty();
     }
+}
+
+/** Add lots of molecules to the group with index 'group' using the
+    supplied map to find the forcefield parameters amongst the molecules'
+    properties. Note that it is an error to try to add molecules to more than
+    one group in the forcefield
+
+    \throw SireBase::missing_property
+    \throw SireMol::invalid_cast
+    \throw SireFF::invalid_group
+*/
+bool InterGroupCoulombFF::addTo(const FFBase::Group &group,
+                                const QList<PartialMolecule> &molecules,
+                                const ParameterMap &map)
+{
+    return FFBase::addTo(group, molecules, map);
+}
+
+/** Add the molecule 'molecule' to group 'A' using the
+    supplied map to find the forcefield parameters amongst the molecule's
+    properties. Note that it is an error to try to add this to more than
+    one group in the forcefield
+
+    \throw SireBase::missing_property
+    \throw SireMol::invalid_cast
+    \throw SireFF::invalid_group
+*/
+bool InterGroupCoulombFF::addToA(const PartialMolecule &molecule,
+                                 const ParameterMap &map)
+{
+    return this->addTo(groups().A(), molecule, map);
+}
+
+/** Add lots of molecules to group 'A' using the
+    supplied map to find the forcefield parameters amongst the molecules'
+    properties. Note that it is an error to try to add a molecule to more than
+    one group in the forcefield
+
+    \throw SireBase::missing_property
+    \throw SireMol::invalid_cast
+    \throw SireFF::invalid_group
+*/
+bool InterGroupCoulombFF::addToA(const QList<PartialMolecule> &molecules,
+                                 const ParameterMap &map)
+{
+    return this->addTo(groups().A(), molecules, map);
+}
+
+/** Add the molecule 'molecule' to group 'B' using the
+    supplied map to find the forcefield parameters amongst the molecule's
+    properties. Note that it is an error to try to add this to more than
+    one group in the forcefield
+
+    \throw SireBase::missing_property
+    \throw SireMol::invalid_cast
+    \throw SireFF::invalid_group
+*/
+bool InterGroupCoulombFF::addToB(const PartialMolecule &molecule,
+                                 const ParameterMap &map)
+{
+    return this->addTo(groups().B(), molecule, map);
+}
+
+/** Add lots of molecules to group 'B' using the
+    supplied map to find the forcefield parameters amongst the molecules'
+    properties. Note that it is an error to try to add a molecule to more than
+    one group in the forcefield
+
+    \throw SireBase::missing_property
+    \throw SireMol::invalid_cast
+    \throw SireFF::invalid_group
+*/
+bool InterGroupCoulombFF::addToB(const QList<PartialMolecule> &molecules,
+                                 const ParameterMap &map)
+{
+    return this->addTo(groups().B(), molecules, map);
+}
+
+/** Return whether this forcefield contains a complete copy of
+    any version of the partial molecule 'molecule' */
+bool InterGroupCoulombFF::contains(const PartialMolecule &mol) const
+{
+    if ( this->refersTo(mol.ID()) )
+        return this->molecule(mol.ID())
+                        .selectedAtoms().contains(mol.selectedAtoms());
+    else
+        return false;
+}
+
+/** Return whether or not this forcefield contains a complete copy
+    of any version of the partial molecule 'molecule' in the
+    group 'group'
+
+    \throw SireFF::missing_group
+*/
+bool InterGroupCoulombFF::contains(const PartialMolecule &mol,
+                                   const FFBase::Group &group) const
+{
+    if ( this->refersTo(mol.ID(),group) )
+        return this->molecule(mol.ID(),group)
+                        .selectedAtoms().contains(mol.selectedAtoms());
+    else
+        return false;
+}
+
+/** Return whether or not this forcefield refers to the molecule
+    with ID == molid */
+bool InterGroupCoulombFF::refersTo(MoleculeID molid) const
+{
+    return molid_to_index[0].contains(molid) or
+           molid_to_index[1].contains(molid);
+}
+
+/** Return whether or not the group 'group' refers to the molecule
+    with ID == molid
+
+    \throw SireFF::missing_group
+*/
+bool InterGroupCoulombFF::refersTo(MoleculeID molid,
+                                   const FFBase::Group &group) const
+{
+    return molid_to_index[groupIndex(group)].contains(molid);
+}
+
+/** Return the groups referring to the molecule with ID == molid */
+QSet<FFBase::Group> InterGroupCoulombFF::groupsReferringTo(MoleculeID molid) const
+{
+    QSet<FFBase::Group> molgroups;
+
+    if (molid_to_index[0].contains(molid))
+        molgroups.insert(this->groups().A());
+    else if (molid_to_index[1].contains(molid))
+        molgroups.insert(this->groups().B());
+
+    return molgroups;
+}
+
+/** Return the IDs of all of the molecules contained in this forcefield */
+QSet<MoleculeID> InterGroupCoulombFF::moleculeIDs() const
+{
+    return (molid_to_index[0].keys() + molid_to_index[1].keys()).toSet();
+}
+
+/** Return the IDs of all of the molecules in the group 'group'
+
+    \throw SireFF::missing_group
+*/
+QSet<MoleculeID> InterGroupCoulombFF::moleculeIDs(const FFBase::Group &group) const
+{
+    return molid_to_index[groupIndex(group)].keys().toSet();
+}
+
+/** Return the molecule with ID == molid
+
+    \throw SireMol::missing_molecule
+*/
+PartialMolecule InterGroupCoulombFF::molecule(MoleculeID molid) const
+{
+    QHash<MoleculeID,uint>::const_iterator it = molid_to_index[0].find(molid);
+
+    if (it != molid_to_index[0].end())
+    {
+        return mols[0].constData()[*it].molecule();
+    }
+    else
+    {
+        it = molid_to_index[1].find(molid);
+
+        if (it != molid_to_index[1].end())
+            return mols[1].constData()[*it].molecule();
+    }
+
+    throw SireMol::missing_molecule( QObject::tr(
+            "There is no molecule with ID == %1 in the forcefield "
+            "\"%2\" (%3 : %4).")
+                .arg(molid).arg(this->name())
+                .arg(this->ID()).arg(this->version().toString()),
+                    CODELOC );
+
+    return PartialMolecule();
+}
+
+/** Return the molecule with ID == molid from the group 'group'
+
+    \throw SireMol::missing_molecule
+    \throw SireFF::missing_group
+*/
+PartialMolecule InterGroupCoulombFF::molecule(MoleculeID molid,
+                                              const FFBase::Group &group) const
+{
+    int idx = groupIndex(group);
+
+    QHash<MoleculeID,uint>::const_iterator it = molid_to_index[idx].find(molid);
+
+    if (it == molid_to_index[idx].end())
+        throw SireMol::missing_molecule( QObject::tr(
+            "There is no molecule with ID == %1 in the forcefield "
+            "\"%2\" (%3 : %4).")
+                .arg(molid).arg(this->name())
+                .arg(this->ID()).arg(this->version().toString()),
+                    CODELOC );
+
+    return mols[idx].constData()[*it].molecule();
+}
+
+/** Return all of the molecules in this forcefield */
+QHash<MoleculeID,PartialMolecule> InterGroupCoulombFF::contents() const
+{
+    QHash<MoleculeID,PartialMolecule> all_mols;
+
+    int nmols = mols[0].count() + mols[1].count();
+
+    if (nmols > 0)
+    {
+        all_mols.reserve(nmols);
+
+        for (int i=0; i<2; ++i)
+        {
+            nmols = mols[i].count();
+            const CoulombMolecule *mols_array = mols[i].constData();
+
+            for (int j=0; j<nmols; ++j)
+            {
+                const PartialMolecule &mol = mols_array[j].molecule();
+
+                all_mols.insert(mol.ID(),mol);
+            }
+        }
+    }
+
+    return all_mols;
+}
+
+/** Return all of the molecules in group 'group'
+
+    \throw SireFF::missing_group
+*/
+QHash<MoleculeID,PartialMolecule>
+InterGroupCoulombFF::contents(const FFBase::Group &group) const
+{
+    int idx = groupIndex(group);
+
+    QHash<MoleculeID,PartialMolecule> all_mols;
+
+    int nmols = mols[idx].count();
+
+    if (nmols > 0)
+    {
+        all_mols.reserve(nmols);
+
+        const CoulombMolecule *mols_array = mols[idx].constData();
+
+        for (int i=0; i<nmols; ++i)
+        {
+            const PartialMolecule &mol = mols_array[i].molecule();
+
+            all_mols.insert(mol.ID(),mol);
+        }
+    }
+
+    return all_mols;
 }

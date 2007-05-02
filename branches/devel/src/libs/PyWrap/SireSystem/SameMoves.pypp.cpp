@@ -8,6 +8,7 @@
 #include "SireMol/molecule.h"
 #include "SireMol/residue.h"
 #include "SireMol/newatom.h"
+#include "SireFF/ffgroupid.h"
 
 namespace bp = boost::python;
 

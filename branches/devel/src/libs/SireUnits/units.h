@@ -82,7 +82,7 @@ const double picometer = nanometer * 1000.0;
 const double meter = nanometer * 1.0e9;
 
 /** Convert Bohr radii into internal units */
-const double bohr_radii = 1.0 / 0.529177249;
+const double bohr_radii = 0.529177249;
 
 /////////////////////////////////////////////////
 // Units of time. Internal unit = femtoseconds //

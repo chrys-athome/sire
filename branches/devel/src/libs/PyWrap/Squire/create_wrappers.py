@@ -27,6 +27,7 @@ extra_includes = [ "SireMol/molecule.h",
 
 def fix_MolproFF(c):
     c.noncopyable = False
+    c.enum("QMMMStatusFlag").exclude()
 
 special_code = { "MolproFF" : fix_MolproFF }
 

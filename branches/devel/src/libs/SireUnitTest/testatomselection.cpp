@@ -43,6 +43,8 @@
 
 #include "SireIO/pdb.h"
 
+#include <QDebug>
+
 using namespace SireTest;
 using namespace SireMol;
 using namespace SireMaths;
@@ -94,7 +96,7 @@ void TestAtomSelection::runTests()
 
         BOOST_CHECK_EQUAL( s.nSelected(resnum), p38.nAtoms(resnum) );
     }
-
+    
     uint ncg = p38.nCutGroups();
 
     for (CutGroupID i(0); i<ncg; ++i)
@@ -103,7 +105,7 @@ void TestAtomSelection::runTests()
     }
 
     t.start();
-    s.deselectAll();
+    s = s.deselectAll();
     ms = t.elapsed();
 
     qDebug() << "Deselecting all took " << ms;
@@ -131,7 +133,7 @@ void TestAtomSelection::runTests()
     qDebug() << "Checking each CutGroup took " << ms;
 
     t.start();
-    s.selectAll();
+    s = s.selectAll();
     ms = t.elapsed();
     qDebug() << "Selecting all took " << ms;
 
@@ -158,7 +160,7 @@ void TestAtomSelection::runTests()
     {
         const ResidueInfo &resinfo = p38.info().at(i);
 
-        s.deselectAll(resinfo.number());
+        s = s.deselectAll(resinfo.number());
 
         BOOST_CHECK( not s.selectedAll() );
         BOOST_CHECK_EQUAL( s.nSelected(resinfo.number()), 0 );
@@ -173,7 +175,7 @@ void TestAtomSelection::runTests()
         }
 
         //reselect the residue
-        s.selectAll(resinfo.number());
+        s = s.selectAll(resinfo.number());
 
         BOOST_CHECK( s.selectedAll(resinfo.number()) );
         BOOST_CHECK_EQUAL( s.nSelected(resinfo.number()), resinfo.nAtoms() );
@@ -183,12 +185,12 @@ void TestAtomSelection::runTests()
     }
     ms = t.elapsed();
     qDebug() << "Deselecting/selecting each residue took " << ms;
-
+    
     //deselect one CutGroup at a time and check that the selection works
     t.start();
     for (CutGroupID i(0); i<ncg; ++i)
     {
-        s.deselectAll(i);
+        s = s.deselectAll(i);
 
         BOOST_CHECK( not s.selectedAll() );
         BOOST_CHECK_EQUAL( s.nSelected(i), 0 );
@@ -203,7 +205,7 @@ void TestAtomSelection::runTests()
         }
 
         //reselect the CutGroup
-        s.selectAll(i);
+        s = s.selectAll(i);
 
         BOOST_CHECK( s.selectedAll(i) );
         BOOST_CHECK_EQUAL( s.nSelected(i), p38.nAtoms(i) );
@@ -239,7 +241,7 @@ void TestAtomSelection::runTests()
 
         BOOST_CHECK( s.selected(cgatomid) );
 
-        s.deselect(cgatomid);
+        s = s.deselect(cgatomid);
 
         BOOST_CHECK( not s.selected(cgatomid) );
 
@@ -280,7 +282,7 @@ void TestAtomSelection::runTests()
 
         BOOST_CHECK( not s.selected(cgatomid) );
 
-        s.select(cgatomid);
+        s = s.select(cgatomid);
 
         BOOST_CHECK( s.selected(cgatomid) );
 

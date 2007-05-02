@@ -17,6 +17,12 @@
 
 #include "MajVersion.pypp.hpp"
 
+#include "Property.pypp.hpp"
+
+#include "PropertyBase.pypp.hpp"
+
+#include "VariantProperty.pypp.hpp"
+
 #include "Version.pypp.hpp"
 
 #include "sirebase_containers.h"
@@ -37,6 +43,16 @@ BOOST_PYTHON_MODULE(_Base){
     register_MajVersion_class();
 
     bp::implicitly_convertible< SireBase::MajVersion, quint32 >();
+
+    register_Property_class();
+
+    register_PropertyBase_class();
+
+    register_VariantProperty_class();
+
+    bp::implicitly_convertible< SireBase::PropertyBase, SireBase::Property >();
+
+    bp::implicitly_convertible< QVariant, SireBase::VariantProperty >();
 
     register_Version_class();
 }

@@ -5,12 +5,14 @@
 #include "_Molecule__memfuns3.pypp.hpp"
 #include "boost/python.hpp"
 #include "siremol_headers.h"
+#include "SireMol/moleculedata.h"
 #include "SireMaths/angle.h"
 #include "SireMaths/quaternion.h"
 #include "SireMaths/matrix.h"
 #include "SireMaths/triangle.h"
 #include "SireMaths/line.h"
 #include "SireMaths/torsion.h"
+#include "SireVol/space.h"
 
 namespace bp = boost::python;
 
@@ -192,7 +194,7 @@ void register_Molecule_memfuns3( Molecule_exposer_t& Molecule_exposer ){
 
     { //::SireMol::Molecule::getProperty
     
-        typedef ::SireMol::Property const & ( ::SireMol::Molecule::*getProperty_function_type )( ::QString const & ) const;
+        typedef ::SireBase::Property const & ( ::SireMol::Molecule::*getProperty_function_type )( ::QString const & ) const;
         
         Molecule_exposer.def( 
             "getProperty"

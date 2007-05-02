@@ -5,27 +5,18 @@
 #include "_Residue__memfuns4.pypp.hpp"
 #include "boost/python.hpp"
 #include "siremol_headers.h"
+#include "SireMol/moleculedata.h"
 #include "SireMaths/angle.h"
 #include "SireMaths/quaternion.h"
 #include "SireMaths/matrix.h"
 #include "SireMaths/triangle.h"
 #include "SireMaths/line.h"
 #include "SireMaths/torsion.h"
+#include "SireVol/space.h"
 
 namespace bp = boost::python;
 
 void register_Residue_memfuns4( Residue_exposer_t& Residue_exposer ){
-
-    { //::SireMol::Residue::rotate
-    
-        typedef void ( ::SireMol::Residue::*rotate_function_type )( ::QSet<SireMol::AtomIndex> const &,::SireMaths::Quaternion const &,::SireMaths::Vector const & ) ;
-        
-        Residue_exposer.def( 
-            "rotate"
-            , rotate_function_type( &::SireMol::Residue::rotate )
-            , ( bp::arg("atoms"), bp::arg("quat"), bp::arg("point") ) );
-    
-    }
 
     { //::SireMol::Residue::rotate
     
@@ -233,6 +224,17 @@ void register_Residue_memfuns4( Residue_exposer_t& Residue_exposer ){
             "setCoordinates"
             , setCoordinates_function_type( &::SireMol::Residue::setCoordinates )
             , ( bp::arg("atomid"), bp::arg("newcoords") ) );
+    
+    }
+
+    { //::SireMol::Residue::setCoordinates
+    
+        typedef void ( ::SireMol::Residue::*setCoordinates_function_type )( ::QHash<SireMol::AtomID,SireMaths::Vector> const & ) ;
+        
+        Residue_exposer.def( 
+            "setCoordinates"
+            , setCoordinates_function_type( &::SireMol::Residue::setCoordinates )
+            , ( bp::arg("newcoords") ) );
     
     }
 

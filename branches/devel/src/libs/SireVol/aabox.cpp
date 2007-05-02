@@ -29,6 +29,8 @@
 #include "aabox.h"
 #include "coordgroup.h"
 
+#include <QDebug>
+
 #include "SireStream/datastream.h"
 
 using namespace SireStream;
@@ -60,7 +62,11 @@ QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds, AABox &aabox)
 }
 
 /** Construct an empty AABox */
-AABox::AABox() : cent(), halfextents(), rad(0.0)
+AABox::AABox() : cent(), halfextents(), rad(0)
+{}
+
+/** Construct an AABox that completely encloses the point 'point' */
+AABox::AABox(const Vector &point) : cent(point), halfextents(), rad(0)
 {}
 
 /** Construct an AABox with center at 'cent', and half-extents 'extents' */
@@ -70,9 +76,15 @@ AABox::AABox(const Vector &c, const Vector &extents) : cent(c), halfextents(exte
 }
 
 /** Construct an AABox that completely encases the CoordGroup 'coordgroup' */
-AABox::AABox(const CoordGroup &coordgroup)
+AABox::AABox(const CoordGroupBase &coordgroup)
 {
     recalculate(coordgroup);
+}
+
+/** Construct an AABox that completely encases the points  in 'coordinates' */
+AABox::AABox(const QVector<Vector> &coordinates)
+{
+    recalculate(coordinates);
 }
 
 /** Destructor */
@@ -91,6 +103,24 @@ bool AABox::operator!=(const AABox &other) const
 {
     return this != &other and
           (rad != other.rad or cent != other.cent or halfextents != other.halfextents);
+}
+
+/** Return an AABox constructed to contain the coordinates in 'coordinates' */
+AABox AABox::from(const QVector<Vector> &coordinates)
+{
+    return AABox(coordinates);
+}
+
+/** Return an AABox constructed to contain the coordinates of 'point' */
+AABox AABox::from(const Vector &point)
+{
+    return AABox(point);
+}
+
+/** Return an AABox constructed to contain the coordinates in 'coordinates' */
+AABox AABox::from(const CoordGroupBase &coordinates)
+{
+    return AABox(coordinates);
 }
 
 /** Internal function used to recalculate the AABox from the coordinates in the
@@ -131,9 +161,15 @@ void AABox::recalculate(const Vector *coords, int sz)
 }
 
 /** Recalculate the AABox so that it completely encloses the CoordGroup 'coordgroup' */
-void AABox::recalculate(const CoordGroup &coordgroup)
+void AABox::recalculate(const CoordGroupBase &coordgroup)
 {
     this->recalculate( coordgroup.constData(), coordgroup.size() );
+}
+
+/** Recalculate the AABox so that it completely encloses the 'coordinates' */
+void AABox::recalculate(const QVector<Vector> &coordinates)
+{
+    this->recalculate( coordinates.constData(), coordinates.size() );
 }
 
 /** Return whether or not this box is within 'dist' of box 'box'.

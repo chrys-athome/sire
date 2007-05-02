@@ -33,6 +33,7 @@
 #include "SireMol/molecule.h"
 #include "SireMol/moleculeinfo.h"
 #include "SireMol/cgatomid.h"
+#include "SireMol/atomselection.h"
 
 #include "SireStream/datastream.h"
 
@@ -133,16 +134,39 @@ AtomicLJs& AtomicLJs::operator=(const AtomicLJs &other)
 
     \throw SireError::invalid_cast
 */
-AtomicLJs& AtomicLJs::operator=(const Property &property)
+AtomicLJs& AtomicLJs::operator=(const Property &other)
 {
-    return AtomicLJs::operator=(sharedpolypointer_cast<AtomicLJs>(property));
+    if (not other.isA<AtomicLJs>())
+        throw SireError::invalid_cast( QObject::tr(
+                "Cannot cast from a \"%1\" to AtomicLJs!")
+                    .arg(other.what()), CODELOC );
+
+    return this->operator=(other.asA<AtomicLJs>());
+}
+
+/** Comparison operator */
+bool AtomicLJs::operator==(const AtomicLJs &other) const
+{
+    return QVector< QVector<LJParameter> >::operator==(other);
+}
+
+/** Comparison operator */
+bool AtomicLJs::operator!=(const AtomicLJs &other) const
+{
+    return QVector< QVector<LJParameter> >::operator!=(other);
+}
+
+/** Comparison function - 'other' is guaranteed to be of type 'AtomicLJs' */
+bool AtomicLJs::_pvt_isEqual(const PropertyBase &other) const
+{
+    BOOST_ASSERT( other.isA<AtomicLJs>() );
+    
+    return this->operator==( other.asA<AtomicLJs>() );
 }
 
 /** Return whether or not this is compatible with 'molecule' */
-bool AtomicLJs::isCompatibleWith(const Molecule &molecule) const
+bool AtomicLJs::isCompatibleWith(const MoleculeInfo &molinfo) const
 {
-    const MoleculeInfo &molinfo = molecule.info();
-
     int ncg = molinfo.nCutGroups();
 
     if (this->count() != ncg)
@@ -167,14 +191,93 @@ bool AtomicLJs::isCompatibleWith(const Molecule &molecule) const
 */
 QVariant AtomicLJs::value(const CGAtomID &cgatomid) const
 {
-    if (cgatomid.cutGroupID() >= this->count())
+    if ( cgatomid.cutGroupID() >= uint(this->count()) )
         throwMissingCutGroup(cgatomid.cutGroupID(), this->count());
 
     const QVector<LJParameter> &ljs =
                             this->constData()[cgatomid.cutGroupID()];
 
-    if (cgatomid.atomID() >= ljs.count())
+    if ( cgatomid.atomID() >= uint(ljs.count()) )
         throwMissingAtom(cgatomid, ljs.count());
 
     return QVariant::fromValue( ljs.constData()[cgatomid.atomID()] );
+}
+
+/** Return the charges just for the atoms that are selected in 'selected_atoms'.
+    This still returns the charges in group, but only returns groups that
+    contain at least one selected atom. Atoms that are not selected are
+    returned with zero charge.
+    
+    \throw SireError::incompatible_error
+*/
+Property AtomicLJs::mask(const AtomSelection &selected_atoms) const
+{
+    if (not this->isCompatibleWith(selected_atoms.info()))
+    {
+        throw SireError::incompatible_error( QObject::tr(
+            "Cannot mask using an incompatible molecule's atom selection!"),
+                CODELOC );
+    }
+    
+    if (selected_atoms.selectedAll())
+        return *this;
+    else if (selected_atoms.nSelectedCutGroups() == this->count())
+    {
+        //just need to mask some atoms in some CutGroups...
+        AtomicLJs selected_ljs(*this);
+        
+        uint ncg = this->count();
+        
+        for (CutGroupID i(0); i<ncg; ++i)
+        {
+            if (not selected_atoms.selectedAll(i))
+            {
+                QVector<LJParameter> &group_ljs = selected_ljs[i];
+                
+                uint nats = group_ljs.count();
+                LJParameter *group_ljs_array = group_ljs.data();
+                
+                for (AtomID j(0); j<nats; ++j)
+                {
+                    if (not selected_atoms.selected(CGAtomID(i,j)))
+                        //this atom is not selected - zero its charge!
+                        group_ljs_array[j] = LJParameter::dummy();
+                }
+            }
+        }
+        
+        return selected_ljs;
+    }
+    else
+    {
+        //there are whole CutGroups that aren't selected - return only
+        //the groups that contain at least one selected atom
+        
+        QSet<CutGroupID> cgids = selected_atoms.selectedCutGroups();
+        
+        QVector< QVector<LJParameter> > selected_ljs(cgids.count());
+        
+        int i=0;
+        
+        foreach (CutGroupID cgid, cgids)
+        {
+            QVector<LJParameter> group_ljs = this->at(cgid);
+            
+            LJParameter *group_ljs_array = group_ljs.data();
+            
+            uint nats = group_ljs.count();
+            
+            for (AtomID j(0); j<nats; ++j)
+            {
+                if (not selected_atoms.selected(CGAtomID(cgid,j)))
+                    //this atom is not selected - zero its charge!
+                    group_ljs_array[j] = LJParameter::dummy();
+            }
+            
+            selected_ljs[i] = group_ljs;
+            ++i;
+        }
+        
+        return AtomicLJs(selected_ljs);
+    }
 }

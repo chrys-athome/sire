@@ -14,14 +14,18 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 set ( SIREFF_SOURCES
       errors.cpp
       ffbase.cpp
+      ffcalculatorbase.cpp
       ffcalculator.cpp
       ffcomponent.cpp
       ffexpression.cpp
+      ffgroupid.cpp
       ffprocessor.cpp
       ffthreadprocessor.cpp
       ffthreadworker.cpp
+      ffworkerbase.cpp
       ffworker.cpp
       forcefield.cpp
+      forcefieldsbase.cpp
       forcefields.cpp
       forcetable.cpp
       parametermap.cpp

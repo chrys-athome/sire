@@ -39,6 +39,7 @@
 #include "newatom.h"
 #include "cutgroup.h"
 #include "residue.h"
+#include "moleculeview_inlines.h"
 #include "molecule.h"
 #include "resnum.h"
 #include "resid.h"
@@ -62,7 +63,6 @@
 #include "SireMaths/torsion.h"
 
 #include "SireStream/datastream.h"
-#include "SireStream/shareddatastream.h"
 
 using namespace SireStream;
 using namespace SireMol;
@@ -78,9 +78,9 @@ static const RegisterMetaType<Residue> r_residue;
 /** Serialise a Residue to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const Residue &res)
 {
-    writeHeader(ds, r_residue, 1) << res.rnum;
-
-    SharedDataStream(ds) << res.d;
+    writeHeader(ds, r_residue, 1)
+            << res.rnum
+            << static_cast<const MoleculeView&>(res);
 
     return ds;
 }
@@ -92,9 +92,8 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, Residue &res)
 
     if (v == 1)
     {
-        SharedDataStream sds(ds);
-
-        sds >> res.rnum >> res.d;
+        ds >> res.rnum
+           >> static_cast<MoleculeView&>(res);
     }
     else
         throw version_error(v, "1", r_residue, CODELOC);
@@ -103,7 +102,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, Residue &res)
 }
 
 /** Construct an empty residue */
-Residue::Residue() : rnum(0)
+Residue::Residue() : MoleculeView(), rnum(0)
 {}
 
 /** Construct a residue that is a copy of the residue with number 'resnum'
@@ -112,9 +111,9 @@ Residue::Residue() : rnum(0)
     \throw SireMol::missing_residue
 */
 Residue::Residue(const Molecule &molecule, ResNum resnum)
-        : d(molecule.d), rnum(resnum)
+        : MoleculeView(molecule), rnum(resnum)
 {
-    d->info().assertResidueExists(rnum);
+    constData().info().assertResidueExists(rnum);
 }
 
 /** Construct a residue that is a copy of the residue at index 'resid' in
@@ -123,7 +122,8 @@ Residue::Residue(const Molecule &molecule, ResNum resnum)
     \throw SireError::invalid_index
 */
 Residue::Residue(const Molecule &molecule, ResID resid)
-        : d(molecule.d), rnum( d->info().residueNumber(resid) )
+        : MoleculeView(molecule),
+          rnum( molecule.info().residueNumber(resid) )
 {}
 
 /** Construct a residue that is a copy of the first residue called 'resname'
@@ -132,18 +132,20 @@ Residue::Residue(const Molecule &molecule, ResID resid)
     \throw SireMol::missing_residue
 */
 Residue::Residue(const Molecule &molecule, const QString &resname)
-        : d(molecule.d), rnum( d->info().residueNumber(resname) )
+        : MoleculeView(molecule),
+          rnum( molecule.info().residueNumber(resname) )
 {}
 
 /** Construct a residue that is a copy of the residue that contains the
     atom 'atom' */
 Residue::Residue(const NewAtom &atom)
-        : d(atom.d), rnum(atom.info().resNum())
+        : MoleculeView(atom),
+          rnum(atom.info().resNum())
 {}
 
 /** Copy constructor - this is fast as this class is implicitly shared */
 Residue::Residue(const Residue &other)
-        : d(other.d), rnum(other.rnum)
+        : MoleculeView(other), rnum(other.rnum)
 {}
 
 /** Destructor */
@@ -156,20 +158,20 @@ Residue::~Residue()
 bool Residue::operator==(const Residue &other) const
 {
     return rnum == other.rnum and
-           ( d.data() == other.d.data() or *d == *(other.d) );
+           MoleculeView::operator==(other);
 }
 
 /** Comparison operator */
 bool Residue::operator!=(const Residue &other) const
 {
     return rnum != other.rnum or
-           ( d.data() != other.d.data() and *d != *(other.d) );
+           MoleculeView::operator!=(other);
 }
 
 /** Assignment operator - this is fast as this class is implicitly shared */
 Residue& Residue::operator=(const Residue &other)
 {
-    d = other.d;
+    MoleculeView::operator=(other);
     rnum = other.rnum;
     return *this;
 }
@@ -180,7 +182,7 @@ Residue& Residue::operator=(const Residue &other)
 */
 Atom Residue::operator[](AtomID i) const
 {
-    return d->at( ResNumAtomID(rnum,i) );
+    return data().at( ResNumAtomID(rnum,i) );
 }
 
 /** Return a copy of the atom called 'atomname'
@@ -189,7 +191,7 @@ Atom Residue::operator[](AtomID i) const
 */
 Atom Residue::operator[](const QString &atomname) const
 {
-    return d->at( AtomIndex(atomname,rnum) );
+    return data().at( AtomIndex(atomname,rnum) );
 }
 
 /** Return a copy of the atom with index 'atom' - this will throw
@@ -202,7 +204,7 @@ Atom Residue::operator[](const QString &atomname) const
 Atom Residue::operator[](const AtomIndex &atom) const
 {
     info().assertSameResidue(atom);
-    return d->at( atom );
+    return data().at( atom );
 }
 
 /** Return a copy of the CutGroup with ID == cgid - this CutGroup
@@ -214,7 +216,7 @@ Atom Residue::operator[](const AtomIndex &atom) const
 CutGroup Residue::operator[](CutGroupID cgid) const
 {
     info().assertSameResidue(cgid);
-    return d->at( cgid );
+    return data().at( cgid );
 }
 
 /** Return a copy of the CutGroup with number 'cgnum' - this CutGroup
@@ -225,18 +227,7 @@ CutGroup Residue::operator[](CutGroupID cgid) const
 */
 CutGroup Residue::operator[](CutGroupNum cgnum) const
 {
-    return this->operator[]( d->info().cutGroupID(cgnum) );
-}
-
-/////////////////////////////////////////////////////////
-
-
-///// Interface with molecule ///////////////////////////
-
-/** Return a copy of the Molecule that contains this Residue */
-Molecule Residue::molecule() const
-{
-    return Molecule(*this);
+    return this->operator[]( data().info().cutGroupID(cgnum) );
 }
 
 /////////////////////////////////////////////////////////
@@ -247,13 +238,13 @@ Molecule Residue::molecule() const
 /** Return the ID number of the molecule that contains this residue */
 MoleculeID Residue::ID() const
 {
-    return d->ID();
+    return data().ID();
 }
 
 /** Return the version number of the molecule that contains this residue */
 const MoleculeVersion& Residue::version() const
 {
-    return d->version();
+    return data().version();
 }
 
 /** Return a string identifying this residue */
@@ -261,8 +252,8 @@ QString Residue::idString() const
 {
     return QObject::tr("%1 (%2) in \"%3\" (%4 %5)")
                           .arg(name()).arg(number())
-                          .arg(d->info().name()).arg(ID())
-                          .arg(d->version().toString());
+                          .arg(data().info().name()).arg(ID())
+                          .arg(data().version().toString());
 }
 
 /** Return a copy of the atom at index 'i'
@@ -320,20 +311,20 @@ CutGroup Residue::at(CutGroupNum cgnum) const
 /** Return the connectivity of this residue */
 ResidueBonds Residue::connectivity() const
 {
-    return d->connectivity(rnum);
+    return data().connectivity(rnum);
 }
 
 /** Return the metainfo for this residue */
 const ResidueInfo& Residue::info() const
 {
-    return d->info().at(rnum);
+    return data().info().at(rnum);
 }
 
 /** Return copies of the CutGroups that contain atoms that are
     in this residue */
 QHash<CutGroupID,CutGroup> Residue::cutGroups() const
 {
-    return d->cutGroups(rnum);
+    return data().cutGroups(rnum);
 }
 
 /** Return a copy of the CutGroup with ID == cgid
@@ -343,14 +334,14 @@ QHash<CutGroupID,CutGroup> Residue::cutGroups() const
 CutGroup Residue::cutGroup(CutGroupID cgid) const
 {
     info().assertSameResidue(cgid);
-    return d->cutGroup(cgid);
+    return data().cutGroup(cgid);
 }
 
 /** Return a copy of the CoordGroups containing the coordinates of
     CutGroups that contain atoms from this residue */
 QHash<CutGroupID,CoordGroup> Residue::coordGroups() const
 {
-    return d->coordGroups(rnum);
+    return data().coordGroups(rnum);
 }
 
 /** Return a copy of the CoordGroup for the CutGroup with ID == cgid
@@ -360,7 +351,7 @@ QHash<CutGroupID,CoordGroup> Residue::coordGroups() const
 CoordGroup Residue::coordGroup(CutGroupID cgid) const
 {
     info().assertSameResidue(cgid);
-    return d->coordGroup(cgid);
+    return data().coordGroup(cgid);
 }
 
 /** Return a copy of the atom at index 'i'
@@ -399,7 +390,7 @@ Atom Residue::atom(const AtomIndex &atom) const
 */
 Vector Residue::coordinates(AtomID i) const
 {
-    return d->coordinates( ResNumAtomID(rnum,i) );
+    return data().coordinates( ResNumAtomID(rnum,i) );
 }
 
 /** Return a copy of the coordinates of the atom with name 'atomname'
@@ -408,7 +399,7 @@ Vector Residue::coordinates(AtomID i) const
 */
 Vector Residue::coordinates(const QString &atomname) const
 {
-    return d->coordinates( AtomIndex(atomname,rnum) );
+    return data().coordinates( AtomIndex(atomname,rnum) );
 }
 
 /** Return a copy of the coordinates of the atom with AtomIndex 'atom'.
@@ -421,21 +412,21 @@ Vector Residue::coordinates(const QString &atomname) const
 Vector Residue::coordinates(const AtomIndex &atom) const
 {
     info().assertSameResidue(atom);
-    return d->coordinates(atom);
+    return data().coordinates(atom);
 }
 
 /** Return an array of all of the atoms in this residue, in the same
     order as they are in the residue */
 QVector<Atom> Residue::atoms() const
 {
-    return d->atoms(rnum);
+    return data().atoms(rnum);
 }
 
 /** Return an array of the coordinates of the atoms in the
     residue in the same order as they are in this residue */
 QVector<Vector> Residue::coordinates() const
 {
-    return d->coordinates(rnum);
+    return data().coordinates(rnum);
 }
 
 template<class T>
@@ -815,7 +806,7 @@ double Residue::getWeight(const QStringList &group0, const QStringList &group1,
     foreach (QString atom, group1)
         g1.add( AtomIndex(atom,rnum) );
 
-    return d->getWeight(g0, g1, weightfunc);
+    return data().getWeight(g0, g1, weightfunc);
 }
 
 /** Return the relative weights of group0 and group1 using the weight function
@@ -843,7 +834,7 @@ double Residue::getWeight(const QSet<AtomIndex> &group0, const QSet<AtomIndex> &
         g1.add(atom);
     }
 
-    return d->getWeight(g0, g1, weightfunc);
+    return data().getWeight(g0, g1, weightfunc);
 }
 
 /////////////////////////////////////////////////////////
@@ -854,7 +845,7 @@ double Residue::getWeight(const QSet<AtomIndex> &group0, const QSet<AtomIndex> &
 /** Translate the entire residue by 'delta' */
 void Residue::translate(const Vector &delta)
 {
-    d->translate(rnum, delta);
+    data().translate(rnum, delta);
 }
 
 /** Translate the atom at index 'atomid' by 'delta'
@@ -863,7 +854,7 @@ void Residue::translate(const Vector &delta)
 */
 void Residue::translate(AtomID atomid, const Vector &delta)
 {
-    d->translate(rnum, atomid, delta);
+    data().translate(rnum, atomid, delta);
 }
 
 /** Translate the atoms with indicies in 'atomids' by 'delta'
@@ -872,7 +863,7 @@ void Residue::translate(AtomID atomid, const Vector &delta)
 */
 void Residue::translate(const QSet<AtomID> &atomids, const Vector &delta)
 {
-    d->translate(rnum, atomids, delta);
+    data().translate(rnum, atomids, delta);
 }
 
 /** Translate the atom called 'atom' by 'delta'
@@ -881,7 +872,7 @@ void Residue::translate(const QSet<AtomID> &atomids, const Vector &delta)
 */
 void Residue::translate(const QString &atom, const Vector &delta)
 {
-    d->translate(AtomIndex(atom,rnum), delta);
+    data().translate(AtomIndex(atom,rnum), delta);
 }
 
 /** Translate the atoms whose names are in 'atoms' by 'delta'
@@ -890,7 +881,7 @@ void Residue::translate(const QString &atom, const Vector &delta)
 */
 void Residue::translate(const QStringList &atoms, const Vector &delta)
 {
-    d->translate(rnum, atoms, delta);
+    data().translate(rnum, atoms, delta);
 }
 
 /** Translate the atom 'atom' by delta - the residue number of 'atom'
@@ -903,7 +894,7 @@ void Residue::translate(const QStringList &atoms, const Vector &delta)
 void Residue::translate(const AtomIndex &atom, const Vector &delta)
 {
     info().assertSameResidue(atom);
-    d->translate(atom, delta);
+    data().translate(atom, delta);
 }
 
 /** Translate the atoms 'atoms' by 'delta' - the residue numbers of
@@ -916,7 +907,7 @@ void Residue::translate(const AtomIndex &atom, const Vector &delta)
 void Residue::translate(const QSet<AtomIndex> &atoms, const Vector &delta)
 {
     info().assertSameResidue(atoms);
-    d->translate(atoms, delta);
+    data().translate(atoms, delta);
 }
 
 /** Rotate the whole residue using the quaternion 'quat' about the point
@@ -924,7 +915,7 @@ void Residue::translate(const QSet<AtomIndex> &atoms, const Vector &delta)
 */
 void Residue::rotate(const Quaternion &quat, const Vector &point)
 {
-    d->rotate(rnum, quat, point);
+    data().rotate(rnum, quat, point);
 }
 
 /** Rotate the atom with index 'atomid' using the quaternion 'quat' about
@@ -934,7 +925,7 @@ void Residue::rotate(const Quaternion &quat, const Vector &point)
 */
 void Residue::rotate(AtomID atomid, const Quaternion &quat, const Vector &point)
 {
-    d->rotate(rnum, atomid, quat, point);
+    data().rotate(rnum, atomid, quat, point);
 }
 
 /** Rotate the atoms with indexes in 'atomids' using the quaternion 'quat'
@@ -945,7 +936,7 @@ void Residue::rotate(AtomID atomid, const Quaternion &quat, const Vector &point)
 void Residue::rotate(const QSet<AtomID> &atomids, const Quaternion &quat,
                      const Vector &point)
 {
-    d->rotate(rnum, atomids, quat, point);
+    data().rotate(rnum, atomids, quat, point);
 }
 
 /** Rotate the atom called 'atomname' using the quaternion 'quat'
@@ -956,7 +947,7 @@ void Residue::rotate(const QSet<AtomID> &atomids, const Quaternion &quat,
 void Residue::rotate(const QString &atomname, const Quaternion &quat,
                      const Vector &point)
 {
-    d->rotate(AtomIndex(atomname,rnum), quat, point);
+    data().rotate(AtomIndex(atomname,rnum), quat, point);
 }
 
 /** Rotate the atoms whose names are in 'atomnames' using the quaternion 'quat'
@@ -967,7 +958,7 @@ void Residue::rotate(const QString &atomname, const Quaternion &quat,
 void Residue::rotate(const QStringList &atomnames, const Quaternion &quat,
                      const Vector &point)
 {
-    d->rotate(rnum, atomnames, quat, point);
+    data().rotate(rnum, atomnames, quat, point);
 }
 
 /** Rotate the atom with AtomIndex 'atom' using the quaternion 'quat'
@@ -982,7 +973,7 @@ void Residue::rotate(const AtomIndex &atom, const Quaternion &quat,
                      const Vector &point)
 {
     info().assertSameResidue(atom);
-    d->rotate(atom, quat, point);
+    data().rotate(atom, quat, point);
 }
 
 /** Rotate the atoms whose AtomIndex objects are in 'atoms', using
@@ -997,7 +988,7 @@ void Residue::rotate(const QSet<AtomIndex> &atoms, const Quaternion &quat,
                      const Vector &point)
 {
     info().assertSameResidue(atoms);
-    d->rotate(atoms, quat, point);
+    data().rotate(atoms, quat, point);
 }
 
 /** Rotate the whole residue using the matrix 'rotmat' about the point
@@ -1005,7 +996,7 @@ void Residue::rotate(const QSet<AtomIndex> &atoms, const Quaternion &quat,
 */
 void Residue::rotate(const Matrix &rotmat, const Vector &point)
 {
-    d->rotate(rnum, rotmat, point);
+    data().rotate(rnum, rotmat, point);
 }
 
 /** Rotate the atom with index 'atomid' using the matrix 'rotmat' about
@@ -1015,7 +1006,7 @@ void Residue::rotate(const Matrix &rotmat, const Vector &point)
 */
 void Residue::rotate(AtomID atomid, const Matrix &rotmat, const Vector &point)
 {
-    d->rotate(rnum, atomid, rotmat, point);
+    data().rotate(rnum, atomid, rotmat, point);
 }
 
 /** Rotate the atoms with indexes in 'atomids' using the matrix 'rotmat'
@@ -1026,7 +1017,7 @@ void Residue::rotate(AtomID atomid, const Matrix &rotmat, const Vector &point)
 void Residue::rotate(const QSet<AtomID> &atomids, const Matrix &rotmat,
                      const Vector &point)
 {
-    d->rotate(rnum, atomids, rotmat, point);
+    data().rotate(rnum, atomids, rotmat, point);
 }
 
 /** Rotate the atom called 'atomname' using the matrix 'rotmat'
@@ -1037,7 +1028,7 @@ void Residue::rotate(const QSet<AtomID> &atomids, const Matrix &rotmat,
 void Residue::rotate(const QString &atomname, const Matrix &rotmat,
                      const Vector &point)
 {
-    d->rotate(AtomIndex(atomname,rnum), rotmat, point);
+    data().rotate(AtomIndex(atomname,rnum), rotmat, point);
 }
 
 /** Rotate the atoms whose names are in 'atomnames' using the matrix 'rotmat'
@@ -1048,7 +1039,7 @@ void Residue::rotate(const QString &atomname, const Matrix &rotmat,
 void Residue::rotate(const QStringList &atomnames, const Matrix &rotmat,
                      const Vector &point)
 {
-    d->rotate(rnum, atomnames, rotmat, point);
+    data().rotate(rnum, atomnames, rotmat, point);
 }
 
 /** Rotate the atom with AtomIndex 'atom' using the matrix 'rotmat'
@@ -1063,7 +1054,7 @@ void Residue::rotate(const AtomIndex &atom, const Matrix &rotmat,
                      const Vector &point)
 {
     info().assertSameResidue(atom);
-    d->rotate(atom, rotmat, point);
+    data().rotate(atom, rotmat, point);
 }
 
 /** Rotate the atoms whose AtomIndex objects are in 'atoms', using
@@ -1078,7 +1069,7 @@ void Residue::rotate(const QSet<AtomIndex> &atoms, const Matrix &rotmat,
                      const Vector &point)
 {
     info().assertSameResidue(atoms);
-    d->rotate(atoms, rotmat, point);
+    data().rotate(atoms, rotmat, point);
 }
 
 /** Set the coordinates of the residue to 'newcoords'. This must have
@@ -1088,7 +1079,7 @@ void Residue::rotate(const QSet<AtomIndex> &atoms, const Matrix &rotmat,
 */
 void Residue::setCoordinates(const QVector<Vector> &newcoords)
 {
-    d->setCoordinates(rnum, newcoords);
+    data().setCoordinates(rnum, newcoords);
 }
 
 /** Set the coordinates of the atom with index 'atomid' to 'newcoords'.
@@ -1097,7 +1088,7 @@ void Residue::setCoordinates(const QVector<Vector> &newcoords)
 */
 void Residue::setCoordinates(AtomID atomid, const Vector &newcoords)
 {
-   d->setCoordinates(rnum, atomid, newcoords);
+   data().setCoordinates(rnum, atomid, newcoords);
 }
 
 /** Set the coordinates of the atoms with the specified indicies to the
@@ -1107,7 +1098,7 @@ void Residue::setCoordinates(AtomID atomid, const Vector &newcoords)
 */
 void Residue::setCoordinates(const QHash<AtomID,Vector> &newcoords)
 {
-    d->setCoordinates(rnum, newcoords);
+    data().setCoordinates(rnum, newcoords);
 }
 
 /** Set the coordinates of the atom with name 'atomname' to 'newcoords'
@@ -1116,7 +1107,7 @@ void Residue::setCoordinates(const QHash<AtomID,Vector> &newcoords)
 */
 void Residue::setCoordinates(const QString &atomname, const Vector &newcoords)
 {
-    d->setCoordinates( AtomIndex(atomname,rnum), newcoords );
+    data().setCoordinates( AtomIndex(atomname,rnum), newcoords );
 }
 
 /** Set the coordinates of the atoms whose names are supplied to the
@@ -1126,7 +1117,7 @@ void Residue::setCoordinates(const QString &atomname, const Vector &newcoords)
 */
 void Residue::setCoordinates(const QHash<QString,Vector> &newcoords)
 {
-    d->setCoordinates(rnum, newcoords);
+    data().setCoordinates(rnum, newcoords);
 }
 
 /** Set the coordinates for the atom 'atom' to 'newcoords'. The residue
@@ -1139,7 +1130,7 @@ void Residue::setCoordinates(const QHash<QString,Vector> &newcoords)
 void Residue::setCoordinates(const AtomIndex &atom, const Vector &newcoords)
 {
     info().assertSameResidue(atom);
-    d->setCoordinates(atom, newcoords);
+    data().setCoordinates(atom, newcoords);
 }
 
 /** Set the coordinates of the specified atoms to the supplied values.
@@ -1159,7 +1150,7 @@ void Residue::setCoordinates(const QHash<AtomIndex,Vector> &newcoords)
         info().assertSameResidue(it.key());
     }
 
-    d->setCoordinates( newcoords );
+    data().setCoordinates( newcoords );
 }
 
 /////////////////////////////////////////////////////////
@@ -1204,7 +1195,7 @@ void Residue::change(const Bond &bnd, double delta,
     AtomIDGroup group1 = groups.get<1>();
 
     //tell the moldata to move the two groups by delta along the vector of the bond...
-    d->change(bnd, delta, group0, group1, weightfunc, anchors);
+    data().change(bnd, delta, group0, group1, weightfunc, anchors);
 }
 
 /** Overloaded function that uses the default RelFromMass weight function
@@ -1243,7 +1234,7 @@ void Residue::change(const SireMol::Angle &ang, const SireMaths::Angle &delta,
     AtomIDGroup group1 = groups.get<1>();
 
     //tell the moldata to move the two groups by delta about this angle
-    d->change(ang, delta, group0, group1, weightfunc, anchors);
+    data().change(ang, delta, group0, group1, weightfunc, anchors);
 }
 
 /** Overloaded function that uses the default RelFromMass() weight function
@@ -1282,7 +1273,7 @@ void Residue::change(const Dihedral &dih, const SireMaths::Angle &delta,
     AtomIDGroup group1 = groups.get<1>();
 
     //tell the moldata to move the two groups around the dihedral
-    d->change(Bond(dih.atom1(),dih.atom2()), delta, group0, group1, weightfunc, anchors);
+    data().change(Bond(dih.atom1(),dih.atom2()), delta, group0, group1, weightfunc, anchors);
 }
 
 /** Overloaded function used to use the default RelFromMass() weight function
@@ -1316,7 +1307,7 @@ void Residue::change(const Bond &dih, const SireMaths::Angle &delta,
     AtomIDGroup group1 = groups.get<1>();
 
     //tell the moldata to move the two groups around the dihedral
-    d->change(dih, delta, group0, group1, weightfunc, anchors);
+    data().change(dih, delta, group0, group1, weightfunc, anchors);
 }
 
 /** Overloaded function use to use the default RelFromMass() weight function
@@ -1354,7 +1345,7 @@ void Residue::change(const Improper &improper, const SireMaths::Angle &delta,
     AtomIDGroup group1 = groups.get<1>();
 
     //tell the moldata to move the two groups around the dihedral
-    d->change(improper, delta, group0, group1, weightfunc, anchors);
+    data().change(improper, delta, group0, group1, weightfunc, anchors);
 }
 
 /** Overloaded function used to use the default RelFromMass() function

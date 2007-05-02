@@ -48,9 +48,10 @@ QDataStream& operator>>(QDataStream&, SireMM::AtomicCharges&);
 namespace SireMM
 {
 
-using SireMol::Molecule;
+using SireMol::MoleculeInfo;
+using SireMol::AtomSelection;
 using SireMol::CGAtomID;
-using SireMol::Property;
+using SireBase::Property;
 
 /** This class is used to hold all of the atomic charges for the
     atoms in a molecule. All of the atomic charges are held in
@@ -87,6 +88,9 @@ public:
 
     AtomicCharges& operator=(const AtomicCharges &other);
 
+    bool operator==(const AtomicCharges &other) const;
+    bool operator!=(const AtomicCharges &other) const;
+
     static const char* typeName()
     {
         return "SireMM::AtomicCharges";
@@ -102,9 +106,14 @@ public:
         return new AtomicCharges(*this);
     }
 
-    bool isCompatibleWith(const Molecule &molecule) const;
+    Property mask(const AtomSelection &selected_atoms) const;
+
+    bool isCompatibleWith(const MoleculeInfo &molinfo) const;
 
     QVariant value(const CGAtomID &cgatomid) const;
+
+protected:
+    bool _pvt_isEqual(const PropertyBase &other) const;
 };
 
 }

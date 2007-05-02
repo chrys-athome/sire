@@ -29,8 +29,6 @@
 #ifndef SIREMOL_MOLECULE_H
 #define SIREMOL_MOLECULE_H
 
-#include <QSharedDataPointer>
-
 #include <QList>
 #include <QVector>
 #include <QSet>
@@ -38,6 +36,7 @@
 
 #include "idtypes.h"
 #include "atomindex.h"
+#include "moleculeview.h"
 
 SIRE_BEGIN_HEADER
 
@@ -62,6 +61,12 @@ class Triangle;
 class Torsion;
 }
 
+namespace SireBase
+{
+class Property;
+class PropertyBase;
+}
+
 namespace SireVol
 {
 class CoordGroup;
@@ -72,9 +77,9 @@ namespace SireMol
 
 class EditMol;
 
-class MoleculeData;
 class NewAtom;
 class Residue;
+class PartialMolecule;
 class CutGroup;
 class Atom;
 
@@ -85,8 +90,7 @@ class ResNum;
 class AtomIndex;
 class CutGroupID;
 
-class Property;
-class PropertyBase;
+class MoleculeProperty;
 
 class Bond;
 class Angle;
@@ -106,6 +110,9 @@ using SireMaths::Vector;
 using SireMaths::Matrix;
 using SireMaths::Quaternion;
 
+using SireBase::Property;
+using SireBase::PropertyBase;
+
 using SireVol::CoordGroup;
 
 namespace detail
@@ -115,15 +122,12 @@ class MolData;
 
 /**
 A Molecule represents a complete molecule. This class is merely a view on the underlying
-MoleculeData class.
+MoleculeView class.
 
 @author Christopher Woods
 */
-class SIREMOL_EXPORT Molecule
+class SIREMOL_EXPORT Molecule : public MoleculeView
 {
-
-friend class NewAtom; //so it can see the MoleculeData object
-friend class Residue; //so it can call the MoleculeData constructor
 
 friend QDataStream& ::operator<<(QDataStream&, const Molecule&);
 friend QDataStream& ::operator>>(QDataStream&, Molecule&);
@@ -132,8 +136,7 @@ public:
    ////// Constructors / destructor ////////////////////////
     Molecule();
 
-    Molecule(const Residue &residue);
-    Molecule(const NewAtom &atom);
+    Molecule(const MoleculeView &molecule);
 
     Molecule(const Molecule &other);
 
@@ -152,7 +155,7 @@ public:
 
 
    ////// Operators ////////////////////////////////////////
-    Molecule& operator=(const Molecule &other);
+    Molecule& operator=(const MoleculeView &other);
     Molecule& operator=(const detail::MolData &moldata);
 
     bool operator==(const Molecule &other) const;
@@ -479,10 +482,6 @@ public:
     void assertSameMolecule(const Molecule &other) const;
     void assertSameMajorVersion(const Molecule &other) const;
     void assertSameVersion(const Molecule &other) const;
-
-private:
-    /** Implicitly shared pointer to the data for this molecule */
-    QSharedDataPointer<MoleculeData> d;
 };
 
 }

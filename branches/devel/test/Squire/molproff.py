@@ -2,6 +2,7 @@
 from Sire.Mol import *
 from Sire.IO import *
 from Sire.Vol import *
+from Sire.FF import *
 from Sire.MM import *
 from Sire.CAS import *
 from Sire.Maths import *
@@ -29,10 +30,14 @@ space = PeriodicBox(Vector(-18.3854,-18.66855,-18.4445), \
 
 #specify the type of switching function to use
 switchfunc = HarmonicSwitchingFunction(80.0)
-switchfunc = HarmonicSwitchingFunction(10.0, 9.5)
+switchfunc = HarmonicSwitchingFunction(15.0, 14.5)
 
 #create a forcefield for the molecules
 molpro = MolproFF(space, switchfunc)
+
+#create a coulomb forcefield to estimate the change
+#in coulomb electrostatic energy
+coulff = InterGroupCoulombFF(space, switchfunc)
 
 molpro.setMolproExe("../../../../../software/molpro/devel/molpro")
 
@@ -58,8 +63,14 @@ for mol in mols:
 qm_mol = mols[0]
 mm_mols = mols[1:]
 
-molpro.addToMM(mm_mols)
+print "Adding the QM molecule..."
 molpro.addToQM(qm_mol)
+print "...done"    
+    
+coulff.addTo( coulff.groups().A(), qm_mol )
+
+print "Adding the MM molecules..."
+coulff.addTo( coulff.groups().B(), mm_mols )
 
 ms = timer.elapsed()
 print "... took %d ms" % ms
@@ -73,34 +84,66 @@ ms = timer.elapsed()
 
 print "Energy = %f kcal mol-1, took %d ms" % (nrg, ms)
 
+# set the origin of the QM energy
+molpro.setEnergyOrigin(nrg)
+
+# add the MM molecules
+print "Adding the MM atoms to the QM forcefield..."
+molpro.addToMM(mm_mols)
+
+#write out the molpro command file to a file
+open("test.cmd", "w").write( str(molpro.molproCommandInput()) )
+
+print "Energy = %f kcal mol-1" % molpro.energy()
+
+print "Coul Energy = %f kcal mol-1" % coulff.energy()
+
 f = open( os.path.join(os.getenv("HOME"),"test.cmd"), "w" )
 f.write( str(molpro.molproCommandInput()) )
 f.close()
-
-# set the origin of the QM energy
-molpro.setEnergyOrigin(nrg)
 
 nrg = molpro.energy()
 print "Scaled energy = %f kcal mol-1" % nrg
 
 #lets translate the QM molecule by 0.1 A
-qm_mol.translate( (-5.0,0.0,0.0) )
+qm_mol.translate( (-1.0,0.0,0.0) )
 
 molpro.change(qm_mol)
+coulff.change(qm_mol)
 
 timer.start()
 nrg = molpro.energy()
 ms = timer.elapsed()
 
 print "Energy = %f kcal mol-1, took %d ms" % (nrg, ms)
+
+print "Coulomb energy = %f kcal mol-1" % coulff.energy()
 
 #now lets translate the QM molecule back again
-qm_mol.translate( (5.0,0.0,0.0) )
+qm_mol.translate( (1.0,0.0,0.0) )
 
 molpro.change(qm_mol)
+coulff.change(qm_mol)
 
 timer.start()
 nrg = molpro.energy()
 ms = timer.elapsed()
 
 print "Energy = %f kcal mol-1, took %d ms" % (nrg, ms)
+print "Coulomb energy = %f kcal mol-1" % coulff.energy()
+
+# test the change in energy for MC size moves (0.2 A)
+old_qm = molpro.energy()
+old_mm = coulff.energy()
+
+qm_mol.translate( (0.2, 0.0, 0.0) )
+
+molpro.change(qm_mol)
+coulff.change(qm_mol)
+
+new_qm = molpro.energy()
+new_mm = coulff.energy()
+
+print old_qm, new_qm, new_qm - old_qm
+print old_mm, new_mm, new_mm - old_mm
+

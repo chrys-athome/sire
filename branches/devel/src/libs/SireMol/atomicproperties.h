@@ -29,11 +29,19 @@
 #ifndef SIREMOL_ATOMICPROPERTIES_H
 #define SIREMOL_ATOMICPROPERTIES_H
 
-#include "property.h"
+#include "moleculeproperty.h"
 
 SIRE_BEGIN_HEADER
 
 class QVariant;
+
+namespace SireMol
+{
+class AtomicProperties;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMol::AtomicProperties&);
+QDataStream& operator>>(QDataStream&, SireMol::AtomicProperties&);
 
 namespace SireMol
 {
@@ -47,8 +55,12 @@ class CGAtomID;
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT AtomicProperties : public PropertyBase
+class SIREMOL_EXPORT AtomicProperties : public MoleculeProperty
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const AtomicProperties&);
+friend QDataStream& ::operator>>(QDataStream&, AtomicProperties&);
+
 public:
     AtomicProperties();
     AtomicProperties(const AtomicProperties &other);

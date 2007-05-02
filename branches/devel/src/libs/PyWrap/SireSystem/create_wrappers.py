@@ -27,7 +27,8 @@ aliases = {}
 
 extra_includes = [ "SireMol/molecule.h",
                    "SireMol/residue.h",
-                   "SireMol/newatom.h" ]
+                   "SireMol/newatom.h",
+                   "SireFF/ffgroupid.h" ]
 
 def remove_next_move(c):
     c.decls( "nextMove", allow_empty=False ).exclude()

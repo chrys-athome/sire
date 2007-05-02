@@ -477,10 +477,18 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MoleculeInfo &molinfo)
 }
 
 /** Shared null object */
-static QSharedDataPointer<MoleculeInfoPvt> shared_null( new MoleculeInfoPvt() );
+static QSharedDataPointer<MoleculeInfoPvt> shared_null;
+
+static const QSharedDataPointer<MoleculeInfoPvt>& getSharedNull()
+{
+    if ( not shared_null )
+        shared_null = new MoleculeInfoPvt();
+    
+    return shared_null;
+}
 
 /** Null constructor */
-MoleculeInfo::MoleculeInfo() : d(shared_null)
+MoleculeInfo::MoleculeInfo() : d( getSharedNull() )
 {}
 
 /** Construct from the passed EditMolData */

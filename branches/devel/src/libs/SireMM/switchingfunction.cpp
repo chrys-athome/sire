@@ -38,6 +38,7 @@
 
 using namespace SireMM;
 using namespace SireStream;
+using namespace SireBase;
 
 /////////////
 ///////////// Implementation of SwitchFuncBase
@@ -49,7 +50,10 @@ static const RegisterMetaType<SwitchFuncBase> r_switchbase(MAGIC_ONLY,
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const SwitchFuncBase &switchbase)
 {
-    writeHeader(ds, r_switchbase, 1) << switchbase.cutdist;
+    writeHeader(ds, r_switchbase, 1)
+        << static_cast<const PropertyBase&>(switchbase)
+        << switchbase.cutdist;
+
     return ds;
 }
 
@@ -60,7 +64,8 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, SwitchFuncBase &switchbas
 
     if (v == 1)
     {
-        ds >> switchbase.cutdist;
+        ds >> static_cast<SwitchFuncBase&>(switchbase)
+           >> switchbase.cutdist;
     }
     else
         throw version_error(v, "1", r_switchbase, CODELOC);
@@ -70,17 +75,20 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, SwitchFuncBase &switchbas
 
 /** Null constructor - this places the cutoff distance at
     the maximum value of a double (e.g. on cutoff) */
-SwitchFuncBase::SwitchFuncBase() : QSharedData(), cutdist( std::numeric_limits<double>::max() )
+SwitchFuncBase::SwitchFuncBase()
+               : PropertyBase(),
+                 cutdist( std::numeric_limits<double>::max() )
 {}
 
 /** Construct, placing the ultimate cutoff distance at 'cutdistance' */
 SwitchFuncBase::SwitchFuncBase(double cutdistance)
-               : QSharedData(), cutdist( std::abs(cutdistance) )
+               : PropertyBase(),
+                 cutdist( std::abs(cutdistance) )
 {}
 
 /** Copy constructor */
 SwitchFuncBase::SwitchFuncBase(const SwitchFuncBase &other)
-               : QSharedData(), cutdist(other.cutdist)
+               : PropertyBase(other), cutdist(other.cutdist)
 {}
 
 /** Destructor */
@@ -129,6 +137,13 @@ NoCutoff::NoCutoff(const NoCutoff &other)
 /** Destructor */
 NoCutoff::~NoCutoff()
 {}
+
+/** Comparison function used by derived classes */
+bool NoCutoff::_pvt_isEqual(const PropertyBase &other) const
+{
+    BOOST_ASSERT( other.isA<NoCutoff>() );
+    return true;
+}
 
 /** Return the scale factor for the electrostatic energies - this
     will always be 1.0, as there are no cutoffs */
@@ -293,6 +308,16 @@ HarmonicSwitchingFunction::HarmonicSwitchingFunction(
 HarmonicSwitchingFunction::~HarmonicSwitchingFunction()
 {}
 
+/** Comparison function used by derived classes */
+bool HarmonicSwitchingFunction::_pvt_isEqual(const PropertyBase &prop) const
+{
+    BOOST_ASSERT( prop.isA<HarmonicSwitchingFunction>() );
+    
+    const HarmonicSwitchingFunction &other = prop.asA<HarmonicSwitchingFunction>();
+    
+    return cut_elec == other.cut_elec and cut_vdw == other.cut_vdw;
+}
+
 /** Return the scale factor for the electrostatic interaction for the
     distance 'dist'. This returns;
 
@@ -343,7 +368,8 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
 {
     writeHeader(ds, r_switchfunc, 1);
 
-    SharedDataStream(ds) << switchfunc.d;
+    SharedDataStream sds(ds);
+    sds << switchfunc.d;
 
     return ds;
 }
@@ -356,7 +382,8 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
 
     if (v == 1)
     {
-        SharedDataStream(ds) >> switchfunc.d;
+        SharedDataStream sds(ds);
+        sds >> switchfunc.d;
     }
     else
         throw version_error(v, "1", r_switchfunc, CODELOC);
@@ -372,7 +399,12 @@ SwitchingFunction::SwitchingFunction() : d(shared_null)
 
 /** Construct from the passed switching function */
 SwitchingFunction::SwitchingFunction(const SwitchFuncBase &switchingfunction)
-                  : d( switchingfunction.clone() )
+                  : d(switchingfunction)
+{}
+
+/** Construct from the passed property */
+SwitchingFunction::SwitchingFunction(const Property &property)
+                  : d(property.base())
 {}
 
 /** Copy constructor */
@@ -389,6 +421,32 @@ SwitchingFunction& SwitchingFunction::operator=(const SwitchingFunction &other)
 {
     d = other.d;
     return *this;
+}
+
+/** Assign from a SwitchFuncBase */
+SwitchingFunction& SwitchingFunction::operator=(const SwitchFuncBase &other)
+{
+    d = other;
+    return *this;
+}
+
+/** Assign from a Property */
+SwitchingFunction& SwitchingFunction::operator=(const Property &property)
+{
+    d = property.base();
+    return *this;
+}
+
+/** Comparison operator */
+bool SwitchingFunction::operator==(const SwitchingFunction &other) const
+{
+    return d == other.d or *d == *(other.d);
+}
+
+/** Comparison operator */
+bool SwitchingFunction::operator!=(const SwitchingFunction &other) const
+{
+    return d != other.d and *d != *(other.d);
 }
 
 /** Return the type name of this switching function */

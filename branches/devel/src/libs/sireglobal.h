@@ -193,36 +193,6 @@
   #fatal No QT_POINTER_SIZE macro defined!
 #endif
 
-#include <QString>
-#include <boost/type_traits/is_pod.hpp>
-#include <boost/mpl/if.hpp>
-
-template<typename T>
-struct qstr_numtype
-{
-    static QString qstr(const T &val)
-    {
-        return QString::number(val);
-    }
-};
-
-template<class T>
-struct qstr_classtype
-{
-    static QString qstr(const T &obj)
-    {
-        return obj.toString();
-    }
-};
-
-template<class T>
-QString qstr(const T &obj)
-{
-    return boost::mpl::if_<boost::is_pod<T>,
-                     qstr_numtype<T>, qstr_classtype<T> >
-                         ::type::qstr(obj);
-}
-
 //Add functions that are used to register all public
 //types (this allows them to be streamed to a binary file and
 //created dynamically)

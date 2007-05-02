@@ -17,15 +17,19 @@ set ( SIREUNITTEST_SOURCES
       testatomselection.cpp
       testbase.cpp
       testcomplex.cpp
+      testcoordgroup.cpp
       testcutgroup.cpp
       testffdb.cpp
       testmatch.cpp
       testperiodicbox.cpp
+      testpropertyextractor.cpp
       testsharedpolypointer.cpp
       testsirecas.cpp
       testunits.cpp
       testvector.cpp
       testversion.cpp
+
+      runall.cpp
     )
 
 # Add the resource files
@@ -52,7 +56,7 @@ target_link_libraries (SireUnitTest
                        SireIO
                        SireMM
                        SireCAS
-           SireBase
+                       SireBase
                        SireUnits
                        ${BOOST_UNITTEST_LIBRARY}
                        )

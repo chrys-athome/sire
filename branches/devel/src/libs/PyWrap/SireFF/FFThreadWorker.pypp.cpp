@@ -6,6 +6,7 @@
 #include "boost/python.hpp"
 #include "sireff_headers.h"
 #include "SireMol/molecule.h"
+#include "SireMol/partialmolecule.h"
 #include "SireMol/residue.h"
 #include "SireMol/newatom.h"
 #include "SireMol/atom.h"
@@ -14,6 +15,7 @@
 #include "SireMol/resnumatomid.h"
 #include "SireMol/resid.h"
 #include "SireMol/moleculeid.h"
+#include "SireBase/property.h"
 
 namespace bp = boost::python;
 
@@ -21,10 +23,7 @@ const char* pvt_get_name(const SireFF::FFThreadWorker&){ return "SireFF::FFThrea
 
 void register_FFThreadWorker_class(){
 
-    bp::class_< SireFF::FFThreadWorker, bp::bases< SireFF::FFWorkerBase, SireCluster::ThreadWorker >, boost::noncopyable >( "FFThreadWorker", bp::no_init )    
-        .def( 
-            "forcefield"
-            , (::SireFF::ForceField ( ::SireFF::FFThreadWorker::* )(  ) const)( &::SireFF::FFThreadWorker::forcefield ) )    
+    bp::class_< SireFF::FFThreadWorker, bp::bases< SireFF::FFLocalWorker, SireCluster::ThreadWorker >, boost::noncopyable >( "FFThreadWorker", bp::no_init )    
         .def( "__str__", &pvt_get_name);
 
 }

@@ -8,5 +8,6 @@
 #include "SireSystem/systemdata.h"
 #include "SireSystem/system.h"
 #include "SireSystem/systemid.h"
+#include "SireSystem/checkpoint.h"
 
 #endif

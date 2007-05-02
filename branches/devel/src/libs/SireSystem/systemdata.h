@@ -57,9 +57,17 @@ class Values;
 namespace SireMol
 {
 class Molecule;
+class PartialMolecule;
 class MoleculeID;
-class Residue;
-class NewAtom;
+}
+
+namespace SireFF
+{
+class ForceFields;
+}
+
+namespace SireBase
+{
 class Property;
 }
 
@@ -68,13 +76,14 @@ namespace SireSystem
 
 using SireBase::IDMajMinVersion;
 using SireBase::Version;
+using SireBase::Property;
 
 using SireVol::Space;
 
+using SireFF::ForceFields;
+
 using SireMol::Molecule;
-using SireMol::Residue;
-using SireMol::NewAtom;
-using SireMol::Property;
+using SireMol::PartialMolecule;
 using SireMol::MoleculeID;
 using SireMol::MoleculeGroup;
 using SireMol::MoleculeGroups;
@@ -101,44 +110,74 @@ friend QDataStream& ::operator>>(QDataStream&, SystemData&);
 
 public:
     SystemData();
-    
+
     SystemData(const QString &name);
 
     SystemData(const SystemData &other);
-    
+
     virtual ~SystemData();
+
+    SystemData& operator=(const SystemData &other);
 
     bool operator==(const SystemData &other) const;
     bool operator!=(const SystemData &other) const;
-    
+
     const QString& name() const;
     SystemID ID() const;
     const Version& version() const;
 
-    void add(const MoleculeGroup &group);
-    
-    bool contains(const Molecule &molecule) const;
-    bool contains(MoleculeID molid) const;
-    
-    void remove(MoleculeGroupID groupid);
-    void remove(const MoleculeGroup &group);
-
-    //void add(const MoleculeConstraint &constraint);
-    
-    //void remove(const MoleculeConstraint &constraint);
-    //void removeConstraint(const Molecule &molecule);
-    //void removeConstraint(MoleculeID molid);
-
-    QHash<MoleculeID,Molecule> applyConstraints(const Molecule &molecule);
+    const Space& space() const;
 
     const MoleculeGroup& group(MoleculeGroupID id) const;
     const MoleculeGroups& groups() const;
 
-    QHash<MoleculeID,Molecule> change(const Molecule &molecule);
-    QHash<MoleculeID,Molecule> change(const Residue &residue);
-    QHash<MoleculeID,Molecule> change(const NewAtom &atom);
+    bool refersTo(MoleculeGroupID groupid) const;
 
-    void remove(const Molecule &molecule);
+    void add(const MoleculeGroup &group);
+    void add(const MoleculeGroups &groups);
+
+    void remove(MoleculeGroupID groupid);
+    void remove(const MoleculeGroup &group);
+
+    PartialMolecule mapIntoSystemSpace(const PartialMolecule &molecule) const;
+
+    QHash<MoleculeID,PartialMolecule>
+    mapIntoSystemSpace(const QHash<MoleculeID,PartialMolecule> &molecules) const;
+
+    QHash<MoleculeID,PartialMolecule>
+    mapIntoSystemSpace(const QList<PartialMolecule> &molecules) const;
+
+    PartialMolecule change(const PartialMolecule &molecule);
+
+    QHash<MoleculeID,PartialMolecule>
+    change(const QList<PartialMolecule> &molecules);
+
+    QHash<MoleculeID,PartialMolecule>
+    change(const QHash<MoleculeID,PartialMolecule> &molecules);
+
+    PartialMolecule add(const PartialMolecule &molecule,
+                        const QSet<MoleculeGroupID> &groupids);
+
+    QHash<MoleculeID,PartialMolecule>
+    add(const QHash<MoleculeID,PartialMolecule> &molecules,
+        const QSet<MoleculeGroupID> &groupids);
+
+    QHash<MoleculeID,PartialMolecule>
+    add(const QList<PartialMolecule> &molecules,
+        const QSet<MoleculeGroupID> &groupids);
+
+    void remove(const PartialMolecule &molecule,
+                const QSet<MoleculeGroupID> &groupids);
+
+    void remove(const QHash<MoleculeID,PartialMolecule> &molecules,
+                const QSet<MoleculeGroupID> &groupids);
+
+    void remove(const QList<PartialMolecule> &molecules,
+                const QSet<MoleculeGroupID> &groupids);
+
+    void remove(const PartialMolecule &molecule);
+    void remove(const QHash<MoleculeID,PartialMolecule> &molecules);
+    void remove(const QList<PartialMolecule> &molecules);
 
     void incrementMinorVersion();
     void incrementMajorVersion();
@@ -154,7 +193,7 @@ private:
         of the system must use this space (e.g. volume moves). */
     Space sys_space;
 
-    /** The list of constraints, indexed by the molecule IDs of the 
+    /** The list of constraints, indexed by the molecule IDs of the
         molecules to which they must be applied */
     //QHash<MoleculeID, MoleculeConstraint> mol_constraints;
 
@@ -199,11 +238,11 @@ inline void SystemData::incrementMinorVersion()
     id_and_version.incrementMinor();
 }
 
-/** Return whether or not this object contains information about
-    the molecule with ID == molid */
-inline bool SystemData::contains(MoleculeID molid) const
+/** Return the space into which the coordinates of all molecules will
+    be mapped. */
+inline const Space& SystemData::space() const
 {
-    return molgroups.contains(molid); // or mol_constraints.contains(molid);
+    return sys_space;
 }
 
 /** Return all of the Molecule groups in this System */

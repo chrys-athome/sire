@@ -48,7 +48,7 @@
 #include "atominfogroup.h"
 #include "idmolatom.h"
 
-#include "property.h"
+#include "moleculeproperty.h"
 
 #include "cutgroupid.h"
 #include "resid.h"
@@ -60,6 +60,7 @@
 #include "residatomid.h"
 
 #include "SireMol/errors.h"
+#include "SireBase/errors.h"
 #include "SireError/errors.h"
 
 #include "SireMaths/angle.h"
@@ -73,6 +74,7 @@
 #include "SireStream/datastream.h"
 
 using namespace SireStream;
+using namespace SireBase;
 using namespace SireMol;
 using namespace SireVol;
 
@@ -182,28 +184,22 @@ MoleculeData& MoleculeData::operator=(const detail::MolData &moldata)
     return *this;
 }
 
-/** Comparison operator */
+/** Comparison operator - two molecules are the same if they have
+    the same ID and version numbers. */
 bool MoleculeData::operator==(const MoleculeData &other) const
 {
     return (this == &other) or
            (_id == other._id and
-            _molversion == other._molversion and
-            _molinfo == other._molinfo and
-            _molbonds == other._molbonds and
-            _coords == other._coords and
-            _properties == other._properties);
+            _molversion == other._molversion);
 }
 
-/** Comparison operator */
+/** Comparison operator - two molecules are the same if they have
+    the same ID and version numbers. */
 bool MoleculeData::operator!=(const MoleculeData &other) const
 {
     return (this != &other) and
            (_id != other._id or
-            _molversion != other._molversion or
-            _molinfo != other._molinfo or
-            _molbonds != other._molbonds or
-            _coords != other._coords or
-            _properties != other._properties);
+            _molversion != other._molversion);
 }
 
 /** Return the ID number of the molecule */
@@ -253,14 +249,14 @@ EditMol MoleculeData::edit() const
 
 /** Return the property called 'name'
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
 */
 const Property& MoleculeData::getProperty(const QString &name) const
 {
     QHash<QString,Property>::const_iterator it = _properties.find(name);
 
     if (it == _properties.constEnd())
-        throw SireMol::missing_property( QObject::tr(
+        throw SireBase::missing_property( QObject::tr(
                 "There is no property called \"%1\" in the molecule \"%2\" (%3:%4)")
                     .arg(name, info().name()).arg(ID()).arg(version().toString()),
                         CODELOC );
@@ -281,12 +277,12 @@ void MoleculeData::setProperty(const QString &name, const Property &value)
 /** Add a property called 'name' with value 'value'. This will only add the
     property if there is not an already existing property with that name.
 
-    \throw SireMol::duplicate_property
+    \throw SireBase::duplicate_property
 */
 void MoleculeData::addProperty(const QString &name, const Property &value)
 {
     if (_properties.contains(name))
-        throw SireMol::duplicate_property( QObject::tr(
+        throw SireBase::duplicate_property( QObject::tr(
               "Cannot add the property \"%1\" to the molecule \"%2\" (%3:%4) "
               "as this molecule already has a property with this name.")
                   .arg(name, info().name()).arg(ID()).arg(version().toString()),
@@ -335,15 +331,6 @@ const MoleculeInfo& MoleculeData::info() const
     return _molinfo;
 }
 
-/** Return the CutGroup with CutGroupID == id
-
-    \throw SireMol::missing_cutgroup
-*/
-CutGroup MoleculeData::cutGroup(CutGroupID id) const
-{
-    return CutGroup( info().atomGroup(id), coordinates(id) );
-}
-
 /** Return the coordinates for the CutGroup with CutGroupID == id
 
     \throw SireMol::missing_cutgroup
@@ -352,6 +339,15 @@ CoordGroup MoleculeData::coordGroup(CutGroupID id) const
 {
     info().assertCutGroupExists(id);
     return _coords.at(id);
+}
+
+/** Return the CutGroup with CutGroupID == id
+
+    \throw SireMol::missing_cutgroup
+*/
+CutGroup MoleculeData::cutGroup(CutGroupID id) const
+{
+    return CutGroup( info().atomGroup(id), coordGroup(id) );
 }
 
 /** Return a copy of the CutGroup with ID == cgid
@@ -525,7 +521,25 @@ QHash< T, QVector<Vector> > copyGroupedCoords(const MoleculeData &moldata,
 */
 QVector<Vector> MoleculeData::coordinates(CutGroupID cgid) const
 {
-    return cutGroup(cgid).coordinates();
+    CoordGroup cgroup = coordGroup(cgid);
+
+    //create an array to hold the coordinates...
+    int ncoords = cgroup.count();
+
+    if (ncoords > 0)
+    {
+        QVector<Vector> coords(ncoords);
+
+        //copy the CoordGroup coordinates into the array
+        void *output = qMemCopy(coords.data(), cgroup.constData(),
+                                ncoords * sizeof(Vector));
+
+        BOOST_ASSERT( output == coords.constData() );
+
+        return coords;
+    }
+    else
+        return QVector<Vector>();
 }
 
 /** Return an array of the coordinates for the atoms in the CutGroups

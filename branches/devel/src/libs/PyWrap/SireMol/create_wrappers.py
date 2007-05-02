@@ -21,6 +21,7 @@ wrap_classes = [ "Angle",
                  "AtomInfoGroup",
                  "AtomNum",
                  "AtomSelection",
+                 "AtomSelector",
                  "Bond",
                  "BondAddingFunction",
                  "CGAtomID",
@@ -42,6 +43,7 @@ wrap_classes = [ "Angle",
                  "Index",
                  "MolCGAtomID",
                  "MolCutGroupID",
+                 "MolDataView",
                  "Molecule",
                  "MoleculeBonds",
                  "MoleculeCutting",
@@ -50,10 +52,13 @@ wrap_classes = [ "Angle",
                  "MoleculeGroups",
                  "MoleculeID",
                  "MoleculeInfo",
+                 "MoleculeMover",
+                 "MoleculeProperty",
                  "MoleculeVersion",
+                 "MoleculeView",
                  "NewAtom",
-                 "Property",
-                 "PropertyBase",
+                 "PartialMolecule",
+                 "PropertyExtractor",
                  "ResID",
                  "ResIDAtomID",
                  "Residue",
@@ -63,7 +68,7 @@ wrap_classes = [ "Angle",
                  "ResNum",
                  "ResNumAtomID",
                  "ResNumIndexID",
-                 "VariantProperty",
+                 "SelectionFromMol",
                  "WeightFunction"
                ]
 
@@ -75,12 +80,14 @@ huge_classes = [ "EditMol",
 
 aliases = {}
 
-extra_includes = [ "SireMaths/angle.h",
+extra_includes = [ "SireMol/moleculedata.h",
+                   "SireMaths/angle.h",
                    "SireMaths/quaternion.h",
                    "SireMaths/matrix.h",
                    "SireMaths/triangle.h",
                    "SireMaths/line.h",
-                   "SireMaths/torsion.h" ]
+                   "SireMaths/torsion.h",
+		   "SireVol/space.h" ]
 
 def fix_atominfo(c):
     c.decls( "element", allow_empty=True ).exclude()
@@ -97,13 +104,9 @@ def fix_atominfogroup(c):
 def fix_molecule(c):
     c.add_registration_code( "def( bp::init<const SireMol::Molecule&>() )" )
 
-def remove_property_bases(c):
-    c.bases = []
-
 special_code = { "AtomInfo" : fix_atominfo,
                  "Atom" : fix_atom,
                  "AtomInfoGroup" : fix_atominfogroup,
-                 "Property" : remove_property_bases,
                  "Molecule" : fix_molecule
                }
 
@@ -156,10 +159,9 @@ implicitly_convertible = [ ("boost::tuples::tuple<SireMol::AtomIndex,SireMol::At
                            
                            ("SireMol::NewAtom", "SireMaths::Vector"),
                            ("SireMol::NewAtom", "SireMol::Element"),
-                           
-                           ("const SireMol::PropertyBase&", "SireMol::Property"),
-                           
-                           ("QVariant", "SireMol::VariantProperty")
+
+                           ("SireMol::MoleculeView", "SireMol::Molecule"),
+                           ("SireMol::MolDataView", "SireMol::PartialMolecule")
                          ]
 
 incpaths = sys.argv[1:]

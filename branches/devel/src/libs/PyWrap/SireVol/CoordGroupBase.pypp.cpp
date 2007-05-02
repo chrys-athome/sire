@@ -11,43 +11,52 @@
 
 namespace bp = boost::python;
 
-SireVol::CoordGroupBase __copy__(const SireVol::CoordGroupBase &other){ return SireVol::CoordGroupBase(other); }
-
 const char* pvt_get_name(const SireVol::CoordGroupBase&){ return "SireVol::CoordGroupBase";}
 
 void register_CoordGroupBase_class(){
 
-    bp::class_< SireVol::CoordGroupBase >( "CoordGroupBase" )    
-        .def( bp::init< >() )    
-        .def( bp::init< int >(( bp::arg("size") )) )    
-        .def( bp::init< int, SireMaths::Vector const & >(( bp::arg("size"), bp::arg("value") )) )    
-        .def( bp::init< QVector<SireMaths::Vector> const & >(( bp::arg("coords") )) )    
+    bp::class_< SireVol::CoordGroupBase, boost::noncopyable >( "CoordGroupBase", bp::no_init )    
         .def( 
             "aaBox"
             , (::SireVol::AABox const & ( ::SireVol::CoordGroupBase::* )(  ) const)( &::SireVol::CoordGroupBase::aaBox )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
+            "assertSameSize"
+            , (void ( ::SireVol::CoordGroupBase::* )( ::QVector<SireMaths::Vector> const & ) const)( &::SireVol::CoordGroupBase::assertSameSize )
+            , ( bp::arg("coordinates") ) )    
+        .def( 
+            "assertSameSize"
+            , (void ( ::SireVol::CoordGroupBase::* )( ::SireVol::CoordGroupBase const & ) const)( &::SireVol::CoordGroupBase::assertSameSize )
+            , ( bp::arg("other") ) )    
+        .def( 
+            "assertValidIndex"
+            , (void ( ::SireVol::CoordGroupBase::* )( ::quint32 ) const)( &::SireVol::CoordGroupBase::assertValidIndex )
+            , ( bp::arg("i") ) )    
+        .def( 
             "at"
-            , (::SireMaths::Vector const & ( ::SireVol::CoordGroupBase::* )( int ) const)( &::SireVol::CoordGroupBase::at )
+            , (::SireMaths::Vector const & ( ::SireVol::CoordGroupBase::* )( ::quint32 ) const)( &::SireVol::CoordGroupBase::at )
             , ( bp::arg("i") )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "count"
-            , (int ( ::SireVol::CoordGroupBase::* )(  ) const)( &::SireVol::CoordGroupBase::count ) )    
+            , (::quint32 ( ::SireVol::CoordGroupBase::* )(  ) const)( &::SireVol::CoordGroupBase::count ) )    
         .def( 
             "isEmpty"
             , (bool ( ::SireVol::CoordGroupBase::* )(  ) const)( &::SireVol::CoordGroupBase::isEmpty ) )    
+        .def( 
+            "maybeDifferent"
+            , (bool ( ::SireVol::CoordGroupBase::* )( ::SireVol::CoordGroupBase const & ) const)( &::SireVol::CoordGroupBase::maybeDifferent )
+            , ( bp::arg("other") ) )    
         .def( bp::self != bp::self )    
         .def( bp::self == bp::self )    
         .def( 
             "__getitem__"
-            , (::SireMaths::Vector const & ( ::SireVol::CoordGroupBase::* )( int ) const)( &::SireVol::CoordGroupBase::operator[] )
+            , (::SireMaths::Vector const & ( ::SireVol::CoordGroupBase::* )( ::quint32 ) const)( &::SireVol::CoordGroupBase::operator[] )
             , ( bp::arg("i") )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "size"
-            , (int ( ::SireVol::CoordGroupBase::* )(  ) const)( &::SireVol::CoordGroupBase::size ) )    
-        .def( "__copy__", &__copy__)    
+            , (::quint32 ( ::SireVol::CoordGroupBase::* )(  ) const)( &::SireVol::CoordGroupBase::size ) )    
         .def( "__str__", &pvt_get_name);
 
 }

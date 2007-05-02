@@ -4,12 +4,14 @@
 
 #include "boost/python.hpp"
 #include "siremol_headers.h"
+#include "SireMol/moleculedata.h"
 #include "SireMaths/angle.h"
 #include "SireMaths/quaternion.h"
 #include "SireMaths/matrix.h"
 #include "SireMaths/triangle.h"
 #include "SireMaths/line.h"
 #include "SireMaths/torsion.h"
+#include "SireVol/space.h"
 #include "_Residue__enums.pypp.hpp"
 #include "_Residue__unnamed_enums.pypp.hpp"
 #include "_Residue__classes.pypp.hpp"
@@ -34,7 +36,7 @@ const char* pvt_get_name(const SireMol::Residue&){ return "SireMol::Residue";}
 void register_Residue_class(){
 
 { //::SireMol::Residue
-    typedef bp::class_< SireMol::Residue > Residue_exposer_t;
+    typedef bp::class_< SireMol::Residue, bp::bases< SireMol::MoleculeView > > Residue_exposer_t;
     Residue_exposer_t Residue_exposer = Residue_exposer_t( "Residue" );
     bp::scope Residue_scope( Residue_exposer );
     Residue_exposer.def( bp::init< >() );

@@ -31,11 +31,12 @@
 #include "systemdata.h"
 
 #include "SireBase/incremint.h"
+#include "SireBase/property.h"
 
-#include "SireMol/property.h"
-#include "SireMol/molecule.h"
-#include "SireMol/residue.h"
-#include "SireMol/newatom.h"
+#include "SireMol/partialmolecule.h"
+#include "SireMol/moleculemover.h"
+#include "SireMol/atomselector.h"
+
 #include "SireMol/moleculegroup.h"
 #include "SireMol/moleculegroups.h"
 
@@ -113,6 +114,17 @@ SystemData::SystemData(const SystemData &other)
 SystemData::~SystemData()
 {}
 
+/** Copy assignment operator */
+SystemData& SystemData::operator=(const SystemData &other)
+{
+    molgroups = other.molgroups;
+    sys_space = other.sys_space;
+    nme = other.nme;
+    id_and_version = other.id_and_version;
+
+    return *this;
+}
+
 /** Comparison operator - two SystemData objects are equal if they
     have the same ID and version */
 bool SystemData::operator==(const SystemData &other) const
@@ -125,13 +137,6 @@ bool SystemData::operator==(const SystemData &other) const
 bool SystemData::operator!=(const SystemData &other) const
 {
     return ID() != other.ID() or version() != other.version();
-}
-
-/** Return whether or not this object contains information about
-    the molecule 'mol' */
-bool SystemData::contains(const Molecule &molecule) const
-{
-    return this->contains(molecule.ID());
 }
 
 /** Return the MoleculeGroup with ID == id
@@ -150,6 +155,18 @@ void SystemData::add(const MoleculeGroup &group)
     this->incrementMajorVersion();
 }
 
+/** Add lots of MoleculeGroups to this System */
+void SystemData::add(const MoleculeGroups &groups)
+{
+    molgroups.add(groups);
+}
+
+/** Return whether we contain a group with ID == groupid */
+bool SystemData::refersTo(MoleculeGroupID groupid) const
+{
+    return molgroups.refersTo(groupid);
+}
+
 /** Remove the MoleculeGroup 'group' from this System */
 void SystemData::remove(const MoleculeGroup &group)
 {
@@ -164,65 +181,186 @@ void SystemData::remove(MoleculeGroupID groupid)
         this->incrementMajorVersion();
 }
 
-/** Remove the molecule 'molecule' from the system */
-void SystemData::remove(const Molecule &molecule)
+/** Map the molecule 'molecule' into the system space (so that it is contained
+    in the system space). The returned, mapped, molecule will contain
+    the union of the atoms selected in 'molecule' with the atoms that have
+    had to be moved to accomplish the mapping */
+PartialMolecule SystemData::mapIntoSystemSpace(const PartialMolecule &molecule) const
 {
-    if (molgroups.remove(molecule))
-    {
-        this->incrementMinorVersion();
-    }
+    return molecule.move().mapInto(space());
 }
 
-/** Apply constraints to this molecule, and any molecules that have
-    constraints based on this molecule, and return copies of the
-    affected changed molecules. If no molecule is affected by the
-    constraint then return an empty hash. */
-QHash<MoleculeID,Molecule> SystemData::applyConstraints(const Molecule &molecule)
+/** Map the molecule in 'molecules' into the system space (so that they are contained
+    in the system space). The returned, mapped, molecules will contain
+    the union of the atoms selected in each molecule with the atoms that have
+    had to be moved to accomplish the mapping */
+QHash<MoleculeID,PartialMolecule> SystemData::mapIntoSystemSpace(
+                    const QHash<MoleculeID,PartialMolecule> &molecules) const
 {
-    //apply constraint in MoleculeConstraints...
+    QHash<MoleculeID,PartialMolecule> mapped_mols = molecules;
 
+    for (QHash<MoleculeID,PartialMolecule>::iterator it = mapped_mols.begin();
+         it != mapped_mols.end();
+         ++it)
+    {
+        *it = this->mapIntoSystemSpace(*it);
+    }
 
-    //apply space constraint on resulting molecules...
+    return mapped_mols;
+}
 
+/** Map the molecule in 'molecules' into the system space (so that they are contained
+    in the system space). The returned, mapped, molecules will contain
+    the union of the atoms selected in each molecule with the atoms that have
+    had to be moved to accomplish the mapping */
+QHash<MoleculeID,PartialMolecule>
+SystemData::mapIntoSystemSpace(const QList<PartialMolecule> &molecules) const
+{
+    QHash<MoleculeID,PartialMolecule> mapped_mols;
 
-    return QHash<MoleculeID,Molecule>();
+    mapped_mols.reserve(molecules.count());
+
+    for (QList<PartialMolecule>::const_iterator it = molecules.begin();
+         it != molecules.end();
+         ++it)
+    {
+        PartialMolecule mapped_mol = this->mapIntoSystemSpace(*it);
+
+        if (mapped_mols.contains(it->ID()))
+        {
+            //we have already mapped this molecule...
+            //we have to do it again, and create the union of selected atoms
+            AtomSelection current_selection = it->selectedAtoms();
+
+            mapped_mol = mapped_mol.selection().add(current_selection);
+        }
+
+        mapped_mols.insert(mapped_mol.ID(), mapped_mol);
+    }
+
+    return mapped_mols;
 }
 
 /** Change the molecule 'molecule' */
-QHash<MoleculeID,Molecule> SystemData::change(const Molecule &molecule)
+PartialMolecule SystemData::change(const PartialMolecule &molecule)
 {
-    QHash<MoleculeID,Molecule> constrained_mols =
-                            this->applyConstraints(molecule);
+    PartialMolecule mapped_mol = this->mapIntoSystemSpace(molecule);
 
-    bool changed = false;
-
-    if (constrained_mols.isEmpty())
-    {
-        changed = molgroups.change(molecule);
-    }
-    else if (constrained_mols.count() == 1)
-    {
-        changed = molgroups.change( *(constrained_mols.constBegin()) );
-    }
-    else
-    {
-        changed = molgroups.change(constrained_mols);
-    }
-
-    if (changed)
+    if (molgroups.change(mapped_mol))
         this->incrementMinorVersion();
 
-    return constrained_mols;
+    return mapped_mol;
 }
 
-/** Change the residue 'residue' */
-QHash<MoleculeID,Molecule> SystemData::change(const Residue &residue)
+/** Change a whole load of molecules */
+QHash<MoleculeID,PartialMolecule>
+SystemData::change(const QList<PartialMolecule> &molecules)
 {
-    return this->change( residue.molecule() );
+    QHash<MoleculeID,PartialMolecule> mapped_mols =
+                              this->mapIntoSystemSpace(molecules);
+
+    if (molgroups.change(mapped_mols))
+        this->incrementMinorVersion();
+
+    return mapped_mols;
 }
 
-/** Change the atom 'atom' */
-QHash<MoleculeID,Molecule> SystemData::change(const NewAtom &atom)
+/** Change a whole load of molecules */
+QHash<MoleculeID,PartialMolecule>
+SystemData::change(const QHash<MoleculeID,PartialMolecule> &molecules)
 {
-    return this->change( atom.molecule() );
+    QHash<MoleculeID,PartialMolecule> mapped_mols =
+                              this->mapIntoSystemSpace(molecules);
+
+    if (molgroups.change(mapped_mols))
+        this->incrementMinorVersion();
+
+    return mapped_mols;
+}
+
+/** Add the molecule to the groups whose IDs are in 'groupids' */
+PartialMolecule SystemData::add(const PartialMolecule &molecule,
+                                const QSet<MoleculeGroupID> &groupids)
+{
+    PartialMolecule mapped_mol = this->mapIntoSystemSpace(molecule);
+
+    if (molgroups.add(mapped_mol, groupids))
+        this->incrementMinorVersion();
+
+    return mapped_mol;
+}
+
+/** Add lots of molecules to the groups whose IDs are in 'groupids' */
+QHash<MoleculeID,PartialMolecule>
+SystemData::add(const QHash<MoleculeID,PartialMolecule> &molecules,
+                const QSet<MoleculeGroupID> &groupids)
+{
+    QHash<MoleculeID,PartialMolecule> mapped_mols =
+                              this->mapIntoSystemSpace(molecules);
+
+    if (molgroups.add(mapped_mols, groupids))
+        this->incrementMinorVersion();
+
+    return mapped_mols;
+}
+
+/** Add lots of molecules to lots of groups */
+QHash<MoleculeID,PartialMolecule>
+SystemData::add(const QList<PartialMolecule> &molecules,
+                const QSet<MoleculeGroupID> &groupids)
+{
+    QHash<MoleculeID,PartialMolecule> mapped_mols =
+                              this->mapIntoSystemSpace(molecules);
+
+    if (molgroups.add(mapped_mols, groupids))
+        this->incrementMinorVersion();
+
+    return mapped_mols;
+}
+
+/** Remove the molecule 'molecule' from the groups whose IDs are
+    in 'groupids' */
+void SystemData::remove(const PartialMolecule &molecule,
+                        const QSet<MoleculeGroupID> &groupids)
+{
+    if (molgroups.remove(molecule, groupids))
+        this->incrementMinorVersion();
+}
+
+/** Remove lots of molecules from lots of groups */
+void SystemData::remove(const QHash<MoleculeID,PartialMolecule> &molecules,
+                        const QSet<MoleculeGroupID> &groupids)
+{
+    if (molgroups.remove(molecules,groupids))
+        this->incrementMinorVersion();
+}
+
+/** Remove lots of molecules from lots of groups */
+void SystemData::remove(const QList<PartialMolecule> &molecules,
+                        const QSet<MoleculeGroupID> &groupids)
+{
+    if (molgroups.remove(molecules,groupids))
+        this->incrementMinorVersion();
+}
+
+/** Completely remove the selected atoms of the molecule 'molecule'
+    from all groups */
+void SystemData::remove(const PartialMolecule &molecule)
+{
+    if (molgroups.remove(molecule))
+        this->incrementMinorVersion();
+}
+
+/** Completely remove lots of molecules from all of the groups */
+void SystemData::remove(const QHash<MoleculeID,PartialMolecule> &molecules)
+{
+    if (molgroups.remove(molecules))
+        this->incrementMinorVersion();
+}
+
+/** Completely remove lots of molecules from all of the groups */
+void SystemData::remove(const QList<PartialMolecule> &molecules)
+{
+    if (molgroups.remove(molecules))
+        this->incrementMinorVersion();
 }

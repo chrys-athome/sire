@@ -24,12 +24,28 @@ void register_ArithmeticCombiningRules_class(){
         .def( bp::init< >() )    
         .def( 
             "combine"
+            , (void ( ::SireMM::ArithmeticCombiningRules::* )( ::QVector<SireMM::CLJParameter> const &,::QVector<SireMM::CLJParameter> const &,::SireMM::CLJPairMatrix & ) const)( &::SireMM::ArithmeticCombiningRules::combine )
+            , ( bp::arg("clj0"), bp::arg("clj1"), bp::arg("cljmatrix") ) )    
+        .def( 
+            "combine"
+            , (void ( ::SireMM::ArithmeticCombiningRules::* )( ::QVector<SireMM::CLJParameter> const &,::SireMM::CLJPairMatrix & ) const)( &::SireMM::ArithmeticCombiningRules::combine )
+            , ( bp::arg("cljs"), bp::arg("cljmatrix") ) )    
+        .def( 
+            "combine"
             , (void ( ::SireMM::ArithmeticCombiningRules::* )( ::QVector<SireMM::ChargeParameter> const &,::QVector<SireMM::LJParameter> const &,::QVector<SireMM::ChargeParameter> const &,::QVector<SireMM::LJParameter> const &,::SireMM::CLJPairMatrix & ) const)( &::SireMM::ArithmeticCombiningRules::combine )
             , ( bp::arg("chg0"), bp::arg("lj0"), bp::arg("chg1"), bp::arg("lj1"), bp::arg("cljmatrix") ) )    
         .def( 
             "combine"
             , (void ( ::SireMM::ArithmeticCombiningRules::* )( ::QVector<SireMM::ChargeParameter> const &,::QVector<SireMM::LJParameter> const &,::SireMM::CLJPairMatrix & ) const)( &::SireMM::ArithmeticCombiningRules::combine )
             , ( bp::arg("chgs"), bp::arg("ljs"), bp::arg("cljmatrix") ) )    
+        .def( 
+            "combine"
+            , (void ( ::SireMM::ArithmeticCombiningRules::* )( ::QVector<SireMM::LJParameter> const &,::QVector<SireMM::LJParameter> const &,::SireMM::LJPairMatrix & ) const)( &::SireMM::ArithmeticCombiningRules::combine )
+            , ( bp::arg("lj0"), bp::arg("lj1"), bp::arg("ljmatrix") ) )    
+        .def( 
+            "combine"
+            , (void ( ::SireMM::ArithmeticCombiningRules::* )( ::QVector<SireMM::LJParameter> const &,::SireMM::LJPairMatrix & ) const)( &::SireMM::ArithmeticCombiningRules::combine )
+            , ( bp::arg("ljs"), bp::arg("ljmatrix") ) )    
         .def( 
             "typeName"
             , (char const * (*)(  ))( &::SireMM::ArithmeticCombiningRules::typeName ) )    

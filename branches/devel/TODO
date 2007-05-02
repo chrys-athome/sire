@@ -19,6 +19,16 @@ SireCAS
 (*) Take a stab at writing better integration code for sums and products
 
 (*) Move code over to using SharedPolyPointer to hold ExBase objects
+
+
+------
+SireFF
+------
+
+(*) Remove components_ptr from all of the forcefields and instead
+    use a QSharedDataPointer and accept the dynamic_cast whenever
+    we return the components! This is to remove the stupid dynamic_cast
+    and clone on *every* forcefield copy!
     
 ------
 SireDB
@@ -49,6 +59,15 @@ SireDB
     of a function
 
 -------
+SireVol
+-------
+
+(*) Update the CoordGroup classes to use placement new to allocate
+    the data (so that the shared pointer is also the pointer to 
+    the array of coordinates, thereby removing the need for pointer
+    to a pointer lookups) - see techdocs/testplacementnew.cpp
+
+-------
 SireMol
 -------
 
@@ -57,6 +76,12 @@ SireMol
 
 (*) Fix all of the broken parts of the code
 
+(*) Add version numbers to MoleculeProperty so that code can
+    see if a property has changed when the molecule's major version
+    number has changed.
+
+(*) Implement PartialMolecule fully, and better integrate
+    PartialMolecule with the rest of the code
 
 (*) Integrate ParameterTable into Molecule as a Molecule should contain all of 
     its own parameters... (though must do this taking into account things like
@@ -96,4 +121,9 @@ SirePy
     are inherited by Python. Streamed class must contain Python code for the
     class, and de-streaming must parse the stored code...
 
+-----------
+SireCluster
+-----------
 
+(*) Write PoolProcessor and FFPoolProcessor that can distribute
+    multiple forcefields over a worker pool of threads

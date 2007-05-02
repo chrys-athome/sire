@@ -118,10 +118,12 @@ public:
     QList< boost::tuple<double,CoordGroup> >
                getCopiesWithin(const CoordGroup &group,
                                const CoordGroup &center, double dist) const;
-    
+
     bool contains(const Vector &point) const;
 
 protected:
+
+    bool _pvt_isEqual(const SireBase::PropertyBase &other) const;
 
     Vector wrapDelta(const Vector &v0, const Vector &v1) const;
 

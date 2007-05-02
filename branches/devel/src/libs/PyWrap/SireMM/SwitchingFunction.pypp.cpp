@@ -23,6 +23,11 @@ void register_SwitchingFunction_class(){
     bp::class_< SireMM::SwitchingFunction >( "SwitchingFunction" )    
         .def( bp::init< >() )    
         .def( bp::init< SireMM::SwitchFuncBase const & >(( bp::arg("switchingfunction") )) )    
+        .def( bp::init< SireBase::Property const & >(( bp::arg("property") )) )    
+        .def( 
+            "base"
+            , (::SireMM::SwitchFuncBase const & ( ::SireMM::SwitchingFunction::* )(  ) const)( &::SireMM::SwitchingFunction::base )
+            , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "cutoffDistance"
             , (double ( ::SireMM::SwitchingFunction::* )(  ) const)( &::SireMM::SwitchingFunction::cutoffDistance ) )    
@@ -30,6 +35,9 @@ void register_SwitchingFunction_class(){
             "electrostaticScaleFactor"
             , (double ( ::SireMM::SwitchingFunction::* )( double ) const)( &::SireMM::SwitchingFunction::electrostaticScaleFactor )
             , ( bp::arg("dist") ) )    
+        .def( "as__scope_SireBase_scope_Property", &SireMM::SwitchingFunction::operator ::SireBase::Property  )    
+        .def( bp::self != bp::self )    
+        .def( bp::self == bp::self )    
         .def( 
             "vdwScaleFactor"
             , (double ( ::SireMM::SwitchingFunction::* )( double ) const)( &::SireMM::SwitchingFunction::vdwScaleFactor )

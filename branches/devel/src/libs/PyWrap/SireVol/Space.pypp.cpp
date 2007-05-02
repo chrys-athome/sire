@@ -22,6 +22,11 @@ void register_Space_class(){
     bp::class_< SireVol::Space >( "Space" )    
         .def( bp::init< >() )    
         .def( bp::init< SireVol::SpaceBase const & >(( bp::arg("other") )) )    
+        .def( bp::init< SireBase::Property const & >(( bp::arg("property") )) )    
+        .def( 
+            "base"
+            , (::SireVol::SpaceBase const & ( ::SireVol::Space::* )(  ) const)( &::SireVol::Space::base )
+            , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "beyond"
             , (bool ( ::SireVol::Space::* )( double,::SireVol::CoordGroup const &,::SireVol::CoordGroup const & ) const)( &::SireVol::Space::beyond )
@@ -86,6 +91,9 @@ void register_Space_class(){
             "moveToCenterBox"
             , (::QVector<SireVol::CoordGroup> ( ::SireVol::Space::* )( ::QVector<SireVol::CoordGroup> const & ) const)( &::SireVol::Space::moveToCenterBox )
             , ( bp::arg("groups") ) )    
+        .def( "as__scope_SireBase_scope_Property", &SireVol::Space::operator ::SireBase::Property  )    
+        .def( bp::self != bp::self )    
+        .def( bp::self == bp::self )    
         .def( 
             "what"
             , (char const * ( ::SireVol::Space::* )(  ) const)( &::SireVol::Space::what ) )    

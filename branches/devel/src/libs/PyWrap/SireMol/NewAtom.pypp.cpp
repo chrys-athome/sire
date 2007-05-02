@@ -4,12 +4,14 @@
 
 #include "boost/python.hpp"
 #include "siremol_headers.h"
+#include "SireMol/moleculedata.h"
 #include "SireMaths/angle.h"
 #include "SireMaths/quaternion.h"
 #include "SireMaths/matrix.h"
 #include "SireMaths/triangle.h"
 #include "SireMaths/line.h"
 #include "SireMaths/torsion.h"
+#include "SireVol/space.h"
 #include "_NewAtom__enums.pypp.hpp"
 #include "_NewAtom__unnamed_enums.pypp.hpp"
 #include "_NewAtom__classes.pypp.hpp"
@@ -29,7 +31,7 @@ SireMol::NewAtom __copy__(const SireMol::NewAtom &other){ return SireMol::NewAto
 void register_NewAtom_class(){
 
 { //::SireMol::NewAtom
-    typedef bp::class_< SireMol::NewAtom > NewAtom_exposer_t;
+    typedef bp::class_< SireMol::NewAtom, bp::bases< SireMol::MoleculeView > > NewAtom_exposer_t;
     NewAtom_exposer_t NewAtom_exposer = NewAtom_exposer_t( "NewAtom" );
     bp::scope NewAtom_scope( NewAtom_exposer );
     NewAtom_exposer.def( bp::init< >() );

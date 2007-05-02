@@ -29,155 +29,109 @@
 #ifndef SIREFF_FFWORKER_H
 #define SIREFF_FFWORKER_H
 
-#include "SireCluster/processor.h"
-#include "SireCAS/values.h"
-
-#include "parametermap.h"
+#include "ffworkerbase.h"
 
 SIRE_BEGIN_HEADER
-
-namespace SireMol
-{
-class Molecule;
-class Residue;
-class MoleculeID;
-}
 
 namespace SireFF
 {
 
-class ForceField;
-class FFCalculator;
-class FFComponent;
-
-using SireMol::Molecule;
-using SireMol::Residue;
-using SireMol::MoleculeID;
-
-using SireCAS::Values;
-
-/** This is the base class of all FFWorkers - an FFWorker is a class
-    that evaluates a ForceField on a (possibly) remote thread or processor.
+/** This is a basic class that provides a local FFWorker
 
     @author Christopher Woods
 */
-class SIREFF_EXPORT FFWorkerBase
+class SIREFF_EXPORT FFLocalWorker : public FFWorkerBase
 {
 public:
-    virtual ~FFWorkerBase();
+    FFLocalWorker(FFCalculatorBase *ffcalculator);
 
-    virtual ForceField forcefield() const=0;
-    void setForceField(const ForceField &forcefield);
-
-    void recalculateEnergy();
-    void waitUntilReady();
-
-    double energy();
-    double energy(const FFComponent &component);
-
-    Values energies();
-
-    void add(const Molecule &molecule, const ParameterMap &map = ParameterMap());
-    void add(const Residue &residue, const ParameterMap &map = ParameterMap());
-    
-    void change(const Molecule &molecule);
-    void change(const Residue &residue);
-    
-    void remove(const Molecule &molecule);
-    void remove(const Residue &residue);
-    
-    void replace(const Molecule &oldmol,
-                 const Molecule &newmol, const ParameterMap &map = ParameterMap());
-
-    void assertContains(const FFComponent &component) const;
+    ~FFLocalWorker();
 
 protected:
-    FFWorkerBase();
+    ForceField _pvt_forceField();
+    bool _pvt_setForceField(const ForceField &forcefield);
 
-    virtual bool _pvt_setForceField(const ForceField &forcefield)=0;
-
-    virtual bool _pvt_add(const Molecule &molecule, 
-                          const ParameterMap &map)=0;
-                          
-    virtual bool _pvt_add(const Residue &residue,
-                          const ParameterMap &map)=0;
-
-    virtual bool _pvt_change(const Molecule &molecule)=0;
-    virtual bool _pvt_change(const Residue &residue)=0;
+    double _pvt_getEnergies(Values &components);
     
-    virtual bool _pvt_remove(const Molecule &molecule)=0;
-    virtual bool _pvt_remove(const Residue &residue)=0;
+    bool _pvt_setProperty(const QString &name, const Property &property);
+    Property _pvt_getProperty(const QString &name);
+    bool _pvt_containsProperty(const QString &name);
     
-    virtual bool _pvt_replace(const Molecule &oldmol,
-                              const Molecule &newmol, const ParameterMap &map)=0;
+    QHash<QString,Property> _pvt_properties();
+    
+    bool _pvt_add(const PartialMolecule &molecule, const ParameterMap &map);
+    bool _pvt_add(const QList<PartialMolecule> &molecules, const ParameterMap &map);
 
-    virtual void _pvt_recalculateEnergy()=0;
-    virtual void _pvt_recalculateEnergyFG()=0;
+    bool _pvt_addTo(const FFBase::Group &group, const PartialMolecule &molecule,
+                    const ParameterMap &map);
+    bool _pvt_addTo(const FFBase::Group &group,
+                    const QList<PartialMolecule> &molecules,
+                    const ParameterMap &map);
 
-    virtual void _pvt_waitUntilReady()=0;
+    void _pvt_mustNowRecalculateFromScratch();
 
-    virtual double _pvt_getEnergies(Values &components)=0;
+    bool _pvt_change(const PartialMolecule &molecule);
+    bool _pvt_change(const QHash<MoleculeID,PartialMolecule> &molecules);
+    bool _pvt_change(const QList<PartialMolecule> &molecules);
 
-private:
-    void checkEnergiesUpToDate();
+    bool _pvt_remove(const PartialMolecule &molecule);
+    bool _pvt_remove(const QList<PartialMolecule> &molecules);
 
-    /** The total energy of the forcefield */
-    double total_nrg;
+    bool _pvt_removeFrom(const FFBase::Group &group,
+                         const PartialMolecule &molecule);
+    bool _pvt_removeFrom(const FFBase::Group &group,
+                         const QList<PartialMolecule> &molecules);
 
-    /** The values of the energy components */
-    Values nrg_components;
+    bool _pvt_contains(const PartialMolecule &molecule);
+    bool _pvt_contains(const PartialMolecule &molecule,
+                       const FFBase::Group &group);
 
-    /** The different states of this processor */
-    enum FF_STATE{ IDLE  = 0x00000000,  ///< The processor is idle
-                   CALCULATING_ENERGY = 0x00000001,  ///< Energy recalculation is underway
-                   CALCULATING_FORCE = 0x00000002   ///< Force recalculation is underway
-                 };
+    bool _pvt_refersTo(MoleculeID molid);
+    bool _pvt_refersTo(MoleculeID molid, const FFBase::Group &group);
 
-    /** The current status of this processor */
-    FF_STATE current_state;
+    QSet<FFBase::Group> _pvt_groupsReferringTo(MoleculeID molid);
 
-    /** Whether or not the energy needs recalculating */
-    bool needs_energy_recalculation;
+    QSet<MoleculeID> _pvt_moleculeIDs();
+    QSet<MoleculeID> _pvt_moleculeIDs(const FFBase::Group &group);
+
+    PartialMolecule _pvt_molecule(MoleculeID molid);
+    PartialMolecule _pvt_molecule(MoleculeID molid, const FFBase::Group &group);
+
+    QHash<MoleculeID,PartialMolecule> _pvt_molecules();
+    QHash<MoleculeID,PartialMolecule> _pvt_molecules(const FFBase::Group &group);
+    QHash<MoleculeID,PartialMolecule> _pvt_molecules(const QSet<MoleculeID> &molids);
+
+    QHash<MoleculeID,PartialMolecule> _pvt_contents(const FFBase::Group &group);
+    QHash<MoleculeID,PartialMolecule> _pvt_contents();
+
+    bool _pvt_isDirty();
+    bool _pvt_isClean();
+
+    ForceFieldID _pvt_ID();
+    Version _pvt_version();
+
+    void _pvt_assertContains(const FFComponent &component);
+
+    /** The calculator used to evaluate the forcefield */
+    std::auto_ptr<FFCalculatorBase> ffcalculator;
 };
 
 /** This is a test class which calculates the forcefield energy in the main thread.
 
     @author Christopher Woods
 */
-class SIREFF_EXPORT FFWorker : public FFWorkerBase, public SireCluster::WorkerBase
+class SIREFF_EXPORT FFWorker : public FFLocalWorker, public SireCluster::WorkerBase
 {
 public:
-    FFWorker(FFCalculator *ffcalculator);
+    FFWorker(FFCalculatorBase *ffcalculator);
 
     ~FFWorker();
 
-    ForceField forcefield() const;
-
 protected:
-    bool _pvt_setForceField(const ForceField &forcefield);
-
-    bool _pvt_add(const Molecule &molecule, const ParameterMap &map);
-    bool _pvt_add(const Residue &residue, const ParameterMap &map);
-
-    bool _pvt_change(const Molecule &molecule);
-    bool _pvt_change(const Residue &residue);
-
-    bool _pvt_remove(const Molecule &molecule);
-    bool _pvt_remove(const Residue &residue);
-    
-    bool _pvt_replace(const Molecule &oldmol,
-                      const Molecule &newmol, const ParameterMap &map);
-
     void _pvt_recalculateEnergy();
     void _pvt_recalculateEnergyFG();
 
     void _pvt_waitUntilReady();
-
-    double _pvt_getEnergies(Values &components);
-
-private:
-    /** The calculator used to evaluate the forcefield */
-    std::auto_ptr<FFCalculator> ffcalculator;
 };
 
 }

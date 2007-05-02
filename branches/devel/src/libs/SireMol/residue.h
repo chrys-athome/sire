@@ -33,7 +33,7 @@
 
 #include "resnum.h"
 #include "atomindex.h"
-#include "moleculedata.h"
+#include "moleculeview.h"
 
 SIRE_BEGIN_HEADER
 
@@ -60,6 +60,7 @@ namespace SireMol
 {
 
 class Molecule;
+class PartialMolecule;
 class MoleculeVersion;
 class NewAtom;
 class ResidueBonds;
@@ -67,6 +68,7 @@ class Bond;
 class Angle;
 class Dihedral;
 class Improper;
+class ResidueInfo;
 
 class WeightFunction;
 
@@ -75,11 +77,8 @@ This class represents a Residue in a Molecule.
 
 @author Christopher Woods
 */
-class SIREMOL_EXPORT Residue
+class SIREMOL_EXPORT Residue : public MoleculeView
 {
-
-friend class Molecule;  //so can see pointer to MoleculeData
-friend class NewAtom;   //so can see pointer to MoleculeData
 
 friend QDataStream& ::operator<<(QDataStream&, const Residue&);
 friend QDataStream& ::operator>>(QDataStream&, Residue&);
@@ -108,11 +107,6 @@ public:
 
     CutGroup operator[](CutGroupID cgid) const;
     CutGroup operator[](CutGroupNum cgnum) const;
-   /////////////////////////////////////////////////////////
-
-
-   ///// Interface with molecule ///////////////////////////
-    Molecule molecule() const;
    /////////////////////////////////////////////////////////
 
 
@@ -298,9 +292,6 @@ public:
    /////////////////////////////////////////////////////////
 
 private:
-    /** MoleculeData object containing the actual data of the molecule */
-    QSharedDataPointer<MoleculeData> d;
-
     /** The residue number of this residue */
     ResNum rnum;
 

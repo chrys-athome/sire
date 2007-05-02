@@ -8,6 +8,7 @@
 #include "SireMol/molecule.h"
 #include "SireMol/residue.h"
 #include "SireMol/newatom.h"
+#include "SireFF/ffgroupid.h"
 
 namespace bp = boost::python;
 
@@ -19,12 +20,22 @@ const char* pvt_get_name(const SireSystem::System&){ return "SireSystem::System"
 
 void register_System_class(){
 
-    bp::class_< SireSystem::System >( "System" )    
-        .def( bp::init< >() )    
-        .def( bp::init< QString const & >(( bp::arg("name") )) )    
+    bp::class_< SireSystem::System >( "System", bp::init< bp::optional< SireMol::MoleculeGroups const &, SireFF::ForceFields const &, SireSystem::SystemMonitors const & > >(( bp::arg("groups")=::SireMol::MoleculeGroups( ), bp::arg("forcefields")=::SireFF::ForceFields( ), bp::arg("monitors")=::SireSystem::SystemMonitors( ) )) )    
+        .def( bp::init< QString const &, bp::optional< SireMol::MoleculeGroups const &, SireFF::ForceFields const &, SireSystem::SystemMonitors const & > >(( bp::arg("name"), bp::arg("groups")=::SireMol::MoleculeGroups( ), bp::arg("forcefields")=::SireFF::ForceFields( ), bp::arg("monitors")=::SireSystem::SystemMonitors( ) )) )    
+        .def( bp::init< SireMol::MoleculeGroups const &, SireSystem::SystemMonitors const & >(( bp::arg("groups"), bp::arg("monitors") )) )    
+        .def( bp::init< QString const &, SireMol::MoleculeGroups const &, SireSystem::SystemMonitors const & >(( bp::arg("name"), bp::arg("groups"), bp::arg("monitors") )) )    
+        .def( bp::init< SireFF::ForceFields const &, bp::optional< SireSystem::SystemMonitors const & > >(( bp::arg("forcefields"), bp::arg("monitors")=::SireSystem::SystemMonitors( ) )) )    
+        .def( bp::init< QString const &, SireFF::ForceFields const &, bp::optional< SireSystem::SystemMonitors const & > >(( bp::arg("name"), bp::arg("forcefields"), bp::arg("monitors")=::SireSystem::SystemMonitors( ) )) )    
+        .def( bp::init< SireSystem::SystemMonitors const & >(( bp::arg("monitors") )) )    
+        .def( bp::init< QString const &, SireSystem::SystemMonitors const & >(( bp::arg("name"), bp::arg("monitors") )) )    
+        .def( bp::init< SireSystem::CheckPoint const & >(( bp::arg("checkpoint") )) )    
+        .def( bp::init< SireSystem::QuerySystem & >(( bp::arg("simsystem") )) )    
         .def( 
             "ID"
             , (::SireSystem::SystemID ( ::SireSystem::System::* )(  ) const)( &::SireSystem::System::ID ) )    
+        .def( 
+            "checkPoint"
+            , (::SireSystem::CheckPoint ( ::SireSystem::System::* )(  ) )( &::SireSystem::System::checkPoint ) )    
         .def( 
             "forceFields"
             , (::SireFF::ForceFields const & ( ::SireSystem::System::* )(  ) const)( &::SireSystem::System::forceFields )
@@ -32,6 +43,10 @@ void register_System_class(){
         .def( 
             "info"
             , (::SireSystem::SystemData const & ( ::SireSystem::System::* )(  ) const)( &::SireSystem::System::info )
+            , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( 
+            "monitors"
+            , (::SireSystem::SystemMonitors const & ( ::SireSystem::System::* )(  ) const)( &::SireSystem::System::monitors )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( bp::self != bp::self )    
         .def( bp::self == bp::self )    

@@ -17,7 +17,7 @@ const char* pvt_get_name(const SireVol::SpaceBase&){ return "SireVol::SpaceBase"
 
 void register_SpaceBase_class(){
 
-    bp::class_< SireVol::SpaceBase, boost::noncopyable >( "SpaceBase", bp::no_init )    
+    bp::class_< SireVol::SpaceBase, bp::bases< SireBase::PropertyBase >, boost::noncopyable >( "SpaceBase", bp::no_init )    
         .def( 
             "beyond"
             , (bool ( ::SireVol::SpaceBase::* )( double,::SireVol::CoordGroup const &,::SireVol::CoordGroup const & ) const)( &::SireVol::SpaceBase::beyond )
@@ -82,9 +82,6 @@ void register_SpaceBase_class(){
             "moveToCenterBox"
             , (::QVector<SireVol::CoordGroup> ( ::SireVol::SpaceBase::* )( ::QVector<SireVol::CoordGroup> const & ) const)( &::SireVol::SpaceBase::moveToCenterBox )
             , ( bp::arg("groups") ) )    
-        .def( 
-            "what"
-            , (char const * ( ::SireVol::SpaceBase::* )(  ) const)( &::SireVol::SpaceBase::what ) )    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireVol::SpaceBase >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireVol::SpaceBase >,

@@ -58,11 +58,12 @@ while line:
                  line)
                  
     if m:
+        #must convert MM coordinates from bohr radii to angstrom
         npdb = npdb + 1
         print "ATOM %6d  %3s %4s %4d   %8.3f%8.3f%8.3f" % \
-                     (npdb, "O", "MM", 2, float(m.group(1)),
-                                          float(m.group(2)),
-                                          float(m.group(3)))
+                     (npdb, "O", "MM", 2, float(m.group(1)) * 0.529177249,
+                                          float(m.group(2)) * 0.529177249,
+                                          float(m.group(3)) * 0.529177249)
 
     line = molpro.readline()
 

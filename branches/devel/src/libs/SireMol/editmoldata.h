@@ -41,6 +41,7 @@
 #include "resnum.h"
 #include "cutgroupnum.h"
 #include "moleculebonds.h"
+#include "moleculedata.h"
 #include "cuttingfunction.h"
 
 SIRE_BEGIN_HEADER

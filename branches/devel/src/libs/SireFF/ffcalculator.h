@@ -29,80 +29,100 @@
 #ifndef SIREFF_FFCALCULATOR_H
 #define SIREFF_FFCALCULATOR_H
 
-#include "forcefield.h"
-
-#include <boost/noncopyable.hpp>
+#include "ffcalculatorbase.h"
 
 SIRE_BEGIN_HEADER
-
-namespace SireMol
-{
-class Molecule;
-class Residue;
-class MoleculeID;
-}
-
-namespace SireCAS
-{
-class Values;
-}
 
 namespace SireFF
 {
 
-using SireCAS::Values;
-using SireMol::Molecule;
-using SireMol::Residue;
-using SireMol::MoleculeID;
-
-/** This is the pure virtual base class of all of the FFCalculatorBases. These are
-    simple classes that provide an interface to a ForceField that allows their
-    use by the FFProcessor classes.
-
-    FFWorker classes are non-copyable!
-
+/** This is the base class of calculators that store and use 
+    a local copy of the forcefield 
+    
     @author Christopher Woods
 */
-class SIREFF_EXPORT FFCalculatorBase : public boost::noncopyable
+class SIREFF_EXPORT FFLocalCalculator : public FFCalculatorBase
 {
 public:
-    FFCalculatorBase();
+    FFLocalCalculator();
+    FFLocalCalculator(const ForceField &ffield);
+    
+    ~FFLocalCalculator();
 
-    virtual ~FFCalculatorBase();
+    bool setProperty(const QString &name, const Property &property);
+    Property getProperty(const QString &name);
+    bool containsProperty(const QString &name);
 
-    virtual double getEnergies(Values &values)=0;
+    QHash<QString,Property> properties();
 
-    virtual void calculateEnergy()=0;
+    void mustNowRecalculateFromScratch();
 
-    virtual bool add(const Molecule &molecule,
-                     const ParameterMap &map = ParameterMap())=0;
-                     
-    virtual bool add(const Residue &residue, 
-                     const ParameterMap &map = ParameterMap())=0;
+    bool change(const PartialMolecule &molecule);
+    bool change(const QHash<MoleculeID,PartialMolecule> &molecules);
+    bool change(const QList<PartialMolecule> &molecules);
 
-    virtual bool change(const Molecule &molecule)=0;
-    virtual bool change(const Residue &residue)=0;
+    bool add(const PartialMolecule &molecule,
+             const ParameterMap &map = ParameterMap());
+    bool add(const QList<PartialMolecule> &molecules,
+             const ParameterMap &map = ParameterMap());
 
-    virtual bool remove(const Molecule &molecule)=0;
-    virtual bool remove(const Residue &residue)=0;
-                        
-    virtual bool replace(const Molecule &oldmol,
-                         const Molecule &newmol,
-                         const ParameterMap &map = ParameterMap())=0;
+    bool addTo(const FFBase::Group &group,
+               const PartialMolecule &molecule,
+               const ParameterMap &map = ParameterMap());
+    bool addTo(const FFBase::Group &group,
+               const QList<PartialMolecule> &molecules,
+               const ParameterMap &map = ParameterMap());
 
-    virtual bool setForceField(const ForceField &forcefield)=0;
+    bool remove(const PartialMolecule &molecule);
+    bool remove(const QList<PartialMolecule> &molecules);
 
-    virtual ForceField forcefield() const=0;
+    bool removeFrom(const FFBase::Group &group,
+                    const PartialMolecule &molecule);
+    bool removeFrom(const FFBase::Group &group,
+                    const QList<PartialMolecule> &molecules);
+
+    bool contains(const PartialMolecule &molecule);
+    bool contains(const PartialMolecule &molecule,
+                  const FFBase::Group &group);
+
+    bool refersTo(MoleculeID molid);
+    bool refersTo(MoleculeID molid, const FFBase::Group &group);
+
+    QSet<FFBase::Group> groupsReferringTo(MoleculeID molid);
+
+    QSet<MoleculeID> moleculeIDs();
+    QSet<MoleculeID> moleculeIDs(const FFBase::Group &group);
+
+    PartialMolecule molecule(MoleculeID molid);
+    PartialMolecule molecule(MoleculeID molid, const FFBase::Group &group);
+
+    QHash<MoleculeID,PartialMolecule> molecules();
+    QHash<MoleculeID,PartialMolecule> molecules(const QSet<MoleculeID> &molids);
+    QHash<MoleculeID,PartialMolecule> molecules(const FFBase::Group &group);
+
+    QHash<MoleculeID,PartialMolecule> contents(const FFBase::Group &group);
+    QHash<MoleculeID,PartialMolecule> contents();
+
+    bool isDirty();
+    bool isClean();
+
+    ForceFieldID ID();
+    Version version();
+
+    void assertContains(const FFComponent &component);
+
+protected:
+    /** The forcefield being evaluated */
+    ForceField ffield;
 };
 
 /** This is the default, and most simple, FFCalculator. This will
     work with any forcefield that can be used from the command line
-    (pretty much all of them). The only exceptions are forcefields
-    which require special calculators, e.g. MolproFF.
+    (pretty much all of them).
 
     @author Christopher Woods
 */
-class SIREFF_EXPORT FFCalculator : public FFCalculatorBase
+class SIREFF_EXPORT FFCalculator : public FFLocalCalculator
 {
 public:
     FFCalculator();
@@ -111,33 +131,12 @@ public:
     ~FFCalculator();
 
     double getEnergies(Values &values);
-
     void calculateEnergy();
 
-    bool add(const Molecule &molecule,
-             const ParameterMap &map = ParameterMap());
-                     
-    bool add(const Residue &residue, 
-             const ParameterMap &map = ParameterMap());
-
-    bool change(const Molecule &molecule);
-    bool change(const Residue &residue);
-
-    bool remove(const Molecule &molecule);
-    bool remove(const Residue &residue);
-                        
-    bool replace(const Molecule &oldmol,
-                 const Molecule &newmol,
-                 const ParameterMap &map = ParameterMap());
-
     bool setForceField(const ForceField &forcefield);
-
-    ForceField forcefield() const;
+    ForceField forceField();
 
 private:
-    /** The forcefield being evaluated */
-    ForceField ffield;
-
     /** The total energy of the forcefield at the last calculation */
     double total_nrg;
 

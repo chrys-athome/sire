@@ -29,6 +29,9 @@ set ( WRAPBASE_SOURCES
       MajMinVersion.pypp.cpp
       MajVersion.pypp.cpp
       MD5Sum.pypp.cpp
+      PropertyBase.pypp.cpp
+      Property.pypp.cpp
+      VariantProperty.pypp.cpp
       Version.pypp.cpp
     )
 

@@ -29,13 +29,14 @@
 #include "SireMol/qhash_siremol.h"
 
 #include "molecule.h"
-#include "moleculedata.h"
+#include "moleculeview_inlines.h"
 #include "newatom.h"
 #include "residue.h"
+#include "partialmolecule.h"
 #include "cutgroup.h"
 #include "editmol.h"
 
-#include "property.h"
+#include "moleculeproperty.h"
 
 #include "moleculeinfo.h"
 #include "moleculebonds.h"
@@ -64,6 +65,7 @@
 #include "SireStream/shareddatastream.h"
 
 using namespace SireStream;
+using namespace SireBase;
 using namespace SireMol;
 
 static const RegisterMetaType<Molecule> r_molecule;
@@ -71,9 +73,8 @@ static const RegisterMetaType<Molecule> r_molecule;
 /** Serialise to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const Molecule &mol)
 {
-    writeHeader(ds, r_molecule, 1);
-
-    SharedDataStream(ds) << mol.d;
+    writeHeader(ds, r_molecule, 1)
+              << static_cast<const MoleculeView&>(mol);
 
     return ds;
 }
@@ -85,7 +86,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, Molecule &mol)
 
     if (v == 1)
     {
-        SharedDataStream(ds) >> mol.d;
+        ds >> static_cast<MoleculeView&>(mol);
     }
     else
         throw version_error(v, "1", r_molecule, CODELOC);
@@ -103,21 +104,18 @@ uint SIREMOL_EXPORT qHash(const Molecule &molecule)
 //@{
 
 /** Create an empty molecule */
-Molecule::Molecule() : d( MoleculeData::null() )
+Molecule::Molecule() : MoleculeView()
 {}
 
 /** Construct a Molecule that is a copy of the molecule that contains the
-    residue 'residue' */
-Molecule::Molecule(const Residue &residue) : d( residue.d )
-{}
-
-/** Construct a Molecule that is a copy of the molecule that contains the
-    atom 'atom' */
-Molecule::Molecule(const NewAtom &atom) : d( atom.d )
+    view 'Molecule */
+Molecule::Molecule(const MoleculeView &molecule)
+         : MoleculeView(molecule)
 {}
 
 /** Copy constructor - this is fast as this class is implicitly shared */
-Molecule::Molecule(const Molecule &other) : d( other.d )
+Molecule::Molecule(const Molecule &other)
+         : MoleculeView(other)
 {}
 
 /** Destructor */
@@ -133,20 +131,20 @@ Molecule::~Molecule()
 /** Return the ID number of this molecule */
 MoleculeID Molecule::ID() const
 {
-    return d->ID();
+    return data().ID();
 }
 
 /** Give this molecule a new (unique) ID number.
     This will reset the molecule's version. */
 void Molecule::setNewID()
 {
-    d->setNewID();
+    data().setNewID();
 }
 
 /** Return the version number of this molecule. */
 const MoleculeVersion& Molecule::version() const
 {
-    return d->version();
+    return data().version();
 }
 
 /** Return an ID string for this molecule */
@@ -172,28 +170,30 @@ QString Molecule::idString() const
 /** Comparison operator */
 bool Molecule::operator==(const Molecule &other) const
 {
-    return d.data() == other.d.data() or
-           *d == *(other.d);
+    return MoleculeView::operator==(other);
 }
 
 /** Comparison operator */
 bool Molecule::operator!=(const Molecule &other) const
 {
-    return d.data() != other.d.data() and
-           *d != *(other.d);
+    return MoleculeView::operator!=(other);
 }
 
 /** Assignment operator - this is fast as this class is implicitly shared */
-Molecule& Molecule::operator=(const Molecule &other)
+Molecule& Molecule::operator=(const MoleculeView &other)
 {
-    d = other.d;
+    MoleculeView::operator=(other);
     return *this;
 }
+
+#include <QDebug>
 
 /** Assign from the MolData which is the result from a commit of an EditMol */
 Molecule& Molecule::operator=(const detail::MolData &moldata)
 {
-    *d = moldata;
+    data() = moldata;
+    _pvt_selection() = AtomSelection(data().info());
+    
     return *this;
 }
 
@@ -203,39 +203,43 @@ Molecule& Molecule::operator=(const detail::MolData &moldata)
 /** Return an EditMol representation of this molecule. */
 EditMol Molecule::edit() const
 {
-    return d->edit();
+    return data().edit();
 }
 
 /** Return the property called 'name'
 
-    \throw SireMol::missing_property
+    \throw SireBase::missing_property
 */
 const Property& Molecule::getProperty(const QString &name) const
 {
-    return d->getProperty(name);
+    return data().getProperty(name);
 }
 
 /** Set the value of the property called 'name' to 'value' - this will
     replace any existing property with that name. */
 void Molecule::setProperty(const QString &name, const Property &value)
 {
-    //this property must be compatible with this molecule
-    value->assertCompatibleWith(*this);
+    //if this is a molecule property then this property
+    //must be compatible with this molecule
+    if (value.isA<MoleculeProperty>())
+        value.asA<MoleculeProperty>().assertCompatibleWith(*this);
 
-    d->setProperty(name, value);
+    data().setProperty(name, value);
 }
 
 /** Add a property called 'name' with value 'value'. This will only add the
     property if there is not an already existing property with that name.
 
-    \throw SireMol::duplicate_property
+    \throw SireBase::duplicate_property
 */
 void Molecule::addProperty(const QString &name, const Property &value)
 {
-    //this property must be compatible with this molecule
-    value->assertCompatibleWith(*this);
+    //if this is a molecule property then this property
+    //must be compatible with this molecule
+    if (value.isA<MoleculeProperty>())
+        value.asA<MoleculeProperty>().assertCompatibleWith(*this);
 
-    d->addProperty(name, value);
+    data().addProperty(name, value);
 }
 
 /** Set the property called 'name' to the value 'value'. This will overwrite
@@ -248,7 +252,7 @@ void Molecule::setProperty(const QString &name, const PropertyBase &value)
 /** Add a property called 'name' with value 'value'. This will only add the
     property if there is not an already existing property with that name.
 
-    \throw SireMol::duplicate_property
+    \throw SireBase::duplicate_property
 */
 void Molecule::addProperty(const QString &name, const PropertyBase &value)
 {
@@ -265,7 +269,7 @@ void Molecule::setProperty(const QString &name, const QVariant &value)
 /** Add a property called 'name' with value 'value'. This will only add the
     property if there is not an already existing property with that name.
 
-    \throw SireMol::duplicate_property
+    \throw SireBase::duplicate_property
 */
 void Molecule::addProperty(const QString &name, const QVariant &value)
 {
@@ -275,7 +279,7 @@ void Molecule::addProperty(const QString &name, const QVariant &value)
 /** Return a hash of all of the properties associated with this molecule */
 const QHash<QString,Property>& Molecule::properties() const
 {
-    return d->properties();
+    return data().properties();
 }
 
 
@@ -292,7 +296,7 @@ const QHash<QString,Property>& Molecule::properties() const
 */
 CutGroup Molecule::operator[](CutGroupID cgid) const
 {
-    return d->at(cgid);
+    return data().at(cgid);
 }
 
 /** Return a copy of the residue at index 'resid'
@@ -320,7 +324,7 @@ Residue Molecule::operator[](ResNum resnum) const
 */
 Atom Molecule::operator[](const CGAtomID &cgatomid) const
 {
-    return d->at(cgatomid);
+    return data().at(cgatomid);
 }
 
 /** Return a copy of the atom at 'atomid'
@@ -331,7 +335,7 @@ Atom Molecule::operator[](const CGAtomID &cgatomid) const
 */
 Atom Molecule::operator[](const IDMolAtom &atomid) const
 {
-    return d->at(atomid);
+    return data().at(atomid);
 }
 
 /////////////////////////////////////////////////////////
@@ -444,7 +448,7 @@ Residue Molecule::at(ResID resid) const
 */
 CutGroup Molecule::at(CutGroupID cgid) const
 {
-    return d->at(cgid);
+    return data().at(cgid);
 }
 
 /** Return a copy of the atom at index 'cgatomid'
@@ -454,7 +458,7 @@ CutGroup Molecule::at(CutGroupID cgid) const
 */
 Atom Molecule::at(const CGAtomID &cgatomid) const
 {
-    return d->at(cgatomid);
+    return data().at(cgatomid);
 }
 
 /** Return a copy of the atom at 'atomid'
@@ -465,7 +469,7 @@ Atom Molecule::at(const CGAtomID &cgatomid) const
 */
 Atom Molecule::at(const IDMolAtom &atomid) const
 {
-    return d->at(atomid);
+    return data().at(atomid);
 }
 
 /////////////////////////////////////////////////////////
@@ -481,7 +485,7 @@ Atom Molecule::at(const IDMolAtom &atomid) const
 /** Return a copy of the connectivity of this molecule */
 MoleculeBonds Molecule::connectivity() const
 {
-    return d->connectivity();
+    return data().connectivity();
 }
 
 /** Return a copy of the connectivity of the residue with
@@ -491,7 +495,7 @@ MoleculeBonds Molecule::connectivity() const
 */
 ResidueBonds Molecule::connectivity(ResNum resnum) const
 {
-    return d->connectivity(resnum);
+    return data().connectivity(resnum);
 }
 
 /** Return a copy of the connectivity of the residue at
@@ -501,7 +505,7 @@ ResidueBonds Molecule::connectivity(ResNum resnum) const
 */
 ResidueBonds Molecule::connectivity(ResID resid) const
 {
-    return d->connectivity(resid);
+    return data().connectivity(resid);
 }
 
 /////////////////////////////////////////////////////////
@@ -511,7 +515,7 @@ ResidueBonds Molecule::connectivity(ResID resid) const
     molecule */
 const MoleculeInfo& Molecule::info() const
 {
-    return d->info();
+    return data().info();
 }
 
 /** @name Molecule::atoms(...)
@@ -523,7 +527,7 @@ const MoleculeInfo& Molecule::info() const
 /** Return an array holding a copy of all of the atoms in this molecule */
 QVector<Atom> Molecule::atoms() const
 {
-    return d->atoms();
+    return data().atoms();
 }
 
 /** Return an array holding a copy of all of the atoms in the residue
@@ -533,7 +537,7 @@ QVector<Atom> Molecule::atoms() const
 */
 QVector<Atom> Molecule::atoms(ResNum resnum) const
 {
-    return d->atoms(resnum);
+    return data().atoms(resnum);
 }
 
 /** Return an array holding a copy of all of the atoms in the residue
@@ -543,7 +547,7 @@ QVector<Atom> Molecule::atoms(ResNum resnum) const
 */
 QVector<Atom> Molecule::atoms(ResID resid) const
 {
-    return d->atoms(resid);
+    return data().atoms(resid);
 }
 
 /** Return an array holding a copy of all of the atoms in the CutGroup
@@ -553,7 +557,7 @@ QVector<Atom> Molecule::atoms(ResID resid) const
 */
 QVector<Atom> Molecule::atoms(CutGroupID cgid) const
 {
-    return d->atoms(cgid);
+    return data().atoms(cgid);
 }
 
 /** Return arrays containing copies of all of the atoms in the residues whose indicies
@@ -563,7 +567,7 @@ QVector<Atom> Molecule::atoms(CutGroupID cgid) const
 */
 QHash< ResID,QVector<Atom> > Molecule::atoms(const QSet<ResID> &resids) const
 {
-    return d->atoms(resids);
+    return data().atoms(resids);
 }
 
 /** Return arrays containing copies of all of the atoms in the residues whose numbers
@@ -573,7 +577,7 @@ QHash< ResID,QVector<Atom> > Molecule::atoms(const QSet<ResID> &resids) const
 */
 QHash< ResNum,QVector<Atom> > Molecule::atoms(const QSet<ResNum> &resnums) const
 {
-    return d->atoms(resnums);
+    return data().atoms(resnums);
 }
 
 /** Return arrays containing copies of all of the atoms in the CutGroups
@@ -583,7 +587,7 @@ QHash< ResNum,QVector<Atom> > Molecule::atoms(const QSet<ResNum> &resnums) const
 */
 QHash< CutGroupID,QVector<Atom> > Molecule::atoms(const QSet<CutGroupID> &cgids) const
 {
-    return d->atoms(cgids);
+    return data().atoms(cgids);
 }
 
 /** Return copies of all of the atoms whose AtomIndex objects are in 'atms'
@@ -593,7 +597,7 @@ QHash< CutGroupID,QVector<Atom> > Molecule::atoms(const QSet<CutGroupID> &cgids)
 */
 QHash<AtomIndex,Atom> Molecule::atoms(const QSet<AtomIndex> &atms) const
 {
-    return d->atoms(atms);
+    return data().atoms(atms);
 }
 
 /** Return copies of all of the atoms whose indicies are in 'resatomids'
@@ -602,7 +606,7 @@ QHash<AtomIndex,Atom> Molecule::atoms(const QSet<AtomIndex> &atms) const
 */
 QHash<ResIDAtomID,Atom> Molecule::atoms(const QSet<ResIDAtomID> &resatomids) const
 {
-    return d->atoms(resatomids);
+    return data().atoms(resatomids);
 }
 
 /** Return copies of all of the atoms whose indicies are in 'resatomids'
@@ -612,7 +616,7 @@ QHash<ResIDAtomID,Atom> Molecule::atoms(const QSet<ResIDAtomID> &resatomids) con
 */
 QHash<ResNumAtomID,Atom> Molecule::atoms(const QSet<ResNumAtomID> &resatomids) const
 {
-    return d->atoms(resatomids);
+    return data().atoms(resatomids);
 }
 
 /** Return copies of all of the atoms whose indicies are in 'cgatomids'
@@ -622,7 +626,7 @@ QHash<ResNumAtomID,Atom> Molecule::atoms(const QSet<ResNumAtomID> &resatomids) c
 */
 QHash<CGAtomID,Atom> Molecule::atoms(const QSet<CGAtomID> &cgatomids) const
 {
-    return d->atoms(cgatomids);
+    return data().atoms(cgatomids);
 }
 
 /** Return copies of all of the atoms whose indicies are in 'atomids'
@@ -631,7 +635,7 @@ QHash<CGAtomID,Atom> Molecule::atoms(const QSet<CGAtomID> &cgatomids) const
 */
 QHash<AtomID,Atom> Molecule::atoms(const QSet<AtomID> &atomids) const
 {
-    return d->atoms(atomids);
+    return data().atoms(atomids);
 }
 
 /////////////////////////////////////////////////////////
@@ -647,7 +651,7 @@ QHash<AtomID,Atom> Molecule::atoms(const QSet<AtomID> &atomids) const
     by CutGroupID */
 QVector<CutGroup> Molecule::cutGroups() const
 {
-    return d->cutGroups();
+    return data().cutGroups();
 }
 
 /** Return a copy of all of the CutGroups that contain atoms from
@@ -657,7 +661,7 @@ QVector<CutGroup> Molecule::cutGroups() const
 */
 QHash<CutGroupID,CutGroup> Molecule::cutGroups(ResNum resnum) const
 {
-    return d->cutGroups(resnum);
+    return data().cutGroups(resnum);
 }
 
 /** Return a copy of all of the CutGroups that contain atoms from
@@ -667,7 +671,7 @@ QHash<CutGroupID,CutGroup> Molecule::cutGroups(ResNum resnum) const
 */
 QHash<CutGroupID,CutGroup> Molecule::cutGroups(ResID resid) const
 {
-    return d->cutGroups(resid);
+    return data().cutGroups(resid);
 }
 
 /** Return a copy of the CutGroup with ID == id
@@ -676,7 +680,7 @@ QHash<CutGroupID,CutGroup> Molecule::cutGroups(ResID resid) const
 */
 CutGroup Molecule::cutGroup(CutGroupID id) const
 {
-    return d->cutGroup(id);
+    return data().cutGroup(id);
 }
 
 /////////////////////////////////////////////////////////
@@ -695,7 +699,7 @@ CutGroup Molecule::cutGroup(CutGroupID id) const
 */
 QVector<CoordGroup> Molecule::coordGroups() const
 {
-    return d->coordGroups();
+    return data().coordGroups();
 }
 
 /** Return a copy of the CoordGroups that contain the coordinates of atoms
@@ -705,7 +709,7 @@ QVector<CoordGroup> Molecule::coordGroups() const
 */
 QHash<CutGroupID,CoordGroup> Molecule::coordGroups(ResNum resnum) const
 {
-    return d->coordGroups(resnum);
+    return data().coordGroups(resnum);
 }
 
 /** Return a copy of the CoordGroups that contain the coordinates of atoms
@@ -715,7 +719,7 @@ QHash<CutGroupID,CoordGroup> Molecule::coordGroups(ResNum resnum) const
 */
 QHash<CutGroupID,CoordGroup> Molecule::coordGroups(ResID resid) const
 {
-    return d->coordGroups(resid);
+    return data().coordGroups(resid);
 }
 
 template<class IDX>
@@ -758,7 +762,7 @@ QHash<CutGroupID,CoordGroup> Molecule::coordGroups(const QSet<ResID> &resids) co
 */
 CoordGroup Molecule::coordGroup(CutGroupID id) const
 {
-    return d->coordGroup(id);
+    return data().coordGroup(id);
 }
 
 /** Return a copy of the CoordGroups with IDs in 'cgids'
@@ -794,7 +798,7 @@ QHash<CutGroupID,CoordGroup> Molecule::coordGroups(const QSet<CutGroupID> &cgids
 */
 Atom Molecule::atom(const CGAtomID &cgatmid) const
 {
-    return d->atom(cgatmid);
+    return data().atom(cgatmid);
 }
 
 /** Return a copy of the atom at index 'atomid'
@@ -805,7 +809,7 @@ Atom Molecule::atom(const CGAtomID &cgatmid) const
 */
 Atom Molecule::atom(const IDMolAtom &atomid) const
 {
-    return d->atom(atomid);
+    return data().atom(atomid);
 }
 
 /////////////////////////////////////////////////////////
@@ -825,7 +829,7 @@ Atom Molecule::atom(const IDMolAtom &atomid) const
 */
 Vector Molecule::coordinates(const CGAtomID &cgatmid) const
 {
-    return d->coordinates(cgatmid);
+    return data().coordinates(cgatmid);
 }
 
 /** Return a copy of the coordinates of the atom at index 'atomid'
@@ -836,7 +840,7 @@ Vector Molecule::coordinates(const CGAtomID &cgatmid) const
 */
 Vector Molecule::coordinates(const IDMolAtom &atomid) const
 {
-    return d->coordinates(atomid);
+    return data().coordinates(atomid);
 }
 
 /** Return copies of the coordinates of the atoms indexed by the passed indicies,
@@ -848,7 +852,7 @@ Vector Molecule::coordinates(const IDMolAtom &atomid) const
 */
 QHash<CGAtomID,Vector> Molecule::coordinates(const QSet<CGAtomID> &cgatomids) const
 {
-    return d->coordinates(cgatomids);
+    return data().coordinates(cgatomids);
 }
 
 /** Return copies of the coordinates of the atoms indexed by the passed indicies,
@@ -861,7 +865,7 @@ QHash<CGAtomID,Vector> Molecule::coordinates(const QSet<CGAtomID> &cgatomids) co
 QHash<ResNumAtomID,Vector> Molecule::coordinates(
                                       const QSet<ResNumAtomID> &resatomids) const
 {
-    return d->coordinates(resatomids);
+    return data().coordinates(resatomids);
 }
 
 /** Return copies of the coordinates of the atoms indexed by the passed indicies,
@@ -873,7 +877,7 @@ QHash<ResNumAtomID,Vector> Molecule::coordinates(
 QHash<ResIDAtomID,Vector> Molecule::coordinates(
                                       const QSet<ResIDAtomID> &resatomids) const
 {
-    return d->coordinates(resatomids);
+    return data().coordinates(resatomids);
 }
 
 /** Return copies of the coordinates of the atoms indexed by the passed indicies,
@@ -885,7 +889,7 @@ QHash<ResIDAtomID,Vector> Molecule::coordinates(
 */
 QHash<AtomIndex,Vector> Molecule::coordinates(const QSet<AtomIndex> &atoms) const
 {
-    return d->coordinates(atoms);
+    return data().coordinates(atoms);
 }
 
 /** Return copies of the coordinates of the atoms indexed by the passed indicies,
@@ -896,14 +900,14 @@ QHash<AtomIndex,Vector> Molecule::coordinates(const QSet<AtomIndex> &atoms) cons
 */
 QHash<AtomID,Vector> Molecule::coordinates(const QSet<AtomID> &atomids) const
 {
-    return d->coordinates(atomids);
+    return data().coordinates(atomids);
 }
 
 /** Return a copy of the coordinates of all of the atoms in this molecule, in
     the order that the atoms appear in this molecule. */
 QVector<Vector> Molecule::coordinates() const
 {
-    return d->coordinates();
+    return data().coordinates();
 }
 
 /** Return an array of all of the coordinates in the CutGroup with ID == cgid,
@@ -914,7 +918,7 @@ QVector<Vector> Molecule::coordinates() const
 */
 QVector<Vector> Molecule::coordinates(CutGroupID cgid)
 {
-    return d->coordinates(cgid);
+    return data().coordinates(cgid);
 }
 
 /** Return arrays of all of the coordinates in the CutGroups whose ID numbers are
@@ -925,7 +929,7 @@ QVector<Vector> Molecule::coordinates(CutGroupID cgid)
 QHash< CutGroupID,QVector<Vector> > Molecule::coordinates(
                                         const QSet<CutGroupID> &cgids) const
 {
-    return d->coordinates(cgids);
+    return data().coordinates(cgids);
 }
 
 /** Return an array of the coordinates of the atoms in the residue with number
@@ -936,7 +940,7 @@ QHash< CutGroupID,QVector<Vector> > Molecule::coordinates(
 */
 QVector<Vector> Molecule::coordinates(ResNum resnum)
 {
-    return d->coordinates(resnum);
+    return data().coordinates(resnum);
 }
 
 /** Return arrays of the coordinates of the atoms in the residues with numbers
@@ -948,7 +952,7 @@ QVector<Vector> Molecule::coordinates(ResNum resnum)
 QHash< ResNum,QVector<Vector> > Molecule::coordinates(
                                       const QSet<ResNum> &resnums) const
 {
-    return d->coordinates(resnums);
+    return data().coordinates(resnums);
 }
 
 /** Return an array of the coordinates of the atoms in the residue at index
@@ -959,7 +963,7 @@ QHash< ResNum,QVector<Vector> > Molecule::coordinates(
 */
 QVector<Vector> Molecule::coordinates(ResID resid)
 {
-    return d->coordinates(resid);
+    return data().coordinates(resid);
 }
 
 /** Return arrays of the coordinates of the atoms in the residues at indicies
@@ -971,7 +975,7 @@ QVector<Vector> Molecule::coordinates(ResID resid)
 QHash< ResID,QVector<Vector> > Molecule::coordinates(
                                       const QSet<ResID> &resids) const
 {
-    return d->coordinates(resids);
+    return data().coordinates(resids);
 }
 
 /////////////////////////////////////////////////////////
@@ -1334,7 +1338,7 @@ QStringList Molecule::atomNames(ResID resid) const
 */
 SireMaths::Line Molecule::bond(const Bond &bnd) const
 {
-    return d->bond(bnd);
+    return data().bond(bnd);
 }
 
 /** Return the geometric triangle that represents the three atoms in the
@@ -1345,7 +1349,7 @@ SireMaths::Line Molecule::bond(const Bond &bnd) const
 */
 SireMaths::Triangle Molecule::angle(const SireMol::Angle &ang) const
 {
-    return d->angle(ang);
+    return data().angle(ang);
 }
 
 /** Return the geometric torsion that represents the four atoms in the
@@ -1356,7 +1360,7 @@ SireMaths::Triangle Molecule::angle(const SireMol::Angle &ang) const
 */
 SireMaths::Torsion Molecule::dihedral(const Dihedral &dih) const
 {
-    return d->dihedral(dih);
+    return data().dihedral(dih);
 }
 
 /** Return the geometric torsion that represents the four atoms of the
@@ -1367,7 +1371,7 @@ SireMaths::Torsion Molecule::dihedral(const Dihedral &dih) const
 */
 SireMaths::Torsion Molecule::improper(const Improper &imp) const
 {
-    return d->improper(imp);
+    return data().improper(imp);
 }
 
 /** @name Molecule::measure(...)
@@ -1383,7 +1387,7 @@ SireMaths::Torsion Molecule::improper(const Improper &imp) const
 */
 double Molecule::measure(const Bond &bnd) const
 {
-    return d->measure(bnd);
+    return data().measure(bnd);
 }
 
 /** Return the size of the angle 'ang'
@@ -1393,7 +1397,7 @@ double Molecule::measure(const Bond &bnd) const
 */
 SireMaths::Angle Molecule::measure(const SireMol::Angle &ang) const
 {
-    return d->measure(ang);
+    return data().measure(ang);
 }
 
 /** Return the size of the dihedral 'dih'
@@ -1403,7 +1407,7 @@ SireMaths::Angle Molecule::measure(const SireMol::Angle &ang) const
 */
 SireMaths::Angle Molecule::measure(const Dihedral &dih) const
 {
-    return d->measure(dih);
+    return data().measure(dih);
 }
 
 /** Return the size of the improper angle 'imp'
@@ -1413,7 +1417,7 @@ SireMaths::Angle Molecule::measure(const Dihedral &dih) const
 */
 SireMaths::Angle Molecule::measure(const Improper &imp) const
 {
-    return d->measure(imp);
+    return data().measure(imp);
 }
 
 /////////////////////////////////////////////////////////
@@ -1428,7 +1432,7 @@ SireMaths::Angle Molecule::measure(const Improper &imp) const
 double Molecule::getWeight(const AtomIDGroup &group0, const AtomIDGroup &group1,
                            const WeightFunction &weightfunc) const
 {
-    return d->getWeight(group0, group1, weightfunc);
+    return data().getWeight(group0, group1, weightfunc);
 }
 
 /** @name Molecule::translate(...)
@@ -1440,7 +1444,7 @@ double Molecule::getWeight(const AtomIDGroup &group0, const AtomIDGroup &group1,
 /** Translate all of the molecule by 'delta' */
 void Molecule::translate(const Vector &delta)
 {
-    d->translate(delta);
+    data().translate(delta);
 }
 
 /** Translate the group of atoms 'group' by 'delta'
@@ -1450,7 +1454,7 @@ void Molecule::translate(const Vector &delta)
 */
 void Molecule::translate(const AtomIDGroup &group, const Vector &delta)
 {
-    d->translate(group, delta);
+    data().translate(group, delta);
 }
 
 /** Translate the atom 'atom' by 'delta'
@@ -1460,7 +1464,7 @@ void Molecule::translate(const AtomIDGroup &group, const Vector &delta)
 */
 void Molecule::translate(const AtomIndex &atom, const Vector &delta)
 {
-    d->translate(atom, delta);
+    data().translate(atom, delta);
 }
 
 /** Translate the set of atoms in 'atoms' by 'delta'
@@ -1470,7 +1474,7 @@ void Molecule::translate(const AtomIndex &atom, const Vector &delta)
 */
 void Molecule::translate(const QSet<AtomIndex> &atoms, const Vector &delta)
 {
-    d->translate(atoms, delta);
+    data().translate(atoms, delta);
 }
 
 /** Translate the atoms in the residue with number 'resnum' whose names are
@@ -1481,7 +1485,7 @@ void Molecule::translate(const QSet<AtomIndex> &atoms, const Vector &delta)
 */
 void Molecule::translate(ResNum resnum, const QStringList &atoms, const Vector &delta)
 {
-    d->translate(resnum, atoms, delta);
+    data().translate(resnum, atoms, delta);
 }
 
 /** Translate the residue with number 'resnum' by 'delta'
@@ -1490,7 +1494,7 @@ void Molecule::translate(ResNum resnum, const QStringList &atoms, const Vector &
 */
 void Molecule::translate(ResNum resnum, const Vector &delta)
 {
-    d->translate(resnum, delta);
+    data().translate(resnum, delta);
 }
 
 /** Translate the set of residues whose residue numbers are in 'resnums'
@@ -1500,7 +1504,7 @@ void Molecule::translate(ResNum resnum, const Vector &delta)
 */
 void Molecule::translate(const QSet<ResNum> &resnums, const Vector &delta)
 {
-    d->translate(resnums, delta);
+    data().translate(resnums, delta);
 }
 
 /** Translate the atoms in the residue at index 'resid' whose names are in
@@ -1511,7 +1515,7 @@ void Molecule::translate(const QSet<ResNum> &resnums, const Vector &delta)
 */
 void Molecule::translate(ResID resid, const QStringList &atoms, const Vector &delta)
 {
-    d->translate(resid, atoms, delta);
+    data().translate(resid, atoms, delta);
 }
 
 /** Translate the residue at index 'resid' by 'delta'
@@ -1520,7 +1524,7 @@ void Molecule::translate(ResID resid, const QStringList &atoms, const Vector &de
 */
 void Molecule::translate(ResID resid, const Vector &delta)
 {
-    d->translate(resid, delta);
+    data().translate(resid, delta);
 }
 
 /** Translate the set of residues whose indicies are in 'resids' by 'delta'
@@ -1529,7 +1533,7 @@ void Molecule::translate(ResID resid, const Vector &delta)
 */
 void Molecule::translate(const QSet<ResID> &resids, const Vector &delta)
 {
-    d->translate(resids, delta);
+    data().translate(resids, delta);
 }
 
 /** Translate all of the atoms in the CutGroup with ID == cgid by 'delta'
@@ -1538,7 +1542,7 @@ void Molecule::translate(const QSet<ResID> &resids, const Vector &delta)
 */
 void Molecule::translate(CutGroupID cgid, const Vector &delta)
 {
-    d->translate(cgid, delta);
+    data().translate(cgid, delta);
 }
 
 /** Translate all of the atoms in the CutGroups with IDs in 'cgids' by 'delta'
@@ -1547,7 +1551,7 @@ void Molecule::translate(CutGroupID cgid, const Vector &delta)
 */
 void Molecule::translate(const QSet<CutGroupID> &cgids, const Vector &delta)
 {
-    d->translate(cgids, delta);
+    data().translate(cgids, delta);
 }
 
 /////////////////////////////////////////////////////////
@@ -1562,7 +1566,7 @@ void Molecule::translate(const QSet<CutGroupID> &cgids, const Vector &delta)
 /** Rotate the whole molecule using the quaternion 'quat' about the point 'point' */
 void Molecule::rotate(const Quaternion &quat, const Vector &point)
 {
-    d->rotate(quat, point);
+    data().rotate(quat, point);
 }
 
 /** Rotate the atoms in the group 'group' using the quaternion 'quat' about the
@@ -1574,7 +1578,7 @@ void Molecule::rotate(const Quaternion &quat, const Vector &point)
 void Molecule::rotate(const AtomIDGroup &group, const Quaternion &quat,
                       const Vector &point)
 {
-    d->rotate(group, quat, point);
+    data().rotate(group, quat, point);
 }
 
 /** Rotate the atom 'atom' using the quaternion 'quat' about the point 'point'.
@@ -1585,7 +1589,7 @@ void Molecule::rotate(const AtomIDGroup &group, const Quaternion &quat,
 void Molecule::rotate(const AtomIndex &atom, const Quaternion &quat,
                       const Vector &point)
 {
-    d->rotate(atom, quat, point);
+    data().rotate(atom, quat, point);
 }
 
 /** Rotate the atoms in 'atoms' using the quaternion 'quat' about the point 'point'.
@@ -1596,7 +1600,7 @@ void Molecule::rotate(const AtomIndex &atom, const Quaternion &quat,
 void Molecule::rotate(const QSet<AtomIndex> &atoms, const Quaternion &quat,
                       const Vector &point)
 {
-    d->rotate(atoms, quat, point);
+    data().rotate(atoms, quat, point);
 }
 
 /** Rotate the atoms in the residue with number 'resnum' whose names are in 'atoms'
@@ -1608,7 +1612,7 @@ void Molecule::rotate(const QSet<AtomIndex> &atoms, const Quaternion &quat,
 void Molecule::rotate(ResNum resnum, const QStringList &atoms,
                       const Quaternion &quat, const Vector &point)
 {
-    d->rotate(resnum, atoms, quat, point);
+    data().rotate(resnum, atoms, quat, point);
 }
 
 /** Rotate the atoms in the residue with number 'resnum' using the quaternion
@@ -1618,7 +1622,7 @@ void Molecule::rotate(ResNum resnum, const QStringList &atoms,
 */
 void Molecule::rotate(ResNum resnum, const Quaternion &quat, const Vector &point)
 {
-    d->rotate(resnum, quat, point);
+    data().rotate(resnum, quat, point);
 }
 
 /** Rotate the atoms in the residues whose numbers are in 'resnums'
@@ -1629,7 +1633,7 @@ void Molecule::rotate(ResNum resnum, const Quaternion &quat, const Vector &point
 void Molecule::rotate(const QSet<ResNum> &resnums, const Quaternion &quat,
                       const Vector &point)
 {
-    d->rotate(resnums, quat, point);
+    data().rotate(resnums, quat, point);
 }
 
 /** Rotate the atoms in the residue at index 'resid' whose names are in 'atoms'
@@ -1641,7 +1645,7 @@ void Molecule::rotate(const QSet<ResNum> &resnums, const Quaternion &quat,
 void Molecule::rotate(ResID resid, const QStringList &atoms,
                       const Quaternion &quat, const Vector &point)
 {
-    d->rotate(resid, atoms, quat, point);
+    data().rotate(resid, atoms, quat, point);
 }
 
 /** Rotate the atoms in the residue at index 'resid' using the quaternion 'quat'
@@ -1651,7 +1655,7 @@ void Molecule::rotate(ResID resid, const QStringList &atoms,
 */
 void Molecule::rotate(ResID resid, const Quaternion &quat, const Vector &point)
 {
-    d->rotate(resid, quat, point);
+    data().rotate(resid, quat, point);
 }
 
 /** Rotate the atoms in the residues whose indicies are in 'resids'
@@ -1662,7 +1666,7 @@ void Molecule::rotate(ResID resid, const Quaternion &quat, const Vector &point)
 void Molecule::rotate(const QSet<ResID> &resids, const Quaternion &quat,
                       const Vector &point)
 {
-    d->rotate(resids, quat, point);
+    data().rotate(resids, quat, point);
 }
 
 /** Rotate the atoms in the CutGroup with ID == cgid using the quaternion 'quat'
@@ -1672,7 +1676,7 @@ void Molecule::rotate(const QSet<ResID> &resids, const Quaternion &quat,
 */
 void Molecule::rotate(CutGroupID cgid, const Quaternion &quat, const Vector &point)
 {
-    d->rotate(cgid, quat, point);
+    data().rotate(cgid, quat, point);
 }
 
 /** Rotate the atoms in the CutGroups whose IDs are in 'cgids'
@@ -1683,13 +1687,13 @@ void Molecule::rotate(CutGroupID cgid, const Quaternion &quat, const Vector &poi
 void Molecule::rotate(const QSet<CutGroupID> &cgids, const Quaternion &quat,
                       const Vector &point)
 {
-    d->rotate(cgids, quat, point);
+    data().rotate(cgids, quat, point);
 }
 
 /** Rotate the whole molecule using the matrix 'matrix' about the point 'point' */
 void Molecule::rotate(const Matrix &matrix, const Vector &point)
 {
-    d->rotate(matrix, point);
+    data().rotate(matrix, point);
 }
 
 /** Rotate the atoms in the group 'group' using the matrix 'matrix' about the
@@ -1701,7 +1705,7 @@ void Molecule::rotate(const Matrix &matrix, const Vector &point)
 void Molecule::rotate(const AtomIDGroup &group, const Matrix &matrix,
                       const Vector &point)
 {
-    d->rotate(group, matrix, point);
+    data().rotate(group, matrix, point);
 }
 
 /** Rotate the atom 'atom' using the matrix 'matrix' about the point 'point'.
@@ -1712,7 +1716,7 @@ void Molecule::rotate(const AtomIDGroup &group, const Matrix &matrix,
 void Molecule::rotate(const AtomIndex &atom, const Matrix &matrix,
                       const Vector &point)
 {
-    d->rotate(atom, matrix, point);
+    data().rotate(atom, matrix, point);
 }
 
 /** Rotate the atoms in 'atoms' using the matrix 'matrix' about the point 'point'.
@@ -1723,7 +1727,7 @@ void Molecule::rotate(const AtomIndex &atom, const Matrix &matrix,
 void Molecule::rotate(const QSet<AtomIndex> &atoms, const Matrix &matrix,
                       const Vector &point)
 {
-    d->rotate(atoms, matrix, point);
+    data().rotate(atoms, matrix, point);
 }
 
 /** Rotate the atoms in the residue with number 'resnum' whose names are in 'atoms'
@@ -1735,7 +1739,7 @@ void Molecule::rotate(const QSet<AtomIndex> &atoms, const Matrix &matrix,
 void Molecule::rotate(ResNum resnum, const QStringList &atoms,
                       const Matrix &matrix, const Vector &point)
 {
-    d->rotate(resnum, atoms, matrix, point);
+    data().rotate(resnum, atoms, matrix, point);
 }
 
 /** Rotate the atoms in the residue with number 'resnum' using the matrixernion
@@ -1745,7 +1749,7 @@ void Molecule::rotate(ResNum resnum, const QStringList &atoms,
 */
 void Molecule::rotate(ResNum resnum, const Matrix &matrix, const Vector &point)
 {
-    d->rotate(resnum, matrix, point);
+    data().rotate(resnum, matrix, point);
 }
 
 /** Rotate the atoms in the residues whose numbers are in 'resnums'
@@ -1756,7 +1760,7 @@ void Molecule::rotate(ResNum resnum, const Matrix &matrix, const Vector &point)
 void Molecule::rotate(const QSet<ResNum> &resnums, const Matrix &matrix,
                       const Vector &point)
 {
-    d->rotate(resnums, matrix, point);
+    data().rotate(resnums, matrix, point);
 }
 
 /** Rotate the atoms in the residue at index 'resid' whose names are in 'atoms'
@@ -1768,7 +1772,7 @@ void Molecule::rotate(const QSet<ResNum> &resnums, const Matrix &matrix,
 void Molecule::rotate(ResID resid, const QStringList &atoms,
                       const Matrix &matrix, const Vector &point)
 {
-    d->rotate(resid, atoms, matrix, point);
+    data().rotate(resid, atoms, matrix, point);
 }
 
 /** Rotate the atoms in the residue at index 'resid' using the matrix 'matrix'
@@ -1778,7 +1782,7 @@ void Molecule::rotate(ResID resid, const QStringList &atoms,
 */
 void Molecule::rotate(ResID resid, const Matrix &matrix, const Vector &point)
 {
-    d->rotate(resid, matrix, point);
+    data().rotate(resid, matrix, point);
 }
 
 /** Rotate the atoms in the residues whose indicies are in 'resids'
@@ -1789,7 +1793,7 @@ void Molecule::rotate(ResID resid, const Matrix &matrix, const Vector &point)
 void Molecule::rotate(const QSet<ResID> &resids, const Matrix &matrix,
                       const Vector &point)
 {
-    d->rotate(resids, matrix, point);
+    data().rotate(resids, matrix, point);
 }
 
 /** Rotate the atoms in the CutGroup with ID == cgid using the matrix 'matrix'
@@ -1799,7 +1803,7 @@ void Molecule::rotate(const QSet<ResID> &resids, const Matrix &matrix,
 */
 void Molecule::rotate(CutGroupID cgid, const Matrix &matrix, const Vector &point)
 {
-    d->rotate(cgid, matrix, point);
+    data().rotate(cgid, matrix, point);
 }
 
 /** Rotate the atoms in the CutGroups whose IDs are in 'cgids'
@@ -1810,7 +1814,7 @@ void Molecule::rotate(CutGroupID cgid, const Matrix &matrix, const Vector &point
 void Molecule::rotate(const QSet<CutGroupID> &cgids, const Matrix &matrix,
                       const Vector &point)
 {
-    d->rotate(cgids, matrix, point);
+    data().rotate(cgids, matrix, point);
 }
 
 /////////////////////////////////////////////////////////
@@ -1833,7 +1837,7 @@ void Molecule::rotate(const QSet<CutGroupID> &cgids, const Matrix &matrix,
 */
 void Molecule::setCoordinates(CutGroupID cgid, const CoordGroup &newcoords)
 {
-    d->setCoordinates(cgid, newcoords);
+    data().setCoordinates(cgid, newcoords);
 }
 
 /** Set the coordinates of lots of CutGroups at once, with the new
@@ -1845,7 +1849,7 @@ void Molecule::setCoordinates(CutGroupID cgid, const CoordGroup &newcoords)
 */
 void Molecule::setCoordinates(const QHash<CutGroupID,CoordGroup> &newcoords)
 {
-    d->setCoordinates(newcoords);
+    data().setCoordinates(newcoords);
 }
 
 /** Set the coordinates from the array of CoordGroups - these must be
@@ -1857,7 +1861,7 @@ void Molecule::setCoordinates(const QHash<CutGroupID,CoordGroup> &newcoords)
 */
 void Molecule::setCoordinates(const QVector<CoordGroup> &newcoords)
 {
-    d->setCoordinates(newcoords);
+    data().setCoordinates(newcoords);
 }
 
 /** Set the coordinates of all of the atoms in the whole molecule to the
@@ -1871,7 +1875,7 @@ void Molecule::setCoordinates(const QVector<CoordGroup> &newcoords)
 */
 void Molecule::setCoordinates(const QVector<Vector> &newcoords)
 {
-    d->setCoordinates(newcoords);
+    data().setCoordinates(newcoords);
 }
 
 /** Set the coordinates of the CutGroup with ID == cgid to the coordinates
@@ -1886,7 +1890,7 @@ void Molecule::setCoordinates(const QVector<Vector> &newcoords)
 */
 void Molecule::setCoordinates(CutGroupID cgid, const QVector<Vector> &newcoords)
 {
-    d->setCoordinates(cgid, newcoords);
+    data().setCoordinates(cgid, newcoords);
 }
 
 /** Set the coordinates for many CutGroups, using the arrays of coordinates
@@ -1898,7 +1902,7 @@ void Molecule::setCoordinates(CutGroupID cgid, const QVector<Vector> &newcoords)
 */
 void Molecule::setCoordinates(const QHash< CutGroupID,QVector<Vector> > &newcoords)
 {
-    d->setCoordinates(newcoords);
+    data().setCoordinates(newcoords);
 }
 
 /** Set the coordinates of the residue 'resnum' using the array of coordinates
@@ -1914,7 +1918,7 @@ void Molecule::setCoordinates(const QHash< CutGroupID,QVector<Vector> > &newcoor
 */
 void Molecule::setCoordinates(ResNum resnum, const QVector<Vector> &newcoords)
 {
-    d->setCoordinates(resnum, newcoords);
+    data().setCoordinates(resnum, newcoords);
 }
 
 /** Set the coordinates of a large number of residues, using the arrays
@@ -1926,7 +1930,7 @@ void Molecule::setCoordinates(ResNum resnum, const QVector<Vector> &newcoords)
 */
 void Molecule::setCoordinates(const QHash< ResNum,QVector<Vector> > &newcoords)
 {
-    d->setCoordinates(newcoords);
+    data().setCoordinates(newcoords);
 }
 
 /** Set the coordinates of the residue at index 'resid' using the array of
@@ -1941,7 +1945,7 @@ void Molecule::setCoordinates(const QHash< ResNum,QVector<Vector> > &newcoords)
 */
 void Molecule::setCoordinates(ResID resid, const QVector<Vector> &newcoords)
 {
-    d->setCoordinates(resid, newcoords);
+    data().setCoordinates(resid, newcoords);
 }
 
 /** Set the coordinates of many residues, with the new coordinates stored
@@ -1953,7 +1957,7 @@ void Molecule::setCoordinates(ResID resid, const QVector<Vector> &newcoords)
 */
 void Molecule::setCoordinates(const QHash< ResID,QVector<Vector> > &newcoords)
 {
-    d->setCoordinates(newcoords);
+    data().setCoordinates(newcoords);
 }
 
 /** Set the coordinates of the individual atom 'atom' to 'newcoords'
@@ -1963,7 +1967,7 @@ void Molecule::setCoordinates(const QHash< ResID,QVector<Vector> > &newcoords)
 */
 void Molecule::setCoordinates(const AtomIndex &atom, const Vector &newcoords)
 {
-    d->setCoordinates(atom, newcoords);
+    data().setCoordinates(atom, newcoords);
 }
 
 /** Set the coordinates of many atoms to 'newcoords', with the new coordinates
@@ -1974,7 +1978,7 @@ void Molecule::setCoordinates(const AtomIndex &atom, const Vector &newcoords)
 */
 void Molecule::setCoordinates(const QHash<AtomIndex,Vector> &newcoords)
 {
-    d->setCoordinates(newcoords);
+    data().setCoordinates(newcoords);
 }
 
 /** Set the coordinates of the atom at index 'cgatomid' to 'newcoords'
@@ -1984,7 +1988,7 @@ void Molecule::setCoordinates(const QHash<AtomIndex,Vector> &newcoords)
 */
 void Molecule::setCoordinates(const CGAtomID &cgatomid, const Vector &newcoords)
 {
-    d->setCoordinates(cgatomid, newcoords);
+    data().setCoordinates(cgatomid, newcoords);
 }
 
 /** Set the coordinates of many atoms, with the new coordinates indexed
@@ -1995,7 +1999,7 @@ void Molecule::setCoordinates(const CGAtomID &cgatomid, const Vector &newcoords)
 */
 void Molecule::setCoordinates(const QHash<CGAtomID,Vector> &newcoords)
 {
-    d->setCoordinates(newcoords);
+    data().setCoordinates(newcoords);
 }
 
 /** Set the coordinates of the atom with index 'resatomid' to 'newcoords'.
@@ -2005,7 +2009,7 @@ void Molecule::setCoordinates(const QHash<CGAtomID,Vector> &newcoords)
 */
 void Molecule::setCoordinates(const ResNumAtomID &resatomid, const Vector &newcoords)
 {
-    d->setCoordinates(resatomid, newcoords);
+    data().setCoordinates(resatomid, newcoords);
 }
 
 /** Set the coordinates of many atoms, with the new coordinates indexed
@@ -2016,7 +2020,7 @@ void Molecule::setCoordinates(const ResNumAtomID &resatomid, const Vector &newco
 */
 void Molecule::setCoordinates(const QHash<ResNumAtomID,Vector> &newcoords)
 {
-    d->setCoordinates(newcoords);
+    data().setCoordinates(newcoords);
 }
 
 /** Set the coordinates of the atom at index 'resatomid' to 'newcoords'
@@ -2025,7 +2029,7 @@ void Molecule::setCoordinates(const QHash<ResNumAtomID,Vector> &newcoords)
 */
 void Molecule::setCoordinates(const ResIDAtomID &resatomid, const Vector &newcoords)
 {
-    d->setCoordinates(resatomid, newcoords);
+    data().setCoordinates(resatomid, newcoords);
 }
 
 /** Set the coordinates for many atoms, with the new coordinates indexed
@@ -2035,7 +2039,7 @@ void Molecule::setCoordinates(const ResIDAtomID &resatomid, const Vector &newcoo
 */
 void Molecule::setCoordinates(const QHash<ResIDAtomID,Vector> &newcoords)
 {
-    d->setCoordinates(newcoords);
+    data().setCoordinates(newcoords);
 }
 
 /////////////////////////////////////////////////
@@ -2072,7 +2076,7 @@ void Molecule::change(const Bond &bnd, double delta,
     AtomIDGroup group0 = groups.get<0>();
     AtomIDGroup group1 = groups.get<1>();
 
-    d->change(bnd, delta, group0, group1, weightfunc, anchors);
+    data().change(bnd, delta, group0, group1, weightfunc, anchors);
 }
 
 /** Overloaded function that changes the bond length using the RelFromMass weight function
@@ -2109,7 +2113,7 @@ void Molecule::change(const SireMol::Angle &ang, const SireMaths::Angle &delta,
     AtomIDGroup group0 = groups.get<0>();
     AtomIDGroup group1 = groups.get<1>();
 
-    d->change(ang, delta, group0, group1, weightfunc, anchors);
+    data().change(ang, delta, group0, group1, weightfunc, anchors);
 }
 
 /** Overload of the function that uses a default weight function
@@ -2147,7 +2151,7 @@ void Molecule::change(const Dihedral &dih, const SireMaths::Angle &delta,
     AtomIDGroup group0 = groups.get<0>();
     AtomIDGroup group1 = groups.get<1>();
 
-    d->change(Bond(dih.atom1(),dih.atom2()), delta, group0, group1, weightfunc, anchors);
+    data().change(Bond(dih.atom1(),dih.atom2()), delta, group0, group1, weightfunc, anchors);
 }
 
 /** Overload of the function that uses a default weight function
@@ -2185,7 +2189,7 @@ void Molecule::change(const Bond &bnd, const SireMaths::Angle &delta,
     AtomIDGroup group0 = groups.get<0>();
     AtomIDGroup group1 = groups.get<1>();
 
-    d->change(bnd, delta, group0, group1, weightfunc, anchors);
+    data().change(bnd, delta, group0, group1, weightfunc, anchors);
 }
 
 /** Overload of the function that uses a default WeightFunction */
@@ -2217,7 +2221,7 @@ void Molecule::change(const Improper &improper, const SireMaths::Angle &delta,
     AtomIDGroup group0 = groups.get<0>();
     AtomIDGroup group1 = groups.get<1>();
 
-    d->change(improper, delta, group0, group1, weightfunc, anchors);
+    data().change(improper, delta, group0, group1, weightfunc, anchors);
 }
 
 /** Overload of the function that uses a default weight function

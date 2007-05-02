@@ -79,6 +79,14 @@ Cartesian::Cartesian(const Cartesian &other) : SpaceBase(other)
 Cartesian::~Cartesian()
 {}
 
+/** Comparison operator */
+bool Cartesian::_pvt_isEqual(const PropertyBase &other) const
+{
+    BOOST_ASSERT(other.isA<Cartesian>());
+
+    return true;
+}
+
 /** Populate the matrix 'mat' with the distances between all points in
     the group 'group'. Return the shortest distance between points. */
 double Cartesian::calcDist(const CoordGroup &group, DistMatrix &mat) const

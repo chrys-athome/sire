@@ -21,6 +21,7 @@ set ( SIREMOL_SOURCES
       atominfo.cpp
       atominfogroup.cpp
       atomselection.cpp
+      atomselector.cpp
       bond.cpp
       cgatomid.cpp
       cgnumatomid.cpp
@@ -45,8 +46,12 @@ set ( SIREMOL_SOURCES
       moleculegroup.cpp
       moleculegroups.cpp
       moleculeinfo.cpp
+      moleculemover.cpp
+      moleculeproperty.cpp
       moleculeversion.cpp
-      property.cpp
+      moleculeview.cpp
+      partialmolecule.cpp
+      propertyextractor.cpp
       residatomid.cpp
       residue.cpp
       residuebonds.cpp
@@ -54,6 +59,7 @@ set ( SIREMOL_SOURCES
       residueinfo.cpp
       resnumatomid.cpp
       resnumindexid.cpp
+      selectionfrommol.cpp
       splitmolecule.cpp
       weightfunction.cpp
     )

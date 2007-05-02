@@ -11,6 +11,8 @@
 
 namespace bp = boost::python;
 
+Squire::MolproFF __copy__(const Squire::MolproFF &other){ return Squire::MolproFF(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 #include "SirePy/str.hpp"
@@ -32,6 +34,14 @@ void register_MolproFF_class(){
                 , (::SireFF::FFComponent const & ( ::Squire::MolproFF::Components::* )(  ) const)( &::Squire::MolproFF::Components::qm )
                 , bp::return_value_policy< bp::copy_const_reference >() )    
             .staticmethod( "describe_qm" );
+        bp::class_< Squire::MolproFF::Groups, bp::bases< SireFF::FFBase::Groups > >( "Groups" )    
+            .def( bp::init< >() )    
+            .def( 
+                "mm"
+                , (::SireFF::FFBase::Group ( ::Squire::MolproFF::Groups::* )(  ) const)( &::Squire::MolproFF::Groups::mm ) )    
+            .def( 
+                "qm"
+                , (::SireFF::FFBase::Group ( ::Squire::MolproFF::Groups::* )(  ) const)( &::Squire::MolproFF::Groups::qm ) );
         bp::class_< Squire::MolproFF::Parameters, bp::bases< SireFF::FFBase::Parameters > >( "Parameters" )    
             .def( bp::init< >() )    
             .def( 
@@ -41,9 +51,49 @@ void register_MolproFF_class(){
             .def_readonly( "default_sources", Squire::MolproFF::Parameters::default_sources );
         MolproFF_exposer.def( bp::init< >() );
         MolproFF_exposer.def( bp::init< SireVol::Space const &, SireMM::SwitchingFunction const & >(( bp::arg("space"), bp::arg("switchfunc") )) );
+        { //::Squire::MolproFF::add
+        
+            typedef bool ( ::Squire::MolproFF::*add_function_type )( ::SireMol::PartialMolecule const &,::SireFF::ParameterMap const & ) ;
+            
+            MolproFF_exposer.def( 
+                "add"
+                , add_function_type( &::Squire::MolproFF::add )
+                , ( bp::arg("molecule"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
+        
+        }
+        { //::Squire::MolproFF::add
+        
+            typedef bool ( ::Squire::MolproFF::*add_function_type )( ::QList<SireMol::PartialMolecule> const &,::SireFF::ParameterMap const & ) ;
+            
+            MolproFF_exposer.def( 
+                "add"
+                , add_function_type( &::Squire::MolproFF::add )
+                , ( bp::arg("molecules"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
+        
+        }
+        { //::Squire::MolproFF::addTo
+        
+            typedef bool ( ::Squire::MolproFF::*addTo_function_type )( ::SireFF::FFBase::Group const &,::SireMol::PartialMolecule const &,::SireFF::ParameterMap const & ) ;
+            
+            MolproFF_exposer.def( 
+                "addTo"
+                , addTo_function_type( &::Squire::MolproFF::addTo )
+                , ( bp::arg("group"), bp::arg("molecule"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
+        
+        }
+        { //::Squire::MolproFF::addTo
+        
+            typedef bool ( ::Squire::MolproFF::*addTo_function_type )( ::SireFF::FFBase::Group const &,::QList<SireMol::PartialMolecule> const &,::SireFF::ParameterMap const & ) ;
+            
+            MolproFF_exposer.def( 
+                "addTo"
+                , addTo_function_type( &::Squire::MolproFF::addTo )
+                , ( bp::arg("group"), bp::arg("molecules"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
+        
+        }
         { //::Squire::MolproFF::addToMM
         
-            typedef bool ( ::Squire::MolproFF::*addToMM_function_type )( ::SireMol::Molecule const &,::SireFF::ParameterMap const & ) ;
+            typedef bool ( ::Squire::MolproFF::*addToMM_function_type )( ::SireMol::PartialMolecule const &,::SireFF::ParameterMap const & ) ;
             
             MolproFF_exposer.def( 
                 "addToMM"
@@ -53,7 +103,7 @@ void register_MolproFF_class(){
         }
         { //::Squire::MolproFF::addToMM
         
-            typedef bool ( ::Squire::MolproFF::*addToMM_function_type )( ::QList<SireMol::Molecule> const &,::SireFF::ParameterMap const & ) ;
+            typedef bool ( ::Squire::MolproFF::*addToMM_function_type )( ::QList<SireMol::PartialMolecule> const &,::SireFF::ParameterMap const & ) ;
             
             MolproFF_exposer.def( 
                 "addToMM"
@@ -63,52 +113,52 @@ void register_MolproFF_class(){
         }
         { //::Squire::MolproFF::addToQM
         
-            typedef bool ( ::Squire::MolproFF::*addToQM_function_type )( ::SireMol::Molecule const & ) ;
+            typedef bool ( ::Squire::MolproFF::*addToQM_function_type )( ::SireMol::PartialMolecule const &,::SireFF::ParameterMap const & ) ;
             
             MolproFF_exposer.def( 
                 "addToQM"
                 , addToQM_function_type( &::Squire::MolproFF::addToQM )
-                , ( bp::arg("molecule") ) );
+                , ( bp::arg("molecule"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
         
         }
         { //::Squire::MolproFF::addToQM
         
-            typedef bool ( ::Squire::MolproFF::*addToQM_function_type )( ::QList<SireMol::Molecule> const & ) ;
+            typedef bool ( ::Squire::MolproFF::*addToQM_function_type )( ::QList<SireMol::PartialMolecule> const &,::SireFF::ParameterMap const & ) ;
             
             MolproFF_exposer.def( 
                 "addToQM"
                 , addToQM_function_type( &::Squire::MolproFF::addToQM )
+                , ( bp::arg("molecules"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
+        
+        }
+        { //::Squire::MolproFF::change
+        
+            typedef bool ( ::Squire::MolproFF::*change_function_type )( ::SireMol::PartialMolecule const & ) ;
+            
+            MolproFF_exposer.def( 
+                "change"
+                , change_function_type( &::Squire::MolproFF::change )
+                , ( bp::arg("molecule") ) );
+        
+        }
+        { //::Squire::MolproFF::change
+        
+            typedef bool ( ::Squire::MolproFF::*change_function_type )( ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> const & ) ;
+            
+            MolproFF_exposer.def( 
+                "change"
+                , change_function_type( &::Squire::MolproFF::change )
                 , ( bp::arg("molecules") ) );
         
         }
         { //::Squire::MolproFF::change
         
-            typedef bool ( ::Squire::MolproFF::*change_function_type )( ::SireMol::Molecule const & ) ;
+            typedef bool ( ::Squire::MolproFF::*change_function_type )( ::QList<SireMol::PartialMolecule> const & ) ;
             
             MolproFF_exposer.def( 
                 "change"
                 , change_function_type( &::Squire::MolproFF::change )
-                , ( bp::arg("molecule") ) );
-        
-        }
-        { //::Squire::MolproFF::change
-        
-            typedef bool ( ::Squire::MolproFF::*change_function_type )( ::SireMol::Residue const & ) ;
-            
-            MolproFF_exposer.def( 
-                "change"
-                , change_function_type( &::Squire::MolproFF::change )
-                , ( bp::arg("residue") ) );
-        
-        }
-        { //::Squire::MolproFF::change
-        
-            typedef bool ( ::Squire::MolproFF::*change_function_type )( ::SireMol::NewAtom const & ) ;
-            
-            MolproFF_exposer.def( 
-                "change"
-                , change_function_type( &::Squire::MolproFF::change )
-                , ( bp::arg("atom") ) );
+                , ( bp::arg("molecules") ) );
         
         }
         { //::Squire::MolproFF::components
@@ -121,6 +171,94 @@ void register_MolproFF_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        { //::Squire::MolproFF::contains
+        
+            typedef bool ( ::Squire::MolproFF::*contains_function_type )( ::SireMol::PartialMolecule const & ) const;
+            
+            MolproFF_exposer.def( 
+                "contains"
+                , contains_function_type( &::Squire::MolproFF::contains )
+                , ( bp::arg("molecule") ) );
+        
+        }
+        { //::Squire::MolproFF::contains
+        
+            typedef bool ( ::Squire::MolproFF::*contains_function_type )( ::SireMol::PartialMolecule const &,::SireFF::FFBase::Group const & ) const;
+            
+            MolproFF_exposer.def( 
+                "contains"
+                , contains_function_type( &::Squire::MolproFF::contains )
+                , ( bp::arg("molecule"), bp::arg("group") ) );
+        
+        }
+        { //::Squire::MolproFF::containsProperty
+        
+            typedef bool ( ::Squire::MolproFF::*containsProperty_function_type )( ::QString const & ) const;
+            
+            MolproFF_exposer.def( 
+                "containsProperty"
+                , containsProperty_function_type( &::Squire::MolproFF::containsProperty )
+                , ( bp::arg("name") ) );
+        
+        }
+        { //::Squire::MolproFF::contents
+        
+            typedef ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::Squire::MolproFF::*contents_function_type )(  ) const;
+            
+            MolproFF_exposer.def( 
+                "contents"
+                , contents_function_type( &::Squire::MolproFF::contents ) );
+        
+        }
+        { //::Squire::MolproFF::contents
+        
+            typedef ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::Squire::MolproFF::*contents_function_type )( ::SireFF::FFBase::Group const & ) const;
+            
+            MolproFF_exposer.def( 
+                "contents"
+                , contents_function_type( &::Squire::MolproFF::contents )
+                , ( bp::arg("group") ) );
+        
+        }
+        { //::Squire::MolproFF::energyOrigin
+        
+            typedef double ( ::Squire::MolproFF::*energyOrigin_function_type )(  ) const;
+            
+            MolproFF_exposer.def( 
+                "energyOrigin"
+                , energyOrigin_function_type( &::Squire::MolproFF::energyOrigin ) );
+        
+        }
+        { //::Squire::MolproFF::getProperty
+        
+            typedef ::SireBase::Property ( ::Squire::MolproFF::*getProperty_function_type )( ::QString const & ) const;
+            
+            MolproFF_exposer.def( 
+                "getProperty"
+                , getProperty_function_type( &::Squire::MolproFF::getProperty )
+                , ( bp::arg("name") ) );
+        
+        }
+        { //::Squire::MolproFF::groups
+        
+            typedef ::Squire::MolproFF::Groups const & ( ::Squire::MolproFF::*groups_function_type )(  ) const;
+            
+            MolproFF_exposer.def( 
+                "groups"
+                , groups_function_type( &::Squire::MolproFF::groups )
+                , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
+        { //::Squire::MolproFF::groupsReferringTo
+        
+            typedef ::QSet<SireFF::FFBase::Group> ( ::Squire::MolproFF::*groupsReferringTo_function_type )( ::SireMol::MoleculeID ) const;
+            
+            MolproFF_exposer.def( 
+                "groupsReferringTo"
+                , groupsReferringTo_function_type( &::Squire::MolproFF::groupsReferringTo )
+                , ( bp::arg("molid") ) );
+        
+        }
         { //::Squire::MolproFF::mmCoordsAndChargesArray
         
             typedef ::QVector<double> const & ( ::Squire::MolproFF::*mmCoordsAndChargesArray_function_type )(  ) const;
@@ -129,6 +267,54 @@ void register_MolproFF_class(){
                 "mmCoordsAndChargesArray"
                 , mmCoordsAndChargesArray_function_type( &::Squire::MolproFF::mmCoordsAndChargesArray )
                 , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
+        { //::Squire::MolproFF::mmMolecules
+        
+            typedef ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::Squire::MolproFF::*mmMolecules_function_type )(  ) const;
+            
+            MolproFF_exposer.def( 
+                "mmMolecules"
+                , mmMolecules_function_type( &::Squire::MolproFF::mmMolecules ) );
+        
+        }
+        { //::Squire::MolproFF::molecule
+        
+            typedef ::SireMol::PartialMolecule ( ::Squire::MolproFF::*molecule_function_type )( ::SireMol::MoleculeID ) const;
+            
+            MolproFF_exposer.def( 
+                "molecule"
+                , molecule_function_type( &::Squire::MolproFF::molecule )
+                , ( bp::arg("molid") ) );
+        
+        }
+        { //::Squire::MolproFF::molecule
+        
+            typedef ::SireMol::PartialMolecule ( ::Squire::MolproFF::*molecule_function_type )( ::SireMol::MoleculeID,::SireFF::FFBase::Group const & ) const;
+            
+            MolproFF_exposer.def( 
+                "molecule"
+                , molecule_function_type( &::Squire::MolproFF::molecule )
+                , ( bp::arg("molid"), bp::arg("group") ) );
+        
+        }
+        { //::Squire::MolproFF::moleculeIDs
+        
+            typedef ::QSet<SireMol::MoleculeID> ( ::Squire::MolproFF::*moleculeIDs_function_type )(  ) const;
+            
+            MolproFF_exposer.def( 
+                "moleculeIDs"
+                , moleculeIDs_function_type( &::Squire::MolproFF::moleculeIDs ) );
+        
+        }
+        { //::Squire::MolproFF::moleculeIDs
+        
+            typedef ::QSet<SireMol::MoleculeID> ( ::Squire::MolproFF::*moleculeIDs_function_type )( ::SireFF::FFBase::Group const & ) const;
+            
+            MolproFF_exposer.def( 
+                "moleculeIDs"
+                , moleculeIDs_function_type( &::Squire::MolproFF::moleculeIDs )
+                , ( bp::arg("group") ) );
         
         }
         { //::Squire::MolproFF::molproCommandInput
@@ -160,6 +346,15 @@ void register_MolproFF_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        { //::Squire::MolproFF::mustNowRecalculateFromScratch
+        
+            typedef void ( ::Squire::MolproFF::*mustNowRecalculateFromScratch_function_type )(  ) ;
+            
+            MolproFF_exposer.def( 
+                "mustNowRecalculateFromScratch"
+                , mustNowRecalculateFromScratch_function_type( &::Squire::MolproFF::mustNowRecalculateFromScratch ) );
+        
+        }
         { //::Squire::MolproFF::parameters
         
             typedef ::Squire::MolproFF::Parameters const & ( ::Squire::MolproFF::*parameters_function_type )(  ) const;
@@ -168,6 +363,15 @@ void register_MolproFF_class(){
                 "parameters"
                 , parameters_function_type( &::Squire::MolproFF::parameters )
                 , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
+        { //::Squire::MolproFF::properties
+        
+            typedef ::QHash<QString,SireBase::Property> ( ::Squire::MolproFF::*properties_function_type )(  ) const;
+            
+            MolproFF_exposer.def( 
+                "properties"
+                , properties_function_type( &::Squire::MolproFF::properties ) );
         
         }
         { //::Squire::MolproFF::qmCoordsArray
@@ -180,6 +384,15 @@ void register_MolproFF_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        { //::Squire::MolproFF::qmMolecules
+        
+            typedef ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::Squire::MolproFF::*qmMolecules_function_type )(  ) const;
+            
+            MolproFF_exposer.def( 
+                "qmMolecules"
+                , qmMolecules_function_type( &::Squire::MolproFF::qmMolecules ) );
+        
+        }
         { //::Squire::MolproFF::qmVersion
         
             typedef ::quint32 ( ::Squire::MolproFF::*qmVersion_function_type )(  ) const;
@@ -189,9 +402,29 @@ void register_MolproFF_class(){
                 , qmVersion_function_type( &::Squire::MolproFF::qmVersion ) );
         
         }
+        { //::Squire::MolproFF::refersTo
+        
+            typedef bool ( ::Squire::MolproFF::*refersTo_function_type )( ::SireMol::MoleculeID ) const;
+            
+            MolproFF_exposer.def( 
+                "refersTo"
+                , refersTo_function_type( &::Squire::MolproFF::refersTo )
+                , ( bp::arg("molid") ) );
+        
+        }
+        { //::Squire::MolproFF::refersTo
+        
+            typedef bool ( ::Squire::MolproFF::*refersTo_function_type )( ::SireMol::MoleculeID,::SireFF::FFBase::Group const & ) const;
+            
+            MolproFF_exposer.def( 
+                "refersTo"
+                , refersTo_function_type( &::Squire::MolproFF::refersTo )
+                , ( bp::arg("molid"), bp::arg("group") ) );
+        
+        }
         { //::Squire::MolproFF::remove
         
-            typedef bool ( ::Squire::MolproFF::*remove_function_type )( ::SireMol::Molecule const & ) ;
+            typedef bool ( ::Squire::MolproFF::*remove_function_type )( ::SireMol::PartialMolecule const & ) ;
             
             MolproFF_exposer.def( 
                 "remove"
@@ -199,9 +432,79 @@ void register_MolproFF_class(){
                 , ( bp::arg("molecule") ) );
         
         }
+        { //::Squire::MolproFF::remove
+        
+            typedef bool ( ::Squire::MolproFF::*remove_function_type )( ::QList<SireMol::PartialMolecule> const & ) ;
+            
+            MolproFF_exposer.def( 
+                "remove"
+                , remove_function_type( &::Squire::MolproFF::remove )
+                , ( bp::arg("molecules") ) );
+        
+        }
+        { //::Squire::MolproFF::removeFrom
+        
+            typedef bool ( ::Squire::MolproFF::*removeFrom_function_type )( ::SireFF::FFBase::Group const &,::SireMol::PartialMolecule const & ) ;
+            
+            MolproFF_exposer.def( 
+                "removeFrom"
+                , removeFrom_function_type( &::Squire::MolproFF::removeFrom )
+                , ( bp::arg("group"), bp::arg("molecule") ) );
+        
+        }
+        { //::Squire::MolproFF::removeFrom
+        
+            typedef bool ( ::Squire::MolproFF::*removeFrom_function_type )( ::SireFF::FFBase::Group const &,::QList<SireMol::PartialMolecule> const & ) ;
+            
+            MolproFF_exposer.def( 
+                "removeFrom"
+                , removeFrom_function_type( &::Squire::MolproFF::removeFrom )
+                , ( bp::arg("group"), bp::arg("molecules") ) );
+        
+        }
+        { //::Squire::MolproFF::removeFromMM
+        
+            typedef bool ( ::Squire::MolproFF::*removeFromMM_function_type )( ::SireMol::PartialMolecule const & ) ;
+            
+            MolproFF_exposer.def( 
+                "removeFromMM"
+                , removeFromMM_function_type( &::Squire::MolproFF::removeFromMM )
+                , ( bp::arg("molecule") ) );
+        
+        }
+        { //::Squire::MolproFF::removeFromMM
+        
+            typedef bool ( ::Squire::MolproFF::*removeFromMM_function_type )( ::QList<SireMol::PartialMolecule> const & ) ;
+            
+            MolproFF_exposer.def( 
+                "removeFromMM"
+                , removeFromMM_function_type( &::Squire::MolproFF::removeFromMM )
+                , ( bp::arg("molecules") ) );
+        
+        }
+        { //::Squire::MolproFF::removeFromQM
+        
+            typedef bool ( ::Squire::MolproFF::*removeFromQM_function_type )( ::SireMol::PartialMolecule const & ) ;
+            
+            MolproFF_exposer.def( 
+                "removeFromQM"
+                , removeFromQM_function_type( &::Squire::MolproFF::removeFromQM )
+                , ( bp::arg("molecule") ) );
+        
+        }
+        { //::Squire::MolproFF::removeFromQM
+        
+            typedef bool ( ::Squire::MolproFF::*removeFromQM_function_type )( ::QList<SireMol::PartialMolecule> const & ) ;
+            
+            MolproFF_exposer.def( 
+                "removeFromQM"
+                , removeFromQM_function_type( &::Squire::MolproFF::removeFromQM )
+                , ( bp::arg("molecules") ) );
+        
+        }
         { //::Squire::MolproFF::setEnergyOrigin
         
-            typedef void ( ::Squire::MolproFF::*setEnergyOrigin_function_type )( double ) ;
+            typedef bool ( ::Squire::MolproFF::*setEnergyOrigin_function_type )( double ) ;
             
             MolproFF_exposer.def( 
                 "setEnergyOrigin"
@@ -211,7 +514,7 @@ void register_MolproFF_class(){
         }
         { //::Squire::MolproFF::setMolproExe
         
-            typedef void ( ::Squire::MolproFF::*setMolproExe_function_type )( ::QFileInfo const & ) ;
+            typedef bool ( ::Squire::MolproFF::*setMolproExe_function_type )( ::QFileInfo const & ) ;
             
             MolproFF_exposer.def( 
                 "setMolproExe"
@@ -221,12 +524,42 @@ void register_MolproFF_class(){
         }
         { //::Squire::MolproFF::setMolproTempDir
         
-            typedef void ( ::Squire::MolproFF::*setMolproTempDir_function_type )( ::QDir const & ) ;
+            typedef bool ( ::Squire::MolproFF::*setMolproTempDir_function_type )( ::QDir const & ) ;
             
             MolproFF_exposer.def( 
                 "setMolproTempDir"
                 , setMolproTempDir_function_type( &::Squire::MolproFF::setMolproTempDir )
                 , ( bp::arg("tempdir") ) );
+        
+        }
+        { //::Squire::MolproFF::setProperty
+        
+            typedef bool ( ::Squire::MolproFF::*setProperty_function_type )( ::QString const &,::SireBase::Property const & ) ;
+            
+            MolproFF_exposer.def( 
+                "setProperty"
+                , setProperty_function_type( &::Squire::MolproFF::setProperty )
+                , ( bp::arg("name"), bp::arg("value") ) );
+        
+        }
+        { //::Squire::MolproFF::setSpace
+        
+            typedef bool ( ::Squire::MolproFF::*setSpace_function_type )( ::SireVol::Space const & ) ;
+            
+            MolproFF_exposer.def( 
+                "setSpace"
+                , setSpace_function_type( &::Squire::MolproFF::setSpace )
+                , ( bp::arg("space") ) );
+        
+        }
+        { //::Squire::MolproFF::setSwitchingFunction
+        
+            typedef bool ( ::Squire::MolproFF::*setSwitchingFunction_function_type )( ::SireMM::SwitchingFunction const & ) ;
+            
+            MolproFF_exposer.def( 
+                "setSwitchingFunction"
+                , setSwitchingFunction_function_type( &::Squire::MolproFF::setSwitchingFunction )
+                , ( bp::arg("switchfunc") ) );
         
         }
         { //::Squire::MolproFF::space
@@ -268,6 +601,7 @@ void register_MolproFF_class(){
         
         }
         MolproFF_exposer.staticmethod( "typeName" );
+        MolproFF_exposer.def( "__copy__", &__copy__);
         MolproFF_exposer.def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::Squire::MolproFF >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         MolproFF_exposer.def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::Squire::MolproFF >,

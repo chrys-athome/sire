@@ -5,12 +5,14 @@
 #include "CuttingFunctionBase.pypp.hpp"
 #include "boost/python.hpp"
 #include "siremol_headers.h"
+#include "SireMol/moleculedata.h"
 #include "SireMaths/angle.h"
 #include "SireMaths/quaternion.h"
 #include "SireMaths/matrix.h"
 #include "SireMaths/triangle.h"
 #include "SireMaths/line.h"
 #include "SireMaths/torsion.h"
+#include "SireVol/space.h"
 
 namespace bp = boost::python;
 
@@ -26,8 +28,12 @@ void register_CuttingFunctionBase_class(){
             , &::SireMol::CuttingFunctionBase::operator()
             , ( bp::arg("atom"), bp::arg("moldata") ) )    
         .def( 
+            "typeName"
+            , &::SireMol::CuttingFunctionBase::typeName )    
+        .def( 
             "what"
             , &::SireMol::CuttingFunctionBase::what )    
+        .staticmethod( "typeName" )    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::CuttingFunctionBase >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::CuttingFunctionBase >,
