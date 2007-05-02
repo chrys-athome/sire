@@ -324,20 +324,20 @@ QString ParameterMap::source(const ParameterName &param) const
 }
 
 
-ParameterMap SireFF::operator&&(const ParameterSource &source_a,
-                                const ParameterSource &source_b)
+ParameterMap SIREFF_EXPORT SireFF::operator&&(const ParameterSource &source_a,
+                                              const ParameterSource &source_b)
 {
     return ParameterMap(source_a) and ParameterMap(source_b);
 }
 
-ParameterMap SireFF::operator&&(const ParameterMap &map,
-                                const ParameterSource &source)
+ParameterMap SIREFF_EXPORT SireFF::operator&&(const ParameterMap &map,
+                                              const ParameterSource &source)
 {
     return map and ParameterMap(source);
 }
 
-ParameterMap SireFF::operator&&(const ParameterSource &source,
-                                const ParameterMap &map)
+ParameterMap SIREFF_EXPORT SireFF::operator&&(const ParameterSource &source,
+                                              const ParameterMap &map)
 {
     return ParameterMap(source) and map;
 }
