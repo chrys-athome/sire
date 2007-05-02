@@ -81,7 +81,7 @@ public:
 
     static const char* typeName()
     {
-        return "SireVol::Cartesian";
+        return "SireVol::PeriodicBox";
     }
 
     const char* what() const

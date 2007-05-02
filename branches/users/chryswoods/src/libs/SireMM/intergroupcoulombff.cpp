@@ -950,22 +950,6 @@ bool InterGroupCoulombFF::addTo(const FFBase::Group &group,
     }
 }
 
-/** Add lots of molecules to the group with index 'group' using the
-    supplied map to find the forcefield parameters amongst the molecules'
-    properties. Note that it is an error to try to add molecules to more than
-    one group in the forcefield
-
-    \throw SireBase::missing_property
-    \throw SireMol::invalid_cast
-    \throw SireFF::invalid_group
-*/
-bool InterGroupCoulombFF::addTo(const FFBase::Group &group,
-                                const QList<PartialMolecule> &molecules,
-                                const ParameterMap &map)
-{
-    return FFBase::addTo(group, molecules, map);
-}
-
 /** Add the molecule 'molecule' to group 'A' using the
     supplied map to find the forcefield parameters amongst the molecule's
     properties. Note that it is an error to try to add this to more than
@@ -981,21 +965,6 @@ bool InterGroupCoulombFF::addToA(const PartialMolecule &molecule,
     return this->addTo(groups().A(), molecule, map);
 }
 
-/** Add lots of molecules to group 'A' using the
-    supplied map to find the forcefield parameters amongst the molecules'
-    properties. Note that it is an error to try to add a molecule to more than
-    one group in the forcefield
-
-    \throw SireBase::missing_property
-    \throw SireMol::invalid_cast
-    \throw SireFF::invalid_group
-*/
-bool InterGroupCoulombFF::addToA(const QList<PartialMolecule> &molecules,
-                                 const ParameterMap &map)
-{
-    return this->addTo(groups().A(), molecules, map);
-}
-
 /** Add the molecule 'molecule' to group 'B' using the
     supplied map to find the forcefield parameters amongst the molecule's
     properties. Note that it is an error to try to add this to more than
@@ -1009,21 +978,6 @@ bool InterGroupCoulombFF::addToB(const PartialMolecule &molecule,
                                  const ParameterMap &map)
 {
     return this->addTo(groups().B(), molecule, map);
-}
-
-/** Add lots of molecules to group 'B' using the
-    supplied map to find the forcefield parameters amongst the molecules'
-    properties. Note that it is an error to try to add a molecule to more than
-    one group in the forcefield
-
-    \throw SireBase::missing_property
-    \throw SireMol::invalid_cast
-    \throw SireFF::invalid_group
-*/
-bool InterGroupCoulombFF::addToB(const QList<PartialMolecule> &molecules,
-                                 const ParameterMap &map)
-{
-    return this->addTo(groups().B(), molecules, map);
 }
 
 /** Return whether this forcefield contains a complete copy of

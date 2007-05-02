@@ -40,7 +40,7 @@ void register_InterCoulombFF_class(){
             InterCoulombFF_exposer.def( 
                 "add"
                 , add_function_type( &::SireMM::InterCoulombFF::add )
-                , ( bp::arg("mol"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
+                , ( bp::arg("molecule"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
         
         }
         { //::SireMM::InterCoulombFF::change
@@ -149,6 +149,9 @@ void register_InterCoulombFF_class(){
         
         }
         InterCoulombFF_exposer.staticmethod( "typeName" );
+        InterCoulombFF_exposer.def( "add", &::SireMM::InterCoulombFF::add< QList< ::SireMol::PartialMolecule > >,
+                                       ( bp::arg("molecules"),
+                                         bp::arg("map")=::SireFF::ParameterMap() ) );
         InterCoulombFF_exposer.def( "__copy__", &__copy__);
         InterCoulombFF_exposer.def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::InterCoulombFF >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );

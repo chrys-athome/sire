@@ -26,7 +26,7 @@ space = Cartesian()
 
 #specify the type of switching function to use
 switchfunc = HarmonicSwitchingFunction(80.0)
-switchfunc = HarmonicSwitchingFunction(15.0, 14.5)
+switchfunc = HarmonicSwitchingFunction(5.0, 4.5)
 
 #create a forcefield for the molecules
 cljff = InterCLJFF( Space(space),

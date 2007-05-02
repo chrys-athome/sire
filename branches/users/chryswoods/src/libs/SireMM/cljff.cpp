@@ -1083,8 +1083,8 @@ CLJFF::CLJEnergy CLJFF::calculateEnergy(const CoordGroup &group0,
             BOOST_ASSERT( chg1.count() == lj1.count() );
 
             //combine the charge and LJ parameters together
-            int nats0 = lj0.count();
-            int nats1 = lj1.count();
+            uint nats0 = lj0.count();
+            uint nats1 = lj1.count();
 
             BOOST_ASSERT( group0.count() == nats0 );
             BOOST_ASSERT( group1.count() == nats1 );
@@ -1097,7 +1097,7 @@ CLJFF::CLJEnergy CLJFF::calculateEnergy(const CoordGroup &group0,
             const ChargeParameter *chg1_array = chg1.constData();
             const LJParameter *lj1_array = lj1.constData();
 
-            for (int i=0; i<nats0; ++i)
+            for (uint i=0; i<nats0; ++i)
             {
                 cljmatrix.setOuterIndex(i);
 
@@ -1106,7 +1106,7 @@ CLJFF::CLJEnergy CLJFF::calculateEnergy(const CoordGroup &group0,
 
                 const LJParameter &lj0param = lj0_array[i];
 
-                for (int j=0; j<nats1; ++j)
+                for (uint j=0; j<nats1; ++j)
                 {
                     LJPair combined_lj = LJPair::geometric( lj1_array[j], lj0param );
 
@@ -1140,10 +1140,10 @@ CLJFF::CLJEnergy CLJFF::calculateEnergy(const CoordGroup &group,
     space.calcInvDist2(group, distmatrix);
 
     //combine together the LJ parameters
-    int nats = ljs.count();
+    uint nats = ljs.count();
 
     BOOST_ASSERT(group.count() == nats);
-    BOOST_ASSERT(chgs.count() == nats);
+    BOOST_ASSERT(chgs.count() == int(nats));
 
     cljmatrix.redimension(nats,nats);
 
@@ -1153,14 +1153,14 @@ CLJFF::CLJEnergy CLJFF::calculateEnergy(const CoordGroup &group,
     //we only need to fill in the top left diagonal
     //(and we don't need to do matrix(i,i) as we never
     // calculate a self-interaction!)
-    for (int i=0; i<nats-1; ++i)
+    for (uint i=0; i<nats-1; ++i)
     {
         cljmatrix.setOuterIndex(i);
 
         double chg0_param = SireUnits::one_over_four_pi_eps0 * chg_array[i].charge();
         const LJParameter &lj0param = lj_array[i];
 
-        for (int j=i+1; j<nats; ++j)
+        for (uint j=i+1; j<nats; ++j)
         {
             LJPair combined_lj = LJPair::geometric( lj_array[j], lj0param );
 

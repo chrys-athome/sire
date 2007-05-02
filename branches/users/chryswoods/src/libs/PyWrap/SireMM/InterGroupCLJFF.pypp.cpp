@@ -46,7 +46,7 @@ void register_InterGroupCLJFF_class(){
             InterGroupCLJFF_exposer.def( 
                 "add"
                 , add_function_type( &::SireMM::InterGroupCLJFF::add )
-                , ( bp::arg("mol"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
+                , ( bp::arg("molecule"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
         
         }
         { //::SireMM::InterGroupCLJFF::addTo
@@ -275,6 +275,19 @@ void register_InterGroupCLJFF_class(){
         
         }
         InterGroupCLJFF_exposer.staticmethod( "typeName" );
+        InterGroupCLJFF_exposer.def( "add", &::SireMM::InterGroupCLJFF::add< QList< ::SireMol::PartialMolecule > >,
+                                       ( bp::arg("molecules"),
+                                         bp::arg("map")=::SireFF::ParameterMap() ) );
+        InterGroupCLJFF_exposer.def( "addTo", &::SireMM::InterGroupCLJFF::addTo< QList< ::SireMol::PartialMolecule > >,
+                                       ( bp::arg("group"),
+                                         bp::arg("molecules"),
+                                         bp::arg("map")=::SireFF::ParameterMap() ) );
+        InterGroupCLJFF_exposer.def( "addToA", &::SireMM::InterGroupCLJFF::addToA< QList< ::SireMol::PartialMolecule > >,
+                                       ( bp::arg("molecules"),
+                                         bp::arg("map")=::SireFF::ParameterMap() ) );
+        InterGroupCLJFF_exposer.def( "addToB", &::SireMM::InterGroupCLJFF::addToB< QList< ::SireMol::PartialMolecule > >,
+                                       ( bp::arg("molecules"),
+                                         bp::arg("map")=::SireFF::ParameterMap() ) );
         InterGroupCLJFF_exposer.def( "__copy__", &__copy__);
         InterGroupCLJFF_exposer.def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::InterGroupCLJFF >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );

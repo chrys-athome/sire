@@ -40,7 +40,7 @@ void register_InterCLJFF_class(){
             InterCLJFF_exposer.def( 
                 "add"
                 , add_function_type( &::SireMM::InterCLJFF::add )
-                , ( bp::arg("mol"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
+                , ( bp::arg("molecule"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
         
         }
         { //::SireMM::InterCLJFF::change
@@ -149,6 +149,9 @@ void register_InterCLJFF_class(){
         
         }
         InterCLJFF_exposer.staticmethod( "typeName" );
+        InterCLJFF_exposer.def( "add", &::SireMM::InterCLJFF::add< QList< ::SireMol::PartialMolecule > >,
+                                       ( bp::arg("molecules"),
+                                         bp::arg("map")=::SireFF::ParameterMap() ) );
         InterCLJFF_exposer.def( "__copy__", &__copy__);
         InterCLJFF_exposer.def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::InterCLJFF >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );

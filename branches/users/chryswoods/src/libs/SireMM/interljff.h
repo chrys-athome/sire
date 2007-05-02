@@ -51,7 +51,7 @@ using SireFF::ParameterMap;
 
 /** An InterLJFF is used to calculate the intermolecular LJ
     energy of a group of molecules.
-    
+
     @author Christopher Woods
 */
 class SIREMM_EXPORT InterLJFF : public LJFF
@@ -62,13 +62,13 @@ friend QDataStream& ::operator>>(QDataStream&, InterLJFF&);
 
 public:
     InterLJFF();
-    
+
     InterLJFF(const Space &space, const SwitchingFunction &switchingfunction);
-    
+
     InterLJFF(const InterLJFF &other);
-    
+
     ~InterLJFF();
-    
+
     class SIREMM_EXPORT Components : public LJFF::Components
     {
     public:
@@ -119,19 +119,25 @@ public:
     void mustNowRecalculateFromScratch();
 
     bool change(const PartialMolecule &molecule);
-    bool add(const PartialMolecule &mol, const ParameterMap &map = ParameterMap());
+
+    bool add(const PartialMolecule &molecule,
+             const ParameterMap &map = ParameterMap());
+
+    template<class T>
+    bool add(const T &molecules, const ParameterMap &map = ParameterMap());
+
     bool remove(const PartialMolecule &molecule);
 
     bool contains(const PartialMolecule &molecule) const;
-    
+
     bool refersTo(MoleculeID molid) const;
 
     QSet<FFBase::Group> groupsReferringTo(MoleculeID molid) const;
-    
+
     QSet<MoleculeID> moleculeIDs() const;
-    
+
     PartialMolecule molecule(MoleculeID molid) const;
-    
+
     QHash<MoleculeID,PartialMolecule> contents() const;
 
 protected:
@@ -154,25 +160,31 @@ private:
     /** All of the molecules that have at least one atom
         in this forcefield */
     QVector<LJFF::LJMolecule> mols;
-    
+
     /** Hash mapping the MoleculeID to the index of the molecule in 'mols' */
     QHash<MoleculeID, uint> molid_to_index;
-    
-    /** Information about all of the changed molecules since the 
+
+    /** Information about all of the changed molecules since the
         last energy calculation */
     QVector<LJFF::ChangedLJMolecule> changed_mols;
-    
+
     /** Hash mapping the MoleculeID of a changed molecule to its
         index in changed_mols */
     QHash<MoleculeID, uint> molid_to_changedindex;
-    
+
     /** MoleculeIDs of all molecules that have been removed since
         the last energy evaluation */
     QSet<MoleculeID> removed_mols;
-    
+
     /** Whether or not a total energy recalculation is required */
     bool need_total_recalc;
 };
+
+template<class T>
+bool InterLJFF::add(const T &molecules, const ParameterMap &map)
+{
+    return FFBase::addTo<T>(this->groups().main(), molecules, map);
+}
 
 }
 

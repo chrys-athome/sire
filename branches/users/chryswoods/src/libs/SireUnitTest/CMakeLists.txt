@@ -20,6 +20,7 @@ set ( SIREUNITTEST_SOURCES
       testcoordgroup.cpp
       testcutgroup.cpp
       testffdb.cpp
+      testforcefields.cpp
       testmatch.cpp
       testperiodicbox.cpp
       testpropertyextractor.cpp

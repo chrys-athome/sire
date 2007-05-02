@@ -275,6 +275,19 @@ void register_InterGroupLJFF_class(){
         
         }
         InterGroupLJFF_exposer.staticmethod( "typeName" );
+        InterGroupLJFF_exposer.def( "add", &::SireMM::InterGroupLJFF::add< QList< ::SireMol::PartialMolecule > >,
+                                       ( bp::arg("molecules"),
+                                         bp::arg("map")=::SireFF::ParameterMap() ) );
+        InterGroupLJFF_exposer.def( "addTo", &::SireMM::InterGroupLJFF::addTo< QList< ::SireMol::PartialMolecule > >,
+                                       ( bp::arg("group"),
+                                         bp::arg("molecules"),
+                                         bp::arg("map")=::SireFF::ParameterMap() ) );
+        InterGroupLJFF_exposer.def( "addToA", &::SireMM::InterGroupLJFF::addToA< QList< ::SireMol::PartialMolecule > >,
+                                       ( bp::arg("molecules"),
+                                         bp::arg("map")=::SireFF::ParameterMap() ) );
+        InterGroupLJFF_exposer.def( "addToB", &::SireMM::InterGroupLJFF::addToB< QList< ::SireMol::PartialMolecule > >,
+                                       ( bp::arg("molecules"),
+                                         bp::arg("map")=::SireFF::ParameterMap() ) );
         InterGroupLJFF_exposer.def( "__copy__", &__copy__);
         InterGroupLJFF_exposer.def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::InterGroupLJFF >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );

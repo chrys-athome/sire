@@ -119,19 +119,23 @@ public:
     void mustNowRecalculateFromScratch();
 
     bool change(const PartialMolecule &molecule);
-    bool add(const PartialMolecule &mol, const ParameterMap &map = ParameterMap());
+    bool add(const PartialMolecule &molecule,
+             const ParameterMap &map = ParameterMap());
     bool remove(const PartialMolecule &molecule);
 
+    template<class T>
+    bool add(const T &molecules, const ParameterMap &map = ParameterMap());
+
     bool contains(const PartialMolecule &molecule) const;
-    
+
     bool refersTo(MoleculeID molid) const;
 
     QSet<FFBase::Group> groupsReferringTo(MoleculeID molid) const;
-    
+
     QSet<MoleculeID> moleculeIDs() const;
-    
+
     PartialMolecule molecule(MoleculeID molid) const;
-    
+
     QHash<MoleculeID,PartialMolecule> contents() const;
 
 protected:
@@ -169,10 +173,17 @@ private:
     /** MoleculeIDs of all molecules that have been removed since
         the last energy evaluation */
     QSet<MoleculeID> removed_mols;
-    
+
     /** Whether or not a total energy recalculation is required */
     bool need_total_recalc;
 };
+
+template<class T>
+SIRE_INLINE_TEMPLATE
+bool InterCoulombFF::add(const T &molecules, const ParameterMap &map)
+{
+    return FFBase::addTo<T>(this->groups().main(), molecules, map);
+}
 
 }
 

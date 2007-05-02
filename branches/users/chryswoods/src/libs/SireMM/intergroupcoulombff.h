@@ -154,21 +154,24 @@ public:
     bool addTo(const FFBase::Group &group, const PartialMolecule &molecule,
                const ParameterMap &map = ParameterMap());
 
-    bool addTo(const FFBase::Group &group,
-               const QList<PartialMolecule> &molecules,
-               const ParameterMap &map = ParameterMap());
-
     bool addToA(const PartialMolecule &molecule,
-                const ParameterMap &map = ParameterMap());
-
-    bool addToA(const QList<PartialMolecule> &molecules,
                 const ParameterMap &map = ParameterMap());
 
     bool addToB(const PartialMolecule &molecule,
                 const ParameterMap &map = ParameterMap());
 
-    bool addToB(const QList<PartialMolecule> &molecules,
-                const ParameterMap &map = ParameterMap());
+    template<class T>
+    bool add(const T &molecules, const ParameterMap &map = ParameterMap());
+
+    template<class T>
+    bool addTo(const FFBase::Group &group, const T &molecules,
+               const ParameterMap &map = ParameterMap());
+
+    template<class T>
+    bool addToA(const T &molecules, const ParameterMap &map = ParameterMap());
+
+    template<class T>
+    bool addToB(const T &molecules, const ParameterMap &map = ParameterMap());
 
     bool remove(const PartialMolecule &molecule);
 
@@ -254,6 +257,35 @@ private:
     /** Whether or not a total energy recalculation is required */
     bool need_total_recalc;
 };
+
+template<class T>
+SIRE_INLINE_TEMPLATE
+bool InterGroupCoulombFF::add(const T &molecules, const ParameterMap &map)
+{
+    return FFBase::addTo<T>(this->groups().main(), molecules, map);
+}
+
+template<class T>
+SIRE_INLINE_TEMPLATE
+bool InterGroupCoulombFF::addTo(const FFBase::Group &group,
+                            const T &molecules, const ParameterMap &map)
+{
+    return FFBase::addTo<T>(group, molecules, map);
+}
+
+template<class T>
+SIRE_INLINE_TEMPLATE
+bool InterGroupCoulombFF::addToA(const T &molecules, const ParameterMap &map)
+{
+    return FFBase::addTo<T>(this->groups().A(), molecules, map);
+}
+
+template<class T>
+SIRE_INLINE_TEMPLATE
+bool InterGroupCoulombFF::addToB(const T &molecules, const ParameterMap &map)
+{
+    return FFBase::addTo<T>(this->groups().B(), molecules, map);
+}
 
 }
 

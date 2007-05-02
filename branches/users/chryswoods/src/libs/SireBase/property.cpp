@@ -28,6 +28,8 @@
 
 #include "property.h"
 
+#include <QDebug>
+
 #include "SireError/errors.h"
 #include "SireStream/datastream.h"
 

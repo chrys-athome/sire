@@ -26,41 +26,35 @@
   *
 \*********************************************/
 
-#include "runall.h"
+#ifndef SIRETEST_TESTFORCEFIELDS_H
+#define SIRETEST_TESTFORCEFIELDS_H
 
-#include "testangle.h"
-#include "testatomselection.h"
-#include "testcoordgroup.h"
-#include "testcutgroup.h"
-#include "testcomplex.h"
-#include "testffdb.h"
-#include "testforcefields.h"
-#include "testmatch.h"
-#include "testperiodicbox.h"
-#include "testpropertyextractor.h"
-#include "testsharedpolypointer.h"
-#include "testsirecas.h"
-#include "testunits.h"
-#include "testvector.h"
-#include "testversion.h"
+#include "testbase.h"
 
-using namespace SireTest;
+SIRE_BEGIN_HEADER
 
-void SireTest::runAll(test_suite *test)
+namespace SireTest
 {
-    initialise(new TestAngle(), test);
-    initialise(new TestAtomSelection(), test);
-    initialise(new TestComplex(), test);
-    initialise(new TestCoordGroup(), test);
-    initialise(new TestCutGroup(), test);
-    initialise(new TestFFDB(), test);
-    initialise(new TestForceFields(), test);
-    initialise(new TestMatch(), test);
-    initialise(new TestPeriodicBox(), test);
-    initialise(new TestPropertyExtractor(), test);
-    initialise(new TestSharedPolyPointer(), test);
-    initialise(new TestSireCAS(), test);
-    initialise(new TestVector(), test);
-    initialise(new TestVersion(), test);
-    initialise(new TestUnits(), test);
+
+/**
+This file tests the SireFF::ForceFields class
+
+@author Christopher Woods
+*/
+class SIREUNITTEST_EXPORT TestForceFields : public TestBase
+{
+public:
+    TestForceFields();
+    ~TestForceFields();
+
+    virtual void initialise(test_suite *test);
+
+    static void runTests();
+};
+
 }
+
+SIRE_END_HEADER
+
+#endif
+

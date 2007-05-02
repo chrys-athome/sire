@@ -5,5 +5,6 @@
     <file alias="solvents.ff">../../../test/ff/solvents.ff</file>
     <file alias="tip4p.pdb">../../../test/geometry/tip4p.pdb</file>
     <file alias="p38.pdb">../../../test/io/p38.pdb</file>
+    <file alias="water.pdb">../../../test/io/water.pdb</file>
 </qresource>
 </RCC>

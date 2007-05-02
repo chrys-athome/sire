@@ -335,7 +335,7 @@ public:
         quint32 n;
     };
 
-    /** Return the object containing the names of the 
+    /** Return the object containing the names of the
         groups used by this forcefield */
     virtual const FFBase::Groups& groups() const
     {
@@ -359,7 +359,7 @@ public:
 
     virtual QHash<QString,Property> properties() const;
 
-    /** Tell the forcefield that it has to recalculate everything from 
+    /** Tell the forcefield that it has to recalculate everything from
         scratch */
     virtual void mustNowRecalculateFromScratch()=0;
 
@@ -403,6 +403,11 @@ public:
                        const PartialMolecule &molecule,
                        const ParameterMap &map = ParameterMap());
 
+    template<class T>
+    bool addTo(const FFBase::Group &group,
+               const T &molecules,
+               const ParameterMap &map = ParameterMap());
+
     virtual bool add(const QList<PartialMolecule> &molecules,
                      const ParameterMap &map = ParameterMap());
 
@@ -441,7 +446,7 @@ public:
     virtual bool refersTo(MoleculeID molid, const FFBase::Group &group) const;
 
     /** Return the groups that refer to the molecule with ID == molid
-    
+
         \throw SireMol::missing_molecule
     */
     virtual QSet<FFBase::Group> groupsReferringTo(MoleculeID molid) const=0;
@@ -461,10 +466,10 @@ public:
     */
     virtual PartialMolecule molecule(MoleculeID molid) const=0;
 
-    virtual PartialMolecule molecule(MoleculeID molid, 
+    virtual PartialMolecule molecule(MoleculeID molid,
                                      const FFBase::Group &group) const;
 
-    virtual QHash<MoleculeID,PartialMolecule> 
+    virtual QHash<MoleculeID,PartialMolecule>
                   molecules(const QSet<MoleculeID> &molids) const;
 
     QHash<MoleculeID,PartialMolecule> molecules() const;
@@ -531,6 +536,39 @@ private:
     /** Whether or not this forcefield is dirty (requires an update) */
     bool isdirty;
 };
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool FFBase::addTo(const FFBase::Group &group,
+                   const T &molecules, const ParameterMap &map)
+{
+    if (molecules.isEmpty())
+        return false;
+    else if (molecules.count() == 1)
+    {
+        return this->addTo(group, PartialMolecule(*(molecules.begin())), map);
+    }
+    else
+    {
+        //maintain the invariant by working on a copy of the forcefield
+        boost::scoped_ptr<FFBase> ffield( this->clone() );
+
+        bool changed = false;
+
+        for (typename T::const_iterator it = molecules.begin();
+             it != molecules.end();
+             ++it)
+        {
+            bool this_changed = ffield->addTo(group, PartialMolecule(*it), map);
+            changed = changed or this_changed;
+        }
+
+        //everything went well - update the original with the new version
+        *this = *ffield;
+
+        return changed;
+    }
+}
 
 /** Set the energy value of the component 'comp' */
 inline void FFBase::setComponent(const FFComponent &comp, double nrg)

@@ -208,6 +208,12 @@ inline bool ParameterMap::operator!=(const ParameterMap &other) const
     return map != other.map;
 }
 
+ParameterMap operator&&(const ParameterSource &source_a,
+                        const ParameterSource &source_b);
+
+ParameterMap operator&&(const ParameterMap &map, const ParameterSource &source);
+ParameterMap operator&&(const ParameterSource &source, const ParameterMap &map);
+
 }
 
 inline uint qHash(const SireFF::ParameterSource &source)
