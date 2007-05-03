@@ -72,6 +72,8 @@ class NewAtom;
 class MoleculeID;
 class ResNum;
 class ResID;
+
+class Molecules;
 }
 
 namespace SireFF
@@ -91,6 +93,7 @@ using SireCAS::Symbols;
 
 using SireMol::MoleculeID;
 using SireMol::Molecule;
+using SireMol::Molecules;
 using SireMol::Residue;
 using SireMol::ResNum;
 using SireMol::ResID;
@@ -378,8 +381,7 @@ public:
     */
     virtual bool change(const PartialMolecule &molecule)=0;
 
-    virtual bool change(const QList<PartialMolecule> &mols);
-    virtual bool change(const QHash<MoleculeID,PartialMolecule> &mols);
+    virtual bool change(const Molecules &molecules);
 
     /** Add the molecule 'molecule' to this forcefield using the
         optional parameter map to find any necessay parameters
@@ -403,16 +405,11 @@ public:
                        const PartialMolecule &molecule,
                        const ParameterMap &map = ParameterMap());
 
-    template<class T>
-    bool addTo(const FFBase::Group &group,
-               const T &molecules,
-               const ParameterMap &map = ParameterMap());
-
-    virtual bool add(const QList<PartialMolecule> &molecules,
+    virtual bool add(const Molecules &molecules,
                      const ParameterMap &map = ParameterMap());
 
     virtual bool addTo(const FFBase::Group &group,
-                       const QList<PartialMolecule> &molecules,
+                       const Molecules &molecules,
                        const ParameterMap &map = ParameterMap());
 
     /** Remove the molecule 'molecule' from this forcefield - this
@@ -424,13 +421,13 @@ public:
     */
     virtual bool remove(const PartialMolecule &molecule)=0;
 
-    virtual bool remove(const QList<PartialMolecule> &molecules);
+    virtual bool remove(const Molecules &molecules);
 
     virtual bool removeFrom(const FFBase::Group &group,
                             const PartialMolecule &molecule);
 
     virtual bool removeFrom(const FFBase::Group &group,
-                            const QList<PartialMolecule> &molecules);
+                            const Molecules &molecules);
 
     /** Return whether this forcefield contains a complete copy of
         any version of the partial molecule 'molecule' */
@@ -469,18 +466,16 @@ public:
     virtual PartialMolecule molecule(MoleculeID molid,
                                      const FFBase::Group &group) const;
 
-    virtual QHash<MoleculeID,PartialMolecule>
-                  molecules(const QSet<MoleculeID> &molids) const;
+    virtual Molecules molecules(const QSet<MoleculeID> &molids) const;
 
-    QHash<MoleculeID,PartialMolecule> molecules() const;
-    QHash<MoleculeID,PartialMolecule> molecules(const FFBase::Group &group) const;
+    Molecules molecules() const;
+    Molecules molecules(const FFBase::Group &group) const;
 
     /** Return all of the molecules (and parts of molecules) that
         are in this forcefield */
-    virtual QHash<MoleculeID,PartialMolecule> contents() const=0;
+    virtual Molecules contents() const=0;
 
-    virtual QHash<MoleculeID,PartialMolecule> contents(
-                                        const FFBase::Group &group) const;
+    virtual Molecules contents(const FFBase::Group &group) const;
 
     bool isDirty() const;
     bool isClean() const;
@@ -536,39 +531,6 @@ private:
     /** Whether or not this forcefield is dirty (requires an update) */
     bool isdirty;
 };
-
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-bool FFBase::addTo(const FFBase::Group &group,
-                   const T &molecules, const ParameterMap &map)
-{
-    if (molecules.isEmpty())
-        return false;
-    else if (molecules.count() == 1)
-    {
-        return this->addTo(group, PartialMolecule(*(molecules.begin())), map);
-    }
-    else
-    {
-        //maintain the invariant by working on a copy of the forcefield
-        boost::scoped_ptr<FFBase> ffield( this->clone() );
-
-        bool changed = false;
-
-        for (typename T::const_iterator it = molecules.begin();
-             it != molecules.end();
-             ++it)
-        {
-            bool this_changed = ffield->addTo(group, PartialMolecule(*it), map);
-            changed = changed or this_changed;
-        }
-
-        //everything went well - update the original with the new version
-        *this = *ffield;
-
-        return changed;
-    }
-}
 
 /** Set the energy value of the component 'comp' */
 inline void FFBase::setComponent(const FFComponent &comp, double nrg)

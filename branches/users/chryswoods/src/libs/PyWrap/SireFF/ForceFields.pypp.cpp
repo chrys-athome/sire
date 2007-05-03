@@ -136,6 +136,7 @@ void register_ForceFields_class(){
             "setProperty"
             , (bool ( ::SireFF::ForceFields::* )( ::QSet<SireFF::ForceFieldID> const &,::QString const &,::SireBase::Property const & ) )( &::SireFF::ForceFields::setProperty )
             , ( bp::arg("ffids"), bp::arg("name"), bp::arg("property") ) )    
+        .def( "change", &::SireFF::ForceFields::change< QList< ::SireMol::PartialMolecule > > )    
         .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireFF::ForceFields >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    

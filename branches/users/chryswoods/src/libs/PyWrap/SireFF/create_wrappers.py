@@ -12,17 +12,17 @@ from sireutils import *
 
 wrap_classes = [ "FFBase",
                  "FFCalculatorBase",
-		 "FFLocalCalculator",
+                 "FFLocalCalculator",
                  "FFCalculator",
                  "FFComponent",
                  "FFExpression",
-		 "FFGroupID",
+                 "FFGroupID",
                  "FFProcessorBase",
                  "FFProcessor",
                  "FFThreadProcessor",
                  "FFThreadWorker",
                  "FFWorkerBase",
-		 "FFLocalWorker",
+                 "FFLocalWorker",
                  "FFWorker",
                  "ForceField",
                  "ForceFieldID",
@@ -48,13 +48,21 @@ extra_includes = [ "SireMol/molecule.h",
                    "SireMol/resnumatomid.h",
                    "SireMol/resid.h",
                    "SireMol/moleculeid.h",
-		   "SireBase/property.h"
+                   "SireBase/property.h"
                  ]
 
 def remove_forcefield_bases(c):
     c.bases = []
 
-special_code = { "ForceField" : remove_forcefield_bases }
+def fix_forcefields(c):
+
+    c.add_registration_code(
+             "def( \"change\", " +
+             "&::SireFF::%s::change< QList< ::SireMol::PartialMolecule > > )" % c.name )
+
+special_code = { "ForceField" : remove_forcefield_bases,
+                 "ForceFieldsBase" : fix_forcefields,
+                 "ForceFields" : fix_forcefields }
 
 implicitly_convertible = [ ("QString", "SireFF::ParameterName"),
                            ("const SireFF::FFBase&", "SireFF::ForceField"),

@@ -154,6 +154,9 @@ public:
     virtual bool change(const QList<PartialMolecule> &molecules);
     virtual bool change(const QHash<MoleculeID,PartialMolecule> &molecules);
 
+    template<class T>
+    bool change(const T &molecules);
+
     virtual bool add( ForceFieldID ffid,
                       const PartialMolecule &molecule,
                       const ParameterMap &map = ParameterMap() );
@@ -448,6 +451,28 @@ private:
         system. */
     SymbolID total_id;
 };
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool ForceFieldsBase::change(const T &molecules)
+{
+    if (molecules.count() == 0)
+        return false;
+    else if (molecules.count() == 1)
+        return this->change( *(molecules.begin()) );
+
+    QHash<MoleculeID,PartialMolecule> mols;
+    mols.reserve(molecules.count());
+
+    for (typename T::const_iterator it = molecules.begin();
+         it != molecules.end();
+         ++it)
+    {
+        mols.insert(it->ID(), *it);
+    }
+
+    return this->change(mols);
+}
 
 }
 

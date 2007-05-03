@@ -710,6 +710,24 @@ void TestForceFields::runTests()
 
     qDebug() << "...done ;-)";
 
+    qDebug() << "Testing changing molecules...";
+
+    t.start();
+
+    BOOST_CHECK( not cljff.change(mols) );
+    BOOST_CHECK( not ljff_a_b.change(mols) );
+
+    ms = t.elapsed();
+
+    qDebug() << "Changing nothing took" << ms << "ms";
+
+    t.start();
+
+    BOOST_CHECK( not ffields.change(mols) );
+
+    ms = t.elapsed();
+
+    qDebug() << "Changing nothing took" << ms << "ms";
 
     qDebug() << "Finished TestForceFields tests...";
 

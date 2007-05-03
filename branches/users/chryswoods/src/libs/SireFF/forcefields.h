@@ -104,6 +104,9 @@ public:
     bool change(const PartialMolecule &molecule);
     bool change(const QHash<MoleculeID,PartialMolecule> &molecules);
 
+    template<class T>
+    bool change(const T &molecules);
+
     bool addTo( ForceFieldID ffid, const FFBase::Group &group,
                 const PartialMolecule &molecule,
                 const ParameterMap &map = ParameterMap() );
@@ -149,6 +152,12 @@ private:
     /** All of the forcefields in this group, indexed by their ID */
     QHash<ForceFieldID, ForceField> ffields;
 };
+
+template<class T>
+bool ForceFields::change(const T &molecules)
+{
+    return ForceFieldsBase::change<T>(molecules);
+}
 
 }
 

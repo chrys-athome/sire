@@ -427,6 +427,7 @@ void register_ForceFieldsBase_class(){
             "total"
             , (::SireFF::FFExpression const & ( ::SireFF::ForceFieldsBase::* )(  ) const)( &::SireFF::ForceFieldsBase::total )
             , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( "change", &::SireFF::ForceFieldsBase::change< QList< ::SireMol::PartialMolecule > > )    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireFF::ForceFieldsBase >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireFF::ForceFieldsBase >,
