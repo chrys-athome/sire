@@ -30,6 +30,7 @@
 #include "SireFF/qhash_sireff.h"
 
 #include <QMap>
+#include <QDebug>
 
 #include "tostring.h"
 
@@ -110,10 +111,7 @@ ForceFields::ForceFields(const QList<ForceField> &ffields)
          it != ffields.end();
          ++it)
     {
-        if ( this->contains(it->ID()) )
-            this->set(*it);
-        else
-            this->add(*it);
+        this->add(*it);
     }
 }
 
@@ -202,50 +200,6 @@ const ForceField& ForceFields::getConstForceField(ForceFieldID ffid) const
     return this->getForceField(ffid);
 }
 
-/** Add the forcefield 'ffield' to this set. This will change
-    all of the forcefields in this set so that they contain molecules
-    that are at the same version as the molecules in 'ffield'
-
-    \throw SireFF::duplicate_forcefield
-*/
-void ForceFields::add(const ForceField &ffield)
-{
-    if ( ffields.contains(ffield.ID()) )
-        throw SireFF::duplicate_forcefield( QObject::tr(
-            "Cannot add the forcefield \"%1\" (%2 %3) to this set "
-            "as a copy of this forcefield already exists! (version == %4)")
-                .arg(ffield.name()).arg(ffield.ID())
-                .arg(ffield.version().toString(),
-                     ffields.value(ffield.ID()).version().toString()),
-                        CODELOC );
-
-    //take a copy of this set so that we can maintain the invariant
-    ForceFields orig = *this;
-
-    try
-    {
-        //ensure that all forcefields have the same version
-        //as these molecules
-        this->change( ffield.molecules() );
-
-        ffields.insert(ffield.ID(), ffield);
-
-        //record the location of all of the molecules
-        QSet<MoleculeID> molids = ffield.moleculeIDs();
-
-        //record the location of all of the molecules
-        ForceFieldsBase::addToIndex(molids, ffield.ID());
-    }
-    catch(...)
-    {
-        //something went wrong - restore the original
-        *this = orig;
-
-        //rethrow the exception
-        throw;
-    }
-}
-
 /** Set the forcefield in this group equal to 'ffield'. This
     forcefield must be contained within this group. This will
     synchronise all of the molecules so that they have the
@@ -253,11 +207,11 @@ void ForceFields::add(const ForceField &ffield)
 
     \throw SireFF::missing_forcefield
 */
-void ForceFields::set(const ForceField &ffield)
+bool ForceFields::change(const ForceField &ffield)
 {
     if ( not ffields.contains(ffield.ID()) )
         throw SireFF::missing_forcefield( QObject::tr(
-            "Cannot update the forcefield \"%1\" (%2 %3) as it does not "
+            "Cannot change the forcefield \"%1\" (%2 %3) as it does not "
             "yet exist in this set.")
                 .arg(ffield.name()).arg(ffield.ID())
                 .arg(ffield.version().toString()), CODELOC );
@@ -265,8 +219,8 @@ void ForceFields::set(const ForceField &ffield)
     //do nothing if the version numbers are the same
     const ForceField &old_ffield = this->getConstForceField(ffield.ID());
 
-    if (old_ffield.ID() == ffield.ID())
-        return;
+    if (old_ffield.version() == ffield.version())
+        return false;
 
     //take a copy of this set so that we can maintain the invariant
     ForceFields orig = *this;
@@ -278,6 +232,7 @@ void ForceFields::set(const ForceField &ffield)
 
         //update the forcefield...
         ffields.insert(ffield.ID(), ffield);
+        ForceFieldsBase::changed(ffield.ID());
 
         //record the location of, and synchronise all of the molecules
         QSet<MoleculeID> molids = ffield.moleculeIDs();
@@ -307,19 +262,67 @@ void ForceFields::set(const ForceField &ffield)
         throw;
     }
 
+    return true;
+}
+
+/** Add the forcefield 'ffield' to this set. This will change
+    all of the forcefields in this set so that they contain molecules
+    that are at the same version as the molecules in 'ffield'
+*/
+bool ForceFields::add(const ForceField &ffield)
+{
+    if ( ffields.contains(ffield.ID()) )
+    {
+        return this->change(ffield);
+    }
+
+    //take a copy of this set so that we can maintain the invariant
+    ForceFields orig = *this;
+
+    try
+    {
+        //ensure that all forcefields have the same version
+        //as these molecules
+        this->change( ffield.molecules() );
+
+        ffields.insert(ffield.ID(), ffield);
+        ForceFieldsBase::changed(ffield.ID());
+
+        //record the location of all of the molecules
+        QSet<MoleculeID> molids = ffield.moleculeIDs();
+
+        //record the location of all of the molecules
+        ForceFieldsBase::addToIndex(molids, ffield.ID());
+    }
+    catch(...)
+    {
+        //something went wrong - restore the original
+        *this = orig;
+
+        //rethrow the exception
+        throw;
+    }
+
+    return true;
 }
 
 /** Remove the forcefield with ID == ffid. This will also remove
     any molecules contained in that forcefield, and any expressions
     that depend on that forcefield. */
-void ForceFields::remove(ForceFieldID ffid)
+bool ForceFields::remove(ForceFieldID ffid)
 {
-    ForceFieldsBase::removeFromIndex(ffid);
-    ffields.remove(ffid);
+    if (ffields.contains(ffid))
+    {
+        ForceFieldsBase::removeFromIndex(ffid);
+        ffields.remove(ffid);
+        return true;
+    }
+    else
+        return false;
 }
 
 /** Remove all forcefields that are called 'ffname' */
-void ForceFields::remove(const QString &ffname)
+bool ForceFields::remove(const QString &ffname)
 {
     QSet<ForceFieldID> ffids;
 
@@ -331,10 +334,89 @@ void ForceFields::remove(const QString &ffname)
             ffids.insert(it.key());
     }
 
+    if (ffids.isEmpty())
+        return false;
+
     foreach( ForceFieldID ffid, ffids )
     {
         this->remove(ffid);
     }
+
+    return true;
+}
+
+/** Add the expression 'ff_equation' to the list of expressions in
+    this forcefield
+
+    \throw SireFF::duplicate_function
+    \throw SireFF::missing_forcefield
+    \throw SireFF::missing_component
+    \throw SireError::dependency_error
+*/
+void ForceFields::add(const FFExpression &ff_equation)
+{
+    ForceFieldsBase::add(ff_equation);
+}
+
+/** Add a whole load of equations to this set.
+
+    \throw SireFF::duplicate_function
+    \throw SireFF::missing_forcefield
+    \throw SireFF::missing_component
+    \throw SireError::dependency_error
+*/
+void ForceFields::add(const QVector<FFExpression> &ff_equations)
+{
+    ForceFieldsBase::add(ff_equations);
+}
+
+/** Remove the equation 'component' - you can only remove an expression
+    if it is not depended on by any other expression!
+
+    \throw SireError::dependency_error
+*/
+void ForceFields::remove(const Function &function)
+{
+    ForceFieldsBase::remove(function);
+}
+
+/** Remove a whole load of expressions!
+
+    \throw SireError::dependency_error
+*/
+void ForceFields::remove(const QSet<Function> &functions)
+{
+    ForceFieldsBase::remove(functions);
+}
+
+/** Remove the equation 'ff_equation' - you can only remove an expression
+    if it is not depended on by any other expression!
+
+    \throw SireError::dependency_error
+*/
+void ForceFields::remove(const FFExpression &ff_equation)
+{
+    ForceFieldsBase::remove(ff_equation.function());
+}
+
+/** Remove a whole load of expressions!
+
+    \throw SireError::dependency_error
+*/
+void ForceFields::remove(const QVector<FFExpression> &ff_equations)
+{
+    QSet<Function> funcs;
+
+    int nfuncs = ff_equations.count();
+    funcs.reserve(nfuncs);
+    const FFExpression *ff_array = ff_equations.constData();
+
+    for (int i=0; i<nfuncs; ++i)
+    {
+        funcs.insert( ff_array[i].function() );
+    }
+
+    ForceFieldsBase::remove(funcs);
 }
 
 /** Return all of the forcefields in this set, indexed by
@@ -456,7 +538,7 @@ bool ForceFields::change(const PartialMolecule &molecule)
                 throw;
             }
         }
-        
+
         return true;
     }
     else
@@ -537,7 +619,7 @@ bool ForceFields::change(const QHash<MoleculeID,PartialMolecule> &molecules)
             *this = ffields_orig;
             throw;
         }
-        
+
         return true;
     }
 }
@@ -590,7 +672,7 @@ bool ForceFields::addTo( ForceFieldID ffid, const FFBase::Group &group,
 
             throw;
         }
-        
+
         return changed;
     }
 }
@@ -612,11 +694,11 @@ bool ForceFields::removeFrom(ForceFieldID ffid, const FFBase::Group &group,
         {
             if (not ffield.refersTo(mol.ID()))
                 ForceFieldsBase::removeFromIndex(mol.ID(), ffid);
-                
+
             return true;
         }
     }
-    
+
     return false;
 }
 

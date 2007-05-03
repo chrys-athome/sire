@@ -178,6 +178,14 @@ void register_ForceFieldsBase_class(){
             , ( bp::arg("component") ) )    
         .def( 
             "energy"
+            , (double ( ::SireFF::ForceFieldsBase::* )( ::SireCAS::Symbol const & ) )( &::SireFF::ForceFieldsBase::energy )
+            , ( bp::arg("symbol") ) )    
+        .def( 
+            "energy"
+            , (double ( ::SireFF::ForceFieldsBase::* )( ::SireCAS::SymbolID ) )( &::SireFF::ForceFieldsBase::energy )
+            , ( bp::arg("symbolid") ) )    
+        .def( 
+            "energy"
             , (double ( ::SireFF::ForceFieldsBase::* )( ::SireFF::FFComponent const & ) )( &::SireFF::ForceFieldsBase::energy )
             , ( bp::arg("component") ) )    
         .def( 

@@ -58,6 +58,8 @@
 
 #include "SireUnits/units.h"
 
+#include "SireFF/errors.h"
+
 #include <QTime>
 
 using namespace SireTest;
@@ -83,6 +85,9 @@ void TestForceFields::initialise(test_suite *test)
 
 void TestForceFields::runTests()
 {
+    try
+    {
+
     qDebug() << "Running TestForceFields tests...";
 
     QTime t;
@@ -137,6 +142,7 @@ void TestForceFields::runTests()
     //ok, lets put all of the molecules into a single forcefield and check that
     //the energy is correct!
     InterCLJFF cljff(periodic_box, long_cutoff);
+    cljff.setName("CLJ");
 
     cljff.add(mols, cljff.parameters().coulomb() == "charges" and
                     cljff.parameters().lj() == "ljs" );
@@ -225,93 +231,96 @@ void TestForceFields::runTests()
     qDebug() << "Calculating the energy (" << nrg << ") took" << ms << "ms";
 
     qDebug() << "Testing composite forcefields...";
-    
+
     InterLJFF ljff(periodic_box, long_cutoff);
     InterCoulombFF coulff(periodic_box, long_cutoff);
-    
+
+    ljff.setName("LJ");
+    coulff.setName("Coul");
+
     ljff.add(mols, ljff.parameters().lj() == "ljs");
     coulff.add(mols, coulff.parameters().coulomb() == "charges");
-    
+
     cljff.setProperty("space", periodic_box);
     cljff.setProperty("switching function", long_cutoff);
-    
+
     t.start();
     nrg = ljff.energy();
     ms = t.elapsed();
-    
+
     qDebug() << "LJFF energy (" << nrg << ") took" << ms << "ms";
-    
+
     t.start();
     nrg = coulff.energy();
     ms = t.elapsed();
-    
+
     qDebug() << "CoulombFF energy (" << nrg << ") took" << ms << "ms";
-    
+
     BOOST_CHECK_CLOSE( cljff.energy(cljff.components().coulomb()),
                        coulff.energy(), 1e-6 );
-                       
+
     BOOST_CHECK_CLOSE( cljff.energy(cljff.components().coulomb()),
                        coulff.energy(coulff.components().coulomb()), 1e-6 );
-                       
+
     BOOST_CHECK_CLOSE( cljff.energy(cljff.components().lj()),
                        ljff.energy(), 1e-6 );
-    
+
     BOOST_CHECK_CLOSE( cljff.energy(cljff.components().lj()),
                        ljff.energy(ljff.components().lj()), 1e-6 );
 
     cljff.setProperty("space", cartesian);
     coulff.setProperty("space", cartesian);
     ljff.setProperty("space", cartesian);
-    
+
     t.start();
     nrg = ljff.energy();
     ms = t.elapsed();
-    
+
     qDebug() << "LJFF energy (" << nrg << ") took" << ms << "ms";
-    
+
     t.start();
     nrg = coulff.energy();
     ms = t.elapsed();
-    
+
     qDebug() << "CoulombFF energy (" << nrg << ") took" << ms << "ms";
-    
+
     BOOST_CHECK_CLOSE( cljff.energy(cljff.components().coulomb()),
                        coulff.energy(), 1e-6 );
-                       
+
     BOOST_CHECK_CLOSE( cljff.energy(cljff.components().coulomb()),
                        coulff.energy(coulff.components().coulomb()), 1e-6 );
-                       
+
     BOOST_CHECK_CLOSE( cljff.energy(cljff.components().lj()),
                        ljff.energy(), 1e-6 );
-    
+
     BOOST_CHECK_CLOSE( cljff.energy(cljff.components().lj()),
                        ljff.energy(ljff.components().lj()), 1e-6 );
 
     cljff.setProperty("switching function", short_cutoff);
     coulff.setProperty("switching function", short_cutoff);
     ljff.setProperty("switching function", short_cutoff);
-    
+
     t.start();
     nrg = ljff.energy();
     ms = t.elapsed();
-    
+
     qDebug() << "LJFF energy (" << nrg << ") took" << ms << "ms";
-    
+
     t.start();
     nrg = coulff.energy();
     ms = t.elapsed();
-    
+
     qDebug() << "CoulombFF energy (" << nrg << ") took" << ms << "ms";
-    
+
     BOOST_CHECK_CLOSE( cljff.energy(cljff.components().coulomb()),
                        coulff.energy(), 1e-6 );
-                       
+
     BOOST_CHECK_CLOSE( cljff.energy(cljff.components().coulomb()),
                        coulff.energy(coulff.components().coulomb()), 1e-6 );
-                       
+
     BOOST_CHECK_CLOSE( cljff.energy(cljff.components().lj()),
                        ljff.energy(), 1e-6 );
-    
+
     BOOST_CHECK_CLOSE( cljff.energy(cljff.components().lj()),
                        ljff.energy(ljff.components().lj()), 1e-6 );
 
@@ -320,38 +329,42 @@ void TestForceFields::runTests()
     InterGroupCLJFF cljff_a_b(periodic_box, long_cutoff);
     InterGroupLJFF ljff_a_b(periodic_box, long_cutoff);
     InterGroupCoulombFF coulff_a_b(periodic_box, long_cutoff);
-    
+
+    cljff_a_b.setName("CLJ{A,B}");
+    ljff_a_b.setName("LJ{A,B}");
+    coulff_a_b.setName("Coul{A,B}");
+
     //divide the molecules evenly between both groups...
     QList<Molecule> a_mols = mols.mid(0, mols.count() / 2);
     QList<Molecule> b_mols = mols.mid(mols.count() / 2);
-    
-    cljff_a_b.addToA(a_mols, cljff_a_b.parameters().coulomb() == "charges" and 
+
+    cljff_a_b.addToA(a_mols, cljff_a_b.parameters().coulomb() == "charges" and
                              cljff_a_b.parameters().lj() == "ljs");
-    cljff_a_b.addToB(b_mols, cljff_a_b.parameters().coulomb() == "charges" and 
+    cljff_a_b.addToB(b_mols, cljff_a_b.parameters().coulomb() == "charges" and
                              cljff_a_b.parameters().lj() == "ljs");
 
     coulff_a_b.addToA(a_mols, coulff_a_b.parameters().coulomb() == "charges");
     coulff_a_b.addToB(b_mols, coulff_a_b.parameters().coulomb() == "charges");
-    
+
     ljff_a_b.addToA(a_mols, ljff_a_b.parameters().lj() == "ljs");
     ljff_a_b.addToB(b_mols, ljff_a_b.parameters().lj() == "ljs");
 
     t.start();
     nrg = cljff_a_b.energy();
     ms = t.elapsed();
-    
+
     qDebug() << "CLJFF energy (" << nrg << ") took" << ms << "ms";
 
     t.start();
     nrg = coulff_a_b.energy();
     ms = t.elapsed();
-    
+
     qDebug() << "CoulFF energy (" << nrg << ") took" << ms << "ms";
 
     t.start();
     nrg = ljff_a_b.energy();
     ms = t.elapsed();
-    
+
     qDebug() << "LJFF energy (" << nrg << ") took" << ms << "ms";
 
     BOOST_CHECK_CLOSE( cljff_a_b.energy( cljff_a_b.components().coulomb() ),
@@ -361,136 +374,284 @@ void TestForceFields::runTests()
 
     InterCLJFF cljff_a(periodic_box, long_cutoff);
     InterCLJFF cljff_b(periodic_box, long_cutoff);
-    
-    cljff_a.add(a_mols, cljff_a.parameters().coulomb() == "charges" and 
+
+    cljff_a.setName("CLJ{A}");
+    cljff_b.setName("CLJ{B}");
+
+    cljff_a.add(a_mols, cljff_a.parameters().coulomb() == "charges" and
                         cljff_a.parameters().lj() == "ljs");
-    cljff_b.add(b_mols, cljff_b.parameters().coulomb() == "charges" and 
+    cljff_b.add(b_mols, cljff_b.parameters().coulomb() == "charges" and
                         cljff_b.parameters().lj() == "ljs");
-                        
+
     InterCoulombFF coulff_a(periodic_box, long_cutoff);
     InterCoulombFF coulff_b(periodic_box, long_cutoff);
-    
+
+    coulff_a.setName("Coul{A}");
+    coulff_b.setName("COul{B}");
+
     coulff_a.add(a_mols, coulff_a.parameters().coulomb() == "charges" );
     coulff_b.add(b_mols, coulff_b.parameters().coulomb() == "charges" );
-    
+
     InterLJFF ljff_a(periodic_box, long_cutoff);
     InterLJFF ljff_b(periodic_box, long_cutoff);
-    
+
+    ljff_a.setName("LJ{A}");
+    ljff_b.setName("LJ{B}");
+
     ljff_a.add(a_mols, ljff_a.parameters().lj() == "ljs" );
     ljff_b.add(b_mols, ljff_b.parameters().lj() == "ljs" );
 
     qDebug() << "Checking the sum of group energies...";
-    
+
     cljff.setProperty( "space", periodic_box );
     cljff.setProperty( "switching function", long_cutoff );
-    
+
     coulff.setProperty( "space", periodic_box );
     coulff.setProperty( "switching function", long_cutoff );
-    
+
     ljff.setProperty( "space", periodic_box );
     ljff.setProperty( "switching function", long_cutoff );
-    
+
     t.start();
     nrg = cljff_a_b.energy() + cljff_a.energy() + cljff_b.energy();
     ms = t.elapsed();
-    
+
     BOOST_CHECK_CLOSE( nrg, cljff.energy(), 1e-6 );
-    
+
     qDebug() << "CLJFF energy (" << nrg << ") took" << ms << "ms";
-    
+
     t.start();
     nrg = coulff_a_b.energy() + coulff_a.energy() + coulff_b.energy();
     ms = t.elapsed();
-    
+
     BOOST_CHECK_CLOSE( nrg, coulff.energy(), 1e-6 );
-    
+
     qDebug() << "CoulFF energy (" << nrg << ") took" << ms << "ms";
-    
+
     t.start();
     nrg = ljff_a_b.energy() + ljff_a.energy() + ljff_b.energy();
     ms = t.elapsed();
-    
+
     BOOST_CHECK_CLOSE( nrg, ljff.energy(), 1e-6 );
-    
+
     qDebug() << "LJFF energy (" << nrg << ") took" << ms << "ms";
-    
+
     cljff.setProperty( "space", cartesian );
     cljff_a.setProperty( "space", cartesian );
     cljff_b.setProperty( "space", cartesian );
     cljff_a_b.setProperty( "space", cartesian );
-    
+
     coulff.setProperty( "space", cartesian );
     coulff_a.setProperty( "space", cartesian );
     coulff_b.setProperty( "space", cartesian );
     coulff_a_b.setProperty( "space", cartesian );
-    
+
     ljff.setProperty( "space", cartesian );
     ljff_a.setProperty( "space", cartesian );
     ljff_b.setProperty( "space", cartesian );
     ljff_a_b.setProperty( "space", cartesian );
-    
+
     t.start();
     nrg = cljff_a_b.energy() + cljff_a.energy() + cljff_b.energy();
     ms = t.elapsed();
-    
+
     BOOST_CHECK_CLOSE( nrg, cljff.energy(), 1e-6 );
-    
+
     qDebug() << "CLJFF energy (" << nrg << ") took" << ms << "ms";
-    
+
     t.start();
     nrg = coulff_a_b.energy() + coulff_a.energy() + coulff_b.energy();
     ms = t.elapsed();
-    
+
     BOOST_CHECK_CLOSE( nrg, coulff.energy(), 1e-6 );
-    
+
     qDebug() << "CoulFF energy (" << nrg << ") took" << ms << "ms";
-    
+
     t.start();
     nrg = ljff_a_b.energy() + ljff_a.energy() + ljff_b.energy();
     ms = t.elapsed();
-    
+
     BOOST_CHECK_CLOSE( nrg, ljff.energy(), 1e-6 );
-    
+
     qDebug() << "LJFF energy (" << nrg << ") took" << ms << "ms";
-    
+
     cljff.setProperty( "switching function", short_cutoff );
     cljff_a.setProperty( "switching function", short_cutoff );
     cljff_b.setProperty( "switching function", short_cutoff );
     cljff_a_b.setProperty( "switching function", short_cutoff );
-    
+
     coulff.setProperty( "switching function", short_cutoff );
     coulff_a.setProperty( "switching function", short_cutoff );
     coulff_b.setProperty( "switching function", short_cutoff );
     coulff_a_b.setProperty( "switching function", short_cutoff );
-    
+
     ljff.setProperty( "switching function", short_cutoff );
     ljff_a.setProperty( "switching function", short_cutoff );
     ljff_b.setProperty( "switching function", short_cutoff );
     ljff_a_b.setProperty( "switching function", short_cutoff );
-    
+
     t.start();
     nrg = cljff_a_b.energy() + cljff_a.energy() + cljff_b.energy();
     ms = t.elapsed();
-    
+
     BOOST_CHECK_CLOSE( nrg, cljff.energy(), 1e-6 );
-    
+
     qDebug() << "CLJFF energy (" << nrg << ") took" << ms << "ms";
-    
+
     t.start();
     nrg = coulff_a_b.energy() + coulff_a.energy() + coulff_b.energy();
     ms = t.elapsed();
-    
+
     BOOST_CHECK_CLOSE( nrg, coulff.energy(), 1e-6 );
-    
+
     qDebug() << "CoulFF energy (" << nrg << ") took" << ms << "ms";
-    
+
     t.start();
     nrg = ljff_a_b.energy() + ljff_a.energy() + ljff_b.energy();
     ms = t.elapsed();
-    
+
     BOOST_CHECK_CLOSE( nrg, ljff.energy(), 1e-6 );
-    
+
     qDebug() << "LJFF energy (" << nrg << ") took" << ms << "ms";
 
+    qDebug() << "Testing the ForceFields class...";
+
+    ForceFields ffields;
+
+    BOOST_CHECK_EQUAL( ffields.energy(), 0 );
+    BOOST_CHECK_EQUAL( ffields.forceFields().count(), 0 );
+    BOOST_CHECK_EQUAL( ffields.forceFieldIDs().count(), 0 );
+
+    BOOST_CHECK( ffields.add(cljff) );
+
+    BOOST_CHECK_EQUAL( ffields.energy(), cljff.energy() );
+    BOOST_CHECK_EQUAL( ffields.forceFields().count(), 1 );
+    BOOST_CHECK( ffields.forceFields().contains(cljff.ID()) );
+    BOOST_CHECK_EQUAL( ffields.forceFieldIDs().count(), 1 );
+    BOOST_CHECK( ffields.forceFieldIDs().contains(cljff.ID()) );
+
+    BOOST_CHECK( ffields.add(ljff) );
+
+    BOOST_CHECK_EQUAL( ffields.energy(), cljff.energy() + ljff.energy()  );
+    BOOST_CHECK_EQUAL( ffields.forceFields().count(), 2 );
+    BOOST_CHECK( ffields.forceFields().contains(ljff.ID()) );
+    BOOST_CHECK_EQUAL( ffields.forceFieldIDs().count(), 2 );
+    BOOST_CHECK( ffields.forceFieldIDs().contains(ljff.ID()) );
+
+    BOOST_CHECK( ffields.add(coulff) );
+
+    BOOST_CHECK_EQUAL( ffields.energy(), cljff.energy() + ljff.energy() +
+                                         coulff.energy()  );
+    BOOST_CHECK_EQUAL( ffields.forceFields().count(), 3 );
+    BOOST_CHECK( ffields.forceFields().contains(coulff.ID()) );
+    BOOST_CHECK_EQUAL( ffields.forceFieldIDs().count(), 3 );
+    BOOST_CHECK( ffields.forceFieldIDs().contains(coulff.ID()) );
+
+    BOOST_CHECK( ffields.add(ljff_a_b) );
+
+    BOOST_CHECK_EQUAL( ffields.energy(), cljff.energy() + ljff.energy() +
+                                         coulff.energy() + ljff_a_b.energy()  );
+    BOOST_CHECK_EQUAL( ffields.forceFields().count(), 4 );
+    BOOST_CHECK( ffields.forceFields().contains(ljff_a_b.ID()) );
+    BOOST_CHECK_EQUAL( ffields.forceFieldIDs().count(), 4 );
+    BOOST_CHECK( ffields.forceFieldIDs().contains(ljff_a_b.ID()) );
+
+    qDebug() << "Testing forcefield expressions...";
+
+    BOOST_CHECK_CLOSE( ffields.energy( cljff.components().coulomb() +
+                                       ljff_a_b.components().total() ),
+                       cljff.energy(cljff.components().coulomb()) + ljff_a_b.energy(),
+                       1e-6 );
+
+    Symbol lambda("lambda");
+
+    FFExpression ffexp( "T1",
+                        cljff.components().coulomb() +
+                        lambda * ljff_a_b.components().total() );
+
+    ffields.add(ffexp);
+    ffields.setParameter(lambda, 0.5);
+
+    qDebug() << ffexp.toString();
+
+    Values vals;
+    vals.add( lambda == 0.5 );
+
+    vals += cljff.energies();
+    vals += ljff_a_b.energies();
+
+    BOOST_CHECK_CLOSE( ffexp.evaluate(vals),
+                       cljff.energy(cljff.components().coulomb()) +
+                       0.5 * ljff_a_b.energy(ljff_a_b.components().total()),
+                       1e-6 );
+
+    BOOST_CHECK_CLOSE( ffexp.evaluate(vals), ffields.energy(ffexp.function()), 1e-6 );
+
+    vals.add( lambda == 0.3 );
+    ffields.setParameter(lambda, 0.3);
+
+    BOOST_CHECK_CLOSE( ffexp.evaluate(vals), ffields.energy(ffexp.function()), 1e-6 );
+
+    ffields.setTotal( ffexp );
+
+    BOOST_CHECK_CLOSE( ffexp.evaluate(vals),
+                       cljff.energy(cljff.components().coulomb()) +
+                       0.3 * ljff_a_b.energy(ljff_a_b.components().total()),
+                       1e-6 );
+
+    BOOST_CHECK_CLOSE( ffexp.evaluate(vals), ffields.energy(), 1e-6 );
+
+    FFExpression ffexp2( "T2",
+                         (lambda*ffexp.function()) + cljff_a_b.components().coulomb()
+                           - 5 * ljff_b.components().lj() );
+
+    BOOST_CHECK( ffields.add(cljff_a_b) );
+    BOOST_CHECK( ffields.add(ljff_b) );
+
+    vals = ffields.energies();
+
+    qDebug() << "All forcefield values...";
+    for (QHash<SymbolID,double>::const_iterator it = vals.values().constBegin();
+         it != vals.values().constEnd();
+         ++it)
+    {
+        qDebug() << Symbol(it.key()).toString() << "==" << *it;
+    }
+
+    BOOST_CHECK_CLOSE( vals.value(ffexp.function()),
+                       cljff.energy(cljff.components().coulomb()) +
+                       0.3 * ljff_a_b.energy(ljff_a_b.components().total()),
+                       1e-6 );
+
+    qDebug() << ffexp2.toString();
+
+    try
+    {
+        ffields.add(ffexp2);
+    }
+    catch(const SireFF::missing_forcefield&)
+    {
+        qDebug() << "Caught expected exception caused by missing"
+                 << "forcefields in function!";
+    }
+
+    BOOST_CHECK_CLOSE( ffexp2.evaluate(vals),
+                       (0.3 * (cljff.energy(cljff.components().coulomb()) +
+                               0.3 * ljff_a_b.energy(ljff_a_b.components().total()))
+                       ) + cljff_a_b.energy(cljff_a_b.components().coulomb())
+                         - 5 * ljff_b.energy(ljff_b.components().lj()),
+                       1e-6 );
+
+    BOOST_CHECK_CLOSE( ffields.energy(ffexp2), ffexp2.evaluate(vals), 1e-6 );
+
+
+
     qDebug() << "Finished TestForceFields tests...";
+
+    }
+    catch(const SireError::exception &error)
+    {
+        qDebug() << error.toString();
+        throw;
+    }
 }

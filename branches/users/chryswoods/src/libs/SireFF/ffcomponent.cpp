@@ -103,12 +103,12 @@ FFComponent::FFComponent()
             : Function(), ffid(0)
 {}
 
-QString getName(const FFBase &ffbase)
+static QString getName(const FFBase &ffbase)
 {
     return QString("E_{%1[%2]}").arg(ffbase.name()).arg(ffbase.ID());
 }
 
-QString getName(const FFBase &ffbase, const QString &component_name)
+static QString getName(const FFBase &ffbase, const QString &component_name)
 {
     return QString("E_{%1[%3]}_{%2}").arg(ffbase.name(), component_name)
                                      .arg(ffbase.ID());
@@ -117,7 +117,7 @@ QString getName(const FFBase &ffbase, const QString &component_name)
 /** Construct an FFComponent that represents the total energy
     of the passed forcefield */
 FFComponent::FFComponent(const FFBase &ffbase)
-            : Function(getName(ffbase)),
+            : Function(::getName(ffbase)),
               ffid(ffbase.ID())
 {}
 
@@ -125,14 +125,14 @@ FFComponent::FFComponent(const FFBase &ffbase)
     of the passed forcefield based on the supplied symbols */
 FFComponent::FFComponent(const FFBase &ffbase,
                          const Symbols &symbols)
-            : Function(getName(ffbase), symbols), ffid(ffbase.ID())
+            : Function(::getName(ffbase), symbols), ffid(ffbase.ID())
 {}
 
 /** Construct an FFComponent that represents the total energy
     of the passed forcefield based on the supplied symbols */
 FFComponent::FFComponent(const FFBase &ffbase,
                          const Symbol &sym0)
-            : Function(getName(ffbase),
+            : Function(::getName(ffbase),
                        sym0),
               ffid(ffbase.ID())
 {}
@@ -141,7 +141,7 @@ FFComponent::FFComponent(const FFBase &ffbase,
     of the passed forcefield based on the supplied symbols */
 FFComponent::FFComponent(const FFBase &ffbase,
                          const Symbol &sym0, const Symbol &sym1)
-            : Function(getName(ffbase),
+            : Function(::getName(ffbase),
                        sym0, sym1),
               ffid(ffbase.ID())
 {}
@@ -150,7 +150,7 @@ FFComponent::FFComponent(const FFBase &ffbase,
     of the passed forcefield based on the supplied symbols */
 FFComponent::FFComponent(const FFBase &ffbase,
                          const Symbol &sym0, const Symbol &sym1, const Symbol &sym2)
-            : Function(getName(ffbase),
+            : Function(::getName(ffbase),
                        sym0, sym1, sym2),
               ffid(ffbase.ID())
 {}
@@ -160,7 +160,7 @@ FFComponent::FFComponent(const FFBase &ffbase,
 FFComponent::FFComponent(const FFBase &ffbase,
                          const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
                          const Symbol &sym3)
-            : Function(getName(ffbase),
+            : Function(::getName(ffbase),
                        sym0, sym1, sym2,
                        sym3),
               ffid(ffbase.ID())
@@ -171,7 +171,7 @@ FFComponent::FFComponent(const FFBase &ffbase,
 FFComponent::FFComponent(const FFBase &ffbase,
                          const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
                          const Symbol &sym3, const Symbol &sym4)
-            : Function(getName(ffbase),
+            : Function(::getName(ffbase),
                        sym0, sym1, sym2,
                        sym3, sym4),
               ffid(ffbase.ID())
@@ -182,7 +182,7 @@ FFComponent::FFComponent(const FFBase &ffbase,
 FFComponent::FFComponent(const FFBase &ffbase,
                          const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
                          const Symbol &sym3, const Symbol &sym4, const Symbol &sym5)
-            : Function(getName(ffbase),
+            : Function(::getName(ffbase),
                        sym0, sym1, sym2,
                        sym3, sym4, sym5),
               ffid(ffbase.ID())
@@ -194,7 +194,7 @@ FFComponent::FFComponent(const FFBase &ffbase,
                          const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
                          const Symbol &sym3, const Symbol &sym4, const Symbol &sym5,
                          const Symbol &sym6)
-            : Function(getName(ffbase),
+            : Function(::getName(ffbase),
                        sym0, sym1, sym2,
                        sym3, sym4, sym5,
                        sym6),
@@ -207,7 +207,7 @@ FFComponent::FFComponent(const FFBase &ffbase,
                          const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
                          const Symbol &sym3, const Symbol &sym4, const Symbol &sym5,
                          const Symbol &sym6, const Symbol &sym7)
-            : Function(getName(ffbase),
+            : Function(::getName(ffbase),
                        sym0, sym1, sym2,
                        sym3, sym4, sym5,
                        sym6, sym7),
@@ -220,7 +220,7 @@ FFComponent::FFComponent(const FFBase &ffbase,
                          const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
                          const Symbol &sym3, const Symbol &sym4, const Symbol &sym5,
                          const Symbol &sym6, const Symbol &sym7, const Symbol &sym8)
-            : Function(getName(ffbase),
+            : Function(::getName(ffbase),
                        sym0, sym1, sym2,
                        sym3, sym4, sym5,
                        sym6, sym7, sym8),
@@ -234,7 +234,7 @@ FFComponent::FFComponent(const FFBase &ffbase,
                          const Symbol &sym3, const Symbol &sym4, const Symbol &sym5,
                          const Symbol &sym6, const Symbol &sym7, const Symbol &sym8,
                          const Symbol &sym9)
-            : Function(getName(ffbase),
+            : Function(::getName(ffbase),
                        sym0, sym1, sym2,
                        sym3, sym4, sym5,
                        sym6, sym7, sym8,
@@ -246,7 +246,7 @@ FFComponent::FFComponent(const FFBase &ffbase,
     'component_name' of the passed forcefield */
 FFComponent::FFComponent(const FFBase &ffbase,
                          const QString &component_name)
-            : Function(getName(ffbase,component_name)),
+            : Function(::getName(ffbase,component_name)),
               ffid(ffbase.ID())
 {}
 
@@ -254,7 +254,7 @@ FFComponent::FFComponent(const FFBase &ffbase,
     of the passed forcefield based on the supplied symbols */
 FFComponent::FFComponent(const FFBase &ffbase, const QString &component_name,
                          const Symbols &symbols)
-            : Function(getName(ffbase,component_name), symbols),
+            : Function(::getName(ffbase,component_name), symbols),
               ffid(ffbase.ID())
 {}
 
@@ -262,7 +262,7 @@ FFComponent::FFComponent(const FFBase &ffbase, const QString &component_name,
     of the passed forcefield based on the supplied symbols */
 FFComponent::FFComponent(const FFBase &ffbase, const QString &component_name,
                          const Symbol &sym0)
-            : Function(getName(ffbase,component_name),
+            : Function(::getName(ffbase,component_name),
                        sym0),
               ffid(ffbase.ID())
 {}
@@ -272,7 +272,7 @@ FFComponent::FFComponent(const FFBase &ffbase, const QString &component_name,
     passed forcefield based on the supplied symbols */
 FFComponent::FFComponent(const FFBase &ffbase, const QString &component_name,
                          const Symbol &sym0, const Symbol &sym1)
-            : Function(getName(ffbase,component_name),
+            : Function(::getName(ffbase,component_name),
                        sym0, sym1),
               ffid(ffbase.ID())
 {}
@@ -282,7 +282,7 @@ FFComponent::FFComponent(const FFBase &ffbase, const QString &component_name,
     passed forcefield based on the supplied symbols */
 FFComponent::FFComponent(const FFBase &ffbase, const QString &component_name,
                          const Symbol &sym0, const Symbol &sym1, const Symbol &sym2)
-            : Function(getName(ffbase,component_name),
+            : Function(::getName(ffbase,component_name),
                        sym0, sym1, sym2),
               ffid(ffbase.ID())
 {}
@@ -293,7 +293,7 @@ FFComponent::FFComponent(const FFBase &ffbase, const QString &component_name,
 FFComponent::FFComponent(const FFBase &ffbase, const QString &component_name,
                          const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
                          const Symbol &sym3)
-            : Function(getName(ffbase,component_name),
+            : Function(::getName(ffbase,component_name),
                        sym0, sym1, sym2,
                        sym3),
               ffid(ffbase.ID())
@@ -305,7 +305,7 @@ FFComponent::FFComponent(const FFBase &ffbase, const QString &component_name,
 FFComponent::FFComponent(const FFBase &ffbase, const QString &component_name,
                          const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
                          const Symbol &sym3, const Symbol &sym4)
-            : Function(getName(ffbase,component_name),
+            : Function(::getName(ffbase,component_name),
                        sym0, sym1, sym2,
                        sym3, sym4),
               ffid(ffbase.ID())
@@ -317,7 +317,7 @@ FFComponent::FFComponent(const FFBase &ffbase, const QString &component_name,
 FFComponent::FFComponent(const FFBase &ffbase, const QString &component_name,
                          const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
                          const Symbol &sym3, const Symbol &sym4, const Symbol &sym5)
-            : Function(getName(ffbase,component_name),
+            : Function(::getName(ffbase,component_name),
                        sym0, sym1, sym2,
                        sym3, sym4, sym5),
               ffid(ffbase.ID())
@@ -330,7 +330,7 @@ FFComponent::FFComponent(const FFBase &ffbase, const QString &component_name,
                          const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
                          const Symbol &sym3, const Symbol &sym4, const Symbol &sym5,
                          const Symbol &sym6)
-            : Function(getName(ffbase,component_name),
+            : Function(::getName(ffbase,component_name),
                        sym0, sym1, sym2,
                        sym3, sym4, sym5,
                        sym6),
@@ -344,7 +344,7 @@ FFComponent::FFComponent(const FFBase &ffbase, const QString &component_name,
                          const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
                          const Symbol &sym3, const Symbol &sym4, const Symbol &sym5,
                          const Symbol &sym6, const Symbol &sym7)
-            : Function(getName(ffbase,component_name),
+            : Function(::getName(ffbase,component_name),
                        sym0, sym1, sym2,
                        sym3, sym4, sym5,
                        sym6, sym7),
@@ -358,7 +358,7 @@ FFComponent::FFComponent(const FFBase &ffbase, const QString &component_name,
                          const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
                          const Symbol &sym3, const Symbol &sym4, const Symbol &sym5,
                          const Symbol &sym6, const Symbol &sym7, const Symbol &sym8)
-            : Function(getName(ffbase,component_name),
+            : Function(::getName(ffbase,component_name),
                        sym0, sym1, sym2,
                        sym3, sym4, sym5,
                        sym6, sym7, sym8),
@@ -373,7 +373,7 @@ FFComponent::FFComponent(const FFBase &ffbase, const QString &component_name,
                          const Symbol &sym3, const Symbol &sym4, const Symbol &sym5,
                          const Symbol &sym6, const Symbol &sym7, const Symbol &sym8,
                          const Symbol &sym9)
-            : Function(getName(ffbase,component_name),
+            : Function(::getName(ffbase,component_name),
                        sym0, sym1, sym2,
                        sym3, sym4, sym5,
                        sym6, sym7, sym8,

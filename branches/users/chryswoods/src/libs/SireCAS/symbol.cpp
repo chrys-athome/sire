@@ -39,6 +39,8 @@
 #include "complexvalues.h"
 #include "values.h"
 
+#include "SireCAS/errors.h"
+
 #include "SireStream/datastream.h"
 
 using namespace SireStream;
@@ -46,12 +48,24 @@ using namespace SireCAS;
 
 typedef struct
 {
-QMutex idmutex;
 QHash<QString,SymbolID> name2id;
 SymbolID lastid;
 } SymbolReg;
 
 static SymbolReg *registry = 0;
+
+static QMutex global_reg_mutex;
+
+static SymbolReg& getRegistry()
+{
+    if (registry == 0)
+    {
+        registry = new SymbolReg();
+        registry->lastid = 0;
+    }
+
+    return *registry;
+}
 
 /** Return an ID for the symbol with representation 'rep'. This
     creates a new ID if there is no symbol currently registered with
@@ -61,22 +75,41 @@ SymbolID Symbol::getNewID(const QString &rep)
     if (rep.isNull() or rep.isEmpty())
         return 0;
 
-    if (registry == 0)
-    {
-        registry = new SymbolReg();
-        registry->lastid = 0;
-    }
+    QMutexLocker lkr(&global_reg_mutex);
 
-    QMutexLocker lkr(&(registry->idmutex));
+    SymbolReg &registry = getRegistry();
 
-    if (registry->name2id.contains(rep))
-        return registry->name2id.value(rep);
+    if (registry.name2id.contains(rep))
+        return registry.name2id.value(rep);
     else
     {
-        registry->lastid++;
-        registry->name2id.insert( rep, registry->lastid );
-        return registry->lastid;
+        registry.lastid++;
+        registry.name2id.insert( rep, registry.lastid );
+        return registry.lastid;
     }
+}
+
+/** Return the name of the symbol with ID == symid
+
+    \throw SireCAS::invalid_symbol
+*/
+QString Symbol::getName(SymbolID symid)
+{
+    QMutexLocker lkr(&global_reg_mutex);
+
+    SymbolReg &registry = getRegistry();
+
+    for (QHash<QString,SymbolID>::const_iterator it = registry.name2id.constBegin();
+         it != registry.name2id.constEnd();
+         ++it)
+    {
+        if (*it == symid)
+            return it.key();
+    }
+
+    throw SireCAS::invalid_symbol( QObject::tr(
+              "There is no symbol with ID == %1.")
+                  .arg(symid), CODELOC );
 }
 
 static const RegisterMetaType<Symbol> r_symbol;
@@ -118,6 +151,11 @@ QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Symbol &sym)
 Symbol::Symbol() : ExBase(), id(0), stringrep(QString::null)
 {}
 
+/** Construct a symbol from the passed ID number */
+Symbol::Symbol(SymbolID symid)
+       : ExBase(), id(symid), stringrep( Symbol::getName(symid) )
+{}
+
 /** Construct a new symbol, with string representation 'rep' */
 Symbol::Symbol(const QString &rep)
        : ExBase(), id( Symbol::getNewID(rep) ), stringrep(rep)
@@ -138,6 +176,12 @@ Symbol& Symbol::operator=(const Symbol &other)
     id = other.id;
     stringrep = other.stringrep;
     return *this;
+}
+
+/** Assignment operator */
+Symbol& Symbol::operator=(SymbolID symid)
+{
+    return this->operator=( Symbol(symid) );
 }
 
 /** Comparison operator */

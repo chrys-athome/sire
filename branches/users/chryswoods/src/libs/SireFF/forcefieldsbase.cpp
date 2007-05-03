@@ -30,6 +30,7 @@
 #include "SireFF/qhash_sireff.h"
 
 #include <QMap>
+#include <QString>
 
 #include "tostring.h"
 
@@ -158,7 +159,7 @@ ExpressionInfo::ExpressionInfo(const FFExpression &expression,
             const ExpressionInfo &dep_exprinfo = ff_equations[it->ID()];
 
             const FFExpression &dep_expr = dep_exprinfo.expression();
-            const FFComponent &dep_func = dep_expr.function();
+            const Function &dep_func = dep_exprinfo.function();
 
             if ( done_funcs.contains(dep_func.ID()) )
                 continue;
@@ -342,7 +343,7 @@ ForceFieldsBase& ForceFieldsBase::operator=(const ForceFieldsBase &other)
         ff_params = other.ff_params;
         cached_energies = other.cached_energies;
         total_id = other.total_id;
-    
+
         //copy the rest of the forcefield's data - this is designed
         //to work regardless of the type of the forcefield
         this->_pvt_copy(other);
@@ -358,9 +359,9 @@ ForceFieldsBase& ForceFieldsBase::operator=(const ForceFieldsBase &other)
 ForceField ForceFieldsBase::forceField(ForceFieldID ffid) const
 {
     QHash<ForceFieldID,ForceField> ffields = this->forceFields();
-    
+
     QHash<ForceFieldID,ForceField>::const_iterator it = ffields.constFind(ffid);
-    
+
     if (it == ffields.constEnd())
         throw SireFF::missing_forcefield( QObject::tr(
                 "There is no forcefield with ID == %1 (valid IDs == %2)")
@@ -374,34 +375,34 @@ ForceField ForceFieldsBase::forceField(ForceFieldID ffid) const
 
     \throw SireFF::missing_forcefield
 */
-QHash<ForceFieldID,ForceField> 
+QHash<ForceFieldID,ForceField>
 ForceFieldsBase::forceFields(const QSet<ForceFieldID> &ffids) const
 {
     QHash<ForceFieldID,ForceField> ffields = this->forceFields();
-    
+
     QSet<ForceFieldID> missing_ff;
-    
+
     foreach (ForceFieldID ffid, ffids)
     {
         if (not ffields.contains(ffid))
             missing_ff.insert(ffid);
     }
-    
+
     if (not ffids.isEmpty())
         throw SireFF::missing_forcefield( QObject::tr(
             "The following forcefields are missing! %1 (valid IDs == %2)")
                 .arg( toString(missing_ff), toString(ffields.keys()) ),
                     CODELOC );
-                    
+
     if (ffids.count() == ffields.count())
         return ffields;
-        
+
     foreach (ForceFieldID ffid, ffields.keys())
     {
         if (not ffids.contains(ffid))
             ffields.remove(ffid);
     }
-    
+
     return ffields;
 }
 
@@ -459,47 +460,47 @@ QHash<Function,FFExpression> ForceFieldsBase::expressions() const
     return allexpressions;
 }
 
-/** Return the expression that match the functions in 'functions' 
+/** Return the expression that match the functions in 'functions'
 
     \throw SireFF::missing_function
 */
-QHash<Function,FFExpression> 
+QHash<Function,FFExpression>
 ForceFieldsBase::expressions(const QSet<Function> &functions) const
 {
     QSet<Function> missing_funcs;
-    
+
     foreach (Function func, functions)
     {
         if (not ff_equations.contains(func.ID()))
             missing_funcs.insert(func);
     }
-    
+
     if (not missing_funcs.isEmpty())
     {
         QSet<Function> allfuncs;
-        
+
         for (QHash<SymbolID,ExpressionInfo>::const_iterator it = ff_equations.begin();
              it != ff_equations.end();
              ++it)
         {
             allfuncs.insert( it->function() );
         }
-    
+
         throw SireFF::missing_function( QObject::tr(
                 "There is no expression matching the functions %1 in "
                 "this set. (functions include %2)")
                     .arg( toString(missing_funcs), toString(allfuncs) ),
                         CODELOC );
     }
-    
+
     QHash<Function,FFExpression> exps;
     exps.reserve(functions.count());
-    
+
     foreach (Function func, functions)
     {
         exps.insert( func, ff_equations.constFind(func.ID())->expression() );
     }
-    
+
     return exps;
 }
 
@@ -514,7 +515,7 @@ bool ForceFieldsBase::setParameter(const Symbol &param, double value)
 
         //assume that this changes all of the energies, so clear the cache
         cached_energies.clear();
-        
+
         return true;
     }
 }
@@ -631,11 +632,11 @@ double ForceFieldsBase::energy(const ExpressionInfo &expr, bool cache_result)
             else
             {
                 double nrg = dep.evaluate(nrg_components);
-                
+
                 //cache this intermediate result
                 if (cache_result)
                     cached_energies.insert(depfunc.ID(), nrg);
-                
+
                 nrg_components.set(depfunc, nrg);
             }
         }
@@ -744,6 +745,33 @@ double ForceFieldsBase::energy(const Expression &expression)
     return this->energy(expr, false);
 }
 
+/** Return the energy of the symbol 'symbol' (which may just be a single parameter!)
+
+    \throw SireFF::missing_function
+    \throw SireFF::missing_component
+*/
+double ForceFieldsBase::energy(const Symbol &symbol)
+{
+    if (symbol.isA<Function>())
+        return this->energy( symbol.asA<Function>() );
+    else
+    {
+        //is this a parameter?
+        return ff_params.value(symbol);
+    }
+}
+
+/** Return the energy of the symbol with ID 'symid' (which may just be
+    a single parameter)
+
+    \throw SireFF::missing_function
+    \throw SireFF::missing_component
+*/
+double ForceFieldsBase::energy(SymbolID symid)
+{
+    return this->energy( Symbol(symid) );
+}
+
 /** Return the total energy of the system, as calculated from the
     'total()' function. By default, the total is the straight
     sum of the energies of all components */
@@ -770,18 +798,18 @@ double ForceFieldsBase::energy()
     }
 }
 
-/** Return the energies of absolutely every component of all 
+/** Return the energies of absolutely every component of all
     of the forcefields, and of all of the forcefield expressions */
 Values ForceFieldsBase::energies()
 {
     Values nrgs;
-    
+
     //get all of the component energies of all of the forcefields
     foreach (ForceFieldID ffid, this->forceFieldIDs())
     {
         nrgs += this->getEnergies(ffid);
     }
-    
+
     //now get all of the expression energies
     for (QHash<SymbolID,ExpressionInfo>::const_iterator it = ff_equations.constBegin();
          it != ff_equations.constEnd();
@@ -789,14 +817,14 @@ Values ForceFieldsBase::energies()
     {
         nrgs.set( it->function(), this->energy(it->function()) );
     }
-    
+
     //now add on all of the energy parameters...
     nrgs += ff_params;
-    
+
     return nrgs;
 }
 
-/** Return the energies of all of the components in 'components' 
+/** Return the energies of all of the components in 'components'
 
     \throw SireFF::missing_forcefield
     \throw SireFF::missing_component
@@ -804,40 +832,40 @@ Values ForceFieldsBase::energies()
 Values ForceFieldsBase::energies(const QSet<FFComponent> &components)
 {
     Values nrgs;
-    
+
     for (QSet<FFComponent>::const_iterator it = components.begin();
          it != components.end();
          ++it)
     {
         nrgs.set( *it, this->energy(*it) );
     }
-    
+
     return nrgs;
 }
 
 /** Return the energies of all of the functions whose symbols are
     in 'components'
-    
+
     \throw SireFF::missing_forcefield
     \throw SireFF::missing_component
 */
 Values ForceFieldsBase::energies(const QSet<Function> &components)
 {
     Values nrgs;
-    
+
     for (QSet<Function>::const_iterator it = components.begin();
          it != components.end();
          ++it)
     {
         nrgs.set( *it, this->energy(*it) );
     }
-    
+
     return nrgs;
 }
 
 /** Set the property 'name' to the value 'value' in all of the forcefields
-    whose IDs are in 'ffids' 
-    
+    whose IDs are in 'ffids'
+
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
@@ -846,17 +874,17 @@ bool ForceFieldsBase::setProperty(const QSet<ForceFieldID> &ffids,
 {
     //maintain the invariant...
     ForceFields orig_ffields(*this);
-    
+
     try
     {
         bool changed = false;
-    
+
         foreach (ForceFieldID ffid, ffids)
         {
             bool this_changed = this->setProperty( ffid, name, value );
             changed = changed or this_changed;
         }
-        
+
         return changed;
     }
     catch(...)
@@ -871,18 +899,18 @@ bool ForceFieldsBase::setProperty(const QSet<ForceFieldID> &ffids,
 /** Set the property 'name' to the value 'value' in all of the forcefields
     for which this is a valid property - throws an exception if there
     are no forcefields in this group that accept this property
-     
+
     \throw SireBase::missing_property
 */
 bool ForceFieldsBase::setProperty(const QString &name, const Property &value)
 {
     QSet<ForceFieldID> ffids = this->forceFieldsWithProperty(name);
-    
+
     if (ffids.isEmpty())
         throw SireBase::missing_property( QObject::tr(
                 "There are no forcefields that accept the property \"%1\"")
                     .arg(name), CODELOC );
-                    
+
     return this->setProperty(ffids, name, value);
 }
 
@@ -892,7 +920,7 @@ bool ForceFieldsBase::setProperty(const QString &name, const Property &value)
 QHash<ForceFieldID,Property> ForceFieldsBase::getProperty(const QString &name) const
 {
     const QHash< QString, QHash<ForceFieldID,Property> > props = this->properties();
-    
+
     if (not props.contains(name))
         throw SireBase::missing_property( QObject::tr(
             "There is no property with the name \"%1\" in any of the forcefields.")
@@ -901,20 +929,20 @@ QHash<ForceFieldID,Property> ForceFieldsBase::getProperty(const QString &name) c
     return props[name];
 }
 
-/** Return the value of the property with the name 'name' in all of the 
+/** Return the value of the property with the name 'name' in all of the
     forcefields whose IDs are in 'ffids'
-    
+
     \throw SireFF::missing_forcefield
     \throw SireBase::missing_property
 */
-QHash<ForceFieldID,Property> 
+QHash<ForceFieldID,Property>
 ForceFieldsBase::getProperty(const QSet<ForceFieldID> &ffids,
                              const QString &name) const
 {
     QHash<ForceFieldID,Property> props = this->getProperty(name);
-    
+
     QSet<ForceFieldID> my_ffids = this->forceFieldIDs();
-    
+
     foreach (ForceFieldID ffid, ffids)
     {
         if (not my_ffids.contains(ffid))
@@ -922,23 +950,23 @@ ForceFieldsBase::getProperty(const QSet<ForceFieldID> &ffids,
                 "There is no forcefield with ID == %1 in this group. "
                 "Available forcefields == %2")
                     .arg(ffid).arg( toString(my_ffids)), CODELOC );
-        
+
         if (not props.contains(ffid))
             throw SireBase::missing_property( QObject::tr(
                 "The forcefield with ID == %1 does not contain the property "
                 "with name \"%2\".")
                     .arg(ffid).arg(name), CODELOC );
     }
-    
+
     if (ffids.count() == props.count())
         return props;
-        
+
     foreach (ForceFieldID ffid, props.keys())
     {
         if (not ffids.contains(ffid))
             props.remove(ffid);
     }
-    
+
     return props;
 }
 
@@ -950,27 +978,27 @@ ForceFieldsBase::getProperty(const QSet<ForceFieldID> &ffids,
 Property ForceFieldsBase::getProperty(ForceFieldID ffid, const QString &name) const
 {
     QSet<ForceFieldID> my_ffids = this->forceFieldIDs();
-    
+
     if (not my_ffids.contains(ffid))
         throw SireFF::missing_forcefield( QObject::tr(
             "There is no forcefield with ID == %1 in this group. "
             "Available forcefields == %2")
                 .arg(ffid).arg( toString(my_ffids)), CODELOC );
-    
+
     const QHash< QString, QHash<ForceFieldID,Property> > props = this->properties();
-    
+
     if (not props.contains(name) or not props[name].contains(ffid))
         throw SireBase::missing_property( QObject::tr(
             "The forcefield with ID == %1 does not contain a property "
             "with name \"%2\".")
                 .arg(ffid).arg(name), CODELOC );
-                
+
     return props[name][ffid];
 }
 
 /** Return the values of all properties in the forcefields whose
-    IDs are in 'ffids' 
-    
+    IDs are in 'ffids'
+
     \throw SireFF::missing_forcefield
 */
 QHash< QString, QHash<ForceFieldID,Property> >
@@ -985,9 +1013,9 @@ ForceFieldsBase::properties(const QSet<ForceFieldID> &ffids) const
                 "There is no forcefield with ID == %1 in this group.")
                     .arg(ffid), CODELOC );
     }
-    
+
     QHash< QString, QHash<ForceFieldID,Property> > props = this->properties();
-    
+
     for (QHash< QString, QHash<ForceFieldID,Property> >::iterator it = props.begin();
          it != props.end();
          ++it)
@@ -998,13 +1026,13 @@ ForceFieldsBase::properties(const QSet<ForceFieldID> &ffids) const
                 it.value().remove(ffid);
         }
     }
-    
+
     foreach (QString name, props.keys())
     {
         if (props[name].isEmpty())
             props.remove(name);
     }
-    
+
     return props;
 }
 
@@ -1029,12 +1057,12 @@ bool ForceFieldsBase::containsProperty(ForceFieldID ffid, const QString &name) c
 QSet<ForceFieldID> ForceFieldsBase::forceFieldsWithProperty(const QString &name) const
 {
     QSet<ForceFieldID> ffids = this->properties().value(name).keys().toSet();
-    
+
     if (ffids.isEmpty())
         throw SireBase::missing_property( QObject::tr(
             "No forcefield in this group contains a property with name \"%1\".")
                 .arg(name), CODELOC );
-                
+
     return ffids;
 }
 
@@ -1050,11 +1078,11 @@ bool ForceFieldsBase::change(const QHash<MoleculeID,PartialMolecule> &molecules)
 
     //maintain the invariant
     ForceFields orig_ffields(*this);
-    
+
     try
     {
         bool changed = false;
-    
+
         for (QHash<MoleculeID,PartialMolecule>::const_iterator it = molecules.begin();
              it != molecules.end();
              ++it)
@@ -1062,7 +1090,7 @@ bool ForceFieldsBase::change(const QHash<MoleculeID,PartialMolecule> &molecules)
             bool this_changed = this->change(*it);
             changed = changed or this_changed;
         }
-    
+
         return changed;
     }
     catch(...)
@@ -1084,14 +1112,14 @@ bool ForceFieldsBase::change(const QList<PartialMolecule> &molecules)
         else
             return false;
     }
-    
+
     //maintain the invariant
     ForceFields orig_ffields(*this);
-    
+
     try
     {
         bool changed = false;
-        
+
         for (QList<PartialMolecule>::const_iterator it = molecules.begin();
              it != molecules.end();
              ++it)
@@ -1099,7 +1127,7 @@ bool ForceFieldsBase::change(const QList<PartialMolecule> &molecules)
             bool this_changed = this->change(*it);
             changed = changed or this_changed;
         }
-        
+
         return changed;
     }
     catch(...)
@@ -1112,9 +1140,9 @@ bool ForceFieldsBase::change(const QList<PartialMolecule> &molecules)
 }
 
 /** This adds the molecule 'molecule' to the forcefield with ID == ffid.
-    This synchronises all forcefields in this group to have the same 
+    This synchronises all forcefields in this group to have the same
     version of the molecule as that which is to be added.
-    
+
     \throw SireFF::missing_forcefield
 */
 bool ForceFieldsBase::add( ForceFieldID ffid,
@@ -1125,10 +1153,10 @@ bool ForceFieldsBase::add( ForceFieldID ffid,
 }
 
 /** Add all of the molecules listed in 'molecules' to the forcefield
-    with ID == ffid. This synchronises all of the added molecules in 
-    all of the forcefields to have the same version as the added 
+    with ID == ffid. This synchronises all of the added molecules in
+    all of the forcefields to have the same version as the added
     molecules.
-    
+
     \throw SireFF::missing_forcefield
 */
 bool ForceFieldsBase::add( ForceFieldID ffid,
@@ -1138,10 +1166,10 @@ bool ForceFieldsBase::add( ForceFieldID ffid,
     return this->addTo( ffid, FFBase::Groups::main(), molecules, map );
 }
 
-/** Add the molecule 'molecule' to all of the forcefields whose IDs are 
+/** Add the molecule 'molecule' to all of the forcefields whose IDs are
     in 'ffids' - this synchronises the molecules to all have the same
     version as the added molecule.
-    
+
     \throw SireFF::missing_forcefield
 */
 bool ForceFieldsBase::add( const QSet<ForceFieldID> &ffids,
@@ -1157,17 +1185,17 @@ bool ForceFieldsBase::add( const QSet<ForceFieldID> &ffids,
 
     //maintain the invariant
     ForceFields orig_ffields(*this);
-    
+
     try
     {
         bool changed = this->change(molecule);
-    
+
         foreach (ForceFieldID ffid, ffids)
         {
             bool this_changed = this->add(ffid, molecule, map);
             changed = changed or this_changed;
         }
-        
+
         return changed;
     }
     catch(...)
@@ -1181,7 +1209,7 @@ bool ForceFieldsBase::add( const QSet<ForceFieldID> &ffids,
 
 /** Add all of the molecules in 'molecules' to the forcefields whose
     IDs are in 'ffids'
-    
+
     \throw SireFF::missing_forcefield
 */
 bool ForceFieldsBase::add( const QSet<ForceFieldID> &ffids,
@@ -1205,11 +1233,11 @@ bool ForceFieldsBase::add( const QSet<ForceFieldID> &ffids,
 
     //maintain the invariant
     ForceFields orig_ffields(*this);
-    
+
     try
     {
         bool changed = this->change(molecules);
-    
+
         foreach (ForceFieldID ffid, ffids)
         {
             for (QList<PartialMolecule>::const_iterator it = molecules.begin();
@@ -1220,7 +1248,7 @@ bool ForceFieldsBase::add( const QSet<ForceFieldID> &ffids,
                 changed = changed or this_changed;
             }
         }
-        
+
         return changed;
     }
     catch(...)
@@ -1237,9 +1265,9 @@ void ForceFieldsBase::clearIndex()
     index.clear();
 }
 
-/** Add the molecules in 'molecules' to the group 'group' in the 
+/** Add the molecules in 'molecules' to the group 'group' in the
     forcefield with ID == ffid
-    
+
     \throw SireFF::missing_forcefield
     \throw SireFF::missing_group
 */
@@ -1256,13 +1284,13 @@ bool ForceFieldsBase::addTo( ForceFieldID ffid, const FFBase::Group &group,
 
     //maintain the invariant
     ForceFields orig_ffields(*this);
-    
+
     try
     {
         //change all of the forcefields so that they contain the same
         //version of the molecules in 'molecules'
         bool changed = this->change(molecules);
-    
+
         for (QList<PartialMolecule>::const_iterator it = molecules.begin();
              it != molecules.end();
              ++it)
@@ -1270,7 +1298,7 @@ bool ForceFieldsBase::addTo( ForceFieldID ffid, const FFBase::Group &group,
             bool this_changed = this->addTo(ffid, group, *it, map);
             changed = changed or this_changed;
         }
-        
+
         return changed;
     }
     catch(...)
@@ -1324,17 +1352,17 @@ bool ForceFieldsBase::addTo( const QSet<FFGroupID> &ffgroupids,
 
     //maintain the invariant
     ForceFields orig_ffields(*this);
-    
+
     try
     {
         bool changed = this->change(molecule);
-    
+
         foreach (FFGroupID ffgroupid, ffgroupids)
         {
             bool this_changed = this->addTo(ffgroupid, molecule, map);
             changed = changed or this_changed;
         }
-        
+
         return changed;
     }
     catch(...)
@@ -1348,7 +1376,7 @@ bool ForceFieldsBase::addTo( const QSet<FFGroupID> &ffgroupids,
 
 /** Add the molecules in 'molecules' to the groups whose IDs are
     in 'ffgroupids'
-    
+
     \throw SireFF::missing_forcefield
     \throw SireFF::missing_group
 */
@@ -1373,11 +1401,11 @@ bool ForceFieldsBase::addTo( const QSet<FFGroupID> &ffgroupids,
 
     //maintain the invariant
     ForceFields orig_ffields(*this);
-    
+
     try
     {
         bool changed = this->change(molecules);
-        
+
         foreach( FFGroupID ffgroupid, ffgroupids )
         {
             for (QList<PartialMolecule>::const_iterator it = molecules.begin();
@@ -1388,7 +1416,7 @@ bool ForceFieldsBase::addTo( const QSet<FFGroupID> &ffgroupids,
                 changed = changed or this_changed;
             }
         }
-        
+
         return changed;
     }
     catch(...)
@@ -1402,7 +1430,7 @@ bool ForceFieldsBase::addTo( const QSet<FFGroupID> &ffgroupids,
 
 /** Add the molecules in 'molecules' to the groups whose IDs are
     in 'ffgroupids'
-    
+
     \throw SireFF::missing_forcefield
     \throw SireFF::missing_group
 */
@@ -1417,7 +1445,7 @@ bool ForceFieldsBase::addTo( const QSet<FFGroupID> &ffgroupids,
 bool ForceFieldsBase::remove(const PartialMolecule &molecule)
 {
     QSet<ForceFieldID> ffids = this->forceFieldsReferringTo(molecule.ID());
-    
+
     if (not ffids.isEmpty())
         return this->remove(ffids, molecule);
     else
@@ -1436,17 +1464,17 @@ bool ForceFieldsBase::remove(const QList<PartialMolecule> &molecules)
 
     //maintain the invariant
     ForceFields orig_ffields(*this);
-    
+
     try
     {
         bool changed = false;
-    
+
         for (QList<PartialMolecule>::const_iterator it = molecules.begin();
              it != molecules.end();
              ++it)
         {
             QSet<ForceFieldID> ffids = this->forceFieldsReferringTo(it->ID());
-            
+
             foreach( ForceFieldID ffid, ffids )
             {
                 if (this->refersTo(it->ID(), ffid))
@@ -1456,7 +1484,7 @@ bool ForceFieldsBase::remove(const QList<PartialMolecule> &molecules)
                 }
             }
         }
-        
+
         return changed;
     }
     catch(...)
@@ -1468,7 +1496,7 @@ bool ForceFieldsBase::remove(const QList<PartialMolecule> &molecules)
     }
 }
 
-/** Remove the molecule 'molecule' from the forcefield with ID == ffid 
+/** Remove the molecule 'molecule' from the forcefield with ID == ffid
 
     \throw SireFF::missing_forcefield
 */
@@ -1481,7 +1509,7 @@ bool ForceFieldsBase::remove(ForceFieldID ffid, const PartialMolecule &molecule)
 }
 
 /** Remove the molecules in 'molecules' from the forcefield with ID == ffid
-  
+
     \throw SireFF::missing_forcefield
 */
 bool ForceFieldsBase::remove(ForceFieldID ffid,
@@ -1490,9 +1518,9 @@ bool ForceFieldsBase::remove(ForceFieldID ffid,
     return this->removeFrom( ffid, FFBase::Groups::main(), molecules );
 }
 
-/** Remove the molecule 'molecule' from all forcefields whose IDs are 
+/** Remove the molecule 'molecule' from all forcefields whose IDs are
     in 'ffids'
-    
+
     \throw SireFF::missing_forcefield
 */
 bool ForceFieldsBase::remove(const QSet<ForceFieldID> &ffids,
@@ -1507,11 +1535,11 @@ bool ForceFieldsBase::remove(const QSet<ForceFieldID> &ffids,
 
     //maintain the invariant
     ForceFields orig_ffields(*this);
-    
+
     try
     {
         bool changed = false;
-    
+
         foreach (ForceFieldID ffid, ffids)
         {
             if (this->refersTo(molecule.ID(), ffid))
@@ -1520,7 +1548,7 @@ bool ForceFieldsBase::remove(const QSet<ForceFieldID> &ffids,
                 changed = changed or this_changed;
             }
         }
-        
+
         return changed;
     }
     catch(...)
@@ -1531,10 +1559,10 @@ bool ForceFieldsBase::remove(const QSet<ForceFieldID> &ffids,
         return false;
     }
 }
-                             
-/** Remove all of the molecules in 'molecules' from all of the 
-    forcefields whose IDs are in 'ffids' 
-    
+
+/** Remove all of the molecules in 'molecules' from all of the
+    forcefields whose IDs are in 'ffids'
+
     \throw SireFF::missing_forcefield
 */
 bool ForceFieldsBase::remove(const QSet<ForceFieldID> &ffids,
@@ -1554,14 +1582,14 @@ bool ForceFieldsBase::remove(const QSet<ForceFieldID> &ffids,
         else
             return false;
     }
-    
+
     //maintain the invariant
     ForceFields orig_ffields(*this);
-    
+
     try
     {
         bool changed = false;
-    
+
         foreach (ForceFieldID ffid, ffids)
         {
             for (QList<PartialMolecule>::const_iterator it = molecules.begin();
@@ -1575,7 +1603,7 @@ bool ForceFieldsBase::remove(const QSet<ForceFieldID> &ffids,
                 }
             }
         }
-        
+
         return changed;
     }
     catch(...)
@@ -1589,7 +1617,7 @@ bool ForceFieldsBase::remove(const QSet<ForceFieldID> &ffids,
 
 /** Remove all of the molecules in 'molecules' from the group 'group'
     in the forcefield with ID == ffid
-    
+
     \throw SireFF::missing_forcefield
     \throw SireFF::missing_group
 */
@@ -1603,14 +1631,14 @@ bool ForceFieldsBase::removeFrom(ForceFieldID ffid, const FFBase::Group &group,
         else
             return false;
     }
-    
+
     //maintain the invariant
     ForceFields orig_ffields(*this);
-    
+
     try
     {
         bool changed = false;
-    
+
         for (QList<PartialMolecule>::const_iterator it = molecules.begin();
              it != molecules.end();
              ++it)
@@ -1621,7 +1649,7 @@ bool ForceFieldsBase::removeFrom(ForceFieldID ffid, const FFBase::Group &group,
                 changed = changed or this_changed;
             }
         }
-        
+
         return changed;
     }
     catch(...)
@@ -1643,10 +1671,10 @@ bool ForceFieldsBase::removeFrom(const FFGroupID &ffgroupid,
 {
     return this->removeFrom(ffgroupid.ID(), ffgroupid.group(), molecule);
 }
-                                 
-/** Remove the molecules in 'molecules' from the group with 
+
+/** Remove the molecules in 'molecules' from the group with
     ID == ffgroupid
-    
+
     \throw SireFF::missing_forcefield
     \throw SireFF::missing_group
 */
@@ -1658,7 +1686,7 @@ bool ForceFieldsBase::removeFrom(const FFGroupID &ffgroupid,
 
 /** Remove the molecule 'molecule' from all of the groups whose
     IDs are in 'ffgroupids'
-    
+
     \throw SireFF::missing_forcefield
     \throw SireFF::missing_group
 */
@@ -1672,14 +1700,14 @@ bool ForceFieldsBase::removeFrom(const QSet<FFGroupID> &ffgroupids,
         else
             return false;
     }
-    
+
     //maintain the invariant
     ForceFields orig_ffields(*this);
-    
+
     try
     {
         bool changed = false;
-    
+
         foreach (FFGroupID ffgroupid, ffgroupids)
         {
             if (this->refersTo(molecule.ID(), ffgroupid.ID()))
@@ -1688,7 +1716,7 @@ bool ForceFieldsBase::removeFrom(const QSet<FFGroupID> &ffgroupids,
                 changed = changed or this_changed;
             }
         }
-        
+
         return changed;
     }
     catch(...)
@@ -1702,7 +1730,7 @@ bool ForceFieldsBase::removeFrom(const QSet<FFGroupID> &ffgroupids,
 
 /** Remove all of the molecules in 'molecules' from all of the groups
     whose IDs are in 'ffgroupids'
-    
+
     \throw SireFF::missing_forcefield
     \throw SireFF::missing_group
 */
@@ -1723,14 +1751,14 @@ bool ForceFieldsBase::removeFrom(const QSet<FFGroupID> &ffgroupids,
         else
             return false;
     }
-    
+
     //maintain the invariant
     ForceFields orig_ffields(*this);
-    
+
     try
     {
         bool changed = false;
-    
+
         foreach (FFGroupID ffgroupid, ffgroupids)
         {
             for (QList<PartialMolecule>::const_iterator it = molecules.begin();
@@ -1744,7 +1772,7 @@ bool ForceFieldsBase::removeFrom(const QSet<FFGroupID> &ffgroupids,
                 }
             }
         }
-        
+
         return changed;
     }
     catch(...)
@@ -1756,7 +1784,7 @@ bool ForceFieldsBase::removeFrom(const QSet<FFGroupID> &ffgroupids,
     }
 }
 
-/** Return whether or not any of the forcefields in this group 
+/** Return whether or not any of the forcefields in this group
     refer to (contain any part of) the molecule with ID == molid */
 bool ForceFieldsBase::refersTo(MoleculeID molid) const
 {
@@ -1768,7 +1796,7 @@ bool ForceFieldsBase::refersTo(MoleculeID molid) const
 bool ForceFieldsBase::refersTo(MoleculeID molid, ForceFieldID ffid) const
 {
     QHash< MoleculeID, QSet<ForceFieldID> >::const_iterator it = index.find(molid);
-    
+
     return (it != index.end()) and it->contains(ffid);
 }
 
@@ -1777,7 +1805,7 @@ bool ForceFieldsBase::refersTo(MoleculeID molid, ForceFieldID ffid) const
 bool ForceFieldsBase::refersTo(MoleculeID molid, const QSet<ForceFieldID> &ffids) const
 {
     QHash< MoleculeID, QSet<ForceFieldID> >::const_iterator it = index.find(molid);
-    
+
     if (it != index.end())
     {
         foreach (ForceFieldID ffid, ffids)
@@ -1786,7 +1814,7 @@ bool ForceFieldsBase::refersTo(MoleculeID molid, const QSet<ForceFieldID> &ffids
                 return true;
         }
     }
-    
+
     return false;
 }
 
@@ -1800,17 +1828,17 @@ bool ForceFieldsBase::refersTo(MoleculeID molid, const FFGroupID &ffgroupid) con
         return false;
 }
 
-/** Return whether or not any of the groups whose IDs are in 'ffgroupids' 
+/** Return whether or not any of the groups whose IDs are in 'ffgroupids'
     refer to (contain any part of) the molecule with ID ==  molid */
-bool ForceFieldsBase::refersTo(MoleculeID molid, 
+bool ForceFieldsBase::refersTo(MoleculeID molid,
                                const QSet<FFGroupID> &ffgroupids) const
 {
     QHash< MoleculeID, QSet<ForceFieldID> >::const_iterator it = index.find(molid);
-    
+
     if (it != index.end())
     {
         QSet<ForceFieldID> ffids = *it;
-    
+
         foreach (FFGroupID ffgroupid, ffgroupids)
         {
             if ( ffids.contains(ffgroupid.ID()) )
@@ -1820,7 +1848,7 @@ bool ForceFieldsBase::refersTo(MoleculeID molid,
             }
         }
     }
-    
+
     return false;
 }
 
@@ -1845,13 +1873,13 @@ bool ForceFieldsBase::contains(const PartialMolecule &molecule) const
         return false;
 }
 
-/** Return whether or not the forcefield with ID == ffid contains  
-    at least all of the selected atoms of any version of the 
+/** Return whether or not the forcefield with ID == ffid contains
+    at least all of the selected atoms of any version of the
     molecule 'molecule'
-    
+
     \throw SireFF::missing_forcefield
 */
-bool ForceFieldsBase::contains(const PartialMolecule &molecule, 
+bool ForceFieldsBase::contains(const PartialMolecule &molecule,
                                ForceFieldID ffid) const
 {
     if ( this->refersTo(molecule.ID(),ffid) )
@@ -1866,23 +1894,23 @@ bool ForceFieldsBase::contains(const PartialMolecule &molecule,
 /** Return whether or not the forcefields whose IDs are in 'ffids'
     between them contain at least all of the selected atoms of
     any version of the molecule 'molecule'
-    
+
     \throw SireFF::missing_forcefield
 */
 bool ForceFieldsBase::contains(const PartialMolecule &molecule,
                                const QSet<ForceFieldID> &ffids) const
 {
     QSet<ForceFieldID> ffids_referring_to_mol;
-    
+
     foreach (ForceFieldID ffid, ffids)
     {
         if (this->refersTo(molecule.ID(),ffid))
             ffids_referring_to_mol.insert(ffid);
     }
-    
+
     if (ffids.isEmpty())
         return false;
-        
+
     return this->molecule(molecule.ID(),ffids)
                     .selectedAtoms().contains(molecule.selectedAtoms());
 }
@@ -1890,7 +1918,7 @@ bool ForceFieldsBase::contains(const PartialMolecule &molecule,
 /** Return whether or not the group 'group' in the forcefield with ID == ffid
     contains at least all of the selected atoms of any version of the molecule
     'molecule'
-    
+
     \throw SireFF::missing_forcefield
     \throw SireFF::missing_group
 */
@@ -1909,7 +1937,7 @@ bool ForceFieldsBase::contains(const PartialMolecule &molecule,
 /** Return whether or not the group with ID == ffgroupid
     contains at least all of the selected atoms of any version of the molecule
     'molecule'
-    
+
     \throw SireFF::missing_forcefield
     \throw SireFF::missing_group
 */
@@ -1922,20 +1950,20 @@ bool ForceFieldsBase::contains(const PartialMolecule &molecule,
 /** Return whether or not the groups whose IDs are in 'ffgroupids'
     between them contain at least all of the selected atoms of
     any version of the molecule 'molecule'
-    
+
     \throw SireFF::missing_forcefield
 */
 bool ForceFieldsBase::contains(const PartialMolecule &molecule,
                                const QSet<FFGroupID> &ffgroupids) const
 {
     QSet<FFGroupID> groups_referring_to_mol;
-    
+
     foreach (FFGroupID ffgroupid, ffgroupids)
     {
         if (this->refersTo(molecule.ID(),ffgroupid))
             groups_referring_to_mol.insert(ffgroupid);
     }
-    
+
     if (groups_referring_to_mol.isEmpty())
         return false;
 
@@ -1945,33 +1973,33 @@ bool ForceFieldsBase::contains(const PartialMolecule &molecule,
 
 /** Return all of the IDs of forcefields that contain at least all of the
     selected atoms of any version of the molecule 'molecule' */
-QSet<ForceFieldID> 
+QSet<ForceFieldID>
 ForceFieldsBase::forceFieldsContaining(const PartialMolecule &molecule) const
 {
     QSet<ForceFieldID> ffids = this->forceFieldsReferringTo(molecule.ID());
-    
+
     foreach (ForceFieldID ffid, ffids)
     {
         if ( not this->contains(molecule, ffid) )
             ffids.remove(ffid);
     }
-    
+
     return ffids;
 }
 
-/** Return all of the IDs of forcefield groups that contain at least all of  
+/** Return all of the IDs of forcefield groups that contain at least all of
     the selected atoms of any version of the molecule 'molecule' */
-QSet<FFGroupID> 
+QSet<FFGroupID>
 ForceFieldsBase::forceFieldGroupsContaining(const PartialMolecule &molecule) const
 {
     QSet<FFGroupID> ffgroupids = this->forceFieldGroupsReferringTo(molecule.ID());
-    
+
     foreach (FFGroupID ffgroupid, ffgroupids)
     {
         if ( not this->contains(molecule, ffgroupid) )
             ffgroupids.remove(ffgroupid);
     }
-    
+
     return ffgroupids;
 }
 
@@ -1986,7 +2014,7 @@ QSet<MoleculeID> ForceFieldsBase::moleculeIDs() const
 QSet<MoleculeID> ForceFieldsBase::moleculeIDs(ForceFieldID ffid) const
 {
     QSet<MoleculeID> molids;
-    
+
     for (QHash< MoleculeID,QSet<ForceFieldID> >::const_iterator it = index.begin();
          it != index.end();
          ++it)
@@ -1994,7 +2022,7 @@ QSet<MoleculeID> ForceFieldsBase::moleculeIDs(ForceFieldID ffid) const
         if (it->contains(ffid))
             molids.insert(it.key());
     }
-    
+
     return molids;
 }
 
@@ -2005,38 +2033,38 @@ QSet<MoleculeID> ForceFieldsBase::moleculeIDs(const FFGroupID &ffgroupid) const
 }
 
 /** Return all of the atoms in the molecule with ID == molid that are
-    contained in any of the forcefields in this group 
-    
+    contained in any of the forcefields in this group
+
     \throw SireMol::missing_molecule
 */
 PartialMolecule ForceFieldsBase::molecule(MoleculeID molid) const
 {
     QSet<ForceFieldID> ffids = this->forceFieldsReferringTo(molid);
-    
+
     if (ffids.isEmpty())
         throw SireMol::missing_molecule( QObject::tr(
             "There is no molecule with ID == %1 in any of the forcefields in "
             "this group!")
                 .arg(molid), CODELOC );
-                
+
     QSet<ForceFieldID>::const_iterator it = ffids.constBegin();
-    
+
     PartialMolecule mol = this->molecule(molid, *it);
-    
+
     ++it;
-    
+
     while (it != ffids.constEnd() and not mol.selectedAtoms().selectedAll())
     {
         mol = mol.selection().add( this->molecule(molid, *it).selectedAtoms() );
         ++it;
     }
-    
+
     return mol;
 }
-                
+
 /** Return all of the atoms in the molecule with ID == molid that are
     contained in the any of the forcefields whose IDs are in 'ffids'
-    
+
     \throw SireError::invalid_arg
     \throw SireMol::missing_molecule
     \throw SireFF::missing_forcefield
@@ -2064,28 +2092,28 @@ PartialMolecule ForceFieldsBase::molecule(MoleculeID molid,
                 .arg(molid).arg( toString(ffids) ), CODELOC );
 
     QSet<ForceFieldID>::const_iterator it = ffids_referring_to_mol.constBegin();
-    
+
     PartialMolecule mol = this->molecule(molid, *it);
-    
+
     ++it;
-    
-    while (it != ffids_referring_to_mol.constEnd() and 
+
+    while (it != ffids_referring_to_mol.constEnd() and
                     not mol.selectedAtoms().selectedAll())
     {
         mol = mol.selection().add( this->molecule(molid, *it).selectedAtoms() );
         ++it;
     }
-    
+
     return mol;
 }
 
-/** Return the selected atoms of the molecule with ID == molid that 
+/** Return the selected atoms of the molecule with ID == molid that
     are in the forcefield with ID == ffid
-    
+
     \throw SireMol::missing_molecule
     \throw SireFF::missing_forcefield
 */
-PartialMolecule ForceFieldsBase::molecule(MoleculeID molid, 
+PartialMolecule ForceFieldsBase::molecule(MoleculeID molid,
                                           ForceFieldID ffid) const
 {
     if (not this->refersTo(molid, ffid))
@@ -2097,22 +2125,22 @@ PartialMolecule ForceFieldsBase::molecule(MoleculeID molid,
     return this->molecule(molid, ffid, FFBase::Groups::main());
 }
 
-/** Return the selected atoms of the molecule with ID == molid in the 
-    group with ID == ffgroupid 
-    
+/** Return the selected atoms of the molecule with ID == molid in the
+    group with ID == ffgroupid
+
     \throw SireMol::missing_molecule
     \throw SireFF::missing_forcefield
     \throw SireFF::missing_group
 */
-PartialMolecule ForceFieldsBase::molecule(MoleculeID molid, 
+PartialMolecule ForceFieldsBase::molecule(MoleculeID molid,
                                           const FFGroupID &ffgroupid) const
 {
     return this->molecule(molid, ffgroupid.ID(), ffgroupid.group());
 }
 
-/** Return the selected atoms of the molecule with ID == molid in the 
+/** Return the selected atoms of the molecule with ID == molid in the
     groups whose IDs are in 'ffgroupids'
-    
+
     \throw SireMol::missing_molecule
     \throw SireFF::missing_forcefield
     \throw SireFF::missing_group
@@ -2123,7 +2151,7 @@ PartialMolecule ForceFieldsBase::molecule(MoleculeID molid,
 {
     if (ffgroupids.isEmpty())
         throw SireError::invalid_arg( QObject::tr(
-            "You must supply at least one forcefield group ID...!"), 
+            "You must supply at least one forcefield group ID...!"),
                 CODELOC );
 
     QSet<FFGroupID> groups_referring_to_mol;
@@ -2141,22 +2169,22 @@ PartialMolecule ForceFieldsBase::molecule(MoleculeID molid,
                 .arg(molid).arg( toString(ffgroupids) ), CODELOC );
 
     QSet<FFGroupID>::const_iterator it = groups_referring_to_mol.constBegin();
-    
+
     PartialMolecule mol = this->molecule(molid, *it);
-    
+
     ++it;
-    
-    while (it != groups_referring_to_mol.constEnd() and 
+
+    while (it != groups_referring_to_mol.constEnd() and
                   not mol.selectedAtoms().selectedAll())
     {
         mol = mol.selection().add( this->molecule(molid, *it).selectedAtoms() );
         ++it;
     }
-    
+
     return mol;
 }
 
-/** Return all of the selected atoms of all of the molecules that are in 
+/** Return all of the selected atoms of all of the molecules that are in
     all of the forcefields in this group */
 QHash<MoleculeID,PartialMolecule> ForceFieldsBase::contents() const
 {
@@ -2164,50 +2192,50 @@ QHash<MoleculeID,PartialMolecule> ForceFieldsBase::contents() const
 
     QSet<MoleculeID> molids = this->moleculeIDs();
     mols.reserve(molids.count());
-    
+
     foreach (MoleculeID molid, molids)
     {
         mols.insert( molid, this->molecule(molid) );
     }
-    
+
     return mols;
 }
 
-/** Return all of the selected atoms of all of the molecules that are in 
-    the forcefield with ID == ffid 
-    
+/** Return all of the selected atoms of all of the molecules that are in
+    the forcefield with ID == ffid
+
     \throw SireFF::missing_forcefield
 */
 QHash<MoleculeID,PartialMolecule> ForceFieldsBase::contents(ForceFieldID ffid) const
 {
     QSet<MoleculeID> molids = this->moleculeIDs(ffid);
-    
+
     QHash<MoleculeID,PartialMolecule> mols;
     mols.reserve(molids.count());
-    
+
     foreach (MoleculeID molid, molids)
     {
         mols.insert( molid, this->molecule(molid, ffid) );
     }
-    
+
     return mols;
 }
 
-/** Return all of the molecules that are in the forcefields whose IDs are 
+/** Return all of the molecules that are in the forcefields whose IDs are
     in 'ffids' - this returns all parts of the molecule thtat are in any
     of the forcefields
-    
+
     \throw SireFF::missing_forcefield
 */
 QHash<MoleculeID,PartialMolecule>
 ForceFieldsBase::contents(const QSet<ForceFieldID> &ffids) const
 {
     QHash<MoleculeID,PartialMolecule> mols;
-    
+
     foreach (ForceFieldID ffid, ffids)
     {
         QHash<MoleculeID,PartialMolecule> ffmols = this->contents(ffid);
-        
+
         for (QHash<MoleculeID,PartialMolecule>::const_iterator it = ffmols.constBegin();
              it != ffmols.constEnd();
              ++it)
@@ -2215,46 +2243,46 @@ ForceFieldsBase::contents(const QSet<ForceFieldID> &ffids) const
             if (mols.contains(it.key()))
             {
                 PartialMolecule &mol = mols[it.key()];
-                
+
                 mol = mol.selection().add(it->selectedAtoms());
             }
             else
                 mols.insert( it.key(), it.value() );
         }
     }
-    
+
     return mols;
 }
 
-/** Return all of the selected atoms of all of the molecules that are in 
+/** Return all of the selected atoms of all of the molecules that are in
     the group 'group' in the forcefield with ID == ffid
-    
+
     \throw SireFF::missing_forcefield
     \throw SireFF::missing_group
 */
-QHash<MoleculeID,PartialMolecule> 
+QHash<MoleculeID,PartialMolecule>
 ForceFieldsBase::contents(ForceFieldID ffid, const FFBase::Group &group) const
 {
     QSet<MoleculeID> molids = this->moleculeIDs(ffid, group);
-    
+
     QHash<MoleculeID,PartialMolecule> mols;
     mols.reserve(molids.count());
-    
+
     foreach (MoleculeID molid, molids)
     {
         mols.insert( molid, this->molecule(molid, ffid, group) );
     }
-    
+
     return mols;
 }
 
-/** Return all of the selected atoms of all of the molecules that are in 
+/** Return all of the selected atoms of all of the molecules that are in
     the group with ID == 'ffgroupid'
-    
+
     \throw SireFF::missing_forcefield
     \throw SireFF::missing_group
 */
-QHash<MoleculeID,PartialMolecule> 
+QHash<MoleculeID,PartialMolecule>
 ForceFieldsBase::contents(const FFGroupID &ffgroupid) const
 {
     return this->contents(ffgroupid.ID(), ffgroupid.group());
@@ -2262,7 +2290,7 @@ ForceFieldsBase::contents(const FFGroupID &ffgroupid) const
 
 /** Return all of the selected atoms of all of the molecules that are
     in the groups whose IDs are in 'ffgroupids'
-    
+
     \throw SireFF::missing_forcefield
     \throw SireFF::missing_group
 */
@@ -2270,11 +2298,11 @@ QHash<MoleculeID,PartialMolecule>
 ForceFieldsBase::contents(const QSet<FFGroupID> &ffgroupids) const
 {
     QHash<MoleculeID,PartialMolecule> mols;
-    
+
     foreach (FFGroupID ffgroupid, ffgroupids)
     {
         QHash<MoleculeID,PartialMolecule> ffmols = this->contents(ffgroupid);
-        
+
         for (QHash<MoleculeID,PartialMolecule>::const_iterator it = ffmols.constBegin();
              it != ffmols.constEnd();
              ++it)
@@ -2288,7 +2316,7 @@ ForceFieldsBase::contents(const QSet<FFGroupID> &ffgroupids) const
                 mols.insert( it.key(), it.value() );
         }
     }
-    
+
     return mols;
 }
 
@@ -2299,11 +2327,11 @@ QHash<MoleculeID,PartialMolecule> ForceFieldsBase::molecules() const
     return this->contents();
 }
 
-/** Return all of the molecules that are in the forcefield with ID == ffid 
+/** Return all of the molecules that are in the forcefield with ID == ffid
 
     \throw SireFF::missing_forcefield
 */
-QHash<MoleculeID,PartialMolecule> 
+QHash<MoleculeID,PartialMolecule>
 ForceFieldsBase::molecules(ForceFieldID ffid) const
 {
     return this->contents(ffid);
@@ -2311,7 +2339,7 @@ ForceFieldsBase::molecules(ForceFieldID ffid) const
 
 /** Return all of the molecules that are in the forcefields whose IDs are
     in 'ffids'
-    
+
     \throw SireFF::missing_forcefield
 */
 QHash<MoleculeID,PartialMolecule>
@@ -2322,7 +2350,7 @@ ForceFieldsBase::molecules(const QSet<ForceFieldID> &ffids) const
 
 /** Return all of the molecules that are in the group 'group' of the forcefield
     with ID == ffid
-    
+
     \throw SireFF::missing_forcefield
     \throw SireFF::missing_group
 */
@@ -2344,7 +2372,7 @@ ForceFieldsBase::molecules(const FFGroupID &ffgroupid) const
 }
 
 /** Return all of the molecules that are in the groups whose IDs are in 'ffgroupids'
-    
+
     \throw SireFF::missing_forcefield
     \throw SireFF::missing_group
 */
@@ -2568,7 +2596,7 @@ void ForceFieldsBase::addToIndex(const QSet<MoleculeID> &molids,
 /** Internal function used to record that the molecule with ID == molid
     is in the forcefields whose IDs are in ffids (a record is made
     even if only part of the molecule is in the forcefield) */
-void ForceFieldsBase::addToIndex(MoleculeID molid, 
+void ForceFieldsBase::addToIndex(MoleculeID molid,
                                  const QSet<ForceFieldID> &ffids) throw()
 {
     index[molid].unite(ffids);
@@ -2640,6 +2668,9 @@ void ForceFieldsBase::changed(ForceFieldID ffid) throw()
             cached_energies.remove(funcid);
         }
     }
+
+    if (total_id == 0)
+        cached_energies.remove(0);
 }
 
 /** Record that all of the forcefields whose IDs are in ffids

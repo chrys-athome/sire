@@ -61,7 +61,7 @@ public:
 
     ForceFields(const QList<ForceField> &ffields);
     ForceFields(const QHash<ForceFieldID,ForceField> &ffields);
-    
+
     ForceFields(const ForceFieldsBase &other);
     ForceFields(const ForceFields &other);
 
@@ -70,23 +70,32 @@ public:
     ForceFields& operator=(const ForceFieldsBase &other);
     ForceFields& operator=(const ForceFields &other);
 
-    void add(const ForceField &ffield);
-    void set(const ForceField &ffield);
-    
-    void remove(ForceFieldID ffid);
-    void remove(const QString &ffname);
+    bool add(const ForceField &ffield);
+    bool change(const ForceField &ffield);
+
+    bool remove(ForceFieldID ffid);
+    bool remove(const QString &ffname);
+
+    void add(const FFExpression &ff_equation);
+    void add(const QVector<FFExpression> &ff_equations);
+
+    void remove(const Function &function);
+    void remove(const QSet<Function> &functions);
+
+    void remove(const FFExpression &ff_equation);
+    void remove(const QVector<FFExpression> &ff_equations);
 
     QHash<ForceFieldID,ForceField> forceFields() const;
 
     QSet<ForceFieldID> forceFieldIDs() const;
 
-    bool setProperty(ForceFieldID ffid, const QString &name, 
+    bool setProperty(ForceFieldID ffid, const QString &name,
                      const Property &property);
-                     
+
     QHash< QString, QHash<ForceFieldID,Property> > properties() const;
-    
+
     void mustNowRecalculateFromScratch();
-    
+
     bool change(const PartialMolecule &molecule);
     bool change(const QHash<MoleculeID,PartialMolecule> &molecules);
 
@@ -113,11 +122,11 @@ public:
 
 protected:
     void reindex();
-    
+
     void _pvt_copy(const ForceFieldsBase &ffields);
-    
+
     QSet<ForceFieldID> getFFIDs(const QString &ffname) const;
-    
+
     Values getEnergies(ForceFieldID ffid);
     Values getEnergies(const QSet<ForceFieldID> &ffids);
     Values getEnergies(const QSet<FFComponent> &components);

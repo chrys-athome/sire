@@ -34,8 +34,16 @@ void register_ForceFields_class(){
         .def( bp::init< SireFF::ForceFieldsBase const & >(( bp::arg("other") )) )    
         .def( 
             "add"
-            , (void ( ::SireFF::ForceFields::* )( ::SireFF::ForceField const & ) )( &::SireFF::ForceFields::add )
+            , (bool ( ::SireFF::ForceFields::* )( ::SireFF::ForceField const & ) )( &::SireFF::ForceFields::add )
             , ( bp::arg("ffield") ) )    
+        .def( 
+            "add"
+            , (void ( ::SireFF::ForceFields::* )( ::SireFF::FFExpression const & ) )( &::SireFF::ForceFields::add )
+            , ( bp::arg("ff_equation") ) )    
+        .def( 
+            "add"
+            , (void ( ::SireFF::ForceFields::* )( ::QVector<SireFF::FFExpression> const & ) )( &::SireFF::ForceFields::add )
+            , ( bp::arg("ff_equations") ) )    
         .def( 
             "addTo"
             , (bool ( ::SireFF::ForceFields::* )( ::SireFF::ForceFieldID,::SireFF::FFBase::Group const &,::SireMol::PartialMolecule const &,::SireFF::ParameterMap const & ) )( &::SireFF::ForceFields::addTo )
@@ -48,6 +56,10 @@ void register_ForceFields_class(){
             "assertValidComponents"
             , (void ( ::SireFF::ForceFields::* )( ::SireFF::FFExpression const & ) const)( &::SireFF::ForceFields::assertValidComponents )
             , ( bp::arg("expression") ) )    
+        .def( 
+            "change"
+            , (bool ( ::SireFF::ForceFields::* )( ::SireFF::ForceField const & ) )( &::SireFF::ForceFields::change )
+            , ( bp::arg("ffield") ) )    
         .def( 
             "change"
             , (bool ( ::SireFF::ForceFields::* )( ::SireMol::PartialMolecule const & ) )( &::SireFF::ForceFields::change )
@@ -86,20 +98,32 @@ void register_ForceFields_class(){
             , ( bp::arg("molid"), bp::arg("ffid"), bp::arg("group") ) )    
         .def( 
             "remove"
-            , (void ( ::SireFF::ForceFields::* )( ::SireFF::ForceFieldID ) )( &::SireFF::ForceFields::remove )
+            , (bool ( ::SireFF::ForceFields::* )( ::SireFF::ForceFieldID ) )( &::SireFF::ForceFields::remove )
             , ( bp::arg("ffid") ) )    
         .def( 
             "remove"
-            , (void ( ::SireFF::ForceFields::* )( ::QString const & ) )( &::SireFF::ForceFields::remove )
+            , (bool ( ::SireFF::ForceFields::* )( ::QString const & ) )( &::SireFF::ForceFields::remove )
             , ( bp::arg("ffname") ) )    
+        .def( 
+            "remove"
+            , (void ( ::SireFF::ForceFields::* )( ::SireCAS::Function const & ) )( &::SireFF::ForceFields::remove )
+            , ( bp::arg("function") ) )    
+        .def( 
+            "remove"
+            , (void ( ::SireFF::ForceFields::* )( ::QSet<SireCAS::Function> const & ) )( &::SireFF::ForceFields::remove )
+            , ( bp::arg("functions") ) )    
+        .def( 
+            "remove"
+            , (void ( ::SireFF::ForceFields::* )( ::SireFF::FFExpression const & ) )( &::SireFF::ForceFields::remove )
+            , ( bp::arg("ff_equation") ) )    
+        .def( 
+            "remove"
+            , (void ( ::SireFF::ForceFields::* )( ::QVector<SireFF::FFExpression> const & ) )( &::SireFF::ForceFields::remove )
+            , ( bp::arg("ff_equations") ) )    
         .def( 
             "removeFrom"
             , (bool ( ::SireFF::ForceFields::* )( ::SireFF::ForceFieldID,::SireFF::FFBase::Group const &,::SireMol::PartialMolecule const & ) )( &::SireFF::ForceFields::removeFrom )
             , ( bp::arg("ffid"), bp::arg("group"), bp::arg("molecule") ) )    
-        .def( 
-            "set"
-            , (void ( ::SireFF::ForceFields::* )( ::SireFF::ForceField const & ) )( &::SireFF::ForceFields::set )
-            , ( bp::arg("ffield") ) )    
         .def( 
             "setProperty"
             , (bool ( ::SireFF::ForceFields::* )( ::SireFF::ForceFieldID,::QString const &,::SireBase::Property const & ) )( &::SireFF::ForceFields::setProperty )

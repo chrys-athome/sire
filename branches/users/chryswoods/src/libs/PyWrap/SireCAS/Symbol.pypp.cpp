@@ -18,6 +18,7 @@ void register_Symbol_class(){
 
     bp::class_< SireCAS::Symbol, bp::bases< SireCAS::ExBase > >( "Symbol" )    
         .def( bp::init< >() )    
+        .def( bp::init< SireCAS::SymbolID >(( bp::arg("symid") )) )    
         .def( bp::init< QString const & >(( bp::arg("rep") )) )    
         .def( 
             "ID"

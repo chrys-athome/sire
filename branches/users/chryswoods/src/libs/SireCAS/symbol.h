@@ -65,6 +65,7 @@ friend QDataStream& ::operator>>(QDataStream&, Symbol&);
 
 public:
     Symbol();
+    Symbol(SymbolID symid);
     Symbol(const QString &rep);
 
     Symbol(const Symbol &other);
@@ -72,6 +73,7 @@ public:
     ~Symbol();
 
     Symbol& operator=(const Symbol &other);
+    Symbol& operator=(SymbolID symid);
 
     /** Return the unique ID number of the symbol */
     SymbolID ID() const
@@ -143,6 +145,7 @@ public:
 protected:
 
     static SymbolID getNewID(const QString &symbol);
+    static QString getName(SymbolID symid);
 
     /** Unique ID number that is given to every symbol */
     SymbolID id;
