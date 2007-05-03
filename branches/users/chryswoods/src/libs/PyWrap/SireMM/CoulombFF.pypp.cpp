@@ -179,6 +179,15 @@ void register_CoulombFF_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        { //::SireMM::CoulombFF::properties
+        
+            typedef ::QHash<QString,SireBase::Property> ( ::SireMM::CoulombFF::*properties_function_type )(  ) const;
+            
+            CoulombFF_exposer.def( 
+                "properties"
+                , properties_function_type( &::SireMM::CoulombFF::properties ) );
+        
+        }
         { //::SireMM::CoulombFF::setProperty
         
             typedef bool ( ::SireMM::CoulombFF::*setProperty_function_type )( ::QString const &,::SireBase::Property const & ) ;

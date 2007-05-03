@@ -1295,6 +1295,19 @@ bool CoulombFF::containsProperty(const QString &name) const
            FFBase::containsProperty(name);
 }
 
+/** Return all of the properties of this forcefield, indexed by name */
+QHash<QString,Property> CoulombFF::properties() const
+{
+    QHash<QString,Property> props;
+
+    props.insert( QLatin1String("space"), this->space() );
+    props.insert( QLatin1String("switching function"), this->switchingFunction() );
+
+    props.unite( FFBase::properties() );
+
+    return props;
+}
+
 /** Register the energy components associated with this forcefield */
 void CoulombFF::registerComponents()
 {

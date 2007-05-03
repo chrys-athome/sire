@@ -157,8 +157,6 @@ ExpressionInfo::ExpressionInfo(const FFExpression &expression,
              ++it)
         {
             const ExpressionInfo &dep_exprinfo = ff_equations[it->ID()];
-
-            const FFExpression &dep_expr = dep_exprinfo.expression();
             const Function &dep_func = dep_exprinfo.function();
 
             if ( done_funcs.contains(dep_func.ID()) )
@@ -989,9 +987,9 @@ Property ForceFieldsBase::getProperty(ForceFieldID ffid, const QString &name) co
 
     if (not props.contains(name) or not props[name].contains(ffid))
         throw SireBase::missing_property( QObject::tr(
-            "The forcefield with ID == %1 does not contain a property "
-            "with name \"%2\".")
-                .arg(ffid).arg(name), CODELOC );
+            "The forcefield with ID == %1 (%2) does not contain a property "
+            "with name \"%3\".")
+                .arg(ffid).arg(forceField(ffid).what()).arg(name), CODELOC );
 
     return props[name][ffid];
 }

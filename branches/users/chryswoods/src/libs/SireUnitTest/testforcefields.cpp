@@ -558,6 +558,13 @@ void TestForceFields::runTests()
 
     qDebug() << "Testing forcefield expressions...";
 
+    BOOST_CHECK_CLOSE( ffields.energy(cljff.components().coulomb()),
+                       cljff.energy(cljff.components().coulomb()),
+                       1e-6 );
+
+    BOOST_CHECK_CLOSE( ffields.energy(ljff_a_b.components().total()),
+                       ljff_a_b.energy(ljff_a_b.components().total()), 1e-6 );
+
     BOOST_CHECK_CLOSE( ffields.energy( cljff.components().coulomb() +
                                        ljff_a_b.components().total() ),
                        cljff.energy(cljff.components().coulomb()) + ljff_a_b.energy(),
@@ -635,6 +642,13 @@ void TestForceFields::runTests()
                  << "forcefields in function!";
     }
 
+    BOOST_CHECK_CLOSE( ffields.energy(cljff_a_b.components().coulomb()),
+                       cljff_a_b.energy(cljff_a_b.components().coulomb()),
+                       1e-6 );
+
+    BOOST_CHECK_CLOSE( ffields.energy(ljff_b.components().lj()),
+                       ljff_b.energy(ljff_b.components().lj()), 1e-6 );
+
     BOOST_CHECK_CLOSE( ffexp2.evaluate(vals),
                        (0.3 * (cljff.energy(cljff.components().coulomb()) +
                                0.3 * ljff_a_b.energy(ljff_a_b.components().total()))
@@ -644,6 +658,57 @@ void TestForceFields::runTests()
 
     BOOST_CHECK_CLOSE( ffields.energy(ffexp2), ffexp2.evaluate(vals), 1e-6 );
 
+    qDebug() << "Testing changing of properties...";
+
+    ffields.setProperty("space", periodic_box);
+
+    cljff.setProperty("space", periodic_box);
+    ljff_a_b.setProperty("space", periodic_box);
+
+    BOOST_CHECK( cljff.getProperty("space") == periodic_box );
+    BOOST_CHECK( ljff_a_b.getProperty("space") == periodic_box );
+
+    BOOST_CHECK( ffields.getProperty(cljff.ID(),"space") == periodic_box );
+    BOOST_CHECK( ffields.getProperty(ljff_a_b.ID(),"space") == periodic_box );
+
+    BOOST_CHECK_CLOSE( ffields.energy(cljff.components().coulomb()),
+                       cljff.energy(cljff.components().coulomb()), 1e-6 );
+
+    BOOST_CHECK_CLOSE( ffields.energy(ljff_a_b.components().total()),
+                       ljff_a_b.energy(ljff_a_b.components().total()), 1e-6 );
+
+    BOOST_CHECK_CLOSE( ffields.energy(ffexp),
+                       cljff.energy(cljff.components().coulomb()) +
+                       0.3 * ljff_a_b.energy(ljff_a_b.components().total()),
+                       1e-6 );
+
+    ffields.setProperty("switching function", long_cutoff);
+
+    cljff.setProperty("switching function", long_cutoff);
+    ljff_a_b.setProperty("switching function", long_cutoff);
+
+    BOOST_CHECK( cljff.getProperty("switching function") == long_cutoff );
+    BOOST_CHECK( ljff_a_b.getProperty("switching function") == long_cutoff );
+
+    BOOST_CHECK( ffields.getProperty(cljff.ID(),
+                                     "switching function") == long_cutoff );
+    BOOST_CHECK( ffields.getProperty(ljff_a_b.ID(),
+                                     "switching function") == long_cutoff );
+
+    qDebug() << "Calculating lots with a long cutoff....";
+
+    BOOST_CHECK_CLOSE( ffields.energy(cljff.components().coulomb()),
+                       cljff.energy(cljff.components().coulomb()), 1e-6 );
+
+    BOOST_CHECK_CLOSE( ffields.energy(ljff_a_b.components().total()),
+                       ljff_a_b.energy(ljff_a_b.components().total()), 1e-6 );
+
+    BOOST_CHECK_CLOSE( ffields.energy(ffexp),
+                       cljff.energy(cljff.components().coulomb()) +
+                       0.3 * ljff_a_b.energy(ljff_a_b.components().total()),
+                       1e-6 );
+
+    qDebug() << "...done ;-)";
 
 
     qDebug() << "Finished TestForceFields tests...";

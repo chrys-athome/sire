@@ -442,7 +442,24 @@ QSet<ForceFieldID> ForceFields::forceFieldIDs() const
 bool ForceFields::setProperty(ForceFieldID ffid, const QString &name,
                               const Property &value)
 {
-    return this->getForceField(ffid).setProperty(name, value);
+    if (this->getForceField(ffid).setProperty(name, value))
+    {
+        ForceFieldsBase::changed(ffid);
+        return true;
+    }
+    else
+        return false;
+}
+
+bool ForceFields::setProperty(const QString &name, const Property &property)
+{
+    return ForceFieldsBase::setProperty(name, property);
+}
+
+bool ForceFields::setProperty(const QSet<ForceFieldID> &ffids,
+                              const QString &name, const Property &property)
+{
+    return ForceFieldsBase::setProperty(ffids, name, property);
 }
 
 /** Return all of the properties of all of the forcefields indexed

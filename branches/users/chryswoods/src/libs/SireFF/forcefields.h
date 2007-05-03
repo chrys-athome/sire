@@ -92,6 +92,11 @@ public:
     bool setProperty(ForceFieldID ffid, const QString &name,
                      const Property &property);
 
+    bool setProperty(const QString &name, const Property &property);
+
+    bool setProperty(const QSet<ForceFieldID> &ffids,
+                     const QString &name, const Property &property);
+
     QHash< QString, QHash<ForceFieldID,Property> > properties() const;
 
     void mustNowRecalculateFromScratch();

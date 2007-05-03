@@ -179,6 +179,15 @@ void register_LJFF_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        { //::SireMM::LJFF::properties
+        
+            typedef ::QHash<QString,SireBase::Property> ( ::SireMM::LJFF::*properties_function_type )(  ) const;
+            
+            LJFF_exposer.def( 
+                "properties"
+                , properties_function_type( &::SireMM::LJFF::properties ) );
+        
+        }
         { //::SireMM::LJFF::setProperty
         
             typedef bool ( ::SireMM::LJFF::*setProperty_function_type )( ::QString const &,::SireBase::Property const & ) ;

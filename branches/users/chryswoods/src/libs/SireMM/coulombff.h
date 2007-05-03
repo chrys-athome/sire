@@ -174,6 +174,8 @@ public:
     Property getProperty(const QString &name) const;
     bool containsProperty(const QString &name) const;
 
+    QHash<QString,Property> properties() const;
+
     /** Return the object describing the components of this
         forcefield */
     const CoulombFF::Components& components() const
