@@ -107,11 +107,6 @@ public:
 
     NewAtom& operator=(const NewAtom &other);
 
-    NewAtom& operator=(const Vector &newcoords);
-
-    NewAtom& operator+=(const Vector &delta);
-    NewAtom& operator-=(const Vector &delta);
-
     bool operator==(const NewAtom &other) const;
     bool operator!=(const NewAtom &other) const;
 
@@ -141,13 +136,6 @@ public:
     operator Vector() const;
     operator Element() const;
     operator const AtomInfo&() const;
-
-    void setCoordinates(double x, double y, double z);
-    void setCoordinates(const Vector &newcoords);
-
-    void translate(const Vector &delta);
-    void rotate(const Quaternion &quat, const Vector &point);
-    void rotate(const Matrix &rotmat, const Vector &point);
 
     bool withinBondRadii(const NewAtom &other, double err=0) const;
 

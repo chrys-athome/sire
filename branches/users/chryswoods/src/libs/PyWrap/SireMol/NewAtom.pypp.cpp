@@ -2,6 +2,7 @@
 
 // (C) Christopher Woods, GPL >=2 License
 
+#include "NewAtom.pypp.hpp"
 #include "boost/python.hpp"
 #include "siremol_headers.h"
 #include "SireMol/moleculedata.h"
@@ -12,13 +13,6 @@
 #include "SireMaths/line.h"
 #include "SireMaths/torsion.h"
 #include "SireVol/space.h"
-#include "_NewAtom__enums.pypp.hpp"
-#include "_NewAtom__unnamed_enums.pypp.hpp"
-#include "_NewAtom__classes.pypp.hpp"
-#include "_NewAtom__memfuns.pypp.hpp"
-#include "_NewAtom__memfuns_virtual.pypp.hpp"
-#include "_NewAtom__memfuns_pvirtual.pypp.hpp"
-#include "_NewAtom__protected_memfuns.pypp.hpp"
 
 namespace bp = boost::python;
 
@@ -30,29 +24,72 @@ SireMol::NewAtom __copy__(const SireMol::NewAtom &other){ return SireMol::NewAto
 
 void register_NewAtom_class(){
 
-{ //::SireMol::NewAtom
-    typedef bp::class_< SireMol::NewAtom, bp::bases< SireMol::MoleculeView > > NewAtom_exposer_t;
-    NewAtom_exposer_t NewAtom_exposer = NewAtom_exposer_t( "NewAtom" );
-    bp::scope NewAtom_scope( NewAtom_exposer );
-    NewAtom_exposer.def( bp::init< >() );
-    NewAtom_exposer.def( bp::init< SireMol::CGAtomID const &, SireMol::Molecule const & >(( bp::arg("cgatomid"), bp::arg("molecule") )) );
-    NewAtom_exposer.def( bp::init< SireMol::IDMolAtom const &, SireMol::Molecule const & >(( bp::arg("idmolatom"), bp::arg("molecule") )) );
-    NewAtom_exposer.def( bp::init< QString const &, SireMol::Residue const & >(( bp::arg("name"), bp::arg("residue") )) );
-    NewAtom_exposer.def( bp::init< SireMol::AtomID, SireMol::Residue const & >(( bp::arg("i"), bp::arg("residue") )) );
-    register_NewAtom_memfuns(NewAtom_exposer);
-    NewAtom_exposer.def( "as__scope_SireMaths_scope_Vector", &SireMol::NewAtom::operator ::SireMaths::Vector  );
-    NewAtom_exposer.def( "as__scope_SireMol_scope_AtomInfo_const__ref_", &SireMol::NewAtom::operator ::SireMol::AtomInfo const & ,bp::return_value_policy< bp::copy_const_reference >() );
-    NewAtom_exposer.def( "as__scope_SireMol_scope_Element", &SireMol::NewAtom::operator ::SireMol::Element  );
-    NewAtom_exposer.def( bp::self != bp::self );
-    NewAtom_exposer.def( bp::self += bp::other< SireMaths::Vector >() );
-    NewAtom_exposer.def( bp::self -= bp::other< SireMaths::Vector >() );
-    NewAtom_exposer.def( bp::self == bp::self );
-    NewAtom_exposer.def( "__copy__", &__copy__);
-    NewAtom_exposer.def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::NewAtom >,
-                        bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
-    NewAtom_exposer.def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::NewAtom >,
-                        bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
-    NewAtom_exposer.def( "__str__", &SirePy::__str__< ::SireMol::NewAtom > );
-}
+    bp::class_< SireMol::NewAtom, bp::bases< SireMol::MoleculeView > >( "NewAtom" )    
+        .def( bp::init< >() )    
+        .def( bp::init< SireMol::CGAtomID const &, SireMol::Molecule const & >(( bp::arg("cgatomid"), bp::arg("molecule") )) )    
+        .def( bp::init< SireMol::IDMolAtom const &, SireMol::Molecule const & >(( bp::arg("idmolatom"), bp::arg("molecule") )) )    
+        .def( bp::init< QString const &, SireMol::Residue const & >(( bp::arg("name"), bp::arg("residue") )) )    
+        .def( bp::init< SireMol::AtomID, SireMol::Residue const & >(( bp::arg("i"), bp::arg("residue") )) )    
+        .def( 
+            "ID"
+            , &::SireMol::NewAtom::ID )    
+        .def( 
+            "bondedAtoms"
+            , &::SireMol::NewAtom::bondedAtoms )    
+        .def( 
+            "bondedResidues"
+            , &::SireMol::NewAtom::bondedResidues )    
+        .def( 
+            "cgAtomID"
+            , &::SireMol::NewAtom::cgAtomID
+            , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( 
+            "coordinates"
+            , &::SireMol::NewAtom::coordinates )    
+        .def( 
+            "element"
+            , &::SireMol::NewAtom::element )    
+        .def( 
+            "idString"
+            , &::SireMol::NewAtom::idString )    
+        .def( 
+            "info"
+            , &::SireMol::NewAtom::info
+            , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( 
+            "molecule"
+            , &::SireMol::NewAtom::molecule )    
+        .def( 
+            "name"
+            , &::SireMol::NewAtom::name )    
+        .def( "as__scope_SireMaths_scope_Vector", &SireMol::NewAtom::operator ::SireMaths::Vector  )    
+        .def( "as__scope_SireMol_scope_AtomInfo_const__ref_", &SireMol::NewAtom::operator ::SireMol::AtomInfo const & ,bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( "as__scope_SireMol_scope_Element", &SireMol::NewAtom::operator ::SireMol::Element  )    
+        .def( bp::self != bp::self )    
+        .def( bp::self == bp::self )    
+        .def( 
+            "property"
+            , &::SireMol::NewAtom::property
+            , ( bp::arg("name") ) )    
+        .def( 
+            "residue"
+            , &::SireMol::NewAtom::residue )    
+        .def( 
+            "toString"
+            , &::SireMol::NewAtom::toString )    
+        .def( 
+            "version"
+            , &::SireMol::NewAtom::version
+            , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( 
+            "withinBondRadii"
+            , &::SireMol::NewAtom::withinBondRadii
+            , ( bp::arg("other"), bp::arg("err")=0 ) )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::NewAtom >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::NewAtom >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &SirePy::__str__< ::SireMol::NewAtom > );
 
 }

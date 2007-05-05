@@ -899,7 +899,7 @@ bool CLJFF::ChangedCLJMolecule::isEmpty() const
 /** Return whether nothing has changed - this will be when oldmol == newmol */
 bool CLJFF::ChangedCLJMolecule::nothingChanged() const
 {
-    return oldmol == newmol;
+    return (oldmol.isEmpty() and newmol.isEmpty()) or oldmol == newmol;
 }
 
 /** Return whether the entire molecule has changed */

@@ -106,7 +106,7 @@ nrg = molpro.energy()
 print "Scaled energy = %f kcal mol-1" % nrg
 
 #lets translate the QM molecule by 0.1 A
-qm_mol.translate( (-1.0,0.0,0.0) )
+qm_mol = Molecule(qm_mol.move().translate( (-1.0,0.0,0.0) ))
 
 molpro.change(qm_mol)
 coulff.change(qm_mol)
@@ -120,7 +120,7 @@ print "Energy = %f kcal mol-1, took %d ms" % (nrg, ms)
 print "Coulomb energy = %f kcal mol-1" % coulff.energy()
 
 #now lets translate the QM molecule back again
-qm_mol.translate( (1.0,0.0,0.0) )
+qm_mol = Molecule(qm_mol.move().translate( (1.0,0.0,0.0) ))
 
 molpro.change(qm_mol)
 coulff.change(qm_mol)
@@ -136,7 +136,7 @@ print "Coulomb energy = %f kcal mol-1" % coulff.energy()
 old_qm = molpro.energy()
 old_mm = coulff.energy()
 
-qm_mol.translate( (0.2, 0.0, 0.0) )
+qm_mol = Molecule(qm_mol.move().translate( (0.2, 0.0, 0.0) ))
 
 molpro.change(qm_mol)
 coulff.change(qm_mol)

@@ -824,7 +824,7 @@ bool LJFF::ChangedLJMolecule::isEmpty() const
 /** Return whether nothing has changed - this will be when oldmol == newmol */
 bool LJFF::ChangedLJMolecule::nothingChanged() const
 {
-    return oldmol == newmol;
+    return (oldmol.isEmpty() and newmol.isEmpty()) or oldmol == newmol;
 }
 
 /** Return whether the entire molecule has changed */

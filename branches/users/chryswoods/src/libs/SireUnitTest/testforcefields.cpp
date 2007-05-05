@@ -50,6 +50,7 @@
 #include "SireMol/partialmolecule.h"
 #include "SireMol/molecule.h"
 #include "SireMol/molecules.h"
+#include "SireMol/moleculemover.h"
 
 #include "SireVol/periodicbox.h"
 #include "SireVol/cartesian.h"
@@ -750,6 +751,41 @@ void TestForceFields::runTests()
     ms = t.elapsed();
 
     qDebug() << "Changing nothing took" << ms << "ms";
+
+    qDebug() << "Testing changing something...";
+    
+    mols[0] = mols[0].move().translate( Vector(5,0,0) );
+
+    cljff2 = InterCLJFF(periodic_box, long_cutoff);
+    
+    cljff2.add(mols, cljff2.parameters().coulomb() == "charges" and
+                     cljff2.parameters().lj() == "ljs");
+                     
+    cljff.change(mols);
+    
+    BOOST_CHECK_CLOSE(cljff2.energy(), cljff.energy(), 1e-6);
+    BOOST_CHECK_CLOSE(cljff2.energy(cljff2.components().coulomb()),
+                      cljff.energy(cljff.components().coulomb()), 1e-6);
+    BOOST_CHECK_CLOSE(cljff2.energy(cljff2.components().lj()),
+                      cljff.energy(cljff.components().lj()), 1e-6);
+
+    for (int i=5; i<10; ++i)
+    {
+        mols[i] = mols[i].move().translate( Vector(1,0,0) );
+    }
+    
+    cljff2 = InterCLJFF(periodic_box, long_cutoff);
+    
+    cljff2.add(mols, cljff2.parameters().coulomb() == "charges" and
+                     cljff2.parameters().lj() == "ljs");
+
+    cljff.change(mols);
+
+    BOOST_CHECK_CLOSE(cljff2.energy(), cljff.energy(), 1e-6);
+    BOOST_CHECK_CLOSE(cljff2.energy(cljff2.components().coulomb()),
+                      cljff.energy(cljff.components().coulomb()), 1e-6);
+    BOOST_CHECK_CLOSE(cljff2.energy(cljff2.components().lj()),
+                      cljff.energy(cljff.components().lj()), 1e-6);
 
     qDebug() << "Finished TestForceFields tests...";
 

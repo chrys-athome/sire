@@ -572,7 +572,7 @@ void InterLJFF::removeFromCurrentState(MoleculeID molid)
 /** Apply the change described by 'changed_mol' */
 bool InterLJFF::applyChange(MoleculeID molid, const ChangedLJMolecule &changed_mol)
 {
-    if (changed_mol.isEmpty())
+    if (changed_mol.nothingChanged())
         return false;
 
     if (changed_mol.newMolecule().isEmpty())

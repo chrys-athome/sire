@@ -36,6 +36,7 @@
 #include "SireVol/periodicbox.h"
 
 #include "SireMol/molecule.h"
+#include "SireMol/moleculemover.h"
 
 #include "SireIO/pdb.h"
 
@@ -104,7 +105,7 @@ void TestPeriodicBox::runTests()
 
     Molecule tip4p1 = tip4p0;
 
-    tip4p1.setCoordinates(new_coords);
+    tip4p1 = tip4p1.move().setCoordinates(new_coords);
 
     BOOST_CHECK( std::abs(box.minimumDistance(orig_coords.at(0), new_coords.at(0))) < 1e-10 );
 
@@ -128,7 +129,7 @@ void TestPeriodicBox::runTests()
     BOOST_CHECK( new_coords.count() == 1 );
     BOOST_CHECK( new_coords.at(0).count() == 4 );
 
-    tip4p1.setCoordinates(new_coords);
+    tip4p1 = tip4p1.move().setCoordinates(new_coords);
 
     BOOST_CHECK( std::abs(box.minimumDistance(orig_coords.at(0), new_coords.at(0))) < 1e-10 );
 

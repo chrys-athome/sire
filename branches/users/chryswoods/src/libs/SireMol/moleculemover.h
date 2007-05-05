@@ -32,6 +32,7 @@
 #include <QVector>
 #include <QHash>
 
+#include "atomindex.h"
 #include "moleculeview.h"
 
 SIRE_BEGIN_HEADER
@@ -47,12 +48,44 @@ QDataStream& operator>>(QDataStream&, SireMol::MoleculeMover&);
 namespace SireVol
 {
 class Space;
+class CoordGroup;
+}
+
+namespace SireMaths
+{
+class Vector;
+class Matrix;
+class Quaternion;
+class Line;
+class Angle;
+class Triangle;
+class Torsion;
 }
 
 namespace SireMol
 {
 
+class AtomIDGroup;
+class Bond;
+class Angle;
+class Dihedral;
+class Improper;
+
+class MoleculeID;
+class ResID;
+class AtomID;
+class ResNum;
+class AtomIndex;
+class CutGroupID;
+
+class WeightFunction;
+
+using SireVol::CoordGroup;
 using SireVol::Space;
+
+using SireMaths::Vector;
+using SireMaths::Matrix;
+using SireMaths::Quaternion;
 
 /** This class is used to add a nice API to the MoleculeView based classes to
     allow the movement of parts of the molecule,
@@ -98,10 +131,160 @@ public:
 
     MoleculeMover mapInto(const Space &space) const;
 
-//     MoleculeMover translate(const Vector &delta) const;
-//
-//     MoleculeMover bond(const AtomIndex &atom0, const AtomIndex &atom1,
-//                        double delta) const;
+    MoleculeMover translate(const Vector &delta) const;
+    MoleculeMover translate(const AtomIDGroup &group, 
+                            const Vector &delta) const;
+    MoleculeMover translate(const AtomIndex &atom, 
+                            const Vector &delta) const;
+    MoleculeMover translate(const QSet<AtomIndex> &atoms, 
+                            const Vector &delta) const;
+    MoleculeMover translate(ResNum resnum, const QStringList &atoms, 
+                            const Vector &delta) const;
+    MoleculeMover translate(ResNum resnum, const Vector &delta) const;
+    MoleculeMover translate(const QSet<ResNum> &resnums, 
+                            const Vector &delta) const;
+    MoleculeMover translate(ResID resid, const QStringList &atoms, 
+                            const Vector &delta) const;
+    MoleculeMover translate(ResID resid, const Vector &delta) const;
+    MoleculeMover translate(const QSet<ResID> &resids, const Vector &delta) const;
+    MoleculeMover translate(CutGroupID cgid, const Vector &delta) const;
+    MoleculeMover translate(const QSet<CutGroupID> &cgids, const Vector &delta) const;
+
+    MoleculeMover rotate(const Quaternion &quat, const Vector &point) const;
+    MoleculeMover rotate(const AtomIDGroup &group, const Quaternion &quat, 
+                         const Vector &point) const;
+    MoleculeMover rotate(const AtomIndex &atom, const Quaternion &quat, 
+                         const Vector &point) const;
+    MoleculeMover rotate(const QSet<AtomIndex> &atoms, const Quaternion &quat, 
+                         const Vector &point) const;
+    MoleculeMover rotate(ResNum resnum, const QStringList &atoms, 
+                         const Quaternion &quat, const Vector &point) const;
+    MoleculeMover rotate(ResNum resnum, const Quaternion &quat, 
+                         const Vector &point) const;
+    MoleculeMover rotate(const QSet<ResNum> &resnums, const Quaternion &quat, 
+                         const Vector &point) const;
+    MoleculeMover rotate(ResID resid, const QStringList &atoms, 
+                         const Quaternion &quat, const Vector &point) const;
+    MoleculeMover rotate(ResID resid, const Quaternion &quat, 
+                         const Vector &point) const;
+    MoleculeMover rotate(const QSet<ResID> &resids, const Quaternion &quat, 
+                         const Vector &point) const;
+    MoleculeMover rotate(CutGroupID cgid, const Quaternion &quat, 
+                         const Vector &point) const;
+    MoleculeMover rotate(const QSet<CutGroupID> &cgids, const Quaternion &quat, 
+                         const Vector &point) const;
+
+    MoleculeMover rotate(const Matrix &matrix, const Vector &point) const;
+    MoleculeMover rotate(const AtomIDGroup &group, const Matrix &matrix, 
+                         const Vector &point) const;
+    MoleculeMover rotate(const AtomIndex &atom, const Matrix &matrix, 
+                         const Vector &point) const;
+    MoleculeMover rotate(const QSet<AtomIndex> &atoms, const Matrix &matrix, 
+                         const Vector &point) const;
+    MoleculeMover rotate(ResNum resnum, const QStringList &atoms, const Matrix &matrix,
+                         const Vector &point) const;
+    MoleculeMover rotate(ResNum resnum, const Matrix &matrix, const Vector &point) const;
+    MoleculeMover rotate(const QSet<ResNum> &resnums, const Matrix &matrix, 
+                         const Vector &point) const;
+    MoleculeMover rotate(ResID resid, const QStringList &atoms, const Matrix &matrix,
+                         const Vector &point) const;
+    MoleculeMover rotate(ResID resid, const Matrix &matrix, const Vector &point) const;
+    MoleculeMover rotate(const QSet<ResID> &resids, const Matrix &matrix, 
+                         const Vector &point) const;
+    MoleculeMover rotate(CutGroupID cgid, const Matrix &matrix, 
+                         const Vector &point) const;
+    MoleculeMover rotate(const QSet<CutGroupID> &cgids, const Matrix &matrix, 
+                         const Vector &point) const;
+
+    MoleculeMover setCoordinates(CutGroupID cgid, const CoordGroup &newcoords) const;
+    MoleculeMover setCoordinates(const QHash<CutGroupID,CoordGroup> &newcoords) const;
+    MoleculeMover setCoordinates(const QVector<CoordGroup> &newcoords) const;
+
+    MoleculeMover setCoordinates(const QVector<Vector> &newcoords) const;
+
+    MoleculeMover setCoordinates(CutGroupID cgid, 
+                                 const QVector<Vector> &newcoords) const;
+    MoleculeMover setCoordinates(const QHash< CutGroupID,QVector<Vector> > 
+                                                                &newcoords) const;
+
+    MoleculeMover setCoordinates(ResNum resnum, const QVector<Vector> &newcoords) const;
+    MoleculeMover setCoordinates(const QHash< ResNum,QVector<Vector> > &newcoords) const;
+
+    MoleculeMover setCoordinates(ResID resid, const QVector<Vector> &newcoords) const;
+    MoleculeMover setCoordinates(const QHash< ResID,QVector<Vector> > &newcoords) const;
+
+    MoleculeMover setCoordinates(const AtomIndex &atom, const Vector &newcoords) const;
+    MoleculeMover setCoordinates(const QHash<AtomIndex,Vector> &newcoords) const;
+
+    MoleculeMover setCoordinates(const CGAtomID &cgatomid, 
+                                 const Vector &newcoords) const;
+    MoleculeMover setCoordinates(const QHash<CGAtomID,Vector> &newcoords) const;
+
+    MoleculeMover setCoordinates(const ResNumAtomID &resatomid, 
+                                 const Vector &newcoords) const;
+    MoleculeMover setCoordinates(const QHash<ResNumAtomID,Vector> &newcoords) const;
+
+    MoleculeMover setCoordinates(const ResIDAtomID &resatomid, 
+                                 const Vector &newcoords) const;
+    MoleculeMover setCoordinates(const QHash<ResIDAtomID,Vector> &newcoords) const;
+
+    MoleculeMover change(const Bond &bond, double delta,
+                         const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
+    MoleculeMover change(const Bond &bond, double delta, const WeightFunction &func,
+                         const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
+
+    MoleculeMover change(const Angle &angle, const SireMaths::Angle &delta,
+                         const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
+    MoleculeMover change(const Angle &angle, const SireMaths::Angle &delta,
+                         const WeightFunction &func,
+                         const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
+
+    MoleculeMover change(const Dihedral &dihedral, const SireMaths::Angle &delta,
+                         const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
+    MoleculeMover change(const Dihedral &dihedral, const SireMaths::Angle &delta,
+                         const WeightFunction &func,
+                         const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
+
+    MoleculeMover change(const Bond &bond, const SireMaths::Angle &delta,
+                         const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
+    MoleculeMover change(const Bond &bond, const SireMaths::Angle &delta,
+                         const WeightFunction &func,
+                         const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
+
+    MoleculeMover change(const Improper &improper, const SireMaths::Angle &delta,
+                         const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
+    MoleculeMover change(const Improper &improper, const SireMaths::Angle &delta,
+                         const WeightFunction &func,
+                         const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
+
+    MoleculeMover set(const Bond &bond, double lgth,
+                      const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
+    MoleculeMover set(const Bond &bond, double lgth, const WeightFunction &func,
+                      const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
+
+    MoleculeMover set(const SireMol::Angle &angle, const SireMaths::Angle &ang,
+                      const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
+    MoleculeMover set(const SireMol::Angle &angle, const SireMaths::Angle &ang,
+                      const WeightFunction &func,
+                      const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
+
+    MoleculeMover set(const Dihedral &dihedral, const SireMaths::Angle &ang,
+                      const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
+    MoleculeMover set(const Dihedral &dihedral, const SireMaths::Angle &ang,
+                      const WeightFunction &func,
+                      const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
+
+    MoleculeMover setAll(const Dihedral &dihedral, const SireMaths::Angle &ang,
+                         const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
+    MoleculeMover setAll(const Dihedral &dihedral, const SireMaths::Angle &ang,
+                         const WeightFunction &func,
+                         const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
+
+    MoleculeMover set(const Improper &improper, const SireMaths::Angle &ang,
+                      const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
+    MoleculeMover set(const Improper &improper, const SireMaths::Angle &ang,
+                      const WeightFunction &func,
+                      const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
 };
 
 }

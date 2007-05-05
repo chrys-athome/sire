@@ -2,6 +2,7 @@
 
 // (C) Christopher Woods, GPL >=2 License
 
+#include "Molecule.pypp.hpp"
 #include "boost/python.hpp"
 #include "siremol_headers.h"
 #include "SireMol/moleculedata.h"
@@ -12,22 +13,6 @@
 #include "SireMaths/line.h"
 #include "SireMaths/torsion.h"
 #include "SireVol/space.h"
-#include "_Molecule__enums.pypp.hpp"
-#include "_Molecule__unnamed_enums.pypp.hpp"
-#include "_Molecule__classes.pypp.hpp"
-#include "_Molecule__memfuns0.pypp.hpp"
-#include "_Molecule__memfuns1.pypp.hpp"
-#include "_Molecule__memfuns2.pypp.hpp"
-#include "_Molecule__memfuns3.pypp.hpp"
-#include "_Molecule__memfuns4.pypp.hpp"
-#include "_Molecule__memfuns5.pypp.hpp"
-#include "_Molecule__memfuns6.pypp.hpp"
-#include "_Molecule__memfuns7.pypp.hpp"
-#include "_Molecule__memfuns8.pypp.hpp"
-#include "_Molecule__memfuns9.pypp.hpp"
-#include "_Molecule__memfuns_virtual.pypp.hpp"
-#include "_Molecule__memfuns_pvirtual.pypp.hpp"
-#include "_Molecule__protected_memfuns.pypp.hpp"
 
 namespace bp = boost::python;
 
@@ -39,31 +24,482 @@ const char* pvt_get_name(const SireMol::Molecule&){ return "SireMol::Molecule";}
 
 void register_Molecule_class(){
 
-{ //::SireMol::Molecule
-    typedef bp::class_< SireMol::Molecule, bp::bases< SireMol::MoleculeView > > Molecule_exposer_t;
-    Molecule_exposer_t Molecule_exposer = Molecule_exposer_t( "Molecule" );
-    bp::scope Molecule_scope( Molecule_exposer );
-    Molecule_exposer.def( bp::init< >() );
-    Molecule_exposer.def( bp::init< SireMol::MoleculeView const & >(( bp::arg("molecule") )) );
-    register_Molecule_memfuns0(Molecule_exposer);
-    register_Molecule_memfuns1(Molecule_exposer);
-    register_Molecule_memfuns2(Molecule_exposer);
-    register_Molecule_memfuns3(Molecule_exposer);
-    register_Molecule_memfuns4(Molecule_exposer);
-    register_Molecule_memfuns5(Molecule_exposer);
-    Molecule_exposer.def( bp::self != bp::self );
-    Molecule_exposer.def( bp::self == bp::self );
-    register_Molecule_memfuns6(Molecule_exposer);
-    register_Molecule_memfuns7(Molecule_exposer);
-    register_Molecule_memfuns8(Molecule_exposer);
-    register_Molecule_memfuns9(Molecule_exposer);
-    Molecule_exposer.def( bp::init<const SireMol::Molecule&>() );
-    Molecule_exposer.def( "__copy__", &__copy__);
-    Molecule_exposer.def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::Molecule >,
-                        bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
-    Molecule_exposer.def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::Molecule >,
-                        bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
-    Molecule_exposer.def( "__str__", &pvt_get_name);
-}
+    bp::class_< SireMol::Molecule, bp::bases< SireMol::MoleculeView > >( "Molecule" )    
+        .def( bp::init< >() )    
+        .def( bp::init< SireMol::MolDataView const & >(( bp::arg("molecule") )) )    
+        .def( 
+            "ID"
+            , &::SireMol::Molecule::ID )    
+        .def( 
+            "addProperty"
+            , (void ( ::SireMol::Molecule::* )( ::QString const &,::SireBase::PropertyBase const & ) )( &::SireMol::Molecule::addProperty )
+            , ( bp::arg("name"), bp::arg("value") ) )    
+        .def( 
+            "addProperty"
+            , (void ( ::SireMol::Molecule::* )( ::QString const &,::SireBase::Property const & ) )( &::SireMol::Molecule::addProperty )
+            , ( bp::arg("name"), bp::arg("value") ) )    
+        .def( 
+            "addProperty"
+            , (void ( ::SireMol::Molecule::* )( ::QString const &,::QVariant const & ) )( &::SireMol::Molecule::addProperty )
+            , ( bp::arg("name"), bp::arg("value") ) )    
+        .def( 
+            "angle"
+            , &::SireMol::Molecule::angle
+            , ( bp::arg("ang") ) )    
+        .def( 
+            "assertSameMajorVersion"
+            , &::SireMol::Molecule::assertSameMajorVersion
+            , ( bp::arg("other") ) )    
+        .def( 
+            "assertSameMolecule"
+            , &::SireMol::Molecule::assertSameMolecule
+            , ( bp::arg("other") ) )    
+        .def( 
+            "assertSameVersion"
+            , &::SireMol::Molecule::assertSameVersion
+            , ( bp::arg("other") ) )    
+        .def( 
+            "at"
+            , (::SireMol::Residue ( ::SireMol::Molecule::* )( ::SireMol::ResNum ) const)( &::SireMol::Molecule::at )
+            , ( bp::arg("resnum") ) )    
+        .def( 
+            "at"
+            , (::SireMol::Residue ( ::SireMol::Molecule::* )( ::SireMol::ResID ) const)( &::SireMol::Molecule::at )
+            , ( bp::arg("i") ) )    
+        .def( 
+            "at"
+            , (::SireMol::CutGroup ( ::SireMol::Molecule::* )( ::SireMol::CutGroupID ) const)( &::SireMol::Molecule::at )
+            , ( bp::arg("cgid") ) )    
+        .def( 
+            "at"
+            , (::SireMol::Atom ( ::SireMol::Molecule::* )( ::SireMol::CGAtomID const & ) const)( &::SireMol::Molecule::at )
+            , ( bp::arg("cgatomid") ) )    
+        .def( 
+            "at"
+            , (::SireMol::Atom ( ::SireMol::Molecule::* )( ::SireMol::IDMolAtom const & ) const)( &::SireMol::Molecule::at )
+            , ( bp::arg("atomid") ) )    
+        .def( 
+            "atom"
+            , (::SireMol::Atom ( ::SireMol::Molecule::* )( ::SireMol::CGAtomID const & ) const)( &::SireMol::Molecule::atom )
+            , ( bp::arg("cgatmid") ) )    
+        .def( 
+            "atom"
+            , (::SireMol::Atom ( ::SireMol::Molecule::* )( ::SireMol::IDMolAtom const & ) const)( &::SireMol::Molecule::atom )
+            , ( bp::arg("atomid") ) )    
+        .def( 
+            "atomNames"
+            , (::QStringList ( ::SireMol::Molecule::* )( ::SireMol::ResNum ) const)( &::SireMol::Molecule::atomNames )
+            , ( bp::arg("resnum") ) )    
+        .def( 
+            "atomNames"
+            , (::QStringList ( ::SireMol::Molecule::* )( ::SireMol::ResID ) const)( &::SireMol::Molecule::atomNames )
+            , ( bp::arg("resid") ) )    
+        .def( 
+            "atoms"
+            , (::QVector<SireMol::Atom> ( ::SireMol::Molecule::* )(  ) const)( &::SireMol::Molecule::atoms ) )    
+        .def( 
+            "atoms"
+            , (::QHash<SireMol::AtomID,SireMol::Atom> ( ::SireMol::Molecule::* )( ::QSet<SireMol::AtomID> const & ) const)( &::SireMol::Molecule::atoms )
+            , ( bp::arg("atomids") ) )    
+        .def( 
+            "atoms"
+            , (::QHash<SireMol::CGAtomID,SireMol::Atom> ( ::SireMol::Molecule::* )( ::QSet<SireMol::CGAtomID> const & ) const)( &::SireMol::Molecule::atoms )
+            , ( bp::arg("cgatomids") ) )    
+        .def( 
+            "atoms"
+            , (::QHash<SireMol::ResNumAtomID,SireMol::Atom> ( ::SireMol::Molecule::* )( ::QSet<SireMol::ResNumAtomID> const & ) const)( &::SireMol::Molecule::atoms )
+            , ( bp::arg("resatomids") ) )    
+        .def( 
+            "atoms"
+            , (::QHash<SireMol::ResIDAtomID,SireMol::Atom> ( ::SireMol::Molecule::* )( ::QSet<SireMol::ResIDAtomID> const & ) const)( &::SireMol::Molecule::atoms )
+            , ( bp::arg("resatomids") ) )    
+        .def( 
+            "atoms"
+            , (::QHash<SireMol::AtomIndex,SireMol::Atom> ( ::SireMol::Molecule::* )( ::QSet<SireMol::AtomIndex> const & ) const)( &::SireMol::Molecule::atoms )
+            , ( bp::arg("atoms") ) )    
+        .def( 
+            "atoms"
+            , (::QVector<SireMol::Atom> ( ::SireMol::Molecule::* )( ::SireMol::CutGroupID ) const)( &::SireMol::Molecule::atoms )
+            , ( bp::arg("cgid") ) )    
+        .def( 
+            "atoms"
+            , (::QHash<SireMol::CutGroupID,QVector<SireMol::Atom> > ( ::SireMol::Molecule::* )( ::QSet<SireMol::CutGroupID> const & ) const)( &::SireMol::Molecule::atoms )
+            , ( bp::arg("cgids") ) )    
+        .def( 
+            "atoms"
+            , (::QVector<SireMol::Atom> ( ::SireMol::Molecule::* )( ::SireMol::ResNum ) const)( &::SireMol::Molecule::atoms )
+            , ( bp::arg("resnum") ) )    
+        .def( 
+            "atoms"
+            , (::QHash<SireMol::ResNum,QVector<SireMol::Atom> > ( ::SireMol::Molecule::* )( ::QSet<SireMol::ResNum> const & ) const)( &::SireMol::Molecule::atoms )
+            , ( bp::arg("resnums") ) )    
+        .def( 
+            "atoms"
+            , (::QVector<SireMol::Atom> ( ::SireMol::Molecule::* )( ::SireMol::ResID ) const)( &::SireMol::Molecule::atoms )
+            , ( bp::arg("resid") ) )    
+        .def( 
+            "atoms"
+            , (::QHash<SireMol::ResID,QVector<SireMol::Atom> > ( ::SireMol::Molecule::* )( ::QSet<SireMol::ResID> const & ) const)( &::SireMol::Molecule::atoms )
+            , ( bp::arg("resids") ) )    
+        .def( 
+            "bond"
+            , &::SireMol::Molecule::bond
+            , ( bp::arg("bnd") ) )    
+        .def( 
+            "connectivity"
+            , (::SireMol::MoleculeBonds ( ::SireMol::Molecule::* )(  ) const)( &::SireMol::Molecule::connectivity ) )    
+        .def( 
+            "connectivity"
+            , (::SireMol::ResidueBonds ( ::SireMol::Molecule::* )( ::SireMol::ResNum ) const)( &::SireMol::Molecule::connectivity )
+            , ( bp::arg("resnum") ) )    
+        .def( 
+            "connectivity"
+            , (::SireMol::ResidueBonds ( ::SireMol::Molecule::* )( ::SireMol::ResID ) const)( &::SireMol::Molecule::connectivity )
+            , ( bp::arg("resid") ) )    
+        .def( 
+            "contains"
+            , (bool ( ::SireMol::Molecule::* )( ::SireMol::CutGroupID ) const)( &::SireMol::Molecule::contains )
+            , ( bp::arg("cgid") ) )    
+        .def( 
+            "contains"
+            , (bool ( ::SireMol::Molecule::* )( ::SireMol::ResNum ) const)( &::SireMol::Molecule::contains )
+            , ( bp::arg("resnum") ) )    
+        .def( 
+            "contains"
+            , (bool ( ::SireMol::Molecule::* )( ::SireMol::ResID ) const)( &::SireMol::Molecule::contains )
+            , ( bp::arg("resid") ) )    
+        .def( 
+            "contains"
+            , (bool ( ::SireMol::Molecule::* )( ::SireMol::CGAtomID const & ) const)( &::SireMol::Molecule::contains )
+            , ( bp::arg("cgatomid") ) )    
+        .def( 
+            "contains"
+            , (bool ( ::SireMol::Molecule::* )( ::SireMol::IDMolAtom const & ) const)( &::SireMol::Molecule::contains )
+            , ( bp::arg("atomid") ) )    
+        .def( 
+            "contains"
+            , (bool ( ::SireMol::Molecule::* )( ::SireMol::Bond const & ) const)( &::SireMol::Molecule::contains )
+            , ( bp::arg("bond") ) )    
+        .def( 
+            "coordGroup"
+            , &::SireMol::Molecule::coordGroup
+            , ( bp::arg("id") ) )    
+        .def( 
+            "coordGroups"
+            , (::QVector<SireVol::CoordGroup> ( ::SireMol::Molecule::* )(  ) const)( &::SireMol::Molecule::coordGroups ) )    
+        .def( 
+            "coordGroups"
+            , (::QHash<SireMol::CutGroupID,SireVol::CoordGroup> ( ::SireMol::Molecule::* )( ::SireMol::ResNum ) const)( &::SireMol::Molecule::coordGroups )
+            , ( bp::arg("resnum") ) )    
+        .def( 
+            "coordGroups"
+            , (::QHash<SireMol::CutGroupID,SireVol::CoordGroup> ( ::SireMol::Molecule::* )( ::SireMol::ResID ) const)( &::SireMol::Molecule::coordGroups )
+            , ( bp::arg("resid") ) )    
+        .def( 
+            "coordGroups"
+            , (::QHash<SireMol::CutGroupID,SireVol::CoordGroup> ( ::SireMol::Molecule::* )( ::QSet<SireMol::CutGroupID> const & ) const)( &::SireMol::Molecule::coordGroups )
+            , ( bp::arg("cgids") ) )    
+        .def( 
+            "coordGroups"
+            , (::QHash<SireMol::CutGroupID,SireVol::CoordGroup> ( ::SireMol::Molecule::* )( ::QSet<SireMol::ResNum> const & ) const)( &::SireMol::Molecule::coordGroups )
+            , ( bp::arg("resnums") ) )    
+        .def( 
+            "coordGroups"
+            , (::QHash<SireMol::CutGroupID,SireVol::CoordGroup> ( ::SireMol::Molecule::* )( ::QSet<SireMol::ResID> const & ) const)( &::SireMol::Molecule::coordGroups )
+            , ( bp::arg("resids") ) )    
+        .def( 
+            "coordinates"
+            , (::SireMaths::Vector ( ::SireMol::Molecule::* )( ::SireMol::CGAtomID const & ) const)( &::SireMol::Molecule::coordinates )
+            , ( bp::arg("cgatomid") ) )    
+        .def( 
+            "coordinates"
+            , (::SireMaths::Vector ( ::SireMol::Molecule::* )( ::SireMol::IDMolAtom const & ) const)( &::SireMol::Molecule::coordinates )
+            , ( bp::arg("atomid") ) )    
+        .def( 
+            "coordinates"
+            , (::QVector<SireMaths::Vector> ( ::SireMol::Molecule::* )(  ) const)( &::SireMol::Molecule::coordinates ) )    
+        .def( 
+            "coordinates"
+            , (::QHash<SireMol::AtomID,SireMaths::Vector> ( ::SireMol::Molecule::* )( ::QSet<SireMol::AtomID> const & ) const)( &::SireMol::Molecule::coordinates )
+            , ( bp::arg("atomids") ) )    
+        .def( 
+            "coordinates"
+            , (::QHash<SireMol::CGAtomID,SireMaths::Vector> ( ::SireMol::Molecule::* )( ::QSet<SireMol::CGAtomID> const & ) const)( &::SireMol::Molecule::coordinates )
+            , ( bp::arg("cgatomids") ) )    
+        .def( 
+            "coordinates"
+            , (::QHash<SireMol::ResNumAtomID,SireMaths::Vector> ( ::SireMol::Molecule::* )( ::QSet<SireMol::ResNumAtomID> const & ) const)( &::SireMol::Molecule::coordinates )
+            , ( bp::arg("resatomids") ) )    
+        .def( 
+            "coordinates"
+            , (::QHash<SireMol::ResIDAtomID,SireMaths::Vector> ( ::SireMol::Molecule::* )( ::QSet<SireMol::ResIDAtomID> const & ) const)( &::SireMol::Molecule::coordinates )
+            , ( bp::arg("resatomids") ) )    
+        .def( 
+            "coordinates"
+            , (::QHash<SireMol::AtomIndex,SireMaths::Vector> ( ::SireMol::Molecule::* )( ::QSet<SireMol::AtomIndex> const & ) const)( &::SireMol::Molecule::coordinates )
+            , ( bp::arg("atoms") ) )    
+        .def( 
+            "coordinates"
+            , (::QVector<SireMaths::Vector> ( ::SireMol::Molecule::* )( ::SireMol::CutGroupID ) )( &::SireMol::Molecule::coordinates )
+            , ( bp::arg("cgid") ) )    
+        .def( 
+            "coordinates"
+            , (::QHash<SireMol::CutGroupID,QVector<SireMaths::Vector> > ( ::SireMol::Molecule::* )( ::QSet<SireMol::CutGroupID> const & ) const)( &::SireMol::Molecule::coordinates )
+            , ( bp::arg("cgids") ) )    
+        .def( 
+            "coordinates"
+            , (::QVector<SireMaths::Vector> ( ::SireMol::Molecule::* )( ::SireMol::ResNum ) )( &::SireMol::Molecule::coordinates )
+            , ( bp::arg("resnum") ) )    
+        .def( 
+            "coordinates"
+            , (::QHash<SireMol::ResNum,QVector<SireMaths::Vector> > ( ::SireMol::Molecule::* )( ::QSet<SireMol::ResNum> const & ) const)( &::SireMol::Molecule::coordinates )
+            , ( bp::arg("resnums") ) )    
+        .def( 
+            "coordinates"
+            , (::QVector<SireMaths::Vector> ( ::SireMol::Molecule::* )( ::SireMol::ResID ) )( &::SireMol::Molecule::coordinates )
+            , ( bp::arg("resid") ) )    
+        .def( 
+            "coordinates"
+            , (::QHash<SireMol::ResID,QVector<SireMaths::Vector> > ( ::SireMol::Molecule::* )( ::QSet<SireMol::ResID> const & ) const)( &::SireMol::Molecule::coordinates )
+            , ( bp::arg("resids") ) )    
+        .def( 
+            "cutGroup"
+            , &::SireMol::Molecule::cutGroup
+            , ( bp::arg("id") ) )    
+        .def( 
+            "cutGroups"
+            , (::QVector<SireMol::CutGroup> ( ::SireMol::Molecule::* )(  ) const)( &::SireMol::Molecule::cutGroups ) )    
+        .def( 
+            "cutGroups"
+            , (::QHash<SireMol::CutGroupID,SireMol::CutGroup> ( ::SireMol::Molecule::* )( ::SireMol::ResNum ) const)( &::SireMol::Molecule::cutGroups )
+            , ( bp::arg("resnum") ) )    
+        .def( 
+            "cutGroups"
+            , (::QHash<SireMol::CutGroupID,SireMol::CutGroup> ( ::SireMol::Molecule::* )( ::SireMol::ResID ) const)( &::SireMol::Molecule::cutGroups )
+            , ( bp::arg("resid") ) )    
+        .def( 
+            "dihedral"
+            , &::SireMol::Molecule::dihedral
+            , ( bp::arg("dih") ) )    
+        .def( 
+            "edit"
+            , &::SireMol::Molecule::edit )    
+        .def( 
+            "getProperty"
+            , &::SireMol::Molecule::getProperty
+            , ( bp::arg("name") )
+            , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( 
+            "getWeight"
+            , &::SireMol::Molecule::getWeight
+            , ( bp::arg("group0"), bp::arg("group1"), bp::arg("weightfunc") ) )    
+        .def( 
+            "idString"
+            , &::SireMol::Molecule::idString )    
+        .def( 
+            "improper"
+            , &::SireMol::Molecule::improper
+            , ( bp::arg("improper") ) )    
+        .def( 
+            "info"
+            , &::SireMol::Molecule::info
+            , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( 
+            "isEmpty"
+            , (bool ( ::SireMol::Molecule::* )(  ) const)( &::SireMol::Molecule::isEmpty ) )    
+        .def( 
+            "isEmpty"
+            , (bool ( ::SireMol::Molecule::* )( ::SireMol::ResNum ) const)( &::SireMol::Molecule::isEmpty )
+            , ( bp::arg("resnum") ) )    
+        .def( 
+            "isEmpty"
+            , (bool ( ::SireMol::Molecule::* )( ::SireMol::ResID ) const)( &::SireMol::Molecule::isEmpty )
+            , ( bp::arg("resid") ) )    
+        .def( 
+            "isEmpty"
+            , (bool ( ::SireMol::Molecule::* )( ::SireMol::CutGroupID ) const)( &::SireMol::Molecule::isEmpty )
+            , ( bp::arg("cgid") ) )    
+        .def( 
+            "measure"
+            , (double ( ::SireMol::Molecule::* )( ::SireMol::Bond const & ) const)( &::SireMol::Molecule::measure )
+            , ( bp::arg("bnd") ) )    
+        .def( 
+            "measure"
+            , (::SireMaths::Angle ( ::SireMol::Molecule::* )( ::SireMol::Angle const & ) const)( &::SireMol::Molecule::measure )
+            , ( bp::arg("ang") ) )    
+        .def( 
+            "measure"
+            , (::SireMaths::Angle ( ::SireMol::Molecule::* )( ::SireMol::Dihedral const & ) const)( &::SireMol::Molecule::measure )
+            , ( bp::arg("dih") ) )    
+        .def( 
+            "measure"
+            , (::SireMaths::Angle ( ::SireMol::Molecule::* )( ::SireMol::Improper const & ) const)( &::SireMol::Molecule::measure )
+            , ( bp::arg("improper") ) )    
+        .def( 
+            "nAtoms"
+            , (int ( ::SireMol::Molecule::* )(  ) const)( &::SireMol::Molecule::nAtoms ) )    
+        .def( 
+            "nAtoms"
+            , (int ( ::SireMol::Molecule::* )( ::SireMol::ResNum ) const)( &::SireMol::Molecule::nAtoms )
+            , ( bp::arg("resnum") ) )    
+        .def( 
+            "nAtoms"
+            , (int ( ::SireMol::Molecule::* )( ::SireMol::ResID ) const)( &::SireMol::Molecule::nAtoms )
+            , ( bp::arg("resid") ) )    
+        .def( 
+            "nAtoms"
+            , (int ( ::SireMol::Molecule::* )( ::SireMol::CutGroupID ) const)( &::SireMol::Molecule::nAtoms )
+            , ( bp::arg("id") ) )    
+        .def( 
+            "nBonds"
+            , (int ( ::SireMol::Molecule::* )(  ) const)( &::SireMol::Molecule::nBonds ) )    
+        .def( 
+            "nBonds"
+            , (int ( ::SireMol::Molecule::* )( ::SireMol::ResNum ) const)( &::SireMol::Molecule::nBonds )
+            , ( bp::arg("resnum") ) )    
+        .def( 
+            "nBonds"
+            , (int ( ::SireMol::Molecule::* )( ::SireMol::ResID ) const)( &::SireMol::Molecule::nBonds )
+            , ( bp::arg("resid") ) )    
+        .def( 
+            "nCutGroups"
+            , &::SireMol::Molecule::nCutGroups )    
+        .def( 
+            "nInterBonds"
+            , (int ( ::SireMol::Molecule::* )(  ) const)( &::SireMol::Molecule::nInterBonds ) )    
+        .def( 
+            "nInterBonds"
+            , (int ( ::SireMol::Molecule::* )( ::SireMol::ResNum ) const)( &::SireMol::Molecule::nInterBonds )
+            , ( bp::arg("resnum") ) )    
+        .def( 
+            "nInterBonds"
+            , (int ( ::SireMol::Molecule::* )( ::SireMol::ResID ) const)( &::SireMol::Molecule::nInterBonds )
+            , ( bp::arg("resid") ) )    
+        .def( 
+            "nIntraBonds"
+            , (int ( ::SireMol::Molecule::* )(  ) const)( &::SireMol::Molecule::nIntraBonds ) )    
+        .def( 
+            "nIntraBonds"
+            , (int ( ::SireMol::Molecule::* )( ::SireMol::ResNum ) const)( &::SireMol::Molecule::nIntraBonds )
+            , ( bp::arg("resnum") ) )    
+        .def( 
+            "nIntraBonds"
+            , (int ( ::SireMol::Molecule::* )( ::SireMol::ResID ) const)( &::SireMol::Molecule::nIntraBonds )
+            , ( bp::arg("resid") ) )    
+        .def( 
+            "nResidues"
+            , &::SireMol::Molecule::nResidues )    
+        .def( 
+            "name"
+            , &::SireMol::Molecule::name )    
+        .def( bp::self != bp::self )    
+        .def( bp::self == bp::self )    
+        .def( 
+            "__getitem__"
+            , (::SireMol::CutGroup ( ::SireMol::Molecule::* )( ::SireMol::CutGroupID ) const)( &::SireMol::Molecule::operator[] )
+            , ( bp::arg("cgid") ) )    
+        .def( 
+            "__getitem__"
+            , (::SireMol::Residue ( ::SireMol::Molecule::* )( ::SireMol::ResID ) const)( &::SireMol::Molecule::operator[] )
+            , ( bp::arg("resid") ) )    
+        .def( 
+            "__getitem__"
+            , (::SireMol::Residue ( ::SireMol::Molecule::* )( ::SireMol::ResNum ) const)( &::SireMol::Molecule::operator[] )
+            , ( bp::arg("resnum") ) )    
+        .def( 
+            "__getitem__"
+            , (::SireMol::Atom ( ::SireMol::Molecule::* )( ::SireMol::CGAtomID const & ) const)( &::SireMol::Molecule::operator[] )
+            , ( bp::arg("cgatomid") ) )    
+        .def( 
+            "__getitem__"
+            , (::SireMol::Atom ( ::SireMol::Molecule::* )( ::SireMol::IDMolAtom const & ) const)( &::SireMol::Molecule::operator[] )
+            , ( bp::arg("atomid") ) )    
+        .def( 
+            "properties"
+            , &::SireMol::Molecule::properties
+            , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( 
+            "residue"
+            , (::SireMol::Residue ( ::SireMol::Molecule::* )( ::SireMol::ResNum ) const)( &::SireMol::Molecule::residue )
+            , ( bp::arg("resnum") ) )    
+        .def( 
+            "residue"
+            , (::SireMol::Residue ( ::SireMol::Molecule::* )( ::SireMol::ResID ) const)( &::SireMol::Molecule::residue )
+            , ( bp::arg("resid") ) )    
+        .def( 
+            "residue"
+            , (::SireMol::Residue ( ::SireMol::Molecule::* )( ::QString const & ) const)( &::SireMol::Molecule::residue )
+            , ( bp::arg("resname") ) )    
+        .def( 
+            "residueName"
+            , (::QString ( ::SireMol::Molecule::* )( ::SireMol::ResNum ) const)( &::SireMol::Molecule::residueName )
+            , ( bp::arg("resnum") ) )    
+        .def( 
+            "residueName"
+            , (::QString ( ::SireMol::Molecule::* )( ::SireMol::ResID ) const)( &::SireMol::Molecule::residueName )
+            , ( bp::arg("resid") ) )    
+        .def( 
+            "residueNames"
+            , &::SireMol::Molecule::residueNames )    
+        .def( 
+            "residueNumber"
+            , (::SireMol::ResNum ( ::SireMol::Molecule::* )( ::SireMol::ResID ) const)( &::SireMol::Molecule::residueNumber )
+            , ( bp::arg("resid") ) )    
+        .def( 
+            "residueNumber"
+            , (::SireMol::ResNum ( ::SireMol::Molecule::* )( ::QString const & ) const)( &::SireMol::Molecule::residueNumber )
+            , ( bp::arg("resname") ) )    
+        .def( 
+            "residueNumbers"
+            , (::QVector<SireMol::ResNum> ( ::SireMol::Molecule::* )(  ) const)( &::SireMol::Molecule::residueNumbers ) )    
+        .def( 
+            "residueNumbers"
+            , (::QVector<SireMol::ResNum> ( ::SireMol::Molecule::* )( ::QString const & ) const)( &::SireMol::Molecule::residueNumbers )
+            , ( bp::arg("resnam") ) )    
+        .def( 
+            "residueNumbers"
+            , (::QVector<SireMol::ResNum> ( ::SireMol::Molecule::* )( ::SireMol::CutGroupID ) const)( &::SireMol::Molecule::residueNumbers )
+            , ( bp::arg("cgid") ) )    
+        .def( 
+            "residues"
+            , (::QHash<SireMol::ResNum,SireMol::Residue> ( ::SireMol::Molecule::* )(  ) const)( &::SireMol::Molecule::residues ) )    
+        .def( 
+            "residues"
+            , (::QHash<SireMol::ResNum,SireMol::Residue> ( ::SireMol::Molecule::* )( ::QSet<SireMol::ResNum> const & ) const)( &::SireMol::Molecule::residues )
+            , ( bp::arg("resnums") ) )    
+        .def( 
+            "residuesBondedTo"
+            , (::QHash<SireMol::ResNum,SireMol::Residue> ( ::SireMol::Molecule::* )( ::SireMol::ResNum ) const)( &::SireMol::Molecule::residuesBondedTo )
+            , ( bp::arg("resnum") ) )    
+        .def( 
+            "residuesBondedTo"
+            , (::QHash<SireMol::ResNum,SireMol::Residue> ( ::SireMol::Molecule::* )( ::SireMol::ResID ) const)( &::SireMol::Molecule::residuesBondedTo )
+            , ( bp::arg("resid") ) )    
+        .def( 
+            "setNewID"
+            , &::SireMol::Molecule::setNewID )    
+        .def( 
+            "setProperty"
+            , (void ( ::SireMol::Molecule::* )( ::QString const &,::SireBase::PropertyBase const & ) )( &::SireMol::Molecule::setProperty )
+            , ( bp::arg("name"), bp::arg("value") ) )    
+        .def( 
+            "setProperty"
+            , (void ( ::SireMol::Molecule::* )( ::QString const &,::SireBase::Property const & ) )( &::SireMol::Molecule::setProperty )
+            , ( bp::arg("name"), bp::arg("value") ) )    
+        .def( 
+            "setProperty"
+            , (void ( ::SireMol::Molecule::* )( ::QString const &,::QVariant const & ) )( &::SireMol::Molecule::setProperty )
+            , ( bp::arg("name"), bp::arg("value") ) )    
+        .def( 
+            "version"
+            , &::SireMol::Molecule::version
+            , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( bp::init<const SireMol::Molecule&>() )    
+        .def( "__copy__", &__copy__)    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::Molecule >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMol::Molecule >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

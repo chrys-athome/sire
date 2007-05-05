@@ -72,11 +72,7 @@ wrap_classes = [ "Angle",
                  "WeightFunction"
                ]
 
-huge_classes = [ "EditMol",
-                 "EditRes",
-                 "Molecule",
-                 "NewAtom",
-                 "Residue" ]
+huge_classes = [ ]
 
 aliases = {}
 

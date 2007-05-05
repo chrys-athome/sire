@@ -762,7 +762,7 @@ void InterGroupLJFF::recordChange(int group_idx, MoleculeID molid,
 bool InterGroupLJFF::applyChange(MoleculeID molid,
                                  const ChangedLJMolecule &changed_mol)
 {
-    if (changed_mol.isEmpty())
+    if (changed_mol.nothingChanged())
         return false;
 
     //get the current group in which the molecule resides

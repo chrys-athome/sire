@@ -150,27 +150,6 @@ NewAtom& NewAtom::operator=(const NewAtom &other)
     return *this;
 }
 
-/** Syntactic sugar for atom.setCoordinates(newcoords) */
-NewAtom& NewAtom::operator=(const Vector &newcoords)
-{
-    this->setCoordinates(newcoords);
-    return *this;
-}
-
-/** Syntactic sugar for atom.translate(delta) */
-NewAtom& NewAtom::operator+=(const Vector &delta)
-{
-    this->translate(delta);
-    return *this;
-}
-
-/** Syntactic sugar for atom.translate(-delta) */
-NewAtom& NewAtom::operator-=(const Vector &delta)
-{
-    this->translate(-delta);
-    return *this;
-}
-
 /** Are these the same? They are if they refer to the same
     atoms in the same version of the same molecule */
 bool NewAtom::operator==(const NewAtom &other) const
@@ -340,36 +319,6 @@ QSet<Residue> NewAtom::bondedResidues() const
     }
 
     return allres;
-}
-
-/** Set the coordinates of this atom to 'newcoords' */
-void NewAtom::setCoordinates(const Vector &newcoords)
-{
-    data().setCoordinates(cgatomid, newcoords);
-}
-
-/** Set the coordinates of this atom to (x,y,z) */
-void NewAtom::setCoordinates(double x, double y, double z)
-{
-    this->setCoordinates( Vector(x,y,z) );
-}
-
-/** Translate this atom by 'delta' */
-void NewAtom::translate(const Vector &delta)
-{
-    this->setCoordinates( coordinates() + delta );
-}
-
-/** Rotate this atom by the rotate matrix 'rotmat' about the point 'point' */
-void NewAtom::rotate(const Matrix &rotmat, const Vector &point)
-{
-    this->setCoordinates( SireMaths::rotate(coordinates(), rotmat, point) );
-}
-
-/** Rotate this atom by the quaternion 'quat' about the point 'point' */
-void NewAtom::rotate(const Quaternion &quat, const Vector &point)
-{
-    this->rotate( quat.toMatrix(), point );
 }
 
 /** Return whether this atom is within bonding distance of 'other', to

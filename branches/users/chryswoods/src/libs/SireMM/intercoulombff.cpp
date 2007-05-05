@@ -572,7 +572,7 @@ void InterCoulombFF::removeFromCurrentState(MoleculeID molid)
 /** Apply the change described by 'changed_mol' */
 bool InterCoulombFF::applyChange(MoleculeID molid, const ChangedCoulombMolecule &changed_mol)
 {
-    if (changed_mol.isEmpty())
+    if (changed_mol.nothingChanged())
         return false;
 
     if (changed_mol.newMolecule().isEmpty())

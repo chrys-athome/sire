@@ -759,7 +759,7 @@ void InterGroupCoulombFF::recordChange(int group_idx, MoleculeID molid,
 bool InterGroupCoulombFF::applyChange(MoleculeID molid,
                                       const ChangedCoulombMolecule &changed_mol)
 {
-    if (changed_mol.isEmpty())
+    if (changed_mol.nothingChanged())
         return false;
 
     //get the current group in which the molecule resides

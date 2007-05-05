@@ -205,7 +205,7 @@ ms = timer.elapsed()
 print "InterCLJFF ",cljff.energy(), "kcal mol-1"
 print "... took %d ms (%f moves per second)" % (ms, nmoves*1000.0/ms)
 
-tip4p.translate( (1.0,0.0,0.0) )
+tip4p = Molecule(tip4p.move().translate( (1.0,0.0,0.0) ))
 
 timer.start()
 
@@ -239,7 +239,7 @@ timer.start()
 
 nmoves = 1000
 for i in range(0,nmoves):
-    tip4p.translate( (0.00001,0,0) )
+    tip4p = Molecule(tip4p.move().translate( (0.00001,0,0) ))
     cljff.change( tip4p )
     nrg = cljff.energy()
 
@@ -257,7 +257,7 @@ old_nrg = coulff.energy()
 old_version = coulff.version()
 
 for i in range(0,nmoves):
-    tip4p.translate( (0.00001,0,0) )
+    tip4p = Molecule(tip4p.move().translate( (0.00001,0,0) ))
     
     old_coulff = copy.copy(coulff)
     
@@ -294,7 +294,7 @@ old_nrg = ljff.energy()
 old_version = ljff.version()
 
 for i in range(0,nmoves):
-    tip4p.translate( (0.00001,0,0) )
+    tip4p = Molecule(tip4p.move().translate( (0.00001,0,0) ))
     
     old_ljff = copy.copy(ljff)
     
@@ -330,7 +330,7 @@ delta = 0
 old_nrg = cljff_a.energy() + cljff_b.energy() + cljff_a_b.energy()
 
 for i in range(0,nmoves):
-    tip4p.translate( (0.00001,0,0) )
+    tip4p = Molecule(tip4p.move().translate( (0.00001,0,0) ))
     
     old_cljff_a = copy.copy(cljff_a)
     old_cljff_b = copy.copy(cljff_b)
@@ -367,7 +367,7 @@ delta = 0
 old_nrg = coulff_a.energy() + coulff_b.energy() + coulff_a_b.energy()
 
 for i in range(0,nmoves):
-    tip4p.translate( (0.00001,0,0) )
+    tip4p = Molecule(tip4p.move().translate( (0.00001,0,0) ))
     
     old_coulff_a = copy.copy(coulff_a)
     old_coulff_b = copy.copy(coulff_b)
@@ -404,7 +404,7 @@ delta = 0
 old_nrg = ljff_a.energy() + ljff_b.energy() + ljff_a_b.energy()
 
 for i in range(0,nmoves):
-    tip4p.translate( (0.00001,0,0) )
+    tip4p = Molecule(tip4p.move().translate( (0.00001,0,0) ))
     
     old_ljff_a = copy.copy(ljff_a)
     old_ljff_b = copy.copy(ljff_b)
