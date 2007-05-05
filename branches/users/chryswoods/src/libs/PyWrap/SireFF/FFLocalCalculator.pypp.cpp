@@ -6,6 +6,7 @@
 #include "boost/python.hpp"
 #include "sireff_headers.h"
 #include "SireMol/molecule.h"
+#include "SireMol/molecules.h"
 #include "SireMol/partialmolecule.h"
 #include "SireMol/residue.h"
 #include "SireMol/newatom.h"
@@ -33,7 +34,7 @@ void register_FFLocalCalculator_class(){
             , ( bp::arg("molecule"), bp::arg("map")=::SireFF::ParameterMap( ) ) )    
         .def( 
             "add"
-            , (bool ( ::SireFF::FFLocalCalculator::* )( ::QList<SireMol::PartialMolecule> const &,::SireFF::ParameterMap const & ) )( &::SireFF::FFLocalCalculator::add )
+            , (bool ( ::SireFF::FFLocalCalculator::* )( ::SireMol::Molecules const &,::SireFF::ParameterMap const & ) )( &::SireFF::FFLocalCalculator::add )
             , ( bp::arg("molecules"), bp::arg("map")=::SireFF::ParameterMap( ) ) )    
         .def( 
             "addTo"
@@ -41,7 +42,7 @@ void register_FFLocalCalculator_class(){
             , ( bp::arg("group"), bp::arg("molecule"), bp::arg("map")=::SireFF::ParameterMap( ) ) )    
         .def( 
             "addTo"
-            , (bool ( ::SireFF::FFLocalCalculator::* )( ::SireFF::FFBase::Group const &,::QList<SireMol::PartialMolecule> const &,::SireFF::ParameterMap const & ) )( &::SireFF::FFLocalCalculator::addTo )
+            , (bool ( ::SireFF::FFLocalCalculator::* )( ::SireFF::FFBase::Group const &,::SireMol::Molecules const &,::SireFF::ParameterMap const & ) )( &::SireFF::FFLocalCalculator::addTo )
             , ( bp::arg("group"), bp::arg("molecules"), bp::arg("map")=::SireFF::ParameterMap( ) ) )    
         .def( 
             "assertContains"
@@ -53,11 +54,7 @@ void register_FFLocalCalculator_class(){
             , ( bp::arg("molecule") ) )    
         .def( 
             "change"
-            , (bool ( ::SireFF::FFLocalCalculator::* )( ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> const & ) )( &::SireFF::FFLocalCalculator::change )
-            , ( bp::arg("molecules") ) )    
-        .def( 
-            "change"
-            , (bool ( ::SireFF::FFLocalCalculator::* )( ::QList<SireMol::PartialMolecule> const & ) )( &::SireFF::FFLocalCalculator::change )
+            , (bool ( ::SireFF::FFLocalCalculator::* )( ::SireMol::Molecules const & ) )( &::SireFF::FFLocalCalculator::change )
             , ( bp::arg("molecules") ) )    
         .def( 
             "contains"
@@ -73,11 +70,11 @@ void register_FFLocalCalculator_class(){
             , ( bp::arg("name") ) )    
         .def( 
             "contents"
-            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::FFLocalCalculator::* )( ::SireFF::FFBase::Group const & ) )( &::SireFF::FFLocalCalculator::contents )
+            , (::SireMol::Molecules ( ::SireFF::FFLocalCalculator::* )( ::SireFF::FFBase::Group const & ) )( &::SireFF::FFLocalCalculator::contents )
             , ( bp::arg("group") ) )    
         .def( 
             "contents"
-            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::FFLocalCalculator::* )(  ) )( &::SireFF::FFLocalCalculator::contents ) )    
+            , (::SireMol::Molecules ( ::SireFF::FFLocalCalculator::* )(  ) )( &::SireFF::FFLocalCalculator::contents ) )    
         .def( 
             "getProperty"
             , (::SireBase::Property ( ::SireFF::FFLocalCalculator::* )( ::QString const & ) )( &::SireFF::FFLocalCalculator::getProperty )
@@ -109,14 +106,14 @@ void register_FFLocalCalculator_class(){
             , ( bp::arg("group") ) )    
         .def( 
             "molecules"
-            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::FFLocalCalculator::* )(  ) )( &::SireFF::FFLocalCalculator::molecules ) )    
+            , (::SireMol::Molecules ( ::SireFF::FFLocalCalculator::* )(  ) )( &::SireFF::FFLocalCalculator::molecules ) )    
         .def( 
             "molecules"
-            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::FFLocalCalculator::* )( ::QSet<SireMol::MoleculeID> const & ) )( &::SireFF::FFLocalCalculator::molecules )
+            , (::SireMol::Molecules ( ::SireFF::FFLocalCalculator::* )( ::QSet<SireMol::MoleculeID> const & ) )( &::SireFF::FFLocalCalculator::molecules )
             , ( bp::arg("molids") ) )    
         .def( 
             "molecules"
-            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::FFLocalCalculator::* )( ::SireFF::FFBase::Group const & ) )( &::SireFF::FFLocalCalculator::molecules )
+            , (::SireMol::Molecules ( ::SireFF::FFLocalCalculator::* )( ::SireFF::FFBase::Group const & ) )( &::SireFF::FFLocalCalculator::molecules )
             , ( bp::arg("group") ) )    
         .def( 
             "mustNowRecalculateFromScratch"
@@ -138,7 +135,7 @@ void register_FFLocalCalculator_class(){
             , ( bp::arg("molecule") ) )    
         .def( 
             "remove"
-            , (bool ( ::SireFF::FFLocalCalculator::* )( ::QList<SireMol::PartialMolecule> const & ) )( &::SireFF::FFLocalCalculator::remove )
+            , (bool ( ::SireFF::FFLocalCalculator::* )( ::SireMol::Molecules const & ) )( &::SireFF::FFLocalCalculator::remove )
             , ( bp::arg("molecules") ) )    
         .def( 
             "removeFrom"
@@ -146,7 +143,7 @@ void register_FFLocalCalculator_class(){
             , ( bp::arg("group"), bp::arg("molecule") ) )    
         .def( 
             "removeFrom"
-            , (bool ( ::SireFF::FFLocalCalculator::* )( ::SireFF::FFBase::Group const &,::QList<SireMol::PartialMolecule> const & ) )( &::SireFF::FFLocalCalculator::removeFrom )
+            , (bool ( ::SireFF::FFLocalCalculator::* )( ::SireFF::FFBase::Group const &,::SireMol::Molecules const & ) )( &::SireFF::FFLocalCalculator::removeFrom )
             , ( bp::arg("group"), bp::arg("molecules") ) )    
         .def( 
             "setProperty"

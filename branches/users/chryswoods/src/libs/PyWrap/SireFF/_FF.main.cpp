@@ -9,6 +9,8 @@
 
 #include "SireMol/molecule.h"
 
+#include "SireMol/molecules.h"
+
 #include "SireMol/partialmolecule.h"
 
 #include "SireMol/residue.h"

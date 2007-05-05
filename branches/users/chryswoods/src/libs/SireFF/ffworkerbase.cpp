@@ -35,6 +35,7 @@
 #include "SireCAS/function.h"
 
 #include "SireMol/molecule.h"
+#include "SireMol/molecules.h"
 #include "SireMol/partialmolecule.h"
 #include "SireMol/residue.h"
 #include "SireMol/moleculeid.h"
@@ -79,7 +80,7 @@ void FFWorkerBase::waitUntilReady()
             //the energy no longer needs recalculating
             needs_energy_recalculation = false;
         }
-        
+
         //the processor is now idle
         current_state = IDLE;
     }
@@ -178,7 +179,7 @@ Values FFWorkerBase::energies()
 bool FFWorkerBase::needsRecalculation(bool needs_recalc)
 {
     needs_energy_recalculation = needs_energy_recalculation or needs_recalc;
-    
+
     return needs_energy_recalculation;
 }
 
@@ -187,7 +188,7 @@ ForceField FFWorkerBase::forceField()
 {
     //wait until the processor is idle
     this->waitUntilReady();
-    
+
     return this->_pvt_forceField();
 }
 
@@ -214,19 +215,19 @@ bool FFWorkerBase::setProperty(const QString &name, const Property &value)
 {
     //wait until the processor is idle
     this->waitUntilReady();
-    
+
     return needsRecalculation( this->_pvt_setProperty(name,value) );
 }
 
 /** Return the property with name 'name'
 
     \throw SireBase::missing_property
-*/    
+*/
 Property FFWorkerBase::getProperty(const QString &name)
 {
     //wait until the processor is idle
     this->waitUntilReady();
-    
+
     return this->_pvt_getProperty(name);
 }
 
@@ -259,18 +260,17 @@ QHash<QString,Property> FFWorkerBase::properties()
 bool FFWorkerBase::add(const PartialMolecule &molecule, const ParameterMap &map)
 {
     this->waitUntilReady();
-    
+
     return needsRecalculation( this->_pvt_add(molecule,map) );
 }
 
-/** Add lots of molecules 
+/** Add lots of molecules
 
     \throw SireError::invalid_operation
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-bool FFWorkerBase::add(const QList<PartialMolecule> &molecules,
-                       const ParameterMap &map)
+bool FFWorkerBase::add(const Molecules &molecules, const ParameterMap &map)
 {
     this->waitUntilReady();
     return needsRecalculation( this->_pvt_add(molecules,map) );
@@ -296,7 +296,7 @@ bool FFWorkerBase::addTo(const FFBase::Group &group,
     return needsRecalculation( this->_pvt_addTo(group,molecule,map) );
 }
 
-/** Adds lots of molecules to the group 'group' 
+/** Adds lots of molecules to the group 'group'
 
     \throw SireBase::missing_property
     \throw SireMol::invalid_cast
@@ -304,8 +304,7 @@ bool FFWorkerBase::addTo(const FFBase::Group &group,
     \throw SireFF::invalid_group
 */
 bool FFWorkerBase::addTo(const FFBase::Group &group,
-                         const QList<PartialMolecule> &molecules,
-                         const ParameterMap &map)
+                         const Molecules &molecules, const ParameterMap &map)
 {
     this->waitUntilReady();
     return needsRecalculation( this->_pvt_addTo(group,molecules,map) );
@@ -345,19 +344,7 @@ bool FFWorkerBase::change(const PartialMolecule &molecule)
     \throw SireError::invalid_cast
     \throw SireError::invalid_operation
 */
-bool FFWorkerBase::change(const QHash<MoleculeID,PartialMolecule> &molecules)
-{
-    this->waitUntilReady();
-    return needsRecalculation( this->_pvt_change(molecules) );
-}
-
-/** Change a whole load of partial molecules
-
-    \throw SireBase::missing_property
-    \throw SireError::invalid_cast
-    \throw SireError::invalid_operation
-*/
-bool FFWorkerBase::change(const QList<PartialMolecule> &molecules)
+bool FFWorkerBase::change(const Molecules &molecules)
 {
     this->waitUntilReady();
     return needsRecalculation( this->_pvt_change(molecules) );
@@ -377,7 +364,7 @@ bool FFWorkerBase::remove(const PartialMolecule &molecule)
 }
 
 /** Remove a whole load of molecules */
-bool FFWorkerBase::remove(const QList<PartialMolecule> &molecules)
+bool FFWorkerBase::remove(const Molecules &molecules)
 {
     this->waitUntilReady();
     return needsRecalculation( this->_pvt_remove(molecules) );
@@ -397,13 +384,13 @@ bool FFWorkerBase::removeFrom(const FFBase::Group &group,
     this->waitUntilReady();
     return needsRecalculation( this->_pvt_removeFrom(group,molecule) );
 }
-                              
-/** Remove lots of molecules from the group 'group' 
+
+/** Remove lots of molecules from the group 'group'
 
     \throw SireFF::invalid_group
 */
 bool FFWorkerBase::removeFrom(const FFBase::Group &group,
-                              const QList<PartialMolecule> &molecules)
+                              const Molecules &molecules)
 {
     this->waitUntilReady();
     return needsRecalculation( this->_pvt_removeFrom(group,molecules) );
@@ -418,8 +405,8 @@ bool FFWorkerBase::contains(const PartialMolecule &molecule)
 }
 
 /** Return whether this forcefield contains a complete copy of
-    any version of the partial molecule 'molecule' in the group 'group' 
-    
+    any version of the partial molecule 'molecule' in the group 'group'
+
     \throw SireFF::invalid_group
 */
 bool FFWorkerBase::contains(const PartialMolecule &molecule,
@@ -439,8 +426,8 @@ bool FFWorkerBase::refersTo(MoleculeID molid)
 
 /** Return whether or not the group 'group' in this forcefield
     contains *any part* of any version of the molecule with ID
-    'molid' 
-    
+    'molid'
+
     \throw SireFF::invalid_group
 */
 bool FFWorkerBase::refersTo(MoleculeID molid, const FFBase::Group &group)
@@ -472,8 +459,8 @@ QSet<MoleculeID> FFWorkerBase::moleculeIDs()
 /** Return the set of all of the ID numbers of all of the
     molecules that are referred to by group 'group' in
     this forcefield (i.e. all molecules that have at least
-    some part in this group in this forcefield) 
-    
+    some part in this group in this forcefield)
+
     \throw SireFF::invalid_group
 */
 QSet<MoleculeID> FFWorkerBase::moleculeIDs(const FFBase::Group &group)
@@ -505,7 +492,7 @@ PartialMolecule FFWorkerBase::molecule(MoleculeID molid, const FFBase::Group &gr
 }
 
 /** Return copies of all of the molecules that are in this forcefield */
-QHash<MoleculeID,PartialMolecule> FFWorkerBase::molecules()
+Molecules FFWorkerBase::molecules()
 {
     this->waitUntilReady();
     return this->_pvt_molecules();
@@ -515,29 +502,28 @@ QHash<MoleculeID,PartialMolecule> FFWorkerBase::molecules()
 
     \throw SireFF::missing_group
 */
-QHash<MoleculeID,PartialMolecule> FFWorkerBase::molecules(const FFBase::Group &group)
+Molecules FFWorkerBase::molecules(const FFBase::Group &group)
 {
     this->waitUntilReady();
     return this->_pvt_molecules(group);
 }
 
-/** Return copies of the molecules in this forcefield whose IDs 
+/** Return copies of the molecules in this forcefield whose IDs
     are in 'molids'
-    
+
     \throw SireMol::missing_molecule
 */
-QHash<MoleculeID,PartialMolecule> 
-FFWorkerBase::molecules(const QSet<MoleculeID> &molids)
+Molecules FFWorkerBase::molecules(const QSet<MoleculeID> &molids)
 {
     this->waitUntilReady();
     return this->_pvt_molecules(molids);
 }
 
-/** Return the contents of the group 'group' in this forcefield 
+/** Return the contents of the group 'group' in this forcefield
 
     \throw SireFF::invalid_group
 */
-QHash<MoleculeID,PartialMolecule> FFWorkerBase::contents(const FFBase::Group group)
+Molecules FFWorkerBase::contents(const FFBase::Group group)
 {
     this->waitUntilReady();
     return this->_pvt_contents(group);
@@ -545,7 +531,7 @@ QHash<MoleculeID,PartialMolecule> FFWorkerBase::contents(const FFBase::Group gro
 
 /** Return all of the molecules (and parts of molecules) that
     are in this forcefield */
-QHash<MoleculeID,PartialMolecule> FFWorkerBase::contents()
+Molecules FFWorkerBase::contents()
 {
     this->waitUntilReady();
     return this->_pvt_contents();

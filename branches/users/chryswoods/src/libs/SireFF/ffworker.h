@@ -52,35 +52,34 @@ protected:
     bool _pvt_setForceField(const ForceField &forcefield);
 
     double _pvt_getEnergies(Values &components);
-    
+
     bool _pvt_setProperty(const QString &name, const Property &property);
     Property _pvt_getProperty(const QString &name);
     bool _pvt_containsProperty(const QString &name);
-    
+
     QHash<QString,Property> _pvt_properties();
-    
+
     bool _pvt_add(const PartialMolecule &molecule, const ParameterMap &map);
-    bool _pvt_add(const QList<PartialMolecule> &molecules, const ParameterMap &map);
+    bool _pvt_add(const Molecules &molecules, const ParameterMap &map);
 
     bool _pvt_addTo(const FFBase::Group &group, const PartialMolecule &molecule,
                     const ParameterMap &map);
     bool _pvt_addTo(const FFBase::Group &group,
-                    const QList<PartialMolecule> &molecules,
+                    const Molecules &molecules,
                     const ParameterMap &map);
 
     void _pvt_mustNowRecalculateFromScratch();
 
     bool _pvt_change(const PartialMolecule &molecule);
-    bool _pvt_change(const QHash<MoleculeID,PartialMolecule> &molecules);
-    bool _pvt_change(const QList<PartialMolecule> &molecules);
+    bool _pvt_change(const Molecules &molecules);
 
     bool _pvt_remove(const PartialMolecule &molecule);
-    bool _pvt_remove(const QList<PartialMolecule> &molecules);
+    bool _pvt_remove(const Molecules &molecules);
 
     bool _pvt_removeFrom(const FFBase::Group &group,
                          const PartialMolecule &molecule);
     bool _pvt_removeFrom(const FFBase::Group &group,
-                         const QList<PartialMolecule> &molecules);
+                         const Molecules &molecules);
 
     bool _pvt_contains(const PartialMolecule &molecule);
     bool _pvt_contains(const PartialMolecule &molecule,
@@ -97,12 +96,12 @@ protected:
     PartialMolecule _pvt_molecule(MoleculeID molid);
     PartialMolecule _pvt_molecule(MoleculeID molid, const FFBase::Group &group);
 
-    QHash<MoleculeID,PartialMolecule> _pvt_molecules();
-    QHash<MoleculeID,PartialMolecule> _pvt_molecules(const FFBase::Group &group);
-    QHash<MoleculeID,PartialMolecule> _pvt_molecules(const QSet<MoleculeID> &molids);
+    Molecules _pvt_molecules();
+    Molecules _pvt_molecules(const FFBase::Group &group);
+    Molecules _pvt_molecules(const QSet<MoleculeID> &molids);
 
-    QHash<MoleculeID,PartialMolecule> _pvt_contents(const FFBase::Group &group);
-    QHash<MoleculeID,PartialMolecule> _pvt_contents();
+    Molecules _pvt_contents(const FFBase::Group &group);
+    Molecules _pvt_contents();
 
     bool _pvt_isDirty();
     bool _pvt_isClean();

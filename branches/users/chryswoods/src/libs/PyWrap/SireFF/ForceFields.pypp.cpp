@@ -6,6 +6,7 @@
 #include "boost/python.hpp"
 #include "sireff_headers.h"
 #include "SireMol/molecule.h"
+#include "SireMol/molecules.h"
 #include "SireMol/partialmolecule.h"
 #include "SireMol/residue.h"
 #include "SireMol/newatom.h"
@@ -66,7 +67,7 @@ void register_ForceFields_class(){
             , ( bp::arg("molecule") ) )    
         .def( 
             "change"
-            , (bool ( ::SireFF::ForceFields::* )( ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> const & ) )( &::SireFF::ForceFields::change )
+            , (bool ( ::SireFF::ForceFields::* )( ::SireMol::Molecules const & ) )( &::SireFF::ForceFields::change )
             , ( bp::arg("molecules") ) )    
         .def( 
             "forceFieldGroupsReferringTo"
@@ -136,7 +137,6 @@ void register_ForceFields_class(){
             "setProperty"
             , (bool ( ::SireFF::ForceFields::* )( ::QSet<SireFF::ForceFieldID> const &,::QString const &,::SireBase::Property const & ) )( &::SireFF::ForceFields::setProperty )
             , ( bp::arg("ffids"), bp::arg("name"), bp::arg("property") ) )    
-        .def( "change", &::SireFF::ForceFields::change< QList< ::SireMol::PartialMolecule > > )    
         .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireFF::ForceFields >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    

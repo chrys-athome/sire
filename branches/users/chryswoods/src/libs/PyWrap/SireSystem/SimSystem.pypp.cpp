@@ -6,6 +6,7 @@
 #include "boost/python.hpp"
 #include "siresystem_headers.h"
 #include "SireMol/molecule.h"
+#include "SireMol/molecules.h"
 #include "SireMol/residue.h"
 #include "SireMol/newatom.h"
 #include "SireFF/ffgroupid.h"
@@ -31,27 +32,15 @@ void register_SimSystem_class(){
             , ( bp::arg("molecule"), bp::arg("ffgroupids"), bp::arg("molgroupids"), bp::arg("map")=::SireFF::ParameterMap( ) ) )    
         .def( 
             "add"
-            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireSystem::SimSystem::* )( ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> const &,::QSet<SireMol::MoleculeGroupID> const & ) )( &::SireSystem::SimSystem::add )
+            , (::SireMol::Molecules ( ::SireSystem::SimSystem::* )( ::SireMol::Molecules const &,::QSet<SireMol::MoleculeGroupID> const & ) )( &::SireSystem::SimSystem::add )
             , ( bp::arg("molecules"), bp::arg("molgroupids") ) )    
         .def( 
             "add"
-            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireSystem::SimSystem::* )( ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> const &,::QSet<SireFF::FFGroupID> const &,::SireFF::ParameterMap const & ) )( &::SireSystem::SimSystem::add )
+            , (::SireMol::Molecules ( ::SireSystem::SimSystem::* )( ::SireMol::Molecules const &,::QSet<SireFF::FFGroupID> const &,::SireFF::ParameterMap const & ) )( &::SireSystem::SimSystem::add )
             , ( bp::arg("molecules"), bp::arg("ffgroupids"), bp::arg("map")=::SireFF::ParameterMap( ) ) )    
         .def( 
             "add"
-            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireSystem::SimSystem::* )( ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> const &,::QSet<SireFF::FFGroupID> const &,::QSet<SireMol::MoleculeGroupID> const &,::SireFF::ParameterMap const & ) )( &::SireSystem::SimSystem::add )
-            , ( bp::arg("molecules"), bp::arg("ffgroupids"), bp::arg("molgroupids"), bp::arg("map")=::SireFF::ParameterMap( ) ) )    
-        .def( 
-            "add"
-            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireSystem::SimSystem::* )( ::QList<SireMol::PartialMolecule> const &,::QSet<SireMol::MoleculeGroupID> const & ) )( &::SireSystem::SimSystem::add )
-            , ( bp::arg("molecules"), bp::arg("molgroupids") ) )    
-        .def( 
-            "add"
-            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireSystem::SimSystem::* )( ::QList<SireMol::PartialMolecule> const &,::QSet<SireFF::FFGroupID> const &,::SireFF::ParameterMap const & ) )( &::SireSystem::SimSystem::add )
-            , ( bp::arg("molecules"), bp::arg("ffgroupids"), bp::arg("map")=::SireFF::ParameterMap( ) ) )    
-        .def( 
-            "add"
-            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireSystem::SimSystem::* )( ::QList<SireMol::PartialMolecule> const &,::QSet<SireFF::FFGroupID> const &,::QSet<SireMol::MoleculeGroupID> const &,::SireFF::ParameterMap const & ) )( &::SireSystem::SimSystem::add )
+            , (::SireMol::Molecules ( ::SireSystem::SimSystem::* )( ::SireMol::Molecules const &,::QSet<SireFF::FFGroupID> const &,::QSet<SireMol::MoleculeGroupID> const &,::SireFF::ParameterMap const & ) )( &::SireSystem::SimSystem::add )
             , ( bp::arg("molecules"), bp::arg("ffgroupids"), bp::arg("molgroupids"), bp::arg("map")=::SireFF::ParameterMap( ) ) )    
         .def( 
             "change"
@@ -59,11 +48,7 @@ void register_SimSystem_class(){
             , ( bp::arg("molecule") ) )    
         .def( 
             "change"
-            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireSystem::SimSystem::* )( ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> const & ) )( &::SireSystem::SimSystem::change )
-            , ( bp::arg("molecules") ) )    
-        .def( 
-            "change"
-            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireSystem::SimSystem::* )( ::QList<SireMol::PartialMolecule> const & ) )( &::SireSystem::SimSystem::change )
+            , (::SireMol::Molecules ( ::SireSystem::SimSystem::* )( ::SireMol::Molecules const & ) )( &::SireSystem::SimSystem::change )
             , ( bp::arg("molecules") ) )    
         .def( 
             "commit"
@@ -74,7 +59,7 @@ void register_SimSystem_class(){
             , ( bp::arg("molecule") ) )    
         .def( 
             "remove"
-            , (void ( ::SireSystem::SimSystem::* )( ::QList<SireMol::PartialMolecule> const & ) )( &::SireSystem::SimSystem::remove )
+            , (void ( ::SireSystem::SimSystem::* )( ::SireMol::Molecules const & ) )( &::SireSystem::SimSystem::remove )
             , ( bp::arg("molecules") ) )    
         .def( 
             "remove"
@@ -86,11 +71,11 @@ void register_SimSystem_class(){
             , ( bp::arg("molecule"), bp::arg("ffgroupids"), bp::arg("molgroupids")=::QSet<SireMol::MoleculeGroupID>( ) ) )    
         .def( 
             "remove"
-            , (void ( ::SireSystem::SimSystem::* )( ::QList<SireMol::PartialMolecule> const &,::QSet<SireMol::MoleculeGroupID> const & ) )( &::SireSystem::SimSystem::remove )
+            , (void ( ::SireSystem::SimSystem::* )( ::SireMol::Molecules const &,::QSet<SireMol::MoleculeGroupID> const & ) )( &::SireSystem::SimSystem::remove )
             , ( bp::arg("molecules"), bp::arg("molgroupids") ) )    
         .def( 
             "remove"
-            , (void ( ::SireSystem::SimSystem::* )( ::QList<SireMol::PartialMolecule> const &,::QSet<SireFF::FFGroupID> const &,::QSet<SireMol::MoleculeGroupID> const & ) )( &::SireSystem::SimSystem::remove )
+            , (void ( ::SireSystem::SimSystem::* )( ::SireMol::Molecules const &,::QSet<SireFF::FFGroupID> const &,::QSet<SireMol::MoleculeGroupID> const & ) )( &::SireSystem::SimSystem::remove )
             , ( bp::arg("molecules"), bp::arg("ffgroupids"), bp::arg("molgroupids")=::QSet<SireMol::MoleculeGroupID>( ) ) )    
         .def( 
             "rollback"

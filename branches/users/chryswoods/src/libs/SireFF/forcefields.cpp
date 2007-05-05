@@ -43,6 +43,7 @@
 #include "SireError/errors.h"
 
 #include "SireMol/molecule.h"
+#include "SireMol/molecules.h"
 #include "SireMol/moleculeversion.h"
 #include "SireMol/partialmolecule.h"
 #include "SireMol/residue.h"
@@ -563,7 +564,7 @@ bool ForceFields::change(const PartialMolecule &molecule)
 }
 
 /** Change the molecules  in 'mols' */
-bool ForceFields::change(const QHash<MoleculeID,PartialMolecule> &molecules)
+bool ForceFields::change(const Molecules &molecules)
 {
     if (molecules.isEmpty())
         return false;
@@ -576,13 +577,13 @@ bool ForceFields::change(const QHash<MoleculeID,PartialMolecule> &molecules)
         //get the list of molecules that are actually contained in these
         //forcefields that are of a different version to the molecules
         //in 'molecules'
-        QHash<MoleculeID,PartialMolecule> mols_in_ffields = molecules;
+        Molecules mols_in_ffields = molecules;
 
         //also accumulate the list of forcefields that contain any one
         //of these molecules
         QSet<ForceFieldID> ffids_with_mols;
 
-        for (QHash<MoleculeID,PartialMolecule>::const_iterator it = molecules.begin();
+        for (Molecules::const_iterator it = molecules.begin();
              it != molecules.end();
              ++it)
         {

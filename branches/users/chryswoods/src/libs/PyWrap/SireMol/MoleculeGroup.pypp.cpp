@@ -27,8 +27,7 @@ void register_MoleculeGroup_class(){
     bp::class_< SireMol::MoleculeGroup >( "MoleculeGroup" )    
         .def( bp::init< >() )    
         .def( bp::init< QString const & >(( bp::arg("name") )) )    
-        .def( bp::init< QString const &, QList<SireMol::PartialMolecule> const & >(( bp::arg("name"), bp::arg("molecules") )) )    
-        .def( bp::init< QString const &, QHash<SireMol::MoleculeID,SireMol::PartialMolecule> const & >(( bp::arg("name"), bp::arg("molecules") )) )    
+        .def( bp::init< QString const &, SireMol::Molecules const & >(( bp::arg("name"), bp::arg("molecules") )) )    
         .def( 
             "ID"
             , &::SireMol::MoleculeGroup::ID )    
@@ -38,7 +37,7 @@ void register_MoleculeGroup_class(){
             , ( bp::arg("molecule") ) )    
         .def( 
             "add"
-            , (bool ( ::SireMol::MoleculeGroup::* )( ::QList<SireMol::PartialMolecule> const & ) )( &::SireMol::MoleculeGroup::add )
+            , (bool ( ::SireMol::MoleculeGroup::* )( ::SireMol::Molecules const & ) )( &::SireMol::MoleculeGroup::add )
             , ( bp::arg("molecules") ) )    
         .def( 
             "at"
@@ -51,11 +50,7 @@ void register_MoleculeGroup_class(){
             , ( bp::arg("molecule") ) )    
         .def( 
             "change"
-            , (bool ( ::SireMol::MoleculeGroup::* )( ::QList<SireMol::PartialMolecule> const & ) )( &::SireMol::MoleculeGroup::change )
-            , ( bp::arg("molecules") ) )    
-        .def( 
-            "change"
-            , (bool ( ::SireMol::MoleculeGroup::* )( ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> const & ) )( &::SireMol::MoleculeGroup::change )
+            , (bool ( ::SireMol::MoleculeGroup::* )( ::SireMol::Molecules const & ) )( &::SireMol::MoleculeGroup::change )
             , ( bp::arg("molecules") ) )    
         .def( 
             "contains"
@@ -101,7 +96,7 @@ void register_MoleculeGroup_class(){
             , ( bp::arg("molid") ) )    
         .def( 
             "remove"
-            , (bool ( ::SireMol::MoleculeGroup::* )( ::QList<SireMol::PartialMolecule> const & ) )( &::SireMol::MoleculeGroup::remove )
+            , (bool ( ::SireMol::MoleculeGroup::* )( ::SireMol::Molecules const & ) )( &::SireMol::MoleculeGroup::remove )
             , ( bp::arg("molecules") ) )    
         .def( 
             "remove"

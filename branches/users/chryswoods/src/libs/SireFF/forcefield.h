@@ -49,6 +49,7 @@ class PartialMolecule;
 class Molecule;
 class Residue;
 class NewAtom;
+class Molecules;
 
 class MoleculeID;
 class ResNum;
@@ -60,6 +61,7 @@ namespace SireFF
 
 using SireMol::MoleculeID;
 using SireMol::Molecule;
+using SireMol::Molecules;
 using SireMol::Residue;
 using SireMol::ResNum;
 using SireMol::ResID;
@@ -91,19 +93,19 @@ public:
     ForceField& operator=(const FFBase &ffbase);
 
     const FFBase& base() const;
-    
+
     template<class T>
     bool isA() const
     {
         return d.isA<T>();
     }
-    
+
     template<class T>
     const T& asA() const
     {
         return d.asA<T>();
     }
-    
+
     template<class T>
     T& asA()
     {
@@ -134,31 +136,30 @@ public:
     void mustNowRecalculateFromScratch();
 
     bool change(const PartialMolecule &molecule);
-    bool change(const QList<PartialMolecule> &molecules);
-    bool change(const QHash<MoleculeID,PartialMolecule> &molecules);
+    bool change(const Molecules &molecules);
 
     bool add(const PartialMolecule &molecule,
              const ParameterMap &map = ParameterMap());
 
-    bool add(const QList<PartialMolecule> &molecules,
+    bool add(const Molecules &molecules,
              const ParameterMap &map = ParameterMap());
 
     bool addTo(const FFBase::Group &group, const PartialMolecule &molecule,
                const ParameterMap &map = ParameterMap());
 
     bool addTo(const FFBase::Group &group,
-               const QList<PartialMolecule> &molecules,
+               const Molecules &molecules,
                const ParameterMap &map = ParameterMap());
 
     bool remove(const PartialMolecule &molecule);
 
-    bool remove(const QList<PartialMolecule> &molecules);
+    bool remove(const Molecules &molecules);
 
     bool removeFrom(const FFBase::Group &group,
                     const PartialMolecule &molecule);
 
     bool removeFrom(const FFBase::Group &group,
-                    const QList<PartialMolecule> &molecules);
+                    const Molecules &molecules);
 
     bool contains(const PartialMolecule &molecule) const;
 
@@ -174,13 +175,13 @@ public:
 
     PartialMolecule molecule(MoleculeID molid) const;
     PartialMolecule molecule(MoleculeID molid, const FFBase::Group &group) const;
-    
-    QHash<MoleculeID,PartialMolecule> molecules() const;
-    QHash<MoleculeID,PartialMolecule> molecules(const FFBase::Group &group) const;
-    QHash<MoleculeID,PartialMolecule> molecules(const QSet<MoleculeID> &molids) const;
 
-    QHash<MoleculeID,PartialMolecule> contents(const FFBase::Group &group) const;
-    QHash<MoleculeID,PartialMolecule> contents() const;
+    Molecules molecules() const;
+    Molecules molecules(const FFBase::Group &group) const;
+    Molecules molecules(const QSet<MoleculeID> &molids) const;
+
+    Molecules contents(const FFBase::Group &group) const;
+    Molecules contents() const;
 
     bool isDirty() const;
     bool isClean() const;

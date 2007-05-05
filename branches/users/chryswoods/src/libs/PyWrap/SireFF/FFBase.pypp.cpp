@@ -6,6 +6,7 @@
 #include "boost/python.hpp"
 #include "sireff_headers.h"
 #include "SireMol/molecule.h"
+#include "SireMol/molecules.h"
 #include "SireMol/partialmolecule.h"
 #include "SireMol/residue.h"
 #include "SireMol/newatom.h"
@@ -131,7 +132,7 @@ void register_FFBase_class(){
         }
         { //::SireFF::FFBase::add
         
-            typedef bool ( ::SireFF::FFBase::*add_function_type )( ::QList<SireMol::PartialMolecule> const &,::SireFF::ParameterMap const & ) ;
+            typedef bool ( ::SireFF::FFBase::*add_function_type )( ::SireMol::Molecules const &,::SireFF::ParameterMap const & ) ;
             
             FFBase_exposer.def( 
                 "add"
@@ -151,7 +152,7 @@ void register_FFBase_class(){
         }
         { //::SireFF::FFBase::addTo
         
-            typedef bool ( ::SireFF::FFBase::*addTo_function_type )( ::SireFF::FFBase::Group const &,::QList<SireMol::PartialMolecule> const &,::SireFF::ParameterMap const & ) ;
+            typedef bool ( ::SireFF::FFBase::*addTo_function_type )( ::SireFF::FFBase::Group const &,::SireMol::Molecules const &,::SireFF::ParameterMap const & ) ;
             
             FFBase_exposer.def( 
                 "addTo"
@@ -181,22 +182,12 @@ void register_FFBase_class(){
         }
         { //::SireFF::FFBase::change
         
-            typedef bool ( ::SireFF::FFBase::*change_function_type )( ::QList<SireMol::PartialMolecule> const & ) ;
+            typedef bool ( ::SireFF::FFBase::*change_function_type )( ::SireMol::Molecules const & ) ;
             
             FFBase_exposer.def( 
                 "change"
                 , change_function_type( &::SireFF::FFBase::change )
-                , ( bp::arg("mols") ) );
-        
-        }
-        { //::SireFF::FFBase::change
-        
-            typedef bool ( ::SireFF::FFBase::*change_function_type )( ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> const & ) ;
-            
-            FFBase_exposer.def( 
-                "change"
-                , change_function_type( &::SireFF::FFBase::change )
-                , ( bp::arg("mols") ) );
+                , ( bp::arg("molecules") ) );
         
         }
         { //::SireFF::FFBase::components
@@ -241,7 +232,7 @@ void register_FFBase_class(){
         }
         { //::SireFF::FFBase::contents
         
-            typedef ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::FFBase::*contents_function_type )(  ) const;
+            typedef ::SireMol::Molecules ( ::SireFF::FFBase::*contents_function_type )(  ) const;
             
             FFBase_exposer.def( 
                 "contents"
@@ -250,7 +241,7 @@ void register_FFBase_class(){
         }
         { //::SireFF::FFBase::contents
         
-            typedef ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::FFBase::*contents_function_type )( ::SireFF::FFBase::Group const & ) const;
+            typedef ::SireMol::Molecules ( ::SireFF::FFBase::*contents_function_type )( ::SireFF::FFBase::Group const & ) const;
             
             FFBase_exposer.def( 
                 "contents"
@@ -385,7 +376,7 @@ void register_FFBase_class(){
         }
         { //::SireFF::FFBase::molecules
         
-            typedef ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::FFBase::*molecules_function_type )( ::QSet<SireMol::MoleculeID> const & ) const;
+            typedef ::SireMol::Molecules ( ::SireFF::FFBase::*molecules_function_type )( ::QSet<SireMol::MoleculeID> const & ) const;
             
             FFBase_exposer.def( 
                 "molecules"
@@ -395,7 +386,7 @@ void register_FFBase_class(){
         }
         { //::SireFF::FFBase::molecules
         
-            typedef ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::FFBase::*molecules_function_type )(  ) const;
+            typedef ::SireMol::Molecules ( ::SireFF::FFBase::*molecules_function_type )(  ) const;
             
             FFBase_exposer.def( 
                 "molecules"
@@ -404,7 +395,7 @@ void register_FFBase_class(){
         }
         { //::SireFF::FFBase::molecules
         
-            typedef ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::FFBase::*molecules_function_type )( ::SireFF::FFBase::Group const & ) const;
+            typedef ::SireMol::Molecules ( ::SireFF::FFBase::*molecules_function_type )( ::SireFF::FFBase::Group const & ) const;
             
             FFBase_exposer.def( 
                 "molecules"
@@ -484,7 +475,7 @@ void register_FFBase_class(){
         }
         { //::SireFF::FFBase::remove
         
-            typedef bool ( ::SireFF::FFBase::*remove_function_type )( ::QList<SireMol::PartialMolecule> const & ) ;
+            typedef bool ( ::SireFF::FFBase::*remove_function_type )( ::SireMol::Molecules const & ) ;
             
             FFBase_exposer.def( 
                 "remove"
@@ -504,7 +495,7 @@ void register_FFBase_class(){
         }
         { //::SireFF::FFBase::removeFrom
         
-            typedef bool ( ::SireFF::FFBase::*removeFrom_function_type )( ::SireFF::FFBase::Group const &,::QList<SireMol::PartialMolecule> const & ) ;
+            typedef bool ( ::SireFF::FFBase::*removeFrom_function_type )( ::SireFF::FFBase::Group const &,::SireMol::Molecules const & ) ;
             
             FFBase_exposer.def( 
                 "removeFrom"

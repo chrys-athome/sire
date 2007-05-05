@@ -32,6 +32,7 @@
 #include "intercljff.h"
 
 #include "SireMol/partialmolecule.h"
+#include "SireMol/molecules.h"
 
 #include "SireMol/errors.h"
 
@@ -693,6 +694,16 @@ bool InterCLJFF::add(const PartialMolecule &molecule, const ParameterMap &map)
         return isDirty();
 }
 
+/** Add lots of molecules
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+bool InterCLJFF::add(const Molecules &molecules, const ParameterMap &map)
+{
+    return CLJFF::add(molecules, map);
+}
+
 /** Remove the molecule 'molecule' */
 bool InterCLJFF::remove(const PartialMolecule &molecule)
 {
@@ -709,6 +720,12 @@ bool InterCLJFF::remove(const PartialMolecule &molecule)
         return isDirty();
 }
 
+/** Remove lots of molecules */
+bool InterCLJFF::remove(const Molecules &molecules)
+{
+    return CLJFF::remove(molecules);
+}
+
 /** Change the molecule 'molecule' */
 bool InterCLJFF::change(const PartialMolecule &molecule)
 {
@@ -723,6 +740,12 @@ bool InterCLJFF::change(const PartialMolecule &molecule)
     }
     else
         return this->isDirty();
+}
+
+/** Change lots of molecules */
+bool InterCLJFF::change(const Molecules &molecules)
+{
+    return CLJFF::change(molecules);
 }
 
 /** Return whether this forcefield contains a complete copy of
@@ -792,9 +815,9 @@ PartialMolecule InterCLJFF::molecule(MoleculeID molid) const
 
 /** Return all of the molecules (and parts of molecules) that
     are in this forcefield */
-QHash<MoleculeID,PartialMolecule> InterCLJFF::contents() const
+Molecules InterCLJFF::contents() const
 {
-    QHash<MoleculeID,PartialMolecule> all_mols;
+    Molecules all_mols;
 
     int nmols = mols.count();
 
@@ -808,7 +831,7 @@ QHash<MoleculeID,PartialMolecule> InterCLJFF::contents() const
         {
             const PartialMolecule &mol = mols_array[i].molecule();
 
-            all_mols.insert( mol.ID(), mol );
+            all_mols.add( mol );
         }
     }
 

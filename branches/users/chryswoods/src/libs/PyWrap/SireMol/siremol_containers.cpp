@@ -43,6 +43,7 @@
 #include "ThirdParty/tuples.hpp"
 
 #include "siremol_headers.h"
+#include "SireMol/molecules.h"
 
 using namespace SireMol;
 using namespace SireMaths;
@@ -52,6 +53,8 @@ using boost::python::register_tuple;
 
 void register_SireMol_containers()
 {
+    register_list< Molecules >();
+
     register_list< QList<Molecule> >();
     register_list< QVector<Molecule> >();
 

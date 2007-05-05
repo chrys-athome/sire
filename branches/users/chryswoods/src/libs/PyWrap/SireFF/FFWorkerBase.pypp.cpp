@@ -6,6 +6,7 @@
 #include "boost/python.hpp"
 #include "sireff_headers.h"
 #include "SireMol/molecule.h"
+#include "SireMol/molecules.h"
 #include "SireMol/partialmolecule.h"
 #include "SireMol/residue.h"
 #include "SireMol/newatom.h"
@@ -48,7 +49,7 @@ void register_FFWorkerBase_class(){
         }
         { //::SireFF::FFWorkerBase::add
         
-            typedef bool ( ::SireFF::FFWorkerBase::*add_function_type )( ::QList<SireMol::PartialMolecule> const &,::SireFF::ParameterMap const & ) ;
+            typedef bool ( ::SireFF::FFWorkerBase::*add_function_type )( ::SireMol::Molecules const &,::SireFF::ParameterMap const & ) ;
             
             FFWorkerBase_exposer.def( 
                 "add"
@@ -68,7 +69,7 @@ void register_FFWorkerBase_class(){
         }
         { //::SireFF::FFWorkerBase::addTo
         
-            typedef bool ( ::SireFF::FFWorkerBase::*addTo_function_type )( ::SireFF::FFBase::Group const &,::QList<SireMol::PartialMolecule> const &,::SireFF::ParameterMap const & ) ;
+            typedef bool ( ::SireFF::FFWorkerBase::*addTo_function_type )( ::SireFF::FFBase::Group const &,::SireMol::Molecules const &,::SireFF::ParameterMap const & ) ;
             
             FFWorkerBase_exposer.def( 
                 "addTo"
@@ -98,17 +99,7 @@ void register_FFWorkerBase_class(){
         }
         { //::SireFF::FFWorkerBase::change
         
-            typedef bool ( ::SireFF::FFWorkerBase::*change_function_type )( ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> const & ) ;
-            
-            FFWorkerBase_exposer.def( 
-                "change"
-                , change_function_type( &::SireFF::FFWorkerBase::change )
-                , ( bp::arg("molecules") ) );
-        
-        }
-        { //::SireFF::FFWorkerBase::change
-        
-            typedef bool ( ::SireFF::FFWorkerBase::*change_function_type )( ::QList<SireMol::PartialMolecule> const & ) ;
+            typedef bool ( ::SireFF::FFWorkerBase::*change_function_type )( ::SireMol::Molecules const & ) ;
             
             FFWorkerBase_exposer.def( 
                 "change"
@@ -148,7 +139,7 @@ void register_FFWorkerBase_class(){
         }
         { //::SireFF::FFWorkerBase::contents
         
-            typedef ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::FFWorkerBase::*contents_function_type )( ::SireFF::FFBase::Group const ) ;
+            typedef ::SireMol::Molecules ( ::SireFF::FFWorkerBase::*contents_function_type )( ::SireFF::FFBase::Group const ) ;
             
             FFWorkerBase_exposer.def( 
                 "contents"
@@ -158,7 +149,7 @@ void register_FFWorkerBase_class(){
         }
         { //::SireFF::FFWorkerBase::contents
         
-            typedef ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::FFWorkerBase::*contents_function_type )(  ) ;
+            typedef ::SireMol::Molecules ( ::SireFF::FFWorkerBase::*contents_function_type )(  ) ;
             
             FFWorkerBase_exposer.def( 
                 "contents"
@@ -281,7 +272,7 @@ void register_FFWorkerBase_class(){
         }
         { //::SireFF::FFWorkerBase::molecules
         
-            typedef ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::FFWorkerBase::*molecules_function_type )(  ) ;
+            typedef ::SireMol::Molecules ( ::SireFF::FFWorkerBase::*molecules_function_type )(  ) ;
             
             FFWorkerBase_exposer.def( 
                 "molecules"
@@ -290,7 +281,7 @@ void register_FFWorkerBase_class(){
         }
         { //::SireFF::FFWorkerBase::molecules
         
-            typedef ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::FFWorkerBase::*molecules_function_type )( ::SireFF::FFBase::Group const & ) ;
+            typedef ::SireMol::Molecules ( ::SireFF::FFWorkerBase::*molecules_function_type )( ::SireFF::FFBase::Group const & ) ;
             
             FFWorkerBase_exposer.def( 
                 "molecules"
@@ -300,7 +291,7 @@ void register_FFWorkerBase_class(){
         }
         { //::SireFF::FFWorkerBase::molecules
         
-            typedef ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireFF::FFWorkerBase::*molecules_function_type )( ::QSet<SireMol::MoleculeID> const & ) ;
+            typedef ::SireMol::Molecules ( ::SireFF::FFWorkerBase::*molecules_function_type )( ::QSet<SireMol::MoleculeID> const & ) ;
             
             FFWorkerBase_exposer.def( 
                 "molecules"
@@ -367,7 +358,7 @@ void register_FFWorkerBase_class(){
         }
         { //::SireFF::FFWorkerBase::remove
         
-            typedef bool ( ::SireFF::FFWorkerBase::*remove_function_type )( ::QList<SireMol::PartialMolecule> const & ) ;
+            typedef bool ( ::SireFF::FFWorkerBase::*remove_function_type )( ::SireMol::Molecules const & ) ;
             
             FFWorkerBase_exposer.def( 
                 "remove"
@@ -387,7 +378,7 @@ void register_FFWorkerBase_class(){
         }
         { //::SireFF::FFWorkerBase::removeFrom
         
-            typedef bool ( ::SireFF::FFWorkerBase::*removeFrom_function_type )( ::SireFF::FFBase::Group const &,::QList<SireMol::PartialMolecule> const & ) ;
+            typedef bool ( ::SireFF::FFWorkerBase::*removeFrom_function_type )( ::SireFF::FFBase::Group const &,::SireMol::Molecules const & ) ;
             
             FFWorkerBase_exposer.def( 
                 "removeFrom"

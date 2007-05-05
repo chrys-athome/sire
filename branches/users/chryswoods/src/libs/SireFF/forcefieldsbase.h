@@ -151,18 +151,14 @@ public:
     virtual void mustNowRecalculateFromScratch()=0;
 
     virtual bool change(const PartialMolecule &molecule)=0;
-    virtual bool change(const QList<PartialMolecule> &molecules);
-    virtual bool change(const QHash<MoleculeID,PartialMolecule> &molecules);
-
-    template<class T>
-    bool change(const T &molecules);
+    virtual bool change(const Molecules &molecules);
 
     virtual bool add( ForceFieldID ffid,
                       const PartialMolecule &molecule,
                       const ParameterMap &map = ParameterMap() );
 
     virtual bool add( ForceFieldID ffid,
-                      const QList<PartialMolecule> &molecules,
+                      const Molecules &molecules,
                       const ParameterMap &map = ParameterMap() );
 
     virtual bool add( const QSet<ForceFieldID> &ffids,
@@ -170,7 +166,7 @@ public:
                       const ParameterMap &map = ParameterMap() );
 
     virtual bool add( const QSet<ForceFieldID> &ffids,
-                      const QList<PartialMolecule> &molecules,
+                      const Molecules &molecules,
                       const ParameterMap &map = ParameterMap() );
 
     virtual bool addTo( ForceFieldID ffid, const FFBase::Group &group,
@@ -178,7 +174,7 @@ public:
                         const ParameterMap &map = ParameterMap() )=0;
 
     virtual bool addTo( ForceFieldID ffid, const FFBase::Group &group,
-                        const QList<PartialMolecule> &molecules,
+                        const Molecules &molecules,
                         const ParameterMap &map = ParameterMap() );
 
     virtual bool addTo( const FFGroupID &ffgroupid,
@@ -186,7 +182,7 @@ public:
                         const ParameterMap &map = ParameterMap() );
 
     virtual bool addTo( const FFGroupID &ffgroupid,
-                        const QList<PartialMolecule> &molecules,
+                        const Molecules &molecules,
                         const ParameterMap &map = ParameterMap() );
 
     virtual bool addTo( const QSet<FFGroupID> &ffgroupids,
@@ -194,39 +190,34 @@ public:
                         const ParameterMap &map = ParameterMap() );
 
     virtual bool addTo( const QSet<FFGroupID> &ffgroupids,
-                        const QList<PartialMolecule> &molecules,
-                        const ParameterMap &map = ParameterMap() );
-
-    virtual bool addTo( const QSet<FFGroupID> &ffgroupids,
-                        const QHash<MoleculeID,PartialMolecule> &molecules,
+                        const Molecules &molecules,
                         const ParameterMap &map = ParameterMap() );
 
     virtual bool remove(const PartialMolecule &molecule);
-    virtual bool remove(const QList<PartialMolecule> &molecules);
+    virtual bool remove(const Molecules &molecules);
 
     virtual bool remove(ForceFieldID ffid, const PartialMolecule &molecule);
-    virtual bool remove(ForceFieldID ffid,
-                        const QList<PartialMolecule> &molecules);
+    virtual bool remove(ForceFieldID ffid, const Molecules &molecules);
 
     virtual bool remove(const QSet<ForceFieldID> &ffids,
                         const PartialMolecule &molecule);
     virtual bool remove(const QSet<ForceFieldID> &ffids,
-                        const QList<PartialMolecule> &molecules);
+                        const Molecules &molecules);
 
     virtual bool removeFrom(ForceFieldID ffid, const FFBase::Group &group,
                             const PartialMolecule &molecule)=0;
     virtual bool removeFrom(ForceFieldID ffid, const FFBase::Group &group,
-                            const QList<PartialMolecule> &molecules);
+                            const Molecules &molecules);
 
     virtual bool removeFrom(const FFGroupID &ffgroupid,
                             const PartialMolecule &molecule);
     virtual bool removeFrom(const FFGroupID &ffgroupid,
-                            const QList<PartialMolecule> &molecules);
+                            const Molecules &molecules);
 
     virtual bool removeFrom(const QSet<FFGroupID> &ffgroupids,
                             const PartialMolecule &molecule);
     virtual bool removeFrom(const QSet<FFGroupID> &ffgroupids,
-                            const QList<PartialMolecule> &molecules);
+                            const Molecules &molecules);
 
     bool refersTo(MoleculeID molid) const;
     bool refersTo(MoleculeID molid, ForceFieldID ffid) const;
@@ -282,25 +273,21 @@ public:
     virtual PartialMolecule molecule(MoleculeID molid,
                                      const QSet<FFGroupID> &ffgroupids) const;
 
-    virtual QHash<MoleculeID,PartialMolecule> contents() const;
-    virtual QHash<MoleculeID,PartialMolecule> contents(ForceFieldID ffid) const;
-    virtual QHash<MoleculeID,PartialMolecule>
-                      contents(const QSet<ForceFieldID> &ffids) const;
-    virtual QHash<MoleculeID,PartialMolecule>
-                      contents(ForceFieldID ffid, const FFBase::Group &group) const;
+    virtual Molecules contents() const;
+    virtual Molecules contents(ForceFieldID ffid) const;
+    virtual Molecules contents(const QSet<ForceFieldID> &ffids) const;
+    virtual Molecules contents(ForceFieldID ffid, const FFBase::Group &group) const;
 
-    QHash<MoleculeID,PartialMolecule> contents(const FFGroupID &ffgroupid) const;
-    QHash<MoleculeID,PartialMolecule>
-                      contents(const QSet<FFGroupID> &ffgroupids) const;
+    Molecules contents(const FFGroupID &ffgroupid) const;
+    Molecules contents(const QSet<FFGroupID> &ffgroupids) const;
 
-    QHash<MoleculeID,PartialMolecule> molecules() const;
-    QHash<MoleculeID,PartialMolecule> molecules(ForceFieldID ffid) const;
-    QHash<MoleculeID,PartialMolecule> molecules(const QSet<ForceFieldID> &ffids) const;
+    Molecules molecules() const;
+    Molecules molecules(ForceFieldID ffid) const;
+    Molecules molecules(const QSet<ForceFieldID> &ffids) const;
 
-    QHash<MoleculeID,PartialMolecule> molecules(ForceFieldID ffid,
-                                                const FFBase::Group &group) const;
-    QHash<MoleculeID,PartialMolecule> molecules(const FFGroupID &ffgroupid) const;
-    QHash<MoleculeID,PartialMolecule> molecules(const QSet<FFGroupID> &ffgroupids) const;
+    Molecules molecules(ForceFieldID ffid, const FFBase::Group &group) const;
+    Molecules molecules(const FFGroupID &ffgroupid) const;
+    Molecules molecules(const QSet<FFGroupID> &ffgroupids) const;
 
     virtual void assertValidComponents(const FFExpression &expression) const=0;
     virtual void assertSameContents(const ForceFieldsBase &other) const=0;
@@ -451,28 +438,6 @@ private:
         system. */
     SymbolID total_id;
 };
-
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-bool ForceFieldsBase::change(const T &molecules)
-{
-    if (molecules.count() == 0)
-        return false;
-    else if (molecules.count() == 1)
-        return this->change( *(molecules.begin()) );
-
-    QHash<MoleculeID,PartialMolecule> mols;
-    mols.reserve(molecules.count());
-
-    for (typename T::const_iterator it = molecules.begin();
-         it != molecules.end();
-         ++it)
-    {
-        mols.insert(it->ID(), *it);
-    }
-
-    return this->change(mols);
-}
 
 }
 

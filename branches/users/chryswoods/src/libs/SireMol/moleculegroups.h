@@ -83,43 +83,32 @@ public:
     bool remove(const QString &groupname);
 
     bool add(const PartialMolecule &molecule, MoleculeGroupID groupid);
-    bool add(const QHash<MoleculeID,PartialMolecule> &molecules,
-             MoleculeGroupID groupid);
-    bool add(const QList<PartialMolecule> &molecules, MoleculeGroupID groupid);
+    bool add(const Molecules &molecules, MoleculeGroupID groupid);
 
     bool add(const PartialMolecule &molecule,
              const QSet<MoleculeGroupID> &groupids);
-    bool add(const QHash<MoleculeID,PartialMolecule> &molecules,
-             const QSet<MoleculeGroupID> &groupids);
-    bool add(const QList<PartialMolecule> &molecules,
-             const QSet<MoleculeGroupID> &groupids);
+    bool add(const Molecules &molecules, const QSet<MoleculeGroupID> &groupids);
 
     bool remove(const PartialMolecule &molecule, MoleculeGroupID groupid);
-    bool remove(const QHash<MoleculeID,PartialMolecule> &molecules,
-                MoleculeGroupID groupid);
-    bool remove(const QList<PartialMolecule> &molecules, MoleculeGroupID groupid);
+    bool remove(const Molecules &molecules, MoleculeGroupID groupid);
 
     bool remove(const PartialMolecule &molecule,
                 const QSet<MoleculeGroupID> &groupids);
-    bool remove(const QHash<MoleculeID,PartialMolecule> &molecules,
-                const QSet<MoleculeGroupID> &groupids);
-    bool remove(const QList<PartialMolecule> &molecules,
+    bool remove(const Molecules &molecules,
                 const QSet<MoleculeGroupID> &groupids);
 
     bool change(const PartialMolecule &molecule);
-    bool change(const QList<PartialMolecule> &molecules);
-    bool change(const QHash<MoleculeID,PartialMolecule> &molecules);
+    bool change(const Molecules &molecules);
 
     bool remove(const PartialMolecule &molecule);
-    bool remove(const QHash<MoleculeID,PartialMolecule> &molecules);
-    bool remove(const QList<PartialMolecule> &molecules);
+    bool remove(const Molecules &molecules);
 
     PartialMolecule molecule(MoleculeID molid) const;
     PartialMolecule molecule(MoleculeID molid, MoleculeGroupID groupid) const;
     PartialMolecule molecule(MoleculeID molid,
                              const QSet<MoleculeGroupID> &groupids) const;
 
-    QHash<MoleculeID,PartialMolecule> molecules() const;
+    Molecules molecules() const;
 
     QSet<MoleculeID> moleculeIDs() const;
 

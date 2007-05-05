@@ -6,6 +6,7 @@
 #include "boost/python.hpp"
 #include "siremm_headers.h"
 #include "SireMol/molecule.h"
+#include "SireMol/molecules.h"
 #include "SireMol/residue.h"
 #include "SireMol/newatom.h"
 #include "SireMol/atom.h"
@@ -43,6 +44,16 @@ void register_InterLJFF_class(){
                 , ( bp::arg("molecule"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
         
         }
+        { //::SireMM::InterLJFF::add
+        
+            typedef bool ( ::SireMM::InterLJFF::*add_function_type )( ::SireMol::Molecules const &,::SireFF::ParameterMap const & ) ;
+            
+            InterLJFF_exposer.def( 
+                "add"
+                , add_function_type( &::SireMM::InterLJFF::add )
+                , ( bp::arg("molecules"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
+        
+        }
         { //::SireMM::InterLJFF::change
         
             typedef bool ( ::SireMM::InterLJFF::*change_function_type )( ::SireMol::PartialMolecule const & ) ;
@@ -51,6 +62,16 @@ void register_InterLJFF_class(){
                 "change"
                 , change_function_type( &::SireMM::InterLJFF::change )
                 , ( bp::arg("molecule") ) );
+        
+        }
+        { //::SireMM::InterLJFF::change
+        
+            typedef bool ( ::SireMM::InterLJFF::*change_function_type )( ::SireMol::Molecules const & ) ;
+            
+            InterLJFF_exposer.def( 
+                "change"
+                , change_function_type( &::SireMM::InterLJFF::change )
+                , ( bp::arg("molecules") ) );
         
         }
         { //::SireMM::InterLJFF::contains
@@ -65,7 +86,7 @@ void register_InterLJFF_class(){
         }
         { //::SireMM::InterLJFF::contents
         
-            typedef ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireMM::InterLJFF::*contents_function_type )(  ) const;
+            typedef ::SireMol::Molecules ( ::SireMM::InterLJFF::*contents_function_type )(  ) const;
             
             InterLJFF_exposer.def( 
                 "contents"
@@ -130,6 +151,16 @@ void register_InterLJFF_class(){
                 , ( bp::arg("molecule") ) );
         
         }
+        { //::SireMM::InterLJFF::remove
+        
+            typedef bool ( ::SireMM::InterLJFF::*remove_function_type )( ::SireMol::Molecules const & ) ;
+            
+            InterLJFF_exposer.def( 
+                "remove"
+                , remove_function_type( &::SireMM::InterLJFF::remove )
+                , ( bp::arg("molecules") ) );
+        
+        }
         { //::SireMM::InterLJFF::typeName
         
             typedef char const * ( *typeName_function_type )(  );
@@ -149,9 +180,6 @@ void register_InterLJFF_class(){
         
         }
         InterLJFF_exposer.staticmethod( "typeName" );
-        InterLJFF_exposer.def( "add", &::SireMM::InterLJFF::add< QList< ::SireMol::PartialMolecule > >,
-                                       ( bp::arg("molecules"),
-                                         bp::arg("map")=::SireFF::ParameterMap() ) );
         InterLJFF_exposer.def( "__copy__", &__copy__);
         InterLJFF_exposer.def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::InterLJFF >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );

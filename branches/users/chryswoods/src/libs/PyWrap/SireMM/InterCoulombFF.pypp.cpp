@@ -6,6 +6,7 @@
 #include "boost/python.hpp"
 #include "siremm_headers.h"
 #include "SireMol/molecule.h"
+#include "SireMol/molecules.h"
 #include "SireMol/residue.h"
 #include "SireMol/newatom.h"
 #include "SireMol/atom.h"
@@ -43,6 +44,16 @@ void register_InterCoulombFF_class(){
                 , ( bp::arg("molecule"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
         
         }
+        { //::SireMM::InterCoulombFF::add
+        
+            typedef bool ( ::SireMM::InterCoulombFF::*add_function_type )( ::SireMol::Molecules const &,::SireFF::ParameterMap const & ) ;
+            
+            InterCoulombFF_exposer.def( 
+                "add"
+                , add_function_type( &::SireMM::InterCoulombFF::add )
+                , ( bp::arg("molecules"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
+        
+        }
         { //::SireMM::InterCoulombFF::change
         
             typedef bool ( ::SireMM::InterCoulombFF::*change_function_type )( ::SireMol::PartialMolecule const & ) ;
@@ -51,6 +62,16 @@ void register_InterCoulombFF_class(){
                 "change"
                 , change_function_type( &::SireMM::InterCoulombFF::change )
                 , ( bp::arg("molecule") ) );
+        
+        }
+        { //::SireMM::InterCoulombFF::change
+        
+            typedef bool ( ::SireMM::InterCoulombFF::*change_function_type )( ::SireMol::Molecules const & ) ;
+            
+            InterCoulombFF_exposer.def( 
+                "change"
+                , change_function_type( &::SireMM::InterCoulombFF::change )
+                , ( bp::arg("molecules") ) );
         
         }
         { //::SireMM::InterCoulombFF::contains
@@ -65,7 +86,7 @@ void register_InterCoulombFF_class(){
         }
         { //::SireMM::InterCoulombFF::contents
         
-            typedef ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireMM::InterCoulombFF::*contents_function_type )(  ) const;
+            typedef ::SireMol::Molecules ( ::SireMM::InterCoulombFF::*contents_function_type )(  ) const;
             
             InterCoulombFF_exposer.def( 
                 "contents"
@@ -130,6 +151,16 @@ void register_InterCoulombFF_class(){
                 , ( bp::arg("molecule") ) );
         
         }
+        { //::SireMM::InterCoulombFF::remove
+        
+            typedef bool ( ::SireMM::InterCoulombFF::*remove_function_type )( ::SireMol::Molecules const & ) ;
+            
+            InterCoulombFF_exposer.def( 
+                "remove"
+                , remove_function_type( &::SireMM::InterCoulombFF::remove )
+                , ( bp::arg("molecules") ) );
+        
+        }
         { //::SireMM::InterCoulombFF::typeName
         
             typedef char const * ( *typeName_function_type )(  );
@@ -149,9 +180,6 @@ void register_InterCoulombFF_class(){
         
         }
         InterCoulombFF_exposer.staticmethod( "typeName" );
-        InterCoulombFF_exposer.def( "add", &::SireMM::InterCoulombFF::add< QList< ::SireMol::PartialMolecule > >,
-                                       ( bp::arg("molecules"),
-                                         bp::arg("map")=::SireFF::ParameterMap() ) );
         InterCoulombFF_exposer.def( "__copy__", &__copy__);
         InterCoulombFF_exposer.def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::InterCoulombFF >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );

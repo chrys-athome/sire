@@ -64,6 +64,8 @@ namespace SireMol
 
 using SireBase::Version;
 
+class Molecules;
+
 namespace detail
 {
 class MoleculeGroupPvt;
@@ -85,12 +87,8 @@ public:
     MoleculeGroup();
 
     MoleculeGroup(const QString &name);
-    
-    MoleculeGroup(const QString &name,
-                  const QList<PartialMolecule> &molecules);
 
-    MoleculeGroup(const QString &name,
-                  const QHash<MoleculeID,PartialMolecule> &molecules);
+    MoleculeGroup(const QString &name, const Molecules &molecules);
 
     MoleculeGroup(const MoleculeGroup &other);
 
@@ -112,7 +110,7 @@ public:
     MoleculeGroupID ID() const;
     const Version& version() const;
 
-    const QHash<MoleculeID,PartialMolecule>& molecules() const;
+    const Molecules& molecules() const;
 
     QSet<MoleculeID> moleculeIDs() const;
 
@@ -124,12 +122,9 @@ public:
 
     bool remove(MoleculeID molid);
 
-    bool add(const QList<PartialMolecule> &molecules);
-    
-    bool change(const QList<PartialMolecule> &molecules);
-    bool change(const QHash<MoleculeID,PartialMolecule> &molecules);
-    
-    bool remove(const QList<PartialMolecule> &molecules);
+    bool add(const Molecules &molecules);
+    bool change(const Molecules &molecules);
+    bool remove(const Molecules &molecules);
 
     bool remove(const QSet<MoleculeID> &molids);
 

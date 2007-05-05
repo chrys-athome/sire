@@ -26,6 +26,7 @@ huge_classes = []
 aliases = {}
 
 extra_includes = [ "SireMol/molecule.h",
+                   "SireMol/molecules.h",
                    "SireMol/residue.h",
                    "SireMol/newatom.h",
                    "SireFF/ffgroupid.h" ]

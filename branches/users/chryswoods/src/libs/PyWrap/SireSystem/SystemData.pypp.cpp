@@ -6,6 +6,7 @@
 #include "boost/python.hpp"
 #include "siresystem_headers.h"
 #include "SireMol/molecule.h"
+#include "SireMol/molecules.h"
 #include "SireMol/residue.h"
 #include "SireMol/newatom.h"
 #include "SireFF/ffgroupid.h"
@@ -40,11 +41,7 @@ void register_SystemData_class(){
             , ( bp::arg("molecule"), bp::arg("groupids") ) )    
         .def( 
             "add"
-            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireSystem::SystemData::* )( ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> const &,::QSet<SireMol::MoleculeGroupID> const & ) )( &::SireSystem::SystemData::add )
-            , ( bp::arg("molecules"), bp::arg("groupids") ) )    
-        .def( 
-            "add"
-            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireSystem::SystemData::* )( ::QList<SireMol::PartialMolecule> const &,::QSet<SireMol::MoleculeGroupID> const & ) )( &::SireSystem::SystemData::add )
+            , (::SireMol::Molecules ( ::SireSystem::SystemData::* )( ::SireMol::Molecules const &,::QSet<SireMol::MoleculeGroupID> const & ) )( &::SireSystem::SystemData::add )
             , ( bp::arg("molecules"), bp::arg("groupids") ) )    
         .def( 
             "change"
@@ -52,11 +49,7 @@ void register_SystemData_class(){
             , ( bp::arg("molecule") ) )    
         .def( 
             "change"
-            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireSystem::SystemData::* )( ::QList<SireMol::PartialMolecule> const & ) )( &::SireSystem::SystemData::change )
-            , ( bp::arg("molecules") ) )    
-        .def( 
-            "change"
-            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireSystem::SystemData::* )( ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> const & ) )( &::SireSystem::SystemData::change )
+            , (::SireMol::Molecules ( ::SireSystem::SystemData::* )( ::SireMol::Molecules const & ) )( &::SireSystem::SystemData::change )
             , ( bp::arg("molecules") ) )    
         .def( 
             "group"
@@ -79,11 +72,7 @@ void register_SystemData_class(){
             , ( bp::arg("molecule") ) )    
         .def( 
             "mapIntoSystemSpace"
-            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireSystem::SystemData::* )( ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> const & ) const)( &::SireSystem::SystemData::mapIntoSystemSpace )
-            , ( bp::arg("molecules") ) )    
-        .def( 
-            "mapIntoSystemSpace"
-            , (::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::SireSystem::SystemData::* )( ::QList<SireMol::PartialMolecule> const & ) const)( &::SireSystem::SystemData::mapIntoSystemSpace )
+            , (::SireMol::Molecules ( ::SireSystem::SystemData::* )( ::SireMol::Molecules const & ) const)( &::SireSystem::SystemData::mapIntoSystemSpace )
             , ( bp::arg("molecules") ) )    
         .def( 
             "name"
@@ -109,11 +98,7 @@ void register_SystemData_class(){
             , ( bp::arg("molecule"), bp::arg("groupids") ) )    
         .def( 
             "remove"
-            , (void ( ::SireSystem::SystemData::* )( ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> const &,::QSet<SireMol::MoleculeGroupID> const & ) )( &::SireSystem::SystemData::remove )
-            , ( bp::arg("molecules"), bp::arg("groupids") ) )    
-        .def( 
-            "remove"
-            , (void ( ::SireSystem::SystemData::* )( ::QList<SireMol::PartialMolecule> const &,::QSet<SireMol::MoleculeGroupID> const & ) )( &::SireSystem::SystemData::remove )
+            , (void ( ::SireSystem::SystemData::* )( ::SireMol::Molecules const &,::QSet<SireMol::MoleculeGroupID> const & ) )( &::SireSystem::SystemData::remove )
             , ( bp::arg("molecules"), bp::arg("groupids") ) )    
         .def( 
             "remove"
@@ -121,11 +106,7 @@ void register_SystemData_class(){
             , ( bp::arg("molecule") ) )    
         .def( 
             "remove"
-            , (void ( ::SireSystem::SystemData::* )( ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> const & ) )( &::SireSystem::SystemData::remove )
-            , ( bp::arg("molecules") ) )    
-        .def( 
-            "remove"
-            , (void ( ::SireSystem::SystemData::* )( ::QList<SireMol::PartialMolecule> const & ) )( &::SireSystem::SystemData::remove )
+            , (void ( ::SireSystem::SystemData::* )( ::SireMol::Molecules const & ) )( &::SireSystem::SystemData::remove )
             , ( bp::arg("molecules") ) )    
         .def( 
             "space"

@@ -75,6 +75,8 @@ using SireCAS::Symbols;
 using SireCAS::Values;
 
 using SireMol::PartialMolecule;
+using SireMol::Molecules;
+
 using SireMol::AtomSelection;
 using SireMol::MoleculeID;
 using SireMol::Element;
@@ -267,50 +269,48 @@ public:
     void mustNowRecalculateFromScratch();
 
     bool change(const PartialMolecule &molecule);
-
-    bool change(const QHash<MoleculeID,PartialMolecule> &molecules);
-    bool change(const QList<PartialMolecule> &molecules);
+    bool change(const Molecules &molecules);
 
     bool add(const PartialMolecule &molecule,
+             const ParameterMap &map = ParameterMap());
+
+    bool add(const Molecules &molecules,
              const ParameterMap &map = ParameterMap());
 
     bool addTo(const FFBase::Group &group, const PartialMolecule &molecule,
                const ParameterMap &map = ParameterMap());
 
+    bool addTo(const FFBase::Group &group,
+               const Molecules &molecules,
+               const ParameterMap &map = ParameterMap());
+
     bool addToQM(const PartialMolecule &molecule,
+                 const ParameterMap &map = ParameterMap());
+
+    bool addToQM(const Molecules &molecules,
                  const ParameterMap &map = ParameterMap());
 
     bool addToMM(const PartialMolecule &molecule,
                  const ParameterMap &map = ParameterMap());
 
-    bool add(const QList<PartialMolecule> &molecules,
-             const ParameterMap &map = ParameterMap());
-
-    bool addTo(const FFBase::Group &group,
-               const QList<PartialMolecule> &molecules,
-               const ParameterMap &map = ParameterMap());
-
-    bool addToQM(const QList<PartialMolecule> &molecules,
-                 const ParameterMap &map = ParameterMap());
-
-    bool addToMM(const QList<PartialMolecule> &molecules,
+    bool addToMM(const Molecules &molecules,
                  const ParameterMap &map = ParameterMap());
 
     bool remove(const PartialMolecule &molecule);
 
+    bool remove(const Molecules &molecules);
+
     bool removeFrom(const FFBase::Group &group,
                     const PartialMolecule &molecule);
 
-    bool removeFromQM(const PartialMolecule &molecule);
-    bool removeFromMM(const PartialMolecule &molecule);
-
-    bool remove(const QList<PartialMolecule> &molecules);
-
     bool removeFrom(const FFBase::Group &group,
-                    const QList<PartialMolecule> &molecules);
+                    const Molecules &molecules);
 
-    bool removeFromQM(const QList<PartialMolecule> &molecules);
-    bool removeFromMM(const QList<PartialMolecule> &molecules);
+    bool removeFromQM(const PartialMolecule &molecule);
+    bool removeFromQM(const Molecules &molecules);
+
+    bool removeFromMM(const PartialMolecule &molecule);
+    bool removeFromMM(const Molecules &molecules);
 
     bool contains(const PartialMolecule &molecule) const;
 
@@ -333,11 +333,11 @@ public:
     PartialMolecule molecule(MoleculeID molid,
                              const FFBase::Group &group) const;
 
-    QHash<MoleculeID,PartialMolecule> qmMolecules() const;
-    QHash<MoleculeID,PartialMolecule> mmMolecules() const;
+    Molecules qmMolecules() const;
+    Molecules mmMolecules() const;
 
-    QHash<MoleculeID,PartialMolecule> contents() const;
-    QHash<MoleculeID,PartialMolecule> contents(const FFBase::Group &group) const;
+    Molecules contents() const;
+    Molecules contents(const FFBase::Group &group) const;
 
     enum QMMMStatusFlag
     {

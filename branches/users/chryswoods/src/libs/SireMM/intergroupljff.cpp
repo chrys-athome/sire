@@ -32,6 +32,7 @@
 #include "intergroupljff.h"
 
 #include "SireMol/partialmolecule.h"
+#include "SireMol/molecules.h"
 
 #include "SireMol/errors.h"
 #include "SireFF/errors.h"
@@ -813,6 +814,12 @@ bool InterGroupLJFF::change(const PartialMolecule &molecule)
         return isDirty();
 }
 
+/** Change lots of molecules */
+bool InterGroupLJFF::change(const Molecules &molecules)
+{
+    return LJFF::change(molecules);
+}
+
 /** Remove the molecule 'molecule' */
 bool InterGroupLJFF::remove(const PartialMolecule &molecule)
 {
@@ -829,6 +836,12 @@ bool InterGroupLJFF::remove(const PartialMolecule &molecule)
         return isDirty();
 }
 
+/** Remove lots of molecules */
+bool InterGroupLJFF::remove(const Molecules &molecules)
+{
+    return LJFF::remove(molecules);
+}
+
 /** Remove the molecule 'molecule' from the group 'group'
 
     \throw SireFF::missing_group
@@ -842,16 +855,38 @@ bool InterGroupLJFF::removeFrom(const FFBase::Group &group,
         return false;
 }
 
+/** Remove lots of molecules from the group 'group'
+
+    \throw SireFF::invalid_group
+*/
+bool InterGroupLJFF::removeFrom(const FFBase::Group &group,
+                                const Molecules &molecules)
+{
+    return LJFF::removeFrom(group, molecules);
+}
+
 /** Remove the molecule 'molecule' from group 'A' */
 bool InterGroupLJFF::removeFromA(const PartialMolecule &molecule)
 {
     return this->removeFrom(groups().A(), molecule);
 }
 
+/** Remove lots of molecules from group 'A' */
+bool InterGroupLJFF::removeFromA(const Molecules &molecules)
+{
+    return LJFF::removeFrom(groups().A(), molecules);
+}
+
 /** Remove the molecule 'molecule' from group 'B' */
 bool InterGroupLJFF::removeFromB(const PartialMolecule &molecule)
 {
     return this->removeFrom(groups().B(), molecule);
+}
+
+/** Remove lots of molecules from group 'B' */
+bool InterGroupLJFF::removeFromB(const Molecules &molecules)
+{
+    return LJFF::removeFrom(groups().B(), molecules);
 }
 
 /** Add the molecule 'molecule' to this forcefield using the optionally
@@ -861,7 +896,8 @@ bool InterGroupLJFF::removeFromB(const PartialMolecule &molecule)
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-bool InterGroupLJFF::add(const PartialMolecule &molecule, const ParameterMap &map)
+bool InterGroupLJFF::add(const PartialMolecule &molecule,
+                         const ParameterMap &map)
 {
     //get the molecule's ID
     MoleculeID molid = molecule.ID();
@@ -877,6 +913,17 @@ bool InterGroupLJFF::add(const PartialMolecule &molecule, const ParameterMap &ma
     }
     else
         return isDirty();
+}
+
+/** Add lots of molecules to this forcefield
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+bool InterGroupLJFF::add(const Molecules &molecules,
+                         const ParameterMap &map)
+{
+    return LJFF::add(molecules, map);
 }
 
 /** Return the index of the group in this forcefield
@@ -950,6 +997,19 @@ bool InterGroupLJFF::addTo(const FFBase::Group &group,
     }
 }
 
+/** Add lots of molecules to the group 'group'
+
+    \throw SireBase::missing_property
+    \throw SireMol::invalid_cast
+    \throw SireFF::invalid_group
+*/
+bool InterGroupLJFF::addTo(const FFBase::Group &group,
+                           const Molecules &molecules,
+                           const ParameterMap &map)
+{
+    return LJFF::addTo(group, molecules, map);
+}
+
 /** Add the molecule 'molecule' to group 'A' using the
     supplied map to find the forcefield parameters amongst the molecule's
     properties. Note that it is an error to try to add this to more than
@@ -965,6 +1025,18 @@ bool InterGroupLJFF::addToA(const PartialMolecule &molecule,
     return this->addTo(groups().A(), molecule, map);
 }
 
+/** Add lots of molecules to group 'A'
+
+    \throw SireBase::missing_property
+    \throw SireMol::invalid_cast
+    \throw SireFF::invalid_group
+*/
+bool InterGroupLJFF::addToA(const Molecules &molecules,
+                            const ParameterMap &map)
+{
+    return LJFF::addTo(groups().A(), molecules, map);
+}
+
 /** Add the molecule 'molecule' to group 'B' using the
     supplied map to find the forcefield parameters amongst the molecule's
     properties. Note that it is an error to try to add this to more than
@@ -978,6 +1050,18 @@ bool InterGroupLJFF::addToB(const PartialMolecule &molecule,
                             const ParameterMap &map)
 {
     return this->addTo(groups().B(), molecule, map);
+}
+
+/** Add lots of molecules to group 'B'
+
+    \throw SireBase::missing_property
+    \throw SireMol::invalid_cast
+    \throw SireFF::invalid_group
+*/
+bool InterGroupLJFF::addToB(const Molecules &molecules,
+                            const ParameterMap &map)
+{
+    return LJFF::addTo(groups().B(), molecules, map);
 }
 
 /** Return whether this forcefield contains a complete copy of
@@ -1108,27 +1192,19 @@ PartialMolecule InterGroupLJFF::molecule(MoleculeID molid,
 }
 
 /** Return all of the molecules in this forcefield */
-QHash<MoleculeID,PartialMolecule> InterGroupLJFF::contents() const
+Molecules InterGroupLJFF::contents() const
 {
-    QHash<MoleculeID,PartialMolecule> all_mols;
+    Molecules all_mols;
 
-    int nmols = mols[0].count() + mols[1].count();
+    QSet<MoleculeID> molids = this->moleculeIDs();
 
-    if (nmols > 0)
+    if (not molids.isEmpty())
     {
-        all_mols.reserve(nmols);
+        all_mols.reserve(molids.count());
 
-        for (int i=0; i<2; ++i)
+        foreach (MoleculeID molid, molids)
         {
-            nmols = mols[i].count();
-            const LJMolecule *mols_array = mols[i].constData();
-
-            for (int j=0; j<nmols; ++j)
-            {
-                const PartialMolecule &mol = mols_array[j].molecule();
-
-                all_mols.insert(mol.ID(),mol);
-            }
+            all_mols.add( this->molecule(molid) );
         }
     }
 
@@ -1139,12 +1215,11 @@ QHash<MoleculeID,PartialMolecule> InterGroupLJFF::contents() const
 
     \throw SireFF::missing_group
 */
-QHash<MoleculeID,PartialMolecule>
-InterGroupLJFF::contents(const FFBase::Group &group) const
+Molecules InterGroupLJFF::contents(const FFBase::Group &group) const
 {
     int idx = groupIndex(group);
 
-    QHash<MoleculeID,PartialMolecule> all_mols;
+    Molecules all_mols;
 
     int nmols = mols[idx].count();
 
@@ -1158,7 +1233,7 @@ InterGroupLJFF::contents(const FFBase::Group &group) const
         {
             const PartialMolecule &mol = mols_array[i].molecule();
 
-            all_mols.insert(mol.ID(),mol);
+            all_mols.add(mol);
         }
     }
 

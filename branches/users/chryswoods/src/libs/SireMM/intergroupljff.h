@@ -45,6 +45,8 @@ namespace SireMM
 {
 
 using SireMol::Molecule;
+using SireMol::Molecules;
+
 using SireMol::PartialMolecule;
 using SireMol::Residue;
 using SireMol::NewAtom;
@@ -148,38 +150,47 @@ public:
     void mustNowRecalculateFromScratch();
 
     bool change(const PartialMolecule &molecule);
+    bool change(const Molecules &molecules);
 
-    bool add(const PartialMolecule &mol, const ParameterMap &map = ParameterMap());
+    bool add(const PartialMolecule &molecule,
+             const ParameterMap &map = ParameterMap());
+    bool add(const Molecules &molecules,
+             const ParameterMap &map = ParameterMap());
 
-    bool addTo(const FFBase::Group &group, const PartialMolecule &molecule,
+    bool addTo(const FFBase::Group &group,
+               const PartialMolecule &molecule,
+               const ParameterMap &map = ParameterMap());
+
+    bool addTo(const FFBase::Group &group,
+               const Molecules &molecules,
                const ParameterMap &map = ParameterMap());
 
     bool addToA(const PartialMolecule &molecule,
                 const ParameterMap &map = ParameterMap());
 
+    bool addToA(const Molecules &molecules,
+                const ParameterMap &map = ParameterMap());
+
     bool addToB(const PartialMolecule &molecule,
                 const ParameterMap &map = ParameterMap());
 
-    template<class T>
-    bool add(const T &molecules, const ParameterMap &map = ParameterMap());
-
-    template<class T>
-    bool addTo(const FFBase::Group &group, const T &molecules,
-               const ParameterMap &map = ParameterMap());
-
-    template<class T>
-    bool addToA(const T &molecules, const ParameterMap &map = ParameterMap());
-
-    template<class T>
-    bool addToB(const T &molecules, const ParameterMap &map = ParameterMap());
+    bool addToB(const Molecules &molecules,
+                const ParameterMap &map = ParameterMap());
 
     bool remove(const PartialMolecule &molecule);
+    bool remove(const Molecules &molecules);
 
     bool removeFrom(const FFBase::Group &group,
                     const PartialMolecule &molecule);
 
+    bool removeFrom(const FFBase::Group &group,
+                    const Molecules &molecules);
+
     bool removeFromA(const PartialMolecule &molecule);
+    bool removeFromA(const Molecules &molecules);
+
     bool removeFromB(const PartialMolecule &molecule);
+    bool removeFromB(const Molecules &molecules);
 
     bool contains(const PartialMolecule &molecule) const;
 
@@ -202,9 +213,8 @@ public:
     PartialMolecule molecule(MoleculeID molid,
                              const FFBase::Group &group) const;
 
-    QHash<MoleculeID,PartialMolecule> contents() const;
-
-    QHash<MoleculeID,PartialMolecule> contents(const FFBase::Group &group) const;
+    Molecules contents() const;
+    Molecules contents(const FFBase::Group &group) const;
 
 protected:
     void recalculateViaDelta();
@@ -257,35 +267,6 @@ private:
     /** Whether or not a total energy recalculation is required */
     bool need_total_recalc;
 };
-
-template<class T>
-SIRE_INLINE_TEMPLATE
-bool InterGroupLJFF::add(const T &molecules, const ParameterMap &map)
-{
-    return FFBase::addTo<T>(this->groups().main(), molecules, map);
-}
-
-template<class T>
-SIRE_INLINE_TEMPLATE
-bool InterGroupLJFF::addTo(const FFBase::Group &group,
-                            const T &molecules, const ParameterMap &map)
-{
-    return FFBase::addTo<T>(group, molecules, map);
-}
-
-template<class T>
-SIRE_INLINE_TEMPLATE
-bool InterGroupLJFF::addToA(const T &molecules, const ParameterMap &map)
-{
-    return FFBase::addTo<T>(this->groups().A(), molecules, map);
-}
-
-template<class T>
-SIRE_INLINE_TEMPLATE
-bool InterGroupLJFF::addToB(const T &molecules, const ParameterMap &map)
-{
-    return FFBase::addTo<T>(this->groups().B(), molecules, map);
-}
 
 }
 

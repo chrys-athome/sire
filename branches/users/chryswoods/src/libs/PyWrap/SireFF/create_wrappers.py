@@ -39,6 +39,7 @@ huge_classes = []
 aliases = {}
 
 extra_includes = [ "SireMol/molecule.h",
+                   "SireMol/molecules.h",
                    "SireMol/partialmolecule.h",
                    "SireMol/residue.h",
                    "SireMol/newatom.h",
@@ -54,15 +55,7 @@ extra_includes = [ "SireMol/molecule.h",
 def remove_forcefield_bases(c):
     c.bases = []
 
-def fix_forcefields(c):
-
-    c.add_registration_code(
-             "def( \"change\", " +
-             "&::SireFF::%s::change< QList< ::SireMol::PartialMolecule > > )" % c.name )
-
-special_code = { "ForceField" : remove_forcefield_bases,
-                 "ForceFieldsBase" : fix_forcefields,
-                 "ForceFields" : fix_forcefields }
+special_code = { "ForceField" : remove_forcefield_bases }
 
 implicitly_convertible = [ ("QString", "SireFF::ParameterName"),
                            ("const SireFF::FFBase&", "SireFF::ForceField"),

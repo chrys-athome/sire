@@ -32,6 +32,7 @@
 #include "intercoulombff.h"
 
 #include "SireMol/partialmolecule.h"
+#include "SireMol/molecules.h"
 
 #include "SireMol/errors.h"
 
@@ -685,6 +686,16 @@ bool InterCoulombFF::add(const PartialMolecule &molecule, const ParameterMap &ma
         return isDirty();
 }
 
+/** Add lots of molecules
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+bool InterCoulombFF::add(const Molecules &molecules, const ParameterMap &map)
+{
+    return CoulombFF::add(molecules, map);
+}
+
 /** Remove the molecule 'molecule' */
 bool InterCoulombFF::remove(const PartialMolecule &molecule)
 {
@@ -701,6 +712,12 @@ bool InterCoulombFF::remove(const PartialMolecule &molecule)
         return isDirty();
 }
 
+/** Remove lots of molecules */
+bool InterCoulombFF::remove(const Molecules &molecules)
+{
+    return CoulombFF::remove(molecules);
+}
+
 /** Change the molecule 'molecule' */
 bool InterCoulombFF::change(const PartialMolecule &molecule)
 {
@@ -715,6 +732,12 @@ bool InterCoulombFF::change(const PartialMolecule &molecule)
     }
     else
         return this->isDirty();
+}
+
+/** Change lots of molecules */
+bool InterCoulombFF::change(const Molecules &molecules)
+{
+    return CoulombFF::change(molecules);
 }
 
 /** Return whether this forcefield contains a complete copy of
@@ -784,9 +807,9 @@ PartialMolecule InterCoulombFF::molecule(MoleculeID molid) const
 
 /** Return all of the molecules (and parts of molecules) that
     are in this forcefield */
-QHash<MoleculeID,PartialMolecule> InterCoulombFF::contents() const
+Molecules InterCoulombFF::contents() const
 {
-    QHash<MoleculeID,PartialMolecule> all_mols;
+    Molecules all_mols;
 
     int nmols = mols.count();
 
@@ -800,7 +823,7 @@ QHash<MoleculeID,PartialMolecule> InterCoulombFF::contents() const
         {
             const PartialMolecule &mol = mols_array[i].molecule();
 
-            all_mols.insert( mol.ID(), mol );
+            all_mols.add( mol );
         }
     }
 

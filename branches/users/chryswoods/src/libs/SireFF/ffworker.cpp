@@ -35,6 +35,7 @@
 #include "SireCAS/function.h"
 
 #include "SireMol/molecule.h"
+#include "SireMol/molecules.h"
 #include "SireMol/partialmolecule.h"
 #include "SireMol/residue.h"
 #include "SireMol/moleculeid.h"
@@ -56,7 +57,7 @@ using namespace SireCAS;
     to evaluate the forcefield. This takes over ownership
     of the calculator and will delete it once it has finished
     with it.
-     
+
     \throw SireError::nullptr_error
 */
 FFLocalWorker::FFLocalWorker(FFCalculatorBase *ffcalc)
@@ -108,7 +109,7 @@ bool FFLocalWorker::_pvt_setProperty(const QString &name, const Property &value)
 /** Return the property with name 'name'
 
     \throw SireBase::missing_property
-*/    
+*/
 Property FFLocalWorker::_pvt_getProperty(const QString &name)
 {
     return ffcalculator->getProperty(name);
@@ -138,19 +139,19 @@ QHash<QString,Property> FFLocalWorker::_pvt_properties()
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-bool FFLocalWorker::_pvt_add(const PartialMolecule &molecule, 
+bool FFLocalWorker::_pvt_add(const PartialMolecule &molecule,
                              const ParameterMap &map)
 {
     return ffcalculator->add(molecule,map);
 }
 
-/** Add lots of molecules 
+/** Add lots of molecules
 
     \throw SireError::invalid_operation
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-bool FFLocalWorker::_pvt_add(const QList<PartialMolecule> &molecules, 
+bool FFLocalWorker::_pvt_add(const Molecules &molecules,
                              const ParameterMap &map)
 {
     return ffcalculator->add(molecules,map);
@@ -169,14 +170,14 @@ bool FFLocalWorker::_pvt_add(const QList<PartialMolecule> &molecules,
     \throw SireError::invalid_operation
     \throw SireFF::invalid_group
 */
-bool FFLocalWorker::_pvt_addTo(const FFBase::Group &group, 
+bool FFLocalWorker::_pvt_addTo(const FFBase::Group &group,
                                const PartialMolecule &molecule,
                                const ParameterMap &map)
 {
     return ffcalculator->addTo(group,molecule,map);
 }
 
-/** Adds lots of molecules to the group 'group' 
+/** Adds lots of molecules to the group 'group'
 
     \throw SireBase::missing_property
     \throw SireMol::invalid_cast
@@ -184,7 +185,7 @@ bool FFLocalWorker::_pvt_addTo(const FFBase::Group &group,
     \throw SireFF::invalid_group
 */
 bool FFLocalWorker::_pvt_addTo(const FFBase::Group &group,
-                               const QList<PartialMolecule> &molecules,
+                               const Molecules &molecules,
                                const ParameterMap &map)
 {
     return ffcalculator->addTo(group,molecules,map);
@@ -221,18 +222,7 @@ bool FFLocalWorker::_pvt_change(const PartialMolecule &molecule)
     \throw SireError::invalid_cast
     \throw SireError::invalid_operation
 */
-bool FFLocalWorker::_pvt_change(const QHash<MoleculeID,PartialMolecule> &molecules)
-{
-    return ffcalculator->change(molecules);
-}
-
-/** Change a whole load of partial molecules
-
-    \throw SireBase::missing_property
-    \throw SireError::invalid_cast
-    \throw SireError::invalid_operation
-*/
-bool FFLocalWorker::_pvt_change(const QList<PartialMolecule> &molecules)
+bool FFLocalWorker::_pvt_change(const Molecules &molecules)
 {
     return ffcalculator->change(molecules);
 }
@@ -250,7 +240,7 @@ bool FFLocalWorker::_pvt_remove(const PartialMolecule &molecule)
 }
 
 /** Remove a whole load of molecules */
-bool FFLocalWorker::_pvt_remove(const QList<PartialMolecule> &molecules)
+bool FFLocalWorker::_pvt_remove(const Molecules &molecules)
 {
     return ffcalculator->remove(molecules);
 }
@@ -269,16 +259,16 @@ bool FFLocalWorker::_pvt_removeFrom(const FFBase::Group &group,
     return ffcalculator->removeFrom(group,molecule);
 }
 
-/** Remove lots of molecules from the group 'group' 
+/** Remove lots of molecules from the group 'group'
 
     \throw SireFF::invalid_group
 */
 bool FFLocalWorker::_pvt_removeFrom(const FFBase::Group &group,
-                                    const QList<PartialMolecule> &molecules)
+                                    const Molecules &molecules)
 {
     return ffcalculator->removeFrom(group,molecules);
 }
-  
+
 /** Return whether this forcefield contains a complete copy of
     any version of the partial molecule 'molecule' */
 bool FFLocalWorker::_pvt_contains(const PartialMolecule &molecule)
@@ -287,8 +277,8 @@ bool FFLocalWorker::_pvt_contains(const PartialMolecule &molecule)
 }
 
 /** Return whether this forcefield contains a complete copy of
-    any version of the partial molecule 'molecule' in the group 'group' 
-    
+    any version of the partial molecule 'molecule' in the group 'group'
+
     \throw SireFF::invalid_group
 */
 bool FFLocalWorker::_pvt_contains(const PartialMolecule &molecule,
@@ -306,8 +296,8 @@ bool FFLocalWorker::_pvt_refersTo(MoleculeID molid)
 
 /** Return whether or not the group 'group' in this forcefield
     contains *any part* of any version of the molecule with ID
-    'molid' 
-    
+    'molid'
+
     \throw SireFF::invalid_group
 */
 bool FFLocalWorker::_pvt_refersTo(MoleculeID molid, const FFBase::Group &group)
@@ -336,8 +326,8 @@ QSet<MoleculeID> FFLocalWorker::_pvt_moleculeIDs()
 /** Return the set of all of the ID numbers of all of the
     molecules that are referred to by group 'group' in
     this forcefield (i.e. all molecules that have at least
-    some part in this group in this forcefield) 
-    
+    some part in this group in this forcefield)
+
     \throw SireFF::invalid_group
 */
 QSet<MoleculeID> FFLocalWorker::_pvt_moleculeIDs(const FFBase::Group &group)
@@ -360,14 +350,14 @@ PartialMolecule FFLocalWorker::_pvt_molecule(MoleculeID molid)
     \throw SireMol::missing_molecule
     \throw SireFF::missing_group
 */
-PartialMolecule FFLocalWorker::_pvt_molecule(MoleculeID molid, 
+PartialMolecule FFLocalWorker::_pvt_molecule(MoleculeID molid,
                                              const FFBase::Group &group)
 {
     return ffcalculator->molecule(molid,group);
 }
 
 /** Return copies of all of the molecules that are in this forcefield */
-QHash<MoleculeID,PartialMolecule> FFLocalWorker::_pvt_molecules()
+Molecules FFLocalWorker::_pvt_molecules()
 {
     return ffcalculator->molecules();
 }
@@ -376,36 +366,33 @@ QHash<MoleculeID,PartialMolecule> FFLocalWorker::_pvt_molecules()
 
     \throw SireFF::missing_group
 */
-QHash<MoleculeID,PartialMolecule> 
-FFLocalWorker::_pvt_molecules(const FFBase::Group &group)
+Molecules FFLocalWorker::_pvt_molecules(const FFBase::Group &group)
 {
     return ffcalculator->molecules(group);
 }
 
-/** Return copies of the molecules in this forcefield whose IDs 
+/** Return copies of the molecules in this forcefield whose IDs
     are in 'molids'
-    
+
     \throw SireMol::missing_molecule
 */
-QHash<MoleculeID,PartialMolecule> 
-FFLocalWorker::_pvt_molecules(const QSet<MoleculeID> &molids)
+Molecules FFLocalWorker::_pvt_molecules(const QSet<MoleculeID> &molids)
 {
     return ffcalculator->molecules(molids);
 }
 
-/** Return the contents of the group 'group' in this forcefield 
+/** Return the contents of the group 'group' in this forcefield
 
     \throw SireFF::invalid_group
 */
-QHash<MoleculeID,PartialMolecule> 
-FFLocalWorker::_pvt_contents(const FFBase::Group &group)
+Molecules FFLocalWorker::_pvt_contents(const FFBase::Group &group)
 {
     return ffcalculator->contents(group);
 }
 
 /** Return all of the molecules (and parts of molecules) that
     are in this forcefield */
-QHash<MoleculeID,PartialMolecule> FFLocalWorker::_pvt_contents()
+Molecules FFLocalWorker::_pvt_contents()
 {
     return ffcalculator->contents();
 }

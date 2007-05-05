@@ -987,8 +987,8 @@ double LJFF::calculateEnergy(const CoordGroup &group0,
         if (scllj != 0)
         {
             //combine the LJ parameters together
-            int nats0 = lj0.count();
-            int nats1 = lj1.count();
+            uint nats0 = lj0.count();
+            uint nats1 = lj1.count();
 
             BOOST_ASSERT( group0.count() == nats0 );
             BOOST_ASSERT( group1.count() == nats1 );
@@ -998,13 +998,13 @@ double LJFF::calculateEnergy(const CoordGroup &group0,
             const LJParameter *lj0_array = lj0.constData();
             const LJParameter *lj1_array = lj1.constData();
 
-            for (int i=0; i<nats0; ++i)
+            for (uint i=0; i<nats0; ++i)
             {
                 ljmatrix.setOuterIndex(i);
 
                 const LJParameter &lj0param = lj0_array[i];
 
-                for (int j=0; j<nats1; ++j)
+                for (uint j=0; j<nats1; ++j)
                 {
                     ljmatrix[j] = LJPair::geometric( lj1_array[j], lj0param );
                 }
@@ -1030,7 +1030,7 @@ double LJFF::calculateEnergy(const CoordGroup &group,
     space.calcInvDist2(group, distmatrix);
 
     //combine together the LJ parameters
-    int nats = ljs.count();
+    uint nats = ljs.count();
 
     BOOST_ASSERT(group.count() == nats);
 
@@ -1041,13 +1041,13 @@ double LJFF::calculateEnergy(const CoordGroup &group,
     //we only need to fill in the top left diagonal
     //(and we don't need to do matrix(i,i) as we never
     // calculate a self-interaction!)
-    for (int i=0; i<nats-1; ++i)
+    for (uint i=0; i<nats-1; ++i)
     {
         ljmatrix.setOuterIndex(i);
 
         const LJParameter &lj0param = lj_array[i];
 
-        for (int j=i+1; j<nats; ++j)
+        for (uint j=i+1; j<nats; ++j)
         {
             ljmatrix[j] = LJPair::geometric( lj_array[j], lj0param );
         }

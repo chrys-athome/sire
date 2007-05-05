@@ -47,6 +47,8 @@ namespace SireMM
 {
 
 using SireMol::MoleculeID;
+using SireMol::Molecules;
+
 using SireFF::ParameterMap;
 
 /** An InterCLJFF is used to calculate the
@@ -120,15 +122,16 @@ public:
     void mustNowRecalculateFromScratch();
 
     bool change(const PartialMolecule &molecule);
+    bool change(const Molecules &molecules);
 
     bool add(const PartialMolecule &molecule,
              const ParameterMap &map = ParameterMap());
 
-    template<class T>
-    bool add(const T &molecules,
+    bool add(const Molecules &molecules,
              const ParameterMap &map = ParameterMap());
 
     bool remove(const PartialMolecule &molecule);
+    bool remove(const Molecules &molecules);
 
     bool contains(const PartialMolecule &molecule) const;
 
@@ -140,7 +143,7 @@ public:
 
     PartialMolecule molecule(MoleculeID molid) const;
 
-    QHash<MoleculeID,PartialMolecule> contents() const;
+    Molecules contents() const;
 
 protected:
     void recalculateViaDelta();
@@ -181,13 +184,6 @@ private:
     /** Whether or not a total energy recalculation is required */
     bool need_total_recalc;
 };
-
-template<class T>
-SIRE_INLINE_TEMPLATE
-bool InterCLJFF::add(const T &molecules, const ParameterMap &map)
-{
-    return FFBase::addTo<T>( this->groups().main(), molecules, map );
-}
 
 }
 

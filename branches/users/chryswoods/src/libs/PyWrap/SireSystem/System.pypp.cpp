@@ -6,6 +6,7 @@
 #include "boost/python.hpp"
 #include "siresystem_headers.h"
 #include "SireMol/molecule.h"
+#include "SireMol/molecules.h"
 #include "SireMol/residue.h"
 #include "SireMol/newatom.h"
 #include "SireFF/ffgroupid.h"

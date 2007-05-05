@@ -171,6 +171,7 @@ aliases = { "assign_internals<SireMM::MolAngleInfo>" :
           }
 
 extra_includes = [ "SireMol/molecule.h",
+                   "SireMol/molecules.h",
                    "SireMol/residue.h",
                    "SireMol/newatom.h",
                    "SireMol/atom.h" ]
@@ -180,34 +181,6 @@ def remove_create(c):
 
 def fix_noncopyable(c):
     c.noncopyable = False
-
-def fix_inter_x_ff(c):
-    fix_noncopyable(c)
-    
-    c.add_registration_code( 
-            "def( \"add\", &::SireMM::%s::add< QList< ::SireMol::PartialMolecule > >,\n" % (c.name) +
-        "                               ( bp::arg(\"molecules\"),\n" +
-        "                                 bp::arg(\"map\")=::SireFF::ParameterMap() ) )" )
-
-def fix_intergroup_x_ff(c):
-
-    fix_inter_x_ff(c)
-    
-    c.add_registration_code(
-            "def( \"addTo\", &::SireMM::%s::addTo< QList< ::SireMol::PartialMolecule > >,\n" % (c.name) +
-        "                               ( bp::arg(\"group\"),\n" + 
-        "                                 bp::arg(\"molecules\"),\n" +
-        "                                 bp::arg(\"map\")=::SireFF::ParameterMap() ) )" )
-    
-    c.add_registration_code( 
-            "def( \"addToA\", &::SireMM::%s::addToA< QList< ::SireMol::PartialMolecule > >,\n" % (c.name) +
-        "                               ( bp::arg(\"molecules\"),\n" +
-        "                                 bp::arg(\"map\")=::SireFF::ParameterMap() ) )" )
-
-    c.add_registration_code( 
-            "def( \"addToB\", &::SireMM::%s::addToB< QList< ::SireMol::PartialMolecule > >,\n" % (c.name) +
-        "                               ( bp::arg(\"molecules\"),\n" +
-        "                                 bp::arg(\"map\")=::SireFF::ParameterMap() ) )" )
 
 def fix_assigninternals(c):
     c.add_declaration_code("#include \"SireDB/using_database.h\"")
@@ -222,12 +195,12 @@ special_code = { "assign_angles" : fix_assigninternals,
                  "ChargeTable" : remove_create,
                  "DihedralTable" : remove_create,
                  "LJTable" : remove_create,
-                 "InterCoulombFF" : fix_inter_x_ff,
-                 "InterLJFF" : fix_inter_x_ff,
-                 "InterGroupCLJFF" : fix_intergroup_x_ff,
-                 "InterGroupCoulombFF" : fix_intergroup_x_ff,
-                 "InterGroupLJFF" : fix_intergroup_x_ff,
-                 "InterCLJFF" : fix_inter_x_ff
+                 "InterCoulombFF" : fix_noncopyable,
+                 "InterLJFF" : fix_noncopyable,
+                 "InterGroupCLJFF" : fix_noncopyable,
+                 "InterGroupCoulombFF" : fix_noncopyable,
+                 "InterGroupLJFF" : fix_noncopyable,
+                 "InterCLJFF" : fix_noncopyable
                }
 
 implicitly_convertible = [ ("QVector< QVector<SireMM::ChargeParameter> >",

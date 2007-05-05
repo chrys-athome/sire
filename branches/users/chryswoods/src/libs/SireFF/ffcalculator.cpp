@@ -31,6 +31,7 @@
 #include "SireBase/property.h"
 
 #include "SireMol/molecule.h"
+#include "SireMol/molecules.h"
 #include "SireMol/partialmolecule.h"
 
 #include "ffcalculator.h"
@@ -57,7 +58,7 @@ FFLocalCalculator::FFLocalCalculator(const ForceField &forcefield)
 FFLocalCalculator::~FFLocalCalculator()
 {}
 
-/** Set the property 'name' to the value 'value' 
+/** Set the property 'name' to the value 'value'
 
     \throw SireBase::missing_property
     \throw SireError::incompatible_error
@@ -107,8 +108,7 @@ bool FFLocalCalculator::add(const PartialMolecule &molecule, const ParameterMap 
     \throw SireError::incompatible_error
     \throw SireError::invalid_cast
 */
-bool FFLocalCalculator::add(const QList<PartialMolecule> &molecules,
-                       const ParameterMap &map)
+bool FFLocalCalculator::add(const Molecules &molecules, const ParameterMap &map)
 {
     return ffield.add(molecules, map);
 }
@@ -120,11 +120,11 @@ bool FFLocalCalculator::add(const QList<PartialMolecule> &molecules,
     \throw SireError::invalid_cast
 */
 bool FFLocalCalculator::addTo(const FFBase::Group &group,
-                         const PartialMolecule &molecule, const ParameterMap &map)
+                              const PartialMolecule &molecule, const ParameterMap &map)
 {
     return ffield.addTo(group, molecule, map);
 }
-                         
+
 /** Add lots of molecules to the group 'group'
 
     \throw SireBase::missing_property
@@ -132,8 +132,7 @@ bool FFLocalCalculator::addTo(const FFBase::Group &group,
     \throw SireError::invalid_cast
 */
 bool FFLocalCalculator::addTo(const FFBase::Group &group,
-                         const QList<PartialMolecule> &molecules,
-                         const ParameterMap &map)
+                              const Molecules &molecules, const ParameterMap &map)
 {
     return ffield.addTo(group, molecules, map);
 }
@@ -162,18 +161,7 @@ bool FFLocalCalculator::change(const PartialMolecule &molecule)
     \throw SireError::incompatible_error
     \throw SireError::invalid_cast
 */
-bool FFLocalCalculator::change(const QHash<MoleculeID,PartialMolecule> &molecules)
-{
-    return ffield.change(molecules);
-}
-
-/** Change lots of molecules.
-
-    \throw SireBase::missing_property
-    \throw SireError::incompatible_error
-    \throw SireError::invalid_cast
-*/
-bool FFLocalCalculator::change(const QList<PartialMolecule> &molecules)
+bool FFLocalCalculator::change(const Molecules &molecules)
 {
     return ffield.change(molecules);
 }
@@ -185,7 +173,7 @@ bool FFLocalCalculator::remove(const PartialMolecule &molecule)
 }
 
 /** Remove lots of molecules */
-bool FFLocalCalculator::remove(const QList<PartialMolecule> &molecules)
+bool FFLocalCalculator::remove(const Molecules &molecules)
 {
     return ffield.remove(molecules);
 }
@@ -195,7 +183,7 @@ bool FFLocalCalculator::remove(const QList<PartialMolecule> &molecules)
     \throw SireFF::missing_group
 */
 bool FFLocalCalculator::removeFrom(const FFBase::Group &group,
-                              const PartialMolecule &molecule)
+                                   const PartialMolecule &molecule)
 {
     return ffield.removeFrom(group, molecule);
 }
@@ -205,7 +193,7 @@ bool FFLocalCalculator::removeFrom(const FFBase::Group &group,
     \throw SireFF::missing_group
 */
 bool FFLocalCalculator::removeFrom(const FFBase::Group &group,
-                              const QList<PartialMolecule> &molecules)
+                                   const Molecules &molecules)
 {
     return ffield.removeFrom(group, molecules);
 }
@@ -219,16 +207,16 @@ bool FFLocalCalculator::contains(const PartialMolecule &molecule)
 
 /** Return whether or not the forcefield contains any version of
     the atoms in the molecule 'molecule' in the group 'group'
-    
+
     \throw SireFF::missing_group
 */
 bool FFLocalCalculator::contains(const PartialMolecule &molecule,
-                            const FFBase::Group &group)
+                                 const FFBase::Group &group)
 {
     return ffield.contains(molecule, group);
 }
 
-/** Return whether or not this forcefield refers to the molecule with 
+/** Return whether or not this forcefield refers to the molecule with
     ID == molid */
 bool FFLocalCalculator::refersTo(MoleculeID molid)
 {
@@ -237,7 +225,7 @@ bool FFLocalCalculator::refersTo(MoleculeID molid)
 
 /** Return whether or not this forcefield refers to the molecule with
     ID == molid in the group 'group'
-    
+
     \throw SireFF::missing_group
 */
 bool FFLocalCalculator::refersTo(MoleculeID molid, const FFBase::Group &group)
@@ -261,9 +249,9 @@ QSet<MoleculeID> FFLocalCalculator::moleculeIDs()
     return ffield.moleculeIDs();
 }
 
-/** Return the set of IDs of all molecules that are referred to by 
-    the group 'group' in this forcefield 
-    
+/** Return the set of IDs of all molecules that are referred to by
+    the group 'group' in this forcefield
+
     \throw SireFF::missing_group
 */
 QSet<MoleculeID> FFLocalCalculator::moleculeIDs(const FFBase::Group &group)
@@ -291,7 +279,7 @@ PartialMolecule FFLocalCalculator::molecule(MoleculeID molid, const FFBase::Grou
 }
 
 /** Return all of the molecules in this forcefield */
-QHash<MoleculeID,PartialMolecule> FFLocalCalculator::molecules()
+Molecules FFLocalCalculator::molecules()
 {
     return ffield.molecules();
 }
@@ -300,7 +288,7 @@ QHash<MoleculeID,PartialMolecule> FFLocalCalculator::molecules()
 
     \throw SireFF::missing_group
 */
-QHash<MoleculeID,PartialMolecule> FFLocalCalculator::molecules(const FFBase::Group &group)
+Molecules FFLocalCalculator::molecules(const FFBase::Group &group)
 {
     return ffield.molecules(group);
 }
@@ -309,23 +297,22 @@ QHash<MoleculeID,PartialMolecule> FFLocalCalculator::molecules(const FFBase::Gro
 
     \throw SireMol::missing_molecule
 */
-QHash<MoleculeID,PartialMolecule> 
-FFLocalCalculator::molecules(const QSet<MoleculeID> &molids)
+Molecules FFLocalCalculator::molecules(const QSet<MoleculeID> &molids)
 {
     return ffield.molecules(molids);
 }
 
-/** Return the complete contents of the group 'group' in this forcefield 
+/** Return the complete contents of the group 'group' in this forcefield
 
     \throw SireFF::missing_group
 */
-QHash<MoleculeID,PartialMolecule> FFLocalCalculator::contents(const FFBase::Group &group)
+Molecules FFLocalCalculator::contents(const FFBase::Group &group)
 {
     return ffield.contents(group);
 }
 
 /** Return the complete contents of this forcefield */
-QHash<MoleculeID,PartialMolecule> FFLocalCalculator::contents()
+Molecules FFLocalCalculator::contents()
 {
     return ffield.contents();
 }
@@ -400,7 +387,7 @@ void FFCalculator::calculateEnergy()
     nrg_components = ffield.energies();
     total_nrg = nrg_components.value(ffield.components().total());
 }
-             
+
 /** Set the forcefield to be calculated and return whether its
     energy needs to be reevaluated. */
 bool FFCalculator::setForceField(const ForceField &forcefield)

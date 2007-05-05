@@ -49,6 +49,7 @@
 
 #include "SireMol/partialmolecule.h"
 #include "SireMol/molecule.h"
+#include "SireMol/molecules.h"
 
 #include "SireVol/periodicbox.h"
 #include "SireVol/cartesian.h"
@@ -712,10 +713,27 @@ void TestForceFields::runTests()
 
     qDebug() << "Testing changing molecules...";
 
-    t.start();
+    double old_cljff_nrg = cljff.energy();
+    double old_ljff_a_b_nrg = ljff_a_b.energy();
+
+    Version old_cljff_version = cljff.version();
+    Version old_ljff_a_b_version = ljff_a_b.version();
 
     BOOST_CHECK( not cljff.change(mols) );
     BOOST_CHECK( not ljff_a_b.change(mols) );
+
+    qDebug() << "Comparing versions...";
+    qDebug() << old_cljff_version.toString() << "vs." << cljff.version().toString();
+    qDebug() << old_ljff_a_b_version.toString() << "vs."
+             << ljff_a_b.version().toString();
+
+    BOOST_CHECK( old_cljff_version == cljff.version() );
+    BOOST_CHECK( old_ljff_a_b_version == ljff_a_b.version() );
+
+    t.start();
+
+    BOOST_CHECK_CLOSE( old_cljff_nrg, cljff.energy(), 1e-6 );
+    BOOST_CHECK_CLOSE( old_ljff_a_b_nrg, ljff_a_b.energy(), 1e-6 );
 
     ms = t.elapsed();
 
@@ -723,7 +741,11 @@ void TestForceFields::runTests()
 
     t.start();
 
+    double old_ffields_nrg = ffields.energy();
+
     BOOST_CHECK( not ffields.change(mols) );
+
+    BOOST_CHECK_CLOSE( old_ffields_nrg, ffields.energy(), 1e-6 );
 
     ms = t.elapsed();
 

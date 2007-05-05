@@ -57,6 +57,7 @@ class Values;
 namespace SireMol
 {
 class Molecule;
+class Molecules;
 class PartialMolecule;
 class MoleculeID;
 }
@@ -83,6 +84,7 @@ using SireVol::Space;
 using SireFF::ForceFields;
 
 using SireMol::Molecule;
+using SireMol::Molecules;
 using SireMol::PartialMolecule;
 using SireMol::MoleculeID;
 using SireMol::MoleculeGroup;
@@ -141,43 +143,26 @@ public:
 
     PartialMolecule mapIntoSystemSpace(const PartialMolecule &molecule) const;
 
-    QHash<MoleculeID,PartialMolecule>
-    mapIntoSystemSpace(const QHash<MoleculeID,PartialMolecule> &molecules) const;
-
-    QHash<MoleculeID,PartialMolecule>
-    mapIntoSystemSpace(const QList<PartialMolecule> &molecules) const;
+    Molecules mapIntoSystemSpace(const Molecules &molecules) const;
 
     PartialMolecule change(const PartialMolecule &molecule);
 
-    QHash<MoleculeID,PartialMolecule>
-    change(const QList<PartialMolecule> &molecules);
-
-    QHash<MoleculeID,PartialMolecule>
-    change(const QHash<MoleculeID,PartialMolecule> &molecules);
+    Molecules change(const Molecules &molecules);
 
     PartialMolecule add(const PartialMolecule &molecule,
                         const QSet<MoleculeGroupID> &groupids);
 
-    QHash<MoleculeID,PartialMolecule>
-    add(const QHash<MoleculeID,PartialMolecule> &molecules,
-        const QSet<MoleculeGroupID> &groupids);
-
-    QHash<MoleculeID,PartialMolecule>
-    add(const QList<PartialMolecule> &molecules,
-        const QSet<MoleculeGroupID> &groupids);
+    Molecules add(const Molecules &molecules,
+                  const QSet<MoleculeGroupID> &groupids);
 
     void remove(const PartialMolecule &molecule,
                 const QSet<MoleculeGroupID> &groupids);
 
-    void remove(const QHash<MoleculeID,PartialMolecule> &molecules,
-                const QSet<MoleculeGroupID> &groupids);
-
-    void remove(const QList<PartialMolecule> &molecules,
+    void remove(const Molecules &molecules,
                 const QSet<MoleculeGroupID> &groupids);
 
     void remove(const PartialMolecule &molecule);
-    void remove(const QHash<MoleculeID,PartialMolecule> &molecules);
-    void remove(const QList<PartialMolecule> &molecules);
+    void remove(const Molecules &molecules);
 
     void incrementMinorVersion();
     void incrementMajorVersion();

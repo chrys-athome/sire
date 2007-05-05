@@ -36,9 +36,9 @@ SIRE_BEGIN_HEADER
 namespace SireFF
 {
 
-/** This is the base class of calculators that store and use 
-    a local copy of the forcefield 
-    
+/** This is the base class of calculators that store and use
+    a local copy of the forcefield
+
     @author Christopher Woods
 */
 class SIREFF_EXPORT FFLocalCalculator : public FFCalculatorBase
@@ -46,7 +46,7 @@ class SIREFF_EXPORT FFLocalCalculator : public FFCalculatorBase
 public:
     FFLocalCalculator();
     FFLocalCalculator(const ForceField &ffield);
-    
+
     ~FFLocalCalculator();
 
     bool setProperty(const QString &name, const Property &property);
@@ -58,28 +58,27 @@ public:
     void mustNowRecalculateFromScratch();
 
     bool change(const PartialMolecule &molecule);
-    bool change(const QHash<MoleculeID,PartialMolecule> &molecules);
-    bool change(const QList<PartialMolecule> &molecules);
+    bool change(const Molecules &molecules);
 
     bool add(const PartialMolecule &molecule,
              const ParameterMap &map = ParameterMap());
-    bool add(const QList<PartialMolecule> &molecules,
+    bool add(const Molecules &molecules,
              const ParameterMap &map = ParameterMap());
 
     bool addTo(const FFBase::Group &group,
                const PartialMolecule &molecule,
                const ParameterMap &map = ParameterMap());
     bool addTo(const FFBase::Group &group,
-               const QList<PartialMolecule> &molecules,
+               const Molecules &molecules,
                const ParameterMap &map = ParameterMap());
 
     bool remove(const PartialMolecule &molecule);
-    bool remove(const QList<PartialMolecule> &molecules);
+    bool remove(const Molecules &molecules);
 
     bool removeFrom(const FFBase::Group &group,
                     const PartialMolecule &molecule);
     bool removeFrom(const FFBase::Group &group,
-                    const QList<PartialMolecule> &molecules);
+                    const Molecules &molecules);
 
     bool contains(const PartialMolecule &molecule);
     bool contains(const PartialMolecule &molecule,
@@ -96,12 +95,12 @@ public:
     PartialMolecule molecule(MoleculeID molid);
     PartialMolecule molecule(MoleculeID molid, const FFBase::Group &group);
 
-    QHash<MoleculeID,PartialMolecule> molecules();
-    QHash<MoleculeID,PartialMolecule> molecules(const QSet<MoleculeID> &molids);
-    QHash<MoleculeID,PartialMolecule> molecules(const FFBase::Group &group);
+    Molecules molecules();
+    Molecules molecules(const QSet<MoleculeID> &molids);
+    Molecules molecules(const FFBase::Group &group);
 
-    QHash<MoleculeID,PartialMolecule> contents(const FFBase::Group &group);
-    QHash<MoleculeID,PartialMolecule> contents();
+    Molecules contents(const FFBase::Group &group);
+    Molecules contents();
 
     bool isDirty();
     bool isClean();

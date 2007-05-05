@@ -31,6 +31,8 @@
 #include "molprosession.h"
 
 #include "SireMol/molecule.h"
+#include "SireMol/molecules.h"
+
 #include "SireMol/residue.h"
 #include "SireMol/residueinfo.h"
 #include "SireMol/newatom.h"
@@ -1737,13 +1739,13 @@ bool MolproFF::addToQM(const PartialMolecule &molecule,
 
     \throw SireMol::duplicate_molecule
 */
-bool MolproFF::addToQM(const QList<PartialMolecule> &molecules,
+bool MolproFF::addToQM(const Molecules &molecules,
                        const ParameterMap &map)
 {
     if (molecules.count() == 0)
         return isDirty();
     else if (molecules.count() == 1)
-        return this->addToQM(molecules.first(),map);
+        return this->addToQM(*(molecules.begin()),map);
     else
     {
         //work on a detached copy of this forcefield, so that
@@ -1753,7 +1755,7 @@ bool MolproFF::addToQM(const QList<PartialMolecule> &molecules,
 
         bool changed = false;
 
-        for (QList<PartialMolecule>::const_iterator it = molecules.constBegin();
+        for (Molecules::const_iterator it = molecules.constBegin();
              it != molecules.constEnd();
              ++it)
         {
@@ -1793,13 +1795,13 @@ bool MolproFF::addToMM(const PartialMolecule &molecule,
 
     \throw SireMol::duplicate_molecule
 */
-bool MolproFF::addToMM(const QList<PartialMolecule> &molecules,
+bool MolproFF::addToMM(const Molecules &molecules,
                        const ParameterMap &map)
 {
     if (molecules.count() == 0)
         return isDirty();
     else if (molecules.count() == 1)
-        return this->addToMM(molecules.first(),map);
+        return this->addToMM(*(molecules.begin()),map);
     else
     {
         //work on a detached copy of this forcefield, so that
@@ -1809,7 +1811,7 @@ bool MolproFF::addToMM(const QList<PartialMolecule> &molecules,
 
         bool changed = false;
 
-        for (QList<PartialMolecule>::const_iterator it = molecules.begin();
+        for (Molecules::const_iterator it = molecules.begin();
              it != molecules.end();
              ++it)
         {
@@ -1869,13 +1871,13 @@ bool MolproFF::add(const PartialMolecule &molecule,
 
     \throw SireMol::missing_molecule
 */
-bool MolproFF::add(const QList<PartialMolecule> &molecules,
+bool MolproFF::add(const Molecules &molecules,
                    const ParameterMap &map)
 {
     if (molecules.count() == 0)
         return isDirty();
     else if (molecules.count() == 1)
-        return this->add(molecules.first(),map);
+        return this->add(*(molecules.begin()),map);
     else
     {
         //work on a detached copy of this forcefield, so that
@@ -1885,7 +1887,7 @@ bool MolproFF::add(const QList<PartialMolecule> &molecules,
 
         bool changed = false;
 
-        for (QList<PartialMolecule>::const_iterator it = molecules.begin();
+        for (Molecules::const_iterator it = molecules.begin();
              it != molecules.end();
              ++it)
         {
@@ -1929,7 +1931,7 @@ bool MolproFF::addTo(const FFBase::Group &group, const PartialMolecule &molecule
     \throw SireFF::invalid_group
 */
 bool MolproFF::addTo(const FFBase::Group &group,
-                     const QList<PartialMolecule> &molecules,
+                     const Molecules &molecules,
                      const ParameterMap &map)
 {
     if (group == groups().qm())
@@ -1990,42 +1992,7 @@ bool MolproFF::change(const PartialMolecule &molecule)
 }
 
 /** Change a whole load of molecules */
-bool MolproFF::change(const QList<PartialMolecule> &molecules)
-{
-    if (molecules.count() == 0)
-        return isDirty();
-    else if (molecules.count() == 1)
-        return this->change(molecules.first());
-    else
-    {
-        //work on a detached copy of this forcefield, so that
-        //we maintain the invariant
-        SharedPolyPointer<MolproFF> ffield(*this);
-        MolproFF &copy = *ffield;
-
-        bool changed = false;
-
-        for (QList<PartialMolecule>::const_iterator it = molecules.begin();
-             it != molecules.end();
-             ++it)
-        {
-            bool this_changed = copy._pvt_change(*it);
-
-            changed = changed or this_changed;
-        }
-
-        if (changed)
-        {
-            copy.incrementMinorVersion();
-            FFBase::operator=(copy);
-        }
-
-        return isDirty();
-    }
-}
-
-/** Change a whole load of molecules */
-bool MolproFF::change(const QHash<MoleculeID,PartialMolecule> &molecules)
+bool MolproFF::change(const Molecules &molecules)
 {
     if (molecules.count() == 0)
         return isDirty();
@@ -2040,11 +2007,11 @@ bool MolproFF::change(const QHash<MoleculeID,PartialMolecule> &molecules)
 
         bool changed = false;
 
-        for (QHash<MoleculeID,PartialMolecule>::const_iterator it = molecules.begin();
+        for (Molecules::const_iterator it = molecules.begin();
              it != molecules.end();
              ++it)
         {
-            bool this_changed = copy._pvt_change(it.value());
+            bool this_changed = copy._pvt_change(*it);
 
             changed = changed or this_changed;
         }
@@ -2132,12 +2099,12 @@ bool MolproFF::removeFromMM(const PartialMolecule &molecule)
 }
 
 /** Remove the molecules in 'molecules' from the QM region */
-bool MolproFF::removeFromQM(const QList<PartialMolecule> &molecules)
+bool MolproFF::removeFromQM(const Molecules &molecules)
 {
     if (molecules.count() == 0)
         return isDirty();
     else if (molecules.count() == 1)
-        return this->removeFromQM(molecules.first());
+        return this->removeFromQM( *(molecules.begin()) );
     else
     {
         //work on a detached copy of this forcefield, so that
@@ -2147,7 +2114,7 @@ bool MolproFF::removeFromQM(const QList<PartialMolecule> &molecules)
 
         bool changed = false;
 
-        for (QList<PartialMolecule>::const_iterator it = molecules.begin();
+        for (Molecules::const_iterator it = molecules.begin();
              it != molecules.end();
              ++it)
         {
@@ -2166,12 +2133,12 @@ bool MolproFF::removeFromQM(const QList<PartialMolecule> &molecules)
 }
 
 /** Remove the molecules in 'molecules' from the MM region */
-bool MolproFF::removeFromMM(const QList<PartialMolecule> &molecules)
+bool MolproFF::removeFromMM(const Molecules &molecules)
 {
     if (molecules.count() == 0)
         return isDirty();
     else if (molecules.count() == 1)
-        return this->removeFromMM(molecules.first());
+        return this->removeFromMM( *(molecules.begin()) );
     else
     {
         //work on a detached copy of this forcefield, so that
@@ -2181,7 +2148,7 @@ bool MolproFF::removeFromMM(const QList<PartialMolecule> &molecules)
 
         bool changed = false;
 
-        for (QList<PartialMolecule>::const_iterator it = molecules.begin();
+        for (Molecules::const_iterator it = molecules.begin();
              it != molecules.end();
              ++it)
         {
@@ -2225,7 +2192,7 @@ bool MolproFF::removeFrom(const FFBase::Group &group,
     \throw SireFF::invalid_group
 */
 bool MolproFF::removeFrom(const FFBase::Group &group,
-                          const QList<PartialMolecule> &molecules)
+                          const Molecules &molecules)
 {
     if (group == groups().qm())
         return this->removeFromQM(molecules);
@@ -2264,12 +2231,12 @@ bool MolproFF::remove(const PartialMolecule &molecule)
 }
 
 /** Remove all of the molecules in 'molecules' from this forcefield */
-bool MolproFF::remove(const QList<PartialMolecule> &molecules)
+bool MolproFF::remove(const Molecules &molecules)
 {
     if (molecules.count() == 0)
         return isDirty();
     else if (molecules.count() == 1)
-        return this->remove(molecules.first());
+        return this->remove( *(molecules.begin()) );
     else
     {
         //work on a detached copy of this forcefield, so that
@@ -2279,7 +2246,7 @@ bool MolproFF::remove(const QList<PartialMolecule> &molecules)
 
         bool changed = false;
 
-        for (QList<PartialMolecule>::const_iterator it = molecules.begin();
+        for (Molecules::const_iterator it = molecules.begin();
              it != molecules.end();
              ++it)
         {
@@ -3021,9 +2988,9 @@ bool MolproFF::contains(const PartialMolecule &mol,
 }
 
 /** Return copies of all of the molecules that are in this forcefield */
-QHash<MoleculeID,PartialMolecule> MolproFF::contents() const
+Molecules MolproFF::contents() const
 {
-    QHash<MoleculeID,PartialMolecule> mols;
+    Molecules mols;
 
     int nmols = qm_mols.count() + mm_mols.count();
 
@@ -3036,28 +3003,23 @@ QHash<MoleculeID,PartialMolecule> MolproFF::contents() const
          it != mm_mols.constEnd();
          ++it)
     {
-        mols.insert( it.key(), it->molecule() );
+        mols.add( it->molecule() );
     }
 
     for (QHash<MoleculeID,QMMolecule>::const_iterator it = qm_mols.constBegin();
          it != qm_mols.constEnd();
          ++it)
     {
-        if ( mols.contains(it.key()) )
-        {
-            mols[it.key()] = mols[it.key()].selection().add(it->molecule().selectedAtoms());
-        }
-        else
-            mols.insert( it.key(), it->molecule() );
+        mols.add( it->molecule() );
     }
 
     return mols;
 }
 
 /** Return copies of all of the QM molecules in this forcefield */
-QHash<MoleculeID,PartialMolecule> MolproFF::qmMolecules() const
+Molecules MolproFF::qmMolecules() const
 {
-    QHash<MoleculeID,PartialMolecule> mols;
+    Molecules mols;
 
     int nmols = qm_mols.count();
 
@@ -3069,7 +3031,7 @@ QHash<MoleculeID,PartialMolecule> MolproFF::qmMolecules() const
              it != qm_mols.constEnd();
              ++it)
         {
-            mols.insert(it.key(),it->molecule());
+            mols.add(it->molecule());
         }
     }
 
@@ -3077,9 +3039,9 @@ QHash<MoleculeID,PartialMolecule> MolproFF::qmMolecules() const
 }
 
 /** Return copies of all of the MM molecules in this forcefield */
-QHash<MoleculeID,PartialMolecule> MolproFF::mmMolecules() const
+Molecules MolproFF::mmMolecules() const
 {
-    QHash<MoleculeID,PartialMolecule> mols;
+    Molecules mols;
 
     int nmols = mm_mols.count();
 
@@ -3091,7 +3053,7 @@ QHash<MoleculeID,PartialMolecule> MolproFF::mmMolecules() const
              it != mm_mols.constEnd();
              ++it)
         {
-            mols.insert(it.key(),it->molecule());
+            mols.add(it->molecule());
         }
     }
 
@@ -3102,8 +3064,7 @@ QHash<MoleculeID,PartialMolecule> MolproFF::mmMolecules() const
 
     \throw SireFF::invalid_group
 */
-QHash<MoleculeID,PartialMolecule>
-MolproFF::contents(const FFBase::Group &group) const
+Molecules MolproFF::contents(const FFBase::Group &group) const
 {
     if (group == groups().qm())
         return this->qmMolecules();
@@ -3115,6 +3076,6 @@ MolproFF::contents(const FFBase::Group &group) const
             "There is no such group in the MolproFF forcefield!"),
                 CODELOC );
 
-        return QHash<MoleculeID,PartialMolecule>();
+        return Molecules();
     }
 }

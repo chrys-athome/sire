@@ -32,6 +32,7 @@
 #include "intergroupcljff.h"
 
 #include "SireMol/partialmolecule.h"
+#include "SireMol/molecules.h"
 
 #include "SireMol/errors.h"
 #include "SireFF/errors.h"
@@ -816,6 +817,12 @@ bool InterGroupCLJFF::change(const PartialMolecule &molecule)
         return isDirty();
 }
 
+/** Change lots of molecules */
+bool InterGroupCLJFF::change(const Molecules &molecules)
+{
+    return CLJFF::change(molecules);
+}
+
 /** Remove the molecule 'molecule' */
 bool InterGroupCLJFF::remove(const PartialMolecule &molecule)
 {
@@ -832,6 +839,12 @@ bool InterGroupCLJFF::remove(const PartialMolecule &molecule)
         return isDirty();
 }
 
+/** Remove lots of molecules */
+bool InterGroupCLJFF::remove(const Molecules &molecules)
+{
+    return CLJFF::remove(molecules);
+}
+
 /** Remove the molecule 'molecule' from the group 'group'
 
     \throw SireFF::missing_group
@@ -845,16 +858,35 @@ bool InterGroupCLJFF::removeFrom(const FFBase::Group &group,
         return false;
 }
 
+/** Remove lots of molecules from the group 'group' */
+bool InterGroupCLJFF::removeFrom(const FFBase::Group &group,
+                                 const Molecules &molecules)
+{
+    return CLJFF::removeFrom(group, molecules);
+}
+
 /** Remove the molecule 'molecule' from group 'A' */
 bool InterGroupCLJFF::removeFromA(const PartialMolecule &molecule)
 {
     return this->removeFrom(groups().A(), molecule);
 }
 
+/** Remove lots of molecules from group 'A' */
+bool InterGroupCLJFF::removeFromA(const Molecules &molecules)
+{
+    return CLJFF::removeFrom(groups().A(), molecules);
+}
+
 /** Remove the molecule 'molecule' from group 'B' */
 bool InterGroupCLJFF::removeFromB(const PartialMolecule &molecule)
 {
     return this->removeFrom(groups().B(), molecule);
+}
+
+/** Remove lots of molecules from group 'B' */
+bool InterGroupCLJFF::removeFromB(const Molecules &molecules)
+{
+    return CLJFF::removeFrom(groups().B(), molecules);
 }
 
 /** Add the molecule 'molecule' to this forcefield using the optionally
@@ -881,6 +913,16 @@ bool InterGroupCLJFF::add(const PartialMolecule &molecule, const ParameterMap &m
     }
     else
         return isDirty();
+}
+
+/** Add lots of molecules to this forcefield
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+bool InterGroupCLJFF::add(const Molecules &molecules, const ParameterMap &map)
+{
+    return CLJFF::add(molecules, map);
 }
 
 /** Return the index of the group in this forcefield
@@ -957,6 +999,18 @@ bool InterGroupCLJFF::addTo(const FFBase::Group &group,
     }
 }
 
+/** Add lots of molecules to the group 'group'
+
+    \throw SireFF::invalid_group
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+bool InterGroupCLJFF::addTo(const FFBase::Group &group,
+                            const Molecules &molecules, const ParameterMap &map)
+{
+    return CLJFF::addTo(group, molecules, map);
+}
+
 /** Add the molecule 'molecule' to group 'A' using the
     supplied map to find the forcefield parameters amongst the molecule's
     properties. Note that it is an error to try to add this to more than
@@ -972,6 +1026,18 @@ bool InterGroupCLJFF::addToA(const PartialMolecule &molecule,
     return this->addTo(groups().A(), molecule, map);
 }
 
+/** Add lots of molecules to group 'A'
+
+    \throw SireBase::missing_property
+    \throw SireMol::invalid_cast
+    \throw SireFF::invalid_group
+*/
+bool InterGroupCLJFF::addToA(const Molecules &molecules,
+                             const ParameterMap &map)
+{
+    return CLJFF::addTo(groups().A(), molecules, map);
+}
+
 /** Add the molecule 'molecule' to group 'B' using the
     supplied map to find the forcefield parameters amongst the molecule's
     properties. Note that it is an error to try to add this to more than
@@ -985,6 +1051,18 @@ bool InterGroupCLJFF::addToB(const PartialMolecule &molecule,
                              const ParameterMap &map)
 {
     return this->addTo(groups().B(), molecule, map);
+}
+
+/** Add lots of molecules to group 'B'
+
+    \throw SireBase::missing_property
+    \throw SireMol::invalid_cast
+    \throw SireFF::invalid_group
+*/
+bool InterGroupCLJFF::addToB(const Molecules &molecules,
+                             const ParameterMap &map)
+{
+    return CLJFF::addTo(groups().B(), molecules, map);
 }
 
 /** Return whether this forcefield contains a complete copy of
@@ -1115,27 +1193,19 @@ PartialMolecule InterGroupCLJFF::molecule(MoleculeID molid,
 }
 
 /** Return all of the molecules in this forcefield */
-QHash<MoleculeID,PartialMolecule> InterGroupCLJFF::contents() const
+Molecules InterGroupCLJFF::contents() const
 {
-    QHash<MoleculeID,PartialMolecule> all_mols;
+    QSet<MoleculeID> molids = this->moleculeIDs();
 
-    int nmols = mols[0].count() + mols[1].count();
+    Molecules all_mols;
 
-    if (nmols > 0)
+    if (not molids.isEmpty())
     {
-        all_mols.reserve(nmols);
+        all_mols.reserve(molids.count());
 
-        for (int i=0; i<2; ++i)
+        foreach (MoleculeID molid, molids)
         {
-            nmols = mols[i].count();
-            const CLJMolecule *mols_array = mols[i].constData();
-
-            for (int j=0; j<nmols; ++j)
-            {
-                const PartialMolecule &mol = mols_array[j].molecule();
-
-                all_mols.insert(mol.ID(),mol);
-            }
+            all_mols.add( this->molecule(molid) );
         }
     }
 
@@ -1146,12 +1216,11 @@ QHash<MoleculeID,PartialMolecule> InterGroupCLJFF::contents() const
 
     \throw SireFF::missing_group
 */
-QHash<MoleculeID,PartialMolecule>
-InterGroupCLJFF::contents(const FFBase::Group &group) const
+Molecules InterGroupCLJFF::contents(const FFBase::Group &group) const
 {
     int idx = groupIndex(group);
 
-    QHash<MoleculeID,PartialMolecule> all_mols;
+    Molecules all_mols;
 
     int nmols = mols[idx].count();
 
@@ -1165,7 +1234,7 @@ InterGroupCLJFF::contents(const FFBase::Group &group) const
         {
             const PartialMolecule &mol = mols_array[i].molecule();
 
-            all_mols.insert(mol.ID(),mol);
+            all_mols.add(mol);
         }
     }
 

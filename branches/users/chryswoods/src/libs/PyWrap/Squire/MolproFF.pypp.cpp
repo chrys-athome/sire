@@ -6,6 +6,7 @@
 #include "boost/python.hpp"
 #include "squire_headers.h"
 #include "SireMol/molecule.h"
+#include "SireMol/molecules.h"
 #include "SireMol/residue.h"
 #include "SireMol/newatom.h"
 
@@ -63,7 +64,7 @@ void register_MolproFF_class(){
         }
         { //::Squire::MolproFF::add
         
-            typedef bool ( ::Squire::MolproFF::*add_function_type )( ::QList<SireMol::PartialMolecule> const &,::SireFF::ParameterMap const & ) ;
+            typedef bool ( ::Squire::MolproFF::*add_function_type )( ::SireMol::Molecules const &,::SireFF::ParameterMap const & ) ;
             
             MolproFF_exposer.def( 
                 "add"
@@ -83,7 +84,7 @@ void register_MolproFF_class(){
         }
         { //::Squire::MolproFF::addTo
         
-            typedef bool ( ::Squire::MolproFF::*addTo_function_type )( ::SireFF::FFBase::Group const &,::QList<SireMol::PartialMolecule> const &,::SireFF::ParameterMap const & ) ;
+            typedef bool ( ::Squire::MolproFF::*addTo_function_type )( ::SireFF::FFBase::Group const &,::SireMol::Molecules const &,::SireFF::ParameterMap const & ) ;
             
             MolproFF_exposer.def( 
                 "addTo"
@@ -103,7 +104,7 @@ void register_MolproFF_class(){
         }
         { //::Squire::MolproFF::addToMM
         
-            typedef bool ( ::Squire::MolproFF::*addToMM_function_type )( ::QList<SireMol::PartialMolecule> const &,::SireFF::ParameterMap const & ) ;
+            typedef bool ( ::Squire::MolproFF::*addToMM_function_type )( ::SireMol::Molecules const &,::SireFF::ParameterMap const & ) ;
             
             MolproFF_exposer.def( 
                 "addToMM"
@@ -123,7 +124,7 @@ void register_MolproFF_class(){
         }
         { //::Squire::MolproFF::addToQM
         
-            typedef bool ( ::Squire::MolproFF::*addToQM_function_type )( ::QList<SireMol::PartialMolecule> const &,::SireFF::ParameterMap const & ) ;
+            typedef bool ( ::Squire::MolproFF::*addToQM_function_type )( ::SireMol::Molecules const &,::SireFF::ParameterMap const & ) ;
             
             MolproFF_exposer.def( 
                 "addToQM"
@@ -143,17 +144,7 @@ void register_MolproFF_class(){
         }
         { //::Squire::MolproFF::change
         
-            typedef bool ( ::Squire::MolproFF::*change_function_type )( ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> const & ) ;
-            
-            MolproFF_exposer.def( 
-                "change"
-                , change_function_type( &::Squire::MolproFF::change )
-                , ( bp::arg("molecules") ) );
-        
-        }
-        { //::Squire::MolproFF::change
-        
-            typedef bool ( ::Squire::MolproFF::*change_function_type )( ::QList<SireMol::PartialMolecule> const & ) ;
+            typedef bool ( ::Squire::MolproFF::*change_function_type )( ::SireMol::Molecules const & ) ;
             
             MolproFF_exposer.def( 
                 "change"
@@ -203,7 +194,7 @@ void register_MolproFF_class(){
         }
         { //::Squire::MolproFF::contents
         
-            typedef ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::Squire::MolproFF::*contents_function_type )(  ) const;
+            typedef ::SireMol::Molecules ( ::Squire::MolproFF::*contents_function_type )(  ) const;
             
             MolproFF_exposer.def( 
                 "contents"
@@ -212,7 +203,7 @@ void register_MolproFF_class(){
         }
         { //::Squire::MolproFF::contents
         
-            typedef ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::Squire::MolproFF::*contents_function_type )( ::SireFF::FFBase::Group const & ) const;
+            typedef ::SireMol::Molecules ( ::Squire::MolproFF::*contents_function_type )( ::SireFF::FFBase::Group const & ) const;
             
             MolproFF_exposer.def( 
                 "contents"
@@ -271,7 +262,7 @@ void register_MolproFF_class(){
         }
         { //::Squire::MolproFF::mmMolecules
         
-            typedef ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::Squire::MolproFF::*mmMolecules_function_type )(  ) const;
+            typedef ::SireMol::Molecules ( ::Squire::MolproFF::*mmMolecules_function_type )(  ) const;
             
             MolproFF_exposer.def( 
                 "mmMolecules"
@@ -386,7 +377,7 @@ void register_MolproFF_class(){
         }
         { //::Squire::MolproFF::qmMolecules
         
-            typedef ::QHash<SireMol::MoleculeID,SireMol::PartialMolecule> ( ::Squire::MolproFF::*qmMolecules_function_type )(  ) const;
+            typedef ::SireMol::Molecules ( ::Squire::MolproFF::*qmMolecules_function_type )(  ) const;
             
             MolproFF_exposer.def( 
                 "qmMolecules"
@@ -434,7 +425,7 @@ void register_MolproFF_class(){
         }
         { //::Squire::MolproFF::remove
         
-            typedef bool ( ::Squire::MolproFF::*remove_function_type )( ::QList<SireMol::PartialMolecule> const & ) ;
+            typedef bool ( ::Squire::MolproFF::*remove_function_type )( ::SireMol::Molecules const & ) ;
             
             MolproFF_exposer.def( 
                 "remove"
@@ -454,7 +445,7 @@ void register_MolproFF_class(){
         }
         { //::Squire::MolproFF::removeFrom
         
-            typedef bool ( ::Squire::MolproFF::*removeFrom_function_type )( ::SireFF::FFBase::Group const &,::QList<SireMol::PartialMolecule> const & ) ;
+            typedef bool ( ::Squire::MolproFF::*removeFrom_function_type )( ::SireFF::FFBase::Group const &,::SireMol::Molecules const & ) ;
             
             MolproFF_exposer.def( 
                 "removeFrom"
@@ -474,7 +465,7 @@ void register_MolproFF_class(){
         }
         { //::Squire::MolproFF::removeFromMM
         
-            typedef bool ( ::Squire::MolproFF::*removeFromMM_function_type )( ::QList<SireMol::PartialMolecule> const & ) ;
+            typedef bool ( ::Squire::MolproFF::*removeFromMM_function_type )( ::SireMol::Molecules const & ) ;
             
             MolproFF_exposer.def( 
                 "removeFromMM"
@@ -494,7 +485,7 @@ void register_MolproFF_class(){
         }
         { //::Squire::MolproFF::removeFromQM
         
-            typedef bool ( ::Squire::MolproFF::*removeFromQM_function_type )( ::QList<SireMol::PartialMolecule> const & ) ;
+            typedef bool ( ::Squire::MolproFF::*removeFromQM_function_type )( ::SireMol::Molecules const & ) ;
             
             MolproFF_exposer.def( 
                 "removeFromQM"

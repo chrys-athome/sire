@@ -46,6 +46,8 @@ namespace SireSystem
 using SireFF::FFGroupID;
 using SireFF::ParameterMap;
 
+using SireMol::Molecules;
+
 /** This class holds a system that is being actively
     simulated.
 
@@ -73,11 +75,7 @@ public:
 
     PartialMolecule change(const PartialMolecule &molecule);
 
-    QHash<MoleculeID,PartialMolecule>
-    change(const QHash<MoleculeID,PartialMolecule> &molecules);
-
-    QHash<MoleculeID,PartialMolecule>
-    change(const QList<PartialMolecule> &molecules);
+    Molecules change(const Molecules &molecules);
 
     PartialMolecule add(const PartialMolecule &molecule,
                         const QSet<MoleculeGroupID> &molgroupids);
@@ -91,38 +89,20 @@ public:
                         const QSet<MoleculeGroupID> &molgroupids,
                         const ParameterMap &map = ParameterMap());
 
-    QHash<MoleculeID,PartialMolecule>
-    add(const QHash<MoleculeID,PartialMolecule> &molecules,
-        const QSet<MoleculeGroupID> &molgroupids);
+    Molecules add(const Molecules &molecules,
+                  const QSet<MoleculeGroupID> &molgroupids);
 
-    QHash<MoleculeID,PartialMolecule>
-    add(const QHash<MoleculeID,PartialMolecule> &molecules,
-        const QSet<FFGroupID> &ffgroupids,
-        const ParameterMap &map = ParameterMap());
+    Molecules add(const Molecules &molecules,
+                  const QSet<FFGroupID> &ffgroupids,
+                  const ParameterMap &map = ParameterMap());
 
-    QHash<MoleculeID,PartialMolecule>
-    add(const QHash<MoleculeID,PartialMolecule> &molecules,
-        const QSet<FFGroupID> &ffgroupids,
-        const QSet<MoleculeGroupID> &molgroupids,
-        const ParameterMap &map = ParameterMap());
-
-    QHash<MoleculeID,PartialMolecule>
-    add(const QList<PartialMolecule> &molecules,
-        const QSet<MoleculeGroupID> &molgroupids);
-
-    QHash<MoleculeID,PartialMolecule>
-    add(const QList<PartialMolecule> &molecules,
-        const QSet<FFGroupID> &ffgroupids,
-        const ParameterMap &map = ParameterMap());
-
-    QHash<MoleculeID,PartialMolecule>
-    add(const QList<PartialMolecule> &molecules,
-        const QSet<FFGroupID> &ffgroupids,
-        const QSet<MoleculeGroupID> &molgroupids,
-        const ParameterMap &map = ParameterMap());
+    Molecules add(const Molecules &molecules,
+                  const QSet<FFGroupID> &ffgroupids,
+                  const QSet<MoleculeGroupID> &molgroupids,
+                  const ParameterMap &map = ParameterMap());
 
     void remove(const PartialMolecule &molecule);
-    void remove(const QList<PartialMolecule> &molecules);
+    void remove(const Molecules &molecules);
 
     void remove(const PartialMolecule &molecule,
                 const QSet<MoleculeGroupID> &molgroupids);
@@ -131,10 +111,10 @@ public:
                 const QSet<FFGroupID> &ffgroupids,
                 const QSet<MoleculeGroupID> &molgroupids = QSet<MoleculeGroupID>());
 
-    void remove(const QList<PartialMolecule> &molecules,
+    void remove(const Molecules &molecules,
                 const QSet<MoleculeGroupID> &molgroupids);
 
-    void remove(const QList<PartialMolecule> &molecules,
+    void remove(const Molecules &molecules,
                 const QSet<FFGroupID> &ffgroupids,
                 const QSet<MoleculeGroupID> &molgroupids = QSet<MoleculeGroupID>());
 
