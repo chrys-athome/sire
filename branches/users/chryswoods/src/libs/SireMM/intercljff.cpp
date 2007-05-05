@@ -579,7 +579,7 @@ void InterCLJFF::removeFromCurrentState(MoleculeID molid)
     this changed anything */
 bool InterCLJFF::applyChange(MoleculeID molid, const ChangedCLJMolecule &changed_mol)
 {
-    if (changed_mol.nothingChanged())
+    if (changed_mol.isEmpty())
         return false;
 
     if (changed_mol.newMolecule().isEmpty())

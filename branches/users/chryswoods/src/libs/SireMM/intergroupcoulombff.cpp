@@ -743,7 +743,25 @@ void InterGroupCoulombFF::recordChange(int group_idx, MoleculeID molid,
     if (it != molid_to_changedindex[group_idx].constEnd())
     {
         //the molecule has been changed before
-        changed_mols[group_idx][it.value()] = changed_mol;
+        if (changed_mol.nothingChanged())
+        {
+            //we have changed back to the old state
+            changed_mols[group_idx][*it] = ChangedCoulombMolecule();
+            molid_to_changedindex[group_idx].remove(molid);
+            
+            if (molid_to_changedindex[0].isEmpty() and  
+                molid_to_changedindex[1].isEmpty())
+            {
+                //no molecules have now changed - the forcefield is clean again
+                molid_to_changedindex[0].clear();
+                molid_to_changedindex[1].clear();
+                changed_mols[0].clear();
+                changed_mols[1].clear();
+                this->setClean();
+            }
+        }
+        else
+            changed_mols[group_idx][*it] = changed_mol;
     }
     else
     {
@@ -759,7 +777,7 @@ void InterGroupCoulombFF::recordChange(int group_idx, MoleculeID molid,
 bool InterGroupCoulombFF::applyChange(MoleculeID molid,
                                       const ChangedCoulombMolecule &changed_mol)
 {
-    if (changed_mol.nothingChanged())
+    if (changed_mol.isEmpty())
         return false;
 
     //get the current group in which the molecule resides

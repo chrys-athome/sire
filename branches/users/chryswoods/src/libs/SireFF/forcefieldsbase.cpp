@@ -2323,7 +2323,8 @@ void ForceFieldsBase::add(const FFExpression &ff_equation)
     //its dependencies
     ExpressionInfo exprinfo(ff_equation, ff_equations);
 
-    BOOST_ASSERT( exprinfo.expression().function().ID() == ff_equation.function().ID() );
+    BOOST_ASSERT( exprinfo.expression().function().ID() 
+                                      == ff_equation.function().ID() );
 
     //add this to the list of expressions
     ff_equations.insert(ff_equation.function().ID(), exprinfo);
