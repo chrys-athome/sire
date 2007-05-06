@@ -116,6 +116,7 @@ public:
 
     bool isEmpty() const;
     int count() const;
+    int nMolecules() const;
 
     bool add(const PartialMolecule &molecule);
     bool change(const PartialMolecule &molecule);

@@ -53,7 +53,11 @@ QDataStream& operator>>(QDataStream&, SireMove::Sampler&);
 namespace SireMol
 {
 class PartialMolecule;
-class MoleculeGroup;
+}
+
+namespace SireSystem
+{
+class QuerySystem;
 }
 
 namespace SireMove
@@ -67,7 +71,8 @@ using SireBase::SharedPolyPointer;
 using SireMaths::RanGenerator;
 
 using SireMol::PartialMolecule;
-using SireMol::MoleculeGroup;
+
+using SireSystem::QuerySystem;
 
 /** This is the base class of all Samplers. A Sampler is used
     to pick a random molecule from a MoleculeGroup
@@ -81,7 +86,6 @@ friend QDataStream& ::operator<<(QDataStream&, const SamplerBase&);
 friend QDataStream& ::operator>>(QDataStream&, SamplerBase&);
 
 public:
-    SamplerBase();
     SamplerBase(const RanGenerator &rangenerator);
 
     SamplerBase(const SamplerBase &other);
@@ -102,10 +106,10 @@ public:
     void setGenerator(const RanGenerator &generator);
     const RanGenerator& generator() const;
 
-    virtual tuple<PartialMolecule,double> sample(const MoleculeGroup &group)=0;
+    virtual tuple<PartialMolecule,double> sample(const QuerySystem &system)=0;
 
     virtual double probabilityOf(const PartialMolecule &molecule,
-                                 const MoleculeGroup &group)=0;
+                                 const QuerySystem &system)=0;
 
 protected:
     RanGenerator& _pvt_generator();
@@ -143,10 +147,10 @@ public:
 
     Sampler& operator=(const Sampler &other);
 
-    tuple<PartialMolecule,double> sample(const MoleculeGroup &group);
+    tuple<PartialMolecule,double> sample(const QuerySystem &system);
 
     double probabilityOf(const PartialMolecule &molecule,
-                         const MoleculeGroup &group);
+                         const QuerySystem &system);
 
     void setGenerator(const RanGenerator &generator);
     const RanGenerator& generator() const;

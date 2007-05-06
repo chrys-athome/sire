@@ -77,10 +77,6 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds,
     return ds;
 }
 
-/** Constructor */
-SamplerBase::SamplerBase() : PropertyBase()
-{}
-
 /** Construct with a specified random number generator */
 SamplerBase::SamplerBase(const RanGenerator &generator)
             : PropertyBase(), rangen(generator)
@@ -185,19 +181,19 @@ Sampler& Sampler::operator=(const Sampler &other)
     return *this;
 }
 
-/** Return a random molecule from the group, together with the probability
+/** Return a random molecule from the system, together with the probability
     that this molecule had of being chosen. */
-tuple<PartialMolecule,double> Sampler::sample(const MoleculeGroup &group)
+tuple<PartialMolecule,double> Sampler::sample(const QuerySystem &system)
 {
-    return d->sample(group);
+    return d->sample(system);
 }
 
 /** Return the probability that the molecule 'molecule' has
     of being chosen in the System 'system' */
 double Sampler::probabilityOf(const PartialMolecule &molecule,
-                              const MoleculeGroup &group)
+                              const QuerySystem &system)
 {
-    return d->probabilityOf(molecule, group);
+    return d->probabilityOf(molecule, system);
 }
 
 /** Set the random number generator to be used by this sampler */

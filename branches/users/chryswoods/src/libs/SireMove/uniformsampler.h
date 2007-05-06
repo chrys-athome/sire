@@ -41,6 +41,12 @@ namespace SireMove
 class UniformSampler;
 }
 
+namespace SireMol
+{
+class MoleculeGroup;
+class MoleculeGroupID;
+}
+
 QDataStream& operator<<(QDataStream&, const SireMove::UniformSampler&);
 QDataStream& operator>>(QDataStream&, SireMove::UniformSampler&);
 
@@ -48,10 +54,13 @@ namespace SireMove
 {
 
 using SireMol::MoleculeID;
+using SireMol::MoleculeGroup;
 using SireMol::MoleculeGroupID;
 
-/** This class is used to pick contained Molecules, Residues
-    or Atoms at random (uniformly distributed).
+/** This class is used to pick a molecule at random
+    from a specified MoleculeGroup in a System. Each
+    molecule in the MoleculeGroup has an equal chance
+    of being picked.
 
     @author Christopher Woods
 */
@@ -62,14 +71,18 @@ friend QDataStream& ::operator<<(QDataStream&, const UniformSampler&);
 friend QDataStream& ::operator>>(QDataStream&, UniformSampler&);
 
 public:
-    UniformSampler();
-    UniformSampler(const RanGenerator &rangenerator);
+    UniformSampler(const RanGenerator &rangenerator = RanGenerator());
+    
+    UniformSampler(const MoleculeGroup &group,
+                   const RanGenerator &rangenerator = RanGenerator());
 
     UniformSampler(const UniformSampler &other);
 
     ~UniformSampler();
 
     UniformSampler& operator=(const UniformSampler &other);
+
+    void setGroup(const MoleculeGroup &group);
 
     static const char* typeName()
     {
@@ -86,10 +99,10 @@ public:
         return new UniformSampler(*this);
     }
 
-    tuple<PartialMolecule,double> sample(const MoleculeGroup &group);
+    tuple<PartialMolecule,double> sample(const QuerySystem &system);
 
     double probabilityOf(const PartialMolecule &molecule,
-                         const MoleculeGroup &group);
+                         const QuerySystem &system);
 
 protected:
     bool _pvt_isEqual(const PropertyBase &other) const;
@@ -100,12 +113,12 @@ private:
     /** List of IDs of all of the molecules that could be selected */
     QList<MoleculeID> molids;
     
-    /** The ID of the MoleculeGroup from which the last molecule
-        was chosen */
+    /** The ID of the MoleculeGroup from which the molecule
+        will be sampled */
     MoleculeGroupID groupid;
     
-    /** The major version number of the group from which the last molecule
-        was chosen */
+    /** The current major version number of the group from which the 
+        molecule will be sampled */
     quint32 majver;
 };
 

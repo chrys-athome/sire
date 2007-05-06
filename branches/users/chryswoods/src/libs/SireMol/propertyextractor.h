@@ -104,6 +104,8 @@ public:
 
     QVector< QVector<Element> > elements() const;
 
+    Vector geometricCenter() const;
+
     Property property(const QString &name) const;
 };
 
