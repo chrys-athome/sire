@@ -55,6 +55,7 @@ namespace SireMol
 {
 class MoleculeID;
 class MoleculeGroup;
+class PartialMolecule;
 }
 
 namespace SireMove
@@ -66,6 +67,8 @@ using SireSystem::SimSystem;
 
 using SireMol::MoleculeGroup;
 using SireMol::MoleculeID;
+
+using SireMol::PartialMolecule;
 
 /** This class implements a rigid body Monte Carlo move that
     may be applied to a random molecule within a MoleculeGroup
@@ -184,17 +187,17 @@ public:
 
     double acceptanceRatio() const;
 
-    quint32 nAttempted(const Molecule &mol) const;
-    quint32 nAccepted(const Molecule &mol) const;
-    quint32 nRejected(const Molecule &mol) const;
+    quint32 nAttempted(const PartialMolecule &molecule) const;
+    quint32 nAccepted(const PartialMolecule &molecule) const;
+    quint32 nRejected(const PartialMolecule &molecule) const;
 
-    double acceptanceRatio(const Molecule &mol) const;
+    double acceptanceRatio(const PartialMolecule &molecule) const;
 
 protected:
-    RigidBodyMC::Delta maximumDelta(const Molecule &mol) const;
+    RigidBodyMC::Delta maximumDelta(const PartialMolecule &mol) const;
 
-    void incrementAccept(const Molecule &mol);
-    void incrementReject(const Molecule &mol);
+    void incrementAccept(const PartialMolecule &molecule);
+    void incrementReject(const PartialMolecule &molecule);
 
 private:
     /** Hash containing the maximum amount by which

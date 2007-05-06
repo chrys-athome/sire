@@ -539,6 +539,12 @@ bool MoleculeGroup::contains(const PartialMolecule &molecule) const
     return d->contains(molecule);
 }
 
+/** Return whether this group is empty */
+bool MoleculeGroup::isEmpty() const
+{
+    return molecules().isEmpty();
+}
+
 /** Return the number of molecules in the group */
 int MoleculeGroup::count() const
 {

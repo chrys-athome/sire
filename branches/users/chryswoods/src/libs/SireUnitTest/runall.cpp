@@ -38,6 +38,7 @@
 #include "testmatch.h"
 #include "testperiodicbox.h"
 #include "testpropertyextractor.h"
+#include "testsampler.h"
 #include "testsharedpolypointer.h"
 #include "testsirecas.h"
 #include "testunits.h"
@@ -58,6 +59,7 @@ void SireTest::runAll(test_suite *test)
     initialise(new TestMatch(), test);
     initialise(new TestPeriodicBox(), test);
     initialise(new TestPropertyExtractor(), test);
+    initialise(new TestSampler(), test);
     initialise(new TestSharedPolyPointer(), test);
     initialise(new TestSireCAS(), test);
     initialise(new TestVector(), test);

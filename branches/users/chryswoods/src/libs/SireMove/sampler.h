@@ -32,6 +32,7 @@
 #include <boost/tuple/tuple.hpp>
 
 #include "SireBase/sharedpolypointer.hpp"
+#include "SireBase/property.h"
 
 #include "SireMaths/rangenerator.h"
 
@@ -51,9 +52,7 @@ QDataStream& operator>>(QDataStream&, SireMove::Sampler&);
 
 namespace SireMol
 {
-class Molecule;
-class Residue;
-class NewAtom;
+class PartialMolecule;
 class MoleculeGroup;
 }
 
@@ -62,11 +61,12 @@ namespace SireMove
 
 using boost::tuple;
 
+using SireBase::PropertyBase;
+using SireBase::SharedPolyPointer;
+
 using SireMaths::RanGenerator;
 
-using SireMol::Molecule;
-using SireMol::Residue;
-using SireMol::NewAtom;
+using SireMol::PartialMolecule;
 using SireMol::MoleculeGroup;
 
 /** This is the base class of all Samplers. A Sampler is used
@@ -74,7 +74,7 @@ using SireMol::MoleculeGroup;
 
     @author Christopher Woods
 */
-class SIREMOVE_EXPORT SamplerBase : public QSharedData
+class SIREMOVE_EXPORT SamplerBase : public PropertyBase
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const SamplerBase&);
@@ -86,36 +86,29 @@ public:
 
     SamplerBase(const SamplerBase &other);
 
-    virtual ~SamplerBase();
+    ~SamplerBase();
 
     SamplerBase& operator=(const SamplerBase &other);
+
+    virtual SamplerBase* clone() const=0;
 
     static const char* typeName()
     {
         return "SireMove::SamplerBase";
     }
 
+    static SharedPolyPointer<SamplerBase> null_sampler();
+
     void setGenerator(const RanGenerator &generator);
     const RanGenerator& generator() const;
 
-    virtual const char* what() const=0;
-    virtual SamplerBase* clone() const=0;
+    virtual tuple<PartialMolecule,double> sample(const MoleculeGroup &group)=0;
 
-    virtual tuple<Molecule,double> randomMolecule(const MoleculeGroup &group)=0;
-    virtual tuple<Residue,double> randomResidue(const MoleculeGroup &group)=0;
-    virtual tuple<NewAtom,double> randomAtom(const MoleculeGroup &group)=0;
-
-    virtual double probability(const MoleculeGroup &group,
-                               const Molecule &molecule)=0;
-
-    virtual double probability(const MoleculeGroup &group,
-                               const Residue &residue)=0;
-
-    virtual double probability(const MoleculeGroup &group,
-                               const NewAtom &atom)=0;
+    virtual double probabilityOf(const PartialMolecule &molecule,
+                                 const MoleculeGroup &group)=0;
 
 protected:
-    RanGenerator& generator();
+    RanGenerator& _pvt_generator();
 
 private:
     /** The random number generator used by the sampler */
@@ -124,7 +117,7 @@ private:
 
 /** Internal function used to return a reference to the random
     number generator used by this sampler */
-inline RanGenerator& SamplerBase::generator()
+inline RanGenerator& SamplerBase::_pvt_generator()
 {
     return rangen;
 }
@@ -150,13 +143,10 @@ public:
 
     Sampler& operator=(const Sampler &other);
 
-    tuple<Molecule,double> randomMolecule(const MoleculeGroup &group);
-    tuple<Residue,double> randomResidue(const MoleculeGroup &group);
-    tuple<NewAtom,double> randomAtom(const MoleculeGroup &group);
+    tuple<PartialMolecule,double> sample(const MoleculeGroup &group);
 
-    double probability(const MoleculeGroup &group, const Molecule &molecule);
-    double probability(const MoleculeGroup &group, const Residue &residue);
-    double probability(const MoleculeGroup &group, const NewAtom &atom);
+    double probabilityOf(const PartialMolecule &molecule,
+                         const MoleculeGroup &group);
 
     void setGenerator(const RanGenerator &generator);
     const RanGenerator& generator() const;

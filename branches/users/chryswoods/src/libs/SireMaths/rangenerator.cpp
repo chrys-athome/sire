@@ -29,6 +29,8 @@
 #include <QMutex>
 #include <QVector>
 
+#include <QDebug>
+
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_array.hpp>
 
@@ -508,10 +510,11 @@ QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, RanGeneratorPvt &ranpv
     
         ds >> n;
         
-        throw SireError::program_bug( QObject::tr(
-            "The size of the Mersenne Twister state array has changed without "
-            "the version number changing - this is a bug! (%1 vs. %2)")
-                .arg(n).arg(MTRand::N), CODELOC );
+        if (n != MTRand::N)
+            throw SireError::program_bug( QObject::tr(
+                "The size of the Mersenne Twister state array has changed without "
+                "the version number changing - this is a bug! (%1 vs. %2)")
+                    .arg(n).arg(MTRand::N), CODELOC );
                 
         //this is a large object - full state is 624 quint32 (~2.5kB)
         typedef MTRand::uint32 MTUInt32;
@@ -528,7 +531,6 @@ QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, RanGeneratorPvt &ranpv
         
         QMutexLocker lkr( &(ranpvt.mutex) );
         ranpvt.mersenne_generator.load(array.get());
-        ranpvt.mutex.unlock();
     }
     else
         throw version_error(v, "1", r_ranpvt, CODELOC);
@@ -547,8 +549,8 @@ QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const RanGenerator &ra
 {
     writeHeader(ds, r_rangen, 1);
     
-    //SharedDataStream sds(ds) << rangen.d;
-    ds << *(rangen.d);
+    SharedDataStream sds(ds);
+    sds << *(rangen.d);
     
     return ds;
 }
@@ -563,8 +565,8 @@ QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, RanGenerator &rangen)
         if (not rangen.d.unique())
             rangen.d.reset( new RanGeneratorPvt() );
     
-        //SharedDataStream sds(ds) >> rangen.d;
-        ds >> *(rangen.d);
+        SharedDataStream sds(ds);
+        sds >> *(rangen.d);
     }
     else
         throw version_error(v, "1", r_rangen, CODELOC);
@@ -605,6 +607,20 @@ RanGenerator& RanGenerator::operator=(const RanGenerator &other)
 {
     d = other.d;
     return *this;
+}
+
+/** Comparison operator - two generators are equal if they use the 
+    same underlying generator */
+bool RanGenerator::operator==(const RanGenerator &other) const
+{
+    return d == other.d;
+}
+
+/** Comparison operator - two generators are equal if they use the 
+    same underlying generator */
+bool RanGenerator::operator!=(const RanGenerator &other) const
+{
+    return d != other.d;
 }
 
 /** See the generator with a new, random seed - this will detach

@@ -24,6 +24,7 @@ set ( SIREUNITTEST_SOURCES
       testmatch.cpp
       testperiodicbox.cpp
       testpropertyextractor.cpp
+      testsampler.cpp
       testsharedpolypointer.cpp
       testsirecas.cpp
       testunits.cpp
@@ -55,6 +56,7 @@ set_target_properties (SireUnitTest PROPERTIES
 # Link to other Sire libraries
 target_link_libraries (SireUnitTest
                        SireIO
+                       SireMove
                        SireMM
                        SireCAS
                        SireBase

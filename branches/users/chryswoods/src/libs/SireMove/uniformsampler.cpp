@@ -28,15 +28,10 @@
 
 #include "uniformsampler.h"
 
-#include "SireMol/molecule.h"
-#include "SireMol/residue.h"
-#include "SireMol/newatom.h"
+#include "SireMol/partialmolecule.h"
 #include "SireMol/moleculegroup.h"
 
 #include "SireMol/moleculeid.h"
-#include "SireMol/resid.h"
-#include "SireMol/atomid.h"
-#include "SireMol/idmolatom.h"
 
 #include "SireMol/errors.h"
 
@@ -65,7 +60,11 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, UniformSampler &sampler
 
     if (v == 1)
     {
-        ds >> static_cast<SamplerBase&>(sampler);
+        UniformSampler newsampler;
+        
+        ds >> static_cast<SamplerBase&>(newsampler);
+        
+        sampler = newsampler;
     }
     else
         throw version_error(v, "1", r_sampler, CODELOC);
@@ -74,17 +73,21 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, UniformSampler &sampler
 }
 
 /** Constructor - uses the global random number generator */
-UniformSampler::UniformSampler() : SamplerBase()
+UniformSampler::UniformSampler() 
+               : SamplerBase(), groupid(0), majver(0)
 {}
 
 /** Construct using a specified random number generator */
 UniformSampler::UniformSampler(const RanGenerator &generator)
-               : SamplerBase(generator)
+               : SamplerBase(generator),
+                 groupid(0), majver(0)
 {}
 
 /** Copy constructor */
 UniformSampler::UniformSampler(const UniformSampler &other)
-               : SamplerBase(other)
+               : SamplerBase(other),
+                 molids(other.molids),
+                 groupid(other.groupid), majver(other.groupid)
 {}
 
 /** Destructor */
@@ -95,19 +98,35 @@ UniformSampler::~UniformSampler()
 UniformSampler& UniformSampler::operator=(const UniformSampler &other)
 {
     SamplerBase::operator=(other);
+    
+    molids = other.molids;
+    groupid = other.groupid;
+    majver = other.majver;
 
     return *this;
 }
 
-/** Internal function used to return a random molecule
-    from a MoleculeGroup that is known not to be empty */
-tuple<Molecule,double>
-UniformSampler::_pvt_randomMolecule(const MoleculeGroup &group, uint nmols)
+/** Comparison operator */
+bool UniformSampler::_pvt_isEqual(const PropertyBase &other) const
 {
-    return Molecule();
-//    return tuple<Molecule,double>(
-//                      group.molecules().constData()[generator().randInt(nmols-1)],
-//                      1.0 / nmols);
+    BOOST_ASSERT( other.isA<UniformSampler>() );
+    
+    const UniformSampler &sampler = other.asA<UniformSampler>();
+    
+    return groupid == sampler.groupid and majver == sampler.majver;
+}
+
+/** Update the statistics regarding the current group... */
+void UniformSampler::updateFrom(const MoleculeGroup &group)
+{
+    if (groupid != group.ID() or majver != group.version().major())
+    {
+        //recreate the list of MoleculeIDs
+        molids = group.moleculeIDs().toList();
+        
+        groupid = group.ID();
+        majver = group.version().major();
+    }
 }
 
 /** Return a random molecule that is in the group 'group'. This
@@ -115,130 +134,47 @@ UniformSampler::_pvt_randomMolecule(const MoleculeGroup &group, uint nmols)
 
     \throw SireMol::missing_molecule
 */
-tuple<Molecule,double>
-UniformSampler::randomMolecule(const MoleculeGroup &group)
+tuple<PartialMolecule,double> UniformSampler::sample(const MoleculeGroup &group)
 {
-    uint nmols = group.count();
-
-    if (nmols == 0)
+    if (group.isEmpty())
         throw SireMol::missing_molecule( QObject::tr(
-              "Cannot select a random molecule from an empty MoleculeGroup!"),
-                  CODELOC );
-
-    return _pvt_randomMolecule(group, nmols);
-}
-
-/** Return a random residue that is in the group 'group'. This
-    throws an exception if there are no residues in the group
-
-    \throw SireMol::missing_residue
-*/
-tuple<Residue,double>
-UniformSampler::randomResidue(const MoleculeGroup &group)
-{
-    uint nmols = group.count();
-
-    if (nmols == 0)
-        throw SireMol::missing_residue( QObject::tr(
-            "Cannot select a random residue from an empty MoleculeGroup!"),
+            "The MoleculeGroup is empty, so we can't choose a molecule!"),
                 CODELOC );
-
-    //get a random molecule
-    tuple<Molecule,double> randmol = this->_pvt_randomMolecule(group, nmols);
-
-    //choose a random residue within that molecule
-    const Molecule &molecule = randmol.get<0>();
-
-    uint nres = molecule.nResidues();
-
-    //there should never be any empty molecules in
-    //the group!
-    BOOST_ASSERT(nres != 0);
-
-    return tuple<Residue,double>(
-                  molecule.residue( ResID(generator().randInt(nres-1)) ),
-                  randmol.get<1>() / nres );
-}
-
-/** Return a random atom that is in the group 'group'. This
-    throws an exception if there are no atoms in the group.
-
-    \throw SireMol::missing_atom
-*/
-tuple<NewAtom,double> UniformSampler::randomAtom(const MoleculeGroup &group)
-{
-    uint nmols = group.count();
-
-    if (nmols == 0)
-        throw SireMol::missing_atom( QObject::tr(
-            "Cannot select a random atom from an empty MoleculeGroup!"),
-                CODELOC );
-
-    //get a random molecule
-    tuple<Molecule,double> randmol = this->_pvt_randomMolecule(group, nmols);
-
-    //choose a random atom within that molecule
-    const Molecule &molecule = randmol.get<0>();
-
-    uint natms = molecule.nAtoms();
-
-    //there should never be any empty molecules in the group!
-    BOOST_ASSERT(natms != 0);
-
-    return tuple<NewAtom,double>(
-                NewAtom( AtomID(generator().randInt(natms-1)), molecule ),
-                randmol.get<1>() / natms );
+    
+    //update the statistics to mirror 'group'
+    this->updateFrom(group);
+    
+    int nmols = molids.count();
+  
+    BOOST_ASSERT(nmols != 0);
+  
+    if (nmols == 1)
+        return tuple<PartialMolecule,double>(group.molecule(molids.at(0)),
+                                             1.0);
+    else
+    {
+        //choose a random molecule ID...
+        quint32 i = _pvt_generator().randInt(molids.count()-1);
+    
+        //return the matching molecule
+        return tuple<PartialMolecule,double>(group.molecule( molids.at(i) ),
+                                             1.0 / molids.count());
+    }
 }
 
 /** Return the probability of selecting the molecule 'molecule' from
-    the group 'group'. A probability of zero is returned if the
-    molecule is not in the group!
+    the group 'group'. An exception will be thrown if it in not
+    possible to select this molecule from the passed group.
+    
+    \throw SireMol::missing_molecule
 */
-double UniformSampler::probability(const MoleculeGroup &group,
-                                   const Molecule &molecule)
+double UniformSampler::probabilityOf(const PartialMolecule &molecule,
+                                     const MoleculeGroup &group)
 {
-    if (not group.contains(molecule))
+    if (not group.refersTo(molecule.ID()))
         return 0;
+    
+    this->updateFrom(group);
 
-    return 1.0 / group.count();
-}
-
-/** Return the probability of selecting the residue 'residue' from
-    the group 'group'. A probability of zero is returned if the
-    residue is not in the group.
-*/
-double UniformSampler::probability(const MoleculeGroup &group,
-                                   const Residue &residue)
-{
-    Molecule molecule = residue.molecule();
-
-    if (not group.contains(molecule))
-        return 0;
-    else
-    {
-        //this is safe as the group cannot contain empty molecules
-        BOOST_ASSERT( molecule.nResidues() != 0 );
-
-        return 1.0 / (group.count() * molecule.nResidues());
-    }
-}
-
-/** Return the probability of selecting the atom 'atom' from
-    the group 'group'. A probability of zero is returned if
-    the atom is not in the group.
-*/
-double UniformSampler::probability(const MoleculeGroup &group,
-                                   const NewAtom &atom)
-{
-    Molecule molecule = atom.molecule();
-
-    if (not group.contains(molecule))
-        return 0;
-    else
-    {
-        //this is safe as the group cannot contain empty molecules
-        BOOST_ASSERT( molecule.nAtoms() != 0 );
-
-        return 1.0 / (group.count() * molecule.nAtoms());
-    }
+    return 1.0 / molids.count();
 }

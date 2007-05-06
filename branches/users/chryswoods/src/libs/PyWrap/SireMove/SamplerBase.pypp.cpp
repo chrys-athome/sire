@@ -19,34 +19,21 @@ const char* pvt_get_name(const SireMove::SamplerBase&){ return "SireMove::Sample
 
 void register_SamplerBase_class(){
 
-    bp::class_< SireMove::SamplerBase, boost::noncopyable >( "SamplerBase", bp::no_init )    
+    bp::class_< SireMove::SamplerBase, bp::bases< SireBase::PropertyBase >, boost::noncopyable >( "SamplerBase", bp::no_init )    
         .def( 
             "generator"
             , (::SireMaths::RanGenerator const & ( ::SireMove::SamplerBase::* )(  ) const)( &::SireMove::SamplerBase::generator )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
-            "probability"
-            , (double ( ::SireMove::SamplerBase::* )( ::SireMol::MoleculeGroup const &,::SireMol::Molecule const & ) )( &::SireMove::SamplerBase::probability )
-            , ( bp::arg("group"), bp::arg("molecule") ) )    
+            "null_sampler"
+            , (::SireBase::SharedPolyPointer<SireMove::SamplerBase> (*)(  ))( &::SireMove::SamplerBase::null_sampler ) )    
         .def( 
-            "probability"
-            , (double ( ::SireMove::SamplerBase::* )( ::SireMol::MoleculeGroup const &,::SireMol::Residue const & ) )( &::SireMove::SamplerBase::probability )
-            , ( bp::arg("group"), bp::arg("residue") ) )    
+            "probabilityOf"
+            , (double ( ::SireMove::SamplerBase::* )( ::SireMol::PartialMolecule const &,::SireMol::MoleculeGroup const & ) )( &::SireMove::SamplerBase::probabilityOf )
+            , ( bp::arg("molecule"), bp::arg("group") ) )    
         .def( 
-            "probability"
-            , (double ( ::SireMove::SamplerBase::* )( ::SireMol::MoleculeGroup const &,::SireMol::NewAtom const & ) )( &::SireMove::SamplerBase::probability )
-            , ( bp::arg("group"), bp::arg("atom") ) )    
-        .def( 
-            "randomAtom"
-            , (::boost::tuples::tuple<SireMol::NewAtom,double,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type> ( ::SireMove::SamplerBase::* )( ::SireMol::MoleculeGroup const & ) )( &::SireMove::SamplerBase::randomAtom )
-            , ( bp::arg("group") ) )    
-        .def( 
-            "randomMolecule"
-            , (::boost::tuples::tuple<SireMol::Molecule,double,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type> ( ::SireMove::SamplerBase::* )( ::SireMol::MoleculeGroup const & ) )( &::SireMove::SamplerBase::randomMolecule )
-            , ( bp::arg("group") ) )    
-        .def( 
-            "randomResidue"
-            , (::boost::tuples::tuple<SireMol::Residue,double,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type> ( ::SireMove::SamplerBase::* )( ::SireMol::MoleculeGroup const & ) )( &::SireMove::SamplerBase::randomResidue )
+            "sample"
+            , (::boost::tuples::tuple<SireMol::PartialMolecule,double,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type> ( ::SireMove::SamplerBase::* )( ::SireMol::MoleculeGroup const & ) )( &::SireMove::SamplerBase::sample )
             , ( bp::arg("group") ) )    
         .def( 
             "setGenerator"
@@ -55,9 +42,7 @@ void register_SamplerBase_class(){
         .def( 
             "typeName"
             , (char const * (*)(  ))( &::SireMove::SamplerBase::typeName ) )    
-        .def( 
-            "what"
-            , (char const * ( ::SireMove::SamplerBase::* )(  ) const)( &::SireMove::SamplerBase::what ) )    
+        .staticmethod( "null_sampler" )    
         .staticmethod( "typeName" )    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMove::SamplerBase >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    

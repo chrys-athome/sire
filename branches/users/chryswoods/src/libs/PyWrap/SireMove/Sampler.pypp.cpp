@@ -29,28 +29,12 @@ void register_Sampler_class(){
             , (::SireMaths::RanGenerator const & ( ::SireMove::Sampler::* )(  ) const)( &::SireMove::Sampler::generator )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
-            "probability"
-            , (double ( ::SireMove::Sampler::* )( ::SireMol::MoleculeGroup const &,::SireMol::Molecule const & ) )( &::SireMove::Sampler::probability )
-            , ( bp::arg("group"), bp::arg("molecule") ) )    
+            "probabilityOf"
+            , (double ( ::SireMove::Sampler::* )( ::SireMol::PartialMolecule const &,::SireMol::MoleculeGroup const & ) )( &::SireMove::Sampler::probabilityOf )
+            , ( bp::arg("molecule"), bp::arg("group") ) )    
         .def( 
-            "probability"
-            , (double ( ::SireMove::Sampler::* )( ::SireMol::MoleculeGroup const &,::SireMol::Residue const & ) )( &::SireMove::Sampler::probability )
-            , ( bp::arg("group"), bp::arg("residue") ) )    
-        .def( 
-            "probability"
-            , (double ( ::SireMove::Sampler::* )( ::SireMol::MoleculeGroup const &,::SireMol::NewAtom const & ) )( &::SireMove::Sampler::probability )
-            , ( bp::arg("group"), bp::arg("atom") ) )    
-        .def( 
-            "randomAtom"
-            , (::boost::tuples::tuple<SireMol::NewAtom,double,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type> ( ::SireMove::Sampler::* )( ::SireMol::MoleculeGroup const & ) )( &::SireMove::Sampler::randomAtom )
-            , ( bp::arg("group") ) )    
-        .def( 
-            "randomMolecule"
-            , (::boost::tuples::tuple<SireMol::Molecule,double,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type> ( ::SireMove::Sampler::* )( ::SireMol::MoleculeGroup const & ) )( &::SireMove::Sampler::randomMolecule )
-            , ( bp::arg("group") ) )    
-        .def( 
-            "randomResidue"
-            , (::boost::tuples::tuple<SireMol::Residue,double,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type> ( ::SireMove::Sampler::* )( ::SireMol::MoleculeGroup const & ) )( &::SireMove::Sampler::randomResidue )
+            "sample"
+            , (::boost::tuples::tuple<SireMol::PartialMolecule,double,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type> ( ::SireMove::Sampler::* )( ::SireMol::MoleculeGroup const & ) )( &::SireMove::Sampler::sample )
             , ( bp::arg("group") ) )    
         .def( 
             "setGenerator"

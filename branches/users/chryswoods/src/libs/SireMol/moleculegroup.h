@@ -114,6 +114,7 @@ public:
 
     QSet<MoleculeID> moleculeIDs() const;
 
+    bool isEmpty() const;
     int count() const;
 
     bool add(const PartialMolecule &molecule);

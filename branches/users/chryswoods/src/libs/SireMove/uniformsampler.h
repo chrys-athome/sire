@@ -31,6 +31,9 @@
 
 #include "sampler.h"
 
+#include "SireMol/moleculeid.h"
+#include "SireMol/moleculegroupid.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMove
@@ -43,6 +46,9 @@ QDataStream& operator>>(QDataStream&, SireMove::UniformSampler&);
 
 namespace SireMove
 {
+
+using SireMol::MoleculeID;
+using SireMol::MoleculeGroupID;
 
 /** This class is used to pick contained Molecules, Residues
     or Atoms at random (uniformly distributed).
@@ -80,17 +86,27 @@ public:
         return new UniformSampler(*this);
     }
 
-    tuple<Molecule,double> randomMolecule(const MoleculeGroup &group);
-    tuple<Residue,double> randomResidue(const MoleculeGroup &group);
-    tuple<NewAtom,double> randomAtom(const MoleculeGroup &group);
+    tuple<PartialMolecule,double> sample(const MoleculeGroup &group);
 
-    double probability(const MoleculeGroup &group, const Molecule &molecule);
-    double probability(const MoleculeGroup &group, const Residue &residue);
-    double probability(const MoleculeGroup &group, const NewAtom &atom);
+    double probabilityOf(const PartialMolecule &molecule,
+                         const MoleculeGroup &group);
+
+protected:
+    bool _pvt_isEqual(const PropertyBase &other) const;
 
 private:
-    tuple<Molecule,double> _pvt_randomMolecule(const MoleculeGroup &group,
-                                               uint nmols);
+    void updateFrom(const MoleculeGroup &group);
+
+    /** List of IDs of all of the molecules that could be selected */
+    QList<MoleculeID> molids;
+    
+    /** The ID of the MoleculeGroup from which the last molecule
+        was chosen */
+    MoleculeGroupID groupid;
+    
+    /** The major version number of the group from which the last molecule
+        was chosen */
+    quint32 majver;
 };
 
 }

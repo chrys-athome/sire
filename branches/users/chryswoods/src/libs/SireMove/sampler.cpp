@@ -29,9 +29,7 @@
 #include "sampler.h"
 #include "uniformsampler.h"
 
-#include "SireMol/molecule.h"
-#include "SireMol/residue.h"
-#include "SireMol/newatom.h"
+#include "SireMol/partialmolecule.h"
 #include "SireMol/moleculegroup.h"
 
 #include "SireStream/datastream.h"
@@ -49,36 +47,48 @@ static const RegisterMetaType<SamplerBase> r_samplerbase(MAGIC_ONLY,
                                                          "SireMove::SamplerBase");
 
 /** Serialise to a binary datastream */
-QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const SamplerBase&)
+QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, 
+                                        const SamplerBase &samplerbase)
 {
-    writeHeader(ds, r_samplerbase, 0);
+    writeHeader(ds, r_samplerbase, 1);
+
+    SharedDataStream sds(ds);
+    sds << samplerbase.rangen
+        << static_cast<const PropertyBase&>(samplerbase);
 
     return ds;
 }
 
 /** Deserialise from a binary datastream */
-QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, SamplerBase&)
+QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, 
+                                        SamplerBase &samplerbase)
 {
     VersionID v = readHeader(ds, r_samplerbase);
 
-    if (v != 0)
-        throw version_error(v, "0", r_samplerbase, CODELOC);
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        sds >> samplerbase.rangen
+            >> static_cast<PropertyBase&>(samplerbase);
+    }
+    else
+        throw version_error(v, "1", r_samplerbase, CODELOC);
 
     return ds;
 }
 
 /** Constructor */
-SamplerBase::SamplerBase() : QSharedData()
+SamplerBase::SamplerBase() : PropertyBase()
 {}
 
 /** Construct with a specified random number generator */
 SamplerBase::SamplerBase(const RanGenerator &generator)
-            : QSharedData(), rangen(generator)
+            : PropertyBase(), rangen(generator)
 {}
 
 /** Copy constructor */
 SamplerBase::SamplerBase(const SamplerBase &other) 
-            : QSharedData(), rangen(other.rangen)
+            : PropertyBase(other), rangen(other.rangen)
 {}
 
 /** Destructor */
@@ -88,6 +98,8 @@ SamplerBase::~SamplerBase()
 /** Copy assignment */
 SamplerBase& SamplerBase::operator=(const SamplerBase &other)
 {
+    PropertyBase::operator=(other);
+
     rangen = other.rangen;
 
     return *this;
@@ -104,6 +116,17 @@ void SamplerBase::setGenerator(const RanGenerator &generator)
 const RanGenerator& SamplerBase::generator() const
 {
     return rangen;
+}
+
+static SharedPolyPointer<SamplerBase> shared_null;
+
+/** Return the global null sampler */
+SharedPolyPointer<SamplerBase> SamplerBase::null_sampler()
+{
+    if (shared_null.constData() == 0)
+        shared_null = new UniformSampler();
+        
+    return shared_null;
 }
 
 //////////
@@ -137,10 +160,8 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, Sampler &sampler)
     return ds;
 }
 
-static SharedPolyPointer<SamplerBase> shared_null( new UniformSampler() );
-
 /** Null constructor */
-Sampler::Sampler() : d(shared_null)
+Sampler::Sampler() : d(SamplerBase::null_sampler())
 {}
 
 /** Construct from the passed sampler */
@@ -166,47 +187,17 @@ Sampler& Sampler::operator=(const Sampler &other)
 
 /** Return a random molecule from the group, together with the probability
     that this molecule had of being chosen. */
-tuple<Molecule,double> Sampler::randomMolecule(const MoleculeGroup &group)
+tuple<PartialMolecule,double> Sampler::sample(const MoleculeGroup &group)
 {
-    return d->randomMolecule(group);
-}
-
-/** Return a random residue from the group, together with the probability
-    that this residue had of being chosen. */
-tuple<Residue,double> Sampler::randomResidue(const MoleculeGroup &group)
-{
-    return d->randomResidue(group);
-}
-
-/** Return a random atom from the group, together with the probability
-    that this atom had of being chosen. */
-tuple<NewAtom,double> Sampler::randomAtom(const MoleculeGroup &group)
-{
-    return d->randomAtom(group);
+    return d->sample(group);
 }
 
 /** Return the probability that the molecule 'molecule' has
     of being chosen in the System 'system' */
-double Sampler::probability(const MoleculeGroup &group,
-                            const Molecule &molecule)
+double Sampler::probabilityOf(const PartialMolecule &molecule,
+                              const MoleculeGroup &group)
 {
-    return d->probability(group, molecule);
-}
-
-/** Return the probability that the residue 'residue' has
-    of being chosen in the System 'system' */
-double Sampler::probability(const MoleculeGroup &group,
-                            const Residue &residue)
-{
-    return d->probability(group, residue);
-}
-
-/** Return the probability that the atom 'atom' has
-    of being chosen in the System 'system' */
-double Sampler::probability(const MoleculeGroup &group,
-                            const NewAtom &atom)
-{
-    return d->probability(group, atom);
+    return d->probabilityOf(molecule, group);
 }
 
 /** Set the random number generator to be used by this sampler */
