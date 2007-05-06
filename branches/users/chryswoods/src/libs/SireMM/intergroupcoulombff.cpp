@@ -818,9 +818,15 @@ bool InterGroupCoulombFF::change(const PartialMolecule &molecule)
 {
     MoleculeID molid = molecule.ID();
 
-    ChangedCoulombMolecule new_molecule = this->changeRecord(molid).change(molecule);
-
-    if (this->applyChange(molid, new_molecule))
+    ChangedCoulombMolecule old_molecule = this->changeRecord(molid);
+    ChangedCoulombMolecule new_molecule = old_molecule.change(molecule);
+    
+    if (new_molecule.nothingChanged() and old_molecule.nothingChanged())
+    {
+        //there is no change at all!
+        return isDirty();
+    }
+    else if (this->applyChange(molid, new_molecule))
     {
         this->incrementMinorVersion();
         return true;

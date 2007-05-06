@@ -821,9 +821,15 @@ bool InterGroupLJFF::change(const PartialMolecule &molecule)
 {
     MoleculeID molid = molecule.ID();
 
-    ChangedLJMolecule new_molecule = this->changeRecord(molid).change(molecule);
-
-    if (this->applyChange(molid, new_molecule))
+    ChangedLJMolecule old_molecule = this->changeRecord(molid);
+    ChangedLJMolecule new_molecule = old_molecule.change(molecule);
+    
+    if (new_molecule.nothingChanged() and old_molecule.nothingChanged())
+    {
+        //there is no change at all!
+        return isDirty();
+    }
+    else if (this->applyChange(molid, new_molecule))
     {
         this->incrementMinorVersion();
         return true;

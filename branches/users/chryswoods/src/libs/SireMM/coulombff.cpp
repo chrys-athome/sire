@@ -848,7 +848,7 @@ bool CoulombFF::ChangedCoulombMolecule::isEmpty() const
 /** Return whether nothing has changed - this will be when oldmol == newmol */
 bool CoulombFF::ChangedCoulombMolecule::nothingChanged() const
 {
-    return (oldmol.isEmpty() and newmol.isEmpty()) or oldmol == newmol;
+    return oldmol == newmol;
 }
 
 /** Return whether the entire molecule has changed */
