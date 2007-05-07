@@ -133,6 +133,12 @@ private:
     /** The sum of all of the molecule probabilities */
     float sum_of_probs;
     
+    /** The highest probability value... */
+    float max_prob;
+    
+    /** The k-value used in the probability calculation */
+    double kval;
+    
     /** The molecule from which the probability is calculated
          - the geometric center of the molecule is used - the 
            closer a molecule is to the center, the higher

@@ -95,7 +95,7 @@ float PrefSampler::calculateProbability(const PartialMolecule &molecule) const
 
     return 1.0 / (Vector::distance2(center_point, 
                                     molecule.extract().geometricCenter())
-                  + k);
+                  + kval);
 }
 
 /** Perform a complete update of all of the statistics */
@@ -113,6 +113,7 @@ void PrefSampler::completeUpdate(const PartialMolecule &new_center,
     }
     
     sum_of_probs = 0;
+    max_prob = 0;
     
     BOOST_ASSERT( molprobs.count() == group.count() );
     
@@ -132,6 +133,7 @@ void PrefSampler::completeUpdate(const PartialMolecule &new_center,
         molprob.probability = calculateProbability(*it); 
     
         sum_of_probs += molprob.probability;
+        max_prob = qMax(max_prob, molprob.probability);
     }
 }
 
@@ -144,6 +146,8 @@ void PrefSampler::partialUpdate(const MoleculeGroup &group)
     MolProb *molprobs_array = molprobs.data();
     
     //annoying linear search over all surrounding molecules...
+    max_prob = 0;
+    
     for (int i=0; i<nmols; ++i)
     {
         MolProb &molprob = molprobs_array[i];
@@ -161,6 +165,9 @@ void PrefSampler::partialUpdate(const MoleculeGroup &group)
             
             sum_of_probs += molprob.probability;
         }
+        
+        //need to find the largest probability
+        max_prob = qMax(max_prob, molprob.probability);
     }
 }
 
@@ -229,6 +236,13 @@ tuple<PartialMolecule,double> PrefSampler::sample(const QuerySystem &system)
         return tuple<PartialMolecule,double>(group.molecule(molprobs.at(0).ID),
                                              1.0);
     
+    //use the von Neumann rejection method to choose a random molecule 
+    //using the owicki weights
+    // (weights = 1 / (dist^2 + k), rejection method - choose random
+    //  molecule, then choose random number from 0 to max_prob. If 
+    //  probability of the molecule <= the random number, then accept
+    //  this molecule, else go back to the beginning and try again...
+    
     //pick a random molecule...
     while (true)
     {
@@ -237,17 +251,27 @@ tuple<PartialMolecule,double> PrefSampler::sample(const QuerySystem &system)
         
         const MolProb &molprob = molprobs.constData()[i];
         
-        //compare the normalised probability against a random number from 0 to 1
-        float normalised_prob = molprob.probability / sum_of_probs;
-        float prob = normalised_prob * molprobs.count();
-        
-        if (prob >= 1 or prob > _pvt_generator().rand())
+        //compare the normalised probability against a random number from 0 to max_prob
+        if (_pvt_generator().rand(max_prob) <= molprob.probability)
             return tuple<PartialMolecule,double>(group.molecule(molprob.ID),
-                                                 normalised_prob);
+                                                 molprob.probability / sum_of_probs);
     }
 }
 
 double PrefSampler::probabilityOf(const PartialMolecule &molecule,
-                     const QuerySystem &system);
+                                  const QuerySystem &system)
+{
+    const MoleculeGroup &group = system.groups().group(groupid);
+    
+    if (not group.refersTo(molecule.ID()))
+        throw SireMol::missing_molecule( QObject::tr(
+            "The molecule \"%1\" (%2) is not in the group with ID == %3.")
+                .arg(molecule.name()).arg(molecule.ID())
+                .arg(groupid), CODELOC );
+    
+    this->updateFrom(system);
+    
+    return this->calculateProbability(molecule) / sum_of_probs;
+}
 
 bool PrefSampler::_pvt_isEqual(const PropertyBase &other) const;
