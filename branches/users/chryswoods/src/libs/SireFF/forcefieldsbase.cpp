@@ -751,7 +751,10 @@ double ForceFieldsBase::energy(const Expression &expression)
 */
 double ForceFieldsBase::energy(const Symbol &symbol)
 {
-    if (symbol.isA<Function>())
+    if (symbol.ID() == 0)
+        //return the total energy
+        return energy();
+    else if (symbol.isA<Function>())
         return this->energy( symbol.asA<Function>() );
     else
     {
@@ -768,7 +771,11 @@ double ForceFieldsBase::energy(const Symbol &symbol)
 */
 double ForceFieldsBase::energy(SymbolID symid)
 {
-    return this->energy( Symbol(symid) );
+    if (symid == 0)
+        //return the total energy
+        return energy();
+    else
+        return this->energy( Symbol(symid) );
 }
 
 /** Return the total energy of the system, as calculated from the
@@ -2323,7 +2330,7 @@ void ForceFieldsBase::add(const FFExpression &ff_equation)
     //its dependencies
     ExpressionInfo exprinfo(ff_equation, ff_equations);
 
-    BOOST_ASSERT( exprinfo.expression().function().ID() 
+    BOOST_ASSERT( exprinfo.expression().function().ID()
                                       == ff_equation.function().ID() );
 
     //add this to the list of expressions

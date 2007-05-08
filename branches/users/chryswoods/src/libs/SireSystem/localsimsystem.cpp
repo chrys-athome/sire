@@ -44,12 +44,12 @@ LocalSimSystem::~LocalSimSystem()
 {}
 
 /** Roll this simulation back to a previous checkpoint */
-void LocalSimSystem::rollback(const CheckPoint &checkpoint)
+void LocalSimSystem::rollBack(const CheckPoint &checkpoint)
 {
     local_sysdata = checkpoint.info();
     local_ffields = checkpoint.forceFields();
     local_monitors = checkpoint.monitors();
-    
+
     SimSystem::setSystem(local_sysdata,
                          local_ffields,
                          local_monitors);

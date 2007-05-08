@@ -68,45 +68,52 @@ friend QDataStream& ::operator<<(QDataStream&, const MonteCarlo&);
 friend QDataStream& ::operator>>(QDataStream&, MonteCarlo&);
 
 public:
-    MonteCarlo();
-    MonteCarlo(const RanGenerator &generator);
-
+    MonteCarlo(const RanGenerator &generator = RanGenerator());
     MonteCarlo(const MonteCarlo &other);
 
     ~MonteCarlo();
 
     MonteCarlo& operator=(const MonteCarlo &other);
 
+    quint32 nAttempted() const;
+    quint32 nAccepted() const;
+    quint32 nRejected() const;
+
+    double acceptanceRatio() const;
+
+    virtual void clearMoveStatistics();
+
     void setGenerator(const RanGenerator &generator);
     const RanGenerator& generator() const;
 
-    class SIREMOVE_EXPORT CheckPoint
-    {
-    public:
-        CheckPoint();
-
-        CheckPoint(const Simulation &simulation);
-
-        CheckPoint(const CheckPoint &other);
-
-        ~CheckPoint();
-    };
+    void setTemperature(double temperature);
+    double temperature() const;
 
 protected:
-    RanGenerator& generator();
+    bool test(double new_energy,
+              double old_energy,
+              double new_bias,
+              double old_bias);
+
+    RanGenerator& _pvt_generator()
+    {
+        return _generator;
+    }
 
 private:
-    /** The random number generator used to generate
-        and test this Monte Carlo moves */
-    RanGenerator rangen;
-};
+    /** The random number generator used during the moves
+        and in the test */
+    RanGenerator _generator;
 
-/** Internal function used to return the random number 
-    generator used by this move */
-inline RanGenerator& MonteCarlo::generator()
-{
-    return rangen;
-}
+    /** beta (== 1 / kT) */
+    double beta;
+
+    /** The number of times this move has been attempted */
+    quint32 nattempt;
+
+    /** The number of times this move has been rejected */
+    quint32 nreject;
+};
 
 }
 

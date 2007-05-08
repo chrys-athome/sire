@@ -132,6 +132,25 @@ double QuerySystem::energy(const Function &component)
 
     \throw SireFF::missing_component
 */
+double QuerySystem::energy(const Symbol &component)
+{
+    return ffields.energy(component);
+}
+
+/** Return the current total energy of the component
+    with ID == symid
+
+    \throw SireFF::missing_component
+*/
+double QuerySystem::energy(SymbolID symid)
+{
+    return ffields.energy(symid);
+}
+
+/** Return the current total energy of the component 'component'
+
+    \throw SireFF::missing_component
+*/
 double QuerySystem::energy(const FFComponent &component)
 {
     return ffields.energy(component);

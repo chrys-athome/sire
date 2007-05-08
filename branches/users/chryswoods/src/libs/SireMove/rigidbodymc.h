@@ -34,7 +34,10 @@
 #include "montecarlo.h"
 #include "sampler.h"
 
+#include "SireCAS/symbol.h"
 #include "SireMaths/angle.h"
+
+#include "SireSystem/checkpoint.h"
 
 SIRE_BEGIN_HEADER
 
@@ -70,6 +73,8 @@ using SireMol::MoleculeID;
 
 using SireMol::PartialMolecule;
 
+using SireCAS::Symbol;
+
 /** This class implements a rigid body Monte Carlo move that
     may be applied to a random molecule within a MoleculeGroup
 
@@ -82,81 +87,19 @@ friend QDataStream& ::operator<<(QDataStream&, const RigidBodyMC&);
 friend QDataStream& ::operator>>(QDataStream&, RigidBodyMC&);
 
 public:
-    RigidBodyMC();
+    RigidBodyMC(const RanGenerator &generator = RanGenerator());
 
     RigidBodyMC(const Sampler &sampler,
+                const RanGenerator &generator = RanGenerator());
+
+    RigidBodyMC(const Sampler &sampler,
+                double max_translation,
+                const SireMaths::Angle &max_rotation,
                 const RanGenerator &generator = RanGenerator());
 
     RigidBodyMC(const RigidBodyMC &other);
 
     ~RigidBodyMC();
-
-    /** Small class used to hold the maximum amounts by
-        which the molecule can be translated and rotated */
-    class Delta
-    {
-    public:
-        Delta(double adel=0, SireMaths::Angle rdel=0);
-        ~Delta();
-
-        double maximumTranslation() const
-        {
-            return adel;
-        }
-
-        SireMaths::Angle maximumRotation() const
-        {
-            return rdel;
-        }
-
-    private:
-        /** Maximum translation (in A) */
-        double adel;
-        SireMaths::Angle rdel;
-    };
-
-    /** Small class used to hold a record of the number
-        of moves on a molecule, and whether or not they
-        were successful */
-    class MoveRecord
-    {
-    public:
-        MoveRecord();
-        ~MoveRecord();
-
-        void incrementAccept();
-        void incrementReject();
-
-        quint32 nAttempted();
-
-        quint32 nAccepted();
-        quint32 nRejected();
-
-    private:
-        /** The total number of accepted moves */
-        quint32 naccept;
-        /** The total number of rejected moves */
-        quint32 nreject;
-    };
-
-    /** Small class that holds everything necessary to checkpoint
-        the MC move */
-    class CheckPoint : public MonteCarlo::CheckPoint
-    {
-    public:
-        CheckPoint();
-
-        CheckPoint(const SimSystem &system,
-                   const Sampler &sampler);
-
-        CheckPoint(const CheckPoint &other);
-
-        ~CheckPoint();
-
-    private:
-        /** We need to checkpoint our sampler */
-        Sampler smplr;
-    };
 
     static const char* typeName()
     {
@@ -173,40 +116,60 @@ public:
         return new RigidBodyMC(*this);
     }
 
-    void initialise(const SimSystem &system);
+    void setMaximumTranslation(double max_translation);
+    void setMaximumRotation(const SireMaths::Angle &max_rotation);
+
+    void setComponent(const Symbol &energy);
 
     void move(SimSystem &system);
 
-    quint32 nAttempted() const;
-    quint32 nAccepted() const;
-    quint32 nRejected() const;
-
-    double acceptanceRatio() const;
-
-    quint32 nAttempted(const PartialMolecule &molecule) const;
-    quint32 nAccepted(const PartialMolecule &molecule) const;
-    quint32 nRejected(const PartialMolecule &molecule) const;
-
-    double acceptanceRatio(const PartialMolecule &molecule) const;
-
 protected:
-    RigidBodyMC::Delta maximumDelta(const PartialMolecule &mol) const;
+    class CheckPoint
+    {
+    public:
+        CheckPoint();
 
-    void incrementAccept(const PartialMolecule &molecule);
-    void incrementReject(const PartialMolecule &molecule);
+        CheckPoint(const SireSystem::CheckPoint &checkpoint,
+                   const Sampler &sampler);
+
+        CheckPoint(const CheckPoint &other);
+
+        ~CheckPoint();
+
+        const SireMove::CheckPoint& system() const
+        {
+            return sys_ckpt;
+        }
+
+        const Sampler& sampler() const
+        {
+            return smplr_ckpt;
+        }
+
+    private:
+        /** Checkpoint of the system */
+        SireSystem::CheckPoint sys_ckpt;
+
+        /** Checkpoint of the sampler */
+        Sampler smplr_ckpt;
+    };
+
+    RigidBodyMC::CheckPoint checkPoint(QuerySystem &system) const;
+    void rollBack(const RigidBodyMC::CheckPoint &checkpoint);
 
 private:
-    /** Hash containing the maximum amount by which
-        each molecule can be translated or rotated */
-    QHash<MoleculeID, RigidBodyMC::Delta> maxdelta;
-
-    /** Hash mapping the number of attempted and accepted moves
-        for each molecule */
-    QHash<MoleculeID, RigidBodyMC::MoveRecord> moverecord;
-
     /** The sampler used to select random molecules from the
         MoleculeGroup */
-    Sampler smplr;
+    Sampler _sampler;
+
+    /** The energy component evaluated during the move */
+    Symbol nrg_component;
+
+    /** The maximum translation */
+    double adel;
+
+    /** The maximum rotation */
+    SireMaths::Angle rdel;
 };
 
 }

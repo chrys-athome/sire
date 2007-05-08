@@ -34,37 +34,18 @@ using namespace SireMove;
 using namespace SireSystem;
 using namespace SireStream;
 
-//////////
-////////// Implementation of MonteCarlo::CheckPoint
-//////////
-
-/** Null constructor */
-MonteCarlo::CheckPoint::CheckPoint()
-{}
-
-/** Construct a CheckPoint for the Simulation 'simulation' */
-MonteCarlo::CheckPoint::CheckPoint(const Simulation &simulation)
-{}
-
-/** Copy constructor */
-MonteCarlo::CheckPoint::CheckPoint(const MonteCarlo::CheckPoint &other)
-{}
-
-/** Destructor */
-MonteCarlo::CheckPoint::~CheckPoint()
-{}
-
-//////////
-////////// Implementation of MonteCarlo
-//////////
-
 static const RegisterMetaType<MonteCarlo> r_mc(MAGIC_ONLY, "SireMove::MonteCarlo");
 
 /** Serialise to a binary data stream */
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const MonteCarlo &mc)
 {
-    writeHeader(ds, r_mc, 1)
-          << mc.rangen << static_cast<const MoveBase&>(mc);
+    writeHeader(ds, r_mc, 1);
+
+    SharedDataStream sds(ds);
+
+    sds << mc._generator << mc.beta
+        << mc.naccept << mc.nreject
+        << static_cast<const MoveBase&>(mc);
 
     return ds;
 }
@@ -76,7 +57,9 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, MonteCarlo &mc)
 
     if (v == 1)
     {
-        ds >> mc.rangen >> static_cast<MoveBase&>(mc);
+        ds >> mc._generator >> mc.beta
+           >> mc.naccept >> mc.nreject
+           >> static_cast<MoveBase&>(mc);
     }
     else
         throw version_error(v, "1", r_mc, CODELOC);
@@ -84,18 +67,19 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, MonteCarlo &mc)
     return ds;
 }
 
-/** Construct using the global random number generator */
-MonteCarlo::MonteCarlo() : MoveBase()
-{}
-
 /** Construct using the supplied random number generator */
 MonteCarlo::MonteCarlo(const RanGenerator &generator)
-           : MoveBase(), rangen(generator)
-{}
+           : MoveBase(), _generator(generator),
+             naccept(0), nreject(0)
+{
+    setTemperature( 298.15 * kelvin );
+}
 
 /** Copy constructor */
 MonteCarlo::MonteCarlo(const MonteCarlo &other)
-           : MoveBase(other), rangen(other.rangen)
+           : MoveBase(other), _generator(other._generator),
+             beta(other.beta),
+             naccept(other.naccept), nreject(other.nreject)
 {}
 
 /** Destructor */
@@ -105,7 +89,11 @@ MonteCarlo::~MonteCarlo()
 /** Copy assignment */
 MonteCarlo& MonteCarlo::operator=(const MonteCarlo &other)
 {
-    rangen = other.rangen;
+    _generator = other._generator;
+    beta = other.beta;
+    naccept = other.naccept;
+    nreject = other.nreject;
+
     MoveBase::operator=(other);
 
     return *this;
@@ -114,11 +102,62 @@ MonteCarlo& MonteCarlo::operator=(const MonteCarlo &other)
 /** Set the random number generator to use for these moves */
 void MonteCarlo::setGenerator(const RanGenerator &generator)
 {
-    rangen = generator;
+    _generator = generator;
 }
 
 /** Return the random number generator used for these moves */
 const RanGenerator& MonteCarlo::generator() const
 {
-    return rangen;
+    return _generator;
+}
+
+/** Return the number of attempted moves */
+quint32 MonteCarlo::nAttempted() const
+{
+    return naccept + nreject;
+}
+
+/** Return the number of accepted moves */
+quint32 MonteCarlo::nAccepted() const
+{
+    return naccept;
+}
+
+/** Return the number of rejected moves */
+quint32 MonteCarlo::nRejected() const
+{
+    return nreject;
+}
+
+/** Return the acceptance ratio (ratio of
+    accepted moves to attempted moves) */
+double MonteCarlo::acceptanceRatio() const
+{
+    return double(nAccepted()) / double(nAttempted());
+}
+
+/** Zero the move statistics */
+void MonteCarlo::clearMoveStatistics()
+{
+    naccept = 0;
+    nreject = 0;
+}
+
+/** Perform the monte carlo test, using the supplied change in energy
+    and the supplied change in biasing probabilities */
+bool MonteCarlo::test(double new_energy, double old_energy,
+                      double new_bias, double old_bias)
+{
+    double x = (new_bias / old_bias) * std::exp( -beta*(new_energy - old_energy) );
+
+    if (x > 1 or x > _generator.rand())
+    {
+        ++naccept;
+        return true;
+    }
+    else
+    {
+        ++nreject;
+        return false;
+    }
 }

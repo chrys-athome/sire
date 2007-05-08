@@ -478,6 +478,12 @@ Vector RanGenerator::vectorOnSphere()
     }
 }
 
+/** Return a random vector on the sphere with radius 'radius' */
+Vector RanGenerator::vectorOnSphere(double radius)
+{
+    return radius * this->vectorOnSphere();
+}
+
 /** Return a random 32bit unsigned integer in [0,2^32 - 1] */
 quint32 RanGenerator::randInt()
 {

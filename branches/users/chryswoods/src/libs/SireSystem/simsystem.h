@@ -63,7 +63,7 @@ class SIRESYSTEM_EXPORT SimSystem : public QuerySystem
 public:
     ~SimSystem();
 
-    virtual void rollback(const CheckPoint &checkpoint)=0;
+    virtual void rollBack(const CheckPoint &checkpoint)=0;
 
     void commit();
 

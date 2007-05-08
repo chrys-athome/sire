@@ -137,6 +137,8 @@ public:
     double energy();
     double energy(const Function &component);
     double energy(const FFComponent &component);
+    double energy(const Symbol &symbol);
+    double energy(SymbolID symid);
 
     double energy(const Expression &expression);
     double energy(const FFExpression &expression);

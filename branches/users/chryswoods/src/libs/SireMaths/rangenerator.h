@@ -98,6 +98,7 @@ public:
     double randNorm(double mean, double variance);
 
     Vector vectorOnSphere();
+    Vector vectorOnSphere(double radius);
 
     quint32 randInt();
     quint32 randInt(quint32 maxval);
