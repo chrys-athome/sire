@@ -207,24 +207,130 @@ void AABox::translate(const Vector &delta)
 
 /** Add another AABox to this one - this forms the union of both of the
     boxes. */
-void AABox::add(const AABox &other)
-{
-    Vector mincoords = this->minCoords();
-    mincoords.setMin( other.minCoords() );
-
-    Vector maxcoords = this->maxCoords();
-    maxcoords.setMax( other.maxCoords() );
-
-    cent = 0.5 * (maxcoords + mincoords);
-
-    halfextents = maxcoords - cent;
-
-    rad = halfextents.length();
-}
-
-/** Syntactic sugar for 'add' */
 AABox& AABox::operator+=(const AABox &other)
 {
-    this->add(other);
+    Vector mincoords = this->minCoords();
+    Vector maxcoords = this->maxCoords();
+
+    Vector old_mincoords = mincoords;
+    Vector old_maxcoords = maxcoords;
+
+    mincoords.setMin( other.minCoords() );
+    maxcoords.setMax( other.maxCoords() );
+
+    if (mincoords != old_mincoords or
+        maxcoords != old_maxcoords)
+    {
+        cent = 0.5 * (maxcoords + mincoords);
+
+        halfextents = maxcoords - cent;
+
+        rad = halfextents.length();
+    }
+
     return *this;
+}
+
+/** Add another AABox to this one - this forms the union of both of the
+    boxes. */
+AABox AABox::operator+(const AABox &other) const
+{
+    AABox ret = *this;
+    ret += other;
+    return ret;
+}
+
+/** Add another AABox to this one - this forms the union of both of the
+    boxes. */
+void AABox::add(const AABox &other)
+{
+    *this += other;
+}
+
+/** Add a point to this box */
+AABox& AABox::operator+=(const Vector &point)
+{
+    Vector mincoords = this->minCoords();
+    Vector maxcoords = this->maxCoords();
+
+    Vector old_mincoords = mincoords;
+    Vector old_maxcoords = maxcoords;
+
+    mincoords.setMin( point );
+    maxcoords.setMax( point );
+
+    if (old_mincoords != mincoords or
+        old_maxcoords != maxcoords)
+    {
+        cent = 0.5 * (maxcoords + mincoords);
+
+        halfextents = maxcoords - cent;
+
+        rad = halfextents.length();
+    }
+
+    return *this;
+}
+
+/** Add a point to this box */
+AABox AABox::operator+(const Vector &point) const
+{
+    AABox ret = *this;
+    ret += point;
+    return ret;
+}
+
+/** Add a point to this box */
+void AABox::add(const Vector &point)
+{
+    *this += point;
+}
+
+/** Add lots of points to this box */
+AABox& AABox::operator+=(const QVector<Vector> &points)
+{
+    if (points.isEmpty())
+        return *this;
+
+    Vector mincoords = this->minCoords();
+    Vector maxcoords = this->maxCoords();
+
+    Vector old_mincoords = mincoords;
+    Vector old_maxcoords = maxcoords;
+
+    int npoints = points.count();
+    const Vector *points_array = points.constData();
+
+    for (int i=0; i<npoints; ++i)
+    {
+        const Vector &point = points_array[i];
+        mincoords.setMin(point);
+        maxcoords.setMax(point);
+    }
+
+    if (mincoords != old_mincoords or
+        maxcoords != old_maxcoords)
+    {
+        cent = 0.5 * (maxcoords + mincoords);
+
+        halfextents = maxcoords - cent;
+
+        rad = halfextents.length();
+    }
+
+    return *this;
+}
+
+/** Add lots of points to this box */
+AABox AABox::operator+(const QVector<Vector> &points) const
+{
+    AABox ret = *this;
+    ret += points;
+    return ret;
+}
+
+/** Add lots of points to this box */
+void AABox::add(const QVector<Vector> &points)
+{
+    *this += points;
 }

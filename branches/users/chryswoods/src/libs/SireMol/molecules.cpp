@@ -31,6 +31,8 @@
 
 #include "SireMol/errors.h"
 
+#include "SireBase/version.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 

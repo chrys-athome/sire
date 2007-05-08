@@ -19,6 +19,8 @@
 
 #include "MonteCarlo.pypp.hpp"
 
+#include "PrefSampler.pypp.hpp"
+
 #include "Sampler.pypp.hpp"
 
 #include "SamplerBase.pypp.hpp"
@@ -34,9 +36,11 @@ BOOST_PYTHON_MODULE(_Move){
 
     register_MonteCarlo_class();
 
-    register_Sampler_class();
-
     register_SamplerBase_class();
+
+    register_PrefSampler_class();
+
+    register_Sampler_class();
 
     bp::implicitly_convertible< const SireMove::SamplerBase&, SireMove::Sampler >();
 

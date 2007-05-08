@@ -30,7 +30,8 @@
 #include "molecule.h"
 #include "moleculeinfo.h"
 #include "moleculeid.h"
-#include "moleculeversion.h"
+
+#include "SireBase/version.h"
 
 #include "SireError/errors.h"
 

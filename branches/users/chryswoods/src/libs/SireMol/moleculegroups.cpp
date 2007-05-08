@@ -27,7 +27,6 @@
 \*********************************************/
 
 #include "moleculegroups.h"
-#include "moleculeversion.h"
 #include "partialmolecule.h"
 #include "atomselector.h"
 #include "molecules.h"

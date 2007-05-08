@@ -49,6 +49,11 @@ namespace SireBase
 class Property;
 }
 
+namespace SireMaths
+{
+class Vector;
+}
+
 namespace SireVol
 {
 class CoordGroup;
@@ -63,7 +68,10 @@ class Element;
 class PartialMolecule;
 
 using SireBase::Property;
+
 using SireVol::CoordGroup;
+
+using SireMaths::Vector;
 
 /** This class is used to add a nice API to the MoleculeView based classes to
     allow the extraction of various properties of the molecule (without the
@@ -87,7 +95,7 @@ public:
     PropertyExtractor();
 
     PropertyExtractor(const MoleculeView &molecule);
-    
+
     PropertyExtractor(const MoleculeView &molecule,
                       const SelectionFromMol &selection);
 

@@ -37,6 +37,7 @@
 #include "moleculeinfo.h"
 #include "residueinfo.h"
 #include "resnum.h"
+#include "resnumatomid.h"
 #include "residatomid.h"
 #include "cgatomid.h"
 
@@ -250,9 +251,9 @@ int AtomSelection::nSelected(CutGroupID cgid) const
         return molinfo.nAtoms(cgid);
     else
     {
-        const QHash< CutGroupID,QSet<AtomID> >::const_iterator 
+        const QHash< CutGroupID,QSet<AtomID> >::const_iterator
                                               it = selected_atoms.find(cgid);
-                                              
+
         if (it != selected_atoms.end())
         {
             if (it->isEmpty())
@@ -700,7 +701,7 @@ void AtomSelection::_unsafe_deselect(const CGAtomID &cgatomid)
             }
 
             --nselected;
-            
+
             return;
         }
         else
@@ -1481,8 +1482,8 @@ void AtomSelection::assertCompatibleWith(const SelectionFromMol &selection) cons
     }
 }
 
-/** Return a list of all of the atoms that are contained in the this selection */
-QSet<AtomIndex> AtomSelection::selected() const
+/** Return the set of all of the atoms that are contained in the this selection */
+QSet<AtomIndex> AtomSelection::selectedAtoms() const
 {
     QSet<AtomIndex> all_atoms;
 
@@ -1503,6 +1504,71 @@ QSet<AtomIndex> AtomSelection::selected() const
     }
 
     return all_atoms;
+}
+
+/** Return the set of CGAtomIDs of all of the atoms that are selected in the
+    CutGroup with ID == cgid
+
+    \throw SireError::invalid_index
+*/
+QSet<CGAtomID> AtomSelection::selectedAtoms(CutGroupID cgid) const
+{
+    QSet<CGAtomID> atms;
+
+    if (this->selectedAll(cgid))
+    {
+        uint natms = molinfo.nAtoms(cgid);
+
+        for (AtomID i(0); i<natms; ++i)
+        {
+            atms.insert( CGAtomID(cgid,i) );
+        }
+    }
+    else
+    {
+        QSet<AtomID> atomids = selected_atoms.value(cgid);
+
+        foreach (AtomID atomid, atomids)
+        {
+            atms.insert( CGAtomID(cgid,atomid) );
+        }
+    }
+
+    return atms;
+}
+
+/** Return the set of ResNumAtomIDs of all of the atoms that are selected
+    in the ResNum with number 'resnum'
+
+    \throw SireMol::missing_residue
+*/
+QSet<ResNumAtomID> AtomSelection::selectedAtoms(ResNum resnum) const
+{
+    QSet<ResNumAtomID> atms;
+
+    if (this->selectedAll(resnum))
+    {
+        uint natms = molinfo.nAtoms(resnum);
+
+        for (AtomID i(0); i<natms; ++i)
+        {
+            atms.insert( ResNumAtomID(resnum,i) );
+        }
+    }
+    else
+    {
+        uint natms = molinfo.nAtoms(resnum);
+
+        for (AtomID i(0); i<natms; ++i)
+        {
+            ResNumAtomID id(resnum,i);
+
+            if (this->selected(id))
+                atms.insert(id);
+        }
+    }
+
+    return atms;
 }
 
 /** Return the CutGroupIDs of any CutGroups that have at least one
@@ -1655,5 +1721,5 @@ ResNum AtomSelection::asSingleResidue() const
         //there is only one Residue in the molecule
         return info().residueNumber( ResID(0) );
     else
-        return this->selected().constBegin()->resNum();
+        return this->selectedAtoms().constBegin()->resNum();
 }

@@ -83,7 +83,7 @@ static const RegisterMetaType<MoleculeData> r_pvt;
 /** Serialise to a binary data stream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const MoleculeData &moldata)
 {
-    writeHeader(ds, r_pvt, 1) << moldata._id << moldata._molversion
+    writeHeader(ds, r_pvt, 1) << moldata._id_and_version
                               << moldata._coords << moldata._molinfo
                               << moldata._molbonds << moldata._properties;
     return ds;
@@ -96,7 +96,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MoleculeData &moldata)
 
     if (v == 1)
     {
-        ds >> moldata._id >> moldata._molversion
+        ds >> moldata._id_and_version
            >> moldata._coords >> moldata._molinfo
            >> moldata._molbonds >> moldata._properties;
     }
@@ -106,19 +106,8 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MoleculeData &moldata)
     return ds;
 }
 
-/** Mutex to serialise the aquisition of new ID numbers */
-QMutex MoleculeData::idmutex;
-
-/** The last allocated ID number */
-MoleculeID MoleculeData::lastid(0);
-
-/** Get a new, unique, ID number */
-MoleculeID MoleculeData::getNewID()
-{
-    QMutexLocker lkr(&idmutex);
-    ++lastid;
-    return lastid;
-}
+/** Incremint used to assign MoleculeID numbers */
+static Incremint molid_incremint(0);
 
 /** Shared null MoleculeData */
 static QSharedDataPointer<MoleculeData> shared_null( new MoleculeData() );
@@ -132,22 +121,23 @@ QSharedDataPointer<MoleculeData> MoleculeData::null()
 /** Null constructor */
 MoleculeData::MoleculeData()
                 : QSharedData(),
-                  _id(0), _molversion(0,0)
+                  _id_and_version(&molid_incremint)
 {}
 
 /** Construct from some molecule data (which comes from an EditMol) */
 MoleculeData::MoleculeData(const detail::MolData &moldata)
              : QSharedData(),
-               _id( MoleculeData::getNewID() ), _molversion(1,0),
+               _id_and_version(&molid_incremint),
                _molinfo(moldata.info()), _molbonds(moldata.connectivity()),
                _coords(moldata.coordinates())
-{}
+{
+    incrementID();
+}
 
 /** Copy constructor */
 MoleculeData::MoleculeData(const MoleculeData &other)
                 : QSharedData(),
-                  _id(other._id),
-                  _molversion(other._molversion),
+                  _id_and_version(other._id_and_version),
                   _molinfo(other._molinfo),
                   _molbonds(other._molbonds),
                   _coords(other._coords),
@@ -161,8 +151,7 @@ MoleculeData::~MoleculeData()
 /** Assignment operator */
 MoleculeData& MoleculeData::operator=(const MoleculeData &other)
 {
-    _id = other._id;
-    _molversion = other._molversion;
+    _id_and_version = other._id_and_version;
     _molinfo = other._molinfo;
     _molbonds = other._molbonds;
     _coords = other._coords;
@@ -172,10 +161,11 @@ MoleculeData& MoleculeData::operator=(const MoleculeData &other)
 }
 
 /** Assign from some molecule data (which has come from an EditMol).
-    This will increment the major version number of this molecule. */
+    This will give this molecule a new ID number (since it will be
+    a new molecule! */
 MoleculeData& MoleculeData::operator=(const detail::MolData &moldata)
 {
-    this->incrementMajorVersion();
+    this->incrementID();
 
     _molinfo = moldata.info();
     _molbonds = moldata.connectivity();
@@ -188,53 +178,46 @@ MoleculeData& MoleculeData::operator=(const detail::MolData &moldata)
     the same ID and version numbers. */
 bool MoleculeData::operator==(const MoleculeData &other) const
 {
-    return (this == &other) or
-           (_id == other._id and
-            _molversion == other._molversion);
+    return _id_and_version == other._id_and_version;
 }
 
 /** Comparison operator - two molecules are the same if they have
     the same ID and version numbers. */
 bool MoleculeData::operator!=(const MoleculeData &other) const
 {
-    return (this != &other) and
-           (_id != other._id or
-            _molversion != other._molversion);
+    return _id_and_version != other._id_and_version;
 }
 
 /** Return the ID number of the molecule */
 MoleculeID MoleculeData::ID() const
 {
-    return _id;
+    return MoleculeID( _id_and_version.ID() );
 }
 
 /** Give this molecule a new ID number. This will also give a new
     ID number to all contained (identified) objects, e.g. CutGroups */
-void MoleculeData::setNewID()
+void MoleculeData::incrementID()
 {
     //get a new ID number
-    _id = getNewID();
-
-    //now reset the version number to 1.0
-    _molversion = MoleculeVersion(1,0);
+    _id_and_version.incrementID();
 }
 
 /** Return the version number of the molecule */
-const MoleculeVersion& MoleculeData::version() const
+const Version& MoleculeData::version() const
 {
-    return _molversion;
+    return _id_and_version.version();
 }
 
 /** Increment the major version of the molecule */
 void MoleculeData::incrementMajorVersion()
 {
-    _molversion.incrementMajor();
+    _id_and_version.incrementMajor();
 }
 
 /** Increment the minor version number of the molecule */
 void MoleculeData::incrementMinorVersion()
 {
-    _molversion.incrementMinor();
+    _id_and_version.incrementMinor();
 }
 
 /** Edit this Molecule - we do this by returning an EditMol editor */
@@ -2661,7 +2644,7 @@ void MoleculeData::setCoordinates(const QVector<CoordGroup> &newcoords)
                   "(%1) does not equal the number of CutGroups (%2) in this "
                   "molecule (%3 : %4)")
                       .arg(ncg).arg(_coords.count())
-                      .arg(info().name()).arg(_id), CODELOC );
+                      .arg(info().name()).arg(ID()), CODELOC );
 
     //check that there are the right number of points in each group...
     const CoordGroup *newcoords_array = newcoords.constData();
@@ -2679,7 +2662,7 @@ void MoleculeData::setCoordinates(const QVector<CoordGroup> &newcoords)
                 "the number of atoms in the corresponding CutGroup "
                 "(nAtoms() == %3) in this molecule (%4 : %5)")
                     .arg(i).arg(oldgroup.count()).arg(newgroup.count())
-                    .arg(info().name()).arg(_id), CODELOC );
+                    .arg(info().name()).arg(ID()), CODELOC );
     }
 
     //everything is ok - copy the coordinates

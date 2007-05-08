@@ -60,6 +60,9 @@ void register_MoleculeGroup_class(){
             "count"
             , &::SireMol::MoleculeGroup::count )    
         .def( 
+            "isEmpty"
+            , &::SireMol::MoleculeGroup::isEmpty )    
+        .def( 
             "molecule"
             , &::SireMol::MoleculeGroup::molecule
             , ( bp::arg("molid") )
@@ -71,6 +74,9 @@ void register_MoleculeGroup_class(){
             "molecules"
             , &::SireMol::MoleculeGroup::molecules
             , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( 
+            "nMolecules"
+            , &::SireMol::MoleculeGroup::nMolecules )    
         .def( 
             "name"
             , &::SireMol::MoleculeGroup::name

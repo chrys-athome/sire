@@ -23,58 +23,56 @@ void register_RanGenerator_class(){
         .def( 
             "getState"
             , (::QVector<unsigned> ( ::SireMaths::RanGenerator::* )(  ) )( &::SireMaths::RanGenerator::getState ) )    
+        .def( bp::self != bp::self )    
+        .def( bp::self == bp::self )    
         .def( 
             "rand"
             , (double ( ::SireMaths::RanGenerator::* )(  ) )( &::SireMaths::RanGenerator::rand ) )    
         .def( 
             "rand"
-            , (void ( ::SireMaths::RanGenerator::* )( ::QVector<double> &,::uint ) )( &::SireMaths::RanGenerator::rand )
-            , ( bp::arg("array"), bp::arg("n")=(unsigned int)(0) ) )    
+            , (double ( ::SireMaths::RanGenerator::* )( double ) )( &::SireMaths::RanGenerator::rand )
+            , ( bp::arg("maxval") ) )    
+        .def( 
+            "rand"
+            , (double ( ::SireMaths::RanGenerator::* )( double,double ) )( &::SireMaths::RanGenerator::rand )
+            , ( bp::arg("minval"), bp::arg("maxval") ) )    
         .def( 
             "rand53"
             , (double ( ::SireMaths::RanGenerator::* )(  ) )( &::SireMaths::RanGenerator::rand53 ) )    
         .def( 
             "rand53"
-            , (void ( ::SireMaths::RanGenerator::* )( ::QVector<double> &,::uint ) )( &::SireMaths::RanGenerator::rand53 )
-            , ( bp::arg("array"), bp::arg("n")=(unsigned int)(0) ) )    
+            , (double ( ::SireMaths::RanGenerator::* )( double ) )( &::SireMaths::RanGenerator::rand53 )
+            , ( bp::arg("maxval") ) )    
+        .def( 
+            "rand53"
+            , (double ( ::SireMaths::RanGenerator::* )( double,double ) )( &::SireMaths::RanGenerator::rand53 )
+            , ( bp::arg("minval"), bp::arg("maxval") ) )    
         .def( 
             "randInt"
             , (::quint32 ( ::SireMaths::RanGenerator::* )(  ) )( &::SireMaths::RanGenerator::randInt ) )    
-        .def( 
-            "randInt"
-            , (void ( ::SireMaths::RanGenerator::* )( ::QVector<unsigned> &,::uint ) )( &::SireMaths::RanGenerator::randInt )
-            , ( bp::arg("array"), bp::arg("n")=(unsigned int)(0) ) )    
         .def( 
             "randInt"
             , (::quint32 ( ::SireMaths::RanGenerator::* )( ::quint32 ) )( &::SireMaths::RanGenerator::randInt )
             , ( bp::arg("maxval") ) )    
         .def( 
             "randInt"
-            , (void ( ::SireMaths::RanGenerator::* )( ::QVector<unsigned> &,::quint32,::uint ) )( &::SireMaths::RanGenerator::randInt )
-            , ( bp::arg("array"), bp::arg("maxval"), bp::arg("n")=(unsigned int)(0) ) )    
+            , (::qint32 ( ::SireMaths::RanGenerator::* )( ::qint32,::qint32 ) )( &::SireMaths::RanGenerator::randInt )
+            , ( bp::arg("minval"), bp::arg("maxval") ) )    
         .def( 
             "randInt64"
             , (::quint64 ( ::SireMaths::RanGenerator::* )(  ) )( &::SireMaths::RanGenerator::randInt64 ) )    
-        .def( 
-            "randInt64"
-            , (void ( ::SireMaths::RanGenerator::* )( ::QVector<long long unsigned int> &,::uint ) )( &::SireMaths::RanGenerator::randInt64 )
-            , ( bp::arg("array"), bp::arg("n")=(unsigned int)(0) ) )    
         .def( 
             "randInt64"
             , (::quint64 ( ::SireMaths::RanGenerator::* )( ::quint64 ) )( &::SireMaths::RanGenerator::randInt64 )
             , ( bp::arg("maxval") ) )    
         .def( 
             "randInt64"
-            , (void ( ::SireMaths::RanGenerator::* )( ::QVector<long long unsigned int> &,::quint64,::uint ) )( &::SireMaths::RanGenerator::randInt64 )
-            , ( bp::arg("array"), bp::arg("maxval"), bp::arg("n")=(unsigned int)(0) ) )    
+            , (::qint64 ( ::SireMaths::RanGenerator::* )( ::qint64,::qint64 ) )( &::SireMaths::RanGenerator::randInt64 )
+            , ( bp::arg("minval"), bp::arg("maxval") ) )    
         .def( 
             "randNorm"
             , (double ( ::SireMaths::RanGenerator::* )( double,double ) )( &::SireMaths::RanGenerator::randNorm )
             , ( bp::arg("mean"), bp::arg("variance") ) )    
-        .def( 
-            "randNorm"
-            , (void ( ::SireMaths::RanGenerator::* )( ::QVector<double> &,double,double,::uint ) )( &::SireMaths::RanGenerator::randNorm )
-            , ( bp::arg("array"), bp::arg("mean"), bp::arg("variance"), bp::arg("n")=(unsigned int)(0) ) )    
         .def( 
             "seed"
             , (void ( ::SireMaths::RanGenerator::* )(  ) )( &::SireMaths::RanGenerator::seed ) )    
@@ -97,10 +95,6 @@ void register_RanGenerator_class(){
         .def( 
             "vectorOnSphere"
             , (::SireMaths::Vector ( ::SireMaths::RanGenerator::* )(  ) )( &::SireMaths::RanGenerator::vectorOnSphere ) )    
-        .def( 
-            "vectorOnSphere"
-            , (void ( ::SireMaths::RanGenerator::* )( ::QVector<SireMaths::Vector> &,::uint ) )( &::SireMaths::RanGenerator::vectorOnSphere )
-            , ( bp::arg("array"), bp::arg("n")=(unsigned int)(0) ) )    
         .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMaths::RanGenerator >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    

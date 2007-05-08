@@ -173,7 +173,7 @@ MoleculeID NewAtom::ID() const
 }
 
 /** Return the version number of the molecule that contains this atom */
-const MoleculeVersion& NewAtom::version() const
+const Version& NewAtom::version() const
 {
     return data().version();
 }

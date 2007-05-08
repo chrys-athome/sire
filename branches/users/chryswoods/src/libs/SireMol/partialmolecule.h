@@ -44,8 +44,6 @@ QDataStream& operator>>(QDataStream&, SireMol::PartialMolecule&);
 namespace SireMol
 {
 
-class MoleculeVersion;
-
 /** This class provides a view to an arbitrary part of a molecule
     (which can range from just a single atom all the way through to
      the entire molecule). As such, this class can be used to
@@ -82,7 +80,7 @@ public:
     // Interface from Molecule
     QString name() const;
     MoleculeID ID() const;
-    const MoleculeVersion& version() const;
+    const Version& version() const;
 
     const MoleculeInfo& info() const;
 };

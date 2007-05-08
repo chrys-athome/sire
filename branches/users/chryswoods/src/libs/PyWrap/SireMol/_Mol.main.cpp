@@ -111,8 +111,6 @@
 
 #include "MoleculeProperty.pypp.hpp"
 
-#include "MoleculeVersion.pypp.hpp"
-
 #include "MoleculeView.pypp.hpp"
 
 #include "NewAtom.pypp.hpp"
@@ -245,8 +243,6 @@ BOOST_PYTHON_MODULE(_Mol){
     register_MoleculeInfo_class();
 
     register_MoleculeMover_class();
-
-    register_MoleculeVersion_class();
 
     register_NewAtom_class();
 

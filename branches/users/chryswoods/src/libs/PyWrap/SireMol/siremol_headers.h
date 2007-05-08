@@ -50,7 +50,6 @@
 #include "SireMol/moleculemover.h"
 #include "SireMol/moleculeproperty.h"
 #include "SireMol/molecules.h"
-#include "SireMol/moleculeversion.h"
 #include "SireMol/moleculeview.h"
 #include "SireMol/newatom.h"
 #include "SireMol/partialmolecule.h"

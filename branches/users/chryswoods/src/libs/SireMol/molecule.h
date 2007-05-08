@@ -65,6 +65,7 @@ namespace SireBase
 {
 class Property;
 class PropertyBase;
+class Version;
 }
 
 namespace SireVol
@@ -99,7 +100,6 @@ class Improper;
 
 class AtomIDGroup;
 
-class MoleculeVersion;
 class MoleculeInfo;
 
 class MoleculeBonds;
@@ -112,6 +112,7 @@ using SireMaths::Quaternion;
 
 using SireBase::Property;
 using SireBase::PropertyBase;
+using SireBase::Version;
 
 using SireVol::CoordGroup;
 
@@ -146,9 +147,9 @@ public:
 
    ////// Dealing with the ID number and version ///////////
      MoleculeID ID() const;
-     void setNewID();
+     void incrementID();
 
-     const MoleculeVersion& version() const;
+     const Version& version() const;
 
      QString idString() const;
    /////////////////////////////////////////////////////////

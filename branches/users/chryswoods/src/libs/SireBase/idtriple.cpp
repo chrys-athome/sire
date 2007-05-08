@@ -60,21 +60,24 @@ QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, IDTriple &idtriple)
     return ds;
 }
 
+/** Private static incremint used by the null IDTriple */
+static Incremint null_idtriple_incremint(0);
+
 /** Private static incremint that is used when no
     other one is supplied by the user */
-Incremint IDTriple::shared_triple_incremint;
+Incremint IDTriple::shared_triple_incremint(0);
 
 /** Constructor - optionally provide the Incremint that is used
-    to get the ID version number */
+    to get the ID version number. The initial value of the ID
+    and version is 0:0.0 - you must increment the ID of this
+    IDTriple before you can use it! */
 IDTriple::IDTriple(Incremint *idint)
-         : id_incremint(idint)
+         : id_incremint(idint), idnum(0), versn(&null_idtriple_incremint)
 {
     if (not idint)
         throw SireError::program_bug( QObject::tr(
                   "You *must* supply a valid Incremint to the "
                   "IDTriple constructor!"), CODELOC );
-
-    this->incrementID();
 }
 
 /** Copy constructor */

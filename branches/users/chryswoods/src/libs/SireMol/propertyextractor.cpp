@@ -40,10 +40,14 @@
 
 #include "SireVol/coordgroup.h"
 
+#include "SireMol/errors.h"
+#include "SireError/errors.h"
+
 #include "SireStream/datastream.h"
 
 using namespace SireMol;
 using namespace SireVol;
+using namespace SireMaths;
 using namespace SireBase;
 using namespace SireStream;
 
@@ -84,8 +88,8 @@ PropertyExtractor::PropertyExtractor(const MoleculeView &molecule)
 {}
 
 /** Construct the extractor to extract properties from the 'selection'
-    within the molecule 'molecule' 
-    
+    within the molecule 'molecule'
+
     \throw SireError::incompatible_error
 */
 PropertyExtractor::PropertyExtractor(const MoleculeView &molecule,
@@ -349,5 +353,93 @@ QVector< QVector<Element> > PropertyExtractor::elements() const
         }
 
         return grouped_elements;
+    }
+}
+
+static AABox getAABox(CutGroupID cgid, const CoordGroup &cgroup,
+                      const AtomSelection &selected_atoms)
+{
+    if (selected_atoms.selectedAll(cgid))
+        return cgroup.aaBox();
+    else
+    {
+        //we need to create the AABox from scratch...
+        // Get the coordinates of the selected atoms
+        QSet<CGAtomID> cgatomids = selected_atoms.selectedAtoms(cgid);
+
+        if (cgatomids.isEmpty())
+            throw SireMol::missing_atom( QObject::tr(
+                "There are no atoms selected in the CutGroup with ID == %1, "
+                "so it is not possible to find their center!")
+                    .arg(cgid), CODELOC );
+
+        QVector<Vector> coords;
+        coords.reserve(cgatomids.count());
+
+        foreach (const CGAtomID &cgatomid, cgatomids)
+        {
+            coords.append( cgroup.at(cgatomid.atomID()) );
+        }
+
+        return AABox(coords);
+    }
+}
+
+/** This function returns the geometric center of the selected atoms of the
+    molecule. There must be some atoms in this molecule for the center
+    to be found!
+
+    \throw SireMol::missing_atom
+*/
+Vector PropertyExtractor::geometricCenter() const
+{
+    QVector<CoordGroup> cgroups = data().coordGroups();
+    const CoordGroup *cgroups_array = cgroups.constData();
+    uint ncg = cgroups.count();
+
+    const AtomSelection &selected_atoms = selectedAtoms();
+
+    if (ncg == 0 or selected_atoms.selectedNone())
+        throw SireMol::missing_atom( QObject::tr(
+              "Cannot find the center of no atoms!"),
+                  CODELOC );
+
+    if (selected_atoms.selectedAll())
+    {
+        //combine together the boxes of all of the CoordGroups...
+        AABox box = cgroups_array[0].aaBox();
+
+        for (CutGroupID i(1); i<ncg; ++i)
+        {
+            box += cgroups_array[i].aaBox();
+        }
+
+        return box.center();
+    }
+    else if (selected_atoms.selectedAllCutGroups())
+    {
+        AABox box = getAABox(CutGroupID(0), cgroups_array[0], selected_atoms);
+
+        for (CutGroupID i(1); i<ncg; ++i)
+        {
+            box += getAABox(i, cgroups_array[i], selected_atoms);
+        }
+
+        return box.center();
+    }
+    else
+    {
+        QSet<CutGroupID> cgids = selected_atoms.selectedCutGroups();
+
+        QSet<CutGroupID>::const_iterator it = cgids.constBegin();
+
+        AABox box = getAABox(*it, cgroups_array[*it], selected_atoms);
+
+        for (++it; it != cgids.constEnd(); ++it)
+        {
+            box += getAABox(*it, cgroups_array[*it], selected_atoms);
+        }
+
+        return box.center();
     }
 }

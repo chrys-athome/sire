@@ -57,31 +57,48 @@ void TestVersion::runTests()
 
     qDebug() << "TestVersion::runTests() begin...";
 
+    //null versions should start at 0
+    IDMajMinVersion null_id_and_version;
+    BOOST_CHECK_EQUAL( null_id_and_version.ID(), 0 );
+    BOOST_CHECK_EQUAL( null_id_and_version.version().major(), 0 );
+    BOOST_CHECK_EQUAL( null_id_and_version.version().minor(), 0 );
+
+    IDMajMinVersion null_id_and_version2;
+    BOOST_CHECK_EQUAL( null_id_and_version2.ID(), 0 );
+    BOOST_CHECK_EQUAL( null_id_and_version2.version().major(), 0 );
+    BOOST_CHECK_EQUAL( null_id_and_version2.version().minor(), 0 );
+
+    null_id_and_version.incrementMajor();
+    null_id_and_version2.incrementMajor();
+
+    BOOST_CHECK_EQUAL( null_id_and_version.ID(), null_id_and_version2.ID() );
+    BOOST_CHECK( null_id_and_version.version() != null_id_and_version2.version() );
+
     Incremint i0(0);
 
     MajMinVersion ver(&i0);
 
-    BOOST_CHECK_EQUAL( ver.major(), 1 );
+    BOOST_CHECK_EQUAL( ver.major(), 0 );
     BOOST_CHECK_EQUAL( ver.minor(), 0 );
 
     ver.incrementMinor();
 
-    BOOST_CHECK_EQUAL( ver.major(), 1 );
+    BOOST_CHECK_EQUAL( ver.major(), 0 );
     BOOST_CHECK_EQUAL( ver.minor(), 1 );
 
     ver.incrementMinor();
 
-    BOOST_CHECK_EQUAL( ver.major(), 1 );
+    BOOST_CHECK_EQUAL( ver.major(), 0 );
     BOOST_CHECK_EQUAL( ver.minor(), 2 );
 
     ver.incrementMinor();
 
-    BOOST_CHECK_EQUAL( ver.major(), 1 );
+    BOOST_CHECK_EQUAL( ver.major(), 0 );
     BOOST_CHECK_EQUAL( ver.minor(), 3 );
 
     ver.incrementMajor();
 
-    BOOST_CHECK_EQUAL( ver.major(), 2 );
+    BOOST_CHECK_EQUAL( ver.major(), 1 );
     BOOST_CHECK_EQUAL( ver.minor(), 0 );
 
     QTime t;
@@ -96,7 +113,7 @@ void TestVersion::runTests()
 
     qDebug() << "100000 minors == " << ms;
 
-    BOOST_CHECK_EQUAL( ver.major(), 2 );
+    BOOST_CHECK_EQUAL( ver.major(), 1 );
     BOOST_CHECK_EQUAL( ver.minor(), 100000 );
 
     t.start();
@@ -107,34 +124,35 @@ void TestVersion::runTests()
 
     ms = t.elapsed();
 
-    BOOST_CHECK_EQUAL( ver.major(), 100002 );
+    BOOST_CHECK_EQUAL( ver.major(), 100001 );
     BOOST_CHECK_EQUAL( ver.minor(), 0 );
 
     MajMinVersion ver2 = ver;
 
-    BOOST_CHECK_EQUAL( ver.major(), 100002 );
+    BOOST_CHECK_EQUAL( ver.major(), 100001 );
     BOOST_CHECK_EQUAL( ver.minor(), 0 );
 
     ver2.incrementMinor();
 
-    BOOST_CHECK_EQUAL( ver.major(), 100002 );
+    BOOST_CHECK_EQUAL( ver.major(), 100001 );
     BOOST_CHECK_EQUAL( ver.minor(), 0 );
 
-    BOOST_CHECK_EQUAL( ver2.major(), 100002 );
+    BOOST_CHECK_EQUAL( ver2.major(), 100001 );
     BOOST_CHECK_EQUAL( ver2.minor(), 1 );
 
     ver.incrementMinor();
 
-    BOOST_CHECK_EQUAL( ver.major(), 100002 );
+    BOOST_CHECK_EQUAL( ver.major(), 100001 );
     BOOST_CHECK_EQUAL( ver.minor(), 2 );
 
-    BOOST_CHECK_EQUAL( ver2.major(), 100002 );
+    BOOST_CHECK_EQUAL( ver2.major(), 100001 );
     BOOST_CHECK_EQUAL( ver2.minor(), 1 );
 
     qDebug() << "100000 majors == " << ms;
 
     Incremint i1(0);
     IDVersion idver(&i1);
+    idver.incrementID();
 
     BOOST_CHECK_EQUAL( idver.ID(), 1 );
     BOOST_CHECK_EQUAL( idver.version(), 0 );
@@ -209,57 +227,58 @@ void TestVersion::runTests()
     Incremint i3(0);
 
     IDMajMinVersion idmajver(&i3);
+    idmajver.incrementID();
 
     BOOST_CHECK_EQUAL( idmajver.ID(), 1 );
-    BOOST_CHECK_EQUAL( idmajver.major(), 1 );
+    BOOST_CHECK_EQUAL( idmajver.major(), 0 );
     BOOST_CHECK_EQUAL( idmajver.minor(), 0 );
 
-    BOOST_CHECK_EQUAL( idmajver.version().major(), 1 );
+    BOOST_CHECK_EQUAL( idmajver.version().major(), 0 );
     BOOST_CHECK_EQUAL( idmajver.version().minor(), 0 );
 
     idmajver.incrementMinor();
 
     BOOST_CHECK_EQUAL( idmajver.ID(), 1 );
-    BOOST_CHECK_EQUAL( idmajver.major(), 1 );
+    BOOST_CHECK_EQUAL( idmajver.major(), 0 );
     BOOST_CHECK_EQUAL( idmajver.minor(), 1 );
 
-    BOOST_CHECK_EQUAL( idmajver.version().major(), 1 );
+    BOOST_CHECK_EQUAL( idmajver.version().major(), 0 );
     BOOST_CHECK_EQUAL( idmajver.version().minor(), 1 );
 
     idmajver.incrementMinor();
 
     BOOST_CHECK_EQUAL( idmajver.ID(), 1 );
-    BOOST_CHECK_EQUAL( idmajver.major(), 1 );
+    BOOST_CHECK_EQUAL( idmajver.major(), 0 );
     BOOST_CHECK_EQUAL( idmajver.minor(), 2 );
 
-    BOOST_CHECK_EQUAL( idmajver.version().major(), 1 );
+    BOOST_CHECK_EQUAL( idmajver.version().major(), 0 );
     BOOST_CHECK_EQUAL( idmajver.version().minor(), 2 );
 
     idmajver.incrementMajor();
 
     BOOST_CHECK_EQUAL( idmajver.ID(), 1 );
-    BOOST_CHECK_EQUAL( idmajver.major(), 2 );
+    BOOST_CHECK_EQUAL( idmajver.major(), 1 );
     BOOST_CHECK_EQUAL( idmajver.minor(), 0 );
 
-    BOOST_CHECK_EQUAL( idmajver.version().major(), 2 );
+    BOOST_CHECK_EQUAL( idmajver.version().major(), 1 );
     BOOST_CHECK_EQUAL( idmajver.version().minor(), 0 );
 
     idmajver.incrementMinor();
 
     BOOST_CHECK_EQUAL( idmajver.ID(), 1 );
-    BOOST_CHECK_EQUAL( idmajver.major(), 2 );
+    BOOST_CHECK_EQUAL( idmajver.major(), 1 );
     BOOST_CHECK_EQUAL( idmajver.minor(), 1 );
 
-    BOOST_CHECK_EQUAL( idmajver.version().major(), 2 );
+    BOOST_CHECK_EQUAL( idmajver.version().major(), 1 );
     BOOST_CHECK_EQUAL( idmajver.version().minor(), 1 );
 
     idmajver.incrementID();
 
     BOOST_CHECK_EQUAL( idmajver.ID(), 2 );
-    BOOST_CHECK_EQUAL( idmajver.major(), 1 );
+    BOOST_CHECK_EQUAL( idmajver.major(), 0 );
     BOOST_CHECK_EQUAL( idmajver.minor(), 0 );
 
-    BOOST_CHECK_EQUAL( idmajver.version().major(), 1 );
+    BOOST_CHECK_EQUAL( idmajver.version().major(), 0 );
     BOOST_CHECK_EQUAL( idmajver.version().minor(), 0 );
 
     t.start();
@@ -273,10 +292,10 @@ void TestVersion::runTests()
     qDebug() << "100000 minors == " << ms;
 
     BOOST_CHECK_EQUAL( idmajver.ID(), 2 );
-    BOOST_CHECK_EQUAL( idmajver.major(), 1 );
+    BOOST_CHECK_EQUAL( idmajver.major(), 0 );
     BOOST_CHECK_EQUAL( idmajver.minor(), 100000 );
 
-    BOOST_CHECK_EQUAL( idmajver.version().major(), 1 );
+    BOOST_CHECK_EQUAL( idmajver.version().major(), 0 );
     BOOST_CHECK_EQUAL( idmajver.version().minor(), 100000 );
 
     t.start();
@@ -290,10 +309,10 @@ void TestVersion::runTests()
     qDebug() << "100000 majors == " << ms;
 
     BOOST_CHECK_EQUAL( idmajver.ID(), 2 );
-    BOOST_CHECK_EQUAL( idmajver.major(), 100001 );
+    BOOST_CHECK_EQUAL( idmajver.major(), 100000 );
     BOOST_CHECK_EQUAL( idmajver.minor(), 0 );
 
-    BOOST_CHECK_EQUAL( idmajver.version().major(), 100001 );
+    BOOST_CHECK_EQUAL( idmajver.version().major(), 100000 );
     BOOST_CHECK_EQUAL( idmajver.version().minor(), 0 );
 
     t.start();
@@ -307,31 +326,63 @@ void TestVersion::runTests()
     qDebug() << "100000 IDs == " << ms;
 
     BOOST_CHECK_EQUAL( idmajver.ID(), 100002 );
-    BOOST_CHECK_EQUAL( idmajver.major(), 1 );
+    BOOST_CHECK_EQUAL( idmajver.major(), 0 );
     BOOST_CHECK_EQUAL( idmajver.minor(), 0 );
 
-    BOOST_CHECK_EQUAL( idmajver.version().major(), 1 );
+    BOOST_CHECK_EQUAL( idmajver.version().major(), 0 );
     BOOST_CHECK_EQUAL( idmajver.version().minor(), 0 );
 
     IDMajMinVersion idmajver2 = idmajver;
 
     BOOST_CHECK_EQUAL( idmajver.ID(), 100002 );
-    BOOST_CHECK_EQUAL( idmajver.major(), 1 );
+    BOOST_CHECK_EQUAL( idmajver.major(), 0 );
     BOOST_CHECK_EQUAL( idmajver.minor(), 0 );
 
-    BOOST_CHECK_EQUAL( idmajver.version().major(), 1 );
+    BOOST_CHECK_EQUAL( idmajver.version().major(), 0 );
     BOOST_CHECK_EQUAL( idmajver.version().minor(), 0 );
 
     BOOST_CHECK_EQUAL( idmajver2.ID(), 100002 );
-    BOOST_CHECK_EQUAL( idmajver2.major(), 1 );
+    BOOST_CHECK_EQUAL( idmajver2.major(), 0 );
     BOOST_CHECK_EQUAL( idmajver2.minor(), 0 );
 
-    BOOST_CHECK_EQUAL( idmajver2.version().major(), 1 );
+    BOOST_CHECK_EQUAL( idmajver2.version().major(), 0 );
     BOOST_CHECK_EQUAL( idmajver2.version().minor(), 0 );
 
     idmajver2.incrementMinor();
 
     BOOST_CHECK_EQUAL( idmajver.ID(), 100002 );
+    BOOST_CHECK_EQUAL( idmajver.major(), 0 );
+    BOOST_CHECK_EQUAL( idmajver.minor(), 0 );
+
+    BOOST_CHECK_EQUAL( idmajver.version().major(), 0 );
+    BOOST_CHECK_EQUAL( idmajver.version().minor(), 0 );
+
+    BOOST_CHECK_EQUAL( idmajver2.ID(), 100002 );
+    BOOST_CHECK_EQUAL( idmajver2.major(), 0 );
+    BOOST_CHECK_EQUAL( idmajver2.minor(), 1 );
+
+    BOOST_CHECK_EQUAL( idmajver2.version().major(), 0 );
+    BOOST_CHECK_EQUAL( idmajver2.version().minor(), 1 );
+
+    idmajver.incrementMinor();
+
+    BOOST_CHECK_EQUAL( idmajver.ID(), 100002 );
+    BOOST_CHECK_EQUAL( idmajver.major(), 0 );
+    BOOST_CHECK_EQUAL( idmajver.minor(), 2 );
+
+    BOOST_CHECK_EQUAL( idmajver.version().major(), 0 );
+    BOOST_CHECK_EQUAL( idmajver.version().minor(), 2 );
+
+    BOOST_CHECK_EQUAL( idmajver2.ID(), 100002 );
+    BOOST_CHECK_EQUAL( idmajver2.major(), 0 );
+    BOOST_CHECK_EQUAL( idmajver2.minor(), 1 );
+
+    BOOST_CHECK_EQUAL( idmajver2.version().major(), 0 );
+    BOOST_CHECK_EQUAL( idmajver2.version().minor(), 1 );
+
+    idmajver.incrementMajor();
+
+    BOOST_CHECK_EQUAL( idmajver.ID(), 100002 );
     BOOST_CHECK_EQUAL( idmajver.major(), 1 );
     BOOST_CHECK_EQUAL( idmajver.minor(), 0 );
 
@@ -339,26 +390,10 @@ void TestVersion::runTests()
     BOOST_CHECK_EQUAL( idmajver.version().minor(), 0 );
 
     BOOST_CHECK_EQUAL( idmajver2.ID(), 100002 );
-    BOOST_CHECK_EQUAL( idmajver2.major(), 1 );
+    BOOST_CHECK_EQUAL( idmajver2.major(), 0 );
     BOOST_CHECK_EQUAL( idmajver2.minor(), 1 );
 
-    BOOST_CHECK_EQUAL( idmajver2.version().major(), 1 );
-    BOOST_CHECK_EQUAL( idmajver2.version().minor(), 1 );
-
-    idmajver.incrementMinor();
-
-    BOOST_CHECK_EQUAL( idmajver.ID(), 100002 );
-    BOOST_CHECK_EQUAL( idmajver.major(), 1 );
-    BOOST_CHECK_EQUAL( idmajver.minor(), 2 );
-
-    BOOST_CHECK_EQUAL( idmajver.version().major(), 1 );
-    BOOST_CHECK_EQUAL( idmajver.version().minor(), 2 );
-
-    BOOST_CHECK_EQUAL( idmajver2.ID(), 100002 );
-    BOOST_CHECK_EQUAL( idmajver2.major(), 1 );
-    BOOST_CHECK_EQUAL( idmajver2.minor(), 1 );
-
-    BOOST_CHECK_EQUAL( idmajver2.version().major(), 1 );
+    BOOST_CHECK_EQUAL( idmajver2.version().major(), 0 );
     BOOST_CHECK_EQUAL( idmajver2.version().minor(), 1 );
 
     qDebug() << "TestVersion::runTests() complete";

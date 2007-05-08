@@ -42,6 +42,10 @@
 
 #include "SireIO/pdb.h"
 
+#include "SireSystem/checkpoint.h"
+#include "SireSystem/system.h"
+#include "SireSystem/localsimsystem.h"
+
 #include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
@@ -52,6 +56,7 @@ using namespace SireMove;
 using namespace SireIO;
 using namespace SireMol;
 using namespace SireMaths;
+using namespace SireSystem;
 using namespace SireStream;
 
 TestSampler::TestSampler() : TestBase()
@@ -73,83 +78,85 @@ void TestSampler::runTests()
     qDebug() << "Running TestSampler tests...";
 
     QList<Molecule> mols = PDB().read(":water.pdb");
-    
+
     BOOST_CHECK_EQUAL( mols.count(), 1679 );
-    
+
     int nmols = mols.count();
-    
+
     MoleculeGroup group;
     group.add(mols);
-    
+
+    //create the system that holds the molecules
+    System system(group);
+    LocalSimSystem simsystem( system.checkPoint() );
+
     RanGenerator rand;
-    
+
     UniformSampler unisampler(rand);
-    
+
     UniformSampler unisampler2 = unisampler;
-    
+
     QByteArray pickle;
     QDataStream ds(&pickle, QIODevice::WriteOnly);
-    
+
     ds << unisampler;
-    
+
     ds.setDevice(0);
-    
+
     BOOST_CHECK( unisampler.generator() == rand );
-    
+
     QSet<MoleculeID> molids;
-    
+
     for (int i=0; i<100; ++i)
     {
-        tuple<PartialMolecule,double> mol = unisampler.sample(group);
-        
+        tuple<PartialMolecule,double> mol = unisampler.sample(simsystem);
+
         BOOST_CHECK_EQUAL( mol.get<1>(), 1.0 / nmols );
         BOOST_CHECK( group.contains(mol.get<0>()) );
-        
+
         molids.insert( mol.get<0>().ID() );
-    
-        BOOST_CHECK_EQUAL( unisampler.probabilityOf(mol.get<0>(), group),
+
+        BOOST_CHECK_EQUAL( unisampler.probabilityOf(mol.get<0>(), simsystem),
                            1.0 / nmols );
     }
 
     qDebug() << "Selected" << molids.count() << "molecules..." << molids;
-    
+
     //this may fail ( 1 in 1679**100 chance... )
     BOOST_CHECK( molids.count() > 1 );
 
     //unpack the pickle and ensure that it duplicates the selected molecules
     QDataStream ds2(&pickle, QIODevice::ReadOnly);
-    
+
     ds2 >> unisampler;
-    
+
     qDebug() << CODELOC;
-    
+
     QSet<MoleculeID> same_mols;
-    
+
     for (int i=0; i<100; ++i)
     {
-        qDebug() << i;
-        tuple<PartialMolecule,double> mol = unisampler.sample(group);
-        qDebug() << CODELOC;
-    
+        tuple<PartialMolecule,double> mol = unisampler.sample(simsystem);
+
         BOOST_CHECK_EQUAL( mol.get<1>(), 1.0 / nmols );
         BOOST_CHECK( group.contains(mol.get<0>()) );
-        
+
         BOOST_CHECK( molids.contains(mol.get<0>().ID()) );
-    
-        BOOST_CHECK_EQUAL( unisampler.probabilityOf(mol.get<0>(), group),
+
+        BOOST_CHECK_EQUAL( unisampler.probabilityOf(mol.get<0>(), simsystem),
                            1.0 / nmols );
-                           
-        tuple<PartialMolecule,double> mol2 = unisampler2.sample(group);
-        
+
+        tuple<PartialMolecule,double> mol2 = unisampler2.sample(simsystem);
+
         if (mol2.get<0>() == mol.get<0>())
             same_mols.insert(mol2.get<0>().ID());
     }
-    
+
     //we mustn't repeat the same sample order!
     BOOST_CHECK( same_mols.count() != 1679 );
 
     qDebug() << "Finished TestSampler tests...";
-    
+
     }
     catch(SireError::exception &e)
     {

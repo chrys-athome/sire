@@ -11,6 +11,7 @@ sys.path.append("..")
 from sireutils import *
 
 wrap_classes = [ "MonteCarlo",
+                 "PrefSampler",
                  #"RigidBodyMC",
                  "SamplerBase",
                  "Sampler",
@@ -28,7 +29,10 @@ extra_includes = [ "SireMol/molecule.h",
                    
                    "SireSystem/simsystem.h" ]
 
-special_code = {}
+def fixPrefSampler(c):
+    c.class_("MolProb").exclude()
+
+special_code = { "PrefSampler" : fixPrefSampler }
 
 implicitly_convertible = [ ("const SireMove::SamplerBase&",
                             "SireMove::Sampler") 

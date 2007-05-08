@@ -31,8 +31,11 @@
 
 #include "sampler.h"
 
+#include "SireMaths/vector.h"
+
 #include "SireMol/moleculeid.h"
 #include "SireMol/moleculegroupid.h"
+#include "SireMol/moleculegroup.h"
 
 #include "SireMol/partialmolecule.h"
 
@@ -48,8 +51,16 @@ class PrefSampler;
 QDataStream& operator<<(QDataStream&, const SireMove::PrefSampler&);
 QDataStream& operator>>(QDataStream&, SireMove::PrefSampler&);
 
+namespace SireMol
+{
+class MoleculeGroup;
+}
+
 namespace SireMove
 {
+
+using SireMol::MoleculeGroup;
+using SireMol::PartialMolecule;
 
 using SireMol::MoleculeID;
 using SireMol::MoleculeGroupID;
@@ -58,10 +69,11 @@ using SireMol::PartialMolecule;
 using SireBase::Version;
 
 using SireMaths::Vector;
+using SireMaths::RanGenerator;
 
-/** This class is used to pick molecules at random 
+/** This class is used to pick molecules at random
     from a MoleculeGroup, with the molecules closest
-    to the 
+    to the
 
     @author Christopher Woods
 */
@@ -73,14 +85,23 @@ friend QDataStream& ::operator>>(QDataStream&, PrefSampler&);
 
 public:
     PrefSampler(const RanGenerator &rangenerator = RanGenerator());
-    
-    PrefSampler(const MoleculeGroup &group, 
+
+    PrefSampler(const MoleculeGroup &group,
                 const RanGenerator &rangenerator = RanGenerator());
-                
-    PrefSampler(const PartialMolecule &center_mol,
+
+    PrefSampler(const PartialMolecule &center,
                 const RanGenerator &rangenerator = RanGenerator());
-                
-    PrefSampler(const PartialMolecule &center_mol,
+
+    PrefSampler(const PartialMolecule &center,
+                double k,
+                const RanGenerator &rangenerator = RanGenerator());
+
+    PrefSampler(const PartialMolecule &center,
+                const MoleculeGroup &group,
+                const RanGenerator &rangenerator = RanGenerator());
+
+    PrefSampler(const PartialMolecule &center,
+                double k,
                 const MoleculeGroup &group,
                 const RanGenerator &rangenerator = RanGenerator());
 
@@ -92,6 +113,10 @@ public:
 
     void setGroup(const MoleculeGroup &group);
     void setCenterMolecule(const PartialMolecule &molecule);
+    void setK(double k);
+
+    const PartialMolecule& centerMolecule() const;
+    double k() const;
 
     static const char* typeName()
     {
@@ -113,12 +138,6 @@ public:
     double probabilityOf(const PartialMolecule &molecule,
                          const QuerySystem &system);
 
-protected:
-    bool _pvt_isEqual(const PropertyBase &other) const;
-
-private:
-    void updateFrom(const QuerySystem &system);
-
     struct MolProb
     {
         MoleculeID ID;
@@ -126,40 +145,66 @@ private:
         float probability;
     };
 
-    /** List of IDs, versions and probabilities 
+protected:
+    bool _pvt_isEqual(const PropertyBase &other) const;
+
+    float calculateProbability(const PartialMolecule &molecule) const;
+
+    void completeUpdate(const PartialMolecule &new_center,
+                        const MoleculeGroup &group);
+
+    void partialUpdate(const MoleculeGroup &group);
+
+private:
+    void updateFrom(const QuerySystem &system);
+
+    /** List of IDs, versions and probabilities
         of all of the molecules that could be selected */
     QVector<MolProb> molprobs;
-    
+
     /** The sum of all of the molecule probabilities */
     float sum_of_probs;
-    
+
     /** The highest probability value... */
     float max_prob;
-    
+
     /** The k-value used in the probability calculation */
     double kval;
-    
+
     /** The molecule from which the probability is calculated
-         - the geometric center of the molecule is used - the 
+         - the geometric center of the molecule is used - the
            closer a molecule is to the center, the higher
            the probability that it will be chosen */
     PartialMolecule center_mol;
-    
+
     /** The point from which the probabilities are calculated */
     Vector center_point;
-    
-    /** The ID of the MoleculeGroup from which the molecule
-        will be sampled */
-    MoleculeGroupID groupid;
-    
-    /** The current version number of the group from which the 
-        molecule will be sampled */
-    Version group_version;
+
+    /** The MoleculeGroup from which the molecule will be sampled */
+    MoleculeGroup molgroup;
+
+    /** Whether we need a complete update */
+    bool need_complete_update;
 };
+
+/** Return the center molecule - molecules closest to this molecule
+    will be sampled more frequently. */
+inline const PartialMolecule& PrefSampler::centerMolecule() const
+{
+    return center_mol;
+}
+
+/** Return the value of 'k' - this is used to moderate the sampling
+    algorithm - large values of k prevent volume expansion */
+inline double PrefSampler::k() const
+{
+    return kval;
+}
 
 }
 
 Q_DECLARE_METATYPE(SireMove::PrefSampler);
+Q_DECLARE_TYPEINFO(SireMove::PrefSampler::MolProb, Q_MOVABLE_TYPE);
 
 SIRE_END_HEADER
 

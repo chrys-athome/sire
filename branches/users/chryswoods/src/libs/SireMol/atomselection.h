@@ -141,32 +141,32 @@ public:
 
     AtomSelection select(CutGroupID cgid) const;
     AtomSelection deselect(CutGroupID cgid) const;
-    
+
     AtomSelection setSelection(CutGroupID cgid) const;
 
     AtomSelection select(ResNum resnum) const;
     AtomSelection deselect(ResNum resnum) const;
-    
+
     AtomSelection setSelection(ResNum resnum) const;
 
     AtomSelection select(const CGAtomID &cgatomid) const;
     AtomSelection deselect(const CGAtomID &cgatomid) const;
-    
+
     AtomSelection setSelection(const CGAtomID &cgatomid) const;
 
     AtomSelection select(const IDMolAtom &atomid) const;
     AtomSelection deselect(const IDMolAtom &atomid) const;
-    
+
     AtomSelection setSelection(const IDMolAtom &atomid) const;
 
     AtomSelection select(const AtomSelection &selection) const;
     AtomSelection deselect(const AtomSelection &selection) const;
-    
+
     AtomSelection setSelection(const AtomSelection &selection) const;
 
     AtomSelection select(const SelectionFromMol &selection) const;
     AtomSelection deselect(const SelectionFromMol &selection) const;
-    
+
     AtomSelection setSelection(const SelectionFromMol &selection) const;
 
     AtomSelection invert() const;
@@ -196,7 +196,10 @@ public:
     void assertCompatibleWith(const AtomSelection &other) const;
     void assertCompatibleWith(const SelectionFromMol &other) const;
 
-    QSet<AtomIndex> selected() const;
+    QSet<AtomIndex> selectedAtoms() const;
+
+    QSet<CGAtomID> selectedAtoms(CutGroupID cgid) const;
+    QSet<ResNumAtomID> selectedAtoms(ResNum resnum) const;
 
     QSet<CutGroupID> selectedCutGroups() const;
     QSet<ResNum> selectedResidues() const;

@@ -245,8 +245,6 @@ QList<Molecule> PDB::readMols(const QByteArray &data,
          ++it)
     {
         Molecule molecule;
-        molecule.setNewID();
-
         molecule = it->commit();
 
         molecules.append(molecule);
@@ -272,13 +270,13 @@ QByteArray PDB::writeMols(const QList<Molecule> &molecules) const
         const Molecule &mol = molecules[i];
 
         //loop over each residue in the editmol...
-        int nres = mol.nResidues();
+        uint nres = mol.nResidues();
         for (ResID ires(0); ires<nres; ++ires)
         {
             Residue res = mol[ires];
 
             //now loop over each atom in the residue...
-            int nats = res.nAtoms();
+            uint nats = res.nAtoms();
             for (AtomID iat(0); iat<nats; ++iat)
             {
                 ++atcount;
@@ -325,13 +323,13 @@ QByteArray PDB::writeMols(const QList<EditMol> &molecules) const
         const EditMol &mol = molecules[i];
 
         //loop over each residue in the editmol...
-        int nres = mol.nResidues();
+        uint nres = mol.nResidues();
         for (ResID ires(0); ires<nres; ++ires)
         {
             EditRes res = mol[ires];
 
             //now loop over each atom in the residue...
-            int nats = res.nAtoms();
+            uint nats = res.nAtoms();
             for (AtomID iat(0); iat<nats; ++iat)
             {
                 ++atcount;

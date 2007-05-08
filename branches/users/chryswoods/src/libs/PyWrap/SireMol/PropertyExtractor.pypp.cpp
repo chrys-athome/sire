@@ -41,6 +41,9 @@ void register_PropertyExtractor_class(){
             "elements"
             , &::SireMol::PropertyExtractor::elements )    
         .def( 
+            "geometricCenter"
+            , &::SireMol::PropertyExtractor::geometricCenter )    
+        .def( 
             "property"
             , &::SireMol::PropertyExtractor::property
             , ( bp::arg("name") ) )    

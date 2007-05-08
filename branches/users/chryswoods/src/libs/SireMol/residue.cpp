@@ -242,7 +242,7 @@ MoleculeID Residue::ID() const
 }
 
 /** Return the version number of the molecule that contains this residue */
-const MoleculeVersion& Residue::version() const
+const Version& Residue::version() const
 {
     return data().version();
 }

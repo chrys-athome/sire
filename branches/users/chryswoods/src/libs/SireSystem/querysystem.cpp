@@ -32,8 +32,12 @@
 #include "systemdata.h"
 #include "systemmonitors.h"
 
+#include "SireMol/atomselector.h"
+
 #include "SireBase/property.h"
 #include "SireFF/forcefields.h"
+
+#include "SireMol/errors.h"
 
 using namespace SireSystem;
 using namespace SireMol;
@@ -245,4 +249,60 @@ QSet<ForceFieldID> QuerySystem::forceFieldsWithProperty(const QString &name)
 QHash< QString,QHash<ForceFieldID,Property> > QuerySystem::properties()
 {
     return ffields.properties();
+}
+
+/** Return the version of the molecule 'mol' in this system - this returns
+    the molecule with the same selected atoms as 'mol'
+
+    \throw SireMol::missing_molecule
+*/
+PartialMolecule QuerySystem::molecule(const PartialMolecule &mol) const
+{
+    if ( groups().refersTo(mol.ID()) )
+    {
+        //good - we'll just get the molecule from the first group that
+        //refers to it ;-)
+        PartialMolecule groupmol = groups().molecule(mol.ID(),
+                         *(groups().groupsReferringTo(mol.ID()).constBegin()) );
+
+        return mol.change(groupmol);
+    }
+    else
+    {
+        if (not forceFields().refersTo(mol.ID()))
+            throw SireMol::missing_molecule( QObject::tr(
+                "The molecule \"%1\" (%2) is not present in this system!")
+                    .arg(mol.name()).arg(mol.ID()), CODELOC );
+
+        return mol.change(forceFields().molecule(mol.ID()));
+    }
+}
+
+/** Return all of the atoms of the molecule in this system
+    with ID == molid
+
+    \throw SireMol::missing_molecule
+*/
+PartialMolecule QuerySystem::molecule(MoleculeID molid) const
+{
+    if ( groups().refersTo(molid) )
+    {
+        PartialMolecule mol = groups().molecule(molid);
+
+        if (mol.selectedAtoms().selectedAll())
+            return mol;
+
+        //see if we need to add on atoms from the forcefields...
+        if (forceFields().refersTo(mol.ID()))
+            return mol.selection().add( forceFields().molecule(molid).selectedAtoms() );
+    }
+    else
+    {
+        if (not forceFields().refersTo(molid))
+            throw SireMol::missing_molecule( QObject::tr(
+                "There is no molecule with ID == %1 in this system!")
+                    .arg(molid), CODELOC );
+
+        return forceFields().molecule(molid);
+    }
 }

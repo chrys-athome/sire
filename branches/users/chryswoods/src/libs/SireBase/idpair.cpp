@@ -61,19 +61,19 @@ QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, IDPair &idpair)
 
 /** Private static incremint that is used when no
     other one is supplied by the user */
-Incremint IDPair::shared_pair_increment;
+Incremint IDPair::shared_pair_increment(0);
 
 /** Constructor - optionally provide the Incremint that is used
-    to get the major version number */
+    to get the major version number. You must call incrementMajor()
+    before using  */
 IDPair::IDPair(Incremint *majint)
-       : major_incremint(majint)
+       : minor_incremint(new Incremint(0)), major_incremint(majint),
+         _version(0,0)
 {
     if (not majint)
         throw SireError::program_bug( QObject::tr(
                   "You *must* supply a valid Incremint to the "
                   "IDPair constructor!"), CODELOC );
-
-    this->incrementMajor();
 }
 
 /** Copy constructor */

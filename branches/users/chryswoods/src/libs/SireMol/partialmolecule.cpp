@@ -71,7 +71,7 @@ PartialMolecule::PartialMolecule(const MolDataView &molecule)
                 : MoleculeView(molecule)
 {}
 
-/** Construct a PartialMolecule that represents 'molecule', with 
+/** Construct a PartialMolecule that represents 'molecule', with
     the atoms in 'selection' additionally selected */
 PartialMolecule::PartialMolecule(const MolDataView &molecule,
                                  const SelectionFromMol &selection)
@@ -113,14 +113,14 @@ const MoleculeInfo& PartialMolecule::info() const
 {
     return data().info();
 }
-    
+
 /** Return the name of the molecule */
 QString PartialMolecule::name() const
 {
     return info().name();
 }
 
-/** Return the ID number of this molecule - the ID number is 
+/** Return the ID number of this molecule - the ID number is
     used to uniquely identify a molecule */
 MoleculeID PartialMolecule::ID() const
 {
@@ -128,22 +128,22 @@ MoleculeID PartialMolecule::ID() const
 }
 
 /** Return the version number of the molecule - this changes
-    whenever the molecule is changed. Two molecules with the 
+    whenever the molecule is changed. Two molecules with the
     same ID and version are identical. */
-const MoleculeVersion& PartialMolecule::version() const
+const Version& PartialMolecule::version() const
 {
     return data().version();
 }
 
 /** Change this molecule so that it is at the same state as 'other'.
-    
+
     \throw SireError::incompatible_error
 */
 PartialMolecule PartialMolecule::change(const MoleculeView &other) const
 {
     PartialMolecule retval(*this);
-    
+
     retval._pvt_change(other);
-    
+
     return retval;
 }

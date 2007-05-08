@@ -49,7 +49,6 @@ set ( SIREMOL_SOURCES
       moleculemover.cpp
       moleculeproperty.cpp
       molecules.cpp
-      moleculeversion.cpp
       moleculeview.cpp
       partialmolecule.cpp
       propertyextractor.cpp

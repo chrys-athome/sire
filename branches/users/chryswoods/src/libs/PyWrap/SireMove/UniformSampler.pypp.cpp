@@ -21,16 +21,19 @@ const char* pvt_get_name(const SireMove::UniformSampler&){ return "SireMove::Uni
 
 void register_UniformSampler_class(){
 
-    bp::class_< SireMove::UniformSampler, bp::bases< SireMove::SamplerBase > >( "UniformSampler" )    
-        .def( bp::init< >() )    
-        .def( bp::init< SireMaths::RanGenerator const & >(( bp::arg("rangenerator") )) )    
+    bp::class_< SireMove::UniformSampler, bp::bases< SireMove::SamplerBase > >( "UniformSampler", bp::init< bp::optional< SireMaths::RanGenerator const & > >(( bp::arg("rangenerator")=::SireMaths::RanGenerator( ) )) )    
+        .def( bp::init< SireMol::MoleculeGroup const &, bp::optional< SireMaths::RanGenerator const & > >(( bp::arg("group"), bp::arg("rangenerator")=::SireMaths::RanGenerator( ) )) )    
         .def( 
             "probabilityOf"
-            , (double ( ::SireMove::UniformSampler::* )( ::SireMol::PartialMolecule const &,::SireMol::MoleculeGroup const & ) )( &::SireMove::UniformSampler::probabilityOf )
-            , ( bp::arg("molecule"), bp::arg("group") ) )    
+            , (double ( ::SireMove::UniformSampler::* )( ::SireMol::PartialMolecule const &,::SireSystem::QuerySystem const & ) )( &::SireMove::UniformSampler::probabilityOf )
+            , ( bp::arg("molecule"), bp::arg("system") ) )    
         .def( 
             "sample"
-            , (::boost::tuples::tuple<SireMol::PartialMolecule,double,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type> ( ::SireMove::UniformSampler::* )( ::SireMol::MoleculeGroup const & ) )( &::SireMove::UniformSampler::sample )
+            , (::boost::tuples::tuple<SireMol::PartialMolecule,double,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type> ( ::SireMove::UniformSampler::* )( ::SireSystem::QuerySystem const & ) )( &::SireMove::UniformSampler::sample )
+            , ( bp::arg("system") ) )    
+        .def( 
+            "setGroup"
+            , (void ( ::SireMove::UniformSampler::* )( ::SireMol::MoleculeGroup const & ) )( &::SireMove::UniformSampler::setGroup )
             , ( bp::arg("group") ) )    
         .def( 
             "typeName"

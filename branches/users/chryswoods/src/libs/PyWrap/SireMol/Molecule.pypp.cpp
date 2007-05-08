@@ -301,6 +301,9 @@ void register_Molecule_class(){
             , &::SireMol::Molecule::improper
             , ( bp::arg("improper") ) )    
         .def( 
+            "incrementID"
+            , &::SireMol::Molecule::incrementID )    
+        .def( 
             "info"
             , &::SireMol::Molecule::info
             , bp::return_value_policy< bp::copy_const_reference >() )    
@@ -475,9 +478,6 @@ void register_Molecule_class(){
             "residuesBondedTo"
             , (::QHash<SireMol::ResNum,SireMol::Residue> ( ::SireMol::Molecule::* )( ::SireMol::ResID ) const)( &::SireMol::Molecule::residuesBondedTo )
             , ( bp::arg("resid") ) )    
-        .def( 
-            "setNewID"
-            , &::SireMol::Molecule::setNewID )    
         .def( 
             "setProperty"
             , (void ( ::SireMol::Molecule::* )( ::QString const &,::SireBase::PropertyBase const & ) )( &::SireMol::Molecule::setProperty )

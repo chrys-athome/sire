@@ -72,7 +72,7 @@ using SireMol::PartialMolecule;
 
 /** This class implements a rigid body Monte Carlo move that
     may be applied to a random molecule within a MoleculeGroup
-    
+
     @author Christopher Woods
 */
 class SIREMOVE_EXPORT RigidBodyMC : public MonteCarlo
@@ -84,12 +84,8 @@ friend QDataStream& ::operator>>(QDataStream&, RigidBodyMC&);
 public:
     RigidBodyMC();
 
-    RigidBodyMC(const MoleculeGroup &group,
-                const Sampler &sampler);
-
-    RigidBodyMC(const MoleculeGroup &group,
-                const RanGenerator &generator,
-                const Sampler &sampler);
+    RigidBodyMC(const Sampler &sampler,
+                const RanGenerator &generator = RanGenerator());
 
     RigidBodyMC(const RigidBodyMC &other);
 
@@ -207,8 +203,8 @@ private:
     /** Hash mapping the number of attempted and accepted moves
         for each molecule */
     QHash<MoleculeID, RigidBodyMC::MoveRecord> moverecord;
-    
-    /** The sampler used to select random molecules from the 
+
+    /** The sampler used to select random molecules from the
         MoleculeGroup */
     Sampler smplr;
 };

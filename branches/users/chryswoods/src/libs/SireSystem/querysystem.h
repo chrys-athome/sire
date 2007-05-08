@@ -128,6 +128,9 @@ public:
 
     const MoleculeGroups& groups() const;
 
+    PartialMolecule molecule(const PartialMolecule &mol) const;
+    PartialMolecule molecule(MoleculeID molid) const;
+
     ForceField forceField(ForceFieldID ffid);
     MoleculeGroup group(MoleculeGroupID id) const;
 
@@ -156,7 +159,7 @@ public:
 
 protected:
     QuerySystem();
-    
+
     QuerySystem(SystemData &sysdata,
                 ForceFieldsBase &ffields,
                 SystemMonitors &monitors);

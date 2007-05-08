@@ -484,7 +484,7 @@ bool MolproFF::MMMolecule::change(const PartialMolecule &molecule,
     if (rebuild_all or mol.selectedAtoms().isEmpty())
     {
         //just update the molecule
-        MoleculeVersion oldversion = mol.version();
+        Version oldversion = mol.version();
 
         mol = mol.change(molecule);
         coords = mol.extract().coordGroups();

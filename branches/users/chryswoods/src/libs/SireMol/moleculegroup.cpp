@@ -31,7 +31,6 @@
 #include "moleculegroup.h"
 #include "atomselector.h"
 
-#include "moleculeversion.h"
 #include "molecules.h"
 
 #include "SireMol/errors.h"
@@ -547,6 +546,12 @@ bool MoleculeGroup::isEmpty() const
 
 /** Return the number of molecules in the group */
 int MoleculeGroup::count() const
+{
+    return molecules().count();
+}
+
+/** Return the number of molecules in the group */
+int MoleculeGroup::nMolecules() const
 {
     return molecules().count();
 }

@@ -79,8 +79,16 @@ public:
     bool operator!=(const AABox &other) const;
 
     AABox& operator+=(const AABox &other);
+    AABox& operator+=(const Vector &point);
+    AABox& operator+=(const QVector<Vector> &points);
+
+    AABox operator+(const AABox &other) const;
+    AABox operator+(const Vector &point) const;
+    AABox operator+(const QVector<Vector> &points) const;
 
     void add(const AABox &other);
+    void add(const Vector &point);
+    void add(const QVector<Vector> &points);
 
     void recalculate(const CoordGroupBase &coordgroup);
     void recalculate(const QVector<Vector> &coordinates);
@@ -160,6 +168,8 @@ inline double AABox::radius() const
 }
 
 Q_DECLARE_METATYPE(SireVol::AABox)
+Q_DECLARE_TYPEINFO(SireVol::AABox, Q_MOVABLE_TYPE);
+
 
 SIRE_END_HEADER
 

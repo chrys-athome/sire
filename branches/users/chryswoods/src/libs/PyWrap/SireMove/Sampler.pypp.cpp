@@ -30,12 +30,12 @@ void register_Sampler_class(){
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "probabilityOf"
-            , (double ( ::SireMove::Sampler::* )( ::SireMol::PartialMolecule const &,::SireMol::MoleculeGroup const & ) )( &::SireMove::Sampler::probabilityOf )
-            , ( bp::arg("molecule"), bp::arg("group") ) )    
+            , (double ( ::SireMove::Sampler::* )( ::SireMol::PartialMolecule const &,::SireSystem::QuerySystem const & ) )( &::SireMove::Sampler::probabilityOf )
+            , ( bp::arg("molecule"), bp::arg("system") ) )    
         .def( 
             "sample"
-            , (::boost::tuples::tuple<SireMol::PartialMolecule,double,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type> ( ::SireMove::Sampler::* )( ::SireMol::MoleculeGroup const & ) )( &::SireMove::Sampler::sample )
-            , ( bp::arg("group") ) )    
+            , (::boost::tuples::tuple<SireMol::PartialMolecule,double,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type,boost::tuples::null_type> ( ::SireMove::Sampler::* )( ::SireSystem::QuerySystem const & ) )( &::SireMove::Sampler::sample )
+            , ( bp::arg("system") ) )    
         .def( 
             "setGenerator"
             , (void ( ::SireMove::Sampler::* )( ::SireMaths::RanGenerator const & ) )( &::SireMove::Sampler::setGenerator )

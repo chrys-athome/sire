@@ -166,7 +166,7 @@ AtomSelector AtomSelector::remove(const SelectionFromMol &selection) const
 
 /** Return the selector with all of the atoms in 'selection' additionally
     selected
-    
+
     \throw SireError::incompatible_error
 */
 AtomSelector AtomSelector::selectAll(const SelectionFromMol &selection) const
@@ -174,7 +174,7 @@ AtomSelector AtomSelector::selectAll(const SelectionFromMol &selection) const
     return this->add(selection);
 }
 
-/** Return a selector with all of the atoms in 'selection' deselected 
+/** Return a selector with all of the atoms in 'selection' deselected
 
     \throw SireError::incompatible_error
 */
@@ -193,8 +193,8 @@ AtomSelector AtomSelector::selectNone(const SelectionFromMol &selection) const
 }
 
 /** Return a selector with the selection of the atoms in 'selection'
-    removed. 
-    
+    removed.
+
     \throw SireError::incompatible_error
 */
 AtomSelector AtomSelector::clear(const SelectionFromMol &selection) const
@@ -202,20 +202,20 @@ AtomSelector AtomSelector::clear(const SelectionFromMol &selection) const
     return this->remove(selection);
 }
 
-/** Return a selector with the selection set equal to 'selection' 
+/** Return a selector with the selection set equal to 'selection'
 
     \throw SireError::incompatible_error
 */
 AtomSelector AtomSelector::set(const SelectionFromMol &selection) const
 {
     AtomSelector retval = *this;
-    
+
     retval._pvt_selection() = selectedAtoms().setSelection(selection);
-    
+
     return retval;
 }
 
-/** Return a selector with the selection set equal to 'selection' 
+/** Return a selector with the selection set equal to 'selection'
 
     \throw SireError::incompatible_error
 */
@@ -233,9 +233,9 @@ AtomSelector AtomSelector::select(const SelectionFromMol &selection) const
     return this->add(selection);
 }
 
-/** Return a selector with the atoms in 'selection' removed from 
+/** Return a selector with the atoms in 'selection' removed from
     the selection
-    
+
     \throw SireError::incompatible_error
 */
 AtomSelector AtomSelector::deselect(const SelectionFromMol &selection) const
@@ -253,40 +253,40 @@ AtomSelector AtomSelector::invert() const
 
 /** Return the selector that represents the intersection of this
     selection and 'selection'
-    
+
     \throw SireError::incompatible_error
 */
 AtomSelector AtomSelector::intersect(const SelectionFromMol &selection) const
 {
     AtomSelector retval = *this;
     retval._pvt_selection() = selectedAtoms().intersect(selection);
-    
+
     return *this;
 }
 
 /** Return the selector that represents the union of this
     selection and 'selection'
-    
+
     \throw SireError::incompatible_error
 */
 AtomSelector AtomSelector::unite(const SelectionFromMol &selection) const
 {
     AtomSelector retval = *this;
     retval._pvt_selection() = selectedAtoms().unite(selection);
-    
+
     return *this;
 }
 
 /** Return the selector that represents the difference of this
     selection and 'selection'
-    
+
     \throw SireError::incompatible_error
 */
 AtomSelector AtomSelector::subtract(const SelectionFromMol &selection) const
 {
     AtomSelector retval = *this;
     retval._pvt_selection() = selectedAtoms().subtract(selection);
-    
+
     return *this;
 }
 
@@ -299,8 +299,8 @@ AtomSelector AtomSelector::applyMask(const SelectionFromMol &selection) const
 {
     AtomSelector retval = *this;
     retval._pvt_selection() = selectedAtoms().applyMask(selection);
-    
-    return *this;    
+
+    return *this;
 }
 
 /** Return whether no atoms are selected */
@@ -323,7 +323,7 @@ int AtomSelector::nSelected() const
 
 /** Return the total number of atoms from 'selection' which have been
     selected
-    
+
     \throw SireError::incompatible_error
 */
 int AtomSelector::nSelected(const SelectionFromMol &selection) const
@@ -331,14 +331,14 @@ int AtomSelector::nSelected(const SelectionFromMol &selection) const
     return selectedAtoms().nSelected(selection);
 }
 
-/** Return the number of CutGroups that contain at least one 
+/** Return the number of CutGroups that contain at least one
     selected atom */
 int AtomSelector::nSelectedCutGroups() const
 {
     return selectedAtoms().nSelectedCutGroups();
 }
 
-/** Return the number of Residues that contain at least one 
+/** Return the number of Residues that contain at least one
     selected atom */
 int AtomSelector::nSelectedResidues() const
 {
@@ -398,9 +398,9 @@ bool AtomSelector::selectedNone(const SelectionFromMol &selection) const
     return selectedAtoms().selectedNone(selection);
 }
 
-/** Return whether this selection contains any of the atoms 
+/** Return whether this selection contains any of the atoms
     in the selection 'selection'
-    
+
     \throw SireError::incompatible_error
 */
 bool AtomSelector::intersects(const SelectionFromMol &selection) const
@@ -410,7 +410,7 @@ bool AtomSelector::intersects(const SelectionFromMol &selection) const
 
 /** Return whether this selection contains all of the atoms
     in 'selection'
-    
+
     \throw SireError::incompatible_error
 */
 bool AtomSelector::contains(const SelectionFromMol &selection) const
@@ -421,7 +421,7 @@ bool AtomSelector::contains(const SelectionFromMol &selection) const
 /** Return the AtomIndex objects of all of the selected atoms */
 QSet<AtomIndex> AtomSelector::atomIndexes() const
 {
-    return selectedAtoms().selected();
+    return selectedAtoms().selectedAtoms();
 }
 
 /** Return the CutGroupIDs of all CutGroups that contain at least
@@ -431,7 +431,7 @@ QSet<CutGroupID> AtomSelector::cutGroupIDs() const
     return selectedAtoms().selectedCutGroups();
 }
 
-/** Return the residue numbers of all residues that contain 
+/** Return the residue numbers of all residues that contain
     at least one selected atom */
 QSet<ResNum> AtomSelector::residueNumbers() const
 {

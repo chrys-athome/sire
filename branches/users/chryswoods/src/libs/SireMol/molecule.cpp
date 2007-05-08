@@ -136,13 +136,13 @@ MoleculeID Molecule::ID() const
 
 /** Give this molecule a new (unique) ID number.
     This will reset the molecule's version. */
-void Molecule::setNewID()
+void Molecule::incrementID()
 {
-    data().setNewID();
+    data().incrementID();
 }
 
 /** Return the version number of this molecule. */
-const MoleculeVersion& Molecule::version() const
+const Version& Molecule::version() const
 {
     return data().version();
 }
@@ -193,7 +193,7 @@ Molecule& Molecule::operator=(const detail::MolData &moldata)
 {
     data() = moldata;
     _pvt_selection() = AtomSelection(data().info());
-    
+
     return *this;
 }
 

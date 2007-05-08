@@ -34,7 +34,6 @@
 #include "ljff.h"
 
 #include "SireMol/cgatomid.h"
-#include "SireMol/moleculeversion.h"
 #include "SireMol/molecule.h"
 #include "SireMol/moleculeinfo.h"
 #include "SireMol/propertyextractor.h"

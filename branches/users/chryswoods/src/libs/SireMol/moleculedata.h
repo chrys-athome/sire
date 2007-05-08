@@ -37,13 +37,14 @@
 #include <QMutex>
 
 #include "moleculeid.h"
-#include "moleculeversion.h"
 #include "moleculeinfo.h"
 #include "moleculebonds.h"
 #include "residuebonds.h"
 #include "resnum.h"
 
 #include "idtypes.h"
+
+#include "SireBase/idmajminversion.h"
 
 #include "SireVol/coordgroup.h"
 
@@ -90,6 +91,8 @@ class MoleculeID;
 
 using SireBase::Property;
 using SireBase::PropertyBase;
+using SireBase::IDMajMinVersion;
+using SireBase::Version;
 
 class EditMol;
 class EditMolData;
@@ -216,9 +219,9 @@ public:
 
    ////// Dealing with the ID number and version ///////////
      MoleculeID ID() const;
-     void setNewID();
+     void incrementID();
 
-     const MoleculeVersion& version() const;
+     const Version& version() const;
    /////////////////////////////////////////////////////////
 
 
@@ -436,10 +439,6 @@ public:
    static QSharedDataPointer<MoleculeData> null();
 
 private:
-    static MoleculeID getNewID();
-    static QMutex idmutex;
-    static MoleculeID lastid;
-
     void incrementMajorVersion();
     void incrementMinorVersion();
 
@@ -574,11 +573,8 @@ private:
     QHash<CutGroupID,CutGroup> cutGroups(const ResidueInfo &resinfo) const;
     QHash<CutGroupID,CoordGroup> coordGroups(const ResidueInfo &resinfo) const;
 
-    /** ID number used to identify the molecule */
-    MoleculeID _id;
-
-    /** The version number of the metadata */
-    MoleculeVersion _molversion;
+    /** ID and version number used to identify the molecule */
+    IDMajMinVersion _id_and_version;
 
     /** The metainfo about the molecule - this contains the names of the molecule,
         residue and all atoms, and additional metainfo about all of the residues

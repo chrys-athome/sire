@@ -33,7 +33,6 @@
 #include <QSharedData>
 
 #include "atomselection.h"
-#include "moleculeversion.h"
 
 SIRE_BEGIN_HEADER
 
@@ -49,6 +48,11 @@ QDataStream& operator>>(QDataStream&, SireMol::MolDataView&);
 QDataStream& operator<<(QDataStream&, const SireMol::MoleculeView&);
 QDataStream& operator>>(QDataStream&, SireMol::MoleculeView&);
 
+namespace SireBase
+{
+class Version;
+}
+
 namespace SireMol
 {
 
@@ -59,6 +63,8 @@ class PropertyExtractor;
 class MoleculeData;
 class Molecule;
 class PartialMolecule;
+
+using SireBase::Version;
 
 namespace detail
 {
@@ -220,7 +226,7 @@ protected:
     /** Copy constructor */
     MoleculeView(const MoleculeView &other) : MolDataView(other)
     {}
-    
+
     MoleculeView(const MoleculeData &moldata);
     MoleculeView(const MoleculeData &moldata,
                  const AtomSelection &selected_atoms);

@@ -59,7 +59,7 @@ class RanGeneratorPvt;
     random number generator. Copies are guaranteed to produce
     different random number sequences (thus the possibility
     of accidental repeat random numbers is removed).
-    
+
     @author Christopher Woods
 */
 class SIREMATHS_EXPORT RanGenerator
@@ -78,40 +78,35 @@ public:
     ~RanGenerator();
 
     RanGenerator& operator=(const RanGenerator &other);
-    
+
     bool operator==(const RanGenerator &other) const;
     bool operator!=(const RanGenerator &other) const;
-    
+
     void seed();
     void seed(quint32 seed);
     void seed(const QVector<quint32> &seed);
     void seed(const RanGenerator &other);
 
     double rand();
-    void rand(QVector<double> &array, uint n=0);
-    
+    double rand(double maxval);
+    double rand(double minval, double maxval);
+
     double rand53();
-    void rand53(QVector<double> &array, uint n=0);
-    
+    double rand53(double maxval);
+    double rand53(double minval, double maxval);
+
     double randNorm(double mean, double variance);
-    void randNorm(QVector<double> &array, double mean, 
-                  double variance, uint n=0);
 
     Vector vectorOnSphere();
-    void vectorOnSphere(QVector<Vector> &array, uint n=0);
-    
+
     quint32 randInt();
-    void randInt(QVector<quint32> &array, uint n=0);
-    
     quint32 randInt(quint32 maxval);
-    void randInt(QVector<quint32> &array, quint32 maxval, uint n=0);
-    
+    qint32 randInt(qint32 minval, qint32 maxval);
+
     quint64 randInt64();
-    void randInt64(QVector<quint64> &array, uint n=0);
-    
     quint64 randInt64(quint64 maxval);
-    void randInt64(QVector<quint64> &array, quint64 maxval, uint n=0);
-    
+    qint64 randInt64(qint64 minval, qint64 maxval);
+
     QVector<quint32> getState();
     void setState(const QVector<quint32> &state);
 

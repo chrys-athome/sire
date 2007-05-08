@@ -73,7 +73,6 @@ set ( WRAPMOL_SOURCES
       MoleculeInfo.pypp.cpp
       MoleculeProperty.pypp.cpp
       MoleculeMover.pypp.cpp
-      MoleculeVersion.pypp.cpp
       MoleculeView.pypp.cpp
 
       NewAtom.pypp.cpp

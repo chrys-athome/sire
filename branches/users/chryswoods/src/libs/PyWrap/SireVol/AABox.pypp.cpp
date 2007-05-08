@@ -30,6 +30,14 @@ void register_AABox_class(){
             , (void ( ::SireVol::AABox::* )( ::SireVol::AABox const & ) )( &::SireVol::AABox::add )
             , ( bp::arg("other") ) )    
         .def( 
+            "add"
+            , (void ( ::SireVol::AABox::* )( ::SireMaths::Vector const & ) )( &::SireVol::AABox::add )
+            , ( bp::arg("point") ) )    
+        .def( 
+            "add"
+            , (void ( ::SireVol::AABox::* )( ::QVector<SireMaths::Vector> const & ) )( &::SireVol::AABox::add )
+            , ( bp::arg("points") ) )    
+        .def( 
             "center"
             , (::SireMaths::Vector const & ( ::SireVol::AABox::* )(  ) const)( &::SireVol::AABox::center )
             , bp::return_value_policy< bp::copy_const_reference >() )    
@@ -60,7 +68,12 @@ void register_AABox_class(){
             "minCoords"
             , (::SireMaths::Vector ( ::SireVol::AABox::* )(  ) const)( &::SireVol::AABox::minCoords ) )    
         .def( bp::self != bp::self )    
+        .def( bp::self + bp::self )    
+        .def( bp::self + bp::other< SireMaths::Vector >() )    
+        .def( bp::self + bp::other< QVector<SireMaths::Vector> >() )    
         .def( bp::self += bp::self )    
+        .def( bp::self += bp::other< SireMaths::Vector >() )    
+        .def( bp::self += bp::other< QVector<SireMaths::Vector> >() )    
         .def( bp::self == bp::self )    
         .def( 
             "radius"
