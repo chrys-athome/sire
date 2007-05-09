@@ -98,8 +98,8 @@ MoleculeMover::MoleculeMover(const MoleculeView &molecule)
 {}
 
 /** Construct the mover to move atoms from the 'selection'
-    within the molecule 'molecule' 
-    
+    within the molecule 'molecule'
+
     \throw SireError::incompatible_error
 */
 MoleculeMover::MoleculeMover(const MoleculeView &molecule,
@@ -165,7 +165,7 @@ MoleculeMover MoleculeMover::translate(const Vector &delta) const
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-MoleculeMover MoleculeMover::translate(const AtomIDGroup &group, 
+MoleculeMover MoleculeMover::translate(const AtomIDGroup &group,
                                        const Vector &delta) const
 {
     MoleculeMover ret = *this;
@@ -178,7 +178,7 @@ MoleculeMover MoleculeMover::translate(const AtomIDGroup &group,
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-MoleculeMover MoleculeMover::translate(const AtomIndex &atom, 
+MoleculeMover MoleculeMover::translate(const AtomIndex &atom,
                                        const Vector &delta) const
 {
     MoleculeMover ret = *this;
@@ -191,7 +191,7 @@ MoleculeMover MoleculeMover::translate(const AtomIndex &atom,
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-MoleculeMover MoleculeMover::translate(const QSet<AtomIndex> &atoms, 
+MoleculeMover MoleculeMover::translate(const QSet<AtomIndex> &atoms,
                                        const Vector &delta) const
 {
     MoleculeMover ret = *this;
@@ -205,7 +205,7 @@ MoleculeMover MoleculeMover::translate(const QSet<AtomIndex> &atoms,
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-MoleculeMover MoleculeMover::translate(ResNum resnum, const QStringList &atoms, 
+MoleculeMover MoleculeMover::translate(ResNum resnum, const QStringList &atoms,
                                        const Vector &delta) const
 {
     MoleculeMover ret = *this;
@@ -229,7 +229,7 @@ MoleculeMover MoleculeMover::translate(ResNum resnum, const Vector &delta) const
 
     \throw SireMol::missing_residue
 */
-MoleculeMover MoleculeMover::translate(const QSet<ResNum> &resnums, 
+MoleculeMover MoleculeMover::translate(const QSet<ResNum> &resnums,
                                        const Vector &delta) const
 {
     MoleculeMover ret = *this;
@@ -243,7 +243,7 @@ MoleculeMover MoleculeMover::translate(const QSet<ResNum> &resnums,
     \throw SireError::invalid_index
     \throw SireMol::missing_atom
 */
-MoleculeMover MoleculeMover::translate(ResID resid, const QStringList &atoms, 
+MoleculeMover MoleculeMover::translate(ResID resid, const QStringList &atoms,
                                        const Vector &delta) const
 {
     MoleculeMover ret = *this;
@@ -266,7 +266,7 @@ MoleculeMover MoleculeMover::translate(ResID resid, const Vector &delta) const
 
     \throw SireError::invalid_index
 */
-MoleculeMover MoleculeMover::translate(const QSet<ResID> &resids, 
+MoleculeMover MoleculeMover::translate(const QSet<ResID> &resids,
                                        const Vector &delta) const
 {
     MoleculeMover ret = *this;
@@ -289,7 +289,7 @@ MoleculeMover MoleculeMover::translate(CutGroupID cgid, const Vector &delta) con
 
     \throw SireMol::missing_cutgroup
 */
-MoleculeMover MoleculeMover::translate(const QSet<CutGroupID> &cgids, 
+MoleculeMover MoleculeMover::translate(const QSet<CutGroupID> &cgids,
                                        const Vector &delta) const
 {
     MoleculeMover ret = *this;
@@ -364,7 +364,7 @@ MoleculeMover MoleculeMover::rotate(ResNum resnum, const QStringList &atoms,
 
     \throw SireMol::missing_residue
 */
-MoleculeMover MoleculeMover::rotate(ResNum resnum, const Quaternion &quat, 
+MoleculeMover MoleculeMover::rotate(ResNum resnum, const Quaternion &quat,
                                     const Vector &point) const
 {
     MoleculeMover ret = *this;
@@ -404,7 +404,7 @@ MoleculeMover MoleculeMover::rotate(ResID resid, const QStringList &atoms,
 
     \throw SireError::invalid_index
 */
-MoleculeMover MoleculeMover::rotate(ResID resid, const Quaternion &quat, 
+MoleculeMover MoleculeMover::rotate(ResID resid, const Quaternion &quat,
                                     const Vector &point) const
 {
     MoleculeMover ret = *this;
@@ -430,7 +430,7 @@ MoleculeMover MoleculeMover::rotate(const QSet<ResID> &resids, const Quaternion 
 
     \throw SireMol::missing_cutgroup
 */
-MoleculeMover MoleculeMover::rotate(CutGroupID cgid, const Quaternion &quat, 
+MoleculeMover MoleculeMover::rotate(CutGroupID cgid, const Quaternion &quat,
                                     const Vector &point) const
 {
     MoleculeMover ret = *this;
@@ -443,7 +443,7 @@ MoleculeMover MoleculeMover::rotate(CutGroupID cgid, const Quaternion &quat,
 
     \throw SireMol::missing_cutgroup
 */
-MoleculeMover MoleculeMover::rotate(const QSet<CutGroupID> &cgids, 
+MoleculeMover MoleculeMover::rotate(const QSet<CutGroupID> &cgids,
                                     const Quaternion &quat,
                                     const Vector &point) const
 {
@@ -519,7 +519,7 @@ MoleculeMover MoleculeMover::rotate(ResNum resnum, const QStringList &atoms,
 
     \throw SireMol::missing_residue
 */
-MoleculeMover MoleculeMover::rotate(ResNum resnum, const Matrix &matrix, 
+MoleculeMover MoleculeMover::rotate(ResNum resnum, const Matrix &matrix,
                                     const Vector &point) const
 {
     MoleculeMover ret = *this;
@@ -559,7 +559,7 @@ MoleculeMover MoleculeMover::rotate(ResID resid, const QStringList &atoms,
 
     \throw SireError::invalid_index
 */
-MoleculeMover MoleculeMover::rotate(ResID resid, const Matrix &matrix, 
+MoleculeMover MoleculeMover::rotate(ResID resid, const Matrix &matrix,
                                     const Vector &point) const
 {
     MoleculeMover ret = *this;
@@ -585,7 +585,7 @@ MoleculeMover MoleculeMover::rotate(const QSet<ResID> &resids, const Matrix &mat
 
     \throw SireMol::missing_cutgroup
 */
-MoleculeMover MoleculeMover::rotate(CutGroupID cgid, const Matrix &matrix, 
+MoleculeMover MoleculeMover::rotate(CutGroupID cgid, const Matrix &matrix,
                                     const Vector &point) const
 {
     MoleculeMover ret = *this;
@@ -606,6 +606,20 @@ MoleculeMover MoleculeMover::rotate(const QSet<CutGroupID> &cgids, const Matrix 
     return ret;
 }
 
+/** Simultaneously translate this molecule by 'delta', and rotate it about the
+    point 'point'. The molecule is translated *after* it has been rotated! */
+MoleculeMover MoleculeMover::translateAndRotate(const Vector &delta,
+                                                const Quaternion &quat,
+                                                const Vector &point) const
+{
+    MoleculeMover ret = *this;
+
+    ret.data().rotate(quat,point);
+    ret.data().translate(delta);
+
+    return ret;
+}
+
 /** Set the coordinates of the atoms in the CutGroup with ID == cgid to
     'newcoords'.
 
@@ -615,7 +629,7 @@ MoleculeMover MoleculeMover::rotate(const QSet<CutGroupID> &cgids, const Matrix 
     \throw SireError::incompatible_error
     \throw SireMol::missing_cutgroup
 */
-MoleculeMover MoleculeMover::setCoordinates(CutGroupID cgid, 
+MoleculeMover MoleculeMover::setCoordinates(CutGroupID cgid,
                                             const CoordGroup &newcoords) const
 {
     MoleculeMover ret = *this;
@@ -678,7 +692,7 @@ MoleculeMover MoleculeMover::setCoordinates(const QVector<Vector> &newcoords) co
     \throw SireError::incompatible_error
     \throw SireMol::missing_cutgroup
 */
-MoleculeMover MoleculeMover::setCoordinates(CutGroupID cgid, 
+MoleculeMover MoleculeMover::setCoordinates(CutGroupID cgid,
                                             const QVector<Vector> &newcoords) const
 {
     MoleculeMover ret = *this;
@@ -712,7 +726,7 @@ MoleculeMover MoleculeMover::setCoordinates(
     \throw SireError::incompatible_error
     \throw SireMol::missing_residue
 */
-MoleculeMover MoleculeMover::setCoordinates(ResNum resnum, 
+MoleculeMover MoleculeMover::setCoordinates(ResNum resnum,
                                             const QVector<Vector> &newcoords) const
 {
     MoleculeMover ret = *this;
@@ -745,7 +759,7 @@ MoleculeMover MoleculeMover::setCoordinates(
     \throw SireError::incompatible_error
     \throw SireError::invalid_index
 */
-MoleculeMover MoleculeMover::setCoordinates(ResID resid, 
+MoleculeMover MoleculeMover::setCoordinates(ResID resid,
                                             const QVector<Vector> &newcoords) const
 {
     MoleculeMover ret = *this;
@@ -773,7 +787,7 @@ MoleculeMover MoleculeMover::setCoordinates(
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-MoleculeMover MoleculeMover::setCoordinates(const AtomIndex &atom, 
+MoleculeMover MoleculeMover::setCoordinates(const AtomIndex &atom,
                                             const Vector &newcoords) const
 {
     MoleculeMover ret = *this;
@@ -800,7 +814,7 @@ MoleculeMover MoleculeMover::setCoordinates(
     \throw SireMol::missing_cutgroup
     \throw SireError::invalid_index
 */
-MoleculeMover MoleculeMover::setCoordinates(const CGAtomID &cgatomid, 
+MoleculeMover MoleculeMover::setCoordinates(const CGAtomID &cgatomid,
                                             const Vector &newcoords) const
 {
     MoleculeMover ret = *this;
@@ -827,7 +841,7 @@ MoleculeMover MoleculeMover::setCoordinates(
     \throw SireMol::missing_residue
     \throw SireError::invalid_index
 */
-MoleculeMover MoleculeMover::setCoordinates(const ResNumAtomID &resatomid, 
+MoleculeMover MoleculeMover::setCoordinates(const ResNumAtomID &resatomid,
                                             const Vector &newcoords) const
 {
     MoleculeMover ret = *this;
@@ -853,7 +867,7 @@ MoleculeMover MoleculeMover::setCoordinates(
 
     \throw SireError::invalid_index
 */
-MoleculeMover MoleculeMover::setCoordinates(const ResIDAtomID &resatomid, 
+MoleculeMover MoleculeMover::setCoordinates(const ResIDAtomID &resatomid,
                                             const Vector &newcoords) const
 {
     MoleculeMover ret = *this;
@@ -893,16 +907,16 @@ MoleculeMover MoleculeMover::change(const Bond &bnd, double delta,
                                     const QSet<AtomIndex> &anchors) const
 {
     //Split the molecule into two groups based on the bond
-    boost::tuple<AtomIDGroup,AtomIDGroup> groups = splitMolecule(bnd, 
+    boost::tuple<AtomIDGroup,AtomIDGroup> groups = splitMolecule(bnd,
                                                         data().connectivity());
 
     AtomIDGroup group0 = groups.get<0>();
     AtomIDGroup group1 = groups.get<1>();
 
     MoleculeMover ret = *this;
-    
+
     ret.data().change(bnd, delta, group0, group1, weightfunc, anchors);
-    
+
     return ret;
 }
 
@@ -912,7 +926,7 @@ MoleculeMover MoleculeMover::change(const Bond &bnd, double delta,
     \throw SireMol::anchor_error
     \throw SireMol::ring_error
 */
-MoleculeMover MoleculeMover::change(const Bond &bond, double delta, 
+MoleculeMover MoleculeMover::change(const Bond &bond, double delta,
                                     const QSet<AtomIndex> &anchors) const
 {
     return change(bond, delta, RelFromMass(), anchors);
@@ -932,13 +946,13 @@ MoleculeMover MoleculeMover::change(const Bond &bond, double delta,
     \throw SireMol::ring_error
 
 */
-MoleculeMover MoleculeMover::change(const SireMol::Angle &ang, 
+MoleculeMover MoleculeMover::change(const SireMol::Angle &ang,
                                     const SireMaths::Angle &delta,
-                                    const WeightFunction &weightfunc, 
+                                    const WeightFunction &weightfunc,
                                     const QSet<AtomIndex> &anchors) const
 {
     //split the molecule into two parts based on the angle
-    boost::tuple<AtomIDGroup,AtomIDGroup> groups = splitMolecule(ang, 
+    boost::tuple<AtomIDGroup,AtomIDGroup> groups = splitMolecule(ang,
                                                       data().connectivity());
 
     AtomIDGroup group0 = groups.get<0>();
@@ -947,7 +961,7 @@ MoleculeMover MoleculeMover::change(const SireMol::Angle &ang,
     MoleculeMover ret = *this;
 
     ret.data().change(ang, delta, group0, group1, weightfunc, anchors);
-    
+
     return ret;
 }
 
@@ -957,7 +971,7 @@ MoleculeMover MoleculeMover::change(const SireMol::Angle &ang,
     \throw SireMol::anchor_error
     \throw SireMol::ring_error
 */
-MoleculeMover MoleculeMover::change(const SireMol::Angle &ang, 
+MoleculeMover MoleculeMover::change(const SireMol::Angle &ang,
                                     const SireMaths::Angle &delta,
                                     const QSet<AtomIndex> &anchors) const
 {
@@ -979,7 +993,7 @@ MoleculeMover MoleculeMover::change(const SireMol::Angle &ang,
 
 */
 MoleculeMover MoleculeMover::change(const Dihedral &dih, const SireMaths::Angle &delta,
-                                    const WeightFunction &weightfunc, 
+                                    const WeightFunction &weightfunc,
                                     const QSet<AtomIndex> &anchors) const
 {
     //split the molecule into two parts based on the dihedral
@@ -990,9 +1004,9 @@ MoleculeMover MoleculeMover::change(const Dihedral &dih, const SireMaths::Angle 
 
     MoleculeMover ret = *this;
 
-    ret.data().change(Bond(dih.atom1(),dih.atom2()), 
+    ret.data().change(Bond(dih.atom1(),dih.atom2()),
                       delta, group0, group1, weightfunc, anchors);
-    
+
     return ret;
 }
 
@@ -1023,7 +1037,7 @@ MoleculeMover MoleculeMover::change(const Dihedral &dih, const SireMaths::Angle 
     \throw SireMol::ring_error
 */
 MoleculeMover MoleculeMover::change(const Bond &bnd, const SireMaths::Angle &delta,
-                                    const WeightFunction &weightfunc, 
+                                    const WeightFunction &weightfunc,
                                     const QSet<AtomIndex> &anchors) const
 {
     //split the molecule into two parts based on the bond
@@ -1035,12 +1049,12 @@ MoleculeMover MoleculeMover::change(const Bond &bnd, const SireMaths::Angle &del
     MoleculeMover ret = *this;
 
     ret.data().change(bnd, delta, group0, group1, weightfunc, anchors);
-    
+
     return ret;
 }
 
 /** Overload of the function that uses a default WeightFunction */
-MoleculeMover MoleculeMover::change(const Bond &dih, const SireMaths::Angle &delta, 
+MoleculeMover MoleculeMover::change(const Bond &dih, const SireMaths::Angle &delta,
                                     const QSet<AtomIndex> &anchors) const
 {
     return change(dih, delta, RelFromMass(), anchors);
@@ -1060,9 +1074,9 @@ MoleculeMover MoleculeMover::change(const Bond &dih, const SireMaths::Angle &del
     \throw SireMol::ring_error
 
 */
-MoleculeMover MoleculeMover::change(const Improper &improper, 
+MoleculeMover MoleculeMover::change(const Improper &improper,
                                     const SireMaths::Angle &delta,
-                                    const WeightFunction &weightfunc, 
+                                    const WeightFunction &weightfunc,
                                     const QSet<AtomIndex> &anchors) const
 {
     //split the molecule into two parts based on the improper
@@ -1074,7 +1088,7 @@ MoleculeMover MoleculeMover::change(const Improper &improper,
     MoleculeMover ret = *this;
 
     ret.data().change(improper, delta, group0, group1, weightfunc, anchors);
-    
+
     return ret;
 }
 
@@ -1084,7 +1098,7 @@ MoleculeMover MoleculeMover::change(const Improper &improper,
     \throw SireMol::anchor_error
     \throw SireMol::ring_error
 */
-MoleculeMover MoleculeMover::change(const Improper &improper, 
+MoleculeMover MoleculeMover::change(const Improper &improper,
                                     const SireMaths::Angle &delta,
                                     const QSet<AtomIndex> &anchors) const
 {
@@ -1099,7 +1113,7 @@ MoleculeMover MoleculeMover::change(const Improper &improper,
     \throw SireMol::ring_error
 */
 MoleculeMover MoleculeMover::set(const Bond &bnd, double val,
-                                 const WeightFunction &weightfunc, 
+                                 const WeightFunction &weightfunc,
                                  const QSet<AtomIndex> &anchors) const
 {
     return change(bnd, val-data().measure(bnd), weightfunc, anchors);
@@ -1111,7 +1125,7 @@ MoleculeMover MoleculeMover::set(const Bond &bnd, double val,
     \throw SireMol::anchor_error
     \throw SireMol::ring_error
 */
-MoleculeMover MoleculeMover::set(const Bond &bnd, double val, 
+MoleculeMover MoleculeMover::set(const Bond &bnd, double val,
                                  const QSet<AtomIndex> &anchors) const
 {
     return change(bnd, val-data().measure(bnd), anchors);
@@ -1126,9 +1140,9 @@ MoleculeMover MoleculeMover::set(const Bond &bnd, double val,
     \throw SireMol::anchor_error
     \throw SireMol::ring_error
 */
-MoleculeMover MoleculeMover::set(const SireMol::Angle &ang, 
+MoleculeMover MoleculeMover::set(const SireMol::Angle &ang,
                                  const SireMaths::Angle &val,
-                                 const WeightFunction &weightfunc, 
+                                 const WeightFunction &weightfunc,
                                  const QSet<AtomIndex> &anchors) const
 {
     return change(ang, val-data().measure(ang), weightfunc, anchors);
@@ -1140,7 +1154,7 @@ MoleculeMover MoleculeMover::set(const SireMol::Angle &ang,
     \throw SireMol::anchor_error
     \throw SireMol::ring_error
 */
-MoleculeMover MoleculeMover::set(const SireMol::Angle &ang, 
+MoleculeMover MoleculeMover::set(const SireMol::Angle &ang,
                                  const SireMaths::Angle &val,
                                  const QSet<AtomIndex> &anchors) const
 {
@@ -1155,9 +1169,9 @@ MoleculeMover MoleculeMover::set(const SireMol::Angle &ang,
     \throw SireMol::anchor_error
     \throw SireMol::ring_error
 */
-MoleculeMover MoleculeMover::set(const Dihedral &dih, 
+MoleculeMover MoleculeMover::set(const Dihedral &dih,
                                  const SireMaths::Angle &val,
-                                 const WeightFunction &weightfunc, 
+                                 const WeightFunction &weightfunc,
                                  const QSet<AtomIndex> &anchors) const
 {
     return change(dih, val-data().measure(dih), weightfunc, anchors);
@@ -1169,7 +1183,7 @@ MoleculeMover MoleculeMover::set(const Dihedral &dih,
     \throw SireMol::anchor_error
     \throw SireMol::ring_error
 */
-MoleculeMover MoleculeMover::set(const Dihedral &dih, 
+MoleculeMover MoleculeMover::set(const Dihedral &dih,
                                  const SireMaths::Angle &val,
                                  const QSet<AtomIndex> &anchors) const
 {
@@ -1183,9 +1197,9 @@ MoleculeMover MoleculeMover::set(const Dihedral &dih,
     \throw SireMol::anchor_error
     \throw SireMol::ring_error
 */
-MoleculeMover MoleculeMover::setAll(const Dihedral &dih, 
+MoleculeMover MoleculeMover::setAll(const Dihedral &dih,
                                     const SireMaths::Angle &val,
-                                    const WeightFunction &weightfunc, 
+                                    const WeightFunction &weightfunc,
                                     const QSet<AtomIndex> &anchors) const
 {
     return change(dih, val-data().measure(dih), weightfunc, anchors);
@@ -1197,7 +1211,7 @@ MoleculeMover MoleculeMover::setAll(const Dihedral &dih,
     \throw SireMol::anchor_error
     \throw SireMol::ring_error
 */
-MoleculeMover MoleculeMover::setAll(const Dihedral &dih, 
+MoleculeMover MoleculeMover::setAll(const Dihedral &dih,
                                     const SireMaths::Angle &val,
                                     const QSet<AtomIndex> &anchors) const
 {
@@ -1211,9 +1225,9 @@ MoleculeMover MoleculeMover::setAll(const Dihedral &dih,
     \throw SireMol::anchor_error
     \throw SireMol::ring_error
 */
-MoleculeMover MoleculeMover::set(const Improper &improper, 
+MoleculeMover MoleculeMover::set(const Improper &improper,
                                  const SireMaths::Angle &size,
-                                 const WeightFunction &weightfunc, 
+                                 const WeightFunction &weightfunc,
                                  const QSet<AtomIndex> &anchors) const
 {
     return change(improper, size-data().measure(improper), weightfunc, anchors);
@@ -1225,7 +1239,7 @@ MoleculeMover MoleculeMover::set(const Improper &improper,
     \throw SireMol::anchor_error
     \throw SireMol::ring_error
 */
-MoleculeMover MoleculeMover::set(const Improper &improper, 
+MoleculeMover MoleculeMover::set(const Improper &improper,
                                  const SireMaths::Angle &size,
                                  const QSet<AtomIndex> &anchors) const
 {

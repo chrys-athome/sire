@@ -28,9 +28,14 @@
 
 #include "montecarlo.h"
 
+#include <cmath>
+
+#include "SireUnits/units.h"
+
 #include "SireStream/datastream.h"
 
 using namespace SireMove;
+using namespace SireUnits;
 using namespace SireSystem;
 using namespace SireStream;
 
@@ -72,7 +77,7 @@ MonteCarlo::MonteCarlo(const RanGenerator &generator)
            : MoveBase(), _generator(generator),
              naccept(0), nreject(0)
 {
-    setTemperature( 298.15 * kelvin );
+    setTemperature( 25 * celsius );
 }
 
 /** Copy constructor */

@@ -54,6 +54,7 @@ namespace SireSystem
 {
 
 class SimSystem;
+class QuerySystem;
 
 using SireSim::Simulation;
 
@@ -82,7 +83,7 @@ public:
 
     virtual MoveBase* clone() const=0;
 
-    virtual void initialise(const SimSystem &system)=0;
+    virtual void initialise(QuerySystem &system)=0;
 
     virtual void move(SimSystem &system)=0;
 
@@ -116,7 +117,7 @@ public:
     Move& operator=(const SireBase::SharedPolyPointer<MoveBase> &ptr);
     Move& operator=(const Move &move);
 
-    void initialise(const SimSystem &system);
+    void initialise(QuerySystem &system);
 
     void move(SimSystem &system);
 
@@ -126,7 +127,7 @@ private:
 };
 
 /** Initialise the move to work on the Simulation system 'system' */
-inline void Move::initialise(const SimSystem &system)
+inline void Move::initialise(QuerySystem &system)
 {
     d->initialise(system);
 }

@@ -132,18 +132,18 @@ public:
     MoleculeMover mapInto(const Space &space) const;
 
     MoleculeMover translate(const Vector &delta) const;
-    MoleculeMover translate(const AtomIDGroup &group, 
+    MoleculeMover translate(const AtomIDGroup &group,
                             const Vector &delta) const;
-    MoleculeMover translate(const AtomIndex &atom, 
+    MoleculeMover translate(const AtomIndex &atom,
                             const Vector &delta) const;
-    MoleculeMover translate(const QSet<AtomIndex> &atoms, 
+    MoleculeMover translate(const QSet<AtomIndex> &atoms,
                             const Vector &delta) const;
-    MoleculeMover translate(ResNum resnum, const QStringList &atoms, 
+    MoleculeMover translate(ResNum resnum, const QStringList &atoms,
                             const Vector &delta) const;
     MoleculeMover translate(ResNum resnum, const Vector &delta) const;
-    MoleculeMover translate(const QSet<ResNum> &resnums, 
+    MoleculeMover translate(const QSet<ResNum> &resnums,
                             const Vector &delta) const;
-    MoleculeMover translate(ResID resid, const QStringList &atoms, 
+    MoleculeMover translate(ResID resid, const QStringList &atoms,
                             const Vector &delta) const;
     MoleculeMover translate(ResID resid, const Vector &delta) const;
     MoleculeMover translate(const QSet<ResID> &resids, const Vector &delta) const;
@@ -151,50 +151,53 @@ public:
     MoleculeMover translate(const QSet<CutGroupID> &cgids, const Vector &delta) const;
 
     MoleculeMover rotate(const Quaternion &quat, const Vector &point) const;
-    MoleculeMover rotate(const AtomIDGroup &group, const Quaternion &quat, 
+    MoleculeMover rotate(const AtomIDGroup &group, const Quaternion &quat,
                          const Vector &point) const;
-    MoleculeMover rotate(const AtomIndex &atom, const Quaternion &quat, 
+    MoleculeMover rotate(const AtomIndex &atom, const Quaternion &quat,
                          const Vector &point) const;
-    MoleculeMover rotate(const QSet<AtomIndex> &atoms, const Quaternion &quat, 
+    MoleculeMover rotate(const QSet<AtomIndex> &atoms, const Quaternion &quat,
                          const Vector &point) const;
-    MoleculeMover rotate(ResNum resnum, const QStringList &atoms, 
+    MoleculeMover rotate(ResNum resnum, const QStringList &atoms,
                          const Quaternion &quat, const Vector &point) const;
-    MoleculeMover rotate(ResNum resnum, const Quaternion &quat, 
+    MoleculeMover rotate(ResNum resnum, const Quaternion &quat,
                          const Vector &point) const;
-    MoleculeMover rotate(const QSet<ResNum> &resnums, const Quaternion &quat, 
+    MoleculeMover rotate(const QSet<ResNum> &resnums, const Quaternion &quat,
                          const Vector &point) const;
-    MoleculeMover rotate(ResID resid, const QStringList &atoms, 
+    MoleculeMover rotate(ResID resid, const QStringList &atoms,
                          const Quaternion &quat, const Vector &point) const;
-    MoleculeMover rotate(ResID resid, const Quaternion &quat, 
+    MoleculeMover rotate(ResID resid, const Quaternion &quat,
                          const Vector &point) const;
-    MoleculeMover rotate(const QSet<ResID> &resids, const Quaternion &quat, 
+    MoleculeMover rotate(const QSet<ResID> &resids, const Quaternion &quat,
                          const Vector &point) const;
-    MoleculeMover rotate(CutGroupID cgid, const Quaternion &quat, 
+    MoleculeMover rotate(CutGroupID cgid, const Quaternion &quat,
                          const Vector &point) const;
-    MoleculeMover rotate(const QSet<CutGroupID> &cgids, const Quaternion &quat, 
+    MoleculeMover rotate(const QSet<CutGroupID> &cgids, const Quaternion &quat,
                          const Vector &point) const;
 
     MoleculeMover rotate(const Matrix &matrix, const Vector &point) const;
-    MoleculeMover rotate(const AtomIDGroup &group, const Matrix &matrix, 
+    MoleculeMover rotate(const AtomIDGroup &group, const Matrix &matrix,
                          const Vector &point) const;
-    MoleculeMover rotate(const AtomIndex &atom, const Matrix &matrix, 
+    MoleculeMover rotate(const AtomIndex &atom, const Matrix &matrix,
                          const Vector &point) const;
-    MoleculeMover rotate(const QSet<AtomIndex> &atoms, const Matrix &matrix, 
+    MoleculeMover rotate(const QSet<AtomIndex> &atoms, const Matrix &matrix,
                          const Vector &point) const;
     MoleculeMover rotate(ResNum resnum, const QStringList &atoms, const Matrix &matrix,
                          const Vector &point) const;
     MoleculeMover rotate(ResNum resnum, const Matrix &matrix, const Vector &point) const;
-    MoleculeMover rotate(const QSet<ResNum> &resnums, const Matrix &matrix, 
+    MoleculeMover rotate(const QSet<ResNum> &resnums, const Matrix &matrix,
                          const Vector &point) const;
     MoleculeMover rotate(ResID resid, const QStringList &atoms, const Matrix &matrix,
                          const Vector &point) const;
     MoleculeMover rotate(ResID resid, const Matrix &matrix, const Vector &point) const;
-    MoleculeMover rotate(const QSet<ResID> &resids, const Matrix &matrix, 
+    MoleculeMover rotate(const QSet<ResID> &resids, const Matrix &matrix,
                          const Vector &point) const;
-    MoleculeMover rotate(CutGroupID cgid, const Matrix &matrix, 
+    MoleculeMover rotate(CutGroupID cgid, const Matrix &matrix,
                          const Vector &point) const;
-    MoleculeMover rotate(const QSet<CutGroupID> &cgids, const Matrix &matrix, 
+    MoleculeMover rotate(const QSet<CutGroupID> &cgids, const Matrix &matrix,
                          const Vector &point) const;
+
+    MoleculeMover translateAndRotate(const Vector &delta,
+                                     const Quaternion &quat, const Vector &point) const;
 
     MoleculeMover setCoordinates(CutGroupID cgid, const CoordGroup &newcoords) const;
     MoleculeMover setCoordinates(const QHash<CutGroupID,CoordGroup> &newcoords) const;
@@ -202,9 +205,9 @@ public:
 
     MoleculeMover setCoordinates(const QVector<Vector> &newcoords) const;
 
-    MoleculeMover setCoordinates(CutGroupID cgid, 
+    MoleculeMover setCoordinates(CutGroupID cgid,
                                  const QVector<Vector> &newcoords) const;
-    MoleculeMover setCoordinates(const QHash< CutGroupID,QVector<Vector> > 
+    MoleculeMover setCoordinates(const QHash< CutGroupID,QVector<Vector> >
                                                                 &newcoords) const;
 
     MoleculeMover setCoordinates(ResNum resnum, const QVector<Vector> &newcoords) const;
@@ -216,15 +219,15 @@ public:
     MoleculeMover setCoordinates(const AtomIndex &atom, const Vector &newcoords) const;
     MoleculeMover setCoordinates(const QHash<AtomIndex,Vector> &newcoords) const;
 
-    MoleculeMover setCoordinates(const CGAtomID &cgatomid, 
+    MoleculeMover setCoordinates(const CGAtomID &cgatomid,
                                  const Vector &newcoords) const;
     MoleculeMover setCoordinates(const QHash<CGAtomID,Vector> &newcoords) const;
 
-    MoleculeMover setCoordinates(const ResNumAtomID &resatomid, 
+    MoleculeMover setCoordinates(const ResNumAtomID &resatomid,
                                  const Vector &newcoords) const;
     MoleculeMover setCoordinates(const QHash<ResNumAtomID,Vector> &newcoords) const;
 
-    MoleculeMover setCoordinates(const ResIDAtomID &resatomid, 
+    MoleculeMover setCoordinates(const ResIDAtomID &resatomid,
                                  const Vector &newcoords) const;
     MoleculeMover setCoordinates(const QHash<ResIDAtomID,Vector> &newcoords) const;
 

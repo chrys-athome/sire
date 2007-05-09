@@ -46,6 +46,7 @@ namespace SireCAS
 class Function;
 class Expression;
 class Values;
+class Symbol;
 }
 
 namespace SireMol
@@ -77,6 +78,8 @@ class SystemMonitors;
 using SireCAS::Function;
 using SireCAS::Expression;
 using SireCAS::Values;
+using SireCAS::Symbol;
+using SireCAS::SymbolID;
 
 using SireMol::PartialMolecule;
 using SireMol::MoleculeGroup;

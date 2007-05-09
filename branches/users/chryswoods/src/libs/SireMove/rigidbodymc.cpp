@@ -30,9 +30,21 @@
 
 #include "SireSystem/simsystem.h"
 
+#include "SireMol/moleculemover.h"
+#include "SireMol/propertyextractor.h"
+
+#include "SireMaths/quaternion.h"
+
+#include "SireUnits/units.h"
+
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
 using namespace SireMove;
 using namespace SireSystem;
 using namespace SireMol;
+using namespace SireUnits;
+using namespace SireStream;
 using namespace SireMaths;
 
 /////////////
@@ -82,7 +94,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
 }
 
 /** Deserialise from a binary datastream */
-QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, )
+QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RigidBodyMC &rbmc)
 {
     VersionID v = readHeader(ds, r_rbmc);
 
@@ -103,7 +115,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, )
 /** Null constructor */
 RigidBodyMC::RigidBodyMC(const RanGenerator &generator)
             : MonteCarlo(generator),
-              adel( 5 * Angstroms ),
+              adel( 5 * angstrom ),
               rdel( SireMaths::Angle::degrees(5) )
 {}
 
@@ -112,7 +124,7 @@ RigidBodyMC::RigidBodyMC(const RanGenerator &generator)
 RigidBodyMC::RigidBodyMC(const Sampler &sampler, const RanGenerator &generator)
             : MonteCarlo(generator),
               _sampler(sampler),
-              adel( 5 * Angstroms ),
+              adel( 5 * angstrom ),
               rdel( SireMaths::Angle::degrees(5) )
 {}
 
@@ -132,7 +144,7 @@ RigidBodyMC::RigidBodyMC(const Sampler &sampler,
 /** Copy constructor */
 RigidBodyMC::RigidBodyMC(const RigidBodyMC &other)
             : MonteCarlo(other),
-              _sampler(other.sampler),
+              _sampler(other._sampler),
               nrg_component(other.nrg_component),
               adel(other.adel), rdel(other.rdel)
 {}
@@ -174,6 +186,13 @@ void RigidBodyMC::rollBack(SimSystem &system,
     _sampler = checkpoint.sampler();
 }
 
+/** Initialise this move from the system - this is to try
+    and catch any silly errors before the simulation starts... */
+void RigidBodyMC::initialise(QuerySystem &system)
+{
+    _sampler.sample(system);
+}
+
 /** Attempt a single rigid-body move */
 void RigidBodyMC::move(SimSystem &system)
 {
@@ -189,7 +208,7 @@ void RigidBodyMC::move(SimSystem &system)
         //randomly select a molecule to move
         tuple<PartialMolecule,double> mol_and_bias = _sampler.sample(system);
 
-        double oldbias = mol_and_bias.get<1>();
+        double old_bias = mol_and_bias.get<1>();
 
         //now translate and rotate the molecule
         Vector delta = _pvt_generator().vectorOnSphere(adel);
@@ -206,24 +225,24 @@ void RigidBodyMC::move(SimSystem &system)
                                                );
 
         //update the simulation with the new coordinates
-        newmol = simulation.change(newmol);
+        newmol = system.change(newmol);
 
         //calculate the energy of the system
         double new_nrg = system.energy(nrg_component);
 
         //get the new bias on this molecule
-        double newbias = sampler.probabilityOf(newmol, system);
+        double new_bias = _sampler.probabilityOf(newmol, system);
 
         //accept or reject the move based on the change of energy
         //and the biasing factors
         if (not this->test(new_nrg, old_nrg, new_bias, old_bias))
             //the move has been rejected - reset the state
-            rollBack(checkpoint);
+            rollBack(system, checkpoint);
     }
     catch(...)
     {
         //rollback to before the move
-        rollBack(checkpoint);
+        rollBack(system, checkpoint);
 
         //rethrow the exception
         throw;

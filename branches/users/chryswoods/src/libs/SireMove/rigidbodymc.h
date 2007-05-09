@@ -52,6 +52,7 @@ QDataStream& operator>>(QDataStream&, SireMove::RigidBodyMC&);
 namespace SireSystem
 {
 class SimSystem;
+class CheckPoint;
 }
 
 namespace SireMol
@@ -121,6 +122,8 @@ public:
 
     void setComponent(const Symbol &energy);
 
+    void initialise(QuerySystem &system);
+
     void move(SimSystem &system);
 
 protected:
@@ -136,7 +139,7 @@ protected:
 
         ~CheckPoint();
 
-        const SireMove::CheckPoint& system() const
+        const SireSystem::CheckPoint& system() const
         {
             return sys_ckpt;
         }
@@ -155,7 +158,9 @@ protected:
     };
 
     RigidBodyMC::CheckPoint checkPoint(QuerySystem &system) const;
-    void rollBack(const RigidBodyMC::CheckPoint &checkpoint);
+
+    void rollBack(SimSystem &system,
+                  const RigidBodyMC::CheckPoint &checkpoint);
 
 private:
     /** The sampler used to select random molecules from the

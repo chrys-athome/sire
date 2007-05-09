@@ -36,7 +36,7 @@ using namespace SireSystem;
 LocalSimSystem::LocalSimSystem(const CheckPoint &checkpoint)
                : SimSystem()
 {
-    this->rollback(checkpoint);
+    this->rollBack(checkpoint);
 }
 
 /** Destructor */

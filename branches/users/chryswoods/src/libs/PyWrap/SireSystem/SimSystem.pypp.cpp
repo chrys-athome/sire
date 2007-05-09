@@ -78,8 +78,8 @@ void register_SimSystem_class(){
             , (void ( ::SireSystem::SimSystem::* )( ::SireMol::Molecules const &,::QSet<SireFF::FFGroupID> const &,::QSet<SireMol::MoleculeGroupID> const & ) )( &::SireSystem::SimSystem::remove )
             , ( bp::arg("molecules"), bp::arg("ffgroupids"), bp::arg("molgroupids")=::QSet<SireMol::MoleculeGroupID>( ) ) )    
         .def( 
-            "rollback"
-            , (void ( ::SireSystem::SimSystem::* )( ::SireSystem::CheckPoint const & ) )( &::SireSystem::SimSystem::rollback )
+            "rollBack"
+            , (void ( ::SireSystem::SimSystem::* )( ::SireSystem::CheckPoint const & ) )( &::SireSystem::SimSystem::rollBack )
             , ( bp::arg("checkpoint") ) )    
         .def( 
             "setProperty"

@@ -109,7 +109,7 @@ private:
     double beta;
 
     /** The number of times this move has been attempted */
-    quint32 nattempt;
+    quint32 naccept;
 
     /** The number of times this move has been rejected */
     quint32 nreject;

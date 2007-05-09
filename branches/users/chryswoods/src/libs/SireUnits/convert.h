@@ -29,25 +29,186 @@
 #ifndef SIREUNITS_CONVERT_H
 #define SIREUNITS_CONVERT_H
 
+#include "SireUnits/units.h"
+
+#include <QDebug>
+
 namespace SireUnits
 {
 
-/** Convert 'val' from units of 'fromunits' to units of 'tounits' */
-inline double convert(double val, double fromunits, double tounits)
+/////////////////////////////////////////////////
+// Conversion functions for derived units      //
+/////////////////////////////////////////////////
+
+inline double convertFrom(double val, const Dimension::DerivedUnit &from_units)
 {
-    return val * (fromunits / tounits);
+    return from_units.convertToInternal(val);
 }
 
-/** Convert 'val' from units of 'fromunits' to internal units. */
-inline double convertFrom(double val, double fromunits)
+inline double convertTo(double val, const Dimension::DerivedUnit &to_units)
 {
-    return val * fromunits;
+    return to_units.convertFromInternal(val);
 }
 
-/** Convert 'val' from internal units to value of 'tounits' */
-inline double convertTo(double val, double tounits)
+inline double convert(double val, const Dimension::DerivedUnit &from_units,
+                                  const Dimension::DerivedUnit &to_units)
 {
-    return val / tounits;
+    return convertTo( convertFrom(val,from_units), to_units );
+}
+
+inline double convert(double val, const Dimension::DerivedUnit &to_units)
+{
+    return convertTo(val, to_units);
+}
+
+/////////////////////////////////////////////////
+// Conversion functions for lengths            //
+/////////////////////////////////////////////////
+
+inline double convertFrom(double val, const Dimension::Length &from_units)
+{
+    return from_units.convertToInternal(val);
+}
+
+inline double convertTo(double val, const Dimension::Length &to_units)
+{
+    return to_units.convertFromInternal(val);
+}
+
+inline double convert(double val, const Dimension::Length &from_units,
+                                  const Dimension::Length &to_units)
+{
+    return convertTo( convertFrom(val,from_units), to_units );
+}
+
+inline double convert(double val, const Dimension::Length &to_units)
+{
+    return convertTo(val, to_units);
+}
+
+/////////////////////////////////////////////////
+// Conversion functions for times              //
+/////////////////////////////////////////////////
+
+inline double convertFrom(double val, const Dimension::Time &from_units)
+{
+    return from_units.convertToInternal(val);
+}
+
+inline double convertTo(double val, const Dimension::Time &to_units)
+{
+    return to_units.convertFromInternal(val);
+}
+
+inline double convert(double val, const Dimension::Time &from_units,
+                                  const Dimension::Time &to_units)
+{
+    return convertTo( convertFrom(val,from_units), to_units );
+}
+
+inline double convert(double val, const Dimension::Time &to_units)
+{
+    return convertTo(val, to_units);
+}
+
+/////////////////////////////////////////////////
+// Conversion functions for mass               //
+/////////////////////////////////////////////////
+
+inline double convertFrom(double val, const Dimension::Mass &from_units)
+{
+    return from_units.convertToInternal(val);
+}
+
+inline double convertTo(double val, const Dimension::Mass &to_units)
+{
+    return to_units.convertFromInternal(val);
+}
+
+inline double convert(double val, const Dimension::Mass &from_units,
+                                  const Dimension::Mass &to_units)
+{
+    return convertTo( convertFrom(val,from_units), to_units );
+}
+
+inline double convert(double val, const Dimension::Mass &to_units)
+{
+    return convertTo(val, to_units);
+}
+
+/////////////////////////////////////////////////
+// Conversion functions for charge             //
+/////////////////////////////////////////////////
+
+inline double convertFrom(double val, const Dimension::Charge &from_units)
+{
+    return from_units.convertToInternal(val);
+}
+
+inline double convertTo(double val, const Dimension::Charge &to_units)
+{
+    return to_units.convertFromInternal(val);
+}
+
+inline double convert(double val, const Dimension::Charge &from_units,
+                                  const Dimension::Charge &to_units)
+{
+    return convertTo( convertFrom(val,from_units), to_units );
+}
+
+inline double convert(double val, const Dimension::Charge &to_units)
+{
+    return convertTo(val, to_units);
+}
+
+/////////////////////////////////////////////////
+// Conversion functions for energy             //
+/////////////////////////////////////////////////
+
+inline double convertFrom(double val, const Dimension::Energy &from_units)
+{
+    return from_units.convertToInternal(val);
+}
+
+inline double convertTo(double val, const Dimension::Energy &to_units)
+{
+    return to_units.convertFromInternal(val);
+}
+
+inline double convert(double val, const Dimension::Energy &from_units,
+                                  const Dimension::Energy &to_units)
+{
+    return convertTo( convertFrom(val,from_units), to_units );
+}
+
+inline double convert(double val, const Dimension::Energy &to_units)
+{
+    return convertTo(val, to_units);
+}
+
+/////////////////////////////////////////////////
+// Conversion functions for temperature        //
+/////////////////////////////////////////////////
+
+inline double convertFrom(double val, const Dimension::Temperature &from_units)
+{
+    return from_units.convertToInternal(val);
+}
+
+inline double convertTo(double val, const Dimension::Temperature &to_units)
+{
+    return to_units.convertFromInternal(val);
+}
+
+inline double convert(double val, const Dimension::Temperature &from_units,
+                                  const Dimension::Temperature &to_units)
+{
+    return convertTo( convertFrom(val,from_units), to_units );
+}
+
+inline double convert(double val, const Dimension::Temperature &to_units)
+{
+    return convertTo(val, to_units);
 }
 
 }

@@ -328,6 +328,10 @@ void register_MoleculeMover_class(){
             "translate"
             , (::SireMol::MoleculeMover ( ::SireMol::MoleculeMover::* )( ::QSet<SireMol::CutGroupID> const &,::SireMaths::Vector const & ) const)( &::SireMol::MoleculeMover::translate )
             , ( bp::arg("cgids"), bp::arg("delta") ) )    
+        .def( 
+            "translateAndRotate"
+            , &::SireMol::MoleculeMover::translateAndRotate
+            , ( bp::arg("delta"), bp::arg("quat"), bp::arg("point") ) )    
         .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMol::MoleculeMover >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
