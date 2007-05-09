@@ -22,16 +22,23 @@ set ( WRAPSYSTEM_SOURCES
 
       siresystem_containers.cpp
 
+      CheckPoint.pypp.cpp
+
+      LocalSimSystem.pypp.cpp
+
       MoveBase.pypp.cpp
       Move.pypp.cpp
       MovesBase.pypp.cpp
       Moves.pypp.cpp
+
+      QuerySystem.pypp.cpp
 
       SameMoves.pypp.cpp
       SimSystem.pypp.cpp
       SystemData.pypp.cpp
       SystemID.pypp.cpp
       System.pypp.cpp
+      SystemMonitors.pypp.cpp
     
     )
 

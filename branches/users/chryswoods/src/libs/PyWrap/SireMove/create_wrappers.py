@@ -12,7 +12,7 @@ from sireutils import *
 
 wrap_classes = [ "MonteCarlo",
                  "PrefSampler",
-                 #"RigidBodyMC",
+                 "RigidBodyMC",
                  "SamplerBase",
                  "Sampler",
                  "UniformSampler"

@@ -8,6 +8,8 @@ from Sire.CAS import *
 from Sire.Maths import *
 from Sire.Qt import *
 from Sire.Units import *
+from Sire.System import *
+from Sire.Move import *
 
 import copy
 
@@ -88,15 +90,36 @@ print "... took %d ms" % ms
       
 print "(%d molecules in group A, %d in group B)" % (n_in_a, n_in_b)
 
+print cljff_a.energy(), cljff_b.energy(), cljff_a_b.energy()
+print cljff_a.energy() + cljff_b.energy() + cljff_a_b.energy()
+
 #add the forcefields to a forcefields object
 ffields = ForceFields()
 ffields.add(cljff_a)
 ffields.add(cljff_b)
 ffields.add(cljff_a_b)
       
+print ffields.nForceFields()
+      
 #now calculate the energy of the forcefield
 print "Calculating the energy..."
-
 print ffields.energy()
 
-print ffields.forceFields()
+group = MoleculeGroup("solvent", mols)
+
+system = System(group, ffields)
+
+mc = RigidBodyMC( UniformSampler(group) )
+
+PDB().write(system.info().groups().molecules(), "test00.pdb")
+
+timer.start()
+moves = system.run(mc, 1000)
+ms = timer.elapsed()
+
+PDB().write(system.info().groups().molecules(), "test01.pdb")
+
+print "1000 moves took %d ms" % ms
+
+print moves.count(), moves.percentProgress()
+

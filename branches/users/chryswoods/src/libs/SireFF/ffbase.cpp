@@ -376,7 +376,9 @@ FFBase::FFBase() : QSharedData(),
                    ffname(QObject::tr("Unnamed")),
                    id_and_version(&forcefield_incremint),
                    isdirty(true)
-{}
+{
+    id_and_version.incrementID();
+}
 
 /** Construct a forcefield called 'name' */
 FFBase::FFBase(const QString &name)
@@ -384,7 +386,9 @@ FFBase::FFBase(const QString &name)
          ffname(name),
          id_and_version(&forcefield_incremint),
          isdirty(true)
-{}
+{
+    id_and_version.incrementID();
+}
 
 /** Copy constructor */
 FFBase::FFBase(const FFBase &other)

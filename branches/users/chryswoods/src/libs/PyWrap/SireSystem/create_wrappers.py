@@ -10,15 +10,19 @@ from pygccxml import declarations
 sys.path.append("..")
 from sireutils import *
 
-wrap_classes = [ "MoveBase",
+wrap_classes = [ "CheckPoint",
+                 "LocalSimSystem",
+                 "MoveBase",
                  "Move",
                  "MovesBase",
                  "SameMoves",
                  "Moves",
+                 "QuerySystem",
                  "SimSystem",
                  "SystemData",
                  "System",
-                 "SystemID"
+                 "SystemID",
+                 "SystemMonitors"
                ]
 
 huge_classes = []
@@ -34,8 +38,12 @@ extra_includes = [ "SireMol/molecule.h",
 def remove_next_move(c):
     c.decls( "nextMove", allow_empty=False ).exclude()
 
+def fix_noncopyable(c):
+    c.noncopyable = False
+
 special_code = { "MovesBase" : remove_next_move,
-                 "SameMoves" : remove_next_move }
+                 "SameMoves" : remove_next_move,
+                 "Moves" : fix_noncopyable }
 
 implicitly_convertible = [ ("const SireSystem::MoveBase&",
                             "SireSystem::Move"),

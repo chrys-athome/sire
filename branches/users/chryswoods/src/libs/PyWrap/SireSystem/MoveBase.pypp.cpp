@@ -22,7 +22,7 @@ void register_MoveBase_class(){
     bp::class_< SireSystem::MoveBase, boost::noncopyable >( "MoveBase", bp::no_init )    
         .def( 
             "initialise"
-            , (void ( ::SireSystem::MoveBase::* )( ::SireSystem::SimSystem const & ) )( &::SireSystem::MoveBase::initialise )
+            , (void ( ::SireSystem::MoveBase::* )( ::SireSystem::QuerySystem & ) )( &::SireSystem::MoveBase::initialise )
             , ( bp::arg("system") ) )    
         .def( 
             "move"

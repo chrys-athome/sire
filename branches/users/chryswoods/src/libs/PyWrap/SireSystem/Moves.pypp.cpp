@@ -13,19 +13,24 @@
 
 namespace bp = boost::python;
 
+SireSystem::Moves __copy__(const SireSystem::Moves &other){ return SireSystem::Moves(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 const char* pvt_get_name(const SireSystem::Moves&){ return "SireSystem::Moves";}
 
 void register_Moves_class(){
 
-    bp::class_< SireSystem::Moves, boost::noncopyable >( "Moves" )    
+    bp::class_< SireSystem::Moves >( "Moves" )    
+        .def( bp::init< >() )    
+        .def( bp::init< SireSystem::Move const & >(( bp::arg("move") )) )    
+        .def( bp::init< SireSystem::MovesBase const & >(( bp::arg("moves") )) )    
         .def( 
             "count"
             , (int ( ::SireSystem::Moves::* )(  ) const)( &::SireSystem::Moves::count ) )    
         .def( 
             "initialise"
-            , (void ( ::SireSystem::Moves::* )( ::SireSystem::SimSystem & ) )( &::SireSystem::Moves::initialise )
+            , (void ( ::SireSystem::Moves::* )( ::SireSystem::QuerySystem & ) )( &::SireSystem::Moves::initialise )
             , ( bp::arg("system") ) )    
         .def( 
             "pause"
@@ -51,6 +56,7 @@ void register_Moves_class(){
         .def( 
             "stop"
             , (void ( ::SireSystem::Moves::* )(  ) )( &::SireSystem::Moves::stop ) )    
+        .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireSystem::Moves >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireSystem::Moves >,

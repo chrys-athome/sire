@@ -25,7 +25,7 @@ void register_MovesBase_class(){
             , (int ( ::SireSystem::MovesBase::* )(  ) const)( &::SireSystem::MovesBase::count ) )    
         .def( 
             "initialise"
-            , (void ( ::SireSystem::MovesBase::* )( ::SireSystem::SimSystem & ) )( &::SireSystem::MovesBase::initialise )
+            , (void ( ::SireSystem::MovesBase::* )( ::SireSystem::QuerySystem & ) )( &::SireSystem::MovesBase::initialise )
             , ( bp::arg("system") ) )    
         .def( 
             "typeName"

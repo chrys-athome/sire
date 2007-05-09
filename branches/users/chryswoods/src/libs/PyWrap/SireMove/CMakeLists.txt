@@ -26,6 +26,8 @@ set ( WRAPMOVE_SOURCES
 
       PrefSampler.pypp.cpp
       
+      RigidBodyMC.pypp.cpp
+      
       SamplerBase.pypp.cpp
       Sampler.pypp.cpp
       

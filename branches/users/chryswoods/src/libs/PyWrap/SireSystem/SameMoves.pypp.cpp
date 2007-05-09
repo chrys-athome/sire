@@ -29,7 +29,7 @@ void register_SameMoves_class(){
             , (int ( ::SireSystem::SameMoves::* )(  ) const)( &::SireSystem::SameMoves::count ) )    
         .def( 
             "initialise"
-            , (void ( ::SireSystem::SameMoves::* )( ::SireSystem::SimSystem & ) )( &::SireSystem::SameMoves::initialise )
+            , (void ( ::SireSystem::SameMoves::* )( ::SireSystem::QuerySystem & ) )( &::SireSystem::SameMoves::initialise )
             , ( bp::arg("system") ) )    
         .def( 
             "typeName"

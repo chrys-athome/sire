@@ -17,6 +17,10 @@
 
 #include "SireFF/ffgroupid.h"
 
+#include "CheckPoint.pypp.hpp"
+
+#include "LocalSimSystem.pypp.hpp"
+
 #include "Move.pypp.hpp"
 
 #include "MoveBase.pypp.hpp"
@@ -24,6 +28,8 @@
 #include "Moves.pypp.hpp"
 
 #include "MovesBase.pypp.hpp"
+
+#include "QuerySystem.pypp.hpp"
 
 #include "SameMoves.pypp.hpp"
 
@@ -35,12 +41,22 @@
 
 #include "SystemID.pypp.hpp"
 
+#include "SystemMonitors.pypp.hpp"
+
 #include "siresystem_containers.h"
 
 namespace bp = boost::python;
 
 BOOST_PYTHON_MODULE(_System){
     register_SireSystem_containers();
+
+    register_CheckPoint_class();
+
+    register_QuerySystem_class();
+
+    register_SimSystem_class();
+
+    register_LocalSimSystem_class();
 
     register_Move_class();
 
@@ -52,7 +68,7 @@ BOOST_PYTHON_MODULE(_System){
 
     register_SameMoves_class();
 
-    register_SimSystem_class();
+    register_SystemMonitors_class();
 
     register_System_class();
 

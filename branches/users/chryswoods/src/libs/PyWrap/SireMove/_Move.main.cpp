@@ -21,6 +21,8 @@
 
 #include "PrefSampler.pypp.hpp"
 
+#include "RigidBodyMC.pypp.hpp"
+
 #include "Sampler.pypp.hpp"
 
 #include "SamplerBase.pypp.hpp"
@@ -39,6 +41,8 @@ BOOST_PYTHON_MODULE(_Move){
     register_SamplerBase_class();
 
     register_PrefSampler_class();
+
+    register_RigidBodyMC_class();
 
     register_Sampler_class();
 

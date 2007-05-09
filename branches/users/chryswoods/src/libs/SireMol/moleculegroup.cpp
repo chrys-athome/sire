@@ -200,12 +200,16 @@ QDataStream SIRESTREAM_EXPORT &operator>>(QDataStream &ds,
 /** Null constructor */
 MoleculeGroupPvt::MoleculeGroupPvt()
                  : QSharedData(), id_and_version(&molgroup_incremint)
-{}
+{
+    id_and_version.incrementID();
+}
 
 /** Construct a named, empty group */
 MoleculeGroupPvt::MoleculeGroupPvt(const QString &name)
                  : QSharedData(), nme(name), id_and_version(&molgroup_incremint)
-{}
+{
+    id_and_version.incrementID();
+}
 
 /** Construct a named group that contains 'molecules'
 
@@ -217,7 +221,9 @@ MoleculeGroupPvt::MoleculeGroupPvt(const QString &name,
                    mols(molecules),
                    nme(name),
                    id_and_version(&molgroup_incremint)
-{}
+{
+    id_and_version.incrementID();
+}
 
 /** Copy constructor */
 MoleculeGroupPvt::MoleculeGroupPvt(const MoleculeGroupPvt &other)
