@@ -26,8 +26,12 @@ void register_DerivedUnit_class(){
             "multiply"
             , &::SireUnits::Dimension::DerivedUnit::multiply
             , ( bp::arg("unit") ) )    
+        .def( bp::self * bp::other< SireUnits::Dimension::Quantity >() )    
         .def( bp::other< double >() * bp::self )    
+        .def( bp::self / bp::other< SireUnits::Dimension::Quantity >() )    
         .def( bp::other< double >() / bp::self )    
+        .def( bp::self * bp::other<SireUnits::Dimension::Unit>() )    
+        .def( bp::self / bp::other<SireUnits::Dimension::Unit>() )    
         .def( "__copy__", &__copy__)    
         .def( "__str__", &pvt_get_name);
 

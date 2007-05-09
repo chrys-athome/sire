@@ -16,6 +16,9 @@ void register_Kelvin_class(){
 
     bp::class_< SireUnits::Kelvin, bp::bases< SireUnits::Dimension::Temperature > >( "Kelvin" )    
         .def( bp::init< >() )    
+        .def( bp::init< SireUnits::Dimension::DerivedUnit const & >(( bp::arg("unit") )) )    
+        .def( bp::self * bp::other<SireUnits::Dimension::Unit>() )    
+        .def( bp::self / bp::other<SireUnits::Dimension::Unit>() )    
         .def( "__copy__", &__copy__)    
         .def( "__str__", &pvt_get_name);
 

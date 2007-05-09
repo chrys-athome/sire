@@ -82,6 +82,12 @@ void register_Quaternion_class(){
             , (double ( ::SireMaths::Quaternion::* )(  ) const)( &::SireMaths::Quaternion::z ) )    
         .staticmethod( "fromString" )    
         .staticmethod( "identity" )    
+        .def( bp::self != bp::self )    
+        .def( bp::self * bp::self )    
+        .def( bp::self * bp::other< SireMaths::Vector >() )    
+        .def( bp::self + bp::self )    
+        .def( bp::self - bp::self )    
+        .def( bp::self == bp::self )    
         .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMaths::Quaternion >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    

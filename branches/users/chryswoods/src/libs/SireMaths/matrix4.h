@@ -95,8 +95,8 @@ public:
     Matrix4& operator+=(const Matrix4 &m);
     Matrix4& operator-=(const Matrix4 &m);
 
-    friend const Matrix4 operator+(const Matrix4 &m1, const Matrix4 &m2);
-    friend const Matrix4 operator-(const Matrix4 &m1, const Matrix4 &m2);
+    Matrix4 operator+(const Matrix4 &m) const;
+    Matrix4 operator-(const Matrix4 &m) const;
 
     Quaternion column0() const;
 

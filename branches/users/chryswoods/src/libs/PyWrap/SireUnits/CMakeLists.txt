@@ -35,6 +35,8 @@ set ( WRAPUNITS_SOURCES
       
       Mass.pypp.cpp
       
+      Quantity.pypp.cpp
+      
       Temperature.pypp.cpp
       Time.pypp.cpp
       

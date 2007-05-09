@@ -44,6 +44,9 @@ set ( WRAPMATHS_SOURCES
       Triangle.pypp.cpp
       
       Vector.pypp.cpp
+      
+      _Maths_free_functions.pypp.cpp
+      _Maths_global_variables.pypp.cpp
     )
 
 # Create the library that holds all of the class wrappers

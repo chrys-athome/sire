@@ -130,30 +130,28 @@ void TestSampler::runTests()
 
     ds2 >> unisampler;
 
-    qDebug() << CODELOC;
-
-    QSet<MoleculeID> same_mols;
-
-    for (int i=0; i<100; ++i)
-    {
-        tuple<PartialMolecule,double> mol = unisampler.sample(simsystem);
-
-        BOOST_CHECK_EQUAL( mol.get<1>(), 1.0 / nmols );
-        BOOST_CHECK( group.contains(mol.get<0>()) );
-
-        BOOST_CHECK( molids.contains(mol.get<0>().ID()) );
-
-        BOOST_CHECK_EQUAL( unisampler.probabilityOf(mol.get<0>(), simsystem),
-                           1.0 / nmols );
-
-        tuple<PartialMolecule,double> mol2 = unisampler2.sample(simsystem);
-
-        if (mol2.get<0>() == mol.get<0>())
-            same_mols.insert(mol2.get<0>().ID());
-    }
-
-    //we mustn't repeat the same sample order!
-    BOOST_CHECK( same_mols.count() != 1679 );
+//     QSet<MoleculeID> same_mols;
+//
+//     for (int i=0; i<100; ++i)
+//     {
+//         tuple<PartialMolecule,double> mol = unisampler.sample(simsystem);
+//
+//         BOOST_CHECK_EQUAL( mol.get<1>(), 1.0 / nmols );
+//         BOOST_CHECK( group.contains(mol.get<0>()) );
+//
+//         BOOST_CHECK( molids.contains(mol.get<0>().ID()) );
+//
+//         BOOST_CHECK_EQUAL( unisampler.probabilityOf(mol.get<0>(), simsystem),
+//                            1.0 / nmols );
+//
+//         tuple<PartialMolecule,double> mol2 = unisampler2.sample(simsystem);
+//
+//         if (mol2.get<0>() == mol.get<0>())
+//             same_mols.insert(mol2.get<0>().ID());
+//     }
+//
+//     //we mustn't repeat the same sample order!
+//     BOOST_CHECK( same_mols.count() != 1679 );
 
     qDebug() << "Finished TestSampler tests...";
 

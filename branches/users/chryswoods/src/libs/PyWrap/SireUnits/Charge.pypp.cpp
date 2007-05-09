@@ -15,8 +15,13 @@ const char* pvt_get_name(const SireUnits::Dimension::Charge&){ return "SireUnits
 void register_Charge_class(){
 
     bp::class_< SireUnits::Dimension::Charge, bp::bases< SireUnits::Dimension::Unit > >( "Charge", bp::init< double >(( bp::arg("scale_factor") )) )    
+        .def( bp::init< SireUnits::Dimension::DerivedUnit const & >(( bp::arg("unit") )) )    
+        .def( bp::self * bp::other< SireUnits::Dimension::Quantity >() )    
         .def( bp::other< double >() * bp::self )    
+        .def( bp::self / bp::other< SireUnits::Dimension::Quantity >() )    
         .def( bp::other< double >() / bp::self )    
+        .def( bp::self * bp::other<SireUnits::Dimension::Unit>() )    
+        .def( bp::self / bp::other<SireUnits::Dimension::Unit>() )    
         .def( "__copy__", &__copy__)    
         .def( "__str__", &pvt_get_name);
 

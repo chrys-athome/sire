@@ -150,8 +150,81 @@ inline DerivedUnit operator/(const Unit &unit0, const Unit &unit1)
 // First, basic, dimensionless constants       //
 /////////////////////////////////////////////////
 
+namespace Dimension
+{
+
+class Quantity : protected Unit
+{
+public:
+    Quantity(double scale_factor) : Unit(scale_factor)
+    {}
+
+    explicit Quantity(const DerivedUnit &unit) : Unit(unit)
+    {}
+
+    ~Quantity()
+    {}
+
+    double convertFromInternal(double val) const
+    {
+        return Unit::convertFromInternal(val);
+    }
+
+    double convertToInternal(double val) const
+    {
+        return Unit::convertToInternal(val);
+    }
+
+    double relativeScale() const
+    {
+        return Unit::relativeScale();
+    }
+};
+
+inline double operator*(double val, const Quantity &unit)
+{
+    return unit.convertToInternal(val);
+}
+
+inline double operator/(double val, const Quantity &unit)
+{
+    return unit.convertFromInternal(val);
+}
+
+inline Quantity operator*(const Quantity &unit, const Quantity &amount)
+{
+    return Quantity( unit.relativeScale() * amount.relativeScale() );
+}
+
+inline Quantity operator/(const Quantity &unit, const Quantity &amount)
+{
+    return Quantity( unit.relativeScale() / amount.relativeScale() );
+}
+
+inline DerivedUnit operator*(const DerivedUnit &unit, const Quantity &amount)
+{
+    return DerivedUnit( unit.relativeScale() * amount.relativeScale() );
+}
+
+inline DerivedUnit operator/(const DerivedUnit &unit, const Quantity &amount)
+{
+    return DerivedUnit( unit.relativeScale() / amount.relativeScale() );
+}
+
+inline DerivedUnit operator*(const Quantity &amount, const DerivedUnit &unit)
+{
+    return DerivedUnit( unit.relativeScale() * amount.relativeScale() );
+}
+
+inline DerivedUnit operator/(const Quantity &amount, const DerivedUnit &unit)
+{
+    return DerivedUnit( amount.relativeScale() / unit.relativeScale() );
+}
+
+} // end of namespace Dimension
+
 /** Avogadro's number */
-const double mole = 6.0221419947e23;
+const Dimension::Quantity mole( 6.0221419947e23 );
 
 /////////////////////////////////////////////////
 // Units of angle. Internal unit = radians     //
@@ -176,6 +249,9 @@ public:
     Length(double scale_factor) : Unit(scale_factor)
     {}
 
+    explicit Length(const DerivedUnit &unit) : Unit(unit)
+    {}
+
     ~Length()
     {}
 };
@@ -188,6 +264,26 @@ inline double operator*(double val, const Length &unit)
 inline double operator/(double val, const Length &unit)
 {
     return unit.convertFromInternal(val);
+}
+
+inline Length operator*(const Length &unit, const Quantity &amount)
+{
+    return Length( unit.relativeScale() * amount.relativeScale() );
+}
+
+inline Length operator/(const Length &unit, const Quantity &amount)
+{
+    return Length( unit.relativeScale() / amount.relativeScale() );
+}
+
+inline Length operator*(const Quantity &amount, const Length &unit)
+{
+    return Length( unit.relativeScale() * amount.relativeScale() );
+}
+
+inline Length operator/(const Quantity &amount, const Length &unit)
+{
+    return Length( amount.relativeScale() / unit.relativeScale() );
 }
 
 } // end of namespace Dimension
@@ -228,6 +324,9 @@ public:
     Time(double scale_factor) : Unit(scale_factor)
     {}
 
+    explicit Time(const DerivedUnit &unit) : Unit(unit)
+    {}
+
     ~Time()
     {}
 };
@@ -240,6 +339,26 @@ inline double operator*(double val, const Time &unit)
 inline double operator/(double val, const Time &unit)
 {
     return unit.convertFromInternal(val);
+}
+
+inline Time operator*(const Time &unit, const Quantity &amount)
+{
+    return Time( unit.relativeScale() * amount.relativeScale() );
+}
+
+inline Time operator/(const Time &unit, const Quantity &amount)
+{
+    return Time( unit.relativeScale() / amount.relativeScale() );
+}
+
+inline Time operator*(const Quantity &amount, const Time &unit)
+{
+    return Time( unit.relativeScale() * amount.relativeScale() );
+}
+
+inline Time operator/(const Quantity &amount, const Time &unit)
+{
+    return Time( amount.relativeScale() / unit.relativeScale() );
 }
 
 } // end of namespace Dimension
@@ -276,6 +395,9 @@ public:
     Mass(double scale_factor) : Unit(scale_factor)
     {}
 
+    explicit Mass(const DerivedUnit &unit) : Unit(unit)
+    {}
+
     ~Mass()
     {}
 };
@@ -288,6 +410,26 @@ inline double operator*(double val, const Mass &unit)
 inline double operator/(double val, const Mass &unit)
 {
     return unit.convertFromInternal(val);
+}
+
+inline Mass operator*(const Mass &unit, const Quantity &amount)
+{
+    return Mass( unit.relativeScale() * amount.relativeScale() );
+}
+
+inline Mass operator/(const Mass &unit, const Quantity &amount)
+{
+    return Mass( unit.relativeScale() / amount.relativeScale() );
+}
+
+inline Mass operator*(const Quantity &amount, const Mass &unit)
+{
+    return Mass( unit.relativeScale() * amount.relativeScale() );
+}
+
+inline Mass operator/(const Quantity &amount, const Mass &unit)
+{
+    return Mass( amount.relativeScale() / unit.relativeScale() );
 }
 
 } // end of namespace Dimension
@@ -311,6 +453,9 @@ public:
     Charge(double scale_factor) : Unit(scale_factor)
     {}
 
+    explicit Charge(const DerivedUnit &unit) : Unit(unit)
+    {}
+
     ~Charge()
     {}
 };
@@ -323,6 +468,26 @@ inline double operator*(double val, const Charge &unit)
 inline double operator/(double val, const Charge &unit)
 {
     return unit.convertFromInternal(val);
+}
+
+inline Charge operator*(const Charge &unit, const Quantity &amount)
+{
+    return Charge( unit.relativeScale() * amount.relativeScale() );
+}
+
+inline Charge operator/(const Charge &unit, const Quantity &amount)
+{
+    return Charge( unit.relativeScale() / amount.relativeScale() );
+}
+
+inline Charge operator*(const Quantity &amount, const Charge &unit)
+{
+    return Charge( unit.relativeScale() * amount.relativeScale() );
+}
+
+inline Charge operator/(const Quantity &amount, const Charge &unit)
+{
+    return Charge( amount.relativeScale() / unit.relativeScale() );
 }
 
 } // end of namespace Dimension
@@ -350,6 +515,9 @@ public:
     Energy(double scale_factor) : Unit(scale_factor)
     {}
 
+    explicit Energy(const DerivedUnit &unit) : Unit(unit)
+    {}
+
     ~Energy()
     {}
 };
@@ -362,6 +530,26 @@ inline double operator*(double val, const Energy &unit)
 inline double operator/(double val, const Energy &unit)
 {
     return unit.convertFromInternal(val);
+}
+
+inline Energy operator*(const Energy &unit, const Quantity &amount)
+{
+    return Energy( unit.relativeScale() * amount.relativeScale() );
+}
+
+inline Energy operator/(const Energy &unit, const Quantity &amount)
+{
+    return Energy( unit.relativeScale() / amount.relativeScale() );
+}
+
+inline Energy operator*(const Quantity &amount, const Energy &unit)
+{
+    return Energy( unit.relativeScale() * amount.relativeScale() );
+}
+
+inline Energy operator/(const Quantity &amount, const Energy &unit)
+{
+    return Energy( amount.relativeScale() / unit.relativeScale() );
 }
 
 } // end of namespace Dimension
@@ -399,7 +587,7 @@ const Dimension::DerivedUnit newton_per_mol( J_per_mol / meter );
 const Dimension::DerivedUnit newton( joule / meter );
 
 //////////////////////////////////////////////////////////
-// Units of pressure. Internal units = kcal mol-1 A-3   //
+// Units of pressure. Internal units = kcal mol-1 A-2   //
 //////////////////////////////////////////////////////////
 
 /** Convert pressure in Pascals (N m-2) to internal units (where does the mol-1 come from..?) */
@@ -418,12 +606,15 @@ namespace Dimension
 class Temperature : public Unit
 {
 public:
-      ~Temperature()
-      {}
+    ~Temperature()
+    {}
 
 protected:
-      Temperature(double scale_factor) : Unit(scale_factor)
-      {}
+    Temperature(double scale_factor) : Unit(scale_factor)
+    {}
+
+    explicit Temperature(const DerivedUnit &unit) : Unit(unit)
+    {}
 };
 
 inline double operator*(double val, const Temperature &unit)
@@ -444,6 +635,10 @@ public:
     Kelvin() : Dimension::Temperature(1)
     {}
 
+    explicit Kelvin(const Dimension::DerivedUnit &unit)
+              : Dimension::Temperature(unit)
+    {}
+
     ~Kelvin()
     {}
 };
@@ -452,6 +647,10 @@ class Celsius : public Dimension::Temperature
 {
 public:
     Celsius() : Dimension::Temperature(1)
+    {}
+
+    explicit Celsius(const Dimension::DerivedUnit &unit)
+              : Dimension::Temperature(unit)
     {}
 
     ~Celsius()
@@ -477,6 +676,10 @@ public:
     {}
 
     ~Fahrenheit()
+    {}
+
+    explicit Fahrenheit(const Dimension::DerivedUnit &unit)
+                : Dimension::Temperature(unit)
     {}
 
     double convertFromInternal(double val) const

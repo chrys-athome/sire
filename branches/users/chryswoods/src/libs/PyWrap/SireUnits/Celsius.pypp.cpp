@@ -16,6 +16,7 @@ void register_Celsius_class(){
 
     bp::class_< SireUnits::Celsius, bp::bases< SireUnits::Dimension::Temperature > >( "Celsius" )    
         .def( bp::init< >() )    
+        .def( bp::init< SireUnits::Dimension::DerivedUnit const & >(( bp::arg("unit") )) )    
         .def( 
             "convertFromInternal"
             , &::SireUnits::Celsius::convertFromInternal
@@ -24,6 +25,8 @@ void register_Celsius_class(){
             "convertToInternal"
             , &::SireUnits::Celsius::convertToInternal
             , ( bp::arg("val") ) )    
+        .def( bp::self * bp::other<SireUnits::Dimension::Unit>() )    
+        .def( bp::self / bp::other<SireUnits::Dimension::Unit>() )    
         .def( "__copy__", &__copy__)    
         .def( "__str__", &pvt_get_name);
 

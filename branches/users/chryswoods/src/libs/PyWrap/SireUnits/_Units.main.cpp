@@ -23,6 +23,8 @@
 
 #include "Mass.pypp.hpp"
 
+#include "Quantity.pypp.hpp"
+
 #include "Temperature.pypp.hpp"
 
 #include "Time.pypp.hpp"
@@ -51,6 +53,8 @@ BOOST_PYTHON_MODULE(_Units){
     register_Length_class();
 
     register_Mass_class();
+
+    register_Quantity_class();
 
     register_Time_class();
 

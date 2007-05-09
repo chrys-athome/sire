@@ -30,7 +30,9 @@ void register_Matrix4_class(){
             "identity"
             , (::SireMaths::Matrix4 (*)(  ))( &::SireMaths::Matrix4::identity ) )    
         .def( bp::self != bp::self )    
+        .def( bp::self + bp::self )    
         .def( bp::self += bp::self )    
+        .def( bp::self - bp::self )    
         .def( bp::self -= bp::self )    
         .def( bp::self == bp::self )    
         .def( 

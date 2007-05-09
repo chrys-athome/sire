@@ -261,7 +261,7 @@ Moves& Moves::operator=(const Moves &other)
      - this is used to catch a lot of errors before the
        simulation starts, rather than while it is running
        (or even months into it running!) */
-void Moves::initialise(SimSystem &system)
+void Moves::initialise(QuerySystem &system)
 {
     //can only do this while the moves aren't active
     QMutexLocker lkr(&movemutex);

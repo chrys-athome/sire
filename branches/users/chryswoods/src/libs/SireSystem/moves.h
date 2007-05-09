@@ -98,12 +98,12 @@ public:
 
     /** Initialise all of the moves in the set to
         work with the passed system */
-    virtual void initialise(SimSystem &system)=0;
+    virtual void initialise(QuerySystem &system)=0;
 };
 
 /** This class represents moves which are a collection
     of a single type of Moves
-    
+
     @author Christopher Woods
 */
 class SIRESYSTEM_EXPORT SameMoves : public MovesBase
@@ -114,13 +114,13 @@ friend QDataStream& ::operator>>(QDataStream&, SameMoves&);
 
 public:
     SameMoves();
-    
+
     SameMoves(const Move &move);
-    
+
     SameMoves(const SameMoves &other);
-    
+
     ~SameMoves();
-    
+
     static const char* typeName()
     {
         return "SireSystem::SameMoves";
@@ -130,23 +130,23 @@ public:
     {
         return SameMoves::typeName();
     }
-    
+
     SameMoves* clone() const
     {
         return new SameMoves(*this);
     }
-    
+
     int count() const
     {
         return 1;
     }
-    
+
     Move& nextMove()
     {
         return single_move;
     }
-    
-    void initialise(SimSystem &system)
+
+    void initialise(QuerySystem &system)
     {
         single_move.initialise(system);
     }
@@ -181,7 +181,7 @@ public:
 
     Moves& operator=(const Moves &other);
 
-    void initialise(SimSystem &system);
+    void initialise(QuerySystem &system);
 
     int count() const;
 

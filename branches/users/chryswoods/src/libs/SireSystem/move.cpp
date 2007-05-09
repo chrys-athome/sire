@@ -129,7 +129,7 @@ public:
         return new NullMove(*this);
     }
 
-    void initialise(const SimSystem&)
+    void initialise(QuerySystem&)
     {}
 
     void move(SimSystem&)

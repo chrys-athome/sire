@@ -121,6 +121,16 @@ for classname in wrap_classes:
    #tell the program to write wrappers for this class
    export_class(mb, classname, aliases, special_code)
 
+#export the free functions and free variables
+def export_free(things):
+   for thing in things:
+       if thing.parent.name == "SireMaths":
+           thing.include()
+           
+export_free( mb.free_functions() )
+export_free( mb.free_operators() )
+export_free( mb.variables() )
+
 register_implicit_conversions(mb, implicitly_convertible)
 
 write_wrappers(mb, modulename, extra_includes, huge_classes)

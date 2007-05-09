@@ -95,6 +95,10 @@ void register_RanGenerator_class(){
         .def( 
             "vectorOnSphere"
             , (::SireMaths::Vector ( ::SireMaths::RanGenerator::* )(  ) )( &::SireMaths::RanGenerator::vectorOnSphere ) )    
+        .def( 
+            "vectorOnSphere"
+            , (::SireMaths::Vector ( ::SireMaths::RanGenerator::* )( double ) )( &::SireMaths::RanGenerator::vectorOnSphere )
+            , ( bp::arg("radius") ) )    
         .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMaths::RanGenerator >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    

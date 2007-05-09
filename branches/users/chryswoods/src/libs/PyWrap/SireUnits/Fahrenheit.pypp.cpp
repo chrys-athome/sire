@@ -16,6 +16,7 @@ void register_Fahrenheit_class(){
 
     bp::class_< SireUnits::Fahrenheit, bp::bases< SireUnits::Dimension::Temperature > >( "Fahrenheit" )    
         .def( bp::init< >() )    
+        .def( bp::init< SireUnits::Dimension::DerivedUnit const & >(( bp::arg("unit") )) )    
         .def( 
             "convertFromInternal"
             , &::SireUnits::Fahrenheit::convertFromInternal
@@ -24,6 +25,8 @@ void register_Fahrenheit_class(){
             "convertToInternal"
             , &::SireUnits::Fahrenheit::convertToInternal
             , ( bp::arg("val") ) )    
+        .def( bp::self * bp::other<SireUnits::Dimension::Unit>() )    
+        .def( bp::self / bp::other<SireUnits::Dimension::Unit>() )    
         .def( "__copy__", &__copy__)    
         .def( "__str__", &pvt_get_name);
 

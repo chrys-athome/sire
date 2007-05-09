@@ -18,6 +18,7 @@ wrap_classes = [ "Celsius",
                  "Kelvin",
                  "Length", 
                  "Mass",
+                 "Quantity",
                  "Temperature",
                  "Time",
                  "Unit"
@@ -29,7 +30,20 @@ aliases = {}
 
 extra_includes = []
 
-special_code = {}
+def add_operators(c):
+   c.add_registration_code( "def( bp::self * bp::other<SireUnits::Dimension::Unit>() )" )
+   c.add_registration_code( "def( bp::self / bp::other<SireUnits::Dimension::Unit>() )" )
+
+special_code = { "Celsius" : add_operators,
+                 "Charge" : add_operators,
+                 "DerivedUnit" : add_operators,
+                 "Energy" : add_operators,
+                 "Fahrenheit" : add_operators,
+                 "Kelvin" : add_operators,
+                 "Length" : add_operators,
+                 "Mass" : add_operators,
+                 "Time" : add_operators
+               }
 
 implicitly_convertible = []
 

@@ -33,6 +33,10 @@
 
 #include "Vector.pypp.hpp"
 
+#include "_Maths_free_functions.pypp.hpp"
+
+#include "_Maths_global_variables.pypp.hpp"
+
 #include "siremaths_containers.h"
 
 namespace bp = boost::python;
@@ -64,12 +68,16 @@ BOOST_PYTHON_MODULE(_Maths){
 
     register_Torsion_class();
 
+    register_Triangle_class();
+
     bp::implicitly_convertible< boost::tuples::tuple<double,double,double>, SireMaths::Vector >();
 
     bp::implicitly_convertible< double, SireMaths::Angle >();
 
     bp::implicitly_convertible< boost::tuples::tuple<SireMaths::Vector,SireMaths::Vector,SireMaths::Vector>, SireMaths::Matrix >();
 
-    register_Triangle_class();
+    register_global_variables();
+
+    register_free_functions();
 }
 

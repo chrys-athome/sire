@@ -19,36 +19,41 @@ const char* pvt_get_name(const SireMove::MonteCarlo&){ return "SireMove::MonteCa
 
 void register_MonteCarlo_class(){
 
-    { //::SireMove::MonteCarlo
-        typedef bp::class_< SireMove::MonteCarlo, bp::bases< SireSystem::MoveBase >, boost::noncopyable > MonteCarlo_exposer_t;
-        MonteCarlo_exposer_t MonteCarlo_exposer = MonteCarlo_exposer_t( "MonteCarlo", bp::no_init );
-        bp::scope MonteCarlo_scope( MonteCarlo_exposer );
-        bp::class_< SireMove::MonteCarlo::CheckPoint >( "CheckPoint" );
-        { //::SireMove::MonteCarlo::generator
-        
-            typedef ::SireMaths::RanGenerator const & ( ::SireMove::MonteCarlo::*generator_function_type )(  ) const;
-            
-            MonteCarlo_exposer.def( 
-                "generator"
-                , generator_function_type( &::SireMove::MonteCarlo::generator )
-                , bp::return_value_policy< bp::copy_const_reference >() );
-        
-        }
-        { //::SireMove::MonteCarlo::setGenerator
-        
-            typedef void ( ::SireMove::MonteCarlo::*setGenerator_function_type )( ::SireMaths::RanGenerator const & ) ;
-            
-            MonteCarlo_exposer.def( 
-                "setGenerator"
-                , setGenerator_function_type( &::SireMove::MonteCarlo::setGenerator )
-                , ( bp::arg("generator") ) );
-        
-        }
-        MonteCarlo_exposer.def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMove::MonteCarlo >,
-                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
-        MonteCarlo_exposer.def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMove::MonteCarlo >,
-                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
-        MonteCarlo_exposer.def( "__str__", &pvt_get_name);
-    }
+    bp::class_< SireMove::MonteCarlo, bp::bases< SireSystem::MoveBase >, boost::noncopyable >( "MonteCarlo", bp::no_init )    
+        .def( 
+            "acceptanceRatio"
+            , (double ( ::SireMove::MonteCarlo::* )(  ) const)( &::SireMove::MonteCarlo::acceptanceRatio ) )    
+        .def( 
+            "clearMoveStatistics"
+            , (void ( ::SireMove::MonteCarlo::* )(  ) )( &::SireMove::MonteCarlo::clearMoveStatistics ) )    
+        .def( 
+            "generator"
+            , (::SireMaths::RanGenerator const & ( ::SireMove::MonteCarlo::* )(  ) const)( &::SireMove::MonteCarlo::generator )
+            , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( 
+            "nAccepted"
+            , (::quint32 ( ::SireMove::MonteCarlo::* )(  ) const)( &::SireMove::MonteCarlo::nAccepted ) )    
+        .def( 
+            "nAttempted"
+            , (::quint32 ( ::SireMove::MonteCarlo::* )(  ) const)( &::SireMove::MonteCarlo::nAttempted ) )    
+        .def( 
+            "nRejected"
+            , (::quint32 ( ::SireMove::MonteCarlo::* )(  ) const)( &::SireMove::MonteCarlo::nRejected ) )    
+        .def( 
+            "setGenerator"
+            , (void ( ::SireMove::MonteCarlo::* )( ::SireMaths::RanGenerator const & ) )( &::SireMove::MonteCarlo::setGenerator )
+            , ( bp::arg("generator") ) )    
+        .def( 
+            "setTemperature"
+            , (void ( ::SireMove::MonteCarlo::* )( double ) )( &::SireMove::MonteCarlo::setTemperature )
+            , ( bp::arg("temperature") ) )    
+        .def( 
+            "temperature"
+            , (double ( ::SireMove::MonteCarlo::* )(  ) const)( &::SireMove::MonteCarlo::temperature ) )    
+        .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMove::MonteCarlo >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMove::MonteCarlo >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
+        .def( "__str__", &pvt_get_name);
 
 }

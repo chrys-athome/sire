@@ -203,6 +203,20 @@ Matrix4& Matrix4::operator-=(const Matrix4 &m)
     return *this;
 }
 
+Matrix4 Matrix4::operator+(const Matrix4 &other) const
+{
+    Matrix4 ret = *this;
+    ret += other;
+    return ret;
+}
+
+Matrix4 Matrix4::operator-(const Matrix4 &other) const
+{
+    Matrix4 ret = *this;
+    ret -= other;
+    return ret;
+}
+
 Matrix4 convertGSLMatrix4(gsl_matrix *mat)
 {
     return Matrix4( gsl_matrix_get(mat,0,0), gsl_matrix_get(mat,1,0),
