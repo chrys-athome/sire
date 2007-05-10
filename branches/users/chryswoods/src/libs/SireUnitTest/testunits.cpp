@@ -63,12 +63,12 @@ void TestUnits::runTests()
     BOOST_CHECK_CLOSE( convertFrom(8.31447215, (joule/mole) / kelvin), gasr, 1e-6 );
 
     //test conversion of atmospheres into internal pressure units (kcal mol-1 A-3)
-    BOOST_CHECK_CLOSE( convertFrom(101325.0, joule / (meter*meter*meter)), 1*atm, 1e-6 );
+    BOOST_CHECK_CLOSE( convertFrom(101325.0, joule / (meter*meter*meter)), double(atm), 1e-6 );
 
     //now check that the constant agree with those calculated and used in ProtoMS2
     BOOST_CHECK_CLOSE( one_over_four_pi_eps0, 332.06371, 1e-6 );
     BOOST_CHECK_CLOSE( gasr, 0.00198720653680688336, 1e-6 );
-    BOOST_CHECK_CLOSE( 1*atm, 1.45839756e-05, 1e-6 );
+    BOOST_CHECK_CLOSE( double(atm), 1.45839756e-05, 1e-6 );
 
     //check conversions
     BOOST_CHECK_CLOSE( convertFrom(5.5, kcal_per_mol), convertFrom(5500.0, cal_per_mol), 1e-6 );

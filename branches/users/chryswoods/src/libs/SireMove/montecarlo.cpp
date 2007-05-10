@@ -31,6 +31,7 @@
 #include <cmath>
 
 #include "SireUnits/units.h"
+#include "SireUnits/temperature.h"
 
 #include "SireStream/datastream.h"
 
