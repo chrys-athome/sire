@@ -40,16 +40,20 @@ namespace SireUnits
 
 /** This file defines physical constants, in internal units of this program
 
-    energy = kcal mol-1  (thermal)
-    length = Angstroms
-    time = femtoseconds
-    mass = g mol-1
+    energy = kcal (thermal)
+    length = angstrom
+    time = femtosecond
+    mass = g
     charge = unit electrons
-
+    quantity = mole-1
 */
 
 /** Avogadro's number */
-const Dimension::Quantity mole( 6.0221419947e23 );
+const Dimension::PerQuantity per_mol( 6.0221419947e23 );
+const Dimension::Quantity mole = 1 / per_mol;
+
+const Dimension::PerQuantity per_dozen( 12 );
+const Dimension::Quantity dozen = 1 / per_dozen;
 
 /////////////////////////////////////////////////
 // Units of angle. Internal unit = radians     //
@@ -101,7 +105,7 @@ const Dimension::Time day( 24 * hour );
 // Units of mass. Internal unit = g mol-1            //
 ///////////////////////////////////////////////////////
 
-const Dimension::Mass g_per_mol(1);
+const Dimension::MolarMass g_per_mol(1);
 
 const Dimension::Mass gram( mole * g_per_mol );
 const Dimension::Mass kilogram( 1000 * gram );
@@ -113,13 +117,13 @@ const Dimension::Mass nanogram( 0.001 * microgram );
 const Dimension::Mass picogram( 0.001 * nanogram );
 const Dimension::Mass femtogram( 0.001 * picogram );
 
-const Dimension::Mass kg_per_mol( 1000 * g_per_mol );
-const Dimension::Mass tonne_per_mol( 1000 * kg_per_mol );
-const Dimension::Mass mg_per_mol( 0.001 * g_per_mol );
-const Dimension::Mass ug_per_mol( 0.001 * mg_per_mol );
-const Dimension::Mass ng_per_mol( 0.001 * ug_per_mol );
-const Dimension::Mass pg_per_mol( 0.001 * ng_per_mol );
-const Dimension::Mass fg_per_mol( 0.001 * pg_per_mol );
+const Dimension::MolarMass kg_per_mol( 1000 * g_per_mol );
+const Dimension::MolarMass tonne_per_mol( 1000 * kg_per_mol );
+const Dimension::MolarMass mg_per_mol( 0.001 * g_per_mol );
+const Dimension::MolarMass ug_per_mol( 0.001 * mg_per_mol );
+const Dimension::MolarMass ng_per_mol( 0.001 * ug_per_mol );
+const Dimension::MolarMass pg_per_mol( 0.001 * ng_per_mol );
+const Dimension::MolarMass fg_per_mol( 0.001 * pg_per_mol );
 
 ///////////////////////////////////////////////////////
 // Units of Charge. Internal unit = |electron| mol-1 //
@@ -127,32 +131,34 @@ const Dimension::Mass fg_per_mol( 0.001 * pg_per_mol );
 
 const Dimension::Charge mod_electrons(1);
 
-const Dimension::Charge coulomb( (1.0/1.60217646263e-19) * mod_electrons );
+const Dimension::Charge coulomb( mod_electrons / 1.60217646263e-19 );
 
 const Dimension::Charge e_charge(mod_electrons);
+
+const Dimension::MolarCharge faraday = e_charge * per_mol;
 
 /////////////////////////////////////////////////
 // Units of Energy. Internal unit = kcal mol-1 //
 /////////////////////////////////////////////////
 
-const Dimension::Energy kcal_per_mol(1);
-const Dimension::Energy kcal( mole * kcal_per_mol );
+const Dimension::MolarEnergy kcal_per_mol(1);
+const Dimension::Energy kcal = mole * kcal_per_mol;
 
-const Dimension::Energy cal_per_mol( 0.001 * kcal_per_mol );
-const Dimension::Energy cal( 0.001 * kcal );
+const Dimension::MolarEnergy cal_per_mol = 0.001 * kcal_per_mol;
+const Dimension::Energy cal = 0.001 * kcal;
 
-const Dimension::Energy kJ_per_mol( (1.0/4.184) * kcal_per_mol );
-const Dimension::Energy kilojoule( mole * kJ_per_mol );
+const Dimension::MolarEnergy kJ_per_mol = kcal_per_mol / 4.184;
+const Dimension::Energy kilojoule = mole * kJ_per_mol;
 
-const Dimension::Energy MJ_per_mol( 1000 * kJ_per_mol );
-const Dimension::Energy megajoule( 1000 * kilojoule );
+const Dimension::MolarEnergy MJ_per_mol = 1000 * kJ_per_mol;
+const Dimension::Energy megajoule = 1000 * kilojoule;
 
-const Dimension::Energy J_per_mol( 0.001 * kJ_per_mol );
-const Dimension::Energy joule( 0.001 * kilojoule );
+const Dimension::MolarEnergy J_per_mol = 0.001 * kJ_per_mol;
+const Dimension::Energy joule = 0.001 * kilojoule;
 
 /** Conversion factor from international kcal mol-1 to internal units  */
-const Dimension::Energy int_kcal_per_mol( 4.1868 * kJ_per_mol );
-const Dimension::Energy int_cal_per_mol( 0.001 * int_kcal_per_mol );
+const Dimension::MolarEnergy int_kcal_per_mol( 4.1868 * kJ_per_mol );
+const Dimension::MolarEnergy int_cal_per_mol( 0.001 * int_kcal_per_mol );
 
 const Dimension::Energy int_kcal( mole * int_kcal_per_mol );
 const Dimension::Energy int_cal( 0.001 * int_kcal );
@@ -164,20 +170,32 @@ const Dimension::Energy hartree(4.3597438134e-18 * joule);
 //////////////////////////////////////////////////////////
 
 /** Convert force in Newtons_per_mol (J mol-1 m-1) to internal units (kcal mol-1 A-1) */
-const Dimension::Force newton_per_mol( J_per_mol / meter );
+const Dimension::MolarForce newton_per_mol( J_per_mol / meter );
 
 /** Convert a force in Newtons to internal units */
 const Dimension::Force newton( joule / meter );
+
+/** Weights */
+const Dimension::Force ounce = 0.27801385095 * newton;
+const Dimension::Force pound = 16 * ounce;
+const Dimension::Force stone = 14 * pound;
+const Dimension::Force hundredweight = 8 * stone;
 
 //////////////////////////////////////////////////////////
 // Units of pressure. Internal units = kcal mol-1 A-2   //
 //////////////////////////////////////////////////////////
 
-/** Convert pressure in Pascals (N m-2) to internal units (where does the mol-1 come from..?) */
-const Dimension::Pressure pascal( newton / (meter*meter) );
+const Dimension::Pressure pascal = newton / (meter*meter);
+const Dimension::MolarPressure pascal_per_mol = newton_per_mol / (meter*meter);
 
-/** Convert atmospheres to internal units */
-const Dimension::Pressure atm( 101325.0 * pascal );
+const Dimension::Pressure bar = 10000 * pascal;
+const Dimension::MolarPressure bar_per_mol = 10000 * pascal_per_mol;
+
+const Dimension::Pressure atm = 101325 * pascal;
+const Dimension::MolarPressure atm_per_mol = 101325 * pascal_per_mol;
+
+const Dimension::Pressure psi = pound / (inch*inch);
+const Dimension::Pressure mmHg = 133.322 * pascal;
 
 //////////////////////////////////////////////////////////
 // Units of temperature. Internal units = Kelvin        //
@@ -192,16 +210,17 @@ const Dimension::Temperature kelvin(1);
 //////////////////////////////////////////////////////////
 
 /** Convert the units of current (amps) */
-const Dimension::ElecCurrent amp( coulomb / second );
+const Dimension::ElecCurrent amp = coulomb / second;
 
 /** Volts */
-const Dimension::ElecPotential volt( joule / coulomb );
+const Dimension::ElecPotential volt = joule / coulomb;
 
 /** Convert the units of capacitance (farads) */
-const Dimension::PhysUnit<-1,-2,2,2,0> farad( coulomb / volt );
+const Dimension::PhysUnit<-1,-2,2,2,0,0> farad = coulomb / volt;
 
 /** Convert power in Watts */
-const Dimension::Power watt( joule / second );
+const Dimension::Power watt = joule / second;
+const Dimension::MolarPower watt_per_mol = J_per_mol / second;
 
 ///////////////////////////////////////////////////////////
 // Now physical constants converted into internal units. //
@@ -210,11 +229,11 @@ const Dimension::Power watt( joule / second );
 ///////////////////////////////////////////////////////////
 
 /** Speed of light in a vacuum */
-const Dimension::Velocity c( 299792458.0 * (meter / second) );
+const Dimension::Velocity c = 299792458 * (meter / second);
 
 /** Epsilon_0 (electrostatic constant) 8.854187817e-12 F m-1,
     converted to internal units, |e|^2 J-1 mol A-1 */
-const double epsilon0 = 8.854187817e-12 * (farad / meter);
+const double epsilon0 = 8.854187817e-12 * (farad / meter) * mole;
 
 /** 4 * pi * epsilon_0 */
 const double four_pi_eps0 = 4.0 * SireMaths::pi * epsilon0;
@@ -225,14 +244,17 @@ const double one_over_four_pi_eps0 = 1.0 / four_pi_eps0;
 /** Gas constant (8.31447215 J mol-1 K-1) */
 const double gasr = 8.31447215 * (J_per_mol / kelvin);
 
-/** Boltzmann constant */
+/** Boltzmann constant J K-1 */
 const double k_boltz = 1.380650524e-23 * (joule / kelvin);
 
 /** Magnetic constant, mu0, 4pi * 10-7 N A-2 */
 const double mu0 = 4.0 * pi * (newton / (amp*amp));
 
 /** Newton's gravitational constant, 6.673(10) m^3 kg-1 s-2 */
-const double G_newton = 6.67310 * ((meter*meter*meter) / (kilogram * second*second));
+const double G_newton = 6.67310 * ((meter*meter*meter) / (kilogram * second * second));
+
+/** Acceleration due to gravity on Earth */
+const Dimension::Acceleration g_accel = 9.8 * meter / (second*second);
 
 /** Planck's constant, 6.62606876(52) J s */
 const double h_planck = 6.6260687652 * (joule * second);
@@ -241,22 +263,19 @@ const double h_planck = 6.6260687652 * (joule * second);
 const double h_slash = h_planck / (2.0*pi);
 
 /** Mass of an electron */
-const Dimension::Mass electron_mass( 9.1093818872e-31 * kilogram );
+const Dimension::Mass electron_mass = 9.1093818872e-31 * kilogram;
 
 /** Mass of a proton */
-const Dimension::Mass proton_mass( 1.6726215813e-27 * kilogram );
+const Dimension::Mass proton_mass = 1.6726215813e-27 * kilogram;
 
 /** Mass of a neutron */
-const Dimension::Mass neutron_mass( 1.6749271613e-27 * kilogram );
+const Dimension::Mass neutron_mass = 1.6749271613e-27 * kilogram;
 
 /** Atomic mass constant */
-const Dimension::Mass atomic_mass_constant( 1.6605387313e-27 * kilogram );
-
-/** Faraday constant */
-const Dimension::Charge faraday( (96485.341539 * coulomb) / mole );
+const Dimension::Mass atomic_mass_constant = 1.6605387313e-27 * kilogram;
 
 /** Molar volume of an ideal gas */
-const Dimension::Volume molar_volume( (22.41399639e-3 * (meter*meter*meter)) / mole );
+const Dimension::MolarVolume molar_volume = 22.41399639e-3 * (meter*meter*meter) / mole;
 
 }
 

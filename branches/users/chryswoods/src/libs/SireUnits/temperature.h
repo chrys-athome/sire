@@ -44,8 +44,8 @@ namespace Dimension
 
 class TempBase
 {
-friend class Celsius;
-friend class Fahrenheit;
+friend class SireUnits::Celsius;
+friend class SireUnits::Fahrenheit;
 
 public:
     TempBase(double value = 0) : val(value)
@@ -211,9 +211,9 @@ Celsius operator*(double value, const Celsius &temp)
     return Celsius(value * double(temp));
 }
 
-Dimension::PhysUnit<0,0,0,0,-1> operator/(double value, const Celsius &temp)
+Dimension::PhysUnit<0,0,0,0,-1,0> operator/(double value, const Celsius &temp)
 {
-    return Dimension::PhysUnit<0,0,0,0,-1>(value / double(temp));
+    return Dimension::PhysUnit<0,0,0,0,-1,0>(value / double(temp));
 }
 
 Celsius operator*(int value, const Celsius &temp)
@@ -221,7 +221,7 @@ Celsius operator*(int value, const Celsius &temp)
     return double(value) * temp;
 }
 
-Dimension::PhysUnit<0,0,0,0,-1> operator/(int value, const Celsius &temp)
+Dimension::PhysUnit<0,0,0,0,-1,0> operator/(int value, const Celsius &temp)
 {
     return double(value) / temp;
 }
@@ -361,9 +361,9 @@ Fahrenheit operator*(double value, const Fahrenheit &temp)
     return Fahrenheit(value * double(temp));
 }
 
-Dimension::PhysUnit<0,0,0,0,-1> operator/(double value, const Fahrenheit &temp)
+Dimension::PhysUnit<0,0,0,0,-1,0> operator/(double value, const Fahrenheit &temp)
 {
-    return Dimension::PhysUnit<0,0,0,0,-1>( value / (1.8*double(temp)) );
+    return Dimension::PhysUnit<0,0,0,0,-1,0>( value / (1.8*double(temp)) );
 }
 
 Fahrenheit operator*(int value, const Fahrenheit &temp)
@@ -371,7 +371,7 @@ Fahrenheit operator*(int value, const Fahrenheit &temp)
     return double(value) * temp;
 }
 
-Dimension::PhysUnit<0,0,0,0,-1> operator/(int value, const Fahrenheit &temp)
+Dimension::PhysUnit<0,0,0,0,-1,0> operator/(int value, const Fahrenheit &temp)
 {
     return double(value) / temp;
 }
