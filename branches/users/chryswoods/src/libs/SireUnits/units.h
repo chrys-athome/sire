@@ -29,7 +29,11 @@
 #ifndef SIREUNITS_UNITS_H
 #define SIREUNITS_UNITS_H
 
+//skip this completely when parsing with gccxml as it is broken!
+#ifndef SKIP_BROKEN_GCCXML_PARTS
+
 #include <limits>
+#include <cmath>
 
 #include "dimensions.h"
 
@@ -40,20 +44,20 @@ namespace SireUnits
 
 /** This file defines physical constants, in internal units of this program
 
-    energy = kcal (thermal)
+    We use the AKMA units (same as charmm)
+        Angstroms, Kilocalories per Mole, Atomic mass units
+
+    energy = kcal mol-1 (thermal)
     length = angstrom
-    time = femtosecond
-    mass = g
+    mass = g mol-1
+    time = AKMA time == 48.88821 fs == 0.04888821 ps
     charge = unit electrons
-    quantity = mole-1
 */
 
 /** Avogadro's number */
-const Dimension::PerQuantity per_mol( 6.0221419947e23 );
-const Dimension::Quantity mole = 1 / per_mol;
+const Dimension::Quantity mole( 6.0221419947e23 );
 
-const Dimension::PerQuantity per_dozen( 12 );
-const Dimension::Quantity dozen = 1 / per_dozen;
+const Dimension::Quantity dozen( 12 );
 
 /////////////////////////////////////////////////
 // Units of angle. Internal unit = radians     //
@@ -86,21 +90,6 @@ const Dimension::Length foot( 12 * inch );
 const Dimension::Length yard( 3 * foot );
 const Dimension::Length mile( 1760 * yard );
 
-/////////////////////////////////////////////////
-// Units of time. Internal unit = femtoseconds //
-/////////////////////////////////////
-
-const Dimension::Time femtosecond(1);
-const Dimension::Time picosecond(1000 * femtosecond);
-const Dimension::Time nanosecond(1000 * picosecond);
-const Dimension::Time microsecond(1000 * nanosecond);
-const Dimension::Time millisecond(1000 * microsecond);
-const Dimension::Time second(1000 * millisecond);
-
-const Dimension::Time minute( 60 * second );
-const Dimension::Time hour( 60 * minute );
-const Dimension::Time day( 24 * hour );
-
 ///////////////////////////////////////////////////////
 // Units of mass. Internal unit = g mol-1            //
 ///////////////////////////////////////////////////////
@@ -126,16 +115,16 @@ const Dimension::MolarMass pg_per_mol( 0.001 * ng_per_mol );
 const Dimension::MolarMass fg_per_mol( 0.001 * pg_per_mol );
 
 ///////////////////////////////////////////////////////
-// Units of Charge. Internal unit = |electron| mol-1 //
+// Units of Charge. Internal unit = |e|              //
 ///////////////////////////////////////////////////////
 
-const Dimension::Charge mod_electrons(1);
+const Dimension::Charge mod_electron(1);
+const Dimension::MolarCharge faraday(1);
 
-const Dimension::Charge coulomb( mod_electrons / 1.60217646263e-19 );
+const Dimension::Charge coulomb = mod_electron / 1.60217646263e-19;
+const Dimension::MolarCharge coulomb_per_mol = coulomb / mole;
 
-const Dimension::Charge e_charge(mod_electrons);
-
-const Dimension::MolarCharge faraday = e_charge * per_mol;
+const Dimension::Charge e_charge = -mod_electron;
 
 /////////////////////////////////////////////////
 // Units of Energy. Internal unit = kcal mol-1 //
@@ -165,12 +154,26 @@ const Dimension::Energy int_cal( 0.001 * int_kcal );
 
 const Dimension::Energy hartree(4.3597438134e-18 * joule);
 
+////////////////////////////////////////////////////////////
+// Units of time. Internal unit = akma_time == 48.8882 fs //
+////////////////////////////////////////////////////////////
+
+const Dimension::Time akma_time(1);
+
+const Dimension::Time second( std::sqrt( (kg_per_mol * meter * meter) / J_per_mol ) );
+const Dimension::Time millisecond = 0.001 * second;
+const Dimension::Time microsecond = 0.001 * millisecond;
+const Dimension::Time nanosecond = 0.001 * microsecond;
+const Dimension::Time picosecond = 0.001 * nanosecond;
+const Dimension::Time femtosecond = 0.001 * picosecond;
+
+const Dimension::Time minute( 60 * second );
+const Dimension::Time hour( 60 * minute );
+const Dimension::Time day( 24 * hour );
+
 //////////////////////////////////////////////////////////
 // Units of force. Internal units = kcal mol-1 A-1      //
 //////////////////////////////////////////////////////////
-
-/** Convert force in Newtons_per_mol (J mol-1 m-1) to internal units (kcal mol-1 A-1) */
-const Dimension::MolarForce newton_per_mol( J_per_mol / meter );
 
 /** Convert a force in Newtons to internal units */
 const Dimension::Force newton( joule / meter );
@@ -186,13 +189,9 @@ const Dimension::Force hundredweight = 8 * stone;
 //////////////////////////////////////////////////////////
 
 const Dimension::Pressure pascal = newton / (meter*meter);
-const Dimension::MolarPressure pascal_per_mol = newton_per_mol / (meter*meter);
 
-const Dimension::Pressure bar = 10000 * pascal;
-const Dimension::MolarPressure bar_per_mol = 10000 * pascal_per_mol;
-
+const Dimension::Pressure bar = 100000 * pascal;
 const Dimension::Pressure atm = 101325 * pascal;
-const Dimension::MolarPressure atm_per_mol = 101325 * pascal_per_mol;
 
 const Dimension::Pressure psi = pound / (inch*inch);
 const Dimension::Pressure mmHg = 133.322 * pascal;
@@ -231,9 +230,8 @@ const Dimension::MolarPower watt_per_mol = J_per_mol / second;
 /** Speed of light in a vacuum */
 const Dimension::Velocity c = 299792458 * (meter / second);
 
-/** Epsilon_0 (electrostatic constant) 8.854187817e-12 F m-1,
-    converted to internal units, |e|^2 J-1 mol A-1 */
-const double epsilon0 = 8.854187817e-12 * (farad / meter) * mole;
+/** Epsilon_0 (electrostatic constant) 8.854187817e-12 F m-1 */
+const double epsilon0 = 8.854187817e-12 * (farad / meter);
 
 /** 4 * pi * epsilon_0 */
 const double four_pi_eps0 = 4.0 * SireMaths::pi * epsilon0;
@@ -244,8 +242,8 @@ const double one_over_four_pi_eps0 = 1.0 / four_pi_eps0;
 /** Gas constant (8.31447215 J mol-1 K-1) */
 const double gasr = 8.31447215 * (J_per_mol / kelvin);
 
-/** Boltzmann constant J K-1 */
-const double k_boltz = 1.380650524e-23 * (joule / kelvin);
+/** Boltzmann constant J K-1 (is equal to gasr in internal units of kcal mol-1 K-1) */
+const double k_boltz = gasr;
 
 /** Magnetic constant, mu0, 4pi * 10-7 N A-2 */
 const double mu0 = 4.0 * pi * (newton / (amp*amp));
@@ -280,5 +278,7 @@ const Dimension::MolarVolume molar_volume = 22.41399639e-3 * (meter*meter*meter)
 }
 
 SIRE_END_HEADER
+
+#endif // end of 'ifndef SKIP_BROKEN_GCCXML_PARTS'
 
 #endif

@@ -20,30 +20,51 @@ set ( WRAPUNITS_SOURCES
 
       _Units.main.cpp
 
-      Celsius.pypp.cpp      
-      Charge.pypp.cpp
-      
-      DerivedUnit.pypp.cpp
-      
-      Energy.pypp.cpp
-      
-      Fahrenheit.pypp.cpp
-      
-      Kelvin.pypp.cpp
-      
-      Length.pypp.cpp
-      
-      Mass.pypp.cpp
-      
-      Quantity.pypp.cpp
-      
-      Temperature.pypp.cpp
-      Time.pypp.cpp
-      
       Unit.pypp.cpp
+      
+      Celsius.pypp.cpp
+      Fahrenheit.pypp.cpp
+      TempBase.pypp.cpp
+      
+      Acceleration.pyman.cpp
+      Area.pyman.cpp
+      
+      Charge.pyman.cpp
+      
+      Density.pyman.cpp
+      Dimensionless.pyman.cpp
+      
+      ElecCurrent.pyman.cpp
+      ElecPotential.pyman.cpp
+      Energy.pyman.cpp
+      
+      Force.pyman.cpp
+      
+      Length.pyman.cpp
+      
+      Mass.pyman.cpp
+      MolarCharge.pyman.cpp
+      MolarDensity.pyman.cpp
+      MolarEnergy.pyman.cpp
+      MolarMass.pyman.cpp
+      MolarPower.pyman.cpp
+      MolarVolume.pyman.cpp
+      
+      Power.pyman.cpp
+      Pressure.pyman.cpp
+      
+      Quantity.pyman.cpp
+      
+      Temperature.pyman.cpp
+      Time.pyman.cpp
+      
+      Velocity.pyman.cpp
+      Volume.pyman.cpp
       
       _Units_free_functions.pypp.cpp
       _Units_global_variables.pypp.cpp
+      
+      _Units_global_variables.pyman.cpp
      
      )
 

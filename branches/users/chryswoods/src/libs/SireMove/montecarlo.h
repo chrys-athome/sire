@@ -31,6 +31,8 @@
 
 #include "SireSystem/move.h"
 
+#include "SireUnits/dimensions.h"
+
 #include "SireMaths/rangenerator.h"
 
 SIRE_BEGIN_HEADER
@@ -56,6 +58,8 @@ using SireSim::Simulation;
 using SireSystem::MoveBase;
 
 using SireMaths::RanGenerator;
+
+using SireUnits::Dimension::Temperature;
 
 /** This is the base class of all Monte Carlo moves
 
@@ -86,8 +90,8 @@ public:
     void setGenerator(const RanGenerator &generator);
     const RanGenerator& generator() const;
 
-    void setTemperature(double temperature);
-    double temperature() const;
+    void setTemperature(Temperature temperature);
+    Temperature temperature() const;
 
 protected:
     bool test(double new_energy,

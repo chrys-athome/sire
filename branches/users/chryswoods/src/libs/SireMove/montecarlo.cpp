@@ -106,15 +106,15 @@ MonteCarlo& MonteCarlo::operator=(const MonteCarlo &other)
 }
 
 /** Set the temperature of the MC simulation */
-void MonteCarlo::setTemperature(double temperature)
+void MonteCarlo::setTemperature(Temperature temperature)
 {
     beta = 1.0 / (k_boltz * temperature);
 }
 
 /** Return the temperature of the MC simulation */
-double MonteCarlo::temperature() const
+Temperature MonteCarlo::temperature() const
 {
-    return 1.0 / (k_boltz * beta);
+    return Temperature( 1.0 / (k_boltz * beta) );
 }
 
 /** Set the random number generator to use for these moves */

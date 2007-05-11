@@ -45,11 +45,11 @@ void register_MonteCarlo_class(){
             , ( bp::arg("generator") ) )    
         .def( 
             "setTemperature"
-            , (void ( ::SireMove::MonteCarlo::* )( double ) )( &::SireMove::MonteCarlo::setTemperature )
+            , (void ( ::SireMove::MonteCarlo::* )( ::SireUnits::Dimension::Temperature ) )( &::SireMove::MonteCarlo::setTemperature )
             , ( bp::arg("temperature") ) )    
         .def( 
             "temperature"
-            , (double ( ::SireMove::MonteCarlo::* )(  ) const)( &::SireMove::MonteCarlo::temperature ) )    
+            , (::SireUnits::Dimension::Temperature ( ::SireMove::MonteCarlo::* )(  ) const)( &::SireMove::MonteCarlo::temperature ) )    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMove::MonteCarlo >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMove::MonteCarlo >,

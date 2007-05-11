@@ -113,9 +113,9 @@ void TestForceFields::runTests()
     QVector<ChargeParameter> group_chgs;
 
     group_chgs.append( ChargeParameter(0) );                     // Oxygen
-    group_chgs.append( ChargeParameter(0.52 * mod_electrons) );  // Hydrogen
-    group_chgs.append( ChargeParameter(0.52 * mod_electrons) );  // Hydrogen
-    group_chgs.append( ChargeParameter(-1.04 * mod_electrons) ); // M atom
+    group_chgs.append( ChargeParameter(0.52 * mod_electron) );  // Hydrogen
+    group_chgs.append( ChargeParameter(0.52 * mod_electron) );  // Hydrogen
+    group_chgs.append( ChargeParameter(-1.04 * mod_electron) ); // M atom
 
     AtomicCharges chgs(group_chgs);
 
@@ -743,13 +743,13 @@ void TestForceFields::runTests()
     double old_ffields_nrg = ffields.energy();
     double old_ffields_ffexp = ffields.energy(ffexp);
     double old_ffields_ffexp2 = ffields.energy(ffexp2);
-    
+
     ForceFields old_ffields = ffields;
-    
+
     BOOST_CHECK_CLOSE( ffields.energy(), old_ffields.energy(), 1e-6 );
     BOOST_CHECK_CLOSE( ffields.energy(ffexp), old_ffields.energy(ffexp), 1e-6 );
     BOOST_CHECK_CLOSE( ffields.energy(ffexp2), old_ffields.energy(ffexp2), 1e-6 );
-    
+
     qDebug() << ffields.energy() << ffields.energy(ffexp)
              << ffields.energy(ffexp2);
 
@@ -764,18 +764,18 @@ void TestForceFields::runTests()
     qDebug() << "Changing nothing took" << ms << "ms";
 
     qDebug() << "Testing changing something...";
-    
+
     QList<Molecule> old_mols = mols;
-    
+
     mols[0] = mols[0].move().translate( Vector(5,0,0) );
 
     cljff2 = InterCLJFF(periodic_box, long_cutoff);
-    
+
     cljff2.add(mols, cljff2.parameters().coulomb() == "charges" and
                      cljff2.parameters().lj() == "ljs");
-                     
+
     cljff.change(mols);
-    
+
     BOOST_CHECK_CLOSE(cljff2.energy(), cljff.energy(), 1e-6);
     BOOST_CHECK_CLOSE(cljff2.energy(cljff2.components().coulomb()),
                       cljff.energy(cljff.components().coulomb()), 1e-6);
@@ -783,21 +783,21 @@ void TestForceFields::runTests()
                       cljff.energy(cljff.components().lj()), 1e-6);
 
     InterGroupLJFF ljff_a_b2( periodic_box, long_cutoff );
-    
+
     a_mols = mols.mid(0, mols.count() / 2);
     b_mols = mols.mid(mols.count() / 2);
 
     ljff_a_b2.addToA(a_mols, ljff_a_b2.parameters().lj() == "ljs");
     ljff_a_b2.addToB(b_mols, ljff_a_b2.parameters().lj() == "ljs");
-    
+
     ljff_a_b.change(mols);
-    
+
     BOOST_CHECK_CLOSE(ljff_a_b.energy(), ljff_a_b2.energy(), 1e-6);
     BOOST_CHECK_CLOSE(ljff_a_b.energy(ljff_a_b.components().lj()),
                       ljff_a_b2.energy(ljff_a_b2.components().lj()), 1e-6);
-    
+
     ffields.change(mols);
-    
+
     BOOST_CHECK_CLOSE( ffields.energy(cljff.components().coulomb()),
                        cljff.energy(cljff.components().coulomb()), 1e-6 );
 
@@ -808,14 +808,14 @@ void TestForceFields::runTests()
                        cljff.energy(cljff.components().coulomb()) +
                        0.3 * ljff_a_b.energy(ljff_a_b.components().total()),
                        1e-6 );
-    
+
     for (int i=5; i<10; ++i)
     {
         mols[i] = mols[i].move().translate( Vector(1,0,0) );
     }
-    
+
     cljff2 = InterCLJFF(periodic_box, long_cutoff);
-    
+
     cljff2.add(mols, cljff2.parameters().coulomb() == "charges" and
                      cljff2.parameters().lj() == "ljs");
 
@@ -828,21 +828,21 @@ void TestForceFields::runTests()
                       cljff.energy(cljff.components().lj()), 1e-6);
 
     ljff_a_b2 = InterGroupLJFF( periodic_box, long_cutoff );
-    
+
     a_mols = mols.mid(0, mols.count() / 2);
     b_mols = mols.mid(mols.count() / 2);
 
     ljff_a_b2.addToA(a_mols, ljff_a_b2.parameters().lj() == "ljs");
     ljff_a_b2.addToB(b_mols, ljff_a_b2.parameters().lj() == "ljs");
-    
+
     ljff_a_b.change(mols);
-    
+
     BOOST_CHECK_CLOSE(ljff_a_b.energy(), ljff_a_b2.energy(), 1e-6);
     BOOST_CHECK_CLOSE(ljff_a_b.energy(ljff_a_b.components().lj()),
                       ljff_a_b2.energy(ljff_a_b2.components().lj()), 1e-6);
 
     ffields.change(mols);
-    
+
     BOOST_CHECK_CLOSE( ffields.energy(cljff.components().coulomb()),
                        cljff.energy(cljff.components().coulomb()), 1e-6 );
 
@@ -853,23 +853,23 @@ void TestForceFields::runTests()
                        cljff.energy(cljff.components().coulomb()) +
                        0.3 * ljff_a_b.energy(ljff_a_b.components().total()),
                        1e-6 );
-    
+
     BOOST_CHECK_CLOSE( ffields.energy(), ffields.energy(ffexp), 1e-6 );
-    
+
     qDebug() << "Testing changing it back again...";
-    
+
     qDebug() << "Changing:" << old_ffields_nrg << ffields.energy();
     qDebug() << "Changing:" << old_ffields_ffexp << ffields.energy(ffexp);
     qDebug() << "Changing:" << old_ffields_ffexp2 << ffields.energy(ffexp2);
-    
+
     cljff.change(old_mols);
     ljff_a_b.change(old_mols);
     ffields.change(old_mols);
-    
+
     qDebug() << "Changing:" << old_ffields_ffexp2 << ffields.energy(ffexp2);
 
     cljff2 = cljff;
-    
+
     cljff2.change(mols);
     cljff2.change(old_mols);
     BOOST_CHECK_CLOSE( cljff.energy(), cljff2.energy(), 1e-6 );
@@ -888,7 +888,7 @@ void TestForceFields::runTests()
     cljff_a_b2.change(mols);
     cljff_a_b2.change(old_mols);
     BOOST_CHECK_CLOSE( cljff_a_b.energy(), cljff_a_b2.energy(), 1e-6 );
-    
+
     InterLJFF ljff_b2 = ljff_b;
     ljff_b2.change(mols);
     ljff_b2.change(old_mols);
@@ -896,19 +896,19 @@ void TestForceFields::runTests()
 
     BOOST_CHECK_CLOSE( cljff.energy(), old_cljff_nrg, 1e-6 );
     BOOST_CHECK_CLOSE( ljff_a_b.energy(), old_ljff_a_b_nrg, 1e-6 );
-    
+
     BOOST_CHECK_CLOSE( ffields.energy(), old_ffields_nrg, 1e-6 );
     BOOST_CHECK_CLOSE( ffields.energy(ffexp), old_ffields_ffexp, 1e-6 );
     BOOST_CHECK_CLOSE( ffields.energy(ffexp2), old_ffields_ffexp2, 1e-6 );
-    
+
     BOOST_CHECK_CLOSE( ffields.energy(), old_ffields.energy(), 1e-6 );
     BOOST_CHECK_CLOSE( ffields.energy(ffexp), old_ffields.energy(ffexp), 1e-6 );
     BOOST_CHECK_CLOSE( ffields.energy(ffexp2), old_ffields.energy(ffexp2), 1e-6 );
-    
+
     BOOST_CHECK_CLOSE( ffields.energy( cljff.components().total() ),
                        old_ffields.energy( cljff.components().total() ),
                        1e-6 );
-                       
+
     BOOST_CHECK_CLOSE( ffields.energy( cljff.components().coulomb() ),
                        old_ffields.energy( cljff.components().coulomb() ),
                        1e-6 );
@@ -921,7 +921,7 @@ void TestForceFields::runTests()
     BOOST_CHECK_CLOSE( ffields.energy( ljff_a_b.components().total() ),
                        old_ffields.energy( ljff_a_b.components().total() ),
                        1e-6 );
-    
+
     qDebug() << "Finished TestForceFields tests...";
 
     }

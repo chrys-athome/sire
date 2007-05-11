@@ -790,7 +790,7 @@ getCoordsAndCharges( const QList< tuple<double,CoordGroup> > &close_groups,
 
             //also store the charge (in absolute electron charges)
             coords_and_chgs_array[i] = convertTo(scale_fac * it2->charge(),
-                                                 mod_electrons);
+                                                 mod_electron);
             ++i;
         }
     }
