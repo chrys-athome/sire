@@ -266,14 +266,14 @@ inline Celsius operator*(double value, const Celsius &temp)
 }
 
 #ifndef SKIP_BROKEN_GCCXML_PARTS
-inline Dimension::PhysUnit<0,0,0,0,-1,0> operator/(double value, const Celsius &temp)
+inline Dimension::PhysUnit<0,0,0,0,-1,0,0> operator/(double value, const Celsius &temp)
 {
-    return Dimension::PhysUnit<0,0,0,0,-1,0>(value / temp.convertFromInternal());
+    return Dimension::PhysUnit<0,0,0,0,-1,0,0>(value / temp.convertFromInternal());
 }
 
-inline Dimension::PhysUnit<0,0,0,0,-1,0> operator/(int value, const Celsius &temp)
+inline Dimension::PhysUnit<0,0,0,0,-1,0,0> operator/(int value, const Celsius &temp)
 {
-    return Dimension::PhysUnit<0,0,0,0,-1,0>(value / temp.convertFromInternal());
+    return Dimension::PhysUnit<0,0,0,0,-1,0,0>(value / temp.convertFromInternal());
 }
 #endif
 
@@ -408,14 +408,14 @@ inline Fahrenheit operator*(double value, const Fahrenheit &temp)
 }
 
 #ifndef SKIP_BROKEN_GCCXML_PARTS
-inline Dimension::PhysUnit<0,0,0,0,-1,0> operator/(double value, const Fahrenheit &temp)
+inline Dimension::PhysUnit<0,0,0,0,-1,0,0> operator/(double value, const Fahrenheit &temp)
 {
-    return Dimension::PhysUnit<0,0,0,0,-1,0>(value / temp.convertFromInternal());
+    return Dimension::PhysUnit<0,0,0,0,-1,0,0>(value / temp.convertFromInternal());
 }
 
-inline Dimension::PhysUnit<0,0,0,0,-1,0> operator/(int value, const Fahrenheit &temp)
+inline Dimension::PhysUnit<0,0,0,0,-1,0,0> operator/(int value, const Fahrenheit &temp)
 {
-    return Dimension::PhysUnit<0,0,0,0,-1,0>(value / temp.convertFromInternal());
+    return Dimension::PhysUnit<0,0,0,0,-1,0,0>(value / temp.convertFromInternal());
 }
 #endif
 

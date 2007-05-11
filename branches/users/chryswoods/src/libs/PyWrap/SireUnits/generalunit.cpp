@@ -18,6 +18,7 @@ GeneralUnit::GeneralUnit()
     Charge = 0;
     temperature = 0;
     Quantity = 0;
+    Angle = 0;
 }
 
 GeneralUnit::GeneralUnit(const GeneralUnit &other)
@@ -30,6 +31,7 @@ GeneralUnit::GeneralUnit(const GeneralUnit &other)
     Charge = other.Charge;
     temperature = other.temperature;
     Quantity = other.Quantity;
+    Angle = other.Angle;
 }
 
 GeneralUnit::~GeneralUnit()
@@ -42,7 +44,8 @@ void GeneralUnit::assertCompatible(const GeneralUnit &other) const
         Time != other.Time or
         Charge != other.Charge or
         temperature != other.temperature or
-        Quantity != other.Quantity)
+        Quantity != other.Quantity or
+        Angle != other.Angle)
     {
         throw "Unit conversion error!!!";
     }
@@ -90,6 +93,7 @@ QString GeneralUnit::toString() const
     appendString(Charge, "C", pos, neg);
     appendString(temperature, "t", pos, neg);
     appendString(Quantity, "Q", pos, neg);
+    appendString(Angle, "A", pos, neg);
     
     if (pos.isEmpty() and neg.isEmpty())
         return QString::number(value);
@@ -138,6 +142,11 @@ int GeneralUnit::QUANTITY() const
     return Quantity;
 }
 
+int GeneralUnit::ANGLE() const
+{
+    return Angle;
+}
+
 GeneralUnit& GeneralUnit::operator=(const GeneralUnit &other)
 {
     value = other.value;
@@ -148,6 +157,7 @@ GeneralUnit& GeneralUnit::operator=(const GeneralUnit &other)
     Charge = other.CHARGE();
     temperature = other.TEMPERATURE();
     Quantity = other.QUANTITY();
+    Angle = other.ANGLE();
     
     return *this;
 }
@@ -208,6 +218,7 @@ GeneralUnit GeneralUnit::operator*=(const GeneralUnit &other)
      Charge += other.Charge;
      temperature += other.temperature;
      Quantity += other.Quantity;
+     Angle += other.Angle;
      
      return *this;
 }
@@ -221,6 +232,7 @@ GeneralUnit GeneralUnit::operator/=(const GeneralUnit &other)
     Charge -= other.Charge;
     temperature -= other.temperature;
     Quantity -= other.Quantity;
+    Angle -= other.Angle;
     
     return *this;
 }
@@ -303,6 +315,7 @@ GeneralUnit GeneralUnit::invert() const
     ret.Charge = -Charge;
     ret.temperature = -temperature;
     ret.Quantity = -Quantity;
+    ret.Angle = -Angle;
     
     return ret;
 }

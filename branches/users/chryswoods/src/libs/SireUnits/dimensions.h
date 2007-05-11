@@ -88,13 +88,13 @@ private:
 };
 
 /** Construct a physical unit with the specified
-    Mass, Length, Time, Charge, temperature
-    and Quantity dimensions
+    Mass, Length, Time, Charge, temperature,
+    Quantity and Angle dimensions
 
     @author Christopher Woods
 */
 template<int M, int L, int T,
-         int C, int t, int Q>
+         int C, int t, int Q, int A>
 class PhysUnit : public Unit
 {
 public:
@@ -105,112 +105,112 @@ public:
                : Unit(scale_factor)
     {}
 
-    PhysUnit(const PhysUnit<M,L,T,C,t,Q> &other)
+    PhysUnit(const PhysUnit<M,L,T,C,t,Q,A> &other)
                : Unit(other)
     {}
 
     ~PhysUnit()
     {}
 
-    PhysUnit<M,L,T,C,t,Q>
-    operator=(const PhysUnit<M,L,T,C,t,Q> &other)
+    PhysUnit<M,L,T,C,t,Q,A>
+    operator=(const PhysUnit<M,L,T,C,t,Q,A> &other)
     {
         Unit::setScale(other.scaleFactor());
         return *this;
     }
 
-    bool operator==(const PhysUnit<M,L,T,C,t,Q> &other) const
+    bool operator==(const PhysUnit<M,L,T,C,t,Q,A> &other) const
     {
         return scaleFactor() == other.scaleFactor();
     }
 
-    bool operator!=(const PhysUnit<M,L,T,C,t,Q> &other) const
+    bool operator!=(const PhysUnit<M,L,T,C,t,Q,A> &other) const
     {
         return scaleFactor() != other.scaleFactor();
     }
 
-    PhysUnit<M,L,T,C,t,Q> operator-() const
+    PhysUnit<M,L,T,C,t,Q,A> operator-() const
     {
-        return PhysUnit<M,L,T,C,t,Q>( -scaleFactor() );
+        return PhysUnit<M,L,T,C,t,Q,A>( -scaleFactor() );
     }
 
-    PhysUnit<M,L,T,C,t,Q>
-    operator+(const PhysUnit<M,L,T,C,t,Q> &other) const
+    PhysUnit<M,L,T,C,t,Q,A>
+    operator+(const PhysUnit<M,L,T,C,t,Q,A> &other) const
     {
-        return PhysUnit<M,L,T,C,t,Q>(
+        return PhysUnit<M,L,T,C,t,Q,A>(
                   scaleFactor() + other.scaleFactor());
     }
 
-    PhysUnit<M,L,T,C,t,Q>
-    operator-(const PhysUnit<M,L,T,C,t,Q> &other) const
+    PhysUnit<M,L,T,C,t,Q,A>
+    operator-(const PhysUnit<M,L,T,C,t,Q,A> &other) const
     {
-        return PhysUnit<M,L,T,C,t,Q>(
+        return PhysUnit<M,L,T,C,t,Q,A>(
                   scaleFactor() - other.scaleFactor());
     }
 
-    PhysUnit<M,L,T,C,t,Q>&
-    operator+=(const PhysUnit<M,L,T,C,t,Q> &other)
+    PhysUnit<M,L,T,C,t,Q,A>&
+    operator+=(const PhysUnit<M,L,T,C,t,Q,A> &other)
     {
         Unit::setScale( scaleFactor() + other.scaleFactor() );
         return *this;
     }
 
-    PhysUnit<M,L,T,C,t,Q>&
-    operator-=(const PhysUnit<M,L,T,C,t,Q> &other)
+    PhysUnit<M,L,T,C,t,Q,A>&
+    operator-=(const PhysUnit<M,L,T,C,t,Q,A> &other)
     {
         Unit::setScale( scaleFactor() - other.scaleFactor() );
         return *this;
     }
 
-    PhysUnit<M,L,T,C,t,Q> operator*(double val) const
+    PhysUnit<M,L,T,C,t,Q,A> operator*(double val) const
     {
-        return PhysUnit<M,L,T,C,t,Q>(scaleFactor() * val);
+        return PhysUnit<M,L,T,C,t,Q,A>(scaleFactor() * val);
     }
 
-    PhysUnit<M,L,T,C,t,Q> operator/(double val) const
+    PhysUnit<M,L,T,C,t,Q,A> operator/(double val) const
     {
-        return PhysUnit<M,L,T,C,t,Q>(scaleFactor() / val);
+        return PhysUnit<M,L,T,C,t,Q,A>(scaleFactor() / val);
     }
 
-    PhysUnit<M,L,T,C,t,Q> operator*(int val) const
+    PhysUnit<M,L,T,C,t,Q,A> operator*(int val) const
     {
-        return PhysUnit<M,L,T,C,t,Q>(scaleFactor() * val);
+        return PhysUnit<M,L,T,C,t,Q,A>(scaleFactor() * val);
     }
 
-    PhysUnit<M,L,T,C,t,Q> operator/(int val) const
+    PhysUnit<M,L,T,C,t,Q,A> operator/(int val) const
     {
-        return PhysUnit<M,L,T,C,t,Q>(scaleFactor() / val);
+        return PhysUnit<M,L,T,C,t,Q,A>(scaleFactor() / val);
     }
 
     template<int _M, int _L, int _T,
-             int _C, int _t, int _Q>
-    PhysUnit<M+_M, L+_L, T+_T, C+_C, t+_t, Q+_Q>
-    operator*(const PhysUnit<_M,_L,_T,_C,_t,_Q> &other) const
+             int _C, int _t, int _Q, int _A>
+    PhysUnit<M+_M, L+_L, T+_T, C+_C, t+_t, Q+_Q, A+_A>
+    operator*(const PhysUnit<_M,_L,_T,_C,_t,_Q,_A> &other) const
     {
-        return PhysUnit<M+_M,L+_L,T+_T,C+_C,t+_t,Q+_Q>(
+        return PhysUnit<M+_M,L+_L,T+_T,C+_C,t+_t,Q+_Q,A+_A>(
                   scaleFactor() * other.scaleFactor());
     }
 
     template<int _M, int _L, int _T,
-             int _C, int _t, int _Q>
-    PhysUnit<M-_M, L-_L, T-_T, C-_C, t-_t, Q-_Q>
-    operator/(const PhysUnit<_M,_L,_T,_C,_t,_Q> &other) const
+             int _C, int _t, int _Q, int _A>
+    PhysUnit<M-_M, L-_L, T-_T, C-_C, t-_t, Q-_Q, A-_A>
+    operator/(const PhysUnit<_M,_L,_T,_C,_t,_Q,_A> &other) const
     {
-        return PhysUnit<M-_M,L-_L,T-_T,C-_C,t-_t,Q-_Q>(
+        return PhysUnit<M-_M,L-_L,T-_T,C-_C,t-_t,Q-_Q,A-_A>(
                   scaleFactor() / other.scaleFactor());
     }
 
-    PhysUnit<-M,-L,-T,-C,-t,-Q> invert() const
+    PhysUnit<-M,-L,-T,-C,-t,-Q,-A> invert() const
     {
-        return PhysUnit<-M,-L,-T,-C,-t,-Q>( 1.0 / scaleFactor() );
+        return PhysUnit<-M,-L,-T,-C,-t,-Q,-A>( 1.0 / scaleFactor() );
     }
 
-    double in(const PhysUnit<M,L,T,C,t,Q> &units) const
+    double in(const PhysUnit<M,L,T,C,t,Q,A> &units) const
     {
         return units.convertFromInternal(*this);
     }
     
-    double to(const PhysUnit<M,L,T,C,t,Q> &units) const
+    double to(const PhysUnit<M,L,T,C,t,Q,A> &units) const
     {
         return this->in(units);
     }
@@ -244,85 +244,96 @@ public:
     {
         return Q;
     }
+    
+    static int ANGLE()
+    {
+        return A;
+    }
 };
 
-template<int M, int L, int T, int C, int t, int Q>
-PhysUnit<M,L,T,C,t,Q>
-operator*(double val, const PhysUnit<M,L,T,C,t,Q> &unit)
+template<int M, int L, int T, int C, int t, int Q, int A>
+PhysUnit<M,L,T,C,t,Q,A>
+operator*(double val, const PhysUnit<M,L,T,C,t,Q,A> &unit)
 {
-    return PhysUnit<M,L,T,C,t,Q>( val * unit.scaleFactor() );
+    return PhysUnit<M,L,T,C,t,Q,A>( val * unit.scaleFactor() );
 }
 
-template<int M, int L, int T, int C, int t, int Q>
-PhysUnit<M,L,T,C,t,Q>
-operator*(int val, const PhysUnit<M,L,T,C,t,Q> &unit)
+template<int M, int L, int T, int C, int t, int Q, int A>
+PhysUnit<M,L,T,C,t,Q,A>
+operator*(int val, const PhysUnit<M,L,T,C,t,Q,A> &unit)
 {
-    return PhysUnit<M,L,T,C,t,Q>( val * unit.scaleFactor() );
+    return PhysUnit<M,L,T,C,t,Q,A>( val * unit.scaleFactor() );
 }
 
-template<int M, int L, int T, int C, int t, int Q>
-PhysUnit<-M,-L,-T,-C,-t,-Q>
-operator/(double val, const PhysUnit<M,L,T,C,t,Q> &unit)
+template<int M, int L, int T, int C, int t, int Q, int A>
+PhysUnit<-M,-L,-T,-C,-t,-Q,-A>
+operator/(double val, const PhysUnit<M,L,T,C,t,Q,A> &unit)
 {
-    return PhysUnit<-M,-L,-T,-C,-t,-Q>( val / unit.scaleFactor() );
+    return PhysUnit<-M,-L,-T,-C,-t,-Q,-A>( val / unit.scaleFactor() );
 }
 
-template<int M, int L, int T, int C, int t, int Q>
-PhysUnit<-M,-L,-T,-C,-t,-Q>
-operator/(int val, const PhysUnit<M,L,T,C,t,Q> &unit)
+template<int M, int L, int T, int C, int t, int Q, int A>
+PhysUnit<-M,-L,-T,-C,-t,-Q,-A>
+operator/(int val, const PhysUnit<M,L,T,C,t,Q,A> &unit)
 {
-    return PhysUnit<-M,-L,-T,-C,-t,-Q>( val / unit.scaleFactor() );
+    return PhysUnit<-M,-L,-T,-C,-t,-Q,-A>( val / unit.scaleFactor() );
 }
 
 /** Typedef the various unit dimensions (including derived units) */
 #ifndef SKIP_BROKEN_GCCXML_PARTS
-typedef PhysUnit<0,0,0,0,0,0> Dimensionless;
+typedef PhysUnit<0,0,0,0,0,0,0> Dimensionless;
 
-typedef PhysUnit<1,0,0,0,0,0> Mass;
+typedef PhysUnit<1,0,0,0,0,0,0> Mass;
 
-typedef PhysUnit<1,0,0,0,0,-1> MolarMass;
+typedef PhysUnit<1,0,0,0,0,-1,0> MolarMass;
 
-typedef PhysUnit<0,1,0,0,0,0> Length;
+typedef PhysUnit<0,1,0,0,0,0,0> Length;
 
-typedef PhysUnit<0,0,1,0,0,0> Time;
+typedef PhysUnit<0,0,1,0,0,0,0> Time;
 
-typedef PhysUnit<0,0,0,1,0,0> Charge;
+typedef PhysUnit<0,0,0,1,0,0,0> Charge;
 
-typedef PhysUnit<0,0,0,1,0,-1> MolarCharge;
+typedef PhysUnit<0,0,0,1,0,-1,0> MolarCharge;
 
-typedef PhysUnit<0,0,0,0,1,0> Temperature;
+typedef PhysUnit<0,0,0,0,1,0,0> Temperature;
 
-typedef PhysUnit<0,0,0,0,0,1> Quantity;
+typedef PhysUnit<0,0,0,0,0,1,0> Quantity;
 
-typedef PhysUnit<0,2,0,0,0,0> Area;
+typedef PhysUnit<0,0,0,0,0,0,1> Angle;
 
-typedef PhysUnit<0,3,0,0,0,0> Volume;
+typedef PhysUnit<0,2,0,0,0,0,0> Area;
 
-typedef PhysUnit<0,3,0,0,0,-1> MolarVolume;
+typedef PhysUnit<0,3,0,0,0,0,0> Volume;
 
-typedef PhysUnit<0,1,-1,0,0,0> Velocity;
+typedef PhysUnit<0,3,0,0,0,-1,0> MolarVolume;
 
-typedef PhysUnit<0,1,-2,0,0,0> Acceleration;
+typedef PhysUnit<0,1,-1,0,0,0,0> Velocity;
 
-typedef PhysUnit<1,2,-2,0,0,0> Energy;
+typedef PhysUnit<0,0,-1,0,0,0,1> AngularVelocity;
 
-typedef PhysUnit<1,2,-2,0,0,-1> MolarEnergy;
+typedef PhysUnit<0,1,-2,0,0,0,0> Acceleration;
 
-typedef PhysUnit<1,2,-3,0,0,0> Power;
+typedef PhysUnit<0,0,-2,0,0,0,1> AngularAcceleration;
 
-typedef PhysUnit<1,2,-3,0,0,-1> MolarPower;
+typedef PhysUnit<1,2,-2,0,0,0,0> Energy;
 
-typedef PhysUnit<1,-3,0,0,0,0> Density;
+typedef PhysUnit<1,2,-2,0,0,-1,0> MolarEnergy;
 
-typedef PhysUnit<1,-3,0,0,0,-1> MolarDensity;
+typedef PhysUnit<1,2,-3,0,0,0,0> Power;
 
-typedef PhysUnit<1,1,-2,0,0,0> Force;
+typedef PhysUnit<1,2,-3,0,0,-1,0> MolarPower;
 
-typedef PhysUnit<1,-1,-2,0,0,0> Pressure;
+typedef PhysUnit<1,-3,0,0,0,0,0> Density;
 
-typedef PhysUnit<0,0,-1,1,0,0> Current;
-typedef PhysUnit<-1,-2,2,2,0,0> Capacitance;
-typedef PhysUnit<1,2,-2,-1,0,0> Potential;
+typedef PhysUnit<1,-3,0,0,0,-1,0> MolarDensity;
+
+typedef PhysUnit<1,1,-2,0,0,0,0> Force;
+
+typedef PhysUnit<1,-1,-2,0,0,0,0> Pressure;
+
+typedef PhysUnit<0,0,-1,1,0,0,0> Current;
+typedef PhysUnit<-1,-2,2,2,0,0,0> Capacitance;
+typedef PhysUnit<1,2,-2,-1,0,0,0> Potential;
 
 #else // else with 'ifndef SKIP_BROKEN_GCCXML_PARTS'
 
@@ -335,6 +346,7 @@ class Charge;
 class MolarCharge;
 class Temperature;
 class Quantity;
+class Angle;
 class Area;
 class Volume;
 class MolarVolume;

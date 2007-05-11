@@ -64,10 +64,15 @@ const Dimension::Quantity dozen( 12 );
 /////////////////////////////////////////////////
 
 /** Convert radians into internal units */
-const double radians = 1.0;
+const Dimension::Angle radians( 1 );
+const Dimension::Angle radian( 1 );
 
 /** Convert degrees into internal units */
-const double degrees = pi / 180.0;
+const Dimension::Angle degrees = radians * pi / 180.0;
+const Dimension::Angle degree = degrees;
+
+const Dimension::Angle revolution = 2 * pi * radians;
+const Dimension::Angle revs = revolution;
 
 /////////////////////////////////////////////////
 // Units of length. Internal unit = Angstroms  //
@@ -170,6 +175,8 @@ const Dimension::Time femtosecond = 0.001 * picosecond;
 const Dimension::Time minute( 60 * second );
 const Dimension::Time hour( 60 * minute );
 const Dimension::Time day( 24 * hour );
+const Dimension::Time week( 7 * day );
+const Dimension::Time fortnight( 2 * week );
 
 //////////////////////////////////////////////////////////
 // Units of force. Internal units = kcal mol-1 A-1      //

@@ -38,6 +38,7 @@ public:
         Charge = D::CHARGE();
         temperature = D::TEMPERATURE();
         Quantity = D::QUANTITY();
+        Angle = D::ANGLE();
     }
     
     GeneralUnit(const GeneralUnit &other);
@@ -50,6 +51,7 @@ public:
     int CHARGE() const;
     int TEMPERATURE() const;
     int QUANTITY() const;
+    int ANGLE() const;
 
     GeneralUnit& operator=(const GeneralUnit &other);
     
@@ -102,7 +104,7 @@ private:
     void assertCompatible(const GeneralUnit &other) const;
 
     double value;
-    int Mass, Length, Time, Charge, temperature, Quantity;
+    int Mass, Length, Time, Charge, temperature, Quantity, Angle;
 };
 
 inline GeneralUnit operator*(double val, const GeneralUnit &unit)
@@ -162,7 +164,8 @@ struct from_general_unit
                  gen_unit.TIME() == D::TIME() and
                  gen_unit.CHARGE() == D::CHARGE() and
                  gen_unit.TEMPERATURE() == D::TEMPERATURE() and
-                 gen_unit.QUANTITY() == D::QUANTITY() )
+                 gen_unit.QUANTITY() == D::QUANTITY() and
+                 gen_unit.ANGLE() == D::ANGLE() )
             {
                 //this has the right dimension :-)
                 return obj_ptr;
@@ -194,7 +197,8 @@ struct from_general_unit
                  gen_unit.TIME() == D::TIME() and
                  gen_unit.CHARGE() == D::CHARGE() and
                  gen_unit.TEMPERATURE() == D::TEMPERATURE() and
-                 gen_unit.QUANTITY() == D::QUANTITY() )
+                 gen_unit.QUANTITY() == D::QUANTITY() and
+                 gen_unit.ANGLE() == D::ANGLE() )
             {
                 //locate the storage space for the result
                 void* storage =

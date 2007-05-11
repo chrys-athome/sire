@@ -47,11 +47,14 @@ void register_SireUnits_dimensions()
     register_dimension< MolarCharge >();
     register_dimension< Temperature >();
     register_dimension< Quantity >();
+    register_dimension< Angle >();
     register_dimension< Area >();
     register_dimension< Volume >();
     register_dimension< MolarVolume >();
     register_dimension< Velocity >();
     register_dimension< Acceleration >();
+    register_dimension< AngularVelocity >();
+    register_dimension< AngularAcceleration >();
     register_dimension< Energy >();
     register_dimension< MolarEnergy >();
     register_dimension< Power >();

@@ -17,6 +17,9 @@ void register_GeneralUnit_class(){
     bp::class_< SireUnits::Dimension::GeneralUnit >( "GeneralUnit" )    
         .def( bp::init< >() )    
         .def( 
+            "ANGLE"
+            , &::SireUnits::Dimension::GeneralUnit::ANGLE )    
+        .def( 
             "CHARGE"
             , &::SireUnits::Dimension::GeneralUnit::CHARGE )    
         .def( 

@@ -13,6 +13,18 @@ void register_man_global_variables()
 
     scope().attr("dozen") = dozen;
 
+    scope().attr("radians") = radians;
+
+    scope().attr("radian") = radian;
+
+    scope().attr("degrees") = degrees;
+
+    scope().attr("degree") = degree;
+
+    scope().attr("revolution") = revolution;
+
+    scope().attr("revs") = revs;
+
     scope().attr("angstrom") = angstrom;
 
     scope().attr("picometer") = picometer;
@@ -130,6 +142,10 @@ void register_man_global_variables()
     scope().attr("hour") = hour;
 
     scope().attr("day") = day;
+
+    scope().attr("week") = week;
+
+    scope().attr("fortnight") = fortnight;
 
     scope().attr("newton") = newton;
 
