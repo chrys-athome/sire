@@ -11,63 +11,17 @@
 
 #include "Fahrenheit.pypp.hpp"
 
-#include "TempBase.pypp.hpp"
+#include "GeneralUnit.pypp.hpp"
 
-#include "Unit.pypp.hpp"
+#include "TempBase.pypp.hpp"
 
 #include "_Units_free_functions.pypp.hpp"
 
 #include "_Units_global_variables.pypp.hpp"
 
+#include "sireunits_dimensions.h"
+
 #include "_Units_global_variables.pyman.hpp"
-
-#include "ElecPotential.pyman.hpp"
-
-#include "ElecCurrent.pyman.hpp"
-
-#include "Pressure.pyman.hpp"
-
-#include "Force.pyman.hpp"
-
-#include "MolarDensity.pyman.hpp"
-
-#include "Density.pyman.hpp"
-
-#include "MolarPower.pyman.hpp"
-
-#include "Power.pyman.hpp"
-
-#include "MolarEnergy.pyman.hpp"
-
-#include "Energy.pyman.hpp"
-
-#include "Acceleration.pyman.hpp"
-
-#include "Velocity.pyman.hpp"
-
-#include "MolarVolume.pyman.hpp"
-
-#include "Volume.pyman.hpp"
-
-#include "Area.pyman.hpp"
-
-#include "Quantity.pyman.hpp"
-
-#include "Temperature.pyman.hpp"
-
-#include "MolarCharge.pyman.hpp"
-
-#include "Charge.pyman.hpp"
-
-#include "Time.pyman.hpp"
-
-#include "Length.pyman.hpp"
-
-#include "MolarMass.pyman.hpp"
-
-#include "Mass.pyman.hpp"
-
-#include "Dimensionless.pyman.hpp"
 
 namespace bp = boost::python;
 
@@ -76,61 +30,13 @@ BOOST_PYTHON_MODULE(_Units){
 
     register_Celsius_class();
 
-    register_Unit_class();
-
-    bp::implicitly_convertible< SireUnits::Dimension::Unit, double >();
+    register_GeneralUnit_class();
 
     register_Fahrenheit_class();
 
     bp::implicitly_convertible< SireUnits::Dimension::TempBase, SireUnits::Dimension::Temperature >();
 
-    register_Dimensionless_class();
-
-    register_Mass_class();
-
-    register_MolarMass_class();
-
-    register_Length_class();
-
-    register_Time_class();
-
-    register_Charge_class();
-
-    register_MolarCharge_class();
-
-    register_Temperature_class();
-
-    register_Quantity_class();
-
-    register_Area_class();
-
-    register_Volume_class();
-
-    register_MolarVolume_class();
-
-    register_Velocity_class();
-
-    register_Acceleration_class();
-
-    register_Energy_class();
-
-    register_MolarEnergy_class();
-
-    register_Power_class();
-
-    register_MolarPower_class();
-
-    register_Density_class();
-
-    register_MolarDensity_class();
-
-    register_Force_class();
-
-    register_Pressure_class();
-
-    register_ElecCurrent_class();
-
-    register_ElecPotential_class();
+    register_SireUnits_dimensions();
 
     register_man_global_variables();
 

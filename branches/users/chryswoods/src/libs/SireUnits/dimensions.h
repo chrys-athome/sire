@@ -200,9 +200,49 @@ public:
                   scaleFactor() / other.scaleFactor());
     }
 
+    PhysUnit<-M,-L,-T,-C,-t,-Q> invert() const
+    {
+        return PhysUnit<-M,-L,-T,-C,-t,-Q>( 1.0 / scaleFactor() );
+    }
+
     double in(const PhysUnit<M,L,T,C,t,Q> &units) const
     {
         return units.convertFromInternal(*this);
+    }
+    
+    double to(const PhysUnit<M,L,T,C,t,Q> &units) const
+    {
+        return this->in(units);
+    }
+
+    static int MASS()
+    {
+        return M;
+    }
+    
+    static int LENGTH()
+    {
+        return L;
+    }
+    
+    static int TIME()
+    {
+        return T;
+    }
+    
+    static int CHARGE()
+    {
+        return C;
+    }
+    
+    static int TEMPERATURE()
+    {
+        return t;
+    }
+    
+    static int QUANTITY()
+    {
+        return Q;
     }
 };
 
@@ -280,9 +320,9 @@ typedef PhysUnit<1,1,-2,0,0,0> Force;
 
 typedef PhysUnit<1,-1,-2,0,0,0> Pressure;
 
-typedef PhysUnit<0,0,-1,1,0,0> ElecCurrent;
-
-typedef PhysUnit<1,2,-2,-1,0,0> ElecPotential;
+typedef PhysUnit<0,0,-1,1,0,0> Current;
+typedef PhysUnit<-1,-2,2,2,0,0> Capacitance;
+typedef PhysUnit<1,2,-2,-1,0,0> Potential;
 
 #else // else with 'ifndef SKIP_BROKEN_GCCXML_PARTS'
 
@@ -308,8 +348,9 @@ class Density;
 class MolarDensity;
 class Force;
 class Pressure;
-class ElecCurrent;
-class ElecPotential;
+class Capacitance;
+class Current;
+class Potential;
 
 #endif // end of 'ifndef SKIP_BROKEN_GCCXML_PARTS'
 

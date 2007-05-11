@@ -1,11 +1,25 @@
 #ifndef PYWRAP_SIREUNITS_GENERALUNIT_H
 #define PYWRAP_SIREUNITS_GENERALUNIT_H
 
+#ifndef SKIP_TEMPLATE_DEFINITIONS
+#include <Python.h>
+#include <boost/python.hpp>
+#endif
+
+#include <QString>
+
 #include "SireUnits/dimensions.h"
 
 SIRE_BEGIN_HEADER
 
+#ifndef SKIP_TEMPLATE_DEFINITIONS
+namespace bp = boost::python;
+#endif
+
 namespace SireUnits
+{
+
+namespace Dimension
 {
 
 class GeneralUnit
@@ -13,41 +27,29 @@ class GeneralUnit
 public:
     GeneralUnit();
 
-    template<int M, int L, int T, int C, int t, int Q>
-    GeneralUnit(const PhysUnit<M,L,T,C,t,Q> &unit)
+    template<class D>
+    explicit GeneralUnit(const D &unit)
     {
         value = unit;
-        Mass = M;
-        Length = L;
-        Time = T;
-        Charge = C;
-        temperature = t;
-        Quantity = Q;
+        
+        Mass = D::MASS();
+        Length = D::LENGTH();
+        Time = D::TIME();
+        Charge = D::CHARGE();
+        temperature = D::TEMPERATURE();
+        Quantity = D::QUANTITY();
     }
     
     GeneralUnit(const GeneralUnit &other);
     
     ~GeneralUnit();
 
-    int M() const;
-    int L() const;
-    int T() const;
-    int C() const;
-    int t() const;
-    int Q() const;
-
-    template<int M, int L, int T, int C, int t, int Q>
-    PhysUnit<M,L,T,C,t,Q> convert() const
-    {
-        BOOST_ASSERT( M == Mass );
-        BOOST_ASSERT( L == Length );
-        BOOST_ASSERT( T == Time );
-        BOOST_ASSERT( C == Charge );
-        BOOST_ASSERT( t == temperature );
-        BOOST_ASSERT( Q == Quantity );
-    
-        return PhysUnit<M,L,T,C,t,Q>( value );
-    }
+    int MASS() const;
+    int LENGTH() const;
+    int TIME() const;
+    int CHARGE() const;
+    int TEMPERATURE() const;
+    int QUANTITY() const;
 
     GeneralUnit& operator=(const GeneralUnit &other);
     
@@ -74,14 +76,27 @@ public:
     GeneralUnit operator/(const GeneralUnit &other) const;
     
     GeneralUnit& operator*=(double val);
-    
     GeneralUnit& operator/=(double val);
     
-    GeneralUnit operator*(double val) const;
+    GeneralUnit& operator*=(int val);
+    GeneralUnit& operator/=(int val);
     
+    GeneralUnit operator*(double val) const;
     GeneralUnit operator/(double val) const;
     
-    operator double() const;
+    GeneralUnit operator*(int val) const;
+    GeneralUnit operator/(int val) const;
+    
+    GeneralUnit invert() const;
+    
+    double to(const GeneralUnit &other) const;
+    
+    double scaleFactor() const;
+    
+    double convertToInternal(double value) const;
+    double convertFromInternal(double value) const;
+    
+    QString toString() const;
 
 private:
     void assertCompatible(const GeneralUnit &other) const;
@@ -89,6 +104,30 @@ private:
     double value;
     int Mass, Length, Time, Charge, temperature, Quantity;
 };
+
+inline GeneralUnit operator*(double val, const GeneralUnit &unit)
+{
+    return unit * val;
+}
+
+inline GeneralUnit operator*(int val, const GeneralUnit &unit)
+{
+    return unit * val;
+}
+
+inline GeneralUnit operator/(double val, const GeneralUnit &unit)
+{
+    return unit.invert() * val;
+}
+
+inline GeneralUnit operator/(int val, const GeneralUnit &unit)
+{
+    return unit.invert() * val;
+}
+
+} // end of namespace Dimension
+
+#ifndef SKIP_TEMPLATE_DEFINITIONS
 
 template<class D>
 struct from_general_unit
@@ -100,30 +139,30 @@ struct from_general_unit
         boost::python::converter::registry::push_back(
             &convertible,
             &construct,
-            type_id< D >());
+            bp::type_id< D >());
     }
 
     /** Test whether or not it is possible to convert the PyObject
         holding a GeneralUnit to this specific PhysUnit*/
     static void* convertible(PyObject* obj_ptr)
     {
-        object obj( handle<>(borrowed(obj_ptr)) );
+        bp::object obj( bp::handle<>(bp::borrowed(obj_ptr)) );
     
-        extract<GeneralUnit> x(obj); 
+        bp::extract<const Dimension::GeneralUnit&> x(obj); 
     
         //is this a GeneralUnit?
         if ( x.check() )
         {
             //it is ;-)  Get a reference to it and make sure
             //that it is of the right dimension
-            GeneralUnit &gen_unit = x();
+            const Dimension::GeneralUnit &gen_unit = x();
             
-            if ( gen_unit.M() == D::M() and
-                 gen_unit.L() == D::L() and
-                 gen_unit.T() == D::T() and
-                 gen_unit.C() == D::C() and
-                 gen_unit.t() == D::t() and
-                 gen_unit.Q() == D::Q() )
+            if ( gen_unit.MASS() == D::MASS() and
+                 gen_unit.LENGTH() == D::LENGTH() and
+                 gen_unit.TIME() == D::TIME() and
+                 gen_unit.CHARGE() == D::CHARGE() and
+                 gen_unit.TEMPERATURE() == D::TEMPERATURE() and
+                 gen_unit.QUANTITY() == D::QUANTITY() )
             {
                 //this has the right dimension :-)
                 return obj_ptr;
@@ -139,30 +178,30 @@ struct from_general_unit
         PyObject* obj_ptr,
         boost::python::converter::rvalue_from_python_stage1_data* data)
     {
-        object obj( handle<>(borrowed(obj_ptr)) );
+        bp::object obj( bp::handle<>(bp::borrowed(obj_ptr)) );
     
-        extract<GeneralUnit> x(obj); 
+        bp::extract<const Dimension::GeneralUnit&> x(obj); 
     
         //is this a GeneralUnit?
         if ( x.check() )
         {
             //it is ;-)  Get a reference to it and make sure
             //that it is of the right dimension
-            GeneralUnit &gen_unit = x();
+            const Dimension::GeneralUnit &gen_unit = x();
             
-            if ( gen_unit.M() == D::M() and
-                 gen_unit.L() == D::L() and
-                 gen_unit.T() == D::T() and
-                 gen_unit.C() == D::C() and
-                 gen_unit.t() == D::t() and
-                 gen_unit.Q() == D::Q() )
+            if ( gen_unit.MASS() == D::MASS() and
+                 gen_unit.LENGTH() == D::LENGTH() and
+                 gen_unit.TIME() == D::TIME() and
+                 gen_unit.CHARGE() == D::CHARGE() and
+                 gen_unit.TEMPERATURE() == D::TEMPERATURE() and
+                 gen_unit.QUANTITY() == D::QUANTITY() )
             {
                 //locate the storage space for the result
                 void* storage =
-                    ( (converter::rvalue_from_python_storage<D>*)data )->storage.bytes;
+                    ( (bp::converter::rvalue_from_python_storage<D>*)data )->storage.bytes;
 
                 //create the T container
-                new (storage) D( double(gen_unit) );
+                new (storage) D( gen_unit.scaleFactor() );
                 
                 data->convertible = storage;
             }
@@ -175,23 +214,22 @@ struct to_general_unit
 {
     static PyObject* convert(const D &unit)
     {
-        return incref( object(GeneralUnit(unit)).ptr() );
+        return bp::incref( bp::object(Dimension::GeneralUnit(unit)).ptr() );
     }
 };
 
 template<class D>
-void register_unit()
+void register_dimension()
 {
-    typedef typename PhysUnit<M,L,T,C,t,Q> D;
+    bp::to_python_converter< D, to_general_unit<D> >();
 
-    to_python_converter< D, to_general_unit<D> >();
-
-    converter::registry::push_back( 
+    bp::converter::registry::push_back( 
           &from_general_unit<D>::convertible,
           &from_general_unit<D>::construct,
-          type_id<D>() );
+          bp::type_id<D>() );
 }
 
+#endif // 'SKIP_TEMPLATE_DEFINITIONS'
 
 }
 

@@ -5,4 +5,6 @@
 #include "SireUnits/temperature.h"
 #include "SireUnits/convert.h"
 
+#include "generalunit.h"
+
 #endif

@@ -209,13 +209,13 @@ const Dimension::Temperature kelvin(1);
 //////////////////////////////////////////////////////////
 
 /** Convert the units of current (amps) */
-const Dimension::ElecCurrent amp = coulomb / second;
+const Dimension::Current amp = coulomb / second;
 
 /** Volts */
-const Dimension::ElecPotential volt = joule / coulomb;
+const Dimension::Potential volt = joule / coulomb;
 
 /** Convert the units of capacitance (farads) */
-const Dimension::PhysUnit<-1,-2,2,2,0,0> farad = coulomb / volt;
+const Dimension::Capacitance farad = coulomb / volt;
 
 /** Convert power in Watts */
 const Dimension::Power watt = joule / second;

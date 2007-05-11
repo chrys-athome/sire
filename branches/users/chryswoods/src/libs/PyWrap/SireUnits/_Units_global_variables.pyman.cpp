@@ -157,6 +157,8 @@ void register_man_global_variables()
 
     scope().attr("volt") = volt;
 
+    scope().attr("farad") = farad;
+
     scope().attr("watt") = watt;
 
     scope().attr("watt_per_mol") = watt_per_mol;
