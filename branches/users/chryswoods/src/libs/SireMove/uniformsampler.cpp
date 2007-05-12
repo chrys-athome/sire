@@ -157,6 +157,11 @@ bool UniformSampler::_pvt_isEqual(const PropertyBase &other) const
 */
 tuple<PartialMolecule,double> UniformSampler::sample(const QuerySystem &system)
 {
+    if (groupid == 0)
+        throw SireMol::missing_group( QObject::tr(
+            "You must supply the sampler with a group to sample!"),
+                CODELOC );
+
     //get the group from the system
     const MoleculeGroup &group = system.groups().group(groupid);
 

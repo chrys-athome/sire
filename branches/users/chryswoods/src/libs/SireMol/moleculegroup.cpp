@@ -432,10 +432,8 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MoleculeGroup &group)
     return ds;
 }
 
-static QSharedDataPointer<MoleculeGroupPvt> shared_null( new MoleculeGroupPvt() );
-
 /** Null constructor */
-MoleculeGroup::MoleculeGroup() : d(shared_null)
+MoleculeGroup::MoleculeGroup() : d(new MoleculeGroupPvt())
 {}
 
 /** Construct an empty, named group */

@@ -92,7 +92,7 @@ void TestSampler::runTests()
 
     RanGenerator rand;
 
-    UniformSampler unisampler(rand);
+    UniformSampler unisampler(group, rand);
 
     UniformSampler unisampler2 = unisampler;
 
