@@ -126,12 +126,14 @@ void TestUnits::runTests()
     BOOST_CHECK_CLOSE( convertFrom(5.5, kcal_per_mol), convertFrom(5500.0, cal_per_mol), 1e-6 );
     BOOST_CHECK_CLOSE( convertFrom(15.31, angstrom), convertFrom(1.531, nanometer), 1e-6 );
 
-/*    BOOST_CHECK_CLOSE( double(Temperature(25 * celsius)),
-                       double(298.15 * kelvin), 1e-6 );
-    BOOST_CHECK_CLOSE( double(Temperature(5*celsius + 10*celsius)),
-                       double(Temperature(15*celsius)), 1e-6 );
-    BOOST_CHECK_CLOSE( double(Temperature( 5*fahrenheit + 10*fahrenheit )),
-                       double(Temperature(15*fahrenheit)), 1e-6 );
-    BOOST_CHECK_CLOSE( double(Temperature(100 * fahrenheit)),
-                       double(Temperature( ((100-32)/1.8) * celsius )), 1e-6 );*/
+    BOOST_CHECK_CLOSE( double(25 * celsius), double(298.15 * kelvin), 1e-6 );
+    BOOST_CHECK_CLOSE( double(5*celsius + 10*celsius), double(15*celsius), 1e-6 );
+    BOOST_CHECK_CLOSE( double(5*fahrenheit + 10*fahrenheit), double(15*fahrenheit), 1e-6 );
+    BOOST_CHECK_CLOSE( double(100 * fahrenheit), double(((100-32)/1.8) * celsius), 1e-6 );
+
+    BOOST_CHECK_CLOSE( (100 * fahrenheit).to(celsius), (100-32)/1.8, 1e-6 );
+
+    qDebug() << "100 Fahrenheit ==" << (100*fahrenheit).to(celsius) << "Celsius";
+
+    qDebug() << QObject::tr("Finished TestUnits tests");
 }

@@ -14,7 +14,7 @@ SireUnits::Dimension::GeneralUnit __copy__(const SireUnits::Dimension::GeneralUn
 
 void register_GeneralUnit_class(){
 
-    bp::class_< SireUnits::Dimension::GeneralUnit >( "GeneralUnit" )    
+    bp::class_< SireUnits::Dimension::GeneralUnit, bp::bases< SireUnits::Dimension::Unit > >( "GeneralUnit" )    
         .def( bp::init< >() )    
         .def( 
             "ANGLE"
@@ -38,14 +38,6 @@ void register_GeneralUnit_class(){
             "TIME"
             , &::SireUnits::Dimension::GeneralUnit::TIME )    
         .def( 
-            "convertFromInternal"
-            , &::SireUnits::Dimension::GeneralUnit::convertFromInternal
-            , ( bp::arg("value") ) )    
-        .def( 
-            "convertToInternal"
-            , &::SireUnits::Dimension::GeneralUnit::convertToInternal
-            , ( bp::arg("value") ) )    
-        .def( 
             "invert"
             , &::SireUnits::Dimension::GeneralUnit::invert )    
         .def( bp::self != bp::self )    
@@ -68,11 +60,12 @@ void register_GeneralUnit_class(){
         .def( bp::self /= bp::other< int >() )    
         .def( bp::self == bp::self )    
         .def( 
-            "scaleFactor"
-            , &::SireUnits::Dimension::GeneralUnit::scaleFactor )    
+            "to"
+            , (double ( ::SireUnits::Dimension::GeneralUnit::* )( ::SireUnits::Dimension::TempBase const & ) const)( &::SireUnits::Dimension::GeneralUnit::to )
+            , ( bp::arg("other") ) )    
         .def( 
             "to"
-            , &::SireUnits::Dimension::GeneralUnit::to
+            , (double ( ::SireUnits::Dimension::GeneralUnit::* )( ::SireUnits::Dimension::GeneralUnit const & ) const)( &::SireUnits::Dimension::GeneralUnit::to )
             , ( bp::arg("other") ) )    
         .def( 
             "toString"

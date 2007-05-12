@@ -24,6 +24,7 @@ set ( WRAPUNITS_SOURCES
       Fahrenheit.pypp.cpp
       TempBase.pypp.cpp
       
+      Unit.pypp.cpp
       GeneralUnit.pypp.cpp
       
       generalunit.cpp

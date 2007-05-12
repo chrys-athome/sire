@@ -15,6 +15,8 @@
 
 #include "TempBase.pypp.hpp"
 
+#include "Unit.pypp.hpp"
+
 #include "_Units_free_functions.pypp.hpp"
 
 #include "_Units_global_variables.pypp.hpp"
@@ -30,11 +32,17 @@ BOOST_PYTHON_MODULE(_Units){
 
     register_Celsius_class();
 
+    register_Unit_class();
+
+    bp::implicitly_convertible< SireUnits::Dimension::Unit, double >();
+
     register_GeneralUnit_class();
 
     register_Fahrenheit_class();
 
     bp::implicitly_convertible< SireUnits::Dimension::TempBase, SireUnits::Dimension::Temperature >();
+
+    bp::implicitly_convertible< SireUnits::Dimension::TempBase, double >();
 
     register_SireUnits_dimensions();
 

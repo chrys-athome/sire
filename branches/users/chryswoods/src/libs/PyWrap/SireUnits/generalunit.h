@@ -22,16 +22,17 @@ namespace SireUnits
 namespace Dimension
 {
 
-class GeneralUnit
+class TempBase;
+class _Pvt_Kelvin;
+
+class GeneralUnit : public Unit
 {
 public:
     GeneralUnit();
 
     template<class D>
-    explicit GeneralUnit(const D &unit)
+    explicit GeneralUnit(const D &unit) : Unit(unit)
     {
-        value = unit;
-        
         Mass = D::MASS();
         Length = D::LENGTH();
         Time = D::TIME();
@@ -91,19 +92,14 @@ public:
     
     GeneralUnit invert() const;
     
+    double to(const TempBase &other) const;
     double to(const GeneralUnit &other) const;
-    
-    double scaleFactor() const;
-    
-    double convertToInternal(double value) const;
-    double convertFromInternal(double value) const;
     
     QString toString() const;
 
 private:
     void assertCompatible(const GeneralUnit &other) const;
 
-    double value;
     int Mass, Length, Time, Charge, temperature, Quantity, Angle;
 };
 

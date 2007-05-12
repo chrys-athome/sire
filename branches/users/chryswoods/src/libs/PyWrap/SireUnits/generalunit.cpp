@@ -6,12 +6,13 @@
 
 #include "generalunit.h"
 
+#include "SireUnits/temperature.h"
+
 using namespace SireUnits;
 using namespace SireUnits::Dimension;
 
-GeneralUnit::GeneralUnit()
+GeneralUnit::GeneralUnit() : Unit(0)
 {
-    value = 0;
     Mass = 0;
     Length = 0;
     Time = 0;
@@ -21,10 +22,8 @@ GeneralUnit::GeneralUnit()
     Angle = 0;
 }
 
-GeneralUnit::GeneralUnit(const GeneralUnit &other)
+GeneralUnit::GeneralUnit(const GeneralUnit &other) : Unit(other)
 {
-    value = other.value;
-    
     Mass = other.Mass;
     Length = other.Length;
     Time = other.Time;
@@ -49,21 +48,6 @@ void GeneralUnit::assertCompatible(const GeneralUnit &other) const
     {
         throw "Unit conversion error!!!";
     }
-}
-
-double GeneralUnit::scaleFactor() const
-{
-    return value;
-}
-
-double GeneralUnit::convertToInternal(double val) const
-{
-    return val * value;
-}
-
-double GeneralUnit::convertFromInternal(double val) const
-{
-    return val / value;
 }
     
 static void appendString(int M, QString rep, QStringList &pos, QStringList &neg)
@@ -96,20 +80,32 @@ QString GeneralUnit::toString() const
     appendString(Angle, "A", pos, neg);
     
     if (pos.isEmpty() and neg.isEmpty())
-        return QString::number(value);
+        return QString::number(value());
     else if (neg.isEmpty())
-        return QString("%1 %2").arg(value).arg(pos.join(" "));
+        return QString("%1 %2").arg(value()).arg(pos.join(" "));
     else if (pos.isEmpty())
-        return QString("%1 %2").arg(value).arg(neg.join(" "));
+        return QString("%1 %2").arg(value()).arg(neg.join(" "));
     else
-        return QString("%1 %2 %3").arg(value)
+        return QString("%1 %2 %3").arg(value())
                                   .arg(pos.join(" "), neg.join(" "));
 }
 
 double GeneralUnit::to(const GeneralUnit &units) const
 {
     assertCompatible(units);
-    return units.convertFromInternal(value);
+    return units.convertFromInternal(value());
+}
+
+double GeneralUnit::to(const TempBase &other) const
+{
+    //this must be a temperature!
+    GeneralUnit general_temp;
+    general_temp.temperature = 1;
+    general_temp.setScale(other);
+    
+    this->assertCompatible(general_temp);
+    
+    return other.convertFromInternal(value()) / other.convertFromInternal();
 }
 
 int GeneralUnit::MASS() const
@@ -149,7 +145,7 @@ int GeneralUnit::ANGLE() const
 
 GeneralUnit& GeneralUnit::operator=(const GeneralUnit &other)
 {
-    value = other.value;
+    setScale(other.value());
     
     Mass = other.MASS();
     Length = other.LENGTH();
@@ -165,33 +161,33 @@ GeneralUnit& GeneralUnit::operator=(const GeneralUnit &other)
 bool GeneralUnit::operator==(const GeneralUnit &other) const
 {
     assertCompatible(other);
-    return value == other.value;
+    return value() == other.value();
 }
 
 bool GeneralUnit::operator!=(const GeneralUnit &other) const
 {
     assertCompatible(other);
-    return value != other.value;
+    return value() != other.value();
 }
 
 GeneralUnit GeneralUnit::operator-() const
 {
     GeneralUnit ret = *this;
-    ret.value *= -1;
+    ret.setScale( -value() );
     return ret;
 }
 
 GeneralUnit& GeneralUnit::operator+=(const GeneralUnit &other)
 {
     assertCompatible(other);
-    value += other.value;
+    setScale(value() + other.value());
     return *this;
 }
 
 GeneralUnit& GeneralUnit::operator-=(const GeneralUnit &other)
 {
     assertCompatible(other);
-    value -= other.value;
+    setScale(value() - other.value());
     return *this;
 }
 
@@ -211,7 +207,7 @@ GeneralUnit GeneralUnit::operator-(const GeneralUnit &other) const
 
 GeneralUnit GeneralUnit::operator*=(const GeneralUnit &other)
 {
-     value *= other.value;
+     setScale(value() * other.value());
      Mass += other.Mass;
      Length += other.Length;
      Time += other.Time;
@@ -225,7 +221,7 @@ GeneralUnit GeneralUnit::operator*=(const GeneralUnit &other)
 
 GeneralUnit GeneralUnit::operator/=(const GeneralUnit &other)
 {
-    value /= other.value;
+    setScale(value() / other.value());
     Mass -= other.Mass;
     Length -= other.Length;
     Time -= other.Time;
@@ -253,25 +249,25 @@ GeneralUnit GeneralUnit::operator/(const GeneralUnit &other) const
 
 GeneralUnit& GeneralUnit::operator*=(double val)
 {
-    value *= val;
+    setScale(value() * val);
     return *this;
 }
 
 GeneralUnit& GeneralUnit::operator/=(double val)
 {
-    value /= val;
+    setScale(value() / val);
     return *this;
 }
 
 GeneralUnit& GeneralUnit::operator*=(int val)
 {
-    value *= val;
+    setScale(value() * val);
     return *this;
 }
 
 GeneralUnit& GeneralUnit::operator/=(int val)
 {
-    value /= val;
+    setScale(value() / val);
     return *this;
 }
 
@@ -307,7 +303,7 @@ GeneralUnit GeneralUnit::invert() const
 {
     GeneralUnit ret;
     
-    ret.value = 1.0 / value;
+    ret.setScale( 1.0 / value() );
     
     ret.Mass = -Mass;
     ret.Length = -Length;

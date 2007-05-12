@@ -113,16 +113,24 @@ public:
         return Temperature(val);
     }
 
+    operator double() const
+    {
+        return val;
+    }
+
     double in(const TempBase &other) const
     {
-        return this->convertFromInternal(val) /
-               other.convertFromInternal(other.val);
+        return other.convertFromInternal(val) / other.convertFromInternal();
     }
 
     double in(const Temperature &temp) const
     {
-        return this->convertFromInternal(val) /
-               this->convertFromInternal(temp);
+        return val * temp;
+    }
+
+    double to(const TempBase &other) const
+    {
+        return this->in(other);
     }
 
     virtual double convertToInternal(double value) const=0;
@@ -137,6 +145,11 @@ protected:
     /** This holds the temperature in internal units (K) */
     double val;
 };
+
+/** Construct a Unit from a TempBase */
+inline Unit::Unit(const TempBase &temperature)
+            : sclfac(temperature)
+{}
 
 } //end of namespace Dimension
 

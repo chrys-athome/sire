@@ -33,10 +33,15 @@ void register_TempBase_class(){
             , (double ( ::SireUnits::Dimension::TempBase::* )( ::SireUnits::Dimension::Temperature const & ) const)( &::SireUnits::Dimension::TempBase::in )
             , ( bp::arg("temp") ) )    
         .def( "as__scope_SireUnits_scope_Dimension_scope_Temperature", &SireUnits::Dimension::TempBase::operator ::SireUnits::Dimension::Temperature  )    
+        .def( "__float__", &SireUnits::Dimension::TempBase::operator double  )    
         .def( bp::self != bp::self )    
         .def( bp::self != bp::other< SireUnits::Dimension::Temperature >() )    
         .def( bp::self == bp::self )    
         .def( bp::self == bp::other< SireUnits::Dimension::Temperature >() )    
+        .def( 
+            "to"
+            , &::SireUnits::Dimension::TempBase::to
+            , ( bp::arg("other") ) )    
         .def( "__str__", &pvt_get_name);
 
 }

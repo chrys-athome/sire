@@ -31,6 +31,8 @@
 
 #include "SireMaths/constants.h"
 
+#include <boost/static_assert.hpp>
+
 SIRE_BEGIN_HEADER
 
 namespace SireUnits
@@ -41,6 +43,8 @@ using SireMaths::pi;
 
 namespace Dimension
 {
+
+class TempBase;
 
 /** This is the base class of all units - at its heart, this is
     just a scale factor - how many times the base unit is the
@@ -55,6 +59,11 @@ public:
     {}
 
     operator double() const
+    {
+        return sclfac;
+    }
+
+    double value() const
     {
         return sclfac;
     }
@@ -77,6 +86,8 @@ public:
 protected:
     Unit(double scale_factor) : sclfac(scale_factor)
     {}
+    
+    Unit(const TempBase &temperature);
 
     void setScale(double scale_factor)
     {
@@ -104,6 +115,13 @@ public:
     explicit PhysUnit(double scale_factor)
                : Unit(scale_factor)
     {}
+
+    explicit PhysUnit(const TempBase &temperature) : Unit(temperature)
+    {
+        //this must be a Temperature!
+        BOOST_STATIC_ASSERT( t == 1 and M == 0 and L == 0 and 
+                             T == 0 and C == 0 and Q == 0 and A == 0);
+    }
 
     PhysUnit(const PhysUnit<M,L,T,C,t,Q,A> &other)
                : Unit(other)

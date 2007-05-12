@@ -23,7 +23,40 @@ void register_free_functions(){
 
     { //::SireUnits::convert
     
+        typedef double ( *convert_function_type )( double,::SireUnits::Dimension::TempBase const & );
+        
+        bp::def( 
+            "convert"
+            , convert_function_type( &::SireUnits::convert )
+            , ( bp::arg("val"), bp::arg("to_units") ) );
+    
+    }
+
+    { //::SireUnits::convert
+    
         typedef double ( *convert_function_type )( double,::SireUnits::Dimension::Unit const &,::SireUnits::Dimension::Unit const & );
+        
+        bp::def( 
+            "convert"
+            , convert_function_type( &::SireUnits::convert )
+            , ( bp::arg("val"), bp::arg("from_units"), bp::arg("to_units") ) );
+    
+    }
+
+    { //::SireUnits::convert
+    
+        typedef double ( *convert_function_type )( double,::SireUnits::Dimension::Unit const &,::SireUnits::Dimension::TempBase const & );
+        
+        bp::def( 
+            "convert"
+            , convert_function_type( &::SireUnits::convert )
+            , ( bp::arg("val"), bp::arg("from_units"), bp::arg("to_units") ) );
+    
+    }
+
+    { //::SireUnits::convert
+    
+        typedef double ( *convert_function_type )( double,::SireUnits::Dimension::TempBase const &,::SireUnits::Dimension::TempBase const & );
         
         bp::def( 
             "convert"
@@ -43,9 +76,31 @@ void register_free_functions(){
     
     }
 
+    { //::SireUnits::convertFrom
+    
+        typedef double ( *convertFrom_function_type )( double,::SireUnits::Dimension::TempBase const & );
+        
+        bp::def( 
+            "convertFrom"
+            , convertFrom_function_type( &::SireUnits::convertFrom )
+            , ( bp::arg("val"), bp::arg("from_units") ) );
+    
+    }
+
     { //::SireUnits::convertTo
     
         typedef double ( *convertTo_function_type )( double,::SireUnits::Dimension::Unit const & );
+        
+        bp::def( 
+            "convertTo"
+            , convertTo_function_type( &::SireUnits::convertTo )
+            , ( bp::arg("val"), bp::arg("to_units") ) );
+    
+    }
+
+    { //::SireUnits::convertTo
+    
+        typedef double ( *convertTo_function_type )( double,::SireUnits::Dimension::TempBase const & );
         
         bp::def( 
             "convertTo"

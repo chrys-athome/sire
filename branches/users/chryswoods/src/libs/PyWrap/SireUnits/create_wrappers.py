@@ -14,6 +14,7 @@ from sireutils import *
 wrap_classes = [ "TempBase",
                  "Celsius",
                  "Fahrenheit",
+                 "Unit",
                  "GeneralUnit" ]
 
 huge_classes = []
@@ -24,9 +25,12 @@ extra_includes = []
 
 special_code = {}
 
-implicitly_convertible = [ ("SireUnits::Dimension::TempBase", 
-                            "SireUnits::Dimension::Temperature") ]
-
+implicitly_convertible = [ ("SireUnits::Dimension::TempBase",
+                            "SireUnits::Dimension::Temperature"),
+                           ("SireUnits::Dimension::TempBase",
+                            "double"),
+                         ]
+ 
 
 def findGlobals():
     lines = open("../../SireUnits/units.h", "r").readlines()
