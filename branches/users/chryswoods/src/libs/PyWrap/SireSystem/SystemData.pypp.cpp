@@ -109,6 +109,10 @@ void register_SystemData_class(){
             , (void ( ::SireSystem::SystemData::* )( ::SireMol::Molecules const & ) )( &::SireSystem::SystemData::remove )
             , ( bp::arg("molecules") ) )    
         .def( 
+            "setSpace"
+            , (void ( ::SireSystem::SystemData::* )( ::SireVol::Space const & ) )( &::SireSystem::SystemData::setSpace )
+            , ( bp::arg("space") ) )    
+        .def( 
             "space"
             , (::SireVol::Space const & ( ::SireSystem::SystemData::* )(  ) const)( &::SireSystem::SystemData::space )
             , bp::return_value_policy< bp::copy_const_reference >() )    

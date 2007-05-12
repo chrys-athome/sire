@@ -100,6 +100,7 @@ print ffields.nForceFields()
 group = MoleculeGroup("solvent", mols)
 
 system = System(group, ffields)
+system.setSpace(space)
 
 mc = RigidBodyMC( UniformSampler(group) )
 

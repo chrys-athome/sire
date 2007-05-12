@@ -314,6 +314,8 @@ PartialMolecule QuerySystem::molecule(MoleculeID molid) const
         //see if we need to add on atoms from the forcefields...
         if (forceFields().refersTo(mol.ID()))
             return mol.selection().add( forceFields().molecule(molid).selectedAtoms() );
+        else
+            return mol;
     }
     else
     {

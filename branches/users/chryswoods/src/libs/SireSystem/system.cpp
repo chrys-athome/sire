@@ -210,6 +210,13 @@ bool System::operator!=(const System &other) const
     return sysdata != other.sysdata;
 }
 
+/** Set the space in which the molecules are mapped */
+void System::setSpace(const Space &space)
+{
+    #warning Need to set the space properly
+    sysdata.setSpace(space);
+}
+
 /** Prepare ourselves for simulation... */
 void System::prepareForSimulation()
 {

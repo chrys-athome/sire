@@ -129,6 +129,7 @@ public:
     const Version& version() const;
 
     const Space& space() const;
+    void setSpace(const Space &space);
 
     const MoleculeGroup& group(MoleculeGroupID id) const;
     const MoleculeGroups& groups() const;

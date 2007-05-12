@@ -191,6 +191,13 @@ PartialMolecule SystemData::mapIntoSystemSpace(const PartialMolecule &molecule) 
     return molecule.move().mapInto(space());
 }
 
+/** Set the system space */
+void SystemData::setSpace(const Space &space)
+{
+    #warning Still need to map molecules into the space if it changes...
+    sys_space = space;
+}
+
 /** Map the molecule in 'molecules' into the system space (so that they are contained
     in the system space). The returned, mapped, molecules will contain
     the union of the atoms selected in each molecule with the atoms that have

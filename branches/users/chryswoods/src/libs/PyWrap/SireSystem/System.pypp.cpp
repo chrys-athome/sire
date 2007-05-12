@@ -67,6 +67,10 @@ void register_System_class(){
             , (::SireSystem::Moves ( ::SireSystem::System::* )( ::SireSystem::Moves const &,::quint32 ) )( &::SireSystem::System::run )
             , ( bp::arg("moves"), bp::arg("nmoves") ) )    
         .def( 
+            "setSpace"
+            , (void ( ::SireSystem::System::* )( ::SireVol::Space const & ) )( &::SireSystem::System::setSpace )
+            , ( bp::arg("space") ) )    
+        .def( 
             "version"
             , (::SireBase::Version const & ( ::SireSystem::System::* )(  ) const)( &::SireSystem::System::version )
             , bp::return_value_policy< bp::copy_const_reference >() )    

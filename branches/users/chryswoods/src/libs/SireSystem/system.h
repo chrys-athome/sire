@@ -123,6 +123,8 @@ public:
     const ForceFields& forceFields() const;
     const SystemData& info() const;
     const SystemMonitors& monitors() const;
+  
+    void setSpace(const Space &space);
 
     Moves run(const Move &move, quint32 nmoves=1);
     Moves run(const Moves &moves);
