@@ -32,9 +32,8 @@
 #include "vector.h"
 #include "line.h"
 #include "triangle.h"
-#include "angle.h"
 
-#include "sireglobal.h"
+#include "SireUnits/dimensions.h"
 
 SIRE_BEGIN_HEADER
 
@@ -49,6 +48,8 @@ QDataStream& operator>>(QDataStream&, SireMaths::Torsion&);
 
 namespace SireMaths
 {
+
+using SireUnits::Dimension::Angle;
 
 /**
 This class represents a torsion in three dimensional space, e.g. four points in space, not necessarily lying in a plane. A torsion is used to calculate dihedral angles (imagine each point is an atom). I am not happy with the name of this class, and welcome suggestions :-)
@@ -91,6 +92,8 @@ private:
     /** The four points that make up the torsion */
     Vector points[4];
 };
+
+#ifndef SKIP_TEMPLATE_DEFINITIONS
 
 /** Return the torsion angle of this torsion (the torsion angle 0-1-2-3 around the 1-2 line) */
 inline Angle Torsion::angle() const
@@ -157,6 +160,8 @@ inline const Vector& Torsion::at( int i ) const
 {
     return this->point(i);
 }
+
+#endif // end of '#ifndef SKIP_TEMPLATE_DEFINITIONS'
 
 }
 

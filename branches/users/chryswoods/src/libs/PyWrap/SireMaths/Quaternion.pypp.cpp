@@ -18,7 +18,7 @@ void register_Quaternion_class(){
 
     bp::class_< SireMaths::Quaternion >( "Quaternion" )    
         .def( bp::init< >() )    
-        .def( bp::init< SireMaths::Angle const &, SireMaths::Vector const & >(( bp::arg("angle"), bp::arg("axis") )) )    
+        .def( bp::init< SireUnits::Dimension::Angle, SireMaths::Vector const & >(( bp::arg("angle"), bp::arg("axis") )) )    
         .def( bp::init< SireMaths::Matrix const & >(( bp::arg("m") )) )    
         .def( bp::init< double, double, double, double >(( bp::arg("x"), bp::arg("y"), bp::arg("z"), bp::arg("w") )) )    
         .def( 

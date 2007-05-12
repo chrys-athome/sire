@@ -10,8 +10,7 @@ from pygccxml import declarations
 sys.path.append("..")
 from sireutils import *
 
-wrap_classes = [ "Angle",
-                 "AxisSet",
+wrap_classes = [ "AxisSet",
                  "Complex",
                  "Line",
                  "Matrix4",
@@ -37,52 +36,10 @@ def fix_matrix4(c):
       if len(d.arguments) >= 16:
          d.exclude()
 
-def fix_vector(c):
-
-   # add maths operators
-   c.add_registration_code( "def(self + self)" )
-   c.add_registration_code( "def(self - self)" )
-   c.add_registration_code( "def(self * other<double>())" )
-   c.add_registration_code( "def(self / other<double>())" )
-   c.add_registration_code( "def(self += self)" )
-   c.add_registration_code( "def(self -= self)" )
-   c.add_registration_code( "def(self *= other<double>())" )
-   c.add_registration_code( "def(self /= other<double>())" )
-   c.add_registration_code( "def(-self)" )
-   c.add_registration_code( "def(self == self)" )
-   c.add_registration_code( "def(self != self)" )
-   
-def fix_angle(c):
-   
-   c.add_registration_code( "def(self + self)" )
-   c.add_registration_code( "def(self - self)" )
-   c.add_registration_code( "def(self * other<double>())" )
-   c.add_registration_code( "def(self / other<double>())" )
-
-def fix_matrix(c):
-
-   c.add_registration_code( "def(self + self)" )
-   c.add_registration_code( "def(self - self)" )
-   c.add_registration_code( "def(self * self)" )
-   c.add_registration_code( "def(self += self)" )
-   c.add_registration_code( "def(self -= self)" )
-   c.add_registration_code( "def(self *= self)" )
-   c.add_registration_code( "def(self *= other<double>())" )
-   c.add_registration_code( "def(self * other<double>())" )
-   c.add_registration_code( "def(other<double>() * self)" )
-   c.add_registration_code( "def(self * other<SireMaths::Vector>())" )
-   c.add_registration_code( "def(other<SireMaths::Vector>() * self)" )
-   c.add_registration_code( "def(self == self)" )
-   c.add_registration_code( "def(self != self)" )
-
-special_code = { "Matrix4" : fix_matrix4,
-                 "Vector" : fix_vector,
-                 "Angle" : fix_angle,
-                 "Matrix" : fix_matrix }
+special_code = { "Matrix4" : fix_matrix4 }
 
 implicitly_convertible = [ ("boost::tuples::tuple<double,double,double>",
                             "SireMaths::Vector"),
-                           ("double", "SireMaths::Angle"),
                            ("boost::tuples::tuple<SireMaths::Vector,SireMaths::Vector,SireMaths::Vector>",
                             "SireMaths::Matrix")
                          ]
@@ -128,9 +85,10 @@ def export_free(things):
            thing.include()
            
 export_free( mb.free_functions() )
-export_free( mb.free_operators() )
+mb.free_operators().include()
 export_free( mb.variables() )
 
 register_implicit_conversions(mb, implicitly_convertible)
 
 write_wrappers(mb, modulename, extra_includes, huge_classes)
+

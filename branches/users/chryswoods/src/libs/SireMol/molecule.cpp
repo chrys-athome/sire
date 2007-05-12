@@ -1395,7 +1395,7 @@ double Molecule::measure(const Bond &bnd) const
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-SireMaths::Angle Molecule::measure(const SireMol::Angle &ang) const
+SireUnits::Dimension::Angle Molecule::measure(const SireMol::Angle &ang) const
 {
     return data().measure(ang);
 }
@@ -1405,7 +1405,7 @@ SireMaths::Angle Molecule::measure(const SireMol::Angle &ang) const
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-SireMaths::Angle Molecule::measure(const Dihedral &dih) const
+SireUnits::Dimension::Angle Molecule::measure(const Dihedral &dih) const
 {
     return data().measure(dih);
 }
@@ -1415,7 +1415,7 @@ SireMaths::Angle Molecule::measure(const Dihedral &dih) const
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-SireMaths::Angle Molecule::measure(const Improper &imp) const
+SireUnits::Dimension::Angle Molecule::measure(const Improper &imp) const
 {
     return data().measure(imp);
 }

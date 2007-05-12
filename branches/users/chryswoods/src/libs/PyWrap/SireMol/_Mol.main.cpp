@@ -9,8 +9,6 @@
 
 #include "SireMol/moleculedata.h"
 
-#include "SireMaths/angle.h"
-
 #include "SireMaths/quaternion.h"
 
 #include "SireMaths/matrix.h"

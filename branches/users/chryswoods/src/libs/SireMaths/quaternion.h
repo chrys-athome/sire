@@ -33,7 +33,7 @@ class QString;
 
 #include "maths.h"
 
-#include "sireglobal.h"
+#include "SireUnits/dimensions.h"
 
 SIRE_BEGIN_HEADER
 
@@ -51,7 +51,6 @@ namespace SireMaths
 
 class Vector;
 class Matrix;
-class Angle;
 
 /**
 This is a quaternion class that is used to handle 3D rotations and SLERP.
@@ -68,7 +67,7 @@ public:
     Quaternion();
     Quaternion(const Quaternion& p1);
     
-    Quaternion(const Angle &angle, const Vector &axis);
+    Quaternion(SireUnits::Dimension::Angle angle, const Vector &axis);
     Quaternion(const Matrix &m);
     Quaternion(double x, double y, double z, double w);
     

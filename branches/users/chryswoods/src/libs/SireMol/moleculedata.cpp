@@ -63,7 +63,6 @@
 #include "SireBase/errors.h"
 #include "SireError/errors.h"
 
-#include "SireMaths/angle.h"
 #include "SireMaths/quaternion.h"
 #include "SireMaths/matrix.h"
 #include "SireMaths/line.h"
@@ -1021,7 +1020,7 @@ double MoleculeData::measure(const Bond &bnd) const
 
     \throw SireMol::missing_atom
 */
-SireMaths::Angle MoleculeData::measure(const SireMol::Angle &ang) const
+SireUnits::Dimension::Angle MoleculeData::measure(const SireMol::Angle &ang) const
 {
     return angle(ang).angle1();
 }
@@ -1030,7 +1029,7 @@ SireMaths::Angle MoleculeData::measure(const SireMol::Angle &ang) const
 
     \throw SireMol::missing_atom
 */
-SireMaths::Angle MoleculeData::measure(const Dihedral &dih) const
+SireUnits::Dimension::Angle MoleculeData::measure(const Dihedral &dih) const
 {
     return dihedral(dih).angle();
 }
@@ -1039,11 +1038,11 @@ SireMaths::Angle MoleculeData::measure(const Dihedral &dih) const
 
     \throw SireMol::missing_atom
 */
-SireMaths::Angle MoleculeData::measure(const Improper &improper) const
+SireUnits::Dimension::Angle MoleculeData::measure(const Improper &improper) const
 {
     throw SireError::incomplete_code("Need to write this!", CODELOC);
 
-    return 0.0;
+    return SireUnits::Dimension::Angle(0);
 }
 
 /** Return the relative weights of 'group0' and 'group1' using the weight function
@@ -3141,7 +3140,7 @@ void MoleculeData::change(const Bond &bnd, double delta,
     \throw SireMol::missing_residue
     \throw SireMol::anchor_error
 */
-void MoleculeData::change(const SireMol::Angle &ang, const SireMaths::Angle &delta,
+void MoleculeData::change(const SireMol::Angle &ang, SireUnits::Dimension::Angle delta,
                 const AtomIDGroup &group0, const AtomIDGroup &group1,
                 const WeightFunction &weightfunc, const QSet<AtomIndex> &anchors)
 {
@@ -3203,7 +3202,7 @@ void MoleculeData::change(const SireMol::Angle &ang, const SireMaths::Angle &del
     \throw SireMol::missing_residue
     \throw SireMol::anchor_error
 */
-void MoleculeData::change(const Bond &dih, const SireMaths::Angle &delta,
+void MoleculeData::change(const Bond &dih, SireUnits::Dimension::Angle delta,
                 const AtomIDGroup &group0, const AtomIDGroup &group1,
                 const WeightFunction &weightfunc, const QSet<AtomIndex> &anchors)
 {
@@ -3265,7 +3264,7 @@ void MoleculeData::change(const Bond &dih, const SireMaths::Angle &delta,
     \throw SireMol::missing_residue
     \throw SireMol::anchor_error
 */
-void MoleculeData::change(const Improper &improper, const SireMaths::Angle &delta,
+void MoleculeData::change(const Improper &improper, SireUnits::Dimension::Angle delta,
                 const AtomIDGroup &group0, const AtomIDGroup &group1,
                 const WeightFunction &weightfunc, const QSet<AtomIndex> &anchors)
 {

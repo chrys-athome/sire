@@ -35,6 +35,8 @@
 #include "atomindex.h"
 #include "moleculeview.h"
 
+#include "SireUnits/dimensions.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMaths
@@ -45,7 +47,6 @@ class Quaternion;
 class Line;
 class Triangle;
 class Torsion;
-class Angle;
 }
 
 namespace SireMol
@@ -189,9 +190,9 @@ public:
     SireMaths::Torsion improper(const Improper &improper) const;
 
     double measure(const Bond &bnd) const;
-    SireMaths::Angle measure(const SireMol::Angle &ang) const;
-    SireMaths::Angle measure(const Dihedral &dih) const;
-    SireMaths::Angle measure(const Improper &improper) const;
+    SireUnits::Dimension::Angle measure(const SireMol::Angle &ang) const;
+    SireUnits::Dimension::Angle measure(const Dihedral &dih) const;
+    SireUnits::Dimension::Angle measure(const Improper &improper) const;
 
     double getWeight(const QStringList &group0, const QStringList &group1,
                      const WeightFunction &weightfunc) const;

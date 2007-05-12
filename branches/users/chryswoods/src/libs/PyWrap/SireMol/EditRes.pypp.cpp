@@ -6,7 +6,6 @@
 #include "boost/python.hpp"
 #include "siremol_headers.h"
 #include "SireMol/moleculedata.h"
-#include "SireMaths/angle.h"
 #include "SireMaths/quaternion.h"
 #include "SireMaths/matrix.h"
 #include "SireMaths/triangle.h"
@@ -251,15 +250,15 @@ void register_EditRes_class(){
             , ( bp::arg("bnd") ) )    
         .def( 
             "measure"
-            , (::SireMaths::Angle ( ::SireMol::EditRes::* )( ::SireMol::Angle const & ) const)( &::SireMol::EditRes::measure )
+            , (::SireUnits::Dimension::Angle ( ::SireMol::EditRes::* )( ::SireMol::Angle const & ) const)( &::SireMol::EditRes::measure )
             , ( bp::arg("ang") ) )    
         .def( 
             "measure"
-            , (::SireMaths::Angle ( ::SireMol::EditRes::* )( ::SireMol::Dihedral const & ) const)( &::SireMol::EditRes::measure )
+            , (::SireUnits::Dimension::Angle ( ::SireMol::EditRes::* )( ::SireMol::Dihedral const & ) const)( &::SireMol::EditRes::measure )
             , ( bp::arg("dih") ) )    
         .def( 
             "measure"
-            , (::SireMaths::Angle ( ::SireMol::EditRes::* )( ::SireMol::Improper const & ) const)( &::SireMol::EditRes::measure )
+            , (::SireUnits::Dimension::Angle ( ::SireMol::EditRes::* )( ::SireMol::Improper const & ) const)( &::SireMol::EditRes::measure )
             , ( bp::arg("improper") ) )    
         .def( 
             "molecule"

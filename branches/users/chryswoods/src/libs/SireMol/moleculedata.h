@@ -48,6 +48,8 @@
 
 #include "SireVol/coordgroup.h"
 
+#include "SireUnits/dimensions.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMaths
@@ -58,7 +60,6 @@ class Quaternion;
 class Line;
 class Triangle;
 class Torsion;
-class Angle;
 }
 
 namespace SireBase
@@ -323,9 +324,9 @@ public:
     SireMaths::Torsion improper(const Improper &improper) const;
 
     double measure(const Bond &bnd) const;
-    SireMaths::Angle measure(const SireMol::Angle &ang) const;
-    SireMaths::Angle measure(const Dihedral &dih) const;
-    SireMaths::Angle measure(const Improper &improper) const;
+    SireUnits::Dimension::Angle measure(const SireMol::Angle &ang) const;
+    SireUnits::Dimension::Angle measure(const Dihedral &dih) const;
+    SireUnits::Dimension::Angle measure(const Improper &improper) const;
 
     double getWeight(const AtomIDGroup &group0, const AtomIDGroup &group1,
                      const WeightFunction &weightfunc) const;
@@ -423,15 +424,15 @@ public:
                 const AtomIDGroup &group0, const AtomIDGroup &group1,
                 const WeightFunction &weightfunc, const QSet<AtomIndex> &anchors);
 
-    void change(const SireMol::Angle &ang, const SireMaths::Angle &delta,
+    void change(const SireMol::Angle &ang, SireUnits::Dimension::Angle delta,
                 const AtomIDGroup &group0, const AtomIDGroup &group1,
                 const WeightFunction &weightfunc, const QSet<AtomIndex> &anchors);
 
-    void change(const Bond &bnd, const SireMaths::Angle &delta,
+    void change(const Bond &bnd, SireUnits::Dimension::Angle delta,
                 const AtomIDGroup &group0, const AtomIDGroup &group1,
                 const WeightFunction &weightfunc, const QSet<AtomIndex> &anchors);
 
-    void change(const Improper &improper, const SireMaths::Angle &delta,
+    void change(const Improper &improper, SireUnits::Dimension::Angle delta,
                 const AtomIDGroup &group0, const AtomIDGroup &group1,
                 const WeightFunction &weightfunc, const QSet<AtomIndex> &anchors);
    /////////////////////////////////////////////////

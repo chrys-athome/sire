@@ -35,6 +35,8 @@
 #include "atomindex.h"
 #include "moleculeview.h"
 
+#include "SireUnits/dimensions.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol
@@ -57,7 +59,6 @@ class Vector;
 class Matrix;
 class Quaternion;
 class Line;
-class Angle;
 class Triangle;
 class Torsion;
 }
@@ -236,27 +237,27 @@ public:
     MoleculeMover change(const Bond &bond, double delta, const WeightFunction &func,
                          const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
 
-    MoleculeMover change(const Angle &angle, const SireMaths::Angle &delta,
+    MoleculeMover change(const Angle &angle, SireUnits::Dimension::Angle delta,
                          const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
-    MoleculeMover change(const Angle &angle, const SireMaths::Angle &delta,
+    MoleculeMover change(const Angle &angle, SireUnits::Dimension::Angle delta,
                          const WeightFunction &func,
                          const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
 
-    MoleculeMover change(const Dihedral &dihedral, const SireMaths::Angle &delta,
+    MoleculeMover change(const Dihedral &dihedral, SireUnits::Dimension::Angle delta,
                          const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
-    MoleculeMover change(const Dihedral &dihedral, const SireMaths::Angle &delta,
+    MoleculeMover change(const Dihedral &dihedral, SireUnits::Dimension::Angle delta,
                          const WeightFunction &func,
                          const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
 
-    MoleculeMover change(const Bond &bond, const SireMaths::Angle &delta,
+    MoleculeMover change(const Bond &bond, SireUnits::Dimension::Angle delta,
                          const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
-    MoleculeMover change(const Bond &bond, const SireMaths::Angle &delta,
+    MoleculeMover change(const Bond &bond, SireUnits::Dimension::Angle delta,
                          const WeightFunction &func,
                          const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
 
-    MoleculeMover change(const Improper &improper, const SireMaths::Angle &delta,
+    MoleculeMover change(const Improper &improper, SireUnits::Dimension::Angle delta,
                          const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
-    MoleculeMover change(const Improper &improper, const SireMaths::Angle &delta,
+    MoleculeMover change(const Improper &improper, SireUnits::Dimension::Angle delta,
                          const WeightFunction &func,
                          const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
 
@@ -265,27 +266,27 @@ public:
     MoleculeMover set(const Bond &bond, double lgth, const WeightFunction &func,
                       const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
 
-    MoleculeMover set(const SireMol::Angle &angle, const SireMaths::Angle &ang,
+    MoleculeMover set(const SireMol::Angle &angle, SireUnits::Dimension::Angle ang,
                       const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
-    MoleculeMover set(const SireMol::Angle &angle, const SireMaths::Angle &ang,
+    MoleculeMover set(const SireMol::Angle &angle, SireUnits::Dimension::Angle ang,
                       const WeightFunction &func,
                       const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
 
-    MoleculeMover set(const Dihedral &dihedral, const SireMaths::Angle &ang,
+    MoleculeMover set(const Dihedral &dihedral, SireUnits::Dimension::Angle ang,
                       const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
-    MoleculeMover set(const Dihedral &dihedral, const SireMaths::Angle &ang,
+    MoleculeMover set(const Dihedral &dihedral, SireUnits::Dimension::Angle ang,
                       const WeightFunction &func,
                       const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
 
-    MoleculeMover setAll(const Dihedral &dihedral, const SireMaths::Angle &ang,
+    MoleculeMover setAll(const Dihedral &dihedral, SireUnits::Dimension::Angle ang,
                          const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
-    MoleculeMover setAll(const Dihedral &dihedral, const SireMaths::Angle &ang,
+    MoleculeMover setAll(const Dihedral &dihedral, SireUnits::Dimension::Angle ang,
                          const WeightFunction &func,
                          const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
 
-    MoleculeMover set(const Improper &improper, const SireMaths::Angle &ang,
+    MoleculeMover set(const Improper &improper, SireUnits::Dimension::Angle ang,
                       const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
-    MoleculeMover set(const Improper &improper, const SireMaths::Angle &ang,
+    MoleculeMover set(const Improper &improper, SireUnits::Dimension::Angle ang,
                       const WeightFunction &func,
                       const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
 };

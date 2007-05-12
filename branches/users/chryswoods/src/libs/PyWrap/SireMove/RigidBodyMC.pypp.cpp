@@ -23,11 +23,17 @@ void register_RigidBodyMC_class(){
 
     bp::class_< SireMove::RigidBodyMC, bp::bases< SireMove::MonteCarlo > >( "RigidBodyMC", bp::init< bp::optional< SireMaths::RanGenerator const & > >(( bp::arg("generator")=::SireMaths::RanGenerator( ) )) )    
         .def( bp::init< SireMove::Sampler const &, bp::optional< SireMaths::RanGenerator const & > >(( bp::arg("sampler"), bp::arg("generator")=::SireMaths::RanGenerator( ) )) )    
-        .def( bp::init< SireMove::Sampler const &, double, SireMaths::Angle const &, bp::optional< SireMaths::RanGenerator const & > >(( bp::arg("sampler"), bp::arg("max_translation"), bp::arg("max_rotation"), bp::arg("generator")=::SireMaths::RanGenerator( ) )) )    
+        .def( bp::init< SireMove::Sampler const &, SireUnits::Dimension::Length, SireUnits::Dimension::Angle, bp::optional< SireMaths::RanGenerator const & > >(( bp::arg("sampler"), bp::arg("max_translation"), bp::arg("max_rotation"), bp::arg("generator")=::SireMaths::RanGenerator( ) )) )    
         .def( 
             "initialise"
             , (void ( ::SireMove::RigidBodyMC::* )( ::SireSystem::QuerySystem & ) )( &::SireMove::RigidBodyMC::initialise )
             , ( bp::arg("system") ) )    
+        .def( 
+            "maximumRotation"
+            , (::SireUnits::Dimension::Angle ( ::SireMove::RigidBodyMC::* )(  ) const)( &::SireMove::RigidBodyMC::maximumRotation ) )    
+        .def( 
+            "maximumTranslation"
+            , (::SireUnits::Dimension::Length ( ::SireMove::RigidBodyMC::* )(  ) const)( &::SireMove::RigidBodyMC::maximumTranslation ) )    
         .def( 
             "move"
             , (void ( ::SireMove::RigidBodyMC::* )( ::SireSystem::SimSystem & ) )( &::SireMove::RigidBodyMC::move )
@@ -38,11 +44,11 @@ void register_RigidBodyMC_class(){
             , ( bp::arg("energy") ) )    
         .def( 
             "setMaximumRotation"
-            , (void ( ::SireMove::RigidBodyMC::* )( ::SireMaths::Angle const & ) )( &::SireMove::RigidBodyMC::setMaximumRotation )
+            , (void ( ::SireMove::RigidBodyMC::* )( ::SireUnits::Dimension::Angle ) )( &::SireMove::RigidBodyMC::setMaximumRotation )
             , ( bp::arg("max_rotation") ) )    
         .def( 
             "setMaximumTranslation"
-            , (void ( ::SireMove::RigidBodyMC::* )( double ) )( &::SireMove::RigidBodyMC::setMaximumTranslation )
+            , (void ( ::SireMove::RigidBodyMC::* )( ::SireUnits::Dimension::Length ) )( &::SireMove::RigidBodyMC::setMaximumTranslation )
             , ( bp::arg("max_translation") ) )    
         .def( 
             "typeName"

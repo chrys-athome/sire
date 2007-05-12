@@ -1797,7 +1797,7 @@ double EditMolData::measure(const Bond &bnd) const
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-SireMaths::Angle EditMolData::measure(const SireMol::Angle &ang) const
+SireUnits::Dimension::Angle EditMolData::measure(const SireMol::Angle &ang) const
 {
     return angle(ang).angle();
 }
@@ -1807,7 +1807,7 @@ SireMaths::Angle EditMolData::measure(const SireMol::Angle &ang) const
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-SireMaths::Angle EditMolData::measure(const Dihedral &dih) const
+SireUnits::Dimension::Angle EditMolData::measure(const Dihedral &dih) const
 {
     return dihedral(dih).angle();
 }
@@ -1817,11 +1817,11 @@ SireMaths::Angle EditMolData::measure(const Dihedral &dih) const
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-SireMaths::Angle EditMolData::measure(const Improper &imp) const
+SireUnits::Dimension::Angle EditMolData::measure(const Improper &imp) const
 {
     throw SireError::incomplete_code("Need to write this!", CODELOC);
 
-    return 0.0;
+    return SireUnits::Dimension::Angle(0);
 }
 
 /** Return the relative weights of 'group0' and 'group1' in this
@@ -3651,7 +3651,7 @@ void EditMolData::change(const Bond &bnd, double delta,
     \throw SireMol::missing_residue
     \throw SireMol::anchor_error
 */
-void EditMolData::change(const SireMol::Angle &ang, const SireMaths::Angle &delta,
+void EditMolData::change(const SireMol::Angle &ang, const SireUnits::Dimension::Angle &delta,
                          const AtomIDGroup &group0, const AtomIDGroup &group1,
                          const WeightFunction &weightfunc, const QSet<AtomIndex> &anchors)
 {
@@ -3704,7 +3704,7 @@ void EditMolData::change(const SireMol::Angle &ang, const SireMaths::Angle &delt
     \throw SireMol::missing_residue
     \throw SireMol::anchor_error
 */
-void EditMolData::change(const Bond &dih, const SireMaths::Angle &delta,
+void EditMolData::change(const Bond &dih, const SireUnits::Dimension::Angle &delta,
                          const AtomIDGroup &group0, const AtomIDGroup &group1,
                          const WeightFunction &weightfunc, const QSet<AtomIndex> &anchors)
 {
@@ -3757,7 +3757,7 @@ void EditMolData::change(const Bond &dih, const SireMaths::Angle &delta,
     \throw SireMol::missing_residue
     \throw SireMol::anchor_error
 */
-void EditMolData::change(const Improper &improper, const SireMaths::Angle &delta,
+void EditMolData::change(const Improper &improper, const SireUnits::Dimension::Angle &delta,
                          const AtomIDGroup &group0, const AtomIDGroup &group1,
                          const WeightFunction &weightfunc, const QSet<AtomIndex> &anchors)
 {

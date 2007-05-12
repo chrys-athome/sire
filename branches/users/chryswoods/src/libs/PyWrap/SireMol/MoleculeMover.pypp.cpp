@@ -6,7 +6,6 @@
 #include "boost/python.hpp"
 #include "siremol_headers.h"
 #include "SireMol/moleculedata.h"
-#include "SireMaths/angle.h"
 #include "SireMaths/quaternion.h"
 #include "SireMaths/matrix.h"
 #include "SireMaths/triangle.h"
@@ -38,35 +37,35 @@ void register_MoleculeMover_class(){
             , ( bp::arg("bond"), bp::arg("delta"), bp::arg("func"), bp::arg("anchors")=::QSet<SireMol::AtomIndex>( ) ) )    
         .def( 
             "change"
-            , (::SireMol::MoleculeMover ( ::SireMol::MoleculeMover::* )( ::SireMol::Angle const &,::SireMaths::Angle const &,::QSet<SireMol::AtomIndex> const & ) const)( &::SireMol::MoleculeMover::change )
+            , (::SireMol::MoleculeMover ( ::SireMol::MoleculeMover::* )( ::SireMol::Angle const &,::SireUnits::Dimension::Angle,::QSet<SireMol::AtomIndex> const & ) const)( &::SireMol::MoleculeMover::change )
             , ( bp::arg("angle"), bp::arg("delta"), bp::arg("anchors")=::QSet<SireMol::AtomIndex>( ) ) )    
         .def( 
             "change"
-            , (::SireMol::MoleculeMover ( ::SireMol::MoleculeMover::* )( ::SireMol::Angle const &,::SireMaths::Angle const &,::SireMol::WeightFunction const &,::QSet<SireMol::AtomIndex> const & ) const)( &::SireMol::MoleculeMover::change )
+            , (::SireMol::MoleculeMover ( ::SireMol::MoleculeMover::* )( ::SireMol::Angle const &,::SireUnits::Dimension::Angle,::SireMol::WeightFunction const &,::QSet<SireMol::AtomIndex> const & ) const)( &::SireMol::MoleculeMover::change )
             , ( bp::arg("angle"), bp::arg("delta"), bp::arg("func"), bp::arg("anchors")=::QSet<SireMol::AtomIndex>( ) ) )    
         .def( 
             "change"
-            , (::SireMol::MoleculeMover ( ::SireMol::MoleculeMover::* )( ::SireMol::Dihedral const &,::SireMaths::Angle const &,::QSet<SireMol::AtomIndex> const & ) const)( &::SireMol::MoleculeMover::change )
+            , (::SireMol::MoleculeMover ( ::SireMol::MoleculeMover::* )( ::SireMol::Dihedral const &,::SireUnits::Dimension::Angle,::QSet<SireMol::AtomIndex> const & ) const)( &::SireMol::MoleculeMover::change )
             , ( bp::arg("dihedral"), bp::arg("delta"), bp::arg("anchors")=::QSet<SireMol::AtomIndex>( ) ) )    
         .def( 
             "change"
-            , (::SireMol::MoleculeMover ( ::SireMol::MoleculeMover::* )( ::SireMol::Dihedral const &,::SireMaths::Angle const &,::SireMol::WeightFunction const &,::QSet<SireMol::AtomIndex> const & ) const)( &::SireMol::MoleculeMover::change )
+            , (::SireMol::MoleculeMover ( ::SireMol::MoleculeMover::* )( ::SireMol::Dihedral const &,::SireUnits::Dimension::Angle,::SireMol::WeightFunction const &,::QSet<SireMol::AtomIndex> const & ) const)( &::SireMol::MoleculeMover::change )
             , ( bp::arg("dihedral"), bp::arg("delta"), bp::arg("func"), bp::arg("anchors")=::QSet<SireMol::AtomIndex>( ) ) )    
         .def( 
             "change"
-            , (::SireMol::MoleculeMover ( ::SireMol::MoleculeMover::* )( ::SireMol::Bond const &,::SireMaths::Angle const &,::QSet<SireMol::AtomIndex> const & ) const)( &::SireMol::MoleculeMover::change )
+            , (::SireMol::MoleculeMover ( ::SireMol::MoleculeMover::* )( ::SireMol::Bond const &,::SireUnits::Dimension::Angle,::QSet<SireMol::AtomIndex> const & ) const)( &::SireMol::MoleculeMover::change )
             , ( bp::arg("bond"), bp::arg("delta"), bp::arg("anchors")=::QSet<SireMol::AtomIndex>( ) ) )    
         .def( 
             "change"
-            , (::SireMol::MoleculeMover ( ::SireMol::MoleculeMover::* )( ::SireMol::Bond const &,::SireMaths::Angle const &,::SireMol::WeightFunction const &,::QSet<SireMol::AtomIndex> const & ) const)( &::SireMol::MoleculeMover::change )
+            , (::SireMol::MoleculeMover ( ::SireMol::MoleculeMover::* )( ::SireMol::Bond const &,::SireUnits::Dimension::Angle,::SireMol::WeightFunction const &,::QSet<SireMol::AtomIndex> const & ) const)( &::SireMol::MoleculeMover::change )
             , ( bp::arg("bond"), bp::arg("delta"), bp::arg("func"), bp::arg("anchors")=::QSet<SireMol::AtomIndex>( ) ) )    
         .def( 
             "change"
-            , (::SireMol::MoleculeMover ( ::SireMol::MoleculeMover::* )( ::SireMol::Improper const &,::SireMaths::Angle const &,::QSet<SireMol::AtomIndex> const & ) const)( &::SireMol::MoleculeMover::change )
+            , (::SireMol::MoleculeMover ( ::SireMol::MoleculeMover::* )( ::SireMol::Improper const &,::SireUnits::Dimension::Angle,::QSet<SireMol::AtomIndex> const & ) const)( &::SireMol::MoleculeMover::change )
             , ( bp::arg("improper"), bp::arg("delta"), bp::arg("anchors")=::QSet<SireMol::AtomIndex>( ) ) )    
         .def( 
             "change"
-            , (::SireMol::MoleculeMover ( ::SireMol::MoleculeMover::* )( ::SireMol::Improper const &,::SireMaths::Angle const &,::SireMol::WeightFunction const &,::QSet<SireMol::AtomIndex> const & ) const)( &::SireMol::MoleculeMover::change )
+            , (::SireMol::MoleculeMover ( ::SireMol::MoleculeMover::* )( ::SireMol::Improper const &,::SireUnits::Dimension::Angle,::SireMol::WeightFunction const &,::QSet<SireMol::AtomIndex> const & ) const)( &::SireMol::MoleculeMover::change )
             , ( bp::arg("improper"), bp::arg("delta"), bp::arg("func"), bp::arg("anchors")=::QSet<SireMol::AtomIndex>( ) ) )    
         .def( 
             "mapInto"
@@ -178,35 +177,35 @@ void register_MoleculeMover_class(){
             , ( bp::arg("bond"), bp::arg("lgth"), bp::arg("func"), bp::arg("anchors")=::QSet<SireMol::AtomIndex>( ) ) )    
         .def( 
             "set"
-            , (::SireMol::MoleculeMover ( ::SireMol::MoleculeMover::* )( ::SireMol::Angle const &,::SireMaths::Angle const &,::QSet<SireMol::AtomIndex> const & ) const)( &::SireMol::MoleculeMover::set )
+            , (::SireMol::MoleculeMover ( ::SireMol::MoleculeMover::* )( ::SireMol::Angle const &,::SireUnits::Dimension::Angle,::QSet<SireMol::AtomIndex> const & ) const)( &::SireMol::MoleculeMover::set )
             , ( bp::arg("angle"), bp::arg("ang"), bp::arg("anchors")=::QSet<SireMol::AtomIndex>( ) ) )    
         .def( 
             "set"
-            , (::SireMol::MoleculeMover ( ::SireMol::MoleculeMover::* )( ::SireMol::Angle const &,::SireMaths::Angle const &,::SireMol::WeightFunction const &,::QSet<SireMol::AtomIndex> const & ) const)( &::SireMol::MoleculeMover::set )
+            , (::SireMol::MoleculeMover ( ::SireMol::MoleculeMover::* )( ::SireMol::Angle const &,::SireUnits::Dimension::Angle,::SireMol::WeightFunction const &,::QSet<SireMol::AtomIndex> const & ) const)( &::SireMol::MoleculeMover::set )
             , ( bp::arg("angle"), bp::arg("ang"), bp::arg("func"), bp::arg("anchors")=::QSet<SireMol::AtomIndex>( ) ) )    
         .def( 
             "set"
-            , (::SireMol::MoleculeMover ( ::SireMol::MoleculeMover::* )( ::SireMol::Dihedral const &,::SireMaths::Angle const &,::QSet<SireMol::AtomIndex> const & ) const)( &::SireMol::MoleculeMover::set )
+            , (::SireMol::MoleculeMover ( ::SireMol::MoleculeMover::* )( ::SireMol::Dihedral const &,::SireUnits::Dimension::Angle,::QSet<SireMol::AtomIndex> const & ) const)( &::SireMol::MoleculeMover::set )
             , ( bp::arg("dihedral"), bp::arg("ang"), bp::arg("anchors")=::QSet<SireMol::AtomIndex>( ) ) )    
         .def( 
             "set"
-            , (::SireMol::MoleculeMover ( ::SireMol::MoleculeMover::* )( ::SireMol::Dihedral const &,::SireMaths::Angle const &,::SireMol::WeightFunction const &,::QSet<SireMol::AtomIndex> const & ) const)( &::SireMol::MoleculeMover::set )
+            , (::SireMol::MoleculeMover ( ::SireMol::MoleculeMover::* )( ::SireMol::Dihedral const &,::SireUnits::Dimension::Angle,::SireMol::WeightFunction const &,::QSet<SireMol::AtomIndex> const & ) const)( &::SireMol::MoleculeMover::set )
             , ( bp::arg("dihedral"), bp::arg("ang"), bp::arg("func"), bp::arg("anchors")=::QSet<SireMol::AtomIndex>( ) ) )    
         .def( 
             "set"
-            , (::SireMol::MoleculeMover ( ::SireMol::MoleculeMover::* )( ::SireMol::Improper const &,::SireMaths::Angle const &,::QSet<SireMol::AtomIndex> const & ) const)( &::SireMol::MoleculeMover::set )
+            , (::SireMol::MoleculeMover ( ::SireMol::MoleculeMover::* )( ::SireMol::Improper const &,::SireUnits::Dimension::Angle,::QSet<SireMol::AtomIndex> const & ) const)( &::SireMol::MoleculeMover::set )
             , ( bp::arg("improper"), bp::arg("ang"), bp::arg("anchors")=::QSet<SireMol::AtomIndex>( ) ) )    
         .def( 
             "set"
-            , (::SireMol::MoleculeMover ( ::SireMol::MoleculeMover::* )( ::SireMol::Improper const &,::SireMaths::Angle const &,::SireMol::WeightFunction const &,::QSet<SireMol::AtomIndex> const & ) const)( &::SireMol::MoleculeMover::set )
+            , (::SireMol::MoleculeMover ( ::SireMol::MoleculeMover::* )( ::SireMol::Improper const &,::SireUnits::Dimension::Angle,::SireMol::WeightFunction const &,::QSet<SireMol::AtomIndex> const & ) const)( &::SireMol::MoleculeMover::set )
             , ( bp::arg("improper"), bp::arg("ang"), bp::arg("func"), bp::arg("anchors")=::QSet<SireMol::AtomIndex>( ) ) )    
         .def( 
             "setAll"
-            , (::SireMol::MoleculeMover ( ::SireMol::MoleculeMover::* )( ::SireMol::Dihedral const &,::SireMaths::Angle const &,::QSet<SireMol::AtomIndex> const & ) const)( &::SireMol::MoleculeMover::setAll )
+            , (::SireMol::MoleculeMover ( ::SireMol::MoleculeMover::* )( ::SireMol::Dihedral const &,::SireUnits::Dimension::Angle,::QSet<SireMol::AtomIndex> const & ) const)( &::SireMol::MoleculeMover::setAll )
             , ( bp::arg("dihedral"), bp::arg("ang"), bp::arg("anchors")=::QSet<SireMol::AtomIndex>( ) ) )    
         .def( 
             "setAll"
-            , (::SireMol::MoleculeMover ( ::SireMol::MoleculeMover::* )( ::SireMol::Dihedral const &,::SireMaths::Angle const &,::SireMol::WeightFunction const &,::QSet<SireMol::AtomIndex> const & ) const)( &::SireMol::MoleculeMover::setAll )
+            , (::SireMol::MoleculeMover ( ::SireMol::MoleculeMover::* )( ::SireMol::Dihedral const &,::SireUnits::Dimension::Angle,::SireMol::WeightFunction const &,::QSet<SireMol::AtomIndex> const & ) const)( &::SireMol::MoleculeMover::setAll )
             , ( bp::arg("dihedral"), bp::arg("ang"), bp::arg("func"), bp::arg("anchors")=::QSet<SireMol::AtomIndex>( ) ) )    
         .def( 
             "setCoordinates"

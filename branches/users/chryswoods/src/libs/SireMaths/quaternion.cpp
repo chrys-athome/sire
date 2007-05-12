@@ -29,7 +29,6 @@
 #include "quaternion.h"
 #include "vector.h"
 #include "matrix.h"
-#include "angle.h"
 
 #include <QString>
 #include <QRegExp>
@@ -103,14 +102,14 @@ Quaternion::Quaternion(const Quaternion& p)
 }
 
 /** Construct a quaternion which represents a rotation of 'angle' around 'axis' */
-Quaternion::Quaternion(const Angle &angle, const Vector &axis)
+Quaternion::Quaternion(SireUnits::Dimension::Angle angle, const Vector &axis)
 {
     //the unit quaternion can be represented by;
     // Q = cos(theta) + u*sin(theta)
     // which represents a rotation of 2*theta around the
     // vector u
 
-    double ang = angle.toRadians() * 0.5;
+    double ang = double(angle) * 0.5;
     double costheta = cos(ang);
     double sintheta = sin(ang);
 

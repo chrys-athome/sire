@@ -27,7 +27,6 @@
 \*********************************************/
 
 #include "vector.h"
-#include "angle.h"
 #include "quaternion.h"
 #include "matrix.h"
 
@@ -42,6 +41,7 @@
 #include <cmath>
 
 using namespace SireMaths;
+using namespace SireUnits;
 using namespace SireStream;
 
 static const RegisterMetaType<Vector> r_vector;
@@ -209,18 +209,18 @@ Angle Vector::bearing() const
     Vector t(x(),y(),0.0);
 
     if (t.x() == 0.0 and t.y() == 0.0)
-        return Angle(0.0);
+        return Angle(0);
 
     if (t.y() == 0.0)
     {
        if (t.x() > 0.0)
-         return Angle(1.5707963); // 90 degrees
+         return 90 * degrees;
        else
-         return Angle(4.712389); // 270 degrees
+         return 270 * degrees;
     }
     else if (t.y() > 0.0)  // range from -90 to 180 to 90
     {
-        return Angle(3.1415927 - std::atan(t.x()/t.y()));
+        return (360*degrees) - Angle(std::atan(t.x()/t.y()));
     }
     else  // range from -90 to 0 to 90
     {
@@ -261,7 +261,7 @@ Angle Vector::angle(const Vector &v0, const Vector &v1)
     double lt = v0.length() * v1.length();
 
     if (SireMaths::isZero(lt))
-        return Angle(0.0);
+        return Angle(0);
     else
         return Angle( std::acos(d/lt) );
 }
@@ -321,8 +321,8 @@ Angle Vector::dihedral(const Vector &v0, const Vector &v1, const Vector &v2, con
 
     Angle ang2(std::acos(cos_ang));
 
-    if (ang2.toRadians() < SireMaths::pi_over_two)
-        return Angle(SireMaths::two_pi - ang.toRadians());
+    if (ang2 < SireMaths::pi_over_two)
+        return (360*degrees) - ang;
     else
         return ang;
 }
@@ -355,10 +355,10 @@ Vector Vector::generate(double dst, const Vector &v1, const Angle &ang, const Ve
 //    ybs = lgth * sin(ang) * sin(dih)
 //    zbs = -lgth * cos(ang)
 
-      double sinval = std::sin(ang.toRadians());
-      double xbs = dst * sinval * std::cos(dih.toRadians());
-      double ybs = dst * sinval * std::sin(dih.toRadians());
-      double zbs = -dst * std::cos(ang.toRadians());
+      double sinval = std::sin(ang);
+      double xbs = dst * sinval * std::cos(dih);
+      double ybs = dst * sinval * std::sin(dih);
+      double zbs = -dst * std::cos(ang);
 
 //    Then we map the coordinates in this basis set to our cartesian coordinates
 //    via...

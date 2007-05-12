@@ -41,17 +41,15 @@ cljff_a_b = InterGroupCLJFF(space, switchfunc)
 #parametise each molecule and add it to the forcefield
 print "Parametising the molecules..."
 
-chgs = AtomicCharges( [0.0, 0.52 * mod_electrons,
-                            0.52 * mod_electrons,
-                           -1.04 * mod_electrons] )
+chgs = AtomicCharges( [0.0, 0.52 * mod_electron,
+                            0.52 * mod_electron,
+                           -1.04 * mod_electron] )
 
 ljs = AtomicLJs( [ LJParameter( 3.15365 * angstrom, \
                                 0.1550 * kcal_per_mol ), \
                    LJParameter.dummy(), \
                    LJParameter.dummy(), \
                    LJParameter.dummy() ] )
-
-tip4p = mols[0]
 
 timer.start()
 
@@ -90,9 +88,6 @@ print "... took %d ms" % ms
       
 print "(%d molecules in group A, %d in group B)" % (n_in_a, n_in_b)
 
-print cljff_a.energy(), cljff_b.energy(), cljff_a_b.energy()
-print cljff_a.energy() + cljff_b.energy() + cljff_a_b.energy()
-
 #add the forcefields to a forcefields object
 ffields = ForceFields()
 ffields.add(cljff_a)
@@ -101,10 +96,7 @@ ffields.add(cljff_a_b)
       
 print ffields.nForceFields()
       
-#now calculate the energy of the forcefield
-print "Calculating the energy..."
-print ffields.energy()
-
+#now create the molecule groups
 group = MoleculeGroup("solvent", mols)
 
 system = System(group, ffields)

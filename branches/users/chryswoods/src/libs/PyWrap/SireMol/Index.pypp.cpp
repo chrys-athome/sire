@@ -6,7 +6,6 @@
 #include "boost/python.hpp"
 #include "siremol_headers.h"
 #include "SireMol/moleculedata.h"
-#include "SireMaths/angle.h"
 #include "SireMaths/quaternion.h"
 #include "SireMaths/matrix.h"
 #include "SireMaths/triangle.h"

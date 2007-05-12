@@ -22,7 +22,6 @@ set ( WRAPMATHS_SOURCES
 
       siremaths_containers.cpp
       
-      Angle.pypp.cpp
       AxisSet.pypp.cpp
       
       Complex.pypp.cpp

@@ -55,7 +55,6 @@
 #include "SireError/errors.h"
 #include "SireMol/errors.h"
 
-#include "SireMaths/angle.h"
 #include "SireMaths/quaternion.h"
 #include "SireMaths/matrix.h"
 #include "SireMaths/line.h"
@@ -760,7 +759,7 @@ double Residue::measure(const Bond &bnd) const
     \throw SireError::invalid_arg
     \throw SireMol::missing_atom
 */
-SireMaths::Angle Residue::measure(const SireMol::Angle &ang) const
+SireUnits::Dimension::Angle Residue::measure(const SireMol::Angle &ang) const
 {
     return this->angle(ang).angle();
 }
@@ -771,7 +770,7 @@ SireMaths::Angle Residue::measure(const SireMol::Angle &ang) const
     \throw SireError::invalid_arg
     \throw SireMol::missing_atom
 */
-SireMaths::Angle Residue::measure(const Dihedral &dih) const
+SireUnits::Dimension::Angle Residue::measure(const Dihedral &dih) const
 {
     return this->dihedral(dih).angle();
 }
@@ -782,11 +781,11 @@ SireMaths::Angle Residue::measure(const Dihedral &dih) const
     \throw SireError::invalid_arg
     \throw SireMol::missing_atom
 */
-SireMaths::Angle Residue::measure(const Improper &imp) const
+SireUnits::Dimension::Angle Residue::measure(const Improper &imp) const
 {
     throw SireError::incomplete_code("Need to write this!", CODELOC);
 
-    return 0.0;
+    return SireUnits::Dimension::Angle(0);
 }
 
 /** Return the relative weights of group0 and group1 using the weight function

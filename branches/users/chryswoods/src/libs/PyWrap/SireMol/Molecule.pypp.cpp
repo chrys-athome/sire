@@ -6,7 +6,6 @@
 #include "boost/python.hpp"
 #include "siremol_headers.h"
 #include "SireMol/moleculedata.h"
-#include "SireMaths/angle.h"
 #include "SireMaths/quaternion.h"
 #include "SireMaths/matrix.h"
 #include "SireMaths/triangle.h"
@@ -328,15 +327,15 @@ void register_Molecule_class(){
             , ( bp::arg("bnd") ) )    
         .def( 
             "measure"
-            , (::SireMaths::Angle ( ::SireMol::Molecule::* )( ::SireMol::Angle const & ) const)( &::SireMol::Molecule::measure )
+            , (::SireUnits::Dimension::Angle ( ::SireMol::Molecule::* )( ::SireMol::Angle const & ) const)( &::SireMol::Molecule::measure )
             , ( bp::arg("ang") ) )    
         .def( 
             "measure"
-            , (::SireMaths::Angle ( ::SireMol::Molecule::* )( ::SireMol::Dihedral const & ) const)( &::SireMol::Molecule::measure )
+            , (::SireUnits::Dimension::Angle ( ::SireMol::Molecule::* )( ::SireMol::Dihedral const & ) const)( &::SireMol::Molecule::measure )
             , ( bp::arg("dih") ) )    
         .def( 
             "measure"
-            , (::SireMaths::Angle ( ::SireMol::Molecule::* )( ::SireMol::Improper const & ) const)( &::SireMol::Molecule::measure )
+            , (::SireUnits::Dimension::Angle ( ::SireMol::Molecule::* )( ::SireMol::Improper const & ) const)( &::SireMol::Molecule::measure )
             , ( bp::arg("improper") ) )    
         .def( 
             "nAtoms"

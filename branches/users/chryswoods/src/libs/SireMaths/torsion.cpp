@@ -28,9 +28,12 @@
 
 #include "torsion.h"
 
+#include "SireUnits/units.h"
+
 #include "SireStream/datastream.h"
 
 using namespace SireStream;
+using namespace SireUnits;
 using namespace SireMaths;
 
 static RegisterMetaType<Torsion> r_torsion;
@@ -81,6 +84,6 @@ Torsion::~Torsion()
 /** Return a string representation of this torsion */
 QString Torsion::toString() const
 {
-    return QObject::tr("Torsion: Angle %1, length03 = %2")
-                  .arg(angle().toString()).arg(vector03().length());
+    return QObject::tr("Torsion: Angle %1 degrees, length03 = %2")
+                  .arg(angle().to(degrees)).arg(vector03().length());
 }

@@ -21,16 +21,16 @@ void register_Triangle_class(){
         .def( bp::init< SireMaths::Vector const &, SireMaths::Vector const &, SireMaths::Vector const & >(( bp::arg("point0"), bp::arg("point1"), bp::arg("point2") )) )    
         .def( 
             "angle"
-            , (::SireMaths::Angle ( ::SireMaths::Triangle::* )(  ) const)( &::SireMaths::Triangle::angle ) )    
+            , (::SireUnits::Dimension::Angle ( ::SireMaths::Triangle::* )(  ) const)( &::SireMaths::Triangle::angle ) )    
         .def( 
             "angle0"
-            , (::SireMaths::Angle ( ::SireMaths::Triangle::* )(  ) const)( &::SireMaths::Triangle::angle0 ) )    
+            , (::SireUnits::Dimension::Angle ( ::SireMaths::Triangle::* )(  ) const)( &::SireMaths::Triangle::angle0 ) )    
         .def( 
             "angle1"
-            , (::SireMaths::Angle ( ::SireMaths::Triangle::* )(  ) const)( &::SireMaths::Triangle::angle1 ) )    
+            , (::SireUnits::Dimension::Angle ( ::SireMaths::Triangle::* )(  ) const)( &::SireMaths::Triangle::angle1 ) )    
         .def( 
             "angle2"
-            , (::SireMaths::Angle ( ::SireMaths::Triangle::* )(  ) const)( &::SireMaths::Triangle::angle2 ) )    
+            , (::SireUnits::Dimension::Angle ( ::SireMaths::Triangle::* )(  ) const)( &::SireMaths::Triangle::angle2 ) )    
         .def( 
             "at"
             , (::SireMaths::Vector const & ( ::SireMaths::Triangle::* )( int ) const)( &::SireMaths::Triangle::at )

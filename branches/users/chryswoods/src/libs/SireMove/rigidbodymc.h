@@ -35,7 +35,6 @@
 #include "sampler.h"
 
 #include "SireCAS/symbol.h"
-#include "SireMaths/angle.h"
 
 #include "SireSystem/checkpoint.h"
 
@@ -94,8 +93,8 @@ public:
                 const RanGenerator &generator = RanGenerator());
 
     RigidBodyMC(const Sampler &sampler,
-                double max_translation,
-                const SireMaths::Angle &max_rotation,
+                SireUnits::Dimension::Length max_translation,
+                SireUnits::Dimension::Angle max_rotation,
                 const RanGenerator &generator = RanGenerator());
 
     RigidBodyMC(const RigidBodyMC &other);
@@ -117,8 +116,11 @@ public:
         return new RigidBodyMC(*this);
     }
 
-    void setMaximumTranslation(double max_translation);
-    void setMaximumRotation(const SireMaths::Angle &max_rotation);
+    void setMaximumTranslation(SireUnits::Dimension::Length max_translation);
+    void setMaximumRotation(SireUnits::Dimension::Angle max_rotation);
+
+    SireUnits::Dimension::Length maximumTranslation() const;
+    SireUnits::Dimension::Angle maximumRotation() const;
 
     void setComponent(const Symbol &energy);
 
@@ -173,8 +175,10 @@ private:
     /** The maximum translation */
     double adel;
 
+    #ifndef SKIP_BROKEN_GCCXML_PARTS
     /** The maximum rotation */
-    SireMaths::Angle rdel;
+    SireUnits::Dimension::Angle rdel;
+    #endif
 };
 
 }

@@ -63,16 +63,37 @@ const Dimension::Quantity dozen( 12 );
 // Units of angle. Internal unit = radians     //
 /////////////////////////////////////////////////
 
-/** Convert radians into internal units */
 const Dimension::Angle radians( 1 );
 const Dimension::Angle radian( 1 );
 
-/** Convert degrees into internal units */
 const Dimension::Angle degrees = radians * pi / 180.0;
 const Dimension::Angle degree = degrees;
 
-const Dimension::Angle revolution = 2 * pi * radians;
+const Dimension::Angle angle_minute = degree / 60;
+const Dimension::Angle angle_minutes = angle_minute;
+
+const Dimension::Angle angle_second = angle_minute / 60;
+const Dimension::Angle angle_seconds = angle_second;
+
+const Dimension::Angle octant = 45 * degrees;
+const Dimension::Angle octants = octant;
+
+const Dimension::Angle sextant = 60 * degrees;
+const Dimension::Angle sextants = sextant;
+
+const Dimension::Angle quadrant = 90 * degrees;
+const Dimension::Angle quadrants = quadrant;
+
+const Dimension::Angle gradian = quadrant / 100;
+const Dimension::Angle gradians = gradian;
+const Dimension::Angle grad = gradian;
+const Dimension::Angle gon = gradian;
+
+const Dimension::Angle revolution = 360 * degrees;
+const Dimension::Angle revolutions = revolution;
 const Dimension::Angle revs = revolution;
+
+const Dimension::Angle circumference = revolution;
 
 /////////////////////////////////////////////////
 // Units of length. Internal unit = Angstroms  //

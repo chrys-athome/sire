@@ -40,6 +40,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QDebug>
+
 using namespace SireMove;
 using namespace SireSystem;
 using namespace SireMol;
@@ -87,7 +89,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
     SharedDataStream sds(ds);
 
     sds << rbmc._sampler << rbmc.nrg_component
-        << rbmc.adel << rbmc.rdel
+        << rbmc.adel << double(rbmc.rdel)
         << static_cast<const MonteCarlo&>(rbmc);
 
     return ds;
@@ -102,9 +104,13 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RigidBodyMC &rbmc)
     {
         SharedDataStream sds(ds);
 
+        double rdel;
+
         sds >> rbmc._sampler >> rbmc.nrg_component
-            >> rbmc.adel >> rbmc.rdel
+            >> rbmc.adel >> rdel
             >> static_cast<MonteCarlo&>(rbmc);
+            
+        rbmc.rdel = SireUnits::Dimension::Angle(rdel);
     }
     else
         throw version_error(v, "1", r_rbmc, CODELOC);
@@ -115,8 +121,8 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RigidBodyMC &rbmc)
 /** Null constructor */
 RigidBodyMC::RigidBodyMC(const RanGenerator &generator)
             : MonteCarlo(generator),
-              adel( 5 * angstrom ),
-              rdel( SireMaths::Angle::degrees(5) )
+              adel( 0.15 * angstrom ),
+              rdel( 15 * degrees )
 {}
 
 /** Construct a move that moves molecules returned by the sampler 'sampler',
@@ -124,16 +130,16 @@ RigidBodyMC::RigidBodyMC(const RanGenerator &generator)
 RigidBodyMC::RigidBodyMC(const Sampler &sampler, const RanGenerator &generator)
             : MonteCarlo(generator),
               _sampler(sampler),
-              adel( 5 * angstrom ),
-              rdel( SireMaths::Angle::degrees(5) )
+              adel( 0.15 * angstrom ),
+              rdel( 15 * degrees )
 {}
 
 /** Construct a move that moves molecules returned by the sampler 'sampler',
     performing moves with a maximum translation of 'max_translation' and a
     maximum rotation of 'max_rotation' */
 RigidBodyMC::RigidBodyMC(const Sampler &sampler,
-                         double max_translation,
-                         const SireMaths::Angle &max_rotation,
+                         Dimension::Length max_translation,
+                         Dimension::Angle max_rotation,
                          const RanGenerator &generator)
             : MonteCarlo(generator),
               _sampler(sampler),
@@ -154,15 +160,27 @@ RigidBodyMC::~RigidBodyMC()
 {}
 
 /** Set the maximum delta for any translation */
-void RigidBodyMC::setMaximumTranslation(double max_translation)
+void RigidBodyMC::setMaximumTranslation(Dimension::Length max_translation)
 {
     adel = max_translation;
 }
 
 /** Set the maximum delta for any rotation */
-void RigidBodyMC::setMaximumRotation(const SireMaths::Angle &max_rotation)
+void RigidBodyMC::setMaximumRotation(Dimension::Angle max_rotation)
 {
     rdel = max_rotation;
+}
+
+/** Return the maximum translation for each move */
+Dimension::Length RigidBodyMC::maximumTranslation() const
+{
+    return Dimension::Length(adel);
+}
+
+/** Return the maximum rotation for each move */
+Dimension::Angle RigidBodyMC::maximumRotation() const
+{
+    return rdel;
 }
 
 /** Set the symbol representing the energy component that is used
@@ -198,7 +216,7 @@ void RigidBodyMC::move(SimSystem &system)
 {
     //get the current total energy of the system
     double old_nrg = system.energy(nrg_component);
-
+    
     //checkpoint the simulation - we only need to save
     //the system and our sampler...
     RigidBodyMC::CheckPoint checkpoint = checkPoint(system);

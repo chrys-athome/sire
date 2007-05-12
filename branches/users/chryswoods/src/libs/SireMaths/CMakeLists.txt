@@ -14,7 +14,6 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the sources in ThirdParty
 set ( SIREMATHS_SOURCES
-      angle.cpp
       axisset.cpp
       complex.cpp
       errors.cpp
@@ -41,6 +40,7 @@ set_target_properties (SireMaths PROPERTIES
 # Link to other Sire libraries, and GSL
 target_link_libraries (SireMaths
                        SireStream
+                       SireUnits
                        ${GSL_LIBRARIES}
                        ${QT_QTCORE_LIBRARY}
                        )

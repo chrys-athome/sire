@@ -7,8 +7,6 @@
 
 #include "siremaths_headers.h"
 
-#include "Angle.pypp.hpp"
-
 #include "AxisSet.pypp.hpp"
 
 #include "Complex.pypp.hpp"
@@ -44,8 +42,6 @@ namespace bp = boost::python;
 BOOST_PYTHON_MODULE(_Maths){
     register_SireMaths_containers();
 
-    register_Angle_class();
-
     register_Vector_class();
 
     register_AxisSet_class();
@@ -71,8 +67,6 @@ BOOST_PYTHON_MODULE(_Maths){
     register_Triangle_class();
 
     bp::implicitly_convertible< boost::tuples::tuple<double,double,double>, SireMaths::Vector >();
-
-    bp::implicitly_convertible< double, SireMaths::Angle >();
 
     bp::implicitly_convertible< boost::tuples::tuple<SireMaths::Vector,SireMaths::Vector,SireMaths::Vector>, SireMaths::Matrix >();
 

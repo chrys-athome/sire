@@ -6,7 +6,6 @@
 #include "boost/python.hpp"
 #include "siremol_headers.h"
 #include "SireMol/moleculedata.h"
-#include "SireMaths/angle.h"
 #include "SireMaths/quaternion.h"
 #include "SireMaths/matrix.h"
 #include "SireMaths/triangle.h"
@@ -534,15 +533,15 @@ void register_EditMol_class(){
             , ( bp::arg("bnd") ) )    
         .def( 
             "measure"
-            , (::SireMaths::Angle ( ::SireMol::EditMol::* )( ::SireMol::Angle const & ) const)( &::SireMol::EditMol::measure )
+            , (::SireUnits::Dimension::Angle ( ::SireMol::EditMol::* )( ::SireMol::Angle const & ) const)( &::SireMol::EditMol::measure )
             , ( bp::arg("ang") ) )    
         .def( 
             "measure"
-            , (::SireMaths::Angle ( ::SireMol::EditMol::* )( ::SireMol::Dihedral const & ) const)( &::SireMol::EditMol::measure )
+            , (::SireUnits::Dimension::Angle ( ::SireMol::EditMol::* )( ::SireMol::Dihedral const & ) const)( &::SireMol::EditMol::measure )
             , ( bp::arg("dih") ) )    
         .def( 
             "measure"
-            , (::SireMaths::Angle ( ::SireMol::EditMol::* )( ::SireMol::Improper const & ) const)( &::SireMol::EditMol::measure )
+            , (::SireUnits::Dimension::Angle ( ::SireMol::EditMol::* )( ::SireMol::Improper const & ) const)( &::SireMol::EditMol::measure )
             , ( bp::arg("improper") ) )    
         .def( 
             "nAtoms"

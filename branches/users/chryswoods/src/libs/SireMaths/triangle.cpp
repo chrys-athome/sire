@@ -30,9 +30,12 @@
 
 #include "triangle.h"
 
+#include "SireUnits/units.h"
+
 #include "SireStream/datastream.h"
 
 using namespace SireStream;
+using namespace SireUnits;
 using namespace SireMaths;
 
 static const RegisterMetaType<Triangle> r_triangle;
@@ -87,6 +90,8 @@ Triangle::~Triangle()
 /** Return a string representation of the triangle */
 QString Triangle::toString() const
 {
-    return QObject::tr("Triangle: Angles %1, %2, %3")
-                .arg(angle0().toString()).arg(angle1().toString()).arg(angle2().toString());
+    return QObject::tr("Triangle: Angles %1 degs, %2 degs, %3 degs")
+                .arg(angle0().to(degrees))
+                .arg(angle1().to(degrees))
+                .arg(angle2().to(degrees));
 }

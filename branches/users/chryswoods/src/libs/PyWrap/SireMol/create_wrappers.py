@@ -76,7 +76,6 @@ huge_classes = [ ]
 aliases = {}
 
 extra_includes = [ "SireMol/moleculedata.h",
-                   "SireMaths/angle.h",
                    "SireMaths/quaternion.h",
                    "SireMaths/matrix.h",
                    "SireMaths/triangle.h",

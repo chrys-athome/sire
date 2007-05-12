@@ -40,7 +40,7 @@ class QString;
 
 #include "maths.h"
 
-#include "sireglobal.h"
+#include "SireUnits/dimensions.h"
 
 SIRE_BEGIN_HEADER
 
@@ -60,6 +60,8 @@ class Quaternion;
 class Matrix;
 
 using boost::tuple;
+
+using SireUnits::Dimension::Angle;
 
 /**
 This is a simple 3D vector.
@@ -96,7 +98,6 @@ graph in techdocs/fastLengthError.png and the script techdocs/fastLengthError.py
 @author Christopher Woods
 */
 
-class Angle;
 class Quaternion;
 
 class SIREMATHS_EXPORT Vector

@@ -947,7 +947,7 @@ MoleculeMover MoleculeMover::change(const Bond &bond, double delta,
 
 */
 MoleculeMover MoleculeMover::change(const SireMol::Angle &ang,
-                                    const SireMaths::Angle &delta,
+                                    SireUnits::Dimension::Angle delta,
                                     const WeightFunction &weightfunc,
                                     const QSet<AtomIndex> &anchors) const
 {
@@ -972,7 +972,7 @@ MoleculeMover MoleculeMover::change(const SireMol::Angle &ang,
     \throw SireMol::ring_error
 */
 MoleculeMover MoleculeMover::change(const SireMol::Angle &ang,
-                                    const SireMaths::Angle &delta,
+                                    SireUnits::Dimension::Angle delta,
                                     const QSet<AtomIndex> &anchors) const
 {
     return change(ang, delta, RelFromMass(), anchors);
@@ -992,7 +992,7 @@ MoleculeMover MoleculeMover::change(const SireMol::Angle &ang,
     \throw SireMol::ring_error
 
 */
-MoleculeMover MoleculeMover::change(const Dihedral &dih, const SireMaths::Angle &delta,
+MoleculeMover MoleculeMover::change(const Dihedral &dih, SireUnits::Dimension::Angle delta,
                                     const WeightFunction &weightfunc,
                                     const QSet<AtomIndex> &anchors) const
 {
@@ -1016,7 +1016,7 @@ MoleculeMover MoleculeMover::change(const Dihedral &dih, const SireMaths::Angle 
     \throw SireMol::anchor_error
     \throw SireMol::ring_error
 */
-MoleculeMover MoleculeMover::change(const Dihedral &dih, const SireMaths::Angle &delta,
+MoleculeMover MoleculeMover::change(const Dihedral &dih, SireUnits::Dimension::Angle delta,
                                     const QSet<AtomIndex> &anchors) const
 {
     return change(dih,delta,RelFromMass(),anchors);
@@ -1036,7 +1036,7 @@ MoleculeMover MoleculeMover::change(const Dihedral &dih, const SireMaths::Angle 
     \throw SireMol::anchor_error
     \throw SireMol::ring_error
 */
-MoleculeMover MoleculeMover::change(const Bond &bnd, const SireMaths::Angle &delta,
+MoleculeMover MoleculeMover::change(const Bond &bnd, SireUnits::Dimension::Angle delta,
                                     const WeightFunction &weightfunc,
                                     const QSet<AtomIndex> &anchors) const
 {
@@ -1054,7 +1054,7 @@ MoleculeMover MoleculeMover::change(const Bond &bnd, const SireMaths::Angle &del
 }
 
 /** Overload of the function that uses a default WeightFunction */
-MoleculeMover MoleculeMover::change(const Bond &dih, const SireMaths::Angle &delta,
+MoleculeMover MoleculeMover::change(const Bond &dih, SireUnits::Dimension::Angle delta,
                                     const QSet<AtomIndex> &anchors) const
 {
     return change(dih, delta, RelFromMass(), anchors);
@@ -1075,7 +1075,7 @@ MoleculeMover MoleculeMover::change(const Bond &dih, const SireMaths::Angle &del
 
 */
 MoleculeMover MoleculeMover::change(const Improper &improper,
-                                    const SireMaths::Angle &delta,
+                                    SireUnits::Dimension::Angle delta,
                                     const WeightFunction &weightfunc,
                                     const QSet<AtomIndex> &anchors) const
 {
@@ -1099,7 +1099,7 @@ MoleculeMover MoleculeMover::change(const Improper &improper,
     \throw SireMol::ring_error
 */
 MoleculeMover MoleculeMover::change(const Improper &improper,
-                                    const SireMaths::Angle &delta,
+                                    SireUnits::Dimension::Angle delta,
                                     const QSet<AtomIndex> &anchors) const
 {
     return change(improper, delta, RelFromMass(), anchors);
@@ -1141,7 +1141,7 @@ MoleculeMover MoleculeMover::set(const Bond &bnd, double val,
     \throw SireMol::ring_error
 */
 MoleculeMover MoleculeMover::set(const SireMol::Angle &ang,
-                                 const SireMaths::Angle &val,
+                                 SireUnits::Dimension::Angle val,
                                  const WeightFunction &weightfunc,
                                  const QSet<AtomIndex> &anchors) const
 {
@@ -1155,7 +1155,7 @@ MoleculeMover MoleculeMover::set(const SireMol::Angle &ang,
     \throw SireMol::ring_error
 */
 MoleculeMover MoleculeMover::set(const SireMol::Angle &ang,
-                                 const SireMaths::Angle &val,
+                                 SireUnits::Dimension::Angle val,
                                  const QSet<AtomIndex> &anchors) const
 {
     return change(ang, val-data().measure(ang), anchors);
@@ -1170,7 +1170,7 @@ MoleculeMover MoleculeMover::set(const SireMol::Angle &ang,
     \throw SireMol::ring_error
 */
 MoleculeMover MoleculeMover::set(const Dihedral &dih,
-                                 const SireMaths::Angle &val,
+                                 SireUnits::Dimension::Angle val,
                                  const WeightFunction &weightfunc,
                                  const QSet<AtomIndex> &anchors) const
 {
@@ -1184,7 +1184,7 @@ MoleculeMover MoleculeMover::set(const Dihedral &dih,
     \throw SireMol::ring_error
 */
 MoleculeMover MoleculeMover::set(const Dihedral &dih,
-                                 const SireMaths::Angle &val,
+                                 SireUnits::Dimension::Angle val,
                                  const QSet<AtomIndex> &anchors) const
 {
     return change(dih, val-data().measure(dih), anchors);
@@ -1198,7 +1198,7 @@ MoleculeMover MoleculeMover::set(const Dihedral &dih,
     \throw SireMol::ring_error
 */
 MoleculeMover MoleculeMover::setAll(const Dihedral &dih,
-                                    const SireMaths::Angle &val,
+                                    SireUnits::Dimension::Angle val,
                                     const WeightFunction &weightfunc,
                                     const QSet<AtomIndex> &anchors) const
 {
@@ -1212,7 +1212,7 @@ MoleculeMover MoleculeMover::setAll(const Dihedral &dih,
     \throw SireMol::ring_error
 */
 MoleculeMover MoleculeMover::setAll(const Dihedral &dih,
-                                    const SireMaths::Angle &val,
+                                    SireUnits::Dimension::Angle val,
                                     const QSet<AtomIndex> &anchors) const
 {
     return change(dih, val-data().measure(dih), anchors);
@@ -1226,7 +1226,7 @@ MoleculeMover MoleculeMover::setAll(const Dihedral &dih,
     \throw SireMol::ring_error
 */
 MoleculeMover MoleculeMover::set(const Improper &improper,
-                                 const SireMaths::Angle &size,
+                                 SireUnits::Dimension::Angle size,
                                  const WeightFunction &weightfunc,
                                  const QSet<AtomIndex> &anchors) const
 {
@@ -1240,7 +1240,7 @@ MoleculeMover MoleculeMover::set(const Improper &improper,
     \throw SireMol::ring_error
 */
 MoleculeMover MoleculeMover::set(const Improper &improper,
-                                 const SireMaths::Angle &size,
+                                 SireUnits::Dimension::Angle size,
                                  const QSet<AtomIndex> &anchors) const
 {
     return change(improper, size-data().measure(improper), anchors);

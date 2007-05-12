@@ -892,7 +892,7 @@ double EditRes::measure(const Bond &bnd) const
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-SireMaths::Angle EditRes::measure(const SireMol::Angle &ang) const
+SireUnits::Dimension::Angle EditRes::measure(const SireMol::Angle &ang) const
 {
     return angle(ang).angle();
 }
@@ -905,7 +905,7 @@ SireMaths::Angle EditRes::measure(const SireMol::Angle &ang) const
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-SireMaths::Angle EditRes::measure(const Dihedral &dih) const
+SireUnits::Dimension::Angle EditRes::measure(const Dihedral &dih) const
 {
     return dihedral(dih).angle();
 }
@@ -918,10 +918,10 @@ SireMaths::Angle EditRes::measure(const Dihedral &dih) const
     \throw SireMol::missing_residue
     \throw SireMol::missing_atom
 */
-SireMaths::Angle EditRes::measure(const Improper &improper) const
+SireUnits::Dimension::Angle EditRes::measure(const Improper &improper) const
 {
     throw SireError::incomplete_code( QObject::tr("Need to write this!"), CODELOC );
-    return 0.0;
+    return SireUnits::Dimension::Angle(0);
 }
 
 /** Return the relative weights of the two groups, 'group0' and 'group1'

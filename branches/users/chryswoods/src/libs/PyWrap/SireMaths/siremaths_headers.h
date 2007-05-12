@@ -1,8 +1,8 @@
 #ifndef PYPLUSPLUS_SIREMATHS_HEADERS_H
 #define PYPLUSPLUS_SIREMATHS_HEADERS_H
 
-#include "SireMaths/angle.h"
 #include "SireMaths/axisset.h"
+#include "SireMaths/circularangle.h"
 #include "SireMaths/complex.h"
 #include "SireMaths/constants.h"
 #include "SireMaths/line.h"

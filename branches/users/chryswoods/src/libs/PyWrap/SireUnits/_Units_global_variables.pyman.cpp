@@ -21,9 +21,41 @@ void register_man_global_variables()
 
     scope().attr("degree") = degree;
 
+    scope().attr("angle_minute") = angle_minute;
+
+    scope().attr("angle_minutes") = angle_minutes;
+
+    scope().attr("angle_second") = angle_second;
+
+    scope().attr("angle_seconds") = angle_seconds;
+
+    scope().attr("octant") = octant;
+
+    scope().attr("octants") = octants;
+
+    scope().attr("sextant") = sextant;
+
+    scope().attr("sextants") = sextants;
+
+    scope().attr("quadrant") = quadrant;
+
+    scope().attr("quadrants") = quadrants;
+
+    scope().attr("gradian") = gradian;
+
+    scope().attr("gradians") = gradians;
+
+    scope().attr("grad") = grad;
+
+    scope().attr("gon") = gon;
+
     scope().attr("revolution") = revolution;
 
+    scope().attr("revolutions") = revolutions;
+
     scope().attr("revs") = revs;
+
+    scope().attr("circumference") = circumference;
 
     scope().attr("angstrom") = angstrom;
 

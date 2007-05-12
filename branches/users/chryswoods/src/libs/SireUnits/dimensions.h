@@ -355,6 +355,7 @@ typedef PhysUnit<1,2,-2,-1,0,0,0> Potential;
 
 #else // else with 'ifndef SKIP_BROKEN_GCCXML_PARTS'
 
+class Angle;
 class Dimensionless;
 class Mass;
 class MolarMass;

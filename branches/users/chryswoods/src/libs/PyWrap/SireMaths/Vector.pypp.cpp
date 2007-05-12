@@ -22,11 +22,11 @@ void register_Vector_class(){
         .def( bp::init< QString const & >(( bp::arg("str") )) )    
         .def( 
             "angle"
-            , (::SireMaths::Angle (*)( ::SireMaths::Vector const &,::SireMaths::Vector const & ))( &::SireMaths::Vector::angle )
+            , (::SireUnits::Dimension::Angle (*)( ::SireMaths::Vector const &,::SireMaths::Vector const & ))( &::SireMaths::Vector::angle )
             , ( bp::arg("v0"), bp::arg("v1") ) )    
         .def( 
             "angle"
-            , (::SireMaths::Angle (*)( ::SireMaths::Vector const &,::SireMaths::Vector const &,::SireMaths::Vector const & ))( &::SireMaths::Vector::angle )
+            , (::SireUnits::Dimension::Angle (*)( ::SireMaths::Vector const &,::SireMaths::Vector const &,::SireMaths::Vector const & ))( &::SireMaths::Vector::angle )
             , ( bp::arg("v0"), bp::arg("v1"), bp::arg("v2") ) )    
         .def( 
             "at"
@@ -38,18 +38,18 @@ void register_Vector_class(){
             , (double ( ::SireMaths::Vector::* )(  ) const)( &::SireMaths::Vector::b ) )    
         .def( 
             "bearing"
-            , (::SireMaths::Angle ( ::SireMaths::Vector::* )(  ) const)( &::SireMaths::Vector::bearing ) )    
+            , (::SireUnits::Dimension::Angle ( ::SireMaths::Vector::* )(  ) const)( &::SireMaths::Vector::bearing ) )    
         .def( 
             "bearingXY"
-            , (::SireMaths::Angle ( ::SireMaths::Vector::* )( ::SireMaths::Vector const & ) const)( &::SireMaths::Vector::bearingXY )
+            , (::SireUnits::Dimension::Angle ( ::SireMaths::Vector::* )( ::SireMaths::Vector const & ) const)( &::SireMaths::Vector::bearingXY )
             , ( bp::arg("v") ) )    
         .def( 
             "bearingXZ"
-            , (::SireMaths::Angle ( ::SireMaths::Vector::* )( ::SireMaths::Vector const & ) const)( &::SireMaths::Vector::bearingXZ )
+            , (::SireUnits::Dimension::Angle ( ::SireMaths::Vector::* )( ::SireMaths::Vector const & ) const)( &::SireMaths::Vector::bearingXZ )
             , ( bp::arg("v") ) )    
         .def( 
             "bearingYZ"
-            , (::SireMaths::Angle ( ::SireMaths::Vector::* )( ::SireMaths::Vector const & ) const)( &::SireMaths::Vector::bearingYZ )
+            , (::SireUnits::Dimension::Angle ( ::SireMaths::Vector::* )( ::SireMaths::Vector const & ) const)( &::SireMaths::Vector::bearingYZ )
             , ( bp::arg("v") ) )    
         .def( 
             "count"
@@ -60,7 +60,7 @@ void register_Vector_class(){
             , ( bp::arg("v0"), bp::arg("v1") ) )    
         .def( 
             "dihedral"
-            , (::SireMaths::Angle (*)( ::SireMaths::Vector const &,::SireMaths::Vector const &,::SireMaths::Vector const &,::SireMaths::Vector const & ))( &::SireMaths::Vector::dihedral )
+            , (::SireUnits::Dimension::Angle (*)( ::SireMaths::Vector const &,::SireMaths::Vector const &,::SireMaths::Vector const &,::SireMaths::Vector const & ))( &::SireMaths::Vector::dihedral )
             , ( bp::arg("v0"), bp::arg("v1"), bp::arg("v2"), bp::arg("v3") ) )    
         .def( 
             "distance"
@@ -83,7 +83,7 @@ void register_Vector_class(){
             , (double ( ::SireMaths::Vector::* )(  ) const)( &::SireMaths::Vector::g ) )    
         .def( 
             "generate"
-            , (::SireMaths::Vector (*)( double,::SireMaths::Vector const &,::SireMaths::Angle const &,::SireMaths::Vector const &,::SireMaths::Angle const &,::SireMaths::Vector const & ))( &::SireMaths::Vector::generate )
+            , (::SireMaths::Vector (*)( double,::SireMaths::Vector const &,::SireUnits::Dimension::Angle const &,::SireMaths::Vector const &,::SireUnits::Dimension::Angle const &,::SireMaths::Vector const & ))( &::SireMaths::Vector::generate )
             , ( bp::arg("dst"), bp::arg("v1"), bp::arg("ang"), bp::arg("v2"), bp::arg("dih"), bp::arg("v3") ) )    
         .def( 
             "invDistance"
@@ -208,17 +208,6 @@ void register_Vector_class(){
         .def( bp::self + bp::self )    
         .def( bp::self - bp::self )    
         .def( bp::self / bp::other< double >() )    
-        .def(self + self)    
-        .def(self - self)    
-        .def(self * other<double>())    
-        .def(self / other<double>())    
-        .def(self += self)    
-        .def(self -= self)    
-        .def(self *= other<double>())    
-        .def(self /= other<double>())    
-        .def(-self)    
-        .def(self == self)    
-        .def(self != self)    
         .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMaths::Vector >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    

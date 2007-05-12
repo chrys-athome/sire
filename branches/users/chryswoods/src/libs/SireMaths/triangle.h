@@ -31,9 +31,8 @@
 
 #include "vector.h"
 #include "line.h"
-#include "angle.h"
 
-#include "sireglobal.h"
+#include "SireUnits/dimensions.h"
 
 SIRE_BEGIN_HEADER
 
@@ -48,6 +47,8 @@ QDataStream& operator>>(QDataStream&, SireMaths::Triangle&);
 
 namespace SireMaths
 {
+
+using SireUnits::Dimension::Angle;
 
 /**
 This class represents a triangle in three-dimensional space. (or three points)
@@ -98,6 +99,8 @@ private:
     /** The three points that make up the triangle */
     Vector points[3];
 };
+
+#ifndef SKIP_TEMPLATE_DEFINITIONS
 
 /** Return the number of elements in this triangle (3) */
 inline int Triangle::count() const
@@ -189,6 +192,8 @@ inline Angle Triangle::angle() const
 {
     return this->angle1();
 }
+
+#endif // end of '#ifndef SKIP_TEMPLATE_DEFINITIONS'
 
 }
 

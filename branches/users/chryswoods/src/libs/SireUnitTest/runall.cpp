@@ -28,7 +28,6 @@
 
 #include "runall.h"
 
-#include "testangle.h"
 #include "testatomselection.h"
 #include "testcoordgroup.h"
 #include "testcutgroup.h"
@@ -49,7 +48,6 @@ using namespace SireTest;
 
 void SireTest::runAll(test_suite *test)
 {
-    initialise(new TestAngle(), test);
     initialise(new TestAtomSelection(), test);
     initialise(new TestComplex(), test);
     initialise(new TestCoordGroup(), test);

@@ -21,7 +21,7 @@ void register_Torsion_class(){
         .def( bp::init< SireMaths::Vector const &, SireMaths::Vector const &, SireMaths::Vector const &, SireMaths::Vector const & >(( bp::arg("point0"), bp::arg("point1"), bp::arg("point2"), bp::arg("point3") )) )    
         .def( 
             "angle"
-            , (::SireMaths::Angle ( ::SireMaths::Torsion::* )(  ) const)( &::SireMaths::Torsion::angle ) )    
+            , (::SireUnits::Dimension::Angle ( ::SireMaths::Torsion::* )(  ) const)( &::SireMaths::Torsion::angle ) )    
         .def( 
             "at"
             , (::SireMaths::Vector const & ( ::SireMaths::Torsion::* )( int ) const)( &::SireMaths::Torsion::at )

@@ -6,7 +6,6 @@
 #include "boost/python.hpp"
 #include "siremol_headers.h"
 #include "SireMol/moleculedata.h"
-#include "SireMaths/angle.h"
 #include "SireMaths/quaternion.h"
 #include "SireMaths/matrix.h"
 #include "SireMaths/triangle.h"
@@ -190,15 +189,15 @@ void register_Residue_class(){
             , ( bp::arg("bnd") ) )    
         .def( 
             "measure"
-            , (::SireMaths::Angle ( ::SireMol::Residue::* )( ::SireMol::Angle const & ) const)( &::SireMol::Residue::measure )
+            , (::SireUnits::Dimension::Angle ( ::SireMol::Residue::* )( ::SireMol::Angle const & ) const)( &::SireMol::Residue::measure )
             , ( bp::arg("ang") ) )    
         .def( 
             "measure"
-            , (::SireMaths::Angle ( ::SireMol::Residue::* )( ::SireMol::Dihedral const & ) const)( &::SireMol::Residue::measure )
+            , (::SireUnits::Dimension::Angle ( ::SireMol::Residue::* )( ::SireMol::Dihedral const & ) const)( &::SireMol::Residue::measure )
             , ( bp::arg("dih") ) )    
         .def( 
             "measure"
-            , (::SireMaths::Angle ( ::SireMol::Residue::* )( ::SireMol::Improper const & ) const)( &::SireMol::Residue::measure )
+            , (::SireUnits::Dimension::Angle ( ::SireMol::Residue::* )( ::SireMol::Improper const & ) const)( &::SireMol::Residue::measure )
             , ( bp::arg("improper") ) )    
         .def( 
             "nAtoms"
