@@ -121,6 +121,11 @@ public:
 
     void move(SimSystem &system);
 
+    MoveBase* clone() const
+    {
+        return d->clone();
+    }
+
 private:
     /** Shared pointer to the actual move object */
     SireBase::SharedPolyPointer<MoveBase> d;

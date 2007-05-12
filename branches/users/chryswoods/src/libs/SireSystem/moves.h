@@ -99,6 +99,11 @@ public:
     /** Initialise all of the moves in the set to
         work with the passed system */
     virtual void initialise(QuerySystem &system)=0;
+
+    /** Return copies of all of the different moves that
+        are part of this collection - this is so that the
+        code can query the moves after they have been performed */
+    virtual QList<Move> moves() const=0;
 };
 
 /** This class represents moves which are a collection
@@ -151,6 +156,13 @@ public:
         single_move.initialise(system);
     }
 
+    QList<Move> moves() const
+    {
+        QList<Move> allmoves;
+        allmoves.append(single_move);
+        return allmoves;
+    }
+
 private:
     /** The only move in this set */
     Move single_move;
@@ -194,6 +206,8 @@ public:
     void stop();
 
     int percentProgress() const;
+
+    QList<Move> moves();
 
 private:
     void _pvt_run(SimSystem &system);

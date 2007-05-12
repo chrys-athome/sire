@@ -32,6 +32,9 @@ void register_SameMoves_class(){
             , (void ( ::SireSystem::SameMoves::* )( ::SireSystem::QuerySystem & ) )( &::SireSystem::SameMoves::initialise )
             , ( bp::arg("system") ) )    
         .def( 
+            "moves"
+            , (::QList<SireSystem::Move> ( ::SireSystem::SameMoves::* )(  ) const)( &::SireSystem::SameMoves::moves ) )    
+        .def( 
             "typeName"
             , (char const * (*)(  ))( &::SireSystem::SameMoves::typeName ) )    
         .def( 

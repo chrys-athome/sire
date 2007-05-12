@@ -28,6 +28,9 @@ void register_MovesBase_class(){
             , (void ( ::SireSystem::MovesBase::* )( ::SireSystem::QuerySystem & ) )( &::SireSystem::MovesBase::initialise )
             , ( bp::arg("system") ) )    
         .def( 
+            "moves"
+            , (::QList<SireSystem::Move> ( ::SireSystem::MovesBase::* )(  ) const)( &::SireSystem::MovesBase::moves ) )    
+        .def( 
             "typeName"
             , (char const * (*)(  ))( &::SireSystem::MovesBase::typeName ) )    
         .def( 

@@ -269,6 +269,17 @@ void Moves::initialise(QuerySystem &system)
     d->initialise(system);
 }
 
+/** Return a copy of the moves that are part of this run.
+    This allows you to query how they performed during
+    the simulation */
+QList<Move> Moves::moves()
+{
+    //can only do this while the moves aren't active
+    QMutexLocker lkr(&movemutex);
+    
+    return d->moves();
+}
+
 /** This internal function is used to run the
     moves from ncompleted to ntotal */
 void Moves::_pvt_run(SimSystem &system)

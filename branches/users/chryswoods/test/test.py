@@ -59,7 +59,7 @@ n_in_a = 0
 n_in_b = 0
 
 for mol in mols:
-      
+
       mol.setProperty( "charges", chgs )
       mol.setProperty( "ljs", ljs )
 
@@ -67,25 +67,25 @@ for mol in mols:
       if (rand.rand() < 0.5):
           cljff_a.add(mol, {cljff_a.parameters().coulomb() : "charges",
                             cljff_a.parameters().lj() : "ljs"})
-                            
+
           cljff_a_b.addTo(cljff_a_b.groups().A(),
                           mol, {cljff_a_b.parameters().coulomb() : "charges",
                                 cljff_a_b.parameters().lj() : "ljs"})
-                         
+
           n_in_a = n_in_a + 1
       else:
           cljff_b.add(mol, {cljff_b.parameters().coulomb() : "charges",
                             cljff_b.parameters().lj() : "ljs"})
-                            
+
           cljff_a_b.addTo(cljff_a_b.groups().B(),
                           mol, {cljff_a_b.parameters().coulomb() : "charges",
                                 cljff_a_b.parameters().lj() : "ljs"})
-      
+
           n_in_b = n_in_b + 1
 
 ms = timer.elapsed()
 print "... took %d ms" % ms
-      
+
 print "(%d molecules in group A, %d in group B)" % (n_in_a, n_in_b)
 
 #add the forcefields to a forcefields object
@@ -93,9 +93,9 @@ ffields = ForceFields()
 ffields.add(cljff_a)
 ffields.add(cljff_b)
 ffields.add(cljff_a_b)
-      
+
 print ffields.nForceFields()
-      
+
 #now create the molecule groups
 group = MoleculeGroup("solvent", mols)
 
@@ -103,15 +103,33 @@ system = System(group, ffields)
 
 mc = RigidBodyMC( UniformSampler(group) )
 
-PDB().write(system.info().groups().molecules(), "test00.pdb")
+PDB().write(system.info().groups().molecules(), "test000.pdb")
 
-timer.start()
-moves = system.run(mc, 1000)
-ms = timer.elapsed()
+nmoves = 50000
+nblocks = 200
 
-PDB().write(system.info().groups().molecules(), "test01.pdb")
+nmoves = 1000
+nblocks = 5
 
-print "1000 moves took %d ms" % ms
+print "Running %d blocks, %d moves per block..." % (nblocks, nmoves)
 
-print moves.count(), moves.percentProgress()
+for i in range(1,nblocks+1):
+    print "Block %d of %d..." % (i,nblocks)
 
+    print "Energy = %f kcal mol-1" % system.forceFields().energy()
+
+    timer.start()
+    moves = system.run(mc, nmoves)
+    ms = timer.elapsed()
+
+    PDB().write(system.info().groups().molecules(), "test%003d.pdb" % i)
+
+    move = moves.moves()[0].clone()
+    
+    print "Energy = %f kcal mol-1" % system.forceFields().energy()
+
+    print "%d moves took %d ms (%d accept out of %d)" % (nmoves,ms,
+                                                         move.nAccepted(),
+                                                         move.nAttempted())
+
+print "Done!"

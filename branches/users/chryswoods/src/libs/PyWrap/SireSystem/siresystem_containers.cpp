@@ -49,6 +49,7 @@ using boost::python::register_tuple;
 
 void register_SireSystem_containers()
 {
+    register_list< QList<Move> >();
 
     #if QT_VERSION >= 0x402000
 

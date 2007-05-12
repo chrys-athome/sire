@@ -3,6 +3,7 @@ import os
 import sys
 
 from pyplusplus.module_builder import module_builder_t
+from pyplusplus.module_builder import call_policies
 
 from pygccxml.declarations.matchers import access_type_matcher_t
 from pygccxml import declarations
@@ -38,11 +39,17 @@ extra_includes = [ "SireMol/molecule.h",
 def remove_next_move(c):
     c.decls( "nextMove", allow_empty=False ).exclude()
 
+def expose_clone(c):
+    c.decls( "clone" ).include()
+    c.decls( "clone" ).call_policies = \
+             call_policies.return_value_policy(call_policies.manage_new_object)
+
 def fix_noncopyable(c):
     c.noncopyable = False
 
 special_code = { "MovesBase" : remove_next_move,
                  "SameMoves" : remove_next_move,
+                 "Move" : expose_clone,
                  "Moves" : fix_noncopyable }
 
 implicitly_convertible = [ ("const SireSystem::MoveBase&",

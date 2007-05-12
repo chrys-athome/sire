@@ -33,6 +33,9 @@ void register_Moves_class(){
             , (void ( ::SireSystem::Moves::* )( ::SireSystem::QuerySystem & ) )( &::SireSystem::Moves::initialise )
             , ( bp::arg("system") ) )    
         .def( 
+            "moves"
+            , (::QList<SireSystem::Move> ( ::SireSystem::Moves::* )(  ) )( &::SireSystem::Moves::moves ) )    
+        .def( 
             "pause"
             , (void ( ::SireSystem::Moves::* )(  ) )( &::SireSystem::Moves::pause ) )    
         .def( 

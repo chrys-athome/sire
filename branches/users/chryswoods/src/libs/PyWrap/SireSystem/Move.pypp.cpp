@@ -26,6 +26,10 @@ void register_Move_class(){
         .def( bp::init< SireSystem::MoveBase const & >(( bp::arg("move") )) )    
         .def( bp::init< SireBase::SharedPolyPointer<SireSystem::MoveBase> const & >(( bp::arg("ptr") )) )    
         .def( 
+            "clone"
+            , (::SireSystem::MoveBase * ( ::SireSystem::Move::* )(  ) const)( &::SireSystem::Move::clone )
+            , bp::return_value_policy< bp::manage_new_object >() )    
+        .def( 
             "initialise"
             , (void ( ::SireSystem::Move::* )( ::SireSystem::QuerySystem & ) )( &::SireSystem::Move::initialise )
             , ( bp::arg("system") ) )    
