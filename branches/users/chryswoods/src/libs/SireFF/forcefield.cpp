@@ -355,6 +355,26 @@ double ForceField::energy(const FFComponent &component)
     return d->energy(component);
 }
 
+/** Return the energy of the component represented by the function
+    'component'
+
+    \throw SireFF::missing_component
+*/
+double ForceField::energy(const Function &component)
+{
+    return d->energy(component);
+}
+
+/** Return the energy of the component represented by the function
+    'component'
+
+    \throw SireFF::missing_component
+*/
+double ForceField::energy(const Symbol &component)
+{
+    return d->energy(component);
+}
+
 /** Return the values of all of the energy components of this forcefield */
 Values ForceField::energies()
 {

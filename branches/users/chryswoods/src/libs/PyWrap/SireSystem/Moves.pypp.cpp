@@ -57,6 +57,10 @@ void register_Moves_class(){
             , (void ( ::SireSystem::Moves::* )( ::SireSystem::SimSystem &,::quint32 ) )( &::SireSystem::Moves::run )
             , ( bp::arg("system"), bp::arg("nmoves") ) )    
         .def( 
+            "setEnergyComponent"
+            , (void ( ::SireSystem::Moves::* )( ::SireCAS::Symbol const & ) )( &::SireSystem::Moves::setEnergyComponent )
+            , ( bp::arg("component") ) )    
+        .def( 
             "stop"
             , (void ( ::SireSystem::Moves::* )(  ) )( &::SireSystem::Moves::stop ) )    
         .def( "__copy__", &__copy__)    

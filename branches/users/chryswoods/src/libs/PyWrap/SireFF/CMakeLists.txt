@@ -46,6 +46,8 @@ set ( WRAPFF_SOURCES
       ParameterMap.pypp.cpp
       ParameterName.pypp.cpp
       ParameterSource.pypp.cpp
+
+      _FF_free_functions.pypp.cpp
     )
 
 # Create the library that holds all of the class wrappers

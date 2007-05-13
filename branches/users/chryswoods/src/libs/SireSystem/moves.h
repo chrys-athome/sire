@@ -100,6 +100,10 @@ public:
         work with the passed system */
     virtual void initialise(QuerySystem &system)=0;
 
+    /** Set the component of the energy that all of these
+        moves will follow */
+    virtual void setEnergyComponent(const Symbol &symbol)=0;
+
     /** Return copies of all of the different moves that
         are part of this collection - this is so that the
         code can query the moves after they have been performed */
@@ -156,6 +160,11 @@ public:
         single_move.initialise(system);
     }
 
+    void setEnergyComponent(const Symbol &symbol)
+    {
+        single_move.setEnergyComponent(symbol);
+    }
+
     QList<Move> moves() const
     {
         QList<Move> allmoves;
@@ -194,6 +203,8 @@ public:
     Moves& operator=(const Moves &other);
 
     void initialise(QuerySystem &system);
+
+    void setEnergyComponent(const Symbol &component);
 
     int count() const;
 

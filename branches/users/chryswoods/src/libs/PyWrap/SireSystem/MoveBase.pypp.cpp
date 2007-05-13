@@ -21,6 +21,10 @@ void register_MoveBase_class(){
 
     bp::class_< SireSystem::MoveBase, boost::noncopyable >( "MoveBase", bp::no_init )    
         .def( 
+            "energyComponent"
+            , (::SireCAS::Symbol const & ( ::SireSystem::MoveBase::* )(  ) const)( &::SireSystem::MoveBase::energyComponent )
+            , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( 
             "initialise"
             , (void ( ::SireSystem::MoveBase::* )( ::SireSystem::QuerySystem & ) )( &::SireSystem::MoveBase::initialise )
             , ( bp::arg("system") ) )    
@@ -28,6 +32,10 @@ void register_MoveBase_class(){
             "move"
             , (void ( ::SireSystem::MoveBase::* )( ::SireSystem::SimSystem & ) )( &::SireSystem::MoveBase::move )
             , ( bp::arg("system") ) )    
+        .def( 
+            "setEnergyComponent"
+            , (void ( ::SireSystem::MoveBase::* )( ::SireCAS::Symbol const & ) )( &::SireSystem::MoveBase::setEnergyComponent )
+            , ( bp::arg("symbol") ) )    
         .def( 
             "typeName"
             , (char const * (*)(  ))( &::SireSystem::MoveBase::typeName ) )    

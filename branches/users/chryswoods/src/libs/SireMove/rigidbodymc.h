@@ -34,8 +34,6 @@
 #include "montecarlo.h"
 #include "sampler.h"
 
-#include "SireCAS/symbol.h"
-
 #include "SireSystem/checkpoint.h"
 
 SIRE_BEGIN_HEADER
@@ -72,8 +70,6 @@ using SireMol::MoleculeGroup;
 using SireMol::MoleculeID;
 
 using SireMol::PartialMolecule;
-
-using SireCAS::Symbol;
 
 /** This class implements a rigid body Monte Carlo move that
     may be applied to a random molecule within a MoleculeGroup
@@ -122,8 +118,6 @@ public:
     SireUnits::Dimension::Length maximumTranslation() const;
     SireUnits::Dimension::Angle maximumRotation() const;
 
-    void setComponent(const Symbol &energy);
-
     void initialise(QuerySystem &system);
 
     void move(SimSystem &system);
@@ -168,9 +162,6 @@ private:
     /** The sampler used to select random molecules from the
         MoleculeGroup */
     Sampler _sampler;
-
-    /** The energy component evaluated during the move */
-    Symbol nrg_component;
 
     /** The maximum translation */
     double adel;

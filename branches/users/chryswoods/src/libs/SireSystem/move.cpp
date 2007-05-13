@@ -28,12 +28,16 @@
 
 #include "move.h"
 
+#include "SireFF/ffbase.h"
+
+#include "SireSystem/querysystem.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
 using namespace SireSystem;
 using namespace SireBase;
-using namespace SireSim;
+using namespace SireFF;
 using namespace SireStream;
 
 ///////////
@@ -63,12 +67,18 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, MoveBase&)
 }
 
 /** Constructor */
-MoveBase::MoveBase() : QSharedData()
+MoveBase::MoveBase() : QSharedData(), nrg_component( SireFF::e_total() )
+{}
+
+/** Construct a move that follows potential energy surface 
+    represented by 'symbol' */
+MoveBase::MoveBase(const Symbol &component) 
+         : QSharedData(), nrg_component(component)
 {}
 
 /** Copy constructor */
-MoveBase::MoveBase(const MoveBase&)
-         : QSharedData()
+MoveBase::MoveBase(const MoveBase &other)
+         : QSharedData(), nrg_component(other.nrg_component)
 {}
 
 /** Destructor */
@@ -76,9 +86,31 @@ MoveBase::~MoveBase()
 {}
 
 /** Assignment operator */
-MoveBase& MoveBase::operator=(const MoveBase&)
+MoveBase& MoveBase::operator=(const MoveBase &other)
 {
+    nrg_component = other.nrg_component;
     return *this;
+}
+
+/** Return the energy component that represents the potential
+    energy surface that this move will follow. */
+const Symbol& MoveBase::energyComponent() const
+{
+    return nrg_component;
+}
+
+/** Set the energy component that will represent the 
+    potential energy surface that this move will follow */
+void MoveBase::setEnergyComponent(const Symbol &symbol)
+{
+    nrg_component = symbol;
+}
+
+/** Return the energy on the potential energy surface that
+    this move follows of the passed system */
+double MoveBase::energy(QuerySystem &system) const
+{
+    return system.energy(nrg_component);
 }
 
 ///////////
@@ -252,4 +284,18 @@ Move& Move::operator=(const Move &other)
 {
     d = other.d;
     return *this;
+}
+
+/** Set the energy component that will represent the 
+    potential energy surface that this move will follow */
+void Move::setEnergyComponent(const Symbol &component)
+{
+    d->setEnergyComponent(component);
+}
+    
+/** Return the energy component that represents the potential
+    energy surface that this move will follow. */
+Symbol Move::energyComponent() const
+{
+    return d->energyComponent();
 }

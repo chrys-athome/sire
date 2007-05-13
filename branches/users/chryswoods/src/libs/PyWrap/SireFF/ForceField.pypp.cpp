@@ -105,6 +105,14 @@ void register_ForceField_class(){
             , (double ( ::SireFF::ForceField::* )( ::SireFF::FFComponent const & ) )( &::SireFF::ForceField::energy )
             , ( bp::arg("component") ) )    
         .def( 
+            "energy"
+            , (double ( ::SireFF::ForceField::* )( ::SireCAS::Function const & ) )( &::SireFF::ForceField::energy )
+            , ( bp::arg("component") ) )    
+        .def( 
+            "energy"
+            , (double ( ::SireFF::ForceField::* )( ::SireCAS::Symbol const & ) )( &::SireFF::ForceField::energy )
+            , ( bp::arg("component") ) )    
+        .def( 
             "getProperty"
             , (::SireBase::Property ( ::SireFF::ForceField::* )( ::QString const & ) const)( &::SireFF::ForceField::getProperty )
             , ( bp::arg("name") ) )    

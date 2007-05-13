@@ -38,6 +38,7 @@
 
 #include "SireCAS/function.h"
 #include "SireCAS/values.h"
+#include "SireCAS/symbol.h"
 
 #include "SireMol/moleculeid.h"
 #include "SireMol/idmolatom.h"
@@ -100,6 +101,22 @@ using SireMol::ResID;
 using SireMol::NewAtom;
 using SireMol::IDMolAtom;
 using SireMol::PartialMolecule;
+
+namespace detail
+{
+static Symbol _e_total;
+}
+
+/** Return the global symbol that represents the total  
+    energy - this returns the total energy of whatever
+    it is passed to. */
+inline const Symbol& e_total()
+{
+    if (detail::_e_total.ID() == 0)
+        detail::_e_total = Symbol("E_total");
+        
+    return detail::_e_total;
+}
 
 /**
 This class is the base class of all of the forcefield classes. The forcefields all form
@@ -350,6 +367,7 @@ public:
 
     double energy();
     double energy(const Function &component);
+    double energy(const Symbol &symbol);
 
     Values energies(const QSet<FFComponent> &components);
     Values energies();

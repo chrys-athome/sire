@@ -263,7 +263,7 @@ QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const ForceFieldsBase &ff
 
     //now stream the remaining contents of the object
     sds << ffbase.ff_params << ffbase.cached_energies
-        << ffbase.total_id;
+        << ffbase.total_nrg;
 
     return ds;
 }
@@ -305,7 +305,7 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, ForceFieldsBase &ffbase)
 
         //now stream in the remaining data
         sds >> ffbase.ff_params >> ffbase.cached_energies
-            >> ffbase.total_id;
+            >> ffbase.total_nrg;
     }
     else
         throw version_error(v, "1", r_ffbase, CODELOC);
@@ -314,7 +314,7 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, ForceFieldsBase &ffbase)
 }
 
 /** Constructor */
-ForceFieldsBase::ForceFieldsBase() : total_id(0)
+ForceFieldsBase::ForceFieldsBase() : total_nrg( e_total() )
 {}
 
 /** Copy constructor */
@@ -324,7 +324,7 @@ ForceFieldsBase::ForceFieldsBase(const ForceFieldsBase &other)
                   ff_dependents(other.ff_dependents),
                   ff_params(other.ff_params),
                   cached_energies(other.cached_energies),
-                  total_id(other.total_id)
+                  total_nrg(other.total_nrg)
 {}
 
 /** Destructor */
@@ -341,7 +341,7 @@ ForceFieldsBase& ForceFieldsBase::operator=(const ForceFieldsBase &other)
         ff_dependents = other.ff_dependents;
         ff_params = other.ff_params;
         cached_energies = other.cached_energies;
-        total_id = other.total_id;
+        total_nrg = other.total_nrg;
 
         //copy the rest of the forcefield's data - this is designed
         //to work regardless of the type of the forcefield
@@ -415,8 +415,10 @@ const Values& ForceFieldsBase::parameters() const
 
     \throw SireFF::missing_function
 */
-const FFExpression& ForceFieldsBase::expression(const Function &function) const
+FFExpression ForceFieldsBase::expression(const Function &function) const
 {
+    #warning Need to allow symbols to represent single components of a forcefield
+
     QHash<SymbolID,ExpressionInfo>::const_iterator
                                   it = ff_equations.find(function.ID());
 
@@ -437,6 +439,18 @@ const FFExpression& ForceFieldsBase::expression(const Function &function) const
     }
 
     return it->expression();
+}
+
+/** Return the expression matching the symbol 'symbol'
+
+    \throw SireFF::missing_component
+*/
+FFExpression ForceFieldsBase::expression(const Symbol &symbol) const
+{
+    #warning Still need to write total!
+    throw SireError::incomplete_code( QObject::tr("TODO!"), CODELOC );
+        
+    return FFExpression();
 }
 
 /** Return all of the expressions in this set */
@@ -533,13 +547,37 @@ bool ForceFieldsBase::setTotal(const FFExpression &expression)
     if (not ff_equations.contains(expression.function().ID()))
         this->add(expression);
 
-    if (total_id != expression.function().ID())
+    if (total_nrg.ID() != expression.function().ID())
     {
-        total_id = expression.function().ID();
+        total_nrg = expression.function();
         return true;
     }
     else
         return false;
+}
+
+/** Set the expression used to calculate the total energy of 
+    the set of forcefields as the symbol 'component'
+    
+    \throw SireFF::missing_component
+*/
+bool ForceFieldsBase::setTotal(const Symbol &component)
+{
+    if (component == total_nrg)
+        return false;
+        
+    #warning Need to allow total to equal component within a forcefield...!
+    if ( component != e_total() and not ff_equations.contains(component.ID()) )
+    {
+        throw SireFF::missing_component( QObject::tr(
+            "There is no energy component represented by the symbol \"%1\" in "
+            "the forcefields.")
+                .arg(component.toString()),
+                    CODELOC );
+    }
+    
+    total_nrg = component;
+    return true;
 }
 
 /** Return whether or not this contains the function 'function' */
@@ -573,15 +611,9 @@ int ForceFieldsBase::nMolecules() const
 
     \throw SireFF::missing_function
 */
-const FFExpression& ForceFieldsBase::total() const
+const Symbol& ForceFieldsBase::total() const
 {
-    if (not total_id == 0)
-        throw SireFF::missing_function( QObject::tr(
-            "No expression to calculate the total energy of the forcefields "
-            "has been set, so instead the sum of their total energies is "
-            "being calculated."),  CODELOC );
-
-    return ff_equations[total_id].expression();
+    return total_nrg;
 }
 
 /** Return the energy of the expression described by ExpressionInfo 'expr' */
@@ -751,7 +783,7 @@ double ForceFieldsBase::energy(const Expression &expression)
 */
 double ForceFieldsBase::energy(const Symbol &symbol)
 {
-    if (symbol.ID() == 0)
+    if (symbol.ID() == e_total().ID())
         //return the total energy
         return energy();
     else if (symbol.isA<Function>())
@@ -771,11 +803,7 @@ double ForceFieldsBase::energy(const Symbol &symbol)
 */
 double ForceFieldsBase::energy(SymbolID symid)
 {
-    if (symid == 0)
-        //return the total energy
-        return energy();
-    else
-        return this->energy( Symbol(symid) );
+    return this->energy( Symbol(symid) );
 }
 
 /** Return the total energy of the system, as calculated from the
@@ -783,22 +811,22 @@ double ForceFieldsBase::energy(SymbolID symid)
     sum of the energies of all components */
 double ForceFieldsBase::energy()
 {
-    if (cached_energies.contains(total_id))
-        return cached_energies.value(total_id);
+    if (cached_energies.contains(total_nrg.ID()))
+        return cached_energies.value(total_nrg.ID());
 
-    if (total_id != 0)
+    if (total_nrg != e_total())
     {
-        //total_id is always valid!
-        BOOST_ASSERT( ff_equations.contains(total_id) );
+        //total_nrg is always valid!
+        BOOST_ASSERT( ff_equations.contains(total_nrg.ID()) );
 
-        return this->energy( *(ff_equations.constFind(total_id)) );
+        return this->energy( *(ff_equations.constFind(total_nrg.ID())) );
     }
     else
     {
         //calculate the sum of all forcefields
         double nrg = this->getTotalEnergy();
 
-        cached_energies.insert(SymbolID(0), nrg);
+        cached_energies.insert(total_nrg.ID(), nrg);
 
         return nrg;
     }
@@ -2429,9 +2457,9 @@ void ForceFieldsBase::remove(const Function &component)
         ff_equations.remove(component.ID());
         cached_energies.remove(component.ID());
 
-        if (total_id == component.ID())
+        if (total_nrg.ID() == component.ID())
             //we have just removed the total energy expression!
-            total_id = 0;
+            total_nrg = e_total();
     }
 }
 
@@ -2451,7 +2479,7 @@ void ForceFieldsBase::removeAll()
     cached_energies.clear();
     ff_dependents.clear();
 
-    total_id = 0;
+    total_nrg = e_total();
 }
 
 /** Take out an expression - this removes the expression and
@@ -2566,8 +2594,8 @@ void ForceFieldsBase::removeFromIndex(ForceFieldID ffid) throw()
             ff_equations.remove(funcid);
             cached_energies.remove(funcid);
 
-            if (total_id == funcid)
-                total_id = 0;
+            if (total_nrg.ID() == funcid)
+                total_nrg = e_total();
         }
     }
 
@@ -2591,8 +2619,7 @@ void ForceFieldsBase::changed(ForceFieldID ffid) throw()
         }
     }
 
-    if (total_id == 0)
-        cached_energies.remove(0);
+    cached_energies.remove(total_nrg.ID());
 }
 
 /** Record that all of the forcefields whose IDs are in ffids

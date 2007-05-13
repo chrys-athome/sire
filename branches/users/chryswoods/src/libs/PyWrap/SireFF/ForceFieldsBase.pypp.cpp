@@ -186,9 +186,12 @@ void register_ForceFieldsBase_class(){
             , (double ( ::SireFF::ForceFieldsBase::* )(  ) )( &::SireFF::ForceFieldsBase::energy ) )    
         .def( 
             "expression"
-            , (::SireFF::FFExpression const & ( ::SireFF::ForceFieldsBase::* )( ::SireCAS::Function const & ) const)( &::SireFF::ForceFieldsBase::expression )
-            , ( bp::arg("function") )
-            , bp::return_value_policy< bp::copy_const_reference >() )    
+            , (::SireFF::FFExpression ( ::SireFF::ForceFieldsBase::* )( ::SireCAS::Function const & ) const)( &::SireFF::ForceFieldsBase::expression )
+            , ( bp::arg("function") ) )    
+        .def( 
+            "expression"
+            , (::SireFF::FFExpression ( ::SireFF::ForceFieldsBase::* )( ::SireCAS::Symbol const & ) const)( &::SireFF::ForceFieldsBase::expression )
+            , ( bp::arg("symbol") ) )    
         .def( 
             "expressions"
             , (::QHash<SireCAS::Function,SireFF::FFExpression> ( ::SireFF::ForceFieldsBase::* )( ::QSet<SireCAS::Function> const & ) const)( &::SireFF::ForceFieldsBase::expressions )
@@ -417,8 +420,12 @@ void register_ForceFieldsBase_class(){
             , (bool ( ::SireFF::ForceFieldsBase::* )( ::SireFF::FFExpression const & ) )( &::SireFF::ForceFieldsBase::setTotal )
             , ( bp::arg("expression") ) )    
         .def( 
+            "setTotal"
+            , (bool ( ::SireFF::ForceFieldsBase::* )( ::SireCAS::Symbol const & ) )( &::SireFF::ForceFieldsBase::setTotal )
+            , ( bp::arg("symbol") ) )    
+        .def( 
             "total"
-            , (::SireFF::FFExpression const & ( ::SireFF::ForceFieldsBase::* )(  ) const)( &::SireFF::ForceFieldsBase::total )
+            , (::SireCAS::Symbol const & ( ::SireFF::ForceFieldsBase::* )(  ) const)( &::SireFF::ForceFieldsBase::total )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireFF::ForceFieldsBase >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    

@@ -269,6 +269,16 @@ void Moves::initialise(QuerySystem &system)
     d->initialise(system);
 }
 
+/** Set the energy component that all of the moves in this
+    set will follow */
+void Moves::setEnergyComponent(const Symbol &component)
+{
+    //can only do this while the moves aren't active
+    QMutexLocker lkr(&movemutex);
+
+    d->setEnergyComponent(component);
+}
+
 /** Return a copy of the moves that are part of this run.
     This allows you to query how they performed during
     the simulation */

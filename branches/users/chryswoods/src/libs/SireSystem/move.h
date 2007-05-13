@@ -31,6 +31,8 @@
 
 #include "SireBase/sharedpolypointer.hpp"
 
+#include "SireCAS/symbol.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireSystem
@@ -45,18 +47,14 @@ QDataStream& operator>>(QDataStream&, SireSystem::MoveBase&);
 QDataStream& operator<<(QDataStream&, const SireSystem::Move&);
 QDataStream& operator>>(QDataStream&, SireSystem::Move&);
 
-namespace SireSim
-{
-class Simulation;
-}
-
 namespace SireSystem
 {
 
 class SimSystem;
 class QuerySystem;
 
-using SireSim::Simulation;
+using SireCAS::Symbol;
+using SireCAS::SymbolID;
 
 /** This is the virtual base class of all moves that
     can be applied to a SimSystem
@@ -87,9 +85,23 @@ public:
 
     virtual void move(SimSystem &system)=0;
 
+    virtual void setEnergyComponent(const Symbol &symbol);
+
+    const Symbol& energyComponent() const;
+
 protected:
     MoveBase();
+    MoveBase(const Symbol &energy_component);
+    
     MoveBase(const MoveBase &other);
+    
+    double energy(QuerySystem &system) const;
+
+private:
+    /** The symbol representing the energy component that
+        defines the potential energy surface that this
+        move will sample */
+    Symbol nrg_component;
 };
 
 /** This is a convienient wrapper for SharedPolyPointer<MoveBase>
@@ -120,6 +132,10 @@ public:
     void initialise(QuerySystem &system);
 
     void move(SimSystem &system);
+
+    void setEnergyComponent(const Symbol &component);
+    
+    Symbol energyComponent() const;
 
     MoveBase* clone() const
     {

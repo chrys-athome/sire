@@ -31,6 +31,10 @@ void register_MovesBase_class(){
             "moves"
             , (::QList<SireSystem::Move> ( ::SireSystem::MovesBase::* )(  ) const)( &::SireSystem::MovesBase::moves ) )    
         .def( 
+            "setEnergyComponent"
+            , (void ( ::SireSystem::MovesBase::* )( ::SireCAS::Symbol const & ) )( &::SireSystem::MovesBase::setEnergyComponent )
+            , ( bp::arg("symbol") ) )    
+        .def( 
             "typeName"
             , (char const * (*)(  ))( &::SireSystem::MovesBase::typeName ) )    
         .def( 

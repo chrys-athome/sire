@@ -537,6 +537,29 @@ double FFBase::energy()
     return energy( components().total() );
 }
 
+/** Return the energy of the component represented by the symbol 'symbol' 
+
+    \throw SireFF::missing_component
+*/
+double FFBase::energy(const Symbol &symbol)
+{
+    if (symbol.ID() == e_total().ID())
+        //return the total energy
+        return energy();
+    else if (symbol.isA<Function>())
+        return this->energy( symbol.asA<Function>() );
+    else
+    {
+        throw SireFF::missing_component( QObject::tr(
+            "There is no component of the energy in the forcefield \"%1\" (%2) "
+            "that is represented by the symbol \"%3\".")
+                .arg(this->name()).arg(this->ID()).arg(symbol.toString()),
+                    CODELOC );
+                    
+        return 0;
+    }
+}
+
 /** Return the values of all of the energy components of this forcefield */
 Values FFBase::energies()
 {

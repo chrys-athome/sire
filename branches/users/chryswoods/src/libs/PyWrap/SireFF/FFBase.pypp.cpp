@@ -287,6 +287,16 @@ void register_FFBase_class(){
                 , ( bp::arg("component") ) );
         
         }
+        { //::SireFF::FFBase::energy
+        
+            typedef double ( ::SireFF::FFBase::*energy_function_type )( ::SireCAS::Symbol const & ) ;
+            
+            FFBase_exposer.def( 
+                "energy"
+                , energy_function_type( &::SireFF::FFBase::energy )
+                , ( bp::arg("symbol") ) );
+        
+        }
         { //::SireFF::FFBase::getProperty
         
             typedef ::SireBase::Property ( ::SireFF::FFBase::*getProperty_function_type )( ::QString const & ) const;

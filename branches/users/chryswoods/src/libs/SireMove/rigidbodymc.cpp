@@ -88,7 +88,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
 
     SharedDataStream sds(ds);
 
-    sds << rbmc._sampler << rbmc.nrg_component
+    sds << rbmc._sampler
         << rbmc.adel << double(rbmc.rdel)
         << static_cast<const MonteCarlo&>(rbmc);
 
@@ -106,7 +106,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RigidBodyMC &rbmc)
 
         double rdel;
 
-        sds >> rbmc._sampler >> rbmc.nrg_component
+        sds >> rbmc._sampler
             >> rbmc.adel >> rdel
             >> static_cast<MonteCarlo&>(rbmc);
             
@@ -151,7 +151,6 @@ RigidBodyMC::RigidBodyMC(const Sampler &sampler,
 RigidBodyMC::RigidBodyMC(const RigidBodyMC &other)
             : MonteCarlo(other),
               _sampler(other._sampler),
-              nrg_component(other.nrg_component),
               adel(other.adel), rdel(other.rdel)
 {}
 
@@ -183,13 +182,6 @@ Dimension::Angle RigidBodyMC::maximumRotation() const
     return rdel;
 }
 
-/** Set the symbol representing the energy component that is used
-    to perform this move */
-void RigidBodyMC::setComponent(const Symbol &energy)
-{
-    nrg_component = energy;
-}
-
 /** Checkpoint this move */
 RigidBodyMC::CheckPoint RigidBodyMC::checkPoint(QuerySystem &system) const
 {
@@ -215,7 +207,7 @@ void RigidBodyMC::initialise(QuerySystem &system)
 void RigidBodyMC::move(SimSystem &system)
 {
     //get the current total energy of the system
-    double old_nrg = system.energy(nrg_component);
+    double old_nrg = energy(system);
     
     //checkpoint the simulation - we only need to save
     //the system and our sampler...
@@ -246,7 +238,7 @@ void RigidBodyMC::move(SimSystem &system)
         newmol = system.change(newmol);
 
         //calculate the energy of the system
-        double new_nrg = system.energy(nrg_component);
+        double new_nrg = energy(system);
 
         //get the new bias on this molecule
         double new_bias = _sampler.probabilityOf(newmol, system);

@@ -94,13 +94,18 @@ public:
 
     const Values& parameters() const;
 
-    const FFExpression& expression(const Function &function) const;
+    FFExpression expression(const Function &function) const;
+    FFExpression expression(const Symbol &symbol) const;
 
     QHash<Function,FFExpression> expressions(const QSet<Function> &functions) const;
     QHash<Function,FFExpression> expressions() const;
 
     bool setParameter(const Symbol &param, double value);
+    
     bool setTotal(const FFExpression &expression);
+    bool setTotal(const Symbol &symbol);
+
+    const Symbol& total() const;
 
     virtual bool contains(const Function &function) const;
     virtual bool contains(const ForceFieldID ffid) const;
@@ -109,8 +114,6 @@ public:
 
     int nMolecules() const;
     int nForceFields() const;
-
-    const FFExpression& total() const;
 
     double energy(const Expression &expression);
     double energy(const FFExpression &expression);
@@ -434,9 +437,9 @@ private:
         system is changed) */
     QHash<SymbolID, double> cached_energies;
 
-    /** The ID of the function representing the total energy of this
+    /** The symbol of the function representing the total energy of this
         system. */
-    SymbolID total_id;
+    Symbol total_nrg;
 };
 
 }

@@ -35,6 +35,10 @@ void register_SameMoves_class(){
             "moves"
             , (::QList<SireSystem::Move> ( ::SireSystem::SameMoves::* )(  ) const)( &::SireSystem::SameMoves::moves ) )    
         .def( 
+            "setEnergyComponent"
+            , (void ( ::SireSystem::SameMoves::* )( ::SireCAS::Symbol const & ) )( &::SireSystem::SameMoves::setEnergyComponent )
+            , ( bp::arg("symbol") ) )    
+        .def( 
             "typeName"
             , (char const * (*)(  ))( &::SireSystem::SameMoves::typeName ) )    
         .def( 

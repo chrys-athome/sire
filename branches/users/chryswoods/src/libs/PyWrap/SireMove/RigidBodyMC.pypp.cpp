@@ -39,10 +39,6 @@ void register_RigidBodyMC_class(){
             , (void ( ::SireMove::RigidBodyMC::* )( ::SireSystem::SimSystem & ) )( &::SireMove::RigidBodyMC::move )
             , ( bp::arg("system") ) )    
         .def( 
-            "setComponent"
-            , (void ( ::SireMove::RigidBodyMC::* )( ::SireCAS::Symbol const & ) )( &::SireMove::RigidBodyMC::setComponent )
-            , ( bp::arg("energy") ) )    
-        .def( 
             "setMaximumRotation"
             , (void ( ::SireMove::RigidBodyMC::* )( ::SireUnits::Dimension::Angle ) )( &::SireMove::RigidBodyMC::setMaximumRotation )
             , ( bp::arg("max_rotation") ) )    

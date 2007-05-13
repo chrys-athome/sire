@@ -81,7 +81,7 @@ for classname in wrap_classes:
 #export the free functions and free variables
 def export_free(things):
    for thing in things:
-       if thing.parent.name == "SireMaths":
+       if thing.parent.name == namespace:
            thing.include()
            
 export_free( mb.free_functions() )

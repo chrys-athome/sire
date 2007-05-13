@@ -30,6 +30,9 @@ void register_Move_class(){
             , (::SireSystem::MoveBase * ( ::SireSystem::Move::* )(  ) const)( &::SireSystem::Move::clone )
             , bp::return_value_policy< bp::manage_new_object >() )    
         .def( 
+            "energyComponent"
+            , (::SireCAS::Symbol ( ::SireSystem::Move::* )(  ) const)( &::SireSystem::Move::energyComponent ) )    
+        .def( 
             "initialise"
             , (void ( ::SireSystem::Move::* )( ::SireSystem::QuerySystem & ) )( &::SireSystem::Move::initialise )
             , ( bp::arg("system") ) )    
@@ -37,6 +40,10 @@ void register_Move_class(){
             "move"
             , (void ( ::SireSystem::Move::* )( ::SireSystem::SimSystem & ) )( &::SireSystem::Move::move )
             , ( bp::arg("system") ) )    
+        .def( 
+            "setEnergyComponent"
+            , (void ( ::SireSystem::Move::* )( ::SireCAS::Symbol const & ) )( &::SireSystem::Move::setEnergyComponent )
+            , ( bp::arg("component") ) )    
         .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireSystem::Move >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    

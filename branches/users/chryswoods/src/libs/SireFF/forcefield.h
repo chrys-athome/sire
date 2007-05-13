@@ -123,6 +123,8 @@ public:
 
     double energy();
     double energy(const FFComponent &component);
+    double energy(const Function &component);
+    double energy(const Symbol &component);
 
     Values energies();
     Values energies(const QSet<FFComponent> &components);

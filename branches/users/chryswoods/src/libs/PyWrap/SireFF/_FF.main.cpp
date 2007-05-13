@@ -75,6 +75,8 @@
 
 #include "ParameterSource.pypp.hpp"
 
+#include "_FF_free_functions.pypp.hpp"
+
 #include "sireff_containers.h"
 
 namespace bp = boost::python;
@@ -126,6 +128,8 @@ BOOST_PYTHON_MODULE(_FF){
 
     register_ParameterName_class();
 
+    register_ParameterSource_class();
+
     bp::implicitly_convertible< QString, SireFF::ParameterName >();
 
     bp::implicitly_convertible< const SireFF::FFBase&, SireFF::ForceField >();
@@ -136,6 +140,6 @@ BOOST_PYTHON_MODULE(_FF){
 
     bp::implicitly_convertible< QHash<SireFF::ParameterName,QString>, SireFF::ParameterMap >();
 
-    register_ParameterSource_class();
+    register_free_functions();
 }
 
