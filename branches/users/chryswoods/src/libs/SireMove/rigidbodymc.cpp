@@ -158,6 +158,20 @@ RigidBodyMC::RigidBodyMC(const RigidBodyMC &other)
 RigidBodyMC::~RigidBodyMC()
 {}
 
+/** Copy assignment operator */
+RigidBodyMC& RigidBodyMC::operator=(const RigidBodyMC &other)
+{
+    if (this != &other)
+    {
+        _sampler = other._sampler;
+        adel = other.adel;
+        rdel = other.rdel;
+        MonteCarlo::operator=(other);
+    }
+    
+    return *this;
+}
+
 /** Set the maximum delta for any translation */
 void RigidBodyMC::setMaximumTranslation(Dimension::Length max_translation)
 {
@@ -196,11 +210,12 @@ void RigidBodyMC::rollBack(SimSystem &system,
     _sampler = checkpoint.sampler();
 }
 
-/** Initialise this move from the system - this is to try
-    and catch any silly errors before the simulation starts... */
-void RigidBodyMC::initialise(QuerySystem &system)
+/** Assert that this move is compatible with the passed system - this is 
+    to try and catch any silly errors before the simulation starts... */
+void RigidBodyMC::assertCompatibleWith(QuerySystem &system) const
 {
-    _sampler.sample(system);
+    _sampler.assertCompatibleWith(system);
+    MonteCarlo::assertCompatibleWith(system);
 }
 
 /** Attempt a single rigid-body move */

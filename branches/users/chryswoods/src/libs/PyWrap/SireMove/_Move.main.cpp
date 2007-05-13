@@ -17,6 +17,8 @@
 
 #include "SireSystem/simsystem.h"
 
+#include "MTSMC.pypp.hpp"
+
 #include "MonteCarlo.pypp.hpp"
 
 #include "PrefSampler.pypp.hpp"
@@ -37,6 +39,8 @@ BOOST_PYTHON_MODULE(_Move){
     register_SireMove_containers();
 
     register_MonteCarlo_class();
+
+    register_MTSMC_class();
 
     register_SamplerBase_class();
 

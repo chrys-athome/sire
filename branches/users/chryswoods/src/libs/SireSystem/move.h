@@ -81,13 +81,13 @@ public:
 
     virtual MoveBase* clone() const=0;
 
-    virtual void initialise(QuerySystem &system)=0;
-
     virtual void move(SimSystem &system)=0;
 
     virtual void setEnergyComponent(const Symbol &symbol);
 
     const Symbol& energyComponent() const;
+
+    virtual void assertCompatibleWith(QuerySystem &system) const;
 
 protected:
     MoveBase();
@@ -129,7 +129,7 @@ public:
     Move& operator=(const SireBase::SharedPolyPointer<MoveBase> &ptr);
     Move& operator=(const Move &move);
 
-    void initialise(QuerySystem &system);
+    void assertCompatibleWith(QuerySystem &system) const;
 
     void move(SimSystem &system);
 
@@ -148,9 +148,9 @@ private:
 };
 
 /** Initialise the move to work on the Simulation system 'system' */
-inline void Move::initialise(QuerySystem &system)
+inline void Move::assertCompatibleWith(QuerySystem &system) const
 {
-    d->initialise(system);
+    d->assertCompatibleWith(system);
 }
 
 /** Perform the move on the simulation system */

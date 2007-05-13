@@ -586,6 +586,18 @@ bool ForceFieldsBase::contains(const Function &function) const
     return ff_equations.contains(function.ID());
 }
 
+/** Return whether or not this contains the component represented 
+    by the symbol 'component' */
+bool ForceFieldsBase::contains(const Symbol &component) const
+{
+    if (component == e_total())
+        return true;
+    else if (component.isA<Function>())
+        return this->contains(component.asA<Function>());
+    else
+        return false;
+}
+
 /** Return whether this contains a forcefield with ID == ffid */
 bool ForceFieldsBase::contains(const ForceFieldID ffid) const
 {
@@ -2639,4 +2651,18 @@ void ForceFieldsBase::changed(const QSet<ForceFieldID> &ffids) throw()
 void ForceFieldsBase::changedAll() throw()
 {
     cached_energies.clear();
+}
+
+/** Assert that this set of forcefields contains an energy component
+    that is represented by the symbol 'symbol' 
+    
+    \throw SireFF::missing_component
+*/
+void ForceFieldsBase::assertContains(const Symbol &component) const
+{
+    if (not this->contains(component))
+        throw SireFF::missing_component( QObject::tr(
+            "This set of forcefields does not contain an energy component "
+            "represented by the symbol \"%1\".")
+                .arg(component.toString()), CODELOC );
 }

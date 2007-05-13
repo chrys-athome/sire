@@ -145,6 +145,8 @@ public:
         float probability;
     };
 
+    void assertCompatibleWith(const QuerySystem &system) const;
+
 protected:
     bool _pvt_isEqual(const PropertyBase &other) const;
 

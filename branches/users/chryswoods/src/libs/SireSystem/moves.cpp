@@ -261,12 +261,11 @@ Moves& Moves::operator=(const Moves &other)
      - this is used to catch a lot of errors before the
        simulation starts, rather than while it is running
        (or even months into it running!) */
-void Moves::initialise(QuerySystem &system)
+void Moves::assertCompatibleWith(QuerySystem &system) const
 {
     //can only do this while the moves aren't active
-    QMutexLocker lkr(&movemutex);
-
-    d->initialise(system);
+    QMutexLocker lkr( const_cast<QMutex*>(&movemutex) );
+    d->assertCompatibleWith(system);
 }
 
 /** Set the energy component that all of the moves in this
@@ -341,11 +340,6 @@ void Moves::run(SimSystem &system, quint32 nmoves)
 
     sysid = system.ID();
 
-    //initialise all of the moves with the system
-    // - this ensures that all of the moves are currently
-    //   valid with this system
-    d->initialise(system);
-
     //run the moves
     this->_pvt_run(system);
 }
@@ -365,9 +359,6 @@ void Moves::resume(SimSystem &system)
         //the simulation has finished
         return;
 
-    //initialise all of the moves with the system
-    d->initialise(system);
-
     //run the moves
     this->_pvt_run(system);
 }
@@ -385,8 +376,6 @@ void Moves::rerun(SimSystem &system)
 
     if (ncomplete >= ntotal)
         return;
-
-    d->initialise(system);
 
     this->_pvt_run(system);
 }

@@ -24,6 +24,10 @@ void register_UniformSampler_class(){
     bp::class_< SireMove::UniformSampler, bp::bases< SireMove::SamplerBase > >( "UniformSampler", bp::init< bp::optional< SireMaths::RanGenerator const & > >(( bp::arg("rangenerator")=::SireMaths::RanGenerator( ) )) )    
         .def( bp::init< SireMol::MoleculeGroup const &, bp::optional< SireMaths::RanGenerator const & > >(( bp::arg("group"), bp::arg("rangenerator")=::SireMaths::RanGenerator( ) )) )    
         .def( 
+            "assertCompatibleWith"
+            , (void ( ::SireMove::UniformSampler::* )( ::SireSystem::QuerySystem const & ) const)( &::SireMove::UniformSampler::assertCompatibleWith )
+            , ( bp::arg("system") ) )    
+        .def( 
             "probabilityOf"
             , (double ( ::SireMove::UniformSampler::* )( ::SireMol::PartialMolecule const &,::SireSystem::QuerySystem const & ) )( &::SireMove::UniformSampler::probabilityOf )
             , ( bp::arg("molecule"), bp::arg("system") ) )    

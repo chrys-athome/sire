@@ -99,6 +99,9 @@ protected:
               double new_bias,
               double old_bias);
 
+    bool test(double new_energy,
+              double old_energy);
+
     RanGenerator& _pvt_generator()
     {
         return _generator;

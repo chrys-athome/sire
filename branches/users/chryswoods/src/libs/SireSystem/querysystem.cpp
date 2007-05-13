@@ -327,3 +327,37 @@ PartialMolecule QuerySystem::molecule(MoleculeID molid) const
         return forceFields().molecule(molid);
     }
 }
+
+/** Assert that the forcefields in this system contain the component
+    represented by the symbol 'symbol'
+    
+    \throw SireFF::missing_component
+*/
+void QuerySystem::assertContains(const Symbol &symbol) const
+{
+    forceFields().assertContains(symbol);
+}
+
+/** Assert that this system contains a MoleculeGroup with ID == groupid
+  
+    \throw SireMol::missing_group
+*/
+void QuerySystem::assertContains(MoleculeGroupID groupid) const
+{
+    info().groups().assertContains(groupid);
+}
+
+/** Assert that this system contains the molecule with ID == molid 
+
+    \throw SireMol::missing_molecule
+*/
+void QuerySystem::assertContains(MoleculeID molid) const
+{
+    if ( not (info().groups().refersTo(molid) or 
+              forceFields().refersTo(molid)) )
+    {
+        throw SireMol::missing_molecule( QObject::tr(
+            "This system does not contain the molecule with ID == %1.")
+                .arg(molid), CODELOC );
+    }
+}

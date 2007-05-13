@@ -106,6 +106,14 @@ void MoveBase::setEnergyComponent(const Symbol &symbol)
     nrg_component = symbol;
 }
 
+/** Initialise this move for the system - this ensures that 
+    the system has the energy component that this move will
+    be sampling */
+void MoveBase::assertCompatibleWith(QuerySystem &system) const
+{
+    system.assertContains(nrg_component);
+}
+
 /** Return the energy on the potential energy surface that
     this move follows of the passed system */
 double MoveBase::energy(QuerySystem &system) const

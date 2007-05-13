@@ -50,6 +50,12 @@ QDataStream& operator>>(QDataStream&, SireMove::MTSMC&);
 namespace SireMove
 {
 
+using SireSystem::Moves;
+using SireSystem::QuerySystem;
+using SireSystem::SimSystem;
+
+using SireCAS::Symbol;
+
 /** This is a multiple-time-step Monte Carlo move
     (see Hetenyi et. al., J. Chem. Phys., 117, 8203-8207, 2002)
     
@@ -68,12 +74,14 @@ friend QDataStream& ::operator>>(QDataStream&, MTSMC&);
 public:
     MTSMC();
     
-    MTSMC(const Moves &moves, const Symbol &slow_component,
-          const Symbol &fast_component, int nfast=0);
+    MTSMC(const Moves &moves, const Symbol &fastcomponent, 
+          quint32 nfastmoves=0);
           
     MTSMC(const MTSMC &other);
     
     ~MTSMC();
+    
+    MTSMC& operator=(const MTSMC &other);
     
     static const char* typeName()
     {
@@ -91,7 +99,7 @@ public:
     }
     
     void setMoves(const Moves &moves);
-    void setMoves(const Moves &moves, const Symbol &fast_component);
+    void setMoves(const Moves &moves, const Symbol &fastcomponent);
     
     void setNumFastMoves(quint32 nmoves);
     
@@ -99,23 +107,23 @@ public:
     
     quint32 numFastMoves() const;
     
-    const Symbol& fastComponent() const;
-    const Symbol& slowComponent() const;
-
-    void initialise(QuerySystem &system);
+    const Symbol& fastEnergyComponent() const;
+    void setFastEnergyComponent(const Symbol &symbol);
 
     void move(SimSystem &system);
+
+    void assertCompatibleWith(QuerySystem &system) const;
 
 private:
     /** The moves performed on the fast forcefield */
     Moves fast_moves;
     
+    /** The fast energy component */
+    Symbol fast_component;
+    
     /** The number of moves on the fast forcefield 
         per slow move */
     quint32 nfast;
-    
-    /** The fast energy component */
-    Symbol fast_nrg;
 };
 
 }

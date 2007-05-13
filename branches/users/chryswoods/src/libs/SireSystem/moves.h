@@ -96,10 +96,6 @@ public:
         should be performed */
     virtual Move& nextMove()=0;
 
-    /** Initialise all of the moves in the set to
-        work with the passed system */
-    virtual void initialise(QuerySystem &system)=0;
-
     /** Set the component of the energy that all of these
         moves will follow */
     virtual void setEnergyComponent(const Symbol &symbol)=0;
@@ -108,6 +104,11 @@ public:
         are part of this collection - this is so that the
         code can query the moves after they have been performed */
     virtual QList<Move> moves() const=0;
+
+    /** Assert that all of the moves in this set are compatible
+        with the passed system - this is to ensure that any silly errors
+        are revealed now, rather than halfway through the simulation... */
+    virtual void assertCompatibleWith(QuerySystem &system) const=0;
 };
 
 /** This class represents moves which are a collection
@@ -155,11 +156,6 @@ public:
         return single_move;
     }
 
-    void initialise(QuerySystem &system)
-    {
-        single_move.initialise(system);
-    }
-
     void setEnergyComponent(const Symbol &symbol)
     {
         single_move.setEnergyComponent(symbol);
@@ -170,6 +166,11 @@ public:
         QList<Move> allmoves;
         allmoves.append(single_move);
         return allmoves;
+    }
+
+    void assertCompatibleWith(QuerySystem &system) const
+    {
+        single_move.assertCompatibleWith(system);
     }
 
 private:
@@ -202,8 +203,6 @@ public:
 
     Moves& operator=(const Moves &other);
 
-    void initialise(QuerySystem &system);
-
     void setEnergyComponent(const Symbol &component);
 
     int count() const;
@@ -219,6 +218,8 @@ public:
     int percentProgress() const;
 
     QList<Move> moves();
+
+    void assertCompatibleWith(QuerySystem &system) const;
 
 private:
     void _pvt_run(SimSystem &system);

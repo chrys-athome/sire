@@ -21,6 +21,10 @@ void register_SamplerBase_class(){
 
     bp::class_< SireMove::SamplerBase, bp::bases< SireBase::PropertyBase >, boost::noncopyable >( "SamplerBase", bp::no_init )    
         .def( 
+            "assertCompatibleWith"
+            , (void ( ::SireMove::SamplerBase::* )( ::SireSystem::QuerySystem const & ) const)( &::SireMove::SamplerBase::assertCompatibleWith )
+            , ( bp::arg("system") ) )    
+        .def( 
             "generator"
             , (::SireMaths::RanGenerator const & ( ::SireMove::SamplerBase::* )(  ) const)( &::SireMove::SamplerBase::generator )
             , bp::return_value_policy< bp::copy_const_reference >() )    

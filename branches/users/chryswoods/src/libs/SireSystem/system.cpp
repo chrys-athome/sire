@@ -247,6 +247,9 @@ Moves System::run(const Moves &moves, quint32 nmoves)
 {
     LocalSimSystem simsystem(this->checkPoint());
 
+    //make sure that the moves are compatible with the system
+    moves.assertCompatibleWith(simsystem);
+
     //work with a copy of the moves
     Moves run_moves(moves);
 

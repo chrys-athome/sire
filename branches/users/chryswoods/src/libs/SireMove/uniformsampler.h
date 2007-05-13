@@ -104,6 +104,8 @@ public:
     double probabilityOf(const PartialMolecule &molecule,
                          const QuerySystem &system);
 
+    void assertCompatibleWith(const QuerySystem &system) const;
+
 protected:
     bool _pvt_isEqual(const PropertyBase &other) const;
 

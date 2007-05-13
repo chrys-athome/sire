@@ -111,6 +111,8 @@ public:
     virtual double probabilityOf(const PartialMolecule &molecule,
                                  const QuerySystem &system)=0;
 
+    virtual void assertCompatibleWith(const QuerySystem &system) const=0;
+
 protected:
     RanGenerator& _pvt_generator();
 
@@ -154,6 +156,8 @@ public:
 
     void setGenerator(const RanGenerator &generator);
     const RanGenerator& generator() const;
+
+    void assertCompatibleWith(const QuerySystem &system) const;
 
 private:
     /** Implicitly shared pointer to the sampler implementation */

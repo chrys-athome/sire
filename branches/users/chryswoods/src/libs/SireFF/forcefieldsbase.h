@@ -107,6 +107,7 @@ public:
 
     const Symbol& total() const;
 
+    virtual bool contains(const Symbol &symbol) const;
     virtual bool contains(const Function &function) const;
     virtual bool contains(const ForceFieldID ffid) const;
 
@@ -294,6 +295,8 @@ public:
 
     virtual void assertValidComponents(const FFExpression &expression) const=0;
     virtual void assertSameContents(const ForceFieldsBase &other) const=0;
+    
+    void assertContains(const Symbol &symbol) const;
 
 protected:
     virtual void reindex()=0;

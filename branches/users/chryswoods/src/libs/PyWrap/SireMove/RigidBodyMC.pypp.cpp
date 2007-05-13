@@ -25,8 +25,8 @@ void register_RigidBodyMC_class(){
         .def( bp::init< SireMove::Sampler const &, bp::optional< SireMaths::RanGenerator const & > >(( bp::arg("sampler"), bp::arg("generator")=::SireMaths::RanGenerator( ) )) )    
         .def( bp::init< SireMove::Sampler const &, SireUnits::Dimension::Length, SireUnits::Dimension::Angle, bp::optional< SireMaths::RanGenerator const & > >(( bp::arg("sampler"), bp::arg("max_translation"), bp::arg("max_rotation"), bp::arg("generator")=::SireMaths::RanGenerator( ) )) )    
         .def( 
-            "initialise"
-            , (void ( ::SireMove::RigidBodyMC::* )( ::SireSystem::QuerySystem & ) )( &::SireMove::RigidBodyMC::initialise )
+            "assertCompatibleWith"
+            , (void ( ::SireMove::RigidBodyMC::* )( ::SireSystem::QuerySystem & ) const)( &::SireMove::RigidBodyMC::assertCompatibleWith )
             , ( bp::arg("system") ) )    
         .def( 
             "maximumRotation"

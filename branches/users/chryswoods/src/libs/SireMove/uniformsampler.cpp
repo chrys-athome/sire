@@ -35,6 +35,7 @@
 
 #include "SireMol/moleculeid.h"
 
+#include "SireSystem/systemdata.h"
 #include "SireSystem/querysystem.h"
 
 #include "SireMol/errors.h"
@@ -213,4 +214,13 @@ double UniformSampler::probabilityOf(const PartialMolecule &molecule,
     this->updateFrom(group);
 
     return 1.0 / molids.count();
+}
+
+/** Assert that this sampler is compatible with the system 'system'
+
+    \throw SireMol::missing_group
+*/
+void UniformSampler::assertCompatibleWith(const QuerySystem &system) const
+{
+    system.info().groups().assertContains(groupid);
 }

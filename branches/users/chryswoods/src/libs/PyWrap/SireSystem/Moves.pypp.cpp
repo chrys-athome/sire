@@ -26,12 +26,12 @@ void register_Moves_class(){
         .def( bp::init< SireSystem::Move const & >(( bp::arg("move") )) )    
         .def( bp::init< SireSystem::MovesBase const & >(( bp::arg("moves") )) )    
         .def( 
+            "assertCompatibleWith"
+            , (void ( ::SireSystem::Moves::* )( ::SireSystem::QuerySystem & ) const)( &::SireSystem::Moves::assertCompatibleWith )
+            , ( bp::arg("system") ) )    
+        .def( 
             "count"
             , (int ( ::SireSystem::Moves::* )(  ) const)( &::SireSystem::Moves::count ) )    
-        .def( 
-            "initialise"
-            , (void ( ::SireSystem::Moves::* )( ::SireSystem::QuerySystem & ) )( &::SireSystem::Moves::initialise )
-            , ( bp::arg("system") ) )    
         .def( 
             "moves"
             , (::QList<SireSystem::Move> ( ::SireSystem::Moves::* )(  ) )( &::SireSystem::Moves::moves ) )    

@@ -23,6 +23,7 @@ set ( WRAPMOVE_SOURCES
       siremove_containers.cpp
       
       MonteCarlo.pypp.cpp
+      MTSMC.pypp.cpp
 
       PrefSampler.pypp.cpp
       

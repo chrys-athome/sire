@@ -34,6 +34,7 @@
 #include "SireMol/propertyextractor.h"
 
 #include "SireSystem/querysystem.h"
+#include "SireSystem/systemdata.h"
 
 #include "SireMol/errors.h"
 #include "SireError/errors.h"
@@ -407,4 +408,13 @@ bool PrefSampler::_pvt_isEqual(const PropertyBase &other) const
 
     return molgroup == sampler.molgroup and kval == sampler.kval and
            center_mol == sampler.center_mol;
+}
+
+/** Assert that this sampler is compatible with the system 'system'
+
+    \throw SireMol::missing_group
+*/
+void PrefSampler::assertCompatibleWith(const QuerySystem &system) const
+{
+    system.info().groups().assertContains(molgroup.ID());
 }

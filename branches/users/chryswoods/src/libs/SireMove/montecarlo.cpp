@@ -161,13 +161,37 @@ void MonteCarlo::clearMoveStatistics()
     nreject = 0;
 }
 
-/** Perform the monte carlo test, using the supplied change in energy
+/** Perform the Monte Carlo test, using the supplied change in energy
     and the supplied change in biasing probabilities */
 bool MonteCarlo::test(double new_energy, double old_energy,
                       double new_bias, double old_bias)
 {
     double x = (new_bias / old_bias) * std::exp( -beta*(new_energy - old_energy) );
 
+    if (x > 1 or x > _generator.rand())
+    {
+        ++naccept;
+        return true;
+    }
+    else
+    {
+        ++nreject;
+        return false;
+    }
+}
+
+/** Perform the Monte Carlo test, using the supplied change in energy 
+    (no change in biasing factor) */
+bool MonteCarlo::test(double new_energy, double old_energy)
+{
+    if (new_energy <= old_energy)
+    {
+        ++naccept;
+        return true;
+    }
+    
+    double x = std::exp( -beta*(new_energy - old_energy) );
+    
     if (x > 1 or x > _generator.rand())
     {
         ++naccept;

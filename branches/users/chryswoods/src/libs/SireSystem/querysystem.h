@@ -162,6 +162,10 @@ public:
 
     QHash< QString,QHash<ForceFieldID,Property> > properties();
 
+    void assertContains(const Symbol &symbol) const;
+    void assertContains(MoleculeGroupID groupid) const;
+    void assertContains(MoleculeID molid) const;
+
 protected:
     QuerySystem();
 

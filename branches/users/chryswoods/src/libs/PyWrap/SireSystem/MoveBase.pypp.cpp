@@ -21,13 +21,13 @@ void register_MoveBase_class(){
 
     bp::class_< SireSystem::MoveBase, boost::noncopyable >( "MoveBase", bp::no_init )    
         .def( 
+            "assertCompatibleWith"
+            , (void ( ::SireSystem::MoveBase::* )( ::SireSystem::QuerySystem & ) const)( &::SireSystem::MoveBase::assertCompatibleWith )
+            , ( bp::arg("system") ) )    
+        .def( 
             "energyComponent"
             , (::SireCAS::Symbol const & ( ::SireSystem::MoveBase::* )(  ) const)( &::SireSystem::MoveBase::energyComponent )
             , bp::return_value_policy< bp::copy_const_reference >() )    
-        .def( 
-            "initialise"
-            , (void ( ::SireSystem::MoveBase::* )( ::SireSystem::QuerySystem & ) )( &::SireSystem::MoveBase::initialise )
-            , ( bp::arg("system") ) )    
         .def( 
             "move"
             , (void ( ::SireSystem::MoveBase::* )( ::SireSystem::SimSystem & ) )( &::SireSystem::MoveBase::move )

@@ -11,6 +11,7 @@ sys.path.append("..")
 from sireutils import *
 
 wrap_classes = [ "MonteCarlo",
+                 "MTSMC",
                  "PrefSampler",
                  "RigidBodyMC",
                  "SamplerBase",

@@ -22,6 +22,18 @@ void register_QuerySystem_class(){
             "ID"
             , (::SireSystem::SystemID ( ::SireSystem::QuerySystem::* )(  ) const)( &::SireSystem::QuerySystem::ID ) )    
         .def( 
+            "assertContains"
+            , (void ( ::SireSystem::QuerySystem::* )( ::SireCAS::Symbol const & ) const)( &::SireSystem::QuerySystem::assertContains )
+            , ( bp::arg("symbol") ) )    
+        .def( 
+            "assertContains"
+            , (void ( ::SireSystem::QuerySystem::* )( ::SireMol::MoleculeGroupID ) const)( &::SireSystem::QuerySystem::assertContains )
+            , ( bp::arg("groupid") ) )    
+        .def( 
+            "assertContains"
+            , (void ( ::SireSystem::QuerySystem::* )( ::SireMol::MoleculeID ) const)( &::SireSystem::QuerySystem::assertContains )
+            , ( bp::arg("molid") ) )    
+        .def( 
             "checkPoint"
             , (::SireSystem::CheckPoint ( ::SireSystem::QuerySystem::* )(  ) )( &::SireSystem::QuerySystem::checkPoint ) )    
         .def( 

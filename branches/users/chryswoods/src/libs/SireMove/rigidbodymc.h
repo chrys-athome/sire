@@ -97,6 +97,8 @@ public:
 
     ~RigidBodyMC();
 
+    RigidBodyMC& operator=(const RigidBodyMC &other);
+
     static const char* typeName()
     {
         return "SireMove::RigidBodyMC";
@@ -118,9 +120,9 @@ public:
     SireUnits::Dimension::Length maximumTranslation() const;
     SireUnits::Dimension::Angle maximumRotation() const;
 
-    void initialise(QuerySystem &system);
-
     void move(SimSystem &system);
+
+    void assertCompatibleWith(QuerySystem &system) const;
 
 protected:
     class CheckPoint

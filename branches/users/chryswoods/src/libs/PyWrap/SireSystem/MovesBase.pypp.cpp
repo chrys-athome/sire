@@ -21,12 +21,12 @@ void register_MovesBase_class(){
 
     bp::class_< SireSystem::MovesBase, boost::noncopyable >( "MovesBase", bp::no_init )    
         .def( 
+            "assertCompatibleWith"
+            , (void ( ::SireSystem::MovesBase::* )( ::SireSystem::QuerySystem & ) const)( &::SireSystem::MovesBase::assertCompatibleWith )
+            , ( bp::arg("system") ) )    
+        .def( 
             "count"
             , (int ( ::SireSystem::MovesBase::* )(  ) const)( &::SireSystem::MovesBase::count ) )    
-        .def( 
-            "initialise"
-            , (void ( ::SireSystem::MovesBase::* )( ::SireSystem::QuerySystem & ) )( &::SireSystem::MovesBase::initialise )
-            , ( bp::arg("system") ) )    
         .def( 
             "moves"
             , (::QList<SireSystem::Move> ( ::SireSystem::MovesBase::* )(  ) const)( &::SireSystem::MovesBase::moves ) )    

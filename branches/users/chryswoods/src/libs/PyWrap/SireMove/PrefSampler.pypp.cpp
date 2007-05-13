@@ -28,6 +28,10 @@ void register_PrefSampler_class(){
         .def( bp::init< SireMol::PartialMolecule const &, SireMol::MoleculeGroup const &, bp::optional< SireMaths::RanGenerator const & > >(( bp::arg("center"), bp::arg("group"), bp::arg("rangenerator")=::SireMaths::RanGenerator( ) )) )    
         .def( bp::init< SireMol::PartialMolecule const &, double, SireMol::MoleculeGroup const &, bp::optional< SireMaths::RanGenerator const & > >(( bp::arg("center"), bp::arg("k"), bp::arg("group"), bp::arg("rangenerator")=::SireMaths::RanGenerator( ) )) )    
         .def( 
+            "assertCompatibleWith"
+            , (void ( ::SireMove::PrefSampler::* )( ::SireSystem::QuerySystem const & ) const)( &::SireMove::PrefSampler::assertCompatibleWith )
+            , ( bp::arg("system") ) )    
+        .def( 
             "centerMolecule"
             , (::SireMol::PartialMolecule const & ( ::SireMove::PrefSampler::* )(  ) const)( &::SireMove::PrefSampler::centerMolecule )
             , bp::return_value_policy< bp::copy_const_reference >() )    

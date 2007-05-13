@@ -207,3 +207,9 @@ const RanGenerator& Sampler::generator() const
 {
     return d->generator();
 }
+
+/** Assert that this sampler is compatible with the passed system */
+void Sampler::assertCompatibleWith(const QuerySystem &system) const
+{
+    d->assertCompatibleWith(system);
+}

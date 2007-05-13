@@ -2,6 +2,7 @@
 #define PYPLUSPLUS_SIREMOVE_HEADERS_H
 
 #include "SireMove/montecarlo.h"
+#include "SireMove/mtsmc.h"
 #include "SireMove/prefsampler.h"
 #include "SireMove/rigidbodymc.h"
 #include "SireMove/sampler.h"

@@ -25,12 +25,12 @@ void register_SameMoves_class(){
         .def( bp::init< >() )    
         .def( bp::init< SireSystem::Move const & >(( bp::arg("move") )) )    
         .def( 
+            "assertCompatibleWith"
+            , (void ( ::SireSystem::SameMoves::* )( ::SireSystem::QuerySystem & ) const)( &::SireSystem::SameMoves::assertCompatibleWith )
+            , ( bp::arg("system") ) )    
+        .def( 
             "count"
             , (int ( ::SireSystem::SameMoves::* )(  ) const)( &::SireSystem::SameMoves::count ) )    
-        .def( 
-            "initialise"
-            , (void ( ::SireSystem::SameMoves::* )( ::SireSystem::QuerySystem & ) )( &::SireSystem::SameMoves::initialise )
-            , ( bp::arg("system") ) )    
         .def( 
             "moves"
             , (::QList<SireSystem::Move> ( ::SireSystem::SameMoves::* )(  ) const)( &::SireSystem::SameMoves::moves ) )    
