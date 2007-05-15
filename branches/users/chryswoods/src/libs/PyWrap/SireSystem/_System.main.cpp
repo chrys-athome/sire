@@ -76,7 +76,9 @@ BOOST_PYTHON_MODULE(_System){
 
     bp::implicitly_convertible< const SireSystem::MoveBase&, SireSystem::Move >();
 
-    bp::implicitly_convertible< SireSystem::Move, SireSystem::SameMoves >();
+    bp::implicitly_convertible< SireSystem::Move, SireSystem::Moves >();
+
+    bp::implicitly_convertible< const SireSystem::MoveBase&, SireSystem::Moves >();
 
     register_SystemID_class();
 }

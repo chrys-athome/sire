@@ -54,7 +54,9 @@ special_code = { "MovesBase" : remove_next_move,
 
 implicitly_convertible = [ ("const SireSystem::MoveBase&",
                             "SireSystem::Move"),
-                           ("SireSystem::Move", "SireSystem::SameMoves")
+                           ("SireSystem::Move", "SireSystem::Moves"),
+                           ("const SireSystem::MoveBase&",
+                            "SireSystem::Moves")
                          ]
 
 incpaths = sys.argv[1:]

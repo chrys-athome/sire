@@ -13,13 +13,17 @@
 
 namespace bp = boost::python;
 
+SireMove::MTSMC __copy__(const SireMove::MTSMC &other){ return SireMove::MTSMC(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 const char* pvt_get_name(const SireMove::MTSMC&){ return "SireMove::MTSMC";}
 
 void register_MTSMC_class(){
 
-    bp::class_< SireMove::MTSMC, bp::bases< SireMove::MonteCarlo >, boost::noncopyable >( "MTSMC" )    
+    bp::class_< SireMove::MTSMC, bp::bases< SireMove::MonteCarlo > >( "MTSMC" )    
+        .def( bp::init< >() )    
+        .def( bp::init< SireSystem::Moves const &, SireCAS::Symbol const &, bp::optional< quint32 > >(( bp::arg("moves"), bp::arg("fastcomponent"), bp::arg("nfastmoves")=(unsigned int)(0) )) )    
         .def( 
             "assertCompatibleWith"
             , (void ( ::SireMove::MTSMC::* )( ::SireSystem::QuerySystem & ) const)( &::SireMove::MTSMC::assertCompatibleWith )
@@ -62,6 +66,7 @@ void register_MTSMC_class(){
             "what"
             , (char const * ( ::SireMove::MTSMC::* )(  ) const)( &::SireMove::MTSMC::what ) )    
         .staticmethod( "typeName" )    
+        .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMove::MTSMC >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMove::MTSMC >,

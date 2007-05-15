@@ -54,9 +54,9 @@ coulff_a_b = InterGroupCoulombFF(space, switchfunc)
 #parametise each molecule and add it to the forcefield
 print "Parametising the molecules..."
 
-chgs = AtomicCharges( [0.0, 0.52 * mod_electrons,
-                            0.52 * mod_electrons,
-                           -1.04 * mod_electrons] )
+chgs = AtomicCharges( [0.0, 0.52 * mod_electron,
+                            0.52 * mod_electron,
+                           -1.04 * mod_electron] )
 
 ljs = AtomicLJs( [ LJParameter( 3.15365 * angstrom, \
                                 0.1550 * kcal_per_mol ), \

@@ -51,6 +51,8 @@
 
 #include "SireStream/datastream.h"
 
+#include <QDebug>
+
 using namespace SireFF;
 using namespace SireBase;
 using namespace SireCAS;
@@ -537,7 +539,7 @@ double FFBase::energy()
     return energy( components().total() );
 }
 
-/** Return the energy of the component represented by the symbol 'symbol' 
+/** Return the energy of the component represented by the symbol 'symbol'
 
     \throw SireFF::missing_component
 */
@@ -555,7 +557,7 @@ double FFBase::energy(const Symbol &symbol)
             "that is represented by the symbol \"%3\".")
                 .arg(this->name()).arg(this->ID()).arg(symbol.toString()),
                     CODELOC );
-                    
+
         return 0;
     }
 }

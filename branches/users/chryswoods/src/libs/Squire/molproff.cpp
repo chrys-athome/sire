@@ -1211,7 +1211,8 @@ MolproFF::MolproFF(const MolproFF &other)
            molpro_exe(other.molpro_exe), molpro_tmpdir(other.molpro_tmpdir),
            qm_coords(other.qm_coords),
            mm_coords_and_charges(other.mm_coords_and_charges),
-           qm_mols(other.qm_mols), mm_mols(other.mm_mols),
+           qm_mols(other.qm_mols), qm_coordgroup(other.qm_coordgroup),
+           mm_array_index(other.mm_array_index), mm_mols(other.mm_mols),
            qm_version(other.qm_version), zero_nrg(other.zero_nrg),
            rebuild_mm(other.rebuild_mm), ff_status(other.ff_status)
 {
@@ -1246,6 +1247,8 @@ void MolproFF::_pvt_copy(const FFBase &ffbase)
     qm_coords = other.qm_coords;
     mm_coords_and_charges = other.mm_coords_and_charges;
     qm_mols = other.qm_mols;
+    qm_coordgroup = other.qm_coordgroup;
+    mm_array_index = other.mm_array_index;
     mm_mols = other.mm_mols;
     qm_version = other.qm_version;
     zero_nrg = other.zero_nrg;

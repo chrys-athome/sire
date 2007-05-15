@@ -322,6 +322,8 @@ BOOST_PYTHON_MODULE(_Mol){
 
     bp::implicitly_convertible< SireMol::MolDataView, SireMol::PartialMolecule >();
 
+    bp::implicitly_convertible< SireMol::MolDataView, SireMol::Molecules >();
+
     register_WeightFunction_class();
 }
 

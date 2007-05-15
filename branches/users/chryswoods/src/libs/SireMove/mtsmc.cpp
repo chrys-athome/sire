@@ -44,11 +44,11 @@ static const RegisterMetaType<MTSMC> r_mtsmc;
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const MTSMC &mtsmc)
 {
     writeHeader(ds, r_mtsmc, 1);
-    
+
     SharedDataStream sds(ds);
     sds << mtsmc.fast_moves << mtsmc.nfast << mtsmc.fast_component
         << static_cast<const MonteCarlo&>(mtsmc);
-    
+
     return ds;
 }
 
@@ -56,22 +56,22 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const MTSMC &mtsmc)
 QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, MTSMC &mtsmc)
 {
     VersionID v = readHeader(ds, r_mtsmc);
-    
+
     if (v == 1)
     {
         SharedDataStream sds(ds);
-        
+
         sds >> mtsmc.fast_moves >> mtsmc.nfast >> mtsmc.fast_component
             >> static_cast<MonteCarlo&>(mtsmc);
     }
     else
         throw version_error(v, "1", r_mtsmc, CODELOC);
-    
+
     return ds;
 }
 
 /** Null constructor */
-MTSMC::MTSMC() 
+MTSMC::MTSMC()
       : MonteCarlo(),
         fast_component(SireFF::e_total()), nfast(0)
 {}
@@ -90,7 +90,7 @@ MTSMC::MTSMC(const Moves &moves, const Symbol &fastcomponent, quint32 nfastmoves
 
 /** Copy constructor */
 MTSMC::MTSMC(const MTSMC &other)
-      : MonteCarlo(other), 
+      : MonteCarlo(other),
         fast_moves(other.fast_moves), fast_component(other.fast_component),
         nfast(other.nfast)
 {}
@@ -109,7 +109,7 @@ MTSMC& MTSMC::operator=(const MTSMC &other)
         nfast = other.nfast;
         MonteCarlo::operator=(other);
     }
-    
+
     return *this;
 }
 
@@ -126,7 +126,7 @@ void MTSMC::setMoves(const Moves &moves, const Symbol &fastcomponent)
 {
     fast_moves = moves;
     fast_component = fastcomponent;
-    
+
     fast_moves.setEnergyComponent(fast_component);
 }
 
@@ -144,21 +144,21 @@ const Moves& MTSMC::moves() const
     return fast_moves;
 }
 
-/** Return the number of moves that will be performed on the 
+/** Return the number of moves that will be performed on the
     fast forcefield */
 quint32 MTSMC::numFastMoves() const
 {
     return nfast;
 }
 
-/** Return the energy component that represents the fast 
+/** Return the energy component that represents the fast
     component of the forcefield. */
 const Symbol& MTSMC::fastEnergyComponent() const
 {
     return fast_component;
 }
 
-/** Set the energy component that will be used for the 
+/** Set the energy component that will be used for the
     'fast' moves. */
 void MTSMC::setFastEnergyComponent(const Symbol &component)
 {
@@ -192,29 +192,38 @@ void MTSMC::move(SimSystem &system)
 
     //get the old energy on the slow forcefield
     double V_old = energy(system);   // This is the energy V
-    
+
     // V2 = V - V1
     double V2_old = V_old - system.energy(fast_component);
-    
+
     //checkpoint the system
     CheckPoint checkpoint = system.checkPoint();
     Moves old_moves = fast_moves;
-    
+
+    qDebug() << "Old energies ==" << V_old << V2_old;
+
     try
     {
         //perform the moves using the fast forcefield
         fast_moves.run(system, nfast);
-        
+
         //get the new energy after the moves
         double V_new = energy(system);
         double V2_new = V_new - system.energy(fast_component);
-    
+
+        qDebug() << "New energies ==" << V_new << V2_new;
+
         if (not this->test(V2_new, V2_old))
+        {
+            qDebug() << "FAIL!!!";
+
             //the move has been rejected - reset the state,
             //but don't restore the moves, as I don't want to
             //lose their statistics
             system.rollBack(checkpoint);
-            
+        }
+        else
+            qDebug() << "PASS!!!";
     }
     catch(...)
     {

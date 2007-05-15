@@ -31,6 +31,7 @@
 
 #include <QMap>
 #include <QString>
+#include <QDebug>
 
 #include "tostring.h"
 
@@ -449,7 +450,7 @@ FFExpression ForceFieldsBase::expression(const Symbol &symbol) const
 {
     #warning Still need to write total!
     throw SireError::incomplete_code( QObject::tr("TODO!"), CODELOC );
-        
+
     return FFExpression();
 }
 
@@ -556,16 +557,16 @@ bool ForceFieldsBase::setTotal(const FFExpression &expression)
         return false;
 }
 
-/** Set the expression used to calculate the total energy of 
+/** Set the expression used to calculate the total energy of
     the set of forcefields as the symbol 'component'
-    
+
     \throw SireFF::missing_component
 */
 bool ForceFieldsBase::setTotal(const Symbol &component)
 {
     if (component == total_nrg)
         return false;
-        
+
     #warning Need to allow total to equal component within a forcefield...!
     if ( component != e_total() and not ff_equations.contains(component.ID()) )
     {
@@ -575,7 +576,7 @@ bool ForceFieldsBase::setTotal(const Symbol &component)
                 .arg(component.toString()),
                     CODELOC );
     }
-    
+
     total_nrg = component;
     return true;
 }
@@ -586,12 +587,16 @@ bool ForceFieldsBase::contains(const Function &function) const
     return ff_equations.contains(function.ID());
 }
 
-/** Return whether or not this contains the component represented 
+/** Return whether or not this contains the component represented
     by the symbol 'component' */
 bool ForceFieldsBase::contains(const Symbol &component) const
 {
-    if (component == e_total())
+    if (component == e_total() or cached_energies.contains(component.ID())
+          or ff_equations.contains(component.ID())
+          or ff_params.values().contains(component.ID()))
+    {
         return true;
+    }
     else if (component.isA<Function>())
         return this->contains(component.asA<Function>());
     else
@@ -796,14 +801,39 @@ double ForceFieldsBase::energy(const Expression &expression)
 double ForceFieldsBase::energy(const Symbol &symbol)
 {
     if (symbol.ID() == e_total().ID())
+    {
         //return the total energy
         return energy();
+    }
+    else if (cached_energies.contains(symbol.ID()))
+    {
+        //look in the cache of calculated energies
+        return cached_energies.value(symbol.ID());
+    }
     else if (symbol.isA<Function>())
+    {
         return this->energy( symbol.asA<Function>() );
+    }
     else
     {
-        //is this a parameter?
-        return ff_params.value(symbol);
+        QHash<SymbolID,ExpressionInfo>::const_iterator it =
+                                            ff_equations.constFind(symbol.ID());
+
+        if ( it != ff_equations.constEnd() )
+        {
+            //this is one of the forcefield expressions in this system
+            BOOST_ASSERT( it->expression().function().ID() == symbol.ID() );
+
+            return this->energy(*it);
+        }
+
+        if (ff_params.values().contains(symbol.ID()))
+            //this is a parameter
+            return ff_params.value(symbol);
+
+        throw SireFF::missing_component( QObject::tr(
+            "Cannot find the energy component \"%1\" in any of the forcefields!")
+                .arg(symbol.toString()), CODELOC );
     }
 }
 
@@ -2654,8 +2684,8 @@ void ForceFieldsBase::changedAll() throw()
 }
 
 /** Assert that this set of forcefields contains an energy component
-    that is represented by the symbol 'symbol' 
-    
+    that is represented by the symbol 'symbol'
+
     \throw SireFF::missing_component
 */
 void ForceFieldsBase::assertContains(const Symbol &component) const

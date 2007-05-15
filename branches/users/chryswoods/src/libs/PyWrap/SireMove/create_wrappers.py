@@ -33,7 +33,11 @@ extra_includes = [ "SireMol/molecule.h",
 def fixPrefSampler(c):
     c.class_("MolProb").exclude()
 
-special_code = { "PrefSampler" : fixPrefSampler }
+def fix_noncopyable(c):
+    c.noncopyable = False
+
+special_code = { "PrefSampler" : fixPrefSampler,
+                 "MTSMC" : fix_noncopyable }
 
 implicitly_convertible = [ ("const SireMove::SamplerBase&",
                             "SireMove::Sampler") 

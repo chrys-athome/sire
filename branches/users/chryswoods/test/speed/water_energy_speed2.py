@@ -21,8 +21,8 @@ print "... took %d ms" % ms
 #specify the space in which the molecules are placed
 space = Cartesian()
 
-#space = PeriodicBox(Vector(-18.3854,-18.66855,-18.4445), \
-#                    Vector( 18.3854, 18.66855, 18.4445))
+space = PeriodicBox(Vector(-18.3854,-18.66855,-18.4445), \
+                    Vector( 18.3854, 18.66855, 18.4445))
 
 #specify the type of switching function to use
 switchfunc = HarmonicSwitchingFunction(80.0)
@@ -35,14 +35,14 @@ cljff = InterCLJFF( Space(space),
 #parametise each molecule and add it to the forcefield
 print "Parametising the molecules..."
 
-chgs = AtomicCharges( [0.0, 0.52 * mod_electrons,
-                            0.52 * mod_electrons,
-                           -1.04 * mod_electrons] )
+chgs = AtomicCharges( [0.0, 0.52 * mod_electron,
+                            0.52 * mod_electron,
+                           -1.04 * mod_electron] )
 
-ljs = AtomicLJs( [ LJParameter( 3.15365 * angstrom, \
-                                0.1550 * kcal_per_mol ), \
-                   LJParameter.dummy(), \
-                   LJParameter.dummy(), \
+ljs = AtomicLJs( [ LJParameter( 3.15365 * angstrom, 
+                                0.1550 * kcal_per_mol ), 
+                   LJParameter.dummy(), 
+                   LJParameter.dummy(),
                    LJParameter.dummy() ] )
 
 tip4p = False

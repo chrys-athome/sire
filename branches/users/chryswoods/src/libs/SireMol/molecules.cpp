@@ -83,7 +83,7 @@ Molecules::Molecules(const PartialMolecule &molecule)
 /** Construct a container that holds only 'molecule' */
 Molecules::Molecules(const MolDataView &molecule)
 {
-    PartialMolecule mol;
+    PartialMolecule mol(molecule);
 
     if (not mol.selectedAtoms().isEmpty())
         mols.insert(mol.ID(), mol);
