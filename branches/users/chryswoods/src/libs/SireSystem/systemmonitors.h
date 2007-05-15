@@ -68,6 +68,15 @@ public:
     SystemMonitors& operator=(const SystemMonitors &other);
 
     void update(QuerySystem &system);
+
+private:
+    /** All of the system monitors, indexed by the symbol
+        used to represent them */
+    QHash<Symbol, SystemMonitor> montrs;
+
+    /** All of the symbols that must be updated every
+        n steps (n is the key) */
+    QHash< quint32, QSet<Symbol> > deltas;
 };
 
 }
