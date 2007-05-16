@@ -43,6 +43,8 @@ if (MOLPRO_FOUND)
                ${MOLPRO_CLIENT_LIBRARIES}
        )
 
+   add_definitions( ${MOLPRO_DEFINITIONS} )
+
 endif (MOLPRO_FOUND)
 
 

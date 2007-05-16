@@ -26,63 +26,39 @@
   *
 \*********************************************/
 
-#ifndef SIRESYSTEM_MONITORS_H
-#define SIRESYSTEM_MONITORS_H
+#ifndef SIRETEST_TESTSKELETON_H
+#define SIRETEST_TESTSKELETON_H
 
-#include "sireglobal.h"
+#ifdef _BUILD_MOLPRO_
+
+#include "testbase.h"
 
 SIRE_BEGIN_HEADER
 
-namespace SireSystem
-{
-class SystemMonitors;
-}
-
-QDataStream& operator<<(QDataStream&, const SireSystem::SystemMonitors&);
-QDataStream& operator>>(QDataStream&, SireSystem::SystemMonitors&);
-
-namespace SireSystem
+namespace SireTest
 {
 
-class QuerySystem;
+/**
+Use this file as a template for all unit tests...
 
-/** This class will eventually be the container for the variety
-    of monitors that will monitor properties of a running simulation
-    system
-
-    @author Christopher Woods
+@author Christopher Woods
 */
-class SIRESYSTEM_EXPORT SystemMonitors
+class SIREUNITTEST_EXPORT TestMolproFF : public TestBase
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const SystemMonitors&);
-friend QDataStream& ::operator>>(QDataStream&, SystemMonitors&);
-
 public:
-    SystemMonitors();
+    TestMolproFF();
+    ~TestMolproFF();
 
-    SystemMonitors(const SystemMonitors &other);
+    virtual void initialise(test_suite *test);
 
-    ~SystemMonitors();
-
-    SystemMonitors& operator=(const SystemMonitors &other);
-
-    void update(QuerySystem &system);
-
-private:
-    /** All of the system monitors, indexed by the symbol
-        used to represent them */
-    //QHash<Symbol, SystemMonitor> montrs;
-
-    /** All of the symbols that must be updated every
-        n steps (n is the key) */
-    //QHash< quint32, QSet<Symbol> > deltas;
+    static void runTests();
 };
 
 }
 
-Q_DECLARE_METATYPE(SireSystem::SystemMonitors);
-
 SIRE_END_HEADER
 
+#endif // end of '#ifdef _BUILD_MOLPRO_'
+
 #endif
+

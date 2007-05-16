@@ -29,6 +29,8 @@
 #ifndef SQUIRE_MOLPROSESSION_H
 #define SQUIRE_MOLPROSESSION_H
 
+#ifdef _BUILD_MOLPRO_
+
 #include <MolproClient/molproclient.h>
 
 #include <QMutex>
@@ -133,5 +135,7 @@ private:
 }
 
 SIRE_END_HEADER
+
+#endif // end of '#ifdef _BUILD_MOLPRO_'
 
 #endif

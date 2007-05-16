@@ -115,6 +115,12 @@ public:
 
     virtual SpaceBase* clone() const=0;
 
+    /** Calculate the distance between two points */
+    virtual double calcDist(const Vector &point0, const Vector &point1) const=0;
+
+    /** Calculate the distance squared between two points */
+    virtual double calcDist2(const Vector &point0, const Vector &point1) const=0;
+
     /** Populate the matrix 'mat' with the distances between all of the
         points within a CoordGroup. This creates a symmetrical matrix,
         with a 0 diagonal. This returns the shortest distance between
@@ -264,6 +270,9 @@ public:
         return d->asA<T>();
     }
 
+    double calcDist(const Vector &point0, const Vector &point1) const;
+    double calcDist2(const Vector &point0, const Vector &point1) const;
+
     double calcDist(const CoordGroup &group, DistMatrix &distmat) const;
     double calcDist2(const CoordGroup &group, DistMatrix &distmat) const;
     double calcInvDist(const CoordGroup &group, DistMatrix &distmat) const;
@@ -308,6 +317,18 @@ private:
         that is used to perform the distance calculations. */
     SireBase::SharedPolyPointer<SpaceBase> d;
 };
+
+/** Calculate the distance between two points */
+inline double Space::calcDist(const Vector &point0, const Vector &point1) const
+{
+    return d->calcDist(point0, point1);
+}
+
+/** Calculate the distance squared between two points */
+inline double Space::calcDist2(const Vector &point0, const Vector &point1) const
+{
+    return d->calcDist2(point0, point1);
+}
 
 /** Populate the matrix 'mat' with the distances between all of the
     points within a CoordGroup. This creates a symmetrical matrix,

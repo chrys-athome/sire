@@ -56,6 +56,11 @@ namespace SireMol
 class MoleculeGroup;
 }
 
+namespace SireVol
+{
+class Space;
+}
+
 namespace SireMove
 {
 
@@ -70,6 +75,8 @@ using SireBase::Version;
 
 using SireMaths::Vector;
 using SireMaths::RanGenerator;
+
+using SireVol::Space;
 
 /** This class is used to pick molecules at random
     from a MoleculeGroup, with the molecules closest
@@ -150,12 +157,15 @@ public:
 protected:
     bool _pvt_isEqual(const PropertyBase &other) const;
 
-    float calculateProbability(const PartialMolecule &molecule) const;
+    float calculateProbability(const PartialMolecule &molecule,
+                               const Space &space) const;
 
     void completeUpdate(const PartialMolecule &new_center,
-                        const MoleculeGroup &group);
+                        const MoleculeGroup &group,
+                        const Space &space);
 
-    void partialUpdate(const MoleculeGroup &group);
+    void partialUpdate(const MoleculeGroup &group,
+                       const Space &space);
 
 private:
     void updateFrom(const QuerySystem &system);

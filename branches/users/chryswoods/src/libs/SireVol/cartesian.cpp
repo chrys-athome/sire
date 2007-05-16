@@ -87,6 +87,18 @@ bool Cartesian::_pvt_isEqual(const PropertyBase &other) const
     return true;
 }
 
+/** Calculate the distance between two points */
+double Cartesian::calcDist(const Vector &point0, const Vector &point1) const
+{
+    return Vector::distance(point0, point1);
+}
+
+/** Calculate the distance squared between two points */
+double Cartesian::calcDist2(const Vector &point0, const Vector &point1) const
+{
+    return Vector::distance2(point0, point1);
+}
+
 /** Populate the matrix 'mat' with the distances between all points in
     the group 'group'. Return the shortest distance between points. */
 double Cartesian::calcDist(const CoordGroup &group, DistMatrix &mat) const

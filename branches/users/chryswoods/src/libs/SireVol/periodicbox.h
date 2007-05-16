@@ -89,6 +89,9 @@ public:
         return PeriodicBox::typeName();
     }
 
+    double calcDist(const Vector &point0, const Vector &point1) const;
+    double calcDist2(const Vector &point0, const Vector &point1) const;
+
     double calcDist(const CoordGroup &group1, const CoordGroup &group2,
                     DistMatrix &distmat) const;
 

@@ -11,6 +11,7 @@ from Sire.Units import *
 from Sire.System import *
 from Sire.Move import *
 from Sire.Squire import *
+from Sire.Base import *
 
 import sys
 
@@ -41,7 +42,7 @@ mmff.setName("MMFF")
 
 #create a forcefield to calculate the QM solute-solvent energy
 qmff = MolproFF(space, switchfunc)
-qmff.setMolproExe("../../../../../software/molpro/devel/molpro")
+qmff.setMolproExe( findExe("molpro") )
 qmff.setName("QMFF")
 
 #parametise each molecule and add it to the forcefields
@@ -129,8 +130,8 @@ ffields.add(e_slow)
 ffields.add(e_total)
 ffields.add(de_by_dlam)
 
-# start at lambda = 0.5
-ffields.setParameter(lam, 0.5)
+# start at lambda = 0.0
+ffields.setParameter(lam, 0.0)
 
 # let's see what the initial values of these functions are...
 print "e_fast == %f kcal mol-1" % ffields.energy(e_fast)
@@ -143,9 +144,13 @@ print "de_by_dlam == %f kcal mol-1" % ffields.energy(de_by_dlam)
 solvent_group = MoleculeGroup("solvent", solvent)
 solute_group = MoleculeGroup("solute", tip4p)
 
+all_mols = MoleculeGroup("all", solvent)
+all_mols.add(tip4p)
+
 groups = MoleculeGroups()
 groups.add(solvent_group)
 groups.add(solute_group)
+groups.add(all_mols)
 
 # create a system that can be used to simulate these groups
 # using the forcefields that we have constructed
@@ -156,18 +161,18 @@ system.setSpace(space)
 
 # create a rigid body MC move that moves random solvent
 # molecules, with the solvent molecules picked uniformly
-mc = RigidBodyMC( UniformSampler(solvent_group) )
+mc = RigidBodyMC( PrefSampler(tip4p, 200.0, all_mols) )
 
-# Create a multiple-time-step MC move that performs 10
+# Create a multiple-time-step MC move that performs 500
 # rigid body moves of the solvent using e_fast, then accepts
 # or rejects the whole block of moves using e_total
-mtsmc = MTSMC(mc, e_fast.function(), 100)
+mtsmc = MTSMC(mc, e_fast.function(), 500)
 
 mtsmc.setEnergyComponent(e_total.function())
 
 PDB().write(system.info().groups().molecules(), "test000.pdb")
 
-nmoves = 5
+nmoves = 10
 timer.start()
 
 moves = system.run(mtsmc,nmoves)
@@ -175,5 +180,29 @@ moves = system.run(mtsmc,nmoves)
 ms = timer.elapsed()
 
 print "%d moves took %d ms" % (nmoves, ms)
+
+mtsmc = moves.moves()[0].clone()
+
+print "%d accepted, %d rejected, ratio == %f %%" % \
+           (mtsmc.nAccepted(), mtsmc.nRejected(), mtsmc.acceptanceRatio())
+
+# check that the QM and MM energies have been conserved...
+new_molpro = MolproFF(space, switchfunc)
+new_molpro.setMolproExe( qmff.molproExe() )
+new_molpro.setEnergyOrigin( qmff.energyOrigin() )
+
+system_qmff = system.forceFields().forceField(qmff.ID())
+
+new_molpro.addToQM( system_qmff.molecules(qmff.groups().qm()) )
+new_molpro.addToMM( system_qmff.molecules(qmff.groups().mm()), 
+                    {new_molpro.parameters().coulomb() : "charges"} )
+
+print "QM energy = %f, new molproff = %f" % \
+            ( system.forceFields().forceField(qmff.ID()).energy(),
+              new_molpro.energy() )
+
+qmff.change(system.forceFields().molecules())
+
+print "qmff == %f" % qmff.energy()
 
 PDB().write(system.info().groups().molecules(), "test001.pdb")

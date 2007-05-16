@@ -28,8 +28,16 @@ void register_PeriodicBox_class(){
             , ( bp::arg("dist"), bp::arg("group0"), bp::arg("group1") ) )    
         .def( 
             "calcDist"
+            , (double ( ::SireVol::PeriodicBox::* )( ::SireMaths::Vector const &,::SireMaths::Vector const & ) const)( &::SireVol::PeriodicBox::calcDist )
+            , ( bp::arg("point0"), bp::arg("point1") ) )    
+        .def( 
+            "calcDist"
             , (double ( ::SireVol::PeriodicBox::* )( ::SireVol::CoordGroup const &,::SireVol::CoordGroup const &,::SireVol::DistMatrix & ) const)( &::SireVol::PeriodicBox::calcDist )
             , ( bp::arg("group1"), bp::arg("group2"), bp::arg("distmat") ) )    
+        .def( 
+            "calcDist2"
+            , (double ( ::SireVol::PeriodicBox::* )( ::SireMaths::Vector const &,::SireMaths::Vector const & ) const)( &::SireVol::PeriodicBox::calcDist2 )
+            , ( bp::arg("point0"), bp::arg("point1") ) )    
         .def( 
             "calcDist2"
             , (double ( ::SireVol::PeriodicBox::* )( ::SireVol::CoordGroup const &,::SireVol::CoordGroup const &,::SireVol::DistMatrix & ) const)( &::SireVol::PeriodicBox::calcDist2 )

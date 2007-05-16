@@ -3,7 +3,7 @@
     <file alias="opls96.ff">../../../test/ff/opls96.ff</file>
     <file alias="opls96-residues.ff">../../../test/ff/opls96-residues.ff</file>
     <file alias="solvents.ff">../../../test/ff/solvents.ff</file>
-    <file alias="tip4p.pdb">../../../test/geometry/tip4p.pdb</file>
+    <file alias="tip4p.pdb">../../../test/io/tip4p.pdb</file>
     <file alias="p38.pdb">../../../test/io/p38.pdb</file>
     <file alias="water.pdb">../../../test/io/water.pdb</file>
 </qresource>

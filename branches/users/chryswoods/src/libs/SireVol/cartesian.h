@@ -76,6 +76,9 @@ public:
         return new Cartesian(*this);
     }
 
+    double calcDist(const Vector &point0, const Vector &point1) const;
+    double calcDist2(const Vector &point0, const Vector &point1) const;
+
     double calcDist(const CoordGroup &group, DistMatrix &mat) const;
     double calcDist2(const CoordGroup &group, DistMatrix &mat) const;
     double calcInvDist(const CoordGroup &group, DistMatrix &mat) const;

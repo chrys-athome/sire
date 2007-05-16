@@ -25,6 +25,10 @@
 
 #include "Version.pypp.hpp"
 
+#include "_Base_free_functions.pypp.hpp"
+
+#include "_Base_global_variables.pypp.hpp"
+
 #include "sirebase_containers.h"
 
 namespace bp = boost::python;
@@ -50,10 +54,14 @@ BOOST_PYTHON_MODULE(_Base){
 
     register_VariantProperty_class();
 
+    register_Version_class();
+
     bp::implicitly_convertible< SireBase::PropertyBase, SireBase::Property >();
 
     bp::implicitly_convertible< QVariant, SireBase::VariantProperty >();
 
-    register_Version_class();
+    register_global_variables();
+
+    register_free_functions();
 }
 

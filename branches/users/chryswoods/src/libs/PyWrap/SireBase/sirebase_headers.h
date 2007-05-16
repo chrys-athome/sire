@@ -1,6 +1,7 @@
 #ifndef PYPLUSPLUS_SIREBASE_HEADERS_H
 #define PYPLUSPLUS_SIREBASE_HEADERS_H
 
+#include "SireBase/findexe.h"
 #include "SireBase/idmajminversion.h"
 #include "SireBase/idpair.h"
 #include "SireBase/idtriple.h"

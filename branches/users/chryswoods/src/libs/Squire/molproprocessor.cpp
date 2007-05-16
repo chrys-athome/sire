@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#ifdef _BUILD_MOLPRO_
+
 #include "molproprocessor.h"
 #include "molprocalculator.h"
 
@@ -127,3 +129,5 @@ const MolproProcessorPvt& MolproProcessor::data() const
 {
     return dynamic_cast<const MolproProcessorPvt&>( FFThreadProcessor::data() );
 }
+
+#endif // end of '#ifdef _BUILD_MOLPRO_'

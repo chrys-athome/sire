@@ -29,6 +29,8 @@
 #ifndef SQUIRE_MOLPROPROCESSOR_H
 #define SQUIRE_MOLPROPROCESSOR_H
 
+#ifdef _BUILD_MOLPRO_
+
 #include "SireFF/ffthreadprocessor.h"
 
 #include <QDir>
@@ -97,5 +99,7 @@ protected:
 }
 
 SIRE_END_HEADER
+
+#endif // end of '#ifdef _BUILD_MOLPRO_'
 
 #endif

@@ -26,9 +26,12 @@
   *
 \*********************************************/
 
+#ifdef _BUILD_MOLPRO_
+
 #include <QUuid>
 #include <QRegExp>
 #include <QHostInfo>
+#include <QStringList>
 
 #include "molproff.h"
 #include "molprosession.h"
@@ -65,10 +68,12 @@ MolproSession::MolproSession(MolproFF &molproff)
                 qm_version( molproff.qmVersion() )
 {
     if (not molpro_exe.isExecutable())
+    {
         throw SireError::process_error( QObject::tr(
             "Cannot start a separate Molpro process as the molpro file \"%1\" "
             "is not executable, or does not exist!")
                 .arg(molpro_exe.absoluteFilePath()), CODELOC );
+    }
 
     //only one molpro job may start at a time!
     QMutexLocker lkr(&starter_mutex);
@@ -513,3 +518,5 @@ double MolproSession::calculateEnergy(const QString &qcmds)
     //return the energy
     return nrg;
 }
+
+#endif // end of '#ifdef _BUILD_MOLPRO_'

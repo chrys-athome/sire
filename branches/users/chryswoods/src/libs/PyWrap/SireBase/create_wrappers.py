@@ -17,7 +17,7 @@ wrap_classes = [ "IDMajMinVersion",
                  "MD5Sum",
                  "PropertyBase",
                  "Property",
-		 "VariantProperty",
+                 "VariantProperty",
                  "Version"
                ]
 
@@ -72,6 +72,16 @@ mb.calldefs().create_with_signature = True
 for classname in wrap_classes:
    #tell the program to write wrappers for this class
    export_class(mb, classname, aliases, special_code)
+
+#export the free functions and free variables
+def export_free(things):
+   for thing in things:
+       if thing.parent.name == namespace:
+           thing.include()
+           
+export_free( mb.free_functions() )
+mb.free_operators().include()
+export_free( mb.variables() )
 
 register_implicit_conversions(mb, implicitly_convertible)
 

@@ -26,62 +26,25 @@
   *
 \*********************************************/
 
-#ifndef SIRESYSTEM_MONITORS_H
-#define SIRESYSTEM_MONITORS_H
+#ifndef SIREBASE_FINDEXE_H
+#define SIREBASE_FINDEXE_H
 
 #include "sireglobal.h"
 
+#include <QFileInfo>
+#include <QString>
+
 SIRE_BEGIN_HEADER
 
-namespace SireSystem
-{
-class SystemMonitors;
-}
-
-QDataStream& operator<<(QDataStream&, const SireSystem::SystemMonitors&);
-QDataStream& operator>>(QDataStream&, SireSystem::SystemMonitors&);
-
-namespace SireSystem
+namespace SireBase
 {
 
-class QuerySystem;
-
-/** This class will eventually be the container for the variety
-    of monitors that will monitor properties of a running simulation
-    system
-
-    @author Christopher Woods
-*/
-class SIRESYSTEM_EXPORT SystemMonitors
-{
-
-friend QDataStream& ::operator<<(QDataStream&, const SystemMonitors&);
-friend QDataStream& ::operator>>(QDataStream&, SystemMonitors&);
-
-public:
-    SystemMonitors();
-
-    SystemMonitors(const SystemMonitors &other);
-
-    ~SystemMonitors();
-
-    SystemMonitors& operator=(const SystemMonitors &other);
-
-    void update(QuerySystem &system);
-
-private:
-    /** All of the system monitors, indexed by the symbol
-        used to represent them */
-    //QHash<Symbol, SystemMonitor> montrs;
-
-    /** All of the symbols that must be updated every
-        n steps (n is the key) */
-    //QHash< quint32, QSet<Symbol> > deltas;
-};
+/** Return the fileinfo for the executable called 'exe'. This
+    searches the system path until it finds the first occurance
+    of this executable. */
+QFileInfo findExe(const QString &exe);
 
 }
-
-Q_DECLARE_METATYPE(SireSystem::SystemMonitors);
 
 SIRE_END_HEADER
 

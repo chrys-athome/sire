@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#ifdef _BUILD_MOLPRO_
+
 #include "molprocalculator.h"
 #include "molprosession.h"
 
@@ -99,7 +101,7 @@ bool MolproCalculator::setForceField(const ForceField &forcefield)
                 .arg(forcefield.what()), CODELOC );
 
     ffield = forcefield;
-    
+
     if (ffield.isDirty())
         return true;
     else
@@ -116,3 +118,5 @@ ForceField MolproCalculator::forceField()
 {
     return ffield;
 }
+
+#endif // end of '#ifdef _BUILD_MOLPRO_'

@@ -754,8 +754,8 @@ void InterGroupCLJFF::recordChange(int group_idx, MoleculeID molid,
             //we have changed back to the old state
             changed_mols[group_idx][*it] = ChangedCLJMolecule();
             molid_to_changedindex[group_idx].remove(molid);
-            
-            if (molid_to_changedindex[0].isEmpty() and  
+
+            if (molid_to_changedindex[0].isEmpty() and
                 molid_to_changedindex[1].isEmpty())
             {
                 //no molecules have now changed - the forcefield is clean again
@@ -826,7 +826,7 @@ bool InterGroupCLJFF::change(const PartialMolecule &molecule)
 
     ChangedCLJMolecule old_molecule = this->changeRecord(molid);
     ChangedCLJMolecule new_molecule = old_molecule.change(molecule);
-    
+
     if (new_molecule.nothingChanged() and old_molecule.nothingChanged())
     {
         //there is no change at all!
@@ -1201,19 +1201,24 @@ PartialMolecule InterGroupCLJFF::molecule(MoleculeID molid) const
 PartialMolecule InterGroupCLJFF::molecule(MoleculeID molid,
                                           const FFBase::Group &group) const
 {
-    int idx = groupIndex(group);
+    if (group == this->groups().main())
+        return this->molecule(molid);
+    else
+    {
+        int idx = groupIndex(group);
 
-    QHash<MoleculeID,uint>::const_iterator it = molid_to_index[idx].find(molid);
+        QHash<MoleculeID,uint>::const_iterator it = molid_to_index[idx].find(molid);
 
-    if (it == molid_to_index[idx].end())
-        throw SireMol::missing_molecule( QObject::tr(
-            "There is no molecule with ID == %1 in the forcefield "
-            "\"%2\" (%3 : %4).")
-                .arg(molid).arg(this->name())
-                .arg(this->ID()).arg(this->version().toString()),
-                    CODELOC );
+        if (it == molid_to_index[idx].end())
+            throw SireMol::missing_molecule( QObject::tr(
+                "There is no molecule with ID == %1 in the forcefield "
+                "\"%2\" (%3 : %4).")
+                    .arg(molid).arg(this->name())
+                    .arg(this->ID()).arg(this->version().toString()),
+                        CODELOC );
 
-    return mols[idx].constData()[*it].molecule();
+        return mols[idx].constData()[*it].molecule();
+    }
 }
 
 /** Return all of the molecules in this forcefield */

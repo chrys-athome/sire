@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#ifdef _BUILD_MOLPRO_
+
 #include "molproff.h"
 #include "molproprocessor.h"
 #include "molprosession.h"
@@ -974,8 +976,9 @@ int MolproFF::MMMolecule::update(QVector<double> &mm_coords_and_charges,
     if (new_i > mm_coords_and_charges.count())
     {
         throw SireError::program_bug( QObject::tr(
-            "There is insufficient space for this MM molecule in the "
-            "mm_coords_and_charges array! (Have %1 but need %2) (%3, %4)")
+            "There is insufficient space for this MM molecule (%1) in the "
+            "mm_coords_and_charges array! (Have %2 but need %3) (%4, %5)")
+                  .arg(mol.ID())
                   .arg(mm_coords_and_charges.count())
                   .arg(new_i)
                   .arg(i).arg(nats), CODELOC );
@@ -2492,7 +2495,8 @@ void MolproFF::updateMMArray()
 
     int n_additional_atoms = 0;
 
-    foreach (MoleculeID molid, rebuild_mm)
+    QSet<MoleculeID> it_rebuild_mm = rebuild_mm;
+    foreach (MoleculeID molid, it_rebuild_mm)
     {
         QHash<MoleculeID,MMMolecule>::iterator it = mm_mols.find(molid);
 
@@ -2509,9 +2513,15 @@ void MolproFF::updateMMArray()
             if (new_natms != old_natms)
             {
                 recopy_all = true;
-                n_additional_atoms = new_natms - old_natms;
+                n_additional_atoms += new_natms - old_natms;
             }
-            else if (new_natms != 0)
+            else if (new_natms == 0)
+            {
+                //the molecule was not in the array before, and it is
+                //not in the array now
+                rebuild_mm.remove(molid);
+            }
+            else
             {
                 //there were some atoms in the array before, and still some
                 //atoms - this means that moving this molecule has changed
@@ -2589,8 +2599,8 @@ void MolproFF::updateMMArray()
         //only individual molecules in the array have changed
         foreach (MoleculeID molid, rebuild_mm)
         {
-            BOOST_ASSERT( mm_array_index.contains(molid) );
             BOOST_ASSERT( mm_mols.contains(molid) );
+            BOOST_ASSERT( mm_array_index.contains(molid) );
 
             int i = mm_array_index.value(molid);
             mm_mols.constFind(molid)->update(mm_coords_and_charges, i);
@@ -2635,7 +2645,7 @@ void MolproFF::updateArrays()
 /** Return the string of commands used to calculate the energy */
 QString MolproFF::energyCmdString() const
 {
-    return "HF";
+    return "HF\nMP2";
 }
 
 /** Return Molpro format strings used to specify the QM geometry */
@@ -3082,3 +3092,5 @@ Molecules MolproFF::contents(const FFBase::Group &group) const
         return Molecules();
     }
 }
+
+#endif // end of '#ifdef _BUILD_MOLPRO_'

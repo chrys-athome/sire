@@ -33,6 +33,22 @@ set ( SIREUNITTEST_SOURCES
       runall.cpp
     )
 
+# Are we testing the molpro forcefield?
+if (MOLPRO_FOUND)
+
+    set ( SIREUNITTEST_SOURCES
+          ${SIREUNITTEST_SOURCES}
+          testmolproff.cpp
+        )
+
+    set ( OPTIONAL_LIBRARIES
+          ${OPTIONAL_LIBRARIES}
+          Squire )
+
+    add_definitions( ${MOLPRO_DEFINITIONS} )
+
+endif (MOLPRO_FOUND)        
+
 # Add the resource files
 set ( SIREUNITTEST_RCCS
       resources.qrc
@@ -60,6 +76,7 @@ target_link_libraries (SireUnitTest
                        SireCAS
                        SireBase
                        SireUnits
+                       ${OPTIONAL_LIBRARIES}
                        ${BOOST_UNITTEST_LIBRARY}
                        )
 

@@ -129,6 +129,22 @@ void PeriodicBox::setDimension(const Vector &min, const Vector &max)
     }
 }
 
+/** Calculate the distance between two points */
+double PeriodicBox::calcDist(const Vector &point0, const Vector &point1) const
+{
+    //do we need to wrap the coordinates?
+    Vector wrapdelta = this->wrapDelta(point0, point1);
+    return Vector::distance( point0 + wrapdelta, point1 );
+}
+
+/** Calculate the distance squared between two points */
+double PeriodicBox::calcDist2(const Vector &point0, const Vector &point1) const
+{
+    //do we need to wrap the coordinates?
+    Vector wrapdelta = this->wrapDelta(point0, point1);
+    return Vector::distance2( point0 + wrapdelta, point1 );
+}
+
 /** Populate the matrix 'mat' with the distances between all of the
     atoms of the two CoordGroups. Return the shortest distance^2 between the two
     CoordGroups. */
@@ -154,7 +170,7 @@ double PeriodicBox::calcDist(const CoordGroup &group0, const CoordGroup &group1,
     for (int i=0; i<n0; ++i)
     {
         //add the delta to the coordinates of atom0
-        const Vector &point0 = array0[i] + wrapdelta;
+        Vector point0 = array0[i] + wrapdelta;
         mat.setOuterIndex(i);
 
         for (int j=0; j<n1; ++j)

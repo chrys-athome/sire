@@ -27,12 +27,20 @@ void register_Cartesian_class(){
             , ( bp::arg("dist"), bp::arg("group0"), bp::arg("group1") ) )    
         .def( 
             "calcDist"
+            , (double ( ::SireVol::Cartesian::* )( ::SireMaths::Vector const &,::SireMaths::Vector const & ) const)( &::SireVol::Cartesian::calcDist )
+            , ( bp::arg("point0"), bp::arg("point1") ) )    
+        .def( 
+            "calcDist"
             , (double ( ::SireVol::Cartesian::* )( ::SireVol::CoordGroup const &,::SireVol::DistMatrix & ) const)( &::SireVol::Cartesian::calcDist )
             , ( bp::arg("group"), bp::arg("mat") ) )    
         .def( 
             "calcDist"
             , (double ( ::SireVol::Cartesian::* )( ::SireVol::CoordGroup const &,::SireVol::CoordGroup const &,::SireVol::DistMatrix & ) const)( &::SireVol::Cartesian::calcDist )
             , ( bp::arg("group1"), bp::arg("group2"), bp::arg("mat") ) )    
+        .def( 
+            "calcDist2"
+            , (double ( ::SireVol::Cartesian::* )( ::SireMaths::Vector const &,::SireMaths::Vector const & ) const)( &::SireVol::Cartesian::calcDist2 )
+            , ( bp::arg("point0"), bp::arg("point1") ) )    
         .def( 
             "calcDist2"
             , (double ( ::SireVol::Cartesian::* )( ::SireVol::CoordGroup const &,::SireVol::DistMatrix & ) const)( &::SireVol::Cartesian::calcDist2 )

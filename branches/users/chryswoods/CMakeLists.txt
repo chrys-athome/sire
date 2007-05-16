@@ -88,6 +88,8 @@ if (SIRE_BUILD_MOLPRO)
           )
                              
       set ( MOLPRO_FOUND "ON" )
+
+      set ( MOLPRO_DEFINITIONS "-D_BUILD_MOLPRO_" )
  
       message ( STATUS "MolproClient paths ${MOLPRO_CLIENT_LIBRARIES} | "
                        "${MOLPRO_CLIENT_INCLUDE_DIR}" )

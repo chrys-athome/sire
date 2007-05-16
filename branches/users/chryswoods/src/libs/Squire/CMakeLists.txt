@@ -37,6 +37,8 @@ if (MOLPRO_FOUND)
                ${SQUIRE_LIBRARIES}
                ${MOLPRO_CLIENT_LIBRARIES}
       )
+
+  add_definitions( ${MOLPRO_DEFINITIONS} )
  
 endif (MOLPRO_FOUND)
 

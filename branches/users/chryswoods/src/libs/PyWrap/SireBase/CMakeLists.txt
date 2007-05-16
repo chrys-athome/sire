@@ -33,6 +33,9 @@ set ( WRAPBASE_SOURCES
       Property.pypp.cpp
       VariantProperty.pypp.cpp
       Version.pypp.cpp
+      
+      _Base_free_functions.pypp.cpp
+      _Base_global_variables.pypp.cpp
     )
 
 # Create the library that holds all of the class wrappers

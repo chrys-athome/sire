@@ -29,6 +29,8 @@
 #ifndef SQUIRE_MOLPROCALCULATOR_H
 #define SQUIRE_MOLPROCALCULATOR_H
 
+#ifdef _BUILD_MOLPRO_
+
 #include <QFileInfo>
 #include <QDir>
 
@@ -56,7 +58,7 @@ using SireFF::ForceField;
     MolproFF : The forcefield that uses Molpro to evaluate the QM/MM energy.
                Can evaluate the Molpro energy using a one-shot Molpro process
 
-    MolproCalculator : Calculator that can be used to allow MolproFF to 
+    MolproCalculator : Calculator that can be used to allow MolproFF to
                        evaluate the energy using a single Molpro process
 
     MolproProcessor : Processor that can run MolproFF derived forcefields
@@ -106,5 +108,7 @@ private:
 }
 
 SIRE_END_HEADER
+
+#endif // end of '#ifdef _BUILD_MOLPRO_'
 
 #endif

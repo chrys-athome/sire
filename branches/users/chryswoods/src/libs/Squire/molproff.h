@@ -29,6 +29,8 @@
 #ifndef SQUIRE_MOLPROFF_H
 #define SQUIRE_MOLPROFF_H
 
+#ifdef _BUILD_MOLPRO_
+
 #include <QVector>
 #include <QDir>
 #include <QFlags>
@@ -644,5 +646,7 @@ inline const QVector<double>& MolproFF::qmCoordsArray() const
 Q_DECLARE_METATYPE(Squire::MolproFF);
 
 SIRE_END_HEADER
+
+#endif // end of '#ifdef _BUILD_MOLPRO_'
 
 #endif

@@ -36,6 +36,8 @@
 #include "SireSystem/querysystem.h"
 #include "SireSystem/systemdata.h"
 
+#include "SireVol/space.h"
+
 #include "SireMol/errors.h"
 #include "SireError/errors.h"
 
@@ -46,6 +48,7 @@ using namespace SireMove;
 using namespace SireSystem;
 using namespace SireMol;
 using namespace SireMaths;
+using namespace SireVol;
 using namespace SireStream;
 
 static const RegisterMetaType<PrefSampler> r_prefsampler;
@@ -180,22 +183,24 @@ PrefSampler& PrefSampler::operator=(const PrefSampler &other)
 
 /** Calculate the (unnormalised) probability of choosing the molecule
     'molecule' */
-float PrefSampler::calculateProbability(const PartialMolecule &molecule) const
+float PrefSampler::calculateProbability(const PartialMolecule &molecule,
+                                        const Space &space) const
 {
     // p = 1 / (dist^2 + k)
-    return 1.0 / (Vector::distance2(center_point,
-                                    molecule.extract().geometricCenter())
+    return 1.0 / (space.calcDist2(center_point,
+                                  molecule.extract().geometricCenter())
                   + kval);
 }
 
 /** Perform a complete update of all of the statistics */
 void PrefSampler::completeUpdate(const PartialMolecule &new_center,
-                                 const MoleculeGroup &group)
+                                 const MoleculeGroup &group,
+                                 const Space &space)
 {
     center_mol = new_center;
     center_point = center_mol.extract().geometricCenter();
 
-    if (group.version().major() != molgroup.version().major())
+    if (group.count() != molprobs.count())
     {
         //we need to recreate the array of molecule information
         //for the surrounding molecules
@@ -204,8 +209,6 @@ void PrefSampler::completeUpdate(const PartialMolecule &new_center,
 
     sum_of_probs = 0;
     max_prob = 0;
-
-    BOOST_ASSERT( molprobs.count() == group.count() );
 
     MolProb *molprobs_array = molprobs.data();
     int i=0;
@@ -220,7 +223,7 @@ void PrefSampler::completeUpdate(const PartialMolecule &new_center,
         molprob.ID = it->ID();
         molprob.version = it->version();
 
-        molprob.probability = calculateProbability(*it);
+        molprob.probability = calculateProbability(*it, space);
 
         sum_of_probs += molprob.probability;
         max_prob = qMax(max_prob, molprob.probability);
@@ -228,7 +231,7 @@ void PrefSampler::completeUpdate(const PartialMolecule &new_center,
 }
 
 /** Perform a partial update of the system */
-void PrefSampler::partialUpdate(const MoleculeGroup &group)
+void PrefSampler::partialUpdate(const MoleculeGroup &group, const Space &space)
 {
     BOOST_ASSERT( molprobs.count() == group.count() );
 
@@ -249,7 +252,7 @@ void PrefSampler::partialUpdate(const MoleculeGroup &group)
             //this molecule needs to be updated...
             sum_of_probs -= molprob.probability;
 
-            molprob.probability = calculateProbability(molecule);
+            molprob.probability = calculateProbability(molecule, space);
 
             molprob.version = molecule.version();
 
@@ -271,7 +274,7 @@ void PrefSampler::updateFrom(const QuerySystem &system)
     if (need_complete_update or current_mol.version() != center_mol.version())
     {
         //we need to update everything as the center molecule has moved!
-        this->completeUpdate(current_mol, group);
+        this->completeUpdate(current_mol, group, system.info().space());
         need_complete_update = false;
     }
     else
@@ -280,12 +283,12 @@ void PrefSampler::updateFrom(const QuerySystem &system)
         {
             //we need to update everything as the number
             //or identity of surrounding molecules may have changed
-            this->completeUpdate(center_mol, group);
+            this->completeUpdate(center_mol, group, system.info().space());
         }
         else if (group.version().minor() != molgroup.version().minor())
         {
             //some of the surrounding molecules may have moved...
-            this->partialUpdate(group);
+            this->partialUpdate(group, system.info().space());
         }
     }
 
@@ -374,10 +377,12 @@ tuple<PartialMolecule,double> PrefSampler::sample(const QuerySystem &system)
 
         //compare the normalised probability against a random number from 0 to max_prob
         if (_pvt_generator().rand(max_prob) <= molprob.probability)
+        {
             //test passed - return the molecule and the normalised probability
             //of picking the molecule
             return tuple<PartialMolecule,double>(group.molecule(molprob.ID),
                                                  molprob.probability / sum_of_probs);
+        }
     }
 }
 
@@ -396,7 +401,7 @@ double PrefSampler::probabilityOf(const PartialMolecule &molecule,
 
     this->updateFrom(system);
 
-    return this->calculateProbability(molecule) / sum_of_probs;
+    return this->calculateProbability(molecule, system.info().space()) / sum_of_probs;
 }
 
 /** Comparison function */

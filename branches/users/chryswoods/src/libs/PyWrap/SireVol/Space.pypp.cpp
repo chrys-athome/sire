@@ -33,12 +33,20 @@ void register_Space_class(){
             , ( bp::arg("dist"), bp::arg("group0"), bp::arg("group1") ) )    
         .def( 
             "calcDist"
+            , (double ( ::SireVol::Space::* )( ::SireMaths::Vector const &,::SireMaths::Vector const & ) const)( &::SireVol::Space::calcDist )
+            , ( bp::arg("point0"), bp::arg("point1") ) )    
+        .def( 
+            "calcDist"
             , (double ( ::SireVol::Space::* )( ::SireVol::CoordGroup const &,::SireVol::DistMatrix & ) const)( &::SireVol::Space::calcDist )
             , ( bp::arg("group"), bp::arg("distmat") ) )    
         .def( 
             "calcDist"
             , (double ( ::SireVol::Space::* )( ::SireVol::CoordGroup const &,::SireVol::CoordGroup const &,::SireVol::DistMatrix & ) const)( &::SireVol::Space::calcDist )
             , ( bp::arg("group0"), bp::arg("group1"), bp::arg("distmat") ) )    
+        .def( 
+            "calcDist2"
+            , (double ( ::SireVol::Space::* )( ::SireMaths::Vector const &,::SireMaths::Vector const & ) const)( &::SireVol::Space::calcDist2 )
+            , ( bp::arg("point0"), bp::arg("point1") ) )    
         .def( 
             "calcDist2"
             , (double ( ::SireVol::Space::* )( ::SireVol::CoordGroup const &,::SireVol::DistMatrix & ) const)( &::SireVol::Space::calcDist2 )
