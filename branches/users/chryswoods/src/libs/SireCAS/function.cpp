@@ -360,10 +360,9 @@ Function::~Function()
 /** Comparison operator */
 bool Function::operator==(const ExBase &other) const
 {
-    const Function *other_func = dynamic_cast<const Function*>(&other);
+    const Symbol *other_func = dynamic_cast<const Symbol*>(&other);
 
-    return other_func != 0 and typeid(other).name() == typeid(*this).name()
-             and d == other_func->d;
+    return other_func != 0 and ID() == other_func->ID();
 }
 
 /** Assignment operator */
@@ -428,9 +427,7 @@ Expression Function::integrate(const Symbol &symbol) const
 /** Return a hash of this Function */
 uint Function::hash() const
 {
-    return ( r_function.magicID() <<16 ) |
-           ( (d.symbols().count() << 8) & 0x0000FF00 ) |
-           ( d.functions().count() & 0x000000FF );
+    return Symbol::hash();
 }
 
 /** Return the expression that matches this function */

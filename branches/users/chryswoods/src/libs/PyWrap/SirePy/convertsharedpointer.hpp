@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2007   Christopher Woods
+  *  Copyright (C) 2007  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,42 +26,41 @@
   *
 \*********************************************/
 
-#include <Python.h>
-#include <boost/python.hpp>
+#ifndef PYWRAP_SIREPY_CONVERTSHAREDPOINTER_HPP
+#define PYWRAP_SIREPY_CONVERTSHAREDPOINTER_HPP
 
-#include <QVector>
-#include <QSet>
+using namespace boost::python;
 
-#include <boost/tuple/tuple.hpp>
+#include "SireBase/sharedpolypointer.hpp"
 
-#include "SirePy/convertlist.hpp"
-#include "SirePy/convertdict.hpp"
-#include "SirePy/convertset.hpp"
-#include "SirePy/convertsharedpointer.hpp"
+SIRE_BEGIN_HEADER
 
-#include "ThirdParty/tuples.hpp"
-
-#include "siresystem_headers.h"
-
-using namespace SireSystem;
-using namespace SirePy;
-
-using boost::python::register_tuple;
-
-void register_SireSystem_containers()
+namespace SirePy
 {
-    register_container< SystemMonitor, SystemMonitorBase >();
 
-    register_list< QList<Move> >();
+using SireBase::SharedPolyPointer;
 
-    #if QT_VERSION >= 0x402000
+template<class P, class Base>
+struct to_base_object
+{
+    static PyObject* convert(const P &object_container)
+    {
+        return incref( object( SireBase::SharedPolyPointer<Base>(object_container.base()) ).ptr() );
+    }
+};
 
-    register_dict< QHash<Symbol, SystemMonitor> >();
+template<class P, class Base>
+void register_container()
+{
+    to_python_converter< P, to_base_object<P,Base> >();
 
-    #else
-    
-    register_dict< QHash<Symbol, SystemMonitor>,
-                   Symbol, SystemMonitor >();
-    
-    #endif    
+    implicitly_convertible< Base, P >();
+
+    register_ptr_to_python< SharedPolyPointer<Base> >();
 }
+
+}
+
+SIRE_END_HEADER
+
+#endif

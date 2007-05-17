@@ -134,10 +134,10 @@ ffields.add(de_by_dlam)
 ffields.setParameter(lam, 0.0)
 
 # let's see what the initial values of these functions are...
-print "e_fast == %f kcal mol-1" % ffields.energy(e_fast)
-print "e_slow == %f kcal mol-1" % ffields.energy(e_slow)
-print "e_total == %f kcal mol-1" % ffields.energy(e_total)
-print "de_by_dlam == %f kcal mol-1" % ffields.energy(de_by_dlam)
+#print "e_fast == %f kcal mol-1" % ffields.energy(e_fast)
+#print "e_slow == %f kcal mol-1" % ffields.energy(e_slow)
+#print "e_total == %f kcal mol-1" % ffields.energy(e_total)
+#print "de_by_dlam == %f kcal mol-1" % ffields.energy(de_by_dlam)
 
 #there are two groups of molecules, the solute and the solvent
 # - lets create these groups (moves move random molecules from a group)
@@ -152,9 +152,16 @@ groups.add(solvent_group)
 groups.add(solute_group)
 groups.add(all_mols)
 
+# create a monitor to monitor the average energies
+monitors = SystemMonitors()
+monitors.set( e_slow.function(), MonitorEnergy(e_slow.function()) )
+monitors.set( e_fast.function(), MonitorEnergy(e_fast.function()) )
+monitors.set( de_by_dlam.function(), MonitorEnergy(de_by_dlam.function()) )
+monitors.set( e_total.function(), MonitorEnergy(e_total.function()) )
+
 # create a system that can be used to simulate these groups
 # using the forcefields that we have constructed
-system = System( groups, ffields )
+system = System( groups, ffields, monitors )
 
 # set the space in which the simulation will occur
 system.setSpace(space)
@@ -162,6 +169,43 @@ system.setSpace(space)
 # create a rigid body MC move that moves random solvent
 # molecules, with the solvent molecules picked uniformly
 mc = RigidBodyMC( PrefSampler(tip4p, 200.0, all_mols) )
+
+system.run(mc, 5)
+
+print system.monitors().monitor(e_total.function()).average()
+print system.monitors().monitor(e_total.function()).nUpdates()
+print system.forceFields().energy(e_total)
+print "\n"
+
+system.run(mc, 5)
+
+print system.monitors().monitor(e_total.function()).average()
+print system.monitors().monitor(e_total.function()).nUpdates()
+print system.forceFields().energy(e_total)
+print "\n"
+
+system.run(mc, 5)
+
+print system.monitors().monitor(e_total.function()).average()
+print system.monitors().monitor(e_total.function()).nUpdates()
+print system.forceFields().energy(e_total)
+print "\n"
+
+system.run(mc, 5)
+
+print system.monitors().monitor(e_total.function()).average()
+print system.monitors().monitor(e_total.function()).nUpdates()
+print system.forceFields().energy(e_total)
+print "\n"
+
+system.run(mc, 5)
+
+print system.monitors().monitor(e_total.function()).average()
+print system.monitors().monitor(e_total.function()).nUpdates()
+print system.forceFields().energy(e_total)
+print "\n"
+
+sys.exit(0)
 
 # Create a multiple-time-step MC move that performs 500
 # rigid body moves of the solvent using e_fast, then accepts

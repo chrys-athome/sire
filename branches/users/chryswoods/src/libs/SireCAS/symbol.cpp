@@ -117,7 +117,8 @@ static const RegisterMetaType<Symbol> r_symbol;
 /** Hash a symbol */
 uint Symbol::hash() const
 {
-    return (r_symbol.magicID() << 16) | (id & 0x0000FFFF);
+    //return (r_symbol.magicID() << 16) | (id & 0x0000FFFF);
+    return id;
 }
 
 /** Serialise a Symbol to a binary datastream */
@@ -189,8 +190,7 @@ bool Symbol::operator==(const ExBase &other) const
 {
     const Symbol *sym = dynamic_cast<const Symbol*>(&other);
 
-    return sym != 0 and typeid(other).name() == typeid(*this).name()
-            and sym->ID() == this->ID();
+    return sym != 0 and sym->ID() == this->ID();
 }
 
 /** Return a string representation of this symbol */

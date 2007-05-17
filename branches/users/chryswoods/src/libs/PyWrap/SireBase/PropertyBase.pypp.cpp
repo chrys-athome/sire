@@ -14,7 +14,7 @@ const char* pvt_get_name(const SireBase::PropertyBase&){ return "SireBase::Prope
 
 void register_PropertyBase_class(){
 
-    bp::class_< SireBase::PropertyBase, boost::noncopyable >( "PropertyBase", bp::no_init )    
+    bp::class_< SireBase::PropertyBase, std::auto_ptr<SireBase::PropertyBase>, boost::noncopyable >( "PropertyBase", bp::no_init )    
         .def( 
             "null_property"
             , (::SireBase::Property (*)(  ))( &::SireBase::PropertyBase::null_property ) )    

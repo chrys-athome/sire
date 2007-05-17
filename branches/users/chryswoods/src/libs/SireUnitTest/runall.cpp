@@ -52,24 +52,25 @@ using namespace SireTest;
 
 void SireTest::runAll(test_suite *test)
 {
-//     initialise(new TestAtomSelection(), test);
-//     initialise(new TestComplex(), test);
-//     initialise(new TestCoordGroup(), test);
-//     initialise(new TestCutGroup(), test);
-//     initialise(new TestFFDB(), test);
-//     initialise(new TestForceFields(), test);
-//     initialise(new TestMatch(), test);
+    initialise(new TestAtomSelection(), test);
+    initialise(new TestComplex(), test);
+    initialise(new TestCoordGroup(), test);
+    initialise(new TestCutGroup(), test);
+    initialise(new TestFFDB(), test);
+    initialise(new TestForceFields(), test);
+    initialise(new TestMatch(), test);
 
     #ifdef _BUILD_MOLPRO_
     initialise(new TestMolproFF(), test);
     #endif
 
-//     initialise(new TestPeriodicBox(), test);
-//     initialise(new TestPropertyExtractor(), test);
-//     initialise(new TestSampler(), test);
-//     initialise(new TestSharedPolyPointer(), test);
-//     initialise(new TestSireCAS(), test);
-//     initialise(new TestVector(), test);
-//     initialise(new TestVersion(), test);
-//     initialise(new TestUnits(), test);
+    initialise(new TestPeriodicBox(), test);
+    initialise(new TestPropertyExtractor(), test);
+    initialise(new TestSampler(), test);
+    initialise(new TestSharedPolyPointer(), test);
+    initialise(new TestSireCAS(), test);
+    initialise(new TestVector(), test);
+    initialise(new TestVersion(), test);
+    initialise(new TestUnits(), test);
+
 }

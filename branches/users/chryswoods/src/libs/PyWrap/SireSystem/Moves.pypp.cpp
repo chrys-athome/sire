@@ -46,16 +46,16 @@ void register_Moves_class(){
             , (void ( ::SireSystem::Moves::* )(  ) )( &::SireSystem::Moves::play ) )    
         .def( 
             "rerun"
-            , (void ( ::SireSystem::Moves::* )( ::SireSystem::SimSystem & ) )( &::SireSystem::Moves::rerun )
-            , ( bp::arg("system") ) )    
+            , (void ( ::SireSystem::Moves::* )( ::SireSystem::SimSystem &,bool ) )( &::SireSystem::Moves::rerun )
+            , ( bp::arg("system"), bp::arg("record_stats")=(bool)(false) ) )    
         .def( 
             "resume"
-            , (void ( ::SireSystem::Moves::* )( ::SireSystem::SimSystem & ) )( &::SireSystem::Moves::resume )
-            , ( bp::arg("system") ) )    
+            , (void ( ::SireSystem::Moves::* )( ::SireSystem::SimSystem &,bool ) )( &::SireSystem::Moves::resume )
+            , ( bp::arg("system"), bp::arg("record_stats")=(bool)(false) ) )    
         .def( 
             "run"
-            , (void ( ::SireSystem::Moves::* )( ::SireSystem::SimSystem &,::quint32 ) )( &::SireSystem::Moves::run )
-            , ( bp::arg("system"), bp::arg("nmoves") ) )    
+            , (void ( ::SireSystem::Moves::* )( ::SireSystem::SimSystem &,::quint32,bool ) )( &::SireSystem::Moves::run )
+            , ( bp::arg("system"), bp::arg("nmoves"), bp::arg("record_stats")=(bool)(false) ) )    
         .def( 
             "setEnergyComponent"
             , (void ( ::SireSystem::Moves::* )( ::SireCAS::Symbol const & ) )( &::SireSystem::Moves::setEnergyComponent )

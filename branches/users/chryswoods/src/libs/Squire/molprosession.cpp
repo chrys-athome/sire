@@ -312,6 +312,9 @@ MolproSession::~MolproSession()
                 //we'll just have to kill it, as it hasn't ended gracefully!
                 molpro_process.kill();
             }
+
+            //disconnect the RPC connection
+            ::disconnectFromMolpro(molpro_rpc,0);
         }
         else
         {

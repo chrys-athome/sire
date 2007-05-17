@@ -9,5 +9,8 @@
 #include "SireSystem/system.h"
 #include "SireSystem/systemid.h"
 #include "SireSystem/checkpoint.h"
+#include "SireSystem/systemmonitor.h"
+#include "SireSystem/systemmonitors.h"
+#include "SireSystem/monitorenergy.h"
 
 #endif

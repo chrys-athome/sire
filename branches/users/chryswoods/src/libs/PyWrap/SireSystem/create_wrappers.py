@@ -13,6 +13,7 @@ from sireutils import *
 
 wrap_classes = [ "CheckPoint",
                  "LocalSimSystem",
+                 "MonitorEnergy",
                  "MoveBase",
                  "Move",
                  "MovesBase",
@@ -23,6 +24,7 @@ wrap_classes = [ "CheckPoint",
                  "SystemData",
                  "System",
                  "SystemID",
+                 "SystemMonitorBase",
                  "SystemMonitors"
                ]
 

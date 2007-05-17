@@ -285,13 +285,13 @@ QList<Move> Moves::moves()
 {
     //can only do this while the moves aren't active
     QMutexLocker lkr(&movemutex);
-    
+
     return d->moves();
 }
 
 /** This internal function is used to run the
     moves from ncompleted to ntotal */
-void Moves::_pvt_run(SimSystem &system)
+void Moves::_pvt_run(SimSystem &system, bool record_stats)
 {
     if (ncomplete >= ntotal)
         //there's nothing to do
@@ -320,6 +320,10 @@ void Moves::_pvt_run(SimSystem &system)
         //apply this move to the system
         nextmove.move(system);
 
+        if (record_stats)
+            //commit the move - this increments the statistics
+            system.commit();
+
         //increment the number of complete moves
         ++ncomplete;
 
@@ -328,8 +332,9 @@ void Moves::_pvt_run(SimSystem &system)
 
 /** Run 'nmoves' moves of the system. This will run the
     moves in a way that allows the simulation to be paused
-    between moves. */
-void Moves::run(SimSystem &system, quint32 nmoves)
+    between moves. If record_stats is true, then the
+    system will be monitored at the end of each move. */
+void Moves::run(SimSystem &system, quint32 nmoves, bool record_stats)
 {
     //we need to ensure that only a single system is
     //being run at a time
@@ -341,13 +346,13 @@ void Moves::run(SimSystem &system, quint32 nmoves)
     sysid = system.ID();
 
     //run the moves
-    this->_pvt_run(system);
+    this->_pvt_run(system, record_stats);
 }
 
 /** Continue the moves in this set on the passed system.
     This function is used to continue a set of moves that
     were part of a snapshot */
-void Moves::resume(SimSystem &system)
+void Moves::resume(SimSystem &system, bool record_stats)
 {
     //we need to ensure that only a single system
     //is being run at a time
@@ -360,14 +365,14 @@ void Moves::resume(SimSystem &system)
         return;
 
     //run the moves
-    this->_pvt_run(system);
+    this->_pvt_run(system, record_stats);
 }
 
 /** Rerun the moves in this set on the passed system.
     While the same number of moves will be attempted,
     there is no guarantee that the moves will be the same,
     or in the same order as the last run. */
-void Moves::rerun(SimSystem &system)
+void Moves::rerun(SimSystem &system, bool record_stats)
 {
     QMutexLocker lkr(&movemutex);
 
@@ -377,7 +382,7 @@ void Moves::rerun(SimSystem &system)
     if (ncomplete >= ntotal)
         return;
 
-    this->_pvt_run(system);
+    this->_pvt_run(system, record_stats);
 }
 
 /** Pause the simulation - the thread running the simulation is

@@ -67,11 +67,33 @@ public:
 
     virtual ~SystemMonitorBase();
 
-    virtual void monitor(QuerySystem &system)=0;
+    SystemMonitorBase& operator=(const SystemMonitorBase &other);
+
+    virtual SystemMonitorBase* clone() const=0;
+
+    virtual void monitor(QuerySystem &system);
 
     /** Convert the monitor's result into a single value - this
         will only be meaningful for some monitors */
     virtual double value() const=0;
+
+    /** Return the number of times that this monitor has been updated */
+    quint64 nUpdates() const
+    {
+        return nupdates;
+    }
+
+    /** Completely clear all of the monitor's statistics */
+    virtual void clear()
+    {
+        nupdates = 0;
+    }
+
+    /** Assert that this monitor is compatible with the passed system */
+    virtual void assertCompatibleWith(const QuerySystem &system) const=0;
+
+private:
+    quint64 nupdates;
 };
 
 /** This is the holder of SystemMonitor objects */
@@ -101,9 +123,27 @@ public:
 
     double value() const;
 
+    quint64 nUpdates() const;
+
+    void clear();
+
+    void assertCompatibleWith(const QuerySystem &system) const;
+
+    template<class T>
+    bool isA() const
+    {
+        return d->isA<T>();
+    }
+
+    template<class T>
+    const T& asA() const
+    {
+        return d->asA<T>();
+    }
+
 private:
     /** Implicitly shared pointer to the monitor */
-    SharedPolyPointer<SystemMonitorBase> d;
+    SireBase::SharedPolyPointer<SystemMonitorBase> d;
 };
 
 }

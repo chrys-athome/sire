@@ -26,6 +26,7 @@ set ( WRAPSYSTEM_SOURCES
 
       LocalSimSystem.pypp.cpp
 
+      MonitorEnergy.pypp.cpp
       MoveBase.pypp.cpp
       Move.pypp.cpp
       MovesBase.pypp.cpp
@@ -38,6 +39,7 @@ set ( WRAPSYSTEM_SOURCES
       SystemData.pypp.cpp
       SystemID.pypp.cpp
       System.pypp.cpp
+      SystemMonitorBase.pypp.cpp
       SystemMonitors.pypp.cpp
     
     )

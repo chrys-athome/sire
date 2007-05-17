@@ -21,6 +21,8 @@
 
 #include "LocalSimSystem.pypp.hpp"
 
+#include "MonitorEnergy.pypp.hpp"
+
 #include "Move.pypp.hpp"
 
 #include "MoveBase.pypp.hpp"
@@ -41,6 +43,8 @@
 
 #include "SystemID.pypp.hpp"
 
+#include "SystemMonitorBase.pypp.hpp"
+
 #include "SystemMonitors.pypp.hpp"
 
 #include "siresystem_containers.h"
@@ -57,6 +61,10 @@ BOOST_PYTHON_MODULE(_System){
     register_SimSystem_class();
 
     register_LocalSimSystem_class();
+
+    register_SystemMonitorBase_class();
+
+    register_MonitorEnergy_class();
 
     register_Move_class();
 

@@ -29,7 +29,11 @@
 #ifndef SIRESYSTEM_MONITORS_H
 #define SIRESYSTEM_MONITORS_H
 
-#include "sireglobal.h"
+#include "systemmonitor.h"
+
+#include "SireCAS/symbol.h"
+
+#include <QHash>
 
 SIRE_BEGIN_HEADER
 
@@ -45,6 +49,8 @@ namespace SireSystem
 {
 
 class QuerySystem;
+
+using SireCAS::Symbol;
 
 /** This class will eventually be the container for the variety
     of monitors that will monitor properties of a running simulation
@@ -67,16 +73,54 @@ public:
 
     SystemMonitors& operator=(const SystemMonitors &other);
 
+    bool nMonitors() const;
+    bool count() const;
+
+    bool isEmpty() const;
+
+    bool contains(const Symbol &symbol) const;
+
+    void set(const Symbol &symbol, const SystemMonitor &monitor,
+             quint64 delta = 1);
+
+    void setDelta(const Symbol &symbol, quint64 delta);
+    quint64 getDelta(const Symbol &symbol) const;
+
+    SystemMonitor take(const Symbol &symbol);
+    void remove(const Symbol &symbol);
+
+    const SystemMonitor& monitor(const Symbol &symbol) const;
+
+    double value(const Symbol &symbol) const;
+
     void update(QuerySystem &system);
+    void forceUpdate(QuerySystem &system);
+
+    void monitor(QuerySystem &system);
+
+    const QHash<Symbol,SystemMonitor>& monitors() const;
+
+    quint64 nUpdates() const;
+
+    void resetStatistics();
+
+    void clear();
+
+    void assertContains(const Symbol &symbol) const;
+    void assertCompatibleWith(const QuerySystem &system) const;
 
 private:
     /** All of the system monitors, indexed by the symbol
         used to represent them */
-    //QHash<Symbol, SystemMonitor> montrs;
+    QHash<Symbol, SystemMonitor> montrs;
 
     /** All of the symbols that must be updated every
         n steps (n is the key) */
-    //QHash< quint32, QSet<Symbol> > deltas;
+    QHash< quint64, QSet<Symbol> > deltas;
+
+    /** The number of times this collection of monitors
+        has been updated */
+    quint64 nupdates;
 };
 
 }

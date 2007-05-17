@@ -207,9 +207,9 @@ public:
 
     int count() const;
 
-    void run(SimSystem &system, quint32 nmoves);
-    void resume(SimSystem &system);
-    void rerun(SimSystem &system);
+    void run(SimSystem &system, quint32 nmoves, bool record_stats = false);
+    void resume(SimSystem &system, bool record_stats = false);
+    void rerun(SimSystem &system, bool record_stats = false);
 
     void play();
     void pause();
@@ -222,7 +222,7 @@ public:
     void assertCompatibleWith(QuerySystem &system) const;
 
 private:
-    void _pvt_run(SimSystem &system);
+    void _pvt_run(SimSystem &system, bool record_stats);
 
     /** Pointer to the implementation of this class */
     SireBase::SharedPolyPointer<MovesBase> d;

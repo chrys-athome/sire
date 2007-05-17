@@ -51,8 +51,8 @@ QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const System &system)
 
     SharedDataStream sds(ds);
 
-    sds << system.sysdata 
-        << system.ffields 
+    sds << system.sysdata
+        << system.ffields
         << system.sysmonitors
         << system.is_consistent;
 
@@ -68,8 +68,8 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, System &system)
     {
         SharedDataStream sds(ds);
 
-        sds >> system.sysdata 
-            >> system.ffields 
+        sds >> system.sysdata
+            >> system.ffields
             >> system.sysmonitors
             >> system.is_consistent;
     }
@@ -80,7 +80,7 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, System &system)
 }
 
 /** Construct a System containing the groups 'groups',
-    the forcefields in 'forcefields' and the using the 
+    the forcefields in 'forcefields' and the using the
     monitors 'monitors' */
 System::System(const MoleculeGroups &groups, const ForceFields &forcefields,
                const SystemMonitors &monitors)
@@ -108,7 +108,7 @@ System::System(const MoleculeGroups &groups, const SystemMonitors &monitors)
     sysdata.add(groups);
 }
 
-/** Construct a System called 'name' containing the groups 'groups' 
+/** Construct a System called 'name' containing the groups 'groups'
     and using the monitors 'monitors' */
 System::System(const QString &name, const MoleculeGroups &groups,
                const SystemMonitors &monitors)
@@ -117,17 +117,17 @@ System::System(const QString &name, const MoleculeGroups &groups,
     sysdata.add(groups);
 }
 
-/** Construct a System containing the forcefields 'forcefields' 
+/** Construct a System containing the forcefields 'forcefields'
     and using the monitors 'monitors' */
 System::System(const ForceFields &forcefields, const SystemMonitors &monitors)
        : ffields(forcefields), sysmonitors(monitors), is_consistent(false)
 {}
 
-/** Construct a System called 'name' containing the forcefields 
+/** Construct a System called 'name' containing the forcefields
     'forcefields' and using the monitors 'monitors' */
 System::System(const QString &name, const ForceFields &forcefields,
                const SystemMonitors &monitors)
-       : sysdata(name), ffields(forcefields), 
+       : sysdata(name), ffields(forcefields),
          sysmonitors(monitors), is_consistent(false)
 {}
 
@@ -186,7 +186,7 @@ System& System::operator=(const CheckPoint &checkpoint)
     ffields = checkpoint.forceFields();
     sysmonitors = checkpoint.monitors();
     is_consistent = true;
-    
+
     return *this;
 }
 
@@ -223,9 +223,9 @@ void System::prepareForSimulation()
     //resolve all expressions etc.
     if (not is_consistent)
     {
-    
-    
-    
+
+
+
         is_consistent = true;
     }
 }
@@ -253,7 +253,8 @@ Moves System::run(const Moves &moves, quint32 nmoves)
     //work with a copy of the moves
     Moves run_moves(moves);
 
-    run_moves.run(simsystem, nmoves);
+    //run the moves, recording statistics
+    run_moves.run(simsystem, nmoves, true);
 
     //everything went well - copy back into this system
     *this = simsystem.checkPoint();

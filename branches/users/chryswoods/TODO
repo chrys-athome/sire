@@ -11,14 +11,13 @@ SireStream
 SireCAS
 -------
 
-(*) Sort out the code to allow generic-function of a generic-function,
-    so that the function substitution works correctly!
-    
+(*) Remove Function completely from the code!!! Everything will be based
+    on symbol and I'll forget about complex differentials of combined
+    symbols...! Function was more trouble than it was worth!
+
 (*) Write code to allow simplification and expansion of sums and products
 
 (*) Take a stab at writing better integration code for sums and products
-
-(*) Move code over to using SharedPolyPointer to hold ExBase objects
 
 
 ------
@@ -127,3 +126,4 @@ SireCluster
 
 (*) Write PoolProcessor and FFPoolProcessor that can distribute
     multiple forcefields over a worker pool of threads
+

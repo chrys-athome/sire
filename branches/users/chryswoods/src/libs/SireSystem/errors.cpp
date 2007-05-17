@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2007   Christopher Woods
+  *  Copyright (C) 2007  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,42 +26,9 @@
   *
 \*********************************************/
 
-#include <Python.h>
-#include <boost/python.hpp>
-
-#include <QVector>
-#include <QSet>
-
-#include <boost/tuple/tuple.hpp>
-
-#include "SirePy/convertlist.hpp"
-#include "SirePy/convertdict.hpp"
-#include "SirePy/convertset.hpp"
-#include "SirePy/convertsharedpointer.hpp"
-
-#include "ThirdParty/tuples.hpp"
-
-#include "siresystem_headers.h"
+#include "SireSystem/errors.h"
 
 using namespace SireSystem;
-using namespace SirePy;
 
-using boost::python::register_tuple;
-
-void register_SireSystem_containers()
-{
-    register_container< SystemMonitor, SystemMonitorBase >();
-
-    register_list< QList<Move> >();
-
-    #if QT_VERSION >= 0x402000
-
-    register_dict< QHash<Symbol, SystemMonitor> >();
-
-    #else
-    
-    register_dict< QHash<Symbol, SystemMonitor>,
-                   Symbol, SystemMonitor >();
-    
-    #endif    
-}
+static const RegisterMetaType<siresystem_error> r_sys;
+static const RegisterMetaType<missing_monitor> r_missmonitor;
