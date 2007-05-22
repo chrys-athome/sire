@@ -65,7 +65,7 @@ CoordGroupData::CoordGroupData(quint32 size)
 /** Copy constructor */
 CoordGroupData::CoordGroupData(const CoordGroupData &other)
                : QSharedData(),
-                 aabox(other.aabox), sz(other.sz), 
+                 aabox(other.aabox), sz(other.sz),
                  needsupdate(other.needsupdate)
 {}
 
@@ -82,7 +82,7 @@ CoordGroupData& CoordGroupData::operator=(const CoordGroupData &other)
         sz = other.sz;
         needsupdate = other.needsupdate;
     }
-    
+
     return *this;
 }
 
@@ -114,10 +114,10 @@ CoordGroupData* CoordGroupData::getSharedNull()
         shared_null = new CoordGroupData(0);
         shared_null->ref.ref();
     }
-        
+
     //increment the reference count
     shared_null->ref.ref();
-        
+
     return shared_null;
 }
 
@@ -129,21 +129,21 @@ CoordGroupData* CoordGroupData::getSharedNull()
 void CoordGroupBase::destroy(CoordGroupData *group_ptr)
 {
     char *storage = (char*)group_ptr;
-    
+
     int sz = group_ptr->count();
-    
+
     Vector *array = (Vector*)( storage + sizeof(CoordGroupData) );
-    
+
     //destroy all elements in the array (in reverse order
     //to preserve the C++ canonical order)
     for (int i=sz-1; i>=0; --i)
     {
         array[i].~Vector();
     }
-    
+
     //destroy the CoordGroupData
     group_ptr->~CoordGroupData();
-    
+
     //finally, delete the memory
     delete[] storage;
 }
@@ -155,44 +155,47 @@ void CoordGroupBase::detach()
 
     if (group_ptr->ref != 1)
     {
-        //we need to clone the memory - get the size of the 
+        //we need to clone the memory - get the size of the
         //memory to be cloned
-        int mem_size = sizeof(CoordGroupData) + 
+        int mem_size = sizeof(CoordGroupData) +
                           group_ptr->count() * sizeof(Vector);
-                          
+
         //create a new array of this size
         char *new_storage = new char[mem_size];
-        
+
         //copy the data...
         void *output = qMemCopy( new_storage, storage, mem_size * sizeof(char) );
-        
+
         BOOST_ASSERT( output == new_storage );
-        
+
         //copy the new storage to the old pointer - the first
         //part of this memory is the CoordGroupData object...
         CoordGroupData *new_group_ptr = (CoordGroupData*)(new_storage);
-        new_group_ptr->ref.ref();
-        
+
+        //set the reference count to '1', as it is currently equal to whatever
+        //the count is in the original!
+        new_group_ptr->ref = 1;
+
         CoordGroupData *old_group_ptr = (CoordGroupData*)(storage);
-        
+
         new_group_ptr = qAtomicSetPtr(&old_group_ptr, new_group_ptr);
-        
+
         storage = (char*)(old_group_ptr);
-        
+
         if (!new_group_ptr->ref.deref())
             //we need to delete the original...
             destroy(new_group_ptr);
     }
 }
 
-/** Return a modifiable reference to the CoordGroupData that contains the 
+/** Return a modifiable reference to the CoordGroupData that contains the
     metadata about this group */
 CoordGroupData& CoordGroupBase::_pvt_group()
 {
     return *( (CoordGroupData*)(memory()) );
 }
 
-/** Return a modifiable reference to the CoordGroupData that contains the 
+/** Return a modifiable reference to the CoordGroupData that contains the
     metadata about this group */
 const CoordGroupData& CoordGroupBase::_pvt_constGroup() const
 {
@@ -206,24 +209,24 @@ CoordGroupBase& CoordGroupBase::operator=(const CoordGroupBase &other)
     if (storage != other.storage)
     {
         CoordGroupData *new_ptr = &( const_cast<CoordGroupData&>(other._pvt_group()) );
-   
+
         new_ptr->ref.ref();
-          
+
         CoordGroupData *old_group_ptr = (CoordGroupData*)(storage);
-        
+
         new_ptr = qAtomicSetPtr(&old_group_ptr, new_ptr);
-        
+
         storage = (char*)(old_group_ptr);
-    
+
         if (!new_ptr->ref.deref())
             destroy(new_ptr);
     }
-    
+
     return *this;
 }
 
 /** Null constructor */
-CoordGroupBase::CoordGroupBase() 
+CoordGroupBase::CoordGroupBase()
                : storage( (char*)(CoordGroupData::getSharedNull()) )
 {}
 
@@ -233,24 +236,24 @@ CoordGroupBase::CoordGroupBase(quint32 size, const Vector &value)
 {
     //construct the storage
     storage = new char[ sizeof(CoordGroupData) + size*sizeof(Vector) ];
-    
+
     //construct the CoordGroupData in this piece of memory
     CoordGroupData *group_ptr = new (storage) CoordGroupData(size);
-    
+
     //add a reference count for this object
     group_ptr->ref.ref();
-    
+
     if (size > 0)
     {
         //initialise all of the coordinates to zero
         Vector *array = (Vector*)(storage + sizeof(CoordGroupData));
-        
+
         for (quint32 i=0; i<size; ++i)
         {
             //construct the coordinate at this position in the array
             new ( &(array[i]) ) Vector(value);
         }
-        
+
         //update the group with the correct bounding AABox
         group_ptr->update( AABox(value) );
     }
@@ -267,24 +270,24 @@ CoordGroupBase::CoordGroupBase(const QVector<Vector> &coordinates)
 
     //construct the storage
     storage = new char[ sizeof(CoordGroupData) + ncoords*sizeof(Vector) ];
-    
+
     //construct the CoordGroupData in this piece of memory
     CoordGroupData *group_ptr = new (storage) CoordGroupData(ncoords);
-    
+
     //add a reference count for this object
     group_ptr->ref.ref();
-    
+
     if (ncoords > 0)
     {
         //get the pointer to the first element in the array that
         //will house the coordinates
         Vector *array = (Vector*)(storage + sizeof(CoordGroupData));
-        
-        void *output = qMemCopy( array, coordinates.constData(), 
+
+        void *output = qMemCopy( array, coordinates.constData(),
                                  ncoords*sizeof(Vector) );
-                                 
+
         BOOST_ASSERT( output == array );
-        
+
         //update the group with the bounding box that contains
         //these coordinates
         group_ptr->update( AABox(coordinates) );
@@ -308,9 +311,11 @@ CoordGroupBase::CoordGroupBase(const CoordGroupBase &other)
 CoordGroupBase::~CoordGroupBase()
 {
     CoordGroupData *group_ptr = (CoordGroupData*)storage;
-    
+
     if (!group_ptr->ref.deref())
+    {
         destroy(group_ptr);
+    }
 }
 
 /** Comparison operator */
@@ -326,14 +331,14 @@ bool CoordGroupBase::operator==(const CoordGroupBase &other) const
         //compare the coordinates
         const Vector *my_coords = constData();
         const Vector *other_coords = other.constData();
-        
+
         int sz = size();
         for (int i=0; i<sz; ++i)
         {
             if (my_coords[i] != other_coords[i])
                 return false;
         }
-        
+
         return true;
     }
     else
@@ -354,7 +359,7 @@ bool CoordGroupBase::maybeDifferent(const CoordGroupBase &other) const
 {
     return storage != other.storage;
 }
-    
+
 static inline void assertSame(quint32 sz, quint32 other)
 {
     if (sz != other)
@@ -363,27 +368,27 @@ static inline void assertSame(quint32 sz, quint32 other)
             "the number of coordinates in the other is %2!")
                 .arg(sz).arg(other), CODELOC );
 }
-    
+
 /** Assert that the array of coordinates contains the same number of
     coordinates as are in this group
-    
+
     \throw SireError::incompatible_error
 */
 void CoordGroupBase::assertSameSize(const QVector<Vector> &coordinates) const
 {
     assertSame(this->count(), coordinates.count());
 }
-    
+
 /** Assert that the CoordGroup 'other' contains the same number of
     coordinates as are in this group
-    
+
     \throw SireError::incompatible_error
 */
 void CoordGroupBase::assertSameSize(const CoordGroupBase &other) const
 {
     assertSame(this->count(), other.count());
 }
-    
+
 /** Assert that 'i' is a valid index in this group
 
     \throw SireError::invalid_index
@@ -415,13 +420,13 @@ const Vector& CoordGroupBase::operator[](quint32 i) const
     assertValidIndex(i);
     return _pvt_data()[i];
 }
-    
+
 /** Set that the AABox needs to be updated */
 void CoordGroupBase::setNeedsUpdate()
 {
     _pvt_group().setNeedsUpdate();
 }
-    
+
 /** Update the AABox with the current coordinates */
 void CoordGroupBase::update()
 {
@@ -435,56 +440,56 @@ void CoordGroupBase::update()
 static const RegisterMetaType<CoordGroup> r_cgroup;
 
 /** Serialise to a binary data stream */
-QDataStream SIREVOL_EXPORT &operator<<(QDataStream &ds, 
+QDataStream SIREVOL_EXPORT &operator<<(QDataStream &ds,
                                        const CoordGroup &cgroup)
 {
     writeHeader(ds, r_cgroup, 1);
-    
+
     quint32 sz = cgroup.count();
     const Vector *coords = cgroup.constData();
-    
+
     ds << cgroup.aaBox() << sz;
-    
+
     for (quint32 i=0; i<sz; ++i)
     {
         const Vector &coord = coords[i];
         ds << coord.x() << coord.y() << coord.z();
     }
-    
+
     return ds;
 }
 
 /** Deserialise from a binary data stream */
-QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds, 
+QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds,
                                        CoordGroup &cgroup)
 {
     VersionID v = readHeader(ds, r_cgroup);
-    
+
     if (v == 1)
     {
         quint32 sz;
         AABox box;
-        
+
         ds >> box >> sz;
-        
+
         CoordGroup newgroup(sz);
         Vector *coords = newgroup._pvt_data();
-        
+
         for (quint32 i=0; i<sz; ++i)
         {
             double x, y, z;
             ds >> x >> y >> z;
-            
+
             coords[i] = Vector(x,y,z);
         }
-        
+
         newgroup._pvt_group().update(box);
-        
+
         cgroup = newgroup;
     }
     else
         throw version_error(v, "1", r_cgroup, CODELOC);
-    
+
     return ds;
 }
 
@@ -536,14 +541,14 @@ CoordGroup& CoordGroup::operator=(const CoordGroup &other)
 CoordGroup& CoordGroup::operator=(const CoordGroupBase &other)
 {
     CoordGroupBase::operator=(other);
-    
+
     if (CoordGroupBase::needsUpdate())
         CoordGroupBase::update();
 
     return *this;
 }
 
-/** Return an editor that can be used to edit the 
+/** Return an editor that can be used to edit the
     coordinates in this group */
 CoordGroupEditor CoordGroup::edit() const
 {
@@ -583,7 +588,7 @@ Vector& CoordGroupEditor::operator[](quint32 i)
 {
     CoordGroupBase::assertValidIndex(i);
     CoordGroupBase::setNeedsUpdate();
-    
+
     return _pvt_data()[i];
 }
 
@@ -603,12 +608,12 @@ void CoordGroupEditor::translate(const Vector &delta)
         //translate all of the coordinates
         quint32 ncoords = this->count();
         Vector *coords = _pvt_data();
-        
+
         for (quint32 i=0; i<ncoords; ++i)
         {
             coords[i] += delta;
         }
-        
+
         //now translate the AABox
         if (not this->needsUpdate())
         {
@@ -640,7 +645,7 @@ void CoordGroupEditor::rotate(const Matrix &rotmat, const Vector &point)
     {
         coords[i] = SireMaths::rotate( coords[i], rotmat, point );
     }
-    
+
     CoordGroupBase::setNeedsUpdate();
 }
 
@@ -680,15 +685,15 @@ void CoordGroupEditor::rotate(quint32 i, const Quaternion &quat, const Vector &p
 void CoordGroupEditor::setCoordinates(const QVector<Vector> &newcoords)
 {
     CoordGroupBase::assertSameSize(newcoords);
-    
+
     int sz = this->count();
     Vector *coords = this->_pvt_data();
     const Vector *newcoords_array  = newcoords.constData();
-    
+
     void *output = qMemCopy(coords, newcoords_array, sz*sizeof(Vector));
     CoordGroupBase::setNeedsUpdate();
-    
-    BOOST_ASSERT(output == coords);    
+
+    BOOST_ASSERT(output == coords);
 }
 
 /** Set the coordinates of the CoordGroup to 'newcoords' - this
