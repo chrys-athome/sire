@@ -197,8 +197,8 @@ void HarmonicFF::HarmonicMoleculeData::extractHarmonicProperties()
     find the equilibrium point and force constant for the restraint */
 HarmonicFF::HarmonicMoleculeData::HarmonicMoleculeData(
                                  const PartialMolecule &molecule,
-                                 const QString &k_property,
-                                 const QString &r0_property)
+                                 const QString &r0_property,
+                                 const QString &k_property)
            : QSharedData(),
              mol(molecule), _r0(0), _k(0),
              r0_prop(r0_property), k_prop(k_property)
@@ -444,6 +444,42 @@ void HarmonicFF::HarmonicMolecule::change(const PartialMolecule &molecule)
     d->change(molecule);
 }
 
+/////////////
+///////////// Implementation of HarmonicFF::Components
+/////////////
+
+/** Constructor */
+HarmonicFF::Components::Components() : FFBase::Components()
+{}
+
+/** Construct using the supplied forcefield */
+HarmonicFF::Components::Components(const FFBase &ffbase, const Symbols &symbols)
+      : FFBase::Components( ffbase, addToSymbols(symbols, x(), y(), z()) )
+{}
+
+/** Copy constructor */
+HarmonicFF::Components::Components(const HarmonicFF::Components &other)
+      : FFBase::Components(other)
+{}
+
+/** Destructor */
+HarmonicFF::Components::~Components()
+{}
+
+/** Assignment operator */
+HarmonicFF::Components& HarmonicFF::Components::operator=(
+                                      const HarmonicFF::Components &other)
+{
+    FFBase::Components::operator=(other);
+    return *this;
+}
+
+/** Set the forcefield */
+void HarmonicFF::Components::setForceField(const FFBase &ffbase)
+{
+    *this = HarmonicFF::Components(ffbase);
+}
+
 ////////////
 //////////// Implementation of HarmonicFF::Parameters
 ////////////
@@ -504,13 +540,17 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, HarmonicFF &harmff)
 
 /** Null constructor */
 HarmonicFF::HarmonicFF() : FFBase(), delta_nrg(0), need_total_recalc(true)
-{}
+{
+    FFBase::registerComponents(new HarmonicFF::Components(*this));
+}
 
 /** Construct the forcefield using the supplied space to
     calculate distances */
 HarmonicFF::HarmonicFF(const Space &space)
            : FFBase(), spce(space), delta_nrg(0), need_total_recalc(true)
-{}
+{
+    FFBase::registerComponents(new HarmonicFF::Components(*this));
+}
 
 /** Copy constructor */
 HarmonicFF::HarmonicFF(const HarmonicFF &other)

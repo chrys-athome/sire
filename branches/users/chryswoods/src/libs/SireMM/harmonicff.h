@@ -55,6 +55,8 @@ namespace SireMM
 using SireBase::Property;
 using SireBase::Version;
 
+using SireCAS::Symbols;
+
 using SireMaths::Vector;
 
 using SireVol::Space;
@@ -96,6 +98,27 @@ public:
     class HarmonicMolecule;
     class HarmonicMoleculeData;
 
+    class SIREMM_EXPORT Components : public FFBase::Components
+    {
+    public:
+        Components();
+        Components(const SireFF::FFBase &ffbase, const Symbols &symbols = Symbols());
+
+        Components(const Components &other);
+
+        ~Components();
+
+        Components& operator=(const Components &other);
+
+        Components* clone() const
+        {
+            return new Components(*this);
+        }
+
+    protected:
+        void setForceField(const SireFF::FFBase &ffbase);
+    };
+    
     class SIREMM_EXPORT Parameters : public SireFF::FFBase::Parameters
     {
     public:

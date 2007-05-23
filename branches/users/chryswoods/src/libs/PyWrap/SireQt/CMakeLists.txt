@@ -56,6 +56,7 @@ set ( WRAPQT_SOURCES
 add_library (PythonWrapping_Qt ${WRAPQT_SOURCES})
 
 target_link_libraries (PythonWrapping_Qt
+                       SireMaths
                        ${QT_QTCORE_LIBRARY}
                        ${BOOST_PYTHON_LIBRARY}
                        ${PYTHON_LIBRARY}

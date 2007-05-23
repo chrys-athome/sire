@@ -13,6 +13,8 @@
 
 namespace bp = boost::python;
 
+SireMM::HarmonicFF __copy__(const SireMM::HarmonicFF &other){ return SireMM::HarmonicFF(other); }
+
 #include "SireQt/qdatastream.hpp"
 
 #include "SirePy/str.hpp"
@@ -20,10 +22,15 @@ namespace bp = boost::python;
 void register_HarmonicFF_class(){
 
     { //::SireMM::HarmonicFF
-        typedef bp::class_< SireMM::HarmonicFF, bp::bases< SireFF::FFBase >, boost::noncopyable > HarmonicFF_exposer_t;
+        typedef bp::class_< SireMM::HarmonicFF, bp::bases< SireFF::FFBase > > HarmonicFF_exposer_t;
         HarmonicFF_exposer_t HarmonicFF_exposer = HarmonicFF_exposer_t( "HarmonicFF" );
         bp::scope HarmonicFF_scope( HarmonicFF_exposer );
+        bp::class_< SireMM::HarmonicFF::Components, bp::bases< SireFF::FFBase::Components > >( "Components" )    
+            .def( bp::init< >() )    
+            .def( bp::init< SireFF::FFBase const &, bp::optional< SireCAS::Symbols const & > >(( bp::arg("ffbase"), bp::arg("symbols")=::SireCAS::Symbols( ) )) );
         bp::class_< SireMM::HarmonicFF::HarmonicMolecule >( "HarmonicMolecule" )    
+            .def( bp::init< >() )    
+            .def( bp::init< SireMol::PartialMolecule const &, QString const &, QString const & >(( bp::arg("mol"), bp::arg("r0_property"), bp::arg("k_property") )) )    
             .def( 
                 "change"
                 , (void ( ::SireMM::HarmonicFF::HarmonicMolecule::* )( ::SireMol::PartialMolecule const & ) )( &::SireMM::HarmonicFF::HarmonicMolecule::change )
@@ -60,6 +67,7 @@ void register_HarmonicFF_class(){
                 , (::SireBase::Version const & ( ::SireMM::HarmonicFF::HarmonicMolecule::* )(  ) const)( &::SireMM::HarmonicFF::HarmonicMolecule::version )
                 , bp::return_value_policy< bp::copy_const_reference >() );
         bp::class_< SireMM::HarmonicFF::Parameters, bp::bases< SireFF::FFBase::Parameters > >( "Parameters" )    
+            .def( bp::init< >() )    
             .def( 
                 "center"
                 , (::SireFF::ParameterName const & ( ::SireMM::HarmonicFF::Parameters::* )(  ) const)( &::SireMM::HarmonicFF::Parameters::center )
@@ -76,6 +84,8 @@ void register_HarmonicFF_class(){
                 "r0"
                 , (::SireFF::ParameterName const ( ::SireMM::HarmonicFF::Parameters::* )(  ) const)( &::SireMM::HarmonicFF::Parameters::r0 ) )    
             .def_readonly( "default_sources", SireMM::HarmonicFF::Parameters::default_sources );
+        HarmonicFF_exposer.def( bp::init< >() );
+        HarmonicFF_exposer.def( bp::init< SireVol::Space const & >(( bp::arg("space") )) );
         { //::SireMM::HarmonicFF::add
         
             typedef bool ( ::SireMM::HarmonicFF::*add_function_type )( ::SireMol::PartialMolecule const &,::SireFF::ParameterMap const & ) ;
@@ -291,6 +301,7 @@ void register_HarmonicFF_class(){
         
         }
         HarmonicFF_exposer.staticmethod( "typeName" );
+        HarmonicFF_exposer.def( "__copy__", &__copy__);
         HarmonicFF_exposer.def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireMM::HarmonicFF >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         HarmonicFF_exposer.def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireMM::HarmonicFF >,

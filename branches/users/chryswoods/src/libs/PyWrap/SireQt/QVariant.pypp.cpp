@@ -12,6 +12,8 @@ namespace bp = boost::python;
 
 #include "SirePy/str.hpp"
 
+#include "SireMaths/vector.h"
+
 void register_QVariant_class(){
 
     { //::QVariant
@@ -434,8 +436,17 @@ void register_QVariant_class(){
                 , userType_function_type( &::QVariant::userType ) );
         
         }
+        { //::QVariant::fromValue
+        
+            QVariant_exposer.def( 
+                "fromValue"
+                , &::QVariant::fromValue<SireMaths::Vector> );
+        
+        }
+        
         QVariant_exposer.staticmethod( "nameToType" );
         QVariant_exposer.staticmethod( "typeToName" );
+        QVariant_exposer.staticmethod( "fromValue" );
         QVariant_exposer.def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::QVariant >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         QVariant_exposer.def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::QVariant >,

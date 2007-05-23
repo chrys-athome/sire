@@ -76,7 +76,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, AtomSelection &atomselec
     return ds;
 }
 
-uint qHash(const SireMol::AtomSelection &selection)
+uint SIREMOL_EXPORT qHash(const SireMol::AtomSelection &selection)
 {
     if (selection.selectedNone())
         return 0;
