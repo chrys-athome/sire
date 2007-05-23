@@ -76,6 +76,23 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, AtomSelection &atomselec
     return ds;
 }
 
+uint qHash(const SireMol::AtomSelection &selection)
+{
+    if (selection.selectedNone())
+        return 0;
+    else if (selection.selectedAll())
+    {
+        return 0xFFFFFFFF;
+    }
+    else
+    {
+        //construct the hash from the CutGroupID, number
+        //of CutGroups, and number of selected atoms...
+        return uint(selection.nSelected()) << 16 | uint(selection.nSelectedCutGroups()) << 8
+                  | uint(*(selection.selectedCutGroups().constBegin())) & 0x0000FFFF;
+    }
+}
+
 /** Null constructor */
 AtomSelection::AtomSelection() : nselected(0)
 {}

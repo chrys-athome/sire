@@ -70,6 +70,7 @@ set ( WRAPMM_SOURCES
 
       GeometricCombiningRules.pypp.cpp
 
+      HarmonicFF.pypp.cpp
       HarmonicSwitchingFunction.pypp.cpp
 
       InterCLJFF.pypp.cpp

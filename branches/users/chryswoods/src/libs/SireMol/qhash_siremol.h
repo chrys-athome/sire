@@ -70,8 +70,11 @@ class Residue;
 class EditMol;
 class Molecule;
 
+class AtomSelection;
+
 }
 
+uint qHash(const SireMol::AtomSelection&);
 uint qHash(const SireMol::AtomIndex&);
 uint qHash(const SireMol::AtomInfo&);
 uint qHash(const SireMol::Bond&);

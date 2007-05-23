@@ -12,36 +12,37 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the sources in SireMM
 set ( SIREMM_SOURCES
-      angledb.cpp            
-      anglegenerator.cpp     
-      angletable.cpp         
-      assign_angles.cpp      
-      assign_bonds.cpp       
+      angledb.cpp
+      anglegenerator.cpp
+      angletable.cpp
+      assign_angles.cpp
+      assign_bonds.cpp
       assign_dihedrals.cpp
       atomiccharges.cpp
       atomicljs.cpp
-      bonddb.cpp             
-      bondgenerator.cpp      
-      bondtable.cpp          
-      chargedb.cpp           
-      chargeparameter.cpp    
-      chargetable.cpp       
-      cljff.cpp	      
-      cljpair.cpp	      
-      cljparameter.cpp      
+      bonddb.cpp
+      bondgenerator.cpp
+      bondtable.cpp
+      chargedb.cpp
+      chargeparameter.cpp
+      chargetable.cpp
+      cljff.cpp
+      cljpair.cpp
+      cljparameter.cpp
       combiningrules.cpp
       coulombff.cpp
-      dihedraldb.cpp        
-      dihedralgenerator.cpp 
-      dihedraltable.cpp     
-      errors.cpp	      
-      intercljff.cpp        
+      dihedraldb.cpp
+      dihedralgenerator.cpp
+      dihedraltable.cpp
+      errors.cpp
+      harmonicff.cpp
+      intercljff.cpp
       intercoulombff.cpp
       intergroupcoulombff.cpp
-      intergroupcljff.cpp   
+      intergroupcljff.cpp
       intergroupljff.cpp
       interljff.cpp
-      internaldatatypes.cpp 
+      internaldatatypes.cpp
       ljdb.cpp
       ljff.cpp
       ljpair.cpp

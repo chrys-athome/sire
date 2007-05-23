@@ -83,6 +83,8 @@
 
 #include "GeometricCombiningRules.pypp.hpp"
 
+#include "HarmonicFF.pypp.hpp"
+
 #include "HarmonicSwitchingFunction.pypp.hpp"
 
 #include "InterCLJFF.pypp.hpp"
@@ -293,6 +295,8 @@ BOOST_PYTHON_MODULE(_MM){
     register_DihedralTable_class();
 
     register_GeometricCombiningRules_class();
+
+    register_HarmonicFF_class();
 
     register_SwitchFuncBase_class();
 

@@ -1419,6 +1419,7 @@ bool CLJFF::setSwitchingFunction(const SwitchingFunction &sfunc)
     not exist in this forcefield.
 
     \throw SireBase::missing_property
+    \throw SireError::invalid_cast
 */
 bool CLJFF::setProperty(const QString &name, const Property &value)
 {
