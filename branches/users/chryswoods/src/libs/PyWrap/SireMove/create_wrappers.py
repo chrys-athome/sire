@@ -16,7 +16,8 @@ wrap_classes = [ "MonteCarlo",
                  "RigidBodyMC",
                  "SamplerBase",
                  "Sampler",
-                 "UniformSampler"
+                 "UniformSampler",
+                 "WeightedMoves"
                ]
 
 huge_classes = []
@@ -36,8 +37,12 @@ def fixPrefSampler(c):
 def fix_noncopyable(c):
     c.noncopyable = False
 
+def remove_next_move(c):
+    c.decls( "nextMove", allow_empty=False ).exclude()
+
 special_code = { "PrefSampler" : fixPrefSampler,
-                 "MTSMC" : fix_noncopyable }
+                 "MTSMC" : fix_noncopyable,
+                 "WeightedMoves" : remove_next_move }
 
 implicitly_convertible = [ ("const SireMove::SamplerBase&",
                             "SireMove::Sampler") 

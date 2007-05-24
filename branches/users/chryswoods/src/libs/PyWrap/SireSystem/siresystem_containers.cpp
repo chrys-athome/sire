@@ -54,6 +54,10 @@ void register_SireSystem_containers()
 
     register_list< QList<Move> >();
 
+    register_tuple< boost::tuple<Move,double> >();
+    
+    register_list< QVector< boost::tuple<Move,double> > >();
+
     #if QT_VERSION >= 0x402000
 
     register_dict< QHash<Symbol, SystemMonitor> >();

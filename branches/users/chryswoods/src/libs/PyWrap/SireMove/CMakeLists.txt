@@ -34,6 +34,8 @@ set ( WRAPMOVE_SOURCES
       
       UniformSampler.pypp.cpp
 
+      WeightedMoves.pypp.cpp
+
      )
 
 # Create the library that holds all of the class wrappers

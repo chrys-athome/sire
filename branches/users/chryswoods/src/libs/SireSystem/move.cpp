@@ -251,14 +251,6 @@ Move::Move() : d(shared_null)
 Move::Move(const MoveBase &move) : d(move)
 {}
 
-/** Construct from the passed pointer - this will be set to the
-    null move if the pointer is null */
-Move::Move(const SharedPolyPointer<MoveBase> &ptr) : d(ptr)
-{
-    if (!d)
-        d = shared_null;
-}
-
 /** Copy constructor */
 Move::Move(const Move &other) : d(other.d)
 {}
@@ -271,18 +263,6 @@ Move::~Move()
 Move& Move::operator=(const MoveBase &move)
 {
     d = move;
-
-    return *this;
-}
-
-/** Assign from a pointer - this will be set to the null object
-    if the pointer is null */
-Move& Move::operator=(const SharedPolyPointer<MoveBase> &ptr)
-{
-    if (ptr)
-        d = ptr;
-    else
-        d = shared_null;
 
     return *this;
 }

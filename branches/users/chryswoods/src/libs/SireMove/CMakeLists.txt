@@ -22,6 +22,8 @@ set ( SIREMOVE_SOURCES
       sampler.cpp
       
       uniformsampler.cpp
+      
+      weightedmoves.cpp
     )
 
 add_library (SireMove ${SIREMOVE_SOURCES})

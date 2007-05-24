@@ -24,7 +24,6 @@ void register_Move_class(){
     bp::class_< SireSystem::Move >( "Move" )    
         .def( bp::init< >() )    
         .def( bp::init< SireSystem::MoveBase const & >(( bp::arg("move") )) )    
-        .def( bp::init< SireBase::SharedPolyPointer<SireSystem::MoveBase> const & >(( bp::arg("ptr") )) )    
         .def( 
             "assertCompatibleWith"
             , (void ( ::SireSystem::Move::* )( ::SireSystem::QuerySystem & ) const)( &::SireSystem::Move::assertCompatibleWith )
@@ -44,6 +43,9 @@ void register_Move_class(){
             "setEnergyComponent"
             , (void ( ::SireSystem::Move::* )( ::SireCAS::Symbol const & ) )( &::SireSystem::Move::setEnergyComponent )
             , ( bp::arg("component") ) )    
+        .def( 
+            "what"
+            , (char const * ( ::SireSystem::Move::* )(  ) const)( &::SireSystem::Move::what ) )    
         .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireSystem::Move >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    

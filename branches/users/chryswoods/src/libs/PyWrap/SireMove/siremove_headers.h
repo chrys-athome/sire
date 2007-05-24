@@ -7,5 +7,6 @@
 #include "SireMove/rigidbodymc.h"
 #include "SireMove/sampler.h"
 #include "SireMove/uniformsampler.h"
+#include "SireMove/weightedmoves.h"
 
 #endif

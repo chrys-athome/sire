@@ -69,6 +69,10 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, MovesBase&)
 MovesBase::MovesBase() : QSharedData()
 {}
 
+/** Copy constructor */
+MovesBase::MovesBase(const MovesBase&) : QSharedData()
+{}
+
 /** Destructor */
 MovesBase::~MovesBase()
 {}
@@ -120,7 +124,7 @@ SameMoves::SameMoves(const Move &move)
 
 /** Copy constructor */
 SameMoves::SameMoves(const SameMoves &other)
-          : MovesBase(), single_move(other.single_move)
+          : MovesBase(other), single_move(other.single_move)
 {}
 
 /** Destructor */

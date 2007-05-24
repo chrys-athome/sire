@@ -31,6 +31,8 @@
 
 #include "UniformSampler.pypp.hpp"
 
+#include "WeightedMoves.pypp.hpp"
+
 #include "siremove_containers.h"
 
 namespace bp = boost::python;
@@ -50,8 +52,10 @@ BOOST_PYTHON_MODULE(_Move){
 
     register_Sampler_class();
 
+    register_UniformSampler_class();
+
     bp::implicitly_convertible< const SireMove::SamplerBase&, SireMove::Sampler >();
 
-    register_UniformSampler_class();
+    register_WeightedMoves_class();
 }
 

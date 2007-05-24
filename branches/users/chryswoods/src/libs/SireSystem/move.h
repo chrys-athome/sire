@@ -119,14 +119,11 @@ public:
 
     Move(const MoveBase &move);
 
-    Move(const SireBase::SharedPolyPointer<MoveBase> &ptr);
-
     Move(const Move &move);
 
     ~Move();
 
     Move& operator=(const MoveBase &move);
-    Move& operator=(const SireBase::SharedPolyPointer<MoveBase> &ptr);
     Move& operator=(const Move &move);
 
     void assertCompatibleWith(QuerySystem &system) const;
@@ -136,6 +133,11 @@ public:
     void setEnergyComponent(const Symbol &component);
     
     Symbol energyComponent() const;
+
+    const char* what() const
+    {
+        return d->what();
+    }
 
     MoveBase* clone() const
     {
