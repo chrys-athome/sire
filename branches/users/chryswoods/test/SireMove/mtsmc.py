@@ -170,43 +170,6 @@ system.setSpace(space)
 # molecules, with the solvent molecules picked uniformly
 mc = RigidBodyMC( PrefSampler(tip4p, 200.0, all_mols) )
 
-system.run(mc, 5)
-
-print system.monitors().monitor(e_total.function()).average()
-print system.monitors().monitor(e_total.function()).nUpdates()
-print system.forceFields().energy(e_total)
-print "\n"
-
-system.run(mc, 5)
-
-print system.monitors().monitor(e_total.function()).average()
-print system.monitors().monitor(e_total.function()).nUpdates()
-print system.forceFields().energy(e_total)
-print "\n"
-
-system.run(mc, 5)
-
-print system.monitors().monitor(e_total.function()).average()
-print system.monitors().monitor(e_total.function()).nUpdates()
-print system.forceFields().energy(e_total)
-print "\n"
-
-system.run(mc, 5)
-
-print system.monitors().monitor(e_total.function()).average()
-print system.monitors().monitor(e_total.function()).nUpdates()
-print system.forceFields().energy(e_total)
-print "\n"
-
-system.run(mc, 5)
-
-print system.monitors().monitor(e_total.function()).average()
-print system.monitors().monitor(e_total.function()).nUpdates()
-print system.forceFields().energy(e_total)
-print "\n"
-
-sys.exit(0)
-
 # Create a multiple-time-step MC move that performs 500
 # rigid body moves of the solvent using e_fast, then accepts
 # or rejects the whole block of moves using e_total

@@ -1063,6 +1063,7 @@ QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds, const MolproFF &molproff)
     sds << molproff.spce << molproff.switchfunc
         << molproff.molpro_exe.absoluteFilePath()     //save the full path to the
         << molproff.molpro_tmpdir.absolutePath()      //molpro exe and temp dirs...
+        << molproff.molpro_program << molproff.basis_set
         << molproff.qm_version << molproff.zero_nrg;
 
     //now stream in all of the QM molecules
@@ -1113,6 +1114,7 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, MolproFF &molproff)
 
         sds >> molproff.spce >> molproff.switchfunc
             >> molpro_exe_path >> molpro_tmpdir_path
+            >> molproff.molpro_program >> molproff.basis_set
             >> molproff.qm_version >> molproff.zero_nrg;
 
         //get the fileinfo for the molpro executable
@@ -1190,6 +1192,7 @@ static Incremint global_molproff_qm_version;
 MolproFF::MolproFF()
          : FFBase(),
            molpro_exe("molpro"), molpro_tmpdir(QDir::temp()),
+           molpro_program("HF"), basis_set("VDZ"),
            qm_version(&global_molproff_qm_version), zero_nrg(0),
            ff_status(NEED_ENERGY_CALC)
 {
@@ -1201,6 +1204,7 @@ MolproFF::MolproFF(const Space &space, const SwitchingFunction &switchingfunctio
          : FFBase(),
            spce(space), switchfunc(switchingfunction),
            molpro_exe("molpro"), molpro_tmpdir(QDir::temp()),
+           molpro_program("HF"), basis_set("VDZ"),
            qm_version(&global_molproff_qm_version), zero_nrg(0),
            ff_status(NEED_ENERGY_CALC)
 {
@@ -1212,6 +1216,7 @@ MolproFF::MolproFF(const MolproFF &other)
          : FFBase(other),
            spce(other.spce), switchfunc(other.switchfunc),
            molpro_exe(other.molpro_exe), molpro_tmpdir(other.molpro_tmpdir),
+           molpro_program(other.molpro_program), basis_set(other.basis_set),
            qm_coords(other.qm_coords),
            mm_coords_and_charges(other.mm_coords_and_charges),
            qm_mols(other.qm_mols), qm_coordgroup(other.qm_coordgroup),
@@ -1247,6 +1252,8 @@ void MolproFF::_pvt_copy(const FFBase &ffbase)
     switchfunc = other.switchfunc;
     molpro_exe = other.molpro_exe;
     molpro_tmpdir = other.molpro_tmpdir;
+    molpro_program = other.molpro_program;
+    basis_set = other.basis_set;
     qm_coords = other.qm_coords;
     mm_coords_and_charges = other.mm_coords_and_charges;
     qm_mols = other.qm_mols;
@@ -1439,6 +1446,48 @@ bool MolproFF::setEnergyOrigin(double nrg)
     return isDirty();
 }
 
+/** Return the string of commands used to define the program used
+    to calculate the energy and forces */
+const QString& MolproFF::program() const
+{
+    return molpro_program;
+}
+
+/** Return the string that describes the basis set - this is "vdz" by 
+    default */
+const QString& MolproFF::basisSet() const
+{
+    return basis_set;
+}
+
+/** Set the program that will be used to calculate the energy and forces */
+bool MolproFF::setProgram(const QString &program)
+{
+    if (molpro_program != program)
+    {
+        molpro_program = program;
+        qm_version.increment();
+        this->incrementMajorVersion();
+        this->mustNowRecalculateFromScratch();
+    }
+    
+    return isDirty();
+}
+
+/** Set the basis set used during the calculation */
+bool MolproFF::setBasisSet(const QString &basisset)
+{
+    if (basis_set != basisset)
+    {
+        basis_set = basisset;
+        qm_version.increment();
+        this->incrementMajorVersion();
+        this->mustNowRecalculateFromScratch();
+    }
+    
+    return isDirty();
+}
+
 /** Return the zero energy of the forcefield, in internal
     units (kcal mol-1) */
 double MolproFF::energyOrigin() const
@@ -1495,6 +1544,48 @@ bool MolproFF::setProperty(const QString &name, const Property &value)
     else if ( name == QLatin1String("switching function") )
     {
         this->setSwitchingFunction(value);
+        return this->isDirty();
+    }
+    else if ( name == QLatin1String("program") )
+    {
+        if (not value.isA<VariantProperty>())
+            throw SireError::invalid_cast( QObject::tr(
+                "You must set the Molpro program "
+                "via a string (which will "
+                "implicitly convert to a VariantProperty). You cannot "
+                "set the program from a %1!").arg(value.what()),
+                      CODELOC );
+
+        const VariantProperty &varprop = value.asA<VariantProperty>();
+
+        if (varprop.canConvert<QString>())
+            this->setProgram( varprop.value<QString>() );
+        else
+            throw SireError::invalid_cast( QObject::tr(
+                "You must set the Molpro program as a string!"),
+                    CODELOC );
+
+        return this->isDirty();
+    }
+    else if ( name == QLatin1String("basis set") )
+    {
+        if (not value.isA<VariantProperty>())
+            throw SireError::invalid_cast( QObject::tr(
+                "You must set the basis set "
+                "via a string (which will "
+                "implicitly convert to a VariantProperty). You cannot "
+                "set the basis set from a %1!").arg(value.what()),
+                      CODELOC );
+
+        const VariantProperty &varprop = value.asA<VariantProperty>();
+
+        if (varprop.canConvert<QString>())
+            this->setBasisSet( varprop.value<QString>() );
+        else
+            throw SireError::invalid_cast( QObject::tr(
+                "You must set the basis set as a string!"),
+                    CODELOC );
+
         return this->isDirty();
     }
     else if ( name == QLatin1String("energy origin") )
@@ -1579,6 +1670,14 @@ Property MolproFF::getProperty(const QString &name) const
     {
         return this->switchingFunction();
     }
+    else if ( name == QLatin1String("program") )
+    {
+        return QVariant::fromValue(this->program());
+    }
+    else if ( name == QLatin1String("basis set") )
+    {
+        return QVariant::fromValue(this->basisSet());
+    }
     else if ( name == QLatin1String("energy origin") )
     {
         return QVariant::fromValue(this->energyOrigin());
@@ -1601,6 +1700,8 @@ bool MolproFF::containsProperty(const QString &name) const
     return ( name == QLatin1String("space") ) or
            ( name == QLatin1String("switching function") ) or
            ( name == QLatin1String("energy origin") ) or
+           ( name == QLatin1String("program") ) or
+           ( name == QLatin1String("basis set") ) or
            ( name == QLatin1String("molpro") ) or
            ( name == QLatin1String("molpro temporary directory") ) or
            FFBase::containsProperty(name);
@@ -1615,6 +1716,10 @@ QHash<QString,Property> MolproFF::properties() const
     props.insert( QLatin1String("switching function"), this->switchingFunction() );
     props.insert( QLatin1String("energy origin"),
                     QVariant::fromValue(this->energyOrigin()) );
+    props.insert( QLatin1String("program"),
+                    QVariant::fromValue(this->program()) );
+    props.insert( QLatin1String("basis set"),
+                    QVariant::fromValue(this->basisSet()) );
     props.insert( QLatin1String("molpro"),
                     QVariant::fromValue(this->molproExe().absoluteFilePath()) );
     props.insert( QLatin1String("molpro temporary directory"),
@@ -2642,12 +2747,6 @@ void MolproFF::updateArrays()
     }
 }
 
-/** Return the string of commands used to calculate the energy */
-QString MolproFF::energyCmdString() const
-{
-    return "HF\nMP2";
-}
-
 /** Return Molpro format strings used to specify the QM geometry */
 QString MolproFF::qmCoordString() const
 {
@@ -2738,11 +2837,13 @@ QString MolproFF::molproCommandInput()
                    "BEGIN_DATA\n"
                    "%3\n"
                    "END\n"
+                   "BASIS=%4\n"
                    "START\n"
-                   "%4\n")
+                   "%5\n"
+                  )
               .arg( nQMAtomsInArray() )
-              .arg( qmCoordString(), mmCoordAndChargesString(),
-                    energyCmdString() );
+              .arg( qmCoordString(), mmCoordAndChargesString(), 
+                    basisSet(), program() );
 }
 
 /** Use the passed MolproSession to recalculate the energy of
@@ -2770,7 +2871,7 @@ Values MolproFF::recalculateEnergy(MolproSession &session)
             session.setArrays(qm_coords, mm_coords_and_charges);
 
             //calculate the energy of the system
-            qmmm_nrg = session.calculateEnergy(this->energyCmdString());
+            qmmm_nrg = session.calculateEnergy();
         }
 
         qmmm_nrg = (qmmm_nrg - zero_nrg) * hartree;
@@ -2807,7 +2908,7 @@ void MolproFF::recalculateEnergy()
             MolproSession session(*this);
 
             //obtain the calculated energy from molpro
-            qmmm_nrg = session.calculateEnergy(this->energyCmdString());
+            qmmm_nrg = session.calculateEnergy();
         }
 
         //subtract the zero energy and convert to kcal mol-1

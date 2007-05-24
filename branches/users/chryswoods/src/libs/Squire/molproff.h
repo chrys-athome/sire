@@ -252,8 +252,14 @@ public:
     const Space& space() const;
     const SwitchingFunction& switchingFunction() const;
 
+    const QString& program() const;
+    const QString& basisSet() const;
+
     virtual bool setSpace(const Space &space);
     virtual bool setSwitchingFunction(const SwitchingFunction &switchfunc);
+
+    virtual bool setProgram(const QString &cmd);
+    virtual bool setBasisSet(const QString &basisset);
 
     bool setProperty(const QString &name, const Property &value);
     Property getProperty(const QString &name) const;
@@ -378,8 +384,7 @@ protected:
 
 private:
     void registerComponents();
-
-    QString energyCmdString() const;
+    
     QString qmCoordString() const;
     QString mmCoordAndChargesString();
 
@@ -544,6 +549,14 @@ private:
         Each calculation will be carried out within a new unique directory
         within this directory. */
     QDir molpro_tmpdir;
+
+    /** The program used to calculate the energy and forces
+        (e.g. "HF", "HF\nMP2", "HF\nCCSD(T)") */
+    QString molpro_program;
+    
+    /** The string describing the basis set to use 
+        (e.g. "vdz", "vtz", "6-31g**") */
+    QString basis_set;
 
     /** All of the coordinates of the QM atoms */
     QVector<double> qm_coords;

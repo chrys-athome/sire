@@ -5,6 +5,7 @@ from Sire.Vol import *
 from Sire.FF import *
 from Sire.MM import *
 from Sire.CAS import *
+from Sire.Base import *
 from Sire.Maths import *
 from Sire.Qt import *
 from Sire.Units import *
@@ -39,14 +40,14 @@ molpro = MolproFF(space, switchfunc)
 #in coulomb electrostatic energy
 coulff = InterGroupCoulombFF(space, switchfunc)
 
-molpro.setMolproExe("../../../../../software/molpro/devel/molpro")
+molpro.setMolproExe( findExe("molpro") )
 
 #parametise each molecule and add it to the forcefield
 print "Parametising the molecules..."
 
-chgs = AtomicCharges( [0.0, 0.52 * mod_electrons,
-                            0.52 * mod_electrons,
-                           -1.04 * mod_electrons] )
+chgs = AtomicCharges( [0.0, 0.52 * mod_electron,
+                            0.52 * mod_electron,
+                           -1.04 * mod_electron] )
 
 ljs = AtomicLJs( [ LJParameter( 3.15365 * angstrom, \
                                 0.1550 * kcal_per_mol ), \
@@ -77,6 +78,11 @@ print "... took %d ms" % ms
       
 #now calculate the energy of the forcefield
 print "Calculating the energy..."
+
+molpro.setProgram("HF\nMP2")
+molpro.setBasisSet("AVDZ")
+
+print >>open("test.cmd","w"), molpro.molproCommandInput()
 
 timer.start()
 nrg = molpro.energy()
@@ -146,4 +152,4 @@ new_mm = coulff.energy()
 
 print old_qm, new_qm, new_qm - old_qm
 print old_mm, new_mm, new_mm - old_mm
-
+print (new_qm - new_mm) - (old_qm - old_mm)

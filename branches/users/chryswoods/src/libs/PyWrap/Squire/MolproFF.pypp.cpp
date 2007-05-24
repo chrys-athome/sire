@@ -132,6 +132,16 @@ void register_MolproFF_class(){
                 , ( bp::arg("molecules"), bp::arg("map")=::SireFF::ParameterMap( ) ) );
         
         }
+        { //::Squire::MolproFF::basisSet
+        
+            typedef ::QString const & ( ::Squire::MolproFF::*basisSet_function_type )(  ) const;
+            
+            MolproFF_exposer.def( 
+                "basisSet"
+                , basisSet_function_type( &::Squire::MolproFF::basisSet )
+                , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
         { //::Squire::MolproFF::change
         
             typedef bool ( ::Squire::MolproFF::*change_function_type )( ::SireMol::PartialMolecule const & ) ;
@@ -356,6 +366,16 @@ void register_MolproFF_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        { //::Squire::MolproFF::program
+        
+            typedef ::QString const & ( ::Squire::MolproFF::*program_function_type )(  ) const;
+            
+            MolproFF_exposer.def( 
+                "program"
+                , program_function_type( &::Squire::MolproFF::program )
+                , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
         { //::Squire::MolproFF::properties
         
             typedef ::QHash<QString,SireBase::Property> ( ::Squire::MolproFF::*properties_function_type )(  ) const;
@@ -493,6 +513,16 @@ void register_MolproFF_class(){
                 , ( bp::arg("molecules") ) );
         
         }
+        { //::Squire::MolproFF::setBasisSet
+        
+            typedef bool ( ::Squire::MolproFF::*setBasisSet_function_type )( ::QString const & ) ;
+            
+            MolproFF_exposer.def( 
+                "setBasisSet"
+                , setBasisSet_function_type( &::Squire::MolproFF::setBasisSet )
+                , ( bp::arg("basisset") ) );
+        
+        }
         { //::Squire::MolproFF::setEnergyOrigin
         
             typedef bool ( ::Squire::MolproFF::*setEnergyOrigin_function_type )( double ) ;
@@ -521,6 +551,16 @@ void register_MolproFF_class(){
                 "setMolproTempDir"
                 , setMolproTempDir_function_type( &::Squire::MolproFF::setMolproTempDir )
                 , ( bp::arg("tempdir") ) );
+        
+        }
+        { //::Squire::MolproFF::setProgram
+        
+            typedef bool ( ::Squire::MolproFF::*setProgram_function_type )( ::QString const & ) ;
+            
+            MolproFF_exposer.def( 
+                "setProgram"
+                , setProgram_function_type( &::Squire::MolproFF::setProgram )
+                , ( bp::arg("cmd") ) );
         
         }
         { //::Squire::MolproFF::setProperty

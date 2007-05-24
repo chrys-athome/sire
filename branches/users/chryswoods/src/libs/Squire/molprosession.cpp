@@ -181,9 +181,15 @@ MolproSession::MolproSession(MolproFF &molproff)
         int nbytes = molpro_process.write( molproff.molproCommandInput().toLatin1() );
         BOOST_ASSERT(nbytes != -1);
 
-        //tell the molpro process to start its RPC connection
-        nbytes = molpro_process.write("user\n");  //eventually will be write("start_rpc\n");
+        //tell the molpro process to start its RPC connection and also
+        //to save the energy to a variable that we can access
+        nbytes = molpro_process.write("INITIAL_ENERGY = energy\nuser\n");  
+        //eventually will be write("INITIAL_ENERGY = energy\nstart_rpc\n");
+        
         BOOST_ASSERT(nbytes != -1);
+
+        //record the energy commands to use
+        nrg_cmds = molproff.program().toLatin1();
 
         //close the input (so that molpro starts up fully)
         molpro_process.closeWriteChannel();
@@ -413,7 +419,7 @@ double MolproSession::getCurrentEnergy()
 {
     char *error = 0;
 
-    double nrg = ::get_scalar(molpro_rpc, "ENERGY", &error);
+    double nrg = ::get_scalar(molpro_rpc, "INITIAL_ENERGY", &error);
 
     this->captureErrorLog();
 
@@ -431,17 +437,12 @@ double MolproSession::getCurrentEnergy()
     return nrg;
 }
 
-/** Calculate the energy of the current system using the
-    Molpro commands in 'cmds' - returns the QM energy.
+/** Calculate the energy of the current system
 
     \throw SireError::process_error
 */
-double MolproSession::calculateEnergy(const QString &qcmds)
+double MolproSession::calculateEnergy()
 {
-    QByteArray bcmds = qcmds.toLatin1();
-    BOOST_ASSERT( not bcmds.isEmpty() );
-    const char *cmds = bcmds.constData();
-
     //molpro still needs to be running!
     this->assertMolproIsRunning();
 
@@ -458,16 +459,14 @@ double MolproSession::calculateEnergy(const QString &qcmds)
         if (new_mm.constData() == current_mm.constData())
         {
             //the coordinates of the QM and MM regions have not changed
-            //since the last evaluation - just run the commands and
-            //get the energy
-            //nrg = ::run_hf(molpro_rpc, &error);
-            nrg = ::calculateEnergy( molpro_rpc, cmds, 0, &error );
+            //since the last evaluation - just get the energy
+            nrg = this->getCurrentEnergy();
         }
         else
         {
             //only the MM region has changed since the last update
             nrg = ::calculateEnergyWithNewMM( molpro_rpc,
-                                              cmds,
+                                              nrg_cmds.constData(),
                                               const_cast<double*>(new_mm.constData()),
                                               new_mm.count() / 4,
                                               0, &error );
@@ -480,7 +479,7 @@ double MolproSession::calculateEnergy(const QString &qcmds)
             //the coordinates of only the QM region
             //has changed since the last update
             nrg = ::calculateEnergyWithNewQM( molpro_rpc,
-                                              cmds,
+                                              nrg_cmds.constData(),
                                               const_cast<double*>(new_qm.constData()),
                                               new_qm.count() / 3,
                                               0, &error );
@@ -488,7 +487,7 @@ double MolproSession::calculateEnergy(const QString &qcmds)
         else
         {
             //both the QM and MM regions have changed since the last update
-            nrg = ::calculateEnergyWithNewQMMM( molpro_rpc, cmds,
+            nrg = ::calculateEnergyWithNewQMMM( molpro_rpc, nrg_cmds.constData(),
                                                 const_cast<double*>(new_qm.constData()),
                                                 new_qm.count() / 3,
                                                 const_cast<double*>(new_mm.constData()),
@@ -509,7 +508,7 @@ double MolproSession::calculateEnergy(const QString &qcmds)
         throw SireError::process_error( QObject::tr(
                 "Error detected while running the Molpro commands \"%1\" : %2\n"
                 "Molpro error log:\n%3")
-                    .arg(qcmds, qerror, errorlog.join("")), CODELOC );
+                    .arg(nrg_cmds, qerror, errorlog.join("")), CODELOC );
 
     }
 

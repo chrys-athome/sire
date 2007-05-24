@@ -26,8 +26,7 @@ void register_MolproSession_class(){
             , (void ( ::Squire::MolproSession::* )(  ) const)( &::Squire::MolproSession::assertMolproIsRunning ) )    
         .def( 
             "calculateEnergy"
-            , (double ( ::Squire::MolproSession::* )( ::QString const & ) )( &::Squire::MolproSession::calculateEnergy )
-            , ( bp::arg("cmds") ) )    
+            , (double ( ::Squire::MolproSession::* )(  ) )( &::Squire::MolproSession::calculateEnergy ) )    
         .def( 
             "getCurrentEnergy"
             , (double ( ::Squire::MolproSession::* )(  ) )( &::Squire::MolproSession::getCurrentEnergy ) )    

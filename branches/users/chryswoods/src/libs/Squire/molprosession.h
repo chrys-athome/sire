@@ -73,8 +73,7 @@ public:
     void setArrays(const QVector<double> &qm_array,
                    const QVector<double> &mm_array);
 
-    double calculateEnergy(const QString &cmds);
-
+    double calculateEnergy();
     double getCurrentEnergy();
 
     bool incompatibleWith(const MolproFF &molproff) const;
@@ -102,6 +101,9 @@ private:
 
     /** The QProcess in which the molpro process is started */
     QProcess molpro_process;
+
+    /** The commands used to calculate the energy */
+    QByteArray nrg_cmds;
 
     /** The current ID number of the MolproFF that has been loaded
         onto this session */
