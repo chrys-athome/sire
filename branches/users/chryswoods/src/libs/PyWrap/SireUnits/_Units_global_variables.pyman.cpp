@@ -213,7 +213,25 @@ void register_man_global_variables()
 
     scope().attr("c") = c;
 
+    scope().attr("epsilon0") = epsilon0;
+
+    scope().attr("four_pi_eps0") = four_pi_eps0;
+
+    scope().attr("one_over_four_pi_eps0") = one_over_four_pi_eps0;
+
+    scope().attr("gasr") = gasr;
+
+    scope().attr("k_boltz") = k_boltz;
+
+    scope().attr("mu0") = mu0;
+
+    scope().attr("G_newton") = G_newton;
+
     scope().attr("g_accel") = g_accel;
+
+    scope().attr("h_planck") = h_planck;
+
+    scope().attr("h_slash") = h_slash;
 
     scope().attr("electron_mass") = electron_mass;
 

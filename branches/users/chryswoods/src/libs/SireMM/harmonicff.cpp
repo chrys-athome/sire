@@ -47,6 +47,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QDebug>
+
 using namespace SireMol;
 using namespace SireBase;
 using namespace SireFF;
@@ -1032,7 +1034,6 @@ void HarmonicFF::recalculateTotalEnergy()
     double nrg = 0;
 
     int nmols = mols.count();
-    const HarmonicMolecule *mols_array = mols.constData();
 
     if (not changed_mols.isEmpty())
     {
@@ -1051,11 +1052,13 @@ void HarmonicFF::recalculateTotalEnergy()
                 const QHash<AtomSelection,uint> &parts
                                       = *(molid_to_index.constFind(it.key()));
 
+                HarmonicMolecule *mols_array = mols.data();
+
                 for (QHash<AtomSelection,uint>::const_iterator it2 = parts.begin();
                      it2 != parts.end();
                      ++it2)
                 {
-                    mols[*it2].change(*it);
+                    mols_array[*it2].change(*it);
                 }
             }
         }
@@ -1065,6 +1068,8 @@ void HarmonicFF::recalculateTotalEnergy()
             throw;
         }
     }
+
+    const HarmonicMolecule *mols_array = mols.constData();
 
     for (int i=0; i<nmols; ++i)
     {
@@ -1090,7 +1095,7 @@ void HarmonicFF::recalculateEnergy()
 
         try
         {
-            const HarmonicMolecule *mols_array = mols.constData();
+            HarmonicMolecule *mols_array = mols.data();
 
             //change all of the molecules
             for (QHash<MoleculeID,Molecule>::const_iterator it = changed_mols.constBegin();
@@ -1108,7 +1113,7 @@ void HarmonicFF::recalculateEnergy()
                 {
                     BOOST_ASSERT( *it2 < uint(mols.count()) );
 
-                    HarmonicMolecule mol = mols_array[*it2];
+                    HarmonicMolecule &mol = mols_array[*it2];
 
                     delta_nrg -= mol.energy(spce);
                     mol.change(*it);

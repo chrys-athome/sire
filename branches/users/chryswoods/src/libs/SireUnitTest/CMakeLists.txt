@@ -20,6 +20,7 @@ set ( SIREUNITTEST_SOURCES
       testcutgroup.cpp
       testffdb.cpp
       testforcefields.cpp
+      testharmonicff.cpp
       testmatch.cpp
       testperiodicbox.cpp
       testpropertyextractor.cpp
@@ -47,7 +48,7 @@ if (MOLPRO_FOUND)
 
     add_definitions( ${MOLPRO_DEFINITIONS} )
 
-endif (MOLPRO_FOUND)        
+endif (MOLPRO_FOUND)
 
 # Add the resource files
 set ( SIREUNITTEST_RCCS

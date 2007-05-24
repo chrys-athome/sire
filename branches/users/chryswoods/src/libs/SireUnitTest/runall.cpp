@@ -34,6 +34,7 @@
 #include "testcomplex.h"
 #include "testffdb.h"
 #include "testforcefields.h"
+#include "testharmonicff.h"
 #include "testmatch.h"
 #include "testperiodicbox.h"
 #include "testpropertyextractor.h"
@@ -58,6 +59,7 @@ void SireTest::runAll(test_suite *test)
     initialise(new TestCutGroup(), test);
     initialise(new TestFFDB(), test);
     initialise(new TestForceFields(), test);
+    initialise(new TestHarmonicFF(), test);
     initialise(new TestMatch(), test);
 
     #ifdef _BUILD_MOLPRO_

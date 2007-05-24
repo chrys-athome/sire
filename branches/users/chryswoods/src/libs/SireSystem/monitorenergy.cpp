@@ -157,8 +157,6 @@ void MonitorEnergy::monitor(QuerySystem &system)
 
     double nrg = system.energy(cmpnt);
 
-    qDebug() << "MONITOR" << cmpnt.toString() << ":" << nrg;
-
     this->addToAverage(nrg);
 }
 

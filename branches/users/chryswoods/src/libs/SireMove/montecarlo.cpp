@@ -35,6 +35,8 @@
 
 #include "SireStream/datastream.h"
 
+#include <QDebug>
+
 using namespace SireMove;
 using namespace SireUnits;
 using namespace SireSystem;
@@ -180,7 +182,7 @@ bool MonteCarlo::test(double new_energy, double old_energy,
     }
 }
 
-/** Perform the Monte Carlo test, using the supplied change in energy 
+/** Perform the Monte Carlo test, using the supplied change in energy
     (no change in biasing factor) */
 bool MonteCarlo::test(double new_energy, double old_energy)
 {
@@ -189,9 +191,9 @@ bool MonteCarlo::test(double new_energy, double old_energy)
         ++naccept;
         return true;
     }
-    
+
     double x = std::exp( -beta*(new_energy - old_energy) );
-    
+
     if (x > 1 or x > _generator.rand())
     {
         ++naccept;

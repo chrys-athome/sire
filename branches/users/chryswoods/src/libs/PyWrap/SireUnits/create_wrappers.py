@@ -63,6 +63,12 @@ def findGlobals():
         if match:
             name = match.group(2)
             print >>FILE, "    scope().attr(\"%s\") = %s;\n" % (name,name)
+        else:
+            match = re.search(r"const double\s+(\w+)", line)
+            
+            if match:
+                name = match.group(1)
+                print >>FILE, "    scope().attr(\"%s\") = %s;\n" % (name,name)
 
 
     print >>FILE, "}\n"

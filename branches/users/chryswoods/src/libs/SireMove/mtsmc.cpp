@@ -200,8 +200,6 @@ void MTSMC::move(SimSystem &system)
     CheckPoint checkpoint = system.checkPoint();
     Moves old_moves = fast_moves;
 
-    qDebug() << "Old energies ==" << V_old << V2_old;
-
     try
     {
         //perform the moves using the fast forcefield
@@ -211,19 +209,13 @@ void MTSMC::move(SimSystem &system)
         double V_new = energy(system);
         double V2_new = V_new - system.energy(fast_component);
 
-        qDebug() << "New energies ==" << V_new << V2_new;
-
         if (not this->test(V2_new, V2_old))
         {
-            qDebug() << "FAIL!!!";
-
             //the move has been rejected - reset the state,
             //but don't restore the moves, as I don't want to
             //lose their statistics
             system.rollBack(checkpoint);
         }
-        else
-            qDebug() << "PASS!!!";
     }
     catch(...)
     {
