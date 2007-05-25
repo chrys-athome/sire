@@ -70,6 +70,22 @@ void register_PeriodicBox_class(){
             , (::QVector<SireVol::CoordGroup> ( ::SireVol::PeriodicBox::* )( ::QVector<SireVol::CoordGroup> const &,::SireMaths::Vector const & ) const)( &::SireVol::PeriodicBox::getMinimumImage )
             , ( bp::arg("groups"), bp::arg("center") ) )    
         .def( 
+            "mapFromCartesian"
+            , (::SireVol::CoordGroup ( ::SireVol::PeriodicBox::* )( ::SireVol::CoordGroup const & ) const)( &::SireVol::PeriodicBox::mapFromCartesian )
+            , ( bp::arg("group") ) )    
+        .def( 
+            "mapFromCartesian"
+            , (::QVector<SireVol::CoordGroup> ( ::SireVol::PeriodicBox::* )( ::QVector<SireVol::CoordGroup> const & ) const)( &::SireVol::PeriodicBox::mapFromCartesian )
+            , ( bp::arg("groups") ) )    
+        .def( 
+            "mapFromSelf"
+            , (::SireVol::CoordGroup ( ::SireVol::PeriodicBox::* )( ::SireVol::CoordGroup const &,::SireVol::Space const & ) const)( &::SireVol::PeriodicBox::mapFromSelf )
+            , ( bp::arg("group"), bp::arg("other") ) )    
+        .def( 
+            "mapFromSelf"
+            , (::QVector<SireVol::CoordGroup> ( ::SireVol::PeriodicBox::* )( ::QVector<SireVol::CoordGroup> const &,::SireVol::Space const & ) const)( &::SireVol::PeriodicBox::mapFromSelf )
+            , ( bp::arg("groups"), bp::arg("other") ) )    
+        .def( 
             "maxCoords"
             , (::SireMaths::Vector const & ( ::SireVol::PeriodicBox::* )(  ) const)( &::SireVol::PeriodicBox::maxCoords )
             , bp::return_value_policy< bp::copy_const_reference >() )    
@@ -81,14 +97,6 @@ void register_PeriodicBox_class(){
             "minimumDistance"
             , (double ( ::SireVol::PeriodicBox::* )( ::SireVol::CoordGroup const &,::SireVol::CoordGroup const & ) const)( &::SireVol::PeriodicBox::minimumDistance )
             , ( bp::arg("group0"), bp::arg("group1") ) )    
-        .def( 
-            "moveToCenterBox"
-            , (::SireVol::CoordGroup ( ::SireVol::PeriodicBox::* )( ::SireVol::CoordGroup const & ) const)( &::SireVol::PeriodicBox::moveToCenterBox )
-            , ( bp::arg("group") ) )    
-        .def( 
-            "moveToCenterBox"
-            , (::QVector<SireVol::CoordGroup> ( ::SireVol::PeriodicBox::* )( ::QVector<SireVol::CoordGroup> const & ) const)( &::SireVol::PeriodicBox::moveToCenterBox )
-            , ( bp::arg("groups") ) )    
         .def( 
             "setDimension"
             , (void ( ::SireVol::PeriodicBox::* )( ::SireMaths::Vector const &,::SireMaths::Vector const & ) )( &::SireVol::PeriodicBox::setDimension )

@@ -103,9 +103,12 @@ public:
 
     double minimumDistance(const CoordGroup &group) const;
 
-    CoordGroup moveToCenterBox(const CoordGroup &group) const;
+    CoordGroup mapFromCartesian(const CoordGroup &group) const;
+    QVector<CoordGroup> mapFromCartesian(const QVector<CoordGroup> &groups) const;
 
-    QVector<CoordGroup> moveToCenterBox(const QVector<CoordGroup> &groups) const;
+    CoordGroup mapFromSelf(const CoordGroup &group, const Space &other) const;
+    QVector<CoordGroup> mapFromSelf(const QVector<CoordGroup> &groups,
+                                    const Space &other) const;
 
     CoordGroup getMinimumImage(const CoordGroup &group, const Vector &center) const;
 

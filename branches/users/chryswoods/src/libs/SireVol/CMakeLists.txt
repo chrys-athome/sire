@@ -14,6 +14,7 @@ set ( SIREVOL_SOURCES
       aabox.cpp
       cartesian.cpp
       coordgroup.cpp
+      mappingfunction.cpp
       periodicbox.cpp
       space.cpp
     )

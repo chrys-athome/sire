@@ -75,6 +75,22 @@ void register_SpaceBase_class(){
             , (::QVector<SireVol::CoordGroup> ( ::SireVol::SpaceBase::* )( ::QVector<SireVol::CoordGroup> const &,::SireMaths::Vector const & ) const)( &::SireVol::SpaceBase::getMinimumImage )
             , ( bp::arg("groups"), bp::arg("center") ) )    
         .def( 
+            "mapFromCartesian"
+            , (::SireVol::CoordGroup ( ::SireVol::SpaceBase::* )( ::SireVol::CoordGroup const & ) const)( &::SireVol::SpaceBase::mapFromCartesian )
+            , ( bp::arg("group") ) )    
+        .def( 
+            "mapFromCartesian"
+            , (::QVector<SireVol::CoordGroup> ( ::SireVol::SpaceBase::* )( ::QVector<SireVol::CoordGroup> const & ) const)( &::SireVol::SpaceBase::mapFromCartesian )
+            , ( bp::arg("groups") ) )    
+        .def( 
+            "mapFromSelf"
+            , (::SireVol::CoordGroup ( ::SireVol::SpaceBase::* )( ::SireVol::CoordGroup const &,::SireVol::Space const & ) const)( &::SireVol::SpaceBase::mapFromSelf )
+            , ( bp::arg("group"), bp::arg("other") ) )    
+        .def( 
+            "mapFromSelf"
+            , (::QVector<SireVol::CoordGroup> ( ::SireVol::SpaceBase::* )( ::QVector<SireVol::CoordGroup> const &,::SireVol::Space const & ) const)( &::SireVol::SpaceBase::mapFromSelf )
+            , ( bp::arg("groups"), bp::arg("other") ) )    
+        .def( 
             "minimumDistance"
             , (double ( ::SireVol::SpaceBase::* )( ::SireVol::CoordGroup const &,::SireVol::CoordGroup const & ) const)( &::SireVol::SpaceBase::minimumDistance )
             , ( bp::arg("group0"), bp::arg("group1") ) )    
@@ -82,14 +98,6 @@ void register_SpaceBase_class(){
             "minimumDistance"
             , (double ( ::SireVol::SpaceBase::* )( ::SireVol::CoordGroup const & ) const)( &::SireVol::SpaceBase::minimumDistance )
             , ( bp::arg("group") ) )    
-        .def( 
-            "moveToCenterBox"
-            , (::SireVol::CoordGroup ( ::SireVol::SpaceBase::* )( ::SireVol::CoordGroup const & ) const)( &::SireVol::SpaceBase::moveToCenterBox )
-            , ( bp::arg("group") ) )    
-        .def( 
-            "moveToCenterBox"
-            , (::QVector<SireVol::CoordGroup> ( ::SireVol::SpaceBase::* )( ::QVector<SireVol::CoordGroup> const & ) const)( &::SireVol::SpaceBase::moveToCenterBox )
-            , ( bp::arg("groups") ) )    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireVol::SpaceBase >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireVol::SpaceBase >,

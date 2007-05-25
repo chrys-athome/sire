@@ -15,9 +15,12 @@ wrap_classes = [ "AABox",
                  "CoordGroupBase",
                  "CoordGroup",
                  "CoordGroupEditor",
+                 "MapFromCartesianFunction",
+                 "MapFromSelfFunction",
+                 "MappingFunctionBase",
                  "PeriodicBox",
                  "SpaceBase",
-                 "Space" 
+                 "Space"
                ]
 
 huge_classes = []
@@ -39,7 +42,8 @@ special_code = { "CoordGroupBase" : fix_coordgroup,
                  "CoordGroupEditor" : fix_coordgroupeditor }
 
 implicitly_convertible = [ ("QVector<SireMaths::Vector>","SireVol::CoordGroup"),
-                           ("const SireVol::SpaceBase&","SireVol::Space")
+                           ("const SireVol::SpaceBase&","SireVol::Space"),
+                           ("const SireVol::MappingFunctionBase&","SireVol::MappingFunction")
                          ]
 
 incpaths = sys.argv[1:]

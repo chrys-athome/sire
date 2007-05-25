@@ -134,7 +134,7 @@ MoleculeMover MoleculeMover::mapInto(const Space &space) const
     QVector<CoordGroup> coords = data().coordGroups();
 
     //map them all into the space
-    QVector<CoordGroup> mapped_coords = space.moveToCenterBox(coords);
+    QVector<CoordGroup> mapped_coords = space.mapFromCartesian(coords);
 
     //has anything changed?
     if (coords.constData() == mapped_coords.constData())

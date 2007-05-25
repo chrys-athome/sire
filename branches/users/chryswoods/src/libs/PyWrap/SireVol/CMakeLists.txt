@@ -29,6 +29,11 @@ set ( WRAPVOL_SOURCES
       CoordGroupEditor.pypp.cpp
       CoordGroup.pypp.cpp
       
+      MapFromCartesianFunction.pypp.cpp
+      MapFromSelfFunction.pypp.cpp
+      MappingFunctionBase.pypp.cpp
+      
+      
       PeriodicBox.pypp.cpp
       SpaceBase.pypp.cpp
       Space.pypp.cpp

@@ -454,23 +454,72 @@ QVector<CoordGroup> PeriodicBox::getMinimumImage(const QVector<CoordGroup> &grou
 
 }
 
-/** Return a copy of the passed CoordGroup that has been moved into the
-    central box. */
-CoordGroup PeriodicBox::moveToCenterBox(const CoordGroup &group) const
+/** Return a copy of the passed CoordGroup that has been mapped from
+    an infinite cartesian space into this space */
+CoordGroup PeriodicBox::mapFromCartesian(const CoordGroup &group) const
 {
     //this is the same as getting the minimum image from the
     //center of the box
     return getMinimumImage(group, this->center());
 }
 
-/** Return a copy of an array of passed CoordGroups that have been moved
-    into the central box. */
-QVector<CoordGroup> PeriodicBox::moveToCenterBox(
+/** Return a copy of an array of passed CoordGroups that have been mapped
+    from an infinite cartesian space into this space. */
+QVector<CoordGroup> PeriodicBox::mapFromCartesian(
                                   const QVector<CoordGroup> &groups) const
 {
     //this is the same as getting the minimum image from the
     //center of the box
     return getMinimumImage(groups, this->center());
+}
+
+/** Return a copy of the passed CoordGroup that has been mapped from
+    another copy of this space into this space (e.g. map from a
+    small PeriodicBox to a large PeriodicBox) - note that the
+    other space must have the same type as this space!
+
+    \throw SireError::incompatible_error
+*/
+CoordGroup PeriodicBox::mapFromSelf(const CoordGroup &group, const Space &other) const
+{
+    assertCompatible(other);
+
+    const PeriodicBox &other_box = other.asA<PeriodicBox>();
+
+    if (other_box == *this)
+        return group;
+    else
+    {
+        //the boxes are different - we need to move the molecule accordingly...
+        throw SireError::incomplete_code( "HERE", CODELOC );
+
+        return group;
+    }
+}
+
+/** Return a copy an array of passed CoordGroups that have been mapped
+    from another copy of this space into this space (e.g. map from a
+    small PeriodicBox to a large PeriodicBox) - note that the
+    other space must have the same type as this space!
+
+    \throw SireError::incompatible_error
+*/
+QVector<CoordGroup> PeriodicBox::mapFromSelf(const QVector<CoordGroup> &groups,
+                                             const Space &other) const
+{
+    assertCompatible(other);
+
+    const PeriodicBox &other_box = other.asA<PeriodicBox>();
+
+    if (other_box == *this)
+        return groups;
+    else
+    {
+        //the boxes are different - we need to move the molecule accordingly...
+        throw SireError::incomplete_code( "HERE", CODELOC );
+
+        return groups;
+    }
 }
 
 /** Return a list of copies of CoordGroup 'group' that are within

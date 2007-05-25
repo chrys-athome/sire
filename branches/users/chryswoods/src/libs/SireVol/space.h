@@ -186,14 +186,34 @@ public:
     /** Return the minimum distance between points within the group 'group'. */
     virtual double minimumDistance(const CoordGroup &group) const=0;
 
-    /** Return a copy of the passed CoordGroup that has been moved into the
-        central box. This only does something for periodic spaces. */
-    virtual CoordGroup moveToCenterBox(const CoordGroup &group) const=0;
+    /** Return a copy of the passed CoordGroup that has been mapped from
+        an infinite cartesian space into this space */
+    virtual CoordGroup mapFromCartesian(const CoordGroup &group) const=0;
 
-    /** Return a copy of an array of passed CoordGroups that have been moved
-        into the central box. This only does something for periodic spaces. */
-    virtual QVector<CoordGroup> moveToCenterBox(
+    /** Return a copy of an array of passed CoordGroups that have been mapped
+        from an infinite cartesian space into this space. */
+    virtual QVector<CoordGroup> mapFromCartesian(
                                     const QVector<CoordGroup> &groups) const=0;
+
+    /** Return a copy of the passed CoordGroup that has been mapped from
+        another copy of this space into this space (e.g. map from a
+        small PeriodicBox to a large PeriodicBox) - note that the
+        other space must have the same type as this space!
+
+        \throw SireError::incompatible_error
+    */
+    virtual CoordGroup mapFromSelf(const CoordGroup &group,
+                                   const Space &other) const=0;
+
+    /** Return a copy an array of passed CoordGroups that have been mapped
+        from another copy of this space into this space (e.g. map from a
+        small PeriodicBox to a large PeriodicBox) - note that the
+        other space must have the same type as this space!
+
+        \throw SireError::incompatible_error
+    */
+    virtual QVector<CoordGroup> mapFromSelf(const QVector<CoordGroup> &groups,
+                                            const Space &other) const=0;
 
     /** Return the minimum image copy of 'group' with respect to 'center'.
         For periodic spaces, this translates 'group' into the box that
@@ -223,6 +243,9 @@ public:
     virtual QList< boost::tuple<double,CoordGroup> >
                     getCopiesWithin(const CoordGroup &group, const CoordGroup &center,
                                     double dist) const=0;
+
+protected:
+    void assertCompatible(const Space &other) const;
 };
 
 /** This is the user-handle class that is used to hold the dynanmic Space classes.
@@ -293,9 +316,12 @@ public:
 
     double minimumDistance(const CoordGroup &group) const;
 
-    CoordGroup moveToCenterBox(const CoordGroup &group) const;
+    CoordGroup mapFromCartesian(const CoordGroup &group) const;
+    QVector<CoordGroup> mapFromCartesian(const QVector<CoordGroup> &groups) const;
 
-    QVector<CoordGroup> moveToCenterBox(const QVector<CoordGroup> &groups) const;
+    CoordGroup mapFromSelf(const CoordGroup &group, const Space &other) const;
+    QVector<CoordGroup> mapFromSelf(const QVector<CoordGroup> &groups,
+                                    const Space &other) const;
 
     CoordGroup getMinimumImage(const CoordGroup &group, const Vector &center) const;
 
@@ -428,19 +454,44 @@ inline double Space::minimumDistance(const CoordGroup &group) const
     return d->minimumDistance(group);
 }
 
-/** Return a copy of the passed CoordGroup that has been moved into the
-    central box. This only does something for periodic spaces. */
-inline CoordGroup Space::moveToCenterBox(const CoordGroup &group) const
+/** Return a copy of the passed CoordGroup that has been mapped from
+    an infinite cartesian space into this space */
+inline CoordGroup Space::mapFromCartesian(const CoordGroup &group) const
 {
-    return d->moveToCenterBox(group);
+    return d->mapFromCartesian(group);
 }
 
-/** Return a copy of an array of passed CoordGroups that have been moved
-    into the central box. This only does something for periodic spaces. */
-inline QVector<CoordGroup> Space::moveToCenterBox(
+/** Return a copy of an array of passed CoordGroups that have been mapped
+    from an infinite cartesian space into this space. */
+inline QVector<CoordGroup> Space::mapFromCartesian(
                                       const QVector<CoordGroup> &groups) const
 {
-    return d->moveToCenterBox(groups);
+    return d->mapFromCartesian(groups);
+}
+
+/** Return a copy of the passed CoordGroup that has been mapped from
+    another copy of this space into this space (e.g. map from a
+    small PeriodicBox to a large PeriodicBox) - note that the
+    other space must have the same type as this space!
+
+    \throw SireError::incompatible_error
+*/
+inline CoordGroup Space::mapFromSelf(const CoordGroup &group, const Space &other) const
+{
+    return d->mapFromSelf(group, other);
+}
+
+/** Return a copy an array of passed CoordGroups that have been mapped
+    from another copy of this space into this space (e.g. map from a
+    small PeriodicBox to a large PeriodicBox) - note that the
+    other space must have the same type as this space!
+
+    \throw SireError::incompatible_error
+*/
+inline QVector<CoordGroup> Space::mapFromSelf(const QVector<CoordGroup> &groups,
+                                       const Space &other) const
+{
+    return d->mapFromSelf(groups, other);
 }
 
 /** Return the minimum image copy of 'group' with respect to 'center'.

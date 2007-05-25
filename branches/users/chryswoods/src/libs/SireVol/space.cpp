@@ -29,6 +29,8 @@
 #include "space.h"
 #include "cartesian.h"
 
+#include "SireError/errors.h"
+
 #include "SireStream/datastream.h"
 
 using namespace SireVol;
@@ -78,6 +80,19 @@ SpaceBase::SpaceBase(const SpaceBase &other) : PropertyBase(other)
 /** Destructor */
 SpaceBase::~SpaceBase()
 {}
+
+/** Assert that 'other' is of the same type as this space
+
+    \throw SireError::incompatible_error
+*/
+void SpaceBase::assertCompatible(const Space &other) const
+{
+    if ( QLatin1String(this->what()) != QLatin1String(other.what()) )
+        throw SireError::incompatible_error( QObject::tr(
+            "This space (of type \"%1\") is incompatible with "
+            "a space of type \"%2\".")
+                .arg(this->what()).arg(other.what()), CODELOC );
+}
 
 //////////////
 ////////////// Implementation of Space

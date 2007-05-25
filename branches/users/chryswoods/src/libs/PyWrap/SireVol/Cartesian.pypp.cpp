@@ -78,6 +78,22 @@ void register_Cartesian_class(){
             , (::QVector<SireVol::CoordGroup> ( ::SireVol::Cartesian::* )( ::QVector<SireVol::CoordGroup> const &,::SireMaths::Vector const & ) const)( &::SireVol::Cartesian::getMinimumImage )
             , ( bp::arg("groups"), bp::arg("center") ) )    
         .def( 
+            "mapFromCartesian"
+            , (::SireVol::CoordGroup ( ::SireVol::Cartesian::* )( ::SireVol::CoordGroup const & ) const)( &::SireVol::Cartesian::mapFromCartesian )
+            , ( bp::arg("group") ) )    
+        .def( 
+            "mapFromCartesian"
+            , (::QVector<SireVol::CoordGroup> ( ::SireVol::Cartesian::* )( ::QVector<SireVol::CoordGroup> const & ) const)( &::SireVol::Cartesian::mapFromCartesian )
+            , ( bp::arg("groups") ) )    
+        .def( 
+            "mapFromSelf"
+            , (::SireVol::CoordGroup ( ::SireVol::Cartesian::* )( ::SireVol::CoordGroup const &,::SireVol::Space const & ) const)( &::SireVol::Cartesian::mapFromSelf )
+            , ( bp::arg("group"), bp::arg("other") ) )    
+        .def( 
+            "mapFromSelf"
+            , (::QVector<SireVol::CoordGroup> ( ::SireVol::Cartesian::* )( ::QVector<SireVol::CoordGroup> const &,::SireVol::Space const & ) const)( &::SireVol::Cartesian::mapFromSelf )
+            , ( bp::arg("groups"), bp::arg("other") ) )    
+        .def( 
             "minimumDistance"
             , (double ( ::SireVol::Cartesian::* )( ::SireVol::CoordGroup const &,::SireVol::CoordGroup const & ) const)( &::SireVol::Cartesian::minimumDistance )
             , ( bp::arg("group0"), bp::arg("group1") ) )    
@@ -85,14 +101,6 @@ void register_Cartesian_class(){
             "minimumDistance"
             , (double ( ::SireVol::Cartesian::* )( ::SireVol::CoordGroup const & ) const)( &::SireVol::Cartesian::minimumDistance )
             , ( bp::arg("group") ) )    
-        .def( 
-            "moveToCenterBox"
-            , (::SireVol::CoordGroup ( ::SireVol::Cartesian::* )( ::SireVol::CoordGroup const & ) const)( &::SireVol::Cartesian::moveToCenterBox )
-            , ( bp::arg("group") ) )    
-        .def( 
-            "moveToCenterBox"
-            , (::QVector<SireVol::CoordGroup> ( ::SireVol::Cartesian::* )( ::QVector<SireVol::CoordGroup> const & ) const)( &::SireVol::Cartesian::moveToCenterBox )
-            , ( bp::arg("groups") ) )    
         .def( 
             "typeName"
             , (char const * (*)(  ))( &::SireVol::Cartesian::typeName ) )    

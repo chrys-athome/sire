@@ -23,6 +23,12 @@
 
 #include "CoordGroupEditor.pypp.hpp"
 
+#include "MapFromCartesianFunction.pypp.hpp"
+
+#include "MapFromSelfFunction.pypp.hpp"
+
+#include "MappingFunctionBase.pypp.hpp"
+
 #include "PeriodicBox.pypp.hpp"
 
 #include "Space.pypp.hpp"
@@ -48,6 +54,12 @@ BOOST_PYTHON_MODULE(_Vol){
 
     register_CoordGroupEditor_class();
 
+    register_MappingFunctionBase_class();
+
+    register_MapFromCartesianFunction_class();
+
+    register_MapFromSelfFunction_class();
+
     register_PeriodicBox_class();
 
     register_Space_class();
@@ -55,6 +67,8 @@ BOOST_PYTHON_MODULE(_Vol){
     bp::implicitly_convertible< QVector<SireMaths::Vector>, SireVol::CoordGroup >();
 
     bp::implicitly_convertible< const SireVol::SpaceBase&, SireVol::Space >();
+
+    bp::implicitly_convertible< const SireVol::MappingFunctionBase&, SireVol::MappingFunction >();
 
     bp::implicitly_convertible< SireVol::Space, SireBase::Property >();
 }

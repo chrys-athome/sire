@@ -37,6 +37,7 @@
 #include "SirePy/convertlist.hpp"
 #include "SirePy/convertdict.hpp"
 #include "SirePy/convertset.hpp"
+#include "SirePy/convertsharedpointer.hpp"
 
 #include "ThirdParty/tuples.hpp"
 
@@ -50,6 +51,8 @@ using boost::python::register_tuple;
 
 void register_SireVol_containers()
 {
+    register_container< MappingFunction, MappingFunctionBase >();
+
     register_list< QList<CoordGroup> >();
     register_list< QVector<CoordGroup> >();
     

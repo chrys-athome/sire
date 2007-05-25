@@ -485,20 +485,46 @@ double Cartesian::minimumDistance(const CoordGroup &group) const
     return sqrt(mindist2);
 }
 
-/** Return a copy of the passed CoordGroup that has been moved into the
-    central box. In this case, this is not a periodic space, so a copy of
-    the passed CoordGroup is returned */
-CoordGroup Cartesian::moveToCenterBox(const CoordGroup &group) const
+/** Return a copy of the passed CoordGroup that has been mapped from
+    an infinite cartesian space into this space */
+CoordGroup Cartesian::mapFromCartesian(const CoordGroup &group) const
 {
     return group;
 }
 
-/** Return a copy of an array of passed CoordGroups that have been moved
-    into the central box. In this case, this is not a periodic space, so
-    a copy of the passed array is returned */
-QVector<CoordGroup> Cartesian::moveToCenterBox(
+/** Return a copy of an array of passed CoordGroups that have been mapped
+    from an infinite cartesian space into this space. */
+QVector<CoordGroup> Cartesian::mapFromCartesian(
                                       const QVector<CoordGroup> &groups) const
 {
+    return groups;
+}
+
+/** Return a copy of the passed CoordGroup that has been mapped from
+    another copy of this space into this space (e.g. map from a
+    small PeriodicBox to a large PeriodicBox) - note that the
+    other space must have the same type as this space!
+
+    \throw SireError::incompatible_error
+*/
+CoordGroup Cartesian::mapFromSelf(const CoordGroup &group,
+                                  const Space &other) const
+{
+    assertCompatible(other);
+    return group;
+}
+
+/** Return a copy an array of passed CoordGroups that have been mapped
+    from another copy of this space into this space (e.g. map from a
+    small PeriodicBox to a large PeriodicBox) - note that the
+    other space must have the same type as this space!
+
+    \throw SireError::incompatible_error
+*/
+QVector<CoordGroup> Cartesian::mapFromSelf(const QVector<CoordGroup> &groups,
+                                           const Space &other) const
+{
+    assertCompatible(other);
     return groups;
 }
 
