@@ -3,6 +3,7 @@ import os
 import sys
 
 from pyplusplus.module_builder import module_builder_t
+from pyplusplus.module_builder import call_policies
 
 from pygccxml.declarations.matchers import access_type_matcher_t
 from pygccxml import declarations
@@ -37,6 +38,11 @@ def fix_coordgroup(c):
 
 def fix_coordgroupeditor(c):
    c.decl("data").exclude()
+   
+   c.decls( "translate" ).call_policies = call_policies.return_self()
+   c.decls( "rotate" ).call_policies = call_policies.return_self()
+   c.decls( "setCoordinates" ).call_policies = call_policies.return_self()
+   
 
 special_code = { "CoordGroupBase" : fix_coordgroup,
                  "CoordGroupEditor" : fix_coordgroupeditor }

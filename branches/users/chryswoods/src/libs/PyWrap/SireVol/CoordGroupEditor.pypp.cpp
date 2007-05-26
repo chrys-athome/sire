@@ -30,36 +30,44 @@ void register_CoordGroupEditor_class(){
             , bp::return_internal_reference< 1 >() )    
         .def( 
             "rotate"
-            , (void ( ::SireVol::CoordGroupEditor::* )( ::SireMaths::Quaternion const &,::SireMaths::Vector const & ) )( &::SireVol::CoordGroupEditor::rotate )
-            , ( bp::arg("quat"), bp::arg("point") ) )    
+            , (::SireVol::CoordGroupEditor & ( ::SireVol::CoordGroupEditor::* )( ::SireMaths::Quaternion const &,::SireMaths::Vector const & ) )( &::SireVol::CoordGroupEditor::rotate )
+            , ( bp::arg("quat"), bp::arg("point") )
+            , bp::return_self< >() )    
         .def( 
             "rotate"
-            , (void ( ::SireVol::CoordGroupEditor::* )( ::SireMaths::Matrix const &,::SireMaths::Vector const & ) )( &::SireVol::CoordGroupEditor::rotate )
-            , ( bp::arg("rotmat"), bp::arg("point") ) )    
+            , (::SireVol::CoordGroupEditor & ( ::SireVol::CoordGroupEditor::* )( ::SireMaths::Matrix const &,::SireMaths::Vector const & ) )( &::SireVol::CoordGroupEditor::rotate )
+            , ( bp::arg("rotmat"), bp::arg("point") )
+            , bp::return_self< >() )    
         .def( 
             "rotate"
-            , (void ( ::SireVol::CoordGroupEditor::* )( ::quint32,::SireMaths::Quaternion const &,::SireMaths::Vector const & ) )( &::SireVol::CoordGroupEditor::rotate )
-            , ( bp::arg("i"), bp::arg("quat"), bp::arg("point") ) )    
+            , (::SireVol::CoordGroupEditor & ( ::SireVol::CoordGroupEditor::* )( ::quint32,::SireMaths::Quaternion const &,::SireMaths::Vector const & ) )( &::SireVol::CoordGroupEditor::rotate )
+            , ( bp::arg("i"), bp::arg("quat"), bp::arg("point") )
+            , bp::return_self< >() )    
         .def( 
             "rotate"
-            , (void ( ::SireVol::CoordGroupEditor::* )( ::quint32,::SireMaths::Matrix const &,::SireMaths::Vector const & ) )( &::SireVol::CoordGroupEditor::rotate )
-            , ( bp::arg("i"), bp::arg("rotmat"), bp::arg("point") ) )    
+            , (::SireVol::CoordGroupEditor & ( ::SireVol::CoordGroupEditor::* )( ::quint32,::SireMaths::Matrix const &,::SireMaths::Vector const & ) )( &::SireVol::CoordGroupEditor::rotate )
+            , ( bp::arg("i"), bp::arg("rotmat"), bp::arg("point") )
+            , bp::return_self< >() )    
         .def( 
             "setCoordinates"
-            , (void ( ::SireVol::CoordGroupEditor::* )( ::QVector<SireMaths::Vector> const & ) )( &::SireVol::CoordGroupEditor::setCoordinates )
-            , ( bp::arg("newcoords") ) )    
+            , (::SireVol::CoordGroupEditor & ( ::SireVol::CoordGroupEditor::* )( ::QVector<SireMaths::Vector> const & ) )( &::SireVol::CoordGroupEditor::setCoordinates )
+            , ( bp::arg("newcoords") )
+            , bp::return_self< >() )    
         .def( 
             "setCoordinates"
-            , (void ( ::SireVol::CoordGroupEditor::* )( ::SireVol::CoordGroupBase const & ) )( &::SireVol::CoordGroupEditor::setCoordinates )
-            , ( bp::arg("newcoords") ) )    
+            , (::SireVol::CoordGroupEditor & ( ::SireVol::CoordGroupEditor::* )( ::SireVol::CoordGroupBase const & ) )( &::SireVol::CoordGroupEditor::setCoordinates )
+            , ( bp::arg("newcoords") )
+            , bp::return_self< >() )    
         .def( 
             "translate"
-            , (void ( ::SireVol::CoordGroupEditor::* )( ::SireMaths::Vector const & ) )( &::SireVol::CoordGroupEditor::translate )
-            , ( bp::arg("delta") ) )    
+            , (::SireVol::CoordGroupEditor & ( ::SireVol::CoordGroupEditor::* )( ::SireMaths::Vector const & ) )( &::SireVol::CoordGroupEditor::translate )
+            , ( bp::arg("delta") )
+            , bp::return_self< >() )    
         .def( 
             "translate"
-            , (void ( ::SireVol::CoordGroupEditor::* )( ::quint32,::SireMaths::Vector const & ) )( &::SireVol::CoordGroupEditor::translate )
-            , ( bp::arg("i"), bp::arg("delta") ) )    
+            , (::SireVol::CoordGroupEditor & ( ::SireVol::CoordGroupEditor::* )( ::quint32,::SireMaths::Vector const & ) )( &::SireVol::CoordGroupEditor::translate )
+            , ( bp::arg("i"), bp::arg("delta") )
+            , bp::return_self< >() )    
         .def( "__copy__", &__copy__)    
         .def( "__str__", &pvt_get_name);
 

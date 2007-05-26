@@ -500,17 +500,17 @@ public:
 
     Vector* data();
 
-    void translate(const Vector &delta);
-    void translate(quint32 i, const Vector &delta);
+    CoordGroupEditor& translate(const Vector &delta);
+    CoordGroupEditor& translate(quint32 i, const Vector &delta);
 
-    void rotate(const Quaternion &quat, const Vector &point);
-    void rotate(const Matrix &rotmat, const Vector &point);
+    CoordGroupEditor& rotate(const Quaternion &quat, const Vector &point);
+    CoordGroupEditor& rotate(const Matrix &rotmat, const Vector &point);
 
-    void rotate(quint32 i, const Quaternion &quat, const Vector &point);
-    void rotate(quint32 i, const Matrix &rotmat, const Vector &point);
+    CoordGroupEditor& rotate(quint32 i, const Quaternion &quat, const Vector &point);
+    CoordGroupEditor& rotate(quint32 i, const Matrix &rotmat, const Vector &point);
 
-    void setCoordinates(const QVector<Vector> &newcoords);
-    void setCoordinates(const CoordGroupBase &newcoords);
+    CoordGroupEditor& setCoordinates(const QVector<Vector> &newcoords);
+    CoordGroupEditor& setCoordinates(const CoordGroupBase &newcoords);
 
     CoordGroup commit();
 };

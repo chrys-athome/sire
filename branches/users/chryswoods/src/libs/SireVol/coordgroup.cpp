@@ -601,7 +601,7 @@ Vector* CoordGroupEditor::data()
 }
 
 /** Translate this CoordGroup by 'delta' */
-void CoordGroupEditor::translate(const Vector &delta)
+CoordGroupEditor& CoordGroupEditor::translate(const Vector &delta)
 {
     if (not delta.isZero())
     {
@@ -622,21 +622,25 @@ void CoordGroupEditor::translate(const Vector &delta)
             this->_pvt_group().update(new_box);
         }
     }
+    
+    return *this;
 }
 
 /** Translate the 'ith' point in the group by 'delta'
 
     \throw SireError::invalid_index
 */
-void CoordGroupEditor::translate(quint32 i, const Vector &delta)
+CoordGroupEditor& CoordGroupEditor::translate(quint32 i, const Vector &delta)
 {
     if (not delta.isZero())
         this->operator[](i) += delta;
+
+    return *this;
 }
 
 /** Rotate (and perhaps scale and shear) this group by the matrix 'rotmat'
     about the point 'point' */
-void CoordGroupEditor::rotate(const Matrix &rotmat, const Vector &point)
+CoordGroupEditor& CoordGroupEditor::rotate(const Matrix &rotmat, const Vector &point)
 {
     quint32 sz = this->count();
     Vector *coords = this->_pvt_data();
@@ -647,6 +651,8 @@ void CoordGroupEditor::rotate(const Matrix &rotmat, const Vector &point)
     }
 
     CoordGroupBase::setNeedsUpdate();
+
+    return *this;
 }
 
 /** Rotate the 'ith' point in the group using the matrix 'rotmat' about the
@@ -654,16 +660,18 @@ void CoordGroupEditor::rotate(const Matrix &rotmat, const Vector &point)
 
     \throw SireError::index
 */
-void CoordGroupEditor::rotate(quint32 i, const Matrix &rotmat, const Vector &point)
+CoordGroupEditor& CoordGroupEditor::rotate(quint32 i, const Matrix &rotmat, const Vector &point)
 {
     Vector &coord = this->operator[](i);
     coord = SireMaths::rotate(coord, rotmat, point);
+
+    return *this;
 }
 
 /** Rotate this group by the Quaternion 'quat' about the point 'point' */
-void CoordGroupEditor::rotate(const Quaternion &quat, const Vector &point)
+CoordGroupEditor& CoordGroupEditor::rotate(const Quaternion &quat, const Vector &point)
 {
-    this->rotate(quat.toMatrix(), point);
+    return this->rotate(quat.toMatrix(), point);
 }
 
 /** Rotate the 'ith' point in the group using the quaternion 'quat' about the
@@ -671,9 +679,9 @@ void CoordGroupEditor::rotate(const Quaternion &quat, const Vector &point)
 
     \throw SireError::index
 */
-void CoordGroupEditor::rotate(quint32 i, const Quaternion &quat, const Vector &point)
+CoordGroupEditor& CoordGroupEditor::rotate(quint32 i, const Quaternion &quat, const Vector &point)
 {
-    this->rotate(i, quat.toMatrix(), point);
+    return this->rotate(i, quat.toMatrix(), point);
 }
 
 /** Set the coordinates of the CoordGroup to 'newcoords' - this must
@@ -682,7 +690,7 @@ void CoordGroupEditor::rotate(quint32 i, const Quaternion &quat, const Vector &p
 
     \throw SireError::incompatible_error
 */
-void CoordGroupEditor::setCoordinates(const QVector<Vector> &newcoords)
+CoordGroupEditor& CoordGroupEditor::setCoordinates(const QVector<Vector> &newcoords)
 {
     CoordGroupBase::assertSameSize(newcoords);
 
@@ -694,6 +702,8 @@ void CoordGroupEditor::setCoordinates(const QVector<Vector> &newcoords)
     CoordGroupBase::setNeedsUpdate();
 
     BOOST_ASSERT(output == coords);
+  
+    return *this;
 }
 
 /** Set the coordinates of the CoordGroup to 'newcoords' - this
@@ -702,10 +712,12 @@ void CoordGroupEditor::setCoordinates(const QVector<Vector> &newcoords)
 
     \throw SireError::incompatible_error
 */
-void CoordGroupEditor::setCoordinates(const CoordGroupBase &newcoords)
+CoordGroupEditor& CoordGroupEditor::setCoordinates(const CoordGroupBase &newcoords)
 {
     CoordGroupBase::assertSameSize(newcoords);
     CoordGroupBase::operator=(newcoords);
+
+    return *this;
 }
 
 /** Return a CoordGroup which is a copy of this group. This will update the

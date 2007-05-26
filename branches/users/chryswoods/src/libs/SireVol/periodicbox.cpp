@@ -490,10 +490,20 @@ CoordGroup PeriodicBox::mapFromSelf(const CoordGroup &group, const Space &other)
         return group;
     else
     {
-        //the boxes are different - we need to move the molecule accordingly...
-        throw SireError::incomplete_code( "HERE", CODELOC );
-
-        return group;
+        //now get the scale factor for the change in dimension
+        Vector scale( other_box.boxlength.x() * this->invlength.x(),
+                      other_box.boxlength.y() * this->invlength.y(),
+                      other_box.boxlength.z() * this->invlength.z() );
+    
+        //get the distance from the center of this box to the group
+        Vector delta = group.aaBox().center() - this->center();
+        
+        //multiply this by 'scale'
+        Vector new_delta = Vector( scale.x() * delta.x(),
+                                   scale.y() * delta.y(),
+                                   scale.z() * delta.z() );
+   
+        return group.edit().translate( other_box.center() + new_delta - delta );
     }
 }
 
@@ -515,10 +525,33 @@ QVector<CoordGroup> PeriodicBox::mapFromSelf(const QVector<CoordGroup> &groups,
         return groups;
     else
     {
-        //the boxes are different - we need to move the molecule accordingly...
-        throw SireError::incomplete_code( "HERE", CODELOC );
-
-        return groups;
+        QVector<CoordGroup> moved_groups = groups;
+        
+        Vector this_center = this->center();
+        Vector other_center = other_box.center();
+        
+        //now get the scale factor for the change in dimension
+        Vector scale( other_box.boxlength.x() * this->invlength.x(),
+                      other_box.boxlength.y() * this->invlength.y(),
+                      other_box.boxlength.z() * this->invlength.z() );
+        
+        int ngroups = moved_groups.count();
+        CoordGroup *groups_array = moved_groups.data();
+        
+        for (int i=0; i<ngroups; ++i)
+        {
+            CoordGroup &group = groups_array[i];
+            
+            Vector delta = group.aaBox().center() - this_center;
+            
+            Vector new_delta = Vector( scale.x() * delta.x(),
+                                       scale.y() * delta.y(),
+                                       scale.z() * delta.z() );
+                            
+            group = group.edit().translate( other_center + new_delta - delta );
+        }
+        
+        return moved_groups;
     }
 }
 
