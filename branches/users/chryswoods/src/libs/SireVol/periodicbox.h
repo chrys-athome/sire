@@ -194,9 +194,13 @@ inline int PeriodicBox::getWrapVal(double del, double invlgth, double halflgth)
     distances so that the molecules are all wrapped into the same periodic box */
 inline Vector PeriodicBox::wrapDelta(const Vector &v0, const Vector &v1) const
 {
-    return Vector( getWrapVal( v1.x()-v0.x(), invlength.x(), halflength.x()) * boxlength.x(),
-                   getWrapVal( v1.y()-v0.y(), invlength.y(), halflength.y()) * boxlength.y(),
-                   getWrapVal( v1.z()-v0.z(), invlength.z(), halflength.z()) * boxlength.z() );
+    return Vector( getWrapVal( v1.x()-v0.x(), invlength.x(), halflength.x()) 
+                                          * boxlength.x(),
+                   getWrapVal( v1.y()-v0.y(), invlength.y(), halflength.y()) 
+                                          * boxlength.y(),
+                   getWrapVal( v1.z()-v0.z(), invlength.z(), halflength.z()) 
+                                          * boxlength.z()
+                 );
 }
 
 /** Return whether this box contains the point 'point' (without the need

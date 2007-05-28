@@ -86,6 +86,7 @@ using SireMol::MoleculeGroup;
 using SireMol::MoleculeGroups;
 using SireMol::MoleculeGroupID;
 using SireMol::MoleculeID;
+using SireMol::Molecules;
 
 using SireFF::ForceField;
 using SireFF::ForceFieldsBase;
@@ -133,6 +134,9 @@ public:
 
     PartialMolecule molecule(const PartialMolecule &mol) const;
     PartialMolecule molecule(MoleculeID molid) const;
+
+    QSet<MoleculeID> moleculeIDs() const;
+    Molecules molecules() const;
 
     ForceField forceField(ForceFieldID ffid);
     MoleculeGroup group(MoleculeGroupID id) const;

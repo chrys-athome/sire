@@ -30,6 +30,7 @@
 #define SIRESYSTEM_SIMSYSTEM_H
 
 #include "querysystem.h"
+#include "spacechanger.h"
 
 #include "SireFF/parametermap.h"
 

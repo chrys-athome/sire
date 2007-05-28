@@ -210,13 +210,6 @@ bool System::operator!=(const System &other) const
     return sysdata != other.sysdata;
 }
 
-/** Set the space in which the molecules are mapped */
-void System::setSpace(const Space &space)
-{
-    #warning Need to set the space properly
-    sysdata.setSpace(space);
-}
-
 /** Prepare ourselves for simulation... */
 void System::prepareForSimulation()
 {
@@ -236,6 +229,19 @@ CheckPoint System::checkPoint()
 {
     this->prepareForSimulation();
     return CheckPoint(*this);
+}
+
+/** Set the space in which the molecules are mapped */
+void System::setSpace(const Space &space, const SpaceChanger &spacechanger)
+{
+    if (sysdata.space() != space)
+    {
+        LocalSimSystem simsystem(this->checkPoint());
+        
+        simsystem.setSpace(space, spacechanger);
+        
+        *this = simsystem.checkPoint();
+    }
 }
 
 /** Run this system in the local thread - this will only work

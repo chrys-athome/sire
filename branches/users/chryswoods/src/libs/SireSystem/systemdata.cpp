@@ -194,8 +194,11 @@ PartialMolecule SystemData::mapIntoSystemSpace(const PartialMolecule &molecule) 
 /** Set the system space */
 void SystemData::setSpace(const Space &space)
 {
-    #warning Still need to map molecules into the space if it changes...
-    sys_space = space;
+    if (space != sys_space)
+    {
+        sys_space = space;
+        this->incrementMajorVersion();
+    }
 }
 
 /** Map the molecule in 'molecules' into the system space (so that they are contained

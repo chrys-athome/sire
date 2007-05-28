@@ -97,9 +97,9 @@ public:
 
         \throw SireError::incompatible_error
     */
-    virtual QVector<CoordGroup> mapCoordinates(const QVector<CoordGroup> &coords,
-                                               const Space &old_space,
-                                               const Space &new_space) const=0;
+    virtual QVector<CoordGroup> map(const QVector<CoordGroup> &coords,
+                                    const Space &old_space,
+                                    const Space &new_space) const=0;
 
     QVector<CoordGroup> operator()(const QVector<CoordGroup> &coords,
                                    const Space &old_space,
@@ -111,9 +111,9 @@ public:
 
         \throw SireError::incompatible_error
     */
-    virtual CoordGroup mapCoordinates(const CoordGroup &coords,
-                                      const Space &old_space,
-                                      const Space &new_space) const=0;
+    virtual CoordGroup map(const CoordGroup &coords,
+                           const Space &old_space,
+                           const Space &new_space) const=0;
 
     CoordGroup operator()(const CoordGroup &coords,
                           const Space &old_space,
@@ -132,7 +132,7 @@ public:
     }
 };
 
-/** Convienient syntax for "mapCoordinates" that lets you use
+/** Convienient syntax for "map" that lets you use
     this MappingFunction object like a normal function.
 
     \throw SireError::incompatible_error
@@ -141,10 +141,10 @@ inline QVector<CoordGroup>
 MappingFunctionBase::operator()(const QVector<CoordGroup> &coords,
                                 const Space &old_space, const Space &new_space) const
 {
-    return this->mapCoordinates(coords, old_space, new_space);
+    return this->map(coords, old_space, new_space);
 }
 
-/** Convienient syntax for "mapCoordinates" that lets you use
+/** Convienient syntax for "map" that lets you use
     this MappingFunction object like a normal function.
 
     \throw SireError::incompatible_error
@@ -153,7 +153,7 @@ inline CoordGroup MappingFunctionBase::operator()(const CoordGroup &coords,
                                                   const Space &old_space,
                                                   const Space &new_space) const
 {
-    return this->mapCoordinates(coords, old_space, new_space);
+    return this->map(coords, old_space, new_space);
 }
 
 /** This is a mapping function that maps coordinates from an infinite
@@ -189,12 +189,12 @@ public:
         return new MapFromCartesianFunction(*this);
     }
 
-    CoordGroup mapCoordinates(const CoordGroup &coords,
-                              const Space &old_space, const Space &new_space) const;
+    CoordGroup map(const CoordGroup &coords,
+                   const Space &old_space, const Space &new_space) const;
 
-    QVector<CoordGroup> mapCoordinates(const QVector<CoordGroup> &coords,
-                                       const Space &old_space,
-                                       const Space &new_space) const;
+    QVector<CoordGroup> map(const QVector<CoordGroup> &coords,
+                            const Space &old_space,
+                            const Space &new_space) const;
 
 private:
     void assertCompatible(const Space &old_space) const;
@@ -234,12 +234,12 @@ public:
         return new MapFromSelfFunction(*this);
     }
 
-    CoordGroup mapCoordinates(const CoordGroup &coords,
-                              const Space &old_space, const Space &new_space) const;
+    CoordGroup map(const CoordGroup &coords,
+                   const Space &old_space, const Space &new_space) const;
 
-    QVector<CoordGroup> mapCoordinates(const QVector<CoordGroup> &coords,
-                                       const Space &old_space,
-                                       const Space &new_space) const;
+    QVector<CoordGroup> map(const QVector<CoordGroup> &coords,
+                            const Space &old_space,
+                            const Space &new_space) const;
 };
 
 /** This is the holder class used to hold all MappingFunctions
@@ -268,13 +268,13 @@ public:
 
     const MappingFunctionBase& base() const;
 
-    QVector<CoordGroup> mapCoordinates(const QVector<CoordGroup> &coords,
-                                       const Space &old_space,
-                                       const Space &new_space) const;
+    QVector<CoordGroup> map(const QVector<CoordGroup> &coords,
+                            const Space &old_space,
+                            const Space &new_space) const;
 
-    CoordGroup mapCoordinates(const CoordGroup &coords,
-                              const Space &old_space,
-                              const Space &new_space) const;
+    CoordGroup map(const CoordGroup &coords,
+                   const Space &old_space,
+                   const Space &new_space) const;
 
     QVector<CoordGroup> operator()(const QVector<CoordGroup> &coords,
                                    const Space &old_space,
@@ -307,14 +307,14 @@ private:
     \throw SireError::incompatible_error
 */
 inline QVector<CoordGroup>
-MappingFunction::mapCoordinates(const QVector<CoordGroup> &coords,
-                                const Space &old_space,
-                                const Space &new_space) const
+MappingFunction::map(const QVector<CoordGroup> &coords,
+                     const Space &old_space,
+                     const Space &new_space) const
 {
-    return d->mapCoordinates(coords, old_space, new_space);
+    return d->map(coords, old_space, new_space);
 }
 
-/** Convienient syntax for "mapCoordinates" that lets you use
+/** Convienient syntax for "map" that lets you use
     this MappingFunction object like a normal function.
 
     \throw SireError::incompatible_error
@@ -333,14 +333,14 @@ MappingFunction::operator()(const QVector<CoordGroup> &coords,
 
     \throw SireError::incompatible_error
 */
-inline CoordGroup MappingFunction::mapCoordinates(const CoordGroup &coords,
-                                                  const Space &old_space,
-                                                  const Space &new_space) const
+inline CoordGroup MappingFunction::map(const CoordGroup &coords,
+                                       const Space &old_space,
+                                       const Space &new_space) const
 {
-    return d->mapCoordinates(coords, old_space, new_space);
+    return d->map(coords, old_space, new_space);
 }
 
-/** Convienient syntax for "mapCoordinates" that lets you use
+/** Convienient syntax for "map" that lets you use
     this MappingFunction object like a normal function.
 
     \throw SireError::incompatible_error

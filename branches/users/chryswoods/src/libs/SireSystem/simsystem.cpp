@@ -84,6 +84,22 @@ void SimSystem::commit()
     sysdata.incrementMinorVersion();
 }
 
+/** Set the space in which the molecules exist */
+void SimSystem::setSpace(const Space &new_space, const SpaceChanger &spacechanger)
+{
+    if (new_space != sysdata.space())
+    {
+        Molecules mapped_mols = spacechanger.map(this->molecules(),
+                                                 sysdata.space(), new_space);
+                                                 
+        sysdata.setSpace(new_space);
+        
+        spacechanger.update(ffields, new_space);
+        
+        this->change(mapped_mols);
+    }
+}
+
 /** Set the property 'name' in all forcefields to the value 'value'
 
     \throw SireBase::missing_property

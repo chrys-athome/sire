@@ -33,6 +33,7 @@
 #include "systemmonitors.h"
 
 #include "SireMol/atomselector.h"
+#include "SireMol/molecules.h"
 
 #include "SireBase/property.h"
 #include "SireFF/forcefields.h"
@@ -326,6 +327,22 @@ PartialMolecule QuerySystem::molecule(MoleculeID molid) const
 
         return forceFields().molecule(molid);
     }
+}
+
+/** Return the IDs of all molecules that are in this system */
+QSet<MoleculeID> QuerySystem::moleculeIDs() const
+{
+    QSet<MoleculeID> allids = sysdata.groups().moleculeIDs();
+    
+    allids.unite( ffields.moleculeIDs() );
+    
+    return allids; 
+}
+
+/** Return copies of all molecules that are in this system */
+Molecules QuerySystem::molecules() const
+{
+    return sysdata.groups().molecules() + ffields.molecules();
 }
 
 /** Assert that the forcefields in this system contain the component

@@ -33,6 +33,7 @@
 
 #include "systemdata.h"
 #include "systemmonitors.h"
+#include "spacechanger.h"
 
 #include "SireFF/forcefields.h"
 
@@ -124,7 +125,8 @@ public:
     const SystemData& info() const;
     const SystemMonitors& monitors() const;
   
-    void setSpace(const Space &space);
+    void setSpace(const Space &space,
+                  const SpaceChanger &spacechanger = SpaceChanger());
 
     Moves run(const Move &move, quint32 nmoves=1);
     Moves run(const Moves &moves);

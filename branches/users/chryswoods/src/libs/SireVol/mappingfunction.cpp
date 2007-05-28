@@ -147,9 +147,9 @@ void MapFromCartesianFunction::assertCompatible(const Space &old_space) const
 
     \throw SireError::incompatible_error
 */
-CoordGroup MapFromCartesianFunction::mapCoordinates(const CoordGroup &coords,
-                                                    const Space &old_space,
-                                                    const Space &new_space) const
+CoordGroup MapFromCartesianFunction::map(const CoordGroup &coords,
+                                         const Space &old_space,
+                                         const Space &new_space) const
 {
     this->assertCompatible(old_space);
     return new_space.mapFromCartesian(coords);
@@ -161,9 +161,9 @@ CoordGroup MapFromCartesianFunction::mapCoordinates(const CoordGroup &coords,
     \throw SireError::incompatible_error
 */
 QVector<CoordGroup>
-MapFromCartesianFunction::mapCoordinates(const QVector<CoordGroup> &coords,
-                                         const Space &old_space,
-                                         const Space &new_space) const
+MapFromCartesianFunction::map(const QVector<CoordGroup> &coords,
+                              const Space &old_space,
+                              const Space &new_space) const
 {
     this->assertCompatible(old_space);
     return new_space.mapFromCartesian(coords);
@@ -220,9 +220,9 @@ MapFromSelfFunction::~MapFromSelfFunction()
 
     \throw SireError::incompatible_error
 */
-CoordGroup MapFromSelfFunction::mapCoordinates(const CoordGroup &coords,
-                                               const Space &old_space,
-                                               const Space &new_space) const
+CoordGroup MapFromSelfFunction::map(const CoordGroup &coords,
+                                    const Space &old_space,
+                                    const Space &new_space) const
 {
     return new_space.mapFromSelf(coords, old_space);
 }
@@ -233,9 +233,9 @@ CoordGroup MapFromSelfFunction::mapCoordinates(const CoordGroup &coords,
     \throw SireError::incompatible_error
 */
 QVector<CoordGroup>
-MapFromSelfFunction::mapCoordinates(const QVector<CoordGroup> &coords,
-                                    const Space &old_space,
-                                    const Space &new_space) const
+MapFromSelfFunction::map(const QVector<CoordGroup> &coords,
+                         const Space &old_space,
+                         const Space &new_space) const
 {
     return new_space.mapFromSelf(coords, old_space);
 }
