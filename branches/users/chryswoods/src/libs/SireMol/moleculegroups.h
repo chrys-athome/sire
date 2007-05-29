@@ -111,6 +111,7 @@ public:
     Molecules molecules() const;
 
     QSet<MoleculeID> moleculeIDs() const;
+    QSet<MoleculeGroupID> groupIDs() const;
 
     QHash<MoleculeGroupID,MoleculeGroup> groups() const;
     QHash<MoleculeGroupID,MoleculeGroup>

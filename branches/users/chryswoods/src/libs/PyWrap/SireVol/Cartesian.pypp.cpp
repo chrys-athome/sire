@@ -102,11 +102,15 @@ void register_Cartesian_class(){
             , (double ( ::SireVol::Cartesian::* )( ::SireVol::CoordGroup const & ) const)( &::SireVol::Cartesian::minimumDistance )
             , ( bp::arg("group") ) )    
         .def( 
+            "setVolume"
+            , (::SireVol::Space ( ::SireVol::Cartesian::* )( ::SireUnits::Dimension::Volume ) const)( &::SireVol::Cartesian::setVolume )
+            , ( bp::arg("volume") ) )    
+        .def( 
             "typeName"
             , (char const * (*)(  ))( &::SireVol::Cartesian::typeName ) )    
         .def( 
             "volume"
-            , (double ( ::SireVol::Cartesian::* )(  ) const)( &::SireVol::Cartesian::volume ) )    
+            , (::SireUnits::Dimension::Volume ( ::SireVol::Cartesian::* )(  ) const)( &::SireVol::Cartesian::volume ) )    
         .def( 
             "what"
             , (char const * ( ::SireVol::Cartesian::* )(  ) const)( &::SireVol::Cartesian::what ) )    

@@ -262,6 +262,39 @@ CoordGroupBase::CoordGroupBase(quint32 size, const Vector &value)
         group_ptr->update( AABox() );
 }
 
+/** Construct a CoordGroup that holds the 'size' points
+    copied from the array 'values' */
+CoordGroupBase::CoordGroupBase(quint32 size, const Vector *values)
+{
+    //construct the storage
+    storage = new char[ sizeof(CoordGroupData) + size*sizeof(Vector) ];
+
+    //construct the CoordGroupData in this piece of memory
+    CoordGroupData *group_ptr = new (storage) CoordGroupData(size);
+
+    //add a reference count for this object
+    group_ptr->ref.ref();
+
+    if (size > 0)
+    {
+        //get the pointer to the first element in the array that
+        //will house the coordinates
+        Vector *array = (Vector*)(storage + sizeof(CoordGroupData));
+
+        void *output = qMemCopy( array, values,
+                                 size*sizeof(Vector) );
+
+        BOOST_ASSERT( output == array );
+
+        //update the group with the bounding box that contains
+        //these coordinates
+        group_ptr->update( AABox(*this) );
+    }
+    else
+        //update with the null AABox
+        group_ptr->update( AABox() );
+}
+
 /** Construct a CoordGroup from the specified coordinates */
 CoordGroupBase::CoordGroupBase(const QVector<Vector> &coordinates)
 {
@@ -290,7 +323,7 @@ CoordGroupBase::CoordGroupBase(const QVector<Vector> &coordinates)
 
         //update the group with the bounding box that contains
         //these coordinates
-        group_ptr->update( AABox(coordinates) );
+        group_ptr->update( AABox(*this) );
     }
     else
         //update with the null AABox
@@ -508,6 +541,12 @@ CoordGroup::CoordGroup(quint32 size, const Vector &value)
            : CoordGroupBase(size,value)
 {}
 
+/** Construct a CoordGroup that holds the 'size' points
+    copied from the array 'values' */
+CoordGroup::CoordGroup(quint32 size, const Vector *values)
+           : CoordGroupBase(size, values)
+{}
+
 /** Construct a CoordGroup from the array of passed coordinates */
 CoordGroup::CoordGroup(const QVector<Vector> &points)
            : CoordGroupBase(points)
@@ -529,6 +568,15 @@ CoordGroup::CoordGroup(const CoordGroup &other)
 /** Destructor */
 CoordGroup::~CoordGroup()
 {}
+
+void CoordGroup::throwInvalidCountError(uint nats0, uint nats1)
+{
+    throw SireError::invalid_state( QObject::tr(
+        "You can only split a CoordGroup into groups if the total number "
+        "of atoms in the single CoordGroup and the group of CoordGroups "
+        "is the same. It isn't in this case! %1 vs. %2.")
+            .arg(nats0).arg(nats1), CODELOC );
+}
 
 /** Copy assignment operator */
 CoordGroup& CoordGroup::operator=(const CoordGroup &other)
@@ -622,7 +670,7 @@ CoordGroupEditor& CoordGroupEditor::translate(const Vector &delta)
             this->_pvt_group().update(new_box);
         }
     }
-    
+
     return *this;
 }
 
@@ -702,7 +750,7 @@ CoordGroupEditor& CoordGroupEditor::setCoordinates(const QVector<Vector> &newcoo
     CoordGroupBase::setNeedsUpdate();
 
     BOOST_ASSERT(output == coords);
-  
+
     return *this;
 }
 

@@ -66,6 +66,11 @@ class ForceFieldID;
 class ForceFieldsBase;
 }
 
+namespace SireVol
+{
+class Space;
+}
+
 namespace SireSystem
 {
 
@@ -94,6 +99,8 @@ using SireFF::ForceFieldID;
 using SireFF::FFComponent;
 using SireFF::FFExpression;
 using SireFF::FFBase;
+
+using SireVol::Space;
 
 using SireBase::Property;
 using SireBase::Version;
@@ -131,6 +138,8 @@ public:
     const SystemMonitors& monitors() const;
 
     const MoleculeGroups& groups() const;
+
+    const Space& space() const;
 
     PartialMolecule molecule(const PartialMolecule &mol) const;
     PartialMolecule molecule(MoleculeID molid) const;

@@ -97,6 +97,10 @@ void SimSystem::setSpace(const Space &new_space, const Molecules &changed_mols)
         //change the space
         sysdata.setSpace(new_space);
 
+        //change the space in the forcefields
+        if (ffields.containsProperty("space"))
+            ffields.setProperty("space", new_space);
+
         //move all of the molecules into the central box
         Molecules all_mols = this->molecules();
 

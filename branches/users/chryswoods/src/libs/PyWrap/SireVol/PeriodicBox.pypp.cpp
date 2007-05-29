@@ -102,11 +102,15 @@ void register_PeriodicBox_class(){
             , (void ( ::SireVol::PeriodicBox::* )( ::SireMaths::Vector const &,::SireMaths::Vector const & ) )( &::SireVol::PeriodicBox::setDimension )
             , ( bp::arg("min"), bp::arg("max") ) )    
         .def( 
+            "setVolume"
+            , (::SireVol::Space ( ::SireVol::PeriodicBox::* )( ::SireUnits::Dimension::Volume ) const)( &::SireVol::PeriodicBox::setVolume )
+            , ( bp::arg("volume") ) )    
+        .def( 
             "typeName"
             , (char const * (*)(  ))( &::SireVol::PeriodicBox::typeName ) )    
         .def( 
             "volume"
-            , (double ( ::SireVol::PeriodicBox::* )(  ) const)( &::SireVol::PeriodicBox::volume ) )    
+            , (::SireUnits::Dimension::Volume ( ::SireVol::PeriodicBox::* )(  ) const)( &::SireVol::PeriodicBox::volume ) )    
         .def( 
             "what"
             , (char const * ( ::SireVol::PeriodicBox::* )(  ) const)( &::SireVol::PeriodicBox::what ) )    

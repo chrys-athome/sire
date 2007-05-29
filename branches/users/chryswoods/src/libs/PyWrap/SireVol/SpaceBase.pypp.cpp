@@ -63,6 +63,10 @@ void register_SpaceBase_class(){
             , (double ( ::SireVol::SpaceBase::* )( ::SireVol::CoordGroup const &,::SireVol::CoordGroup const &,::SireVol::DistMatrix & ) const)( &::SireVol::SpaceBase::calcInvDist2 )
             , ( bp::arg("group1"), bp::arg("group2"), bp::arg("distmat") ) )    
         .def( 
+            "changeVolume"
+            , (::SireVol::Space ( ::SireVol::SpaceBase::* )( ::SireUnits::Dimension::Volume ) const)( &::SireVol::SpaceBase::changeVolume )
+            , ( bp::arg("delta") ) )    
+        .def( 
             "getCopiesWithin"
             , (::QList<boost::tuples::tuple<double, SireVol::CoordGroup, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type> > ( ::SireVol::SpaceBase::* )( ::SireVol::CoordGroup const &,::SireVol::CoordGroup const &,double ) const)( &::SireVol::SpaceBase::getCopiesWithin )
             , ( bp::arg("group"), bp::arg("center"), bp::arg("dist") ) )    
@@ -99,8 +103,12 @@ void register_SpaceBase_class(){
             , (double ( ::SireVol::SpaceBase::* )( ::SireVol::CoordGroup const & ) const)( &::SireVol::SpaceBase::minimumDistance )
             , ( bp::arg("group") ) )    
         .def( 
+            "setVolume"
+            , (::SireVol::Space ( ::SireVol::SpaceBase::* )( ::SireUnits::Dimension::Volume ) const)( &::SireVol::SpaceBase::setVolume )
+            , ( bp::arg("volume") ) )    
+        .def( 
             "volume"
-            , (double ( ::SireVol::SpaceBase::* )(  ) const)( &::SireVol::SpaceBase::volume ) )    
+            , (::SireUnits::Dimension::Volume ( ::SireVol::SpaceBase::* )(  ) const)( &::SireVol::SpaceBase::volume ) )    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireVol::SpaceBase >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    
         .def( "__rrshift__", &SireQt::__rrshift__QDataStream< ::SireVol::SpaceBase >,

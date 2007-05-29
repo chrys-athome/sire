@@ -26,99 +26,256 @@
   *
 \*********************************************/
 
-#ifndef SIRESYSTEM_MOLMAPPINGFUNCTION_H
-#define SIRESYSTEM_MOLMAPPINGFUNCTION_H
+#ifndef SIREMOVE_MOLMAPPINGFUNCTION_H
+#define SIREMOVE_MOLMAPPINGFUNCTION_H
 
 #include "SireVol/mappingfunction.h"
 
+#include "SireMol/moleculegroupid.h"
+
 SIRE_BEGIN_HEADER
+
+namespace SireMove
+{
+class MolMappingFunctionBase;
+class MolMappingFunction;
+class MapAsMolecules;
+class MapAsCutGroups;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMove::MolMappingFunctionBase&);
+QDataStream& operator>>(QDataStream&, SireMove::MolMappingFunctionBase&);
+
+QDataStream& operator<<(QDataStream&, const SireMove::MolMappingFunction&);
+QDataStream& operator>>(QDataStream&, SireMove::MolMappingFunction&);
+
+QDataStream& operator<<(QDataStream&, const SireMove::MapAsMolecules&);
+QDataStream& operator>>(QDataStream&, SireMove::MapAsMolecules&);
+
+QDataStream& operator<<(QDataStream&, const SireMove::MapAsCutGroups&);
+QDataStream& operator>>(QDataStream&, SireMove::MapAsCutGroups&);
+
+namespace SireMol
+{
+class MoleculeGroup;
+class MoleculeGroups;
+class Molecules;
+}
+
+namespace SireVol
+{
+class Space;
+}
 
 namespace SireSystem
 {
+class QuerySystem;
+}
 
-using SireVol::MappingFunctionBase;
+namespace SireMove
+{
+
+using SireMol::MoleculeGroup;
+using SireMol::MoleculeGroups;
+using SireMol::Molecules;
+using SireMol::MoleculeGroupID;
+
+using SireVol::MappingFunction;
+using SireVol::Space;
+
+using SireSystem::QuerySystem;
 
 /** This is the base class of functions that map molecules from one space
     to another.
-    
+
     @author Christopher Woods
 */
-class SIRESYSTEM_EXPORT MolMappingFunctionBase : public MappingFunctionBase
+class SIREMOVE_EXPORT MolMappingFunctionBase : public QSharedData
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const MolMappingFunctionBase&);
 friend QDataStream& ::operator>>(QDataStream&, MolMappingFunctionBase&);
 
 public:
-    MolMappingFunction(const MappingFunction &mappingfunction);
-    
-    MolMappingFunction(const MolMappingFunction &other);
-    
-    ~MolMappingFunction();
-    
-    CoordGroup operator()(const CoordGroup &coords,
-                          const Space &old_space,
-                          const Space &new_space) const;
-    
-    QVector<CoordGroup> operator()(const QVector<CoordGroup> &coords,
-                                   const Space &old_space,
-                                   const Space &new_space) const;
-    
-    PartialMolecule operator()(const PartialMolecule &molecule,
-                               const Space &old_space,
-                               const Space &new_space) const;
-                               
-    Molecules operator()(const Molecules &molecules,
-                         const Space &old_space,
+    MolMappingFunctionBase(const MappingFunction &mappingfunction);
+
+    MolMappingFunctionBase(const MolMappingFunctionBase &other);
+
+    virtual ~MolMappingFunctionBase();
+
+    Molecules operator()(QuerySystem &system,
                          const Space &new_space) const;
-    
+
     static const char* typeName()
     {
-        return "SireSystem::MolMappingFunction";
+        return "SireMove::MolMappingFunction";
     }
 
-    QVector<CoordGroup> map(const QVector<CoordGroup> &coords,
-                            const Space &old_space,
-                            const Space &new_space) const;
-                                       
-    CoordGroup map(const CoordGroup &coords,
-                   const Space &old_space,
-                   const Space &new_space) const;
-                   
-    virtual PartialMolecule map(const PartialMolecule &molecule,
-                                const Space &old_space,
-                                const Space &new_space) const=0;
-                                
-    virtual Molecules map(const Molecules &molecules,
-                          const Space &old_space,
+    virtual const char* what() const;
+
+    virtual MolMappingFunctionBase* clone() const;
+
+    virtual Molecules map(QuerySystem &system,
                           const Space &new_space) const=0;
+
+protected:
+    /** The mapping function used to map CoordGroups between spaces */
+    MappingFunction mapfunc;
 };
 
 /** This function maps each molecule as a single unit - this
-    means that even multi-cutgroup molecules are mapped as a 
+    means that even multi-cutgroup molecules are mapped as a
     single unit.
-    
+
     @author Christopher Woods
 */
-class SIRESYSTEM_EXPORT MapAsWholeMolecule : public MolMappingFunctionBase
+class SIREMOVE_EXPORT MapAsMolecules : public MolMappingFunctionBase
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const MapAsMolecules&);
+friend QDataStream& ::operator>>(QDataStream&, MapAsMolecules&);
+
+public:
+    MapAsMolecules();
+
+    MapAsMolecules(const MoleculeGroup &molgroup,
+                        const MappingFunction &mappingfunction = MappingFunction());
+
+    MapAsMolecules(const QList<MoleculeGroup> &molgroups,
+                        const MappingFunction &mappingfunction = MappingFunction());
+
+    MapAsMolecules(const MoleculeGroups &molgroups,
+                        const MappingFunction &mappingfunction = MappingFunction());
+
+    MapAsMolecules(const MapAsMolecules &other);
+
+    ~MapAsMolecules();
+
+    static const char* typeName()
+    {
+        return "SireMove::MapAsMolecules";
+    }
+
+    const char* what() const
+    {
+        return MapAsMolecules::typeName();
+    }
+
+    MapAsMolecules* clone() const
+    {
+        return new MapAsMolecules(*this);
+    }
+
+    Molecules map(QuerySystem &system, const Space &new_space) const;
+
+private:
+    /** The IDs of the molecule groups that have to be mapped */
+    QSet<MoleculeGroupID> groupids;
 };
 
-/** This function maps each cutgroup within each molecule as 
+/** This function maps each cutgroup within each molecule as
     separate units. This will change the internal geometry
     of multi-cutgroup molecules.
-    
+
     @author Christopher Woods
 */
-class SIRESYSTEM_EXPORT MapAsCutGroups : public MolMappingFunctionBase
+class SIREMOVE_EXPORT MapAsCutGroups : public MolMappingFunctionBase
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const MapAsCutGroups&);
+friend QDataStream& ::operator>>(QDataStream&, MapAsCutGroups&);
+
+public:
+    MapAsCutGroups();
+
+    MapAsCutGroups(const MoleculeGroup &molgroup,
+                        const MappingFunction &mappingfunction = MappingFunction());
+
+    MapAsCutGroups(const QList<MoleculeGroup> &molgroups,
+                        const MappingFunction &mappingfunction = MappingFunction());
+
+    MapAsCutGroups(const MoleculeGroups &molgroups,
+                        const MappingFunction &mappingfunction = MappingFunction());
+
+    MapAsCutGroups(const MapAsCutGroups &other);
+
+    ~MapAsCutGroups();
+
+    static const char* typeName()
+    {
+        return "SireMove::MapAsCutGroups";
+    }
+
+    const char* what() const
+    {
+        return MapAsCutGroups::typeName();
+    }
+
+    MapAsCutGroups* clone() const
+    {
+        return new MapAsCutGroups(*this);
+    }
+
+    Molecules map(QuerySystem &system, const Space &new_space) const;
+
+private:
+    /** The IDs of the molecule groups that have to be mapped */
+    QSet<MoleculeGroupID> groupids;
+};
+
+/** This is the holder for the complete hierarchy of MolMappingFunctions
+
+    @author Christopher Woods
+*/
+class SIREMOVE_EXPORT MolMappingFunction
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const MolMappingFunction&);
+friend QDataStream& ::operator>>(QDataStream&, MolMappingFunction&);
+
+public:
+    MolMappingFunction();
+
+    MolMappingFunction(const MolMappingFunctionBase &mapfunc);
+
+    MolMappingFunction(const MolMappingFunction &other);
+
+    ~MolMappingFunction();
+
+    MolMappingFunction& operator=(const MolMappingFunctionBase &mapfunc);
+    MolMappingFunction& operator=(const MolMappingFunction &other);
+
+    Molecules operator()(QuerySystem &system,
+                         const Space &new_space) const;
+
+    const char* what() const;
+
+    const MolMappingFunctionBase& base() const;
+
+    Molecules map(QuerySystem &system, const Space &new_space) const;
+
+    template<class T>
+    bool isA() const
+    {
+        return d->isA<T>();
+    }
+
+    template<class T>
+    const T& asA() const
+    {
+        return d->asA<T>();
+    }
+
+private:
+    /** Implicitly shared pointer to the actual mapping function */
+    SireBase::SharedPolyPointer<MolMappingFunctionBase> d;
 };
 
 }
 
-Q_DECLARE_METATYPE(SireSystem::MapAsWholeMolecule);
-Q_DECLARE_METATYPE(SireSystem::MapAsCutGroups);
-Q_DECLARE_METATYPE(SireSystem::MolMappingFunction);
+Q_DECLARE_METATYPE(SireMove::MapAsMolecules);
+Q_DECLARE_METATYPE(SireMove::MapAsCutGroups);
+Q_DECLARE_METATYPE(SireMove::MolMappingFunction);
 
 SIRE_END_HEADER
 

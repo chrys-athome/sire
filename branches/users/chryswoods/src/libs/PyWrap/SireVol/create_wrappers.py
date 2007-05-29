@@ -32,9 +32,17 @@ extra_includes = [ "SireMaths/vector.h",
                    "SireMaths/quaternion.h",
                    "SireMaths/matrix.h" ]
 
-def fix_coordgroup(c):
+def fix_coordgroupbase(c):
    c.decl("data").exclude()
    c.decl("constData").exclude()
+   
+   
+def fix_coordgroup(c):   
+   c.add_registration_code( "def( \"split\", &SireVol::CoordGroup::split< QVector<SireVol::CoordGroup> > )" )
+   c.add_registration_code( "def( \"combine\", &SireVol::CoordGroup::combine< QVector<SireVol::CoordGroup> > )")
+   
+   c.add_registration_code("staticmethod(\"split\")")
+   c.add_registration_code("staticmethod(\"combine\")")
 
 def fix_coordgroupeditor(c):
    c.decl("data").exclude()
@@ -44,7 +52,8 @@ def fix_coordgroupeditor(c):
    c.decls( "setCoordinates" ).call_policies = call_policies.return_self()
    
 
-special_code = { "CoordGroupBase" : fix_coordgroup,
+special_code = { "CoordGroupBase" : fix_coordgroupbase,
+                 "CoordGroup" : fix_coordgroup,
                  "CoordGroupEditor" : fix_coordgroupeditor }
 
 implicitly_convertible = [ ("QVector<SireMaths::Vector>","SireVol::CoordGroup"),

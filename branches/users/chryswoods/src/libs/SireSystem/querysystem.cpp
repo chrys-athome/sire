@@ -96,6 +96,12 @@ const MoleculeGroups& QuerySystem::groups() const
     return sysdata.groups();
 }
 
+/** Return the space within which the molecules exist */
+const Space& QuerySystem::space() const
+{
+    return sysdata.space();
+}
+
 /** Return a copy of the forcefield with ID == ffid
 
     \throw SireFF::missing_forcefield
@@ -333,10 +339,10 @@ PartialMolecule QuerySystem::molecule(MoleculeID molid) const
 QSet<MoleculeID> QuerySystem::moleculeIDs() const
 {
     QSet<MoleculeID> allids = sysdata.groups().moleculeIDs();
-    
+
     allids.unite( ffields.moleculeIDs() );
-    
-    return allids; 
+
+    return allids;
 }
 
 /** Return copies of all molecules that are in this system */
@@ -347,7 +353,7 @@ Molecules QuerySystem::molecules() const
 
 /** Assert that the forcefields in this system contain the component
     represented by the symbol 'symbol'
-    
+
     \throw SireFF::missing_component
 */
 void QuerySystem::assertContains(const Symbol &symbol) const
@@ -356,7 +362,7 @@ void QuerySystem::assertContains(const Symbol &symbol) const
 }
 
 /** Assert that this system contains a MoleculeGroup with ID == groupid
-  
+
     \throw SireMol::missing_group
 */
 void QuerySystem::assertContains(MoleculeGroupID groupid) const
@@ -364,13 +370,13 @@ void QuerySystem::assertContains(MoleculeGroupID groupid) const
     info().groups().assertContains(groupid);
 }
 
-/** Assert that this system contains the molecule with ID == molid 
+/** Assert that this system contains the molecule with ID == molid
 
     \throw SireMol::missing_molecule
 */
 void QuerySystem::assertContains(MoleculeID molid) const
 {
-    if ( not (info().groups().refersTo(molid) or 
+    if ( not (info().groups().refersTo(molid) or
               forceFields().refersTo(molid)) )
     {
         throw SireMol::missing_molecule( QObject::tr(

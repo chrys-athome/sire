@@ -31,6 +31,11 @@
 
 #include "montecarlo.h"
 
+#include "molmappingfunction.h"
+#include "volchangingfunction.h"
+
+#include "SireUnits/dimensions.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMove
@@ -92,6 +97,9 @@ public:
         return new VolumeMove(*this);
     }
 
+    void setPressure(SireUnits::Dimension::Pressure pressure);
+    SireUnits::Dimension::Pressure pressure() const;
+
     void setMappingFunction(const MolMappingFunction &mapfunc);
     const MolMappingFunction& mappingFunction() const;
 
@@ -101,6 +109,10 @@ public:
     void move(SimSystem &system);
 
     void assertCompatibleWith(QuerySystem &system) const;
+
+protected:
+    bool nptTest(double new_nrg, double old_nrg,
+                 double new_volume, double old_volume);
 
 private:
     /** The mapping function which is used to map the supplied

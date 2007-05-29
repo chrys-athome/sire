@@ -70,9 +70,9 @@ namespace detail
 {
 
 /** This class holds the data about the CoordGroup
-    (the AABox enclosing all of the coordinates and 
+    (the AABox enclosing all of the coordinates and
      the number of coordinates in the group)
-     
+
     @author Christopher Woods
 */
 class SIREVOL_EXPORT CoordGroupData : public QSharedData
@@ -80,7 +80,7 @@ class SIREVOL_EXPORT CoordGroupData : public QSharedData
 public:
     CoordGroupData();
     CoordGroupData(quint32 size);
-    
+
     CoordGroupData(const CoordGroupData &other);
 
     ~CoordGroupData();
@@ -97,24 +97,24 @@ public:
     const AABox& aaBox() const;
 
     bool needsUpdate() const;
-    
+
     void setNeedsUpdate();
     void update(const AABox &new_aabox);
-    
+
     static CoordGroupData* getSharedNull();
 
 private:
     /** Pointer to the global null CoordGroupData */
     static CoordGroupData *shared_null;
-    
-    /** axis-aligned box that completely encloses all of 
+
+    /** axis-aligned box that completely encloses all of
         the points in this group */
     AABox aabox;
-    
+
     /** The number of coordinates in this group */
     quint32 sz;
-    
-    /** Whether or not the AABox for this group needs 
+
+    /** Whether or not the AABox for this group needs
         to be updated */
     bool needsupdate;
 };
@@ -138,7 +138,7 @@ inline const AABox& CoordGroupData::aaBox() const
 {
     return aabox;
 }
-    
+
 /** Return whether or not the AABox that encloses all of the points
     needs to be updated. */
 inline bool CoordGroupData::needsUpdate() const
@@ -163,14 +163,14 @@ inline void CoordGroupData::update(const AABox &new_aabox)
 
 } // end of namespace detail
 
-/** This is the base class of all CoordGroup-like classes 
+/** This is the base class of all CoordGroup-like classes
     (e.g. CoordGroup and CoordGroupEditor). CoordGroup classes
     hold a group of coordinates, together with an axis-aligned
     box that completely encloses all of those points. The
-    class is implicitly shared, and, since it is used in the 
-    most performance-sensitive parts of the code, has 
+    class is implicitly shared, and, since it is used in the
+    most performance-sensitive parts of the code, has
     a slightly more complex implicit-sharing design.
-    
+
     Instead of CoordGroup holding a pointer to CoordGroupData,
     which would then hold a pointer to the array of coordinates
     in the group, CoordGroup is designed to create CoordGroupData
@@ -178,13 +178,13 @@ inline void CoordGroupData::update(const AABox &new_aabox)
     (using placement new) - CoordGroupData is placed first in
     the memory block, then the array of coordinates. CoordGroup
     then holds just a pointer to the first coordinate in the array.
-    This allows rapid lookup of coordinates in the group, as 
+    This allows rapid lookup of coordinates in the group, as
     it is the same as a normal array lookup (and not a pointer
     dereference plus array lookup, as is the case in the
     first described design). A pointer to the CoordGroupData object
-    can be obtained from the array pointer by subtracting the 
+    can be obtained from the array pointer by subtracting the
     size of CoordGroupData.
-    
+
     @author Christopher Woods
 */
 class SIREVOL_EXPORT CoordGroupBase
@@ -192,12 +192,12 @@ class SIREVOL_EXPORT CoordGroupBase
 
 public:
     ~CoordGroupBase();
-    
+
     bool operator==(const CoordGroupBase &other) const;
     bool operator!=(const CoordGroupBase &other) const;
 
     bool maybeDifferent(const CoordGroupBase &other) const;
-    
+
     const Vector& at(quint32 i) const;
     const Vector& operator[](quint32 i) const;
 
@@ -212,25 +212,26 @@ public:
     quint32 size() const;
 
     void assertValidIndex(quint32 i) const;
-    
+
     void assertSameSize(const QVector<Vector> &coordinates) const;
     void assertSameSize(const CoordGroupBase &other) const;
 
 protected:
     CoordGroupBase();
-    
+
     CoordGroupBase(quint32 size, const Vector &value = Vector());
-    
+    CoordGroupBase(quint32 size, const Vector *values);
+
     CoordGroupBase(const QVector<Vector> &coordinates);
-    
+
     CoordGroupBase(const CoordGroupBase &other);
-    
+
     CoordGroupBase& operator=(const CoordGroupBase &other);
-    
+
     void setNeedsUpdate();
     bool needsUpdate() const;
     void update();
-    
+
     const char* memory() const;
     char* memory();
 
@@ -238,33 +239,33 @@ protected:
 
     const detail::CoordGroupData& _pvt_group() const;
     detail::CoordGroupData& _pvt_group();
-    
+
     const detail::CoordGroupData& _pvt_constGroup() const;
-    
+
     const Vector* _pvt_data() const;
     Vector* _pvt_data();
-    
+
     const Vector* _pvt_constData() const;
 
 private:
     void detach();
-    
+
     static void destroy(detail::CoordGroupData *group_ptr);
-    
+
     /** Pointer to the memory in which the
         CoordGroupData and array of coordinates
         are placed */
     char *storage;
 };
 
-/** Return a pointer to the raw memory in which the 
+/** Return a pointer to the raw memory in which the
     CoordGroupData and array of coordinates are placed */
 inline const char* CoordGroupBase::memory() const
 {
     return storage;
 }
 
-/** Return a pointer to the raw memory in which the 
+/** Return a pointer to the raw memory in which the
     CoordGroupData and array of coordinates are placed */
 inline char* CoordGroupBase::memory()
 {
@@ -272,14 +273,14 @@ inline char* CoordGroupBase::memory()
     return storage;
 }
 
-/** Return a pointer to the raw memory in which the 
+/** Return a pointer to the raw memory in which the
     CoordGroupData and array of coordinates are placed */
 inline const char* CoordGroupBase::constMemory() const
 {
     return storage;
 }
 
-/** Return a reference to the CoordGroupData that contains the 
+/** Return a reference to the CoordGroupData that contains the
     metadata about this group */
 inline const detail::CoordGroupData& CoordGroupBase::_pvt_group() const
 {
@@ -301,7 +302,7 @@ inline const Vector* CoordGroupBase::_pvt_data() const
         return 0;
 }
 
-/** Return a modifiable raw pointer to the array of 
+/** Return a modifiable raw pointer to the array of
     coordinates */
 inline Vector* CoordGroupBase::_pvt_data()
 {
@@ -316,7 +317,7 @@ inline const Vector* CoordGroupBase::_pvt_constData() const
 {
     return _pvt_data();
 }
-    
+
 /** Return whether or not this group needs to be updated */
 inline bool CoordGroupBase::needsUpdate() const
 {
@@ -346,7 +347,7 @@ inline const Vector* CoordGroupBase::data() const
 /** Return the number of coordinates in this group */
 inline quint32 CoordGroupBase::count() const
 {
-    return _pvt_group().count(); 
+    return _pvt_group().count();
 }
 
 /** Return the number of coordinates in this group */
@@ -376,6 +377,7 @@ public:
     CoordGroup();
     CoordGroup(quint32 size);
     CoordGroup(quint32 size, const Vector &value);
+    CoordGroup(quint32 size, const Vector *values);
     CoordGroup(const QVector<Vector> &points);
 
     CoordGroup(const CoordGroupBase &other);
@@ -390,7 +392,15 @@ public:
 
     template<class T>
     static CoordGroup combine(const T &groups);
+
+    template<class T>
+    static T split(const CoordGroup &group, const T &groups);
+
+private:
+    static void throwInvalidCountError(uint nats0, uint nats1);
 };
+
+#ifndef SKIP_TEMPLATE_DEFINITIONS
 
 /** Combine a whole load of CoordGroups into a single CoordGroup. */
 template<class T>
@@ -444,8 +454,8 @@ CoordGroup CoordGroup::combine(const T &groups)
             const Vector *group_array = it->constData();
 
             //copy the coordinates
-            void *output = qMemCopy( group_array, &(combined_array[i]),
-                                     npoints*sizeof(Vector) );
+            qMemCopy( &(combined_array[i]), group_array,
+                      npoints*sizeof(Vector) );
 
             i += npoints;
 
@@ -458,6 +468,68 @@ CoordGroup CoordGroup::combine(const T &groups)
         return combined_group;
     }
 }
+
+/** Split a single CoordGroup into lots of little CoordGroups, split
+    up into parts according to 'groups' - this function does the reverse
+    operation of 'combine', e.g. you can write;
+
+    \code
+    //combine 'groups' into a single CoordGroup
+    CoordGroup group = CoordGroup::combine(groups);
+
+    //do stuff with the single CoordGroup
+
+    //now split this back into its original groups
+    groups = CoordGroup::split(group, groups);
+    \endcode
+*/
+template<class T>
+T CoordGroup::split(const CoordGroup &group, const T &groups)
+{
+    T new_groups = groups;
+
+    //ensure we have the same number of atoms...
+    uint nats = 0;
+
+    foreach (const CoordGroup &cgroup, groups)
+    {
+        nats += cgroup.count();
+    }
+
+    if (group.count() != nats)
+        throwInvalidCountError(group.count(), nats);
+
+    if (nats == 0)
+    {
+        return new_groups;
+    }
+    else if (groups.count() == 1)
+    {
+        new_groups[0] = group;
+        return new_groups;
+    }
+    else
+    {
+        //there is more than one CoordGroup - we need to combine them together
+        int ngroups = groups.count();
+
+        const Vector *coords = group.constData();
+
+        for (int i=0; i<ngroups; ++i)
+        {
+            CoordGroup &cgroup = new_groups[i];
+
+            quint32 nats = cgroup.count();
+
+            cgroup = CoordGroup(nats, coords);
+            coords += nats;
+        }
+
+        return new_groups;
+    }
+}
+
+#endif // #ifndef SKIP_TEMPLATE_DEFINITIONS
 
 /**
 This class is used to edit a CoordGroup. This class is used when you want to

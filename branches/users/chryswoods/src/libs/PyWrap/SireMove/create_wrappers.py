@@ -10,13 +10,19 @@ from pygccxml import declarations
 sys.path.append("..")
 from sireutils import *
 
-wrap_classes = [ "MonteCarlo",
+wrap_classes = [ "MapAsCutGroups",
+                 "MapAsMolecules",
+                 "MolMappingFunctionBase",
+                 "MonteCarlo",
                  "MTSMC",
                  "PrefSampler",
                  "RigidBodyMC",
                  "SamplerBase",
                  "Sampler",
                  "UniformSampler",
+                 "UniformVolumeChange",
+                 "VolChangingFunctionBase",
+                 "VolumeMove",
                  "WeightedMoves"
                ]
 

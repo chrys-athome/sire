@@ -85,8 +85,6 @@ public:
     void setSpace(const Space &new_space,
                   const Molecules &changed_mols = Molecules());
 
-    const Space& space() const;
-
     PartialMolecule change(const PartialMolecule &molecule);
 
     Molecules change(const Molecules &molecules);

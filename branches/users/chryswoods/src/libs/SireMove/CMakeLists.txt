@@ -11,19 +11,23 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the sources in SireMove
 set ( SIREMOVE_SOURCES
-      
+
+      molmappingfunction.cpp
       montecarlo.cpp
       mtsmc.cpp
-      
+
       prefsampler.cpp
-      
+
       rigidbodymc.cpp
-      
+
       sampler.cpp
-      
+
       uniformsampler.cpp
-      
+
       weightedmoves.cpp
+
+      volchangingfunction.cpp
+      volumemove.cpp
     )
 
 add_library (SireMove ${SIREMOVE_SOURCES})
@@ -37,7 +41,7 @@ set_target_properties (SireMove PROPERTIES
 # Link to other Sire libraries
 target_link_libraries (SireMove
                        SireSystem
-		       SireMaths
+           SireMaths
                        )
 
 # installation

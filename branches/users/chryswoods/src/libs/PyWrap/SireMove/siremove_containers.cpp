@@ -37,6 +37,7 @@
 #include "SirePy/convertlist.hpp"
 #include "SirePy/convertdict.hpp"
 #include "SirePy/convertset.hpp"
+#include "SirePy/convertsharedpointer.hpp"
 
 #include "ThirdParty/tuples.hpp"
 
@@ -49,6 +50,8 @@ using boost::python::register_tuple;
 
 void register_SireMove_containers()
 {
+    register_container< MolMappingFunction, MolMappingFunctionBase >();
+    register_container< VolChangingFunction, VolChangingFunctionBase >();
 
     #if QT_VERSION >= 0x402000
 

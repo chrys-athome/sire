@@ -49,7 +49,8 @@ namespace SireVol
 using SireMaths::Vector;
 
 /**
-A PeriodicBox is a volume  that represents standard periodic boundary conditions (a 3D box replicated to infinity along all three dimensions).
+A PeriodicBox is a volume  that represents standard periodic boundary conditions
+(a 3D box replicated to infinity along all three dimensions).
 
 @author Christopher Woods
 */
@@ -67,7 +68,8 @@ public:
 
     ~PeriodicBox();
 
-    double volume() const;
+    SireUnits::Dimension::Volume volume() const;
+    Space setVolume(SireUnits::Dimension::Volume volume) const;
 
     void setDimension(const Vector &min, const Vector &max);
 

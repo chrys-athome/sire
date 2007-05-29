@@ -76,7 +76,8 @@ public:
         return new Cartesian(*this);
     }
 
-    double volume() const;
+    SireUnits::Dimension::Volume volume() const;
+    Space setVolume(SireUnits::Dimension::Volume volume) const;
 
     double calcDist(const Vector &point0, const Vector &point1) const;
     double calcDist2(const Vector &point0, const Vector &point1) const;

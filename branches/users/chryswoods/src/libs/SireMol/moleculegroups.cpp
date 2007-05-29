@@ -219,6 +219,12 @@ QSet<MoleculeID> MoleculeGroups::moleculeIDs() const
     return index.keys().toSet();
 }
 
+/** Return the set of ID numbers of all of the groups in this set */
+QSet<MoleculeGroupID> MoleculeGroups::groupIDs() const
+{
+    return molgroups.keys().toSet();
+}
+
 /** Completely clear this set - this removes all groups */
 void MoleculeGroups::clear()
 {

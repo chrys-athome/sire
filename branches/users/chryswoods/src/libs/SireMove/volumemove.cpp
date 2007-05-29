@@ -26,7 +26,21 @@
   *
 \*********************************************/
 
+#include "volumemove.h"
 
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
+using namespace SireMove;
+using namespace SireStream;
+
+/** The actual NPT Monte Carlo test */
+bool VolumeMove::nptTest(double new_nrg, double old_nrg,
+                         double new_volume, double old_volume)
+{
+}
+
+/** Perform a volume Monte Carlo move */
 void VolumeMove::move(SimSystem &system)
 {
     //get the old energy and old space
@@ -42,7 +56,7 @@ void VolumeMove::move(SimSystem &system)
         Space new_space = volchanger.change(old_space, _pvt_generator());
 
         //change any molecules that need to be mapped
-        Molecules mapped_mols = mapfunc.map(system, old_space, new_space);
+        Molecules mapped_mols = mapfunc.map(system, new_space);
 
         //now change the system
         system.setSpace(new_space, mapped_mols);

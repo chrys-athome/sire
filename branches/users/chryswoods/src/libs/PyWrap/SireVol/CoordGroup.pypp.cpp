@@ -23,11 +23,16 @@ void register_CoordGroup_class(){
         .def( bp::init< >() )    
         .def( bp::init< quint32 >(( bp::arg("size") )) )    
         .def( bp::init< quint32, SireMaths::Vector const & >(( bp::arg("size"), bp::arg("value") )) )    
+        .def( bp::init< quint32, SireMaths::Vector const * >(( bp::arg("size"), bp::arg("values") )) )    
         .def( bp::init< QVector<SireMaths::Vector> const & >(( bp::arg("points") )) )    
         .def( bp::init< SireVol::CoordGroupBase const & >(( bp::arg("other") )) )    
         .def( 
             "edit"
             , (::SireVol::CoordGroupEditor ( ::SireVol::CoordGroup::* )(  ) const)( &::SireVol::CoordGroup::edit ) )    
+        .def( "split", &SireVol::CoordGroup::split< QVector<SireVol::CoordGroup> > )    
+        .def( "combine", &SireVol::CoordGroup::combine< QVector<SireVol::CoordGroup> > )    
+        .staticmethod("split")    
+        .staticmethod("combine")    
         .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireVol::CoordGroup >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )    

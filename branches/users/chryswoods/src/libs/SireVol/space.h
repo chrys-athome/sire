@@ -37,6 +37,8 @@
 #include "SireBase/property.h"
 #include "SireBase/sharedpolypointer.hpp"
 
+#include "SireUnits/dimensions.h"
+
 #include "SireMaths/vector.h"
 
 #include "sireglobal.h"
@@ -118,7 +120,15 @@ public:
     /** Return the volume of the central box of this space. This
         throws an exception if it is not possible to calculate the
         volume of this space (e.g. it is an infinite space!) */
-    virtual double volume() const=0;
+    virtual SireUnits::Dimension::Volume volume() const=0;
+
+    /** Return a copy of this space with the volume of set to 'volume'
+        - this will scale the space uniformly, keeping the center at
+        the same location, to achieve this volume */
+    virtual Space setVolume(SireUnits::Dimension::Volume volume) const=0;
+
+    /** Change the volume of this space by 'delta' */
+    Space changeVolume(SireUnits::Dimension::Volume delta) const;
 
     /** Calculate the distance between two points */
     virtual double calcDist(const Vector &point0, const Vector &point1) const=0;
@@ -298,7 +308,10 @@ public:
         return d->asA<T>();
     }
 
-    double volume() const;
+    SireUnits::Dimension::Volume volume() const;
+
+    Space setVolume(SireUnits::Dimension::Volume volume) const;
+    Space changeVolume(SireUnits::Dimension::Volume delta) const;
 
     double calcDist(const Vector &point0, const Vector &point1) const;
     double calcDist2(const Vector &point0, const Vector &point1) const;
@@ -351,13 +364,31 @@ private:
     SireBase::SharedPolyPointer<SpaceBase> d;
 };
 
+#ifndef SKIP_BROKEN_GCCXML_PARTS
+
 /** Return the volume of the central box of this space. This
     throws an exception if it is not possible to calculate the
     volume of this space (e.g. it is an infinite space!) */
-inline double Space::volume() const
+inline SireUnits::Dimension::Volume Space::volume() const
 {
     return d->volume();
 }
+
+/** Return a copy of this space with the volume of set to 'volume'
+    - this will scale the space uniformly, keeping the center at
+    the same location, to achieve this volume */
+inline Space Space::setVolume(SireUnits::Dimension::Volume volume) const
+{
+    return d->setVolume(volume);
+}
+
+/** Change the volume of this space by 'delta' */
+inline Space Space::changeVolume(SireUnits::Dimension::Volume delta) const
+{
+    return d->changeVolume(delta);
+}
+
+#endif // #ifndef SKIP_BROKEN_GCCXML_PARTS
 
 /** Calculate the distance between two points */
 inline double Space::calcDist(const Vector &point0, const Vector &point1) const

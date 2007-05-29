@@ -81,6 +81,12 @@ SpaceBase::SpaceBase(const SpaceBase &other) : PropertyBase(other)
 SpaceBase::~SpaceBase()
 {}
 
+/** Change the volume of this space by 'delta' */
+Space SpaceBase::changeVolume(SireUnits::Dimension::Volume delta) const
+{
+    return this->setVolume( this->volume() + delta );
+}
+
 /** Assert that 'other' is of the same type as this space
 
     \throw SireError::incompatible_error

@@ -72,6 +72,10 @@ void register_Space_class(){
             , (double ( ::SireVol::Space::* )( ::SireVol::CoordGroup const &,::SireVol::CoordGroup const &,::SireVol::DistMatrix & ) const)( &::SireVol::Space::calcInvDist2 )
             , ( bp::arg("group0"), bp::arg("group1"), bp::arg("distmat") ) )    
         .def( 
+            "changeVolume"
+            , (::SireVol::Space ( ::SireVol::Space::* )( ::SireUnits::Dimension::Volume ) const)( &::SireVol::Space::changeVolume )
+            , ( bp::arg("delta") ) )    
+        .def( 
             "getCopiesWithin"
             , (::QList<boost::tuples::tuple<double, SireVol::CoordGroup, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type> > ( ::SireVol::Space::* )( ::SireVol::CoordGroup const &,::SireVol::CoordGroup const &,double ) const)( &::SireVol::Space::getCopiesWithin )
             , ( bp::arg("group"), bp::arg("center"), bp::arg("dist") ) )    
@@ -111,8 +115,12 @@ void register_Space_class(){
         .def( bp::self != bp::self )    
         .def( bp::self == bp::self )    
         .def( 
+            "setVolume"
+            , (::SireVol::Space ( ::SireVol::Space::* )( ::SireUnits::Dimension::Volume ) const)( &::SireVol::Space::setVolume )
+            , ( bp::arg("volume") ) )    
+        .def( 
             "volume"
-            , (double ( ::SireVol::Space::* )(  ) const)( &::SireVol::Space::volume ) )    
+            , (::SireUnits::Dimension::Volume ( ::SireVol::Space::* )(  ) const)( &::SireVol::Space::volume ) )    
         .def( 
             "what"
             , (char const * ( ::SireVol::Space::* )(  ) const)( &::SireVol::Space::what ) )    

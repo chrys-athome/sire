@@ -111,9 +111,35 @@ bool PeriodicBox::_pvt_isEqual(const PropertyBase &other) const
 }
 
 /** Return the volume of the central box of this space.  */
-double PeriodicBox::volume() const
+SireUnits::Dimension::Volume PeriodicBox::volume() const
 {
-    return boxlength.x() * boxlength.y() * boxlength.z();
+    return SireUnits::Dimension::Volume( boxlength.x() *
+                                         boxlength.y() *
+                                         boxlength.z() );
+}
+
+/** Return a copy of this space with the volume of set to 'volume'
+    - this will scale the space uniformly, keeping the center at
+    the same location, to achieve this volume */
+Space PeriodicBox::setVolume(SireUnits::Dimension::Volume vol) const
+{
+    double old_volume = this->volume();
+    double new_volume = vol;
+
+    if (new_volume < 0)
+        throw SireError::invalid_arg( QObject::tr(
+            "You cannot set the volume of a periodic box to a negative value! (%1)")
+                .arg(new_volume), CODELOC );
+
+    if (old_volume == new_volume)
+        return *this;
+
+    double scl = std::pow( new_volume / old_volume, 1.0/3.0 ); // rats - no cbrt function!
+
+    Vector cent = this->center();
+    Vector new_halflength = scl * halflength;
+
+    return Space( new PeriodicBox(cent - new_halflength, cent + new_halflength) );
 }
 
 /** Set the dimensions of this box so that it is the smallest possible that contains
