@@ -19,6 +19,12 @@
 
 #include "MTSMC.pypp.hpp"
 
+#include "MapAsCutGroups.pypp.hpp"
+
+#include "MapAsMolecules.pypp.hpp"
+
+#include "MolMappingFunctionBase.pypp.hpp"
+
 #include "MonteCarlo.pypp.hpp"
 
 #include "PrefSampler.pypp.hpp"
@@ -30,6 +36,12 @@
 #include "SamplerBase.pypp.hpp"
 
 #include "UniformSampler.pypp.hpp"
+
+#include "UniformVolumeChange.pypp.hpp"
+
+#include "VolChangingFunctionBase.pypp.hpp"
+
+#include "VolumeMove.pypp.hpp"
 
 #include "WeightedMoves.pypp.hpp"
 
@@ -44,6 +56,12 @@ BOOST_PYTHON_MODULE(_Move){
 
     register_MTSMC_class();
 
+    register_MolMappingFunctionBase_class();
+
+    register_MapAsCutGroups_class();
+
+    register_MapAsMolecules_class();
+
     register_SamplerBase_class();
 
     register_PrefSampler_class();
@@ -53,6 +71,12 @@ BOOST_PYTHON_MODULE(_Move){
     register_Sampler_class();
 
     register_UniformSampler_class();
+
+    register_VolChangingFunctionBase_class();
+
+    register_UniformVolumeChange_class();
+
+    register_VolumeMove_class();
 
     bp::implicitly_convertible< const SireMove::SamplerBase&, SireMove::Sampler >();
 

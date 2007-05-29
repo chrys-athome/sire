@@ -92,7 +92,9 @@ public:
 
     virtual VolChangingFunctionBase* clone() const=0;
 
-    virtual Space change(const Space &old_space, RanGenerator &generator) const=0;
+    virtual Space change(const Space &old_space, RanGenerator generator) const=0;
+
+    virtual void assertCompatibleWith(const Space &space) const=0;
 };
 
 /** This function changes a space uniformly by a set volume - this scales each
@@ -132,8 +134,10 @@ public:
     SireUnits::Dimension::Volume maximumVolumeChange() const;
 
     Space change(const Space &old_space,
-                 RanGenerator &generator = RanGenerator()) const;
+                 RanGenerator generator = RanGenerator()) const;
 
+    void assertCompatibleWith(const Space &space) const;
+    
 private:
     #ifndef SKIP_BROKEN_GCCXML_PARTS
     /** The maximum amount by which the volume can
@@ -168,7 +172,7 @@ public:
     const VolChangingFunctionBase& base() const;
 
     Space change(const Space &old_space,
-                 RanGenerator &generator = RanGenerator()) const;
+                 RanGenerator generator = RanGenerator()) const;
 
     template<class T>
     bool isA() const
@@ -181,6 +185,8 @@ public:
     {
         return d->asA<T>();
     }
+
+    void assertCompatibleWith(const Space &space) const;
 
 private:
     /** Implicitly shared pointer to the volume changing function */

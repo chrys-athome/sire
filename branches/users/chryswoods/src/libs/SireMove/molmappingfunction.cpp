@@ -108,9 +108,46 @@ Molecules MolMappingFunctionBase::operator()(QuerySystem &system,
 ///////////// Implementation of MapAsMolecules
 /////////////
 
+static const RegisterMetaType<MapAsMolecules> r_mapmols;
+
+/** Serialise to a binary data stream */
+QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, 
+                                        const MapAsMolecules &mapmols)
+{
+    writeHeader(ds, r_mapmols, 1);
+    
+    SharedDataStream sds(ds);
+    sds << mapmols.groupids 
+        << static_cast<const MolMappingFunctionBase&>(mapmols);
+    
+    return ds;
+}
+
+/** Deserialise from a binary data stream */
+QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, MapAsMolecules &mapmols)
+{
+    VersionID v = readHeader(ds, r_mapmols);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        sds >> mapmols.groupids >> static_cast<MolMappingFunctionBase&>(mapmols);
+    }
+    else
+        throw version_error(v, "1", r_mapmols, CODELOC);
+    
+    return ds;
+}
+
 /** Null constructor - this maps no molecules! */
 MapAsMolecules::MapAsMolecules() : MolMappingFunctionBase( MappingFunction() )
 {}
+
+MapAsMolecules::MapAsMolecules(const MoleculeGroup &molgroup)
+               : MolMappingFunctionBase( MappingFunction() )
+{
+    groupids.insert( molgroup.ID() );
+}
 
 /** Construct a mapper that maps the molecules from the group 'molgroup',
     using the mapping function 'mappingfunction' */
@@ -140,11 +177,33 @@ MapAsMolecules::MapAsMolecules(const QList<MoleculeGroup> &molgroups,
     }
 }
 
+MapAsMolecules::MapAsMolecules(const QList<MoleculeGroup> &molgroups)
+               : MolMappingFunctionBase( MappingFunction() )
+{
+    if (not molgroups.isEmpty())
+    {
+        groupids.reserve(molgroups.count());
+
+        for (QList<MoleculeGroup>::const_iterator it = molgroups.begin();
+             it != molgroups.end();
+             ++it)
+        {
+            groupids.insert( it->ID() );
+        }
+    }
+}
+
 /** Construct a mapper that maps the molecules from the groups in 'molgroups'
     using the mapping function 'mappingfunction' */
 MapAsMolecules::MapAsMolecules(const MoleculeGroups &molgroups,
                                const MappingFunction &mappingfunction)
                : MolMappingFunctionBase(mappingfunction),
+                 groupids( molgroups.groupIDs() )
+{}
+
+/** Construct a mapper that maps the molecules from the groups in 'molgroups' */
+MapAsMolecules::MapAsMolecules(const MoleculeGroups &molgroups)
+               : MolMappingFunctionBase(MappingFunction()),
                  groupids( molgroups.groupIDs() )
 {}
 
@@ -204,9 +263,49 @@ Molecules MapAsMolecules::map(QuerySystem &system, const Space &new_space) const
     return mapped_mols;
 }
 
+/** Assert that this mapping function is compatible with the passed system */
+void MapAsMolecules::assertCompatibleWith(QuerySystem &system) const
+{
+    foreach (MoleculeGroupID groupid, groupids)
+    {
+        system.assertContains(groupid);
+    }
+}
+
 /////////////
 ///////////// Implementation of MapAsCutGroups
 /////////////
+
+static const RegisterMetaType<MapAsCutGroups> r_mapgroups;
+
+/** Serialise to a binary data stream */
+QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, 
+                                        const MapAsCutGroups &mapgroups)
+{
+    writeHeader(ds, r_mapgroups, 1);
+    
+    SharedDataStream sds(ds);
+    sds << mapgroups.groupids 
+        << static_cast<const MolMappingFunctionBase&>(mapgroups);
+    
+    return ds;
+}
+
+/** Deserialise from a binary data stream */
+QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, MapAsCutGroups &mapgroups)
+{
+    VersionID v = readHeader(ds, r_mapgroups);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        sds >> mapgroups.groupids >> static_cast<MolMappingFunctionBase&>(mapgroups);
+    }
+    else
+        throw version_error(v, "1", r_mapgroups, CODELOC);
+    
+    return ds;
+}
 
 /** Null constructor - this maps no molecules! */
 MapAsCutGroups::MapAsCutGroups() : MolMappingFunctionBase( MappingFunction() )
@@ -217,6 +316,13 @@ MapAsCutGroups::MapAsCutGroups() : MolMappingFunctionBase( MappingFunction() )
 MapAsCutGroups::MapAsCutGroups(const MoleculeGroup &molgroup,
                                const MappingFunction &mappingfunction)
                : MolMappingFunctionBase(mappingfunction)
+{
+    groupids.insert( molgroup.ID() );
+}
+
+/** Construct a mapper that maps the molecules from the group 'molgroup' */
+MapAsCutGroups::MapAsCutGroups(const MoleculeGroup &molgroup)
+               : MolMappingFunctionBase(MappingFunction())
 {
     groupids.insert( molgroup.ID() );
 }
@@ -240,11 +346,34 @@ MapAsCutGroups::MapAsCutGroups(const QList<MoleculeGroup> &molgroups,
     }
 }
 
+/** Construct a mapper that maps the molecules from the groups in 'molgroups' */
+MapAsCutGroups::MapAsCutGroups(const QList<MoleculeGroup> &molgroups)
+               : MolMappingFunctionBase(MappingFunction())
+{
+    if (not molgroups.isEmpty())
+    {
+        groupids.reserve(molgroups.count());
+
+        for (QList<MoleculeGroup>::const_iterator it = molgroups.begin();
+             it != molgroups.end();
+             ++it)
+        {
+            groupids.insert( it->ID() );
+        }
+    }
+}
+
 /** Construct a mapper that maps the molecules from the groups in 'molgroups'
     using the mapping function 'mappingfunction' */
 MapAsCutGroups::MapAsCutGroups(const MoleculeGroups &molgroups,
                                const MappingFunction &mappingfunction)
                : MolMappingFunctionBase(mappingfunction),
+                 groupids( molgroups.groupIDs() )
+{}
+
+/** Construct a mapper that maps the molecules from the groups in 'molgroups' */
+MapAsCutGroups::MapAsCutGroups(const MoleculeGroups &molgroups)
+               : MolMappingFunctionBase(MappingFunction()),
                  groupids( molgroups.groupIDs() )
 {}
 
@@ -298,6 +427,15 @@ Molecules MapAsCutGroups::map(QuerySystem &system, const Space &new_space) const
     return mapped_mols;
 }
 
+/** Assert that this mapping function is compatible with the passed system */
+void MapAsCutGroups::assertCompatibleWith(QuerySystem &system) const
+{
+    foreach (MoleculeGroupID groupid, groupids)
+    {
+        system.assertContains(groupid);
+    }
+}
+
 /////////////
 ///////////// Implementation of MolMappingFunction
 /////////////
@@ -312,9 +450,52 @@ static SharedPolyPointer<MolMappingFunctionBase> getSharedNull()
     return shared_null;
 }
 
+static const RegisterMetaType<MolMappingFunction> r_mapfunc;
+
+/** Serialise to a binary data stream */
+QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, 
+                                        const MolMappingFunction &mapfunc)
+{
+    writeHeader(ds, r_mapfunc, 1);
+    
+    SharedDataStream sds(ds);
+    sds << mapfunc.d;
+    
+    return ds;
+}
+
+/** Deserialise from a binary data stream */
+QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds,
+                                        MolMappingFunction &mapfunc)
+{
+    VersionID v = readHeader(ds, r_mapfunc);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        sds >> mapfunc.d;
+    }
+    else
+        throw version_error(v, "1", r_mapfunc, CODELOC);
+    
+    return ds;
+}
+
 /** Constructor */
 MolMappingFunction::MolMappingFunction()
                    : d( getSharedNull() )
+{}
+
+MolMappingFunction::MolMappingFunction(const MoleculeGroup &molgroup)
+                   : d( new MapAsMolecules(molgroup) )
+{}
+
+MolMappingFunction::MolMappingFunction(const QList<MoleculeGroup> &molgroups)
+                   : d( new MapAsMolecules(molgroups) )
+{}
+
+MolMappingFunction::MolMappingFunction(const MoleculeGroups &molgroups)
+                   : d( new MapAsMolecules(molgroups) )
 {}
 
 /** Construct from the passed mapping function */
@@ -368,4 +549,10 @@ const MolMappingFunctionBase& MolMappingFunction::base() const
 Molecules MolMappingFunction::map(QuerySystem &system, const Space &new_space) const
 {
     return d->map(system, new_space);
+}
+
+/** Assert that this mapping function is compatible with the passed system */
+void MolMappingFunction::assertCompatibleWith(QuerySystem &system) const
+{
+    d->assertCompatibleWith(system);
 }

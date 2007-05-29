@@ -236,10 +236,10 @@ void RigidBodyMC::move(SimSystem &system)
         double old_bias = mol_and_bias.get<1>();
 
         //now translate and rotate the molecule
-        Vector delta = _pvt_generator().vectorOnSphere(adel);
+        Vector delta = rangenerator.vectorOnSphere(adel);
 
-        Quaternion rotdelta( rdel * _pvt_generator().rand(),
-                             _pvt_generator().vectorOnSphere() );
+        Quaternion rotdelta( rdel * rangenerator.rand(),
+                             rangenerator.vectorOnSphere() );
 
         const PartialMolecule &oldmol = mol_and_bias.get<0>();
 

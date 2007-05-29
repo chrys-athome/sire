@@ -147,6 +147,8 @@ public:
     QSet<MoleculeID> moleculeIDs() const;
     Molecules molecules() const;
 
+    int nMolecules() const;
+
     ForceField forceField(ForceFieldID ffid);
     MoleculeGroup group(MoleculeGroupID id) const;
 

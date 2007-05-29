@@ -51,7 +51,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const MonteCarlo &mc)
 
     SharedDataStream sds(ds);
 
-    sds << mc._generator << mc.beta
+    sds << mc.rangenerator << mc.beta
         << mc.naccept << mc.nreject
         << static_cast<const MoveBase&>(mc);
 
@@ -65,7 +65,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, MonteCarlo &mc)
 
     if (v == 1)
     {
-        ds >> mc._generator >> mc.beta
+        ds >> mc.rangenerator >> mc.beta
            >> mc.naccept >> mc.nreject
            >> static_cast<MoveBase&>(mc);
     }
@@ -77,7 +77,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, MonteCarlo &mc)
 
 /** Construct using the supplied random number generator */
 MonteCarlo::MonteCarlo(const RanGenerator &generator)
-           : MoveBase(), _generator(generator),
+           : MoveBase(), rangenerator(generator),
              naccept(0), nreject(0)
 {
     setTemperature( 25 * celsius );
@@ -85,7 +85,7 @@ MonteCarlo::MonteCarlo(const RanGenerator &generator)
 
 /** Copy constructor */
 MonteCarlo::MonteCarlo(const MonteCarlo &other)
-           : MoveBase(other), _generator(other._generator),
+           : MoveBase(other), rangenerator(other.rangenerator),
              beta(other.beta),
              naccept(other.naccept), nreject(other.nreject)
 {}
@@ -97,7 +97,7 @@ MonteCarlo::~MonteCarlo()
 /** Copy assignment */
 MonteCarlo& MonteCarlo::operator=(const MonteCarlo &other)
 {
-    _generator = other._generator;
+    rangenerator = other.rangenerator;
     beta = other.beta;
     naccept = other.naccept;
     nreject = other.nreject;
@@ -122,13 +122,13 @@ Temperature MonteCarlo::temperature() const
 /** Set the random number generator to use for these moves */
 void MonteCarlo::setGenerator(const RanGenerator &generator)
 {
-    _generator = generator;
+    rangenerator = generator;
 }
 
 /** Return the random number generator used for these moves */
 const RanGenerator& MonteCarlo::generator() const
 {
-    return _generator;
+    return rangenerator;
 }
 
 /** Return the number of attempted moves */
@@ -170,7 +170,7 @@ bool MonteCarlo::test(double new_energy, double old_energy,
 {
     double x = (new_bias / old_bias) * std::exp( -beta*(new_energy - old_energy) );
 
-    if (x > 1 or x > _generator.rand())
+    if (x > 1 or x > rangenerator.rand())
     {
         ++naccept;
         return true;
@@ -194,7 +194,7 @@ bool MonteCarlo::test(double new_energy, double old_energy)
 
     double x = std::exp( -beta*(new_energy - old_energy) );
 
-    if (x > 1 or x > _generator.rand())
+    if (x > 1 or x > rangenerator.rand())
     {
         ++naccept;
         return true;

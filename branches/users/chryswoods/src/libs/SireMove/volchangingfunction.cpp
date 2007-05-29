@@ -151,12 +151,16 @@ SireUnits::Dimension::Volume UniformVolumeChange::maximumVolumeChange() const
 
 /** Change the space uniformly by a random amount */
 Space UniformVolumeChange::change(const Space &old_space,
-                                  RanGenerator &generator) const
+                                  RanGenerator generator) const
 {
     SireUnits::Dimension::Volume delta = generator.rand(-1,1) * maxdelta;
 
     return old_space.changeVolume(delta);
 }
+
+/** Assert that this function is compatible with the passed space */
+void UniformVolumeChange::assertCompatibleWith(const Space&) const
+{}
 
 ////////////
 //////////// Implementation of VolChangingFunction
@@ -253,7 +257,13 @@ const VolChangingFunctionBase& VolChangingFunction::base() const
 /** Use the changing function to randomly change the volume of the
     passed Space - return the new space */
 Space VolChangingFunction::change(const Space &old_space,
-                                  RanGenerator &generator) const
+                                  RanGenerator generator) const
 {
     return d->change(old_space, generator);
+}
+
+/** Assert that this function is compatible with the passed space */
+void VolChangingFunction::assertCompatibleWith(const Space &space) const
+{
+    d->assertCompatibleWith(space);
 }

@@ -345,6 +345,12 @@ QSet<MoleculeID> QuerySystem::moleculeIDs() const
     return allids;
 }
 
+/** Return the total number of molecules in this system */
+int QuerySystem::nMolecules() const
+{
+    return moleculeIDs().count();
+}
+
 /** Return copies of all molecules that are in this system */
 Molecules QuerySystem::molecules() const
 {

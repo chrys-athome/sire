@@ -47,14 +47,13 @@ QDataStream& operator>>(QDataStream&, SireMove::MonteCarlo&);
 
 namespace SireSim
 {
-class Simulation;
+class SimSystem;
 }
 
 namespace SireMove
 {
 
-using SireSim::Simulation;
-
+using SireSystem::SimSystem;
 using SireSystem::MoveBase;
 
 using SireMaths::RanGenerator;
@@ -102,15 +101,9 @@ protected:
     bool test(double new_energy,
               double old_energy);
 
-    RanGenerator& _pvt_generator()
-    {
-        return _generator;
-    }
-
-private:
     /** The random number generator used during the moves
         and in the test */
-    RanGenerator _generator;
+    RanGenerator rangenerator;
 
     /** beta (== 1 / kT) */
     double beta;

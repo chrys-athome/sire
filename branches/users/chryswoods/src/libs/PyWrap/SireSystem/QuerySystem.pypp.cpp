@@ -137,8 +137,15 @@ void register_QuerySystem_class(){
             , (::SireSystem::SystemMonitors const & ( ::SireSystem::QuerySystem::* )(  ) const)( &::SireSystem::QuerySystem::monitors )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
+            "nMolecules"
+            , (int ( ::SireSystem::QuerySystem::* )(  ) const)( &::SireSystem::QuerySystem::nMolecules ) )    
+        .def( 
             "properties"
             , (::QHash<QString,QHash<SireFF::ForceFieldID, SireBase::Property> > ( ::SireSystem::QuerySystem::* )(  ) )( &::SireSystem::QuerySystem::properties ) )    
+        .def( 
+            "space"
+            , (::SireVol::Space const & ( ::SireSystem::QuerySystem::* )(  ) const)( &::SireSystem::QuerySystem::space )
+            , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
             "version"
             , (::SireBase::Version const & ( ::SireSystem::QuerySystem::* )(  ) const)( &::SireSystem::QuerySystem::version )

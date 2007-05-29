@@ -5,6 +5,7 @@
 ## (C) Christopher Woods
 ##
 
+import Sire.Units
 import Sire.Mol
 import Sire.System
 

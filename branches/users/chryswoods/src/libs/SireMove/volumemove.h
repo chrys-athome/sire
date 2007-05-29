@@ -62,14 +62,7 @@ friend QDataStream& ::operator>>(QDataStream&, VolumeMove&);
 public:
     VolumeMove(const RanGenerator &generator = RanGenerator());
 
-    VolumeMove(const MoleculeGroup &group,
-               const RanGenerator &generator = RanGenerator());
-
     VolumeMove(const MolMappingFunction &mapfunc,
-               const RanGenerator &generator = RanGenerator());
-
-    VolumeMove(const MoleculeGroup &group,
-               const VolChangingFunction &changefunc,
                const RanGenerator &generator = RanGenerator());
 
     VolumeMove(const MolMappingFunction &mapfunc,
@@ -112,9 +105,9 @@ public:
 
 protected:
     bool nptTest(double new_nrg, double old_nrg,
-                 double new_volume, double old_volume);
+                 double new_volume, double old_volume,
+                 int nmolecules);
 
-private:
     /** The mapping function which is used to map the supplied
         molecules from one space into another */
     MolMappingFunction mapfunc;
@@ -122,6 +115,9 @@ private:
     /** The function used to change the volume of the space
         from move to move */
     VolChangingFunction volchanger;
+
+    /** The pressure that this move is targetting */
+    double p;
 };
 
 }

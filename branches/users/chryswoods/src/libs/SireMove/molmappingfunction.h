@@ -111,12 +111,14 @@ public:
         return "SireMove::MolMappingFunction";
     }
 
-    virtual const char* what() const;
+    virtual const char* what() const=0;
 
-    virtual MolMappingFunctionBase* clone() const;
+    virtual MolMappingFunctionBase* clone() const=0;
 
     virtual Molecules map(QuerySystem &system,
                           const Space &new_space) const=0;
+
+    virtual void assertCompatibleWith(QuerySystem &system) const=0;
 
 protected:
     /** The mapping function used to map CoordGroups between spaces */
@@ -138,14 +140,20 @@ friend QDataStream& ::operator>>(QDataStream&, MapAsMolecules&);
 public:
     MapAsMolecules();
 
+    MapAsMolecules(const MoleculeGroup &molgroup);
+
     MapAsMolecules(const MoleculeGroup &molgroup,
-                        const MappingFunction &mappingfunction = MappingFunction());
+                   const MappingFunction &mappingfunction);
+
+    MapAsMolecules(const QList<MoleculeGroup> &molgroups);
 
     MapAsMolecules(const QList<MoleculeGroup> &molgroups,
-                        const MappingFunction &mappingfunction = MappingFunction());
+                   const MappingFunction &mappingfunction);
+
+    MapAsMolecules(const MoleculeGroups &molgroups);
 
     MapAsMolecules(const MoleculeGroups &molgroups,
-                        const MappingFunction &mappingfunction = MappingFunction());
+                   const MappingFunction &mappingfunction);
 
     MapAsMolecules(const MapAsMolecules &other);
 
@@ -168,6 +176,8 @@ public:
 
     Molecules map(QuerySystem &system, const Space &new_space) const;
 
+    void assertCompatibleWith(QuerySystem &system) const;
+
 private:
     /** The IDs of the molecule groups that have to be mapped */
     QSet<MoleculeGroupID> groupids;
@@ -188,14 +198,20 @@ friend QDataStream& ::operator>>(QDataStream&, MapAsCutGroups&);
 public:
     MapAsCutGroups();
 
+    MapAsCutGroups(const MoleculeGroup &molgroup);
+
     MapAsCutGroups(const MoleculeGroup &molgroup,
-                        const MappingFunction &mappingfunction = MappingFunction());
+                   const MappingFunction &mappingfunction);
+
+    MapAsCutGroups(const QList<MoleculeGroup> &molgroups);
 
     MapAsCutGroups(const QList<MoleculeGroup> &molgroups,
-                        const MappingFunction &mappingfunction = MappingFunction());
+                   const MappingFunction &mappingfunction);
+
+    MapAsCutGroups(const MoleculeGroups &molgroups);
 
     MapAsCutGroups(const MoleculeGroups &molgroups,
-                        const MappingFunction &mappingfunction = MappingFunction());
+                   const MappingFunction &mappingfunction);
 
     MapAsCutGroups(const MapAsCutGroups &other);
 
@@ -218,6 +234,8 @@ public:
 
     Molecules map(QuerySystem &system, const Space &new_space) const;
 
+    void assertCompatibleWith(QuerySystem &system) const;
+    
 private:
     /** The IDs of the molecule groups that have to be mapped */
     QSet<MoleculeGroupID> groupids;
@@ -237,6 +255,10 @@ public:
     MolMappingFunction();
 
     MolMappingFunction(const MolMappingFunctionBase &mapfunc);
+
+    MolMappingFunction(const MoleculeGroup &molgroup);
+    MolMappingFunction(const QList<MoleculeGroup> &molgroups);
+    MolMappingFunction(const MoleculeGroups &molgroups);
 
     MolMappingFunction(const MolMappingFunction &other);
 
@@ -265,6 +287,8 @@ public:
     {
         return d->asA<T>();
     }
+
+    void assertCompatibleWith(QuerySystem &system) const;
 
 private:
     /** Implicitly shared pointer to the actual mapping function */

@@ -21,7 +21,10 @@ set ( WRAPMOVE_SOURCES
       _Move.main.cpp
 
       siremove_containers.cpp
-      
+
+      MapAsCutGroups.pypp.cpp
+      MapAsMolecules.pypp.cpp
+      MolMappingFunctionBase.pypp.cpp      
       MonteCarlo.pypp.cpp
       MTSMC.pypp.cpp
 
@@ -33,6 +36,10 @@ set ( WRAPMOVE_SOURCES
       Sampler.pypp.cpp
       
       UniformSampler.pypp.cpp
+      UniformVolumeChange.pypp.cpp
+
+      VolChangingFunctionBase.pypp.cpp
+      VolumeMove.pypp.cpp
 
       WeightedMoves.pypp.cpp
 
