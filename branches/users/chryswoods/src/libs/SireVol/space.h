@@ -115,6 +115,11 @@ public:
 
     virtual SpaceBase* clone() const=0;
 
+    /** Return the volume of the central box of this space. This
+        throws an exception if it is not possible to calculate the
+        volume of this space (e.g. it is an infinite space!) */
+    virtual double volume() const=0;
+
     /** Calculate the distance between two points */
     virtual double calcDist(const Vector &point0, const Vector &point1) const=0;
 
@@ -293,6 +298,8 @@ public:
         return d->asA<T>();
     }
 
+    double volume() const;
+
     double calcDist(const Vector &point0, const Vector &point1) const;
     double calcDist2(const Vector &point0, const Vector &point1) const;
 
@@ -343,6 +350,14 @@ private:
         that is used to perform the distance calculations. */
     SireBase::SharedPolyPointer<SpaceBase> d;
 };
+
+/** Return the volume of the central box of this space. This
+    throws an exception if it is not possible to calculate the
+    volume of this space (e.g. it is an infinite space!) */
+inline double Space::volume() const
+{
+    return d->volume();
+}
 
 /** Calculate the distance between two points */
 inline double Space::calcDist(const Vector &point0, const Vector &point1) const

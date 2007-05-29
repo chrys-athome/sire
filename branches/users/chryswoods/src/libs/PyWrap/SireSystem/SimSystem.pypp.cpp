@@ -93,6 +93,10 @@ void register_SimSystem_class(){
             "setProperty"
             , (void ( ::SireSystem::SimSystem::* )( ::QSet<SireFF::ForceFieldID> const &,::QString const &,::SireBase::Property const & ) )( &::SireSystem::SimSystem::setProperty )
             , ( bp::arg("ffids"), bp::arg("name"), bp::arg("property") ) )    
+        .def( 
+            "setSpace"
+            , (void ( ::SireSystem::SimSystem::* )( ::SireVol::Space const &,::SireMol::Molecules const & ) )( &::SireSystem::SimSystem::setSpace )
+            , ( bp::arg("new_space"), bp::arg("changed_mols")=::SireMol::Molecules( ) ) )    
         .def( "__str__", &pvt_get_name);
 
 }

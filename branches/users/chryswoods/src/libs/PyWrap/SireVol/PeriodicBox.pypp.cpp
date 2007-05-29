@@ -105,6 +105,9 @@ void register_PeriodicBox_class(){
             "typeName"
             , (char const * (*)(  ))( &::SireVol::PeriodicBox::typeName ) )    
         .def( 
+            "volume"
+            , (double ( ::SireVol::PeriodicBox::* )(  ) const)( &::SireVol::PeriodicBox::volume ) )    
+        .def( 
             "what"
             , (char const * ( ::SireVol::PeriodicBox::* )(  ) const)( &::SireVol::PeriodicBox::what ) )    
         .staticmethod( "typeName" )    

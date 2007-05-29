@@ -22,12 +22,12 @@ void register_MapFromSelfFunction_class(){
     bp::class_< SireVol::MapFromSelfFunction, bp::bases< SireVol::MappingFunctionBase > >( "MapFromSelfFunction" )    
         .def( bp::init< >() )    
         .def( 
-            "mapCoordinates"
-            , (::SireVol::CoordGroup ( ::SireVol::MapFromSelfFunction::* )( ::SireVol::CoordGroup const &,::SireVol::Space const &,::SireVol::Space const & ) const)( &::SireVol::MapFromSelfFunction::mapCoordinates )
+            "map"
+            , (::SireVol::CoordGroup ( ::SireVol::MapFromSelfFunction::* )( ::SireVol::CoordGroup const &,::SireVol::Space const &,::SireVol::Space const & ) const)( &::SireVol::MapFromSelfFunction::map )
             , ( bp::arg("coords"), bp::arg("old_space"), bp::arg("new_space") ) )    
         .def( 
-            "mapCoordinates"
-            , (::QVector<SireVol::CoordGroup> ( ::SireVol::MapFromSelfFunction::* )( ::QVector<SireVol::CoordGroup> const &,::SireVol::Space const &,::SireVol::Space const & ) const)( &::SireVol::MapFromSelfFunction::mapCoordinates )
+            "map"
+            , (::QVector<SireVol::CoordGroup> ( ::SireVol::MapFromSelfFunction::* )( ::QVector<SireVol::CoordGroup> const &,::SireVol::Space const &,::SireVol::Space const & ) const)( &::SireVol::MapFromSelfFunction::map )
             , ( bp::arg("coords"), bp::arg("old_space"), bp::arg("new_space") ) )    
         .def( 
             "typeName"

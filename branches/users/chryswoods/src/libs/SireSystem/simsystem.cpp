@@ -35,10 +35,11 @@
 #include "SireFF/forcefield.h"
 
 #include "SireMol/partialmolecule.h"
-#include "SireMol/molecules.h"
 #include "SireMol/moleculeid.h"
 #include "SireMol/moleculegroup.h"
 #include "SireMol/moleculegroups.h"
+
+#include "SireVol/space.h"
 
 #include "SireBase/property.h"
 
@@ -84,20 +85,51 @@ void SimSystem::commit()
     sysdata.incrementMinorVersion();
 }
 
-/** Set the space in which the molecules exist */
-void SimSystem::setSpace(const Space &new_space, const SpaceChanger &spacechanger)
+/** Set the space in which the molecules exist, also changing
+    the molecules in 'changed_mols' at the same time (e.g. because
+    these molecules have been mapped into the new space) */
+void SimSystem::setSpace(const Space &new_space, const Molecules &changed_mols)
 {
+    Molecules mapped_mols = changed_mols;
+
     if (new_space != sysdata.space())
     {
-        Molecules mapped_mols = spacechanger.map(this->molecules(),
-                                                 sysdata.space(), new_space);
-                                                 
+        //change the space
         sysdata.setSpace(new_space);
-        
-        spacechanger.update(ffields, new_space);
-        
-        this->change(mapped_mols);
+
+        //move all of the molecules into the central box
+        Molecules all_mols = this->molecules();
+
+        //make sure that 'mapped_mols' contains all of the molecules in the
+        //system, as we need to map them
+        if (mapped_mols.isEmpty())
+        {
+            mapped_mols = all_mols;
+        }
+        else
+        {
+            for (Molecules::const_iterator it = all_mols.constBegin();
+                 it != all_mols.constEnd();
+                 ++it)
+            {
+                if (not mapped_mols.contains(it.key()))
+                    mapped_mols.append(*it);
+            }
+        }
     }
+
+    //now get the copy of the molecule that is in the central box of this space
+    const Molecules iter_mols = mapped_mols;
+
+    for (Molecules::const_iterator it = iter_mols.constBegin();
+         it != iter_mols.constEnd();
+         ++it)
+    {
+        mapped_mols.change(sysdata.mapIntoSystemSpace(*it));
+    }
+
+    //change all of the molecules
+    this->change(mapped_mols);
 }
 
 /** Set the property 'name' in all forcefields to the value 'value'

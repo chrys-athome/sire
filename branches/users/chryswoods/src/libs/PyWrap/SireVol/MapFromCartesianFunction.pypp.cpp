@@ -22,12 +22,12 @@ void register_MapFromCartesianFunction_class(){
     bp::class_< SireVol::MapFromCartesianFunction, bp::bases< SireVol::MappingFunctionBase > >( "MapFromCartesianFunction" )    
         .def( bp::init< >() )    
         .def( 
-            "mapCoordinates"
-            , (::SireVol::CoordGroup ( ::SireVol::MapFromCartesianFunction::* )( ::SireVol::CoordGroup const &,::SireVol::Space const &,::SireVol::Space const & ) const)( &::SireVol::MapFromCartesianFunction::mapCoordinates )
+            "map"
+            , (::SireVol::CoordGroup ( ::SireVol::MapFromCartesianFunction::* )( ::SireVol::CoordGroup const &,::SireVol::Space const &,::SireVol::Space const & ) const)( &::SireVol::MapFromCartesianFunction::map )
             , ( bp::arg("coords"), bp::arg("old_space"), bp::arg("new_space") ) )    
         .def( 
-            "mapCoordinates"
-            , (::QVector<SireVol::CoordGroup> ( ::SireVol::MapFromCartesianFunction::* )( ::QVector<SireVol::CoordGroup> const &,::SireVol::Space const &,::SireVol::Space const & ) const)( &::SireVol::MapFromCartesianFunction::mapCoordinates )
+            "map"
+            , (::QVector<SireVol::CoordGroup> ( ::SireVol::MapFromCartesianFunction::* )( ::QVector<SireVol::CoordGroup> const &,::SireVol::Space const &,::SireVol::Space const & ) const)( &::SireVol::MapFromCartesianFunction::map )
             , ( bp::arg("coords"), bp::arg("old_space"), bp::arg("new_space") ) )    
         .def( 
             "typeName"

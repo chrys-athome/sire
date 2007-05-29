@@ -127,6 +127,12 @@ void register_QuerySystem_class(){
             , (::SireMol::PartialMolecule ( ::SireSystem::QuerySystem::* )( ::SireMol::MoleculeID ) const)( &::SireSystem::QuerySystem::molecule )
             , ( bp::arg("molid") ) )    
         .def( 
+            "moleculeIDs"
+            , (::QSet<SireMol::MoleculeID> ( ::SireSystem::QuerySystem::* )(  ) const)( &::SireSystem::QuerySystem::moleculeIDs ) )    
+        .def( 
+            "molecules"
+            , (::SireMol::Molecules ( ::SireSystem::QuerySystem::* )(  ) const)( &::SireSystem::QuerySystem::molecules ) )    
+        .def( 
             "monitors"
             , (::SireSystem::SystemMonitors const & ( ::SireSystem::QuerySystem::* )(  ) const)( &::SireSystem::QuerySystem::monitors )
             , bp::return_value_policy< bp::copy_const_reference >() )    

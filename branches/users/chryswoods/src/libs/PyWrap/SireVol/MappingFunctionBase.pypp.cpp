@@ -19,12 +19,12 @@ void register_MappingFunctionBase_class(){
 
     bp::class_< SireVol::MappingFunctionBase, boost::noncopyable >( "MappingFunctionBase", bp::no_init )    
         .def( 
-            "mapCoordinates"
-            , (::QVector<SireVol::CoordGroup> ( ::SireVol::MappingFunctionBase::* )( ::QVector<SireVol::CoordGroup> const &,::SireVol::Space const &,::SireVol::Space const & ) const)( &::SireVol::MappingFunctionBase::mapCoordinates )
+            "map"
+            , (::QVector<SireVol::CoordGroup> ( ::SireVol::MappingFunctionBase::* )( ::QVector<SireVol::CoordGroup> const &,::SireVol::Space const &,::SireVol::Space const & ) const)( &::SireVol::MappingFunctionBase::map )
             , ( bp::arg("coords"), bp::arg("old_space"), bp::arg("new_space") ) )    
         .def( 
-            "mapCoordinates"
-            , (::SireVol::CoordGroup ( ::SireVol::MappingFunctionBase::* )( ::SireVol::CoordGroup const &,::SireVol::Space const &,::SireVol::Space const & ) const)( &::SireVol::MappingFunctionBase::mapCoordinates )
+            "map"
+            , (::SireVol::CoordGroup ( ::SireVol::MappingFunctionBase::* )( ::SireVol::CoordGroup const &,::SireVol::Space const &,::SireVol::Space const & ) const)( &::SireVol::MappingFunctionBase::map )
             , ( bp::arg("coords"), bp::arg("old_space"), bp::arg("new_space") ) )    
         .def( 
             "__call__"

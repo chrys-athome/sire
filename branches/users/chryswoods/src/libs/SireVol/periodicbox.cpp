@@ -110,6 +110,12 @@ bool PeriodicBox::_pvt_isEqual(const PropertyBase &other) const
     return mincoords == other_box.mincoords and maxcoords == other_box.maxcoords;
 }
 
+/** Return the volume of the central box of this space.  */
+double PeriodicBox::volume() const
+{
+    return boxlength.x() * boxlength.y() * boxlength.z();
+}
+
 /** Set the dimensions of this box so that it is the smallest possible that contains
     the points 'min' and 'max'. The minimum coordinates of this box will be set to
     the minimum of the coordinates of these two points, and the maximum coordinates
@@ -496,21 +502,21 @@ CoordGroup PeriodicBox::mapFromSelf(const CoordGroup &group, const Space &other)
         Vector scale( this->boxlength.x() * other_box.invlength.x(),
                       this->boxlength.y() * other_box.invlength.y(),
                       this->boxlength.z() * other_box.invlength.z() );
-    
+
         //get the vector needed to translate this group into the central box
         Vector other_center = other_box.center();
         Vector wrapdelta = other_box.wrapDelta(other_center, group.aaBox().center());
-        
+
         //get the vector from the center of the other box to the center
         //of the molecule when it is in the central box
         Vector delta = group.aaBox().center() - wrapdelta - other_center;
-        
+
         //multiply this by 'scale'
         Vector new_delta = Vector( (scale.x() - 1) * delta.x(),
                                    (scale.y() - 1) * delta.y(),
                                    (scale.z() - 1) * delta.z() );
-   
-        return group.edit().translate( this->center() - other_center + 
+
+        return group.edit().translate( this->center() - other_center +
                                        new_delta - wrapdelta );
     }
 }
@@ -536,37 +542,37 @@ QVector<CoordGroup> PeriodicBox::mapFromSelf(const QVector<CoordGroup> &groups,
     else
     {
         QVector<CoordGroup> moved_groups = groups;
-        
+
         Vector this_center = this->center();
         Vector other_center = other_box.center();
-        
+
         Vector center_delta = this_center - other_center;
-        
+
         //now get the scale factor for the change in dimension
         Vector scale( this->boxlength.x() * other_box.invlength.x(),
                       this->boxlength.y() * other_box.invlength.y(),
                       this->boxlength.z() * other_box.invlength.z() );
-        
+
         int ngroups = moved_groups.count();
         CoordGroup *groups_array = moved_groups.data();
-        
+
         for (int i=0; i<ngroups; ++i)
         {
             CoordGroup &group = groups_array[i];
-        
+
             //get the vector needed to translate this group into the central box
-            Vector wrapdelta = other_box.wrapDelta(other_center, 
+            Vector wrapdelta = other_box.wrapDelta(other_center,
                                                    group.aaBox().center());
-            
+
             Vector delta = group.aaBox().center() - wrapdelta - other_center;
-            
+
             Vector new_delta = Vector( (scale.x() - 1) * delta.x(),
                                        (scale.y() - 1) * delta.y(),
                                        (scale.z() - 1) * delta.z() );
-                            
+
             group = group.edit().translate( center_delta + new_delta - wrapdelta );
         }
-        
+
         return moved_groups;
     }
 }

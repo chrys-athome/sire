@@ -111,6 +111,9 @@ void register_Space_class(){
         .def( bp::self != bp::self )    
         .def( bp::self == bp::self )    
         .def( 
+            "volume"
+            , (double ( ::SireVol::Space::* )(  ) const)( &::SireVol::Space::volume ) )    
+        .def( 
             "what"
             , (char const * ( ::SireVol::Space::* )(  ) const)( &::SireVol::Space::what ) )    
         .def( "__copy__", &__copy__)    

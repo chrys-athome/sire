@@ -33,7 +33,6 @@
 
 #include "systemdata.h"
 #include "systemmonitors.h"
-#include "spacechanger.h"
 
 #include "SireFF/forcefields.h"
 
@@ -91,18 +90,18 @@ public:
 
     System(const MoleculeGroups &groups,
            const SystemMonitors &monitors);
-           
+
     System(const QString &name,
            const MoleculeGroups &groups,
            const SystemMonitors &monitors);
-           
+
     System(const ForceFields &forcefields,
            const SystemMonitors &monitors = SystemMonitors());
-          
+
     System(const QString &name,
            const ForceFields &forcefields,
            const SystemMonitors &monitors = SystemMonitors());
-    
+
     System(const SystemMonitors &monitors);
     System(const QString &name, const SystemMonitors &monitors);
 
@@ -124,9 +123,8 @@ public:
     const ForceFields& forceFields() const;
     const SystemData& info() const;
     const SystemMonitors& monitors() const;
-  
-    void setSpace(const Space &space,
-                  const SpaceChanger &spacechanger = SpaceChanger());
+
+    void setSpace(const Space &space);
 
     Moves run(const Move &move, quint32 nmoves=1);
     Moves run(const Moves &moves);
@@ -153,7 +151,7 @@ private:
     /** The monitors that are used to monitor properties of
         this system */
     SystemMonitors sysmonitors;
-    
+
     /** Whether or not the system is in a consistent state */
     bool is_consistent;
 };

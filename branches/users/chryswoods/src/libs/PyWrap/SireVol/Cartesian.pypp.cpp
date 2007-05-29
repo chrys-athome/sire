@@ -105,6 +105,9 @@ void register_Cartesian_class(){
             "typeName"
             , (char const * (*)(  ))( &::SireVol::Cartesian::typeName ) )    
         .def( 
+            "volume"
+            , (double ( ::SireVol::Cartesian::* )(  ) const)( &::SireVol::Cartesian::volume ) )    
+        .def( 
             "what"
             , (char const * ( ::SireVol::Cartesian::* )(  ) const)( &::SireVol::Cartesian::what ) )    
         .staticmethod( "typeName" )    

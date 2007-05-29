@@ -30,7 +30,8 @@
 #define SIRESYSTEM_SIMSYSTEM_H
 
 #include "querysystem.h"
-#include "spacechanger.h"
+
+#include "SireMol/molecules.h"
 
 #include "SireFF/parametermap.h"
 
@@ -41,6 +42,11 @@ namespace SireFF
 class FFGroupID;
 }
 
+namespace SireVol
+{
+class Space;
+}
+
 namespace SireSystem
 {
 
@@ -48,6 +54,8 @@ using SireFF::FFGroupID;
 using SireFF::ParameterMap;
 
 using SireMol::Molecules;
+
+using SireVol::Space;
 
 /** This class holds a system that is being actively
     simulated.
@@ -73,6 +81,11 @@ public:
 
     void setProperty(const QSet<ForceFieldID> &ffids,
                      const QString &name, const Property &property);
+
+    void setSpace(const Space &new_space,
+                  const Molecules &changed_mols = Molecules());
+
+    const Space& space() const;
 
     PartialMolecule change(const PartialMolecule &molecule);
 

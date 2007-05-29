@@ -232,14 +232,14 @@ CheckPoint System::checkPoint()
 }
 
 /** Set the space in which the molecules are mapped */
-void System::setSpace(const Space &space, const SpaceChanger &spacechanger)
+void System::setSpace(const Space &space)
 {
     if (sysdata.space() != space)
     {
         LocalSimSystem simsystem(this->checkPoint());
-        
-        simsystem.setSpace(space, spacechanger);
-        
+
+        simsystem.setSpace(space);
+
         *this = simsystem.checkPoint();
     }
 }

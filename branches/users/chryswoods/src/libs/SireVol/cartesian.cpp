@@ -87,6 +87,16 @@ bool Cartesian::_pvt_isEqual(const PropertyBase &other) const
     return true;
 }
 
+/** Throw an exception as an infinite space doesn't have a volume! */
+double Cartesian::volume() const
+{
+    throw SireError::invalid_state( QObject::tr(
+        "It is not possible to calculate the volume of an infinite space!"),
+            CODELOC );
+
+    return 0;
+}
+
 /** Calculate the distance between two points */
 double Cartesian::calcDist(const Vector &point0, const Vector &point1) const
 {
