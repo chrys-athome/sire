@@ -116,6 +116,26 @@ const Dimension::Length foot( 12 * inch );
 const Dimension::Length yard( 3 * foot );
 const Dimension::Length mile( 1760 * yard );
 
+/////////////////////////////////////////////////
+// Units of area. Internal unit = Angstroms^2  //
+/////////////////////////////////////////////////
+
+const Dimension::Area angstrom2 = angstrom * angstrom;
+const Dimension::Area picometer2 = picometer * picometer;
+const Dimension::Area nanometer2 = nanometer * nanometer;
+
+const Dimension::Area meter2 = meter * meter;
+
+/////////////////////////////////////////////////
+// Units of volume. Internal unit = Angstroms^3  //
+/////////////////////////////////////////////////
+
+const Dimension::Volume angstrom3 = angstrom * angstrom * angstrom;
+const Dimension::Volume picometer3 = picometer * picometer * picometer;
+const Dimension::Volume nanometer3 = nanometer * nanometer * nanometer;
+
+const Dimension::Volume meter3 = meter * meter * meter;
+
 ///////////////////////////////////////////////////////
 // Units of mass. Internal unit = g mol-1            //
 ///////////////////////////////////////////////////////

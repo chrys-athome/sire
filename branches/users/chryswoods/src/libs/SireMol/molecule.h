@@ -142,6 +142,8 @@ public:
 
     Molecule(const Molecule &other);
 
+    Molecule(const EditMol &editmol);
+
     ~Molecule();
    /////////////////////////////////////////////////////////
 

@@ -26,6 +26,7 @@ void register_Molecule_class(){
     bp::class_< SireMol::Molecule, bp::bases< SireMol::MoleculeView > >( "Molecule" )    
         .def( bp::init< >() )    
         .def( bp::init< SireMol::MolDataView const & >(( bp::arg("molecule") )) )    
+        .def( bp::init< SireMol::EditMol const & >(( bp::arg("editmol") )) )    
         .def( 
             "ID"
             , &::SireMol::Molecule::ID )    

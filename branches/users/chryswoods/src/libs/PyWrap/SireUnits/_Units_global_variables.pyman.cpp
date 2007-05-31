@@ -83,6 +83,22 @@ void register_man_global_variables()
 
     scope().attr("mile") = mile;
 
+    scope().attr("angstrom2") = angstrom2;
+
+    scope().attr("picometer2") = picometer2;
+
+    scope().attr("nanometer2") = nanometer2;
+
+    scope().attr("meter2") = meter2;
+
+    scope().attr("angstrom3") = angstrom3;
+
+    scope().attr("picometer3") = picometer3;
+
+    scope().attr("nanometer3") = nanometer3;
+
+    scope().attr("meter3") = meter3;
+
     scope().attr("g_per_mol") = g_per_mol;
 
     scope().attr("gram") = gram;

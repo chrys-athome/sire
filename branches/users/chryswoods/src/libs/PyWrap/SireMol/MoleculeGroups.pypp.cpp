@@ -91,6 +91,9 @@ void register_MoleculeGroups_class(){
             , ( bp::arg("name") )
             , bp::return_value_policy< bp::copy_const_reference >() )    
         .def( 
+            "groupIDs"
+            , &::SireMol::MoleculeGroups::groupIDs )    
+        .def( 
             "groups"
             , (::QHash<SireMol::MoleculeGroupID, SireMol::MoleculeGroup> ( ::SireMol::MoleculeGroups::* )(  ) const)( &::SireMol::MoleculeGroups::groups ) )    
         .def( 

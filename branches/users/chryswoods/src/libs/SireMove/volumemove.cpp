@@ -36,6 +36,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QDebug>
+
 using namespace SireMove;
 using namespace SireSystem;
 using namespace SireStream;
@@ -44,44 +46,44 @@ using namespace SireUnits;
 static const RegisterMetaType<VolumeMove> r_volmove;
 
 /** Serialise to a binary data stream */
-QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, 
+QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
                                         const VolumeMove &volmove)
 {
     writeHeader(ds, r_volmove, 1);
-    
+
     SharedDataStream sds(ds);
-    
+
     sds << volmove.mapfunc << volmove.volchanger << volmove.p
         << static_cast<const MonteCarlo&>(volmove);
-    
+
     return ds;
 }
 
 /** Deserialise from a binary data stream */
-QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, 
+QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds,
                                         VolumeMove &volmove)
 {
     VersionID v = readHeader(ds, r_volmove);
-    
+
     if (v == 1)
     {
         SharedDataStream sds(ds);
-        
+
         sds >> volmove.mapfunc >> volmove.volchanger
             >> volmove.p >> static_cast<MonteCarlo&>(volmove);
     }
     else
         throw version_error(v, "1", r_volmove, CODELOC);
-    
+
     return ds;
 }
 
 /** Null constructor */
-VolumeMove::VolumeMove(const RanGenerator &generator) 
+VolumeMove::VolumeMove(const RanGenerator &generator)
            : MonteCarlo(generator), p( 1 * atm )
 {}
 
-/** Construct a VolumeMove that moves the molecules in the passed 
+/** Construct a VolumeMove that moves the molecules in the passed
     mapping function */
 VolumeMove::VolumeMove(const MolMappingFunction &mappingfunction,
                        const RanGenerator &generator)
@@ -118,7 +120,7 @@ VolumeMove& VolumeMove::operator=(const VolumeMove &other)
         volchanger = other.volchanger;
         p = other.p;
     }
-    
+
     return *this;
 }
 
@@ -134,7 +136,7 @@ SireUnits::Dimension::Pressure VolumeMove::pressure() const
     return SireUnits::Dimension::Pressure(p);
 }
 
-/** Set the mapping function that is used to map the molecules from 
+/** Set the mapping function that is used to map the molecules from
     one space to another - this function also contains all of the molecules
     that will be mapped */
 void VolumeMove::setMappingFunction(const MolMappingFunction &mappingfunction)
@@ -167,11 +169,11 @@ bool VolumeMove::nptTest(double new_nrg, double old_nrg,
                          int nmolecules)
 {
     double p_deltav = p * (new_volume - old_volume);
-    
+
     double vratio = nmolecules * std::log(new_volume / old_volume);
-    
+
     double x = std::exp( -beta * (new_nrg - old_nrg + p_deltav) + vratio );
-    
+
     if ( x > 1 or x > rangenerator.rand() )
     {
         ++naccept;
@@ -229,6 +231,6 @@ void VolumeMove::assertCompatibleWith(QuerySystem &system) const
 {
     mapfunc.assertCompatibleWith(system);
     volchanger.assertCompatibleWith(system.space());
-    
+
     MonteCarlo::assertCompatibleWith(system);
 }

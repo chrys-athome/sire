@@ -82,8 +82,6 @@ print "Calculating the energy..."
 molpro.setProgram("HF\nMP2")
 molpro.setBasisSet("AVDZ")
 
-print >>open("test.cmd","w"), molpro.molproCommandInput()
-
 timer.start()
 nrg = molpro.energy()
 ms = timer.elapsed()

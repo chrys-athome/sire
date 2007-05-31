@@ -107,6 +107,12 @@ uint SIREMOL_EXPORT qHash(const Molecule &molecule)
 Molecule::Molecule() : MoleculeView()
 {}
 
+/** Create a new molecule from the passed EditMol */
+Molecule::Molecule(const EditMol &editmol) : MoleculeView()
+{
+    *this = editmol.commit();
+}
+
 /** Construct a Molecule that is a copy of the molecule that contains the
     view 'Molecule */
 Molecule::Molecule(const MolDataView &molecule)

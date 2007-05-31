@@ -58,6 +58,8 @@ implicitly_convertible = [ ("const SireSystem::MoveBase&",
                             "SireSystem::Move"),
                            ("SireSystem::Move", "SireSystem::Moves"),
                            ("const SireSystem::MoveBase&",
+                            "SireSystem::Moves"),
+                           ("const SireSystem::MovesBase&",
                             "SireSystem::Moves")
                          ]
 
