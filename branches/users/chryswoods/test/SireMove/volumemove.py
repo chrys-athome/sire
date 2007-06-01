@@ -14,6 +14,19 @@ timer = QTime()
 
 # create a regular lattice of 125 LJ atoms (5 x 5 x 5)
 
+###########
+#
+# This script has now been validated and shown to produce a
+# trajectory that has the same average energy and volume
+# as the trajectory modelled using ProtoMS. This validates
+# that Sire is producing a correct NPT ensemble.
+#
+# The only downside is that ProtoMS produced 100M steps
+# in 140 minutes, while Sire took 540 minutes...
+#  (so Sire was nearly 4 times slower...)
+#
+#
+
 mols = []
 
 ljs = AtomicLJs( [ LJParameter(2.0*angstrom, 2.0*kcal_per_mol) ] )
