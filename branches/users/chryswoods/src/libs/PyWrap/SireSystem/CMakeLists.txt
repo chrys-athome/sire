@@ -34,6 +34,7 @@ set ( WRAPSYSTEM_SOURCES
 
       QuerySystem.pypp.cpp
 
+      RDF.pypp.cpp
       RDFMonitor.pypp.cpp
 
       SameMoves.pypp.cpp

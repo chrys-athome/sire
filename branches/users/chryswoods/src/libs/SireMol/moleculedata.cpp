@@ -223,10 +223,25 @@ void MoleculeData::incrementMinorVersion()
 EditMol MoleculeData::edit() const
 {
     #warning Editing is broken!
-    throw SireError::incomplete_code( QObject::tr(
-                  "Editing a molecule is not yet supported!"), CODELOC );
+    EditMol editmol(info().name());
+    
+    uint nres = info().nResidues();
+    
+    for (ResID i(0); i<nres; ++i)
+    {
+        const ResidueInfo &resinfo = info().residue(i);
+        
+        editmol.add(resinfo.resNum(), resinfo.resName());
+        
+        uint nats = resinfo.nAtoms();
+        
+        for (AtomID j(0); j<nats; ++j)
+        {
+            editmol.add(this->atom( ResIDAtomID(i,j) ));
+        }
+    }
 
-    return EditMol();
+    return editmol;
 }
 
 /** Return the property called 'name'

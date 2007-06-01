@@ -26,7 +26,8 @@
   *
 \*********************************************/
 
-#include "qhash_siresystem.h"
+#include "SireSystem/qhash_siresystem.h"
+#include "SireMol/qhash_siremol.h"
 
 #include <boost/tuple/tuple.hpp>
 
@@ -417,7 +418,7 @@ uint AtomPairs::hash() const
                             | ( (this->get<1>().count()) & 0x0000FFFF );
 }
 
-uint qHash(const SireSystem::detail::AtomPairs &pairs)
+uint SIRESYSTEM_EXPORT qHash(const SireSystem::detail::AtomPairs &pairs)
 {
     return pairs.hash();
 }

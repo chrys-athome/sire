@@ -33,6 +33,8 @@
 
 #include "QuerySystem.pypp.hpp"
 
+#include "RDF.pypp.hpp"
+
 #include "RDFMonitor.pypp.hpp"
 
 #include "SameMoves.pypp.hpp"
@@ -75,6 +77,8 @@ BOOST_PYTHON_MODULE(_System){
     register_Moves_class();
 
     register_MovesBase_class();
+
+    register_RDF_class();
 
     register_RDFMonitor_class();
 

@@ -29,9 +29,6 @@
 #include <Python.h>
 #include <boost/python.hpp>
 
-#include "SireSystem/qhash_siresystem.h"
-#include "SireMol/qhash_siremol.h"
-
 #include <QVector>
 #include <QSet>
 
@@ -44,38 +41,19 @@
 
 #include "ThirdParty/tuples.hpp"
 
-#include "siresystem_headers.h"
-
-using namespace SireSystem;
 using namespace SirePy;
 
 using boost::python::register_tuple;
 
-void register_SireSystem_containers()
+void register_SirePy_containers()
 {
-    register_container< SystemMonitor, SystemMonitorBase >();
+    register_tuple< boost::tuple<double,double> >();
 
-    register_list< QList<Move> >();
-
-    register_tuple< boost::tuple<Move,double> >();
-    
-    register_list< QVector< boost::tuple<Move,double> > >();
-    
-    register_tuple< SireSystem::detail::AtomPairs >();
+    register_list< QVector< boost::tuple<double,double> > >();
 
     #if QT_VERSION >= 0x402000
 
-    register_dict< QHash<Symbol, SystemMonitor> >();
-    
-    register_dict< QHash<SireSystem::detail::AtomPairs,RDF> >();
-
     #else
-    
-    register_dict< QHash<Symbol, SystemMonitor>,
-                   Symbol, SystemMonitor >();
-    
-    register_dict< QHash<SireSystem::detail::AtomPairs,RDF>,
-                   SireSystem::detail::AtomPairs, RDF >();
     
     #endif    
 }

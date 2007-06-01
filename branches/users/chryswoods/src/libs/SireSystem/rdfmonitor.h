@@ -133,7 +133,7 @@ namespace detail
 
 /** This class is used to hold atom pairs, and is provided
     so that I can use these pairs as a key in a hash */
-class AtomPairs : public tuple< QSet<AtomIndex>,QSet<AtomIndex> >
+class SIRESYSTEM_EXPORT AtomPairs : public tuple< QSet<AtomIndex>,QSet<AtomIndex> >
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const AtomPairs&);

@@ -1933,6 +1933,20 @@ void EditMolData::renumberResidue(ResNum oldnum, ResNum newnum)
     //renumber the residue in the list of residue numbers
     resnums.replace( resnums.indexOf(oldnum), newnum );
 
+    //renumber the residue in the list of CutGroup atoms...
+    for (QHash< CutGroupNum,QList<AtomIndex> >::iterator it = cgatoms.begin();
+         it != cgatoms.end();
+         ++it)
+    {
+        for (QList<AtomIndex>::iterator it2 = it->begin();
+             it2 != it->end();
+             ++it2)
+        {
+            if (it2->resNum() == oldnum)
+                *it2 = AtomIndex(it2->name(), newnum);
+        }
+    }
+
     //renumber the residue in the molecule's connectivity
     molbnds.renumber(oldnum, newnum);
 }

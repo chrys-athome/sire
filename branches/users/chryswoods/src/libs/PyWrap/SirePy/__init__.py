@@ -12,3 +12,5 @@
 ## (C) Christopher Woods
 ##
 
+from _Py import *
+
