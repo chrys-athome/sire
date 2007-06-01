@@ -18,6 +18,7 @@ set ( SIRESYSTEM_SOURCES
       move.cpp
       moves.cpp
       querysystem.cpp
+      rdfmonitor.cpp
       simsystem.cpp
       system.cpp
       systemdata.cpp

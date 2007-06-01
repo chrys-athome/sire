@@ -34,6 +34,8 @@ set ( WRAPSYSTEM_SOURCES
 
       QuerySystem.pypp.cpp
 
+      RDFMonitor.pypp.cpp
+
       SameMoves.pypp.cpp
       SimSystem.pypp.cpp
       SystemData.pypp.cpp

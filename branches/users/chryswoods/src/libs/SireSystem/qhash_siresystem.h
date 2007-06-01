@@ -33,6 +33,18 @@
 
 SIRE_BEGIN_HEADER
 
+namespace SireSystem
+{
+
+namespace detail
+{
+class AtomPairs;
+}
+
+}
+
+uint qHash(const SireSystem::detail::AtomPairs&);
+
 SIRE_END_HEADER
 
 #endif
