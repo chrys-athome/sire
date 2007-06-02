@@ -730,10 +730,19 @@ const RDF& RDFMonitor::getRDF(const QSet<AtomIndex> &atoms0,
     return *it;
 }
 
-/** Return the hash of all of the RDFs in this monitor */
-const QHash<AtomPairs,RDF>& RDFMonitor::rdfs() const
+/** Return all of the RDFs in this monitor */
+QList< tuple<AtomPairs,RDF> > RDFMonitor::rdfs() const
 {
-    return allrdfs;
+    QList< tuple<AtomPairs,RDF> > rdflist;
+    
+    for (QHash<AtomPairs,RDF>::const_iterator it = allrdfs.constBegin();
+         it != allrdfs.constEnd();
+         ++it)
+    {
+        rdflist.append( make_tuple(it.key(),it.value()) );
+    }
+    
+    return rdflist;
 }
 
 /** Return the central molecule from which all RDFs are calculated */

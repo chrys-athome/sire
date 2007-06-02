@@ -214,7 +214,7 @@ public:
     const RDF& getRDF(const QSet<AtomIndex> &atoms0,
                       const QSet<AtomIndex> &atoms1) const;
 
-    const QHash<detail::AtomPairs,RDF>& rdfs() const;
+    QList< tuple<detail::AtomPairs,RDF> > rdfs() const;
 
     const Molecule& molecule() const;
 

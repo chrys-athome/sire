@@ -1923,6 +1923,9 @@ void EditMolData::clean()
 */
 void EditMolData::renumberResidue(ResNum oldnum, ResNum newnum)
 {
+    if (oldnum == newnum)
+        return;
+
     this->assertResidueExists(oldnum);
     this->assertResidueNotExists(newnum);
 

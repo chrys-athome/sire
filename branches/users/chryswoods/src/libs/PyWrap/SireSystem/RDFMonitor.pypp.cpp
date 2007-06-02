@@ -56,8 +56,7 @@ void register_RDFMonitor_class(){
         .def( bp::self += bp::self )    
         .def( 
             "rdfs"
-            , (::QHash<SireSystem::detail::AtomPairs, SireSystem::RDF> const & ( ::SireSystem::RDFMonitor::* )(  ) const)( &::SireSystem::RDFMonitor::rdfs )
-            , bp::return_value_policy< bp::copy_const_reference >() )    
+            , (::QList<boost::tuples::tuple<SireSystem::detail::AtomPairs, SireSystem::RDF, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type> > ( ::SireSystem::RDFMonitor::* )(  ) const)( &::SireSystem::RDFMonitor::rdfs ) )    
         .def( 
             "typeName"
             , (char const * (*)(  ))( &::SireSystem::RDFMonitor::typeName ) )    
