@@ -25,6 +25,21 @@ tip4p = PDB().read("test/io/tip4p.pdb")[0]
 print "Loading the solvent..."
 solvent = PDB().read("test/io/water.pdb")
 
+#renumber the the residues of the solvent so that they all have number 1
+def renumberResidue(mols, newnum):
+   
+    newmols = []
+    
+    for mol in mols:
+        editor = mol.edit()
+        editor.setName("Water")
+        editor.renumberResidue(mol.atoms()[0].resNum(), newnum)
+        newmols.append( Molecule(editor) )
+
+    return newmols
+
+solvent = renumberResidue(solvent, ResNum(1))
+
 #specify the space in which the molecules are placed
 space = PeriodicBox( (-18.3854,-18.66855,-18.4445),
                      ( 18.3854, 18.66855, 18.4445) )
@@ -44,6 +59,9 @@ mmff.setName("MMFF")
 qmff = MolproFF(space, switchfunc)
 qmff.setMolproExe( findExe("molpro") )
 qmff.setName("QMFF")
+
+qmff.setProgram("HF\nMP2")
+qmff.setBasisSet("AVDZ")
 
 #parametise each molecule and add it to the forcefields
 print "Parametising the molecules..."
@@ -152,12 +170,24 @@ groups.add(solvent_group)
 groups.add(solute_group)
 groups.add(all_mols)
 
-# create a monitor to monitor the average energies
+# create a monitor to monitor the average energies and RDFs
 monitors = SystemMonitors()
 monitors.set( e_slow.function(), MonitorEnergy(e_slow.function()) )
 monitors.set( e_fast.function(), MonitorEnergy(e_fast.function()) )
 monitors.set( de_by_dlam.function(), MonitorEnergy(de_by_dlam.function()) )
 monitors.set( e_total.function(), MonitorEnergy(e_total.function()) )
+
+rdfmonitor = RDFMonitor(tip4p, solvent_group)
+
+oxygen = [("O00",ResNum(1))]
+hydrogen = [("H01",ResNum(1)),("H02",ResNum(1))]
+
+rdfmonitor.addRDF( oxygen, oxygen, RDF(0,15,150) )
+rdfmonitor.addRDF( oxygen, hydrogen, RDF(0,15,150) )
+rdfmonitor.addRDF( hydrogen, oxygen, RDF(0,15,150) )
+rdfmonitor.addRDF( hydrogen, hydrogen, RDF(0,15,150) )
+
+monitors.set( Symbol("RDF"), rdfmonitor )
 
 # create a system that can be used to simulate these groups
 # using the forcefields that we have constructed
@@ -179,14 +209,20 @@ mtsmc.setEnergyComponent(e_total.function())
 
 PDB().write(system.info().groups().molecules(), "test000.pdb")
 
-nmoves = 10
-timer.start()
+for i in range(1,21):
+    nmoves = 100
 
-moves = system.run(mtsmc,nmoves)
+    print "Block %d: Running %d moves" % (i, nmoves)
 
-ms = timer.elapsed()
+    timer.start()
 
-print "%d moves took %d ms" % (nmoves, ms)
+    moves = system.run(mtsmc,nmoves)
+
+    ms = timer.elapsed()
+
+    print "%d moves took %d ms" % (nmoves, ms)
+
+    PDB().write(system.info().groups().molecules(), "test%3.3d.pdb" % i)
 
 mtsmc = moves.moves()[0].clone()
 
@@ -212,4 +248,34 @@ qmff.change(system.forceFields().molecules())
 
 print "qmff == %f" % qmff.energy()
 
-PDB().write(system.info().groups().molecules(), "test001.pdb")
+# get the RDFs
+rdfmonitor = system.monitors().monitor(Symbol("RDF"))
+
+rdf = rdfmonitor.getRDF( oxygen, oxygen )
+
+print "OXYGEN-OXYGEN"
+
+for point in rdf.normalise():
+    print "%f  %f" % point
+
+print "\nOXYGEN-HYDROGEN"
+
+rdf = rdfmonitor.getRDF( oxygen, hydrogen )
+
+for point in rdf.normalise():
+   print "%f  %f" % point
+
+print "\nHYDROGEN-OXYGEN"
+
+rdf = rdfmonitor.getRDF( hydrogen, oxygen )
+
+for point in rdf.normalise():
+   print "%f  %f" % point
+
+print "\nHYDROGEN-HYDROGEN"
+
+rdf = rdfmonitor.getRDF( hydrogen, hydrogen )
+
+for point in rdf.normalise():
+   print "%f  %f" % point
+
