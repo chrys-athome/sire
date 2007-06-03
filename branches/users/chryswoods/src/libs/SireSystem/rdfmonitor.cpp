@@ -320,8 +320,9 @@ void RDF::clear()
 QVector< tuple<double,double> > RDF::normalise() const
 {
     //calculate the total volume of the space within which
-    //RDF statistics have been collected
-    double vol = (4/3) * pi * ( pow_3(maxval) - pow_3(minval) );
+    //RDF statistics have been collected (don't need 4/3 pi as this
+    //factor will cancel out below)
+    double vol = pow_3(maxval) - pow_3(minval);
 
     //what is the density of the points?
     double density = nValues() / vol;
@@ -337,11 +338,17 @@ QVector< tuple<double,double> > RDF::normalise() const
     QVector< tuple<double,double> > normdata(nbins);
     tuple<double,double> *normdata_array = normdata.data();
 
+    double half_binwidth = 0.5 * binwidth;
+
     for (int i=0; i<nbins; ++i)
     {
         double dist = (0.5 + i) * binwidth;
 
-        double prob = histdata_array[i] / (4 * pi * pow_2(dist) * binwidth * density);
+        //the rdf is the ratio of the number of observations in the volume shell
+        //from i*binwidth to (i+1)*binwidth (this has volume (4/3)pi [ r1^3 - r0^3 ]
+        //(the 4/3 pi factor cancels out from above)
+        double prob = histdata_array[i] / ((pow_3(dist+half_binwidth) -
+                                            pow_3(dist-half_binwidth)) * density);
 
         normdata_array[i] = tuple<double,double>(dist, prob);
     }
