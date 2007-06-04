@@ -15,14 +15,12 @@ from Sire.Base import *
 
 import sys
 
-if len(sys.argv) < 5:
-    print "USAGE: test.py input_file lambda start stop"
+if len(sys.argv) < 3:
+    print "USAGE: test.py input_file lambda"
     sys.exit(-1)
     
 inpfile = sys.argv[1]
 lamval = float(sys.argv[2])
-start = int(sys.argv[3])
-stop = int(sys.argv[4])
 
 if lamval < 0:
    lamval = 0
@@ -37,12 +35,32 @@ timer = QTime()
 print "Loading the input files..."
 mols = PDB().read(inpfile)
 
+def renumberResidues(mols, newnum):
+    newmols = []
+    
+    for mol in mols:
+       editor = mol.edit()
+       editor.renumberResidue(mol.atoms()[0].resNum(), newnum)
+       newmols.append( Molecule(editor) )
+       
+    return newmols
+
+mols = renumberResidues(mols, ResNum(1))
+
 solute = mols[0]
 solvent = mols[1:]
 
 #specify the space in which the molecules are placed
-space = PeriodicBox( (-18.4040,-18.68748,-18.4632),
-                     ( 18.4040, 18.68748, 18.4632) )
+import os
+line = os.popen("grep \"HEADER box\" %s" % inpfile, "r").readline()
+words = line.split()
+
+mincoords = Vector( float(words[2]), float(words[3]), float(words[4]) )
+maxcoords = Vector( float(words[5]), float(words[6]), float(words[7]) )
+
+print "Box dimension: %s to %s" % (mincoords,maxcoords)
+
+space = PeriodicBox( mincoords, maxcoords )
 
 #specify the type of switching function to use
 switchfunc = HarmonicSwitchingFunction(15.0, 14.5)
@@ -69,32 +87,37 @@ qmff.setBasisSet(qm_basis)
 #parametise each molecule and add it to the forcefields
 print "Parametising the molecules..."
 
-solvent_chgs = AtomicCharges( [0.0, 0.52 * mod_electron,
-                               0.52 * mod_electron,
-                              -1.04 * mod_electron] )
+solvent_tip4p_chgs = AtomicCharges( [0.0, 
+                                     0.52 * mod_electron,
+                                     0.52 * mod_electron,
+                                    -1.04 * mod_electron] )
 
-solvent_ljs = AtomicLJs( [ LJParameter( 3.15365 * angstrom, \
-                                        0.1550 * kcal_per_mol ), \
-                           LJParameter.dummy(), \
-                           LJParameter.dummy(), \
-                           LJParameter.dummy() ] )
+solvent_tip4p_ljs = AtomicLJs( [ LJParameter( 3.15365 * angstrom, \
+                                              0.1550 * kcal_per_mol ), \
+                                 LJParameter.dummy(), \
+                                 LJParameter.dummy(), \
+                                 LJParameter.dummy() ] )
 
-solute_chgs = AtomicCharges( [-0.24 * mod_electron, 
-                               0.06 * mod_electron,
-                               0.06 * mod_electron,
-                               0.06 * mod_electron,
-                               0.06 * mod_electron] )
+solute_tip4p_chgs = AtomicCharges( [ 0.0,
+                                     0.52 * mod_electron,
+                                     0.52 * mod_electron,
+                                    -1.04 * mod_electron,
+                                     0.0,
+                                     0.0 ] )
 
-solute_ljs = AtomicLJs( [ LJParameter( 3.5000 * angstrom, \
-                                       0.0660 * kcal_per_mol ), \
-                          LJParameter( 2.5000 * angstrom,
-                                       0.0300 * angstrom), \
-                          LJParameter( 2.5000 * angstrom,
-                                       0.0300 * angstrom), \
-                          LJParameter( 2.5000 * angstrom,
-                                       0.0300 * angstrom), \
-                          LJParameter( 2.5000 * angstrom,
-                                       0.0300 * angstrom) ] )
+solute_tip4p_ljs = AtomicLJs( [ LJParameter( 3.15365 * angstrom, \
+                                             0.1550 * kcal_per_mol ), \
+                                LJParameter.dummy(),
+                                LJParameter.dummy(),
+                                LJParameter.dummy(),
+                                LJParameter.dummy(),
+                                LJParameter.dummy() ] )
+
+solute_chgs = solute_tip4p_chgs
+solute_ljs = solute_tip4p_ljs
+
+solvent_chgs = solvent_tip4p_chgs
+solvent_ljs = solvent_tip4p_ljs
 
 #first parametise the solute and add it to the right forcefields
 solute.setProperty( "charges", solute_chgs )
@@ -107,8 +130,11 @@ qmff.addToQM( solute )
 
 # QM energies are absolute, while MM energies are relative. We
 # will set the QM energy relative to the QM energy of the gas-phase
-# methane molecule
+# solute molecule
+timer.start()
 qmff.setEnergyOrigin( qmff.energy() )
+
+print "Gas-phase calculation took %d ms" % timer.elapsed()
 
 #now parametise the solvent molecules and add them to the right
 #forcefields
@@ -170,24 +196,18 @@ ffields.add(de_by_dlam)
 
 # start at lambda = lamval
 ffields.setParameter(lam, lamval)
+ffields.setTotal(e_total)
 
 print "Calculating initial energies..."
 timer.start()
 
 # let's see what the initial values of these functions are...
-print "e_fast == %f kcal mol-1" % ffields.energy(e_fast)
-print "e_slow == %f kcal mol-1" % ffields.energy(e_slow)
-print "e_total == %f kcal mol-1" % ffields.energy(e_total)
-print "de_by_dlam == %f kcal mol-1" % ffields.energy(de_by_dlam)
+print "e_fast == %f kcal mol-1 (%d ms)" % (ffields.energy(e_fast), timer.elapsed())
+print "e_slow == %f kcal mol-1 (%d ms)" % (ffields.energy(e_slow), timer.elapsed())
+print "e_total == %f kcal mol-1 (%d ms)" % (ffields.energy(e_total), timer.elapsed())
+print "de_by_dlam == %f kcal mol-1 (%d ms)" % (ffields.energy(de_by_dlam), timer.elapsed())
 
 print "Took %d ms" % timer.elapsed()
-
-sys.exit(0)
-
-#monitor the de/dlambda and the total energy
-monitors = SystemMonitors()
-monitors.set( e_total.function(), MonitorEnergy(e_total.function()) )
-monitors.set( de_by_dlam.function(), MonitorEnergy(de_by_dlam.function()) )
 
 #there are two groups of molecules, the solute and the solvent
 # - lets create these groups (moves move random molecules from a group)
@@ -201,6 +221,29 @@ groups = MoleculeGroups()
 groups.add(solvent_group)
 groups.add(solute_group)
 groups.add(all_mols)
+
+#monitor the de/dlambda and the total energy
+monitors = SystemMonitors()
+monitors.set( e_total.function(), MonitorEnergy(e_total.function()) )
+monitors.set( de_by_dlam.function(), MonitorEnergy(de_by_dlam.function()) )
+
+#also monitor the RDF from the solute to the solvent
+rdfmonitor = RDFMonitor(solute, solvent_group)
+
+water_oxygen = [ ("o00",ResNum(1)) ]
+water_hydrogen = [ ("h01",ResNum(1)), ("h02",ResNum(1)) ]
+
+ch4_carbon = [ ("c",ResNum(1)) ]
+ch4_hydrogen = [ ("h1",ResNum(1)), ("h2",ResNum(1)),
+                 ("h3",ResNum(1)), ("h4",ResNum(1)) ]
+
+#need to choose whether methane or water sim
+rdfmonitor.addRDF( water_oxygen, water_oxygen, RDF(0,15,100) )
+rdfmonitor.addRDF( water_oxygen, water_hydrogen, RDF(0,15,100) )
+rdfmonitor.addRDF( water_hydrogen, water_oxygen, RDF(0,15,100) )
+rdfmonitor.addRDF( water_hydrogen, water_hydrogen, RDF(0,15,100) )
+
+monitors.set(Symbol("RDF"), rdfmonitor)
 
 # create a system that can be used to simulate these groups
 # using the forcefields that we have constructed
@@ -218,24 +261,29 @@ pressure = 1 * atm
 solv_mc = RigidBodyMC( PrefSampler(solute, 200.0, solvent_group) )
 
 solv_mc.setTemperature(temperature)
+solv_mc.setMaximumTranslation( 0.2 * angstrom )
+solv_mc.setMaximumRotation( 5 * degrees )
 
 # create a rigid body MC move that moves the solute molecule
-solu_mc = RigidBodyMC( solute_group )
+solu_mc = RigidBodyMC( UniformSampler(solute_group) )
+solu_mc.setMaximumTranslation( 0.1 * angstrom )
+solu_mc.setMaximumRotation( 2.5 * degrees )
 
 solu_mc.setTemperature(temperature)
 
 # create a volume move that moves everything using NPT
-vol_mc = VolumeMove( all_mols )
+vol_mc = VolumeMove( MapAsCutGroups(all_mols) )
 
 vol_mc.setTemperature(temperature)
 vol_mc.setPressure(pressure)
+vol_mc.setVolumeChangingFunction( UniformVolumeChange(167.9 * angstrom3) )
 
 # add all of the moves to a selection of moves, giving each
 # one a weight
 moves = WeightedMoves()
 
-moves.add(solv_mc, 1)
-moves.add(solu_mc, 1)
+moves.add(solv_mc, 1600)
+moves.add(solu_mc, 100)
 moves.add(vol_mc, 1)
 
 # Create a multiple-time-step MC move that performs 500
@@ -245,49 +293,66 @@ mtsmc = MTSMC(moves, e_fast.function(), 500)
 
 mtsmc.setEnergyComponent(e_total.function())
 
-PDB().write(system.info().groups().molecules(), "output_%003d_dup.pdb" % (start-1))
-
 nmoves = 100
 
-for i in range(start,stop+1):
+timer.start()
 
-    timer.start()
+print "Initial Energy = %f kcal mol-1" % system.forceFields().energy()
+print "Initial Volume = %f A^3" % system.info().space().volume()
 
-    moves = system.run(mtsmc,nmoves)
+moves = system.run(mtsmc,nmoves)
 
-    ms = timer.elapsed()
+ms = timer.elapsed()
+print "%d moves took %d ms" % (nmoves, ms)
 
-    print "%d moves took %d ms" % (nmoves, ms)
+print "Final Energy = %f kcal mol-1" % system.forceFields().energy()
+print "Final Volume = %f A^3" % system.info().space().volume()
 
-    mtsmc = moves.moves()[0].clone()
+mtsmc = moves.moves()[0]
 
-    print "%d accepted, %d rejected, ratio == %f %%" % \
-               (mtsmc.nAccepted(), mtsmc.nRejected(), mtsmc.acceptanceRatio())
+print "%d accepted, %d rejected, ratio == %f %%" % \
+           (mtsmc.nAccepted(), mtsmc.nRejected(), mtsmc.acceptanceRatio())
 
+solv_mc = mtsmc.moves()[0]
+solu_mc = mtsmc.moves()[1]
+vol_mc = mtsmc.moves()[2]
+    
+print "Solute: %d accepted, %d rejected." % \
+                 (solu_mc.nAccepted(), solu_mc.nRejected())
+                     
+print "Solvent: %d accepted, %d rejected." % \
+                 (solv_mc.nAccepted(), solv_mc.nRejected())
+                     
+print "Volume: %d accepted, %d rejected." % \
+                 (vol_mc.nAccepted(), vol_mc.nRejected())                     
 
-    # check that the QM and MM energies have been conserved...
-    new_molpro = MolproFF(space, switchfunc)
-    new_molpro.setMolproExe( qmff.molproExe() )
-    new_molpro.setEnergyOrigin( qmff.energyOrigin() )
+gradmon = system.monitors().monitor(de_by_dlam.function())
+totalmon = system.monitors().monitor(e_total.function())
 
-    system_qmff = system.forceFields().forceField(qmff.ID())
+print "AVGS: %f (%d), %f (%d)" % (gradmon.average(), gradmon.nUpdates(),
+                                  totalmon.average(), totalmon.nUpdates())
 
-    new_molpro.addToQM( system_qmff.molecules(qmff.groups().qm()) )
-    new_molpro.addToMM( system_qmff.molecules(qmff.groups().mm()), 
-                        {new_molpro.parameters().coulomb() : "charges"} )
+rdfmon = system.monitors().monitor(Symbol("RDF"))
+    
+print "OXYGEN-OXYGEN"
+    
+for point in rdfmon.getRDF(water_oxygen, water_oxygen).normalise():
+   print "%f  %f" % point
+    
+#now print out the RETI energies
+ffields = system.forceFields()
 
-    print "QM energy = %f, new molproff = %f" % \
-                ( system.forceFields().forceField(qmff.ID()).energy(),
-                  new_molpro.energy() )
+lamf = lamval + 0.05
+lamb = lamval - 0.05
 
-    qmff.change(system.forceFields().molecules())
+if (lamf > 1):
+   lamf = 1
+   
+if (lamb < 0):
+   lamb = 0
+   
+ffields.setParameter(lam, lamf)
+print "Lambda = %f, energy = %f" % (lamf, ffields.energy())
+ffields.setParameter(lam, lamb)
+print "Lambda = %f, energy = %f" % (lamb, ffields.energy())
 
-    print "qmff == %f" % qmff.energy()
-
-    gradmon = system.monitors().monitor(de_by_dlam.function())
-    totalmon = system.monitors().monitor(e_total.function())
-
-    print "AVGS: %f (%d), %f (%d)" % (gradmon.average(), gradmon.nUpdates(),
-                                      totalmon.average(), totalmon.nUpdates())
-
-    PDB().write(system.info().groups().molecules(), "output_%003d.pdb" % i)

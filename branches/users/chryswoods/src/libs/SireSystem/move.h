@@ -92,9 +92,9 @@ public:
 protected:
     MoveBase();
     MoveBase(const Symbol &energy_component);
-    
+
     MoveBase(const MoveBase &other);
-    
+
     double energy(QuerySystem &system) const;
 
 private:
@@ -126,22 +126,19 @@ public:
     Move& operator=(const MoveBase &move);
     Move& operator=(const Move &move);
 
+    const MoveBase& base() const;
+
     void assertCompatibleWith(QuerySystem &system) const;
 
     void move(SimSystem &system);
 
     void setEnergyComponent(const Symbol &component);
-    
+
     Symbol energyComponent() const;
 
     const char* what() const
     {
         return d->what();
-    }
-
-    MoveBase* clone() const
-    {
-        return d->clone();
     }
 
 private:

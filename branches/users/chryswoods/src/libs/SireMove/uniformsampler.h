@@ -72,7 +72,7 @@ friend QDataStream& ::operator>>(QDataStream&, UniformSampler&);
 
 public:
     UniformSampler(const RanGenerator &rangenerator = RanGenerator());
-    
+
     UniformSampler(const MoleculeGroup &group,
                    const RanGenerator &rangenerator = RanGenerator());
 
@@ -114,12 +114,12 @@ private:
 
     /** List of IDs of all of the molecules that could be selected */
     QList<MoleculeID> molids;
-    
+
     /** The ID of the MoleculeGroup from which the molecule
         will be sampled */
     MoleculeGroupID groupid;
-    
-    /** The current major version number of the group from which the 
+
+    /** The current major version number of the group from which the
         molecule will be sampled */
     quint32 majver;
 };

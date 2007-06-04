@@ -88,6 +88,13 @@ public:
 
     virtual MovesBase* clone() const=0;
 
+    virtual Move at(int i) const=0;
+
+    Move operator[](int i) const
+    {
+        return this->at(i);
+    }
+
     /** Return the total number of moves necessary
         to complete one cycle */
     virtual int count() const=0;
@@ -146,6 +153,8 @@ public:
         return new SameMoves(*this);
     }
 
+    Move at(int i) const;
+
     int count() const
     {
         return 1;
@@ -203,7 +212,12 @@ public:
 
     Moves& operator=(const Moves &other);
 
+    const MovesBase& base() const;
+
     void setEnergyComponent(const Symbol &component);
+
+    Move operator[](int i) const;
+    Move at(int i) const;
 
     int count() const;
 

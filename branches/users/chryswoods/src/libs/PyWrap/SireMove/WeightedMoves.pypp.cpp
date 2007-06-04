@@ -32,6 +32,10 @@ void register_WeightedMoves_class(){
             , (void ( ::SireMove::WeightedMoves::* )( ::SireSystem::QuerySystem & ) const)( &::SireMove::WeightedMoves::assertCompatibleWith )
             , ( bp::arg("system") ) )    
         .def( 
+            "at"
+            , (::SireSystem::Move ( ::SireMove::WeightedMoves::* )( int ) const)( &::SireMove::WeightedMoves::at )
+            , ( bp::arg("i") ) )    
+        .def( 
             "count"
             , (int ( ::SireMove::WeightedMoves::* )(  ) const)( &::SireMove::WeightedMoves::count ) )    
         .def( 

@@ -54,6 +54,8 @@ using boost::python::register_tuple;
 void register_SireSystem_containers()
 {
     register_container< SystemMonitor, SystemMonitorBase >();
+    register_container< Move, MoveBase >();
+    register_container< Moves, MovesBase >();
 
     register_list< QList<Move> >();
 

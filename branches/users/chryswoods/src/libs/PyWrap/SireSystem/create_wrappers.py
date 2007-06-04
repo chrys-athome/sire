@@ -15,12 +15,10 @@ wrap_classes = [ "CheckPoint",
                  "LocalSimSystem",
                  "MonitorEnergy",
                  "MoveBase",
-                 "Move",
                  "MovesBase",
                  "SameMoves",
-                 "Moves",
                  "QuerySystem",
-		 "RDF",
+                 "RDF",
                  "RDFMonitor",
                  "SimSystem",
                  "SystemData",
@@ -53,8 +51,7 @@ def fix_noncopyable(c):
 
 special_code = { "MovesBase" : remove_next_move,
                  "SameMoves" : remove_next_move,
-                 "Move" : expose_clone,
-                 "Moves" : fix_noncopyable }
+               }
 
 implicitly_convertible = [ ("const SireSystem::MoveBase&",
                             "SireSystem::Move"),

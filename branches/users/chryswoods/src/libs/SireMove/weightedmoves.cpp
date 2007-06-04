@@ -42,62 +42,62 @@ using namespace SireStream;
 static const RegisterMetaType<WeightedMoves> r_weightmoves;
 
 /** Serialise to a binary data stream */
-QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, 
+QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
                                         const WeightedMoves &weightmoves)
 {
     writeHeader(ds, r_weightmoves, 1);
-    
+
     SharedDataStream sds(ds);
-    
+
     sds << weightmoves._generator;
-    
+
     sds << quint32( weightmoves.weighted_moves.count() );
-    
-    for (QVector< tuple<Move,double> >::const_iterator 
+
+    for (QVector< tuple<Move,double> >::const_iterator
                         it = weightmoves.weighted_moves.constBegin();
          it != weightmoves.weighted_moves.constEnd();
          ++it)
     {
         sds << it->get<0>() << it->get<1>();
     }
-    
+
     return ds;
 }
 
 /** Deserialise from a binary data stream */
-QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, 
+QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds,
                                         WeightedMoves &weightmoves)
 {
     VersionID v = readHeader(ds, r_weightmoves);
-    
+
     if (v == 1)
     {
         SharedDataStream sds(ds);
-        
+
         sds >> weightmoves._generator;
-        
+
         quint32 nmoves;
         sds >> nmoves;
-        
+
         QVector< tuple<Move,double> > weighted_moves;
-    
+
         for (quint32 i=0; i<nmoves; ++i)
         {
             Move move;
             double weight;
-            
+
             sds >> move >> weight;
-            
+
             weighted_moves.append( tuple<Move,double>(move,weight) );
         }
-        
+
         weightmoves.weighted_moves = weighted_moves;
         weightmoves.recalculateWeights();
-    
+
     }
     else
         throw version_error(v, "1", r_weightmoves, CODELOC);
-    
+
     return ds;
 }
 
@@ -112,20 +112,20 @@ void WeightedMoves::recalculateWeights()
 {
     sum_of_weights = 0;
     maxweight = 0;
-    
+
     //calculate the sum and get the maximum weight
     for (QVector< tuple<Move,double> >::const_iterator it = weighted_moves.constBegin();
          it != weighted_moves.constEnd();
          ++it)
     {
         double weight = it->get<1>();
-        
+
         if (weight < 0)
             throw SireError::invalid_arg( QObject::tr(
                 "Cannot give a move a negative weight! (%1 for %2)")
                     .arg(weight).arg(it->get<0>().what()),
                         CODELOC );
-    
+
         sum_of_weights += weight;
         maxweight = qMax(maxweight, weight);
     }
@@ -173,9 +173,9 @@ void WeightedMoves::add(const Move &move, double weight)
             "Cannot give a move a negative weight! (%1 for %2)")
                 .arg(weight).arg(move.what()),
                     CODELOC );
-    
+
     weighted_moves.append( tuple<Move,double>(move,weight) );
-    
+
     sum_of_weights += weight;
     maxweight = qMax(maxweight, weight);
 }
@@ -186,6 +186,17 @@ int WeightedMoves::count() const
     return weighted_moves.count();
 }
 
+/** Return the ith move */
+Move WeightedMoves::at(int i) const
+{
+    if (i < 0 or i > count())
+        throw SireError::invalid_index( QObject::tr(
+            "Invalid index (%d). The total number of moves equals %d.")
+                .arg(i).arg(count()), CODELOC );
+
+    return weighted_moves.at(i).get<0>();
+}
+
 /** Return a reference to the next move in the sequence */
 Move& WeightedMoves::nextMove()
 {
@@ -193,30 +204,30 @@ Move& WeightedMoves::nextMove()
         throw SireError::invalid_state( QObject::tr(
             "You cannot ask for the next move when there aren't any!"),
                 CODELOC );
-                
+
     //use the von Neumann rejection method to choose a random move
     //using the supplied weights
     //  rejection method - choose random
     //  move, then choose random number from 0 to maxweight. If
     //  probability of the move <= the random number, then accept
     //  this move, else go back to the beginning and try again...
-    
+
     int nmoves = weighted_moves.count();
-    
+
     tuple<Move,double> *moves_array = weighted_moves.data();
-    
+
     if (nmoves == 1)
         return moves_array[0].get<0>();
-    
+
     //normalise the probabilities
     double norm_maxweight = maxweight / sum_of_weights;
-    
+
     while (true)
     {
         quint32 i = _generator.randInt(nmoves-1);
-        
+
         tuple<Move,double> &move = moves_array[i];
-        
+
         if ( _generator.rand(norm_maxweight) <= (move.get<1>() / sum_of_weights) )
         {
             //use this move
@@ -240,18 +251,18 @@ void WeightedMoves::setEnergyComponent(const Symbol &symbol)
 QList<Move> WeightedMoves::moves() const
 {
     QList<Move> all_moves;
-    
+
     for (QVector< tuple<Move,double> >::const_iterator it = weighted_moves.begin();
          it != weighted_moves.end();
          ++it)
     {
         all_moves.append( it->get<0>() );
     }
-    
+
     return all_moves;
 }
 
-/** Assert that all of the moves in this set are compatible with the 
+/** Assert that all of the moves in this set are compatible with the
     system 'system' - this is to ensure that errors are caught now,
     rather than well into the running of the simulation. */
 void WeightedMoves::assertCompatibleWith(QuerySystem &system) const

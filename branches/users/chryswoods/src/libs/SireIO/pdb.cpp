@@ -234,7 +234,8 @@ QList<Molecule> PDB::readMols(const QByteArray &data,
     }
 
     //the last loaded molecule needs to be added to the list
-    loadedmols.append(currentmol);
+    if (currentmol.nAtoms() > 0)
+        loadedmols.append(currentmol);
 
     //convert all of the loaded EditMols to Molecules, and return the
     //results

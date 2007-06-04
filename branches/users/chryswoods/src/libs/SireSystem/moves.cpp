@@ -31,6 +31,8 @@
 
 #include "SireMol/moleculegroupid.h"
 
+#include "SireError/errors.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
@@ -130,6 +132,17 @@ SameMoves::SameMoves(const SameMoves &other)
 /** Destructor */
 SameMoves::~SameMoves()
 {}
+
+/** Return the 'ith' move */
+Move SameMoves::at(int i) const
+{
+    if (i != 0)
+        throw SireError::invalid_index( QObject::tr(
+            "SameMoves only has a single move, so any index other "
+            "than 0 is invalid! (%d)").arg(i), CODELOC );
+
+    return single_move;
+}
 
 ///////////
 /////////// Implementation of Moves
@@ -259,6 +272,24 @@ Moves& Moves::operator=(const Moves &other)
     }
 
     return *this;
+}
+
+/** Return the base Moves object */
+const MovesBase& Moves::base() const
+{
+    return *d;
+}
+
+/** Return the ith move */
+Move Moves::at(int i) const
+{
+    return d->at(i);
+}
+
+/** Return the ith move */
+Move Moves::operator[](int i) const
+{
+    return d->operator[](i);
 }
 
 /** Initialise all of the moves with the passed System

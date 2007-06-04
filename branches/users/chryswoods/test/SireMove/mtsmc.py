@@ -210,7 +210,7 @@ mtsmc.setEnergyComponent(e_total.function())
 PDB().write(system.info().groups().molecules(), "test000.pdb")
 
 for i in range(1,21):
-    nmoves = 100
+    nmoves = 1000
 
     print "Block %d: Running %d moves" % (i, nmoves)
 

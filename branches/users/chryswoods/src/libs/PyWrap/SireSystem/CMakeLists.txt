@@ -28,9 +28,7 @@ set ( WRAPSYSTEM_SOURCES
 
       MonitorEnergy.pypp.cpp
       MoveBase.pypp.cpp
-      Move.pypp.cpp
       MovesBase.pypp.cpp
-      Moves.pypp.cpp
 
       QuerySystem.pypp.cpp
 

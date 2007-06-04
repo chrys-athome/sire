@@ -23,11 +23,7 @@
 
 #include "MonitorEnergy.pypp.hpp"
 
-#include "Move.pypp.hpp"
-
 #include "MoveBase.pypp.hpp"
-
-#include "Moves.pypp.hpp"
 
 #include "MovesBase.pypp.hpp"
 
@@ -70,11 +66,7 @@ BOOST_PYTHON_MODULE(_System){
 
     register_MonitorEnergy_class();
 
-    register_Move_class();
-
     register_MoveBase_class();
-
-    register_Moves_class();
 
     register_MovesBase_class();
 

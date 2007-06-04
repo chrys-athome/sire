@@ -80,7 +80,7 @@ print "... took %d ms" % ms
 print "Calculating the energy..."
 
 molpro.setProgram("HF\nMP2")
-molpro.setBasisSet("AVDZ")
+molpro.setBasisSet("VDZ")
 
 timer.start()
 nrg = molpro.energy()

@@ -61,9 +61,9 @@ using SireMaths::RanGenerator;
 
 using boost::tuple;
 
-/** This is a collection of moves, with each move in the collection 
+/** This is a collection of moves, with each move in the collection
     chosen at random according to its weight
-    
+
     @author Christopher Woods
 */
 class SIREMOVE_EXPORT WeightedMoves : public MovesBase
@@ -74,14 +74,14 @@ friend QDataStream& ::operator>>(QDataStream&, WeightedMoves&);
 
 public:
     WeightedMoves(const RanGenerator &generator = RanGenerator());
-    
+
     WeightedMoves(const QVector< tuple<Move,double> > &moves,
                   const RanGenerator &generator = RanGenerator());
-    
+
     WeightedMoves(const WeightedMoves &other);
-    
+
     ~WeightedMoves();
-    
+
     static const char* typeName()
     {
         return "SireMove::WeightedMoves";
@@ -96,6 +96,8 @@ public:
     {
         return new WeightedMoves(*this);
     }
+
+    Move at(int i) const;
 
     const RanGenerator& generator() const;
     void setGenerator(const RanGenerator &generator);
@@ -114,16 +116,16 @@ public:
 
 private:
     void recalculateWeights();
-    
+
     /** The list of all moves in this set, together with thier weights */
     QVector< tuple<Move,double> > weighted_moves;
-    
+
     /** The random number generator used to select the moves */
     RanGenerator _generator;
-    
+
     /** The maximum weight */
     double maxweight;
-    
+
     /** The sum of all weights */
     double sum_of_weights;
 };

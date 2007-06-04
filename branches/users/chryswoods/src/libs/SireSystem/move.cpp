@@ -70,9 +70,9 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, MoveBase&)
 MoveBase::MoveBase() : QSharedData(), nrg_component( SireFF::e_total() )
 {}
 
-/** Construct a move that follows potential energy surface 
+/** Construct a move that follows potential energy surface
     represented by 'symbol' */
-MoveBase::MoveBase(const Symbol &component) 
+MoveBase::MoveBase(const Symbol &component)
          : QSharedData(), nrg_component(component)
 {}
 
@@ -99,14 +99,14 @@ const Symbol& MoveBase::energyComponent() const
     return nrg_component;
 }
 
-/** Set the energy component that will represent the 
+/** Set the energy component that will represent the
     potential energy surface that this move will follow */
 void MoveBase::setEnergyComponent(const Symbol &symbol)
 {
     nrg_component = symbol;
 }
 
-/** Initialise this move for the system - this ensures that 
+/** Initialise this move for the system - this ensures that
     the system has the energy component that this move will
     be sampling */
 void MoveBase::assertCompatibleWith(QuerySystem &system) const
@@ -274,13 +274,19 @@ Move& Move::operator=(const Move &other)
     return *this;
 }
 
-/** Set the energy component that will represent the 
+/** Return the base class of the move */
+const MoveBase& Move::base() const
+{
+    return *d;
+}
+
+/** Set the energy component that will represent the
     potential energy surface that this move will follow */
 void Move::setEnergyComponent(const Symbol &component)
 {
     d->setEnergyComponent(component);
 }
-    
+
 /** Return the energy component that represents the potential
     energy surface that this move will follow. */
 Symbol Move::energyComponent() const

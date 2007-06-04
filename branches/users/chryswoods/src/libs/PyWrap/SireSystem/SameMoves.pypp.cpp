@@ -29,6 +29,10 @@ void register_SameMoves_class(){
             , (void ( ::SireSystem::SameMoves::* )( ::SireSystem::QuerySystem & ) const)( &::SireSystem::SameMoves::assertCompatibleWith )
             , ( bp::arg("system") ) )    
         .def( 
+            "at"
+            , (::SireSystem::Move ( ::SireSystem::SameMoves::* )( int ) const)( &::SireSystem::SameMoves::at )
+            , ( bp::arg("i") ) )    
+        .def( 
             "count"
             , (int ( ::SireSystem::SameMoves::* )(  ) const)( &::SireSystem::SameMoves::count ) )    
         .def( 

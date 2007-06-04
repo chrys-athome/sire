@@ -25,11 +25,19 @@ void register_MovesBase_class(){
             , (void ( ::SireSystem::MovesBase::* )( ::SireSystem::QuerySystem & ) const)( &::SireSystem::MovesBase::assertCompatibleWith )
             , ( bp::arg("system") ) )    
         .def( 
+            "at"
+            , (::SireSystem::Move ( ::SireSystem::MovesBase::* )( int ) const)( &::SireSystem::MovesBase::at )
+            , ( bp::arg("i") ) )    
+        .def( 
             "count"
             , (int ( ::SireSystem::MovesBase::* )(  ) const)( &::SireSystem::MovesBase::count ) )    
         .def( 
             "moves"
             , (::QList<SireSystem::Move> ( ::SireSystem::MovesBase::* )(  ) const)( &::SireSystem::MovesBase::moves ) )    
+        .def( 
+            "__getitem__"
+            , (::SireSystem::Move ( ::SireSystem::MovesBase::* )( int ) const)( &::SireSystem::MovesBase::operator[] )
+            , ( bp::arg("i") ) )    
         .def( 
             "setEnergyComponent"
             , (void ( ::SireSystem::MovesBase::* )( ::SireCAS::Symbol const & ) )( &::SireSystem::MovesBase::setEnergyComponent )
