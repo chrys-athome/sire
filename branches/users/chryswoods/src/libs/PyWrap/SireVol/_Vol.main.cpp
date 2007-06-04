@@ -31,8 +31,6 @@
 
 #include "PeriodicBox.pypp.hpp"
 
-#include "Space.pypp.hpp"
-
 #include "SpaceBase.pypp.hpp"
 
 #include "sirevol_containers.h"
@@ -60,16 +58,12 @@ BOOST_PYTHON_MODULE(_Vol){
 
     register_MapFromSelfFunction_class();
 
-    register_PeriodicBox_class();
-
-    register_Space_class();
-
     bp::implicitly_convertible< QVector<SireMaths::Vector>, SireVol::CoordGroup >();
 
     bp::implicitly_convertible< const SireVol::SpaceBase&, SireVol::Space >();
 
     bp::implicitly_convertible< const SireVol::MappingFunctionBase&, SireVol::MappingFunction >();
 
-    bp::implicitly_convertible< SireVol::Space, SireBase::Property >();
+    register_PeriodicBox_class();
 }
 

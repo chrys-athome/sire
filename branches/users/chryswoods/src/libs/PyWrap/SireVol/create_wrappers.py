@@ -20,8 +20,7 @@ wrap_classes = [ "AABox",
                  "MapFromSelfFunction",
                  "MappingFunctionBase",
                  "PeriodicBox",
-                 "SpaceBase",
-                 "Space"
+                 "SpaceBase"
                ]
 
 huge_classes = []

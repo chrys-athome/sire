@@ -36,7 +36,6 @@ set ( WRAPVOL_SOURCES
       
       PeriodicBox.pypp.cpp
       SpaceBase.pypp.cpp
-      Space.pypp.cpp
       
     )
 
