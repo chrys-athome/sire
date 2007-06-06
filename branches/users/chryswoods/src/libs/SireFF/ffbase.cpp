@@ -529,7 +529,14 @@ double FFBase::energy(const Function &component)
         this->setClean();
     }
 
-    return nrg_components.value(component);
+    double nrg = nrg_components.value(component);
+
+    if (nrg != nrg)
+        //this is normally the sign that nrg is NaN
+        qWarning() << "We may now have an invalid energy ("
+                   << component.name() << "==" << nrg << ")";
+
+    return nrg;
 }
 
 /** Return the total energy of this forcefield. This will return the cached

@@ -145,14 +145,14 @@ template<class T>
 SIRE_INLINE_TEMPLATE
 const T& PairMatrix<T>::operator()(unsigned int i, unsigned int j) const
 {
-    return array[i*n_outer + j];
+    return array[i*n_inner + j];
 }
 
 template<class T>
 SIRE_INLINE_TEMPLATE
 T& PairMatrix<T>::operator()(unsigned int i, unsigned int j)
 {
-    return array[i*n_outer + j];
+    return array[i*n_inner + j];
 }
 
 template<class T>
@@ -187,7 +187,7 @@ template<class T>
 SIRE_INLINE_TEMPLATE
 void PairMatrix<T>::setOuterIndex(unsigned int i)
 {
-    outer_index = n_outer * i;
+    outer_index = n_inner * i;
 }
 
 template<class T>
@@ -201,8 +201,8 @@ template<class T>
 SIRE_INLINE_TEMPLATE
 void PairMatrix<T>::redimension(unsigned int i, unsigned int j)
 {
-    n_inner = i;
-    n_outer = j;
+    n_outer = i;
+    n_inner = j;
 
     outer_index = 0;
 
@@ -210,7 +210,7 @@ void PairMatrix<T>::redimension(unsigned int i, unsigned int j)
     if (new_n_elements > n_elements)
     {
         n_elements = new_n_elements;
-           
+
         delete[] array;
         array = new T[n_elements];
     }
