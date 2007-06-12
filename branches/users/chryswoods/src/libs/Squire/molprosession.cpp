@@ -33,6 +33,8 @@
 #include <QHostInfo>
 #include <QStringList>
 
+#include <cstdlib>
+
 #include "molproff.h"
 #include "molprosession.h"
 
@@ -162,6 +164,24 @@ MolproSession::MolproSession(MolproFF &molproff)
 
         //add the new TMPDIR location
         env.append( QString("TMPDIR=%1").arg(rundir.absolutePath()) );
+
+        #ifdef Q_OS_UNIX
+
+        //molpro needs to have the "LOGNAME" environmental variable set - this
+        //variable does not appear to be set when using rsh to run a remote job
+        QRegExp find_logname_regexp("\\s*LOGNAME\\s*=\\s*.*", Qt::CaseInsensitive);
+
+        idx = env.indexOf(find_logname_regexp);
+
+        if (idx == -1)
+        {
+            //use the USER variable instead
+            env << QString("LOGNAME=%1").arg( std::getenv("USER") );
+        }
+
+        #endif // #ifdef Q_OS_UNIX
+
+        //set the environmental variables used by the Molpro process
         molpro_process.setEnvironment(env);
 
         //start the molpro process
@@ -183,9 +203,9 @@ MolproSession::MolproSession(MolproFF &molproff)
 
         //tell the molpro process to start its RPC connection and also
         //to save the energy to a variable that we can access
-        nbytes = molpro_process.write("INITIAL_ENERGY = energy\nuser\n");  
+        nbytes = molpro_process.write("INITIAL_ENERGY = energy\nuser\n");
         //eventually will be write("INITIAL_ENERGY = energy\nstart_rpc\n");
-        
+
         BOOST_ASSERT(nbytes != -1);
 
         //record the energy commands to use

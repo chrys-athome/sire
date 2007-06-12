@@ -602,6 +602,8 @@ void RDFMonitor::monitor(QuerySystem &system)
 
     BOOST_ASSERT( coords0.count() != 0 );
 
+    const MoleculeInfo &mol0info = mol.info();
+
     //loop over all of the molecules and calculate all of the RDFs for each
     //molecule in turn
     for (Molecules::const_iterator it = molecules.constBegin();
@@ -611,7 +613,7 @@ void RDFMonitor::monitor(QuerySystem &system)
         //this is a cache of inter-group distances for a pair of CutGroups
         QHash< tuple<uint,uint>, DistMatrix > pairdist2;
 
-        const MoleculeInfo &molinfo = it->info();
+        const MoleculeInfo &mol1info = it->info();
 
         //get the CoordGroups containing the coordinates of all the atoms in
         //this molecule
@@ -632,11 +634,11 @@ void RDFMonitor::monitor(QuerySystem &system)
             //loop over all pairs of atoms...
             foreach (AtomIndex atom0, atoms0)
             {
-                CGAtomID cgatomid0 = molinfo[atom0];
+                CGAtomID cgatomid0 = mol0info[atom0];
 
                 foreach (AtomIndex atom1, atoms1)
                 {
-                    CGAtomID cgatomid1 = molinfo[atom1];
+                    CGAtomID cgatomid1 = mol1info[atom1];
 
                     addToRDF(rdf, cgatomid0, cgatomid1,
                              coords0, coords1, space, pairdist2);
@@ -741,14 +743,14 @@ const RDF& RDFMonitor::getRDF(const QSet<AtomIndex> &atoms0,
 QList< tuple<AtomPairs,RDF> > RDFMonitor::rdfs() const
 {
     QList< tuple<AtomPairs,RDF> > rdflist;
-    
+
     for (QHash<AtomPairs,RDF>::const_iterator it = allrdfs.constBegin();
          it != allrdfs.constEnd();
          ++it)
     {
         rdflist.append( make_tuple(it.key(),it.value()) );
     }
-    
+
     return rdflist;
 }
 
