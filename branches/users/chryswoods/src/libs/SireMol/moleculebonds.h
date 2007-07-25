@@ -49,7 +49,12 @@ namespace SireMol
 {
 
 /**
-This class contains all of the bonding information about a molecule. It enables very fast lookup of which atoms are bonded together, which residues are bonded together etc. This class is used by both EditMol and Molecule to hold the bonding information, and is the foundation on which the intramolecular move classes are constructed (as this class is used to split a molecule into parts based on the bonding).
+This class contains all of the bonding information about a molecule. It enables
+very fast lookup of which atoms are bonded together, which residues are bonded
+together etc. This class is used by both EditMol and Molecule to hold the bonding
+information, and is the foundation on which the intramolecular move classes are
+constructed (as this class is used to split a molecule into parts
+based on the bonding).
 
 This class is implicitly shared, so copying is fast.
 
