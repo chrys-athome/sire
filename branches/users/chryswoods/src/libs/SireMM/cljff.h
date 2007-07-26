@@ -77,6 +77,14 @@ using SireFF::FFComponent;
 
 using SireCAS::Symbols;
 
+struct CLJFactor;
+class CLJNBPairs;
+
+template<class T>
+class CGAtomPairs;
+
+typedef CGAtomPairs<CLJFactor> CLJCGNBPairs;
+
 /** This is the base class of all forcefields that provide only
     the LJ energy of molecules.
 
@@ -256,6 +264,7 @@ public:
                                      CLJPairMatrix &cljmatrix);
 
     static CLJEnergy calculateEnergy(const CLJMolecule &mol,
+                                     const CLJNBPairs &nbpairs,
                                      const Space &space,
                                      const SwitchingFunction &switchfunc,
                                      DistMatrix &distmatrix,
@@ -274,9 +283,22 @@ protected:
                                      DistMatrix &distmatrix,
                                      CLJPairMatrix &cljmatrix);
 
+    static CLJEnergy calculateEnergy(const CoordGroup &group0,
+                                     const QVector<ChargeParameter> &chg0,
+                                     const QVector<LJParameter> &lj0,
+                                     const CoordGroup &group1,
+                                     const QVector<ChargeParameter> &chg1,
+                                     const QVector<LJParameter> &lj1,
+                                     const CLJCGNBPairs &nbpairs,
+                                     const Space &space,
+                                     const SwitchingFunction &switchfunc,
+                                     DistMatrix &distmatrix,
+                                     CLJPairMatrix &cljmatrix);
+
     static CLJEnergy calculateEnergy(const CoordGroup &group,
                                      const QVector<ChargeParameter> &chgs,
                                      const QVector<LJParameter> &ljs,
+                                     const CLJCGNBPairs &nbpairs,
                                      const Space &space,
                                      DistMatrix &distmatrix,
                                      CLJPairMatrix &cljmatrix);
@@ -288,8 +310,13 @@ private:
     static CLJEnergy calculatePairEnergy(DistMatrix &distmatrix,
                                          CLJPairMatrix &cljmatrix);
 
+    static CLJEnergy calculatePairEnergy(DistMatrix &distmatrix,
+                                         CLJPairMatrix &cljmatrix,
+                                         CLJCGNBPairs &nbpairs);
+
     static CLJEnergy calculateSelfEnergy(DistMatrix &distmatrix,
-                                         CLJPairMatrix &cljmatrix);
+                                         CLJPairMatrix &cljmatrix,
+                                         CLJCGNBPairs &nbpairs);
 
     void registerComponents();
 
@@ -328,7 +355,8 @@ public:
     CLJMolecule();
 
     CLJMolecule(const PartialMolecule &molecule,
-                const QString &chgproperty, const QString &ljproperty);
+                const QString &chgproperty, const QString &ljproperty,
+                const QString &nbsclproperty = QString::null);
 
     CLJMolecule(const CLJMolecule &other);
 
@@ -345,11 +373,13 @@ public:
 
     CLJMolecule change(const PartialMolecule &molecule,
                        const QString &chgproperty = QString::null,
-                       const QString &ljproperty = QString::null) const;
+                       const QString &ljproperty = QString::null,
+                       const QString &nbsclproperty = QString::null) const;
 
     CLJMolecule add(const PartialMolecule &molecule,
                     const QString &chgproperty = QString::null,
-                    const QString &ljproperty = QString::null) const;
+                    const QString &ljproperty = QString::null,
+                    const QString &nbsclproperty = QString::null) const;
 
     CLJMolecule remove(const PartialMolecule &molecule) const;
 
@@ -357,11 +387,13 @@ public:
 
     const QString& chargeProperty() const;
     const QString& ljProperty() const;
+    const QString& nbsclProperty() const;
 
     const QVector<CoordGroup>& coordinates() const;
 
     const AtomicCharges& charges() const;
     const AtomicLJs& ljParameters() const;
+    const CLJNBPairs& intraNBScaleFactors() const;
 
     bool isWholeMolecule() const;
 

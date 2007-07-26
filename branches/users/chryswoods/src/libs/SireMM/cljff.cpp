@@ -34,6 +34,8 @@
 #include "cljff.h"
 #include "ljpair.h"
 
+#include "cljnbpairs.h"
+
 #include "SireMol/partialmolecule.h"
 #include "SireMol/atomselector.h"
 #include "SireMol/propertyextractor.h"
@@ -163,7 +165,8 @@ public:
     CLJMoleculeData();
 
     CLJMoleculeData(const PartialMolecule &molecule,
-                    const QString &chgproperty, const QString &ljproperty);
+                    const QString &chgproperty, const QString &ljproperty,
+                    const QString &nbsclproperty);
 
     CLJMoleculeData(const CLJMoleculeData &other);
 
@@ -186,6 +189,10 @@ public:
     /** The name of the property associated with the LJ parameters */
     QString lj_property;
 
+    /** The name of the property associated with the intramolecular
+        nonbonded scaling factors */
+    QString nbscl_property;
+
     /** The coordinates of the CutGroups that contain atoms that
         are selected for inclusion in the LJ forcefield.  */
     QVector<CoordGroup> coords;
@@ -200,6 +207,10 @@ public:
         have a zero LJ parameter. */
     AtomicLJs ljs;
 
+    /** The intramolecular nonbonded coulomb and Lennard-Jones
+        scaling factors */
+    CLJNBPairs nbpairs;
+
     static QSharedDataPointer<CLJMoleculeData> shared_null;
 };
 
@@ -210,11 +221,13 @@ CLJFF::CLJMoleculeData::CLJMoleculeData() : QSharedData()
 /** Construct to represent all of the molecule 'mol' */
 CLJFF::CLJMoleculeData::CLJMoleculeData(const PartialMolecule &mol,
                                         const QString &chgproperty,
-                                        const QString &ljproperty)
+                                        const QString &ljproperty,
+                                        const QString &nbsclproperty)
                      : QSharedData(),
                        molecule(mol),
                        chg_property(chgproperty),
-                       lj_property(ljproperty)
+                       lj_property(ljproperty),
+                       nbscl_property(nbsclproperty)
 {
     this->rebuildAll();
 }
@@ -225,9 +238,11 @@ CLJFF::CLJMoleculeData::CLJMoleculeData(const CLJFF::CLJMoleculeData &other)
                          molecule(other.molecule),
                          chg_property(other.chg_property),
                          lj_property(other.lj_property),
+                         nbscl_property(other.nbscl_property),
                          coords(other.coords),
                          chgs(other.chgs),
-                         ljs(other.ljs)
+                         ljs(other.ljs),
+                         nbpairs(other.nbpairs)
 {}
 
 /** Destructor */
@@ -242,9 +257,11 @@ CLJFF::CLJMoleculeData& CLJFF::CLJMoleculeData::operator=(const CLJFF::CLJMolecu
         molecule = other.molecule;
         lj_property = other.lj_property;
         chg_property = other.chg_property;
+        nbscl_property = other.nbscl_property;
         coords = other.coords;
         chgs = other.chgs;
         ljs = other.ljs;
+        nbpairs = other.nbpairs;
     }
 
     return *this;
@@ -255,7 +272,8 @@ bool CLJFF::CLJMoleculeData::operator==(const CLJFF::CLJMoleculeData &other) con
 {
     return molecule == other.molecule and
            chg_property == other.chg_property and
-           lj_property == other.lj_property;
+           lj_property == other.lj_property and
+           nbscl_property == other.nbscl_property;
 }
 
 /** Comparison operator */
@@ -263,7 +281,8 @@ bool CLJFF::CLJMoleculeData::operator!=(const CLJFF::CLJMoleculeData &other) con
 {
     return molecule != other.molecule or
            chg_property != other.chg_property or
-           lj_property != other.lj_property;
+           lj_property != other.lj_property or
+           nbscl_property != other.nbscl_property;
 }
 
 /** Rebuild all of the coordinate and LJ data from scratch
@@ -275,6 +294,12 @@ void CLJFF::CLJMoleculeData::rebuildAll()
 {
     chgs = molecule.extract().property(chg_property);
     ljs = molecule.extract().property(lj_property);
+
+    if (not nbscl_property.isNull())
+        nbpairs = molecule.extract().property(nbscl_property);
+    else
+        nbpairs = CLJNBPairs(molecule.info(), CLJScale(1,1));
+
     coords = molecule.extract().coordGroups();
 }
 
@@ -1012,11 +1037,72 @@ CLJFF::CLJEnergy CLJFF::calculatePairEnergy(DistMatrix &distmatrix,
     return CLJEnergy(cnrg,ljnrg);
 }
 
+/** This function returns the CLJ energy of two groups based on the
+    inter-atomic inverse-square-distances stored in 'distmatrix'
+    and using the CLJ parameters in 'cljmatrix', and using
+    atom-atom coulomb and LJ scale factors from 'nbpairs' */
+CLJFF::CLJEnergy CLJFF::calculatePairEnergy(DistMatrix &distmatrix,
+                                            CLJPairMatrix &cljmatrix,
+                                            const CLJCGNBPairs &nbpairs)
+{
+    if (nbpairs.isEmpty())
+    {
+        //the coulomb and LJ scale factors are the same for all atom pairs
+        CLJEnergy cljnrg = CLJFF::calculatePairEnergy(distmatrix, cljmatrix);
+
+        const CLJFactor &cljscl = cljmatrix.get(0,0);
+
+        return CLJEnergy( cljscl.coulomb * cljnrg.coulomb(),
+                          cljscl.lj * cljnrg.lj() );
+    }
+
+    //the coulomb and LJ scale factors vary for each atom pair...
+    uint nats0 = distmatrix.nOuter();
+    uint nats1 = distmatrix.nInner();
+
+    BOOST_ASSERT( cljmatrix.nOuter() == nats0 );
+    BOOST_ASSERT( cljmatrix.nInner() == nats1 );
+
+    double cnrg = 0;
+    double ljnrg = 0;
+
+    //loop over all pairs of atoms
+    for (uint i=0; i<nats0; ++i)
+    {
+        distmatrix.setOuterIndex(i);
+        cljmatrix.setOuterIndex(i);
+
+        for (uint j=0; j<nats1; ++j)
+        {
+            //get the scale factor for this pair of atoms
+            const CLJFactor &cljscl = nbpairs.get(i,j);
+
+            //get the distance and LJPair for this atom pair
+            double invdist2 = distmatrix[j];
+            const CLJPair &cljpair = cljmatrix[j];
+
+            double sig2_over_dist2 = SireMaths::pow_2(cljpair.sigma()) * invdist2;
+            double sig6_over_dist6 = SireMaths::pow_3(sig2_over_dist2);
+            double sig12_over_dist12 = SireMaths::pow_2(sig6_over_dist6);
+
+            //LJ energy
+            ljnrg += cljscl.lj * double(4) * cljpair.epsilon() *
+                                    ( sig12_over_dist12 - sig6_over_dist6 );
+
+            //Coulomb energy
+            cnrg += cljscl.coulomb * cljpair.charge2() * std::sqrt(invdist2);
+        }
+    }
+
+    return CLJEnergy(cnrg,ljnrg);
+}
+
 /** This function is used to calculate and return the self-energy of a group,
     using the inverse-square-distances and parameters stored
     in the passed distance and CLJ matricies. */
 CLJFF::CLJEnergy CLJFF::calculateSelfEnergy(DistMatrix &distmatrix,
-                                            CLJPairMatrix &cljmatrix)
+                                            CLJPairMatrix &cljmatrix,
+                                            const CLJCGNBPairs &nbpairs)
 {
     uint nats = distmatrix.nOuter();
 
@@ -1034,6 +1120,9 @@ CLJFF::CLJEnergy CLJFF::calculateSelfEnergy(DistMatrix &distmatrix,
 
         for (uint j=i+1; j<nats; ++j)
         {
+            //get the nonbonded scale factor for this pair of atoms
+            const CLJFactor &cljscl = nbpairs.get(i,j);
+
             //get the distance and LJPair for this atom pair
             double invdist2 = distmatrix[j];
             const CLJPair &cljpair = cljmatrix[j];
@@ -1043,11 +1132,11 @@ CLJFF::CLJEnergy CLJFF::calculateSelfEnergy(DistMatrix &distmatrix,
             double sig12_over_dist12 = SireMaths::pow_2(sig6_over_dist6);
 
             //LJ energy
-            ljnrg += double(4) * cljpair.epsilon() *
+            ljnrg += cljscl.lj * double(4) * cljpair.epsilon() *
                                     ( sig12_over_dist12 - sig6_over_dist6 );
 
             //coulomb energy
-            cnrg += cljpair.charge2() * std::sqrt(invdist2);
+            cnrg += cljscl.coulomb * cljpair.charge2() * std::sqrt(invdist2);
         }
     }
 
@@ -1126,6 +1215,81 @@ CLJFF::CLJEnergy CLJFF::calculateEnergy(const CoordGroup &group0,
     return CLJEnergy(0,0);
 }
 
+/** Calculate and return the LJ energy of interaction of group0,
+    with partial charges in 'chgs0' and with LJ parameters
+    in 'lj0' and group1, with partial charges in 'chgs1' and
+    LJ parameters in 'lj1', with atom-pair coulomb and LJ
+    scaling factors in 'nbpairs' and using the space 'space', and using
+    the provided distance and CLJ matricies as temporary workspace. */
+CLJFF::CLJEnergy CLJFF::calculateEnergy(const CoordGroup &group0,
+                                        const QVector<ChargeParameter> &chg0,
+                                        const QVector<LJParameter> &lj0,
+                                        const CoordGroup &group1,
+                                        const QVector<ChargeParameter> &chg1,
+                                        const QVector<LJParameter> &lj1,
+                                        const CLJCGNBPairs &nbpairs,
+                                        const Space &space,
+                                        const SwitchingFunction &switchfunc,
+                                        DistMatrix &distmatrix,
+                                        CLJPairMatrix &cljmatrix)
+{
+    if ( not space.beyond(switchfunc.cutoffDistance(), group0, group1) )
+    {
+        double mindist = space.calcInvDist2(group0, group1, distmatrix);
+
+        double sclcoul = switchfunc.electrostaticScaleFactor(mindist);
+        double scllj = switchfunc.vdwScaleFactor(mindist);
+
+        if (sclcoul != 0 or scllj != 0)
+        {
+            BOOST_ASSERT( chg0.count() == lj0.count() );
+            BOOST_ASSERT( chg1.count() == lj1.count() );
+
+            //combine the charge and LJ parameters together
+            uint nats0 = lj0.count();
+            uint nats1 = lj1.count();
+
+            BOOST_ASSERT( group0.count() == nats0 );
+            BOOST_ASSERT( group1.count() == nats1 );
+
+            cljmatrix.redimension(nats0, nats1);
+
+            const ChargeParameter *chg0_array = chg0.constData();
+            const LJParameter *lj0_array = lj0.constData();
+
+            const ChargeParameter *chg1_array = chg1.constData();
+            const LJParameter *lj1_array = lj1.constData();
+
+            for (uint i=0; i<nats0; ++i)
+            {
+                cljmatrix.setOuterIndex(i);
+
+                double chg0_param = SireUnits::one_over_four_pi_eps0
+                                              * chg0_array[i].charge();
+
+                const LJParameter &lj0param = lj0_array[i];
+
+                for (uint j=0; j<nats1; ++j)
+                {
+                    LJPair combined_lj = LJPair::geometric( lj1_array[j], lj0param );
+
+                    cljmatrix[j] = CLJPair( chg0_param * chg1_array[j].charge(),
+                                            combined_lj.sigma(),
+                                            combined_lj.epsilon() );
+                }
+            }
+
+            CLJEnergy nrg = CLJFF::calculatePairEnergy(distmatrix, cljmatrix,
+                                                       nbpairs);
+
+            return CLJEnergy( sclcoul * nrg.coulomb(),
+                              scllj * nrg.lj() );
+        }
+    }
+
+    return CLJEnergy(0,0);
+}
+
 /** Calculate the LJ energy of interaction of the atoms within the
     group 'group', with partial charges 'chgs', LJ parameters in 'ljs',
     using the space 'space', and working in the temporary
@@ -1133,6 +1297,7 @@ CLJFF::CLJEnergy CLJFF::calculateEnergy(const CoordGroup &group0,
 CLJFF::CLJEnergy CLJFF::calculateEnergy(const CoordGroup &group,
                                         const QVector<ChargeParameter> &chgs,
                                         const QVector<LJParameter> &ljs,
+                                        const CLJCGNBPairs &nbpairs,
                                         const Space &space,
                                         DistMatrix &distmatrix,
                                         CLJPairMatrix &cljmatrix)
@@ -1170,7 +1335,7 @@ CLJFF::CLJEnergy CLJFF::calculateEnergy(const CoordGroup &group,
         }
     }
 
-    return CLJFF::calculateSelfEnergy(distmatrix, cljmatrix);
+    return CLJFF::calculateSelfEnergy(distmatrix, cljmatrix, nbpairs);
 }
 
 /** Calculate and return the LJ energy of interaction between two
@@ -1245,6 +1410,7 @@ CLJFF::CLJEnergy CLJFF::calculateEnergy(const CLJFF::CLJMolecule &mol0,
     'switchfunc'. The calculation will use the provided
     distance and LJ matricies as a temporary workspace  */
 CLJFF::CLJEnergy CLJFF::calculateEnergy(const CLJFF::CLJMolecule &mol,
+                                        const CLJNBPairs &nbpairs,
                                         const Space &space,
                                         const SwitchingFunction &switchfunc,
                                         DistMatrix &distmatrix,
@@ -1258,6 +1424,7 @@ CLJFF::CLJEnergy CLJFF::calculateEnergy(const CLJFF::CLJMolecule &mol,
         return calculateEnergy(mol.coordinates().constData()[0],
                                mol.charges().constData()[0],
                                mol.ljParameters().constData()[0],
+                               nbpairs.get(CutGroupID(0),CutGroupID(0)),
                                space, distmatrix, cljmatrix);
     }
     else if (ncg > 1)
@@ -1290,6 +1457,7 @@ CLJFF::CLJEnergy CLJFF::calculateEnergy(const CLJFF::CLJMolecule &mol,
 
                 cljnrg += calculateEnergy(group0, chg0, lj0,
                                           group1, chg1, lj1,
+                                          nbpairs.get(CutGroupID(i),CutGroupID(j)),
                                           space, switchfunc,
                                           distmatrix, cljmatrix);
             }
@@ -1301,7 +1469,9 @@ CLJFF::CLJEnergy CLJFF::calculateEnergy(const CLJFF::CLJMolecule &mol,
         const QVector<ChargeParameter> &chg = chgarray[ncg-1];
         const QVector<LJParameter> &lj = ljarray[ncg-1];
 
-        cljnrg += calculateEnergy(group, chg, lj, space, distmatrix, cljmatrix);
+        cljnrg += calculateEnergy(group, chg, lj,
+                                  nbpairs.get(CutGroupID(ncg-1),CutGroupID(ncg-1)),
+                                  space, distmatrix, cljmatrix);
 
         return cljnrg;
     }

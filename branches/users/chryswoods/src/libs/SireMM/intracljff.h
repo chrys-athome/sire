@@ -30,7 +30,6 @@
 #define SIREMM_INTRACLJFF_H
 
 #include "cljff.h"
-#include "atompairs.hpp"
 
 SIRE_BEGIN_HEADER
 
@@ -44,8 +43,6 @@ QDataStream& operator>>(QDataStream&, SireMM::IntraCLJFF&);
 
 namespace SireMM
 {
-
-typedef AtomPairs< std::pair<double,double> > CLJNBPairs;
 
 using SireMol::MoleculeID;
 using SireMol::Molecules;
@@ -96,7 +93,24 @@ public:
         Parameters(const Parameters &other);
 
         ~Parameters();
+
+        /** Return the default source of the non-bonded scale factors */
+        const ParameterName& nbScale() const
+        {
+            return nbscl_params;
+        }
+
+        static Parameters default_sources;
+
+    private:
+        /** The name and default source of the non-bonded scale factors */
+        ParameterName nbscl_params;
     };
+
+    const IntraCLJFF::Parameters& parameters() const
+    {
+        return IntraCLJFF::Parameters::default_sources;
+    }
 
     class SIREMM_EXPORT Groups : public CLJFF::Groups
     {
@@ -151,6 +165,11 @@ public:
 protected:
     void _pvt_copy(const FFBase &other);
 
+    void recalculateViaDelta();
+    void recalculateTotalEnergy();
+
+    void recalculateEnergy();
+
 private:
     /** All of the molecules that have at least one atom in this forcefield */
     QVector<CLJFF::CLJMolecule> mols;
@@ -168,7 +187,7 @@ private:
 
     /** The non-bonded scale factors for each pair of atoms in
         each molecule */
-    QHash<MoleculeID,CLJNBPairs> nbpairs;
+    QHash<MoleculeID,CLJNBPairs> mol_nbpairs;
 
     /** Whether or not a total energy recalculation is required */
     bool need_total_recalc;

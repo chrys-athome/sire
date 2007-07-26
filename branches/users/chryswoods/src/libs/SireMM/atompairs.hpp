@@ -188,12 +188,12 @@ bool CGAtomPairs<T>::isEmpty() const
     return data.isEmpty();
 }
 
-/** The default value for all atom pairs, unless otherwise stated */
+/** Return the default value for all pairs */
 template<class T>
 SIRE_INLINE_TEMPLATE
 const T& CGAtomPairs<T>::defaultValue() const
 {
-    return data.defaultValue();
+    return def;
 }
 
 /** This class is used to store objects of type 'T' associated
@@ -244,6 +244,10 @@ public:
     void set(const IDMolAtom &atm0, const T &value);
     void set(const IDMolAtom &atm0, const IDMolAtom &atm1, const T &value);
 
+    void setAll(const T &value);
+    void setAll(CutGroupID cgid0, const T &value);
+    void setAll(CutGroupID cgid0, CutGroupID cgid1, const T &value);
+
     bool isEmpty() const;
 
     const MoleculeInfo& info() const;
@@ -251,9 +255,6 @@ public:
 private:
     /** Info about the molecule that contains these atom pairs */
     MoleculeInfo molinfo;
-
-    /** The default value of all of the atom pairs */
-    T def;
 
     /** The matrix of all CutGroup-CutGroup pairs */
     SireBase::SparseMatrix< CGAtomPairs<T> > cgpairs;
@@ -263,7 +264,7 @@ private:
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 AtomPairs<T>::AtomPairs(const T &default_value)
-             : def(default_value)
+             : cgpairs( CGAtomPairs<T>(default_value) )
 {}
 
 /** Construct a set of AtomPairs for the passed molecule, using the provided
@@ -271,14 +272,14 @@ AtomPairs<T>::AtomPairs(const T &default_value)
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 AtomPairs<T>::AtomPairs(const MoleculeInfo &info, const T &default_value)
-             : molinfo(info), def(default_value)
+             : molinfo(info)
 {}
 
 /** Copy constructor */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 AtomPairs<T>::AtomPairs(const AtomPairs &other)
-             : molinfo(other.molinfo), def(other.def), cgpairs(other.cgpairs)
+             : molinfo(other.molinfo), cgpairs(other.cgpairs)
 {}
 
 /** Destructor */
@@ -295,7 +296,6 @@ AtomPairs& AtomPairs<T>::operator=(const AtomPairs &other)
     if (&other != this)
     {
         molinfo = other.molinfo;
-        def = other.def;
         cgpairs = other.cgpairs;
     }
 
@@ -308,15 +308,13 @@ template<class T>
 SIRE_INLINE_TEMPLATE
 const CGAtomPairs<T>& AtomPairs<T>::operator()(CutGroupID cgid0, CutGroupID cgid1) const
 {
-    if (cgid0 <= cgid1)
-        return cgpairs(cgid0, cgid1);
-    else
-        return cgpairs(cgid1, cgid0);
+    return cgpairs(cgid0, cgid1);
 }
 
 /** Return the objects associated with all of the atom pairs within the
     CutGroup with ID == cgid */
 template<class T>
+SIRE_INLINE_TEMPLATE
 const CGAtomPairs<T>& AtomPairs<T>::operator()(CutGroupID cgid0) const
 {
     return cgpairs(cgid0,cgid0);
@@ -325,6 +323,7 @@ const CGAtomPairs<T>& AtomPairs<T>::operator()(CutGroupID cgid0) const
 /** Return the objects associated with all of the atom pairs within the
     CutGroup with ID == cgid */
 template<class T>
+SIRE_INLINE_TEMPLATE
 const CGAtomPairs<T>& AtomPairs<T>::get(CutGroupID cgid0) const
 {
     return this->operator()(cgid0);
@@ -414,23 +413,112 @@ const T& AtomPairs<T>::get(const IDMolAtom &atm0, const IDMolAtom &atm1) const
     return this->operator()(atm0,atm1);
 }
 
+/** Set the value for the atom-pair 'atm0'-'atm1' */
 template<class T>
-void AtomPairs<T>::set(const CGAtomID &atm0, const T &value);
+SIRE_OUTOFLINE_TEMPLATE
+void AtomPairs<T>::set(const CGAtomID &atm0, const CGAtomID &atm1,
+                       const T &value)
+{
+    molinfo.assertAtomExists(atm0);
+    molinfo.assertAtomExists(atm1);
 
-template<class T>
-void AtomPairs<T>::set(const CGAtomID &atm0, const CGAtomID &atm1, const T &value);
+    typename CGAtomPairs<T> cgpair = cgpairs.get(atm0.cutGroupID(),
+                                                 atm1.cutGroupID());
 
-template<class T>
-void AtomPairs<T>::set(const IDMolAtom &atm0, const T &value);
+    cgpair.set(atm0.atomID(), atm1.atomID(), value);
 
-template<class T>
-void AtomPairs<T>::set(const IDMolAtom &atm0, const IDMolAtom &atm1, const T &value);
+    if (atm0.cutGroupID() == atm1.cutGroupID())
+    {
+        cgpair.set(atm1.atomID(), atm0.atomID(), value);
 
-template<class T>
-bool AtomPairs<T>::isEmpty() const;
+        cgpairs.set(atm0.cutGroupID(), atm1.cutGroupID(), cgpair);
+    }
+    else
+    {
+        cgpairs.set(atm0.cutGroupID(), atm1.cutGroupID(), cgpair);
 
+        cgpair = cgpairs.get(atm1.cutGroupID(), atm0.cutGroupID());
+        cgpair.set(atm1.atomID(), atm0.atomID(), value);
+        cgpairs.set(atm1.cutGroupID(), atm0.cutGroupID(), cgpair);
+    }
+}
+
+/** Set the value for the atom 'atm0' */
 template<class T>
-const MoleculeInfo& AtomPairs<T>::info() const;
+SIRE_INLINE_TEMPLATE
+void AtomPairs<T>::set(const CGAtomID &atm0, const T &value)
+{
+    this->set(atm0, atm0, value);
+}
+
+/** Set the value for the atom 'atm0' */
+template<class T>
+SIRE_INLINE_TEMPLATE
+void AtomPairs<T>::set(const IDMolAtom &atm0, const T &value)
+{
+    this->set( atm0.index(molinfo), value );
+}
+
+/** Set the value for the atom-pair 'atm0'-'atm1' */
+template<class T>
+SIRE_INLINE_TEMPLATE
+void AtomPairs<T>::set(const IDMolAtom &atm0, const IDMolAtom &atm1,
+                       const T &value)
+{
+    this->set( atm0.index(molinfo), atm1.index(molinfo), value );
+}
+
+/** Set every single atom pair in this molecule to have the value 'value' */
+template<class T>
+SIRE_INLINE_TEMPLATE
+void AtomPairs<T>::setAll(const T &value)
+{
+    cgpairs = SparseMatrix< CGAtomPairs<T> >( CGAtomPairs<T>(value) );
+}
+
+/** Set every single atom pair in the CutGroup with ID == cgid0 to have
+    the value 'value' */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void AtomPairs<T>::setAll(CutGroupID cgid0, const T &value)
+{
+    molinfo.assertCutGroupExists(cgid0);
+
+    cgpairs.set(cgid0, CGAtomPairs<T>(value));
+}
+
+/** Set every single atom pair between the CutGroups with IDs (cgid0,cgid1)
+    to have the value 'value' */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void AtomPairs<T>::setAll(CutGroupID cgid0, CutGroupID cgid1, const T &value)
+{
+    molinfo.assertCutGroupExists(cgid0);
+    molinfo.assertCutGroupExists(cgid1);
+
+    cgpairs.set(cgid0, cgid1, CGAtomPairs<T>(value));
+
+    if (cgid0 != cgid1)
+        cgpairs.set(cgid1, cgid0, CGAtomPairs<T>(value));
+}
+
+/** Return whether or not this is empty - all of the atom pairs have
+    the default value. */
+template<class T>
+SIRE_INLINE_TEMPLATE
+bool AtomPairs<T>::isEmpty() const
+{
+    return cgpairs.isEmpty();
+}
+
+/** Return the info object describing the molecule that contains
+    all of the atoms */
+template<class T>
+SIRE_INLINE_TEMPLATE
+const MoleculeInfo& AtomPairs<T>::info() const
+{
+    return molinfo;
+}
 
 }
 

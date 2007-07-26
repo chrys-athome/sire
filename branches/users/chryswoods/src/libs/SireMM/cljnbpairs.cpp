@@ -26,3 +26,61 @@
   *
 \*********************************************/
 
+#include "cljnbpairs.h"
+
+#include "SireStream/datastream.h"
+
+using namespace SireMM;
+using namespace SireMol;
+
+static const RegisterMetaType<CLJNBPairs> r_cljnbpairs;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJNBPairs &cljnbpairs)
+{
+    writeHeader(ds, r_cljnbpairs, 1)
+        << static_cast<const AtomPairs<CLJFactor>&>(cljnbpairs);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJNBPairs &cljnbpairs)
+{
+    VersionID v = readHeader(ds, r_cljnbpairs);
+
+    if (v == 1)
+    {
+        ds >> static_cast<AtomPairs<CLJFactor>&>(cljnbpairs);
+    }
+    else
+        throw version_error(v, "1", r_cljnbpairs, CODELOC);
+
+    return ds;
+}
+
+/** Null constructor */
+CLJNBPairs::CLJNBPairs() : AtomPairs<CLJFactor>( CLJFactor(1,1) )
+{}
+
+/** Construct, using 'default_scale' for all of the atom-atom
+    interactions in the molecule 'molinfo' */
+CLJNBPairs::CLJNBPairs(const MoleculeInfo &molinfo, const CLJFactor &default_scale)
+           : AtomPairs<CLJFactor>(molinfo, default_scale)
+{}
+
+/** Copy constructor */
+CLJNBPairs::CLJNBPairs(const CLJNBPairs &other)
+           : AtomPairs<CLJFactor>(other)
+{}
+
+/** Destructor */
+CLJNBPairs::~CLJNBPairs()
+{}
+
+/** Copy assignment operator */
+CLJNBPairs& CLJNBPairs::operator=(const CLJNBPairs &other)
+{
+    AtomPairs<CLJFactor>::operator=(other);
+    return *this;
+}

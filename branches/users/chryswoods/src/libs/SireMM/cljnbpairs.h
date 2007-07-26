@@ -26,3 +26,70 @@
   *
 \*********************************************/
 
+#ifndef SIREMM_CLJNBPAIRS_H
+#define SIREMM_CLJNBPAIRS_H
+
+#include "atompairs.hpp"
+
+SIRE_BEGIN_HEADER
+
+namespace SireMM
+{
+class CLJNBPairs;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMM::CLJNBPairs&);
+QDataStream& operator>>(QDataStream&, SireMM::CLJNBPairs&);
+
+namespace SireMM
+{
+
+/** This small struct holds the coulomb and LJ scaling factors */
+struct CLJFactor
+{
+    CLJFactor(double _coulomb=0, double _lj=0) : coulomb(_coulomb), lj(_lj)
+    {}
+
+    double coulomb;
+    double lj;
+};
+
+typedef CGAtomPairs<CLJFactor> CLJCGNBPairs;
+
+/** This class holds all of the non-bonded scale factors that are used
+    to scale the intramolecular atom-atom coulomb and Lennard-Jones
+    interactions between pairs of atoms, e.g. for most MM forcefields,
+    the scale factors for 1-1, 1-2 and 1-3 pairs are zero, the
+    1-4 pairs are scaled by a coulomb and LJ factor (e.g. 0.5 for OPLS)
+    and the 1-5 and above pairs are not scaled (i.e. the coulomba and
+    LJ factors equal 1)
+
+    @author Christopher Woods
+*/
+class SIREMM_EXPORT CLJNBPairs : public AtomPairs<CLJFactor>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const CLJNBPairs&);
+friend QDataStream& ::operator>>(QDataStream&, CLJNBPairs&);
+
+public:
+    CLJNBPairs();
+
+    CLJNBPairs(const MoleculeInfo &molinfo,
+               const CLJFactor &default_scale = CLJFactor(1,1));
+
+    CLJNBPairs(const CLJNBPairs &other);
+
+    ~CLJNBPairs()
+
+    CLJNBPairs& operator=(const CLJNBPairs &other);
+};
+
+}
+
+Q_DECLARE_METATYPE(SireMM::CLJCGNBPairs);
+Q_DECLARE_METATYPE(SireMM::CLJNBPairs);
+
+SIRE_END_HEADER
+
+#endif
