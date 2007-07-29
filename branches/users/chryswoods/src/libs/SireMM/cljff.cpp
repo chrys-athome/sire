@@ -152,30 +152,30 @@ CLJFF::Groups::~Groups()
 {}
 
 /////////////
-///////////// Implementation of CLJFF::CLJMoleculeData
+///////////// Implementation of CLJFF::MoleculeData
 /////////////
 
 namespace SireMM
 {
 
-/** Private class used to hold the data of CLJFF::CLJMolecule */
-class CLJFF::CLJMoleculeData : public QSharedData
+/** Private class used to hold the data of CLJFF::Molecule */
+class CLJFF::MoleculeData : public QSharedData
 {
 public:
-    CLJMoleculeData();
+    MoleculeData();
 
-    CLJMoleculeData(const PartialMolecule &molecule,
-                    const QString &chgproperty, const QString &ljproperty,
-                    const QString &nbsclproperty);
+    MoleculeData(const PartialMolecule &molecule,
+                 const QString &chgproperty, const QString &ljproperty,
+                 const QString &nbsclproperty);
 
-    CLJMoleculeData(const CLJMoleculeData &other);
+    MoleculeData(const CLJFF::MoleculeData &other);
 
-    ~CLJMoleculeData();
+    ~MoleculeData();
 
-    CLJMoleculeData& operator=(const CLJMoleculeData &other);
+    MoleculeData& operator=(const CLJFF::MoleculeData &other);
 
-    bool operator==(const CLJMoleculeData &other) const;
-    bool operator!=(const CLJMoleculeData &other) const;
+    bool operator==(const CLJFF::MoleculeData &other) const;
+    bool operator!=(const CLJFF::MoleculeData &other) const;
 
     void rebuildAll();
     void rebuildCoordinates();
@@ -211,18 +211,18 @@ public:
         scaling factors */
     CLJNBPairs nbpairs;
 
-    static QSharedDataPointer<CLJMoleculeData> shared_null;
+    static QSharedDataPointer<CLJFF::MoleculeData> shared_null;
 };
 
 /** Constructor */
-CLJFF::CLJMoleculeData::CLJMoleculeData() : QSharedData()
+CLJFF::MoleculeData::MoleculeData() : QSharedData()
 {}
 
 /** Construct to represent all of the molecule 'mol' */
-CLJFF::CLJMoleculeData::CLJMoleculeData(const PartialMolecule &mol,
-                                        const QString &chgproperty,
-                                        const QString &ljproperty,
-                                        const QString &nbsclproperty)
+CLJFF::MoleculeData::MoleculeData(const PartialMolecule &mol,
+                                  const QString &chgproperty,
+                                  const QString &ljproperty,
+                                  const QString &nbsclproperty)
                      : QSharedData(),
                        molecule(mol),
                        chg_property(chgproperty),
@@ -233,24 +233,24 @@ CLJFF::CLJMoleculeData::CLJMoleculeData(const PartialMolecule &mol,
 }
 
 /** Copy constructor */
-CLJFF::CLJMoleculeData::CLJMoleculeData(const CLJFF::CLJMoleculeData &other)
-                       : QSharedData(),
-                         molecule(other.molecule),
-                         chg_property(other.chg_property),
-                         lj_property(other.lj_property),
-                         nbscl_property(other.nbscl_property),
-                         coords(other.coords),
-                         chgs(other.chgs),
-                         ljs(other.ljs),
-                         nbpairs(other.nbpairs)
+CLJFF::MoleculeData::MoleculeData(const CLJFF::MoleculeData &other)
+                    : QSharedData(),
+                      molecule(other.molecule),
+                      chg_property(other.chg_property),
+                      lj_property(other.lj_property),
+                      nbscl_property(other.nbscl_property),
+                      coords(other.coords),
+                      chgs(other.chgs),
+                      ljs(other.ljs),
+                      nbpairs(other.nbpairs)
 {}
 
 /** Destructor */
-CLJFF::CLJMoleculeData::~CLJMoleculeData()
+CLJFF::MoleculeData::~MoleculeData()
 {}
 
 /** Assignment operator */
-CLJFF::CLJMoleculeData& CLJFF::CLJMoleculeData::operator=(const CLJFF::CLJMoleculeData &other)
+CLJFF::MoleculeData& CLJFF::MoleculeData::operator=(const CLJFF::MoleculeData &other)
 {
     if (this != &other)
     {
@@ -268,7 +268,7 @@ CLJFF::CLJMoleculeData& CLJFF::CLJMoleculeData::operator=(const CLJFF::CLJMolecu
 }
 
 /** Comparison operator */
-bool CLJFF::CLJMoleculeData::operator==(const CLJFF::CLJMoleculeData &other) const
+bool CLJFF::MoleculeData::operator==(const CLJFF::MoleculeData &other) const
 {
     return molecule == other.molecule and
            chg_property == other.chg_property and
@@ -277,7 +277,7 @@ bool CLJFF::CLJMoleculeData::operator==(const CLJFF::CLJMoleculeData &other) con
 }
 
 /** Comparison operator */
-bool CLJFF::CLJMoleculeData::operator!=(const CLJFF::CLJMoleculeData &other) const
+bool CLJFF::MoleculeData::operator!=(const CLJFF::MoleculeData &other) const
 {
     return molecule != other.molecule or
            chg_property != other.chg_property or
@@ -290,7 +290,7 @@ bool CLJFF::CLJMoleculeData::operator!=(const CLJFF::CLJMoleculeData &other) con
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-void CLJFF::CLJMoleculeData::rebuildAll()
+void CLJFF::MoleculeData::rebuildAll()
 {
     chgs = molecule.extract().property(chg_property);
     ljs = molecule.extract().property(lj_property);
@@ -304,24 +304,24 @@ void CLJFF::CLJMoleculeData::rebuildAll()
 }
 
 /** Rebuild all of the coordinate data from scratch */
-void CLJFF::CLJMoleculeData::rebuildCoordinates()
+void CLJFF::MoleculeData::rebuildCoordinates()
 {
     coords = molecule.extract().coordGroups();
 }
 
-/** Shared null CLJMoleculeData */
-QSharedDataPointer<CLJFF::CLJMoleculeData> CLJFF::CLJMoleculeData::shared_null(
-                                                    new CLJFF::CLJMoleculeData() );
+/** Shared null MoleculeData */
+QSharedDataPointer<CLJFF::MoleculeData> CLJFF::MoleculeData::shared_null(
+                                                    new CLJFF::MoleculeData() );
 
 } // end of namespace SireMM
 
 
-static const RegisterMetaType<CLJFF::CLJMoleculeData> r_cljmoldata(MAGIC_ONLY,
-                                                      "SireMM::CLJFF::CLJMoleculeData");
+static const RegisterMetaType<CLJFF::MoleculeData> r_cljmoldata(MAGIC_ONLY,
+                                                      "SireMM::CLJFF::MoleculeData");
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
-                                      const CLJFF::CLJMoleculeData &cljmoldata)
+                                      const CLJFF::MoleculeData &cljmoldata)
 {
     writeHeader(ds, r_cljmoldata, 1);
 
@@ -329,14 +329,15 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
 
     sds << cljmoldata.molecule
         << cljmoldata.chg_property
-        << cljmoldata.lj_property;
+        << cljmoldata.lj_property
+        << cljmoldata.nbscl_property;
 
     return ds;
 }
 
 /** Deserialise from a binary data stream */
 QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
-                                      CLJFF::CLJMoleculeData &cljmoldata)
+                                      CLJFF::MoleculeData &cljmoldata)
 {
     VersionID v = readHeader(ds, r_cljmoldata);
 
@@ -347,11 +348,12 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
         PartialMolecule molecule;
         QString chg_property;
         QString lj_property;
+        QString nbscl_property;
 
-        sds >> molecule >> chg_property >> lj_property;
+        sds >> molecule >> chg_property >> lj_property >> nbscl_property;
 
-        cljmoldata = CLJFF::CLJMoleculeData(molecule,
-                                            chg_property, lj_property);
+        cljmoldata = CLJFF::MoleculeData(molecule, chg_property, 
+                                         lj_property, nbscl_property);
     }
     else
         throw version_error(v, "1", r_cljmoldata, CODELOC);
@@ -360,14 +362,14 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
 }
 
 /////////////
-///////////// Implementation of CLJFF::CLJMolecule
+///////////// Implementation of CLJFF::Molecule
 /////////////
 
-static const RegisterMetaType<CLJFF::CLJMolecule> r_cljmol;
+static const RegisterMetaType<CLJFF::Molecule> r_cljmol;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
-                                      const CLJFF::CLJMolecule &cljmol)
+                                      const CLJFF::Molecule &cljmol)
 {
     writeHeader(ds, r_cljmol, 1);
 
@@ -378,7 +380,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
 }
 
 /** Deserialise from a binary data stream */
-QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJFF::CLJMolecule &cljmol)
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJFF::Molecule &cljmol)
 {
     VersionID v = readHeader(ds, r_cljmol);
 
@@ -394,8 +396,8 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJFF::CLJMolecule &cljmo
     return ds;
 }
 
-/** Null constructor - creates an empty CLJMolecule */
-CLJFF::CLJMolecule::CLJMolecule() : d(CLJFF::CLJMoleculeData::shared_null)
+/** Null constructor - creates an empty Molecule */
+CLJFF::Molecule::Molecule() : d(CLJFF::MoleculeData::shared_null)
 {}
 
 /** Construct from the passed molecule, using 'ljproperty' to find the
@@ -404,80 +406,84 @@ CLJFF::CLJMolecule::CLJMolecule() : d(CLJFF::CLJMoleculeData::shared_null)
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-CLJFF::CLJMolecule::CLJMolecule(const PartialMolecule &molecule,
-                                const QString &chgproperty,
-                                const QString &ljproperty)
-                   : d( new CLJFF::CLJMoleculeData(molecule,
-                                                   chgproperty,
-                                                   ljproperty) )
+CLJFF::Molecule::Molecule(const PartialMolecule &molecule,
+                          const QString &chgproperty,
+                          const QString &ljproperty,
+                          const QString &nbscl_property)
+                   : d( new CLJFF::MoleculeData(molecule,
+                                                chgproperty,
+                                                ljproperty,
+                                                nbscl_property) )
 {}
 
 /** Copy constructor */
-CLJFF::CLJMolecule::CLJMolecule(const CLJMolecule &other)
-                   : d( other.d )
+CLJFF::Molecule::Molecule(const CLJFF::Molecule &other)
+                : d( other.d )
 {}
 
 /** Destructor */
-CLJFF::CLJMolecule::~CLJMolecule()
+CLJFF::Molecule::~Molecule()
 {}
 
 /** Assignment operator */
-CLJFF::CLJMolecule& CLJFF::CLJMolecule::operator=(const CLJMolecule &other)
+CLJFF::Molecule& CLJFF::Molecule::operator=(const CLJFF::Molecule &other)
 {
     d = other.d;
     return *this;
 }
 
 /** Comparison operator */
-bool CLJFF::CLJMolecule::operator==(const CLJFF::CLJMolecule &other) const
+bool CLJFF::Molecule::operator==(const CLJFF::Molecule &other) const
 {
     return d == other.d or (*d == *(other.d));
 }
 
 /** Comparison operator */
-bool CLJFF::CLJMolecule::operator!=(const CLJFF::CLJMolecule &other) const
+bool CLJFF::Molecule::operator!=(const CLJFF::Molecule &other) const
 {
     return d != other.d and (*d != *(other.d));
 }
 
 /** Return whether or not this is empty (has no atoms selected */
-bool CLJFF::CLJMolecule::isEmpty() const
+bool CLJFF::Molecule::isEmpty() const
 {
     return d->molecule.selectedAtoms().isEmpty();
 }
 
 /** Return the actual molecule */
-const PartialMolecule& CLJFF::CLJMolecule::molecule() const
+const PartialMolecule& CLJFF::Molecule::molecule() const
 {
     return d->molecule;
 }
 
-/** Return a CLJMolecule that represents this molecule changed
+/** Return a Molecule that represents this molecule changed
     to 'molecule'. Note that the new state must have the same
     MoleculeID as the current state!
 
     \throw SireError::incompatible_error
 */
-CLJFF::CLJMolecule CLJFF::CLJMolecule::change(const PartialMolecule &molecule,
-                                              const QString &chgproperty,
-                                              const QString &ljproperty) const
+CLJFF::Molecule CLJFF::Molecule::change(const PartialMolecule &molecule,
+                                        const QString &chgproperty,
+                                        const QString &ljproperty,
+                                        const QString &nbsclproperty) const
 {
     if (d->molecule.ID() == 0)
         //this is a null Molecule
-        return CLJMolecule();
+        return Molecule();
 
     //assert that this is the same molecule
     d->molecule.assertSameMolecule(molecule);
 
     if ( (chgproperty.isNull() or chgproperty == d->chg_property) and
-         (ljproperty.isNull() or ljproperty == d->lj_property) )
+         (ljproperty.isNull() or ljproperty == d->lj_property) and
+         (nbsclproperty.isNull() or nbsclproperty == d->nbscl_property) )
     {
         if ( d->molecule.version() == molecule.version() )
             //there has been no change
             return *this;
         else
         {
-            CLJMolecule newmol(*this);
+            CLJFF::Molecule newmol(*this);
 
             PartialMolecule &mol = newmol.d->molecule;
             mol = mol.change(molecule);
@@ -494,13 +500,14 @@ CLJFF::CLJMolecule CLJFF::CLJMolecule::change(const PartialMolecule &molecule,
     {
         //there has been a change of property - the entire molecule
         //needs to be rebuilt
-        CLJMolecule newmol(*this);
+        CLJFF::Molecule newmol(*this);
 
         PartialMolecule &mol = newmol.d->molecule;
         mol = mol.change(molecule);
 
         newmol.d->chg_property = chgproperty;
         newmol.d->lj_property = ljproperty;
+        newmol.d->nbscl_property = nbsclproperty;
 
         newmol.d->rebuildAll();
 
@@ -508,22 +515,23 @@ CLJFF::CLJMolecule CLJFF::CLJMolecule::change(const PartialMolecule &molecule,
     }
 }
 
-/** Return a CLJMolecule that represents the change from the CLJMolecule
+/** Return a Molecule that represents the change from the Molecule
     in its current state to include the entire molecule, which itself may
     have changed
 
     \throw SireError::incompatible_error
 */
-CLJFF::CLJMolecule CLJFF::CLJMolecule::add(const PartialMolecule &mol,
-                                           const QString &chgproperty,
-                                           const QString &ljproperty) const
+CLJFF::Molecule CLJFF::Molecule::add(const PartialMolecule &mol,
+                                     const QString &chgproperty,
+                                     const QString &ljproperty,
+                                     const QString &nbsclproperty) const
 {
     if (d->molecule.ID() == 0)
-        return CLJMolecule(mol, chgproperty, ljproperty);
+        return CLJFF::Molecule(mol, chgproperty, ljproperty,nbsclproperty);
 
     else if (molecule().selectedAtoms().contains(mol.selectedAtoms()))
         //there will be no change in the atom selections
-        return this->change(mol, chgproperty, ljproperty);
+        return this->change(mol, chgproperty, ljproperty, nbsclproperty);
     else
     {
         PartialMolecule mol = molecule().change(mol)
@@ -531,6 +539,7 @@ CLJFF::CLJMolecule CLJFF::CLJMolecule::add(const PartialMolecule &mol,
 
         QString chg_property = chgproperty;
         QString lj_property = ljproperty;
+        QString nbscl_property = nbsclproperty;
 
         if (chgproperty.isNull())
             chg_property = chargeProperty();
@@ -538,25 +547,28 @@ CLJFF::CLJMolecule CLJFF::CLJMolecule::add(const PartialMolecule &mol,
         if (ljproperty.isNull())
             lj_property = ljProperty();
 
-        return CLJMolecule(mol, chg_property, lj_property);
+        if (nbsclproperty.isNull())
+            nbscl_property = nbsclProperty();
+
+        return CLJFF::Molecule(mol, chg_property, lj_property, nbscl_property);
     }
 }
 
-/** Return a CLJMolecule that represents the change from the CLJMolecule
+/** Return a Molecule that represents the change from the Molecule
     in its current state to remove the entire molecule, which itself may
     have changed
 
     \throw SireError::incompatible_error
 */
-CLJFF::CLJMolecule CLJFF::CLJMolecule::remove(const PartialMolecule &mol) const
+CLJFF::Molecule CLJFF::Molecule::remove(const PartialMolecule &mol) const
 {
     if (d->molecule.ID() == 0)
     {
-        return CLJMolecule();
+        return CLJFF::Molecule();
     }
     else if (molecule().selectedAtoms().intersects(mol.selectedAtoms()))
     {
-        CLJMolecule newmol(*this);
+        CLJFF::Molecule newmol(*this);
 
         PartialMolecule &mol = newmol.d->molecule;
         mol = mol.selection().remove(mol.selectedAtoms());
@@ -570,10 +582,9 @@ CLJFF::CLJMolecule CLJFF::CLJMolecule::remove(const PartialMolecule &mol) const
         return *this;
 }
 
-/** Return a CLJMolecule that contains the CutGroups of 'oldmol'
+/** Return a Molecule that contains the CutGroups of this molecule
     that appear to have changed in 'newmol' */
-CLJFF::CLJMolecule
-CLJFF::CLJMolecule::getDifferences(const CLJFF::CLJMolecule &newmol) const
+CLJFF::Molecule CLJFF::Molecule::getDifferences(const CLJFF::Molecule &newmol) const
 {
     const PartialMolecule &old_molecule = this->molecule();
     const PartialMolecule &new_molecule = newmol.molecule();
@@ -585,6 +596,11 @@ CLJFF::CLJMolecule::getDifferences(const CLJFF::CLJMolecule &newmol) const
 
     if (ngroups == 0)
         //the molecule is empty - all of none of it has changed :-)
+        return *this;
+
+    if (this->intraNBScaleFactors() != newmol.intraNBScaleFactors())
+        //the non-bonded scale factors have changed - assume that 
+        //everything has changed (this could be optimised!)
         return *this;
 
     QSet<CutGroupID> cgids_that_change;
@@ -747,31 +763,37 @@ CLJFF::CLJMolecule::getDifferences(const CLJFF::CLJMolecule &newmol) const
 
     if (cgids_that_change.isEmpty())
         //none of oldmol has changed!
-        return CLJMolecule();
+        return CLJFF::Molecule();
     else
         //cgids_that_change contains the IDs of all of the CutGroups
-        //that change - create a CLJMolecule to represent this change
-        return CLJMolecule( old_molecule.selection().applyMask(cgids_that_change),
-                            chargeProperty(), ljProperty() );
+        //that change - create a Molecule to represent this change
+        return CLJFF::Molecule( old_molecule.selection().applyMask(cgids_that_change),
+                                chargeProperty(), ljProperty(), nbsclProperty() );
 }
 
 /** Return the name of the property used to get the partial charges */
-const QString& CLJFF::CLJMolecule::chargeProperty() const
+const QString& CLJFF::Molecule::chargeProperty() const
 {
     return d->chg_property;
 }
 
 /** Return the name of the property used to get the LJ parameters */
-const QString& CLJFF::CLJMolecule::ljProperty() const
+const QString& CLJFF::Molecule::ljProperty() const
 {
     return d->lj_property;
+}
+
+/** Return the name of the property used to get the non-bonded scale factors */
+const QString& CLJFF::Molecule::nbsclProperty() const
+{
+    return d->nbscl_property;
 }
 
 /** Return the CoordGroups of the CutGroups that have atoms that are
     in this forcefield. Note that there is no defined order to the
     array of CoordGroups, other than it is the same order as the
     array of LJ parameter groups returned by ljParameters(). */
-const QVector<CoordGroup>& CLJFF::CLJMolecule::coordinates() const
+const QVector<CoordGroup>& CLJFF::Molecule::coordinates() const
 {
     return d->coords;
 }
@@ -781,7 +803,7 @@ const QVector<CoordGroup>& CLJFF::CLJMolecule::coordinates() const
     by CutGroups and are in the same order as the coordinates
     as returned by coordinates(). Atoms which are not in this
     forcefield have zero charge. */
-const AtomicCharges& CLJFF::CLJMolecule::charges() const
+const AtomicCharges& CLJFF::Molecule::charges() const
 {
     return d->chgs;
 }
@@ -791,27 +813,34 @@ const AtomicCharges& CLJFF::CLJMolecule::charges() const
     are in the same order as the coordinates as returned by
     coordinates(). Atoms which are not in this forcefield
     have zero LJ parameters. */
-const AtomicLJs& CLJFF::CLJMolecule::ljParameters() const
+const AtomicLJs& CLJFF::Molecule::ljParameters() const
 {
     return d->ljs;
 }
 
-/** Return whether or not this CLJMolecule represents the whole
+/** Return the non-bonded scale factors of all of the intramolecular
+    atom-atom interaction energies */
+const CLJNBPairs& CLJFF::Molecule::intraNBScaleFactors() const
+{
+    return d->nbpairs;
+}
+
+/** Return whether or not this Molecule represents the whole
     of the molecule */
-bool CLJFF::CLJMolecule::isWholeMolecule() const
+bool CLJFF::Molecule::isWholeMolecule() const
 {
     return d->molecule.selectedAtoms().selectedAll();
 }
 
 /////////////
-///////////// Implementation of CLJFF::ChangedCLJMolecule
+///////////// Implementation of CLJFF::ChangedMolecule
 /////////////
 
-static const RegisterMetaType<CLJFF::ChangedCLJMolecule> r_changedmol;
+static const RegisterMetaType<CLJFF::ChangedMolecule> r_changedmol;
 
 /** Serialise to a binary data stream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
-                                      const CLJFF::ChangedCLJMolecule &changedmol)
+                                      const CLJFF::ChangedMolecule &changedmol)
 {
     writeHeader(ds, r_changedmol, 1);
 
@@ -825,7 +854,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
 
 /** Deserialise from a binary data stream */
 QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
-                                      CLJFF::ChangedCLJMolecule &changedmol)
+                                      CLJFF::ChangedMolecule &changedmol)
 {
     VersionID v = readHeader(ds, r_changedmol);
 
@@ -843,20 +872,20 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
 }
 
 /** Empty constructor - this represents no change */
-CLJFF::ChangedCLJMolecule::ChangedCLJMolecule()
+CLJFF::ChangedMolecule::ChangedMolecule()
 {}
 
 /** Construct a zero change - e.g. from 'mol' to 'mol' - this
     is useful when constructing changes that will later on move
-    from 'mol' to 'newmol', e.g. ChangedCLJMolecule(mol).change(newmol) */
-CLJFF::ChangedCLJMolecule::ChangedCLJMolecule(const CLJMolecule &molecule)
-                          : oldmol(molecule),
-                            newmol(molecule)
+    from 'mol' to 'newmol', e.g. ChangedMolecule(mol).change(newmol) */
+CLJFF::ChangedMolecule::ChangedMolecule(const CLJFF::Molecule &molecule)
+                       : oldmol(molecule),
+                         newmol(molecule)
 {}
 
 /** Construct the change of all of 'old_molecule' to all of 'new_molecule' */
-CLJFF::ChangedCLJMolecule::ChangedCLJMolecule(const CLJMolecule &old_molecule,
-                                              const CLJMolecule &new_molecule)
+CLJFF::ChangedMolecule::ChangedMolecule(const CLJFF::Molecule &old_molecule,
+                                        const CLJFF::Molecule &new_molecule)
                           : oldmol(old_molecule),
                             newmol(new_molecule)
 {
@@ -874,7 +903,7 @@ CLJFF::ChangedCLJMolecule::ChangedCLJMolecule(const CLJMolecule &old_molecule,
 }
 
 /** Copy constructor */
-CLJFF::ChangedCLJMolecule::ChangedCLJMolecule(const CLJFF::ChangedCLJMolecule &other)
+CLJFF::ChangedMolecule::ChangedMolecule(const CLJFF::ChangedMolecule &other)
                           : oldmol(other.oldmol),
                             newmol(other.newmol),
                             oldparts(other.oldparts),
@@ -882,12 +911,12 @@ CLJFF::ChangedCLJMolecule::ChangedCLJMolecule(const CLJFF::ChangedCLJMolecule &o
 {}
 
 /** Destructor */
-CLJFF::ChangedCLJMolecule::~ChangedCLJMolecule()
+CLJFF::ChangedMolecule::~ChangedMolecule()
 {}
 
 /** Assignment operator */
-CLJFF::ChangedCLJMolecule&
-CLJFF::ChangedCLJMolecule::operator=(const CLJFF::ChangedCLJMolecule &other)
+CLJFF::ChangedMolecule&
+CLJFF::ChangedMolecule::operator=(const CLJFF::ChangedMolecule &other)
 {
     oldmol = other.oldmol;
     newmol = other.newmol;
@@ -898,7 +927,7 @@ CLJFF::ChangedCLJMolecule::operator=(const CLJFF::ChangedCLJMolecule &other)
 }
 
 /** Comparison operator */
-bool CLJFF::ChangedCLJMolecule::operator==(const CLJFF::ChangedCLJMolecule &other) const
+bool CLJFF::ChangedMolecule::operator==(const CLJFF::ChangedMolecule &other) const
 {
     return oldmol == other.oldmol and
            newmol == other.newmol and
@@ -907,7 +936,7 @@ bool CLJFF::ChangedCLJMolecule::operator==(const CLJFF::ChangedCLJMolecule &othe
 }
 
 /** Comparison operator */
-bool CLJFF::ChangedCLJMolecule::operator!=(const CLJFF::ChangedCLJMolecule &other) const
+bool CLJFF::ChangedMolecule::operator!=(const CLJFF::ChangedMolecule &other) const
 {
     return oldmol != other.oldmol or
            newmol != other.newmol or
@@ -916,78 +945,81 @@ bool CLJFF::ChangedCLJMolecule::operator!=(const CLJFF::ChangedCLJMolecule &othe
 }
 
 /** Return whether or not this is empty (both old and new are empty) */
-bool CLJFF::ChangedCLJMolecule::isEmpty() const
+bool CLJFF::ChangedMolecule::isEmpty() const
 {
     return oldmol.isEmpty() and newmol.isEmpty();
 }
 
 /** Return whether nothing has changed - this will be when oldmol == newmol */
-bool CLJFF::ChangedCLJMolecule::nothingChanged() const
+bool CLJFF::ChangedMolecule::nothingChanged() const
 {
     return oldmol == newmol;
 }
 
 /** Return whether the entire molecule has changed */
-bool CLJFF::ChangedCLJMolecule::changedAll() const
+bool CLJFF::ChangedMolecule::changedAll() const
 {
     return newparts == newmol or oldparts == oldmol;
 }
 
-/** Return the whole CLJMolecule as it was in the old state */
-const CLJFF::CLJMolecule& CLJFF::ChangedCLJMolecule::oldMolecule() const
+/** Return the whole Molecule as it was in the old state */
+const CLJFF::Molecule& CLJFF::ChangedMolecule::oldMolecule() const
 {
     return oldmol;
 }
 
-/** Return the whole CLJMolecule as it is in the new state */
-const CLJFF::CLJMolecule& CLJFF::ChangedCLJMolecule::newMolecule() const
+/** Return the whole Molecule as it is in the new state */
+const CLJFF::Molecule& CLJFF::ChangedMolecule::newMolecule() const
 {
     return newmol;
 }
 
-/** Return the parts of the CLJMolecule in the old state that
+/** Return the parts of the Molecule in the old state that
     have changed compared to the new state */
-const CLJFF::CLJMolecule& CLJFF::ChangedCLJMolecule::oldParts() const
+const CLJFF::Molecule& CLJFF::ChangedMolecule::oldParts() const
 {
     return oldparts;
 }
 
-/** Return the parts of the CLJMolecule in the new state that
+/** Return the parts of the Molecule in the new state that
     have changed compared to the old state */
-const CLJFF::CLJMolecule& CLJFF::ChangedCLJMolecule::newParts() const
+const CLJFF::Molecule& CLJFF::ChangedMolecule::newParts() const
 {
     return newparts;
 }
 
-/** Return the ChangedCLJMolecule that represents the change from the old molecule
+/** Return the ChangedMolecule that represents the change from the old molecule
     to 'molecule' */
-CLJFF::ChangedCLJMolecule
-CLJFF::ChangedCLJMolecule::change(const PartialMolecule &molecule,
-                                  const QString &chgproperty,
-                                  const QString &ljproperty) const
-{
-    return ChangedCLJMolecule( oldmol, newmol.change(molecule,
-                                                     chgproperty,
-                                                     ljproperty) );
-}
-
-/** Return the ChangedCLJMolecule that represents the addition of all atoms
-    in the molecule 'molecule' */
-CLJFF::ChangedCLJMolecule
-CLJFF::ChangedCLJMolecule::add(const PartialMolecule &molecule,
+CLJFF::ChangedMolecule
+CLJFF::ChangedMolecule::change(const PartialMolecule &molecule,
                                const QString &chgproperty,
-                               const QString &ljproperty) const
+                               const QString &ljproperty,
+                               const QString &nbsclproperty) const
 {
-    return ChangedCLJMolecule( oldmol, newmol.add(molecule,
+    return ChangedMolecule( oldmol, newmol.change(molecule,
                                                   chgproperty,
-                                                  ljproperty) );
+                                                  ljproperty,
+                                                  nbsclproperty) );
 }
 
-/** Return the ChangedCLJMolecule that represents the removal of the entire molecule! */
-CLJFF::ChangedCLJMolecule
-CLJFF::ChangedCLJMolecule::remove(const PartialMolecule &molecule) const
+/** Return the ChangedMolecule that represents the addition of all atoms
+    in the molecule 'molecule' */
+CLJFF::ChangedMolecule CLJFF::ChangedMolecule::add(const PartialMolecule &molecule,
+                                                   const QString &chgproperty,
+                                                   const QString &ljproperty,
+                                                   const QString &nbsclproperty) const
 {
-    return ChangedCLJMolecule( oldmol, newmol.remove(molecule) );
+    return ChangedMolecule( oldmol, newmol.add(molecule,
+                                               chgproperty,
+                                               ljproperty,
+                                               nbsclproperty) );
+}
+
+/** Return the ChangedMolecule that represents the removal of the entire molecule! */
+CLJFF::ChangedMolecule
+CLJFF::ChangedMolecule::remove(const PartialMolecule &molecule) const
+{
+    return ChangedMolecule( oldmol, newmol.remove(molecule) );
 }
 
 /////////////
@@ -1339,11 +1371,11 @@ CLJFF::CLJEnergy CLJFF::calculateEnergy(const CoordGroup &group,
 }
 
 /** Calculate and return the LJ energy of interaction between two
-    CLJMolecules, using the space 'space', combining rules 'combrules'
+    Molecules, using the space 'space', combining rules 'combrules'
     and switching function 'switchfunc'. The calculation will use
     the provided distance and CLJ matricies as a temporary workspace */
-CLJFF::CLJEnergy CLJFF::calculateEnergy(const CLJFF::CLJMolecule &mol0,
-                                        const CLJFF::CLJMolecule &mol1,
+CLJFF::CLJEnergy CLJFF::calculateEnergy(const CLJFF::Molecule &mol0,
+                                        const CLJFF::Molecule &mol1,
                                         const Space &space,
                                         const SwitchingFunction &switchfunc,
                                         DistMatrix &distmatrix,
@@ -1405,12 +1437,11 @@ CLJFF::CLJEnergy CLJFF::calculateEnergy(const CLJFF::CLJMolecule &mol0,
 }
 
 /** Calculate and return the LJ energy of interaction between the pairs
-    of atoms within a single CLJMolecule, using the space 'space',
+    of atoms within a single Molecule, using the space 'space',
     combining rules 'combrules' and switching function
     'switchfunc'. The calculation will use the provided
     distance and LJ matricies as a temporary workspace  */
-CLJFF::CLJEnergy CLJFF::calculateEnergy(const CLJFF::CLJMolecule &mol,
-                                        const CLJNBPairs &nbpairs,
+CLJFF::CLJEnergy CLJFF::calculateEnergy(const CLJFF::Molecule &mol,
                                         const Space &space,
                                         const SwitchingFunction &switchfunc,
                                         DistMatrix &distmatrix,
@@ -1424,7 +1455,8 @@ CLJFF::CLJEnergy CLJFF::calculateEnergy(const CLJFF::CLJMolecule &mol,
         return calculateEnergy(mol.coordinates().constData()[0],
                                mol.charges().constData()[0],
                                mol.ljParameters().constData()[0],
-                               nbpairs.get(CutGroupID(0),CutGroupID(0)),
+                               mol.intraNBScaleFactors()
+                                  .get(CutGroupID(0),CutGroupID(0)),
                                space, distmatrix, cljmatrix);
     }
     else if (ncg > 1)
@@ -1435,6 +1467,8 @@ CLJFF::CLJEnergy CLJFF::calculateEnergy(const CLJFF::CLJMolecule &mol,
 
         const QVector<ChargeParameter> *chgarray = mol.charges().constData();
         const QVector<LJParameter> *ljarray = mol.ljParameters().constData();
+
+        const CLJNBPairs &nbpairs = mol.intraNBScaleFactors();
 
         for (int i=0; i<ncg-1; ++i)
         {

@@ -105,9 +105,9 @@ public:
 
     ~CLJFF();
 
-    class CLJMolecule;
-    class CLJMoleculeData;  //private implementation of CLJMolecule
-    class ChangedCLJMolecule;
+    class Molecule;
+    class MoleculeData;  //private implementation of CLJFF::Molecule
+    class ChangedMolecule;
 
     class SIREMM_EXPORT Components : public FFBase::Components
     {
@@ -256,21 +256,24 @@ public:
         double iljnrg;
     };
 
-    static CLJEnergy calculateEnergy(const CLJMolecule &mol0,
-                                     const CLJMolecule &mol1,
-                                     const Space &space,
-                                     const SwitchingFunction &switchfunc,
-                                     DistMatrix &distmatrix,
-                                     CLJPairMatrix &cljmatrix);
-
-    static CLJEnergy calculateEnergy(const CLJMolecule &mol,
-                                     const CLJNBPairs &nbpairs,
-                                     const Space &space,
-                                     const SwitchingFunction &switchfunc,
-                                     DistMatrix &distmatrix,
-                                     CLJPairMatrix &cljmatrix);
-
 protected:
+
+    static CLJEnergy calculateEnergy(const CLJFF::Molecule &mol0,
+                                     const CLJFF::Molecule &mol1,
+                                     const Space &space,
+                                     const SwitchingFunction &switchfunc,
+                                     DistMatrix &distmatrix,
+                                     CLJPairMatrix &cljmatrix);
+
+    static CLJEnergy calculateEnergy(const CLJFF::Molecule &mol,
+                                     const Space &space,
+                                     const SwitchingFunction &switchfunc,
+                                     DistMatrix &distmatrix,
+                                     CLJPairMatrix &cljmatrix);
+
+    void _pvt_copy(const FFBase &other);
+
+private:
 
     static CLJEnergy calculateEnergy(const CoordGroup &group0,
                                      const QVector<ChargeParameter> &chg0,
@@ -303,10 +306,6 @@ protected:
                                      DistMatrix &distmatrix,
                                      CLJPairMatrix &cljmatrix);
 
-    void _pvt_copy(const FFBase &other);
-
-private:
-
     static CLJEnergy calculatePairEnergy(DistMatrix &distmatrix,
                                          CLJPairMatrix &cljmatrix);
 
@@ -333,11 +332,11 @@ private:
 
 } // end of namespace SireMM
 
-QDataStream& operator<<(QDataStream&, const SireMM::CLJFF::CLJMolecule&);
-QDataStream& operator>>(QDataStream&, SireMM::CLJFF::CLJMolecule&);
+QDataStream& operator<<(QDataStream&, const SireMM::CLJFF::Molecule&);
+QDataStream& operator>>(QDataStream&, SireMM::CLJFF::Molecule&);
 
-QDataStream& operator<<(QDataStream&, const SireMM::CLJFF::ChangedCLJMolecule&);
-QDataStream& operator>>(QDataStream&, SireMM::CLJFF::ChangedCLJMolecule&);
+QDataStream& operator<<(QDataStream&, const SireMM::CLJFF::ChangedMolecule&);
+QDataStream& operator>>(QDataStream&, SireMM::CLJFF::ChangedMolecule&);
 
 namespace SireMM
 {
@@ -345,45 +344,45 @@ namespace SireMM
 /** This class is used to represent a Molecule or part of a Molecule
     in this forcefield. It contains all of the coordinates of the molecule,
     together with the LJ parameters of the atoms. */
-class SIREMM_EXPORT CLJFF::CLJMolecule
+class SIREMM_EXPORT CLJFF::Molecule
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const CLJFF::CLJMolecule&);
-friend QDataStream& ::operator>>(QDataStream&, CLJFF::CLJMolecule&);
+friend QDataStream& ::operator<<(QDataStream&, const CLJFF::Molecule&);
+friend QDataStream& ::operator>>(QDataStream&, CLJFF::Molecule&);
 
 public:
-    CLJMolecule();
+    Molecule();
 
-    CLJMolecule(const PartialMolecule &molecule,
+    Molecule(const PartialMolecule &molecule,
                 const QString &chgproperty, const QString &ljproperty,
                 const QString &nbsclproperty = QString::null);
 
-    CLJMolecule(const CLJMolecule &other);
+    Molecule(const Molecule &other);
 
-    ~CLJMolecule();
+    ~Molecule();
 
-    CLJMolecule& operator=(const CLJMolecule &other);
+    Molecule& operator=(const Molecule &other);
 
-    bool operator==(const CLJMolecule &other) const;
-    bool operator!=(const CLJMolecule &other) const;
+    bool operator==(const Molecule &other) const;
+    bool operator!=(const Molecule &other) const;
 
     bool isEmpty() const;
 
     const PartialMolecule& molecule() const;
 
-    CLJMolecule change(const PartialMolecule &molecule,
-                       const QString &chgproperty = QString::null,
-                       const QString &ljproperty = QString::null,
-                       const QString &nbsclproperty = QString::null) const;
+    CLJFF::Molecule change(const PartialMolecule &molecule,
+                           const QString &chgproperty = QString::null,
+                           const QString &ljproperty = QString::null,
+                           const QString &nbsclproperty = QString::null) const;
 
-    CLJMolecule add(const PartialMolecule &molecule,
-                    const QString &chgproperty = QString::null,
-                    const QString &ljproperty = QString::null,
-                    const QString &nbsclproperty = QString::null) const;
+    CLJFF::Molecule add(const PartialMolecule &molecule,
+                        const QString &chgproperty = QString::null,
+                        const QString &ljproperty = QString::null,
+                        const QString &nbsclproperty = QString::null) const;
 
-    CLJMolecule remove(const PartialMolecule &molecule) const;
+    CLJFF::Molecule remove(const PartialMolecule &molecule) const;
 
-    CLJMolecule getDifferences(const CLJMolecule &other) const;
+    CLJFF::Molecule getDifferences(const CLJFF::Molecule &other) const;
 
     const QString& chargeProperty() const;
     const QString& ljProperty() const;
@@ -399,69 +398,71 @@ public:
 
 private:
     /** Implicitly shared pointer to the data of this class */
-    QSharedDataPointer<CLJMoleculeData> d;
+    QSharedDataPointer<CLJFF::MoleculeData> d;
 };
 
 /** This class holds information on how a molecule has changed
     since the last energy evaluation.
 */
-class SIREMM_EXPORT CLJFF::ChangedCLJMolecule
+class SIREMM_EXPORT CLJFF::ChangedMolecule
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const CLJFF::ChangedCLJMolecule&);
-friend QDataStream& ::operator>>(QDataStream&, CLJFF::ChangedCLJMolecule&);
+friend QDataStream& ::operator<<(QDataStream&, const CLJFF::ChangedMolecule&);
+friend QDataStream& ::operator>>(QDataStream&, CLJFF::ChangedMolecule&);
 
 public:
-    ChangedCLJMolecule();
+    ChangedMolecule();
 
-    ChangedCLJMolecule(const CLJMolecule &mol);
+    ChangedMolecule(const CLJFF::Molecule &mol);
 
-    ChangedCLJMolecule(const CLJMolecule &oldmol, const CLJMolecule &newmol);
+    ChangedMolecule(const CLJFF::Molecule &oldmol, const CLJFF::Molecule &newmol);
 
-    ChangedCLJMolecule(const ChangedCLJMolecule &other);
+    ChangedMolecule(const CLJFF::ChangedMolecule &other);
 
-    ~ChangedCLJMolecule();
+    ~ChangedMolecule();
 
-    ChangedCLJMolecule& operator=(const ChangedCLJMolecule &other);
+    ChangedMolecule& operator=(const CLJFF::ChangedMolecule &other);
 
-    bool operator==(const ChangedCLJMolecule &other) const;
-    bool operator!=(const ChangedCLJMolecule &other) const;
+    bool operator==(const ChangedMolecule &other) const;
+    bool operator!=(const ChangedMolecule &other) const;
 
     bool isEmpty() const;
 
-    ChangedCLJMolecule change(const PartialMolecule &molecule,
-                              const QString &chgproperty = QString::null,
-                              const QString &ljproperty = QString::null) const;
+    CLJFF::ChangedMolecule change(const PartialMolecule &molecule,
+                                  const QString &chgproperty = QString::null,
+                                  const QString &ljproperty = QString::null,
+                                  const QString &nbsclproperty = QString::null) const;
 
-    ChangedCLJMolecule add(const PartialMolecule &molecule,
-                           const QString &chgproperty = QString::null,
-                           const QString &ljproperty = QString::null) const;
+    CLJFF::ChangedMolecule add(const PartialMolecule &molecule,
+                               const QString &chgproperty = QString::null,
+                               const QString &ljproperty = QString::null,
+                               const QString &nbsclproperty = QString::null) const;
 
-    ChangedCLJMolecule remove(const PartialMolecule &molecule) const;
+    CLJFF::ChangedMolecule remove(const PartialMolecule &molecule) const;
 
     bool changedAll() const;
     bool nothingChanged() const;
 
-    const CLJMolecule& oldMolecule() const;
-    const CLJMolecule& newMolecule() const;
+    const CLJFF::Molecule& oldMolecule() const;
+    const CLJFF::Molecule& newMolecule() const;
 
-    const CLJMolecule& oldParts() const;
-    const CLJMolecule& newParts() const;
+    const CLJFF::Molecule& oldParts() const;
+    const CLJFF::Molecule& newParts() const;
 
 private:
     /** The old version of the molecule */
-    CLJMolecule oldmol;
+    CLJFF::Molecule oldmol;
 
     /** The new version of the molecule */
-    CLJMolecule newmol;
+    CLJFF::Molecule newmol;
 
     /** The old version of the parts of the molecule that have
         changed */
-    CLJMolecule oldparts;
+    CLJFF::Molecule oldparts;
 
     /** The new version of the parts of the molecule that have
         changed */
-    CLJMolecule newparts;
+    CLJFF::Molecule newparts;
 };
 
 
@@ -480,8 +481,8 @@ inline const SwitchingFunction& CLJFF::switchingFunction() const
 
 } // end of namespace SireMM
 
-Q_DECLARE_METATYPE(SireMM::CLJFF::CLJMolecule);
-Q_DECLARE_METATYPE(SireMM::CLJFF::ChangedCLJMolecule);
+Q_DECLARE_METATYPE(SireMM::CLJFF::Molecule);
+Q_DECLARE_METATYPE(SireMM::CLJFF::ChangedMolecule);
 
 SIRE_END_HEADER
 
