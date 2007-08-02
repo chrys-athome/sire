@@ -39,7 +39,9 @@
 #include "atomicljs.h"
 
 #include "SireVol/space.h"
+
 #include "SireFF/ffbase.h"
+#include "SireFF/parametermap.h"
 
 #include "SireMol/molecule.h"
 #include "SireMol/residue.h"
@@ -73,6 +75,7 @@ using SireVol::DistMatrix;
 
 using SireFF::FFBase;
 using SireFF::ParameterName;
+using SireFF::ParameterMap;
 using SireFF::FFComponent;
 
 using SireCAS::Symbols;
@@ -108,6 +111,9 @@ public:
     class Molecule;
     class MoleculeData;  //private implementation of CLJFF::Molecule
     class ChangedMolecule;
+    class Energy;
+
+    typedef CLJPairMatrix ParamPairMatrix;
 
     class SIREMM_EXPORT Components : public FFBase::Components
     {
@@ -211,30 +217,30 @@ public:
         return *components_ptr;
     }
 
-    class SIREMM_EXPORT CLJEnergy
+    class SIREMM_EXPORT Energy
     {
     public:
-        CLJEnergy(double cnrg=0, double ljnrg=0)
+        Energy(double cnrg=0, double ljnrg=0)
         {
             icnrg = cnrg;
             iljnrg = ljnrg;
         }
 
-        CLJEnergy(const CLJEnergy &other)
+        Energy(const Energy &other)
                    : icnrg(other.icnrg), iljnrg(other.iljnrg)
         {}
 
-        ~CLJEnergy()
+        ~Energy()
         {}
 
-        CLJEnergy& operator+=(const CLJEnergy &other)
+        Energy& operator+=(const Energy &other)
         {
             icnrg += other.icnrg;
             iljnrg += other.iljnrg;
             return *this;
         }
 
-        CLJEnergy& operator-=(const CLJEnergy &other)
+        Energy& operator-=(const Energy &other)
         {
             icnrg -= other.icnrg;
             iljnrg -= other.iljnrg;
@@ -258,24 +264,33 @@ public:
 
 protected:
 
-    static CLJEnergy calculateEnergy(const CLJFF::Molecule &mol0,
-                                     const CLJFF::Molecule &mol1,
-                                     const Space &space,
-                                     const SwitchingFunction &switchfunc,
-                                     DistMatrix &distmatrix,
-                                     CLJPairMatrix &cljmatrix);
+    static CLJFF::Energy calculateEnergy(const CLJFF::Molecule &mol0,
+                                         const CLJFF::Molecule &mol1,
+                                         const Space &space,
+                                         const SwitchingFunction &switchfunc,
+                                         DistMatrix &distmatrix,
+                                         CLJPairMatrix &cljmatrix);
 
-    static CLJEnergy calculateEnergy(const CLJFF::Molecule &mol,
-                                     const Space &space,
-                                     const SwitchingFunction &switchfunc,
-                                     DistMatrix &distmatrix,
-                                     CLJPairMatrix &cljmatrix);
+    static CLJFF::Energy calculateEnergy(const CLJFF::Molecule &mol,
+                                         const Space &space,
+                                         const SwitchingFunction &switchfunc,
+                                         DistMatrix &distmatrix,
+                                         CLJPairMatrix &cljmatrix);
+
+    static CLJFF::Molecule createMolecule(const PartialMolecule &molecule,
+                                          const ParameterMap &map);
+
+    static void assertCompatibleParameters(const CLJFF::Molecule &mol,
+                                           const ParameterMap &map);
+
+    void setEnergy(const CLJFF::Energy &energy);
+    void updateEnergy(const CLJFF::Energy &energy);
 
     void _pvt_copy(const FFBase &other);
 
 private:
 
-    static CLJEnergy calculateEnergy(const CoordGroup &group0,
+    static Energy calculateEnergy(const CoordGroup &group0,
                                      const QVector<ChargeParameter> &chg0,
                                      const QVector<LJParameter> &lj0,
                                      const CoordGroup &group1,
@@ -286,7 +301,7 @@ private:
                                      DistMatrix &distmatrix,
                                      CLJPairMatrix &cljmatrix);
 
-    static CLJEnergy calculateEnergy(const CoordGroup &group0,
+    static Energy calculateEnergy(const CoordGroup &group0,
                                      const QVector<ChargeParameter> &chg0,
                                      const QVector<LJParameter> &lj0,
                                      const CoordGroup &group1,
@@ -298,7 +313,7 @@ private:
                                      DistMatrix &distmatrix,
                                      CLJPairMatrix &cljmatrix);
 
-    static CLJEnergy calculateEnergy(const CoordGroup &group,
+    static Energy calculateEnergy(const CoordGroup &group,
                                      const QVector<ChargeParameter> &chgs,
                                      const QVector<LJParameter> &ljs,
                                      const CLJCGNBPairs &nbpairs,
@@ -306,14 +321,14 @@ private:
                                      DistMatrix &distmatrix,
                                      CLJPairMatrix &cljmatrix);
 
-    static CLJEnergy calculatePairEnergy(DistMatrix &distmatrix,
+    static Energy calculatePairEnergy(DistMatrix &distmatrix,
                                          CLJPairMatrix &cljmatrix);
 
-    static CLJEnergy calculatePairEnergy(DistMatrix &distmatrix,
+    static Energy calculatePairEnergy(DistMatrix &distmatrix,
                                          CLJPairMatrix &cljmatrix,
                                          CLJCGNBPairs &nbpairs);
 
-    static CLJEnergy calculateSelfEnergy(DistMatrix &distmatrix,
+    static Energy calculateSelfEnergy(DistMatrix &distmatrix,
                                          CLJPairMatrix &cljmatrix,
                                          CLJCGNBPairs &nbpairs);
 
@@ -354,8 +369,8 @@ public:
     Molecule();
 
     Molecule(const PartialMolecule &molecule,
-                const QString &chgproperty, const QString &ljproperty,
-                const QString &nbsclproperty = QString::null);
+             const QString &chgproperty, const QString &ljproperty,
+             const QString &nbsclproperty = QString::null);
 
     Molecule(const Molecule &other);
 
@@ -370,17 +385,13 @@ public:
 
     const PartialMolecule& molecule() const;
 
-    CLJFF::Molecule change(const PartialMolecule &molecule,
-                           const QString &chgproperty = QString::null,
-                           const QString &ljproperty = QString::null,
-                           const QString &nbsclproperty = QString::null) const;
-
-    CLJFF::Molecule add(const PartialMolecule &molecule,
-                        const QString &chgproperty = QString::null,
-                        const QString &ljproperty = QString::null,
-                        const QString &nbsclproperty = QString::null) const;
-
+    CLJFF::Molecule change(const PartialMolecule &molecule) const;
+    CLJFF::Molecule add(const PartialMolecule &molecule) const;
     CLJFF::Molecule remove(const PartialMolecule &molecule) const;
+
+    CLJFF::Molecule changeParameters(const QString &chgproperty,
+                                     const QString &ljproperty,
+                                     const QString &nbsclproperty) const;
 
     CLJFF::Molecule getDifferences(const CLJFF::Molecule &other) const;
 
@@ -428,17 +439,13 @@ public:
 
     bool isEmpty() const;
 
-    CLJFF::ChangedMolecule change(const PartialMolecule &molecule,
-                                  const QString &chgproperty = QString::null,
-                                  const QString &ljproperty = QString::null,
-                                  const QString &nbsclproperty = QString::null) const;
-
-    CLJFF::ChangedMolecule add(const PartialMolecule &molecule,
-                               const QString &chgproperty = QString::null,
-                               const QString &ljproperty = QString::null,
-                               const QString &nbsclproperty = QString::null) const;
-
+    CLJFF::ChangedMolecule change(const PartialMolecule &molecule) const;
+    CLJFF::ChangedMolecule add(const PartialMolecule &molecule) const;
     CLJFF::ChangedMolecule remove(const PartialMolecule &molecule) const;
+
+    CLJFF::ChangedMolecule changeParameters(const QString &chgproperty,
+                                            const QString &ljproperty,
+                                            const QString &nbsclproperty) const;
 
     bool changedAll() const;
     bool nothingChanged() const;

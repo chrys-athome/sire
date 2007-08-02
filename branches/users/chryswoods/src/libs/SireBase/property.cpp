@@ -41,39 +41,23 @@ namespace SireBase
 {
 
 /** This is a null property */
-class SIREBASE_EXPORT NullProperty : public PropertyBase
+class SIREBASE_EXPORT NullProperty
+              : public ConcreteProperty<NullProperty,PropertyBase>
 {
 public:
-    NullProperty() : PropertyBase()
+    NullProperty() : ConcreteProperty<NullProperty,PropertyBase>()
     {}
 
-    NullProperty(const NullProperty &other) : PropertyBase(other)
+    NullProperty(const NullProperty &other)
+            : ConcreteProperty<NullProperty,PropertyBase>(other)
     {}
 
     ~NullProperty()
     {}
 
-    NullProperty* clone() const
-    {
-        return new NullProperty(*this);
-    }
-
     static const char* typeName()
     {
         return "SireBase::NullProperty";
-    }
-
-    const char* what() const
-    {
-        return NullProperty::typeName();
-    }
-
-protected:
-    bool _pvt_isEqual(const PropertyBase &other) const
-    {
-        BOOST_ASSERT( other.isA<NullProperty>() );
-
-        return true;
     }
 };
 
@@ -88,11 +72,11 @@ using namespace SireStream;
 ///////////////
 
 /** Constructor */
-PropertyBase::PropertyBase()
+PropertyBase::PropertyBase() : QSharedData()
 {}
 
 /** Copy constructor */
-PropertyBase::PropertyBase(const PropertyBase&)
+PropertyBase::PropertyBase(const PropertyBase&) : QSharedData()
 {}
 
 /** Destructor */
@@ -108,21 +92,13 @@ PropertyBase& PropertyBase::operator=(const PropertyBase&)
 /** Comparison operator */
 bool PropertyBase::operator==(const PropertyBase &other) const
 {
-    if (this == &other)
-        return true;
-    else
-    {
-        if (QLatin1String(this->what()) == QLatin1String(other.what()))
-            return this->_pvt_isEqual(other);
-        else
-            return false;
-    }
+    return true;
 }
 
 /** Comparison operator */
 bool PropertyBase::operator!=(const PropertyBase &other) const
 {
-    return not this->operator==(other);
+    return false;
 }
 
 static const RegisterMetaType<PropertyBase> r_propbase(MAGIC_ONLY,

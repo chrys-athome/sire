@@ -61,7 +61,7 @@ typedef CGAtomPairs<CLJFactor> CLJCGNBPairs;
     interactions between pairs of atoms, e.g. for most MM forcefields,
     the scale factors for 1-1, 1-2 and 1-3 pairs are zero, the
     1-4 pairs are scaled by a coulomb and LJ factor (e.g. 0.5 for OPLS)
-    and the 1-5 and above pairs are not scaled (i.e. the coulomba and
+    and the 1-5 and above pairs are not scaled (i.e. the coulomb and
     LJ factors equal 1)
 
     @author Christopher Woods
@@ -80,9 +80,16 @@ public:
 
     CLJNBPairs(const CLJNBPairs &other);
 
-    ~CLJNBPairs()
+    ~CLJNBPairs();
 
     CLJNBPairs& operator=(const CLJNBPairs &other);
+
+    static const char* typeName()
+    {
+        return "SireMM::CLJNBPairs";
+    }
+
+
 };
 
 }

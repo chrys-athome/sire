@@ -32,6 +32,7 @@
 
 using namespace SireMM;
 using namespace SireMol;
+using namespace SireStream;
 
 static const RegisterMetaType<CLJNBPairs> r_cljnbpairs;
 

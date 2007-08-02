@@ -27,6 +27,7 @@ set ( SIREMM_SOURCES
       chargeparameter.cpp
       chargetable.cpp
       cljff.cpp
+      cljnbpairs.cpp
       cljpair.cpp
       cljparameter.cpp
       combiningrules.cpp

@@ -89,13 +89,13 @@ public:
 
     quint32 i;
     quint32 j;
-}
+};
 
 } // end of namespace detail
 
 } // end of namespace SireBase
 
-uint qHash(const SireMM::detail::Index &idx)
+uint qHash(const SireBase::detail::Index &idx)
 {
     return (idx.i << 16) & (idx.j | 0x0000FFFF);
 }
@@ -122,10 +122,10 @@ public:
 
     SparseMatrix<T>& operator=(const SparseMatrix<T> &other);
 
-    const T& operator(int i, int j) const;
+    const T& operator()(quint32 i, quint32 j) const;
 
-    void set(int i, int j, const T &value);
-    const T& get(int i, int j) const;
+    void set(quint32 i, quint32 j, const T &value);
+    const T& get(quint32 i, quint32 j) const;
 
     bool isEmpty() const;
 
@@ -173,11 +173,11 @@ SparseMatrix<T>& SparseMatrix<T>::operator=(const SparseMatrix<T> &other)
     constructed value if there is no element at this index */
 template<class T>
 SIRE_INLINE_TEMPLATE
-const T& SparseMatrix<T>::operator(quint32 i, quint32 j) const
+const T& SparseMatrix<T>::operator()(quint32 i, quint32 j) const
 {
-    Index idx(i,j);
+    detail::Index idx(i,j);
 
-    typename QHash<Index,T>::const_iterator it = data.constFind(idx);
+    typename QHash<detail::Index,T>::const_iterator it = data.constFind(idx);
 
     if (it != data.constEnd())
         return *it;
@@ -188,12 +188,12 @@ const T& SparseMatrix<T>::operator(quint32 i, quint32 j) const
 /** Set the element at (i,j) to equal 'value' */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-void SparseMatrix<T>::set(int i, int j, const T &value)
+void SparseMatrix<T>::set(quint32 i, quint32 j, const T &value)
 {
     if (value == def)
-        data.remove(idx);
+        data.remove( detail::Index(i,j) );
     else
-        data.insert(idx,value);
+        data.insert( detail::Index(i,j) ,value );
 }
 
 /** Return the element at index (i,j) - this returns the default

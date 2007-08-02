@@ -47,6 +47,15 @@ QDataStream& operator>>(QDataStream&, SireBase::PropertyBase&);
 QDataStream& operator<<(QDataStream&, const SireBase::Property&);
 QDataStream& operator>>(QDataStream&, SireBase::Property&);
 
+SireStream::XMLStream& operator<<(SireStream::XMLStream&, const SireBase::Property&);
+SireStream::XMLStream& operator>>(SireStream::XMLStream&, SireBase::Property&);
+
+SireStream::XMLStream& operator<<(SireStream::XMLStream&,
+                                  const SireBase::PropertyBase&);
+SireStream::XMLStream& operator>>(SireStream::XMLStream&,
+                                  SireBase::PropertyBase&);
+
+
 namespace SireBase
 {
 
@@ -77,12 +86,25 @@ public:
 
     virtual ~PropertyBase();
 
-    PropertyBase& operator=(const PropertyBase &other);
+    virtual PropertyBase& operator=(const PropertyBase &other);
 
-    bool operator==(const PropertyBase &other) const;
-    bool operator!=(const PropertyBase &other) const;
+    PropertyBase& operator=(const Property &other);
+
+    virtual bool operator==(const PropertyBase &other) const;
+    virtual bool operator!=(const PropertyBase &other) const;
+
+    bool operator==(const Property &other) const;
+    bool operator!=(const Property &other) const;
 
     virtual PropertyBase* clone() const=0;
+    virtual PropertyBase& copy(const PropertyBase &other)=0;
+    virtual bool compare(const PropertyBase &other) const=0;
+
+    virtual void save(QDataStream &ds) const=0;
+    virtual void load(QDataStream &ds)=0;
+
+    virtual void save(SireStream::XMLStream &xs) const=0;
+    virtual void load(SireStream::XMLStream &xs);
 
     virtual const char* what() const=0;
 
@@ -104,12 +126,117 @@ public:
     {
         return dynamic_cast<const T&>(*this);
     }
+};
+
+/** This is the second-to-top class of all Properties. Any instantiatable
+    properties must inherit from this template class so that all of the
+    virtual functions are supplied correctly, e.g. if you have a
+    class called Derived, that inherits from Base, and Base derives
+    from PropertyBase, then you need to inherit Derived from
+    ConcreteProperty<Derived,Base>
+
+    @author Christopher Woods
+*/
+template<class Derived, class Base>
+ConcreteProperty : public Base
+{
+public:
+    ConcreteProperty() : Base()
+    {}
+
+    template<class T0>
+    ConcreteProperty(const T0 &t0) : Base(t0)
+    {}
+
+    template<class T0, class T1>
+    ConcreteProperty(const T0 &t0, const T1 &t1) : Base(t0,t1)
+    {}
+
+    template<class T0, class T1, class T2>
+    ConcreteProperty(const T0 &t0, const T1 &t1,
+                     const T2 &t2) : Base(t0,t1,t2)
+    {}
+
+    ~ConcreteProperty()
+    {}
+
+    ConcreteProperty<Derived,Base>& operator=(const Base &other)
+    {
+        const Derived* other_t = dynamic_cast<const Derived*>(&other);
+
+        if (!other_t)
+            Base::throwInvalidCast(other);
+
+        return static_cast<Derived*>(this)->operator=(*other_t);
+    }
+
+    bool operator==(const Base &other) const
+    {
+        const Derived* other_t = dynamic_cast<const Derived*>(&other);
+
+        if (other_t)
+            return static_cast<const Derived*>(this)->operator==(*other_t);
+        else
+            return false;
+    }
+
+    bool operator!=(const Base &other) const
+    {
+        const Derived* other_t = dynamic_cast<const Derived*>(&other);
+
+        if (other_t)
+            return static_cast<const Derived*>(this)->operator!=(*other_t);
+        else
+            return true;
+    }
+
+    const char* what() const
+    {
+        return Derived::typeName();
+    }
+
+    ConcreteProperty<Derived,Base>* clone() const
+    {
+        return new Derived( static_cast<const T&>(*this) );
+    }
+
+    ConcreteProperty<Derived,Base>& copy(const Base &other)
+    {
+        return ConcreteProperty<Derived,Base>::operator=(other);
+    }
+
+    bool compare(const Base &other) const
+    {
+        return ConcreteProperty<Derived,Base>::operator==(other);
+    }
+
+    void save(QDataStream &ds) const
+    {
+        ds << static_cast<const T&>(*this);
+    }
+
+    void load(QDataStream &ds)
+    {
+        ds >> static_cast<T&>(*this);
+    }
 
 protected:
-    /** Return whether this property is equal to 'other'. This
-        function will only be called after a test has been made
-        to ensure that both properties are of the same type */
-    virtual bool _pvt_isEqual(const PropertyBase &other) const=0;
+    ConcreteProperty<Derived,Base>&
+    operator=(const ConcreteProperty<Derived,Base> &other)
+    {
+        Base::operator=(other);
+        return *this;
+    }
+
+    bool operator==(const ConcreteProperty<Derived,Base> &other) const
+    {
+        return Base::operator==(other);
+    }
+
+    bool operator!=(const ConcreteProperty<Derived,Base> &other) const
+    {
+        return Base::operator!=(other);
+    }
 };
 
 /** This is a simple property that holds any value as a QVariant. This
@@ -119,7 +246,8 @@ protected:
 
     @author Christopher Woods
 */
-class SIREBASE_EXPORT VariantProperty : public PropertyBase, public QVariant
+class SIREBASE_EXPORT VariantProperty
+          : public ConcreteProperty<VariantProperty,PropertyBase>, public QVariant
 {
 public:
     VariantProperty();
@@ -132,27 +260,20 @@ public:
 
     ~VariantProperty();
 
+    using PropertyBase::operator=();
+    using PropertyBase::operator==();
+    using PropertyBase::operator!=();
+
     VariantProperty& operator=(const QVariant &value);
-    VariantProperty& operator=(const Property &property);
     VariantProperty& operator=(const VariantProperty &other);
+
+    bool operator==(const VariantProperty &other) const;
+    bool operator!=(const VariantProperty &other) const;
 
     static const char* typeName()
     {
         return "SireBase::VariantProperty";
     }
-
-    const char* what() const
-    {
-        return VariantProperty::typeName();
-    }
-
-    VariantProperty* clone() const
-    {
-        return new VariantProperty(*this);
-    }
-
-protected:
-    bool _pvt_isEqual(const PropertyBase &other) const;
 };
 
 /** This is the visible holder class for PropertyBase. This is just
@@ -183,6 +304,9 @@ public:
 
     bool operator==(const Property &other) const;
     bool operator!=(const Property &other) const;
+
+    void save(QDataStream &ds) const;
+    void load(QDataStream &ds);
 
     const PropertyBase& base() const
     {

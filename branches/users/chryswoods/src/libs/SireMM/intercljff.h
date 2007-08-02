@@ -30,8 +30,7 @@
 #define SIREMM_INTERCLJFF_H
 
 #include "cljff.h"
-
-#include "SireMol/moleculeid.h"
+#include "inter2bodyff.hpp"
 
 SIRE_BEGIN_HEADER
 
@@ -46,18 +45,13 @@ QDataStream& operator>>(QDataStream&, SireMM::InterCLJFF&);
 namespace SireMM
 {
 
-using SireMol::MoleculeID;
-using SireMol::Molecules;
-
-using SireFF::ParameterMap;
-
 /** An InterCLJFF is used to calculate the
     intermolecular coulomb and LJ
     energy of a group of molecules.
 
     @author Christopher Woods
 */
-class SIREMM_EXPORT InterCLJFF : public CLJFF
+class SIREMM_EXPORT InterCLJFF : public Inter2BodyFF<CLJFF>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const InterCLJFF&);
@@ -71,38 +65,6 @@ public:
     InterCLJFF(const InterCLJFF &other);
 
     ~InterCLJFF();
-
-    class SIREMM_EXPORT Components : public CLJFF::Components
-    {
-    public:
-        Components();
-
-        Components(const FFBase &ffbase, const Symbols &symbols);
-
-        Components(const Components &other);
-
-        ~Components();
-
-        Components& operator=(const Components &other);
-    };
-
-    class SIREMM_EXPORT Parameters : public CLJFF::Parameters
-    {
-    public:
-        Parameters();
-        Parameters(const Parameters &other);
-
-        ~Parameters();
-    };
-
-    class SIREMM_EXPORT Groups : public CLJFF::Groups
-    {
-    public:
-        Groups();
-        Groups(const Groups &other);
-
-        ~Groups();
-    };
 
     static const char* typeName()
     {
@@ -118,71 +80,6 @@ public:
     {
         return new InterCLJFF(*this);
     }
-
-    void mustNowRecalculateFromScratch();
-
-    bool change(const PartialMolecule &molecule);
-    bool change(const Molecules &molecules);
-
-    bool add(const PartialMolecule &molecule,
-             const ParameterMap &map = ParameterMap());
-
-    bool add(const Molecules &molecules,
-             const ParameterMap &map = ParameterMap());
-
-    bool remove(const PartialMolecule &molecule);
-    bool remove(const Molecules &molecules);
-
-    bool contains(const PartialMolecule &molecule) const;
-
-    bool refersTo(MoleculeID molid) const;
-
-    QSet<FFBase::Group> groupsReferringTo(MoleculeID molid) const;
-
-    QSet<MoleculeID> moleculeIDs() const;
-
-    PartialMolecule molecule(MoleculeID molid) const;
-
-    Molecules contents() const;
-
-protected:
-    void recalculateViaDelta();
-    void recalculateTotalEnergy();
-
-    void recalculateEnergy();
-
-    ChangedCLJMolecule changeRecord(MoleculeID molid) const;
-
-    bool applyChange(MoleculeID molid,
-                     const ChangedCLJMolecule &new_molecule);
-
-    void _pvt_copy(const FFBase &other);
-
-private:
-    void updateCurrentState(const CLJMolecule &new_molecule);
-    void removeFromCurrentState(MoleculeID molid);
-
-    /** All of the molecules that have at least one atom
-        in this forcefield */
-    QVector<CLJFF::CLJMolecule> mols;
-
-    /** Hash mapping the MoleculeID to the index of the molecule in 'mols' */
-    QHash<MoleculeID, uint> molid_to_index;
-
-    /** Information about all of the changed molecules since the
-        last energy calculation */
-    QVector<CLJFF::ChangedCLJMolecule> changed_mols;
-
-    /** Hash mapping the MoleculeID of a changed molecule to its
-        index in changed_mols */
-    QHash<MoleculeID, uint> molid_to_changedindex;
-
-    /** MoleculeIDs of all molecules that have been removed since
-        the last energy evaluation */
-    QSet<MoleculeID> removed_mols;
-
-    /** Whether or not a total energy recalculation is required */
-    bool need_total_recalc;
 };
 
 }

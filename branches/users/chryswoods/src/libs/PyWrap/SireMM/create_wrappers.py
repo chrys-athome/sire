@@ -109,7 +109,9 @@ wrap_classes = [ "AngleDB",
                  
                  "UsePassedInternals<SireMM::MolAngleInfo>",
                  "UsePassedInternals<SireMM::MolBondInfo>",
-                 "UsePassedInternals<SireMM::MolDihedralInfo>"
+                 "UsePassedInternals<SireMM::MolDihedralInfo>",
+                 
+                 "Inter2BodyFF<SireMM::CLJFF>"
                  
                ]
 
@@ -168,7 +170,10 @@ aliases = { "assign_internals<SireMM::MolAngleInfo>" :
             "UsePassedInternals<SireMM::MolBondInfo>" :
                        "UsePassedInternals_MolBondInfo_",
             "UsePassedInternals<SireMM::MolDihedralInfo>" :
-                       "UsePassedInternals_MolDihedralInfo_"
+                       "UsePassedInternals_MolDihedralInfo_",
+                       
+            "Inter2BodyFF<CLJFF>" : "Inter2BodyFF_CLJFF_"
+                       
           }
 
 extra_includes = [ "SireMol/molecule.h",
@@ -195,7 +200,7 @@ special_code = { "assign_angles" : fix_assigninternals,
                  "BondTable" : remove_create,
                  "ChargeTable" : remove_create,
                  "DihedralTable" : remove_create,
-		 "HarmonicFF" : fix_noncopyable,
+                 "HarmonicFF" : fix_noncopyable,
                  "LJTable" : remove_create,
                  "InterCoulombFF" : fix_noncopyable,
                  "InterLJFF" : fix_noncopyable,

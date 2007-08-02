@@ -29,7 +29,21 @@
 #ifndef SIREMM_INTER2BODYFF_HPP
 #define SIREMM_INTER2BODYFF_HPP
 
-#include "sireglobal.h"
+#include "combiningrules.h"
+#include "switchingfunction.h"
+
+#include "SireVol/space.h"
+
+#include "SireFF/ffbase.h"
+#include "SireFF/parametermap.h"
+
+#include "SireMol/molecules.h"
+#include "SireMol/molecule.h"
+#include "SireMol/residue.h"
+#include "SireMol/newatom.h"
+#include "SireMol/atomselection.h"
+
+#include "SireMol/errors.h"
 
 SIRE_BEGIN_HEADER
 
@@ -41,10 +55,32 @@ class Inter2BodyFF;
 
 template<class T>
 QDataStream& operator<<(QDataStream&, const SireMM::Inter2BodyFF<T>&);
+template<class T>
 QDataStream& operator>>(QDataStream&, SireMM::Inter2BodyFF<T>&);
 
 namespace SireMM
 {
+
+using SireMol::Molecules;
+using SireMol::Molecule;
+using SireMol::MoleculeID;
+using SireMol::PartialMolecule;
+using SireMol::Residue;
+using SireMol::NewAtom;
+using SireMol::AtomSelection;
+
+using SireMol::CutGroupID;
+
+using SireVol::Space;
+using SireVol::CoordGroup;
+using SireVol::DistMatrix;
+
+using SireFF::FFBase;
+using SireFF::ParameterName;
+using SireFF::ParameterMap;
+using SireFF::FFComponent;
+
+using SireCAS::Symbols;
 
 /** This is the mid-base class of all 2-body intermolecular forcefields.
     This class calculates the intermolecular
@@ -54,18 +90,18 @@ namespace SireMM
     about a molecule in the forcefield, T::ChangedMolecule that contains
     information about the molecule as it is changed, T::Energy,
     which holds the energy of the molecule-molecule interaction,
-    and the function 
-    
+    and the function
+
     <code>
     static T::Energy T::calculateEnergy(const T::Molecule&, const T::Molecule&,
                                         const Space&, const SwitchingFunction&,
-                                        DistMatrix&, T::ParamPairMatrix&) 
+                                        DistMatrix&, T::ParamPairMatrix&)
     </code>
 
-    which calculates the energy between two molecules, using the 
+    which calculates the energy between two molecules, using the
     provided space, switching function and distance and parameter
     pair matrix workspaces.
-    
+
     @author Christopher Woods
 */
 template<class T>
@@ -92,6 +128,14 @@ public:
     bool remove(const PartialMolecule &molecule);
     bool remove(const Molecules &molecules);
 
+    bool add(const PartialMolecule &molecule,
+             const ParameterMap &map = ParameterMap());
+
+    bool add(const Molecules &molecules,
+             const ParameterMap &map = ParameterMap());
+
+    bool changeParameters(MoleculeID molid, const ParameterMap &map);
+
     bool contains(const PartialMolecule &molecule) const;
 
     bool refersTo(MoleculeID molid) const;
@@ -105,35 +149,32 @@ public:
     Molecules contents() const;
 
 protected:
-    T::Energy calculateEnergy();
-    
-    bool add(const T::Molecule &molecule);
-
-    T::ChangedMolecule changeRecord(MoleculeID molid) const;
-
-    bool applyChange(MoleculeID molid,
-                     const T::ChangedMolecule &new_molecule);
-
+    void recalculateEnergy();
     void _pvt_copy(const FFBase &other);
 
 private:
-    
-    T::Energy recalculateViaDelta();
-    T::Energy recalculateTotalEnergy();
-    
-    void updateCurrentState(const T::Molecule &new_molecule);
+
+    typename T::ChangedMolecule changeRecord(MoleculeID molid) const;
+
+    bool applyChange(MoleculeID molid,
+                     const typename T::ChangedMolecule &new_molecule);
+
+    void recalculateViaDelta();
+    void recalculateTotalEnergy();
+
+    void updateCurrentState(const typename T::Molecule &new_molecule);
     void removeFromCurrentState(MoleculeID molid);
 
     /** All of the molecules that have at least one atom
         in this forcefield */
-    QVector<T::Molecule> mols;
+    QVector<typename T::Molecule> mols;
 
     /** Hash mapping the MoleculeID to the index of the molecule in 'mols' */
     QHash<MoleculeID, uint> molid_to_index;
 
     /** Information about all of the changed molecules since the
         last energy calculation */
-    QVector<T::ChangedMolecule> changed_mols;
+    QVector<typename T::ChangedMolecule> changed_mols;
 
     /** Hash mapping the MoleculeID of a changed molecule to its
         index in changed_mols */
@@ -211,30 +252,30 @@ void Inter2BodyFF<T>::mustNowRecalculateFromScratch()
 
 /** Recalculate and return the total energy of this forcefield from scratch */
 template<class T>
-T::Energy Inter2BodyFF<T>::recalculateTotalEnergy()
+void Inter2BodyFF<T>::recalculateTotalEnergy()
 {
     //calculate the total energy of all molecule pairs...
-    T::Energy nrg(0);
+    typename T::Energy nrg(0);
 
     int nmols = mols.count();
 
-    const T::Molecule *mols_array = mols.constData();
+    const typename T::Molecule *mols_array = mols.constData();
 
     DistMatrix distmat(30,30);
-    T::ParamPairMatrix paramat(30,30);
+    typename T::ParamPairMatrix paramat(30,30);
 
     //loop over all molecule pairs
     for (int i=0; i<nmols-1; ++i)
     {
-        const T::Molecule &mol0 = mols_array[i];
+        const typename T::Molecule &mol0 = mols_array[i];
 
         for (int j=i+1; j<nmols; ++j)
         {
-            const T::Molecule &mol1 = mols_array[j];
+            const typename T::Molecule &mol1 = mols_array[j];
 
             nrg += T::calculateEnergy( mol0, mol1,
-                                       space(),
-                                       switchingFunction(),
+                                       T::space(),
+                                       T::switchingFunction(),
                                        distmat,
                                        paramat );
         }
@@ -246,13 +287,13 @@ T::Energy Inter2BodyFF<T>::recalculateTotalEnergy()
     removed_mols.clear();
     need_total_recalc = false;
 
-    //return the total energy
-    return nrg;
+    //set the total energy
+    T::setEnergy(nrg);
 }
 
 /** Recalculate the energy by using a delta from the old configuration */
 template<class T>
-T::Energy Inter2BodyFF<T>::recalculateViaDelta(const T &current_nrg)
+void Inter2BodyFF<T>::recalculateViaDelta()
 {
     int nmols = mols.count();
     int nchanged = changed_mols.count();
@@ -260,7 +301,8 @@ T::Energy Inter2BodyFF<T>::recalculateViaDelta(const T &current_nrg)
     if (need_total_recalc or nchanged == 0)
     {
         //no changed molecules, so just recalculate the total energy
-        return recalculateTotalEnergy();
+        this->recalculateTotalEnergy();
+        return;
     }
     else if (nmols == 0)
     {
@@ -271,24 +313,25 @@ T::Energy Inter2BodyFF<T>::recalculateViaDelta(const T &current_nrg)
         removed_mols.clear();
         need_total_recalc = false;
 
-        return T::Energy(0);
+        this->setEnergy(typename T::Energy(0));
+        return;
     }
 
     //temp components to hold the change in energies
-    T::Energy nrg(0);
+    typename T::Energy nrg(0);
 
     //now loop over all of the molecules in the system
-    const T::Molecule *mols_array = mols.constData();
-    const T::ChangedMolecule *changed_array = changed_mols.constData();
+    const typename T::Molecule *mols_array = mols.constData();
+    const typename T::ChangedMolecule *changed_array = changed_mols.constData();
 
     DistMatrix distmat(30,30);
-    T::ParamPairMatrix paramat(30,30);
+    typename T::ParamPairMatrix paramat(30,30);
 
     QHash<MoleculeID,uint>::const_iterator it;
 
     for (int i=0; i<nmols; ++i)
     {
-        const T::Molecule &mol = mols_array[i];
+        const typename T::Molecule &mol = mols_array[i];
 
         //is this one of the changed molecules?
         it = molid_to_changedindex.constFind(mol.molecule().ID());
@@ -301,16 +344,16 @@ T::Energy Inter2BodyFF<T>::recalculateViaDelta(const T &current_nrg)
             //molecules
             for (int j=0; j<nchanged; ++j)
             {
-                const T::ChangedMolecule &changed_mol = changed_array[j];
+                const typename T::ChangedMolecule &changed_mol = changed_array[j];
 
                 //calculate the energy of the new configuration
                 nrg += T::calculateEnergy(mol, changed_mol.newParts(),
-                                          space(), switchingFunction(),
+                                          T::space(), T::switchingFunction(),
                                           distmat, paramat);
 
                 //subtract the energy of the old configuration
                 nrg -= T::calculateEnergy(mol, changed_mol.oldParts(),
-                                          space(), switchingFunction(),
+                                          T::space(), T::switchingFunction(),
                                           distmat, paramat);
             }
         }
@@ -322,7 +365,7 @@ T::Energy Inter2BodyFF<T>::recalculateViaDelta(const T &current_nrg)
             //molecules that are after it in the changed mols array
             int idx = it.value();
 
-            const T::ChangedMolecule &changed_mol0 = changed_array[idx];
+            const typename T::ChangedMolecule &changed_mol0 = changed_array[idx];
 
             if (changed_mol0.changedAll())
             {
@@ -331,18 +374,18 @@ T::Energy Inter2BodyFF<T>::recalculateViaDelta(const T &current_nrg)
                 //of the other moved molecules
                 for (int j=idx+1; j<nchanged; ++j)
                 {
-                    const T::ChangedMolecule &changed_mol1 = changed_array[j];
+                    const typename T::ChangedMolecule &changed_mol1 = changed_array[j];
 
                     //add on the new interaction energy
                     nrg += T::calculateEnergy(changed_mol0.newMolecule(),
                                               changed_mol1.newMolecule(),
-                                              space(), switchingFunction(),
+                                              T::space(), T::switchingFunction(),
                                               distmat, paramat);
 
                     //subtract the old interaction energy
                     nrg -= T::calculateEnergy(changed_mol0.oldMolecule(),
                                               changed_mol1.oldMolecule(),
-                                              space(), switchingFunction(),
+                                              T::space(), T::switchingFunction(),
                                               distmat, paramat);
                 }
             }
@@ -351,7 +394,7 @@ T::Energy Inter2BodyFF<T>::recalculateViaDelta(const T &current_nrg)
                 //only part of this molecule has been moved...
                 for (int j=idx+1; j<nchanged; ++j)
                 {
-                    const T::ChangedMolecule &changed_mol1 = changed_array[j];
+                    const typename T::ChangedMolecule &changed_mol1 = changed_array[j];
 
                     if (changed_mol1.changedAll())
                     {
@@ -360,13 +403,13 @@ T::Energy Inter2BodyFF<T>::recalculateViaDelta(const T &current_nrg)
                         //with this molecule
                         nrg += T::calculateEnergy(changed_mol0.newMolecule(),
                                                   changed_mol1.newMolecule(),
-                                                  space(), switchingFunction(),
+                                                  T::space(), T::switchingFunction(),
                                                   distmat, paramat);
 
                         //subtract the old energy
                         nrg -= T::calculateEnergy(changed_mol0.oldMolecule(),
                                                   changed_mol1.oldMolecule(),
-                                                  space(), switchingFunction(),
+                                                  T::space(), T::switchingFunction(),
                                                   distmat, paramat);
                     }
                     else
@@ -383,24 +426,24 @@ T::Energy Inter2BodyFF<T>::recalculateViaDelta(const T &current_nrg)
                         //ok, so first the changed part of mol0 with all of mol1
                         nrg += T::calculateEnergy(changed_mol0.newParts(),
                                                   changed_mol1.newMolecule(),
-                                                  space(), switchingFunction(),
+                                                  T::space(), T::switchingFunction(),
                                                   distmat, paramat);
 
 
                         nrg -= T::calculateEnergy(changed_mol0.oldParts(),
                                                   changed_mol1.oldMolecule(),
-                                                  space(), switchingFunction(),
+                                                  T::space(), T::switchingFunction(),
                                                   distmat, paramat);
 
                         //now the changed part of mol1 with all of mol0
                         nrg += T::calculateEnergy(changed_mol0.newMolecule(),
                                                   changed_mol1.newParts(),
-                                                  space(), switchingFunction(),
+                                                  T::space(), T::switchingFunction(),
                                                   distmat, paramat);
 
                         nrg -= T::calculateEnergy(changed_mol0.oldMolecule(),
                                                   changed_mol1.oldParts(),
-                                                  space(), switchingFunction(),
+                                                  T::space(), T::switchingFunction(),
                                                   distmat, paramat);
 
                         //finally, remove the doubly-counted contribution of the
@@ -409,12 +452,12 @@ T::Energy Inter2BodyFF<T>::recalculateViaDelta(const T &current_nrg)
                         //subtract doubly counted contributions
                         nrg -= T::calculateEnergy(changed_mol0.newParts(),
                                                   changed_mol1.newParts(),
-                                                  space(), switchingFunction(),
+                                                  T::space(), T::switchingFunction(),
                                                   distmat, paramat);
 
                         nrg += T::calculateEnergy(changed_mol0.oldParts(),
                                                   changed_mol1.oldParts(),
-                                                  space(), switchingFunction(),
+                                                  T::space(), T::switchingFunction(),
                                                   distmat, paramat);
                     }
                 }
@@ -427,25 +470,25 @@ T::Energy Inter2BodyFF<T>::recalculateViaDelta(const T &current_nrg)
     //as has the energy of moved molecules that are before the removed molecules
     //in the moved list. We only now have to calculate the energy of the removed
     //molecules with all of the molecules that lie above us in the moved list
-    for (QSet<MoleculeID>::const_iterator it = removed_mols.constBegin();
+    for (typename QSet<MoleculeID>::const_iterator it = removed_mols.constBegin();
          it != removed_mols.constEnd();
          ++it)
     {
         //get the index of the removed molecule in the moved list
         int idx = molid_to_changedindex.value(*it);
 
-        const T::ChangedMolecule &removed_mol = changed_array[idx];
+        const typename T::ChangedMolecule &removed_mol = changed_array[idx];
 
         //calculate the change in energy associated with removing this molecule
         //(only have to do the 'old' energy, as the new energy is zero)
 
         for (int j=idx+1; j<nchanged; ++j)
         {
-            const T::ChangedMolecule &changed_mol = changed_array[j];
+            const typename T::ChangedMolecule &changed_mol = changed_array[j];
 
             nrg -= T::calculateEnergy(removed_mol.oldMolecule(),
                                       changed_mol.oldMolecule(),
-                                      space(), switchingFunction(),
+                                      T::space(), T::switchingFunction(),
                                       distmat, paramat);
         }
     }
@@ -456,29 +499,30 @@ T::Energy Inter2BodyFF<T>::recalculateViaDelta(const T &current_nrg)
     removed_mols.clear();
     need_total_recalc = false;
 
-    return current_nrg + nrg;
+    T::updateEnergy(nrg);
+    return;
 }
 
-/** Calculate and return the total energy of this forcefield. This will either
+/** Calculate the total energy of this forcefield. This will either
     calculate the energy from scratch, or it will calculate it as a
     delta based on the parts of the forcefield that have moved since
     the last evaluation. */
 template<class T>
-T::Energy Inter2BodyFF<T>::calculateEnergy()
+void Inter2BodyFF<T>::recalculateEnergy()
 {
     if (need_total_recalc or changed_mols.isEmpty())
     {
-        return this->recalculateTotalEnergy();
+        this->recalculateTotalEnergy();
     }
     else
     {
-        return this->recalculateViaDelta();
+        this->recalculateViaDelta();
     }
 }
 
 /** Save the current state of 'mol' */
 template<class T>
-void Inter2BodyFF<T>::updateCurrentState(const T::Molecule &mol)
+void Inter2BodyFF<T>::updateCurrentState(const typename T::Molecule &mol)
 {
     MoleculeID id = mol.molecule().ID();
 
@@ -519,7 +563,7 @@ void Inter2BodyFF<T>::removeFromCurrentState(MoleculeID molid)
         {
             molid_to_index.reserve(nmols);
 
-            const T::Molecule *mols_array = mols.constData();
+            const typename T::Molecule *mols_array = mols.constData();
 
             for (uint i=0; i<nmols; ++i)
             {
@@ -535,8 +579,8 @@ void Inter2BodyFF<T>::removeFromCurrentState(MoleculeID molid)
 /** Apply the change described by 'changed_mol' - return whether or not
     this changed anything */
 template<class T>
-bool Inter2BodyFF<T>::applyChange(MoleculeID molid, 
-                                  const T::ChangedMolecule &changed_mol)
+bool Inter2BodyFF<T>::applyChange(MoleculeID molid,
+                                  const typename T::ChangedMolecule &changed_mol)
 {
     if (changed_mol.isEmpty())
         return false;
@@ -556,7 +600,8 @@ bool Inter2BodyFF<T>::applyChange(MoleculeID molid,
     if (not need_total_recalc)
     {
         //save the change
-        QHash<MoleculeID,uint>::const_iterator it = molid_to_changedindex.constFind(molid);
+        typename QHash<MoleculeID,uint>::const_iterator
+                                      it = molid_to_changedindex.constFind(molid);
 
         if (it != molid_to_changedindex.constEnd())
         {
@@ -567,7 +612,7 @@ bool Inter2BodyFF<T>::applyChange(MoleculeID molid,
             if (changed_mols[idx].oldMolecule() == changed_mol.newMolecule())
             {
                 //we have changed back to the old state!
-                changed_mols[idx] = T::ChangedMolecule();
+                changed_mols[idx] = typename T::ChangedMolecule();
                 molid_to_changedindex.remove(molid);
                 removed_mols.remove(molid);
 
@@ -599,11 +644,13 @@ bool Inter2BodyFF<T>::applyChange(MoleculeID molid,
 }
 
 /** Get the current change record for a molecule */
-T::ChangedMolecule Inter2BodyFF<T>::changeRecord(MoleculeID molid) const
+template<class T>
+typename T::ChangedMolecule Inter2BodyFF<T>::changeRecord(MoleculeID molid) const
 {
     if ( not need_total_recalc )
     {
-        QHash<MoleculeID,uint>::const_iterator it = molid_to_changedindex.find(molid);
+        typename QHash<MoleculeID,uint>::const_iterator
+                                    it = molid_to_changedindex.find(molid);
 
         if (it != molid_to_changedindex.end())
             //this molecule has been changed before - return the record
@@ -611,19 +658,19 @@ T::ChangedMolecule Inter2BodyFF<T>::changeRecord(MoleculeID molid) const
             return changed_mols.constData()[ *it ];
     }
 
-    QHash<MoleculeID,uint>::const_iterator it = molid_to_index.find(molid);
+    typename QHash<MoleculeID,uint>::const_iterator it = molid_to_index.find(molid);
 
     if (it != molid_to_index.end())
     {
         //this molecule has not been changed before - return a change
         //record that has the state, but doesn't change it
-        return T::ChangedMolecule( mols.constData()[*it] );
+        return typename T::ChangedMolecule( mols.constData()[*it] );
     }
     else
     {
         //this molecule does not yet exist in this forcefield -
         //return an empty change record
-        return T::ChangedMolecule();
+        return typename T::ChangedMolecule();
     }
 }
 
@@ -635,20 +682,50 @@ T::ChangedMolecule Inter2BodyFF<T>::changeRecord(MoleculeID molid) const
     \throw SireError::invalid_cast
 */
 template<class T>
-bool Inter2BodyFF<T>::add(const T::Molecule &molecule)
+bool Inter2BodyFF<T>::add(const PartialMolecule &molecule, const ParameterMap &map)
 {
     //get the molecule's ID
-    MoleculeID molid = molecule.molecule().ID();
+    MoleculeID molid = molecule.ID();
 
-    T::ChangedMolecule new_molecule = changeRecord(molid).add(molecule);
+    //create a change record for the addition of this molecule
+    typename T::ChangedMolecule changerec = this->changeRecord(molid);
 
-    if (this->applyChange(molid, new_molecule))
+    //is the new molecule empty - in which case this molecule is not currently
+    //in this forcefield
+    if (changerec.newMolecule().isEmpty())
+    {
+        //the molecule is being added from scratch
+        changerec = typename T::ChangedMolecule(changerec.oldMolecule(),
+                                                T::createMolecule(molecule,map));
+    }
+    else
+    {
+        //we are adding atoms to an existing molecule - the parameters must
+        //be the same!
+        T::assertCompatibleParameters(changerec.newMolecule(), map);
+        changerec.add(molecule);
+    }
+
+    if (this->applyChange(molid, changerec))
     {
         this->incrementMajorVersion();
         return true;
     }
     else
-        return isDirty();
+        return T::isDirty();
+}
+
+/** Add lots of molecules 'molecules' to this forcefield using the optionally
+    supplied map to find the forcefield parameters amongst the
+    molecules' properties.
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+bool Inter2BodyFF<T>::add(const Molecules &molecules, const ParameterMap &map)
+{
+    return T::add(molecules, map);
 }
 
 /** Remove the molecule 'molecule' */
@@ -657,7 +734,8 @@ bool Inter2BodyFF<T>::remove(const PartialMolecule &molecule)
 {
     MoleculeID molid = molecule.ID();
 
-    T::ChangedMolecule new_molecule = changeRecord(molid).remove(molecule);
+    typename T::ChangedMolecule new_molecule =
+                              changeRecord(molid).remove(molecule);
 
     if (this->applyChange(molid, new_molecule))
     {
@@ -665,7 +743,7 @@ bool Inter2BodyFF<T>::remove(const PartialMolecule &molecule)
         return true;
     }
     else
-        return isDirty();
+        return T::isDirty();
 }
 
 /** Remove lots of molecules */
@@ -681,7 +759,8 @@ bool Inter2BodyFF<T>::change(const PartialMolecule &molecule)
 {
     MoleculeID molid = molecule.ID();
 
-    T::ChangedMolecule new_molecule = this->changeRecord(molid).change(molecule);
+    typename T::ChangedMolecule new_molecule =
+                            this->changeRecord(molid).change(molecule);
 
     if (this->applyChange(molid, new_molecule))
     {
@@ -689,7 +768,7 @@ bool Inter2BodyFF<T>::change(const PartialMolecule &molecule)
         return true;
     }
     else
-        return this->isDirty();
+        return T::isDirty();
 }
 
 /** Change lots of molecules */
@@ -704,7 +783,8 @@ bool Inter2BodyFF<T>::change(const Molecules &molecules)
 template<class T>
 bool Inter2BodyFF<T>::contains(const PartialMolecule &molecule) const
 {
-    QHash<MoleculeID,uint>::const_iterator it = molid_to_index.find(molecule.ID());
+    typename QHash<MoleculeID,uint>::const_iterator
+                            it = molid_to_index.find(molecule.ID());
 
     if (it == molid_to_index.end())
         return false;
@@ -756,7 +836,8 @@ QSet<MoleculeID> Inter2BodyFF<T>::moleculeIDs() const
 template<class T>
 PartialMolecule Inter2BodyFF<T>::molecule(MoleculeID molid) const
 {
-    QHash<MoleculeID,uint>::const_iterator it = molid_to_index.find(molid);
+    typename QHash<MoleculeID,uint>::const_iterator
+                                it = molid_to_index.find(molid);
 
     if (it == molid_to_index.end())
         throw SireMol::missing_molecule( QObject::tr(
@@ -782,7 +863,7 @@ Molecules Inter2BodyFF<T>::contents() const
     {
         all_mols.reserve(nmols);
 
-        const CLJMolecule *mols_array = mols.constData();
+        const typename T::Molecule *mols_array = mols.constData();
 
         for (int i=0; i<nmols; ++i)
         {

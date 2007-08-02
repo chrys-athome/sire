@@ -32,6 +32,13 @@
 #include "SireBase/sparsematrix.hpp"
 #include "SireBase/property.h"
 
+#include "SireMol/cgatomid.h"
+#include "SireMol/idmolatom.h"
+#include "SireMol/moleculeinfo.h"
+#include "SireMol/moleculeproperty.h"
+
+#include "SireError/errors.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMM
@@ -56,6 +63,13 @@ QDataStream& operator>>(QDataStream&, SireMM::CGAtomPairs<T>&);
 namespace SireMM
 {
 
+using SireMol::AtomID;
+using SireMol::CutGroupID;
+using SireMol::CGAtomID;
+using SireMol::IDMolAtom;
+
+using SireMol::MoleculeInfo;
+
 /** This class is used to store objects of type 'T' associated
     with atom pairs within a CutGroup, or between a pair of
     CutGroups.
@@ -76,7 +90,7 @@ public:
 
     ~CGAtomPairs();
 
-    CGAtomPairs& operator=(const CGAtomPairs<T> &other);
+    CGAtomPairs<T>& operator=(const CGAtomPairs<T> &other);
 
     const T& operator()(AtomID atm0) const;
     const T& operator()(AtomID atm0, AtomID atm1) const;
@@ -119,7 +133,7 @@ CGAtomPairs<T>::~CGAtomPairs()
 /** Copy assignment operator */
 template<class T>
 SIRE_INLINE_TEMPLATE
-CGAtomPairs& CGAtomPairs<T>::operator=(const CGAtomPairs<T> &other)
+CGAtomPairs<T>& CGAtomPairs<T>::operator=(const CGAtomPairs<T> &other)
 {
     data = other.data;
     return *this;
@@ -193,7 +207,7 @@ template<class T>
 SIRE_INLINE_TEMPLATE
 const T& CGAtomPairs<T>::defaultValue() const
 {
-    return def;
+    return data.defaultValue();
 }
 
 /** This class is used to store objects of type 'T' associated
@@ -203,7 +217,7 @@ const T& CGAtomPairs<T>::defaultValue() const
     @author Christopher Woods
 */
 template<class T>
-class SIREMM_EXPORT AtomPairs : public SireBase::PropertyBase
+class SIREMM_EXPORT AtomPairs : public SireMol::MoleculeProperty
 {
 
 friend QDataStream& ::operator<<<>(QDataStream&, const AtomPairs<T>&);
@@ -218,7 +232,7 @@ public:
 
     ~AtomPairs();
 
-    AtomPairs& operator=(const AtomPairs &other);
+    AtomPairs<T>& operator=(const AtomPairs &other);
 
     const T& operator()(const CGAtomID &atm0) const;
     const T& operator()(const CGAtomID &atm0, const CGAtomID &atm1) const;
@@ -251,6 +265,9 @@ public:
     bool isEmpty() const;
 
     const MoleculeInfo& info() const;
+
+    bool isCompatibleWith(const MoleculeInfo &molinfo) const;
+    Property mask(const AtomSelection &selected_atoms) const;
 
 private:
     /** Info about the molecule that contains these atom pairs */
@@ -291,7 +308,7 @@ AtomPairs<T>::~AtomPairs()
 /** Copy assignment operator */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-AtomPairs& AtomPairs<T>::operator=(const AtomPairs &other)
+AtomPairs<T>& AtomPairs<T>::operator=(const AtomPairs &other)
 {
     if (&other != this)
     {
@@ -422,8 +439,8 @@ void AtomPairs<T>::set(const CGAtomID &atm0, const CGAtomID &atm1,
     molinfo.assertAtomExists(atm0);
     molinfo.assertAtomExists(atm1);
 
-    typename CGAtomPairs<T> cgpair = cgpairs.get(atm0.cutGroupID(),
-                                                 atm1.cutGroupID());
+    CGAtomPairs<T> cgpair = cgpairs.get(atm0.cutGroupID(),
+                                        atm1.cutGroupID());
 
     cgpair.set(atm0.atomID(), atm1.atomID(), value);
 
@@ -473,7 +490,7 @@ template<class T>
 SIRE_INLINE_TEMPLATE
 void AtomPairs<T>::setAll(const T &value)
 {
-    cgpairs = SparseMatrix< CGAtomPairs<T> >( CGAtomPairs<T>(value) );
+    cgpairs = SireBase::SparseMatrix< CGAtomPairs<T> >( CGAtomPairs<T>(value) );
 }
 
 /** Set every single atom pair in the CutGroup with ID == cgid0 to have
@@ -518,6 +535,39 @@ SIRE_INLINE_TEMPLATE
 const MoleculeInfo& AtomPairs<T>::info() const
 {
     return molinfo;
+}
+
+/** Return whether this object is compatible with a molecule with
+    metadata in 'info' */
+template<class T>
+SIRE_INLINE_TEMPLATE
+bool AtomPairs<T>::isCompatibleWith(const MoleculeInfo &info) const
+{
+    return molinfo == info;
+}
+
+/** Return this object masked by the passed selected atoms */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+Property AtomPairs<T>::mask(const AtomSelection &selected_atoms) const
+{
+    if ( not this->isCompatibleWith(selected_atoms.info()) )
+    {
+        throw SireError::incompatible_error( QObject::tr(
+            "Cannot mask using an incompatible molecule's atom selection!"),
+                CODELOC );
+    }
+
+    if (this->isEmpty() or selected_atoms.selectedAll())
+    {
+        return *this;
+    }
+    else
+    {
+        //loop through all CutGroups and remove all entries for
+        //deselected atoms or groups
+
+    }
 }
 
 }
