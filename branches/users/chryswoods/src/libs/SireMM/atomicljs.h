@@ -45,6 +45,9 @@ class AtomicLJs;
 QDataStream& operator<<(QDataStream&, const SireMM::AtomicLJs&);
 QDataStream& operator>>(QDataStream&, SireMM::AtomicLJs&);
 
+XMLStream& operator<<(XMLStream&, const SireMM::AtomicLJs&);
+XMLStream& operator>>(XMLStream&, SireMM::AtomicLJs&);
+
 namespace SireMM
 {
 
@@ -63,12 +66,16 @@ using SireBase::Property;
 
     @author Christopher Woods
 */
-class SIREMM_EXPORT AtomicLJs : public SireMol::AtomicProperties,
-                                public QVector< QVector<LJParameter> >
+class SIREMM_EXPORT AtomicLJs
+      : public SireBase::ConcreteProperty<AtomicLJs,SireMol::AtomicProperties>,
+        public QVector< QVector<LJParameter> >
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const AtomicLJs&);
 friend QDataStream& ::operator>>(QDataStream&, AtomicLJs&);
+
+friend XMLStream& ::operator<<(XMLStream&, const AtomicLJs&);
+friend XMLStream& ::operator>>(XMLStream&, AtomicLJs&);
 
 public:
     AtomicLJs();
@@ -86,8 +93,6 @@ public:
     AtomicLJs& operator=(const QVector< QVector<LJParameter> > &ljparams);
     AtomicLJs& operator=(const QVector<LJParameter> &ljparams);
 
-    AtomicLJs& operator=(const Property &property);
-
     AtomicLJs& operator=(const AtomicLJs &other);
 
     bool operator==(const AtomicLJs &other) const;
@@ -98,24 +103,11 @@ public:
         return "SireMM::AtomicLJs";
     }
 
-    const char* what() const
-    {
-        return AtomicLJs::typeName();
-    }
-
-    AtomicLJs* clone() const
-    {
-        return new AtomicLJs(*this);
-    }
-
     Property mask(const AtomSelection &selected_atoms) const;
 
     bool isCompatibleWith(const MoleculeInfo &molinfo) const;
 
     QVariant value(const CGAtomID &cgatomid) const;
-
-protected:
-    bool _pvt_isEqual(const PropertyBase &other) const;
 };
 
 }

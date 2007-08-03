@@ -43,6 +43,9 @@ class AtomicProperties;
 QDataStream& operator<<(QDataStream&, const SireMol::AtomicProperties&);
 QDataStream& operator>>(QDataStream&, SireMol::AtomicProperties&);
 
+XMLStream& operator<<(XMLStream&, const SireMol::AtomicProperties&);
+XMLStream& operator>>(XMLStream&, SireMol::AtomicProperties&);
+
 namespace SireMol
 {
 
@@ -60,6 +63,9 @@ class SIREMOL_EXPORT AtomicProperties : public MoleculeProperty
 
 friend QDataStream& ::operator<<(QDataStream&, const AtomicProperties&);
 friend QDataStream& ::operator>>(QDataStream&, AtomicProperties&);
+
+friend XMLStream& ::operator<<(XMLStream&, const AtomicProperties&);
+friend XMLStream& ::operator>>(XMLStream&, AtomicProperties&);
 
 public:
     AtomicProperties();

@@ -90,15 +90,44 @@ PropertyBase& PropertyBase::operator=(const PropertyBase&)
 }
 
 /** Comparison operator */
-bool PropertyBase::operator==(const PropertyBase &other) const
+bool PropertyBase::operator==(const PropertyBase&) const
 {
     return true;
 }
 
 /** Comparison operator */
-bool PropertyBase::operator!=(const PropertyBase &other) const
+bool PropertyBase::operator!=(const PropertyBase&) const
 {
     return false;
+}
+
+/** Assignment operator */
+PropertyBase& PropertyBase::operator=(const Property &property)
+{
+    return this->operator=(property.base());
+}
+
+/** Comparison operator */
+bool PropertyBase::operator==(const Property &property) const
+{
+    return this->operator==(property.base());
+}
+
+/** Comparison operator */
+bool PropertyBase::operator!=(const Property &property) const
+{
+    return this->operator!=(property.base());
+}
+
+/** Throw an invalid cast!
+
+    \throw SireError::invalid_cast
+*/
+void PropertyBase::throwInvalidCast(const PropertyBase &other) const
+{
+    throw SireError::invalid_cast( QObject::tr(
+            "Cannot cast from an object of class \"%1\" to an object of class \"%2\"")
+                .arg(other.what()).arg(this->what()), CODELOC );
 }
 
 static const RegisterMetaType<PropertyBase> r_propbase(MAGIC_ONLY,
@@ -164,12 +193,12 @@ QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, VariantProperty &varpro
 
 /** Null constructor */
 VariantProperty::VariantProperty()
-                : PropertyBase(), QVariant()
+                : ConcreteProperty<VariantProperty,PropertyBase>(), QVariant()
 {}
 
 /** Construct a property equal to 'value' */
 VariantProperty::VariantProperty(const QVariant &value)
-                : PropertyBase(), QVariant(value)
+                : ConcreteProperty<VariantProperty,PropertyBase>(), QVariant(value)
 {}
 
 /** Construct from a 'Property' - the property must be able to
@@ -178,14 +207,14 @@ VariantProperty::VariantProperty(const QVariant &value)
     \throw SireError::invalid_cast
 */
 VariantProperty::VariantProperty(const Property &property)
-                : PropertyBase(), QVariant()
+                : ConcreteProperty<VariantProperty,PropertyBase>(), QVariant()
 {
     *this = property;
 }
 
 /** Copy constructor */
 VariantProperty::VariantProperty(const VariantProperty &other)
-                : PropertyBase(other), QVariant(other)
+                : ConcreteProperty<VariantProperty,PropertyBase>(other), QVariant(other)
 {}
 
 /** Destructor */
@@ -208,26 +237,16 @@ VariantProperty& VariantProperty::operator=(const VariantProperty &other)
     return *this;
 }
 
-/** Assignment from a Property
-
-    \throw SireError::invalid_cast
-*/
-VariantProperty& VariantProperty::operator=(const Property &other)
+/** Comparison operator */
+bool VariantProperty::operator==(const VariantProperty &other) const
 {
-    if (not other.isA<VariantProperty>())
-        throw SireError::invalid_cast( QObject::tr(
-                "Cannot cast from a \"%1\" to a VariantProperty!")
-                    .arg(other.what()), CODELOC );
-
-    return this->operator=(other.asA<VariantProperty>());
+    return QVariant::operator==(other);
 }
 
-/** Comparison function */
-bool VariantProperty::_pvt_isEqual(const PropertyBase &other) const
+/** Comparison operator */
+bool VariantProperty::operator!=(const VariantProperty &other) const
 {
-    BOOST_ASSERT(other.isA<VariantProperty>());
-
-    return QVariant::operator==( other.asA<VariantProperty>() );
+    return QVariant::operator!=(other);
 }
 
 ///////////////
@@ -316,4 +335,28 @@ bool Property::operator==(const Property &other) const
 bool Property::operator!=(const Property &other) const
 {
     return (d != other.d) or *d != *(other.d);
+}
+
+/** Save this Property to the passed binary datastream */
+void Property::save(QDataStream &ds) const
+{
+    ds << *this;
+}
+
+/** Load this property from the passed binary datastream */
+void Property::load(QDataStream &ds)
+{
+    ds >> *this;
+}
+
+/** Save this property to the passed XML datastream */
+void Property::save(XMLStream&) const
+{
+    //xs << *this;
+}
+
+/** Load this property from the passed XML datastream */
+void Property::load(XMLStream&)
+{
+    //xs >> *this;
 }

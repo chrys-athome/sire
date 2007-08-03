@@ -315,6 +315,12 @@ public:
 
 } // namespace Sire
 
+namespace SireStream
+{
+class XMLStream; // This class is used to stream objects to and from XML files
+
+} // namespace SireStream
+
 using Sire::MetaType;
 using Sire::RegisterMetaTypeBase;
 using Sire::RegisterMetaType;
@@ -322,6 +328,10 @@ using Sire::MAGIC_ONLY;
 using Sire::NO_STREAM;
 using Sire::MagicID;
 using Sire::getMagic;
+using SireStream::XMLStream;
+
+class QDataStream;
+class QTextStream;
 
 #else  // else #ifdef __cplusplus
 

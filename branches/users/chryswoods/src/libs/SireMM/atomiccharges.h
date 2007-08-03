@@ -45,6 +45,9 @@ class AtomicCharges;
 QDataStream& operator<<(QDataStream&, const SireMM::AtomicCharges&);
 QDataStream& operator>>(QDataStream&, SireMM::AtomicCharges&);
 
+XMLStream& operator<<(XMLStream&, const SireMM::AtomicCharges&);
+XMLStream& operator>>(XMLStream&, SireMM::AtomicCharges&);
+
 namespace SireMM
 {
 
@@ -62,12 +65,16 @@ using SireBase::Property;
 
     @author Christopher Woods
 */
-class SIREMM_EXPORT AtomicCharges : public SireMol::AtomicProperties,
-                                    public QVector< QVector<ChargeParameter> >
+class SIREMM_EXPORT AtomicCharges
+        : public SireBase::ConcreteProperty<AtomicCharges,SireMol::AtomicProperties>,
+          public QVector< QVector<ChargeParameter> >
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const AtomicCharges&);
 friend QDataStream& ::operator>>(QDataStream&, AtomicCharges&);
+
+friend XMLStream& ::operator<<(XMLStream&, const AtomicCharges&);
+friend XMLStream& ::operator>>(XMLStream&, AtomicCharges&);
 
 public:
     AtomicCharges();
@@ -84,7 +91,6 @@ public:
 
     AtomicCharges& operator=(const QVector< QVector<ChargeParameter> > &charges);
     AtomicCharges& operator=(const QVector<ChargeParameter> &charges);
-    AtomicCharges& operator=(const Property &property);
 
     AtomicCharges& operator=(const AtomicCharges &other);
 
@@ -96,24 +102,11 @@ public:
         return "SireMM::AtomicCharges";
     }
 
-    const char* what() const
-    {
-        return AtomicCharges::typeName();
-    }
-
-    AtomicCharges* clone() const
-    {
-        return new AtomicCharges(*this);
-    }
-
     Property mask(const AtomSelection &selected_atoms) const;
 
     bool isCompatibleWith(const MoleculeInfo &molinfo) const;
 
     QVariant value(const CGAtomID &cgatomid) const;
-
-protected:
-    bool _pvt_isEqual(const PropertyBase &other) const;
 };
 
 }

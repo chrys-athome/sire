@@ -41,6 +41,9 @@ class MoleculeProperty;
 QDataStream& operator<<(QDataStream&, const SireMol::MoleculeProperty&);
 QDataStream& operator>>(QDataStream&, SireMol::MoleculeProperty&);
 
+XMLStream& operator<<(XMLStream&, const SireMol::MoleculeProperty&);
+XMLStream& operator>>(XMLStream&, SireMol::MoleculeProperty&);
+
 namespace SireMol
 {
 
@@ -62,12 +65,20 @@ class SIREMOL_EXPORT MoleculeProperty : public SireBase::PropertyBase
 friend QDataStream& ::operator<<(QDataStream&, const MoleculeProperty&);
 friend QDataStream& ::operator>>(QDataStream&, MoleculeProperty&);
 
+friend XMLStream& ::operator<<(XMLStream&, const MoleculeProperty&);
+friend XMLStream& ::operator>>(XMLStream&, MoleculeProperty&);
+
 public:
     MoleculeProperty();
 
     MoleculeProperty(const MoleculeProperty &other);
 
     ~MoleculeProperty();
+
+    static const char* typeName()
+    {
+        return "SireMol::MoleculeProperty";
+    }
 
     virtual bool isCompatibleWith(const MoleculeInfo &molinfo) const=0;
 

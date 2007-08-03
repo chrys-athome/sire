@@ -47,14 +47,14 @@ QDataStream& operator>>(QDataStream&, SireBase::PropertyBase&);
 QDataStream& operator<<(QDataStream&, const SireBase::Property&);
 QDataStream& operator>>(QDataStream&, SireBase::Property&);
 
-SireStream::XMLStream& operator<<(SireStream::XMLStream&, const SireBase::Property&);
-SireStream::XMLStream& operator>>(SireStream::XMLStream&, SireBase::Property&);
+XMLStream& operator<<(XMLStream&, const SireBase::Property&);
+XMLStream& operator>>(XMLStream&, SireBase::Property&);
 
-SireStream::XMLStream& operator<<(SireStream::XMLStream&,
-                                  const SireBase::PropertyBase&);
-SireStream::XMLStream& operator>>(SireStream::XMLStream&,
-                                  SireBase::PropertyBase&);
+XMLStream& operator<<(XMLStream&, const SireBase::PropertyBase&);
+XMLStream& operator>>(XMLStream&, SireBase::PropertyBase&);
 
+QTextStream& operator<<(QTextStream&, const SireBase::PropertyBase&);
+QTextStream& operator<<(QTextStream&, const SireBase::Property&);
 
 namespace SireBase
 {
@@ -78,6 +78,9 @@ class SIREBASE_EXPORT PropertyBase : public QSharedData
 
 friend QDataStream& ::operator<<(QDataStream&, const PropertyBase&);
 friend QDataStream& ::operator>>(QDataStream&, PropertyBase&);
+
+friend XMLStream& ::operator<<(XMLStream&, const PropertyBase&);
+friend XMLStream& ::operator>>(XMLStream&, PropertyBase&);
 
 public:
     PropertyBase();
@@ -103,8 +106,8 @@ public:
     virtual void save(QDataStream &ds) const=0;
     virtual void load(QDataStream &ds)=0;
 
-    virtual void save(SireStream::XMLStream &xs) const=0;
-    virtual void load(SireStream::XMLStream &xs);
+    virtual void save(XMLStream &xs) const=0;
+    virtual void load(XMLStream &xs)=0;
 
     virtual const char* what() const=0;
 
@@ -126,6 +129,9 @@ public:
     {
         return dynamic_cast<const T&>(*this);
     }
+
+protected:
+    void throwInvalidCast(const PropertyBase &other) const;
 };
 
 /** This is the second-to-top class of all Properties. Any instantiatable
@@ -138,7 +144,7 @@ public:
     @author Christopher Woods
 */
 template<class Derived, class Base>
-ConcreteProperty : public Base
+class ConcreteProperty : public Base
 {
 public:
     ConcreteProperty() : Base()
@@ -160,7 +166,7 @@ public:
     ~ConcreteProperty()
     {}
 
-    ConcreteProperty<Derived,Base>& operator=(const Base &other)
+    ConcreteProperty<Derived,Base>& operator=(const PropertyBase &other)
     {
         const Derived* other_t = dynamic_cast<const Derived*>(&other);
 
@@ -170,7 +176,7 @@ public:
         return static_cast<Derived*>(this)->operator=(*other_t);
     }
 
-    bool operator==(const Base &other) const
+    bool operator==(const PropertyBase &other) const
     {
         const Derived* other_t = dynamic_cast<const Derived*>(&other);
 
@@ -180,7 +186,7 @@ public:
             return false;
     }
 
-    bool operator!=(const Base &other) const
+    bool operator!=(const PropertyBase &other) const
     {
         const Derived* other_t = dynamic_cast<const Derived*>(&other);
 
@@ -197,27 +203,37 @@ public:
 
     ConcreteProperty<Derived,Base>* clone() const
     {
-        return new Derived( static_cast<const T&>(*this) );
+        return new Derived( static_cast<const Derived&>(*this) );
     }
 
-    ConcreteProperty<Derived,Base>& copy(const Base &other)
+    ConcreteProperty<Derived,Base>& copy(const PropertyBase &other)
     {
         return ConcreteProperty<Derived,Base>::operator=(other);
     }
 
-    bool compare(const Base &other) const
+    bool compare(const PropertyBase &other) const
     {
         return ConcreteProperty<Derived,Base>::operator==(other);
     }
 
     void save(QDataStream &ds) const
     {
-        ds << static_cast<const T&>(*this);
+        ds << static_cast<const Derived&>(*this);
     }
 
     void load(QDataStream &ds)
     {
-        ds >> static_cast<T&>(*this);
+        ds >> static_cast<Derived&>(*this);
+    }
+
+    void save(XMLStream &) const
+    {
+        //xs << static_cast<const Derived&>(*this);
+    }
+
+    void load(XMLStream &)
+    {
+        //xs >> static_cast<Derived&>(*this);
     }
 
 protected:
@@ -260,9 +276,9 @@ public:
 
     ~VariantProperty();
 
-    using PropertyBase::operator=();
-    using PropertyBase::operator==();
-    using PropertyBase::operator!=();
+    using PropertyBase::operator=;
+    using PropertyBase::operator==;
+    using PropertyBase::operator!=;
 
     VariantProperty& operator=(const QVariant &value);
     VariantProperty& operator=(const VariantProperty &other);
@@ -288,6 +304,9 @@ class SIREBASE_EXPORT Property
 friend QDataStream& ::operator<<(QDataStream&, const Property&);
 friend QDataStream& ::operator>>(QDataStream&, Property&);
 
+friend XMLStream& ::operator<<(XMLStream&, const Property&);
+friend XMLStream& ::operator>>(XMLStream&, Property&);
+
 public:
     Property();
 
@@ -307,6 +326,9 @@ public:
 
     void save(QDataStream &ds) const;
     void load(QDataStream &ds);
+
+    void save(XMLStream &xs) const;
+    void load(XMLStream &xs);
 
     const PropertyBase& base() const
     {
