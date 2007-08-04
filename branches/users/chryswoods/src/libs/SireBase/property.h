@@ -39,10 +39,14 @@ namespace SireBase
 {
 class PropertyBase;
 class Property;
+class VariantProperty;
 }
 
 QDataStream& operator<<(QDataStream&, const SireBase::PropertyBase&);
 QDataStream& operator>>(QDataStream&, SireBase::PropertyBase&);
+
+QDataStream& operator<<(QDataStream&, const SireBase::VariantProperty&);
+QDataStream& operator>>(QDataStream&, SireBase::VariantProperty&);
 
 QDataStream& operator<<(QDataStream&, const SireBase::Property&);
 QDataStream& operator>>(QDataStream&, SireBase::Property&);
@@ -100,14 +104,14 @@ public:
     bool operator!=(const Property &other) const;
 
     virtual PropertyBase* clone() const=0;
-    virtual PropertyBase& copy(const PropertyBase &other)=0;
+    virtual void copy(const PropertyBase &other)=0;
     virtual bool compare(const PropertyBase &other) const=0;
 
     virtual void save(QDataStream &ds) const=0;
     virtual void load(QDataStream &ds)=0;
 
-    virtual void save(XMLStream &xs) const=0;
-    virtual void load(XMLStream &xs)=0;
+    //virtual void save(XMLStream &xs) const=0;
+    //virtual void load(XMLStream &xs)=0;
 
     virtual const char* what() const=0;
 
@@ -206,9 +210,9 @@ public:
         return new Derived( static_cast<const Derived&>(*this) );
     }
 
-    ConcreteProperty<Derived,Base>& copy(const PropertyBase &other)
+    void copy(const PropertyBase &other)
     {
-        return ConcreteProperty<Derived,Base>::operator=(other);
+        ConcreteProperty<Derived,Base>::operator=(other);
     }
 
     bool compare(const PropertyBase &other) const
@@ -226,15 +230,15 @@ public:
         ds >> static_cast<Derived&>(*this);
     }
 
-    void save(XMLStream &) const
-    {
-        //xs << static_cast<const Derived&>(*this);
-    }
-
-    void load(XMLStream &)
-    {
-        //xs >> static_cast<Derived&>(*this);
-    }
+//     void save(XMLStream &) const
+//     {
+//         //xs << static_cast<const Derived&>(*this);
+//     }
+// 
+//     void load(XMLStream &)
+//     {
+//         //xs >> static_cast<Derived&>(*this);
+//     }
 
 protected:
     ConcreteProperty<Derived,Base>&
@@ -327,8 +331,8 @@ public:
     void save(QDataStream &ds) const;
     void load(QDataStream &ds);
 
-    void save(XMLStream &xs) const;
-    void load(XMLStream &xs);
+//     void save(XMLStream &xs) const;
+//     void load(XMLStream &xs);
 
     const PropertyBase& base() const
     {

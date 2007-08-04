@@ -21,13 +21,16 @@ wrap_classes = [ "IDMajMinVersion",
                  "VariantProperty",
                  "Version",
                  
-                 "ConcreteProperty<Properties,PropertyBase>"
+                 "ConcreteProperty<SireBase::Properties, SireBase::PropertyBase>",
+                 "ConcreteProperty<SireBase::VariantProperty, SireBase::PropertyBase>"
                ]
 
 huge_classes = []
 
-aliases = { "ConcreteProperty<Properties,PropertyBase>" :
-            "ConcreteProperty_Properties_PropertyBase_" }
+aliases = { "ConcreteProperty<SireBase::Properties, SireBase::PropertyBase>" :
+            "ConcreteProperty_Properties_PropertyBase_",
+            "ConcreteProperty<SireBase::VariantProperty, SireBase::PropertyBase>" :
+            "ConcreteProperty_VariantProperty_PropertyBase_" }
 
 extra_includes = []
 

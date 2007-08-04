@@ -7,6 +7,10 @@
 
 #include "sirebase_headers.h"
 
+#include "ConcreteProperty_Properties_PropertyBase_.pypp.hpp"
+
+#include "ConcreteProperty_VariantProperty_PropertyBase_.pypp.hpp"
+
 #include "IDMajMinVersion.pypp.hpp"
 
 #include "IDVersion.pypp.hpp"
@@ -16,6 +20,8 @@
 #include "MajMinVersion.pypp.hpp"
 
 #include "MajVersion.pypp.hpp"
+
+#include "Properties.pypp.hpp"
 
 #include "Property.pypp.hpp"
 
@@ -36,6 +42,12 @@ namespace bp = boost::python;
 BOOST_PYTHON_MODULE(_Base){
     register_SireBase_containers();
 
+    register_PropertyBase_class();
+
+    register_ConcreteProperty_Properties_PropertyBase__class();
+
+    register_ConcreteProperty_VariantProperty_PropertyBase__class();
+
     register_IDMajMinVersion_class();
 
     register_IDVersion_class();
@@ -48,9 +60,9 @@ BOOST_PYTHON_MODULE(_Base){
 
     bp::implicitly_convertible< SireBase::MajVersion, quint32 >();
 
-    register_Property_class();
+    register_Properties_class();
 
-    register_PropertyBase_class();
+    register_Property_class();
 
     register_VariantProperty_class();
 

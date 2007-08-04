@@ -14,16 +14,15 @@ SireBase::VariantProperty __copy__(const SireBase::VariantProperty &other){ retu
 
 void register_VariantProperty_class(){
 
-    bp::class_< SireBase::VariantProperty, bp::bases< SireBase::PropertyBase > >( "VariantProperty" )    
+    bp::class_< SireBase::VariantProperty, bp::bases< SireBase::ConcreteProperty<SireBase::VariantProperty, SireBase::PropertyBase> > >( "VariantProperty" )    
         .def( bp::init< >() )    
         .def( bp::init< QVariant const & >(( bp::arg("value") )) )    
         .def( bp::init< SireBase::Property const & >(( bp::arg("other") )) )    
+        .def( bp::self != bp::self )    
+        .def( bp::self == bp::self )    
         .def( 
             "typeName"
             , (char const * (*)(  ))( &::SireBase::VariantProperty::typeName ) )    
-        .def( 
-            "what"
-            , (char const * ( ::SireBase::VariantProperty::* )(  ) const)( &::SireBase::VariantProperty::what ) )    
         .staticmethod( "typeName" )    
         .def( "__copy__", &__copy__)    
         .def( "__str__", &SirePy::__str__< ::SireBase::VariantProperty > );

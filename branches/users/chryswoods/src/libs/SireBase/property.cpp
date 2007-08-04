@@ -350,13 +350,13 @@ void Property::load(QDataStream &ds)
 }
 
 /** Save this property to the passed XML datastream */
-void Property::save(XMLStream&) const
-{
-    //xs << *this;
-}
-
-/** Load this property from the passed XML datastream */
-void Property::load(XMLStream&)
-{
-    //xs >> *this;
-}
+// void Property::save(XMLStream&) const
+// {
+//     //xs << *this;
+// }
+// 
+// /** Load this property from the passed XML datastream */
+// void Property::load(XMLStream&)
+// {
+//     //xs >> *this;
+// }

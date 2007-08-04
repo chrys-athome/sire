@@ -106,8 +106,10 @@ public:
 
     void insert(const Properties &properties);
 
+    void insert(const QString &key, const Property &value);
+    
     void insert(const QString &key, const Property &value,
-                const Properties &metadata = Properties());
+                const Properties &metadata);
 
     void update(const QString &key, const Property &value,
                 bool clear_metadata=false);
@@ -118,8 +120,11 @@ public:
     void insertMetadata(const QString &key, const Properties &metadata);
     
     void insertMetadata(const QString &key, const QString &metakey,
+                        const Property &metavalue);
+    
+    void insertMetadata(const QString &key, const QString &metakey,
                         const Property &metavalue, 
-                        const Properties &metametadata = Properties());
+                        const Properties &metametadata);
 
     void updateMetadata(const QString &key, const QString &metakey,
                         const Property &metavalue,

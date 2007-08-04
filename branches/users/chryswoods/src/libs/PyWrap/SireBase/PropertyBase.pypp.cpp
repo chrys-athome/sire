@@ -14,12 +14,30 @@ const char* pvt_get_name(const SireBase::PropertyBase&){ return "SireBase::Prope
 
 void register_PropertyBase_class(){
 
-    bp::class_< SireBase::PropertyBase, std::auto_ptr<SireBase::PropertyBase>, boost::noncopyable >( "PropertyBase", bp::no_init )    
+    bp::class_< SireBase::PropertyBase, boost::noncopyable >( "PropertyBase", bp::no_init )    
+        .def( 
+            "compare"
+            , (bool ( ::SireBase::PropertyBase::* )( ::SireBase::PropertyBase const & ) const)( &::SireBase::PropertyBase::compare )
+            , ( bp::arg("other") ) )    
+        .def( 
+            "copy"
+            , (void ( ::SireBase::PropertyBase::* )( ::SireBase::PropertyBase const & ) )( &::SireBase::PropertyBase::copy )
+            , ( bp::arg("other") ) )    
+        .def( 
+            "load"
+            , (void ( ::SireBase::PropertyBase::* )( ::QDataStream & ) )( &::SireBase::PropertyBase::load )
+            , ( bp::arg("ds") ) )    
         .def( 
             "null_property"
             , (::SireBase::Property (*)(  ))( &::SireBase::PropertyBase::null_property ) )    
         .def( bp::self != bp::self )    
+        .def( bp::self != bp::other< SireBase::Property >() )    
         .def( bp::self == bp::self )    
+        .def( bp::self == bp::other< SireBase::Property >() )    
+        .def( 
+            "save"
+            , (void ( ::SireBase::PropertyBase::* )( ::QDataStream & ) const)( &::SireBase::PropertyBase::save )
+            , ( bp::arg("ds") ) )    
         .def( 
             "typeName"
             , (char const * (*)(  ))( &::SireBase::PropertyBase::typeName ) )    

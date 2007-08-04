@@ -29,10 +29,14 @@ set ( WRAPBASE_SOURCES
       MajMinVersion.pypp.cpp
       MajVersion.pypp.cpp
       MD5Sum.pypp.cpp
+      Properties.pypp.cpp
       PropertyBase.pypp.cpp
       Property.pypp.cpp
       VariantProperty.pypp.cpp
       Version.pypp.cpp
+      
+      ConcreteProperty_Properties_PropertyBase_.pypp.cpp
+      ConcreteProperty_VariantProperty_PropertyBase_.pypp.cpp
       
       _Base_free_functions.pypp.cpp
       _Base_global_variables.pypp.cpp

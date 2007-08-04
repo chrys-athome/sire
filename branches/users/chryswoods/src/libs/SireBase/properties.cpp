@@ -398,6 +398,14 @@ void Properties::insert(const QString &key, const Property &value,
     d->props_metadata.insert(key, metadata);
 }
 
+/** Insert the property with key 'key' and value 'value'
+    into this set - any existing property with this key
+    is replaced */
+void Properties::insert(const QString &key, const Property &value)
+{
+    this->insert(key, value, Properties());
+}
+
 /** Update the value of the property with key 'key' to have value 
     'value'. If 'clear_metadata' is true, then all of the metadata
     for this property is removed. If there is no property with this
@@ -470,6 +478,17 @@ void Properties::insertMetadata(const QString &key, const QString &metakey,
     this->assertContainsProperty(key);
     
     d->props_metadata[key].insert(metakey, metavalue, metametadata);
+}
+
+/** Set the metadata for the property with key 'key' and metadata with
+    metakey 'metakey' to the value 'metavalue'
+    
+    \throw SireBase::missing_property
+*/
+void Properties::insertMetadata(const QString &key, const QString &metakey,
+                                const Property &metavalue)
+{
+    this->insertMetadata(key, metakey, metavalue, Properties());
 }
 
 /** Update the metadata for the property with key 'key' and metadata with

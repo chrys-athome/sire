@@ -25,8 +25,16 @@ void register_Property_class(){
             "base"
             , (::SireBase::PropertyBase const & ( ::SireBase::Property::* )(  ) const)( &::SireBase::Property::base )
             , bp::return_value_policy< bp::copy_const_reference >() )    
+        .def( 
+            "load"
+            , (void ( ::SireBase::Property::* )( ::QDataStream & ) )( &::SireBase::Property::load )
+            , ( bp::arg("ds") ) )    
         .def( bp::self != bp::self )    
         .def( bp::self == bp::self )    
+        .def( 
+            "save"
+            , (void ( ::SireBase::Property::* )( ::QDataStream & ) const)( &::SireBase::Property::save )
+            , ( bp::arg("ds") ) )    
         .def( 
             "what"
             , (char const * ( ::SireBase::Property::* )(  ) const)( &::SireBase::Property::what ) )    
