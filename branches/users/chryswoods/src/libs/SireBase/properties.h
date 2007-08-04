@@ -57,9 +57,8 @@ class PropertiesData;
 }
 
 /** This class holds a collection of properties, indexed by name.
-    Each property comes complete with a set of metadata, which
-    also includes a version number for each property within
-    this set. The metadata is actually another Properties object,
+    Each property comes complete with a set of metadata.
+    The metadata is actually another Properties object,
     and indeed Properties can itself be a Property,
     so allowing Properties to be nested indefinitely.
 
@@ -83,7 +82,7 @@ public:
 
     ~Properties();
 
-    Properties& operator=(const Properties &other) const;
+    Properties& operator=(const Properties &other);
 
     bool operator==(const Properties &other) const;
     bool operator!=(const Properties &other) const;
@@ -93,10 +92,9 @@ public:
         return "SireBase::Properties";
     }
 
-    quint32 version() const;
-    quint32 version(const QString &key) const;
-
     const Property& operator[](const QString &key) const;
+
+    bool isEmpty() const;
 
     const Properties& metadata() const;
     const Properties& metadata(const QString &key) const;
@@ -104,20 +102,33 @@ public:
     const Property& value(const QString &key) const;
 
     QStringList keys() const;
+    QStringList metadataKeys(const QString &key) const;
 
-    void addProperty(const QString &key, const Property &value);
-    void addProperty(const QString &key, const Property &value,
-                     const Properties &metadata);
+    void insert(const Properties &properties);
 
-    void setProperty(const QString &key, const Property &value,
-                     bool clear_metadata=false);
+    void insert(const QString &key, const Property &value,
+                const Properties &metadata = Properties());
 
-    void setMetadata(const QString &key, const QString &metakey,
-                     const Property &metavalue);
+    void update(const QString &key, const Property &value,
+                bool clear_metadata=false);
 
-    void setMetadata(const QString &key, const Properties &metadata);
+    void update(const QString &key, const Property &value,
+                const Properties &metadata, bool clear_metadata=false);
 
-    void addMetadata(const QString &key, const Properties &metadata);
+    void insertMetadata(const QString &key, const Properties &metadata);
+    
+    void insertMetadata(const QString &key, const QString &metakey,
+                        const Property &metavalue, 
+                        const Properties &metametadata = Properties());
+
+    void updateMetadata(const QString &key, const QString &metakey,
+                        const Property &metavalue,
+                        bool clear_metametadata=false);
+
+    void updateMetadata(const QString &key, const QString &metakey,
+                        const Property &metavalue,
+                        const Properties &metametadata,
+                        bool clear_metametadata=false);
 
     void remove(const QString &key);
 
@@ -125,6 +136,12 @@ public:
     void removeMetaData(const QString &key, const QString &metakey);
 
     void clear();
+
+    bool contains(const QString &key) const;
+    bool contains(const QString &key, const QString &metakey) const;
+    
+    void assertContainsProperty(const QString &key) const;
+    void assertContainsMetadata(const QString &key, const QString &metakey) const;
 
 private:
     Properties(bool);

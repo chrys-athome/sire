@@ -16,14 +16,18 @@ wrap_classes = [ "IDMajMinVersion",
                  "MajVersion",
                  "MD5Sum",
                  "PropertyBase",
+                 "Properties",
                  "Property",
                  "VariantProperty",
-                 "Version"
+                 "Version",
+                 
+                 "ConcreteProperty<Properties,PropertyBase>"
                ]
 
 huge_classes = []
 
-aliases = {}
+aliases = { "ConcreteProperty<Properties,PropertyBase>" :
+            "ConcreteProperty_Properties_PropertyBase_" }
 
 extra_includes = []
 
