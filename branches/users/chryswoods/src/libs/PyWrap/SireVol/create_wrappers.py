@@ -20,18 +20,15 @@ wrap_classes = [ "AABox",
                  "MapFromSelfFunction",
                  "MappingFunctionBase",
                  "PeriodicBox",
-                 "SpaceBase",
-                 
-                 "ConcreteProperty<SireVol::Cartesian, SireVol::SpaceBase>",
-                 "ConcreteProperty<SireVol::PeriodicBox, SireVol::Cartesian>"
+                 "SpaceBase"
                ]
 
 huge_classes = []
 
-aliases = { "ConcreteProperty<SireVol::Cartesian, SireVol::SpaceBase>" :
-            "ConcreteProperty_Cartesian_SpaceBase_",
-            "ConcreteProperty<SireVol::PeriodicBox, SireVol::Cartesian>" :
-            "ConcreteProperty_PeriodicBox_Cartesian_"}
+ignore_bases = ["ConcreteProperty<SireVol::Cartesian, SireVol::SpaceBase>",
+                "ConcreteProperty<SireVol::PeriodicBox, SireVol::Cartesian>"]
+
+aliases = {}
 
 extra_includes = [ "SireMaths/vector.h",
                    "SireMaths/quaternion.h",
@@ -55,14 +52,26 @@ def fix_coordgroupeditor(c):
    c.decls( "translate" ).call_policies = call_policies.return_self()
    c.decls( "rotate" ).call_policies = call_policies.return_self()
    c.decls( "setCoordinates" ).call_policies = call_policies.return_self()
+
+def fix_periodicbox(c):
+
+   bases = []
    
+   for base in c.bases:
+      print base.related_class.name
+   
+   bases.append( c.bases[1] )
+   bases.append( c.bases[4] )
+   bases.append( c.bases[3] )
+   
+   c.bases = bases   
 
 special_code = { "CoordGroupBase" : fix_coordgroupbase,
                  "CoordGroup" : fix_coordgroup,
-                 "CoordGroupEditor" : fix_coordgroupeditor }
+                 "CoordGroupEditor" : fix_coordgroupeditor,
+                 "PeriodicBox" : fix_periodicbox }
 
 implicitly_convertible = [ ("QVector<SireMaths::Vector>","SireVol::CoordGroup"),
-                           ("const SireVol::SpaceBase&","SireVol::Space"),
                            ("const SireVol::MappingFunctionBase&","SireVol::MappingFunction")
                          ]
 
@@ -82,7 +91,7 @@ mb = module_builder_t( files=headerfiles,
                                        "SKIP_TEMPLATE_DEFINITIONS"] )
 
 
-populateNamespaces(mb)
+populateNamespaces(mb, namespace, ignore_bases)
 
 for calldef in mb.calldefs():
     try:

@@ -17,10 +17,6 @@
 
 #include "Cartesian.pypp.hpp"
 
-#include "ConcreteProperty_Cartesian_SpaceBase_.pypp.hpp"
-
-#include "ConcreteProperty_PeriodicBox_Cartesian_.pypp.hpp"
-
 #include "CoordGroup.pypp.hpp"
 
 #include "CoordGroupBase.pypp.hpp"
@@ -44,15 +40,11 @@ namespace bp = boost::python;
 BOOST_PYTHON_MODULE(_Vol){
     register_SireVol_containers();
 
+    register_AABox_class();
+
     register_SpaceBase_class();
 
-    register_ConcreteProperty_Cartesian_SpaceBase__class();
-
     register_Cartesian_class();
-
-    register_ConcreteProperty_PeriodicBox_Cartesian__class();
-
-    register_AABox_class();
 
     register_CoordGroupBase_class();
 
@@ -67,8 +59,6 @@ BOOST_PYTHON_MODULE(_Vol){
     register_MapFromSelfFunction_class();
 
     bp::implicitly_convertible< QVector<SireMaths::Vector>, SireVol::CoordGroup >();
-
-    bp::implicitly_convertible< const SireVol::SpaceBase&, SireVol::Space >();
 
     bp::implicitly_convertible< const SireVol::MappingFunctionBase&, SireVol::MappingFunction >();
 

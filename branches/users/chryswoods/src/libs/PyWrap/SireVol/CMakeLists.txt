@@ -37,8 +37,6 @@ set ( WRAPVOL_SOURCES
       PeriodicBox.pypp.cpp
       SpaceBase.pypp.cpp
       
-      ConcreteProperty_Cartesian_SpaceBase_.pypp.cpp
-      ConcreteProperty_PeriodicBox_Cartesian_.pypp.cpp
     )
 
 # Create the library that holds all of the class wrappers

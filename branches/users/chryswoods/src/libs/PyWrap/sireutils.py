@@ -38,13 +38,20 @@ use_namespaces = [ "SireBase",
 use_base_classes = ["QVariant"]
 
 namespaces = []
+ignore_bases = []
 
-def populateNamespaces(mb):
+def populateNamespaces(mb, current_namespace, ignorebases):
+
+    for base in ignorebases:
+        ignore_bases.append(base)
+
     for namespace in use_namespaces:
-        try:
-            namespaces.append( mb.namespace(namespace) )
-        except:
-            pass
+
+        if namespace != current_namespace:
+            try:
+                namespaces.append( mb.namespace(namespace) )
+            except:
+                pass
 
 def withinNamespace(baseclass):
     for namespace in namespaces:
@@ -64,6 +71,11 @@ def _generate_bases(self, base_creators):
 
         #this is the annoying line - it removes the base class unless
         #it has already been exposed to Python!
+
+        print base_desc.related_class.name, ignore_bases
+
+        if base_desc.related_class.name in ignore_bases:
+            continue
         
         #I will modify it so that it will work if the base class
         #is either exported, or it belongs to one of a specified namespace,
@@ -124,7 +136,7 @@ def has_function(c, funcname):
 def export_class(mb, classname, aliases, special_code):
    #find the class in the declarations
    c = mb.class_(classname)
-  
+   
    #include the class in the wrapper
    c.include()
 

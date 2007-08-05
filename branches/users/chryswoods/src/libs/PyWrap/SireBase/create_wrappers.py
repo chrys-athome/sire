@@ -36,9 +36,6 @@ extra_includes = []
 def remove_md5_digest(c):
    c.decls("digest").exclude()
 
-def remove_property_bases(c):
-    c.bases = []
-
 special_code = { "MD5Sum" : remove_md5_digest }
 
 implicitly_convertible = [ ("QVariant", "SireBase::VariantProperty") ]
