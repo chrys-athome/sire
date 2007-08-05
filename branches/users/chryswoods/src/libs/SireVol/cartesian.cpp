@@ -68,24 +68,17 @@ QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds, Cartesian &cart)
 }
 
 /** Construct a default Cartesian volume */
-Cartesian::Cartesian() : SpaceBase()
+Cartesian::Cartesian() : ConcreteProperty<Cartesian,SpaceBase>()
 {}
 
 /** Copy constructor */
-Cartesian::Cartesian(const Cartesian &other) : SpaceBase(other)
+Cartesian::Cartesian(const Cartesian &other) 
+          : ConcreteProperty<Cartesian,SpaceBase>(other)
 {}
 
 /** Destructor */
 Cartesian::~Cartesian()
 {}
-
-/** Comparison operator */
-bool Cartesian::_pvt_isEqual(const PropertyBase &other) const
-{
-    BOOST_ASSERT(other.isA<Cartesian>());
-
-    return true;
-}
 
 /** Throw an exception as an infinite space doesn't have a volume! */
 SireUnits::Dimension::Volume Cartesian::volume() const

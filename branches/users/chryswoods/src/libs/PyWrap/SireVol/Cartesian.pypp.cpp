@@ -19,7 +19,7 @@ const char* pvt_get_name(const SireVol::Cartesian&){ return "SireVol::Cartesian"
 
 void register_Cartesian_class(){
 
-    bp::class_< SireVol::Cartesian, bp::bases< SireVol::SpaceBase > >( "Cartesian" )    
+    bp::class_< SireVol::Cartesian, bp::bases< SireVol::SpaceBase, SireBase::PropertyBase > >( "Cartesian" )    
         .def( bp::init< >() )    
         .def( 
             "beyond"
@@ -111,9 +111,6 @@ void register_Cartesian_class(){
         .def( 
             "volume"
             , (::SireUnits::Dimension::Volume ( ::SireVol::Cartesian::* )(  ) const)( &::SireVol::Cartesian::volume ) )    
-        .def( 
-            "what"
-            , (char const * ( ::SireVol::Cartesian::* )(  ) const)( &::SireVol::Cartesian::what ) )    
         .staticmethod( "typeName" )    
         .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireVol::Cartesian >,

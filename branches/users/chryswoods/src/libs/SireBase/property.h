@@ -167,7 +167,7 @@ public:
                      const T2 &t2) : Base(t0,t1,t2)
     {}
 
-    ~ConcreteProperty()
+    virtual ~ConcreteProperty()
     {}
 
     ConcreteProperty<Derived,Base>& operator=(const PropertyBase &other)
@@ -278,7 +278,7 @@ public:
 
     VariantProperty(const VariantProperty &other);
 
-    ~VariantProperty();
+    virtual ~VariantProperty();
 
     using PropertyBase::operator=;
     using PropertyBase::operator==;

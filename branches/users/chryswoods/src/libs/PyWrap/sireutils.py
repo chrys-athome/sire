@@ -35,6 +35,8 @@ use_namespaces = [ "SireBase",
                    "Squire"
                   ]
 
+use_base_classes = ["QVariant"]
+
 namespaces = []
 
 def populateNamespaces(mb):
@@ -67,7 +69,8 @@ def _generate_bases(self, base_creators):
         #is either exported, or it belongs to one of a specified namespace,
         #or if it is explicitly listed
         if (base_creators.has_key( id(base_desc.related_class) ) or
-            withinNamespace(base_desc.related_class) ):
+            withinNamespace(base_desc.related_class) or
+            base_desc.related_class.name in use_base_classes):
             bases.append( algorithm.create_identifier( self, base_desc.related_class.decl_string ) )
     
     if not bases:
@@ -124,6 +127,11 @@ def export_class(mb, classname, aliases, special_code):
   
    #include the class in the wrapper
    c.include()
+
+   #ensure that the list of bases includes *all* bases,
+   # - this is to fix problems with typeerror being
+   #   thrown for derived types
+   c.bases = c.recursive_bases
 
    #exclude any "clone" functions
    c.decls( "clone", allow_empty=True ).exclude()

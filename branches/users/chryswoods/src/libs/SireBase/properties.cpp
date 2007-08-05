@@ -35,6 +35,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QDebug>
+
 using namespace SireBase;
 using namespace SireStream;
 
@@ -90,10 +92,12 @@ const QSharedDataPointer<PropertiesData>& PropertiesData::getNullData()
     if (nulldata_ptr.constData() == 0)
     {
         //use a constructor where the circular reference is broken
-        nulldata_ptr = new PropertiesData(false);
+        PropertiesData *ptr = new PropertiesData(false);
+        
+        nulldata_ptr = ptr;
 
         //fix the reference
-        nulldata_ptr->metadata = Properties();
+        ptr->metadata = Properties();
     }
 
     return nulldata_ptr;

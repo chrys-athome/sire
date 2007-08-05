@@ -16,7 +16,7 @@ const char* pvt_get_name(const SireBase::Properties&){ return "SireBase::Propert
 
 void register_Properties_class(){
 
-    bp::class_< SireBase::Properties, bp::bases< SireBase::ConcreteProperty<SireBase::Properties, SireBase::PropertyBase> > >( "Properties" )    
+    bp::class_< SireBase::Properties, bp::bases< SireBase::ConcreteProperty<SireBase::Properties, SireBase::PropertyBase>, SireBase::PropertyBase > >( "Properties" )    
         .def( bp::init< >() )    
         .def( 
             "assertContainsMetadata"

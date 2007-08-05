@@ -17,7 +17,6 @@ wrap_classes = [ "IDMajMinVersion",
                  "MD5Sum",
                  "PropertyBase",
                  "Properties",
-                 "Property",
                  "VariantProperty",
                  "Version",
                  
@@ -40,11 +39,9 @@ def remove_md5_digest(c):
 def remove_property_bases(c):
     c.bases = []
 
-special_code = { "MD5Sum" : remove_md5_digest,
-                 "Property" : remove_property_bases }
+special_code = { "MD5Sum" : remove_md5_digest }
 
-implicitly_convertible = [ ("SireBase::PropertyBase", "SireBase::Property"),
-                           ("QVariant", "SireBase::VariantProperty") ]
+implicitly_convertible = [ ("QVariant", "SireBase::VariantProperty") ]
 
 incpaths = sys.argv[1:]
 incpaths.insert(0, "../../")

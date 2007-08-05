@@ -1,6 +1,9 @@
 
 from Sire.Base import *
+from Sire.Qt import *
 
 p = Properties()
-p.metadata().metadata().metadata()
 
+p.insert("author", VariantProperty(QVariant("Christopher")))
+
+print p["author"].what()

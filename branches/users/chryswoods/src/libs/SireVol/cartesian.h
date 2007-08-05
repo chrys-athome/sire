@@ -49,7 +49,8 @@ This class overloads SimVolume to provide an infinite Cartesian (3-dimensional, 
 
 @author Christopher Woods
 */
-class SIREVOL_EXPORT Cartesian : public SpaceBase
+class SIREVOL_EXPORT Cartesian 
+          : public SireBase::ConcreteProperty<Cartesian,SpaceBase>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const Cartesian&);
@@ -59,21 +60,11 @@ public:
     Cartesian();
     Cartesian(const Cartesian &other);
 
-    ~Cartesian();
+    virtual ~Cartesian();
 
     static const char* typeName()
     {
         return "SireVol::Cartesian";
-    }
-
-    const char* what() const
-    {
-        return Cartesian::typeName();
-    }
-
-    SpaceBase* clone() const
-    {
-        return new Cartesian(*this);
     }
 
     SireUnits::Dimension::Volume volume() const;
@@ -121,9 +112,6 @@ public:
     QList< boost::tuple<double,CoordGroup> >
                getCopiesWithin(const CoordGroup &group,
                                const CoordGroup &center, double dist) const;
-
-protected:
-    bool _pvt_isEqual(const SireBase::PropertyBase &other) const;
 };
 
 }

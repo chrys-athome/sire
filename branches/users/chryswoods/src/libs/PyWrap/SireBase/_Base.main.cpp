@@ -23,8 +23,6 @@
 
 #include "Properties.pypp.hpp"
 
-#include "Property.pypp.hpp"
-
 #include "PropertyBase.pypp.hpp"
 
 #include "VariantProperty.pypp.hpp"
@@ -62,13 +60,9 @@ BOOST_PYTHON_MODULE(_Base){
 
     register_Properties_class();
 
-    register_Property_class();
-
     register_VariantProperty_class();
 
     register_Version_class();
-
-    bp::implicitly_convertible< SireBase::PropertyBase, SireBase::Property >();
 
     bp::implicitly_convertible< QVariant, SireBase::VariantProperty >();
 

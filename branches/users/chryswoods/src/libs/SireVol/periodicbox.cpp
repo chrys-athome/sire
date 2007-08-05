@@ -78,19 +78,19 @@ QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds, PeriodicBox &box)
 }
 
 /** Construct a default PeriodicBox volume (zero volume) */
-PeriodicBox::PeriodicBox() : Cartesian()
+PeriodicBox::PeriodicBox() : ConcreteProperty<PeriodicBox,Cartesian>()
 {}
 
 /** Construct a PeriodicBox volume that goes from min to max */
 PeriodicBox::PeriodicBox(const Vector &min, const Vector &max)
-            : Cartesian()
+            : ConcreteProperty<PeriodicBox,Cartesian>()
 {
     this->setDimension(min,max);
 }
 
 /** Copy constructor */
 PeriodicBox::PeriodicBox(const PeriodicBox &other)
-            : Cartesian(other),
+            : ConcreteProperty<PeriodicBox,Cartesian>(other),
               mincoords(other.mincoords), maxcoords(other.maxcoords),
               boxlength(other.boxlength),
               halflength(other.halflength), invlength(other.invlength)
@@ -99,16 +99,6 @@ PeriodicBox::PeriodicBox(const PeriodicBox &other)
 /** Destructor */
 PeriodicBox::~PeriodicBox()
 {}
-
-/** Comparison operator */
-bool PeriodicBox::_pvt_isEqual(const PropertyBase &other) const
-{
-    BOOST_ASSERT( other.isA<PeriodicBox>() );
-
-    const PeriodicBox &other_box = other.asA<PeriodicBox>();
-
-    return mincoords == other_box.mincoords and maxcoords == other_box.maxcoords;
-}
 
 /** Return the volume of the central box of this space.  */
 SireUnits::Dimension::Volume PeriodicBox::volume() const

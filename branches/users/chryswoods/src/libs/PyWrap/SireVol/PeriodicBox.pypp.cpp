@@ -19,7 +19,7 @@ const char* pvt_get_name(const SireVol::PeriodicBox&){ return "SireVol::Periodic
 
 void register_PeriodicBox_class(){
 
-    bp::class_< SireVol::PeriodicBox, bp::bases< SireVol::Cartesian > >( "PeriodicBox" )    
+    bp::class_< SireVol::PeriodicBox, bp::bases< SireVol::Cartesian, SireVol::SpaceBase, SireBase::PropertyBase > >( "PeriodicBox" )    
         .def( bp::init< >() )    
         .def( bp::init< SireMaths::Vector const &, SireMaths::Vector const & >(( bp::arg("min"), bp::arg("max") )) )    
         .def( 
@@ -111,9 +111,6 @@ void register_PeriodicBox_class(){
         .def( 
             "volume"
             , (::SireUnits::Dimension::Volume ( ::SireVol::PeriodicBox::* )(  ) const)( &::SireVol::PeriodicBox::volume ) )    
-        .def( 
-            "what"
-            , (char const * ( ::SireVol::PeriodicBox::* )(  ) const)( &::SireVol::PeriodicBox::what ) )    
         .staticmethod( "typeName" )    
         .def( "__copy__", &__copy__)    
         .def( "__rlshift__", &SireQt::__rlshift__QDataStream< ::SireVol::PeriodicBox >,

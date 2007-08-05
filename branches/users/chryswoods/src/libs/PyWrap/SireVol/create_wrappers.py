@@ -20,12 +20,18 @@ wrap_classes = [ "AABox",
                  "MapFromSelfFunction",
                  "MappingFunctionBase",
                  "PeriodicBox",
-                 "SpaceBase"
+                 "SpaceBase",
+                 
+                 "ConcreteProperty<SireVol::Cartesian, SireVol::SpaceBase>",
+                 "ConcreteProperty<SireVol::PeriodicBox, SireVol::Cartesian>"
                ]
 
 huge_classes = []
 
-aliases = {}
+aliases = { "ConcreteProperty<SireVol::Cartesian, SireVol::SpaceBase>" :
+            "ConcreteProperty_Cartesian_SpaceBase_",
+            "ConcreteProperty<SireVol::PeriodicBox, SireVol::Cartesian>" :
+            "ConcreteProperty_PeriodicBox_Cartesian_"}
 
 extra_includes = [ "SireMaths/vector.h",
                    "SireMaths/quaternion.h",

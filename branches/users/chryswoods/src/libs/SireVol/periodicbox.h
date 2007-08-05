@@ -54,7 +54,8 @@ A PeriodicBox is a volume  that represents standard periodic boundary conditions
 
 @author Christopher Woods
 */
-class SIREVOL_EXPORT PeriodicBox : public Cartesian
+class SIREVOL_EXPORT PeriodicBox 
+        : public SireBase::ConcreteProperty<PeriodicBox,Cartesian>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const PeriodicBox&);
@@ -78,19 +79,9 @@ public:
 
     Vector center() const;
 
-    SpaceBase* clone() const
-    {
-        return new PeriodicBox(*this);
-    }
-
     static const char* typeName()
     {
         return "SireVol::PeriodicBox";
-    }
-
-    const char* what() const
-    {
-        return PeriodicBox::typeName();
     }
 
     double calcDist(const Vector &point0, const Vector &point1) const;
@@ -133,8 +124,6 @@ public:
     bool contains(const Vector &point) const;
 
 protected:
-
-    bool _pvt_isEqual(const SireBase::PropertyBase &other) const;
 
     Vector wrapDelta(const Vector &v0, const Vector &v1) const;
 

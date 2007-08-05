@@ -31,7 +31,6 @@ set ( WRAPBASE_SOURCES
       MD5Sum.pypp.cpp
       Properties.pypp.cpp
       PropertyBase.pypp.cpp
-      Property.pypp.cpp
       VariantProperty.pypp.cpp
       Version.pypp.cpp
       

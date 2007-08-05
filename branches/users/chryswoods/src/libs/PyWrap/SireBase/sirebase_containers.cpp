@@ -37,6 +37,7 @@
 #include "SirePy/convertlist.hpp"
 #include "SirePy/convertdict.hpp"
 #include "SirePy/convertset.hpp"
+#include "SirePy/convertsharedpointer.hpp"
 
 #include "ThirdParty/tuples.hpp"
 
@@ -48,4 +49,6 @@ using namespace SirePy;
 using boost::python::register_tuple;
 
 void register_SireBase_containers()
-{}
+{
+    register_container< Property, PropertyBase >();
+}
