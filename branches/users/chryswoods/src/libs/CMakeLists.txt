@@ -32,3 +32,10 @@ add_subdirectory (Squire)
 add_subdirectory (ThirdParty)
 add_subdirectory (ThirdPartyGUI)
 
+set ( SIRE_HEADERS
+      sireglobal.h
+      tostring.h
+    )
+    
+install( FILES ${SIRE_HEADERS}
+         DESTINATION ${SIRE_INCLUDES} )

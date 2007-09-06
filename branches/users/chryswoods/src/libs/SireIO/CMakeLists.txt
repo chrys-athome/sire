@@ -10,6 +10,15 @@ include_directories(${QT_QTSQL_INCLUDE_DIR})
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
+# Define the headers in SireIO
+set ( SIREIO_HEADERS
+      iobase.h
+      pdb.h
+      protoms.h
+      protomsws.h
+      psf.h
+    )
+
 # Define the sources in SireIO
 set ( SIREIO_SOURCES
       iobase.cpp
@@ -17,6 +26,8 @@ set ( SIREIO_SOURCES
       protoms.cpp
       protomsws.cpp
       psf.cpp
+    
+      ${SIREIO_HEADERS}
     )
 
 add_library (SireIO ${SIREIO_SOURCES})
@@ -38,3 +49,6 @@ install( TARGETS SireIO
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}
        )
+
+install( FILES ${SIREIO_HEADERS} 
+         DESTINATION ${SIRE_INCLUDES}/SireIO )

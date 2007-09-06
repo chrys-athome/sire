@@ -9,6 +9,25 @@
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
+# Define the headers in SireSystem
+set ( SIRESYSTEM_HEADERS
+      checkpoint.h
+      errors.h
+      localsimsystem.h
+      monitorenergy.h
+      move.h
+      moves.h
+      qhash_siresystem.h
+      querysystem.h
+      rdfmonitor.h
+      simsystem.h
+      system.h
+      systemdata.h
+      systemid.h
+      systemmonitor.h
+      systemmonitors.h
+    )
+
 # Define the sources in SireSystem
 set ( SIRESYSTEM_SOURCES
       checkpoint.cpp
@@ -24,6 +43,8 @@ set ( SIRESYSTEM_SOURCES
       systemdata.cpp
       systemmonitor.cpp
       systemmonitors.cpp
+    
+      ${SIRESYSTEM_HEADERS}
     )
 
 add_library (SireSystem ${SIRESYSTEM_SOURCES})
@@ -47,3 +68,6 @@ install( TARGETS SireSystem
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}
        )
+
+install( FILES ${SIRESYSTEM_HEADERS}
+         DESTINATION ${SIRE_INCLUDES}/SireSystem )

@@ -53,6 +53,8 @@
 #define SIRE_MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define SIRE_MIN(x, y) (((x) < (y)) ? (x) : (y))
 
+SIRE_BEGIN_HEADER
+
 namespace SireMaths
 {
 
@@ -363,5 +365,7 @@ bool isZero(const T &val)
 }
 
 }
+
+SIRE_END_HEADER
 
 #endif

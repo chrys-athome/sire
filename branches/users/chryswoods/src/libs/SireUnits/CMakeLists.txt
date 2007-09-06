@@ -9,9 +9,18 @@
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
+set ( SIREUNITS_HEADERS
+      convert.h
+      dimensions.h
+      temperature.h
+      units.h
+    )
+
 # Define the sources in SireUnits
 set ( SIREUNITS_SOURCES
       convert.cpp            
+    
+      ${SIREUNITS_HEADERS}
     )
 
 add_library (SireUnits ${SIREUNITS_SOURCES})
@@ -27,3 +36,6 @@ install( TARGETS SireUnits
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}
        )
+
+install( FILES ${SIREUNITS_HEADERS}
+         DESTINATION ${SIRE_INCLUDES}/SireUnits )

@@ -12,6 +12,29 @@ include(${QT_USE_FILE})
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
+# Define the header files for SireBase
+set ( SIREBASE_HEADERS
+
+      errors.h
+      findexe.h
+      idmajminversion.h
+      idpair.h
+      idtriple.h
+      idversion.h
+      increment.h
+      incremint.h
+      majminversion.h
+      majversion.h
+      md5sum.h
+      pairmatrix.hpp
+      properties.h
+      property.h
+      sharedpolypointer.hpp
+      sharedpolypointer_cast.hpp
+      sparsematrix.hpp
+      version.h
+    )
+
 # Define the sources in SireBase
 set ( SIREBASE_SOURCES
 
@@ -28,7 +51,8 @@ set ( SIREBASE_SOURCES
       property.cpp
       sharedpolypointer.cpp
       version.cpp
-
+      
+      ${SIREBASE_HEADERS}
     )
 
 add_library (SireBase ${SIREBASE_SOURCES})
@@ -51,3 +75,5 @@ install( TARGETS SireBase
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}
        )
 
+install( FILES ${SIREBASE_HEADERS} 
+         DESTINATION ${SIRE_INCLUDES}/SireBase )

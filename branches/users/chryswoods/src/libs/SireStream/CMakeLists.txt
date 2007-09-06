@@ -6,12 +6,26 @@
 
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
-add_library (SireStream
-             datastream.cpp
-             getmagic.cpp
-             magic_error.cpp
-             shareddatastream.cpp
-             version_error.cpp)
+set ( SIRESTREAM_HEADERS
+      datastream.h
+      magic_error.h
+      shareddatastream.h
+      version_error.h
+      versionid.h
+    )
+
+set ( SIRESTREAM_SOURCES
+      datastream.cpp
+      getmagic.cpp
+      magic_error.cpp
+      shareddatastream.cpp
+      version_error.cpp
+    
+      ${SIRESTREAM_HEADERS}
+    )
+
+
+add_library ( SireStream ${SIRESTREAM_SOURCES} )
 
 target_link_libraries (SireStream
                        ThirdParty
@@ -25,3 +39,6 @@ install( TARGETS SireStream
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}
        )
+
+install( FILES ${SIRESTREAM_HEADERS}
+         DESTINATION ${SIRE_INCLUDES}/SireStream )

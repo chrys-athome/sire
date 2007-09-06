@@ -44,6 +44,8 @@ class System;
 QDataStream& operator<<(QDataStream&, const SireSystem::System&);
 QDataStream& operator>>(QDataStream&, SireSystem::System&);
 
+SIRE_BEGIN_HEADER
+
 namespace SireSystem
 {
 
@@ -190,5 +192,7 @@ inline const SystemMonitors& System::monitors() const
 }
 
 Q_DECLARE_METATYPE(SireSystem::System);
+
+SIRE_END_HEADER
 
 #endif

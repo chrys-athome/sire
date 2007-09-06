@@ -41,6 +41,19 @@ class Version;
 QDataStream& operator<<(QDataStream&, const SireBase::Version&);
 QDataStream& operator>>(QDataStream&, SireBase::Version&);
 
+#ifdef major
+//glibc #defines major == gnu_dev_major
+//This ruins any use of 'major' - this is why macros are BAD!!!
+//It does this in sys/sysmacros.h
+#undef major
+#endif
+
+#ifdef minor
+//glibc does the same thing with 'minor' as well...
+// #define minor == gnu_dev_minor
+#undef minor
+#endif
+
 namespace SireBase
 {
 

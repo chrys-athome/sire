@@ -39,6 +39,8 @@
 
 class QDataStream;
 
+SIRE_BEGIN_HEADER
+
 namespace SireStream
 {
 
@@ -52,5 +54,7 @@ VersionID readHeader(QDataStream &ds, const RegisterMetaTypeBase &r_type);
 VersionID readHeader(QDataStream &ds, MagicID magicid, const char *type_name);
 
 }
+
+SIRE_END_HEADER
 
 #endif

@@ -15,34 +15,69 @@ include_directories(${GSL_INCLUDE_DIR})
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
+# Define the headers in SireCAS
+set ( SIRECAS_HEADERS
+      complexvalues.h
+      constant.h
+      errors.h
+      exbase.h
+      exp.h
+      expressionbase.h
+      expression.h
+      expressions.h
+      function.h
+      functions.h
+      functionsignature.h
+      hyperbolicfuncs.h
+      i.h
+      identities.h
+      integrationconstant.h
+      invhyperbolicfuncs.h
+      invtrigfuncs.h
+      powerconstant.h
+      power.h
+      product.h
+      singlefunc.h
+      sum.h
+      symbol.h
+      symbols.h
+      symbolcomplex.h
+      symbolexpression.h
+      trigfuncs.h
+      values.h
+    )
+
 # Define the sources in SireCAS
 set ( SIRECAS_SOURCES
-      complexvalues.cpp
-      constant.cpp
-      errors.cpp
-      exbase.cpp
-      exp.cpp
-      expressionbase.cpp
-      expression.cpp
-      expressions.cpp
-      function.cpp
-      functions.cpp
-      functionsignature.cpp
-      hyperbolicfuncs.cpp
-      i.cpp
-      identities.cpp
-      integrationconstant.cpp
-      invhyperbolicfuncs.cpp
-      invtrigfuncs.cpp
-      powerconstant.cpp
-      power.cpp
-      product.cpp
-      singlefunc.cpp
-      sum.cpp
-      symbol.cpp
-      symbolexpression.cpp
-      trigfuncs.cpp
+      complexvalues.cpp           
+      constant.cpp                
+      errors.cpp                  
+      exbase.cpp                  
+      exp.cpp                     
+      expressionbase.cpp          
+      expression.cpp              
+      expressions.cpp             
+      function.cpp                
+      functions.cpp               
+      functionsignature.cpp       
+      hyperbolicfuncs.cpp         
+      i.cpp                       
+      identities.cpp              
+      integrationconstant.cpp     
+      invhyperbolicfuncs.cpp      
+      invtrigfuncs.cpp            
+      powerconstant.cpp           
+      power.cpp                   
+      product.cpp                 
+      singlefunc.cpp              
+      sum.cpp                     
+      symbol.cpp                  
+      symbolexpression.cpp        
+      trigfuncs.cpp               
       values.cpp
+      
+      ${SIRECAS_HEADERS}
+                        
     )
 
 add_library (SireCAS ${SIRECAS_SOURCES})
@@ -67,3 +102,4 @@ install( TARGETS SireCAS
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}
        )
 
+install( FILES ${SIRECAS_HEADERS} DESTINATION ${SIRE_INCLUDES}/SireCAS )

@@ -31,6 +31,8 @@
 
 #include <QList>
 
+SIRE_BEGIN_HEADER
+
 namespace SireDB
 {
 
@@ -38,5 +40,7 @@ class RelateAtomTypeData;
 typedef QList<RelateAtomTypeData> RelateAtomTypeDataList;
 
 }
+
+SIRE_END_HEADER
 
 #endif

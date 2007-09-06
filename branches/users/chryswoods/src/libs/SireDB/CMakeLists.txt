@@ -10,6 +10,62 @@ include_directories(${QT_QTSQL_INCLUDE_DIR})
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
+# Define the headers in SireDB
+set ( SIREDB_HEADERS
+      assign_atoms.h
+      assign_parameters.h
+      assignbase.h
+      assigninstruction.h
+      atomdb.h
+      atomparameter.hpp
+      atomtable.h
+      atomtable.hpp
+      atomtype.h
+      atomtypedb.h
+      atomtypetable.h
+      dbbase.h
+      errors.h
+      funcdb.h
+      matchatom.h
+      matchatomtype.h
+      matchatomtypedata.h
+      matchdata.h
+      matchhelpers.h
+      matchmol.h
+      matchmr.h
+      matchmra.h
+      matchmradata.h
+      matchmrdata.h
+      matchres.h
+      multimatch.hpp
+      namedb.h
+      nameidset.h
+      overwriteparams.h
+      parameterdb.h
+      parametergroup.hpp
+      parameterstore.hpp
+      parametertable.h
+      relateatomtypedata.h
+      relateatomtypedatalist.h
+      relateatomtypedb.h
+      relatedb.h
+      relateidmap.h
+      relatemradata.h
+      relatemradatalist.h
+      relatemradb.h
+      relatemrdata.h
+      relatemrdb.h
+      relationshipdb.h
+      smarts.h
+      tablebase.h
+      term12db.h
+      term13db.h
+      term14db.h
+      using_database.h
+      using_parameters.hpp
+      using_relationships.hpp
+    )
+
 # Define the sources in SireDB
 set ( SIREDB_SOURCES
       assign_atoms.cpp         
@@ -52,6 +108,8 @@ set ( SIREDB_SOURCES
       term13db.cpp
       term14db.cpp
       using_database.cpp
+      
+      ${SIREDB_HEADERS}
     )
 
 add_library (SireDB ${SIREDB_SOURCES})
@@ -76,3 +134,6 @@ install( TARGETS SireDB
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}
        )
+
+install( FILES ${SIREDB_HEADERS} 
+         DESTINATION ${SIRE_INCLUDES}/SireDB )

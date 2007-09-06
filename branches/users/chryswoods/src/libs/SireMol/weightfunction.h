@@ -324,7 +324,8 @@ public:
     double calculateWeight(const WeightCalculator &calculator) const;
 };
 
-
 }
+
+SIRE_END_HEADER
 
 #endif

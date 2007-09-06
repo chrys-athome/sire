@@ -32,6 +32,8 @@
 #include <QString>
 #include <QRegExp>
 
+SIRE_BEGIN_HEADER
+
 namespace SireBase
 {
 
@@ -56,5 +58,7 @@ inline QString increment(QString name)
 }
 
 }
+
+SIRE_END_HEADER
 
 #endif

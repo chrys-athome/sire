@@ -31,6 +31,8 @@
 
 #include <QList>
 
+SIRE_BEGIN_HEADER
+
 namespace SireDB
 {
 
@@ -40,5 +42,7 @@ class RelateMRAData;
 typedef QList<RelateMRAData> RelateMRADataList;
 
 }
+
+SIRE_END_HEADER
 
 #endif

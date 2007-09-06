@@ -1,157 +1,478 @@
-# - Find the Boost includes and libraries.
-# The following variables are set if Boost is found.  If Boost is not
-# found, BOOST_FOUND is set to false.
-#  BOOST_FOUND        - True when the Boost include directory is found.
-#  BOOST_INCLUDE_DIRS - the path to where the boost include files are.
-#  BOOST_LIBRARY_DIRS - The path to where the boost library files are.
-#  BOOST_LIB_DIAGNOSTIC_DEFINITIONS - Only set if using Windows.
-
-# ----------------------------------------------------------------------------
-# If you have installed Boost in a non-standard location or you have
-# just staged the boost files using bjam then you have three
-# options. In the following comments, it is assumed that <Your Path>
-# points to the root directory of the include directory of Boost. e.g
-# If you have put boost in C:\development\Boost then <Your Path> is
-# "C:/development/Boost" and in this directory there will be two
-# directories called "include" and "lib".
-# 1) After CMake runs, set BOOST_INCLUDE_DIR to <Your Path>/include/boost<-version>
-# 2) Use CMAKE_INCLUDE_PATH to set a path to <Your Path>/include. This will allow FIND_PATH()
-#    to locate BOOST_INCLUDE_DIR by utilizing the PATH_SUFFIXES option. e.g.
-#    SET(CMAKE_INCLUDE_PATH ${CMAKE_INCLUDE_PATH} "<Your Path>/include")
-# 3) Set an environment variable called ${BOOST_ROOT} that points to the root of where you have
-#    installed Boost, e.g. <Your Path>. It is assumed that there is at least a subdirectory called
-#    include in this path.
+# - Try to find Boost
+# Once done this will define
 #
-# Note:
-#  1) If you are just using the boost headers, then you do not need to use
-#     BOOST_LIBRARY_DIRS in your CMakeLists.txt file.
-#  2) If Boost has not been installed, then when setting BOOST_LIBRARY_DIRS
-#     the script will look for /lib first and, if this fails, then for /stage/lib.
+#  BOOST_FOUND - System has Boost
+#  BOOST_INCLUDE_DIRS - Boost include directory
+#  BOOST_LIBRARIES - Link these to use Boost
+#  BOOST_LIBRARY_DIRS - The path to where the Boost library files are.
+#  BOOST_DEFINITIONS - Compiler switches required for using Boost
+#  BOOST_LIBRARIES_SUFFIX - Boost libraries name suffix (e.g -vc71-mt-gd-1_34, -gcc41-mt...)
 #
-# Usage:
-# In your CMakeLists.txt file do something like this:
-# ...
-# # Boost
-# FIND_PACKAGE(Boost)
-# ...
-# INCLUDE_DIRECTORIES(${BOOST_INCLUDE_DIRS})
-# LINK_DIRECTORIES(${BOOST_LIBRARY_DIRS})
+#  BOOST_DATE_TIME_FOUND               True if Boost Date Time was found.
+#  BOOST_FILESYSTEM_FOUND              True if Boost Filesystem was found.
+#  BOOST_IOSTREAMS_FOUND               True if Boost Iostream was found.
+#  BOOST_PRG_EXEC_MONITOR_FOUND        True if Boost Program Exec Monitor was found.
+#  BOOST_PROGRAM_OPTIONS_FOUND         True if Boost Program Options was found.
+#  BOOST_PYTHON_FOUND                  True if Boost Python was found.
+#  BOOST_REGEX_FOUND                   True if Boost Regex was found.
+#  BOOST_SERIALIZATION_FOUND           True if Boost Serialization was found.
+#  BOOST_SIGNALS_FOUND                 True if Boost Signals was found.
+#  BOOST_TEST_EXEC_MONITOR_FOUND       True if Boost Test Exec Monitor was found.
+#  BOOST_THREAD-MT_FOUND               True if Boost Thread was found.
+#  BOOST_UNIT_TEST_FRAMEWORK_FOUND     True if Boost Unit Test Framework was found.
+#  BOOST_WSERIALIZATION_FOUND          True if Boost WSerialization was found.
 #
-# In Windows, we make the assumption that, if the Boost files are installed, the default directory
-# will be C:\boost.
-
+#  BOOST_DATE_TIME_LIBRARY             The Boost Date Time libary.
+#  BOOST_FILESYSTEM_LIBRARY            The Boost Filesystem libary.
+#  BOOST_IOSTREAMS_LIBRARY             The Boost Iostream libary.
+#  BOOST_PRG_EXEC_MONITOR_LIBRARY      The Boost Program libary.
+#  BOOST_PROGRAM_OPTIONS_LIBRARY       The Boost Program libary.
+#  BOOST_PYTHON_LIBRARY                The Boost Python libary.
+#  BOOST_REGEX_LIBRARY                 The Boost Regex libary.
+#  BOOST_SERIALIZATION_LIBRARY         The Boost Serialization libary.
+#  BOOST_SIGNALS_LIBRARY               The Boost Signals libary.
+#  BOOST_TEST_EXEC_MONITOR_LIBRARY     The Boost Test Exec Monitor libary.
+#  BOOST_THREAD_LIBRARY                The Boost Thread libary.
+#  BOOST_UNIT_TEST_FRAMEWORK_LIBRARY   The Boost Unit Test Framework libary.
+#  BOOST_WSERIALIZATION_LIBRARY        The Boost WSerialization libary.
 #
-# TODO:
+#  Copyright (c) 2006 Andreas Schneider <mail@cynapses.org>
+#  Copyright (c) 2007 Wengo
 #
-# 1) Automatically find the Boost library files and eliminate the need
-#    to use Link Directories.
+#  Redistribution and use is allowed according to the terms of the New
+#  BSD license.
+#  For details see the accompanying COPYING-CMAKE-SCRIPTS file.
 #
 
-IF(WIN32)
-  # In windows, automatic linking is performed, so you do not have to specify the libraries.
-  # If you are linking to a dynamic runtime, then you can choose to link to either a static or a
-  # dynamic Boost library, the default is to do a static link.  You can alter this for a specific
-  # library "whatever" by defining BOOST_WHATEVER_DYN_LINK to force Boost library "whatever" to
-  # be linked dynamically.  Alternatively you can force all Boost libraries to dynamic link by
-  # defining BOOST_ALL_DYN_LINK.
 
-  # This feature can be disabled for Boost library "whatever" by defining BOOST_WHATEVER_NO_LIB,
-  # or for all of Boost by defining BOOST_ALL_NO_LIB.
-
-  # If you want to observe which libraries are being linked against then defining
-  # BOOST_LIB_DIAGNOSTIC will cause the auto-linking code to emit a #pragma message each time
-  # a library is selected for linking.
-  SET(BOOST_LIB_DIAGNOSTIC_DEFINITIONS "-DBOOST_LIB_DIAGNOSTIC")
-ENDIF(WIN32)
-
-
-SET(BOOST_INCLUDE_PATH_DESCRIPTION "directory containing the boost include files. E.g /usr/local/include/boost-1_33_1 or c:\\boost\\include\\boost-1_33_1")
-
-SET(BOOST_DIR_MESSAGE "Set the BOOST_INCLUDE_DIR cmake cache entry to the ${BOOST_INCLUDE_PATH_DESCRIPTION}")
-
-SET(BOOST_DIR_SEARCH $ENV{BOOST_ROOT})
-IF(BOOST_DIR_SEARCH)
-  FILE(TO_CMAKE_PATH ${BOOST_DIR_SEARCH} BOOST_DIR_SEARCH)
-  SET(BOOST_DIR_SEARCH ${BOOST_DIR_SEARCH}/include)
-ENDIF(BOOST_DIR_SEARCH)
-
-IF(WIN32)
-  SET(BOOST_DIR_SEARCH
-    ${BOOST_DIR_SEARCH}
-    C:/boost/include
-    D:/boost/include
+if (BOOST_LIBRARIES AND BOOST_INCLUDE_DIRS)
+  # in cache already
+  set(BOOST_FOUND TRUE)
+else (BOOST_LIBRARIES AND BOOST_INCLUDE_DIRS)
+  # Add in some path suffixes. These will have to be updated whenever
+  # a new Boost version comes out.
+  set(BOOST_PATH_SUFFIX
+    boost-1_34_1
+    boost-1_34_0
+    boost-1_34
+    boost-1_33_1
+    boost-1_33_0
+    boost-1_33
   )
-ENDIF(WIN32)
 
-# Add in some path suffixes. These will have to be updated whenever a new Boost version comes out.
-SET(SUFFIX_FOR_PATH
- boost-1_34_1
- boost-1_34_0
- boost-1_33_1
- boost-1_33_0
-)
+  set(BOOST_VERSION_SUFFIX
+     -mt-1_34_1
+     -mt-1_34_0
+     -mt-1_34
+     -mt-1_33_1
+     -mt-1_33_0
+     -mt-1_33
+  )
 
-#
-# Look for an installation.
-#
-FIND_PATH(BOOST_INCLUDE_DIR NAMES boost/config.hpp PATH_SUFFIXES ${SUFFIX_FOR_PATH} PATHS
+  if (WIN32)
+    # In windows, automatic linking is performed, so you do not have to specify the libraries.
+    # If you are linking to a dynamic runtime, then you can choose to link to either a static or a
+    # dynamic Boost library, the default is to do a static link.  You can alter this for a specific
+    # library "whatever" by defining BOOST_WHATEVER_DYN_LINK to force Boost library "whatever" to
+    # be linked dynamically.  Alternatively you can force all Boost libraries to dynamic link by
+    # defining BOOST_ALL_DYN_LINK.
 
-  # Look in other places.
-  ${BOOST_DIR_SEARCH}
+    # This feature can be disabled for Boost library "whatever" by defining BOOST_WHATEVER_NO_LIB,
+    # or for all of Boost by defining BOOST_ALL_NO_LIB.
 
-  # Help the user find it if we cannot.
-  DOC "The ${BOOST_INCLUDE_PATH_DESCRIPTION}"
-)
+    # If you want to observe which libraries are being linked against then defining
+    # BOOST_LIB_DIAGNOSTIC will cause the auto-linking code to emit a #pragma message each time
+    # a library is selected for linking.
+    set(BOOST_LIB_DIAGNOSTIC_DEFINITIONS "-DBOOST_LIB_DIAGNOSTIC")
 
-# Assume we didn't find it.
-SET(BOOST_FOUND 0)
+    set(BOOST_INCLUDE_SEARCH_DIRS
+      $ENV{BOOSTINCLUDEDIR}
+      $ENV{BOOST_ROOT}/include
+      C:/boost/include
+      "C:/Program Files/boost/boost_1_34_0"
+      "C:/Program Files/boost/boost_1_33_1"
+      # D: is very often the cdrom drive, if you don't have a
+      # cdrom inserted it will popup a very annoying dialog
+      #D:/boost/include
+      /usr/include
+      /usr/local/include
+      /opt/local/include
+      /sw/include
+    )
 
-# Now try to get the include and library path.
-IF(BOOST_INCLUDE_DIR)
+    set(BOOST_LIBRARIES_SEARCH_DIRS
+      $ENV{BOOSTLIBDIR}
+      $ENV{BOOST_ROOT}/lib
+      C:/boost/lib
+      "C:/Program Files/boost/boost_1_34_0/lib"
+      "C:/Program Files/boost/boost_1_33_1/lib"
+      /usr/lib
+      /usr/local/lib
+      /opt/local/lib
+      /sw/lib
+    )
 
-  # Look for the boost library path.
-  # Note that the user may not have installed any libraries
-  # so it is quite possible the Boost_LIBRARY_PATH may not exist.
-  SET(Boost_LIBRARY_DIR ${BOOST_INCLUDE_DIR})
+    if (MSVC71)
+      if (CMAKE_BUILD_TYPE STREQUAL Debug)
+        set(BOOST_LIBRARIES_SUFFIXES
+          -vc71-mt-gd-1_34
+          -vc71-mt-gd-1_33_1
+        )
+      else (CMAKE_BUILD_TYPE STREQUAL Debug)
+        set(BOOST_LIBRARIES_SUFFIXES
+          -vc71-mt-1_34
+          -vc71-mt-1_33_1
+        )
+      endif (CMAKE_BUILD_TYPE STREQUAL Debug)
+    endif (MSVC71)
 
-  IF("${Boost_LIBRARY_DIR}" MATCHES "boost-[0-9]+")
-    GET_FILENAME_COMPONENT(Boost_LIBRARY_DIR ${Boost_LIBRARY_DIR} PATH)
-  ENDIF ("${Boost_LIBRARY_DIR}" MATCHES "boost-[0-9]+")
+    if (MSVC80)
+      if (CMAKE_BUILD_TYPE STREQUAL Debug)
+        set(BOOST_LIBRARIES_SUFFIXES
+          -vc80-mt-gd-1_34
+          -vc80-mt-gd-1_33_1
+        )
+      else (CMAKE_BUILD_TYPE STREQUAL Debug)
+        set(BOOST_LIBRARIES_SUFFIXES
+          -vc80-mt-1_34
+          -vc80-mt-1_33_1
+        )
+      endif (CMAKE_BUILD_TYPE STREQUAL Debug)
+    endif (MSVC80)
 
-  IF("${Boost_LIBRARY_DIR}" MATCHES "/include$")
-    # Strip off the trailing "/include" in the path.
-    GET_FILENAME_COMPONENT(Boost_LIBRARY_DIR ${Boost_LIBRARY_DIR} PATH)
-  ENDIF("${Boost_LIBRARY_DIR}" MATCHES "/include$")
+    if (MINGW)
+      if (CMAKE_BUILD_TYPE STREQUAL Debug)
+        set(BOOST_LIBRARIES_SUFFIXES
+          -mgw-mt-d
+        )
+      else (CMAKE_BUILD_TYPE STREQUAL Debug)
+        set(BOOST_LIBRARIES_SUFFIXES
+          -mgw-mt
+        )
+      endif (CMAKE_BUILD_TYPE STREQUAL Debug)
+    endif (MINGW)
 
-  IF(EXISTS "${Boost_LIBRARY_DIR}/lib")
-    SET (Boost_LIBRARY_DIR ${Boost_LIBRARY_DIR}/lib)
-  ELSE(EXISTS "${Boost_LIBRARY_DIR}/lib")
-    IF(EXISTS "${Boost_LIBRARY_DIR}/stage/lib")
-      SET(Boost_LIBRARY_DIR ${Boost_LIBRARY_DIR}/stage/lib)
-    ELSE(EXISTS "${Boost_LIBRARY_DIR}/stage/lib")
-      SET(Boost_LIBRARY_DIR "")
-    ENDIF(EXISTS "${Boost_LIBRARY_DIR}/stage/lib")
-  ENDIF(EXISTS "${Boost_LIBRARY_DIR}/lib")
+    if (CYGWIN)
+      if (CMAKE_BUILD_TYPE STREQUAL Debug)
+        set(BOOST_LIBRARIES_SUFFIXES
+          -gcc-mt-d
+        )
+      else (CMAKE_BUILD_TYPE STREQUAL Debug)
+        set(BOOST_LIBRARIES_SUFFIXES
+          -gcc-mt
+        )
+      endif (CMAKE_BUILD_TYPE STREQUAL Debug)
+    endif (CYGWIN)
 
-  IF(EXISTS "${BOOST_INCLUDE_DIR}")
-    SET(BOOST_INCLUDE_DIRS ${BOOST_INCLUDE_DIR})
-    # We have found boost. It is possible that the user has not
-    # compiled any libraries so we set BOOST_FOUND to be true here.
-    SET(BOOST_FOUND 1)
-  ENDIF(EXISTS "${BOOST_INCLUDE_DIR}")
+  else (WIN32)
+    set(BOOST_LIBRARIES_SUFFIXES
+        -gcc-mt
+        -gcc41-mt
+	${BOOST_VERSION_SUFFIX}
+    )
+  endif (WIN32)
 
-  IF(Boost_LIBRARY_DIR AND EXISTS "${Boost_LIBRARY_DIR}")
-    SET(BOOST_LIBRARY_DIRS ${Boost_LIBRARY_DIR})
-  ENDIF(Boost_LIBRARY_DIR AND EXISTS "${Boost_LIBRARY_DIR}")
-ENDIF(BOOST_INCLUDE_DIR)
+  find_path(BOOST_INCLUDE_DIR
+    NAMES
+      boost/config.hpp
+    PATHS
+      ${BOOST_INCLUDE_SEARCH_DIRS}
+    PATH_SUFFIXES
+      ${BOOST_PATH_SUFFIX}
+  )
 
-IF(NOT BOOST_FOUND)
-  IF(NOT Boost_FIND_QUIETLY)
-    MESSAGE(STATUS "Boost was not found. ${BOOST_DIR_MESSAGE}")
-  ELSE(NOT Boost_FIND_QUIETLY)
-    IF(Boost_FIND_REQUIRED)
-      MESSAGE(FATAL_ERROR "Boost was not found. ${BOOST_DIR_MESSAGE}")
-    ENDIF(Boost_FIND_REQUIRED)
-  ENDIF(NOT Boost_FIND_QUIETLY)
-ENDIF(NOT BOOST_FOUND)
 
+  foreach (TMP_BOOST_LIBRARIES_SUFFIX ${BOOST_LIBRARIES_SUFFIXES} "")
+
+    if (NOT BOOST_DATE_TIME_LIBRARY)
+      find_library(BOOST_DATE_TIME_LIBRARY
+        NAMES
+          boost_date_time${TMP_BOOST_LIBRARIES_SUFFIX}
+        PATHS
+          ${BOOST_LIBRARIES_SEARCH_DIRS}
+      )
+
+      if (BOOST_DATE_TIME_LIBRARY)
+        # BOOST_DATE_TIME_LIBRARY was found
+        # sets the libraries suffix, this code is ugly
+        # but CMake does not allow to break a loop :/
+        set(BOOST_LIBRARIES_SUFFIX
+          ${TMP_BOOST_LIBRARIES_SUFFIX}
+          CACHE INTERNAL "" FORCE
+        )
+      endif (BOOST_DATE_TIME_LIBRARY)
+
+    endif (NOT BOOST_DATE_TIME_LIBRARY)
+
+    if (NOT BOOST_FILESYSTEM_LIBRARY)
+      find_library(BOOST_FILESYSTEM_LIBRARY
+        NAMES
+          boost_filesystem${TMP_BOOST_LIBRARIES_SUFFIX}
+        PATHS
+          ${BOOST_LIBRARIES_SEARCH_DIRS}
+      )
+    endif (NOT BOOST_FILESYSTEM_LIBRARY)
+
+    if (NOT BOOST_IOSTREAMS_LIBRARY)
+      find_library(BOOST_IOSTREAMS_LIBRARY
+        NAMES
+          boost_iostreams${TMP_BOOST_LIBRARIES_SUFFIX}
+        PATHS
+          ${BOOST_LIBRARIES_SEARCH_DIRS}
+      )
+    endif (NOT BOOST_IOSTREAMS_LIBRARY)
+
+    if (NOT BOOST_PRG_EXEC_MONITOR_LIBRARY)
+      find_library(BOOST_PRG_EXEC_MONITOR_LIBRARY
+        NAMES
+          boost_prg_exec_monitor${TMP_BOOST_LIBRARIES_SUFFIX}
+        PATHS
+          ${BOOST_LIBRARIES_SEARCH_DIRS}
+      )
+    endif (NOT BOOST_PRG_EXEC_MONITOR_LIBRARY)
+
+    if (NOT BOOST_PROGRAM_OPTIONS_LIBRARY)
+      find_library(BOOST_PROGRAM_OPTIONS_LIBRARY
+        NAMES
+          boost_program_options${TMP_BOOST_LIBRARIES_SUFFIX}
+        PATHS
+          ${BOOST_LIBRARIES_SEARCH_DIRS}
+      )
+    endif (NOT BOOST_PROGRAM_OPTIONS_LIBRARY)
+
+    if (NOT BOOST_PYTHON_LIBRARY)
+      find_library(BOOST_PYTHON_LIBRARY
+        NAMES
+          boost_python${TMP_BOOST_LIBRARIES_SUFFIX}
+        PATHS
+          ${BOOST_LIBRARIES_SEARCH_DIRS}
+      )
+    endif (NOT BOOST_PYTHON_LIBRARY)
+
+    if (NOT BOOST_REGEX_LIBRARY)
+      find_library(BOOST_REGEX_LIBRARY
+        NAMES
+          boost_regex${TMP_BOOST_LIBRARIES_SUFFIX}
+        PATHS
+          ${BOOST_LIBRARIES_SEARCH_DIRS}
+      )
+    endif (NOT BOOST_REGEX_LIBRARY)
+
+    if (NOT BOOST_SERIALIZATION_LIBRARY)
+      find_library(BOOST_SERIALIZATION_LIBRARY
+        NAMES
+          boost_serialization${TMP_BOOST_LIBRARIES_SUFFIX}
+        PATHS
+          ${BOOST_LIBRARIES_SEARCH_DIRS}
+      )
+    endif (NOT BOOST_SERIALIZATION_LIBRARY)
+
+    if (NOT BOOST_SIGNALS_LIBRARY)
+      find_library(BOOST_SIGNALS_LIBRARY
+        NAMES
+          boost_signals${TMP_BOOST_LIBRARIES_SUFFIX}
+        PATHS
+          ${BOOST_LIBRARIES_SEARCH_DIRS}
+      )
+    endif (NOT BOOST_SIGNALS_LIBRARY)
+
+    if (NOT BOOST_TEST_EXEC_MONITOR_LIBRARY)
+      if (WIN32)
+        set (_name libboost_test_exec_monitor${TMP_BOOST_LIBRARIES_SUFFIX})
+      else (WIN32)
+        set (_name boost_test_exec_monitor${TMP_BOOST_LIBRARIES_SUFFIX})
+      endif (WIN32)
+      find_library(BOOST_TEST_EXEC_MONITOR_LIBRARY
+        NAMES
+          ${_name}
+        PATHS
+          ${BOOST_LIBRARIES_SEARCH_DIRS}
+      )
+    endif (NOT BOOST_TEST_EXEC_MONITOR_LIBRARY)
+
+    if (NOT BOOST_THREAD_LIBRARY)
+      find_library(BOOST_THREAD_LIBRARY
+        NAMES
+          boost_thread${TMP_BOOST_LIBRARIES_SUFFIX}
+          boost_thread-mt
+        PATHS
+          ${BOOST_LIBRARIES_SEARCH_DIRS}
+      )
+    endif (NOT BOOST_THREAD_LIBRARY)
+
+    if (NOT BOOST_UNIT_TEST_FRAMEWORK_LIBRARY)
+      set (_boost_unit_test_lib_name "")
+      if (WIN32)
+        set (_boost_unit_test_lib_name libboost_unit_test_framework${TMP_BOOST_LIBRARIES_SUFFIX})
+      else (WIN32)
+        set (_boost_unit_test_lib_name boost_unit_test_framework${TMP_BOOST_LIBRARIES_SUFFIX})
+      endif (WIN32)
+      find_library(BOOST_UNIT_TEST_FRAMEWORK_LIBRARY
+        NAMES
+          ${_boost_unit_test_lib_name}
+        PATHS
+          ${BOOST_LIBRARIES_SEARCH_DIRS}
+      )
+    endif (NOT BOOST_UNIT_TEST_FRAMEWORK_LIBRARY)
+
+    if (NOT BOOST_WSERIALIZATION_LIBRARY)
+      find_library(BOOST_WSERIALIZATION_LIBRARY
+        NAMES
+          boost_wserialization${TMP_BOOST_LIBRARIES_SUFFIX}
+        PATHS
+          ${BOOST_LIBRARIES_SEARCH_DIRS}
+      )
+    endif (NOT BOOST_WSERIALIZATION_LIBRARY)
+
+    if (BOOST_DATE_TIME_LIBRARY)
+      set(BOOST_DATE_TIME_FOUND TRUE)
+    endif (BOOST_DATE_TIME_LIBRARY)
+    if (BOOST_FILESYSTEM_LIBRARY)
+      set(BOOST_FILESYSTEM_FOUND TRUE)
+    endif (BOOST_FILESYSTEM_LIBRARY)
+    if (BOOST_IOSTREAMS_LIBRARY)
+      set(BOOST_IOSTREAMS_FOUND TRUE)
+    endif (BOOST_IOSTREAMS_LIBRARY)
+    if (BOOST_PRG_EXEC_MONITOR_LIBRARY)
+      set(BOOST_PRG_EXEC_MONITOR_FOUND TRUE)
+    endif (BOOST_PRG_EXEC_MONITOR_LIBRARY)
+    if (BOOST_PROGRAM_OPTIONS_LIBRARY)
+      set(BOOST_PROGRAM_OPTIONS_FOUND TRUE)
+    endif (BOOST_PROGRAM_OPTIONS_LIBRARY)
+    if (BOOST_PYTHON_LIBRARY)
+      set(BOOST_PYTHON_FOUND TRUE)
+    endif (BOOST_PYTHON_LIBRARY)
+    if (BOOST_REGEX_LIBRARY)
+      set(BOOST_REGEX_FOUND TRUE)
+    endif (BOOST_REGEX_LIBRARY)
+    if (BOOST_SERIALIZATION_LIBRARY)
+      set(BOOST_SERIALIZATION_FOUND TRUE)
+    endif (BOOST_SERIALIZATION_LIBRARY)
+    if (BOOST_SIGNALS_LIBRARY)
+      set(BOOST_SIGNALS_FOUND TRUE)
+    endif (BOOST_SIGNALS_LIBRARY)
+    if (BOOST_TEST_EXEC_MONITOR_LIBRARY)
+      set(BOOST_TEST_EXEC_MONITOR_FOUND TRUE)
+    endif (BOOST_TEST_EXEC_MONITOR_LIBRARY)
+    if (BOOST_THREAD_LIBRARY)
+      set(BOOST_THREAD-MT_FOUND TRUE)
+    endif (BOOST_THREAD_LIBRARY)
+    if (BOOST_UNIT_TEST_FRAMEWORK_LIBRARY)
+      set(BOOST_UNIT_TEST_FRAMEWORK_FOUND TRUE)
+    endif (BOOST_UNIT_TEST_FRAMEWORK_LIBRARY)
+    if (BOOST_WSERIALIZATION_LIBRARY)
+      set(BOOST_WSERIALIZATION_FOUND TRUE)
+    endif (BOOST_WSERIALIZATION_LIBRARY)
+
+  endforeach (TMP_BOOST_LIBRARIES_SUFFIX)
+
+  set(BOOST_INCLUDE_DIRS
+    ${BOOST_INCLUDE_DIR}
+  )
+
+  if (BOOST_DATE_TIME_FOUND)
+    set(BOOST_LIBRARIES
+      ${BOOST_LIBRARIES}
+      ${BOOST_DATE_TIME_LIBRARY}
+    )
+  endif (BOOST_DATE_TIME_FOUND)
+  if (BOOST_FILESYSTEM_FOUND)
+    set(BOOST_LIBRARIES
+      ${BOOST_LIBRARIES}
+      ${BOOST_FILESYSTEM_LIBRARY}
+    )
+  endif (BOOST_FILESYSTEM_FOUND)
+  if (BOOST_IOSTREAMS_FOUND)
+    set(BOOST_LIBRARIES
+      ${BOOST_LIBRARIES}
+      ${BOOST_IOSTREAMS_LIBRARY}
+    )
+  endif (BOOST_IOSTREAMS_FOUND)
+  if (BOOST_PRG_EXEC_MONITOR_FOUND)
+    set(BOOST_LIBRARIES
+      ${BOOST_LIBRARIES}
+      ${BOOST_PRG_EXEC_MONITOR_LIBRARY}
+    )
+  endif (BOOST_PRG_EXEC_MONITOR_FOUND)
+  if (BOOST_PROGRAM_OPTIONS_FOUND)
+    set(BOOST_LIBRARIES
+      ${BOOST_LIBRARIES}
+      ${BOOST_PROGRAM_OPTIONS_LIBRARY}
+    )
+  endif (BOOST_PROGRAM_OPTIONS_FOUND)
+  if (BOOST_PYTHON_FOUND)
+    set(BOOST_LIBRARIES
+      ${BOOST_LIBRARIES}
+      ${BOOST_PYTHON_LIBRARY}
+    )
+  endif (BOOST_PYTHON_FOUND)
+  if (BOOST_REGEX_FOUND)
+    set(BOOST_LIBRARIES
+      ${BOOST_LIBRARIES}
+      ${BOOST_REGEX_LIBRARY}
+    )
+  endif (BOOST_REGEX_FOUND)
+  if (BOOST_SERIALIZATION_FOUND)
+    set(BOOST_LIBRARIES
+      ${BOOST_LIBRARIES}
+      ${BOOST_SERIALIZATION_LIBRARY}
+    )
+  endif (BOOST_SERIALIZATION_FOUND)
+  if (BOOST_SIGNALS_FOUND)
+    set(BOOST_LIBRARIES
+      ${BOOST_LIBRARIES}
+      ${BOOST_SIGNALS_LIBRARY}
+    )
+  endif (BOOST_SIGNALS_FOUND)
+  if (BOOST_TEST_EXEC_MONITOR_FOUND)
+    set(BOOST_LIBRARIES
+      ${BOOST_LIBRARIES}
+      ${BOOST_TEST_EXEC_MONITOR_LIBRARY}
+    )
+  endif (BOOST_TEST_EXEC_MONITOR_FOUND)
+  if (BOOST_THREAD-MT_FOUND)
+    set(BOOST_LIBRARIES
+      ${BOOST_LIBRARIES}
+      ${BOOST_THREAD_LIBRARY}
+    )
+  endif (BOOST_THREAD-MT_FOUND)
+  if (BOOST_UNIT_TEST_FRAMEWORK_FOUND)
+    set(BOOST_LIBRARIES
+      ${BOOST_LIBRARIES}
+      ${BOOST_UNIT_TEST_FRAMEWORK_LIBRARY}
+    )
+  endif (BOOST_UNIT_TEST_FRAMEWORK_FOUND)
+  if (BOOST_WSERIALIZATION_FOUND)
+    set(BOOST_LIBRARIES
+      ${BOOST_LIBRARIES}
+      ${BOOST_WSERIALIZATION_LIBRARY}
+    )
+  endif (BOOST_WSERIALIZATION_FOUND)
+
+  if (BOOST_INCLUDE_DIRS AND BOOST_LIBRARIES)
+    set(BOOST_FOUND TRUE)
+  endif (BOOST_INCLUDE_DIRS AND BOOST_LIBRARIES)
+
+  if (BOOST_FOUND)
+    if (NOT Boost_FIND_QUIETLY)
+      message(STATUS "Found Boost: ${BOOST_LIBRARIES}")
+    endif (NOT Boost_FIND_QUIETLY)
+  else (BOOST_FOUND)
+    if (Boost_FIND_REQUIRED)
+      message(FATAL_ERROR "Please install the Boost libraries and development packages")
+    endif (Boost_FIND_REQUIRED)
+  endif (BOOST_FOUND)
+
+  foreach (BOOST_LIBDIR ${BOOST_LIBRARIES})
+    get_filename_component(BOOST_LIBRARY_DIRS ${BOOST_LIBDIR} PATH)
+  endforeach (BOOST_LIBDIR ${BOOST_LIBRARIES})
+
+  # Under Windows, automatic linking is performed, so no need to specify the libraries.
+  if (WIN32)
+    set(BOOST_LIBRARIES "")
+  endif (WIN32)
+
+  # show the BOOST_INCLUDE_DIRS and BOOST_LIBRARIES variables only in the advanced view
+  mark_as_advanced(BOOST_INCLUDE_DIRS BOOST_LIBRARIES BOOST_LIBRARY_DIRS BOOST_DEFINITIONS BOOST_LIBRARIES_SUFFIX)
+
+endif (BOOST_LIBRARIES AND BOOST_INCLUDE_DIRS)

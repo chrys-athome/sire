@@ -10,6 +10,29 @@ include_directories(${QT_QTSQL_INCLUDE_DIR})
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
+# Define the headers in SireFF
+set ( SIREFF_HEADERS
+      errors.h
+      ffbase.h
+      ffcalculator.h
+      ffcalculatorbase.h
+      ffcomponent.h
+      ffexpression.h
+      ffgroupid.h
+      ffprocessor.h
+      ffthreadprocessor.h
+      ffthreadworker.h
+      ffworker.h
+      ffworkerbase.h
+      forcefield.h
+      forcefieldid.h
+      forcefields.h
+      forcefieldsbase.h
+      forcetable.h
+      parametermap.h
+      qhash_sireff.h
+    )
+
 # Define the sources in SireFF
 set ( SIREFF_SOURCES
       errors.cpp
@@ -29,6 +52,8 @@ set ( SIREFF_SOURCES
       forcefields.cpp
       forcetable.cpp
       parametermap.cpp
+    
+      ${SIREFF_HEADERS}
     )
 
 add_library (SireFF ${SIREFF_SOURCES})
@@ -52,3 +77,6 @@ install( TARGETS SireFF
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}
        )
+
+install( FILES ${SIREFF_HEADERS} 
+         DESTINATION ${SIRE_INCLUDES}/SireFF )

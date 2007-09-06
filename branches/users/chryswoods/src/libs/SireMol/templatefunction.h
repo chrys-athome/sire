@@ -29,6 +29,8 @@
 #ifndef SIREMOL_TEMPLATEFUNCTION_H
 #define SIREMOL_TEMPLATEFUNCTION_H
 
+SIRE_BEGIN_HEADER
+
 namespace SireMol
 {
 
@@ -43,5 +45,7 @@ public:
 };
 
 }
+
+SIRE_END_HEADER
 
 #endif

@@ -9,6 +9,20 @@
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
+# Define the headers in SireMove
+set ( SIREMOVE_HEADERS
+      molmappingfunction.h
+      montecarlo.h
+      mtsmc.h
+      prefsampler.h
+      rigidbodymc.h
+      sampler.h
+      uniformsampler.h
+      volchangingfunction.h
+      volumemove.h
+      weightedmoves.h
+    )
+
 # Define the sources in SireMove
 set ( SIREMOVE_SOURCES
 
@@ -28,6 +42,8 @@ set ( SIREMOVE_SOURCES
 
       volchangingfunction.cpp
       volumemove.cpp
+    
+      ${SIREMOVE_HEADERS}
     )
 
 add_library (SireMove ${SIREMOVE_SOURCES})
@@ -51,3 +67,5 @@ install( TARGETS SireMove
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}
        )
 
+install( FILES ${SIREMOVE_HEADERS}
+         DESTINATION ${SIRE_INCLUDES}/SireMove )

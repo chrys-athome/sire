@@ -9,6 +9,9 @@
 # require cmake >= 2.4.1
 cmake_minimum_required(VERSION 2.4.1 FATAL_ERROR)
 
+# use loose loop syntax in CMakeLists files
+set( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
+
 # Absolutely can't run cmake in the source directory!
 if ( CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR )
   message( FATAL_ERROR "You must run CMake in a different directory to the source!" ) 
@@ -38,6 +41,8 @@ set (SIRE_BIN "bin")
 set (SIRE_LIBS "lib")
 # Static library install dir
 set (SIRE_ARCHIVES "lib/static")
+# Include (header) files install dir
+set (SIRE_INCLUDES "include/Sire")
 
 # Uncomment for more verbose compiling/linking
 # (or run 'make VERBOSE=1')
@@ -94,9 +99,9 @@ if (SIRE_BUILD_MOLPRO)
       message ( STATUS "MolproClient paths ${MOLPRO_CLIENT_LIBRARIES} | "
                        "${MOLPRO_CLIENT_INCLUDE_DIR}" )
 
-    endif ( MOLPRO_CLIENT_C_LIBRARY )
+    endif()
 
-  endif (MOLPRO_CLIENT_INCLUDE_DIR )
+  endif()
 
   if (NOT MOLPRO_FOUND)
   
@@ -104,9 +109,9 @@ if (SIRE_BUILD_MOLPRO)
                     "Compilation of the Molpro-based forcefields "
                     "has been disabled." )
 
-  endif (NOT MOLPRO_FOUND)
+  endif()
 
-endif (SIRE_BUILD_MOLPRO)
+endif()
 
 # Add option to turn off symbol hiding
 option ( SIRE_SYMBOL_HIDING "Turn on library symbol hiding" ON )
@@ -119,9 +124,9 @@ set (QT_USE_QTSQL TRUE)
 if ( SIRE_BUILD_SPIER )
    set (QT_USE_QTGUI TRUE)
    set (QT_USE_OPENGL TRUE)
-else ( SIRE_BUILD_SPIER )
+else()
    set (QT_DONT_USE_QTGUI TRUE)
-endif ( SIRE_BUILD_SPIER )
+endif()
 
 # Sire depends on >= Qt 4.1
 set (QT_MIN_VERSION "4.1.0")
@@ -136,34 +141,50 @@ include( FindQt4 )
 set( QT_QTCORE_LIBRARY ${QT_QTCORE_LIBRARY} ${QT_CORE_LIB_DEPENDENCIES} )
 set( QT_QTGUI_LIBRARY ${QT_QTGUI_LIBRARY} ${QT_GUI_LIB_DEPENDENCIES} )
 
-# Sire depends on >= Python 2.2
-set( PYTHON_REQUIRE_MAJOR 2 )
-set( PYTHON_REQUIRE_MINOR 2 )
-include( FindPython )
+IF(NOT APPLE)
 
-# Use the python interpreter to get the link options, version and install
-# directory - simplify by using the python script in the build directory
-set (PYTHON_CONFIG ${CMAKE_SOURCE_DIR}/build/python-config)
+   # Sire depends on >= Python 2.2
+   set( PYTHON_REQUIRE_MAJOR 2 )
+   set( PYTHON_REQUIRE_MINOR 2 )
+   include( FindPython )
 
-# get the link flags for the shared library
-exec_program ( ${PYTHON_EXECUTABLE}
-               ARGS "${PYTHON_CONFIG} --lflags"
-	       OUTPUT_VARIABLE PYTHON_LIBRARY
-	     )
+   # Use the python interpreter to get the link options, version and install
+   # directory - simplify by using the python script in the build directory
+   set (PYTHON_CONFIG ${CMAKE_SOURCE_DIR}/build/python-config)
 
-# get the include directories
-exec_program ( ${PYTHON_EXECUTABLE}
-               ARGS "${PYTHON_CONFIG} --cflags"
-	       OUTPUT_VARIABLE PYTHON_INCLUDE_DIR
-	     )
+   # get the link flags for the shared library
+   exec_program ( ${PYTHON_EXECUTABLE}
+                  ARGS "${PYTHON_CONFIG} --lflags"
+                  OUTPUT_VARIABLE PYTHON_LIBRARY
+                )
 
-# get the path to the python site files (excluding the prefix)
-set( PYTHON_SITE_DIR "lib/python${PYTHON_MAJOR_VERSION}.${PYTHON_MINOR_VERSION}/site-packages" )
+   # get the include directories
+   exec_program ( ${PYTHON_EXECUTABLE}
+                  ARGS "${PYTHON_CONFIG} --cflags"
+                  OUTPUT_VARIABLE PYTHON_INCLUDE_DIR
+                )
 
-message( STATUS "Python paths ${PYTHON_LIBRARY} | ${PYTHON_INCLUDE_DIR} | ${PYTHON_SITE_DIR}" )
+   # get the path to the python site files (excluding the prefix)
+   set( PYTHON_SITE_DIR "lib/python${PYTHON_MAJOR_VERSION}.${PYTHON_MINOR_VERSION}/site-packages" )
 
-# set the location to install the python modules
-set (SIRE_PYTHON "${PYTHON_SITE_DIR}")
+   message( STATUS "Python paths ${PYTHON_LIBRARY} | ${PYTHON_INCLUDE_DIR} | ${PYTHON_SITE_DIR}" )
+
+   # set the location to install the python modules
+   set (SIRE_PYTHON "${PYTHON_SITE_DIR}")
+
+else()
+
+   include(FindPythonLibs)
+   find_package(Python REQUIRED)
+
+   # get the path to the python site files (excluding the prefix)
+   set( PYTHON_SITE_DIR "lib/python${PYTHON_MAJOR_VERSION}.${PYTHON_MINOR_VERSION}/site-packages" )
+
+   set( PYTHON_INCLUDE_DIR ${PYTHON_INCLUDE_PATH} )
+
+   message( STATUS "Python paths ${PYTHON_LIBRARY} | ${PYTHON_INCLUDE_DIR} | ${PYTHON_SITE_DIR}" )
+
+endif()
 
 # Sire depends on >= boost 1.31
 set (BOOST_FIND_REQUIRED TRUE)
@@ -171,44 +192,20 @@ include ( FindBoost )
 
 message( STATUS "Boost paths ${BOOST_LIBRARY_DIRS} | ${BOOST_INCLUDE_DIRS}" )
 
-# Sire depends on >= boost_python 1.31
-find_library( BOOST_PYTHON_LIBRARY
-              NAMES
-                boost_python
-              PATHS
-                ${BOOST_LIBRARY_DIRS}
-                /usr/lib
-                /usr/local/lib
-                ENV LD_LIBRARY_PATH
-              DOC
-                "Path where the Boost Python Library can be found"
-            )
-
 # Need to ensure that we are linking to boost_python shared library!
 if (UNIX)
-  if ( BOOST_PYTHON_LIBRARY MATCHES "(\\.so$)" OR BOOST_PYTHON_LIBRARY MATCHES "(\\.SO$)" )
-  else ( BOOST_PYTHON_LIBRARY MATCHES "(\\.so$)" OR BOOST_PYTHON_LIBRARY MATCHES "(\\.SO$)" )
+  if ( BOOST_PYTHON_LIBRARY MATCHES "(\\.a$)" OR
+       BOOST_PYTHON_LIBRARY MATCHES "(\\.A$)" )
+
     message( FATAL_ERROR "Need to link to shared boost::python library (should be "
-                         "boost_python.so, "
+                         "boost_python.so or boost_python.dylib, "
                          "not ${BOOST_PYTHON_LIBRARY})" )
-  endif ( BOOST_PYTHON_LIBRARY MATCHES "(\\.so$)" OR BOOST_PYTHON_LIBRARY MATCHES "(\\.SO$)" )
-endif (UNIX)
+
+  endif ()
+endif()
 
 message( STATUS "Boost python library = ${BOOST_PYTHON_LIBRARY}" )
-
-find_library( BOOST_UNITTEST_LIBRARY
-              NAMES
-                boost_unit_test_framework
-              PATHS
-                ${BOOST_LIBRARY_DIRS}
-                /usr/lib
-                /usr/local/lib
-                ENV LD_LIBRARY_PATH
-              DOC
-                "Path where the Boost UnitTest Library can be found"
-            )
-
-message( STATUS "Boost unit test library = ${BOOST_UNITTEST_LIBRARY}" )
+message( STATUS "Boost unit test library = ${BOOST_UNIT_TEST_FRAMEWORK_LIBRARY}" )
 
 # Sire depends on >= GSL 1.6
 include ( FindGSL )
@@ -263,7 +260,7 @@ if ( CMAKE_COMPILER_IS_GNUCC )
     if ( GCC_MAJOR_VERSION LESS 3 )
        message( FATAL_ERROR "Sire requires GCC >= 3.0. Please upgrade "
                       "your version of GCC." )
-    endif ( GCC_MAJOR_VERSION LESS 3 )
+    endif()
 
     # Add options common to all gcc version
     ADD_DEFINITIONS( -pipe )
@@ -281,26 +278,30 @@ if ( CMAKE_COMPILER_IS_GNUCC )
         ADD_DEFINITIONS( -DSIRE_VISIBILITY_AVAILABLE )
         ADD_DEFINITIONS( -fvisibility=hidden -fvisibility-inlines-hidden )
 
-      else ( SIRE_SYMBOL_HIDING )
+      else()
   
         ADD_DEFINITIONS( -DSIRE_NO_VISIBILITY_AVAILABLE )
 
-      endif ( SIRE_SYMBOL_HIDING )
+      endif()
     
-    else ( GCC_MAJOR_VERSION GREATER 3 )
+    else()
     
       ADD_DEFINITIONS( -DSIRE_NO_VISIBILITY_AVAILABLE )
 
-    endif ( GCC_MAJOR_VERSION GREATER 3 )
+    endif()
     
-endif ( CMAKE_COMPILER_IS_GNUCC )
+endif()
 
 # Copy the Sire compile flags to CMake
 set( CMAKE_C_FLAGS ${SIRE_C_FLAGS_RELEASE} )
 set( CMAKE_CXX_FLAGS ${SIRE_CXX_FLAGS_RELEASE} )
 
 # Ensure that the libraries don't contain any undefined symbols
-set( SIRE_LINK_FLAGS "-Wl,--no-undefined" )
+if(APPLE)
+  set( SIRE_LINK_FLAGS "-Wl" )
+else(UNIX)
+  set( SIRE_LINK_FLAGS "-Wl,--no-undefined" )
+endif()
 
 # Add this to all shared libraries
 set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${SIRE_LINK_FLAGS}" )

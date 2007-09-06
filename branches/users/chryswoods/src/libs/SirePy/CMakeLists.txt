@@ -10,12 +10,24 @@ include_directories(${PYTHON_INCLUDE_DIR})
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
+# Define the headers in SirePy
+set ( SIREPY_HEADERS
+      indexer.hpp
+      python2qt.h
+      python2wrappers.h
+      pythonerror.h
+      pythonparser.h
+      pythonscript.h
+    )
+
 # Define the sources in SirePy
 set ( SIREPY_SOURCES
       python2qt.cpp
       pythonerror.cpp
       pythonparser.cpp
       pythonscript.cpp
+    
+      ${SIREPY_HEADERS}
     )
 
 set ( SIREPY_MOCS
@@ -44,3 +56,6 @@ install( TARGETS SirePy
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}
        )
+
+install( FILES ${SIREPY_HEADERS}
+         DESTINATION ${SIRE_INCLUDES}/SirePy )

@@ -73,6 +73,6 @@ private:
 
 }
 
-SIRE_BEGIN_HEADER
+SIRE_END_HEADER
 
 #endif

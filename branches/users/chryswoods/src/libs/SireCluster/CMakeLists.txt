@@ -7,11 +7,20 @@
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
+# Define the headers in SireCluster
+set ( SIRECLUSTER_HEADERS
+      errors.h
+      processor.h
+      threadworker.h
+    )
+
 # Define the sources in SireCluster
 set ( SIRECLUSTER_SOURCES
-      errors.cpp
-      processor.cpp
+      errors.cpp      
+      processor.cpp   
       threadworker.cpp
+      
+      ${SIRECLUSTER_HEADERS}
     )
 
 add_library (SireCluster ${SIRECLUSTER_SOURCES})
@@ -32,3 +41,6 @@ install( TARGETS SireCluster
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}
        )
+
+install( FILES ${SIRECLUSTER_HEADERS} 
+         DESTINATION ${SIRE_INCLUDES}/SireCluster )

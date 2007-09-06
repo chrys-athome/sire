@@ -204,4 +204,6 @@ inline bool IDPair::operator!=(const IDPair &other) const
 
 Q_DECLARE_METATYPE(SireBase::IDPair);
 
+SIRE_END_HEADER
+
 #endif

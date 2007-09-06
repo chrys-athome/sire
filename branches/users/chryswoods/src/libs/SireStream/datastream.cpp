@@ -88,4 +88,6 @@ VersionID SIRESTREAM_EXPORT readHeader(QDataStream &ds,
     return v;
 }
 
-}
+} //end of namespace SireStream
+
+

@@ -54,6 +54,8 @@ class CoordGroupBase;
 class CoordGroup;
 }
 
+SIRE_BEGIN_HEADER
+
 QDataStream& operator<<(QDataStream&, const SireVol::CoordGroup&);
 QDataStream& operator>>(QDataStream&, SireVol::CoordGroup&);
 
@@ -590,5 +592,7 @@ public:
 }
 
 Q_DECLARE_METATYPE(SireVol::CoordGroup);
+
+SIRE_END_HEADER
 
 #endif

@@ -34,6 +34,8 @@
 
 #include <QDebug>
 
+SIRE_BEGIN_HEADER
+
 namespace SireUnits
 {
 
@@ -90,5 +92,7 @@ inline double convert(double val, const Dimension::Unit &to_units)
 }
 
 }
+
+SIRE_END_HEADER
 
 #endif

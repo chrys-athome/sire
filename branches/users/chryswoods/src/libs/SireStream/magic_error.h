@@ -86,4 +86,6 @@ public:
 
 Q_DECLARE_METATYPE(SireStream::magic_error);
 
+SIRE_END_HEADER
+
 #endif

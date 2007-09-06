@@ -10,6 +10,72 @@ include_directories(${QT_QTSQL_INCLUDE_DIR})
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
+# Define the headers in SireMM
+set ( SIREMM_HEADERS
+      angledb.h
+      anglegenerator.h
+      angletable.h
+      angletable.hpp
+      assign_angles.h
+      assign_bonds.h
+      assign_dihedrals.h
+      assign_internals.hpp
+      atomiccharges.h
+      atomicljs.h
+      atompairs.hpp
+      bonddb.h
+      bondgenerator.h
+      bondtable.h
+      bondtable.hpp
+      chargedb.h
+      chargeparameter.h
+      chargetable.h
+      cljff.h
+      cljnbpairs.h
+      cljpair.h
+      cljparameter.h
+      combiningrules.h
+      coulombff.h
+      dihedraldb.h
+      dihedralgenerator.h
+      dihedraltable.h
+      dihedraltable.hpp
+      errors.h
+      harmonicff.h
+      inter2bodyff.hpp
+      intercljff.h
+      intercoulombff.h
+      intergroup2bodyff.hpp
+      intergroupcljff.h
+      intergroupcoulombff.h
+      intergroupljff.h
+      interljff.h
+      internaldatatypes.h
+      internaldb.hpp
+      internalgenerator.hpp
+      internaltable.hpp
+      internaltablebase.hpp
+      intra2bodyff.hpp
+      intracljff.h
+      intragroup2bodyff.hpp
+      ljdb.h
+      ljff.h
+      ljpair.h
+      ljparameter.h
+      ljtable.h
+      molangleinfo.h
+      molbondinfo.h
+      moldihedralinfo.h
+      molinternalinfo.hpp
+      qhash_siremm.h
+      resangleinfo.h
+      resbondinfo.h
+      resdihedralinfo.h
+      resinternalinfo.hpp
+      switchingfunction.h
+      ureybradleydb.h
+    )
+
 # Define the sources in SireMM
 set ( SIREMM_SOURCES
       angledb.cpp
@@ -57,6 +123,8 @@ set ( SIREMM_SOURCES
       resdihedralinfo.cpp
       switchingfunction.cpp
       ureybradleydb.cpp
+    
+      ${SIREMM_HEADERS}
     )
 
 add_library (SireMM ${SIREMM_SOURCES})
@@ -79,3 +147,5 @@ install( TARGETS SireMM
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}
        )
+
+install( FILES ${SIREMM_HEADERS} DESTINATION ${SIRE_INCLUDES}/SireMM )

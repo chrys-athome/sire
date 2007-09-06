@@ -6,10 +6,22 @@
 
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
-add_library (SireError
-             errors.cpp
-             exception.cpp
-             getbacktrace.cpp)
+set ( SIREERROR_HEADERS
+      errors.h
+      exception.h
+      getbacktrace.h
+      version_error.h
+    )
+
+set ( SIREERROR_SOURCES
+      errors.cpp
+      exception.cpp
+      getbacktrace.cpp
+    
+      ${SIREERROR_HEADERS}
+    )
+
+add_library ( SireError ${SIREERROR_SOURCES} )
 
 target_link_libraries (SireError
                        ${QT_QTCORE_LIBRARY}
@@ -22,3 +34,5 @@ install( TARGETS SireError
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}
        )
 
+install( FILES ${SIREERROR_HEADERS} 
+         DESTINATION ${SIRE_INCLUDES}/SireError )

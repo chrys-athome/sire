@@ -12,7 +12,30 @@ include_directories(${GSL_INCLUDE_DIR})
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
-# Define the sources in ThirdParty
+# Define the headers in SireMaths
+set ( SIREMATHS_HEADERS
+      axisset.h
+      circularangle.h
+      complex.h
+      constants.h
+      errors.h
+      line.h
+      maths.h
+      matrix.h
+      matrix4.h
+      plane.h
+      quaternion.h
+      rangenerator.h
+      rational.h
+      rotate.h
+      sphere.h
+      torsion.h
+      triangle.h
+      vector.h
+      vectorvector.h
+    )
+
+# Define the sources in SireMaths
 set ( SIREMATHS_SOURCES
       axisset.cpp
       complex.cpp
@@ -28,6 +51,8 @@ set ( SIREMATHS_SOURCES
       torsion.cpp
       triangle.cpp
       vector.cpp
+    
+      ${SIREMATHS_HEADERS}
     )
 
 add_library (SireMaths ${SIREMATHS_SOURCES})
@@ -51,3 +76,7 @@ install( TARGETS SireMaths
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}
        )
+
+install( FILES ${SIREMATHS_HEADERS}
+         DESTINATION ${SIRE_INCLUDES}/SireMaths )
+          

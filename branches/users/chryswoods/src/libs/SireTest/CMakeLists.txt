@@ -12,6 +12,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 # Define the sources in SireSystem
 set ( SIRETEST_SOURCES
       runtests.cpp
+      runtests.h
     )
 
 add_library (SireTest ${SIRETEST_SOURCES})

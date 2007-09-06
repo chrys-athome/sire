@@ -9,6 +9,16 @@
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
+# Define the headers in SireVol
+set ( SIREVOL_HEADERS
+      aabox.h
+      cartesian.h
+      coordgroup.h
+      mappingfunction.h
+      periodicbox.h
+      space.h
+    )
+
 # Define the sources in SireVol
 set ( SIREVOL_SOURCES
       aabox.cpp
@@ -17,6 +27,8 @@ set ( SIREVOL_SOURCES
       mappingfunction.cpp
       periodicbox.cpp
       space.cpp
+    
+      ${SIREVOL_HEADERS}
     )
 
 add_library (SireVol ${SIREVOL_SOURCES})
@@ -40,3 +52,6 @@ install( TARGETS SireVol
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}
        )
+
+install( FILES ${SIREVOL_HEADERS}
+         DESTINATION ${SIRE_INCLUDES}/SireVol )

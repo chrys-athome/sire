@@ -9,6 +9,82 @@
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
+# Define the headers in SireMol
+set ( SIREMOL_HEADERS
+      angle.h
+      angleset.h
+      atom.h
+      atomcutting.h
+      atomicproperties.h
+      atomid.h
+      atomidgroup.h
+      atomindex.h
+      atominfo.h
+      atominfogroup.h
+      atomnum.h
+      atomselection.h
+      atomselector.h
+      bond.h
+      bondaddingfunction.h
+      calculateaxes.hpp
+      cgatomid.h
+      cgnumatomid.h
+      cutgroup.h
+      cutgroupid.h
+      cutgroupnum.h
+      cuttingfunction.h
+      dihedral.h
+      editmol.h
+      editmoldata.h
+      editres.h
+      element-data.h
+      element.h
+      elementdb.h
+      errors.h
+      groupedvector.hpp
+      groupid.h
+      groupindexid.h
+      id.h
+      idmolatom.h
+      idtypes.h
+      improper.h
+      index.h
+      indexinfo.h
+      molcgatomid.h
+      molcutgroupid.h
+      molecule.h
+      moleculebonds.h
+      moleculecutting.h
+      moleculedata.h
+      moleculegroup.h
+      moleculegroupid.h
+      moleculegroups.h
+      moleculeid.h
+      moleculeinfo.h
+      moleculemover.h
+      moleculeproperty.h
+      molecules.h
+      moleculeview.h
+      moleculeview_inlines.h
+      newatom.h
+      partialmolecule.h
+      propertyextractor.h
+      qhash_siremol.h
+      resid.h
+      residatomid.h
+      residue.h
+      residuebonds.h
+      residuecutting.h
+      residueinfo.h
+      resnum.h
+      resnumatomid.h
+      resnumindexid.h
+      selectionfrommol.h
+      splitmolecule.h
+      templatefunction.h
+      weightfunction.h
+    )
+
 # Define the sources in SireMol
 set ( SIREMOL_SOURCES
       angle.cpp
@@ -62,6 +138,8 @@ set ( SIREMOL_SOURCES
       selectionfrommol.cpp
       splitmolecule.cpp
       weightfunction.cpp
+    
+      ${SIREMOL_HEADERS}
     )
 
 add_library (SireMol ${SIREMOL_SOURCES})
@@ -83,3 +161,6 @@ install( TARGETS SireMol
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}
        )
+
+install( FILES ${SIREMOL_HEADERS}
+         DESTINATION ${SIRE_INCLUDES}/SireMol )

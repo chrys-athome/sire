@@ -17,6 +17,17 @@ if (MOLPRO_FOUND)
   #we definitely want to build squire
   set ( BUILD_SQUIRE "ON" )
 
+  #add the Molpro forcefield include files
+  set ( SQUIRE_HEADERS
+   
+        ${SQUIRE_HEADERS}
+
+        molprocalculator.h
+        molproff.h
+        molproprocessor.h
+        molprosession.h
+      )
+
   #add the Molpro forcefield files
   set ( SQUIRE_SOURCES
   
@@ -26,6 +37,8 @@ if (MOLPRO_FOUND)
         molproff.cpp
         molproprocessor.cpp
         molprosession.cpp
+      
+        ${SQUIRE_HEADERS}
       )
 
   set ( SQUIRE_INCLUDE_DIRS 
@@ -69,5 +82,7 @@ if (BUILD_SQUIRE)
            ARCHIVE DESTINATION ${SIRE_ARCHIVES}
        )
 
-endif (BUILD_SQUIRE)
+  install( FILES ${SQUIRE_HEADERS}
+           DESTINATION ${SIRE_INCLUDES}/Squire )
 
+endif (BUILD_SQUIRE)
