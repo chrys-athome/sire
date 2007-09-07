@@ -99,6 +99,9 @@ public:
     Matrix4 operator-(const Matrix4 &m) const;
 
     Quaternion column0() const;
+    Quaternion column1() const;
+    Quaternion column2() const;
+    Quaternion column3() const;
 
 protected:
     /** The components of the matrix */

@@ -26,16 +26,15 @@ wrap_classes = [ "AxisSet",
 
 huge_classes = []
 
+ignore_bases = []
+
 aliases = {}
 
 extra_includes = []
 
 def fix_matrix4(c):
-   #remove 16 argument constructor!
-   for d in c.constructors():
-      if len(d.arguments) >= 16:
-         d.exclude()
-
+   c.add_declaration_code("#define BOOST_PYTHON_MAX_ARITY 17", False)
+   
 special_code = { "Matrix4" : fix_matrix4 }
 
 implicitly_convertible = [ ("boost::tuples::tuple<double,double,double>",
@@ -59,7 +58,7 @@ mb = module_builder_t( files=headerfiles,
                        define_symbols=["SKIP_BROKEN_GCCXML_PARTS",
                                        "SKIP_TEMPLATE_DEFINITIONS"] )
 
-populateNamespaces(mb)
+populateNamespaces(mb, namespace, ignore_bases)
 
 for calldef in mb.calldefs():
     try:

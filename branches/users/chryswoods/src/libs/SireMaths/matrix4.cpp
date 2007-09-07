@@ -86,6 +86,10 @@ Matrix4::Matrix4()
 /** Construct a matrix whose diagonal values are equal to
     'diagonal_value' and whose off-diagonal values are zero */
 Matrix4::Matrix4(double diagonal_value)
+        : xx(diagonal_value), xy(0), xz(0), xw(0),
+          yx(0), yy(diagonal_value), yz(0), yw(0),
+          zx(0), zy(0), zz(diagonal_value), zw(0),
+          wx(0), wy(0), wz(0), ww(diagonal_value)
 {}
 
 /** Construct a Matrix. Elements listed as column 1, then
@@ -245,7 +249,7 @@ Matrix4 Matrix4::getPrincipalAxes() const
     //only look at the values in the upper-right diagonal
 
     //we first need to copy the contents of this matrix into an array...
-    double *sym_mtx = new double[16];
+    double sym_mtx[16];
 
     sym_mtx[0] = xx;
     sym_mtx[1] = yx;
@@ -296,9 +300,6 @@ Matrix4 Matrix4::getPrincipalAxes() const
     gsl_vector_free(eig_val);
     gsl_matrix_free(eig_vec);
 
-    //free up the memory held by the copy of this matrix
-    delete[] sym_mtx;
-
     //finally, return the matrix of principal components
     return ret;
 }
@@ -306,4 +307,19 @@ Matrix4 Matrix4::getPrincipalAxes() const
 Quaternion Matrix4::column0() const
 {
     return Quaternion(xx,xy,xz,xw);
+}
+
+Quaternion Matrix4::column1() const
+{
+    return Quaternion(yx,yy,yz,yw);
+}
+
+Quaternion Matrix4::column2() const
+{
+    return Quaternion(zx,zy,zz,zw);
+}
+
+Quaternion Matrix4::column3() const
+{
+    return Quaternion(wx,wy,wz,ww);
 }

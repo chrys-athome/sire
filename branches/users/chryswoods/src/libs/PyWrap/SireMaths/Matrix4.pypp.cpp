@@ -2,6 +2,8 @@
 
 // (C) Christopher Woods, GPL >=2 License
 
+#define BOOST_PYTHON_MAX_ARITY 17
+
 #include "Matrix4.pypp.hpp"
 #include "boost/python.hpp"
 #include "siremaths_headers.h"
@@ -19,10 +21,20 @@ void register_Matrix4_class(){
     bp::class_< SireMaths::Matrix4 >( "Matrix4" )    
         .def( bp::init< >() )    
         .def( bp::init< double >(( bp::arg("diagonal_value") )) )    
+        .def( bp::init< double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double >(( bp::arg("xx"), bp::arg("xy"), bp::arg("xz"), bp::arg("xw"), bp::arg("yx"), bp::arg("yy"), bp::arg("yz"), bp::arg("yw"), bp::arg("zx"), bp::arg("zy"), bp::arg("zz"), bp::arg("zw"), bp::arg("wx"), bp::arg("wy"), bp::arg("wz"), bp::arg("ww") )) )    
         .def( bp::init< SireMaths::Matrix const & >(( bp::arg("m") )) )    
         .def( 
             "column0"
             , (::SireMaths::Quaternion ( ::SireMaths::Matrix4::* )(  ) const)( &::SireMaths::Matrix4::column0 ) )    
+        .def( 
+            "column1"
+            , (::SireMaths::Quaternion ( ::SireMaths::Matrix4::* )(  ) const)( &::SireMaths::Matrix4::column1 ) )    
+        .def( 
+            "column2"
+            , (::SireMaths::Quaternion ( ::SireMaths::Matrix4::* )(  ) const)( &::SireMaths::Matrix4::column2 ) )    
+        .def( 
+            "column3"
+            , (::SireMaths::Quaternion ( ::SireMaths::Matrix4::* )(  ) const)( &::SireMaths::Matrix4::column3 ) )    
         .def( 
             "getPrincipalAxes"
             , (::SireMaths::Matrix4 ( ::SireMaths::Matrix4::* )(  ) const)( &::SireMaths::Matrix4::getPrincipalAxes ) )    
