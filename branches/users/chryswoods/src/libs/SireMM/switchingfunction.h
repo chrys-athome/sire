@@ -104,7 +104,8 @@ This class implements no cutoffs (e.g. there is no cutoff, and no switching func
 
 @author Christopher Woods
 */
-class SIREMM_EXPORT NoCutoff : public SwitchFuncBase
+class SIREMM_EXPORT NoCutoff 
+        : public SireBase::ConcreteProperty<NoCutoff,SwitchFuncBase>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const NoCutoff&);
@@ -122,21 +123,17 @@ public:
         return "SireMM::NoCutoff";
     }
 
-    const char* what() const
-    {
-        return NoCutoff::typeName();
-    }
-
-    NoCutoff* clone() const
-    {
-        return new NoCutoff(*this);
-    }
-
+    using PropertyBase::operator=;
+    using PropertyBase::operator==;
+    using PropertyBase::operator!=;
+    
+    NoCutoff& operator=(const NoCutoff &other);
+    
+    bool operator==(const NoCutoff &other) const;
+    bool operator!=(const NoCutoff &other) const;
+    
     double electrostaticScaleFactor(double dist) const;
     double vdwScaleFactor(double dist) const;
-
-protected:
-    bool _pvt_isEqual(const SireBase::PropertyBase &other) const;
 };
 
 /**
@@ -145,7 +142,9 @@ harmonically down to zero.
 
 @author Christopher Woods
 */
-class SIREMM_EXPORT HarmonicSwitchingFunction : public SwitchFuncBase
+class SIREMM_EXPORT HarmonicSwitchingFunction 
+         : public SireBase::ConcreteProperty<HarmonicSwitchingFunction,
+                                             SwitchFuncBase>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const HarmonicSwitchingFunction&);
@@ -170,22 +169,15 @@ public:
         return "SireMM::HarmonicSwitchingFunction";
     }
 
-    const char* what() const
-    {
-        return HarmonicSwitchingFunction::typeName();
-    }
-
-    HarmonicSwitchingFunction* clone() const
-    {
-        return new HarmonicSwitchingFunction(*this);
-    }
-
+    HarmonicSwitchingFunction& operator=(const HarmonicSwitchingFunction &other);
+    
+    bool operator==(const HarmonicSwitchingFunction &other) const;
+    bool operator!=(const HarmonicSwitchingFunction &other) const;
+    
     double electrostaticScaleFactor(double dist) const;
     double vdwScaleFactor(double dist) const;
 
 protected:
-    bool _pvt_isEqual(const SireBase::PropertyBase &other) const;
-
     void set(double cutelec, double featherelec,
              double cutvdw, double feathervdw);
 

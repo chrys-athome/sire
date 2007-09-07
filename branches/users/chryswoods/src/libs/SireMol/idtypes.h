@@ -29,8 +29,6 @@
 #ifndef SIREMOL_IDTYPES_H
 #define SIREMOL_IDTYPES_H
 
-SIRE_BEGIN_HEADER
-
 namespace SireMol
 {
 
@@ -64,7 +62,5 @@ class AtomIndex;
 class IDMolAtom;
 
 }
-
-SIRE_END_HEADER
 
 #endif

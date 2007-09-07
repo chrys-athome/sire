@@ -183,6 +183,8 @@ else()
    set( PYTHON_INCLUDE_DIR ${PYTHON_INCLUDE_PATH} )
 
    message( STATUS "Python paths ${PYTHON_LIBRARY} | ${PYTHON_INCLUDE_DIR} | ${PYTHON_SITE_DIR}" )
+  
+   set (SIRE_PYTHON "${PYTHON_SITE_DIR}")
 
 endif()
 
@@ -308,5 +310,5 @@ set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${SIRE_LINK_FLAGS}"
 
 # Recurse into the src/libs and src/apps subdirectories
 add_subdirectory (src/libs)
-add_subdirectory (src/apps)
+#add_subdirectory (src/apps)
 

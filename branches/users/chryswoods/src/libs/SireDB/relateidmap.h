@@ -32,8 +32,6 @@
 #include <QMap>
 #include <QMapIterator>
 
-SIRE_BEGIN_HEADER
-
 namespace SireDB
 {
 
@@ -54,7 +52,5 @@ typedef QMap<qint32, RelateID> RelateIDMap;
 typedef QMapIterator<qint32, RelateID> RelateIDMapIterator;
 
 }
-
-SIRE_END_HEADER
 
 #endif

@@ -24,7 +24,7 @@ set ( WRAPIO_SOURCES
       
       IOBase.pypp.cpp
       PDB.pypp.cpp
-      ProtoMS.pypp.cpp
+#      ProtoMS.pypp.cpp
       
     )
 

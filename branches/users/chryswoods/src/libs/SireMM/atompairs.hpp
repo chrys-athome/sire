@@ -211,7 +211,7 @@ const T& CGAtomPairs<T>::defaultValue() const
 }
 
 /** This class is used to store objects of type 'T' associated
-    with each pair of atoms in a molecule, and convieniently grouped
+    with each pair of atoms in a molecule, and conveniently grouped
     according to CutGroup.
 
     @author Christopher Woods

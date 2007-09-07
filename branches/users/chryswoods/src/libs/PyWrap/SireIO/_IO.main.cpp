@@ -17,7 +17,7 @@
 
 #include "PDB.pypp.hpp"
 
-#include "ProtoMS.pypp.hpp"
+//#include "ProtoMS.pypp.hpp"
 
 #include "sireio_containers.h"
 
@@ -30,6 +30,6 @@ BOOST_PYTHON_MODULE(_IO){
 
     register_PDB_class();
 
-    register_ProtoMS_class();
+    //register_ProtoMS_class();
 }
 

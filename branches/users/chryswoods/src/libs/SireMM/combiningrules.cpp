@@ -116,24 +116,39 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
 
 /** Constructor */
 ArithmeticCombiningRules::ArithmeticCombiningRules()
-                         : CombiningRuleBase()
+                         : ConcreteProperty<ArithmeticCombiningRules,
+                                            CombiningRuleBase>()
 {}
 
 /** Copy constructor */
 ArithmeticCombiningRules::ArithmeticCombiningRules(
                                     const ArithmeticCombiningRules &other)
-                         : CombiningRuleBase(other)
+                         : ConcreteProperty<ArithmeticCombiningRules,
+                                            CombiningRuleBase>(other)
 {}
 
 /** Destructor */
 ArithmeticCombiningRules::~ArithmeticCombiningRules()
 {}
 
-/** Comparison function used by derived classes */
-bool ArithmeticCombiningRules::_pvt_isEqual(const PropertyBase &other) const
+/** Copy assignment operator */
+ArithmeticCombiningRules& ArithmeticCombiningRules::operator=(
+                                                     ArithmeticCombiningRules &other) 
 {
-    BOOST_ASSERT( other.isA<ArithmeticCombiningRules>() );
+    CombiningRuleBase::operator=(other);
+    return *this;
+}
+
+/** Comparison operator */
+bool ArithmeticCombiningRules::operator==(const ArithmeticCombiningRules&) const
+{
     return true;
+}
+
+/** Comparison operator */
+bool ArithmeticCombiningRules::operator!=(const ArithmeticCombiningRules&) const
+{
+    return false;
 }
 
 /** Combine the LJ paramters using arithmetic combining
@@ -369,24 +384,39 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
 
 /** Constructor */
 GeometricCombiningRules::GeometricCombiningRules()
-                         : CombiningRuleBase()
+                         : ConcreteProperty<GeometricCombiningRules,
+                                            CombiningRuleBase>()
 {}
 
 /** Copy constructor */
 GeometricCombiningRules::GeometricCombiningRules(
                                     const GeometricCombiningRules &other)
-                         : CombiningRuleBase(other)
+                         : ConcreteProperty<GeometricCombiningRules,
+                                            CombiningRuleBase>(other)
 {}
 
 /** Destructor */
 GeometricCombiningRules::~GeometricCombiningRules()
 {}
 
-/** Comparison function used by derived classes */
-bool GeometricCombiningRules::_pvt_isEqual(const PropertyBase &other) const
+/** Copy assignment operator */
+GeometricCombiningRules& GeometricCombiningRules::operator==(
+                                                const GeometricCombiningRules &other)
 {
-    BOOST_ASSERT( other.isA<GeometricCombiningRules>() );
+    CombiningRuleBase::operator=(other);
+    return *this;
+}
+
+/** Comparison operator */
+bool GeometricCombiningRules::operator==(const GeometricCombiningRules&) const
+{
     return true;
+}
+
+/** Comparison operator */
+bool GeometricCombiningRules::operator!=(const GeometricCombiningRules&) const
+{
+    return false;
 }
 
 /** Combine the LJ paramters using geometric combining

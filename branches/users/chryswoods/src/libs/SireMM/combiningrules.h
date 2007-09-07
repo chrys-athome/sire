@@ -115,7 +115,9 @@ This class implements arithmetic (Lorentz-Berthelot) combining rules
 
 @author Christopher Woods
 */
-class SIREMM_EXPORT ArithmeticCombiningRules : public CombiningRuleBase
+class SIREMM_EXPORT ArithmeticCombiningRules 
+         : public SireBase::ConcreteProperty<ArithmeticCombiningRules,
+                                             CombiningRuleBase>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const ArithmeticCombiningRules&);
@@ -131,17 +133,16 @@ public:
     {
         return "SireMM::ArithmeticCombiningRules";
     }
+    
+    using SireBase::PropertyBase::operator=;
+    using SireBase::PropertyBase::operator==;
+    using SireBase::PropertyBase::operator!=;
 
-    const char* what() const
-    {
-        return ArithmeticCombiningRules::typeName();
-    }
-
-    ArithmeticCombiningRules* clone() const
-    {
-        return new ArithmeticCombiningRules(*this);
-    }
-
+    ArithmeticCombiningRules& operator=(const ArithmeticCombiningRules &other);
+    
+    bool operator==(const ArithmeticCombiningRules &other) const;
+    bool operator!=(const ArithmeticCombiningRules &other) const;
+    
     void combine(const QVector<CLJParameter> &clj0,
                  const QVector<CLJParameter> &clj1,
                  CLJPairMatrix &cljmatrix) const;
@@ -165,9 +166,6 @@ public:
 
     void combine(const QVector<LJParameter> &ljs,
                  LJPairMatrix &ljmatrix) const;
-
-protected:
-    bool _pvt_isEqual(const SireBase::PropertyBase &other) const;
 };
 
 /**
@@ -175,7 +173,9 @@ This class implements geometric combining rules
 
 @author Christopher Woods
 */
-class SIREMM_EXPORT GeometricCombiningRules : public CombiningRuleBase
+class SIREMM_EXPORT GeometricCombiningRules 
+         : public SireBase::ConcreteProperty<GeometricCombiningRules,
+                                             CombiningRuleBase>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const GeometricCombiningRules&);
@@ -192,16 +192,15 @@ public:
         return "SireMM::GeometricCombiningRules";
     }
 
-    const char* what() const
-    {
-        return GeometricCombiningRules::typeName();
-    }
+    using PropertyBase::operator=;
+    using PropertyBase::operator==;
+    using PropertyBase::operator!=;
 
-    GeometricCombiningRules* clone() const
-    {
-        return new GeometricCombiningRules(*this);
-    }
-
+    GeometricCombiningRules& operator=(const GeometricCombiningRules &other);
+    
+    bool operator==(const GeometricCombiningRules &other) const;
+    bool operator!=(const GeometricCombiningRules &other) const;
+    
     void combine(const QVector<CLJParameter> &clj0,
                  const QVector<CLJParameter> &clj1,
                  CLJPairMatrix &cljmatrix) const;
@@ -225,9 +224,6 @@ public:
 
     void combine(const QVector<LJParameter> &ljs,
                  LJPairMatrix &ljmatrix) const;
-
-protected:
-    bool _pvt_isEqual(const SireBase::PropertyBase &other) const;
 };
 
 /**

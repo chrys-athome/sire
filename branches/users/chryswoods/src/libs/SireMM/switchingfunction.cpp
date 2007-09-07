@@ -126,23 +126,36 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, NoCutoff &nocutoff)
 }
 
 /** Constructor */
-NoCutoff::NoCutoff() : SwitchFuncBase(std::numeric_limits<double>::max())
+NoCutoff::NoCutoff() 
+         : ConcreteProperty<NoCutoff,SwitchFuncBase>(std::numeric_limits<double>::max())
 {}
 
 /** Copy constructor */
 NoCutoff::NoCutoff(const NoCutoff &other)
-         : SwitchFuncBase(other)
+         : ConcreteProperty<NoCutoff,SwitchFuncBase>(other)
 {}
 
 /** Destructor */
 NoCutoff::~NoCutoff()
 {}
 
-/** Comparison function used by derived classes */
-bool NoCutoff::_pvt_isEqual(const PropertyBase &other) const
+/** Copy assignment operator */
+NoCutoff& NoCutoff::operator=(const NoCutoff &other)
 {
-    BOOST_ASSERT( other.isA<NoCutoff>() );
+    SwitchFuncBase::operator=(other);
+    return *this;
+}
+
+/** Comparison operator */
+bool NoCutoff::operator==(const NoCutoff&) const
+{
     return true;
+}
+
+/** Comparison operator */
+bool NoCutoff::operator!=(const NoCutoff&) const
+{
+    return false;
 }
 
 /** Return the scale factor for the electrostatic energies - this
@@ -223,18 +236,18 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
 
 /** Construct a null harmonic switching function (no cutoff) */
 HarmonicSwitchingFunction::HarmonicSwitchingFunction()
-                          : SwitchFuncBase(),
-                            cut_elec(cutdist), feather_elec(cutdist),
-                            cut_elec2(cutdist), norm_elec(0),
-                            cut_vdw(cutdist), feather_vdw(cutdist),
-                            cut_vdw2(cutdist), norm_vdw(0)
+    : ConcreteProperty<HarmonicSwitchingFunction,SwitchFuncBase>(),
+      cut_elec(cutdist), feather_elec(cutdist),
+      cut_elec2(cutdist), norm_elec(0),
+      cut_vdw(cutdist), feather_vdw(cutdist),
+      cut_vdw2(cutdist), norm_vdw(0)
 {}
 
 /** Construct an harmonic switching function which represents a hard
     cutoff of both the electrostatic and vdw interactions at a distance
     of 'cutoffdist' */
 HarmonicSwitchingFunction::HarmonicSwitchingFunction(double cutoffdist)
-                          : SwitchFuncBase(cutoffdist)
+     : ConcreteProperty<HarmonicSwitchingFunction,SwitchFuncBase>(cutoffdist)
 {
     this->set(cutdist,cutdist,cutdist,cutdist);
 }
@@ -245,7 +258,7 @@ HarmonicSwitchingFunction::HarmonicSwitchingFunction(double cutoffdist)
     then this represents a hard cutoff */
 HarmonicSwitchingFunction::HarmonicSwitchingFunction(double cutoffdist,
                                                      double featherdist)
-                          : SwitchFuncBase(cutoffdist)
+    : ConcreteProperty<HarmonicSwitchingFunction,SwitchFuncBase>(cutoffdist)
 {
     featherdist = qMin(cutdist, std::abs(featherdist));
 
@@ -262,7 +275,7 @@ HarmonicSwitchingFunction::HarmonicSwitchingFunction(double cutoffdist,
 HarmonicSwitchingFunction::HarmonicSwitchingFunction(double cutoffdist,
                                                      double elecfeather,
                                                      double vdwfeather)
-                          : SwitchFuncBase(cutoffdist)
+     : ConcreteProperty<HarmonicSwitchingFunction,SwitchFuncBase>(cutoffdist)
 {
     elecfeather = qMin(cutdist, std::abs(elecfeather));
     vdwfeather = qMin(cutdist, std::abs(vdwfeather));
@@ -281,7 +294,7 @@ HarmonicSwitchingFunction::HarmonicSwitchingFunction(double eleccutoff,
                                                      double elecfeather,
                                                      double vdwcutoff,
                                                      double vdwfeather)
-                          : SwitchFuncBase()
+    : ConcreteProperty<HarmonicSwitchingFunction,SwitchFuncBase>()
 {
     eleccutoff = std::abs(eleccutoff);
     vdwcutoff = std::abs(vdwcutoff);
@@ -297,26 +310,51 @@ HarmonicSwitchingFunction::HarmonicSwitchingFunction(double eleccutoff,
 /** Copy constructor */
 HarmonicSwitchingFunction::HarmonicSwitchingFunction(
                                 const HarmonicSwitchingFunction &other)
-                          : SwitchFuncBase(other),
-                            cut_elec(other.cut_elec), feather_elec(other.feather_elec),
-                            cut_elec2(other.cut_elec2), norm_elec(other.norm_elec),
-                            cut_vdw(other.cut_vdw), feather_vdw(other.feather_vdw),
-                            cut_vdw2(other.cut_vdw2), norm_vdw(other.norm_vdw)
+    : ConcreteProperty<HarmonicSwitchingFunction,SwitchFuncBase>(other),
+      cut_elec(other.cut_elec), feather_elec(other.feather_elec),
+      cut_elec2(other.cut_elec2), norm_elec(other.norm_elec),
+      cut_vdw(other.cut_vdw), feather_vdw(other.feather_vdw),
+      cut_vdw2(other.cut_vdw2), norm_vdw(other.norm_vdw)
 {}
 
 /** Destructor */
 HarmonicSwitchingFunction::~HarmonicSwitchingFunction()
 {}
 
-/** Comparison function used by derived classes */
-bool HarmonicSwitchingFunction::_pvt_isEqual(const PropertyBase &prop) const
+/** Copy assignment operator */
+HarmonicSwitchingFunction& HarmonicSwitchingFunction::operator=(
+                                                const HarmonicSwitchingFunction &other)
 {
-    BOOST_ASSERT( prop.isA<HarmonicSwitchingFunction>() );
-    
-    const HarmonicSwitchingFunction &other = prop.asA<HarmonicSwitchingFunction>();
-    
-    return cut_elec == other.cut_elec and cut_vdw == other.cut_vdw;
+    if (this != &other)
+    {
+        cut_elec = other.cut_elec;
+        feather_elec = other.feather_elec;
+        cut_elec2 = other.cut_elec2;
+        norm_elec = other.norm_elec;
+        cut_vdw = other.cut_vdw;
+        feather_vdw = other.feather_vdw;
+        cut_vdw2 = other.cut_vdw2;
+        norm_vdw = other.norm_vdw;
+        
+        SwitchFuncBase::operator=(other);
+    }
+
+    return *this;
 }
+
+/** Comparison operator */
+bool HarmonicSwitchingFunction::operator==(const HarmonicSwitchingFunction &other) const
+{
+    return this == &other or
+           (cut_elec == other.cut_elec and cut_vdw == other.cut_vdw);
+}
+
+/** Comparison operator */
+bool HarmonicSwitchingFunction::operator!=(const HarmonicSwitchingFunction &other) const
+{
+    return this != &other and
+           (cut_elec2 != other.cut_elec2 or cut_vdw != other.cut_vdw);
+}                                      
 
 /** Return the scale factor for the electrostatic interaction for the
     distance 'dist'. This returns;

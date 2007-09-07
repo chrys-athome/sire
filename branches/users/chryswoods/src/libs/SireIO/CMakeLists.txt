@@ -14,18 +14,18 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 set ( SIREIO_HEADERS
       iobase.h
       pdb.h
-      protoms.h
-      protomsws.h
-      psf.h
+#      protoms.h
+#      protomsws.h
+#      psf.h
     )
 
 # Define the sources in SireIO
 set ( SIREIO_SOURCES
       iobase.cpp
       pdb.cpp
-      protoms.cpp
-      protomsws.cpp
-      psf.cpp
+#      protoms.cpp
+#      protomsws.cpp
+#      psf.cpp
     
       ${SIREIO_HEADERS}
     )
@@ -39,7 +39,7 @@ set_target_properties (SireIO PROPERTIES
 
 # Link to other Sire libraries
 target_link_libraries (SireIO
-                       SireMM
+                       #SireMM
                        SireMol
                        )
 
