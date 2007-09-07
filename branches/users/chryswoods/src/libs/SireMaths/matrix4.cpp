@@ -124,7 +124,8 @@ Matrix4::~Matrix4()
 /** Return a QString representation of the matrix */
 QString Matrix4::toString() const
 {
-    return QObject::tr("( %1, %2, %3  %4 | %5, %6, %7  %8 | %9, %10, %11  %12 )")
+    return QObject::tr(
+        "( %1, %2, %3  %4 | %5, %6, %7  %8 | %9, %10, %11  %12 | %13, %14, %15, %16 )")
                           .arg(xx).arg(yx).arg(zx).arg(wx)
                           .arg(xy).arg(yy).arg(zy).arg(wy)
                           .arg(xz).arg(yz).arg(zz).arg(wz)

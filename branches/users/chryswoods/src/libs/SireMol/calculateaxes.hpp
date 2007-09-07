@@ -136,9 +136,14 @@ AxisSet SIREMOL_EXPORT calculateInertiaAxes(const T &atoms)
     return AxisSet(inertia_tensor,com);
 }    
 
-/** Return the AxisSet needed to align moveatoms against refatoms (minimise the RMSD). This uses the quaternion alignment algorithm presented by Simon K. Kearsley in Acta Cryst. A 45, pp208-210.
+/** Return the AxisSet needed to align moveatoms against refatoms (minimise the RMSD). 
+    This uses the quaternion alignment algorithm presented by Simon K. Kearsley 
+    in Acta Cryst. A 45, pp208-210.
 
-This function aligns atom 'i' in moveatom against atom 'i' in refatom. If there are more atoms in moveatoms than in refatoms, then the extra atoms are ignored. If there are less atoms in moveatoms compared to refatoms then the extra atoms in refatoms are ignored. 
+    This function aligns atom 'i' in moveatom against atom 'i' in refatom. If there are
+    more atoms in moveatoms than in refatoms, then the extra atoms are ignored. If 
+    there are less atoms in moveatoms compared to refatoms then the extra atoms in 
+    refatoms are ignored. 
  */
 template<class S, class T>
 SIRE_OUTOFLINE_TEMPLATE
