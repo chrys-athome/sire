@@ -18,13 +18,13 @@ set ( SIREUNITTEST_SOURCES
       testcomplex.cpp
       testcoordgroup.cpp
       testcutgroup.cpp
-      testffdb.cpp
-      testforcefields.cpp
-      testharmonicff.cpp
-      testmatch.cpp
+      #testffdb.cpp
+      #testforcefields.cpp
+      #testharmonicff.cpp
+      #testmatch.cpp
       testperiodicbox.cpp
       testpropertyextractor.cpp
-      testsampler.cpp
+      #testsampler.cpp
       testsharedpolypointer.cpp
       testsirecas.cpp
       testunits.cpp
@@ -71,14 +71,17 @@ set_target_properties (SireUnitTest PROPERTIES
 
 # Link to other Sire libraries
 target_link_libraries (SireUnitTest
+                  #     SireIO
+                  #     SireMove
+                  #     SireMM
                        SireIO
-                       SireMove
-                       SireMM
+                       SireMol
+                       SireVol
                        SireCAS
                        SireBase
                        SireUnits
                        ${OPTIONAL_LIBRARIES}
-                       ${BOOST_UNITTEST_LIBRARY}
+                       ${BOOST_UNIT_TEST_FRAMEWORK_LIBRARY}
                        )
 
 # installation

@@ -14,6 +14,7 @@ set ( SIREMOL_HEADERS
       angle.h
       angleset.h
       atom.h
+      atomaliases.h
       atomcutting.h
       atomicproperties.h
       atomid.h
@@ -89,6 +90,7 @@ set ( SIREMOL_HEADERS
 set ( SIREMOL_SOURCES
       angle.cpp
       atom.cpp
+      atomaliases.cpp
       newatom.cpp
       atomicproperties.cpp
       atomcutting.cpp

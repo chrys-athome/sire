@@ -108,13 +108,27 @@ namespace SireBase
     *not* designed for numerical computation - it is merely to be
     used to efficiently hold a sparse matrix of objects.
 
+    Note that this matrix is *always* a 2^32 by 2^32 square 
+    matrix - it is just that the vast majority of it has
+    the default value.
+    
+    The matrix can be set to be symmetric, meaning that 
+    the value at (i,j) is constrained to be equal to the 
+    value at (j,i) - this means that setting (i,j) equal to
+    'x' also sets the value of (j,i) equal to 'x'.
+    
+    It is *very* fast to take the transpose of this matrix - the
+    implementation is such that taking the transpose just 
+    involves setting a flag.
+    
     @author Christopher Woods
 */
 template<class T>
 class SIREBASE_EXPORT SparseMatrix
 {
 public:
-    SparseMatrix(const T &default_value = T());
+    SparseMatrix(const T &default_value = T(), 
+                 bool is_symmetric=false);
 
     SparseMatrix(const SparseMatrix<T> &other);
 
@@ -122,16 +136,33 @@ public:
 
     SparseMatrix<T>& operator=(const SparseMatrix<T> &other);
 
+    bool operator==(const SparseMatrix<T> &other) const;
+    bool operator!=(const SparseMatrix<T> &other) const;
+    
     const T& operator()(quint32 i, quint32 j) const;
 
     void set(quint32 i, quint32 j, const T &value);
     const T& get(quint32 i, quint32 j) const;
 
     bool isEmpty() const;
+    bool isSymmetric() const;
 
     const T& defaultValue() const;
 
+    SparseMatrix<T> transpose() const;
+    
 private:
+    /** Possible state of the sparse matrix */
+    enum MATRIX_STATE
+    {
+        NORMAL,     //normal matrix
+        TRANSPOSE,  //the transpose of the matrix is stored
+        SYMMETRIC   //this is a symmetrix matrix
+    }
+    
+    /** The state of this matrix */
+    MATRIX_STATE current_state;
+    
     /** The default value of each element of the matrix */
     T def;
 
@@ -142,14 +173,19 @@ private:
 /** Construct an empty sparse matrix */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-SparseMatrix<T>::SparseMatrix(const T &default_value) : def(default_value)
-{}
+SparseMatrix<T>::SparseMatrix(const T &default_value,
+                              bool is_symmetric) 
+                : current_state(NORMAL), def(default_value)
+{
+    if (is_symmetric)
+        current_state = SYMMETRIC;
+}
 
 /** Copy constructor */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 SparseMatrix<T>::SparseMatrix(const SparseMatrix<T> &other)
-                : def(other.def), data(other.data)
+                : current_state(other.current_state), def(other.def), data(other.data)
 {}
 
 /** Destructor */
@@ -163,19 +199,53 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 SparseMatrix<T>& SparseMatrix<T>::operator=(const SparseMatrix<T> &other)
 {
-    data = other.data;
-    def = other.def;
+    if (this != &other)
+    {
+        data = other.data;
+        def = other.def;
+        current_state = other.current_state;        
+    }
 
     return *this;
+}
+
+/** Comparison operator */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool SparseMatrix<T>::operator==(const SparseMatrix<T> &other) const
+{
+    return current_state == other.current_state and
+           def == other.def and
+           data == other.data;
+}
+
+/** Comparison operator */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool SparseMatrix<T>::operator!=(const SparseMatrix<T> &other) const
+{
+    return current_state != other.current_state or
+           def != other.def or
+           data != other.data;
 }
 
 /** Return the element at index (i,j) - this returns the default
     constructed value if there is no element at this index */
 template<class T>
-SIRE_INLINE_TEMPLATE
+SIRE_OUTOFLINE_TEMPLATE
 const T& SparseMatrix<T>::operator()(quint32 i, quint32 j) const
 {
-    detail::Index idx(i,j);
+    detail::Index idx;
+    
+    if ( current_state == TRANSPOSE or
+         (current_state == SYMMETRIC and j < i) )
+    {
+        idx = detail::Index(j,i);
+    }
+    else
+    {
+        idx = detail::Index(i,j);
+    }
 
     typename QHash<detail::Index,T>::const_iterator it = data.constFind(idx);
 
@@ -190,10 +260,22 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 void SparseMatrix<T>::set(quint32 i, quint32 j, const T &value)
 {
-    if (value == def)
-        data.remove( detail::Index(i,j) );
+    detail::Index idx;
+    
+    if ( current_state == TRANSPOSE or
+         (current_state == SYMMETRIC and j < i) )
+    {
+        idx = detail::Index(j,i);
+    }
     else
-        data.insert( detail::Index(i,j) ,value );
+    {
+        idx = detail::Index(i,j);
+    }
+    
+    if (value == def)
+        data.remove(idx);
+    else
+        data.insert( idx, value );
 }
 
 /** Return the element at index (i,j) - this returns the default
@@ -212,6 +294,44 @@ SIRE_INLINE_TEMPLATE
 bool SparseMatrix<T>::isEmpty() const
 {
     return data.isEmpty();
+}
+
+/** Return whether or not this matrix is symmetric */
+template<class T>
+SIRE_INLINE_TEMPLATE
+bool SparseMatrix<T>::isSymmetric() const
+{
+    return current_state == SYMMETRIC;
+}
+
+/** Return the default value of this sparse matrix */
+template<class T>
+SIRE_INLINE_TEMPLATE
+const T& SparseMatrix<T>::defaultValue() const
+{
+    return def;
+}
+
+/** Return the transpose of this matrix */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+SparseMatrix<T> SparseMatrix<T>::transpose() const
+{
+    SparseMatrix<T> ret(*this);
+    
+    switch( this->current_state )
+    {
+        case NORMAL:
+            ret.current_state = TRANSPOSE;
+            break;
+        case TRANSPOSE:
+            ret.current_state = NORMAL;
+            break;
+        case SYMMETRIC:
+            break;
+    }
+    
+    return ret;
 }
 
 }

@@ -26,6 +26,7 @@ set_target_properties (siretest PROPERTIES
 # Link to other Sire libraries
 target_link_libraries (siretest
                        SireUnitTest
+                       SireTest
                       )
 
 # installation

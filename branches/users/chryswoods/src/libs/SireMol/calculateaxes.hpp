@@ -186,7 +186,7 @@ AxisSet SIREMOL_EXPORT calculateAlignmentAxes(const S &moveatoms, const T &refat
                          m.x()*p.z()-p.x()*m.z(), p.x()*m.y()-m.x()*p.y(),
                          
                          p.y()*m.z()-m.y()*p.z(), p.y()*p.y()+p.z()*p.z()+m.x()*m.x(),
-                         m.x()*m.y()-p.x()*p.y(), m.x()*m.x()-p.x()*p.z(),
+                         m.x()*m.y()-p.x()*p.y(), m.x()*m.z()-p.x()*p.z(),
                          
                          m.x()*p.z()-p.x()*m.z(), m.x()*m.y()-p.x()*p.y(),
                          p.x()*p.x()+p.z()*p.z()*m.y()*m.y(), m.y()*m.z()-p.y()*p.z(),

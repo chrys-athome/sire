@@ -141,36 +141,30 @@ include( FindQt4 )
 set( QT_QTCORE_LIBRARY ${QT_QTCORE_LIBRARY} ${QT_CORE_LIB_DEPENDENCIES} )
 set( QT_QTGUI_LIBRARY ${QT_QTGUI_LIBRARY} ${QT_GUI_LIB_DEPENDENCIES} )
 
-IF(NOT APPLE)
+# Sire depends on >= Python 2.2
+set( PYTHON_REQUIRE_MAJOR 2 )
+set( PYTHON_REQUIRE_MINOR 2 )
+include( FindPython )
 
-   # Sire depends on >= Python 2.2
-   set( PYTHON_REQUIRE_MAJOR 2 )
-   set( PYTHON_REQUIRE_MINOR 2 )
-   include( FindPython )
-
+if( NOT APPLE )
    # Use the python interpreter to get the link options, version and install
    # directory - simplify by using the python script in the build directory
    set (PYTHON_CONFIG ${CMAKE_SOURCE_DIR}/build/python-config)
 
    # get the link flags for the shared library
    exec_program ( ${PYTHON_EXECUTABLE}
-                  ARGS "${PYTHON_CONFIG} --lflags"
+                  ARGS "${PYTHON_CONFIG} --ldflags"
                   OUTPUT_VARIABLE PYTHON_LIBRARY
                 )
 
    # get the include directories
    exec_program ( ${PYTHON_EXECUTABLE}
-                  ARGS "${PYTHON_CONFIG} --cflags"
+                  ARGS "${PYTHON_CONFIG} --includes"
                   OUTPUT_VARIABLE PYTHON_INCLUDE_DIR
                 )
 
    # get the path to the python site files (excluding the prefix)
    set( PYTHON_SITE_DIR "lib/python${PYTHON_MAJOR_VERSION}.${PYTHON_MINOR_VERSION}/site-packages" )
-
-   message( STATUS "Python paths ${PYTHON_LIBRARY} | ${PYTHON_INCLUDE_DIR} | ${PYTHON_SITE_DIR}" )
-
-   # set the location to install the python modules
-   set (SIRE_PYTHON "${PYTHON_SITE_DIR}")
 
 else()
 
@@ -179,14 +173,15 @@ else()
 
    # get the path to the python site files (excluding the prefix)
    set( PYTHON_SITE_DIR "lib/python${PYTHON_MAJOR_VERSION}.${PYTHON_MINOR_VERSION}/site-packages" )
-
    set( PYTHON_INCLUDE_DIR ${PYTHON_INCLUDE_PATH} )
-
-   message( STATUS "Python paths ${PYTHON_LIBRARY} | ${PYTHON_INCLUDE_DIR} | ${PYTHON_SITE_DIR}" )
-  
    set (SIRE_PYTHON "${PYTHON_SITE_DIR}")
 
 endif()
+
+message( STATUS "Python paths ${PYTHON_LIBRARY} | ${PYTHON_INCLUDE_DIR} | ${PYTHON_SITE_DIR}" )
+
+# set the location to install the python modules
+set (SIRE_PYTHON "${PYTHON_SITE_DIR}")
 
 # Sire depends on >= boost 1.31
 set (BOOST_FIND_REQUIRED TRUE)
@@ -203,7 +198,7 @@ if (UNIX)
                          "boost_python.so or boost_python.dylib, "
                          "not ${BOOST_PYTHON_LIBRARY})" )
 
-  endif ()
+  endif()
 endif()
 
 message( STATUS "Boost python library = ${BOOST_PYTHON_LIBRARY}" )
@@ -224,16 +219,24 @@ include_directories( ${QT_INCLUDE_DIR}
 add_definitions( ${QT_DEFINITIONS} )
 
 # Set compile flags for debug and release
-set( SIRE_C_FLAGS_RELEASE "-Wall -O2" )
+
+set( SIRE_PLATFORM_OPTIONS "" )
+
+if(APPLE)
+   set( SIRE_PLATFORM_OPTIONS 
+       "-arch i386 -Wno-long-double -no-cpp-precomp -mno-fused-madd -fno-common" )
+endif()
+
+set( SIRE_C_FLAGS_RELEASE "-Wall -O2 ${SIRE_PLATFORM_OPTIONS}" )
 set( SIRE_CXX_FLAGS_RELEASE ${SIRE_C_FLAGS_RELEASE} )
 
-set( SIRE_C_FLAGS_DEBUG "-Wall -g -O2" )
+set( SIRE_C_FLAGS_DEBUG "-Wall -g -O2 ${SIRE_PLATFORM_OPTIONS}" )
 set( SIRE_CXX_FLAGS_DEBUG ${SIRE_C_FLAGS_DEBUG} )
 
 # Also set flags for size-optimised compile - this is used for
 # all of the python wrappers, which can grow to enormous sizes 
 # otherwise! (and aren't performance critical)
-set( SIRE_C_FLAGS_SMALL "-Wall -Os" )
+set( SIRE_C_FLAGS_SMALL "-Wall -Os ${SIRE_PLATFORM_OPTIONS}" )
 set( SIRE_CXX_FLAGS_SMALL ${SIRE_C_FLAGS_SMALL} )
 
 # Add compiler specific flags
@@ -298,6 +301,8 @@ endif()
 set( CMAKE_C_FLAGS ${SIRE_C_FLAGS_RELEASE} )
 set( CMAKE_CXX_FLAGS ${SIRE_CXX_FLAGS_RELEASE} )
 
+message( STATUS "Compiler flags = ${SIRE_CXX_FLAGS_RELEASE}" )
+
 # Ensure that the libraries don't contain any undefined symbols
 if(APPLE)
   set( SIRE_LINK_FLAGS "-Wl" )
@@ -310,5 +315,5 @@ set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${SIRE_LINK_FLAGS}"
 
 # Recurse into the src/libs and src/apps subdirectories
 add_subdirectory (src/libs)
-#add_subdirectory (src/apps)
+add_subdirectory (src/apps)
 

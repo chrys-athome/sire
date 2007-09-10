@@ -78,5 +78,8 @@ void RunTests::run()
     int ms = t.elapsed();
     
     qDebug() << QObject::tr("a = %1, ms = %2").arg(a).arg(ms);
+
+    //temporary testing of structural alignment...
+    
 }
 

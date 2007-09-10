@@ -33,6 +33,7 @@
 #include <QHash>
 
 #include "atomindex.h"
+#include "atomaliases.h"
 #include "moleculeview.h"
 
 #include "SireUnits/dimensions.h"
@@ -289,6 +290,12 @@ public:
     MoleculeMover set(const Improper &improper, SireUnits::Dimension::Angle ang,
                       const WeightFunction &func,
                       const QSet<AtomIndex> &anchors = QSet<AtomIndex>()) const;
+
+    MoleculeMover align(const MolDataView &other,
+                        const AtomAliases &aliases = AtomAliases()) const;
+    MoleculeMover align(const MolDataView &other,
+                        const AtomSelection &selected_atoms,
+                        const AtomAliases &aliases = AtomAliases()) const;
 };
 
 }

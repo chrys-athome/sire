@@ -46,10 +46,6 @@ class MoleculeInfo;
     the Molecule class can expose only a single function,
     thereby preventing an explosion of over-ridden functions.
 
-    This class is designed to be used only by functions
-    of Molecule and MoleculeView, and is not safe for
-    use by any other class.
-
     @author Christopher Woods
 */
 class SIREMOL_EXPORT IDMolAtom
