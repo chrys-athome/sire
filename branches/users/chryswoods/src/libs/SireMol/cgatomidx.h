@@ -1,0 +1,147 @@
+/********************************************\
+  *
+  *  Sire - Molecular Simulation Framework
+  *
+  *  Copyright (C) 2007  Christopher Woods
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+  *  the Free Software Foundation; either version 2 of the License, or
+  *  (at your option) any later version.
+  *
+  *  This program is distributed in the hope that it will be useful,
+  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  *  GNU General Public License for more details.
+  *
+  *  You should have received a copy of the GNU General Public License
+  *  along with this program; if not, write to the Free Software
+  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  *
+  *  For full details of the license please see the COPYING file
+  *  that should have come with this distribution.
+  *
+  *  You can contact the authors via the developer's mailing list
+  *  at http://siremol.org
+  *
+\*********************************************/
+
+#ifndef SIREMOL_CGATOMIDX_H
+#define SIREMOL_CGATOMIDX_H
+
+#include "cutgroupidx.h"
+#include "atomidx.h"
+
+#include <boost/tuple/tuple.hpp>
+
+SIRE_BEGIN_HEADER
+
+namespace SireMol
+{
+class CGAtomIdx;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMol::CGAtomIdx&);
+QDataStream& operator>>(QDataStream&, SireMol::CGAtomIdx&);
+
+namespace SireMol
+{
+
+/** This is the basic type used to ID atoms within a molecule. This
+    provides the fastest way of indexing atoms and is the base
+    type that all other AtomID classes map to.
+    
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT CGAtomIdx : public AtomID
+{
+public:
+    CGAtomIdx()
+    {}
+    
+    CGAtomIdx(const CutGroupIdx &cgidx, const AtomIdx &atomidx)
+          : _cgidx(cgidx), _atomidx(atomidx)
+    {}
+    
+    CGAtomIdx(const boost::tuple<CutGroupIdx,AtomIdx> &pair)
+          : _cgidx(pair.get<0>()), _atomidx(pair.get<1>())
+    {}
+    
+    CGAtomIdx(const CGAtomIdx &other)
+          : _cgidx(other._cgidx), _atomidx(other._atomidx)
+    {}
+    
+    ~CGAtomIdx()
+    {}
+    
+    static const char* typeName()
+    {
+        return "SireMol::CGAtomIdx";
+    }
+    
+    const char* what() const
+    {
+        return CGAtomIdx::typeName();
+    }
+    
+    CGAtomIdx* clone() const
+    {
+        return new CGAtomIdx(*this);
+    }
+    
+    uint hash() const
+    {
+        return (qHash(_cgid) << 16) | (qHash(_atmid) & 0x0000FFFF);
+    }
+    
+    QString toString() const
+    {
+        return QString("{%1,%2}").arg(_cgid.toString(), _atmid.toString());
+    }
+    
+    CGAtomIdx& operator=(const CGAtomIdx &other)
+    {
+        _cgid = other._cgid;
+        _atmid = other._atmid;
+        
+        AtomID::operator=(other);
+        
+        return *this;
+    }
+    
+    bool operator==(const SireID::ID &other) const
+    {
+        return SireID::compare<CGAtomIdx>(*this, other);
+    }
+    
+    bool operator==(const CGAtomIdx &other) const
+    {
+        return _cgidx == other._cgidx and _atmidx == other._atmidx;
+    }
+    
+    bool operator!=(const CGAtomIdx &other) const
+    {
+        return _cgidx != other._cgidx or _atmidx != other._atmidx;
+    }
+    
+    CGAtomIdx map(const MoleculeInfo&) const
+    {
+        return *this;
+    }
+    
+private:
+    /** The index of the CutGroup that contains the atom */
+    CutGroupIdx _cgidx;
+    
+    /** The index of the atom within the CutGroup */
+    AtomIdx _atmidx;
+};
+
+}
+
+Q_DECLARE_TYPEINFO(SireMol::CGAtomIdx, Q_MOVABLE_TYPE);
+Q_DECLARE_METATYPE(SireMol::CGAtomIdx);
+
+SIRE_END_HEADER
+
+#endif

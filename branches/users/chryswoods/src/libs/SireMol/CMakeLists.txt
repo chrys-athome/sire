@@ -18,10 +18,13 @@ set ( SIREMOL_HEADERS
       atomcutting.h
       atomicproperties.h
       atomid.h
+      atomidcombo.hpp
+      atomidx.h
       atomidgroup.h
       atomindex.h
       atominfo.h
       atominfogroup.h
+      atomname.h
       atomnum.h
       atomselection.h
       atomselector.h
@@ -29,6 +32,7 @@ set ( SIREMOL_HEADERS
       bondaddingfunction.h
       calculateaxes.hpp
       cgatomid.h
+      cgatomidx.h
       cgnumatomid.h
       cutgroup.h
       cutgroupid.h

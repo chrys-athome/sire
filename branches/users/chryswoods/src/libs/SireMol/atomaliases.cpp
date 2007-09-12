@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2006  Christopher Woods
+  *  Copyright (C) 2007  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,43 +26,3 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_ATOMID_H
-#define SIREMOL_ATOMID_H
-
-#include "SireID/id.h"
-
-SIRE_BEGIN_HEADER
-
-namespace SireMol
-{
-
-class MoleculeInfo;
-
-/** This is the base class of all identifiers that are used 
-    to identify an atom
-
-    @author Christopher Woods
-*/
-class SIREMOL_EXPORT AtomID : public SireID::ID
-{
-
-public:
-    AtomID() : SireID::ID()
-    {}
-
-    AtomID(const AtomID &other) : SireID::ID(other)
-    {}
-
-    ~AtomID()
-    {}
-
-    /** Map this ID back to the CGAtomIdx of the atom in the molecule, 
-        using the passed MoleculeInfo to do the mapping */
-    virtual CGAtomIdx map(const MoleculeInfo &molinfo) const=0;
-};
-
-}
-
-SIRE_END_HEADER
-
-#endif

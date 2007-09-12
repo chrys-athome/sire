@@ -76,6 +76,12 @@ public:
     {
         return Derived::typeName();
     }
+
+    Derived& operator+=(int val)
+    {
+        cout << typeid(*this).name() << " increment " << val << endl;
+        return static_cast<Derived&>(*this);
+    }
     
     Leaf<Derived,Base>* clone() const
     {
@@ -286,6 +292,11 @@ int main(void)
     
     cout << (d2 == d0) << endl;
     cout << (d2 != d0) << endl;
+    
+    d0 += 1;
+    (d1 += 5) += 8;
+    d2 += 3;
+    d3 += 9;
     
     return 0;
 }

@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2006  Christopher Woods
+  *  Copyright (C) 2007  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,10 +26,12 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_ATOMNUM_H
-#define SIREMOL_ATOMNUM_H
+#ifndef SIREMOL_ATOMIDX_H
+#define SIREMOL_ATOMIDX_H
 
-#include "id.h"
+#include "SireID/index.h"
+
+#include "atomid.h"
 
 SIRE_BEGIN_HEADER
 
@@ -40,92 +42,89 @@ class CutGroupID;
 class ResidueID;
 class SegmentID;
 
-/** This ID number is used to identify an atom by the user-supplied
-    atom number (this is typically the number assigned to the
-    atom from the PDB or other coordinate file)
-
-    Be careful not to confuse this with AtomID, which is the
-    index of the atom in the residue or CutGroup (e.g. the
-    fifth atom in the residue would have AtomID '4' but has
-    whatever AtomNum the user supplied.
+/** This is an ID object that is used to index atoms (e.g. index
+    in a list or array, or in a molecule).
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT AtomNum : public SireID::Number, public AtomID
+class SIREMOL_EXPORT AtomIdx 
+       : public SireID::Index_T_<AtomIdx>, public AtomID
 {
-
 public:
-    AtomNum() : SireID::Number(), AtomID()
+    AtomIdx() : SireID::Index_T_<AtomIdx>(), AtomID()
     {}
-
-    explicit AtomNum(quint32 num) : SireID::Number(num), AtomID()
+    
+    explicit AtomIdx(quint32 idx) 
+              : SireID::Index_T_<AtomIdx>(idx), AtomID()
     {}
-
-    AtomNum(const AtomNum &other) : SireID::Number(other), AtomID(other)
+    
+    AtomIdx(const AtomIdx &other) 
+              : SireID::Index_T<AtomIdx>(other), AtomID(other)
     {}
-
-    ~AtomNum()
+    
+    ~AtomIdx()
     {}
     
     static const char* typeName()
     {
-        return "SireMol::AtomNum";
+        return "SireMol::AtomIdx";
     }
     
     const char* what() const
     {
-        return AtomNum::typeName();
+        return AtomIdx::typeName();
     }
     
-    AtomNum* clone() const
+    AtomIdx* clone() const
     {
-        return new AtomNum(*this);
+        return new AtomIdx(*this);
     }
     
     uint hash() const
     {
-        return qHash( static_cast<const SireID::Number&>(*this) );
+        return qHash( static_cast<const SireID::Index&>(*this) );
     }
-    
+
     QString toString() const
     {
-        return QString("AtomNum(%1)").arg(_num);
+        return QString("AtomID(%1)").arg(_idx);
     }
     
-    AtomNum& operator=(const AtomNum &other)
+    AtomIdx& operator=(const AtomIdx &other)
     {
-        SireID::Number::operator=(other);
+        SireID::Index::operator=(other);
         SireID::ID::operator=(other);
         return *this;
     }
     
     bool operator==(const SireID::ID &other) const
     {
-        return SireID::ID::compare<AtomNum>(*this, other);
-    }
-
-    bool operator==(const AtomNum &other) const
-    {
-        return _num == other._num;
+        return SireID::ID::compare<AtomIdx>(*this, other);
     }
     
-    bool operator!=(const AtomNum &other) const
-    {
-        return _num != other._num;
-    }
+    using SireID::Index_T_<AtomIdx>::operator=;
 
+    using SireID::Index_T_<AtomIdx>::operator==;
+    using SireID::Index_T_<AtomIdx>::operator!=;
+
+    using SireID::Index_T_<AtomIdx>::operator+=;
+    using SireID::Index_T_<AtomIdx>::operator++;
+    using SireID::Index_T_<AtomIdx>::operator-=;
+    using SireID::Index_T_<AtomIdx>::operator--;
+    
     CGAtomIdx map(const MoleculeInfo &molinfo) const;
 
     CGAtomIdx map(const MoleculeInfo &molinfo, const ResidueID &resid) const;
     CGAtomIdx map(const MoleculeInfo &molinfo, const CutGroupID &cgid) const;
     CGAtomIdx map(const MoleculeInfo &molinfo, const SegmentID &segid) const;
 };
-
+    
 }
 
-Q_DECLARE_TYPEINFO(SireMol::AtomNum, Q_MOVABLE_TYPE);
-Q_DECLARE_METATYPE(SireMol::AtomNum);
+Q_DECLARE_TYPEINFO(SireMol::AtomIdx, Q_MOVABLE_TYPE);
+Q_DECLARE_METATYPE(SireMol::AtomIdx);
 
 SIRE_END_HEADER
 
 #endif
+

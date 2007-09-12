@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2006  Christopher Woods
+  *  Copyright (C) 2007  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,92 +26,92 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_ATOMNUM_H
-#define SIREMOL_ATOMNUM_H
+#ifndef SIREMOL_ATOMNAME_H
+#define SIREMOL_ATOMNAME_H
 
-#include "id.h"
+#include "SireID/name.h"
+
+#include "atomid.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
+class AtomName;
+}
 
-class CutGroupID;
-class ResidueID;
-class SegmentID;
-
-/** This ID number is used to identify an atom by the user-supplied
-    atom number (this is typically the number assigned to the
-    atom from the PDB or other coordinate file)
-
-    Be careful not to confuse this with AtomID, which is the
-    index of the atom in the residue or CutGroup (e.g. the
-    fifth atom in the residue would have AtomID '4' but has
-    whatever AtomNum the user supplied.
-
-    @author Christopher Woods
-*/
-class SIREMOL_EXPORT AtomNum : public SireID::Number, public AtomID
+namespace SireMol
 {
 
+class ResidueID;
+class CutGroupID;
+class SegmentID;
+
+/** This class holds the name of an atom. This can be used
+    to identify an atom within a residue.
+    
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT AtomName : public SireID::Name, public AtomID
+{
 public:
-    AtomNum() : SireID::Number(), AtomID()
+    AtomName() : SireID::Name(), AtomID()
     {}
-
-    explicit AtomNum(quint32 num) : SireID::Number(num), AtomID()
+    
+    explicit AtomName(const QString &name) : SireID::Name(name), AtomID()
     {}
-
-    AtomNum(const AtomNum &other) : SireID::Number(other), AtomID(other)
+    
+    AtomName(const AtomName &other) : SireID::Name(other), AtomID(other)
     {}
-
-    ~AtomNum()
+    
+    ~AtomName()
     {}
     
     static const char* typeName()
     {
-        return "SireMol::AtomNum";
+        return "SireMol::AtomName";
     }
     
     const char* what() const
     {
-        return AtomNum::typeName();
+        return AtomName::typeName();
     }
     
-    AtomNum* clone() const
+    AtomName* clone() const
     {
-        return new AtomNum(*this);
+        return new AtomName(*this);
     }
     
     uint hash() const
     {
-        return qHash( static_cast<const SireID::Number&>(*this) );
+        return qHash(_name);
     }
     
     QString toString() const
     {
-        return QString("AtomNum(%1)").arg(_num);
+        return QString("AtomName('%1')").arg(_name);
     }
     
-    AtomNum& operator=(const AtomNum &other)
+    AtomName& operator=(const AtomName &other)
     {
-        SireID::Number::operator=(other);
-        SireID::ID::operator=(other);
+        SireID::Name::operator=(other);
+        AtomID::operator=(other);
         return *this;
     }
     
     bool operator==(const SireID::ID &other) const
     {
-        return SireID::ID::compare<AtomNum>(*this, other);
-    }
-
-    bool operator==(const AtomNum &other) const
-    {
-        return _num == other._num;
+        return SireID::ID::compare<AtomName>(*this, other);
     }
     
-    bool operator!=(const AtomNum &other) const
+    bool operator==(const AtomName &other) const
     {
-        return _num != other._num;
+        return _name == other._name;
+    }
+    
+    bool operator!=(const AtomName &other) const
+    {
+        return _name != other._name;
     }
 
     CGAtomIdx map(const MoleculeInfo &molinfo) const;
@@ -123,8 +123,7 @@ public:
 
 }
 
-Q_DECLARE_TYPEINFO(SireMol::AtomNum, Q_MOVABLE_TYPE);
-Q_DECLARE_METATYPE(SireMol::AtomNum);
+Q_DECLARE_METATYPE(SireMol::AtomName);
 
 SIRE_END_HEADER
 
