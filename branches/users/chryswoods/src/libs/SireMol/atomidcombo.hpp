@@ -163,6 +163,23 @@ private:
 
 }
 
+template<class A, class B>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator<<(QDataStream &ds, 
+                        const SireMol::AtomIDCombo<A,B> &atomid)
+{
+    ds << atomid._a << atomid._b;
+    return ds;
+}
+
+template<class A, class B>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator>>(QDataStream &ds, SireMol::AtomIDCombo<A,B> &atomid)
+{
+    ds >> atomid._a >> atomid._b;
+    return ds;
+}
+
 SIRE_END_HEADER
 
 #endif

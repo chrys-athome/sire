@@ -19,6 +19,7 @@ set ( SIREMOL_HEADERS
       atomicproperties.h
       atomid.h
       atomidcombo.hpp
+      atomidcombos.h
       atomidx.h
       atomidgroup.h
       atomindex.h
@@ -97,6 +98,7 @@ set ( SIREMOL_SOURCES
       atomaliases.cpp
       newatom.cpp
       atomicproperties.cpp
+      atomidcombos.cpp
       atomcutting.cpp
       atomidgroup.cpp
       atomindex.cpp
