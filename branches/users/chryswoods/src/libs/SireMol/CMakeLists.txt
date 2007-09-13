@@ -11,8 +11,6 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the headers in SireMol
 set ( SIREMOL_HEADERS
-      angle.h
-      angleset.h
       atom.h
       atomaliases.h
       atomcutting.h
@@ -20,109 +18,78 @@ set ( SIREMOL_HEADERS
       atomid.h
       atomidcombo.hpp
       atomidcombos.h
+      atomidentifier.h
       atomidx.h
-      atomidgroup.h
-      atomindex.h
       atominfo.h
       atominfogroup.h
       atomname.h
       atomnum.h
       atomselection.h
       atomselector.h
-      bond.h
-      bondaddingfunction.h
       calculateaxes.hpp
-      cgatomid.h
       cgatomidx.h
-      cgnumatomid.h
+      cgid.h
+      cgidentifier.h
+      cgidx.h
+      cgname.h
+      cgnum.h
       cutgroup.h
-      cutgroupid.h
-      cutgroupnum.h
       cuttingfunction.h
-      dihedral.h
-      editmol.h
-      editmoldata.h
-      editres.h
       element-data.h
       element.h
       elementdb.h
       errors.h
-      groupedvector.hpp
-      groupid.h
-      groupindexid.h
-      id.h
-      idmolatom.h
-      idtypes.h
-      improper.h
-      index.h
-      indexinfo.h
-      molcgatomid.h
-      molcutgroupid.h
       molecule.h
       moleculebonds.h
       moleculecutting.h
       moleculedata.h
       moleculegroup.h
-      moleculegroupid.h
       moleculegroups.h
-      moleculeid.h
       moleculeinfo.h
       moleculemover.h
       moleculeproperty.h
       molecules.h
       moleculeview.h
       moleculeview_inlines.h
-      newatom.h
       partialmolecule.h
       propertyextractor.h
       qhash_siremol.h
       resid.h
-      residatomid.h
+      residentifier.h
       residue.h
       residuebonds.h
       residuecutting.h
       residueinfo.h
+      residx.h
+      resname.h
       resnum.h
-      resnumatomid.h
-      resnumindexid.h
-      selectionfrommol.h
+      segid.h
+      segidentifier.h
+      segidx.h
+      segname.h
+      segnum.h
+      segment.h
       splitmolecule.h
-      templatefunction.h
       weightfunction.h
     )
 
 # Define the sources in SireMol
 set ( SIREMOL_SOURCES
-      angle.cpp
       atom.cpp
       atomaliases.cpp
-      newatom.cpp
       atomicproperties.cpp
       atomidcombos.cpp
+      atomidentifier.cpp
       atomcutting.cpp
-      atomidgroup.cpp
-      atomindex.cpp
       atominfo.cpp
       atominfogroup.cpp
       atomselection.cpp
       atomselector.cpp
-      bond.cpp
-      cgatomid.cpp
-      cgnumatomid.cpp
+      cgidentifier.cpp
       cutgroup.cpp
       cuttingfunction.cpp
-      dihedral.cpp
-      editmol.cpp
-      editmoldata.cpp
-      editres.cpp
       elementdb.cpp
       errors.cpp
-      groupindexid.cpp
-      idmolatom.cpp
-      improper.cpp
-      indexinfo.cpp
-      molcgatomid.cpp
-      molcutgroupid.cpp
       molecule.cpp
       moleculebonds.cpp
       moleculecutting.cpp
@@ -136,14 +103,13 @@ set ( SIREMOL_SOURCES
       moleculeview.cpp
       partialmolecule.cpp
       propertyextractor.cpp
-      residatomid.cpp
+      residentifier.cpp
       residue.cpp
       residuebonds.cpp
       residuecutting.cpp
       residueinfo.cpp
-      resnumatomid.cpp
-      resnumindexid.cpp
-      selectionfrommol.cpp
+      segidentifier.cpp
+      segment.cpp
       splitmolecule.cpp
       weightfunction.cpp
     

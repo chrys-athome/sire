@@ -37,6 +37,11 @@ namespace SireMol
 {
 
 class MoleculeInfo;
+class ResID;
+class SegID;
+class CGID;
+
+class CGAtomIdx;
 
 /** This is the base class of all identifiers that are used 
     to identify an atom
@@ -45,7 +50,6 @@ class MoleculeInfo;
 */
 class SIREMOL_EXPORT AtomID : public SireID::ID
 {
-
 public:
     AtomID() : SireID::ID()
     {}
@@ -56,9 +60,47 @@ public:
     ~AtomID()
     {}
 
+    virtual AtomID* clone() const=0;
+
     /** Map this ID back to the CGAtomIdx of the atom in the molecule, 
         using the passed MoleculeInfo to do the mapping */
     virtual CGAtomIdx map(const MoleculeInfo &molinfo) const=0;
+};
+
+/** This is the base class of all identifiers that are
+    used to identify an Atom *only* - i.e. IDs that refer to
+    the atom in a group, but don't contain information about the
+    group, so AtomIdx, AtomNum and AtomName, but not 
+    CGAtomIdx or any of the other AtomIDCombo IDs 
+    
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT AtomOnlyID : public AtomID
+{
+public:
+    AtomOnlyID() : AtomID()
+    {}
+    
+    AtomOnlyID(const AtomOnlyID &other) : AtomID(other)
+    {}
+    
+    ~AtomOnlyID()
+    {}
+    
+    virtual AtomOnlyID* clone() const=0;
+    
+    /** Map this ID to the CGAtomIdx of the atom in residue identified by
+        'resid' in the molecule described by 'molinfo' */
+    virtual CGAtomIdx map(const MoleculeInfo &molinfo, const ResID &resid) const=0;
+
+    /** Map this ID to the CGAtomIdx of the atom in CutGroup identified by
+        'cgid' in the molecule described by 'molinfo' */
+    virtual CGAtomIdx map(const MoleculeInfo &molinfo, const CGID &cgid) const=0;
+
+    /** Map this ID to the CGAtomIdx of the atom in segment identified by
+        'segid' in the molecule described by 'molinfo' */
+    virtual CGAtomIdx map(const MoleculeInfo &molinfo, const SegID &segid) const=0;
+    
 };
 
 }

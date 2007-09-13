@@ -29,16 +29,22 @@
 #ifndef SIREMOL_ATOMNUM_H
 #define SIREMOL_ATOMNUM_H
 
-#include "id.h"
+#include "atomid.h"
+
+#include "SireID/number.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
+class AtomNum;
+}
 
-class CutGroupID;
-class ResidueID;
-class SegmentID;
+XMLStream& operator<<(XMLStream&, const SireMol::AtomNum&);
+XMLStream& operator>>(XMLStream&, SireMol::AtomNum&);
+
+namespace SireMol
+{
 
 /** This ID number is used to identify an atom by the user-supplied
     atom number (this is typically the number assigned to the
@@ -53,6 +59,9 @@ class SegmentID;
 */
 class SIREMOL_EXPORT AtomNum : public SireID::Number, public AtomID
 {
+
+friend XMLStream& ::operator<<(XMLStream&, const AtomNum&);
+friend XMLStream& ::operator>>(XMLStream&, AtomNum&);
 
 public:
     AtomNum() : SireID::Number(), AtomID()
@@ -95,7 +104,7 @@ public:
     AtomNum& operator=(const AtomNum &other)
     {
         SireID::Number::operator=(other);
-        SireID::ID::operator=(other);
+        AtomOnlyID::operator=(other);
         return *this;
     }
     
@@ -116,9 +125,9 @@ public:
 
     CGAtomIdx map(const MoleculeInfo &molinfo) const;
 
-    CGAtomIdx map(const MoleculeInfo &molinfo, const ResidueID &resid) const;
-    CGAtomIdx map(const MoleculeInfo &molinfo, const CutGroupID &cgid) const;
-    CGAtomIdx map(const MoleculeInfo &molinfo, const SegmentID &segid) const;
+    CGAtomIdx map(const MoleculeInfo &molinfo, const ResID &resid) const;
+    CGAtomIdx map(const MoleculeInfo &molinfo, const CGID &cgid) const;
+    CGAtomIdx map(const MoleculeInfo &molinfo, const SegID &segid) const;
 };
 
 }

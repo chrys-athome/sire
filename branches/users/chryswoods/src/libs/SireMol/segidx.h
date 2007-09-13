@@ -26,66 +26,65 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_ATOMIDX_H
-#define SIREMOL_ATOMIDX_H
+#ifndef SIREMOL_SEGIDX_H
+#define SIREMOL_SEGIDX_H
 
 #include "SireID/index.h"
 
-#include "atomid.h"
+#include "SegID.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
-class AtomIdx;
+class SegIdx;
 }
 
-XMLStream& operator<<(XMLStream&, const SireMol::AtomIdx&);
-XMLStream& operator>>(XMLStream&, SireMol::AtomIdx&);
+XMLStream& operator<<(XMLStream&, const SireMol::SegIdx&);
+XMLStream& operator>>(XMLStream&, SireMol::SegIdx&);
 
 namespace SireMol
 {
 
-/** This is an ID object that is used to index atoms (e.g. index
-    in a list or array, or in a molecule).
+/** This is an ID object that is used to index CutGroups
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT AtomIdx 
-       : public SireID::Index_T_<AtomIdx>, public AtomOnlyID
+class SIREMOL_EXPORT SegIdx 
+       : public SireID::Index_T_<SegIdx>, public SegID
 {
 
-friend XMLStream& ::operator<<(XMLStream&, const AtomIdx&);
-friend XMLStream& ::operator>>(XMLStream&, AtomIdx&);
+friend XMLStream& ::operator<<(XMLStream&, const SegIdx&);
+friend XMLStream& ::operator>>(XMLStream&, SegIdx&);
 
 public:
-    AtomIdx() : SireID::Index_T_<AtomIdx>(), AtomOnlyID()
+    SegIdx() : SireID::Index_T_<SegIdx>(), SegID()
     {}
     
-    explicit AtomIdx(quint32 idx) 
-              : SireID::Index_T_<AtomIdx>(idx), AtomOnlyID()
+    explicit SegIdx(quint32 idx) 
+              : SireID::Index_T_<SegIdx>(idx), SegID()
     {}
     
-    AtomIdx(const AtomIdx &other) 
-              : SireID::Index_T<AtomIdx>(other), AtomOnlyID(other)
+    SegIdx(const SegIdx &other) 
+              : SireID::Index_T<SegIdx>(other), SegID(other)
     {}
     
-    ~AtomIdx()
+    ~SegIdx()
     {}
     
     static const char* typeName()
     {
-        return "SireMol::AtomIdx";
+        return "SireMol::SegIdx";
     }
     
     const char* what() const
     {
-        return AtomIdx::typeName();
+        return SegIdx::typeName();
     }
     
-    AtomIdx* clone() const
+    SegIdx* clone() const
     {
-        return new AtomIdx(*this);
+        return new SegIdx(*this);
     }
     
     uint hash() const
@@ -98,39 +97,35 @@ public:
         return QString("AtomID(%1)").arg(_idx);
     }
     
-    AtomIdx& operator=(const AtomIdx &other)
+    SegIdx& operator=(const SegIdx &other)
     {
         SireID::Index::operator=(other);
-        AtomOnlyID::operator=(other);
+        SegID::operator=(other);
         return *this;
     }
     
     bool operator==(const SireID::ID &other) const
     {
-        return SireID::ID::compare<AtomIdx>(*this, other);
+        return SireID::ID::compare<SegIdx>(*this, other);
     }
     
-    using SireID::Index_T_<AtomIdx>::operator=;
+    using SireID::Index_T_<SegIdx>::operator=;
 
-    using SireID::Index_T_<AtomIdx>::operator==;
-    using SireID::Index_T_<AtomIdx>::operator!=;
+    using SireID::Index_T_<SegIdx>::operator==;
+    using SireID::Index_T_<SegIdx>::operator!=;
 
-    using SireID::Index_T_<AtomIdx>::operator+=;
-    using SireID::Index_T_<AtomIdx>::operator++;
-    using SireID::Index_T_<AtomIdx>::operator-=;
-    using SireID::Index_T_<AtomIdx>::operator--;
+    using SireID::Index_T_<SegIdx>::operator+=;
+    using SireID::Index_T_<SegIdx>::operator++;
+    using SireID::Index_T_<SegIdx>::operator-=;
+    using SireID::Index_T_<SegIdx>::operator--;
     
-    CGAtomIdx map(const MoleculeInfo &molinfo) const;
-
-    CGAtomIdx map(const MoleculeInfo &molinfo, const ResID &resid) const;
-    CGAtomIdx map(const MoleculeInfo &molinfo, const CGID &cgid) const;
-    CGAtomIdx map(const MoleculeInfo &molinfo, const SegID &segid) const;
+    SegNum map(const MoleculeInfo &molinfo) const;
 };
     
 }
 
-Q_DECLARE_TYPEINFO(SireMol::AtomIdx, Q_MOVABLE_TYPE);
-Q_DECLARE_METATYPE(SireMol::AtomIdx);
+Q_DECLARE_TYPEINFO(SireMol::SegIdx, Q_MOVABLE_TYPE);
+Q_DECLARE_METATYPE(SireMol::SegIdx);
 
 SIRE_END_HEADER
 

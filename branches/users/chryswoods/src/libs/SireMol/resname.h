@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2006  Christopher Woods
+  *  Copyright (C) 2007  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,10 +26,10 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_RESNUM_H
-#define SIREMOL_RESNUM_H
+#ifndef SIREMOL_RESNAME_H
+#define SIREMOL_RESNAME_H
 
-#include "SireID/number.h"
+#include "SireID/name.h"
 
 #include "ResID.h"
 
@@ -37,97 +37,93 @@ SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
-class ResNum;
+class ResName;
 }
 
-XMLStream& operator<<(XMLStream&, const SireMol::ResNum&);
-XMLStream& operator>>(XMLStream&, SireMol::ResNum&);
+XMLStream& operator<<(XMLStream&, const SireMol::ResName&);
+XMLStream& operator>>(XMLStream&, SireMol::ResName&);
 
 namespace SireMol
 {
 
-/** This ID number is used to identify a CutGroup by the user-supplied
-    number
-
+/** This class holds the name of a CutGroup.
+    
     @author Christopher Woods
 */
-class SIREMOL_EXPORT ResNum : public SireID::Number, public ResID
+class SIREMOL_EXPORT ResName : public SireID::Name, public ResID
 {
 
-friend XMLStream& ::operator<<(XMLStream&, const ResNum&);
-friend XMLStream& ::operator>>(XMLStream&, ResNum&);
+friend XMLStream& ::operator<<(XMLStream&, const ResName&);
+friend XMLStream& ::operator>>(XMLStream&, ResName&);
 
 public:
-    ResNum() : SireID::Number(), ResID()
+    ResName() : SireID::Name(), ResID()
     {}
-
-    explicit ResNum(quint32 num) : SireID::Number(num), ResID()
+    
+    explicit ResName(const QString &name) : SireID::Name(name), ResID()
     {}
-
-    ResNum(const ResNum &other) : SireID::Number(other), ResID(other)
+    
+    ResName(const ResName &other) : SireID::Name(other), ResID(other)
     {}
-
-    ~ResNum()
+    
+    ~ResName()
     {}
     
     static const char* typeName()
     {
-        return "SireMol::ResNum";
+        return "SireMol::ResName";
     }
     
     const char* what() const
     {
-        return ResNum::typeName();
+        return ResName::typeName();
     }
     
-    ResNum* clone() const
+    ResName* clone() const
     {
-        return new ResNum(*this);
+        return new ResName(*this);
     }
     
     uint hash() const
     {
-        return qHash( static_cast<const SireID::Number&>(*this) );
+        return qHash(_name);
     }
     
     QString toString() const
     {
-        return QString("ResNum(%1)").arg(_num);
+        return QString("ResName('%1')").arg(_name);
     }
     
-    ResNum& operator=(const ResNum &other)
+    ResName& operator=(const ResName &other)
     {
-        SireID::Number::operator=(other);
+        SireID::Name::operator=(other);
         ResID::operator=(other);
         return *this;
     }
     
     bool operator==(const SireID::ID &other) const
     {
-        return SireID::ID::compare<ResNum>(*this, other);
-    }
-
-    bool operator==(const ResNum &other) const
-    {
-        return _num == other._num;
+        return SireID::ID::compare<ResName>(*this, other);
     }
     
-    bool operator!=(const ResNum &other) const
+    bool operator==(const ResName &other) const
     {
-        return _num != other._num;
+        return _name == other._name;
+    }
+    
+    bool operator!=(const ResName &other) const
+    {
+        return _name != other._name;
     }
 
-    ResNum map(const MoleculeInfo&) const
-    {
-        return *this;
-    }
+    ResNum map(const MoleculeInfo &molinfo) const;
 };
 
 }
 
-Q_DECLARE_TYPEINFO(SireMol::ResNum, Q_MOVABLE_TYPE);
-Q_DECLARE_METATYPE(SireMol::ResNum);
+Q_DECLARE_METATYPE(SireMol::ResName);
 
 SIRE_END_HEADER
 
 #endif
+

@@ -26,46 +26,46 @@
   *
 \*********************************************/
 
-#include "identifier.h"
+#ifndef SIREMOL_SEGID_H
+#define SIREMOL_SEGID_H
 
-#include "SireError/errors.h"
+#include "SireID/id.h"
 
-#include "SireStream/datastream.h"
+SIRE_BEGIN_HEADER
 
-using namespace SireID;
-using namespace SireID::detail;
-
-using namespace SireStream;
-
-void Identifier_T_Base::throwNullIDError() const
+namespace SireMol
 {
-    throw SireError::nullptr_error( QObject::tr(
-            "Cannot query a null Identifier!"), CODELOC );
+
+class MoleculeInfo;
+class SegIdx;
+
+/** This is the base class of all identifiers that are used 
+    to identify a Segment within a Molecule
+
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT SegID : public SireID::ID
+{
+
+public:
+    SegID() : SireID::ID()
+    {}
+
+    SegID(const SegID &other) : SireID::ID(other)
+    {}
+
+    ~SegID()
+    {}
+
+    virtual SegID* clone() const=0;
+
+    /** Map this ID back to the SegNum of the segment in the molecule, 
+        using the passed MoleculeInfo to do the mapping */
+    virtual SegIdx map(const MoleculeInfo &molinfo) const=0;
+};
+
 }
 
-void Identifier_T_Base::throwVersionError(VersionID v, 
-                                          const QString &supported_versions,
-                                          const RegisterMetaTypeBase &r_type) const
-{
-    throw SireError::version_error(v, vers, r_type, CODELOC);
-}
+SIRE_END_HEADER
 
-static const RegisterMetaType<Identifier> r_id;
-
-/** Serialise to a binary datastream */
-QDataStream SIREID_EXPORT &operator<<(QDataStream &ds, const Identifier &id)
-{
-    return id.save(ds, r_id);
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIREID_EXPORT &operator>>(QDataStream &ds, Identifier &id)
-{
-    return id.load(ds, r_id);
-}
-
-/** Return the hash of this ID */
-uint SIREID_EXPORT qHash(const Identifier &id)
-{
-    return id.hash();
-}
+#endif

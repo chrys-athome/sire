@@ -26,46 +26,31 @@
   *
 \*********************************************/
 
-#include "identifier.h"
-
-#include "SireError/errors.h"
+#include "residentifier.h"
 
 #include "SireStream/datastream.h"
 
+using namespace SireMol;
 using namespace SireID;
-using namespace SireID::detail;
 
-using namespace SireStream;
-
-void Identifier_T_Base::throwNullIDError() const
-{
-    throw SireError::nullptr_error( QObject::tr(
-            "Cannot query a null Identifier!"), CODELOC );
-}
-
-void Identifier_T_Base::throwVersionError(VersionID v, 
-                                          const QString &supported_versions,
-                                          const RegisterMetaTypeBase &r_type) const
-{
-    throw SireError::version_error(v, vers, r_type, CODELOC);
-}
-
-static const RegisterMetaType<Identifier> r_id;
+static const RegisterMetaType<ResIdentifier> r_resid;
 
 /** Serialise to a binary datastream */
-QDataStream SIREID_EXPORT &operator<<(QDataStream &ds, const Identifier &id)
+QDataStream SIREID_EXPORT &operator<<(QDataStream &ds, const ResIdentifier &resid)
 {
-    return id.save(ds, r_id);
+    return resid.save(ds, r_resid);
 }
 
 /** Deserialise from a binary datastream */
-QDataStream SIREID_EXPORT &operator>>(QDataStream &ds, Identifier &id)
+QDataStream SIREID_EXPORT &operator>>(QDataStream &ds, ResIdentifier &resid)
 {
-    return id.load(ds, r_id);
+    return resid.load(ds, r_resid);
 }
 
 /** Return the hash of this ID */
-uint SIREID_EXPORT qHash(const Identifier &id)
+uint SIREID_EXPORT qHash(const ResIdentifier &resid)
 {
-    return id.hash();
+    return resid.hash();
 }
+
+

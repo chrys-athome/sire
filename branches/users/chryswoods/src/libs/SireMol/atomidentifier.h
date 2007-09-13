@@ -26,46 +26,28 @@
   *
 \*********************************************/
 
-#include "identifier.h"
+#ifndef SIREMOL_ATOMIDENTIFIER_H
+#define SIREMOL_ATOMIDENTIFIER_H
 
-#include "SireError/errors.h"
+#include "SireID/identifier.h"
 
-#include "SireStream/datastream.h"
+#include "atomid.h"
 
-using namespace SireID;
-using namespace SireID::detail;
-
-using namespace SireStream;
-
-void Identifier_T_Base::throwNullIDError() const
+namespace SireMol
 {
-    throw SireError::nullptr_error( QObject::tr(
-            "Cannot query a null Identifier!"), CODELOC );
+
+typedef SireID::Identifier_T_<AtomID> AtomIdentifier;
+
 }
 
-void Identifier_T_Base::throwVersionError(VersionID v, 
-                                          const QString &supported_versions,
-                                          const RegisterMetaTypeBase &r_type) const
-{
-    throw SireError::version_error(v, vers, r_type, CODELOC);
-}
+QDataStream& operator<<(QDataStream&, const SireMol::AtomIdentifier&);
+QDataStream& operator>>(QDataStream&, SireMol::AtomIdentifier&);
 
-static const RegisterMetaType<Identifier> r_id;
+XMLStream& operator<<(XMLStream&, const SireMol::AtomIdentifier&);
+XMLStream& operator>>(XMLStream&, SireMol::AtomIdentifier&);
 
-/** Serialise to a binary datastream */
-QDataStream SIREID_EXPORT &operator<<(QDataStream &ds, const Identifier &id)
-{
-    return id.save(ds, r_id);
-}
+uint qHash(const SireMol::AtomIdentifier &atomid);
 
-/** Deserialise from a binary datastream */
-QDataStream SIREID_EXPORT &operator>>(QDataStream &ds, Identifier &id)
-{
-    return id.load(ds, r_id);
-}
+Q_DECLARE_METATYPE(SireMol::AtomIdentifier);
 
-/** Return the hash of this ID */
-uint SIREID_EXPORT qHash(const Identifier &id)
-{
-    return id.hash();
-}
+#endif

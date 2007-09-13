@@ -26,46 +26,46 @@
   *
 \*********************************************/
 
-#include "identifier.h"
+#ifndef SIREMOL_RESID_H
+#define SIREMOL_RESID_H
 
-#include "SireError/errors.h"
+#include "SireID/id.h"
 
-#include "SireStream/datastream.h"
+SIRE_BEGIN_HEADER
 
-using namespace SireID;
-using namespace SireID::detail;
-
-using namespace SireStream;
-
-void Identifier_T_Base::throwNullIDError() const
+namespace SireMol
 {
-    throw SireError::nullptr_error( QObject::tr(
-            "Cannot query a null Identifier!"), CODELOC );
+
+class MoleculeInfo;
+
+/** This is the base class of all identifiers that are used 
+    to identify a residue within a molecule
+
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT ResID : public SireID::ID
+{
+
+public:
+    ResID() : SireID::ID()
+    {}
+
+    ResID(const ResID &other) : SireID::ID(other)
+    {}
+
+    ~ResID()
+    {}
+    
+    virtual ResID* clone() const=0;
+
+    /** Map this ID back to the ResNum of the residue in the molecule, 
+        using the passed MoleculeInfo to do the mapping */
+    virtual ResNum map(const MoleculeInfo &molinfo) const=0;
+};
+
 }
 
-void Identifier_T_Base::throwVersionError(VersionID v, 
-                                          const QString &supported_versions,
-                                          const RegisterMetaTypeBase &r_type) const
-{
-    throw SireError::version_error(v, vers, r_type, CODELOC);
-}
+SIRE_END_HEADER
 
-static const RegisterMetaType<Identifier> r_id;
+#endif
 
-/** Serialise to a binary datastream */
-QDataStream SIREID_EXPORT &operator<<(QDataStream &ds, const Identifier &id)
-{
-    return id.save(ds, r_id);
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIREID_EXPORT &operator>>(QDataStream &ds, Identifier &id)
-{
-    return id.load(ds, r_id);
-}
-
-/** Return the hash of this ID */
-uint SIREID_EXPORT qHash(const Identifier &id)
-{
-    return id.hash();
-}
