@@ -39,6 +39,8 @@ namespace SireMol
 class MoleculeInfo;
 class SegIdx;
 
+class SegName;
+
 /** This is the base class of all identifiers that are used 
     to identify a Segment within a Molecule
 
@@ -61,7 +63,7 @@ public:
 
     /** Map this ID back to the SegNum of the segment in the molecule, 
         using the passed MoleculeInfo to do the mapping */
-    virtual SegIdx map(const MoleculeInfo &molinfo) const=0;
+    virtual SegName map(const MoleculeInfo &molinfo) const=0;
 };
 
 }

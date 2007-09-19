@@ -31,7 +31,25 @@
 
 #include "id.h"
 
+#include "SireStream/datastream.h"
+
 SIRE_BEGIN_HEADER
+
+namespace SireID
+{
+template<class S, class T>
+class Identifier_T_;
+}
+
+template<class S, class T>
+QDataStream& operator<<(QDataStream&, const SireID::Identifier_T_<S,T>&);
+template<class S, class T>
+QDataStream& operator>>(QDataStream&, SireID::Identifier_T_<S,T>&);
+
+template<class S, class T>
+XMLStream& operator<<(XMLStream&, const SireID::Identifier_T_<S,T>&);
+template<class S, class T>
+XMLStream& operator>>(XMLStream&, SireID::Identifier_T_<S,T>&);
 
 namespace SireID
 {
@@ -52,7 +70,7 @@ protected:
     void throwNullIDError() const;
     void throwVersionError(SireStream::VersionID v,
                            const QString &supported_versions,
-                           const SireStream::RegisterMetaTypeBase &r_type) const;
+                           const RegisterMetaTypeBase &r_type) const;
 };
 
 }
@@ -63,17 +81,17 @@ protected:
     
     @author Christopher Woods
 */
-template<class T>
+template<class S, class T>
 class SIREID_EXPORT Identifier_T_ : public T, private detail::Identifier_T_Base
 {
 
-friend QDataStream& operator<<<>(QDataStream&, const Identifier_T_<T>&);
-friend QDataStream& operator>><>(QDataStream&, Identifier_T_<T>&);
+friend QDataStream& operator<<<>(QDataStream&, const Identifier_T_<S,T>&);
+friend QDataStream& operator>><>(QDataStream&, Identifier_T_<S,T>&);
 
-friend XMLStream& operator<<<>(XMLStream&, const Identifier_T_<T>&);
-friend XMLStream& operator>><>(XMLStream&, Identifier_T_<T>&);
+friend XMLStream& operator<<<>(XMLStream&, const Identifier_T_<S,T>&);
+friend XMLStream& operator>><>(XMLStream&, Identifier_T_<S,T>&);
 
-static QString typenam = QString("Identifier_T_<%1>").arg(T::typeName());
+static QString typenam;
 
 public:
     Identifier_T_() : idptr(0)
@@ -82,7 +100,7 @@ public:
     Identifier_T_(const T &idobj) : idptr( idobj.clone() )
     {}
     
-    Identifier_T_(const Identifier_T_<T> &other) : idptr( other.idptr->clone() )
+    Identifier_T_(const Identifier_T_<S,T> &other) : idptr( other.idptr->clone() )
     {}
     
     ~Identifier_T_()
@@ -90,7 +108,7 @@ public:
         delete idptr;
     }
     
-    Identifier_T_<T>& operator=(const Identifier_T_<T> &other)
+    S& operator=(const Identifier_T_<S,T> &other)
     {
         if (&other != this)
         {
@@ -98,21 +116,21 @@ public:
             idptr = other.idptr->clone();
         }
         
-        return *this;
+        return static_cast<S&>(*this);
     }
     
-    Identifier_T_<T>& operator=(const ID &idobj)
+    S& operator=(const ID &idobj)
     {
-        if (&other != idptr)
+        if (&idobj != idptr)
         {
             delete idptr;
             idptr = idobj.clone();
         }
         
-        return *this;
+        return static_cast<S&>(*this);
     }
     
-    bool operator==(const Identifier_T_<T> &other) const
+    bool operator==(const Identifier_T_<S,T> &other) const
     {
         if (idptr == 0 or other.idptr == 0)
             return idptr == other.idptr;
@@ -125,7 +143,7 @@ public:
         return idptr != 0 and *idptr == idobj;
     }
     
-    bool operator!=(const Identifier_T_ &other) const
+    bool operator!=(const Identifier_T_<S,T> &other) const
     {
         if (idptr == 0 or other.idptr == 0)
             return idptr != other.idptr;
@@ -143,10 +161,16 @@ public:
         return idptr == 0;
     }
     
+    void assertNotNull() const
+    {
+        if (idptr == 0)
+            this->throwNullIDError();
+    }
+    
     T* clone() const
     {
         if (idptr == 0)
-            return new Identifier_T_<T>();
+            return new S();
         else
             return idptr->clone();
     }
@@ -169,46 +193,44 @@ public:
     
     static const char* typeName()
     {
-        return qPrintable(Identifier_T_<T>::typenam);
+        return qPrintable( QString(Identifier_T_<S,T>::typenam) );
     }
     
     const char* what() const
     {
         if (idptr == 0)
-            return Identifier_T_<T>::typeName();
+            return Identifier_T_<S,T>::typeName();
         else
             return idptr->what();
     }
     
-    template<class S>
+    template<class X>
     bool isA() const
     {
         if (idptr != 0)
-            return idptr->isA<S>();
+            return idptr->isA<X>();
         else
             return 0;
     }
     
-    template<class S>
-    const S& asA() const
+    template<class X>
+    const X& asA() const
     {
-        if (idptr == 0)
-            throwNullIDError();
+        this->assertNotNull();
     
-        return idptr->asA<S>();
+        return idptr->asA<X>();
     }
     
-    template<class S>
-    S& asA()
+    template<class X>
+    X& asA()
     {
-        if (idptr == 0)
-            throwNullIDError();
+        this->assertNotNull();
     
-        return idptr->asA<S>();
+        return idptr->asA<X>();
     }
     
     QDataStream& save(QDataStream &ds, 
-                      const SireStream::RegisterMetaTypeBase &r_type) const
+                      const RegisterMetaTypeBase &r_type) const
     {
         SireStream::writeHeader(ds, r_type, 1);
         
@@ -216,7 +238,7 @@ public:
     }
     
     QDataStream& load(QDataStream &ds, 
-                      const SireStream::RegisterMetaTypeBase &r_type)
+                      const RegisterMetaTypeBase &r_type)
     {
         SireStream::VersionID v = SireStream::readHeader(ds, r_type);
         
@@ -231,10 +253,28 @@ public:
     
 private:
     /** Pointer to the actual ID object */
-    ID *idptr;
+    T *idptr;
 }; 
 
-typedef Identifier_T_<ID> Identifier;
+template<class S, class T>
+QString Identifier_T_<S,T>::typenam = QString("Identifier_T_<%1>").arg(T::typeName());
+
+class Identifier : public Identifier_T_<Identifier,ID>
+{
+public:
+    Identifier() : Identifier_T_<Identifier,ID>()
+    {}
+    
+    Identifier(const ID &id) : Identifier_T_<Identifier,ID>(id)
+    {}
+    
+    Identifier(const Identifier &other)
+           : Identifier_T_<Identifier,ID>(other)
+    {}
+    
+    ~Identifier()
+    {}
+};
 
 }
 

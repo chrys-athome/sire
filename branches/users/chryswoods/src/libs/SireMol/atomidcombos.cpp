@@ -53,7 +53,7 @@ static const RegisterMetaType<ResAtomNum> r_resatomnum;
 static const RegisterMetaType<ResNumAtomName> r_resnumatomname;
 
 static const RegisterMetaType<ResNameAtomIdx> r_resnameatomidx;
-static const RegisterMetaType<ResNameAtomNum> r_resatomnum;
+static const RegisterMetaType<ResNameAtomNum> r_resnameatomnum;
 static const RegisterMetaType<ResAtomName> r_resatomname;
 
 static const RegisterMetaType<SegAtomIdx> r_segatomidx;

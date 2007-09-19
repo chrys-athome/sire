@@ -148,7 +148,7 @@ public:
     }
     
     /** Increment operator */
-    T operator++(qint)
+    T operator++(qint32)
     {
         T orig(*this);
         ++_idx;

@@ -32,11 +32,34 @@
 #include "SireID/identifier.h"
 
 #include "cgid.h"
+#include "cgidx.h"
 
 namespace SireMol
 {
 
-typedef SireID::Identifier_T_<CGID> CGIdentifier;
+class CGIdentifier : public SireID::Identifier_T_<CGIdentifier,CGID>
+{
+public:
+    CGIdentifier() : SireID::Identifier_T_<CGIdentifier,CGID>()
+    {}
+    
+    CGIdentifier(const CGID &cgid) 
+            : SireID::Identifier_T_<CGIdentifier,CGID>(cgid)
+    {}
+    
+    CGIdentifier(const CGIdentifier &other) 
+            : SireID::Identifier_T_<CGIdentifier,CGID>(other)
+    {}
+    
+    ~CGIdentifier()
+    {}
+    
+    CGIdx map(const MoleculeInfo &molinfo) const
+    {
+        this->assertNotNull();
+        return this->asA<CGID>().map(molinfo);
+    }
+};
 
 }
 

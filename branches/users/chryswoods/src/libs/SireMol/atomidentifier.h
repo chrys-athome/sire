@@ -32,11 +32,35 @@
 #include "SireID/identifier.h"
 
 #include "atomid.h"
+#include "cgatomidx.h"
 
 namespace SireMol
 {
 
-typedef SireID::Identifier_T_<AtomID> AtomIdentifier;
+class AtomIdentifier : public SireID::Identifier_T_<AtomIdentifier,AtomID>
+{
+public:
+    AtomIdentifier() : SireID::Identifier_T_<AtomIdentifier,AtomID>()
+    {}
+    
+    AtomIdentifier(const AtomID &atomid) 
+            : SireID::Identifier_T_<AtomIdentifier,AtomID>(atomid)
+    {}
+    
+    AtomIdentifier(const AtomIdentifier &other) 
+            : SireID::Identifier_T_<AtomIdentifier,AtomID>(other)
+    {}
+    
+    ~AtomIdentifier()
+    {}
+    
+    CGAtomIdx map(const MoleculeInfo &molinfo) const
+    {
+        this->assertNotNull();
+            
+        return this->asA<AtomID>().map(molinfo);
+    }
+};
 
 }
 

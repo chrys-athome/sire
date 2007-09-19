@@ -36,6 +36,8 @@ SIRE_BEGIN_HEADER
 namespace SireMol
 {
 
+class ResNum;
+
 class MoleculeInfo;
 
 /** This is the base class of all identifiers that are used 

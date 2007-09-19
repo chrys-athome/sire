@@ -116,7 +116,10 @@ public:
         return _name != other._name;
     }
 
-    SegNum map(const MoleculeInfo &molinfo) const;
+    SegName map(const MoleculeInfo&) const
+    {
+        return *this;
+    }
 };
 
 }

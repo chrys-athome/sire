@@ -55,6 +55,11 @@ public:
     virtual ~ID()
     {}
     
+    static const char* typeName()
+    {
+        return "SireID::ID";
+    }
+    
     /** Return a clone of this ID object. You are responsible
         for managing the returned object. */
     virtual ID* clone() const=0;
@@ -67,7 +72,7 @@ public:
     virtual uint hash() const=0;
  
     /** Return a string representation of this ID */
-    QString toString() const=0;
+    virtual QString toString() const=0;
           
     /** Comparison operator */
     virtual bool operator==(const ID &other) const=0;
@@ -90,9 +95,9 @@ public:
     template<class T>
     static bool compare(const T &obj, const ID &other)
     {
-        if ( typeid(obj).name() == typeid(other.name()) )
+        if ( typeid(obj).name() == typeid(other).name() )
         {
-            const T *other_t = dynamic_cast<const T*>(other);
+            const T *other_t = dynamic_cast<const T*>(&other);
             return (other_t != 0) and (obj == *other_t);
         }
         else

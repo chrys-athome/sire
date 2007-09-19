@@ -31,12 +31,35 @@
 
 #include "SireID/identifier.h"
 
-#include "cgid.h"
+#include "resid.h"
+#include "resnum.h"
 
 namespace SireMol
 {
 
-typedef SireID::Identifier_T_<CGID> ResIdentifier;
+class ResIdentifier : public SireID::Identifier_T_<ResIdentifier,ResID>
+{
+public:
+    ResIdentifier() : SireID::Identifier_T_<ResIdentifier,ResID>()
+    {}
+    
+    ResIdentifier(const ResID &resid) 
+            : SireID::Identifier_T_<ResIdentifier,ResID>(resid)
+    {}
+    
+    ResIdentifier(const ResIdentifier &other) 
+            : SireID::Identifier_T_<ResIdentifier,ResID>(other)
+    {}
+    
+    ~ResIdentifier()
+    {}
+    
+    ResNum map(const MoleculeInfo &molinfo) const
+    {
+        this->assertNotNull();
+        return this->asA<ResID>().map(molinfo);
+    }
+};
 
 }
 

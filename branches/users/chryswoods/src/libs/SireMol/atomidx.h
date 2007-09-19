@@ -67,7 +67,7 @@ public:
     {}
     
     AtomIdx(const AtomIdx &other) 
-              : SireID::Index_T<AtomIdx>(other), AtomOnlyID(other)
+              : SireID::Index_T_<AtomIdx>(other), AtomOnlyID(other)
     {}
     
     ~AtomIdx()

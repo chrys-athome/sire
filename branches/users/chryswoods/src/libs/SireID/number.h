@@ -74,7 +74,7 @@ public:
     }
     
 protected:
-    Number(quint32 num) : _num(num)
+    Number(quint32 num=0) : _num(num)
     {}
     
     Number(const Number &other) : _num(other._num)
@@ -102,7 +102,7 @@ inline QDataStream& operator<<(QDataStream &ds, const SireID::Number &number)
 /** Deserialise a Number class */
 inline QDataStream& operator>>(QDataStream &ds, SireID::Number &number)
 {
-    ds >> number._number;
+    ds >> number._num;
     return ds;
 }
 

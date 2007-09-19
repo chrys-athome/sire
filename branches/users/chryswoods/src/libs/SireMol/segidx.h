@@ -66,7 +66,7 @@ public:
     {}
     
     SegIdx(const SegIdx &other) 
-              : SireID::Index_T<SegIdx>(other), SegID(other)
+              : SireID::Index_T_<SegIdx>(other), SegID(other)
     {}
     
     ~SegIdx()
@@ -119,7 +119,7 @@ public:
     using SireID::Index_T_<SegIdx>::operator-=;
     using SireID::Index_T_<SegIdx>::operator--;
     
-    SegNum map(const MoleculeInfo &molinfo) const;
+    SegName map(const MoleculeInfo &molinfo) const;
 };
     
 }

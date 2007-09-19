@@ -59,7 +59,7 @@ typedef AtomIDCombo<CGIdx,AtomNum> CGIdxAtomNum;
 typedef AtomIDCombo<CGIdx,AtomName> CGIdxAtomName;
 
 typedef AtomIDCombo<CGNum,AtomIdx> CGNumAtomIdx;
-typedef AtomIDCombo<CGNum,AtomNum> CGAtmNum;
+typedef AtomIDCombo<CGNum,AtomNum> CGAtomNum;
 typedef AtomIDCombo<CGNum,AtomName> CGNumAtomName;
 
 typedef AtomIDCombo<CGName,AtomIdx> CGNameAtomIdx;
@@ -85,7 +85,7 @@ typedef AtomIDCombo<SegIdx,AtomNum> SegIdxAtomNum;
 typedef AtomIDCombo<SegIdx,AtomName> SegIdxAtomName;
 
 typedef AtomIDCombo<SegNum,AtomIdx> SegNumAtomIdx;
-typedef AtomIDCombo<SegNum,AtomNum> SegNumAtomNum;
+typedef AtomIDCombo<SegNum,AtomNum> SegAtomNum;
 typedef AtomIDCombo<SegNum,AtomName> SegNumAtomName;
 
 typedef AtomIDCombo<SegName,AtomIdx> SegNameAtomIdx;
@@ -132,7 +132,7 @@ Q_DECLARE_METATYPE(SireMol::SegIdxAtomName);
 
 Q_DECLARE_METATYPE(SireMol::SegNumAtomIdx);
 Q_DECLARE_METATYPE(SireMol::SegAtomNum);
-Q_DECLARE_METATYPE(SireMol::SegNameAtomName);
+Q_DECLARE_METATYPE(SireMol::SegNumAtomName);
 
 Q_DECLARE_METATYPE(SireMol::SegNameAtomIdx);
 Q_DECLARE_METATYPE(SireMol::SegNameAtomNum);

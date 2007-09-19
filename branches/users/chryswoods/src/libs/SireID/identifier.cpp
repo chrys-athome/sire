@@ -47,7 +47,7 @@ void Identifier_T_Base::throwVersionError(VersionID v,
                                           const QString &supported_versions,
                                           const RegisterMetaTypeBase &r_type) const
 {
-    throw SireError::version_error(v, vers, r_type, CODELOC);
+    throw SireStream::version_error(v, supported_versions, r_type, CODELOC);
 }
 
 static const RegisterMetaType<Identifier> r_id;

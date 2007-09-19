@@ -87,6 +87,8 @@ public:
     ~AtomOnlyID()
     {}
     
+    using AtomID::operator=;
+    
     virtual AtomOnlyID* clone() const=0;
     
     /** Map this ID to the CGAtomIdx of the atom in residue identified by

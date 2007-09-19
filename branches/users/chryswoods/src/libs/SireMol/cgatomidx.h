@@ -29,7 +29,7 @@
 #ifndef SIREMOL_CGATOMIDX_H
 #define SIREMOL_CGATOMIDX_H
 
-#include "cutgroupidx.h"
+#include "cgidx.h"
 #include "atomidx.h"
 
 #include <boost/tuple/tuple.hpp>
@@ -59,16 +59,16 @@ public:
     CGAtomIdx()
     {}
     
-    CGAtomIdx(const CutGroupIdx &cgidx, const AtomIdx &atomidx)
-          : _cgidx(cgidx), _atomidx(atomidx)
+    CGAtomIdx(const CGIdx &cgidx, const AtomIdx &atomidx)
+          : _cgidx(cgidx), _atmidx(atomidx)
     {}
     
-    CGAtomIdx(const boost::tuple<CutGroupIdx,AtomIdx> &pair)
-          : _cgidx(pair.get<0>()), _atomidx(pair.get<1>())
+    CGAtomIdx(const boost::tuple<CGIdx,AtomIdx> &pair)
+          : _cgidx(pair.get<0>()), _atmidx(pair.get<1>())
     {}
     
     CGAtomIdx(const CGAtomIdx &other)
-          : _cgidx(other._cgidx), _atomidx(other._atomidx)
+          : _cgidx(other._cgidx), _atmidx(other._atmidx)
     {}
     
     ~CGAtomIdx()
@@ -91,18 +91,18 @@ public:
     
     uint hash() const
     {
-        return (qHash(_cgid) << 16) | (qHash(_atmid) & 0x0000FFFF);
+        return (qHash(_cgidx) << 16) | (qHash(_atmidx) & 0x0000FFFF);
     }
     
     QString toString() const
     {
-        return QString("{%1,%2}").arg(_cgid.toString(), _atmid.toString());
+        return QString("{%1,%2}").arg(_cgidx.toString(), _atmidx.toString());
     }
     
     CGAtomIdx& operator=(const CGAtomIdx &other)
     {
-        _cgid = other._cgid;
-        _atmid = other._atmid;
+        _cgidx = other._cgidx;
+        _atmidx = other._atmidx;
         
         AtomID::operator=(other);
         
@@ -111,7 +111,7 @@ public:
     
     bool operator==(const SireID::ID &other) const
     {
-        return SireID::compare<CGAtomIdx>(*this, other);
+        return SireID::ID::compare<CGAtomIdx>(*this, other);
     }
     
     bool operator==(const CGAtomIdx &other) const
@@ -129,9 +129,19 @@ public:
         return *this;
     }
     
+    CGIdx cgIdx() const
+    {
+        return _cgidx;
+    }
+    
+    AtomIdx atomIdx() const
+    {
+        return _atmidx;
+    }
+    
 private:
     /** The index of the CutGroup that contains the atom */
-    CutGroupIdx _cgidx;
+    CGIdx _cgidx;
     
     /** The index of the atom within the CutGroup */
     AtomIdx _atmidx;

@@ -66,7 +66,7 @@ public:
     {}
     
     CGIdx(const CGIdx &other) 
-              : SireID::Index_T<CGIdx>(other), CGID(other)
+              : SireID::Index_T_<CGIdx>(other), CGID(other)
     {}
     
     ~CGIdx()

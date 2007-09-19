@@ -31,12 +31,35 @@
 
 #include "SireID/identifier.h"
 
-#include "cgid.h"
+#include "segid.h"
+#include "segname.h"
 
 namespace SireMol
 {
 
-typedef SireID::Identifier_T_<CGID> SegIdentifier;
+class SegIdentifier : public SireID::Identifier_T_<SegIdentifier,SegID>
+{
+public:
+    SegIdentifier() : SireID::Identifier_T_<SegIdentifier,SegID>()
+    {}
+    
+    SegIdentifier(const SegID &segid) 
+            : SireID::Identifier_T_<SegIdentifier,SegID>(segid)
+    {}
+    
+    SegIdentifier(const SegIdentifier &other) 
+            : SireID::Identifier_T_<SegIdentifier,SegID>(other)
+    {}
+    
+    ~SegIdentifier()
+    {}
+    
+    SegName map(const MoleculeInfo &molinfo) const
+    {
+        this->assertNotNull();
+        return this->asA<SegID>().map(molinfo);
+    }
+};
 
 }
 

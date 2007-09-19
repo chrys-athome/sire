@@ -29,6 +29,9 @@
 #ifndef SIREID_NAME_H
 #define SIREID_NAME_H
 
+#include <QHash>
+#include <QString>
+
 #include "SireStream/shareddatastream.h"
 
 SIRE_BEGIN_HEADER
@@ -59,8 +62,8 @@ namespace SireID
 class SIREID_EXPORT Name
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const Number&);
-friend QDataStream& ::operator>>(QDataStream&, Number&);
+friend QDataStream& ::operator<<(QDataStream&, const Name&);
+friend QDataStream& ::operator>>(QDataStream&, Name&);
 
 public:
     ~Name()
@@ -72,7 +75,7 @@ public:
     }
 
 protected:
-    Name(const QString &name = QString::null) : _name(name)
+    explicit Name(const QString &name = QString::null) : _name(name)
     {}
     
     Name(const Name &other) : _name(other._name)
@@ -93,7 +96,7 @@ uint qHash(const SireID::Name &name)
 /** Serialise a Name class */
 inline QDataStream& operator<<(QDataStream &ds, const SireID::Name &name)
 {
-    SharedDataStream sds(ds);
+    SireStream::SharedDataStream sds(ds);
     sds << name._name;
 
     return ds;
@@ -102,7 +105,7 @@ inline QDataStream& operator<<(QDataStream &ds, const SireID::Name &name)
 /** Deserialise a Name class */
 inline QDataStream& operator>>(QDataStream &ds, SireID::Name &name)
 {
-    SharedDataStream sds(ds);
+    SireStream::SharedDataStream sds(ds);
     sds >> name._name;
     
     return ds;

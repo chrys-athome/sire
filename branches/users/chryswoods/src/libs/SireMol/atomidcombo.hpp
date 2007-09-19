@@ -76,8 +76,7 @@ friend QDataStream& operator>><>(QDataStream&, AtomIDCombo<A,B>&);
 friend XMLStream& operator<<<>(XMLStream&, const AtomIDCombo<A,B>&);
 friend XMLStream& operator>><>(XMLStream&, AtomIDCombo<A,B>&);
 
-static QString typenam = QString("SireMol::AtomIDCombo<%1,%2>")
-                            .arg(A::typeName()).arg(B::typeName());
+static QString typenam;
 
 public:
     AtomIDCombo()
@@ -86,8 +85,8 @@ public:
     AtomIDCombo(const A &a, const B &b) : _a(a), _b(b)
     {}
     
-    AtomIDCombo(const boost::tuple::tuple<A,B> &pair)
-          : _a(pair.get<0>()), _b(pair.get<1>())
+    AtomIDCombo(const typename boost::tuple<A,B> &pair)
+          : _a(boost::tuples::get<0>(pair)), _b(boost::tuples::get<1>(pair))
     {}
     
     AtomIDCombo(const AtomIDCombo<A,B> &other)
@@ -99,7 +98,7 @@ public:
     
     static const char* typeName()
     {
-        return qPrintable(AtomIDCombo<A,B>::typenam);
+        return qPrintable( typenam );
     }
     
     const char* what() const
@@ -160,6 +159,10 @@ private:
         within the part of the molecule */
     B _b;
 };
+
+template<class A, class B>
+QString AtomIDCombo<A,B>::typenam = QString("SireMol::AtomIDCombo<%1,%2>")
+                                            .arg(A::typeName()).arg(B::typeName());
 
 }
 

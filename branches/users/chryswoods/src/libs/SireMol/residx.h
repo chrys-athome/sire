@@ -66,7 +66,7 @@ public:
     {}
     
     ResIdx(const ResIdx &other) 
-              : SireID::Index_T<ResIdx>(other), ResID(other)
+              : SireID::Index_T_<ResIdx>(other), ResID(other)
     {}
     
     ~ResIdx()

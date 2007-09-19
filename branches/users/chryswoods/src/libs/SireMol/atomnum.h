@@ -104,7 +104,7 @@ public:
     AtomNum& operator=(const AtomNum &other)
     {
         SireID::Number::operator=(other);
-        AtomOnlyID::operator=(other);
+        AtomID::operator=(other);
         return *this;
     }
     

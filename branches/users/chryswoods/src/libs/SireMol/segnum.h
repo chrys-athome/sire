@@ -117,10 +117,7 @@ public:
         return _num != other._num;
     }
 
-    SegNum map(const MoleculeInfo&) const
-    {
-        return *this;
-    }
+    SegName map(const MoleculeInfo &molinfo) const;
 };
 
 }
