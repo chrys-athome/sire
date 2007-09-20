@@ -59,11 +59,16 @@ class EditMolData;
 class MoleculeInfoPvt;
 
 /**
-This class holds all of the metainfo about a molecule. This is information that allows mapping from an atom or residue-based ID to the actual information for the atom. Also it contains all non-coordinate information about the molecule. This information is separated off so that changing the coordinates will not cause any copying of the metainfo. In addition, this metainfo object can be used in other classes, e.g. the parameter table classes, where it can be combined with lists of other parameters.
+This class holds all of the metainfo about a molecule. This is information that 
+allows mapping from an atom or residue-based ID to the actual information for the atom. 
+Also it contains all non-coordinate information about the molecule. This information 
+is separated off so that changing the coordinates will not cause any copying of 
+the metainfo. In addition, this metainfo object can be used in other classes, 
+e.g. the parameter table classes, where it can be combined with lists of other parameters.
 
-The other main purpose of this class is to allow the many different ways of indexing an atom
-(e.g. by residue number and atom name, or by index into the molecule) to be mapped efficiently
-to the indexing method used internally by the code - namely CGAtomID.
+The other main purpose of this class is to allow the many different ways of indexing 
+an atom (e.g. by residue number and atom name, or by index into the molecule) to be 
+mapped efficiently to the indexing method used internally by the code - namely CGAtomIdx.
 
 @author Christopher Woods
 */
