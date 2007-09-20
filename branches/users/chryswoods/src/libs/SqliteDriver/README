@@ -1,5 +1,5 @@
 This directory contains the sqlite database driver and complete sqlite source code as
-contained in qt-4.1.3
+contained in qt-4.3.1
 
 This is included here so that is is definitely compiled with the rest of the application,
 with the resulting library placed with the other Sire libraries. This should simplify

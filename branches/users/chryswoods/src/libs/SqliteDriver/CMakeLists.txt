@@ -11,43 +11,7 @@ include_directories( ${CMAKE_SOURCE_DIR}/src/libs
 
 # Define the sources in SqliteDriver
 set ( SQLITEDRIVER_SOURCES
-      alter.c
-      analyze.c
-      attach.c
-      auth.c
-      btree.c
-      build.c
-      callback.c
-      date.c
-      delete.c
-      expr.c
-      func.c
-      hash.c
-      insert.c
-      legacy.c
-      main.c
-      opcodes.c
-      pager.c
-      parse.c
-      pragma.c
-      prepare.c
-      printf.c
       qsql_sqlite.cpp
-      random.c
-      select.c
-      table.c
-      tokenize.c
-      trigger.c
-      update.c
-      utf.c
-      util.c
-      vacuum.c
-      vdbe.c
-      vdbeapi.c
-      vdbeaux.c
-      vdbefifo.c
-      vdbemem.c
-      where.c
     )
 
 if (WIN32)
