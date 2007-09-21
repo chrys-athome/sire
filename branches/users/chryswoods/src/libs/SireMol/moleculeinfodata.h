@@ -88,21 +88,35 @@ private:
         ~ResInfo();
         
         /** The name of this residue */
-        QString name;
+        ResName name;
         
         /** The number of this residue */
         ResNum number;
 
-        /** The CGAtomIdx indicies of all of the atoms in 
-            this residue, in the order that they appear
-            in this residue */
-        QVector<CGAtomIdx> atoms_by_idx;
+        /** The index of the chain this residue is in */
+        ChainIdx chainidx;
+
+        /** The indicies of all atoms that are in this residue */
+        QSet<AtomIdx> atom_indicies;
         
         /** Hash mapping the name of each atom in this residue
-            to the index of the atom in this residue (atom names
-            within each residue must be unique) */
-        QHash<QString,int> atoms_by_name;
-    }
+            to the indicies of the atoms in the molecule
+            (there may be more than one atom with the same name) */
+        QMultiHash<QString,AtomIdx> atoms_by_name;
+    };
+
+    class ChainInfo
+    {
+    public:
+        ChainInfo();
+        ~ChainInfo();
+        
+        /** The name of this chain */
+        ChainName name;
+        
+        /** The indicies of the residues that are contained in this chain */
+        QSet<ResIdx> res_indicies;
+    };
 
     class SegInfo
     {
@@ -111,14 +125,23 @@ private:
         ~SegInfo();
 
         /** The name of this segment */
-        QString name;
+        SegName name;
         
-        /** The number of this segment */
-        SegNum number;
+        /** The indicies of all of the atoms that are in this residue */
+        QSet<AtomIdx> atom_indexes;
+    };
+    
+    class CGInfo
+    {
+    public:
+        CGInfo();
+        ~CGInfo();
         
-        /** The CGAtomIdx indicies of all of the atoms in 
-            this segment, in the order that they appear */
-        QVector<CGAtomIdx> atoms_by_idx;
+        /** The name of this CutGroup */
+        CGName name;
+        
+        /** The indicies of all of the atoms that are in this CutGroup */
+        QSet<AtomIdx> atom_indexes;
     };
     
     class AtmInfo
@@ -129,66 +152,56 @@ private:
         
         /** The name of this atom */
         QString name;
+
+        /** Index of the residue this atom is in */
+        ResIdx residx;
+
+        /** Index of the chain this atom is in */
+        ChainIdx chainidx;
         
-        /** The number of the residue in which this belongs
-            (an atom *must* be in one residue) */
-        ResNum resnum;
+        /** Index of the segment this atom is in */
+        SegIdx segidx;
         
-        /** The name of the segment in which this belongs
-            (this is null if the atom is not in any segment) */
-        QString segname;
+        /** The CGAtomIdx index of the atom in the molecule
+             - this says which CutGroup the atom is in,
+               which atom in that CutGroup this is */
+        CGAtomIdx cgatomidx;
     };
     
-    class CGInfo
-    {
-    public:
-        CGInfo();
-        ~CGInfo();
-        
-        /** The name of this CutGroup */
-        QString name;
-        
-        /** The number of this CutGroup */
-        CGNum number;
-        
-        /** Information about all of the atoms in this CutGroup,
-            arranged in the order that they are in this CutGroup */
-        QVector<AtomInfo> atominfos;
-    };
+    /** All of the atoms in the molecule, in the order they were
+        added to the molecule */
+    QVector<AtomInfo> atoms_by_index;
     
     /** All of the residues in this molecule, arranged in the
         order that they appear in this molecule */
-    QVector<ResInfo> resinfos;
+    QVector<ResInfo> res_by_index;
+    
+    /** Hash mapping residue names to residue indicies */
+    QMultiHash<ResName,ResIdx> res_by_name;
+    
+    /** Hash mapping residue numbers to residue indicies */
+    QMultiHash<ResNum,ResIdx> res_by_num;
+    
+    /** All of the chains in this molecule, arranged in the 
+        order that they appear in this molecule */
+    QVector<ChainInfo> chains_by_index;
+    
+    /** Hash mapping chain names to chain indicies */
+    QMultiHash<ChainName,ChainIdx> chain_by_name;
     
     /** All of the segments in this molecule, arranged in the
         order that they appear in this molecule */
-    QVector<SegInfo> seginfos;
+    QVector<SegInfo> seg_by_index;
+    
+    /** Hash mapping segment names to segment indicies */
+    QMultiHash<SegName,SegIdx> seg_by_name;
     
     /** All of the CutGroups in this molecule, arranged in the
         order that they appear in this molecule */
-    QVector<CGInfo> cginfos;
+    QVector<CGInfo> cg_by_index;
 
-    /** The CGAtomIdx of all atoms in this molecule, arranged in 
-        the order that they appear in this molecule */
-    QVector<CGAtomIdx> atom_by_index;
-
-    /** Hash allowing rapid indexing of residues by name */
-    QHash<QString,int> res_by_name;
-    
-    /** Hash allowing rapid indexing of residues by number */
-    QHash<ResNum,int> res_by_number;
-    
-    /** Hash allowing rapid indexing of segments by name */
-    QHash<QString,int> seg_by_name;
-    
-    /** Hash allowing rapid indexing of segments by number */
-    QHash<SegNum,int> seg_by_number;
-    
-    /** Hash allowing rapid indexing of CutGroups by name */
-    QHash<QString,int> cg_by_name;
-    
-    /** Hash allowing rapid indexing of CutGroups by number */
-    QHash<CGNum,int> cg_by_num;
+    /** Hash mapping CutGroup name to CutGroup indicies */
+    QMultiHash<CGName,CGIdx> cg_by_name;
 };
 
 }
