@@ -29,36 +29,59 @@
 #ifndef SIREMOL_RESIDENTIFIER_H
 #define SIREMOL_RESIDENTIFIER_H
 
-#include "SireID/identifier.h"
-
 #include "resid.h"
 #include "resnum.h"
 
 namespace SireMol
 {
 
-class ResIdentifier : public SireID::Identifier_T_<ResIdentifier,ResID>
+/** This class is used as a means of storing all of the ID
+    for a residue that can be contained in a combination of
+    any or all of the other residue ID types (ResName, 
+    ResNum and ResIdx)
+    
+    @author Christopher Woods
+*/
+class ResIdentifier : public ResID
 {
 public:
-    ResIdentifier() : SireID::Identifier_T_<ResIdentifier,ResID>()
-    {}
+    ResIdentifier();
     
-    ResIdentifier(const ResID &resid) 
-            : SireID::Identifier_T_<ResIdentifier,ResID>(resid)
-    {}
+    ResIdentifier(const ResName &name);
+    ResIdentifier(const ResNum &num);
+    ResIdentifier(const ResIdx &idx);
     
-    ResIdentifier(const ResIdentifier &other) 
-            : SireID::Identifier_T_<ResIdentifier,ResID>(other)
-    {}
+    ResIdentifier(const ResName &name, const ResNum &num);
     
-    ~ResIdentifier()
-    {}
+    ResIdentifier(const ResID &id0);
+    ResIdentifier(const ResID &id0, const ResID &id1);
+    ResIdentifier(const ResID &id0, const ResID &id1, const ResID &id2);
+
+    ResIdentifier(const ResIdentifier &other);
     
-    ResNum map(const MoleculeInfo &molinfo) const
-    {
-        this->assertNotNull();
-        return this->asA<ResID>().map(molinfo);
-    }
+    ~ResIdentifier();
+    
+    void setName(const ResName &name);
+    void setNumber(const ResNum &num);
+    void setIndex(const ResIdx &idx);
+    
+    const ResName& name() const;
+    const ResNum& number() const;
+    const ResIdx& index() const;
+
+    QList<ResIdx> map(const MoleculeInfo &molinfo) const;
+    
+private:
+    void assignFrom(const ResID &resid);
+
+    /** The name of the residue */
+    ResName _name;
+    
+    /** The number of the residue */
+    ResNum _number;
+    
+    /** The index of this residue, using the above criteria */
+    ResIdx _idx;
 };
 
 }

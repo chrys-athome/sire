@@ -26,65 +26,39 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_RESID_H
-#define SIREMOL_RESID_H
+#ifndef SIREMOL_ATOMIDCOMBO_H
+#define SIREMOL_ATOMIDCOMBO_H
 
-#include "SireID/id.h"
+#include "atomid.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
 
-class ResNum;
-
-class MoleculeInfo;
-
-class SIREMOL_EXPORT ResIDPart
-{
-public:
-    ResIDPart()
-    {}
+/** This class represents a combination of ID types that
+    are all combined so that we can try to identify some
+    atoms.
     
-    virtual ~ResIDPart()
-    {}
-    
-    ResIDCombo operator+(const ResIDPart &other) const;
-    
-    virtual void update(ResIDCombo &combo) const=0;
-};
-
-/** This is the base class of all identifiers that are used 
-    to identify a residue within a molecule
-
     @author Christopher Woods
 */
-class SIREMOL_EXPORT ResID : public SireID::ID, 
-                             public ResIDPart,
-                             public AtomIDPart
+class AtomIDCombo : public AtomID
 {
-
 public:
-    ResID() : SireID::ID()
-    {}
 
-    ResID(const ResID &other) : SireID::ID(other)
-    {}
 
-    ~ResID()
-    {}
-    
-    using ResIDPart::operator+;
-    using AtomIDPart::operator+;
-    
-    virtual ResID* clone() const=0;
+private:
+    /** The identifier for the segment */
+    SegIdentifier segid;
 
-    /** Map this ID back to the indicies of the residues in the molecule, 
-        using the passed MoleculeInfo to do the mapping */
-    virtual QList<ResIdx> map(const MoleculeInfo &molinfo) const=0;
+    /** The identifier for the chain and residue */
+    ResIDCombo resid;
     
-    /** Update the ResIdentifier with information from this ID */
-    virtual void update(ResIdentifier &resid) const=0;
+    /** The identifier for the CutGroup */
+    CGIdentifier cgid;
+    
+    /** The identifiers for the atom */
+    AtomIdentifier atmid;
 };
 
 }
@@ -92,4 +66,3 @@ public:
 SIRE_END_HEADER
 
 #endif
-

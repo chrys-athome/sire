@@ -16,6 +16,7 @@ set ( SIREMOL_HEADERS
       atomcutting.h
       atomicproperties.h
       atomid.h
+      atomidcombo.h
       atomidcombo.hpp
       atomidcombos.h
       atomidentifier.h
@@ -33,6 +34,7 @@ set ( SIREMOL_HEADERS
       cgidx.h
       cgname.h
       cgnum.h
+      chainid.h
       cutgroup.h
       cuttingfunction.h
       element-data.h
@@ -83,6 +85,7 @@ set ( SIREMOL_SOURCES
       atomidcombos.cpp
       atomidentifier.cpp
       atomcutting.cpp
+      atomidcombo.cpp
       atominfo.cpp
       atominfogroup.cpp
       atomselection.cpp

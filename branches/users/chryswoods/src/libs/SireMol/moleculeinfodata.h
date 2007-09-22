@@ -77,9 +77,52 @@ friend QDataStream& operator>>(QDataStream&, MoleculeInfoData&);
 public:
     MoleculeInfoData();
     
+    QList<ResIdx> map(const ResName &name) const;
+    QList<ResIdx> map(const ResNum &num) const;
+    QList<ResIdx> map(const ResIdx &idx) const;
+    QList<ResIdx> map(const ResID &resid) const;
+    
+    QList<ChainIdx> map(const ChainName &name) const;
+    QList<ChainIdx> map(const ChainIdx &idx) const;
+    QList<ChainIdx> map(const ChainID &chainid) const;
+
+    QList<ResIdx> getResiduesIn(const ChainID &chainid) const;
+    QList<ResIdx> getResiduesIn(const ChainID &chainid, 
+                                const ResID &resid) const;
+
+    QList<SegIdx> map(const SegName &name) const;
+    QList<SegIdx> map(const SegIdx &idx) const;
+    QList<SegIdx> map(const SegID &segid) const;
+   
+    QList<CGIdx> map(const CGName &name) const;
+    QList<CGIdx> map(const CGIdx &idx) const;
+    QList<CGIdx> map(const CGID &cgid) const;
+    
+    QList<AtomIdx> map(const AtomName &name) const;
+    QList<AtomIdx> map(const AtomNum &num) const;
+    QList<AtomIdx> map(const AtomIdx &idx) const;
+    QList<AtomIdx> map(const AtomID &atomid) const;
+    
+    QList<AtomIdx> getAtomsIn(const ResID &resid) const;
+    QList<AtomIdx> getAtomsIn(const ResID &resid,
+                              const AtomName &atomname) const;
+
+    QList<AtomIdx> getAtomsIn(const ChainID &chainid) const;
+    QList<AtomIdx> getAtomsIn(const ChainID &chainid,
+                              const AtomName &atomname) const;
+                              
+    QList<AtomIdx> getAtomsIn(const CGID &cgid) const;
+    QList<AtomIdx> getAtomsIn(const CGID &cgid,
+                              const AtomName &atomname) const;
+                              
+    QList<AtomIdx> getAtomsIn(const SegID &segid) const;
+    QList<AtomIdx> getAtomsIn(const SegID &segid,
+                              const AtomName &atomname) const;
+
+    template<class T>
+    static QList<T> intersection(const QList<T> &list0, const QList<T> &list1);
+    
 private:
-    /** The name of the molecule */
-    QString nam;
     
     class ResInfo
     {
@@ -168,6 +211,9 @@ private:
         CGAtomIdx cgatomidx;
     };
     
+    /** The name of the molecule */
+    QString molname;
+
     /** All of the atoms in the molecule, in the order they were
         added to the molecule */
     QVector<AtomInfo> atoms_by_index;
@@ -203,6 +249,43 @@ private:
     /** Hash mapping CutGroup name to CutGroup indicies */
     QMultiHash<CGName,CGIdx> cg_by_name;
 };
+
+/** Return the intersection of the objects in 'list0' and 'list1'. This returns
+    a list that contains only those items that are in both lists. The order
+    of the list is the same as the input, namely if both list0 and list1 are
+    sorted, then the returned list will be sorted as well. */
+template<class T>
+QList<T> MoleculeInfoData::intersection(const QList<T> &list0, const QList<T> &list1)
+{
+    QList<T> intersection_list;
+
+    if (list0.count() <= list1.count())
+    {
+        QSet<T> set1 = list1.toSet();
+        
+        for (typename QList<T>::const_iterator it = list0.constBegin();
+             it != list0.constEnd();
+             ++it)
+        {
+            if (set1.contains(*it))
+                intersection_list.append(*it);
+        }
+    }
+    else
+    {
+        QSet<T> set0 = list0.toSet();
+        
+        for (typename QList<T>::const_iterator it = list1.constBegin();
+             it != list1.constEnd();
+             ++it)
+        {
+            if (set0.contains(*it))
+                intersection_list.append(*it);
+        }
+    }
+    
+    return intersection_list;
+}
 
 }
 

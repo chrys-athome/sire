@@ -1,4 +1,49 @@
 
+ala = ResName("ALA")
+ca = AtomName("CA")
+chain_b = ChainName("B")
+
+//return the first atom called 'CA' in the fourth residue
+//called 'ALA'
+atom = mol.select( ala[3] + ca[0] )
+
+//return the first atom called 'CA' in the last residue
+//called 'ALA' in chain 'B'
+atom = mol.select( chain_b + ala[-1] + ca )
+
+//select all of the atoms called 'CA' in all of the 'ALA' 
+//residues in chain_b
+atoms = mol.selectAll( chain_b + ala + ca )
+
+//moves the first and second of these atoms
+atoms = atoms.move(0).translate( [1,2,3] )
+atoms = atoms.move(1).translate( [2,3,4] )
+
+//select all of the residues called 'ALA'
+residues = mol.selectAll( ala )
+
+//move the first and second of these residues
+residues = residues.move(0).translate( [1,2,3] ).move(1).translate( [2,3,4] )
+
+//combine selection and move together
+mol = mol.selectAll(ala).move(0).translate([1,2,3]).move(1).translate([2,3,4])
+
+// Manipulator<Residues,Mover> Residues::move(int idx) const
+
+// Manipulator<Mol, Type> : public Mol, public Type  <- type uses the d ptr from Mol
+
+Atom -> Single Atom
+Atoms -> Collection of Atoms in the Molecule (PartialMolecule)
+
+Residue -> Single Residue
+Residues -> Collection of Residues in the Molecule
+
+Chain -> Single Chain
+Chains -> Collection of Chains in the Molecule
+
+Segment -> Single Segment
+Segments -> Collection of Segments in the Molecule
+
 class AtomID
    virtual CGAtomIdx index(const MoleculeInfo &molinfo) const=0;
    

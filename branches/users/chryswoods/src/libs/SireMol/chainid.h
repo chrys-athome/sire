@@ -26,8 +26,8 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_RESID_H
-#define SIREMOL_RESID_H
+#ifndef SIREMOL_CHAINID_H
+#define SIREMOL_CHAINID_H
 
 #include "SireID/id.h"
 
@@ -36,55 +36,33 @@ SIRE_BEGIN_HEADER
 namespace SireMol
 {
 
-class ResNum;
+class ChainIdx;
 
 class MoleculeInfo;
 
-class SIREMOL_EXPORT ResIDPart
-{
-public:
-    ResIDPart()
-    {}
-    
-    virtual ~ResIDPart()
-    {}
-    
-    ResIDCombo operator+(const ResIDPart &other) const;
-    
-    virtual void update(ResIDCombo &combo) const=0;
-};
-
 /** This is the base class of all identifiers that are used 
-    to identify a residue within a molecule
+    to identify a chain within a molecule
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT ResID : public SireID::ID, 
-                             public ResIDPart,
-                             public AtomIDPart
+class SIREMOL_EXPORT ChainID : public SireID::ID
 {
 
 public:
-    ResID() : SireID::ID()
+    ChainID() : SireID::ID()
     {}
 
-    ResID(const ResID &other) : SireID::ID(other)
+    ChainID(const ChainID &other) : SireID::ID(other)
     {}
 
-    ~ResID()
+    ~ChainID()
     {}
     
-    using ResIDPart::operator+;
-    using AtomIDPart::operator+;
-    
-    virtual ResID* clone() const=0;
+    virtual ChainID* clone() const=0;
 
-    /** Map this ID back to the indicies of the residues in the molecule, 
+    /** Map this ID back to the indicies of the chains in the molecule, 
         using the passed MoleculeInfo to do the mapping */
-    virtual QList<ResIdx> map(const MoleculeInfo &molinfo) const=0;
-    
-    /** Update the ResIdentifier with information from this ID */
-    virtual void update(ResIdentifier &resid) const=0;
+    virtual QSet<ChainIdx> map(const MoleculeInfo &molinfo) const=0;
 };
 
 }
