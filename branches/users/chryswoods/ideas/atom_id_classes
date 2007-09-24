@@ -5,14 +5,16 @@ chain_b = ChainName("B")
 
 //return the first atom called 'CA' in the fourth residue
 //called 'ALA'
-atom = mol.select( ala[3] + ca[0] )
+atom = mol.select( (ala[3] + ca)[0] )
+
+atom = mol.select( ( (chain_b[0] + ala)[2] + ca)[0] )
 
 //return the first atom called 'CA' in the last residue
 //called 'ALA' in chain 'B'
-atom = mol.select( chain_b + ala[-1] + ca )
+atom = mol.select( ((chain_b[0] + ala)[-1] + ca)[0] )
 
 //select all of the atoms called 'CA' in all of the 'ALA' 
-//residues in chain_b
+//residues in all of the chains called chain_b
 atoms = mol.selectAll( chain_b + ala + ca )
 
 //moves the first and second of these atoms

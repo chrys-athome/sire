@@ -13,11 +13,10 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 set ( SIREMOL_HEADERS
       atom.h
       atomaliases.h
+      atomatomid.h
       atomcutting.h
       atomicproperties.h
       atomid.h
-      atomidcombo.h
-      atomidcombo.hpp
       atomidcombos.h
       atomidentifier.h
       atomidx.h
@@ -33,14 +32,17 @@ set ( SIREMOL_HEADERS
       cgidentifier.h
       cgidx.h
       cgname.h
-      cgnum.h
+      chainchainid.h
       chainid.h
+      chainresid.h
       cutgroup.h
       cuttingfunction.h
       element-data.h
       element.h
       elementdb.h
       errors.h
+      groupatomids.h
+      groupgroupids.h
       molecule.h
       moleculebonds.h
       moleculecutting.h
@@ -55,6 +57,11 @@ set ( SIREMOL_HEADERS
       molecules.h
       moleculeview.h
       moleculeview_inlines.h
+      molid.h
+      molidentifier.h
+      molidx.h
+      molname.h
+      molnum.h
       partialmolecule.h
       propertyextractor.h
       qhash_siremol.h
@@ -67,11 +74,11 @@ set ( SIREMOL_HEADERS
       residx.h
       resname.h
       resnum.h
+      resresid.h
       segid.h
       segidentifier.h
       segidx.h
       segname.h
-      segnum.h
       segment.h
       splitmolecule.h
       weightfunction.h
@@ -81,16 +88,17 @@ set ( SIREMOL_HEADERS
 set ( SIREMOL_SOURCES
       atom.cpp
       atomaliases.cpp
+      atomatomid.cpp
       atomicproperties.cpp
-      atomidcombos.cpp
       atomidentifier.cpp
       atomcutting.cpp
-      atomidcombo.cpp
       atominfo.cpp
       atominfogroup.cpp
       atomselection.cpp
       atomselector.cpp
       cgidentifier.cpp
+      chainchainid.cpp
+      chainresid.cpp
       cutgroup.cpp
       cuttingfunction.cpp
       elementdb.cpp
@@ -108,6 +116,7 @@ set ( SIREMOL_SOURCES
       moleculeproperty.cpp
       molecules.cpp
       moleculeview.cpp
+      molidentifier.cpp
       partialmolecule.cpp
       propertyextractor.cpp
       residentifier.cpp
@@ -115,6 +124,7 @@ set ( SIREMOL_SOURCES
       residuebonds.cpp
       residuecutting.cpp
       residueinfo.cpp
+      resresid.cpp
       segidentifier.cpp
       segment.cpp
       splitmolecule.cpp

@@ -45,20 +45,88 @@ namespace SireMol
 class AtomIDCombo : public AtomID
 {
 public:
-
+    AtomIDCombo();
+    
+    AtomIDCombo(const AtomIDCombo &other);
+    
+    ~AtomIDCombo();
+    
+    static const char* typeName()
+    {
+        return "SireMol::AtomIDCombo";
+    }
+    
+    const char* what() const
+    {
+        return AtomIDCombo::typeName();
+    }
+    
+    void add(const SegID &segid) const;
+    void add(const ChainID &chainid) const;
+    void add(const CGID &cgid) const;
+    void add(const ResID &resid) const;
+    void add(const AtomID &atomid) const;
+    
+    QString toString() const;
+    
+    QList<AtomIdx> map(const MoleculeInfo &molinfo) const;
 
 private:
-    /** The identifier for the segment */
-    SegIdentifier segid;
+    /** The collection of Segment IDs that are part of this combo */
+    QList<SegmentIdentifier> segids;
+    
+    /** The collection of Chain IDs that are part of this combo */
+    QList<ChainIdentifier> chainids;
+    
+    /** The collection of CutGroup IDs that are part of this combo */
+    QList<CGIdentifier> cgids;
+    
+    /** The collection of Residue IDs that are part of this combo */
+    QList<ResIdentifier> resids;
 
-    /** The identifier for the chain and residue */
-    ResIDCombo resid;
+    /** The collection of Atom IDs that are part of this combo */ 
+    QList<AtomIdentifier> atomids;
+};
+
+AtomIDCombo operator+(const AtomIDCombo &combo, const AtomIDCombo &combo);
+AtomIDCombo operator+(const MolPartID &part, const AtomIDCombo &combo);
+AtomIDCombo operator+(const AtomIDCombo &combo, const MolPartID &part);
+AtomIDCombo operator+(const MolPartID &part0, const MolPartID &part1);
+
+class ResAtomID : public AtomID
+{
+public:
+    ResAtomID();
     
-    /** The identifier for the CutGroup */
-    CGIdentifier cgid;
+    ResAtomID(const ResAtomID &other) const;
     
-    /** The identifiers for the atom */
-    AtomIdentifier atmid;
+    ~ResAtomID();
+    
+    static const char* typeName()
+    {
+        return "SireMol::ResAtomID";
+    }
+    
+    const char* what() const
+    {
+        return ResAtomID::typeName();
+    }
+    
+    ResAtomID* clone() const
+    {
+        return new ResAtomID(*this);
+    }
+    
+    QString toString() const
+    {
+        return QString("%1 and %2").arg(resid->toString(), atomid->toString());
+    }
+    
+    QList<AtomIdx> map(const MoleculeInfo &molinfo) const;
+    
+private:
+    boost::shared_ptr<ResID> resid;
+    boost::shared_ptr<AtomID> atomid;
 };
 
 }

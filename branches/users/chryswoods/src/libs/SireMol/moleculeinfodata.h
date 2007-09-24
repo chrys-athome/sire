@@ -68,7 +68,7 @@ namespace SireMol
     
     @author Christopher Woods
 */
-class MoleculeInfoData
+class MoleculeInfoData : public QSharedData
 {
 
 friend QDataStream& operator<<(QDataStream&, const MoleculeInfoData&);
@@ -76,6 +76,110 @@ friend QDataStream& operator>>(QDataStream&, MoleculeInfoData&);
 
 public:
     MoleculeInfoData();
+    
+    MoleculeInfoData(const MoleculeInfoData &other);
+    
+    ~MoleculeInfoData();
+    
+    MoleculeInfoData& operator=(const MoleculeInfoData &other);
+    
+    const MolName& name() const;
+    
+    const ChainName& name(const ChainID &chainid) const;
+    const ChainName& name(ChainIdx chainidx) const;
+    
+    const SegName& name(const SegID &segid) const;
+    const SegName& name(SegIdx segidx) const;
+    
+    const ResName& name(const ResID &resid) const;
+    const ResName& name(ResIdx residx) const;
+    
+    const CGName& name(const CGID &cgid) const;
+    const CGName& name(CGIdx cgidx) const;
+    
+    const AtomName& name(const AtomID &atomid) const;
+    const AtomName& name(AtomIdx atomidx) const;
+    
+    ResNum number(const ResID &resid) const;
+    ResNum number(ResIdx residx) const;
+    
+    AtomNum number(const AtomID &atomid) const;
+    AtomNum number(AtomIdx atomidx) const;
+    
+    CGAtomIdx cgAtomIdx(AtomIdx atomidx) const;
+    CGAtomIdx cgAtomIdx(const AtomID &atomid) const;
+    QList<CGAtomIdx> cgAtomIdxs(const AtomID &atomid) const;
+
+    AtomIdx atomIdx(const AtomID &atomid) const;
+    AtomIdx atomIdx(const CGAtomIdx &cgatomidx) const;
+    QList<AtomIdx> atomIdxs(const AtomID &atomid) const;
+    
+    QList<ResIdx> getResiduesIn(ChainIdx chainidx) const;
+    QList<ResIdx> getResiduesIn(const ChainID &chainid) const;
+
+    QList<AtomIdx> getAtomsIn(ResIdx residx) const;
+    QList<AtomIdx> getAtomsIn(const ResID &resid) const;
+    QList<AtomIdx> getAtomsIn(ResIdx residx, const AtomName &name) const;
+    QList<AtomIdx> getAtomsIn(const ResID &resid,
+                              const AtomName &atomname) const;
+
+    QList<AtomIdx> getAtomsIn(ChainIdx chainidx) const;
+    QList<AtomIdx> getAtomsIn(const ChainID &chainid) const;
+    QList<AtomIdx> getAtomsIn(ChainIdx chainidx, 
+                              const AtomName &atomname) const;
+    QList<AtomIdx> getAtomsIn(const ChainID &chainid,
+                              const AtomName &atomname) const;
+                              
+    QList<AtomIdx> getAtomsIn(CGIdx cgidx) const;
+    QList<AtomIdx> getAtomsIn(const CGID &cgid) const;
+    
+    QList<AtomIdx> getAtomsIn(SegIdx segidx) const;
+    QList<AtomIdx> getAtomsIn(const SegID &segid) const;
+
+    ChainIdx parentChain(ResIdx residx) const;
+    ChainIdx parentChain(const ResID &resid) const;
+    
+    ChainIdx parentChain(AtomIdx atomidx) const;
+    ChainIdx parentChain(const AtomID &atomid) const;
+    
+    ResIdx parentResidue(AtomIdx atomidx) const;
+    ResIdx parentResidue(const AtomID &atomid) const;
+    
+    SegIdx parentSegment(AtomIdx atomidx) const;
+    SegIdx parentSegment(const AtomID &atomid) const;
+    
+    CGIdx parentCutGroup(AtomIdx atomidx) const;
+    CGIdx parentCutGroup(const AtomID &atomid) const;
+    
+    bool contains(const ChainID &chainid, const ResID &resid) const;
+    bool contains(const ChainID &chainid, const AtomID &atomid) const;
+    bool contains(const ChainID &chainid, const AtomName &name) const;
+    
+    bool contains(const ResID &resid, const AtomID &atomid) const;
+    bool contains(const ResID &resid, const AtomName &name) const;
+    
+    bool contains(const SegID &segid, const AtomID &atomid) const;
+    bool contains(const CGID &cgid, const AtomID &atomid) const; 
+    
+    bool contains(const AtomID &atomid) const;
+    
+    int nAtoms() const;
+    
+    int nAtoms(const ChainID &chainid) const;
+    int nAtoms(ChainIdx chainidx) const;
+    
+    int nAtoms(const ResID &resid) const;
+    int nAtoms(ResIdx residx) const;
+    
+    int nAtoms(const SegID &segid) const;
+    int nAtoms(SegIdx segidx) const;
+    
+    int nAtoms(const CGID &cgid) const;
+    int nAtoms(CGIdx cgidx) const;
+    
+    int nResidues() const;
+    int nResidues(const ChainID &chainid) const;
+    int nResidues(ChainIdx chainidx) const;
     
     QList<ResIdx> map(const ResName &name) const;
     QList<ResIdx> map(const ResNum &num) const;
@@ -85,10 +189,6 @@ public:
     QList<ChainIdx> map(const ChainName &name) const;
     QList<ChainIdx> map(const ChainIdx &idx) const;
     QList<ChainIdx> map(const ChainID &chainid) const;
-
-    QList<ResIdx> getResiduesIn(const ChainID &chainid) const;
-    QList<ResIdx> getResiduesIn(const ChainID &chainid, 
-                                const ResID &resid) const;
 
     QList<SegIdx> map(const SegName &name) const;
     QList<SegIdx> map(const SegIdx &idx) const;
@@ -102,22 +202,6 @@ public:
     QList<AtomIdx> map(const AtomNum &num) const;
     QList<AtomIdx> map(const AtomIdx &idx) const;
     QList<AtomIdx> map(const AtomID &atomid) const;
-    
-    QList<AtomIdx> getAtomsIn(const ResID &resid) const;
-    QList<AtomIdx> getAtomsIn(const ResID &resid,
-                              const AtomName &atomname) const;
-
-    QList<AtomIdx> getAtomsIn(const ChainID &chainid) const;
-    QList<AtomIdx> getAtomsIn(const ChainID &chainid,
-                              const AtomName &atomname) const;
-                              
-    QList<AtomIdx> getAtomsIn(const CGID &cgid) const;
-    QList<AtomIdx> getAtomsIn(const CGID &cgid,
-                              const AtomName &atomname) const;
-                              
-    QList<AtomIdx> getAtomsIn(const SegID &segid) const;
-    QList<AtomIdx> getAtomsIn(const SegID &segid,
-                              const AtomName &atomname) const;
 
     template<class T>
     static QList<T> intersection(const QList<T> &list0, const QList<T> &list1);
@@ -139,8 +223,8 @@ private:
         /** The index of the chain this residue is in */
         ChainIdx chainidx;
 
-        /** The indicies of all atoms that are in this residue */
-        QSet<AtomIdx> atom_indicies;
+        /** The sorted list of the indicis of all atoms that are in this residue */
+        QVector<AtomIdx> atom_indicies;
         
         /** Hash mapping the name of each atom in this residue
             to the indicies of the atoms in the molecule
@@ -157,8 +241,9 @@ private:
         /** The name of this chain */
         ChainName name;
         
-        /** The indicies of the residues that are contained in this chain */
-        QSet<ResIdx> res_indicies;
+        /** The sorted list of all indicies of the residues that 
+            are contained in this chain */
+        QVector<ResIdx> res_indicies;
     };
 
     class SegInfo
@@ -170,8 +255,8 @@ private:
         /** The name of this segment */
         SegName name;
         
-        /** The indicies of all of the atoms that are in this residue */
-        QSet<AtomIdx> atom_indexes;
+        /** The sorted list of all indicies of the atoms that are in this residue */
+        QVector<AtomIdx> atom_indexes;
     };
     
     class CGInfo
@@ -183,8 +268,9 @@ private:
         /** The name of this CutGroup */
         CGName name;
         
-        /** The indicies of all of the atoms that are in this CutGroup */
-        QSet<AtomIdx> atom_indexes;
+        /** The sorted list of all indicies of all of the atoms 
+            that are in this CutGroup */
+        QVector<AtomIdx> atom_indexes;
     };
     
     class AtmInfo
@@ -196,11 +282,10 @@ private:
         /** The name of this atom */
         QString name;
 
-        /** Index of the residue this atom is in */
+        /** Index of the residue this atom is in
+            (this also tells us the index of the chain
+             this atom is in) */
         ResIdx residx;
-
-        /** Index of the chain this atom is in */
-        ChainIdx chainidx;
         
         /** Index of the segment this atom is in */
         SegIdx segidx;
@@ -212,7 +297,7 @@ private:
     };
     
     /** The name of the molecule */
-    QString molname;
+    MolName molname;
 
     /** All of the atoms in the molecule, in the order they were
         added to the molecule */
@@ -233,7 +318,7 @@ private:
     QVector<ChainInfo> chains_by_index;
     
     /** Hash mapping chain names to chain indicies */
-    QMultiHash<ChainName,ChainIdx> chain_by_name;
+    QMultiHash<ChainName,ChainIdx> chains_by_name;
     
     /** All of the segments in this molecule, arranged in the
         order that they appear in this molecule */

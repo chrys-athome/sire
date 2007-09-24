@@ -26,19 +26,60 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_ATOMIDCOMBOS_H
-#define SIREMOL_ATOMIDCOMBOS_H
+#ifndef SIREMOL_ATOMATOMID_H
+#define SIREMOL_ATOMATOMID_H
 
-#include "atomatomid.h"
-#include "groupatomids.h"
+#include "atomidentifier.h"
 
-#include "cgatomidx.h"
+SIRE_BEGIN_HEADER
 
-#include "groupgroupids.h"
+namespace SireMol
+{
 
-#include "chainchainid.h"
-#include "chainresid.h"
-#include "resresid.h"
+/** This class holds a pair of AtomIDs, which are used together
+    to identify atom(s)
+    
+    @author Christopher Woods
+*/
+class AtomAtomID : public AtomID
+{
+public:
+    AtomAtomID();
+    
+    AtomAtomID(const AtomID &id0, const AtomID &id1);
+    
+    AtomAtomID(const AtomAtomID &other);
+    
+    ~AtomAtomID();
+    
+    static const char* typeName()
+    {
+        return "SireMol::AtomAtomID";
+    }
+    
+    const char* what() const
+    {
+        return AtomAtomID::typeName();
+    }
+
+    AtomAtomID* clone() const
+    {
+        return new AtomAtomID(*this);
+    }
+
+    QString toString() const;
+
+    QList<AtomIdx> map(const MoleculeInfoData &molinfo) const;
+
+private:
+    /** The pair of IDs that are combined */
+    AtomIdentifier atomid0, atomid1;
+};
+
+AtomAtomID operator+(const AtomID &id0, const AtomID &id1);
+
+}
+
+SIRE_END_HEADER
 
 #endif
-

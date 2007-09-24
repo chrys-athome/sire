@@ -134,33 +134,190 @@ QList<ChainIdx> MoleculeInfoData::map(const ChainID &chainid) const
     return chainid.map(*this);
 }
 
-QList<SegIdx> MoleculeInfoData::map(const SegName &name) const;
-QList<SegIdx> MoleculeInfoData::map(const SegID &segid) const;
-   
-QList<CGIdx> MoleculeInfoData::map(const CGName &name) const;
-QList<CGIdx> MoleculeInfoData::map(const CGID &cgid) const;
-    
-QList<AtomIdx> MoleculeInfoData::map(const AtomName &name) const;
-QList<AtomIdx> MoleculeInfoData::map(const AtomNum &num) const;
-QList<AtomIdx> MoleculeInfoData::map(const AtomID &atomid) const;
+/** Return the indicies of the segments that have the name 'name'
 
-/** Return the indicies of residues that simultaneously match both 
-    the chain ID and residue IDs supplied. This throws an exception
-    if there are no residues or chains that match these IDs
+    \throw SireMol::missing_segment
+*/
+QList<SegIdx> MoleculeInfoData::map(const SegName &name) const
+{
+    QList<SegIdx> segidxs = seg_by_name.values(name);
     
-    \throw SireMol::missing_chain
-    \throw SireMol::missing_residue
+    if (segidxs.isEmpty())
+        throw SireMol::missing_segment( QObject::tr(
+            "There is no segment called \"%1\" in the molecule \"%2\".")
+                .arg(name, molname), CODELOC );
+                
+    qSort(segidxs);
+    return segidxs;
+}
+
+/** Obvious function that maps the SegIdx to a list of SegIdx
+    objects
+    
     \throw SireError::invalid_index
 */
-QList<ResIdx> MoleculeInfoData::getResiduesIn(const ChainID &chainid, 
-                                              const ResID &resid) const
+QList<SegIdx> MoleculeInfoData::map(const SegIdx &idx) const
 {
-    //get a list of all of the residues in the chains that match the
-    //ID 'chainid'
-    QList<ResIdx> res_in_chains = this->getResiduesIn(chainid);
+    QList<SegIdx> segidxs;
+    segidxs.append( idx.map(seg_by_index.count()) );
     
-    //now match the residue, limited by 'res_in_chains'
-    return resid.map(*this, res_in_chains);
+    return segidxs;
+}
+
+/** Return the indicies of segments that match the ID 'segid'
+
+    \throw SireMol::missing_segment
+    \throw SireError::invalid_index
+*/
+QList<SegIdx> MoleculeInfoData::map(const SegID &segid) const
+{
+    return segid.map(*this);
+}
+
+/** Return the indicies of CutGroups that have the name 'name'
+
+    \throw SireMol::missing_cutgroup
+*/
+QList<CGIdx> MoleculeInfoData::map(const CGName &name) const
+{
+    QList<CGIdx> cgidxs = cg_by_name.values(name);
+    
+    if (cgidxs.isEmpty())
+        throw SireMol::missing_cutgroup( QObject::tr(
+            "There is no CutGroup called \"%1\" in the molecule \"%2\".")
+                .arg(name, molname), CODELOC );
+                
+    qSort(cgidxs);
+    return cgidxs;
+}
+
+/** Obvious function that maps the CGIdx to a list of CGIdx
+    objects
+    
+    \throw SireError::invalid_index
+*/
+QList<CGIdx> MoleculeInfoData::map(const CGIdx &idx) const
+{
+    QList<CGIdx> cgidxs;
+    cgidxs.append( idx.map(cg_by_index.count()) );
+    
+    return cgidxs;
+}
+
+/** Return the indicies of CutGroups that match the ID 'cgid'
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+QList<CGIdx> MoleculeInfoData::map(const CGID &cgid) const
+{
+    return cgid.map(*this);
+}
+    
+/** Return the indicies of atoms that are called 'name'
+ 
+    \throw SireMol::missing_atom
+*/
+QList<AtomIdx> MoleculeInfoData::map(const AtomName &name) const
+{
+    QList<AtomIdx> atomidxs;
+    
+    //loop through all of the atoms...
+    int nats = atoms_by_index.count();
+    const AtomInfo *atoms_by_index_array = atoms_by_index.constData();
+    
+    for (int i=0; i<nats; ++i)
+    {
+        if (atoms_by_index_array[i].name == name)
+            atomidxs.append( AtomIdx(i) );
+    }
+    
+    if (atomidxs.isEmpty())
+        throw SireMol::missing_atom( QObject::tr(
+            "There is no atom called \"%1\" in the molecule \"%2\".")
+                .arg(name, molname), CODELOC );
+                
+    //no need to sort as added in sorted order
+    return atomidxs;
+}
+
+/** Return the indicies of atoms that have the number 'num'.
+
+    \throw SireMol::missing_atom
+*/
+QList<AtomIdx> MoleculeInfoData::map(const AtomNum &num) const
+{
+    QList<AtomIdx> atomidxs;
+    
+    //loop through all of the atoms
+    int nats = atoms_by_index.count();
+    const AtomInfo *atoms_by_index_array = atoms_by_index.constData();
+    
+    for (int i=0; i<nats; ++i)
+    {
+        if (atoms_by_index_array[i].number = num)
+            atomidxs.append( AtomIdx(i) );
+    }
+    
+    //no need to sort as added in sorted order
+    return atomidxs;
+}
+
+/** Obvious function that maps the AtomIdx to a list of AtomIdx
+    objects
+    
+    \throw SireError::invalid_index
+*/
+QList<AtomIdx> MoleculeInfoData::map(const AtomIdx &idx) const
+{
+    QList<AtomIdx> atomidxs;
+    atomidxs.append( idx.map(atoms_by_index.count()) );
+    
+    return atomidxs;
+}
+
+/** Return the indicies of atoms that match the ID 'atomid'
+
+    \throw SireMol::missing_atom
+    \throw SireError::invalid_index
+*/
+QList<AtomIdx> MoleculeInfoData::map(const AtomID &atomid) const
+{
+    return atomid.map(*this);
+}
+
+/** Return the indicies of residues that are in the chains that match
+    the specified ID
+    
+    \throw SireMol::missing_chain
+    \throw SireError::invalid_index
+*/
+QList<ResIdx> MoleculeInfoData::getResiduesIn(const ChainID &chainid) const
+{
+    QList<ChainIdx> chainidxs = chainid.map(*this);
+    
+    QList<ResIdx> residxs;
+    
+    foreach (ChainIdx chainidx, chainidxs)
+    {
+        residxs.append( chains_by_index.at(chainidx).res_indicies.toList() );
+    }
+
+    if (chainidxs.count() > 1)
+        qSort(residxs);
+    
+    return residxs;
+}
+
+void MoleculeInfoData::_pvt_getAtomsIn(const QList<ResIdx> &residx, 
+                                       QList<AtomIdx> &atomidxs) const
+{
+    const ResInfo *res_by_index_array = res_by_index.constData();
+
+    foreach (ResIdx residx, residxs)
+    {
+        atomidxs.append( res_by_index_array[residx].atom_indicies.toList() );
+    }
 }
 
 /** Return the indicies of all of the atoms that are in the 
@@ -172,21 +329,28 @@ QList<ResIdx> MoleculeInfoData::getResiduesIn(const ChainID &chainid,
 QList<AtomIdx> MoleculeInfoData::getAtomsIn(const ResID &resid) const
 {
     //get the indicies of matching residues
-    QList<ResIdx> residxs = this->map(resid);
+    QList<ResIdx> residxs = resid.map(*this);
     
     //add all of the atomidxs together
     QList<AtomIdx> atomidxs;
     
+    this->_pvt_getAtomsIn(residxs, atomidxs);
+    
+    if (residxs.count() > 1)
+        qSort(atomidxs);
+    
+    return atomidxs;
+}
+
+void MoleculeInfoData::_pvt_getAtomsIn(const QList<ResIdx> residxs, AtomName name,
+                                       QList<AtomIdx> &atomidxs) const
+{
     const ResInfo *res_by_index_array = res_by_index.constData();
     
     foreach (ResIdx residx, residxs)
     {
-        atomidxs.append( res_by_index_array[residx].atom_indicies.toList() );
+        atomidxs.append( res_by_index_array[residx].atoms_by_name.values(name) );
     }
-    
-    qSort(atomidxs);
-    
-    return atomidxs;
 }
 
 /** Return the indicies of all of the atoms that have the name
@@ -205,13 +369,8 @@ QList<AtomIdx> MoleculeInfoData::getAtomsIn(const ResID &resid,
     //now only search these residues for the atom with the 
     //specified name
     QList<AtomIdx> atomidxs;
-    
-    const ResInfo *res_by_index_array = res_by_index.constData();
-    
-    foreach (ResIdx residx, residxs)
-    {
-        atomidxs.append( res_by_index_array[residx].atoms_by_name.values(name) );
-    }
+
+    this->_pvt_getAtomsIn(residxs, name, atomidxs);
     
     if (atomidxs.isEmpty())
         throw SireMol::missing_atom( QObject::tr(
@@ -223,64 +382,95 @@ QList<AtomIdx> MoleculeInfoData::getAtomsIn(const ResID &resid,
     return atomidxs;
 }
 
-/** Return the indicies of all of the atoms in the residues that match
-    the ID 'resid' that match the atom ID 'atomid'
+/** Return the indicies of all of the atoms that are in the chains
+    with ID 'chainid'
     
-    \throw SireMol::missing_residue
+    \throw SireMol::missing_chain
+    \throw SireError::invalid_index
+*/
+QList<AtomIdx> MoleculeInfoData::getAtomsIn(const ChainID &chainid) const
+{
+    QList<ResIdx> residxs = this->getResiduesIn(chainid);
+    
+    QList<AtomIdx> atomidxs;
+
+    this->_pvt_getAtomsIn(residxs, atomidxs);
+
+    if (residxs.count() > 1)
+        qSort(atomidxs);
+    
+    return atomidxs;
+}
+
+/** Return the indicies of all atoms that are in the chain identified
+    by 'chainid' and are also called 'name'
+    
+    \throw SireMol::missing_chain
     \throw SireMol::missing_atom
     \throw SireError::invalid_index
 */
-QList<AtomIdx> MoleculeInfoData::getAtomsIn(const ResID &resid,
-                                            const AtomID &atomid) const
+QList<AtomIdx> MoleculeInfoData::getAtomsIn(const ChainID &chainid, 
+                                            const AtomName &name) const
 {
-    QList<AtomIdx> atomidxs = this->getAtomsIn(resid);
-    return atomid.map(*this, atomidxs);
+    QList<ResIdx> residxs = this->getResiduesIn(chainid);
+    
+    QList<AtomIdx> atomidxs;
+    
+    this->_pvt_getAtomsIn(residxs, name, atomidxs);
+    
+    if (atomidxs.isEmpty())
+        throw SireMol::missing_molecule( QObject::tr(
+            "There are no atoms called \"%1\" in the chains identified "
+            "by %2 in the molecule \"%3\".")
+                .arg(name, chainid.toString(), molname), CODELOC );
+    
+    qSort(atomidxs);
+    
+    return atomidxs;
 }
 
-////////// ResIDCombo ///////////////////////////////
-
-/** Return the indicies of residues that match this combined 
-    chain-residue ID 'resid' 
+/** Return the indicies of the atoms in the segment identified by 
+    the segment with ID 'segid'
     
-    \throw SireMol::missing_chain
-    \throw SireMol::missing_residue
-    \throw SireError:invalid_index
+    \throw SireMol::missing_segment
+    \throw SireError::invalid_index
 */
-QList<ResIdx> ResIDCombo::map(const MoleculeInfo &molinfo) const
+QList<AtomIdx> MoleculeInfoData::getAtomsIn(const SegID &segid) const
 {
-    this->assertNotNull();
-
-    if (_chain.isNull())
-        return molinfo.map(_res);
-    else if (_res.isNull())
-        return molinfo.map(_chain);
-    else
+    QList<SegIdx> segidxs = segid.map(*this);
+    
+    QList<AtomIdx> atomidxs;
+    
+    foreach (SegIdx segidx, segidxs)
     {
-        QList<ResIdx> res_in_chains = molinfo.getResiduesIn(_chain);
-        return _res.map(molinfo, res_in_chains);
+        atomidxs.append( seg_by_index[segidx].atom_indicies.toList() );
     }
+    
+    if (segidx.count() > 1)
+        qSort(atomidxs);
+    
+    return atomidxs;
 }
 
-////////////////////////////////////////////////////////
-
-//////// ResAtomCombo //////////////////////////////////
-
-/** Return the indicies of atoms that match this combined
-    res-atom ID 'atomid'
+/** Return the indicies of the atoms in the CutGroups identified
+    by the ID 'cgid'
     
-    \throw SireMol::missing_residue
-    \throw SireMol::missing_atom
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
 */
-QList<AtomIdx> AtomIDCombo::map(const MoleculeInfo &molinfo) const
+QList<AtomIdx> MoleculeInfoData::getAtomsIn(const CGID &cgid) const
 {
-    this->assertNotNull();
+    QList<CGIdx> cgidxs = cgid.map(*this);
     
-    if (_res.isNull())
-        return molinfo.map(_atom);
-    else if (_atom.isNull())
-        return molinfo.map(_res);
-    else
+    QList<AtomIdx> atomidxs;
+    
+    foreach (CGIdx cgidx, cgidxs)
     {
-        return _atom.map(molinfo, _res);
+        atomidxs.append( cg_by_index[cgidx].atom_indicies.toList() );
     }
+    
+    if (cgidxs.count() > 1)
+        qSort(atomidxs);
+        
+    return atomidxs;
 }
