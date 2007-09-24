@@ -26,6 +26,7 @@ set ( SIREMOL_HEADERS
       atomnum.h
       atomselection.h
       atomselector.h
+      atomsin.hpp
       calculateaxes.hpp
       cgatomidx.h
       cgid.h
@@ -80,6 +81,7 @@ set ( SIREMOL_HEADERS
       segidx.h
       segname.h
       segment.h
+      specify.hpp
       splitmolecule.h
       weightfunction.h
     )

@@ -33,6 +33,7 @@
 
 #include "atomid.h"
 #include "cgatomidx.h"
+#include "specify.h"
 
 namespace SireMol
 {

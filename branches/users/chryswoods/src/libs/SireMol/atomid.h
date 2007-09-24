@@ -36,6 +36,9 @@ SIRE_BEGIN_HEADER
 namespace SireMol
 {
 
+template<class ID>
+class Specify;
+
 class MoleculeInfo;
 class ResID;
 class SegID;
@@ -43,26 +46,12 @@ class CGID;
 
 class CGAtomIdx;
 
-class SIREMOL_EXPORT AtomIDPart
-{
-public:
-    AtomIDPart()
-    {}
-    
-    virtual ~AtomIDPart()
-    {}
-    
-    AtomIDCombo operator+(const AtomIDPart &other) const;
-    
-    virtual void update(AtomIDCombo &atomid) const=0;
-};
-
 /** This is the base class of all identifiers that are used 
     to identify an atom
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT AtomID : public SireID::ID, public AtomIDPart
+class SIREMOL_EXPORT AtomID : public SireID::ID
 {
 public:
     AtomID() : SireID::ID()
@@ -74,7 +63,9 @@ public:
     ~AtomID()
     {}
 
-    using AtomIDPart::operator+;
+    Specify<AtomIdentifier> operator[](int i) const;
+    Specify<AtomIdentifier> operator()(int i) const;
+    Specify<AtomIdentifier> operator()(int i, int j) const;
 
     virtual AtomID* clone() const=0;
 
