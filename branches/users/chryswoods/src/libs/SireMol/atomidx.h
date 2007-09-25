@@ -51,23 +51,20 @@ namespace SireMol
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT AtomIdx 
-       : public SireID::Index_T_<AtomIdx>, public AtomOnlyID
+class SIREMOL_EXPORT AtomIdx : public SireID::Index_T_<AtomIdx>, public AtomID
 {
 
 friend XMLStream& ::operator<<(XMLStream&, const AtomIdx&);
 friend XMLStream& ::operator>>(XMLStream&, AtomIdx&);
 
 public:
-    AtomIdx() : SireID::Index_T_<AtomIdx>(), AtomOnlyID()
+    AtomIdx() : SireID::Index_T_<AtomIdx>(), AtomID()
     {}
     
-    explicit AtomIdx(quint32 idx) 
-              : SireID::Index_T_<AtomIdx>(idx), AtomOnlyID()
+    explicit AtomIdx(qint32 idx) : SireID::Index_T_<AtomIdx>(idx), AtomID()
     {}
     
-    AtomIdx(const AtomIdx &other) 
-              : SireID::Index_T_<AtomIdx>(other), AtomOnlyID(other)
+    AtomIdx(const AtomIdx &other) : SireID::Index_T_<AtomIdx>(other), AtomID(other)
     {}
     
     ~AtomIdx()
@@ -88,20 +85,25 @@ public:
         return new AtomIdx(*this);
     }
     
+    bool isNull() const
+    {
+        return SireID::Index_T_<AtomIdx>::isNull();
+    }
+    
     uint hash() const
     {
-        return qHash( static_cast<const SireID::Index&>(*this) );
+        return SireID::Index_T_<AtomIdx>::hash();
     }
 
     QString toString() const
     {
-        return QString("AtomID(%1)").arg(_idx);
+        return QString("AtomIdx(%1)").arg(_idx);
     }
     
     AtomIdx& operator=(const AtomIdx &other)
     {
-        SireID::Index::operator=(other);
-        AtomOnlyID::operator=(other);
+        SireID::IndexBase::operator=(other);
+        AtomID::operator=(other);
         return *this;
     }
     
@@ -120,11 +122,12 @@ public:
     using SireID::Index_T_<AtomIdx>::operator-=;
     using SireID::Index_T_<AtomIdx>::operator--;
     
-    CGAtomIdx map(const MoleculeInfo &molinfo) const;
-
-    CGAtomIdx map(const MoleculeInfo &molinfo, const ResID &resid) const;
-    CGAtomIdx map(const MoleculeInfo &molinfo, const CGID &cgid) const;
-    CGAtomIdx map(const MoleculeInfo &molinfo, const SegID &segid) const;
+    QList<AtomIdx> map(const MoleculeInfoData&) const
+    {
+        QList<AtomIdx> atomidxs;
+        atomidxs.append(*this);
+        return atomidxs;
+    }
 };
     
 }

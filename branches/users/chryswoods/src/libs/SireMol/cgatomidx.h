@@ -30,9 +30,8 @@
 #define SIREMOL_CGATOMIDX_H
 
 #include "cgidx.h"
-#include "atomidx.h"
 
-#include <boost/tuple/tuple.hpp>
+#include "SireID/index.h"
 
 SIRE_BEGIN_HEADER
 
@@ -56,19 +55,15 @@ namespace SireMol
 class SIREMOL_EXPORT CGAtomIdx : public AtomID
 {
 public:
-    CGAtomIdx()
+    CGAtomIdx() : AtomID()
     {}
     
-    CGAtomIdx(const CGIdx &cgidx, const AtomIdx &atomidx)
-          : _cgidx(cgidx), _atmidx(atomidx)
-    {}
-    
-    CGAtomIdx(const boost::tuple<CGIdx,AtomIdx> &pair)
-          : _cgidx(pair.get<0>()), _atmidx(pair.get<1>())
+    CGAtomIdx(CGIdx cgid, SireID::Index atomid)
+          : AtomID(), _cgidx(cgid), _atmidx(atomid)
     {}
     
     CGAtomIdx(const CGAtomIdx &other)
-          : _cgidx(other._cgidx), _atmidx(other._atmidx)
+          : AtomID(other), _cgidx(other._cgidx), _atmidx(other._atmidx)
     {}
     
     ~CGAtomIdx()
@@ -87,6 +82,11 @@ public:
     CGAtomIdx* clone() const
     {
         return new CGAtomIdx(*this);
+    }
+    
+    bool isNull() const
+    {
+        return _cgidx.isNull() and _atmidx.isNull();
     }
     
     uint hash() const
@@ -124,17 +124,14 @@ public:
         return _cgidx != other._cgidx or _atmidx != other._atmidx;
     }
     
-    CGAtomIdx map(const MoleculeInfo&) const
-    {
-        return *this;
-    }
+    QList<AtomIdx> map(const MoleculeInfoData &molinfo) const;
     
-    CGIdx cgIdx() const
+    CGIdx cutGroup() const
     {
         return _cgidx;
     }
     
-    AtomIdx atomIdx() const
+    SireID::Index atom() const
     {
         return _atmidx;
     }
@@ -144,8 +141,27 @@ private:
     CGIdx _cgidx;
     
     /** The index of the atom within the CutGroup */
-    AtomIdx _atmidx;
+    SireID::Index _atmidx;
 };
+
+}
+
+#include "moleculeinfodata.h"
+
+namespace SireMol
+{
+
+/** Map this CGAtomIdx back to the index of the atom in the molecule 
+    
+    \throw SireError::invalid_index
+*/
+QList<AtomIdx> CGAtomIdx::map(const MoleculeInfoData &molinfo) const
+{
+    QList<AtomIdx> atomidxs;
+    atomidxs.append( molinfo.atomIdx(*this) );
+    
+    return atomidxs;
+}
 
 }
 

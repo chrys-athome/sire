@@ -87,19 +87,24 @@ public:
         return new SegIdx(*this);
     }
     
+    bool isNull() const
+    {
+        return SireID::Index_T_<SegIdx>::isNull();
+    }
+    
     uint hash() const
     {
-        return qHash( static_cast<const SireID::Index&>(*this) );
+        return SireID::Index_T_<SegIdx>::hash();
     }
 
     QString toString() const
     {
-        return QString("AtomID(%1)").arg(_idx);
+        return QString("SegIdx(%1)").arg(_idx);
     }
     
     SegIdx& operator=(const SegIdx &other)
     {
-        SireID::Index::operator=(other);
+        SireID::IndexBase::operator=(other);
         SegID::operator=(other);
         return *this;
     }
@@ -119,7 +124,12 @@ public:
     using SireID::Index_T_<SegIdx>::operator-=;
     using SireID::Index_T_<SegIdx>::operator--;
     
-    SegName map(const MoleculeInfo &molinfo) const;
+    QList<SegIdx> map(const MoleculeInfoData&) const
+    {
+        QList<SegIdx> segidxs;
+        segidxs.append(*this);
+        return segidxs;
+    }
 };
     
 }

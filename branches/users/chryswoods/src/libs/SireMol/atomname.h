@@ -51,20 +51,20 @@ namespace SireMol
     
     @author Christopher Woods
 */
-class SIREMOL_EXPORT AtomName : public SireID::Name, public AtomOnlyID
+class SIREMOL_EXPORT AtomName : public SireID::Name, public AtomID
 {
 
 friend XMLStream& ::operator<<(XMLStream&, const AtomName&);
 friend XMLStream& ::operator>>(XMLStream&, AtomName&);
 
 public:
-    AtomName() : SireID::Name(), AtomOnlyID()
+    AtomName() : SireID::Name(), AtomID()
     {}
     
-    explicit AtomName(const QString &name) : SireID::Name(name), AtomOnlyID()
+    explicit AtomName(const QString &name) : SireID::Name(name), AtomID()
     {}
     
-    AtomName(const AtomName &other) : SireID::Name(other), AtomOnlyID(other)
+    AtomName(const AtomName &other) : SireID::Name(other), AtomID(other)
     {}
     
     ~AtomName()
@@ -85,6 +85,11 @@ public:
         return new AtomName(*this);
     }
     
+    bool isNull() const
+    {
+        return SireID::Name::isNull();
+    }
+    
     uint hash() const
     {
         return qHash(_name);
@@ -98,7 +103,7 @@ public:
     AtomName& operator=(const AtomName &other)
     {
         SireID::Name::operator=(other);
-        AtomOnlyID::operator=(other);
+        AtomID::operator=(other);
         return *this;
     }
     
@@ -117,11 +122,7 @@ public:
         return _name != other._name;
     }
 
-    CGAtomIdx map(const MoleculeInfo &molinfo) const;
-
-    CGAtomIdx map(const MoleculeInfo &molinfo, const ResID &resid) const;
-    CGAtomIdx map(const MoleculeInfo &molinfo, const CGID &cgid) const;
-    CGAtomIdx map(const MoleculeInfo &molinfo, const SegID &segid) const;
+    QList<AtomIdx> map(const MoleculeInfoData &molinfo) const;
 };
 
 }

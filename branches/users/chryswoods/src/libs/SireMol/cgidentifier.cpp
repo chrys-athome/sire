@@ -27,11 +27,26 @@
 \*********************************************/
 
 #include "cgidentifier.h"
+#include "cgidx.h"
+#include "moleculeinfodata.h"
 
 #include "SireStream/datastream.h"
 
 using namespace SireMol;
 using namespace SireID;
+
+////////
+//////// Implementation of CGName
+////////
+
+QList<CGIdx> CGName::map(const MoleculeInfoData &molinfo) const
+{
+    return molinfo.map(*this);
+}
+
+////////
+//////// Implementation of CGIdentifier
+////////
 
 static const RegisterMetaType<CGIdentifier> r_cgid;
 

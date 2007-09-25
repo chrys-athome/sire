@@ -36,32 +36,15 @@ SIRE_BEGIN_HEADER
 namespace SireMol
 {
 
-class ResNum;
-
-class MoleculeInfo;
-
-class SIREMOL_EXPORT ResIDPart
-{
-public:
-    ResIDPart()
-    {}
-    
-    virtual ~ResIDPart()
-    {}
-    
-    ResIDCombo operator+(const ResIDPart &other) const;
-    
-    virtual void update(ResIDCombo &combo) const=0;
-};
+class ResIdx;
+class MoleculeInfoData;
 
 /** This is the base class of all identifiers that are used 
     to identify a residue within a molecule
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT ResID : public SireID::ID, 
-                             public ResIDPart,
-                             public AtomIDPart
+class SIREMOL_EXPORT ResID : public SireID::ID
 {
 
 public:
@@ -74,17 +57,11 @@ public:
     ~ResID()
     {}
     
-    using ResIDPart::operator+;
-    using AtomIDPart::operator+;
-    
     virtual ResID* clone() const=0;
 
     /** Map this ID back to the indicies of the residues in the molecule, 
         using the passed MoleculeInfo to do the mapping */
-    virtual QList<ResIdx> map(const MoleculeInfo &molinfo) const=0;
-    
-    /** Update the ResIdentifier with information from this ID */
-    virtual void update(ResIdentifier &resid) const=0;
+    virtual QList<ResIdx> map(const MoleculeInfoData &molinfo) const=0;
 };
 
 }

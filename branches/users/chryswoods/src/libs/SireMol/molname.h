@@ -26,3 +26,107 @@
   *
 \*********************************************/
 
+#ifndef SIREMOL_MOLNAME_H
+#define SIREMOL_MOLNAME_H
+
+#include "SireID/name.h"
+
+#include "molid.h"
+
+SIRE_BEGIN_HEADER
+
+namespace SireMol
+{
+class MolName;
+}
+
+XMLStream& operator<<(XMLStream&, const SireMol::MolName&);
+XMLStream& operator>>(XMLStream&, SireMol::MolName&);
+
+namespace SireMol
+{
+
+/** This class holds the name of a Molecule.
+    
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT MolName : public SireID::Name, public MolID
+{
+
+friend XMLStream& ::operator<<(XMLStream&, const MolName&);
+friend XMLStream& ::operator>>(XMLStream&, MolName&);
+
+public:
+    MolName() : SireID::Name(), MolID()
+    {}
+    
+    explicit MolName(const QString &name) : SireID::Name(name), MolID()
+    {}
+    
+    MolName(const MolName &other) : SireID::Name(other), MolID(other)
+    {}
+    
+    ~MolName()
+    {}
+    
+    static const char* typeName()
+    {
+        return "SireMol::MolName";
+    }
+    
+    const char* what() const
+    {
+        return MolName::typeName();
+    }
+    
+    MolName* clone() const
+    {
+        return new MolName(*this);
+    }
+    
+    bool isNull() const
+    {
+        return SireID::Name::isNull();
+    }
+    
+    uint hash() const
+    {
+        return qHash(_name);
+    }
+    
+    QString toString() const
+    {
+        return QString("MolName('%1')").arg(_name);
+    }
+    
+    MolName& operator=(const MolName &other)
+    {
+        SireID::Name::operator=(other);
+        MolID::operator=(other);
+        return *this;
+    }
+    
+    bool operator==(const SireID::ID &other) const
+    {
+        return SireID::ID::compare<MolName>(*this, other);
+    }
+    
+    bool operator==(const MolName &other) const
+    {
+        return _name == other._name;
+    }
+    
+    bool operator!=(const MolName &other) const
+    {
+        return _name != other._name;
+    }
+};
+
+}
+
+Q_DECLARE_METATYPE(SireMol::MolName);
+
+SIRE_END_HEADER
+
+#endif
+

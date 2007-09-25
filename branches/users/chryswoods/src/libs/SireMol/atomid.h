@@ -39,12 +39,9 @@ namespace SireMol
 template<class ID>
 class Specify;
 
-class MoleculeInfo;
-class ResID;
-class SegID;
-class CGID;
-
-class CGAtomIdx;
+class MoleculeInfoData;
+class AtomIdx;
+class AtomIdentifier;
 
 /** This is the base class of all identifiers that are used 
     to identify an atom
@@ -54,24 +51,30 @@ class CGAtomIdx;
 class SIREMOL_EXPORT AtomID : public SireID::ID
 {
 public:
-    AtomID() : SireID::ID()
-    {}
+    /** Define the index type of this ID */
+    typedef AtomIdx Index;
+    
+    /** Define the container (Identifier) type for this ID */
+    typedef AtomIdentifier Identifier;
 
-    AtomID(const AtomID &other) : SireID::ID(other)
-    {}
-
-    ~AtomID()
-    {}
-
+    AtomID();
+    AtomID(const AtomID &other);
+    ~AtomID();
+    
     Specify<AtomIdentifier> operator[](int i) const;
     Specify<AtomIdentifier> operator()(int i) const;
     Specify<AtomIdentifier> operator()(int i, int j) const;
+
+    static const char* typeName()
+    {
+        return "SireMol::AtomID";
+    }
 
     virtual AtomID* clone() const=0;
 
     /** Map this ID back to the indicies of the matching atoms in the molecule, 
         using the passed MoleculeInfo to do the mapping */
-    virtual QSet<AtomIdx> map(const MoleculeInfo &molinfo) const=0;
+    virtual QList<AtomIdx> map(const MoleculeInfoData &molinfo) const=0;
 };
 
 }

@@ -26,43 +26,24 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_MOLID_H
-#define SIREMOL_MOLID_H
+#include "chainidentifier.h"
+#include "chainname.h"
 
-#include "SireID/id.h"
+#include "moleculeinfodata.h"
 
-SIRE_BEGIN_HEADER
+using namespace SireMol;
+using namespace SireID;
 
-namespace SireMol
+///////
+/////// Implementation of ChainName
+///////
+
+QList<ChainIdx> ChainName::map(const MoleculeInfoData &molinfo) const
 {
-
-/** This is the base class of all identifiers that are used 
-    to identify a Molecule
-
-    @author Christopher Woods
-*/
-class SIREMOL_EXPORT MolID : public SireID::ID
-{
-public:
-    MolID() : SireID::ID()
-    {}
-    
-    MolID(const MolID &other) : SireID::ID(other)
-    {}
-    
-    ~MolID()
-    {}
-
-    static const char* typeName()
-    {
-        return "SireMol::MolID";
-    }
-
-    virtual MolID* clone() const=0;
-};
-
+    return molinfo.map(*this);
 }
 
-SIRE_END_HEADER
+///////
+/////// Implementation of ChainIdentifier
+///////
 
-#endif

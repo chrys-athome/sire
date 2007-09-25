@@ -26,43 +26,39 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_MOLID_H
-#define SIREMOL_MOLID_H
+#include "atomid.h"
+#include "atomidentifier.h"
+#include "specify.hpp"
 
-#include "SireID/id.h"
+using namespace SireMol;
+using namespace SireID;
 
-SIRE_BEGIN_HEADER
+/** Constructor */
+AtomID::AtomID() : ID()
+{}
 
-namespace SireMol
+/** Copy constructor */
+AtomID(const AtomID &other) : ID(other)
+{}
+
+/** Destructor */
+AtomID::~AtomID()
+{}
+  
+/** Return a specific atom that matches this ID */
+Specify<AtomIdentifier> AtomID::operator[](int i) const
 {
-
-/** This is the base class of all identifiers that are used 
-    to identify a Molecule
-
-    @author Christopher Woods
-*/
-class SIREMOL_EXPORT MolID : public SireID::ID
-{
-public:
-    MolID() : SireID::ID()
-    {}
-    
-    MolID(const MolID &other) : SireID::ID(other)
-    {}
-    
-    ~MolID()
-    {}
-
-    static const char* typeName()
-    {
-        return "SireMol::MolID";
-    }
-
-    virtual MolID* clone() const=0;
-};
-
+    return Specify<AtomIdentifier>(*this, i);
 }
 
-SIRE_END_HEADER
+/** Return a specific atom that matches this ID */
+Specify<AtomIdentifier> AtomID::operator()(int i) const
+{
+    return this->operator[](i);
+}
 
-#endif
+/** Return a range of atoms that match this ID */
+Specify<AtomIdentifier> AtomID::operator()(int i, int j) const
+{
+    return Specify<AtomIdentifier>(*this, i, j);
+}

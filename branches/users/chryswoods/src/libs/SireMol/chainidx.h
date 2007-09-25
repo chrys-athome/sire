@@ -26,116 +26,114 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_RESIDX_H
-#define SIREMOL_RESIDX_H
+#ifndef SIREMOL_CHAINIDX_H
+#define SIREMOL_CHAINIDX_H
 
 #include "SireID/index.h"
 
-#include "resid.h"
+#include "chainid.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
-class ResIdx;
+class ChainIdx;
 }
 
-XMLStream& operator<<(XMLStream&, const SireMol::ResIdx&);
-XMLStream& operator>>(XMLStream&, SireMol::ResIdx&);
+XMLStream& operator<<(XMLStream&, const SireMol::ChainIdx&);
+XMLStream& operator>>(XMLStream&, SireMol::ChainIdx&);
 
 namespace SireMol
 {
 
-/** This is an ID object that is used to index CutGroups
+/** This is an ID object that is used to index atoms (e.g. index
+    in a list or array, or in a molecule).
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT ResIdx 
-       : public SireID::Index_T_<ResIdx>, public ResID
+class SIREMOL_EXPORT ChainIdx : public SireID::Index_T_<ChainIdx>, public ChainID
 {
 
-friend XMLStream& ::operator<<(XMLStream&, const ResIdx&);
-friend XMLStream& ::operator>>(XMLStream&, ResIdx&);
+friend XMLStream& ::operator<<(XMLStream&, const ChainIdx&);
+friend XMLStream& ::operator>>(XMLStream&, ChainIdx&);
 
 public:
-    ResIdx() : SireID::Index_T_<ResIdx>(), ResID()
+    ChainIdx() : SireID::Index_T_<ChainIdx>(), ChainID()
     {}
     
-    explicit ResIdx(quint32 idx) 
-              : SireID::Index_T_<ResIdx>(idx), ResID()
+    explicit ChainIdx(qint32 idx) : SireID::Index_T_<ChainIdx>(idx), ChainID()
     {}
     
-    ResIdx(const ResIdx &other) 
-              : SireID::Index_T_<ResIdx>(other), ResID(other)
+    ChainIdx(const ChainIdx &other) : SireID::Index_T_<ChainIdx>(other), ChainID(other)
     {}
     
-    ~ResIdx()
+    ~ChainIdx()
     {}
     
     static const char* typeName()
     {
-        return "SireMol::ResIdx";
+        return "SireMol::ChainIdx";
     }
     
     const char* what() const
     {
-        return ResIdx::typeName();
+        return ChainIdx::typeName();
     }
     
-    ResIdx* clone() const
+    ChainIdx* clone() const
     {
-        return new ResIdx(*this);
+        return new ChainIdx(*this);
     }
     
     bool isNull() const
     {
-        return SireID::Index_T_<ResIdx>::isNull();
+        return SireID::Index_T_<ChainIdx>::isNull();
     }
     
     uint hash() const
     {
-        return SireID::Index_T_<ResIdx>::hash();
+        return SireID::Index_T_<ChainIdx>::hash();
     }
 
     QString toString() const
     {
-        return QString("AtomID(%1)").arg(_idx);
+        return QString("ChainIdx(%1)").arg(_idx);
     }
     
-    ResIdx& operator=(const ResIdx &other)
+    ChainIdx& operator=(const ChainIdx &other)
     {
         SireID::IndexBase::operator=(other);
-        ResID::operator=(other);
+        ChainID::operator=(other);
         return *this;
     }
     
     bool operator==(const SireID::ID &other) const
     {
-        return SireID::ID::compare<ResIdx>(*this, other);
+        return SireID::ID::compare<ChainIdx>(*this, other);
     }
     
-    using SireID::Index_T_<ResIdx>::operator=;
+    using SireID::Index_T_<ChainIdx>::operator=;
 
-    using SireID::Index_T_<ResIdx>::operator==;
-    using SireID::Index_T_<ResIdx>::operator!=;
+    using SireID::Index_T_<ChainIdx>::operator==;
+    using SireID::Index_T_<ChainIdx>::operator!=;
 
-    using SireID::Index_T_<ResIdx>::operator+=;
-    using SireID::Index_T_<ResIdx>::operator++;
-    using SireID::Index_T_<ResIdx>::operator-=;
-    using SireID::Index_T_<ResIdx>::operator--;
+    using SireID::Index_T_<ChainIdx>::operator+=;
+    using SireID::Index_T_<ChainIdx>::operator++;
+    using SireID::Index_T_<ChainIdx>::operator-=;
+    using SireID::Index_T_<ChainIdx>::operator--;
     
-    QList<ResIdx> map(const MoleculeInfoData&) const
+    QList<ChainIdx> map(const MoleculeInfoData&) const
     {
-        QList<ResIdx> residxs;
-        residxs.append(*this);
-        return residxs;
+        QList<ChainIdx> ChainIdxs;
+        ChainIdxs.append(*this);
+        return ChainIdxs;
     }
 };
     
 }
 
-Q_DECLARE_TYPEINFO(SireMol::ResIdx, Q_MOVABLE_TYPE);
-Q_DECLARE_METATYPE(SireMol::ResIdx);
+Q_DECLARE_TYPEINFO(SireMol::ChainIdx, Q_MOVABLE_TYPE);
+Q_DECLARE_METATYPE(SireMol::ChainIdx);
 
 SIRE_END_HEADER
 

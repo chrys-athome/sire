@@ -35,6 +35,9 @@ set ( SIREMOL_HEADERS
       cgname.h
       chainchainid.h
       chainid.h
+      chainidentifier.h
+      chainidx.h
+      chainname.h
       chainresid.h
       cutgroup.h
       cuttingfunction.h
@@ -92,6 +95,7 @@ set ( SIREMOL_SOURCES
       atomaliases.cpp
       atomatomid.cpp
       atomicproperties.cpp
+      atomid.cpp
       atomidentifier.cpp
       atomcutting.cpp
       atominfo.cpp

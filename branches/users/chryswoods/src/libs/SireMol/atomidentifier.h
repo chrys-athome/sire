@@ -33,34 +33,27 @@
 
 #include "atomid.h"
 #include "cgatomidx.h"
-#include "specify.h"
 
 namespace SireMol
 {
 
+template<class ID>
+class Specify;
+
 class AtomIdentifier : public SireID::Identifier_T_<AtomIdentifier,AtomID>
 {
 public:
-    AtomIdentifier() : SireID::Identifier_T_<AtomIdentifier,AtomID>()
-    {}
+    AtomIdentifier();
+    AtomIdentifier(const AtomID &atomid);
+    AtomIdentifier(const AtomIdentifier &other);
     
-    AtomIdentifier(const AtomID &atomid) 
-            : SireID::Identifier_T_<AtomIdentifier,AtomID>(atomid)
-    {}
+    ~AtomIdentifier();
+
+    Specify<AtomIdentifier> operator[](int i) const;
+    Specify<AtomIdentifier> operator()(int i) const;
+    Specify<AtomIdentifier> operator()(int i, int j) const;
     
-    AtomIdentifier(const AtomIdentifier &other) 
-            : SireID::Identifier_T_<AtomIdentifier,AtomID>(other)
-    {}
-    
-    ~AtomIdentifier()
-    {}
-    
-    CGAtomIdx map(const MoleculeInfo &molinfo) const
-    {
-        this->assertNotNull();
-            
-        return this->asA<AtomID>().map(molinfo);
-    }
+    QList<AtomIdx> map(const MoleculeInfoData &molinfo) const;
 };
 
 }

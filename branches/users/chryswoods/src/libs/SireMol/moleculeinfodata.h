@@ -29,7 +29,30 @@
 #ifndef SIREMOL_MOLECULEINFODATA_H
 #define SIREMOL_MOLECULEINFODATA_H
 
+#include <QSharedData>
+#include <QVector>
+#include <QMultiHash>
+
 #include "cgatomidx.h"
+#include "molname.h"
+
+#include "segname.h"
+#include "segidx.h"
+
+#include "chainname.h"
+#include "chainidx.h"
+
+#include "cgname.h"
+#include "cgidx.h"
+
+#include "resname.h"
+#include "resnum.h"
+#include "residx.h"
+
+#include "atomname.h"
+#include "atomnum.h"
+#include "atomidx.h"
+
 
 SIRE_BEGIN_HEADER
 
@@ -113,9 +136,16 @@ public:
     AtomIdx atomIdx(const AtomID &atomid) const;
     AtomIdx atomIdx(const CGAtomIdx &cgatomidx) const;
     QList<AtomIdx> atomIdxs(const AtomID &atomid) const;
+
+    QList<SegIdx> getSegments() const;
+    QList<CGIdx> getCutGroups() const;
+    QList<ChainIdx> getChains() const;
+    QList<ResIdx> getResidues() const;
     
     QList<ResIdx> getResiduesIn(ChainIdx chainidx) const;
     QList<ResIdx> getResiduesIn(const ChainID &chainid) const;
+
+    QList<AtomIdx> getAtoms() const;
 
     QList<AtomIdx> getAtomsIn(ResIdx residx) const;
     QList<AtomIdx> getAtomsIn(const ResID &resid) const;
@@ -273,11 +303,11 @@ private:
         QVector<AtomIdx> atom_indexes;
     };
     
-    class AtmInfo
+    class AtomInfo
     {
     public:
-        AtmInfo();
-        ~AtmInfo();
+        AtomInfo();
+        ~AtomInfo();
         
         /** The name of this atom */
         QString name;

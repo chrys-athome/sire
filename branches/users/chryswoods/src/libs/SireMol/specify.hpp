@@ -31,6 +31,8 @@
 
 #include "moleculeinfodata.h"
 
+#include "SireID/index.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol
@@ -45,9 +47,12 @@ namespace SireMol
 template<class ID>
 class Specify : public ID
 {
+private:
+    static QString typname;
+
 public:
-    Specify(const ID &id, int i);
-    Specify(const ID &id, int i, int j);
+    Specify(const ID &id, qint32 i);
+    Specify(const ID &id, qint32 i, qint32 j);
     
     Specify(const Specify<ID> &other);
     
@@ -63,36 +68,146 @@ public:
         return Specify<ID>::typeName();
     }
     
-    Specify<ID,IDX>* clone() const
+    Specify<ID>* clone() const
     {
         return new Specify<ID>(*this);
+    }
+
+    Specify<ID>& operator=(const Specify<ID> &other);
+    
+    bool operator==(const Specify<ID> &other) const;
+    bool operator==(const SireID::ID &other) const;
+
+    bool operator!=(const Specify<ID> &other) const
+    {
+        return not this->operator==(other);
+    }
+    
+    bool operator!=(const SireID::ID &other) const
+    {
+        return not this->operator==(other);
     }
     
     QString toString() const;
     
-    QList<ID::Index> map(const MoleculeInfoData &molinfo) const;
+    QList<typename ID::Index> map(const MoleculeInfoData &molinfo) const;
 
 private:
-    int strt, end;
+    /** Hide the index operators */
+    int operator[](int) const
+    {
+        return 0;
+    }
+    
+    int operator()(int) const
+    {
+        return 0;
+    }
+    
+    int operator()(int,int) const
+    {
+        return 0;
+    }
+
+    SireID::Index strt, end;
 };
+
+template<class ID>
+QString Specify<ID>::typname = QString("Specify<%1>").arg(ID::typeName());
+
+/** Construct, using the passed ID and index */
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+Specify<ID>::Specify(const ID &id, qint32 i)
+            : ID(id), strt(i), end(i)
+{}
+
+/** Construct using the passed ID and range */
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+Specify<ID>::Specify(const ID &id, qint32 i, qint32 j)
+            : ID(id), strt(i), end(j)
+{}
+  
+/** Copy constructor */  
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+Specify<ID>::Specify(const Specify<ID> &other)
+            : ID(other), strt(other.strt), end(other.end)
+{}
+  
+/** Destructor */  
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+Specify<ID>::~Specify()
+{}
+
+/** Copy assignment operator */
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+Specify<ID>& Specify<ID>::operator=(const Specify<ID> &other)
+{
+    if (&other != this)
+    {
+        ID::operator=(other);
+        strt = other.strt;
+        end = other.end;
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+bool Specify<ID>::operator==(const Specify<ID> &other) const
+{
+    return strt == other.strt and end == other.end and 
+           ID::operator==(other);
+}
+
+/** Comparison operator */
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+bool Specify<ID>::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare< Specify<ID> >(*this, other);
+}
+
+/** Return a string representation of this ID */
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+QString Specify<ID>::toString() const
+{
+    if (strt == end)
+        return QString("(%1)[%2]").arg(ID::toString()).arg(strt);
+    else
+        return QString("(%1)[%2:%3]").arg(ID::toString())
+                                     .arg(strt).arg(end);
+}
 
 /** Map this ID to the indicies of the matching parts of the molecule */
 template<class ID>
-QList<ID::Index> Specify<ID>::map(const MoleculeInfoData &molinfo) const
+SIRE_OUTOFLINE_TEMPLATE
+QList<typename ID::Index> Specify<ID>::map(const MoleculeInfoData &molinfo) const
 {
     //first get all of the matches
-    QList<ID::Index> idxs = ID::map(molinfo);
+    QList<typename ID::Index> idxs = ID::map(molinfo);
     
     //now get the specified matches
     int nmatches = idxs.count();
+
+    int sane_strt = strt.map(nmatches);
+    int sane_end = end.map(nmatches);
     
-    this->sanitise(strt, end, nmatches);
+    if (sane_strt > sane_end)
+        qSwap(sane_strt,sane_end);
     
-    if (end - strt == nmatches)
+    if (sane_end - sane_strt == nmatches)
         return idxs;
     else
     {
-        QList<ID::Index> specified_idxs;
+        QList<typename ID::Index> specified_idxs;
     
         for (int i=strt; i<=end; ++i)
         {

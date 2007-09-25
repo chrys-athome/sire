@@ -84,6 +84,11 @@ public:
         return new ResName(*this);
     }
     
+    bool isNull() const
+    {
+        return SireID::Name::isNull();
+    }
+    
     uint hash() const
     {
         return qHash(_name);
@@ -116,7 +121,7 @@ public:
         return _name != other._name;
     }
 
-    ResNum map(const MoleculeInfo &molinfo) const;
+    QList<ResIdx> map(const MoleculeInfoData &molinfo) const;
 };
 
 }

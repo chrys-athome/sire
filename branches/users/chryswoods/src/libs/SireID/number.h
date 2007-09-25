@@ -31,6 +31,8 @@
 
 #include "sireglobal.h"
 
+#include <limits>
+
 SIRE_BEGIN_HEADER
 
 namespace SireID
@@ -68,20 +70,30 @@ public:
     ~Number()
     {}
     
-    operator quint32() const
+    operator qint32() const
     {
         return _num;
     }
     
+    static qint32 null()
+    {
+        return std::numeric_limits<qint32>::min();
+    }
+    
+    bool isNull() const
+    {
+        return _num == null();
+    }
+    
 protected:
-    Number(quint32 num=0) : _num(num)
+    Number(qint32 num=0) : _num(num)
     {}
     
     Number(const Number &other) : _num(other._num)
     {}
     
     /** The actual number */
-    quint32 _num;
+    qint32 _num;
 };
 
 }

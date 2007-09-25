@@ -33,6 +33,8 @@
 
 #include "SireStream/datastream.h"
 
+#include <boost/shared_ptr.hpp>
+
 SIRE_BEGIN_HEADER
 
 namespace SireID
@@ -67,7 +69,6 @@ protected:
     ~Identifier_T_Base()
     {}
     
-    void throwNullIDError() const;
     void throwVersionError(SireStream::VersionID v,
                            const QString &supported_versions,
                            const RegisterMetaTypeBase &r_type) const;
@@ -94,13 +95,13 @@ friend XMLStream& operator>><>(XMLStream&, Identifier_T_<S,T>&);
 static QString typenam;
 
 public:
-    Identifier_T_() : idptr(0)
+    Identifier_T_()
     {}
     
     Identifier_T_(const T &idobj) : idptr( idobj.clone() )
     {}
     
-    Identifier_T_(const Identifier_T_<S,T> &other) : idptr( other.idptr->clone() )
+    Identifier_T_(const Identifier_T_<S,T> &other) : idptr(other.idptr)
     {}
     
     ~Identifier_T_()
@@ -110,12 +111,7 @@ public:
     
     S& operator=(const Identifier_T_<S,T> &other)
     {
-        if (&other != this)
-        {
-            delete idptr;
-            idptr = other.idptr->clone();
-        }
-        
+        idptr = other.idptr;
         return static_cast<S&>(*this);
     }
     
@@ -123,8 +119,7 @@ public:
     {
         if (&idobj != idptr)
         {
-            delete idptr;
-            idptr = idobj.clone();
+            idptr.reset(idobj.clone());
         }
         
         return static_cast<S&>(*this);
@@ -158,13 +153,7 @@ public:
     
     bool isNull() const
     {
-        return idptr == 0;
-    }
-    
-    void assertNotNull() const
-    {
-        if (idptr == 0)
-            this->throwNullIDError();
+        return idptr == 0 or idptr->isNull();
     }
     
     T* clone() const
@@ -216,16 +205,6 @@ public:
     template<class X>
     const X& asA() const
     {
-        this->assertNotNull();
-    
-        return idptr->asA<X>();
-    }
-    
-    template<class X>
-    X& asA()
-    {
-        this->assertNotNull();
-    
         return idptr->asA<X>();
     }
     

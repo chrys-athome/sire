@@ -37,7 +37,7 @@ namespace SireMol
 {
 
 class CGIdx;
-class MoleculeInfo;
+class MoleculeInfoData;
 
 /** This is the base class of all identifiers that are used 
     to identify a CutGroup
@@ -59,9 +59,9 @@ public:
 
     virtual CGID* clone() const=0;
 
-    /** Map this ID back to the CGIdx of the CutGroup
+    /** Map this ID back to the indicies of the CutGroups
         within the molecule described by the info in 'molinfo' */
-    virtual CGIdx map(const MoleculeInfo &molinfo) const=0;
+    virtual QList<CGIdx> map(const MoleculeInfoData &molinfo) const=0;
 };
 
 }

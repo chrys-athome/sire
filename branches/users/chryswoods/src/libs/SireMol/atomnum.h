@@ -91,6 +91,11 @@ public:
         return new AtomNum(*this);
     }
     
+    bool isNull() const
+    {
+        return SireID::Number::isNull();
+    }
+    
     uint hash() const
     {
         return qHash( static_cast<const SireID::Number&>(*this) );
@@ -123,11 +128,7 @@ public:
         return _num != other._num;
     }
 
-    CGAtomIdx map(const MoleculeInfo &molinfo) const;
-
-    CGAtomIdx map(const MoleculeInfo &molinfo, const ResID &resid) const;
-    CGAtomIdx map(const MoleculeInfo &molinfo, const CGID &cgid) const;
-    CGAtomIdx map(const MoleculeInfo &molinfo, const SegID &segid) const;
+    QList<AtomIdx> map(const MoleculeInfoData &molinfo) const;
 };
 
 }

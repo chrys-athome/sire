@@ -37,8 +37,7 @@ namespace SireMol
 {
 
 class ChainIdx;
-
-class MoleculeInfo;
+class MoleculeInfoData;
 
 /** This is the base class of all identifiers that are used 
     to identify a chain within a molecule
@@ -62,7 +61,7 @@ public:
 
     /** Map this ID back to the indicies of the chains in the molecule, 
         using the passed MoleculeInfo to do the mapping */
-    virtual QSet<ChainIdx> map(const MoleculeInfo &molinfo) const=0;
+    virtual QList<ChainIdx> map(const MoleculeInfoData &molinfo) const=0;
 };
 
 }

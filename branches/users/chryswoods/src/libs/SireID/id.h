@@ -73,7 +73,10 @@ public:
  
     /** Return a string representation of this ID */
     virtual QString toString() const=0;
-          
+ 
+    /** Return whether or not this ID is null */
+    virtual bool isNull() const=0;
+                            
     /** Comparison operator */
     virtual bool operator==(const ID &other) const=0;
     

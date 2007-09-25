@@ -28,12 +28,27 @@
 
 #include "segidentifier.h"
 
+#include "moleculeinfodata.h"
+
 #include "SireStream/datastream.h"
 
 using namespace SireMol;
 using namespace SireID;
 
 static const RegisterMetaType<SegIdentifier> r_segid;
+
+///////
+/////// Implementation of SegName
+///////
+
+QList<SegIdx> SegName::map(const MoleculeInfoData &molinfo) const
+{
+    return molinfo.map(*this);
+}
+
+///////
+/////// Implementation of SegIdentifier
+///////
 
 /** Serialise to a binary datastream */
 QDataStream SIREID_EXPORT &operator<<(QDataStream &ds, const SegIdentifier &segid)

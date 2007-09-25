@@ -29,17 +29,19 @@
 #ifndef SIREID_INDEX_H
 #define SIREID_INDEX_H
 
-#include "sireglobal.h"
+#include "id.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireID
 {
-class Index;
+class IndexBase;
 }
 
-QDataStream& operator<<(QDataStream&, const SireID::Index&);
-QDataStream& operator>>(QDataStream&, SireID::Index&);
+QDataStream& operator<<(QDataStream&, const SireID::IndexBase&);
+QDataStream& operator>>(QDataStream&, SireID::IndexBase&);
+
+uint qHash(const SireID::IndexBase &index);
 
 namespace SireID
 {
@@ -52,42 +54,75 @@ namespace SireID
     This class cannot be instantiated on its own - it must be 
     inherited by a derived class to be used.
     
-    Note that this is a 32bit index, so can only index from 
-    0 to (2^32)-1
-    
     @author Christopher Woods
 */
-class SIREID_EXPORT Index
+class SIREID_EXPORT IndexBase
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const Index&);
-friend QDataStream& ::operator>>(QDataStream&, Index&);
+friend QDataStream& ::operator<<(QDataStream&, const IndexBase&);
+friend QDataStream& ::operator>>(QDataStream&, IndexBase&);
 
 public:
-    ~Index()
+    ~IndexBase()
     {}
 
+    /** Return the null index */
+    static qint32 null()
+    {
+        return std::numeric_limits<qint32>::min();
+    }
+
+    /** Return whether this is a null index - a null
+        index is one that equals std::numeric_limits<qint32>::min(),
+        which should be -21474833648 for a 32bit integer */
+    bool isNull() const
+    {
+        return _idx == IndexBase::null();
+    }
+
     /** Allow implicit conversion back to an int */
-    operator quint32() const
+    operator qint32() const
     {
         return _idx;
     }
 
+    /** Map this index into the container of 'n' elements - this
+        maps the index (with negative indexing, e.g. -1 is the last
+        element), and throws an exception if the index is out 
+        of the bounds of the array
+        
+        \throw SireError::invalid_index
+    */
+    qint32 map(qint32 n) const
+    {
+        if (_idx >= 0 and _idx < n)
+            return _idx;
+        else if (_idx < 0 and _idx >= -n)
+            return n - _idx;
+        else
+        {
+            throwInvalidIndex(n);
+            return null();
+        }
+    }
+
 protected:
-    Index(quint32 idx) : _idx(idx)
+    explicit IndexBase(qint32 idx = IndexBase::null) : _idx(idx)
     {}
     
-    Index(const Index &other) : _idx(other._idx)
+    IndexBase(const IndexBase &other) : _idx(other._idx)
     {}
     
-    Index& operator=(const Index &other)
+    IndexBase& operator=(const IndexBase &other)
     {
         _idx = other._idx;
         return *this;
     }
     
+    void throwInvalidIndex(qint32 n) const;
+    
     /** The actual index value */
-    quint32 _idx;
+    qint32 _idx;
 };
 
 /** This derived version of index provides all of the
@@ -96,11 +131,32 @@ protected:
     @author Christopher Woods
 */
 template<class T>
-class SIREID_EXPORT Index_T_ : public Index
+class SIREID_EXPORT Index_T_ : public IndexBase
 {
 public:
+    explicit Index_T_(qint32 idx=IndexBase::null()) : IndexBase(idx)
+    {}
+    
+    explicit Index_T_(const Index_T_<T> &other) : IndexBase(other)
+    {}
+
     ~Index_T_()
     {}
+
+    const char* what() const
+    {
+        return T::typeName();
+    }
+    
+    IndexBase* clone() const
+    {
+        return new T( static_cast<const T&>(*this) );
+    }
+    
+    uint hash() const
+    {
+        return qHash( static_cast<const IndexBase&>(*this) );
+    }
 
     /** Comparison operator */
     bool operator==(const T &other) const
@@ -109,7 +165,13 @@ public:
     }
     
     /** Comparison operator */
-    bool operator==(quint32 val) const
+    bool operator==(const ID &other) const
+    {
+        return ID::compare<T>(static_cast<const T&>(*this),other);
+    }
+    
+    /** Comparison operator */
+    bool operator==(qint32 val) const
     {
         return _idx == val;
     }
@@ -121,13 +183,13 @@ public:
     }
     
     /** Comparison operator */
-    bool operator!=(quint32 val) const
+    bool operator!=(qint32 val) const
     {
         return _idx != val;
     }
     
     /** Assignment operator */
-    T& operator=(quint32 idx)
+    T& operator=(qint32 idx)
     {
         _idx = idx;
         return static_cast<T&>(*this);
@@ -177,32 +239,48 @@ public:
         --_idx;
         return orig;
     }
-    
-protected:
-    Index_T_(quint32 idx=0) : Index(idx)
+};
+
+class Index : public Index_T_<Index>
+{
+public:
+    explicit Index(qint32 idx = IndexBase::null()) : Index_T_<Index>(idx)
     {}
     
-    Index_T_(const Index_T_<T> &other) : Index(other)
+    Index(const Index &other) : Index_T_<Index>(other)
     {}
+    
+    ~Index()
+    {}
+    
+    static const char* typeName()
+    {
+        return "SireID::Index";
+    }
+    
+    QString toString() const
+    {
+        return QString("Index(%1)").arg(_idx);
+    }
 };
 
 }
 
 /** Return a hash of this index */
-uint qHash(const SireID::Index &index)
+uint qHash(const SireID::IndexBase &index)
 {
-    return quint32(index);
+    return qint32(index);
 }
 
 /** Serialise an Idx class */
-inline QDataStream& operator<<(QDataStream &ds, const SireID::Index &idx)
+inline QDataStream& operator<<(QDataStream &ds, const SireID::IndexBase &idx)
 {
     ds << idx._idx;
     return ds;
 }
 
 /** Deserialise an Idx class */
-inline QDataStream& operator>>(QDataStream &ds, SireID::Index &idx)
+inline QDataStream& operator>>(QDataStream &ds, SireID::IndexBase &idx)
 {
     ds >> idx._idx;
     return ds;

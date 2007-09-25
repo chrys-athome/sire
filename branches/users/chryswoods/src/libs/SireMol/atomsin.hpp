@@ -31,6 +31,8 @@
 
 #include "moleculeinfodata.h"
 
+#include "SireID/index.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol
@@ -43,21 +45,15 @@ namespace SireMol
     @author Christopher Woods
 */
 template<class ID>
-class AtomsIn : public ID
+class AtomsIn : public AtomID
 {
 public:
-    AtomsIn(int i, const ID &id) : ID(id), strt(i), end(i)
-    {}
+    AtomsIn(const ID &id, SireID::Index i);
+    AtomsIn(const ID &id, SireID::Index i, SireID::Index j);
     
-    AtomsIn(int i, int j, const ID &id) : ID(id), strt(i), end(j)
-    {}
+    AtomsIn(const AtomsIn<ID> &other);
     
-    AtomsIn(const AtomsIn<ID> &other)
-          : ID(other), strt(other.strt), end(other.end)
-    {}
-    
-    ~AtomsIn()
-    {}
+    ~AtomsIn();
     
     static const char* typeName()
     {
@@ -74,24 +70,109 @@ public:
         return new AtomsIn<ID>(*this);
     }
     
+    AtomsIn<ID>& operator=(const AtomsIn<ID> &other);
+
+    bool operator==(const AtomsIn<ID> &other) const;
+    bool operator==(const SireID::ID &other) const;
+    
+    bool operator!=(const AtomsIn<ID> &other) const
+    {
+        return not this->operator==(other);
+    }
+    
+    bool operator!=(const SireID::ID &other) const
+    {
+        return not this->operator==(other);
+    }
+    
+    uint hash() const
+    {
+        return qHash(groupid);
+    }
+    
     QString toString() const;
     
     QList<AtomIdx> map(const MoleculeInfoData &molinfo) const;
 
 private:
+    /** The ID of the group that contains the atoms */
+    ID groupid;
+
     /** The indicies of the range of atoms that this specifies */
-    int strt,end;
+    SireID::Index strt,end;
 };
+
+/** Construct for a specified atom */
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+AtomsIn<ID>::AtomsIn(const ID &id, SireID::Index i)
+            : AtomID(), group(id), strt(i), end(i)
+{}
+
+/** Construct for a range of atoms */
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+AtomsIn<ID>::AtomsIn(const ID &id, SireID::Index i, SireID:Index j)
+            : AtomID(), groupid(id), strt(i), end(j)
+{}
+
+/** Copy constructor */
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+AtomsIn<ID>::AtomsIn(const AtomsIn<ID> &other)
+            : AtomID(other), groupid(other.groupid), 
+              strt(other.strt), end(other.end)
+{}
+
+/** Destructor */
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+AtomsIn<ID>::~AtomsIn()
+{}
 
 /** Return a string representation of this ID */
 template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
 QString AtomsIn<ID>::toString() const
 {
     if (strt == end)
-        return QString("(%1).atom(%2)").arg(ID::toString()).arg(strt);
+        return QString("(%1).atom(%2)").arg(groupid.toString()).arg(strt);
     else
         return QString("(%1).atoms(%2,%3)")
-                    .arg(ID::toString()).arg(strt).arg(end);
+                    .arg(groupid.toString()).arg(strt).arg(end);
+}
+
+/** Copy assignment operator */
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+AtomsIn<ID>& AtomsIn<ID>::operator=(const AtomsIn<ID> &other)
+{
+    if (this != &other)
+    {
+        AtomID::operator=(other);
+        groupid = other.groupid;
+        strt = other.strt;
+        end = other.end;
+    }
+
+    return *this;
+}
+
+/** Comparison operator */
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+bool AtomsIn<ID>::operator==(const AtomsIn<ID> &other) const
+{
+    return strt == other.strt and end == other.end and
+           groupid == other.groupid;
+}
+
+/** Comparison operator */
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+bool AtomsIn<ID>::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare< AtomsIn<ID> >(*this, other);
 }
 
 /** Map this ID to the indicies of matching atoms 
@@ -100,10 +181,11 @@ QString AtomsIn<ID>::toString() const
     \throw SireError::invalid_index
 */
 template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
 QList<AtomIdx> AtomsIn<ID>::map(const MoleculeInfoData &molinfo) const
 {
     //first get the list of atom indicies from the base class...
-    QList<ID::Index> idxs = ID::map(molinfo);
+    QList<ID::Index> idxs = groupid.map(molinfo);
     
     QList<AtomIdx> atomidxs;
     
@@ -115,16 +197,27 @@ QList<AtomIdx> AtomsIn<ID>::map(const MoleculeInfoData &molinfo) const
     //now map _i and _j to the indicies...
     int nats = atomidxs.count();
     
-    this->sanitise(strt, end, nats);
+    int sane_strt = strt.map(nats);
+    int sane_end = end.map(nats);
     
-    QList<AtomIdx> specified_atomidxs;
+    if (sane_strt > sane_end)
+        qSwap(sane_strt, sane_end);
     
-    for (int i=strt, i<=end; ++i)
+    if (sane_end - sane_strt = nats)
     {
-        specified_atomidxs.append( atomidxs[i] );
+        return atomidxs;
     }
+    else
+    {
+        QList<AtomIdx> specified_atomidxs;
     
-    return specified_atomidxs;
+        for (int i=sane_strt, i<=sane_end; ++i)
+        {
+            specified_atomidxs.append( atomidxs[i] );
+        }
+    
+        return specified_atomidxs;
+    }
 }
 
 }

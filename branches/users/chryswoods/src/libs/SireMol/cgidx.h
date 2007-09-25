@@ -61,7 +61,7 @@ public:
     CGIdx() : SireID::Index_T_<CGIdx>(), CGID()
     {}
     
-    explicit CGIdx(quint32 idx) 
+    explicit CGIdx(qint32 idx) 
               : SireID::Index_T_<CGIdx>(idx), CGID()
     {}
     
@@ -76,20 +76,25 @@ public:
     {
         return "SireMol::CGIdx";
     }
-    
+
     const char* what() const
     {
-        return CGIdx::typeName();
+        return SireID::Index_T_<CGIdx>::what();
+    }
+    
+    bool isNull() const
+    {
+        return SireID::Index_T_<CGIdx>::isNull();
+    }
+    
+    uint hash() const
+    {
+        return SireID::Index_T_<CGIdx>::hash();
     }
     
     CGIdx* clone() const
     {
         return new CGIdx(*this);
-    }
-    
-    uint hash() const
-    {
-        return qHash( static_cast<const SireID::Index&>(*this) );
     }
 
     QString toString() const
@@ -99,7 +104,7 @@ public:
     
     CGIdx& operator=(const CGIdx &other)
     {
-        SireID::Index::operator=(other);
+        SireID::IndexBase::operator=(other);
         CGID::operator=(other);
         return *this;
     }
@@ -119,9 +124,11 @@ public:
     using SireID::Index_T_<CGIdx>::operator-=;
     using SireID::Index_T_<CGIdx>::operator--;
     
-    CGIdx map(const MoleculeInfo&) const
+    QList<CGIdx> map(const MoleculeInfoData&) const
     {
-        return *this;
+        QList<CGIdx> cgidxs;
+        cgidxs.append(*this);
+        return cgidxs;
     }
 };
     

@@ -36,10 +36,8 @@ SIRE_BEGIN_HEADER
 namespace SireMol
 {
 
-class MoleculeInfo;
+class MoleculeInfoData;
 class SegIdx;
-
-class SegName;
 
 /** This is the base class of all identifiers that are used 
     to identify a Segment within a Molecule
@@ -61,9 +59,9 @@ public:
 
     virtual SegID* clone() const=0;
 
-    /** Map this ID back to the SegNum of the segment in the molecule, 
+    /** Map this ID back to the indicies of the segments in the molecule, 
         using the passed MoleculeInfo to do the mapping */
-    virtual SegName map(const MoleculeInfo &molinfo) const=0;
+    virtual QList<SegIdx> map(const MoleculeInfoData &molinfo) const=0;
 };
 
 }

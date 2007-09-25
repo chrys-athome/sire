@@ -84,6 +84,11 @@ public:
         return new SegName(*this);
     }
     
+    bool isNull() const
+    {
+        return SireID::Name::isNull();
+    }
+    
     uint hash() const
     {
         return qHash(_name);
@@ -116,10 +121,7 @@ public:
         return _name != other._name;
     }
 
-    SegName map(const MoleculeInfo&) const
-    {
-        return *this;
-    }
+    QList<SegIdx> map(const MoleculeInfoData &molinfo) const;
 };
 
 }

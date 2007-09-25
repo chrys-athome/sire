@@ -27,6 +27,7 @@
 \*********************************************/
 
 #include "residentifier.h"
+#include "moleculeinfodata.h"
 
 #include "SireStream/datastream.h"
 
@@ -34,6 +35,28 @@ using namespace SireMol;
 using namespace SireID;
 
 static const RegisterMetaType<ResIdentifier> r_resid;
+
+///////
+/////// Implementation of ResName
+///////
+
+QList<ResIdx> ResName::map(const MoleculeInfoData &molinfo) const
+{
+    return molinfo.map(*this);
+}
+
+///////
+/////// Implementation of ResNum
+///////
+
+QList<ResIdx> ResNum::map(const MoleculeInfoData &molinfo) const
+{
+    return molinfo.map(*this);
+}
+
+///////
+/////// Implementation of ResIdentifier
+///////
 
 /** Serialise to a binary datastream */
 QDataStream SIREID_EXPORT &operator<<(QDataStream &ds, const ResIdentifier &resid)

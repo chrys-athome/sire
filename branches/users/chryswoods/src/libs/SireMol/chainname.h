@@ -26,62 +26,63 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_CGNAME_H
-#define SIREMOL_CGNAME_H
+#ifndef SIREMOL_CHAINNAME_H
+#define SIREMOL_CHAINNAME_H
 
 #include "SireID/name.h"
 
-#include "cgid.h"
+#include "chainid.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
-class CGName;
+class ChainName;
 }
 
-XMLStream& operator<<(XMLStream&, const SireMol::CGName&);
-XMLStream& operator>>(XMLStream&, SireMol::CGName&);
+XMLStream& operator<<(XMLStream&, const SireMol::ChainName&);
+XMLStream& operator>>(XMLStream&, SireMol::ChainName&);
 
 namespace SireMol
 {
 
-/** This class holds the name of a CutGroup.
+/** This class holds the name of an atom. This can be used
+    to identify an atom within a residue.
     
     @author Christopher Woods
 */
-class SIREMOL_EXPORT CGName : public SireID::Name, public CGID
+class SIREMOL_EXPORT ChainName : public SireID::Name, public ChainID
 {
 
-friend XMLStream& ::operator<<(XMLStream&, const CGName&);
-friend XMLStream& ::operator>>(XMLStream&, CGName&);
+friend XMLStream& ::operator<<(XMLStream&, const ChainName&);
+friend XMLStream& ::operator>>(XMLStream&, ChainName&);
 
 public:
-    CGName() : SireID::Name(), CGID()
+    ChainName() : SireID::Name(), ChainID()
     {}
     
-    explicit CGName(const QString &name) : SireID::Name(name), CGID()
+    explicit ChainName(const QString &name) : SireID::Name(name), ChainID()
     {}
     
-    CGName(const CGName &other) : SireID::Name(other), CGID(other)
+    ChainName(const ChainName &other) : SireID::Name(other), ChainID(other)
     {}
     
-    ~CGName()
+    ~ChainName()
     {}
     
     static const char* typeName()
     {
-        return "SireMol::CGName";
+        return "SireMol::ChainName";
     }
     
     const char* what() const
     {
-        return CGName::typeName();
+        return ChainName::typeName();
     }
     
-    CGName* clone() const
+    ChainName* clone() const
     {
-        return new CGName(*this);
+        return new ChainName(*this);
     }
     
     bool isNull() const
@@ -96,38 +97,39 @@ public:
     
     QString toString() const
     {
-        return QString("CGName('%1')").arg(_name);
+        return QString("ChainName('%1')").arg(_name);
     }
     
-    CGName& operator=(const CGName &other)
+    ChainName& operator=(const ChainName &other)
     {
         SireID::Name::operator=(other);
-        CGID::operator=(other);
+        ChainID::operator=(other);
         return *this;
     }
     
     bool operator==(const SireID::ID &other) const
     {
-        return SireID::ID::compare<CGName>(*this, other);
+        return SireID::ID::compare<ChainName>(*this, other);
     }
     
-    bool operator==(const CGName &other) const
+    bool operator==(const ChainName &other) const
     {
         return _name == other._name;
     }
     
-    bool operator!=(const CGName &other) const
+    bool operator!=(const ChainName &other) const
     {
         return _name != other._name;
     }
 
-    QList<CGIdx> map(const MoleculeInfoData &molinfo) const;
+    QList<ChainIdx> map(const MoleculeInfoData &molinfo) const;
 };
 
 }
 
-Q_DECLARE_METATYPE(SireMol::CGName);
+Q_DECLARE_METATYPE(SireMol::ChainName);
 
 SIRE_END_HEADER
 
 #endif
+
