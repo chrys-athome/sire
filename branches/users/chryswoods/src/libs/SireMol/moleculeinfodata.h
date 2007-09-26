@@ -135,7 +135,11 @@ public:
 
     AtomIdx atomIdx(const AtomID &atomid) const;
     AtomIdx atomIdx(const CGAtomIdx &cgatomidx) const;
-    QList<AtomIdx> atomIdxs(const AtomID &atomid) const;
+
+    ResIdx resIdx(const ResID &resid) const;
+    ChainIdx chainIdx(const ChainID &chainid) const;
+    SegIdx segIdx(const SegID &segid) const;
+    CGIdx cgIdx(const CGID &cgid) const;
 
     QList<SegIdx> getSegments() const;
     QList<CGIdx> getCutGroups() const;
@@ -286,7 +290,7 @@ private:
         SegName name;
         
         /** The sorted list of all indicies of the atoms that are in this residue */
-        QVector<AtomIdx> atom_indexes;
+        QVector<AtomIdx> atom_indicies;
     };
     
     class CGInfo
@@ -300,7 +304,7 @@ private:
         
         /** The sorted list of all indicies of all of the atoms 
             that are in this CutGroup */
-        QVector<AtomIdx> atom_indexes;
+        QVector<AtomIdx> atom_indicies;
     };
     
     class AtomInfo

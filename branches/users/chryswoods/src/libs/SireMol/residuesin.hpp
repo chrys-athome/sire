@@ -26,8 +26,8 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_ATOMSIN_HPP
-#define SIREMOL_ATOMSIN_HPP
+#ifndef SIREMOL_RESIDUESIN_HPP
+#define SIREMOL_RESIDUESIN_HPP
 
 #include "moleculeinfodata.h"
 
@@ -38,25 +38,25 @@ SIRE_BEGIN_HEADER
 namespace SireMol
 {
 
-/** This helper class is used to provide the '.atoms()' functionality
-    of the group ID classes. This allows the class to an atom, or
-    range of atoms by index from the group that has been identified.
+/** This helper class is used to provide the '.residues()' functionality
+    of the group ID classes. This allows a class to identify the index to a residue, or
+    range of residues by index from the group that has been identified.
     
     @author Christopher Woods
 */
 template<class GROUP>
-class AtomsIn : public AtomID
+class ResiduesIn : public ResID
 {
 private:
     static QString typname;
 
 public:
-    AtomsIn(const GROUP &id, qint32 i);
-    AtomsIn(const GROUP &id, qint32 i, qint32 j);
+    ResiduesIn(const GROUP &id, qint32 i);
+    ResiduesIn(const GROUP &id, qint32 i, qint32 j);
     
-    AtomsIn(const AtomsIn<GROUP> &other);
+    ResiduesIn(const ResiduesIn<GROUP> &other);
     
-    ~AtomsIn();
+    ~ResiduesIn();
     
     static const char* typeName()
     {
@@ -65,20 +65,20 @@ public:
     
     const char* what() const
     {
-        return AtomsIn<GROUP>::typeName();
+        return ResiduesIn<GROUP>::typeName();
     }
     
-    AtomsIn<GROUP>* clone() const
+    ResiduesIn<GROUP>* clone() const
     {
-        return new AtomsIn<GROUP>(*this);
+        return new ResiduesIn<GROUP>(*this);
     }
     
-    AtomsIn<GROUP>& operator=(const AtomsIn<GROUP> &other);
+    ResiduesIn<GROUP>& operator=(const ResiduesIn<GROUP> &other);
 
-    bool operator==(const AtomsIn<GROUP> &other) const;
+    bool operator==(const ResiduesIn<GROUP> &other) const;
     bool operator==(const SireID::ID &other) const;
     
-    bool operator!=(const AtomsIn<GROUP> &other) const
+    bool operator!=(const ResiduesIn<GROUP> &other) const
     {
         return not this->operator==(other);
     }
@@ -100,7 +100,7 @@ public:
     
     QString toString() const;
     
-    QList<AtomIdx> map(const MoleculeInfoData &molinfo) const;
+    QList<ResIDx> map(const MoleculeInfoData &molinfo) const;
 
 private:
     /** The ID of the group that contains the atoms */
@@ -111,57 +111,59 @@ private:
 };
 
 template<class GROUP>
-QString AtomsIn<GROUP>::typname 
-                    = QString("SireMol::AtomsIn<%1>").arg(GROUP::typeName());
+QString ResiduesIn<GROUP>::typname 
+                    = QString("SireMol::ResiduesIn<%1>").arg(GROUP::typeName());
 
 /** Construct for a specified atom */
 template<class GROUP>
 SIRE_OUTOFLINE_TEMPLATE
-AtomsIn<GROUP>::AtomsIn(const GROUP &id, qint32 i)
-            : AtomID(), groupid(id), strt(i), end(i)
+ResiduesIn<GROUP>::ResiduesIn(const GROUP &id, qint32 i)
+            : ResID(), groupid(id), strt(i), end(i)
 {}
 
 /** Construct for a range of atoms */
 template<class GROUP>
 SIRE_OUTOFLINE_TEMPLATE
-AtomsIn<GROUP>::AtomsIn(const GROUP &id, qint32 i, qint32 j)
-            : AtomID(), groupid(id), strt(i), end(j)
+ResiduesIn<GROUP>::ResiduesIn(const GROUP &id, qint32 i, qint32 j)
+            : ResID(), groupid(id), strt(i), end(j)
 {}
 
 /** Copy constructor */
 template<class GROUP>
 SIRE_OUTOFLINE_TEMPLATE
-AtomsIn<GROUP>::AtomsIn(const AtomsIn<GROUP> &other)
-            : AtomID(other), groupid(other.groupid), 
+ResiduesIn<GROUP>::ResiduesIn(const ResiduesIn<GROUP> &other)
+            : ResID(other), groupid(other.groupid), 
               strt(other.strt), end(other.end)
 {}
 
 /** Destructor */
 template<class GROUP>
 SIRE_OUTOFLINE_TEMPLATE
-AtomsIn<GROUP>::~AtomsIn()
+ResiduesIn<GROUP>::~ResiduesIn()
 {}
 
 /** Return a string representation of this ID */
 template<class GROUP>
 SIRE_OUTOFLINE_TEMPLATE
-QString AtomsIn<GROUP>::toString() const
+QString ResiduesIn<GROUP>::toString() const
 {
     if (strt == end)
-        return QString("(%1).atom(%2)").arg(groupid.toString()).arg(strt);
+        return QString("(%1).residue(%2)").arg(groupid.toString()).arg(strt);
+    else if (strt == 0 and end == -1)
+        return QString("(%1).residues()").arg(groupid.toString());
     else
-        return QString("(%1).atoms(%2,%3)")
+        return QString("(%1).residues(%2,%3)")
                     .arg(groupid.toString()).arg(strt).arg(end);
 }
 
 /** Copy assignment operator */
 template<class GROUP>
 SIRE_OUTOFLINE_TEMPLATE
-AtomsIn<GROUP>& AtomsIn<GROUP>::operator=(const AtomsIn<GROUP> &other)
+ResiduesIn<GROUP>& ResiduesIn<GROUP>::operator=(const ResiduesIn<GROUP> &other)
 {
     if (this != &other)
     {
-        AtomID::operator=(other);
+        ResID::operator=(other);
         groupid = other.groupid;
         strt = other.strt;
         end = other.end;
@@ -173,7 +175,7 @@ AtomsIn<GROUP>& AtomsIn<GROUP>::operator=(const AtomsIn<GROUP> &other)
 /** Comparison operator */
 template<class GROUP>
 SIRE_OUTOFLINE_TEMPLATE
-bool AtomsIn<GROUP>::operator==(const AtomsIn<GROUP> &other) const
+bool ResiduesIn<GROUP>::operator==(const ResiduesIn<GROUP> &other) const
 {
     return strt == other.strt and end == other.end and
            groupid == other.groupid;
@@ -182,9 +184,9 @@ bool AtomsIn<GROUP>::operator==(const AtomsIn<GROUP> &other) const
 /** Comparison operator */
 template<class GROUP>
 SIRE_OUTOFLINE_TEMPLATE
-bool AtomsIn<GROUP>::operator==(const SireID::ID &other) const
+bool ResiduesIn<GROUP>::operator==(const SireID::ID &other) const
 {
-    return SireID::ID::compare< AtomsIn<GROUP> >(*this, other);
+    return SireID::ID::compare< ResiduesIn<GROUP> >(*this, other);
 }
 
 /** Map this ID to the indicies of matching atoms 
@@ -194,21 +196,21 @@ bool AtomsIn<GROUP>::operator==(const SireID::ID &other) const
 */
 template<class GROUP>
 SIRE_OUTOFLINE_TEMPLATE
-QList<AtomIdx> AtomsIn<GROUP>::map(const MoleculeInfoData &molinfo) const
+QList<ResIDx> ResiduesIn<GROUP>::map(const MoleculeInfoData &molinfo) const
 {
     //first get the list of the indicies of the matching groups
     QList<typename GROUP::Index> idxs = groupid.map(molinfo);
     
     //now get a list of the indicies of all of the atoms in these groups
-    QList<AtomIdx> atomidxs;
+    QList<ResIdx> residxs;
     
     foreach (typename GROUP::Index idx, idxs)
     {
-        atomidxs += molinfo.getAtomsIn(idx);
+        residxs += molinfo.getResiduesIn(idx);
     }
     
     //now map _i and _j to the indicies...
-    int nats = atomidxs.count();
+    int nats = residxs.count();
     
     int sane_strt = strt.map(nats);
     int sane_end = end.map(nats);
@@ -219,18 +221,18 @@ QList<AtomIdx> AtomsIn<GROUP>::map(const MoleculeInfoData &molinfo) const
     //now extract only the desired atom indicies
     if (sane_end - sane_strt == nats)
     {
-        return atomidxs;
+        return residxs;
     }
     else
     {
-        QList<AtomIdx> specified_atomidxs;
+        QList<ResIDx> specified_residxs;
     
         for (int i=sane_strt; i<=sane_end; ++i)
         {
-            specified_atomidxs.append( atomidxs[i] );
+            specified_residxs.append( residxs[i] );
         }
     
-        return specified_atomidxs;
+        return specified_residxs;
     }
 }
 

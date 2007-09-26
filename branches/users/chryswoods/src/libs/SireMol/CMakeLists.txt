@@ -75,6 +75,7 @@ set ( SIREMOL_HEADERS
       residuebonds.h
       residuecutting.h
       residueinfo.h
+      residuesin.hpp
       residx.h
       resname.h
       resnum.h

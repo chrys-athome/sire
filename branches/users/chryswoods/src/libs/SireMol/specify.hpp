@@ -88,6 +88,11 @@ public:
         return not this->operator==(other);
     }
     
+    bool isNull() const
+    {
+        return false;
+    }
+    
     QString toString() const;
     
     QList<typename ID::Index> map(const MoleculeInfoData &molinfo) const;
@@ -113,7 +118,7 @@ private:
 };
 
 template<class ID>
-QString Specify<ID>::typname = QString("Specify<%1>").arg(ID::typeName());
+QString Specify<ID>::typname = QString("SireMol::Specify<%1>").arg(ID::typeName());
 
 /** Construct, using the passed ID and index */
 template<class ID>

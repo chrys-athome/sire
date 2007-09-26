@@ -30,6 +30,7 @@
 #define SIREMOL_CGATOMIDX_H
 
 #include "cgidx.h"
+#include "atomid.h"
 
 #include "SireID/index.h"
 
@@ -143,25 +144,6 @@ private:
     /** The index of the atom within the CutGroup */
     SireID::Index _atmidx;
 };
-
-}
-
-#include "moleculeinfodata.h"
-
-namespace SireMol
-{
-
-/** Map this CGAtomIdx back to the index of the atom in the molecule 
-    
-    \throw SireError::invalid_index
-*/
-QList<AtomIdx> CGAtomIdx::map(const MoleculeInfoData &molinfo) const
-{
-    QList<AtomIdx> atomidxs;
-    atomidxs.append( molinfo.atomIdx(*this) );
-    
-    return atomidxs;
-}
 
 }
 

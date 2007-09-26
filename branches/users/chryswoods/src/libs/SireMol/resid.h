@@ -37,6 +37,7 @@ namespace SireMol
 {
 
 class ResIdx;
+class ResIdentifier;
 class MoleculeInfoData;
 
 /** This is the base class of all identifiers that are used 
@@ -48,6 +49,13 @@ class SIREMOL_EXPORT ResID : public SireID::ID
 {
 
 public:
+
+    /** The type used to index a Residue */
+    typedef ResIdx Index;
+    
+    /** The generic type used to identify a residue */
+    typedef ResIdentifier Identifier;
+
     ResID() : SireID::ID()
     {}
 

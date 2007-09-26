@@ -45,6 +45,22 @@ QList<CGIdx> CGName::map(const MoleculeInfoData &molinfo) const
 }
 
 ////////
+//////// Implementation of CGAtomIdx
+////////
+
+/** Map this CGAtomIdx back to the index of the atom in the molecule 
+    
+    \throw SireError::invalid_index
+*/
+QList<AtomIdx> CGAtomIdx::map(const MoleculeInfoData &molinfo) const
+{
+    QList<AtomIdx> atomidxs;
+    atomidxs.append( molinfo.atomIdx(*this) );
+    
+    return atomidxs;
+}
+
+////////
 //////// Implementation of CGIdentifier
 ////////
 

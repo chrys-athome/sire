@@ -29,6 +29,9 @@
 #include "residentifier.h"
 #include "moleculeinfodata.h"
 
+#include "specify.hpp"
+#include "atomsin.hpp"
+
 #include "SireStream/datastream.h"
 
 using namespace SireMol;
@@ -58,153 +61,69 @@ QList<ResIdx> ResNum::map(const MoleculeInfoData &molinfo) const
 /////// Implementation of ResIdentifier
 ///////
 
-/** Serialise to a binary datastream */
-QDataStream SIREID_EXPORT &operator<<(QDataStream &ds, const ResIdentifier &resid)
-{
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIREID_EXPORT &operator>>(QDataStream &ds, ResIdentifier &resid)
-{
-    return resid.load(ds, r_resid);
-}
-
-/** Return the hash of this ID */
-uint SIREID_EXPORT qHash(const ResIdentifier &resid)
-{
-}
-
 /** Null constructor */
-ResIdentifier::ResIdentifier() : ResID()
-{}
-    
-/** Allow implicit conversion from a ResName */
-ResIdentifier::ResIdentifier(const ResName &name)
-              : ResID(), _name(name)
+ResIdentifier::ResIdentifier() : Identifier_T_<ResIdentifier,ResID>()
 {}
 
-/** Allow implicit conversion from a ResNum */
-ResIdentifier::ResIdentifier(const ResNum &num)
-              : ResID(), _num(num)
+/** Construct from the passed ID */
+ResIdentifier::ResIdentifier(const ResID &resid)
+              : Identifier_T_<ResIdentifier,ResID>(resid)
 {}
-
-/** Allow implicit conversion from a ResIdx */
-ResIdentifier::ResIdentifier(const ResIdx &idx)
-              : ResID(), _idx(idx)
+         
+/** Copy constructor */
+ResIdentifier::ResIdentifier(const ResIdentifier &other)
+              : Identifier_T_<ResIdentifier,ResID>(other)
 {}
-
   
-ResIdentifier::ResIdentifier(const ResName &name, const ResNum &num);
-  
-ResIdentifier::ResIdentifier(const ResID &id0)
-{
-    id0.update(*this);
-}
-
-ResIdentifier::ResIdentifier(const ResID &id0, const ResID &id1)
-{
-    id0.update(*this);
-    id1.update(*this);
-}
-
-ResIdentifier::ResIdentifier(const ResID &id0, const ResID &id1, const ResID &id2)
-{
-    id0.update(*this);
-    id1.update(*this);
-    id2.update(*this);
-}
-    
+/** Destructor */  
 ResIdentifier::~ResIdentifier()
 {}
 
-void ResIdentifier::setName(const ResName &name)
+/** Return a specific matching residue */
+Specify<ResIdentifier> ResIdentifier::operator[](int i) const
 {
-    _name = name;
+    return Specify<ResIdentifier>(*this, i);
 }
 
-void ResIdentifier::setNumber(const ResNum &num)
+/** Return a specific matching residue */
+Specify<ResIdentifier> ResIdentifier::operator()(int i) const
 {
-    _num = num;
+    return this->operator[](i);
 }
 
-void ResIdentifier::setIndex(const ResIdx &idx)
+/** Return a specific matching residue */
+Specify<ResIdentifier> ResIdentifier::operator()(int i, int j) const
 {
-    _idx = idx;
+    return Specify<ResIdentifier>(*this, i, j);
 }
-
-void ResName::update(ResIdentifier &resid) const
-{
-    resid.setName(*this);
-}
-
-void ResNum::update(ResIdentifier &resid) const
-{
-    resid.setNumber(*this);
-}
-
-void ResIdx::update(ResIdentifier &resid) const
-{
-    resid.setIndex(*this);
-}
-
-void ResIdentifier::update(ResIdentifier &resid) const
-{
-    if (this != &resid)
-    {
-        if (not _name.isNull())
-            resid.setName(_name);
-            
-        if (not _num.isNull())
-            resid.setNumber(_num);
-            
-        if (not _idx.isNull())
-            resid.setIndex(_idx);
-    }
-}
-
-/** Map from this residue identifier to the list of indicies of residues
-    that match this ID in the molecule described by 'molinfo'. This
-    raises an exception if there are no residues that match this ID
-    in this molecule.
     
-    \throw SireMol::missing_molecule
+/** Return the ID for the ith atom in the matching residue(s) */
+AtomsIn<ResIdentifier> ResIdentifier::atom(int i) const
+{
+    return AtomsIn<ResIdentifier>(*this, i);
+}
+
+/** Return the IDs for all of the atoms in the matching residue(s) */
+AtomsIn<ResIdentifier> ResIdentifier::atoms() const
+{
+    return AtomsIn<ResIdentifier>(*this, 0, -1);
+}
+
+/** Return the specified range of atoms in the matching residue(s) */
+AtomsIn<ResIdentifier> ResIdentifier::atoms(int i, int j) const
+{
+    return AtomsIn<ResIdentifier>(*this, i, j);
+}
+   
+/** Return the indicies of all of the residues that match this ID 
+
+    \throw SireMol::missing_residue
     \throw SireError::invalid_index
 */
-QList<ResIdx> ResIdentifier::map(const MoleculeInfo &molinfo) const
+QList<ResIdx> ResIdentifier::map(const MoleculeInfoData &molinfo) const
 {
-    this->assertNotNull();
-    
-    QList<ResIdx> residxs;
-    
-    if (_name.isNull() and _num.isNull())
-        //only the index is set
-        return molinfo.map(_idx);
-    else if (_name.isNull())
-        //only the number is set
-        residxs = molinfo.map(_num);
-    else if (_num.isNull())
-        //only the name is set
-        residxs = molinfo.map(_name);
+    if (this->isNull())
+        return molinfo.getResidues();
     else
-    {
-        //both are set - combine them together
-        residxs = MoleculeInfoData::intersection( molinfo.map(_name),
-                                                  molinfo.map(_num) );
-    
-        if (residxs.isEmpty())
-            throw SireMol::missing_residue( QObject:tr(
-                "There is no residue \"%1\" (%2) in the molecule called \"%3\".")
-                    .arg(_name).arg(_num).arg(molinfo.name()), CODELOC );
-    }
-    
-    if (not _idx.isNull())
-    {
-        QList<T> single_res;
-        
-        single_res.append( residxs.at( _idx.map(residxs.count()) ) );
-        
-        return single_res;
-    }
-    else
-        return residxs;
+        return this->asA<ResID>().map(molinfo);
 }

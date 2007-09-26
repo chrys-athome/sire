@@ -32,7 +32,6 @@
 #include "SireID/identifier.h"
 
 #include "atomid.h"
-#include "cgatomidx.h"
 
 namespace SireMol
 {

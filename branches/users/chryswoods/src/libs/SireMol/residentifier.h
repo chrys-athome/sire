@@ -29,59 +29,38 @@
 #ifndef SIREMOL_RESIDENTIFIER_H
 #define SIREMOL_RESIDENTIFIER_H
 
+#include "SireID/identifier.h"
+
 #include "resid.h"
-#include "resnum.h"
 
 namespace SireMol
 {
 
-/** This class is used as a means of storing all of the ID
-    for a residue that can be contained in a combination of
-    any or all of the other residue ID types (ResName, 
-    ResNum and ResIdx)
-    
-    @author Christopher Woods
-*/
-class ResIdentifier : public ResID
+template<class ID>
+class Specify;
+
+template<class ID>
+class AtomsIn;
+
+class ResIdentifier : public SireID::Identifier_T_<ResIdentifier,ResID>
 {
 public:
     ResIdentifier();
-    
-    ResIdentifier(const ResName &name);
-    ResIdentifier(const ResNum &num);
-    ResIdentifier(const ResIdx &idx);
-    
-    ResIdentifier(const ResName &name, const ResNum &num);
-    
-    ResIdentifier(const ResID &id0);
-    ResIdentifier(const ResID &id0, const ResID &id1);
-    ResIdentifier(const ResID &id0, const ResID &id1, const ResID &id2);
-
+    ResIdentifier(const ResID &ResID);
     ResIdentifier(const ResIdentifier &other);
     
     ~ResIdentifier();
-    
-    void setName(const ResName &name);
-    void setNumber(const ResNum &num);
-    void setIndex(const ResIdx &idx);
-    
-    const ResName& name() const;
-    const ResNum& number() const;
-    const ResIdx& index() const;
 
-    QList<ResIdx> map(const MoleculeInfo &molinfo) const;
+    Specify<ResIdentifier> operator[](int i) const;
+    Specify<ResIdentifier> operator()(int i) const;
+    Specify<ResIdentifier> operator()(int i, int j) const;
     
-private:
-    void assignFrom(const ResID &resid);
+    AtomsIn<ResIdentifier> atom(int i) const;
 
-    /** The name of the residue */
-    ResName _name;
+    AtomsIn<ResIdentifier> atoms() const;
+    AtomsIn<ResIdentifier> atoms(int i, int j) const;
     
-    /** The number of the residue */
-    ResNum _number;
-    
-    /** The index of this residue, using the above criteria */
-    ResIdx _idx;
+    QList<ResIdx> map(const MoleculeInfoData &molinfo) const;
 };
 
 }
@@ -92,10 +71,9 @@ QDataStream& operator>>(QDataStream&, SireMol::ResIdentifier&);
 XMLStream& operator<<(XMLStream&, const SireMol::ResIdentifier&);
 XMLStream& operator>>(XMLStream&, SireMol::ResIdentifier&);
 
-uint qHash(const SireMol::ResIdentifier &resid);
+uint qHash(const SireMol::ResIdentifier &ResID);
 
 Q_DECLARE_METATYPE(SireMol::ResIdentifier);
 
 #endif
-
 
