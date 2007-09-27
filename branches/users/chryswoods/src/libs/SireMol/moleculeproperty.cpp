@@ -26,10 +26,8 @@
   *
 \*********************************************/
 
-#include "moleculeproperty.h"
-#include "molecule.h"
+#include "molecularproperty.h"
 #include "moleculeinfo.h"
-#include "moleculeid.h"
 
 #include "SireBase/version.h"
 
@@ -41,12 +39,12 @@ using namespace SireMol;
 using namespace SireBase;
 using namespace SireStream;
 
-static const RegisterMetaType<MoleculeProperty> r_molprop(MAGIC_ONLY,
-                                                          "SireMol::MoleculeProperty");
+static const RegisterMetaType<MolecularProperty> r_molprop(MAGIC_ONLY,
+                                                          "SireMol::MolecularProperty");
 
 /** Serialise to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
-                                       const MoleculeProperty &molprop)
+                                       const MolecularProperty &molprop)
 {
     writeHeader(ds, r_molprop, 1) << static_cast<const PropertyBase&>(molprop);
 
@@ -55,7 +53,7 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
 
 /** Deserialise from a binary datastream */
 QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
-                                       MoleculeProperty &molprop)
+                                       MolecularProperty &molprop)
 {
     VersionID v = readHeader(ds, r_molprop);
 
@@ -70,27 +68,26 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 }
 
 /** Constructor */
-MoleculeProperty::MoleculeProperty() : PropertyBase()
+MolecularProperty::MolecularProperty() : PropertyBase()
 {}
 
 /** Copy constructor */
-MoleculeProperty::MoleculeProperty(const MoleculeProperty &other)
+MolecularProperty::MolecularProperty(const MolecularProperty &other)
                  : PropertyBase(other)
 {}
 
 /** Destructor */
-MoleculeProperty::~MoleculeProperty()
+MolecularProperty::~MolecularProperty()
 {}
 
-/** Assert that this property is compatible with the molecule 'molecule'
+/** Assert that this property is compatible with the MoleculeInfo 'info'
 
     \throw SireError::incompatible_error
 */
-void MoleculeProperty::assertCompatibleWith(const Molecule &molecule) const
+void MolecularProperty::assertCompatibleWith(const MoleculeInfo &info) const
 {
     if (not this->isCompatibleWith(molecule.info()))
         throw SireError::incompatible_error( QObject::tr(
-                "This property is incompatible with the molecule \"%1\" (%2:%3)")
-                    .arg(molecule.info().name()).arg(molecule.ID())
-                    .arg(molecule.version().toString()), CODELOC );
+                "This property is incompatible with the molecule \"%1\" (%2)")
+                    .arg(info.name()).arg(info.number()), CODELOC );
 }

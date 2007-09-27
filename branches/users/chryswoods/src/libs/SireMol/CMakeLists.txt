@@ -27,6 +27,7 @@ set ( SIREMOL_HEADERS
       atomselection.h
       atomselector.h
       atomsin.hpp
+      atomsinmol.h
       calculateaxes.hpp
       cgatomidx.h
       cgid.h
@@ -103,6 +104,7 @@ set ( SIREMOL_SOURCES
       atominfogroup.cpp
       atomselection.cpp
       atomselector.cpp
+      atomsinmol.cpp
       cgidentifier.cpp
       chainchainid.cpp
       chainresid.cpp

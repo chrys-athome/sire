@@ -30,6 +30,7 @@
 #define SIREMOL_MOLECULEINFODATA_H
 
 #include <QSharedData>
+#include <QSharedDataPointer>
 #include <QVector>
 #include <QMultiHash>
 
@@ -94,8 +95,8 @@ namespace SireMol
 class MoleculeInfoData : public QSharedData
 {
 
-friend QDataStream& operator<<(QDataStream&, const MoleculeInfoData&);
-friend QDataStream& operator>>(QDataStream&, MoleculeInfoData&);
+friend QDataStream& ::operator<<(QDataStream&, const MoleculeInfoData&);
+friend QDataStream& ::operator>>(QDataStream&, MoleculeInfoData&);
 
 public:
     MoleculeInfoData();
@@ -238,6 +239,8 @@ public:
     template<class T>
     static QList<T> intersection(const QList<T> &list0, const QList<T> &list1);
     
+    static QSharedDataPointer<MoleculeInfoData> null();
+    
 private:
     
     class ResInfo
@@ -342,6 +345,9 @@ private:
     
     /** The name of the molecule */
     MolName molname;
+
+    /** The number of the molecule */
+    MolNum molnum;
 
     /** All of the atoms in the molecule, in the order they were
         added to the molecule */

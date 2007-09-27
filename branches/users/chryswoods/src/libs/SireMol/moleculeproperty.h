@@ -26,8 +26,8 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_MOLECULEPROPERTY_H
-#define SIREMOL_MOLECULEPROPERTY_H
+#ifndef SIREMOL_MOLECULARPROPERTY_H
+#define SIREMOL_MOLECULARPROPERTY_H
 
 #include "SireBase/property.h"
 
@@ -35,21 +35,18 @@ SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
-class MoleculeProperty;
+class MolecularProperty;
 }
 
-QDataStream& operator<<(QDataStream&, const SireMol::MoleculeProperty&);
-QDataStream& operator>>(QDataStream&, SireMol::MoleculeProperty&);
+QDataStream& operator<<(QDataStream&, const SireMol::MolecularProperty&);
+QDataStream& operator>>(QDataStream&, SireMol::MolecularProperty&);
 
-XMLStream& operator<<(XMLStream&, const SireMol::MoleculeProperty&);
-XMLStream& operator>>(XMLStream&, SireMol::MoleculeProperty&);
+XMLStream& operator<<(XMLStream&, const SireMol::MolecularProperty&);
+XMLStream& operator>>(XMLStream&, SireMol::MolecularProperty&);
 
 namespace SireMol
 {
 
-using SireBase::Property;
-
-class Molecule;
 class MoleculeInfo;
 class AtomSelection;
 
@@ -59,32 +56,32 @@ class AtomSelection;
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT MoleculeProperty : public SireBase::PropertyBase
+class SIREMOL_EXPORT MolecularProperty : public SireBase::PropertyBase
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const MoleculeProperty&);
-friend QDataStream& ::operator>>(QDataStream&, MoleculeProperty&);
+friend QDataStream& ::operator<<(QDataStream&, const MolecularProperty&);
+friend QDataStream& ::operator>>(QDataStream&, MolecularProperty&);
 
-friend XMLStream& ::operator<<(XMLStream&, const MoleculeProperty&);
-friend XMLStream& ::operator>>(XMLStream&, MoleculeProperty&);
+friend XMLStream& ::operator<<(XMLStream&, const MolecularProperty&);
+friend XMLStream& ::operator>>(XMLStream&, MolecularProperty&);
 
 public:
-    MoleculeProperty();
+    MolecularProperty();
 
-    MoleculeProperty(const MoleculeProperty &other);
+    MolecularProperty(const MolecularProperty &other);
 
-    ~MoleculeProperty();
+    ~MolecularProperty();
 
     static const char* typeName()
     {
-        return "SireMol::MoleculeProperty";
+        return "SireMol::MolecularProperty";
     }
 
     virtual bool isCompatibleWith(const MoleculeInfo &molinfo) const=0;
 
-    virtual Property mask(const AtomSelection &selected_atoms) const=0;
+    virtual SireBase::Property mask(const AtomSelection &selected_atoms) const=0;
 
-    void assertCompatibleWith(const Molecule &molecule) const;
+    void assertCompatibleWith(const MoleculeInfo &info) const;
 };
 
 }

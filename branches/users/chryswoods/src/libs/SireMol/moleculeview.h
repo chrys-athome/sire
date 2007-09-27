@@ -32,218 +32,51 @@
 #include <QSharedDataPointer>
 #include <QSharedData>
 
-#include "atomselection.h"
-
 SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
 class MoleculeView;
-class MolDataView;
 }
-
-QDataStream& operator<<(QDataStream&, const SireMol::MolDataView&);
-QDataStream& operator>>(QDataStream&, SireMol::MolDataView&);
 
 QDataStream& operator<<(QDataStream&, const SireMol::MoleculeView&);
 QDataStream& operator>>(QDataStream&, SireMol::MoleculeView&);
 
-namespace SireBase
-{
-class Version;
-}
-
 namespace SireMol
 {
 
-class AtomSelector;
-class MoleculeMover;
-class PropertyExtractor;
-
-class MoleculeData;
-class Molecule;
-class PartialMolecule;
-
-using SireBase::Version;
-
-namespace detail
-{
-
-/** This private class holds the MoleculeData and AtomSelection objects
-    used by MolDataView. An implicitly shared pointer is used so that
-    MolDataView (and derived classes like Molecule and PartialMolecule)
-    have the same size as a pointer, thereby allowing them to be stored
-    efficiently in Qt template classes.
+/** This is the base class of all views of a Molecule. Derived
+    classes include Molecule, Segment, Chain, CutGroup, Residue and Atom.
+    
+    (and the manipulator classes of each of these)
 
     @author Christopher Woods
 */
-class MolDataViewPvt : public QSharedData
-{
-public:
-    MolDataViewPvt();
-
-    MolDataViewPvt(const MoleculeData &moldata);
-    MolDataViewPvt(const MoleculeData &moldata,
-               const AtomSelection &selected_atoms);
-
-    MolDataViewPvt(const MolDataViewPvt &other);
-
-    ~MolDataViewPvt();
-
-    MolDataViewPvt& operator=(const MolDataViewPvt &other);
-
-    bool operator==(const MolDataViewPvt &other) const;
-    bool operator!=(const MolDataViewPvt &other) const;
-
-    /** Pointer to the molecule's data */
-    QSharedDataPointer<MoleculeData> d;
-
-    /** All of the atoms that are selected
-        from the molecule */
-    AtomSelection selected_atoms;
-
-    static QSharedDataPointer<MolDataViewPvt> shared_null;
-};
-
-} // end of namespace detail
-
-/** This is the base class of all views of the MoleculeData. Derived
-    classes include;
-
-    MoleculeView  - base class of all Molecule views, e.g. Molecule,
-                    PartialMolecule, Residue and NewAtom
-
-    PropertyExtractor - used to extract properties from the MoleculeData
-
-    MoleculeMover - used to move the MoleculeData
-
-    @author Christopher Woods
-*/
-class SIREMOL_EXPORT MolDataView
-{
-
-friend QDataStream& ::operator<<(QDataStream&, const MolDataView&);
-friend QDataStream& ::operator>>(QDataStream&, MolDataView&);
-
-public:
-    ~MolDataView();
-
-protected:
-    MolDataView();
-
-    MolDataView(const MoleculeData &moldata);
-
-    MolDataView(const MoleculeData &moldata,
-                const AtomSelection &selected_atoms);
-
-    MolDataView(const MolDataView &other);
-
-    MolDataView& operator=(const MolDataView &other);
-
-    bool operator==(const MolDataView &other) const;
-    bool operator!=(const MolDataView &other) const;
-
-    bool _pvt_isEqual(const MolDataView &other) const;
-
-    const MoleculeData& data() const;
-    const MoleculeData& constData() const;
-
-    MoleculeData& data();
-
-    void _pvt_change(const MolDataView &other);
-
-    const AtomSelection& _pvt_selection() const
-    {
-        return d->selected_atoms;
-    }
-
-    const AtomSelection& _pvt_constSelection() const
-    {
-        return d->selected_atoms;
-    }
-
-    AtomSelection& _pvt_selection()
-    {
-        return d->selected_atoms;
-    }
-
-    const AtomSelection& selectedAtoms() const
-    {
-        return d->selected_atoms;
-    }
-
-private:
-    /** Shared pointer to the underlying MolDataViewPvt */
-    QSharedDataPointer<detail::MolDataViewPvt> d;
-};
-
-/** This is the base class of all views of a Molecule. All Molecule classes
-    are actually a view of MoleculeData - Molecule can see all of MoleculeData,
-    Residue can see only the parts of MoleculeData that correspond to that
-    residue etc.
-
-    @author Christopher Woods
-*/
-class SIREMOL_EXPORT MoleculeView : public MolDataView
+class SIREMOL_EXPORT MoleculeView
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const MoleculeView&);
 friend QDataStream& ::operator>>(QDataStream&, MoleculeView&);
 
 public:
-    ~MoleculeView();
+    virtual ~MoleculeView();
 
-    Molecule molecule() const;
+    virtual MoleculeView& operator=(const MoleculeView &other)=0;
 
-    /** Return the atoms that are part of this view of the molecule */
-    const AtomSelection& selectedAtoms() const
-    {
-        return _pvt_selection();
-    }
+    /** Return the atoms that are selected as part of this view */
+    virtual AtomSelection selectedAtoms() const=0;
 
-    MoleculeMover move() const;
-    MoleculeMover move(const SelectionFromMol &selection) const;
-
-    PropertyExtractor extract() const;
-    PropertyExtractor extract(const SelectionFromMol &selected_atoms) const;
-
-    AtomSelector selection() const;
-    AtomSelector selection(const SelectionFromMol &selected_atoms) const;
+    /** Update this view with a new version of the molecule */
+    virtual void update(const MoleculeView &other) const=0;
 
     void assertSameMolecule(const MoleculeView &other) const;
-    void assertSameMajorVersion(const MoleculeView &other) const;
-    void assertSameVersion(const MoleculeView &other) const;
 
 protected:
-    /** Null constructor */
-    MoleculeView() : MolDataView()
-    {}
+    MoleculeView();
+    MoleculeView(const MoleculeView &other);
 
-    /** Copy(ish) constructor */
-    MoleculeView(const MolDataView &other) : MolDataView(other)
-    {}
-
-    /** Copy constructor */
-    MoleculeView(const MoleculeView &other) : MolDataView(other)
-    {}
-
-    MoleculeView(const MoleculeData &moldata);
-    MoleculeView(const MoleculeData &moldata,
-                 const AtomSelection &selected_atoms);
-
-    /** Copy assignment operator */
-    MoleculeView& operator=(const MoleculeView &other)
-    {
-        MolDataView::operator=(other);
-        return *this;
-    }
-
-    /** Copy assignment operator */
-    MoleculeView& operator=(const MolDataView &other)
-    {
-        MolDataView::operator=(other);
-        return *this;
-    }
+    /** Shared pointer to the raw data of the molecule */
+    QSharedDataPointer<MoleculeData> d;
 };
 
 }
