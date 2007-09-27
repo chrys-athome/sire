@@ -124,6 +124,8 @@ public:
     using SireID::Index_T_<SegIdx>::operator-=;
     using SireID::Index_T_<SegIdx>::operator--;
     
+    using SireID::Index_T_<SegIdx>::map;
+    
     QList<SegIdx> map(const MoleculeInfoData&) const
     {
         QList<SegIdx> segidxs;

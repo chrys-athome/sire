@@ -185,18 +185,6 @@ public:
     CGIdx parentCutGroup(AtomIdx atomidx) const;
     CGIdx parentCutGroup(const AtomID &atomid) const;
     
-    bool contains(const ChainID &chainid, const ResID &resid) const;
-    bool contains(const ChainID &chainid, const AtomID &atomid) const;
-    bool contains(const ChainID &chainid, const AtomName &name) const;
-    
-    bool contains(const ResID &resid, const AtomID &atomid) const;
-    bool contains(const ResID &resid, const AtomName &name) const;
-    
-    bool contains(const SegID &segid, const AtomID &atomid) const;
-    bool contains(const CGID &cgid, const AtomID &atomid) const; 
-    
-    bool contains(const AtomID &atomid) const;
-    
     int nAtoms() const;
     
     int nAtoms(const ChainID &chainid) const;
@@ -214,6 +202,10 @@ public:
     int nResidues() const;
     int nResidues(const ChainID &chainid) const;
     int nResidues(ChainIdx chainidx) const;
+    
+    int nChains() const;
+    int nCutGroups() const;
+    int nSegments() const;
     
     QList<ResIdx> map(const ResName &name) const;
     QList<ResIdx> map(const ResNum &num) const;
@@ -236,6 +228,12 @@ public:
     QList<AtomIdx> map(const AtomNum &num) const;
     QList<AtomIdx> map(const AtomIdx &idx) const;
     QList<AtomIdx> map(const AtomID &atomid) const;
+
+    void assertSingleAtom(const QList<AtomIdx> &atomidxs) const;
+    void assertSingleResidue(const QList<ResIdx> &residxs) const;
+    void assertSingleChain(const QList<ChainIdx> &chainidxs) const;
+    void assertSingleCutGroup(const QList<CGIdx> &cgidxs) const;
+    void assertSingleSegment(const QList<SegIdx> &segidxs) const;
 
     template<class T>
     static QList<T> intersection(const QList<T> &list0, const QList<T> &list1);
@@ -314,7 +312,10 @@ private:
         ~AtomInfo();
         
         /** The name of this atom */
-        QString name;
+        AtomName name;
+
+        /** The number of this atom */
+        AtomNum number;
 
         /** Index of the residue this atom is in
             (this also tells us the index of the chain
@@ -329,6 +330,15 @@ private:
                which atom in that CutGroup this is */
         CGAtomIdx cgatomidx;
     };
+    
+    QList<AtomIdx> _pvt_getAtomsIn(const QList<ResIdx> &residxs) const;
+    QList<AtomIdx> _pvt_getAtomsIn(const QList<ResIdx> &residxs,
+                                   const AtomName &name) const;
+                                   
+    int _pvt_nAtoms(const QVector<ResIdx> &residxs) const;
+    int _pvt_nAtoms(const QList<ResIdx> &residxs) const;
+    int _pvt_nAtoms(ChainIdx chainidx) const;
+    
     
     /** The name of the molecule */
     MolName molname;

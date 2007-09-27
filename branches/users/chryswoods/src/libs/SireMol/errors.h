@@ -91,34 +91,8 @@ public:
     }
 };
 
-/** This exception is thrown when a request is made of a non-existant group
-
-    @author Christopher Woods
-*/
-class SIREMOL_EXPORT missing_group : public siremol_error
-{
-public:
-    missing_group() : siremol_error()
-    {}
-
-    missing_group(QString err, QString place = QString::null)
-              : siremol_error(err,place)
-    {}
-
-    missing_group(const missing_group &other) : siremol_error(other)
-    {}
-
-    ~missing_group() throw()
-    {}
-
-    const char* what() const throw()
-    {
-        return "SireMol::missing_group";
-    }
-};
-
-/** This exception is thrown when a new atom with an existing ID is added
-    to a set.
+/** This exception is thrown whenever multiple atoms are found,
+    but we want only one
 
     @author Christopher Woods
 */
@@ -144,33 +118,7 @@ public:
     }
 };
 
-/** This exception is thrown when an action is requested of a non-existant molecule
-
-    @author Christopher Woods
-*/
-class SIREMOL_EXPORT missing_molecule : public siremol_error
-{
-public:
-    missing_molecule() : siremol_error()
-    {}
-
-    missing_molecule(QString err, QString place = QString::null)
-                    : siremol_error(err,place)
-    {}
-
-    missing_molecule(const missing_molecule &other) : siremol_error(other)
-    {}
-
-    ~missing_molecule() throw()
-    {}
-
-    const char* what() const throw()
-    {
-        return "SireMol::missing_molecule";
-    }
-};
-
-/** This exception is thrown when an action is requested of a non-existant residue
+/** This exception is thrown when a request is made of a non-existant residue
 
     @author Christopher Woods
 */
@@ -193,6 +141,33 @@ public:
     const char* what() const throw()
     {
         return "SireMol::missing_residue";
+    }
+};
+
+/** This exception is thrown when we get more than one
+    residue, but we want only one
+
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT duplicate_residue : public siremol_error
+{
+public:
+    duplicate_residue() : siremol_error()
+    {}
+
+    duplicate_residue(QString err, QString place = QString::null)
+                  : siremol_error(err,place)
+    {}
+
+    duplicate_residue(const duplicate_residue &other) : siremol_error(other)
+    {}
+
+    ~duplicate_residue() throw()
+    {}
+
+    const char* what() const throw()
+    {
+        return "SireMol::duplicate_residue";
     }
 };
 
@@ -222,30 +197,188 @@ public:
     }
 };
 
-/** This exception is thrown when a new residue is added to a set that already
-    contains a residue with the same ID
+/** This exception is thrown when we get more than one
+    cutgroup, but we want only one
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT duplicate_residue : public siremol_error
+class SIREMOL_EXPORT duplicate_cutgroup : public siremol_error
 {
 public:
-    duplicate_residue() : siremol_error()
+    duplicate_cutgroup() : siremol_error()
     {}
 
-    duplicate_residue(QString err, QString place = QString::null)
+    duplicate_cutgroup(QString err, QString place = QString::null)
                   : siremol_error(err,place)
     {}
 
-    duplicate_residue(const duplicate_residue &other) : siremol_error(other)
+    duplicate_cutgroup(const duplicate_cutgroup &other) : siremol_error(other)
     {}
 
-    ~duplicate_residue() throw()
+    ~duplicate_cutgroup() throw()
     {}
 
     const char* what() const throw()
     {
-        return "SireMol::duplicate_residue";
+        return "SireMol::duplicate_cutgroup";
+    }
+};
+
+/** This exception is thrown when an action is requested of a non-existant chain
+
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT missing_chain : public siremol_error
+{
+public:
+    missing_chain() : siremol_error()
+    {}
+
+    missing_chain(QString err, QString place = QString::null)
+                    : siremol_error(err,place)
+    {}
+
+    missing_chain(const missing_chain &other) : siremol_error(other)
+    {}
+
+    ~missing_chain() throw()
+    {}
+
+    const char* what() const throw()
+    {
+        return "SireMol::missing_chain";
+    }
+};
+
+/** This exception is thrown when we get more than one
+    chain, but we want only one
+
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT duplicate_chain : public siremol_error
+{
+public:
+    duplicate_chain() : siremol_error()
+    {}
+
+    duplicate_chain(QString err, QString place = QString::null)
+                  : siremol_error(err,place)
+    {}
+
+    duplicate_chain(const duplicate_chain &other) : siremol_error(other)
+    {}
+
+    ~duplicate_chain() throw()
+    {}
+
+    const char* what() const throw()
+    {
+        return "SireMol::duplicate_chain";
+    }
+};
+
+/** This exception is thrown when an action is requested of a non-existant segment
+
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT missing_segment : public siremol_error
+{
+public:
+    missing_segment() : siremol_error()
+    {}
+
+    missing_segment(QString err, QString place = QString::null)
+                    : siremol_error(err,place)
+    {}
+
+    missing_segment(const missing_segment &other) : siremol_error(other)
+    {}
+
+    ~missing_segment() throw()
+    {}
+
+    const char* what() const throw()
+    {
+        return "SireMol::missing_segment";
+    }
+};
+
+/** This exception is thrown when we get more than one
+    segment, but we want only one
+
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT duplicate_segment : public siremol_error
+{
+public:
+    duplicate_segment() : siremol_error()
+    {}
+
+    duplicate_segment(QString err, QString place = QString::null)
+                  : siremol_error(err,place)
+    {}
+
+    duplicate_segment(const duplicate_segment &other) : siremol_error(other)
+    {}
+
+    ~duplicate_segment() throw()
+    {}
+
+    const char* what() const throw()
+    {
+        return "SireMol::duplicate_segment";
+    }
+};
+
+/** This exception is thrown when a request is made of a non-existant group
+
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT missing_group : public siremol_error
+{
+public:
+    missing_group() : siremol_error()
+    {}
+
+    missing_group(QString err, QString place = QString::null)
+              : siremol_error(err,place)
+    {}
+
+    missing_group(const missing_group &other) : siremol_error(other)
+    {}
+
+    ~missing_group() throw()
+    {}
+
+    const char* what() const throw()
+    {
+        return "SireMol::missing_group";
+    }
+};
+
+/** This exception is thrown when an action is requested of a non-existant molecule
+
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT missing_molecule : public siremol_error
+{
+public:
+    missing_molecule() : siremol_error()
+    {}
+
+    missing_molecule(QString err, QString place = QString::null)
+                    : siremol_error(err,place)
+    {}
+
+    missing_molecule(const missing_molecule &other) : siremol_error(other)
+    {}
+
+    ~missing_molecule() throw()
+    {}
+
+    const char* what() const throw()
+    {
+        return "SireMol::missing_molecule";
     }
 };
 
@@ -388,12 +521,17 @@ public:
 
 Q_DECLARE_METATYPE(SireMol::siremol_error)
 Q_DECLARE_METATYPE(SireMol::missing_atom)
-Q_DECLARE_METATYPE(SireMol::missing_group)
 Q_DECLARE_METATYPE(SireMol::duplicate_atom)
-Q_DECLARE_METATYPE(SireMol::missing_molecule)
 Q_DECLARE_METATYPE(SireMol::missing_residue)
-Q_DECLARE_METATYPE(SireMol::missing_cutgroup)
 Q_DECLARE_METATYPE(SireMol::duplicate_residue)
+Q_DECLARE_METATYPE(SireMol::missing_cutgroup)
+Q_DECLARE_METATYPE(SireMol::duplicate_cutgroup)
+Q_DECLARE_METATYPE(SireMol::missing_chain)
+Q_DECLARE_METATYPE(SireMol::duplicate_chain)
+Q_DECLARE_METATYPE(SireMol::missing_segment)
+Q_DECLARE_METATYPE(SireMol::duplicate_segment)
+Q_DECLARE_METATYPE(SireMol::missing_group)
+Q_DECLARE_METATYPE(SireMol::missing_molecule)
 Q_DECLARE_METATYPE(SireMol::duplicate_molecule)
 Q_DECLARE_METATYPE(SireMol::template_error)
 Q_DECLARE_METATYPE(SireMol::anchor_error)

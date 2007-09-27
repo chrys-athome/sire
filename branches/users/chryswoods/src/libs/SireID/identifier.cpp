@@ -27,6 +27,7 @@
 \*********************************************/
 
 #include "identifier.h"
+#include "index.h"
 
 #include "SireError/errors.h"
 
@@ -36,6 +37,36 @@ using namespace SireID;
 using namespace SireID::detail;
 
 using namespace SireStream;
+
+/////////
+///////// Implementation of IndexBase
+/////////
+
+void IndexBase::throwInvalidIndex(qint32 n) const
+{
+    if (n == 0)
+    {
+        if (this->isNull())
+            throw SireError::invalid_index( QObject::tr(
+                "A null index cannot match an empty range!"), CODELOC );
+        else
+            throw SireError::invalid_index( QObject::tr(
+                "The index %1 cannot match an empty range!")
+                    .arg(_idx), CODELOC );
+    }
+    else if (this->isNull())
+        throw SireError::invalid_index( QObject::tr(
+            "A null index cannot match the range [0,%1).")
+                .arg(n), CODELOC );
+    else
+        throw SireError::invalid_index( QObject::tr(
+            "The index %1 cannot be mapped into the range [0,%1).")
+                .arg(_idx).arg(n), CODELOC );
+}
+
+/////////
+///////// Implementation of Identifier
+/////////
 
 void Identifier_T_Base::throwNullIDError() const
 {

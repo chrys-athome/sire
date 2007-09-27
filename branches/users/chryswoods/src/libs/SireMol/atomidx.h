@@ -122,6 +122,8 @@ public:
     using SireID::Index_T_<AtomIdx>::operator-=;
     using SireID::Index_T_<AtomIdx>::operator--;
     
+    using SireID::Index_T_<AtomIdx>::map;
+    
     QList<AtomIdx> map(const MoleculeInfoData&) const
     {
         QList<AtomIdx> atomidxs;

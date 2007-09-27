@@ -124,6 +124,8 @@ public:
     using SireID::Index_T_<ResIdx>::operator-=;
     using SireID::Index_T_<ResIdx>::operator--;
     
+    using SireID::Index_T_<ResIdx>::map;
+    
     QList<ResIdx> map(const MoleculeInfoData&) const
     {
         QList<ResIdx> residxs;

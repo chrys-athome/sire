@@ -98,7 +98,7 @@ public:
         if (_idx >= 0 and _idx < n)
             return _idx;
         else if (_idx < 0 and _idx >= -n)
-            return n - _idx;
+            return n + _idx;
         else
         {
             throwInvalidIndex(n);
