@@ -585,15 +585,10 @@ CoordGroup& CoordGroup::operator=(const CoordGroup &other)
     return *this;
 }
 
-/** Copy assignment from a CoordGroupBase */
-CoordGroup& CoordGroup::operator=(const CoordGroupBase &other)
+/** Copy assignment from a CoordGroupEditor */
+CoordGroup& CoordGroup::operator=(const CoordGroupEditor &other)
 {
-    CoordGroupBase::operator=(other);
-
-    if (CoordGroupBase::needsUpdate())
-        CoordGroupBase::update();
-
-    return *this;
+    return this->operator=( other.commit() );
 }
 
 /** Return an editor that can be used to edit the

@@ -67,6 +67,8 @@ set ( SIREMOL_HEADERS
       molidx.h
       molname.h
       molnum.h
+      mover.h
+      mover.hpp
       partialmolecule.h
       propertyextractor.h
       qhash_siremol.h
@@ -126,6 +128,7 @@ set ( SIREMOL_SOURCES
       molecules.cpp
       moleculeview.cpp
       molidentifier.cpp
+      mover.cpp
       partialmolecule.cpp
       propertyextractor.cpp
       residentifier.cpp

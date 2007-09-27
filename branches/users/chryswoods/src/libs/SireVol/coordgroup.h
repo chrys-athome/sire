@@ -388,7 +388,7 @@ public:
     ~CoordGroup();
 
     CoordGroup& operator=(const CoordGroup &other);
-    CoordGroup& operator=(const CoordGroupBase &other);
+    CoordGroup& operator=(const CoordGroupEditor &other);
 
     CoordGroupEditor edit() const;
 

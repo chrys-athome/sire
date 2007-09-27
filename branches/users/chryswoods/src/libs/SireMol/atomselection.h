@@ -200,8 +200,8 @@ public:
 
     QSet<AtomIndex> selectedAtoms() const;
 
-    QSet<CGAtomID> selectedAtoms(CutGroupID cgid) const;
-    QSet<ResNumAtomID> selectedAtoms(ResNum resnum) const;
+    QSet<Index> selectedAtoms(CutGroupID cgid) const;
+    QSet<CGAtomIdx> selectedAtoms(ResNum resnum) const;
 
     QSet<CutGroupID> selectedCutGroups() const;
     QSet<ResNum> selectedResidues() const;
@@ -248,7 +248,7 @@ private:
     void _pvt_applyMask(const AtomSelection &selection);
 
     /** The AtomIDs of selected atoms, arranged by CutGroupID */
-    QHash< CutGroupID, QSet<AtomID> > selected_atoms;
+    QHash< CGIdx, QSet<Index> > selected_atoms;
 
     /** The MoleculeInfo describing the molecule whose parts
         are being selected by this object */
