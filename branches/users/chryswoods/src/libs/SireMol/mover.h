@@ -58,31 +58,31 @@ protected:
 
     void translate(MoleculeData &data,      
                    const Vector &delta,
-                   const QString &coord_property) const;
+                   const PropertyMap &map) const;
                    
     void rotate(MoleculeData &data,
                 const Quaternion &quat,
                 const Vector &point,
-                const QString &coord_property) const;
+                const PropertyMap &map) const;
 
     void rotate(MoleculeData &data,
                 const Matrix &rotmat,
                 const Vector &point,
-                const QString &coord_property) const;
+                const PropertyMap &map) const;
 
     void change(MoleculeData &data, const BondID &bond,
-                double delta, const PropertyMap &map); 
+                SireUnits::Dimension::Length delta, const PropertyMap &map); 
 
     static void translate(MoleculeView &view, 
                           const AtomSelection &selected_atoms,
                           const Vector &delta, 
-                          const QString &coord_property);
+                          const PropertyMap &map);
 
     static void rotate(MoleculeView &view,
                        const AtomSelection &selected_atoms,
                        const Matrix &rotmat,
                        const Vector &point,
-                       const QString &coord_property);
+                       const PropertyMap &map);
 
     static void translate(QVector<CoordGroup> &coords,
                           const AtomSelection &selected_atoms,
