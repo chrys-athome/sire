@@ -92,17 +92,19 @@ public:
         return "SireBase::Properties";
     }
 
-    const Property& operator[](const QString &key) const;
+    const Property& operator[](const PropertyName &key) const;
 
     bool isEmpty() const;
 
     const Properties& metadata() const;
-    const Properties& metadata(const QString &key) const;
+    const Properties& metadata(const PropertyName &key) const;
 
-    const Property& value(const QString &key) const;
+    const Property& value(const PropertyName &key) const;
+    const Property& value(const PropertyName &key,
+                          const Property &default_value) const;
 
     QStringList keys() const;
-    QStringList metadataKeys(const QString &key) const;
+    QStringList metadataKeys(const PropertyName &key) const;
 
     void insert(const Properties &properties);
 
@@ -142,11 +144,12 @@ public:
 
     void clear();
 
-    bool contains(const QString &key) const;
-    bool contains(const QString &key, const QString &metakey) const;
+    bool contains(const PropertyName &key) const;
+    bool contains(const PropertyName &key, const QString &metakey) const;
     
-    void assertContainsProperty(const QString &key) const;
-    void assertContainsMetadata(const QString &key, const QString &metakey) const;
+    void assertContainsProperty(const PropertyName &key) const;
+    void assertContainsMetadata(const PropertyName &key, 
+                                const QString &metakey) const;
 
 private:
     Properties(bool);

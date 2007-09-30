@@ -328,6 +328,8 @@ public:
     bool operator==(const Property &other) const;
     bool operator!=(const Property &other) const;
 
+    bool isNull() const;
+
     void save(QDataStream &ds) const;
     void load(QDataStream &ds);
 

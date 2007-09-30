@@ -26,209 +26,165 @@
   *
 \*********************************************/
 
-#ifndef SIREFF_PARAMETERMAP_H
-#define SIREFF_PARAMETERMAP_H
+#ifndef SIREBASE_PROPERTYMAP_H
+#define SIREBASE_PROPERTYMAP_H
 
 #include <QHash>
 #include <QString>
 #include <QList>
 
-#include "sireglobal.h"
+#include "property.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireFF
 {
-class ParameterSource;
-class ParameterName;
-class ParameterMap;
+class PropertyName;
+class PropertyMap;
 }
 
-QDataStream& operator<<(QDataStream&, const SireFF::ParameterName&);
-QDataStream& operator>>(QDataStream&, SireFF::ParameterName&);
+QDataStream& operator<<(QDataStream&, const SireFF::PropertyName&);
+QDataStream& operator>>(QDataStream&, SireFF::PropertyName&);
 
-QDataStream& operator<<(QDataStream&, const SireFF::ParameterSource&);
-QDataStream& operator>>(QDataStream&, SireFF::ParameterSource&);
-
-QDataStream& operator<<(QDataStream&, const SireFF::ParameterMap&);
-QDataStream& operator>>(QDataStream&, SireFF::ParameterMap&);
-
-uint qHash(const SireFF::ParameterName&);
-uint qHash(const SireFF::ParameterSource&);
+QDataStream& operator<<(QDataStream&, const SireFF::PropertyMap&);
+QDataStream& operator>>(QDataStream&, SireFF::PropertyMap&);
 
 namespace SireFF
 {
 
-class ParameterSource;
+/** This class is used to store the registered name of the
+    property (used as the offial name of the property
+    by the code in the program, e.g. "coordinates" is the
+    official name of the coordinates property, "charges"
+    is the official name of the charges), the name for
+    the property assigned by the user (so the user can 
+    say that the "charges" property is actually in the 
+    property called "my charges") and an overridden
+    value for the property that is used instead of 
+    the value found in the object being queried
+    (so the user can say to use a specific value of
+     a property)
 
-/** This is a very simple class that holds the name of a type
-    of parameter that is used by a forcefield, together with
-    a default source property from which that parameter may
-    be obtained.
+    This class is not used directly by the code, but
+    is instead used as part of the Property::set( ) function,
+    so that the user can write;
+    
+    cljff.add( mol, Property::set("charges","chgs") + 
+                    Property::set("ljs","ljparams") );
+                    
+    The PropertyMap/PropertyName classes provide a kwargs
+    like interface for the C++ classes - indeed the python
+    wrappers should allow code to be written like;
+    
+    cljff.add( mol, {"charges" : "chgs", "ljs" : "ljparams"} )
+    
+    or
+    
+    cljff.add( mol, charges="charges", ljs="ljparams" )
 
     @author Christopher Woods
 */
-class SIREFF_EXPORT ParameterName
+class SIREBASE_EXPORT PropertyName
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const ParameterName&);
-friend QDataStream& ::operator>>(QDataStream&, ParameterName&);
+friend QDataStream& ::operator<<(QDataStream&, const PropertyName&);
+friend QDataStream& ::operator>>(QDataStream&, PropertyName&);
 
 public:
-    explicit ParameterName(const QString &name = QString::null);
-    ParameterName(const QString &name, const QString &defaultsource);
+    PropertyName();
+    PropertyName(const QString &source);
+    PropertyName(const Property &value);
 
-    ParameterName(const ParameterName &other);
+    PropertyName(const ParameterName &other);
 
-    ~ParameterName();
+    ~PropertyName();
+
+    PropertyName& operator=(const PropertyName &other);
 
     bool operator==(const ParameterName &other) const;
     bool operator!=(const ParameterName &other) const;
 
-    ParameterSource operator==(const QString &source) const;
-
-    bool isValid() const;
-
-    const QString& name() const;
-    const QString& defaultSource() const;
-
-private:
-    /** The name of the parameter */
-    QString param_name;
-
-    /** The default source of the parameter */
-    QString default_source;
-};
-
-/** This is a simple extension to ParameterName that allows the
-    user to override the source property of the the parameter.
-
-    ParameterName has an overloaded property that provides
-    the only public way of creating valid ParameterSource objects,
-    e.g
-
-    \code
-    ParameterSource src = ParameterName("coulomb") == "charges";
-
-    //or more cleanly,
-    cljff.add( mol, cljff.parameters().coulomb() == "charges" );
-
-    \endcode
-
-    \author Christopher Woods
-*/
-class SIREFF_EXPORT ParameterSource : public ParameterName
-{
-
-friend class ParameterName;
-
-friend QDataStream& ::operator<<(QDataStream&, const ParameterSource&);
-friend QDataStream& ::operator>>(QDataStream&, ParameterSource&);
-
-public:
-    ParameterSource();
-
-    ParameterSource(const ParameterSource &other);
-
-    ~ParameterSource();
-
-    bool operator==(const ParameterSource &other) const;
-    bool operator!=(const ParameterSource &other) const;
-
-    bool isValid() const;
-    bool isDefault() const;
+    bool hasSource() const;
+    bool hasValue() const;
 
     const QString& source() const;
+    const Property& value() const;
 
-protected:
-    ParameterSource(const ParameterName &name, const QString &value);
+    operator QString() const
+    {
+        return src;
+    }
 
 private:
-    /** The source of the parameter (property name) */
-    QString param_source;
+    /** The name to use to find the property in the  
+        Properties container */
+    QString src;
+    
+    /** The value of the property - this is either
+        the value to use instead of the container value
+        (if 'isPreferred()' is true), or the default value to 
+        use if the container doesn't have the property set */
+    Property val;
 };
 
-/** This is a simple class that holds all of the mappings from
-    parameters to sources. This holds only non-default source
-    locations. This object is designed to be created implicitly
-    by combining together ParameterSource objects, e.g.
-
-    \code
-    cljff.add( mol, cljff.parameters().coulomb() == "charges" and
-                    cljff.parameters().lj() == "ljs" );
-    \endcode
+/** This is the class that holds the collection of user-supplied
+    optional properties and their locations to functions.
+    
+    This class allows the following code to be written;
+    
+    cljff.add( mol, Property::set("charges","chgs") + 
+                    Property::set("ljs","ljparams") );
+                    
+    The PropertyMap/PropertyName classes provide a kwargs
+    like interface for the C++ classes - indeed the python
+    wrappers should allow code to be written like;
+    
+    cljff.add( mol, {"charges" : "chgs", "ljs" : "ljparams"} )
+    
+    or
+    
+    cljff.add( mol, charges="charges", ljs="ljparams" )
 
     @author Christopher Woods
 */
-class SIREFF_EXPORT ParameterMap
+class SIREBASE_EXPORT PropertyMap
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const ParameterMap&);
-friend QDataStream& ::operator>>(QDataStream&, ParameterMap&);
+friend QDataStream& ::operator<<(QDataStream&, const PropertyMap&);
+friend QDataStream& ::operator>>(QDataStream&, PropertyMap&);
 
 public:
-    ParameterMap();
+    PropertyMap();
+    PropertyMap(const QString &property, const PropertyName &propname);
+    
+    PropertyMap(const QHash<QString,PropertyName> &propnames);
 
-    ParameterMap(const ParameterSource &source);
-    ParameterMap(const QList<ParameterSource> &sources);
+    PropertyMap(const PropertyMap &other);
 
-    ParameterMap(const QHash<ParameterName,QString> &mapping);
+    ~PropertyMap();
 
-    ParameterMap(const ParameterMap &other);
+    PropertyMap& operator=(const PropertyMap &other);
 
-    ~ParameterMap();
-
-    ParameterMap& operator=(const ParameterMap &other);
-
-    ParameterMap operator&&(const ParameterMap &other) const;
+    PropertyMap operator+(const PropertyMap &other) const;
 
     bool operator==(const ParameterMap &other) const;
     bool operator!=(const ParameterMap &other) const;
 
-    QString source(const ParameterName &param) const;
+    PropertyName operator[](const QString &name) const;
+
+    bool specified(const QString &name) const;
+
+    void set(const QString &name, const ParameterName &source);
 
 private:
-    void add(const ParameterSource &source);
-
-    /** Hash mapping the name of one type of
-        parameters to the property containing
-        those parameters */
-    QHash<QString,QString> map;
+    /** Hash indexing all of the PropertyNames */
+    QHash<QString,PropertyName> propmap;
 };
 
-/** Comparison operator */
-inline bool ParameterMap::operator==(const ParameterMap &other) const
-{
-    return map == other.map;
 }
 
-/** Comparison operator */
-inline bool ParameterMap::operator!=(const ParameterMap &other) const
-{
-    return map != other.map;
-}
-
-ParameterMap operator&&(const ParameterSource &source_a,
-                        const ParameterSource &source_b);
-
-ParameterMap operator&&(const ParameterMap &map, const ParameterSource &source);
-ParameterMap operator&&(const ParameterSource &source, const ParameterMap &map);
-
-}
-
-inline uint qHash(const SireFF::ParameterSource &source)
-{
-    return qHash(source.name());
-}
-
-inline uint qHash(const SireFF::ParameterName &source)
-{
-    return qHash(source.name());
-}
-
-Q_DECLARE_METATYPE(SireFF::ParameterName);
-Q_DECLARE_METATYPE(SireFF::ParameterSource);
-Q_DECLARE_METATYPE(SireFF::ParameterMap);
+Q_DECLARE_METATYPE(SireBase::PropertyName);
+Q_DECLARE_METATYPE(SireBase::PropertyMap);
 
 SIRE_END_HEADER
 

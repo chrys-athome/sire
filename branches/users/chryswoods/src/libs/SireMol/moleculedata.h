@@ -73,10 +73,12 @@ public:
 
     /** The version number of this molecule - two molecules
         with the same version number and ID number are identical */
-    const Version& version() const
+    Version version() const
     {
         return vrsn;
     }
+
+    Version version(const PropertyName &key) const;
 
     /** Return the info object that contains all of the
         metainformation about the atoms, residues, chains,
@@ -100,10 +102,15 @@ public:
     
         \throw SireBase::missing_property
     */
-    const Property& property(const QString &key) const
+    const Property& property(const SireBase::PropertyName &key) const
     {
         return props.value(key);
     }
+    
+    /** Return the property with key 'key', returning
+        'default_value' if there is no such key in this molecule */
+    const Property& property(const SireBase::PropertyName &key,
+                             const Property &default_value) const;
     
     /** Return the metadata associated with the property
         with key 'key'
@@ -117,6 +124,8 @@ public:
 
     void setProperty(const QString &key, 
                      const Property &value, bool clear_metadata=false) const;
+
+    void removeProperty(const QString &key);
 
     /** Return the shared null MoleculeData */
     static QSharedDataPointer<MoleculeData> null();
@@ -150,6 +159,7 @@ private:
         ~PropVersions()
         {}
         
+        Version increment();
         Version increment(const QString &key, Version &mol);
         
     private:
@@ -166,9 +176,13 @@ private:
         QHash<QString,Version> property_version;
     };
 
+    /** The version number of each of the properties in 
+        this molecule */
+    QHash<QString,Version> prop_vrsns;
+
     /** The incremints that are used to update the version numbers
         of the different parts of this molecule */
-    boost::shared_ptr<MolVersions> vrsns;
+    boost::shared_ptr<PropVersions> vrsns;
 };
 
 }

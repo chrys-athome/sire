@@ -252,9 +252,9 @@ QStringList Properties::keys() const
 
     \throw SireBase::missing_property
 */
-void Properties::assertContainsProperty(const QString &key) const
+void Properties::assertContainsProperty(const PropertyName &key) const
 {
-    if (not d->properties.contains(key))
+    if (key.hasSource() and not d->properties.contains(key))
     {
         throw SireBase::missing_property( QObject::tr(
             "There is no property with key \"%1\". Available keys are ( %2 ).")
@@ -266,11 +266,15 @@ void Properties::assertContainsProperty(const QString &key) const
 
     \throw SireBase::missing_property
 */
-QStringList Properties::metadataKeys(const QString &key) const
+QStringList Properties::metadataKeys(const PropertyName &key) const
 {
-    this->assertContainsProperty(key);
-    
-    return d->props_metadata.constFind(key)->keys();
+    if (key.hasSource())
+    {
+        this->assertContainsProperty(key);
+        return d->props_metadata.constFind(key)->keys();
+    }
+    else
+        return QStringList();
 }
 
 /** Assert that this set contains the metadata property for the
@@ -278,12 +282,13 @@ QStringList Properties::metadataKeys(const QString &key) const
     
     \throw SireBase::missing_property
 */
-void Properties::assertContainsMetadata(const QString &key, 
-                                        const QString &metakey) const
+void Properties::assertContainsMetadata(const PropertyName &key, 
+                                        const PropertyName &metakey) const
 {
     this->assertContainsProperty(key);
     
-    if (not d->props_metadata.constFind(key)->contains(metakey))
+    if (metakey.hasSource() and 
+        not d->props_metadata.constFind(key)->contains(metakey))
     {
         throw SireBase::missing_property( QObject::tr(
             "There is no metadata with metakey \"%1\" for the property \"%2\". "
@@ -293,9 +298,9 @@ void Properties::assertContainsMetadata(const QString &key,
 }
 
 /** Return whether or not this contains a property with key 'key' */
-bool Properties::contains(const QString &key) const
+bool Properties::contains(const PropertyName &key) const
 {
-    return d->properties.contains(key);
+    return key.hasValue() or d->properties.contains(key);
 }
 
 /** Return whether or not the property with key 'key' contains some
@@ -303,29 +308,37 @@ bool Properties::contains(const QString &key) const
     
     \throw SireBase::missing_property
 */
-bool Properties::contains(const QString &key, const QString &metakey) const
+bool Properties::contains(const PropertyName &key, 
+                          const PropertyName &metakey) const
 {
     this->assertContainsProperty(key);
     
-    return d->props_metadata.constFind(key)->contains(metakey);
+    return metakey.hasValue() or 
+           d->props_metadata.constFind(key)->contains(metakey);
 }
 
-/** Return the property with name 'name'
+/** Return the property with key 'key'
 
     \throw SireBase::missing_property
 */
-const Property& Properties::operator[](const QString &name) const
+const Property& Properties::operator[](const PropertyName &key) const
 {
-    QHash<QString,Property>::const_iterator it = d->properties.constFind(name);
-
-    if (it == d->properties.constEnd())
+    if (key.hasValue())
+        return key.value();
+    else
     {
-        throw SireBase::missing_property( QObject::tr(
-            "There is no property with name \"%1\". Available properties are [ %2 ].")
-                .arg(name, keys().join(", ")), CODELOC );
-    }
+        QHash<QString,Property>::const_iterator it = d->properties.constFind(name);
 
-    return *it;
+        if (it == d->properties.constEnd())
+        {
+            throw SireBase::missing_property( QObject::tr(
+                "There is no property with name \"%1\". "
+                "Available properties are [ %2 ].")
+                    .arg(name, keys().join(", ")), CODELOC );
+        }
+
+        return *it;
+    }
 }
 
 /** Return the metadata associated with these properties */
@@ -334,31 +347,59 @@ const Properties& Properties::metadata() const
     return d->metadata;
 }
 
-/** Return the metadata for the property with key 'name'
+/** Return the metadata for the property with key 'key'
 
     \throw SireBase::missing_property
 */
-const Properties& Properties::metadata(const QString &name) const
+const Properties& Properties::metadata(const PropertyName &key) const
 {
-    QHash<QString,Properties>::const_iterator it = d->props_metadata.constFind(name);
-
-    if (it == d->props_metadata.constEnd())
+    if (key.hasValue())
+        return key.metadata();
+    else
     {
-        throw SireBase::missing_property( QObject::tr(
-            "There is no property with name \"%1\". Available properties are [ %2 ].")
-                .arg(name, keys().join(", ")), CODELOC );
-    }
+        QHash<QString,Properties>::const_iterator it = d->props_metadata.constFind(name);
 
-    return *it;
+        if (it == d->props_metadata.constEnd())
+        {
+            throw SireBase::missing_property( QObject::tr(
+                "There is no property with name \"%1\". Available properties are [ %2 ].")
+                    .arg(name, keys().join(", ")), CODELOC );
+        }
+
+        return *it;
+    }
 }
 
-/** Return the property with key 'key'
+/** Return the property with key 'key' - note that if 
+    'key' specifies a value rather than a source, then the
+    value contained in the key is returned
 
     \throw SireBase::missing_property
 */
-const Property& Properties::value(const QString &key) const
+const Property& Properties::value(const PropertyName &key) const
 {
     return this->operator[](key);
+}
+
+/** Return the property with key 'key' - note that if 
+    'key' specifies a value rather than a source, then the
+    value contained in the key is returned. If no such source
+    exists, and there is no value in the key, then 
+    'default_value' is returned */
+const Property& Properties::value(const PropertyName &key,
+                                  const Property &default_value) const
+{
+    if (key.hasValue())
+        return key.value();
+    else
+    {
+        QHash<QString,Properties>::const_iterator it = d->props_metadata.constFind(name);
+
+        if (it != d->props_metadata.constEnd())
+            return *it;
+        else
+            return default_value;
+    }
 }
 
 /** Insert the properties 'properties' into this set - any properties

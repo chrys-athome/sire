@@ -337,6 +337,12 @@ bool Property::operator!=(const Property &other) const
     return (d != other.d) or *d != *(other.d);
 }
 
+/** Return whether this is the null property */
+bool Property::isNull() const
+{
+    return d == PropertyBase::null_property().d;
+}
+
 /** Save this Property to the passed binary datastream */
 void Property::save(QDataStream &ds) const
 {

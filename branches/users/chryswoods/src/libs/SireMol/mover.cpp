@@ -30,6 +30,9 @@
 
 using namespace SireMol;
 
+/** The default weighting function used by Mover */
+static Property default_weightfunc( new RelFromNumber() );
+
 /** Constructor */
 MoverBase::MoverBase()
 {}
@@ -245,7 +248,7 @@ void MoverBase::translate(MoleculeData &moldata
                           const PropertyMap &map)
 {
     //which property contains the coordinates?
-    const PropertyName &coord_property = map["coordinates"];
+    PropertyName coord_property = map["coordinates"];
 
     //get the current coordinates
     AtomicCoords coords = moldata.property(coord_property);
@@ -275,7 +278,7 @@ void MoverBase::rotate(MoleculeData &moldata,
                        const PropertyMap &map)
 {
     //get the name of the property that contains the coordinates
-    const PropertyName &coord_property = map["coordinates"];
+    PropertyName coord_property = map["coordinates"];
 
     //get the coordinates to be rotated
     AtomicCoords coords = moldata.property(coord_property);
@@ -300,7 +303,7 @@ void MoverBase::mapInto(MoleculeData &moldata,
                         const PropertyMap &map)
 {
     //get the name of the property that holds the coordinates
-    const PropertyName &coord_property = map["coordinates"];
+    PropertyName coord_property = map["coordinates"];
     
     //get the coordinates to be mapped
     AtomicCoords coords = moldata.property(coord_property);
@@ -428,7 +431,8 @@ void MoverBase::change(MoleculeData &moldata, const BondID &bond,
     {
         //get the weighting function that is used to weight the two
         //sides of the move
-        WeightFunction weightfunc = moldata.property(map["weight function"]);
+        WeightFunction weightfunc = moldata.property(map["weight function"],
+                                                     default_weightfunc);
     
         tuple<double,double> weights = weightfunc(moldata, group0, 
                                                   group1, map);
@@ -438,7 +442,7 @@ void MoverBase::change(MoleculeData &moldata, const BondID &bond,
     }
     
     //now get property containing the coordinates of the atoms
-    const PropertyName &coord_property = map["coordinates"];
+    PropertyName coord_property = map["coordinates"];
     
     AtomicCoords coords = moldata.property(coord_property);
     
@@ -534,7 +538,8 @@ void MoverBase::change(MoleculeData &moldata, const AngleID &angle,
     {
         //get the weighting function that is used to weight the 
         //two sides of the move
-        WeightFunction weightfunc = moldata.property(map["weight function"]);
+        WeightFunction weightfunc = moldata.property(map["weight function"],
+                                                     default_weightfunc);
         
         tuple<double,double> weights = weightfunc(moldata, group0, 
                                                   group1, map);
@@ -544,7 +549,7 @@ void MoverBase::change(MoleculeData &moldata, const AngleID &angle,
     }
     
     //get the coordinates that are to be changed
-    const PropertyName &coord_property = map["coordinates"];
+    PropertyName coord_property = map["coordinates"];
     AtomicCoords coords = moldata.property(coord_property);
     
     //get the coordinates of the three atoms that comprise the angle
@@ -642,7 +647,8 @@ void MoverBase::change(MoleculeData &moldata, const DihedralID &dihedral,
     }
     else
     {
-        WeightFunction weightfunc = moldata.property(map["weight function"]);
+        WeightFunction weightfunc = moldata.property(map["weight function"],
+                                                     default_weightfunc);
         
         tuple<double,double> weights = weightfunc(moldata, group0,
                                                   group1, map);
@@ -652,7 +658,7 @@ void MoverBase::change(MoleculeData &moldata, const DihedralID &dihedral,
     }
     
     //get the coordinates to be moved
-    const PropertyName &coord_property = map["coordinates"];
+    PropertyName coord_property = map["coordinates"];
     AtomicCoords coords = moldata.property(coord_property);
     
     //get the coordinates of the central two atoms of the dihedral
@@ -742,7 +748,8 @@ void MoverBase::change(MoleculeData &moldata, const BondID &bond,
     }
     else
     {
-        WeightFunction weightfunc = moldata.property(map["weight function"]);
+        WeightFunction weightfunc = moldata.property(map["weight function"],
+                                                     default_weightfunc);
         
         tuple<double,double> weights = weightfunc(moldata, group0,
                                                   group1, map);
@@ -752,7 +759,7 @@ void MoverBase::change(MoleculeData &moldata, const BondID &bond,
     }
     
     //get the coordinates to be moved
-    const PropertyName &coord_property = map["coordinates"];
+    PropertyName coord_property = map["coordinates"];
     AtomicCoords coords = moldata.property(coord_property);
     
     //get the coordinates of the central two atoms of the dihedral
@@ -850,7 +857,8 @@ void MoverBase::change(MoleculeData &moldata, const ImproperID &improper,
     }
     else
     {
-        WeightFunction weightfunc = moldata.property(map["weight function"]);
+        WeightFunction weightfunc = moldata.property(map["weight function"],
+                                                     default_weightfunc);
         
         tuple<double,double> weights = weightfunc(moldata, group0,
                                                   group1, map);
@@ -860,7 +868,7 @@ void MoverBase::change(MoleculeData &moldata, const ImproperID &improper,
     }
     
     //get the coordinates to be moved
-    const PropertyName &coord_property = map["coordinates"];
+    PropertyName coord_property = map["coordinates"];
     AtomicCoords coords = moldata.property(coord_property);
     
     //get the coordinates of the last three atoms of the improper
