@@ -71,7 +71,52 @@ protected:
                 const PropertyMap &map) const;
 
     void change(MoleculeData &data, const BondID &bond,
-                SireUnits::Dimension::Length delta, const PropertyMap &map); 
+                SireUnits::Dimension::Length delta, 
+                const PropertyMap &map) const; 
+
+    void change(MoleculeData &data, const AngleID &angle,
+                SireUnits::Dimension::Angle delta, 
+                const PropertyMap &map) const;
+                
+    void change(MoleculeData &data, const DihedralID &dihedral,
+                SireUnits::Dimension::Angle delta, 
+                const PropertyMap &map) const;
+                
+    void change(MoleculeData &data, const BondID &bond,
+                SireUnits::Dimension::Angle delta, 
+                const PropertyMap &map) const;
+                
+    void change(MoleculeData &data, const ImproperID &improper,
+                SireUnits::Dimension::Angle delta, 
+                const PropertyMap &map) const;
+
+    void set(MoleculeData &data, const BondID &bond,
+             SireUnits::Dimension::Length value, 
+             const PropertyMap &map) const;
+             
+    void set(MoleculeData &data, const AngleID &angle,
+             SireUnits::Dimension::Angle value, 
+             const PropertyMap &map) const;
+             
+    void set(MoleculeData &data, const DihedralID &dihedral,
+             SireUnits::Dimension::Angle value,
+             const PropertyMap &map) const;
+             
+    void setAll(MoleculeData &data, const DihedralID &dihedral,
+                SireUnits::Dimension::Angle value, 
+                const PropertyMap &map) const;
+                
+    void set(MoleculeData &data, const ImproperID &improper,
+             SireUnits::Dimension::Angle value, 
+             const PropertyMap &map) const;
+
+    void align(MoleculeData &data, const MoleculeView &other,
+               const AtomAliases &aliases,
+               const PropertyMap &map0, const PropertyMap &map1) const;
+               
+    void align(MoleculeData &data, const AtomSelection &align_atoms,
+               const MoleculeView &other, const AtomAliases &aliases,
+               const PropertyMap &map0, const PropertyMap &map1) const;
 
     static void translate(MoleculeView &view, 
                           const AtomSelection &selected_atoms,
@@ -84,14 +129,21 @@ protected:
                        const Vector &point,
                        const PropertyMap &map);
 
-    static void translate(QVector<CoordGroup> &coords,
+    static void mapInto(MoleculeData &data, const AtomSelection &selected_atoms,
+                        const AxisSet &axes, const PropertyMap &map);
+
+    static void translate(AtomicCoords &coords,
                           const AtomSelection &selected_atoms,
                           const Vector &delta);
 
-    static void rotate(QVector<CoordGroup> &coords,
+    static void rotate(AtomicCoords &coords,
                        const AtomSelection &selected_atoms,
                        const Matrix &rotmat,
                        const Vector &point);
+
+    static void mapInto(AtomicCoords &coords,
+                        const AtomSelection &selected_atoms,
+                        const AxisSet &axes);
 
     /** The only atoms that can be moved by this Mover */
     AtomSelection movable_atoms;

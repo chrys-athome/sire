@@ -586,6 +586,10 @@ public:
     CoordGroupEditor& setCoordinates(const QVector<Vector> &newcoords);
     CoordGroupEditor& setCoordinates(const CoordGroupBase &newcoords);
 
+    CoordGroupEditor& setCoordinates(quint32 i, const Vector &newcoords);
+
+    CoordGroupEditor& mapInto(const AxisSet &axes);
+
     CoordGroup commit();
 };
 
