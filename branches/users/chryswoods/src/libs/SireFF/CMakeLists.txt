@@ -29,7 +29,6 @@ set ( SIREFF_HEADERS
       forcefields.h
       forcefieldsbase.h
       forcetable.h
-      parametermap.h
       qhash_sireff.h
     )
 
@@ -51,7 +50,6 @@ set ( SIREFF_SOURCES
       forcefieldsbase.cpp
       forcefields.cpp
       forcetable.cpp
-      parametermap.cpp
     
       ${SIREFF_HEADERS}
     )

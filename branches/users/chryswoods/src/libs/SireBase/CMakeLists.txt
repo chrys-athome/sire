@@ -29,6 +29,7 @@ set ( SIREBASE_HEADERS
       pairmatrix.hpp
       properties.h
       property.h
+      propertymap.h
       sharedpolypointer.hpp
       sharedpolypointer_cast.hpp
       sparsematrix.hpp
@@ -49,6 +50,7 @@ set ( SIREBASE_SOURCES
       md5sum.cpp
       properties.cpp
       property.cpp
+      propertymap.cpp
       sharedpolypointer.cpp
       version.cpp
       
