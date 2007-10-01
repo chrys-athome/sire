@@ -40,6 +40,7 @@ set ( SIREMOL_HEADERS
       chainidx.h
       chainname.h
       chainresid.h
+      connectivity.h
       cutgroup.h
       cuttingfunction.h
       element-data.h
@@ -49,7 +50,6 @@ set ( SIREMOL_HEADERS
       groupatomids.h
       groupgroupids.h
       molecule.h
-      moleculebonds.h
       moleculecutting.h
       moleculedata.h
       moleculegroup.h
@@ -75,7 +75,6 @@ set ( SIREMOL_HEADERS
       resid.h
       residentifier.h
       residue.h
-      residuebonds.h
       residuecutting.h
       residueinfo.h
       residuesin.hpp
@@ -110,12 +109,12 @@ set ( SIREMOL_SOURCES
       cgidentifier.cpp
       chainchainid.cpp
       chainresid.cpp
+      connectivity.cpp
       cutgroup.cpp
       cuttingfunction.cpp
       elementdb.cpp
       errors.cpp
       molecule.cpp
-      moleculebonds.cpp
       moleculecutting.cpp
       moleculedata.cpp
       moleculegroup.cpp
@@ -133,7 +132,6 @@ set ( SIREMOL_SOURCES
       propertyextractor.cpp
       residentifier.cpp
       residue.cpp
-      residuebonds.cpp
       residuecutting.cpp
       residueinfo.cpp
       resresid.cpp
