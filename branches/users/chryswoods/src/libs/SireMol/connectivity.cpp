@@ -37,6 +37,7 @@
 
 using namespace SireStream;
 using namespace SireMol;
+using namespace SireBase;
 
 /////////
 ///////// Implementation of ConnectivityBase
@@ -53,7 +54,7 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
     SharedDataStream sds(ds);
 
     sds << conbase.connected_atoms << conbase.connected_residues
-        << conbase.molinfo;
+        << conbase.molinfo << static_cast<const PropertyBase&>(conbase);
 
     return ds;
 }
@@ -69,7 +70,8 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
         SharedDataStream sds(ds);
         
         sds >> conbase.connected_atoms >> conbase.connected_residues
-            >> conbase.molinfo;
+            >> conbase.molinfo
+            >> static_cast<PropertyBase&>(conbase);
     }
     else
         throw version_error(v, "1", r_conbase, CODELOC);
@@ -78,13 +80,13 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 }
 
 /** Null constructor */
-ConnectivityBase::ConnectivityBase()
+ConnectivityBase::ConnectivityBase() : PropertyBase()
 {}
 
 /** Construct the connectivity for molecule described by 
     the passed info object */
 ConnectivityBase::ConnectivityBase(const MoleculeInfo &info)
-                 : molinfo(info)
+                 : PropertyBase(), molinfo(info)
 {
     if (molinfo.nAtoms() > 0)
     {
@@ -101,7 +103,8 @@ ConnectivityBase::ConnectivityBase(const MoleculeInfo &info)
     
 /** Copy constructor */
 ConnectivityBase::ConnectivityBase(const ConnectivityBase &other)
-                 : connected_atoms(other.connected_atoms),
+                 : PropertyBase(other),
+                   connected_atoms(other.connected_atoms),
                    connected_res(other.connected_res),
                    molinfo(other.molinfo)
 {}
@@ -360,7 +363,8 @@ void Connectivity::squeeze()
 }
 
 /** Null constructor */
-Connectivity::Connectivity() : ConnectivityBase()
+Connectivity::Connectivity() 
+             : ConcreteProperty<Connectivity,ConnectivityBase>()
 {}
 
 /** Construct the connectivity for the molecule described by the 
@@ -371,14 +375,14 @@ Connectivity::Connectivity(const MoleculeInfo &molinfo)
 
 /** Construct the connectivity from the passed editor */
 Connectivity::Connectivity(const ConnectivityEditor &editor)
-             : ConnectivityBase(editor)
+             : ConcreteProperty<Connectivity,ConnectivityBase>(editor)
 {
     this->squeeze();
 }
 
 /** Copy constructor */
 Connectivity::Connectivity(const Connectivity &other)
-             : ConnectivityBase(other)
+             : ConcreteProperty<Connectivity,ConnectivityBase>(other)
 {}
 
 /** Destructor */
@@ -424,18 +428,18 @@ ConnectivityEditor Connectivity::edit() const
 
 /** Null constructor */
 ConnectivityEditor::ConnectivityEditor()
-                   : ConnectivityBase()
+                   : ConcreteProperty<ConnectivityEditor,ConnectivityBase>()
 {}
 
 /** Construct an editor to edit a copy of the passed 
     Connectivity object */
 ConnectivityEditor::ConnectivityEditor(const Connectivity &connectivity)
-                   : ConnectivityBase(connectivity)
+                   : ConcreteProperty<ConnectivityEditor,ConnectivityBase>(connectivity)
 {}
 
 /** Copy constructor */
 ConnectivityEditor::ConnectivityEditor(const ConnectivityEditor &other)
-                   : ConnectivityBase(other)
+                   : ConcreteProperty<ConnectivityEditor,ConnectivityBase>(other)
 {}
 
 /** Destructor */

@@ -53,7 +53,7 @@ class ConnectivityEditor;
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT ConnectivityBase
+class SIREMOL_EXPORT ConnectivityBase : public SireBase::PropertyBase
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const SireMol::ConnectivityBase&);
@@ -61,6 +61,11 @@ friend QDataStream& ::operator>>(QDataStream&, SireMol::ConnectivityBase&);
 
 public:
     ~ConnectivityBase();
+    
+    static const char* typeName()
+    {
+        return "SireMol::ConnectivityBase";
+    }
 
     bool areConnected(AtomIdx atom0, AtomIdx atom1) const;
     bool areConnected(const AtomID &atom0, const AtomID &atom1) const;
@@ -121,7 +126,9 @@ atoms it is connected to) and also to auto-generate internal angles
     @author Christopher Woods
 
 */
-class SIREMOL_EXPORT Connectivity : public ConnectivityBase
+class SIREMOL_EXPORT Connectivity 
+            : public SireBase::ConcreteProperty<Connectivity,
+                                                ConnectivityBase>
 {
 
 public:
@@ -133,6 +140,15 @@ public:
     Connectivity(const Connectivity &other);
 
     ~Connectivity();
+
+    static const char* typeName()
+    {
+        return "SireMol::Connectivity";
+    }
+
+    using SireBase::PropertyBase::operator=;
+    using SireBase::PropertyBase::operator==;
+    using SireBase::PropertyBase::operator!=;
 
     Connectivity& operator=(const Connectivity &other);
     Connectivity& operator=(const ConnectivityEditor &editor);
@@ -150,7 +166,9 @@ private:
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT ConnectivityEditor : public ConnectivityBase
+class SIREMOL_EXPORT ConnectivityEditor 
+        : public SireBase::ConcreteProperty<ConnectivityEditor,
+                                            ConnectivityBase>
 {
 public:
     ConnectivityEditor();
@@ -160,6 +178,15 @@ public:
     ConnectivityEditor(const ConnectivityEditor &other);
     
     ~ConnectivityEditor();
+    
+    static const char* typeName()
+    {
+        return "SireMol::ConnectivityEditor";
+    }
+    
+    using SireBase::PropertyBase::operator=;
+    using SireBase::PropertyBase::operator==;
+    using SireBase::PropertyBase::operator!=;
     
     ConnectivityEditor& operator=(const ConnectivityBase &other);
     

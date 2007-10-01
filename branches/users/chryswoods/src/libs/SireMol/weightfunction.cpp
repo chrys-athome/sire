@@ -29,199 +29,182 @@
 #include "weightfunction.h"
 
 using namespace SireMol;
+using namespace SireBase;
 
-///////////
-/////////// Implementation of WeightCalculator
-///////////
+//////////
+////////// Implementation of WeightFuncBase
+//////////
 
-/** Construct a new, empty WeightCalculator that will calculate the
-    relative weight using 'weightfunc'. This will hold the workspace and
-    results of a weight calculation using an arbitrary WeightFunction. */
-WeightCalculator::WeightCalculator(const WeightFunction &weightfunction)
-                 : weightfunc(weightfunction), natms_a(0), natms_b(0)
+//////////
+////////// Implementation of WeightFunction
+//////////
+
+//////////
+////////// Implementation of AbsFromNumber
+//////////
+
+AbsFromNumber::AbsFromNumber()
+              : ConcreteProperty<AbsFromNumber,WeightFuncBase>()
 {}
 
-/** Destructor */
-WeightCalculator::~WeightCalculator()
+AbsFromNumber::AbsFromNumber(const AbsFromNumber &other)
+              : ConcreteProperty<AbsFromNumber,WeightFuncBase>(other)
 {}
 
-/** Add an atom to group 'A' */
-void WeightCalculator::addToA(const Atom &atom)
-{
-    group_a.append(atom);
-
-    if (group_a.count() >= MaxWeightFunctionAtoms)
-        processBuffers();
-}
-
-/** Add an atom to group 'B' */
-void WeightCalculator::addToB(const Atom &atom)
-{
-    group_b.append(atom);
-
-    if (group_b.count() >= MaxWeightFunctionAtoms)
-        processBuffers();
-}
-
-/** Add a whole list of atoms to group 'A' */
-void WeightCalculator::addToA(const QVector<Atom> &atoms)
-{
-    if (group_a.count() + atoms.count() >= MaxWeightFunctionAtoms)
-        processBuffers();
-
-    group_a.reserve(atoms.count());
-
-    for (int i=0; i<atoms.count(); ++i)
-        group_a.append( atoms.at(i) );
-
-    if (group_a.count() >= MaxWeightFunctionAtoms)
-        processBuffers();
-}
-
-/** Add a whole list of atoms to group 'B' */
-void WeightCalculator::addToB(const QVector<Atom> &atoms)
-{
-    if (group_b.count() + atoms.count() >= MaxWeightFunctionAtoms)
-        processBuffers();
-
-    group_b.reserve(atoms.count());
-
-    for (int i=0; i<atoms.count(); ++i)
-        group_b.append( atoms.at(i) );
-
-    if (group_b.count() >= MaxWeightFunctionAtoms)
-        processBuffers();
-}
-
-/** Return the calculated weight based on the atoms added so far... */
-double WeightCalculator::weight() const
-{
-    //ensure that all of the atoms have been processed...
-    if (group_a.count() > 0 or group_b.count() > 0)
-        const_cast<WeightCalculator*>(this)->processBuffers();
-
-    double weight = weightfunc.calculateWeight(*this);
-
-    //clamp the result to lie within the range 0->1 inclusive
-    if (weight < 0.0)
-        return 0.0;
-    else if (weight > 1.0)
-        return 1.0;
-    else
-        return weight;
-}
-
-/** Process the atoms that are in the group_a and group_b buffers, then
-    clear the buffers after processing. Using a buffer means that we don't
-    call the virtual WeightFunction function for every added atom. This
-    will hopefully result in major performance advantages. */
-void WeightCalculator::processBuffers()
-{
-    if (group_a.count() == 0 and group_b.count() == 0)
-        return;
-
-    //tell the weight function to process the buffers...
-    weightfunc.processBuffers(*this);
-
-    //finally, clear the buffers
-    group_a.clear();
-    group_b.clear();
-}
-
-///////////
-/////////// Implementation of WeightFunction 'processBuffer' functions...
-///////////
-
-//////////// AbsFromNumber ///////////////
-
-/** AbsFromNumber doesn't need to do any runtime processing */
-void AbsFromNumber::processBuffers(WeightCalculator&) const
+~AbsFromNumber()
 {}
 
-/** AbsFromNumber calculates the weight purely based on which of the two groups
-    was the largest. */
-double AbsFromNumber::calculateWeight(const WeightCalculator &calc) const
+inline double AbsFromNumber::weight(int nats0, int nats1)
 {
-    qint32 natsa = nAtomsA(calc);
-    qint32 natsb = nAtomsB(calc);
-
-    if (natsa > natsb)
-        return 0.0;
-    else if (natsa < natsb)
-        return 1.0;
+    if (nats0 > nats1)
+        return 1;
+    else if (nats0 < nats1)
+        return 0;
     else
         return 0.5;
 }
 
-//////////// RelFromNumber ///////////////
-
-/** RelFromNumber calculates the weight purely based on the ratio of the number
-    of atoms of the two groups. */
-double RelFromNumber::calculateWeight(const WeightCalculator &calc) const
+double AbsFromNumber::operator()(const MoleculeData &moldata,
+                                 const AtomSelection &group0,
+                                 const AtomSelection &group1,
+                                 const PropertyMap&) const
 {
-    qint32 natsa = nAtomsA(calc);
-    qint32 natsb = nAtomsB(calc);
+    moldata.assertCompatibleWith(group0);
+    moldata.assertCompatibleWith(group1);
 
-    qint32 total = natsa + natsb;
-
-    if (total == 0)
-        return 0.5;
-    else
-        return double(natsb) / double(total);
+    return weight(group0.nAtoms(), group1.nAtoms());
 }
 
-//////////// AbsFromMass ///////////////
-
-/** Need to accumalate the total mass of the two groups... */
-void AbsFromMass::processBuffers(WeightCalculator &calc) const
+double AbsFromNumber::operator()(const MoleculeView &view0,
+                                 const MoleculeView &view1,
+                                 const PropertyMap&) const
 {
-    //get the current value of the mass of the two groups (default 0.0)
-    double mass_a = boost::any_cast<double>(getValue(calc, "mass_a", 0.0));
-    double mass_b = boost::any_cast<double>(getValue(calc, "mass_b", 0.0));
-
-    //go through all of the atoms in groupA and calculate their mass
-    const WeightFunctionAtoms &atoms_a = groupA(calc);
-    const WeightFunctionAtoms &atoms_b = groupB(calc);
-
-    for (int i=0; i<atoms_a.count(); ++i)
-        mass_a += atoms_a[i].mass();
-
-    for (int i=0; i<atoms_b.count(); ++i)
-        mass_b += atoms_b[i].mass();
-
-    //save the calculated values of the mass
-    setValue(calc, "mass_a", mass_a);
-    setValue(calc, "mass_b", mass_b);
+    return weight(view0.nAtoms(), view1.nAtoms());
 }
 
-/** The weight is given entirely to the group with the largest mass */
-double AbsFromMass::calculateWeight(const WeightCalculator &calc) const
-{
-    //get the current value of the mass of the two groups (default 0.0)
-    double mass_a = boost::any_cast<double>(getValue(calc, "mass_a", 0.0));
-    double mass_b = boost::any_cast<double>(getValue(calc, "mass_b", 0.0));
+//////////
+////////// Implementation of RelFromNumber
+//////////
 
-    if (mass_a > mass_b)
-        return 0.0;
-    else if (mass_a < mass_b)
-        return 1.0;
+RelFromNumber::RelFromNumber()
+              : ConcreteProperty<RelFromNumber,WeightFuncBase>()
+{}
+
+RelFromNumber::AbsFromNumber(const RelFromNumber &other)
+              : ConcreteProperty<RelFromNumber,WeightFuncBase>(other)
+{}
+
+~RelFromNumber()
+{}
+
+inline double RelFromNumber::weight(int nats0, int nats1)
+{
+    double total = nats0 + nats1;
+    
+    if (total > 0)
+        return nats1 / total;
     else
         return 0.5;
 }
 
-//////////// RelFromMass ///////////////
-
-/** The weight is based on the ratio of the masses of the two groups */
-double RelFromMass::calculateWeight(const WeightCalculator &calc) const
+double RelFromNumber::operator()(const MoleculeData &moldata,
+                                 const AtomSelection &group0,
+                                 const AtomSelection &group1,
+                                 const PropertyMap&) const
 {
-    //get the current value of the mass of the two groups (default 0.0)
-    double mass_a = boost::any_cast<double>(getValue(calc, "mass_a", 0.0));
-    double mass_b = boost::any_cast<double>(getValue(calc, "mass_b", 0.0));
+    moldata.assertCompatibleWith(group0);
+    moldata.assertCompatibleWith(group1);
 
-    double totalmass = mass_a + mass_b;
+    return weight(group0.nAtoms(), group1.nAtoms());
+}
 
-    if ( SireMaths::isZero(totalmass) )
-        return 0.5;
+double RelFromNumber::operator()(const MoleculeView &view0,
+                                 const MoleculeView &view1,
+                                 const PropertyMap&) const
+{
+    return weight(view0.nAtoms(), view1.nAtoms());
+}
+
+//////////
+////////// Implementation of AbsFromMass
+//////////
+
+AbsFromMass::AbsFromMass()
+              : ConcreteProperty<AbsFromMass,WeightFuncBase>()
+{}
+
+AbsFromMass::AbsFromMass(const AbsFromMass &other)
+              : ConcreteProperty<AbsFromMass,WeightFuncBase>(other)
+{}
+
+~AbsFromMass()
+{}
+
+inline double AbsFromMass::weight(double mass0, double mass1)
+{
+    if (mass0 > mass1)
+        return 1;
+    else if (mass0 < mass1)
+        return 0;
     else
-        return mass_b / totalmass;
+        return 0.5;
+}
+
+double AbsFromMass::operator()(const MoleculeData &moldata,
+                               const AtomSelection &group0,
+                               const AtomSelection &group1,
+                               const PropertyMap &map) const
+{
+    return weight( PartialMolecule(moldata,group0).evaluate().mass(map),
+                   PartialMolecule(moldata,group1).evaluate().mass(map) );
+}
+
+double AbsFromMass::operator()(const MoleculeView &view0,
+                               const MoleculeView &view1,
+                               const PropertyMap&) const
+{
+    return weight( view0.evaluate().mass(map),
+                   view1.evaluate().mass(map) );
+}
+
+//////////
+////////// Implementation of RelFromMass
+//////////
+
+RelFromMass::RelFromMass()
+              : ConcreteProperty<RelFromMass,WeightFuncBase>()
+{}
+
+RelFromMass::RelFromMass(const RelFromMass &other)
+              : ConcreteProperty<RelFromMass,WeightFuncBase>(other)
+{}
+
+~RelFromMass()
+{}
+
+inline double RelFromMass::weight(double mass0, double mass1)
+{
+    double total = mass0 + mass1;
+    
+    if (total > 0)
+        return mass1 / total;
+    else
+        return 0.5;
+}
+
+double RelFromMass::operator()(const MoleculeData &moldata,
+                               const AtomSelection &group0,
+                               const AtomSelection &group1,
+                               const PropertyMap &map) const
+{
+    return weight( PartialMolecule(moldata,group0).evaluate().mass(map),
+                   PartialMolecule(moldata,group1).evaluate().mass(map) );
+}
+
+double RelFromMass::operator()(const MoleculeView &view0,
+                               const MoleculeView &view1,
+                               const PropertyMap&) const
+{
+    return weight( view0.evaluate().mass(map),
+                   view1.evaluate().mass(map) );
 }

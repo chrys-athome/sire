@@ -29,232 +29,188 @@
 #ifndef SIREMOL_WEIGHTFUNCTION_H
 #define SIREMOL_WEIGHTFUNCTION_H
 
-#include <QVarLengthArray>
-#include <QHash>
-#include <QString>
-#include <QVector>
-
-#include <boost/any.hpp>
-
-#include "atom.h"
+#include "SireBase/property.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
 
-/** The number of atoms stored on the stack in WeightFunctionAtoms */
-const int MaxWeightFunctionAtoms = 64;
-
-/** This class is used as a temporary cache of atoms, while the
-    atoms are being compared. This acts as a buffer, which will
-    reduce the number of virtual function calls. */
-typedef QVarLengthArray<Atom,MaxWeightFunctionAtoms> WeightFunctionAtoms;
-
 class WeightFunction;
 
-/**
-This class is used to provide the temporary storage for a Weight calculation. This
-allows the calculation to be performed (as much as possible) on the stack, and avoids the
-need for the polymorphic WeightFunction class to be held as a pointer.
-
-\author Christopher Woods
+/** This is the base class of all weight functions. A weight function
+    is a simple function that takes two groups in a molecule, and
+    returns the relative weight of those two groups (0 == 100% group A,
+    0.5 == 50% group A, 50% group B, 1 == 100% groupB)
+    
+    @author Christopher Woods
 */
-class SIREMOL_EXPORT WeightCalculator
+class SIREMOL_EXPORT WeightFuncBase : public SireBase::PropertyBase
 {
-
-friend class WeightFunction;
-
 public:
-    WeightCalculator(const WeightFunction &weightfunction);
-    ~WeightCalculator();
+    WeightFuncBase();
+    
+    WeightFuncBase(const WeightFuncBase &other);
+    
+    virtual ~WeightFuncBase();
+    
+    static const char* typeName()
+    {
+        return "SireMol::WeightFuncBase";
+    }
+    
+    virtual WeightFuncBase* clone() const=0;
+    
+    /** Return the relative weight of group0 and group1 in the 
+        molecule whose data is in 'moldata', using the supplied
+        map to find the required properties
+        
+        \throw SireError::incompatible_error
+        \throw SireBase::missing_property
+    */
+    virtual double operator()(const MoleculeData &moldata,
+                              const AtomSelection &group0,
+                              const AtomSelection &group1,
+                              const PropertyMap &map = PropertyMap()) const=0;
 
-    void addToA(const Atom &atom);
-    void addToB(const Atom &atom);
+    /** Return the relative weight of two molecule views (view0
+        and view1), using map0 to find the required properties
+        from view0, and map1 to find the required properties from
+        view1.
+        
+        \throw SireBase::missing_property
+    */
+    virtual double operator()(const MoleculeView &view0, 
+                              const PropertyMap &map0,
+                              const MoleculeView &view1,
+                              const PropertyMap &map1) const=0;
 
-    void addToA(const QVector<Atom> &atoms);
-    void addToB(const QVector<Atom> &atoms);
-
-    double weight() const;
-
-protected:
-
-    /** These functions are the only ones that the 'WeightFunction' should
-        call. Please respect the privacy of this class and do not access
-        any private data. */
-
-    void setValue(const QString &name, const boost::any &value);
-
-    boost::any getValue(const QString &name, const boost::any &devault) const;
-
-    const WeightFunctionAtoms& groupA() const;
-    const WeightFunctionAtoms& groupB() const;
-
-    quint32 nAtomsA() const;
-    quint32 nAtomsB() const;
-
-private:
-    void processBuffers();
-
-    /** Const reference to the actual WeightFunction used to
-        perform the calculation. */
-    const WeightFunction &weightfunc;
-
-    /** Temporary buffer that holds the atoms in groupa as they
-        are being added */
-    WeightFunctionAtoms group_a;
-
-    /** Temporary buffer that holds the atoms in groupb as they
-        are being added */
-    WeightFunctionAtoms group_b;
-
-    /** The hash of any additional data required by the weight function,
-        indexed by name. */
-    QHash<QString, boost::any> vals;
-
-    /** The total number of atoms that have been added to group A */
-    quint32 natms_a;
-
-    /** The total number of atoms that have been added to group B */
-    quint32 natms_b;
+    /** Return the relative weight of the two molecule views
+        (view0 and view1) using the supplied map to find the 
+        required properties from both views
+        
+        \throw SireBase::missing_property
+    */
+    double operator()(const MoleculeView &view0,
+                      const MoleculeView &view1,
+                      const PropertyMap &map = PropertyMap()) const
+    {
+        return this->operator()(view0, map, view1, map);
+    }
 };
 
-/** Set the current value of the parameter named 'name'. Note that this will
-    overwrite any pre-existing value. */
-inline void WeightCalculator::setValue(const QString &name, const boost::any &value)
-{
-    vals.insert(name, value);
-}
-
-/** Return the current value of the parameter named 'name', or return 'devault' if this
-    parameter does not exist. */
-inline boost::any WeightCalculator::getValue(const QString &name,
-                                             const boost::any &devault) const
-{
-    return vals.value(name, devault);
-}
-
-/** Return the buffer of atoms in group A. */
-inline const WeightFunctionAtoms& WeightCalculator::groupA() const
-{
-    return group_a;
-}
-
-/** Return the buffer of atoms in group B. */
-inline const WeightFunctionAtoms& WeightCalculator::groupB() const
-{
-    return group_b;
-}
-
-/** Return the total number of atoms that have been added to group A (including
-    those currently in the buffer) */
-inline quint32 WeightCalculator::nAtomsA() const
-{
-    return natms_a;
-}
-
-/** Return the total number of atoms that have been added to group B (including
-    those currently in the buffer) */
-inline quint32 WeightCalculator::nAtomsB() const
-{
-    return natms_b;
-}
-
-
-/**
-This is the base class of all weight functions. A weight function is used to calculate the relative weight of two groups of atoms. This is used primarily in the internal move code, whereby the amount of the move is shared between the two moving halves based on their relative weights.
-
-This is a completely const class that may not possess any member data. It uses the non-polymorphic WeightCalculator class to actually store the intermediate results of the calculation.
-
-@author Christopher Woods
+/** This is the wrapper class that holds a generic WeightFuncBase
+    Property
+    
+    @author Christopher Woods
 */
 class SIREMOL_EXPORT WeightFunction
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const WeightFunction&);
+friend QDataStream& ::operator>>(QDataStream&, WeightFunction&);
+
 public:
-    WeightFunction()
-    {}
+    WeightFunction();
+    WeightFunction(const WeightFuncBase &weightfunc);
+    
+    WeightFunction(const WeightFunction &other);
+    
+    ~WeightFunction();
 
-    virtual ~WeightFunction()
-    {}
+    WeightFunction& operator=(const WeightFuncBase &weightfunc);
+    WeightFunction& operator=(const WeightFunction &weightfunc);
+    
+    WeightFunction& operator=(const Property &other);
 
-    virtual const char* what() const=0;
+    bool operator==(const WeightFunction &other) const;
+    bool operator!=(const WeightFunction &other) const;
 
-    virtual double calculateWeight(const WeightCalculator &calculator) const=0;
-    virtual void processBuffers(WeightCalculator &calculator) const=0;
+    bool operator==(const Property &other) const;
+    bool operator!=(const Property &other) const;
 
-protected:
-    void setValue(WeightCalculator &calc, const QString &name, const boost::any &value) const;
+    const WeightFuncBase& base() const
+    {
+        return *d;
+    }
 
-    boost::any getValue(const WeightCalculator &calc, const QString &name,
-                        const boost::any &devault) const;
+    const char* what() const
+    {
+        return d->what();
+    }
 
-    const WeightFunctionAtoms& groupA(const WeightCalculator &calc) const;
-    const WeightFunctionAtoms& groupB(const WeightCalculator &calcs) const;
+    template<class T>
+    bool isA() const
+    {
+        return d->isA<T>();
+    }
 
-    quint32 nAtomsA(const WeightCalculator &calc) const;
-    quint32 nAtomsB(const WeightCalculator &calc) const;
+    template<class T>
+    const T& asA() const
+    {
+        return d->asA<T>();
+    }
+
+private:
+    /** Shared pointer to the actual property */
+    SireBase::SharedPolyPointer<WeightFuncBase> d;
 };
-
-/** Convienience function, calling the equivalent on WeightCalculator */
-inline void WeightFunction::setValue(WeightCalculator &calc, const QString &name,
-                                     const boost::any &value) const
-{
-    calc.setValue(name, value);
-}
-
-/** Convienience function, calling the equivalent on WeightCalculator */
-inline boost::any WeightFunction::getValue(const WeightCalculator &calc, const QString &name,
-                                           const boost::any &devault) const
-{
-    return calc.getValue(name, devault);
-}
-
-/** Convienience function, calling the equivalent on WeightCalculator */
-inline const WeightFunctionAtoms& WeightFunction::groupA(const WeightCalculator &calc) const
-{
-    return calc.groupA();
-}
-
-/** Convienience function, calling the equivalent on WeightCalculator */
-inline const WeightFunctionAtoms& WeightFunction::groupB(const WeightCalculator &calc) const
-{
-    return calc.groupB();
-}
-
-/** Convienience function, calling the equivalent on WeightCalculator */
-inline quint32 WeightFunction::nAtomsA(const WeightCalculator &calc) const
-{
-    return calc.nAtomsA();
-}
-
-/** Convienience function, calling the equivalent on WeightCalculator */
-inline quint32 WeightFunction::nAtomsB(const WeightCalculator &calc) const
-{
-    return calc.nAtomsB();
-}
-
 
 /** This class calculates the weight by assigning all of the weight to
     the group with the largest number of atoms.
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT AbsFromNumber : public WeightFunction
+class SIREMOL_EXPORT AbsFromNumber 
+            : public SireBase::ConcreteProperty<AbsFromNumber,WeightFuncBase>
 {
 public:
-    AbsFromNumber() : WeightFunction()
-    {}
+    AbsFromNumber();
+    AbsFromNumber(const AbsFromNumber &other);
 
-    ~AbsFromNumber()
-    {}
+    ~AbsFromNumber();
 
-    const char* what() const
+    static const char* typeName()
     {
         return "SireMol::AbsFromNumber";
     }
 
-    void processBuffers(WeightCalculator &calculator) const;
-    double calculateWeight(const WeightCalculator &calculator) const;
+    using SireBase::PropertyBase::operator=;
+    using SireBase::PropertyBase::operator==;
+    using SireBase::PropertyBase::operator!=;
+    
+    AbsFromNumber& operator=(const AbsFromNumber&)
+    {
+        return *this;
+    }
+    
+    bool operator==(const AbsFromNumber&) const
+    {
+        return true;
+    }
+    
+    bool operator!=(const AbsFromNumber&) const
+    {
+        return false;
+    }
+    
+    AbsFromNumber* clone() const
+    {
+        return new AbsFromNumber(*this);
+    }
+    
+    double operator()(const MoleculeData &moldata,
+                      const AtomSelection &group0,
+                      const AtomSelection &group1,
+                      const PropertyMap &map = PropertyMap()) const;
+
+    double operator()(const MoleculeView &view0, 
+                      const PropertyMap &map0,
+                      const MoleculeView &view1,
+                      const PropertyMap &map1) const;
+
+private:
+    double weight(int nats0, int nats1) const;
 };
 
 /** This class calculates the weight by assigning the weight based on the
@@ -262,44 +218,113 @@ public:
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT RelFromNumber : public AbsFromNumber
+class SIREMOL_EXPORT ResFromNumber 
+            : public SireBase::ConcreteProperty<ResFromNumber,WeightFuncBase>
 {
 public:
-    RelFromNumber() : AbsFromNumber()
-    {}
+    ResFromNumber();
+    ResFromNumber(const ResFromNumber &other);
 
-    ~RelFromNumber()
-    {}
+    ~ResFromNumber();
 
-    const char* what() const
+    static const char* typeName()
     {
-        return "SireMol::RelFromNumber";
+        return "SireMol::ResFromNumber";
     }
 
-    double calculateWeight(const WeightCalculator &calculator) const;
+    using SireBase::PropertyBase::operator=;
+    using SireBase::PropertyBase::operator==;
+    using SireBase::PropertyBase::operator!=;
+    
+    ResFromNumber& operator=(const ResFromNumber&)
+    {
+        return *this;
+    }
+    
+    bool operator==(const ResFromNumber&) const
+    {
+        return true;
+    }
+    
+    bool operator!=(const ResFromNumber&) const
+    {
+        return false;
+    }
+    
+    ResFromNumber* clone() const
+    {
+        return new ResFromNumber(*this);
+    }
+    
+    double operator()(const MoleculeData &moldata,
+                      const AtomSelection &group0,
+                      const AtomSelection &group1,
+                      const PropertyMap &map = PropertyMap()) const;
+
+    double operator()(const MoleculeView &view0, 
+                      const PropertyMap &map0,
+                      const MoleculeView &view1,
+                      const PropertyMap &map1) const;
+
+private:
+    double weight(int nats0, int nats1) const;
 };
 
 /** This class calculates the weight by assigning all of the weight to
-    the heaviest group (greatest mass)
+    the group with the most mass
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT AbsFromMass : public WeightFunction
+class SIREMOL_EXPORT AbsFromMass 
+            : public SireBase::ConcreteProperty<AbsFromMass,WeightFuncBase>
 {
 public:
-    AbsFromMass() : WeightFunction()
-    {}
+    AbsFromMass();
+    AbsFromMass(const AbsFromMass &other);
 
-    ~AbsFromMass()
-    {}
+    ~AbsFromMass();
 
-    const char* what() const
+    static const char* typeName()
     {
         return "SireMol::AbsFromMass";
     }
 
-    void processBuffers(WeightCalculator &calculator) const;
-    double calculateWeight(const WeightCalculator &calculator) const;
+    using SireBase::PropertyBase::operator=;
+    using SireBase::PropertyBase::operator==;
+    using SireBase::PropertyBase::operator!=;
+    
+    AbsFromMass& operator=(const AbsFromMass&)
+    {
+        return *this
+    }
+    
+    bool operator==(const AbsFromMass&) const
+    {
+        return true;
+    }
+    
+    bool operator!=(const AbsFromMass&) const
+    {
+        return false;
+    }
+    
+    AbsFromMass* clone() const
+    {
+        return new AbsFromMass(*this);
+    }
+    
+    double operator()(const MoleculeData &moldata,
+                      const AtomSelection &group0,
+                      const AtomSelection &group1,
+                      const PropertyMap &map = PropertyMap()) const;
+
+    double operator()(const MoleculeView &view0, 
+                      const PropertyMap &map0,
+                      const MoleculeView &view1,
+                      const PropertyMap &map1) const;
+
+private:
+    double weight(double mass0, double mass1) const;
 };
 
 /** This class calculates the weight by assigning the weight based on the
@@ -307,21 +332,56 @@ public:
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT RelFromMass : public AbsFromMass
+class SIREMOL_EXPORT RelFromMass 
+            : public SireBase::ConcreteProperty<RelFromMass,WeightFuncBase>
 {
 public:
-    RelFromMass() : AbsFromMass()
-    {}
+    RelFromMass();
+    RelFromMass(const RelFromMass &other);
 
-    ~RelFromMass()
-    {}
+    ~RelFromMass();
 
-    const char* what() const
+    static const char* typeName()
     {
         return "SireMol::RelFromMass";
     }
 
-    double calculateWeight(const WeightCalculator &calculator) const;
+    using SireBase::PropertyBase::operator=;
+    using SireBase::PropertyBase::operator==;
+    using SireBase::PropertyBase::operator!=;
+    
+    RelFromMass& operator=(const RelFromMass&)
+    {
+        return *this;
+    }
+    
+    bool operator==(const RelFromMass&) const
+    {
+        return true;
+    }
+    
+    bool operator!=(const RelFromMass&) const
+    {
+        return false;
+    }
+    
+    RelFromMass* clone() const
+    {
+        return new RelFromMass(*this);
+    }
+    
+    double operator()(const MoleculeData &moldata,
+                      const AtomSelection &group0,
+                      const AtomSelection &group1,
+                      const PropertyMap &map = PropertyMap()) const;
+
+    double operator()(const MoleculeView &view0, 
+                      const PropertyMap &map0,
+                      const MoleculeView &view1,
+                      const PropertyMap &map1) const;
+
+private:
+    double weight(double mass0, double mass1) const;
 };
 
 }
