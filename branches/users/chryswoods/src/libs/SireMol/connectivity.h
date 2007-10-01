@@ -26,133 +26,167 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_MOLECULEBONDS_H
-#define SIREMOL_MOLECULEBONDS_H
+#ifndef SIREMOL_CONNECTIVITY_H
+#define SIREMOL_CONNECTIVITY_H
 
 #include <QHash>
 #include <QSet>
 
-#include "residuebonds.h"
+#include "SireBase/property.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
-class MoleculeBonds;
+class ConnectivityBase;
 }
 
-class QDataStream;
-QDataStream& operator<<(QDataStream&, const SireMol::MoleculeBonds&);
-QDataStream& operator>>(QDataStream&, SireMol::MoleculeBonds&);
+QDataStream& operator<<(QDataStream&, const SireMol::ConnectivityBase&);
+QDataStream& operator>>(QDataStream&, SireMol::ConnectivityBase&);
 
 namespace SireMol
 {
 
-/**
-This class contains all of the bonding information about a molecule. It enables
-very fast lookup of which atoms are bonded together, which residues are bonded
-together etc. This class is used by both EditMol and Molecule to hold the bonding
-information, and is the foundation on which the intramolecular move classes are
-constructed (as this class is used to split a molecule into parts
-based on the bonding).
+class ConnectivityEditor;
 
-This class is implicitly shared, so copying is fast.
+/** The base class of Connectivity and ConnectivityEditor
 
-@author Christopher Woods
+    @author Christopher Woods
 */
-class SIREMOL_EXPORT MoleculeBonds
+class SIREMOL_EXPORT ConnectivityBase
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const MoleculeBonds&);
-friend QDataStream& ::operator>>(QDataStream&, MoleculeBonds&);
+friend QDataStream& ::operator<<(QDataStream&, const SireMol::ConnectivityBase&);
+friend QDataStream& ::operator>>(QDataStream&, SireMol::ConnectivityBase&);
 
 public:
-    MoleculeBonds();
-    MoleculeBonds(const MoleculeBonds &other);
+    ~ConnectivityBase();
 
-    ~MoleculeBonds();
+    bool areConnected(AtomIdx atom0, AtomIdx atom1) const;
+    bool areConnected(const AtomID &atom0, const AtomID &atom1) const;
+    
+    bool areConnected(ResIdx res0, ResIdx res1) const;
+    bool areConnected(const ResID &res0, const ResID &res1) const;
 
-   ////////// Operators ////////////////////////////////
-    bool operator==(const MoleculeBonds &other) const;
-    bool operator!=(const MoleculeBonds &other) const;
-   /////////////////////////////////////////////////////
+    int nConnections() const;
+    int nConnections(AtomIdx atomidx) const;
+    int nConnections(const AtomID &atomid) const;
+    
+    int nConnections(ResIdx residx) const;
+    int nConnections(const ResID &resid) const;
+    
+    int nConnections(ResIdx res0, ResIdx res1) const;
+    int nConnections(const ResID &res0, const ResID &res1) const;
+    
+    const QSet<AtomIdx>& connectionsTo(AtomIdx atomidx) const;
+    const QSet<AtomIdx>& connectionsTo(const AtomID &atomid) const;
+    
+    const QSet<ResIdx>& connectionsTo(ResIdx residx) const;
+    const QSet<ResIdx>& connectionsTo(const ResID &resid) const;
 
+protected:
+    ConnectivityBase();
+    ConnectivityBase(const MoleculeInfo &info);
+    
+    ConnectivityBase(const ConnectivityBase &other);
 
-   ////////// Editing functions ////////////////////////
-    void add(const AtomIndex &atom0, const AtomIndex &atom1);
-    void add(ResNum resnum, const QString &atom0, const QString &atom1);
-    void add(const Bond &bond);
+    ConnectivityBase& operator=(const ConnectivityBase &other);
 
-    void remove(const AtomIndex &atom0, const AtomIndex &atom1);
-    void remove(ResNum resnum, const QString &atom0, const QString &atom1);
-    void remove(const Bond &bond);
+    bool operator==(const ConnectivityBase &other) const;
+    bool operator!=(const ConnectivityBase &other) const;
 
-    void remove(const AtomIndex &atom);
-    void remove(ResNum resnum);
+    /** The which atoms are connected to which other atoms
+        in this molecule */
+    QVector< QSet<AtomIdx> > connected_atoms;
+    
+    /** Which residues are connected to which other residues */
+    QVector< QSet<ResIdx> > connected_res;
+    
+    /** The info object that describes the molecule */
+    MoleculeInfo molinfo;
+   
+};
 
-    void removeIntra(ResNum resnum);
-    void removeInter(ResNum resnum);
+/** This class contains the connectivity of the molecule, namely which
+atoms are connected to which other atoms. The connectivity is used
+to move parts of the molecule (e.g. moving an atom also moves all
+of the atoms that it is connected to), and to automatically generate
+the internal geometry of the molecule (e.g. to auto-generate
+all of the bonds, angles and dihedrals). Note that the connectivity
+is not the same as the bonding - the connectivity is used to move
+parts of the molecule (e.g. moving an atom should move all of the 
+atoms it is connected to) and also to auto-generate internal angles
+(e.g. auto-generation of bonds, angles and dihedrals)
 
-    void removeIntra(const AtomIndex &atom);
-    void removeInter(const AtomIndex &atom);
+    @author Christopher Woods
 
-    void removeAll();
-    void removeAllIntra();
-    void removeAllInter();
+*/
+class SIREMOL_EXPORT Connectivity : public ConnectivityBase
+{
 
-    void renumber(ResNum oldnum, ResNum newnum);
+public:
+    Connectivity();
+    
+    Connectivity(const MoleculeInfo &molinfo);
 
-    void clear();
-    void finalise();
-   ////////////////////////////////////////////////////
+    Connectivity(const ConnectivityEditor &editor);
+    Connectivity(const Connectivity &other);
 
+    ~Connectivity();
 
-   ////////// Querying functions //////////////////////
-    bool isEmpty() const;
+    Connectivity& operator=(const Connectivity &other);
+    Connectivity& operator=(const ConnectivityEditor &editor);
 
-    ResidueBonds residue(ResNum resnum) const;
+    bool operator==(const Connectivity &other) const;
+    bool operator!=(const Connectivity &other) const;
 
-    QString toString() const;
-
-    QList<ResidueBonds> bondedResidues(ResNum resnum) const;
-
-    QList<Bond> bonds() const;
-    QList<Bond> bonds(const AtomIndex &atom) const;
-    QList<Bond> bonds(ResNum resnum) const;
-
-    int nBonds() const;
-    int nInterBonds() const;
-    int nIntraBonds() const;
-
-    int nResidues() const;
-
-    bool contains(ResNum resnum) const;
-    bool contains(const AtomIndex &atom) const;
-    bool contains(const Bond &bond) const;
-
-    bool bonded(ResNum resnum0, ResNum resnum1) const;
-    bool bonded(const AtomIndex &atom0, const AtomIndex &atom1) const;
-
-    QSet<ResNum> resNumsBondedTo(ResNum resnum) const;
-    QSet<AtomIndex> atomsBondedTo(const AtomIndex &atom) const;
-
-    QSet<ResNum> resNums() const;
-
-   ////////////////////////////////////////////////////
+    ConnectivityEditor edit() const;
 
 private:
+    void squeeze();
+};
 
-    ResidueBonds& getResidue(ResNum resnum);
+/** An editor that can be used to edit a Connectivity object
 
-    /** Hash of all of the ResidueBonds objects that describe the
-        bonding in each residue of this molecule - indexed by residue number */
-    QHash<ResNum, ResidueBonds> resbnds;
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT ConnectivityEditor : public ConnectivityBase
+{
+public:
+    ConnectivityEditor();
+    
+    ConnectivityEditor(const Connectivity &connectivity);
+    
+    ConnectivityEditor(const ConnectivityEditor &other);
+    
+    ~ConnectivityEditor();
+    
+    ConnectivityEditor& operator=(const ConnectivityBase &other);
+    
+    bool operator==(const ConnectivityEditor &other) const;
+    bool operator!=(const ConnectivityEditor &other) const;
+
+    ConnectivityEditor& connect(AtomIdx atom0, AtomIdx atom1);
+    ConnectivityEditor& disconnect(AtomIdx atom0, AtomIdx atom1);
+    
+    ConnectivityEditor& connect(const AtomID &atom0, const AtomID &atom1);
+    ConnectivityEditor& disconnect(const AtomID &atom0, const AtomID &atom1);
+    
+    ConnectivityEditor& disconnectAll(AtomIdx atomidx);
+    ConnectivityEditor& disconnectAll(ResIdx residx);
+    
+    ConnectivityEditor& disconnectAll(const AtomID &atomid);
+    ConnectivityEditor& disconnectAll(const ResID &resid);
+};
+
 
 };
 
 }
 
-Q_DECLARE_METATYPE(SireMol::MoleculeBonds)
+Q_DECLARE_METATYPE(SireMol::ConnectivityBase);
+Q_DECLARE_METATYPE(SireMol::Connectivity);
+Q_DECLARE_METATYPE(SireMol::ConnectivityEditor);
 
 SIRE_END_HEADER
 

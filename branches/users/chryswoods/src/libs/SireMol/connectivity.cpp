@@ -26,14 +26,10 @@
   *
 \*********************************************/
 
-#include "qhash_siremol.h"
-
 #include <QDataStream>
 #include <boost/assert.hpp>
 
-#include "moleculebonds.h"
-#include "atom.h"
-#include "bond.h"
+#include "connectivity.h"
 
 #include "SireMol/errors.h"
 
@@ -42,538 +38,569 @@
 using namespace SireStream;
 using namespace SireMol;
 
-static const RegisterMetaType<MoleculeBonds> r_molbonds;
+/////////
+///////// Implementation of ConnectivityBase
+/////////
 
-/** Serialise a MoleculeBonds */
-QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const MoleculeBonds &molbnds)
+static const RegisterMetaType<ConnectivityBase> r_conbase;
+
+/** Serialise ConnectivityBase */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, 
+                                       const ConnectivityBase &conbase)
 {
-    writeHeader(ds, r_molbonds, 1) << molbnds.resbnds;
+    writeHeader(ds, r_conbase, 1);
+
+    SharedDataStream sds(ds);
+
+    sds << conbase.connected_atoms << conbase.connected_residues
+        << conbase.molinfo;
 
     return ds;
 }
 
 /** Deserialise a MoleculeBonds */
-QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MoleculeBonds &molbnds)
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, 
+                                       ConnectivityBase &conbase)
 {
-    VersionID v = readHeader(ds, r_molbonds);
+    VersionID v = readHeader(ds, r_conbase);
 
     if (v == 1)
     {
-        ds >> molbnds.resbnds;
+        SharedDataStream sds(ds);
+        
+        sds >> conbase.connected_atoms >> conbase.connected_residues
+            >> conbase.molinfo;
     }
     else
-        throw version_error(v, "1", r_molbonds, CODELOC);
+        throw version_error(v, "1", r_conbase, CODELOC);
 
     return ds;
 }
 
-/** Construct an empty set of MoleculeBonds */
-MoleculeBonds::MoleculeBonds()
+/** Null constructor */
+ConnectivityBase::ConnectivityBase()
 {}
 
+/** Construct the connectivity for molecule described by 
+    the passed info object */
+ConnectivityBase::ConnectivityBase(const MoleculeInfo &info)
+                 : molinfo(info)
+{
+    if (molinfo.nAtoms() > 0)
+    {
+        connected_atoms.resize(molinfo.nAtoms());
+        connected_atoms.squeeze();
+    }
+    
+    if (molinfo.nResidues() > 0)
+    {
+        connected_res.resize(molinfo.nResidues());
+        connected_res.squeeze();
+    }
+}
+    
 /** Copy constructor */
-MoleculeBonds::MoleculeBonds(const MoleculeBonds &other) : resbnds(other.resbnds)
+ConnectivityBase::ConnectivityBase(const ConnectivityBase &other)
+                 : connected_atoms(other.connected_atoms),
+                   connected_res(other.connected_res),
+                   molinfo(other.molinfo)
 {}
 
 /** Destructor */
-MoleculeBonds::~MoleculeBonds()
+ConnectivityBase::~ConnectivityBase()
 {}
 
+/** Copy assignment operator */
+ConnectivityBase& ConnectivityBase::operator=(const ConnectivityBase &other)
+{
+    if (this != &other)
+    {
+        connected_atoms = other.connected_atoms;
+        connected_res = other.connected_res;
+        molinfo = other.molinfo;
+    }
+    
+    return *this;
+}
+
 /** Comparison operator */
-bool MoleculeBonds::operator==(const MoleculeBonds &other) const
+bool ConnectivityBase::operator==(const ConnectivityBase &other) const
 {
-    return resbnds == other.resbnds;
+    return molinfo == other.molinfo and 
+           connected_atoms == other.connected_atoms;
 }
 
 /** Comparison operator */
-bool MoleculeBonds::operator!=(const MoleculeBonds &other) const
+bool ConnectivityBase::operator!=(const ConnectivityBase &other) const
 {
-    return resbnds != other.resbnds;
+    return molinfo != other.molinfo or
+           connected_atoms != other.connected_atoms;
 }
 
-/** Private function used to return a non-const reference to the ResidueBonds
-    for the residue with residue number 'resnum'. This creates a new ResidueBonds
-    if one does not already exist for this residue. */
-ResidueBonds& MoleculeBonds::getResidue(ResNum resnum)
+/** Return the total number of connections between atoms
+    in this connectivity object */
+int ConnectivityBase::nConnections() const
 {
-    if (not resbnds.contains(resnum))
-        resbnds.insert( resnum, ResidueBonds(resnum) );
-
-    return resbnds[resnum];
-}
-
-/** Return a string representation of the MoleculeBonds */
-QString MoleculeBonds::toString() const
-{
-    int nbnds = nBonds();
-    int nres = nResidues();
-
-    return QObject::tr("MoleculeBonds: nBonds() == %1 for nResidues() == %2")
-                                .arg(nbnds).arg(nres);
-}
-
-/** Add a bond between atoms 'atom0' and 'atom1'. This does nothing if a bond already
-    exists between these atoms. */
-void MoleculeBonds::add(const AtomIndex &atom0, const AtomIndex &atom1)
-{
-    getResidue(atom0.resNum()).add(atom0,atom1);
-
-    if (atom0.resNum() != atom1.resNum())
-        getResidue(atom1.resNum()).add(atom0,atom1);
-}
-
-/** Overloaded function - add a bond between atoms called 'atom0' and 'atom1' in
-    residue 'resnum' */
-void MoleculeBonds::add(ResNum resnum, const QString &atom0, const QString &atom1)
-{
-    getResidue(resnum).add(atom0,atom1);
-}
-
-/** Overloaded function - add the bond 'bond' to the molecule */
-void MoleculeBonds::add(const Bond &bond)
-{
-    this->add(bond.atom0(),bond.atom1());
-}
-
-/** Remove the bond between atoms 'atom0' and 'atom1'. This does nothing if there
-    is no such bond. */
-void MoleculeBonds::remove(const AtomIndex &atom0, const AtomIndex &atom1)
-{
-    if ( resbnds.contains(atom0.resNum()) )
+    int n = 0;
+    
+    QSet<AtomIdx> *connected_atoms_array = connected_atoms.constData();
+    int nats = connected_atoms.count();
+    
+    for (int i=0; i<nats; ++i)
     {
-        ResidueBonds &res = resbnds[atom0.resNum()];
-        res.remove(atom0,atom1);
-
-        if (res.isEmpty())
-            //there cannot be any inter-residue bonds, so it is
-            //safe to remove this residue
-            resbnds.remove(atom0.resNum());
-    }
-
-    if (atom0.resNum() != atom1.resNum())
-    {
-        ResidueBonds &res = resbnds[atom1.resNum()];
-        res.remove(atom0,atom1);
-
-        if (res.isEmpty())
-            //there cannot be any inter-residue bonds, so it is
-            //safe to remove this residue
-            resbnds.remove(atom1.resNum());
-    }
-}
-
-/** Overloaded function - remove the bond between atoms called 'atom0' and 'atom1' in
-    residue with residue number 'resnum'. This does nothing if there is no
-    such bond in this molecule. */
-void MoleculeBonds::remove(ResNum resnum, const QString &atom0, const QString &atom1)
-{
-    if ( resbnds.contains(resnum) )
-    {
-        ResidueBonds &res = resbnds[resnum];
-        res.remove(atom0,atom1);
-
-        if (res.isEmpty())
-            //there cannot be any inter-residue bonds, so it is
-            //safe to remove this residue
-            resbnds.remove(resnum);
-    }
-}
-
-/** Overloaded function - remove the bond 'bond' from this molecule. This does nothing
-    if there is no such bond. */
-void MoleculeBonds::remove(const Bond &bond)
-{
-    this->remove(bond.atom0(),bond.atom1());
-}
-
-/** Remove all bonds from the molecule that involve atom 'atom' */
-void MoleculeBonds::remove(const AtomIndex &atom)
-{
-    if ( resbnds.contains(atom.resNum()) )
-    {
-        //get the residue containing this atom
-        ResidueBonds &res = resbnds[atom.resNum()];
-
-        //get the list of residue numbers of residues bonded to this atom
-        QSet<ResNum> bondedres = res.residuesBondedTo(atom.name());
-
-        //remove this atom from its residue
-        res.remove(atom.name());
-
-        //if this residue has no other bonds, then it is safe to remove it
-        if (res.isEmpty())
-            resbnds.remove(res.resNum());
-
-        //now remove the atom from all of the bonded residues
-        foreach (ResNum resnum, bondedres)
+        foreach (AtomIdx j, connected_atoms_array[i])
         {
-            ResidueBonds &bondedres = getResidue(resnum);
-            bondedres.remove(atom);
-
-            if (bondedres.isEmpty())
-                resbnds.remove(bondedres.resNum());
+            if (i < j)
+            {
+                //only count connections when the i atom is less
+                //than j - this avoids double counting the bond
+                // i-j and j-i
+                ++n;
+            }
         }
     }
+    
+    return n;
 }
 
-/** Remove all bonds to the residue with residue number 'resnum' */
-void MoleculeBonds::remove(ResNum resnum)
+/** Return the indicies of atoms connected to the atom at index 'atomidx'.
+    This returns an empty set if there are no atoms connected to 
+    this atom
+    
+    \throw SireError::invalid_index
+*/
+const QSet<AtomIdx>& ConnectivityBase::connectionsTo(AtomIdx atomidx) const
 {
-    if ( resbnds.contains(resnum) )
+    return connected_atoms.constData()[ atomidx.map(connected_atoms.count()) ];
+}
+
+/** Return the indicies of atoms connected to the atom identified
+    by 'resid' - this returns an empty set if there are no connections
+    to this atom
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+const QSet<AtomIdx>& ConnectivityBase::connectionsTo(const AtomID &atomid) const
+{
+    return connected_atoms.constData()[ molinfo.atomIdx(atomid) ];
+}
+
+/** Return the indicies of the residues connected to the residue at 
+    index 'residx'. This returns an empty set if there are no residues
+    connected to this residue
+    
+    \throw SireError::invalid_index
+*/
+const QSet<ResIdx>& ConnectivityBase::connectionsTo(ResIdx residx) const
+{
+    return connected_res.constData()[ residx.map(connected_res.count()) ];
+}
+
+/** Return the indicies of the residues connectd to the residue
+    identified by 'resid'. This returns an empty set if there are
+    no residues connected to this residue.
+    
+    \throw SireMol::missing_residue
+    \throw SireMol::duplicate_residue
+    \throw SireError::invalid_index
+*/
+const QSet<ResIdx>& ConnectivityBase::connectionsTo(const ResID &resid) const
+{
+    return connected_res.constData()[ molinfo.resIdx(resid) ];
+}
+
+/** Return the number of connections to the atom at index 'atomidx' 
+
+    \throw SireError::index_error
+*/
+int ConnectivityBase::nConnections(AtomIdx atomidx) const
+{
+    return this->connectionsTo(atomidx).count();
+}
+
+/** Return the number of connections to the atom with ID 'atomid' 
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+int ConnectivityBase::nConnections(const AtomID &atomid) const
+{
+    return this->connectionsTo(atomid).count();
+}
+
+/** Return the number of connections to the residue at index 'residx'
+
+    \throw SireError::invalid_index
+*/
+int ConnectivityBase::nConnections(ResIdx residx) const
+{
+    return this->connectionsTo(residx).count();
+}
+
+/** Return the number of connections to the residue identified
+    by 'resid'
+    
+    \throw SireMol::missing_residue
+    \throw SireMol::duplicate_residue
+    \throw SireError::invalid_index
+*/
+int ConnectivityBase::nConnections(const ResID &resid) const
+{
+    return this->connectionsTo(resid).count();
+}
+
+/** Return the number of atom connections between the residues at
+    indicies 'res0' and 'res1' 
+    
+    \throw SireError::invalid_index
+*/
+int ConnectivityBase::nConnections(ResIdx res0, ResIdx res1) const
+{
+    if (not this->areConnected(res0, res1))
+        return 0;
+        
+    int n = 0;
+    
+    QList<AtomIdx> atoms0 = molinfo.getAtomsIn(res0);
+    QList<AtomIdx> atoms1 = molinfo.getAtomsIn(res1);
+    
+    foreach (AtomIdx atom0, atoms0)
     {
-        //get the residue...
-        ResidueBonds &res = resbnds[resnum];
+        const QSet<AtomIdx> &connected = this->connectionsTo(atom0);
 
-        //find all of the residues bonded to this residue
-        QSet<ResNum> resnums = res.bondedResidues();
-
-        //remove this residue
-        resbnds.remove(resnum);
-
-        //now remove this residue from all of the bonded residues
-        foreach( ResNum rnum, resnums )
+        foreach (AtomIdx atom1, atoms1)
         {
-            ResidueBonds &bondedres = getResidue(rnum);
-
-            bondedres.remove(rnum);
-            if (bondedres.isEmpty())
-                resbnds.remove(bondedres.resNum());
+            if (connected.contains(atom1))
+                ++n;
         }
     }
+    
+    return n;
 }
 
-/** Remove all of the intra-residue bonds from the residue with number 'resnum' */
-void MoleculeBonds::removeIntra(ResNum resnum)
+/** Return the number of atom connections between the residues
+    identified by 'res0' and 'res1'
+    
+    \throw SireMol::missing_residue
+    \throw SireMol::duplicate_residue
+    \throw SireError::invalid_index
+*/
+int ConnectivityBase::nConnections(const ResID &res0, const ResID &res1) const
 {
-    if (resbnds.contains(resnum))
-        resbnds[resnum].removeIntra();
+    return this->nConnections( molinfo.resIdx(res0), molinfo.resIdx(res1) );
 }
 
-/** Remove all inter-residue bonds that involve the residue with number 'resnum' */
-void MoleculeBonds::removeInter(ResNum resnum)
+/** Return whether or not the atoms at indicies 'atom0' and 'atom1'
+    are connected
+    
+    \throw SireError::invalid_index
+*/
+bool ConnectivityBase::areConnected(AtomIdx atom0, AtomIdx atom1) const
 {
-    if (resbnds.contains(resnum))
+    return this->connectionsTo(atom0).contains( atom1.map(connected_atoms.count()) );
+}
+
+/** Return whether or not the atoms identified by 'atom0' and 'atom1'
+    are connected
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+bool ConnectivityBase::areConnected(const AtomID &atom0, const AtomID &atom1) const
+{
+    return this->connectionsTo(atom0).contains( molinfo.atomIdx(atom1) );
+}
+    
+/** Return whether or not the residues at indicies 'res0' and 'res1' 
+    are connected
+    
+    \throw SireError::invalid_index
+*/
+bool ConnectivityBase::areConnected(ResIdx res0, ResIdx res1) const
+{
+    return this->connectionsTo(res0).contains( res1.map(connected_res.count()) );
+}
+
+/** Return whether the residues identified by 'res0' and 'res1' are connected */
+bool ConnectivityBase::areConnected(const ResID &res0, const ResID &res1) const
+{
+    return this->connectionsTo(res0).contains( molinfo.resIdx(res1) );
+}
+
+/////////
+///////// Implementation of Connectivity
+/////////
+
+/** Reduce the memory usage of this object to a minimum */
+void Connectivity::squeeze()
+{
+    connected_atoms.squeeze();
+    
+    QSet<AtomIdx> *connected_atoms_array = connected_atoms.data();
+    int nats = connected_atoms.count();
+    
+    for (int i=0; i<nats; ++i)
     {
-        ResidueBonds &residue = resbnds[resnum];
+        connected_atoms_array[i].squeeze();
+    }
+    
+    connected_res.squeeze();
+    
+    QSet<ResIdx> *connected_res_array = connected_res.data();
+    int nres = connected_res.count();
+    
+    for (int i=0; i<nres; ++i)
+    {
+        connected_res_array[i].squeeze();
+    }
+}
 
-        //remove all bonds involving this residue from the bonded residues
-        QSet<ResNum> bondedres = residue.bondedResidues();
+/** Null constructor */
+Connectivity::Connectivity() : ConnectivityBase()
+{}
 
-        for (QSet<ResNum>::const_iterator it = bondedres.constBegin();
-             it != bondedres.constEnd();
-             ++it)
+/** Construct the connectivity for the molecule described by the 
+    passed MoleculeInfo */
+Connectivity::Connectivity(const MoleculeInfo &molinfo)
+             : ConnectivityBase(molinfo)
+{}
+
+/** Construct the connectivity from the passed editor */
+Connectivity::Connectivity(const ConnectivityEditor &editor)
+             : ConnectivityBase(editor)
+{
+    this->squeeze();
+}
+
+/** Copy constructor */
+Connectivity::Connectivity(const Connectivity &other)
+             : ConnectivityBase(other)
+{}
+
+/** Destructor */
+Connectivity::~Connectivity()
+{}
+
+/** Copy assignment from another Connectivity object */
+Connectivity& Connectivity::operator=(const Connectivity &other)
+{
+    ConnectivityBase::operator=(other);
+    return *this;
+}
+
+/** Copy assignment from a ConnectivityEditor */
+Connectivity& Connectivity::operator=(const ConnectivityEditor &editor)
+{
+    ConnectivityBase::operator=(editor);
+    this->squeeze();
+    return *this;
+}
+
+/** Comparison operator */
+bool Connectivity::operator==(const Connectivity &other) const
+{
+    return ConnectivityBase::operator==(other);
+}
+
+/** Comparison operator */
+bool Connectivity::operator!=(const Connectivity &other) const
+{
+    return ConnectivityBase::operator!=(other);
+}
+
+/** Return an editor that can edit a copy of this connectivity */
+ConnectivityEditor Connectivity::edit() const
+{
+    return ConnectivityEditor(*this);
+}
+
+/////////
+///////// Implementation of ConnectivityEditor
+/////////
+
+/** Null constructor */
+ConnectivityEditor::ConnectivityEditor()
+                   : ConnectivityBase()
+{}
+
+/** Construct an editor to edit a copy of the passed 
+    Connectivity object */
+ConnectivityEditor::ConnectivityEditor(const Connectivity &connectivity)
+                   : ConnectivityBase(connectivity)
+{}
+
+/** Copy constructor */
+ConnectivityEditor::ConnectivityEditor(const ConnectivityEditor &other)
+                   : ConnectivityBase(other)
+{}
+
+/** Destructor */
+ConnectivityEditor::~ConnectivityEditor()
+{}
+
+/** Copy assignment operator */
+ConnectivityEditor& ConnectivityEditor::operator=(const ConnectivityBase &other)
+{
+    ConnectivityBase::operator=(other);
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool ConnectivityEditor::operator==(const ConnectivityEditor &other) const
+{
+    return ConnectivityBase::operator==(other);
+}
+
+/** Comparison operator */
+bool ConnectivityEditor::operator!=(const ConnectivityEditor &other) const
+{
+    return ConnectivityBase::operator!=(other);
+}
+
+/** Record the connection between the atoms at indicies 'atom0' 
+    and 'atom1'
+    
+    \throw SireError::invalid_index
+*/
+ConnectivityEditor& ConnectivityEditor::connect(AtomIdx atom0, AtomIdx atom1)
+{
+    AtomIdx atomidx0 = atom0.map(connected_atoms.count());
+    AtomIdx atomidx1 = atom1.map(connected_atoms.count());
+    
+    if (atomidx0 == atomidx1)
+        return;
+    
+    QSet<AtomIdx> *connected_atoms_array = connected_atoms.data();
+    
+    connected_atoms_array[atomidx0].insert(atomidx1);
+    connected_atoms_array[atomidx1].insert(atomidx0);
+    
+    return *this;
+}
+
+/** Record a connection between the atom identified by 'atom0' and 
+    the atom identified by 'atom1'
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+ConnectivityEditor& ConnectivityEditor::connect(const AtomID &atom0,
+                                                const AtomID &atom1)
+{
+    AtomIdx atomidx0 = map.atomIdx(atom0);
+    AtomIdx atomidx1 = map.atomIdx(atom1);
+    
+    if (atomidx0 == atomidx1)
+        return;
+        
+    QSet<AtomIdx> *connected_atoms_array = connected_atoms.data();
+    
+    connected_atoms_array[atomidx0].insert(atomidx1);
+    connected_atoms_array[atomidx1].insert(atomidx0);
+    
+    return *this;
+}
+
+/** Remove the connection between the atoms at indicies 'atom0'
+    and 'atom1' - this does nothing if there isn't already a connection
+    
+    \throw SireError::invalid_index
+*/
+ConnectivityEditor& ConnectivityEditor::disconnect(AtomIdx atom0, AtomIdx atom1)
+{
+    if (this->areConnected(atom0, atom1))
+    {
+        AtomIdx atomidx0 = atom0.map( connected_atoms.count() );
+        AtomIdx atomidx1 = atom1.map( connected_atoms.count() );
+        
+        connected_atoms[atomidx0].remove(atomidx1);
+        connected_atoms[atomidx1].remove(atomidx0);
+        
+        //now check to see if the residues are still connected
+        ResIdx residx0 = molinfo.parentResidue(atomidx0);
+        ResIdx residx1 = molinfo.parentResidue(atomidx1);
+
+        if (this->nConnections(residx0, residx1) == 0)
         {
-            resbnds.find(*it)->remove(resnum);
-        }
-
-        //remove the bonds from the residue itself
-        residue.removeInter();
-    }
-}
-
-/** Remove all intra-residue bonds that involve the atom 'atom' */
-void MoleculeBonds::removeIntra(const AtomIndex &atom)
-{
-    if (resbnds.contains(atom.resNum()))
-        resbnds[ atom.resNum() ].removeIntra(atom.name());
-}
-
-/** Remove all of the inter-residue bonds that involve the atom 'atom' */
-void MoleculeBonds::removeInter(const AtomIndex &atom)
-{
-    if ( resbnds.contains(atom.resNum()) )
-    {
-        ResidueBonds &residue = resbnds[ atom.resNum() ];
-
-        QSet<ResNum> bondedres = residue.residuesBondedTo(atom.name());
-
-        for (QSet<ResNum>::const_iterator it = bondedres.constBegin();
-             it != bondedres.constEnd();
-             ++it)
-        {
-            resbnds.find(*it)->remove(atom);
-        }
-
-        //remove the inter-residue bonds from the residue itself
-        residue.removeInter(atom.name());
-    }
-}
-
-/** Remove all bonds from this molecule */
-void MoleculeBonds::removeAll()
-{
-    resbnds.clear();
-}
-
-/** Remove all intra-residue bonds from all residues in this molecule */
-void MoleculeBonds::removeAllIntra()
-{
-    for (QHash<ResNum,ResidueBonds>::iterator it = resbnds.begin();
-         it != resbnds.end();
-         ++it)
-    {
-        it->removeIntra();
-    }
-}
-
-/** Remove all inter-residue bonds from all residues in this molecule */
-void MoleculeBonds::removeAllInter()
-{
-    for (QHash<ResNum,ResidueBonds>::iterator it = resbnds.begin();
-         it != resbnds.end();
-         ++it)
-    {
-        it->removeInter();
-    }
-}
-
-/** Renumber the residue with current number 'oldnum' to 'newnum'.
-    This does nothing if there is no residue with number 'oldnum'. */
-void MoleculeBonds::renumber(ResNum oldnum, ResNum newnum)
-{
-    if (resbnds.contains(oldnum))
-    {
-        if (resbnds.contains(newnum))
-            throw SireMol::duplicate_residue( QObject::tr(
-                      "Cannot renumber the residue with number \"%1\" "
-                      "to \"%2\" as a residue with this number already exists!")
-                          .arg(oldnum).arg(newnum), CODELOC );
-
-        //move the residue...
-        resbnds.insert( newnum, resbnds.take(oldnum) );
-
-        //renumber the residue in each of the residues...
-        for (QHash<ResNum,ResidueBonds>::iterator it = resbnds.begin();
-             it != resbnds.end();
-             ++it)
-        {
-            it->renumber(oldnum,newnum);
+            connected_res[residx0].remove(residx1);
+            connected_res[residx1].remove(residx0);
         }
     }
+
+    return *this;
 }
 
-/** Completely clear all of the bonding information */
-void MoleculeBonds::clear()
+/** Disconnect the atoms that are identified by 'atom0' and 'atom1' - 
+    this does nothing if there isn't a connection between these atoms
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+ConnectivityEditor& ConnectivityEditor::disconnect(const AtomID &atom0, 
+                                                   const AtomID &atom1)
 {
-    resbnds.clear();
+    return this->disconnect( molinfo.atomIdx(atom0), molinfo.atomIdx(atom1) );
 }
 
-/** Finalise the bonding information. This compacts the data structure to
-    minimise the memory usage of the bonding data. Note that this will make
-    it slower to modify. */
-void MoleculeBonds::finalise()
-{
-    //finalise each of the ResidueBonds objects...
-    QMutableHashIterator<ResNum,ResidueBonds> it(resbnds);
+/** Remove all of the connections to the atom at index 'atomidx' 
 
-    while (it.hasNext())
+    \throw SireError::invalid_index
+*/
+ConnectivityEditor& ConnectivityEditor::disconnectAll(AtomIdx atomidx)
+{
+    QSet<AtomIdx> connected = this->connectedTo(atomidx);
+    
+    foreach (AtomIdx atom1, connected)
     {
-        it.next();
-        it.value().finalise();
+        this->disconnect(atomidx, atom1);
     }
-
-    resbnds.squeeze();
+    
+    return *this;
 }
 
-/** Return whether or not this is empty (contains no bonds) */
-bool MoleculeBonds::isEmpty() const
+/** Remove all of the connections to the atom identified by 'atomid' 
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+ConnectivityEditor& ConnectivityEditor::disconnectAll(const AtomID &atomid)
 {
-    return resbnds.isEmpty();
+    return this->disconnectAll(molinfo.atomIdx(atomid));
 }
 
-/** Return the ResidueBonds for the residue with residue number 'resnum'. Note that
-    this will return an empty ResidueBonds if there are no bonds in this residue */
-ResidueBonds MoleculeBonds::residue(ResNum resnum) const
+/** Remove all of the connections that involve any of the atoms
+    in the residue at index 'residx'
+    
+    \throw SireError::invalid_index
+*/
+ConnectivityEditor& ConnectivityEditor::disconnectAll(ResIdx residx)
 {
-    return resbnds.value(resnum);
-}
-
-/** Return the list of ResidueBonds that contain the bonding of residues that are
-    bonded to the residue with residue number 'resnum' */
-QList<ResidueBonds> MoleculeBonds::bondedResidues(ResNum resnum) const
-{
-    if (resbnds.contains(resnum))
+    QSet<AtomIdx> atomidxs = molinfo.getAtomsIn(residx);
+    
+    foreach (AtomIdx atomidx, atomidxs)
     {
-        QSet<ResNum> resnums = resbnds[resnum].bondedResidues();
-
-        QList<ResidueBonds> bondedres;
-
-        foreach( ResNum rnum, resnums )
-        {
-            BOOST_ASSERT(resbnds.contains(rnum));
-            bondedres.append(resbnds[rnum]);
-        }
-
-        return bondedres;
+        this->disconnectAll(atomidx);
     }
-    else
-        return QList<ResidueBonds>();
+    
+    return *this;
 }
 
-/** Return the total number of bonds in the molecule */
-int MoleculeBonds::nBonds() const
+/** Remove all of the connections that involve any of the atoms
+    in the residue identified by 'resid'
+    
+    \throw SireMol::missing_residue
+    \throw SireMol::duplicate_residue
+    \throw SireError::invalid_index
+*/
+ConnectivityEditor& ConnectivityEditor::disconnectAll(const ResID &resid)
 {
-    int nbnds = 0;
-
-    QHashIterator<ResNum, ResidueBonds> it(resbnds);
-
-    while (it.hasNext())
-    {
-        it.next();
-        nbnds += it.value().nAsymmetricBonds();
-    }
-
-    return nbnds;
-}
-
-/** Return the total number of intra-residue bonds in this molecule */
-int MoleculeBonds::nIntraBonds() const
-{
-    //loop over each residue and sum the number of intra-bonds
-    int nintra = 0;
-
-    for (QHash<ResNum,ResidueBonds>::const_iterator it = resbnds.begin();
-         it != resbnds.end();
-         ++it)
-    {
-        nintra += it->nIntraBonds();
-    }
-
-    return nintra;
-}
-
-/** Return the total number of inter-residue bonds in this molecule */
-int MoleculeBonds::nInterBonds() const
-{
-    //loop over each residue and sum the number of
-    //asymmetric inter-residue bonds
-    int ninter = 0;
-
-    for (QHash<ResNum,ResidueBonds>::const_iterator it = resbnds.begin();
-         it != resbnds.end();
-         ++it)
-    {
-        ninter += it->nAsymmetricBonds();
-    }
-
-    return ninter;
-}
-
-/** Return the number of residues */
-int MoleculeBonds::nResidues() const
-{
-    return resbnds.count();
-}
-
-/** Return the list of all of the bonds in this molecule */
-QList<Bond> MoleculeBonds::bonds() const
-{
-    QList<Bond> bnds;
-
-    QHashIterator<ResNum, ResidueBonds> it(resbnds);
-
-    while (it.hasNext())
-    {
-        it.next();
-        bnds += it.value().asymmetricBonds();
-    }
-
-    return bnds;
-}
-
-/** Return all of the bonds that involve the atom 'atom' */
-QList<Bond> MoleculeBonds::bonds(const AtomIndex &atom) const
-{
-    if (resbnds.contains(atom.resNum()))
-        return resbnds[atom.resNum()].bonds(atom.name());
-    else
-        return QList<Bond>();
-}
-
-/** Return all of the bonds that involve the residue with number 'resnum' */
-QList<Bond> MoleculeBonds::bonds(ResNum resnum) const
-{
-    if (resbnds.contains(resnum))
-        return resbnds[resnum].bonds();
-    else
-        return QList<Bond>();
-}
-
-/** Return whether or not the two residues with residue numbers 'resnum0' and resnum1'
-    are bonded together */
-bool MoleculeBonds::bonded(ResNum resnum0, ResNum resnum1) const
-{
-    if (resbnds.contains(resnum0))
-        return resbnds[resnum0].bondedTo(resnum1);
-    else
-        return false;
-}
-
-/** Return whether or not this contains the bond 'bond' */
-bool MoleculeBonds::contains(const Bond &bond) const
-{
-    return resbnds.contains(bond.atom0().resNum()) and
-              resbnds[bond.atom0().resNum()].bonded(bond.atom0(),bond.atom1());
-}
-
-/** Return whether or not this contains bonding information for atom 'atm' */
-bool MoleculeBonds::contains(const AtomIndex &atom) const
-{
-    return resbnds.contains(atom.resNum()) and resbnds[atom.resNum()].contains(atom.name());
-}
-
-/** Return whether or not this contains bonding information for the residue
-    with number 'resnum' */
-bool MoleculeBonds::contains(ResNum resnum) const
-{
-    return resbnds.contains(resnum);
-}
-
-/** Return whether or not the atom 'atom0' is bonded to the atom 'atom1' in this
-    molecule. */
-bool MoleculeBonds::bonded(const AtomIndex &atom0, const AtomIndex &atom1) const
-{
-    return resbnds.contains(atom0.resNum()) and
-              resbnds[atom0.resNum()].bonded(atom0,atom1);
-}
-
-/** Return the list of residue numbers of residues bonded to the residue with
-    residue number 'resnum' */
-QSet<ResNum> MoleculeBonds::resNumsBondedTo(ResNum resnum) const
-{
-    if (resbnds.contains(resnum))
-        return resbnds[resnum].bondedResidues();
-    else
-        return QSet<ResNum>();
-}
-
-/** Return the list of AtomIndexes of atoms that are bonded to 'atom' */
-QSet<AtomIndex> MoleculeBonds::atomsBondedTo(const AtomIndex &atom) const
-{
-    QList<Bond> bnds = this->bonds(atom);
-
-    if (bnds.count() > 0)
-    {
-        QSet<AtomIndex> bndatoms;
-        bndatoms.reserve(bnds.count());
-
-        for (QList<Bond>::const_iterator it = bnds.constBegin();
-             it != bnds.constEnd();
-             ++it)
-        {
-            bndatoms.insert( it->other(atom) );
-        }
-
-        return bndatoms;
-    }
-    else
-        return QSet<AtomIndex>();
-}
-
-/** Return the complete list of residue numbers in this molecule
-    (note that this only returns the residue numbers of residues that contain
-    some bonding) */
-QSet<ResNum> MoleculeBonds::resNums() const
-{
-    return resbnds.keys().toSet();
+    return this->disconnectAll( molinfo.resIdx(resid) );
 }
