@@ -47,6 +47,7 @@ set ( SIREMOL_HEADERS
       element.h
       elementdb.h
       errors.h
+      evaluator.h
       groupatomids.h
       groupgroupids.h
       molecule.h
@@ -70,7 +71,6 @@ set ( SIREMOL_HEADERS
       mover.h
       mover.hpp
       partialmolecule.h
-      propertyextractor.h
       qhash_siremol.h
       resid.h
       residentifier.h
@@ -114,6 +114,7 @@ set ( SIREMOL_SOURCES
       cuttingfunction.cpp
       elementdb.cpp
       errors.cpp
+      evaluator.cpp
       molecule.cpp
       moleculecutting.cpp
       moleculedata.cpp
@@ -129,7 +130,6 @@ set ( SIREMOL_SOURCES
       molidentifier.cpp
       mover.cpp
       partialmolecule.cpp
-      propertyextractor.cpp
       residentifier.cpp
       residue.cpp
       residuecutting.cpp
