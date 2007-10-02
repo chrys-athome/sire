@@ -113,6 +113,7 @@ friend QDataStream& ::operator>>(QDataStream&, WeightFunction&);
 public:
     WeightFunction();
     WeightFunction(const WeightFuncBase &weightfunc);
+    WeightFunction(const SireBase::Property &property);
     
     WeightFunction(const WeightFunction &other);
     
@@ -121,13 +122,27 @@ public:
     WeightFunction& operator=(const WeightFuncBase &weightfunc);
     WeightFunction& operator=(const WeightFunction &weightfunc);
     
-    WeightFunction& operator=(const Property &other);
+    WeightFunction& operator=(const SireBase::Property &other);
 
     bool operator==(const WeightFunction &other) const;
     bool operator!=(const WeightFunction &other) const;
 
     bool operator==(const Property &other) const;
     bool operator!=(const Property &other) const;
+
+    double operator()(const MoleculeData &moldata,
+                      const AtomSelection &group0,
+                      const AtomSelection &group1,
+                      const PropertyMap &map = PropertyMap()) const;
+                      
+    double operator()(const MoleculeView &view0,
+                      const PropertyMap &map0,
+                      const MoleculeView &view1,
+                      const PropertyMap &map1) const;
+                      
+    double operator()(const MoleculeView &view0,
+                      const MoleculeView &view1,
+                      const PropertyMap &map = PropertyMap()) const;
 
     const WeightFuncBase& base() const
     {
@@ -149,6 +164,13 @@ public:
     const T& asA() const
     {
         return d->asA<T>();
+    }
+
+    /** Allow implicit conversion of a WeightFunction
+        to a Property */
+    operator Property() const
+    {
+        return SireBase::Property(*d);
     }
 
 private:

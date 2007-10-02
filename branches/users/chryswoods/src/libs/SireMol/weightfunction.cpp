@@ -35,9 +35,156 @@ using namespace SireBase;
 ////////// Implementation of WeightFuncBase
 //////////
 
+/** Constructor */
+WeightFuncBase::WeightFuncBase() : PropertyBase()
+{}
+  
+/** Copy constructor */  
+WeightFuncBase::WeightFuncBase(const WeightFuncBase &other)
+               : PropertyBase(other)
+{}
+  
+/** Destructror */  
+WeightFuncBase::~WeightFuncBase()
+{}
+
 //////////
 ////////// Implementation of WeightFunction
 //////////
+
+static QSharedPolyPointer<WeightFuncBase>& shared_null;
+
+const QSharedPolyPointer<WeightFuncBase>& getSharedNull()
+{
+    if (shared_null.constData() == 0)
+        shared_null = new RelFromNumber();
+        
+    return shared_null;
+}
+
+/** Default constructor - this is a RelByNumber weight function */
+WeightFunction::WeightFunction() : d( getSharedNull() )
+{}
+
+/** Create from the passed WeightFuncBase */
+WeightFunction::WeightFunction(const WeightFuncBase &weightfunc)
+               : d(weightfunc)
+{}
+
+/** Create from the passed property
+
+    \throw SireError::invalid_cast
+*/
+WeightFunction::WeightFunction(const SireBase::Property &property)
+               : d(property.base())
+{}
+
+/** Copy constructor */
+WeightFunction::WeightFunction(const WeightFunction &other)
+               d(other.d)
+{}
+
+/** Destructor */
+WeightFunction::~WeightFunction()
+{}
+
+/** Copy assignment from a WeightFuncBase */
+WeightFunction& WeightFunction::operator=(const WeightFuncBase &weightfunc)
+{
+    if (&weightfunc != d.constData())
+    {
+        d = weightfunc;
+    }
+    
+    return *this;
+}
+
+/** Copy assignment operator */
+WeightFunction& WeightFunction::operator=(const WeightFunction &weightfunc)
+{
+    if (&weightfunc != this)
+    {
+        d = other.d;
+    }
+    
+    return *this;
+}
+
+/** Copy assignment from a Property
+
+    \throw SireError::invalid_cast
+*/
+WeightFunction& WeightFunction::operator=(const SireBase::Property &other)
+{
+    d = other.base();
+    return *this;
+}
+
+/** Comparison operator */
+bool WeightFunction::operator==(const WeightFunction &other) const
+{
+    return d == other.d or *d == *(other.d);
+}
+
+/** Comparison operator */
+bool WeightFunction::operator!=(const WeightFunction &other) const
+{
+    return d != other.d and *d != *(other.d);
+}
+
+/** Comparison operator to a Property */
+bool WeightFunction::operator==(const Property &other) const
+{
+    return Property(*d) == other;
+}
+
+/** Comparison operator to a Property */
+bool WeightFunction::operator!=(const Property &other) const
+{
+    return Property(*d) != other;
+}
+
+/** Return the relative weight of group0 and group1 in the molecule
+    whose data is in 'moldata' using the passed PropertyMap to 
+    find any required properties
+    
+    \throw SireError::incompatible_error
+    \throw SireBase::missing_property
+*/
+double WeightFunction::operator()(const MoleculeData &moldata,
+                                  const AtomSelection &group0,
+                                  const AtomSelection &group1,
+                                  const PropertyMap &map) const
+{
+    return d->operator()(moldata, group0, group1, map);
+}
+
+/** Return the relative weight of view0 and view1 using 
+    map0 to find any required properties from view0, and 
+    map1 to find any required properties from view1 
+    
+    \throw SireBase::missing_property
+*/
+double WeightFunction::operator()(const MoleculeView &view0,
+                                  const PropertyMap &map0,
+                                  const MoleculeView &view1,
+                                  const PropertyMap &map1) const
+{
+    return d->operator()(view0, map0, view1, map1);
+}
+
+/** Return the relative weight of view0 and view1 using
+    the supplied PropertyMap to find any required properties
+    from both views
+    
+    \throw SireBase::missing_property
+*/
+double WeightFunction::operator()(const MoleculeView &view0,
+                                  const MoleculeView &view1,
+                                  const PropertyMap &map) const
+{
+    return d->operator()(view0, view1, map);
+}
 
 //////////
 ////////// Implementation of AbsFromNumber
