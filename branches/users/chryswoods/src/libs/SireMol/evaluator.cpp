@@ -26,420 +26,356 @@
   *
 \*********************************************/
 
-#include "propertyextractor.h"
-#include "moleculeview_inlines.h"
-
-#include "cutgroup.h"
-#include "atominfogroup.h"
-#include "cgatomid.h"
-#include "moleculeproperty.h"
-
-#include "partialmolecule.h"
-
-#include "SireBase/property.h"
-
-#include "SireVol/coordgroup.h"
-
-#include "SireMol/errors.h"
-#include "SireError/errors.h"
+#include "evaluator.h"
 
 #include "SireStream/datastream.h"
 
 using namespace SireMol;
-using namespace SireVol;
-using namespace SireMaths;
-using namespace SireBase;
 using namespace SireStream;
 
-static const RegisterMetaType<PropertyExtractor> r_propex;
+static const RegisterMetaType<Evaluator> r_eval;
 
 /** Serialise to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
-                                       const PropertyExtractor &propex)
+                                       const Evaluator &eval
 {
-    writeHeader(ds, r_propex, 1)
-          << static_cast<const MolDataView&>(propex);
+    writeHeader(ds, r_eval, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << eval.selected_atoms << static_cast<const MoleculeView&>(eval);
 
     return ds;
 }
 
 /** Deserialise from a binary datastream */
-QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, PropertyExtractor &propex)
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, Evaluator &eval)
 {
-    VersionID v = readHeader(ds, r_propex);
+    VersionID v = readHeader(ds, r_eval);
 
     if (v == 1)
     {
-        ds >> static_cast<MolDataView&>(propex);
+        SharedDataStream sds(ds);
+        
+        sds >> eval.selected_atoms >> static_cast<MoleculeView&>(eval);
     }
     else
-        throw version_error(v, "1", r_propex, CODELOC);
+        throw version_error(v, "1", r_eval, CODELOC);
 
     return ds;
 }
 
 /** Null constructor */
-PropertyExtractor::PropertyExtractor() : MolDataView()
+Evaluator::Evaluator() : MoleculeView()
 {}
 
-/** Construct the extractor to extract properties from 'molecule' */
-PropertyExtractor::PropertyExtractor(const MoleculeView &molecule)
-                  : MolDataView(molecule)
+/** Construct from the passed molecule view */
+Evaluator::Evaluator(const MoleculeView &molecule)
+          : MoleculeView(molecule), selected_atoms(molecule.selectedAtoms())
 {}
-
-/** Construct the extractor to extract properties from the 'selection'
-    within the molecule 'molecule'
-
-    \throw SireError::incompatible_error
-*/
-PropertyExtractor::PropertyExtractor(const MoleculeView &molecule,
-                                     const SelectionFromMol &selection)
-                  : MolDataView(molecule)
-{
-    _pvt_selection() = selectedAtoms().intersect(selection);
-}
 
 /** Copy constructor */
-PropertyExtractor::PropertyExtractor(const PropertyExtractor &other)
-                  : MolDataView(other)
+Evaluator::Evaluator(const Evaluator &other)
+          : MoleculeView(other), selected_atoms(other.selected_atoms)
 {}
 
-/** Copy assignment operator */
-PropertyExtractor& PropertyExtractor::operator=(const PropertyExtractor &other)
+/** Destructor */
+Evaluator::~Evaluator()
+{}
+
+/** Copy assignment from another evaluator */
+Evaluator& Evaluator::operator=(const Evaluator &other)
 {
-    MolDataView::operator=(other);
+    if (this != &other)
+    {
+        MoleculeView::operator=(other);
+        selected_atoms = other.selected_atoms;
+    }
+    
     return *this;
 }
 
-/** Destructor */
-PropertyExtractor::~PropertyExtractor()
-{}
-
-/** Return the index of CutGroupID into the CoordGroup, AtomicProperty
-    or CutGroup arrays. This is necessary as while CutGroupID corresponds
-    exactly to the array index for a whole molecule, it does not
-    correspond exactly for a partial molecule (as CutGroups that don't contain
-    any selected atoms are left out, and the order of the CutGroups in the
-    array may change). This function returns the index that maps CutGroupID
-    to the location of the CutGroup in the arrays returned by coordGroups(),
-    getProperty() and all of the extract() functions. */
-QHash<CutGroupID,quint32> PropertyExtractor::cutGroupIndex() const
+/** Copy assignment from another molecule */
+Evaluator& Evaluator::operator=(const MoleculeView &other)
 {
-    const AtomSelection &selected_atoms = selectedAtoms();
+    MoleculeView::operator=(other);
+    selected_atoms = other.selectedAtoms();
+    
+    return *this;
+}
 
-    if (selected_atoms.selectedAllCutGroups())
+/** Return the selected atoms over which the properties
+    will be evaluated */
+AtomSelection Evaluator::selectedAtoms() const
+{
+    return selected_atoms;
+}
+
+/** Update this evaluator with a new version of the molecule */
+void Evaluator::update(const MoleculeData &data) const
+{
+    MoleculeData::update(data);
+}
+
+static void getMinMax(const CoordGroup &cgroup, Vector &min, Vector &max)
+{
+    const Vector *cgroup_array = cgroup.constData();
+    int nats = cgroup.count();
+            
+    for (int i=0; i<nats; ++i)
     {
-        //all CutGroups are selected, so CutGroupID => index into array
-        // - this is a pretty pointless index!
-        QHash<CutGroupID,quint32> index;
-        uint ncg = data().info().nCutGroups();
-        index.reserve(ncg);
-
-        for (CutGroupID i(0); i<ncg; ++i)
-        {
-            index.insert( i, i );
-        }
-
-        return index;
-    }
-    else
-    {
-        //there are some missing CutGroups - the arrays are ordered
-        //using the iterator order of selectedCutGroups()
-        QSet<CutGroupID> cgids = selected_atoms.selectedCutGroups();
-
-        QHash<CutGroupID,quint32> index;
-
-        if (not cgids.isEmpty())
-        {
-            index.reserve(cgids.count());
-
-            quint32 i = 0;
-
-            foreach (CutGroupID cgid, cgids)
-            {
-                index.insert( cgid, i );
-                ++i;
-            }
-        }
-
-        return index;
+        const Vector &coords = cgroup_array[i];
+    
+        min.setMin(coords);
+        max.setMax(coords);
     }
 }
 
-/** Return the property with the name 'name'. If this is a molecular
-    property then this property will be masked by the atom selection
-    (e.g. AtomicProperties will only be returned for selected atoms,
-     with the order the same as that returned by coordGroups() )
+static void getMinMax(const CoordGroup &cgroup, const QSet<Index> &idxs,
+                      Vector &min, Vector &max)
+{
+    const Vector *cgroup_array = cgroup.constData();
+            
+    foreach (Index i, idxs)
+    {
+        const Vector &coords = cgroup_array[i];
+    
+        min.setMin(coords);
+        max.setMax(coords);
+    }
+}
+
+/** Return the center of the selected atoms,
+    using the passed property map to find the coordinates
+    property of the molecule (the center is the point
+    that is exactly in the middle of the atoms - i.e.
+    halfway between the maximum and minimum coordinates
 
     \throw SireBase::missing_property
+    \throw SireError::invalid_cast
 */
-Property PropertyExtractor::property(const QString &name) const
+Vector Evaluator::center(const PropertyMap &map) const
 {
-    const AtomSelection &selected_atoms = selectedAtoms();
+    if (selected_atoms.selectedNone())
+        return Vector(0);
 
-    Property property = data().getProperty(name);
-
-    if (selected_atoms.selectedAll() or not property.isA<MoleculeProperty>())
-    {
-        return property;
-    }
-
-    //mask this property by the current selection
-    return property.asA<MoleculeProperty>().mask(selected_atoms);
-}
-
-/** Return the CoordGroups that contain the coordinates of atoms that
-    have been selected. Only CoordGroups that contain selected atoms
-    will be returned. */
-QVector<CoordGroup> PropertyExtractor::coordGroups() const
-{
-    const AtomSelection &selected_atoms = selectedAtoms();
-
-    QVector<CoordGroup> coords = data().coordGroups();
-
-    if (selected_atoms.selectedAllCutGroups())
-        return coords;
-    else
-    {
-        QSet<CutGroupID> cgids = selected_atoms.selectedCutGroups();
-        QVector<CoordGroup> selected_coords( cgids.count() );
-
-        const CoordGroup *coords_array = coords.constData();
-        CoordGroup *selected_coords_array = selected_coords.data();
-
-        int i=0;
-
-        foreach (CutGroupID cgid, cgids)
-        {
-            selected_coords_array[i] = coords_array[cgid];
-            ++i;
-        }
-
-        return selected_coords;
-    }
-}
-
-/** Return the CutGroups that contain the atoms that
-    have been selected. Only CutGroups that contain selected atoms
-    will be returned. */
-QVector<CutGroup> PropertyExtractor::cutGroups() const
-{
-    const AtomSelection &selected_atoms = selectedAtoms();
-
-    if (selected_atoms.selectedAllCutGroups())
-        return data().cutGroups();
-    else
-    {
-        QSet<CutGroupID> cgids = selected_atoms.selectedCutGroups();
-        QVector<CutGroup> selected_cgroups( cgids.count() );
-
-        CutGroup *selected_cgroups_array = selected_cgroups.data();
-
-        int i=0;
-
-        foreach (CutGroupID cgid, cgids)
-        {
-            selected_cgroups_array[i] = data().cutGroup(cgid);
-            ++i;
-        }
-
-        return selected_cgroups;
-    }
-}
-
-/** Return groups containing all of the element types of all of the
-    atoms in the molecule. This returns the elements according
-    to CutGroup, with only groups that contain at least one
-    selected atom being returned. Atoms in the group that have
-    not been selected will be set to dummy atoms. */
-QVector< QVector<Element> > PropertyExtractor::elements() const
-{
-    const AtomSelection &selected_atoms = selectedAtoms();
-
-    QHash<CutGroupID,AtomInfoGroup> atominfos = data().info().atomGroups();
-
-    if (selected_atoms.selectedAllCutGroups())
-    {
-        uint ngroups = atominfos.count();
-
-        if (ngroups == 0)
-            return QVector< QVector<Element> >();
-
-        QVector< QVector<Element> > grouped_elements(ngroups);
-
-        for (CutGroupID i(0); i<ngroups; ++i)
-        {
-            const AtomInfoGroup &info_group = *(atominfos.constFind(i));
-
-            uint nats = info_group.nAtoms();
-            const AtomInfo *atominfo_array = info_group.constData();
-
-            QVector<Element> &element_group = grouped_elements[i];
-
-            element_group.resize(nats);
-            Element *element_group_array = element_group.data();
-
-            if (selected_atoms.selectedAll(i))
-            {
-                for (AtomID j(0); j<nats; ++j)
-                {
-                    element_group_array[j] = atominfo_array[j];
-                }
-            }
-            else
-            {
-                for (AtomID j(0); j<nats; ++j)
-                {
-                    if ( selected_atoms.selected(CGAtomID(i,j)) )
-                    {
-                        element_group_array[j] = atominfo_array[j];
-                    }
-                    else
-                    {
-                        element_group_array[j] = Element(0);
-                    }
-                }
-            }
-        }
-
-        return grouped_elements;
-    }
-    else
-    {
-        QSet<CutGroupID> cgids = selected_atoms.selectedCutGroups();
-
-        int ngroups = cgids.count();
-
-        if (ngroups == 0)
-            return QVector< QVector<Element> >();
-
-        int i=0;
-        QVector< QVector<Element> > grouped_elements(ngroups);
-
-        foreach (CutGroupID cgid, cgids)
-        {
-            QVector<Element> &element_group = grouped_elements[i];
-            ++i;
-
-            const AtomInfoGroup &info_group = *(atominfos.constFind(cgid));
-            const AtomInfo *atominfo_array = info_group.constData();
-            uint nats = info_group.nAtoms();
-
-            element_group.resize(nats);
-            Element *element_group_array = element_group.data();
-
-            if (selected_atoms.selectedAll(cgid))
-            {
-                for (AtomID j(0); j<nats; ++j)
-                {
-                    element_group_array[j] = atominfo_array[j];
-                }
-            }
-            else
-            {
-                for (AtomID j(0); j<nats; ++j)
-                {
-                    if ( selected_atoms.selected(CGAtomID(cgid,j)) )
-                    {
-                        element_group_array[j] = atominfo_array[j];
-                    }
-                    else
-                    {
-                        element_group_array[j] = Element(0);
-                    }
-                }
-            }
-        }
-
-        return grouped_elements;
-    }
-}
-
-static AABox getAABox(CutGroupID cgid, const CoordGroup &cgroup,
-                      const AtomSelection &selected_atoms)
-{
-    if (selected_atoms.selectedAll(cgid))
-        return cgroup.aaBox();
-    else
-    {
-        //we need to create the AABox from scratch...
-        // Get the coordinates of the selected atoms
-        QSet<CGAtomID> cgatomids = selected_atoms.selectedAtoms(cgid);
-
-        if (cgatomids.isEmpty())
-            throw SireMol::missing_atom( QObject::tr(
-                "There are no atoms selected in the CutGroup with ID == %1, "
-                "so it is not possible to find their center!")
-                    .arg(cgid), CODELOC );
-
-        QVector<Vector> coords;
-        coords.reserve(cgatomids.count());
-
-        foreach (const CGAtomID &cgatomid, cgatomids)
-        {
-            coords.append( cgroup.at(cgatomid.atomID()) );
-        }
-
-        return AABox(coords);
-    }
-}
-
-/** This function returns the geometric center of the selected atoms of the
-    molecule. There must be some atoms in this molecule for the center
-    to be found!
-
-    \throw SireMol::missing_atom
-*/
-Vector PropertyExtractor::geometricCenter() const
-{
-    QVector<CoordGroup> cgroups = data().coordGroups();
-    const CoordGroup *cgroups_array = cgroups.constData();
-    uint ncg = cgroups.count();
-
-    const AtomSelection &selected_atoms = selectedAtoms();
-
-    if (ncg == 0 or selected_atoms.selectedNone())
-        throw SireMol::missing_atom( QObject::tr(
-              "Cannot find the center of no atoms!"),
-                  CODELOC );
-
+    //get the coordinates of the atoms
+    AtomicCoords coords = d->property(map["coordinates"]);
+    
+    const CoordGroup *coords_array = coords.constData();
+    int ncg = coords.count();
+    
+    //now get the minimum and maximum coordinates...
+    Vector mincoords( std::numeric_limits<double>::max() );
+    Vector maxcoords( -std::numeric_limits<double>::min() );
+    
     if (selected_atoms.selectedAll())
     {
-        //combine together the boxes of all of the CoordGroups...
-        AABox box = cgroups_array[0].aaBox();
-
-        for (CutGroupID i(1); i<ncg; ++i)
+        for (int i=0; i<ncg; ++i)
         {
-            box += cgroups_array[i].aaBox();
+            setMinMax(coords_array[i], min, max);
         }
-
-        return box.center();
     }
     else if (selected_atoms.selectedAllCutGroups())
     {
-        AABox box = getAABox(CutGroupID(0), cgroups_array[0], selected_atoms);
-
-        for (CutGroupID i(1); i<ncg; ++i)
+        for (CGIdx i(0); i<ncg; ++i)
         {
-            box += getAABox(i, cgroups_array[i], selected_atoms);
+            if (selected_atoms.selectedAll(i))
+            {
+                setMinMax(coords_array[i], mincoords, maxcoords);
+            }
+            else
+            {
+                setMinMax(coords_array[i], selected_atoms.selectedAtoms(i),
+                          mincoords, maxcoords);
+            }
         }
-
-        return box.center();
     }
     else
     {
-        QSet<CutGroupID> cgids = selected_atoms.selectedCutGroups();
-
-        QSet<CutGroupID>::const_iterator it = cgids.constBegin();
-
-        AABox box = getAABox(*it, cgroups_array[*it], selected_atoms);
-
-        for (++it; it != cgids.constEnd(); ++it)
+        QSet<CGIdx> cgidxs = selected_atoms.selectedCutGroups();
+        
+        foreach (CGIdx cgidx, cgidxs)
         {
-            box += getAABox(*it, cgroups_array[*it], selected_atoms);
+            if (selected_atoms.selectedAll(cgidx))
+            {
+                setMinMax(coords_array[cgidx], mincoords, maxcoords);
+            }
+            else
+            {
+                setMinMax(coords_array[cgidx], selected_atoms.selectedAtoms(cgidx),
+                          mincoords, maxcoords);
+            }
         }
-
-        return box.center();
     }
+    
+    return mincoords + 0.5*(maxcoords - mincoords);
+}
+
+tuple<Vector,Vector>...
+
+double calcMass(const QVector<SireUnits::Dimension::Mass> &masses)
+{
+    const SireUnits::Dimension::Mass *masses_array = masses.constData();
+    int nmasses = masses.count();
+    
+    double m = 0;
+    
+    for (int i=0; i<nmasses; ++i)
+    {
+        m += masses_array[i];
+    }
+    
+    return m;
+}
+
+double calcMass(const QVector<SireUnits::Dimension::Mass> &masses,
+                const QSet<Index> &idxs)
+{
+    const SireUnits::Dimension::Mass *masses_array = masses.constData();
+    
+    double m = 0;
+    
+    foreach (Index i, idxs)
+    {
+        m += masses_array[i];
+    }
+    
+    return m;
+}
+
+double Evaluator::_pvt_mass(const AtomicMasses &masses) const
+{
+    double m = 0;
+    
+    const QVector<SireUnits::Dimension::Mass> *masses_array = masses.constData();
+    int ncg = masses.count();
+
+    if (selected_atoms.selectedAll())
+    {
+        for (int i=0; i<ncg; ++i)
+        {
+            m += calcMass( masses_array[i] );
+        }
+    }
+    else if (selected_atoms.selectedAllCutGroups())
+    {
+        for (CGIdx i(0); i<ncg; ++i)
+        {
+            if (selected_atoms.selectedAll(i))
+                m += calcMass( masses_array[i] );
+            else
+                m += calcMass( masses_array[i], selected_atoms.selectedAtoms(i) );
+        }
+    }
+    else
+    {
+        foreach (CGIdx cgidx, selected_atoms.selectedCutGroups())
+        {
+            if (selected_atoms.selectedAll(cgidx))
+                m += calcMass( masses_array[i] );
+            else
+                m += calcMass( masses_array[i], selected_atoms.selectedAtoms(i) );
+        }
+    }
+    
+    return m;
+}
+
+double calcMass(const QVector<Element> &elements)
+{
+    const Element *elements_array = elements.constData();
+    int nelements = elements.count();
+    
+    double m = 0;
+    
+    for (int i=0; i<nelements; ++i)
+    {
+        m += elements_array[i].mass();
+    }
+    
+    return m;
+}
+
+double calcMass(const QVector<Element> &elements, const QSet<Index> &idxs)
+{
+    const Element *elements_array = elements.constData();
+    
+    double m = 0;
+    
+    foreach (Index i, idxs)
+    {
+        m += elements_array[i].mass();
+    }
+    
+    return m;
+}
+
+double Evaluator::_pvt_mass(const AtomicElements &elements) const
+{
+    double m = 0;
+    
+    const QVector<Element> *elements_array = elements.constData();
+    int ncg = elements.count();
+
+    if (selected_atoms.selectedAll())
+    {
+        for (int i=0; i<ncg; ++i)
+        {
+            m += calcMass( elements_array[i] );
+        }
+    }
+    else if (selected_atoms.selectedAllCutGroups())
+    {
+        for (CGIdx i(0); i<ncg; ++i)
+        {
+            if (selected_atoms.selectedAll(i))
+                m += calcMass( elements_array[i] );
+            else
+                m += calcMass( elements_array[i], selected_atoms.selectedAtoms(i) );
+        }
+    }
+    else
+    {
+        foreach (CGIdx cgidx, selected_atoms.selectedCutGroups())
+        {
+            if (selected_atoms.selectedAll(cgidx))
+                m += calcMass( elements_array[i] );
+            else
+                m += calcMass( elements_array[i], selected_atoms.selectedAtoms(i) );
+        }
+    }
+    
+    return m;
+}
+
+/** Return the mass of the selected part of this molecule, using 
+    the supplied map to find either the mass property, or if that
+    does not exist, using the element property
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+double Evaluator::mass() const
+{
+    if (selected_atoms.selectedNone())
+        return 0;
+
+    Property p = d->property( map["mass"], map["element"] );
+    
+    if (p.isA<AtomicMasses>())
+    {
+        return this->_pvt_mass(p.asA<AtomicMasses>());
+    }
+    else if (p.isA<AtomicElements>())
+    {
+        return this->_pvt_mass(p.asA<AtomicElements>());
+    }
+    else
+        throw SireError::invalid_cast( QObject::tr(
+            "Cannot cast the property of type %1 into either an "
+            "AtomicMasses or AtomicElements property!")
+                .arg(p.what()), CODELOC );
+
+    return 0;
 }

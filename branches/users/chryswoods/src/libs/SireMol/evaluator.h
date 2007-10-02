@@ -26,8 +26,8 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_PROPERTYEXTRACTOR_H
-#define SIREMOL_PROPERTYEXTRACTOR_H
+#ifndef SIREMOL_EVALUATOR_H
+#define SIREMOL_EVALUATOR_H
 
 #include <QVector>
 #include <QHash>
@@ -38,88 +38,63 @@ SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
-class PropertyExtractor;
+class Evaluator;
 }
 
-QDataStream& operator<<(QDataStream&, const SireMol::PropertyExtractor&);
-QDataStream& operator>>(QDataStream&, SireMol::PropertyExtractor&);
-
-namespace SireBase
-{
-class Property;
-}
-
-namespace SireMaths
-{
-class Vector;
-}
-
-namespace SireVol
-{
-class CoordGroup;
-}
+QDataStream& operator<<(QDataStream&, const SireMol::Evaluator&);
+QDataStream& operator>>(QDataStream&, SireMol::Evaluator&);
 
 namespace SireMol
 {
 
-class CutGroup;
-class CutGroupID;
-class Element;
-class PartialMolecule;
-
-using SireBase::Property;
-
-using SireVol::CoordGroup;
-
-using SireMaths::Vector;
-
 /** This class is used to add a nice API to the MoleculeView based classes to
-    allow the extraction of various properties of the molecule (without the
-    need to clutter up the moleculeview classes APIs).
+    allow the evaluation of various properties of the molecule (without the
+    need to clutter up the MoleculeView-based classes' APIs).
 
-    e.g. can type mol.extract().elements() rather than mol.elements().
-
-    In addition, this allows me to have the property extraction code
-    all in one place, without the need to update multiple MoleculeView
-    derived classes APIs
+    e.g. can type mol.evaluate().center() rather than mol.center()
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT PropertyExtractor : public MolDataView
+class SIREMOL_EXPORT Evaluator : public MoleculeView
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const PropertyExtractor&);
-friend QDataStream& ::operator>>(QDataStream&, PropertyExtractor&);
+friend QDataStream& ::operator<<(QDataStream&, const Evaluator&);
+friend QDataStream& ::operator>>(QDataStream&, Evaluator&);
 
 public:
-    PropertyExtractor();
+    Evaluator();
 
-    PropertyExtractor(const MoleculeView &molecule);
+    Evaluator(const MoleculeView &molecule);
 
-    PropertyExtractor(const MoleculeView &molecule,
-                      const SelectionFromMol &selection);
+    Evaluator(const Evaluator &other);
 
-    PropertyExtractor(const PropertyExtractor &other);
+    ~Evaluator();
 
-    ~PropertyExtractor();
+    Evaluator& operator=(const Evaluator &other);
+    Evaluator& operator=(const MoleculeView &other);
 
-    PropertyExtractor& operator=(const PropertyExtractor &other);
+    AtomSelection selectedAtoms() const;
+    
+    void update(const MoleculeData &moldata) const;
 
-    QHash<CutGroupID,quint32> cutGroupIndex() const;
+    double mass(const PropertyMap &map = PropertyMap()) const;
 
-    QVector< CutGroup > cutGroups() const;
-    QVector< CoordGroup > coordGroups() const;
+    Vector center(const PropertyMap &map = PropertyMap()) const;
 
-    QVector< QVector<Element> > elements() const;
+    tuple<Vector,Vector> minMaxCoords(const PropertyMap &map = PropertyMap()) const;
 
-    Vector geometricCenter() const;
+    Vector centerOfGeometry(const PropertyMap &map = PropertyMap()) const;
+    Vector centerOfMass(const PropertyMap &map = PropertyMap()) const;
 
-    Property property(const QString &name) const;
+private:
+    /** The atoms over which the properties will be 
+        evaluated */
+    AtomSelection selected_atoms;
 };
 
 }
 
-Q_DECLARE_METATYPE(SireMol::PropertyExtractor)
+Q_DECLARE_METATYPE(SireMol::Evaluator)
 
 SIRE_END_HEADER
 

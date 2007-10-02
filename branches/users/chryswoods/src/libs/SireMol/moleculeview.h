@@ -67,9 +67,14 @@ public:
     virtual AtomSelection selectedAtoms() const=0;
 
     /** Update this view with a new version of the molecule */
-    virtual void update(const MoleculeView &other) const=0;
+    virtual void update(const MoleculeData &moldata) const=0;
 
     void assertSameMolecule(const MoleculeView &other) const;
+
+    const MoleculeData& data() const
+    {
+        return *d;
+    }
 
 protected:
     MoleculeView();
