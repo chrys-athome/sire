@@ -119,16 +119,9 @@ void Evaluator::update(const MoleculeData &data) const
 
 static void getMinMax(const CoordGroup &cgroup, Vector &min, Vector &max)
 {
-    const Vector *cgroup_array = cgroup.constData();
-    int nats = cgroup.count();
-            
-    for (int i=0; i<nats; ++i)
-    {
-        const Vector &coords = cgroup_array[i];
-    
-        min.setMin(coords);
-        max.setMax(coords);
-    }
+    //we can cheat by using the CoordGroup's aabox!
+    min.setMinCoords(cgroup.aaBox().minCoords());
+    max.setMaxCoords(cgroup.aaBox().maxCoords());
 }
 
 static void getMinMax(const CoordGroup &cgroup, const QSet<Index> &idxs,
@@ -145,19 +138,16 @@ static void getMinMax(const CoordGroup &cgroup, const QSet<Index> &idxs,
     }
 }
 
-/** Return the center of the selected atoms,
-    using the passed property map to find the coordinates
-    property of the molecule (the center is the point
-    that is exactly in the middle of the atoms - i.e.
-    halfway between the maximum and minimum coordinates
-
+/** Return the axis-aligned box that just contains all of the 
+    atoms in this view 
+    
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-Vector Evaluator::center(const PropertyMap &map) const
+AABox Evaluator::aaBox(const PropertyMap &map) const
 {
     if (selected_atoms.selectedNone())
-        return Vector(0);
+        return AABox();
 
     //get the coordinates of the atoms
     AtomicCoords coords = d->property(map["coordinates"]);
@@ -209,10 +199,32 @@ Vector Evaluator::center(const PropertyMap &map) const
         }
     }
     
-    return mincoords + 0.5*(maxcoords - mincoords);
+    return AABox::from(mincoords, maxcoords);
 }
 
-tuple<Vector,Vector>...
+/** Return the center of the selected atoms,
+    using the passed property map to find the coordinates
+    property of the molecule (the center is the point
+    that is exactly in the middle of the atoms - i.e.
+    halfway between the maximum and minimum coordinates
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+Vector Evaluator::center(const PropertyMap &map) const
+{
+    return this->aaBox(map).center();
+}
+
+/** Return the sphere that just encloses all of the atoms in this view 
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+Sphere Evaluator::sphere(const PropertyMap &map) const
+{
+    return this->aaBox(map).sphere();
+}
 
 double calcMass(const QVector<SireUnits::Dimension::Mass> &masses)
 {
@@ -356,7 +368,7 @@ double Evaluator::_pvt_mass(const AtomicElements &elements) const
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-double Evaluator::mass() const
+double Evaluator::mass(const PropertyMap &map) const
 {
     if (selected_atoms.selectedNone())
         return 0;
@@ -378,4 +390,304 @@ double Evaluator::mass() const
                 .arg(p.what()), CODELOC );
 
     return 0;
+}
+
+int addToAvg(const CoordGroup &coords, Vector &avg)
+{
+    const Vector *coords_array = coords.constData();
+    int nats = coords.count();
+    
+    for (int i=0; i<nats; ++i)
+    {
+        avg += coords_array[i];
+    }
+    
+    return nats;
+}
+
+int addToAvg(const CoordGroup &coords, const QSet<Index> &indicies,
+             Vector &avg)
+{
+    const Vector *coords_array = coords.constData();
+
+    foreach (Index i, indicies)
+    {
+       avg += coords_array[i];
+    }
+    
+    return indicies.count();
+} 
+
+/** Return the center of geometry of this part of the molecule
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+Vector Evaluator::centerOfGeometry(const PropertyMap &map) const
+{
+    if (selected_atoms.selectedNone())
+        return Vector(0);
+        
+    AtomicCoords coords = d->property( map["coordinates"] );
+    
+    const CoordGroup *coords_array = coords.constData();
+    int ncg = coords.count();
+    
+    //calculate the average coordinates
+    Vector avg(0);
+    
+    int navg = 0;
+    
+    if (selected_atoms.selectedAll())
+    {
+        for (int i=0; i<ncg; ++i)
+        { 
+            navg += addToAvg(coords_array[i], avg);
+        }
+    }
+    else if (selected_atoms.selectedAllCutGroups())
+    {
+        for (CGIdx i(0); i<ncg; ++i)
+        {
+            if (selected_atoms.selectedAll(i))
+            {
+                navg += addToAvg(coords_array[i], avg);
+            }
+            else
+            {
+                navg += addToAvg(coords_array[i], selected_atoms.selectedAtoms(i),
+                                 avg);
+            }
+        }
+    }
+    else
+    {
+        foreach (CGIdx i, selected_atoms.selectedCutGroups())
+        {
+            if (selected_atoms.selectedAll(i))
+            {
+                navg += addToAvg(coords_array[i], avg);
+            }
+            else
+            {
+                navg += addToAvg(coords_array[i], selected_atoms.selectedAtoms(i),
+                                 avg);
+            }
+        }
+    }
+    
+    //form the average
+    return avg / navg;
+}
+
+double addToAvg(const CoordGroup &coords, 
+                const QVector<SireUnits::Dimension::Mass> &masses, Vector &avg)
+{
+    const Vector *coords_array = coords.constData();
+    const SireUnits::Dimension::Mass *masses_array = masses.constData();
+    
+    int nats = coords.count();
+    
+    double mass = 0;
+    
+    for (int i=0; i<nats; ++i)
+    {
+        avg += masses_array[i] * coords_array[i];
+        mass += masses_array[i];
+    }
+    
+    return mass;
+}
+
+double addToAvg(const CoordGroup &coords, 
+                const QVector<SireUnits::Dimension::Mass> &masses,
+                const QSet<Index> &indicies, Vector &avg)
+{
+    const Vector *coords_array = coords.constData();
+    const SireUnits::Dimension::Mass *masses_array = masses.constData();
+
+    double mass = 0;
+
+    foreach (Index i, indicies)
+    {
+       avg += masses_array[i] * coords_array[i];
+       mass += masses_array[i];
+    }
+    
+    return mass;
+}
+
+Vector Evalutor::_pvt_centerOfMass(const AtomicCoords &coords,
+                                   const AtomicMasses &masses)
+{
+    const CoordGroup *coords_array = coords.constData();
+    const QVector<SireUnits::Dimension::Mass> *masses_array = masses.constData();
+    
+    int ncg = coords.count();
+    
+    //calculate the average mass position
+    Vector avg(0);
+    
+    double total_mass = 0;
+    
+    if (selected_atoms.selectedAll())
+    {
+        for (int i=0; i<ncg; ++i)
+        { 
+            total_mass += addToAvg(coords_array[i], masses_array[i], avg);
+        }
+    }
+    else if (selected_atoms.selectedAllCutGroups())
+    {
+        for (CGIdx i(0); i<ncg; ++i)
+        {
+            if (selected_atoms.selectedAll(i))
+            {
+                total_mass += addToAvg(coords_array[i], masses_array[i], avg);
+            }
+            else
+            {
+                total_mass += addToAvg(coords_array[i], masses_array[i],
+                                       selected_atoms.selectedAtoms(i), avg);
+            }
+        }
+    }
+    else
+    {
+        foreach (CGIdx i, selected_atoms.selectedCutGroups())
+        {
+            if (selected_atoms.selectedAll(i))
+            {
+                total_mass += addToAvg(coords_array[i], masses_array[i], avg);
+            }
+            else
+            {
+                total_mass += addToAvg(coords_array[i], masses_array[i],
+                                       selected_atoms.selectedAtoms(i), avg);
+            }
+        }
+    }
+    
+    //form the average
+    return avg / navg;
+}
+
+double addToAvg(const CoordGroup &coords, const QVector<Element> &elements, 
+                Vector &avg)
+{
+    const Vector *coords_array = coords.constData();
+    const Element *elements_array = elements.constData();
+    
+    int nats = coords.count();
+    
+    double mass = 0;
+    
+    for (int i=0; i<nats; ++i)
+    {
+        avg += elements_array[i].mass() * coords_array[i];
+        mass += elements_array[i].mass();
+    }
+    
+    return mass;
+}
+
+double addToAvg(const CoordGroup &coords, const QVector<Element> &elements,
+                const QSet<Index> &indicies, Vector &avg)
+{
+    const Vector *coords_array = coords.constData();
+    const Element *elements_array = elements.constData();
+
+    double mass = 0;
+
+    foreach (Index i, indicies)
+    {
+       avg += elements_array[i].mass() * coords_array[i];
+       mass += elements_array[i].mass();
+    }
+    
+    return mass;
+}
+
+Vector Evalutor::_pvt_centerOfMass(const AtomicCoords &coords,
+                                   const AtomicElements &elements)
+{
+    const CoordGroup *coords_array = coords.constData();
+    const QVector<Element> *elements_array = elements.constData();
+    
+    int ncg = coords.count();
+    
+    //calculate the average mass position
+    Vector avg(0);
+    
+    double total_mass = 0;
+    
+    if (selected_atoms.selectedAll())
+    {
+        for (int i=0; i<ncg; ++i)
+        { 
+            total_mass += addToAvg(coords_array[i], elements_array[i], avg);
+        }
+    }
+    else if (selected_atoms.selectedAllCutGroups())
+    {
+        for (CGIdx i(0); i<ncg; ++i)
+        {
+            if (selected_atoms.selectedAll(i))
+            {
+                total_mass += addToAvg(coords_array[i], elements_array[i], avg);
+            }
+            else
+            {
+                total_mass += addToAvg(coords_array[i], elements_array[i],
+                                       selected_atoms.selectedAtoms(i), avg);
+            }
+        }
+    }
+    else
+    {
+        foreach (CGIdx i, selected_atoms.selectedCutGroups())
+        {
+            if (selected_atoms.selectedAll(i))
+            {
+                total_mass += addToAvg(coords_array[i], elements_array[i], avg);
+            }
+            else
+            {
+                total_mass += addToAvg(coords_array[i], elements_array[i],
+                                       selected_atoms.selectedAtoms(i), avg);
+            }
+        }
+    }
+    
+    //form the average
+    return avg / total_mass;
+}
+
+/** Return the center of mass of this part of the molecule
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+Vector Evaluator::centerOfMass(const PropertyMap &map) const
+{
+    if (selected_atoms.selectedNone())
+        return Vector(0);
+        
+    AtomicCoords coords = d->property( map["coordinates"] );
+
+    Property p = d->property( map["mass"], map["element"] );
+    
+    if (p.isA<AtomicMasses>())
+    {
+        return this->_pvt_centerOfMass(coords, p.asA<AtomicMasses>());
+    }
+    else if (p.isA<AtomicElements>())
+    {
+        return this->_pvt_centerOfMass(coords, p.asA<AtomicElements>());
+    }
+    else
+        throw SireError::invalid_cast( QObject::tr(
+            "Cannot cast the property of type %1 into either an "
+            "AtomicMasses or AtomicElements property!")
+                .arg(p.what()), CODELOC );
 }

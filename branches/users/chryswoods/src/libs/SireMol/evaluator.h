@@ -80,8 +80,8 @@ public:
     double mass(const PropertyMap &map = PropertyMap()) const;
 
     Vector center(const PropertyMap &map = PropertyMap()) const;
-
-    tuple<Vector,Vector> minMaxCoords(const PropertyMap &map = PropertyMap()) const;
+    AABox aaBox(const PropertyMap &map = PropertyMap()) const;
+    Sphere sphere(const PropertyMap &map = PropertyMap()) const;
 
     Vector centerOfGeometry(const PropertyMap &map = PropertyMap()) const;
     Vector centerOfMass(const PropertyMap &map = PropertyMap()) const;

@@ -108,6 +108,7 @@ public:
     static AABox from(const Vector &point);
     static AABox from(const CoordGroupBase &coordgroup);
     static AABox from(const QVector<Vector> &coords);
+    static AABox from(const Vector &mincoords, const Vector &maxcoords);
 
 protected:
     void recalculate(const Vector *coords, int size);
