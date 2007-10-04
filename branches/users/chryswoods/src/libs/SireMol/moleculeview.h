@@ -63,21 +63,35 @@ public:
 
     virtual MoleculeView& operator=(const MoleculeView &other)=0;
 
-    /** Return the atoms that are selected as part of this view */
-    virtual AtomSelection selectedAtoms() const=0;
-
-    /** Update this view with a new version of the molecule */
-    virtual void update(const MoleculeData &moldata) const=0;
-
-    void assertSameMolecule(const MoleculeView &other) const;
-
-    const MoleculeData& data() const
+    /** Return the MoleculeData that contains all of the information
+        about the molecule which this view is showing */
+    const MoleculeData& Atom::data() const
     {
         return *d;
     }
 
+    /** Return the MoleculeData that contains all of the information
+        about the molecule which this view is showing */
+    const MoleculeData& Atom::constData() const
+    {
+        return *d;
+    }
+
+    /** Return the atoms that are selected as part of this view */
+    virtual AtomSelection selectedAtoms() const=0;
+
+    /** Update this view with a new version of the molecule */
+    virtual void update(const MoleculeData &moldata) const;
+
+    void assertSameMolecule(const MoleculeView &other) const;
+    void assertSameMolecule(const MoleculeData &other) const;
+
+    virtual void assertContains(AtomIdx atomidx) const;
+    void assertContains(const AtomID &atomid) const;
+
 protected:
     MoleculeView();
+    MoleculeView(const MoleculeData &moldata);
     MoleculeView(const MoleculeView &other);
 
     /** Shared pointer to the raw data of the molecule */

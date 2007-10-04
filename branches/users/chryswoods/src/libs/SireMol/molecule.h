@@ -94,9 +94,12 @@ public:
     Molecule& operator=(const Molecule &other);
     Molecule& operator=(const MoleculeView &other);
     
+    const MoleculeData& data() const;
+    const MoleculeData& constData() const;
+    
     AtomSelection selectedAtoms() const;
     
-    void update(const MoleculeView &other);
+    void update(const MoleculeData &other);
     
     const MolName& name() const;
     const MolNum& number() const;
@@ -104,7 +107,7 @@ public:
     const MoleculeInfo& info() const;
     
     Mover<Molecule> move() const;
-    Evaluator<Molecule> evaluate() const;
+    Evaluator evaluate() const;
     Editor<Molecule> edit() const;
     Selector<Molecule> selection() const;
     

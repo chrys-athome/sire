@@ -26,126 +26,139 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_NEWATOM_H
-#define SIREMOL_NEWATOM_H
+#ifndef SIREMOL_ATOM_H
+#define SIREMOL_ATOM_H
 
 #include <QVariant>
 
-#include "idtypes.h"
-#include "cgatomid.h"
-
 #include "moleculeview.h"
-
-#include "SireMaths/vector.h"
-
-#include "SireError/errors.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
-class NewAtom;
+class Atom;
 }
 
-QDataStream& operator<<(QDataStream&, const SireMol::NewAtom&);
-QDataStream& operator>>(QDataStream&, SireMol::NewAtom&);
-
-uint qHash(const SireMol::NewAtom&);
-
-namespace SireMaths
-{
-class Quaternion;
-class Matrix;
-}
+QDataStream& operator<<(QDataStream&, const SireMol::Atom&);
+QDataStream& operator>>(QDataStream&, SireMol::Atom&);
 
 namespace SireMol
 {
 
-class Molecule;
-class PartialMolecule;
-class Residue;
-class Element;
-class AtomInfo;
-
-using SireMaths::Vector;
-using SireMaths::Quaternion;
-using SireMaths::Matrix;
-
-/** This is a replacement for the Atom class that provides an
-    Atom that is in context with its containing molecule.
-
-    The main difference to the old Atom class is that this
-    one is the MoleculeView of the
-    Molecule that contains this Atom, and that therefore,
-    the editing functions available are more limited than
-    Atom (which can be heavily edited due to its
-    use of multiple inheritance)
-
-    This is a MoleculeView in the same way that
-    Residue and Molecule are MoleculeViews
+/** This is a single-atom view into a molecule.
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT NewAtom : public MoleculeView
+class SIREMOL_EXPORT Atom : public MoleculeView
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const NewAtom&);
-friend QDataStream& ::operator>>(QDataStream&, NewAtom&);
+friend QDataStream& ::operator<<(QDataStream&, const Atom&);
+friend QDataStream& ::operator>>(QDataStream&, Atom&);
 
 public:
-    NewAtom();
-    NewAtom(const CGAtomID &cgatomid, const Molecule &molecule);
-    NewAtom(const IDMolAtom &idmolatom, const Molecule &molecule);
+    Atom();
+    
+    Atom(const MoleculeView &molview, const AtomID &atomid);
+    Atom(const MoleculeData &moldata, const AtomID &atomid);
 
-    NewAtom(const QString &name, const Residue &residue);
-    NewAtom(AtomID i, const Residue &residue);
+    Atom(const Atom &other);
 
-    NewAtom(const NewAtom &other);
+    ~Atom();
 
-    ~NewAtom();
+    Atom& operator=(const Atom &other);
 
-    NewAtom& operator=(const NewAtom &other);
+    bool operator==(const Atom &other) const;
+    bool operator!=(const Atom &other) const;
+    
+    AtomSelection selectedAtoms() const;
+    
+    void update(const MoleculeData &other) const;
 
-    bool operator==(const NewAtom &other) const;
-    bool operator!=(const NewAtom &other) const;
+    AtomName name() const;
+    AtomNum number() const;
+    AtomIdx index() const;
+    const CGAtomIdx& cgAtomIdx() const;
 
-    QString name() const;
+    AtomInfo info() const;
 
-    MoleculeID ID() const;
-    const Version& version() const;
-
-    QString idString() const;
-
-    const AtomInfo& info() const;
-    Element element() const;
-    Vector coordinates() const;
-
-    const CGAtomID& cgAtomID() const;
-
-    QVariant property(const QString &name) const;
-
-    QString toString() const;
-
-    Molecule molecule() const;
+    template<class T>
+    void setProperty(const QString &key, const T &value);
+    
+    template<class T>
+    T property(const PropertyName &key) const;
+    
+    Mover<Atom> move() const;
+    Evaluator evaluate() const;
+    Editor<Atom> edit() const;
+    
     Residue residue() const;
+    Chain chain() const;
+    Segment segment() const;
+    CutGroup cutGroup() const;
 
-    QSet<NewAtom> bondedAtoms() const;
-    QSet<Residue> bondedResidues() const;
-
-    operator Vector() const;
-    operator Element() const;
-    operator const AtomInfo&() const;
-
-    bool withinBondRadii(const NewAtom &other, double err=0) const;
+    void assertContains(AtomIdx atomidx) const;
 
 private:
     /** The index of this atom in the molecule */
-    CGAtomID cgatomid;
+    AtomIdx atomidx;
 };
+
+/** Set the property (of type T) at key 'key' for this
+    atom to be equal to 'value'. This works by creating
+    an AtomicProperty<T> for this molecule, and assigning
+    the value for this atom to 'value'. If there is already
+    a property at key 'key', then it must be of type 
+    AtomicProperty<T> for this to work
+    
+    \throw SireMol::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void Atom::setProperty(const QString &key, const T &value)
+{
+    AtomicProperty<T> atom_props;
+
+    if (d->hasProperty(key))
+    {
+        atom_props = d->property(key);
+    }
+    else
+    {
+        atom_props = AtomicProperty<T>(*d);
+    }
+    
+    atom_props.set(this->cgAtomIdx(), value);
+    d->setProperty(key, atom_props);
+}
+
+/** Return the property (of type T) at key 'key' that is 
+    specifically assigned to this atom. This will only work
+    if the property at this key is an Atomic property (i.e.
+    has one value for every atom) and that it can be
+    cast to type T
+    
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+T Atom::property(const PropertyName &key) const
+{
+    AtomicProperty<T> atom_props = d->property(key);
+    return atom_props.at(this->cgAtomIdx());
+}
+
+/** We have different behaviour for an atoms Vector property */
+template<>
+void Atom::setProperty<Vector>(const QString &key, const Vector &coords);
+
+template<>
+Vector Atom::property<Vector>(const PropertyName &key) const;
 
 }
 
-Q_DECLARE_METATYPE(SireMol::NewAtom);
+Q_DECLARE_METATYPE(SireMol::Atom);
 
 SIRE_END_HEADER
 

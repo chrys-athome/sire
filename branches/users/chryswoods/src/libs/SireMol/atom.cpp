@@ -26,306 +26,216 @@
   *
 \*********************************************/
 
-#include "qhash_siremol.h"
-
-#include "newatom.h"
-
-#include "moleculeview_inlines.h"
-#include "molecule.h"
-#include "residue.h"
-#include "cgatomid.h"
-#include "atominfo.h"
-#include "residueinfo.h"
-#include "moleculeinfo.h"
-
-#include "atomicproperties.h"
-
-#include "SireBase/sharedpolypointer_cast.hpp"
-
-#include "SireMaths/rotate.h"
-#include "SireMaths/quaternion.h"
-#include "SireMaths/matrix.h"
+#include "atom.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
 using namespace SireMol;
 using namespace SireStream;
-using namespace SireBase;
-using namespace SireMaths;
 
-static const RegisterMetaType<NewAtom> r_newatom;
+static const RegisterMetaType<Atom> r_atom;
 
 /** Serialise to a binary datastream */
-QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const NewAtom &atom)
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const Atom &atom)
 {
     writeHeader(ds, r_newatom, 1);
 
-    SharedDataStream(ds) << atom.cgatomid
-                         << static_cast<const MoleculeView&>(atom);
+    ds << atom.atomidx << static_cast<const MoleculeView&>(atom);
 
     return ds;
 }
 
 /** Deserialise from a binary datastream */
-QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, NewAtom &atom)
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, Atom &atom)
 {
-    VersionID v = readHeader(ds, r_newatom);
+    VersionID v = readHeader(ds, r_atom);
 
     if (v == 1)
     {
-        ds >> atom.cgatomid
-           >> static_cast<MoleculeView&>(atom);
+        ds >> atom.atomidx >> static_cast<MoleculeView&>(atom);
     }
     else
-        throw version_error(v, "1", r_newatom, CODELOC);
+        throw version_error(v, "1", r_atom, CODELOC);
 
     return ds;
 }
 
-uint SIREMOL_EXPORT qHash(const NewAtom &atom)
-{
-    return qHash(atom.info().index());
-}
-
 /** Null constructor */
-NewAtom::NewAtom() : MoleculeView()
+Atom::Atom() : MoleculeView(), atomidx( Index::null() )
 {}
 
-/** Construct an Atom that represents the atom at index 'i' in the
-    molecule 'molecule'
-
+/** Construct the atom that that is identified by ID 'atomid'
+    in the view 'molview' - this atom must be within this view
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
     \throw SireError::invalid_index
 */
-NewAtom::NewAtom(const CGAtomID &i, const Molecule &molecule)
-        : MoleculeView(molecule), cgatomid(i)
+Atom::Atom(const MoleculeView &molview, const AtomID &atomid)
+     : MoleculeView(molview)
 {
-    constData().info().assertAtomExists(i);
+    atomidx = atomid.map(d->info());
+    molview.assertContains(atomidx);
 }
 
-/** Construct an Atom that represents the atom at index 'i' in the
-    molecule 'molecule'
-
-    \throw SireMol::missing_residue
+/** Construct the atom that is identified by ID 'atomid'
+    in the molecule whose data is in 'moldata'
+    
     \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
     \throw SireError::invalid_index
 */
-NewAtom::NewAtom(const IDMolAtom &i, const Molecule &molecule)
-        : MoleculeView(molecule), cgatomid( i.index(molecule.info()) )
-{}
-
-/** Construct an Atom that represents the atom called 'name' in
-    the residue 'residue'
-
-    \throw SireMol::missing_atom
-*/
-NewAtom::NewAtom(const QString &name, const Residue &residue)
-        : MoleculeView(residue), cgatomid( residue.info().at(name) )
-{}
-
-/** Construct an Atom that represents the atom at index 'i'
-    in the residue 'residue'
-
-    \throw SireError::invalid_index
-*/
-NewAtom::NewAtom(AtomID i, const Residue &residue)
-        : MoleculeView(residue), cgatomid( residue.info().at(i) )
+Atom::Atom(const MoleculeData &moldata, const AtomID &atomid)
+     : MoleculeView(moldata), atomidx( atomid.map(moldata.info()) )
 {}
 
 /** Copy constructor */
-NewAtom::NewAtom(const NewAtom &other)
-        : MoleculeView(other), cgatomid(other.cgatomid)
+Atom::Atom(const Atom &other)
+     : MoleculeView(other), atomidx(other.atomidx)
 {}
 
 /** Destructor */
-NewAtom::~NewAtom()
+Atom::~Atom()
 {}
 
 /** Copy assignment operator */
-NewAtom& NewAtom::operator=(const NewAtom &other)
+Atom& Atom::operator=(const Atom &other)
 {
     MoleculeView::operator=(other);
-    cgatomid = other.cgatomid;
-
+    atomidx = other.atomidx;
+    
     return *this;
 }
 
-/** Are these the same? They are if they refer to the same
-    atoms in the same version of the same molecule */
-bool NewAtom::operator==(const NewAtom &other) const
+/** Comparison operator */
+bool Atom::operator==(const Atom &other) const
 {
-    return cgatomid == other.cgatomid and
-           MoleculeView::operator==(other);
+    return atomidx == other.atomidx and MoleculeView::operator==(other);
 }
 
-/** Are these different? They are different if they point
-    to different atoms, or to different molecules */
-bool NewAtom::operator!=(const NewAtom &other) const
+/** Comparison operator */
+bool Atom::operator!=(const Atom &other) const
 {
-    return cgatomid != other.cgatomid or
-           MoleculeView::operator!=(other);
+    return atomidx != other.atomidx or MoleculeView::operator!=(other);
 }
 
-/** Return the ID number of the molecule that contains this atom */
-MoleculeID NewAtom::ID() const
+/** Return the selected atom! */
+AtomSelection Atom::selectedAtoms() const
 {
-    return data().ID();
+    AtomSelection selected_atoms(d->info());
+    
+    selected_atoms.select( d->cgAtomIdx(atomidx) );
+    
+    return selected_atoms;
 }
 
-/** Return the version number of the molecule that contains this atom */
-const Version& NewAtom::version() const
+/** Return the name of the atom */
+AtomName Atom::name() const
 {
-    return data().version();
+    return d->info().name(atomidx);
 }
 
-/** Return the AtomInfo for this Atom */
-const AtomInfo& NewAtom::info() const
+/** Return the number of the atom */
+AtomNum Atom::number() const
 {
-    return data().info().atom(cgatomid);
+    return d->info().number(atomidx);
 }
 
-/** Return a string identifying this atom */
-QString NewAtom::idString() const
+/** Return the index number of this atom in the molecule */
+AtomIdx Atom::index() const
 {
-    return QObject::tr("%1 in %2 (%3) in \"%3\" (%4 %5)")
-                          .arg(name())
-                          .arg(data().info().residueName(info().resNum()))
-                          .arg(info().resNum())
-                          .arg(data().info().name()).arg(ID())
-                          .arg(data().version().toString());
+    return atomidx;
 }
 
-/** Return the name of this atom */
-QString NewAtom::name() const
+/** Return the info object about this atom */
+AtomInfo Atom::info() const
 {
-    return this->info().name();
+    return AtomInfo( d->info(), atomidx );
 }
 
-/** Return a copy of the chemical element of this atom */
-Element NewAtom::element() const
+/** Return a Mover that can be used to move this atom */
+Mover<Atom> Atom::move() const
 {
-    return this->info().element();
+    return Mover<Atom>(*this);
 }
 
-/** Return a reference to the coordinates of this atom */
-Vector NewAtom::coordinates() const
+/** Return an evaluator that can be used to evaluate properties
+    of this atom */
+Evaluator Atom::evaluate() const
 {
-    return data().coordinates(cgatomid);
+    return Evaluator(*this);
 }
 
-/** Return the CGAtomID of the atom */
-const CGAtomID& NewAtom::cgAtomID() const
+/** Return an editor that can be used to edit this atom */
+Editor<Atom> Atom::edit() const
 {
-    return cgatomid;
+    return Editor<Atom>(*this);
 }
 
-/** Allow implicit conversion to a Vector (to get the coordinates) */
-NewAtom::operator Vector() const
+/** Return the residue that this atom is in 
+
+    \throw SireMol::missing_residue
+*/
+Residue Atom::residue() const
 {
-    return this->coordinates();
+    return Residue(*d, d->info().parentResidue(atomidx));
 }
 
-/** Allow implicit conversion to an Element */
-NewAtom::operator Element() const
+/** Return the chain this atom is in 
+
+    \throw SireMol::missing_chain
+*/
+Chain Atom::chain() const
 {
-    return this->element();
+    return Chain(*d, d->info().parentChain(atomidx));
 }
 
-/** Allow implicit conversion to an AtomInfo object */
-NewAtom::operator const AtomInfo&() const
+/** Return the segment this atom is in 
+
+    \throw SireMol::missing_segment
+*/
+Segment Atom::segment() const
 {
-    return this->info();
+    return Segment(*d, d->info().parentSegment(atomidx));
 }
 
-/** Return a copy of the property called 'name' for this
-    atom. Note that this must be an AtomProperty class or
-    an exception will be thrown
+/** Return the CutGroup this atom is in */
+CutGroup Atom::cutGroup() const
+{
+    return CutGroup(*d, d->info().parentCutGroup(atomidx));
+}
+
+/** Return a vector atomic property
 
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-QVariant NewAtom::property(const QString &name) const
+template<>
+Vector Atom::property<Vector>(const PropertyName &key) const
 {
-    Property property = data().getProperty(name);
-
-    if (not property.isA<AtomicProperties>())
-        throw SireError::invalid_cast( QObject::tr(
-            "Cannot convert a property of type \"%1\" to an atomic property!")
-                .arg(property.what()), CODELOC );
-
-    return property.asA<AtomicProperties>().value(cgatomid);
+    AtomicCoords coords = d->property(key);
+    return coords.at(this->cgAtomIdx());
 }
 
-/** Return a string describing this atom */
-QString NewAtom::toString() const
+/** Set a vector atomic property
+
+    \throw SireError::invalid_cast
+*/
+template<>
+void Atom::setProperty<Vector>(const QString &key, const Vector &new_coords)
 {
-    Residue res = this->residue();
+    AtomicCoords coords;
 
-    return QString("%1 : %2(%3) : %4 (%5 - %6)")
-                 .arg(this->name())
-                 .arg(res.name()).arg(res.number())
-                 .arg(data().info().name()).arg(data().ID())
-                 .arg(data().version().major()).arg(data().version().minor());
-}
-
-/** Return a copy of the molecule that contains this atom */
-Molecule NewAtom::molecule() const
-{
-    return Molecule(*this);
-}
-
-/** Return a copy of the residue that contains this atom */
-Residue NewAtom::residue() const
-{
-    return Residue(*this);
-}
-
-/** Return the set of all atoms that are bonded to this atom */
-QSet<NewAtom> NewAtom::bondedAtoms() const
-{
-    QSet<AtomIndex> bondedatms = data().connectivity().atomsBondedTo(*this);
-
-    QSet<NewAtom> atoms;
-    atoms.reserve(bondedatms.count());
-
-    for (QSet<AtomIndex>::const_iterator it = bondedatms.constBegin();
-         it != bondedatms.constEnd();
-         ++it)
+    if (d->hasProperty(key))
     {
-        atoms.insert( NewAtom(*it, molecule()) );
+        coords = d->property(key);
     }
-
-    return atoms;
-}
-
-/** Return a set of all residues that are bonded to this atom
-    (includes the residue that contains this atom) */
-QSet<Residue> NewAtom::bondedResidues() const
-{
-    Residue res = this->residue();
-
-    QSet<ResNum> bondedres = data().connectivity().resNumsBondedTo(res.number());
-
-    QSet<Residue> allres;
-    allres.reserve( bondedres.count() + 1 );
-
-    allres.insert(res);
-
-    for (QSet<ResNum>::const_iterator it = bondedres.constBegin();
-         it != bondedres.constEnd();
-         ++it)
+    else
     {
-        allres.insert( molecule().residue(*it) );
+        coords = AtomicCoords(*d);
     }
-
-    return allres;
-}
-
-/** Return whether this atom is within bonding distance of 'other', to
-    within an error of 'err' angstroms */
-bool NewAtom::withinBondRadii(const NewAtom &other, double err) const
-{
-    double bonddist = info().bondOrderRadius() + other.info().bondOrderRadius() + err;
-
-    return Vector::distance2(*this, other) < bonddist*bonddist;
+    
+    coords.set(this->cgAtomIdx(), new_coords);
+    d->setProperty(key, coords);
 }
