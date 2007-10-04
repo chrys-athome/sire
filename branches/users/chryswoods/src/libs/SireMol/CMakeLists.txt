@@ -33,16 +33,23 @@ set ( SIREMOL_HEADERS
       cgid.h
       cgidentifier.h
       cgidx.h
+      cginfo.h
+      cginmol.h
       cgname.h
+      cginmol.h
+      chain.h
       chainchainid.h
       chainid.h
       chainidentifier.h
       chainidx.h
+      chaininfo.h
       chainname.h
       chainresid.h
+      chainsinmol.h
       connectivity.h
       cutgroup.h
       cuttingfunction.h
+      editor.h
       element-data.h
       element.h
       elementdb.h
@@ -76,15 +83,18 @@ set ( SIREMOL_HEADERS
       residentifier.h
       residue.h
       residuecutting.h
-      residueinfo.h
       residuesin.hpp
       residx.h
+      resinmol.h
+      resinfo.h
       resname.h
       resnum.h
       resresid.h
       segid.h
       segidentifier.h
       segidx.h
+      seginfo.h
+      seginmol.h
       segname.h
       segment.h
       specify.hpp
@@ -102,16 +112,21 @@ set ( SIREMOL_SOURCES
       atomidentifier.cpp
       atomcutting.cpp
       atominfo.cpp
-      atominfogroup.cpp
       atomselection.cpp
       atomselector.cpp
       atomsinmol.cpp
       cgidentifier.cpp
+      cginfo.cpp
+      cginmol.cpp 
+      chain.cpp
       chainchainid.cpp
+      chaininfo.cpp
       chainresid.cpp
+      chainsinmol.cpp
       connectivity.cpp
       cutgroup.cpp
       cuttingfunction.cpp
+      editor.cpp
       elementdb.cpp
       errors.cpp
       evaluator.cpp
@@ -133,9 +148,12 @@ set ( SIREMOL_SOURCES
       residentifier.cpp
       residue.cpp
       residuecutting.cpp
-      residueinfo.cpp
+      resinfo.cpp
+      resinmol.cpp
       resresid.cpp
       segidentifier.cpp
+      seginfo.cpp
+      seginmol.cpp
       segment.cpp
       splitmolecule.cpp
       weightfunction.cpp

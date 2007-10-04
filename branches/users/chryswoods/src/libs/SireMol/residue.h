@@ -58,27 +58,40 @@ friend QDataStream& ::operator>>(QDataStream&, Residue&);
 public:
     Residue();
     
-    Residue(const MoleculeView &molview, const ResID &resid);
+    Residue(const MoleculeData &moldata, const ResID &resid);
+
     Residue(const Residue &other);
 
     ~Residue();
 
     Residue& operator=(const Residue &other);
-    Residue& operator=(const MoleculeView &other);
+    
+    bool operator==(const Residue &other) const;
+    bool operator!=(const Residue &other) const;
     
     AtomSelection selectedAtoms() const;
     
-    void update(const MoleculeView &other);
+    void update(const MoleculeData &moldata);
 
     ResName name() const;
     ResNum number() const;
+    ResIdx index() const;
     
     ResidueInfo info() const;
     
+    template<class T>
+    T property(const PropertyName &key) const;
+    
+    template<class T>
+    T metadata(const PropertyName &metakey) const;
+    
+    template<class T>
+    T metadata(const PropertyName &key,
+               const PropertyName &metakey) const;
+    
     Mover<Residue> move() const;
-    Evaluator<Residue> evaluate() const;
+    Evaluator evaluate() const;
     Editor<Residue> edit() const;
-    Selector<Residue> selection() const;
     
     Molecule molecule() const;
     Chain chain() const;
@@ -93,10 +106,16 @@ public:
     AtomsInMol atoms(const AtomID &atomid) const;
     AtomsInMol atoms() const;
 
-    Properties properties() const;
+protected:
+    template<class T>
+    void setProperty(const QString &key, const T &value);
+
+    template<class T>
+    void setMetadata(const QString &metakey, const T &value);
     
-    Property property(const QString &key) const;
-    const Properties& metadata(const QString &key) const;
+    template<class T>
+    void setMetadata(const QString &key, const QString &metakey,
+                     const T &value);
 
 private:
     /** The index of the residue in the molecule */

@@ -109,7 +109,6 @@ public:
     Mover<Molecule> move() const;
     Evaluator evaluate() const;
     Editor<Molecule> edit() const;
-    Selector<Molecule> selection() const;
     
     Atom select(const AtomID &atomid) const;
     Residue select(const ResID &resid) const;
@@ -151,8 +150,21 @@ public:
     
     const Properties& properties() const;
     
-    const Property& property(const QString &key) const;
-    const Properties& metadata(const QString &key) const;
+    const Property& property(const PropertyName &key) const;
+    
+    const Property& metadata(const PropertyName &key,
+                             const PropertyName &metakey) const;
+                             
+    const Property& metadata(const PropertyName &metakey) const;
+
+protected:
+    void setProperty(const PropertyName &key, const PropertyBase &value);
+    
+    void setMetadata(const PropertyName &metakey,
+                     const PropertyBase &value);
+                     
+    void setMetadata(const PropertyName &key, const PropertyName &metakey,
+                     const PropertyBase &value);
 };
 
 }

@@ -26,3 +26,98 @@
   *
 \*********************************************/
 
+#ifndef SIREMOL_SEGMENT_H
+#define SIREMOL_SEGMENT_H
+
+#include "moleculeview.h"
+
+SIRE_BEGIN_HEADER
+
+namespace SireMol
+{
+class Segment;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMol::Segment&);
+QDataStream& operator>>(QDataStream&, SireMol::Segment&);
+
+namespace SireMol
+{
+
+/** This is a view of a single segment within a molecule
+
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT Segment : public MoleculeView
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const Segment&);
+friend QDataStream& ::operator>>(QDataStream&, Segment&);
+
+public:
+    Segment();
+    
+    Segment(const MoleculeData &data, const SegID &segid);
+    
+    Segment(const Segment &other);
+    
+    ~Segment();
+    
+    Segment& operator=(const Segment &other);
+    
+    bool operator==(const Segment &other) const;
+    bool operator!=(const Segment &other) const;
+    
+    AtomSelection selectedAtoms() const;
+    
+    void update(const MoleculeData &moldata) const;
+    
+    SegName name() const;
+    SegIdx index() const;
+    
+    SegmentInfo info() const;
+    
+    Mover<Segment> move() const;
+    Evaluator evaluate() const;
+    Editor<Segment> edit() const;
+    
+    Molecule molecule() const;
+    
+    Atom select(const AtomID &atomid) const;
+    AtomsInMol selectAll(const AtomID &atomid) const;
+    AtomsInMol selectAll() const;
+    
+    Atom atom(const AtomID &atomid) const;
+    AtomsInMol atoms(const AtomID &atomid) const;
+    AtomsInMol atoms() const;
+
+    template<class T>
+    T property(const PropertyName &key) const;
+    
+    template<class T>
+    T metadata(const PropertyName &key,
+               const PropertyName &metakey) const;
+
+protected:
+    template<class T>
+    void setProperty(const QString &key, const T &value);
+    
+    template<class T>
+    void setMetadata(const QString &key, const QString &metakey,
+                     const T &value);
+
+private:
+    /** The index of the segment in the molecule */
+    SegIdx segidx;
+    
+    /** The atoms that are part of this segment */
+    AtomSelection selected_atoms;
+};
+
+}
+
+Q_DECLARE_METATYPE(SireMol::Segment);
+
+SIRE_END_HEADER
+
+#endif

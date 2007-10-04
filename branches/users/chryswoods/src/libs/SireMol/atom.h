@@ -81,12 +81,16 @@ public:
     const CGAtomIdx& cgAtomIdx() const;
 
     AtomInfo info() const;
-
-    template<class T>
-    void setProperty(const QString &key, const T &value);
     
     template<class T>
     T property(const PropertyName &key) const;
+    
+    template<class T>
+    T metadata(const PropertyName &metakey) const;
+    
+    template<class T>
+    T metadata(const PropertyName &key,
+               const PropertyName &metakey) const;
     
     Mover<Atom> move() const;
     Evaluator evaluate() const;
@@ -96,8 +100,20 @@ public:
     Chain chain() const;
     Segment segment() const;
     CutGroup cutGroup() const;
+    Molecule molecule() const;
 
     void assertContains(AtomIdx atomidx) const;
+
+protected:
+    template<class T>
+    void setProperty(const QString &key, const T &value);
+
+    template<class T>
+    void setMetadata(const QString &metakey, const T &value);
+    
+    template<class T>
+    void setMetadata(const QString &key, const QString &metakey,
+                     const T &value);
 
 private:
     /** The index of this atom in the molecule */
