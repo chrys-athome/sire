@@ -153,12 +153,6 @@ AtomIdx Atom::index() const
     return atomidx;
 }
 
-/** Return the info object about this atom */
-AtomInfo Atom::info() const
-{
-    return AtomInfo( d->info(), atomidx );
-}
-
 /** Return a Mover that can be used to move this atom */
 Mover<Atom> Atom::move() const
 {

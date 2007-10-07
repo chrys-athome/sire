@@ -149,13 +149,6 @@ ResIdx Residue::index() const
     return residx;
 }
 
-/** Return an info object that describes the names
-    and arrangement of this residue */
-ResInfo Residue::info() const
-{
-    return ResidueInfo( d->info(), residx );
-}
-
 /** Return a Mover that moves all of the atoms in this residue */
 Mover<Residue> Residue::move() const
 {
@@ -181,6 +174,47 @@ Editor<Residue> Residue::edit() const
 Selector<Residue> Residue::selection() const
 {
     return Selector<Residue>(*this);
+}
+
+/** Return the number of atoms in this residue */
+int Residue::nAtoms() const
+{
+    return d->info().nAtoms(residx);
+}
+
+/** Return the indicies of the atoms in this residue, in the
+    order that they appear in this residue */
+QList<AtomIdx> Residue::atomIdxs() const
+{
+    return d->info().getAtomsIn(chainidx);
+}
+
+/** Return whether or not this residue contains the atom 
+    at index 'atomidx' */
+bool Residue::contains(AtomIdx atomidx) const
+{
+    return d->info().contains(residx, atomidx);
+}
+
+/** Return whether or not this residue contains all of 
+    the atoms identified by the ID 'atomid' */
+bool Residue::contains(const AtomID &atomid) const
+{
+    return d->info().containsAll(residx, atomid);
+}
+
+/** Return whether or not this residue contains all of 
+    the atoms identified by the ID 'atomid' */
+bool Residue::containsAll(const AtomID &atomid) const
+{
+    return d->info().containsAll(residx, atomid);
+}
+
+/** Return whether or not this residue contains some of  
+    the atoms identified by the ID 'atomid' */
+bool Residue::containsSome(const AtomID &atomid) const
+{
+    return d->info().containsSome(residx, atomid);
 }
 
 /** Return the molecule that contains this residue */

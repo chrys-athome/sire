@@ -84,8 +84,6 @@ public:
     CGName name() const;
     CGIdx index() const;
     
-    CGInfo info() const;
-    
     template<class T>
     T property(const PropertyName &key) const;
     
@@ -100,6 +98,16 @@ public:
     Evaluator evaluate() const;
     Editor<CutGroup> edit() const;
     Selector<CutGroup> selection() const;
+
+    int nAtoms() const;
+
+    const QList<AtomIdx>& atomIdxs() const;
+
+    bool contains(const AtomID &atomid) const;
+    bool contains(AtomIdx atomidx) const;
+
+    bool containsAll(const AtomID &atomid) const;
+    bool containsSome(const AtomID &atomid) const;
 
     Atom select(const AtomID &atomid) const;
     AtomsInMol selectAll(const AtomID &atomid) const;

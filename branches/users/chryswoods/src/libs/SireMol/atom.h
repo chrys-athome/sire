@@ -61,7 +61,6 @@ public:
     typedef Index AtomIdx;
     typedef Name AtomName;
     typedef Number AtomNum;
-    typedef Info AtomInfo;
 
     Atom();
     

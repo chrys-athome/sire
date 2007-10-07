@@ -147,12 +147,12 @@ public:
     QList<ChainIdx> getChains() const;
     QList<ResIdx> getResidues() const;
     
-    QList<ResIdx> getResiduesIn(ChainIdx chainidx) const;
+    const QList<ResIdx>& getResiduesIn(ChainIdx chainidx) const;
     QList<ResIdx> getResiduesIn(const ChainID &chainid) const;
 
     QList<AtomIdx> getAtoms() const;
 
-    QList<AtomIdx> getAtomsIn(ResIdx residx) const;
+    const QList<ResIdx>& getAtomsIn(ResIdx residx) const;
     QList<AtomIdx> getAtomsIn(const ResID &resid) const;
     QList<AtomIdx> getAtomsIn(ResIdx residx, const AtomName &name) const;
     QList<AtomIdx> getAtomsIn(const ResID &resid,
@@ -165,10 +165,10 @@ public:
     QList<AtomIdx> getAtomsIn(const ChainID &chainid,
                               const AtomName &atomname) const;
                               
-    QList<AtomIdx> getAtomsIn(CGIdx cgidx) const;
+    const QList<AtomIdx>& getAtomsIn(CGIdx cgidx) const;
     QList<AtomIdx> getAtomsIn(const CGID &cgid) const;
     
-    QList<AtomIdx> getAtomsIn(SegIdx segidx) const;
+    const QList<AtomIdx>& getAtomsIn(SegIdx segidx) const;
     QList<AtomIdx> getAtomsIn(const SegID &segid) const;
 
     ChainIdx parentChain(ResIdx residx) const;
@@ -185,6 +185,24 @@ public:
     
     CGIdx parentCutGroup(AtomIdx atomidx) const;
     CGIdx parentCutGroup(const AtomID &atomid) const;
+    
+    bool contains(ResIdx residx, AtomIdx atomidx) const;
+    bool contains(ChainIdx chainidx, AtomIdx atomidx) const;
+    bool contains(SegIdx segidx, AtomIdx atomidx) const;
+    bool contains(CGIdx cgidx, AtomIdx atomidx) const;
+    bool contains(ChainIdx chainidx, ResIdx residx) const;
+    
+    bool containsAll(ResIdx residx, const AtomID &atomid) const;
+    bool containsAll(ChainIdx chainidx, const AtomID &atomid) const;
+    bool containsAll(SegIdx segidx, const AtomID &atomid) const;
+    bool containsAll(CGIdx cgidx, const AtomID &atomid) const;
+    bool containsAll(ChainIdx chainidx, const ResID &resid) const;
+
+    bool containsSome(ResIdx residx, const AtomID &atomid) const;
+    bool containsSome(ChainIdx chainidx, const AtomID &atomid) const;
+    bool containsSome(SegIdx segidx, const AtomID &atomid) const;
+    bool containsSome(CGIdx cgidx, const AtomID &atomid) const;
+    bool containsSome(ChainIdx chainidx, const ResID &resid) const;
     
     int nAtoms() const;
     
@@ -259,7 +277,7 @@ private:
         ChainIdx chainidx;
 
         /** The sorted list of the indicis of all atoms that are in this residue */
-        QVector<AtomIdx> atom_indicies;
+        QList<AtomIdx> atom_indicies;
         
         /** Hash mapping the name of each atom in this residue
             to the indicies of the atoms in the molecule
@@ -278,7 +296,7 @@ private:
         
         /** The sorted list of all indicies of the residues that 
             are contained in this chain */
-        QVector<ResIdx> res_indicies;
+        QList<ResIdx> res_indicies;
     };
 
     class SegInfo
@@ -291,7 +309,7 @@ private:
         SegName name;
         
         /** The sorted list of all indicies of the atoms that are in this residue */
-        QVector<AtomIdx> atom_indicies;
+        QList<AtomIdx> atom_indicies;
     };
     
     class CGInfo
@@ -305,7 +323,7 @@ private:
         
         /** The sorted list of all indicies of all of the atoms 
             that are in this CutGroup */
-        QVector<AtomIdx> atom_indicies;
+        QList<AtomIdx> atom_indicies;
     };
     
     class AtomInfo

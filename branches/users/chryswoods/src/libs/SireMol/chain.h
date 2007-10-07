@@ -79,8 +79,6 @@ public:
     ChainName name() const;
     ChainIdx index() const;
     
-    ChainInfo info() const;
-    
     template<class T>
     T property(const PropertyName &key) const;
     
@@ -95,6 +93,26 @@ public:
     Evaluator evaluate() const;
     Editor<Chain> edit() const;
     Selector<Chain> selection() const;
+    
+    int nAtoms() const;
+    
+    QList<AtomIdx> atomIdxs() const;
+    
+    bool contains(AtomIdx atomidx) const;
+    bool contains(const AtomID &atomid) const;
+    
+    bool containsAll(const AtomID &atomid) const;
+    bool containsSome(const AtomID &atomid) const;
+    
+    int nResidues() const;
+    
+    const QList<ResIdx>& resIdxs() const;
+    
+    bool contains(ResIdx residx) const;
+    bool contains(const ResID &resid) const;
+    
+    bool containsAll(const ResID &resid) const;
+    bool containsSome(const ResID &resid) const;
     
     Molecule molecule() const;
     

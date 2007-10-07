@@ -81,8 +81,6 @@ public:
     ResNum number() const;
     ResIdx index() const;
     
-    ResInfo info() const;
-    
     template<class T>
     T property(const PropertyName &key) const;
     
@@ -97,6 +95,16 @@ public:
     Evaluator evaluate() const;
     Editor<Residue> edit() const;
     Selector<Residue> selection() const;
+    
+    int nAtoms() const;
+    
+    const QList<AtomIdx>& atomIdxs() const;
+    
+    bool contains(AtomIdx atomidx) const;
+    bool contains(const AtomID &atomid) const;
+    
+    bool containsAll(const AtomID &atomid) const;
+    bool containsSome(const AtomID &atomid) const;
     
     Molecule molecule() const;
     Chain chain() const;

@@ -79,8 +79,6 @@ public:
     
     SegName name() const;
     SegIdx index() const;
-    
-    SegInfo info() const;
 
     template<class T>
     T property(const PropertyName &key) const;
@@ -96,6 +94,16 @@ public:
     Evaluator evaluate() const;
     Editor<Segment> edit() const;
     Selector<Segment> selection() const;
+    
+    int nAtoms() const;
+    
+    const QList<AtomIdx>& atomIdxs() const;
+    
+    bool contains(SegIdx segidx) const;
+    bool contains(const SegID &segid) const;
+    
+    bool containsAll(const SegId &segid) const;
+    bool containsSome(const SegID &segid) const;
     
     Molecule molecule() const;
     

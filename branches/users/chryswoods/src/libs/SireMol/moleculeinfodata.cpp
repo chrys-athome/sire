@@ -738,6 +738,47 @@ CGIdx MoleculeInfoData::parentCutGroup(const AtomID &atomid) const
     return atoms_by_index[this->atomIdx(atomid)].cgatomidx.cutGroup();
 }
 
+bool MoleculeInfoData::contains(ResIdx residx, AtomIdx atomidx) const;
+bool MoleculeInfoData::contains(ChainIdx chainidx, AtomIdx atomidx) const;
+bool MoleculeInfoData::contains(SegIdx segidx, AtomIdx atomidx) const;
+bool MoleculeInfoData::contains(CGIdx cgidx, AtomIdx atomidx) const;
+bool MoleculeInfoData::contains(ChainIdx chainidx, ResIdx residx) const;
+
+bool MoleculeInfoData::containsAll(ResIdx residx, const AtomID &atomid) const;
+bool MoleculeInfoData::containsAll(ChainIdx chainidx, const AtomID &atomid) const;
+bool MoleculeInfoData::containsAll(SegIdx segidx, const AtomID &atomid) const;
+bool MoleculeInfoData::containsAll(CGIdx cgidx, const AtomID &atomid) const;
+bool MoleculeInfoData::containsAll(ChainIdx chainidx, const ResID &resid) const;
+
+/** Return whether or not the residue at index 'residx' contains any of
+    the atoms identified by the ID 'atomid' */
+bool MoleculeInfoData::containsSome(ResIdx residx, const AtomID &atomid) const
+{
+    try
+    {
+        QList<AtomIdx> atomidxs = atomid.map(*this);
+        
+        const QList<AtomIdx> &res_atoms = this->getAtomIdxs(residx);
+        
+        foreach (AtomIdx atomidx, atomidxs)
+        {
+            if (res_atoms.contains(atomidx))
+                return true;
+        }
+        
+        return false;
+    }
+    catch(...)
+    {
+        return false;
+    }
+}
+
+bool MoleculeInfoData::containsSome(ChainIdx chainidx, const AtomID &atomid) const;
+bool MoleculeInfoData::containsSome(SegIdx segidx, const AtomID &atomid) const;
+bool MoleculeInfoData::containsSome(CGIdx cgidx, const AtomID &atomid) const;
+bool MoleculeInfoData::containsSome(ChainIdx chainidx, const ResID &resid) const;
+
 /** Return the number of atoms in the molecule */
 int MoleculeInfoData::nAtoms() const
 {

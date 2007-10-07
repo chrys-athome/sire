@@ -20,8 +20,6 @@ set ( SIREMOL_HEADERS
       atomidcombos.h
       atomidentifier.h
       atomidx.h
-      atominfo.h
-      atominfogroup.h
       atomname.h
       atomnum.h
       atomselection.h
@@ -32,14 +30,12 @@ set ( SIREMOL_HEADERS
       cgid.h
       cgidentifier.h
       cgidx.h
-      cginfo.h
       cgname.h
       chain.h
       chainchainid.h
       chainid.h
       chainidentifier.h
       chainidx.h
-      chaininfo.h
       chainname.h
       chainresid.h
       connectivity.h
@@ -58,7 +54,6 @@ set ( SIREMOL_HEADERS
       moleculedata.h
       moleculegroup.h
       moleculegroups.h
-      moleculeinfo.h
       moleculeinfodata.h
       moleculeinfodataeditor.h
       moleculemover.h
@@ -81,14 +76,12 @@ set ( SIREMOL_HEADERS
       residuecutting.h
       residuesin.hpp
       residx.h
-      resinfo.h
       resname.h
       resnum.h
       resresid.h
       segid.h
       segidentifier.h
       segidx.h
-      seginfo.h
       segname.h
       segment.h
       selector.hpp
@@ -106,14 +99,11 @@ set ( SIREMOL_SOURCES
       atomid.cpp
       atomidentifier.cpp
       atomcutting.cpp
-      atominfo.cpp
       atomselection.cpp
       atomselector.cpp
       cgidentifier.cpp
-      cginfo.cpp
       chain.cpp
       chainchainid.cpp
-      chaininfo.cpp
       chainresid.cpp
       connectivity.cpp
       cutgroup.cpp
@@ -127,7 +117,6 @@ set ( SIREMOL_SOURCES
       moleculedata.cpp
       moleculegroup.cpp
       moleculegroups.cpp
-      moleculeinfo.cpp
       moleculeinfodata.cpp
       moleculeinfodataeditor.cpp
       moleculemover.cpp
@@ -140,10 +129,8 @@ set ( SIREMOL_SOURCES
       residentifier.cpp
       residue.cpp
       residuecutting.cpp
-      resinfo.cpp
       resresid.cpp
       segidentifier.cpp
-      seginfo.cpp
       segment.cpp
       splitmolecule.cpp
       weightfunction.cpp

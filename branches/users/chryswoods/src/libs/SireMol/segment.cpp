@@ -142,12 +142,6 @@ SegIdx Segment::index() const
     return segidx;
 }
 
-/** Return the info object that describes this Segment */
-SegmentInfo Segment::info() const
-{
-    return SegmentInfo( d->info(), segidx );
-}
-
 /** Return an object that can move a copy of this Segment */
 Mover<Segment> Segment::move() const
 {
@@ -172,6 +166,47 @@ Editor<Segment> Segment::edit() const
 Selector<Segment> Segment::selection() const
 {
     return Selector<Segment>(*this);
+}
+
+/** Return the number of atoms in this Segment */
+int Segment::nAtoms() const
+{
+    return d->info().nAtoms(segidx);
+}
+
+/** Return the indicies of the atoms in this segment, in the
+    order that they appear in this segment */
+QList<AtomIdx> Segment::atomIdxs() const
+{
+    return d->info().getAtomsIn(segidx);
+}
+
+/** Return whether or not this segment contains the atom 
+    at index 'atomidx' */
+bool Segment::contains(AtomIdx atomidx) const
+{
+    return d->info().contains(segidx, atomidx);
+}
+
+/** Return whether or not this segment contains all of 
+    the atoms identified by the ID 'atomid' */
+bool Segment::contains(const AtomID &atomid) const
+{
+    return d->info().containsAll(segidx, atomid);
+}
+
+/** Return whether or not this segment contains all of 
+    the atoms identified by the ID 'atomid' */
+bool Segment::containsAll(const AtomID &atomid) const
+{
+    return d->info().containsAll(segidx, atomid);
+}
+
+/** Return whether or not this segment contains some of  
+    the atoms identified by the ID 'atomid' */
+bool Segment::containsSome(const AtomID &atomid) const
+{
+    return d->info().containsSome(segidx, atomid);
 }
 
 /** Return the molecule that contains this Segment */

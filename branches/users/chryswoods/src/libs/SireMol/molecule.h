@@ -104,8 +104,6 @@ public:
     const MolName& name() const;
     const MolNum& number() const;
     
-    const MoleculeInfo& info() const;
-    
     Mover<Molecule> move() const;
     Evaluator evaluate() const;
     Editor<Molecule> edit() const;
@@ -116,11 +114,11 @@ public:
     CutGroup select(const CGID &cgid) const;
     Segment select(const Segment &segid) const;
     
-    AtomsInMol selectAll(const AtomID &atomid) const;
-    ResiduesInMol selectAll(const ResID &resid) const;
-    ChainsInMol selectAll(const ChainID &chainid) const;
-    CutGroupsInMol selectAll(const CGID &cgid) const;
-    SegmentsInMol selectAll(const SegID &segid) const;
+    Selector<Atom> selectAll(const AtomID &atomid) const;
+    Selector<Residue> selectAll(const ResID &resid) const;
+    Selector<Chain> selectAll(const ChainID &chainid) const;
+    Selector<CutGroup> selectAll(const CGID &cgid) const;
+    Selector<Segment> selectAll(const SegID &segid) const;
     
     Atom atom(const AtomID &atomid) const;
     Residue residue(const ResidueID &resid) const;
@@ -128,25 +126,25 @@ public:
     CutGroup cutGroup(const CGID &cgid) const;
     Segment segment(const SegID &segid) const;
     
-    AtomsInMol atoms(const AtomID &atomid) const;
-    AtomsInMol atoms(const ResidueID &resid) const;
-    AtomsInMol atoms(const ChainID &chainid) const;
-    AtomsInMol atoms(const CGID &cgid) const;
-    AtomsInMol atoms(const SegID &segid) const;
-    AtomsInMol atoms() const;
+    Selector<Atom> atoms(const AtomID &atomid) const;
+    Selector<Atom> atoms(const ResidueID &resid) const;
+    Selector<Atom> atoms(const ChainID &chainid) const;
+    Selector<Atom> atoms(const CGID &cgid) const;
+    Selector<Atom> atoms(const SegID &segid) const;
+    Selector<Atom> atoms() const;
     
-    ResInMol residues(const ResID &resid) const;
-    ResInMol residues(const ChainID &chainid) const;
-    ResInMol residues() const;
+    Selector<Residue> residues(const ResID &resid) const;
+    Selector<Residue> residues(const ChainID &chainid) const;
+    Selector<Residue> residues() const;
     
-    ChainsInMol chains(const ChainID &chainid) const;
-    ChainsInMol chains();
+    Selector<Chain> chains(const ChainID &chainid) const;
+    Selector<Chain> chains();
     
-    CutGroupsInMol cutGroups(const CGID &cgid) const;
-    CutGroupsInMol cutGroups();
+    Selector<CutGroup> cutGroups(const CGID &cgid) const;
+    Selector<CutGroup> cutGroups();
     
-    SegmentsInMol segments(const SegID &segid) const;
-    SegmentsInMol segments();
+    Selector<Segment> segments(const SegID &segid) const;
+    Selector<Segment> segments();
     
     const Properties& properties() const;
     

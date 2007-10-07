@@ -165,6 +165,48 @@ Selector<CutGroup> CutGroup::selection() const
     return Selector<CutGroup>(*this);
 }
 
+/** Return the number of atoms in this CutGroup */
+int CutGroup::nAtoms() const
+{
+    return d->info().nAtoms(cgidx);
+}
+
+/** Return the indicies of the atoms in this CutGroup, in the
+    order they appear in this CutGroup */
+const QList<AtomIdx>& CutGroup::atomIdxs() const
+{
+    return d->info().getAtomsIn(cgidx);
+}
+
+/** Return whether or not this CutGroup contains all of the 
+    atoms identified by the ID 'atomid'
+*/
+bool CutGroup::contains(const AtomID &atomid) const
+{
+    return d->info().containsAll(cgidx, atomid);
+}
+
+/** Return whether or not this CutGroup contains the atom 
+    at index 'atomidx' in the molecule */
+bool CutGroup::contains(AtomIdx atomidx) const
+{
+    return d->info().contains(cgidx, atomidx);
+}
+
+/** Return whether or not this CutGroup contains all of 
+    the atoms that match the ID 'atomid' */
+bool CutGroup::containsAll(const AtomID &atomid) const
+{
+    return d->info().containsAll(cgidx, atomid);
+}
+
+/** Return whether or not this CutGroup contains some of
+    the atoms that match the ID 'atomid' */
+bool CutGroup::containsSome(const AtomID &atomid) const
+{
+    return d->info().containsSome(cgidx, atomid);
+}
+
 /** Return the molecule that contains this CutGroup */
 Molecule CutGroup::molecule() const
 {

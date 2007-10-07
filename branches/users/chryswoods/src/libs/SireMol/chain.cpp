@@ -173,6 +173,88 @@ Selector<Chain> Chain::selection() const
     return Selector<Chain>(*this);
 }
 
+/** Return the number of atoms in this Chain */
+int Chain::nAtoms() const
+{
+    return d->info().nAtoms(chainidx);
+}
+
+/** Return the indicies of the atoms in this chain, in the
+    order that they appear in this chain */
+QList<AtomIdx> Chain::atomIdxs() const
+{
+    return d->info().getAtomsIn(chainidx);
+}
+
+/** Return whether or not this chain contains the atom 
+    at index 'atomidx' */
+bool Chain::contains(AtomIdx atomidx) const
+{
+    return d->info().contains(chainidx, atomidx);
+}
+
+/** Return whether or not this chain contains all of 
+    the atoms identified by the ID 'atomid' */
+bool Chain::contains(const AtomID &atomid) const
+{
+    return d->info().containsAll(chainidx, atomid);
+}
+
+/** Return whether or not this chain contains all of 
+    the atoms identified by the ID 'atomid' */
+bool Chain::containsAll(const AtomID &atomid) const
+{
+    return d->info().containsAll(chainidx, atomid);
+}
+
+/** Return whether or not this chain contains some of  
+    the atoms identified by the ID 'atomid' */
+bool Chain::containsSome(const AtomID &atomid) const
+{
+    return d->info().containsSome(chainidx, atomid);
+}
+
+/** Return the number of residues in this chain */
+int Chain::nResidues() const
+{
+    return d->info().nResidues(chainidx);
+}
+
+/** Return the list of indicies of residues that are
+    in this chain, in the order they appear in this chain */
+const QList<ResIdx>& Chain::resIdxs() const
+{
+    return d->info().getResiduesIn(chainidx);
+}
+
+/** Return whether or not this chain contains the 
+    residue at index 'residx' */
+bool Chain::contains(ResIdx residx) const
+{
+    return d->info().contains(chainidx, residx);
+}
+
+/** Return whether or not this chain contains all
+    of the residues identified by the ID 'resid' */
+bool Chain::contains(const ResID &resid) const
+{
+    return d->info().containsAll(chainidx, resid);
+}
+
+/** Return whether or not this chain contains all
+    of the residues identified by the ID 'resid' */
+bool Chain::containsAll(const ResID &resid) const
+{
+    return d->info().containsAll(chainidx, resid);
+}
+
+/** Return whether or not this chain contains some
+    of the residues identified by the ID 'resid' */
+bool Chain::containsSome(const ResID &resid) const
+{
+    return d->info().containsSome(chainidx, resid);
+}
+
 /** Return the molecule that contains this chain */
 Molecule Chain::molecule() const
 {
