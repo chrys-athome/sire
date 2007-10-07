@@ -94,9 +94,84 @@ protected:
     MoleculeView(const MoleculeData &moldata);
     MoleculeView(const MoleculeView &other);
 
+    template<class ViewType, class PropType, class T>
+    static void setProperty(const typename ViewType::Index &idx,
+                            MoleculeData &data,
+                            const QString &key, const T &value);
+
+    template<class ViewType, class PropType, class T>
+    static void setMetadata(const typename ViewType::Index &idx,
+                            MoleculeData &data,
+                            const QString &metakey, const T &value);
+
+    template<class ViewType, class PropType, class T>
+    static void setMetadata(const typename ViewType::Index &idx, 
+                            MoleculeData &data,
+                            const QString &key, const QString &metakey,
+                            const T &value);
+                            
+
     /** Shared pointer to the raw data of the molecule */
     QSharedDataPointer<MoleculeData> d;
 };
+
+template<class ViewType, class PropType, class T>
+SIRE_OUTOFLINE_TEMPLATE
+void MoleculeView::setProperty(const typename ViewType::Index &idx, 
+                               MoleculeData &data,
+                               const QString &key, const T &value)
+{
+    PropType props;
+    
+    if (data.hasProperty(key)
+        props = data.property(key);
+        
+    else
+        props = PropType(data);
+        
+    props.set(idx, value);
+    
+    data.setProperty(key, props);
+}
+
+template<class ViewType, class PropType, class T>
+SIRE_OUTOFLINE_TEMPLATE
+void MoleculeView::setMetadata(const typename ViewType::Index &idx, 
+                               MoleculeData &data,
+                               const QString &metakey, const T &value)
+{
+    PropType props;
+    
+    if (data.hasMetadata(metakey)
+        props = data.metadata(metakey);
+        
+    else
+        props = PropType(data);
+        
+    props.set(idx, value);
+    
+    data.setMetadata(metakey, props);
+}
+
+template<class ViewType, class PropType, class T>
+SIRE_OUTOFLINE_TEMPLATE
+void MoleculeView::setMetadata(const typename ViewType::Index &idx, 
+                               MoleculeData &data,
+                               const QString &key, const QString &metakey,
+                               const T &value)
+{
+    PropType props;
+    
+    if (data.hasMetadata(key, metakey)
+        props = data.metadata(key, metakey);
+        
+    else
+        props = PropType(data);
+        
+    props.set(idx, value);
+    
+    data.setMetadata(key, metakey, props);
+}
 
 }
 

@@ -27,444 +27,200 @@
 \*********************************************/
 
 #include "cutgroup.h"
-#include "atomid.h"
-#include "atom.h"
 
-#include "SireError/errors.h"
+#include "editor.hpp"
+#include "mover.hpp"
+#include "selector.hpp"
+#include "evaluator.h"
+
 #include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
 
 using namespace SireMol;
-using namespace SireVol;
 using namespace SireStream;
 
-static const RegisterMetaType<SireMol::CutGroup> r_cutgroup;
+RegisterMetaType<CutGroup> r_cg;
 
-/** Serialise to a binary data stream */
-QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const CutGroup &cgroup)
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const CutGroup &cg)
 {
-    writeHeader(ds, r_cutgroup, 1) << cgroup.atominfos << cgroup.coords;
+    writeHeader(ds, r_cg, 1);
+
+    SharedDataStream sds(ds);
+    
+    sds << cg.cgidx << static_cast<const MoleculeView&>(CutGroup);
+
     return ds;
 }
 
-/** Deserialise from a binary data stream */
-QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, CutGroup &cgroup)
+/** Deserialise from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, CutGroup &cg)
 {
-    VersionID v = readHeader(ds, r_cutgroup);
+    VersionID v = readHeader(ds, r_cg);
 
     if (v == 1)
     {
-        ds >> cgroup.atominfos >> cgroup.coords;
+        SharedDataStream sds(ds);
+        
+        sds >> cg.cgidx >> static_cast<MoleculeView&>(CutGroup);
     }
     else
-        throw version_error(v, "1", r_cutgroup, CODELOC);
+        throw version_error(v, "1", r_cg, CODELOC);
 
     return ds;
 }
 
 /** Null constructor */
-CutGroup::CutGroup()
+CutGroup::CutGroup() : MoleculeView(), CGIdx( CGIdx::null() )
 {}
 
-/** Construct a CutGroup containing the 'atoms'. This does not check
-    for duplicate atoms, though you would be wise not to include
-    duplicate atoms! */
-CutGroup::CutGroup(const QVector<Atom> atoms)
-{
-    int sz = atoms.count();
-
-    if (sz > 0)
-    {
-        //get a pointer to the array containing the atoms
-        const Atom *atomarray = atoms.constData();
-
-        //make space for the AtomInfo objects
-        QVector<AtomInfo> atominfovector;
-        atominfovector.resize(sz);
-
-        //edit a new CoordGroup
-        CoordGroupEditor editor = CoordGroup(sz).edit();
-
-        //get a mutable pointer to the coordinate array, and the info array
-        AtomInfo *infoarray = atominfovector.data();
-        Vector *coordarray = editor.data();
-
-        //copy the information from the Atom array into the info and coordinate arrays
-        for (int i=0; i<sz; ++i)
-        {
-            coordarray[i] = atomarray[i];
-            infoarray[i] = atomarray[i];
-        }
-
-        //save the coordinates
-        coords = editor.commit();
-        //save the metadata
-        atominfos = atominfovector;
-    }
-}
-
-/** Construct a CutGroup containing the 'atoms'. This does not check
-    for duplicate atoms, though you would be wise not to include
-    duplicate atoms! */
-CutGroup::CutGroup(const QList<Atom> atoms)
-{
-    int sz = atoms.count();
-
-    if (sz > 0)
-    {
-        QVector<AtomInfo> atominfovector;
-        atominfovector.resize(sz);
-
-        //edit a new CoordGroup
-        CoordGroupEditor editor = CoordGroup(sz).edit();
-
-        //get mutable pointers to the coordinate and info arrays
-        AtomInfo *infoarray = atominfovector.data();
-        Vector *coordarray = editor.data();
-
-        //copy the information from the list
-        int i = 0;
-        for (QList<Atom>::const_iterator it = atoms.begin();
-             it != atoms.end();
-             ++it)
-        {
-            coordarray[i] = *it;
-            infoarray[i] = *it;
-            ++i;
-        }
-
-        //save the coordinates
-        coords = editor.commit();
-        //save the metadata
-        atominfos = atominfovector;
-    }
-}
-
-/** This function checks that the AtomInfoGroup and CoordGroup that comprise
-    this CutGroup are compatible - if not then an exception if thrown
-
-    \throw SireError::incompatible_error
+/** Construct the CutGroup at ID 'cgid' in the molecule whose data
+    is in 'moldata'
+    
+    \throw SireMol::missing_CutGroup
+    \throw SireMol::duplicate_CutGroup
+    \throw SireError::invalid_index
 */
-void CutGroup::assertCompatible() const
-{
-    if (atominfos.nAtoms() != coords.count())
-        throw SireError::incompatible_error( QObject::tr(
-              "You cannot create a CutGroup from an AtomInfo containing "
-              "%1 atoms, and a CoordGroup containing %2 sets of coordinates!")
-                  .arg(atominfos.nAtoms()).arg(coords.count()), CODELOC );
-}
+CutGroup::CutGroup(const MoleculeData &moldata, const CGID &cgid)
+      : MoleculeView(moldata), cgidx( moldata.info().cgIdx(cgid) )
+{}
 
-/** Construct a CutGroup using the atom information from 'infos' and
-    the coordinates from 'coordinates'. The number of coordinates in 'coordinates'
-    must be the same as the number of atoms in 'infos' or an
-    exception will be thrown.
-
-    \throw SireError::incompatible_error
-*/
-CutGroup::CutGroup(const AtomInfoGroup &infos, const CoordGroup &coordinates)
-         : atominfos(infos), coords(coordinates)
-{
-    this->assertCompatible();
-}
-
-/** Construct a CutGroup using the atom information from 'infos' and
-    the coordinates in 'coordinates'. The number of coordinates in
-    'coordinates' must be the same as the number of atoms in 'infos'
-    or an exception will be thrown
-
-    \throw SireError::incompatible_error
-*/
-CutGroup::CutGroup(const AtomInfoGroup &infos,
-                   const QVector<Vector> &coordinates)
-         : atominfos(infos), coords(coordinates)
-{
-    this->assertCompatible();
-}
-
-/** Construct a CutGroup using the atom infomation from 'infos'. The
-    atoms are all initially placed at the origin. */
-CutGroup::CutGroup(const AtomInfoGroup &infos)
-         : atominfos(infos)
-{
-    if (atominfos.nAtoms() > 0)
-        coords = CoordGroup(atominfos.nAtoms(), Vector(0));
-}
-
-/** Copy constructor - fast as the data for this object is implicitly shared */
+/** Copy constructor */
 CutGroup::CutGroup(const CutGroup &other)
-         : atominfos(other.atominfos), coords(other.coords)
+      : MoleculeView(other), cgidx(other.cgidx)
 {}
 
 /** Destructor */
 CutGroup::~CutGroup()
 {}
 
+/** Copy assignment operator */
+CutGroup& CutGroup::operator=(const CutGroup &other)
+{
+    MoleculeView::operator=(other);
+    cgidx = other.cgidx;
+    return *this;
+}
+
 /** Comparison operator */
 bool CutGroup::operator==(const CutGroup &other) const
 {
-    return atominfos == other.atominfos and coords == other.coords;
+    return cgidx == other.cgidx and 
+           MoleculeView::operator==(other);
 }
 
 /** Comparison operator */
 bool CutGroup::operator!=(const CutGroup &other) const
 {
-    return atominfos != other.atominfos or coords != other.coords;
+    return cgidx != other.cgidx or
+           MoleculeView::operator!=(other);
 }
 
-/** Return a copy of the 'ith' atom - this will throw an exception
-    if 'i' refers to an invalid index
+/** Return the atoms that are in this CutGroup */
+AtomSelection CutGroup::selectedAtoms() const
+{
+    return selected_atoms;
+}
 
+/** Return the name of this CutGroup */
+CutGroupName CutGroup::name() const
+{
+    return d->info().name(cgidx);
+}
+
+/** Return the index of this CutGroup in the molecule */
+CGIdx CutGroup::index() const
+{
+    return cgidx;
+}
+
+/** Return the info object that describes this CutGroup */
+CutGroupInfo CutGroup::info() const
+{
+    return CutGroupInfo( d->info(), cgidx );
+}
+
+/** Return an object that can move a copy of this CutGroup */
+Mover<CutGroup> CutGroup::move() const
+{
+    return Mover<CutGroup>(*this);
+}
+
+/** Return an evaluator that can evaluate properties 
+    of this CutGroup */
+Evaluator CutGroup::evaluate() const
+{
+    return Evaluator(*this);
+}
+
+/** Return an editor that can edit this CutGroup */
+Editor<CutGroup> CutGroup::edit() const
+{
+    return Editor<CutGroup>(*this);
+}
+
+/** Return a selector that can change the selection of CutGroups */
+Selector<CutGroup> CutGroup::selection() const
+{
+    return Selector<CutGroup>(*this);
+}
+
+/** Return the molecule that contains this CutGroup */
+Molecule CutGroup::molecule() const
+{
+    return Molecule(this->data());
+}
+
+/** Return the atom in this CutGroup that also has ID 'atomid'
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
     \throw SireError::invalid_index
 */
-Atom CutGroup::at(AtomID i) const
+Atom CutGroup::atom(const AtomID &atomid) const
 {
-    //try 'coords' first, as this will throw an exception of the
-    //right type
-    const Vector &coord = coords[i];
-
-    //now get the info
-    const AtomInfo &info = atominfos[i];
-
-    return Atom(info,coord);
+    return Atom( this->data(), cgidx + atomid );
 }
 
-/** Return a copy of the 'ith' atom - this will throw an exception
-    if 'i' refers to an invalid index
+/** Return the atoms in this CutGroup that also have the ID 'atomid'
 
+    \throw SireMol::missing_atom
     \throw SireError::invalid_index
 */
-Atom CutGroup::atom(AtomID i) const
+AtomsInMol CutGroup::atoms(const AtomID &atomid) const
 {
-    return this->at(i);
+    return AtomsInMol( this->data(), cgidx + atomid );
 }
 
-/** Return a copy of the coordinates of the 'ith' atom -  this will
-    throw an exception if 'i' refers to an invalid index. 
-    
-    \throw SireMol::invalid_index
-*/
-Vector CutGroup::coordinates(AtomID i) const
+/** Return all of the atoms in this CutGroup */
+AtomsInMol CutGroup::atoms() const
 {
-    return coords[i];
+    return AtomsInMol( this->data(), cgidx.atoms() );
 }
 
-/** Return a copy of the 'ith' atom - this will throw an exception
-    if 'i' refers to an invalid index
+/** Return the atom in this CutGroup that also has ID 'atomid'
 
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
     \throw SireError::invalid_index
 */
-Atom CutGroup::operator[](AtomID i) const
+Atom CutGroup::select(const AtomID &atomid) const
 {
-    return this->at(i);
+    return this->atom(atomid);
 }
 
-/** Assignment operator - fast as the data for this object is implicitly shared */
-CutGroup& CutGroup::operator=(const CutGroup &other)
-{
-    atominfos = other.atominfos;
-    coords = other.coords;
-    return *this;
-}
+/** Return the atoms in this CutGroup that also have the ID 'atomid'
 
-/** Set the coordinates for the atoms in the CutGroup. The coordinates must be
-    in the same order as the atoms in this CutGroup, and must have the same size,
-    else an exception will be thrown.
-
-    \throw SireError::incompatible_error
-*/
-void CutGroup::setCoordGroup(const CoordGroup &newcoords)
-{
-    if (newcoords.size() == coords.size())
-        coords = newcoords;
-    else
-        throw SireError::incompatible_error( QObject::tr(
-                      "Cannot use a CoordGroup of size() == %1 to update the coordinates "
-                      "of a CutGroup with size() == %2")
-                          .arg(newcoords.size()).arg(coords.size()), CODELOC );
-}
-
-/** Set the coordinates of the atoms in the CutGroup. The coordinates must
-    be in the same order as the atoms in this CutGroup, and must have the
-    same size else an exception will be thrown.
-
-    \throw SireError::incompatible_error
-*/
-void CutGroup::setCoordinates(const QVector<Vector> &newcoords)
-{
-    this->setCoordGroup( CoordGroup(newcoords) );
-}
-
-/** Assign from a CoordGroup - use this to update the coordinates only
-
-    \throw SireError::incompatible_error
-*/
-CutGroup& CutGroup::operator=(const CoordGroup &coordgroup)
-{
-    this->setCoordGroup(coordgroup);
-    return *this;
-}
-
-/** Assign from an array of coordinates - use this to update the coordinates
-    only
-
-    \throw SireError::incompatible_error
-*/
-CutGroup& CutGroup::operator=(const QVector<Vector> &coords)
-{
-    this->setCoordinates(coords);
-    return *this;
-}
-
-/** Return a string representation of this CutGroup */
-QString CutGroup::toString() const
-{
-    return QObject::tr("CutGroup: nAtoms() == %1").arg(nAtoms());
-}
-
-/** Return a vector of all of the atoms in this CutGroup, in the same order
-    as the atoms in the CutGroup. */
-QVector<Atom> CutGroup::atoms() const
-{
-    QVector<Atom> atomvector;
-
-    int nats = coords.size();
-    if (nats > 0)
-    {
-        //get const pointers to the info and coords arrays...
-        const AtomInfo *infoarray = atominfos.constData();
-        const Vector *coordarray = coords.constData();
-
-        //resize the vector to hold the output
-        atomvector.resize(nats);
-
-        Atom *atomarray = atomvector.data();
-
-        for (int i=0; i<nats; ++i)
-        {
-            Atom &atom = atomarray[i];
-
-            atom = infoarray[i];
-            atom = coordarray[i];
-        }
-    }
-
-    return atomvector;
-}
-
-/** Return a vector of all of the atoms from 'strt' to 'end' in this CutGroup.
-    If 'strt' is less than 'end' then the order is reversed. If strt or end refer
-    to invalid indexes then an exception is thrown.
-
+    \throw SireMol::missing_atom
     \throw SireError::invalid_index
 */
-QVector<Atom> CutGroup::atoms(AtomID strt, AtomID end) const
+AtomsInMol CutGroup::selectAll(const AtomID &atomid) const
 {
-    int nats = coords.size();
-
-    if (strt >= nats or end >= nats)
-        throw SireError::invalid_index( QObject::tr(
-                "Invalid slice indicies for a CutGroup: %1:%2 when size() == %3")
-                    .arg(strt).arg(end).arg(nats), CODELOC );
-
-    QVector<Atom> atomvector;
-
-    if (strt < end)
-    {
-        const AtomInfo *infoarray = atominfos.constData();
-        const Vector *coordarray = coords.constData();
-
-        atomvector.resize( end - strt );
-        Atom *atomarray = atomvector.data();
-
-        int idx = 0;
-        for (int i=strt; i<end; ++i)
-        {
-            Atom &atom = atomarray[idx];
-            atom = infoarray[i];
-            atom = coordarray[i];
-            ++idx;
-        }
-    }
-    else if (strt > end)
-    {
-        const AtomInfo *infoarray = atominfos.constData();
-        const Vector *coordarray = coords.constData();
-
-        atomvector.resize( strt - end );
-        Atom *atomarray = atomvector.data();
-
-        int idx = 0;
-        for (int i=end; i>strt; --i)
-        {
-            Atom &atom = atomarray[idx];
-            atom = infoarray[i];
-            atom = coordarray[i];
-            ++idx;
-        }
-    }
-
-    return atomvector;
+    return this->atoms(atomid);
 }
 
-/** Return an array of all of the coordinates of the atoms in this CutGroup.
-    This is in the same order as the array produced by CutGroup::atoms() */
-QVector<Vector> CutGroup::coordinates() const
+/** Return all of the atoms in this CutGroup */
+AtomsInMol CutGroup::selectAllAtoms() const
 {
-    QVector<Vector> coordvector;
-
-    int nats = coords.size();
-    if (nats > 0)
-    {
-        //get const pointers to the coords arrays...
-        const Vector *coordarray = coords.constData();
-
-        //resize the vector to hold the output
-        coordvector.reserve(nats);
-
-        for (int i=0; i<nats; ++i)
-        {
-            coordvector.append( coordarray[i] );
-        }
-    }
-
-    return coordvector;
-}
-
-/** Return a vector of all of the coordinates from 'strt' to 'end' in this CutGroup.
-    If 'strt' is less than 'end' then the order is reversed. If strt or end refer
-    to invalid indexes then an exception is thrown. This returns the coordinates
-    in the same order as CutGroup::atoms(int strt, int end).
-
-    \throw SireError::invalid_index
-*/
-QVector<Vector> CutGroup::coordinates(AtomID strt, AtomID end) const
-{
-    int nats = coords.size();
-
-    if (strt >= nats or end >= nats)
-        throw SireError::invalid_index( QObject::tr(
-                "Invalid slice indicies for a CutGroup: %1:%2 when size() == %3")
-                    .arg(strt).arg(end).arg(nats), CODELOC );
-
-    QVector<Vector> coordvector;
-
-    if (strt < end)
-    {
-        const Vector *coordarray = coords.constData();
-
-        coordvector.reserve( end - strt );
-
-        for (int i=strt; i<end; ++i)
-            coordvector.append( coordarray[i] );
-    }
-    else if (strt > end)
-    {
-        const Vector *coordarray = coords.constData();
-
-        coordvector.reserve( strt - end );
-
-        for (int i=end; i>strt; --i)
-            coordvector.append(coordarray[i]);
-    }
-
-    return coordvector;
+    return this->atoms();
 }

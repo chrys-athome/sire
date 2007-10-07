@@ -59,6 +59,11 @@ friend QDataStream& ::operator<<(QDataStream&, const CutGroup&);
 friend QDataStream& ::operator>>(QDataStream&, CutGroup&);
 
 public:
+    typedef ID CGID;
+    typedef Index CGIdx;
+    typedef Name CGName;
+    typedef Info CGInfo;
+
     CutGroup();
 
     CutGroup(const MoleculeData &moldata, const CGID &cgid);
@@ -79,7 +84,7 @@ public:
     CGName name() const;
     CGIdx index() const;
     
-    CutGroupInfo info() const;
+    CGInfo info() const;
     
     template<class T>
     T property(const PropertyName &key) const;
@@ -94,6 +99,7 @@ public:
     Mover<CutGroup> move() const;
     Evaluator evaluate() const;
     Editor<CutGroup> edit() const;
+    Selector<CutGroup> selection() const;
 
     Atom select(const AtomID &atomid) const;
     AtomsInMol selectAll(const AtomID &atomid) const;
@@ -120,6 +126,94 @@ private:
     /** The index of the CutGroup */
     CGIdx cgidx;
 };
+
+/** Return the property (of type T) at key 'key' that is 
+    specifically assigned to this CutGroup. This will only work
+    if the property at this key is a CutGroup property (i.e.
+    has one value for every CutGroup) and that it can be
+    cast to type T
+    
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+T CutGroup::property(const PropertyName &key) const
+{
+    CGProperty<T> cg_props = d->property(key);
+    return cg_props.at(this->index());
+}
+
+/** Return the metadata at metakey 'metakey' for this residue
+
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+T CutGroup::metadata(const PropertyName &key) const
+{
+    CGProperty<T> cg_props = d->metadata(key);
+    return cg_props.at(this->index());
+}
+
+/** Return the metadata at metakey 'metakey' for the property
+    at key 'key'
+    
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+T CutGroup::metadata(const PropertyName &key, const PropertyName &metakey) const
+{
+    CGProperty<T> cg_props = d->metadata(key, metakey);
+    return cg_props.at(this->index());
+}
+
+/** Set the property (of type T) at key 'key' for this
+    CutGroup to be equal to 'value'. This works by creating
+    a CGProperty<T> for this molecule, and assigning
+    the value for this CutGroup to 'value'. If there is already
+    a property at key 'key', then it must be of type 
+    CGProperty<T> for this to work
+    
+    \throw SireMol::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void CutGroup::setProperty(const QString &key, const T &value)
+{
+    MoleculeView::setProperty<CutGroup,CGProperty<T>,T>(this->index(), *d,
+                                                        key, value);
+}
+
+/** Set the metadata at metakey 'metakey' to the value 'value' 
+    for this residue
+    
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void CutGroup::setMetadata(const QString &metakey, const T &value)
+{
+    MoleculeView::setMetadata<CutGroup,CGProperty<T>,T>(this->index(), *d,
+                                                        metakey, value);
+}
+
+/** Set the metadata at metakey 'metakey' for the property at key
+    'key' to the value 'value'
+    
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void CutGroup::setMetadata(const QString &key, const QString &metakey,
+                           const T &value)
+{
+    MoleculeView::setMetadata<CutGroup,CGProperty<T>,T>(this->index(), *d, 
+                                                        key, metakey, value);
+}
 
 }
 

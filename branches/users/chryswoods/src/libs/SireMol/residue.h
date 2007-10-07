@@ -56,6 +56,12 @@ friend QDataStream& ::operator<<(QDataStream&, const Residue&);
 friend QDataStream& ::operator>>(QDataStream&, Residue&);
 
 public:
+    typedef ID ResID;
+    typedef Index ResIdx;
+    typedef Name ResName;
+    typedef Number ResNum;
+    typedef Info ResInfo;
+
     Residue();
     
     Residue(const MoleculeData &moldata, const ResID &resid);
@@ -70,14 +76,12 @@ public:
     bool operator!=(const Residue &other) const;
     
     AtomSelection selectedAtoms() const;
-    
-    void update(const MoleculeData &moldata);
 
     ResName name() const;
     ResNum number() const;
     ResIdx index() const;
     
-    ResidueInfo info() const;
+    ResInfo info() const;
     
     template<class T>
     T property(const PropertyName &key) const;
@@ -92,6 +96,7 @@ public:
     Mover<Residue> move() const;
     Evaluator evaluate() const;
     Editor<Residue> edit() const;
+    Selector<Residue> selection() const;
     
     Molecule molecule() const;
     Chain chain() const;
@@ -124,6 +129,94 @@ private:
     /** The atoms that are selected as part of this residue */
     AtomSelection selected_atoms;
 };
+
+/** Return the property (of type T) at key 'key' that is 
+    specifically assigned to this residue. This will only work
+    if the property at this key is a residue property (i.e.
+    has one value for every residue) and that it can be
+    cast to type T
+    
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+T Residue::property(const PropertyName &key) const
+{
+    ResProperty<T> res_props = d->property(key);
+    return res_props.at(this->index());
+}
+
+/** Return the metadata at metakey 'metakey' for this residue
+
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+T Residue::metadata(const PropertyName &key) const
+{
+    ResProperty<T> res_props = d->metadata(key);
+    return res_props.at(this->index());
+}
+
+/** Return the metadata at metakey 'metakey' for the property
+    at key 'key'
+    
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+T Residue::metadata(const PropertyName &key, const PropertyName &metakey) const
+{
+    ResProperty<T> res_props = d->metadata(key, metakey);
+    return res_props.at(this->index());
+}
+
+/** Set the property (of type T) at key 'key' for this
+    residue to be equal to 'value'. This works by creating
+    a ResProperty<T> for this molecule, and assigning
+    the value for this residue to 'value'. If there is already
+    a property at key 'key', then it must be of type 
+    ResProperty<T> for this to work
+    
+    \throw SireMol::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void Residue::setProperty(const QString &key, const T &value)
+{
+    MoleculeView::setProperty<Residue,ResProperty<T>,T>(this->index(), *d,
+                                                        key, value);
+}
+
+/** Set the metadata at metakey 'metakey' to the value 'value' 
+    for this residue
+    
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void Residue::setMetadata(const QString &metakey, const T &value)
+{
+    MoleculeView::setMetadata<Residue,ResProperty<T>,T>(this->index(), *d,
+                                                        metakey, value);
+}
+
+/** Set the metadata at metakey 'metakey' for the property at key
+    'key' to the value 'value'
+    
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void Residue::setMetadata(const QString &key, const QString &metakey,
+                          const T &value)
+{
+    MoleculeView::setMetadata<Residue,ResProperty<T>,T>(this->index(), *d, 
+                                                        key, metakey, value);
+}
 
 }
 

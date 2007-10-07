@@ -28,6 +28,11 @@
 
 #include "atom.h"
 
+#include "editor.hpp"
+#include "mover.hpp"
+#include "selector.hpp"
+#include "evaluator.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
@@ -173,6 +178,13 @@ Editor<Atom> Atom::edit() const
     return Editor<Atom>(*this);
 }
 
+/** Return the selector object that can play with the selection
+    of atoms */
+Selector<Atom> Atom::selection() const
+{
+    return Selector<Atom>(*this);
+}
+
 /** Return the residue that this atom is in 
 
     \throw SireMol::missing_residue
@@ -218,24 +230,48 @@ Vector Atom::property<Vector>(const PropertyName &key) const
     return coords.at(this->cgAtomIdx());
 }
 
+/** Return a vector metadata property */
+template<>
+Vector Atom::metadata<Vector>(const PropertyName &metakey) const
+{
+    AtomicCoords coords = d->metadata(metakey);
+    return coords.at(this->cgAtomIdx());
+}
+
+/** Return a vector metadata property */
+template<>
+Vector Atom::metadata<Vector>(const PropertyName &key,
+                              const PropertyName &metakey) const
+{
+    AtomicCoords coords = d->metadata(key, metakey);
+    return coords.at(this->cgAtomIdx());
+}
+
 /** Set a vector atomic property
 
     \throw SireError::invalid_cast
 */
 template<>
-void Atom::setProperty<Vector>(const QString &key, const Vector &new_coords)
+void Atom::setProperty<Vector>(const QString &key, const Vector &coords)
 {
-    AtomicCoords coords;
+    MoleculeView::setProperty<Atom,AtomicCoords,Vector>(this->cgAtomIdx(), *d,
+                                                        key, coords);
+}
 
-    if (d->hasProperty(key))
-    {
-        coords = d->property(key);
-    }
-    else
-    {
-        coords = AtomicCoords(*d);
-    }
-    
-    coords.set(this->cgAtomIdx(), new_coords);
-    d->setProperty(key, coords);
+/** Set a vector atomic metadata property */
+template<>
+void Atom::setMetadata<Vector>(const QString &metakey, const Vector &coords)
+{
+    MoleculeView::setMetadata<Atom,AtomicCoords,Vector>(this->cgAtomIdx(), *d,
+                                                        metakey, coords);
+}
+
+/** Set a vector atomic metadata property */
+template<>
+void Atom::setMetadata<Vector>(const QString &key, const QString &metakey,
+                               const Vector &coords)
+{
+    MoleculeView::setMetadata<Atom,AtomicCoords,Vector>(this->cgAtomIdx(), *d,
+                                                        key, metakey,
+                                                        coords);
 }

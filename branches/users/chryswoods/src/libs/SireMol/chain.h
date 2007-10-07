@@ -26,3 +26,210 @@
   *
 \*********************************************/
 
+#ifndef SIREMOL_CHAIN_H
+#define SIREMOL_CHAIN_H
+
+#include "moleculeview.h"
+
+SIRE_BEGIN_HEADER
+
+namespace SireMol
+{
+class Chain;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMol::Chain&);
+QDataStream& operator>>(QDataStream&, SireMol::Chain&);
+
+namespace SireMol
+{
+
+/**
+This class represents a Chain in a Molecule.
+
+@author Christopher Woods
+*/
+class SIREMOL_EXPORT Chain : public MoleculeView
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const Chain&);
+friend QDataStream& ::operator>>(QDataStream&, Chain&);
+
+public:
+    typedef ID ChainID;
+    typedef Index ChainIdx;
+    typedef Name ChainName;
+    typedef Info ChainInfo;
+
+    Chain();
+    
+    Chain(const MoleculeData &moldata, const ChainID &chainid);
+
+    Chain(const Chain &other);
+
+    ~Chain();
+
+    Chain& operator=(const Chain &other);
+    
+    bool operator==(const Chain &other) const;
+    bool operator!=(const Chain &other) const;
+    
+    AtomSelection selectedAtoms() const;
+    
+    ChainName name() const;
+    ChainIdx index() const;
+    
+    ChainInfo info() const;
+    
+    template<class T>
+    T property(const PropertyName &key) const;
+    
+    template<class T>
+    T metadata(const PropertyName &metakey) const;
+    
+    template<class T>
+    T metadata(const PropertyName &key,
+               const PropertyName &metakey) const;
+    
+    Mover<Chain> move() const;
+    Evaluator evaluate() const;
+    Editor<Chain> edit() const;
+    Selector<Chain> selection() const;
+    
+    Molecule molecule() const;
+    
+    Atom select(const AtomID &atomid) const;
+    
+    AtomsInMol selectAll(const AtomID &atomid) const;
+    AtomsInMol selectAllAtoms() const;
+    
+    Atom atom(const AtomID &atomid) const;
+    
+    AtomsInMol atoms(const AtomID &atomid) const;
+    AtomsInMol atoms() const;
+
+    Residue select(const ResID &resid) const;
+    
+    ResInMol selectAll(const ResID &resid) const;
+    ResInMol selectAllResidues() const;
+    
+    Residue residue(const ResID &resid) const;
+    
+    ResInMol residues(const ResID &resid) const;
+    ResInMol residues() const;
+
+protected:
+    template<class T>
+    void setProperty(const QString &key, const T &value);
+
+    template<class T>
+    void setMetadata(const QString &metakey, const T &value);
+    
+    template<class T>
+    void setMetadata(const QString &key, const QString &metakey,
+                     const T &value);
+
+private:
+    /** The index of the Chain in the molecule */
+    ChainIdx chainidx;
+    
+    /** The atoms that are selected as part of this Chain */
+    AtomSelection selected_atoms;
+};
+
+/** Return the property (of type T) at key 'key' that is 
+    specifically assigned to this chain. This will only work
+    if the property at this key is a chain property (i.e.
+    has one value for every chain) and that it can be
+    cast to type T
+    
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+T Chain::property(const PropertyName &key) const
+{
+    ChainProperty<T> chain_props = d->property(key);
+    return chain_props.at(this->index());
+}
+
+/** Return the metadata at metakey 'metakey' for this residue
+
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+T Chain::metadata(const PropertyName &key) const
+{
+    ChainProperty<T> chain_props = d->metadata(key);
+    return chain_props.at(this->index());
+}
+
+/** Return the metadata at metakey 'metakey' for the property
+    at key 'key'
+    
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+T Chain::metadata(const PropertyName &key, const PropertyName &metakey) const
+{
+    ChainProperty<T> chain_props = d->metadata(key, metakey);
+    return chain_props.at(this->index());
+}
+
+/** Set the property (of type T) at key 'key' for this
+    chain to be equal to 'value'. This works by creating
+    a ChainProperty<T> for this molecule, and assigning
+    the value for this chain to 'value'. If there is already
+    a property at key 'key', then it must be of type 
+    ChainProperty<T> for this to work
+    
+    \throw SireMol::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void Chain::setProperty(const QString &key, const T &value)
+{
+    MoleculeView::setProperty<Chain,ChainProperty<T>,T>(this->index(), *d,
+                                                        key, value);
+}
+
+/** Set the metadata at metakey 'metakey' to the value 'value' 
+    for this residue
+    
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void Chain::setMetadata(const QString &metakey, const T &value)
+{
+    MoleculeView::setMetadata<Chain,ChainProperty<T>,T>(this->index(), *d,
+                                                        metakey, value);
+}
+
+/** Set the metadata at metakey 'metakey' for the property at key
+    'key' to the value 'value'
+    
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void Chain::setMetadata(const QString &key, const QString &metakey,
+                        const T &value)
+{
+    MoleculeView::setMetadata<Chain,ChainProperty<T>,T>(this->index(), *d, 
+                                                        key, metakey, value);
+}
+
+}
+
+Q_DECLARE_METATYPE(SireMol::Chain)
+
+SIRE_END_HEADER
+
+#endif
+

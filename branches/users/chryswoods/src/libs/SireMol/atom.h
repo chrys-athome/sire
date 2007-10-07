@@ -57,6 +57,12 @@ friend QDataStream& ::operator<<(QDataStream&, const Atom&);
 friend QDataStream& ::operator>>(QDataStream&, Atom&);
 
 public:
+    typedef ID AtomID;
+    typedef Index AtomIdx;
+    typedef Name AtomName;
+    typedef Number AtomNum;
+    typedef Info AtomInfo;
+
     Atom();
     
     Atom(const MoleculeView &molview, const AtomID &atomid);
@@ -95,6 +101,7 @@ public:
     Mover<Atom> move() const;
     Evaluator evaluate() const;
     Editor<Atom> edit() const;
+    Selector<Atom> selection() const;
     
     Residue residue() const;
     Chain chain() const;
@@ -120,6 +127,50 @@ private:
     AtomIdx atomidx;
 };
 
+/** Return the property (of type T) at key 'key' that is 
+    specifically assigned to this atom. This will only work
+    if the property at this key is an Atomic property (i.e.
+    has one value for every atom) and that it can be
+    cast to type T
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+T Atom::property(const PropertyName &key) const
+{
+    AtomicProperty<T> atom_props = d->property(key);
+    return atom_props.at(this->cgAtomIdx());
+}
+
+/** Return the metadata for this atom at metakey 'metakey'
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+T Atom::metadata(const PropertyName &metakey) const
+{
+    AtomicProperty<T> atom_props = d->metadata(metakey);
+    return atom_props.at(this->cgAtomIdx());
+}
+
+/** Return the metadata for this atom at metakey 'metakey'
+    for the property at key 'key'
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+T Atom::metadata(const PropertyName &key, const PropertyName &metakey) const
+{
+    AtomicProperty<T> atom_props = d->metadata(key, metakey);
+    return atom_props.at(this->cgAtomIdx());
+}
+
 /** Set the property (of type T) at key 'key' for this
     atom to be equal to 'value'. This works by creating
     an AtomicProperty<T> for this molecule, and assigning
@@ -133,44 +184,49 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 void Atom::setProperty(const QString &key, const T &value)
 {
-    AtomicProperty<T> atom_props;
-
-    if (d->hasProperty(key))
-    {
-        atom_props = d->property(key);
-    }
-    else
-    {
-        atom_props = AtomicProperty<T>(*d);
-    }
-    
-    atom_props.set(this->cgAtomIdx(), value);
-    d->setProperty(key, atom_props);
+    MoleculeView::setProperty<Atom,AtomicProperty<T>,T>(this->cgAtomIdx(), *d,
+                                                        key, value);
 }
 
-/** Return the property (of type T) at key 'key' that is 
-    specifically assigned to this atom. This will only work
-    if the property at this key is an Atomic property (i.e.
-    has one value for every atom) and that it can be
-    cast to type T
-    
-    \throw SireMol::missing_property
-    \throw SireError::invalid_cast
-*/
+/** Set the metadata at metakey 'metakey' for this atom */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-T Atom::property(const PropertyName &key) const
+void Atom::setMetadata(const QString &metakey, const T &value)
 {
-    AtomicProperty<T> atom_props = d->property(key);
-    return atom_props.at(this->cgAtomIdx());
+    MoleculeView::setMetadata<Atom,AtomicProperty<T>,T>(this->cgAtomIdx(), *d,
+                                                        metakey, value);
+}
+
+/** Set the metadata at metakey 'metakey' for the property at 
+    key 'key' for this atom */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void Atom::setMetadata(const QString &key, const QString &metakey, const T &value)
+{
+    MoleculeView::setMetadata<Atom,AtomicProperty<T>,T>(this->cgAtomIdx(), *d,
+                                                        key, metakey, value);
 }
 
 /** We have different behaviour for an atoms Vector property */
 template<>
+Vector Atom::property<Vector>(const PropertyName &key) const;
+
+template<>
+Vector Atom::metadata<Vector>(const PropertyName &metakey) const;
+
+template<>
+Vector Atom::metadata<Vector>(const PropertyName &key, 
+                              const PropertyName &metakey) const;
+
+template<>
 void Atom::setProperty<Vector>(const QString &key, const Vector &coords);
 
 template<>
-Vector Atom::property<Vector>(const PropertyName &key) const;
+void Atom::setMetadata<Vector>(const QString &metakey, const Vector &coords);
+
+template<>
+void Atom::setMetadata<Vector>(const QString &key, const QString &metakey, 
+                               const Vector &coords); 
 
 }
 

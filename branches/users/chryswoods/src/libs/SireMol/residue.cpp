@@ -28,15 +28,59 @@
 
 #include "residue.h"
 
+#include "editor.hpp"
+#include "mover.hpp"
+#include "selector.hpp"
+#include "evaluator.h"
+
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
 using namespace SireMol;
+using namespace SireStream;
+
+RegisterMetaType<Residue> r_res;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const Residue &res)
+{
+    writeHeader(ds, r_res, 1);
+
+    SharedDataStream sds(ds);
+    
+    sds << res.residx << static_cast<const MoleculeView&>(res);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, Residue &res)
+{
+    VersionID v = readHeader(ds, r_res);
+
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> res.residx >> static_cast<MoleculeView&>(res);
+        
+        res.selected_atoms = AtomSelection(res.d->info());
+        res.selected_atoms.select(res.residx);
+    }
+    else
+        throw version_error(v, "1", r_???, CODELOC);
+
+    return ds;
+}
+
 
 /** Null constructor */
 Residue::Residue() : MoleculeView()
 {}
 
 /** Construct as a specified residue */
-Residue::Residue(const MoleculeView &molview, const ResID &resid)
-        : MoleculeView(molview)
+Residue::Residue(const MoleculeData &moldata, const ResID &resid)
+        : MoleculeView(moldata)
 {
     residx = resid.map(d->info());
     selected_atoms = AtomSelection(d->info());
@@ -66,21 +110,18 @@ Residue& Residue::operator=(const Residue &other)
     return *this;
 }
 
-/** Copy assignment from another MoleculeView. If
-    'other' is a Residue (or derived from Residue)
-    then this copies correctly - otherwise this
-    throws an exception
-    
-    \throw SireError::invalid_cast
-*/
-Residue& Residue::operator=(const MoleculeView &other)
+/** Comparison operator */
+bool Residue::operator==(const Residue &other) const
 {
-    if (not other.isA<Residue>())
-        throw SireError::invalid_cast( QObject::tr(
-            "Cannot assign a Residue from a non-Residue view (%1)!")
-                .arg(other.what()), CODELOC );
-                
-    return this->operator=(other.asA<Residue>());
+    return residx == other.residx and 
+           MoleculeView::opertor==(other);
+}
+
+/** Comparison operator */
+bool Residue::operator!=(const Residue &other) const
+{
+    return residx != other.residx or
+           MoleculeView::operator!=(other);
 }
 
 /** Return the identities of the atoms that are selected as
@@ -88,13 +129,6 @@ Residue& Residue::operator=(const MoleculeView &other)
 AtomSelection Residue::selectedAtoms() const
 {
     return selected_atoms;
-}
-
-/** Update this residue using the passed view */
-void Residue::update(const MoleculeView &other)
-{
-    other.assertSameMolecule(*this);
-    d = other.d;
 }
 
 /** Return the name of this residue */
@@ -109,44 +143,50 @@ ResNum Residue::number() const
     return d->info().number(residx);
 }
 
+/** Return the index of this residue in the molecule */
+ResIdx Residue::index() const
+{
+    return residx;
+}
+
 /** Return an info object that describes the names
     and arrangement of this residue */
-ResidueInfo Residue::info() const
+ResInfo Residue::info() const
 {
-    return d->info(residx);
+    return ResidueInfo( d->info(), residx );
 }
 
 /** Return a Mover that moves all of the atoms in this residue */
 Mover<Residue> Residue::move() const
 {
-    return Mover<Residue>(*this, selected_atoms);
+    return Mover<Residue>(*this);
 }
 
 /** Return an Evaluator that evaluates values using all of 
     the atoms in the residue */
 Evaluator<Residue> Residue::evaluate() const
 {
-    return Evaluator<Residue>(*this, selected_atoms);
+    return Evaluator(*this);
 }
 
 /** Return an editor that can be used to edit any of the  
     atoms of this residue */
 Editor<Residue> Residue::edit() const
 {
-    return Editor<Residue>(*this, selected_atoms);
+    return Editor<Residue>(*this);
 }
 
-/** Return a selector that can be used to change the 
-    selection of atoms in this residue */
+/** Return a selector that can be used to change the selection
+    of residues */
 Selector<Residue> Residue::selection() const
 {
-    return Selector<Residue>(*this, selected_atoms);
+    return Selector<Residue>(*this);
 }
 
 /** Return the molecule that contains this residue */
 Molecule Residue::molecule() const
 {
-    return Molecule(*this);
+    return Molecule(this->data());
 }
 
 /** Return the chain that contain this residue - this throws
@@ -165,7 +205,7 @@ Chain Residue::chain() const
                 .arg(name()).arg(number()).arg(residx).arg(d->info().name()),
                     CODELOC );
 
-    return Chain(*this, chainidx);
+    return Chain(this->data(), chainidx);
 }
 
 /** Return the atom that is in this residue *and* also has the 
@@ -177,7 +217,7 @@ Chain Residue::chain() const
 */
 Atom Residue::atom(const AtomID &atomid) const
 {
-    return Atom(*this, residx + atomid);
+    return Atom(this->data(), residx + atomid);
 }
 
 /** Return the atom(s) that are in this residue *and* also
@@ -188,37 +228,37 @@ Atom Residue::atom(const AtomID &atomid) const
 */
 AtomsInMol Residue::atoms(const AtomID &atomid) const
 {
-    return AtomsInMol(*this, residx + atomid);
+    return AtomsInMol(this->data(), residx + atomid);
 }
 
 /** Return all of the atoms that are in this residue */
 AtomsInMol Residue::atoms() const
 {
-    return AtomsInMol(*this, residx);
+    return AtomsInMol(this->data(), residx.atoms());
 }
 
-/** Return the property associated with the key 'key' - if 
-    this is a molecular property, then it will be masked so
-    that only the parts of the property that are relevant for
-    this Residue are returned 
-    
-    \throw SireBase::missing_property
+/** Return the atom in this residue *and* has the ID 'atomid'
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
 */
-Property Residue::property(const QString &key) const
+Atom Residue::select(const AtomID &atomid) const
 {
-    Property value = d->property(key);
-    
-    if (value.isA<MolecularProperty>())
-        return value.asA<MolecularProperty>().mask(selected_atoms);
-    else
-        return value;
+    return this->atom(atomid);
 }
 
-/** Return the metadata for the property associated with the key 'key'
+/** Return the atoms in this residue *and* having the ID 'atomid'
 
-    \throw SireBase::missing_property
+    \throw SireMol::missing_atom
 */
-const Properties& Residue::metadata(const QString &key) const
+AtomsInMol Residue::selectAll(const AtomID &atomid) const
 {
-    return d->metadata(key);
+    return this->atoms(atomid);
+}
+
+/** Return all of the atoms in this residue */
+AtomsInMol Residue::selectAll() const
+{
+    return this->atoms();
 }

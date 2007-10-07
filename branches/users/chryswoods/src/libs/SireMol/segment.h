@@ -55,6 +55,11 @@ friend QDataStream& ::operator<<(QDataStream&, const Segment&);
 friend QDataStream& ::operator>>(QDataStream&, Segment&);
 
 public:
+    typedef ID SegID;
+    typedef Index SegIdx;
+    typedef Name SegName;
+    typedef Info SegInfo; 
+
     Segment();
     
     Segment(const MoleculeData &data, const SegID &segid);
@@ -75,11 +80,22 @@ public:
     SegName name() const;
     SegIdx index() const;
     
-    SegmentInfo info() const;
+    SegInfo info() const;
+
+    template<class T>
+    T property(const PropertyName &key) const;
+
+    template<class T>
+    T metadata(const PropertyName &metakey) const;
+    
+    template<class T>
+    T metadata(const PropertyName &key,
+               const PropertyName &metakey) const;
     
     Mover<Segment> move() const;
     Evaluator evaluate() const;
     Editor<Segment> edit() const;
+    Selector<Segment> selection() const;
     
     Molecule molecule() const;
     
@@ -91,16 +107,12 @@ public:
     AtomsInMol atoms(const AtomID &atomid) const;
     AtomsInMol atoms() const;
 
-    template<class T>
-    T property(const PropertyName &key) const;
-    
-    template<class T>
-    T metadata(const PropertyName &key,
-               const PropertyName &metakey) const;
-
 protected:
     template<class T>
     void setProperty(const QString &key, const T &value);
+    
+    template<class T>
+    void setMetadata(const QString &metakey, const T &value);
     
     template<class T>
     void setMetadata(const QString &key, const QString &metakey,
@@ -113,6 +125,94 @@ private:
     /** The atoms that are part of this segment */
     AtomSelection selected_atoms;
 };
+
+/** Return the property (of type T) at key 'key' that is 
+    specifically assigned to this segment. This will only work
+    if the property at this key is a segment property (i.e.
+    has one value for every segment) and that it can be
+    cast to type T
+    
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+T Segment::property(const PropertyName &key) const
+{
+    SegProperty<T> seg_props = d->property(key);
+    return seg_props.at(this->index());
+}
+
+/** Return the metadata at metakey 'metakey' for this residue
+
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+T Segment::metadata(const PropertyName &key) const
+{
+    SegProperty<T> seg_props = d->metadata(key);
+    return seg_props.at(this->index());
+}
+
+/** Return the metadata at metakey 'metakey' for the property
+    at key 'key'
+    
+    \throw SireMol::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+T Segment::metadata(const PropertyName &key, const PropertyName &metakey) const
+{
+    SegProperty<T> seg_props = d->metadata(key, metakey);
+    return seg_props.at(this->index());
+}
+
+/** Set the property (of type T) at key 'key' for this
+    segment to be equal to 'value'. This works by creating
+    a SrgProperty<T> for this molecule, and assigning
+    the value for this segment to 'value'. If there is already
+    a property at key 'key', then it must be of type 
+    SegProperty<T> for this to work
+    
+    \throw SireMol::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void Segment::setProperty(const QString &key, const T &value)
+{
+    MoleculeView::setProperty<Segment,SegProperty<T>,T>(this->index(), *d,
+                                                        key, value);
+}
+
+/** Set the metadata at metakey 'metakey' to the value 'value' 
+    for this residue
+    
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void Segment::setMetadata(const QString &metakey, const T &value)
+{
+    MoleculeView::setMetadata<Segment,SegProperty<T>,T>(this->index(), *d,
+                                                        metakey, value);
+}
+
+/** Set the metadata at metakey 'metakey' for the property at key
+    'key' to the value 'value'
+    
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void Segment::setMetadata(const QString &key, const QString &metakey,
+                           const T &value)
+{
+    MoleculeView::setMetadata<Segment,SegProperty<T>,T>(this->index(), *d, 
+                                                        key, metakey, value);
+}
 
 }
 
