@@ -42,7 +42,6 @@ MoleculeInfoData::MoleculeInfoData()
 MoleculeInfoData::MoleculeInfoData(const MoleculeInfoData &other)
                  : QSharedData(),
                    molname(other.molname),
-                   molnum(other.molnum),
                    atoms_by_index(other.atoms_by_index),
                    res_by_index(other.res_by_index),
                    res_by_name(other.res_by_name),
@@ -65,7 +64,6 @@ MoleculeInfoData& MoleculeInfoData::operator=(const MoleculeInfoData &other)
     if (&other != this)
     {
         molname = other.molname;
-        molnum = other.molnum;
         atoms_by_index = other.atoms_by_index;
         res_by_index = other.res_by_index;
         res_by_name = other.res_by_name;

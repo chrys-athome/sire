@@ -364,9 +364,6 @@ private:
     /** The name of the molecule */
     MolName molname;
 
-    /** The number of the molecule */
-    MolNum molnum;
-
     /** All of the atoms in the molecule, in the order they were
         added to the molecule */
     QVector<AtomInfo> atoms_by_index;

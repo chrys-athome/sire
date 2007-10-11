@@ -26,68 +26,36 @@
   *
 \*********************************************/
 
-#include "molecularproperty.h"
-#include "moleculeinfo.h"
-
-#include "SireBase/version.h"
+#include "molviewproperty.h"
+#include "moleculeinfodata.h"
 
 #include "SireError/errors.h"
 
-#include "SireStream/datastream.h"
-
 using namespace SireMol;
 using namespace SireBase;
-using namespace SireStream;
-
-static const RegisterMetaType<MolecularProperty> r_molprop(MAGIC_ONLY,
-                                                          "SireMol::MolecularProperty");
-
-/** Serialise to a binary datastream */
-QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
-                                       const MolecularProperty &molprop)
-{
-    writeHeader(ds, r_molprop, 1) << static_cast<const PropertyBase&>(molprop);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
-                                       MolecularProperty &molprop)
-{
-    VersionID v = readHeader(ds, r_molprop);
-
-    if (v == 1)
-    {
-        ds >> static_cast<PropertyBase&>(molprop);
-    }
-    else
-        throw version_error(v, "1", r_molprop, CODELOC);
-
-    return ds;
-}
 
 /** Constructor */
-MolecularProperty::MolecularProperty() : PropertyBase()
+MolViewProperty::MolViewProperty() : PropertyBase()
 {}
 
 /** Copy constructor */
-MolecularProperty::MolecularProperty(const MolecularProperty &other)
-                 : PropertyBase(other)
+MolViewProperty::MolViewProperty(const MolViewProperty &other)
+                : PropertyBase(other)
 {}
 
 /** Destructor */
-MolecularProperty::~MolecularProperty()
+MolViewProperty::~MolViewProperty()
 {}
 
-/** Assert that this property is compatible with the MoleculeInfo 'info'
+/** Assert that this property is compatible with the MoleculeInfoData 'info'
 
     \throw SireError::incompatible_error
 */
-void MolecularProperty::assertCompatibleWith(const MoleculeInfo &info) const
+void MolViewProperty::assertCompatibleWith(const MoleculeInfoData &molinfo) const
 {
-    if (not this->isCompatibleWith(molecule.info()))
+    if (not this->isCompatibleWith(molinfo))
         throw SireError::incompatible_error( QObject::tr(
-                "This property is incompatible with the molecule \"%1\" (%2)")
-                    .arg(info.name()).arg(info.number()), CODELOC );
+                "The property of type %1 is incompatible with the molecule "
+                "\"%2\"")
+                    .arg(this->what()).arg(molinfo.name()), CODELOC );
 }

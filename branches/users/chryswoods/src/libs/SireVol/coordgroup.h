@@ -40,6 +40,7 @@ namespace SireMaths
 {
 class Quaternion;
 class Matrix;
+class AxisSet;
 }
 
 namespace SireVol
@@ -210,8 +211,8 @@ public:
 
     bool isEmpty() const;
 
-    quint32 count() const;
-    quint32 size() const;
+    int count() const;
+    int size() const;
 
     void assertValidIndex(quint32 i) const;
 
@@ -347,13 +348,13 @@ inline const Vector* CoordGroupBase::data() const
 }
 
 /** Return the number of coordinates in this group */
-inline quint32 CoordGroupBase::count() const
+inline int CoordGroupBase::count() const
 {
     return _pvt_group().count();
 }
 
 /** Return the number of coordinates in this group */
-inline quint32 CoordGroupBase::size() const
+inline int CoordGroupBase::size() const
 {
     return _pvt_group().count();
 }
@@ -588,7 +589,7 @@ public:
 
     CoordGroupEditor& setCoordinates(quint32 i, const Vector &newcoords);
 
-    CoordGroupEditor& mapInto(const AxisSet &axes);
+    CoordGroupEditor& mapInto(const SireMaths::AxisSet &axes);
 
     CoordGroup commit();
 };

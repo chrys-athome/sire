@@ -29,7 +29,10 @@
 #ifndef SIREMOL_ATOMPROPERTY_HPP
 #define SIREMOL_ATOMPROPERTY_HPP
 
-#include "moleculeproperty.h"
+#include "molviewproperty.h"
+#include "moleculeinfodata.h"
+
+#include "SireError/errors.h"
 
 namespace SireMol
 {
@@ -82,7 +85,7 @@ public:
     
     static const char* typeName()
     {
-        QMetaType::typeName( qMetaTypeId< AtomProperty<T> >() );
+        return QMetaType::typeName( qMetaTypeId< AtomProperty<T> >() );
     }
     
     AtomProperty<T>* clone() const
@@ -115,6 +118,8 @@ public:
     int count() const;
     
     int nCutGroups() const;
+    
+    int nAtoms() const;
     int nAtoms(CGIdx cgidx) const;
 
 private:
@@ -126,6 +131,7 @@ private:
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 AtomProperty<T>::AtomProperty()
+                : SireBase::ConcreteProperty<AtomProperty<T>,MolViewProperty>()
 {}
 
 /** Create an AtomProperty that holds one value for each 
@@ -134,6 +140,7 @@ AtomProperty<T>::AtomProperty()
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 AtomProperty<T>::AtomProperty(const MoleculeInfoData &molinfo)
+                : SireBase::ConcreteProperty<AtomProperty<T>,MolViewProperty>()
 {   
     int ncg = molinfo.nCutGroups();
 
@@ -160,6 +167,7 @@ AtomProperty<T>::AtomProperty(const MoleculeInfoData &molinfo)
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 AtomProperty<T>::AtomProperty(const QVector<T> &values)
+                : SireBase::ConcreteProperty<AtomProperty<T>,MolViewProperty>()
 {
     if (not values.isEmpty())
     {
@@ -175,7 +183,8 @@ AtomProperty<T>::AtomProperty(const QVector<T> &values)
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 AtomProperty<T>::AtomProperty(const QVector< QVector<T> > &values)
-                : props(values)
+                : SireBase::ConcreteProperty<AtomProperty<T>,MolViewProperty>(), 
+                  props(values)
 {
     if (not props.isEmpty())
     {
@@ -196,7 +205,8 @@ AtomProperty<T>::AtomProperty(const QVector< QVector<T> > &values)
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 AtomProperty<T>::AtomProperty(const AtomProperty<T> &other)
-                : MoleculeProperty(), props(other.props)
+                : SireBase::ConcreteProperty<AtomProperty<T>,MolViewProperty>(), 
+                  props(other.props)
 {}
 
 /** Destructor */
@@ -404,6 +414,21 @@ SIRE_OUTOFLINE_TEMPLATE
 int AtomProperty<T>::nCutGroups() const
 {
     return props.count();
+}
+
+/** Return the total number of atoms in the molecule */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+int AtomProperty<T>::nAtoms() const
+{
+    int nats = 0;
+    
+    for (int i=0; i<props.count(); ++i)
+    {
+        nats += props.constData()[i].count();
+    }
+    
+    return nats;
 }
 
 /** Return the number of atoms in the CutGroup at index 'cgidx'

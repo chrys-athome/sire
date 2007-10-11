@@ -26,8 +26,8 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_MOLECULARPROPERTY_H
-#define SIREMOL_MOLECULARPROPERTY_H
+#ifndef SIREMOL_MOLVIEWPROPERTY_H
+#define SIREMOL_MOLVIEWPROPERTY_H
 
 #include "SireBase/property.h"
 
@@ -35,53 +35,41 @@ SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
-class MolecularProperty;
+class MolViewProperty;
 }
-
-QDataStream& operator<<(QDataStream&, const SireMol::MolecularProperty&);
-QDataStream& operator>>(QDataStream&, SireMol::MolecularProperty&);
-
-XMLStream& operator<<(XMLStream&, const SireMol::MolecularProperty&);
-XMLStream& operator>>(XMLStream&, SireMol::MolecularProperty&);
 
 namespace SireMol
 {
 
-class MoleculeInfo;
+class MoleculeInfoData;
 class AtomSelection;
 
 /** This is the base class of all properties that are specifically
-    attached to molecules (e.g. AtomicProperties, BondProperties
-    etc.)
+    attached to views of a molecule (e.g. AtomProperty, ResProperty,
+    SegProperty etc.)
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT MolecularProperty : public SireBase::PropertyBase
+class SIREMOL_EXPORT MolViewProperty : public SireBase::PropertyBase
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const MolecularProperty&);
-friend QDataStream& ::operator>>(QDataStream&, MolecularProperty&);
-
-friend XMLStream& ::operator<<(XMLStream&, const MolecularProperty&);
-friend XMLStream& ::operator>>(XMLStream&, MolecularProperty&);
-
 public:
-    MolecularProperty();
+    MolViewProperty();
 
-    MolecularProperty(const MolecularProperty &other);
+    MolViewProperty(const MolViewProperty &other);
 
-    ~MolecularProperty();
+    ~MolViewProperty();
 
     static const char* typeName()
     {
-        return "SireMol::MolecularProperty";
+        return "SireMol::MolViewProperty";
     }
 
-    virtual bool isCompatibleWith(const MoleculeInfo &molinfo) const=0;
+    virtual bool isCompatibleWith(const MoleculeInfoData &molinfo) const=0;
 
     virtual SireBase::Property mask(const AtomSelection &selected_atoms) const=0;
 
-    void assertCompatibleWith(const MoleculeInfo &info) const;
+    void assertCompatibleWith(const MoleculeInfoData &molinfo) const;
 };
 
 }

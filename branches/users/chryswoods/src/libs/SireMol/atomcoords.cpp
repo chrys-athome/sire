@@ -137,7 +137,7 @@ AtomProperty<Vector>::AtomProperty(const QVector< QVector<Vector> > &coordinates
 AtomProperty<Vector>::AtomProperty(const CoordGroup &cgroup)
                      : ConcreteProperty<AtomProperty<Vector>,MolViewProperty>()
 {
-    if (cgroup.nAtoms() > 0)
+    if (cgroup.count() > 0)
     {
         coords = QVector<CoordGroup>(1);
         coords[0] = cgroup;
@@ -237,8 +237,8 @@ const Vector& AtomProperty<Vector>::get(const CGAtomIdx &cgatomidx) const
 AtomProperty<Vector>& AtomProperty<Vector>::set(const CGAtomIdx &cgatomidx, 
                                                 const Vector &value)
 {
-    coords.data()[cgatomidx.cutGroup().map(coords.count())]
-                   .set(cgatomidx.atom(), value);
+    CoordGroup &group = coords.data()[cgatomidx.cutGroup().map(coords.count())];    
+    group = group.edit().setCoordinates( cgatomidx.atom().map(group.count()), value );
 
     return *this;
 }
@@ -327,6 +327,7 @@ int AtomProperty<Vector>::nCutGroups() const
 }
 
 /** Return the number of atoms in this set */
+int AtomProperty<Vector>::nAtoms() const
 {
     int nats = 0;
     

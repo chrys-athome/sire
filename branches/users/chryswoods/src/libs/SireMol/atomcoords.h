@@ -61,8 +61,8 @@ class AtomProperty<Vector>
        : public SireBase::ConcreteProperty<AtomProperty<Vector>,MolViewProperty>
 {
 
-friend QDataStream& ::operator<<<>(QDataStream&, const AtomProperty<Vector>&);
-friend QDataStream& ::operator>><>(QDataStream&, AtomProperty<Vector>&);
+friend QDataStream& ::operator<<(QDataStream&, const AtomProperty<SireMaths::Vector>&);
+friend QDataStream& ::operator>>(QDataStream&, AtomProperty<SireMaths::Vector>&);
 
 public:
     AtomProperty();
@@ -70,7 +70,7 @@ public:
     AtomProperty(const MoleculeInfoData &molinfo);
     
     AtomProperty(const QVector<Vector> &coordinates);
-    AtomProperty(const QVector< QVector<T> > &coordinates);
+    AtomProperty(const QVector< QVector<Vector> > &coordinates);
     
     AtomProperty(const CoordGroup &cgroup);
     AtomProperty(const QVector<CoordGroup> &cgroups);
@@ -83,13 +83,16 @@ public:
     
     static const char* typeName()
     {
-        QMetaType::typeName( qMetaTypeId< AtomProperty<Vector> >() );
+        return QMetaType::typeName( qMetaTypeId< AtomProperty<Vector> >() );
     }
     
     AtomProperty<Vector>* clone() const
     {
         return new AtomProperty<Vector>(*this);
     }
+    
+    bool isCompatibleWith(const MoleculeInfoData &molinfo) const;
+    SireBase::Property mask(const AtomSelection &selected_atoms) const;
     
     bool operator==(const AtomProperty<Vector> &other) const;
     bool operator!=(const AtomProperty<Vector> &other) const;
