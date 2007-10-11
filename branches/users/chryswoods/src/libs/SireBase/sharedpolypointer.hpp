@@ -234,6 +234,7 @@ SharedPolyPointer<T>::SharedPolyPointer(T *adata)
 template<class T>
 Q_INLINE_TEMPLATE
 SharedPolyPointer<T>::SharedPolyPointer(const T &obj)
+                     : SharedPolyPointerBase()
 {
     //increment the reference count of this object - this 
     //stops if from being deleted
@@ -267,7 +268,7 @@ SharedPolyPointer<T>::SharedPolyPointer(const T &obj)
 template<class T>
 Q_INLINE_TEMPLATE
 SharedPolyPointer<T>::SharedPolyPointer(const SharedPolyPointer<T> &other)
-                     : d(other.d)
+                     : SharedPolyPointerBase(), d(other.d)
 {
     if (d)
         d->ref.ref();

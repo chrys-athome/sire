@@ -30,6 +30,7 @@
 #define SIREMOL_MOLECULEDATA_H
 
 #include <QSharedData>
+#include <QMutex>
 
 #include <boost/shared_ptr.hpp>
 
@@ -52,6 +53,10 @@ QDataStream& operator>>(QDataStream&, SireMol::MoleculeData&);
 
 namespace SireMol
 {
+
+using SireBase::PropertyName;
+using SireBase::Property;
+using SireBase::Properties;
 
 /**
 This class holds the shared molecule data for the Molecule classes
@@ -98,6 +103,16 @@ public:
         return *molinfo;
     }
 
+    bool hasProperty(const PropertyName &key) const;
+    bool hasMetadata(const PropertyName &metakey) const;
+    bool hasMetadata(const PropertyName &key,
+                     const PropertyName &metakey) const;
+                     
+    const char* propertyType(const PropertyName &key) const;
+    const char* metadataType(const PropertyName &metakey) const;
+    const char* metadataType(const PropertyName &key,
+                             const PropertyName &metakey) const;
+
     /** Return all of the properties of this molecule - this
         includes the coordinates, connectivity and any
         forcefield parameters that have been assigned to
@@ -107,34 +122,34 @@ public:
         return props;
     }
 
-    /** Return the property with key 'key'
+    const Property& property(const PropertyName &key) const;
     
-        \throw SireBase::missing_property
-    */
-    const Property& property(const SireBase::PropertyName &key) const
-    {
-        return props.value(key);
-    }
-    
-    /** Return the property with key 'key', returning
-        'default_value' if there is no such key in this molecule */
-    const Property& property(const SireBase::PropertyName &key,
+    const Property& property(const PropertyName &key,
                              const Property &default_value) const;
     
-    /** Return the metadata associated with the property
-        with key 'key'
-        
-        \throw SireBase::missing_property
-    */
-    const Properties& metadata(const QString &key) const
-    {
-        return props.metadata(key);
-    }
+    const Property& metadata(const PropertyName &metakey) const;
+
+    const Property& metadata(const PropertyName &key,
+                             const PropertyName &metakey) const;
+
+    const Property& metadata(const PropertyName &metakey,
+                             const Property &default_value) const;
+                             
+    const Property& metadata(const PropertyName &key,
+                             const PropertyName &metakey,
+                             const Property &default_value) const;
 
     void setProperty(const QString &key, 
                      const Property &value, bool clear_metadata=false) const;
 
     void removeProperty(const QString &key);
+
+    void setMetadata(const QString &metakey, const Property &value);
+    void setMetadata(const QString &key, const QString &metakey, 
+                     const Property &value);
+
+    void removeMetadata(const QString &metakey);
+    void removeMetadata(const QString &key, const QString &metakey);
 
     /** Return the shared null MoleculeData */
     static SireBase::SharedDataPointer<MoleculeData> null();
@@ -168,8 +183,8 @@ private:
         ~PropVersions()
         {}
         
-        Version increment();
-        Version increment(const QString &key, Version &mol);
+        quint64 increment();
+        quint64 increment(const QString &key, quint64 &mol);
         
     private:
         /** Mutex used to serialise access to the last version

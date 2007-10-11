@@ -24,6 +24,7 @@ set ( SIREBASE_HEADERS
       properties.h
       property.h
       propertymap.h
+      shareddatapointer.hpp
       sharedpolypointer.hpp
       sharedpolypointer_cast.hpp
       sparsematrix.hpp

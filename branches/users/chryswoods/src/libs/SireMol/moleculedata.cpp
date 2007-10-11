@@ -46,7 +46,7 @@ static const RegisterMetaType<MoleculeData> r_moldata;
 
 /** Increment the global version number of the molecule,
     and return it */
-Version MoleculeData::PropVersions::increment()
+quint64 MoleculeData::PropVersions::increment()
 {
     QMutexLocker lkr(&mutex);
     
@@ -58,13 +58,13 @@ Version MoleculeData::PropVersions::increment()
 /** Increment the version number of the property with key 'key',
     also updating and returning the global version number of 
     the molecule */
-Version MoleculeData::PropVersions::increment(const QString &key,
-                                              Version &molversion)
+quint64 MoleculeData::PropVersions::increment(const QString &key,
+                                              quint64 &molversion)
 {
     QMutexLocker lkr(&mutex);
     
     //increment the property version
-    Version prop_version = property_version.value(key, 0) + 1;
+    quint64 prop_version = property_version.value(key, 0) + 1;
 
     //now increment the global version
     ++version;
@@ -116,7 +116,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MoleculeData &moldata)
 static QSharedDataPointer<MoleculeData> shared_null;
 
 /** Return a QSharedDataPointer to the shared null MoleculeData object */
-QSharedDataPointer<MoleculeData> MoleculeData::null()
+SharedDataPointer<MoleculeData> MoleculeData::null()
 {
     if (shared_null.constData() == 0)
     {
@@ -183,6 +183,128 @@ bool MoleculeData::operator!=(const MoleculeData &other) const
     return molinfo.number() != other.molinfo.number() or vrsn != other.vrsn;
 }
 
+/** Return the version number of the property at key 'key'.
+    If there is no such key in this molecule, or 
+    the value is supplied by the key itself, then
+    a version number of 0 is returned */
+Version MoleculeData::version(const PropertyName &key) const
+{
+    if (key.hasValue())
+        return 0;
+    else
+        return prop_vrsns.value(key, 0);
+}
+
+/** Return whether this molecule contains a property at key 'key' */
+bool MoleculeData::hasProperty(const PropertyName &key) const
+{
+    return props.hasProperty(key);
+}
+
+/** Return whether this molecule contains metadata at 
+    metakey 'metakey' */
+bool MoleculeData::hasMetadata(const PropertyName &metakey) const
+{
+    return props.hasMetadata(metakey);
+}
+
+/** Return whether this molecule has metadata at metakey 'metakey'
+    for the property at key 'key' 
+    
+    \throw SireBase::missing_property
+*/
+bool MoleculeData::hasMetadata(const PropertyName &key,
+                               const PropertyName &metakey) const
+{
+    return props.hasMetadata(key, metakey);
+}
+                 
+/** Return the type name of the property at key 'key'. 
+
+    \throw SireBase::missing_property
+*/
+const char* MoleculeData::propertyType(const PropertyName &key) const
+{
+    return props.propertyType(key);
+}
+
+/** Return the type name of the metadata at metakey 'metakey'
+
+    \throw SireBase::missing_property
+*/
+const char* MoleculeData::metadataType(const PropertyName &metakey) const
+{
+    return props.metadataType(metakey);
+}
+
+/** Return the type name of the metadata at metakey 'metakey'
+    for the property at key 'key'
+    
+    \throw SireBase::missing_property
+*/
+const char* MoleculeData::metadataType(const PropertyName &key,
+                                       const PropertyName &metakey) const
+{
+    return props.metadataType(key, metakey);
+}
+
+/** Return the property at key 'key' 
+
+    \throw SireBase::missing_property
+*/
+const Property& MoleculeData::property(const PropertyName &key) const
+{
+    return props.property(key);
+}
+
+/** Return the property at key 'key', or 'default_value' if there
+    is no such property */ 
+const Property& MoleculeData::property(const PropertyName &key,
+                                       const Property &default_value) const
+{
+    return props.property(key, default_value);
+}
+
+/** Return the metadata at metakey 'metakey'
+
+    \throw SireBase::missing_property
+*/
+const Property& MoleculeData::metadata(const PropertyName &metakey) const
+{
+    return props.metadata(metakey);
+}
+
+/** Return the metadata at metakey 'metakey' for the property
+    at key 'key'
+    
+    \throw SireBase::missing_property
+*/
+const Property& MoleculeData::metadata(const PropertyName &key,
+                                       const PropertyName &metakey) const
+{
+    return props.metadata(key, metakey);
+}
+
+/** Return the metadata at metakey 'metakey', or 'default_value'
+    if there is no such value */
+const Property& MoleculeData::metadata(const PropertyName &metakey,
+                                       const Property &default_value) const
+{
+    return props.metadata(metakey, default_value);
+}
+                         
+/** Return the metadata at metakey 'metakey' for the property
+    at key 'key', or 'default_value' if there is no such value
+    
+    \throw SireBase::missing_property
+*/
+const Property& MoleculeData::metadata(const PropertyName &key,
+                                       const PropertyName &metakey,
+                                       const Property &default_value) const
+{
+    return props.metadata(key, metakey, default_value);
+}
+
 /** Set the property with the key 'key' to the value 'value'.
     This replaces any current property with that key. This
     also checks to ensure that this property is compatible
@@ -205,6 +327,9 @@ void MoleculeData::setProperty(const QString &key,
         
     //now the property version number
     prop_vrsns.insert( key, vrsns->increment(key, vrsn) );
+    
+    //now save the property itself
+    props.setProperty(key, value, clear_metadata);
 }
 
 /** Completely remove the property at key 'key', together
@@ -212,7 +337,7 @@ void MoleculeData::setProperty(const QString &key,
     no property with this key */
 void MoleculeData::removeProperty(const QString &key)
 {
-    if (props.contains(key))
+    if (props.hasProperty(key))
     {
         props.remove(key);
         prop_vrsns.remove(key);
@@ -227,14 +352,50 @@ void MoleculeData::removeProperty(const QString &key)
     }
 }
 
-/** Return the version number of the property at key 'key'.
-    If there is no such key in this molecule, or 
-    the value is supplied by the key itself, then
-    a version number of 0 is returned */
-Version MoleculeData::version(const PropertyName &key) const
+/** Set the value of the metadata at metakey 'metakey' to 
+    the value 'value' */
+void MoleculeData::setMetadata(const QString &metakey, const Property &value)
 {
-    if (key.hasValue())
-        return 0;
-    else
-        return prop_vrsns.value(key, 0);
+    props.setMetadata(metakey, value);
+
+    //increment the global version number
+    vrsn = vrsns->increment();
+}
+
+/** Set the value of the metadata at metakey 'metakey' of the 
+    property at key 'key' to the value 'value'
+    
+    \throw SireBase::missing_property
+*/ 
+void MoleculeData::setMetadata(const QString &key, const QString &metakey, 
+                               const Property &value)
+{
+    props.setMetadata(key, metakey, value);
+    
+    //increment the global version number
+    vrsn = vrsns->increment();
+}
+
+/** Remove the metadata at metakey 'metakey' */
+void MoleculeData::removeMetadata(const QString &metakey)
+{
+    if (props.hasMetadata(metakey))
+    {
+        props.removeMetadata(metakey);
+        vrsn = vrsns->increment();
+    }
+}
+
+/** Remove the metadata at metakey 'metakey' from the 
+    property at key 'key'
+    
+    \throw SireBase::missing_property
+*/
+void MoleculeData::removeMetadata(const QString &key, const QString &metakey)
+{
+    if (props.hasMetadata(key, metakey))
+    {
+        props.removeMetadata(key, metakey);
+        vrsn = vrsns->increment();
+    }
 }

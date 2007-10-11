@@ -97,59 +97,47 @@ public:
 
     bool isEmpty() const;
 
-    const Properties& metadata() const;
-    const Properties& metadata(const PropertyName &key) const;
-
-    const Property& value(const PropertyName &key) const;
-    const Property& value(const PropertyName &key,
-                          const Property &default_value) const;
-
-    QStringList keys() const;
+    QStringList propertyKeys() const;
+    
+    QStringList metadataKeys() const;
     QStringList metadataKeys(const PropertyName &key) const;
 
-    void insert(const Properties &properties);
-
-    void insert(const QString &key, const Property &value);
+    const Property& property(const PropertyName &key) const;
     
-    void insert(const QString &key, const Property &value,
-                const Properties &metadata);
+    const Property& metadata(const PropertyName &metakey) const;
+    const Property& metadata(const PropertyName &key,
+                             const PropertyName &metakey) const;
 
-    void update(const QString &key, const Property &value,
-                bool clear_metadata=false);
-
-    void update(const QString &key, const Property &value,
-                const Properties &metadata, bool clear_metadata=false);
-
-    void insertMetadata(const QString &key, const Properties &metadata);
+    void setProperty(const PropertyName &key, const Property &value,
+                     bool clear_metadata=false);
     
-    void insertMetadata(const QString &key, const QString &metakey,
-                        const Property &metavalue);
-    
-    void insertMetadata(const QString &key, const QString &metakey,
-                        const Property &metavalue, 
-                        const Properties &metametadata);
+    void setMetadata(const PropertyName &metakey, const Property &value);
+    void setMetadata(const PropertyName &key,
+                     const PropertyName &metakey, const Property &value);
 
-    void updateMetadata(const QString &key, const QString &metakey,
-                        const Property &metavalue,
-                        bool clear_metametadata=false);
+    void removeProperty(const QString &key);
 
-    void updateMetadata(const QString &key, const QString &metakey,
-                        const Property &metavalue,
-                        const Properties &metametadata,
-                        bool clear_metametadata=false);
-
-    void remove(const QString &key);
-
-    void remoteMetaData(const QString &key);
+    void removeMetaData(const QString &key);
     void removeMetaData(const QString &key, const QString &metakey);
 
     void clear();
 
-    bool contains(const PropertyName &key) const;
-    bool contains(const PropertyName &key, 
-                  const PropertyName &metakey) const;
+    bool hasProperty(const PropertyName &key) const;
+    
+    bool hasMetadata(const PropertyName &metakey) const;
+    
+    bool hasMetadata(const PropertyName &key, 
+                     const PropertyName &metakey) const;
+    
+    const char* propertyType(const PropertyName &key) const;
+    
+    const char* metadataType(const PropertyName &metakey) const;
+    const char* metadataType(const PropertyName &key,
+                             const PropertyName &metakey) const;
     
     void assertContainsProperty(const PropertyName &key) const;
+    
+    void assertContainsMetadata(const PropertyName &metakey) const;
     void assertContainsMetadata(const PropertyName &key, 
                                 const PropertyName &metakey) const;
 
