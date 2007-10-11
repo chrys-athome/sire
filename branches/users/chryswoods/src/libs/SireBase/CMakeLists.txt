@@ -17,14 +17,8 @@ set ( SIREBASE_HEADERS
 
       errors.h
       findexe.h
-      idmajminversion.h
-      idpair.h
-      idtriple.h
-      idversion.h
       increment.h
       incremint.h
-      majminversion.h
-      majversion.h
       md5sum.h
       pairmatrix.hpp
       properties.h
@@ -33,7 +27,6 @@ set ( SIREBASE_HEADERS
       sharedpolypointer.hpp
       sharedpolypointer_cast.hpp
       sparsematrix.hpp
-      version.h
     )
 
 # Define the sources in SireBase
@@ -41,18 +34,11 @@ set ( SIREBASE_SOURCES
 
       errors.cpp
       findexe.cpp
-      idmajminversion.cpp
-      idpair.cpp
-      idtriple.cpp
-      idversion.cpp
-      majminversion.cpp
-      majversion.cpp
       md5sum.cpp
       properties.cpp
       property.cpp
       propertymap.cpp
       sharedpolypointer.cpp
-      version.cpp
       
       ${SIREBASE_HEADERS}
     )

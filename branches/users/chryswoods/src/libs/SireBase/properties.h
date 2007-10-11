@@ -30,6 +30,7 @@
 #define SIREBASE_PROPERTIES_H
 
 #include "property.h"
+#include "propertymap.h"
 
 #include <QSharedDataPointer>
 
@@ -145,11 +146,12 @@ public:
     void clear();
 
     bool contains(const PropertyName &key) const;
-    bool contains(const PropertyName &key, const QString &metakey) const;
+    bool contains(const PropertyName &key, 
+                  const PropertyName &metakey) const;
     
     void assertContainsProperty(const PropertyName &key) const;
     void assertContainsMetadata(const PropertyName &key, 
-                                const QString &metakey) const;
+                                const PropertyName &metakey) const;
 
 private:
     Properties(bool);

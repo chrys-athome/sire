@@ -31,6 +31,15 @@
 
 #include <QSharedData>
 
+#include <boost/shared_ptr.hpp>
+
+#include "SireBase/properties.h"
+#include "SireBase/propertymap.h"
+
+#include "SireBase/shareddatapointer.hpp"
+
+#include "moleculeinfodata.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol
@@ -73,12 +82,12 @@ public:
 
     /** The version number of this molecule - two molecules
         with the same version number and ID number are identical */
-    Version version() const
+    quint64 version() const
     {
         return vrsn;
     }
 
-    Version version(const PropertyName &key) const;
+    quint64 version(const PropertyName &key) const;
 
     /** Return the info object that contains all of the
         metainformation about the atoms, residues, chains,
@@ -128,7 +137,7 @@ public:
     void removeProperty(const QString &key);
 
     /** Return the shared null MoleculeData */
-    static QSharedDataPointer<MoleculeData> null();
+    static SireBase::SharedDataPointer<MoleculeData> null();
 
 private:
     /** The metainfo about the molecule - this contains the names of the molecule,
@@ -148,7 +157,7 @@ private:
     /** The version number of this molecule - this changes 
         whenever the molecule is changed in any way. If two molecules
         have the same ID number and version then they must be the same */
-    Version vrsn;
+    quint64 vrsn;
 
     class PropVersions
     {
@@ -169,16 +178,16 @@ private:
         
         /** The last version number assigned to 
             this molecule */ 
-        Version version;
+        quint64 version;
         
         /** The last version number assigned to
             each property of the molecule */
-        QHash<QString,Version> property_version;
+        QHash<QString,quint64> property_version;
     };
 
     /** The version number of each of the properties in 
         this molecule */
-    QHash<QString,Version> prop_vrsns;
+    QHash<QString,quint64> prop_vrsns;
 
     /** The incremints that are used to update the version numbers
         of the different parts of this molecule */

@@ -591,7 +591,7 @@ public:
 
     CoordGroupEditor& mapInto(const SireMaths::AxisSet &axes);
 
-    CoordGroup commit();
+    CoordGroup commit() const;
 };
 
 }

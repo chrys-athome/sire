@@ -37,20 +37,22 @@
 
 SIRE_BEGIN_HEADER
 
-namespace SireFF
+namespace SireBase
 {
 class PropertyName;
 class PropertyMap;
 }
 
-QDataStream& operator<<(QDataStream&, const SireFF::PropertyName&);
-QDataStream& operator>>(QDataStream&, SireFF::PropertyName&);
+QDataStream& operator<<(QDataStream&, const SireBase::PropertyName&);
+QDataStream& operator>>(QDataStream&, SireBase::PropertyName&);
 
-QDataStream& operator<<(QDataStream&, const SireFF::PropertyMap&);
-QDataStream& operator>>(QDataStream&, SireFF::PropertyMap&);
+QDataStream& operator<<(QDataStream&, const SireBase::PropertyMap&);
+QDataStream& operator>>(QDataStream&, SireBase::PropertyMap&);
 
-namespace SireFF
+namespace SireBase
 {
+
+class Properties;
 
 /** This class is used to store the registered name of the
     property (used as the offial name of the property
@@ -95,14 +97,14 @@ public:
     PropertyName(const QString &source);
     PropertyName(const Property &value);
 
-    PropertyName(const ParameterName &other);
+    PropertyName(const PropertyName &other);
 
     ~PropertyName();
 
     PropertyName& operator=(const PropertyName &other);
 
-    bool operator==(const ParameterName &other) const;
-    bool operator!=(const ParameterName &other) const;
+    bool operator==(const PropertyName &other) const;
+    bool operator!=(const PropertyName &other) const;
 
     bool hasSource() const;
     bool hasValue() const;
@@ -167,14 +169,14 @@ public:
 
     PropertyMap operator+(const PropertyMap &other) const;
 
-    bool operator==(const ParameterMap &other) const;
-    bool operator!=(const ParameterMap &other) const;
+    bool operator==(const PropertyMap &other) const;
+    bool operator!=(const PropertyMap &other) const;
 
     PropertyName operator[](const QString &name) const;
 
     bool specified(const QString &name) const;
 
-    void set(const QString &name, const ParameterName &source);
+    void set(const QString &name, const PropertyName &source);
 
 private:
     /** Hash indexing all of the PropertyNames */

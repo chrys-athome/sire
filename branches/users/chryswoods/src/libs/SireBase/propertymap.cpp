@@ -43,7 +43,7 @@ static const RegisterMetaType<PropertyName> r_propname;
 QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, 
                                       const PropertyName &propname)
 {
-    writeHeader(ds, r_paramname, 1);
+    writeHeader(ds, r_propname, 1);
     
     SharedDataStream sds(ds);
     
@@ -85,7 +85,7 @@ PropertyName::PropertyName(const Property &value)
 {}
 
 /** Copy constructor */
-PropertyName::PropertyName(const ParameterName &other)
+PropertyName::PropertyName(const PropertyName &other)
              : src(other.src), val(other.val)
 {}
 
@@ -103,13 +103,13 @@ PropertyName& PropertyName::operator=(const PropertyName &other)
 }
 
 /** Comparison operator */
-bool PropertyName::operator==(const ParameterName &other) const
+bool PropertyName::operator==(const PropertyName &other) const
 {
     return src == other.src and val == other.val;
 }
 
 /** Comparison operator */
-bool PropertyName::operator!=(const ParameterName &other) const
+bool PropertyName::operator!=(const PropertyName &other) const
 {
     return src != other.src or val != other.val;
 }
@@ -224,13 +224,13 @@ PropertyMap PropertyMap::operator+(const PropertyMap &other) const
 }
 
 /** Comparison operator */
-bool PropertyMap::operator==(const ParameterMap &other) const
+bool PropertyMap::operator==(const PropertyMap &other) const
 {
     return propmap == other.propmap;
 }
 
 /** Comparison operator */
-bool PropertyMap::operator!=(const ParameterMap &other) const
+bool PropertyMap::operator!=(const PropertyMap &other) const
 {
     return propmap != other.propmap;
 }
@@ -252,7 +252,7 @@ bool PropertyMap::specified(const QString &name) const
 /** Set the property called 'name' to have the source or value
     in 'source'. This replaces any existing source or value
     for any existing property of this name in this map */
-void PropertyMap::set(const QString &name, const ParameterName &source)
+void PropertyMap::set(const QString &name, const PropertyName &source)
 {
     propmap.insert(name, source);
 }

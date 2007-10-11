@@ -32,6 +32,9 @@
 #include <QSharedDataPointer>
 #include <QSharedData>
 
+#include "moleculedata.h"
+#include "moleculeinfodata.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol
@@ -44,6 +47,9 @@ QDataStream& operator>>(QDataStream&, SireMol::MoleculeView&);
 
 namespace SireMol
 {
+
+class MoleculeData;
+class AtomSelection;
 
 /** This is the base class of all views of a Molecule. Derived
     classes include Molecule, Segment, Chain, CutGroup, Residue and Atom.
@@ -74,14 +80,14 @@ public:
 
     /** Return the MoleculeData that contains all of the information
         about the molecule which this view is showing */
-    const MoleculeData& Atom::data() const
+    const MoleculeData& data() const
     {
         return *d;
     }
 
     /** Return the MoleculeData that contains all of the information
         about the molecule which this view is showing */
-    const MoleculeData& Atom::constData() const
+    const MoleculeData& constData() const
     {
         return *d;
     }

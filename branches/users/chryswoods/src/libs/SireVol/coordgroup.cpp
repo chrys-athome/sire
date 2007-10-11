@@ -428,7 +428,7 @@ void CoordGroupBase::assertSameSize(const CoordGroupBase &other) const
 */
 void CoordGroupBase::assertValidIndex(quint32 i) const
 {
-    if (i >= this->size())
+    if (i >= quint32(this->size()))
         throw SireError::invalid_index( QObject::tr(
             "Invalid index: %1 - maximum index == %2.")
                 .arg(i).arg(this->size()), CODELOC );
@@ -703,7 +703,8 @@ CoordGroupEditor& CoordGroupEditor::rotate(const Matrix &rotmat, const Vector &p
 
     \throw SireError::index
 */
-CoordGroupEditor& CoordGroupEditor::rotate(quint32 i, const Matrix &rotmat, const Vector &point)
+CoordGroupEditor& CoordGroupEditor::rotate(quint32 i, const Matrix &rotmat, 
+                                           const Vector &point)
 {
     Vector &coord = this->operator[](i);
     coord = SireMaths::rotate(coord, rotmat, point);
@@ -722,7 +723,8 @@ CoordGroupEditor& CoordGroupEditor::rotate(const Quaternion &quat, const Vector 
 
     \throw SireError::index
 */
-CoordGroupEditor& CoordGroupEditor::rotate(quint32 i, const Quaternion &quat, const Vector &point)
+CoordGroupEditor& CoordGroupEditor::rotate(quint32 i, const Quaternion &quat, 
+                                           const Vector &point)
 {
     return this->rotate(i, quat.toMatrix(), point);
 }
@@ -763,15 +765,9 @@ CoordGroupEditor& CoordGroupEditor::setCoordinates(const CoordGroupBase &newcoor
     return *this;
 }
 
-/** Return a CoordGroup which is a copy of this group. This will update the
-    AABox before making the copy, thus ensuring that the AABox of the returned
-    CoordGroup is consistent with its coordinates. */
-CoordGroup CoordGroupEditor::commit()
+/** Return a CoordGroup which is a copy of this group. */
+CoordGroup CoordGroupEditor::commit() const
 {
-    if (this->needsUpdate())
-        //update the AABox
-        this->update();
-
     //return a copy of this CoordGroup
     return CoordGroup(*this);
 }
