@@ -59,7 +59,6 @@ public:
     typedef ID ChainID;
     typedef Index ChainIdx;
     typedef Name ChainName;
-    typedef Info ChainInfo;
 
     Chain();
     
@@ -71,6 +70,21 @@ public:
 
     Chain& operator=(const Chain &other);
     
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<Chain>() );
+    }
+    
+    const char* what() const
+    {
+        return Chain::typeName();
+    }
+    
+    Chain* clone() const
+    {
+        return new Chain(*this);
+    }
+    
     bool operator==(const Chain &other) const;
     bool operator!=(const Chain &other) const;
     
@@ -80,14 +94,14 @@ public:
     ChainIdx index() const;
     
     template<class T>
-    T property(const PropertyName &key) const;
+    const T& property(const PropertyName &key) const;
     
     template<class T>
-    T metadata(const PropertyName &metakey) const;
+    const T& metadata(const PropertyName &metakey) const;
     
     template<class T>
-    T metadata(const PropertyName &key,
-               const PropertyName &metakey) const;
+    const T& metadata(const PropertyName &key,
+                      const PropertyName &metakey) const;
     
     Mover<Chain> move() const;
     Evaluator evaluate() const;
@@ -166,9 +180,9 @@ private:
 */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-T Chain::property(const PropertyName &key) const
+const T& Chain::property(const PropertyName &key) const
 {
-    ChainProperty<T> chain_props = d->property(key);
+    const ChainProperty<T> &chain_props = d->property(key).asA< ChainProperty<T> >();
     return chain_props.at(this->index());
 }
 
@@ -181,7 +195,7 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 T Chain::metadata(const PropertyName &key) const
 {
-    ChainProperty<T> chain_props = d->metadata(key);
+    const ChainProperty<T> &chain_props = d->metadata(key).asA< ChainProperty<T> >();
     return chain_props.at(this->index());
 }
 
@@ -195,7 +209,9 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 T Chain::metadata(const PropertyName &key, const PropertyName &metakey) const
 {
-    ChainProperty<T> chain_props = d->metadata(key, metakey);
+    const ChainProperty<T> &chain_props = d->metadata(key, metakey)
+                                                .asA< ChainProperty<T> >();
+                                                
     return chain_props.at(this->index());
 }
 

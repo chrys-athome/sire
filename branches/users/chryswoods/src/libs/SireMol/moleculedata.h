@@ -84,9 +84,9 @@ public:
         metainformation about the atoms, residues, chains,
         cutgroups and segments that make up this molecule,
         and also gives the name and number of this molecule */
-    const MoleculeInfo& info() const
+    const MoleculeInfoData& info() const
     {
-        return molinfo;
+        return *molinfo;
     }
 
     /** Return all of the properties of this molecule - this
@@ -135,7 +135,7 @@ private:
         residue and all atoms, and additional metainfo about all of the residues
         and atoms. This object may also be used to map from atom or residue IDs
         to CGAtomIDs (which are used to lookup the coordinates) */
-    MoleculeInfo molinfo;
+    SireBase::SharedDataPointer<MoleculeInfoData> molinfo;
 
     /** All of the properties of this molecule - this includes
         the coordinates of the atoms, their connectivity and

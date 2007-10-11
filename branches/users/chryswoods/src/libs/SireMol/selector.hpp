@@ -63,6 +63,21 @@ public:
     Selector<T>& operator=(const Selector<T> &other);
     Selector<T>& operator=(const T &view);
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId< Selector<T> >() );
+    }
+
+    const char* what() const
+    {
+        return Selector<T>::typeName();
+    }
+    
+    Selector<T>* clone() const
+    {
+        return new Selector<T>(*this);
+    }
+
     bool operator==(const Selector<T> &other) const;
     bool operator!=(const Selector<T> &other) const;
     
@@ -120,6 +135,37 @@ public:
     Editor< Selector<T> > edit() const;
     Editor< Selector<T> > edit(int i) const;
     Editor< Selector<T> > edit(int i, int j) const;
+
+    template<class V>
+    QList<V> property(const PropertyName &key) const;
+    
+    template<class V>
+    QList<V> metadata(const PropertyName &metakey) const;
+
+    template<class V>
+    QList<V> metadata(const PropertyName &key,
+                      const PropertyName &metakey) const;
+
+protected:
+    template<class V>
+    void setProperty(const QString &key, const QList<V> &values);
+    
+    template<class V>
+    void setProperty(const QString &metakey, const QList<V> &values);
+    
+    template<class V>
+    void setProperty(const QString &key, const QString &metakey,
+                     const QList<V> &values);
+
+    template<class V>
+    void setProperty(const QString &key, const V &value);
+    
+    template<class V>
+    void setProperty(const QString &metakey, V &value);
+    
+    template<class V>
+    void setProperty(const QString &key, const QString &metakey,
+                     const V &value);
 
 private:
     /** The list of indicies of the selected parts
@@ -892,6 +938,139 @@ SIRE_OUTOFLINE_TEMPLATE
 Editor< Selector<T> > Selector<T>::edit(int i, int j) const
 {
     return Editor< Selector<T> >(*this, this->_pvt_selectedAtoms(i,j));
+}
+
+/** Return a list of the values of the property called 'key' for each
+    of the views in this set, in the order that they appear in this set.
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+QList<V> Selector<T>::property(const PropertyName &key) const
+{
+    return detail::SelectorHelper<T>::property<V>(this->data(), 
+                                                  idxs, key);
+}
+
+/** Return a list of all of the metadata called 'metakey' for each
+    of the views in this set, in the order they appear in this set.
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+QList<V> Selector<T>::metadata(const PropertyName &metakey) const
+{
+    return detail::SelectorHelper<T>::metadata<V>(this->data(), 
+                                                  idxs, metakey);
+}
+
+/** Return a list of all of the metadata called 'key'/'metakey' for each
+    of the views in this set, in the order they appear in this set.
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+QList<V> Selector<T>::metadata(const PropertyName &key,
+                               const PropertyName &metakey) const
+{
+    return detail::SelectorHelper<T>::metadata<V>(this->data(), idxs, 
+                                                  key, metakey);
+}
+
+/** Set the property at key 'key' for all of the views in this set
+    to the values in 'values', with the values given in the same
+    order as the views in this set.
+    
+    \throw SireError::incompatible_error
+    \throw SireError::invalid_cast
+*/
+template<class T>
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+void Selector<T>::setProperty(const QString &key, const QList<V> &values)
+{
+    detail::SelectorHelper<T>::setProperty<V>(this->data(), key, values);
+}
+
+/** Set the metadata at key 'metakey' for all of the views in this set
+    to the values in 'values', with the values given in the same
+    order as the views in this set.
+    
+    \throw SireError::incompatible_error
+    \throw SireError::invalid_cast
+*/
+template<class T>
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+void Selector<T>::setProperty(const QString &metakey, const QList<V> &values)
+{
+    detail::SelectorHelper<T>::setMetadata<V>(this->data(), metakey, values);
+}
+
+
+/** Set the metadata at key 'key'/'metakey' for all of the views in this set
+    to the values in 'values', with the values given in the same
+    order as the views in this set.
+    
+    \throw SireError::incompatible_error
+    \throw SireError::invalid_cast
+*/
+template<class T>
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+void Selector<T>::setProperty(const QString &key, const QString &metakey,
+                              const QList<V> &values)
+{
+    detail::SelectorHelper<T>::setMetadata<V>(this->data(), key, metakey, values);
+}
+
+/** Set the property at key 'key' for all of the views in this set 
+    to the value 'value'
+    
+    \throw SireError::invalid_cast
+*/
+template<class T>
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+void Selector<T>::setProperty(const QString &key, const V &value)
+{
+    detail::SelectorHelper<T>::setProperty<V>(key, value);
+}
+
+/** Set the metadata at metakey 'metakey' for all of the views in this set 
+    to the value 'value'
+    
+    \throw SireError::invalid_cast
+*/
+template<class T>
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+void Selector<T>::setMetadata(const QString &metakey, V &value)
+{
+    detail::SelectorHelper<T>::setMetadata<V>(metakey, value);
+}
+
+/** Set the metadata at key 'key'/'metakey' for all of the views in this set 
+    to the value 'value'
+    
+    \throw SireError::invalid_cast
+*/
+template<class T>
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+void Selector<T>::setMetadata(const QString &key, const QString &metakey,
+                              const V &value)
+{
+    detail::SelectorHelper<T>::setMetadata<V>(key, metakey, value);
 }
 
 }

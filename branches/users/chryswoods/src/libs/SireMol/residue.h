@@ -75,6 +75,21 @@ public:
     bool operator==(const Residue &other) const;
     bool operator!=(const Residue &other) const;
     
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<Residue>() );
+    }
+    
+    const char* what() const
+    {
+        return Residue::typeName();
+    }
+    
+    Residue* clone() const
+    {
+        return new Residue(*this);
+    }
+    
     AtomSelection selectedAtoms() const;
 
     ResName name() const;
@@ -224,6 +239,112 @@ void Residue::setMetadata(const QString &key, const QString &metakey,
 {
     MoleculeView::setMetadata<Residue,ResProperty<T>,T>(this->index(), *d, 
                                                         key, metakey, value);
+}
+
+namespace detail
+{
+
+/** Specialisation of SelectorHelper for Residue */
+template<>
+struct SelectorHelper<Residue>
+{
+    static void assertSameSize(int nres, int nprops);
+    
+    template<class V>
+    static QList<V> property(const MoleculeData &moldata,
+                             const QList<Residue::Index> &idxs,
+                             const PropertyName &key)
+    {
+        return GeneralSelectorHelper<ResProperty<V>,Residue::Index>::
+                            property(moldata,idxs,key);
+    }
+    
+    template<class V>
+    static QList<V> metadata(const MoleculeData &moldata,
+                             const QList<Residue::Index> &idxs,
+                             const PropertyName &metakey)
+    {
+        return GeneralSelectorHelper<ResProperty<V>,Residue::Index>::
+                            metadata(moldata,idxs,metakey);
+    }
+    
+    template<class V>
+    static QList<V> metadata(const MoleculeData &moldata,
+                             const QList<Residue::Index> &idxs,
+                             const PropertyName &key,
+                             const PropertyName &metakey)
+    {
+        return GeneralSelectorHelper<ResProperty<V>,Residue::Index>::
+                            metadata(moldata,idxs,key,metakey);
+    }
+
+    template<class V>
+    static void setProperty(MoleculeData &moldata,
+                            const QList<Residue::Index> &idxs,
+                            const QString &key,
+                            const QList<V> &values)
+    {
+        SelectorHelper<Residue>::assertSameSize(idxs.count(), values.count());
+        
+        GeneralSelectorHelper<ResProperty<V>,Residue::Index>::
+                            setProperty(moldata,idxs,key,values);
+    }
+
+    template<class V>
+    static void setMetadata(MoleculeData &moldata,
+                            const QList<Residue::Index> &idxs,
+                            const QString &metakey,
+                            const QList<V> &values)
+    {
+        SelectorHelper<Residue>::assertSameSize(idxs.count(), values.count());
+        
+        GeneralSelectorHelper<ResProperty<V>,Residue::Index>::
+                            setMetadata(moldata,idxs,metakey,values);
+    }
+
+    template<class V>
+    static void setMetadata(MoleculeData &moldata,
+                            const QList<Residue::Index> &idxs,
+                            const QString &key, const QString &metakey,
+                            const QList<V> &values)
+    {
+        SelectorHelper<Residue>::assertSameSize(idxs.count(), values.count());
+        
+        GeneralSelectorHelper<ResProperty<V>,Residue::Index>::
+                            setProperty(moldata,idxs,key,metakey,values);
+    }
+    
+    template<class V>
+    static void setProperty(MoleculeData &moldata,
+                            const QList<Residue::Index> &idxs,
+                            const QString &key,
+                            const V &value)
+    {
+        GeneralSelectorHelper<ResProperty<V>,Residue::Index>::
+                            setProperty(moldata,idxs,key,value);
+    }
+    
+    template<class V>
+    static void setMetadata(MoleculeData &moldata,
+                            const QList<Residue::Index> &idxs,
+                            const QString &metakey,
+                            const V &value)
+    {
+        GeneralSelectorHelper<ResProperty<V>,Residue::Index>::
+                            setMetadata(moldata,idxs,metakey,value);
+    }
+    
+    template<class V>
+    static void setMetadata(MoleculeData &moldata,
+                            const QList<Residue::Index> &idxs,
+                            const QString &key, const QString &metakey,
+                            const V &value)
+    {
+        GeneralSelectorHelper<ResProperty<V>,Residue::Index>::
+                            setProperty(moldata,idxs,key,metakey,value);
+    }
+};
+
 }
 
 }

@@ -14,14 +14,15 @@ set ( SIREMOL_HEADERS
       atom.h
       atomaliases.h
       atomatomid.h
+      atomcoords.h
       atomcutting.h
-      atomicproperties.h
       atomid.h
       atomidcombos.h
       atomidentifier.h
       atomidx.h
       atomname.h
       atomnum.h
+      atomproperty.hpp
       atomselection.h
       atomselector.h
       atomsin.hpp
@@ -31,12 +32,14 @@ set ( SIREMOL_HEADERS
       cgidentifier.h
       cgidx.h
       cgname.h
+      cgproperty.hpp
       chain.h
       chainchainid.h
       chainid.h
       chainidentifier.h
       chainidx.h
       chainname.h
+      chainproperty.hpp
       chainresid.h
       connectivity.h
       cutgroup.h
@@ -57,7 +60,6 @@ set ( SIREMOL_HEADERS
       moleculeinfodata.h
       moleculeinfodataeditor.h
       moleculemover.h
-      moleculeproperty.h
       molecules.h
       moleculeview.h
       moleculeview_inlines.h
@@ -66,6 +68,7 @@ set ( SIREMOL_HEADERS
       molidx.h
       molname.h
       molnum.h
+      molviewproperty.h
       mover.h
       mover.hpp
       partialmolecule.h
@@ -78,12 +81,14 @@ set ( SIREMOL_HEADERS
       residx.h
       resname.h
       resnum.h
+      resproperty.hpp
       resresid.h
       segid.h
       segidentifier.h
       segidx.h
       segname.h
       segment.h
+      segproperty.hpp
       selector.hpp
       specify.hpp
       splitmolecule.h
@@ -95,7 +100,7 @@ set ( SIREMOL_SOURCES
       atom.cpp
       atomaliases.cpp
       atomatomid.cpp
-      atomicproperties.cpp
+      atomcoords.cpp
       atomid.cpp
       atomidentifier.cpp
       atomcutting.cpp
@@ -120,10 +125,10 @@ set ( SIREMOL_SOURCES
       moleculeinfodata.cpp
       moleculeinfodataeditor.cpp
       moleculemover.cpp
-      moleculeproperty.cpp
       molecules.cpp
       moleculeview.cpp
       molidentifier.cpp
+      molviewproperty.cpp
       mover.cpp
       partialmolecule.cpp
       residentifier.cpp
