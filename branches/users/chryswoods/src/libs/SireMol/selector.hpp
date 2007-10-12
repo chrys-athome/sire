@@ -30,6 +30,7 @@
 #define SIREMOL_SELECTOR_HPP
 
 #include "moleculeview.h"
+#include "evaluator.h"
 
 SIRE_BEGIN_HEADER
 
@@ -118,9 +119,6 @@ public:
     bool contains(const Selector<T> &other) const;
     bool contains(const T &view) const;
     bool contains(const typename T::ID &id) const;
-    
-    bool containsAll(const typename T::ID &id) const;
-    bool containsSome(const typename T::ID &id) const;
 
     AtomSelection selectedAtoms() const;
     
@@ -151,23 +149,29 @@ protected:
     void setProperty(const QString &key, const QList<V> &values);
     
     template<class V>
-    void setProperty(const QString &metakey, const QList<V> &values);
+    void setMetadata(const QString &metakey, const QList<V> &values);
     
     template<class V>
-    void setProperty(const QString &key, const QString &metakey,
+    void setMetadata(const QString &key, const QString &metakey,
                      const QList<V> &values);
 
     template<class V>
     void setProperty(const QString &key, const V &value);
     
     template<class V>
-    void setProperty(const QString &metakey, V &value);
+    void setMetadata(const QString &metakey, V &value);
     
     template<class V>
-    void setProperty(const QString &key, const QString &metakey,
+    void setMetadata(const QString &key, const QString &metakey,
                      const V &value);
 
 private:
+    void _pvt_add(typename T::Index idx);
+    void _pvt_sub(typename T::Index idx);
+
+    AtomSelection _pvt_selectedAtoms(int i) const;
+    AtomSelection _pvt_selectedAtoms(int i, int j) const;
+
     /** The list of indicies of the selected parts
         of the molecule */
     QList<typename T::Index> idxs;
@@ -252,7 +256,7 @@ Selector<T>& Selector<T>::operator=(const T &view)
 {
     MoleculeView::operator=(view);
     
-    idxs.clear()
+    idxs.clear();
     idxs.append(view.index());
     
     idxs_set.clear();
@@ -408,11 +412,11 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 Selector<T> Selector<T>::subtract(const typename T::ID &id) const
 {
-    QList<typename ID::Index> idxs = id.map(d->info());
+    QList<typename T::Index> idxs = id.map(d->info());
     
     Selector<T> ret(*this);
     
-    foreach (typename ID::Index idx, idxs)
+    foreach (typename T::Index idx, idxs)
     {
         ret._pvt_sub(idx);
     }
@@ -645,8 +649,6 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 Selector<T> Selector<T>::invert() const
 {
-    Selector<T> ret(*this);
-    
     QList<typename T::Index> all_idxs = typename T::Index::null().map(d->info());
     
     Selector<T> ret(*this);
@@ -689,7 +691,7 @@ bool Selector<T>::contains(const Selector<T> &other) const
 */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-bool Selector<T>::containsSome(const Selector<T> &other) const
+bool Selector<T>::intersects(const Selector<T> &other) const
 {
     MoleculeView::assertSameMolecule(other);
     
@@ -711,15 +713,6 @@ bool Selector<T>::containsSome(const Selector<T> &other) const
     }
     
     return false;
-}
-
-/** Return whether this set contains all of the views
-    in 'other' */
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-bool Selector<T>::containsAll(const Selector<T> &other) const
-{
-    return this->contains(other);
 }
 
 /** Return whether or not this set contains the view 'view' */
@@ -753,20 +746,11 @@ bool Selector<T>::contains(const typename T::ID &id) const
     }
 }
 
-/** Return whether or not this set contains all of the  
-    view identified by the ID 'id' */
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-bool Selector<T>::containsAll(const typename T::ID &id) const
-{
-    return this->contains(id);
-}
-
 /** Return whether this set contains some of the views
     identified by the ID 'id' */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-bool Selector<T>::containsSome(const typename T::ID &id) const
+bool Selector<T>::intersects(const typename T::ID &id) const
 {
     QList<typename T::Index> id_idxs = id.map(d->info());
     
@@ -790,31 +774,6 @@ bool Selector<T>::containsSome(const typename T::ID &id) const
     }
     
     return false;
-}
-
-/** Return whether or not this set intersects with 'other' */
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-bool Selector<T>::intersects(const Selector<T> &other) const
-{
-    return this->containsSome(other);
-}
-
-/** Return whether or not this set contain the view 'view' */
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-bool Selector<T>::intersects(const T &view) const
-{
-    return this->contains(view);
-}
-
-/** Return whether or not this set contains some of the
-    views identified by the ID 'id' */
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-bool Selector<T>::intersects(const typename T::ID &id) const
-{
-    return this->containsSome(id);
 }
 
 /** Return all of the atoms selected in this set */
@@ -951,8 +910,8 @@ template<class V>
 SIRE_OUTOFLINE_TEMPLATE
 QList<V> Selector<T>::property(const PropertyName &key) const
 {
-    return detail::SelectorHelper<T>::property<V>(this->data(), 
-                                                  idxs, key);
+    T *ptr;
+    return detail::get_property<V>(ptr, this->data(), this->idxs, key);
 }
 
 /** Return a list of all of the metadata called 'metakey' for each
@@ -966,8 +925,9 @@ template<class V>
 SIRE_OUTOFLINE_TEMPLATE
 QList<V> Selector<T>::metadata(const PropertyName &metakey) const
 {
-    return detail::SelectorHelper<T>::metadata<V>(this->data(), 
-                                                  idxs, metakey);
+    T *ptr;
+    return detail::get_metadata<V>(ptr, this->data(), 
+                                   this->idxs, metakey);
 }
 
 /** Return a list of all of the metadata called 'key'/'metakey' for each
@@ -982,8 +942,9 @@ SIRE_OUTOFLINE_TEMPLATE
 QList<V> Selector<T>::metadata(const PropertyName &key,
                                const PropertyName &metakey) const
 {
-    return detail::SelectorHelper<T>::metadata<V>(this->data(), idxs, 
-                                                  key, metakey);
+    T *ptr;
+    return detail::get_metadata<V>(ptr, this->data(), this->idxs, 
+                                   key, metakey);
 }
 
 /** Set the property at key 'key' for all of the views in this set
@@ -998,7 +959,8 @@ template<class V>
 SIRE_OUTOFLINE_TEMPLATE
 void Selector<T>::setProperty(const QString &key, const QList<V> &values)
 {
-    detail::SelectorHelper<T>::setProperty<V>(this->data(), key, values);
+    T *ptr;
+    detail::set_property<V>(ptr, this->data(), this->idxs, key, values);
 }
 
 /** Set the metadata at key 'metakey' for all of the views in this set
@@ -1011,9 +973,10 @@ void Selector<T>::setProperty(const QString &key, const QList<V> &values)
 template<class T>
 template<class V>
 SIRE_OUTOFLINE_TEMPLATE
-void Selector<T>::setProperty(const QString &metakey, const QList<V> &values)
+void Selector<T>::setMetadata(const QString &metakey, const QList<V> &values)
 {
-    detail::SelectorHelper<T>::setMetadata<V>(this->data(), metakey, values);
+    T *ptr;
+    detail::set_metadata<V>(ptr, this->data(), this->idxs, metakey, values);
 }
 
 
@@ -1027,10 +990,11 @@ void Selector<T>::setProperty(const QString &metakey, const QList<V> &values)
 template<class T>
 template<class V>
 SIRE_OUTOFLINE_TEMPLATE
-void Selector<T>::setProperty(const QString &key, const QString &metakey,
+void Selector<T>::setMetadata(const QString &key, const QString &metakey,
                               const QList<V> &values)
 {
-    detail::SelectorHelper<T>::setMetadata<V>(this->data(), key, metakey, values);
+    T *ptr;
+    detail::set_metadata<V>(ptr, this->data(), this->idxs, key, metakey, values);
 }
 
 /** Set the property at key 'key' for all of the views in this set 
@@ -1043,7 +1007,8 @@ template<class V>
 SIRE_OUTOFLINE_TEMPLATE
 void Selector<T>::setProperty(const QString &key, const V &value)
 {
-    detail::SelectorHelper<T>::setProperty<V>(key, value);
+    T *ptr;
+    detail::set_property<V>(ptr, this->data(), this->idxs, key, value);
 }
 
 /** Set the metadata at metakey 'metakey' for all of the views in this set 
@@ -1056,7 +1021,8 @@ template<class V>
 SIRE_OUTOFLINE_TEMPLATE
 void Selector<T>::setMetadata(const QString &metakey, V &value)
 {
-    detail::SelectorHelper<T>::setMetadata<V>(metakey, value);
+    T *ptr;
+    detail::set_metadata<V>(ptr, this->data(), this->idxs, metakey, value);
 }
 
 /** Set the metadata at key 'key'/'metakey' for all of the views in this set 
@@ -1070,7 +1036,8 @@ SIRE_OUTOFLINE_TEMPLATE
 void Selector<T>::setMetadata(const QString &key, const QString &metakey,
                               const V &value)
 {
-    detail::SelectorHelper<T>::setMetadata<V>(key, metakey, value);
+    T *ptr;
+    detail::set_metadata<V>(ptr, this->data(), this->idxs, key, metakey, value);
 }
 
 }

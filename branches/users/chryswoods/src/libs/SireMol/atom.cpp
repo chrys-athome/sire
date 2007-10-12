@@ -44,7 +44,7 @@ static const RegisterMetaType<Atom> r_atom;
 /** Serialise to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const Atom &atom)
 {
-    writeHeader(ds, r_newatom, 1);
+    writeHeader(ds, r_atom, 1);
 
     ds << atom.atomidx << static_cast<const MoleculeView&>(atom);
 
@@ -80,7 +80,7 @@ Atom::Atom() : MoleculeView(), atomidx( Index::null() )
 Atom::Atom(const MoleculeView &molview, const AtomID &atomid)
      : MoleculeView(molview)
 {
-    atomidx = atomid.map(d->info());
+    atomidx = d->info().atomIdx(atomid);
     molview.assertContains(atomidx);
 }
 
@@ -92,7 +92,7 @@ Atom::Atom(const MoleculeView &molview, const AtomID &atomid)
     \throw SireError::invalid_index
 */
 Atom::Atom(const MoleculeData &moldata, const AtomID &atomid)
-     : MoleculeView(moldata), atomidx( atomid.map(moldata.info()) )
+     : MoleculeView(moldata), atomidx( moldata.info().atomIdx(atomid) )
 {}
 
 /** Copy constructor */
@@ -128,9 +128,9 @@ bool Atom::operator!=(const Atom &other) const
 /** Return the selected atom! */
 AtomSelection Atom::selectedAtoms() const
 {
-    AtomSelection selected_atoms(d->info());
+    AtomSelection selected_atoms(data());
     
-    selected_atoms.select( d->cgAtomIdx(atomidx) );
+    selected_atoms.select(atomidx);
     
     return selected_atoms;
 }

@@ -29,6 +29,8 @@
 #ifndef SIREBASE_SHAREDDATAPOINTER_HPP
 #define SIREBASE_SHAREDDATAPOINTER_HPP
 
+#include "sireglobal.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireBase

@@ -91,6 +91,35 @@ MoleculeView& MoleculeView::operator=(const MoleculeView &other)
     return *this;
 }
 
+/** Comparison operator */
+bool MoleculeView::operator==(const MoleculeView &other) const
+{
+    return d == other.d or *d == *(other.d);
+}
+
+/** Comparison operator */
+bool MoleculeView::operator!=(const MoleculeView &other) const
+{
+    return d != other.d and *d != *(other.d);
+}
+
+/** Assert that this view is looking at the molecule whose data is 
+    in 'other' (albeit perhaps a different version of that molecule)
+    
+    \throw SireError::incompatible_error
+*/
+void MoleculeView::assertSameMolecule(const MoleculeData &other) const;
+{
+    if (d->number() != other.number())
+        //these are different molecules!
+        throw SireError::incompatible_error( QObject::tr(
+            "The molecules \"%1\", number %2, and \"%3\", number %3, "
+            "are different, and therefore incompatible.")
+                .arg(this->info().name()).arg(this->number())
+                .arg(other.info().name()).arg(other.number()),
+                    CODELOC );
+}
+
 /** Assert that this is a view of the same molecule as 'other'
     (albeit at a different version)
     
@@ -98,13 +127,8 @@ MoleculeView& MoleculeView::operator=(const MoleculeView &other)
 */
 void MoleculeView::assertSameMolecule(const MoleculeView &other) const
 {
-    
+    this->assertSameMolecule(other.data());
 }
-
-void MoleculeView::assertSameMolecule(const MoleculeData &other) const;
-
-void MoleculeView::assertContains(AtomIdx atomidx) const;
-void MoleculeView::assertContains(const AtomID &atomid) const;
 
 /** Update this view with a new version of the molecule. You 
     can only update the molecule if it has the same info

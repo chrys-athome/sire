@@ -131,11 +131,17 @@ public:
     template<class T>
     const T& asA() const
     {
-        return dynamic_cast<const T&>(*this);
+        const T* as_t = dynamic_cast<const T*>(this);
+        
+        if (not as_t)
+            throwInvalidCast(T::typeName());
+    
+        return *as_t;
     }
 
 protected:
     void throwInvalidCast(const PropertyBase &other) const;
+    void throwInvalidCast(const char *typenam) const;
 };
 
 /** This is the second-to-top class of all Properties. Any instantiatable

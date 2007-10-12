@@ -126,8 +126,21 @@ bool PropertyBase::operator!=(const Property &property) const
 void PropertyBase::throwInvalidCast(const PropertyBase &other) const
 {
     throw SireError::invalid_cast( QObject::tr(
-            "Cannot cast from an object of class \"%1\" to an object of class \"%2\"")
+            "Cannot cast from an object of class \"%1\" to an object "
+            "of class \"%2\".")
                 .arg(other.what()).arg(this->what()), CODELOC );
+}
+
+/** Throw an invalid cast!
+
+    \throw SireError::invalid_cast
+*/
+void PropertyBase::throwInvalidCast(const char *typenam) const
+{
+    throw SireError::invalid_cast( QObject::tr(
+            "Cannot cast from an object of class \"%1\" to an object "
+            "of class \"%2\".")
+                .arg(typenam).arg(this->what()), CODELOC );
 }
 
 static const RegisterMetaType<PropertyBase> r_propbase(MAGIC_ONLY,

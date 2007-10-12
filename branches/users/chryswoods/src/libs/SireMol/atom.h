@@ -32,6 +32,7 @@
 #include <QVariant>
 
 #include "moleculeview.h"
+#include "atomproperty.hpp"
 
 SIRE_BEGIN_HEADER
 
@@ -46,6 +47,28 @@ QDataStream& operator>>(QDataStream&, SireMol::Atom&);
 namespace SireMol
 {
 
+class AtomID;
+class AtomIdx;
+class AtomName;
+class AtomNum;
+
+class Evaluator;
+
+template<class T>
+class Editor;
+
+template<class T>
+class Mover;
+
+template<class T>
+class Selector;
+
+class Residue;
+class Chain;
+class CutGroup;
+class Segment;
+class Molecule;
+
 /** This is a single-atom view into a molecule.
 
     @author Christopher Woods
@@ -57,10 +80,10 @@ friend QDataStream& ::operator<<(QDataStream&, const Atom&);
 friend QDataStream& ::operator>>(QDataStream&, Atom&);
 
 public:
-    typedef ID AtomID;
-    typedef Index AtomIdx;
-    typedef Name AtomName;
-    typedef Number AtomNum;
+    typedef AtomID ID;
+    typedef AtomIdx Index;
+    typedef AtomName Name;
+    typedef AtomNum Number;
 
     Atom();
     
@@ -100,17 +123,24 @@ public:
     AtomIdx index() const;
     const CGAtomIdx& cgAtomIdx() const;
 
-    AtomInfo info() const;
+    bool hasProperty(const PropertyName &key) const;
+    bool hasMetadata(const PropertyName &metakey) const;
+    bool hasMetadata(const PropertyName &key,
+                     const PropertyName &metakey) const;
+    
+    QStringList propertyKeys() const;
+    QStringList metadataKeys() const;
+    QStringList metadataKeys(const PropertyName &key) const;
+                
+    template<class T>
+    const T& property(const PropertyName &key) const;
     
     template<class T>
-    T property(const PropertyName &key) const;
+    const T& metadata(const PropertyName &metakey) const;
     
     template<class T>
-    T metadata(const PropertyName &metakey) const;
-    
-    template<class T>
-    T metadata(const PropertyName &key,
-               const PropertyName &metakey) const;
+    const T& metadata(const PropertyName &key,
+                      const PropertyName &metakey) const;
     
     Mover<Atom> move() const;
     Evaluator evaluate() const;
@@ -154,8 +184,8 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 const T& Atom::property(const PropertyName &key) const
 {
-    const AtomProperty<T> &atom_props = 
-                        d->property(key).asA< AtomProperty<T> >();
+    const Property &property = d->property(key);
+    const AtomProperty<T> &atom_props = property.asA< AtomProperty<T> >();
 
     return atom_props.at(this->cgAtomIdx());
 }
@@ -169,8 +199,8 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 const T& Atom::metadata(const PropertyName &metakey) const
 {
-    const AtomProperty<T> &atom_props = 
-                        d->metadata(metakey).asA< AtomProperty<T> >();
+    const Property &property = d->metadata(metakey);
+    const AtomProperty<T> &atom_props = property.asA< AtomProperty<T> >();
 
     return atom_props.at(this->cgAtomIdx());
 }
@@ -185,8 +215,8 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 const T& Atom::metadata(const PropertyName &key, const PropertyName &metakey) const
 {
-    const AtomProperty<T> &atom_props = 
-                        d->metadata(key, metakey).asA< AtomProperty<T> >();
+    const Property &property = d->metadata(key, metakey);
+    const AtomProperty<T> &atom_props = property.asA< AtomProperty<T> >();
                         
     return atom_props.at(this->cgAtomIdx());
 }
@@ -204,8 +234,8 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 void Atom::setProperty(const QString &key, const T &value)
 {
-    MoleculeView::setProperty<Atom,AtomicProperty<T>,T>(this->cgAtomIdx(), *d,
-                                                        key, value);
+    MoleculeView::setProperty<Atom,AtomProperty<T>,T>(this->cgAtomIdx(), *d,
+                                                      key, value);
 }
 
 /** Set the metadata at metakey 'metakey' for this atom */
@@ -213,8 +243,8 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 void Atom::setMetadata(const QString &metakey, const T &value)
 {
-    MoleculeView::setMetadata<Atom,AtomicProperty<T>,T>(this->cgAtomIdx(), *d,
-                                                        metakey, value);
+    MoleculeView::setMetadata<Atom,AtomProperty<T>,T>(this->cgAtomIdx(), *d,
+                                                      metakey, value);
 }
 
 /** Set the metadata at metakey 'metakey' for the property at 
@@ -223,8 +253,8 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 void Atom::setMetadata(const QString &key, const QString &metakey, const T &value)
 {
-    MoleculeView::setMetadata<Atom,AtomicProperty<T>,T>(this->cgAtomIdx(), *d,
-                                                        key, metakey, value);
+    MoleculeView::setMetadata<Atom,AtomProperty<T>,T>(this->cgAtomIdx(), *d,
+                                                      key, metakey, value);
 }
 
 namespace detail
@@ -235,221 +265,219 @@ namespace detail
     
     @author Christopher Woods
 */
-template<>
-struct SelectorHelper<Atom>
-{
-    static void assertSameSize(int nats, int nprops);
+static void assertSameSize(Atom*, int nats, int nprops);
 
-    template<class V>
-    static QList<V> property(const MoleculeData &moldata,
+template<class V>
+static QList<V> get_property(Atom*, const MoleculeData &moldata,
                              const QList<Atom::Index> &idxs,
                              const PropertyName &key)
+{
+    QList<V> props;
+        
+    const Property &property = moldata.property(key);
+        
+    const AtomProperty<V> &atom_prop = property.asA< AtomProperty<V> >();
+
+    const MoleculeInfoData &molinfo = moldata.info();
+
+    foreach (Atom::Index idx, idxs)
     {
-        QList<V> props;
-        
-        const AtomProperty<V> &atom_prop = moldata.property(key)
-                                                  .asA< AtomProperty<V> >();
-
-        const MoleculeInfoData &molinfo = moldata.info();
-
-        foreach (Atom::Index idx, idxs)
-        {
-            props.append( atom_prop.at( molinfo.cgAtomIdx(idx) ) );
-        }
-        
-        return props;
+        props.append( atom_prop.at( molinfo.cgAtomIdx(idx) ) );
     }
+        
+    return props;
+}
     
-    template<class V>
-    static QList<V> metadata(const MoleculeData &moldata,
+template<class V>
+static QList<V> get_metadata(Atom*, const MoleculeData &moldata,
                              const QList<Atom::Index> &idxs,
                              const PropertyName &metakey)
-    {
-        QList<V> mdata;
-        
-        const AtomProperty<V> &atom_prop = moldata.metadata(metakey)
-                                                  .asA< AtomProperty<V> >();
-
-        const MoleculeInfoData &molinfo = moldata.info();
+{
+    QList<V> mdata;
     
-        foreach (Atom::Index idx, idxs)
-        {
-            mdata.append( atom_prop.at( molinfo.cgAtomIdx(idx) ) );
-        }
-        
-        return mdata;
+    const Property &property = moldata.metadata(metakey);
+    
+    const AtomProperty<V> &atom_prop = property.asA< AtomProperty<V> >();
+
+    const MoleculeInfoData &molinfo = moldata.info();
+
+    foreach (Atom::Index idx, idxs)
+    {
+        mdata.append( atom_prop.at( molinfo.cgAtomIdx(idx) ) );
     }
     
-    template<class V>
-    static QList<V> metadata(const MoleculeData &moldata,
+    return mdata;
+}
+
+template<class V>
+static QList<V> get_metadata(Atom*, const MoleculeData &moldata,
                              const QList<Atom::Index> &idxs,
                              const PropertyName &key,
                              const PropertyName &metakey)
+{
+    QList<V> mdata;
+    
+    const Property &property = moldata.metadata(key, metakey);
+    
+    const AtomProperty<V> &atom_prop = property.asA< AtomProperty<V> >();
+                                              
+    const MoleculeInfoData &molinfo = moldata.info();
+    
+    foreach (Atom::Index idx, idxs)
     {
-        QList<V> mdata;
-        
-        const AtomProperty<V> &atom_prop = moldata.metadata(key, metakey)
-                                                  .asA< AtomProperty<V> >();
-                                                  
-        const MoleculeInfoData &molinfo = moldata.info();
-        
-        foreach (Atom::Index idx, idxs)
-        {
-            mdata.append( atom_prop.at( molinfo.cgAtomIdx(idx) ) );
-        }
-        
-        return mdata;
+        mdata.append( atom_prop.at( molinfo.cgAtomIdx(idx) ) );
     }
     
-    template<class V>
-    static void setProperty(MoleculeData &moldata,
-                            const QList<Atom::Index> &idxs,
-                            const QString &key,
-                            const QList<V> &values)
-    {
-        SelectorHelper<Atom>::assertSameSize(idxs.count(), values.count());
-        
-        const MoleculeInfoData &molinfo = moldata.info();
-        
-        AtomProperty<V> atom_prop;
-        
-        if ( moldata.hasProperty(key) )
-            atom_prop = moldata.property(key);
-        else
-            atom_prop = AtomProperty<V>(molinfo);
-            
-        for (int i=0; i<idxs.count(); ++i)
-        {
-            atom_prop.set( molinfo.cgAtomIdx(idxs[i]), values[i] );
-        }
-        
-        moldata.setProperty(key, atom_prop);
-    }
-    
-    template<class V>
-    static void setMetadata(MoleculeData &moldata,
-                            const QList<Atom::Index> &idxs,
-                            const QString &metakey,
-                            const QList<V> &values)
-    {
-        SelectorHelper<Atom>::assertSameSize(idxs.count(), values.count());
-        
-        const MoleculeInfoData &molinfo = moldata.info();
-        
-        AtomProperty<V> atom_prop;
-        
-        if (moldata.hasMetadata(metakey))
-            atom_prop = moldata.metadata(metakey);
-        else
-            atom_prop = AtomProperty<V>(molinfo);
-            
-        for (int i=0; i<idxs.count(); ++i)
-        {
-            atom_prop.set(molinfo.cgAtomIdx(idxs[i]), values[i]); 
-        }
-        
-        moldata.setMetadata(metakey, atom_prop);
-    }
-    
-    template<class V>
-    static void setMetadata(MoleculeData &moldata,
-                            const QList<Atom::Index> &idxs,
-                            const QString &key, const QString &metakey,
-                            const QList<V> &values)
-    {
-        SelectorHelper<Atom>::assertSameSize(idxs.count(), values.count());
-        
-        const MoleculeInfoData &molinfo = moldata.info();
-        
-        AtomProperty<V> atom_prop;
-        
-        if (moldata.hasMetadata(key, metakey))
-            atom_prop = moldata.metadata(key, metakey);
-        else
-            atom_prop = AtomProperty<V>(molinfo);
-            
-        for (int i=0; i<idxs.count(); ++i)
-        {
-            atom_prop.set(molinfo.cgAtomIdx(idxs[i]), values[i]);
-        }
-        
-        moldata.setMetadata(key, metakey, atom_prop);
-    }
-    
-    template<class V>
-    static void setProperty(MoleculeData &moldata,
-                            const QList<Atom::Index> &idxs,
-                            const QString &key,
-                            const V &value)
-    {
-        const MoleculeInfo &molinfo = moldata.info();
-        
-        AtomProperty<V> atom_prop;
-        
-        if (moldata.hasProperty(key))
-            atom_prop = moldata.property(key);
-        else
-            atom_prop = AtomProperty<V>(molinfo);
-            
-        foreach (Atom::Index idx, idxs)
-        {
-            atom_prop.set(molinfo.cgAtomIdx(idx), value);
-        }
-        
-        moldata.setProperty(key, atom_prop);
-    }
-    
-    template<class V>
-    static void setMetadata(MoleculeData &moldata,
-                            const QList<Atom::Index> &idxs,
-                            const QString &metakey,
-                            const V &value)
-    {
-        const MoleculeInfo &molinfo = moldata.info();
-        
-        AtomProperty<V> atom_prop;
-        
-        if (moldata.hasMetadata(metakey))
-            atom_prop = moldata.metadata(metakey);
-        else
-            atom_prop = AtomProperty<V>(molinfo);
-            
-        foreach (Atom::Index idx, idxs)
-        {
-            atom_prop.set(molinfo.cgAtomIdx(idx), value);
-        }
-        
-        moldata.setMetadata(metakey, atom_prop);
-    }
-    
-    template<class V>
-    static void setMetadata(MoleculeData &moldata,
-                            const QList<Atom::Index> &idxs,
-                            const QString &key, const QString &metakey,
-                            const V &value)
-    {
-        const MoleculeInfo &molinfo = moldata.info();
-        
-        AtomProperty<V> atom_prop;
-        
-        if (moldata.hasMetadata(key,metakey))
-            atom_prop = moldata.metadata(key,metakey);
-        else
-            atom_prop = AtomProperty<V>(molinfo);
-            
-        foreach (Atom::Index idx, idxs)
-        {
-            atom_prop.set(molinfo.cgAtomIdx(idx), value);
-        }
-        
-        moldata.setMetadata(key, metakey, atom_prop);
-    }
-    
-};
-
+    return mdata;
 }
 
+template<class V>
+static void set_property(Atom *ptr, MoleculeData &moldata,
+                         const QList<Atom::Index> &idxs,
+                         const QString &key,
+                         const QList<V> &values)
+{
+    assertSameSize(ptr, idxs.count(), values.count());
+    
+    const MoleculeInfoData &molinfo = moldata.info();
+    
+    AtomProperty<V> atom_prop;
+    
+    if ( moldata.hasProperty(key) )
+        atom_prop = moldata.property(key);
+    else
+        atom_prop = AtomProperty<V>(molinfo);
+        
+    for (int i=0; i<idxs.count(); ++i)
+    {
+        atom_prop.set( molinfo.cgAtomIdx(idxs[i]), values[i] );
+    }
+    
+    moldata.setProperty(key, atom_prop);
 }
+
+template<class V>
+static void set_metadata(Atom *ptr, MoleculeData &moldata,
+                         const QList<Atom::Index> &idxs,
+                         const QString &metakey,
+                         const QList<V> &values)
+{
+    assertSameSize(ptr, idxs.count(), values.count());
+    
+    const MoleculeInfoData &molinfo = moldata.info();
+    
+    AtomProperty<V> atom_prop;
+    
+    if (moldata.hasMetadata(metakey))
+        atom_prop = moldata.metadata(metakey);
+    else
+        atom_prop = AtomProperty<V>(molinfo);
+        
+    for (int i=0; i<idxs.count(); ++i)
+    {
+        atom_prop.set(molinfo.cgAtomIdx(idxs[i]), values[i]); 
+    }
+    
+    moldata.setMetadata(metakey, atom_prop);
+}
+
+template<class V>
+static void set_metadata(Atom *ptr, MoleculeData &moldata,
+                         const QList<Atom::Index> &idxs,
+                         const QString &key, const QString &metakey,
+                         const QList<V> &values)
+{
+    assertSameSize(ptr, idxs.count(), values.count());
+    
+    const MoleculeInfoData &molinfo = moldata.info();
+    
+    AtomProperty<V> atom_prop;
+    
+    if (moldata.hasMetadata(key, metakey))
+        atom_prop = moldata.metadata(key, metakey);
+    else
+        atom_prop = AtomProperty<V>(molinfo);
+        
+    for (int i=0; i<idxs.count(); ++i)
+    {
+        atom_prop.set(molinfo.cgAtomIdx(idxs[i]), values[i]);
+    }
+    
+    moldata.setMetadata(key, metakey, atom_prop);
+}
+
+template<class V>
+static void set_property(Atom*, MoleculeData &moldata,
+                         const QList<Atom::Index> &idxs,
+                         const QString &key,
+                         const V &value)
+{
+    const MoleculeInfoData &molinfo = moldata.info();
+    
+    AtomProperty<V> atom_prop;
+    
+    if (moldata.hasProperty(key))
+        atom_prop = moldata.property(key);
+    else
+        atom_prop = AtomProperty<V>(molinfo);
+        
+    foreach (Atom::Index idx, idxs)
+    {
+        atom_prop.set(molinfo.cgAtomIdx(idx), value);
+    }
+    
+    moldata.setProperty(key, atom_prop);
+}
+
+template<class V>
+static void set_metadata(Atom*, MoleculeData &moldata,
+                         const QList<Atom::Index> &idxs,
+                         const QString &metakey,
+                         const V &value)
+{
+    const MoleculeInfoData &molinfo = moldata.info();
+    
+    AtomProperty<V> atom_prop;
+    
+    if (moldata.hasMetadata(metakey))
+        atom_prop = moldata.metadata(metakey);
+    else
+        atom_prop = AtomProperty<V>(molinfo);
+        
+    foreach (Atom::Index idx, idxs)
+    {
+        atom_prop.set(molinfo.cgAtomIdx(idx), value);
+    }
+    
+    moldata.setMetadata(metakey, atom_prop);
+}
+
+template<class V>
+static void set_metadata(Atom*, MoleculeData &moldata,
+                         const QList<Atom::Index> &idxs,
+                         const QString &key, const QString &metakey,
+                         const V &value)
+{
+    const MoleculeInfoData &molinfo = moldata.info();
+    
+    AtomProperty<V> atom_prop;
+    
+    if (moldata.hasMetadata(key,metakey))
+        atom_prop = moldata.metadata(key,metakey);
+    else
+        atom_prop = AtomProperty<V>(molinfo);
+        
+    foreach (Atom::Index idx, idxs)
+    {
+        atom_prop.set(molinfo.cgAtomIdx(idx), value);
+    }
+    
+    moldata.setMetadata(key, metakey, atom_prop);
+}
+
+} // end of namespace detail
+
+} // end of namespace SireMol
 
 Q_DECLARE_METATYPE(SireMol::Atom);
 

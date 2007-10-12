@@ -44,8 +44,22 @@ class Evaluator;
 QDataStream& operator<<(QDataStream&, const SireMol::Evaluator&);
 QDataStream& operator>>(QDataStream&, SireMol::Evaluator&);
 
+namespace SireMaths
+{
+class Sphere;
+}
+
+namespace SireVol
+{
+class AABox;
+}
+
 namespace SireMol
 {
+
+using SireMaths::Sphere;
+
+using SireVol::AABox;
 
 /** This class is used to add a nice API to the MoleculeView based classes to
     allow the evaluation of various properties of the molecule (without the
@@ -72,6 +86,51 @@ public:
 
     Evaluator& operator=(const Evaluator &other);
     Evaluator& operator=(const MoleculeView &other);
+
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<Evaluator>() );
+    }
+
+    const char* what() const
+    {
+        return Evaluator::typeName();
+    }
+
+    Evaluator* clone() const
+    {
+        return new Evaluator(*this);
+    }
+
+    bool hasProperty(const PropertyName&) const
+    {
+        return false;
+    }
+
+    bool hasMetadata(const PropertyName&) const
+    {
+        return false;
+    }
+
+    bool hasMetadata(const PropertyName&, const PropertyName&) const
+    {
+        return false;
+    }
+
+    QStringList propertyKeys() const
+    {
+        return QStringList();
+    }
+
+    QStringList metadataKeys() const
+    {
+        return QStringList();
+    }
+
+    QStringList metadataKeys(const PropertyName&) const
+    {
+        return QStringList();
+    }
 
     AtomSelection selectedAtoms() const;
     

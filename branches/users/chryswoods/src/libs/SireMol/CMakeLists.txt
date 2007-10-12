@@ -62,7 +62,6 @@ set ( SIREMOL_HEADERS
       moleculemover.h
       molecules.h
       moleculeview.h
-      moleculeview_inlines.h
       molid.h
       molidentifier.h
       molidx.h

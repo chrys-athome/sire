@@ -30,11 +30,34 @@
 #define SIREMOL_MOVER_H
 
 #include "moleculeview.h"
+#include "atomselection.h"
+
+#include "SireMaths/vector.h"
 
 SIRE_BEGIN_HEADER
 
+namespace SireMaths
+{
+class AxisSet;
+}
+
 namespace SireMol
 {
+
+class AtomAliases;
+class AtomCoords;
+
+class BondID;
+class AngleID;
+class DihedralID;
+class ImproperID;
+
+using SireMaths::Vector;
+using SireMaths::Quaternion;
+using SireMaths::Matrix;
+using SireMaths::AxisSet;
+
+using SireBase::PropertyMap;
 
 /** This class provides the template-independent part
     of Mover<T>. This class is not designed to be used
@@ -132,16 +155,16 @@ protected:
     static void mapInto(MoleculeData &data, const AtomSelection &selected_atoms,
                         const AxisSet &axes, const PropertyMap &map);
 
-    static void translate(AtomicCoords &coords,
+    static void translate(AtomCoords &coords,
                           const AtomSelection &selected_atoms,
                           const Vector &delta);
 
-    static void rotate(AtomicCoords &coords,
+    static void rotate(AtomCoords &coords,
                        const AtomSelection &selected_atoms,
                        const Matrix &rotmat,
                        const Vector &point);
 
-    static void mapInto(AtomicCoords &coords,
+    static void mapInto(AtomCoords &coords,
                         const AtomSelection &selected_atoms,
                         const AxisSet &axes);
 

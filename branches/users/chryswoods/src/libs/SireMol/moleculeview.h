@@ -149,7 +149,6 @@ public:
     void assertSameMolecule(const MoleculeData &other) const;
 
     virtual void assertContains(AtomIdx atomidx) const;
-    void assertContains(const AtomID &atomid) const;
 
 protected:
     MoleculeView();
@@ -157,6 +156,9 @@ protected:
     MoleculeView(const MoleculeView &other);
 
     MoleculeView& operator=(const MoleculeView &other);
+
+    bool operator==(const MoleculeView &other) const;
+    bool operator!=(const MoleculeView &other) const;
 
     template<class ViewType, class PropType, class T>
     static void setProperty(const typename ViewType::Index &idx,
@@ -190,7 +192,7 @@ void MoleculeView::setProperty(const typename ViewType::Index &idx,
 
     PropType props;
     
-    if (data.hasProperty(key)
+    if (data.hasProperty(key))
         props = data.property(key);
         
     else
@@ -212,7 +214,7 @@ void MoleculeView::setMetadata(const typename ViewType::Index &idx,
 
     PropType props;
     
-    if (data.hasMetadata(metakey)
+    if (data.hasMetadata(metakey))
         props = data.metadata(metakey);
         
     else
@@ -235,7 +237,7 @@ void MoleculeView::setMetadata(const typename ViewType::Index &idx,
 
     PropType props;
     
-    if (data.hasMetadata(key, metakey)
+    if (data.hasMetadata(key, metakey))
         props = data.metadata(key, metakey);
         
     else
@@ -262,7 +264,8 @@ struct GeneralSelectorHelper
     {
         QList<V> props;
         
-        const Prop &prop = moldata.property(key).asA<Prop>();
+        const Property &property = moldata.property(key);
+        const Prop &prop = property.asA<Prop>();
         
         foreach (Idx idx, idxs)
         {
@@ -279,7 +282,8 @@ struct GeneralSelectorHelper
     {
         QList<V> props;
         
-        const Prop &prop = moldata.metadata(metakey).asA<Prop>();
+        const Property &property = moldata.metadata(metakey);
+        const Prop &prop = property.asA<Prop>();
         
         foreach (Idx idx, idxs)
         {
@@ -297,7 +301,8 @@ struct GeneralSelectorHelper
     {
         QList<V> props;
         
-        const Prop &prop = moldata.metadata(key,metakey).asA<Prop>();
+        const Property &property = moldata.metadata(key,metakey);
+        const Prop &prop = property.asA<Prop>();
         
         foreach (Idx idx, idxs)
         {
@@ -320,7 +325,7 @@ struct GeneralSelectorHelper
         else
             props = Prop(moldata.info());
             
-        for (int i=0; i<idx.count(); ++i)
+        for (int i=0; i<idxs.count(); ++i)
         {
             props.set(idxs[i], values[i]);
         }
@@ -341,7 +346,7 @@ struct GeneralSelectorHelper
         else
             props = Prop(moldata.info());
             
-        for (int i=0; i<idx.count(); ++i)
+        for (int i=0; i<idxs.count(); ++i)
         {
             props.set(idxs[i], values[i]);
         }
@@ -362,7 +367,7 @@ struct GeneralSelectorHelper
         else
             props = Prop(moldata.info());
             
-        for (int i=0; i<idx.count(); ++i)
+        for (int i=0; i<idxs.count(); ++i)
         {
             props.set(idxs[i], values[i]);
         }

@@ -131,7 +131,7 @@ Mover<T>::Mover(const T &view, const AtomSelection &movable_atoms)
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 Mover<T>::Mover(const Mover<T> &other)
-         : T(other) : MoverBase(other)
+         : T(other), MoverBase(other)
 {}
 
 /** Destructor */
@@ -165,7 +165,7 @@ Mover<T>& Mover<T>::operator=(const T &other)
     the Molecule after it has been moved */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-T Mover<T>::commit()
+T Mover<T>::commit() const
 {
     return *this;
 }
@@ -176,7 +176,7 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 Mover<T>& Mover<T>::mapInto(const AxisSet &axes, const PropertyMap &map)
 {
-    MoverBase::mapInto(*d, axes, map);
+    MoverBase::mapInto(*(this->d), axes, map);
     return *this;
 }
 
@@ -186,7 +186,7 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 Mover<T>& Mover<T>::translate(const Vector &delta, const PropertyMap &map)
 {
-    MoverBase::translate(*d, delta, map);
+    MoverBase::translate(*(this->d), delta, map);
     return *this;
 }
 
@@ -198,7 +198,7 @@ SIRE_OUTOFLINE_TEMPLATE
 Mover<T>& Mover<T>::rotate(const Quaternion &quat, const Vector &point,
                            const PropertyMap &map)
 {
-    MoverBase::rotate(*d, quat, point, map);
+    MoverBase::rotate(*(this->d), quat, point, map);
     return *this;
 }
                  
@@ -210,7 +210,7 @@ SIRE_OUTOFLINE_TEMPLATE
 Mover<T>& Mover<T>::rotate(const Matrix &rotmat, const Vector &point,
                            const PropertyMap &map)
 {
-    MoverBase::rotate(*d, rotmat, point, map);
+    MoverBase::rotate(*(this->d), rotmat, point, map);
     return *this;
 }
     
@@ -226,7 +226,7 @@ SIRE_OUTOFLINE_TEMPLATE
 Mover<T>& Mover<T>::change(const BondID &bond, SireUnits::Dimension::Length delta,
                            const PropertyMap &map)
 {
-    MoverBase::change(*d, bond, delta, map);
+    MoverBase::change(*(this->d), bond, delta, map);
     return *this;
 }
                  
@@ -242,7 +242,7 @@ SIRE_OUTOFLINE_TEMPLATE
 Mover<T>& Mover<T>::change(const AngleID &angle, SireUnits::Dimension::Angle delta,
                            const PropertyMap &map)
 {
-    MoverBase::change(*d, angle, delta, map);
+    MoverBase::change(*(this->d), angle, delta, map);
     return *this;
 }
                  
@@ -259,7 +259,7 @@ Mover<T>& Mover<T>::change(const DihedralID &dihedral,
                            SireUnits::Dimension::Angle delta,
                            const PropertyMap &map)
 {
-    MoverBase::change(*d, dihedral, delta, map);
+    MoverBase::change(*(this->d), dihedral, delta, map);
     return *this;
 }
 
@@ -275,7 +275,7 @@ SIRE_OUTOFLINE_TEMPLATE
 Mover<T>& Mover<T>::change(const BondID &bond, SireUnits::Dimension::Angle delta,
                            const PropertyMap &map)
 {
-    MoverBase::change(*d, bond, delta, map);
+    MoverBase::change(*(this->d), bond, delta, map);
     return *this;
 }
 
@@ -289,7 +289,7 @@ SIRE_OUTOFLINE_TEMPLATE
 Mover<T>& Mover<T>::change(const ImproperID &improper, SireUnits::Dimension::Angle delta,
                            const PropertyMap &map)
 {
-    MoverBase::change(*d, improper, delta, map);
+    MoverBase::change(*(this->d), improper, delta, map);
     return *this;
 }
                 
@@ -303,7 +303,7 @@ SIRE_OUTOFLINE_TEMPLATE
 Mover<T>& Mover<T>::set(const BondID &bond, SireUnits::Dimension::Length value,
                         const PropertyMap &map)
 {
-    MoverBase::set(*d, bond, value, map);
+    MoverBase::set(*(this->d), bond, value, map);
     return *this;
 }
               
@@ -317,7 +317,7 @@ SIRE_OUTOFLINE_TEMPLATE
 Mover<T>& Mover<T>::set(const AngleID &angle, SireUnits::Dimension::Angle value,
                         const PropertyMap &map)
 {
-    MoverBase::set(*d, angle, value, map);
+    MoverBase::set(*(this->d), angle, value, map);
     return *this;
 }
               
@@ -331,7 +331,7 @@ SIRE_OUTOFLINE_TEMPLATE
 Mover<T>& Mover<T>::set(const DihedralID &dihedral, SireUnits::Dimension::Angle value,
                         const PropertyMap &map)
 {
-    MoverBase::set(*d, dihedral, value, map);
+    MoverBase::set(*(this->d), dihedral, value, map);
     return *this;
 }
               
@@ -345,7 +345,7 @@ SIRE_OUTOFLINE_TEMPLATE
 Mover<T>& Mover<T>::setAll(const DihedralID &dihedral, SireUnits::Dimension::Angle value,
                            const PropertyMap &map)
 {
-    MoverBase::setAll(*d, dihedral, value, map);
+    MoverBase::setAll(*(this->d), dihedral, value, map);
     return *this;
 }
                  
@@ -359,7 +359,7 @@ SIRE_OUTOFLINE_TEMPLATE
 Mover<T>& Mover<T>::set(const ImproperID &improper, SireUnits::Dimension::Angle value,
                         const PropertyMap &map)
 {
-    MoverBase::set(*d, improper, value, map);
+    MoverBase::set(*(this->d), improper, value, map);
     return *this;
 }
 
@@ -379,7 +379,7 @@ SIRE_OUTOFLINE_TEMPLATE
 Mover<T>& Mover<T>::align(const MoleculeView &other, const AtomAliases &aliases,
                           const PropertyMap &map0, const PropertyMap &map1)
 {
-    MoverBase::align(*d, other, aliases, map0, map1);
+    MoverBase::align(*(this->d), other, aliases, map0, map1);
 }
                 
 /** Align all of the atoms by matching 'aligning_atoms' in this molecule
@@ -399,7 +399,7 @@ Mover<T>& Mover<T>::align(const MoleculeView &other, const AtomSelection &aligni
                           const AtomAliases &aliases,
                           const PropertyMap &map0, const PropertyMap &map1)
 {
-    MoverBase::align(*d, aligning_atoms, aliases, map0, map1);
+    MoverBase::align(*(this->d), aligning_atoms, aliases, map0, map1);
 }
 
 }
