@@ -25,3 +25,172 @@
   *  at http://siremol.org
   *
 \*********************************************/
+
+#include "moleculeview.h"
+
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
+using namespace SireStream;
+using namespace SireBase;
+using namespace SireMol;
+
+RegisterMetaType<MoleculeView> r_molview;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, 
+                                       const MoleculeView &molview)
+{
+    writeHeader(ds, r_molview, 1);
+
+    SharedDataStream sds(ds);
+    sds << molview.d;
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
+                                       MoleculeView &molview)
+{
+    VersionID v = readHeader(ds, r_molview);
+
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        sds >> molview.d;
+    }
+    else
+        throw version_error(v, "1", r_molview, CODELOC);
+
+    return ds;
+}
+
+/** Null constructor */
+MoleculeView::MoleculeView() : d( MoleculeData::null() )
+{}
+
+/** Construct a view of the molecule whose data is in 'moldata' */
+MoleculeView::MoleculeView(const MoleculeData &moldata)
+             : d(moldata)
+{}
+
+/** Copy constructor */
+MoleculeView::MoleculeView(const MoleculeView &other)
+             : d(other.d)
+{}
+
+/** Destructor */
+MoleculeView::~MoleculeView()
+{}
+
+/** Copy assignment operator */
+MoleculeView& MoleculeView::operator=(const MoleculeView &other)
+{
+    d = other.d;
+    return *this;
+}
+
+/** Assert that this is a view of the same molecule as 'other'
+    (albeit at a different version)
+    
+    \throw SireError::incompatible_error
+*/
+void MoleculeView::assertSameMolecule(const MoleculeView &other) const
+{
+    
+}
+
+void MoleculeView::assertSameMolecule(const MoleculeData &other) const;
+
+void MoleculeView::assertContains(AtomIdx atomidx) const;
+void MoleculeView::assertContains(const AtomID &atomid) const;
+
+/** Update this view with a new version of the molecule. You 
+    can only update the molecule if it has the same info
+    object (so same atoms, residues, cutgroups etc.)
+    
+    \throw SireError::incompatible_error
+*/
+void MoleculeView::update(const MoleculeData &moldata)
+{
+    this->assertSameMolecule(moldata);
+    d = other.d;
+}
+
+/** Return the type of the property at key 'key'
+
+    \throw SireBase::missing_property 
+*/
+const char* MoleculeView::propertyType(const PropertyName &key) const
+{
+    return this->property(key).what();
+}
+
+/** Return the type of the metadata at metakey 'metakey' 
+
+    \throw SireBase::missing_property
+*/
+const char* MoleculeView::metadataType(const PropertyName &metakey) const
+{
+    return this->metadata(metakey).what();
+}
+
+/** Return the type of the metadata at metakey 'metakey' 
+    for the property at key 'key'
+    
+    \throw SireBase::missing_property
+*/
+const char* MoleculeView::metadataType(const PropertyName &key,
+                                       const PropertyName &metakey) const
+{
+    return this->metadata(key, metakey).what();
+}
+
+/** Assert that this contains a property at key 'key' 
+
+    \throw SireBase::missing_property
+*/
+void MoleculeView::assertHasProperty(const PropertyName &key) const
+{
+    if (not this->hasProperty(key))
+        throw SireBase::missing_property( QObject::tr(
+            "This view of the molecule \"%1\" (view type %2) "
+            "does not have a valid property at key \"%3\".")
+                .arg(d->info().name())
+                .arg(this->what())
+                .arg(key), CODELOC );
+}
+
+/** Assert that this contains some metadata at metakey 'metakey' 
+
+    \throw SireBase::missing_property
+*/
+void MoleculeView::assertHasMetadata(const PropertyName &metakey) const
+{
+    if (not this->hasMetadata(metakey))
+        throw SireBase::missing_property( QObject::tr(
+            "This view of the molecule \"%1\" (view type %2) "
+            "does not have some valid metadata at metakey \"%3\".")
+                .arg(d->info().name())
+                .arg(this->what())
+                .arg(key), CODELOC );
+}
+
+/** Assert that this contains some metadata at metakey 'metakey' 
+    for the property at key 'key'
+
+    \throw SireBase::missing_property
+*/
+void MoleculeView::assertHasMetadata(const PropertyName &key,
+                                     const PropertyName &metakey) const
+{
+    if (not this->hasMetadata(key,metakey))
+        throw SireBase::missing_property( QObject::tr(
+            "This view of the molecule \"%1\" (view type %2) "
+            "does not have some valid metadata at metakey \"%3\" "
+            "for the property at key \"%4\".")
+                .arg(d->info().name())
+                .arg(this->what())
+                .arg(key), CODELOC );
+}

@@ -360,7 +360,6 @@ private:
     int _pvt_nAtoms(const QList<ResIdx> &residxs) const;
     int _pvt_nAtoms(ChainIdx chainidx) const;
     
-    
     /** The name of the molecule */
     MolName molname;
 

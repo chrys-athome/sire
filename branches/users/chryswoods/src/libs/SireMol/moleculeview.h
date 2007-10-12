@@ -29,8 +29,9 @@
 #ifndef SIREMOL_MOLECULEVIEW_H
 #define SIREMOL_MOLECULEVIEW_H
 
-#include <QSharedDataPointer>
 #include <QSharedData>
+
+#include "SireBase/shareddatapointer.hpp"
 
 #include "moleculedata.h"
 #include "moleculeinfodata.h"
@@ -67,16 +68,16 @@ friend QDataStream& ::operator>>(QDataStream&, MoleculeView&);
 public:
     virtual ~MoleculeView();
 
-    virtual MoleculeView& operator=(const MoleculeView &other)=0;
-
     static const char* typeName()
     {
         return "SireMol::MoleculeView";
     }
 
-    virtual const char* what() const;
+    /** Return the type name of this view */
+    virtual const char* what() const=0;
     
-    virtual MoleculeView* clone() const;
+    /** Return a clone of this view */
+    virtual MoleculeView* clone() const=0;
 
     /** Return the MoleculeData that contains all of the information
         about the molecule which this view is showing */
@@ -95,36 +96,49 @@ public:
     /** Return the atoms that are selected as part of this view */
     virtual AtomSelection selectedAtoms() const=0;
 
-    /** Update this view with a new version of the molecule */
     virtual void update(const MoleculeData &moldata) const;
 
+    /** Return whether or not this view has the property at key 'key'
+         - note that this returns true only if there is a property,
+           *and* it fits the view (e.g. is an AtomProperty if this
+           is a view of an Atom or group of Atoms) */
     virtual bool hasProperty(const PropertyName &key) const=0;
     
-    bool hasMetadata(const PropertyName &metakey) const;
-    bool hasMetadata(const PropertyName &key, const PropertyName &metakey) const;
+    /** Return whether or not this view has the metadata at metakey 'metakey'
+         - note that this returns true only if there is some metadata,
+           *and* it fits the view (e.g. is an AtomProperty if this
+           is a view of an Atom or group of Atoms) */
+    virtual bool hasMetadata(const PropertyName &metakey) const=0;
 
+    /** Return whether or not this view has the metadata at metakey 
+        'metakey' for the property at key 'key'
+         - note that this returns true only if there is some metadata,
+           *and* it fits the view (e.g. is an AtomProperty if this
+           is a view of an Atom or group of Atoms) */
+    virtual bool hasMetadata(const PropertyName &key, 
+                             const PropertyName &metakey) const=0;
+
+    /** Return the list of keys of properties that fit this view,
+        e.g. if this is a view of an atom, or group of atoms, then
+        this returns the keys of all AtomProperty derived objects */
     virtual QStringList propertyKeys() const=0;
     
-    QStringList metadataKeys() const;
-    QStringList metadataKeys(const PropertyName &key) const;
+    /** Return the list of metakeys of metadata that fit this view,
+        e.g. if this is a view of an atom, or group of atoms, then
+        this returns the metakeys of all AtomProperty derived objects */
+    virtual QStringList metadataKeys() const=0;
 
-    const char* propertyType(const PropertyName &key) const
-    {
-        this->assertHasProperty(key);
-        return d->propertyType(key).what();
-    }
-    
-    const char* metadataType(const PropertyName &metakey) const
-    {
-        return d->metadataType(metakey);
-    }
+    /** Return the list of metakeys of metadata for the 
+        property at key 'key' that fit this view,
+        e.g. if this is a view of an atom, or group of atoms, then
+        this returns the metakeys of all AtomProperty derived objects */
+    virtual QStringList metadataKeys(const PropertyName &key) const=0;
+
+    const char* propertyType(const PropertyName &key) const;
+    const char* metadataType(const PropertyName &metakey) const;
     
     const char* metadataType(const PropertyName &key,
-                             const PropertyName &metakey) const
-    {
-        this->assertHasProperty(key);
-        return d->metadataType(key, metakey);
-    }
+                             const PropertyName &metakey) const;
 
     void assertHasProperty(const PropertyName &key) const;
     void assertHasMetadata(const PropertyName &metakey) const;
@@ -141,6 +155,8 @@ protected:
     MoleculeView();
     MoleculeView(const MoleculeData &moldata);
     MoleculeView(const MoleculeView &other);
+
+    MoleculeView& operator=(const MoleculeView &other);
 
     template<class ViewType, class PropType, class T>
     static void setProperty(const typename ViewType::Index &idx,
@@ -160,7 +176,7 @@ protected:
                             
 
     /** Shared pointer to the raw data of the molecule */
-    QSharedDataPointer<MoleculeData> d;
+    SireBase::SharedDataPointer<MoleculeData> d;
 };
 
 template<class ViewType, class PropType, class T>

@@ -26,3 +26,110 @@
   *
 \*********************************************/
 
+#ifndef SIREMOL_MOLNUM_H
+#define SIREMOL_MOLNUM_H
+
+#include "SireID/number.h"
+
+#include "molid.h"
+
+SIRE_BEGIN_HEADER
+
+namespace SireMol
+{
+class MolNum;
+}
+
+XMLStream& operator<<(XMLStream&, const SireMol::MolNum&);
+XMLStream& operator>>(XMLStream&, SireMol::MolNum&);
+
+namespace SireMol
+{
+
+/** This ID number is used to identify a Molecule by
+    a unique, program-supplied ID number
+
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT MolNum : public SireID::Number, public MolID
+{
+
+friend XMLStream& ::operator<<(XMLStream&, const MolNum&);
+friend XMLStream& ::operator>>(XMLStream&, MolNum&);
+
+public:
+    MolNum() : SireID::Number(), MolID()
+    {}
+
+    explicit MolNum(quint32 num) : SireID::Number(num), MolID()
+    {}
+
+    MolNum(const MolNum &other) : SireID::Number(other), MolID(other)
+    {}
+
+    ~MolNum()
+    {}
+    
+    static const char* typeName()
+    {
+        return "SireMol::MolNum";
+    }
+    
+    const char* what() const
+    {
+        return MolNum::typeName();
+    }
+    
+    MolNum* clone() const
+    {
+        return new MolNum(*this);
+    }
+    
+    MolNum increment() const;
+    
+    bool isNull() const
+    {
+        return SireID::Number::isNull();
+    }
+    
+    uint hash() const
+    {
+        return qHash( static_cast<const SireID::Number&>(*this) );
+    }
+    
+    QString toString() const
+    {
+        return QString("MolNum(%1)").arg(_num);
+    }
+    
+    MolNum& operator=(const MolNum &other)
+    {
+        SireID::Number::operator=(other);
+        MolID::operator=(other);
+        return *this;
+    }
+    
+    bool operator==(const SireID::ID &other) const
+    {
+        return SireID::ID::compare<MolNum>(*this, other);
+    }
+
+    bool operator==(const MolNum &other) const
+    {
+        return _num == other._num;
+    }
+    
+    bool operator!=(const MolNum &other) const
+    {
+        return _num != other._num;
+    }
+};
+
+}
+
+Q_DECLARE_TYPEINFO(SireMol::MolNum, Q_MOVABLE_TYPE);
+Q_DECLARE_METATYPE(SireMol::MolNum);
+
+SIRE_END_HEADER
+
+#endif

@@ -40,6 +40,7 @@
 #include "SireBase/shareddatapointer.hpp"
 
 #include "moleculeinfodata.h"
+#include "molnum.h"
 
 SIRE_BEGIN_HEADER
 
@@ -84,6 +85,23 @@ public:
 
     bool operator==(const MoleculeData &other) const;
     bool operator!=(const MoleculeData &other) const;
+
+    /** Return the name of the molecule */
+    const MolName& name() const
+    {
+        return molinfo->name();
+    }
+
+    /** The ID number of this molecule - two molecules with
+        the same ID number are the same (though potentially
+        at different versions) */
+    MolNum number() const
+    {
+        return molnum;
+    }
+
+    /** Give this molecule a new, unique ID number */
+    void getNewID();
 
     /** The version number of this molecule - two molecules
         with the same version number and ID number are identical */
@@ -140,7 +158,7 @@ public:
                              const Property &default_value) const;
 
     void setProperty(const QString &key, 
-                     const Property &value, bool clear_metadata=false) const;
+                     const Property &value, bool clear_metadata=false);
 
     void removeProperty(const QString &key);
 
@@ -179,6 +197,10 @@ private:
         have the same ID number and version then they must be the same */
     quint64 vrsn;
 
+    /** The ID number of this molecule - this is kept the same throughout
+        the lifetime of this molecule, and is used to identify it */
+    MolNum molnum;
+
     class PropVersions
     {
     public:
@@ -190,6 +212,8 @@ private:
         
         quint64 increment();
         quint64 increment(const QString &key, quint64 &mol);
+        
+        quint64 reset(QHash<QString,quint64> &prop_vrsns);
         
     private:
         /** Mutex used to serialise access to the last version
@@ -204,6 +228,9 @@ private:
             each property of the molecule */
         QHash<QString,quint64> property_version;
     };
+
+    static boost::shared_ptr<PropVersions> shared_nullversions;
+    static const boost::shared_ptr<PropVersions>& getNullVersions();
 
     /** The version number of each of the properties in 
         this molecule */

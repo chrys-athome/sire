@@ -30,7 +30,6 @@
 #define SIREBASE_SHAREDPOLYPOINTER_HPP
 
 #include "SireStream/datastream.h"
-#include "SireStream/shareddatastream.h"
 
 SIRE_BEGIN_HEADER
 

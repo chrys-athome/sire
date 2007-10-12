@@ -30,13 +30,18 @@
 #include <QSharedData>
 
 #include "moleculedata.h"
-#include "molecularproperty.h"
+#include "molviewproperty.h"
+
+#include "SireBase/incremint.h"
+
+#include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
 using namespace SireStream;
 using namespace SireMol;
+using namespace SireBase;
 
 static const RegisterMetaType<MoleculeData> r_moldata;
 
@@ -63,8 +68,21 @@ quint64 MoleculeData::PropVersions::increment(const QString &key,
 {
     QMutexLocker lkr(&mutex);
     
+    quint64 prop_version;
+    
     //increment the property version
-    quint64 prop_version = property_version.value(key, 0) + 1;
+    QHash<QString,quint64>::iterator it = property_version.find(key);
+    
+    if (it == property_version.end())
+    {
+        prop_version = 1;
+        property_version.insert(key, prop_version);
+    }
+    else
+    {
+        prop_version = it.value() + 1;
+        it.value() = prop_version;
+    }
 
     //now increment the global version
     ++version;
@@ -73,6 +91,26 @@ quint64 MoleculeData::PropVersions::increment(const QString &key,
     molversion = version;
     
     return prop_version;
+}
+
+/** Reset all of the version numbers back to 1 */
+quint64 MoleculeData::PropVersions::reset(QHash<QString,quint64> &prop_vrsns)
+{
+    QMutexLocker lkr(&mutex);
+
+    property_version.clear();
+    
+    for (QHash<QString,quint64>::iterator it = prop_vrsns.begin();
+         it != prop_vrsns.end();
+         ++it)
+    {
+        it.value() = 1;
+        property_version.insert( it.key(), it.value() );
+    }
+    
+    version = 1;
+    
+    return version;
 }
 
 /////////
@@ -86,7 +124,12 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const MoleculeData &mold
     
     SharedDataStream sds(ds);
     
-    sds << moldata.molinfo << moldata.props << moldata.vrsn;
+    sds << moldata.molinfo << moldata.props 
+        << moldata.vrsn << moldata.molnum;
+        
+    throw SireError::incomplete_code( QObject::tr(
+            "Need to be able to save and restore version numbers!!!"),
+                CODELOC );
     
     return ds;
 }
@@ -100,7 +143,8 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MoleculeData &moldata)
     {
         SharedDataStream sds(ds);
         
-        sds >> moldata.molinfo >> moldata.props >> moldata.vrsn;
+        sds >> moldata.molinfo >> moldata.props 
+            >> moldata.vrsn >> moldata.molnum;
         
         throw SireError::incomplete_code( QObject::tr(
             "Need to be able to save and restore version numbers!!!"),
@@ -113,7 +157,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MoleculeData &moldata)
 }
 
 /** Shared null MoleculeData */
-static QSharedDataPointer<MoleculeData> shared_null;
+static SharedDataPointer<MoleculeData> shared_null;
 
 /** Return a QSharedDataPointer to the shared null MoleculeData object */
 SharedDataPointer<MoleculeData> MoleculeData::null()
@@ -126,11 +170,11 @@ SharedDataPointer<MoleculeData> MoleculeData::null()
     return shared_null;
 }
 
-static shared_ptr<MoleculeData::PropVersions> shared_nullversions;
+boost::shared_ptr<MoleculeData::PropVersions> MoleculeData::shared_nullversions;
 
-static const shared_ptr<MoleculeData::PropVersions>& getNullVersions()
+const boost::shared_ptr<MoleculeData::PropVersions>& MoleculeData::getNullVersions()
 {
-    if (shared_nullversions.constData() == 0)
+    if (shared_nullversions == 0)
         shared_nullversions.reset( new MoleculeData::PropVersions() );
         
     return shared_nullversions;
@@ -138,7 +182,8 @@ static const shared_ptr<MoleculeData::PropVersions>& getNullVersions()
 
 /** Null constructor */
 MoleculeData::MoleculeData()
-                : QSharedData(), vrsn(0), vrsns(getNullVersions())
+                : QSharedData(), vrsn(0), molnum(0),
+                  vrsns(getNullVersions())
 {}
 
 /** Copy constructor */
@@ -147,6 +192,7 @@ MoleculeData::MoleculeData(const MoleculeData &other)
                   molinfo(other.molinfo),
                   props(other.props),
                   vrsn(other.vrsn),
+                  molnum(other.molnum),
                   vrsns(other.vrsns)
 {}
 
@@ -162,6 +208,7 @@ MoleculeData& MoleculeData::operator=(const MoleculeData &other)
         molinfo = other.molinfo;
         props = other.props;
         vrsn = other.vrsn;
+        molnum = other.molnum;
         vrsns = other.vrsns;
     }
     
@@ -172,7 +219,7 @@ MoleculeData& MoleculeData::operator=(const MoleculeData &other)
     the same ID and version numbers. */
 bool MoleculeData::operator==(const MoleculeData &other) const
 {
-    return molinfo.number() == other.molinfo.number() and 
+    return molnum == other.molnum and 
            vrsn == other.vrsn;
 }
 
@@ -180,14 +227,33 @@ bool MoleculeData::operator==(const MoleculeData &other) const
     the same ID and version numbers. */
 bool MoleculeData::operator!=(const MoleculeData &other) const
 {
-    return molinfo.number() != other.molinfo.number() or vrsn != other.vrsn;
+    return molnum != other.molnum or vrsn != other.vrsn;
+}
+
+static Incremint molid_incremint;
+
+/** Here is the function to increment a Molecule Number */
+MolNum MolNum::increment() const
+{
+    return MolNum( molid_incremint.increment() );
+}
+
+/** Give this molecule a brand new ID number! */
+void MoleculeData::getNewID()
+{
+    //get the new ID number...
+    molnum = molnum.increment();
+    
+    //now reset the version numbers so they are all '1'
+    vrsns.reset( new PropVersions() );
+    vrsn = vrsns->reset(prop_vrsns);
 }
 
 /** Return the version number of the property at key 'key'.
     If there is no such key in this molecule, or 
     the value is supplied by the key itself, then
     a version number of 0 is returned */
-Version MoleculeData::version(const PropertyName &key) const
+quint64 MoleculeData::version(const PropertyName &key) const
 {
     if (key.hasValue())
         return 0;
@@ -318,12 +384,12 @@ void MoleculeData::setProperty(const QString &key,
                                const Property &value,
                                bool clear_metadata)
 {
-    if (key.isNull())
+    if (key.isEmpty())
         throw SireError::invalid_arg( QObject::tr(
-            "You cannot set a property with a null key!"), CODELOC );
+            "You cannot set a property with an empty key!"), CODELOC );
 
-    if (value.isA<MolecularProperty>())
-        value.asA<MolecularProperty>().assertCompatibleWith(molinfo);
+    if (value.isA<MolViewProperty>())
+        value.asA<MolViewProperty>().assertCompatibleWith(*molinfo);
         
     //now the property version number
     prop_vrsns.insert( key, vrsns->increment(key, vrsn) );
@@ -339,7 +405,7 @@ void MoleculeData::removeProperty(const QString &key)
 {
     if (props.hasProperty(key))
     {
-        props.remove(key);
+        props.removeProperty(key);
         prop_vrsns.remove(key);
     
         //do not remove from the shared version numbers, in
@@ -356,6 +422,13 @@ void MoleculeData::removeProperty(const QString &key)
     the value 'value' */
 void MoleculeData::setMetadata(const QString &metakey, const Property &value)
 {
+    if (metakey.isEmpty())
+        throw SireError::invalid_arg( QObject::tr(
+            "You cannot set some metadata with an empty metakey!"), CODELOC );
+
+    if (value.isA<MolViewProperty>())
+        value.asA<MolViewProperty>().assertCompatibleWith(*molinfo);
+
     props.setMetadata(metakey, value);
 
     //increment the global version number
@@ -370,6 +443,16 @@ void MoleculeData::setMetadata(const QString &metakey, const Property &value)
 void MoleculeData::setMetadata(const QString &key, const QString &metakey, 
                                const Property &value)
 {
+    if (key.isNull())
+        throw SireError::invalid_arg( QObject::tr(
+            "You cannot set some metadata with an empty key!"), CODELOC );
+    else if (metakey.isEmpty())
+        throw SireError::invalid_arg( QObject::tr(
+            "You cannot set some metadata with an empty metakey!"), CODELOC );
+
+    if (value.isA<MolViewProperty>())
+        value.asA<MolViewProperty>().assertCompatibleWith(*molinfo);
+
     props.setMetadata(key, metakey, value);
     
     //increment the global version number

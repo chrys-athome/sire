@@ -36,13 +36,22 @@
 
 #include <boost/shared_ptr.hpp>
 
+//#include "SireBase/shareddatapointer.hpp"
+#include "SireBase/sharedpolypointer.hpp"
+
 SIRE_BEGIN_HEADER
 
 namespace SireStream
 {
 
+using SireBase::SharedDataPointer;
+using SireBase::SharedPolyPointer;
+
 /**
-This is a streaming class that is used to help stream implicitly shared data. This class ensures that only a single copy of the implicitly shared data is actually written to the stream, thus reducing data bloat, and also preserving the shared data of the objects when they are read back into the program.
+This is a streaming class that is used to help stream implicitly shared data. 
+This class ensures that only a single copy of the implicitly shared data is actually 
+written to the stream, thus reducing data bloat, and also preserving the shared data
+of the objects when they are read back into the program.
 
 @author
 */
@@ -60,6 +69,12 @@ public:
     SharedDataStream& operator<<(const QSharedDataPointer<T> &obj);
 
     template<class T>
+    SharedDataStream& operator<<(const SharedDataPointer<T> &obj);
+    
+    template<class T>
+    SharedDataStream& operator<<(const SharedPolyPointer<T> &obj);
+
+    template<class T>
     SharedDataStream& operator<<(const boost::shared_ptr<T> &obj);
 
     template<class T>
@@ -67,6 +82,12 @@ public:
 
     template<class T>
     SharedDataStream& operator>>(QSharedDataPointer<T> &obj);
+
+    template<class T>
+    SharedDataStream& operator>>(SharedDataPointer<T> &obj);
+    
+    template<class T>
+    SharedDataStream& operator>>(SharedPolyPointer<T> &obj);
 
     template<class T>
     SharedDataStream& operator>>(boost::shared_ptr<T> &obj);
@@ -118,6 +139,52 @@ template<class T>
 SharedDataStream& SharedDataStream::operator>>(QSharedDataPointer<T> &objptr)
 {
     ds >> *objptr;
+    return *this;
+}
+
+/** Specialisation of the serialisation function for implicitly shared
+    objects handled by SharedDataPointer. This will stream the object
+    in a way that ensures that only a single copy of the data is passed
+    to the stream, with multiple copies being merely references to the
+    first copy. */
+template<class T>
+SharedDataStream& SharedDataStream::operator<<(const SharedDataPointer<T> &objptr)
+{
+    ds << *objptr;
+    return *this;
+}
+
+/** Specialisation of the deserialisation function for implicitly shared
+    objects handled by SharedDataPointer. This will destream the object
+    in a way that ensures that the implicitly shared nature of the
+    data is preserved. */
+template<class T>
+SharedDataStream& SharedDataStream::operator>>(SharedDataPointer<T> &objptr)
+{
+    ds >> *objptr;
+    return *this;
+}
+
+/** Specialisation of the serialisation function for implicitly shared
+    objects handled by SharedPolyPointer. This will stream the object
+    in a way that ensures that only a single copy of the data is passed
+    to the stream, with multiple copies being merely references to the
+    first copy. */
+template<class T>
+SharedDataStream& SharedDataStream::operator<<(const SharedPolyPointer<T> &objptr)
+{
+    ds << objptr;
+    return *this;
+}
+
+/** Specialisation of the deserialisation function for implicitly shared
+    objects handled by SharedPolyPointer. This will destream the object
+    in a way that ensures that the implicitly shared nature of the
+    data is preserved. */
+template<class T>
+SharedDataStream& SharedDataStream::operator>>(SharedPolyPointer<T> &objptr)
+{
+    ds >> objptr;
     return *this;
 }
 
