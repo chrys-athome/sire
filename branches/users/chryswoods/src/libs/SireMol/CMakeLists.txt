@@ -154,6 +154,7 @@ set_target_properties (SireMol PROPERTIES
 # Link to other Sire libraries, and GSL
 target_link_libraries (SireMol
                        SireVol
+                       SireID
                        )
 
 # installation

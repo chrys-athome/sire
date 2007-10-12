@@ -103,22 +103,36 @@ public:
     QStringList metadataKeys(const PropertyName &key) const;
 
     const Property& property(const PropertyName &key) const;
+    const Property& property(const PropertyName &key,
+                             const Property &default_value) const;
     
     const Property& metadata(const PropertyName &metakey) const;
+    const Property& metadata(const PropertyName &metakey,
+                             const Property &default_value) const;
+    
     const Property& metadata(const PropertyName &key,
                              const PropertyName &metakey) const;
+    const Property& metadata(const PropertyName &key,
+                             const PropertyName &metakey,
+                             const Property &default_value) const;
 
-    void setProperty(const PropertyName &key, const Property &value,
-                     bool clear_metadata=false);
+    const Properties& allMetadata() const;
+    const Properties& allMetadata(const PropertyName &key) const;
+
+    void setProperty(const QString &key, const Property &value,
+                     bool clear_metadata=true);
     
-    void setMetadata(const PropertyName &metakey, const Property &value);
-    void setMetadata(const PropertyName &key,
-                     const PropertyName &metakey, const Property &value);
+    void setMetadata(const QString &metakey, const Property &value);
+    void setMetadata(const QString &key,
+                     const QString &metakey, const Property &value);
 
     void removeProperty(const QString &key);
 
-    void removeMetaData(const QString &key);
-    void removeMetaData(const QString &key, const QString &metakey);
+    void removeMetadata(const QString &metakey);
+    void removeAllMetadata();
+    
+    void removeMetadata(const QString &key, const QString &metakey);
+    void removeAllMetadata(const QString &key);
 
     void clear();
 

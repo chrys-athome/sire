@@ -31,6 +31,7 @@
 #include "properties.h"
 
 #include "SireBase/errors.h"
+#include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -243,7 +244,7 @@ bool Properties::isEmpty() const
 }
 
 /** Return the keys for all of the properties in this set */
-QStringList Properties::keys() const
+QStringList Properties::propertyKeys() const
 {
     return d->properties.keys();
 }
@@ -258,8 +259,20 @@ void Properties::assertContainsProperty(const PropertyName &key) const
     {
         throw SireBase::missing_property( QObject::tr(
             "There is no property with key \"%1\". Available keys are ( %2 ).")
-                .arg(key, keys().join(", ")), CODELOC );
+                .arg(key, this->propertyKeys().join(", ")), CODELOC );
     }
+}
+
+/** Return the list of metadata keys */
+QStringList Properties::metadataKeys() const
+{
+    return d->metadata.propertyKeys();
+}
+
+/** Assert that this contains the metadata at metakey 'metakey' */
+void Properties::assertContainsMetadata(const PropertyName &metakey) const
+{
+    return d->metadata.assertContainsProperty(metakey);
 }
 
 /** Return the list of metadata keys for the property with key 'key'
@@ -268,7 +281,7 @@ void Properties::assertContainsProperty(const PropertyName &key) const
 */
 QStringList Properties::metadataKeys(const PropertyName &key) const
 {
-    return this->metadata(key).keys();
+    return this->allMetadata(key).propertyKeys();
 }
 
 /** Assert that this set contains the metadata property for the
@@ -282,7 +295,7 @@ void Properties::assertContainsMetadata(const PropertyName &key,
     this->assertContainsProperty(key);
     
     if (metakey.hasSource() and 
-        not this->metadata(key).contains(metakey))
+        not this->allMetadata(key).hasProperty(metakey))
     {
         throw SireBase::missing_property( QObject::tr(
             "There is no metadata with metakey \"%1\" for the property \"%2\". "
@@ -292,23 +305,15 @@ void Properties::assertContainsMetadata(const PropertyName &key,
 }
 
 /** Return whether or not this contains a property with key 'key' */
-bool Properties::contains(const PropertyName &key) const
+bool Properties::hasProperty(const PropertyName &key) const
 {
     return key.hasValue() or d->properties.contains(key);
 }
 
-/** Return whether or not the property with key 'key' contains some
-    metadata with the metakey 'metakey'
-    
-    \throw SireBase::missing_property
-*/
-bool Properties::contains(const PropertyName &key, 
-                          const PropertyName &metakey) const
+/** Return whether or not this contains the metadata with metakey 'metakey' */
+bool Properties::hasMetadata(const PropertyName &metakey) const
 {
-    this->assertContainsProperty(key);
-    
-    return metakey.hasValue() or 
-           this->metadata(key).contains(metakey);
+    return d->metadata.hasProperty(metakey);
 }
 
 /** Return the property with key 'key'
@@ -328,15 +333,15 @@ const Property& Properties::operator[](const PropertyName &key) const
             throw SireBase::missing_property( QObject::tr(
                 "There is no property with name \"%1\". "
                 "Available properties are [ %2 ].")
-                    .arg(key, keys().join(", ")), CODELOC );
+                    .arg(key, this->propertyKeys().join(", ")), CODELOC );
         }
 
         return *it;
     }
 }
 
-/** Return the metadata associated with these properties */
-const Properties& Properties::metadata() const
+/** Return all of the metadata associated with this properties object */
+const Properties& Properties::allMetadata() const
 {
     return d->metadata;
 }
@@ -347,7 +352,7 @@ static Properties null_properties;
 
     \throw SireBase::missing_property
 */
-const Properties& Properties::metadata(const PropertyName &key) const
+const Properties& Properties::allMetadata(const PropertyName &key) const
 {
     if (key.hasValue())
         return null_properties;
@@ -360,11 +365,25 @@ const Properties& Properties::metadata(const PropertyName &key) const
             throw SireBase::missing_property( QObject::tr(
                 "There is no property with name \"%1\". "
                 "Available properties are [ %2 ].")
-                    .arg(key, keys().join(", ")), CODELOC );
+                    .arg(key, propertyKeys().join(", ")), CODELOC );
         }
 
         return *it;
     }
+}
+
+/** Return whether or not the property with key 'key' contains some
+    metadata with the metakey 'metakey'
+    
+    \throw SireBase::missing_property
+*/
+bool Properties::hasMetadata(const PropertyName &key, 
+                             const PropertyName &metakey) const
+{
+    this->assertContainsProperty(key);
+    
+    return metakey.hasValue() or 
+           this->allMetadata(key).hasProperty(metakey);
 }
 
 /** Return the property with key 'key' - note that if 
@@ -373,7 +392,7 @@ const Properties& Properties::metadata(const PropertyName &key) const
 
     \throw SireBase::missing_property
 */
-const Property& Properties::value(const PropertyName &key) const
+const Property& Properties::property(const PropertyName &key) const
 {
     return this->operator[](key);
 }
@@ -383,8 +402,8 @@ const Property& Properties::value(const PropertyName &key) const
     value contained in the key is returned. If no such source
     exists, and there is no value in the key, then 
     'default_value' is returned */
-const Property& Properties::value(const PropertyName &key,
-                                  const Property &default_value) const
+const Property& Properties::property(const PropertyName &key,
+                                     const Property &default_value) const
 {
     if (key.hasValue())
         return key.value();
@@ -399,210 +418,156 @@ const Property& Properties::value(const PropertyName &key,
     }
 }
 
-/** Insert the properties 'properties' into this set - any properties
-    with the same name are replaced */
-void Properties::insert(const Properties &properties)
+/** Return the metadata at metakey 'metakey' - note that if 'metakey'
+    specifies a value rather than a source, then the value contained
+    in the metakey is returned.
+    
+    \throw SireBase::missing_property
+*/
+const Property& Properties::metadata(const PropertyName &metakey) const
 {
-    if (this->isEmpty())
-    {
-        d = properties.d;
-        return;
-    }
-    
-    QHash<QString,Property> &props = d->properties;
-    
-    for (QHash<QString,Property>::const_iterator 
-                          it = properties.d->properties.constBegin();
-         it != properties.d->properties.constEnd();
-         ++it)
-    {
-        props.insert(it.key(), it.value());
-    }
-    
-    QHash<QString,Properties> &metaprops = d->props_metadata;
-    
-    for (QHash<QString,Properties>::const_iterator
-                          it = properties.d->props_metadata.constBegin();
-         it != properties.d->props_metadata.constEnd();
-         ++it)
-    {
-        metaprops.insert(it.key(), it.value());
-    }
+    return d->metadata.property(metakey);
 }
 
-/** Insert the property with key 'key' and value 'value' and metadata
-    'metadata' into this set - any existing property with this key
-    is replaced */
-void Properties::insert(const QString &key, const Property &value,
-                        const Properties &metadata)
+/** Return the metadata at metakey 'metakey' - note that if 'metakey'
+    specifies a value rather than a source, then the value contained
+    in the metakey is returned. If there is no such metadata, and no
+    value is contained in the metakey, then 'default_value' is 
+    returned */
+const Property& Properties::metadata(const PropertyName &metakey,
+                                     const Property &default_value) const
 {
+    return d->metadata.property(metakey, default_value);
+}
+
+/** Return the metadata at metakey 'metakey' that is associated with
+    the property at key 'key'.
+    
+    \throw SireBase::missing_property
+*/
+const Property& Properties::metadata(const PropertyName &key,
+                                     const PropertyName &metakey) const
+{
+    return this->allMetadata(key).property(metakey);
+}
+
+/** Return the metadata at metakey 'metakey' that is associated with
+    the property at key 'key', or 'default_value' if there is no
+    such metadata.
+*/
+const Property& Properties::metadata(const PropertyName &key,
+                                     const PropertyName &metakey,
+                                     const Property &default_value) const
+{
+    return this->allMetadata(key).property(metakey,default_value);
+}
+
+/** Set the property at key 'key' to have the value 'value'. This 
+    replaces any existing property at this key, and removes any
+    existing metadata is 'clear_metadata' is true */
+void Properties::setProperty(const QString &key, const Property &value,
+                             bool clear_metadata)
+{
+    if (key.isEmpty())
+        throw SireError::invalid_arg( QObject::tr(
+            "You cannot insert a property with an empty key!"), CODELOC );
+
     d->properties.insert(key, value);
-    d->props_metadata.insert(key, metadata);
+
+    if (clear_metadata or not d->props_metadata.contains(key))
+        d->props_metadata.insert(key, Properties());
 }
 
-/** Insert the property with key 'key' and value 'value'
-    into this set - any existing property with this key
-    is replaced */
-void Properties::insert(const QString &key, const Property &value)
+/** Set the metadata at metakey 'metakey' to have the value 'value'.
+    This replaces any existing metadata with this metakey */
+void Properties::setMetadata(const QString &metakey, const Property &value)
 {
-    this->insert(key, value, Properties());
+    d->metadata.setProperty(metakey, value);
 }
 
-/** Update the value of the property with key 'key' to have value 
-    'value'. If 'clear_metadata' is true, then all of the metadata
-    for this property is removed. If there is no property with this
-    key, then it is added, with no metadata.
-*/
-void Properties::update(const QString &key, const Property &value,
-                        bool clear_metadata)
-{
-    if (this->contains(key))
-    {
-        d->properties.insert(key, value);
-    
-        if (clear_metadata)
-            d->props_metadata.clear();
-    }
-    else
-    {
-        this->insert(key, value);
-    }
-}
-
-/** Update the value of the property with key 'key' to have the 
-    value 'value', and update the metadata as well to have the 
-    values contained in 'metadata'. If 'clear_metadata' is true,
-    then any existing metadata is first cleared before being updated
-    (i.e. the metadata is set equal to 'metadata'). If there
-    is no property with this key, then it is inserted, together
-    with the supplied metadata.
-*/
-void Properties::update(const QString &key, const Property &value,
-                        const Properties &metadata, bool clear_metadata)
-{
-    if (this->contains(key))
-    {
-        d->properties.insert(key, value);
-    
-        if (clear_metadata)
-            d->props_metadata.insert(key, metadata);
-        else
-            d->props_metadata[key].insert(metadata);
-    }
-    else
-    {
-        this->insert(key, value, metadata);
-    }
-}
-
-/** Insert the metadata for the property with key 'key' - this will
-    replace any existing metadata with the same metakeys
-    
-    \throw SireBase::missing_property
-*/
-void Properties::insertMetadata(const QString &key, const Properties &metadata)
+/** Set the metadata at metakey 'metakey' for the property at key 'key'.
+    This replaces any existing metadata for this key/metakey pair */
+void Properties::setMetadata(const QString &key, const QString &metakey,
+                             const Property &value)
 {
     this->assertContainsProperty(key);
-    
-    d->props_metadata[key].insert(metadata);
-}
-
-/** Set the metadata for the property with key 'key' and metadata with
-    metakey 'metakey' to the value 'metavalue', setting the metametadata
-    for this piece of metadata to 'metametadata'
-    
-    \throw SireBase::missing_property
-*/
-void Properties::insertMetadata(const QString &key, const QString &metakey,
-                                const Property &metavalue,
-                                const Properties &metametadata)
-{
-    this->assertContainsProperty(key);
-    
-    d->props_metadata[key].insert(metakey, metavalue, metametadata);
-}
-
-/** Set the metadata for the property with key 'key' and metadata with
-    metakey 'metakey' to the value 'metavalue'
-    
-    \throw SireBase::missing_property
-*/
-void Properties::insertMetadata(const QString &key, const QString &metakey,
-                                const Property &metavalue)
-{
-    this->insertMetadata(key, metakey, metavalue, Properties());
-}
-
-/** Update the metadata for the property with key 'key' and metadata with
-    metakey 'metakey' to equal 'metavalue'. If 'clear_metametadata' is
-    true, then all of the existing metametadata for this piece of 
-    metadata is removed.
-    
-    \throw SireBase::missing_property
-*/
-void Properties::updateMetadata(const QString &key, const QString &metakey,
-                                const Property &metavalue, bool clear_metametadata)
-{
-    this->assertContainsProperty(key);
-    
-    d->props_metadata[key].insert(metakey, metavalue, clear_metametadata);
-}
-
-/** Update the metadata for the property with key 'key' and metadata with
-    metakey 'metakey' to equal 'metavalue', also inserting all of 
-    the metametadata in 'metametadata'. If 'clear_metametadata' is true,
-    the any existing metametadata is removed before 'metametadata' 
-    is added.
-    
-    \throw SireBase::missing_property
-*/
-void Properties::updateMetadata(const QString &key, const QString &metakey,
-                                const Property &metavalue,
-                                const Properties &metametadata,
-                                bool clear_metametadata)
-{
-    this->assertContainsProperty(key);
-    
-    d->props_metadata[key].update(metakey, metavalue, 
-                                  metametadata, clear_metametadata);
+    d->props_metadata.find(key)->setProperty(metakey, value);
 }
 
 /** Remove the property with key 'key' and all of its metadata */
-void Properties::remove(const QString &key)
+void Properties::removeProperty(const QString &key)
 {
-    if (this->contains(key))
+    if (this->hasProperty(key))
     {
         d->properties.remove(key);
         d->props_metadata.remove(key);
     }
 }
 
-/** Remove all of the metadata associated with the property with 
-    key 'key'
-    
-    \throw SireBase::missing_property
-*/
-void Properties::remoteMetaData(const QString &key)
+/** Remove the metadata at metakey 'metakey' */
+void Properties::removeMetadata(const QString &metakey)
 {
-    this->assertContainsProperty(key);
-    
-    d->props_metadata[key].clear();
+    if (this->hasMetadata(metakey))
+    {
+        d->metadata.removeProperty(metakey);
+    }
 }
 
-/** Remove the metadata with metakey 'metakey' from the property 
-    with key 'key' 
-    
-    \throw SireBase::missing_property
-*/
-void Properties::removeMetaData(const QString &key, const QString &metakey)
+/** Remove all of the top-level metadata */
+void Properties::removeAllMetadata()
 {
-    this->assertContainsProperty(key);
-    
-    d->props_metadata[key].remove(metakey);
+    d->metadata.clear();
 }
 
-/** Completely remove all properties */
+/** Remove the metadata at metakey 'metakey' for the 
+    property at key 'key' */
+void Properties::removeMetadata(const QString &key, const QString &metakey)
+{
+    if (this->hasMetadata(key, metakey))
+    {
+        d->props_metadata.find(key)->removeProperty(metakey);
+    }
+}
+
+/** Remove all of the metadata associated with the property at 
+    key 'key' */
+void Properties::removeAllMetadata(const QString &key)
+{
+    if (this->hasProperty(key))
+        d->props_metadata.insert(key, Properties());
+}
+
+/** Completely clear this object of all properties and metadata */
 void Properties::clear()
 {
-    this->operator=(Properties());
+    this->operator=( Properties() );
+}
+
+/** Return the type name of the property at key 'key' 
+
+    \throw SireBase::missing_property
+*/
+const char* Properties::propertyType(const PropertyName &key) const
+{
+    return this->property(key).what();
+}
+
+/** Return the type name of the metadata at metakey 'metakey'
+
+    \throw SireBase::missing_property
+*/
+const char* Properties::metadataType(const PropertyName &metakey) const
+{
+    return this->metadata(metakey).what();
+}
+
+/** Return the type name of the metadata at metakey 'metakey'
+    for the property at key 'key' 
+    
+    \throw SireBase::missing_property
+*/
+const char* Properties::metadataType(const PropertyName &key,
+                                     const PropertyName &metakey) const
+{
+    return this->metadata(key, metakey).what();
 }

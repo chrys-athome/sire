@@ -98,6 +98,39 @@ public:
     /** Update this view with a new version of the molecule */
     virtual void update(const MoleculeData &moldata) const;
 
+    virtual bool hasProperty(const PropertyName &key) const=0;
+    
+    bool hasMetadata(const PropertyName &metakey) const;
+    bool hasMetadata(const PropertyName &key, const PropertyName &metakey) const;
+
+    virtual QStringList propertyKeys() const=0;
+    
+    QStringList metadataKeys() const;
+    QStringList metadataKeys(const PropertyName &key) const;
+
+    const char* propertyType(const PropertyName &key) const
+    {
+        this->assertHasProperty(key);
+        return d->propertyType(key).what();
+    }
+    
+    const char* metadataType(const PropertyName &metakey) const
+    {
+        return d->metadataType(metakey);
+    }
+    
+    const char* metadataType(const PropertyName &key,
+                             const PropertyName &metakey) const
+    {
+        this->assertHasProperty(key);
+        return d->metadataType(key, metakey);
+    }
+
+    void assertHasProperty(const PropertyName &key) const;
+    void assertHasMetadata(const PropertyName &metakey) const;
+    void assertHasMetadata(const PropertyName &key,
+                           const PropertyName &metakey) const;
+
     void assertSameMolecule(const MoleculeView &other) const;
     void assertSameMolecule(const MoleculeData &other) const;
 

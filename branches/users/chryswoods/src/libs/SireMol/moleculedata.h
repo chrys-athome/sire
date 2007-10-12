@@ -151,6 +151,11 @@ public:
     void removeMetadata(const QString &metakey);
     void removeMetadata(const QString &key, const QString &metakey);
 
+    void assertHasProperty(const PropertyName &key) const;
+    void assertHasMetadata(const PropertyName &metakey) const;
+    void assertHasMetadata(const PropertyName &key,
+                           const PropertyName &metakey) const;
+
     /** Return the shared null MoleculeData */
     static SireBase::SharedDataPointer<MoleculeData> null();
 

@@ -26,8 +26,8 @@
   *
 \*********************************************/
 
-#ifndef SIREID_Identifier_H
-#define SIREID_Identifier_H
+#ifndef SIREID_IDENTIFIER_H
+#define SIREID_IDENTIFIER_H
 
 #include "id.h"
 
@@ -72,6 +72,8 @@ protected:
     void throwVersionError(SireStream::VersionID v,
                            const QString &supported_versions,
                            const RegisterMetaTypeBase &r_type) const;
+
+    void throwNullIDError() const;
 };
 
 }
