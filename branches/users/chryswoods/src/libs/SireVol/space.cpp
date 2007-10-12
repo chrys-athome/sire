@@ -32,6 +32,7 @@
 #include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
 
 using namespace SireVol;
 using namespace SireBase;

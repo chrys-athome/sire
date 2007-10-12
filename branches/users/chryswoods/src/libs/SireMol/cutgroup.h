@@ -32,6 +32,7 @@
 #include <QVector>
 
 #include "moleculeview.h"
+#include "cgproperty.hpp"
 
 SIRE_BEGIN_HEADER
 
@@ -59,10 +60,9 @@ friend QDataStream& ::operator<<(QDataStream&, const CutGroup&);
 friend QDataStream& ::operator>>(QDataStream&, CutGroup&);
 
 public:
-    typedef ID CGID;
-    typedef Index CGIdx;
-    typedef Name CGName;
-    typedef Info CGInfo;
+    typedef CGID ID;
+    typedef CGIdx Index;
+    typedef CGName Name;
 
     CutGroup();
 
@@ -77,12 +77,36 @@ public:
     bool operator==(const CutGroup &other) const;
     bool operator!=(const CutGroup &other) const;
     
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<CutGroup>() );
+    }
+    
+    const char* what() const
+    {
+        return CutGroup::typeName();
+    }
+    
+    CutGroup* clone() const
+    {
+        return new CutGroup(*this);
+    }
+    
     AtomSelection selectedAtoms() const;
     
     void update(const MoleculeData &moldata);
     
     CGName name() const;
     CGIdx index() const;
+    
+    bool hasProperty(const PropertyName &key) const;
+    bool hasMetadata(const PropertyName &metakey) const;
+    bool hasMetadata(const PropertyName &key,
+                     const PropertyName &metakey) const;
+                     
+    QStringList propertyKeys() const;
+    QStringList metadataKeys() const;
+    QStringList metadataKeys(const PropertyName &key) const;
     
     template<class T>
     T property(const PropertyName &key) const;
@@ -97,7 +121,6 @@ public:
     Mover<CutGroup> move() const;
     Evaluator evaluate() const;
     Editor<CutGroup> edit() const;
-    Selector<CutGroup> selection() const;
 
     int nAtoms() const;
 
@@ -110,12 +133,12 @@ public:
     bool containsSome(const AtomID &atomid) const;
 
     Atom select(const AtomID &atomid) const;
-    AtomsInMol selectAll(const AtomID &atomid) const;
-    AtomsInMol selectAll() const;
+    Selector<Atom> selectAll(const AtomID &atomid) const;
+    Selector<Atom> selectAll() const;
     
     Atom atom(const AtomID &atomid) const;
-    AtomsInMol atoms(const AtomID &atomid) const;
-    AtomsInMol atoms() const;
+    Selector<Atom> atoms(const AtomID &atomid) const;
+    Selector<Atom> atoms() const;
     
     Molecule molecule() const;
 

@@ -37,7 +37,7 @@ SIRE_BEGIN_HEADER
 namespace SireMol
 {
 template<class T>
-class CGProperty<T>;
+class CGProperty;
 }
 
 template<class T>
@@ -122,7 +122,7 @@ CGProperty<T>::CGProperty()
     CutGroups in the molecule described by 'molinfo' */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-CGProperty<T>::CGProperty(const MoleculeInfoData &molinfo);
+CGProperty<T>::CGProperty(const MoleculeInfoData &molinfo)
               : SireBase::ConcreteProperty<CGProperty<T>,MolViewProperty>()
 {
     if (molinfo.nCutGroups() > 0)
@@ -135,7 +135,7 @@ CGProperty<T>::CGProperty(const MoleculeInfoData &molinfo);
 /** Create CutGroup properties from the list of passed values */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-CGProperty<T>::CGProperty(const QVector<T> &values);
+CGProperty<T>::CGProperty(const QVector<T> &values)
               : SireBase::ConcreteProperty<CGProperty<T>,MolViewProperty>()
 {
     props = values;
@@ -145,7 +145,7 @@ CGProperty<T>::CGProperty(const QVector<T> &values);
 /** Copy constructor */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-CGProperty<T>::CGProperty(const CGProperty<T> &other);
+CGProperty<T>::CGProperty(const CGProperty<T> &other)
               : SireBase::ConcreteProperty<CGProperty<T>,MolViewProperty>(other),
                 props(other.props)
 {}

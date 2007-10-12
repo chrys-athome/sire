@@ -39,10 +39,14 @@ class Molecule;
 QDataStream& operator<<(QDataStream&, const SireMol::Molecule&);
 QDataStream& operator>>(QDataStream&, SireMol::Molecule&);
 
-uint qHash(const SireMol::Molecule &molecule);
-
 namespace SireMol
 {
+
+class Atom;
+class CutGroup;
+class Residue;
+class Chain;
+class Segment;
 
 /**
 A Molecule represents a complete molecule. 
@@ -93,13 +97,23 @@ public:
 
     Molecule& operator=(const Molecule &other);
     Molecule& operator=(const MoleculeView &other);
+
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<Molecule>() );
+    }
     
-    const MoleculeData& data() const;
-    const MoleculeData& constData() const;
+    const char* what() const
+    {
+        return Molecule::typeName();
+    }
+    
+    Molecule* clone() const
+    {
+        return new Molecule(*this);
+    }
     
     AtomSelection selectedAtoms() const;
-    
-    void update(const MoleculeData &other);
     
     const MolName& name() const;
     const MolNum& number() const;
@@ -121,13 +135,13 @@ public:
     Selector<Segment> selectAll(const SegID &segid) const;
     
     Atom atom(const AtomID &atomid) const;
-    Residue residue(const ResidueID &resid) const;
+    Residue residue(const ResID &resid) const;
     Chain chain(const ChainID &chainid) const;
     CutGroup cutGroup(const CGID &cgid) const;
     Segment segment(const SegID &segid) const;
     
     Selector<Atom> atoms(const AtomID &atomid) const;
-    Selector<Atom> atoms(const ResidueID &resid) const;
+    Selector<Atom> atoms(const ResID &resid) const;
     Selector<Atom> atoms(const ChainID &chainid) const;
     Selector<Atom> atoms(const CGID &cgid) const;
     Selector<Atom> atoms(const SegID &segid) const;
@@ -145,6 +159,15 @@ public:
     
     Selector<Segment> segments(const SegID &segid) const;
     Selector<Segment> segments();
+
+    bool hasProperty(const PropertyName &key) const;
+    bool hasMetadata(const PropertyName &metakey) const;
+    bool hasMetadata(const PropertyName &key,
+                     const PropertyName &metakey) const;
+                     
+    QStringList propertyKeys() const;
+    QStringList metadataKeys() const;
+    QStringList metadataKeys(const PropertyName &key) const;
     
     const Properties& properties() const;
     
@@ -156,13 +179,13 @@ public:
     const Property& metadata(const PropertyName &metakey) const;
 
 protected:
-    void setProperty(const PropertyName &key, const PropertyBase &value);
+    void setProperty(const PropertyName &key, const Property &value);
     
     void setMetadata(const PropertyName &metakey,
-                     const PropertyBase &value);
+                     const Property &value);
                      
     void setMetadata(const PropertyName &key, const PropertyName &metakey,
-                     const PropertyBase &value);
+                     const Property &value);
 };
 
 }

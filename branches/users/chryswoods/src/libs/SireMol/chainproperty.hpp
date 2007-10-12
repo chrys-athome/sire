@@ -37,7 +37,7 @@ SIRE_BEGIN_HEADER
 namespace SireMol
 {
 template<class T>
-class ChainProperty<T>;
+class ChainProperty;
 }
 
 template<class T>
@@ -104,7 +104,7 @@ public:
     int size() const;
     int count() const;
     
-    int nchains() const;
+    int nChains() const;
 
 private:
     /** The actual chain property values */
@@ -122,7 +122,7 @@ ChainProperty<T>::ChainProperty()
     chains in the molecule described by 'molinfo' */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-ChainProperty<T>::ChainProperty(const MoleculeInfoData &molinfo);
+ChainProperty<T>::ChainProperty(const MoleculeInfoData &molinfo)
               : SireBase::ConcreteProperty<ChainProperty<T>,MolViewProperty>()
 {
     if (molinfo.nChains() > 0)
@@ -135,7 +135,7 @@ ChainProperty<T>::ChainProperty(const MoleculeInfoData &molinfo);
 /** Create chain properties from the list of passed values */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-ChainProperty<T>::ChainProperty(const QVector<T> &values);
+ChainProperty<T>::ChainProperty(const QVector<T> &values)
               : SireBase::ConcreteProperty<ChainProperty<T>,MolViewProperty>()
 {
     props = values;
@@ -145,7 +145,7 @@ ChainProperty<T>::ChainProperty(const QVector<T> &values);
 /** Copy constructor */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-ChainProperty<T>::ChainProperty(const ChainProperty<T> &other);
+ChainProperty<T>::ChainProperty(const ChainProperty<T> &other)
               : SireBase::ConcreteProperty<ChainProperty<T>,MolViewProperty>(other),
                 props(other.props)
 {}

@@ -36,7 +36,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-//#include "SireBase/shareddatapointer.hpp"
+#include "SireBase/shareddatapointer.hpp"
 #include "SireBase/sharedpolypointer.hpp"
 
 SIRE_BEGIN_HEADER

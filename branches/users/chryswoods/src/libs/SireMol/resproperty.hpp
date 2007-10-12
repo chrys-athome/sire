@@ -37,7 +37,7 @@ SIRE_BEGIN_HEADER
 namespace SireMol
 {
 template<class T>
-class ResProperty<T>;
+class ResProperty;
 }
 
 template<class T>
@@ -104,7 +104,7 @@ public:
     int size() const;
     int count() const;
     
-    int nresidues() const;
+    int nResidues() const;
 
 private:
     /** The actual residue property values */
@@ -122,12 +122,12 @@ ResProperty<T>::ResProperty()
     residues in the molecule described by 'molinfo' */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-ResProperty<T>::ResProperty(const MoleculeInfoData &molinfo);
+ResProperty<T>::ResProperty(const MoleculeInfoData &molinfo)
               : SireBase::ConcreteProperty<ResProperty<T>,MolViewProperty>()
 {
     if (molinfo.nResidues() > 0)
     {
-        props = QVector<T>(molinfo.nresidues());
+        props = QVector<T>(molinfo.nResidues());
         props.squeeze();
     }
 }
@@ -135,7 +135,7 @@ ResProperty<T>::ResProperty(const MoleculeInfoData &molinfo);
 /** Create residue properties from the list of passed values */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-ResProperty<T>::ResProperty(const QVector<T> &values);
+ResProperty<T>::ResProperty(const QVector<T> &values)
               : SireBase::ConcreteProperty<ResProperty<T>,MolViewProperty>()
 {
     props = values;
@@ -145,7 +145,7 @@ ResProperty<T>::ResProperty(const QVector<T> &values);
 /** Copy constructor */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-ResProperty<T>::ResProperty(const ResProperty<T> &other);
+ResProperty<T>::ResProperty(const ResProperty<T> &other)
               : SireBase::ConcreteProperty<ResProperty<T>,MolViewProperty>(other),
                 props(other.props)
 {}

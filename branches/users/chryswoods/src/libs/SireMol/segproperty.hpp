@@ -37,7 +37,7 @@ SIRE_BEGIN_HEADER
 namespace SireMol
 {
 template<class T>
-class SegProperty<T>;
+class SegProperty;
 }
 
 template<class T>
@@ -122,7 +122,7 @@ SegProperty<T>::SegProperty()
     segments in the molecule described by 'molinfo' */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-SegProperty<T>::SegProperty(const MoleculeInfoData &molinfo);
+SegProperty<T>::SegProperty(const MoleculeInfoData &molinfo)
               : SireBase::ConcreteProperty<SegProperty<T>,MolViewProperty>()
 {
     if (molinfo.nSegments() > 0)
@@ -135,7 +135,7 @@ SegProperty<T>::SegProperty(const MoleculeInfoData &molinfo);
 /** Create segment properties from the list of passed values */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-SegProperty<T>::SegProperty(const QVector<T> &values);
+SegProperty<T>::SegProperty(const QVector<T> &values)
               : SireBase::ConcreteProperty<SegProperty<T>,MolViewProperty>()
 {
     props = values;
@@ -145,7 +145,7 @@ SegProperty<T>::SegProperty(const QVector<T> &values);
 /** Copy constructor */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-SegProperty<T>::SegProperty(const SegProperty<T> &other);
+SegProperty<T>::SegProperty(const SegProperty<T> &other)
               : SireBase::ConcreteProperty<SegProperty<T>,MolViewProperty>(other),
                 props(other.props)
 {}

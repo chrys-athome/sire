@@ -45,6 +45,8 @@ template<class T>
 class Mover : public T, public MoverBase
 {
 public:
+    Mover();
+
     Mover(const T &view);
     Mover(const T &view, const AtomSelection &movable_atoms);
     

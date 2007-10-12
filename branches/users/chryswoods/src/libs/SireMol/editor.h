@@ -26,3 +26,9 @@
   *
 \*********************************************/
 
+#ifndef SIREMOL_EDITOR_H
+#define SIREMOL_EDITOR_H
+
+
+
+#endif

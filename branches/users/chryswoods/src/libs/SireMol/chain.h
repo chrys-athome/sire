@@ -30,6 +30,7 @@
 #define SIREMOL_CHAIN_H
 
 #include "moleculeview.h"
+#include "chainproperty.hpp"
 
 SIRE_BEGIN_HEADER
 
@@ -56,9 +57,9 @@ friend QDataStream& ::operator<<(QDataStream&, const Chain&);
 friend QDataStream& ::operator>>(QDataStream&, Chain&);
 
 public:
-    typedef ID ChainID;
-    typedef Index ChainIdx;
-    typedef Name ChainName;
+    typedef ChainID ID;
+    typedef ChainIdx Index;
+    typedef ChainName Name;
 
     Chain();
     
@@ -92,6 +93,15 @@ public:
     
     ChainName name() const;
     ChainIdx index() const;
+    
+    bool hasProperty(const PropertyName &key) const;
+    bool hasMetadata(const PropertyName &metakey) const;
+    bool hasMetadata(const PropertyName &key,
+                     const PropertyName &metakey) const;
+                     
+    QStringList propertyKeys() const;
+    QStringList metadataKeys() const;
+    QStringList metadataKeys(const PropertyName &key) const;
     
     template<class T>
     const T& property(const PropertyName &key) const;
@@ -132,23 +142,23 @@ public:
     
     Atom select(const AtomID &atomid) const;
     
-    AtomsInMol selectAll(const AtomID &atomid) const;
-    AtomsInMol selectAllAtoms() const;
+    Selector<Atom> selectAll(const AtomID &atomid) const;
+    Selector<Atom> selectAllAtoms() const;
     
     Atom atom(const AtomID &atomid) const;
     
-    AtomsInMol atoms(const AtomID &atomid) const;
-    AtomsInMol atoms() const;
+    Selector<Atom> atoms(const AtomID &atomid) const;
+    Selector<Atom> atoms() const;
 
     Residue select(const ResID &resid) const;
     
-    ResInMol selectAll(const ResID &resid) const;
-    ResInMol selectAllResidues() const;
+    Selector<Residue> selectAll(const ResID &resid) const;
+    Selector<Residue> selectAllResidues() const;
     
     Residue residue(const ResID &resid) const;
     
-    ResInMol residues(const ResID &resid) const;
-    ResInMol residues() const;
+    Selector<Residue> residues(const ResID &resid) const;
+    Selector<Residue> residues() const;
 
 protected:
     template<class T>
@@ -182,7 +192,8 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 const T& Chain::property(const PropertyName &key) const
 {
-    const ChainProperty<T> &chain_props = d->property(key).asA< ChainProperty<T> >();
+    const Property &property = d->property(key);
+    const ChainProperty<T> &chain_props = property.asA< ChainProperty<T> >();
     return chain_props.at(this->index());
 }
 
@@ -193,9 +204,10 @@ const T& Chain::property(const PropertyName &key) const
 */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-T Chain::metadata(const PropertyName &key) const
+const T& Chain::metadata(const PropertyName &key) const
 {
-    const ChainProperty<T> &chain_props = d->metadata(key).asA< ChainProperty<T> >();
+    const Property &property = d->metadata(key);
+    const ChainProperty<T> &chain_props = property.asA< ChainProperty<T> >();
     return chain_props.at(this->index());
 }
 
@@ -207,10 +219,10 @@ T Chain::metadata(const PropertyName &key) const
 */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-T Chain::metadata(const PropertyName &key, const PropertyName &metakey) const
+const T& Chain::metadata(const PropertyName &key, const PropertyName &metakey) const
 {
-    const ChainProperty<T> &chain_props = d->metadata(key, metakey)
-                                                .asA< ChainProperty<T> >();
+    const Property &property = d->metadata(key, metakey);
+    const ChainProperty<T> &chain_props = property.asA< ChainProperty<T> >();
                                                 
     return chain_props.at(this->index());
 }

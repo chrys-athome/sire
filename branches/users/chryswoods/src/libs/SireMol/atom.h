@@ -480,6 +480,9 @@ static void set_metadata(Atom*, MoleculeData &moldata,
 } // end of namespace SireMol
 
 Q_DECLARE_METATYPE(SireMol::Atom);
+Q_DECLARE_METATYPE(SireMol::Mover<SireMol::Atom>);
+Q_DECLARE_METATYPE(SireMol::Editor<SireMol::Atom>);
+Q_DECLARE_METATYPE(SireMol::Selector<SireMol::Atom>);
 
 SIRE_END_HEADER
 

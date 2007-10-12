@@ -29,6 +29,7 @@
 #include "propertymap.h"
 
 #include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
 
 using namespace SireBase;
 using namespace SireStream;

@@ -77,6 +77,8 @@ public:
     MoverBase& operator=(const MoverBase &other);
     
 protected:
+    MoverBase(const AtomSelection &selected_atom);
+
     void setMovableAtoms(const AtomSelection &movable_atoms);
 
     void translate(MoleculeData &data,      

@@ -134,6 +134,15 @@ public:
     Editor< Selector<T> > edit(int i) const;
     Editor< Selector<T> > edit(int i, int j) const;
 
+    bool hasProperty(const PropertyName &key) const;
+    bool hasMetadata(const PropertyName &metakey) const;
+    bool hasMetadata(const PropertyName &key,
+                     const PropertyName &metakey) const;
+
+    QStringList propertyKeys() const;
+    QStringList metadataKeys() const;
+    QStringList metadataKeys(const PropertyName &key) const;
+
     template<class V>
     QList<V> property(const PropertyName &key) const;
     

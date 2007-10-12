@@ -37,6 +37,11 @@ static Property default_weightfunc( new RelFromNumber() );
 MoverBase::MoverBase()
 {}
 
+/** Construct a MoverBase that moves the specified atoms */
+MoverBase::MoverBase(const AtomSelection &selected_atoms)
+          : movable_atoms(selected_atoms)
+{}
+
 /** Copy constructor */
 MoverBase::MoverBase(const MoverBase &other)
           : movable_atoms(other.movable_atoms)

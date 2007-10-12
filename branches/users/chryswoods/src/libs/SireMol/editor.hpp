@@ -26,3 +26,71 @@
   *
 \*********************************************/
 
+#ifndef SIREMOL_EDITOR_HPP
+#define SIREMOL_EDITOR_HPP
+
+#include "moleculeview.h"
+#include "editor.h"
+
+SIRE_BEGIN_HEADER
+
+namespace SireMol
+{
+
+/** This is the class that is used to edit the molecule view
+    of type 'T'
+    
+    @author Christopher Woods
+*/
+template<class T>
+class Editor : public T
+{
+public:
+    Editor();
+
+    Editor(const T &view);
+    
+    Editor(const T &view, const AtomSelection &selected_atoms);
+    
+    Editor(const Editor<T> &other);
+    
+    ~Editor();
+    
+    Editor<T>& operator=(const Editor<T> &other);
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId< Editor<T> >() );
+    }
+    
+    const char* what() const
+    {
+        return Editor<T>::typeName();
+    }
+    
+    Editor<T>* clone() const
+    {
+        return new Editor<T>(*this);
+    }
+
+    template<class V>
+    Editor<T>& setProperty(const QString &key, const V &value,
+                           bool clear_metadata = true);
+                           
+    template<class V>
+    Editor<T>& setMetadata(const QString &metakey, const V &value);
+    
+    template<class V>
+    Editor<T>& setMetadata(const QString &key, const QString &metakey,
+                           const V &value);
+                           
+    Editor<T>& removeProperty(const QString &key);
+    Editor<T>& removeMetadata(const QString &metakey);
+    Editor<T>& removeMetadata(const QString &key, const QString &metakey);
+};
+
+}
+
+SIRE_END_HEADER
+
+#endif

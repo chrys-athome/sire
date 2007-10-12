@@ -30,6 +30,7 @@
 #define SIREMOL_RESIDUE_H
 
 #include "moleculeview.h"
+#include "resproperty.hpp"
 
 SIRE_BEGIN_HEADER
 
@@ -56,11 +57,10 @@ friend QDataStream& ::operator<<(QDataStream&, const Residue&);
 friend QDataStream& ::operator>>(QDataStream&, Residue&);
 
 public:
-    typedef ID ResID;
-    typedef Index ResIdx;
-    typedef Name ResName;
-    typedef Number ResNum;
-    typedef Info ResInfo;
+    typedef ResID ID;
+    typedef ResIdx Index;
+    typedef ResName Name;
+    typedef ResNum Number;
 
     Residue();
     
@@ -96,15 +96,24 @@ public:
     ResNum number() const;
     ResIdx index() const;
     
-    template<class T>
-    T property(const PropertyName &key) const;
+    bool hasProperty(const PropertyName &key) const;
+    bool hasMetadata(const PropertyName &metakey) const;
+    bool hasMetadata(const PropertyName &key,
+                     const PropertyName &metakey) const;
+                     
+    QStringList propertyKeys() const;
+    QStringList metadataKeys() const;
+    QStringList metadataKeys(const PropertyName &key) const;
     
     template<class T>
-    T metadata(const PropertyName &metakey) const;
+    const T& property(const PropertyName &key) const;
     
     template<class T>
-    T metadata(const PropertyName &key,
-               const PropertyName &metakey) const;
+    const T& metadata(const PropertyName &metakey) const;
+    
+    template<class T>
+    const T& metadata(const PropertyName &key,
+                      const PropertyName &metakey) const;
     
     Mover<Residue> move() const;
     Evaluator evaluate() const;
@@ -126,13 +135,13 @@ public:
     
     Atom select(const AtomID &atomid) const;
     
-    AtomsInMol selectAll(const AtomID &atomid) const;
-    AtomsInMol selectAll() const;
+    Selector<Atom> selectAll(const AtomID &atomid) const;
+    Selector<Atom> selectAll() const;
     
     Atom atom(const AtomID &atomid) const;
     
-    AtomsInMol atoms(const AtomID &atomid) const;
-    AtomsInMol atoms() const;
+    Selector<Atom> atoms(const AtomID &atomid) const;
+    Selector<Atom> atoms() const;
 
 protected:
     template<class T>
@@ -164,9 +173,10 @@ private:
 */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-T Residue::property(const PropertyName &key) const
+const T& Residue::property(const PropertyName &key) const
 {
-    ResProperty<T> res_props = d->property(key);
+    const Property &property = d->property(key);
+    const ResProperty<T> &res_props = property.asA< ResProperty<T> >();
     return res_props.at(this->index());
 }
 
@@ -177,9 +187,10 @@ T Residue::property(const PropertyName &key) const
 */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-T Residue::metadata(const PropertyName &key) const
+const T& Residue::metadata(const PropertyName &metakey) const
 {
-    ResProperty<T> res_props = d->metadata(key);
+    const Property &property = d->metadata(metakey);
+    const ResProperty<T> &res_props = property.asA< ResProperty<T> >();
     return res_props.at(this->index());
 }
 
@@ -191,9 +202,11 @@ T Residue::metadata(const PropertyName &key) const
 */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-T Residue::metadata(const PropertyName &key, const PropertyName &metakey) const
+const T& Residue::metadata(const PropertyName &key, 
+                           const PropertyName &metakey) const
 {
-    ResProperty<T> res_props = d->metadata(key, metakey);
+    const Property &property = d->metadata(key, metakey);
+    const ResProperty<T> &res_props = property.asA< ResProperty<T> >();
     return res_props.at(this->index());
 }
 

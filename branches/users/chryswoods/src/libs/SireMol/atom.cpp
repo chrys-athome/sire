@@ -33,6 +33,12 @@
 #include "selector.hpp"
 #include "evaluator.h"
 
+#include "cutgroup.h"
+#include "residue.h"
+#include "chain.h"
+#include "segment.h"
+#include "molecule.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
@@ -64,6 +70,15 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, Atom &atom)
         throw version_error(v, "1", r_atom, CODELOC);
 
     return ds;
+}
+
+void SireMol::detail::assertSameSize(Atom*, int nats, int nprops)
+{
+    if (nats != nprops)
+        throw SireError::incompatible_error( QObject::tr(
+            "The number of supplied properties (%1) is not the same "
+            "as the number of atoms (%2).")
+                .arg(nprops).arg(nats), CODELOC );
 }
 
 /** Null constructor */

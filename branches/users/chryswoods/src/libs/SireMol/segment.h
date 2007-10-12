@@ -30,6 +30,7 @@
 #define SIREMOL_SEGMENT_H
 
 #include "moleculeview.h"
+#include "segproperty.hpp"
 
 SIRE_BEGIN_HEADER
 
@@ -55,10 +56,9 @@ friend QDataStream& ::operator<<(QDataStream&, const Segment&);
 friend QDataStream& ::operator>>(QDataStream&, Segment&);
 
 public:
-    typedef ID SegID;
-    typedef Index SegIdx;
-    typedef Name SegName;
-    typedef Info SegInfo; 
+    typedef SegID ID;
+    typedef SegIdx Index;
+    typedef SegName Name;
 
     Segment();
     
@@ -72,6 +72,21 @@ public:
     
     bool operator==(const Segment &other) const;
     bool operator!=(const Segment &other) const;
+
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<Segment>() );
+    }
+    
+    const char* what() const
+    {
+        return Segment::typeName();
+    }
+    
+    Segment* clone() const
+    {
+        return new Segment(*this);
+    }
     
     AtomSelection selectedAtoms() const;
     
@@ -79,16 +94,25 @@ public:
     
     SegName name() const;
     SegIdx index() const;
+    
+    bool hasProperty(const PropertyName &key) const;
+    bool hasMetadata(const PropertyName &metakey) const;
+    bool hasMetadata(const PropertyName &key,
+                     const PropertyName &metakey) const;
+                     
+    QStringList propertyKeys() const;
+    QStringList metadataKeys() const;
+    QStringList metadataKeys(const PropertyName &key) const;
 
     template<class T>
-    T property(const PropertyName &key) const;
+    const T& property(const PropertyName &key) const;
 
     template<class T>
-    T metadata(const PropertyName &metakey) const;
+    const T& metadata(const PropertyName &metakey) const;
     
     template<class T>
-    T metadata(const PropertyName &key,
-               const PropertyName &metakey) const;
+    const T& metadata(const PropertyName &key,
+                      const PropertyName &metakey) const;
     
     Mover<Segment> move() const;
     Evaluator evaluate() const;
@@ -102,18 +126,18 @@ public:
     bool contains(SegIdx segidx) const;
     bool contains(const SegID &segid) const;
     
-    bool containsAll(const SegId &segid) const;
+    bool containsAll(const SegID &segid) const;
     bool containsSome(const SegID &segid) const;
     
     Molecule molecule() const;
     
     Atom select(const AtomID &atomid) const;
-    AtomsInMol selectAll(const AtomID &atomid) const;
-    AtomsInMol selectAll() const;
+    Selector<Atom> selectAll(const AtomID &atomid) const;
+    Selector<Atom> selectAll() const;
     
     Atom atom(const AtomID &atomid) const;
-    AtomsInMol atoms(const AtomID &atomid) const;
-    AtomsInMol atoms() const;
+    Selector<Atom> atoms(const AtomID &atomid) const;
+    Selector<Atom> atoms() const;
 
 protected:
     template<class T>
@@ -145,9 +169,10 @@ private:
 */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-T Segment::property(const PropertyName &key) const
+const T& Segment::property(const PropertyName &key) const
 {
-    SegProperty<T> seg_props = d->property(key);
+    const Property &property = d->property(key);
+    const SegProperty<T> &seg_props = property.asA< SegProperty<T> >();
     return seg_props.at(this->index());
 }
 
@@ -158,9 +183,10 @@ T Segment::property(const PropertyName &key) const
 */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-T Segment::metadata(const PropertyName &key) const
+const T& Segment::metadata(const PropertyName &metakey) const
 {
-    SegProperty<T> seg_props = d->metadata(key);
+    const Property &property = d->metadata(metakey);
+    const SegProperty<T> &seg_props = property.asA< SegProperty<T> >();
     return seg_props.at(this->index());
 }
 
@@ -172,9 +198,11 @@ T Segment::metadata(const PropertyName &key) const
 */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-T Segment::metadata(const PropertyName &key, const PropertyName &metakey) const
+const T& Segment::metadata(const PropertyName &key, 
+                           const PropertyName &metakey) const
 {
-    SegProperty<T> seg_props = d->metadata(key, metakey);
+    const Property &property = d->metadata(key, metakey);
+    const SegProperty<T> &seg_props = property.asA< SegProperty<T> >();
     return seg_props.at(this->index());
 }
 

@@ -32,6 +32,7 @@
 #include "sharedpolypointer.hpp"
 
 #include <QVariant>
+#include <QSharedData>
 
 SIRE_BEGIN_HEADER
 

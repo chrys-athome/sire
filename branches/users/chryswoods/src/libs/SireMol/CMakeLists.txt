@@ -45,6 +45,7 @@ set ( SIREMOL_HEADERS
       cutgroup.h
       cuttingfunction.h
       editor.h
+      editor.hpp
       element-data.h
       element.h
       elementdb.h
