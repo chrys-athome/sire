@@ -74,6 +74,15 @@ Evaluator::Evaluator(const MoleculeView &molecule)
           : MoleculeView(molecule), selected_atoms(molecule.selectedAtoms())
 {}
 
+/** Construct to evaluate properties of the passed selected atoms
+    of the molecule viewed in 'molecule' */
+Evaluator::Evaluator(const MoleculeView &molecule,
+                     const AtomSelection &atoms)
+          : MoleculeView(molecule), selected_atoms(atoms)
+{
+    selected_atoms.assertCompatibleWith(this->data());
+}
+
 /** Copy constructor */
 Evaluator::Evaluator(const Evaluator &other)
           : MoleculeView(other), selected_atoms(other.selected_atoms)

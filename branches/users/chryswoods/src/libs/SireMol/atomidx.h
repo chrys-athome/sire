@@ -85,6 +85,11 @@ public:
         return new AtomIdx(*this);
     }
     
+    static AtomIdx null()
+    {
+        return AtomIdx();
+    }
+    
     bool isNull() const
     {
         return SireID::Index_T_<AtomIdx>::isNull();

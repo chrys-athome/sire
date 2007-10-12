@@ -658,7 +658,7 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 Selector<T> Selector<T>::invert() const
 {
-    QList<typename T::Index> all_idxs = typename T::Index::null().map(d->info());
+    QList<typename T::Index> all_idxs = T::Index::null().map(d->info());
     
     Selector<T> ret(*this);
     ret.idxs.clear();
@@ -741,7 +741,7 @@ bool Selector<T>::contains(const typename T::ID &id) const
 {
     QList<typename T::Index> id_idxs = id.map(d->info());
     
-    if (idxs.count() < id_idxs)
+    if (idxs.count() < id_idxs.count())
         return false;
     else
     {
@@ -763,7 +763,7 @@ bool Selector<T>::intersects(const typename T::ID &id) const
 {
     QList<typename T::Index> id_idxs = id.map(d->info());
     
-    if (idxs.count() <= id_idxs)
+    if (idxs.count() <= id_idxs.count())
     {
         QSet<typename T::Index> id_idxs_set = id_idxs.toSet();
         

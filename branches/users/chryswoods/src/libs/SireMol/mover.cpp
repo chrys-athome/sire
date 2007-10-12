@@ -61,7 +61,7 @@ MoverBase& MoverBase::operator=(const MoverBase &other)
 /** Translate the selected atoms from 'coords' by 'delta'.
     This function assumes that 'selected_atoms' is compatible
     with 'coords' */
-void MoverBase::translate(AtomicCoords &coords,
+void MoverBase::translate(AtomCoords &coords,
                           const AtomSelection &selected_atoms,
                           const Vector &delta)
 {
@@ -122,7 +122,7 @@ void MoverBase::translate(AtomicCoords &coords,
 /** Rotate the coordinates (in 'coords') of the specified selected
     atoms using the rotation matrix 'rotmat' about the point 'point'.
     This function assumes that coords and selected_atoms are compatible */
-void MoverBase::rotate(AtomicCoords &coords,
+void MoverBase::rotate(AtomCoords &coords,
                        const AtomSelection &selected_atoms,
                        const Matrix &rotmat,
                        const Vector &point)
@@ -184,7 +184,7 @@ void MoverBase::rotate(AtomicCoords &coords,
 
     This function assumes that coords and selected_atoms are compatible!
 */
-void MoverBase::mapInto(AtomicCoords &coords,
+void MoverBase::mapInto(AtomCoords &coords,
                         const AtomSelection &selected_atoms,
                         const AxisSet &axes)
 {
@@ -256,7 +256,7 @@ void MoverBase::translate(MoleculeData &moldata
     PropertyName coord_property = map["coordinates"];
 
     //get the current coordinates
-    AtomicCoords coords = moldata.property(coord_property);
+    AtomCoords coords = moldata.property(coord_property);
     
     //translate the coordinates of the selected atoms
     MoverBase::translate(coords, selected_atoms, delta);
@@ -286,7 +286,7 @@ void MoverBase::rotate(MoleculeData &moldata,
     PropertyName coord_property = map["coordinates"];
 
     //get the coordinates to be rotated
-    AtomicCoords coords = moldata.property(coord_property);
+    AtomCoords coords = moldata.property(coord_property);
     
     //rotate the coordinates
     MoverBase::rotate(coords, selected_atoms, rotmat, point);
@@ -311,13 +311,25 @@ void MoverBase::mapInto(MoleculeData &moldata,
     PropertyName coord_property = map["coordinates"];
     
     //get the coordinates to be mapped
-    AtomicCoords coords = moldata.property(coord_property);
+    AtomCoords coords = moldata.property(coord_property);
     
     //map the coordinates
     MoverBase::mapInto(coords, selected_atoms, axes);
     
     //save the new coordinates
     moldata.setProperty(coord_property, coords);
+}
+
+/** Map the atoms we are allowed to move into the passed axes,
+    finding the coordinates using the passed property map
+    
+    \throw SireBase::missing_property
+*/
+void MoverBase::mapInto(MoleculeData &moldata,
+                        const AxisSet &axes,
+                        const PropertyMap &map) const
+{
+    MoverBase::mapInto(moldata, movable_atoms, axes, map);
 }
 
 /** Translate atoms we are allowed to move from the molecule whose
@@ -449,7 +461,7 @@ void MoverBase::change(MoleculeData &moldata, const BondID &bond,
     //now get property containing the coordinates of the atoms
     PropertyName coord_property = map["coordinates"];
     
-    AtomicCoords coords = moldata.property(coord_property);
+    AtomCoords coords = moldata.property(coord_property);
     
     //use these coordinates to calculate the unit vector that 
     //points along the bond
@@ -555,7 +567,7 @@ void MoverBase::change(MoleculeData &moldata, const AngleID &angle,
     
     //get the coordinates that are to be changed
     PropertyName coord_property = map["coordinates"];
-    AtomicCoords coords = moldata.property(coord_property);
+    AtomCoords coords = moldata.property(coord_property);
     
     //get the coordinates of the three atoms that comprise the angle
     const Vector &coords0 = coords[moldata.info().cgAtomIdx(atom0)];
@@ -664,7 +676,7 @@ void MoverBase::change(MoleculeData &moldata, const DihedralID &dihedral,
     
     //get the coordinates to be moved
     PropertyName coord_property = map["coordinates"];
-    AtomicCoords coords = moldata.property(coord_property);
+    AtomCoords coords = moldata.property(coord_property);
     
     //get the coordinates of the central two atoms of the dihedral
     const Vector &coords1 = coords[moldata.info().cgAtomIdx(atom1)];
@@ -765,7 +777,7 @@ void MoverBase::change(MoleculeData &moldata, const BondID &bond,
     
     //get the coordinates to be moved
     PropertyName coord_property = map["coordinates"];
-    AtomicCoords coords = moldata.property(coord_property);
+    AtomCoords coords = moldata.property(coord_property);
     
     //get the coordinates of the central two atoms of the dihedral
     const Vector &coords0 = coords[moldata.info().cgAtomIdx(atom0)];
@@ -874,7 +886,7 @@ void MoverBase::change(MoleculeData &moldata, const ImproperID &improper,
     
     //get the coordinates to be moved
     PropertyName coord_property = map["coordinates"];
-    AtomicCoords coords = moldata.property(coord_property);
+    AtomCoords coords = moldata.property(coord_property);
     
     //get the coordinates of the last three atoms of the improper
     const Vector &coords1 = coords[moldata.info().cgAtomIdx(atom1)];

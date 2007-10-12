@@ -81,6 +81,9 @@ protected:
 
     void setMovableAtoms(const AtomSelection &movable_atoms);
 
+    void mapInto(MoleculeData &data, const AxisSet &axes,
+                 const PropertyMap &map);
+
     void translate(MoleculeData &data,      
                    const Vector &delta,
                    const PropertyMap &map) const;

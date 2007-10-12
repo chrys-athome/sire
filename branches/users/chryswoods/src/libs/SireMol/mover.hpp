@@ -382,6 +382,7 @@ Mover<T>& Mover<T>::align(const MoleculeView &other, const AtomAliases &aliases,
                           const PropertyMap &map0, const PropertyMap &map1)
 {
     MoverBase::align(*(this->d), other, aliases, map0, map1);
+    return *this;
 }
                 
 /** Align all of the atoms by matching 'aligning_atoms' in this molecule
@@ -401,7 +402,8 @@ Mover<T>& Mover<T>::align(const MoleculeView &other, const AtomSelection &aligni
                           const AtomAliases &aliases,
                           const PropertyMap &map0, const PropertyMap &map1)
 {
-    MoverBase::align(*(this->d), aligning_atoms, aliases, map0, map1);
+    MoverBase::align(*(this->d), aligning_atoms, other, aliases, map0, map1);
+    return *this;
 }
 
 }

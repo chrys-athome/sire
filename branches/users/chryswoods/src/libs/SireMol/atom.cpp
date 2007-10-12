@@ -226,3 +226,12 @@ CutGroup Atom::cutGroup() const
 {
     return CutGroup(*d, d->info().parentCutGroup(atomidx));
 }
+
+///////
+/////// Explicitly instantiate the Atom manipulator classes
+///////
+
+template class Editor<Atom>;
+template class Selector<Atom>;
+template class Mover<Atom>;
+

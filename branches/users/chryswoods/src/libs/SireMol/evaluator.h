@@ -79,6 +79,8 @@ public:
     Evaluator();
 
     Evaluator(const MoleculeView &molecule);
+    Evaluator(const MoleculeView &molecule,
+              const AtomSelection &selected_atoms);
 
     Evaluator(const Evaluator &other);
 

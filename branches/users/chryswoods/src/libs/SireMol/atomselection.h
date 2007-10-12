@@ -315,10 +315,6 @@ public:
 
     AtomSelection mask(const AtomSelection &selection) const;
 
-    void assertCompatibleWith(const MoleculeData &moldata) const;
-    void assertCompatibleWith(const MoleculeView &molview) const;
-    void assertCompatibleWith(const AtomSelection &other) const;
-
     QSet<AtomIdx> selectedAtoms() const;
 
     QSet<Index> selectedAtoms(CGIdx cgid) const;
@@ -331,6 +327,10 @@ public:
     QSet<ResIdx> selectedResidues() const;
     QSet<ChainIdx> selectedChains() const;
     QSet<SegIdx> selectedSegments() const;
+
+    void assertCompatibleWith(const MoleculeData &moldata) const;
+    void assertCompatibleWith(const MoleculeView &molview) const;
+    void assertCompatibleWith(const AtomSelection &other) const;
 
 private:
     const MoleculeInfoData& info() const;
