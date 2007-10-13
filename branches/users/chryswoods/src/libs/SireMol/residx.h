@@ -87,6 +87,11 @@ public:
         return new ResIdx(*this);
     }
     
+    static ResIdx null()
+    {
+        return ResIdx();
+    }
+    
     bool isNull() const
     {
         return SireID::Index_T_<ResIdx>::isNull();

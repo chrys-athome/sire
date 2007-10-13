@@ -27,98 +27,142 @@
 \*********************************************/
 
 #include "atomidentifier.h"
-#include "specify.hpp"
-#include "atomname.h"
-#include "atomnum.h"
-
-#include "SireStream/datastream.h"
+#include "moleculeinfodata.h"
 
 using namespace SireMol;
 using namespace SireID;
 
-///////
-/////// Implementation of AtomName
-///////
-
-QList<AtomIdx> AtomName::map(const MoleculeInfoData &molinfo) const
-{
-    return molinfo.map(*this);
-}
-
-///////
-/////// Implementation of AtomNum
-///////
-
-QList<AtomIdx> AtomNum::map(const MoleculeInfoData &molinfo) const
-{
-    return molinfo.map(*this);
-}
-
-///////
-/////// Implementation of AtomIdentifier
-///////
-
-static const RegisterMetaType<AtomIdentifier> r_atomid;
-
-/** Serialise to a binary datastream */
-QDataStream SIREID_EXPORT &operator<<(QDataStream &ds, const AtomIdentifier &atomid)
-{
-    return atomid.save(ds, r_atomid);
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIREID_EXPORT &operator>>(QDataStream &ds, AtomIdentifier &atomid)
-{
-    return atomid.load(ds, r_atomid);
-}
-
-/** Return the hash of this ID */
-uint SIREID_EXPORT qHash(const AtomIdentifier &atomid)
-{
-    return atomid.hash();
-}
-
-/** Construct a null identifier */
-AtomIdentifier::AtomIdentifier() : Identifier_T_<AtomIdentifier,AtomID>()
+/** Null constructor */
+AtomIdentifier::AtomIdentifier() : AtomID()
 {}
 
 /** Construct from the passed AtomID */
 AtomIdentifier::AtomIdentifier(const AtomID &atomid)
-               : Identifier_T_<AtomIdentifier,AtomID>(atomid)
-{}
+               : AtomID()
+{
+    if (atomid.isA<AtomIdentifier>())
+        d = atomid.asA<AtomIdentifier>().d;
+    else if (not atomid.isNull())
+        d.reset( atomid.clone() );
+}
 
 /** Copy constructor */
 AtomIdentifier::AtomIdentifier(const AtomIdentifier &other)
-               : Identifier_T_<AtomIdentifier,AtomID>(other)
+               : AtomID(other), d(other.d)
 {}
-  
-/** Destructor */ 
+
+/** Destructor */
 AtomIdentifier::~AtomIdentifier()
 {}
 
-/** Return a specific atom that matches this identifier */
-Specify<AtomIdentifier> AtomIdentifier::operator[](int i) const
+/** Is this selection null? */
+bool AtomIdentifier::isNull() const
 {
-    return Specify<AtomIdentifier>(*this, i);
+    return d.get() == 0;
 }
 
-/** Return a specific atom that matches this identifier */
-Specify<AtomIdentifier> AtomIdentifier::operator()(int i) const
+/** Return a hash of this identifier */
+uint AtomIdentifier::hash() const
 {
-    return this->operator[](i);
+    if (d.get() == 0)
+        return 0;
+    else
+        return d->hash();
+}
+            
+/** Return a string representatio of this ID */
+QString AtomIdentifier::toString() const
+{
+    if (d.get() == 0)
+        return "null";
+    else
+        return d->toString();
 }
 
-/** Return a range of atoms that match this identifier */
-Specify<AtomIdentifier> AtomIdentifier::operator()(int i, int j) const
+/** Return the base type of this ID */
+const AtomID& AtomIdentifier::base() const
 {
-    return Specify<AtomIdentifier>(*this, i, j);
+    if (d.get() == 0)
+        return *this;
+    else
+        return *d;
 }
+
+/** Copy assignment operator */
+AtomIdentifier& AtomIdentifier::operator=(const AtomIdentifier &other)
+{
+    d = other.d;
+    return *this;
+}
+
+/** Copy assignment operator */
+AtomIdentifier& AtomIdentifier::operator=(const AtomID &other)
+{
+    if (other.isA<AtomIdentifier>())
+        d = other.asA<AtomIdentifier>().d;
+    else if (other.isNull())
+        d.reset();
+    else
+        d.reset(other.clone());
     
-/** Return the list of indicies of atoms that match this identifier */
+    return *this;
+}
+
+/** Comparison operator */
+bool AtomIdentifier::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare<AtomIdentifier>(*this, other);
+}
+
+/** Comparison operator */
+bool AtomIdentifier::operator==(const AtomIdentifier &other) const
+{
+    if (d.get() == 0 or other.d.get() == 0)
+        return d.get() == other.d.get();
+    else
+        return d == other.d or *d == *(other.d);
+}
+
+/** Comparison operator */
+bool AtomIdentifier::operator!=(const AtomIdentifier &other) const
+{
+    if (d.get() == 0 or other.d.get() == 0)
+        return d.get() != other.d.get();
+    else
+        return d != other.d and *d != *(other.d);
+}
+
+/** Comparison operator */
+bool AtomIdentifier::operator==(const AtomID &other) const
+{
+    if (d.get() == 0)
+        return other.isNull();
+    else if (other.isA<AtomIdentifier>())
+        return this->operator==(other.asA<AtomIdentifier>());
+    else
+        return d->operator==(other);
+}
+
+/** Comparison operator */
+bool AtomIdentifier::operator!=(const AtomID &other) const
+{
+    if (d.get() == 0)
+        return not other.isNull();
+    else if (other.isA<AtomIdentifier>())
+        return this->operator!=(other.asA<AtomIdentifier>());
+    else
+        return d->operator!=(other);
+}
+
+/** Map this ID to the list of indicies of atoms that match this ID
+
+    \throw SireMol::missing_atom
+    \throw SireError::invalid_index
+*/
 QList<AtomIdx> AtomIdentifier::map(const MoleculeInfoData &molinfo) const
 {
-    if (this->isNull())
+    if (d.get() == 0)
         return molinfo.getAtoms();
     else
-        return this->asA<AtomID>().map(molinfo);
+        return d->map(molinfo);
 }

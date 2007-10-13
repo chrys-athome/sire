@@ -26,42 +26,82 @@
   *
 \*********************************************/
 
-#include "atomid.h"
-#include "atomidentifier.h"
+#include "chainid.h"
+#include "chainidentifier.h"
 #include "specify.hpp"
 
 using namespace SireMol;
 using namespace SireID;
 
 /** Constructor */
-AtomID::AtomID() : ID()
+ChainID::ChainID() : ID()
 {}
 
 /** Copy constructor */
-AtomID::AtomID(const AtomID &other) : ID(other)
+ChainID::ChainID(const ChainID &other) : ID(other)
 {}
 
 /** Destructor */
-AtomID::~AtomID()
+ChainID::~ChainID()
 {}
+
+/** Return the atoms in the matching residues */
+AtomsIn<ChainID> ChainID::atoms() const
+{
+    return AtomsIn<ChainID>(*this);
+}
+
+/** Return a specific atom in the matching residues */
+AtomsIn<ChainID> ChainID::atom(int i) const
+{
+    return AtomsIn<ChainID>(*this, i);
+}
+
+/** Return a range of atoms in the matching residues */
+AtomsIn<ChainID> ChainID::atoms(int i, int j) const
+{
+    return AtomsIn<ChainID>(*this, i, j);
+}
+
+/** Return the atoms in the matching residues */
+ResIn<ChainID> ChainID::residues() const
+{
+    return ResIn<ChainID>(*this);
+}
+
+/** Return a specific atom in the matching residues */
+ResIn<ChainID> ChainID::residue(int i) const
+{
+    return ResIn<ChainID>(*this, i);
+}
+
+/** Return a range of atoms in the matching residues */
+ResIn<ChainID> ChainID::residues(int i, int j) const
+{
+    return ResIn<ChainID>(*this, i, j);
+}
   
 /** Return a specific atom that matches this ID */
-Specify<AtomID> AtomID::operator[](int i) const
+Specify<ChainID> ChainID::operator[](int i) const
 {
-    return Specify<AtomID>(*this, i);
+    return Specify<ChainID>(*this, i);
 }
 
 /** Return a specific atom that matches this ID */
-Specify<AtomID> AtomID::operator()(int i) const
+Specify<ChainID> ChainID::operator()(int i) const
 {
     return this->operator[](i);
 }
 
 /** Return a range of atoms that match this ID */
-Specify<AtomID> AtomID::operator()(int i, int j) const
+Specify<ChainID> ChainID::operator()(int i, int j) const
 {
-    return Specify<AtomID>(*this, i, j);
+    return Specify<ChainID>(*this, i, j);
 }
 
-//fully instantiate Specify<AtomID>
-template class Specify<AtomID>;
+//fully instantiate template classes
+template class Specify<ChainID>;
+template class AtomsIn<ChainID>;
+template class ResIn<ChainID>;
+
+

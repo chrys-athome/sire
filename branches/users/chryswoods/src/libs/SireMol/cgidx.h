@@ -82,6 +82,11 @@ public:
         return SireID::Index_T_<CGIdx>::what();
     }
     
+    static CGIdx null()
+    {
+        return CGIdx();
+    }
+    
     bool isNull() const
     {
         return SireID::Index_T_<CGIdx>::isNull();

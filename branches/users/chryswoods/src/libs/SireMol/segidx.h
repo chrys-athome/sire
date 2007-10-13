@@ -87,6 +87,11 @@ public:
         return new SegIdx(*this);
     }
     
+    static SegIdx null()
+    {
+        return SegIdx();
+    }
+    
     bool isNull() const
     {
         return SireID::Index_T_<SegIdx>::isNull();

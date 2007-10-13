@@ -48,7 +48,7 @@ public:
     
     static const char* typeName()
     {
-        return qPrintable(typname);
+        return QMetaType::typeName( qMetaTypeId< GroupGroupID<G0,G1> >() );
     }
     
     const char* what() const
@@ -61,31 +61,40 @@ public:
         return new GroupGroupID<G0,G1>(*this);
     }
     
-    QString toString() const;
-       
-    QList<AtomIdx> map(const MoleculeInfoData &molinfo) const
+    using SireID::ID::operator!=;
+    
+    bool operator==(const SireID::ID &other) const
     {
-        if (this->isNull())
-            return molinfo.getAtoms();
-        else if (g0->isNull())
-            return g1->map(molinfo);
-        else if (g1->isNull())
-            return g0->map(molinfo);
-        
-        QList<AtomIdx> atomidxs = MoleculeInfoData::intersection(
-                                                     molinfo.getAtomsIn(*g0),
-                                                     molinfo.getAtomsIn(*g1) );
-        
-        if (atomidxs.isEmpty())
-            this->throwMissingAtom(molinfo);
-            
-        qSort(atomidxs);
-        return atomidxs;
+        return SireID::ID::compare< GroupGroupID<G0,G1> >(*this, other);
     }
+    
+    bool operator==(const GroupGroupID<G0,G1> &other) const
+    {
+        return g0 == other.g0 and g1 == other.g1;
+    }
+    
+    bool operator!=(const GroupGroupID<G0,G1> &other) const
+    {
+        return g0 != other.g0 or g1 != other.g1;
+    }
+    
+    QString toString() const;
+    
+    uint hash() const
+    {
+        return (g0.hash() << 16) | (g1.hash() & 0x0000FFFF);
+    }
+    
+    bool isNull() const
+    {
+        return g0.isNull() and g1.isNull();
+    }
+             
+    QList<AtomIdx> map(const MoleculeInfoData &molinfo) const;
 
 private:
-    G0::Identifier g0;
-    G1::Identifier g1;
+    typename G0::Identifier g0;
+    typename G1::Identifier g1;
 };
 
 /** Return a string representation of this match */
@@ -134,11 +143,9 @@ QList<AtomIdx> GroupGroupID<G0,G1>::map(const MoleculeInfoData &molinfo) const
 typedef GroupGroupID<SegID,ResID> SegResID;
 typedef GroupGroupID<SegID,ChainID> SegChainID;
 typedef GroupGroupID<SegID,CGID> SegCGID;
-typedef GroupGroupID<SegID,SegID> SegSegID;
 
 typedef GroupGroupID<CGID,ResID> CGResID;
 typedef GroupGroupID<CGID,ChainID> CGChainID;
-typedef GroupGroupID<CGID,CGID> CGCGID;
 
 SegResID operator+(const SegID &segid, const ResID &resid);
 SegResID operator+(const ResID &resid, const SegID &segid);
@@ -149,17 +156,19 @@ SegChainID operator+(const ChainID &chainid, const SegID &segid);
 SegCGID operator+(const SegID &segid, const CGID &cgid);
 SegCGID operator+(const CGID &cgid, const SegID &segid);
 
-SegSegID operator+(const SegID &id0, const SegID &id1);
-
 CGResID operator+(const CGID &cgid, const ResID &resid);
 CGResID operator+(const ResID &resid, const CGID &cgid);
 
 CGChainID operator+(const CGID &cgid, const ChainID &chainid);
 CGChainID operator+(const ChainID &chainid, const CGID &cgid);
 
-CGCGID operator+(const CGID &id0, const CGID &id1);
-
 }
+
+Q_DECLARE_METATYPE(SireMol::SegResID);
+Q_DECLARE_METATYPE(SireMol::SegChainID);
+Q_DECLARE_METATYPE(SireMol::SegCGID);
+Q_DECLARE_METATYPE(SireMol::CGResID);
+Q_DECLARE_METATYPE(SireMol::CGChainID);
 
 SIRE_END_HEADER
 

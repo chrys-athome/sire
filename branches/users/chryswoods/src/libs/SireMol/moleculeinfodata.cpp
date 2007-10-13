@@ -445,9 +445,9 @@ QList<AtomIdx> MoleculeInfoData::getAtoms() const
 }
 
 /** Return the indicies of all of the atoms in the residue at index 'residx' */
-QList<AtomIdx> MoleculeInfoData::getAtomsIn(ResIdx residx) const
+const QList<AtomIdx>& MoleculeInfoData::getAtomsIn(ResIdx residx) const
 {
-    return res_by_index[residx.map(res_by_index.count())].atom_indicies.toList();
+    return res_by_index[residx.map(res_by_index.count())].atom_indicies;
 }
 
 QList<AtomIdx> MoleculeInfoData::_pvt_getAtomsIn(const QList<ResIdx> &residxs) const

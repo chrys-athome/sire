@@ -47,10 +47,9 @@ namespace SireMol
 template<class ID>
 class Specify : public ID
 {
-private:
-    static QString typname;
 
 public:
+    Specify();
     Specify(const ID &id, qint32 i);
     Specify(const ID &id, qint32 i, qint32 j);
     
@@ -60,7 +59,7 @@ public:
     
     static const char* typeName()
     {
-        return qPrintable(typname);
+        return QMetaType::typeName( qMetaTypeId< Specify<ID> >() );
     }
     
     const char* what() const
@@ -88,9 +87,29 @@ public:
         return not this->operator==(other);
     }
     
+    Specify<ID> operator[](int i) const
+    {
+        return Specify<ID>(*this, i);
+    }
+    
+    Specify<ID> operator()(int i) const
+    {
+        return Specify<ID>(*this, i);
+    }
+    
+    Specify<ID> operator()(int i, int j) const
+    {
+        return Specify<ID>(*this, i, j);
+    }
+    
+    uint hash() const
+    {
+        return id.hash() + strt + end;
+    }
+    
     bool isNull() const
     {
-        return false;
+        return id.isNull();
     }
     
     QString toString() const;
@@ -98,47 +117,36 @@ public:
     QList<typename ID::Index> map(const MoleculeInfoData &molinfo) const;
 
 private:
-    /** Hide the index operators */
-    int operator[](int) const
-    {
-        return 0;
-    }
-    
-    int operator()(int) const
-    {
-        return 0;
-    }
-    
-    int operator()(int,int) const
-    {
-        return 0;
-    }
+    typename ID::Identifier id;
 
     SireID::Index strt, end;
 };
 
+/** Null constructor */
 template<class ID>
-QString Specify<ID>::typname = QString("SireMol::Specify<%1>").arg(ID::typeName());
+SIRE_OUTOFLINE_TEMPLATE
+Specify<ID>::Specify() : ID(), strt(0), end(-1)
+{}
 
 /** Construct, using the passed ID and index */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-Specify<ID>::Specify(const ID &id, qint32 i)
-            : ID(id), strt(i), end(i)
+Specify<ID>::Specify(const ID &idobj, qint32 i)
+            : ID(), id(idobj), strt(i), end(i)
 {}
 
 /** Construct using the passed ID and range */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-Specify<ID>::Specify(const ID &id, qint32 i, qint32 j)
-            : ID(id), strt(i), end(j)
+Specify<ID>::Specify(const ID &idobj, qint32 i, qint32 j)
+            : ID(), id(idobj), strt(i), end(j)
 {}
   
 /** Copy constructor */  
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
 Specify<ID>::Specify(const Specify<ID> &other)
-            : ID(other), strt(other.strt), end(other.end)
+            : ID(other), id(other.id), strt(other.strt), end(other.end)
 {}
   
 /** Destructor */  
@@ -155,6 +163,7 @@ Specify<ID>& Specify<ID>::operator=(const Specify<ID> &other)
     if (&other != this)
     {
         ID::operator=(other);
+        id = other.id;
         strt = other.strt;
         end = other.end;
     }
@@ -168,7 +177,7 @@ SIRE_OUTOFLINE_TEMPLATE
 bool Specify<ID>::operator==(const Specify<ID> &other) const
 {
     return strt == other.strt and end == other.end and 
-           ID::operator==(other);
+           id == other.id;
 }
 
 /** Comparison operator */
@@ -185,9 +194,9 @@ SIRE_OUTOFLINE_TEMPLATE
 QString Specify<ID>::toString() const
 {
     if (strt == end)
-        return QString("(%1)[%2]").arg(ID::toString()).arg(strt);
+        return QString("(%1)[%2]").arg(id.toString()).arg(strt);
     else
-        return QString("(%1)[%2:%3]").arg(ID::toString())
+        return QString("(%1)[%2:%3]").arg(id.toString())
                                      .arg(strt).arg(end);
 }
 
@@ -197,7 +206,7 @@ SIRE_OUTOFLINE_TEMPLATE
 QList<typename ID::Index> Specify<ID>::map(const MoleculeInfoData &molinfo) const
 {
     //first get all of the matches
-    QList<typename ID::Index> idxs = ID::map(molinfo);
+    QList<typename ID::Index> idxs = id.map(molinfo);
     
     //now get the specified matches
     int nmatches = idxs.count();

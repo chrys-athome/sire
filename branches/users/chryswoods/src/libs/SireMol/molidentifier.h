@@ -26,3 +26,71 @@
   *
 \*********************************************/
 
+#ifndef SIREMOL_MOLIDENTIFIER_H
+#define SIREMOL_MOLIDENTIFIER_H
+
+#include "molid.h"
+
+#include <boost/shared_ptr.hpp>
+
+namespace SireMol
+{
+
+/** This is a generic holder for any MolID class! 
+
+    @author Christopher Woods
+*/
+class MolIdentifier : public MolID
+{
+public:
+    MolIdentifier();
+    MolIdentifier(const MolID &atomid);
+    MolIdentifier(const MolIdentifier &other);
+    
+    ~MolIdentifier();
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<MolIdentifier>() );
+    }
+    
+    const char* what() const
+    {
+        return MolIdentifier::typeName();
+    }
+    
+    MolIdentifier* clone() const
+    {
+        return new MolIdentifier(*this);
+    }
+    
+    bool isNull() const;
+    
+    uint hash() const;
+                
+    QString toString() const;
+    
+    const MolID& base() const;
+    
+    MolIdentifier& operator=(const MolIdentifier &other);
+    MolIdentifier& operator=(const MolID &other);
+    
+    bool operator==(const SireID::ID &other) const;
+    using SireID::ID::operator!=;
+   
+    bool operator==(const MolIdentifier &other) const;
+    bool operator!=(const MolIdentifier &other) const;
+    
+    bool operator==(const MolID &other) const;
+    bool operator!=(const MolID &other) const;
+
+private:
+    /** Pointer to the MolID */
+    boost::shared_ptr<MolID> d;
+};
+
+}
+
+Q_DECLARE_METATYPE(SireMol::MolIdentifier);
+
+#endif

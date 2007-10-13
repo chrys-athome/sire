@@ -26,24 +26,71 @@
   *
 \*********************************************/
 
-#include "chainidentifier.h"
-#include "chainname.h"
+#ifndef SIREMOL_CHAINIDENTIFIER_H
+#define SIREMOL_CHAINIDENTIFIER_H
 
-#include "moleculeinfodata.h"
+#include "chainid.h"
 
-using namespace SireMol;
-using namespace SireID;
+#include <boost/shared_ptr.hpp>
 
-///////
-/////// Implementation of ChainName
-///////
-
-QList<ChainIdx> ChainName::map(const MoleculeInfoData &molinfo) const
+namespace SireMol
 {
-    return molinfo.map(*this);
+
+class ChainIdx;
+
+class ChainIdentifier : public ChainID
+{
+public:
+    ChainIdentifier();
+    ChainIdentifier(const ChainID &chainid);
+    ChainIdentifier(const ChainIdentifier &other);
+    
+    ~ChainIdentifier();
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<ChainIdentifier>() );
+    }
+    
+    const char* what() const
+    {
+        return ChainIdentifier::typeName();
+    }
+    
+    ChainIdentifier* clone() const
+    {
+        return new ChainIdentifier(*this);
+    }
+    
+    bool isNull() const;
+    
+    uint hash() const;
+                
+    QString toString() const;
+    
+    const ChainID& base() const;
+    
+    ChainIdentifier& operator=(const ChainIdentifier &other);
+    ChainIdentifier& operator=(const ChainID &other);
+    
+    bool operator==(const SireID::ID &other) const;
+    using SireID::ID::operator!=;
+   
+    bool operator==(const ChainIdentifier &other) const;
+    bool operator!=(const ChainIdentifier &other) const;
+    
+    bool operator==(const ChainID &other) const;
+    bool operator!=(const ChainID &other) const;
+    
+    QList<ChainIdx> map(const MoleculeInfoData &molinfo) const;
+
+private:
+    /** Pointer to the ChainID */
+    boost::shared_ptr<ChainID> d;
+};
+
 }
 
-///////
-/////// Implementation of ChainIdentifier
-///////
+Q_DECLARE_METATYPE(SireMol::ChainIdentifier);
 
+#endif

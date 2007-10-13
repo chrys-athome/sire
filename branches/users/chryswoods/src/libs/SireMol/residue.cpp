@@ -33,10 +33,20 @@
 #include "selector.hpp"
 #include "evaluator.h"
 
+#include "molecule.h"
+#include "chain.h"
+#include "atom.h"
+
+#include "atomidcombos.h"
+
+#include "SireError/errors.h"
+#include "SireMol/errors.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
 using namespace SireMol;
+using namespace SireBase;
 using namespace SireStream;
 
 RegisterMetaType<Residue> r_res;
@@ -64,15 +74,23 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, Residue &res)
         
         sds >> res.residx >> static_cast<MoleculeView&>(res);
         
-        res.selected_atoms = AtomSelection(res.d->info());
+        res.selected_atoms = AtomSelection(res.data());
         res.selected_atoms.select(res.residx);
     }
     else
-        throw version_error(v, "1", r_???, CODELOC);
+        throw version_error(v, "1", r_res, CODELOC);
 
     return ds;
 }
 
+void SireMol::detail::assertSameSize(Residue*, int nats, int nprops)
+{
+    if (nats != nprops)
+        throw SireError::incompatible_error( QObject::tr(
+            "The number of supplied properties (%1) is not the same "
+            "as the number of residues (%2).")
+                .arg(nprops).arg(nats), CODELOC );
+}
 
 /** Null constructor */
 Residue::Residue() : MoleculeView()
@@ -82,8 +100,8 @@ Residue::Residue() : MoleculeView()
 Residue::Residue(const MoleculeData &moldata, const ResID &resid)
         : MoleculeView(moldata)
 {
-    residx = resid.map(d->info());
-    selected_atoms = AtomSelection(d->info());
+    residx = moldata.info().resIdx(resid);
+    selected_atoms = AtomSelection(moldata);
     selected_atoms.select(residx);
 }
         
@@ -114,7 +132,7 @@ Residue& Residue::operator=(const Residue &other)
 bool Residue::operator==(const Residue &other) const
 {
     return residx == other.residx and 
-           MoleculeView::opertor==(other);
+           MoleculeView::operator==(other);
 }
 
 /** Comparison operator */
@@ -157,7 +175,7 @@ Mover<Residue> Residue::move() const
 
 /** Return an Evaluator that evaluates values using all of 
     the atoms in the residue */
-Evaluator<Residue> Residue::evaluate() const
+Evaluator Residue::evaluate() const
 {
     return Evaluator(*this);
 }
@@ -184,9 +202,9 @@ int Residue::nAtoms() const
 
 /** Return the indicies of the atoms in this residue, in the
     order that they appear in this residue */
-QList<AtomIdx> Residue::atomIdxs() const
+const QList<AtomIdx>& Residue::atomIdxs() const
 {
-    return d->info().getAtomsIn(chainidx);
+    return d->info().getAtomsIn(residx);
 }
 
 /** Return whether or not this residue contains the atom 
@@ -220,7 +238,7 @@ bool Residue::containsSome(const AtomID &atomid) const
 /** Return the molecule that contains this residue */
 Molecule Residue::molecule() const
 {
-    return Molecule(this->data());
+    return Molecule(*d);
 }
 
 /** Return the chain that contain this residue - this throws
@@ -260,15 +278,15 @@ Atom Residue::atom(const AtomID &atomid) const
     \throw SireMol::missing_atom
     \throw SireError::invalid_index
 */
-AtomsInMol Residue::atoms(const AtomID &atomid) const
+Selector<Atom> Residue::atoms(const AtomID &atomid) const
 {
-    return AtomsInMol(this->data(), residx + atomid);
+    return Selector<Atom>(this->data(), residx + atomid);
 }
 
 /** Return all of the atoms that are in this residue */
-AtomsInMol Residue::atoms() const
+Selector<Atom> Residue::atoms() const
 {
-    return AtomsInMol(this->data(), residx.atoms());
+    return Selector<Atom>(this->data(), residx.atoms());
 }
 
 /** Return the atom in this residue *and* has the ID 'atomid'
@@ -286,13 +304,21 @@ Atom Residue::select(const AtomID &atomid) const
 
     \throw SireMol::missing_atom
 */
-AtomsInMol Residue::selectAll(const AtomID &atomid) const
+Selector<Atom> Residue::selectAll(const AtomID &atomid) const
 {
     return this->atoms(atomid);
 }
 
 /** Return all of the atoms in this residue */
-AtomsInMol Residue::selectAll() const
+Selector<Atom> Residue::selectAll() const
 {
     return this->atoms();
 }
+
+/////
+///// explicitly instantiate the Residue manipulator classes
+/////
+
+template class Editor<Residue>;
+template class Mover<Residue>;
+template class Selector<Residue>;

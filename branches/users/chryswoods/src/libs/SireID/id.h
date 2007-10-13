@@ -32,6 +32,7 @@
 #include "sireglobal.h"
 
 #include <QString>
+#include <QMetaType>
 
 SIRE_BEGIN_HEADER
 
@@ -117,12 +118,6 @@ public:
     const T& asA() const
     {
         return dynamic_cast<const T&>(*this);
-    }
-    
-    template<class T>
-    T& asA()
-    {
-        return dynamic_cast<T&>(*this);
     }
 
 protected:

@@ -29,47 +29,67 @@
 #ifndef SIREMOL_SEGIDENTIFIER_H
 #define SIREMOL_SEGIDENTIFIER_H
 
-#include "SireID/identifier.h"
-
 #include "segid.h"
-#include "segname.h"
+
+#include <boost/shared_ptr.hpp>
 
 namespace SireMol
 {
 
-class SegIdentifier : public SireID::Identifier_T_<SegIdentifier,SegID>
+class SegIdx;
+
+class SegIdentifier : public SegID
 {
 public:
-    SegIdentifier() : SireID::Identifier_T_<SegIdentifier,SegID>()
-    {}
+    SegIdentifier();
+    SegIdentifier(const SegID &segid);
+    SegIdentifier(const SegIdentifier &other);
     
-    SegIdentifier(const SegID &segid) 
-            : SireID::Identifier_T_<SegIdentifier,SegID>(segid)
-    {}
+    ~SegIdentifier();
     
-    SegIdentifier(const SegIdentifier &other) 
-            : SireID::Identifier_T_<SegIdentifier,SegID>(other)
-    {}
-    
-    ~SegIdentifier()
-    {}
-    
-    SegName map(const MoleculeInfo &molinfo) const
+    static const char* typeName()
     {
-        this->assertNotNull();
-        return this->asA<SegID>().map(molinfo);
+        return QMetaType::typeName( qMetaTypeId<SegIdentifier>() );
     }
+    
+    const char* what() const
+    {
+        return SegIdentifier::typeName();
+    }
+    
+    SegIdentifier* clone() const
+    {
+        return new SegIdentifier(*this);
+    }
+    
+    bool isNull() const;
+    
+    uint hash() const;
+                
+    QString toString() const;
+    
+    const SegID& base() const;
+    
+    SegIdentifier& operator=(const SegIdentifier &other);
+    SegIdentifier& operator=(const SegID &other);
+    
+    bool operator==(const SireID::ID &other) const;
+    using SireID::ID::operator!=;
+   
+    bool operator==(const SegIdentifier &other) const;
+    bool operator!=(const SegIdentifier &other) const;
+    
+    bool operator==(const SegID &other) const;
+    bool operator!=(const SegID &other) const;
+    
+    QList<SegIdx> map(const MoleculeInfoData &molinfo) const;
+
+private:
+    /** Pointer to the SegID */
+    boost::shared_ptr<SegID> d;
 };
 
 }
-
-QDataStream& operator<<(QDataStream&, const SireMol::SegIdentifier&);
-QDataStream& operator>>(QDataStream&, SireMol::SegIdentifier&);
-
-XMLStream& operator<<(XMLStream&, const SireMol::SegIdentifier&);
-XMLStream& operator>>(XMLStream&, SireMol::SegIdentifier&);
-
-uint qHash(const SireMol::SegIdentifier &segid);
 
 Q_DECLARE_METATYPE(SireMol::SegIdentifier);
 

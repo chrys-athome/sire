@@ -29,101 +29,140 @@
 #include "residentifier.h"
 #include "moleculeinfodata.h"
 
-#include "specify.hpp"
-#include "atomsin.hpp"
-
-#include "SireStream/datastream.h"
-
 using namespace SireMol;
 using namespace SireID;
 
-static const RegisterMetaType<ResIdentifier> r_resid;
-
-///////
-/////// Implementation of ResName
-///////
-
-QList<ResIdx> ResName::map(const MoleculeInfoData &molinfo) const
-{
-    return molinfo.map(*this);
-}
-
-///////
-/////// Implementation of ResNum
-///////
-
-QList<ResIdx> ResNum::map(const MoleculeInfoData &molinfo) const
-{
-    return molinfo.map(*this);
-}
-
-///////
-/////// Implementation of ResIdentifier
-///////
-
 /** Null constructor */
-ResIdentifier::ResIdentifier() : Identifier_T_<ResIdentifier,ResID>()
+ResIdentifier::ResIdentifier() : ResID()
 {}
 
-/** Construct from the passed ID */
+/** Construct from the passed ResID */
 ResIdentifier::ResIdentifier(const ResID &resid)
-              : Identifier_T_<ResIdentifier,ResID>(resid)
-{}
-         
+              : ResID()
+{
+    if (resid.isA<ResIdentifier>())
+        d = resid.asA<ResIdentifier>().d;
+    else if (not resid.isNull())
+        d.reset( resid.clone() );
+}
+
 /** Copy constructor */
 ResIdentifier::ResIdentifier(const ResIdentifier &other)
-              : Identifier_T_<ResIdentifier,ResID>(other)
+              : ResID(other), d(other.d)
 {}
-  
-/** Destructor */  
+
+/** Destructor */
 ResIdentifier::~ResIdentifier()
 {}
 
-/** Return a specific matching residue */
-Specify<ResIdentifier> ResIdentifier::operator[](int i) const
+/** Is this selection null? */
+bool ResIdentifier::isNull() const
 {
-    return Specify<ResIdentifier>(*this, i);
+    return d.get() == 0;
 }
 
-/** Return a specific matching residue */
-Specify<ResIdentifier> ResIdentifier::operator()(int i) const
+/** Return a hash of this identifier */
+uint ResIdentifier::hash() const
 {
-    return this->operator[](i);
+    if (d.get() == 0)
+        return 0;
+    else
+        return d->hash();
+}
+            
+/** Return a string representatio of this ID */
+QString ResIdentifier::toString() const
+{
+    if (d.get() == 0)
+        return "null";
+    else
+        return d->toString();
 }
 
-/** Return a specific matching residue */
-Specify<ResIdentifier> ResIdentifier::operator()(int i, int j) const
+/** Return the base type of this ID */
+const ResID& ResIdentifier::base() const
 {
-    return Specify<ResIdentifier>(*this, i, j);
+    if (d.get() == 0)
+        return *this;
+    else
+        return *d;
 }
+
+/** Copy assignment operator */
+ResIdentifier& ResIdentifier::operator=(const ResIdentifier &other)
+{
+    d = other.d;
+    return *this;
+}
+
+/** Copy assignment operator */
+ResIdentifier& ResIdentifier::operator=(const ResID &other)
+{
+    if (other.isA<ResIdentifier>())
+        d = other.asA<ResIdentifier>().d;
+    else if (other.isNull())
+        d.reset();
+    else
+        d.reset(other.clone());
     
-/** Return the ID for the ith atom in the matching residue(s) */
-AtomsIn<ResIdentifier> ResIdentifier::atom(int i) const
-{
-    return AtomsIn<ResIdentifier>(*this, i);
+    return *this;
 }
 
-/** Return the IDs for all of the atoms in the matching residue(s) */
-AtomsIn<ResIdentifier> ResIdentifier::atoms() const
+/** Comparison operator */
+bool ResIdentifier::operator==(const SireID::ID &other) const
 {
-    return AtomsIn<ResIdentifier>(*this, 0, -1);
+    return SireID::ID::compare<ResIdentifier>(*this, other);
 }
 
-/** Return the specified range of atoms in the matching residue(s) */
-AtomsIn<ResIdentifier> ResIdentifier::atoms(int i, int j) const
+/** Comparison operator */
+bool ResIdentifier::operator==(const ResIdentifier &other) const
 {
-    return AtomsIn<ResIdentifier>(*this, i, j);
+    if (d.get() == 0 or other.d.get() == 0)
+        return d.get() == other.d.get();
+    else
+        return d == other.d or *d == *(other.d);
 }
-   
-/** Return the indicies of all of the residues that match this ID 
 
-    \throw SireMol::missing_residue
+/** Comparison operator */
+bool ResIdentifier::operator!=(const ResIdentifier &other) const
+{
+    if (d.get() == 0 or other.d.get() == 0)
+        return d.get() != other.d.get();
+    else
+        return d != other.d and *d != *(other.d);
+}
+
+/** Comparison operator */
+bool ResIdentifier::operator==(const ResID &other) const
+{
+    if (d.get() == 0)
+        return other.isNull();
+    else if (other.isA<ResIdentifier>())
+        return this->operator==(other.asA<ResIdentifier>());
+    else
+        return d->operator==(other);
+}
+
+/** Comparison operator */
+bool ResIdentifier::operator!=(const ResID &other) const
+{
+    if (d.get() == 0)
+        return not other.isNull();
+    else if (other.isA<ResIdentifier>())
+        return this->operator!=(other.asA<ResIdentifier>());
+    else
+        return d->operator!=(other);
+}
+
+/** Map this ID to the list of indicies of atoms that match this ID
+
+    \throw SireMol::missing_atom
     \throw SireError::invalid_index
 */
 QList<ResIdx> ResIdentifier::map(const MoleculeInfoData &molinfo) const
 {
-    if (this->isNull())
+    if (d.get() == 0)
         return molinfo.getResidues();
     else
-        return this->asA<ResID>().map(molinfo);
+        return d->map(molinfo);
 }

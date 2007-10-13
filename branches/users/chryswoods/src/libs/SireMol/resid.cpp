@@ -26,20 +26,62 @@
   *
 \*********************************************/
 
-#include "groupatomids.h"
-#include "atomidentifier.h"
+#include "resid.h"
 #include "residentifier.h"
-#include "chainidentifier.h"
-#include "segidentifier.h"
-#include "cgidentifier.h"
+
+#include "specify.hpp"
 
 using namespace SireMol;
+using namespace SireID;
 
-//////
-////// Explicitly instantiate the GroupAtomID classes
-//////
+/** Constructor */
+ResID::ResID() : ID()
+{}
 
-template class GroupAtomID<ResID,AtomID>;
-template class GroupAtomID<ChainID,AtomID>;
-template class GroupAtomID<SegID,AtomID>;
-template class GroupAtomID<CGID,AtomID>;
+/** Copy constructor */
+ResID::ResID(const ResID &other) : ID(other)
+{}
+
+/** Destructor */
+ResID::~ResID()
+{}
+  
+/** Return a specific residue that matches this ID */
+Specify<ResID> ResID::operator[](int i) const
+{
+    return Specify<ResID>(*this, i);
+}
+
+/** Return a specific residue that matches this ID */
+Specify<ResID> ResID::operator()(int i) const
+{
+    return this->operator[](i);
+}
+
+/** Return a range of residues that match this ID */
+Specify<ResID> ResID::operator()(int i, int j) const
+{
+    return Specify<ResID>(*this, i, j);
+}
+
+/** Return the atoms in the matching residues */
+AtomsIn<ResID> ResID::atoms() const
+{
+    return AtomsIn<ResID>(*this);
+}
+
+/** Return a specific atom in the matching residues */
+AtomsIn<ResID> ResID::atom(int i) const
+{
+    return AtomsIn<ResID>(*this, i);
+}
+
+/** Return a range of atoms in the matching residues */
+AtomsIn<ResID> ResID::atoms(int i, int j) const
+{
+    return AtomsIn<ResID>(*this, i, j);
+}
+
+//fully instantiate Specify<ResID> and AtomsIn<ResID>
+template class Specify<ResID>;
+template class AtomsIn<ResID>;

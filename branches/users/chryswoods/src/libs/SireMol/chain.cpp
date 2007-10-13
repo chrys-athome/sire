@@ -28,10 +28,17 @@
 
 #include "chain.h"
 
+#include "molecule.h"
+#include "residue.h"
+#include "atom.h"
+
 #include "editor.hpp"
 #include "mover.hpp"
 #include "selector.hpp"
 #include "evaluator.h"
+
+#include "chainresid.h"
+#include "groupatomids.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -64,7 +71,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, Chain &chain)
         
         sds >> chain.chainidx >> static_cast<MoleculeView&>(chain);
         
-        chain.selected_atoms = AtomSelection(chain.d->info());
+        chain.selected_atoms = AtomSelection(chain.data());
         chain.selected_atoms.select(chain.chainidx);
     }
     else
@@ -87,7 +94,7 @@ Chain::Chain() : MoleculeView(), chainidx( ChainIdx::null() )
 Chain::Chain(const MoleculeData &moldata, const ChainID &chainid)
       : MoleculeView(moldata), chainidx( moldata.info().chainIdx(chainid) )
 {
-    selected_atoms = AtomSelection(d->info());
+    selected_atoms = AtomSelection(moldata);
     selected_atoms.select(chainidx);
 }
 
@@ -140,12 +147,6 @@ ChainName Chain::name() const
 ChainIdx Chain::index() const
 {
     return chainidx;
-}
-
-/** Return the info object that describes this chain */
-ChainInfo Chain::info() const
-{
-    return ChainInfo( d->info(), chainidx );
 }
 
 /** Return an object that can move a copy of this chain */
@@ -277,15 +278,15 @@ Atom Chain::atom(const AtomID &atomid) const
     \throw SireMol::missing_atom
     \throw SireError::invalid_index
 */
-AtomsInMol Chain::atoms(const AtomID &atomid) const
+Selector<Atom> Chain::atoms(const AtomID &atomid) const
 {
-    return AtomsInMol( this->data(), chainidx + atomid );
+    return Selector<Atom>( this->data(), chainidx + atomid );
 }
 
 /** Return all of the atoms in this chain */
-AtomsInMol Chain::atoms() const
+Selector<Atom> Chain::atoms() const
 {
-    return AtomsInMol( this->data(), chainidx.atoms() );
+    return Selector<Atom>( this->data(), chainidx.atoms() );
 }
 
 /** Return the atom in this chain that also has ID 'atomid'
@@ -304,13 +305,13 @@ Atom Chain::select(const AtomID &atomid) const
     \throw SireMol::missing_atom
     \throw SireError::invalid_index
 */
-AtomsInMol Chain::selectAll(const AtomID &atomid) const
+Selector<Atom> Chain::selectAll(const AtomID &atomid) const
 {
     return this->atoms(atomid);
 }
 
 /** Return all of the atoms in this chain */
-AtomsInMol Chain::selectAllAtoms() const
+Selector<Atom> Chain::selectAllAtoms() const
 {
     return this->atoms();
 }
@@ -331,15 +332,15 @@ Residue Chain::residue(const ResID &resid) const
     \throw SireMol::missing_residue
     \throw SireError::invalid_index
 */
-ResInMol Chain::residues(const ResID &resid) const
+Selector<Residue> Chain::residues(const ResID &resid) const
 {
-    return ResInMol( this->data(), chainidx + resid );
+    return Selector<Residue>( this->data(), chainidx + resid );
 }
 
 /** Return all of the residues in this chain */
-ResInMol Chain::residues() const
+Selector<Residue> Chain::residues() const
 {
-    return ResInMol( this->data(), chainidx.residues() );
+    return Selector<Residue>( this->data(), chainidx.residues() );
 }
 
 /** Return the residue in this chain that also has ID 'resid'
@@ -358,13 +359,18 @@ Residue Chain::select(const ResID &resid) const
     \throw SireMol::missing_residue
     \throw SireError::invalid_index
 */
-ResInMol Chain::selectAll(const ResID &resid) const
+Selector<Residue> Chain::selectAll(const ResID &resid) const
 {
     return this->residues(resid);
 }
 
 /** Return all of the residues in this chain */
-ResInMol Chain::selectAllResidues() const
+Selector<Residue> Chain::selectAllResidues() const
 {
     return this->residues();
 }
+
+/////// explicitly instantiate chain templates
+template class Editor<Chain>;
+template class Selector<Chain>;
+template class Mover<Chain>;

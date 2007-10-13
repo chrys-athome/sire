@@ -31,6 +31,7 @@
 
 #include "moleculeview.h"
 #include "segproperty.hpp"
+#include "atomselection.h"
 
 SIRE_BEGIN_HEADER
 
@@ -44,6 +45,24 @@ QDataStream& operator>>(QDataStream&, SireMol::Segment&);
 
 namespace SireMol
 {
+
+class SegID;
+class SegIdx;
+class SegName;
+
+class Evaluator;
+
+template<class T>
+class Editor;
+
+template<class T>
+class Mover;
+
+template<class T>
+class Selector;
+
+class Atom;
+class Molecule;
 
 /** This is a view of a single segment within a molecule
 
@@ -92,7 +111,7 @@ public:
     
     void update(const MoleculeData &moldata) const;
     
-    SegName name() const;
+    const SegName& name() const;
     SegIdx index() const;
     
     bool hasProperty(const PropertyName &key) const;
@@ -123,11 +142,11 @@ public:
     
     const QList<AtomIdx>& atomIdxs() const;
     
-    bool contains(SegIdx segidx) const;
-    bool contains(const SegID &segid) const;
+    bool contains(AtomIdx atomidx) const;
+    bool contains(const AtomID &atomid) const;
     
-    bool containsAll(const SegID &segid) const;
-    bool containsSome(const SegID &segid) const;
+    bool containsAll(const AtomID &atomid) const;
+    bool containsSome(const AtomID &atomid) const;
     
     Molecule molecule() const;
     
@@ -250,9 +269,114 @@ void Segment::setMetadata(const QString &key, const QString &metakey,
                                                         key, metakey, value);
 }
 
+namespace detail
+{
+
+void assertSameSize(Segment*, int nres, int nprops);
+    
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+QList<V> get_property(Segment*, const MoleculeData &moldata,
+                      const QList<Segment::Index> &idxs,
+                      const PropertyName &key)
+{
+    return get_property<SegProperty<V>,Segment::Index,V>(moldata,idxs,key);
+}
+
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+QList<V> get_metadata(Segment*, const MoleculeData &moldata,
+                      const QList<Segment::Index> &idxs,
+                      const PropertyName &metakey)
+{
+    return get_metadata<SegProperty<V>,Segment::Index,V>(moldata,idxs,metakey);
+}
+
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+QList<V> get_metadata(Segment*, const MoleculeData &moldata,
+                      const QList<Segment::Index> &idxs,
+                      const PropertyName &key,
+                      const PropertyName &metakey)
+{
+    return get_metadata<SegProperty<V>,Segment::Index,V>(moldata,idxs,key,metakey);
+}
+
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+void set_property(Segment *ptr, MoleculeData &moldata,
+                  const QList<Segment::Index> &idxs,
+                  const QString &key,
+                  const QList<V> &values)
+{
+    assertSameSize(ptr, idxs.count(), values.count());
+    set_property<SegProperty<V>,Segment::Index,V>(moldata,idxs,key,values);
+}
+
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+void set_metadata(Segment *ptr, MoleculeData &moldata,
+                  const QList<Segment::Index> &idxs,
+                  const QString &metakey,
+                  const QList<V> &values)
+{
+    assertSameSize(ptr, idxs.count(), values.count());
+    set_metadata<SegProperty<V>,Segment::Index,V>(moldata,idxs,metakey,values);
+}
+
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+void set_metadata(Segment *ptr, MoleculeData &moldata,
+                  const QList<Segment::Index> &idxs,
+                  const QString &key, const QString &metakey,
+                  const QList<V> &values)
+{
+    assertSameSize(ptr, idxs.count(), values.count());
+    
+    set_metadata<SegProperty<V>,Segment::Index,V>(moldata,idxs,key,metakey,values);
+}
+
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+void set_property(Segment*, MoleculeData &moldata,
+                  const QList<Segment::Index> &idxs,
+                  const QString &key,
+                  const V &value)
+{
+    set_property<SegProperty<V>,Segment::Index,V>(moldata,idxs,key,value);
+}
+
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+void set_metadata(Segment*, MoleculeData &moldata,
+                  const QList<Segment::Index> &idxs,
+                  const QString &metakey,
+                  const V &value)
+{
+    set_metadata<SegProperty<V>,Segment::Index,V>(moldata,idxs,metakey,value);
+}
+
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+void set_metadata(Segment*, MoleculeData &moldata,
+                  const QList<Segment::Index> &idxs,
+                  const QString &key, const QString &metakey,
+                  const V &value)
+{
+    set_metadata<SegProperty<V>,Segment::Index,V>(moldata,idxs,key,metakey,value);
+}
+
+} //end of namespace detail
+
 }
 
 Q_DECLARE_METATYPE(SireMol::Segment);
+Q_DECLARE_METATYPE(SireMol::Editor<SireMol::Segment>);
+Q_DECLARE_METATYPE(SireMol::Mover<SireMol::Segment>);
+Q_DECLARE_METATYPE(SireMol::Selector<SireMol::Segment>);
+
+Q_DECLARE_METATYPE(SireMol::Editor< SireMol::Selector<SireMol::Segment> >);
+Q_DECLARE_METATYPE(SireMol::Mover< SireMol::Selector<SireMol::Segment> >);
 
 SIRE_END_HEADER
 

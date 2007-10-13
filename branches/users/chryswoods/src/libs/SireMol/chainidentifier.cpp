@@ -26,43 +26,43 @@
   *
 \*********************************************/
 
-#include "segidentifier.h"
+#include "chainidentifier.h"
 #include "moleculeinfodata.h"
 
 using namespace SireMol;
 using namespace SireID;
 
 /** Null constructor */
-SegIdentifier::SegIdentifier() : SegID()
+ChainIdentifier::ChainIdentifier() : ChainID()
 {}
 
-/** Construct from the passed SegID */
-SegIdentifier::SegIdentifier(const SegID &segid)
-              : SegID()
+/** Construct from the passed ChainID */
+ChainIdentifier::ChainIdentifier(const ChainID &chainid)
+               : ChainID()
 {
-    if (segid.isA<SegIdentifier>())
-        d = segid.asA<SegIdentifier>().d;
-    else if (not segid.isNull())
-        d.reset( segid.clone() );
+    if (chainid.isA<ChainIdentifier>())
+        d = chainid.asA<ChainIdentifier>().d;
+    else if (not chainid.isNull())
+        d.reset( chainid.clone() );
 }
 
 /** Copy constructor */
-SegIdentifier::SegIdentifier(const SegIdentifier &other)
-              : SegID(other), d(other.d)
+ChainIdentifier::ChainIdentifier(const ChainIdentifier &other)
+               : ChainID(other), d(other.d)
 {}
 
 /** Destructor */
-SegIdentifier::~SegIdentifier()
+ChainIdentifier::~ChainIdentifier()
 {}
 
 /** Is this selection null? */
-bool SegIdentifier::isNull() const
+bool ChainIdentifier::isNull() const
 {
     return d.get() == 0;
 }
 
 /** Return a hash of this identifier */
-uint SegIdentifier::hash() const
+uint ChainIdentifier::hash() const
 {
     if (d.get() == 0)
         return 0;
@@ -71,7 +71,7 @@ uint SegIdentifier::hash() const
 }
             
 /** Return a string representatio of this ID */
-QString SegIdentifier::toString() const
+QString ChainIdentifier::toString() const
 {
     if (d.get() == 0)
         return "null";
@@ -80,7 +80,7 @@ QString SegIdentifier::toString() const
 }
 
 /** Return the base type of this ID */
-const SegID& SegIdentifier::base() const
+const ChainID& ChainIdentifier::base() const
 {
     if (d.get() == 0)
         return *this;
@@ -89,17 +89,17 @@ const SegID& SegIdentifier::base() const
 }
 
 /** Copy assignment operator */
-SegIdentifier& SegIdentifier::operator=(const SegIdentifier &other)
+ChainIdentifier& ChainIdentifier::operator=(const ChainIdentifier &other)
 {
     d = other.d;
     return *this;
 }
 
 /** Copy assignment operator */
-SegIdentifier& SegIdentifier::operator=(const SegID &other)
+ChainIdentifier& ChainIdentifier::operator=(const ChainID &other)
 {
-    if (other.isA<SegIdentifier>())
-        d = other.asA<SegIdentifier>().d;
+    if (other.isA<ChainIdentifier>())
+        d = other.asA<ChainIdentifier>().d;
     else if (other.isNull())
         d.reset();
     else
@@ -109,13 +109,13 @@ SegIdentifier& SegIdentifier::operator=(const SegID &other)
 }
 
 /** Comparison operator */
-bool SegIdentifier::operator==(const SireID::ID &other) const
+bool ChainIdentifier::operator==(const SireID::ID &other) const
 {
-    return SireID::ID::compare<SegIdentifier>(*this, other);
+    return SireID::ID::compare<ChainIdentifier>(*this, other);
 }
 
 /** Comparison operator */
-bool SegIdentifier::operator==(const SegIdentifier &other) const
+bool ChainIdentifier::operator==(const ChainIdentifier &other) const
 {
     if (d.get() == 0 or other.d.get() == 0)
         return d.get() == other.d.get();
@@ -124,7 +124,7 @@ bool SegIdentifier::operator==(const SegIdentifier &other) const
 }
 
 /** Comparison operator */
-bool SegIdentifier::operator!=(const SegIdentifier &other) const
+bool ChainIdentifier::operator!=(const ChainIdentifier &other) const
 {
     if (d.get() == 0 or other.d.get() == 0)
         return d.get() != other.d.get();
@@ -133,23 +133,23 @@ bool SegIdentifier::operator!=(const SegIdentifier &other) const
 }
 
 /** Comparison operator */
-bool SegIdentifier::operator==(const SegID &other) const
+bool ChainIdentifier::operator==(const ChainID &other) const
 {
     if (d.get() == 0)
         return other.isNull();
-    else if (other.isA<SegIdentifier>())
-        return this->operator==(other.asA<SegIdentifier>());
+    else if (other.isA<ChainIdentifier>())
+        return this->operator==(other.asA<ChainIdentifier>());
     else
         return d->operator==(other);
 }
 
 /** Comparison operator */
-bool SegIdentifier::operator!=(const SegID &other) const
+bool ChainIdentifier::operator!=(const ChainID &other) const
 {
     if (d.get() == 0)
         return not other.isNull();
-    else if (other.isA<SegIdentifier>())
-        return this->operator!=(other.asA<SegIdentifier>());
+    else if (other.isA<ChainIdentifier>())
+        return this->operator!=(other.asA<ChainIdentifier>());
     else
         return d->operator!=(other);
 }
@@ -159,10 +159,11 @@ bool SegIdentifier::operator!=(const SegID &other) const
     \throw SireMol::missing_atom
     \throw SireError::invalid_index
 */
-QList<SegIdx> SegIdentifier::map(const MoleculeInfoData &molinfo) const
+QList<ChainIdx> ChainIdentifier::map(const MoleculeInfoData &molinfo) const
 {
     if (d.get() == 0)
-        return molinfo.getSegments();
+        return molinfo.getChains();
     else
         return d->map(molinfo);
 }
+

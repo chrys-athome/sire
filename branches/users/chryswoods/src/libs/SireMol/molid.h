@@ -36,6 +36,9 @@ SIRE_BEGIN_HEADER
 namespace SireMol
 {
 
+class MolIdx;
+class MolIdentifier;
+
 /** This is the base class of all identifiers that are used 
     to identify a Molecule
 
@@ -44,14 +47,14 @@ namespace SireMol
 class SIREMOL_EXPORT MolID : public SireID::ID
 {
 public:
-    MolID() : SireID::ID()
-    {}
+    typedef MolIdx Index;
+    typedef MolIdentifier Identifier;
+
+    MolID();
     
-    MolID(const MolID &other) : SireID::ID(other)
-    {}
+    MolID(const MolID &other);
     
-    ~MolID()
-    {}
+    virtual ~MolID();
 
     static const char* typeName()
     {

@@ -51,19 +51,17 @@ class AtomIdentifier;
 class SIREMOL_EXPORT AtomID : public SireID::ID
 {
 public:
-    /** Define the index type of this ID */
     typedef AtomIdx Index;
-    
-    /** Define the container (Identifier) type for this ID */
     typedef AtomIdentifier Identifier;
 
     AtomID();
     AtomID(const AtomID &other);
-    ~AtomID();
     
-    Specify<AtomIdentifier> operator[](int i) const;
-    Specify<AtomIdentifier> operator()(int i) const;
-    Specify<AtomIdentifier> operator()(int i, int j) const;
+    virtual ~AtomID();
+    
+    Specify<AtomID> operator[](int i) const;
+    Specify<AtomID> operator()(int i) const;
+    Specify<AtomID> operator()(int i, int j) const;
 
     static const char* typeName()
     {
@@ -78,6 +76,8 @@ public:
 };
 
 }
+
+Q_DECLARE_METATYPE( SireMol::Specify<SireMol::AtomID> );
 
 SIRE_END_HEADER
 

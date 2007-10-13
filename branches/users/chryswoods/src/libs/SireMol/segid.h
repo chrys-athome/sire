@@ -36,8 +36,15 @@ SIRE_BEGIN_HEADER
 namespace SireMol
 {
 
+template<class T>
+class Specify;
+
+template<class T>
+class AtomsIn;
+
 class MoleculeInfoData;
 class SegIdx;
+class SegIdentifier;
 
 /** This is the base class of all identifiers that are used 
     to identify a Segment within a Molecule
@@ -48,14 +55,27 @@ class SIREMOL_EXPORT SegID : public SireID::ID
 {
 
 public:
-    SegID() : SireID::ID()
-    {}
+    typedef SegIdx Index;
+    typedef SegIdentifier Identifier;
 
-    SegID(const SegID &other) : SireID::ID(other)
-    {}
+    SegID();
 
-    ~SegID()
-    {}
+    SegID(const SegID &other);
+
+    virtual ~SegID();
+
+    Specify<SegID> operator[](int i) const;
+    Specify<SegID> operator()(int i) const;
+    Specify<SegID> operator()(int i, int j) const;
+
+    AtomsIn<SegID> atoms() const;
+    AtomsIn<SegID> atom(int i) const;
+    AtomsIn<SegID> atoms(int i, int j) const;
+
+    static const char* typeName()
+    {
+        return "SireMol::SegID";
+    }
 
     virtual SegID* clone() const=0;
 
@@ -65,6 +85,9 @@ public:
 };
 
 }
+
+Q_DECLARE_METATYPE( SireMol::Specify<SireMol::SegID> );
+Q_DECLARE_METATYPE( SireMol::AtomsIn<SireMol::SegID> );
 
 SIRE_END_HEADER
 

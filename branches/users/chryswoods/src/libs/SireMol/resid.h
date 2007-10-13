@@ -36,6 +36,12 @@ SIRE_BEGIN_HEADER
 namespace SireMol
 {
 
+template<class T>
+class Specify;
+
+template<class T>
+class AtomsIn;
+
 class ResIdx;
 class ResIdentifier;
 class MoleculeInfoData;
@@ -49,21 +55,27 @@ class SIREMOL_EXPORT ResID : public SireID::ID
 {
 
 public:
-
-    /** The type used to index a Residue */
     typedef ResIdx Index;
-    
-    /** The generic type used to identify a residue */
     typedef ResIdentifier Identifier;
 
-    ResID() : SireID::ID()
-    {}
+    ResID();
 
-    ResID(const ResID &other) : SireID::ID(other)
-    {}
+    ResID(const ResID &other);
 
-    ~ResID()
-    {}
+    virtual ~ResID();
+    
+    Specify<ResID> operator[](int i) const;
+    Specify<ResID> operator()(int i) const;
+    Specify<ResID> operator()(int i, int j) const;
+
+    AtomsIn<ResID> atoms() const;
+    AtomsIn<ResID> atom(int i) const;
+    AtomsIn<ResID> atoms(int i, int j) const;
+    
+    static const char* typeName()
+    {
+        return "SireMol::ResID";
+    }
     
     virtual ResID* clone() const=0;
 
@@ -73,6 +85,9 @@ public:
 };
 
 }
+
+Q_DECLARE_METATYPE( SireMol::Specify<SireMol::ResID> );
+Q_DECLARE_METATYPE( SireMol::AtomsIn<SireMol::ResID> );
 
 SIRE_END_HEADER
 

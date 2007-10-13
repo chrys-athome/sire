@@ -265,12 +265,13 @@ namespace detail
     
     @author Christopher Woods
 */
-static void assertSameSize(Atom*, int nats, int nprops);
+void assertSameSize(Atom*, int nats, int nprops);
 
 template<class V>
-static QList<V> get_property(Atom*, const MoleculeData &moldata,
-                             const QList<Atom::Index> &idxs,
-                             const PropertyName &key)
+SIRE_OUTOFLINE_TEMPLATE
+QList<V> get_property(Atom*, const MoleculeData &moldata,
+                      const QList<Atom::Index> &idxs,
+                      const PropertyName &key)
 {
     QList<V> props;
         
@@ -289,9 +290,10 @@ static QList<V> get_property(Atom*, const MoleculeData &moldata,
 }
     
 template<class V>
-static QList<V> get_metadata(Atom*, const MoleculeData &moldata,
-                             const QList<Atom::Index> &idxs,
-                             const PropertyName &metakey)
+SIRE_OUTOFLINE_TEMPLATE
+QList<V> get_metadata(Atom*, const MoleculeData &moldata,
+                      const QList<Atom::Index> &idxs,
+                      const PropertyName &metakey)
 {
     QList<V> mdata;
     
@@ -310,10 +312,11 @@ static QList<V> get_metadata(Atom*, const MoleculeData &moldata,
 }
 
 template<class V>
-static QList<V> get_metadata(Atom*, const MoleculeData &moldata,
-                             const QList<Atom::Index> &idxs,
-                             const PropertyName &key,
-                             const PropertyName &metakey)
+SIRE_OUTOFLINE_TEMPLATE
+QList<V> get_metadata(Atom*, const MoleculeData &moldata,
+                      const QList<Atom::Index> &idxs,
+                      const PropertyName &key,
+                      const PropertyName &metakey)
 {
     QList<V> mdata;
     
@@ -332,10 +335,11 @@ static QList<V> get_metadata(Atom*, const MoleculeData &moldata,
 }
 
 template<class V>
-static void set_property(Atom *ptr, MoleculeData &moldata,
-                         const QList<Atom::Index> &idxs,
-                         const QString &key,
-                         const QList<V> &values)
+SIRE_OUTOFLINE_TEMPLATE
+void set_property(Atom *ptr, MoleculeData &moldata,
+                  const QList<Atom::Index> &idxs,
+                  const QString &key,
+                  const QList<V> &values)
 {
     assertSameSize(ptr, idxs.count(), values.count());
     
@@ -357,10 +361,11 @@ static void set_property(Atom *ptr, MoleculeData &moldata,
 }
 
 template<class V>
-static void set_metadata(Atom *ptr, MoleculeData &moldata,
-                         const QList<Atom::Index> &idxs,
-                         const QString &metakey,
-                         const QList<V> &values)
+SIRE_OUTOFLINE_TEMPLATE
+void set_metadata(Atom *ptr, MoleculeData &moldata,
+                  const QList<Atom::Index> &idxs,
+                  const QString &metakey,
+                  const QList<V> &values)
 {
     assertSameSize(ptr, idxs.count(), values.count());
     
@@ -382,10 +387,11 @@ static void set_metadata(Atom *ptr, MoleculeData &moldata,
 }
 
 template<class V>
-static void set_metadata(Atom *ptr, MoleculeData &moldata,
-                         const QList<Atom::Index> &idxs,
-                         const QString &key, const QString &metakey,
-                         const QList<V> &values)
+SIRE_OUTOFLINE_TEMPLATE
+void set_metadata(Atom *ptr, MoleculeData &moldata,
+                  const QList<Atom::Index> &idxs,
+                  const QString &key, const QString &metakey,
+                  const QList<V> &values)
 {
     assertSameSize(ptr, idxs.count(), values.count());
     
@@ -407,10 +413,11 @@ static void set_metadata(Atom *ptr, MoleculeData &moldata,
 }
 
 template<class V>
-static void set_property(Atom*, MoleculeData &moldata,
-                         const QList<Atom::Index> &idxs,
-                         const QString &key,
-                         const V &value)
+SIRE_OUTOFLINE_TEMPLATE
+void set_property(Atom*, MoleculeData &moldata,
+                  const QList<Atom::Index> &idxs,
+                  const QString &key,
+                  const V &value)
 {
     const MoleculeInfoData &molinfo = moldata.info();
     
@@ -430,10 +437,11 @@ static void set_property(Atom*, MoleculeData &moldata,
 }
 
 template<class V>
-static void set_metadata(Atom*, MoleculeData &moldata,
-                         const QList<Atom::Index> &idxs,
-                         const QString &metakey,
-                         const V &value)
+SIRE_OUTOFLINE_TEMPLATE
+void set_metadata(Atom*, MoleculeData &moldata,
+                  const QList<Atom::Index> &idxs,
+                  const QString &metakey,
+                  const V &value)
 {
     const MoleculeInfoData &molinfo = moldata.info();
     
@@ -453,10 +461,11 @@ static void set_metadata(Atom*, MoleculeData &moldata,
 }
 
 template<class V>
-static void set_metadata(Atom*, MoleculeData &moldata,
-                         const QList<Atom::Index> &idxs,
-                         const QString &key, const QString &metakey,
-                         const V &value)
+SIRE_OUTOFLINE_TEMPLATE
+void set_metadata(Atom*, MoleculeData &moldata,
+                  const QList<Atom::Index> &idxs,
+                  const QString &key, const QString &metakey,
+                  const V &value)
 {
     const MoleculeInfoData &molinfo = moldata.info();
     

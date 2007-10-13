@@ -31,6 +31,7 @@
 
 #include "moleculeview.h"
 #include "chainproperty.hpp"
+#include "atomselection.h"
 
 SIRE_BEGIN_HEADER
 
@@ -45,10 +46,28 @@ QDataStream& operator>>(QDataStream&, SireMol::Chain&);
 namespace SireMol
 {
 
-/**
-This class represents a Chain in a Molecule.
+class ChainID;
+class ChainIdx;
+class ChainName;
 
-@author Christopher Woods
+class Evaluator;
+
+template<class T>
+class Editor;
+
+template<class T>
+class Mover;
+
+template<class T>
+class Selector;
+
+class Atom;
+class Residue;
+class Molecule;
+
+/** This class represents a Chain in a Molecule.
+
+    @author Christopher Woods
 */
 class SIREMOL_EXPORT Chain : public MoleculeView
 {
@@ -271,9 +290,111 @@ void Chain::setMetadata(const QString &key, const QString &metakey,
                                                         key, metakey, value);
 }
 
+namespace detail
+{
+
+void assertSameSize(Chain*, int nres, int nprops);
+    
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+QList<V> get_property(Chain*, const MoleculeData &moldata,
+                      const QList<Chain::Index> &idxs,
+                      const PropertyName &key)
+{
+    return get_property<ChainProperty<V>,Chain::Index,V>(moldata,idxs,key);
 }
 
-Q_DECLARE_METATYPE(SireMol::Chain)
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+QList<V> get_metadata(Chain*, const MoleculeData &moldata,
+                      const QList<Chain::Index> &idxs,
+                      const PropertyName &metakey)
+{
+    return get_metadata<ChainProperty<V>,Chain::Index,V>(moldata,idxs,metakey);
+}
+
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+QList<V> get_metadata(Chain*, const MoleculeData &moldata,
+                      const QList<Chain::Index> &idxs,
+                      const PropertyName &key,
+                      const PropertyName &metakey)
+{
+    return get_metadata<ChainProperty<V>,Chain::Index,V>(moldata,idxs,key,metakey);
+}
+
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+void set_property(Chain *ptr, MoleculeData &moldata,
+                  const QList<Chain::Index> &idxs,
+                  const QString &key,
+                  const QList<V> &values)
+{
+    assertSameSize(ptr, idxs.count(), values.count());
+    set_property<ChainProperty<V>,Chain::Index,V>(moldata,idxs,key,values);
+}
+
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+void set_metadata(Chain *ptr, MoleculeData &moldata,
+                  const QList<Chain::Index> &idxs,
+                  const QString &metakey,
+                  const QList<V> &values)
+{
+    assertSameSize(ptr, idxs.count(), values.count());
+    set_metadata<ChainProperty<V>,Chain::Index,V>(moldata,idxs,metakey,values);
+}
+
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+void set_metadata(Chain *ptr, MoleculeData &moldata,
+                  const QList<Chain::Index> &idxs,
+                  const QString &key, const QString &metakey,
+                  const QList<V> &values)
+{
+    assertSameSize(ptr, idxs.count(), values.count());
+    
+    set_metadata<ChainProperty<V>,Chain::Index,V>(moldata,idxs,key,metakey,values);
+}
+
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+void set_property(Chain*, MoleculeData &moldata,
+                  const QList<Chain::Index> &idxs,
+                  const QString &key,
+                  const V &value)
+{
+    set_property<ChainProperty<V>,Chain::Index,V>(moldata,idxs,key,value);
+}
+
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+void set_metadata(Chain*, MoleculeData &moldata,
+                  const QList<Chain::Index> &idxs,
+                  const QString &metakey,
+                  const V &value)
+{
+    set_metadata<ChainProperty<V>,Chain::Index,V>(moldata,idxs,metakey,value);
+}
+
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+void set_metadata(Chain*, MoleculeData &moldata,
+                  const QList<Chain::Index> &idxs,
+                  const QString &key, const QString &metakey,
+                  const V &value)
+{
+    set_metadata<ChainProperty<V>,Chain::Index,V>(moldata,idxs,key,metakey,value);
+}
+
+} //end of namespace detail
+
+}
+
+Q_DECLARE_METATYPE(SireMol::Chain);
+Q_DECLARE_METATYPE(SireMol::Editor<SireMol::Chain>);
+Q_DECLARE_METATYPE(SireMol::Mover<SireMol::Chain>);
+Q_DECLARE_METATYPE(SireMol::Selector<SireMol::Chain>);
 
 SIRE_END_HEADER
 

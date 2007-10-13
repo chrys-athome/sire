@@ -36,7 +36,14 @@ SIRE_BEGIN_HEADER
 namespace SireMol
 {
 
+template<class T>
+class Specify;
+
+template<class T>
+class AtomsIn;
+
 class CGIdx;
+class CGIdentifier;
 class MoleculeInfoData;
 
 /** This is the base class of all identifiers that are used 
@@ -48,15 +55,27 @@ class SIREMOL_EXPORT CGID : public SireID::ID
 {
 
 public:
-    CGID() : SireID::ID()
-    {}
+    typedef CGIdx Index;
+    typedef CGIdentifier Identifier;
 
-    CGID(const CGID &other) : SireID::ID(other)
-    {}
+    CGID();
+    CGID(const CGID &other);
 
-    ~CGID()
-    {}
+    virtual ~CGID();
 
+    Specify<CGID> operator[](int i) const;
+    Specify<CGID> operator()(int i) const;
+    Specify<CGID> operator()(int i, int j) const;
+    
+    AtomsIn<CGID> atoms() const;
+    AtomsIn<CGID> atom(int i) const;
+    AtomsIn<CGID> atoms(int i, int j) const;
+    
+    static const char* typeName()
+    {
+        return "SireMol::CGID";
+    }
+    
     virtual CGID* clone() const=0;
 
     /** Map this ID back to the indicies of the CutGroups
@@ -65,6 +84,9 @@ public:
 };
 
 }
+
+Q_DECLARE_METATYPE( SireMol::Specify<SireMol::CGID> );
+Q_DECLARE_METATYPE( SireMol::AtomsIn<SireMol::CGID> );
 
 SIRE_END_HEADER
 

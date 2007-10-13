@@ -27,60 +27,142 @@
 \*********************************************/
 
 #include "cgidentifier.h"
-#include "cgidx.h"
 #include "moleculeinfodata.h"
-
-#include "SireStream/datastream.h"
 
 using namespace SireMol;
 using namespace SireID;
 
-////////
-//////// Implementation of CGName
-////////
+/** Null constructor */
+CGIdentifier::CGIdentifier() : CGID()
+{}
 
-QList<CGIdx> CGName::map(const MoleculeInfoData &molinfo) const
+/** Construct from the passed CGID */
+CGIdentifier::CGIdentifier(const CGID &cgid)
+             : CGID()
 {
-    return molinfo.map(*this);
+    if (cgid.isA<CGIdentifier>())
+        d = cgid.asA<CGIdentifier>().d;
+    else if (not cgid.isNull())
+        d.reset( cgid.clone() );
 }
 
-////////
-//////// Implementation of CGAtomIdx
-////////
+/** Copy constructor */
+CGIdentifier::CGIdentifier(const CGIdentifier &other)
+             : CGID(other), d(other.d)
+{}
 
-/** Map this CGAtomIdx back to the index of the atom in the molecule 
+/** Destructor */
+CGIdentifier::~CGIdentifier()
+{}
+
+/** Is this selection null? */
+bool CGIdentifier::isNull() const
+{
+    return d.get() == 0;
+}
+
+/** Return a hash of this identifier */
+uint CGIdentifier::hash() const
+{
+    if (d.get() == 0)
+        return 0;
+    else
+        return d->hash();
+}
+            
+/** Return a string representatio of this ID */
+QString CGIdentifier::toString() const
+{
+    if (d.get() == 0)
+        return "null";
+    else
+        return d->toString();
+}
+
+/** Return the base type of this ID */
+const CGID& CGIdentifier::base() const
+{
+    if (d.get() == 0)
+        return *this;
+    else
+        return *d;
+}
+
+/** Copy assignment operator */
+CGIdentifier& CGIdentifier::operator=(const CGIdentifier &other)
+{
+    d = other.d;
+    return *this;
+}
+
+/** Copy assignment operator */
+CGIdentifier& CGIdentifier::operator=(const CGID &other)
+{
+    if (other.isA<CGIdentifier>())
+        d = other.asA<CGIdentifier>().d;
+    else if (other.isNull())
+        d.reset();
+    else
+        d.reset(other.clone());
     
+    return *this;
+}
+
+/** Comparison operator */
+bool CGIdentifier::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare<CGIdentifier>(*this, other);
+}
+
+/** Comparison operator */
+bool CGIdentifier::operator==(const CGIdentifier &other) const
+{
+    if (d.get() == 0 or other.d.get() == 0)
+        return d.get() == other.d.get();
+    else
+        return d == other.d or *d == *(other.d);
+}
+
+/** Comparison operator */
+bool CGIdentifier::operator!=(const CGIdentifier &other) const
+{
+    if (d.get() == 0 or other.d.get() == 0)
+        return d.get() != other.d.get();
+    else
+        return d != other.d and *d != *(other.d);
+}
+
+/** Comparison operator */
+bool CGIdentifier::operator==(const CGID &other) const
+{
+    if (d.get() == 0)
+        return other.isNull();
+    else if (other.isA<CGIdentifier>())
+        return this->operator==(other.asA<CGIdentifier>());
+    else
+        return d->operator==(other);
+}
+
+/** Comparison operator */
+bool CGIdentifier::operator!=(const CGID &other) const
+{
+    if (d.get() == 0)
+        return not other.isNull();
+    else if (other.isA<CGIdentifier>())
+        return this->operator!=(other.asA<CGIdentifier>());
+    else
+        return d->operator!=(other);
+}
+
+/** Map this ID to the list of indicies of atoms that match this ID
+
+    \throw SireMol::missing_atom
     \throw SireError::invalid_index
 */
-QList<AtomIdx> CGAtomIdx::map(const MoleculeInfoData &molinfo) const
+QList<CGIdx> CGIdentifier::map(const MoleculeInfoData &molinfo) const
 {
-    QList<AtomIdx> atomidxs;
-    atomidxs.append( molinfo.atomIdx(*this) );
-    
-    return atomidxs;
+    if (d.get() == 0)
+        return molinfo.getCutGroups();
+    else
+        return d->map(molinfo);
 }
-
-////////
-//////// Implementation of CGIdentifier
-////////
-
-static const RegisterMetaType<CGIdentifier> r_cgid;
-
-/** Serialise to a binary datastream */
-QDataStream SIREID_EXPORT &operator<<(QDataStream &ds, const CGIdentifier &cgid)
-{
-    return cgid.save(ds, r_cgid);
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIREID_EXPORT &operator>>(QDataStream &ds, CGIdentifier &cgid)
-{
-    return cgid.load(ds, r_cgid);
-}
-
-/** Return the hash of this ID */
-uint SIREID_EXPORT qHash(const CGIdentifier &cgid)
-{
-    return cgid.hash();
-}
-

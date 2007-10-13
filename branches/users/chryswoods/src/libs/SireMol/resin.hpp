@@ -26,8 +26,8 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_ATOMSIN_HPP
-#define SIREMOL_ATOMSIN_HPP
+#ifndef SIREMOL_RESIN_HPP
+#define SIREMOL_RESIN_HPP
 
 #include "SireID/index.h"
 
@@ -38,48 +38,48 @@ namespace SireMol
 
 class MoleculeInfoData;
 
-/** This helper class is used to provide the '.atoms()' functionality
-    of the group ID classes. This allows the class to an atom, or
-    range of atoms by index from the group that has been identified.
+/** This helper class is used to provide the '.residues()' functionality
+    of the group ID classes. This allows the class to a residue, or
+    range of residues by index from the group that has been identified.
     
     @author Christopher Woods
 */
 template<class GROUP>
-class AtomsIn : public AtomID
+class ResIn : public ResID
 {
 
 public:
-    AtomsIn();
+    ResIn();
     
-    AtomsIn(const GROUP &id);
-    AtomsIn(const GROUP &id, qint32 i);
-    AtomsIn(const GROUP &id, qint32 i, qint32 j);
+    ResIn(const GROUP &id);
+    ResIn(const GROUP &id, qint32 i);
+    ResIn(const GROUP &id, qint32 i, qint32 j);
     
-    AtomsIn(const AtomsIn<GROUP> &other);
+    ResIn(const ResIn<GROUP> &other);
     
-    ~AtomsIn();
+    ~ResIn();
     
     static const char* typeName()
     {
-        return QMetaType::typeName( qMetaTypeId< AtomsIn<GROUP> >() );
+        return QMetaType::typeName( qMetaTypeId< ResIn<GROUP> >() );
     }
     
     const char* what() const
     {
-        return AtomsIn<GROUP>::typeName();
+        return ResIn<GROUP>::typeName();
     }
     
-    AtomsIn<GROUP>* clone() const
+    ResIn<GROUP>* clone() const
     {
-        return new AtomsIn<GROUP>(*this);
+        return new ResIn<GROUP>(*this);
     }
     
-    AtomsIn<GROUP>& operator=(const AtomsIn<GROUP> &other);
+    ResIn<GROUP>& operator=(const ResIn<GROUP> &other);
 
-    bool operator==(const AtomsIn<GROUP> &other) const;
+    bool operator==(const ResIn<GROUP> &other) const;
     bool operator==(const SireID::ID &other) const;
     
-    bool operator!=(const AtomsIn<GROUP> &other) const
+    bool operator!=(const ResIn<GROUP> &other) const
     {
         return not this->operator==(other);
     }
@@ -101,7 +101,7 @@ public:
     
     QString toString() const;
     
-    QList<AtomIdx> map(const MoleculeInfoData &molinfo) const;
+    QList<ResIdx> map(const MoleculeInfoData &molinfo) const;
 
 private:
     /** The ID of the group that contains the atoms */
@@ -114,67 +114,67 @@ private:
 /** Null constructor */
 template<class GROUP>
 SIRE_OUTOFLINE_TEMPLATE
-AtomsIn<GROUP>::AtomsIn()
-               : AtomID(), strt(0), end(-1)
+ResIn<GROUP>::ResIn()
+             : ResID(), strt(0), end(-1)
 {}
 
-/** Construct to get all of the atoms in the passed group */
+/** Construct to get all of the residues in the passed group */
 template<class GROUP>
 SIRE_OUTOFLINE_TEMPLATE
-AtomsIn<GROUP>::AtomsIn(const GROUP &id)
-               : AtomID(), groupid(id), strt(0), end(-1)
+ResIn<GROUP>::ResIn(const GROUP &id)
+             : ResID(), groupid(id), strt(0), end(-1)
 {}
 
-/** Construct for a specified atom */
+/** Construct for a specified residue */
 template<class GROUP>
 SIRE_OUTOFLINE_TEMPLATE
-AtomsIn<GROUP>::AtomsIn(const GROUP &id, qint32 i)
-            : AtomID(), groupid(id), strt(i), end(i)
+ResIn<GROUP>::ResIn(const GROUP &id, qint32 i)
+             : ResID(), groupid(id), strt(i), end(i)
 {}
 
-/** Construct for a range of atoms */
+/** Construct for a range of residues */
 template<class GROUP>
 SIRE_OUTOFLINE_TEMPLATE
-AtomsIn<GROUP>::AtomsIn(const GROUP &id, qint32 i, qint32 j)
-            : AtomID(), groupid(id), strt(i), end(j)
+ResIn<GROUP>::ResIn(const GROUP &id, qint32 i, qint32 j)
+             : ResID(), groupid(id), strt(i), end(j)
 {}
 
 /** Copy constructor */
 template<class GROUP>
 SIRE_OUTOFLINE_TEMPLATE
-AtomsIn<GROUP>::AtomsIn(const AtomsIn<GROUP> &other)
-            : AtomID(other), groupid(other.groupid), 
+ResIn<GROUP>::ResIn(const ResIn<GROUP> &other)
+            : ResID(other), groupid(other.groupid), 
               strt(other.strt), end(other.end)
 {}
 
 /** Destructor */
 template<class GROUP>
 SIRE_OUTOFLINE_TEMPLATE
-AtomsIn<GROUP>::~AtomsIn()
+ResIn<GROUP>::~ResIn()
 {}
 
 /** Return a string representation of this ID */
 template<class GROUP>
 SIRE_OUTOFLINE_TEMPLATE
-QString AtomsIn<GROUP>::toString() const
+QString ResIn<GROUP>::toString() const
 {
     if (strt == 0 and end == -1)
-        return QString("(%1).atoms()").arg(groupid.toString());
+        return QString("(%1).residues()").arg(groupid.toString());
     else if (strt == end)
-        return QString("(%1).atom(%2)").arg(groupid.toString()).arg(strt);
+        return QString("(%1).residue(%2)").arg(groupid.toString()).arg(strt);
     else
-        return QString("(%1).atoms(%2,%3)")
+        return QString("(%1).residues(%2,%3)")
                     .arg(groupid.toString()).arg(strt).arg(end);
 }
 
 /** Copy assignment operator */
 template<class GROUP>
 SIRE_OUTOFLINE_TEMPLATE
-AtomsIn<GROUP>& AtomsIn<GROUP>::operator=(const AtomsIn<GROUP> &other)
+ResIn<GROUP>& ResIn<GROUP>::operator=(const ResIn<GROUP> &other)
 {
     if (this != &other)
     {
-        AtomID::operator=(other);
+        ResID::operator=(other);
         groupid = other.groupid;
         strt = other.strt;
         end = other.end;
@@ -186,7 +186,7 @@ AtomsIn<GROUP>& AtomsIn<GROUP>::operator=(const AtomsIn<GROUP> &other)
 /** Comparison operator */
 template<class GROUP>
 SIRE_OUTOFLINE_TEMPLATE
-bool AtomsIn<GROUP>::operator==(const AtomsIn<GROUP> &other) const
+bool ResIn<GROUP>::operator==(const ResIn<GROUP> &other) const
 {
     return strt == other.strt and end == other.end and
            groupid == other.groupid;
@@ -195,9 +195,9 @@ bool AtomsIn<GROUP>::operator==(const AtomsIn<GROUP> &other) const
 /** Comparison operator */
 template<class GROUP>
 SIRE_OUTOFLINE_TEMPLATE
-bool AtomsIn<GROUP>::operator==(const SireID::ID &other) const
+bool ResIn<GROUP>::operator==(const SireID::ID &other) const
 {
-    return SireID::ID::compare< AtomsIn<GROUP> >(*this, other);
+    return SireID::ID::compare< ResIn<GROUP> >(*this, other);
 }
 
 }

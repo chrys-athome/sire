@@ -79,6 +79,7 @@ set ( SIREMOL_HEADERS
       residuecutting.h
       residuesin.hpp
       residx.h
+      resin.hpp
       resname.h
       resnum.h
       resproperty.hpp
@@ -106,9 +107,12 @@ set ( SIREMOL_SOURCES
       atomcutting.cpp
       atomselection.cpp
       atomselector.cpp
+      cgid.cpp
       cgidentifier.cpp
       chain.cpp
       chainchainid.cpp
+      chainid.cpp
+      chainidentifier.cpp
       chainresid.cpp
       connectivity.cpp
       cutgroup.cpp
@@ -117,6 +121,7 @@ set ( SIREMOL_SOURCES
       elementdb.cpp
       errors.cpp
       evaluator.cpp
+      groupatomids.cpp
       molecule.cpp
       moleculecutting.cpp
       moleculedata.cpp
@@ -127,14 +132,17 @@ set ( SIREMOL_SOURCES
       moleculemover.cpp
       molecules.cpp
       moleculeview.cpp
+      molid.cpp
       molidentifier.cpp
       molviewproperty.cpp
       mover.cpp
       partialmolecule.cpp
+      resid.cpp
       residentifier.cpp
       residue.cpp
       residuecutting.cpp
       resresid.cpp
+      segid.cpp
       segidentifier.cpp
       segment.cpp
       splitmolecule.cpp

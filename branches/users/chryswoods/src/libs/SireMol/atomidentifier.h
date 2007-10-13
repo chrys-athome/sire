@@ -29,17 +29,20 @@
 #ifndef SIREMOL_ATOMIDENTIFIER_H
 #define SIREMOL_ATOMIDENTIFIER_H
 
-#include "SireID/identifier.h"
-
 #include "atomid.h"
+
+#include <boost/shared_ptr.hpp>
 
 namespace SireMol
 {
 
-template<class ID>
-class Specify;
+class AtomIdx;
 
-class AtomIdentifier : public SireID::Identifier_T_<AtomIdentifier,AtomID>
+/** This is a generic holder for any AtomID class! 
+
+    @author Christopher Woods
+*/
+class AtomIdentifier : public AtomID
 {
 public:
     AtomIdentifier();
@@ -47,23 +50,50 @@ public:
     AtomIdentifier(const AtomIdentifier &other);
     
     ~AtomIdentifier();
-
-    Specify<AtomIdentifier> operator[](int i) const;
-    Specify<AtomIdentifier> operator()(int i) const;
-    Specify<AtomIdentifier> operator()(int i, int j) const;
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<AtomIdentifier>() );
+    }
+    
+    const char* what() const
+    {
+        return AtomIdentifier::typeName();
+    }
+    
+    AtomIdentifier* clone() const
+    {
+        return new AtomIdentifier(*this);
+    }
+    
+    bool isNull() const;
+    
+    uint hash() const;
+                
+    QString toString() const;
+    
+    const AtomID& base() const;
+    
+    AtomIdentifier& operator=(const AtomIdentifier &other);
+    AtomIdentifier& operator=(const AtomID &other);
+    
+    bool operator==(const SireID::ID &other) const;
+    using SireID::ID::operator!=;
+   
+    bool operator==(const AtomIdentifier &other) const;
+    bool operator!=(const AtomIdentifier &other) const;
+    
+    bool operator==(const AtomID &other) const;
+    bool operator!=(const AtomID &other) const;
     
     QList<AtomIdx> map(const MoleculeInfoData &molinfo) const;
+
+private:
+    /** Pointer to the AtomID */
+    boost::shared_ptr<AtomID> d;
 };
 
 }
-
-QDataStream& operator<<(QDataStream&, const SireMol::AtomIdentifier&);
-QDataStream& operator>>(QDataStream&, SireMol::AtomIdentifier&);
-
-XMLStream& operator<<(XMLStream&, const SireMol::AtomIdentifier&);
-XMLStream& operator>>(XMLStream&, SireMol::AtomIdentifier&);
-
-uint qHash(const SireMol::AtomIdentifier &atomid);
 
 Q_DECLARE_METATYPE(SireMol::AtomIdentifier);
 

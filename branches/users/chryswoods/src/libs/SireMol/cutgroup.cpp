@@ -28,10 +28,16 @@
 
 #include "cutgroup.h"
 
+#include "atom.h"
+#include "molecule.h"
+
 #include "editor.hpp"
 #include "mover.hpp"
 #include "selector.hpp"
 #include "evaluator.h"
+
+#include "cgatomidx.h"
+#include "groupatomids.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -48,7 +54,7 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const CutGroup &cg)
 
     SharedDataStream sds(ds);
     
-    sds << cg.cgidx << static_cast<const MoleculeView&>(CutGroup);
+    sds << cg.cgidx << static_cast<const MoleculeView&>(cg);
 
     return ds;
 }
@@ -62,7 +68,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, CutGroup &cg)
     {
         SharedDataStream sds(ds);
         
-        sds >> cg.cgidx >> static_cast<MoleculeView&>(CutGroup);
+        sds >> cg.cgidx >> static_cast<MoleculeView&>(cg);
     }
     else
         throw version_error(v, "1", r_cg, CODELOC);
@@ -71,7 +77,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, CutGroup &cg)
 }
 
 /** Null constructor */
-CutGroup::CutGroup() : MoleculeView(), CGIdx( CGIdx::null() )
+CutGroup::CutGroup() : MoleculeView(), cgidx( CGIdx::null() )
 {}
 
 /** Construct the CutGroup at ID 'cgid' in the molecule whose data
@@ -82,12 +88,12 @@ CutGroup::CutGroup() : MoleculeView(), CGIdx( CGIdx::null() )
     \throw SireError::invalid_index
 */
 CutGroup::CutGroup(const MoleculeData &moldata, const CGID &cgid)
-      : MoleculeView(moldata), cgidx( moldata.info().cgIdx(cgid) )
+         : MoleculeView(moldata), cgidx( moldata.info().cgIdx(cgid) )
 {}
 
 /** Copy constructor */
 CutGroup::CutGroup(const CutGroup &other)
-      : MoleculeView(other), cgidx(other.cgidx)
+         : MoleculeView(other), cgidx(other.cgidx)
 {}
 
 /** Destructor */
@@ -119,11 +125,13 @@ bool CutGroup::operator!=(const CutGroup &other) const
 /** Return the atoms that are in this CutGroup */
 AtomSelection CutGroup::selectedAtoms() const
 {
+    AtomSelection selected_atoms(this->data());
+    selected_atoms.select(cgidx);
     return selected_atoms;
 }
 
 /** Return the name of this CutGroup */
-CutGroupName CutGroup::name() const
+const CGName& CutGroup::name() const
 {
     return d->info().name(cgidx);
 }
@@ -132,12 +140,6 @@ CutGroupName CutGroup::name() const
 CGIdx CutGroup::index() const
 {
     return cgidx;
-}
-
-/** Return the info object that describes this CutGroup */
-CutGroupInfo CutGroup::info() const
-{
-    return CutGroupInfo( d->info(), cgidx );
 }
 
 /** Return an object that can move a copy of this CutGroup */
@@ -157,12 +159,6 @@ Evaluator CutGroup::evaluate() const
 Editor<CutGroup> CutGroup::edit() const
 {
     return Editor<CutGroup>(*this);
-}
-
-/** Return a selector that can change the selection of CutGroups */
-Selector<CutGroup> CutGroup::selection() const
-{
-    return Selector<CutGroup>(*this);
 }
 
 /** Return the number of atoms in this CutGroup */
@@ -229,15 +225,15 @@ Atom CutGroup::atom(const AtomID &atomid) const
     \throw SireMol::missing_atom
     \throw SireError::invalid_index
 */
-AtomsInMol CutGroup::atoms(const AtomID &atomid) const
+Selector<Atom> CutGroup::atoms(const AtomID &atomid) const
 {
-    return AtomsInMol( this->data(), cgidx + atomid );
+    return Selector<Atom>( this->data(), cgidx + atomid );
 }
 
 /** Return all of the atoms in this CutGroup */
-AtomsInMol CutGroup::atoms() const
+Selector<Atom> CutGroup::atoms() const
 {
-    return AtomsInMol( this->data(), cgidx.atoms() );
+    return Selector<Atom>( this->data(), cgidx.atoms() );
 }
 
 /** Return the atom in this CutGroup that also has ID 'atomid'
@@ -256,13 +252,18 @@ Atom CutGroup::select(const AtomID &atomid) const
     \throw SireMol::missing_atom
     \throw SireError::invalid_index
 */
-AtomsInMol CutGroup::selectAll(const AtomID &atomid) const
+Selector<Atom> CutGroup::selectAll(const AtomID &atomid) const
 {
     return this->atoms(atomid);
 }
 
 /** Return all of the atoms in this CutGroup */
-AtomsInMol CutGroup::selectAllAtoms() const
+Selector<Atom> CutGroup::selectAll() const
 {
     return this->atoms();
 }
+
+////// explicitly instantiate the CutGroup templates
+template class Editor<CutGroup>;
+template class Mover<CutGroup>;
+template class Selector<CutGroup>;

@@ -36,7 +36,17 @@ SIRE_BEGIN_HEADER
 namespace SireMol
 {
 
+template<class T>
+class Specify;
+
+template<class T>
+class AtomsIn;
+
+template<class T>
+class ResIn;
+
 class ChainIdx;
+class ChainIdentifier;
 class MoleculeInfoData;
 
 /** This is the base class of all identifiers that are used 
@@ -48,14 +58,30 @@ class SIREMOL_EXPORT ChainID : public SireID::ID
 {
 
 public:
-    ChainID() : SireID::ID()
-    {}
+    typedef ChainIdx Index;
+    typedef ChainIdentifier Identifier;
 
-    ChainID(const ChainID &other) : SireID::ID(other)
-    {}
+    ChainID();
+    ChainID(const ChainID &other);
 
-    ~ChainID()
-    {}
+    virtual ~ChainID();
+    
+    Specify<ChainID> operator[](int i) const;
+    Specify<ChainID> operator()(int i) const;
+    Specify<ChainID> operator()(int i, int j) const;
+    
+    AtomsIn<ChainID> atoms() const;
+    AtomsIn<ChainID> atom(int i) const;
+    AtomsIn<ChainID> atoms(int i, int j) const;
+    
+    ResIn<ChainID> residues() const;
+    ResIn<ChainID> residue(int i) const;
+    ResIn<ChainID> residues(int i, int j) const;
+    
+    static const char* typeName()
+    {
+        return "SireMol::ChainID";
+    }
     
     virtual ChainID* clone() const=0;
 
@@ -66,7 +92,10 @@ public:
 
 }
 
+Q_DECLARE_METATYPE( SireMol::Specify<SireMol::ChainID> );
+Q_DECLARE_METATYPE( SireMol::AtomsIn<SireMol::ChainID> );
+Q_DECLARE_METATYPE( SireMol::ResIn<SireMol::ChainID> );
+
 SIRE_END_HEADER
 
 #endif
-

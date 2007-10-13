@@ -29,47 +29,67 @@
 #ifndef SIREMOL_CGIDENTIFIER_H
 #define SIREMOL_CGIDENTIFIER_H
 
-#include "SireID/identifier.h"
-
 #include "cgid.h"
-#include "cgidx.h"
+
+#include <boost/shared_ptr.hpp>
 
 namespace SireMol
 {
 
-class CGIdentifier : public SireID::Identifier_T_<CGIdentifier,CGID>
+class CGIdx;
+
+class CGIdentifier : public CGID
 {
 public:
-    CGIdentifier() : SireID::Identifier_T_<CGIdentifier,CGID>()
-    {}
+    CGIdentifier();
+    CGIdentifier(const CGID &cgid);
+    CGIdentifier(const CGIdentifier &other);
     
-    CGIdentifier(const CGID &cgid) 
-            : SireID::Identifier_T_<CGIdentifier,CGID>(cgid)
-    {}
+    ~CGIdentifier();
     
-    CGIdentifier(const CGIdentifier &other) 
-            : SireID::Identifier_T_<CGIdentifier,CGID>(other)
-    {}
-    
-    ~CGIdentifier()
-    {}
-    
-    CGIdx map(const MoleculeInfo &molinfo) const
+    static const char* typeName()
     {
-        this->assertNotNull();
-        return this->asA<CGID>().map(molinfo);
+        return QMetaType::typeName( qMetaTypeId<CGIdentifier>() );
     }
+    
+    const char* what() const
+    {
+        return CGIdentifier::typeName();
+    }
+    
+    CGIdentifier* clone() const
+    {
+        return new CGIdentifier(*this);
+    }
+    
+    bool isNull() const;
+    
+    uint hash() const;
+                
+    QString toString() const;
+    
+    const CGID& base() const;
+    
+    CGIdentifier& operator=(const CGIdentifier &other);
+    CGIdentifier& operator=(const CGID &other);
+    
+    bool operator==(const SireID::ID &other) const;
+    using SireID::ID::operator!=;
+   
+    bool operator==(const CGIdentifier &other) const;
+    bool operator!=(const CGIdentifier &other) const;
+    
+    bool operator==(const CGID &other) const;
+    bool operator!=(const CGID &other) const;
+    
+    QList<CGIdx> map(const MoleculeInfoData &molinfo) const;
+
+private:
+    /** Pointer to the CGID */
+    boost::shared_ptr<CGID> d;
 };
 
 }
-
-QDataStream& operator<<(QDataStream&, const SireMol::CGIdentifier&);
-QDataStream& operator>>(QDataStream&, SireMol::CGIdentifier&);
-
-XMLStream& operator<<(XMLStream&, const SireMol::CGIdentifier&);
-XMLStream& operator>>(XMLStream&, SireMol::CGIdentifier&);
-
-uint qHash(const SireMol::CGIdentifier &cgid);
 
 Q_DECLARE_METATYPE(SireMol::CGIdentifier);
 

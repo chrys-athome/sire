@@ -34,13 +34,13 @@ using namespace SireMol;
 Molecule::Molecule() : MoleculeView()
 {}
 
-/** Copy constructor */
-Molecule::Molecule(const Molecule &other)
-         : MoleculeView(other)
+/** Construct from the passed MoleculeData */
+Molecule::Molecule(const MoleculeData &moldata)
+         : MoleculeView(moldata)
 {}
 
-/** Copy from another MoleculeView */
-Molecule::Molecule(const MoleculeView &other)
+/** Copy constructor */
+Molecule::Molecule(const Molecule &other)
          : MoleculeView(other)
 {}
 
@@ -52,13 +52,6 @@ Molecule::~Molecule()
 Molecule& Molecule::operator=(const Molecule &other)
 {
     d = other.d;
-    return *this;
-}
-
-/** Copy assignment from a general MoleculeView */
-Molecule& Molecule::operator=(const MoleculeView &view)
-{
-    d = view.d;
     return *this;
 }
 

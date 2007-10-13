@@ -29,49 +29,65 @@
 #ifndef SIREMOL_RESIDENTIFIER_H
 #define SIREMOL_RESIDENTIFIER_H
 
-#include "SireID/identifier.h"
-
 #include "resid.h"
+
+#include <boost/shared_ptr.hpp>
 
 namespace SireMol
 {
 
-template<class ID>
-class Specify;
-
-template<class ID>
-class AtomsIn;
-
-class ResIdentifier : public SireID::Identifier_T_<ResIdentifier,ResID>
+class ResIdentifier : public ResID
 {
 public:
     ResIdentifier();
-    ResIdentifier(const ResID &ResID);
+    ResIdentifier(const ResID &resid);
     ResIdentifier(const ResIdentifier &other);
     
     ~ResIdentifier();
-
-    Specify<ResIdentifier> operator[](int i) const;
-    Specify<ResIdentifier> operator()(int i) const;
-    Specify<ResIdentifier> operator()(int i, int j) const;
     
-    AtomsIn<ResIdentifier> atom(int i) const;
-
-    AtomsIn<ResIdentifier> atoms() const;
-    AtomsIn<ResIdentifier> atoms(int i, int j) const;
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<ResIdentifier>() );
+    }
+    
+    const char* what() const
+    {
+        return ResIdentifier::typeName();
+    }
+    
+    ResIdentifier* clone() const
+    {
+        return new ResIdentifier(*this);
+    }
+    
+    bool isNull() const;
+    
+    uint hash() const;
+                
+    QString toString() const;
+    
+    const ResID& base() const;
+    
+    ResIdentifier& operator=(const ResIdentifier &other);
+    ResIdentifier& operator=(const ResID &other);
+    
+    bool operator==(const SireID::ID &other) const;
+    using SireID::ID::operator!=;
+   
+    bool operator==(const ResIdentifier &other) const;
+    bool operator!=(const ResIdentifier &other) const;
+    
+    bool operator==(const ResID &other) const;
+    bool operator!=(const ResID &other) const;
     
     QList<ResIdx> map(const MoleculeInfoData &molinfo) const;
+
+private:
+    /** Pointer to the ResID */
+    boost::shared_ptr<ResID> d;
 };
 
 }
-
-QDataStream& operator<<(QDataStream&, const SireMol::ResIdentifier&);
-QDataStream& operator>>(QDataStream&, SireMol::ResIdentifier&);
-
-XMLStream& operator<<(XMLStream&, const SireMol::ResIdentifier&);
-XMLStream& operator>>(XMLStream&, SireMol::ResIdentifier&);
-
-uint qHash(const SireMol::ResIdentifier &ResID);
 
 Q_DECLARE_METATYPE(SireMol::ResIdentifier);
 

@@ -89,14 +89,13 @@ friend QDataStream& ::operator>>(QDataStream&, Molecule&);
 
 public:
     Molecule();
+    Molecule(const MoleculeData &moldata);
 
     Molecule(const Molecule &other);
-    Molecule(const MoleculeView &other);
 
     ~Molecule();
 
     Molecule& operator=(const Molecule &other);
-    Molecule& operator=(const MoleculeView &other);
 
     static const char* typeName()
     {

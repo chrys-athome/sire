@@ -187,9 +187,6 @@ void MoleculeView::setProperty(const typename ViewType::Index &idx,
                                MoleculeData &data,
                                const QString &key, const T &value)
 {
-    //this should be changed to work on a modifiable reference
-    //to the property...
-
     PropType props;
     
     if (data.hasProperty(key))
@@ -209,9 +206,6 @@ void MoleculeView::setMetadata(const typename ViewType::Index &idx,
                                MoleculeData &data,
                                const QString &metakey, const T &value)
 {
-    //this should be changed to work on a modifiable reference
-    //to the property...
-
     PropType props;
     
     if (data.hasMetadata(metakey))
@@ -232,9 +226,6 @@ void MoleculeView::setMetadata(const typename ViewType::Index &idx,
                                const QString &key, const QString &metakey,
                                const T &value)
 {
-    //this should be changed to work on a modifiable reference
-    //to the property...
-
     PropType props;
     
     if (data.hasMetadata(key, metakey))
@@ -251,193 +242,186 @@ void MoleculeView::setMetadata(const typename ViewType::Index &idx,
 namespace detail
 {
 
-template<class T>
-struct SelectorHelper;
-
-template<class Prop, class Idx>
-struct GeneralSelectorHelper
+template<class Prop, class Idx, class V>
+QList<V> get_property(const MoleculeData &moldata,
+                      const QList<Idx> &idxs,
+                      const PropertyName &key)
 {
-    template<class V>
-    static QList<V> property(const MoleculeData &moldata,
-                             const QList<Idx> &idxs,
-                             const PropertyName &key)
+    QList<V> props;
+        
+    const Property &property = moldata.property(key);
+    const Prop &prop = property.asA<Prop>();
+        
+    foreach (Idx idx, idxs)
     {
-        QList<V> props;
+        props.append( prop.at(idx) );
+    }
         
-        const Property &property = moldata.property(key);
-        const Prop &prop = property.asA<Prop>();
-        
-        foreach (Idx idx, idxs)
-        {
-            props.append( prop.at(idx) );
-        }
-        
-        return props;
+    return props;
+}
+    
+template<class Prop, class Idx, class V>
+QList<V> get_metadata(const MoleculeData &moldata,
+                      const QList<Idx> &idxs,
+                      const PropertyName &metakey)
+{
+    QList<V> props;
+    
+    const Property &property = moldata.metadata(metakey);
+    const Prop &prop = property.asA<Prop>();
+    
+    foreach (Idx idx, idxs)
+    {
+        props.append( prop.at(idx) );
     }
     
-    template<class V>
-    static QList<V> metadata(const MoleculeData &moldata,
-                             const QList<Idx> &idxs,
-                             const PropertyName &metakey)
-    {
-        QList<V> props;
-        
-        const Property &property = moldata.metadata(metakey);
-        const Prop &prop = property.asA<Prop>();
-        
-        foreach (Idx idx, idxs)
-        {
-            props.append( prop.at(idx) );
-        }
-        
-        return props;
-    }
-    
-    template<class V>
-    static QList<V> metadata(const MoleculeData &moldata,
-                             const QList<Idx> &idxs,
-                             const PropertyName &key,
-                             const PropertyName &metakey)
-    {
-        QList<V> props;
-        
-        const Property &property = moldata.metadata(key,metakey);
-        const Prop &prop = property.asA<Prop>();
-        
-        foreach (Idx idx, idxs)
-        {
-            props.append( prop.at(idx) );
-        }
-        
-        return props;
-    }
-    
-    template<class V>
-    static void setProperty(MoleculeData &moldata,
-                            const QList<Idx> &idxs,
-                            const QString &key,
-                            const QList<V> &values)
-    {
-        Prop props;
-        
-        if (moldata.hasProperty(key))
-            props = moldata.property(key);
-        else
-            props = Prop(moldata.info());
-            
-        for (int i=0; i<idxs.count(); ++i)
-        {
-            props.set(idxs[i], values[i]);
-        }
-        
-        moldata.setProperty(key, props);
-    }
-    
-    template<class V>
-    static void setMetadata(MoleculeData &moldata,
-                            const QList<Idx> &idxs,
-                            const QString &metakey,
-                            const QList<V> &values)
-    {
-        Prop props;
-        
-        if (moldata.hasMetadata(metakey))
-            props = moldata.metadata(metakey);
-        else
-            props = Prop(moldata.info());
-            
-        for (int i=0; i<idxs.count(); ++i)
-        {
-            props.set(idxs[i], values[i]);
-        }
-        
-        moldata.setMetadata(metakey, props);
-    }
-    
-    template<class V>
-    static void setMetadata(MoleculeData &moldata,
-                            const QList<Idx> &idxs,
-                            const QString &key, const QString &metakey,
-                            const QList<V> &values)
-    {
-        Prop props;
-        
-        if (moldata.hasMetadata(key,metakey))
-            props = moldata.metadata(key,metakey);
-        else
-            props = Prop(moldata.info());
-            
-        for (int i=0; i<idxs.count(); ++i)
-        {
-            props.set(idxs[i], values[i]);
-        }
-        
-        moldata.setMetadata(key, metakey, props);
-    }
+    return props;
+}
 
-    template<class V>
-    static void setProperty(MoleculeData &moldata,
-                            const QList<Idx> &idxs,
-                            const QString &key,
-                            const V &value)
+template<class Prop, class Idx, class V>
+QList<V> get_metadata(const MoleculeData &moldata,
+                      const QList<Idx> &idxs,
+                      const PropertyName &key,
+                      const PropertyName &metakey)
+{
+    QList<V> props;
+    
+    const Property &property = moldata.metadata(key,metakey);
+    const Prop &prop = property.asA<Prop>();
+    
+    foreach (Idx idx, idxs)
     {
-        Prop props;
-        
-        if (moldata.hasProperty(key))
-            props = moldata.property(key);
-        else
-            props = Prop(moldata.info());
-            
-        foreach (Idx idx, idxs)
-        {
-            props.set(idx, value);
-        }
-        
-        moldata.setProperty(key, props);
+        props.append( prop.at(idx) );
     }
+    
+    return props;
+}
 
-    template<class V>
-    static void setMetadata(MoleculeData &moldata,
-                            const QList<Idx> &idxs,
-                            const QString &metakey,
-                            const V &value)
+template<class Prop, class Idx, class V>
+void set_property(MoleculeData &moldata,
+                  const QList<Idx> &idxs,
+                  const QString &key,
+                  const QList<V> &values)
+{
+    Prop props;
+    
+    if (moldata.hasProperty(key))
+        props = moldata.property(key);
+    else
+        props = Prop(moldata.info());
+        
+    for (int i=0; i<idxs.count(); ++i)
     {
-        Prop props;
-        
-        if (moldata.hasMetadata(metakey))
-            props = moldata.metadata(metakey);
-        else
-            props = Prop(moldata.info());
-            
-        foreach (Idx idx, idxs)
-        {
-            props.set(idx, value);
-        }
-        
-        moldata.setMetadata(metakey, props);
+        props.set(idxs[i], values[i]);
     }
+    
+    moldata.setProperty(key, props);
+}
 
-    template<class V>
-    static void setMetadata(MoleculeData &moldata,
-                            const QList<Idx> &idxs,
-                            const QString &key, const QString &metakey,
-                            const V &value)
+template<class Prop, class V, class Idx>
+void set_metadata(MoleculeData &moldata,
+                  const QList<Idx> &idxs,
+                  const QString &metakey,
+                  const QList<V> &values)
+{
+    Prop props;
+    
+    if (moldata.hasMetadata(metakey))
+        props = moldata.metadata(metakey);
+    else
+        props = Prop(moldata.info());
+        
+    for (int i=0; i<idxs.count(); ++i)
     {
-        Prop props;
-        
-        if (moldata.hasMetadata(key,metakey))
-            props = moldata.metadata(key,metakey);
-        else
-            props = Prop(moldata.info());
-            
-        foreach (Idx idx, idxs)
-        {
-            props.set(idx, value);
-        }
-        
-        moldata.setMetadata(key, metakey, props);
+        props.set(idxs[i], values[i]);
     }
-};
+    
+    moldata.setMetadata(metakey, props);
+}
+
+template<class Prop, class Idx, class V>
+void set_metadata(MoleculeData &moldata,
+                  const QList<Idx> &idxs,
+                  const QString &key, const QString &metakey,
+                  const QList<V> &values)
+{
+    Prop props;
+    
+    if (moldata.hasMetadata(key,metakey))
+        props = moldata.metadata(key,metakey);
+    else
+        props = Prop(moldata.info());
+        
+    for (int i=0; i<idxs.count(); ++i)
+    {
+        props.set(idxs[i], values[i]);
+    }
+    
+    moldata.setMetadata(key, metakey, props);
+}
+
+template<class Prop, class Idx, class V>
+void set_property(MoleculeData &moldata,
+                  const QList<Idx> &idxs,
+                  const QString &key,
+                  const V &value)
+{
+    Prop props;
+    
+    if (moldata.hasProperty(key))
+        props = moldata.property(key);
+    else
+        props = Prop(moldata.info());
+        
+    foreach (Idx idx, idxs)
+   {
+        props.set(idx, value);
+    }
+    
+    moldata.setProperty(key, props);
+}
+
+template<class Prop, class Idx,class V>
+void set_metadata(MoleculeData &moldata,
+                  const QList<Idx> &idxs,
+                  const QString &metakey,
+                  const V &value)
+{
+    Prop props;
+    
+    if (moldata.hasMetadata(metakey))
+        props = moldata.metadata(metakey);
+    else
+        props = Prop(moldata.info());
+        
+    foreach (Idx idx, idxs)
+    {
+        props.set(idx, value);
+    }
+    
+    moldata.setMetadata(metakey, props);
+}
+
+template<class Prop, class Idx, class V>
+void set_metadata(MoleculeData &moldata,
+                  const QList<Idx> &idxs,
+                  const QString &key, const QString &metakey,
+                  const V &value)
+{
+    Prop props;
+    
+    if (moldata.hasMetadata(key,metakey))
+        props = moldata.metadata(key,metakey);
+    else
+        props = Prop(moldata.info());
+        
+    foreach (Idx idx, idxs)
+    {
+        props.set(idx, value);
+    }
+    
+    moldata.setMetadata(key, metakey, props);
+}
 
 }
 

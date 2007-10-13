@@ -30,11 +30,17 @@
 #define SIREMOL_GROUPATOMIDS_H
 
 #include "moleculeinfodata.h"
+#include "atomid.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
+
+class ResID;
+class ChainID;
+class SegID;
+class CGID;
 
 /** This is the base class of GroupAtomID, used to abstract   
     template-independent parts away from the template code.
@@ -51,7 +57,7 @@ public:
     ~GroupAtomIDBase();
     
 protected:
-    void throwMissingAtom(const MoleculeInfo &molinfo) const;
+    void throwMissingAtom(const MoleculeInfoData &molinfo) const;
 };
 
 /** This class represents an Atom ID that is comprised of both 
@@ -64,8 +70,6 @@ template<class GROUP, class ATOM>
 class GroupAtomID : public GroupAtomIDBase
 {
 
-static QString typname;
-
 public:
     GroupAtomID();
     
@@ -77,7 +81,7 @@ public:
     
     static const char* typeName()
     {
-        return qPrintable(typname);
+        return QMetaType::typeName( qMetaTypeId< GroupAtomID<GROUP,ATOM> >() );
     }
     
     const char* what() const
@@ -90,10 +94,36 @@ public:
         return new GroupAtomID<GROUP,ATOM>(*this);
     }
     
+    bool operator==(const GroupAtomID<GROUP,ATOM> &other) const
+    {
+        return groupid == other.groupid and
+               atomid == other.atomid;
+    }
+    
+    bool operator!=(const GroupAtomID<GROUP,ATOM> &other) const
+    {
+        return not this->operator==(other);
+    }
+    
+    bool operator==(const SireID::ID &other) const
+    {
+        return SireID::ID::compare< GroupAtomID<GROUP,ATOM> >(*this, other);
+    }
+    
+    uint hash() const
+    {
+        return (groupid.hash() << 16) | (atomid.hash() & 0x0000FFFF);
+    }
+    
+    bool isNull() const
+    {
+        return groupid.isNull() and atomid.isNull();
+    }
+    
     QString toString() const;
     
-    QList<AtomIdx> map(const MoleculeInfoData &molinfo);
-
+    QList<AtomIdx> map(const MoleculeInfoData &molinfo) const;
+ 
 private:
     typename GROUP::Identifier groupid;
     typename ATOM::Identifier atomid;
@@ -115,7 +145,7 @@ GroupAtomID<GROUP,ATOM>::GroupAtomID(const GROUP &group,
 
 /** Copy constructor */
 template<class GROUP, class ATOM>
-GroupAtomID<GROUP,ATOM>::GroupAtomID(const GroupAtomID<GROUP,ATOM> &groupatomid)
+GroupAtomID<GROUP,ATOM>::GroupAtomID(const GroupAtomID<GROUP,ATOM> &other)
                         : GroupAtomIDBase(other),
                           groupid(other.groupid), atomid(other.atomid)
 {}
@@ -144,7 +174,7 @@ QList<AtomIdx> GroupAtomID<GROUP,ATOM>::map(const MoleculeInfoData &molinfo) con
     if (this->isNull())
         return molinfo.getAtoms();
     else if (atomid.isNull())
-        return groupid.map(molinfo);
+        return molinfo.getAtomsIn(groupid);
     else if (groupid.isNull())
         return atomid.map(molinfo);
     
@@ -177,6 +207,11 @@ CGAtomID operator+(const CGID &cgid, const AtomID &atomid);
 CGAtomID operator+(const AtomID &atomid, const CGID &cgid);
 
 }
+
+Q_DECLARE_METATYPE(SireMol::ResAtomID);
+Q_DECLARE_METATYPE(SireMol::ChainAtomID);
+Q_DECLARE_METATYPE(SireMol::SegAtomID);
+Q_DECLARE_METATYPE(SireMol::CGAtomID);
 
 SIRE_END_HEADER
 

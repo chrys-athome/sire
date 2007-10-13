@@ -26,3 +26,130 @@
   *
 \*********************************************/
 
+#include "molidentifier.h"
+#include "moleculeinfodata.h"
+
+using namespace SireMol;
+using namespace SireID;
+
+/** Null constructor */
+MolIdentifier::MolIdentifier() : MolID()
+{}
+
+/** Construct from the passed MolID */
+MolIdentifier::MolIdentifier(const MolID &molid)
+              : MolID()
+{
+    if (molid.isA<MolIdentifier>())
+        d = molid.asA<MolIdentifier>().d;
+    else if (not molid.isNull())
+        d.reset( molid.clone() );
+}
+
+/** Copy constructor */
+MolIdentifier::MolIdentifier(const MolIdentifier &other)
+              : MolID(other), d(other.d)
+{}
+
+/** Destructor */
+MolIdentifier::~MolIdentifier()
+{}
+
+/** Is this selection null? */
+bool MolIdentifier::isNull() const
+{
+    return d.get() == 0;
+}
+
+/** Return a hash of this identifier */
+uint MolIdentifier::hash() const
+{
+    if (d.get() == 0)
+        return 0;
+    else
+        return d->hash();
+}
+            
+/** Return a string representatio of this ID */
+QString MolIdentifier::toString() const
+{
+    if (d.get() == 0)
+        return "null";
+    else
+        return d->toString();
+}
+
+/** Return the base type of this ID */
+const MolID& MolIdentifier::base() const
+{
+    if (d.get() == 0)
+        return *this;
+    else
+        return *d;
+}
+
+/** Copy assignment operator */
+MolIdentifier& MolIdentifier::operator=(const MolIdentifier &other)
+{
+    d = other.d;
+    return *this;
+}
+
+/** Copy assignment operator */
+MolIdentifier& MolIdentifier::operator=(const MolID &other)
+{
+    if (other.isA<MolIdentifier>())
+        d = other.asA<MolIdentifier>().d;
+    else if (other.isNull())
+        d.reset();
+    else
+        d.reset(other.clone());
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool MolIdentifier::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare<MolIdentifier>(*this, other);
+}
+
+/** Comparison operator */
+bool MolIdentifier::operator==(const MolIdentifier &other) const
+{
+    if (d.get() == 0 or other.d.get() == 0)
+        return d.get() == other.d.get();
+    else
+        return d == other.d or *d == *(other.d);
+}
+
+/** Comparison operator */
+bool MolIdentifier::operator!=(const MolIdentifier &other) const
+{
+    if (d.get() == 0 or other.d.get() == 0)
+        return d.get() != other.d.get();
+    else
+        return d != other.d and *d != *(other.d);
+}
+
+/** Comparison operator */
+bool MolIdentifier::operator==(const MolID &other) const
+{
+    if (d.get() == 0)
+        return other.isNull();
+    else if (other.isA<MolIdentifier>())
+        return this->operator==(other.asA<MolIdentifier>());
+    else
+        return d->operator==(other);
+}
+
+/** Comparison operator */
+bool MolIdentifier::operator!=(const MolID &other) const
+{
+    if (d.get() == 0)
+        return not other.isNull();
+    else if (other.isA<MolIdentifier>())
+        return this->operator!=(other.asA<MolIdentifier>());
+    else
+        return d->operator!=(other);
+}

@@ -54,7 +54,7 @@ public:
     
     static const char* typeName()
     {
-        return "SireMol::AtomAtomID";
+        return QMetaType::typeName( qMetaTypeId<AtomAtomID>() );
     }
     
     const char* what() const
@@ -69,6 +69,32 @@ public:
 
     QString toString() const;
 
+    bool operator==(const AtomAtomID &other) const
+    {
+        return (atomid0 == other.atomid0 and atomid1 == other.atomid1) or
+               (atomid0 == other.atomid1 and atomid1 == other.atomid0);
+    }
+
+    bool operator!=(const AtomAtomID &other) const
+    {
+        return not this->operator==(other);
+    }
+
+    bool operator==(const SireID::ID &other) const
+    {
+        return SireID::ID::compare<AtomAtomID>(*this, other);
+    }
+
+    uint hash() const
+    {
+        return atomid0.hash() + atomid1.hash();
+    }
+
+    bool isNull() const
+    {
+        return atomid0.isNull() and atomid1.isNull();
+    }
+
     QList<AtomIdx> map(const MoleculeInfoData &molinfo) const;
 
 private:
@@ -79,6 +105,8 @@ private:
 AtomAtomID operator+(const AtomID &id0, const AtomID &id1);
 
 }
+
+Q_DECLARE_METATYPE(SireMol::AtomAtomID);
 
 SIRE_END_HEADER
 

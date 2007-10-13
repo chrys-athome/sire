@@ -26,3 +26,17 @@
   *
 \*********************************************/
 
+#include "groupgroupids.h"
+
+using namespace SireMol;
+
+/////
+///// explicitly instantiate the group group ID classes
+/////
+
+template class GroupGroupID<SegID,ResID>;
+template class GroupGroupID<SegID,ChainID>;
+template class GroupGroupID<SegID,CGID>;
+
+template class GroupGroupID<CGID,ResID>;
+template class GroupGroupID<CGID,ChainID>;

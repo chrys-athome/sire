@@ -26,3 +26,93 @@
   *
 \*********************************************/
 
+#ifndef SIREMOL_CHAINRESID_H
+#define SIREMOL_CHAINRESID_H
+
+#include "residentifier.h"
+
+SIRE_BEGIN_HEADER
+
+namespace SireMol
+{
+
+/** This class holds a combination of a ChainID with a ResID
+    
+    @author Christopher Woods
+*/
+class ChainResID : public ResID
+{
+public:
+    ChainResID();
+    
+    ChainResID(const ChainID &chainid, const ResID &resid);
+    
+    ChainResID(const ChainResID &other);
+    
+    ~ChainResID();
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<ChainResID>() );
+    }
+    
+    const char* what() const
+    {
+        return ChainResID::typeName();
+    }
+
+    ChainResID* clone() const
+    {
+        return new ChainResID(*this);
+    }
+
+    QString toString() const;
+
+    bool operator==(const ChainResID &other) const
+    {
+        return chainid == other.chainid and resid == other.resid;
+    }
+
+    bool operator!=(const ChainResID &other) const
+    {
+        return not this->operator==(other);
+    }
+
+    bool operator==(const SireID::ID &other) const
+    {
+        return SireID::ID::compare<ChainResID>(*this, other);
+    }
+
+    using SireID::ID::operator!=;
+
+    uint hash() const
+    {
+        return (chainid.hash() << 16) | (resid.hash() & 0x0000FFFF);
+    }
+
+    bool isNull() const
+    {
+        return chainid.isNull() and resid.isNull();
+    }
+
+    QList<ResIdx> map(const MoleculeInfoData &molinfo) const;
+
+private:
+    /** Identifier for the chain */
+    ChainIdentifier chainid;
+    
+    /** Identifier for the residue */
+    ResIdentifier resid;
+};
+
+ChainResID operator+(const ChainID &chainid, const ResID &resid);
+ChainResID operator+(const ResID &resid, const ChainID &chainid);
+
+}
+
+Q_DECLARE_METATYPE(SireMol::ChainResID);
+
+SIRE_END_HEADER
+
+#endif
+

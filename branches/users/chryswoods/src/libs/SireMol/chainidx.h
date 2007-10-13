@@ -85,6 +85,11 @@ public:
         return new ChainIdx(*this);
     }
     
+    static ChainIdx null()
+    {
+        return ChainIdx();
+    }
+    
     bool isNull() const
     {
         return SireID::Index_T_<ChainIdx>::isNull();

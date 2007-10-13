@@ -31,6 +31,7 @@
 
 #include "moleculeview.h"
 #include "resproperty.hpp"
+#include "atomselection.h"
 
 SIRE_BEGIN_HEADER
 
@@ -45,10 +46,29 @@ QDataStream& operator>>(QDataStream&, SireMol::Residue&);
 namespace SireMol
 {
 
-/**
-This class represents a Residue in a Molecule.
+class ResID;
+class ResIdx;
+class ResName;
+class ResNum;
 
-@author Christopher Woods
+class Evaluator;
+
+template<class T>
+class Editor;
+
+template<class T>
+class Mover;
+
+template<class T>
+class Selector;
+
+class Atom;
+class Chain;
+class Molecule;
+
+/** This class represents a Residue in a Molecule.
+
+    @author Christopher Woods
 */
 class SIREMOL_EXPORT Residue : public MoleculeView
 {
@@ -257,112 +277,108 @@ void Residue::setMetadata(const QString &key, const QString &metakey,
 namespace detail
 {
 
-/** Specialisation of SelectorHelper for Residue */
-template<>
-struct SelectorHelper<Residue>
+void assertSameSize(Residue*, int nres, int nprops);
+    
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+QList<V> get_property(Residue*, const MoleculeData &moldata,
+                      const QList<Residue::Index> &idxs,
+                      const PropertyName &key)
 {
-    static void assertSameSize(int nres, int nprops);
-    
-    template<class V>
-    static QList<V> property(const MoleculeData &moldata,
-                             const QList<Residue::Index> &idxs,
-                             const PropertyName &key)
-    {
-        return GeneralSelectorHelper<ResProperty<V>,Residue::Index>::
-                            property(moldata,idxs,key);
-    }
-    
-    template<class V>
-    static QList<V> metadata(const MoleculeData &moldata,
-                             const QList<Residue::Index> &idxs,
-                             const PropertyName &metakey)
-    {
-        return GeneralSelectorHelper<ResProperty<V>,Residue::Index>::
-                            metadata(moldata,idxs,metakey);
-    }
-    
-    template<class V>
-    static QList<V> metadata(const MoleculeData &moldata,
-                             const QList<Residue::Index> &idxs,
-                             const PropertyName &key,
-                             const PropertyName &metakey)
-    {
-        return GeneralSelectorHelper<ResProperty<V>,Residue::Index>::
-                            metadata(moldata,idxs,key,metakey);
-    }
-
-    template<class V>
-    static void setProperty(MoleculeData &moldata,
-                            const QList<Residue::Index> &idxs,
-                            const QString &key,
-                            const QList<V> &values)
-    {
-        SelectorHelper<Residue>::assertSameSize(idxs.count(), values.count());
-        
-        GeneralSelectorHelper<ResProperty<V>,Residue::Index>::
-                            setProperty(moldata,idxs,key,values);
-    }
-
-    template<class V>
-    static void setMetadata(MoleculeData &moldata,
-                            const QList<Residue::Index> &idxs,
-                            const QString &metakey,
-                            const QList<V> &values)
-    {
-        SelectorHelper<Residue>::assertSameSize(idxs.count(), values.count());
-        
-        GeneralSelectorHelper<ResProperty<V>,Residue::Index>::
-                            setMetadata(moldata,idxs,metakey,values);
-    }
-
-    template<class V>
-    static void setMetadata(MoleculeData &moldata,
-                            const QList<Residue::Index> &idxs,
-                            const QString &key, const QString &metakey,
-                            const QList<V> &values)
-    {
-        SelectorHelper<Residue>::assertSameSize(idxs.count(), values.count());
-        
-        GeneralSelectorHelper<ResProperty<V>,Residue::Index>::
-                            setProperty(moldata,idxs,key,metakey,values);
-    }
-    
-    template<class V>
-    static void setProperty(MoleculeData &moldata,
-                            const QList<Residue::Index> &idxs,
-                            const QString &key,
-                            const V &value)
-    {
-        GeneralSelectorHelper<ResProperty<V>,Residue::Index>::
-                            setProperty(moldata,idxs,key,value);
-    }
-    
-    template<class V>
-    static void setMetadata(MoleculeData &moldata,
-                            const QList<Residue::Index> &idxs,
-                            const QString &metakey,
-                            const V &value)
-    {
-        GeneralSelectorHelper<ResProperty<V>,Residue::Index>::
-                            setMetadata(moldata,idxs,metakey,value);
-    }
-    
-    template<class V>
-    static void setMetadata(MoleculeData &moldata,
-                            const QList<Residue::Index> &idxs,
-                            const QString &key, const QString &metakey,
-                            const V &value)
-    {
-        GeneralSelectorHelper<ResProperty<V>,Residue::Index>::
-                            setProperty(moldata,idxs,key,metakey,value);
-    }
-};
-
+    return get_property<ResProperty<V>,Residue::Index,V>(moldata,idxs,key);
 }
 
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+QList<V> get_metadata(Residue*, const MoleculeData &moldata,
+                      const QList<Residue::Index> &idxs,
+                      const PropertyName &metakey)
+{
+    return get_metadata<ResProperty<V>,Residue::Index,V>(moldata,idxs,metakey);
 }
 
-Q_DECLARE_METATYPE(SireMol::Residue)
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+QList<V> get_metadata(Residue*, const MoleculeData &moldata,
+                      const QList<Residue::Index> &idxs,
+                      const PropertyName &key,
+                      const PropertyName &metakey)
+{
+    return get_metadata<ResProperty<V>,Residue::Index,V>(moldata,idxs,key,metakey);
+}
+
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+void set_property(Residue *ptr, MoleculeData &moldata,
+                  const QList<Residue::Index> &idxs,
+                  const QString &key,
+                  const QList<V> &values)
+{
+    assertSameSize(ptr, idxs.count(), values.count());
+    set_property<ResProperty<V>,Residue::Index,V>(moldata,idxs,key,values);
+}
+
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+void set_metadata(Residue *ptr, MoleculeData &moldata,
+                  const QList<Residue::Index> &idxs,
+                  const QString &metakey,
+                  const QList<V> &values)
+{
+    assertSameSize(ptr, idxs.count(), values.count());
+    set_metadata<ResProperty<V>,Residue::Index,V>(moldata,idxs,metakey,values);
+}
+
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+void set_metadata(Residue *ptr, MoleculeData &moldata,
+                  const QList<Residue::Index> &idxs,
+                  const QString &key, const QString &metakey,
+                  const QList<V> &values)
+{
+    assertSameSize(ptr, idxs.count(), values.count());
+    
+    set_metadata<ResProperty<V>,Residue::Index,V>(moldata,idxs,key,metakey,values);
+}
+
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+void set_property(Residue*, MoleculeData &moldata,
+                  const QList<Residue::Index> &idxs,
+                  const QString &key,
+                  const V &value)
+{
+    set_property<ResProperty<V>,Residue::Index,V>(moldata,idxs,key,value);
+}
+
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+void set_metadata(Residue*, MoleculeData &moldata,
+                  const QList<Residue::Index> &idxs,
+                  const QString &metakey,
+                  const V &value)
+{
+    set_metadata<ResProperty<V>,Residue::Index,V>(moldata,idxs,metakey,value);
+}
+
+template<class V>
+SIRE_OUTOFLINE_TEMPLATE
+void set_metadata(Residue*, MoleculeData &moldata,
+                  const QList<Residue::Index> &idxs,
+                  const QString &key, const QString &metakey,
+                  const V &value)
+{
+    set_metadata<ResProperty<V>,Residue::Index,V>(moldata,idxs,key,metakey,value);
+}
+
+} //end of namespace detail
+
+} //end of namespace SireMol
+
+Q_DECLARE_METATYPE(SireMol::Residue);
+Q_DECLARE_METATYPE(SireMol::Editor<SireMol::Residue>);
+Q_DECLARE_METATYPE(SireMol::Mover<SireMol::Residue>);
+Q_DECLARE_METATYPE(SireMol::Selector<SireMol::Residue>);
 
 SIRE_END_HEADER
 

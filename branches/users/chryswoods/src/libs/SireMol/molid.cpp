@@ -26,20 +26,3 @@
   *
 \*********************************************/
 
-#include "groupatomids.h"
-#include "atomidentifier.h"
-#include "residentifier.h"
-#include "chainidentifier.h"
-#include "segidentifier.h"
-#include "cgidentifier.h"
-
-using namespace SireMol;
-
-//////
-////// Explicitly instantiate the GroupAtomID classes
-//////
-
-template class GroupAtomID<ResID,AtomID>;
-template class GroupAtomID<ChainID,AtomID>;
-template class GroupAtomID<SegID,AtomID>;
-template class GroupAtomID<CGID,AtomID>;

@@ -28,10 +28,15 @@
 
 #include "segment.h"
 
+#include "atom.h"
+#include "molecule.h"
+
 #include "editor.hpp"
 #include "mover.hpp"
 #include "selector.hpp"
 #include "evaluator.h"
+
+#include "groupatomids.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -48,7 +53,7 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const Segment &seg)
 
     SharedDataStream sds(ds);
     
-    sds << seg.segidx << static_cast<const MoleculeView&>(Segment);
+    sds << seg.segidx << static_cast<const MoleculeView&>(seg);
 
     return ds;
 }
@@ -62,9 +67,9 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, Segment &seg)
     {
         SharedDataStream sds(ds);
         
-        sds >> seg.segidx >> static_cast<MoleculeView&>(Segment);
+        sds >> seg.segidx >> static_cast<MoleculeView&>(seg);
         
-        seg.selected_atoms = AtomSelection(seg.d->info());
+        seg.selected_atoms = AtomSelection(seg.data());
         seg.selected_atoms.select(seg.segidx);
     }
     else
@@ -87,7 +92,7 @@ Segment::Segment() : MoleculeView(), segidx( SegIdx::null() )
 Segment::Segment(const MoleculeData &moldata, const SegID &segid)
       : MoleculeView(moldata), segidx( moldata.info().segIdx(segid) )
 {
-    selected_atoms = AtomSelection(d->info());
+    selected_atoms = AtomSelection(moldata);
     selected_atoms.select(segidx);
 }
 
@@ -131,7 +136,7 @@ AtomSelection Segment::selectedAtoms() const
 }
 
 /** Return the name of this Segment */
-SegmentName Segment::name() const
+const SegName& Segment::name() const
 {
     return d->info().name(segidx);
 }
@@ -176,7 +181,7 @@ int Segment::nAtoms() const
 
 /** Return the indicies of the atoms in this segment, in the
     order that they appear in this segment */
-QList<AtomIdx> Segment::atomIdxs() const
+const QList<AtomIdx>& Segment::atomIdxs() const
 {
     return d->info().getAtomsIn(segidx);
 }
@@ -231,15 +236,15 @@ Atom Segment::atom(const AtomID &atomid) const
     \throw SireMol::missing_atom
     \throw SireError::invalid_index
 */
-AtomsInMol Segment::atoms(const AtomID &atomid) const
+Selector<Atom> Segment::atoms(const AtomID &atomid) const
 {
-    return AtomsInMol( this->data(), segidx + atomid );
+    return Selector<Atom>( this->data(), segidx + atomid );
 }
 
 /** Return all of the atoms in this Segment */
-AtomsInMol Segment::atoms() const
+Selector<Atom> Segment::atoms() const
 {
-    return AtomsInMol( this->data(), segidx.atoms() );
+    return Selector<Atom>( this->data(), segidx.atoms() );
 }
 
 /** Return the atom in this Segment that also has ID 'atomid'
@@ -258,13 +263,21 @@ Atom Segment::select(const AtomID &atomid) const
     \throw SireMol::missing_atom
     \throw SireError::invalid_index
 */
-AtomsInMol Segment::selectAll(const AtomID &atomid) const
+Selector<Atom> Segment::selectAll(const AtomID &atomid) const
 {
     return this->atoms(atomid);
 }
 
 /** Return all of the atoms in this Segment */
-AtomsInMol Segment::selectAllAtoms() const
+Selector<Atom> Segment::selectAll() const
 {
     return this->atoms();
 }
+
+/////// explicitly instantiate the templates
+template class Editor<Segment>;
+template class Mover<Segment>;
+template class Selector<Segment>;
+
+template class Editor< Selector<Segment> >;
+template class Mover< Selector<Segment> >;
