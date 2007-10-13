@@ -322,3 +322,6 @@ Selector<Atom> Residue::selectAll() const
 template class Editor<Residue>;
 template class Mover<Residue>;
 template class Selector<Residue>;
+
+template class Editor< Selector<Residue > >;
+template class Mover< Selector<Residue> >;

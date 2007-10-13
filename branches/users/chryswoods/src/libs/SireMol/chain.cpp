@@ -374,3 +374,6 @@ Selector<Residue> Chain::selectAllResidues() const
 template class Editor<Chain>;
 template class Selector<Chain>;
 template class Mover<Chain>;
+
+template class Editor< Selector<Chain> >;
+template class Mover< Selector<Chain> >;

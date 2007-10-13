@@ -30,7 +30,6 @@
 #include <QSharedData>
 
 #include "moleculedata.h"
-#include "molviewproperty.h"
 
 #include "SireBase/incremint.h"
 
@@ -387,9 +386,6 @@ void MoleculeData::setProperty(const QString &key,
     if (key.isEmpty())
         throw SireError::invalid_arg( QObject::tr(
             "You cannot set a property with an empty key!"), CODELOC );
-
-    if (value.isA<MolViewProperty>())
-        value.asA<MolViewProperty>().assertCompatibleWith(*molinfo);
         
     //now the property version number
     prop_vrsns.insert( key, vrsns->increment(key, vrsn) );
@@ -426,9 +422,6 @@ void MoleculeData::setMetadata(const QString &metakey, const Property &value)
         throw SireError::invalid_arg( QObject::tr(
             "You cannot set some metadata with an empty metakey!"), CODELOC );
 
-    if (value.isA<MolViewProperty>())
-        value.asA<MolViewProperty>().assertCompatibleWith(*molinfo);
-
     props.setMetadata(metakey, value);
 
     //increment the global version number
@@ -449,9 +442,6 @@ void MoleculeData::setMetadata(const QString &key, const QString &metakey,
     else if (metakey.isEmpty())
         throw SireError::invalid_arg( QObject::tr(
             "You cannot set some metadata with an empty metakey!"), CODELOC );
-
-    if (value.isA<MolViewProperty>())
-        value.asA<MolViewProperty>().assertCompatibleWith(*molinfo);
 
     props.setMetadata(key, metakey, value);
     

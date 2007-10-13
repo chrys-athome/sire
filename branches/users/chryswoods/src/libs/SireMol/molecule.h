@@ -29,6 +29,8 @@
 #ifndef SIREMOL_MOLECULE_H
 #define SIREMOL_MOLECULE_H
 
+#include "moleculeview.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol
@@ -42,44 +44,58 @@ QDataStream& operator>>(QDataStream&, SireMol::Molecule&);
 namespace SireMol
 {
 
+class MolID;
+class MolName;
+class MolNum;
+
+class Evaluator;
+
+template<class T>
+class Editor;
+
+template<class T>
+class Mover;
+
+template<class T>
+class Selector;
+
 class Atom;
 class CutGroup;
 class Residue;
 class Chain;
 class Segment;
 
-/**
-A Molecule represents a complete molecule. 
+/** A Molecule represents a complete molecule. 
 
-Most of the manipulation of a molecule is handled by the 'or/er' classes,
-e.g. Mover, Selector, Editer, Evaluator.
+    Most of the manipulation of a molecule is handled by the 'or/er' classes,
+    e.g. Mover, Selector, Editer, Evaluator.
 
-These classes provide additional member functions, thereby allowing me
-to keep the API of Molecule small.
+    These classes provide additional member functions, thereby allowing me
+    to keep the API of Molecule small.
 
-Examples of use include;
+    Examples of use include;
 
-mol = mol.move().translate( Vector(1,2,3) )
-point = mol.evaluate().center()
-mass = mol.evaluate().mass()
+    mol = mol.move().translate( Vector(1,2,3) )
+    point = mol.evaluate().center()
+    mass = mol.evaluate().mass()
 
-mol = mol.edit().rename( ResNum(43)[0], "ALA" ).commit()
+    mol = mol.edit().rename( ResNum(43)[0], "ALA" ).commit()
 
-Equally, we can quickly select well-defined subgroups within the
-molecule, e.g. atom(s), residue(e), chain(s), CutGroup(s) and
-segment(s), via the 'select' functions, e.g.
+    Equally, we can quickly select well-defined subgroups within the
+    molecule, e.g. atom(s), residue(e), chain(s), CutGroup(s) and
+    segment(s), via the 'select' functions, e.g.
 
-ala49 = mol.select( ResName("ala") + ResNum(49) );
+    ala49 = mol.select( ResName("ala") + ResNum(49) );
 
-or if there is more than one residue designate ALA:49
+    or if there is more than one residue designate ALA:49
 
-ala49_0 = mol.select( (ResName("ala")+ResNum(49))[0] );
+    ala49_0 = mol.select( (ResName("ala")+ResNum(49))[0] );
 
-or to get all of these residues, do
+    or to get all of these residues, do
 
-all_ala49 = mol.selectAll( ResName("ala") + ResNum(49) );
+    all_ala49 = mol.selectAll( ResName("ala") + ResNum(49) );
 
-@author Christopher Woods
+    @author Christopher Woods
 */
 class SIREMOL_EXPORT Molecule : public MoleculeView
 {
@@ -115,7 +131,7 @@ public:
     AtomSelection selectedAtoms() const;
     
     const MolName& name() const;
-    const MolNum& number() const;
+    MolNum number() const;
     
     Mover<Molecule> move() const;
     Evaluator evaluate() const;
@@ -125,13 +141,19 @@ public:
     Residue select(const ResID &resid) const;
     Chain select(const ChainID &chainid) const;
     CutGroup select(const CGID &cgid) const;
-    Segment select(const Segment &segid) const;
+    Segment select(const SegID &segid) const;
     
     Selector<Atom> selectAll(const AtomID &atomid) const;
     Selector<Residue> selectAll(const ResID &resid) const;
     Selector<Chain> selectAll(const ChainID &chainid) const;
     Selector<CutGroup> selectAll(const CGID &cgid) const;
     Selector<Segment> selectAll(const SegID &segid) const;
+    
+    Selector<Atom> selectAllAtoms() const;
+    Selector<CutGroup> selectAllCutGroups() const;
+    Selector<Residue> selectAllResidues() const;
+    Selector<Chain> selectAllChains() const;
+    Selector<Segment> selectAllSegments() const;
     
     Atom atom(const AtomID &atomid) const;
     Residue residue(const ResID &resid) const;
@@ -171,11 +193,11 @@ public:
     const Properties& properties() const;
     
     const Property& property(const PropertyName &key) const;
+                             
+    const Property& metadata(const PropertyName &metakey) const;
     
     const Property& metadata(const PropertyName &key,
                              const PropertyName &metakey) const;
-                             
-    const Property& metadata(const PropertyName &metakey) const;
 
 protected:
     void setProperty(const PropertyName &key, const Property &value);
@@ -189,7 +211,9 @@ protected:
 
 }
 
-Q_DECLARE_METATYPE(SireMol::Molecule)
+Q_DECLARE_METATYPE(SireMol::Molecule);
+Q_DECLARE_METATYPE(SireMol::Mover<SireMol::Molecule>);
+Q_DECLARE_METATYPE(SireMol::Editor<SireMol::Molecule>);
 
 SIRE_END_HEADER
 

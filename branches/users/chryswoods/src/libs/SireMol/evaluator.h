@@ -47,6 +47,7 @@ QDataStream& operator>>(QDataStream&, SireMol::Evaluator&);
 namespace SireMaths
 {
 class Sphere;
+class Vector;
 }
 
 namespace SireVol
@@ -57,7 +58,12 @@ class AABox;
 namespace SireMol
 {
 
+using SireBase::Property;
+using SireBase::PropertyMap;
+using SireBase::PropertyName;
+
 using SireMaths::Sphere;
+using SireMaths::Vector;
 
 using SireVol::AABox;
 

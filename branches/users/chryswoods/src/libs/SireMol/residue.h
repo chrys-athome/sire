@@ -277,6 +277,12 @@ void Residue::setMetadata(const QString &key, const QString &metakey,
 namespace detail
 {
 
+template<>
+inline QList<Residue::Index> getAll<Residue>(const MoleculeInfoData &molinfo)
+{
+    return molinfo.getResidues();
+}
+
 void assertSameSize(Residue*, int nres, int nprops);
     
 template<class V>
@@ -379,6 +385,9 @@ Q_DECLARE_METATYPE(SireMol::Residue);
 Q_DECLARE_METATYPE(SireMol::Editor<SireMol::Residue>);
 Q_DECLARE_METATYPE(SireMol::Mover<SireMol::Residue>);
 Q_DECLARE_METATYPE(SireMol::Selector<SireMol::Residue>);
+
+Q_DECLARE_METATYPE(SireMol::Editor< SireMol::Selector<SireMol::Residue> >);
+Q_DECLARE_METATYPE(SireMol::Mover< SireMol::Selector<SireMol::Residue> >);
 
 SIRE_END_HEADER
 

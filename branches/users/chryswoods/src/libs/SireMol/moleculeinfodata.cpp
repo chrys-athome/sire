@@ -307,7 +307,7 @@ AtomIdx MoleculeInfoData::atomIdx(const AtomID &atomid) const
 /** Return the index of the atom with CGAtomIdx 'cgatomidx' */
 AtomIdx MoleculeInfoData::atomIdx(const CGAtomIdx &cgatomidx) const
 {
-    const QVector<AtomIdx> &atomidxs 
+    const QList<AtomIdx> &atomidxs 
             = cg_by_index[cgatomidx.cutGroup().map(cg_by_index.count())].atom_indicies;
     
     return atomidxs[cgatomidx.atom().map(atomidxs.count())];
@@ -406,10 +406,10 @@ QList<ResIdx> MoleculeInfoData::getResidues() const
 }
 
 /** Return the indicies of all of the residues in the chain at index 'chainidx' */
-QList<ResIdx> MoleculeInfoData::getResiduesIn(ChainIdx chainidx) const
+const QList<ResIdx>& MoleculeInfoData::getResiduesIn(ChainIdx chainidx) const
 {
     return chains_by_index[chainidx.map(chains_by_index.count())]
-                    .res_indicies.toList();
+                    .res_indicies;
 }
 
 /** Return the indicies of all of the residues in the chains that match
@@ -422,7 +422,7 @@ QList<ResIdx> MoleculeInfoData::getResiduesIn(const ChainID &chainid) const
     
     foreach (ChainIdx chainidx, chainidxs)
     {
-        residxs += chains_by_index[chainidx].res_indicies.toList();
+        residxs += chains_by_index[chainidx].res_indicies;
     }
     
     if (chainidxs.count() > 1)
@@ -456,7 +456,7 @@ QList<AtomIdx> MoleculeInfoData::_pvt_getAtomsIn(const QList<ResIdx> &residxs) c
     
     foreach (ResIdx residx, residxs)
     {
-        atomidxs += res_by_index[residx].atom_indicies.toList();
+        atomidxs += res_by_index[residx].atom_indicies;
     }
     
     if (residxs.count() > 1)
@@ -588,9 +588,9 @@ QList<AtomIdx> MoleculeInfoData::getAtomsIn(const ChainID &chainid,
 }
                           
 /** Return the indicies of atoms in the CutGroup at index 'cgidx' */
-QList<AtomIdx> MoleculeInfoData::getAtomsIn(CGIdx cgidx) const
+const QList<AtomIdx>& MoleculeInfoData::getAtomsIn(CGIdx cgidx) const
 {
-    return cg_by_index[cgidx.map(cg_by_index.count())].atom_indicies.toList();
+    return cg_by_index[cgidx.map(cg_by_index.count())].atom_indicies;
 }
 
 /** Return the indicies of atoms in the CutGroups identified by ID 'cgid' */
@@ -602,7 +602,7 @@ QList<AtomIdx> MoleculeInfoData::getAtomsIn(const CGID &cgid) const
     
     foreach (CGIdx cgidx, cgidxs)
     {
-        atomidxs += cg_by_index[cgidx].atom_indicies.toList();
+        atomidxs += cg_by_index[cgidx].atom_indicies;
     }
     
     BOOST_ASSERT( not atomidxs.isEmpty() );
@@ -614,9 +614,9 @@ QList<AtomIdx> MoleculeInfoData::getAtomsIn(const CGID &cgid) const
 }
 
 /** Return the indicies of the atoms in the segment at index 'segidx' */
-QList<AtomIdx> MoleculeInfoData::getAtomsIn(SegIdx segidx) const
+const QList<AtomIdx>& MoleculeInfoData::getAtomsIn(SegIdx segidx) const
 {
-    return seg_by_index[segidx.map(seg_by_index.count())].atom_indicies.toList();
+    return seg_by_index[segidx.map(seg_by_index.count())].atom_indicies;
 }
 
 /** Return the indicies of atoms in the segments that match the ID 'segid' */
@@ -628,7 +628,7 @@ QList<AtomIdx> MoleculeInfoData::getAtomsIn(const SegID &segid) const
     
     foreach (SegIdx segidx, segidxs)
     {
-        atomidxs += seg_by_index[segidx].atom_indicies.toList();
+        atomidxs += seg_by_index[segidx].atom_indicies;
     }
     
     BOOST_ASSERT( not atomidxs.isEmpty() );
@@ -736,35 +736,85 @@ CGIdx MoleculeInfoData::parentCutGroup(const AtomID &atomid) const
     return atoms_by_index[this->atomIdx(atomid)].cgatomidx.cutGroup();
 }
 
-bool MoleculeInfoData::contains(ResIdx residx, AtomIdx atomidx) const;
-bool MoleculeInfoData::contains(ChainIdx chainidx, AtomIdx atomidx) const;
-bool MoleculeInfoData::contains(SegIdx segidx, AtomIdx atomidx) const;
-bool MoleculeInfoData::contains(CGIdx cgidx, AtomIdx atomidx) const;
-bool MoleculeInfoData::contains(ChainIdx chainidx, ResIdx residx) const;
-
-bool MoleculeInfoData::containsAll(ResIdx residx, const AtomID &atomid) const;
-bool MoleculeInfoData::containsAll(ChainIdx chainidx, const AtomID &atomid) const;
-bool MoleculeInfoData::containsAll(SegIdx segidx, const AtomID &atomid) const;
-bool MoleculeInfoData::containsAll(CGIdx cgidx, const AtomID &atomid) const;
-bool MoleculeInfoData::containsAll(ChainIdx chainidx, const ResID &resid) const;
-
-/** Return whether or not the residue at index 'residx' contains any of
-    the atoms identified by the ID 'atomid' */
-bool MoleculeInfoData::containsSome(ResIdx residx, const AtomID &atomid) const
+/** Return whether the residue at index 'residx' contains the atom 
+    at index 'atomidx'
+    
+    \throw SireError::invalid_index
+*/
+bool MoleculeInfoData::contains(ResIdx residx, AtomIdx atomidx) const
 {
+    return res_by_index[residx.map(res_by_index.count())]
+               .atom_indicies.contains( AtomIdx(atomidx.map(atoms_by_index.count())) );
+}
+
+/** Return whether the chain at index 'chainidx' contains the atom
+    at index 'atomidx'
+    
+    \throw SireError::invalid_index
+*/
+bool MoleculeInfoData::contains(ChainIdx chainidx, AtomIdx atomidx) const
+{
+    foreach (ResIdx residx, chains_by_index[chainidx.map(chains_by_index.count())]
+                                    .res_indicies)
+    {
+        if (this->contains(residx, atomidx))
+            return true;
+    }
+    
+    return false;
+}
+
+/** Return whether the segment at index 'segidx' contains the atom
+    at index 'atomidx' 
+    
+    \throw SireError::invalid_index
+*/
+bool MoleculeInfoData::contains(SegIdx segidx, AtomIdx atomidx) const
+{
+    return seg_by_index[segidx.map(seg_by_index.count())]
+              .atom_indicies.contains( AtomIdx(atomidx.map(atoms_by_index.count())) );
+}
+
+/** Return whether the CutGroup at index 'cgidx' contains the atom at 
+    index 'atomidx'
+    
+    \throw SireError::invalid_index
+*/
+bool MoleculeInfoData::contains(CGIdx cgidx, AtomIdx atomidx) const
+{
+    return cg_by_index[cgidx.map(cg_by_index.count())]
+            .atom_indicies.contains( AtomIdx(atomidx.map(atoms_by_index.count())) );
+}
+
+/** Return whether the chain at index 'chainidx' contains the residue
+    at index 'residx'
+    
+    \throw SireError::invalid_index
+*/
+bool MoleculeInfoData::contains(ChainIdx chainidx, ResIdx residx) const
+{
+    return chains_by_index[chainidx.map(chains_by_index.count())]
+            .res_indicies.contains( ResIdx(residx.map(res_by_index.count())) );
+}
+
+/** Return whether the residue at index 'residx' contains all of the 
+    atoms that match the ID 'atomid'
+    
+    \throw SireError::invalid_index
+*/
+bool MoleculeInfoData::contains(ResIdx residx, const AtomID &atomid) const
+{
+    residx = ResIdx( residx.map(res_by_index.count()) );
+
     try
     {
-        QList<AtomIdx> atomidxs = atomid.map(*this);
-        
-        const QList<AtomIdx> &res_atoms = this->getAtomIdxs(residx);
-        
-        foreach (AtomIdx atomidx, atomidxs)
+        foreach(AtomIdx atomidx, atomid.map(*this))
         {
-            if (res_atoms.contains(atomidx))
-                return true;
+            if (not this->contains(residx, atomidx))
+                return false;
         }
         
-        return false;
+        return true;
     }
     catch(...)
     {
@@ -772,10 +822,113 @@ bool MoleculeInfoData::containsSome(ResIdx residx, const AtomID &atomid) const
     }
 }
 
-bool MoleculeInfoData::containsSome(ChainIdx chainidx, const AtomID &atomid) const;
-bool MoleculeInfoData::containsSome(SegIdx segidx, const AtomID &atomid) const;
-bool MoleculeInfoData::containsSome(CGIdx cgidx, const AtomID &atomid) const;
-bool MoleculeInfoData::containsSome(ChainIdx chainidx, const ResID &resid) const;
+/** Return whether the chain at index 'chainidx' contains all of the 
+    atoms identified by 'atomid'
+    
+    \throw SireError::invalid_index
+*/
+bool MoleculeInfoData::contains(ChainIdx chainidx, const AtomID &atomid) const
+{
+    chainidx = ChainIdx( chainidx.map(chains_by_index.count()) );
+    
+    try
+    {
+        foreach (AtomIdx atomidx, atomid.map(*this))
+        {
+            if (not this->contains(chainidx,atomidx))
+                return false;
+        }
+        
+        return true;
+    }
+    catch(...)
+    {
+        return false;
+    }
+}
+
+/** Return whether the segment at index 'segid' contains all of the 
+    atoms identified by 'atomid'
+    
+    \throw SireError::invalid_index
+*/
+bool MoleculeInfoData::contains(SegIdx segidx, const AtomID &atomid) const
+{
+    segidx = SegIdx( segidx.map(seg_by_index.count()) );
+    
+    try
+    {
+        foreach( AtomIdx atomidx, atomid.map(*this) )
+        {
+            if (not this->contains(segidx, atomidx))
+                return false;
+        }
+        
+        return true;
+    }
+    catch(...)
+    {
+        return false;
+    }
+}
+
+/** Return whether the CutGroup at index 'cgidx' contains all of the
+    atom identified by 'atomid' 
+    
+    \throw SireError::invalid_index
+*/
+bool MoleculeInfoData::contains(CGIdx cgidx, const AtomID &atomid) const
+{
+    cgidx = CGIdx( cgidx.map(cg_by_index.count()) );
+    
+    try
+    {
+        foreach(AtomIdx atomidx, atomid.map(*this))
+        {
+            if (not this->contains(cgidx, atomidx))
+                return false;
+        }
+        
+        return true;
+    }
+    catch(...)
+    {
+        return false;
+    }
+}
+
+/** Return whether the chain at index 'chainidx' contains all of 
+    the residues identified by 'resid'
+    
+    \throw SireError::invalid_index
+*/
+bool MoleculeInfoData::contains(ChainIdx chainidx, const ResID &resid) const
+{
+    chainidx = ChainIdx( chainidx.map(chains_by_index.count()) );
+    
+    try
+    {
+        foreach (ResIdx residx, resid.map(*this))
+        {
+            if (not this->contains(chainidx, residx))
+                return false;
+        }
+        
+        return true;
+    }
+    catch(...)
+    {
+        return false;
+    }
+}
+
+/** Return whether or not the residue at index 'residx' contains any of
+    the atoms identified by the ID 'atomid' */
+//bool MoleculeInfoData::intersects(ResIdx residx, const AtomID &atomid) const;
+//bool MoleculeInfoData::intersects(ChainIdx chainidx, const AtomID &atomid) const;
+//bool MoleculeInfoData::intersects(SegIdx segidx, const AtomID &atomid) const;
+//bool MoleculeInfoData::intersects(CGIdx cgidx, const AtomID &atomid) const;
+//bool MoleculeInfoData::intersects(ChainIdx chainidx, const ResID &resid) const;
 
 /** Return the number of atoms in the molecule */
 int MoleculeInfoData::nAtoms() const

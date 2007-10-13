@@ -54,6 +54,7 @@ public:
     Selector();
     
     Selector(const T &view);
+
     Selector(const MoleculeData &moldata);
     Selector(const MoleculeData &moldata, const typename T::ID &viewid);
 
@@ -196,12 +197,15 @@ SIRE_OUTOFLINE_TEMPLATE
 Selector<T>::Selector() : MoleculeView()
 {}
 
-/** Construct an empty set of groups for the molecule whose
+/** Construct the set of all groups for the molecule whose
     data is in 'moldata' */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 Selector<T>::Selector(const MoleculeData &moldata) : MoleculeView(moldata)
-{}
+{
+    idxs = detail::getAll<T>(moldata.info());
+    idxs_set = idxs.toSet();
+}
 
 /** Construct the set that contains only the view 'view' */
 template<class T>
@@ -658,7 +662,7 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 Selector<T> Selector<T>::invert() const
 {
-    QList<typename T::Index> all_idxs = T::Index::null().map(d->info());
+    QList<typename T::Index> all_idxs = detail::getAll<T>(d->info());
     
     Selector<T> ret(*this);
     ret.idxs.clear();

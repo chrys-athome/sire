@@ -273,6 +273,12 @@ namespace detail
 {
 
 void assertSameSize(Segment*, int nres, int nprops);
+
+template<>
+inline QList<SegIdx> getAll<Segment>(const MoleculeInfoData &molinfo)
+{
+    return molinfo.getSegments();
+}
     
 template<class V>
 SIRE_OUTOFLINE_TEMPLATE

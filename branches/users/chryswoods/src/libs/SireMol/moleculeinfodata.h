@@ -76,6 +76,12 @@ QDataStream& operator>>(QDataStream&, SireMol::MoleculeInfoData&);
 namespace SireMol
 {
 
+class Atom;
+class CutGroup;
+class Residue;
+class Chain;
+class Segment;
+
 /** This is the implicitly shared class that is used by MoleculeInfo,
     ResidueInfo, SegmentInfo and CutGroupInfo to provide information
     about the arrangement of atoms in a molecule, specifically
@@ -200,17 +206,17 @@ public:
     bool contains(CGIdx cgidx, AtomIdx atomidx) const;
     bool contains(ChainIdx chainidx, ResIdx residx) const;
     
-    bool containsAll(ResIdx residx, const AtomID &atomid) const;
-    bool containsAll(ChainIdx chainidx, const AtomID &atomid) const;
-    bool containsAll(SegIdx segidx, const AtomID &atomid) const;
-    bool containsAll(CGIdx cgidx, const AtomID &atomid) const;
-    bool containsAll(ChainIdx chainidx, const ResID &resid) const;
+    bool contains(ResIdx residx, const AtomID &atomid) const;
+    bool contains(ChainIdx chainidx, const AtomID &atomid) const;
+    bool contains(SegIdx segidx, const AtomID &atomid) const;
+    bool contains(CGIdx cgidx, const AtomID &atomid) const;
+    bool contains(ChainIdx chainidx, const ResID &resid) const;
 
-    bool containsSome(ResIdx residx, const AtomID &atomid) const;
-    bool containsSome(ChainIdx chainidx, const AtomID &atomid) const;
-    bool containsSome(SegIdx segidx, const AtomID &atomid) const;
-    bool containsSome(CGIdx cgidx, const AtomID &atomid) const;
-    bool containsSome(ChainIdx chainidx, const ResID &resid) const;
+    bool intersects(ResIdx residx, const AtomID &atomid) const;
+    bool intersects(ChainIdx chainidx, const AtomID &atomid) const;
+    bool intersects(SegIdx segidx, const AtomID &atomid) const;
+    bool intersects(CGIdx cgidx, const AtomID &atomid) const;
+    bool intersects(ChainIdx chainidx, const ResID &resid) const;
     
     int nAtoms() const;
     
@@ -545,7 +551,16 @@ QList<ResIdx> ResIn<GROUP>::map(const MoleculeInfoData &molinfo) const
     }
 }
 
-}
+namespace detail
+{
+
+template<class T>
+QList<typename T::Index> getAll(const MoleculeInfoData &molinfo);
+
+} //end of namespace detail
+
+} //end of namespace SireMol 
+
 
 Q_DECLARE_METATYPE(SireMol::MoleculeInfoData);
 

@@ -27,6 +27,19 @@
 \*********************************************/
 
 #include "molecule.h"
+#include "segment.h"
+#include "chain.h"
+#include "residue.h"
+#include "cutgroup.h"
+#include "atom.h"
+
+#include "molviewproperty.h"
+
+#include "evaluator.h"
+
+#include "mover.hpp"
+#include "selector.hpp"
+#include "editor.hpp"
 
 using namespace SireMol;
 
@@ -58,19 +71,7 @@ Molecule& Molecule::operator=(const Molecule &other)
 /** Return which atoms are selected in this view */
 AtomSelection Molecule::selectedAtoms() const
 {
-    return AtomSelection(d->info());
-}
-
-/** Update this view to use the new version - this will
-    throw an exception if the new version is incompatible with
-    this view 
-    
-    \throw SireError::incompatible_error
-*/
-void Molecule::update(const MoleculeView &view)
-{
-    view.assertSameMolecule(*this); 
-    d = view.d;
+    return AtomSelection(*d);
 }
 
 /** Return the name of this molecule */
@@ -81,19 +82,11 @@ const MolName& Molecule::name() const
 
 /** Return the number of this molecule - this is used
     to identify the molecule */
-const MolNum& Molecule::number() const
+MolNum Molecule::number() const
 {
-    return d->info().number();
+    return d->number();
 }
-
-/** Return the info object that contains the information
-    about the names of the parts of the molecule, and how
-    they are grouped together */
-const MoleculeInfo& Molecule::info() const
-{
-    return d->info();
-}
-
+ 
 /** Return a Mover that moves all of the atoms in
     this molecule */
 Mover<Molecule> Molecule::move() const
@@ -103,22 +96,15 @@ Mover<Molecule> Molecule::move() const
 
 /** Return an Evaluator that evaluates values using
     all of the atoms in this molecule */
-Evaluator<Molecule> Molecule::evaluate() const
+Evaluator Molecule::evaluate() const
 {
-    return Evaluator<Molecule>(*this);
+    return Evaluator(*this);
 }
 
 /** Return an Editor that can edit any part of this molecule */
 Editor<Molecule> Molecule::edit() const
 {
     return Editor<Molecule>(*this);
-}
-
-/** Return a Selector that can be used to modify the atoms 
-    selected in this molecule */
-Selector<Molecule> Molecule::selection() const
-{
-    return Selector<Molecule>(*this);
 }
 
 /** Return the atom identified by 'atomid'
@@ -129,7 +115,7 @@ Selector<Molecule> Molecule::selection() const
 */
 Atom Molecule::select(const AtomID &atomid) const
 {
-    return Atom(*this, atomid);
+    return Atom(*d, atomid);
 }
 
 /** Return the residue identified by 'resid'
@@ -140,7 +126,7 @@ Atom Molecule::select(const AtomID &atomid) const
 */
 Residue Molecule::select(const ResID &resid) const
 {
-    return Residue(*this, resid);
+    return Residue(*d, resid);
 }
 
 /** Return the chain identified by 'chainid'
@@ -151,7 +137,7 @@ Residue Molecule::select(const ResID &resid) const
 */
 Chain Molecule::select(const ChainID &chainid) const
 {
-    return Chain(*this, chainid);
+    return Chain(*d, chainid);
 }
 
 /** Return the CutGroup identified by 'cgid' 
@@ -162,7 +148,7 @@ Chain Molecule::select(const ChainID &chainid) const
 */
 CutGroup Molecule::select(const CGID &cgid) const
 {
-    return CutGroup(*this, cgid);
+    return CutGroup(*d, cgid);
 }
 
 /** Return the segment identified by 'segid'
@@ -171,9 +157,9 @@ CutGroup Molecule::select(const CGID &cgid) const
     \throw SireMol::duplicate_segment
     \throw SireError::invalid_index
 */
-Segment Molecule::select(const Segment &segid) const
+Segment Molecule::select(const SegID &segid) const
 {
-    return Segment(*this, segid);
+    return Segment(*d, segid);
 }
 
 /** Return the atom(s) in this molecule that match 'atomid'
@@ -181,9 +167,9 @@ Segment Molecule::select(const Segment &segid) const
     \throw SireMol::missing_atom
     \throw SireError::invalid_index
 */
-AtomsInMol Molecule::selectAll(const AtomID &atomid) const
+Selector<Atom> Molecule::selectAll(const AtomID &atomid) const
 {
-    return AtomsInMol(*this, atomid);
+    return Selector<Atom>(*d, atomid);
 }
 
 /** Return the residue(s) in this molecule that match 'resid'
@@ -191,9 +177,9 @@ AtomsInMol Molecule::selectAll(const AtomID &atomid) const
     \throw SireMol::missing_residue
     \throw SireError::invalid_index
 */
-ResiduesInMol Molecule::selectAll(const ResID &resid) const
+Selector<Residue> Molecule::selectAll(const ResID &resid) const
 {
-    return ResiduesInMol(*this, resid);
+    return Selector<Residue>(*d, resid);
 }
 
 /** Return the chain(s) in this molecule that match 'chainid'
@@ -201,9 +187,9 @@ ResiduesInMol Molecule::selectAll(const ResID &resid) const
     \throw SireMol::missing_chain
     \throw SireError::invalid_index
 */
-ChainsInMol Molecule::selectAll(const ChainID &chainid) const
+Selector<Chain> Molecule::selectAll(const ChainID &chainid) const
 {
-    return ChainsInMol(*this, chainid);
+    return Selector<Chain>(*d, chainid);
 }
 
 /** Return the CutGroup(s) in this molecule that match 'cgid' 
@@ -211,9 +197,9 @@ ChainsInMol Molecule::selectAll(const ChainID &chainid) const
     \throw SireMol::missing_cutgroup
     \throw SireError::invalid_index
 */
-CutGroupsInMol Molecule::selectAll(const CGID &cgid) const
+Selector<CutGroup> Molecule::selectAll(const CGID &cgid) const
 {
-    return CutGroupsInMol(*this, cgid);
+    return Selector<CutGroup>(*d, cgid);
 }
 
 /** Return the segment(s) in this molecule that match 'segid'
@@ -221,9 +207,229 @@ CutGroupsInMol Molecule::selectAll(const CGID &cgid) const
     \throw SireMol::missing_segment
     \throw SireMol::invalid_index
 */
-SegmentsInMol Molecule::selectAll(const SegID &segid) const
+Selector<Segment> Molecule::selectAll(const SegID &segid) const
 {
-    return SegmentsInMol(*this, segid);
+    return Selector<Segment>(*d, segid);
+}
+   
+/** Return the selection of all atoms in the molecule */ 
+Selector<Atom> Molecule::selectAllAtoms() const
+{
+    return Selector<Atom>(*d);
+}
+
+/** Return the selection of all CutGroups in the molecule */
+Selector<CutGroup> Molecule::selectAllCutGroups() const
+{
+    return Selector<CutGroup>(*d);
+}
+
+/** Return the selection of all residues in the molecule */
+Selector<Residue> Molecule::selectAllResidues() const
+{
+    return Selector<Residue>(*d);
+}
+
+/** Return the selection of all chains in the molecule */
+Selector<Chain> Molecule::selectAllChains() const
+{
+    return Selector<Chain>(*d);
+}
+
+/** Return the selection of all segments in the molecule */
+Selector<Segment> Molecule::selectAllSegments() const
+{
+    return Selector<Segment>(*d);
+}
+
+/** Return the atom at ID == atomid
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+Atom Molecule::atom(const AtomID &atomid) const
+{
+    return this->select(atomid);
+}
+
+/** Return the residue identified by 'resid'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::duplicate_residue
+    \throw SireError::invalid_index
+*/
+Residue Molecule::residue(const ResID &resid) const
+{
+    return this->select(resid);
+}
+
+/** Return the chain identified by 'chainid'
+
+    \throw SireMol::missing_chain
+    \throw SireMol::duplicate_chain
+    \throw SireError::invalid_index
+*/
+Chain Molecule::chain(const ChainID &chainid) const
+{
+    return this->select(chainid);
+}
+
+/** Return the CutGroup identified by 'cgid' 
+
+    \throw SireMol::missing_cutgroup
+    \throw SireMol::duplicate_cutgroup
+    \throw SireError::invalid_index
+*/
+CutGroup Molecule::cutGroup(const CGID &cgid) const
+{
+    return this->select(cgid);
+}
+
+/** Return the segment identified by 'segid'
+
+    \throw SireMol::missing_segment
+    \throw SireMol::duplicate_segment
+    \throw SireError::invalid_index
+*/
+Segment Molecule::segment(const SegID &segid) const
+{
+    return this->select(segid);
+}
+
+/** Return the atom(s) in this molecule that match 'atomid'
+
+    \throw SireMol::missing_atom
+    \throw SireError::invalid_index
+*/
+Selector<Atom> Molecule::atoms(const AtomID &atomid) const
+{
+    return this->selectAll(atomid);
+}
+
+/** Return the atom(s) in this molecule that 
+    are in the residue(s) that match 'resid'
+
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+*/
+Selector<Atom> Molecule::atoms(const ResID &resid) const
+{
+    return this->selectAll(resid.atoms());
+}
+
+/** Return the atom(s) in this molecule that
+    are in the chain(s) that match 'chainid'
+
+    \throw SireMol::missing_chain
+    \throw SireError::invalid_index
+*/
+Selector<Atom> Molecule::atoms(const ChainID &chainid) const
+{
+    return this->selectAll(chainid.atoms());
+}
+
+/** Return the atom(s) in this molecule that 
+    are in the CutGroup(s) that match 'cgid' 
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+Selector<Atom> Molecule::atoms(const CGID &cgid) const
+{
+    return this->selectAll(cgid.atoms());
+}
+
+/** Return the atom(s) in this molecule that
+    are in the segment(s) that match 'segid'
+
+    \throw SireMol::missing_segment
+    \throw SireMol::invalid_index
+*/
+Selector<Atom> Molecule::atoms(const SegID &segid) const
+{
+    return this->selectAll(segid.atoms());
+}
+
+/** Return all of the atoms in this molecule */
+Selector<Atom> Molecule::atoms() const
+{
+    return this->selectAllAtoms();
+}
+
+/** Return the residue(s) in this molecule that match 'resid'
+
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+*/
+Selector<Residue> Molecule::residues(const ResID &resid) const
+{
+    return this->selectAll(resid);
+}
+
+/** Return the residue(s) in this molecule that 
+    are in the chain(s) that match 'chainid'
+
+    \throw SireMol::missing_chain
+    \throw SireError::invalid_index
+*/
+Selector<Residue> Molecule::residues(const ChainID &chainid) const
+{
+    return this->selectAll(chainid.residues());
+}
+
+/** Return all of the residues in this molecule */
+Selector<Residue> Molecule::residues() const
+{
+    return this->selectAllResidues();
+}
+
+/** Return the chain(s) in this molecule that match 'chainid'
+
+    \throw SireMol::missing_chain
+    \throw SireError::invalid_index
+*/
+Selector<Chain> Molecule::chains(const ChainID &chainid) const
+{
+    return this->selectAll(chainid);
+}
+
+/** Return all of the chains in this molecule */
+Selector<Chain> Molecule::chains()
+{
+    return this->selectAllChains();
+}
+
+/** Return the CutGroup(s) in this molecule that match 'cgid' 
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+Selector<CutGroup> Molecule::cutGroups(const CGID &cgid) const
+{
+    return this->selectAll(cgid);
+}
+
+/** Return all of the CutGroups in this molecule */
+Selector<CutGroup> Molecule::cutGroups()
+{
+    return this->selectAllCutGroups();
+}
+
+/** Return the segment(s) in this molecule that match 'segid'
+
+    \throw SireMol::missing_segment
+    \throw SireMol::invalid_index
+*/
+Selector<Segment> Molecule::segments(const SegID &segid) const
+{
+    return this->selectAll(segid);
+}
+
+/** Return all of the segments in this molecule */
+Selector<Segment> Molecule::segments()
+{
+    return this->selectAllSegments();
 }
 
 /** Return all of the properties of this molecule */
@@ -236,16 +442,75 @@ const Properties& Molecule::properties() const
 
     \throw SireMol::missing_property
 */
-const Property& Molecule::property(const QString &key) const
+const Property& Molecule::property(const PropertyName &key) const
 {
     return d->property(key);
 }
 
-/** Return the metadata for the property associated with the key 'key'
+/** Return the metadata for the metakey 'metakey'
 
     \throw SireMol::missing_property
 */
-const Properties& Molecule::metadata(const QString &key) const
+const Property& Molecule::metadata(const PropertyName &metakey) const
 {
-    return d->metadata(key);
+    return d->metadata(metakey);
 }
+
+/** Return the metadata for the metakey 'metakey' for 
+    the property at key 'key'
+    
+    \throw SireBase::missing_property
+*/
+const Property& Molecule::metadata(const PropertyName &key,
+                                   const PropertyName &metakey) const
+{
+    return d->metadata(key, metakey);
+}
+
+/** Set the property at key 'key' to the value 'value'. If this
+    is a property derived from MolViewProperty then this 
+    property is checked to ensure it is compatible with this molecule
+    
+    \throw SireError::incompatible_error
+*/
+void Molecule::setProperty(const PropertyName &key, const Property &value)
+{
+    if (value.isA<MolViewProperty>())
+        value.asA<MolViewProperty>().assertCompatibleWith(d->info());
+        
+    d->setProperty(key, value);
+}
+
+/** Set the metadata at metakey 'metakey' to the value 'value'.
+    If this is a property derived from MolViewProperty then this 
+    property is checked to ensure it is compatible with this molecule
+    
+    \throw SireError::incompatible_error
+*/
+void Molecule::setMetadata(const PropertyName &metakey,
+                           const Property &value)
+{
+    if (value.isA<MolViewProperty>())
+        value.asA<MolViewProperty>().assertCompatibleWith(d->info());
+        
+    d->setMetadata(metakey, value);
+}
+
+/** Set the metadata at metakey 'metakey' to the value 'value'.
+    If this is a property derived from MolViewProperty then this 
+    property is checked to ensure it is compatible with this molecule
+    
+    \throw SireError::incompatible_error
+*/
+void Molecule::setMetadata(const PropertyName &key, const PropertyName &metakey,
+                           const Property &value)
+{
+    if (value.isA<MolViewProperty>())
+        value.asA<MolViewProperty>().assertCompatibleWith(d->info());
+        
+    d->setMetadata(key, metakey, value);
+}
+
+///// explicitly instantiate manipulator classes
+template class Editor<Molecule>;
+template class Mover<Molecule>;

@@ -272,6 +272,12 @@ namespace detail
 
 void assertSameSize(CutGroup*, int nres, int nprops);
     
+template<>
+inline QList<CGIdx> getAll<CutGroup>(const MoleculeInfoData &molinfo)
+{
+    return molinfo.getCutGroups();
+}
+    
 template<class V>
 SIRE_OUTOFLINE_TEMPLATE
 QList<V> get_property(CutGroup*, const MoleculeData &moldata,
@@ -372,6 +378,9 @@ Q_DECLARE_METATYPE(SireMol::CutGroup);
 Q_DECLARE_METATYPE(SireMol::Editor<SireMol::CutGroup>);
 Q_DECLARE_METATYPE(SireMol::Mover<SireMol::CutGroup>);
 Q_DECLARE_METATYPE(SireMol::Selector<SireMol::CutGroup>);
+
+Q_DECLARE_METATYPE(SireMol::Editor< SireMol::Selector<SireMol::CutGroup> >);
+Q_DECLARE_METATYPE(SireMol::Mover< SireMol::Selector<SireMol::CutGroup> >);
 
 SIRE_END_HEADER
 

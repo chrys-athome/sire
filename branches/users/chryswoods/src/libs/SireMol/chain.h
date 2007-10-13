@@ -295,6 +295,12 @@ namespace detail
 
 void assertSameSize(Chain*, int nres, int nprops);
     
+template<>
+inline QList<ChainIdx> getAll<Chain>(const MoleculeInfoData &molinfo)
+{
+    return molinfo.getChains();
+}
+    
 template<class V>
 SIRE_OUTOFLINE_TEMPLATE
 QList<V> get_property(Chain*, const MoleculeData &moldata,
@@ -395,6 +401,9 @@ Q_DECLARE_METATYPE(SireMol::Chain);
 Q_DECLARE_METATYPE(SireMol::Editor<SireMol::Chain>);
 Q_DECLARE_METATYPE(SireMol::Mover<SireMol::Chain>);
 Q_DECLARE_METATYPE(SireMol::Selector<SireMol::Chain>);
+
+Q_DECLARE_METATYPE(SireMol::Editor< SireMol::Selector<SireMol::Chain> >);
+Q_DECLARE_METATYPE(SireMol::Mover< SireMol::Selector<SireMol::Chain> >);
 
 SIRE_END_HEADER
 

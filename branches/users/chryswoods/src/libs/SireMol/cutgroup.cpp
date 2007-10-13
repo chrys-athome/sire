@@ -267,3 +267,6 @@ Selector<Atom> CutGroup::selectAll() const
 template class Editor<CutGroup>;
 template class Mover<CutGroup>;
 template class Selector<CutGroup>;
+
+template class Editor< Selector<CutGroup> >;
+template class Mover< Selector<CutGroup> >;

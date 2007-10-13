@@ -260,12 +260,13 @@ void Atom::setMetadata(const QString &key, const QString &metakey, const T &valu
 namespace detail
 {
 
-/** Instantiation of a helper class that is used by Selector<Atom> to
-    get and set the properties and metadata of lots of atoms at once 
-    
-    @author Christopher Woods
-*/
 void assertSameSize(Atom*, int nats, int nprops);
+
+template<>
+QList<AtomIdx> getAll<Atom>(const MoleculeInfoData &molinfo)
+{
+    return molinfo.getAtoms();
+}
 
 template<class V>
 SIRE_OUTOFLINE_TEMPLATE
@@ -492,6 +493,9 @@ Q_DECLARE_METATYPE(SireMol::Atom);
 Q_DECLARE_METATYPE(SireMol::Mover<SireMol::Atom>);
 Q_DECLARE_METATYPE(SireMol::Editor<SireMol::Atom>);
 Q_DECLARE_METATYPE(SireMol::Selector<SireMol::Atom>);
+
+Q_DECLARE_METATYPE(SireMol::Mover< SireMol::Selector<SireMol::Atom> >);
+Q_DECLARE_METATYPE(SireMol::Editor< SireMol::Selector<SireMol::Atom> >);
 
 SIRE_END_HEADER
 

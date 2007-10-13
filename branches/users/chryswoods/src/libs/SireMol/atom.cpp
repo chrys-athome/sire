@@ -235,3 +235,5 @@ template class Editor<Atom>;
 template class Selector<Atom>;
 template class Mover<Atom>;
 
+template class Editor< Selector<Atom> >;
+template class Mover< Selector<Atom> >;
