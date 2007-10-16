@@ -209,25 +209,25 @@ public:
     AtomSelection deselect(SegIdx segidx) const;
     AtomSelection selectOnly(SegIdx segidx) const;
 
-    AtomSelection select(const QSet<AtomIdx> &atomidxs) const;
-    AtomSelection deselect(const QSet<AtomIdx> &atomidxs) const;
-    AtomSelection selectOnly(const QSet<AtomIdx> &atomidxs) const;
+    AtomSelection select(const QList<AtomIdx> &atomidxs) const;
+    AtomSelection deselect(const QList<AtomIdx> &atomidxs) const;
+    AtomSelection selectOnly(const QList<AtomIdx> &atomidxs) const;
 
-    AtomSelection select(const QSet<CGIdx> &cgidxs) const;
-    AtomSelection deselect(const QSet<CGIdx> &cgidxs) const;
-    AtomSelection selectOnly(const QSet<CGIdx> &cgidxs) const;
+    AtomSelection select(const QList<CGIdx> &cgidxs) const;
+    AtomSelection deselect(const QList<CGIdx> &cgidxs) const;
+    AtomSelection selectOnly(const QList<CGIdx> &cgidxs) const;
 
-    AtomSelection select(const QSet<ResIdx> &residxs) const;
-    AtomSelection deselect(const QSet<ResIdx> &residxs) const;
-    AtomSelection selectOnly(const QSet<ResIdx> &residxs) const;
+    AtomSelection select(const QList<ResIdx> &residxs) const;
+    AtomSelection deselect(const QList<ResIdx> &residxs) const;
+    AtomSelection selectOnly(const QList<ResIdx> &residxs) const;
 
-    AtomSelection select(const QSet<ChainIdx> &chainidxs) const;
-    AtomSelection deselect(const QSet<ChainIdx> &chainidxs) const;
-    AtomSelection selectOnly(const QSet<ChainIdx> &chainidxs) const;
+    AtomSelection select(const QList<ChainIdx> &chainidxs) const;
+    AtomSelection deselect(const QList<ChainIdx> &chainidxs) const;
+    AtomSelection selectOnly(const QList<ChainIdx> &chainidxs) const;
 
-    AtomSelection select(const QSet<SegIdx> &segidxs) const;
-    AtomSelection deselect(const QSet<SegIdx> &segidxs) const;
-    AtomSelection selectOnly(const QSet<SegIdx> &segidxs) const;
+    AtomSelection select(const QList<SegIdx> &segidxs) const;
+    AtomSelection deselect(const QList<SegIdx> &segidxs) const;
+    AtomSelection selectOnly(const QList<SegIdx> &segidxs) const;
 
     AtomSelection select(const AtomID &atomid) const;
     AtomSelection deselect(const AtomID &atomid) const;
@@ -289,11 +289,11 @@ public:
     AtomSelection intersect(ChainIdx chainidx) const;
     AtomSelection intersect(SegIdx segidx) const;
 
-    AtomSelection intersect(const QSet<AtomIdx> &atomidx) const;
-    AtomSelection intersect(const QSet<CGIdx> &cgidx) const;
-    AtomSelection intersect(const QSet<ResIdx> &residx) const;
-    AtomSelection intersect(const QSet<ChainIdx> &chainidx) const;
-    AtomSelection intersect(const QSet<SegIdx> &segidx) const;
+    AtomSelection intersect(const QList<AtomIdx> &atomidx) const;
+    AtomSelection intersect(const QList<CGIdx> &cgidx) const;
+    AtomSelection intersect(const QList<ResIdx> &residx) const;
+    AtomSelection intersect(const QList<ChainIdx> &chainidx) const;
+    AtomSelection intersect(const QList<SegIdx> &segidx) const;
     
     AtomSelection intersect(const AtomID &atomid) const;
     AtomSelection intersect(const CGID &cgid) const;
@@ -309,11 +309,11 @@ public:
     AtomSelection unite(ChainIdx chainidx) const;
     AtomSelection unite(SegIdx segidx) const;
 
-    AtomSelection unite(const QSet<AtomIdx> &atomidx) const;
-    AtomSelection unite(const QSet<CGIdx> &cgidx) const;
-    AtomSelection unite(const QSet<ResIdx> &residx) const;
-    AtomSelection unite(const QSet<ChainIdx> &chainidx) const;
-    AtomSelection unite(const QSet<SegIdx> &segidx) const;
+    AtomSelection unite(const QList<AtomIdx> &atomidx) const;
+    AtomSelection unite(const QList<CGIdx> &cgidx) const;
+    AtomSelection unite(const QList<ResIdx> &residx) const;
+    AtomSelection unite(const QList<ChainIdx> &chainidx) const;
+    AtomSelection unite(const QList<SegIdx> &segidx) const;
     
     AtomSelection unite(const AtomID &atomid) const;
     AtomSelection unite(const CGID &cgid) const;
@@ -329,11 +329,11 @@ public:
     AtomSelection subtract(ChainIdx chainidx) const;
     AtomSelection subtract(SegIdx segidx) const;
 
-    AtomSelection subtract(const QSet<AtomIdx> &atomidx) const;
-    AtomSelection subtract(const QSet<CGIdx> &cgidx) const;
-    AtomSelection subtract(const QSet<ResIdx> &residx) const;
-    AtomSelection subtract(const QSet<ChainIdx> &chainidx) const;
-    AtomSelection subtract(const QSet<SegIdx> &segidx) const;
+    AtomSelection subtract(const QList<AtomIdx> &atomidx) const;
+    AtomSelection subtract(const QList<CGIdx> &cgidx) const;
+    AtomSelection subtract(const QList<ResIdx> &residx) const;
+    AtomSelection subtract(const QList<ChainIdx> &chainidx) const;
+    AtomSelection subtract(const QList<SegIdx> &segidx) const;
     
     AtomSelection subtract(const AtomID &atomid) const;
     AtomSelection subtract(const CGID &cgid) const;
@@ -349,11 +349,11 @@ public:
     AtomSelection mask(ChainIdx chainidx) const;
     AtomSelection mask(SegIdx segidx) const;
 
-    AtomSelection mask(const QSet<AtomIdx> &atomidx) const;
-    AtomSelection mask(const QSet<CGIdx> &cgidx) const;
-    AtomSelection mask(const QSet<ResIdx> &residx) const;
-    AtomSelection mask(const QSet<ChainIdx> &chainidx) const;
-    AtomSelection mask(const QSet<SegIdx> &segidx) const;
+    AtomSelection mask(const QList<AtomIdx> &atomidx) const;
+    AtomSelection mask(const QList<CGIdx> &cgidx) const;
+    AtomSelection mask(const QList<ResIdx> &residx) const;
+    AtomSelection mask(const QList<ChainIdx> &chainidx) const;
+    AtomSelection mask(const QList<SegIdx> &segidx) const;
     
     AtomSelection mask(const AtomID &atomid) const;
     AtomSelection mask(const CGID &cgid) const;
@@ -363,18 +363,10 @@ public:
 
     AtomSelection mask(const AtomSelection &selection) const;
 
-    QSet<AtomIdx> selectedAtoms() const;
+    QVector<AtomIdx> selectedAtoms() const;
 
     QSet<Index> selectedAtoms(CGIdx cgid) const;
-    
-    QSet<CGAtomIdx> selectedAtoms(ResIdx residx) const;
-    QSet<CGAtomIdx> selectedAtoms(ChainIdx chainidx) const;
-    QSet<CGAtomIdx> selectedAtoms(SegIdx segidx) const;
-
-    QSet<CGIdx> selectedCutGroups() const;
-    QSet<ResIdx> selectedResidues() const;
-    QSet<ChainIdx> selectedChains() const;
-    QSet<SegIdx> selectedSegments() const;
+    QList<CGIdx> selectedCutGroups() const;
 
     void assertCompatibleWith(const MoleculeData &moldata) const;
     void assertCompatibleWith(const MoleculeView &molview) const;
@@ -400,14 +392,22 @@ private:
     void _pvt_select(const CGAtomIdx &cgatomidx);
     void _pvt_deselect(const CGAtomIdx &cgatomidx);
     
+    void _pvt_select(CGIdx cgidx, const QSet<Index> &atoms);
+    
     void _pvt_select(const QVector<CGAtomIdx> &cgatomidxs);
     void _pvt_deselect(const QVector<CGAtomIdx> &cgatomidxs);
 
     template<class IDX>
-    void _pvt_select(const QSet<IDX> &idxs, int n);
+    void _pvt_selectFromIndex(IDX idx);
     
     template<class IDX>
-    void _pvt_deselect(const QSet<IDX> &idxs, int n);
+    void _pvt_deselectFromIndex(IDX idx);
+
+    template<class IDX>
+    void _pvt_select(const QList<IDX> &idxs, int n);
+    
+    template<class IDX>
+    void _pvt_deselect(const QList<IDX> &idxs, int n);
 
     /** The indicies of selected atoms, arranged by CGIdx */
     QHash< CGIdx, QSet<Index> > selected_atoms;

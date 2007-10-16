@@ -30,10 +30,13 @@
 #include <boost/assert.hpp>
 
 #include "connectivity.h"
+#include "moleculedata.h"
+#include "moleculeinfodata.h"
 
 #include "SireMol/errors.h"
 
 #include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
 
 using namespace SireStream;
 using namespace SireMol;
@@ -43,7 +46,8 @@ using namespace SireBase;
 ///////// Implementation of ConnectivityBase
 /////////
 
-static const RegisterMetaType<ConnectivityBase> r_conbase;
+static const RegisterMetaType<ConnectivityBase> r_conbase(MAGIC_ONLY,
+                                                          "SireMol::ConnectivityBase");
 
 /** Serialise ConnectivityBase */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, 
@@ -53,8 +57,8 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
 
     SharedDataStream sds(ds);
 
-    sds << conbase.connected_atoms << conbase.connected_residues
-        << conbase.molinfo << static_cast<const PropertyBase&>(conbase);
+    sds << conbase.connected_atoms << conbase.connected_res
+        << conbase.d << static_cast<const PropertyBase&>(conbase);
 
     return ds;
 }
@@ -69,8 +73,8 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
     {
         SharedDataStream sds(ds);
         
-        sds >> conbase.connected_atoms >> conbase.connected_residues
-            >> conbase.molinfo
+        sds >> conbase.connected_atoms >> conbase.connected_res
+            >> conbase.d
             >> static_cast<PropertyBase&>(conbase);
     }
     else
@@ -80,23 +84,29 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 }
 
 /** Null constructor */
-ConnectivityBase::ConnectivityBase() : PropertyBase()
+ConnectivityBase::ConnectivityBase()
+                 : PropertyBase(), d(MoleculeInfoData::null())
 {}
+
+const MoleculeInfoData& ConnectivityBase::info() const
+{
+    return *d;
+}
 
 /** Construct the connectivity for molecule described by 
     the passed info object */
-ConnectivityBase::ConnectivityBase(const MoleculeInfo &info)
-                 : PropertyBase(), molinfo(info)
+ConnectivityBase::ConnectivityBase(const MoleculeData &moldata)
+                 : PropertyBase(), d(moldata.info())
 {
-    if (molinfo.nAtoms() > 0)
+    if (info().nAtoms() > 0)
     {
-        connected_atoms.resize(molinfo.nAtoms());
+        connected_atoms.resize(info().nAtoms());
         connected_atoms.squeeze();
     }
     
-    if (molinfo.nResidues() > 0)
+    if (info().nResidues() > 0)
     {
-        connected_res.resize(molinfo.nResidues());
+        connected_res.resize(info().nResidues());
         connected_res.squeeze();
     }
 }
@@ -106,7 +116,7 @@ ConnectivityBase::ConnectivityBase(const ConnectivityBase &other)
                  : PropertyBase(other),
                    connected_atoms(other.connected_atoms),
                    connected_res(other.connected_res),
-                   molinfo(other.molinfo)
+                   d(other.d)
 {}
 
 /** Destructor */
@@ -120,7 +130,7 @@ ConnectivityBase& ConnectivityBase::operator=(const ConnectivityBase &other)
     {
         connected_atoms = other.connected_atoms;
         connected_res = other.connected_res;
-        molinfo = other.molinfo;
+        d = other.d;
     }
     
     return *this;
@@ -129,14 +139,14 @@ ConnectivityBase& ConnectivityBase::operator=(const ConnectivityBase &other)
 /** Comparison operator */
 bool ConnectivityBase::operator==(const ConnectivityBase &other) const
 {
-    return molinfo == other.molinfo and 
+    return (d == other.d or *d == *(other.d)) and 
            connected_atoms == other.connected_atoms;
 }
 
 /** Comparison operator */
 bool ConnectivityBase::operator!=(const ConnectivityBase &other) const
 {
-    return molinfo != other.molinfo or
+    return (d != other.d and *d != *(other.d)) or
            connected_atoms != other.connected_atoms;
 }
 
@@ -146,7 +156,7 @@ int ConnectivityBase::nConnections() const
 {
     int n = 0;
     
-    QSet<AtomIdx> *connected_atoms_array = connected_atoms.constData();
+    const QSet<AtomIdx> *connected_atoms_array = connected_atoms.constData();
     int nats = connected_atoms.count();
     
     for (int i=0; i<nats; ++i)
@@ -187,7 +197,7 @@ const QSet<AtomIdx>& ConnectivityBase::connectionsTo(AtomIdx atomidx) const
 */
 const QSet<AtomIdx>& ConnectivityBase::connectionsTo(const AtomID &atomid) const
 {
-    return connected_atoms.constData()[ molinfo.atomIdx(atomid) ];
+    return connected_atoms.constData()[ info().atomIdx(atomid) ];
 }
 
 /** Return the indicies of the residues connected to the residue at 
@@ -211,7 +221,7 @@ const QSet<ResIdx>& ConnectivityBase::connectionsTo(ResIdx residx) const
 */
 const QSet<ResIdx>& ConnectivityBase::connectionsTo(const ResID &resid) const
 {
-    return connected_res.constData()[ molinfo.resIdx(resid) ];
+    return connected_res.constData()[ info().resIdx(resid) ];
 }
 
 /** Return the number of connections to the atom at index 'atomidx' 
@@ -267,8 +277,8 @@ int ConnectivityBase::nConnections(ResIdx res0, ResIdx res1) const
         
     int n = 0;
     
-    QList<AtomIdx> atoms0 = molinfo.getAtomsIn(res0);
-    QList<AtomIdx> atoms1 = molinfo.getAtomsIn(res1);
+    QList<AtomIdx> atoms0 = info().getAtomsIn(res0);
+    QList<AtomIdx> atoms1 = info().getAtomsIn(res1);
     
     foreach (AtomIdx atom0, atoms0)
     {
@@ -293,7 +303,7 @@ int ConnectivityBase::nConnections(ResIdx res0, ResIdx res1) const
 */
 int ConnectivityBase::nConnections(const ResID &res0, const ResID &res1) const
 {
-    return this->nConnections( molinfo.resIdx(res0), molinfo.resIdx(res1) );
+    return this->nConnections( info().resIdx(res0), info().resIdx(res1) );
 }
 
 /** Return whether or not the atoms at indicies 'atom0' and 'atom1'
@@ -303,7 +313,8 @@ int ConnectivityBase::nConnections(const ResID &res0, const ResID &res1) const
 */
 bool ConnectivityBase::areConnected(AtomIdx atom0, AtomIdx atom1) const
 {
-    return this->connectionsTo(atom0).contains( atom1.map(connected_atoms.count()) );
+    return this->connectionsTo(atom0).contains( 
+                                AtomIdx(atom1.map(connected_atoms.count())) );
 }
 
 /** Return whether or not the atoms identified by 'atom0' and 'atom1'
@@ -315,7 +326,7 @@ bool ConnectivityBase::areConnected(AtomIdx atom0, AtomIdx atom1) const
 */
 bool ConnectivityBase::areConnected(const AtomID &atom0, const AtomID &atom1) const
 {
-    return this->connectionsTo(atom0).contains( molinfo.atomIdx(atom1) );
+    return this->connectionsTo(atom0).contains( info().atomIdx(atom1) );
 }
     
 /** Return whether or not the residues at indicies 'res0' and 'res1' 
@@ -325,13 +336,14 @@ bool ConnectivityBase::areConnected(const AtomID &atom0, const AtomID &atom1) co
 */
 bool ConnectivityBase::areConnected(ResIdx res0, ResIdx res1) const
 {
-    return this->connectionsTo(res0).contains( res1.map(connected_res.count()) );
+    return this->connectionsTo(res0).contains( 
+                                        ResIdx(res1.map(connected_res.count())) );
 }
 
 /** Return whether the residues identified by 'res0' and 'res1' are connected */
 bool ConnectivityBase::areConnected(const ResID &res0, const ResID &res1) const
 {
-    return this->connectionsTo(res0).contains( molinfo.resIdx(res1) );
+    return this->connectionsTo(res0).contains( info().resIdx(res1) );
 }
 
 /////////
@@ -367,10 +379,10 @@ Connectivity::Connectivity()
              : ConcreteProperty<Connectivity,ConnectivityBase>()
 {}
 
-/** Construct the connectivity for the molecule described by the 
-    passed MoleculeInfo */
-Connectivity::Connectivity(const MoleculeInfo &molinfo)
-             : ConnectivityBase(molinfo)
+/** Construct the connectivity for the molecule whose data
+    is in 'moldata' */
+Connectivity::Connectivity(const MoleculeData &moldata)
+             : ConcreteProperty<Connectivity,ConnectivityBase>(moldata)
 {}
 
 /** Construct the connectivity from the passed editor */
@@ -473,11 +485,11 @@ bool ConnectivityEditor::operator!=(const ConnectivityEditor &other) const
 */
 ConnectivityEditor& ConnectivityEditor::connect(AtomIdx atom0, AtomIdx atom1)
 {
-    AtomIdx atomidx0 = atom0.map(connected_atoms.count());
-    AtomIdx atomidx1 = atom1.map(connected_atoms.count());
+    AtomIdx atomidx0 = AtomIdx( atom0.map(connected_atoms.count()) );
+    AtomIdx atomidx1 = AtomIdx( atom1.map(connected_atoms.count()) );
     
     if (atomidx0 == atomidx1)
-        return;
+        return *this;
     
     QSet<AtomIdx> *connected_atoms_array = connected_atoms.data();
     
@@ -497,11 +509,11 @@ ConnectivityEditor& ConnectivityEditor::connect(AtomIdx atom0, AtomIdx atom1)
 ConnectivityEditor& ConnectivityEditor::connect(const AtomID &atom0,
                                                 const AtomID &atom1)
 {
-    AtomIdx atomidx0 = map.atomIdx(atom0);
-    AtomIdx atomidx1 = map.atomIdx(atom1);
+    AtomIdx atomidx0 = info().atomIdx(atom0);
+    AtomIdx atomidx1 = info().atomIdx(atom1);
     
     if (atomidx0 == atomidx1)
-        return;
+        return *this;
         
     QSet<AtomIdx> *connected_atoms_array = connected_atoms.data();
     
@@ -520,15 +532,15 @@ ConnectivityEditor& ConnectivityEditor::disconnect(AtomIdx atom0, AtomIdx atom1)
 {
     if (this->areConnected(atom0, atom1))
     {
-        AtomIdx atomidx0 = atom0.map( connected_atoms.count() );
-        AtomIdx atomidx1 = atom1.map( connected_atoms.count() );
+        AtomIdx atomidx0 = AtomIdx( atom0.map( connected_atoms.count() ) );
+        AtomIdx atomidx1 = AtomIdx( atom1.map( connected_atoms.count() ) );
         
         connected_atoms[atomidx0].remove(atomidx1);
         connected_atoms[atomidx1].remove(atomidx0);
         
         //now check to see if the residues are still connected
-        ResIdx residx0 = molinfo.parentResidue(atomidx0);
-        ResIdx residx1 = molinfo.parentResidue(atomidx1);
+        ResIdx residx0 = info().parentResidue(atomidx0);
+        ResIdx residx1 = info().parentResidue(atomidx1);
 
         if (this->nConnections(residx0, residx1) == 0)
         {
@@ -550,7 +562,7 @@ ConnectivityEditor& ConnectivityEditor::disconnect(AtomIdx atom0, AtomIdx atom1)
 ConnectivityEditor& ConnectivityEditor::disconnect(const AtomID &atom0, 
                                                    const AtomID &atom1)
 {
-    return this->disconnect( molinfo.atomIdx(atom0), molinfo.atomIdx(atom1) );
+    return this->disconnect( info().atomIdx(atom0), info().atomIdx(atom1) );
 }
 
 /** Remove all of the connections to the atom at index 'atomidx' 
@@ -559,7 +571,7 @@ ConnectivityEditor& ConnectivityEditor::disconnect(const AtomID &atom0,
 */
 ConnectivityEditor& ConnectivityEditor::disconnectAll(AtomIdx atomidx)
 {
-    QSet<AtomIdx> connected = this->connectedTo(atomidx);
+    QSet<AtomIdx> connected = this->connectionsTo(atomidx);
     
     foreach (AtomIdx atom1, connected)
     {
@@ -577,7 +589,7 @@ ConnectivityEditor& ConnectivityEditor::disconnectAll(AtomIdx atomidx)
 */
 ConnectivityEditor& ConnectivityEditor::disconnectAll(const AtomID &atomid)
 {
-    return this->disconnectAll(molinfo.atomIdx(atomid));
+    return this->disconnectAll(info().atomIdx(atomid));
 }
 
 /** Remove all of the connections that involve any of the atoms
@@ -587,9 +599,7 @@ ConnectivityEditor& ConnectivityEditor::disconnectAll(const AtomID &atomid)
 */
 ConnectivityEditor& ConnectivityEditor::disconnectAll(ResIdx residx)
 {
-    QSet<AtomIdx> atomidxs = molinfo.getAtomsIn(residx);
-    
-    foreach (AtomIdx atomidx, atomidxs)
+    foreach (AtomIdx atomidx, info().getAtomsIn(residx))
     {
         this->disconnectAll(atomidx);
     }
@@ -606,5 +616,5 @@ ConnectivityEditor& ConnectivityEditor::disconnectAll(ResIdx residx)
 */
 ConnectivityEditor& ConnectivityEditor::disconnectAll(const ResID &resid)
 {
-    return this->disconnectAll( molinfo.resIdx(resid) );
+    return this->disconnectAll( info().resIdx(resid) );
 }

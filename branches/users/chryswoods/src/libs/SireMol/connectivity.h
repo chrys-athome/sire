@@ -30,9 +30,11 @@
 #define SIREMOL_CONNECTIVITY_H
 
 #include <QHash>
+#include <QVector>
 #include <QSet>
 
 #include "SireBase/property.h"
+#include "SireBase/shareddatapointer.hpp"
 
 SIRE_BEGIN_HEADER
 
@@ -46,6 +48,15 @@ QDataStream& operator>>(QDataStream&, SireMol::ConnectivityBase&);
 
 namespace SireMol
 {
+
+class AtomIdx;
+class ResIdx;
+
+class AtomID;
+class ResID;
+
+class MoleculeData;
+class MoleculeInfoData;
 
 class ConnectivityEditor;
 
@@ -91,7 +102,7 @@ public:
 
 protected:
     ConnectivityBase();
-    ConnectivityBase(const MoleculeInfo &info);
+    ConnectivityBase(const MoleculeData &moldata);
     
     ConnectivityBase(const ConnectivityBase &other);
 
@@ -99,6 +110,8 @@ protected:
 
     bool operator==(const ConnectivityBase &other) const;
     bool operator!=(const ConnectivityBase &other) const;
+
+    inline const MoleculeInfoData& info() const;
 
     /** The which atoms are connected to which other atoms
         in this molecule */
@@ -108,7 +121,7 @@ protected:
     QVector< QSet<ResIdx> > connected_res;
     
     /** The info object that describes the molecule */
-    MoleculeInfo molinfo;
+    SireBase::SharedDataPointer<MoleculeInfoData> d;
    
 };
 
@@ -134,7 +147,7 @@ class SIREMOL_EXPORT Connectivity
 public:
     Connectivity();
     
-    Connectivity(const MoleculeInfo &molinfo);
+    Connectivity(const MoleculeData &moldata);
 
     Connectivity(const ConnectivityEditor &editor);
     Connectivity(const Connectivity &other);
@@ -143,7 +156,7 @@ public:
 
     static const char* typeName()
     {
-        return "SireMol::Connectivity";
+        return QMetaType::typeName( qMetaTypeId<Connectivity>() );
     }
 
     using SireBase::PropertyBase::operator=;
@@ -181,7 +194,7 @@ public:
     
     static const char* typeName()
     {
-        return "SireMol::ConnectivityEditor";
+        return QMetaType::typeName( qMetaTypeId<ConnectivityEditor>() );
     }
     
     using SireBase::PropertyBase::operator=;
@@ -206,12 +219,8 @@ public:
     ConnectivityEditor& disconnectAll(const ResID &resid);
 };
 
-
-};
-
 }
 
-Q_DECLARE_METATYPE(SireMol::ConnectivityBase);
 Q_DECLARE_METATYPE(SireMol::Connectivity);
 Q_DECLARE_METATYPE(SireMol::ConnectivityEditor);
 

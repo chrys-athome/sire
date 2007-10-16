@@ -146,9 +146,7 @@ public:
     
     bool contains(AtomIdx atomidx) const;
     bool contains(const AtomID &atomid) const;
-    
-    bool containsAll(const AtomID &atomid) const;
-    bool containsSome(const AtomID &atomid) const;
+    bool intersects(const AtomID &atomid) const;
     
     Molecule molecule() const;
     Chain chain() const;

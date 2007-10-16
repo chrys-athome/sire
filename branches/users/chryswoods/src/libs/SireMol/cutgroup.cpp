@@ -174,14 +174,6 @@ const QList<AtomIdx>& CutGroup::atomIdxs() const
     return d->info().getAtomsIn(cgidx);
 }
 
-/** Return whether or not this CutGroup contains all of the 
-    atoms identified by the ID 'atomid'
-*/
-bool CutGroup::contains(const AtomID &atomid) const
-{
-    return d->info().containsAll(cgidx, atomid);
-}
-
 /** Return whether or not this CutGroup contains the atom 
     at index 'atomidx' in the molecule */
 bool CutGroup::contains(AtomIdx atomidx) const
@@ -191,16 +183,16 @@ bool CutGroup::contains(AtomIdx atomidx) const
 
 /** Return whether or not this CutGroup contains all of 
     the atoms that match the ID 'atomid' */
-bool CutGroup::containsAll(const AtomID &atomid) const
+bool CutGroup::contains(const AtomID &atomid) const
 {
-    return d->info().containsAll(cgidx, atomid);
+    return d->info().contains(cgidx, atomid);
 }
 
 /** Return whether or not this CutGroup contains some of
     the atoms that match the ID 'atomid' */
-bool CutGroup::containsSome(const AtomID &atomid) const
+bool CutGroup::intersects(const AtomID &atomid) const
 {
-    return d->info().containsSome(cgidx, atomid);
+    return d->info().intersects(cgidx, atomid);
 }
 
 /** Return the molecule that contains this CutGroup */

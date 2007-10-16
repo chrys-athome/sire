@@ -197,21 +197,14 @@ bool Segment::contains(AtomIdx atomidx) const
     the atoms identified by the ID 'atomid' */
 bool Segment::contains(const AtomID &atomid) const
 {
-    return d->info().containsAll(segidx, atomid);
-}
-
-/** Return whether or not this segment contains all of 
-    the atoms identified by the ID 'atomid' */
-bool Segment::containsAll(const AtomID &atomid) const
-{
-    return d->info().containsAll(segidx, atomid);
+    return d->info().contains(segidx, atomid);
 }
 
 /** Return whether or not this segment contains some of  
     the atoms identified by the ID 'atomid' */
-bool Segment::containsSome(const AtomID &atomid) const
+bool Segment::intersects(const AtomID &atomid) const
 {
-    return d->info().containsSome(segidx, atomid);
+    return d->info().intersects(segidx, atomid);
 }
 
 /** Return the molecule that contains this Segment */

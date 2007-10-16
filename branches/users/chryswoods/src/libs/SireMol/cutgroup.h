@@ -145,9 +145,7 @@ public:
 
     bool contains(const AtomID &atomid) const;
     bool contains(AtomIdx atomidx) const;
-
-    bool containsAll(const AtomID &atomid) const;
-    bool containsSome(const AtomID &atomid) const;
+    bool intersects(const AtomID &atomid) const;
 
     Atom select(const AtomID &atomid) const;
     Selector<Atom> selectAll(const AtomID &atomid) const;

@@ -218,21 +218,14 @@ bool Residue::contains(AtomIdx atomidx) const
     the atoms identified by the ID 'atomid' */
 bool Residue::contains(const AtomID &atomid) const
 {
-    return d->info().containsAll(residx, atomid);
-}
-
-/** Return whether or not this residue contains all of 
-    the atoms identified by the ID 'atomid' */
-bool Residue::containsAll(const AtomID &atomid) const
-{
-    return d->info().containsAll(residx, atomid);
+    return d->info().contains(residx, atomid);
 }
 
 /** Return whether or not this residue contains some of  
     the atoms identified by the ID 'atomid' */
-bool Residue::containsSome(const AtomID &atomid) const
+bool Residue::intersects(const AtomID &atomid) const
 {
-    return d->info().containsSome(residx, atomid);
+    return d->info().intersects(residx, atomid);
 }
 
 /** Return the molecule that contains this residue */
