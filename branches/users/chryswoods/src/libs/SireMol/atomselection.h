@@ -209,6 +209,26 @@ public:
     AtomSelection deselect(SegIdx segidx) const;
     AtomSelection selectOnly(SegIdx segidx) const;
 
+    AtomSelection select(const QSet<AtomIdx> &atomidxs) const;
+    AtomSelection deselect(const QSet<AtomIdx> &atomidxs) const;
+    AtomSelection selectOnly(const QSet<AtomIdx> &atomidxs) const;
+
+    AtomSelection select(const QSet<CGIdx> &cgidxs) const;
+    AtomSelection deselect(const QSet<CGIdx> &cgidxs) const;
+    AtomSelection selectOnly(const QSet<CGIdx> &cgidxs) const;
+
+    AtomSelection select(const QSet<ResIdx> &residxs) const;
+    AtomSelection deselect(const QSet<ResIdx> &residxs) const;
+    AtomSelection selectOnly(const QSet<ResIdx> &residxs) const;
+
+    AtomSelection select(const QSet<ChainIdx> &chainidxs) const;
+    AtomSelection deselect(const QSet<ChainIdx> &chainidxs) const;
+    AtomSelection selectOnly(const QSet<ChainIdx> &chainidxs) const;
+
+    AtomSelection select(const QSet<SegIdx> &segidxs) const;
+    AtomSelection deselect(const QSet<SegIdx> &segidxs) const;
+    AtomSelection selectOnly(const QSet<SegIdx> &segidxs) const;
+
     AtomSelection select(const AtomID &atomid) const;
     AtomSelection deselect(const AtomID &atomid) const;
     AtomSelection selectOnly(const AtomID &atomid) const;
@@ -370,6 +390,24 @@ private:
     bool _pvt_selectedAll(const QVector<CGAtomIdx> &atomidxs) const;
 
     int _pvt_nSelected(ResIdx residx) const;
+
+    void _pvt_select(AtomIdx atomidx);
+    void _pvt_deselect(AtomIdx atomidx);
+    
+    void _pvt_select(CGIdx cgidx);
+    void _pvt_deselect(CGIdx cgidx);
+    
+    void _pvt_select(const CGAtomIdx &cgatomidx);
+    void _pvt_deselect(const CGAtomIdx &cgatomidx);
+    
+    void _pvt_select(const QVector<CGAtomIdx> &cgatomidxs);
+    void _pvt_deselect(const QVector<CGAtomIdx> &cgatomidxs);
+
+    template<class IDX>
+    void _pvt_select(const QSet<IDX> &idxs, int n);
+    
+    template<class IDX>
+    void _pvt_deselect(const QSet<IDX> &idxs, int n);
 
     /** The indicies of selected atoms, arranged by CGIdx */
     QHash< CGIdx, QSet<Index> > selected_atoms;
