@@ -32,9 +32,9 @@
 #include <QSet>
 #include <QHash>
 
+#include "SireBase/shareddatapointer.hpp"
 #include "SireID/index.h"
 
-#include "moleculeinfodata.h"
 #include "cgidx.h"
 
 SIRE_BEGIN_HEADER
@@ -54,6 +54,22 @@ namespace SireMol
 
 class Molecule;
 class MoleculeView;
+class MoleculeInfoData;
+class MoleculeData;
+
+class AtomIdx;
+class CGIdx;
+class ResIdx;
+class ChainIdx;
+class SegIdx;
+
+class AtomID;
+class CGID;
+class ResID;
+class ChainID;
+class SegID;
+
+class CGAtomIdx;
 
 using SireID::Index;
 
@@ -124,6 +140,18 @@ public:
     bool selected(const CGAtomIdx &cgatomidx) const;
     bool selected(AtomIdx atomidx) const;
     bool selected(const AtomID &atomid) const;
+
+    bool selected(CGIdx cgidx) const;
+    bool selected(ResIdx residx) const;
+    bool selected(ChainIdx chainidx) const;
+    bool selected(SegIdx segidx) const;
+    
+    bool selected(const CGID &cgid) const;
+    bool selected(const ResID &resid) const;
+    bool selected(const ChainID &chainid) const;
+    bool selected(const SegID &segid) const;
+
+    bool selected(const AtomSelection &selection) const;
 
     bool selectedAll() const;
 
@@ -335,6 +363,14 @@ public:
 private:
     const MoleculeInfoData& info() const;
 
+    bool _pvt_selected(const CGAtomIdx &cgatomidx) const;
+    bool _pvt_selected(AtomIdx atomidx) const;
+    
+    bool _pvt_selectedAll(CGIdx cgidx) const;
+    bool _pvt_selectedAll(const QVector<CGAtomIdx> &atomidxs) const;
+
+    int _pvt_nSelected(ResIdx residx) const;
+
     /** The indicies of selected atoms, arranged by CGIdx */
     QHash< CGIdx, QSet<Index> > selected_atoms;
 
@@ -343,15 +379,8 @@ private:
     SharedDataPointer<MoleculeInfoData> d;
 
     /** The total number of selected atoms */
-    quint32 nselected;
+    qint32 nselected;
 };
-
-/** Return the info object that describes the molecule whose atoms
-    this selection can select */
-inline const MoleculeInfoData& AtomSelection::info() const
-{
-    return *d;
-}
 
 }
 

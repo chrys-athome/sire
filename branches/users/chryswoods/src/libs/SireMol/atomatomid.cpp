@@ -26,8 +26,13 @@
   *
 \*********************************************/
 
+#include <QSet>
+
 #include "atomatomid.h"
+#include "atomidx.h"
 #include "moleculeinfodata.h"
+
+#include "SireMol/errors.h"
 
 using namespace SireMol;
 

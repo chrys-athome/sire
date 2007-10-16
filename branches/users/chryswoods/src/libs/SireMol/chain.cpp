@@ -198,21 +198,14 @@ bool Chain::contains(AtomIdx atomidx) const
     the atoms identified by the ID 'atomid' */
 bool Chain::contains(const AtomID &atomid) const
 {
-    return d->info().containsAll(chainidx, atomid);
-}
-
-/** Return whether or not this chain contains all of 
-    the atoms identified by the ID 'atomid' */
-bool Chain::containsAll(const AtomID &atomid) const
-{
-    return d->info().containsAll(chainidx, atomid);
+    return d->info().contains(chainidx, atomid);
 }
 
 /** Return whether or not this chain contains some of  
     the atoms identified by the ID 'atomid' */
-bool Chain::containsSome(const AtomID &atomid) const
+bool Chain::intersects(const AtomID &atomid) const
 {
-    return d->info().containsSome(chainidx, atomid);
+    return d->info().intersects(chainidx, atomid);
 }
 
 /** Return the number of residues in this chain */
@@ -239,21 +232,14 @@ bool Chain::contains(ResIdx residx) const
     of the residues identified by the ID 'resid' */
 bool Chain::contains(const ResID &resid) const
 {
-    return d->info().containsAll(chainidx, resid);
-}
-
-/** Return whether or not this chain contains all
-    of the residues identified by the ID 'resid' */
-bool Chain::containsAll(const ResID &resid) const
-{
-    return d->info().containsAll(chainidx, resid);
+    return d->info().contains(chainidx, resid);
 }
 
 /** Return whether or not this chain contains some
     of the residues identified by the ID 'resid' */
-bool Chain::containsSome(const ResID &resid) const
+bool Chain::intersects(const ResID &resid) const
 {
-    return d->info().containsSome(chainidx, resid);
+    return d->info().intersects(chainidx, resid);
 }
 
 /** Return the molecule that contains this chain */

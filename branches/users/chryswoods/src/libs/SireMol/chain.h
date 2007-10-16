@@ -143,9 +143,7 @@ public:
     
     bool contains(AtomIdx atomidx) const;
     bool contains(const AtomID &atomid) const;
-    
-    bool containsAll(const AtomID &atomid) const;
-    bool containsSome(const AtomID &atomid) const;
+    bool intersects(const AtomID &atomid) const;
     
     int nResidues() const;
     
@@ -153,9 +151,7 @@ public:
     
     bool contains(ResIdx residx) const;
     bool contains(const ResID &resid) const;
-    
-    bool containsAll(const ResID &resid) const;
-    bool containsSome(const ResID &resid) const;
+    bool intersects(const ResID &resid) const;
     
     Molecule molecule() const;
     

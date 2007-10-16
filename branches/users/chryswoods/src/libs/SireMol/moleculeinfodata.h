@@ -82,6 +82,11 @@ class Residue;
 class Chain;
 class Segment;
 
+namespace detail
+{
+class MolInfoRegistry;
+}
+
 /** This is the implicitly shared class that is used by MoleculeInfo,
     ResidueInfo, SegmentInfo and CutGroupInfo to provide information
     about the arrangement of atoms in a molecule, specifically
@@ -112,6 +117,8 @@ class MoleculeInfoData : public QSharedData
 friend QDataStream& ::operator<<(QDataStream&, const MoleculeInfoData&);
 friend QDataStream& ::operator>>(QDataStream&, MoleculeInfoData&);
 
+friend class detail::MolInfoRegistry; //so can call _pvt_sameFingerprint(...)
+
 public:
     MoleculeInfoData();
     
@@ -121,7 +128,12 @@ public:
     
     MoleculeInfoData& operator=(const MoleculeInfoData &other);
     
+    bool operator==(const MoleculeInfoData &other) const;
+    bool operator!=(const MoleculeInfoData &other) const;
+    
     const MolName& name() const;
+    
+    bool hasSameFingerprint(const MoleculeInfoData &other) const;
     
     const ChainName& name(const ChainID &chainid) const;
     const ChainName& name(ChainIdx chainidx) const;
@@ -146,7 +158,18 @@ public:
     
     CGAtomIdx cgAtomIdx(AtomIdx atomidx) const;
     CGAtomIdx cgAtomIdx(const AtomID &atomid) const;
-    QList<CGAtomIdx> cgAtomIdxs(const AtomID &atomid) const;
+    
+    QVector<CGAtomIdx> cgAtomIdxs(AtomIdx atomidx) const;
+    QVector<CGAtomIdx> cgAtomIdxs(CGIdx cgidx) const;
+    QVector<CGAtomIdx> cgAtomIdxs(ResIdx residx) const;
+    QVector<CGAtomIdx> cgAtomIdxs(ChainIdx chainidx) const;
+    QVector<CGAtomIdx> cgAtomIdxs(SegIdx segidx) const;
+    
+    QVector<CGAtomIdx> cgAtomIdxs(const AtomID &atomid) const;
+    QVector<CGAtomIdx> cgAtomIdxs(const CGID &cgid) const;
+    QVector<CGAtomIdx> cgAtomIdxs(const ResID &resid) const;
+    QVector<CGAtomIdx> cgAtomIdxs(const ChainID &chainid) const;
+    QVector<CGAtomIdx> cgAtomIdxs(const SegID &segid) const;
 
     AtomIdx atomIdx(const AtomID &atomid) const;
     AtomIdx atomIdx(const CGAtomIdx &cgatomidx) const;
@@ -262,6 +285,8 @@ public:
     QList<AtomIdx> map(const AtomIdx &idx) const;
     QList<AtomIdx> map(const AtomID &atomid) const;
 
+    void assertSameFingerprint(const MoleculeInfoData &other) const;
+
     void assertSingleAtom(const QList<AtomIdx> &atomidxs) const;
     void assertSingleResidue(const QList<ResIdx> &residxs) const;
     void assertSingleChain(const QList<ChainIdx> &chainidxs) const;
@@ -280,6 +305,9 @@ private:
     public:
         ResInfo();
         ~ResInfo();
+        
+        bool operator==(const ResInfo &other);
+        bool operator!=(const ResInfo &other);
         
         /** The name of this residue */
         ResName name;
@@ -305,6 +333,9 @@ private:
         ChainInfo();
         ~ChainInfo();
         
+        bool operator==(const ChainInfo &other) const;
+        bool operator!=(const ChainInfo &other) const;
+        
         /** The name of this chain */
         ChainName name;
         
@@ -319,6 +350,9 @@ private:
         SegInfo();
         ~SegInfo();
 
+        bool operator==(const SegInfo &other) const;
+        bool operator!=(const SegInfo &other) const;
+
         /** The name of this segment */
         SegName name;
         
@@ -331,6 +365,9 @@ private:
     public:
         CGInfo();
         ~CGInfo();
+        
+        bool operator==(const CGInfo &other) const;
+        bool operator!=(const CGInfo &other) const;
         
         /** The name of this CutGroup */
         CGName name;
@@ -345,6 +382,9 @@ private:
     public:
         AtomInfo();
         ~AtomInfo();
+        
+        bool operator==(const AtomInfo &other) const;
+        bool operator!=(const AtomInfo &other) const;
         
         /** The name of this atom */
         AtomName name;
@@ -366,6 +406,8 @@ private:
         CGAtomIdx cgatomidx;
     };
     
+    bool _pvt_hasSameFingerprint(const MoleculeInfoData &other) const;
+    
     QList<AtomIdx> _pvt_getAtomsIn(const QList<ResIdx> &residxs) const;
     QList<AtomIdx> _pvt_getAtomsIn(const QList<ResIdx> &residxs,
                                    const AtomName &name) const;
@@ -374,8 +416,15 @@ private:
     int _pvt_nAtoms(const QList<ResIdx> &residxs) const;
     int _pvt_nAtoms(ChainIdx chainidx) const;
     
+    QVector<CGAtomIdx> _pvt_cgAtomIdxs(const QList<AtomIdx> &atomidxs) const;
+    
     /** The name of the molecule */
     MolName molname;
+
+    /** The ID fingerprint of this info object - the fingerprint
+        identifies the molecule according to the names of its
+        parts, and their order. */
+    quint32 fingerprint;
 
     /** All of the atoms in the molecule, in the order they were
         added to the molecule */
