@@ -27,17 +27,28 @@
 \*********************************************/
 
 #include "evaluator.h"
+#include "atomcoords.h"
+#include "atommasses.h"
+#include "atomelements.h"
+
+#include "SireVol/coordgroup.h"
+
+#include "SireMaths/sphere.h"
+
+#include "SireBase/errors.h"
 
 #include "SireStream/datastream.h"
 
 using namespace SireMol;
+using namespace SireMaths;
+using namespace SireVol;
 using namespace SireStream;
 
 static const RegisterMetaType<Evaluator> r_eval;
 
 /** Serialise to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
-                                       const Evaluator &eval
+                                       const Evaluator &eval)
 {
     writeHeader(ds, r_eval, 1);
     
@@ -120,17 +131,11 @@ AtomSelection Evaluator::selectedAtoms() const
     return selected_atoms;
 }
 
-/** Update this evaluator with a new version of the molecule */
-void Evaluator::update(const MoleculeData &data) const
-{
-    MoleculeData::update(data);
-}
-
 static void getMinMax(const CoordGroup &cgroup, Vector &min, Vector &max)
 {
     //we can cheat by using the CoordGroup's aabox!
-    min.setMinCoords(cgroup.aaBox().minCoords());
-    max.setMaxCoords(cgroup.aaBox().maxCoords());
+    min.setMin(cgroup.aaBox().minCoords());
+    max.setMax(cgroup.aaBox().maxCoords());
 }
 
 static void getMinMax(const CoordGroup &cgroup, const QSet<Index> &idxs,
@@ -159,7 +164,8 @@ AABox Evaluator::aaBox(const PropertyMap &map) const
         return AABox();
 
     //get the coordinates of the atoms
-    AtomicCoords coords = d->property(map["coordinates"]);
+    const Property &prop = d->property(map["coordinates"]);
+    const AtomCoords &coords = prop.asA<AtomCoords>();
     
     const CoordGroup *coords_array = coords.constData();
     int ncg = coords.count();
@@ -172,7 +178,7 @@ AABox Evaluator::aaBox(const PropertyMap &map) const
     {
         for (int i=0; i<ncg; ++i)
         {
-            setMinMax(coords_array[i], min, max);
+            getMinMax(coords_array[i], mincoords, maxcoords);
         }
     }
     else if (selected_atoms.selectedAllCutGroups())
@@ -181,28 +187,26 @@ AABox Evaluator::aaBox(const PropertyMap &map) const
         {
             if (selected_atoms.selectedAll(i))
             {
-                setMinMax(coords_array[i], mincoords, maxcoords);
+                getMinMax(coords_array[i], mincoords, maxcoords);
             }
             else
             {
-                setMinMax(coords_array[i], selected_atoms.selectedAtoms(i),
+                getMinMax(coords_array[i], selected_atoms.selectedAtoms(i),
                           mincoords, maxcoords);
             }
         }
     }
     else
     {
-        QSet<CGIdx> cgidxs = selected_atoms.selectedCutGroups();
-        
-        foreach (CGIdx cgidx, cgidxs)
+        foreach (CGIdx cgidx, selected_atoms.selectedCutGroups())
         {
             if (selected_atoms.selectedAll(cgidx))
             {
-                setMinMax(coords_array[cgidx], mincoords, maxcoords);
+                getMinMax(coords_array[cgidx], mincoords, maxcoords);
             }
             else
             {
-                setMinMax(coords_array[cgidx], selected_atoms.selectedAtoms(cgidx),
+                getMinMax(coords_array[cgidx], selected_atoms.selectedAtoms(cgidx),
                           mincoords, maxcoords);
             }
         }
@@ -230,12 +234,12 @@ Vector Evaluator::center(const PropertyMap &map) const
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-Sphere Evaluator::sphere(const PropertyMap &map) const
+Sphere Evaluator::boundingSphere(const PropertyMap &map) const
 {
-    return this->aaBox(map).sphere();
+    return this->aaBox(map).boundingSphere();
 }
 
-double calcMass(const QVector<SireUnits::Dimension::Mass> &masses)
+double calc_mass(const QVector<SireUnits::Dimension::Mass> &masses)
 {
     const SireUnits::Dimension::Mass *masses_array = masses.constData();
     int nmasses = masses.count();
@@ -250,8 +254,8 @@ double calcMass(const QVector<SireUnits::Dimension::Mass> &masses)
     return m;
 }
 
-double calcMass(const QVector<SireUnits::Dimension::Mass> &masses,
-                const QSet<Index> &idxs)
+static double calc_mass(const QVector<SireUnits::Dimension::Mass> &masses,
+                        const QSet<Index> &idxs)
 {
     const SireUnits::Dimension::Mass *masses_array = masses.constData();
     
@@ -265,7 +269,8 @@ double calcMass(const QVector<SireUnits::Dimension::Mass> &masses,
     return m;
 }
 
-double Evaluator::_pvt_mass(const AtomicMasses &masses) const
+static double get_mass(const AtomMasses &masses,
+                       const AtomSelection &selected_atoms)
 {
     double m = 0;
     
@@ -276,7 +281,7 @@ double Evaluator::_pvt_mass(const AtomicMasses &masses) const
     {
         for (int i=0; i<ncg; ++i)
         {
-            m += calcMass( masses_array[i] );
+            m += calc_mass( masses_array[i] );
         }
     }
     else if (selected_atoms.selectedAllCutGroups())
@@ -284,26 +289,26 @@ double Evaluator::_pvt_mass(const AtomicMasses &masses) const
         for (CGIdx i(0); i<ncg; ++i)
         {
             if (selected_atoms.selectedAll(i))
-                m += calcMass( masses_array[i] );
+                m += calc_mass( masses_array[i] );
             else
-                m += calcMass( masses_array[i], selected_atoms.selectedAtoms(i) );
+                m += calc_mass( masses_array[i], selected_atoms.selectedAtoms(i) );
         }
     }
     else
     {
-        foreach (CGIdx cgidx, selected_atoms.selectedCutGroups())
+        foreach (CGIdx i, selected_atoms.selectedCutGroups())
         {
-            if (selected_atoms.selectedAll(cgidx))
-                m += calcMass( masses_array[i] );
+            if (selected_atoms.selectedAll(i))
+                m += calc_mass( masses_array[i] );
             else
-                m += calcMass( masses_array[i], selected_atoms.selectedAtoms(i) );
+                m += calc_mass( masses_array[i], selected_atoms.selectedAtoms(i) );
         }
     }
     
     return m;
 }
 
-double calcMass(const QVector<Element> &elements)
+static double calc_mass(const QVector<Element> &elements)
 {
     const Element *elements_array = elements.constData();
     int nelements = elements.count();
@@ -318,7 +323,7 @@ double calcMass(const QVector<Element> &elements)
     return m;
 }
 
-double calcMass(const QVector<Element> &elements, const QSet<Index> &idxs)
+static double calc_mass(const QVector<Element> &elements, const QSet<Index> &idxs)
 {
     const Element *elements_array = elements.constData();
     
@@ -332,7 +337,8 @@ double calcMass(const QVector<Element> &elements, const QSet<Index> &idxs)
     return m;
 }
 
-double Evaluator::_pvt_mass(const AtomicElements &elements) const
+static double get_mass(const AtomElements &elements,
+                       const AtomSelection &selected_atoms)
 {
     double m = 0;
     
@@ -343,7 +349,7 @@ double Evaluator::_pvt_mass(const AtomicElements &elements) const
     {
         for (int i=0; i<ncg; ++i)
         {
-            m += calcMass( elements_array[i] );
+            m += calc_mass( elements_array[i] );
         }
     }
     else if (selected_atoms.selectedAllCutGroups())
@@ -351,24 +357,38 @@ double Evaluator::_pvt_mass(const AtomicElements &elements) const
         for (CGIdx i(0); i<ncg; ++i)
         {
             if (selected_atoms.selectedAll(i))
-                m += calcMass( elements_array[i] );
+                m += calc_mass( elements_array[i] );
             else
-                m += calcMass( elements_array[i], selected_atoms.selectedAtoms(i) );
+                m += calc_mass( elements_array[i], selected_atoms.selectedAtoms(i) );
         }
     }
     else
     {
-        foreach (CGIdx cgidx, selected_atoms.selectedCutGroups())
+        foreach (CGIdx i, selected_atoms.selectedCutGroups())
         {
-            if (selected_atoms.selectedAll(cgidx))
-                m += calcMass( elements_array[i] );
+            if (selected_atoms.selectedAll(i))
+                m += calc_mass( elements_array[i] );
             else
-                m += calcMass( elements_array[i], selected_atoms.selectedAtoms(i) );
+                m += calc_mass( elements_array[i], selected_atoms.selectedAtoms(i) );
         }
     }
     
     return m;
 }
+
+static const Property& get_mass_property(const MoleculeData &moldata,
+                                         const PropertyMap &map)
+{
+    try
+    {
+        return moldata.property( map["mass"] );
+    }
+    catch(const SireBase::missing_property&)
+    {
+        return moldata.property( map["element"] );
+    }
+}
+                                    
 
 /** Return the mass of the selected part of this molecule, using 
     the supplied map to find either the mass property, or if that
@@ -382,20 +402,20 @@ double Evaluator::mass(const PropertyMap &map) const
     if (selected_atoms.selectedNone())
         return 0;
 
-    Property p = d->property( map["mass"], map["element"] );
+    const Property &p = get_mass_property(*d, map);
     
-    if (p.isA<AtomicMasses>())
+    if (p.isA<AtomMasses>())
     {
-        return this->_pvt_mass(p.asA<AtomicMasses>());
+        return get_mass(p.asA<AtomMasses>(), selected_atoms);
     }
-    else if (p.isA<AtomicElements>())
+    else if (p.isA<AtomElements>())
     {
-        return this->_pvt_mass(p.asA<AtomicElements>());
+        return get_mass(p.asA<AtomElements>(), selected_atoms);
     }
     else
         throw SireError::invalid_cast( QObject::tr(
             "Cannot cast the property of type %1 into either an "
-            "AtomicMasses or AtomicElements property!")
+            "AtomMasses or AtomElements property!")
                 .arg(p.what()), CODELOC );
 
     return 0;
@@ -437,7 +457,8 @@ Vector Evaluator::centerOfGeometry(const PropertyMap &map) const
     if (selected_atoms.selectedNone())
         return Vector(0);
         
-    AtomicCoords coords = d->property( map["coordinates"] );
+    const Property &prop = d->property( map["coordinates"] );
+    const AtomCoords &coords = prop.asA<AtomCoords>();
     
     const CoordGroup *coords_array = coords.constData();
     int ncg = coords.count();
@@ -489,8 +510,8 @@ Vector Evaluator::centerOfGeometry(const PropertyMap &map) const
     return avg / navg;
 }
 
-double addToAvg(const CoordGroup &coords, 
-                const QVector<SireUnits::Dimension::Mass> &masses, Vector &avg)
+static double addToAvg(const CoordGroup &coords, 
+                       const QVector<SireUnits::Dimension::Mass> &masses, Vector &avg)
 {
     const Vector *coords_array = coords.constData();
     const SireUnits::Dimension::Mass *masses_array = masses.constData();
@@ -526,8 +547,9 @@ double addToAvg(const CoordGroup &coords,
     return mass;
 }
 
-Vector Evalutor::_pvt_centerOfMass(const AtomicCoords &coords,
-                                   const AtomicMasses &masses)
+static Vector get_com(const AtomCoords &coords,
+                      const AtomMasses &masses,
+                      const AtomSelection &selected_atoms)
 {
     const CoordGroup *coords_array = coords.constData();
     const QVector<SireUnits::Dimension::Mass> *masses_array = masses.constData();
@@ -578,7 +600,7 @@ Vector Evalutor::_pvt_centerOfMass(const AtomicCoords &coords,
     }
     
     //form the average
-    return avg / navg;
+    return avg / total_mass;
 }
 
 double addToAvg(const CoordGroup &coords, const QVector<Element> &elements, 
@@ -617,8 +639,9 @@ double addToAvg(const CoordGroup &coords, const QVector<Element> &elements,
     return mass;
 }
 
-Vector Evalutor::_pvt_centerOfMass(const AtomicCoords &coords,
-                                   const AtomicElements &elements)
+static Vector get_com(const AtomCoords &coords,
+                      const AtomElements &elements,
+                      const AtomSelection &selected_atoms)
 {
     const CoordGroup *coords_array = coords.constData();
     const QVector<Element> *elements_array = elements.constData();
@@ -682,21 +705,22 @@ Vector Evaluator::centerOfMass(const PropertyMap &map) const
     if (selected_atoms.selectedNone())
         return Vector(0);
         
-    AtomicCoords coords = d->property( map["coordinates"] );
+    const Property &prop = d->property( map["coordinates"] );
+    const AtomCoords &coords = prop.asA<AtomCoords>();
 
-    Property p = d->property( map["mass"], map["element"] );
+    const Property &p = get_mass_property(*d,map);
     
-    if (p.isA<AtomicMasses>())
+    if (p.isA<AtomMasses>())
     {
-        return this->_pvt_centerOfMass(coords, p.asA<AtomicMasses>());
+        return get_com(coords, p.asA<AtomMasses>(), selected_atoms);
     }
-    else if (p.isA<AtomicElements>())
+    else if (p.isA<AtomElements>())
     {
-        return this->_pvt_centerOfMass(coords, p.asA<AtomicElements>());
+        return get_com(coords, p.asA<AtomElements>(), selected_atoms);
     }
     else
         throw SireError::invalid_cast( QObject::tr(
             "Cannot cast the property of type %1 into either an "
-            "AtomicMasses or AtomicElements property!")
+            "AtomMasses or AtomElements property!")
                 .arg(p.what()), CODELOC );
 }

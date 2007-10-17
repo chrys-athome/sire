@@ -71,6 +71,9 @@ class SegID;
 
 class CGAtomIdx;
 
+template<class T>
+class AtomProperty;
+
 using SireID::Index;
 
 using SireBase::SharedDataPointer;
@@ -371,6 +374,9 @@ public:
     void assertCompatibleWith(const MoleculeData &moldata) const;
     void assertCompatibleWith(const MoleculeView &molview) const;
     void assertCompatibleWith(const AtomSelection &other) const;
+
+    template<class T>
+    void assertCompatibleWith(const AtomProperty<T> &prop) const;
 
 private:
     const MoleculeInfoData& info() const;

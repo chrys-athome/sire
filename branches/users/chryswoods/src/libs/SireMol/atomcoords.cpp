@@ -344,3 +344,13 @@ int AtomProperty<Vector>::nAtoms(CGIdx cgidx) const
 {
     return this->operator[](cgidx).count();
 }
+
+////////
+//////// Lets explicitly instantiate other AtomProperty types...
+////////
+
+#include "atommasses.h"
+#include "atomelements.h"
+
+template class AtomProperty<SireUnits::Dimension::Mass>;
+template class AtomProperty<Element>;

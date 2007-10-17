@@ -33,6 +33,7 @@
 #include <QHash>
 
 #include "moleculeview.h"
+#include "atomselection.h"
 
 SIRE_BEGIN_HEADER
 
@@ -141,19 +142,18 @@ public:
     }
 
     AtomSelection selectedAtoms() const;
-    
-    void update(const MoleculeData &moldata) const;
 
     double mass(const PropertyMap &map = PropertyMap()) const;
 
     Vector center(const PropertyMap &map = PropertyMap()) const;
     AABox aaBox(const PropertyMap &map = PropertyMap()) const;
-    Sphere sphere(const PropertyMap &map = PropertyMap()) const;
+    Sphere boundingSphere(const PropertyMap &map = PropertyMap()) const;
 
     Vector centerOfGeometry(const PropertyMap &map = PropertyMap()) const;
     Vector centerOfMass(const PropertyMap &map = PropertyMap()) const;
 
 private:
+
     /** The atoms over which the properties will be 
         evaluated */
     AtomSelection selected_atoms;

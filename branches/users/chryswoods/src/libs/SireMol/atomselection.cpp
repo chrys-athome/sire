@@ -742,7 +742,11 @@ QList<CGIdx> AtomSelection::selectedCutGroups() const
         return QList<CGIdx>();
     }
     else
-        return selected_atoms.keys();
+    {
+        QList<CGIdx> cgs = selected_atoms.keys();
+        qSort(cgs);
+        return cgs;
+    }
 }
 
 /** Return whether or not all of the atoms selected in 'selection' 

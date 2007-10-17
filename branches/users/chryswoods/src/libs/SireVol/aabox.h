@@ -44,10 +44,16 @@ class QDataStream;
 QDataStream& operator<<(QDataStream&, const SireVol::AABox&);
 QDataStream& operator>>(QDataStream&, SireVol::AABox&);
 
+namespace SireMaths
+{
+class Sphere;
+}
+
 namespace SireVol
 {
 
 using SireMaths::Vector;
+using SireMaths::Sphere;
 
 class CoordGroupBase;
 
@@ -101,6 +107,8 @@ public:
     Vector minCoords() const;
 
     double radius() const;
+
+    Sphere boundingSphere() const;
 
     bool withinDistance(double dist, const AABox &box) const;
     bool intersects(const AABox &other) const;

@@ -16,10 +16,12 @@ set ( SIREMOL_HEADERS
       atomatomid.h
       atomcoords.h
       atomcutting.h
+      atomelements.h
       atomid.h
       atomidcombos.h
       atomidentifier.h
       atomidx.h
+      atommasses.h
       atomname.h
       atomnum.h
       atomproperty.hpp

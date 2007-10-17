@@ -29,6 +29,8 @@
 #include "aabox.h"
 #include "coordgroup.h"
 
+#include "SireMaths/sphere.h"
+
 #include <QDebug>
 
 #include "SireStream/datastream.h"
@@ -333,4 +335,10 @@ AABox AABox::operator+(const QVector<Vector> &points) const
 void AABox::add(const QVector<Vector> &points)
 {
     *this += points;
+}
+
+/** Return the sphere that just contains this AABox */
+Sphere AABox::boundingSphere() const
+{
+    return Sphere( this->center(), this->radius() );
 }

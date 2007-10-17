@@ -33,6 +33,7 @@
 #include <QSharedDataPointer>
 #include <QVector>
 #include <QMultiHash>
+#include <QSet>
 
 #include "cgatomidx.h"
 #include "molname.h"

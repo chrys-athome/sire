@@ -31,6 +31,7 @@
 
 #include "molviewproperty.h"
 #include "moleculeinfodata.h"
+#include "atomselection.h"
 
 #include "SireError/errors.h"
 
@@ -47,6 +48,8 @@ QDataStream& operator>>(QDataStream&, SireMol::AtomProperty<T>&);
 
 namespace SireMol
 {
+
+using SireBase::Property;
 
 /** This is a property that can hold one value for each
     atom in the molecule. The properties are held in 
@@ -121,6 +124,10 @@ public:
     
     int nAtoms() const;
     int nAtoms(CGIdx cgidx) const;
+
+    bool isCompatibleWith(const MoleculeInfoData &molinfo) const;
+    
+    Property mask(const AtomSelection &selected_atoms) const;
 
 private:
     /** The actual atomic property values */
@@ -440,6 +447,124 @@ SIRE_OUTOFLINE_TEMPLATE
 int AtomProperty<T>::nAtoms(CGIdx cgidx) const
 {
     return this->at(cgidx).count();
+}
+
+/** Return whether or not this property is compatible with the
+    Molecule whose layout is described in 'molinfo'
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool AtomProperty<T>::isCompatibleWith(const MoleculeInfoData &molinfo) const
+{
+    int ncg = molinfo.nCutGroups();
+
+    if (ncg != props.count())
+        return false;
+        
+    const QVector<T> *props_array = props.constData();
+    
+    for (CGIdx i(0); i<ncg; ++i)
+    {
+        if (molinfo.nAtoms(i) != props_array[i].count())
+            return false;
+    }
+    
+    return true;
+}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void AtomSelection::assertCompatibleWith(const AtomProperty<T> &prop) const
+{
+    prop.assertCompatibleWith(this->info());
+}
+
+/** Mask this property by the passed selected atoms. This returns 
+    the property only for the CutGroups that have been selected,
+    and with default values for any atoms in those CutGroups that
+    have not been selected.
+    
+    \throw SireError::incompatible_error
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+Property AtomProperty<T>::mask(const AtomSelection &selected_atoms) const
+{
+    selected_atoms.assertCompatibleWith(*this);
+
+    if (selected_atoms.selectedAll())
+        return *this;
+    else if (selected_atoms.selectedNone())
+        return AtomProperty<T>();
+    
+    else if (selected_atoms.selectedAllCutGroups())
+    {
+        QVector< QVector<T> > new_props = props;
+        QVector<T> *new_props_array = new_props.data();
+        
+        int ncg = props.count();
+        
+        for (CGIdx i(0); i<ncg; ++i)
+        {
+            if (not selected_atoms.selectedAll(i))
+            {
+                const QSet<Index> &atoms = selected_atoms.selectedAtoms(i);
+                
+                QVector<T> &atom_props = new_props_array[i];
+                int nats = atom_props.count();
+                
+                T *atom_props_array = atom_props.data();
+                
+                for (Index i(0); i<nats; ++i)
+                {
+                    if (not atoms.contains(i))
+                        atom_props_array[i] = T();
+                }
+            }
+        }
+        
+        return AtomProperty<T>(new_props);
+    }
+    else
+    {
+        QList<CGIdx> cgidxs = selected_atoms.selectedCutGroups();
+        
+        QVector< QVector<T> > new_props = QVector< QVector<T> >(cgidxs.count());
+        QVector<T> *new_props_array = new_props.data();
+        
+        const QVector<T> *props_array = props.constData();
+        
+        int n = 0;
+        
+        foreach (CGIdx i, cgidxs)
+        {
+            if (selected_atoms.selectedAll(i))
+            {
+                new_props_array[n] = props_array[i];
+                ++n;
+            }
+            else
+            {
+                const QSet<Index> &atoms = selected_atoms.selectedAtoms(i);
+                
+                QVector<T> atom_props = props_array[i];
+                int nats = atom_props.count();
+                
+                T *atom_props_array = atom_props.data();
+                
+                for (Index i(0); i<nats; ++i)
+                {
+                    if (not atoms.contains(i))
+                        atom_props_array[i] = T();
+                }
+                
+                new_props_array[n] = atom_props;
+                ++n;
+            }
+        }
+        
+        return AtomProperty<T>(new_props);
+    }
 }
 
 }
