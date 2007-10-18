@@ -254,12 +254,14 @@ public:
 
     const QString& program() const;
     const QString& basisSet() const;
+    const QString& extraCommands() const;
 
     virtual bool setSpace(const Space &space);
     virtual bool setSwitchingFunction(const SwitchingFunction &switchfunc);
 
     virtual bool setProgram(const QString &cmd);
     virtual bool setBasisSet(const QString &basisset);
+    virtual bool setExtraCommands(const QString &extracmds);
 
     bool setProperty(const QString &name, const Property &value);
     Property getProperty(const QString &name) const;
@@ -557,6 +559,9 @@ private:
     /** The string describing the basis set to use 
         (e.g. "vdz", "vtz", "6-31g**") */
     QString basis_set;
+
+    /** Any extra commands that have to be in the input file */
+    QString extra_cmds;
 
     /** All of the coordinates of the QM atoms */
     QVector<double> qm_coords;

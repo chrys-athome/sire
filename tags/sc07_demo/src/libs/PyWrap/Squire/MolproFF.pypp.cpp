@@ -142,6 +142,17 @@ void register_MolproFF_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        { //::Squire::MolproFF::extraCommands
+        
+            typedef ::QString const & ( ::Squire::MolproFF::*extraCommands_function_type )(  ) const;
+            
+            MolproFF_exposer.def( 
+                "extraCommands"
+                , extraCommands_function_type(
+                &::Squire::MolproFF::extraCommands )
+                , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
         { //::Squire::MolproFF::change
         
             typedef bool ( ::Squire::MolproFF::*change_function_type )( ::SireMol::PartialMolecule const & ) ;
@@ -521,6 +532,17 @@ void register_MolproFF_class(){
                 "setBasisSet"
                 , setBasisSet_function_type( &::Squire::MolproFF::setBasisSet )
                 , ( bp::arg("basisset") ) );
+        
+        }
+        { //::Squire::MolproFF::setExtraCommands
+        
+            typedef bool ( ::Squire::MolproFF::*setExtraCommands_function_type )( ::QString const & ) ;
+            
+            MolproFF_exposer.def( 
+                "setExtraCommands"
+                , setExtraCommands_function_type(
+                &::Squire::MolproFF::setExtraCommands )
+                , ( bp::arg("extracmds") ) );
         
         }
         { //::Squire::MolproFF::setEnergyOrigin

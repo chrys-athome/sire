@@ -51,4 +51,13 @@ void register_SireMM_containers()
     
     register_list< QVector<CLJParameter> >();
     register_list< QList<CLJParameter> >();
+    
+    register_list< QVector< QVector<ChargeParameter> > >();
+    register_list< QList< QList<ChargeParameter> > >();
+    
+    register_list< QVector< QVector<LJParameter> > >();
+    register_list< QList< QList<LJParameter> > >();
+    
+    register_list< QVector< QVector<CLJParameter> > >();
+    register_list< QList< QList<CLJParameter> > >();
 }
