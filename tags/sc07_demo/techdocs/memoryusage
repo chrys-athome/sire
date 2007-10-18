@@ -1,0 +1,53 @@
+Memory usage for key classes
+
+boost::shared_ptr = 2*pointer + 2*int  (I think)
+boost::weak_ptr   = 2*pointer + 2*int  (I think)
+
+Ptr<T>   1*pointer
+  |
+PtrBase  1*quint32
+  |
+PtrProxyPtr  1*shared_ptr    (pointer to PtrProxy<T>)
+
+  ...
+  
+PtrProxy<T>
+  |
+PtrProxyBase  1*pointer, 1*shared_ptr
+
+  ... 
+  
+PtrHandle  2*weak_ptr
+
+  ...
+MetaData  1*hash, 1*pointer, 4*quint32
+
+  
+Register, per PtrProxy, use 1*shared_ptr + 1*int + hash overhead  (pointer to PtrInfo)
+
+
+So, roughly, each Ptr<T> will create at least;
+
+2*shared_ptr, 2*weak_ptr, 2*pointer, 1*hash, 5*quint32
+
+which is roughly equal to
+
+12*pointer, 16*int32, so total size is !at least! 112 bytes per NetObject.
+
+So 1M CutGroups would take up 112 MB just for the NetObjects::Ptrs!
+
+In contrast, a tip4p water requires 4*Atom,
+
+Atom  1*int
+ |
+AtomIndex  1*string, 1*int
+ |
+Element   1*pointer
+ |
+Vector   3*double
+
+Each atom = 40 bytes, so 4*Atoms = 160 bytes
+
+1M TIP4P molecules will require 1M Molecule NetObjects (112MB), 1M CutGroup NetObjects (112MB)
+and 4M atoms (160MB). Total memory requirement will be at least 384 MB.
+

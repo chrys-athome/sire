@@ -1,0 +1,118 @@
+######################
+#
+# Script that queries the python
+# interpreter to obtain the compile
+# and link flags necessary to compile
+# sire against that python interpreter
+#
+# @author Christopher Woods
+#
+#
+
+def getSystemLibs():
+    """Return the system libraries that python is linked to"""
+    try:
+        return "%s %s" % ( distutils.sysconfig.get_config_var("LIBS"), \
+                           distutils.sysconfig.get_config_var("SYSLIBS") )
+    except:
+        return ""
+
+def getStaticFlags():
+    """Return the flags necessary to statically link the python 
+       interpreter"""
+
+    #get the path to the static library
+    path = distutils.sysconfig.get_config_var("LIBPL")
+    
+    #get the name of the static library
+    lib = distutils.sysconfig.get_config_var("LIBRARY")
+        
+    #get the name of the system libraries
+    syslibs = getSystemLibs()
+        
+    #need to tell the linker to keep the symbols
+    #that are necessary to load dynamic python modules
+    linkforshared = distutils.sysconfig.get_config_var("LINKFORSHARED")
+    
+    return "%s/%s %s %s" % (path,lib,syslibs,linkforshared)
+
+def getSharedFlags():
+    """Return the link flags necessary to dynamically link
+       the python interpreter"""
+        
+    #first get the library paths
+    libdirs = distutils.sysconfig.get_config_var("LIBDIR")
+        
+    dirs = libdirs.split(" ")
+        
+    libdirs = ""
+    for dir in dirs:
+        libdirs += "-L%s " % dir.lstrip().rstrip()
+            
+    #now get the library itself
+    lib = distutils.sysconfig.get_config_var("LDLIBRARY")
+    
+    #need to strip out 'lib'
+    if lib.startswith("lib"):
+        lib = lib[3:]
+
+    #unix - remove '.so'
+    soloc = lib.find(".so")
+    if (soloc != -1):
+        lib = lib[0:soloc]
+        
+    #windows - remove '.dll'
+    dllloc = lib.find(".dll")
+    if (dllloc != -1):
+        lib = lib[0:dllloc]
+        
+    #get the necessary system libraries
+    syslibs = getSystemLibs()
+        
+    return "%s -l%s %s" % ( libdirs.lstrip().rstrip(), \
+                            lib, syslibs )
+
+def getCFlags():
+    """Return the compile flags necessary to find the python 
+       header files"""
+
+    includedirs = distutils.sysconfig.get_config_var("CONFINCLUDEPY")
+	
+    dirs = includedirs.split(" ")
+	
+    includedirs = ""
+    for dir in dirs:
+        includedirs += "%s " % dir.lstrip().rstrip()
+		
+    return includedirs.lstrip().rstrip()
+
+
+if (__name__ == "__main__"):
+    import distutils.sysconfig
+    import sys
+
+    try:
+        arg = sys.argv[1]
+    except:
+        arg = "--help"
+
+    if arg == "--cflags":
+        print getCFlags()
+    elif arg == "--lflags":
+	    print getSharedFlags()
+    elif arg == "--static":
+        print getStaticFlags()
+    elif arg == "--staticflags":
+        print getCFlags(),getStaticFlags()
+    elif arg == "--sharedflags":
+        print getCFlags(),getSharedFlags()
+    else:
+        print """USAGE: python-config...
+        --cflags      Print compiler flags
+        --lflags      Print link flags
+        --static      Print the link flags for static linking
+        --staticflags Print all flags necessary to compile and 
+                      link with a statically linked interpreter
+        --sharedflags Print all flags necessary to compile and 
+                      link with a dynamically linked interpreter"""
+   

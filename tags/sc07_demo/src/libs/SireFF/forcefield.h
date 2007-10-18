@@ -1,0 +1,207 @@
+/********************************************\
+  *
+  *  Sire - Molecular Simulation Framework
+  *
+  *  Copyright (C) 2006  Christopher Woods
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+  *  the Free Software Foundation; either version 2 of the License, or
+  *  (at your option) any later version.
+  *
+  *  This program is distributed in the hope that it will be useful,
+  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  *  GNU General Public License for more details.
+  *
+  *  You should have received a copy of the GNU General Public License
+  *  along with this program; if not, write to the Free Software
+  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  *
+  *  For full details of the license please see the COPYING file
+  *  that should have come with this distribution.
+  *
+  *  You can contact the authors via the developer's mailing list
+  *  at http://siremol.org
+  *
+\*********************************************/
+
+#ifndef SIREFF_FORCEFIELD_H
+#define SIREFF_FORCEFIELD_H
+
+#include "SireBase/sharedpolypointer.hpp"
+
+#include "ffbase.h"
+
+SIRE_BEGIN_HEADER
+
+namespace SireFF
+{
+class ForceField;
+}
+
+QDataStream& operator<<(QDataStream&, const SireFF::ForceField&);
+QDataStream& operator>>(QDataStream&, SireFF::ForceField&);
+
+namespace SireMol
+{
+class PartialMolecule;
+class Molecule;
+class Residue;
+class NewAtom;
+class Molecules;
+
+class MoleculeID;
+class ResNum;
+class ResID;
+}
+
+namespace SireFF
+{
+
+using SireMol::MoleculeID;
+using SireMol::Molecule;
+using SireMol::Molecules;
+using SireMol::Residue;
+using SireMol::ResNum;
+using SireMol::ResID;
+using SireMol::NewAtom;
+using SireMol::IDMolAtom;
+using SireMol::PartialMolecule;
+
+/**
+This class is the "user" interface to all forcefield classes. This holds an implicitly
+shared copy of the forcefield class.
+
+@author Christopher Woods
+*/
+class SIREFF_EXPORT ForceField
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const ForceField&);
+friend QDataStream& ::operator>>(QDataStream&, ForceField&);
+
+public:
+    ForceField();
+    ForceField(const ForceField &other);
+    ForceField(const FFBase &ffbase);
+    ForceField(const SireBase::SharedPolyPointer<FFBase> &ffptr);
+
+    ~ForceField();
+
+    ForceField& operator=(const ForceField &other);
+    ForceField& operator=(const FFBase &ffbase);
+
+    const FFBase& base() const;
+
+    template<class T>
+    bool isA() const
+    {
+        return d.isA<T>();
+    }
+
+    template<class T>
+    const T& asA() const
+    {
+        return d.asA<T>();
+    }
+
+    template<class T>
+    T& asA()
+    {
+        return d.asA<T>();
+    }
+
+    const char* what() const;
+
+    const QString& name() const;
+    void setName(const QString& name);
+
+    const FFBase::Components& components() const;
+    const FFBase::Parameters& parameters() const;
+    const FFBase::Groups& groups() const;
+
+    double energy();
+    double energy(const FFComponent &component);
+    double energy(const Function &component);
+    double energy(const Symbol &component);
+
+    Values energies();
+    Values energies(const QSet<FFComponent> &components);
+
+    bool setProperty(const QString &name, const Property &value);
+    Property getProperty(const QString &name) const;
+    bool containsProperty(const QString &name) const;
+
+    QHash<QString,Property> properties() const;
+
+    void mustNowRecalculateFromScratch();
+
+    bool change(const PartialMolecule &molecule);
+    bool change(const Molecules &molecules);
+
+    bool add(const PartialMolecule &molecule,
+             const ParameterMap &map = ParameterMap());
+
+    bool add(const Molecules &molecules,
+             const ParameterMap &map = ParameterMap());
+
+    bool addTo(const FFBase::Group &group, const PartialMolecule &molecule,
+               const ParameterMap &map = ParameterMap());
+
+    bool addTo(const FFBase::Group &group,
+               const Molecules &molecules,
+               const ParameterMap &map = ParameterMap());
+
+    bool remove(const PartialMolecule &molecule);
+
+    bool remove(const Molecules &molecules);
+
+    bool removeFrom(const FFBase::Group &group,
+                    const PartialMolecule &molecule);
+
+    bool removeFrom(const FFBase::Group &group,
+                    const Molecules &molecules);
+
+    bool contains(const PartialMolecule &molecule) const;
+
+    bool contains(const PartialMolecule &molecule, const FFBase::Group &group) const;
+
+    bool refersTo(MoleculeID molid) const;
+    bool refersTo(MoleculeID molid, const FFBase::Group &group) const;
+
+    QSet<FFBase::Group> groupsReferringTo(MoleculeID molid) const;
+
+    QSet<MoleculeID> moleculeIDs() const;
+    QSet<MoleculeID> moleculeIDs(const FFBase::Group &group) const;
+
+    PartialMolecule molecule(MoleculeID molid) const;
+    PartialMolecule molecule(MoleculeID molid, const FFBase::Group &group) const;
+
+    Molecules molecules() const;
+    Molecules molecules(const FFBase::Group &group) const;
+    Molecules molecules(const QSet<MoleculeID> &molids) const;
+
+    Molecules contents(const FFBase::Group &group) const;
+    Molecules contents() const;
+
+    bool isDirty() const;
+    bool isClean() const;
+
+    ForceFieldID ID() const;
+    const Version& version() const;
+
+    void assertContains(const FFComponent &component) const;
+
+private:
+    /** Shared pointer to the actual forcefield */
+    SireBase::SharedPolyPointer<FFBase> d;
+};
+
+}
+
+Q_DECLARE_METATYPE(SireFF::ForceField);
+
+SIRE_END_HEADER
+
+#endif
