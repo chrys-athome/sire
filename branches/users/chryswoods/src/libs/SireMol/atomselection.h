@@ -326,6 +326,8 @@ public:
 
     AtomSelection unite(const AtomSelection &selection) const;
 
+    static AtomSelection unite(const QList<AtomSelection> &selections);
+
     AtomSelection subtract(AtomIdx atomidx) const;
     AtomSelection subtract(CGIdx cgidx) const;
     AtomSelection subtract(ResIdx residx) const;
@@ -371,6 +373,9 @@ public:
     QSet<Index> selectedAtoms(CGIdx cgid) const;
     QList<CGIdx> selectedCutGroups() const;
 
+    void assertContains(AtomIdx atomidx) const;
+    void assertContains(const AtomID &atomid) const;
+
     void assertCompatibleWith(const MoleculeData &moldata) const;
     void assertCompatibleWith(const MoleculeView &molview) const;
     void assertCompatibleWith(const AtomSelection &other) const;
@@ -402,6 +407,8 @@ private:
     
     void _pvt_select(const QVector<CGAtomIdx> &cgatomidxs);
     void _pvt_deselect(const QVector<CGAtomIdx> &cgatomidxs);
+
+    void _pvt_select(const AtomSelection &selection);
 
     template<class IDX>
     void _pvt_selectFromIndex(IDX idx);

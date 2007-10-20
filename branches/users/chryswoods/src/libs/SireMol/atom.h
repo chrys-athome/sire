@@ -268,6 +268,14 @@ QList<AtomIdx> getAll<Atom>(const MoleculeInfoData &molinfo)
     return molinfo.getAtoms();
 }
 
+template<>
+QList<AtomIdx> getAll<Atom>(const MoleculeData &moldata,
+                            const AtomSelection &selected_atoms)
+{
+    selected_atoms.assertCompatibleWith(moldata);
+    return selected_atoms.selectedAtoms().toList();
+}
+
 template<class V>
 SIRE_OUTOFLINE_TEMPLATE
 QList<V> get_property(Atom*, const MoleculeData &moldata,

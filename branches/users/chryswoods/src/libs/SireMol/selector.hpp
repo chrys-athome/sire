@@ -56,6 +56,10 @@ public:
     Selector(const T &view);
 
     Selector(const MoleculeData &moldata);
+    
+    Selector(const MoleculeData &moldata,
+             const AtomSelection &selected_atoms);
+    
     Selector(const MoleculeData &moldata, const typename T::ID &viewid);
 
     Selector(const Selector<T> &other);
@@ -98,6 +102,8 @@ public:
     
     T at(int i) const;
     Selector<T> at(int i, int j) const;
+
+    int count() const;
 
     Selector<T> add(const Selector<T> &other) const;
     Selector<T> add(const T &view) const;
@@ -204,6 +210,21 @@ SIRE_OUTOFLINE_TEMPLATE
 Selector<T>::Selector(const MoleculeData &moldata) : MoleculeView(moldata)
 {
     idxs = detail::getAll<T>(moldata.info());
+    idxs_set = idxs.toSet();
+}
+
+/** Construct the set of all groups that contain at least
+    one of the atoms selected in 'selected_atoms'
+    
+    \throw SireError::incompatible_error
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+Selector<T>::Selector(const MoleculeData &moldata,
+                      const AtomSelection &selected_atoms)
+            : MoleculeView(moldata)
+{
+    idxs = detail::getAll<T>(moldata, selected_atoms);
     idxs_set = idxs.toSet();
 }
 
@@ -559,6 +580,14 @@ SIRE_OUTOFLINE_TEMPLATE
 Selector<T> Selector<T>::at(int i, int j) const
 {
     return this->operator()(i,j);
+}
+
+/** Return the number of views in this set */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+int Selector<T>::count() const
+{
+    return idxs.count();
 }
 
 /** Return the intersection of this set with 'other' - the

@@ -83,6 +83,9 @@ class Residue;
 class Chain;
 class Segment;
 
+class MoleculeData;
+class AtomSelection;
+
 namespace detail
 {
 class MolInfoRegistry;
@@ -606,6 +609,10 @@ namespace detail
 
 template<class T>
 QList<typename T::Index> getAll(const MoleculeInfoData &molinfo);
+
+template<class T>
+QList<typename T::Index> getAll(const MoleculeData &moldata,
+                                const AtomSelection &selected_atoms);
 
 } //end of namespace detail
 

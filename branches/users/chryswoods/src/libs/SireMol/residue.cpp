@@ -187,13 +187,6 @@ Editor<Residue> Residue::edit() const
     return Editor<Residue>(*this);
 }
 
-/** Return a selector that can be used to change the selection
-    of residues */
-Selector<Residue> Residue::selection() const
-{
-    return Selector<Residue>(*this);
-}
-
 /** Return the number of atoms in this residue */
 int Residue::nAtoms() const
 {

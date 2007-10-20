@@ -138,7 +138,6 @@ public:
     Mover<Residue> move() const;
     Evaluator evaluate() const;
     Editor<Residue> edit() const;
-    Selector<Residue> selection() const;
     
     int nAtoms() const;
     

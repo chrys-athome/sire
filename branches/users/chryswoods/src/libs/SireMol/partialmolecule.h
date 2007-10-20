@@ -30,6 +30,7 @@
 #define SIREMOL_PARTIALMOLECULE_H
 
 #include "moleculeview.h"
+#include "atomselection.h"
 
 SIRE_BEGIN_HEADER
 
@@ -55,34 +56,78 @@ namespace SireMol
 class SIREMOL_EXPORT PartialMolecule : public MoleculeView
 {
 
-friend class PropertyExtractor;
-
 friend QDataStream& ::operator<<(QDataStream&, const PartialMolecule&);
 friend QDataStream& ::operator>>(QDataStream&, PartialMolecule&);
 
 public:
     PartialMolecule();
-    PartialMolecule(const MolDataView &molecule);
-    PartialMolecule(const MolDataView &molecule,
-                    const SelectionFromMol &selection);
+    PartialMolecule(const MoleculeView &molecule);
+
+    PartialMolecule(const MoleculeData &moldata,
+                    const AtomSelection &atoms);
 
     PartialMolecule(const PartialMolecule &other);
 
     ~PartialMolecule();
 
-    PartialMolecule& operator=(const MolDataView &other);
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<PartialMolecule>() );
+    }
+
+    const char* what() const
+    {
+        return PartialMolecule::typeName();
+    }
+
+    PartialMolecule* clone() const
+    {
+        return new PartialMolecule(*this);
+    }
+
+    PartialMolecule& operator=(const MoleculeView &other);
 
     bool operator==(const PartialMolecule &other) const;
     bool operator!=(const PartialMolecule &other) const;
 
-    PartialMolecule change(const MoleculeView &other) const;
+    const MolName& name() const;
+    MolNum number() const;
 
-    // Interface from Molecule
-    QString name() const;
-    MoleculeID ID() const;
-    const Version& version() const;
+    AtomSelection selectedAtoms() const;
 
-    const MoleculeInfo& info() const;
+    bool hasProperty(const PropertyName&) const
+    {
+        return false;
+    }
+    
+    bool hasMetadata(const PropertyName&) const
+    {
+        return false;
+    }
+    
+    bool hasMetadata(const PropertyName&, const PropertyName&) const
+    {
+        return false;
+    }
+    
+    QStringList propertyKeys() const
+    {
+        return QStringList();
+    }
+    
+    QStringList metadataKeys() const
+    {
+        return QStringList();
+    }
+    
+    QStringList metadataKeys(const PropertyName&) const
+    {
+        return QStringList();
+    }
+
+private:
+    /** The atoms that are selected in this view */
+    AtomSelection selected_atoms;
 };
 
 }

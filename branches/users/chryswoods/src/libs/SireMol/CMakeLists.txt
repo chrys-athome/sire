@@ -94,6 +94,7 @@ set ( SIREMOL_HEADERS
       selector.hpp
       specify.hpp
       splitmolecule.h
+      viewsofmol.h
       weightfunction.h
     )
 
@@ -146,6 +147,7 @@ set ( SIREMOL_SOURCES
       segidentifier.cpp
       segment.cpp
       splitmolecule.cpp
+      viewsofmol.cpp
       weightfunction.cpp
     
       ${SIREMOL_HEADERS}

@@ -32,6 +32,9 @@
 
 #include "moleculeinfodata.h"
 
+#include "SireError/errors.h"
+#include "SireMol/errors.h"
+
 using namespace SireMol;
 
 /** Null constructor */
@@ -81,17 +84,19 @@ AtomSelection& AtomSelection::operator=(const AtomSelection &other)
 /** Comparison operator */
 bool AtomSelection::operator==(const AtomSelection &other) const
 {
-    return nselected == other.nselected and 
-           (d == other.d or *d == *(other.d)) and
-           selected_atoms == other.selected_atoms;
+    return this == &other or
+           ( nselected == other.nselected and 
+             (d == other.d or *d == *(other.d)) and
+             selected_atoms == other.selected_atoms );
 }
 
 /** Comparison operator */
 bool AtomSelection::operator!=(const AtomSelection &other) const
 {
-    return nselected != other.nselected or
-           (d != other.d and *d != *(other.d)) or
-           selected_atoms != other.selected_atoms;
+    return this != &other and
+           ( nselected != other.nselected or
+             (d != other.d and *d != *(other.d)) or
+             selected_atoms != other.selected_atoms );
 }
 
 /** Return wheter no atoms are selected */
@@ -1979,26 +1984,18 @@ AtomSelection AtomSelection::selectOnly(const SegID &segid) const
     return ret;
 }
 
-/** Return a selection with the atoms in 'selection' additionally   
-    selected
-    
-    \throw SireError::incompatible_error
-*/
-AtomSelection AtomSelection::select(const AtomSelection &selection) const
+void AtomSelection::_pvt_select(const AtomSelection &selection)
 {
     info().assertSameFingerprint(selection.info());
     
     if (this->selectedAll())
-        return *this;
+        return;
     else if (selection.selectedAll())
     {
-        AtomSelection ret(*this);
-        ret.selected_atoms = selection.selected_atoms;
-        ret.nselected = selection.nselected;
-        return ret;
+        selected_atoms.clear();
+        nselected = info().nAtoms();
+        return;
     }
-        
-    AtomSelection ret(*this);
     
     if (selection.selectedAllCutGroups())
     {
@@ -2007,12 +2004,12 @@ AtomSelection AtomSelection::select(const AtomSelection &selection) const
         for (CGIdx i(0); i<ncg; ++i)
         {
             if (selection.selectedAll(i))
-                ret._pvt_select(i);
-            else if (not ret.selectedAll(i))
+                this->_pvt_select(i);
+            else if (not this->selectedAll(i))
             {
                 foreach (Index idx, selection.selectedAtoms(i))
                 {
-                    ret._pvt_select( CGAtomIdx(i,idx) );
+                    this->_pvt_select( CGAtomIdx(i,idx) );
                 }
             }
         }
@@ -2022,17 +2019,29 @@ AtomSelection AtomSelection::select(const AtomSelection &selection) const
         foreach (CGIdx i, selection.selectedCutGroups())
         {
             if (selection.selectedAll(i))
-                ret._pvt_select(i);
-            else if (not ret.selectedAll(i))
+                this->_pvt_select(i);
+            else if (this->selectedAll(i))
             {
                 foreach(Index idx, selection.selectedAtoms(i))
                 {
-                    ret._pvt_select( CGAtomIdx(i,idx) );
+                    this->_pvt_select( CGAtomIdx(i,idx) );
                 }
             }
         }
     }
+}
+
+/** Return a selection with the atoms in 'selection' additionally   
+    selected
     
+    \throw SireError::incompatible_error
+*/
+AtomSelection AtomSelection::select(const AtomSelection &selection) const
+{
+    AtomSelection ret(*this);
+      
+    ret._pvt_select(selection);
+      
     return ret;
 }
 
@@ -2760,6 +2769,34 @@ AtomSelection AtomSelection::unite(const AtomSelection &selection) const
     return this->select(selection);
 }
 
+/** Return the union of all of the passed selections
+
+    \throw SireError::incompatible_error
+*/
+AtomSelection AtomSelection::unite(const QList<AtomSelection> &selections)
+{
+    if (selections.isEmpty())
+        return AtomSelection();
+    else if (selections.count() == 1)
+        return selections.at(0);
+    else
+    {
+        QList<AtomSelection>::const_iterator it = selections.constBegin();
+        
+        AtomSelection ret = *it;
+        
+        for (++it; it != selections.constEnd(); ++it)
+        {
+            if (ret.selectedAll())
+                break;
+            
+            ret._pvt_select(*it);
+        }
+        
+        return ret; 
+    }
+}
+
 /** Return the selection from which the atom at index 'atomidx' 
     has been subtracted
     
@@ -3169,6 +3206,33 @@ QVector<AtomIdx> AtomSelection::selectedAtoms() const
     return ret;
 }
 
+/** Assert that this selection contains the atom at index 'atomidx'
+
+    \throw SireError::invalid_index
+*/
+void AtomSelection::assertContains(AtomIdx atomidx) const
+{
+    if (not this->contains(atomidx))
+        throw SireError::invalid_index( QObject::tr(
+            "This selection does not contain the atom at index %1.")
+                .arg(atomidx), CODELOC );
+}
+
+/** Assert that this selection contains all of the atoms identified 
+    by the ID 'atomid'
+    
+    \throw SireMol::missing_atom
+    \throw SireError::invalid_index
+*/
+void AtomSelection::assertContains(const AtomID &atomid) const
+{
+    if (not this->contains(atomid))
+        throw SireMol::missing_atom( QObject::tr(
+            "This selection does not contain all of the atoms "
+            "identified by the ID %1.")
+                .arg(atomid.toString()), CODELOC );
+}
+
 /** Assert that this selection is compatible with the molecule whose
     data is in 'moldata'
     
@@ -3176,7 +3240,12 @@ QVector<AtomIdx> AtomSelection::selectedAtoms() const
 */
 void AtomSelection::assertCompatibleWith(const MoleculeData &moldata) const
 {
-    info().assertSameFingerprint(moldata.info());
+    if (*d != moldata.info())
+        throw SireError::incompatible_error( QObject::tr(
+            "The molecule \"%1\" (%2) is incompatible with this selection, "
+            "which is for the molecule \"%3\".")
+                .arg(moldata.name()).arg(moldata.number())
+                .arg(d->name()), CODELOC );
 }
 
 /** Assert that this selection is compatible with the molecule viewed
@@ -3195,5 +3264,10 @@ void AtomSelection::assertCompatibleWith(const MoleculeView &molview) const
 */
 void AtomSelection::assertCompatibleWith(const AtomSelection &other) const
 {
-    info().assertSameFingerprint(other.info());
+    if (*d != other.info())
+        throw SireError::incompatible_error( QObject::tr(
+            "The selection for molecule \"%1\" is incompatible with this selection, "
+            "which is for the molecule \"%2\".")
+                .arg(other.info().name())
+                .arg(d->name()), CODELOC );
 }
