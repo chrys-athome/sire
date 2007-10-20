@@ -132,7 +132,7 @@ bool Chain::operator!=(const Chain &other) const
 }
 
 /** Return the atoms that are in this chain */
-AtomSelection Chain::selectedAtoms() const
+AtomSelection Chain::selection() const
 {
     return selected_atoms;
 }
@@ -168,12 +168,6 @@ Editor<Chain> Chain::edit() const
     return Editor<Chain>(*this);
 }
 
-/** Return a selector that can change the selection of Chains */
-Selector<Chain> Chain::selection() const
-{
-    return Selector<Chain>(*this);
-}
-
 /** Return the number of atoms in this Chain */
 int Chain::nAtoms() const
 {
@@ -185,6 +179,12 @@ int Chain::nAtoms() const
 QList<AtomIdx> Chain::atomIdxs() const
 {
     return d->info().getAtomsIn(chainidx);
+}
+
+/** Return a selector that change the selection of chains */
+Selector<Chain> Chain::selector() const
+{
+    return Selector<Chain>(*this);
 }
 
 /** Return whether or not this chain contains the atom 

@@ -52,7 +52,7 @@ const MoleculeInfoData& AtomSelection::info() const
     'molecule' */
 AtomSelection::AtomSelection(const MoleculeView &molecule)
 {
-    this->operator=(molecule.selectedAtoms());
+    this->operator=(molecule.selection());
 }
 
 /** Construct a selection of all of the atoms in the 

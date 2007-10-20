@@ -148,14 +148,11 @@ public:
     Mover<ViewsOfMol> move() const;
     Mover<ViewsOfMol> move(int i) const;
     
-    Editor<ViewsOfMol> edit() const;
-    Editor<ViewsOfMol> edit(int i) const;
-    
     Evaluator evaluate() const;
     Evaluator evaluate(int i) const;
 
-    AtomSelection selectedAtoms() const;
-    AtomSelection selectedAtoms(int i) const;
+    AtomSelection selection() const;
+    AtomSelection selection(int i) const;
     
     bool contains(AtomIdx atomidx) const;
     bool contains(const AtomID &atomid) const;
@@ -219,7 +216,6 @@ private:
 
 Q_DECLARE_METATYPE( SireMol::ViewsOfMol );
 Q_DECLARE_METATYPE( SireMol::Mover<SireMol::ViewsOfMol> );
-Q_DECLARE_METATYPE( SireMol::Editor<SireMol::ViewsOfMol> );
 
 SIRE_END_HEADER
 

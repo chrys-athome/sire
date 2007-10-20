@@ -82,7 +82,7 @@ Evaluator::Evaluator() : MoleculeView()
 
 /** Construct from the passed molecule view */
 Evaluator::Evaluator(const MoleculeView &molecule)
-          : MoleculeView(molecule), selected_atoms(molecule.selectedAtoms())
+          : MoleculeView(molecule), selected_atoms(molecule.selection())
 {}
 
 /** Construct to evaluate properties of the passed selected atoms
@@ -119,14 +119,14 @@ Evaluator& Evaluator::operator=(const Evaluator &other)
 Evaluator& Evaluator::operator=(const MoleculeView &other)
 {
     MoleculeView::operator=(other);
-    selected_atoms = other.selectedAtoms();
+    selected_atoms = other.selection();
     
     return *this;
 }
 
 /** Return the selected atoms over which the properties
     will be evaluated */
-AtomSelection Evaluator::selectedAtoms() const
+AtomSelection Evaluator::selection() const
 {
     return selected_atoms;
 }

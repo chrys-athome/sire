@@ -130,7 +130,7 @@ bool Segment::operator!=(const Segment &other) const
 }
 
 /** Return the atoms that are in this Segment */
-AtomSelection Segment::selectedAtoms() const
+AtomSelection Segment::selection() const
 {
     return selected_atoms;
 }
@@ -168,7 +168,7 @@ Editor<Segment> Segment::edit() const
 
 /** Return a selector that can be used to change the selection
     of segments from the molecule */
-Selector<Segment> Segment::selection() const
+Selector<Segment> Segment::selector() const
 {
     return Selector<Segment>(*this);
 }

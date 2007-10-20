@@ -109,7 +109,7 @@ public:
         return new CutGroup(*this);
     }
     
-    AtomSelection selectedAtoms() const;
+    AtomSelection selection() const;
     
     void update(const MoleculeData &moldata);
     
@@ -138,7 +138,8 @@ public:
     Mover<CutGroup> move() const;
     Evaluator evaluate() const;
     Editor<CutGroup> edit() const;
-
+    Selector<CutGroup> selector() const;
+    
     int nAtoms() const;
 
     const QList<AtomIdx>& atomIdxs() const;

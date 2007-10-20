@@ -45,11 +45,22 @@ QDataStream& operator>>(QDataStream&, SireMol::PartialMolecule&);
 namespace SireMol
 {
 
+template<class T>
+class Mover;
+
+template<class T>
+class Selector;
+
+class Evaluator;
+
+class Molecule;
+class Atom;
+
 /** This class provides a view to an arbitrary part of a molecule
     (which can range from just a single atom all the way through to
-     the entire molecule). As such, this class can be used to
-     represent Molecule, Residue and NewAtom, as well as everything
-     in between!
+    the entire molecule). As such, this class can be used to
+    represent Molecule, Residue and Atom, as well as everything
+    in between!
 
     @author Christopher Woods
 */
@@ -86,6 +97,7 @@ public:
     }
 
     PartialMolecule& operator=(const MoleculeView &other);
+    PartialMolecule& operator=(const PartialMolecule &other);
 
     bool operator==(const PartialMolecule &other) const;
     bool operator!=(const PartialMolecule &other) const;
@@ -93,37 +105,47 @@ public:
     const MolName& name() const;
     MolNum number() const;
 
-    AtomSelection selectedAtoms() const;
+    quint64 version() const;
+    quint64 version(const PropertyName &key) const;
 
-    bool hasProperty(const PropertyName&) const
-    {
-        return false;
-    }
+    int nAtoms() const;
+
+    Mover<PartialMolecule> move() const;
     
-    bool hasMetadata(const PropertyName&) const
-    {
-        return false;
-    }
+    Evaluator evaluate() const;
+
+    AtomSelection selection() const;
+
+    Molecule molecule() const;
+
+    Atom select(AtomIdx atomidx) const;
+    Atom select(const AtomID &atomid) const;
     
-    bool hasMetadata(const PropertyName&, const PropertyName&) const
-    {
-        return false;
-    }
+    Selector<Atom> selectAll(const AtomID &atomid) const;
+    Selector<Atom> selectAll() const;
     
-    QStringList propertyKeys() const
-    {
-        return QStringList();
-    }
+    Atom atom(AtomIdx atomidx) const;
+    Atom atom(const AtomID &atomid) const;
     
-    QStringList metadataKeys() const
-    {
-        return QStringList();
-    }
+    Selector<Atom> atoms(const AtomID &atomid) const;
+    Selector<Atom> atoms() const;
+
+    bool hasProperty(const PropertyName &key) const;
     
-    QStringList metadataKeys(const PropertyName&) const
-    {
-        return QStringList();
-    }
+    bool hasMetadata(const PropertyName &metakey) const;
+    
+    bool hasMetadata(const PropertyName &key, 
+                     const PropertyName &metakey) const;
+    
+    QStringList propertyKeys() const;
+    QStringList metadataKeys() const;
+    QStringList metadataKeys(const PropertyName &key) const;
+
+    Property property(const PropertyName &key) const;
+
+    Property metadata(const PropertyName &metakey) const;
+    Property metadata(const PropertyName &key,
+                      const PropertyName &metakey) const;
 
 private:
     /** The atoms that are selected in this view */
@@ -133,6 +155,7 @@ private:
 }
 
 Q_DECLARE_METATYPE(SireMol::PartialMolecule);
+Q_DECLARE_METATYPE(SireMol::Mover<SireMol::PartialMolecule>);
 
 SIRE_END_HEADER
 

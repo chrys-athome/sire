@@ -108,7 +108,7 @@ public:
     bool operator==(const Chain &other) const;
     bool operator!=(const Chain &other) const;
     
-    AtomSelection selectedAtoms() const;
+    AtomSelection selection() const;
     
     ChainName name() const;
     ChainIdx index() const;
@@ -135,7 +135,7 @@ public:
     Mover<Chain> move() const;
     Evaluator evaluate() const;
     Editor<Chain> edit() const;
-    Selector<Chain> selection() const;
+    Selector<Chain> selector() const;
     
     int nAtoms() const;
     

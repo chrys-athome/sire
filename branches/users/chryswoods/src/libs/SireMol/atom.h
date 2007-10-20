@@ -114,7 +114,7 @@ public:
         return new Atom(*this);
     }
     
-    AtomSelection selectedAtoms() const;
+    AtomSelection selection() const;
     
     void update(const MoleculeData &other) const;
 
@@ -145,7 +145,7 @@ public:
     Mover<Atom> move() const;
     Evaluator evaluate() const;
     Editor<Atom> edit() const;
-    Selector<Atom> selection() const;
+    Selector<Atom> selector() const;
     
     Residue residue() const;
     Chain chain() const;

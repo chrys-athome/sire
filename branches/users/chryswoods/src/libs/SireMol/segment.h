@@ -107,7 +107,7 @@ public:
         return new Segment(*this);
     }
     
-    AtomSelection selectedAtoms() const;
+    AtomSelection selection() const;
     
     void update(const MoleculeData &moldata) const;
     
@@ -136,7 +136,7 @@ public:
     Mover<Segment> move() const;
     Evaluator evaluate() const;
     Editor<Segment> edit() const;
-    Selector<Segment> selection() const;
+    Selector<Segment> selector() const;
     
     int nAtoms() const;
     

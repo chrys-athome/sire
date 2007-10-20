@@ -128,10 +128,19 @@ public:
         return new Molecule(*this);
     }
     
-    AtomSelection selectedAtoms() const;
+    AtomSelection selection() const;
     
     const MolName& name() const;
     MolNum number() const;
+    
+    quint64 version() const;
+    quint64 version(const PropertyName &key) const;
+    
+    int nAtoms() const;
+    int nCutGroups() const;
+    int nResidues() const;
+    int nChains() const;
+    int nSegments() const;
     
     Mover<Molecule> move() const;
     Evaluator evaluate() const;

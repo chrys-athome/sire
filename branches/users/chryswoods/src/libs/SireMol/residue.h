@@ -110,7 +110,7 @@ public:
         return new Residue(*this);
     }
     
-    AtomSelection selectedAtoms() const;
+    AtomSelection selection() const;
 
     ResName name() const;
     ResNum number() const;
@@ -138,6 +138,7 @@ public:
     Mover<Residue> move() const;
     Evaluator evaluate() const;
     Editor<Residue> edit() const;
+    Selector<Residue> selector() const;
     
     int nAtoms() const;
     

@@ -123,7 +123,7 @@ bool CutGroup::operator!=(const CutGroup &other) const
 }
 
 /** Return the atoms that are in this CutGroup */
-AtomSelection CutGroup::selectedAtoms() const
+AtomSelection CutGroup::selection() const
 {
     AtomSelection selected_atoms(this->data());
     selected_atoms.select(cgidx);
@@ -159,6 +159,12 @@ Evaluator CutGroup::evaluate() const
 Editor<CutGroup> CutGroup::edit() const
 {
     return Editor<CutGroup>(*this);
+}
+
+/** Return a selector that can change the selection of CutGroups */
+Selector<CutGroup> CutGroup::selector() const
+{
+    return Selector<CutGroup>(*this);
 }
 
 /** Return the number of atoms in this CutGroup */

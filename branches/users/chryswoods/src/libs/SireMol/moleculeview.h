@@ -94,7 +94,7 @@ public:
     }
 
     /** Return the atoms that are selected as part of this view */
-    virtual AtomSelection selectedAtoms() const=0;
+    virtual AtomSelection selection() const=0;
 
     virtual void update(const MoleculeData &moldata) const;
 

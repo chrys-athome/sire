@@ -117,7 +117,7 @@ public:
     in the view 'view' */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-Mover<T>::Mover(const T &view) : T(view), MoverBase(view.selectedAtoms())
+Mover<T>::Mover(const T &view) : T(view), MoverBase(view.selection())
 {}
 
 /** Construct a mover that can move the 'movable_atoms' of the 
@@ -158,7 +158,7 @@ SIRE_OUTOFLINE_TEMPLATE
 Mover<T>& Mover<T>::operator=(const T &other)
 {
     T::operator=(other);
-    MoverBase::setMovableAtoms(other.selectedAtoms());
+    MoverBase::setMovableAtoms(other.selection());
     
     return *this;
 }

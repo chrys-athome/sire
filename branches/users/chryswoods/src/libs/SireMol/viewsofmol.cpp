@@ -118,7 +118,7 @@ ViewsOfMol::ViewsOfMol(const MoleculeData &moldata,
 
 /** Construct just a single view of a molecule */
 ViewsOfMol::ViewsOfMol(const MoleculeView &view)
-           : MoleculeView(view), selected_atoms(view.selectedAtoms())
+           : MoleculeView(view), selected_atoms(view.selection())
 {}
 
 /** Set this equal to the multiple views held in 'selection' */
@@ -133,13 +133,13 @@ void ViewsOfMol::setEqualTo(const Selector<T> &selection)
     
     if (nviews == 1)
     { 
-        selected_atoms = selection.at(0).selectedAtoms();
+        selected_atoms = selection.at(0).selection();
     }
     else if (nviews > 1)
     {
         for (int i=0; i<nviews; ++i)
         {
-            views.append( selection.at(i).selectedAtoms() );
+            views.append( selection.at(i).selection() );
         }
         
         selected_atoms = AtomSelection::unite(views);
@@ -205,7 +205,7 @@ ViewsOfMol& ViewsOfMol::operator=(const ViewsOfMol &other)
 ViewsOfMol& ViewsOfMol::operator=(const MoleculeView &view)
 {
     MoleculeView::operator=(view);
-    selected_atoms = view.selectedAtoms();
+    selected_atoms = view.selection();
     views.clear();
     
     return *this;
@@ -477,7 +477,7 @@ Mover<ViewsOfMol> ViewsOfMol::move() const
 
 /** Return all of the atoms selected across all of the 
     views in this set */
-AtomSelection ViewsOfMol::selectedAtoms() const
+AtomSelection ViewsOfMol::selection() const
 {
     return selected_atoms;
 }
@@ -486,7 +486,7 @@ AtomSelection ViewsOfMol::selectedAtoms() const
     
     \throw SireError:invalid_index
 */
-AtomSelection ViewsOfMol::selectedAtoms(int i) const
+AtomSelection ViewsOfMol::selection(int i) const
 {
     i = Index(i).map( this->nViews() );
     
@@ -503,24 +503,7 @@ AtomSelection ViewsOfMol::selectedAtoms(int i) const
 */
 Mover<ViewsOfMol> ViewsOfMol::move(int i) const
 {
-    return Mover<ViewsOfMol>(*this, selectedAtoms(i));
-}
-
-/** Return an editor that can edit all of the atoms 
-    in the views */
-Editor<ViewsOfMol> ViewsOfMol::edit() const
-{
-    return Editor<ViewsOfMol>(*this);
-}
-
-/** Return an editor that can edit all of the
-    atoms in the ith view of this set
-    
-    \throw SireError::invalid_index
-*/
-Editor<ViewsOfMol> ViewsOfMol::edit(int i) const
-{
-    return Editor<ViewsOfMol>(*this, selectedAtoms(i));
+    return Mover<ViewsOfMol>(*this, selection(i));
 }
 
 /** Return an evaluator that can evaluate properties
@@ -537,7 +520,7 @@ Evaluator ViewsOfMol::evaluate() const
 */
 Evaluator ViewsOfMol::evaluate(int i) const
 {
-    return Evaluator(*this, selectedAtoms(i));
+    return Evaluator(*this, selection(i));
 }
 
 /** Return whether or not any of the views contains
@@ -650,4 +633,3 @@ QList<AtomIdx> ViewsOfMol::atomIdxs() const
 ////////
 
 template class Mover<ViewsOfMol>;
-template class Editor<ViewsOfMol>;

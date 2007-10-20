@@ -69,7 +69,7 @@ Molecule& Molecule::operator=(const Molecule &other)
 }
 
 /** Return which atoms are selected in this view */
-AtomSelection Molecule::selectedAtoms() const
+AtomSelection Molecule::selection() const
 {
     return AtomSelection(*d);
 }
@@ -85,6 +85,56 @@ const MolName& Molecule::name() const
 MolNum Molecule::number() const
 {
     return d->number();
+}
+ 
+/** Return the version number of this molecule - all molecules
+    with the same ID number and version number must be identical */
+quint64 Molecule::version() const
+{
+    return d->version();
+}
+ 
+/** Return the version number of the property at key 'key'.
+    All molecules with the same ID number and same property version
+    number must have the same value of this property
+    (although this says nothing about any metadata associated
+    with this property)
+    
+    \throw SireBase::missing_property 
+*/
+quint64 Molecule::version(const PropertyName &key) const
+{
+    return d->version(key);
+}
+ 
+/** Return the number of atoms in this molecule */
+int Molecule::nAtoms() const
+{
+    return d->info().nAtoms();
+}
+ 
+/** Return the number of CutGroups in this molecule */
+int Molecule::nCutGroups() const
+{
+    return d->info().nCutGroups();
+}
+ 
+/** Return the number of residues in this molecule */
+int Molecule::nResidues() const
+{
+    return d->info().nResidues();
+}
+ 
+/** Return the number of chains in this molecule */
+int Molecule::nChains() const
+{
+    return d->info().nChains();
+}
+ 
+/** Return the number of segments in this molecule */
+int Molecule::nSegments() const
+{
+    return d->info().nSegments();
 }
  
 /** Return a Mover that moves all of the atoms in

@@ -140,6 +140,11 @@ public:
         return props;
     }
 
+    QStringList propertyKeys() const;
+    
+    QStringList metadataKeys() const;
+    QStringList metadataKeys(const PropertyName &key) const;
+
     const Property& property(const PropertyName &key) const;
     
     const Property& property(const PropertyName &key,

@@ -141,7 +141,7 @@ bool Atom::operator!=(const Atom &other) const
 }
 
 /** Return the selected atom! */
-AtomSelection Atom::selectedAtoms() const
+AtomSelection Atom::selection() const
 {
     AtomSelection selected_atoms(data());
     
@@ -187,9 +187,8 @@ Editor<Atom> Atom::edit() const
     return Editor<Atom>(*this);
 }
 
-/** Return the selector object that can play with the selection
-    of atoms */
-Selector<Atom> Atom::selection() const
+/** Return a selector that can change the atom selection */
+Selector<Atom> Atom::selector() const
 {
     return Selector<Atom>(*this);
 }

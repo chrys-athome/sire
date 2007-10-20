@@ -141,7 +141,7 @@ public:
         return QStringList();
     }
 
-    AtomSelection selectedAtoms() const;
+    AtomSelection selection() const;
 
     double mass(const PropertyMap &map = PropertyMap()) const;
 

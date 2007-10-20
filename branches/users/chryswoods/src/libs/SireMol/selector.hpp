@@ -127,7 +127,9 @@ public:
     bool contains(const T &view) const;
     bool contains(const typename T::ID &id) const;
 
-    AtomSelection selectedAtoms() const;
+    AtomSelection selection() const;
+    AtomSelection selection(int i) const;
+    AtomSelection selection(int i, int j) const;
     
     Mover< Selector<T> > move() const;
     Mover< Selector<T> > move(int i) const;
@@ -140,6 +142,10 @@ public:
     Editor< Selector<T> > edit() const;
     Editor< Selector<T> > edit(int i) const;
     Editor< Selector<T> > edit(int i, int j) const;
+    
+    Selector<T> selector() const;
+    Selector<T> selector(int i) const;
+    Selector<T> selector(int i, int j) const;
 
     bool hasProperty(const PropertyName &key) const;
     bool hasMetadata(const PropertyName &metakey) const;
@@ -184,9 +190,6 @@ protected:
 private:
     void _pvt_add(typename T::Index idx);
     void _pvt_sub(typename T::Index idx);
-
-    AtomSelection _pvt_selectedAtoms(int i) const;
-    AtomSelection _pvt_selectedAtoms(int i, int j) const;
 
     /** The list of indicies of the selected parts
         of the molecule */
@@ -821,7 +824,7 @@ bool Selector<T>::intersects(const typename T::ID &id) const
 /** Return all of the atoms selected in this set */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-AtomSelection Selector<T>::selectedAtoms() const
+AtomSelection Selector<T>::selection() const
 {
     AtomSelection selected_atoms(*d);
     
@@ -833,9 +836,13 @@ AtomSelection Selector<T>::selectedAtoms() const
     return selected_atoms;
 }
 
+/** Return the selection of the atoms in the ith view
+
+    \throw SireError::invalid_index
+*/
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-AtomSelection Selector<T>::_pvt_selectedAtoms(int i) const
+AtomSelection Selector<T>::selection(int i) const
 {
     AtomSelection selected_atoms(*d);
     
@@ -844,9 +851,13 @@ AtomSelection Selector<T>::_pvt_selectedAtoms(int i) const
     return selected_atoms;
 }
 
+/** Return the selection of the atoms in the ith to jth views
+
+    \throw SireError::invalid_index
+*/
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-AtomSelection Selector<T>::_pvt_selectedAtoms(int i, int j) const
+AtomSelection Selector<T>::selection(int i, int j) const
 {
     AtomSelection selected_atoms(*d);
     
@@ -855,10 +866,10 @@ AtomSelection Selector<T>::_pvt_selectedAtoms(int i, int j) const
     
     if (i > j)
         qSwap(i,j);
-        
+    
     for ( ; i<=j; ++i)
     {
-        selected_atoms.select( idxs.at(i) );
+        selected_atoms = selected_atoms.select( idxs.at(i) );
     }
     
     return selected_atoms;
@@ -878,7 +889,7 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 Mover< Selector<T> > Selector<T>::move(int i) const
 {
-    return Mover< Selector<T> >(*this, this->_pvt_selectedAtoms(i));
+    return Mover< Selector<T> >(*this, this->selection(i));
 }
 
 /** Return an object that can move the ith to jth views in this set */
@@ -886,7 +897,7 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 Mover< Selector<T> > Selector<T>::move(int i, int j) const
 {
-    return Mover< Selector<T> >(*this, this->_pvt_selectedAtoms(i,j));
+    return Mover< Selector<T> >(*this, this->selection(i,j));
 }
 
 /** Return an evaluator that can evaluate properties over all 
@@ -904,7 +915,7 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 Evaluator Selector<T>::evaluate(int i) const
 {
-    return Evaluator(*this, this->_pvt_selectedAtoms(i));
+    return Evaluator(*this, this->selection(i));
 }
 
 /** Return an evaluator that can evaluate properties over  
@@ -913,7 +924,7 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 Evaluator Selector<T>::evaluate(int i, int j) const
 {
-    return Evaluator(*this, this->_pvt_selectedAtoms(i,j));
+    return Evaluator(*this, this->selection(i,j));
 }
 
 /** Return an editor that can edit all of the views in 
@@ -930,7 +941,7 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 Editor< Selector<T> > Selector<T>::edit(int i) const
 {
-    return Editor< Selector<T> >(*this, this->_pvt_selectedAtoms(i));
+    return Editor< Selector<T> >(*this, this->selection(i));
 }
 
 /** Return an editor that can edit the ith to jth views in this set */
@@ -938,7 +949,38 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 Editor< Selector<T> > Selector<T>::edit(int i, int j) const
 {
-    return Editor< Selector<T> >(*this, this->_pvt_selectedAtoms(i,j));
+    return Editor< Selector<T> >(*this, this->selection(i,j));
+}
+
+/** Return a selector that can change the selection of this view */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+Selector<T> Selector<T>::selector() const
+{
+    return *this;
+}
+
+/** Return a selector for the ith view that can change the 
+    selection of that view
+    
+    \throw SireError::invalid_index
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+Selector<T> Selector<T>::selector(int i) const
+{
+    return Selector<T>(*d, this->selection(i));
+}
+
+/** Return a selector for the ith to jth views 
+
+    \throw SireError::invalid_index
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+Selector<T> Selector<T>::selector(int i, int j) const
+{
+    return Selector<T>(*d, this->selection(i,j));
 }
 
 /** Return a list of the values of the property called 'key' for each

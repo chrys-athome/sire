@@ -144,7 +144,7 @@ bool Residue::operator!=(const Residue &other) const
 
 /** Return the identities of the atoms that are selected as
     part of this residue */
-AtomSelection Residue::selectedAtoms() const
+AtomSelection Residue::selection() const
 {
     return selected_atoms;
 }
@@ -185,6 +185,12 @@ Evaluator Residue::evaluate() const
 Editor<Residue> Residue::edit() const
 {
     return Editor<Residue>(*this);
+}
+
+/** Return a selector that can change the selection of residues */
+Selector<Residue> Residue::selector() const
+{
+    return Selector<Residue>(*this);
 }
 
 /** Return the number of atoms in this residue */
