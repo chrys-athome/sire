@@ -128,11 +128,23 @@ public:
     
     PartialMolecule at(int i) const;
     
+    MolNum number() const;
+    const MolName& name() const;
+    
+    quint64 version() const;
+    quint64 version(const PropertyKey &key) const;
+    
     int nViews() const;
     int count() const;
 
     ViewsOfMol add(const AtomSelection &view) const;
+    ViewsOfMol add(const QList<AtomSelection> &views) const;
+    
+    ViewsOfMol unite(const AtomSelection &view) const;
+    ViewsOfMol unite(const QList<AtomSelection> &views) const;
+    
     ViewsOfMol remove(const AtomSelection &view) const;
+    ViewsOfMol remove(const QList<AtomSelection> &views) const;
     
     ViewsOfMol removeAt(int i) const;
     
@@ -142,6 +154,8 @@ public:
    
     PartialMolecule join() const;
     PartialMolecule all() const;
+    
+    ViewsOfMol removeDuplicates() const;
     
     Molecule molecule() const;
 
@@ -154,9 +168,17 @@ public:
     AtomSelection selection() const;
     AtomSelection selection(int i) const;
     
+    QList<AtomSelection> selections() const;
+    
     bool contains(AtomIdx atomidx) const;
     bool contains(const AtomID &atomid) const;
     bool intersects(const AtomID &atomid) const;
+    
+    bool contains(const AtomSelection &selection) const;
+    bool intersects(const AtomSelection &selection) const;
+    
+    bool contains(const QList<AtomSelection> &selections) const;
+    bool intersects(const QList<AtomSelection> &selections) const;
     
     Atom select(const AtomID &atomid) const;
 
@@ -203,6 +225,8 @@ public:
 private:
     template<class T>
     void setEqualTo(const Selector<T> &selection);
+
+    void _pvt_add(const AtomSelection &view);
 
     /** The union of all of the views of the molecule
         (and the first view, if there is only one view) */

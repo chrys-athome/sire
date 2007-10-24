@@ -296,6 +296,33 @@ PartialMolecule ViewsOfMol::operator[](int i) const
         return PartialMolecule(*d, views.at(i));
 }
 
+/** Return the name of the molecule being viewed */
+const MolName& ViewsOfMol::name() const
+{
+    return d->name();
+}
+
+/** Return the number of the molecule being viewed */
+MolNum ViewsOfMol::number() const
+{
+    return d->number();
+}
+
+/** Return the version of the molecule being viewed */
+quint64 ViewsOfMol::version() const
+{
+    return d->version();
+}
+
+/** Return the version of the property at key 'key'
+
+    \throw SireBase::missing_property
+*/
+quint64 ViewsOfMol::version(const PropertyName &key) const
+{
+    return d->version(key);
+}
+
 /** Return the ith view in this set
 
     \throw SireError::invalid_index
@@ -305,41 +332,92 @@ PartialMolecule ViewsOfMol::at(int i) const
     return this->operator[](i);
 }
 
-/** Return the views where 'view' has been added to the set 
-
-    \throw SireError::incompatible_error
-*/
-ViewsOfMol ViewsOfMol::add(const AtomSelection &view) const
+void ViewsOfMol::_pvt_add(const AtomSelection &view)
 {
     int nviews = this->nViews();
     
     if (nviews == 0)
-        return ViewsOfMol(*d, view);
+        this->operator=(ViewsOfMol(*d, view));
     else if (nviews == 1)
     {
         view.assertCompatibleWith(*d);
     
-        ViewsOfMol ret(*this);
-        ret.views.append(selected_atoms);
-        ret.views.append(view);
+        views.append(selected_atoms);
+        views.append(view);
         
         if (not selected_atoms.selectedAll())
-            ret.selected_atoms = selected_atoms.unite(view);
-        
-        return ret;
+            selected_atoms = selected_atoms.unite(view);
     }
     else
     {
         view.assertCompatibleWith(*d);
         
-        ViewsOfMol ret(*this);
-        ret.views.append(view);
+        views.append(view);
         
         if (not selected_atoms.selectedAll())
-            ret.selected_atoms = selected_atoms.unite(view);
-            
-        return ret;
+            selected_atoms = selected_atoms.unite(view);
     }
+}
+
+/** Return the views where 'view' has been added to the set.
+    This adds a duplicate of 'view' if it already exists 
+    in this set
+
+    \throw SireError::incompatible_error
+*/
+ViewsOfMol ViewsOfMol::add(const AtomSelection &view) const
+{
+    ViewsOfMol ret(*this);
+    ret._pvt_add(view);
+}
+
+/** Return the views where 'views' have been added to 
+    the set - this duplicates any views that already
+    exist
+    
+    \throw SireError::incompatible_error
+*/
+ViewsOfMol ViewsOfMol::add(const QList<AtomSelection> &views) const
+{
+    ViewsOfMol ret(*this);
+    
+    foreach (const AtomSelection &view, views)
+    {
+        ret._pvt_add(view);
+    }
+    
+    return ret;
+}
+
+/** Return the view where 'view' has been united
+    - unlike the add(...) functions this only adds the
+      view if it doesn't already exist in this set
+      
+    \throw SireError::incompatible_error
+*/
+ViewsOfMol ViewsOfMol::unite(const AtomSelection &view) const
+{
+    if (not this->contains(view))
+        return this->add(view);
+}
+
+/** Return the view where 'views' have been united
+    - unlike the add(...) functions, this only adds
+      views that don't already exist in this set 
+      
+    \throw SireError::incompatible_error
+*/
+ViewsOfMol ViewsOfMol::unite(const QList<AtomSelection> &views) const
+{
+    ViewsOfMol ret(*this);
+    
+    foreach (const AtomSelection &view, views)
+    {
+        if (not this->contains(view))
+            ret._pvt_add(view);
+    }
+    
+    return ret;
 }
 
 /** Return the set with the ith view removed

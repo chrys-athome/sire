@@ -31,8 +31,8 @@
 
 #include <QHash>
 
-#include "partialmolecule.h"
-#include "moleculeid.h"
+#include "viewsofmol.h"
+#include "molnum.h"
 
 SIRE_BEGIN_HEADER
 
@@ -47,10 +47,12 @@ QDataStream& operator>>(QDataStream&, SireMol::Molecules&);
 namespace SireMol
 {
 
-/** This class provides a container for lots of molecules. This will eventually
-    form the general purpose molecule container, which is used as the argument
+/** This class provides a container for lots of molecules. This
+    forms a general purpose molecule container, which is used as the argument
     to functions which expect to be passed lots of molecules or parts
-    of molecules
+    of molecules. This class holds the Molecules using the
+    ViewsOfMol class, thereby allowing multiple arbitrary views of each 
+    molecule to be held.
 
     @author Christopher Woods
 */
@@ -62,17 +64,13 @@ friend QDataStream& ::operator>>(QDataStream&, Molecules&);
 
 public:
 
-    typedef QHash<MoleculeID,PartialMolecule>::iterator iterator;
-    typedef QHash<MoleculeID,PartialMolecule>::const_iterator const_iterator;
-
-    typedef PartialMolecule value_type;
+    typedef QHash<MolNum,ViewsOfMol>::const_iterator const_iterator;
+    typedef QHash<MolNum,ViewsOfMol>::iterator iterator;
 
     Molecules();
 
-    Molecules(const PartialMolecule &molecule);
-    Molecules(const MolDataView &molecule);
-
-    Molecules(const QHash<MoleculeID,PartialMolecule> &molecules);
+    Molecules(const MoleculeView &molecule);
+    Molecules(const ViewsOfMol &molviews);
 
     template<class T>
     Molecules(const QList<T> &molecules);
@@ -80,36 +78,76 @@ public:
     template<class T>
     Molecules(const QVector<T> &molecules);
 
-    template<class T>
-    Molecules(const QSet<T> &molecules);
-
-    template<class K, class T>
-    Molecules(const QHash<K,T> &molecules);
-
     Molecules(const Molecules &other);
 
     ~Molecules();
 
-    const PartialMolecule& operator[](MoleculeID molid) const;
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<Molecules>() );
+    }
 
-    Molecules& operator+=(const Molecules &other);
-    Molecules& operator-=(const Molecules &other);
+    const char* what() const
+    {
+        return Molecules::typeName();
+    }
+
+    Molecules* clone() const
+    {
+        return new Molecules(*this);
+    }
+
+    Molecules& operator=(const Molecules &other);
+    
+    bool operator==(const Molecules &other) const;
+    bool operator!=(const Molecules &other) const;
+    
+    const ViewsOfMol& operator[](MolNum molnum) const;
 
     Molecules operator+(const Molecules &other) const;
     Molecules operator-(const Molecules &other) const;
 
-    Molecules unite(const Molecules &other) const;
-    Molecules subtract(const Molecules &other) const;
-    Molecules intersection(const Molecules &other) const;
+    const ViewsOfMol& molecule(MolNum molnum) const;
 
-    bool intersects(const Molecules &other) const;
+    Molecules add(const MoleculeView &molview) const;
+    Molecules add(const ViewsOfMol &molviews) const;
+    Molecules add(const Molecules &molecules) const;
+
+    Molecules unite(const MoleculeView &molview) const;
+    Molecules unite(const ViewsOfMol &molviews) const;
+    Molecules unite(const Molecules &other) const;
+    
+    Molecules remove(const MoleculeView &molview) const;
+    Molecules remove(const ViewsOfMol &molviews) const;
+    Molecules remove(const Molecules &molecules) const;
+    
+    Molecules remove(MolNum molnum) const;
+    
+    Molecules subtract(const MoleculeView &molview) const;
+    Molecules subtract(const ViewsOfMol &molviews) const;
+    Molecules subtract(const Molecules &molecules) const;
+
+    Molecules subtract(MolNum molnum) const;
+
+    Molecules uniteViews() const;
+    Molecules removeDuplicates() const;
+
+    Molecules update(const MoleculeData &moldata) const;
+    Molecules update(const MoleculeView &molview) const;
+    Molecules update(const Molecules &molecules) const;
 
     bool isEmpty() const;
 
-    bool contains(MoleculeID molid) const;
-    bool contains(const PartialMolecule &molecule) const;
+    bool contains(MolNum molnum) const;
+    bool contains(const MoleculeView &molview) const;
+    bool contains(const ViewsOfMol &molviews) const;
+    bool contains(const Molecules &molecules) const;
+
+    bool intersects(const MoleculeView &molview) const;
+    bool intersects(const Molecules &other) const;
 
     int count() const;
+    int nMolecules() const;
 
     const_iterator begin() const;
     const_iterator end() const;
@@ -117,35 +155,35 @@ public:
     const_iterator constBegin() const;
     const_iterator constEnd() const;
 
-    QSet<MoleculeID> moleculeIDs() const;
+    QSet<MolNum> molNums() const;
 
-    void reserve(int count);
-
-    bool add(const PartialMolecule &molecule);
-    bool append(const PartialMolecule &molecule);
-
-    bool add(const Molecules &molecules);
-    bool append(const Molecules &molecules);
-
-    bool change(const PartialMolecule &molecule);
-    bool change(const Molecules &molecules);
-
-    bool remove(const PartialMolecule &molecule);
-    bool remove(const Molecules &molecules);
-
-    bool remove(MoleculeID molid);
-    bool remove(const QSet<MoleculeID> &molids);
-
-    const PartialMolecule& molecule(MoleculeID molid) const;
-
-    void assertContains(MoleculeID molid) const;
+    void assertContains(MolNum molnum) const;
 
 private:
     template<class T>
     static Molecules from(const T &molecules);
 
-    /** Hash that contains all of the molecules */
-    QHash<MoleculeID,PartialMolecule> mols;
+    void _pvt_add(const MoleculeView &molview);
+    void _pvt_add(const ViewsOfMol &molviews);
+    void _pvt_add(const Molecules &molecules);
+    
+    void _pvt_sub(const MoleculeView &molview);
+    void _pvt_sub(const ViewsOfMol &molviews);
+    void _pvt_sub(const Molecules &molecules);
+
+    void _pvt_unite(const MoleculeView &molview);
+    void _pvt_unite(const ViewsOfMol &molviews);
+    void _pvt_unite(const Molecules &molecules);
+
+    void _pvt_update(const MoleculeData &moldata);
+
+    void _pvt_removeDupes();
+    void _pvt_uniteViews();
+
+    /** Hash that contains all of the views of
+        all of the molecules, indexed by 
+        their molecule number */
+    QHash<MolNum,ViewsOfMol> mols;
 
 };
 
@@ -164,7 +202,16 @@ Molecules Molecules::from(const T &molecules)
          it != molecules.end();
          ++it)
     {
-        mols.mols.insert(it->ID(), *it);
+        QHash<MolNum,ViewsOfMol>::iterator mol = mols.mols.find(it->number());
+        
+        if (mol != mols.mols.end())
+        {
+            *mol = mol->add(*it);
+        }
+        else
+        {
+            mols.mols.insert(it->number(), *it);
+        }
     }
 
     return mols;
@@ -186,85 +233,6 @@ SIRE_OUTOFLINE_TEMPLATE
 Molecules::Molecules(const QVector<T> &molecules)
 {
     *this = Molecules::from(molecules);
-}
-
-/** Converting constructor used to convert from general
-    containers of molecules to this container */
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-Molecules::Molecules(const QSet<T> &molecules)
-{
-    *this = Molecules::from(molecules);
-}
-
-/** Converting constructor used to convert from general
-    containers of molecules to this container */
-template<class K, class T>
-SIRE_OUTOFLINE_TEMPLATE
-Molecules::Molecules(const QHash<K,T> &molecules)
-{
-    *this = Molecules::from(molecules);
-}
-
-/** Return whether or not this container is empty */
-inline bool Molecules::isEmpty() const
-{
-    return mols.isEmpty();
-}
-
-/** Return whether this contains at least one atom of any version
-    of the molecule with ID == molid */
-inline bool Molecules::contains(MoleculeID molid) const
-{
-    return mols.contains(molid);
-}
-
-/** Return the number of molecules in this container */
-inline int Molecules::count() const
-{
-    return mols.count();
-}
-
-/** Return an iterator pointing to the first molecule
-    in the container */
-inline Molecules::const_iterator Molecules::begin() const
-{
-    return mols.begin();
-}
-
-/** Return an iterator pointing one past the last molecule
-    in the container */
-inline Molecules::const_iterator Molecules::end() const
-{
-    return mols.end();
-}
-
-/** Return an iterator pointing to the first molecule
-    in the container */
-inline Molecules::const_iterator Molecules::constBegin() const
-{
-    return mols.constBegin();
-}
-
-/** Return an iterator pointing one past the last molecule
-    in the container */
-inline Molecules::const_iterator Molecules::constEnd() const
-{
-    return mols.constEnd();
-}
-
-/** Return the molecule with ID == molid
-
-    \throw SireMol::missing_molecule
-*/
-inline const PartialMolecule& Molecules::molecule(MoleculeID molid) const
-{
-    QHash<MoleculeID,PartialMolecule>::const_iterator it = mols.find(molid);
-
-    if (it == mols.end())
-        assertContains(molid);
-
-    return *it;
 }
 
 }

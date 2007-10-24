@@ -71,9 +71,32 @@ namespace detail
 class MoleculeGroupPvt;
 }
 
-/** This class holds a group of molecules. The group is versioned,
-    and holds the molecules in a manner that allows efficient linear
-    access and indexing (by MoleculeID)
+/** This class is used to group views of molecules together. 
+    Underneath, it used the Molecules class to hold views
+    of molecules (including multiple views of molecules).
+    However it supplements the data in Molecules with 
+    additional meta-information, such as indexing of
+    the molecules (so you can quicky choose the third
+    molecule in the group), indexing of the views
+    (so you can quickly choose the tenth view in
+    the group), and also versioning (so you can tell
+    if the composition of the group has changed,
+    or if any of the members have changed), and also
+    an ID number that lets you keep track of the group.
+    
+    The primary purpose of a MoleculeGroup is to allow you
+    to construct groups of molecule views that can be 
+    used by the program, e.g. a group of views that will
+    be moved by a Monte Carlo move
+    
+    MoleculeGroup objects can also be named, so you could
+    create groups like "solvent", "protein", "ligands",
+    "ions" etc. Each MoleculeGroup in a simulations system
+    is placed into a single MoleculeGroups object, which
+    can then let you search for atoms or molecules using
+    these group names, e.g. GroupName("solvent") + AtomName("O00")
+    would select all of the atoms called "O00" in all of 
+    the molecules in the group(s) called "solvent"
 
     @author Christopher Woods
 */
