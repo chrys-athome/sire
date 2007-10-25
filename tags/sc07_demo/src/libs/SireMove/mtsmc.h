@@ -58,11 +58,11 @@ using SireCAS::Symbol;
 
 /** This is a multiple-time-step Monte Carlo move
     (see Hetenyi et. al., J. Chem. Phys., 117, 8203-8207, 2002)
-    
+
     This move performs n Monte Carlo moves using the 'fast'
     forcefield, and then accepts or rejects all of these moves
     together according to the 'slow' forcefield
-    
+
     @author Christopher Woods
 */
 class SIREMOVE_EXPORT MTSMC : public MonteCarlo
@@ -73,16 +73,16 @@ friend QDataStream& ::operator>>(QDataStream&, MTSMC&);
 
 public:
     MTSMC();
-    
-    MTSMC(const Moves &moves, const Symbol &fastcomponent, 
+
+    MTSMC(const Moves &moves, const Symbol &fastcomponent,
           quint32 nfastmoves=0);
-          
+
     MTSMC(const MTSMC &other);
-    
+
     ~MTSMC();
-    
+
     MTSMC& operator=(const MTSMC &other);
-    
+
     static const char* typeName()
     {
         return "SireMove::MTSMC";
@@ -97,16 +97,18 @@ public:
     {
         return new MTSMC(*this);
     }
-    
+
     void setMoves(const Moves &moves);
     void setMoves(const Moves &moves, const Symbol &fastcomponent);
-    
+
     void setNumFastMoves(quint32 nmoves);
-    
+    void setNumSlowMoves(quint32 nmoves);
+
     const Moves& moves() const;
-    
+
     quint32 numFastMoves() const;
-    
+    quint32 numSlowMoves() const;
+
     const Symbol& fastEnergyComponent() const;
     void setFastEnergyComponent(const Symbol &symbol);
 
@@ -115,15 +117,24 @@ public:
     void assertCompatibleWith(QuerySystem &system) const;
 
 private:
+    quint32 parallelMove(SimSystem &system, quint32 nmoves);
+
     /** The moves performed on the fast forcefield */
     Moves fast_moves;
-    
+
     /** The fast energy component */
     Symbol fast_component;
-    
-    /** The number of moves on the fast forcefield 
+
+    /** The number of moves on the fast forcefield
         per slow move */
     quint32 nfast;
+
+    /** The number of slow moves to run per single MTSMC move.
+        By allowing multiple slow moves, it is then possible to
+        perform the energy calculation to accept the previous
+        move while at the same time running the trajectory
+        forward to generate the next configuration for the next move. */
+    quint32 nslow;
 };
 
 }

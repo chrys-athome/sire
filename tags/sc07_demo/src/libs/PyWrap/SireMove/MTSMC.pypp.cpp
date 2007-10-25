@@ -44,6 +44,9 @@ void register_MTSMC_class(){
             "numFastMoves"
             , (::quint32 ( ::SireMove::MTSMC::* )(  ) const)( &::SireMove::MTSMC::numFastMoves ) )    
         .def( 
+            "numSlowMoves"
+            , (::quint32 ( ::SireMove::MTSMC::* )(  ) const)( &::SireMove::MTSMC::numSlowMoves ) )    
+        .def( 
             "setFastEnergyComponent"
             , (void ( ::SireMove::MTSMC::* )( ::SireCAS::Symbol const & ) )( &::SireMove::MTSMC::setFastEnergyComponent )
             , ( bp::arg("symbol") ) )    
@@ -58,6 +61,10 @@ void register_MTSMC_class(){
         .def( 
             "setNumFastMoves"
             , (void ( ::SireMove::MTSMC::* )( ::quint32 ) )( &::SireMove::MTSMC::setNumFastMoves )
+            , ( bp::arg("nmoves") ) )    
+        .def( 
+            "setNumSlowMoves"
+            , (void ( ::SireMove::MTSMC::* )( ::quint32 ) )( &::SireMove::MTSMC::setNumSlowMoves )
             , ( bp::arg("nmoves") ) )    
         .def( 
             "typeName"

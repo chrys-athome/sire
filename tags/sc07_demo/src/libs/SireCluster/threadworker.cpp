@@ -99,6 +99,7 @@ void ThreadWorker::run()
         do
         {
             //wait until we are asked to do something...
+            qDebug() << "Waiting for some action!";
             runwaiter.wait(&runmutex);
 
             //ok, the job has now started
@@ -109,6 +110,7 @@ void ThreadWorker::run()
 
             qDebug() << "Loop!";
             this->calculate();
+            qDebug() << "Loop complete!";
 
             //wake a thread waiting for us to finish doing something
             runwaiter.wakeOne();

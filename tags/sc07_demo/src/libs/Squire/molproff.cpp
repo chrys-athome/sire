@@ -1459,7 +1459,7 @@ const QString& MolproFF::program() const
     return molpro_program;
 }
 
-/** Return the string that describes the basis set - this is "vdz" by 
+/** Return the string that describes the basis set - this is "vdz" by
     default */
 const QString& MolproFF::basisSet() const
 {
@@ -1483,7 +1483,7 @@ bool MolproFF::setProgram(const QString &program)
         this->incrementMajorVersion();
         this->mustNowRecalculateFromScratch();
     }
-    
+
     return isDirty();
 }
 
@@ -1497,7 +1497,7 @@ bool MolproFF::setBasisSet(const QString &basisset)
         this->incrementMajorVersion();
         this->mustNowRecalculateFromScratch();
     }
-    
+
     return isDirty();
 }
 
@@ -1511,7 +1511,7 @@ bool MolproFF::setExtraCommands(const QString &extracmds)
         this->incrementMajorVersion();
         this->mustNowRecalculateFromScratch();
     }
-    
+
     return isDirty();
 }
 
@@ -2898,7 +2898,7 @@ QString MolproFF::molproCommandInput()
                    "%6\n"
                   )
               .arg( nQMAtomsInArray() )
-              .arg( qmCoordString(), mmCoordAndChargesString(), 
+              .arg( qmCoordString(), mmCoordAndChargesString(),
                     extraCommands(), basisSet(), program() );
 }
 
