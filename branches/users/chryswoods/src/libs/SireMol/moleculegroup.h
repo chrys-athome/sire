@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2006  Christopher Woods
+  *  Copyright (C) 2007  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -29,32 +29,14 @@
 #ifndef SIREMOL_MOLECULEGROUP_H
 #define SIREMOL_MOLECULEGROUP_H
 
-#include <QList>
-#include <QHash>
 #include <QSharedDataPointer>
-
-#include "moleculegroupid.h"
-
-#include "partialmolecule.h"
-#include "moleculeid.h"
-
-#include "SireBase/idmajminversion.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
-
-namespace detail
-{
-class MoleculeGroupPvt;
-}
-
 class MoleculeGroup;
 }
-
-QDataStream& operator<<(QDataStream&, const SireMol::detail::MoleculeGroupPvt&);
-QDataStream& operator>>(QDataStream&, SireMol::detail::MoleculeGroupPvt&);
 
 QDataStream& operator<<(QDataStream&, const SireMol::MoleculeGroup&);
 QDataStream& operator>>(QDataStream&, SireMol::MoleculeGroup&);
@@ -62,9 +44,10 @@ QDataStream& operator>>(QDataStream&, SireMol::MoleculeGroup&);
 namespace SireMol
 {
 
-using SireBase::Version;
-
 class Molecules;
+class MoleculeView;
+class PartialMolecule;
+class ViewsOfMol;
 
 namespace detail
 {
@@ -87,14 +70,16 @@ class MoleculeGroupPvt;
     The primary purpose of a MoleculeGroup is to allow you
     to construct groups of molecule views that can be 
     used by the program, e.g. a group of views that will
-    be moved by a Monte Carlo move
+    be moved by a Monte Carlo move, or the group of
+    atoms that are in particular forcefield (or a sub-group
+    of that forcefield)
     
     MoleculeGroup objects can also be named, so you could
     create groups like "solvent", "protein", "ligands",
     "ions" etc. Each MoleculeGroup in a simulations system
     is placed into a single MoleculeGroups object, which
     can then let you search for atoms or molecules using
-    these group names, e.g. GroupName("solvent") + AtomName("O00")
+    these group names, e.g. MGName("solvent") + AtomName("O00")
     would select all of the atoms called "O00" in all of 
     the molecules in the group(s) called "solvent"
 
@@ -109,55 +94,89 @@ friend QDataStream& ::operator>>(QDataStream&, MoleculeGroup&);
 public:
     MoleculeGroup();
 
+    MoleculeGroup(const Molecules &molecules);
+
     MoleculeGroup(const QString &name);
 
     MoleculeGroup(const QString &name, const Molecules &molecules);
+    MoleculeGroup(const QString &name, const MoleculeGroup &other);
 
     MoleculeGroup(const MoleculeGroup &other);
 
     ~MoleculeGroup();
+
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<MoleculeGroup>() );
+    }
+
+    const char* what() const
+    {
+        return MoleculeGroup::typeName();
+    }
+
+    MoleculeGroup* clone() const
+    {
+        return new MoleculeGroup(*this);
+    }
 
     MoleculeGroup& operator=(const MoleculeGroup &other);
 
     bool operator==(const MoleculeGroup &other) const;
     bool operator!=(const MoleculeGroup &other) const;
 
-    const PartialMolecule& operator[](MoleculeID molid) const;
-
-    const PartialMolecule& at(MoleculeID molid) const;
-
-    const PartialMolecule& molecule(MoleculeID molid) const;
-
-    const QString& name() const;
-
-    MoleculeGroupID ID() const;
-    const Version& version() const;
-
-    const Molecules& molecules() const;
-
-    QSet<MoleculeID> moleculeIDs() const;
+    const ViewsOfMol& operator[](MolNum molnum) const;
+    PartialMolecule operator[](const MolViewID &molviewid) const;
+    
+    const ViewsOfMol& at(MolNum molnum) const;
+    PartialMolecule at(const MolViewID &molviewid) const;
+    PartialMolecule at(MolNum molnum, Index viewidx) const;
+    
+    const ViewsOfMol& moleculeAt(Index idx) const;
+    PartialMolecule viewAt(Index idx) const;
+    
+    int nMolecules() const;
+    
+    int nViews() const;
+    int nViews(MolNum molnum) const;
+    int nViews(Index idx) const;
 
     bool isEmpty() const;
-    int count() const;
-    int nMolecules() const;
+    
+    const Molecules& molecules() const;
 
-    bool add(const PartialMolecule &molecule);
-    bool change(const PartialMolecule &molecule);
-    bool remove(const PartialMolecule &molecule);
+    const MGName& name() const;
+    MGNum number() const;
+    
+    quint64 majorVersion() const;
+    quint64 minorVersion() const;
 
-    bool remove(MoleculeID molid);
+    void add(const MoleculeView &molview);
+    void update(const MoleculeView &molview);
+    void remove(const MoleculeView &molview);
 
-    bool add(const Molecules &molecules);
-    bool change(const Molecules &molecules);
-    bool remove(const Molecules &molecules);
+    void add(const ViewsOfMol &molviews);
+    void remove(const ViewsOfMol &molviews);
 
-    bool remove(const QSet<MoleculeID> &molids);
+    void add(const Molecules &molecules);
+    void update(const Molecules &molecules);
+    void remove(const Molecules &molecules);
 
-    void rename(const QString &newname);
+    void add(const MoleculeGroup &molgroup);
+    void update(const MoleculeGroup &molgroup);
+    void remove(const MoleculeGroup &molgroup);
 
-    bool refersTo(MoleculeID molid) const;
+    void update(const MoleculeData &moldata);
+    void remove(MolNum molnum);
 
-    bool contains(const PartialMolecule &molecule) const;
+    void remove(const QSet<MolNum> &molnums);
+
+    void removeAll();
+    
+    void setContents(const MoleculeView &molview);
+    void setContents(const ViewsOfMol &molviews);
+    void setContents(const Molecules &molecules);
+    void setContents(const MoleculeGroup &molgroup);
 
 private:
     /** Implicit pointer to the data of this object */
