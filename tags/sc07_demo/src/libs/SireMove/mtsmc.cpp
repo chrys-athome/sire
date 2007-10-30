@@ -211,7 +211,7 @@ void MTSMC::assertCompatibleWith(QuerySystem &system) const
 class MTSMC_BG_Runner : public ThreadWorker
 {
 public:
-    MTSMC_BG_Runner(SimSystem &system, const Moves &fast_moves, quint32 nfast);
+    MTSMC_BG_Runner(const CheckPoint &checkpoint, const Moves &fast_moves, quint32 nfast);
 
     ~MTSMC_BG_Runner();
 
@@ -239,10 +239,10 @@ private:
     quint32 nfast;
 };
 
-MTSMC_BG_Runner::MTSMC_BG_Runner(SimSystem &system,
+MTSMC_BG_Runner::MTSMC_BG_Runner(const CheckPoint &checkpoint,
                                  const Moves &moves, quint32 nmoves)
                 : ThreadWorker(),
-                  simsystem(system.checkPoint()),
+                  simsystem(checkpoint),
                   fast_moves(moves), nfast(nmoves)
 {}
 
@@ -303,14 +303,14 @@ void MTSMC_BG_Runner::calculate()
             if (nfast > 50)
             {
                 qDebug() << "Running 50 steps..." << nfast;
-                fast_moves.run(simsystem, 50, true);
+                fast_moves.run(simsystem, 50, false);
                 qDebug() << "...complete";
                 nfast -= 50;
             }
             else
             {
                 qDebug() << nfast;
-                fast_moves.run(simsystem, nfast, true);
+                fast_moves.run(simsystem, nfast, false);
                 nfast = 0;
                 qDebug() << "COMPLETE!!!";
             }
@@ -370,7 +370,7 @@ quint32 MTSMC::parallelMove(SimSystem &system, quint32 nmoves)
             CheckPoint mid_checkpoint = system.checkPoint();
             Moves mid_moves = fast_moves;
 
-            MTSMC_BG_Runner runner(system, fast_moves, nfast);
+            MTSMC_BG_Runner runner(mid_checkpoint, fast_moves, nfast);
 
             if (nmoves > 1)
             {
@@ -379,7 +379,7 @@ quint32 MTSMC::parallelMove(SimSystem &system, quint32 nmoves)
                 runner.start();
             }
 
-            //ok, now we can calculate the energy of this midpoint
+            //ok, now we can calculate the energy of this midpointsystem
             qDebug() << "Calculating the energy of this block!";
             double V_new = energy(system);
             double V2_new = V_new - mid_fast_energy;

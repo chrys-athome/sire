@@ -40,6 +40,8 @@
 
 #include "SireError/errors.h"
 
+#include <unistd.h>
+
 #include <QDebug>
 
 using namespace Squire;
@@ -76,6 +78,10 @@ MolproSession::MolproSession(MolproFF &molproff)
             "is not executable, or does not exist!")
                 .arg(molpro_exe.absoluteFilePath()), CODELOC );
     }
+
+    sleep(1);
+
+    return;
 
     //only one molpro job may start at a time!
     QMutexLocker lkr(&starter_mutex);
@@ -463,6 +469,8 @@ double MolproSession::getCurrentEnergy()
 */
 double MolproSession::calculateEnergy()
 {
+    return 0.0;
+
     //molpro still needs to be running!
     this->assertMolproIsRunning();
 
