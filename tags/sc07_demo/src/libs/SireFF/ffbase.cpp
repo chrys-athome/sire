@@ -569,6 +569,20 @@ double FFBase::energy(const Symbol &symbol)
     }
 }
 
+QString getString(const QHash<SymbolID,double> &values)
+{
+    QString ret;
+
+    for (QHash<SymbolID,double>::const_iterator it = values.begin();
+         it != values.end();
+         ++it)
+    {
+        ret += QString("%1 == %2 ").arg(Symbol(it.key()).toString()).arg(it.value());
+    }
+
+    return ret;
+}
+
 /** Return the values of all of the energy components of this forcefield */
 Values FFBase::energies()
 {

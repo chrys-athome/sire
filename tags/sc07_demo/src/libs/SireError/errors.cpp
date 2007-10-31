@@ -220,4 +220,17 @@ QString SIREERROR_EXPORT processError(const QString &executable,
     }
 }
 
+QString SIREERROR_EXPORT processError(const QString &executable, const QProcess &p,
+                                      const QString &process_output,
+                                      const QString &process_error)
+{
+    return QObject::tr("%1\n"
+                       "######## Output (STDOUT) of the process #######\n"
+                       "%2\n"
+                       "######## Output (STDERR) of the process #######\n"
+                       "%3")
+                    .arg( processError(executable, p),
+                          process_output, process_error);
+}
+
 }

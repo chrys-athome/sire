@@ -54,6 +54,9 @@ namespace SireError
 QString fileError(const QFile &f);
 
 QString processError(const QString &executable, const QProcess &p);
+QString processError(const QString &executable, const QProcess &p,
+                     const QString &process_output,
+                     const QString &process_error);
 
 /** This exception is thrown when the code detects a programming bug. I hope that
     eventually Sire will not throw too many of these!
@@ -378,6 +381,13 @@ public:
               : exception(processError(executable,process), place)
     {}
 
+    process_error(const QString &executable, const QProcess &process,
+                  const QString &process_output, const QString &process_error,
+                  QString place=QString::null)
+              : exception(processError(executable,process,
+                                       process_output,process_error), place)
+    {}
+
     process_error(const process_error &other) : exception(other)
     {}
 
@@ -546,7 +556,7 @@ protected:
 
 /** This exception is thrown whenever an unidentified exception needs translating into
     a SireError::exception, or when an unidentified SireError::exception is detected.
-    
+
     @author Christopher Woods
 */
 class SIREERROR_EXPORT unknown_exception : public SireError::exception
@@ -573,7 +583,7 @@ public:
 /** This exception is thrown whenever a problem is detected
     that involves dependencies, e.g. a dependency is missing,
     or a dependency may be about to be broken.
-    
+
     @author Christopher Woods
 */
 class SIREERROR_EXPORT dependency_error : public SireError::exception

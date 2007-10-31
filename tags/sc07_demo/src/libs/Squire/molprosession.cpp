@@ -40,8 +40,6 @@
 
 #include "SireError/errors.h"
 
-#include <unistd.h>
-
 #include <QDebug>
 
 using namespace Squire;
@@ -64,6 +62,27 @@ QString devNull()
     #endif
 }
 
+QString getMolproSTDOUT(const QDir &rundir)
+{
+    QFile f( rundir.absoluteFilePath("molpro.log") );
+
+    if (f.open(QIODevice::ReadOnly))
+    {
+        QTextStream ts(&f);
+        return ts.readAll();
+    }
+    else
+        return QObject::tr("No output on STDOUT from Molpro available.");
+}
+
+QString getMolproSTDERR(const QStringList &errorlog)
+{
+    if (errorlog.isEmpty())
+        return QObject::tr("No output on STDERR from Molpro available.");
+    else
+        return errorlog.join("\n");
+}
+
 /** Construct a session that will represent the forcefield 'molproff' */
 MolproSession::MolproSession(MolproFF &molproff)
               : boost::noncopyable(),
@@ -78,10 +97,6 @@ MolproSession::MolproSession(MolproFF &molproff)
             "is not executable, or does not exist!")
                 .arg(molpro_exe.absoluteFilePath()), CODELOC );
     }
-
-    sleep(1);
-
-    return;
 
     //only one molpro job may start at a time!
     QMutexLocker lkr(&starter_mutex);
@@ -145,7 +160,8 @@ MolproSession::MolproSession(MolproFF &molproff)
         // and the call has failed. I have seen this occur with both Qt 4.1 and 4.2,
         // though only 4.2 has the ability to fix it!
         #if QT_VERSION >= 0x040200
-          molpro_process.setStandardOutputFile( devNull() );
+          molpro_process.setStandardOutputFile( rundir.absoluteFilePath("molpro.log") );
+          //molpro_process.setStandardOutputFile( devNull() );
         #else
           #error Qt >= 4.2 is required to ensure a robust connection to Molpro. \
                  Please upgrade to at least Qt 4.2
@@ -197,7 +213,10 @@ MolproSession::MolproSession(MolproFF &molproff)
         if (not molpro_process.waitForStarted(60000))
         {
             throw SireError::process_error( molpro_exe.absoluteFilePath(),
-                                            molpro_process, CODELOC );
+                                            molpro_process,
+                                            getMolproSTDOUT(rundir),
+                                            getMolproSTDERR(errorlog),
+                                            CODELOC );
         }
 
         //ok - other molpro jobs are allowed to start now
@@ -258,9 +277,17 @@ MolproSession::MolproSession(MolproFF &molproff)
                     }
                     else if (line.startsWith("MOLPRO_RPC_ERROR"))
                     {
+                        errorlog.append(line);
+
                         //There has been a problem while trying to start the RPC
-                        throw SireError::process_error(line, CODELOC);
+                        throw SireError::process_error( molpro_exe.absoluteFilePath(),
+                                                        molpro_process,
+                                                        getMolproSTDOUT(rundir),
+                                                        getMolproSTDERR(errorlog),
+                                                        CODELOC );
                     }
+                    else
+                        errorlog.append(line);
                 }
             }
             else
@@ -273,12 +300,18 @@ MolproSession::MolproSession(MolproFF &molproff)
                 ++nsecs;
 
                 if (nsecs > 3600)
+                {
+                    errorlog.append("*SIRE SAYS* Failed to receive any output from Molpro "
+                                    "in over an hour!");
+
                     //one hour without any output suggests
                     //that something has gone wrong...
-                    throw SireError::process_error( QObject::tr(
-                            "We have gone more than %d seconds without any contact "
-                            "from Molpro and it still hasn't started its RPC server!")
-                                .arg(nsecs), CODELOC );
+                    throw SireError::process_error( molpro_exe.absoluteFilePath(),
+                                                    molpro_process,
+                                                    getMolproSTDOUT(rundir),
+                                                    getMolproSTDERR(errorlog),
+                                                    CODELOC );
+                }
             }
 
         } while(not rpc_has_started);
@@ -293,11 +326,20 @@ MolproSession::MolproSession(MolproFF &molproff)
 
         //has the connection been successful?
         if (not molpro_rpc.client)
-            throw SireError::process_error( QObject::tr(
+        {
+            this->captureErrorLog();
+
+            errorlog.append(QObject::tr("*SIRE SAYS* "
                      "We failed to establish an RPC connection to the Molpro process "
                      "at %1:%2 (magic == %3)")
-                        .arg(QHostInfo::localHostName()).arg(portnumber)
-                        .arg(magic_key), CODELOC );
+                        .arg(QHostInfo::localHostName()).arg(portnumber) );
+
+            throw SireError::process_error( molpro_exe.absoluteFilePath(),
+                                            molpro_process,
+                                            getMolproSTDOUT(rundir),
+                                            getMolproSTDERR(errorlog),
+                                            CODELOC );
+        }
 
         //save the qm and mm arrays that are now loaded into the process
         current_mm = molproff.mmCoordsAndChargesArray();
@@ -357,6 +399,9 @@ MolproSession::~MolproSession()
         }
     }
 
+    molpro_process.closeReadChannel(QProcess::StandardOutput);
+    molpro_process.closeReadChannel(QProcess::StandardError);
+
     //remove the run directory
     removeDirectory(rundir);
 }
@@ -365,19 +410,55 @@ MolproSession::~MolproSession()
       - USE WITH CARE!!! */
 void MolproSession::removeDirectory(QDir dir)
 {
-    foreach (QFileInfo file, dir.entryInfoList(QDir::NoDotAndDotDot))
+    if (not dir.exists())
+        return;
+
+    foreach (QString filename, dir.entryList())
     {
-        if (file.isDir())
+        if (filename != "." and filename != "..")
         {
-            removeDirectory(file.absoluteFilePath());
-        }
-        else
-        {
-            dir.remove(file.absoluteFilePath());
+            QFileInfo file( dir.filePath(filename) );
+
+            if (file.isDir())
+            {
+                removeDirectory(file.absoluteFilePath());
+            }
+            else
+            {
+                dir.remove(file.absoluteFilePath());
+            }
         }
     }
 
-    dir.rmdir(dir.absolutePath());
+    int i = 0;
+
+    while (not dir.rmdir(dir.absolutePath()))
+    {
+        ++i;
+
+        if (i > 10)
+        {
+            qDebug() << "FAILED to remove the directory??? WHY???";
+            break;
+        }
+
+        foreach (QString filename, dir.entryList())
+        {
+            if (filename != "." and filename != "..")
+            {
+                QFileInfo file( dir.filePath(filename) );
+
+                if (file.isDir())
+                {
+                    removeDirectory(file.absoluteFilePath());
+                }
+                else
+                {
+                    dir.remove(file.absoluteFilePath());
+                }
+            }
+        }
+    }
 }
 
 /** Assert that this session is compatible with the
@@ -413,11 +494,21 @@ bool MolproSession::incompatibleWith(const MolproFF &molproff) const
 
     \throw SireError::process_error
 */
-void MolproSession::assertMolproIsRunning() const
+void MolproSession::assertMolproIsRunning()
 {
     if (molpro_process.state() != QProcess::Running)
-           throw SireError::process_error( molpro_exe.absoluteFilePath(),
-                                           molpro_process, CODELOC );
+    {
+        this->captureErrorLog();
+
+        qDebug() << "STDOUT:" << getMolproSTDOUT(rundir);
+        qDebug() << "STDERR:" << getMolproSTDERR(errorlog);
+
+        throw SireError::process_error( molpro_exe.absoluteFilePath(),
+                                        molpro_process,
+                                        getMolproSTDOUT(rundir),
+                                        getMolproSTDERR(errorlog),
+                                        CODELOC );
+    }
 }
 
 /** Set the arrays containing the QM coordinates and MM coordinates and charges */
@@ -454,10 +545,15 @@ double MolproSession::getCurrentEnergy()
         QString qerror( error );
         free(error);
 
-        throw SireError::process_error( QObject::tr(
-                "There was an error obtaining the current energy from Molpro: %1.\n"
-                "Errors reported from Molpro:\n%2")
-                    .arg(qerror, errorlog.join("")), CODELOC );
+        errorlog.append( QObject::tr(
+                "*SIRE SAYS* There was an error obtaining the current energy from Molpro: %1.")
+                    .arg(qerror) );
+
+        throw SireError::process_error( molpro_exe.absoluteFilePath(),
+                                        molpro_process,
+                                        getMolproSTDOUT(rundir),
+                                        getMolproSTDERR(errorlog),
+                                        CODELOC );
     }
 
     return nrg;
@@ -469,8 +565,6 @@ double MolproSession::getCurrentEnergy()
 */
 double MolproSession::calculateEnergy()
 {
-    return 0.0;
-
     //molpro still needs to be running!
     this->assertMolproIsRunning();
 
@@ -533,11 +627,15 @@ double MolproSession::calculateEnergy()
         QString qerror(error);
         free(error);
 
-        throw SireError::process_error( QObject::tr(
-                "Error detected while running the Molpro commands \"%1\" : %2\n"
-                "Molpro error log:\n%3")
-                    .arg(nrg_cmds, qerror, errorlog.join("")), CODELOC );
+        errorlog.append( QObject::tr(
+                "*SIRE SAYS* There was an error obtaining the current energy from Molpro: %1.")
+                    .arg(qerror) );
 
+        throw SireError::process_error( molpro_exe.absoluteFilePath(),
+                                        molpro_process,
+                                        getMolproSTDOUT(rundir),
+                                        getMolproSTDERR(errorlog),
+                                        CODELOC );
     }
 
     //ok - copy the new arrays to old as they are now definitely

@@ -382,6 +382,8 @@ quint32 MTSMC::parallelMove(SimSystem &system, quint32 nmoves)
             //ok, now we can calculate the energy of this midpointsystem
             qDebug() << "Calculating the energy of this block!";
             double V_new = energy(system);
+            runner.wait();
+
             double V2_new = V_new - mid_fast_energy;
 
             if (this->test(V2_new, V2_old))

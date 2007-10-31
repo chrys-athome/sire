@@ -156,17 +156,17 @@ public:
 
     template<class S>
     SharedPolyPointer<T>& operator=(S *obj);
-    
+
     void detach();
-    
+
     T& operator*();
     const T& operator*() const;
     T* operator->();
     const T* operator->() const;
-    
+
     operator T*();
     operator const T*() const;
-    
+
     T *data();
     const T* data() const;
     const T* constData() const;
@@ -195,7 +195,7 @@ public:
     {
         return dynamic_cast<const S&>(*(this->constData()));
     }
-    
+
     template<class S>
     S& asA()
     {
@@ -209,7 +209,7 @@ private:
 /** Null constructor */
 template<class T>
 Q_INLINE_TEMPLATE
-SharedPolyPointer<T>::SharedPolyPointer() 
+SharedPolyPointer<T>::SharedPolyPointer()
                      : SharedPolyPointerBase(),
                        d(0)
 {}
@@ -218,11 +218,11 @@ SharedPolyPointer<T>::SharedPolyPointer()
     of the data, and may delete it at any time. */
 template<class T>
 Q_INLINE_TEMPLATE
-SharedPolyPointer<T>::SharedPolyPointer(T *adata) 
-                     : SharedPolyPointerBase(), 
+SharedPolyPointer<T>::SharedPolyPointer(T *adata)
+                     : SharedPolyPointerBase(),
                        d(adata)
 {
-    if (d) 
+    if (d)
         d->ref.ref();
 }
 
@@ -235,11 +235,11 @@ template<class T>
 Q_INLINE_TEMPLATE
 SharedPolyPointer<T>::SharedPolyPointer(const T &obj)
 {
-    //increment the reference count of this object - this 
+    //increment the reference count of this object - this
     //stops if from being deleted
     T *obj_ptr = const_cast<T*>(&obj);
     obj_ptr->ref.ref();
-    
+
     //if this object is already pointed to by a SharedPolyPointer
     //then the reference count of the QSharedData part will now be
     //greater than one
@@ -257,7 +257,7 @@ SharedPolyPointer<T>::SharedPolyPointer(const T &obj)
         //of this object.
         d = SharedPolyPointerHelper<T>::clone(obj);
         d->ref.ref();
-    
+
         //reduce the reference count of the original object
         obj_ptr->ref.deref();
     }
@@ -288,7 +288,7 @@ SharedPolyPointer<T>::SharedPolyPointer(const SharedPolyPointer<S> &other)
     if (other_ptr)
     {
         d = dynamic_cast<T*>(other_ptr);
-    
+
         if (d)
             d->ref.ref();
         else
@@ -320,12 +320,12 @@ SharedPolyPointer<T>::SharedPolyPointer(S *data)
     }
 }
 
-/** Construct from a reference to the object 'obj' - if this 
-    object is already pointed to by a SharedPolyPointer then 
+/** Construct from a reference to the object 'obj' - if this
+    object is already pointed to by a SharedPolyPointer then
     this will take another reference to it, otherwise this will
     clone the object (as we will assume that it is not safe
-    to delete this object!) 
-    
+    to delete this object!)
+
     \throw SireError::invalid_cast
 */
 template<class T>
@@ -334,13 +334,13 @@ Q_INLINE_TEMPLATE
 SharedPolyPointer<T>::SharedPolyPointer(const S &obj)
 {
     T *obj_ptr = dynamic_cast<T*>( const_cast<S*>(&obj) );
-    
+
     if (!obj_ptr)
         throwInvalidCast( SharedPolyPointerHelper<S>::what(obj),
                           SharedPolyPointerHelper<T>::typeName() );
-    
+
     obj_ptr->ref.ref();
-    
+
     //if this object is already pointed to by a SharedPolyPointer
     //then the reference count of the QSharedData part will now be
     //greater than one
@@ -358,7 +358,7 @@ SharedPolyPointer<T>::SharedPolyPointer(const S &obj)
         //of this object.
         d = SharedPolyPointerHelper<T>::clone(*obj_ptr);
         d->ref.ref();
-    
+
         //reduce the reference count of the original object
         obj_ptr->ref.deref();
     }
@@ -368,12 +368,12 @@ SharedPolyPointer<T>::SharedPolyPointer(const S &obj)
 template<class T>
 Q_INLINE_TEMPLATE
 SharedPolyPointer<T>::~SharedPolyPointer()
-{ 
-    if (d && !d->ref.deref()) 
-        delete d; 
+{
+    if (d && !d->ref.deref())
+        delete d;
 }
 
-/** Null assignment operator - allows you to write ptr = 0 to 
+/** Null assignment operator - allows you to write ptr = 0 to
     reset the pointer to null */
 template<class T>
 Q_INLINE_TEMPLATE
@@ -381,9 +381,9 @@ SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(int)
 {
     if (d && !d->ref.deref())
         delete d;
-        
+
     d = 0;
-    
+
     return *this;
 }
 
@@ -403,7 +403,7 @@ SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(T *ptr)
             d->ref.ref();
         }
     }
-    
+
     return *this;
 }
 
@@ -417,11 +417,11 @@ SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(const T &obj)
 {
     if (d != &obj)
     {
-        //increment the reference count of this object - this 
+        //increment the reference count of this object - this
         //stops if from being deleted
         T *obj_ptr = const_cast<T*>(&obj);
         obj_ptr->ref.ref();
-    
+
         //if this object is already pointed to by a SharedPolyPointer
         //then the reference count of the QSharedData part will now be
         //greater than one
@@ -431,7 +431,7 @@ SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(const T &obj)
             if (d)
             {
                 qAtomicAssign(d, obj_ptr);
-            
+
                 //remove the extra reference count
                 d->ref.deref();
             }
@@ -447,7 +447,7 @@ SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(const T &obj)
             //of this object.
             obj_ptr->ref.deref();
             obj_ptr = SharedPolyPointerHelper<T>::clone(obj);
-            
+
             if (d)
                 qAtomicAssign(d, obj_ptr);
             else
@@ -457,7 +457,7 @@ SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(const T &obj)
             }
         }
     }
-    
+
     return *this;
 }
 
@@ -480,7 +480,7 @@ SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(const SharedPolyPointer<T>
     return *this;
 }
 
-/** Copy assignment from a SharedPolyPointer<S> 
+/** Copy assignment from a SharedPolyPointer<S>
 
     \throw SireError::invalid_cast
 */
@@ -494,7 +494,7 @@ SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(const SharedPolyPointer<S>
     if (other_ptr and (void*)d != (void*)other_ptr)
     {
         T *obj_ptr = dynamic_cast<T*>(other_ptr);
-    
+
         if (obj_ptr)
         {
             if (d)
@@ -508,15 +508,15 @@ SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(const SharedPolyPointer<S>
         else
             throwInvalidCast( SharedPolyPointerHelper<S>::what(*other),
                               SharedPolyPointerHelper<T>::typeName() );
-        
+
     }
-        
+
     return *this;
 }
 
 /** Assign from a pointer to an object of type 'S' - this will take
     over ownership of this object and may delete it at any time.
-    
+
     \throw SireError::invalid_cast
 */
 template<class T>
@@ -527,11 +527,11 @@ SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(S *ptr)
     if (ptr and ptr != d)
     {
         T *obj_ptr = dynamic_cast<T*>(ptr);
-        
+
         if (!obj_ptr)
             throwInvalidCast( SharedPolyPointerHelper<S>::what(*ptr),
                               SharedPolyPointerHelper<T>::typeName() );
-        
+
         if (d)
             qAtomicAssign(d, obj_ptr);
         else
@@ -540,14 +540,14 @@ SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(S *ptr)
             d->ref.ref();
         }
     }
-    
+
     return *this;
 }
 
 /** Assign from a reference of type 'S' - this will take a new
     reference to this object if it is already pointed to by
     another SharedPolyPointer, or will clone it.
-    
+
     \throw SireError::invalid_cast
 */
 template<class T>
@@ -557,16 +557,16 @@ SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(const S &obj)
 {
     if (d != &obj)
     {
-        //increment the reference count of this object - this 
+        //increment the reference count of this object - this
         //stops if from being deleted
         T *obj_ptr = dynamic_cast<T*>( const_cast<S*>(&obj) );
-        
+
         if (!obj_ptr)
             throwInvalidCast( SharedPolyPointerHelper<S>::what(obj),
                               SharedPolyPointerHelper<T>::typeName() );
-        
+
         obj_ptr->ref.ref();
-    
+
         //if this object is already pointed to by a SharedPolyPointer
         //then the reference count of the QSharedData part will now be
         //greater than one
@@ -576,7 +576,7 @@ SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(const S &obj)
             if (d)
             {
                 qAtomicAssign(d, obj_ptr);
-            
+
                 //remove the extra reference count
                 d->ref.deref();
             }
@@ -595,7 +595,7 @@ SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(const S &obj)
             //of this object.
             obj_ptr->ref.deref();
             obj_ptr = SharedPolyPointerHelper<T>::clone(*obj_ptr);
-            
+
             if (d)
             {
                 qAtomicAssign(d, obj_ptr);
@@ -607,14 +607,14 @@ SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(const S &obj)
             }
         }
     }
-    
+
     return *this;
 }
 
 /** Detach the object pointed to by this pointer from shared storage */
 template <class T>
 Q_INLINE_TEMPLATE
-void SharedPolyPointer<T>::detach() 
+void SharedPolyPointer<T>::detach()
 {
     if (d && d->ref != 1)
     {
@@ -626,33 +626,33 @@ void SharedPolyPointer<T>::detach()
 /** Dereference this pointer */
 template <class T>
 Q_INLINE_TEMPLATE
-T& SharedPolyPointer<T>::operator*() 
-{ 
-    detach(); 
-    return *d; 
+T& SharedPolyPointer<T>::operator*()
+{
+    detach();
+    return *d;
 }
 
 /** Dereference this pointer */
 template <class T>
 Q_INLINE_TEMPLATE
-const T& SharedPolyPointer<T>::operator*() const 
+const T& SharedPolyPointer<T>::operator*() const
 {
-    return *d; 
+    return *d;
 }
 
 /** Pointer dereference */
 template <class T>
 Q_INLINE_TEMPLATE
-T* SharedPolyPointer<T>::operator->() 
+T* SharedPolyPointer<T>::operator->()
 {
-    detach(); 
-    return d; 
+    detach();
+    return d;
 }
 
 /** Pointer dereference */
 template <class T>
 Q_INLINE_TEMPLATE
-const T* SharedPolyPointer<T>::operator->() const 
+const T* SharedPolyPointer<T>::operator->() const
 {
     return d;
 }
@@ -660,16 +660,16 @@ const T* SharedPolyPointer<T>::operator->() const
 /** Cast back to a normal pointer */
 template <class T>
 Q_INLINE_TEMPLATE
-SharedPolyPointer<T>::operator T*() 
+SharedPolyPointer<T>::operator T*()
 {
-    detach(); 
-    return d; 
+    detach();
+    return d;
 }
 
 /** Cast back to a normal pointer */
 template <class T>
 Q_INLINE_TEMPLATE
-SharedPolyPointer<T>::operator const T*() const 
+SharedPolyPointer<T>::operator const T*() const
 {
     return d;
 }
@@ -679,8 +679,8 @@ template <class T>
 Q_INLINE_TEMPLATE
 T* SharedPolyPointer<T>::data()
 {
-    detach(); 
-    return d; 
+    detach();
+    return d;
 }
 
 /** Return the pointer held by this shared pointer */
@@ -702,7 +702,7 @@ const T* SharedPolyPointer<T>::constData() const
 /** Used to implement if (!ptr){ ... } */
 template <class T>
 Q_INLINE_TEMPLATE
-bool SharedPolyPointer<T>::operator!() const 
+bool SharedPolyPointer<T>::operator!() const
 {
     return !d;
 }
@@ -783,7 +783,7 @@ QDataStream& operator>>(QDataStream &ds,
         {
             //detach this pointer
             ptr.detach();
-        
+
             ptr = static_cast<T*>(
                       SireBase::SharedPolyPointerBase::read(ds, ptr.d,
                             SireBase::SharedPolyPointerHelper<T>::what(*(ptr.d))

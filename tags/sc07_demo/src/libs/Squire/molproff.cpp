@@ -2959,17 +2959,12 @@ void MolproFF::recalculateEnergy()
         //if there are no QM atoms, then there is no QM/MM energy!
         if (not qm_coords.isEmpty())
         {
-            qDebug() << "Creating a new MolproSession...";
             //start a new molpro session for this forcefield
             //(this calculates the energy)
             MolproSession session(*this);
 
-            qDebug() << "Using this session to calculate the QM energy...";
             //obtain the calculated energy from molpro
             qmmm_nrg = session.calculateEnergy();
-
-            qDebug() << "QM energy calculation is complete.";
-            return;
         }
 
         //subtract the zero energy and convert to kcal mol-1

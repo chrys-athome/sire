@@ -79,7 +79,7 @@ public:
     bool incompatibleWith(const MolproFF &molproff) const;
     void assertCompatibleWith(const MolproFF &molproff) const;
 
-    void assertMolproIsRunning() const;
+    void assertMolproIsRunning();
 
 private:
 
