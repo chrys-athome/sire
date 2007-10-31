@@ -41,7 +41,7 @@ set_target_properties (SireMove PROPERTIES
 # Link to other Sire libraries
 target_link_libraries (SireMove
                        SireSystem
-           SireMaths
+                       SireMaths
                        )
 
 # installation

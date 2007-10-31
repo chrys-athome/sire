@@ -302,17 +302,13 @@ void MTSMC_BG_Runner::calculate()
             //run the moves in blocks of 50
             if (nfast > 50)
             {
-                qDebug() << "Running 50 steps..." << nfast;
                 fast_moves.run(simsystem, 50, false);
-                qDebug() << "...complete";
                 nfast -= 50;
             }
             else
             {
-                qDebug() << nfast;
                 fast_moves.run(simsystem, nfast, false);
                 nfast = 0;
-                qDebug() << "COMPLETE!!!";
             }
 
             //give someone waiting the chance to grab hold of the mutex
@@ -349,7 +345,6 @@ quint32 MTSMC::parallelMove(SimSystem &system, quint32 nmoves)
 
     //ok, we accept the first configuration, so lets
     //generate the next configuration using a block of fast moves...
-
     try
     {
         qDebug() << "Running the next block of moves...";
@@ -381,8 +376,8 @@ quint32 MTSMC::parallelMove(SimSystem &system, quint32 nmoves)
 
             //ok, now we can calculate the energy of this midpointsystem
             qDebug() << "Calculating the energy of this block!";
-            double V_new = energy(system);
-            runner.wait();
+            ForceFields ffields = mid_checkpoint.forceFields();
+            double V_new = ffields.energy(energyComponent());
 
             double V2_new = V_new - mid_fast_energy;
 
@@ -401,9 +396,8 @@ quint32 MTSMC::parallelMove(SimSystem &system, quint32 nmoves)
                     runner.wait();
                     qDebug() << "The next block is complete!";
 
-
                     //update the system to the new configuration
-                    //system.rollBack(runner.checkPoint());
+                    system.rollBack(runner.checkPoint());
                     fast_moves = runner.moves();
                 }
 
@@ -412,8 +406,6 @@ quint32 MTSMC::parallelMove(SimSystem &system, quint32 nmoves)
             else
             {
                 qDebug() << "The move failed :-(";
-                //the move has been rejected - reset the state
-                system.rollBack(checkpoint);
 
                 if (nmoves > 1)
                 {
@@ -422,6 +414,10 @@ quint32 MTSMC::parallelMove(SimSystem &system, quint32 nmoves)
                     runner.wait();
                     qDebug() << "...it's been stopped!";
                 }
+
+                //the move has been rejected - reset the state (do this after waiting
+                //to avoid a segfault)
+                system.rollBack(checkpoint);
 
                 //reset the moves so that they contain the statistics only up
                 //to the generation of this failed configuration
