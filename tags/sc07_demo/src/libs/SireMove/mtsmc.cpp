@@ -387,16 +387,21 @@ quint32 MTSMC::parallelMove(SimSystem &system, quint32 nmoves)
 
                 if (nmoves > 1)
                 {
-                    //the move has passed - update the checkpoints with
-                    //the accepted move
-                    checkpoint = mid_checkpoint;
+                    //the move has passed
 
                     //now wait for the next block of sampling to complete
                     qDebug() << "Waiting for the next block to complete...";
                     runner.wait();
                     qDebug() << "The next block is complete!";
 
+                    //accumulate the statistics for the current system and retake a checkpoint
+                    //qDebug() << "***ACCUMULATING STATISTICS***";
+
+                    //system.commit();
+                    checkpoint = system.checkPoint();
+
                     //update the system to the new configuration
+                    qDebug() << "Updating to the next new configuration...";
                     system.rollBack(runner.checkPoint());
                     fast_moves = runner.moves();
                 }
@@ -418,6 +423,10 @@ quint32 MTSMC::parallelMove(SimSystem &system, quint32 nmoves)
                 //the move has been rejected - reset the state (do this after waiting
                 //to avoid a segfault)
                 system.rollBack(checkpoint);
+
+                //recount the statistics for this old configuration
+                //qDebug() << "***ACCUMULATING STATISTICS***";
+                //system.commit();
 
                 //reset the moves so that they contain the statistics only up
                 //to the generation of this failed configuration

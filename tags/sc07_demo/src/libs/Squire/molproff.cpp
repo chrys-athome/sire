@@ -2883,7 +2883,9 @@ QString MolproFF::molproCommandInput()
 {
     this->updateArrays();
 
-    return QString("geomtyp=xyz\n"
+    QString cmd =  QString(
+                   "memory,200,mw\n"
+                   "geomtyp=xyz\n"
                    "geometry={ NOSYM, NOORIENT,\n"
                    "%1 ! number of atoms\n"
                    "This is an auto-generated molpro command file generated using Sire\n"
@@ -2892,14 +2894,19 @@ QString MolproFF::molproCommandInput()
                    "BEGIN_DATA\n"
                    "%3\n"
                    "END\n"
-                   "%4\n"
-                   "BASIS=%5\n"
-                   "START\n"
-                   "%6\n"
                   )
               .arg( nQMAtomsInArray() )
-              .arg( qmCoordString(), mmCoordAndChargesString(),
-                    extraCommands(), basisSet(), program() );
+              .arg( qmCoordString(), mmCoordAndChargesString() );
+
+    if (not extraCommands().isEmpty())
+        cmd += extraCommands() + "\n";
+
+    if (not basisSet().isEmpty())
+        cmd += QString("BASIS = %1\n").arg(basisSet());
+
+    cmd += QString("START\n%1\n").arg(program());
+
+    return cmd;
 }
 
 /** Use the passed MolproSession to recalculate the energy of
