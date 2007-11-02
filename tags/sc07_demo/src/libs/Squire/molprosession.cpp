@@ -206,6 +206,20 @@ MolproSession::MolproSession(MolproFF &molproff)
         //set the environmental variables used by the Molpro process
         molpro_process.setEnvironment(env);
 
+        //perform a csreset -Av to clear all of the boards
+        QProcess process;
+        process.start("csreset -Av");
+
+        if (not process.waitForStarted(100))
+        {
+            qDebug() << "No csreset command available? Are you not using a clearspeed board?";
+        }
+        else
+        {
+            process.waitForFinished();
+            qDebug() << process.readAllStandardOutput();
+        }
+
         //start the molpro process
         molpro_process.start(molpro_exe.absoluteFilePath(), QIODevice::ReadWrite);
 
