@@ -31,6 +31,10 @@
 
 #include <QSharedDataPointer>
 
+#include <boost/tuple/tuple.hpp>
+
+#include "sireglobal.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol
@@ -41,13 +45,27 @@ class MoleculeGroup;
 QDataStream& operator<<(QDataStream&, const SireMol::MoleculeGroup&);
 QDataStream& operator>>(QDataStream&, SireMol::MoleculeGroup&);
 
+namespace SireID
+{
+class Index;
+}
+
 namespace SireMol
 {
 
+using SireID::Index;
+
+class MoleculeData;
 class Molecules;
 class MoleculeView;
 class PartialMolecule;
 class ViewsOfMol;
+
+class MolNum;
+class MolNumViewIdx;
+
+class MGName;
+class MGNum;
 
 namespace detail
 {
@@ -126,10 +144,10 @@ public:
     bool operator!=(const MoleculeGroup &other) const;
 
     const ViewsOfMol& operator[](MolNum molnum) const;
-    PartialMolecule operator[](const MolViewID &molviewid) const;
+    PartialMolecule operator[](const boost::tuple<MolNum,Index> &viewidx) const;
     
     const ViewsOfMol& at(MolNum molnum) const;
-    PartialMolecule at(const MolViewID &molviewid) const;
+    PartialMolecule at(const boost::tuple<MolNum,Index> &viewidx) const;
     PartialMolecule at(MolNum molnum, Index viewidx) const;
     
     const ViewsOfMol& moleculeAt(Index idx) const;

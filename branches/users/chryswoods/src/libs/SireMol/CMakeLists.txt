@@ -54,6 +54,11 @@ set ( SIREMOL_HEADERS
       evaluator.h
       groupatomids.h
       groupgroupids.h
+      mgid.h
+      mgidentifier.h
+      mgidx.h
+      mgname.h
+      mgnum.h
       molecule.h
       moleculecutting.h
       moleculedata.h
@@ -123,6 +128,7 @@ set ( SIREMOL_SOURCES
       errors.cpp
       evaluator.cpp
       groupatomids.cpp
+      mgidentifier.cpp
       molecule.cpp
       moleculecutting.cpp
       moleculedata.cpp
@@ -133,7 +139,6 @@ set ( SIREMOL_SOURCES
       moleculemover.cpp
       molecules.cpp
       moleculeview.cpp
-      molid.cpp
       molidentifier.cpp
       molviewproperty.cpp
       mover.cpp

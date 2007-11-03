@@ -132,7 +132,7 @@ public:
     const MolName& name() const;
     
     quint64 version() const;
-    quint64 version(const PropertyKey &key) const;
+    quint64 version(const PropertyName &key) const;
     
     int nViews() const;
     int count() const;
@@ -177,8 +177,10 @@ public:
     bool contains(const AtomSelection &selection) const;
     bool intersects(const AtomSelection &selection) const;
     
+    int indexOf(const AtomSelection &selection) const;
+    QList<int> indiciesOf(const AtomSelection &selection) const;
+    
     bool contains(const QList<AtomSelection> &selections) const;
-    bool intersects(const QList<AtomSelection> &selections) const;
     
     Atom select(const AtomID &atomid) const;
 

@@ -31,6 +31,8 @@
 
 #include <QHash>
 
+#include <boost/tuple/tuple.hpp>
+
 #include "viewsofmol.h"
 #include "molnum.h"
 
@@ -46,6 +48,8 @@ QDataStream& operator>>(QDataStream&, SireMol::Molecules&);
 
 namespace SireMol
 {
+
+class MolNumViewIdx;
 
 /** This class provides a container for lots of molecules. This
     forms a general purpose molecule container, which is used as the argument
@@ -103,6 +107,12 @@ public:
     bool operator!=(const Molecules &other) const;
     
     const ViewsOfMol& operator[](MolNum molnum) const;
+    PartialMolecule operator[](const boost::tuple<MolNum,SireID::Index> &viewidx) const;
+    
+    const ViewsOfMol& at(MolNum molnum) const;
+    PartialMolecule at(const boost::tuple<MolNum,SireID::Index> &viewidx) const;
+
+    PartialMolecule at(MolNum molnum, SireID::Index idx) const;
 
     Molecules operator+(const Molecules &other) const;
     Molecules operator-(const Molecules &other) const;
@@ -122,6 +132,8 @@ public:
     Molecules remove(const Molecules &molecules) const;
     
     Molecules remove(MolNum molnum) const;
+    
+    Molecules removeAll() const;
     
     Molecules subtract(const MoleculeView &molview) const;
     Molecules subtract(const ViewsOfMol &molviews) const;
@@ -148,12 +160,16 @@ public:
 
     int count() const;
     int nMolecules() const;
+    int nViews(MolNum molnum) const;
 
     const_iterator begin() const;
     const_iterator end() const;
 
     const_iterator constBegin() const;
     const_iterator constEnd() const;
+
+    const_iterator find(MolNum molnum) const;
+    const_iterator constFind(MolNum molnum) const;
 
     QSet<MolNum> molNums() const;
 

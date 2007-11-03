@@ -71,7 +71,7 @@ public:
     
     static const char* typeName()
     {
-        return "SireMol::MolName";
+        return QMetaType::typeName( qMetaTypeId<MolName>() );
     }
     
     const char* what() const

@@ -26,110 +26,107 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_MOLNUM_H
-#define SIREMOL_MOLNUM_H
+#ifndef SIREMOL_MGNAME_H
+#define SIREMOL_MGNAME_H
 
-#include "SireID/number.h"
+#include "SireID/name.h"
 
-#include "molid.h"
+#include "mgid.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
-class MolNum;
+class MGName;
 }
 
-XMLStream& operator<<(XMLStream&, const SireMol::MolNum&);
-XMLStream& operator>>(XMLStream&, SireMol::MolNum&);
+XMLStream& operator<<(XMLStream&, const SireMol::MGName&);
+XMLStream& operator>>(XMLStream&, SireMol::MGName&);
 
 namespace SireMol
 {
 
-/** This ID number is used to identify a Molecule by
-    a unique, program-supplied ID number
-
+/** This class holds the name of a MoleculeGroup.
+    
     @author Christopher Woods
 */
-class SIREMOL_EXPORT MolNum : public SireID::Number, public MolID
+class SIREMOL_EXPORT MGName : public SireID::Name, public MGID
 {
 
-friend XMLStream& ::operator<<(XMLStream&, const MolNum&);
-friend XMLStream& ::operator>>(XMLStream&, MolNum&);
+friend XMLStream& ::operator<<(XMLStream&, const MGName&);
+friend XMLStream& ::operator>>(XMLStream&, MGName&);
 
 public:
-    MolNum() : SireID::Number(), MolID()
+    MGName() : SireID::Name(), MGID()
     {}
-
-    explicit MolNum(quint32 num) : SireID::Number(num), MolID()
+    
+    explicit MGName(const QString &name) : SireID::Name(name), MGID()
     {}
-
-    MolNum(const MolNum &other) : SireID::Number(other), MolID(other)
+    
+    MGName(const MGName &other) : SireID::Name(other), MGID(other)
     {}
-
-    ~MolNum()
+    
+    ~MGName()
     {}
     
     static const char* typeName()
     {
-        return QMetaType::typeName( qMetaTypeId<MolNum>() );
+        return QMetaType::typeName( qMetaTypeId<MGName>() );
     }
     
     const char* what() const
     {
-        return MolNum::typeName();
+        return MGName::typeName();
     }
     
-    MolNum* clone() const
+    MGName* clone() const
     {
-        return new MolNum(*this);
+        return new MGName(*this);
     }
-    
-    static MolNum getUniqueNumber();
     
     bool isNull() const
     {
-        return SireID::Number::isNull();
+        return SireID::Name::isNull();
     }
     
     uint hash() const
     {
-        return qHash( static_cast<const SireID::Number&>(*this) );
+        return qHash(_name);
     }
     
     QString toString() const
     {
-        return QString("MolNum(%1)").arg(_num);
+        return QString("MGName('%1')").arg(_name);
     }
     
-    MolNum& operator=(const MolNum &other)
+    MGName& operator=(const MGName &other)
     {
-        SireID::Number::operator=(other);
-        MolID::operator=(other);
+        SireID::Name::operator=(other);
+        MGID::operator=(other);
         return *this;
     }
     
     bool operator==(const SireID::ID &other) const
     {
-        return SireID::ID::compare<MolNum>(*this, other);
-    }
-
-    bool operator==(const MolNum &other) const
-    {
-        return _num == other._num;
+        return SireID::ID::compare<MGName>(*this, other);
     }
     
-    bool operator!=(const MolNum &other) const
+    bool operator==(const MGName &other) const
     {
-        return _num != other._num;
+        return _name == other._name;
+    }
+    
+    bool operator!=(const MGName &other) const
+    {
+        return _name != other._name;
     }
 };
 
 }
 
-Q_DECLARE_TYPEINFO(SireMol::MolNum, Q_MOVABLE_TYPE);
-Q_DECLARE_METATYPE(SireMol::MolNum);
+Q_DECLARE_METATYPE(SireMol::MGName);
 
 SIRE_END_HEADER
 
 #endif
+
