@@ -2910,12 +2910,12 @@ QString MolproFF::molproCommandInput()
     cmd =  QString("%1"
                    "geomtyp=xyz\n"
                    "geometry={ NOSYM, NOORIENT,\n"
-                   "%1 ! number of atoms\n"
+                   "%2 ! number of atoms\n"
                    "This is an auto-generated molpro command file generated using Sire\n"
-                   "%2}\n"
+                   "%3}\n"
                    "lattice, NUCONLY\n"
                    "BEGIN_DATA\n"
-                   "%3\n"
+                   "%4\n"
                    "END\n"
                   )
               .arg( cmd )
