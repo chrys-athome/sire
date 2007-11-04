@@ -217,7 +217,8 @@ MolproSession::MolproSession(MolproFF &molproff)
         else
         {
             process.waitForFinished();
-            qDebug() << process.readAllStandardOutput();
+          
+            
         }
 
         //start the molpro process

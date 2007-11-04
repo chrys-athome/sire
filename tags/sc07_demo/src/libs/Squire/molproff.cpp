@@ -1195,7 +1195,7 @@ MolproFF::MolproFF()
          : FFBase(),
            molpro_exe("molpro"), molpro_tmpdir(QDir::temp()),
            molpro_program("HF"), basis_set("VDZ"),
-           extra_cmds(""),
+           extra_cmds(""), hdr(""),
            qm_version(&global_molproff_qm_version), zero_nrg(0),
            ff_status(NEED_ENERGY_CALC)
 {
@@ -1208,7 +1208,7 @@ MolproFF::MolproFF(const Space &space, const SwitchingFunction &switchingfunctio
            spce(space), switchfunc(switchingfunction),
            molpro_exe("molpro"), molpro_tmpdir(QDir::temp()),
            molpro_program("HF"), basis_set("VDZ"),
-           extra_cmds(""),
+           extra_cmds(""), hdr(""),
            qm_version(&global_molproff_qm_version), zero_nrg(0),
            ff_status(NEED_ENERGY_CALC)
 {
@@ -1221,7 +1221,7 @@ MolproFF::MolproFF(const MolproFF &other)
            spce(other.spce), switchfunc(other.switchfunc),
            molpro_exe(other.molpro_exe), molpro_tmpdir(other.molpro_tmpdir),
            molpro_program(other.molpro_program), basis_set(other.basis_set),
-           extra_cmds(other.extra_cmds),
+           extra_cmds(other.extra_cmds), hdr(other.hdr),
            qm_coords(other.qm_coords),
            mm_coords_and_charges(other.mm_coords_and_charges),
            qm_mols(other.qm_mols), qm_coordgroup(other.qm_coordgroup),
@@ -1260,6 +1260,7 @@ void MolproFF::_pvt_copy(const FFBase &ffbase)
     molpro_program = other.molpro_program;
     basis_set = other.basis_set;
     extra_cmds = other.extra_cmds;
+    hdr = other.hdr;
     qm_coords = other.qm_coords;
     mm_coords_and_charges = other.mm_coords_and_charges;
     qm_mols = other.qm_mols;
@@ -2877,14 +2878,36 @@ int MolproFF::nAtomsInArray()
     return nQMAtomsInArray() + nMMAtomsInArray();
 }
 
+const QString& MolproFF::header() const
+{
+    return hdr;
+}
+
+bool MolproFF::setHeader(const QString &header)
+{
+    if (hdr != header)
+    {
+        hdr = header;
+        qm_version.increment();
+        this->incrementMajorVersion();
+        this->mustNowRecalculateFromScratch();
+    }
+
+    return isDirty();
+}
+
 /** Return the commands used to initialise Molpro with this system
     and calculate the required energy */
 QString MolproFF::molproCommandInput()
 {
     this->updateArrays();
 
-    QString cmd =  QString(
-                   "memory,200,mw\n"
+    QString cmd;
+
+    if (not header().isEmpty())
+        cmd = QString("%1\n").arg(this->header());
+
+    cmd =  QString("%1"
                    "geomtyp=xyz\n"
                    "geometry={ NOSYM, NOORIENT,\n"
                    "%1 ! number of atoms\n"
@@ -2895,6 +2918,7 @@ QString MolproFF::molproCommandInput()
                    "%3\n"
                    "END\n"
                   )
+              .arg( cmd )
               .arg( nQMAtomsInArray() )
               .arg( qmCoordString(), mmCoordAndChargesString() );
 

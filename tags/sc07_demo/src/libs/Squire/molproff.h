@@ -255,6 +255,7 @@ public:
     const QString& program() const;
     const QString& basisSet() const;
     const QString& extraCommands() const;
+    const QString& header() const;
 
     virtual bool setSpace(const Space &space);
     virtual bool setSwitchingFunction(const SwitchingFunction &switchfunc);
@@ -262,6 +263,7 @@ public:
     virtual bool setProgram(const QString &cmd);
     virtual bool setBasisSet(const QString &basisset);
     virtual bool setExtraCommands(const QString &extracmds);
+    virtual bool setHeader(const QString &header);
 
     bool setProperty(const QString &name, const Property &value);
     Property getProperty(const QString &name) const;
@@ -562,6 +564,9 @@ private:
 
     /** Any extra commands that have to be in the input file */
     QString extra_cmds;
+
+    /** The header of the molpro file */
+    QString hdr;
 
     /** All of the coordinates of the QM atoms */
     QVector<double> qm_coords;
