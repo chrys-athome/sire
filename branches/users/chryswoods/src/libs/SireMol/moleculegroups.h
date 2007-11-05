@@ -141,6 +141,7 @@ public:
     int nViews() const;
     int nViews(const MGID &mgid) const;
 
+    const MoleculeGroup& group(MGNum mgnum) const;
     const MoleculeGroup& group(const MGID &mgid) const;
     MoleculeGroups groups(const MGID &mgid) const;
 

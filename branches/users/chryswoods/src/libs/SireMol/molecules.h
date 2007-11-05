@@ -123,6 +123,10 @@ public:
     Molecules add(const ViewsOfMol &molviews) const;
     Molecules add(const Molecules &molecules) const;
 
+    Molecules addIfUnique(const MoleculeView &molview) const;
+    Molecules addIfUnique(const ViewsOfMol &molviews) const;
+    Molecules addIfUnique(const Molecules &molecules) const;
+
     Molecules unite(const MoleculeView &molview) const;
     Molecules unite(const ViewsOfMol &molviews) const;
     Molecules unite(const Molecules &other) const;
