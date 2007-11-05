@@ -231,8 +231,8 @@ bool MoleculeData::operator!=(const MoleculeData &other) const
 
 static Incremint molid_incremint;
 
-/** Here is the function to increment a Molecule Number */
-MolNum MolNum::increment() const
+/** Here is the function to get a unique Molecule Number */
+MolNum MolNum::getUniqueNumber()
 {
     return MolNum( molid_incremint.increment() );
 }
@@ -241,7 +241,7 @@ MolNum MolNum::increment() const
 void MoleculeData::getNewID()
 {
     //get the new ID number...
-    molnum = molnum.increment();
+    molnum = MolNum::getUniqueNumber();
     
     //now reset the version numbers so they are all '1'
     vrsns.reset( new PropVersions() );

@@ -57,6 +57,9 @@ friend QDataStream& ::operator<<(QDataStream&, const MoleculeGroups&);
 friend QDataStream& ::operator>>(QDataStream&, MoleculeGroups&);
 
 public:
+    typedef QVector<MoleculeGroup>::const_iterator iterator;
+    typedef QVector<MoleculeGroup>::const_iterator const_iterator;
+
     MoleculeGroups();
     MoleculeGroups(const MoleculeGroup &group);
 
@@ -64,89 +67,98 @@ public:
 
     ~MoleculeGroups();
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<MoleculeGroups>() );
+    }
+
+    const char* what() const
+    {
+        return MoleculeGroups::typeName();
+    }
+    
+    MoleculeGroups* clone() const
+    {
+        return new MoleculeGroups(*this);
+    }
+
+    MoleculeGroups& operator=(const MoleculeGroup &other);
     MoleculeGroups& operator=(const MoleculeGroups &other);
 
     bool operator==(const MoleculeGroups &other) const;
     bool operator!=(const MoleculeGroups &other) const;
 
-    void clear();
+    const_iterator begin() const;
+    const_iterator constBegin() const;
+    
+    const_iterator end() const;
+    const_iterator constEnd() const;
 
-    bool add(const MoleculeGroup &group);
-    bool change(const MoleculeGroup &group);
-    bool remove(const MoleculeGroup &group);
+    MoleculeGroups add(const MoleculeGroup &group) const;
+    MoleculeGroups add(const MoleculeGroups &groups) const;
 
-    bool add(const MoleculeGroups &groups);
-    bool change(const MoleculeGroups &groups);
-    bool remove(const MoleculeGroups &groups);
+    MoleculeGroups add(const MoleculeView &molview,
+                       const MGID &mgid) const;
+                       
+    MoleculeGroups add(const ViewsOfMol &molviews,
+                       const MGID &mgid) const;
+                       
+    MoleculeGroups add(const Molecules &molecules,
+                       const MGID &mgid) const;
 
-    bool remove(MoleculeGroupID groupid);
-    bool remove(const QString &groupname);
+    MoleculeGroups update(const MoleculeGroup &group) const;
+    MoleculeGroups update(const MoleculeGroups &groups) const;
+    
+    MoleculeGroups update(const MoleculeView &molview) const;
+    MoleculeGroups update(const MoleculeData &moldata) const;
+    MoleculeGroups update(const Molecules &molecules) const;
+    
+    MoleculeGroups remove(const MoleculeGroup &group) const;
+    MoleculeGroups remove(const MoleculeGroups &groups) const;
 
-    bool add(const PartialMolecule &molecule, MoleculeGroupID groupid);
-    bool add(const Molecules &molecules, MoleculeGroupID groupid);
+    MoleculeGroups remove(const MGID &mgid) const;
 
-    bool add(const PartialMolecule &molecule,
-             const QSet<MoleculeGroupID> &groupids);
-    bool add(const Molecules &molecules, const QSet<MoleculeGroupID> &groupids);
+    MoleculeGroups remove(const MoleculeView &molview) const;
+    MoleculeGroups remove(const MoleculeView &molview, 
+                          const MGID &mgid) const;
 
-    bool remove(const PartialMolecule &molecule, MoleculeGroupID groupid);
-    bool remove(const Molecules &molecules, MoleculeGroupID groupid);
+    MoleculeGroups remove(const ViewsOfMol &molviews) const;
+    MoleculeGroups remove(const ViewsOfMol &molviews,
+                          const MGID &mgid) const;
 
-    bool remove(const PartialMolecule &molecule,
-                const QSet<MoleculeGroupID> &groupids);
-    bool remove(const Molecules &molecules,
-                const QSet<MoleculeGroupID> &groupids);
+    MoleculeGroups remove(const Molecules &molecules) const;
+    MoleculeGroups remove(const Molecules &molecules,
+                          const MGID &mgid) const;
 
-    bool change(const PartialMolecule &molecule);
-    bool change(const Molecules &molecules);
+    MoleculeGroups remove(const MolID &molid) const;
+    MoleculeGroups remove(const MolID &molid, const MGID &mgid) const;
 
-    bool remove(const PartialMolecule &molecule);
-    bool remove(const Molecules &molecules);
+    int nGroups() const;
+    
+    int nMolecules() const;
+    int nMolecules(const MGID &mgid) const;
+    
+    int nViews() const;
+    int nViews(const MGID &mgid) const;
 
-    PartialMolecule molecule(MoleculeID molid) const;
-    PartialMolecule molecule(MoleculeID molid, MoleculeGroupID groupid) const;
-    PartialMolecule molecule(MoleculeID molid,
-                             const QSet<MoleculeGroupID> &groupids) const;
+    const MoleculeGroup& group(const MGID &mgid) const;
+    MoleculeGroups groups(const MGID &mgid) const;
 
     Molecules molecules() const;
+    Molecules molecules(const MGID &mgid) const;
 
-    QSet<MoleculeID> moleculeIDs() const;
-    QSet<MoleculeGroupID> groupIDs() const;
-
-    QHash<MoleculeGroupID,MoleculeGroup> groups() const;
-    QHash<MoleculeGroupID,MoleculeGroup>
-                      groups(const QSet<MoleculeGroupID> &groupids) const;
-
-    QHash<MoleculeGroupID,MoleculeGroup> groups(MoleculeID molid) const;
-    QHash<MoleculeGroupID,MoleculeGroup> groups(const PartialMolecule &molecule) const;
-
-    const MoleculeGroup& group(MoleculeGroupID groupid) const;
-    const MoleculeGroup& group(const QString &name) const;
-
-    QSet<MoleculeGroupID> groupsContaining(const PartialMolecule &molecule) const;
-    bool contains(const PartialMolecule &molecule) const;
-
-    QSet<MoleculeGroupID> groupsReferringTo(MoleculeID molid) const;
-
-    bool refersTo(MoleculeID molid) const;
-    bool refersTo(MoleculeGroupID groupid) const;
-
-    int count() const;
-
-    int nMolecules() const;
-
-    void assertContains(MoleculeGroupID groupid) const;
+    const ViewsOfMol& molecule(const MolID &molid) const;
+    
 
 private:
-    void reindex();
-    void _pvt_index(const MoleculeGroup &group);
-
-    /** The collection of groups in this object, indexed
-        by their MoleculeGroupID */
-    QHash<MoleculeGroupID, MoleculeGroup> molgroups;
-
-    /** Index of where each molecule resides */
-    QHash< MoleculeID, QSet<MoleculeGroupID> > index;
+    /** The list of all groups in this set */
+    QVector<MoleculeGroup> groups_by_idx;
+    
+    /** The index of the groups by number */
+    QHash<MGNum,int> groups_by_num;
+    
+    /** Index of which groups contain which molecule */
+    QHash< MolNum, QSet<MGNum> > groups_by_mol;
 };
 
 }
