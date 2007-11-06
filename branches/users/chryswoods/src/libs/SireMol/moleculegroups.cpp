@@ -27,6 +27,9 @@
 \*********************************************/
 
 #include "moleculegroups.h"
+#include "molecules.h"
+#include "mgidx.h"
+#include "mgnum.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -107,13 +110,13 @@ MoleculeGroups& MoleculeGroups::operator=(const MoleculeGroups &other)
 /** Copy from a single group */
 MoleculeGroups& MoleculeGroups::operator=(const MoleculeGroup &other)
 {
-    return this->operator=(MoleculeGroups(other);
+    return this->operator=(MoleculeGroups(other));
 }
 
 /** Comparison operator */
 bool MoleculeGroups::operator==(const MoleculeGroups &other) const
 {
-    return groups_by_idx == other.groups_by_index;
+    return groups_by_idx == other.groups_by_idx;
 }
 
 /** Comparison operator */
@@ -135,7 +138,7 @@ void MoleculeGroups::_pvt_addToIndex(int idx)
     
         if (it2 != groups_by_mol.end())
         {
-            it2.insert(group.number());
+            it2->insert(group.number());
         }
         else
         {
@@ -173,7 +176,7 @@ void MoleculeGroups::_pvt_update(const Molecules &molecules,
     }
     else if (groups_by_idx.count() == 1 and already_updated.isEmpty())
     {
-        groups_by_idx[0] = groups_by_idx[0].update(molecules);
+        groups_by_idx[0].update(molecules);
         return;
     }
     
@@ -189,7 +192,7 @@ void MoleculeGroups::_pvt_update(const Molecules &molecules,
             {
                 MoleculeGroup &group = groups_by_idx[groups_by_num.value(mgnum)];
                 
-                group = group.update(molecules);
+                group.update(molecules);
                 
                 if (already_updated.count() == groups_by_idx.count() - 1)
                     //we have updated all of the groups
@@ -238,6 +241,8 @@ void MoleculeGroups::_pvt_update(const MoleculeGroup &group)
         return;
     
     //we have already updated this group
+    QSet<MGNum> already_updated;
+    already_updated.reserve( nGroups() - 1 );
     already_updated.insert(group.number());
     
     //now update all of the molecules in this set so that
@@ -247,7 +252,7 @@ void MoleculeGroups::_pvt_update(const MoleculeGroup &group)
 
 void MoleculeGroups::_pvt_update(const MoleculeGroups &groups)
 {
-    if (groups.isEmpty() or this->isEmpty())
+    if (groups.nGroups() == 0 or this->nGroups() == 0)
         return;
         
     QSet<MGNum> already_updated;
@@ -287,14 +292,14 @@ void MoleculeGroups::_pvt_update(const MoleculeGroups &groups)
 
 void MoleculeGroups::_pvt_add(const MoleculeGroup &group)
 {
-    if (this->contains(group.number()))
+    if (groups_by_num.contains(group.number()))
     {
         this->_pvt_update(group);
     }
     else
     {
         groups_by_idx.append(group);
-        int idx = groups_by_index.count() - 1;
+        int idx = groups_by_idx.count() - 1;
         
         groups_by_num.insert( group.number(), idx );
         
@@ -310,95 +315,127 @@ void MoleculeGroups::_pvt_add(const MoleculeGroup &group)
     }
 }
 
-/** Return the groups to which the group 'group' has been added.
-    Note that this will update 'group' if it already exists in this set */
-MoleculeGroups MoleculeGroups::add(const MoleculeGroup &group) const
+/** Add the group 'group' to this set. Note that this will update 'group' 
+    if it already exists in this set, and it will also update all of 
+    the molecules in this set so that they have the same version
+    in all of the groups as 'group' */
+void MoleculeGroups::add(const MoleculeGroup &group)
 {
-    MoleculeGroups ret(*this);
-    ret._pvt_add(group);
-    
-    return ret;
+    this->_pvt_add(group);
 }
 
-/** Return the groups to which all of the groups in 'groups'
-    have been added. If any of the groups already exist in this
+/** Add the groups 'groups' to this set.
+    If any of the groups already exist in this
     set, then they will be updated rather than added. */
-MoleculeGroups MoleculeGroups::add(const MoleculeGroups &groups) const
+void MoleculeGroups::add(const MoleculeGroups &groups)
 {
-    MoleculeGroups ret(*this);
-    
-    for (MoleculeGroups::const_iterator it = groups.constBegin();
-         it != groups.constEnd();
-         ++it)
+    if (groups.nGroups() == 0)
     {
-        ret._pvt_add(*it);
+        return;
     }
-    
-    return ret;
+    else if (groups.nGroups() == 1)
+    {
+        this->add( groups.at(MGIdx(0)) );
+    }
+    else
+    {
+        for (MoleculeGroups::const_iterator it = groups.constBegin();
+             it != groups.constEnd();
+             ++it)
+        {
+            this->_pvt_add(*it);
+        }
+    }
 }
 
 void MoleculeGroups::_pvt_add(const MoleculeView &molview,
-                              int idx)
+                              MGNum mgnum)
 {
-    MoleculeGroup &group = groups_by_index[idx];
+    MoleculeGroup &group = groups_by_index[ groups_by_num.value(mgnum) ];
     group = group.add(molview);
     
     groups_by_mol[molview.data().number()].insert(group.number());
 }
 
-/** Return the groups where the molecule view 'molview' has been
-    added to the group(s) identified by 'mgid'. If this view
-    already exists in the group(s) then it will be duplicated.
+/** Add the the molecule view 'molview' to the group(s) identified by 
+    'mgid'. If this view already exists in the group(s) then it 
+    will be duplicated. Also, all groups holding a view of this molecule
+    will be updated to the version of the molecule in 'molview'
     
     \throw SireMol::missing_molgroup
 */
-MoleculeGroups MoleculeGroups::add(const MoleculeView &molview,
-                                   const MGID &mgid) const
+void MoleculeGroups::add(const MoleculeView &molview, const MGID &mgid)
 {
-    QList<MGIdx> mgidxs = mgid.map(*this);
-
-    MoleculeGroups ret(*this);
+    QList<MGNum> mgnums = mgid.map(*this);
     
-    foreach (MGIdx mgidx, mgidxs)
+    if (mgnums.count() == 1)
     {
-        ret._pvt_add(molview, mgidx);
+        this->_pvt_add(molview, mgnums.first());
     }
-    
-    return ret;
+    else
+    {
+        MoleculeGroups saved_state(*this);
+        
+        try
+        {
+            foreach (MGNum mgnum, mgnums)
+            {
+                ret._pvt_add(molview, mgnum);
+            }
+        }
+        catch(...)
+        {
+            //restore the previous state
+            this->operator=(saved_state);
+            throw;
+        }
+    }
 }
 
 void MoleculeGroups::_pvt_add(const ViewsOfMol &molviews,
-                              int idx)
+                              MGNum mgnum)
 {
-    MoleculeGroup &group = groups_by_index[idx];
+    MoleculeGroup &group = groups_by_index[ groups_by_num.value(mgnum) ];
     group = group.add(molviews);
     
     groups_by_mol[molviews.number()].insert(group.number());
 }
                  
-/** Return the groups where the views of the molecule in 'molviews'
-    are added to the group(s) identified by 'mgid'. This adds
+/** Add the views of the molecule in 'molviews'
+    to the group(s) identified by 'mgid'. This adds
     duplicates of any views that are already in these group(s)
     
     \throw SireMol::missing_molgroup
 */
-MoleculeGroups MoleculeGroups::add(const ViewsOfMol &molviews,
-                                   const MGID &mgid) const
+void MoleculeGroups::add(const ViewsOfMol &molviews, const MGID &mgid)
 {
-    QList<MGIdx> mgidxs = mgid.map(*this);
+    QList<MGNum> mgnums = mgid.map(*this);
     
-    MoleculeGroups ret(*this);
-    
-    foreach (MGIdx mgidx, mgidxs)
+    if (mgnums.count() == 1)
     {
-        ret._pvt_add(molviews, mgidx);
+        this->_pvt_add(molviews, mgnums.first());
     }
+    else
+    {
+        MoleculeGroups saved_state(*this);
     
-    return ret;
+        try
+        {
+            foreach (MGNum mgnum, mgnums)
+            {
+                this->_pvt_add(molviews, mgnum);
+            }
+        }
+        catch(...)
+        {
+            this->operator=(saved_state);
+            throw;
+        }
+    }
 }
                
-void MoleculeGroups::add(const Molecules &molecules,
-                         int idx)
+void MoleculeGroups::_pvt_add(const Molecules &molecules,
+                              MGNum mgnum)
 {
     MoleculeGroup &group = groups_by_index[idx];
     groups = group.add(molecules);
@@ -411,26 +448,38 @@ void MoleculeGroups::add(const Molecules &molecules,
     }
 }
                            
-/** Return the groups where all of the molecules in 'molecules'
-    have been added to the group(s) identified by 'mgid'. This
+/** Add all of the molecules in 'molecules'
+    to the group(s) identified by 'mgid'. This
     adds duplicates of any views that are already in these 
     group(s)
     
     \throw SireMol::missing_molgroup
 */
-MoleculeGroups MoleculeGroups::add(const Molecules &molecules,
-                                   const MGID &mgid) const
+void MoleculeGroups::add(const Molecules &molecules, const MGID &mgid)
 {
-    QList<MGIdx> mgidxs = mgid.map(*this);
+    QList<MGNum> mgnums = mgid.map(*this);
     
-    MoleculeGroups ret(*this);
-    
-    foreach (MGIdx mgidx, mgidxs)
+    if (mgnums.count() == 1)
     {
-        ret._pvt_add(molecules, mgidx);
+        this->_pvt_add(molecules, mgnums.first());
     }
-    
-    return ret;
+    else
+    {
+        MoleculeGroups saved_state(*this);
+        
+        try
+        {
+            foreach (MGNum mgnum, mgnums)
+            {
+                this->_pvt_add(molecules, groups_by_num[mgnum]);
+            }
+        }
+        catch(...)
+        {
+            this->operator=(saved_state);
+            throw;
+        }
+    }
 }
 
 /** Update the molecule group 'group' so that it has the same
@@ -438,13 +487,9 @@ MoleculeGroups MoleculeGroups::add(const Molecules &molecules,
     in all of the groups in this set so that they are the same 
     version as in 'group' - this updates the molecules even if
     this group is not in this set */
-MoleculeGroups MoleculeGroups::update(const MoleculeGroup &group) const
+void MoleculeGroups::update(const MoleculeGroup &group)
 {
-    MoleculeGroups ret(*this);
-    
-    ret._pvt_update(group);
-    
-    return ret;
+    this->_pvt_update(group);
 }
 
 /** Update all of the groups in 'groups' so that the groups
@@ -453,13 +498,9 @@ MoleculeGroups MoleculeGroups::update(const MoleculeGroup &group) const
     in this set are at the same version as in 'groups' - this
     updated the molecules even if none of the groups in 'groups'
     are in this set. */
-MoleculeGroups MoleculeGroups::update(const MoleculeGroups &groups) const
+void MoleculeGroups::update(const MoleculeGroups &groups)
 {
-    MoleculeGroups ret(*this);
-    
-    ret._pvt_update(groups);
-    
-    return ret;
+    this->_pvt_update(groups);
 }
 
 void MoleculeGroups::_pvt_update(const MoleculeData &moldata)
@@ -471,66 +512,431 @@ void MoleculeGroups::_pvt_update(const MoleculeData &moldata)
     }
 }
 
-/** Return the set where the molecule whose data is in 'moldata' 
-    has been updated so that it is at the same version as 'moldata'. 
+/** Updated the molecule whose data is in 'moldata' 
+    so that it is at the same version as 'moldata'. 
     This does nothing if this molecule is not in this set */
-MoleculeGroups MoleculeGroups::update(const MoleculeData &moldata) const
+void MoleculeGroups::update(const MoleculeData &moldata)
 {
-    MoleculeGroups ret(*this);
-    
-    ret._pvt_update(moldata);
-    
-    return ret;
+    this->_pvt_update(moldata);
 }
 
-/** Return the set where the molecule that is viewed in 'molview'
-    has been updated so that it is at the same version as 'mollview'
+/** Update the molecule that is viewed in 'molview'
+    so that it is at the same version as 'molview'
     in this set. This does nothing  is this molecule is not in 
     this set. */
-MoleculeGroups MoleculeGroups::update(const MoleculeView &molview) const
+void MoleculeGroups::update(const MoleculeView &molview)
 {
-    return this->update(molview.data());
+    this->update(molview.data());
 }
 
-/** Return the set where the molecules in 'molecules' have been
-    updated in this set so that they are the same version as 
+/** Update the molecules in 'molecules' so that they are the same version as 
     in 'molecules'. This does nothing if none of the molecules
     are in this set. */
-MoleculeGroups MoleculeGroups::update(const Molecules &molecules) const
+void MoleculeGroups::update(const Molecules &molecules)
 {
     if (molecules.isEmpty() or this->isEmpty())
-        return *this;
+        return;
 
-    MoleculeGroups ret(*this);
-    
     QSet<MGNum> already_updated;
     already_updated.reserve( nGroups() - 1 );
     
-    ret._pvt_update(molecules, already_updated);
-    
-    return ret;
+    this->_pvt_update(molecules, already_updated);
 }
 
+void MoleculeGroups::_pvt_remove(MGNum mgnum)
+{
+    int idx = groups_by_num.value(mgnum, -1);
+    
+    if (idx == -1)
+        return;
 
-MoleculeGroups MoleculeGroups::remove(const MoleculeGroup &group) const;
-MoleculeGroups MoleculeGroups::remove(const MoleculeGroups &groups) const;
+    this->_pvt_removeFromIndex(mgnum);
+    
+    groups_by_idx.removeAt(idx);
+    groups_by_num.remove(mgnum);
+}
 
-MoleculeGroups MoleculeGroups::remove(const MGID &mgid) const;
+void MoleculeGroups::_pvt_reindex()
+{
+    groups_by_num.clear();
 
-MoleculeGroups MoleculeGroups::remove(const MoleculeView &molview) const;
-MoleculeGroups MoleculeGroups::remove(const MoleculeView &molview, 
-                      const MGID &mgid) const;
+    int ngroups = groups_by_idx.count();
+    const MoleculeGroup *groups_by_idx_array = groups_by_idx.constData();
 
-MoleculeGroups MoleculeGroups::remove(const ViewsOfMol &molviews) const;
-MoleculeGroups MoleculeGroups::remove(const ViewsOfMol &molviews,
-                      const MGID &mgid) const;
+    groups_by_num.reserve(ngroups);
+    
+    for (int i=0; i<ngroups; ++i)
+    {
+        groups_by_num.insert( groups_by_idx_array[i].number(), i );
+    }
+}
 
-MoleculeGroups MoleculeGroups::remove(const Molecules &molecules) const;
-MoleculeGroups MoleculeGroups::remove(const Molecules &molecules,
-                      const MGID &mgid) const;
+/** Remove the group 'group'. This does nothing if 
+    this group is not part of this set. This removes the group
+    even if it has a different version in this set */
+void MoleculeGroups::remove(const MoleculeGroup &group)
+{
+    this->_pvt_remove(group.number());
+    this->_pvt_reindex();
+}
 
-MoleculeGroups MoleculeGroups::remove(const MolID &molid) const;
-MoleculeGroups MoleculeGroups::remove(const MolID &molid, const MGID &mgid) const;
+/** Remove all of the groups in 'groups' from this set. */
+void MoleculeGroups::remove(const MoleculeGroups &groups)
+{
+    if (groups.nGroups() == 0)
+        return;
+    else if (groups.nGroups() == 1)
+    {
+        this->remove(groups.at(MGIdx(0)));
+        return;
+    }
+    else
+    {
+        MoleculeGroups saved_state(*this);
+    
+        try
+        {
+            for (MoleculeGroups::const_iterator it = groups.begin();
+                 it != groups.end();
+                 ++it)
+            {
+                this->_pvt_remove(it->number());
+            }
+            
+            this->_pvt_reindex();
+        }
+        catch(...)
+        {
+            this->operator=(saved_state);
+            throw;
+        }
+    }
+}
+
+/** Remove the group(s) identified by 'mgid' */
+void MoleculeGroups::remove(const MGID &mgid)
+{
+    QList<MGNum> mgnums;
+    
+    try
+    {
+        mgnums = mgid.map(*this);
+    }
+    catch(...)
+    {
+        return;
+    }
+
+    if (mgnums.count() == 1)
+    {
+        this->_pvt_remove(mgnums.first());
+        this->_pvt_reindex();
+        return;
+    }
+    else
+    {
+        MoleculeGroups saved_state(*this);
+        
+        try
+        {
+            foreach (MGNum mgnum, mgnums)
+            {
+                ret._pvt_remove(mgnum);
+            }
+        
+            ret._pvt_reindex();
+        }
+        catch(...)
+        {
+            this->operator=(saved_state);
+            throw;
+        }
+    }
+}
+
+void MoleculeGroups::_pvt_removeFromIndex(MGNum mgnum, MolNum molnum)
+{
+    QSet<MGNum> &mgnums = groups_by_mol[molnum];
+    
+    mgnums.remove(mgnum);
+    
+    if (mgnums.isEmpty())
+        groups_by_mol.remove(molnum);
+}
+
+void MoleculeGroups::_pvt_remove(const MoleculeView &molview,
+                                 const QSet<MGNum> &mgnums)
+{
+    MolNum molnum = molview.data().number();
+    
+    foreach (MGNum mgnum, mgnums)
+    {
+        MoleculeGroup &group = groups_by_idx[ groups_by_num.value(mgnum) ];
+        
+        group = group.remove(molview);
+        
+        if (not group.contains(molnum))
+        {
+            //the molecule has now been completely removed from this group
+            this->_pvt_removeFromIndex(mgnum, molnum);
+        }
+    }
+}
+
+void MoleculeGroups::_pvt_remove(const ViewsOfMol &molviews,
+                                 const QSet<MGNum> &mgnums)
+{
+    MolNum molnum = molviews.number();
+    
+    QSet<MGNum> mgnums_with_mol = groups_by_mol.value(molnum);
+    mgnums_with_mol.intersect(mgnums);
+    
+    foreach (MGNum mgnum, mgnums_with_mol)
+    {
+        MoleculeGroup &group = groups_by_idx[ groups_by_num.value(mgnum) ];
+        
+        group = group.remove(molviews);
+        
+        if (not group.contains(molnum))
+        {
+            //the molecule has now been completely removed from this group
+            this->_pvt_removeFromIndex(mgnum, molnum);
+        }
+    }
+}
+
+void MoleculeGroups::_pvt_remove(MolNum molnum, 
+                                 const QSet<MGNum> &mgnums)
+{
+    QSet<MGNum> mgnums_with_mol = groups_by_mol.value(molnum);
+    mgnums_with_mol.intersect(mgnums);
+    
+    foreach (MGNum mgnum, mgnums_with_mol)
+    {
+        MoleculeGroup &group = groups_by_idx[ groups_by_num.value(mgnum) ];
+        
+        group = group.remove(molnum);
+        
+        this->_pvt_removeFromIndex(mgnum, molnum);
+    }
+    
+}
+
+/** Completely remove the view of the molecule 'molview' from all
+    of the groups in this set - this only removes this exact view
+    from the set */
+void MoleculeGroups::remove(const MoleculeView &molview)
+{
+    QSet<MGNum> mgnums = groups_by_mol.value(molview.data().number());
+    
+    if (mgnums.isEmpty())
+        return;
+    
+    this->_pvt_remove(molview, mgnums);
+}
+
+/** Remove the view of the molecule 'molview' from the 
+    group(s) identified by 'mgid' 
+    
+    \throw SireMol::missing_molgroup
+*/
+void MoleculeGroups::remove(const MoleculeView &molview, const MGID &mgid)
+{
+    QList<MGNum> mgnums = mgid.map(*this);
+
+    this->_pvt_remove(molview, mgnums.toSet());
+}
+
+/** Remove all of the views in 'molviews' from the returned set */
+void MoleculeGroups::remove(const ViewsOfMol &molviews)
+{
+    QSet<MGNum> mgnums = groups_by_mol.value(molviews.number());
+    
+    if (mgnums.isEmpty())
+        return *this;
+    
+    this->_pvt_remove(molviews, mgnums);
+}
+
+/** Return the set with all of the views in 'molviews' removed
+    from the group(s) identified by 'mgid' 
+    
+    \throw SireMol::missing_molgroup
+*/
+void MoleculeGroups::remove(const ViewsOfMol &molviews, const MGID &mgid)
+{
+    QList<MGNum> mgnums = mgid.map(*this);
+    
+    this->_pvt_remove(molviews, mgnums.toSet());
+}                                      
+
+/** Return the set where all of the molecules in 'molecules' have
+    been removed */
+void MoleculeGroups::remove(const Molecules &molecules)
+{
+    if (molecules.isEmpty())
+        return;
+    else if (molecules.count() == 1)
+    {
+        this->remove(molecules.first());
+        return;
+    }
+    else
+    {
+        MoleculeGroups saved_state(*this);
+    
+        try
+        {
+            for (Molecule::const_iterator it = molecules.begin();
+                 it != molecules.end();
+                 ++it)
+            {
+                QSet<MGNum> mgnums = groups_by_mol.value(it->number());
+        
+                if (not mgnums.isEmpty())
+                    ret._pvt_remove(*it, mgnums);
+            }
+        }
+        catch(...)
+        {
+            this->operator=(saved_state);
+            throw;
+        }
+    }
+}
+
+/** Remove all of the molecules in 'molecules'
+    from the group(s) identified by 'mgid'
+    
+    \throw SireMol::missing_molgroup
+*/
+void MoleculeGroups::remove(const Molecules &molecules, const MGID &mgid)
+{
+    QSet<MGNum> mgnums = mgid.map(*this).toSet();
+
+    if (molecules.isEmpty())
+        return;
+    else if (molecules.count() == 1)
+    {
+        this->_pvt_remove(molecules.first(), mgnums.toSet());
+        return;
+    }
+    else
+    {
+        MoleculeGroups saved_state(*this);
+    
+        try
+        {
+            for (Molecules::const_iterator it = molecules.begin();
+                 it != molecules.constEnd();
+                 ++it)
+            {
+                this->_pvt_remove(*it, mgnums);
+            }
+        }
+        catch(...)
+        {
+            this->operator=(saved_state);
+            throw;
+        }
+    }
+}
+
+/** Return the set where all the molecule(s) identified by 'molid'
+    have been completely removed. This does nothing if no molecules
+    matching this ID are in this set */
+void MoleculeGroups::remove(const MolID &molid)
+{
+    QList<MolNum> molnums;
+    
+    try
+    {
+        molnums = molid.map(*this);
+    }
+    catch(...)
+    {
+        return;
+    }
+
+    if (molnums.count() == 1)
+    {
+        MolNum molnum = molnums.first();
+        
+        QSet<MGNum> mgnums = groups_by_mol.value(molnum);
+        
+        if (not mgnums.isEmpty())
+            this->_pvt_remove(molnum, mgnums);
+            
+        return;
+    }
+    else
+    {
+        MoleculeGroups saved_state(*this);
+        
+        try
+        {
+            foreach (MolNum molnum, molnums)
+            {
+                QSet<MGNum> mgnums = groups_by_mol.value(molnum);
+            
+                if (not mgnums.isEmpty())
+                    this->_pvt_remove(molnum, mgnums);
+            }
+        }
+        catch(...)
+        {
+            this->operator=(saved_state);
+            throw;
+        }
+    }
+}
+
+/** Remove the molecule(s) identified by 'molid'
+    from the group(s) identified by 'mgid'
+    
+    \throw SireMol::missing_molgroup
+*/
+MoleculeGroups MoleculeGroups::remove(const MolID &molid, const MGID &mgid) const
+{
+    QSet<MGNum> mgnums = mgid.map(*this).toSet();
+    
+    QList<MolNum> molnums;
+    
+    try
+    {
+        molnums = molid.map(*this);
+    }
+    catch(...)
+    {
+        return;
+    }
+    
+    if (molnums.isEmpty())
+        return;
+    else if (molnums.count() == 1)
+    {
+        MolNum molnum = molnums.first();
+        this->_pvt_remove(molnum, mgnums);
+        return;
+    }
+    else
+    {
+        MoleculeGroups saved_state(*this);
+        
+        try
+        {
+            foreach (MolNum molnum, molnums)
+            {
+                ret._pvt_remove(molnum, mgnums);
+            }
+        }
+        catch(...)
+        {
+            this->operator=(saved_state);
+            throw;
+        }
+    }
+}
 
 /** Return the number of groups in this set */
 int MoleculeGroups::nGroups() const
@@ -551,18 +957,18 @@ int MoleculeGroups::nMolecules() const
 */
 int MoleculeGroups::nMolecules(const MGID &mgid) const
 {
-    QList<MGIdx> mgidxs = mgid.map(*this);
+    QList<MGNum> mgnums = mgid.map(*this);
     
-    if (mgidxs.count() == 1)
+    if (mgnums.count() == 1)
     {
-        return groups_by_idx[mgidx.first()].nMolecules();
+        return this->group(mgnums.first()).nMolecules();
     }
 
     QSet<MolNum> molnums;
 
-    foreach (MGIdx mgidx, mgid.map(*this))
+    foreach (MGNum mgnum, mgid.map(*this))
     {
-        molnums += groups_by_idx[mgidx].molecules().molNums();
+        molnums += this->group(mgnum).molecules().molNums();
     }
     
     return molnums.count();
@@ -615,20 +1021,20 @@ int MoleculeGroups::nViews() const
 */
 int MoleculeGroups::nViews(const MGID &mgid) const
 {
-    QList<MGIdx> mgidxs = mgid.map(*this);
+    QList<MGNum> mgnums = mgid.map(*this);
     
-    if (mgidxs.count() == 1)
+    if (mgnums.count() == 1)
     {
-        return groups_by_idx[mgidxs.first()].nViews();
+        return this->group(mgnums.first()).nViews();
     }
     else
     {
         //sum up the total number of views in these groups
         int nviews = 0;
         
-        foreach (MGIdx mgidx, mgidxs)
+        foreach (MGIdx mgnum, mgnums)
         {
-            nviews += groups_by_idx[mgidx].nViews();
+            nviews += this->group(mgnum).nViews();
         }
         
         //now remove duplicates
@@ -663,15 +1069,15 @@ const MoleculeGroup& MoleculeGroups::group(MGNum mgnum) const
 */
 const MoleculeGroup& MoleculeGroups::group(const MGID &mgid) const
 {
-    QList<MGIdx> mgidxs = mgid.map(*this);
+    QList<MGNum> mgnums = mgid.map(*this);
     
-    if (mgidxs.count() > 1)
+    if (mgnums.count() > 1)
         throw SireMol::duplicate_molgroup( QObject::tr(
             "More than one MoleculeGroup matches the ID \"%1\" "
-            "(groups at indicies %2)")
-                .arg(mgid.toString(), Sire::toString(mgidxs)), CODELOC );
+            "(groups with numbes %2)")
+                .arg(mgid.toString(), Sire::toString(mgnums)), CODELOC );
                 
-    return groups_by_idx[ mgidxs.first() ];
+    return this->group(mgnums.first());
 }
 
 /** Return the group(s) identified by the ID 'mgid'
@@ -680,14 +1086,22 @@ const MoleculeGroup& MoleculeGroups::group(const MGID &mgid) const
 */
 MoleculeGroups MoleculeGroups::groups(const MGID &mgid) const
 {
-    QList<MGIdx> mgidxs = mgid.map(*this);
+    QList<MGNum> mgnums = mgid.map(*this);
 
-    if (mgidxs.count() == 1)
+    if (mgnums.count() == 1)
     {
-        return MoleculeGroups( groups_by_idx[ mgidxs.first() ] );
+        return MoleculeGroups( this->group(mgnums.first()) );
     }
     else
     {
+        //convert group numbers to indicies
+        QList<MGIdx> mgidxs;
+        
+        foreach (MGNum mgnum, mgnums)
+        {
+            mgidxs.append( groups_by_num[mgnum] );
+        }
+
         qSort(mgidxs);
     
         MoleculeGroups ret;
@@ -739,19 +1153,19 @@ Molecules MoleculeGroups::molecules() const
 */
 Molecules MoleculeGroups::molecules(const MGID &mgid) const
 {
-    QList<MGIdx> mgidxs = mgid.map(*this);
+    QList<MGNum> mgnums = mgid.map(*this);
     
-    if (mgidxs.count() == 1)
+    if (mgnums.count() == 1)
     {
-        return groups_by_idx[ mgidxs.begin() ].molecules();
+        return this->group(mgnums.first()).molecules();
     }
     else
     {
         Molecules mols;
         
-        foreach (MGIdx mgidx, mgidxs)
+        foreach (MGNum mgnum, mgnums)
         {
-            mols = mols.addIfUnique( groups_by_idx[mgidx].molecules() );
+            mols = mols.addIfUnique( this->group(mgnum).molecules() );
         }
         
         return mols;

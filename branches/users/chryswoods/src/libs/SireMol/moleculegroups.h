@@ -29,7 +29,12 @@
 #ifndef SIREMOL_MOLECULEGROUPS_H
 #define SIREMOL_MOLECULEGROUPS_H
 
+#include <QVector>
+#include <QHash>
+
 #include "moleculegroup.h"
+#include "molnum.h"
+#include "mgnum.h"
 
 SIRE_BEGIN_HEADER
 
@@ -65,73 +70,83 @@ public:
 
     MoleculeGroups(const MoleculeGroups &other);
 
-    ~MoleculeGroups();
+    virtual ~MoleculeGroups();
 
     static const char* typeName()
     {
         return QMetaType::typeName( qMetaTypeId<MoleculeGroups>() );
     }
 
-    const char* what() const
+    virtual const char* what() const
     {
         return MoleculeGroups::typeName();
     }
     
-    MoleculeGroups* clone() const
+    virtual MoleculeGroups* clone() const
     {
         return new MoleculeGroups(*this);
     }
 
-    MoleculeGroups& operator=(const MoleculeGroup &other);
-    MoleculeGroups& operator=(const MoleculeGroups &other);
+    virtual MoleculeGroups& operator=(const MoleculeGroup &other);
+    virtual MoleculeGroups& operator=(const MoleculeGroups &other);
 
     bool operator==(const MoleculeGroups &other) const;
     bool operator!=(const MoleculeGroups &other) const;
 
+    const MoleculeGroup& operator[](MGIdx mgidx) const;
+    const MoleculeGroup& operator[](MGNum mgnum) const;
+    const MoleculeGroup& operator[](const MGID &mgid) const;
+    
+    const ViewsOfMol& operator[](const MolID &molid) const;
+    
+    const MoleculeGroup& at(MGIdx mgidx) const;
+    const MoleculeGroup& at(MGNum mgnum) const;
+    const MoleculeGroup& at(const MGID &mgid) const;
+    
+    const ViewsOfMol& at(const MolID &molid) const;
+
     const_iterator begin() const;
     const_iterator constBegin() const;
+    
+    const MoleculeGroup& first() const;
+    const MoleculeGroup& find(const MGID &mgid) const;
+    const MoleculeGroup& last() const;
     
     const_iterator end() const;
     const_iterator constEnd() const;
 
-    MoleculeGroups add(const MoleculeGroup &group) const;
-    MoleculeGroups add(const MoleculeGroups &groups) const;
+    void add(const MoleculeGroup &group);
+    void add(const MoleculeGroups &groups);
 
-    MoleculeGroups add(const MoleculeView &molview,
-                       const MGID &mgid) const;
+    void add(const MoleculeView &molview, const MGID &mgid);
                        
-    MoleculeGroups add(const ViewsOfMol &molviews,
-                       const MGID &mgid) const;
+    void add(const ViewsOfMol &molviews, const MGID &mgid);
                        
-    MoleculeGroups add(const Molecules &molecules,
-                       const MGID &mgid) const;
+    void add(const Molecules &molecules, const MGID &mgid);
 
-    MoleculeGroups update(const MoleculeGroup &group) const;
-    MoleculeGroups update(const MoleculeGroups &groups) const;
+    void update(const MoleculeGroup &group);
+    void update(const MoleculeGroups &groups);
     
-    MoleculeGroups update(const MoleculeView &molview) const;
-    MoleculeGroups update(const MoleculeData &moldata) const;
-    MoleculeGroups update(const Molecules &molecules) const;
+    void update(const MoleculeView &molview);
+    void update(const MoleculeData &moldata);
+    void update(const Molecules &molecules);
     
-    MoleculeGroups remove(const MoleculeGroup &group) const;
-    MoleculeGroups remove(const MoleculeGroups &groups) const;
+    void remove(const MoleculeGroup &group);
+    void remove(const MoleculeGroups &groups);
 
-    MoleculeGroups remove(const MGID &mgid) const;
+    void remove(const MGID &mgid);
 
-    MoleculeGroups remove(const MoleculeView &molview) const;
-    MoleculeGroups remove(const MoleculeView &molview, 
-                          const MGID &mgid) const;
+    void remove(const MoleculeView &molview);
+    void remove(const MoleculeView &molview, const MGID &mgid);
 
-    MoleculeGroups remove(const ViewsOfMol &molviews) const;
-    MoleculeGroups remove(const ViewsOfMol &molviews,
-                          const MGID &mgid) const;
+    void remove(const ViewsOfMol &molviews);
+    void remove(const ViewsOfMol &molviews, const MGID &mgid);
 
-    MoleculeGroups remove(const Molecules &molecules) const;
-    MoleculeGroups remove(const Molecules &molecules,
-                          const MGID &mgid) const;
+    void remove(const Molecules &molecules);
+    void remove(const Molecules &molecules, const MGID &mgid);
 
-    MoleculeGroups remove(const MolID &molid) const;
-    MoleculeGroups remove(const MolID &molid, const MGID &mgid) const;
+    void remove(const MolID &molid);
+    void remove(const MolID &molid, const MGID &mgid);
 
     int nGroups() const;
     
@@ -148,10 +163,40 @@ public:
     Molecules molecules() const;
     Molecules molecules(const MGID &mgid) const;
 
-    const ViewsOfMol& molecule(const MolID &molid) const;
-    
+    ViewsOfMol molecule(const MolID &molid) const;
 
 private:
+    // Editing functions - these are virtual so that they can be
+    // overridden by the System class (which will inherit from 
+    // MoleculeGroups). In System, the ._pvt_add(...) functions (etc.)
+    // will do what is necessary in the forcefields, and will then
+    // copy the resulting MoleculeGroups from the forcefields back
+    // into this set. It will be able to do that as it will
+    // then be responsible for maintaining the constraint that
+    // all molecules must be at the same version
+
+    virtual void _pvt_addToIndex(int idx);
+    
+    virtual void _pvt_removeFromIndex(MGNum mgnum);
+    virtual void _pvt_removeFromIndex(MGNum mgnum, MolNum molnum);
+    
+    virtual void _pvt_update(const Molecules &mols, QSet<MGNum> &already_updated);
+    virtual void _pvt_update(const MoleculeGroup &molgroup);
+    virtual void _pvt_update(const MoleculeGroups &molgroups);
+    virtual void _pvt_update(const MoleculeData &moldata);
+    
+    virtual void _pvt_add(const MoleculeGroup &molgroup);
+    virtual void _pvt_add(const MoleculeView &molview, MGNum mgnum);
+    virtual void _pvt_add(const ViewsOfMol &molviews, MGNum mgnum);
+    virtual void _pvt_add(const Molecules &molecules, MGNum mgnum);
+    
+    virtual void _pvt_remove(MGNum mgnum);
+    virtual void _pvt_remove(MolNum molnum, const QSet<MGNum> &mgnums);
+    virtual void _pvt_remove(const MoleculeView &molview, const QSet<MGNum> &mgnums);
+    virtual void _pvt_remove(const ViewsOfMol &molviews, const QSet<MGNum> &mgnums);
+    
+    virtual void _pvt_reindex();
+
     /** The list of all groups in this set */
     QVector<MoleculeGroup> groups_by_idx;
     
