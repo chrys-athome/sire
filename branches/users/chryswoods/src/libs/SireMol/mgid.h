@@ -38,6 +38,9 @@ namespace SireMol
 
 class MGIdx;
 class MGIdentifier;
+class MGNum;
+
+class MolGroup;
 
 /** This is the base class of all identifiers that are used 
     to identify a MoleculeGroup
@@ -62,6 +65,8 @@ public:
     }
 
     virtual MGID* clone() const=0;
+
+    virtual QList<MGNum> map(const MolGroup &molgroup) const=0;
 };
 
 }

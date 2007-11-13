@@ -123,6 +123,13 @@ public:
     {
         return _num != other._num;
     }
+
+    QList<MolNum> map(const MolGroup&) const
+    {
+        QList<MolNum> ret;
+        ret.append(*this);
+        return ret;
+    }
 };
 
 }

@@ -84,6 +84,8 @@ public:
     bool operator==(const MolID &other) const;
     bool operator!=(const MolID &other) const;
 
+    QList<MolNum> map(const MolGroup &molgroup) const;
+
 private:
     /** Pointer to the MolID */
     boost::shared_ptr<MolID> d;

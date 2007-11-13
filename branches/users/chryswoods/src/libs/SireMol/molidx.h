@@ -26,3 +26,118 @@
   *
 \*********************************************/
 
+#ifndef SIREMOL_MOLIDX_H
+#define SIREMOL_MOLIDX_H
+
+#include "SireID/index.h"
+
+#include "molid.h"
+
+SIRE_BEGIN_HEADER
+
+namespace SireMol
+{
+class MolIdx;
+}
+
+XMLStream& operator<<(XMLStream&, const SireMol::MolIdx&);
+XMLStream& operator>>(XMLStream&, SireMol::MolIdx&);
+
+namespace SireMol
+{
+
+/** This is an ID object that is used to index molecules (e.g. index
+    in a list or array, or in a MoleculeGroup).
+
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT MolIdx : public SireID::Index_T_<MolIdx>, public MolID
+{
+
+friend XMLStream& ::operator<<(XMLStream&, const MolIdx&);
+friend XMLStream& ::operator>>(XMLStream&, MolIdx&);
+
+public:
+    MolIdx() : SireID::Index_T_<MolIdx>(), MolID()
+    {}
+    
+    explicit MolIdx(qint32 idx) : SireID::Index_T_<MolIdx>(idx), MolID()
+    {}
+    
+    MolIdx(const MolIdx &other) : SireID::Index_T_<MolIdx>(other), MolID(other)
+    {}
+    
+    ~MolIdx()
+    {}
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<MolIdx>() );
+    }
+    
+    const char* what() const
+    {
+        return MolIdx::typeName();
+    }
+    
+    MolIdx* clone() const
+    {
+        return new MolIdx(*this);
+    }
+    
+    static MolIdx null()
+    {
+        return MolIdx();
+    }
+    
+    bool isNull() const
+    {
+        return SireID::Index_T_<MolIdx>::isNull();
+    }
+    
+    uint hash() const
+    {
+        return SireID::Index_T_<MolIdx>::hash();
+    }
+
+    QString toString() const
+    {
+        return QString("MolIdx(%1)").arg(_idx);
+    }
+    
+    MolIdx& operator=(const MolIdx &other)
+    {
+        SireID::IndexBase::operator=(other);
+        MolID::operator=(other);
+        return *this;
+    }
+    
+    bool operator==(const SireID::ID &other) const
+    {
+        return SireID::ID::compare<MolIdx>(*this, other);
+    }
+    
+    using SireID::Index_T_<MolIdx>::operator=;
+
+    using SireID::Index_T_<MolIdx>::operator==;
+    using SireID::Index_T_<MolIdx>::operator!=;
+
+    using SireID::Index_T_<MolIdx>::operator+=;
+    using SireID::Index_T_<MolIdx>::operator++;
+    using SireID::Index_T_<MolIdx>::operator-=;
+    using SireID::Index_T_<MolIdx>::operator--;
+    
+    using SireID::Index_T_<MolIdx>::map;
+    
+    QList<MolNum> map(const MolGroup &molgroup) const;
+};
+    
+}
+
+Q_DECLARE_TYPEINFO(SireMol::MolIdx, Q_MOVABLE_TYPE);
+Q_DECLARE_METATYPE(SireMol::MolIdx);
+
+SIRE_END_HEADER
+
+#endif
+

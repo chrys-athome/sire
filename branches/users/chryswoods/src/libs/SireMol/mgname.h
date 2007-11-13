@@ -120,6 +120,8 @@ public:
     {
         return _name != other._name;
     }
+    
+    QList<MGNum> map(const MolGroup &molgroup) const;
 };
 
 }
