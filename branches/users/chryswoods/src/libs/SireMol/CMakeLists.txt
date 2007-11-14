@@ -69,6 +69,8 @@ set ( SIREMOL_HEADERS
       moleculemover.h
       molecules.h
       moleculeview.h
+      molgroup.h
+      molgroups.h
       molid.h
       molidentifier.h
       molidx.h
@@ -101,6 +103,8 @@ set ( SIREMOL_HEADERS
       splitmolecule.h
       viewsofmol.h
       weightfunction.h
+
+      detail/molgrouppvt.h
     )
 
 # Define the sources in SireMol
@@ -139,6 +143,8 @@ set ( SIREMOL_SOURCES
       moleculemover.cpp
       molecules.cpp
       moleculeview.cpp
+      molgroup.cpp
+      molgroups.cpp
       molidentifier.cpp
       molviewproperty.cpp
       mover.cpp

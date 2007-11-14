@@ -29,11 +29,7 @@
 #ifndef SIREMOL_MOLECULEGROUP_H
 #define SIREMOL_MOLECULEGROUP_H
 
-#include <QSharedDataPointer>
-
-#include <boost/tuple/tuple.hpp>
-
-#include "sireglobal.h"
+#include "molgroup.h"
 
 SIRE_BEGIN_HEADER
 
@@ -45,32 +41,10 @@ class MoleculeGroup;
 QDataStream& operator<<(QDataStream&, const SireMol::MoleculeGroup&);
 QDataStream& operator>>(QDataStream&, SireMol::MoleculeGroup&);
 
-namespace SireID
-{
-class Index;
-}
-
 namespace SireMol
 {
 
-using SireID::Index;
-
-class MoleculeData;
-class Molecules;
-class MoleculeView;
-class PartialMolecule;
-class ViewsOfMol;
-
-class MolNum;
-class MolNumViewIdx;
-
-class MGName;
-class MGNum;
-
-namespace detail
-{
-class MoleculeGroupPvt;
-}
+using SireBase::ConcreteProperty;
 
 /** This class is used to group views of molecules together. 
     Underneath, it used the Molecules class to hold views
@@ -103,7 +77,7 @@ class MoleculeGroupPvt;
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT MoleculeGroup
+class SIREMOL_EXPORT MoleculeGroup : public ConcreteProperty<MoleculeGroup,MolGroup>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const MoleculeGroup&);
@@ -143,32 +117,6 @@ public:
     bool operator==(const MoleculeGroup &other) const;
     bool operator!=(const MoleculeGroup &other) const;
 
-    const ViewsOfMol& operator[](MolNum molnum) const;
-    PartialMolecule operator[](const boost::tuple<MolNum,Index> &viewidx) const;
-    
-    const ViewsOfMol& at(MolNum molnum) const;
-    PartialMolecule at(const boost::tuple<MolNum,Index> &viewidx) const;
-    PartialMolecule at(MolNum molnum, Index viewidx) const;
-    
-    const ViewsOfMol& moleculeAt(Index idx) const;
-    PartialMolecule viewAt(Index idx) const;
-    
-    int nMolecules() const;
-    
-    int nViews() const;
-    int nViews(MolNum molnum) const;
-    int nViews(Index idx) const;
-
-    bool isEmpty() const;
-    
-    const Molecules& molecules() const;
-
-    const MGName& name() const;
-    MGNum number() const;
-    
-    quint64 majorVersion() const;
-    quint64 minorVersion() const;
-
     void add(const MoleculeView &molview);
     void update(const MoleculeView &molview);
     void remove(const MoleculeView &molview);
@@ -195,10 +143,6 @@ public:
     void setContents(const ViewsOfMol &molviews);
     void setContents(const Molecules &molecules);
     void setContents(const MoleculeGroup &molgroup);
-
-private:
-    /** Implicit pointer to the data of this object */
-    QSharedDataPointer<detail::MoleculeGroupPvt> d;
 };
 
 }
