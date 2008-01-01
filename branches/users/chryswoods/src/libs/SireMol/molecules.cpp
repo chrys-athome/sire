@@ -27,6 +27,7 @@
 \*********************************************/
 
 #include "molecules.h"
+#include "molecule.h"
 #include "partialmolecule.h"
 #include "selector.hpp"
 #include "atomselection.h"
@@ -214,7 +215,7 @@ QList<ViewsOfMol> Molecules::addIfUnique(const Molecules &molecules)
     whether or not a view was removed */
 bool Molecules::remove(const MoleculeView &molview)
 {
-    if (not mols.contains(molview.number()))
+    if (not mols.contains(molview.data().number()))
         return false;
 
     QHash<MolNum,ViewsOfMol>::iterator it = mols.find(molview.data().number());
@@ -228,13 +229,15 @@ bool Molecules::remove(const MoleculeView &molview)
             
         return removed_view;
     }
+    else
+        return false;
 }
 
 /** Remove all copies of the view 'view' from this set.
     This returns whether any views were removed */
 bool Molecules::removeAll(const MoleculeView &molview)
 {
-    if (not mols.contains(molview.number()))
+    if (not mols.contains(molview.data().number()))
         return false;
         
     QHash<MolNum,ViewsOfMol>::iterator it = mols.find(molview.data().number());
@@ -248,6 +251,8 @@ bool Molecules::removeAll(const MoleculeView &molview)
             
         return removed_view;
     }
+    else
+        return false;
 }
 
 /** Remove all of the views in 'molviews' from this set. This
@@ -272,6 +277,8 @@ ViewsOfMol Molecules::remove(const ViewsOfMol &molviews)
             
         return ViewsOfMol(molviews.data(), removed_views);
     }
+    else
+        return ViewsOfMol();
 }
 
 /** Remove all of the views in 'molviews' from this set. This
@@ -296,6 +303,8 @@ ViewsOfMol Molecules::removeAll(const ViewsOfMol &molviews)
             
         return ViewsOfMol(molviews.data(), removed_views);
     }
+    else
+        return ViewsOfMol();
 }
 
 /** Remove all of the views of all of the molecules in 'molecules'.
@@ -305,7 +314,7 @@ ViewsOfMol Molecules::removeAll(const ViewsOfMol &molviews)
 QList<ViewsOfMol> Molecules::remove(const Molecules &molecules)
 {
     if (molecules.isEmpty())
-        return molecules;
+        return QList<ViewsOfMol>();
 
     QList<ViewsOfMol> removed_mols;
 
@@ -329,7 +338,7 @@ QList<ViewsOfMol> Molecules::remove(const Molecules &molecules)
 QList<ViewsOfMol> Molecules::removeAll(const Molecules &molecules)
 {
     if (molecules.isEmpty())
-        return molecules;
+        return QList<ViewsOfMol>();
 
     QList<ViewsOfMol> removed_mols;
 
@@ -344,6 +353,25 @@ QList<ViewsOfMol> Molecules::removeAll(const Molecules &molecules)
     }
     
     return removed_mols;
+}
+
+/** Remove all views of all molecules from this set. This returns
+    whether or not this changes this set */
+bool Molecules::removeAll()
+{
+    if (not this->isEmpty())
+    {
+        mols.clear();
+        return true;
+    }
+    else
+        return false;
+}
+
+/** Completely clear this set of all views of all molecules */
+void Molecules::clear()
+{
+    mols.clear();
 }
 
 /** Remove all views of the molecule with number 'molnum'. This
@@ -716,6 +744,30 @@ int Molecules::nMolecules() const
     return mols.count();
 }
 
+/** Return the number of views of the molecule with number 'molnum'
+
+    \throw SireMol::missing_molecule
+*/
+int Molecules::nViews(MolNum molnum) const
+{
+    return this->at(molnum).nViews();
+}
+
+/** Return the total number of views in this set */
+int Molecules::nViews() const
+{
+    int nviews = 0;
+
+    for (Molecules::const_iterator it = this->begin();
+         it != this->end();
+         ++it)
+    {
+        nviews += it->nViews();
+    }
+    
+    return nviews;
+}
+
 /** Return an iterator that points to the first molecule 
     in this set */
 Molecules::const_iterator Molecules::begin() const
@@ -730,6 +782,14 @@ Molecules::const_iterator Molecules::end() const
     return mols.end();
 }
 
+/** Return an iterator pointing to the molecule with 
+    number 'molnum'. If there is no such molecule then
+    this returns Molecules::end() */
+Molecules::const_iterator Molecules::find(MolNum molnum) const
+{
+    return mols.find(molnum);
+}
+
 /** Return an iterator that points to the first molecule 
     in this set */
 Molecules::const_iterator Molecules::constBegin() const
@@ -742,4 +802,54 @@ Molecules::const_iterator Molecules::constBegin() const
 Molecules::const_iterator Molecules::constEnd() const
 {
     return mols.end();
+}
+
+/** Return an iterator pointing to the molecule with 
+    number 'molnum'. If there is no such molecule then
+    this returns Molecules::end() */
+Molecules::const_iterator Molecules::constFind(MolNum molnum) const
+{
+    return mols.find(molnum);
+}
+
+/** Return a reference to the first molecule in this set.
+    This throws an exception if this set is empty.
+    
+    \throw SireError::invalid_index
+*/
+const ViewsOfMol& Molecules::first() const
+{
+    if (mols.isEmpty())
+        throw SireError::invalid_index( QObject::tr(
+            "You cannot access the first molecule of an empty set!"),
+                CODELOC );
+                
+    return *(mols.constBegin());
+}
+
+/** Return a reference to the last molecule in this set. 
+    This throws an exception if this set is empty.
+
+    \throw SireError::invalid_index
+*/
+const ViewsOfMol& Molecules::last() const
+{
+    if (mols.isEmpty())
+        throw SireError::invalid_index( QObject::tr(
+            "You cannot access the last molecule of an empty set!"),
+                CODELOC );
+                
+    return *( --(mols.constEnd()) );
+}
+
+/** STL compatible version of Molecules::first() */
+const ViewsOfMol& Molecules::front() const
+{
+    return this->first();
+}
+
+/** STL compatible version of Molecules::last() */
+const ViewsOfMol& Molecules::back() const
+{
+    return this->last();
 }

@@ -282,6 +282,12 @@ int ViewsOfMol::count() const
     return this->nViews();
 }
 
+/** Return whether or not this is an empty set of views */
+bool ViewsOfMol::isEmpty() const
+{
+    return selected_atoms.isEmpty();
+}
+
 /** Return the ith view in this set
 
     \throw SireError::invalid_index
@@ -332,6 +338,15 @@ PartialMolecule ViewsOfMol::at(int i) const
     return this->operator[](i);
 }
 
+/** Synonym for ViewsOfMol::selection(i)
+
+    \throw SireError::invalid_index
+*/
+const AtomSelection& ViewsOfMol::viewAt(int i) const
+{
+    return this->selection(i);
+}
+
 /** Add the view 'view' to this set - this adds the 
     view even if it already exists in this set
 
@@ -374,7 +389,7 @@ void ViewsOfMol::add(const QList<AtomSelection> &views)
 {
     if (views.isEmpty())
         return;
-    else if (view.count() == 1)
+    else if (views.count() == 1)
     {
         this->add(views.first());
         return;
@@ -431,10 +446,12 @@ QList<AtomSelection> ViewsOfMol::addIfUnique(const QList<AtomSelection> &views)
     foreach (const AtomSelection &view, views)
     {
         if (new_views.addIfUnique(view))
-            new_views.append(view);
+            added_views.append(view);
     }
     
-    return new_views;
+    this->operator=(new_views);
+    
+    return added_views;
 }
 
 /** Synonym for ViewsOfMol::addIfUnique(view)
@@ -535,6 +552,34 @@ bool ViewsOfMol::remove(const AtomSelection &view)
     }
 }
 
+/** Remove the views in 'views' from this set. This removes only
+    the first copy of the view if multiple exist in this set.
+    This returns the views that were successfully removed. */
+QList<AtomSelection> ViewsOfMol::remove(const QList<AtomSelection> &views)
+{
+    if (views.isEmpty())
+        return views;
+    else if (views.count() == 1)
+    {
+        if (this->remove(views.first()))
+            return views;
+        else
+            return QList<AtomSelection>();
+    }
+
+    ViewsOfMol new_views(*this);
+    QList<AtomSelection> removed_views;
+    
+    foreach (const AtomSelection &view, views)
+    {
+        if (new_views.remove(view))
+            removed_views.append(view);
+    }
+    
+    this->operator=(new_views);
+    return removed_views;
+}
+
 /** Remove all copies of 'view' from this set, if any
     copies of this view are contained in this set. This
     return whether any views were removed
@@ -578,6 +623,35 @@ bool ViewsOfMol::removeAll(const AtomSelection &view)
         else
             return false;
     }
+}
+
+/** Remove all copies of all of the views in 'views'. This removes
+    all copies of any duplicated views in this set, and returns
+    a list of all of the views that were successfully removed. */
+QList<AtomSelection> ViewsOfMol::removeAll(const QList<AtomSelection> &views)
+{
+    if (views.isEmpty())
+        return views;
+    else if (views.count() == 1)
+    {
+        if (this->removeAll(views.first()))
+            return views;
+        else
+            return QList<AtomSelection>();
+    }
+    
+    ViewsOfMol new_views;
+    QList<AtomSelection> removed_views;
+    
+    foreach (const AtomSelection &view, views)
+    {
+        if (new_views.removeAll(view))
+            removed_views.append(view);
+    }
+    
+    this->operator=(new_views);
+    
+    return removed_views;
 }
 
 /** Remove all views from this set */
@@ -669,7 +743,7 @@ AtomSelection ViewsOfMol::selection() const
     
     \throw SireError:invalid_index
 */
-AtomSelection ViewsOfMol::selection(int i) const
+const AtomSelection& ViewsOfMol::selection(int i) const
 {
     i = Index(i).map( this->nViews() );
     
@@ -744,7 +818,7 @@ bool ViewsOfMol::intersects(const AtomID &atomid) const
     
     \throw SireError::incompatible_error
 */
-int ViewsOfMol::indexOf(const AtomSelection &selection, int from=0) const
+int ViewsOfMol::indexOf(const AtomSelection &selection, int from) const
 {
     if (selection.isEmpty() or this->isEmpty())
         return -1;

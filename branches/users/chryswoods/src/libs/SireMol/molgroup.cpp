@@ -26,25 +26,52 @@
   *
 \*********************************************/
 
+#include <QVector>
+
 #include "molgroup.h"
+#include "molnum.h"
+#include "partialmolecule.h"
+#include "molecule.h"
+
+#include "mover.hpp"
+#include "editor.hpp"
+
+#include "mgname.h"
+#include "mgnum.h"
+
+#include "SireError/errors.h"
+
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
 
 using namespace SireMol;
-using namespace SireMol::detail;
-
 using namespace SireStream;
 using namespace SireBase;
 
-using boost::tuple;
+typedef boost::tuple<MolNum,quint32> MolNumUInt;
 
-QDataStream& operator<<(QDataStream &ds, const tuple<MolNum,Index> &viewidx)
+bool operator==(const MolNumUInt &i0, const MolNumUInt &i1)
 {
-    ds << viewidx.get<0>() << viewidx.get<1>();
+    return i0.get<0>() == i1.get<0>() and 
+           i0.get<1>() == i1.get<1>();
+}
+
+static QDataStream& operator<<(QDataStream &ds, 
+                               const MolNumUInt &molviewidx)
+{
+    ds << molviewidx.get<0>() << molviewidx.get<1>();
     return ds;
 }
 
-QDataStream& operator>>(QDataStream &ds, tuple<MolNum,Index> &viewidx)
+static QDataStream& operator>>(QDataStream &ds, 
+                               MolNumUInt &molviewidx)
 {
-    ds >> viewidx.get<0>() >> viewidx.get<1>();
+    MolNum molnum;
+    quint32 viewidx;
+    
+    ds >> molnum >> viewidx;
+
+    molviewidx = MolNumUInt(molnum,viewidx);
     
     return ds;
 }
@@ -53,6 +80,8 @@ QDataStream& operator>>(QDataStream &ds, tuple<MolNum,Index> &viewidx)
 //////////// Implementation of MolGroupPvt
 ////////////
 
+namespace SireMol
+{
 namespace detail
 {
 
@@ -79,7 +108,7 @@ public:
     Molecules molecules;
     
     QVector<MolNum> molidx_to_num;
-    QVector< tuple<MolNum,quint32> > molviewidx_to_num;
+    QVector<MolNumUInt> molviewidx_to_num;
     
     MGName name;
     MGNum number;
@@ -88,7 +117,10 @@ public:
     quint64 minor_version;
 };
 
-}
+} // end of namespace detail
+} // end of namespace SireMol;
+
+using namespace SireMol::detail;
 
 /** Serialise to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, 
@@ -161,7 +193,7 @@ MolGroupPvt::MolGroupPvt(const QString &nme,
               molviewidx_to_num(other.molviewidx_to_num),
               name(nme),
               number( MGNum::getUniqueNumber() ),
-              major_version(1),
+              major_version(0),
               minor_version(0)
 {}
 
@@ -212,246 +244,6 @@ bool MolGroupPvt::operator!=(const MolGroupPvt &other) const
            minor_version != other.minor_version;
 }
 
-void MolGroupPvt::add(const MoleculeView &view)
-{
-    MolNum molnum = view.data().number();
-
-    if (molecules.contains(molnum))
-    {
-        molviewidx_to_num.append( tuple<MolNum,Index>(molnum,
-                                           Index(molecules.nViews(molnum))) );
-    }
-    else
-    {
-        molidx_to_num.append(molnum);
-        molviewidx_to_num.append( tuple<MolNum,Index>(molnum,Index(0)) );
-    }
-    
-    molecules = molecules.add(view);
-}
-
-void MolGroupPvt::add(const ViewsOfMol &views)
-{
-    MolNum molnum = views.data().number();
-    
-    if (molecules.contains(molnum))
-    {
-        int nviews = molecules.nViews(molnum);
-    
-        for (Index i(nviews); i<nviews + views.count(); ++i)
-        {
-            molviewidx_to_num.append( tuple<MolNum,Index>(molnum,i) );
-        }
-    }
-    else
-    {
-        molidx_to_num.append(molnum);
-
-        for (Index i(0); i<views.count(); ++i)
-        {
-            molviewidx_to_num.append( tuple<MolNum,Index>(molnum,i) );
-        }
-    }
-    
-    molecules = molecules.add(views);
-}
-
-void MolGroupPvt::add(const Molecules &molecules)
-{
-    for (Molecules::const_iterator it = molecules.begin();
-         it != molecules.end();
-         ++it)
-    {
-        this->add(*it);
-    }
-}
-
-void MolGroupPvt::add(const MolGroupPvt &molgroup)
-{
-    if (molecules.isEmpty())
-    {
-        this->setContents(molgroup);
-        return;
-    }
-}
-
-void MolGroupPvt::update(const MoleculeData &moldata)
-{
-    Molecules::const_iterator it = molecules.find(moldata.number());
-    
-    if (it == molecules.end() or it->data().version() == moldata.version())
-        return;
-        
-    molecules = molecules.update(moldata);
-    
-    return true;
-}
-
-template<class T0, class T1>
-bool operator==(const tuple<T0,T1> &t0, const tuple<T0,T1> &t1)
-{
-    return boost::tuples::get<0>(t0) == boost::tuples::get<0>(t1) and 
-           boost::tuples::get<1>(t0) == boost::tuples::get<1>(t1);
-}
-
-template<class T>
-void remove_all(QVector<T> &vec, const T &value)
-{
-    QMutableVectorIterator<T> it(vec);
-    
-    while (it.hasNext())
-    {
-        if (it.next() == value)
-            it.remove();
-    }
-}
-
-bool MolGroupPvt::remove(const MoleculeView &view)
-{
-    Molecules::const_iterator it = molecules.find(view.data().number());
-    
-    if (it == molecules.end())
-        return false;
-        
-    AtomSelection selection = view.selection();
-        
-    QList<int> idxs = it->indiciesOf(selection);
-    
-    if (idxs.isEmpty())
-        return false;
-        
-    //now update the indexes...
-    foreach (int idx, idxs)
-    {
-        remove_all( molviewidx_to_num, tuple<MolNum,Index>(view.data().number(),
-                                                           Index(idx)) );
-    }
-    
-    if (idxs.count() == it->nViews())
-    {
-        //we have remove all of the views of this molecule
-        remove_all(molidx_to_num, view.data().number());
-    }
-
-    molecules = molecules.remove(view);
-    
-    return true;
-}
-
-bool MolGroupPvt::remove(MolNum molnum)
-{
-    if (not molecules.contains(molnum))
-        return false;
-        
-    molecules = molecules.remove(molnum);
-    
-    //remove the indexes...
-    remove_all(molidx_to_num, molnum);
-    
-    QMutableVectorIterator< tuple<MolNum,Index> > it(molviewidx_to_num);
-    
-    while (it.hasNext())
-    {
-        if (it.next().get<0>() == molnum)
-            it.remove();
-    }
-    
-    return true;
-}
-
-bool MolGroupPvt::remove(const ViewsOfMol &views)
-{
-    Molecules::const_iterator it = molecules.find(views.number());
-    
-    if (it == molecules.end())
-        return false;
-        
-    if (*it == views)
-    {
-        //we are removing the whole molecule
-        return this->remove(views.number());
-    }
-        
-    bool removesome = false;
-        
-    foreach (const AtomSelection &selection, views.selections())
-    {
-        QList<int> idxs = it->indiciesOf(selection);
-        
-        if (not idxs.isEmpty())
-        {
-            foreach (int idx, idxs)
-            {
-                remove_all( molviewidx_to_num, tuple<MolNum,Index>(views.number(),
-                                                                   Index(idx)) );
-            }
-            
-            if (idxs.count() == it->nViews())
-                remove_all(molidx_to_num,views.number());
-                
-            removesome = true;
-        }
-    }
-    
-    molecules = molecules.remove(views);
-    
-    return removesome;
-}
-
-bool MolGroupPvt::remove(const Molecules &mols)
-{
-    bool changed = false;
-    
-    for (Molecules::const_iterator it = mols.begin();
-         it != mols.end();
-         ++it)
-    {
-        bool this_changed = this->remove(*it);
-        
-        changed = changed or this_changed;
-    }
-    
-    return changed;
-}
-
-bool MolGroupPvt::removeAll()
-{
-    if (molecules.isEmpty())
-        return false;
-    else
-    {
-        molecules = molecules.removeAll();
-        molidx_to_num.clear();
-        molviewidx_to_num.clear();
-        
-        return true;
-    }
-}
-
-bool MolGroupPvt::setContents(const Molecules &mols)
-{
-    if (molecules == mols)
-        return false;
-
-    this->removeAll();
-    
-    this->add(mols);
-    
-    return true;
-}
-
-bool MolGroupPvt::setContents(const MolGroupPvt &other)
-{
-    if (this == &other or molecules == other.molecules)
-        return false;
-        
-    molecules = other.molecules;
-    molidx_to_num = other.molidx_to_num;
-    molviewidx_to_num = other.molviewidx_to_num;
-    
-    return true;
-}
-
 void MolGroupPvt::incrementMajor()
 {
     throw SireError::incomplete_code("Unimplemented", CODELOC);
@@ -498,12 +290,12 @@ MolGroup::MolGroup(const QString &name, const Molecules &molecules)
 MolGroup::MolGroup(const QString &name, const MolGroup &other)
          : ConcreteProperty<MolGroup,PropertyBase>()
 {
-    if (name == other.name)
+    if (name == other.name())
     {
         d = other.d;
     }
     else
-        d = new MolGroupPvt(name, other);
+        d = new MolGroupPvt(name, *(other.d));
 }
 
 /** Copy constructor */
@@ -528,15 +320,340 @@ bool MolGroup::operator!=(const MolGroup &other) const
     return d != other.d and *d != *(other.d);
 }
 
+/** Return the views of the molecule with number 'molnum' from this group
+
+    \throw SireMol::missing_molecule
+*/
+const ViewsOfMol& MolGroup::operator[](MolNum molnum) const
+{
+    return d->molecules.at(molnum);
+}
+
+/** Return the specified view of the specified molecule...
+
+    \throw SireMol::missing_molecule
+    \throw SireError::invalid_index
+*/
+PartialMolecule MolGroup::operator[](const boost::tuple<MolNum,Index> &viewidx) const
+{
+    return d->molecules.at(viewidx);
+}
+
+/** Add the views of the molecules in 'molecules' to this group. This
+    adds duplicates of any views that already exist in this group. */
+MolGroup& MolGroup::operator+=(const Molecules &molecules)
+{
+    this->add(molecules);
+    return *this;
+}
+
+/** Remove the views of the molecules in 'molecules' from this
+    group. This only removes the first copy of any duplicated
+    views that exist in this group. */
+MolGroup& MolGroup::operator-=(const Molecules &molecules)
+{
+    this->remove(molecules);
+    return *this;
+}
+
+/** Return the views of the molecule with number 'molnum' from this group.
+
+    \throw SireMol::missing_molecule
+*/
+const ViewsOfMol& MolGroup::at(MolNum molnum) const
+{
+    return d->molecules.at(molnum);
+}
+
+/** Return the specified view of the specified molecule in this group.
+
+    \throw SireMol::missing_molecule
+    \throw SireError::invalid_index
+*/
+PartialMolecule MolGroup::at(const boost::tuple<MolNum,Index> &viewidx) const
+{
+    return d->molecules.at(viewidx);
+}
+
+/** Return the specified view of the specified molecule in this group.
+
+    \throw SireMol::missing_molecule
+    \throw SireError::invalid_index
+*/
+PartialMolecule MolGroup::at(MolNum molnum, int viewidx) const
+{
+    return d->molecules.at(molnum, viewidx);
+}
+
+/** Return the views of the molecule at index 'idx' in this group.
+
+    \throw SireError::invalid_index
+*/
+const ViewsOfMol& MolGroup::moleculeAt(int idx) const
+{
+    return d->molecules.at( d->molidx_to_num.constData()
+                            [Index(idx).map(d->molidx_to_num.count())] );
+}
+
+/** Return the view of the molecule at index 'idx' in this group.
+
+    \throw SireError::invalid_index
+*/
+PartialMolecule MolGroup::viewAt(int idx) const
+{
+    idx = Index(idx).map(d->molviewidx_to_num.count());
+    
+    const MolNumUInt &molviewidx = d->molviewidx_to_num.constData()[idx];
+    
+    return d->molecules.at( molviewidx.get<0>(), molviewidx.get<1>() );
+}
+
+/** Return the views of the molecule with number 'molnum' from
+    this group
+    
+    \throw SireMol::missing_molecule
+*/
+const ViewsOfMol& MolGroup::molecule(MolNum molnum) const
+{
+    return d->molecules.at(molnum);
+}
+
+/** Return whether or not this group contains any views of the 
+    molecule with number 'molnum' */
+bool MolGroup::contains(MolNum molnum) const
+{
+    return d->molecules.contains(molnum);
+}
+
+/** Return whether or not this group contains any version of 
+    the view of the molecule in 'molview' */
+bool MolGroup::contains(const MoleculeView &molview) const
+{
+    return d->molecules.contains(molview);
+}
+
+/** Return whether or not this group contains all of the views
+    of any version of the molecule in 'molviews' */
+bool MolGroup::contains(const ViewsOfMol &molviews) const
+{
+    return d->molecules.contains(molviews);
+}
+
+/** Return whether or not this group contains all of the 
+    views of any version of all of the molecules contained
+    in 'molecules' */
+bool MolGroup::contains(const Molecules &molecules) const
+{
+    return d->molecules.contains(molecules);
+}
+
+/** Return whether or not this group contains all of the 
+    views of any version of all of the molecules contained
+    in the group 'other' */
+bool MolGroup::contains(const MolGroup &other) const
+{
+    return this->contains(other.molecules());
+}
+
+/** Return whether or not this group contains any version 
+    of any of the atoms of the molecule in 'molview' */
+bool MolGroup::intersects(const MoleculeView &molview) const
+{
+    return d->molecules.intersects(molview);
+}
+
+/** Return whether or not this group contains any version
+    of any of the atoms in any of the molecules in 'molecules' */
+bool MolGroup::intersects(const Molecules &other) const
+{
+    return d->molecules.intersects(other);
+}
+
+/** Return whether or not this group contains any version
+    of any of the atoms in any of the molecules contained in 
+    the group 'other' */
+bool MolGroup::intersects(const MolGroup &other) const
+{
+    return this->intersects(other.molecules());
+}
+
+/** Return the number of molecules in this group */
+int MolGroup::nMolecules() const
+{
+    return d->molidx_to_num.count();
+}
+
+/** Return the number of views of molecules in this group - 
+    this must always be greater or equal to the number of 
+    molecules! */
+int MolGroup::nViews() const
+{
+    return d->molviewidx_to_num.count();
+}
+
+/** Return the number of views of the molecule with number 'molnum'
+    that are present in this group.
+    
+    \throw SireMol::missing_molecule
+*/
+int MolGroup::nViews(MolNum molnum) const
+{
+    return d->molecules.nViews(molnum);
+}
+
+/** Return the number of views of the molecule at index 'idx'
+    in this group */
+int MolGroup::nViews(Index idx) const
+{
+    return this->nViews( d->molidx_to_num.constData()
+                             [idx.map(d->molidx_to_num.count())] );
+}
+
+/** Return whether or not this group is empty */
+bool MolGroup::isEmpty() const
+{
+    return d->molecules.isEmpty();
+}
+
+/** Return all views of all of the molecules in this group */
+const Molecules& MolGroup::molecules() const
+{
+    return d->molecules;
+}
+
+/** Return a reference to the first molecule in the group 
+
+    \throw SireError::invalid_index
+*/
+const ViewsOfMol& MolGroup::first() const
+{
+    return d->molecules.first();
+}
+
+/** Return a reference to the last molecule in the group
+
+    \throw SireError::invalid_index
+*/
+const ViewsOfMol& MolGroup::last() const
+{
+    return d->molecules.last();
+}
+
+/** Return a reference to the first molecule in the group
+
+    \throw SireError::invalid_index
+*/
+const ViewsOfMol& MolGroup::front() const
+{
+    return d->molecules.front();
+}
+
+/** Return a reference to the last molecule in the group 
+
+    \throw SireError::invalid_index
+*/
+const ViewsOfMol& MolGroup::back() const
+{
+    return d->molecules.back();
+}
+
+/** Return an iterator pointing to the first molecule
+    in the group */
+MolGroup::const_iterator MolGroup::begin() const
+{
+    return d->molecules.begin();
+}
+
+/** Return an iterator pointing one space after the last
+    molecule in the group */
+MolGroup::const_iterator MolGroup::end() const
+{
+    return d->molecules.end();
+}
+
+/** Return an iterator pointing to the first molecule
+    in the group */
+MolGroup::const_iterator MolGroup::constBegin() const
+{
+    return d->molecules.constBegin();
+}
+
+/** Return an iterator pointing to one space after
+    the last molecule in the group */
+MolGroup::const_iterator MolGroup::constEnd() const
+{
+    return d->molecules.constEnd();
+}
+
+/** Return an iterator pointing to the molecule with 
+    number 'molnum'. If there is no such molecule then
+    this returns MolGroup::end() */
+MolGroup::const_iterator MolGroup::find(MolNum molnum) const
+{
+    return d->molecules.find(molnum);
+}
+
+/** Return an iterator pointing to the molecule with 
+    number 'molnum'. If there is no such molecule then
+    this returns MolGroup::end() */
+MolGroup::const_iterator MolGroup::constFind(MolNum molnum) const
+{
+    return d->molecules.constFind(molnum);
+}
+
+/** Return the numbers of all molecules present in this group */
+QSet<MolNum> MolGroup::molNums() const
+{
+    return d->molecules.molNums();
+}
+
+/** Assert that this group contains a view of any part of the 
+    molecule with number 'molnum'
+    
+    \throw SireMol::missing_molecule
+*/
+void MolGroup::assertContains(MolNum molnum) const
+{
+    d->molecules.assertContains(molnum);
+}
+
+/** Return the name of this group */
+const MGName& MolGroup::name() const
+{
+    return d->name;
+}
+
+/** Return the ID number of this group */
+MGNum MolGroup::number() const
+{
+    return d->number;
+}
+
+/** Return the major version number of this group. This number
+    changes whenever views are added or removed from this group */
+quint64 MolGroup::majorVersion() const
+{
+    return d->major_version;
+}
+
+/** Return the minor version number of this group. This number
+    changes whenever any of the versions of molecules in this group
+    are changed. This number is reset to zero whenever the major
+    version number of this group is changed. */
+quint64 MolGroup::minorVersion() const
+{
+    return d->minor_version;
+}
+
 /** Add the view of the molecule in 'molview' to this group. 
     This adds the view as a duplicate if it already exists 
     in this group */
 void MolGroup::add(const MoleculeView &molview)
 {
-    if (molview.isEmpty())
+    if (molview.selection().isEmpty())
         return;
 
-    MolNum molnum = molview.number();
+    MolNum molnum = molview.data().number();
 
     MolGroupPvt &dref = *d;
 
@@ -545,7 +662,7 @@ void MolGroup::add(const MoleculeView &molview)
     
     dref.molecules.add(molview);
    
-    dref.molviewidx_to_num.append( tuple<MolNum,quint32>(molnum,
+    dref.molviewidx_to_num.append( MolNumUInt(molnum,
                                          dref.molecules.nViews(molnum) - 1) );
 
     dref.incrementMajor();
@@ -577,7 +694,7 @@ void MolGroup::add(const ViewsOfMol &molviews)
     
     for (quint32 i = nviews - molviews.count() - 1; i < nviews; ++i)
     {
-        dref.molviewidx_to_num.append( tuple<MolNum,quint32>(molnum,i) );
+        dref.molviewidx_to_num.append( MolNumUInt(molnum,i) );
     }
     
     dref.incrementMajor();
@@ -606,14 +723,14 @@ void MolGroup::add(const Molecules &molecules)
         MolNum molnum = it.key();
         
         if (not dref.molecules.contains(molnum))
-            molidx_to_num.append(molnum);
+            dref.molidx_to_num.append(molnum);
             
         quint32 nviews = dref.molecules.nViews(molnum);
         quint32 n_newviews = it->nViews();
         
         for (quint32 i=nviews; i<nviews + n_newviews; ++i)
         {
-            molviewidx_to_num.append( tuple<MolNum,quint32>(molnum,i) );
+            dref.molviewidx_to_num.append( MolNumUInt(molnum,i) );
         }
     }
 
@@ -652,12 +769,12 @@ void MolGroup::add(const MolGroup &molgroup)
             dref.molidx_to_num.append(molnum);
     }
     
-    foreach (const tuple<MolNum,quint32> &molviewidx,
+    foreach (const MolNumUInt &molviewidx,
              molgroup.d->molviewidx_to_num)
     {
         MolNum molnum = molviewidx.get<0>();
     
-        dref.molviewidx_to_num.append( tuple<MolNum,quint32>( molnum,
+        dref.molviewidx_to_num.append( MolNumUInt( molnum,
                           molviewidx.get<1>() + dref.molecules.nViews(molnum) ) );
     }
     
@@ -672,10 +789,10 @@ void MolGroup::add(const MolGroup &molgroup)
     this group, and returns whether or not the view was added */
 bool MolGroup::addIfUnique(const MoleculeView &molview)
 {
-    if (molview.isEmpty())
+    if (molview.selection().isEmpty())
         return false;
 
-    MolNum molnum = molview.number();
+    MolNum molnum = molview.data().number();
 
     MolGroupPvt &dref = *d;
     
@@ -687,7 +804,7 @@ bool MolGroup::addIfUnique(const MoleculeView &molview)
         if (not hasmol)
             dref.molidx_to_num.append(molnum);
             
-        dref.molviewidx_to_num.append( tuple<MolNum,quint32>(molnum,
+        dref.molviewidx_to_num.append( MolNumUInt(molnum,
                                         dref.molecules.nViews(molnum) - 1) );
     
         dref.incrementMajor();
@@ -717,14 +834,14 @@ ViewsOfMol MolGroup::addIfUnique(const ViewsOfMol &molviews)
     if (not added_views.isEmpty())
     {
         if (not hasmol)
-            molidx_to_num.append(molnum);
+            dref.molidx_to_num.append(molnum);
             
         quint32 nviews = dref.molecules.nViews(molnum);
         quint32 nadded = added_views.nViews();
         
         for (quint32 i=nviews-nadded-1; i<nviews; ++i)
         {
-            molviewidx_to_num.append( tuple<MolNum,quint32>(molnum,i) );
+            dref.molviewidx_to_num.append( MolNumUInt(molnum,i) );
         }
         
         dref.incrementMajor();
@@ -764,7 +881,7 @@ QList<ViewsOfMol> MolGroup::addIfUnique(const Molecules &molecules)
             
             for (quint32 i=nviews-nadded-1; i<nviews; ++i)
             {
-                dref.molviewidx_to_num.append( tuple<MolNum,quint32>(molnum,i) );
+                dref.molviewidx_to_num.append( MolNumUInt(molnum,i) );
             }
         }
         
@@ -793,7 +910,7 @@ QList<ViewsOfMol> MolGroup::addIfUnique(const MolGroup &molgroup)
         
     MolGroupPvt &dref = *d;
     
-    foreach (const tuple<MolNum,quint32> &molviewidx,
+    foreach (const MolNumUInt &molviewidx,
              molgroup.d->molviewidx_to_num)
     {
         MolNum molnum = molviewidx.get<0>();
@@ -838,22 +955,21 @@ QList<ViewsOfMol> MolGroup::unite(const MolGroup &molgroup)
     return this->addIfUnique(molgroup);
 }
 
-/** Remove the view of the molecule in 'molview' from this set.
-    This only removes the first such view from the set, and 
-    returns whether or not any view was removed */
-bool MolGroup::remove(const MoleculeView &molview)
+bool MolGroup::_pvt_remove(const MoleculeView &molview)
 {
-    if (molview.isEmpty())
+    AtomSelection selected_atoms = molview.selection();
+
+    if (selected_atoms.isEmpty())
         return false;
 
-    MolNum molnum = molview.number();
+    MolNum molnum = molview.data().number();
 
     Molecules::const_iterator it = d.constData()->molecules.find(molnum);
     
     if (it == d.constData()->molecules.end())
         return false;
         
-    int viewidx = it->indexOf(molview.selectedAtoms());
+    int viewidx = it->indexOf(selected_atoms);
     
     if (viewidx == -1)
         //this view is not present in this group
@@ -863,7 +979,7 @@ bool MolGroup::remove(const MoleculeView &molview)
     MolGroupPvt &dref = *d;
     
     //remove all of the views of this molecule...
-    ViewsOfMol molviews = dref.molecules.remove(molview.number());
+    ViewsOfMol molviews = dref.molecules.remove(molview.data().number());
     
     //remove the specified view from this set...
     molviews.removeAt(viewidx);
@@ -876,36 +992,530 @@ bool MolGroup::remove(const MoleculeView &molview)
         
         //the molecule has only been partially removed,
         //so remove this view from the molview index
-        ...
+        QMutableVectorIterator< MolNumUInt > it(dref.molviewidx_to_num);
+        
+        while (it.hasNext())
+        {
+            MolNumUInt &molviewidx = it.next();
+            
+            if (molviewidx.get<0>() == molnum)
+            {
+                if (molviewidx.get<1>() == (uint)viewidx)
+                    it.remove();
+                else if (molviewidx.get<1>() > (uint)viewidx)
+                    molviewidx = MolNumUInt(molnum,molviewidx.get<1>()-1);
+            }
+        }
     }
     else
     {
         //this molecule has been completely removed...
         //remove it completely from the index
+        dref.molidx_to_num.remove(molnum);
+        
+        QMutableVectorIterator< MolNumUInt > it(dref.molviewidx_to_num);
+        
+        while (it.hasNext())
+        {
+            const MolNumUInt &molviewidx = it.next();
+        
+            if (molviewidx.get<0>() == molnum)
+                it.remove();
+        }
+    }
+    
+    return true;
+}
+
+/** Remove the view of the molecule in 'molview' from this set.
+    This only removes the first such view from the set, and 
+    returns whether or not any view was removed */
+bool MolGroup::remove(const MoleculeView &molview)
+{
+    if (this->_pvt_remove(molview))
+    {
+        d->incrementMajor();
+        return true;
+    }
+    else
+        return false;
+}
+
+ViewsOfMol MolGroup::_pvt_remove(const ViewsOfMol &molviews)
+{
+    if (molviews.isEmpty())
+        return molviews;
+        
+    int nviews = molviews.nViews();
+    
+    QList<AtomSelection> removed_views;
+    
+    for (int i=0; i<nviews; ++i)
+    {
+        PartialMolecule view = molviews.at(i);
+    
+        if (this->_pvt_remove(view))
+        {
+            removed_views.append(view.selection());
+        }
+    }
+    
+    if (removed_views.isEmpty())
+        return ViewsOfMol();
+    else
+        return ViewsOfMol(molviews.data(), removed_views);
+}
+
+/** Remove all of the views of the molecule in 'molviews' from this
+    set. This only removes the first such view of any duplicates
+    from this set, and returns the views that were removed */
+ViewsOfMol MolGroup::remove(const ViewsOfMol &molviews)
+{
+    ViewsOfMol removed_views = this->_pvt_remove(molviews);
+    
+    if (not removed_views.isEmpty())
+        d->incrementMajor();
+        
+    return removed_views;
+}
+
+/** Remove all of the molecules listed in 'molecules' from this set. 
+    This only removes the first of any duplicated views in this set.
+    This returns the views/molecules that were successfully removed. */
+QList<ViewsOfMol> MolGroup::remove(const Molecules &molecules)
+{
+    QList<ViewsOfMol> removed_mols;
+    
+    for (Molecules::const_iterator it = molecules.begin();
+         it != molecules.end();
+         ++it)
+    {
+        ViewsOfMol removed_views = this->_pvt_remove(*it);
+        
+        if (not removed_views.isEmpty())
+            removed_mols.append(removed_views);
+    }
+    
+    if (not removed_mols.isEmpty())
+        d->incrementMajor();
+    
+    return removed_mols;
+}
+
+/** Remove all of the molecules from the group 'molgroup' from this set.
+    This only removes the first of any duplicated views in this set.
+    This returns the views/molecules that were sucessfully removed. */
+QList<ViewsOfMol> MolGroup::remove(const MolGroup &molgroup)
+{
+    return this->remove(molgroup.molecules());
+}
+
+bool MolGroup::_pvt_removeAll(const MoleculeView &molview)
+{
+    //just keep removing it until the view has gone completely!
+    bool removed_a_view = false;
+    
+    while (this->_pvt_remove(molview))
+    {
+        removed_a_view = true;
+    }
+    
+    return removed_a_view;
+}
+
+/** Remove all copies of the view of the molecule in 'molview' from this
+    group. This removes all copies if this view is duplicated in this
+    group, and returns whether or not any views were removed. */
+bool MolGroup::removeAll(const MoleculeView &molview)
+{
+    if (this->_pvt_removeAll(molview))
+    {
+        d->incrementMajor();
+        return true;
+    }
+    else
+        return false;
+}
+
+ViewsOfMol MolGroup::_pvt_removeAll(const ViewsOfMol &molviews)
+{
+    if (molviews.isEmpty())
+        return molviews;
+        
+    QList<AtomSelection> removed_views;
+    
+    int nviews = molviews.nViews();
+    
+    for (int i=0; i<nviews; ++i)
+    {
+        PartialMolecule view = molviews.at(i);
+        
+        if (this->_pvt_removeAll(view))
+            removed_views.append(view.selection());
+    }
+    
+    if (removed_views.isEmpty())
+        return ViewsOfMol();
+    else
+        return ViewsOfMol(molviews.data(), removed_views);
+}
+
+/** Remove all copies of all of the views of the molecule in 'molviews'.
+    This removes all copies of any duplicated views in this group,
+    and returns the views that were successfully removed. */
+ViewsOfMol MolGroup::removeAll(const ViewsOfMol &molviews)
+{
+    ViewsOfMol removed_views = this->_pvt_remove(molviews);
+    
+    if (not removed_views.isEmpty())
+        d->incrementMajor();
+        
+    return removed_views;
+}
+
+/** Remove all copies of all of the views of the molecules in 'molecules'.
+    This removes all copies of any duplicated views in this group.
+    This returns the molecules/views that were removed. */
+QList<ViewsOfMol> MolGroup::removeAll(const Molecules &molecules)
+{
+    QList<ViewsOfMol> removed_mols;
+    
+    for (Molecules::const_iterator it = molecules.begin();
+         it != molecules.end();
+         ++it)
+    {
+        ViewsOfMol removed_views = this->_pvt_removeAll(*it);
+        
+        if (not removed_views.isEmpty())
+            removed_mols.append(removed_views);
+    }
+    
+    if (not removed_mols.isEmpty())
+        d->incrementMajor();
+    
+    return removed_mols;
+}
+
+/** Remove all copies of all of the views of the molecules in the
+    group 'molgroup'. This removes all copies of any duplicated 
+    views in this group. This returns the molecules/views that
+    were removed
+*/
+QList<ViewsOfMol> MolGroup::removeAll(const MolGroup &molgroup)
+{
+    return this->removeAll(molgroup.molecules());
+}
+
+ViewsOfMol MolGroup::_pvt_remove(MolNum molnum)
+{
+    if (not this->contains(molnum))
+        return ViewsOfMol();
+
+    MolGroupPvt &dref = *d;
+
+    //remove the molecule
+    ViewsOfMol removed_views = dref.molecules.remove(molnum);
+    
+    //now remove it from the index
+    dref.molidx_to_num.remove(molnum);
+    
+    QMutableVectorIterator< MolNumUInt > it(dref.molviewidx_to_num);
+    
+    while (it.hasNext())
+    {
+        const MolNumUInt &molviewidx = it.next();
+        
+        if (molviewidx.get<0>() == molnum)
+            it.remove();
+    }
+    
+    return removed_views;
+}
+
+/** Completely remove all views of the molecule with number 'molnum'
+    from this group. This returns the views that were removed */
+ViewsOfMol MolGroup::remove(MolNum molnum)
+{
+    ViewsOfMol removed_views = this->_pvt_remove(molnum);
+    
+    if (not removed_views.isEmpty())
+        d->incrementMajor();
+        
+    return removed_views;
+}
+
+/** Remove all views of the molecules whose numbers are in 'molnums'.
+    This returns the views that were removed. */
+QList<ViewsOfMol> MolGroup::remove(const QSet<MolNum> &molnums)
+{
+    QList<ViewsOfMol> removed_mols;
+
+    foreach (MolNum molnum, molnums)
+    {
+        ViewsOfMol removed_views = this->_pvt_remove(molnum);
+        
+        if (not removed_views.isEmpty())
+            removed_mols.append(removed_views);
+    }
+    
+    if (not removed_mols.isEmpty())
+        d->incrementMajor();
+    
+    return removed_mols;
+}
+
+/** Remove all of the molecules from this group */
+void MolGroup::removeAll()
+{
+    if (not this->isEmpty())
+    {
+        MolGroupPvt &dref = *d;
+        
+        dref.molecules.clear();
+        dref.molidx_to_num.clear();
+        dref.molviewidx_to_num.clear();
+        
+        dref.incrementMajor();
     }
 }
 
-ViewsOfMol MolGroup::remove(const ViewsOfMol &molviews);
-QList<ViewsOfMol> MolGroup::remove(const Molecules &molecules);
-QList<ViewsOfMol> MolGroup::remove(const MolGroup &molgroup);
+/** Update this group so that the molecule in this group whose 
+    data is in 'moldata' is also at the same version as 'moldata'.
+    
+    This does nothing if there is no such molecule in this 
+    group, or if it is already at this version, and this returns
+    whether or not this changes the group. */
+bool MolGroup::update(const MoleculeData &moldata)
+{
+    MolGroupPvt &dref = *d;
+    
+    if (dref.molecules.update(moldata))
+    {
+        dref.incrementMinor();
+        return true;
+    }
+    else
+        return false;
+}
 
-bool MolGroup::removeAll(const MoleculeView &molview);
-ViewsOfMol MolGroup::removeAll(const ViewsOfMol &molviews);
-QList<ViewsOfMol> MolGroup::removeAll(const Molecules &molecules);
-QList<ViewsOfMol> MolGroup::removeAll(const MolGroup &molgroup);
+/** Update this group so that the molecule in this group that
+    is also viewed in 'molview' is updated to the same
+    version as 'molview'.
+    
+    This does nothing if there is no such molecule in this 
+    group, or if it is already at this version, and this returns
+    whether or not this changes the group. */
+bool MolGroup::update(const MoleculeView &molview)
+{
+    return this->update(molview.data());
+}
 
-bool MolGroup::remove(MolNum molnum);
-QSet<MolNum> MolGroup::remove(const QSet<MolNum> &molnums);
+/** Update this group so that the contained molecules have the 
+    same versions as the molecules in 'molecules'. This does
+    nothing if none of these molecules are in this group, or
+    if they are already at the same versions. This returns
+    the list of molecules that were changed by this update. */
+QList<Molecule> MolGroup::update(const Molecules &molecules)
+{
+    MolGroupPvt &dref = *d;
+    
+    QList<Molecule> changed_mols = dref.molecules.update(molecules);
+    
+    if (not changed_mols.isEmpty())
+        dref.incrementMinor();
+        
+    return changed_mols;
+}
 
-void MolGroup::removeAll();
+/** Update this group so that it has the same version of molecules
+    as those in 'molgroup'. This does nothing if this group
+    doesn't contain any of the molecules in 'molgroup', or
+    if it already has the molecules at the same version. This
+    returns the list of molecules that were changed by this
+    update
+*/
+QList<Molecule> MolGroup::update(const MolGroup &molgroup)
+{
+    return this->update(molgroup.molecules());
+}
 
-bool MolGroup::update(const MoleculeData &moldata);
-bool MolGroup::update(const MoleculeView &molview);
+void MolGroup::_pvt_setContents(const Molecules &molecules)
+{
+    MolGroupPvt &dref = *d;
+    
+    //set the molecules
+    dref.molecules = molecules;
+    
+    //resize the two indexes
+    dref.molidx_to_num.resize(molecules.nMolecules());
+    dref.molviewidx_to_num.resize(molecules.nViews());
 
-QList<Molecule> MolGroup::update(const Molecules &molecules);
-QList<Molecule> MolGroup::update(const MolGroup &molgroup);
+    MolNum *molidx_to_num_array = dref.molidx_to_num.data();
+    MolNumUInt *molviewidx_to_num_array = dref.molviewidx_to_num.data();
+    
+    int imol = 0;
+    int iview = 0;
+    
+    //index the molecules and views...
+    for (Molecules::const_iterator it = molecules.begin();
+         it != molecules.end();
+         ++it)
+    {
+        const ViewsOfMol &molviews = *it;
+        
+        //index the molecule
+        molidx_to_num_array[imol] = it.key();
+        ++imol;
+        
+        //now index its views
+        int nviews = molviews.nViews();
+        
+        for (int i=0; i < nviews; ++i)
+        {
+            molviewidx_to_num_array[iview+i] = MolNumUInt(it.key(),i);
+        }
+        
+        iview += nviews;
+    }
+    
+    dref.incrementMajor();
+}
 
-bool MolGroup::setContents(const MoleculeView &molview);
-bool MolGroup::setContents(const ViewsOfMol &molviews);
-bool MolGroup::setContents(const Molecules &molecules);
-bool MolGroup::setContents(const MolGroup &molgroup);
+/** Set the contents of this group to 'molecules'. This clears
+    any existing contents of this group. */
+bool MolGroup::setContents(const Molecules &molecules)
+{
+    if (molecules.isEmpty())
+    {
+        if (this->isEmpty())
+            return false;
+        else
+        {
+            this->removeAll();
+            return true;
+        }
+    }
+    else if (this->isEmpty())
+    {
+        this->_pvt_setContents(molecules);
+        return true;
+    }
+
+    const Molecules &oldmols = this->molecules();
+
+    if (oldmols == molecules)
+        //there is nothing to do
+        return false;
+        
+    //see if the actual list of molecules has changed, or whether
+    //it is just their versions...
+    if (oldmols.nMolecules() == molecules.nMolecules())
+    {
+        bool different = false;
+    
+        //loop over all molecules and views and check that the same
+        //molecules are in both sets, with the same views
+        for (Molecules::const_iterator it = oldmols.begin();
+             it != oldmols.end();
+             ++it)
+        {
+            if (not molecules.contains(it.key()))
+            {
+                different = true;
+                break;
+            }
+        
+            const ViewsOfMol &oldviews = *it;
+            const ViewsOfMol &newviews = molecules.molecule(it.key());
+            
+            int nviews = oldviews.nViews();
+            
+            if (nviews != newviews.nViews())
+            {
+                different = true;
+                break;
+            }
+            
+            for (int i=0; i<nviews; ++i)
+            {
+                if (oldviews.selection(i) != newviews.selection(i))
+                {
+                    different = true;
+                    break;
+                }
+            }
+            
+            if (different)
+                break;
+        }
+        
+        if (not different)
+        {
+            //ok - the same molecules and views are in the two sets.
+            //All that's changed are the versions :-)
+            //Just update the molecules and increment the minor version 
+            //counter
+            d->molecules = molecules;
+            d->incrementMinor();
+            return true;
+        }
+    }
+    
+    //ok, the two sets of molecules contain different molecules and/or views.
+    //We'll just have to reindex them completely.
+    this->_pvt_setContents(molecules);
+    return true;
+}
+
+/** Set the contents of this group so that it only contains the 
+    view 'molview'. This clears any existing contents of this group */
+bool MolGroup::setContents(const MoleculeView &molview)
+{
+    return this->setContents( Molecules(molview) );
+}
+
+/** Set the contents of this group so that it only contains the 
+    views of the molecule in 'molviews'. This clears any existing
+    contents of this group. */
+bool MolGroup::setContents(const ViewsOfMol &molviews)
+{
+    return this->setContents( Molecules(molviews) );
+}
+
+/** Set the contents of this group so that it equals that
+    of the group 'molgroup'. This sets the contents and
+    also preserves the same order of molecules/views as
+    in 'molgroup'
+*/
+bool MolGroup::setContents(const MolGroup &molgroup)
+{
+    //if the other group has the same ID number then we are reverting
+    //this group back to another version
+    if (this->number() == molgroup.number())
+    {
+        bool changed = (this->majorVersion() != molgroup.majorVersion() or
+                        this->minorVersion() != molgroup.minorVersion());
+
+        d = molgroup.d;
+        
+        return changed;
+    }
+        
+    if (d.constData()->molecules == molgroup.d->molecules and
+        d.constData()->molidx_to_num == molgroup.d->molidx_to_num and
+        d.constData()->molviewidx_to_num == molgroup.d->molviewidx_to_num)
+    {
+        //the contents are exactly the same!
+        return false;
+    }
+    
+    MolGroupPvt &dref = *d;
+    
+    dref.molecules = molgroup.d->molecules;
+    dref.molidx_to_num = molgroup.d->molidx_to_num;
+    dref.molviewidx_to_num = molgroup.d->molviewidx_to_num;
+    
+    dref.incrementMajor();
+    
+    return true;
+}

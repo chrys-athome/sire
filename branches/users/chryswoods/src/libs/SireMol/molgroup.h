@@ -30,10 +30,13 @@
 #define SIREMOL_MOLGROUP_H
 
 #include <QSharedDataPointer>
+#include <QList>
 
 #include <boost/tuple/tuple.hpp>
 
 #include "SireBase/property.h"
+
+#include "molecules.h"
 
 namespace SireMol
 {
@@ -60,6 +63,7 @@ using SireID::Index;
 
 class MoleculeData;
 class Molecules;
+class Molecule;
 class MoleculeView;
 class PartialMolecule;
 class ViewsOfMol;
@@ -70,6 +74,7 @@ class MolNumViewIdx;
 class MGName;
 class MGNum;
 
+using SireBase::ConcreteProperty;
 using SireBase::PropertyBase;
 
 /** This is the virtual base class of all MoleculeGroup type
@@ -84,6 +89,10 @@ friend QDataStream& ::operator<<(QDataStream&, const MolGroup&);
 friend QDataStream& ::operator>>(QDataStream&, MolGroup&);
 
 public:
+
+    typedef Molecules::const_iterator const_iterator;
+    typedef Molecules::iterator iterator;
+
     MolGroup();
 
     MolGroup(const Molecules &molecules);
@@ -118,12 +127,27 @@ public:
     const ViewsOfMol& operator[](MolNum molnum) const;
     PartialMolecule operator[](const boost::tuple<MolNum,Index> &viewidx) const;
     
+    MolGroup& operator+=(const Molecules &molecules);
+    MolGroup& operator-=(const Molecules &molecules);
+    
     const ViewsOfMol& at(MolNum molnum) const;
     PartialMolecule at(const boost::tuple<MolNum,Index> &viewidx) const;
-    PartialMolecule at(MolNum molnum, Index viewidx) const;
+    PartialMolecule at(MolNum molnum, int viewidx) const;
     
-    const ViewsOfMol& moleculeAt(Index idx) const;
-    PartialMolecule viewAt(Index idx) const;
+    const ViewsOfMol& moleculeAt(int idx) const;
+    PartialMolecule viewAt(int idx) const;
+
+    const ViewsOfMol& molecule(MolNum molnum) const;
+
+    bool contains(MolNum molnum) const;
+    bool contains(const MoleculeView &molview) const;
+    bool contains(const ViewsOfMol &molviews) const;
+    bool contains(const Molecules &molecules) const;
+    bool contains(const MolGroup &molgroup) const;
+    
+    bool intersects(const MoleculeView &molview) const;
+    bool intersects(const Molecules &other) const;
+    bool intersects(const MolGroup &molgroup) const;
     
     int nMolecules() const;
     
@@ -134,6 +158,25 @@ public:
     bool isEmpty() const;
     
     const Molecules& molecules() const;
+
+    const ViewsOfMol& first() const;
+    const ViewsOfMol& last() const;
+    
+    const ViewsOfMol& front() const;
+    const ViewsOfMol& back() const;
+
+    const_iterator begin() const;
+    const_iterator end() const;
+
+    const_iterator constBegin() const;
+    const_iterator constEnd() const;
+
+    const_iterator find(MolNum molnum) const;
+    const_iterator constFind(MolNum molnum) const;
+
+    QSet<MolNum> molNums() const;
+
+    void assertContains(MolNum molnum) const;
 
     const MGName& name() const;
     MGNum number() const;
@@ -166,8 +209,8 @@ public:
     virtual QList<ViewsOfMol> removeAll(const Molecules &molecules);
     virtual QList<ViewsOfMol> removeAll(const MolGroup &molgroup);
 
-    virtual bool remove(MolNum molnum);
-    virtual QSet<MolNum> remove(const QSet<MolNum> &molnums);
+    virtual ViewsOfMol remove(MolNum molnum);
+    virtual QList<ViewsOfMol> remove(const QSet<MolNum> &molnums);
 
     virtual void removeAll();
 
@@ -183,12 +226,23 @@ public:
     virtual bool setContents(const MolGroup &molgroup);
 
 private:
+    bool _pvt_remove(const MoleculeView &molview);
+    ViewsOfMol _pvt_remove(const ViewsOfMol &molviews);
+
+    ViewsOfMol _pvt_remove(MolNum molnum);
+    
+    bool _pvt_removeAll(const MoleculeView &molview);
+    ViewsOfMol _pvt_removeAll(const ViewsOfMol &molviews);
+
+    void _pvt_setContents(const Molecules &molecules);
+
     /** Implicitly shared pointer to the contents and index
         of this group */
     QSharedDataPointer<detail::MolGroupPvt> d;
 };
 
-
 }
+
+Q_DECLARE_METATYPE(SireMol::MolGroup);
 
 #endif

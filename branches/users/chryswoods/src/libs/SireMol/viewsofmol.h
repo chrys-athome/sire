@@ -121,8 +121,8 @@ public:
     
     ViewsOfMol& operator=(const MoleculeView &view);
     
-    ViewsOfMol operator+(const ViewsOfMol &views);
-    ViewsOfMol operator-(const ViewsOfMol &views);
+    ViewsOfMol operator+(const ViewsOfMol &views) const;
+    ViewsOfMol operator-(const ViewsOfMol &views) const;
     
     ViewsOfMol& operator+=(const ViewsOfMol &views);
     ViewsOfMol& operator-=(const ViewsOfMol &views);
@@ -133,12 +133,15 @@ public:
     PartialMolecule operator[](int i) const;
     
     PartialMolecule at(int i) const;
+    const AtomSelection& viewAt(int i) const;
     
     MolNum number() const;
     const MolName& name() const;
     
     quint64 version() const;
     quint64 version(const PropertyName &key) const;
+    
+    bool isEmpty() const;
     
     int nViews() const;
     int count() const;
@@ -157,7 +160,7 @@ public:
     Evaluator evaluate(int i) const;
 
     AtomSelection selection() const;
-    AtomSelection selection(int i) const;
+    const AtomSelection& selection(int i) const;
     
     QList<AtomSelection> selections() const;
     
@@ -229,6 +232,7 @@ public:
     AtomSelection removeAt(int i);
     
     bool removeAll(const AtomSelection &view);
+    QList<AtomSelection> removeAll(const QList<AtomSelection> &views);
    
     void removeAll();
    

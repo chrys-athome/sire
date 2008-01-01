@@ -112,7 +112,7 @@ public:
     const ViewsOfMol& at(MolNum molnum) const;
     PartialMolecule at(const boost::tuple<MolNum,SireID::Index> &viewidx) const;
 
-    PartialMolecule at(MolNum molnum, SireID::Index idx) const;
+    PartialMolecule at(MolNum molnum, int idx) const;
 
     Molecules operator+(const Molecules &other) const;
     Molecules operator-(const Molecules &other) const;
@@ -134,7 +134,15 @@ public:
 
     int count() const;
     int nMolecules() const;
+    
+    int nViews() const;
     int nViews(MolNum molnum) const;
+
+    const ViewsOfMol& first() const;
+    const ViewsOfMol& last() const;
+    
+    const ViewsOfMol& front() const;
+    const ViewsOfMol& back() const;
 
     const_iterator begin() const;
     const_iterator end() const;
@@ -171,6 +179,8 @@ public:
     
     ViewsOfMol remove(MolNum molnum);
     bool removeAll();
+
+    void clear();
 
     bool uniteViews();
     bool removeDuplicates();
