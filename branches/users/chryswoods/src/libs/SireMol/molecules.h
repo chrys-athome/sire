@@ -117,40 +117,10 @@ public:
     Molecules operator+(const Molecules &other) const;
     Molecules operator-(const Molecules &other) const;
 
+    Molecules& operator+=(const Molecules &other);
+    Molecules& operator-=(const Molecules &other);
+
     const ViewsOfMol& molecule(MolNum molnum) const;
-
-    Molecules add(const MoleculeView &molview) const;
-    Molecules add(const ViewsOfMol &molviews) const;
-    Molecules add(const Molecules &molecules) const;
-
-    Molecules addIfUnique(const MoleculeView &molview) const;
-    Molecules addIfUnique(const ViewsOfMol &molviews) const;
-    Molecules addIfUnique(const Molecules &molecules) const;
-
-    Molecules unite(const MoleculeView &molview) const;
-    Molecules unite(const ViewsOfMol &molviews) const;
-    Molecules unite(const Molecules &other) const;
-    
-    Molecules remove(const MoleculeView &molview) const;
-    Molecules remove(const ViewsOfMol &molviews) const;
-    Molecules remove(const Molecules &molecules) const;
-    
-    Molecules remove(MolNum molnum) const;
-    
-    Molecules removeAll() const;
-    
-    Molecules subtract(const MoleculeView &molview) const;
-    Molecules subtract(const ViewsOfMol &molviews) const;
-    Molecules subtract(const Molecules &molecules) const;
-
-    Molecules subtract(MolNum molnum) const;
-
-    Molecules uniteViews() const;
-    Molecules removeDuplicates() const;
-
-    Molecules update(const MoleculeData &moldata) const;
-    Molecules update(const MoleculeView &molview) const;
-    Molecules update(const Molecules &molecules) const;
 
     bool isEmpty() const;
 
@@ -179,26 +149,39 @@ public:
 
     void assertContains(MolNum molnum) const;
 
+    void add(const MoleculeView &molview);
+    void add(const ViewsOfMol &molviews);
+    void add(const Molecules &molecules);
+
+    bool addIfUnique(const MoleculeView &molview);
+    ViewsOfMol addIfUnique(const ViewsOfMol &molviews);
+    QList<ViewsOfMol> addIfUnique(const Molecules &molecules);
+
+    bool unite(const MoleculeView &molview);
+    ViewsOfMol unite(const ViewsOfMol &molviews);
+    QList<ViewsOfMol> unite(const Molecules &other);
+    
+    bool remove(const MoleculeView &molview);
+    ViewsOfMol remove(const ViewsOfMol &molviews);
+    QList<ViewsOfMol> remove(const Molecules &molecules);
+    
+    bool removeAll(const MoleculeView &molview);
+    ViewsOfMol removeAll(const ViewsOfMol &molviews);
+    QList<ViewsOfMol> removeAll(const Molecules &molecules);
+    
+    ViewsOfMol remove(MolNum molnum);
+    bool removeAll();
+
+    bool uniteViews();
+    bool removeDuplicates();
+
+    bool update(const MoleculeData &moldata);
+    bool update(const MoleculeView &molview);
+    QList<Molecule> update(const Molecules &molecules);
+
 private:
     template<class T>
     static Molecules from(const T &molecules);
-
-    void _pvt_add(const MoleculeView &molview);
-    void _pvt_add(const ViewsOfMol &molviews);
-    void _pvt_add(const Molecules &molecules);
-    
-    void _pvt_sub(const MoleculeView &molview);
-    void _pvt_sub(const ViewsOfMol &molviews);
-    void _pvt_sub(const Molecules &molecules);
-
-    void _pvt_unite(const MoleculeView &molview);
-    void _pvt_unite(const ViewsOfMol &molviews);
-    void _pvt_unite(const Molecules &molecules);
-
-    void _pvt_update(const MoleculeData &moldata);
-
-    void _pvt_removeDupes();
-    void _pvt_uniteViews();
 
     /** Hash that contains all of the views of
         all of the molecules, indexed by 

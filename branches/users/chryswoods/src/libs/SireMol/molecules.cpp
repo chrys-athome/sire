@@ -81,7 +81,9 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, Molecules &mols)
     return ds;
 }
 
-void Molecules::_pvt_add(const MoleculeView &molview)
+/** Add the view 'view' to this set of molecules - this
+    adds this view even if it already exists in this set */
+void Molecules::add(const MoleculeView &molview)
 {
     PartialMolecule mol(molview);
     
@@ -92,7 +94,7 @@ void Molecules::_pvt_add(const MoleculeView &molview)
 
     if ( it != mols.end() )
     {
-        *it = it->add(mol.selection());
+        it->add(mol.selection());
     }
     else
     {
@@ -100,7 +102,37 @@ void Molecules::_pvt_add(const MoleculeView &molview)
     }
 }
 
-void Molecules::_pvt_add(const ViewsOfMol &molviews)
+/** Add the view 'view' to this set of molecules - this
+    adds this view only if it doesn't already exist in 
+    this set - this returns whether or not the view
+    was added */
+bool Molecules::addIfUnique(const MoleculeView &molview)
+{
+    PartialMolecule mol(molview);
+    
+    if (mol.selection().isEmpty())
+        return false;
+        
+    QHash<MolNum,ViewsOfMol>::iterator it = mols.find(mol.number());
+    
+    if ( it != mols.end() )
+    {
+        if (it->addIfUnique(mol.selection()))
+            return true;
+        else
+            return false;
+    }
+    else
+    {
+        mols.insert( mol.number(), mol );
+        return true;
+    }
+}
+
+/** Add the views in 'molviews' to this set. This adds
+    all of the views, even if they are already present
+    in this set. */
+void Molecules::add(const ViewsOfMol &molviews)
 {
     if (molviews.selection().nSelectedAtoms() == 0)
         return;
@@ -109,7 +141,7 @@ void Molecules::_pvt_add(const ViewsOfMol &molviews)
     
     if ( it != mols.end() )
     {
-        *it = it->add(molviews.selections());
+        it->add(molviews.selections());
     }
     else
     {
@@ -117,114 +149,341 @@ void Molecules::_pvt_add(const ViewsOfMol &molviews)
     }
 }
 
-void Molecules::_pvt_add(const Molecules &molecules)
+/** Add the views in 'molviews' to this set. This only
+    adds the views that don't already exist in this set, 
+    and returns the views that have been added */
+ViewsOfMol Molecules::addIfUnique(const ViewsOfMol &molviews)
+{
+    if (molviews.selection().nSelectedAtoms() == 0)
+        return ViewsOfMol();
+        
+    QHash<MolNum,ViewsOfMol>::iterator it = mols.find(molviews.number());
+    
+    if ( it != mols.end() )
+    {
+        QList<AtomSelection> added_views = it->addIfUnique(molviews.selections());
+        
+        if (added_views.isEmpty())
+            return ViewsOfMol();
+        else
+            return ViewsOfMol(molviews.data(), added_views);
+    }
+    else
+    {
+        mols.insert( molviews.number(), molviews );
+        return molviews;
+    }
+}
+
+/** Add all of the molecules in 'molecules' to this set. 
+    This adds all of the molecules, even if they already
+    exist in this set */
+void Molecules::add(const Molecules &molecules)
 {
     for (QHash<MolNum,ViewsOfMol>::const_iterator it = molecules.mols.constBegin();
          it != molecules.mols.constEnd();
          ++it)
     {
-        this->_pvt_add(it.value());
+        this->add(it.value());
     }
 }
 
-void Molecules::_pvt_sub(const MoleculeView &molview)
+/** Add all of the views of the molecules in 'molecules' to 
+    this set, only if they don't already exist in this set.
+    This returns the views that were added to this set. */
+QList<ViewsOfMol> Molecules::addIfUnique(const Molecules &molecules)
 {
+    QList<ViewsOfMol> added_mols;
+    
+    for (QHash<MolNum,ViewsOfMol>::const_iterator it = molecules.mols.constBegin();
+         it != molecules.mols.constEnd();
+         ++it)
+    {
+        ViewsOfMol added_views = this->addIfUnique(*it);
+        
+        if (not added_views.isEmpty())
+            added_mols.append(added_views);
+    }
+    
+    return added_mols;
+} 
+
+/** Remove the view 'molview' from this set. This only
+    removes the first copy of this view from this set
+    (if multiple copies are present), and returns
+    whether or not a view was removed */
+bool Molecules::remove(const MoleculeView &molview)
+{
+    if (not mols.contains(molview.number()))
+        return false;
+
     QHash<MolNum,ViewsOfMol>::iterator it = mols.find(molview.data().number());
     
     if (it != mols.end())
     {
-        *it = it->remove(molview.selection());
+        bool removed_view = it->remove(molview.selection());
         
-        if (it->selection().isEmpty())
+        if (removed_view and it->selection().isEmpty())
             mols.remove(it.key());
+            
+        return removed_view;
     }
 }
 
-void Molecules::_pvt_sub(const ViewsOfMol &molviews)
+/** Remove all copies of the view 'view' from this set.
+    This returns whether any views were removed */
+bool Molecules::removeAll(const MoleculeView &molview)
 {
-    QHash<MolNum,ViewsOfMol>::iterator it = mols.find(molviews.number());
-    
-    if (it != mols.end())
-    {
-        *it = it->remove(molviews.selections());
+    if (not mols.contains(molview.number()))
+        return false;
         
-        if (it->selection().isEmpty())
-            mols.remove(it.key());
-    }
-}
-
-void Molecules::_pvt_sub(const Molecules &molecules)
-{
-    for (QHash<MolNum,ViewsOfMol>::const_iterator it = molecules.mols.constBegin();
-         it != molecules.mols.constEnd();
-         ++it)
-    {
-        this->_pvt_sub(it.value());
-    }
-}
-
-void Molecules::_pvt_unite(const MoleculeView &molview)
-{
     QHash<MolNum,ViewsOfMol>::iterator it = mols.find(molview.data().number());
     
     if (it != mols.end())
-        *it = it->unite(molview);
-    else
     {
-        mols.insert(molview.data().number(), molview);
+        bool removed_view = it->removeAll(molview.selection());
+        
+        if (removed_view and it->selection().isEmpty())
+            mols.remove(it.key());
+            
+        return removed_view;
     }
 }
 
-void Molecules::_pvt_unite(const ViewsOfMol &molviews)
+/** Remove all of the views in 'molviews' from this set. This
+    only removes the first copy of the view if multiple copies
+    exist, and returns the views that were successfully removed. */
+ViewsOfMol Molecules::remove(const ViewsOfMol &molviews)
 {
+    if (not mols.contains(molviews.number()))
+        return ViewsOfMol();
+
     QHash<MolNum,ViewsOfMol>::iterator it = mols.find(molviews.number());
     
     if (it != mols.end())
     {
-        *it = it->unite(molviews);
-    }
-    else
-    {
-        mols.insert(molviews.number(), molviews);
+        QList<AtomSelection> removed_views = it->remove(molviews.selections());
+        
+        if (removed_views.isEmpty())
+            return ViewsOfMol();
+        
+        if (it->selection().isEmpty())
+            mols.remove(it.key());
+            
+        return ViewsOfMol(molviews.data(), removed_views);
     }
 }
 
-void Molecules::_pvt_unite(const Molecules &molecules)
+/** Remove all of the views in 'molviews' from this set. This
+    removes all copies of the views if multiple copies exist,
+    and returns the views that were successfully removed. */
+ViewsOfMol Molecules::removeAll(const ViewsOfMol &molviews)
 {
+    if (not mols.contains(molviews.number()))
+        return ViewsOfMol();
+
+    QHash<MolNum,ViewsOfMol>::iterator it = mols.find(molviews.number());
+    
+    if (it != mols.end())
+    {
+        QList<AtomSelection> removed_views = it->removeAll(molviews.selections());
+        
+        if (removed_views.isEmpty())
+            return ViewsOfMol();
+        
+        if (it->selection().isEmpty())
+            mols.remove(it.key());
+            
+        return ViewsOfMol(molviews.data(), removed_views);
+    }
+}
+
+/** Remove all of the views of all of the molecules in 'molecules'.
+    This only removes the first copy of any views that appear
+    multiple times in this set. This returns all of the views that
+    were successfully removed */
+QList<ViewsOfMol> Molecules::remove(const Molecules &molecules)
+{
+    if (molecules.isEmpty())
+        return molecules;
+
+    QList<ViewsOfMol> removed_mols;
+
     for (QHash<MolNum,ViewsOfMol>::const_iterator it = molecules.mols.constBegin();
          it != molecules.mols.constEnd();
          ++it)
     {
-        this->_pvt_unite(it.value());
+        ViewsOfMol removed_views = this->remove(*it);
+        
+        if (not removed_views.isEmpty())
+            removed_mols.append(removed_views);
     }
-}
-
-void Molecules::_pvt_update(const MoleculeData &moldata)
-{
-    QHash<MolNum,ViewsOfMol>::iterator it = mols.find(moldata.number());
     
-    if (it != mols.end())
-        it->update(moldata);
+    return removed_mols;
 }
 
-void Molecules::_pvt_removeDupes()
+/** Remove all of the views of all of the molecules in 'molecules'.
+    This removes all copies of any views that appear
+    multiple times in this set. This returns all of the views that
+    were successfully removed */
+QList<ViewsOfMol> Molecules::removeAll(const Molecules &molecules)
 {
+    if (molecules.isEmpty())
+        return molecules;
+
+    QList<ViewsOfMol> removed_mols;
+
+    for (QHash<MolNum,ViewsOfMol>::const_iterator it = molecules.mols.constBegin();
+         it != molecules.mols.constEnd();
+         ++it)
+    {
+        ViewsOfMol removed_views = this->removeAll(*it);
+        
+        if (not removed_views.isEmpty())
+            removed_mols.append(removed_views);
+    }
+    
+    return removed_mols;
+}
+
+/** Remove all views of the molecule with number 'molnum'. This
+    returns the views of the molecule in this set, if it exists,
+    or an empty set of views if it doesn't exist. */
+ViewsOfMol Molecules::remove(MolNum molnum)
+{
+    return mols.take(molnum);
+}
+
+/** Synonym for Molecules::addIfUnique(molview) */
+bool Molecules::unite(const MoleculeView &molview)
+{
+    return this->addIfUnique(molview);
+}
+
+/** Synonym for Molecules::addIfUnique(molviews) */
+ViewsOfMol Molecules::unite(const ViewsOfMol &molviews)
+{
+    return this->addIfUnique(molviews);
+}
+
+/** Synonym for Molecules::addIfUnique(molecules) */
+QList<ViewsOfMol> Molecules::unite(const Molecules &molecules)
+{
+    return this->addIfUnique(molecules);
+}
+
+/** Update the views of the molecule whose data is in 'moldata'
+    in this set so that it is at the same version as 'moldata'.
+    This does nothing if this molecule is not in this set.
+    This returns whether or not the molecule was updated */
+bool Molecules::update(const MoleculeData &moldata)
+{
+    QHash<MolNum,ViewsOfMol>::const_iterator it = mols.constFind(moldata.number());
+    
+    if (it != mols.end() and *it != moldata)
+    {
+        mols.find(moldata.number())->update(moldata);
+        return true;
+    }
+    else
+        return false;
+}
+
+/** Update the views of the molecule viewed by 'molview' 
+    in this set so that they have the same molecule version
+    as 'molview'. This returns whether or not the molecule
+    was updated. */
+bool Molecules::update(const MoleculeView &molview)
+{
+    return this->update(molview.data());
+}
+
+/** Update the views in this set so that they have the 
+    same molecule versions as the molecules in 'molecules'.
+    This returns the molecules that have been updated. */
+QList<Molecule> Molecules::update(const Molecules &molecules)
+{
+    QList<Molecule> updated_mols;
+    
+    if (this->count() <= molecules.count())
+    {
+        for (QHash<MolNum,ViewsOfMol>::iterator it = mols.begin();
+             it != mols.end();
+             ++it)
+        {
+            QHash<MolNum,ViewsOfMol>::const_iterator 
+                                        mol = molecules.mols.find(it.key());
+                                        
+            if (mol != molecules.mols.constEnd() and 
+                mol->data() != it->data())
+            {
+                //this molecule needs to be updated
+                updated_mols.append( Molecule(mol->data()) );
+                it->update(mol->data());
+            }
+        }
+    }
+    else
+    {
+        for (Molecules::const_iterator it = molecules.constBegin();
+             it != molecules.constEnd();
+             ++it)
+        {
+            QHash<MolNum,ViewsOfMol>::const_iterator
+                                        mol = mols.constFind(it.key());
+                                        
+            if (mol != mols.constEnd() and mol->data() != it->data())
+            {
+                //this molecule needs to be updated
+                updated_mols.append( Molecule(it->data()) );
+                
+                mols.find(it.key())->update(it->data());
+            }
+        }
+    }
+
+    return updated_mols;
+}
+
+/** This removes all duplicated views from this set. This returns  
+    whether or not this changes the set (whether or not there
+    were any duplicates!) */
+bool Molecules::removeDuplicates()
+{
+    bool changed = false;
+
     for (QHash<MolNum,ViewsOfMol>::iterator it = mols.begin();
          it != mols.end();
          ++it)
     {
+        int n_old_views = it->nViews();
         *it = it->removeDuplicates();
+        
+        if (not changed)
+            changed = n_old_views != it->nViews();
     }
+    
+    return changed;
 }
 
-void Molecules::_pvt_uniteViews()
+/** Unite all of the views in this set so that each molecule has
+    only a single view that is the union of all of its views.
+    Return whether or not this changes the set. */
+bool Molecules::uniteViews()
 {
+    bool changed = false;
+
     for (QHash<MolNum,ViewsOfMol>::iterator it = mols.begin();
          it != mols.end();
          ++it)
     {
+        if (not changed)
+            changed = it->nViews() > 1;
+    
         *it = it->join();
     }
+    
+    return changed;
 }
 
 /** Construct an empty set of molecules */
@@ -235,14 +494,14 @@ Molecules::Molecules()
     of a molecule */
 Molecules::Molecules(const MoleculeView &molecule)
 {
-    this->_pvt_add(molecule);
+    this->add(molecule);
 }
 
 /** Construct a set that contains the passed views 
     of a molecule */
 Molecules::Molecules(const ViewsOfMol &molviews)
 {
-    this->_pvt_add(molviews);
+    this->add(molviews);
 }
 
 /** Copy constructor */
@@ -320,7 +579,7 @@ Molecules Molecules::operator+(const Molecules &other) const
 {
     Molecules ret(*this);
     
-    ret._pvt_add(other);
+    ret.add(other);
     
     return ret;
 }
@@ -331,9 +590,25 @@ Molecules Molecules::operator-(const Molecules &other) const
 {
     Molecules ret(*this);
     
-    ret._pvt_sub(other);
+    ret.remove(other);
     
     return ret;
+}
+
+/** Synonym for Molecules::add(other) (except that
+    it returns this set, not the added molecules) */
+Molecules& Molecules::operator+=(const Molecules &other)
+{
+    this->add(other);
+    return *this;
+}
+
+/** Synonym for Molecules::remove(other) (except that
+    it returns this set, not the removed molecules) */
+Molecules& Molecules::operator-=(const Molecules &other)
+{
+    this->remove(other);
+    return *this;
 }
 
 /** Return the molecule at number 'molnum'
@@ -343,182 +618,6 @@ Molecules Molecules::operator-(const Molecules &other) const
 const ViewsOfMol& Molecules::molecule(MolNum molnum) const
 {
     return this->operator[](molnum);
-}
-
-/** Add the view of the molecule 'molview' to this set. This
-    adds the view as a duplicate if it already exists in this 
-    set. Also the version of the molecule that is contained
-    in this set is returned if this molecule already exists
-    in this set */
-Molecules Molecules::add(const MoleculeView &molview) const
-{
-    Molecules ret(*this);
-    ret._pvt_add(molview);
-    return ret;
-}
-
-/** Add the views of the molecule 'molviews'. This adds
-    duplicates of any views that already exist in this set */
-Molecules Molecules::add(const ViewsOfMol &molviews) const
-{
-    Molecules ret(*this);
-    ret._pvt_add(molviews);
-    return ret;
-}
-
-/** Add all of the views contained in 'molecules'. This adds
-    duplicates of any views that already exist in this set. */
-Molecules Molecules::add(const Molecules &molecules) const
-{
-    Molecules ret(*this);
-    ret._pvt_add(molecules);
-    return ret;
-}
-
-/** Return the union of this set with passed view of a molecule.
-    Unlike the add(..) functions, unite(...) only adds a 
-    view if it doesn't already exist in this set */
-Molecules Molecules::unite(const MoleculeView &molview) const
-{
-    Molecules ret(*this);
-    ret._pvt_unite(molview);
-    return ret;
-}
-
-/** Return the union of the this set with the passed views of a molecule.
-    Unlike the add(..) functions, unite(...) only adds a 
-    view if it doesn't already exist in this set */
-Molecules Molecules::unite(const ViewsOfMol &molviews) const
-{
-    Molecules ret(*this);
-    ret._pvt_unite(molviews);
-    return ret;
-}
-
-/** Return the union of this set with 'other'.
-    Unlike the add(..) functions, unite(...) only adds a 
-    view if it doesn't already exist in this set */
-Molecules Molecules::unite(const Molecules &other) const
-{
-    Molecules ret(*this);
-    ret._pvt_unite(other);
-    return ret;
-}
-
-/** Return the set with the view 'view' removed. 
-    - note that this only removes this
-    view if exactly this view is contained in this set - also
-    it removes all duplicates of this view as well! */
-Molecules Molecules::remove(const MoleculeView &molview) const
-{
-    Molecules ret(*this);
-    ret._pvt_sub(molview);
-    return ret;
-}
-
-/** Return the set with the views in 'views' removed .
-    - this only removes views
-    that exactly match in this set, and it removes all
-    of the duplicates as well! */
-Molecules Molecules::remove(const ViewsOfMol &molviews) const
-{
-    Molecules ret(*this);
-    ret._pvt_sub(molviews);
-    return ret;
-}
-
-/** Return the set with the molecules in 'molecules' removed.
-    This only removes exactly matching views, and it removes
-    all duplicates as well! */
-Molecules Molecules::remove(const Molecules &molecules) const
-{
-    Molecules ret(*this);
-    ret._pvt_sub(molecules);
-    return ret;
-}
-
-/** Return the set with all views of the molecule with number 'molnum' 
-    completely removed */
-Molecules Molecules::remove(MolNum molnum) const
-{
-    Molecules ret(*this);
-    ret.mols.remove(molnum);
-    return ret;
-}
-
-/** Return the set with the view 'view' removed. 
-    - note that this only removes this
-    view if exactly this view is contained in this set - also
-    it removes all duplicates of this view as well! */
-Molecules Molecules::subtract(const MoleculeView &molview) const
-{
-    return this->remove(molview);
-}
-
-/** Return the set with the views in 'views' removed .
-    - this only removes views
-    that exactly match in this set, and it removes all
-    of the duplicates as well! */
-Molecules Molecules::subtract(const ViewsOfMol &molviews) const
-{
-    return this->remove(molviews);
-}
-
-/** Return the set with the molecules in 'molecules' removed.
-    This only removes exactly matching views, and it removes
-    all duplicates as well! */
-Molecules Molecules::subtract(const Molecules &molecules) const
-{
-    return this->remove(molecules);
-}
-
-/** Return the set with all views of the molecule with number 'molnum' 
-    completely removed */
-Molecules Molecules::subtract(MolNum molnum) const
-{
-    return this->remove(molnum);
-}
-
-/** Return the set where all of the views of each molecule
-    have been joined together so that there is now only
-    a single view of each molecule in the set */
-Molecules Molecules::uniteViews() const
-{
-    Molecules ret(*this);
-    ret._pvt_uniteViews();
-    return ret;
-}
-
-/** Return the set where the data for the molecule is 
-    updated to 'moldata' */
-Molecules Molecules::update(const MoleculeData &moldata) const
-{
-    Molecules ret(*this);
-    ret._pvt_update(moldata);
-    return ret;
-}
-
-/** Return the set where the data for the molecule is
-    updated to be the same as the molecule viewed in 'molview' */
-Molecules Molecules::update(const MoleculeView &molview) const
-{
-    return this->update(molview.data());
-}
-
-/** Return the set where the data for all of the molecules is
-    updated to the same version as the molecule in 'molecules' */
-Molecules Molecules::update(const Molecules &molecules) const
-{
-    Molecules ret(*this);
-    
-    for (QHash<MolNum,ViewsOfMol>::const_iterator it = molecules.mols.begin();
-         it != molecules.mols.end();
-         ++it)
-    {
-        ret._pvt_update(it->data());
-    }
-    
-    return ret;
 }
 
 /** Return whether this set is empty */

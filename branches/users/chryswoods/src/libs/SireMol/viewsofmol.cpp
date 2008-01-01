@@ -332,7 +332,12 @@ PartialMolecule ViewsOfMol::at(int i) const
     return this->operator[](i);
 }
 
-void ViewsOfMol::_pvt_add(const AtomSelection &view)
+/** Add the view 'view' to this set - this adds the 
+    view even if it already exists in this set
+
+    \throw SireError::incompatible_error
+*/
+void ViewsOfMol::add(const AtomSelection &view)
 {
     int nviews = this->nViews();
     
@@ -359,171 +364,271 @@ void ViewsOfMol::_pvt_add(const AtomSelection &view)
     }
 }
 
-/** Return the views where 'view' has been added to the set.
-    This adds a duplicate of 'view' if it already exists 
-    in this set
-
-    \throw SireError::incompatible_error
-*/
-ViewsOfMol ViewsOfMol::add(const AtomSelection &view) const
-{
-    ViewsOfMol ret(*this);
-    ret._pvt_add(view);
-}
-
 /** Return the views where 'views' have been added to 
     the set - this duplicates any views that already
     exist
     
     \throw SireError::incompatible_error
 */
-ViewsOfMol ViewsOfMol::add(const QList<AtomSelection> &views) const
+void ViewsOfMol::add(const QList<AtomSelection> &views)
 {
-    ViewsOfMol ret(*this);
+    if (views.isEmpty())
+        return;
+    else if (view.count() == 1)
+    {
+        this->add(views.first());
+        return;
+    }
+
+    ViewsOfMol new_views(*this);
     
     foreach (const AtomSelection &view, views)
     {
-        ret._pvt_add(view);
+        new_views.add(view);
     }
     
-    return ret;
+    this->operator=(new_views);
 }
 
-/** Return the view where 'view' has been united
-    - unlike the add(...) functions this only adds the
-      view if it doesn't already exist in this set
-      
+/** Add the view 'view' to this set, only if it doesn't
+    already exist - this returns whether the view has
+    been added
+    
     \throw SireError::incompatible_error
 */
-ViewsOfMol ViewsOfMol::unite(const AtomSelection &view) const
+bool ViewsOfMol::addIfUnique(const AtomSelection &view)
 {
-    if (not this->contains(view))
-        return this->add(view);
+    if (this->contains(view))
+        return false;
+    else
+    {
+        this->add(view);
+        return true;
+    }
 }
 
-/** Return the view where 'views' have been united
-    - unlike the add(...) functions, this only adds
-      views that don't already exist in this set 
-      
+/** Add the views in 'views' that don't already exist
+    in this set - this returns the views that were added
+    (or an empty list if nothing was added)
+    
     \throw SireError::incompatible_error
 */
-ViewsOfMol ViewsOfMol::unite(const QList<AtomSelection> &views) const
+QList<AtomSelection> ViewsOfMol::addIfUnique(const QList<AtomSelection> &views)
 {
-    ViewsOfMol ret(*this);
+    if (views.isEmpty())
+        return views;
+    else if (views.count() == 1)
+    {
+        if (this->addIfUnique(views.first()))
+            return views;
+        else
+            return QList<AtomSelection>();
+    }
+    
+    QList<AtomSelection> added_views;
+    ViewsOfMol new_views(*this);
     
     foreach (const AtomSelection &view, views)
     {
-        if (not this->contains(view))
-            ret._pvt_add(view);
+        if (new_views.addIfUnique(view))
+            new_views.append(view);
     }
     
-    return ret;
+    return new_views;
 }
 
-/** Return the set with the ith view removed
+/** Synonym for ViewsOfMol::addIfUnique(view)
+      
+    \throw SireError::incompatible_error
+*/
+bool ViewsOfMol::unite(const AtomSelection &view)
+{
+    return this->addIfUnique(view);
+}
+
+/** Synonym for ViewsOfMol:addIfUnique(views) 
+      
+    \throw SireError::incompatible_error
+*/
+QList<AtomSelection> ViewsOfMol::unite(const QList<AtomSelection> &views)
+{
+    return this->addIfUnique(views);
+}
+
+/** Remove the ith view from this set - this returns
+    the view that was removed
 
     \throw SireError::invalid_index
 */
-ViewsOfMol ViewsOfMol::removeAt(int i) const
+AtomSelection ViewsOfMol::removeAt(int i)
 {
     i = Index(i).map( this->nViews() );
-    
-    if (views.count() == 0)
-        return ViewsOfMol(*d);
-        
+
+    AtomSelection removed_view;
+
+    if (views.isEmpty() == 0)
+    {
+        //there is only one view in this set - and it is
+        //the total selection
+        removed_view = selected_atoms;
+        this->removeAll();
+    }
     else
     {
-        ViewsOfMol ret(*this);
-        ret.views.removeAt(i);
+        removed_view = views.takeAt(i);
         
-        if (ret.views.isEmpty())
-            return ViewsOfMol(*this);
-        else if (ret.views.count() == 1)
+        if (views.count() < 2)
         {
-            ret.selected_atoms = ret.views.at(0);
-            ret.views.clear();
-            return ret;
+            selected_atoms = views.first();
+            views.clear();
         }
         else
-        {
-            ret.selected_atoms = AtomSelection::unite(ret.views);
-            return ret;
-        }
+            selected_atoms = AtomSelection::unite(views);
     }
+
+    return removed_view;
 }
 
-/** Return the views where 'view' has been removed. This only
-    removes the first copy of this view if it can be found in this set
+/** Remove the view 'view' from this set, if 
+    any copies exist. This only removes the first
+    copy of this view from this set, if multiple
+    copies of this view exist. This returns whether 
+    any copies were removed from this set.
     
     \throw SireError::incompatible_error
 */
-ViewsOfMol ViewsOfMol::remove(const AtomSelection &view) const
+bool ViewsOfMol::remove(const AtomSelection &view)
 {
     if (not selected_atoms.contains(view))
-        return *this;
+        return false;
         
     if (views.count() == 0)
     {
         if (selected_atoms == view)
-            return ViewsOfMol(*d);
+        {
+            this->removeAll();
+            return true;
+        }
         else
-            return *this;
+            return false;
     }
     else
     {
         int i = views.indexOf(view);
         
         if (i >= 0)
-            return this->removeAt(i);
+        {
+            views.removeAt(i);
+            
+            if (views.count() < 2)
+            {
+                selected_atoms = views.first();
+                views.clear();
+            }
+            else
+                selected_atoms = AtomSelection::unite(views);
+            
+            return true;
+        }
         else
-            return *this;
+            return false;
     }
 }
 
-/** Return the views where all copies of 'view' have been removed.
+/** Remove all copies of 'view' from this set, if any
+    copies of this view are contained in this set. This
+    return whether any views were removed
 
     \throw SireError::incompatible_error
 */
-ViewsOfMol ViewsOfMol::removeAll(const AtomSelection &view) const
+bool ViewsOfMol::removeAll(const AtomSelection &view)
 {
     if (not selected_atoms.contains(view))
-        return *this;
+        return false;
     
     if (views.isEmpty())
     {
         if (selected_atoms == view)
-            return ViewsOfMol(*d);
+        {
+            this->removeAll();
+            return true;
+        }
         else
-            return *this;
+            return false;
     }
     else
     {
-        ViewsOfMol ret(*this);
-        
-        if (ret.views.removeAll(view) > 0)
+        if (views.removeAll(view) > 0)
         {
-            if (ret.views.isEmpty())
-                return ViewsOfMol(*d);
+            if (views.isEmpty())
+                this->removeAll();
             
-            else if (ret.views.count() == 1)
+            else if (views.count() == 1)
             {
-                ret.selected_atoms = ret.views.at(0);
-                ret.views.clear();
+                selected_atoms = views.first();
+                views.clear();
             }
             else
             {
-                ret.selected_atoms = AtomSelection::unite(ret.views);
+                selected_atoms = AtomSelection::unite(views);
             }
+            
+            return true;
         }
-        
-        return ret;
+        else
+            return false;
     }
 }
 
-/** Return the set with all views removed */
-ViewsOfMol ViewsOfMol::removeAll() const
+/** Remove all views from this set */
+void ViewsOfMol::removeAll()
 {
-    return ViewsOfMol(*d);
+    views.clear();
+    selected_atoms = selected_atoms.selectNone();
+}
+
+/** Adds the other views onto this set.
+
+    \throw SireError::incompatible_error
+*/
+ViewsOfMol ViewsOfMol::operator+(const ViewsOfMol &other) const
+{
+    ViewsOfMol ret(*this);
+    ret.add(other);
+    return ret;
+}
+
+/** Subtract the other views from this set
+
+    \throw SireError::incompatible_error
+*/
+ViewsOfMol ViewsOfMol::operator-(const ViewsOfMol &other) const
+{
+    ViewsOfMol ret(*this);
+    ret.remove(other);
+    return ret;
+}
+
+/** Synonym for ViewsOfMol::add(views), except that this
+    set is returned
+    
+    \throw SireError::incompatible_error
+*/
+ViewsOfMol& ViewsOfMol::operator+=(const ViewsOfMol &other)
+{
+    this->add(other);
+    return *this;
+}
+
+/** Synonym for ViewsOfMol::remove(views), except that this
+    set is returned 
+    
+    \throw SireError::incompatible_error
+*/
+ViewsOfMol& ViewsOfMol::operator-=(const ViewsOfMol &other)
+{
+    this->remove(other);
+    return *this;
 }
 
 /** Return the molecule that is the union of all of the
@@ -631,6 +736,32 @@ bool ViewsOfMol::contains(const AtomID &atomid) const
 bool ViewsOfMol::intersects(const AtomID &atomid) const
 {
     return selected_atoms.intersects(atomid);
+}
+
+/** Return the index of the view 'selection' in this set, 
+    searching forward from the index position 'from'. This
+    returns -1 if this view is not present in this set
+    
+    \throw SireError::incompatible_error
+*/
+int ViewsOfMol::indexOf(const AtomSelection &selection, int from=0) const
+{
+    if (selection.isEmpty() or this->isEmpty())
+        return -1;
+
+    if (from != 0)
+        from = Index(from).map(this->nViews());
+
+    selected_atoms.assertCompatibleWith(selection);
+    
+    if (views.isEmpty())
+    {
+        return (selection == selected_atoms) - 1;
+    }
+    else
+    {
+        return views.indexOf(selection, from);
+    }
 }
 
 /** Return the atom from any of the views in this set

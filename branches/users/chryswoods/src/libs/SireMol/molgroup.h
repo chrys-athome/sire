@@ -72,26 +72,48 @@ class MGNum;
 
 using SireBase::PropertyBase;
 
-/** This is the pure virtual base class of all MoleculeGroup type
+/** This is the virtual base class of all MoleculeGroup type
     objects (e.g. MoleculeGroup, MolGroups and FFBase)
     
     @author Christopher Woods
 */
-class SIREMOL_EXPORT MolGroup : public PropertyBase
+class SIREMOL_EXPORT MolGroup : public ConcreteProperty<MolGroup,PropertyBase>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const MolGroup&);
 friend QDataStream& ::operator>>(QDataStream&, MolGroup&);
 
 public:
-    ~MolGroup();
-    
+    MolGroup();
+
+    MolGroup(const Molecules &molecules);
+
+    MolGroup(const QString &name);
+
+    MolGroup(const QString &name, const Molecules &molecules);
+    MolGroup(const QString &name, const MolGroup &other);
+
+    MolGroup(const MolGroup &other);
+
+    virtual ~MolGroup();
+
     static const char* typeName()
     {
-        return "SireMol::MolGroup";
+        return QMetaType::typeName( qMetaTypeId<MolGroup>() );
     }
 
-    virtual MolGroup* clone() const=0;
+    virtual const char* what() const
+    {
+        return MolGroup::typeName();
+    }
+
+    virtual MolGroup* clone() const
+    {
+        return new MolGroup(*this);
+    }
+
+    virtual bool operator==(const MolGroup &other) const;
+    virtual bool operator!=(const MolGroup &other) const;
     
     const ViewsOfMol& operator[](MolNum molnum) const;
     PartialMolecule operator[](const boost::tuple<MolNum,Index> &viewidx) const;
@@ -119,26 +141,50 @@ public:
     quint64 majorVersion() const;
     quint64 minorVersion() const;
 
-protected:
-    MolGroup();
-
-    MolGroup(const Molecules &molecules);
-
-    MolGroup(const QString &name);
+    virtual void add(const MoleculeView &molview);
+    virtual void add(const ViewsOfMol &molviews);
+    virtual void add(const Molecules &molecules);
+    virtual void add(const MolGroup &molgroup);
     
-    MolGroup(const QString &name, const Molecules &molecules);
-    MolGroup(const QString &name, const MolGroup &molgroup);
+    virtual bool addIfUnique(const MoleculeView &molview);
+    virtual ViewsOfMol addIfUnique(const ViewsOfMol &molviews);
+    virtual QList<ViewsOfMol> addIfUnique(const Molecules &molecules);
+    virtual QList<ViewsOfMol> addIfUnique(const MolGroup &molgroup);
     
-    MolGroup(const MolGroup &other);
+    bool unite(const MoleculeView &molview);
+    ViewsOfMol unite(const ViewsOfMol &molviews);
+    QList<ViewsOfMol> unite(const Molecules &molecules);
+    QList<ViewsOfMol> unite(const MolGroup &molgroup);
+    
+    virtual bool remove(const MoleculeView &molview);
+    virtual ViewsOfMol remove(const ViewsOfMol &molviews);
+    virtual QList<ViewsOfMol> remove(const Molecules &molecules);
+    virtual QList<ViewsOfMol> remove(const MolGroup &molgroup);
+    
+    virtual bool removeAll(const MoleculeView &molview);
+    virtual ViewsOfMol removeAll(const ViewsOfMol &molviews);
+    virtual QList<ViewsOfMol> removeAll(const Molecules &molecules);
+    virtual QList<ViewsOfMol> removeAll(const MolGroup &molgroup);
 
-    MolGroup& operator=(const MolGroup &other);
+    virtual bool remove(MolNum molnum);
+    virtual QSet<MolNum> remove(const QSet<MolNum> &molnums);
 
-    const detail::MolGroupPvt& data() const;
+    virtual void removeAll();
 
-    detail::MolGroupPvt& edit();
+    virtual bool update(const MoleculeData &moldata);
+    bool update(const MoleculeView &molview);
+    
+    virtual QList<Molecule> update(const Molecules &molecules);
+    virtual QList<Molecule> update(const MolGroup &molgroup);
+    
+    virtual bool setContents(const MoleculeView &molview);
+    virtual bool setContents(const ViewsOfMol &molviews);
+    virtual bool setContents(const Molecules &molecules);
+    virtual bool setContents(const MolGroup &molgroup);
 
 private:
-    /** Implicit pointer to the data of this object */
+    /** Implicitly shared pointer to the contents and index
+        of this group */
     QSharedDataPointer<detail::MolGroupPvt> d;
 };
 

@@ -47,7 +47,7 @@ namespace SireMol
 using SireBase::ConcreteProperty;
 
 /** This class is used to group views of molecules together. 
-    Underneath, it used the Molecules class to hold views
+    Underneath, it uses the Molecules class to hold views
     of molecules (including multiple views of molecules).
     However it supplements the data in Molecules with 
     additional meta-information, such as indexing of
@@ -68,16 +68,22 @@ using SireBase::ConcreteProperty;
     
     MoleculeGroup objects can also be named, so you could
     create groups like "solvent", "protein", "ligands",
-    "ions" etc. Each MoleculeGroup in a simulations system
+    "ions" etc. Each MoleculeGroup in a simulation system
     is placed into a single MoleculeGroups object, which
     can then let you search for atoms or molecules using
     these group names, e.g. MGName("solvent") + AtomName("O00")
     would select all of the atoms called "O00" in all of 
     the molecules in the group(s) called "solvent"
 
+    MoleculeGroup is a holder for the MolGroup virtual base
+    class of all MoleculeGroup-like objects (e.g. 
+    FFMolGroup and SystemMolGroup, which have additional
+    actions that must be performed if molecules are added
+    or removed)
+
     @author Christopher Woods
 */
-class SIREMOL_EXPORT MoleculeGroup : public ConcreteProperty<MoleculeGroup,MolGroup>
+class SIREMOL_EXPORT MoleculeGroup
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const MoleculeGroup&);
