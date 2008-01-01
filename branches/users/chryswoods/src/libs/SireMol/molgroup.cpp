@@ -258,6 +258,39 @@ void MolGroupPvt::incrementMinor()
 //////////// Implementation of MolGroup
 ////////////
 
+RegisterMetaType<MolGroup> r_molgroup;
+
+/** Serialise a MolGroup to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
+                                       const MolGroup &molgroup)
+{
+    writeHeader(ds, r_molgroup, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << molgroup.d;
+    
+    return ds;
+}
+
+/** Deserialise a MolGroup from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
+                                       MolGroup &molgroup)
+{
+    VersionID v = readHeader(ds, r_molgroup);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> molgroup.d;
+    }
+    else
+        throw version_error(v, "1", r_molgroup, CODELOC);
+        
+    return ds;
+}
+
 /** Default constructor */
 MolGroup::MolGroup() 
          : ConcreteProperty<MolGroup,PropertyBase>(),
