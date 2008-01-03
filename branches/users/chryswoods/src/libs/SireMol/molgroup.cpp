@@ -1369,7 +1369,11 @@ QList<Molecule> MolGroup::update(const Molecules &molecules)
 */
 QList<Molecule> MolGroup::update(const MolGroup &molgroup)
 {
-    return this->update(molgroup.molecules());
+    if (molgroup == *this)
+        //there is nothing to update!
+        return QList<Molecule>();
+    else
+        return this->update(molgroup.molecules());
 }
 
 void MolGroup::_pvt_setContents(const Molecules &molecules)

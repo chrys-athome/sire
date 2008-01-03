@@ -48,9 +48,205 @@ namespace SireMol
     
     @author Christopher Woods
 */
-class MolGroupsBase : public PropertyBase
+class SIREMOL_EXPORT MolGroupsBase : public PropertyBase
 {
 
+friend QDataStream& ::operator<<(QDataStream&, const MolGroupsBase&);
+friend QDataStream& ::operator>>(QDataStream&, MolGroupsBase&);
+
+public:    
+    virtual ~MolGroupsBase();
+    
+    const MolGroup& operator[](MGNum mgnum) const;
+    const MolGroup& operator[](const MGName &mgname) const;
+    const MolGroup& operator[](const MGID &mgid) const;
+    
+    ViewsOfMol operator[](MolNum molnum) const;
+    ViewsOfMol operator[](const MolID &molid) const;
+    
+    virtual MolGroupsBase* clone() const=0;
+    
+    static const char* typeName()
+    {
+        return "SireMol::MolGroupsBase";
+    }
+    
+    QList<MGNum> map(const MGID &mgid) const;
+    
+    virtual const MolGroup& at(MGNum mgnum) const=0;
+    
+    const MolGroup& at(const MGName &mgname) const;
+    const MolGroup& at(const MGID &mgid) const;
+    
+    ViewsOfMol at(MolNum molnum) const;
+    ViewsOfMol at(const MolID &molid) const;
+
+    MoleculeGroup select(const MGID &mgid) const;
+    ViewsOfMol select(const MolID &molid) const;
+    Segment select(const SegID &segid) const;
+    Chain select(const ChainID &chainid) const;
+    Residue select(const ResID &resid) const;
+    CutGroup select(const CGID &cgid) const;
+    Atom select(const AtomID &atomid) const;
+
+    QList<MoleculeGroup> selectAll(const MGID &mgid) const;
+    QList<ViewsOfMol> selectAll(const MolID &molid) const;
+    QList<Segment> selectAll(const SegID &segid) const;
+    QList<Chain> selectAll(const ChainID &chainid) const;
+    QList<Residue> selectAll(const ResID &resid) const;
+    QList<CutGroup> selectAll(const CGID &cgid) const;
+    QList<Atom> selectAll(const AtomID &atomid) const;
+    
+    const MolGroup& group(MGNum mgnum) const;
+    const MolGroup& group(const MGName &mgname) const;
+    const MolGroup& group(const MGID &mgid) const;
+    
+    QList<MoleculeGroup> groups(MGNum mgnum) const;
+    QList<MoleculeGroup> groups(const MGName &mgname) const;
+    QList<MoleculeGroup> groups(const MGID &mgid) const;
+    
+    ViewsOfMol molecule(MolNum molnum) const;
+    ViewsOfMol molecule(const MolID &molid) const;
+    
+    QList<ViewsOfMol> molecules(MolNum molnum) const;
+    QList<ViewsOfMol> molecules(const MolID &molid) const;
+    
+    QList<Segment> segments(const SegID &segid) const;
+    QList<Chain> chains(const ChainID &chainid) const;
+    QList<Residue> residues(const ResID &resid) const;
+    QList<CutGroup> cutGroups(const CGID &cgid) const;
+    QList<Atom> atoms(const AtomID &atomid) const;
+
+    bool contains(MGNum mgnum) const;
+    bool contains(MolNum molnum) const;
+    bool contains(const MoleculeView &molview) const;
+    bool contains(const ViewsOfMol &molviews) const;
+    bool contains(const Molecules &molecules) const;
+    
+    bool intersects(const MoleculeView &molview) const;
+    bool intersects(const Molecules &other) const;
+
+    const QVector<MGNum>& groupsContaining(MolNum molnum) const;
+    
+    int nMolecules() const;
+    
+    int nViews() const;
+    int nViews(MolNum molnum) const;
+
+    bool isEmpty() const;
+
+    Molecules molecules() const;
+    
+    QSet<MolNum> molNums() const;
+    QSet<MGNum> mgNums() const;
+    
+    void assertContains(MolNum molnum) const;
+    void assertContains(const MolID &molid) const;
+    
+    void assertContains(MGNum mgnum) const;
+    void assertContains(const MGID &mgid) const;
+    
+    virtual void update(const MolGroup &molgroup)=0;
+    
+    virtual void add(const MoleculeView &molview, const MGID &mgid)=0;
+    virtual void add(const ViewsOfMol &molviews, const MGID &mgid)=0;
+    virtual void add(const Molecules &molecules, const MGID &mgid)=0;
+    virtual void add(const MolGroup &molgroup, const MGID &mgid)=0;
+    
+    virtual void addIfUnique(const MoleculeView &molview,
+                             const MGID &mgid)=0;
+    virtual void addIfUnique(const ViewsOfMol &molviews,
+                             const MGID &mgid)=0;
+    virtual void addIfUnique(const Molecules &molecules,
+                             const MGID &mgid)=0;
+    virtual void addIfUnique(const MolGroup &molgroup,
+                             const MGID &mgid)=0;
+    
+    void unite(const MoleculeView &molview, const MGID &mgid);
+    void unite(const ViewsOfMol &molviews, const MGID &mgid);
+    void unite(const Molecules &molecules, const MGID &mgid);
+    void unite(const MolGroup &molgroup, const MGID &mgid);
+    
+    virtual void remove(const MoleculeView &molview);
+    virtual void remove(const ViewsOfMol &molviews);
+    virtual void remove(const Molecules &molecules);
+    virtual void remove(const MolGroup &molgroup);
+    
+    virtual void removeAll(const MoleculeView &molview);
+    virtual void removeAll(const ViewsOfMol &molviews);
+    virtual void removeAll(const Molecules &molecules);
+    virtual void removeAll(const MolGroup &molgroup);
+
+    virtual void remove(MolNum molnum);
+    virtual void remove(const QSet<MolNum> &molnums);
+
+    virtual void removeAll();
+    
+    virtual void remove(const MoleculeView &molview, const MGID &mgid)=0;
+    virtual void remove(const ViewsOfMol &molviews, const MGID &mgid)=0;
+    virtual void remove(const Molecules &molecules, const MGID &mgid)=0;
+    virtual void remove(const MolGroup &molgroup, const MGID &mgid)=0;
+    
+    virtual void removeAll(const MoleculeView &molview, const MGID &mgid)=0;
+    virtual void removeAll(const ViewsOfMol &molviews, const MGID &mgid)=0;
+    virtual void removeAll(const Molecules &molecules, const MGID &mgid)=0;
+    virtual void removeAll(const MolGroup &molgroup, const MGID &mgid)=0;
+
+    virtual void remove(MolNum molnum, const MGID &mgid)=0;
+    virtual void remove(const QSet<MolNum> &molnums, const MGID &mgid)=0;
+
+    virtual void removeAll(const MGID &mgid)=0;
+
+    virtual void update(const MoleculeData &moldata)=0;
+    void update(const MoleculeView &molview);
+    
+    virtual void update(const Molecules &molecules)=0;
+    virtual void update(const MolGroup &molgroup)=0;
+    
+    virtual void setContents(const MGID &mgid, const MoleculeView &molview)=0;
+    virtual void setContents(const MGID &mgid, const ViewsOfMol &molviews)=0;
+    virtual void setContents(const MGID &mgid, const Molecules &molecules)=0;
+    virtual void setContents(const MGID &mgid, const MolGroup &molgroup)=0;
+    
+protected:
+    MolGroupsBase();
+    
+    MolGroupsBase(const MolGroupsBase &other);
+
+    MolGroupsBase& operator=(const MolGroupsBase &other);
+
+    virtual MolGroup& getGroup(MGNum mgnum)=0; 
+    virtual void getGroups(const QList<MGNum> &mgnums,
+                           QVarLengthArray<MolGroup*,10> &groups)=0;
+
+    virtual QHash<MGNum,MolGroup*> getGroups()=0;
+    virtual QHash<MGNum,const MolGroup*> getGroups() const=0;
+
+    const MoleculeData& matchToExistingVersion(const MoleculeData &moldata) const;
+
+    Molecules matchToExistingVersion(const Molecules &molecules) const;
+
+    void addToIndex(const MolGroup &molgroup);
+    void addToIndex(MGNum mgnum, MolNum molnum);
+    void addToIndex(MGNum mgnum, const QSet<MolNum> &molnums);
+    
+    void removeFromIndex(MGNum mgnum);
+    void removeFromIndex(MolNum molnum);
+    
+    void removeFromIndex(MGNum mgnum, MolNum molnum);
+    void removeFromIndex(MGNum mgnum, const QSet<MolNum> &molnums);
+
+    void clearIndex();
+
+private:
+    /** This index keeps an order of MolGroup objects */
+    QVector<MGNum> mgidx_to_num;
+    
+    /** This index maps the names of the MolGroup objects */
+    QHash< MGName, QList<MGNum> > mgname_to_mgnum;
+    
+    /** This is an index of which groups contain which molecules */
+    QHash< MolNum, QVector<MGNum> > molnum_to_mgnum;
 };
 
 /** This class holds a collection of MoleculeGroup objects. This
@@ -75,7 +271,7 @@ class MolGroupsBase : public PropertyBase
     
     @author Christopher Woods
 */
-class MolGroups : public ConcreteProperty<MolGroups,MolGroupsBase>
+class SIREMOL_EXPORT MolGroups : public ConcreteProperty<MolGroups,MolGroupsBase>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const MolGroups&);
@@ -84,10 +280,96 @@ friend QDataStream& ::operator>>(QDataStream&, MolGroups&);
 public:
     MolGroups();
     
+    MolGroups(const MolGroup &molgroup);
+    
+    MolGroups(const QList<MoleculeGroup> &molgroups);
+    
     MolGroups(const MolGroups &other);
     
     ~MolGroups();
+
+    MolGroups* clone() const
+    {
+        return new MolGroups(*this);
+    }
     
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<MolGroups>() );
+    }
+    
+    MolGroups& operator=(const MolGroups &other);
+    
+    bool operator==(const MolGroups &other) const;
+    bool operator!=(const MolGroups &other) const;
+    
+    MolGroupsBase& operator+=(const MolGroup &molgroup);
+    MolGroupsBase& operator-=(const MolGroup &molgroup);
+    
+    MolGroupsBase& operator-=(const MGID &mgid);
+    
+    MolGroupsBase& operator-=(const Molecules &molecules);
+    MolGroupsBase& operator-=(const MolID &molid);
+
+    void add(const MolGroup &molgroup);
+    void remove(MGNum mgnum);
+
+    void remove(const MolGroup &molgroup);
+    void remove(const MGID &mgid);
+    
+    ///////////////////////////////////////////////
+    /// Pure virtual functions of MolGroupsBase ///
+    ///////////////////////////////////////////////
+
+    const MolGroup& at(MGNum mgnum) const;
+    
+    void add(const MolGroup &molgroup);
+    void update(const MolGroup &molgroup);
+    void remove(MGNum mgnum);
+
+    void add(const MoleculeView &molview, const MGID &mgid);
+    void add(const ViewsOfMol &molviews, const MGID &mgid);
+    void add(const Molecules &molecules, const MGID &mgid);
+    void add(const MolGroup &molgroup, const MGID &mgid);
+    
+    void addIfUnique(const MoleculeView &molview, const MGID &mgid);
+    void addIfUnique(const ViewsOfMol &molviews, const MGID &mgid);
+    void addIfUnique(const Molecules &molecules, const MGID &mgid);
+    void addIfUnique(const MolGroup &molgroup, const MGID &mgid);
+
+    void remove(const MoleculeView &molview, const MGID &mgid);
+    void remove(const ViewsOfMol &molviews, const MGID &mgid);
+    void remove(const Molecules &molecules, const MGID &mgid);
+    void remove(const MolGroup &molgroup, const MGID &mgid);
+    
+    void removeAll(const MoleculeView &molview, const MGID &mgid);
+    void removeAll(const ViewsOfMol &molviews, const MGID &mgid);
+    void removeAll(const Molecules &molecules, const MGID &mgid);
+    void removeAll(const MolGroup &molgroup, const MGID &mgid);
+
+    void remove(MolNum molnum, const MGID &mgid);
+    void remove(const QSet<MolNum> &molnums, const MGID &mgid);
+
+    void removeAll(const MGID &mgid);
+
+    void update(const MoleculeData &moldata);
+    
+    void update(const Molecules &molecules);
+    void update(const MolGroup &molgroup);
+    
+    void setContents(const MGID &mgid, const MoleculeView &molview);
+    void setContents(const MGID &mgid, const ViewsOfMol &molviews);
+    void setContents(const MGID &mgid, const Molecules &molecules);
+    void setContents(const MGID &mgid, const MolGroup &molgroup);
+ 
+protected:
+    MolGroup& getGroup(MGNum mgnum); 
+    void getGroups(const QList<MGNum> &mgnums,
+                   QVarLengthArray<MolGroup*,10> &groups);
+
+    QHash<MGNum,MolGroup*> getGroups();
+    QHash<MGNum,const MolGroup*> getGroups() const;
+
 private:
     /** All of the MoleculeGroup objects in this collection, 
         indexed by molecule group number */
