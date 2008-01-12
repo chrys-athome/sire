@@ -63,5 +63,39 @@ Specify<AtomID> AtomID::operator()(int i, int j) const
     return Specify<AtomID>(*this, i, j);
 }
 
+/** Return the set of atoms that match this ID in the molecule groups
+    set 'molgroups' */
+QHash< MolNum,Selector<Atom> >
+AtomID::selectAllFrom(const MolGroupsBase &molgroups) const
+{
+    //get a list of all of the molecules in this group
+    const Molecules all_mols = molgroups.molecules();
+    
+    QHash< MolNum,Selector<Atom> > selected_atoms;
+    
+    //loop over all molecules...
+    for (Molecules::const_iterator it = all_mols.constBegin();
+         it != all_mols.constEnd();
+         ++it)
+    {
+        try
+        {
+            //try to find this atom in this molecule
+            selected_atoms.insert( it.key(),
+                                   it->selectAll(*this) );
+        }
+        catch(...)
+        {}
+    }
+    
+    if (all_mols.isEmpty())
+        throw SireMol::missing_atom( QObject::tr(
+            "There was no atom matching the ID \"%1\" in "
+            "the set of molecules.")
+                .arg(this->toString()), CODELOC );
+
+    return all_mols;
+}
+
 //fully instantiate Specify<AtomID>
 template class Specify<AtomID>;

@@ -73,6 +73,9 @@ public:
     /** Map this ID back to the indicies of the matching atoms in the molecule, 
         using the passed MoleculeInfo to do the mapping */
     virtual QList<AtomIdx> map(const MoleculeInfoData &molinfo) const=0;
+    
+    virtual QHash< MolNum,Selector<Atom> > 
+                selectAllFrom(const MolGroupsBase &molgroups) const;
 };
 
 }

@@ -71,10 +71,29 @@ public:
         return "SireMol::MolGroupsBase";
     }
     
+    MGNum getGroupNumber(MGNum mgnum) const;
+    MGNum getGroupNumber(MGIdx mgidx) const;
+    MGNum getGroupNumber(const MGName &mgname) const;
+    MGNum getGroupNumber(const MGID &mgid) const;
+    
+    QList<MGNum> map(MGNum mgnum) const;
+    QList<MGNum> map(MGIdx mgidx) const;
+    QList<MGNum> map(const MGName &mgname) const;
     QList<MGNum> map(const MGID &mgid) const;
+    
+    MolNum getMoleculeNumber(MolNum molnum) const;
+    MolNum getMoleculeNumber(MolIdx molidx) const;
+    MolNum getMoleculeNumber(const MolName &molname) const;
+    MolNum getMoleculeNumber(const MolID &molid) const;
+    
+    QList<MolNum> map(MolNum molnum) const;
+    QList<MolNum> map(MolIdx molidx) const;
+    QList<MolNum> map(const MolName &molname) const;
+    QList<MolNum> map(const MolID &molid) const;
     
     virtual const MolGroup& at(MGNum mgnum) const=0;
     
+    const MolGroup& at(MGIdx mgidx) const;
     const MolGroup& at(const MGName &mgname) const;
     const MolGroup& at(const MGID &mgid) const;
     
@@ -91,14 +110,16 @@ public:
 
     QList<MoleculeGroup> selectAll(const MGID &mgid) const;
     QList<ViewsOfMol> selectAll(const MolID &molid) const;
-    QList<Segment> selectAll(const SegID &segid) const;
-    QList<Chain> selectAll(const ChainID &chainid) const;
-    QList<Residue> selectAll(const ResID &resid) const;
-    QList<CutGroup> selectAll(const CGID &cgid) const;
-    QList<Atom> selectAll(const AtomID &atomid) const;
+    
+    QHash< MolNum,Selector<Segment> > selectAll(const SegID &segid) const;
+    QHash< MolNum,Selector<Chain> > selectAll(const ChainID &chainid) const;
+    QHash< MolNum,Selector<Residue> > selectAll(const ResID &resid) const;
+    QHash< MolNum,Selector<CutGroup> > selectAll(const CGID &cgid) const;
+    QHash< MolNum,Selector<Atom> > selectAll(const AtomID &atomid) const;
     
     const MolGroup& group(MGNum mgnum) const;
     const MolGroup& group(const MGName &mgname) const;
+    const MolGroup& group(MGIdx mgidx) const;
     const MolGroup& group(const MGID &mgid) const;
     
     QList<MoleculeGroup> groups(MGNum mgnum) const;
@@ -111,11 +132,17 @@ public:
     QList<ViewsOfMol> molecules(MolNum molnum) const;
     QList<ViewsOfMol> molecules(const MolID &molid) const;
     
-    QList<Segment> segments(const SegID &segid) const;
-    QList<Chain> chains(const ChainID &chainid) const;
-    QList<Residue> residues(const ResID &resid) const;
-    QList<CutGroup> cutGroups(const CGID &cgid) const;
-    QList<Atom> atoms(const AtomID &atomid) const;
+    Segment segment(const SegID &segid) const;
+    Chain chain(const ChainID &chainid) const;
+    Residue residue(const ResID &resid) const;
+    CutGroup cutGroup(const CGID &cgid) const;
+    Atom atom(const AtomID &atomid) const;
+    
+    QHash< MolNum,Selector<Segment> > segments(const SegID &segid) const;
+    QHash< MolNum,Selector<Chain> > chains(const ChainID &chainid) const;
+    QHash< MolNum,Selector<Residue> > residues(const ResID &resid) const;
+    QHash< MolNum,Selector<CutGroup> > cutGroups(const CGID &cgid) const;
+    QHash< MolNum,Selector<Atom> > atoms(const AtomID &atomid) const;
 
     bool contains(MGNum mgnum) const;
     bool contains(MolNum molnum) const;
@@ -195,8 +222,6 @@ public:
     virtual void remove(MolNum molnum, const MGID &mgid)=0;
     virtual void remove(const QSet<MolNum> &molnums, const MGID &mgid)=0;
 
-    virtual void removeAll(const MGID &mgid)=0;
-
     virtual void update(const MoleculeData &moldata)=0;
     void update(const MoleculeView &molview);
     
@@ -222,6 +247,8 @@ protected:
     virtual QHash<MGNum,MolGroup*> getGroups()=0;
     virtual QHash<MGNum,const MolGroup*> getGroups() const=0;
 
+    bool needToUpdate(const MoleculeData &moldata) const;
+
     const MoleculeData& matchToExistingVersion(const MoleculeData &moldata) const;
 
     Molecules matchToExistingVersion(const Molecules &molecules) const;
@@ -235,6 +262,8 @@ protected:
     
     void removeFromIndex(MGNum mgnum, MolNum molnum);
     void removeFromIndex(MGNum mgnum, const QSet<MolNum> &molnums);
+
+    void clearIndex(MGNum mgnum);
 
     void clearIndex();
 
@@ -349,8 +378,6 @@ public:
 
     void remove(MolNum molnum, const MGID &mgid);
     void remove(const QSet<MolNum> &molnums, const MGID &mgid);
-
-    void removeAll(const MGID &mgid);
 
     void update(const MoleculeData &moldata);
     
