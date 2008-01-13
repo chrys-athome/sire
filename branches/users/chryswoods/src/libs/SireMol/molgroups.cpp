@@ -159,6 +159,31 @@ ViewsOfMol MolGroupsBase::operator[](const MolID &molid) const
     return this->at(molid);
 }
 
+Segment MolGroupsBase::operator[](const SegID &segid) const
+{
+    return this->at(segid);
+}
+
+Chain MolGroupsBase::operator[](const ChainID &chainid) const
+{
+    return this->at(chainid);
+}
+
+Residue MolGroupsBase::operator[](const ResID &resid) const
+{
+    return this->at(resid);
+}
+
+CutGroup MolGroupsBase::operator[](const CGID &cgid) const
+{
+    return this->at(cgid);
+}
+
+Atom MolGroupsBase::operator[](const AtomID &atomid) const
+{
+    return this->at(atomid);
+}
+
 /** Get the number of the molecule group whose number is 'mgnum'.
     This is an obvious function, only provided as a shortcut
     to prevent the MGID function being called if an MGNum is passed.
@@ -300,7 +325,7 @@ MolNum MolGroupsBase::getMoleculeNumber(MolIdx molidx) const
     int n = molidx.map( molnum_to_mgnum.count() );
     
     //find the nth molnum in the hash - this is potentially very slow!
-    QHash< MolNum,QVector<MGNum> >::const_iterator it = molnum_to_mgnum.begin();
+    QHash< MolNum,QList<MGNum> >::const_iterator it = molnum_to_mgnum.begin();
     
     for (int i=0; i<n; ++i)
     {
@@ -464,15 +489,15 @@ const MolGroup& MolGroupsBase::at(const MGID &mgid) const
 ViewsOfMol MolGroupsBase::at(MolNum molnum) const
 {
     //get the list of groups that contain this molecule
-    const QVector<MGNum> &mgnums = this->groupsContaining(molnum);
+    const QList<MGNum> &mgnums = this->groupsContaining(molnum);
     
     if (mgnums.count() == 1)
-        return this->at( mgnums.at(0) ).molecule(molnum);
+        return this->at( mgnums.first() ).molecule(molnum);
     else
     {
-        ViewsOfMol mol = this->at( mgnums.at(0) ).molecule(molnum);
+        ViewsOfMol mol = this->at( mgnums.first() ).molecule(molnum);
         
-        for (int i=1; i<mgnums.count(); ++i)
+        for (int i=1; i<mgnums.count(); ++i)ß
         {
             mol.add( this->at( mgnums.at(i) ).molecule(molnum) );
         }
@@ -503,6 +528,70 @@ ViewsOfMol MolGroupsBase::at(const MolID &molid) const
     return this->at(molnums.first());
 }
 
+/** Return the segment from this set that matches the ID 'segid'.
+    This segment must be wholly contained by one of the groups
+    in this set
+    
+    \throw SireMol::missing_segment
+    \throw SireMol::duplicate_segment
+    \throw SireError::invalid_index
+*/
+Segment MolGroupsBase::at(const SegID &segid) const
+{
+    return segid.selectFrom(*this);
+}
+
+/** Return the chain from this set that matches the ID 'chainid'.
+    This chain must be wholly contained by one of the groups
+    in this set
+    
+    \throw SireMol::missing_chain
+    \throw SireMol::duplicate_chain
+    \throw SireError::invalid_index
+*/
+Chain MolGroupsBase::at(const ChainID &chainid) const
+{
+    return chainid.selectFrom(*this);
+}
+
+/** Return the residue from this set that matches the ID 'resid'.
+    This residue must be wholly contained by one of the groups
+    in this set
+    
+    \throw SireMol::missing_residue
+    \throw SireMol::duplicate_residue
+    \throw SireError::invalid_index
+*/
+Residue MolGroupsBase::at(const ResID &resid) const
+{
+    return resid.selectFrom(*this);
+}
+
+/** Return the CutGroup from this set that matches the ID 'cgid'.
+    This CutGroup must be wholly contained by one of the groups
+    in this set
+    
+    \throw SireMol::missing_cutgroup
+    \throw SireMol::duplicate_cutgroup
+    \throw SireError::invalid_index
+*/
+CutGroup MolGroupsBase::at(const CGID &cgid) const
+{
+    return cgid.selectFrom(*this);
+}
+
+/** Return the atom from this set that matches the ID 'atomid'.
+    This atom must be contained in one of the groups in this set.
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+Atom MolGroupsBase::at(const AtomID &atomid) const
+{
+    return atomid.selectFrom(*this);
+}
+
 /** Return the MoleculeGroup that matches the ID 'mgid'
 
     \throw SireMol::missing_group
@@ -526,10 +615,57 @@ ViewsOfMol MolGroupsBase::select(const MolID &molid) const
     return this->at(molid);
 }
 
-Segment MolGroupsBase::select(const SegID &segid) const;
-Chain MolGroupsBase::select(const ChainID &chainid) const;
-Residue MolGroupsBase::select(const ResID &resid) const;
-CutGroup MolGroupsBase::select(const CGID &cgid) const;
+/** Return the segment from this set that matches the ID 'segid'.
+    This segment must be wholly contained by one of the groups
+    in this set
+    
+    \throw SireMol::missing_segment
+    \throw SireMol::duplicate_segment
+    \throw SireError::invalid_index
+*/
+Segment MolGroupsBase::select(const SegID &segid) const
+{
+    return this->at(segid);
+}
+
+/** Return the chain from this set that matches the ID 'chainid'.
+    This chain must be wholly contained by one of the groups
+    in this set
+    
+    \throw SireMol::missing_chain
+    \throw SireMol::duplicate_chain
+    \throw SireError::invalid_index
+*/
+Chain MolGroupsBase::select(const ChainID &chainid) const
+{
+    return this->at(chainid);
+}
+
+/** Return the residue from this set that matches the ID 'resid'.
+    This residue must be wholly contained by one of the groups
+    in this set
+    
+    \throw SireMol::missing_residue
+    \throw SireMol::duplicate_residue
+    \throw SireError::invalid_index
+*/
+Residue MolGroupsBase::select(const ResID &resid) const
+{
+    return this->at(resid);
+}
+
+/** Return the CutGroup from this set that matches the ID 'cgid'.
+    This CutGroup must be wholly contained by one of the groups
+    in this set
+    
+    \throw SireMol::missing_cutgroup
+    \throw SireMol::duplicate_cutgroup
+    \throw SireError::invalid_index
+*/
+CutGroup MolGroupsBase::select(const CGID &cgid) const
+{
+    return this->at(cgid);
+}
 
 /** Return the atom from this set that matches the ID 'atomid'.
     This atom must be contained in one of the groups in this set.
@@ -540,16 +676,160 @@ CutGroup MolGroupsBase::select(const CGID &cgid) const;
 */
 Atom MolGroupsBase::select(const AtomID &atomid) const
 {
-    return atomid.selectFrom(*this);
+    return this->at(atomid);
 }
 
-QList<MoleculeGroup> MolGroupsBase::selectAll(const MGID &mgid) const;
-QList<ViewsOfMol> MolGroupsBase::selectAll(const MolID &molid) const;
+/** Obvious shortcut for select(const MGID&) 
+    
+    \throw SireMol::missing_group
+*/
+QList<MoleculeGroup> MolGroupsBase::selectAll(MGNum mgnum) const
+{
+    QList<MoleculeGroup> molgroups;
+    molgroups.append( this->at(mgnum) );
+    
+    return molgroups;
+}
 
-QHash< MolNum,Selector<Segment> > MolGroupsBase::selectAll(const SegID &segid) const;
-QHash< MolNum,Selector<Chain> > MolGroupsBase::selectAll(const ChainID &chainid) const;
-QHash< MolNum,Selector<Residue> > MolGroupsBase::selectAll(const ResID &resid) const;
-QHash< MolNum,Selector<CutGroup> > MolGroupsBase::selectAll(const CGID &cgid) const;
+/** Obvious shortcut for select(const MGID&) 
+
+    \throw SireError::invalid_index
+*/
+QList<MoleculeGroup> MolGroupsBase::selectAll(MGIdx mgidx) const
+{
+    QList<MoleculeGroup> molgroups;
+    molgroups.append( this->at(mgidx) );
+    
+    return molgroups;
+}
+
+/** Return all of the molecule groups that are called 'mgname'
+
+    \throw SireMol::missing_group
+*/
+QList<MoleculeGroup> MolGroupsBase::selectAll(const MGName &mgname) const
+{
+    QHash< MGName,QList<MGNum> >::const_iterator it = mgname_to_mgnum.find(mgname);
+    
+    if (it == mgname_to_mgnum.end())
+        throw SireMol::missing_group( QObject::tr(
+            "There are no groups in this set called \"%1\". "
+            "The groups in this set are called %2.")
+                .arg(mgname).arg(Sire::toString(mgname_to_mgnum.keys())),
+                    CODELOC );
+          
+    //now get all of the groups          
+    QVarLengthArray<const MolGroup*,10> groups;
+    this->getGroups(*it, groups);
+    
+    QList<MoleculeGroup> molgroups;
+    
+    foreach (const MolGroup *group, groups)
+    {
+        molgroups.append( MoleculeGroup(*group) );
+    }
+    
+    return molgroups;
+}
+
+/** Return all of the molecule groups that match the ID 'mgid'
+
+    \throw SireMol::missing_group
+    \throw SireError::invalid_index
+*/
+QList<MoleculeGroup> MolGroupsBase::selectAll(const MGID &mgid) const
+{
+    //get the list of numbers that match this ID
+    QList<MGNum> mgnums = this->map(mgid);
+    
+    //now pick up those groups...
+    QVarLengthArray<const MolGroup*,10> groups;
+    this->getGroups(mgnums, groups);
+
+    QList<MoleculeGroup> molgroups;
+    
+    foreach (const MolGroup *group, groups)
+    {
+        molgroups.append( MoleculeGroup(*group) );
+    }
+    
+    return molgroups;
+}
+
+/** Return the views of the molecule(s) that match the molecule ID
+    'molid'. This returns all views of the molecule in the groups,
+    and if a view is contained multiple times, then multiple copies
+    of that view will be returned.
+    
+    \throw SireMol::missing_molecule
+    \throw SireError::invalid_index
+*/
+QList<ViewsOfMol> MolGroupsBase::selectAll(const MolID &molid) const
+{
+    //get the numbers of molecules that match this ID
+    QList<MolNum> molnums = this->map(molid);
+    
+    QList<ViewsOfMol> molviews;
+    
+    foreach (MolNum molnum, molnums)
+    {
+        molviews.append(this->at(molnum));
+    }
+    
+    return molviews;
+}
+
+/** Return all of the segments from this set that match the ID 'segid'.
+    The returned segments are arranged by molecule, and only one copy
+    of each segment is returned, regardless of how many times it appears
+    in this set.
+    
+    \throw SireMol::missing_segment
+    \throw SireError::invalid_index
+*/
+QHash< MolNum,Selector<Segment> > MolGroupsBase::selectAll(const SegID &segid) const
+{
+    return segid.selectAllFrom(*this);
+}
+
+/** Return all of the chains from this set that match the ID 'chainid'.
+    The returned chains are arranged by molecule, and only one copy
+    of each chain is returned, regardless of how many times it appears
+    in this set.
+    
+    \throw SireMol::missing_chain
+    \throw SireError::invalid_index
+*/
+QHash< MolNum,Selector<Chain> > MolGroupsBase::selectAll(const ChainID &chainid) const
+{
+    return chainid.selectAllFrom(*this);
+}
+
+/** Return all of the residues from this set that match the ID 'resid'.
+    The returned residues are arranged by molecule, and only one copy
+    of each residue is returned, regardless of how many times it appears
+    in this set.
+    
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+*/
+QHash< MolNum,Selector<Residue> > MolGroupsBase::selectAll(const ResID &resid) const
+{
+    return resid.selectAllFrom(*this);
+}
+
+/** Return all of the CutGroups from this set that match the ID 'cgid'.
+    The returned CutGroups are arranged by molecule, and only one copy
+    of each CutGroup is returned, regardless of how many times it appears
+    in this set.
+    
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+QHash< MolNum,Selector<CutGroup> > MolGroupsBase::selectAll(const CGID &cgid) const
+{
+    return cgid.selectAllFrom(*this);
+}
 
 /** Return all of the atoms from this set that match the ID 'atomid'.
     The returned atoms are arranged by molecule, and only one copy
@@ -565,61 +845,516 @@ MolGroupsBase::selectAll(const AtomID &atomid) const
     return atomid.selectAllFrom(*this);
 }
 
-const MolGroup& MolGroupsBase::group(MGNum mgnum) const;
-const MolGroup& MolGroupsBase::group(const MGName &mgname) const;
-const MolGroup& MolGroupsBase::group(MGIdx mgidx) const;
-const MolGroup& MolGroupsBase::group(const MGID &mgid) const;
+/** Return the molecule group that has number 'mgnum'
 
-QList<MoleculeGroup> MolGroupsBase::groups(MGNum mgnum) const;
-QList<MoleculeGroup> MolGroupsBase::groups(const MGName &mgname) const;
-QList<MoleculeGroup> MolGroupsBase::groups(const MGID &mgid) const;
+    \throw SireMol::missing_group
+*/
+const MolGroup& MolGroupsBase::group(MGNum mgnum) const
+{
+    return this->at(mgnum);
+}
 
-ViewsOfMol MolGroupsBase::molecule(MolNum molnum) const;
-ViewsOfMol MolGroupsBase::molecule(const MolID &molid) const;
+/** Return the molecule group that has name 'mgname'
 
-QList<ViewsOfMol> MolGroupsBase::molecules(MolNum molnum) const;
-QList<ViewsOfMol> MolGroupsBase::molecules(const MolID &molid) const;
+    \throw SireMol::missing_group
+    \throw SireMol::duplicate_group
+*/
+const MolGroup& MolGroupsBase::group(const MGName &mgname) const
+{
+    return this->at(mgname);
+}
 
-Segment MolGroupsBase::segment(const SegID &segid) const;
-Chain MolGroupsBase::chain(const ChainID &chainid) const;
-Residue MolGroupsBase::residue(const ResID &resid) const;
-CutGroup MolGroupsBase::cutGroup(const CGID &cgid) const;
-Atom MolGroupsBase::atom(const AtomID &atomid) const;
+/** Return the molecule group at index 'mgidx'
 
-QHash< MolNum,Selector<Segment> > MolGroupsBase::segments(const SegID &segid) const;
-QHash< MolNum,Selector<Chain> > MolGroupsBase::chains(const ChainID &chainid) const;
-QHash< MolNum,Selector<Residue> > MolGroupsBase::residues(const ResID &resid) const;
-QHash< MolNum,Selector<CutGroup> > MolGroupsBase::cutGroups(const CGID &cgid) const;
-QHash< MolNum,Selector<Atom> > MolGroupsBase::atoms(const AtomID &atomid) const;
+    \throw SireError::invalid_index
+*/
+const MolGroup& MolGroupsBase::group(MGIdx mgidx) const
+{
+    return this->at(mgidx);
+}
 
-bool MolGroupsBase::contains(MGNum mgnum) const;
-bool MolGroupsBase::contains(MolNum molnum) const;
-bool MolGroupsBase::contains(const MoleculeView &molview) const;
-bool MolGroupsBase::contains(const ViewsOfMol &molviews) const;
-bool MolGroupsBase::contains(const Molecules &molecules) const;
+/** Return the molecule group that matches the ID 'mgid'
 
-bool MolGroupsBase::intersects(const MoleculeView &molview) const;
-bool MolGroupsBase::intersects(const Molecules &other) const;
+    \throw SireMol::missing_group
+    \throw SireMol::duplicate_group
+    \throw SireError::invalid_index
+*/
+const MolGroup& MolGroupsBase::group(const MGID &mgid) const
+{
+    return this->at(mgid);
+}
 
-const QVector<MGNum>& MolGroupsBase::groupsContaining(MolNum molnum) const;
+/** Obvious shortcut for groups(const MGID&)
 
-int MolGroupsBase::nMolecules() const;
+    \throw SireMol::missing_group
+*/
+QList<MoleculeGroup> MolGroupsBase::groups(MGNum mgnum) const
+{
+    return this->selectAll(mgnum);
+}
 
-int MolGroupsBase::nViews() const;
-int MolGroupsBase::nViews(MolNum molnum) const;
+/** Obvious shortcut for groups(const MGID&)
 
-bool MolGroupsBase::isEmpty() const;
+    \throw SireMol::invalid_index
+*/
+QList<MoleculeGroup> MolGroupsBase::groups(MGIdx mgidx) const
+{
+    return this->selectAll(mgidx);
+}
 
-Molecules MolGroupsBase::molecules() const;
+/** Return all of the groups called 'mgname'
 
-QSet<MolNum> MolGroupsBase::molNums() const;
-QSet<MGNum> MolGroupsBase::mgNums() const;
+    \throw SireMol::missing_group
+*/
+QList<MoleculeGroup> MolGroupsBase::groups(const MGName &mgname) const
+{
+    return this->selectAll(mgname);
+}
 
-void MolGroupsBase::assertContains(MolNum molnum) const;
-void MolGroupsBase::assertContains(const MolID &molid) const;
+/** Return all of the groups that match the ID 'mgid'
 
-void MolGroupsBase::assertContains(MGNum mgnum) const;
-void MolGroupsBase::assertContains(const MGID &mgid) const;
+    \throw SireMol::missing_group
+*/
+QList<MoleculeGroup> MolGroupsBase::groups(const MGID &mgid) const
+{
+    return this->selectAll(mgid);
+}
+
+/** Return all of the views of the molecule that has number 'molnum'
+
+    \throw SireMol::missing_molecule
+*/
+ViewsOfMol MolGroupsBase::molecule(MolNum molnum) const
+{
+    return this->at(molnum);
+}
+
+/** Return all of the views of the molecule that matches 'molid'
+
+    \throw SireMol::missing_molecule
+    \throw SireMol::duplicate_molecule
+*/
+ViewsOfMol MolGroupsBase::molecule(const MolID &molid) const
+{
+    return this->at(molid);
+}
+
+/** Obvious shortcut for molecules(const MolID&)
+
+    \throw SireMol::missing_molecule
+*/
+QList<ViewsOfMol> MolGroupsBase::molecules(MolNum molnum) const
+{
+    return this->selectAll(molnum);
+}
+
+/** Return all of the molecules that match the ID 'molid'
+
+    \throw SireMol::missing_molecule
+*/
+QList<ViewsOfMol> MolGroupsBase::molecules(const MolID &molid) const
+{
+    return this->selectAll(molid);
+}
+
+/** Return the segment that matches the ID 'segid'
+
+    \throw SireMol::missing_segment
+    \throw SireMol::duplicate_segment
+    \throw SireError::invalid_index
+*/
+Segment MolGroupsBase::segment(const SegID &segid) const
+{
+    return this->at(segid);
+}
+
+/** Return the chain that matches the ID 'chainid'
+
+    \throw SireMol::missing_chain
+    \throw SireMol::duplicate_chain
+    \throw SireError::invalid_index
+*/
+Chain MolGroupsBase::chain(const ChainID &chainid) const
+{
+    return this->at(chainid);
+}
+
+/** Return the residue that matches the ID 'resid'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::duplicate_residue
+    \throw SireError::invalid_index
+*/
+Residue MolGroupsBase::residue(const ResID &resid) const
+{
+    return this->at(resid);
+}
+
+/** Return the CutGroup that matches the ID 'cgid'
+
+    \throw SireMol::missing_cutgroup
+    \throw SireMol::duplicate_cutgroup
+    \throw SireError::invalid_index
+*/
+CutGroup MolGroupsBase::cutGroup(const CGID &cgid) const
+{
+    return this->at(cgid);
+}
+
+/** Return the atom that matches the ID 'atomid'
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+Atom MolGroupsBase::atom(const AtomID &atomid) const
+{
+    return this->at(atomid);
+}
+
+/** Return all of the segments from this set that match the ID 'segid'.
+    The returned segments are arranged by molecule, and only one copy
+    of each segment is returned, regardless of how many times it appears
+    in this set.
+    
+    \throw SireMol::missing_segment
+    \throw SireError::invalid_index
+*/
+QHash< MolNum,Selector<Segment> > MolGroupsBase::segments(const SegID &segid) const
+{
+    return this->selectAll(segid);
+}
+
+/** Return all of the chains from this set that match the ID 'chainid'.
+    The returned chains are arranged by molecule, and only one copy
+    of each chain is returned, regardless of how many times it appears
+    in this set.
+    
+    \throw SireMol::missing_chain
+    \throw SireError::invalid_index
+*/
+QHash< MolNum,Selector<Chain> > MolGroupsBase::chains(const ChainID &chainid) const
+{
+    return this->selectAll(chainid);
+}
+
+/** Return all of the residues from this set that match the ID 'resid'.
+    The returned residues are arranged by molecule, and only one copy
+    of each residue is returned, regardless of how many times it appears
+    in this set.
+    
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+*/
+QHash< MolNum,Selector<Residue> > MolGroupsBase::residues(const ResID &resid) const
+{
+    return this->selectAll(resid);
+}
+
+/** Return all of the CutGroups from this set that match the ID 'cgid'.
+    The returned CutGroups are arranged by molecule, and only one copy
+    of each CutGroup is returned, regardless of how many times it appears
+    in this set.
+    
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+QHash< MolNum,Selector<CutGroup> > MolGroupsBase::cutGroups(const CGID &cgid) const
+{
+    return this->selectAll(cgid);
+}
+
+/** Return all of the atoms from this set that match the ID 'atomid'.
+    The returned atoms are arranged by molecule, and only one copy
+    of each atom is returned, regardless of how many times it appears
+    in this set.
+    
+    \throw SireMol::missing_atom
+    \throw SireError::invalid_index
+*/
+QHash< MolNum,Selector<Atom> > MolGroupsBase::atoms(const AtomID &atomid) const
+{
+    return this->selectAll(atomid);
+}
+
+/** Return whether or not this set contains the group with number 'mgnum' */
+bool MolGroupsBase::contains(MGNum mgnum) const
+{
+    return mgidx_to_num.contains(mgnum);
+}
+
+/** Return whether any of the groups contain any view of the molecule
+    with number 'molnum' */
+bool MolGroupsBase::contains(MolNum molnum) const
+{
+    return molnum_to_mgnum.contains(molnum);
+}
+
+/** Return whether or not any of the groups contains the view 'molview' */
+bool MolGroupsBase::contains(const MoleculeView &molview) const
+{
+    QHash< MolNum,QList<MGNum> >::const_iterator 
+                                       it = molnum_to_mgnum.find(molview.number());
+                                       
+    if (it == molnum_to_mgnum.end())
+        return false;
+        
+    QVarLengthArray<const MolGroup*,10> groups;
+    
+    this->getGroups(*it, groups);
+    
+    foreach (const MolGroup *group, groups)
+    {
+        if (group->contains(molview))
+            return true;
+    }
+    
+    return false;
+}
+
+/** Return whether or not this set contains all of the views of 
+    the molecule in 'molviews'. The views can be contained in 
+    multiple groups. */
+bool MolGroupsBase::contains(const ViewsOfMol &molviews) const
+{
+    QHash< MolNum,QList<MGNum> >::const_iterator 
+                                       it = molnum_to_mgnum.find(molview.number());
+                                       
+    if (it == molnum_to_mgnum.end())
+        return false;
+        
+    QVarLengthArray<const MolGroup*,10> groups;
+    
+    this->getGroups(*it, groups);
+
+    for (int i=0; i<molviews.nViews(); ++i)
+    {
+        PartialMolecule view = molviews.at(i);
+        
+        bool found_view = false;
+        
+        foreach (const MolGroup *group, groups)
+        {
+            if (group.contains(view))
+            {
+                found_view = true;
+                break;
+            }
+        }
+        
+        if (not found_view)
+            return false;
+    }
+    
+    return true;
+}
+
+/** Return whether or not this set of groups contains all of the views
+    of all of the molecules in 'molecules'. These views can be spread
+    over lots of groups */
+bool MolGroupsBase::contains(const Molecules &molecules) const
+{
+    for (Molecules::const_iterator it = molecules.begin();
+         it != molecules.end();
+         ++it)
+    {
+        if (not this->contains(*it))
+            return false;
+    }
+    
+    return true;
+}
+
+/** Return whether or not any of the groups in this set contain any
+    of the atoms of the view of the molecule in 'molview' */
+bool MolGroupsBase::intersects(const MoleculeView &molview) const
+{
+    QHash< MolNum,QList<MGNum> >::const_iterator 
+                                       it = molnum_to_mgnum.find(molview.number());
+                                       
+    if (it == molnum_to_mgnum.end())
+        return false;
+        
+    QVarLengthArray<const MolGroup*,10> groups;
+    
+    this->getGroups(*it, groups);
+    
+    foreach (const MolGroup *group, groups)
+    {
+        if (group->intersects(molview))
+            return true;
+    }
+    
+    return false;
+}
+
+/** Return whether any of the groups in this set contain any of the
+    atoms of any of the views of any of the molecules in 'molecules' */
+bool MolGroupsBase::intersects(const Molecules &molecules) const
+{
+    for (Molecules::const_iterator it = molecules.begin();
+         it != molecules.end();
+         ++it)
+    {
+        if (this->intersects(*it))
+            return true;
+    }
+    
+    return false;
+}
+
+/** Return the list of molecule groups numbers of groups that 
+    contain at least one atom of the molecule with number 'molnum'
+    
+    \throw SireMol::missing_molecule
+*/
+const QList<MGNum>& MolGroupsBase::groupsContaining(MolNum molnum) const
+{
+    QHash< MolNum,QList<MGNum> >::const_iterator it = molnum_to_mgnum.find(molnum);
+    
+    if (it == molnum_to_mgnum.end())
+        throw SireMol::missing_molecule( QObject::tr(
+            "There is no molecule with number %1 is the groups in this set.")
+                .arg(molnum), CODELOC );
+                
+    return *it;
+}
+
+/** Return the total number of molecules in the groups in this set */
+int MolGroupsBase::nMolecules() const
+{
+    return molnum_to_mgnum.count();
+}
+
+/** Return the total number of views of molecules in the groups in this set.
+    Note that if a view appears multiple times, then it will be counted
+    multiple times */
+int MolGroupsBase::nViews() const
+{
+    const QHash<MGNum,const MolGroup*> groups = this->getGroups();
+    
+    int nviews = 0;
+    
+    for (QHash<MGNum,const MolGroup*>::const_iterator it = groups.constBegin();
+         it != groups.constEnd();
+         ++it)
+    {
+        nviews += it->nViews();
+    }
+    
+    return nviews;
+}
+
+/** Return the total number of views of the molecule with number  
+    'molnum' in the groups in this set. If a view appears multiple
+    times then it will be counted multiple times.
+    
+    \throw SireMol::missing_molecule
+*/
+int MolGroupsBase::nViews(MolNum molnum) const
+{
+    const QHash<MGNum,const MolGroup*> groups = 
+                                this->getGroups(groupsContaining(molnum));
+    
+    int nviews = 0;
+    
+    for (QHash<MGNum,const MolGroup*>::const_iterator it = groups.constBegin();
+         it != groups.constEnd();
+         ++it)
+    {
+        nviews += it->nViews(molnum);
+    }
+    
+    return nviews;
+}
+
+/** Return whether or not this set is empty (contains no groups) */
+bool MolGroupsBase::isEmpty() const
+{
+    return mgidx_to_num.isEmpty();
+}
+
+/** Return the complete set of all molecules in this group. If a view of a 
+    molecule appears multiple times in this set then multiple copies of 
+    that view will be placed into the returned Molecules object. 
+    Note that this is a potentially very slow operation! */
+Molecules MolGroupsBase::molecules() const
+{
+    Molecules all_mols;
+    
+    const QHash<MGNum,const MolGroup*> groups = this->getGroups();
+    
+    for (QHash<MGNum,const MolGroup*>::const_iterator = groups.constBegin();
+         it != groups.constEnd();
+         ++it)
+    {
+        all_mols += it->molecules();
+    }
+    
+    return all_mols;
+}
+
+/** Return the numbers of all molecules that contain at least
+    one atom in any of the groups of this set */
+QSet<MolNum> MolGroupsBase::molNums() const
+{
+    return molnum_to_mgnum.keys().toSet();
+}
+
+/** Return the numbers of all molecule groups in this set */
+QSet<MGNum> MolGroupsBase::mgNums() const
+{
+    return mgidx_to_num.toSet();
+}
+
+/** Assert that this set contains at least one atom of the 
+    molecule with number 'molnum'
+    
+    \throw SireMol::missing_molecule
+*/
+void MolGroupsBase::assertContains(MolNum molnum) const
+{
+    if (not molnum_to_mgnum.contains(molnum))
+        throw SireMol::missing_molecule( QObject::tr(
+            "None of the groups in this set contain the molecule with "
+            "number %1.")
+                .arg(molnum), CODELOC );
+}
+
+/** Assert that this set contains at least one atom of any
+    molecule that is identified by the ID 'molid'
+    
+    \throw SireMol::missing_molecule
+    \throw SireError::invalid_index
+*/
+void MolGroupsBase::assertContains(const MolID &molid) const
+{
+    this->map(molid);
+}
+
+/** Assert that this contains the molecule group with number 'mgnum'
+
+    \throw SireMol::missing_group
+*/
+void MolGroupsBase::assertContains(MGNum mgnum) const
+{
+    if (not mgidx_to_num.contains(mgnum))
+        throw SireMol::missing_group( QObject::tr(
+            "This set does not contain the molecule group with "
+            "number %1. Contained groups have numbers %2.")
+                .arg(mgnum).arg(Sire::toString(mgidx_to_num)), CODELOC );
+}
+
+/** Assert that this contains at least one molecule group that
+    is identified by the ID 'mgid'
+    
+    \throw SireMol:missing_group
+    \throw SireError::invalid_index
+*/
+void MolGroupsBase::assertContains(const MGID &mgid) const
+{
+    this->map(mgid);
+}
 
 void MolGroupsBase::unite(const MoleculeView &molview, const MGID &mgid);
 void MolGroupsBase::unite(const ViewsOfMol &molviews, const MGID &mgid);
@@ -1327,7 +2062,7 @@ void MolGroups::update(const MoleculeData &moldata)
     //get the current copy of the molecule...
     if (this->needToUpdate(moldata))
     {
-        const QVector<MGNum> &mgnums = this->groupsContaining(moldata.number());
+        const QList<MGNum> &mgnums = this->groupsContaining(moldata.number());
         
         foreach (MGNum mgnum, mgnums)
         {

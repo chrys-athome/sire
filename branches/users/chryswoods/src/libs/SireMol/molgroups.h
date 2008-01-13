@@ -64,6 +64,12 @@ public:
     ViewsOfMol operator[](MolNum molnum) const;
     ViewsOfMol operator[](const MolID &molid) const;
     
+    Segment operator[](const SegID &segid) const;
+    Chain operator[](const ChainID &chainid) const;
+    Residue operator[](const ResID &resid) const;
+    CutGroup operator[](const CGID &cgid) const;
+    Atom operator[](const AtomID &atomid) const;
+    
     virtual MolGroupsBase* clone() const=0;
     
     static const char* typeName()
@@ -100,6 +106,12 @@ public:
     ViewsOfMol at(MolNum molnum) const;
     ViewsOfMol at(const MolID &molid) const;
 
+    Segment at(const SegID &segid) const;
+    Chain at(const ChainID &chainid) const;
+    Residue at(const ResID &resid) const;
+    CutGroup at(const CGID &cgid) const;
+    Atom at(const AtomID &atomid) const;
+
     MoleculeGroup select(const MGID &mgid) const;
     ViewsOfMol select(const MolID &molid) const;
     Segment select(const SegID &segid) const;
@@ -108,7 +120,11 @@ public:
     CutGroup select(const CGID &cgid) const;
     Atom select(const AtomID &atomid) const;
 
+    QList<MoleculeGroup> selectAll(MGNum mgnum) const;
+    QList<MoleculeGroup> selectAll(MGIdx mgidx) const;
+    QList<MoleculeGroup> selectAll(const MGName &mgname) const;
     QList<MoleculeGroup> selectAll(const MGID &mgid) const;
+    
     QList<ViewsOfMol> selectAll(const MolID &molid) const;
     
     QHash< MolNum,Selector<Segment> > selectAll(const SegID &segid) const;
@@ -123,6 +139,7 @@ public:
     const MolGroup& group(const MGID &mgid) const;
     
     QList<MoleculeGroup> groups(MGNum mgnum) const;
+    QList<MoleculeGroup> groups(MGIdx mgidx) const;
     QList<MoleculeGroup> groups(const MGName &mgname) const;
     QList<MoleculeGroup> groups(const MGID &mgid) const;
     
@@ -153,7 +170,7 @@ public:
     bool intersects(const MoleculeView &molview) const;
     bool intersects(const Molecules &other) const;
 
-    const QVector<MGNum>& groupsContaining(MolNum molnum) const;
+    const QList<MGNum>& groupsContaining(MolNum molnum) const;
     
     int nMolecules() const;
     
@@ -244,6 +261,9 @@ protected:
     virtual void getGroups(const QList<MGNum> &mgnums,
                            QVarLengthArray<MolGroup*,10> &groups)=0;
 
+    virtual void getGroups(const QList<MGNum> &mgnums,
+                           QVarLengthArray<const MolGroup*,10> &groups)=0;
+
     virtual QHash<MGNum,MolGroup*> getGroups()=0;
     virtual QHash<MGNum,const MolGroup*> getGroups() const=0;
 
@@ -275,7 +295,7 @@ private:
     QHash< MGName, QList<MGNum> > mgname_to_mgnum;
     
     /** This is an index of which groups contain which molecules */
-    QHash< MolNum, QVector<MGNum> > molnum_to_mgnum;
+    QHash< MolNum, QList<MGNum> > molnum_to_mgnum;
 };
 
 /** This class holds a collection of MoleculeGroup objects. This
