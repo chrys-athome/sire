@@ -224,6 +224,7 @@ public:
     virtual void remove(MolNum molnum);
     virtual void remove(const QSet<MolNum> &molnums);
 
+    virtual void removeAll(const MGID &mgid)=0;
     virtual void removeAll();
     
     virtual void remove(const MoleculeView &molview, const MGID &mgid)=0;
@@ -285,11 +286,9 @@ protected:
 
     void clearIndex(MGNum mgnum);
 
-    void clearIndex();
-
 private:
     /** This index keeps an order of MolGroup objects */
-    QVector<MGNum> mgidx_to_num;
+    QList<MGNum> mgidx_to_num;
     
     /** This index maps the names of the MolGroup objects */
     QHash< MGName, QList<MGNum> > mgname_to_mgnum;
@@ -395,6 +394,8 @@ public:
     void removeAll(const ViewsOfMol &molviews, const MGID &mgid);
     void removeAll(const Molecules &molecules, const MGID &mgid);
     void removeAll(const MolGroup &molgroup, const MGID &mgid);
+
+    void removeAll(const MGID &mgid);
 
     void remove(MolNum molnum, const MGID &mgid);
     void remove(const QSet<MolNum> &molnums, const MGID &mgid);

@@ -40,7 +40,7 @@ class MGIdx;
 class MGIdentifier;
 class MGNum;
 
-class MolGroup;
+class MolGroupsBase;
 
 /** This is the base class of all identifiers that are used 
     to identify a MoleculeGroup
@@ -66,7 +66,55 @@ public:
 
     virtual MGID* clone() const=0;
 
-    virtual QList<MGNum> map(const MolGroup &molgroup) const=0;
+    virtual QList<MGNum> map(const MolGroupsBase &molgroups) const=0;
+};
+
+class SIREMOL_EXPORT MGNumList : public MGID
+{
+public:
+    MGNumList();
+    MGNumList(const QList<MGNum> &mgnums);
+    
+    MGNumList(const MGNumList &other);
+    
+    ~MGNumList();
+    
+    static const char* typeName()
+    {
+        return "SireMol::MGNumList";
+    }
+    
+    const char* what() const
+    {
+        return MGNumList::typeName();
+    }
+    
+    MGNumList* clone() const
+    {
+        return new MGNumList(*this);
+    }
+    
+    bool isNull() const;
+    
+    uint hash() const;
+    
+    QString toString() const;
+    
+    MGNumList& operator=(const MGNumList &other);
+    
+    bool operator==(const SireID::ID &other) const
+    {
+        return SireID::ID::compare<MGNumList>(*this, other);
+    }
+
+    bool operator==(const MGNumList &other) const;
+    bool operator!=(const MGNumList &other) const;
+    
+    QList<MGNum> map(const MolGroupsBase &molgroups) const;
+
+private:
+    /** List of molecule group numbers */
+    QList<MGNum> mgnums;
 };
 
 }

@@ -132,6 +132,7 @@ set ( SIREMOL_SOURCES
       errors.cpp
       evaluator.cpp
       groupatomids.cpp
+      mgid.cpp
       mgidentifier.cpp
       molecule.cpp
       moleculecutting.cpp

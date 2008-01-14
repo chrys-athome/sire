@@ -124,7 +124,7 @@ public:
         return _num != other._num;
     }
     
-    QList<MGNum> map(const MolGroup&) const
+    QList<MGNum> map(const MolGroupsBase&) const
     {
         QList<MGNum> ret;
         ret.append(*this);

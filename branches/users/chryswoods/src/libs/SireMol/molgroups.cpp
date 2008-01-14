@@ -1356,47 +1356,356 @@ void MolGroupsBase::assertContains(const MGID &mgid) const
     this->map(mgid);
 }
 
-void MolGroupsBase::unite(const MoleculeView &molview, const MGID &mgid);
-void MolGroupsBase::unite(const ViewsOfMol &molviews, const MGID &mgid);
-void MolGroupsBase::unite(const Molecules &molecules, const MGID &mgid);
-void MolGroupsBase::unite(const MolGroup &molgroup, const MGID &mgid);
+/** Synonym for MolGroupsBase::addIfUnique
 
-void MolGroupsBase::remove(const MoleculeView &molview);
-void MolGroupsBase::remove(const ViewsOfMol &molviews);
-void MolGroupsBase::remove(const Molecules &molecules);
-void MolGroupsBase::remove(const MolGroup &molgroup);
+    \throw SireMol::missing_group
+    \throw SireError::invalid_index
+*/
+void MolGroupsBase::unite(const MoleculeView &molview, const MGID &mgid)
+{
+    this->addIfUnique(molview, mgid);
+}
 
-void MolGroupsBase::removeAll(const MoleculeView &molview);
-void MolGroupsBase::removeAll(const ViewsOfMol &molviews);
-void MolGroupsBase::removeAll(const Molecules &molecules);
-void MolGroupsBase::removeAll(const MolGroup &molgroup);
+/** Synonym for MolGroupsBase::addIfUnique
 
-void MolGroupsBase::remove(MolNum molnum);
-void MolGroupsBase::remove(const QSet<MolNum> &molnums);
+    \throw SireMol::missing_group
+    \throw SireError::invalid_index
+*/
+void MolGroupsBase::unite(const ViewsOfMol &molviews, const MGID &mgid)
+{
+    this->addIfUnique(molviews, mgid);
+}
 
-void MolGroupsBase::removeAll();
+/** Synonym for MolGroupsBase::addIfUnique
 
-void MolGroupsBase::update(const MoleculeView &molview);
+    \throw SireMol::missing_group
+    \throw SireError::invalid_index
+*/
+void MolGroupsBase::unite(const Molecules &molecules, const MGID &mgid)
+{
+    this->addIfUnique(molecules, mgid);
+}
 
-bool MolGroupsBase::needToUpdate(const MoleculeData &moldata) const;
+/** Synonym for MolGroupsBase::addIfUnique
 
-const MoleculeData& MolGroupsBase::matchToExistingVersion(const MoleculeData &moldata) const;
+    \throw SireMol::missing_group
+    \throw SireError::invalid_index
+*/
+void MolGroupsBase::unite(const MolGroup &molgroup, const MGID &mgid)
+{
+    this->addIfUnique(molgroup, mgid);
+}
 
-Molecules MolGroupsBase::matchToExistingVersion(const Molecules &molecules) const;
+/** Remove the view of the molecule in 'molview' from all of 
+    the groups in this set. This does nothing if this exact
+    view is not contained by any of the groups. If a group has
+    multiple copies of this view, then this removes only
+    the first copy. */
+void MolGroupsBase::remove(const MoleculeView &molview)
+{
+    //get the groups containing this molecule
+    QList<MGNum> mgnums = molnum_to_mgnum.value( molview.data().number() );
 
-void MolGroupsBase::addToIndex(const MolGroup &molgroup);
-void MolGroupsBase::addToIndex(MGNum mgnum, MolNum molnum);
-void MolGroupsBase::addToIndex(MGNum mgnum, const QSet<MolNum> &molnums);
+    if (not mgnums.isEmpty())
+        this->remove( molview, MGNumList(mgnums) );
+}
 
-void MolGroupsBase::removeFromIndex(MGNum mgnum);
-void MolGroupsBase::removeFromIndex(MolNum molnum);
+/** Remove the views of the molecule in 'molviews' from all of
+    the groups in this set. This does nothing if none of these
+    views are contained by any of the groups. If a group contains
+    multiple copies of a view, then only the first copy is removed. */
+void MolGroupsBase::remove(const ViewsOfMol &molviews)
+{
+    //get the groups containing this molecules
+    QList<MGNum> mgnums = molnum_to_mgnum.value( molviews.number() );
+    
+    if (not mgnums.isEmpty())
+        this->remove( molviews, MGNumList(mgnums) );
+}
 
-void MolGroupsBase::removeFromIndex(MGNum mgnum, MolNum molnum);
-void MolGroupsBase::removeFromIndex(MGNum mgnum, const QSet<MolNum> &molnums);
+/** Remove all of the views of all of the molecules in 'molecules'
+    from all of the groups in this set. If a group contains multiple
+    copies of a view then only the first copy is removed */
+void MolGroupsBase::remove(const Molecules &molecules)
+{
+    if (molecules.isEmpty() or this->isEmpty())
+        return;
 
-void MolGroupsBase::clearIndex(MGNum mgnum);
+    this->remove( molecules, MGNumList(mgidx_to_num) );
+}
 
-void MolGroupsBase::clearIndex();
+/** Remove all of the views of all of the molecules in 'molgroup'
+    from this set. Note that this does not remove the actual molecule
+    group. If you want to remove the group, then use the 
+    MolGroupsBase::remove(MGNum) function. Note that this also
+    only removes the first copy of any duplicated views. */
+void MolGroupsBase::remove(const MolGroup &molgroup)
+{
+    this->remove(molgroup.molecules());
+}
+
+/** Remove all copies of the view of the molecule in 'molview'
+    from all of the groups in this set. This removes all copies
+    of a view (even duplicate copies) */
+void MolGroupsBase::removeAll(const MoleculeView &molview)
+{
+    QList<MGNum> mgnums = molnum_to_mgnum.value(molview.data().number());
+    
+    if (not mgnums.isEmpty())
+        this->removeAll( molview, MGNumList(mgnums) );
+}
+
+/** Remove all copies of the views of the molecule in 'molviews'
+    from all of the groups in this set. This removes all
+    copies of the views (even duplicate copies) */
+void MolGroupsBase::removeAll(const ViewsOfMol &molviews)
+{
+    QList<MGNum> mgnus = molnum_to_mgnum.value(molviews.number());
+    
+    if (not mgnums.isEmpty())
+        this->removeAll( molviews, MGNumList(mgnums) );
+}
+
+/** Remove all copies of all views of all molecules in 'molecules'
+    from all of the groups in this set. This removes all copies
+    of the views (even duplicate copies) */
+void MolGroupsBase::removeAll(const Molecules &molecules)
+{
+    if (molecules.isEmpty() or this->isEmpty())
+        return;
+        
+    this->removeAll(molecules, MGNumList(mgidx_to_num));
+}
+
+/** Remove all copies of all views of all molecules in the 
+    group 'molgroup' from this set. Note that this removes
+    the molecules, not the group. Note also that all copies
+    of the views are removed (even duplicate copies) */
+void MolGroupsBase::removeAll(const MolGroup &molgroup)
+{
+    this->removeAll(molgroup.molecules());
+}
+
+/** Completely remove all views of the molecule with number
+    'molnum' from all of the groups from this set. This
+    does nothing if there are no views of this molecule
+    in any of the groups  */
+void MolGroupsBase::remove(MolNum molnum)
+{
+    QList<MGNum> mgnums = molnum_to_mgnum.value(molnum);
+    
+    if (not mgnums.isEmpty())
+        this->remove(molnum, MGNumList(mgnums));
+}
+
+/** Completely remove all views of the molecules whose numbers
+    are in 'molnums' from all of the groups in this set. This
+    does nothing if there are no views of these molecules in
+    any of the groups */
+void MolGroupsBase::remove(const QSet<MolNum> &molnums)
+{
+    if (molnums.isEmpty())
+        return;
+    else if (molnums.count() == 1)
+    {
+        this->remove( *(molnums.begin()) );
+        return;
+    }
+
+    //get the list of groups that contain these molecules
+    QList<MGNum> mgnums;
+    
+    foreach (MolNum molnum, molnums)
+    {
+        mgnums.append( molnum_to_mgnum.value(molnum) );
+    }
+    
+    mgnums = mgnums.toSet().toList();
+    
+    if (not mgnums.isEmpty())
+        this->remove(molnums, MGNumList(mgnums));
+}
+
+/** Completely clear all of the groups in this set */
+void MolGroupsBase::removeAll()
+{
+    if (this->nMolecules() > 1)
+    {
+        this->removeAll( MGNumList(mgidx_to_num) );
+    }
+}
+
+/** Update the copies in this set of the molecule viewed in 'molview' 
+    to use the same version as 'molview' */
+void MolGroupsBase::update(const MoleculeView &molview)
+{
+    this->update(molview.data());
+}
+
+/** Return a reference to the molecule data for the molecule whose data
+    is in 'moldata' that is at the same version as the data that is
+    already present in the groups of this set. This only returns
+    'moldata' if this molecule is not in this set */
+const MoleculeData& 
+MolGroupsBase::matchToExistingVersion(const MoleculeData &moldata) const
+{
+    MolNum molnum = moldata.number();
+
+    QHash< MolNum,QList<MGNum> >::const_iterator 
+                                    it = molnum_to_mgnum.find(molnum);
+                                    
+    if (it == molnum_to_mgnum.end())
+        //the molecule is not in this set - just return moldata
+        return moldata;
+        
+    //get this molecule...
+    const MoleculeData &existing_data = this->getGroup(it->first())
+                                                 .molecule(molnum).data();
+
+    return existing_data;
+}
+
+/** Return whether or not we need to update the molecule whose
+    data is in 'moldata' */
+bool MolGroupsBase::needToUpdate(const MoleculeData &moldata) const
+{
+    return moldata != this->matchToExistingVersion(moldata);
+}
+
+/** Return the set of molecules that is a copy of 'molecules', but where
+    each molecule has been updated to match the version that exists in 
+    the groups in this set */
+Molecules MolGroupsBase::matchToExistingVersion(const Molecules &molecules) const
+{
+    Molecules updated_mols = molecules;
+    
+    for (Molecules::const_iterator it = molecules.constBegin();
+         it != molecules.constEnd();
+         ++it)
+    {
+        updated_mols.update( this->matchToExistingVersion(it->data()) );
+    }
+    
+    return updated_mols;
+}
+
+/** Add the molecule group and all of its contained molecules to the index */
+void MolGroupsBase::addToIndex(const MolGroup &molgroup)
+{
+    if (mgidx_to_num.contains(molgroup.number()))
+        //this group is already in the index!
+        return;
+    
+    //record the number of the group - this allows the groups
+    //to be indexed    
+    mgidx_to_num.append(molgroup.number());
+    
+    //record the name of the group - this allows the groups
+    //to be accessed by name
+    mgname_to_mgnum[molgroup.name()].append(molgroup.number());
+    
+    //now add the contents of this group to the index
+    this->addToIndex(molgroup.number(), molgroup.molNums());
+}
+
+/** Add the molecule with number 'molnum' to the index of the group
+    with number 'mgnum' */
+void MolGroupsBase::addToIndex(MGNum mgnum, MolNum molnum)
+{
+    BOOST_ASSERT( mgidx_to_num.contains(mgnum) );
+    
+    QHash< MolNum,QList<MGNum> >::const_iterator 
+                                it = molnum_to_mgnum.constFind(molnum);
+                                
+    if (it != molnum_to_mgnum.constEnd() and 
+        it->contains(mgnum))
+    {
+        //this molecule is already recorded to be in the group
+        return;
+    }
+                                
+    molnum_to_mgnum[molnum].append(mgnum);
+}
+
+/** Add the set of molecules whose numbers are in 'molnums' to the 
+    index of the group whose number is in 'mgnum' */
+void MolGroupsBase::addToIndex(MGNum mgnum, const QSet<MolNum> &molnums)
+{
+    BOOST_ASSERT( mgidx_to_num.contains(mgnum) );
+    molnum_to_mgnum[mgnum].insert
+}
+
+/** Completely remove the group with number 'mgnum' from the index */
+void MolGroupsBase::removeFromIndex(MGNum mgnum)
+{
+    if (mgidx_to_num.removeAll(mgnum) == 0)
+        //no groups were removed
+        return;
+        
+    //ok, the group was removed - remove it from the other indicies
+    this->clearIndex(mgnum);
+
+    QMutableHashIterator< MGName,QList<MGNum> > it( mgname_to_mgnum );
+    
+    while (it.hasNext())
+    {
+        it.next();
+        
+        it.value().removeAll(mgnum);
+        
+        if (it.value().isEmpty())
+            it.remove();
+    }
+}
+
+/** Completely remove the molecule with number 'molnum' from the index */
+void MolGroupsBase::removeFromIndex(MolNum molnum)
+{
+    molnum_to_mgnum.remove(molnum);
+}
+
+/** Remove the molecule with number 'molnum' from the index
+    of the group with number 'mgnum' */
+void MolGroupsBase::removeFromIndex(MGNum mgnum, MolNum molnum)
+{
+    QHash< MolNum,QList<MGNum> >::iterator it = molnum_to_mgnum.find(molnum);
+    
+    if (it != molnum_to_mgnum.end())
+    {
+        it->removeAll(mgnum);
+        
+        if (it->isEmpty())
+            //there are no more groups that contain this molecule
+            molnum_to_mgnum.remove(molnum);
+    }
+}
+
+/** Remove all of the molecules whose numbers are in 'molnums' from the
+    group with number 'mgnum' */
+void MolGroupsBase::removeFromIndex(MGNum mgnum, const QSet<MolNum> &molnums)
+{
+    foreach (MolNum molnum, molnums)
+    {
+        this->removeFromIndex(mgnum, molnum);
+    }
+}
+
+/** Completely clear the index of the group with number 'mgnum' - this
+    removes the link between all molecules in this index and the group */
+void MolGroupsBase::clearIndex(MGNum mgnum)
+{
+    QMutableHashIterator< MolNum,QList<MGNum> > it( molnum_to_mgnum );
+    
+    while (it.hasNext())
+    {
+        it.next();
+        
+        it.value().removeAll(mgnum);
+        
+        if (it.value().isEmpty())
+            it.remove();
+    }
+}
 
 /////////////
 ///////////// Implementation of MolGroups
@@ -1992,6 +2301,23 @@ void MolGroups::removeAll(const Molecules &molecules, const MGID &mgid)
         }
         
         this->removeFromIndex(mgnum,removed_molnums);
+    }
+}
+
+/** Remove all of the molecules from all of the groups identified by
+    the ID 'mgid'
+    
+    \throw SireMol::missing_group
+    \throw SireError::invalid_index
+*/
+void MolGroups::removeAll(const MGID &mgid)
+{
+    QList<MGNum> mgnums = this->map(mgid);
+    
+    foreach (MGNum mgnum, mgnums)
+    {
+        mgroups.find(mgnum)->removeAll();
+        this->removeFromIndex(mgnum);
     }
 }
 
