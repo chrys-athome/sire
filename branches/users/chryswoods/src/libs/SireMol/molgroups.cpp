@@ -28,10 +28,42 @@
 
 #include "molgroups.h"
 
+#include "molecules.h"
+#include "viewsofmol.h"
+#include "segment.h"
+#include "chain.h"
+#include "residue.h"
+#include "cutgroup.h"
+#include "atom.h"
+
+#include "molgroup.h"
+
+#include "mgnum.h"
+#include "mgidx.h"
+#include "mgname.h"
+
+#include "molnum.h"
+#include "molidx.h"
+#include "molname.h"
+
+#include "segid.h"
+#include "chainid.h"
+#include "resid.h"
+#include "cgid.h"
+#include "atomid.h"
+
+#include "selector.hpp"
+
+#include "tostring.h"
+
+#include "SireMol/errors.h"
+#include "SireError/errors.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
 using namespace SireMol;
+using namespace SireBase;
 using namespace SireStream;
 
 /////////////
@@ -73,7 +105,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
             >> static_cast<PropertyBase&>(molgroupsbase);
     }
     else
-        throw version_error(r_molgroupsbase, "1", CODELOC);
+        throw version_error(v, "1", r_molgroupsbase, CODELOC);
         
     return ds;
 }
@@ -90,7 +122,9 @@ MolGroupsBase::MolGroupsBase(const MolGroupsBase &other)
                 molnum_to_mgnum(other.molnum_to_mgnum)
 {}
 
-MolGroupsBase::~MolGroupsBase();
+/** Destructor */
+MolGroupsBase::~MolGroupsBase()
+{}
 
 /** Copy assignment operator */
 MolGroupsBase& MolGroupsBase::operator=(const MolGroupsBase &other)
@@ -220,7 +254,7 @@ MGNum MolGroupsBase::getGroupNumber(const MGName &mgname) const
 */
 MGNum MolGroupsBase::getGroupNumber(MGIdx mgidx) const
 {
-    return mgidx_to_num.constData()[ mgidx.map(mgidx_to_num.count()) ];
+    return mgidx_to_num.at( mgidx.map(mgidx_to_num.count()) );
 }
 
 /** Return the number of the groups that matches 'mgid'
@@ -247,7 +281,7 @@ MGNum MolGroupsBase::getGroupNumber(const MGID &mgid) const
     
     \throw SireMol::missing_group
 */
-QList<MGNum> MolGroups::map(const MGName &mgname) const
+QList<MGNum> MolGroupsBase::map(const MGName &mgname) const
 {
     QHash< MGName,QList<MGNum> >::const_iterator it = mgname_to_mgnum.find(mgname);
     
@@ -497,7 +531,7 @@ ViewsOfMol MolGroupsBase::at(MolNum molnum) const
     {
         ViewsOfMol mol = this->at( mgnums.first() ).molecule(molnum);
         
-        for (int i=1; i<mgnums.count(); ++i)ß
+        for (int i=1; i<mgnums.count(); ++i)
         {
             mol.add( this->at( mgnums.at(i) ).molecule(molnum) );
         }
@@ -2590,22 +2624,58 @@ void MolGroups::getGroups(const QList<MGNum> &mgnums,
     }
 }
 
-/** Protected function used to return a hash of modifiable 
-    pointers to all of the groups in this set. */
-QHash<MGNum,MolGroup*> MolGroups::getGroups()
+/** Protected function used to return modifiable pointers to the
+    groups whose numbers are in 'mgnums'
+    
+    \throw SireMol::missing_group
+*/
+void MolGroups::getGroups(const QList<MGNum> &mgnums,
+                          QVarLengthArray<MolGroup*,10> &groups)
 {
-    QHash<MGNum,MolGroup*> groups;
+    groups.clear();
     
-    groups.reserve(mgroups.count());
+    QHash<MGNum,MoleculeGroup>::iterator it;
     
-    for (QHash<MGNum,MoleculeGroup>::iterator it = mgroups.begin();
-         it != mgroups.end();
-         ++it)
+    foreach (MGNum mgnum, mgnums)
     {
-        groups.insert( it.key(), &(it->base()) );
-    }
+        it = mgroups.find(mgnum);
+        
+        if (it == mgroups.end())
+            throw SireMol::missing_group( QObject::tr(
+                "Cannot find the MoleculeGroup with number %1. Available "
+                "groups are %2")
+                    .arg(mgnum).arg(Sire::toString(mgroups.keys())), CODELOC );
+        
     
-    return groups;
+        groups.append( &(it->base()) );
+    }
+}
+
+/** Protected function used to return const pointers to the
+    groups whose numbers are in 'mgnums'
+    
+    \throw SireMol::missing_group
+*/
+void MolGroups::getGroups(const QList<MGNum> &mgnums,
+                          QVarLengthArray<const MolGroup*,10> &groups) const
+{
+    groups.clear();
+    
+    QHash<MGNum,MoleculeGroup>::const_iterator it;
+    
+    foreach (MGNum mgnum, mgnums)
+    {
+        it = mgroups.constFind(mgnum);
+        
+        if (it == mgroups.constEnd())
+            throw SireMol::missing_group( QObject::tr(
+                "Cannot find the MoleculeGroup with number %1. Available "
+                "groups are %2")
+                    .arg(mgnum).arg(Sire::toString(mgroups.keys())), CODELOC );
+        
+    
+        groups.append( &(it->base()) );
+    }
 }
 
 /** Protected function used to return a hash of modifiable 

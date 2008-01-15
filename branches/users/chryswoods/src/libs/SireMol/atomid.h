@@ -39,9 +39,17 @@ namespace SireMol
 template<class ID>
 class Specify;
 
+template<class T>
+class Selector;
+
+class Atom;
+
 class MoleculeInfoData;
 class AtomIdx;
 class AtomIdentifier;
+
+class MolGroupsBase;
+class MolNum;
 
 /** This is the base class of all identifiers that are used 
     to identify an atom

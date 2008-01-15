@@ -129,7 +129,7 @@ public:
     
     using SireID::Index_T_<MGIdx>::map;
     
-    QList<MGNum> map(const MolGroup &molgroup) const;
+    QList<MGNum> map(const MolGroupsBase &molgroups) const;
 };
     
 }

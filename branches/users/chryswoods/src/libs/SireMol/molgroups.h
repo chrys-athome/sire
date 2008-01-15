@@ -29,14 +29,61 @@
 #ifndef SIREMOL_MOLGROUPS_H
 #define SIREMOL_MOLGROUPS_H
 
+#include <QVarLengthArray>
+#include <QHash>
+#include <QList>
+
+#include "SireBase/property.h"
+
 namespace SireMol
 {
 class MolGroupsBase;
 class MolGroups;
 }
 
+QDataStream& operator<<(QDataStream&, const SireMol::MolGroupsBase&);
+QDataStream& operator>>(QDataStream&, SireMol::MolGroupsBase&);
+
+QDataStream& operator<<(QDataStream&, const SireMol::MolGroups&);
+QDataStream& operator>>(QDataStream&, SireMol::MolGroups&);
+
 namespace SireMol
 {
+
+using SireBase::PropertyBase;
+using SireBase::ConcreteProperty;
+
+template<class T>
+class Selector;
+
+class MolGroup;
+class MoleculeGroup;
+
+class Molecules;
+class ViewsOfMol;
+class MoleculeView;
+class MoleculeData;
+class Segment;
+class Chain;
+class Residue;
+class CutGroup;
+class Atom;
+
+class MGNum;
+class MGName;
+class MGIdx;
+class MGID;
+
+class MolNum;
+class MolName;
+class MolIdx;
+class MolID;
+
+class SegID;
+class ChainID;
+class ResID;
+class CGID;
+class AtomID;
 
 /** This is the base class of all MoleculeGroups objects.
     These are containers for MoleculeGroup objects, thereby
@@ -189,8 +236,6 @@ public:
     
     void assertContains(MGNum mgnum) const;
     void assertContains(const MGID &mgid) const;
-    
-    virtual void update(const MolGroup &molgroup)=0;
     
     virtual void add(const MoleculeView &molview, const MGID &mgid)=0;
     virtual void add(const ViewsOfMol &molviews, const MGID &mgid)=0;
@@ -370,10 +415,6 @@ public:
     ///////////////////////////////////////////////
 
     const MolGroup& at(MGNum mgnum) const;
-    
-    void add(const MolGroup &molgroup);
-    void update(const MolGroup &molgroup);
-    void remove(MGNum mgnum);
 
     void add(const MoleculeView &molview, const MGID &mgid);
     void add(const ViewsOfMol &molviews, const MGID &mgid);
@@ -412,8 +453,12 @@ public:
  
 protected:
     MolGroup& getGroup(MGNum mgnum); 
+
     void getGroups(const QList<MGNum> &mgnums,
                    QVarLengthArray<MolGroup*,10> &groups);
+
+    void getGroups(const QList<MGNum> &mgnums,
+                   QVarLengthArray<const MolGroup*,10> &groups);
 
     QHash<MGNum,MolGroup*> getGroups();
     QHash<MGNum,const MolGroup*> getGroups() const;

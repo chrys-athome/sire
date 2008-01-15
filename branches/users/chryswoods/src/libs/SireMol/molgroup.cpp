@@ -29,9 +29,13 @@
 #include <QVector>
 
 #include "molgroup.h"
-#include "molnum.h"
 #include "partialmolecule.h"
 #include "molecule.h"
+
+#include "molnum.h"
+#include "molname.h"
+#include "molidx.h"
+#include "molidentifier.h"
 
 #include "mover.hpp"
 #include "editor.hpp"
@@ -39,6 +43,9 @@
 #include "mgname.h"
 #include "mgnum.h"
 
+#include "tostring.h"
+
+#include "SireMol/errors.h"
 #include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
@@ -109,6 +116,7 @@ public:
     
     QVector<MolNum> molidx_to_num;
     QVector<MolNumUInt> molviewidx_to_num;
+    QHash< MolName,QList<MolNum> > molname_to_num;
     
     MGName name;
     MGNum number;
@@ -131,6 +139,7 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
     sds << molgrouppvt.molecules
         << molgrouppvt.molidx_to_num
         << molgrouppvt.molviewidx_to_num
+        << molgrouppvt.molname_to_num
         << molgrouppvt.name
         << molgrouppvt.number
         << molgrouppvt.major_version
@@ -148,6 +157,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
     sds >> molgrouppvt.molecules
         >> molgrouppvt.molidx_to_num
         >> molgrouppvt.molviewidx_to_num
+        >> molgrouppvt.molname_to_num
         >> molgrouppvt.name
         >> molgrouppvt.number
         >> molgrouppvt.major_version
@@ -191,6 +201,7 @@ MolGroupPvt::MolGroupPvt(const QString &nme,
               molecules(other.molecules),
               molidx_to_num(other.molidx_to_num),
               molviewidx_to_num(other.molviewidx_to_num),
+              molname_to_num(other.molname_to_num),
               name(nme),
               number( MGNum::getUniqueNumber() ),
               major_version(0),
@@ -203,6 +214,7 @@ MolGroupPvt::MolGroupPvt(const MolGroupPvt &other)
               molecules(other.molecules),
               molidx_to_num(other.molidx_to_num),
               molviewidx_to_num(other.molviewidx_to_num),
+              molname_to_num(other.molname_to_num),
               name(other.name),
               number(other.number),
               major_version(other.major_version),
@@ -221,6 +233,7 @@ MolGroupPvt& MolGroupPvt::operator=(const MolGroupPvt &other)
         molecules = other.molecules;
         molidx_to_num = other.molidx_to_num;
         molviewidx_to_num = other.molviewidx_to_num;
+        molname_to_num = other.molname_to_num;
         name = other.name;
         number = other.number;
         major_version = other.major_version;
@@ -359,7 +372,37 @@ bool MolGroup::operator!=(const MolGroup &other) const
 */
 const ViewsOfMol& MolGroup::operator[](MolNum molnum) const
 {
-    return d->molecules.at(molnum);
+    return this->at(molnum);
+}
+
+/** Return the views of the molecule at index 'molidx'
+
+    \throw SireMol::invalid_index
+*/
+const ViewsOfMol& MolGroup::operator[](MolIdx molidx) const
+{
+    return this->at(molidx);
+}
+
+/** Return the views of the molecule called 'molname'
+
+    \throw SireMol::missing_molecule
+    \throw SireMol::duplicate_molecule
+*/
+const ViewsOfMol& MolGroup::operator[](const MolName &molname) const
+{
+    return this->at(molname);
+}
+
+/** Return the views of the molecule that matches the ID 'molid'
+
+    \throw SireMol::missing_molecule
+    \throw SireMol::duplicate_molecule
+    \throw SireError::invalid_index
+*/
+const ViewsOfMol& MolGroup::operator[](const MolID &molid) const
+{
+    return this->at(molid);
 }
 
 /** Return the specified view of the specified molecule...
@@ -370,6 +413,18 @@ const ViewsOfMol& MolGroup::operator[](MolNum molnum) const
 PartialMolecule MolGroup::operator[](const boost::tuple<MolNum,Index> &viewidx) const
 {
     return d->molecules.at(viewidx);
+}
+
+/** Return the specified view of the specified molecule...
+
+    \throw SireMol::missing_molecule
+    \throw SireMol::duplicate_molecule
+    \throw SireError::invalid_index
+*/
+PartialMolecule 
+MolGroup::operator[](const boost::tuple<MolIdentifier,Index> &viewidx) const
+{
+    return this->at(viewidx);
 }
 
 /** Add the views of the molecules in 'molecules' to this group. This
@@ -398,6 +453,37 @@ const ViewsOfMol& MolGroup::at(MolNum molnum) const
     return d->molecules.at(molnum);
 }
 
+/** Return the views of the molecule at index 'molidx'
+
+    \throw SireError::invalid_index
+*/
+const ViewsOfMol& MolGroup::at(MolIdx molidx) const
+{
+    return this->at( this->getMoleculeNumber(molidx) );
+}
+
+/** Return the views of the molecule called 'molname'
+
+    \throw SireMol::missing_molecule
+    \throw SireMol::duplicate_molecule
+    \throw SireMol::invalid_index
+*/
+const ViewsOfMol& MolGroup::at(const MolName &molname) const
+{
+    return this->at( this->getMoleculeNumber(molname) );
+}
+
+/** Return the views of the molecule that is identified by 'molid'
+
+    \throw SireMol::missing_molecule
+    \throw SireMol::duplicate_molecule
+    \throw SireError::invalid_index
+*/
+const ViewsOfMol& MolGroup::at(const MolID &molid) const
+{
+    return this->at( this->getMoleculeNumber(molid) );
+}
+
 /** Return the specified view of the specified molecule in this group.
 
     \throw SireMol::missing_molecule
@@ -408,6 +494,18 @@ PartialMolecule MolGroup::at(const boost::tuple<MolNum,Index> &viewidx) const
     return d->molecules.at(viewidx);
 }
 
+/** Return the view of hte molecule at 'viewidx'
+
+    \throw SireMol::missing_molecule
+    \throw SireMol::duplicate_molecule
+    \throw SireError::invalid_index
+*/
+PartialMolecule 
+MolGroup::at(const boost::tuple<MolIdentifier,Index> &viewidx) const
+{
+    return this->at( viewidx.get<0>().base(), viewidx.get<1>() );
+}
+
 /** Return the specified view of the specified molecule in this group.
 
     \throw SireMol::missing_molecule
@@ -416,6 +514,19 @@ PartialMolecule MolGroup::at(const boost::tuple<MolNum,Index> &viewidx) const
 PartialMolecule MolGroup::at(MolNum molnum, int viewidx) const
 {
     return d->molecules.at(molnum, viewidx);
+}
+
+/** Return the specified view of the molecule identified by 
+    the ID 'molid' 
+    
+    \throw SireMol::missing_molecule
+    \throw SireMol::duplicate_molecule
+    \throw SireError::invalid_index
+*/
+PartialMolecule MolGroup::at(const MolID &molid, int viewidx) const
+{
+    return d->molecules.at( this->getMoleculeNumber(molid),
+                            viewidx );
 }
 
 /** Return the views of the molecule at index 'idx' in this group.
@@ -451,11 +562,214 @@ const ViewsOfMol& MolGroup::molecule(MolNum molnum) const
     return d->molecules.at(molnum);
 }
 
+/** Return the views of the molecule at index 'molidx'
+
+    \throw SireError::invalid_index
+*/
+const ViewsOfMol& MolGroup::molecule(MolIdx molidx) const
+{
+    return this->at( this->getMoleculeNumber(molidx) );
+}
+
+/** Return the views of the molecule with name 'molname'
+
+    \throw SireMol::missing_molecule
+    \throw SireMol::duplicate_molecule
+*/
+const ViewsOfMol& MolGroup::molecule(const MolName &molname) const
+{
+    return this->at( this->getMoleculeNumber(molname) );
+}
+
+/** Return the views of the molecule that matches the ID 'molid'
+
+    \throw SireMol::missing_molecule
+    \throw SireMol::duplicate_molecule
+    \throw SireError::invalid_index
+*/
+const ViewsOfMol& MolGroup::molecule(const MolID &molid) const
+{
+    return this->at( this->getMoleculeNumber(molid) );
+}
+
+/** Return all of the molecules that match the ID 'molid'
+
+    \throw SireMol::missing_molecule
+    \throw SireError::invalid_index
+*/
+Molecules MolGroup::molecules(const MolID &molid) const
+{
+    QList<MolNum> molnums = this->map(molid);
+    
+    Molecules mols;
+    
+    foreach (MolNum molnum, molnums)
+    {
+        mols.add( d->molecules.at(molnum) );
+    }
+    
+    return mols;
+}
+
+/** Obvious function used to shortcut the getMoleculeNumber(const MolID&)
+    function
+    
+    \throw SireMol::missing_molecule
+*/
+MolNum MolGroup::getMoleculeNumber(MolNum molnum) const
+{
+    this->assertContains(molnum);
+    return molnum;
+}
+
+/** Return the number of the molecule at index 'molidx'
+
+    \throw SireError::invalid_index
+*/
+MolNum MolGroup::getMoleculeNumber(MolIdx molidx) const
+{
+    int i = molidx.map( d->molidx_to_num.count() );
+    
+    return d->molidx_to_num.constData()[i];
+}
+
+/** Return the number of the molecule with name 'molname'
+
+    \throw SireMol::missing_molecule
+    \throw SireMol::duplicate_molecule
+*/
+MolNum MolGroup::getMoleculeNumber(const MolName &molname) const
+{
+    QList<MolNum> molnums = this->map(molname);
+    
+    if (molnums.count() > 1)
+        throw SireMol::duplicate_molecule( QObject::tr(
+            "There is more than one molecule with the name \"%1\"."
+            "Their numbers are %2.")
+                .arg(molname).arg(Sire::toString(molnums)),
+                    CODELOC );
+
+    return molnums.first();
+}
+
+/** Return the number of the molecule that matches the ID 'molid'
+
+    \throw SireMol::missing_molecule
+    \throw SireMol::duplicate_molecule
+    \throw SireError::invalid_index
+*/
+MolNum MolGroup::getMoleculeNumber(const MolID &molid) const
+{
+    QList<MolNum> molnums = this->map(molid);
+    
+    if (molnums.count() > 1)
+        throw SireMol::duplicate_molecule( QObject::tr(
+            "There is more than one molecule that matches the ID %1. "
+            "Matching molecules have numbers %2.")
+                .arg(molid.toString())
+                .arg(Sire::toString(molnums)), CODELOC );
+                
+    return molnums.first();
+}
+
+/** Obvious overload that shortcuts the map(const MolID&) function
+
+    \throw SireMol::missing_molecule
+*/
+QList<MolNum> MolGroup::map(MolNum molnum) const
+{
+    this->assertContains(molnum);
+    
+    QList<MolNum> molnums;
+    molnums.append(molnum);
+    
+    return molnums;
+}
+
+/** Return the number of the molecule at index 'molidx'
+
+    \throw SireError::invalid_index
+*/
+QList<MolNum> MolGroup::map(MolIdx molidx) const
+{
+    int i = molidx.map( d->molidx_to_num.count() );
+
+    QList<MolNum> molnums;
+    molnums.append( d->molidx_to_num.constData()[i] );
+    
+    return molnums;
+}
+
+/** Return the numbers of the molecules that are called 'molname'
+
+    \throw SireMol::missing_molecule
+*/
+QList<MolNum> MolGroup::map(const MolName &molname) const
+{
+    QHash< MolName,QList<MolNum> >::const_iterator 
+                                        it = d->molname_to_num.find(molname);
+                                        
+    if (it == d->molname_to_num.end())
+        throw SireMol::missing_molecule( QObject::tr(
+            "There are no molecules called \"%1\" in this group. "
+            "Use the MolGroup::molNames() function to get the set "
+            "of the names of molecules in this group.")
+                .arg(molname), CODELOC );
+                
+    return *it;
+}
+
+/** Return the numbers of the molecules that match the ID 'molid'
+
+    \throw SireMol::missing_molecule
+    \throw SireMol::duplicate_molecule
+    \throw SireError::invalid_index
+*/
+QList<MolNum> MolGroup::map(const MolID &molid) const
+{
+    return molid.map(*this);
+}
+
 /** Return whether or not this group contains any views of the 
     molecule with number 'molnum' */
 bool MolGroup::contains(MolNum molnum) const
 {
     return d->molecules.contains(molnum);
+}
+
+/** Return whether or not this group contains a molecule at index 'molidx' */
+bool MolGroup::contains(MolIdx molidx) const
+{
+    try
+    {
+        molidx.map( d->molidx_to_num.count() );
+        return true;
+    }
+    catch(...)
+    {
+        return false;
+    }
+}
+
+/** Return whether or not this group contains any molecules called 'molname' */
+bool MolGroup::contains(const MolName &molname) const
+{
+    return d->molname_to_num.contains(molname);
+}
+
+/** Return whether or not this group contains any molecules that
+    match the ID 'molid' */
+bool MolGroup::contains(const MolID &molid) const
+{
+    try
+    {
+        molid.map(*this);
+        return true;
+    }
+    catch(...)
+    {
+        return false;
+    }
 }
 
 /** Return whether or not this group contains any version of 
@@ -532,6 +846,26 @@ int MolGroup::nViews() const
 int MolGroup::nViews(MolNum molnum) const
 {
     return d->molecules.nViews(molnum);
+}
+
+/** Return the number of views of the molecule(s) that match
+    the ID 'molid'
+    
+    \throw SireMol::missing_molecule
+    \throw SireError::invalid_index
+*/
+int MolGroup::nViews(const MolID &molid) const
+{
+    QList<MolNum> molnums = this->map(molid);
+    
+    int nviews = 0;
+    
+    foreach (MolNum molnum, molnums)
+    {
+        nviews += this->nViews(molnum);
+    }
+    
+    return nviews;
 }
 
 /** Return the number of views of the molecule at index 'idx'
@@ -634,10 +968,40 @@ MolGroup::const_iterator MolGroup::constFind(MolNum molnum) const
     return d->molecules.constFind(molnum);
 }
 
+/** Return an iterator that points to the molecule that matches
+    the ID 'molid'
+    
+    \throw SireMol::missing_molecule
+    \throw SireMol::duplicate_molecule
+    \throw SireError::invalid_index
+*/
+MolGroup::const_iterator MolGroup::find(const MolID &molid) const
+{
+    return this->find( this->getMoleculeNumber(molid) );
+}
+
+/** Return an iterator that points to the molecule that matches
+    the ID 'molid'
+    
+    \throw SireMol::missing_molecule
+    \throw SireMol::duplicate_molecule
+    \throw SireError::invalid_index
+*/
+MolGroup::const_iterator MolGroup::constFind(const MolID &molid) const
+{
+    return this->constFind( this->getMoleculeNumber(molid) );
+}
+
 /** Return the numbers of all molecules present in this group */
 QSet<MolNum> MolGroup::molNums() const
 {
     return d->molecules.molNums();
+}
+
+/** Return the set of all names of the molecules in this group */
+QSet<MolName> MolGroup::molNames() const
+{
+    return d->molname_to_num.keys().toSet();
 }
 
 /** Assert that this group contains a view of any part of the 
@@ -648,6 +1012,20 @@ QSet<MolNum> MolGroup::molNums() const
 void MolGroup::assertContains(MolNum molnum) const
 {
     d->molecules.assertContains(molnum);
+}
+
+/** Assert that this group contains a molecule called 'molname'
+
+    \throw SireMol::missing_molecule
+*/
+void MolGroup::assertContains(const MolName &molname) const
+{
+    if (not d->molname_to_num.contains(molname))
+        throw SireMol::missing_molecule( QObject::tr(
+            "There is no molecule called \"%1\" in this group. Use "
+            "MolGroup::molNames() to get the set of names of molecules "
+            "that are in this group.")
+                .arg(molname), CODELOC );
 }
 
 /** Return the name of this group */

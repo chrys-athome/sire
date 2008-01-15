@@ -356,6 +356,35 @@ public:
     }
 };
 
+/** This exception is thrown when a new molecule group is added 
+    to a set that already contains a group with the same ID, or
+    when multiple groups match the same ID, but only one group
+    is required.
+
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT duplicate_group : public siremol_error
+{
+public:
+    duplicate_group() : siremol_error()
+    {}
+
+    duplicate_group(QString err, QString place = QString::null)
+                  : siremol_error(err,place)
+    {}
+
+    duplicate_group(const duplicate_group &other) : siremol_error(other)
+    {}
+
+    ~duplicate_group() throw()
+    {}
+
+    const char* what() const throw()
+    {
+        return "SireMol::duplicate_group";
+    }
+};
+
 /** This exception is thrown when an action is requested of a non-existant molecule
 
     @author Christopher Woods

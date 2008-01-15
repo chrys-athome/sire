@@ -125,21 +125,52 @@ public:
     virtual bool operator!=(const MolGroup &other) const;
     
     const ViewsOfMol& operator[](MolNum molnum) const;
+    const ViewsOfMol& operator[](MolIdx molidx) const;
+    const ViewsOfMol& operator[](const MolName &molname) const;
+    const ViewsOfMol& operator[](const MolID &molid) const;
+    
     PartialMolecule operator[](const boost::tuple<MolNum,Index> &viewidx) const;
+    PartialMolecule operator[](const boost::tuple<MolIdentifier,Index> &viewidx) const;
     
     MolGroup& operator+=(const Molecules &molecules);
     MolGroup& operator-=(const Molecules &molecules);
     
     const ViewsOfMol& at(MolNum molnum) const;
+    const ViewsOfMol& at(MolIdx molidx) const;
+    const ViewsOfMol& at(const MolName &molname) const;
+    const ViewsOfMol& at(const MolID &molid) const;
+    
     PartialMolecule at(const boost::tuple<MolNum,Index> &viewidx) const;
+    PartialMolecule at(const boost::tuple<MolIdentifier,Index> &viewidx) const;
+    
     PartialMolecule at(MolNum molnum, int viewidx) const;
+    PartialMolecule at(const MolID &molid, int viewidx) const;
     
     const ViewsOfMol& moleculeAt(int idx) const;
     PartialMolecule viewAt(int idx) const;
 
     const ViewsOfMol& molecule(MolNum molnum) const;
+    const ViewsOfMol& molecule(MolIdx molidx) const;
+    const ViewsOfMol& molecule(const MolName &molname) const;
+    const ViewsOfMol& molecule(const MolID &molid) const;
+
+    Molecules molecules(const MolID &molid) const;
+
+    MolNum getMoleculeNumber(MolNum molnum) const;
+    MolNum getMoleculeNumber(MolIdx molidx) const;
+    MolNum getMoleculeNumber(const MolName &molname) const;
+    MolNum getMoleculeNumber(const MolID &molid) const;
+
+    QList<MolNum> map(MolNum molnum) const;
+    QList<MolNum> map(MolIdx molidx) const;
+    QList<MolNum> map(const MolName &molname) const;
+    QList<MolNum> map(const MolID &molid) const;
 
     bool contains(MolNum molnum) const;
+    bool contains(MolIdx molidx) const;
+    bool contains(const MolName &molname) const;
+    bool contains(const MolID &molid) const;
+    
     bool contains(const MoleculeView &molview) const;
     bool contains(const ViewsOfMol &molviews) const;
     bool contains(const Molecules &molecules) const;
@@ -152,7 +183,10 @@ public:
     int nMolecules() const;
     
     int nViews() const;
+
     int nViews(MolNum molnum) const;
+    int nViews(const MolID &molid) const;
+
     int nViews(Index idx) const;
 
     bool isEmpty() const;
@@ -174,9 +208,14 @@ public:
     const_iterator find(MolNum molnum) const;
     const_iterator constFind(MolNum molnum) const;
 
+    const_iterator find(const MolID &molid) const;
+    const_iterator constFind(const MolID &molid) const;
+
     QSet<MolNum> molNums() const;
+    QSet<MolName> molNames() const;
 
     void assertContains(MolNum molnum) const;
+    void assertContains(const MolName &molname) const;
 
     const MGName& name() const;
     MGNum number() const;
