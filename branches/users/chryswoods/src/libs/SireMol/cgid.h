@@ -42,9 +42,19 @@ class Specify;
 template<class T>
 class AtomsIn;
 
+template<class T>
+class Selector;
+
 class CGIdx;
 class CGIdentifier;
 class MoleculeInfoData;
+
+class CutGroup;
+
+class Molecules;
+class MolGroup;
+class MolGroupsBase;
+class MolNum;
 
 /** This is the base class of all identifiers that are used 
     to identify a CutGroup
@@ -81,6 +91,19 @@ public:
     /** Map this ID back to the indicies of the CutGroups
         within the molecule described by the info in 'molinfo' */
     virtual QList<CGIdx> map(const MoleculeInfoData &molinfo) const=0;
+
+    virtual CutGroup selectFrom(const Molecules &molecules) const;
+    virtual QHash< MolNum,Selector<CutGroup> >
+                selectAllFrom(const Molecules &molecules) const;
+
+    virtual CutGroup selectFrom(const MolGroup &molgroup) const;
+    virtual QHash< MolNum,Selector<CutGroup> >
+                selectAllFrom(const MolGroup &molgroup) const;
+    
+    virtual CutGroup selectFrom(const MolGroupsBase &molgroups) const;
+    virtual QHash< MolNum,Selector<CutGroup> > 
+                selectAllFrom(const MolGroupsBase &molgroups) const;
+
 };
 
 }

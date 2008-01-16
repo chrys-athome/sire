@@ -146,6 +146,7 @@ set ( SIREMOL_SOURCES
       moleculeview.cpp
       molgroup.cpp
       molgroups.cpp
+      molid.cpp
       molidentifier.cpp
       molviewproperty.cpp
       mover.cpp

@@ -41,6 +41,7 @@ class MolIdentifier;
 class MolNum;
 
 class MolGroup;
+class MolGroupsBase;
 
 /** This is the base class of all identifiers that are used 
     to identify a Molecule
@@ -67,6 +68,57 @@ public:
     virtual MolID* clone() const=0;
     
     virtual QList<MolNum> map(const MolGroup &molgroup) const=0;
+    
+    virtual QList<MolNum> map(const MolGroupsBase &molgroupsbase) const;
+};
+
+class SIREMOL_EXPORT MolNumList : public MolID
+{
+public:
+    MolNumList();
+    MolNumList(const QList<MolNum> &molnums);
+    
+    MolNumList(const MolNumList &other);
+    
+    ~MolNumList();
+    
+    static const char* typeName()
+    {
+        return "SireMol::MolNumList";
+    }
+    
+    const char* what() const
+    {
+        return MolNumList::typeName();
+    }
+    
+    MolNumList* clone() const
+    {
+        return new MolNumList(*this);
+    }
+    
+    bool isNull() const;
+    
+    uint hash() const;
+    
+    QString toString() const;
+    
+    MolNumList& operator=(const MolNumList &other);
+    
+    bool operator==(const SireID::ID &other) const
+    {
+        return SireID::ID::compare<MolNumList>(*this, other);
+    }
+
+    bool operator==(const MolNumList &other) const;
+    bool operator!=(const MolNumList &other) const;
+    
+    QList<MolNum> map(const MolGroup &molgroup) const;
+    QList<MolNum> map(const MolGroupsBase &molgroups) const;
+
+private:
+    /** List of molecule numbers */
+    QList<MolNum> molnums;
 };
 
 }

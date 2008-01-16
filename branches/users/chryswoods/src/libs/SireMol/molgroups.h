@@ -106,6 +106,7 @@ public:
     
     const MolGroup& operator[](MGNum mgnum) const;
     const MolGroup& operator[](const MGName &mgname) const;
+    const MolGroup& operator[](MGIdx mgidx) const;
     const MolGroup& operator[](const MGID &mgid) const;
     
     ViewsOfMol operator[](MolNum molnum) const;
@@ -219,6 +220,9 @@ public:
 
     const QList<MGNum>& groupsContaining(MolNum molnum) const;
     
+    int nGroups() const;
+    int count() const;
+    
     int nMolecules() const;
     
     int nViews() const;
@@ -308,7 +312,7 @@ protected:
                            QVarLengthArray<MolGroup*,10> &groups)=0;
 
     virtual void getGroups(const QList<MGNum> &mgnums,
-                           QVarLengthArray<const MolGroup*,10> &groups)=0;
+                           QVarLengthArray<const MolGroup*,10> &groups) const=0;
 
     virtual QHash<MGNum,MolGroup*> getGroups()=0;
     virtual QHash<MGNum,const MolGroup*> getGroups() const=0;

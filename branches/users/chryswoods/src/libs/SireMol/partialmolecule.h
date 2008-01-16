@@ -118,18 +118,57 @@ public:
 
     Molecule molecule() const;
 
+    Atom atom(AtomIdx atomidx) const;
+    Atom atom(const AtomID &atomid) const;
+
+    Selector<Atom> atoms(const AtomID &atomid) const;
+    Selector<Atom> atoms() const;
+    
+    CutGroup cutGroup(const CGID &cgid) const;
+    
+    Selector<CutGroup> cutGroups(const CGID &cgid) const;
+    Selector<CutGroup> cutGroups() const;
+    
+    Residue residue(const ResID &resid) const;
+    
+    Selector<Residue> residues(const ResID &resid) const;
+    Selector<Residue> residues() const;
+    
+    Chain chain(const ChainID &chainid) const;
+    
+    Selector<Chain> chains(const ChainID &chainid) const;
+    Selector<Chain> chains() const;
+    
+    Segment segment(const SegID &segid) const;
+    
+    Selector<Segment> segments(const SegID &segid) const;
+    Selector<Segment> segments() const;
+
     Atom select(AtomIdx atomidx) const;
     Atom select(const AtomID &atomid) const;
     
+    CutGroup select(const CGID &cgid) const;
+    Residue select(const ResID &resid) const;
+    Chain select(const ChainID &chainid) const;
+    Segment select(const SegID &segid) const;
+    
     Selector<Atom> selectAll(const AtomID &atomid) const;
+    Selector<Atom> selectAllAtoms() const;
+    
+    Selector<CutGroup> selectAll(const CGID &cgid) const;
+    Selector<CutGroup> selectAllCutGroups() const;
+    
+    Selector<Residue> selectAll(const ResID &resid) const;
+    Selector<Residue> selectAllResidues() const;
+
+    Selector<Chain> selectAll(const ChainID &chainid) const;
+    Selector<Chain> selectAllChains() const;
+    
+    Selector<Segment> selectAll(const SegID &segid) const;
+    Selector<Segment> selectAllSegments() const;
+
     Selector<Atom> selectAll() const;
     
-    Atom atom(AtomIdx atomidx) const;
-    Atom atom(const AtomID &atomid) const;
-    
-    Selector<Atom> atoms(const AtomID &atomid) const;
-    Selector<Atom> atoms() const;
-
     bool hasProperty(const PropertyName &key) const;
     
     bool hasMetadata(const PropertyName &metakey) const;

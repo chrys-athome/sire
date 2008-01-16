@@ -45,9 +45,19 @@ class AtomsIn;
 template<class T>
 class ResIn;
 
+template<class T>
+class Selector;
+
 class ChainIdx;
 class ChainIdentifier;
 class MoleculeInfoData;
+
+class Chain;
+
+class Molecules;
+class MolGroup;
+class MolGroupsBase;
+class MolNum;
 
 /** This is the base class of all identifiers that are used 
     to identify a chain within a molecule
@@ -88,6 +98,18 @@ public:
     /** Map this ID back to the indicies of the chains in the molecule, 
         using the passed MoleculeInfo to do the mapping */
     virtual QList<ChainIdx> map(const MoleculeInfoData &molinfo) const=0;
+
+    virtual Chain selectFrom(const Molecules &molecules) const;
+    virtual QHash< MolNum,Selector<Chain> >
+                    selectAllFrom(const Molecules &molecules) const;
+
+    virtual Chain selectFrom(const MolGroup &molgroup) const;
+    virtual QHash< MolNum,Selector<Chain> >
+                    selectAllFrom(const MolGroup &molgroup) const;
+    
+    virtual Chain selectFrom(const MolGroupsBase &molgroups) const;
+    virtual QHash< MolNum,Selector<Chain> > 
+                    selectAllFrom(const MolGroupsBase &molgroups) const;
 };
 
 }

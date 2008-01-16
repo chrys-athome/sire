@@ -48,6 +48,8 @@ class MoleculeInfoData;
 class AtomIdx;
 class AtomIdentifier;
 
+class Molecules;
+class MolGroup;
 class MolGroupsBase;
 class MolNum;
 
@@ -82,6 +84,15 @@ public:
         using the passed MoleculeInfo to do the mapping */
     virtual QList<AtomIdx> map(const MoleculeInfoData &molinfo) const=0;
     
+    virtual Atom selectFrom(const Molecules &molecules) const;
+    virtual QHash< MolNum,Selector<Atom> >
+                selectAllFrom(const Molecules &molecules) const;
+
+    virtual Atom selectFrom(const MolGroup &molgroup) const;
+    virtual QHash< MolNum,Selector<Atom> >
+                selectAllFrom(const MolGroup &molgroup) const;
+    
+    virtual Atom selectFrom(const MolGroupsBase &molgroups) const;
     virtual QHash< MolNum,Selector<Atom> > 
                 selectAllFrom(const MolGroupsBase &molgroups) const;
 };

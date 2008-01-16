@@ -157,6 +157,15 @@ const MolGroup& MolGroupsBase::operator[](const MGName &mgname) const
     return this->at(mgname);
 }
 
+/** Return a const reference to the molecule group at index 'mgidx'
+
+    \throw SireError::invalid_index
+*/
+const MolGroup& MolGroupsBase::operator[](MGIdx mgidx) const
+{
+    return this->at(mgidx);
+}
+
 /** Return a const reference to the molecule group that is 
     identified by 'mgid'
     
@@ -452,7 +461,7 @@ QList<MolNum> MolGroupsBase::map(const MolName &molname) const
     {
         try
         {
-            molnums.append( (*it)->map(molname) );
+            molnums += (*it)->map(molname);
         }
         catch(...)
         {}
@@ -1252,6 +1261,18 @@ const QList<MGNum>& MolGroupsBase::groupsContaining(MolNum molnum) const
                 .arg(molnum), CODELOC );
                 
     return *it;
+}
+
+/** Return the total number of groups in this set */
+int MolGroupsBase::nGroups() const
+{
+    return mgidx_to_num.count();
+}
+
+/** Return the total number of groups in this set */
+int MolGroupsBase::count() const
+{
+    return this->nGroups();
 }
 
 /** Return the total number of molecules in the groups in this set */

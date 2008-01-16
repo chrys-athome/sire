@@ -109,12 +109,7 @@ QList<MGNum> MGNumList::map(const MolGroupsBase &molgroups) const
 
     foreach (MGNum mgnum, mgnums)
     {
-        if (not molgroups.contains(mgnum))
-            throw SireMol::missing_group( QObject::tr(
-                "There is no molecule group with number %1 in the set. "
-                "Available groups are %2.")
-                    .arg(mgnum).arg( Sire::toString(molgroups.mgNums()) ),
-                        CODELOC );
+        molgroups.assertContains(mgnum);
     }
     
     return mgnums;

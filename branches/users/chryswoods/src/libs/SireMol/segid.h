@@ -42,9 +42,19 @@ class Specify;
 template<class T>
 class AtomsIn;
 
+template<class T>
+class Selector;
+
 class MoleculeInfoData;
 class SegIdx;
 class SegIdentifier;
+
+class Segment;
+
+class Molecules;
+class MolGroup;
+class MolGroupsBase;
+class MolNum;
 
 /** This is the base class of all identifiers that are used 
     to identify a Segment within a Molecule
@@ -82,6 +92,19 @@ public:
     /** Map this ID back to the indicies of the segments in the molecule, 
         using the passed MoleculeInfo to do the mapping */
     virtual QList<SegIdx> map(const MoleculeInfoData &molinfo) const=0;
+
+    virtual Segment selectFrom(const Molecules &molecules) const;
+    virtual QHash< MolNum,Selector<Segment> >
+                selectAllFrom(const Molecules &molecules) const;
+
+    virtual Segment selectFrom(const MolGroup &molgroup) const;
+    virtual QHash< MolNum,Selector<Segment> >
+                selectAllFrom(const MolGroup &molgroup) const;
+    
+    virtual Segment selectFrom(const MolGroupsBase &molgroups) const;
+    virtual QHash< MolNum,Selector<Segment> > 
+                selectAllFrom(const MolGroupsBase &molgroups) const;
+
 };
 
 }

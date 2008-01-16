@@ -31,6 +31,27 @@
 
 #include "specify.hpp"
 
+#include "atom.h"
+#include "selector.hpp"
+
+#include "mover.hpp"
+#include "editor.hpp"
+
+#include "partialmolecule.h"
+#include "segment.h"
+#include "chain.h"
+#include "residue.h"
+#include "cutgroup.h"
+#include "atom.h"
+
+#include "molecules.h"
+#include "molgroup.h"
+#include "molgroups.h"
+
+#include "SireMol/errors.h"
+
+#include "tostring.h"
+
 using namespace SireMol;
 using namespace SireID;
 
@@ -80,6 +101,114 @@ AtomsIn<ResID> ResID::atom(int i) const
 AtomsIn<ResID> ResID::atoms(int i, int j) const
 {
     return AtomsIn<ResID>(*this, i, j);
+}
+
+/** Return all of the residues from the 'molecules' that match
+    this ID
+    
+    \throw SireMol::missing_residue
+*/
+QHash< MolNum,Selector<Residue> >
+ResID::selectAllFrom(const Molecules &molecules) const
+{
+    QHash< MolNum,Selector<Residue> > selected_residues;
+    
+    //loop over all molecules...
+    for (Molecules::const_iterator it = molecules.constBegin();
+         it != molecules.constEnd();
+         ++it)
+    {
+        try
+        {
+            //try to find this residue in this molecule
+            selected_residues.insert( it.key(),
+                                       it->all().selectAll(*this) );
+        }
+        catch(...)
+        {}
+    }
+    
+    if (selected_residues.isEmpty())
+        throw SireMol::missing_residue( QObject::tr(
+            "There was no residue matching the ID \"%1\" in "
+            "the set of molecules.")
+                .arg(this->toString()), CODELOC );
+
+    return selected_residues;
+}
+
+/** Return the residue from the molecules 'molecules' that matches
+    this ID
+    
+    \throw SireMol::missing_residue
+    \throw SireMol::duplicate_residue
+*/
+Residue ResID::selectFrom(const Molecules &molecules) const
+{
+    QHash< MolNum,Selector<Residue> > mols = this->selectAllFrom(molecules);
+    
+    if (mols.count() > 1)
+        throw SireMol::duplicate_residue( QObject::tr(
+            "More than one molecule contains a residue that "
+            "matches this ID (%1). These molecules have numbers %2.")
+                .arg(this->toString()).arg(Sire::toString(mols.keys())),
+                    CODELOC );
+                    
+    const Selector<Residue> &residues = *(mols.constBegin());
+    
+    if (residues.count() > 1)
+        throw SireMol::duplicate_residue( QObject::tr(
+            "While only one molecule (MolNum == %1) "
+            "contains a residue that matches this ID (%2), it contains "
+            "more than one residue that matches.")
+                .arg(residues.data().number()).arg(this->toString()),
+                    CODELOC );
+                    
+    return residues[0];
+}
+
+/** Return the residue from the molecule group 'molgroup' that matches
+    this ID
+    
+    \throw SireMol::missing_residue
+    \throw SireMol::duplicate_residue
+*/
+Residue ResID::selectFrom(const MolGroup &molgroup) const
+{
+    return ResID::selectFrom(molgroup.molecules());
+}
+
+/** Return the residues from the molecule group 'molgroup' that match
+    this ID
+    
+    \throw SireMol::missing_residue
+*/
+QHash< MolNum,Selector<Residue> >
+ResID::selectAllFrom(const MolGroup &molgroup) const
+{
+    return ResID::selectAllFrom(molgroup.molecules());
+}
+
+/** Return the residue from the molecule groups 'molgroups' that matches 
+    this ID
+    
+    \throw SireMol::missing_residue
+    \throw SireMol::duplicate_residue
+*/
+Residue ResID::selectFrom(const MolGroupsBase &molgroups) const
+{
+    return ResID::selectFrom(molgroups.molecules());
+}
+
+/** Return the set of residues that match this ID in the molecule groups
+    set 'molgroups' 
+    
+    \throw SireMol::missing_residue
+*/
+QHash< MolNum,Selector<Residue> >
+ResID::selectAllFrom(const MolGroupsBase &molgroups) const
+{
+    return ResID::selectAllFrom(molgroups.molecules());
 }
 
 //fully instantiate Specify<ResID> and AtomsIn<ResID>

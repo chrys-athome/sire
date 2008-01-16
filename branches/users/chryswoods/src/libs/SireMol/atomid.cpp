@@ -30,6 +30,26 @@
 #include "atomidentifier.h"
 #include "specify.hpp"
 
+#include "atom.h"
+#include "selector.hpp"
+
+#include "mover.hpp"
+#include "editor.hpp"
+
+#include "segment.h"
+#include "chain.h"
+#include "residue.h"
+#include "cutgroup.h"
+#include "atom.h"
+
+#include "molecules.h"
+#include "molgroup.h"
+#include "molgroups.h"
+
+#include "SireMol/errors.h"
+
+#include "tostring.h"
+
 using namespace SireMol;
 using namespace SireID;
 
@@ -63,19 +83,19 @@ Specify<AtomID> AtomID::operator()(int i, int j) const
     return Specify<AtomID>(*this, i, j);
 }
 
-/** Return the set of atoms that match this ID in the molecule groups
-    set 'molgroups' */
-QHash< MolNum,Selector<Atom> >
-AtomID::selectAllFrom(const MolGroupsBase &molgroups) const
-{
-    //get a list of all of the molecules in this group
-    const Molecules all_mols = molgroups.molecules();
+/** Return all of the atoms from the 'molecules' that match
+    this ID
     
+    \throw SireMol::missing_atom
+*/
+QHash< MolNum,Selector<Atom> >
+AtomID::selectAllFrom(const Molecules &molecules) const
+{
     QHash< MolNum,Selector<Atom> > selected_atoms;
     
     //loop over all molecules...
-    for (Molecules::const_iterator it = all_mols.constBegin();
-         it != all_mols.constEnd();
+    for (Molecules::const_iterator it = molecules.constBegin();
+         it != molecules.constEnd();
          ++it)
     {
         try
@@ -88,13 +108,87 @@ AtomID::selectAllFrom(const MolGroupsBase &molgroups) const
         {}
     }
     
-    if (all_mols.isEmpty())
+    if (selected_atoms.isEmpty())
         throw SireMol::missing_atom( QObject::tr(
             "There was no atom matching the ID \"%1\" in "
             "the set of molecules.")
                 .arg(this->toString()), CODELOC );
 
-    return all_mols;
+    return selected_atoms;
+}
+
+/** Return the atom from the molecules 'molecules' that matches
+    this ID
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+*/
+Atom AtomID::selectFrom(const Molecules &molecules) const
+{
+    QHash< MolNum,Selector<Atom> > mols = this->selectAllFrom(molecules);
+    
+    if (mols.count() > 1)
+        throw SireMol::duplicate_atom( QObject::tr(
+            "More than one molecule contains an atom that "
+            "matches this ID (%1). These molecules have numbers %2.")
+                .arg(this->toString()).arg(Sire::toString(mols.keys())),
+                    CODELOC );
+                    
+    const Selector<Atom> &atoms = *(mols.constBegin());
+    
+    if (atoms.count() > 1)
+        throw SireMol::duplicate_atom( QObject::tr(
+            "While only one molecule (MolNum == %1) "
+            "contains an atom that matches this ID (%2), it contains "
+            "more than one atom that matches.")
+                .arg(atoms.data().number()).arg(this->toString()),
+                    CODELOC );
+                    
+    return atoms[0];
+}
+
+/** Return the atom from the molecule group 'molgroup' that matches
+    this ID
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+*/
+Atom AtomID::selectFrom(const MolGroup &molgroup) const
+{
+    return AtomID::selectFrom(molgroup.molecules());
+}
+
+/** Return the atoms from the molecule group 'molgroup' that match
+    this ID
+    
+    \throw SireMol::missing_atom
+*/
+QHash< MolNum,Selector<Atom> >
+AtomID::selectAllFrom(const MolGroup &molgroup) const
+{
+    return AtomID::selectAllFrom(molgroup.molecules());
+}
+
+/** Return the atom from the molecule groups 'molgroups' that matches 
+    this ID
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+*/
+Atom AtomID::selectFrom(const MolGroupsBase &molgroups) const
+{
+    return AtomID::selectFrom(molgroups.molecules());
+}
+
+/** Return the set of atoms that match this ID in the molecule groups
+    set 'molgroups' 
+    
+    \throw SireMol::missing_atom
+*/
+QHash< MolNum,Selector<Atom> >
+AtomID::selectAllFrom(const MolGroupsBase &molgroups) const
+{
+    return AtomID::selectAllFrom(molgroups.molecules());
 }
 
 //fully instantiate Specify<AtomID>

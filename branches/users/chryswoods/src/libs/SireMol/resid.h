@@ -42,9 +42,19 @@ class Specify;
 template<class T>
 class AtomsIn;
 
+template<class T>
+class Selector;
+
 class ResIdx;
 class ResIdentifier;
 class MoleculeInfoData;
+
+class Residue;
+
+class Molecules;
+class MolGroup;
+class MolGroupsBase;
+class MolNum;
 
 /** This is the base class of all identifiers that are used 
     to identify a residue within a molecule
@@ -82,6 +92,19 @@ public:
     /** Map this ID back to the indicies of the residues in the molecule, 
         using the passed MoleculeInfo to do the mapping */
     virtual QList<ResIdx> map(const MoleculeInfoData &molinfo) const=0;
+
+    virtual Residue selectFrom(const Molecules &molecules) const;
+    virtual QHash< MolNum,Selector<Residue> >
+                selectAllFrom(const Molecules &molecules) const;
+
+    virtual Residue selectFrom(const MolGroup &molgroup) const;
+    virtual QHash< MolNum,Selector<Residue> >
+                selectAllFrom(const MolGroup &molgroup) const;
+    
+    virtual Residue selectFrom(const MolGroupsBase &molgroups) const;
+    virtual QHash< MolNum,Selector<Residue> > 
+                selectAllFrom(const MolGroupsBase &molgroups) const;
+
 };
 
 }

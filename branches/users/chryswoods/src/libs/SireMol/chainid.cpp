@@ -30,6 +30,27 @@
 #include "chainidentifier.h"
 #include "specify.hpp"
 
+#include "atom.h"
+#include "selector.hpp"
+
+#include "mover.hpp"
+#include "editor.hpp"
+
+#include "partialmolecule.h"
+#include "segment.h"
+#include "chain.h"
+#include "residue.h"
+#include "cutgroup.h"
+#include "atom.h"
+
+#include "molecules.h"
+#include "molgroup.h"
+#include "molgroups.h"
+
+#include "SireMol/errors.h"
+
+#include "tostring.h"
+
 using namespace SireMol;
 using namespace SireID;
 
@@ -97,6 +118,114 @@ Specify<ChainID> ChainID::operator()(int i) const
 Specify<ChainID> ChainID::operator()(int i, int j) const
 {
     return Specify<ChainID>(*this, i, j);
+}
+
+/** Return all of the chains from the 'molecules' that match
+    this ID
+    
+    \throw SireMol::missing_chain
+*/
+QHash< MolNum,Selector<Chain> >
+ChainID::selectAllFrom(const Molecules &molecules) const
+{
+    QHash< MolNum,Selector<Chain> > selected_chains;
+    
+    //loop over all molecules...
+    for (Molecules::const_iterator it = molecules.constBegin();
+         it != molecules.constEnd();
+         ++it)
+    {
+        try
+        {
+            //try to find this atom in this molecule
+            selected_chains.insert( it.key(),
+                                       it->all().selectAll(*this) );
+        }
+        catch(...)
+        {}
+    }
+    
+    if (selected_chains.isEmpty())
+        throw SireMol::missing_chain( QObject::tr(
+            "There was no chain matching the ID \"%1\" in "
+            "the set of molecules.")
+                .arg(this->toString()), CODELOC );
+
+    return selected_chains;
+}
+
+/** Return the chain from the molecules 'molecules' that matches
+    this ID
+    
+    \throw SireMol::missing_chain
+    \throw SireMol::duplicate_chain
+*/
+Chain ChainID::selectFrom(const Molecules &molecules) const
+{
+    QHash< MolNum,Selector<Chain> > mols = this->selectAllFrom(molecules);
+    
+    if (mols.count() > 1)
+        throw SireMol::duplicate_chain( QObject::tr(
+            "More than one molecule contains a chain that "
+            "matches this ID (%1). These molecules have numbers %2.")
+                .arg(this->toString()).arg(Sire::toString(mols.keys())),
+                    CODELOC );
+                    
+    const Selector<Chain> &chains = *(mols.constBegin());
+    
+    if (chains.count() > 1)
+        throw SireMol::duplicate_chain( QObject::tr(
+            "While only one molecule (MolNum == %1) "
+            "contains a chain that matches this ID (%2), it contains "
+            "more than one chain that matches.")
+                .arg(chains.data().number()).arg(this->toString()),
+                    CODELOC );
+                    
+    return chains[0];
+}
+
+/** Return the chain from the molecule group 'molgroup' that matches
+    this ID
+    
+    \throw SireMol::missing_chain
+    \throw SireMol::duplicate_chain
+*/
+Chain ChainID::selectFrom(const MolGroup &molgroup) const
+{
+    return ChainID::selectFrom(molgroup.molecules());
+}
+
+/** Return the Chains from the molecule group 'molgroup' that match
+    this ID
+    
+    \throw SireMol::missing_chain
+*/
+QHash< MolNum,Selector<Chain> >
+ChainID::selectAllFrom(const MolGroup &molgroup) const
+{
+    return ChainID::selectAllFrom(molgroup.molecules());
+}
+
+/** Return the chain from the molecule groups 'molgroups' that matches 
+    this ID
+    
+    \throw SireMol::missing_chain
+    \throw SireMol::duplicate_chain
+*/
+Chain ChainID::selectFrom(const MolGroupsBase &molgroups) const
+{
+    return ChainID::selectFrom(molgroups.molecules());
+}
+
+/** Return the set of Chains that match this ID in the molecule groups
+    set 'molgroups' 
+    
+    \throw SireMol::missing_chain
+*/
+QHash< MolNum,Selector<Chain> >
+ChainID::selectAllFrom(const MolGroupsBase &molgroups) const
+{
+    return ChainID::selectAllFrom(molgroups.molecules());
 }
 
 //fully instantiate template classes
