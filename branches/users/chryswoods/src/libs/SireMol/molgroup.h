@@ -78,7 +78,16 @@ using SireBase::ConcreteProperty;
 using SireBase::PropertyBase;
 
 /** This is the virtual base class of all MoleculeGroup type
-    objects (e.g. MoleculeGroup, MolGroups and FFBase)
+    objects. Molecule groups are groups of molecules that also
+    provide full indexing, versioning and identification support.
+    
+    Molecule group form the foundation of forcefields (which use
+    groups to hold the molecules), Systems (again, use groups
+    to hold the molecules) and Moves (use groups to select which
+    molecules should be moved).
+    
+    Molecule groups provide the common interface for indexing,
+    searching and managing groups of molecules.
     
     @author Christopher Woods
 */

@@ -29,14 +29,20 @@
 #include "molgroups.h"
 
 #include "molecules.h"
+#include "molecule.h"
 #include "viewsofmol.h"
+#include "partialmolecule.h"
 #include "segment.h"
 #include "chain.h"
 #include "residue.h"
 #include "cutgroup.h"
 #include "atom.h"
 
+#include "mover.hpp"
+#include "editor.hpp"
+
 #include "molgroup.h"
+#include "moleculegroup.h"
 
 #include "mgnum.h"
 #include "mgidx.h"
@@ -767,9 +773,12 @@ QList<MoleculeGroup> MolGroupsBase::selectAll(const MGName &mgname) const
     
     QList<MoleculeGroup> molgroups;
     
-    foreach (const MolGroup *group, groups)
+    int ngroups = groups.count();
+    const MolGroup* const *groups_array = groups.constData();
+    
+    for (int i=0; i<ngroups; ++i)
     {
-        molgroups.append( MoleculeGroup(*group) );
+        molgroups.append( MoleculeGroup( *(groups_array[i]) ) );
     }
     
     return molgroups;
@@ -791,9 +800,12 @@ QList<MoleculeGroup> MolGroupsBase::selectAll(const MGID &mgid) const
 
     QList<MoleculeGroup> molgroups;
     
-    foreach (const MolGroup *group, groups)
+    int ngroups = groups.count();
+    const MolGroup* const *groups_array = groups.constData();
+    
+    for (int i=0; i<ngroups; ++i)
     {
-        molgroups.append( MoleculeGroup(*group) );
+        molgroups.append( MoleculeGroup( *(groups_array[i]) ) );
     }
     
     return molgroups;
@@ -1137,7 +1149,7 @@ bool MolGroupsBase::contains(MolNum molnum) const
 bool MolGroupsBase::contains(const MoleculeView &molview) const
 {
     QHash< MolNum,QList<MGNum> >::const_iterator 
-                                       it = molnum_to_mgnum.find(molview.number());
+                                  it = molnum_to_mgnum.find(molview.data().number());
                                        
     if (it == molnum_to_mgnum.end())
         return false;
@@ -1146,9 +1158,12 @@ bool MolGroupsBase::contains(const MoleculeView &molview) const
     
     this->getGroups(*it, groups);
     
-    foreach (const MolGroup *group, groups)
+    int count = groups.count();
+    const MolGroup* const *groups_array = groups.constData();
+    
+    for (int i=0; i<count; ++i)
     {
-        if (group->contains(molview))
+        if (groups_array[i]->contains(molview))
             return true;
     }
     
@@ -1161,7 +1176,7 @@ bool MolGroupsBase::contains(const MoleculeView &molview) const
 bool MolGroupsBase::contains(const ViewsOfMol &molviews) const
 {
     QHash< MolNum,QList<MGNum> >::const_iterator 
-                                       it = molnum_to_mgnum.find(molview.number());
+                                    it = molnum_to_mgnum.find(molviews.number());
                                        
     if (it == molnum_to_mgnum.end())
         return false;
@@ -1176,9 +1191,12 @@ bool MolGroupsBase::contains(const ViewsOfMol &molviews) const
         
         bool found_view = false;
         
-        foreach (const MolGroup *group, groups)
+        int count = groups.count();
+        const MolGroup* const *groups_array = groups.constData();
+        
+        for (int i=0; i<count; ++i)
         {
-            if (group.contains(view))
+            if (groups_array[i]->contains(view))
             {
                 found_view = true;
                 break;
@@ -1213,7 +1231,7 @@ bool MolGroupsBase::contains(const Molecules &molecules) const
 bool MolGroupsBase::intersects(const MoleculeView &molview) const
 {
     QHash< MolNum,QList<MGNum> >::const_iterator 
-                                       it = molnum_to_mgnum.find(molview.number());
+                                     it = molnum_to_mgnum.find(molview.data().number());
                                        
     if (it == molnum_to_mgnum.end())
         return false;
@@ -1222,9 +1240,12 @@ bool MolGroupsBase::intersects(const MoleculeView &molview) const
     
     this->getGroups(*it, groups);
     
-    foreach (const MolGroup *group, groups)
+    int count = groups.count();
+    const MolGroup* const *groups_array = groups.constData();
+    
+    for (int i=0; i<count; ++i)
     {
-        if (group->intersects(molview))
+        if (groups_array[i]->intersects(molview))
             return true;
     }
     
@@ -1294,7 +1315,7 @@ int MolGroupsBase::nViews() const
          it != groups.constEnd();
          ++it)
     {
-        nviews += it->nViews();
+        nviews += (*it)->nViews();
     }
     
     return nviews;
@@ -1308,16 +1329,17 @@ int MolGroupsBase::nViews() const
 */
 int MolGroupsBase::nViews(MolNum molnum) const
 {
-    const QHash<MGNum,const MolGroup*> groups = 
-                                this->getGroups(groupsContaining(molnum));
+    QVarLengthArray<const MolGroup*,10> groups;
+    this->getGroups(groupsContaining(molnum), groups);
+    
+    int count = groups.count();
+    const MolGroup* const *groups_array = groups.constData();
     
     int nviews = 0;
     
-    for (QHash<MGNum,const MolGroup*>::const_iterator it = groups.constBegin();
-         it != groups.constEnd();
-         ++it)
+    for (int i=0; i<count; ++i)
     {
-        nviews += it->nViews(molnum);
+        nviews += groups_array[i]->nViews(molnum);
     }
     
     return nviews;
@@ -1339,11 +1361,11 @@ Molecules MolGroupsBase::molecules() const
     
     const QHash<MGNum,const MolGroup*> groups = this->getGroups();
     
-    for (QHash<MGNum,const MolGroup*>::const_iterator = groups.constBegin();
+    for (QHash<MGNum,const MolGroup*>::const_iterator it = groups.constBegin();
          it != groups.constEnd();
          ++it)
     {
-        all_mols += it->molecules();
+        all_mols += (*it)->molecules();
     }
     
     return all_mols;
@@ -1515,7 +1537,7 @@ void MolGroupsBase::removeAll(const MoleculeView &molview)
     copies of the views (even duplicate copies) */
 void MolGroupsBase::removeAll(const ViewsOfMol &molviews)
 {
-    QList<MGNum> mgnus = molnum_to_mgnum.value(molviews.number());
+    QList<MGNum> mgnums = molnum_to_mgnum.value(molviews.number());
     
     if (not mgnums.isEmpty())
         this->removeAll( molviews, MGNumList(mgnums) );
@@ -1572,7 +1594,7 @@ void MolGroupsBase::remove(const QSet<MolNum> &molnums)
     
     foreach (MolNum molnum, molnums)
     {
-        mgnums.append( molnum_to_mgnum.value(molnum) );
+        mgnums += molnum_to_mgnum.value(molnum);
     }
     
     mgnums = mgnums.toSet().toList();
@@ -1686,8 +1708,10 @@ void MolGroupsBase::addToIndex(MGNum mgnum, MolNum molnum)
     index of the group whose number is in 'mgnum' */
 void MolGroupsBase::addToIndex(MGNum mgnum, const QSet<MolNum> &molnums)
 {
-    BOOST_ASSERT( mgidx_to_num.contains(mgnum) );
-    molnum_to_mgnum[mgnum].insert
+    foreach (MolNum molnum, molnums)
+    {
+        this->addToIndex(mgnum, molnum);
+    }
 }
 
 /** Completely remove the group with number 'mgnum' from the index */
@@ -1793,7 +1817,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MolGroups &molgroups)
             >> static_cast<MolGroupsBase&>(molgroups);
     }
     else
-        throw version_error(r_molgroups, "1", CODELOC);
+        throw version_error(v, "1", r_molgroups, CODELOC);
         
     return ds;
 }
@@ -1871,7 +1895,7 @@ const MolGroup& MolGroups::at(MGNum mgnum) const
                 .arg(mgnum)
                 .arg( Sire::toString(this->mgNums()) ), CODELOC );
                 
-    return it->base();
+    return it->read();
 }
 
 /** Add the molecule group 'molgroup' to this set. This does
@@ -1893,13 +1917,13 @@ void MolGroups::add(const MolGroup &molgroup)
          it != mgroups.constEnd();
          ++it)
     {
-        new_group.update(it->molecules());
+        new_group.edit().update(it->read().molecules());
     }
     
     //add the group to the index
-    this->addToIndex(new_group.base());
+    this->addToIndex(new_group.read());
     
-    mgroups.insert(new_group.number(), new_group);
+    mgroups.insert(new_group.read().number(), new_group);
 }
 
 /** Update the group 'molgroup'. If this group is in this set,
@@ -1913,7 +1937,7 @@ void MolGroups::update(const MolGroup &molgroup)
     QHash<MGNum,MoleculeGroup>::iterator it = mgroups.find(molgroup.number());
     
     if (it != mgroups.end() and 
-        molgroup.majorVersion() != it->majorVersion())
+        molgroup.majorVersion() != it->read().majorVersion())
     {
         //this group exists in this set and it is at a different
         //major version - this means that its complement of
@@ -1921,7 +1945,7 @@ void MolGroups::update(const MolGroup &molgroup)
         //in the index...
         
         //get the list of current molecules in this group
-        QSet<MolNum> old_molnums = it->molNums();
+        QSet<MolNum> old_molnums = it->read().molNums();
         
         //now the new set of numbers...
         QSet<MolNum> new_molnums = molgroup.molNums();
@@ -1933,7 +1957,7 @@ void MolGroups::update(const MolGroup &molgroup)
     //update all of the groups;
     for (it = mgroups.begin() ; it != mgroups.end(); ++it)
     {
-        it->update(molgroup);
+        it->edit().update(molgroup);
     }
 }
 
@@ -1961,7 +1985,7 @@ void MolGroups::remove(const MGID &mgid)
 {
     try
     {
-        QSet<MGNum> mgnums = this->map(mgid);
+        QList<MGNum> mgnums = this->map(mgid);
     
         foreach (MGNum mgnum, mgnums)
         {
@@ -1987,11 +2011,11 @@ void MolGroups::add(const MoleculeView &molview, const MGID &mgid)
     QList<MGNum> mgnums = this->map(mgid);
 
     PartialMolecule view(molview);
-    view.update( this->matchToExistingData(view.data()) );
+    view.update( this->matchToExistingVersion(view.data()) );
     
     foreach (MGNum mgnum, mgnums)
     {
-        mgroups.find(mgnum)->add(view);
+        mgroups.find(mgnum)->edit().add(view);
         this->addToIndex(mgnum, view.number());
     }
 }
@@ -2012,7 +2036,7 @@ void MolGroups::add(const ViewsOfMol &molviews, const MGID &mgid)
     
     foreach (MGNum mgnum, mgnums)
     {
-        mgroups.find(mgnum)->add(views);
+        mgroups.find(mgnum)->edit().add(views);
         this->addToIndex(mgnum, views.number());
     }
 }
@@ -2036,7 +2060,7 @@ void MolGroups::add(const Molecules &molecules, const MGID &mgid)
     
     foreach (MGNum mgnum, mgnums)
     {
-        mgroups.find(mgnum)->add(mols);
+        mgroups.find(mgnum)->edit().add(mols);
         this->addToIndex(mgnum, molnums);
     }
 }
@@ -2058,13 +2082,13 @@ void MolGroups::add(const MolGroup &molgroup, const MGID &mgid)
     //update the group to match the molecule versions
     //already present in this group...
     MoleculeGroup group(molgroup);
-    group.update( this->matchToExistingVersions(group.molecules()) );
+    group.edit().update( this->matchToExistingVersion(group.read().molecules()) );
     
-    QSet<MolNum> molnums = group.molNums();
+    QSet<MolNum> molnums = group.read().molNums();
     
     foreach (MGNum mgnum, mgnums)
     {
-        mgroups.find(mgnum)->add(group);
+        mgroups.find(mgnum)->edit().add(group);
         this->addToIndex(mgnum,molnums);
     }
 }
@@ -2087,7 +2111,7 @@ void MolGroups::addIfUnique(const MoleculeView &molview, const MGID &mgid)
     
     foreach (MGNum mgnum, mgnums)
     {
-        if ( mgroups.find(mgnum)->addIfUnique(view) )
+        if ( mgroups.find(mgnum)->edit().addIfUnique(view) )
             this->addToIndex(mgnum,view.number());
     }
 }
@@ -2110,7 +2134,7 @@ void MolGroups::addIfUnique(const ViewsOfMol &molviews, const MGID &mgid)
     
     foreach (MGNum mgnum, mgnums)
     {
-        ViewsOfMol added_views = groups.find(mgnum)->addIfUnique(views);
+        ViewsOfMol added_views = mgroups.find(mgnum)->edit().addIfUnique(views);
         
         if (not added_views.isEmpty())
             this->addToIndex(mgnum,views.number());
@@ -2129,12 +2153,12 @@ void MolGroups::addIfUnique(const Molecules &molecules, const MGID &mgid)
 {
     QList<MGNum> mgnums = this->map(mgid);
     
-    Molecules mols = this->matchExistingVersion(molecules);
+    Molecules mols = this->matchToExistingVersion(molecules);
     QSet<MolNum> molnums = mols.molNums();
     
     foreach (MGNum mgnum, mgnums)
     {
-        QList<ViewsOfMol> added_mols = mgroups.find(mgnum)->addIfUnique(mols);
+        QList<ViewsOfMol> added_mols = mgroups.find(mgnum)->edit().addIfUnique(mols);
         
         if (not added_mols.isEmpty())
         {
@@ -2166,12 +2190,12 @@ void MolGroups::addIfUnique(const MolGroup &molgroup, const MGID &mgid)
     
     //update the group...
     MolGroup group(molgroup);
-    group.update( this->matchExistingVersion(group.molecules()) );
+    group.update( this->matchToExistingVersion(group.molecules()) );
     
     //now add the molecules...
     foreach (MGNum mgnum, mgnums)
     {
-        QList<ViewsOfMol> added_mols = mgroups.find(mgnum)->addIfUnique(group);
+        QList<ViewsOfMol> added_mols = mgroups.find(mgnum)->edit().addIfUnique(group);
         
         if (not added_mols.isEmpty())
         {
@@ -2204,9 +2228,9 @@ void MolGroups::remove(const MoleculeView &molview, const MGID &mgid)
     {
         MoleculeGroup &mgroup = *(mgroups.find(mgnum));
         
-        if (mgroup.remove(molview))
+        if (mgroup.edit().remove(molview))
         {
-            if (not mgroup.contains(molnum))
+            if (not mgroup.read().contains(molnum))
                 this->removeFromIndex(mgnum,molnum);
         }
     }
@@ -2229,11 +2253,11 @@ void MolGroups::remove(const ViewsOfMol &molviews, const MGID &mgid)
     {
         MoleculeGroup &mgroup = *(mgroups.find(mgnum));
         
-        ViewsOfMol removed_views = mgroup.remove(molviews);
+        ViewsOfMol removed_views = mgroup.edit().remove(molviews);
         
         if (not removed_views.isEmpty())
         {
-            if (not mgroup.contains(molnum))
+            if (not mgroup.read().contains(molnum))
                 this->removeFromIndex(mgnum,molnum);
         }
     }
@@ -2254,13 +2278,13 @@ void MolGroups::remove(const Molecules &molecules, const MGID &mgid)
     {
         MoleculeGroup &mgroup = *(mgroups.find(mgnum));
     
-        QList<ViewsOfMol> removed_mols = mgroup.remove(molecules);
+        QList<ViewsOfMol> removed_mols = mgroup.edit().remove(molecules);
 
         QSet<MolNum> removed_molnums;
         
         foreach (const ViewsOfMol &removed_mol, removed_mols)
         {
-            if (not mgroup.contains(removed_mol.number()))
+            if (not mgroup.read().contains(removed_mol.number()))
                 removed_molnums.insert(removed_mol.number());
         }
         
@@ -2297,9 +2321,9 @@ void MolGroups::removeAll(const MoleculeView &molview, const MGID &mgid)
     {
         MoleculeGroup &mgroup = *(mgroups.find(mgnum));
         
-        if (mgroup.removeAll(molview))
+        if (mgroup.edit().removeAll(molview))
         {
-            if (not mgroup.contains(molnum))
+            if (not mgroup.read().contains(molnum))
                 this->removeFromIndex(mgnum, molnum);
         }
     }
@@ -2321,11 +2345,11 @@ void MolGroups::removeAll(const ViewsOfMol &molviews, const MGID &mgid)
     {
         MoleculeGroup &mgroup = *(mgroups.find(mgnum));
     
-        ViewsOfMol removed_views = mgroup.removeAll(molviews);
+        ViewsOfMol removed_views = mgroup.edit().removeAll(molviews);
         
         if (not removed_views.isEmpty())
         {
-            if (not mgroup.contains(molnum))
+            if (not mgroup.read().contains(molnum))
                 this->removeFromIndex(mgnum, molnum);
         }
     }
@@ -2345,13 +2369,13 @@ void MolGroups::removeAll(const Molecules &molecules, const MGID &mgid)
     {
         MoleculeGroup &mgroup = *(mgroups.find(mgnum));
     
-        QList<ViewsOfMol> removed_mols = mgroup.removeAll(molecules);
+        QList<ViewsOfMol> removed_mols = mgroup.edit().removeAll(molecules);
         
         QSet<MolNum> removed_molnums;
         
         foreach (const ViewsOfMol &removed_mol, removed_mols)
         {
-            if (not mgroup.contains(removed_mol.number()))
+            if (not mgroup.read().contains(removed_mol.number()))
                 removed_molnums.insert(removed_mol.number());
         }
         
@@ -2371,7 +2395,7 @@ void MolGroups::removeAll(const MGID &mgid)
     
     foreach (MGNum mgnum, mgnums)
     {
-        mgroups.find(mgnum)->removeAll();
+        mgroups.find(mgnum)->edit().removeAll();
         this->removeFromIndex(mgnum);
     }
 }
@@ -2402,7 +2426,7 @@ void MolGroups::remove(MolNum molnum, const MGID &mgid)
     {
         MoleculeGroup &mgroup = *(mgroups.find(mgnum));
     
-        ViewsOfMol removed_views = mgroup.remove(molnum);
+        ViewsOfMol removed_views = mgroup.edit().remove(molnum);
         
         if (not removed_views.isEmpty())
             this->removeFromIndex(molnum);
@@ -2423,7 +2447,7 @@ void MolGroups::remove(const QSet<MolNum> &molnums, const MGID &mgid)
     {
         MoleculeGroup &mgroup = *(mgroups.find(mgnum));
     
-        QList<ViewsOfMol> removed_mols = mgroup.remove(molnums);
+        QList<ViewsOfMol> removed_mols = mgroup.edit().remove(molnums);
         
         QSet<MolNum> removed_nums;
         
@@ -2447,7 +2471,7 @@ void MolGroups::update(const MoleculeData &moldata)
         
         foreach (MGNum mgnum, mgnums)
         {
-            mgroups.find(mgnum)->update(moldata);
+            mgroups.find(mgnum)->edit().update(moldata);
         }
     }
 }
@@ -2460,26 +2484,8 @@ void MolGroups::update(const Molecules &molecules)
          it != mgroups.end();
          ++it)
     {
-        it->update(molecules);
+        it->edit().update(molecules);
     }
-}
-
-/** Update all of the groups to use the versions of the molecules
-    help in the group 'molgroup' */
-void MolGroups::update(const MolGroup &molgroup)
-{
-    QHash<MGNum,MoleculeGroup>::const_iterator 
-                                  it = mgroups.constFind(molgroup.number());
-                                  
-    if (it != mgroups.constEnd() and it->majorVersion() == molgroup.majorVersion()
-                                 and it->minorVersion() == molgroup.minorVersion())
-    {
-        //the group is the same as the existing one, and at the same
-        //version, so nothing to do :-)
-        return;
-    }
-    
-    this->update(molgroup.molecules());
 }
 
 /** Set the contents of the groups identified by 'mgid' so that
@@ -2497,7 +2503,7 @@ void MolGroups::setContents(const MGID &mgid, const MoleculeView &molview)
 
     foreach (MGNum mgnum, mgnums)
     {
-        if (molgroup.find(mgnum)->setContents(view))
+        if (mgroups.find(mgnum)->edit().setContents(view))
         {
             this->clearIndex(mgnum);
             this->addToIndex(mgnum, view.number());
@@ -2520,7 +2526,7 @@ void MolGroups::setContents(const MGID &mgid, const ViewsOfMol &molviews)
     
     foreach (MGNum mgnum, mgnums)
     {
-        if (molgroup.find(mgnum)->setContents(views))
+        if (mgroups.find(mgnum)->edit().setContents(views))
         {
             this->clearIndex(mgnum);
             this->addToIndex(mgnum, views.number());
@@ -2544,7 +2550,7 @@ void MolGroups::setContents(const MGID &mgid, const Molecules &molecules)
     
     foreach (MGNum mgnum, mgnums)
     {
-        if (molgroup.find(mgnum)->setContents(mols))
+        if (mgroups.find(mgnum)->edit().setContents(mols))
         {
             this->clearIndex(mgnum);
             this->addToIndex(mgnum,molnums);
@@ -2566,8 +2572,9 @@ void MolGroups::setContents(const MGID &mgid, const MolGroup &molgroup)
     QHash<MGNum,MoleculeGroup>::const_iterator 
                                   it = mgroups.constFind(molgroup.number());
                                   
-    if (it != mgroups.constEnd() and it->majorVersion() == molgroup.majorVersion()
-                                 and it->minorVersion() == molgroup.minorVersion())
+    if (it != mgroups.constEnd() and 
+        it->read().majorVersion() == molgroup.majorVersion() and
+        it->read().minorVersion() == molgroup.minorVersion())
     {
         //the group is the same as the existing one, and at the same
         //version, so nothing to do :-)
@@ -2584,14 +2591,14 @@ void MolGroups::setContents(const MGID &mgid, const MolGroup &molgroup)
     foreach (MGNum mgnum, mgnums)
     {
         //try to set the contents using the wrong molecule version...
-        MolGroup &group = *(molgroups.find(mgnum));
+        MoleculeGroup &group = *(mgroups.find(mgnum));
         
-        if (group.setContents(molgroup))
+        if (group.edit().setContents(molgroup))
         {
             //ok, we need to update the group to ensure that it uses
             //the same version of molecules as are present in the 
             //rest of the set
-            group.update(mols);
+            group.edit().update(mols);
             
             //now update the index
             this->clearIndex(mgnum);
@@ -2615,7 +2622,25 @@ MolGroup& MolGroups::getGroup(MGNum mgnum)
             "groups are %2")
                 .arg(mgnum).arg(Sire::toString(mgroups.keys())), CODELOC );
 
-    return it->base();
+    return it->edit();
+}
+
+/** Protected function used to return a const reference to the 
+    group with number 'mgnum'
+    
+    \throw SireMol::missing_group
+*/
+const MolGroup& MolGroups::getGroup(MGNum mgnum) const
+{
+    QHash<MGNum,MoleculeGroup>::const_iterator it = mgroups.find(mgnum);
+    
+    if (it == mgroups.end())
+        throw SireMol::missing_group( QObject::tr(
+            "Cannot find the MoleculeGroup with number %1. Available "
+            "groups are %2")
+                .arg(mgnum).arg(Sire::toString(mgroups.keys())), CODELOC );
+
+    return it->read();
 }
 
 /** Protected function used to return modifiable pointers to the
@@ -2641,34 +2666,7 @@ void MolGroups::getGroups(const QList<MGNum> &mgnums,
                     .arg(mgnum).arg(Sire::toString(mgroups.keys())), CODELOC );
         
     
-        groups.append( &(it->base()) );
-    }
-}
-
-/** Protected function used to return modifiable pointers to the
-    groups whose numbers are in 'mgnums'
-    
-    \throw SireMol::missing_group
-*/
-void MolGroups::getGroups(const QList<MGNum> &mgnums,
-                          QVarLengthArray<MolGroup*,10> &groups)
-{
-    groups.clear();
-    
-    QHash<MGNum,MoleculeGroup>::iterator it;
-    
-    foreach (MGNum mgnum, mgnums)
-    {
-        it = mgroups.find(mgnum);
-        
-        if (it == mgroups.end())
-            throw SireMol::missing_group( QObject::tr(
-                "Cannot find the MoleculeGroup with number %1. Available "
-                "groups are %2")
-                    .arg(mgnum).arg(Sire::toString(mgroups.keys())), CODELOC );
-        
-    
-        groups.append( &(it->base()) );
+        groups.append( it->data() );
     }
 }
 
@@ -2686,16 +2684,16 @@ void MolGroups::getGroups(const QList<MGNum> &mgnums,
     
     foreach (MGNum mgnum, mgnums)
     {
-        it = mgroups.constFind(mgnum);
+        it = mgroups.find(mgnum);
         
-        if (it == mgroups.constEnd())
+        if (it == mgroups.end())
             throw SireMol::missing_group( QObject::tr(
                 "Cannot find the MoleculeGroup with number %1. Available "
                 "groups are %2")
                     .arg(mgnum).arg(Sire::toString(mgroups.keys())), CODELOC );
         
     
-        groups.append( &(it->base()) );
+        groups.append( it->constData() );
     }
 }
 
@@ -2711,7 +2709,7 @@ QHash<MGNum,const MolGroup*> MolGroups::getGroups() const
          it != mgroups.end();
          ++it)
     {
-        groups.insert( it.key(), &(it.base()) );
+        groups.insert( it.key(), it->constData() );
     }
     
     return groups;

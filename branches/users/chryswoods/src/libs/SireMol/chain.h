@@ -208,7 +208,7 @@ SIRE_OUTOFLINE_TEMPLATE
 const T& Chain::property(const PropertyName &key) const
 {
     const Property &property = d->property(key);
-    const ChainProperty<T> &chain_props = property.asA< ChainProperty<T> >();
+    const ChainProperty<T> &chain_props = property->asA< ChainProperty<T> >();
     return chain_props.at(this->index());
 }
 
@@ -222,7 +222,7 @@ SIRE_OUTOFLINE_TEMPLATE
 const T& Chain::metadata(const PropertyName &key) const
 {
     const Property &property = d->metadata(key);
-    const ChainProperty<T> &chain_props = property.asA< ChainProperty<T> >();
+    const ChainProperty<T> &chain_props = property->asA< ChainProperty<T> >();
     return chain_props.at(this->index());
 }
 
@@ -237,7 +237,7 @@ SIRE_OUTOFLINE_TEMPLATE
 const T& Chain::metadata(const PropertyName &key, const PropertyName &metakey) const
 {
     const Property &property = d->metadata(key, metakey);
-    const ChainProperty<T> &chain_props = property.asA< ChainProperty<T> >();
+    const ChainProperty<T> &chain_props = property->asA< ChainProperty<T> >();
                                                 
     return chain_props.at(this->index());
 }

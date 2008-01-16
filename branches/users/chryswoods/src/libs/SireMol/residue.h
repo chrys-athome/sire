@@ -194,7 +194,7 @@ SIRE_OUTOFLINE_TEMPLATE
 const T& Residue::property(const PropertyName &key) const
 {
     const Property &property = d->property(key);
-    const ResProperty<T> &res_props = property.asA< ResProperty<T> >();
+    const ResProperty<T> &res_props = property->asA< ResProperty<T> >();
     return res_props.at(this->index());
 }
 
@@ -208,7 +208,7 @@ SIRE_OUTOFLINE_TEMPLATE
 const T& Residue::metadata(const PropertyName &metakey) const
 {
     const Property &property = d->metadata(metakey);
-    const ResProperty<T> &res_props = property.asA< ResProperty<T> >();
+    const ResProperty<T> &res_props = property->asA< ResProperty<T> >();
     return res_props.at(this->index());
 }
 
@@ -224,7 +224,7 @@ const T& Residue::metadata(const PropertyName &key,
                            const PropertyName &metakey) const
 {
     const Property &property = d->metadata(key, metakey);
-    const ResProperty<T> &res_props = property.asA< ResProperty<T> >();
+    const ResProperty<T> &res_props = property->asA< ResProperty<T> >();
     return res_props.at(this->index());
 }
 

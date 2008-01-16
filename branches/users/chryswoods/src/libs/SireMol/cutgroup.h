@@ -188,7 +188,7 @@ SIRE_OUTOFLINE_TEMPLATE
 const T& CutGroup::property(const PropertyName &key) const
 {
     const Property &property = d->property(key);
-    const CGProperty<T> &cg_props = property.asA< CGProperty<T> >();
+    const CGProperty<T> &cg_props = property->asA< CGProperty<T> >();
     return cg_props.at(this->index());
 }
 
@@ -202,7 +202,7 @@ SIRE_OUTOFLINE_TEMPLATE
 const T& CutGroup::metadata(const PropertyName &key) const
 {
     const Property &property = d->metadata(key);
-    const CGProperty<T> &cg_props = property.asA< CGProperty<T> >();
+    const CGProperty<T> &cg_props = property->asA< CGProperty<T> >();
     return cg_props.at(this->index());
 }
 
@@ -218,7 +218,7 @@ const T& CutGroup::metadata(const PropertyName &key,
                             const PropertyName &metakey) const
 {
     const Property &property = d->metadata(key, metakey);
-    const CGProperty<T> &cg_props = property.asA< CGProperty<T> >();
+    const CGProperty<T> &cg_props = property->asA< CGProperty<T> >();
     return cg_props.at(this->index());
 }
 

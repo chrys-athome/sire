@@ -250,7 +250,8 @@ QList<V> get_property(const MoleculeData &moldata,
     QList<V> props;
         
     const Property &property = moldata.property(key);
-    const Prop &prop = property.asA<Prop>();
+    
+    const Prop &prop = property->asA<Prop>();
         
     foreach (Idx idx, idxs)
     {
@@ -268,7 +269,7 @@ QList<V> get_metadata(const MoleculeData &moldata,
     QList<V> props;
     
     const Property &property = moldata.metadata(metakey);
-    const Prop &prop = property.asA<Prop>();
+    const Prop &prop = property->asA<Prop>();
     
     foreach (Idx idx, idxs)
     {
@@ -287,7 +288,7 @@ QList<V> get_metadata(const MoleculeData &moldata,
     QList<V> props;
     
     const Property &property = moldata.metadata(key,metakey);
-    const Prop &prop = property.asA<Prop>();
+    const Prop &prop = property->asA<Prop>();
     
     foreach (Idx idx, idxs)
     {

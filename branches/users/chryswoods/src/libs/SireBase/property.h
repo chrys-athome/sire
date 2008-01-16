@@ -116,8 +116,6 @@ public:
 
     virtual const char* what() const=0;
 
-    static Property null_property();
-
     static const char* typeName()
     {
         return "SireBase::PropertyBase";
@@ -303,9 +301,9 @@ public:
     }
 };
 
-/** This is the visible holder class for PropertyBase. This is just
-    a thin wrapper around SireBase::SharedPolyPointer<PropertyBase>
-    that has extra tests that ensure that this is never null.
+/** This is the polymorphic pointer holder for the entire
+    PropertyBase class hierarchy. This can hold implicitly 
+    shared pointers to any property class.
 
     @author Christopher Woods
 */
@@ -322,52 +320,39 @@ public:
     Property();
 
     Property(const PropertyBase &property);
-    Property(PropertyBase *property);
-
-    Property(const QVariant &value);
-
+    
     Property(const Property &other);
-
-    ~Property();
-
-    Property& operator=(const Property &other);
+    
+    virtual ~Property();
+    
+    virtual Property& operator=(const PropertyBase &property);
 
     bool operator==(const Property &other) const;
     bool operator!=(const Property &other) const;
 
-    bool isNull() const;
+    const PropertyBase* operator->() const;
+    const PropertyBase& operator*() const;
+    
+    const PropertyBase& read() const;
+    PropertyBase& edit();
+    
+    const PropertyBase* data() const;
+    const PropertyBase* constData() const;
+    
+    PropertyBase* data();
+    
+    operator const PropertyBase&() const;
 
-    void save(QDataStream &ds) const;
-    void load(QDataStream &ds);
+protected:
+    const PropertyBase& d() const;
 
-//     void save(XMLStream &xs) const;
-//     void load(XMLStream &xs);
-
-    const PropertyBase& base() const
-    {
-        return *d;
-    }
-
-    const char* what() const
-    {
-        return d->what();
-    }
-
-    template<class T>
-    bool isA() const
-    {
-        return d->isA<T>();
-    }
-
-    template<class T>
-    const T& asA() const
-    {
-        return d->asA<T>();
-    }
+    PropertyBase& d();
 
 private:
+    Property(const SharedPolyPointer<PropertyBase> &p);
+    
     /** Shared pointer to the actual property */
-    SharedPolyPointer<PropertyBase> d;
+    SharedPolyPointer<PropertyBase> ptr;
 };
 
 }

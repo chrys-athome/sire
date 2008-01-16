@@ -49,5 +49,19 @@ int main(void)
 	a.print();
 	a2.print();
 	
+        const A* aptr = &a;
+
+        aptr->print();
+
+        const A* const aconstptr = &a;
+
+        aconstptr->print();
+
+        aptr = &a2;
+//        aconstptr = &a2;
+
+        aptr->print();
+        aconstptr->print();
+
 	return 0;
 }

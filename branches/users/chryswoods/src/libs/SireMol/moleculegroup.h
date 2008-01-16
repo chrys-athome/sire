@@ -31,6 +31,8 @@
 
 #include "molgroup.h"
 
+#include "SireBase/property.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol
@@ -44,46 +46,39 @@ QDataStream& operator>>(QDataStream&, SireMol::MoleculeGroup&);
 namespace SireMol
 {
 
-using SireBase::ConcreteProperty;
-
-/** This class is used to group views of molecules together. 
-    Underneath, it uses the Molecules class to hold views
-    of molecules (including multiple views of molecules).
-    However it supplements the data in Molecules with 
-    additional meta-information, such as indexing of
-    the molecules (so you can quicky choose the third
-    molecule in the group), indexing of the views
-    (so you can quickly choose the tenth view in
-    the group), and also versioning (so you can tell
-    if the composition of the group has changed,
-    or if any of the members have changed), and also
-    an ID number that lets you keep track of the group.
+/** This is the polymorphic pointer holder for the 
+    MolGroup hierarchy of classes (molecule groups).
     
-    The primary purpose of a MoleculeGroup is to allow you
-    to construct groups of molecule views that can be 
-    used by the program, e.g. a group of views that will
-    be moved by a Monte Carlo move, or the group of
-    atoms that are in particular forcefield (or a sub-group
-    of that forcefield)
-    
-    MoleculeGroup objects can also be named, so you could
-    create groups like "solvent", "protein", "ligands",
-    "ions" etc. Each MoleculeGroup in a simulation system
-    is placed into a single MoleculeGroups object, which
-    can then let you search for atoms or molecules using
-    these group names, e.g. MGName("solvent") + AtomName("O00")
-    would select all of the atoms called "O00" in all of 
-    the molecules in the group(s) called "solvent"
+    Molecule groups are groupings of molecules that
+    provide full indexing, versioning and identification.
+    Molecule groups are used by the forcefield classes
+    to hold the molecules, and are used by the System
+    classes as well. They provide the consistent interface
+    for the indexing, searching and manipulation
+    of sets of molecules.
 
-    MoleculeGroup is a holder for the MolGroup virtual base
-    class of all MoleculeGroup-like objects (e.g. 
-    FFMolGroup and SystemMolGroup, which have additional
-    actions that must be performed if molecules are added
-    or removed)
+    Like all Property polymorphic pointer holder classes,
+    this class holds the polymorphic MolGroup object as 
+    an implicitly shared pointer. You can access the 
+    const functions of this object by dereferencing this
+    pointer, or by using the MoleculeGroup::read() function, e.g.;
+    
+    int nats = moleculegroup->nAtoms();
+    nats = moleculegroup.read().nAtoms();
+    
+    You must use the MoleculeGroup::edit() function to
+    access the non-const member functions, e.g.;
+    
+    moleculegroup.edit().update(mols);
+    
+    Because an implicitly shared pointer is held, this
+    class can be copied and passed around quickly. A copy
+    is only made when the object being pointed to is
+    edited via the .edit() function.
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT MoleculeGroup
+class SIREMOL_EXPORT MoleculeGroup : public SireBase::Property
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const MoleculeGroup&);
@@ -91,64 +86,30 @@ friend QDataStream& ::operator>>(QDataStream&, MoleculeGroup&);
 
 public:
     MoleculeGroup();
-
-    MoleculeGroup(const Molecules &molecules);
-
-    MoleculeGroup(const QString &name);
-
-    MoleculeGroup(const QString &name, const Molecules &molecules);
-    MoleculeGroup(const QString &name, const MoleculeGroup &other);
+    MoleculeGroup(const PropertyBase &property);
+    MoleculeGroup(const MolGroup &molgroup);
 
     MoleculeGroup(const MoleculeGroup &other);
-
-    ~MoleculeGroup();
-
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<MoleculeGroup>() );
-    }
-
-    const char* what() const
-    {
-        return MoleculeGroup::typeName();
-    }
-
-    MoleculeGroup* clone() const
-    {
-        return new MoleculeGroup(*this);
-    }
-
-    MoleculeGroup& operator=(const MoleculeGroup &other);
-
-    bool operator==(const MoleculeGroup &other) const;
-    bool operator!=(const MoleculeGroup &other) const;
-
-    void add(const MoleculeView &molview);
-    void update(const MoleculeView &molview);
-    void remove(const MoleculeView &molview);
-
-    void add(const ViewsOfMol &molviews);
-    void remove(const ViewsOfMol &molviews);
-
-    void add(const Molecules &molecules);
-    void update(const Molecules &molecules);
-    void remove(const Molecules &molecules);
-
-    void add(const MoleculeGroup &molgroup);
-    void update(const MoleculeGroup &molgroup);
-    void remove(const MoleculeGroup &molgroup);
-
-    void update(const MoleculeData &moldata);
-    void remove(MolNum molnum);
-
-    void remove(const QSet<MolNum> &molnums);
-
-    void removeAll();
     
-    void setContents(const MoleculeView &molview);
-    void setContents(const ViewsOfMol &molviews);
-    void setContents(const Molecules &molecules);
-    void setContents(const MoleculeGroup &molgroup);
+    ~MoleculeGroup();
+    
+    virtual MoleculeGroup& operator=(const PropertyBase &property);
+    virtual MoleculeGroup& operator=(const MolGroup &other);
+
+    const MolGroup* operator->() const;
+    const MolGroup& operator*() const;
+    
+    const MolGroup& read() const;
+    MolGroup& edit();
+    
+    const MolGroup* data() const;
+    const MolGroup* constData() const;
+    
+    MolGroup* data();
+    
+    operator const MolGroup&() const;
+
+    static const MoleculeGroup& shared_null();
 };
 
 }

@@ -105,19 +105,19 @@ bool PropertyBase::operator!=(const PropertyBase&) const
 /** Assignment operator */
 PropertyBase& PropertyBase::operator=(const Property &property)
 {
-    return this->operator=(property.base());
+    return this->operator=(*property);
 }
 
 /** Comparison operator */
 bool PropertyBase::operator==(const Property &property) const
 {
-    return this->operator==(property.base());
+    return this->operator==(*property);
 }
 
 /** Comparison operator */
 bool PropertyBase::operator!=(const Property &property) const
 {
-    return this->operator!=(property.base());
+    return this->operator!=(*property);
 }
 
 /** Throw an invalid cast!
@@ -163,14 +163,6 @@ QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, PropertyBase&)
         throw version_error(v, "0", r_propbase, CODELOC);
 
     return ds;
-}
-
-static SharedPolyPointer<PropertyBase> shared_null( new NullProperty() );
-
-/** Return a shared null property */
-Property PropertyBase::null_property()
-{
-    return Property(shared_null);
 }
 
 ///////////////
@@ -275,7 +267,7 @@ QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds, const Property &propert
     writeHeader(ds, r_prop, 1);
 
     SharedDataStream sds(ds);
-    sds << property.d;
+    sds << property.ptr;
 
     return ds;
 }
@@ -288,7 +280,7 @@ QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, Property &property)
     if (v == 1)
     {
         SharedDataStream sds(ds);
-        sds >> property.d;
+        sds >> property.ptr;
     }
     else
         throw version_error(v, "1", r_prop, CODELOC);
@@ -296,87 +288,101 @@ QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, Property &property)
     return ds;
 }
 
-/** Null constructor - construct a null property */
-Property::Property() : d( PropertyBase::null_property().d )
+static SharedPolyPointer<PropertyBase> shared_null( new NullProperty() );
+
+/** Null constructor - constructs a null property */
+Property::Property() : ptr(shared_null)
 {}
-
-/** Construct from the passed pointer - this must not be null! This
-    takes over ownership of the passed pointer and may delete it
-    whenever it wishes.
-
-    \throw SireError::nullptr_error
-*/
-Property::Property(PropertyBase *ptr) : d(ptr)
-{
-    if (not ptr)
-        throw SireError::nullptr_error( QObject::tr(
-                  "Cannot construct a Property from a null pointer!"), CODELOC );
-}
 
 /** Construct from the passed property */
 Property::Property(const PropertyBase &property)
-         : d(property)
-{}
-
-/** Construct from a QVariant */
-Property::Property(const QVariant &value)
-         : d(new VariantProperty(value))
+         : ptr(property)
 {}
 
 /** Copy constructor */
 Property::Property(const Property &other)
-         : d(other.d)
+         : ptr(other.ptr)
 {}
 
 /** Destructor */
 Property::~Property()
 {}
 
-/** Copy assignment */
-Property& Property::operator=(const Property &other)
+/** Copy assignment operator */
+Property& Property::operator=(const PropertyBase &property)
 {
-    d = other.d;
+    ptr = property;
     return *this;
 }
 
 /** Comparison operator */
 bool Property::operator==(const Property &other) const
 {
-    return (d == other.d) and *d == *(other.d);
+    return ptr == other.ptr or *ptr == *(other.ptr);
 }
 
 /** Comparison operator */
 bool Property::operator!=(const Property &other) const
 {
-    return (d != other.d) or *d != *(other.d);
+    return ptr != other.ptr and *ptr != *(other.ptr);
 }
 
-/** Return whether this is the null property */
-bool Property::isNull() const
+/** Return a const reference to the object */
+const PropertyBase& Property::d() const
 {
-    return d == PropertyBase::null_property().d;
+    return *ptr;
 }
 
-/** Save this Property to the passed binary datastream */
-void Property::save(QDataStream &ds) const
+/** Return a modifiable reference to the object */
+PropertyBase& Property::d()
 {
-    ds << *this;
+    return *ptr;
 }
 
-/** Load this property from the passed binary datastream */
-void Property::load(QDataStream &ds)
+/** Dereferencing operator */
+const PropertyBase* Property::operator->() const
 {
-    ds >> *this;
+    return &(d());
 }
 
-/** Save this property to the passed XML datastream */
-// void Property::save(XMLStream&) const
-// {
-//     //xs << *this;
-// }
-// 
-// /** Load this property from the passed XML datastream */
-// void Property::load(XMLStream&)
-// {
-//     //xs >> *this;
-// }
+/** Dereferencing operator */
+const PropertyBase& Property::operator*() const
+{
+    return d();
+}
+
+/** Return a const reference to this property */
+const PropertyBase& Property::read() const
+{
+    return d();
+}
+
+/** Return an editable reference to the property */
+PropertyBase& Property::edit()
+{
+    return d();
+}
+
+/** Return a const pointer to the property */
+const PropertyBase* Property::data() const
+{
+    return &(d());
+}
+
+/** Return a const pointer to the property */
+const PropertyBase* Property::constData() const
+{
+    return &(d());
+}
+
+/** Return a modifiable pointer to the property */
+PropertyBase* Property::data()
+{
+    return &(d());
+}
+
+/** Allow implicit casting to a PropertyBase object */
+Property::operator const PropertyBase&() const
+{
+    return d();
+}

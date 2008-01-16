@@ -308,6 +308,8 @@ protected:
     MolGroupsBase& operator=(const MolGroupsBase &other);
 
     virtual MolGroup& getGroup(MGNum mgnum)=0; 
+    virtual const MolGroup& getGroup(MGNum mgnum) const=0;
+    
     virtual void getGroups(const QList<MGNum> &mgnums,
                            QVarLengthArray<MolGroup*,10> &groups)=0;
 
@@ -456,13 +458,14 @@ public:
     void setContents(const MGID &mgid, const MolGroup &molgroup);
  
 protected:
-    MolGroup& getGroup(MGNum mgnum); 
+    MolGroup& getGroup(MGNum mgnum);
+    const MolGroup& getGroup(MGNum mgnum) const;
 
     void getGroups(const QList<MGNum> &mgnums,
                    QVarLengthArray<MolGroup*,10> &groups);
 
     void getGroups(const QList<MGNum> &mgnums,
-                   QVarLengthArray<const MolGroup*,10> &groups);
+                   QVarLengthArray<const MolGroup*,10> &groups) const;
 
     QHash<MGNum,MolGroup*> getGroups();
     QHash<MGNum,const MolGroup*> getGroups() const;
