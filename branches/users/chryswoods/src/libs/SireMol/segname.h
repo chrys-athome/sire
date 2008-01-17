@@ -31,7 +31,7 @@
 
 #include "SireID/name.h"
 
-#include "SegID.h"
+#include "segid.h"
 
 SIRE_BEGIN_HEADER
 

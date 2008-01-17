@@ -308,6 +308,12 @@ Property::Property(const Property &other)
 Property::~Property()
 {}
 
+/** Return whether this is a null property */
+bool Property::isNull() const
+{
+    return ptr->isA<NullProperty>();
+}
+
 /** Copy assignment operator */
 Property& Property::operator=(const PropertyBase &property)
 {

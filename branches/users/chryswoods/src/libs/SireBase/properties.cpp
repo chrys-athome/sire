@@ -412,7 +412,7 @@ const Property& Properties::property(const PropertyName &key,
         QHash<QString,Properties>::const_iterator it = d->props_metadata.constFind(key);
 
         if (it != d->props_metadata.constEnd())
-            return it.value();
+            return *it;
         else
             return default_value;
     }
@@ -549,7 +549,7 @@ void Properties::clear()
 */
 const char* Properties::propertyType(const PropertyName &key) const
 {
-    return this->property(key).what();
+    return this->property(key)->what();
 }
 
 /** Return the type name of the metadata at metakey 'metakey'
@@ -558,7 +558,7 @@ const char* Properties::propertyType(const PropertyName &key) const
 */
 const char* Properties::metadataType(const PropertyName &metakey) const
 {
-    return this->metadata(metakey).what();
+    return this->metadata(metakey)->what();
 }
 
 /** Return the type name of the metadata at metakey 'metakey'
@@ -569,5 +569,5 @@ const char* Properties::metadataType(const PropertyName &metakey) const
 const char* Properties::metadataType(const PropertyName &key,
                                      const PropertyName &metakey) const
 {
-    return this->metadata(key, metakey).what();
+    return this->metadata(key, metakey)->what();
 }

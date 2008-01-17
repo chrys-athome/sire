@@ -336,6 +336,8 @@ public:
     const PropertyBase& read() const;
     PropertyBase& edit();
     
+    bool isNull() const;
+
     const PropertyBase* data() const;
     const PropertyBase* constData() const;
     
