@@ -29,6 +29,8 @@
 #include "molviewproperty.h"
 #include "moleculeinfodata.h"
 
+#include "mover.hpp"
+
 #include "SireError/errors.h"
 
 using namespace SireMol;

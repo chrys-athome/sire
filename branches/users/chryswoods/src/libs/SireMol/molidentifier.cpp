@@ -30,6 +30,8 @@
 #include "molgroup.h"
 #include "moleculeinfodata.h"
 
+#include "mover.hpp"
+
 using namespace SireMol;
 using namespace SireID;
 
@@ -164,7 +166,7 @@ bool MolIdentifier::operator!=(const MolID &other) const
 QList<MolNum> MolIdentifier::map(const MolGroup &molgroup) const
 {
     if (d.get() == 0)
-        return molgroup.getMolecules();
+        return molgroup.molNums().toList();
     else
         return d->map(molgroup);
 }

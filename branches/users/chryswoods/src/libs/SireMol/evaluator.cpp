@@ -165,7 +165,7 @@ AABox Evaluator::aaBox(const PropertyMap &map) const
 
     //get the coordinates of the atoms
     const Property &prop = d->property(map["coordinates"]);
-    const AtomCoords &coords = prop.asA<AtomCoords>();
+    const AtomCoords &coords = prop->asA<AtomCoords>();
     
     const CoordGroup *coords_array = coords.constData();
     int ncg = coords.count();
@@ -404,19 +404,19 @@ double Evaluator::mass(const PropertyMap &map) const
 
     const Property &p = get_mass_property(*d, map);
     
-    if (p.isA<AtomMasses>())
+    if (p->isA<AtomMasses>())
     {
-        return get_mass(p.asA<AtomMasses>(), selected_atoms);
+        return get_mass(p->asA<AtomMasses>(), selected_atoms);
     }
-    else if (p.isA<AtomElements>())
+    else if (p->isA<AtomElements>())
     {
-        return get_mass(p.asA<AtomElements>(), selected_atoms);
+        return get_mass(p->asA<AtomElements>(), selected_atoms);
     }
     else
         throw SireError::invalid_cast( QObject::tr(
             "Cannot cast the property of type %1 into either an "
             "AtomMasses or AtomElements property!")
-                .arg(p.what()), CODELOC );
+                .arg(p->what()), CODELOC );
 
     return 0;
 }
@@ -458,7 +458,7 @@ Vector Evaluator::centerOfGeometry(const PropertyMap &map) const
         return Vector(0);
         
     const Property &prop = d->property( map["coordinates"] );
-    const AtomCoords &coords = prop.asA<AtomCoords>();
+    const AtomCoords &coords = prop->asA<AtomCoords>();
     
     const CoordGroup *coords_array = coords.constData();
     int ncg = coords.count();
@@ -706,21 +706,21 @@ Vector Evaluator::centerOfMass(const PropertyMap &map) const
         return Vector(0);
         
     const Property &prop = d->property( map["coordinates"] );
-    const AtomCoords &coords = prop.asA<AtomCoords>();
+    const AtomCoords &coords = prop->asA<AtomCoords>();
 
     const Property &p = get_mass_property(*d,map);
     
-    if (p.isA<AtomMasses>())
+    if (p->isA<AtomMasses>())
     {
-        return get_com(coords, p.asA<AtomMasses>(), selected_atoms);
+        return get_com(coords, p->asA<AtomMasses>(), selected_atoms);
     }
-    else if (p.isA<AtomElements>())
+    else if (p->isA<AtomElements>())
     {
-        return get_com(coords, p.asA<AtomElements>(), selected_atoms);
+        return get_com(coords, p->asA<AtomElements>(), selected_atoms);
     }
     else
         throw SireError::invalid_cast( QObject::tr(
             "Cannot cast the property of type %1 into either an "
             "AtomMasses or AtomElements property!")
-                .arg(p.what()), CODELOC );
+                .arg(p->what()), CODELOC );
 }

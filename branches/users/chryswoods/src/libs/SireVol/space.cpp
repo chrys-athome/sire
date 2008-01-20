@@ -94,107 +94,148 @@ Space SpaceBase::changeVolume(SireUnits::Dimension::Volume delta) const
 */
 void SpaceBase::assertCompatible(const Space &other) const
 {
-    if ( QLatin1String(this->what()) != QLatin1String(other.what()) )
+    if ( QLatin1String(this->what()) != QLatin1String(other->what()) )
         throw SireError::incompatible_error( QObject::tr(
             "This space (of type \"%1\") is incompatible with "
             "a space of type \"%2\".")
-                .arg(this->what()).arg(other.what()), CODELOC );
+                .arg(this->what()).arg(other->what()), CODELOC );
 }
 
 //////////////
 ////////////// Implementation of Space
 //////////////
 
-static const RegisterMetaType<Space> r_space;
+RegisterMetaType<Space> r_space;
 
-/** Serialise to a binary datastream */
-QDataStream SIREVOL_EXPORT &operator<<(QDataStream &ds, const Space &space)
+/** Serialise a Space to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
+                                       const Space &space)
 {
     writeHeader(ds, r_space, 1);
-
+    
     SharedDataStream sds(ds);
-
-    sds << space.d;
-
+    
+    sds << static_cast<const Property&>(space);
+    
     return ds;
 }
 
-/** Deserialise from a binary datastream */
-QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds, Space &space)
+/** Deserialise a Space from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
+                                       Space &space)
 {
     VersionID v = readHeader(ds, r_space);
-
+    
     if (v == 1)
     {
         SharedDataStream sds(ds);
-        sds >> space.d;
+        sds >> static_cast<Property&>(space);
     }
     else
         throw version_error(v, "1", r_space, CODELOC);
-
+        
     return ds;
 }
 
-static SharedPolyPointer<SpaceBase> shared_null( new Cartesian() );
+static Space *_pvt_shared_null = 0;
 
-/** Null constructor - this is a infinite Cartesian volume */
-Space::Space() : d( shared_null )
+const Space& Space::shared_null()
+{
+    if (_pvt_shared_null == 0)
+        _pvt_shared_null = new Space( Cartesian() );
+        
+    return *_pvt_shared_null;
+}
+
+/** Null constructor - constructs a simple, infinite cartesian volume */
+Space::Space() : Property(Space::shared_null())
 {}
 
-/** Construct from the base class */
-Space::Space(const SpaceBase &other)
-      : d( other.clone() )
+/** Construct from a passed property
+
+    \throw SireError::invalid_cast
+*/
+Space::Space(const PropertyBase &property)
+      : Property(property.asA<SpaceBase>())
 {}
 
-/** Construct from a property */
-Space::Space(const Property &property)
-      : d( property.base() )
+/** Construct from passed SpaceBase */
+Space::Space(const SpaceBase &space)
+      : Property(space)
 {}
 
-/** Copy constructor - fast as this class is implicitly shared */
+/** Copy constructor */
 Space::Space(const Space &other)
-      : d( other.d )
+      : Property(other)
 {}
 
 /** Destructor */
 Space::~Space()
 {}
 
-/** Assign from the base class */
+/** Copy assignment operator from a Property object
+
+    \throw SireError::invalid_cast
+*/
+Space& Space::operator=(const PropertyBase &property)
+{
+    Property::operator=(property.asA<SpaceBase>());
+    return *this;
+}
+
+/** Copy assignment operator from another SpaceBase */
 Space& Space::operator=(const SpaceBase &other)
 {
-    d = other;
+    Property::operator=(other);
     return *this;
 }
 
-/** Assignment operator */
-Space& Space::operator=(const Space &other)
+/** Dereference this pointer */
+const SpaceBase* Space::operator->() const
 {
-    d = other.d;
-    return *this;
+    return static_cast<const SpaceBase*>(&(d()));
 }
 
-/** Assign from a Property */
-Space& Space::operator=(const Property &property)
+/** Dereference this pointer */
+const SpaceBase& Space::operator*() const
 {
-    d = property.base();
-    return *this;
+    return static_cast<const SpaceBase&>(d());
 }
 
-/** Comparison operator */
-bool Space::operator==(const Space &other) const
+/** Return a read-only reference to the contained object */
+const SpaceBase& Space::read() const
 {
-    return d == other.d or *d == *(other.d);
+    return static_cast<const SpaceBase&>(d());
 }
 
-/** Comparison operator */
-bool Space::operator!=(const Space &other) const
+/** Return a modifiable reference to the contained object.
+    This will trigger a copy of the object if more than
+    one pointer is pointing to it. */
+SpaceBase& Space::edit()
 {
-    return d != other.d and *d != *(other.d);
+    return static_cast<SpaceBase&>(d());
+}
+    
+/** Return a raw pointer to the SpaceBase object */
+const SpaceBase* Space::data() const
+{
+    return static_cast<const SpaceBase*>(&(d()));
 }
 
-/** Return the type of Space */
-const char* Space::what() const
+/** Return a raw pointer to the SpaceBase object */
+const SpaceBase* Space::constData() const
 {
-    return d->what();
+    return static_cast<const SpaceBase*>(&(d()));
+}
+    
+/** Return a raw pointer to the SpaceBase object */
+SpaceBase* Space::data()
+{
+    return static_cast<SpaceBase*>(&(d()));
+}
+
+/** Automatic casting operator */
+Space::operator const SpaceBase&() const
+{
+    return static_cast<const SpaceBase&>(d());
 }

@@ -129,7 +129,7 @@ Space PeriodicBox::setVolume(SireUnits::Dimension::Volume vol) const
     Vector cent = this->center();
     Vector new_halflength = scl * halflength;
 
-    return Space( new PeriodicBox(cent - new_halflength, cent + new_halflength) );
+    return PeriodicBox(cent - new_halflength, cent + new_halflength);
 }
 
 /** Set the dimensions of this box so that it is the smallest possible that contains
@@ -508,7 +508,7 @@ CoordGroup PeriodicBox::mapFromSelf(const CoordGroup &group, const Space &other)
 {
     assertCompatible(other);
 
-    const PeriodicBox &other_box = other.asA<PeriodicBox>();
+    const PeriodicBox &other_box = other->asA<PeriodicBox>();
 
     if (other_box == *this)
         return group;
@@ -549,7 +549,7 @@ QVector<CoordGroup> PeriodicBox::mapFromSelf(const QVector<CoordGroup> &groups,
 {
     assertCompatible(other);
 
-    const PeriodicBox &other_box = other.asA<PeriodicBox>();
+    const PeriodicBox &other_box = other->asA<PeriodicBox>();
 
     if (other_box == *this)
     {

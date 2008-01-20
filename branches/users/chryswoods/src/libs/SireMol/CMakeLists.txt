@@ -66,7 +66,6 @@ set ( SIREMOL_HEADERS
       moleculegroups.h
       moleculeinfodata.h
       moleculeinfodataeditor.h
-      moleculemover.h
       molecules.h
       moleculeview.h
       molgroup.h
@@ -141,7 +140,6 @@ set ( SIREMOL_SOURCES
       moleculegroups.cpp
       moleculeinfodata.cpp
       moleculeinfodataeditor.cpp
-      moleculemover.cpp
       molecules.cpp
       moleculeview.cpp
       molgroup.cpp

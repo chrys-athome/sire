@@ -28,6 +28,9 @@
 
 #include "moleculeview.h"
 
+#include "SireBase/errors.h"
+#include "SireError/errors.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
@@ -35,7 +38,8 @@ using namespace SireStream;
 using namespace SireBase;
 using namespace SireMol;
 
-RegisterMetaType<MoleculeView> r_molview;
+RegisterMetaType<MoleculeView> r_molview( MAGIC_ONLY,
+                                          "SireMol::MoleculeView" );
 
 /** Serialise to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, 
@@ -108,15 +112,15 @@ bool MoleculeView::operator!=(const MoleculeView &other) const
     
     \throw SireError::incompatible_error
 */
-void MoleculeView::assertSameMolecule(const MoleculeData &other) const;
+void MoleculeView::assertSameMolecule(const MoleculeData &other) const
 {
     if (d->number() != other.number())
         //these are different molecules!
         throw SireError::incompatible_error( QObject::tr(
             "The molecules \"%1\", number %2, and \"%3\", number %3, "
             "are different, and therefore incompatible.")
-                .arg(this->info().name()).arg(this->number())
-                .arg(other.info().name()).arg(other.number()),
+                .arg(d->info().name()).arg(d->number())
+                .arg(other.name()).arg(other.number()),
                     CODELOC );
 }
 
@@ -139,7 +143,7 @@ void MoleculeView::assertSameMolecule(const MoleculeView &other) const
 void MoleculeView::update(const MoleculeData &moldata)
 {
     this->assertSameMolecule(moldata);
-    d = other.d;
+    d = moldata;
 }
 
 /** Return the type of the property at key 'key'
@@ -148,7 +152,7 @@ void MoleculeView::update(const MoleculeData &moldata)
 */
 const char* MoleculeView::propertyType(const PropertyName &key) const
 {
-    return this->property(key).what();
+    return d->property(key)->what();
 }
 
 /** Return the type of the metadata at metakey 'metakey' 
@@ -157,7 +161,7 @@ const char* MoleculeView::propertyType(const PropertyName &key) const
 */
 const char* MoleculeView::metadataType(const PropertyName &metakey) const
 {
-    return this->metadata(metakey).what();
+    return d->metadata(metakey)->what();
 }
 
 /** Return the type of the metadata at metakey 'metakey' 
@@ -168,7 +172,7 @@ const char* MoleculeView::metadataType(const PropertyName &metakey) const
 const char* MoleculeView::metadataType(const PropertyName &key,
                                        const PropertyName &metakey) const
 {
-    return this->metadata(key, metakey).what();
+    return d->metadata(key, metakey)->what();
 }
 
 /** Assert that this contains a property at key 'key' 
@@ -198,7 +202,7 @@ void MoleculeView::assertHasMetadata(const PropertyName &metakey) const
             "does not have some valid metadata at metakey \"%3\".")
                 .arg(d->info().name())
                 .arg(this->what())
-                .arg(key), CODELOC );
+                .arg(metakey), CODELOC );
 }
 
 /** Assert that this contains some metadata at metakey 'metakey' 

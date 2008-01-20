@@ -34,19 +34,21 @@
 #include "coordgroup.h"
 #include "space.h"
 
+#include "SireBase/property.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireVol
 {
 class MappingFunction;
-class MappingFunctionBase;
+class MapFunc;
 
 class MapFromCartesianFunction;
 class MapFromSelfFunction;
 }
 
-QDataStream& operator<<(QDataStream&, const SireVol::MappingFunctionBase&);
-QDataStream& operator>>(QDataStream&, SireVol::MappingFunctionBase&);
+QDataStream& operator<<(QDataStream&, const SireVol::MapFunc&);
+QDataStream& operator>>(QDataStream&, SireVol::MapFunc&);
 
 QDataStream& operator<<(QDataStream&, const SireVol::MappingFunction&);
 QDataStream& operator>>(QDataStream&, SireVol::MappingFunction&);
@@ -65,31 +67,26 @@ namespace SireVol
 
     @author Christopher Woods
 */
-class SIREVOL_EXPORT MappingFunctionBase : public QSharedData
+class SIREVOL_EXPORT MapFunc : public SireBase::PropertyBase
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const MappingFunctionBase&);
-friend QDataStream& ::operator>>(QDataStream&, MappingFunctionBase&);
+friend QDataStream& ::operator<<(QDataStream&, const MapFunc&);
+friend QDataStream& ::operator>>(QDataStream&, MapFunc&);
 
 public:
-    MappingFunctionBase();
+    MapFunc();
 
-    MappingFunctionBase(const MappingFunctionBase &other);
+    MapFunc(const MapFunc &other);
 
-    virtual ~MappingFunctionBase();
-
-    MappingFunctionBase& operator=(const MappingFunctionBase &other);
+    virtual ~MapFunc();
 
     static const char* typeName()
     {
         return "SireVol::MappingFunction";
     }
 
-    /** Return the typename of this class */
-    virtual const char* what() const=0;
-
     /** Return a clone of this object */
-    virtual MappingFunctionBase* clone() const=0;
+    virtual MapFunc* clone() const=0;
 
     /** Map the coordinates 'coords' from the old space 'old_space'
         to the new space 'new_space'. The spaces must be compatible
@@ -118,18 +115,6 @@ public:
     CoordGroup operator()(const CoordGroup &coords,
                           const Space &old_space,
                           const Space &new_space) const;
-
-    template<class T>
-    bool isA() const
-    {
-        return dynamic_cast<const T*>(this) != 0;
-    }
-
-    template<class T>
-    const T& asA() const
-    {
-        return dynamic_cast<const T&>(*this);
-    }
 };
 
 /** Convienient syntax for "map" that lets you use
@@ -138,8 +123,8 @@ public:
     \throw SireError::incompatible_error
 */
 inline QVector<CoordGroup>
-MappingFunctionBase::operator()(const QVector<CoordGroup> &coords,
-                                const Space &old_space, const Space &new_space) const
+MapFunc::operator()(const QVector<CoordGroup> &coords,
+                    const Space &old_space, const Space &new_space) const
 {
     return this->map(coords, old_space, new_space);
 }
@@ -149,9 +134,9 @@ MappingFunctionBase::operator()(const QVector<CoordGroup> &coords,
 
     \throw SireError::incompatible_error
 */
-inline CoordGroup MappingFunctionBase::operator()(const CoordGroup &coords,
-                                                  const Space &old_space,
-                                                  const Space &new_space) const
+inline CoordGroup MapFunc::operator()(const CoordGroup &coords,
+                                      const Space &old_space,
+                                      const Space &new_space) const
 {
     return this->map(coords, old_space, new_space);
 }
@@ -161,7 +146,8 @@ inline CoordGroup MappingFunctionBase::operator()(const CoordGroup &coords,
 
     @author Christopher Woods
 */
-class SIREMOVE_EXPORT MapFromCartesianFunction : public MappingFunctionBase
+class SIREMOVE_EXPORT MapFromCartesianFunction 
+           : public SireBase::ConcreteProperty<MapFromCartesianFunction,MapFunc>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const MapFromCartesianFunction&);
@@ -176,7 +162,7 @@ public:
 
     static const char* typeName()
     {
-        return "SireVol::MapFromCartesianFunction";
+        return QMetaType::typeName( qMetaTypeId<MapFromCartesianFunction>() );
     }
 
     const char* what() const
@@ -206,7 +192,8 @@ private:
 
     @author Christopher Woods
 */
-class SIREMOVE_EXPORT MapFromSelfFunction : public MappingFunctionBase
+class SIREMOVE_EXPORT MapFromSelfFunction 
+                : public SireBase::ConcreteProperty<MapFromSelfFunction,MapFunc>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const MapFromSelfFunction&);
@@ -221,17 +208,7 @@ public:
 
     static const char* typeName()
     {
-        return "SireVol::MapFromSelfFunction";
-    }
-
-    const char* what() const
-    {
-        return MapFromSelfFunction::typeName();
-    }
-
-    MapFromSelfFunction* clone() const
-    {
-        return new MapFromSelfFunction(*this);
+        return QMetaType::typeName( qMetaTypeId<MapFromSelfFunction>() );
     }
 
     CoordGroup map(const CoordGroup &coords,
@@ -246,7 +223,7 @@ public:
 
     @author Christopher Woods
 */
-class SIREMOVE_EXPORT MappingFunction
+class SIREMOVE_EXPORT MappingFunction : public SireBase::Property
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const MappingFunction&);
@@ -254,103 +231,31 @@ friend QDataStream& ::operator>>(QDataStream&, MappingFunction&);
 
 public:
     MappingFunction();
-
-    MappingFunction(const MappingFunctionBase &function);
+    MappingFunction(const MapFunc &other);
+    MappingFunction(const SireBase::PropertyBase &property);
 
     MappingFunction(const MappingFunction &other);
 
     ~MappingFunction();
 
-    MappingFunction& operator=(const MappingFunction &other);
-    MappingFunction& operator=(const MappingFunctionBase &function);
+    virtual MappingFunction& operator=(const MapFunc &other);
+    virtual MappingFunction& operator=(const SireBase::PropertyBase &other);
 
-    const char* what() const;
+    const MapFunc* operator->() const;
+    const MapFunc& operator*() const;
+    
+    const MapFunc& read() const;
+    MapFunc& edit();
+    
+    const MapFunc* data() const;
+    const MapFunc* constData() const;
+    
+    MapFunc* data();
+    
+    operator const MapFunc&() const;
 
-    const MappingFunctionBase& base() const;
-
-    QVector<CoordGroup> map(const QVector<CoordGroup> &coords,
-                            const Space &old_space,
-                            const Space &new_space) const;
-
-    CoordGroup map(const CoordGroup &coords,
-                   const Space &old_space,
-                   const Space &new_space) const;
-
-    QVector<CoordGroup> operator()(const QVector<CoordGroup> &coords,
-                                   const Space &old_space,
-                                   const Space &new_space) const;
-
-    CoordGroup operator()(const CoordGroup &coords,
-                          const Space &old_space, const Space &new_space) const;
-
-    template<class T>
-    bool isA() const
-    {
-        return d->isA<T>();
-    }
-
-    template<class T>
-    const T& asA() const
-    {
-        return d->asA<T>();
-    }
-
-private:
-    /** Shared pointer to the implementation */
-    SireBase::SharedPolyPointer<MappingFunctionBase> d;
+    static const MappingFunction& shared_null();
 };
-
-/** Map the coordinates 'coords' from the old space 'old_space'
-    to the new space 'new_space'. The spaces must be compatible
-    with this function.
-
-    \throw SireError::incompatible_error
-*/
-inline QVector<CoordGroup>
-MappingFunction::map(const QVector<CoordGroup> &coords,
-                     const Space &old_space,
-                     const Space &new_space) const
-{
-    return d->map(coords, old_space, new_space);
-}
-
-/** Convienient syntax for "map" that lets you use
-    this MappingFunction object like a normal function.
-
-    \throw SireError::incompatible_error
-*/
-inline QVector<CoordGroup>
-MappingFunction::operator()(const QVector<CoordGroup> &coords,
-                            const Space &old_space,
-                            const Space &new_space) const
-{
-    return d->operator()(coords, old_space, new_space);
-}
-
-/** Map the coordinates 'coords' from the old space 'old_space'
-    to the new space 'new_space'. The spaces must be compatible
-    with this function.
-
-    \throw SireError::incompatible_error
-*/
-inline CoordGroup MappingFunction::map(const CoordGroup &coords,
-                                       const Space &old_space,
-                                       const Space &new_space) const
-{
-    return d->map(coords, old_space, new_space);
-}
-
-/** Convienient syntax for "map" that lets you use
-    this MappingFunction object like a normal function.
-
-    \throw SireError::incompatible_error
-*/
-inline CoordGroup MappingFunction::operator()(const CoordGroup &coords,
-                                              const Space &old_space,
-                                              const Space &new_space) const
-{
-    return d->operator()(coords, old_space, new_space);
-}
 
 }
 

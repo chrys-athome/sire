@@ -64,7 +64,7 @@ public:
 
     static const char* typeName()
     {
-        return "SireVol::Cartesian";
+        return QMetaType::typeName( qMetaTypeId<Cartesian>() );
     }
 
     SireUnits::Dimension::Volume volume() const;

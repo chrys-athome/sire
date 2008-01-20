@@ -41,8 +41,6 @@
 
 #include "SireMaths/vector.h"
 
-#include "sireglobal.h"
-
 #include "coordgroup.h"
 
 SIRE_BEGIN_HEADER
@@ -267,7 +265,7 @@ protected:
 
     @author Christopher Woods
 */
-class SIREVOL_EXPORT Space
+class SIREVOL_EXPORT Space : public SireBase::Property
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const Space&);
@@ -276,306 +274,30 @@ friend QDataStream& ::operator>>(QDataStream&, Space&);
 public:
     Space();
     Space(const SpaceBase &other);
-    Space(const SireBase::Property &property);
+    Space(const SireBase::PropertyBase &property);
 
     Space(const Space &other);
 
     ~Space();
 
-    Space& operator=(const SpaceBase &other);
-    Space& operator=(const Space &other);
-    Space& operator=(const SireBase::Property &property);
+    virtual Space& operator=(const SpaceBase &other);
+    virtual Space& operator=(const SireBase::PropertyBase &other);
 
-    bool operator==(const Space &other) const;
-    bool operator!=(const Space &other) const;
+    const SpaceBase* operator->() const;
+    const SpaceBase& operator*() const;
+    
+    const SpaceBase& read() const;
+    SpaceBase& edit();
+    
+    const SpaceBase* data() const;
+    const SpaceBase* constData() const;
+    
+    SpaceBase* data();
+    
+    operator const SpaceBase&() const;
 
-    const char* what() const;
-
-    const SpaceBase& base() const
-    {
-        return *d;
-    }
-
-    template<class T>
-    bool isA() const
-    {
-        return d->isA<T>();
-    }
-
-    template<class T>
-    const T& asA() const
-    {
-        return d->asA<T>();
-    }
-
-    SireUnits::Dimension::Volume volume() const;
-
-    Space setVolume(SireUnits::Dimension::Volume volume) const;
-    Space changeVolume(SireUnits::Dimension::Volume delta) const;
-
-    double calcDist(const Vector &point0, const Vector &point1) const;
-    double calcDist2(const Vector &point0, const Vector &point1) const;
-
-    double calcDist(const CoordGroup &group, DistMatrix &distmat) const;
-    double calcDist2(const CoordGroup &group, DistMatrix &distmat) const;
-    double calcInvDist(const CoordGroup &group, DistMatrix &distmat) const;
-    double calcInvDist2(const CoordGroup &group, DistMatrix &distmat) const;
-
-    double calcDist(const CoordGroup &group0, const CoordGroup &group1,
-                    DistMatrix &distmat) const;
-    double calcDist2(const CoordGroup &group0, const CoordGroup &group1,
-                     DistMatrix &distmat) const;
-    double calcInvDist(const CoordGroup &group0, const CoordGroup &group1,
-                       DistMatrix &distmat) const;
-    double calcInvDist2(const CoordGroup &group0, const CoordGroup &group1,
-                        DistMatrix &distmat) const;
-
-    bool beyond(double dist, const CoordGroup &group0, const CoordGroup &group1) const;
-
-    double minimumDistance(const CoordGroup &group0, const CoordGroup &group1) const;
-
-    double minimumDistance(const CoordGroup &group) const;
-
-    CoordGroup mapFromCartesian(const CoordGroup &group) const;
-    QVector<CoordGroup> mapFromCartesian(const QVector<CoordGroup> &groups) const;
-
-    CoordGroup mapFromSelf(const CoordGroup &group, const Space &other) const;
-    QVector<CoordGroup> mapFromSelf(const QVector<CoordGroup> &groups,
-                                    const Space &other) const;
-
-    CoordGroup getMinimumImage(const CoordGroup &group, const Vector &center) const;
-
-    QVector<CoordGroup> getMinimumImage(const QVector<CoordGroup> &groups,
-                                        const Vector &center) const;
-
-    QList< boost::tuple<double,CoordGroup> >
-                getCopiesWithin(const CoordGroup &group,
-                                const CoordGroup &center, double dist) const;
-
-    /** Allow implicit conversion to a Property */
-    operator SireBase::Property() const
-    {
-        return SireBase::Property(*d);
-    }
-
-private:
-    /** Dynamic shared pointer to the virtual SpaceBase class
-        that is used to perform the distance calculations. */
-    SireBase::SharedPolyPointer<SpaceBase> d;
+    static const Space& shared_null();
 };
-
-#ifndef SKIP_BROKEN_GCCXML_PARTS
-
-/** Return the volume of the central box of this space. This
-    throws an exception if it is not possible to calculate the
-    volume of this space (e.g. it is an infinite space!) */
-inline SireUnits::Dimension::Volume Space::volume() const
-{
-    return d->volume();
-}
-
-/** Return a copy of this space with the volume of set to 'volume'
-    - this will scale the space uniformly, keeping the center at
-    the same location, to achieve this volume */
-inline Space Space::setVolume(SireUnits::Dimension::Volume volume) const
-{
-    return d->setVolume(volume);
-}
-
-/** Change the volume of this space by 'delta' */
-inline Space Space::changeVolume(SireUnits::Dimension::Volume delta) const
-{
-    return d->changeVolume(delta);
-}
-
-#endif // #ifndef SKIP_BROKEN_GCCXML_PARTS
-
-/** Calculate the distance between two points */
-inline double Space::calcDist(const Vector &point0, const Vector &point1) const
-{
-    return d->calcDist(point0, point1);
-}
-
-/** Calculate the distance squared between two points */
-inline double Space::calcDist2(const Vector &point0, const Vector &point1) const
-{
-    return d->calcDist2(point0, point1);
-}
-
-/** Populate the matrix 'mat' with the distances between all of the
-    points within a CoordGroup. This creates a symmetrical matrix,
-    with a 0 diagonal. This returns the shortest distance between
-    two points within the group. */
-inline double Space::calcDist(const CoordGroup &group, DistMatrix &distmat) const
-{
-    return d->calcDist(group, distmat);
-}
-
-/** Populate the matrix 'mat' with the distances^2 between all of the
-    points within a CoordGroup. This creates a symmetrical matrix,
-    with a 0 diagonal. This returns the shortest distance^2 between
-    two points within the group. */
-inline double Space::calcDist2(const CoordGroup &group, DistMatrix &distmat) const
-{
-    return d->calcDist2(group, distmat);
-}
-
-/** Populate the matrix 'mat' with the inverse distances^2 between all of the
-    points within a CoordGroup. This creates a symmetrical matrix,
-    with a 0 diagonal. This returns the the largest inverse distance^2 between
-    two points within the group. */
-inline double Space::calcInvDist(const CoordGroup &group, DistMatrix &distmat) const
-{
-    return d->calcInvDist(group, distmat);
-}
-
-/** Populate the matrix 'mat' with the inverse distances^2 between all of the
-    points within a CoordGroup. This creates a symmetrical matrix,
-    with a 0 diagonal. This returns the the largest inverse distance^2 between
-    two points within the group. */
-inline double Space::calcInvDist2(const CoordGroup &group, DistMatrix &distmat) const
-{
-    return d->calcInvDist2(group, distmat);
-}
-
-/** Populate the matrix 'mat' with the distances between all of the
-    points of the two CoordGroups. Return the shortest distance^2 between the two
-    CoordGroups. */
-inline double Space::calcDist(const CoordGroup &group0, const CoordGroup &group1,
-                              DistMatrix &distmat) const
-{
-    return d->calcDist(group0, group1, distmat);
-}
-
-/** Populate the matrix 'mat' with the distances^2 between all of the
-    points of the two CoordGroups. Return the shortest distance^2 between the
-    two CoordGroups. */
-inline double Space::calcDist2(const CoordGroup &group0, const CoordGroup &group1,
-                               DistMatrix &distmat) const
-{
-    return d->calcDist2(group0, group1, distmat);
-}
-
-/** Populate the matrix 'mat' with the inverse distances between all of the
-     points of the two CoordGroups. Return the largest inverse distance between the two
-    CoordGroups. */
-inline double Space::calcInvDist(const CoordGroup &group0, const CoordGroup &group1,
-                                 DistMatrix &distmat) const
-{
-    return d->calcInvDist(group0, group1, distmat);
-}
-
-/** Populate the matrix 'mat' with the inverse distances^2 between all of the
-    points of the two CoordGroups. Return the largest inverse distance^2 between the two
-    CoordGroups. */
-inline double Space::calcInvDist2(const CoordGroup &group0, const CoordGroup &group1,
-                                  DistMatrix &distmat) const
-{
-    return d->calcInvDist2(group0, group1, distmat);
-}
-
-/** Return whether or not these two groups are definitely beyond the distance 'dist'.
-
-    \warning Note 'beyond' does not mean definitely within the distance!
-*/
-inline bool Space::beyond(double dist, const CoordGroup &group0,
-                          const CoordGroup &group1) const
-{
-    return d->beyond(dist, group0, group1);
-}
-
-/** Return the minimum distance between the points in 'group0' and 'group1'.
-    If this is a periodic space then this uses the minimum image convention
-    (i.e. the minimum distance between the closest periodic replicas are
-    used) */
-inline double Space::minimumDistance(const CoordGroup &group0,
-                                     const CoordGroup &group1) const
-{
-    return d->minimumDistance(group0, group1);
-}
-
-/** Return the minimum distance between points within the group 'group'. */
-inline double Space::minimumDistance(const CoordGroup &group) const
-{
-    return d->minimumDistance(group);
-}
-
-/** Return a copy of the passed CoordGroup that has been mapped from
-    an infinite cartesian space into this space */
-inline CoordGroup Space::mapFromCartesian(const CoordGroup &group) const
-{
-    return d->mapFromCartesian(group);
-}
-
-/** Return a copy of an array of passed CoordGroups that have been mapped
-    from an infinite cartesian space into this space. */
-inline QVector<CoordGroup> Space::mapFromCartesian(
-                                      const QVector<CoordGroup> &groups) const
-{
-    return d->mapFromCartesian(groups);
-}
-
-/** Return a copy of the passed CoordGroup that has been mapped from
-    another copy of this space into this space (e.g. map from a
-    small PeriodicBox to a large PeriodicBox) - note that the
-    other space must have the same type as this space!
-
-    \throw SireError::incompatible_error
-*/
-inline CoordGroup Space::mapFromSelf(const CoordGroup &group, const Space &other) const
-{
-    return d->mapFromSelf(group, other);
-}
-
-/** Return a copy an array of passed CoordGroups that have been mapped
-    from another copy of this space into this space (e.g. map from a
-    small PeriodicBox to a large PeriodicBox) - note that the
-    other space must have the same type as this space!
-
-    \throw SireError::incompatible_error
-*/
-inline QVector<CoordGroup> Space::mapFromSelf(const QVector<CoordGroup> &groups,
-                                       const Space &other) const
-{
-    return d->mapFromSelf(groups, other);
-}
-
-/** Return the minimum image copy of 'group' with respect to 'center'.
-    For periodic spaces, this translates 'group' into the box that
-    has its center at 'center' (i.e. returns the closest copy of
-    'group' to 'center' according to the minimum image convention) */
-inline CoordGroup Space::getMinimumImage(const CoordGroup &group,
-                                         const Vector &center) const
-{
-    return d->getMinimumImage(group, center);
-}
-
-/** Return the minimum image copy of 'groups' with respect to 'center'.
-    For periodic spaces, this translates 'groups' into the box that
-    has its center at 'center' (i.e. returns the closest copy of
-    each 'group' to 'center' according to the minimum image convention) */
-inline QVector<CoordGroup> Space::getMinimumImage(const QVector<CoordGroup> &groups,
-                                                  const Vector &center) const
-{
-    return d->getMinimumImage(groups, center);
-}
-
-/** Return a list of copies of CoordGroup 'group' that are within
-    'distance' of the CoordGroup 'center', translating 'group' so that
-    it has the right coordinates to be around 'center'. Note that multiple
-    copies of 'group' may be returned if this is a periodic space and
-    there are multiple periodic replicas of 'group' within 'dist' of
-    'center'. The copies of 'group' are returned together with the
-    minimum distance between that periodic replica and 'center'.
-
-    If there are no periodic replicas of 'group' that are within
-    'dist' of 'center', then an empty list is returned. */
-inline QList< boost::tuple<double,CoordGroup> >
-Space::getCopiesWithin(const CoordGroup &group, const CoordGroup &center,
-                       double dist) const
-{
-    return d->getCopiesWithin(group, center, dist);
-}
 
 }
 

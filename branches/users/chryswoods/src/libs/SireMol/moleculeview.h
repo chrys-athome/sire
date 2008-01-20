@@ -96,7 +96,7 @@ public:
     /** Return the atoms that are selected as part of this view */
     virtual AtomSelection selection() const=0;
 
-    virtual void update(const MoleculeData &moldata) const;
+    virtual void update(const MoleculeData &moldata);
 
     /** Return whether or not this view has the property at key 'key'
          - note that this returns true only if there is a property,

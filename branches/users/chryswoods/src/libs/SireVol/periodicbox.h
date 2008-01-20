@@ -81,7 +81,7 @@ public:
 
     static const char* typeName()
     {
-        return "SireVol::PeriodicBox";
+        return QMetaType::typeName( qMetaTypeId<PeriodicBox>() );
     }
 
     double calcDist(const Vector &point0, const Vector &point1) const;

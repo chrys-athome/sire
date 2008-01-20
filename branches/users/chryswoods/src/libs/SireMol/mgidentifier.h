@@ -84,7 +84,7 @@ public:
     bool operator==(const MGID &other) const;
     bool operator!=(const MGID &other) const;
 
-    QList<MGNum> map(const MolGroup &molgroup) const;
+    QList<MGNum> map(const MolGroupsBase &molgroups) const;
 
 private:
     /** Pointer to the MGID */

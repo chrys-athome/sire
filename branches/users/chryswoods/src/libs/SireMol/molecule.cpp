@@ -525,8 +525,8 @@ const Property& Molecule::metadata(const PropertyName &key,
 */
 void Molecule::setProperty(const PropertyName &key, const Property &value)
 {
-    if (value.isA<MolViewProperty>())
-        value.asA<MolViewProperty>().assertCompatibleWith(d->info());
+    if (value->isA<MolViewProperty>())
+        value->asA<MolViewProperty>().assertCompatibleWith(d->info());
         
     d->setProperty(key, value);
 }
@@ -540,8 +540,8 @@ void Molecule::setProperty(const PropertyName &key, const Property &value)
 void Molecule::setMetadata(const PropertyName &metakey,
                            const Property &value)
 {
-    if (value.isA<MolViewProperty>())
-        value.asA<MolViewProperty>().assertCompatibleWith(d->info());
+    if (value->isA<MolViewProperty>())
+        value->asA<MolViewProperty>().assertCompatibleWith(d->info());
         
     d->setMetadata(metakey, value);
 }
@@ -555,8 +555,8 @@ void Molecule::setMetadata(const PropertyName &metakey,
 void Molecule::setMetadata(const PropertyName &key, const PropertyName &metakey,
                            const Property &value)
 {
-    if (value.isA<MolViewProperty>())
-        value.asA<MolViewProperty>().assertCompatibleWith(d->info());
+    if (value->isA<MolViewProperty>())
+        value->asA<MolViewProperty>().assertCompatibleWith(d->info());
         
     d->setMetadata(key, metakey, value);
 }
