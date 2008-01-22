@@ -44,8 +44,12 @@ class AxisSet;
 namespace SireMol
 {
 
+template<>
+class AtomProperty<SireMaths::Vector>;
+
+typedef AtomProperty<SireMaths::Vector> AtomCoords;
+
 class AtomAliases;
-class AtomCoords;
 
 class BondID;
 class AngleID;
@@ -62,7 +66,7 @@ using SireBase::PropertyMap;
 /** This class provides the template-independent part
     of Mover<T>. This class is not designed to be used
     on its own!
-    
+
     @author Christopher Woods
 */
 class SIREMOL_EXPORT MoverBase
@@ -73,9 +77,9 @@ public:
     MoverBase(const MoverBase &other);
 
     ~MoverBase();
-    
+
     MoverBase& operator=(const MoverBase &other);
-    
+
 protected:
     MoverBase(const AtomSelection &selected_atom);
 
@@ -84,10 +88,10 @@ protected:
     void mapInto(MoleculeData &data, const AxisSet &axes,
                  const PropertyMap &map);
 
-    void translate(MoleculeData &data,      
+    void translate(MoleculeData &data,
                    const Vector &delta,
                    const PropertyMap &map) const;
-                   
+
     void rotate(MoleculeData &data,
                 const Quaternion &quat,
                 const Vector &point,
@@ -98,60 +102,64 @@ protected:
                 const Vector &point,
                 const PropertyMap &map) const;
 
+    void mapInto(MoleculeData &data,
+                 const AxisSet &axes,
+                 const PropertyMap &map) const;
+
     void change(MoleculeData &data, const BondID &bond,
-                SireUnits::Dimension::Length delta, 
-                const PropertyMap &map) const; 
+                SireUnits::Dimension::Length delta,
+                const PropertyMap &map) const;
 
     void change(MoleculeData &data, const AngleID &angle,
-                SireUnits::Dimension::Angle delta, 
+                SireUnits::Dimension::Angle delta,
                 const PropertyMap &map) const;
-                
+
     void change(MoleculeData &data, const DihedralID &dihedral,
-                SireUnits::Dimension::Angle delta, 
+                SireUnits::Dimension::Angle delta,
                 const PropertyMap &map) const;
-                
+
     void change(MoleculeData &data, const BondID &bond,
-                SireUnits::Dimension::Angle delta, 
+                SireUnits::Dimension::Angle delta,
                 const PropertyMap &map) const;
-                
+
     void change(MoleculeData &data, const ImproperID &improper,
-                SireUnits::Dimension::Angle delta, 
+                SireUnits::Dimension::Angle delta,
                 const PropertyMap &map) const;
 
     void set(MoleculeData &data, const BondID &bond,
-             SireUnits::Dimension::Length value, 
+             SireUnits::Dimension::Length value,
              const PropertyMap &map) const;
-             
+
     void set(MoleculeData &data, const AngleID &angle,
-             SireUnits::Dimension::Angle value, 
+             SireUnits::Dimension::Angle value,
              const PropertyMap &map) const;
-             
+
     void set(MoleculeData &data, const DihedralID &dihedral,
              SireUnits::Dimension::Angle value,
              const PropertyMap &map) const;
-             
+
     void setAll(MoleculeData &data, const DihedralID &dihedral,
-                SireUnits::Dimension::Angle value, 
+                SireUnits::Dimension::Angle value,
                 const PropertyMap &map) const;
-                
+
     void set(MoleculeData &data, const ImproperID &improper,
-             SireUnits::Dimension::Angle value, 
+             SireUnits::Dimension::Angle value,
              const PropertyMap &map) const;
 
     void align(MoleculeData &data, const MoleculeView &other,
                const AtomAliases &aliases,
                const PropertyMap &map0, const PropertyMap &map1) const;
-               
+
     void align(MoleculeData &data, const AtomSelection &align_atoms,
                const MoleculeView &other, const AtomAliases &aliases,
                const PropertyMap &map0, const PropertyMap &map1) const;
 
-    static void translate(MoleculeView &view, 
+    static void translate(MoleculeData &view,
                           const AtomSelection &selected_atoms,
-                          const Vector &delta, 
+                          const Vector &delta,
                           const PropertyMap &map);
 
-    static void rotate(MoleculeView &view,
+    static void rotate(MoleculeData &view,
                        const AtomSelection &selected_atoms,
                        const Matrix &rotmat,
                        const Vector &point,

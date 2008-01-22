@@ -33,6 +33,8 @@
 #include <QVector>
 #include <QSet>
 
+#include <boost/tuple/tuple.hpp>
+
 #include "SireBase/property.h"
 #include "SireBase/shareddatapointer.hpp"
 
@@ -48,6 +50,8 @@ QDataStream& operator>>(QDataStream&, SireMol::ConnectivityBase&);
 
 namespace SireMol
 {
+
+using boost::tuple;
 
 class AtomIdx;
 class ResIdx;
@@ -72,7 +76,7 @@ friend QDataStream& ::operator>>(QDataStream&, SireMol::ConnectivityBase&);
 
 public:
     ~ConnectivityBase();
-    
+
     static const char* typeName()
     {
         return "SireMol::ConnectivityBase";
@@ -80,30 +84,65 @@ public:
 
     bool areConnected(AtomIdx atom0, AtomIdx atom1) const;
     bool areConnected(const AtomID &atom0, const AtomID &atom1) const;
-    
+
     bool areConnected(ResIdx res0, ResIdx res1) const;
     bool areConnected(const ResID &res0, const ResID &res1) const;
 
     int nConnections() const;
     int nConnections(AtomIdx atomidx) const;
     int nConnections(const AtomID &atomid) const;
-    
+
     int nConnections(ResIdx residx) const;
     int nConnections(const ResID &resid) const;
-    
+
     int nConnections(ResIdx res0, ResIdx res1) const;
     int nConnections(const ResID &res0, const ResID &res1) const;
-    
+
     const QSet<AtomIdx>& connectionsTo(AtomIdx atomidx) const;
     const QSet<AtomIdx>& connectionsTo(const AtomID &atomid) const;
-    
+
     const QSet<ResIdx>& connectionsTo(ResIdx residx) const;
     const QSet<ResIdx>& connectionsTo(const ResID &resid) const;
+
+    //anchors should be a separate consideration to the SPLIT
+    // - should not have anchors in here - they should be in mover.cpp
+
+    tuple<AtomSelection,AtomSelection> split(AtomIdx atom0, AtomIdx atom1) const;
+    tuple<AtomSelection,AtomSelection> split(const AtomID &atom0,
+                                             const AtomID &atom1) const;
+
+    tuple<AtomSelection,AtomSelection> split(const BondID &bond) const;
+
+    tuple<AtomSelection,AtomSelection>
+    split(AtomIdx atom0, AtomIdx atom1, const AtomSelection &movable_atoms,
+          const AtomSelection &anchors = AtomSelection()) const;
+
+    tuple<AtomSelection,AtomSelection>
+    split(const AtomID &atom0, const AtomID &atom1,
+          const AtomSelection &movable_atoms,
+          const AtomSelection &anchors = AtomSelection()) const;
+
+    tuple<AtomSelection,AtomSelection>
+    split(const BondID &bond, const AtomSelection &movable_atoms,
+          const AtomSelection &anchors = AtomSelection()) const;
+
+    tuple<AtomSelection,AtomSelection> split(AtomIdx atom0, AtomIdx atom1,
+                                             AtomIdx atom2) const;
+    tuple<AtomSelection,AtomSelection> split(const AtomID &atom0,
+                                             const AtomID &atom1,
+                                             const AtomID &atom2) const;
+
+    tuple<AtomSelection,AtomSelection> split(const AngleID &angle) const;
+
+    tuple<AtomSelection,AtomSelection>
+    split(AtomIdx atom0, AtomIdx atom1, AtomIdx atom2,
+          const AtomSelection &movable_atoms,
+          const AtomSelection &anchors = AtomSelection()) const;
 
 protected:
     ConnectivityBase();
     ConnectivityBase(const MoleculeData &moldata);
-    
+
     ConnectivityBase(const ConnectivityBase &other);
 
     ConnectivityBase& operator=(const ConnectivityBase &other);
@@ -116,13 +155,13 @@ protected:
     /** The which atoms are connected to which other atoms
         in this molecule */
     QVector< QSet<AtomIdx> > connected_atoms;
-    
+
     /** Which residues are connected to which other residues */
     QVector< QSet<ResIdx> > connected_res;
-    
+
     /** The info object that describes the molecule */
     SireBase::SharedDataPointer<MoleculeInfoData> d;
-   
+
 };
 
 /** This class contains the connectivity of the molecule, namely which
@@ -132,21 +171,21 @@ of the atoms that it is connected to), and to automatically generate
 the internal geometry of the molecule (e.g. to auto-generate
 all of the bonds, angles and dihedrals). Note that the connectivity
 is not the same as the bonding - the connectivity is used to move
-parts of the molecule (e.g. moving an atom should move all of the 
+parts of the molecule (e.g. moving an atom should move all of the
 atoms it is connected to) and also to auto-generate internal angles
 (e.g. auto-generation of bonds, angles and dihedrals)
 
     @author Christopher Woods
 
 */
-class SIREMOL_EXPORT Connectivity 
+class SIREMOL_EXPORT Connectivity
             : public SireBase::ConcreteProperty<Connectivity,
                                                 ConnectivityBase>
 {
 
 public:
     Connectivity();
-    
+
     Connectivity(const MoleculeData &moldata);
 
     Connectivity(const ConnectivityEditor &editor);
@@ -179,42 +218,42 @@ private:
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT ConnectivityEditor 
+class SIREMOL_EXPORT ConnectivityEditor
         : public SireBase::ConcreteProperty<ConnectivityEditor,
                                             ConnectivityBase>
 {
 public:
     ConnectivityEditor();
-    
+
     ConnectivityEditor(const Connectivity &connectivity);
-    
+
     ConnectivityEditor(const ConnectivityEditor &other);
-    
+
     ~ConnectivityEditor();
-    
+
     static const char* typeName()
     {
         return QMetaType::typeName( qMetaTypeId<ConnectivityEditor>() );
     }
-    
+
     using SireBase::PropertyBase::operator=;
     using SireBase::PropertyBase::operator==;
     using SireBase::PropertyBase::operator!=;
-    
+
     ConnectivityEditor& operator=(const ConnectivityBase &other);
-    
+
     bool operator==(const ConnectivityEditor &other) const;
     bool operator!=(const ConnectivityEditor &other) const;
 
     ConnectivityEditor& connect(AtomIdx atom0, AtomIdx atom1);
     ConnectivityEditor& disconnect(AtomIdx atom0, AtomIdx atom1);
-    
+
     ConnectivityEditor& connect(const AtomID &atom0, const AtomID &atom1);
     ConnectivityEditor& disconnect(const AtomID &atom0, const AtomID &atom1);
-    
+
     ConnectivityEditor& disconnectAll(AtomIdx atomidx);
     ConnectivityEditor& disconnectAll(ResIdx residx);
-    
+
     ConnectivityEditor& disconnectAll(const AtomID &atomid);
     ConnectivityEditor& disconnectAll(const ResID &resid);
 };

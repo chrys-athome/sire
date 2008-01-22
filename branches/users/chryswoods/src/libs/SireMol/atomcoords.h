@@ -51,9 +51,9 @@ using SireMaths::Vector;
 using SireVol::CoordGroup;
 
 /** This is an explicit specialisation of AtomProperty<T> for the Vector
-    class, as the Vector implies coordinates, which are arranged into 
+    class, as the Vector implies coordinates, which are arranged into
     CoordGroups (so that bounding boxes are calculated automatically)
-    
+
     @author Christopher Woods
 */
 template<>
@@ -68,36 +68,38 @@ public:
     AtomProperty();
 
     AtomProperty(const MoleculeInfoData &molinfo);
-    
+
     AtomProperty(const QVector<Vector> &coordinates);
     AtomProperty(const QVector< QVector<Vector> > &coordinates);
-    
+
     AtomProperty(const CoordGroup &cgroup);
     AtomProperty(const QVector<CoordGroup> &cgroups);
-    
+
     AtomProperty(const AtomProperty<Vector> &other);
-    
+
     ~AtomProperty();
-    
+
     AtomProperty<Vector>& operator=(const AtomProperty<Vector> &other);
-    
+
     static const char* typeName()
     {
         return QMetaType::typeName( qMetaTypeId< AtomProperty<Vector> >() );
     }
-    
+
     AtomProperty<Vector>* clone() const
     {
         return new AtomProperty<Vector>(*this);
     }
-    
+
     bool isCompatibleWith(const MoleculeInfoData &molinfo) const;
     SireBase::Property mask(const AtomSelection &selected_atoms) const;
-    
+
     bool operator==(const AtomProperty<Vector> &other) const;
     bool operator!=(const AtomProperty<Vector> &other) const;
 
     const CoordGroup& operator[](CGIdx cgidx) const;
+    CoordGroup& operator[](CGIdx cgidx);
+
     const CoordGroup& at(CGIdx cgidx) const;
     const CoordGroup& get(CGIdx cgidx) const;
 
@@ -113,14 +115,16 @@ public:
     const CoordGroup* data() const;
     const CoordGroup* constData() const;
 
+    CoordGroup* data();
+
     const Vector* data(CGIdx cgidx) const;
     const Vector* constData(CGIdx cgidx) const;
 
     int size() const;
     int count() const;
-    
+
     int nCutGroups() const;
-    
+
     int nAtoms() const;
     int nAtoms(CGIdx cgidx) const;
 

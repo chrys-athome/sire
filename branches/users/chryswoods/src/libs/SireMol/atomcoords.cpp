@@ -40,20 +40,20 @@ using namespace SireBase;
 RegisterMetaType< AtomProperty<Vector> > r_atomcoords;
 
 /** Serialise to a binary datastream */
-QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, 
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
                                        const AtomProperty<Vector> &atomcoords)
 {
     writeHeader(ds, r_atomcoords, 1);
 
     SharedDataStream sds(ds);
-    
+
     sds << atomcoords.coords;
 
     return ds;
 }
 
 /** Deserialise from a binary datastream */
-QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, 
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
                                        AtomProperty<Vector> &atomcoords)
 {
     VersionID v = readHeader(ds, r_atomcoords);
@@ -80,17 +80,17 @@ AtomProperty<Vector>::AtomProperty(const MoleculeInfoData &molinfo)
                      : ConcreteProperty<AtomProperty<Vector>,MolViewProperty>()
 {
     int ncg = molinfo.nCutGroups();
-    
+
     if (ncg > 0)
     {
         coords = QVector<CoordGroup>(ncg);
         CoordGroup *coords_array = coords.data();
-        
+
         for (CGIdx i(0); i<ncg; ++i)
         {
             coords_array[i] = CoordGroup(molinfo.nAtoms(i));
         }
-        
+
         coords.squeeze();
     }
 }
@@ -101,7 +101,7 @@ AtomProperty<Vector>::AtomProperty(const QVector<Vector> &coordinates)
                      : ConcreteProperty<AtomProperty<Vector>,MolViewProperty>()
 {
     int nats = coordinates.count();
-    
+
     if (nats > 0)
     {
         coords = QVector<CoordGroup>(1);
@@ -116,22 +116,22 @@ AtomProperty<Vector>::AtomProperty(const QVector< QVector<Vector> > &coordinates
                      : ConcreteProperty<AtomProperty<Vector>,MolViewProperty>()
 {
     int ncg = coordinates.count();
-    
+
     if (ncg > 0)
     {
         const QVector<Vector> *coords_array = coordinates.constData();
-    
+
         coords.reserve(ncg);
-        
+
         for (int i=0; i<ncg; ++i)
         {
             if (coords_array[i].count() > 0)
                 coords.append( CoordGroup(coords_array[i]) );
         }
-        
+
         coords.squeeze();
     }
-} 
+}
 
 /** Construct from the single passed CoordGroup */
 AtomProperty<Vector>::AtomProperty(const CoordGroup &cgroup)
@@ -150,19 +150,19 @@ AtomProperty<Vector>::AtomProperty(const QVector<CoordGroup> &cgroups)
                      : ConcreteProperty<AtomProperty<Vector>,MolViewProperty>()
 {
     int ncg = cgroups.count();
-    
+
     if (ncg > 0)
     {
         const CoordGroup *cgroups_array = cgroups.constData();
-        
+
         coords.reserve(ncg);
-        
+
         for (int i=0; i<ncg; ++i)
         {
             if (cgroups_array[i].count() > 0)
                 coords.append(cgroups_array[i]);
         }
-        
+
         coords.squeeze();
     }
 }
@@ -203,6 +203,16 @@ const CoordGroup& AtomProperty<Vector>::operator[](CGIdx cgidx) const
     return coords.constData()[cgidx.map(coords.count())];
 }
 
+/** Return a modifiable reference to the CoordGroup for the CutGroup at
+    index 'cgidx'
+
+    \throw SireError::invalid_index
+*/
+CoordGroup& AtomProperty<Vector>::operator[](CGIdx cgidx)
+{
+    return coords.data()[cgidx.map(coords.count())];
+}
+
 /** Return the CoordGroup for the CutGroup at index 'cgidx' */
 const CoordGroup& AtomProperty<Vector>::at(CGIdx cgidx) const
 {
@@ -234,10 +244,10 @@ const Vector& AtomProperty<Vector>::get(const CGAtomIdx &cgatomidx) const
 }
 
 /** Set the coordinates of the atom at index 'cgatomidx' to the value 'value' */
-AtomProperty<Vector>& AtomProperty<Vector>::set(const CGAtomIdx &cgatomidx, 
+AtomProperty<Vector>& AtomProperty<Vector>::set(const CGAtomIdx &cgatomidx,
                                                 const Vector &value)
 {
-    CoordGroup &group = coords.data()[cgatomidx.cutGroup().map(coords.count())];    
+    CoordGroup &group = coords.data()[cgatomidx.cutGroup().map(coords.count())];
     group = group.edit().setCoordinates( cgatomidx.atom().map(group.count()), value );
 
     return *this;
@@ -246,30 +256,30 @@ AtomProperty<Vector>& AtomProperty<Vector>::set(const CGAtomIdx &cgatomidx,
 /** Set the coordinates of the atoms in the CutGroup at index 'cgidx'
     to have the value 'values' - note that the number of values
     must equal the number of atoms!!! */
-AtomProperty<Vector>& AtomProperty<Vector>::set(CGIdx cgidx, 
+AtomProperty<Vector>& AtomProperty<Vector>::set(CGIdx cgidx,
                                                 const QVector<Vector> &values)
 {
     CoordGroup &group = coords.data()[cgidx.map(coords.count())];
-    
+
     if (group.count() != values.count())
         throw SireError::incompatible_error( QObject::tr(
             "Cannot set the coordinates of the atoms in the CutGroup as "
             "the number of coordinates (%1) is not the same as the number "
             "of atoms! (%2)")
                 .arg(values.count()).arg(group.count()), CODELOC );
-                
+
     group = CoordGroup(values);
 
     return *this;
 }
 
 /** Set the coordinates of atoms in the CutGroup at index 'cgidx' from
-    the passed CoordGroup - note that the number of values must 
+    the passed CoordGroup - note that the number of values must
     equal the number of atoms!!! */
 AtomProperty<Vector>& AtomProperty<Vector>::set(CGIdx cgidx, const CoordGroup &cgroup)
 {
     CoordGroup &group = coords.data()[cgidx.map(coords.count())];
-    
+
     if (group.count() != cgroup.count())
         throw SireError::incompatible_error( QObject::tr(
             "Cannot set the coordinates of the atoms in the CutGroup as "
@@ -278,7 +288,7 @@ AtomProperty<Vector>& AtomProperty<Vector>::set(CGIdx cgidx, const CoordGroup &c
                 .arg(cgroup.count()).arg(group.count()), CODELOC );
 
     group = cgroup;
-    
+
     return *this;
 }
 
@@ -288,20 +298,26 @@ const CoordGroup* AtomProperty<Vector>::data() const
     return coords.constData();
 }
 
+/** Return a modifiable raw pointer to the array of CoordGroups */
+CoordGroup* AtomProperty<Vector>::data()
+{
+    return coords.data();
+}
+
 /** Return a raw pointer to the array of CoordGroups */
 const CoordGroup* AtomProperty<Vector>::constData() const
 {
     return coords.constData();
 }
 
-/** Return a raw pointer to the array of coordinates for the 
+/** Return a raw pointer to the array of coordinates for the
     CoordGroup at index 'cgidx' */
 const Vector* AtomProperty<Vector>::data(CGIdx cgidx) const
 {
     return this->operator[](cgidx).constData();
 }
 
-/** Return a raw pointer to the array of coordinates for the 
+/** Return a raw pointer to the array of coordinates for the
     CoordGroup at index 'cgidx' */
 const Vector* AtomProperty<Vector>::constData(CGIdx cgidx) const
 {
@@ -330,12 +346,12 @@ int AtomProperty<Vector>::nCutGroups() const
 int AtomProperty<Vector>::nAtoms() const
 {
     int nats = 0;
-    
+
     for (int i=0; i<coords.count(); ++i)
     {
         nats += coords.constData()[i].count();
     }
-    
+
     return nats;
 }
 

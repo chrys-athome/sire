@@ -590,6 +590,7 @@ public:
     CoordGroupEditor& setCoordinates(quint32 i, const Vector &newcoords);
 
     CoordGroupEditor& mapInto(const SireMaths::AxisSet &axes);
+    CoordGroupEditor& mapInto(quint32 i, const SireMaths::AxisSet &axes);
 
     CoordGroup commit() const;
 };

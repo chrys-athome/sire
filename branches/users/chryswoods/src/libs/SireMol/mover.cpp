@@ -27,13 +27,20 @@
 \*********************************************/
 
 #include "mover.h"
-
+#include "atomcoords.h"
+#include "connectivity.h"
 #include "weightfunction.h"
 
+#include "SireMaths/quaternion.h"
+#include "SireMaths/matrix.h"
+
+#include "SireVol/coordgroup.h"
+
 using namespace SireMol;
+using namespace SireVol;
 
 /** The default weighting function used by Mover */
-static Property default_weightfunc( new RelFromNumber() );
+static Property default_weightfunc;
 
 /** Constructor */
 MoverBase::MoverBase()
@@ -94,15 +101,21 @@ void MoverBase::translate(AtomCoords &coords,
             {
                 QSet<Index> atoms_to_move = selected_atoms.selectedAtoms(i);
 
-                coords_array[i] = coords_array[i].edit().translate(atoms_to_move,
-                                                                   delta);
+                CoordGroupEditor editor = coords_array[i].edit();
+
+                foreach (const Index atom, atoms_to_move)
+                {
+                    editor.translate(atom, delta);
+                }
+
+                coords_array[i] = editor.commit();
             }
         }
     }
     else
     {
         //we are moving only some CutGroups
-        QSet<CGIdx> cg_to_move = selected_atoms.selectedCutGroups();
+        QList<CGIdx> cg_to_move = selected_atoms.selectedCutGroups();
 
         foreach (CGIdx i, cg_to_move)
         {
@@ -114,8 +127,14 @@ void MoverBase::translate(AtomCoords &coords,
             {
                 QSet<Index> atoms_to_move = selected_atoms.selectedAtoms(i);
 
-                coords_array[i] = coords_array[i].edit().translate(atoms_to_move,
-                                                                   delta);
+                CoordGroupEditor editor = coords_array[i].edit();
+
+                foreach (const Index &atom, atoms_to_move)
+                {
+                    editor.translate(atom, delta);
+                }
+
+                coords_array[i] = editor.commit();
             }
         }
     }
@@ -156,14 +175,20 @@ void MoverBase::rotate(AtomCoords &coords,
             {
                 QSet<Index> atoms_to_move = selected_atoms.selectedAtoms(i);
 
-                coords_array[i] = coords_array[i].edit().rotate(atoms_to_move,
-                                                                rotmat, delta);
+                CoordGroupEditor editor = coords_array[i].edit();
+
+                foreach (const Index &atom, atoms_to_move)
+                {
+                    editor.rotate(atom, rotmat, point);
+                }
+
+                coords_array[i] = editor.commit();
             }
         }
     }
     else
     {
-        QSet<CGIdx> cg_to_move = selected_atoms.selectedCutGroups();
+        QList<CGIdx> cg_to_move = selected_atoms.selectedCutGroups();
 
         foreach (CGIdx i, cg_to_move)
         {
@@ -174,9 +199,14 @@ void MoverBase::rotate(AtomCoords &coords,
             else
             {
                 QSet<Index> atoms_to_move = selected_atoms.selectedAtoms(i);
+                CoordGroupEditor editor = coords_array[i].edit();
 
-                coords_array[i] = coords_array[i].edit().rotate(atoms_to_move,
-                                                                rotmat, point);
+                foreach (const Index &atom, atoms_to_move)
+                {
+                    editor.rotate(atom, rotmat, point);
+                }
+
+                coords_array[i] = editor.commit();
             }
         }
     }
@@ -216,14 +246,20 @@ void MoverBase::mapInto(AtomCoords &coords,
             {
                 QSet<Index> atoms_to_move = selected_atoms.selectedAtoms(i);
 
-                coords_array[i] = coords_array[i].edit().mapInto(atoms_to_move,
-                                                                 axes);
+                CoordGroupEditor editor = coords_array[i];
+
+                foreach (const Index &atom, atoms_to_move)
+                {
+                    editor.mapInto(atom, axes);
+                }
+
+                coords_array[i] = editor.commit();
             }
         }
     }
     else
     {
-        QSet<CGIdx> cg_to_move = selected_atoms.selectedCutGroups();
+        QList<CGIdx> cg_to_move = selected_atoms.selectedCutGroups();
 
         foreach (CGIdx i, cg_to_move)
         {
@@ -235,8 +271,14 @@ void MoverBase::mapInto(AtomCoords &coords,
             {
                 QSet<Index> atoms_to_move = selected_atoms.selectedAtoms(i);
 
-                coords_array[i] = coords_array[i].edit().mapInto(atoms_to_move,
-                                                                 axes);
+                CoordGroupEditor editor = coords_array[i].edit();
+
+                foreach (const Index &atom, atoms_to_move)
+                {
+                    editor.mapInto(atom, axes);
+                }
+
+                coords_array[i] = editor.commit();
             }
         }
     }
@@ -249,7 +291,7 @@ void MoverBase::mapInto(AtomCoords &coords,
 
     \throw SireBase::missing_property
 */
-void MoverBase::translate(MoleculeData &moldata
+void MoverBase::translate(MoleculeData &moldata,
                           const AtomSelection &selected_atoms,
                           const Vector &delta,
                           const PropertyMap &map)
@@ -258,13 +300,13 @@ void MoverBase::translate(MoleculeData &moldata
     PropertyName coord_property = map["coordinates"];
 
     //get the current coordinates
-    AtomCoords coords = moldata.property(coord_property);
+    AtomCoords coords = moldata.property(coord_property)->asA<AtomCoords>();
 
     //translate the coordinates of the selected atoms
     MoverBase::translate(coords, selected_atoms, delta);
 
     //set the new property
-    view.setProperty(coord_property, coords);
+    moldata.setProperty(coord_property, coords);
 }
 
 /** Rotate the selected atoms in the molecule whose data
@@ -288,7 +330,7 @@ void MoverBase::rotate(MoleculeData &moldata,
     PropertyName coord_property = map["coordinates"];
 
     //get the coordinates to be rotated
-    AtomCoords coords = moldata.property(coord_property);
+    AtomCoords coords = moldata.property(coord_property)->asA<AtomCoords>();
 
     //rotate the coordinates
     MoverBase::rotate(coords, selected_atoms, rotmat, point);
@@ -313,7 +355,7 @@ void MoverBase::mapInto(MoleculeData &moldata,
     PropertyName coord_property = map["coordinates"];
 
     //get the coordinates to be mapped
-    AtomCoords coords = moldata.property(coord_property);
+    AtomCoords coords = moldata.property(coord_property)->asA<AtomCoords>();
 
     //map the coordinates
     MoverBase::mapInto(coords, selected_atoms, axes);
@@ -374,7 +416,7 @@ void MoverBase::rotate(MoleculeData &moldata,
                        const PropertyMap &map) const
 {
     MoverBase::rotate(moldata, movable_atoms, rotmat,
-                      point, coord_property);
+                      point, map);
 }
 
 /** Change the length of the bond identified by 'bond' by 'delta',
@@ -406,29 +448,29 @@ void MoverBase::change(MoleculeData &moldata, const BondID &bond,
     if (delta == 0)
         return;
 
-    //get the indicies of the atoms that comprise the bond
-    tuple<AtomIdx,AtomIdx> atomidxs = bond.map(moldata.info());
+    //get the indicies of the two atoms of the bond
+    tuple<AtomIdx,AtomIdx> atomidxs = bond.map(moldata);
 
     AtomIdx atom0 = atomidxs.get<0>();
     AtomIdx atom1 = atomidxs.get<1>();
 
     //get the connectivity property that is used to split
     //the molecule into two parts
-    Connectivity connectivity = moldata.property(map["connectivity"]);
+    const Connectivity &connectivity =
+            moldata.property(map["connectivity"])->asA<Connectivity>();
 
     //see if there are any anchors that must be applied to
     //the section of molecule
     AtomSelection anchors;
 
     if (map.specified("anchors"))
-        anchors = moldata.property(map["anchors"]);
+        anchors = moldata.property(map["anchors"])->asA<AtomSelection>();
 
     //split the molecule into the two parts that are
     //going to move - the two groups are only able to
     //contain the atoms that are in 'movable_atoms'
     tuple<AtomSelection,AtomSelection> groups =
-                        connectivity.split(atom0, atom1,
-                                           movable_atoms, anchors);
+                connectivity.split(atom0, atom1, movable_atoms, anchors);
 
     const AtomSelection &group0 = groups.get<0>();
     const AtomSelection &group1 = groups.get<1>();
@@ -450,8 +492,9 @@ void MoverBase::change(MoleculeData &moldata, const BondID &bond,
     {
         //get the weighting function that is used to weight the two
         //sides of the move
-        WeightFunction weightfunc = moldata.property(map["weight function"],
-                                                     default_weightfunc);
+        const WeightFunction &weightfunc =
+            moldata.property(map["weight function"],
+                             default_weightfunc)->asA<WeightFunction>();
 
         tuple<double,double> weights = weightfunc(moldata, group0,
                                                   group1, map);
@@ -463,20 +506,23 @@ void MoverBase::change(MoleculeData &moldata, const BondID &bond,
     //now get property containing the coordinates of the atoms
     PropertyName coord_property = map["coordinates"];
 
-    AtomCoords coords = moldata.property(coord_property);
+    AtomCoords coords = moldata.property(coord_property)->asA<AtomCoords>();
 
     //use these coordinates to calculate the unit vector that
     //points along the bond
     Vector unit_vec = (coords[moldata.info().cgAtomIdx(atom1)] -
                        coords[moldata.info().cgAtomIdx(atom0)]).normalise();
 
+    //scale the vector by 'delta'
+    unit_vec *= delta;
+
     //now translate the groups along this vector by their weighted
     //amount of delta
     if (weight0 != 0)
-        MoverBase::translate(coords, group0, -weight0 * delta);
+        MoverBase::translate(coords, group0, -weight0 * unit_vec);
 
     if (weight1 != 0)
-        MoverBase::translate(coords, group1, weight1 * delta);
+        MoverBase::translate(coords, group1, weight1 * unit_vec);
 
     //save the new coordinates
     moldata.setProperty(coord_property, coords);
@@ -523,14 +569,15 @@ void MoverBase::change(MoleculeData &moldata, const AngleID &angle,
 
     //get the connectivity that is used to split the
     //molecule into two parts
-    Connectivity connectivity = moldata.property(map["connectivity"]);
+    const Connectivity &connectivity =
+            moldata.property(map["connectivity"])->asA<Connectivity>();
 
     //see if there are any anchors that hold part of the
     //molecule stationary
     AtomSelection anchors;
 
     if (map.specified("anchors"))
-        anchors = moldata.property(map["anchors"]);
+        anchors = moldata.property(map["anchors"])->asA<AtomSelection>();
 
     //split the molecule into the two moving parts
     tuple<AtomSelection,AtomSelection> groups =
@@ -557,8 +604,9 @@ void MoverBase::change(MoleculeData &moldata, const AngleID &angle,
     {
         //get the weighting function that is used to weight the
         //two sides of the move
-        WeightFunction weightfunc = moldata.property(map["weight function"],
-                                                     default_weightfunc);
+        const WeightFunction &weightfunc =
+                moldata.property(map["weight function"],
+                                 default_weightfunc).asA<WeightFunction>();
 
         tuple<double,double> weights = weightfunc(moldata, group0,
                                                   group1, map);
@@ -569,7 +617,7 @@ void MoverBase::change(MoleculeData &moldata, const AngleID &angle,
 
     //get the coordinates that are to be changed
     PropertyName coord_property = map["coordinates"];
-    AtomCoords coords = moldata.property(coord_property);
+    AtomCoords coords = moldata.property(coord_property).asA<AtomCoords>();
 
     //get the coordinates of the three atoms that comprise the angle
     const Vector &coords0 = coords[moldata.info().cgAtomIdx(atom0)];
@@ -633,13 +681,14 @@ void MoverBase::change(MoleculeData &moldata, const DihedralID &dihedral,
     AtomIdx atom3 = atomidxs.get<3>();
 
     //now get the connectivity of the molecule
-    Connectivity connectivity = moldata.property(map["connectivity"]);
+    const Connectivity &connectivity =
+              moldata.property(map["connectivity"])->asA<Connectivity>();
 
     //see if there are any anchor atoms specified
     AtomSelection anchors;
 
     if (map.specified("anchors"))
-        anchors = moldata.property(map["anchors"]);
+        anchors = moldata.property(map["anchors"])->asA<AtomSelection>();
 
     //split the molecule into the two moving parts
     tuple<AtomSelection,AtomSelection> groups =
@@ -666,8 +715,9 @@ void MoverBase::change(MoleculeData &moldata, const DihedralID &dihedral,
     }
     else
     {
-        WeightFunction weightfunc = moldata.property(map["weight function"],
-                                                     default_weightfunc);
+        const WeightFunction &weightfunc =
+                      moldata.property(map["weight function"],
+                                       default_weightfunc)->asA<WeightFunction>();
 
         tuple<double,double> weights = weightfunc(moldata, group0,
                                                   group1, map);
@@ -678,7 +728,7 @@ void MoverBase::change(MoleculeData &moldata, const DihedralID &dihedral,
 
     //get the coordinates to be moved
     PropertyName coord_property = map["coordinates"];
-    AtomCoords coords = moldata.property(coord_property);
+    AtomCoords coords = moldata.property(coord_property)->asA<AtomCoords>();
 
     //get the coordinates of the central two atoms of the dihedral
     const Vector &coords1 = coords[moldata.info().cgAtomIdx(atom1)];
@@ -735,7 +785,8 @@ void MoverBase::change(MoleculeData &moldata, const BondID &bond,
     AtomIdx atom1 = atomidxs.get<1>();
 
     //now get the connectivity of the molecule
-    Connectivity connectivity = moldata.property(map["connectivity"]);
+    const Connectivity &connectivity =
+              moldata.property(map["connectivity"])->asA<Connectivity>();
 
     //see if there are any anchor atoms specified
     AtomSelection anchors;
@@ -767,8 +818,9 @@ void MoverBase::change(MoleculeData &moldata, const BondID &bond,
     }
     else
     {
-        WeightFunction weightfunc = moldata.property(map["weight function"],
-                                                     default_weightfunc);
+        const WeightFunction &weightfunc =
+                     moldata.property(map["weight function"],
+                                      default_weightfunc)->asA<WeightFunction>();
 
         tuple<double,double> weights = weightfunc(moldata, group0,
                                                   group1, map);
@@ -779,7 +831,7 @@ void MoverBase::change(MoleculeData &moldata, const BondID &bond,
 
     //get the coordinates to be moved
     PropertyName coord_property = map["coordinates"];
-    AtomCoords coords = moldata.property(coord_property);
+    AtomCoords coords = moldata.property(coord_property)->asA<AtomCoords>();
 
     //get the coordinates of the central two atoms of the dihedral
     const Vector &coords0 = coords[moldata.info().cgAtomIdx(atom0)];
@@ -844,7 +896,8 @@ void MoverBase::change(MoleculeData &moldata, const ImproperID &improper,
     AtomIdx atom3 = atomidxs.get<3>();
 
     //now get the connectivity of the molecule
-    Connectivity connectivity = moldata.property(map["connectivity"]);
+    const Connectivity &connectivity =
+            moldata.property(map["connectivity"])->asA<Connectivity>();
 
     //see if there are any anchor atoms specified
     AtomSelection anchors;
@@ -876,8 +929,9 @@ void MoverBase::change(MoleculeData &moldata, const ImproperID &improper,
     }
     else
     {
-        WeightFunction weightfunc = moldata.property(map["weight function"],
-                                                     default_weightfunc);
+        const WeightFunction &weightfunc =
+                   moldata.property(map["weight function"],
+                                    default_weightfunc)->asA<WeightFunction>();
 
         tuple<double,double> weights = weightfunc(moldata, group0,
                                                   group1, map);
@@ -888,7 +942,7 @@ void MoverBase::change(MoleculeData &moldata, const ImproperID &improper,
 
     //get the coordinates to be moved
     PropertyName coord_property = map["coordinates"];
-    AtomCoords coords = moldata.property(coord_property);
+    AtomCoords coords = moldata.property(coord_property)->asA<AtomCoords>();
 
     //get the coordinates of the last three atoms of the improper
     const Vector &coords1 = coords[moldata.info().cgAtomIdx(atom1)];
