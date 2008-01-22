@@ -30,41 +30,79 @@
 #define SIREMOL_WEIGHTFUNCTION_H
 
 #include "SireBase/property.h"
+#include "SireBase/propertymap.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
-
 class WeightFunction;
+class WeightFunc;
+
+class RelFromMass;
+class RelFromNumber;
+class AbsFromMass;
+class AbsFromNumber;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMol::WeightFunction&);
+QDataStream& operator>>(QDataStream&, SireMol::WeightFunction&);
+
+QDataStream& operator<<(QDataStream&, const SireMol::WeightFunc&);
+QDataStream& operator>>(QDataStream&, SireMol::WeightFunc&);
+
+QDataStream& operator<<(QDataStream&, const SireMol::AbsFromMass&);
+QDataStream& operator>>(QDataStream&, SireMol::AbsFromMass&);
+
+QDataStream& operator<<(QDataStream&, const SireMol::RelFromMass&);
+QDataStream& operator>>(QDataStream&, SireMol::RelFromMass&);
+
+QDataStream& operator<<(QDataStream&, const SireMol::AbsFromNumber&);
+QDataStream& operator>>(QDataStream&, SireMol::AbsFromNumber&);
+
+QDataStream& operator<<(QDataStream&, const SireMol::RelFromNumber&);
+QDataStream& operator>>(QDataStream&, SireMol::RelFromNumber&);
+
+namespace SireMol
+{
+
+class AtomSelection;
+class MoleculeData;
+class MoleculeView;
+
+using SireBase::PropertyMap;
 
 /** This is the base class of all weight functions. A weight function
     is a simple function that takes two groups in a molecule, and
     returns the relative weight of those two groups (0 == 100% group A,
     0.5 == 50% group A, 50% group B, 1 == 100% groupB)
-    
+
     @author Christopher Woods
 */
-class SIREMOL_EXPORT WeightFuncBase : public SireBase::PropertyBase
+class SIREMOL_EXPORT WeightFunc : public SireBase::PropertyBase
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const WeightFunc&);
+friend QDataStream& ::operator>>(QDataStream&, WeightFunc&);
+
 public:
-    WeightFuncBase();
-    
-    WeightFuncBase(const WeightFuncBase &other);
-    
-    virtual ~WeightFuncBase();
-    
+    WeightFunc();
+
+    WeightFunc(const WeightFunc &other);
+
+    virtual ~WeightFunc();
+
     static const char* typeName()
     {
-        return "SireMol::WeightFuncBase";
+        return "SireMol::WeightFunc";
     }
-    
-    virtual WeightFuncBase* clone() const=0;
-    
-    /** Return the relative weight of group0 and group1 in the 
+
+    virtual WeightFunc* clone() const=0;
+
+    /** Return the relative weight of group0 and group1 in the
         molecule whose data is in 'moldata', using the supplied
         map to find the required properties
-        
+
         \throw SireError::incompatible_error
         \throw SireBase::missing_property
     */
@@ -77,18 +115,18 @@ public:
         and view1), using map0 to find the required properties
         from view0, and map1 to find the required properties from
         view1.
-        
+
         \throw SireBase::missing_property
     */
-    virtual double operator()(const MoleculeView &view0, 
+    virtual double operator()(const MoleculeView &view0,
                               const PropertyMap &map0,
                               const MoleculeView &view1,
                               const PropertyMap &map1) const=0;
 
     /** Return the relative weight of the two molecule views
-        (view0 and view1) using the supplied map to find the 
+        (view0 and view1) using the supplied map to find the
         required properties from both views
-        
+
         \throw SireBase::missing_property
     */
     double operator()(const MoleculeView &view0,
@@ -99,12 +137,12 @@ public:
     }
 };
 
-/** This is the wrapper class that holds a generic WeightFuncBase
+/** This is the wrapper class that holds a generic WeightFunc
     Property
-    
+
     @author Christopher Woods
 */
-class SIREMOL_EXPORT WeightFunction
+class SIREMOL_EXPORT WeightFunction : public SireBase::Property
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const WeightFunction&);
@@ -112,70 +150,44 @@ friend QDataStream& ::operator>>(QDataStream&, WeightFunction&);
 
 public:
     WeightFunction();
-    WeightFunction(const WeightFuncBase &weightfunc);
-    WeightFunction(const SireBase::Property &property);
-    
+    WeightFunction(const SireBase::PropertyBase &property);
+    WeightFunction(const WeightFunc &molgroup);
+
     WeightFunction(const WeightFunction &other);
-    
+
     ~WeightFunction();
 
-    WeightFunction& operator=(const WeightFuncBase &weightfunc);
-    WeightFunction& operator=(const WeightFunction &weightfunc);
-    
-    WeightFunction& operator=(const SireBase::Property &other);
-
-    bool operator==(const WeightFunction &other) const;
-    bool operator!=(const WeightFunction &other) const;
-
-    bool operator==(const Property &other) const;
-    bool operator!=(const Property &other) const;
+    virtual WeightFunction& operator=(const SireBase::PropertyBase &property);
+    virtual WeightFunction& operator=(const WeightFunc &other);
 
     double operator()(const MoleculeData &moldata,
                       const AtomSelection &group0,
                       const AtomSelection &group1,
                       const PropertyMap &map = PropertyMap()) const;
-                      
+
     double operator()(const MoleculeView &view0,
                       const PropertyMap &map0,
                       const MoleculeView &view1,
                       const PropertyMap &map1) const;
-                      
+
     double operator()(const MoleculeView &view0,
                       const MoleculeView &view1,
                       const PropertyMap &map = PropertyMap()) const;
 
-    const WeightFuncBase& base() const
-    {
-        return *d;
-    }
+    const WeightFunc* operator->() const;
+    const WeightFunc& operator*() const;
 
-    const char* what() const
-    {
-        return d->what();
-    }
+    const WeightFunc& read() const;
+    WeightFunc& edit();
 
-    template<class T>
-    bool isA() const
-    {
-        return d->isA<T>();
-    }
+    const WeightFunc* data() const;
+    const WeightFunc* constData() const;
 
-    template<class T>
-    const T& asA() const
-    {
-        return d->asA<T>();
-    }
+    WeightFunc* data();
 
-    /** Allow implicit conversion of a WeightFunction
-        to a Property */
-    operator Property() const
-    {
-        return SireBase::Property(*d);
-    }
+    operator const WeightFunc&() const;
 
-private:
-    /** Shared pointer to the actual property */
-    SireBase::SharedPolyPointer<WeightFuncBase> d;
+    static const WeightFunction& shared_null();
 };
 
 /** This class calculates the weight by assigning all of the weight to
@@ -183,9 +195,13 @@ private:
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT AbsFromNumber 
-            : public SireBase::ConcreteProperty<AbsFromNumber,WeightFuncBase>
+class SIREMOL_EXPORT AbsFromNumber
+            : public SireBase::ConcreteProperty<AbsFromNumber,WeightFunc>
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const AbsFromNumber&);
+friend QDataStream& ::operator>>(QDataStream&, AbsFromNumber&);
+
 public:
     AbsFromNumber();
     AbsFromNumber(const AbsFromNumber &other);
@@ -200,33 +216,33 @@ public:
     using SireBase::PropertyBase::operator=;
     using SireBase::PropertyBase::operator==;
     using SireBase::PropertyBase::operator!=;
-    
+
     AbsFromNumber& operator=(const AbsFromNumber&)
     {
         return *this;
     }
-    
+
     bool operator==(const AbsFromNumber&) const
     {
         return true;
     }
-    
+
     bool operator!=(const AbsFromNumber&) const
     {
         return false;
     }
-    
+
     AbsFromNumber* clone() const
     {
         return new AbsFromNumber(*this);
     }
-    
+
     double operator()(const MoleculeData &moldata,
                       const AtomSelection &group0,
                       const AtomSelection &group1,
                       const PropertyMap &map = PropertyMap()) const;
 
-    double operator()(const MoleculeView &view0, 
+    double operator()(const MoleculeView &view0,
                       const PropertyMap &map0,
                       const MoleculeView &view1,
                       const PropertyMap &map1) const;
@@ -240,50 +256,54 @@ private:
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT ResFromNumber 
-            : public SireBase::ConcreteProperty<ResFromNumber,WeightFuncBase>
+class SIREMOL_EXPORT RelFromNumber
+            : public SireBase::ConcreteProperty<RelFromNumber,WeightFunc>
 {
-public:
-    ResFromNumber();
-    ResFromNumber(const ResFromNumber &other);
 
-    ~ResFromNumber();
+friend QDataStream& ::operator<<(QDataStream&, const RelFromNumber&);
+friend QDataStream& ::operator>>(QDataStream&, RelFromNumber&);
+
+public:
+    RelFromNumber();
+    RelFromNumber(const RelFromNumber &other);
+
+    ~RelFromNumber();
 
     static const char* typeName()
     {
-        return "SireMol::ResFromNumber";
+        return "SireMol::RelFromNumber";
     }
 
     using SireBase::PropertyBase::operator=;
     using SireBase::PropertyBase::operator==;
     using SireBase::PropertyBase::operator!=;
-    
-    ResFromNumber& operator=(const ResFromNumber&)
+
+    RelFromNumber& operator=(const RelFromNumber&)
     {
         return *this;
     }
-    
-    bool operator==(const ResFromNumber&) const
+
+    bool operator==(const RelFromNumber&) const
     {
         return true;
     }
-    
-    bool operator!=(const ResFromNumber&) const
+
+    bool operator!=(const RelFromNumber&) const
     {
         return false;
     }
-    
-    ResFromNumber* clone() const
+
+    RelFromNumber* clone() const
     {
-        return new ResFromNumber(*this);
+        return new RelFromNumber(*this);
     }
-    
+
     double operator()(const MoleculeData &moldata,
                       const AtomSelection &group0,
                       const AtomSelection &group1,
                       const PropertyMap &map = PropertyMap()) const;
 
-    double operator()(const MoleculeView &view0, 
+    double operator()(const MoleculeView &view0,
                       const PropertyMap &map0,
                       const MoleculeView &view1,
                       const PropertyMap &map1) const;
@@ -297,9 +317,13 @@ private:
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT AbsFromMass 
-            : public SireBase::ConcreteProperty<AbsFromMass,WeightFuncBase>
+class SIREMOL_EXPORT AbsFromMass
+            : public SireBase::ConcreteProperty<AbsFromMass,WeightFunc>
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const AbsFromMass&);
+friend QDataStream& ::operator>>(QDataStream&, AbsFromMass&);
+
 public:
     AbsFromMass();
     AbsFromMass(const AbsFromMass &other);
@@ -314,33 +338,33 @@ public:
     using SireBase::PropertyBase::operator=;
     using SireBase::PropertyBase::operator==;
     using SireBase::PropertyBase::operator!=;
-    
+
     AbsFromMass& operator=(const AbsFromMass&)
     {
-        return *this
+        return *this;
     }
-    
+
     bool operator==(const AbsFromMass&) const
     {
         return true;
     }
-    
+
     bool operator!=(const AbsFromMass&) const
     {
         return false;
     }
-    
+
     AbsFromMass* clone() const
     {
         return new AbsFromMass(*this);
     }
-    
+
     double operator()(const MoleculeData &moldata,
                       const AtomSelection &group0,
                       const AtomSelection &group1,
                       const PropertyMap &map = PropertyMap()) const;
 
-    double operator()(const MoleculeView &view0, 
+    double operator()(const MoleculeView &view0,
                       const PropertyMap &map0,
                       const MoleculeView &view1,
                       const PropertyMap &map1) const;
@@ -354,9 +378,13 @@ private:
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT RelFromMass 
-            : public SireBase::ConcreteProperty<RelFromMass,WeightFuncBase>
+class SIREMOL_EXPORT RelFromMass
+            : public SireBase::ConcreteProperty<RelFromMass,WeightFunc>
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const RelFromMass&);
+friend QDataStream& ::operator>>(QDataStream&, RelFromMass&);
+
 public:
     RelFromMass();
     RelFromMass(const RelFromMass &other);
@@ -371,33 +399,33 @@ public:
     using SireBase::PropertyBase::operator=;
     using SireBase::PropertyBase::operator==;
     using SireBase::PropertyBase::operator!=;
-    
+
     RelFromMass& operator=(const RelFromMass&)
     {
         return *this;
     }
-    
+
     bool operator==(const RelFromMass&) const
     {
         return true;
     }
-    
+
     bool operator!=(const RelFromMass&) const
     {
         return false;
     }
-    
+
     RelFromMass* clone() const
     {
         return new RelFromMass(*this);
     }
-    
+
     double operator()(const MoleculeData &moldata,
                       const AtomSelection &group0,
                       const AtomSelection &group1,
                       const PropertyMap &map = PropertyMap()) const;
 
-    double operator()(const MoleculeView &view0, 
+    double operator()(const MoleculeView &view0,
                       const PropertyMap &map0,
                       const MoleculeView &view1,
                       const PropertyMap &map1) const;
@@ -407,6 +435,12 @@ private:
 };
 
 }
+
+Q_DECLARE_METATYPE(SireMol::WeightFunction);
+Q_DECLARE_METATYPE(SireMol::RelFromMass);
+Q_DECLARE_METATYPE(SireMol::RelFromNumber);
+Q_DECLARE_METATYPE(SireMol::AbsFromMass);
+Q_DECLARE_METATYPE(SireMol::AbsFromNumber);
 
 SIRE_END_HEADER
 

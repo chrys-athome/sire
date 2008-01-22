@@ -28,126 +28,210 @@
 
 #include "weightfunction.h"
 
+#include "atomselection.h"
+#include "moleculedata.h"
+#include "moleculeview.h"
+#include "partialmolecule.h"
+#include "evaluator.h"
+
+#include "mover.hpp"
+#include "editor.hpp"
+
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
 using namespace SireMol;
 using namespace SireBase;
+using namespace SireStream;
 
 //////////
-////////// Implementation of WeightFuncBase
+////////// Implementation of WeightFunc
 //////////
+
+static const RegisterMetaType<WeightFunc> r_weightfunc(MAGIC_ONLY,
+                                                       "SireMol::WeightFunc");
+
+/** Serialise to a binary datastream */
+QDataStream SIRE_EXPORT &operator<<(QDataStream &ds,
+                                    const SireMol::WeightFunc &weightfunc)
+{
+    writeHeader(ds, r_weightfunc, 1);
+
+    ds << static_cast<const PropertyBase&>(weightfunc);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIRE_EXPORT &operator>>(QDataStream &ds,
+                                    WeightFunc &weightfunc)
+{
+    VersionID v = readHeader(ds, r_weightfunc);
+
+    if (v == 1)
+    {
+        ds >> static_cast<WeightFunc&>(weightfunc);
+    }
+    else
+        throw version_error(v, "1", r_weightfunc, CODELOC);
+
+    return ds;
+}
 
 /** Constructor */
-WeightFuncBase::WeightFuncBase() : PropertyBase()
+WeightFunc::WeightFunc() : PropertyBase()
 {}
-  
-/** Copy constructor */  
-WeightFuncBase::WeightFuncBase(const WeightFuncBase &other)
+
+/** Copy constructor */
+WeightFunc::WeightFunc(const WeightFunc &other)
                : PropertyBase(other)
 {}
-  
-/** Destructror */  
-WeightFuncBase::~WeightFuncBase()
+
+/** Destructror */
+WeightFunc::~WeightFunc()
 {}
 
 //////////
 ////////// Implementation of WeightFunction
 //////////
 
-static QSharedPolyPointer<WeightFuncBase>& shared_null;
+static const RegisterMetaType<WeightFunction> r_weightfunction;
 
-const QSharedPolyPointer<WeightFuncBase>& getSharedNull()
+/** Serialise to a binary datastream */
+QDataStream SIRE_EXPORT &operator<<(QDataStream &ds,
+                                    const WeightFunction &weightfunc)
 {
-    if (shared_null.constData() == 0)
-        shared_null = new RelFromNumber();
-        
-    return shared_null;
+    writeHeader(ds, r_weightfunction, 1);
+
+    SharedDataStream sds(ds);
+    sds << static_cast<const Property&>(weightfunc);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIRE_EXPORT &operator>>(QDataStream &ds, WeightFunction &weightfunc)
+{
+    VersionID v = readHeader(ds, r_weightfunction);
+
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        sds >> static_cast<Property&>(weightfunc);
+    }
+    else
+        throw version_error(v, "1", r_weightfunction, CODELOC);
+
+    return ds;
+}
+
+static WeightFunction *_pvt_shared_null = 0;
+
+const WeightFunction& WeightFunction::shared_null()
+{
+    if (_pvt_shared_null == 0)
+        _pvt_shared_null = new WeightFunction( RelFromNumber() );
+
+    return *_pvt_shared_null;
 }
 
 /** Default constructor - this is a RelByNumber weight function */
-WeightFunction::WeightFunction() : d( getSharedNull() )
+WeightFunction::WeightFunction() : Property( WeightFunction::shared_null() )
 {}
 
-/** Create from the passed WeightFuncBase */
-WeightFunction::WeightFunction(const WeightFuncBase &weightfunc)
-               : d(weightfunc)
+/** Create from the passed WeightFunc */
+WeightFunction::WeightFunction(const WeightFunc &weightfunc)
+               : Property(weightfunc)
 {}
 
 /** Create from the passed property
 
     \throw SireError::invalid_cast
 */
-WeightFunction::WeightFunction(const SireBase::Property &property)
-               : d(property.base())
+WeightFunction::WeightFunction(const PropertyBase &property)
+               : Property( property.asA<WeightFunc>() )
 {}
 
 /** Copy constructor */
 WeightFunction::WeightFunction(const WeightFunction &other)
-               d(other.d)
+               : Property(other)
 {}
 
 /** Destructor */
 WeightFunction::~WeightFunction()
 {}
 
-/** Copy assignment from a WeightFuncBase */
-WeightFunction& WeightFunction::operator=(const WeightFuncBase &weightfunc)
+/** Copy assignment from a WeightFunc */
+WeightFunction& WeightFunction::operator=(const WeightFunc &weightfunc)
 {
-    if (&weightfunc != d.constData())
-    {
-        d = weightfunc;
-    }
-    
+    Property::operator=(weightfunc);
     return *this;
 }
 
 /** Copy assignment operator */
-WeightFunction& WeightFunction::operator=(const WeightFunction &weightfunc)
+WeightFunction& WeightFunction::operator=(const PropertyBase &property)
 {
-    if (&weightfunc != this)
-    {
-        d = other.d;
-    }
-    
+    Property::operator=(property.asA<WeightFunc>());
     return *this;
 }
 
-/** Copy assignment from a Property
+const WeightFunc* WeightFunction::operator->() const
+{
+    return static_cast<const WeightFunc*>( &(d()) );
+}
 
-    \throw SireError::invalid_cast
+const WeightFunc& WeightFunction::operator*() const
+{
+    return static_cast<const WeightFunc&>( d() );
+}
+
+const WeightFunc& WeightFunction::read() const
+{
+    return static_cast<const WeightFunc&>( d() );
+}
+
+WeightFunc& WeightFunction::edit()
+{
+    return static_cast<WeightFunc&>( d() );
+}
+
+const WeightFunc* WeightFunction::data() const
+{
+    return static_cast<const WeightFunc*>( &(d()) );
+}
+
+const WeightFunc* WeightFunction::constData() const
+{
+    return static_cast<const WeightFunc*>( &(d()) );
+}
+
+WeightFunc* WeightFunction::data()
+{
+    return static_cast<WeightFunc*>( &(d()) );
+}
+
+WeightFunction::operator const WeightFunc&() const
+{
+    return static_cast<const WeightFunc&>( d() );
+}
+
+/** Return the relative weight of view0 and view1 using
+    the supplied PropertyMap to find any required properties
+    from both views
+
+    \throw SireBase::missing_property
 */
-WeightFunction& WeightFunction::operator=(const SireBase::Property &other)
+double WeightFunction::operator()(const MoleculeView &view0,
+                                  const MoleculeView &view1,
+                                  const PropertyMap &map) const
 {
-    d = other.base();
-    return *this;
-}
-
-/** Comparison operator */
-bool WeightFunction::operator==(const WeightFunction &other) const
-{
-    return d == other.d or *d == *(other.d);
-}
-
-/** Comparison operator */
-bool WeightFunction::operator!=(const WeightFunction &other) const
-{
-    return d != other.d and *d != *(other.d);
-}
-
-/** Comparison operator to a Property */
-bool WeightFunction::operator==(const Property &other) const
-{
-    return Property(*d) == other;
-}
-
-/** Comparison operator to a Property */
-bool WeightFunction::operator!=(const Property &other) const
-{
-    return Property(*d) != other;
+    return read()(view0, view1, map);
 }
 
 /** Return the relative weight of group0 and group1 in the molecule
-    whose data is in 'moldata' using the passed PropertyMap to 
+    whose data is in 'moldata' using the passed PropertyMap to
     find any required properties
-    
+
     \throw SireError::incompatible_error
     \throw SireBase::missing_property
 */
@@ -156,13 +240,13 @@ double WeightFunction::operator()(const MoleculeData &moldata,
                                   const AtomSelection &group1,
                                   const PropertyMap &map) const
 {
-    return d->operator()(moldata, group0, group1, map);
+    return read()(moldata, group0, group1, map);
 }
 
-/** Return the relative weight of view0 and view1 using 
-    map0 to find any required properties from view0, and 
-    map1 to find any required properties from view1 
-    
+/** Return the relative weight of view0 and view1 using
+    map0 to find any required properties from view0, and
+    map1 to find any required properties from view1
+
     \throw SireBase::missing_property
 */
 double WeightFunction::operator()(const MoleculeView &view0,
@@ -170,38 +254,54 @@ double WeightFunction::operator()(const MoleculeView &view0,
                                   const MoleculeView &view1,
                                   const PropertyMap &map1) const
 {
-    return d->operator()(view0, map0, view1, map1);
-}
-
-/** Return the relative weight of view0 and view1 using
-    the supplied PropertyMap to find any required properties
-    from both views
-    
-    \throw SireBase::missing_property
-*/
-double WeightFunction::operator()(const MoleculeView &view0,
-                                  const MoleculeView &view1,
-                                  const PropertyMap &map) const
-{
-    return d->operator()(view0, view1, map);
+    return read()(view0, map0, view1, map1);
 }
 
 //////////
 ////////// Implementation of AbsFromNumber
 //////////
 
+static const RegisterMetaType<AbsFromNumber> r_absfromnum;
+
+/** Serialise to a binary datastream */
+QDataStream SIRE_EXPORT &operator<<(QDataStream &ds,
+                                    const AbsFromNumber &absfromnum)
+{
+    writeHeader(ds, r_absfromnum, 1);
+
+    ds << static_cast<const PropertyBase&>(absfromnum);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIRE_EXPORT &operator>>(QDataStream &ds,
+                                    AbsFromNumber &absfromnum)
+{
+    VersionID v = readHeader(ds, r_absfromnum);
+
+    if (v == 1)
+    {
+        ds >> static_cast<AbsFromNumber&>(absfromnum);
+    }
+    else
+        throw version_error(v, "1", r_absfromnum, CODELOC);
+
+    return ds;
+}
+
 AbsFromNumber::AbsFromNumber()
-              : ConcreteProperty<AbsFromNumber,WeightFuncBase>()
+              : ConcreteProperty<AbsFromNumber,WeightFunc>()
 {}
 
 AbsFromNumber::AbsFromNumber(const AbsFromNumber &other)
-              : ConcreteProperty<AbsFromNumber,WeightFuncBase>(other)
+              : ConcreteProperty<AbsFromNumber,WeightFunc>(other)
 {}
 
-~AbsFromNumber()
+AbsFromNumber::~AbsFromNumber()
 {}
 
-inline double AbsFromNumber::weight(int nats0, int nats1)
+inline double AbsFromNumber::weight(int nats0, int nats1) const
 {
     if (nats0 > nats1)
         return 1;
@@ -216,38 +316,69 @@ double AbsFromNumber::operator()(const MoleculeData &moldata,
                                  const AtomSelection &group1,
                                  const PropertyMap&) const
 {
-    moldata.assertCompatibleWith(group0);
-    moldata.assertCompatibleWith(group1);
+    group0.assertCompatibleWith(moldata);
+    group1.assertCompatibleWith(moldata);
 
-    return weight(group0.nAtoms(), group1.nAtoms());
+    return weight(group0.nSelected(), group1.nSelected());
 }
 
 double AbsFromNumber::operator()(const MoleculeView &view0,
+                                 const PropertyMap&,
                                  const MoleculeView &view1,
                                  const PropertyMap&) const
 {
-    return weight(view0.nAtoms(), view1.nAtoms());
+    return weight(view0.selection().nSelected(),
+                  view1.selection().nSelected());
 }
 
 //////////
 ////////// Implementation of RelFromNumber
 //////////
 
+static const RegisterMetaType<RelFromNumber> r_relfromnum;
+
+/** Serialise to a binary datastream */
+QDataStream SIRE_EXPORT &operator<<(QDataStream &ds,
+                                    const RelFromNumber &relfromnum)
+{
+    writeHeader(ds, r_relfromnum, 1);
+
+    ds << static_cast<const PropertyBase&>(relfromnum);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIRE_EXPORT &operator>>(QDataStream &ds,
+                                    RelFromNumber &relfromnum)
+{
+    VersionID v = readHeader(ds, r_relfromnum);
+
+    if (v == 1)
+    {
+        ds >> static_cast<RelFromNumber&>(relfromnum);
+    }
+    else
+        throw version_error(v, "1", r_relfromnum, CODELOC);
+
+    return ds;
+}
+
 RelFromNumber::RelFromNumber()
-              : ConcreteProperty<RelFromNumber,WeightFuncBase>()
+              : ConcreteProperty<RelFromNumber,WeightFunc>()
 {}
 
-RelFromNumber::AbsFromNumber(const RelFromNumber &other)
-              : ConcreteProperty<RelFromNumber,WeightFuncBase>(other)
+RelFromNumber::RelFromNumber(const RelFromNumber &other)
+              : ConcreteProperty<RelFromNumber,WeightFunc>(other)
 {}
 
-~RelFromNumber()
+RelFromNumber::~RelFromNumber()
 {}
 
-inline double RelFromNumber::weight(int nats0, int nats1)
+inline double RelFromNumber::weight(int nats0, int nats1) const
 {
     double total = nats0 + nats1;
-    
+
     if (total > 0)
         return nats1 / total;
     else
@@ -259,35 +390,66 @@ double RelFromNumber::operator()(const MoleculeData &moldata,
                                  const AtomSelection &group1,
                                  const PropertyMap&) const
 {
-    moldata.assertCompatibleWith(group0);
-    moldata.assertCompatibleWith(group1);
+    group0.assertCompatibleWith(moldata);
+    group1.assertCompatibleWith(moldata);
 
-    return weight(group0.nAtoms(), group1.nAtoms());
+    return weight(group0.nSelected(), group1.nSelected());
 }
 
 double RelFromNumber::operator()(const MoleculeView &view0,
+                                 const PropertyMap&,
                                  const MoleculeView &view1,
                                  const PropertyMap&) const
 {
-    return weight(view0.nAtoms(), view1.nAtoms());
+    return weight(view0.selection().nSelected(),
+                  view1.selection().nSelected());
 }
 
 //////////
 ////////// Implementation of AbsFromMass
 //////////
 
+static const RegisterMetaType<AbsFromMass> r_absfrommass;
+
+/** Serialise to a binary datastream */
+QDataStream SIRE_EXPORT &operator<<(QDataStream &ds,
+                                    const AbsFromMass &absfrommass)
+{
+    writeHeader(ds, r_absfrommass, 1);
+
+    ds << static_cast<const PropertyBase&>(absfrommass);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIRE_EXPORT &operator>>(QDataStream &ds,
+                                    AbsFromMass &absfrommass)
+{
+    VersionID v = readHeader(ds, r_absfrommass);
+
+    if (v == 1)
+    {
+        ds >> static_cast<AbsFromMass&>(absfrommass);
+    }
+    else
+        throw version_error(v, "1", r_absfrommass, CODELOC);
+
+    return ds;
+}
+
 AbsFromMass::AbsFromMass()
-              : ConcreteProperty<AbsFromMass,WeightFuncBase>()
+              : ConcreteProperty<AbsFromMass,WeightFunc>()
 {}
 
 AbsFromMass::AbsFromMass(const AbsFromMass &other)
-              : ConcreteProperty<AbsFromMass,WeightFuncBase>(other)
+              : ConcreteProperty<AbsFromMass,WeightFunc>(other)
 {}
 
-~AbsFromMass()
+AbsFromMass::~AbsFromMass()
 {}
 
-inline double AbsFromMass::weight(double mass0, double mass1)
+inline double AbsFromMass::weight(double mass0, double mass1) const
 {
     if (mass0 > mass1)
         return 1;
@@ -307,32 +469,62 @@ double AbsFromMass::operator()(const MoleculeData &moldata,
 }
 
 double AbsFromMass::operator()(const MoleculeView &view0,
+                               const PropertyMap &map0,
                                const MoleculeView &view1,
-                               const PropertyMap&) const
+                               const PropertyMap &map1) const
 {
-    return weight( view0.evaluate().mass(map),
-                   view1.evaluate().mass(map) );
+    return weight( PartialMolecule(view0).evaluate().mass(map0),
+                   PartialMolecule(view1).evaluate().mass(map1) );
 }
 
 //////////
 ////////// Implementation of RelFromMass
 //////////
 
+static const RegisterMetaType<RelFromMass> r_relfrommass;
+
+/** Serialise to a binary datastream */
+QDataStream SIRE_EXPORT &operator<<(QDataStream &ds,
+                                    const RelFromMass &relfrommass)
+{
+    writeHeader(ds, r_relfrommass, 1);
+
+    ds << static_cast<const PropertyBase&>(relfrommass);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIRE_EXPORT &operator>>(QDataStream &ds,
+                                    RelFromMass &relfrommass)
+{
+    VersionID v = readHeader(ds, r_relfrommass);
+
+    if (v == 1)
+    {
+        ds >> static_cast<RelFromMass&>(relfrommass);
+    }
+    else
+        throw version_error(v, "1", r_relfrommass, CODELOC);
+
+    return ds;
+}
+
 RelFromMass::RelFromMass()
-              : ConcreteProperty<RelFromMass,WeightFuncBase>()
+              : ConcreteProperty<RelFromMass,WeightFunc>()
 {}
 
 RelFromMass::RelFromMass(const RelFromMass &other)
-              : ConcreteProperty<RelFromMass,WeightFuncBase>(other)
+              : ConcreteProperty<RelFromMass,WeightFunc>(other)
 {}
 
-~RelFromMass()
+RelFromMass::~RelFromMass()
 {}
 
-inline double RelFromMass::weight(double mass0, double mass1)
+inline double RelFromMass::weight(double mass0, double mass1) const
 {
     double total = mass0 + mass1;
-    
+
     if (total > 0)
         return mass1 / total;
     else
@@ -349,9 +541,10 @@ double RelFromMass::operator()(const MoleculeData &moldata,
 }
 
 double RelFromMass::operator()(const MoleculeView &view0,
+                               const PropertyMap &map0,
                                const MoleculeView &view1,
-                               const PropertyMap&) const
+                               const PropertyMap &map1) const
 {
-    return weight( view0.evaluate().mass(map),
-                   view1.evaluate().mass(map) );
+    return weight( PartialMolecule(view0).evaluate().mass(map0),
+                   PartialMolecule(view1).evaluate().mass(map1) );
 }

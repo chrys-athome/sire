@@ -102,8 +102,6 @@ set ( SIREMOL_HEADERS
       splitmolecule.h
       viewsofmol.h
       weightfunction.h
-
-      detail/molgrouppvt.h
     )
 
 # Define the sources in SireMol
