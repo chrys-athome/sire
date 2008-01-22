@@ -29,8 +29,50 @@
 #include "atomidentifier.h"
 #include "moleculeinfodata.h"
 
+#include "SireError/errors.h"
+
+#include "SireStream/datastream.h"
+
 using namespace SireMol;
 using namespace SireID;
+using namespace SireStream;
+
+static const RegisterMetaType<AtomIdentifier> r_atomid;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
+                                       const AtomIdentifier &atomid)
+{
+    throw SireError::incomplete_code( CODELOC );
+
+    writeHeader(ds, r_atomid, 1);
+    
+    if (atomid.isNull())
+        ds << QString::null;
+    else
+    {
+        ds << QLatin1String( atomid.base().what() );
+    
+        int typid = QMetaType::type(atomid.base().what());
+    
+        if ( not QMetaType::save(ds, typid, &(atomid.base())) )
+        {
+            throw SireError::io_error( QObject::tr(
+                "Unable to serialise an AtomID of type %1.")
+                    .arg(atomid.base().what()), CODELOC );
+        }
+    }
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
+                                       AtomIdentifier &atomid)
+{
+    throw SireError::incomplete_code( CODELOC );
+    return ds;
+}
 
 /** Null constructor */
 AtomIdentifier::AtomIdentifier() : AtomID()

@@ -56,8 +56,14 @@ using boost::tuple;
 class AtomIdx;
 class ResIdx;
 
+class AtomSelection;
+
 class AtomID;
 class ResID;
+
+class BondID;
+class AngleID;
+class DihedralID;
 
 class MoleculeData;
 class MoleculeInfoData;
@@ -104,9 +110,6 @@ public:
     const QSet<ResIdx>& connectionsTo(ResIdx residx) const;
     const QSet<ResIdx>& connectionsTo(const ResID &resid) const;
 
-    //anchors should be a separate consideration to the SPLIT
-    // - should not have anchors in here - they should be in mover.cpp
-
     tuple<AtomSelection,AtomSelection> split(AtomIdx atom0, AtomIdx atom1) const;
     tuple<AtomSelection,AtomSelection> split(const AtomID &atom0,
                                              const AtomID &atom1) const;
@@ -114,17 +117,14 @@ public:
     tuple<AtomSelection,AtomSelection> split(const BondID &bond) const;
 
     tuple<AtomSelection,AtomSelection>
-    split(AtomIdx atom0, AtomIdx atom1, const AtomSelection &movable_atoms,
-          const AtomSelection &anchors = AtomSelection()) const;
+    split(AtomIdx atom0, AtomIdx atom1, const AtomSelection &movable_atoms) const;
 
     tuple<AtomSelection,AtomSelection>
     split(const AtomID &atom0, const AtomID &atom1,
-          const AtomSelection &movable_atoms,
-          const AtomSelection &anchors = AtomSelection()) const;
+          const AtomSelection &movable_atoms) const;
 
     tuple<AtomSelection,AtomSelection>
-    split(const BondID &bond, const AtomSelection &movable_atoms,
-          const AtomSelection &anchors = AtomSelection()) const;
+    split(const BondID &bond, const AtomSelection &movable_atoms) const;
 
     tuple<AtomSelection,AtomSelection> split(AtomIdx atom0, AtomIdx atom1,
                                              AtomIdx atom2) const;
@@ -136,8 +136,44 @@ public:
 
     tuple<AtomSelection,AtomSelection>
     split(AtomIdx atom0, AtomIdx atom1, AtomIdx atom2,
-          const AtomSelection &movable_atoms,
-          const AtomSelection &anchors = AtomSelection()) const;
+          const AtomSelection &movable_atoms) const;
+
+    tuple<AtomSelection,AtomSelection>
+    split(const AtomID &atom0, const AtomID &atom1, const AtomID &atom2,
+          const AtomSelection &movable_atoms) const;
+          
+    tuple<AtomSelection,AtomSelection>
+    split(const AngleID &angle, const AtomSelection &movable_atoms) const;
+    
+    tuple<AtomSelection,AtomSelection>
+    split(AtomIdx atom0, AtomIdx atom1, AtomIdx atom2, AtomIdx atom3) const;
+    
+    tuple<AtomSelection,AtomSelection>
+    split(const AtomID &atom0, const AtomID &atom1, 
+          const AtomID &atom2, const AtomID &atom3) const;
+          
+    tuple<AtomSelection,AtomSelection>
+    split(const DihedralID &dihedral) const;
+    
+    tuple<AtomSelection,AtomSelection>
+    split(AtomIdx atom0, AtomIdx atom1, AtomIdx atom2, AtomIdx atom3,
+          const AtomSelection &movable_atoms) const;
+          
+    tuple<AtomSelection,AtomSelection>
+    split(const AtomID &atom0, const AtomID &atom1,
+          const AtomID &atom2, const AtomID &atom3,
+          const AtomSelection &movable_atoms) const;
+          
+    tuple<AtomSelection,AtomSelection>
+    split(const DihedralID &dihedral,
+          const AtomSelection &movable_atoms) const;
+          
+    tuple<AtomSelection,AtomSelection>
+    split(const ImproperID &improper) const;
+    
+    tuple<AtomSelection,AtomSelection>
+    split(const ImproperID &improper,
+          const AtomSelection &movable_atoms) const;
 
 protected:
     ConnectivityBase();

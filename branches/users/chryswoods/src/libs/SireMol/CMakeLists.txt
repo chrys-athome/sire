@@ -11,6 +11,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the headers in SireMol
 set ( SIREMOL_HEADERS
+      angleid.h
       atom.h
       atomaliases.h
       atomatomid.h
@@ -27,6 +28,7 @@ set ( SIREMOL_HEADERS
       atomproperty.hpp
       atomselection.h
       atomsin.hpp
+      bondid.h
       calculateaxes.hpp
       cgatomidx.h
       cgid.h
@@ -45,6 +47,7 @@ set ( SIREMOL_HEADERS
       connectivity.h
       cutgroup.h
       cuttingfunction.h
+      dihedralid.h
       editor.h
       editor.hpp
       element-data.h
@@ -52,6 +55,7 @@ set ( SIREMOL_HEADERS
       elementdb.h
       errors.h
       evaluator.h
+      improperid.h
       groupatomids.h
       groupgroupids.h
       mgid.h
@@ -106,6 +110,7 @@ set ( SIREMOL_HEADERS
 
 # Define the sources in SireMol
 set ( SIREMOL_SOURCES
+      angleid.cpp
       atom.cpp
       atomaliases.cpp
       atomatomid.cpp
@@ -114,6 +119,7 @@ set ( SIREMOL_SOURCES
       atomidentifier.cpp
       atomcutting.cpp
       atomselection.cpp
+      bondid.cpp
       cgid.cpp
       cgidentifier.cpp
       chain.cpp
@@ -124,10 +130,12 @@ set ( SIREMOL_SOURCES
       connectivity.cpp
       cutgroup.cpp
       cuttingfunction.cpp
+      dihedralid.cpp
       editor.cpp
       elementdb.cpp
       errors.cpp
       evaluator.cpp
+      improperid.cpp
       groupatomids.cpp
       mgid.cpp
       mgidentifier.cpp

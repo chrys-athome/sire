@@ -35,6 +35,14 @@
 
 namespace SireMol
 {
+class AtomIdentifier;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMol::AtomIdentifier&);
+QDataStream& operator>>(QDataStream&, SireMol::AtomIdentifier&);
+
+namespace SireMol
+{
 
 class AtomIdx;
 
@@ -44,6 +52,10 @@ class AtomIdx;
 */
 class AtomIdentifier : public AtomID
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const AtomIdentifier&);
+friend QDataStream& ::operator>>(QDataStream&, AtomIdentifier&);
+
 public:
     AtomIdentifier();
     AtomIdentifier(const AtomID &atomid);
