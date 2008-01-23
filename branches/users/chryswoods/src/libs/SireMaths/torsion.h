@@ -52,7 +52,10 @@ namespace SireMaths
 using SireUnits::Dimension::Angle;
 
 /**
-This class represents a torsion in three dimensional space, e.g. four points in space, not necessarily lying in a plane. A torsion is used to calculate dihedral angles (imagine each point is an atom). I am not happy with the name of this class, and welcome suggestions :-)
+This class represents a torsion in three dimensional space, e.g. four points 
+in space, not necessarily lying in a plane. A torsion is used to calculate 
+dihedral angles (imagine each point is an atom). I am not happy with the 
+name of this class, and welcome suggestions :-)
  
 @author Christopher Woods
 */

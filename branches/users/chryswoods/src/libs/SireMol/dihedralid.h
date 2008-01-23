@@ -26,3 +26,153 @@
   *
 \*********************************************/
 
+#ifndef SIREMOL_DIHEDRALID_H
+#define SIREMOL_DIHEDRALID_H
+
+#include "atomidentifier.h"
+
+#include "SireBase/propertymap.h"
+#include "SireUnits/dimensions.h"
+
+#include <boost/tuple/tuple.hpp>
+
+SIRE_BEGIN_HEADER
+
+namespace SireMol
+{
+class DihedralID;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMol::DihedralID&);
+QDataStream& operator>>(QDataStream&, SireMol::DihedralID&);
+
+namespace SireMaths
+{
+class Vector;
+class Torsion;
+}
+
+namespace SireMol
+{
+
+class MoleculeData;
+class MoleculeInfoData;
+class AtomIdx;
+
+using SireMaths::Vector;
+using SireMaths::Torsion;
+
+using SireBase::PropertyMap;
+
+using boost::tuple;
+
+/** This class provides a generic ID for an angle between
+    three atoms
+    
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT DihedralID : public SireID::ID
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const DihedralID&);
+friend QDataStream& ::operator>>(QDataStream&, DihedralID&);
+
+public:
+    DihedralID();
+    DihedralID(const AtomID &atom0, const AtomID &atom1,
+               const AtomID &atom2, const AtomID &atom3);
+
+    DihedralID(const DihedralID &other);
+    
+    ~DihedralID();
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<DihedralID>() );
+    }
+    
+    const char* what() const
+    {
+        return DihedralID::typeName();
+    }
+    
+    DihedralID* clone() const
+    {
+        return new DihedralID(*this);
+    }
+    
+    uint hash() const;
+
+    QString toString() const;
+    
+    bool isNull() const;
+    
+    DihedralID& operator=(const DihedralID &other);
+    
+    bool operator==(const SireID::ID &other) const;
+    
+    bool operator==(const DihedralID &other) const;
+    bool operator!=(const DihedralID &other) const;
+    
+    tuple<AtomIdx,AtomIdx,AtomIdx,AtomIdx> 
+    map(const MoleculeInfoData &molinfo) const;
+    
+    tuple<AtomIdx,AtomIdx,AtomIdx,AtomIdx> 
+    map(const MoleculeInfoData &mol0info,
+        const MoleculeInfoData &mol1info,
+        const MoleculeInfoData &mol2info,
+        const MoleculeInfoData &mol3info) const;
+
+    Torsion torsion(const MoleculeData &moldata,
+                    const PropertyMap &map = PropertyMap()) const;
+                      
+    Torsion torsion(const MoleculeData &mol0data,
+                    const MoleculeData &mol1data,
+                    const MoleculeData &mol2data,
+                    const MoleculeData &mol3data,
+                    const PropertyMap &map = PropertyMap()) const;
+                      
+    Torsion torsion(const MoleculeData &mol0data,
+                    const PropertyMap &map0,
+                    const MoleculeData &mol1data,
+                    const PropertyMap &map1,
+                    const MoleculeData &mol2data,
+                    const PropertyMap &map2,
+                    const MoleculeData &mol3data,
+                    const PropertyMap &map3) const;
+
+    SireUnits::Dimension::Angle size(const MoleculeData &moldata,
+                                     const PropertyMap &map = PropertyMap()) const;
+
+    SireUnits::Dimension::Angle size(const MoleculeData &mol0data, 
+                                     const MoleculeData &mol1data,
+                                     const MoleculeData &mol2data,
+                                     const MoleculeData &mol3data,
+                                     const PropertyMap &map = PropertyMap()) const;
+                
+    SireUnits::Dimension::Angle size(const MoleculeData &mol0data,
+                                     const PropertyMap &map0,
+                                     const MoleculeData &mol1data,
+                                     const PropertyMap &map1,
+                                     const MoleculeData &mol2data,
+                                     const PropertyMap &map2,
+                                     const MoleculeData &mol3data,
+                                     const PropertyMap &map3) const;
+
+    const AtomID& atom0() const;
+    const AtomID& atom1() const;
+    const AtomID& atom2() const;
+    const AtomID& atom3() const;
+
+private:
+    /** The identifiers of the four atoms */
+    AtomIdentifier atm0,atm1,atm2,atm3;
+};
+
+}
+
+Q_DECLARE_METATYPE(SireMol::DihedralID);
+
+SIRE_END_HEADER
+
+#endif
