@@ -75,6 +75,8 @@ public:
 
     Angle angle() const;
 
+    Angle improperAngle() const;
+
     Line line03() const;
     Line line12() const;
 
@@ -91,80 +93,9 @@ public:
     const Vector& at( int i ) const;
 
 private:
-
     /** The four points that make up the torsion */
     Vector points[4];
 };
-
-#ifndef SKIP_TEMPLATE_DEFINITIONS
-
-/** Return the torsion angle of this torsion (the torsion angle 0-1-2-3 around the 1-2 line) */
-inline Angle Torsion::angle() const
-{
-    return Vector::dihedral(points[0], points[1], points[2], points[3]);
-}
-
-/** Return the line from point 0 to point 3 */
-inline Line Torsion::line03() const
-{
-    return Line(points[0], points[3]);
-}
-
-/** Return the line from point 1 to point 2 */
-inline Line Torsion::line12() const
-{
-    return Line(points[1], points[2]);
-}
-
-/** Return the vector from point 0 to point 3 */
-inline Vector Torsion::vector03() const
-{
-    return line03().vector();
-}
-
-/** Return the vector from point 1 to point 2 */
-inline Vector Torsion::vector12() const
-{
-    return line12().vector();
-}
-
-/** Return the triangle around point 1, i.e. point0-point1-point2 */
-inline Triangle Torsion::triangle1() const
-{
-    return Triangle(points[0], points[1], points[2]);
-}
-
-/** Return the triangle around point 2, i.e. point1-point2-point3 */
-inline Triangle Torsion::triangle2() const
-{
-    return Triangle(points[1], points[2], points[3]);
-}
-
-/** Return the number of points in a torsion (4) */
-inline int Torsion::count() const
-{
-    return 4;
-}
-
-/** Return the point at index 'i' */
-inline const Vector& Torsion::point( int i ) const
-{
-    return points[ i % 4 ];
-}
-
-/** Return the point at index 'i' */
-inline const Vector& Torsion::operator[] ( int i ) const
-{
-    return this->point(i);
-}
-
-/** Return the point at index 'i' */
-inline const Vector& Torsion::at( int i ) const
-{
-    return this->point(i);
-}
-
-#endif // end of '#ifndef SKIP_TEMPLATE_DEFINITIONS'
 
 }
 

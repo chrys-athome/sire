@@ -66,8 +66,8 @@ using SireBase::PropertyMap;
 
 using boost::tuple;
 
-/** This class provides a generic ID for an angle between
-    three atoms
+/** This class provides a generic ID for a dihedral between
+    four atoms
     
     @author Christopher Woods
 */

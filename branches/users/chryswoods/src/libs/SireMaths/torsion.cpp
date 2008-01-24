@@ -87,3 +87,87 @@ QString Torsion::toString() const
     return QObject::tr("Torsion: Angle %1 degrees, length03 = %2")
                   .arg(angle().to(degrees)).arg(vector03().length());
 }
+
+/** Return the torsion angle of this torsion (the torsion angle 0-1-2-3 
+    around the 1-2 line) */
+Angle Torsion::angle() const
+{
+    return Vector::dihedral(points[0], points[1], points[2], points[3]);
+}
+
+/** Return the improper angle of this torsion. The improper
+    angle is the angle 2-1-3-4, which has the effect of measuring
+    the angle between the plane formed by the atoms 1,2,3 and the
+    plane formed by the atoms 1,3,4. This measures by how much
+    atom 4 lies out of the plane formed by the atoms 1,2,3.
+        
+            4
+            |
+            2
+          /   \
+        1       3
+*/
+Angle Torsion::improperAngle() const
+{
+    return Vector::dihedral(points[2], points[1], points[3], points[4]);
+}
+
+/** Return the line from point 0 to point 3 */
+Line Torsion::line03() const
+{
+    return Line(points[0], points[3]);
+}
+
+/** Return the line from point 1 to point 2 */
+Line Torsion::line12() const
+{
+    return Line(points[1], points[2]);
+}
+
+/** Return the vector from point 0 to point 3 */
+Vector Torsion::vector03() const
+{
+    return line03().vector();
+}
+
+/** Return the vector from point 1 to point 2 */
+Vector Torsion::vector12() const
+{
+    return line12().vector();
+}
+
+/** Return the triangle around point 1, i.e. point0-point1-point2 */
+Triangle Torsion::triangle1() const
+{
+    return Triangle(points[0], points[1], points[2]);
+}
+
+/** Return the triangle around point 2, i.e. point1-point2-point3 */
+Triangle Torsion::triangle2() const
+{
+    return Triangle(points[1], points[2], points[3]);
+}
+
+/** Return the number of points in a torsion (4) */
+int Torsion::count() const
+{
+    return 4;
+}
+
+/** Return the point at index 'i' */
+const Vector& Torsion::point( int i ) const
+{
+    return points[ i % 4 ];
+}
+
+/** Return the point at index 'i' */
+const Vector& Torsion::operator[] ( int i ) const
+{
+    return this->point(i);
+}
+
+/** Return the point at index 'i' */
+const Vector& Torsion::at( int i ) const
+{
+    return this->point(i);
+}
