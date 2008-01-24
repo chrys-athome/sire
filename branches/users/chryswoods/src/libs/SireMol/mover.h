@@ -49,8 +49,6 @@ class AtomProperty<SireMaths::Vector>;
 
 typedef AtomProperty<SireMaths::Vector> AtomCoords;
 
-class AtomAliases;
-
 class BondID;
 class AngleID;
 class DihedralID;
@@ -146,14 +144,6 @@ protected:
              SireUnits::Dimension::Angle value,
              const PropertyMap &map) const;
 
-    void align(MoleculeData &data, const MoleculeView &other,
-               const AtomAliases &aliases,
-               const PropertyMap &map0, const PropertyMap &map1) const;
-
-    void align(MoleculeData &data, const AtomSelection &align_atoms,
-               const MoleculeView &other, const AtomAliases &aliases,
-               const PropertyMap &map0, const PropertyMap &map1) const;
-
     static void translate(MoleculeData &view,
                           const AtomSelection &selected_atoms,
                           const Vector &delta,
@@ -175,6 +165,11 @@ protected:
     static void rotate(AtomCoords &coords,
                        const AtomSelection &selected_atoms,
                        const Matrix &rotmat,
+                       const Vector &point);
+
+    static void rotate(AtomCoords &coords,
+                       const AtomSelection &selected_atoms,
+                       const Quaternion &quat,
                        const Vector &point);
 
     static void mapInto(AtomCoords &coords,

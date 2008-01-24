@@ -36,6 +36,8 @@ SIRE_BEGIN_HEADER
 namespace SireMol
 {
 
+class AtomMatcher;
+
 /** This manipulator class is used to move the atoms in 
     a molecule view object. 
     
@@ -101,16 +103,16 @@ public:
     Mover<T>& set(const ImproperID &improper, SireUnits::Dimension::Angle value,
                   const PropertyMap &map = PropertyMap());
 
-    Mover<T>& align(const MoleculeView &other, 
-                    const AtomAliases &aliases = AtomAliases(),
-                    const PropertyMap &map0 = PropertyMap(),
-                    const PropertyMap &map1 = PropertyMap());
+    Mover<T>& alignTo(const MoleculeView &other, 
+                      const AtomMatcher &matcher,
+                      const PropertyMap &map0 = PropertyMap(),
+                      const PropertyMap &map1 = PropertyMap());
                     
-    Mover<T>& align(const MoleculeView &other,
-                    const AtomSelection &aligning_atoms,
-                    const AtomAliases &aliases = AtomAliases(),
-                    const PropertyMap &map0 = PropertyMap(),
-                    const PropertyMap &map1 = PropertyMap());
+    Mover<T>& alignTo(const MoleculeView &other,
+                      const AtomSelection &aligning_atoms,
+                      const AtomMatcher &matcher,
+                      const PropertyMap &map0 = PropertyMap(),
+                      const PropertyMap &map1 = PropertyMap());
 };
 
 /** Construct a mover that can move all of the atoms
@@ -225,7 +227,8 @@ Mover<T>& Mover<T>::rotate(const Matrix &rotmat, const Vector &point,
 */                         
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-Mover<T>& Mover<T>::change(const BondID &bond, SireUnits::Dimension::Length delta,
+Mover<T>& Mover<T>::change(const BondID &bond, 
+                           SireUnits::Dimension::Length delta,
                            const PropertyMap &map)
 {
     MoverBase::change(*(this->d), bond, delta, map);
@@ -241,7 +244,8 @@ Mover<T>& Mover<T>::change(const BondID &bond, SireUnits::Dimension::Length delt
 */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-Mover<T>& Mover<T>::change(const AngleID &angle, SireUnits::Dimension::Angle delta,
+Mover<T>& Mover<T>::change(const AngleID &angle, 
+                           SireUnits::Dimension::Angle delta,
                            const PropertyMap &map)
 {
     MoverBase::change(*(this->d), angle, delta, map);
@@ -274,7 +278,8 @@ Mover<T>& Mover<T>::change(const DihedralID &dihedral,
 */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-Mover<T>& Mover<T>::change(const BondID &bond, SireUnits::Dimension::Angle delta,
+Mover<T>& Mover<T>::change(const BondID &bond, 
+                           SireUnits::Dimension::Angle delta,
                            const PropertyMap &map)
 {
     MoverBase::change(*(this->d), bond, delta, map);
@@ -288,7 +293,8 @@ Mover<T>& Mover<T>::change(const BondID &bond, SireUnits::Dimension::Angle delta
 */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-Mover<T>& Mover<T>::change(const ImproperID &improper, SireUnits::Dimension::Angle delta,
+Mover<T>& Mover<T>::change(const ImproperID &improper, 
+                           SireUnits::Dimension::Angle delta,
                            const PropertyMap &map)
 {
     MoverBase::change(*(this->d), improper, delta, map);
@@ -330,7 +336,8 @@ Mover<T>& Mover<T>::set(const AngleID &angle, SireUnits::Dimension::Angle value,
 */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-Mover<T>& Mover<T>::set(const DihedralID &dihedral, SireUnits::Dimension::Angle value,
+Mover<T>& Mover<T>::set(const DihedralID &dihedral, 
+                        SireUnits::Dimension::Angle value,
                         const PropertyMap &map)
 {
     MoverBase::set(*(this->d), dihedral, value, map);
@@ -344,7 +351,8 @@ Mover<T>& Mover<T>::set(const DihedralID &dihedral, SireUnits::Dimension::Angle 
 */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-Mover<T>& Mover<T>::setAll(const DihedralID &dihedral, SireUnits::Dimension::Angle value,
+Mover<T>& Mover<T>::setAll(const DihedralID &dihedral, 
+                           SireUnits::Dimension::Angle value,
                            const PropertyMap &map)
 {
     MoverBase::setAll(*(this->d), dihedral, value, map);
@@ -366,7 +374,7 @@ Mover<T>& Mover<T>::set(const ImproperID &improper, SireUnits::Dimension::Angle 
 }
 
 /** Align all of the atoms in this view against their equivalent atoms
-    in 'other', using 'aliases' to match atoms in this molecule to
+    in 'other', using 'matcher' to match atoms in this molecule to
     atoms in 'other'. If an atom can't be found, then it is ignored. If
     no atoms can be found then an exception is raised.
     
@@ -378,15 +386,17 @@ Mover<T>& Mover<T>::set(const ImproperID &improper, SireUnits::Dimension::Angle 
 */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-Mover<T>& Mover<T>::align(const MoleculeView &other, const AtomAliases &aliases,
-                          const PropertyMap &map0, const PropertyMap &map1)
+Mover<T>& Mover<T>::alignTo(const MoleculeView &other, const AtomMatcher &matcher,
+                            const PropertyMap &map0, const PropertyMap &map1)
 {
-    MoverBase::align(*(this->d), other, aliases, map0, map1);
+    MoverBase::mapInto(*(this->d), this->evaluator().alignmentAxes(
+                                        other, matcher, map0, map1), map0 );
+
     return *this;
 }
                 
 /** Align all of the atoms by matching 'aligning_atoms' in this molecule
-    against their equivalent atoms in 'other', using 'aliases' to match 
+    against their equivalent atoms in 'other', using 'matcher' to match 
     atoms in this molecule to atoms in 'other'. If an atom can't be found, 
     then it is ignored. If no atoms can be found then an exception is raised.
     
@@ -398,11 +408,15 @@ Mover<T>& Mover<T>::align(const MoleculeView &other, const AtomAliases &aliases,
 */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-Mover<T>& Mover<T>::align(const MoleculeView &other, const AtomSelection &aligning_atoms,
-                          const AtomAliases &aliases,
-                          const PropertyMap &map0, const PropertyMap &map1)
+Mover<T>& Mover<T>::alignTo(const MoleculeView &other, 
+                            const AtomMatcher &matcher,
+                            const AtomAliases &aliases,
+                            const PropertyMap &map0, const PropertyMap &map1)
 {
-    MoverBase::align(*(this->d), aligning_atoms, other, aliases, map0, map1);
+    MoverBase::mapInto(*(this->d), Evaluator(*this, aligning_atoms)
+                                        .alignmentAxes(other, matcher,
+                                                       map0, map1), map0 );
+
     return *this;
 }
 

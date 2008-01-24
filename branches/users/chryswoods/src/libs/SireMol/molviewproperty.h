@@ -72,6 +72,26 @@ public:
     void assertCompatibleWith(const MoleculeInfoData &molinfo) const;
 };
 
+/** This specifically is a property that pertains to an entire
+    molecule (e.g. a selection of atoms from that molecule)
+    
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT MoleculeProperty : public MolViewProperty
+{
+public:
+    MoleculeProperty();
+    
+    MoleculeProperty(const MoleculeProperty &other);
+    
+    ~MoleculeProperty();
+    
+    static const char* typeName()
+    {
+        return "SireMol::MoleculeProperty";
+    }
+};
+
 }
 
 SIRE_END_HEADER

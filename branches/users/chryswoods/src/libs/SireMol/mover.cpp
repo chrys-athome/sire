@@ -36,10 +36,15 @@
 #include "dihedralid.h"
 #include "improperid.h"˚
 
+#include "tostring.h"
+
 #include "SireMaths/quaternion.h"
 #include "SireMaths/matrix.h"
+#include "SireMaths/axisset.h"
 
 #include "SireVol/coordgroup.h"
+
+#include "SireMol/errors.h"
 
 using namespace SireMol;
 using namespace SireVol;
@@ -215,6 +220,16 @@ void MoverBase::rotate(AtomCoords &coords,
             }
         }
     }
+}
+
+/** Rotate the coordinates (in 'coords') of the specified selected
+    atoms using the quaternion 'quat' about the point 'point'.
+    This function assumes that coords and selected_atoms are compatible */
+void MoverBase::rotate(AtomCoords &coords,
+                       const AtomSelection &selected_atoms,
+                       const Quaternion &quat, const Vector &point)
+{
+    MoverBase::rotate(coords, selected_atoms, quat.toMatrix(), point);
 }
 
 /** Map the selected atoms from 'coords' into the axis set in 'axes'
@@ -424,6 +439,28 @@ void MoverBase::rotate(MoleculeData &moldata,
                       point, map);
 }
 
+/** Apply anchors to the groups - this clears a group if it
+    contains an anchor atom */
+static void applyAnchors(const AtomSelection &anchors,
+                         tuple<AtomSelection,AtomSelection> &groups)
+{
+    if (groups.get<0>().intersects(anchors))
+    {
+        groups.get<0>().deselectAll();
+    }
+    
+    if (groups.get<1>().intersects(anchors))
+    {
+        groups.get<1>().deselectAll();
+    }
+}
+
+static const AtomSelection& getAnchors(const MoleculeData &moldata,
+                                       const PropertyMap &map)
+{
+    return moldata.property(map["anchors"])->asA<AtomSelection>();
+}
+
 /** Change the length of the bond identified by 'bond' by 'delta',
     in the molecule whose data is in 'moldata', using the supplied
     PropertyMap to locate the necessary properties
@@ -454,7 +491,7 @@ void MoverBase::change(MoleculeData &moldata, const BondID &bond,
         return;
 
     //get the indicies of the two atoms of the bond
-    tuple<AtomIdx,AtomIdx> atomidxs = bond.map(moldata);
+    tuple<AtomIdx,AtomIdx> atomidxs = bond.map(moldata.info());
 
     AtomIdx atom0 = atomidxs.get<0>();
     AtomIdx atom1 = atomidxs.get<1>();
@@ -464,27 +501,42 @@ void MoverBase::change(MoleculeData &moldata, const BondID &bond,
     const Connectivity &connectivity =
             moldata.property(map["connectivity"])->asA<Connectivity>();
 
-    //see if there are any anchors that must be applied to
-    //the section of molecule
-    AtomSelection anchors;
-
-    if (map.specified("anchors"))
-        anchors = moldata.property(map["anchors"])->asA<AtomSelection>();
-
     //split the molecule into the two parts that are
     //going to move - the two groups are only able to
     //contain the atoms that are in 'movable_atoms'
     tuple<AtomSelection,AtomSelection> groups =
-                connectivity.split(atom0, atom1, movable_atoms, anchors);
+                        connectivity.split(atom0, atom1, movable_atoms);
+
+    //see if there are any anchors that must be applied to
+    //the section of molecule
+    if (map.specified("anchors"))
+    {
+        applyAnchors( getAnchors(moldata, map), groups );
+    }
 
     const AtomSelection &group0 = groups.get<0>();
     const AtomSelection &group1 = groups.get<1>();
 
     double weight0, weight1;
 
-    if (group0.isEmpty())
+    if (group0.isEmpty() and group1.isEmpty())
     {
-        BOOST_ASSERT( not group1.isEmpty() );
+        if (map.specified("anchors"))
+        {
+            throw SireMol::anchor_error( QObject::tr(
+                "Splitting the molecule into two about %1 has resulted "
+                "in two groups that are both anchored (anchors = %2)")
+                    .arg(bond.toString(), 
+                         Sire::toString( getAnchors(moldata, map).selectedAtoms()) ),
+                             CODELOC );
+        }
+    
+        throw SireError::program_bug( QObject::tr(
+            "Splitting the molecule about %1 has resulted "
+            "in two empty groups!").arg(bond.toString()), CODELOC );
+    }
+    else if (group0.isEmpty())
+    {
         weight0 = 0;
         weight1 = 1;
     }
@@ -577,26 +629,40 @@ void MoverBase::change(MoleculeData &moldata, const AngleID &angle,
     const Connectivity &connectivity =
             moldata.property(map["connectivity"])->asA<Connectivity>();
 
-    //see if there are any anchors that hold part of the
-    //molecule stationary
-    AtomSelection anchors;
-
-    if (map.specified("anchors"))
-        anchors = moldata.property(map["anchors"])->asA<AtomSelection>();
-
     //split the molecule into the two moving parts
     tuple<AtomSelection,AtomSelection> groups =
                           connectivity.split(atom0, atom1, atom2,
-                                             movable_atoms, anchors);
+                                             movable_atoms);
+
+    //see if there are any anchors that hold part of the
+    //molecule stationary
+    if (map.specified("anchors"))
+        applyAnchors( getAnchors(moldata, map), groups );
+
 
     const AtomSelection &group0 = groups.get<0>();
     const AtomSelection &group1 = groups.get<1>();
 
     double weight0, weight1;
 
-    if (group0.isEmpty())
+    if (group0.isEmpty() and group1.isEmpty())
     {
-        BOOST_ASSERT( not group1.isEmpty() );
+        if (map.specified("anchors"))
+        {
+            throw SireMol::anchor_error( QObject::tr(
+                "Splitting the molecule into two about %1 has resulted "
+                "in two groups that are both anchored (anchors = %2)")
+                    .arg(angle.toString(), 
+                         Sire::toString( getAnchors(moldata, map).selectedAtoms()) ),
+                             CODELOC );
+        }
+    
+        throw SireError::program_bug( QObject::tr(
+            "Splitting the molecule about the %1 has resulted "
+            "in two empty groups!").arg(angle.toString()), CODELOC );
+    }
+    else if (group0.isEmpty())
+    {
         weight0 = 0;
         weight1 = 1;
     }
@@ -611,7 +677,7 @@ void MoverBase::change(MoleculeData &moldata, const AngleID &angle,
         //two sides of the move
         const WeightFunction &weightfunc =
                 moldata.property(map["weight function"],
-                                 default_weightfunc).asA<WeightFunction>();
+                                 default_weightfunc)->asA<WeightFunction>();
 
         tuple<double,double> weights = weightfunc(moldata, group0,
                                                   group1, map);
@@ -622,7 +688,7 @@ void MoverBase::change(MoleculeData &moldata, const AngleID &angle,
 
     //get the coordinates that are to be changed
     PropertyName coord_property = map["coordinates"];
-    AtomCoords coords = moldata.property(coord_property).asA<AtomCoords>();
+    AtomCoords coords = moldata.property(coord_property)->asA<AtomCoords>();
 
     //get the coordinates of the three atoms that comprise the angle
     const Vector &coords0 = coords[moldata.info().cgAtomIdx(atom0)];
@@ -670,7 +736,7 @@ void MoverBase::change(MoleculeData &moldata, const AngleID &angle,
     \throw SireMol::ring_error
 */
 void MoverBase::change(MoleculeData &moldata, const DihedralID &dihedral,
-                       SireUnits::Dimension::Length delta,
+                       SireUnits::Dimension::Angle delta,
                        const PropertyMap &map) const
 {
     if (delta == 0)
@@ -689,27 +755,38 @@ void MoverBase::change(MoleculeData &moldata, const DihedralID &dihedral,
     const Connectivity &connectivity =
               moldata.property(map["connectivity"])->asA<Connectivity>();
 
-    //see if there are any anchor atoms specified
-    AtomSelection anchors;
+    tuple<AtomSelection,AtomSelection> groups = 
+                        connectivity.split(atom0, atom1, 
+                                           atom2, atom3, movable_atoms);
 
+    //see if there are any anchors that hold part of the
+    //molecule stationary
     if (map.specified("anchors"))
-        anchors = moldata.property(map["anchors"])->asA<AtomSelection>();
-
-    //split the molecule into the two moving parts
-    tuple<AtomSelection,AtomSelection> groups =
-                          connectivity.split(moldata, atom0, atom1,
-                                             atom2, atom3,
-                                             movable_atoms, anchors);
+        applyAnchors( getAnchors(moldata, map), groups );
 
     const AtomSelection &group0 = groups.get<0>();
     const AtomSelection &group1 = groups.get<1>();
 
-    //get the weights applied to the motion of each group
     double weight0, weight1;
 
-    if (group0.isEmpty())
+    if (group0.isEmpty() and group1.isEmpty())
     {
-        BOOST_ASSERT( not group1.isEmpty() );
+        if (map.specified("anchors"))
+        {
+            throw SireMol::anchor_error( QObject::tr(
+                "Splitting the molecule into two about %1 has resulted "
+                "in two groups that are both anchored (anchors = %2)")
+                    .arg(dihedral.toString(), 
+                         Sire::toString( getAnchors(moldata, map).selectedAtoms()) ),
+                             CODELOC );
+        }
+    
+        throw SireError::program_bug( QObject::tr(
+            "Splitting the molecule about the %1 has resulted "
+            "in two empty groups!").arg(dihedral.toString()), CODELOC );
+    }
+    else if (group0.isEmpty())
+    {
         weight0 = 0;
         weight1 = 1;
     }
@@ -793,26 +870,37 @@ void MoverBase::change(MoleculeData &moldata, const BondID &bond,
     const Connectivity &connectivity =
               moldata.property(map["connectivity"])->asA<Connectivity>();
 
-    //see if there are any anchor atoms specified
-    AtomSelection anchors;
+    tuple<AtomSelection,AtomSelection> groups = 
+                            connectivity.split(atom0, atom1, movable_atoms);
 
+    //see if there are any anchors that hold part of the
+    //molecule stationary
     if (map.specified("anchors"))
-        anchors = moldata.property(map["anchors"]);
-
-    //split the molecule into the two moving parts
-    tuple<AtomSelection,AtomSelection> groups =
-                          connectivity.split(moldata, atom0, atom1,
-                                             movable_atoms, anchors);
+        applyAnchors( getAnchors(moldata, map), groups );
 
     const AtomSelection &group0 = groups.get<0>();
     const AtomSelection &group1 = groups.get<1>();
 
-    //get the weights applied to the motion of each group
     double weight0, weight1;
 
-    if (group0.isEmpty())
+    if (group0.isEmpty() and group1.isEmpty())
     {
-        BOOST_ASSERT( not group1.isEmpty() );
+        if (map.specified("anchors"))
+        {
+            throw SireMol::anchor_error( QObject::tr(
+                "Splitting the molecule into two about %1 has resulted "
+                "in two groups that are both anchored (anchors = %2)")
+                    .arg(bond.toString(), 
+                         Sire::toString( getAnchors(moldata, map).selectedAtoms()) ),
+                             CODELOC );
+        }
+    
+        throw SireError::program_bug( QObject::tr(
+            "Splitting the molecule about the %1 has resulted "
+            "in two empty groups!").arg(bond.toString()), CODELOC );
+    }
+    else if (group0.isEmpty())
+    {
         weight0 = 0;
         weight1 = 1;
     }
@@ -904,24 +992,36 @@ void MoverBase::change(MoleculeData &moldata, const ImproperID &improper,
     const Connectivity &connectivity =
             moldata.property(map["connectivity"])->asA<Connectivity>();
 
-    //see if there are any anchor atoms specified
-    AtomSelection anchors;
-
-    if (map.specified("anchors"))
-        anchors = moldata.property(map["anchors"]);
-
-    //split the molecule into the two moving parts
     tuple<AtomSelection,AtomSelection> groups =
-                          connectivity.split(moldata, atom0, atom1,
-                                             movable_atoms, anchors);
+                      connectivity.split(atom0, atom1, movable_atoms);
+
+    //see if there are any anchors that hold part of the
+    //molecule stationary
+    if (map.specified("anchors"))
+        applyAnchors( getAnchors(moldata, map), groups );
 
     const AtomSelection &group0 = groups.get<0>();
     const AtomSelection &group1 = groups.get<1>();
 
-    //get the weights applied to the motion of each group
     double weight0, weight1;
 
-    if (group0.isEmpty())
+    if (group0.isEmpty() and group1.isEmpty())
+    {
+        if (map.specified("anchors"))
+        {
+            throw SireMol::anchor_error( QObject::tr(
+                "Splitting the molecule into two about %1 has resulted "
+                "in two groups that are both anchored (anchors = %2)")
+                    .arg(improper.toString(), 
+                         Sire::toString( getAnchors(moldata, map).selectedAtoms()) ),
+                             CODELOC );
+        }
+    
+        throw SireError::program_bug( QObject::tr(
+            "Splitting the molecule about the %1 has resulted "
+            "in two empty groups!").arg(improper.toString()), CODELOC );
+    }
+    else if (group0.isEmpty())
     {
         BOOST_ASSERT( not group1.isEmpty() );
         weight0 = 0;
@@ -996,7 +1096,7 @@ void MoverBase::set(MoleculeData &moldata, const BondID &bond,
                     SireUnits::Dimension::Length value,
                     const PropertyMap &map) const
 {
-    double current_value = bond.size(moldata,map);
+    SireUnits::Dimension::Length current_value( bond.size(moldata,map) );
 
     this->change(moldata, bond, value - current_value, map);
 }
@@ -1060,7 +1160,7 @@ void MoverBase::set(MoleculeData &moldata, const AngleID &angle,
     \throw SireMol::ring_error
 */
 void MoverBase::set(MoleculeData &moldata, const DihedralID &dihedral,
-                    SireUnits::Dimension::Length value,
+                    SireUnits::Dimension::Angle value,
                     const PropertyMap &map) const
 {
     SireUnits::Dimension::Angle current_value = dihedral.size(moldata, map);
@@ -1098,7 +1198,7 @@ void MoverBase::setAll(MoleculeData &moldata, const DihedralID &dihedral,
 {
     SireUnits::Dimension::Angle current_value = dihedral.size(moldata, map);
 
-    this->change(moldata, dihedral.bond12(),
+    this->change(moldata, BondID(dihedral.atom1(), dihedral.atom2()),
                  value - current_value, map);
 }
 
@@ -1134,56 +1234,4 @@ void MoverBase::set(MoleculeData &moldata, const ImproperID &improper,
     SireUnits::Dimension::Angle current_value = improper.size(moldata, map);
 
     this->change(moldata, improper, value - current_value, map);
-}
-
-/** Align the movable atoms of 'data' against their equivalents in 'other',
-    using the 'aliases' where necessary to find the equivalent atom.
-
-    If this can't find an equivalent atom, then that atom is ignored.
-    If no atoms are found at all, then an exception is raised
-
-    This only moves the movable atoms in this view.
-
-    This works by calculating the alignment axes and then
-    mapping the movable atoms from their current frame into
-    the alignment axes frame
-
-    \throw SireMol::missing_atom
-*/
-void MoverBase::align(MoleculeData &moldata, const MoleculeView &other,
-                      const AtomAliases &aliases,
-                      const PropertyMap &map0, const PropertyMap &map1) const
-{
-    AxisSet alignment_axes = Evaluator::alignmentAxes(moldata, movable_atoms,
-                                                      other, aliases,
-                                                      map0, map1);
-
-    MoverBase::mapInto(moldata, movable_atoms, alignment_axes, map0);
-}
-
-/** Align the movable atoms of 'data', using the alignment axes
-    calculated to align 'align_atoms' of this molecule with their
-    equivalens in 'other', using 'aliases' if necessary to map
-    from the atom ID in this molecule to the atom ID in 'other'.
-
-    If an equivalent atom can't be found then it is ignored - if
-    not equivalent atoms are found then an exception is raised.
-
-    This only moves the movable atoms in this view.
-
-    This works by calculating the alignment axes and then
-    mapping the movable atoms from their current frame into
-    the alignment axes frame
-
-    \throw SireMol::missing_atom
-*/
-void MoverBase::align(MoleculeData &data, const AtomSelection &align_atoms,
-                      const MoleculeView &other, const AtomAliases &aliases,
-                      const PropertyMap &map0, const PropertyMap &map1) const
-{
-    AxisSet alignment_axes = Evaluator::alignmentAxes(moldata, align_atoms,
-                                                      other, aliases,
-                                                      map0, map1);
-
-    MoverBase::mapInto(moldata, movable_atoms, alignment_axes, map0);
 }

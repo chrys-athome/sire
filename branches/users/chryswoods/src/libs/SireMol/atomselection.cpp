@@ -36,9 +36,12 @@
 #include "SireMol/errors.h"
 
 using namespace SireMol;
+using namespace SireBase;
 
 /** Null constructor */
-AtomSelection::AtomSelection() : nselected(0)
+AtomSelection::AtomSelection() 
+              : ConcreteProperty<AtomSelection,MoleculeProperty>(),
+                nselected(0)
 {}
 
 /** Return the info object for the molecule whose atoms
@@ -51,6 +54,7 @@ const MoleculeInfoData& AtomSelection::info() const
 /** Construct a selection of all of the atoms in the view 
     'molecule' */
 AtomSelection::AtomSelection(const MoleculeView &molecule)
+              : ConcreteProperty<AtomSelection,MoleculeProperty>()
 {
     this->operator=(molecule.selection());
 }
@@ -58,12 +62,14 @@ AtomSelection::AtomSelection(const MoleculeView &molecule)
 /** Construct a selection of all of the atoms in the 
     molecule whose data is in 'moldata' */
 AtomSelection::AtomSelection(const MoleculeData &moldata)
-              : d(moldata.info()), nselected(moldata.info().nAtoms())
+              : ConcreteProperty<AtomSelection,MoleculeProperty>(),
+                d(moldata.info()), nselected(moldata.info().nAtoms())
 {}              
 
 /** Copy constructor */
 AtomSelection::AtomSelection(const AtomSelection &other)
-              : selected_atoms(other.selected_atoms),
+              : ConcreteProperty<AtomSelection,MoleculeProperty>(other),
+                selected_atoms(other.selected_atoms),
                 d(other.d), nselected(other.nselected)
 {}
 
@@ -74,6 +80,8 @@ AtomSelection::~AtomSelection()
 /** Copy assignment operator */
 AtomSelection& AtomSelection::operator=(const AtomSelection &other)
 {
+    MoleculeProperty::operator=(other);
+
     selected_atoms = other.selected_atoms;
     d = other.d;
     nselected = other.nselected;
@@ -3246,6 +3254,13 @@ void AtomSelection::assertCompatibleWith(const MoleculeData &moldata) const
             "which is for the molecule \"%3\".")
                 .arg(moldata.name()).arg(moldata.number())
                 .arg(d->name()), CODELOC );
+}
+
+/** Return whether or not this selection is compatible with the molecule info
+    in 'molinfo' */
+bool AtomSelection::isCompatibleWith(const MoleculeInfoData &molinfo) const
+{
+    return molinfo == *d;
 }
 
 /** Assert that this selection is compatible with the molecule viewed

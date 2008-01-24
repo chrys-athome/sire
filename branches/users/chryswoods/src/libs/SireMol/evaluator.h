@@ -152,6 +152,8 @@ public:
     Vector centerOfGeometry(const PropertyMap &map = PropertyMap()) const;
     Vector centerOfMass(const PropertyMap &map = PropertyMap()) const;
 
+    
+
 private:
 
     /** The atoms over which the properties will be 

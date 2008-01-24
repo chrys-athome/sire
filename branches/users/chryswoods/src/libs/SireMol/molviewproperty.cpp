@@ -36,6 +36,10 @@
 using namespace SireMol;
 using namespace SireBase;
 
+/////////
+///////// Implementation of MolViewProperty
+/////////
+
 /** Constructor */
 MolViewProperty::MolViewProperty() : PropertyBase()
 {}
@@ -61,3 +65,19 @@ void MolViewProperty::assertCompatibleWith(const MoleculeInfoData &molinfo) cons
                 "\"%2\"")
                     .arg(this->what()).arg(molinfo.name()), CODELOC );
 }
+
+/////////
+///////// Implementation of MoleculeProperty
+/////////
+
+MoleculeProperty::MoleculeProperty() : MolViewProperty()
+{}
+
+MoleculeProperty::MoleculeProperty(const MoleculeProperty &other)
+                 : MolViewProperty(other)
+{}
+
+MoleculeProperty::~MoleculeProperty()
+{}
+
+

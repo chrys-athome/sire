@@ -32,7 +32,10 @@
 #include <QSet>
 #include <QHash>
 
+#include "molviewproperty.h"
+
 #include "SireBase/shareddatapointer.hpp"
+
 #include "SireID/index.h"
 
 #include "cgidx.h"
@@ -76,6 +79,7 @@ class AtomProperty;
 
 using SireID::Index;
 
+using SireBase::ConcreteProperty;
 using SireBase::SharedDataPointer;
 
 /** This class holds information about a selection of atoms in a Molecule.
@@ -88,6 +92,7 @@ using SireBase::SharedDataPointer;
     @author Christopher Woods
 */
 class SIREMOL_EXPORT AtomSelection
+           : public ConcreteProperty<AtomSelection,MoleculeProperty>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const AtomSelection&);
@@ -104,6 +109,11 @@ public:
     AtomSelection(const AtomSelection &other);
 
     ~AtomSelection();
+
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<AtomSelection>() );
+    } 
 
     AtomSelection& operator=(const AtomSelection &other);
 
@@ -375,6 +385,8 @@ public:
 
     void assertContains(AtomIdx atomidx) const;
     void assertContains(const AtomID &atomid) const;
+    
+    bool isCompatibleWith(const MoleculeInfoData &molinfo) const;
 
     void assertCompatibleWith(const MoleculeData &moldata) const;
     void assertCompatibleWith(const MoleculeView &molview) const;
