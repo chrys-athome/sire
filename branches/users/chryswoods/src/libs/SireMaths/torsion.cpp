@@ -95,23 +95,6 @@ Angle Torsion::angle() const
     return Vector::dihedral(points[0], points[1], points[2], points[3]);
 }
 
-/** Return the improper angle of this torsion. The improper
-    angle is the angle 2-1-3-4, which has the effect of measuring
-    the angle between the plane formed by the atoms 1,2,3 and the
-    plane formed by the atoms 1,3,4. This measures by how much
-    atom 4 lies out of the plane formed by the atoms 1,2,3.
-        
-            4
-            |
-            2
-          /   \
-        1       3
-*/
-Angle Torsion::improperAngle() const
-{
-    return Vector::dihedral(points[2], points[1], points[3], points[4]);
-}
-
 /** Return the line from point 0 to point 3 */
 Line Torsion::line03() const
 {

@@ -293,7 +293,7 @@ Torsion ImproperID::torsion(const MoleculeData &mol0data,
 Angle ImproperID::size(const MoleculeData &moldata,
                        const PropertyMap &map) const
 {
-    return this->torsion(moldata,map).improperAngle();
+    return this->torsion(moldata,map).angle();
 }
 
 /** Return the size of the improper between atom0() in the 
@@ -324,7 +324,7 @@ Angle ImproperID::size(const MoleculeData &mol0data,
     return this->torsion(mol0data, map0, 
                          mol1data, map1,
                          mol2data, map2,
-                         mol3data, map3).improperAngle();
+                         mol3data, map3).angle();
 }
 
 /** Return the size of the improper between atom0() in the 
@@ -348,7 +348,7 @@ Angle ImproperID::size(const MoleculeData &mol0data,
                        const PropertyMap &map) const
 {
     return this->torsion(mol0data, mol1data, 
-                         mol2data, mol3data, map).improperAngle();
+                         mol2data, mol3data, map).angle();
 }
 
 /** Return the ID of the first atom of the improper */

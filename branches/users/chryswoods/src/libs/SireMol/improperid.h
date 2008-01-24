@@ -67,8 +67,23 @@ using SireBase::PropertyMap;
 using boost::tuple;
 
 /** This class provides a generic ID for an 
-    improper angle between four atoms
-    
+    improper angle between four atoms. The improper
+    angle is the angle 1-2-3-4, which has the effect of measuring
+    the angle between the plane formed by the atoms 1,3,4 and the
+    plane formed by the atoms 2,3,4. This measures by how much
+    atom 1 lies out of the plane formed by the atoms 2,3,4.
+        
+            1
+            |
+            2
+          /   \
+        3       4
+
+    The internal move Monte Carlo move changes an improper
+    by splitting the molecule about the 1-2 bond, and then 
+    rotating the atom 1 group, and the atom 2-3-4 group about
+    the vector 3-4, about point 2.
+
     @author Christopher Woods
 */
 class SIREMOL_EXPORT ImproperID : public SireID::ID

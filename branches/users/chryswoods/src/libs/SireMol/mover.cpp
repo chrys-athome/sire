@@ -31,6 +31,11 @@
 #include "connectivity.h"
 #include "weightfunction.h"
 
+#include "bondid.h"
+#include "angleid.h"
+#include "dihedralid.h"
+#include "improperid.h"˚
+
 #include "SireMaths/quaternion.h"
 #include "SireMaths/matrix.h"
 
@@ -741,11 +746,11 @@ void MoverBase::change(MoleculeData &moldata, const DihedralID &dihedral,
     //now rotate the two parts of the molecule
     if (weight0 != 0)
         MoverBase::rotate(coords, group0,
-                          Quaternion(-weight*delta, dihvec), coords1);
+                          Quaternion(-weight0*delta, dihvec), coords1);
 
     if (weight1 != 0)
         MoverBase::rotate(coords, group1,
-                          Quaternion(weight*delta, dihvec), coords2);
+                          Quaternion(weight1*delta, dihvec), coords2);
 
     //save the new coordinates
     moldata.setProperty(coord_property, coords);
@@ -844,11 +849,11 @@ void MoverBase::change(MoleculeData &moldata, const BondID &bond,
     //now rotate the two parts of the molecule
     if (weight0 != 0)
         MoverBase::rotate(coords, group0,
-                          Quaternion(-weight*delta, dihvec), coords0);
+                          Quaternion(-weight0*delta, dihvec), coords0);
 
     if (weight1 != 0)
         MoverBase::rotate(coords, group1,
-                          Quaternion(weight*delta, dihvec), coords1);
+                          Quaternion(weight1*delta, dihvec), coords1);
 
     //save the new coordinates
     moldata.setProperty(coord_property, coords);
@@ -955,11 +960,11 @@ void MoverBase::change(MoleculeData &moldata, const ImproperID &improper,
     //now rotate the two parts of the molecule
     if (weight0 != 0)
         MoverBase::rotate(coords, group0,
-                          Quaternion(-weight*delta, impvec), coords1);
+                          Quaternion(-weight0*delta, impvec), coords1);
 
     if (weight1 != 0)
         MoverBase::rotate(coords, group1,
-                          Quaternion(weight*delta, impvec), coords1);
+                          Quaternion(weight1*delta, impvec), coords1);
 
     //save the new coordinates
     moldata.setProperty(coord_property, coords);
