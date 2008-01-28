@@ -261,6 +261,47 @@ Selector<Atom> CutGroup::selectAll() const
     return this->atoms();
 }
 
+/** Return whether or not there is a CGProperty at key 'key' */
+bool CutGroup::hasProperty(const PropertyName &key) const
+{
+    return d->hasPropertyOfType<CGProp>(key);
+}
+
+/** Return whether or not there is a CGProperty at metakey 'metakey' */
+bool CutGroup::hasMetadata(const PropertyName &metakey) const
+{
+    return d->hasMetadataOfType<CGProp>(metakey);
+}
+
+/** Return whether the metadata at metakey 'metakey' for the property
+    at key 'key' is a CGProperty
+    
+    \throw SireBase::missing_property
+*/
+bool CutGroup::hasMetadata(const PropertyName &key,
+                       const PropertyName &metakey) const
+{
+    return d->hasMetadataOfType<CGProp>(key, metakey);
+}
+
+bool detail::has_property(const CutGroup*, const MoleculeData &moldata,
+                          const PropertyName &key)
+{
+    return moldata.hasPropertyOfType<CGProp>(key);
+}
+
+bool detail::has_metadata(const CutGroup*, const MoleculeData &moldata,
+                          const PropertyName &metakey)
+{
+    return moldata.hasMetadataOfType<CGProp>(metakey);
+}
+
+bool detail::has_metadata(const CutGroup*, const MoleculeData &moldata,
+                          const PropertyName &key, const PropertyName &metakey)
+{
+    return moldata.hasMetadataOfType<CGProp>(key, metakey);
+}
+
 ////// explicitly instantiate the CutGroup templates
 template class Editor<CutGroup>;
 template class Mover<CutGroup>;

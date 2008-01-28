@@ -561,6 +561,30 @@ void Molecule::setMetadata(const PropertyName &key, const PropertyName &metakey,
     d->setMetadata(key, metakey, value);
 }
 
+/** Return whether or not this molecule posseses a property at key 'key' */
+bool Molecule::hasProperty(const PropertyName &key) const
+{
+    return d->hasProperty(key);
+}
+
+/** Return whether or not this molecule posseses metadata with
+    metakey 'metakey' */
+bool Molecule::hasMetadata(const PropertyName &metakey) const
+{
+    return d->hasMetadata(metakey);
+}
+
+/** Return whether or not the property of this molecule at
+    key 'key' has metadata at metakey 'metakey'
+    
+    \throw SireBase::missing_property
+*/
+bool Molecule::hasMetadata(const PropertyName &key,
+                           const PropertyName &metakey) const
+{
+    return d->hasMetadata(key, metakey);
+}
+
 ///// explicitly instantiate manipulator classes
 template class Editor<Molecule>;
 template class Mover<Molecule>;

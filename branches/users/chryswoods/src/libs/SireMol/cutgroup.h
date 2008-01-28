@@ -369,6 +369,15 @@ void set_metadata(CutGroup*, MoleculeData &moldata,
     set_metadata<CGProperty<V>,CutGroup::Index,V>(moldata,idxs,key,metakey,value);
 }
 
+bool has_property(const CutGroup*, const MoleculeData &moldata,
+                  const PropertyName &key);
+                  
+bool has_metadata(const CutGroup*, const MoleculeData &moldata,
+                  const PropertyName &metakey);
+                  
+bool has_metadata(const CutGroup*, const MoleculeData &moldata,
+                  const PropertyName &key, const PropertyName &metakey);                 
+
 } //end of namespace detail
 
 }

@@ -389,6 +389,15 @@ void set_metadata(Chain*, MoleculeData &moldata,
     set_metadata<ChainProperty<V>,Chain::Index,V>(moldata,idxs,key,metakey,value);
 }
 
+bool has_property(const Chain*, const MoleculeData &moldata,
+                  const PropertyName &key);
+                  
+bool has_metadata(const Chain*, const MoleculeData &moldata,
+                  const PropertyName &metakey);
+                  
+bool has_metadata(const Chain*, const MoleculeData &moldata,
+                  const PropertyName &key, const PropertyName &metakey);                 
+
 } //end of namespace detail
 
 }

@@ -267,6 +267,47 @@ Selector<Atom> Segment::selectAll() const
     return this->atoms();
 }
 
+/** Return whether or not there is a SegProperty at key 'key' */
+bool Segment::hasProperty(const PropertyName &key) const
+{
+    return d->hasPropertyOfType<SegProp>(key);
+}
+
+/** Return whether or not there is a SegProperty at metakey 'metakey' */
+bool Segment::hasMetadata(const PropertyName &metakey) const
+{
+    return d->hasMetadataOfType<SegProp>(metakey);
+}
+
+/** Return whether the metadata at metakey 'metakey' for the property
+    at key 'key' is a SegProperty
+    
+    \throw SireBase::missing_property
+*/
+bool Segment::hasMetadata(const PropertyName &key,
+                       const PropertyName &metakey) const
+{
+    return d->hasMetadataOfType<SegProp>(key, metakey);
+}
+
+bool SireMol::detail::has_property(const Segment*, const MoleculeData &moldata,
+                          const PropertyName &key)
+{
+    return moldata.hasPropertyOfType<SegProp>(key);
+}
+
+bool SireMol::detail::has_metadata(const Segment*, const MoleculeData &moldata,
+                                   const PropertyName &metakey)
+{
+    return moldata.hasMetadataOfType<SegProp>(metakey);
+}
+
+bool SireMol::detail::has_metadata(const Segment*, const MoleculeData &moldata,
+                                   const PropertyName &key, const PropertyName &metakey)
+{
+    return moldata.hasMetadataOfType<SegProp>(key, metakey);
+}
+
 /////// explicitly instantiate the templates
 template class Editor<Segment>;
 template class Mover<Segment>;

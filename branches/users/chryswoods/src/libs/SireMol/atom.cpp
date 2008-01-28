@@ -30,7 +30,6 @@
 
 #include "editor.hpp"
 #include "mover.hpp"
-#include "selector.hpp"
 #include "evaluator.h"
 
 #include "cutgroup.h"
@@ -38,6 +37,7 @@
 #include "chain.h"
 #include "segment.h"
 #include "molecule.h"
+#include "selector.hpp"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -247,6 +247,24 @@ bool Atom::hasMetadata(const PropertyName &key,
                        const PropertyName &metakey) const
 {
     return d->hasMetadataOfType<AtomProp>(key, metakey);
+}
+
+bool detail::has_property(const Atom*, const MoleculeData &moldata,
+                          const PropertyName &key)
+{
+    return moldata.hasPropertyOfType<AtomProp>(key);
+}
+
+bool detail::has_metadata(const Atom*, const MoleculeData &moldata,
+                          const PropertyName &metakey)
+{
+    return moldata.hasMetadataOfType<AtomProp>(metakey);
+}
+
+bool detail::has_metadata(const Atom*, const MoleculeData &moldata,
+                          const PropertyName &key, const PropertyName &metakey)
+{
+    return moldata.hasMetadataOfType<AtomProp>(key, metakey);
 }
 
 ///////

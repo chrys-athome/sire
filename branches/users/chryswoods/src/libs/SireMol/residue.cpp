@@ -307,6 +307,47 @@ Selector<Atom> Residue::selectAll() const
     return this->atoms();
 }
 
+/** Return whether or not there is a ResProperty at key 'key' */
+bool Residue::hasProperty(const PropertyName &key) const
+{
+    return d->hasPropertyOfType<ResProp>(key);
+}
+
+/** Return whether or not there is a ResProperty at metakey 'metakey' */
+bool Residue::hasMetadata(const PropertyName &metakey) const
+{
+    return d->hasMetadataOfType<ResProp>(metakey);
+}
+
+/** Return whether the metadata at metakey 'metakey' for the property
+    at key 'key' is a ResProperty
+    
+    \throw SireBase::missing_property
+*/
+bool Residue::hasMetadata(const PropertyName &key,
+                       const PropertyName &metakey) const
+{
+    return d->hasMetadataOfType<ResProp>(key, metakey);
+}
+
+bool SireMol::detail::has_property(const Residue*, const MoleculeData &moldata,
+                          const PropertyName &key)
+{
+    return moldata.hasPropertyOfType<ResProp>(key);
+}
+
+bool SireMol::detail::has_metadata(const Residue*, const MoleculeData &moldata,
+                                   const PropertyName &metakey)
+{
+    return moldata.hasMetadataOfType<ResProp>(metakey);
+}
+
+bool SireMol::detail::has_metadata(const Residue*, const MoleculeData &moldata,
+                                   const PropertyName &key, const PropertyName &metakey)
+{
+    return moldata.hasMetadataOfType<ResProp>(key, metakey);
+}
+
 /////
 ///// explicitly instantiate the Residue manipulator classes
 /////

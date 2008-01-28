@@ -356,6 +356,47 @@ Selector<Residue> Chain::selectAllResidues() const
     return this->residues();
 }
 
+/** Return whether or not there is a ChainProperty at key 'key' */
+bool Chain::hasProperty(const PropertyName &key) const
+{
+    return d->hasPropertyOfType<ChainProp>(key);
+}
+
+/** Return whether or not there is a ChainProperty at metakey 'metakey' */
+bool Chain::hasMetadata(const PropertyName &metakey) const
+{
+    return d->hasMetadataOfType<ChainProp>(metakey);
+}
+
+/** Return whether the metadata at metakey 'metakey' for the property
+    at key 'key' is a ChainProperty
+    
+    \throw SireBase::missing_property
+*/
+bool Chain::hasMetadata(const PropertyName &key,
+                       const PropertyName &metakey) const
+{
+    return d->hasMetadataOfType<ChainProp>(key, metakey);
+}
+
+bool detail::has_property(const Chain*, const MoleculeData &moldata,
+                          const PropertyName &key)
+{
+    return moldata.hasPropertyOfType<ChainProp>(key);
+}
+
+bool detail::has_metadata(const Chain*, const MoleculeData &moldata,
+                          const PropertyName &metakey)
+{
+    return moldata.hasMetadataOfType<ChainProp>(metakey);
+}
+
+bool detail::has_metadata(const Chain*, const MoleculeData &moldata,
+                          const PropertyName &key, const PropertyName &metakey)
+{
+    return moldata.hasMetadataOfType<ChainProp>(key, metakey);
+}
+
 /////// explicitly instantiate chain templates
 template class Editor<Chain>;
 template class Selector<Chain>;

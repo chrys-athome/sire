@@ -37,6 +37,52 @@ SIRE_BEGIN_HEADER
 namespace SireMol
 {
 
+class Atom;
+class Chain;
+class CutGroup;
+class Residue;
+class Segment;
+
+class MoleculeData;
+
+namespace detail
+{
+
+bool has_property(const Atom*, const MoleculeData &moldata,
+                  const PropertyName &key);
+bool has_property(const Chain*, const MoleculeData &moldata,
+                  const PropertyName &key);
+bool has_property(const CutGroup*, const MoleculeData &moldata,
+                  const PropertyName &key);
+bool has_property(const Residue*, const MoleculeData &moldata,
+                  const PropertyName &key);
+bool has_property(const Segment*, const MoleculeData &moldata,
+                  const PropertyName &key);
+
+bool has_metadata(const Atom*, const MoleculeData &moldata,
+                  const PropertyName &metakey);
+bool has_metadata(const Chain*, const MoleculeData &moldata,
+                  const PropertyName &metakey);
+bool has_metadata(const CutGroup*, const MoleculeData &moldata,
+                  const PropertyName &metakey);
+bool has_metadata(const Residue*, const MoleculeData &moldata,
+                  const PropertyName &metakey);
+bool has_metadata(const Segment*, const MoleculeData &moldata,
+                  const PropertyName &metakey);
+
+bool has_metadata(const Atom*, const MoleculeData &moldata,
+                  const PropertyName &key, const PropertyName &metakey);
+bool has_metadata(const Chain*, const MoleculeData &moldata,
+                  const PropertyName &key, const PropertyName &metakey);
+bool has_metadata(const CutGroup*, const MoleculeData &moldata,
+                  const PropertyName &key, const PropertyName &metakey);
+bool has_metadata(const Residue*, const MoleculeData &moldata,
+                  const PropertyName &key, const PropertyName &metakey);
+bool has_metadata(const Segment*, const MoleculeData &moldata,
+                  const PropertyName &key, const PropertyName &metakey);
+
+} // end of namespace detail
+
 /** This template class provides a way to manipulate the selection
     of parts of a a molecule, e.g. Selector<Atom> provides a 
     MoleculeView that has a user-configurable view of an 
@@ -994,7 +1040,7 @@ template<class V>
 SIRE_OUTOFLINE_TEMPLATE
 QList<V> Selector<T>::property(const PropertyName &key) const
 {
-    T *ptr;
+    T *ptr = 0;
     return detail::get_property<V>(ptr, this->data(), this->idxs, key);
 }
 
@@ -1009,7 +1055,7 @@ template<class V>
 SIRE_OUTOFLINE_TEMPLATE
 QList<V> Selector<T>::metadata(const PropertyName &metakey) const
 {
-    T *ptr;
+    T *ptr = 0;
     return detail::get_metadata<V>(ptr, this->data(), 
                                    this->idxs, metakey);
 }
@@ -1026,7 +1072,7 @@ SIRE_OUTOFLINE_TEMPLATE
 QList<V> Selector<T>::metadata(const PropertyName &key,
                                const PropertyName &metakey) const
 {
-    T *ptr;
+    T *ptr = 0;
     return detail::get_metadata<V>(ptr, this->data(), this->idxs, 
                                    key, metakey);
 }
@@ -1043,7 +1089,7 @@ template<class V>
 SIRE_OUTOFLINE_TEMPLATE
 void Selector<T>::setProperty(const QString &key, const QList<V> &values)
 {
-    T *ptr;
+    T *ptr = 0;
     detail::set_property<V>(ptr, this->data(), this->idxs, key, values);
 }
 
@@ -1059,7 +1105,7 @@ template<class V>
 SIRE_OUTOFLINE_TEMPLATE
 void Selector<T>::setMetadata(const QString &metakey, const QList<V> &values)
 {
-    T *ptr;
+    T *ptr = 0;
     detail::set_metadata<V>(ptr, this->data(), this->idxs, metakey, values);
 }
 
@@ -1077,7 +1123,7 @@ SIRE_OUTOFLINE_TEMPLATE
 void Selector<T>::setMetadata(const QString &key, const QString &metakey,
                               const QList<V> &values)
 {
-    T *ptr;
+    T *ptr = 0;
     detail::set_metadata<V>(ptr, this->data(), this->idxs, key, metakey, values);
 }
 
@@ -1091,7 +1137,7 @@ template<class V>
 SIRE_OUTOFLINE_TEMPLATE
 void Selector<T>::setProperty(const QString &key, const V &value)
 {
-    T *ptr;
+    T *ptr = 0;
     detail::set_property<V>(ptr, this->data(), this->idxs, key, value);
 }
 
@@ -1105,7 +1151,7 @@ template<class V>
 SIRE_OUTOFLINE_TEMPLATE
 void Selector<T>::setMetadata(const QString &metakey, V &value)
 {
-    T *ptr;
+    T *ptr = 0;
     detail::set_metadata<V>(ptr, this->data(), this->idxs, metakey, value);
 }
 
@@ -1120,8 +1166,42 @@ SIRE_OUTOFLINE_TEMPLATE
 void Selector<T>::setMetadata(const QString &key, const QString &metakey,
                               const V &value)
 {
-    T *ptr;
+    T *ptr = 0;
     detail::set_metadata<V>(ptr, this->data(), this->idxs, key, metakey, value);
+}
+
+/** Return whether or not the views of this selector has a property
+    at key 'key' */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool Selector<T>::hasProperty(const PropertyName &key) const
+{
+    T *ptr = 0;
+    return detail::has_property(ptr, this->data(), key);
+}
+
+/** Return whether or not the views of this selector have metadata
+    at metakey 'metakey' */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool Selector<T>::hasMetadata(const PropertyName &metakey) const
+{
+    T *ptr = 0;
+    return detail::has_metadata(ptr, this->data(), metakey);
+}
+
+/** Return whether or not the property at key 'key' for the views
+    of this selector has metadata at metakey 'metakey' 
+    
+    \throw SireBase::missing_property
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool Selector<T>::hasMetadata(const PropertyName &key,
+                              const PropertyName &metakey) const
+{
+    T *ptr = 0;
+    return detail::has_metadata(ptr, this->data(), key, metakey);
 }
 
 }

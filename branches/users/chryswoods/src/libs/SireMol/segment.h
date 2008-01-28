@@ -370,6 +370,15 @@ void set_metadata(Segment*, MoleculeData &moldata,
     set_metadata<SegProperty<V>,Segment::Index,V>(moldata,idxs,key,metakey,value);
 }
 
+bool has_property(const Segment*, const MoleculeData &moldata,
+                  const PropertyName &key);
+                  
+bool has_metadata(const Segment*, const MoleculeData &moldata,
+                  const PropertyName &metakey);
+                  
+bool has_metadata(const Segment*, const MoleculeData &moldata,
+                  const PropertyName &key, const PropertyName &metakey);                 
+
 } //end of namespace detail
 
 }

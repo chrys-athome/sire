@@ -29,6 +29,37 @@
 #ifndef SIREMOL_EDITOR_H
 #define SIREMOL_EDITOR_H
 
+#include "moleculeview.h"
+#include "atomselection.h"
 
+SIRE_BEGIN_HEADER
+
+namespace SireMol
+{
+
+/** This class provides the template independent part of Editor<T>.
+    This class is not designed to be used on its own!
+    
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT EditorBase
+{
+public:
+    EditorBase();
+    
+    EditorBase(const EditorBase &other);
+
+    ~EditorBase();
+    
+protected:
+    void removeProperty(MoleculeData &moldata, const QString &key);
+    void removeMetadata(MoleculeData &moldata, const QString &metakey);
+    void removeMetadata(MoleculeData &moldata,
+                        const QString &key, const QString &metakey);
+};
+
+}
+
+SIRE_END_HEADER
 
 #endif

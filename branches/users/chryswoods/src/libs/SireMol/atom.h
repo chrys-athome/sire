@@ -493,6 +493,15 @@ void set_metadata(Atom*, MoleculeData &moldata,
     moldata.setMetadata(key, metakey, atom_prop);
 }
 
+bool has_property(const Atom*, const MoleculeData &moldata,
+                  const PropertyName &key);
+                  
+bool has_metadata(const Atom*, const MoleculeData &moldata,
+                  const PropertyName &metakey);
+                  
+bool has_metadata(const Atom*, const MoleculeData &moldata,
+                  const PropertyName &key, const PropertyName &metakey);                 
+
 } // end of namespace detail
 
 } // end of namespace SireMol

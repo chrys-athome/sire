@@ -127,6 +127,12 @@ public:
                       const PropertyMap &map1);
 };
 
+/** Null constructor */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+Mover<T>::Mover() : T(), MoverBase()
+{}
+
 /** Construct a mover that can move all of the atoms
     in the view 'view' */
 template<class T>
@@ -141,7 +147,9 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 Mover<T>::Mover(const T &view, const AtomSelection &movable_atoms)
          : T(view), MoverBase(movable_atoms)
-{}
+{
+    movable_atoms.assertCompatibleWith(view);
+}
 
 /** Copy constructor */
 template<class T>

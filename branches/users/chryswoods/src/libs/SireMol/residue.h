@@ -375,6 +375,16 @@ void set_metadata(Residue*, MoleculeData &moldata,
     set_metadata<ResProperty<V>,Residue::Index,V>(moldata,idxs,key,metakey,value);
 }
 
+bool has_property(const Residue*, const MoleculeData &moldata,
+                  const PropertyName &key);
+                  
+bool has_metadata(const Residue*, const MoleculeData &moldata,
+                  const PropertyName &metakey);
+                  
+bool has_metadata(const Residue*, const MoleculeData &moldata,
+                  const PropertyName &key, const PropertyName &metakey);                 
+
+
 } //end of namespace detail
 
 } //end of namespace SireMol
