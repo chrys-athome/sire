@@ -48,6 +48,20 @@ QDataStream& operator>>(QDataStream&, SireMol::ResProperty<T>&);
 namespace SireMol
 {
 
+/** Small class used to provide a common base for all ResProperty types */
+class ResProp : public MolViewProperty
+{
+public:
+    ResProp() : MolViewProperty()
+    {}
+   
+    ResProp(const ResProp &other) : MolViewProperty(other)
+    {}
+   
+    virtual ~ResProp()
+    {}
+};
+
 /** This is a property that can hold one value for each
     residue in the molecule.
     
@@ -60,7 +74,7 @@ namespace SireMol
 */
 template<class T>
 class ResProperty 
-    : public SireBase::ConcreteProperty<ResProperty<T>, MolViewProperty>
+    : public SireBase::ConcreteProperty<ResProperty<T>, ResProp>
 {
 
 friend QDataStream& ::operator<<<>(QDataStream&, const ResProperty<T>&);
@@ -115,7 +129,7 @@ private:
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 ResProperty<T>::ResProperty()
-              : SireBase::ConcreteProperty<ResProperty<T>,MolViewProperty>()
+              : SireBase::ConcreteProperty<ResProperty<T>,ResProp>()
 {}
 
 /** Construct space for the values of the property for all of the 
@@ -123,7 +137,7 @@ ResProperty<T>::ResProperty()
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 ResProperty<T>::ResProperty(const MoleculeInfoData &molinfo)
-              : SireBase::ConcreteProperty<ResProperty<T>,MolViewProperty>()
+              : SireBase::ConcreteProperty<ResProperty<T>,ResProp>()
 {
     if (molinfo.nResidues() > 0)
     {
@@ -136,7 +150,7 @@ ResProperty<T>::ResProperty(const MoleculeInfoData &molinfo)
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 ResProperty<T>::ResProperty(const QVector<T> &values)
-              : SireBase::ConcreteProperty<ResProperty<T>,MolViewProperty>()
+              : SireBase::ConcreteProperty<ResProperty<T>,ResProp>()
 {
     props = values;
     props.squeeze();
@@ -146,7 +160,7 @@ ResProperty<T>::ResProperty(const QVector<T> &values)
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 ResProperty<T>::ResProperty(const ResProperty<T> &other)
-              : SireBase::ConcreteProperty<ResProperty<T>,MolViewProperty>(other),
+              : SireBase::ConcreteProperty<ResProperty<T>,ResProp>(other),
                 props(other.props)
 {}
 

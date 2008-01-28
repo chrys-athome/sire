@@ -142,7 +142,17 @@ public:
     
     bool hasMetadata(const PropertyName &key, 
                      const PropertyName &metakey) const;
+                     
+    template<class T>
+    bool hasPropertyOfType(const PropertyName &key) const;
+                     
+    template<class T>
+    bool hasMetadataOfType(const PropertyName &metakey) const;
     
+    template<class T>
+    bool hasMetadataOfType(const PropertyName &key,
+                           const PropertyName &metakey) const;
+
     const char* propertyType(const PropertyName &key) const;
     
     const char* metadataType(const PropertyName &metakey) const;
@@ -161,6 +171,40 @@ private:
     /** Implicitly shared pointer to the data of this object */
     QSharedDataPointer<detail::PropertiesData> d;
 };
+
+/** Return whether or not this molecule has a property called 'key'
+    that is of type 'T' */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool Properties::hasPropertyOfType(const PropertyName &key) const
+{
+    return this->hasProperty(key) and 
+           this->property(key)->isA<T>();
+}
+                 
+/** Return whether or not this molecule has some metadata at metakey
+    'metakey' that is of type 'T' */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool Properties::hasMetadataOfType(const PropertyName &metakey) const
+{
+    return this->hasMetadata(metakey) and
+           this->metadata(metakey)->isA<T>();
+}
+
+/** Return whether or not the property at key 'key' has some metadata
+    at metakey 'metakey' that is of type 'T'
+    
+    \throw SireBase::missing_property
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool Properties::hasMetadataOfType(const PropertyName &key,
+                                   const PropertyName &metakey) const
+{
+    return this->hasMetadata(key, metakey) and
+           this->metadata(key, metakey)->isA<T>();
+}
 
 }
 

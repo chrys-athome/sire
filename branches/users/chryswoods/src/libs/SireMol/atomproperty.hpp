@@ -51,6 +51,21 @@ namespace SireMol
 
 using SireBase::Property;
 
+/** Small class used to give a common base to all
+    AtomProperty classes */
+class AtomProp : public MolViewProperty
+{
+public:
+    AtomProp() : MolViewProperty()
+    {}
+    
+    AtomProp(const AtomProp &other) : MolViewProperty(other)
+    {}
+    
+    virtual ~AtomProp()
+    {}
+};
+
 /** This is a property that can hold one value for each
     atom in the molecule. The properties are held in 
     arrays, with each array corresponding to a CutGroup,
@@ -66,7 +81,7 @@ using SireBase::Property;
 */
 template<class T>
 class AtomProperty 
-    : public SireBase::ConcreteProperty<AtomProperty<T>, MolViewProperty>
+    : public SireBase::ConcreteProperty<AtomProperty<T>, AtomProp>
 {
 
 friend QDataStream& ::operator<<<>(QDataStream&, const AtomProperty<T>&);
@@ -126,8 +141,8 @@ public:
     int nAtoms(CGIdx cgidx) const;
 
     bool isCompatibleWith(const MoleculeInfoData &molinfo) const;
-    
-    Property mask(const AtomSelection &selected_atoms) const;
+
+    AtomProperty<T> matchToSelection(const AtomSelection &selection) const;
 
 private:
     /** The actual atomic property values */
@@ -138,7 +153,7 @@ private:
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 AtomProperty<T>::AtomProperty()
-                : SireBase::ConcreteProperty<AtomProperty<T>,MolViewProperty>()
+                : SireBase::ConcreteProperty<AtomProperty<T>,AtomProp>()
 {}
 
 /** Create an AtomProperty that holds one value for each 
@@ -147,7 +162,7 @@ AtomProperty<T>::AtomProperty()
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 AtomProperty<T>::AtomProperty(const MoleculeInfoData &molinfo)
-                : SireBase::ConcreteProperty<AtomProperty<T>,MolViewProperty>()
+                : SireBase::ConcreteProperty<AtomProperty<T>,AtomProp>()
 {   
     int ncg = molinfo.nCutGroups();
 
@@ -174,7 +189,7 @@ AtomProperty<T>::AtomProperty(const MoleculeInfoData &molinfo)
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 AtomProperty<T>::AtomProperty(const QVector<T> &values)
-                : SireBase::ConcreteProperty<AtomProperty<T>,MolViewProperty>()
+                : SireBase::ConcreteProperty<AtomProperty<T>,AtomProp>()
 {
     if (not values.isEmpty())
     {
@@ -190,7 +205,7 @@ AtomProperty<T>::AtomProperty(const QVector<T> &values)
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 AtomProperty<T>::AtomProperty(const QVector< QVector<T> > &values)
-                : SireBase::ConcreteProperty<AtomProperty<T>,MolViewProperty>(), 
+                : SireBase::ConcreteProperty<AtomProperty<T>,AtomProp>(), 
                   props(values)
 {
     if (not props.isEmpty())
@@ -212,7 +227,7 @@ AtomProperty<T>::AtomProperty(const QVector< QVector<T> > &values)
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 AtomProperty<T>::AtomProperty(const AtomProperty<T> &other)
-                : SireBase::ConcreteProperty<AtomProperty<T>,MolViewProperty>(), 
+                : SireBase::ConcreteProperty<AtomProperty<T>,AtomProp>(), 
                   props(other.props)
 {}
 
@@ -479,16 +494,19 @@ void AtomSelection::assertCompatibleWith(const AtomProperty<T> &prop) const
     prop.assertCompatibleWith(this->info());
 }
 
-/** Mask this property by the passed selected atoms. This returns 
+/** Match this property to the passed selection. This returns 
     the property only for the CutGroups that have been selected,
     and with default values for any atoms in those CutGroups that
-    have not been selected.
+    have not been selected. This is useful, e.g. for the forcefield
+    classes, as this allows an AtomProperty<T> to be returned
+    for only the atoms that are selected as part of the forcefield.
     
     \throw SireError::incompatible_error
 */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-Property AtomProperty<T>::mask(const AtomSelection &selected_atoms) const
+AtomProperty<T> AtomProperty<T>::matchToSelection(
+                                      const AtomSelection &selected_atoms) const
 {
     selected_atoms.assertCompatibleWith(*this);
 

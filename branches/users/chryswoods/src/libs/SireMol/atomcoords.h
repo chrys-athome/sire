@@ -58,7 +58,7 @@ using SireVol::CoordGroup;
 */
 template<>
 class AtomProperty<Vector>
-       : public SireBase::ConcreteProperty<AtomProperty<Vector>,MolViewProperty>
+       : public SireBase::ConcreteProperty<AtomProperty<Vector>,AtomProp>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const AtomProperty<SireMaths::Vector>&);

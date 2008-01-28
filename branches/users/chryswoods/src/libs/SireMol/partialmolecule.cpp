@@ -210,7 +210,7 @@ Molecule PartialMolecule::molecule() const
 */
 Atom PartialMolecule::select(AtomIdx atomidx) const
 {
-    selected_atoms.assertContains(atomidx);
+    selected_atoms.assertSelected(atomidx);
     return Atom(*d, atomidx);
 }
 
@@ -356,12 +356,7 @@ QStringList PartialMolecule::metadataKeys(const PropertyName &key) const
 */
 Property PartialMolecule::property(const PropertyName &key) const
 {
-    const Property &prop = d->property(key);
-    
-    if (not selected_atoms.selectedAll() and prop.isA<MolViewProperty>())
-        return prop.asA<MolViewProperty>().mask(selected_atoms);
-    else
-        return prop;
+    return d->property(key);
 }
 
 /** Return the metadata at metakey 'metakey'. Note that if this 
@@ -373,12 +368,7 @@ Property PartialMolecule::property(const PropertyName &key) const
 */
 Property PartialMolecule::metadata(const PropertyName &metakey) const
 {
-    const Property &prop = d->metadata(metakey);
-    
-    if (not selected_atoms.selectedAll() and prop.isA<MolViewProperty>())
-        return prop.asA<MolViewProperty>().mask(selected_atoms);
-    else
-        return prop;
+    return d->metadata(metakey);
 }
 
 /** Return the metadata at the metakey 'metakey' for the property
@@ -391,12 +381,7 @@ Property PartialMolecule::metadata(const PropertyName &metakey) const
 Property PartialMolecule::metadata(const PropertyName &key,
                                    const PropertyName &metakey) const
 {
-    const Property &prop = this->metadata(key, metakey);
-    
-    if (not selected_atoms.selectedAll() and prop.isA<MolViewProperty>())
-        return prop.asA<MolViewProperty>().mask(selected_atoms);
-    else
-        return prop;
+    return d->metadata(key, metakey);
 }
 
 /////////

@@ -267,7 +267,7 @@ public:
 }
 
 /** Return a hash of this index */
-uint qHash(const SireID::IndexBase &index)
+inline uint qHash(const SireID::IndexBase &index)
 {
     return qint32(index);
 }

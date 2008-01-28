@@ -99,7 +99,7 @@ protected:
 }
 
 /** Return a hash of this Number */
-uint qHash(const SireID::Number &number)
+inline uint qHash(const SireID::Number &number)
 {
     return quint32(number);
 }

@@ -48,6 +48,20 @@ QDataStream& operator>>(QDataStream&, SireMol::SegProperty<T>&);
 namespace SireMol
 {
 
+/** Small class used to provide a common base for all SegProperty types */
+class SegProp : public MolViewProperty
+{
+public:
+    SegProp() : MolViewProperty()
+    {}
+    
+    SegProp(const SegProp &other) : MolViewProperty(other)
+    {}
+    
+    virtual ~SegProp()
+    {}
+};
+
 /** This is a property that can hold one value for each
     segment in the molecule.
     
@@ -60,7 +74,7 @@ namespace SireMol
 */
 template<class T>
 class SegProperty 
-    : public SireBase::ConcreteProperty<SegProperty<T>, MolViewProperty>
+    : public SireBase::ConcreteProperty<SegProperty<T>, SegProp>
 {
 
 friend QDataStream& ::operator<<<>(QDataStream&, const SegProperty<T>&);
@@ -115,7 +129,7 @@ private:
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 SegProperty<T>::SegProperty()
-              : SireBase::ConcreteProperty<SegProperty<T>,MolViewProperty>()
+              : SireBase::ConcreteProperty<SegProperty<T>,SegProp>()
 {}
 
 /** Construct space for the values of the property for all of the 
@@ -123,7 +137,7 @@ SegProperty<T>::SegProperty()
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 SegProperty<T>::SegProperty(const MoleculeInfoData &molinfo)
-              : SireBase::ConcreteProperty<SegProperty<T>,MolViewProperty>()
+              : SireBase::ConcreteProperty<SegProperty<T>,SegProp>()
 {
     if (molinfo.nSegments() > 0)
     {
@@ -136,7 +150,7 @@ SegProperty<T>::SegProperty(const MoleculeInfoData &molinfo)
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 SegProperty<T>::SegProperty(const QVector<T> &values)
-              : SireBase::ConcreteProperty<SegProperty<T>,MolViewProperty>()
+              : SireBase::ConcreteProperty<SegProperty<T>,SegProp>()
 {
     props = values;
     props.squeeze();
@@ -146,7 +160,7 @@ SegProperty<T>::SegProperty(const QVector<T> &values)
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 SegProperty<T>::SegProperty(const SegProperty<T> &other)
-              : SireBase::ConcreteProperty<SegProperty<T>,MolViewProperty>(other),
+              : SireBase::ConcreteProperty<SegProperty<T>,SegProp>(other),
                 props(other.props)
 {}
 

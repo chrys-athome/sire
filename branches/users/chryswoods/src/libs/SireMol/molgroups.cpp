@@ -76,7 +76,7 @@ using namespace SireStream;
 ///////////// Implementation of MolGroupsBase
 /////////////
 
-RegisterMetaType<MolGroupsBase> r_molgroupsbase(MAGIC_ONLY,
+static const RegisterMetaType<MolGroupsBase> r_molgroupsbase(MAGIC_ONLY,
                                                 "SireMol::MolGroupsBase");
                                                 
 /** Serialise to a binary datastream */

@@ -29,9 +29,15 @@
 #include <QDataStream>
 #include <boost/assert.hpp>
 
+#include "atomselection.h"
 #include "connectivity.h"
 #include "moleculedata.h"
 #include "moleculeinfodata.h"
+
+#include "angleid.h"
+#include "bondid.h"
+#include "dihedralid.h"
+#include "improperid.h"
 
 #include "SireMol/errors.h"
 
@@ -344,6 +350,913 @@ bool ConnectivityBase::areConnected(ResIdx res0, ResIdx res1) const
 bool ConnectivityBase::areConnected(const ResID &res0, const ResID &res1) const
 {
     return this->connectionsTo(res0).contains( info().resIdx(res1) );
+}
+
+/** Non-checking version of Connectivity::connectedTo(AtomIdx) */
+const QSet<AtomIdx>& ConnectivityBase::_pvt_connectedTo(AtomIdx atom) const
+{
+    return connected_atoms.constData()[atom];
+}
+
+/** This is a recursive function that traces all atoms that can trace their bonding
+    to 'strt', and are in the same residue as 'strt', but that don't go through 'root',
+    and to add those atoms to 'group'. If any atoms are found that are in 'exclude' then
+    an exception is thrown, as this indicates that the atoms found form part
+    of a ring. This is an internal function that is only intended to be used
+    by the splitMolecule and splitResidue functions.
+
+    \throw SireMol::ring_error
+*/
+void ConnectivityBase::traceRoute(AtomIdx start, AtomIdx root,
+                                  const QSet<AtomIdx> &exclude,
+                                  QSet<AtomIdx> &group) const
+{
+    if (group.contains(start))
+        //we have already processed this atom
+        return;
+
+    //add this atom to the group
+    group.insert(start);
+
+    //now see if any of its bonded atoms need to be added
+    const QSet<AtomIdx> &bonded_atoms = this->_pvt_connectedTo(start);
+
+    //loop over every bond that involves the 'start' atom
+    for (QSet<AtomIdx>::const_iterator it = bonded_atoms.constBegin();
+         it != bonded_atoms.constEnd();
+         ++it)
+    {
+        //if this is the root atom then ignore it, as we don't
+        //want to move backwards!
+        if (*it == root)
+            continue;
+    
+        //has this atom or residue already been selected?
+        else if (group.contains(*it))
+            //yes, this atom or residue is already included!
+            continue;
+
+        //is this atom already excluded?
+        else if (exclude.contains(*it))
+        {
+            //ok, we've just found a ring!
+            throw SireMol::ring_error( QObject::tr(
+                "Atoms %1-%2-%3 form part of ring and cannot be "
+                "unambiguously split.")
+                    .arg(start.toString(), it->toString(), root.toString()),
+                        CODELOC );
+        }
+        else
+        {
+            //now we can trace the atoms from the 'other' atom...
+            this->traceRoute(*it, start, exclude, group);
+        }
+    }
+
+    //ok - we have added all of the atoms that are connected to this atom. We
+    //have finished with this atom, so we can return.
+    return;
+}
+
+/** This is a recursive function that traces all atoms that can trace their bonding
+    to 'strt', and are in the same residue as 'strt', but that don't go through 'root',
+    and to add those atoms to 'group'. If any atoms are found that are in 'exclude' then
+    an exception is thrown, as this indicates that the atoms found form part
+    of a ring. This is an internal function that is only intended to be used
+    by the splitMolecule and splitResidue functions.
+
+    This only searches atoms that are selected in 'selected_atoms'
+
+    \throw SireMol::ring_error
+*/
+void ConnectivityBase::traceRoute(const AtomSelection &selected_atoms,
+                                  AtomIdx start, AtomIdx root,
+                                  const QSet<AtomIdx> &exclude,
+                                  QSet<AtomIdx> &group) const
+{
+    if (group.contains(start) or not selected_atoms.selected(start))
+        //we have already processed this atom or it
+        //is not one of the selected atoms
+        return;
+
+    //add this atom to the group
+    group.insert(start);
+
+    //now see if any of its bonded atoms need to be added
+    const QSet<AtomIdx> &bonded_atoms = this->_pvt_connectedTo(start);
+
+    //loop over every bond that involves the 'start' atom
+    for (QSet<AtomIdx>::const_iterator it = bonded_atoms.constBegin();
+         it != bonded_atoms.constEnd();
+         ++it)
+    {
+        //if this is the root atom then ignore it, as we don't
+        //want to move backwards!
+        if (*it == root)
+            continue;
+    
+        //has this atom or residue already been selected?
+        else if (group.contains(*it))
+            //yes, this atom or residue is already included!
+            continue;
+
+        //is this atom already excluded?
+        else if (exclude.contains(*it))
+        {
+            //ok, we've just found a ring!
+            throw SireMol::ring_error( QObject::tr(
+                "Atoms %1-%2-%3 form part of ring and cannot be "
+                "unambiguously split.")
+                    .arg(start.toString(), it->toString(), root.toString()),
+                        CODELOC );
+        }
+        else
+        {
+            //now we can trace the atoms from the 'other' atom...
+            this->traceRoute(selected_atoms, *it, start, exclude, group);
+        }
+    }
+
+    //ok - we have added all of the atoms that are connected to this atom. We
+    //have finished with this atom, so we can return.
+    return;
+}
+
+/** Return the two AtomSelection objects corresponding to the atoms
+    selected in 'group0' and 'group1' */
+tuple<AtomSelection,AtomSelection>
+ConnectivityBase::selectGroups(const QSet<AtomIdx> &group0,
+                               const QSet<AtomIdx> &group1) const
+{
+    AtomSelection grp0(*d);
+    AtomSelection grp1(*d);
+
+    tuple<AtomSelection,AtomSelection> groups( grp0.selectOnly(group0),
+                                               grp1.selectOnly(group1) );
+    
+    return groups;
+}
+
+/** Split this molecule into two parts about the atoms
+    atom0 and atom1. For example;
+    
+    For example;
+
+          C1--C2--C3--C4--C5--C6--C7--C8
+
+    Splitting C3 and C4 would result in two groups, {C1,C2,C3} and {C4,C5,C6,C7,C8}
+
+          C1\
+          C2-C4--C5
+          C3/
+
+    Splitting C4 and C5 would result in two groups, {C1,C2,C3,C4} and {C5}
+
+    However splitting C1 and C5 would add a bond between C1 and C5. This would mean
+    than C1-C4-C5 would form a ring, so an exception would be thrown.
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMol::ring_error
+*/   
+tuple<AtomSelection,AtomSelection> 
+ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1) const
+{
+    QSet<AtomIdx> group0, group1;
+
+    //map the atoms
+    int nats = d->nAtoms();
+    atom0 = atom0.map(nats);
+    atom1 = atom1.map(nats);
+
+    if (atom0 == atom1)
+        throw SireMol::ring_error( QObject::tr(
+            "You cannot split a molecule into two parts using the same atom! (%1).")
+                .arg(atom0), CODELOC );
+
+    //make sure that there is sufficient space for the
+    //selections - this prevents mallocs while tracing
+    //the bonds
+    group0.reserve(nats);
+    group1.reserve(nats);
+    
+    //add the two atoms to their respective groups
+    group0.insert(atom0);
+    group1.insert(atom1);
+    
+    //add the atoms bonded to atom0 to group0
+    foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom0))
+    {
+        if (not bonded_atom == atom1)
+        {
+            this->traceRoute(bonded_atom, atom0, group1, group0);
+        }
+    }
+    
+    //now add the atoms bonded to atom1 to group1
+    foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom1))
+    {
+        if (not bonded_atom == atom0)
+        {
+            if (group0.contains(bonded_atom))
+                throw SireMol::ring_error( QObject::tr(
+                    "Atoms %1-%2-%3 form part of ring and cannot be "
+                    "unambiguously split.")
+                        .arg(atom0.toString(), bonded_atom.toString(), 
+                             atom1.toString()), CODELOC );
+
+            this->traceRoute(bonded_atom, atom1, group0, group1);
+        }
+    }
+    
+    return this->selectGroups(group0, group1);
+}
+
+/** Split the molecule into two parts about the bond between atom0 and atom1.
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMol::ring_error
+*/   
+tuple<AtomSelection,AtomSelection> 
+ConnectivityBase::split(const AtomID &atom0, const AtomID &atom1) const
+{
+    return this->split( d->atomIdx(atom0), d->atomIdx(atom1) );
+}
+
+/** Split the molecule into two parts about the bond 'bond'
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMol::ring_error
+*/   
+tuple<AtomSelection,AtomSelection> 
+ConnectivityBase::split(const BondID &bond) const
+{
+    return this->split( bond.atom0(), bond.atom1() );
+}
+
+/** Split the selected atoms of this molecule into two parts about the atoms
+    atom0 and atom1. For example;
+    
+    For example;
+
+          C1--C2--C3--C4--C5--C6--C7--C8
+
+    Splitting C3 and C4 would result in two groups, {C1,C2,C3} and {C4,C5,C6,C7,C8}
+
+          C1\
+          C2-C4--C5
+          C3/
+
+    Splitting C4 and C5 would result in two groups, {C1,C2,C3,C4} and {C5}
+
+    However splitting C1 and C5 would add a bond between C1 and C5. This would mean
+    than C1-C4-C5 would form a ring, so an exception would be thrown.
+
+    Note that both atom0 and atom1 *must* be selected as part of 'selected_atoms'
+    or else a missing_atom exception will be thrown.
+
+    \throw SireError::incompatible_error
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMol::ring_error
+*/   
+tuple<AtomSelection,AtomSelection>
+ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1, 
+                        const AtomSelection &selected_atoms) const
+{
+    selected_atoms.assertCompatibleWith(*d);
+    
+    if (selected_atoms.selectedAll())
+        return this->split(atom0, atom1);
+ 
+    selected_atoms.assertSelected(atom0);
+    selected_atoms.assertSelected(atom1);
+
+    QSet<AtomIdx> group0, group1;
+
+    //make sure that there is sufficient space for the
+    //selections - this prevents mallocs while tracing
+    //the bonds
+    group0.reserve(selected_atoms.nSelected());
+    group1.reserve(selected_atoms.nSelected());
+    
+    //map the atoms
+    atom0 = atom0.map(d->nAtoms());
+    atom1 = atom1.map(d->nAtoms());
+
+    if (atom0 == atom1)
+        throw SireMol::ring_error( QObject::tr(
+            "You cannot split a molecule into two parts using the same atom! (%1).")
+                .arg(atom0), CODELOC );
+
+    //add the two atoms to their respective groups
+    group0.insert(atom0);
+    group1.insert(atom1);
+    
+    //add the atoms bonded to atom0 to group0
+    foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom0))
+    {
+        if ( (not bonded_atom == atom1) and 
+             selected_atoms.selected(bonded_atom) )
+        {
+            this->traceRoute(selected_atoms, bonded_atom, 
+                             atom0, group1, group0);
+        }
+    }
+    
+    //now add the atoms bonded to atom1 to group1
+    foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom1))
+    {
+        if ( (not bonded_atom == atom0) and
+             selected_atoms.selected(bonded_atom) )
+        {
+            if (group0.contains(bonded_atom))
+                throw SireMol::ring_error( QObject::tr(
+                    "Atoms %1-%2-%3 form part of ring and cannot be "
+                    "unambiguously split.")
+                        .arg(atom0.toString(), bonded_atom.toString(), 
+                             atom1.toString()), CODELOC );
+                    
+            this->traceRoute(selected_atoms, bonded_atom,
+                             atom1, group0, group1);
+        }
+    }
+    
+    return this->selectGroups(group0, group1);    
+}
+
+/** Split the selected atoms of this molecule about the atoms 
+    'atom0' and 'atom1'
+
+    \throw SireMol::incompatible_error
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMol::ring_error
+*/   
+
+tuple<AtomSelection,AtomSelection>
+ConnectivityBase::split(const AtomID &atom0, const AtomID &atom1,
+                        const AtomSelection &selected_atoms) const
+{
+    return this->split( d->atomIdx(atom0), d->atomIdx(atom1),
+                        selected_atoms );
+}
+
+/** Split the selected atoms of this molecule into two parts
+    about the bond 'bond'
+
+    \throw SireError::incompatible_error
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMol::ring_error
+*/   
+tuple<AtomSelection,AtomSelection>
+ConnectivityBase::split(const BondID &bond, const AtomSelection &selected_atoms) const
+{
+    return this->split( bond.atom0(), bond.atom1(), selected_atoms );
+}
+
+/** Split this molecule into three parts about the atoms
+    'atom0', 'atom1' and 'atom2'.
+    
+    An exception will be thrown if it is not possible to split the molecule
+    unambiguously in two, as the angle is part of a ring.
+
+    For example;
+
+      C1   C3--C8
+        \ /
+        C2
+       /  \
+     C4   C5--C6-C7
+
+    Splitting C5,C2,C3 would return {C5,C6,C7} in one group, and {C3,C8} 
+    in the other group.
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMol::ring_error
+*/   
+tuple<AtomSelection,AtomSelection> 
+ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1, AtomIdx atom2) const
+{
+    QSet<AtomIdx> group0, group1;
+
+    //map the atoms
+    int nats = d->nAtoms();
+    atom0 = atom0.map(nats);
+    atom1 = atom1.map(nats);
+    atom2 = atom2.map(nats);
+
+    if (atom0 == atom1 or atom0 == atom2 or atom1 == atom2)
+        throw SireMol::ring_error( QObject::tr(
+            "You cannot split a molecule into two parts using the same atoms! "
+            "(%1, %2, %3).")
+                .arg(atom0).arg(atom1).arg(atom2), CODELOC );
+
+    //make sure that there is sufficient space for the
+    //selections - this prevents mallocs while tracing
+    //the bonds
+    group0.reserve(nats);
+    group1.reserve(nats);
+    
+    //add the end atoms to their respective groups
+    group0.insert(atom0);
+    group1.insert(atom2);
+    
+    //add the atoms bonded to atom0 to group0
+    foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom0))
+    {
+        if (not bonded_atom == atom1)
+        {
+            this->traceRoute(bonded_atom, atom0, group1, group0);
+        }
+    }
+    
+    //now add the atoms bonded to atom1 to group1
+    foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom2))
+    {
+        if (not bonded_atom == atom1)
+        {
+            if (group0.contains(bonded_atom))
+                throw SireMol::ring_error( QObject::tr(
+                    "Atoms %1-%2-%3-%4 form part of ring and cannot be "
+                    "unambiguously split.")
+                        .arg(atom0.toString(), bonded_atom.toString(), 
+                             atom1.toString(), atom2.toString()), CODELOC );
+
+            this->traceRoute(bonded_atom, atom2, group0, group1);
+        }
+    }
+    
+    return this->selectGroups(group0, group1);
+}
+
+/** Split the molecule into two parts based on the three supplied atoms
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMol::ring_error
+*/   
+tuple<AtomSelection,AtomSelection> 
+ConnectivityBase::split(const AtomID &atom0, const AtomID &atom1,
+                        const AtomID &atom2) const
+{
+    return this->split( d->atomIdx(atom0), d->atomIdx(atom1),
+                        d->atomIdx(atom2) );
+}
+
+/** Split the molecule into two parts based on the supplied angle
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMol::ring_error
+*/   
+tuple<AtomSelection,AtomSelection> 
+ConnectivityBase::split(const AngleID &angle) const
+{
+    return this->split( angle.atom0(), angle.atom1(), angle.atom2() );
+}
+
+/** Split the selected atoms of this molecule into three parts about the atoms
+    'atom0', 'atom1' and 'atom2'.
+    
+    Note that all three atoms must be contained in the selection or else
+    a missing_atom exception will be thrown
+    
+    An exception will be thrown if it is not possible to split the molecule
+    unambiguously in two, as the angle is part of a ring.
+
+    For example;
+
+      C1   C3--C8
+        \ /
+        C2
+       /  \
+     C4   C5--C6-C7
+
+    Splitting C5,C2,C3 would return {C5,C6,C7} in one group, and {C3,C8} in the other group.
+
+    \throw SireError::incompatible_error
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMol::ring_error
+*/   
+tuple<AtomSelection,AtomSelection>
+ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1, AtomIdx atom2,
+                        const AtomSelection &selected_atoms) const
+{
+    selected_atoms.assertCompatibleWith(*d);
+    
+    if (selected_atoms.selectedAll())
+        return this->split(atom0, atom1, atom2);
+ 
+    selected_atoms.assertSelected(atom0);
+    selected_atoms.assertSelected(atom1);
+    selected_atoms.assertSelected(atom2);
+
+    QSet<AtomIdx> group0, group1;
+
+    //make sure that there is sufficient space for the
+    //selections - this prevents mallocs while tracing
+    //the bonds
+    group0.reserve(selected_atoms.nSelected());
+    group1.reserve(selected_atoms.nSelected());
+    
+    //map the atoms
+    atom0 = atom0.map(d->nAtoms());
+    atom1 = atom1.map(d->nAtoms());
+    atom2 = atom2.map(d->nAtoms());
+
+    if (atom0 == atom1 or atom0 == atom2 or atom1 == atom2)
+        throw SireMol::ring_error( QObject::tr(
+            "You cannot split a molecule into two parts using the same atoms! "
+            "(%1, %2, %3).")
+                .arg(atom0).arg(atom1).arg(atom2), CODELOC );
+
+    //add the two end atoms to their respective groups
+    group0.insert(atom0);
+    group1.insert(atom2);
+    
+    //add the atoms bonded to atom0 to group0
+    foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom0))
+    {
+        if ( (not bonded_atom == atom1) and 
+             selected_atoms.selected(bonded_atom) )
+        {
+            this->traceRoute(selected_atoms, bonded_atom, 
+                             atom0, group1, group0);
+        }
+    }
+    
+    //now add the atoms bonded to atom1 to group1
+    foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom2))
+    {
+        if ( (not bonded_atom == atom1) and
+             selected_atoms.selected(bonded_atom) )
+        {
+            if (group0.contains(bonded_atom))
+                throw SireMol::ring_error( QObject::tr(
+                    "Atoms %1-%2-%3-%4 form part of ring and cannot be "
+                    "unambiguously split.")
+                        .arg(atom0.toString(), bonded_atom.toString(), 
+                             atom1.toString(), atom2.toString()), CODELOC );
+                    
+            this->traceRoute(selected_atoms, bonded_atom,
+                             atom2, group0, group1);
+        }
+    }
+    
+    return this->selectGroups(group0, group1);
+}
+
+/** Split the selected atoms of the molecule into two groups around the 
+    three supplied atoms
+
+    \throw SireError::incompatible_error
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMol::ring_error
+*/
+tuple<AtomSelection,AtomSelection>
+ConnectivityBase::split(const AtomID &atom0, const AtomID &atom1, const AtomID &atom2,
+                        const AtomSelection &selected_atoms) const
+{
+    return this->split( d->atomIdx(atom0), d->atomIdx(atom1),
+                        d->atomIdx(atom2), selected_atoms );
+}
+      
+/** Split the selected atoms 'selected_atoms' of this molecule  
+    into two parts based on the angle identified in 
+    'angle'. This splits the molecule about atom0() and atom2()
+    of the angle, ignoring atom atom1().
+    
+    \throw SireError::incompatible_error
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMol::ring_error
+*/      
+tuple<AtomSelection,AtomSelection>
+ConnectivityBase::split(const AngleID &angle, 
+                        const AtomSelection &selected_atoms) const
+{
+    return this->split( angle.atom0(), angle.atom1(),
+                        angle.atom2(), selected_atoms );
+}
+
+/** Split this molecule into two parts based on the passed atoms. 
+    This splits the molecule between atom0 and atom3, ignoring 
+    atom1 and atom2.
+
+    An exception will be thrown if it is not possible to split the molecule
+    unambiguously in two, as the dihedral is part of a ring.
+
+    C1   C4--C5--C6
+      \ /
+      C2    C8--C9
+     /  \  /
+    C3   C7
+           \
+            C10--C11
+
+    Splitting C4,C2,C7,C10 will return {C4,C5,C6} and {C10,C11}. 
+    If this molecule had been split by just Bond(C2,C7) using the above 
+    function, then the first returned group would
+    be {C1,C2,C3,C4,C5,C6}, while the second group would be {C7,C8,C9,C10,C11}.
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMol::ring_error
+*/      
+tuple<AtomSelection,AtomSelection>
+ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1, 
+                        AtomIdx atom2, AtomIdx atom3) const
+{
+    QSet<AtomIdx> group0, group1;
+
+    //map the atoms
+    int nats = d->nAtoms();
+    atom0 = atom0.map(nats);
+    atom1 = atom1.map(nats);
+    atom2 = atom2.map(nats);
+    atom3 = atom3.map(nats);
+
+    if (atom0 == atom1 or atom0 == atom2 or atom0 == atom3 or
+        atom1 == atom2 or atom1 == atom3 or
+        atom2 == atom3)
+        throw SireMol::ring_error( QObject::tr(
+            "You cannot split a molecule into two parts using the same atoms! "
+            "(%1, %2, %3, %4).")
+                .arg(atom0).arg(atom1)
+                .arg(atom2).arg(atom3), CODELOC );
+
+    //make sure that there is sufficient space for the
+    //selections - this prevents mallocs while tracing
+    //the bonds
+    group0.reserve(nats);
+    group1.reserve(nats);
+    
+    //add the end atoms to their respective groups
+    group0.insert(atom0);
+    group1.insert(atom3);
+    
+    //add the atoms bonded to atom0 to group0
+    foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom0))
+    {
+        if (not bonded_atom == atom1)
+        {
+            this->traceRoute(bonded_atom, atom0, group1, group0);
+        }
+    }
+    
+    //now add the atoms bonded to atom1 to group1
+    foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom3))
+    {
+        if (not bonded_atom == atom2)
+        {
+            if (group0.contains(bonded_atom))
+                throw SireMol::ring_error( QObject::tr(
+                    "Atoms %1-%2-%3-%4-%5 form part of ring and cannot be "
+                    "unambiguously split.")
+                        .arg(atom0.toString(), bonded_atom.toString(), 
+                             atom1.toString(), atom2.toString(),
+                             atom3.toString()), CODELOC );
+
+            this->traceRoute(bonded_atom, atom3, group0, group1);
+        }
+    }
+    
+    return this->selectGroups(group0, group1);
+}
+
+/** Split this molecule into two parts based on the passed atoms. 
+    This splits the molecule between atom0 and atom3, ignoring 
+    atom1 and atom2.
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMol::ring_error
+*/      
+tuple<AtomSelection,AtomSelection>
+ConnectivityBase::split(const AtomID &atom0, const AtomID &atom1, 
+                    const AtomID &atom2, const AtomID &atom3) const
+{
+    return this->split( d->atomIdx(atom0), d->atomIdx(atom1),
+                        d->atomIdx(atom2), d->atomIdx(atom3) );
+}
+      
+/** Split this molecule into two parts based on the dihedral identified in 
+    'dihedral'. This splits the molecule about atom0() and atom3()
+    of the dihedral, ignoring atoms atom1() and atom2().
+    
+    \throw SireError::incompatible_error
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMol::ring_error
+*/      
+tuple<AtomSelection,AtomSelection>
+ConnectivityBase::split(const DihedralID &dihedral) const
+{
+    return this->split( dihedral.atom0(), dihedral.atom1(),
+                        dihedral.atom2(), dihedral.atom3() );
+}
+
+/** Split the selected atoms of this molecule into two parts 
+    based on the passed atoms. 
+    
+    This splits the molecule between atom0 and atom3, ignoring 
+    atom1 and atom2.
+
+    All four atoms must be selected in 'selected_atoms' or else
+    a missing_atom exception will be thrown
+
+    An exception will be thrown if it is not possible to split the molecule
+    unambiguously in two, as the dihedral is part of a ring.
+
+    C1   C4--C5--C6
+      \ /
+      C2    C8--C9
+     /  \  /
+    C3   C7
+           \
+            C10--C11
+
+    Splitting C4,C2,C7,C10 will return {C4,C5,C6} and {C10,C11}. 
+    If this molecule had been split by just Bond(C2,C7) using the above 
+    function, then the first returned group would
+    be {C1,C2,C3,C4,C5,C6}, while the second group would be {C7,C8,C9,C10,C11}.
+
+    \throw SireError::incompatible_error
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMol::ring_error
+*/      
+tuple<AtomSelection,AtomSelection>
+ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1, 
+                        AtomIdx atom2, AtomIdx atom3,
+                        const AtomSelection &selected_atoms) const
+{
+    selected_atoms.assertCompatibleWith(*d);
+    
+    if (selected_atoms.selectedAll())
+        return this->split(atom0, atom1, atom2, atom3);
+ 
+    selected_atoms.assertSelected(atom0);
+    selected_atoms.assertSelected(atom1);
+    selected_atoms.assertSelected(atom2);
+    selected_atoms.assertSelected(atom3);
+
+    QSet<AtomIdx> group0, group1;
+
+    //make sure that there is sufficient space for the
+    //selections - this prevents mallocs while tracing
+    //the bonds
+    group0.reserve(selected_atoms.nSelected());
+    group1.reserve(selected_atoms.nSelected());
+    
+    //map the atoms
+    atom0 = atom0.map(d->nAtoms());
+    atom1 = atom1.map(d->nAtoms());
+    atom2 = atom2.map(d->nAtoms());
+    atom3 = atom3.map(d->nAtoms());
+
+    if (atom0 == atom1 or atom0 == atom2 or atom0 == atom3 or
+        atom1 == atom2 or atom1 == atom3 or
+        atom2 == atom3)
+        throw SireMol::ring_error( QObject::tr(
+            "You cannot split a molecule into two parts using the same atoms! "
+            "(%1, %2, %3, %4).")
+                .arg(atom0).arg(atom1)
+                .arg(atom2).arg(atom3), CODELOC );
+
+    //add the two end atoms to their respective groups
+    group0.insert(atom0);
+    group1.insert(atom3);
+    
+    //add the atoms bonded to atom0 to group0
+    foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom0))
+    {
+        if ( (not bonded_atom == atom1) and 
+             selected_atoms.selected(bonded_atom) )
+        {
+            this->traceRoute(selected_atoms, bonded_atom, 
+                             atom0, group1, group0);
+        }
+    }
+    
+    //now add the atoms bonded to atom1 to group1
+    foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom3))
+    {
+        if ( (not bonded_atom == atom2) and
+             selected_atoms.selected(bonded_atom) )
+        {
+            if (group0.contains(bonded_atom))
+                throw SireMol::ring_error( QObject::tr(
+                    "Atoms %1-%2-%3-%4-%5 form part of ring and cannot be "
+                    "unambiguously split.")
+                        .arg(atom0.toString(), bonded_atom.toString(), 
+                             atom1.toString(), atom2.toString(),
+                             atom3.toString()), CODELOC );
+                    
+            this->traceRoute(selected_atoms, bonded_atom,
+                             atom3, group0, group1);
+        }
+    }
+    
+    return this->selectGroups(group0, group1);
+}
+      
+/** Split the selected atoms 'selected_atoms' of this molecule
+    into two parts based on the passed atoms. This splits
+    the molecule between atom0 and atom3, ignoring atom1 and 
+    atom2.
+    
+    \throw SireError::incompatible_error
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMol::ring_error
+*/      
+tuple<AtomSelection,AtomSelection>
+ConnectivityBase::split(const AtomID &atom0, const AtomID &atom1,
+                    const AtomID &atom2, const AtomID &atom3,
+                    const AtomSelection &selected_atoms) const
+{
+    return this->split( d->atomIdx(atom0), d->atomIdx(atom1),
+                        d->atomIdx(atom2), d->atomIdx(atom3),
+                        selected_atoms );
+}
+      
+/** Split the selected atoms 'selected_atoms' of this molecule  
+    into two parts based on the dihedral identified in 
+    'dihedral'. This splits the molecule about atom0() and atom3()
+    of the dihedral, ignoring atoms atom1() and atom2().
+    
+    \throw SireError::incompatible_error
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMol::ring_error
+*/      
+tuple<AtomSelection,AtomSelection>
+ConnectivityBase::split(const DihedralID &dihedral,
+                    const AtomSelection &selected_atoms) const
+{
+    return this->split( dihedral.atom0(), dihedral.atom1(),
+                        dihedral.atom2(), dihedral.atom3(),
+                        selected_atoms );
+}
+
+/** Split this molecule into two parts based on the improper angle
+    identified by 'improper'. This splits the molecule about
+    bond between atom0() and atom1() of the improper
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMol::ring_error
+*/      
+tuple<AtomSelection,AtomSelection>
+ConnectivityBase::split(const ImproperID &improper) const
+{
+    return this->split( improper.atom0(), improper.atom1() );
+}
+
+/** Split the selected atoms in 'selected_atoms' in this molecule
+    into two parts based on the improper angle
+    identified by 'improper'. This splits the molecule about
+    bond between atom0() and atom1() of the improper
+    
+    \throw SireError::incompatible_error
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMol::ring_error
+*/      
+tuple<AtomSelection,AtomSelection>
+ConnectivityBase::split(const ImproperID &improper,
+                    const AtomSelection &selected_atoms) const
+{
+    return this->split( improper.atom0(), improper.atom1(),
+                        selected_atoms );
 }
 
 /////////

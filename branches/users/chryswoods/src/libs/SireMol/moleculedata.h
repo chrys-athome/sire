@@ -126,6 +126,16 @@ public:
     bool hasMetadata(const PropertyName &key,
                      const PropertyName &metakey) const;
                      
+    template<class T>
+    bool hasPropertyOfType(const PropertyName &key) const;
+                     
+    template<class T>
+    bool hasMetadataOfType(const PropertyName &metakey) const;
+    
+    template<class T>
+    bool hasMetadataOfType(const PropertyName &key,
+                           const PropertyName &metakey) const;
+                     
     const char* propertyType(const PropertyName &key) const;
     const char* metadataType(const PropertyName &metakey) const;
     const char* metadataType(const PropertyName &key,
@@ -245,6 +255,37 @@ private:
         of the different parts of this molecule */
     boost::shared_ptr<PropVersions> vrsns;
 };
+
+/** Return whether or not this molecule has a property called 'key'
+    that is of type 'T' */
+template<class T>
+SIRE_INLINE_TEMPLATE
+bool MoleculeData::hasPropertyOfType(const PropertyName &key) const
+{
+    return props.hasPropertyOfType<T>(key);
+}
+                 
+/** Return whether or not this molecule has some metadata at metakey
+    'metakey' that is of type 'T' */
+template<class T>
+SIRE_INLINE_TEMPLATE
+bool MoleculeData::hasMetadataOfType(const PropertyName &metakey) const
+{
+    return props.hasMetadataOfType<T>(metakey);
+}
+
+/** Return whether or not the property at key 'key' has some metadata
+    at metakey 'metakey' that is of type 'T'
+    
+    \throw SireBase::missing_property
+*/
+template<class T>
+SIRE_INLINE_TEMPLATE
+bool MoleculeData::hasMetadataOfType(const PropertyName &key,
+                                     const PropertyName &metakey) const
+{
+    return props.hasMetadataOfType<T>(key, metakey);
+}
 
 }
 

@@ -48,6 +48,20 @@ QDataStream& operator>>(QDataStream&, SireMol::CGProperty<T>&);
 namespace SireMol
 {
 
+/** Small class used to provide a common base for all CGProperty types */
+class CGProp : public MolViewProperty
+{
+public:
+    CGProp() : MolViewProperty()
+    {}
+    
+    CGProp(const CGProp &other) : MolViewProperty(other)
+    {}
+    
+    virtual ~CGProp()
+    {}
+};
+
 /** This is a property that can hold one value for each
     CutGroup in the molecule.
     
@@ -60,7 +74,7 @@ namespace SireMol
 */
 template<class T>
 class CGProperty 
-    : public SireBase::ConcreteProperty<CGProperty<T>, MolViewProperty>
+    : public SireBase::ConcreteProperty<CGProperty<T>, CGProp>
 {
 
 friend QDataStream& ::operator<<<>(QDataStream&, const CGProperty<T>&);
@@ -115,7 +129,7 @@ private:
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 CGProperty<T>::CGProperty()
-              : SireBase::ConcreteProperty<CGProperty<T>,MolViewProperty>()
+              : SireBase::ConcreteProperty<CGProperty<T>,CGProp>()
 {}
 
 /** Construct space for the values of the property for all of the 
@@ -123,7 +137,7 @@ CGProperty<T>::CGProperty()
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 CGProperty<T>::CGProperty(const MoleculeInfoData &molinfo)
-              : SireBase::ConcreteProperty<CGProperty<T>,MolViewProperty>()
+              : SireBase::ConcreteProperty<CGProperty<T>,CGProp>()
 {
     if (molinfo.nCutGroups() > 0)
     {
@@ -136,7 +150,7 @@ CGProperty<T>::CGProperty(const MoleculeInfoData &molinfo)
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 CGProperty<T>::CGProperty(const QVector<T> &values)
-              : SireBase::ConcreteProperty<CGProperty<T>,MolViewProperty>()
+              : SireBase::ConcreteProperty<CGProperty<T>,CGProp>()
 {
     props = values;
     props.squeeze();
@@ -146,7 +160,7 @@ CGProperty<T>::CGProperty(const QVector<T> &values)
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 CGProperty<T>::CGProperty(const CGProperty<T> &other)
-              : SireBase::ConcreteProperty<CGProperty<T>,MolViewProperty>(other),
+              : SireBase::ConcreteProperty<CGProperty<T>,CGProp>(other),
                 props(other.props)
 {}
 

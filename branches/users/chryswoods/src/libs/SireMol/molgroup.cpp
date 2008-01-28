@@ -271,7 +271,7 @@ void MolGroupPvt::incrementMinor()
 //////////// Implementation of MolGroup
 ////////////
 
-RegisterMetaType<MolGroup> r_molgroup;
+static const RegisterMetaType<MolGroup> r_molgroup;
 
 /** Serialise a MolGroup to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,

@@ -47,6 +47,7 @@ QDataStream& operator>>(QDataStream&, SireMol::Evaluator&);
 
 namespace SireMaths
 {
+class AxisSet;
 class Sphere;
 class Vector;
 }
@@ -59,10 +60,14 @@ class AABox;
 namespace SireMol
 {
 
+class AtomMatcher;
+class AtomSelection;
+
 using SireBase::Property;
 using SireBase::PropertyMap;
 using SireBase::PropertyName;
 
+using SireMaths::AxisSet;
 using SireMaths::Sphere;
 using SireMaths::Vector;
 
@@ -152,7 +157,14 @@ public:
     Vector centerOfGeometry(const PropertyMap &map = PropertyMap()) const;
     Vector centerOfMass(const PropertyMap &map = PropertyMap()) const;
 
-    
+    AxisSet alignmentAxes(const MoleculeView &other, 
+                          const AtomMatcher &matcher,
+                          const PropertyMap &map = PropertyMap()) const;
+                          
+    AxisSet alignmentAxes(const MoleculeView &other,
+                          const AtomMatcher &matcher,
+                          const PropertyMap &map0,
+                          const PropertyMap &map1) const;
 
 private:
 

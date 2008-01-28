@@ -37,7 +37,7 @@
 using namespace SireMol;
 using namespace SireStream;
 
-RegisterMetaType<MoleculeGroups> r_molgroups;
+static const RegisterMetaType<MoleculeGroups> r_molgroups;
 
 /** Serialise a MoleculeGroups to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,

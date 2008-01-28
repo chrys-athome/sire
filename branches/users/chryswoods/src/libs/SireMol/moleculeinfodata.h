@@ -471,6 +471,7 @@ private:
     of the list is the same as the input, namely if both list0 and list1 are
     sorted, then the returned list will be sorted as well. */
 template<class T>
+SIRE_OUTOFLINE_TEMPLATE
 QList<T> MoleculeInfoData::intersection(const QList<T> &list0, const QList<T> &list1)
 {
     QList<T> intersection_list;

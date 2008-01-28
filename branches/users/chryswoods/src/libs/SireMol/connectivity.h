@@ -64,6 +64,7 @@ class ResID;
 class BondID;
 class AngleID;
 class DihedralID;
+class ImproperID;
 
 class MoleculeData;
 class MoleculeInfoData;
@@ -117,14 +118,14 @@ public:
     tuple<AtomSelection,AtomSelection> split(const BondID &bond) const;
 
     tuple<AtomSelection,AtomSelection>
-    split(AtomIdx atom0, AtomIdx atom1, const AtomSelection &movable_atoms) const;
+    split(AtomIdx atom0, AtomIdx atom1, const AtomSelection &selected_atoms) const;
 
     tuple<AtomSelection,AtomSelection>
     split(const AtomID &atom0, const AtomID &atom1,
-          const AtomSelection &movable_atoms) const;
+          const AtomSelection &selected_atoms) const;
 
     tuple<AtomSelection,AtomSelection>
-    split(const BondID &bond, const AtomSelection &movable_atoms) const;
+    split(const BondID &bond, const AtomSelection &selected_atoms) const;
 
     tuple<AtomSelection,AtomSelection> split(AtomIdx atom0, AtomIdx atom1,
                                              AtomIdx atom2) const;
@@ -136,14 +137,14 @@ public:
 
     tuple<AtomSelection,AtomSelection>
     split(AtomIdx atom0, AtomIdx atom1, AtomIdx atom2,
-          const AtomSelection &movable_atoms) const;
+          const AtomSelection &selected_atoms) const;
 
     tuple<AtomSelection,AtomSelection>
     split(const AtomID &atom0, const AtomID &atom1, const AtomID &atom2,
-          const AtomSelection &movable_atoms) const;
+          const AtomSelection &selected_atoms) const;
           
     tuple<AtomSelection,AtomSelection>
-    split(const AngleID &angle, const AtomSelection &movable_atoms) const;
+    split(const AngleID &angle, const AtomSelection &selected_atoms) const;
     
     tuple<AtomSelection,AtomSelection>
     split(AtomIdx atom0, AtomIdx atom1, AtomIdx atom2, AtomIdx atom3) const;
@@ -157,23 +158,23 @@ public:
     
     tuple<AtomSelection,AtomSelection>
     split(AtomIdx atom0, AtomIdx atom1, AtomIdx atom2, AtomIdx atom3,
-          const AtomSelection &movable_atoms) const;
+          const AtomSelection &selected_atoms) const;
           
     tuple<AtomSelection,AtomSelection>
     split(const AtomID &atom0, const AtomID &atom1,
           const AtomID &atom2, const AtomID &atom3,
-          const AtomSelection &movable_atoms) const;
+          const AtomSelection &selected_atoms) const;
           
     tuple<AtomSelection,AtomSelection>
     split(const DihedralID &dihedral,
-          const AtomSelection &movable_atoms) const;
+          const AtomSelection &selected_atoms) const;
           
     tuple<AtomSelection,AtomSelection>
     split(const ImproperID &improper) const;
     
     tuple<AtomSelection,AtomSelection>
     split(const ImproperID &improper,
-          const AtomSelection &movable_atoms) const;
+          const AtomSelection &selected_atoms) const;
 
 protected:
     ConnectivityBase();
@@ -198,6 +199,21 @@ protected:
     /** The info object that describes the molecule */
     SireBase::SharedDataPointer<MoleculeInfoData> d;
 
+private:
+    const QSet<AtomIdx>& _pvt_connectedTo(AtomIdx atomidx) const;
+    
+    void traceRoute(AtomIdx start, AtomIdx root,
+                    const QSet<AtomIdx> &exclude,
+                    QSet<AtomIdx> &group) const;
+    
+    void traceRoute(const AtomSelection &selected_atoms,
+                    AtomIdx start, AtomIdx root,
+                    const QSet<AtomIdx> &exclude,
+                    QSet<AtomIdx> &group) const;
+                                                    
+    tuple<AtomSelection,AtomSelection> 
+    selectGroups(const QSet<AtomIdx> &group0, 
+                 const QSet<AtomIdx> &group1) const;
 };
 
 /** This class contains the connectivity of the molecule, namely which

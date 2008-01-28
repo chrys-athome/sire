@@ -47,7 +47,8 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
 
     SharedDataStream sds(ds);
 
-    sds << atomcoords.coords;
+    sds << atomcoords.coords
+        << static_cast<const MolViewProperty&>(atomcoords);
 
     return ds;
 }
@@ -61,7 +62,9 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
     if (v == 1)
     {
         SharedDataStream sds(ds);
-        sds >> atomcoords.coords;
+        
+        sds >> atomcoords.coords
+            >> static_cast<MolViewProperty&>(atomcoords);
     }
     else
         throw version_error(v, "1", r_atomcoords, CODELOC);
@@ -71,13 +74,13 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 
 /** Null constructor */
 AtomProperty<Vector>::AtomProperty()
-                     : ConcreteProperty<AtomProperty<Vector>,MolViewProperty>()
+                     : ConcreteProperty<AtomProperty<Vector>,AtomProp>()
 {}
 
 /** Create space for the coordinates for all of the atoms described in
     'molinfo' - the coordinates are all initially (0,0,0) */
 AtomProperty<Vector>::AtomProperty(const MoleculeInfoData &molinfo)
-                     : ConcreteProperty<AtomProperty<Vector>,MolViewProperty>()
+                     : ConcreteProperty<AtomProperty<Vector>,AtomProp>()
 {
     int ncg = molinfo.nCutGroups();
 
@@ -98,7 +101,7 @@ AtomProperty<Vector>::AtomProperty(const MoleculeInfoData &molinfo)
 /** Construct from the passed set of coordinates (arranged into
     a single CutGroup */
 AtomProperty<Vector>::AtomProperty(const QVector<Vector> &coordinates)
-                     : ConcreteProperty<AtomProperty<Vector>,MolViewProperty>()
+                     : ConcreteProperty<AtomProperty<Vector>,AtomProp>()
 {
     int nats = coordinates.count();
 
@@ -113,7 +116,7 @@ AtomProperty<Vector>::AtomProperty(const QVector<Vector> &coordinates)
 /** Construct from the passed set of coordinates (arranged into
     CutGroups) */
 AtomProperty<Vector>::AtomProperty(const QVector< QVector<Vector> > &coordinates)
-                     : ConcreteProperty<AtomProperty<Vector>,MolViewProperty>()
+                     : ConcreteProperty<AtomProperty<Vector>,AtomProp>()
 {
     int ncg = coordinates.count();
 
@@ -135,7 +138,7 @@ AtomProperty<Vector>::AtomProperty(const QVector< QVector<Vector> > &coordinates
 
 /** Construct from the single passed CoordGroup */
 AtomProperty<Vector>::AtomProperty(const CoordGroup &cgroup)
-                     : ConcreteProperty<AtomProperty<Vector>,MolViewProperty>()
+                     : ConcreteProperty<AtomProperty<Vector>,AtomProp>()
 {
     if (cgroup.count() > 0)
     {
@@ -147,7 +150,7 @@ AtomProperty<Vector>::AtomProperty(const CoordGroup &cgroup)
 
 /** Construct from the array of CoordGroups */
 AtomProperty<Vector>::AtomProperty(const QVector<CoordGroup> &cgroups)
-                     : ConcreteProperty<AtomProperty<Vector>,MolViewProperty>()
+                     : ConcreteProperty<AtomProperty<Vector>,AtomProp>()
 {
     int ncg = cgroups.count();
 
@@ -169,7 +172,7 @@ AtomProperty<Vector>::AtomProperty(const QVector<CoordGroup> &cgroups)
 
 /** Copy constructor */
 AtomProperty<Vector>::AtomProperty(const AtomProperty<Vector> &other)
-                     : ConcreteProperty<AtomProperty<Vector>,MolViewProperty>(other),
+                     : ConcreteProperty<AtomProperty<Vector>,AtomProp>(other),
                        coords(other.coords)
 {}
 

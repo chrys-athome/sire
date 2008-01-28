@@ -67,8 +67,6 @@ public:
 
     virtual bool isCompatibleWith(const MoleculeInfoData &molinfo) const=0;
 
-    virtual SireBase::Property mask(const AtomSelection &selected_atoms) const=0;
-
     void assertCompatibleWith(const MoleculeInfoData &molinfo) const;
 };
 

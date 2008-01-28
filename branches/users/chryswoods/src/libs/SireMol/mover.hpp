@@ -30,6 +30,9 @@
 #define SIREMOL_MOVER_HPP
 
 #include "mover.h"
+#include "evaluator.h"
+
+#include "SireMaths/axisset.h"
 
 SIRE_BEGIN_HEADER
 
@@ -105,14 +108,23 @@ public:
 
     Mover<T>& alignTo(const MoleculeView &other, 
                       const AtomMatcher &matcher,
-                      const PropertyMap &map0 = PropertyMap(),
-                      const PropertyMap &map1 = PropertyMap());
+                      const PropertyMap &map = PropertyMap());
+                      
+    Mover<T>& alignTo(const MoleculeView &other,
+                      const AtomMatcher &matcher,
+                      const PropertyMap &map0,
+                      const PropertyMap &map1);
                     
     Mover<T>& alignTo(const MoleculeView &other,
                       const AtomSelection &aligning_atoms,
                       const AtomMatcher &matcher,
-                      const PropertyMap &map0 = PropertyMap(),
-                      const PropertyMap &map1 = PropertyMap());
+                      const PropertyMap &map = PropertyMap());
+                      
+    Mover<T>& alignTo(const MoleculeView &other,
+                      const AtomSelection &aligning_atoms,
+                      const AtomMatcher &matcher,
+                      const PropertyMap &map0,
+                      const PropertyMap &map1);
 };
 
 /** Construct a mover that can move all of the atoms
@@ -389,10 +401,28 @@ SIRE_OUTOFLINE_TEMPLATE
 Mover<T>& Mover<T>::alignTo(const MoleculeView &other, const AtomMatcher &matcher,
                             const PropertyMap &map0, const PropertyMap &map1)
 {
-    MoverBase::mapInto(*(this->d), this->evaluator().alignmentAxes(
+    MoverBase::mapInto(*(this->d), this->evaluate().alignmentAxes(
                                         other, matcher, map0, map1), map0 );
 
     return *this;
+}
+
+/** Align all of the atoms in this view against their equivalent atoms
+    in 'other', using 'matcher' to match atoms in this molecule to
+    atoms in 'other'. If an atom can't be found, then it is ignored. If
+    no atoms can be found then an exception is raised.
+    
+    Property map 'map' is used to find the coordinates property 
+    in both molecules
+    
+    \throw SireMol::missing_atom
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+Mover<T>& Mover<T>::alignTo(const MoleculeView &other, const AtomMatcher &matcher,
+                            const PropertyMap &map)
+{
+    return this->alignTo(other, matcher, map, map);
 }
                 
 /** Align all of the atoms by matching 'aligning_atoms' in this molecule
@@ -409,8 +439,8 @@ Mover<T>& Mover<T>::alignTo(const MoleculeView &other, const AtomMatcher &matche
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 Mover<T>& Mover<T>::alignTo(const MoleculeView &other, 
+                            const AtomSelection &aligning_atoms,
                             const AtomMatcher &matcher,
-                            const AtomAliases &aliases,
                             const PropertyMap &map0, const PropertyMap &map1)
 {
     MoverBase::mapInto(*(this->d), Evaluator(*this, aligning_atoms)
@@ -418,6 +448,26 @@ Mover<T>& Mover<T>::alignTo(const MoleculeView &other,
                                                        map0, map1), map0 );
 
     return *this;
+}
+                
+/** Align all of the atoms by matching 'aligning_atoms' in this molecule
+    against their equivalent atoms in 'other', using 'matcher' to match 
+    atoms in this molecule to atoms in 'other'. If an atom can't be found, 
+    then it is ignored. If no atoms can be found then an exception is raised.
+    
+    Property map 'map' is used to find the coordinates property 
+    in both molecules
+    
+    \throw SireMol::missing_atom
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+Mover<T>& Mover<T>::alignTo(const MoleculeView &other, 
+                            const AtomSelection &aligning_atoms,
+                            const AtomMatcher &matcher,
+                            const PropertyMap &map)
+{
+    return this->alignTo(other, aligning_atoms, matcher, map, map);
 }
 
 }

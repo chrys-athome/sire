@@ -48,6 +48,20 @@ QDataStream& operator>>(QDataStream&, SireMol::ChainProperty<T>&);
 namespace SireMol
 {
 
+/** Small class used to provide a common base for all ChainProperty types */
+class ChainProp : public MolViewProperty
+{
+public:
+    ChainProp() : MolViewProperty()
+    {}
+    
+    ChainProp(const ChainProp &other) : MolViewProperty(other)
+    {}
+    
+    virtual ~ChainProp()
+    {}
+};
+
 /** This is a property that can hold one value for each
     chain in the molecule.
     
@@ -60,7 +74,7 @@ namespace SireMol
 */
 template<class T>
 class ChainProperty 
-    : public SireBase::ConcreteProperty<ChainProperty<T>, MolViewProperty>
+    : public SireBase::ConcreteProperty<ChainProperty<T>, ChainProp>
 {
 
 friend QDataStream& ::operator<<<>(QDataStream&, const ChainProperty<T>&);
@@ -115,7 +129,7 @@ private:
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 ChainProperty<T>::ChainProperty()
-              : SireBase::ConcreteProperty<ChainProperty<T>,MolViewProperty>()
+              : SireBase::ConcreteProperty<ChainProperty<T>,ChainProp>()
 {}
 
 /** Construct space for the values of the property for all of the 
@@ -123,7 +137,7 @@ ChainProperty<T>::ChainProperty()
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 ChainProperty<T>::ChainProperty(const MoleculeInfoData &molinfo)
-              : SireBase::ConcreteProperty<ChainProperty<T>,MolViewProperty>()
+              : SireBase::ConcreteProperty<ChainProperty<T>,ChainProp>()
 {
     if (molinfo.nChains() > 0)
     {
@@ -136,7 +150,7 @@ ChainProperty<T>::ChainProperty(const MoleculeInfoData &molinfo)
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 ChainProperty<T>::ChainProperty(const QVector<T> &values)
-              : SireBase::ConcreteProperty<ChainProperty<T>,MolViewProperty>()
+              : SireBase::ConcreteProperty<ChainProperty<T>,ChainProp>()
 {
     props = values;
     props.squeeze();
@@ -146,7 +160,7 @@ ChainProperty<T>::ChainProperty(const QVector<T> &values)
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 ChainProperty<T>::ChainProperty(const ChainProperty<T> &other)
-              : SireBase::ConcreteProperty<ChainProperty<T>,MolViewProperty>(other),
+              : SireBase::ConcreteProperty<ChainProperty<T>,ChainProp>(other),
                 props(other.props)
 {}
 

@@ -93,7 +93,7 @@ protected:
 }
 
 /** Return a hash of this Name */
-uint qHash(const SireID::Name &name)
+inline uint qHash(const SireID::Name &name)
 {
     return qHash(QString(name));
 }

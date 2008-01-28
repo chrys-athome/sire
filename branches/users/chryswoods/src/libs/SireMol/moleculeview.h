@@ -375,7 +375,7 @@ void set_property(MoleculeData &moldata,
         props = Prop(moldata.info());
         
     foreach (Idx idx, idxs)
-   {
+    {
         props.set(idx, value);
     }
     

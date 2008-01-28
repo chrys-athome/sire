@@ -847,7 +847,7 @@ int ViewsOfMol::indexOf(const AtomSelection &selection, int from) const
 */
 Atom ViewsOfMol::select(const AtomID &atomid) const
 {
-    selected_atoms.assertContains(atomid);
+    selected_atoms.assertSelected(atomid);
     return Atom(*d, atomid);
 }
 

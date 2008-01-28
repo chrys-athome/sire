@@ -226,6 +226,29 @@ CutGroup Atom::cutGroup() const
     return CutGroup(*d, d->info().parentCutGroup(atomidx));
 }
 
+/** Return whether or not there is an AtomProperty at key 'key' */
+bool Atom::hasProperty(const PropertyName &key) const
+{
+    return d->hasPropertyOfType<AtomProp>(key);
+}
+
+/** Return whether or not there is an AtomProperty at metakey 'metakey' */
+bool Atom::hasMetadata(const PropertyName &metakey) const
+{
+    return d->hasMetadataOfType<AtomProp>(metakey);
+}
+
+/** Return whether the metadata at metakey 'metakey' for the property
+    at key 'key' is an AtomProperty
+    
+    \throw SireBase::missing_property
+*/
+bool Atom::hasMetadata(const PropertyName &key,
+                       const PropertyName &metakey) const
+{
+    return d->hasMetadataOfType<AtomProp>(key, metakey);
+}
+
 ///////
 /////// Explicitly instantiate the Atom manipulator classes
 ///////

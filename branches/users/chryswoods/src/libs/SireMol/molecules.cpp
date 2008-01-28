@@ -49,8 +49,12 @@
 
 #include "tostring.h"
 
+#include <boost/tuple/tuple.hpp>
+
 using namespace SireMol;
 using namespace SireStream;
+
+using boost::tuple;
 
 static const RegisterMetaType<Molecules> r_mols;
 
@@ -597,6 +601,46 @@ const ViewsOfMol& Molecules::operator[](MolNum molnum) const
                 .arg( Sire::toString(this->molNums()) ), CODELOC );
                 
     return *it;
+}
+
+/** Return the view of the molecule identified by molviewidx
+
+    \throw SireMol::missing_molecule
+    \throw SireError::invalid_index
+*/
+PartialMolecule Molecules::operator[](const tuple<MolNum,Index> &molviewidx) const
+{
+    return this->operator[](molviewidx.get<0>()).at(molviewidx.get<1>());
+}
+
+/** Return the view(s) of the molecule that has number 'molnum'
+
+    \throw SireMol::missing_molecule
+*/
+const ViewsOfMol& Molecules::at(MolNum molnum) const
+{
+    return this->operator[](molnum);
+}
+
+/** Return the view of the molecule identified by molviewidx
+
+    \throw SireMol::missing_molecule
+    \throw SireError::invalid_index
+*/
+PartialMolecule Molecules::at(const tuple<MolNum,Index> &molviewidx) const
+{
+    return this->operator[](molviewidx);
+}
+
+/** Return the view at index 'viewidx' of the molecule with number
+    'molnum' from this set
+    
+    \throw SireMol::missing_molecule
+    \throw SireError::invalid_index
+*/
+PartialMolecule Molecules::at(MolNum molnum, int viewidx) const
+{
+    return this->at(molnum).at(viewidx);
 }
 
 /** Return the Molecules that has had 'other' added to it. Note
