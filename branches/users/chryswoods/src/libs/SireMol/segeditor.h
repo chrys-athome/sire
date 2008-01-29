@@ -26,3 +26,193 @@
   *
 \*********************************************/
 
+#ifndef SIREMOL_SEGEDITOR_H
+#define SIREMOL_SEGEDITOR_H
+
+#include "structureeditor.h"
+#include "segment.h"
+#include "editor.hpp"
+
+SIRE_BEGIN_HEADER
+
+namespace SireMol
+{
+class SegEditor;
+class SegStructureEditor;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMol::SegEditor&);
+QDataStream& operator>>(QDataStream&, SireMol::SegEditor&);
+
+QDataStream& operator<<(QDataStream&, const SireMol::SegStructureEditor&);
+QDataStream& operator>>(QDataStream&, SireMol::SegStructureEditor&);
+
+namespace std
+{
+class slice;
+}
+
+namespace SireMol
+{
+
+class MolStructureEditor;
+class SegStructureEditor;
+class ChainStructureEditor;
+class ResStructureEditor;
+class CGStructureEditor;
+class AtomStructureEditor;
+
+class MolEditor;
+class SegEditor;
+class ChainEditor;
+class ResEditor;
+class CGEditor;
+class AtomEditor;
+
+class CGIdx;
+class CGID;
+class ResIdx;
+class ResID;
+
+/** This class is used to edit the non-structural parts of a segment
+
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT SegEditor : public Editor<Segment>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const SegEditor&);
+friend QDataStream& ::operator>>(QDataStream&, SegEditor&);
+
+public:
+    SegEditor();
+    
+    SegEditor(const Segment &residue);
+    
+    SegEditor(const SegEditor &other);
+    
+    ~SegEditor();
+    
+    SegEditor& operator=(const Segment &residue);
+    SegEditor& operator=(const SegEditor &other);
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<SegEditor>() );
+    }
+    
+    const char *what() const
+    {
+        return SegEditor::typeName();
+    }
+    
+    SegEditor* clone() const
+    {
+        return new SegEditor(*this);
+    }
+    
+    MolEditor molecule() const;
+    
+    AtomEditor atom(int i) const;
+    AtomEditor atom(const AtomID &atomid) const;
+    
+    AtomEditor select(const AtomID &atomid) const;
+    AtomEditor select(int i) const;
+    
+    SegEditor& rename(const SegName &name);
+    SegEditor& renumber(SegNum number);
+    
+    SegStructureEditor reindex(SegIdx index) const;
+    
+    MolStructureEditor remove() const;
+
+    AtomStructureEditor add(const AtomName &atomname) const;
+    AtomStructureEditor add(AtomNum atomnum) const;
+    
+    SegStructureEditor remove(const AtomID &atomid) const;
+
+    SegStructureEditor remove(int i) const;
+    SegStructureEditor remove(const std::slice &s) const;
+    
+    SegStructureEditor transfer(const AtomID &atomid, const SegID &segid) const;
+    SegStructureEditor transfer(int i, const SegID &segid) const;
+    SegStructureEditor transfer(const std::slice &s, const SegID &segid) const;
+    
+    SegStructureEditor transferAll(const SegID &segid) const;
+};
+
+/** This is the class used to edit a segment's structure 
+
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT SegStructureEditor : public StructureEditor
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const SegStructureEditor&);
+friend QDataStream& ::operator>>(QDataStream&, SegStructureEditor&);
+
+public:
+    SegStructureEditor();
+    SegStructureEditor(const Segment &residue);
+    SegStructureEditor(const StructureEditor &data, SegIdx residx);
+    
+    SegStructureEditor(const SegStructureEditor &other);
+    
+    ~SegStructureEditor();
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<SegStructureEditor>() );
+    }
+    
+    const char* what() const
+    {
+        return SegStructureEditor::typeName();
+    }
+    
+    SegStructureEditor* clone() const
+    {
+        return new SegStructureEditor(*this);
+    }
+    
+    SegStructureEditor& operator=(const Segment &residue);
+    SegStructureEditor& operator=(const SegStructureEditor &other);
+    
+    MolStructureEditor molecule();
+    
+    AtomStructureEditor atom(int i);
+    AtomStructureEditor atom(const AtomID &atomid);
+
+    AtomStructureEditor select(int i);
+    AtomStructureEditor select(const AtomID &atomid);
+    
+    SegStructureEditor& rename(const SegName &name);
+    SegStructureEditor& renumber(SegNum number);
+    
+    SegStructureEditor& reindex(SegIdx index);
+    
+    MolStructureEditor remove();
+
+    AtomStructureEditor add(const AtomName &atomname);
+    AtomStructureEditor add(AtomNum atomnum);
+    
+    SegStructureEditor& remove(const AtomID &atomid);
+
+    SegStructureEditor& remove(int i);
+    SegStructureEditor& remove(const std::slice &s);
+    
+    SegStructureEditor& transfer(const AtomID &atomid, const SegID &segid);
+    SegStructureEditor& transfer(int i, const SegID &segid);
+    SegStructureEditor& transfer(const std::slice &s, const SegID &segid);
+    
+    SegStructureEditor& transferAll(const SegID &segid);
+};
+
+}
+
+Q_DECLARE_METATYPE( SireMol::SegEditor );
+Q_DECLARE_METATYPE( SireMol::SegStructureEditor );
+
+SIRE_END_HEADER
+
+#endif

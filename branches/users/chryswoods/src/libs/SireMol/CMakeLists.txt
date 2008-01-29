@@ -109,6 +109,7 @@ set ( SIREMOL_HEADERS
       segproperty.hpp
       selector.hpp
       specify.hpp
+      structureeditor.h
       viewsofmol.h
       weightfunction.h
     )
@@ -174,6 +175,7 @@ set ( SIREMOL_SOURCES
       segid.cpp
       segidentifier.cpp
       segment.cpp
+      structureeditor.cpp
       viewsofmol.cpp
       weightfunction.cpp
     

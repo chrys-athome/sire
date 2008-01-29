@@ -39,6 +39,8 @@
 #include "molecule.h"
 #include "selector.hpp"
 
+#include "SireBase/errors.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
@@ -247,6 +249,47 @@ bool Atom::hasMetadata(const PropertyName &key,
                        const PropertyName &metakey) const
 {
     return d->hasMetadataOfType<AtomProp>(key, metakey);
+}
+
+/** Assert that this atom has an AtomProperty at key 'key'
+
+    \throw SireBase::missing_property
+*/
+void Atom::assertContainsProperty(const PropertyName &key) const
+{
+    if (not this->hasProperty(key))
+        throw SireBase::missing_property( QObject::tr(
+            "There is no AtomProperty at key '%1' for this atom.")
+                .arg(key), CODELOC );
+}
+
+/** Assert that this atom has an AtomProperty piece of metadata
+    at metakey 'metakey'
+    
+    \throw SireBase::missing_property
+*/
+void Atom::assertContainsMetadata(const PropertyName &metakey) const
+{
+    if (not this->hasMetadata(metakey))
+        throw SireBase::missing_property( QObject::tr(
+            "There is no AtomProperty metadata at metakey '%1' for "
+            "this atom.")
+                .arg(metakey), CODELOC );
+}
+
+/** Assert that the property at key 'key' has an AtomProperty
+    piece of metadata at metakey 'metakey'
+    
+    \throw SireBase::missing_property
+*/
+void Atom::assertContainsMetadata(const PropertyName &key,
+                                  const PropertyName &metakey) const
+{
+    if (not this->hasMetadata(key, metakey))
+        throw SireBase::missing_property( QObject::tr(
+            "There is no AtomProperty metadata at metakey '%1' "
+            "for the property at key '%2' for this atom.")
+                .arg(metakey, key), CODELOC );
 }
 
 bool detail::has_property(const Atom*, const MoleculeData &moldata,

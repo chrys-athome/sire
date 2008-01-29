@@ -46,34 +46,13 @@ template<class T>
 class Editor : public T, public EditorBase
 {
 public:
-    Editor();
-
-    Editor(const T &view);
-    
-    Editor(const Editor<T> &other);
-    
     ~Editor();
     
     Editor<T>& operator=(const Editor<T> &other);
-    
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId< Editor<T> >() );
-    }
-    
-    const char* what() const
-    {
-        return Editor<T>::typeName();
-    }
-    
-    Editor<T>* clone() const
-    {
-        return new Editor<T>(*this);
-    }
+    Editor<T>& operator=(const T &other);
 
     template<class V>
-    Editor<T>& setProperty(const QString &key, const V &value,
-                           bool clear_metadata = true);
+    Editor<T>& setProperty(const QString &key, const V &value);
                            
     template<class V>
     Editor<T>& setMetadata(const QString &metakey, const V &value);
@@ -85,6 +64,12 @@ public:
     Editor<T>& removeProperty(const QString &key);
     Editor<T>& removeMetadata(const QString &metakey);
     Editor<T>& removeMetadata(const QString &key, const QString &metakey);
+
+protected:
+    Editor();
+    Editor(const T &view);
+    
+    Editor(const Editor<T> &other);
 };
 
 /** Null constructor */
@@ -118,6 +103,16 @@ Editor<T>& Editor<T>::operator=(const Editor<T> &other)
 {
     T::operator=(other);
     EditorBase::operator=(other);
+    
+    return *this;
+}
+
+/** Copy assignment from an object of type T */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+Editor<T>& Editor<T>::operator=(const T &other)
+{
+    T::operator=(other);
     
     return *this;
 }
@@ -169,7 +164,7 @@ SIRE_OUTOFLINE_TEMPLATE
 Editor<T>& Editor<T>::removeProperty(const QString &key)
 {
     T::assertContainsProperty(key);
-    EditorBase::removeProperty(*d, key);
+    EditorBase::removeProperty(*(this->d), key);
     return *this;
 }
 
@@ -186,7 +181,7 @@ SIRE_OUTOFLINE_TEMPLATE
 Editor<T>& Editor<T>::removeMetadata(const QString &metakey)
 {
     T::assertContainsMetadata(metakey);
-    EditorBase::removeMetadata(*d, metakey);
+    EditorBase::removeMetadata(*(this->d), metakey);
     return *this;
 }
 
@@ -201,11 +196,10 @@ Editor<T>& Editor<T>::removeMetadata(const QString &metakey)
 */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-Editor<T>& Editor<T>::removeMetadata(const QString &key, const QString &metakey,
-                                     const QString &metakey)
+Editor<T>& Editor<T>::removeMetadata(const QString &key, const QString &metakey)
 {
     T::assertContainsMetadata(key, metakey);
-    EditorBase::removeMetadata(*d, key, metakey);
+    EditorBase::removeMetadata(*(this->d), key, metakey);
     return *this;
 }
 

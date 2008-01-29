@@ -26,3 +26,202 @@
   *
 \*********************************************/
 
+#ifndef SIREMOL_CHAINEDITOR_H
+#define SIREMOL_CHAINEDITOR_H
+
+#include "structureeditor.h"
+#include "chain.h"
+#include "editor.hpp"
+
+SIRE_BEGIN_HEADER
+
+namespace SireMol
+{
+class ChainEditor;
+class ChainStructureEditor;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMol::ChainEditor&);
+QDataStream& operator>>(QDataStream&, SireMol::ChainEditor&);
+
+QDataStream& operator<<(QDataStream&, const SireMol::ChainStructureEditor&);
+QDataStream& operator>>(QDataStream&, SireMol::ChainStructureEditor&);
+
+namespace std
+{
+class slice;
+}
+
+namespace SireMol
+{
+
+class MolStructureEditor;
+class SegStructureEditor;
+class ChainStructureEditor;
+class ResStructureEditor;
+class CGStructureEditor;
+class AtomStructureEditor;
+
+class MolEditor;
+class SegEditor;
+class ChainEditor;
+class ResEditor;
+class CGEditor;
+class AtomEditor;
+
+class CGIdx;
+class CGID;
+class ResIdx;
+class ResID;
+
+/** This class is used to edit the non-structural parts of a chain
+
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT ChainEditor : public Editor<Chain>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const ChainEditor&);
+friend QDataStream& ::operator>>(QDataStream&, ChainEditor&);
+
+public:
+    ChainEditor();
+    
+    ChainEditor(const Chain &chain);
+    
+    ChainEditor(const ChainEditor &other);
+    
+    ~ChainEditor();
+    
+    ChainEditor& operator=(const Chain &chain);
+    ChainEditor& operator=(const ChainEditor &other);
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<ChainEditor>() );
+    }
+    
+    const char *what() const
+    {
+        return ChainEditor::typeName();
+    }
+    
+    ChainEditor* clone() const
+    {
+        return new ChainEditor(*this);
+    }
+    
+    MolEditor molecule() const;
+    
+    AtomEditor atom(const AtomID &atomid) const;
+
+    ResEditor residue(int i) const;
+    ResEditor residue(const ResID &resid) const;
+    
+    AtomEditor select(const AtomID &atomid) const;
+
+    ResEditor select(int i) const;
+    ResEditor select(const ResID &resid) const;
+    
+    ChainEditor& rename(const ChainName &name);
+    ChainEditor& renumber(ChainNum number);
+    
+    ChainStructureEditor reindex(ChainIdx index) const;
+    
+    MolStructureEditor remove() const;
+
+    ResStructureEditor add(const ResName &resname) const;
+    ResStructureEditor add(ResNum atomnum) const;
+    
+    ChainStructureEditor remove(const AtomID &atomid) const;
+    ChainStructureEditor remove(const ResID &resid) const;
+
+    ChainStructureEditor remove(int i) const;
+    ChainStructureEditor remove(const std::slice &s) const;
+    
+    ChainStructureEditor transfer(const ResID &resid, const ChainID &chainid) const;
+    ChainStructureEditor transfer(int i, const ChainID &chainid) const;
+    ChainStructureEditor transfer(const std::slice &s, const ChainID &chainid) const;
+    
+    ChainStructureEditor transferAll(const ChainID &chainid) const;
+};
+
+/** This is the class used to edit a chain's structure 
+
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT ChainStructureEditor : public StructureEditor
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const ChainStructureEditor&);
+friend QDataStream& ::operator>>(QDataStream&, ChainStructureEditor&);
+
+public:
+    ChainStructureEditor();
+    ChainStructureEditor(const Chain &chain);
+    ChainStructureEditor(const StructureEditor &data, ChainIdx chainidx);
+    
+    ChainStructureEditor(const ChainStructureEditor &other);
+    
+    ~ChainStructureEditor();
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<ChainStructureEditor>() );
+    }
+    
+    const char* what() const
+    {
+        return ChainStructureEditor::typeName();
+    }
+    
+    ChainStructureEditor* clone() const
+    {
+        return new ChainStructureEditor(*this);
+    }
+    
+    ChainStructureEditor& operator=(const Chain &chain);
+    ChainStructureEditor& operator=(const ChainStructureEditor &other);
+    
+    MolStructureEditor molecule();
+    
+    AtomStructureEditor atom(const AtomID &atomid);
+
+    ResStructureEditor residue(int i);
+    ResStructureEditor residue(const ResID &resid);
+
+    AtomStructureEditor select(const AtomID &atomid);
+
+    ResStructureEditor select(int i);
+    ResStructureEditor select(const ResID &resid);
+    
+    ChainStructureEditor& rename(const ChainName &name);
+    ChainStructureEditor& renumber(ChainNum number);
+    
+    ChainStructureEditor& reindex(ChainIdx index);
+    
+    MolStructureEditor remove();
+
+    ResStructureEditor add(const ResName &resname);
+    ResStructureEditor add(ResNum resnum);
+    
+    ChainStructureEditor& remove(const ResID &resid);
+
+    ChainStructureEditor& remove(int i);
+    ChainStructureEditor& remove(const std::slice &s);
+    
+    ChainStructureEditor& transfer(const ResID &resid, const ChainID &chainid);
+    ChainStructureEditor& transfer(int i, const ChainID &resid);
+    ChainStructureEditor& transfer(const std::slice &s, const ChainID &chainid);
+    
+    ChainStructureEditor& transferAll(const ChainID &chainid);
+};
+
+}
+
+Q_DECLARE_METATYPE( SireMol::ChainEditor );
+Q_DECLARE_METATYPE( SireMol::ChainStructureEditor );
+
+SIRE_END_HEADER
+
+#endif

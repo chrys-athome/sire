@@ -185,9 +185,9 @@ public:
     Evaluator evaluate(int i) const;
     Evaluator evaluate(int i, int j) const;
     
-    Editor< Selector<T> > edit() const;
-    Editor< Selector<T> > edit(int i) const;
-    Editor< Selector<T> > edit(int i, int j) const;
+//    Editor< Selector<T> > edit() const;
+//    Editor< Selector<T> > edit(int i) const;
+//    Editor< Selector<T> > edit(int i, int j) const;
     
     Selector<T> selector() const;
     Selector<T> selector(int i) const;
@@ -975,28 +975,28 @@ Evaluator Selector<T>::evaluate(int i, int j) const
 
 /** Return an editor that can edit all of the views in 
     this set */
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-Editor< Selector<T> > Selector<T>::edit() const
-{
-    return Editor< Selector<T> >(*this);
-}
+//template<class T>
+//SIRE_OUTOFLINE_TEMPLATE
+//Editor< Selector<T> > Selector<T>::edit() const
+//{
+//    return Editor< Selector<T> >(*this);
+//}
 
 /** Return an editor that can edit the ith view in this set */
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-Editor< Selector<T> > Selector<T>::edit(int i) const
-{
-    return Editor< Selector<T> >(*this, this->selection(i));
-}
+//template<class T>
+//SIRE_OUTOFLINE_TEMPLATE
+//Editor< Selector<T> > Selector<T>::edit(int i) const
+//{
+//    return Editor< Selector<T> >(*this, this->selection(i));
+//}
 
 /** Return an editor that can edit the ith to jth views in this set */
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-Editor< Selector<T> > Selector<T>::edit(int i, int j) const
-{
-    return Editor< Selector<T> >(*this, this->selection(i,j));
-}
+//template<class T>
+//SIRE_OUTOFLINE_TEMPLATE
+//Editor< Selector<T> > Selector<T>::edit(int i, int j) const
+//{
+//    return Editor< Selector<T> >(*this, this->selection(i,j));
+//}
 
 /** Return a selector that can change the selection of this view */
 template<class T>

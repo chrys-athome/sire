@@ -156,6 +156,12 @@ public:
     
     Molecule molecule() const;
 
+    void assertContainsProperty(const PropertyName &key) const;
+    
+    void assertContainsMetadata(const PropertyName &metakey) const;
+    void assertContainsMetadata(const PropertyName &key,
+                                const PropertyName &metakey) const;
+
 protected:
     template<class T>
     void setProperty(const QString &key, const T &value);

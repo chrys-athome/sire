@@ -206,6 +206,12 @@ public:
     const Property& metadata(const PropertyName &key,
                              const PropertyName &metakey) const;
 
+    void assertContainsProperty(const PropertyName &key) const;
+    
+    void assertContainsMetadata(const PropertyName &metakey) const;
+    void assertContainsMetadata(const PropertyName &key,
+                                const PropertyName &metakey) const;
+
 protected:
     void setProperty(const PropertyName &key, const Property &value);
     

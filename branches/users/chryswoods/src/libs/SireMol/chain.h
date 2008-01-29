@@ -49,6 +49,7 @@ namespace SireMol
 class ChainID;
 class ChainIdx;
 class ChainName;
+class ChainEditor;
 
 class Evaluator;
 
@@ -171,6 +172,12 @@ public:
     
     Selector<Residue> residues(const ResID &resid) const;
     Selector<Residue> residues() const;
+
+    void assertContainsProperty(const PropertyName &key) const;
+    
+    void assertContainsMetadata(const PropertyName &metakey) const;
+    void assertContainsMetadata(const PropertyName &key,
+                                const PropertyName &metakey) const;
 
 protected:
     template<class T>

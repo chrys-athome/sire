@@ -29,7 +29,17 @@
 #include "atomeditor.h"
 #include "atom.h"
 
+#include "molecule.h"
+#include "segment.h"
+#include "chain.h"
+#include "residue.h"
+#include "cutgroup.h"
+
 #include "moleditor.h"
+#include "segeditor.h"
+#include "chaineditor.h"
+#include "reseditor.h"
+#include "cgeditor.h"
 
 #include "selector.hpp"
 #include "mover.hpp"
@@ -37,6 +47,8 @@
 #include "residx.h"
 #include "cgidx.h"
 #include "segidx.h"
+
+#include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -46,7 +58,7 @@ using namespace SireStream;
 
 //fully instantiate the Editor<Atom> and Editor< Selector<Atom> > classes
 template class Editor<Atom>;
-template class Editor< Selector<Atom> >;
+//template class Editor< Selector<Atom> >;
 
 /////////
 ///////// Implementation of AtomEditor
@@ -113,11 +125,75 @@ AtomEditor& AtomEditor::operator=(const AtomEditor &other)
     return *this;
 }
 
+/** Return the editor for the residue that contains this atom */
+ResEditor AtomEditor::residue() const
+{
+    return ResEditor( Atom::residue() );
+}
+
+/** Return the editor for the CutGroup that contains this atom */
+CGEditor AtomEditor::cutGroup() const
+{
+    return CGEditor( Atom::cutGroup() );
+}
+
+/** Return the editor for the chain that contains this atom */
+ChainEditor AtomEditor::chain() const
+{
+    return ChainEditor( Atom::chain() );
+}
+
+/** Return the editor for the segment that contains this atom */
+SegEditor AtomEditor::segment() const
+{
+    return SegEditor( Atom::segment() );
+}
+
+/** Return the editor for the molecule that contains this atom */
+MolEditor AtomEditor::molecule() const
+{
+    return MolEditor( Atom::molecule() );
+}
+
+/** Rename this atom so that it is called 'newname' */
+AtomEditor& AtomEditor::rename(const AtomName &newname)
+{
+    if (newname == this->name())
+        //nothing needs to be done
+        return *this;
+        
+    throw SireError::incomplete_code( CODELOC );
+    
+    return *this;
+}
+
+/** Renumber this atom so that it has number 'newnum' */
+AtomEditor& AtomEditor::renumber(AtomNum newnum)
+{
+    if (newnum == this->number())
+        //nothing needs to be done
+        return *this;
+        
+    throw SireError::incomplete_code( CODELOC );
+    
+    return *this;
+}
+
+/** Reindex this atom so that it lies at index 'newidx'. Note
+    that if 'newidx' is greater than the number of atoms, then
+    this will move this atom to be the last in the list */
+AtomStructureEditor AtomEditor::reindex(AtomIdx newidx) const
+{
+    AtomStructureEditor editor(*this);
+    editor.reindex(newidx);
+    return editor;
+}
+
 /** Remove this atom from the molecule, returning an editor
     that can further edit the structure of the molecule */
 MolStructureEditor AtomEditor::remove() const
 {
-    MolStructureEditor moleditor( this->data() );    
+    MolStructureEditor moleditor(*this);    
     moleditor.remove(this->index());
     
     return moleditor;
@@ -216,3 +292,241 @@ AtomStructureEditor AtomEditor::reparent(const SegID &segid) const
 /////////
 ///////// Implementation of AtomStructureEditor
 /////////
+
+static const RegisterMetaType<AtomStructureEditor> r_atomstructeditor;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
+                                       const AtomStructureEditor &atomeditor)
+{
+    writeHeader(ds, r_atomstructeditor, 1);
+    
+    ds << atomeditor.uid
+       << static_cast<const StructureEditor&>(atomeditor);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
+                                       AtomStructureEditor &atomeditor)
+{
+    VersionID v = readHeader(ds, r_atomstructeditor);
+    
+    if (v == 1)
+    {
+        ds >> atomeditor.uid
+           >> static_cast<StructureEditor&>(atomeditor);
+    }
+    else
+        throw version_error( v, "1", r_atomstructeditor, CODELOC );
+
+    return ds;
+}
+
+/** Null constructor */
+AtomStructureEditor::AtomStructureEditor() : StructureEditor()
+{}
+
+/** Construct from an Atom */
+AtomStructureEditor::AtomStructureEditor(const Atom &atom)
+                    : StructureEditor(atom.data())
+{
+    uid = this->getUID(atom.index());
+}
+
+/** Construct for the atom at index 'idx' in the molecule whose data
+    is being edited in 'moldata'
+    
+    \throw SireError::invalid_index
+*/
+AtomStructureEditor::AtomStructureEditor(const StructureEditor &moldata,
+                                         AtomIdx idx)
+                    : StructureEditor(moldata)
+{
+    uid = this->getUID(idx);
+}
+
+/** Copy constructor */
+AtomStructureEditor::AtomStructureEditor(const AtomStructureEditor &other)
+                    : StructureEditor(other), uid(other.uid)
+{}
+
+/** Destructor */
+AtomStructureEditor::~AtomStructureEditor()
+{}
+
+/** Assign to edit the structure of a copy of 'atom' */
+AtomStructureEditor& AtomStructureEditor::operator=(const Atom &atom)
+{
+    StructureEditor::operator=(atom.data());
+    uid = this->getUID(atom.index());
+    
+    return *this;
+}
+
+/** Copy assignment operator */
+AtomStructureEditor& AtomStructureEditor::operator=(const AtomStructureEditor &other)
+{
+    StructureEditor::operator=(other);
+    uid = other.uid;
+    return *this;
+}
+
+/** Return the name of this atom */
+const AtomName& AtomStructureEditor::name() const
+{
+    return this->atomName(uid);
+}
+
+/** Return the number of this atom */
+AtomNum AtomStructureEditor::number() const
+{
+    return this->atomNum(uid);
+}
+
+/** Return the index number of this atom in the molecule */
+AtomIdx AtomStructureEditor::index() const
+{
+    return this->atomIdx(uid);
+}
+
+/** Return the editor for the residue that contains this atom */
+ResStructureEditor AtomStructureEditor::residue()
+{
+    return ResStructureEditor(*this, this->parentResidue(this->index()));
+}
+
+/** Return the editor for the CutGrop that contains this atom */
+CGStructureEditor AtomStructureEditor::cutGroup()
+{
+    return CGStructureEditor(*this, this->parentCutGroup(this->index()));
+}
+
+/** Return the editor for the chain that contains this atom */
+ChainStructureEditor AtomStructureEditor::chain()
+{
+    return ChainStructureEditor(*this, this->parentChain(this->index()));
+}
+
+/** Return the editor for the segment that contain this atom */
+SegStructureEditor AtomStructureEditor::segment()
+{
+    return SegStructureEditor(*this, this->parentSegment(this->index()));
+}
+
+/** Return the editor for the molecule that contains this atom */
+MolStructureEditor AtomStructureEditor::molecule()
+{
+    return MolStructureEditor(*this);
+}
+
+/** Rename this atom to 'newname' */
+AtomStructureEditor& AtomStructureEditor::rename(const AtomName &newname)
+{
+    this->renameAtom(uid, newname);
+    return *this;
+}
+
+/** Renumber this atom to 'newnum' */
+AtomStructureEditor& AtomStructureEditor::renumber(AtomNum newnum)
+{
+    this->renumberAtom(uid, newnum);
+    return *this;
+}
+
+/** Reindex this atom to 'newidx' - this will move the atom to 
+    the end if 'newidx' is greater than the number of atoms
+    in the molecule */
+AtomStructureEditor& AtomStructureEditor::reindex(AtomIdx newidx)
+{
+    this->reindexAtom(uid, newidx);
+    return *this;
+}
+
+/** Completely remove this atom from the molecule and return
+    a MolStructureEditor that can be used to continue editing
+    the molecule */
+MolStructureEditor AtomStructureEditor::remove()
+{
+    this->removeAtom(uid);
+    return MolStructureEditor(*this);
+}
+
+/** Reparent this atom so that it is now in the CutGroup at index 'cgidx'
+
+    \throw SireError::invalid_index
+*/
+AtomStructureEditor& AtomStructureEditor::reparent(CGIdx cgidx)
+{
+    this->reparentAtom(uid, cgidx);
+    return *this;
+}
+
+/** Reparent this atom so that it is now in the CutGroup identified
+    by ID 'cgid' 
+    
+    \throw SireMol::missing_cutgroup
+    \throw SireMol::duplicate_cutgroup
+    \throw SireMol::invalid_index
+*/
+AtomStructureEditor& AtomStructureEditor::reparent(const CGID &cgid)
+{
+    return this->reparent( this->cgIdx(cgid) );
+}
+
+/** Reparent this atom so that it is now in the residue at index 'residx'
+
+    \throw SireError::invalid_index
+*/
+AtomStructureEditor& AtomStructureEditor::reparent(ResIdx residx)
+{
+    this->reparentAtom(uid, residx);
+    return *this;
+}
+
+/** Reparent this atom so that it is now in the residue identified
+    by ID 'resid' 
+    
+    \throw SireMol::missing_residue
+    \throw SireMol::duplicate_residue
+    \throw SireMol::invalid_index
+*/
+AtomStructureEditor& AtomStructureEditor::reparent(const ResID &resid)
+{
+    return this->reparent( this->resIdx(resid) );
+}
+
+/** Reparent this atom so that it is now in the segment at index 'segidx'
+
+    \throw SireError::invalid_index
+*/
+AtomStructureEditor& AtomStructureEditor::reparent(SegIdx segidx)
+{
+    this->reparentAtom(uid, segidx);
+    return *this;
+}
+
+/** Reparent this atom so that it is now in the segment identified
+    by ID 'segid' 
+    
+    \throw SireMol::missing_segment
+    \throw SireMol::duplicate_segment
+    \throw SireMol::invalid_index
+*/
+AtomStructureEditor& AtomStructureEditor::reparent(const SegID &segid)
+{
+    return this->reparent( this->segIdx(segid) );
+}
+
+/** Commit all of the changes, returning the uneditable Atom */
+Atom AtomStructureEditor::commit() const
+{
+    return Atom( this->commitChanges(), this->index() );
+}
+
+/** Allow automatic casting to an Atom() */
+AtomStructureEditor::operator Atom() const
+{
+    return this->commit();
+}

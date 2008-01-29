@@ -29,7 +29,8 @@
 #ifndef SIREMOL_MOLEDITOR_H
 #define SIREMOL_MOLEDITOR_H
 
-#include "editor.h"
+#include "structureeditor.h"
+#include "editor.hpp"
 #include "molecule.h"
 
 SIRE_BEGIN_HEADER
@@ -48,6 +49,25 @@ QDataStream& operator>>(QDataStream&, SireMol::MolStructureEditor&);
 
 namespace SireMol
 {
+
+class MolStructureEditor;
+class SegStructureEditor;
+class ChainStructureEditor;
+class ResStructureEditor;
+class CGStructureEditor;
+class AtomStructureEditor;
+
+class MolEditor;
+class SegEditor;
+class ChainEditor;
+class ResEditor;
+class CGEditor;
+class AtomEditor;
+
+class CGIdx;
+class CGID;
+class ResIdx;
+class ResID;
 
 /** This class is used to edit non-structural parts of a molecule 
     (e.g. its name, number, properties etc.). To add, move or remove
@@ -89,22 +109,96 @@ public:
     
     MolEditor& operator=(const Molecule &molecule);
     MolEditor& operator=(const MolEditor &other);
-    
-    MolStructureEditor remove(AtomIdx atomidx) const;
-    MolStructureEditor remove(const AtomID &atomid) const;
-    
-    MolStructureEditor remove(CGIdx cgidx) const;
-    MolStructureEditor remove(const CGID &cgid) const;
-    
-    MolStructureEditor remove(ResIdx residx) const;
-    MolStructureEditor remove(const ResID &resid) const;
-    
-    MolStructureEditor remove(ChainIdx Chainidx) const;
-    MolStructureEditor remove(const ChainID &chainid) const;
-    
-    MolStructureEditor remove(SegIdx segidx) const;
-    MolStructureEditor remove(const SegID &segid) const;
 
+    const MolName& name() const;
+    MolNum number() const;
+    
+    MolEditor& rename(const MolName &name);
+    MolEditor& renumber();
+    
+    AtomStructureEditor add(const AtomName &atom);
+    AtomStructureEditor add(const AtomNum &atom);
+    
+    ResStructureEditor add(const ResName &residue);
+    ResStructureEditor add(const ResNum &residue);
+    
+    CGStructureEditor add(const CGName &cutgroup);
+    CGStructureEditor add(const CGNum &cutgroup);
+    
+    ChainStructureEditor add(const ChainName &chain);
+    ChainStructureEditor add(const ChainNum &chain);
+    
+    SegStructureEditor add(const SegName &segment);
+    SegStructureEditor add(const SegNum &segment);
+    
+    MolStructureEditor remove(const AtomID &atomid);
+    MolStructureEditor remove(const CGID &cgid);
+    MolStructureEditor remove(const ResID &resid);
+    MolStructureEditor remove(const ChainID &chainid);
+    MolStructureEditor remove(const SegID &segid);
+
+};
+
+/** This class is used to edit structural parts of the molecule,
+    i.e. adding, moving or removing atoms, residues etc.
+    
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT MolStructureEditor : public StructureEditor
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const MolStructureEditor&);
+friend QDataStream& ::operator>>(QDataStream&, MolStructureEditor&);
+
+public:
+    MolStructureEditor();
+    MolStructureEditor(const MoleculeView &molview);
+    
+    MolStructureEditor(const StructureEditor &other);
+    MolStructureEditor(const MolStructureEditor &other);
+    
+    ~MolStructureEditor();
+    
+    MolStructureEditor& operator=(const MoleculeView &molview);
+    MolStructureEditor& operator=(const StructureEditor &other);
+    MolStructureEditor& operator=(const MolStructureEditor &other);
+    
+    AtomStructureEditor select(const AtomID &atomid);
+    CGStructureEditor select(const CGID &cgid);
+    ResStructureEditor select(const ResID &resid);
+    ChainStructureEditor select(const ChainID &chainid);
+    SegStructureEditor select(const SegID &segid);
+
+    AtomStructureEditor atom(const AtomID &atomid);
+    CGStructureEditor cutGroup(const CGID &cgid);
+    ResStructureEditor residue(const ResID &resid);
+    ChainStructureEditor chain(const ChainID &chainid);
+    SegStructureEditor segment(const SegID &segid);
+
+    const MolName& name() const;
+    
+    MolEditor& rename(const MolName &name);
+    
+    AtomStructureEditor add(const AtomName &atom);
+    AtomStructureEditor add(const AtomNum &atom);
+    
+    ResStructureEditor add(const ResName &residue);
+    ResStructureEditor add(const ResNum &residue);
+    
+    CGStructureEditor add(const CGName &cutgroup);
+    CGStructureEditor add(const CGNum &cutgroup);
+    
+    ChainStructureEditor add(const ChainName &chain);
+    ChainStructureEditor add(const ChainNum &chain);
+    
+    SegStructureEditor add(const SegName &segment);
+    SegStructureEditor add(const SegNum &segment);
+    
+    MolStructureEditor remove(const AtomID &atomid);
+    MolStructureEditor remove(const CGID &cgid);
+    MolStructureEditor remove(const ResID &resid);
+    MolStructureEditor remove(const ChainID &chainid);
+    MolStructureEditor remove(const SegID &segid);
 };
 
 }

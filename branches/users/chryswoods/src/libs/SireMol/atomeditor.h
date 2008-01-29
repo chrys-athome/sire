@@ -29,6 +29,7 @@
 #ifndef SIREMOL_ATOMEDITOR_H
 #define SIREMOL_ATOMEDITOR_H
 
+#include "structureeditor.h"
 #include "editor.hpp"
 #include "atom.h"
 
@@ -50,6 +51,16 @@ namespace SireMol
 {
 
 class MolStructureEditor;
+class SegStructureEditor;
+class ChainStructureEditor;
+class ResStructureEditor;
+class CGStructureEditor;
+
+class MolEditor;
+class SegEditor;
+class ChainEditor;
+class ResEditor;
+class CGEditor;
 
 class CGIdx;
 class CGID;
@@ -98,6 +109,17 @@ public:
         return new AtomEditor(*this);
     }
 
+    ResEditor residue() const;
+    CGEditor cutGroup() const;
+    ChainEditor chain() const;
+    SegEditor segment() const;
+    MolEditor molecule() const;
+
+    AtomEditor& rename(const AtomName &name);
+    AtomEditor& renumber(AtomNum number);
+    
+    AtomStructureEditor reindex(AtomIdx atomidx) const;
+
     MolStructureEditor remove() const;
     
     AtomStructureEditor reparent(CGIdx cgidx) const;
@@ -116,7 +138,7 @@ public:
     
     @author Christopher Woods
 */
-class SIREMOL_EXPORT AtomStructureEditor
+class SIREMOL_EXPORT AtomStructureEditor : public StructureEditor
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const AtomStructureEditor&);
@@ -125,6 +147,7 @@ friend QDataStream& ::operator>>(QDataStream&, AtomStructureEditor&);
 public:
     AtomStructureEditor();
     AtomStructureEditor(const Atom &atom);
+    AtomStructureEditor(const StructureEditor &data, AtomIdx atomidx);
 
     AtomStructureEditor(const AtomStructureEditor &other);
     
@@ -145,6 +168,25 @@ public:
         return new AtomStructureEditor(*this);
     }
 
+    AtomStructureEditor& operator=(const Atom &atom);
+    AtomStructureEditor& operator=(const AtomStructureEditor &other);
+
+    ResStructureEditor residue();
+    CGStructureEditor cutGroup();
+    ChainStructureEditor chain();
+    SegStructureEditor segment();
+    MolStructureEditor molecule();
+
+    const AtomName& name() const;
+    AtomNum number() const;
+    AtomIdx index() const;
+
+    AtomStructureEditor& rename(const AtomName &name);
+    AtomStructureEditor& renumber(AtomNum number);
+    AtomStructureEditor& reindex(AtomIdx idx);
+    
+    MolStructureEditor remove();
+
     AtomStructureEditor& reparent(CGIdx cgidx);
     AtomStructureEditor& reparent(const CGID &cgid);
     
@@ -154,7 +196,16 @@ public:
     AtomStructureEditor& reparent(SegIdx segidx);
     AtomStructureEditor& reparent(const SegID &segid);
 
+    Atom commit() const;
+
     operator Atom() const;
+
+private:
+    /** The unique (temporary) ID of this atom in the molecule.
+        A temporary and private ID is used as this atom can have
+        all of its other ID tokens changed, so it would be difficult
+        to keep track of if it didn't have a private, non-editable ID */
+    quint32 uid;
 };
 
 }

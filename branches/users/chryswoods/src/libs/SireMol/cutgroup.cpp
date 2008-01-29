@@ -303,9 +303,7 @@ bool detail::has_metadata(const CutGroup*, const MoleculeData &moldata,
 }
 
 ////// explicitly instantiate the CutGroup templates
-template class Editor<CutGroup>;
 template class Mover<CutGroup>;
 template class Selector<CutGroup>;
 
-template class Editor< Selector<CutGroup> >;
 template class Mover< Selector<CutGroup> >;
