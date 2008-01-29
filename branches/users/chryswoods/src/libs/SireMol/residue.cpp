@@ -28,10 +28,10 @@
 
 #include "residue.h"
 
-#include "editor.hpp"
 #include "mover.hpp"
 #include "selector.hpp"
 #include "evaluator.h"
+#include "reseditor.h"
 
 #include "molecule.h"
 #include "chain.h"
@@ -182,9 +182,9 @@ Evaluator Residue::evaluate() const
 
 /** Return an editor that can be used to edit any of the  
     atoms of this residue */
-Editor<Residue> Residue::edit() const
+ResEditor Residue::edit() const
 {
-    return Editor<Residue>(*this);
+    return ResEditor(*this);
 }
 
 /** Return a selector that can change the selection of residues */
@@ -352,9 +352,7 @@ bool SireMol::detail::has_metadata(const Residue*, const MoleculeData &moldata,
 ///// explicitly instantiate the Residue manipulator classes
 /////
 
-template class Editor<Residue>;
 template class Mover<Residue>;
 template class Selector<Residue>;
 
-template class Editor< Selector<Residue > >;
 template class Mover< Selector<Residue> >;

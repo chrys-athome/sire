@@ -54,8 +54,7 @@ class AtomNum;
 
 class Evaluator;
 
-template<class T>
-class Editor;
+class AtomEditor;
 
 template<class T>
 class Mover;
@@ -144,7 +143,7 @@ public:
     
     Mover<Atom> move() const;
     Evaluator evaluate() const;
-    Editor<Atom> edit() const;
+    AtomEditor edit() const;
     Selector<Atom> selector() const;
     
     Residue residue() const;
@@ -508,11 +507,9 @@ bool has_metadata(const Atom*, const MoleculeData &moldata,
 
 Q_DECLARE_METATYPE(SireMol::Atom);
 Q_DECLARE_METATYPE(SireMol::Mover<SireMol::Atom>);
-Q_DECLARE_METATYPE(SireMol::Editor<SireMol::Atom>);
 Q_DECLARE_METATYPE(SireMol::Selector<SireMol::Atom>);
 
 Q_DECLARE_METATYPE(SireMol::Mover< SireMol::Selector<SireMol::Atom> >);
-Q_DECLARE_METATYPE(SireMol::Editor< SireMol::Selector<SireMol::Atom> >);
 
 SIRE_END_HEADER
 

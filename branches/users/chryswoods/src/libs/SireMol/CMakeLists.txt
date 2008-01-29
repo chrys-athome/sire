@@ -17,6 +17,7 @@ set ( SIREMOL_HEADERS
       atomatomid.h
       atomcoords.h
       atomcutting.h
+      atomeditor.h
       atomelements.h
       atomid.h
       atomidcombos.h
@@ -31,6 +32,7 @@ set ( SIREMOL_HEADERS
       bondid.h
       calculateaxes.hpp
       cgatomidx.h
+      cgeditor.h
       cgid.h
       cgidentifier.h
       cgidx.h
@@ -38,6 +40,7 @@ set ( SIREMOL_HEADERS
       cgproperty.hpp
       chain.h
       chainchainid.h
+      chaineditor.h
       chainid.h
       chainidentifier.h
       chainidx.h
@@ -72,6 +75,7 @@ set ( SIREMOL_HEADERS
       moleculeinfodataeditor.h
       molecules.h
       moleculeview.h
+      moleditor.h
       molgroup.h
       molgroups.h
       molid.h
@@ -84,6 +88,7 @@ set ( SIREMOL_HEADERS
       mover.hpp
       partialmolecule.h
       qhash_siremol.h
+      reseditor.h
       resid.h
       residentifier.h
       residue.h
@@ -95,6 +100,7 @@ set ( SIREMOL_HEADERS
       resnum.h
       resproperty.hpp
       resresid.h
+      segeditor.h
       segid.h
       segidentifier.h
       segidx.h
@@ -114,15 +120,18 @@ set ( SIREMOL_SOURCES
       atomaliases.cpp
       atomatomid.cpp
       atomcoords.cpp
+      atomeditor.cpp
       atomid.cpp
       atomidentifier.cpp
       atomcutting.cpp
       atomselection.cpp
       bondid.cpp
+      cgeditor.cpp
       cgid.cpp
       cgidentifier.cpp
       chain.cpp
       chainchainid.cpp
+      chaineditor.cpp
       chainid.cpp
       chainidentifier.cpp
       chainresid.cpp
@@ -147,6 +156,7 @@ set ( SIREMOL_SOURCES
       moleculeinfodataeditor.cpp
       molecules.cpp
       moleculeview.cpp
+      moleditor.cpp
       molgroup.cpp
       molgroups.cpp
       molid.cpp
@@ -154,11 +164,13 @@ set ( SIREMOL_SOURCES
       molviewproperty.cpp
       mover.cpp
       partialmolecule.cpp
+      reseditor.cpp
       resid.cpp
       residentifier.cpp
       residue.cpp
       residuecutting.cpp
       resresid.cpp
+      segeditor.cpp
       segid.cpp
       segidentifier.cpp
       segment.cpp

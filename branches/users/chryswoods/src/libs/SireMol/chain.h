@@ -53,9 +53,6 @@ class ChainName;
 class Evaluator;
 
 template<class T>
-class Editor;
-
-template<class T>
 class Mover;
 
 template<class T>
@@ -134,7 +131,7 @@ public:
     
     Mover<Chain> move() const;
     Evaluator evaluate() const;
-    Editor<Chain> edit() const;
+    ChainEditor edit() const;
     Selector<Chain> selector() const;
     
     int nAtoms() const;
@@ -403,11 +400,9 @@ bool has_metadata(const Chain*, const MoleculeData &moldata,
 }
 
 Q_DECLARE_METATYPE(SireMol::Chain);
-Q_DECLARE_METATYPE(SireMol::Editor<SireMol::Chain>);
 Q_DECLARE_METATYPE(SireMol::Mover<SireMol::Chain>);
 Q_DECLARE_METATYPE(SireMol::Selector<SireMol::Chain>);
 
-Q_DECLARE_METATYPE(SireMol::Editor< SireMol::Selector<SireMol::Chain> >);
 Q_DECLARE_METATYPE(SireMol::Mover< SireMol::Selector<SireMol::Chain> >);
 
 SIRE_END_HEADER

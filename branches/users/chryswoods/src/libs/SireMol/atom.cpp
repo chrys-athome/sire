@@ -27,8 +27,8 @@
 \*********************************************/
 
 #include "atom.h"
+#include "atomeditor.h"
 
-#include "editor.hpp"
 #include "mover.hpp"
 #include "evaluator.h"
 
@@ -182,9 +182,9 @@ Evaluator Atom::evaluate() const
 }
 
 /** Return an editor that can be used to edit this atom */
-Editor<Atom> Atom::edit() const
+AtomEditor Atom::edit() const
 {
-    return Editor<Atom>(*this);
+    return AtomEditor(*this);
 }
 
 /** Return a selector that can change the atom selection */
@@ -271,9 +271,7 @@ bool detail::has_metadata(const Atom*, const MoleculeData &moldata,
 /////// Explicitly instantiate the Atom manipulator classes
 ///////
 
-template class Editor<Atom>;
 template class Selector<Atom>;
 template class Mover<Atom>;
 
-template class Editor< Selector<Atom> >;
 template class Mover< Selector<Atom> >;

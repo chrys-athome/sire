@@ -50,11 +50,9 @@ namespace SireMol
 class CGID;
 class CGIdx;
 class CGName;
+class CGEditor;
 
 class Evaluator;
-
-template<class T>
-class Editor;
 
 template<class T>
 class Mover;
@@ -137,7 +135,7 @@ public:
     
     Mover<CutGroup> move() const;
     Evaluator evaluate() const;
-    Editor<CutGroup> edit() const;
+    CGEditor edit() const;
     Selector<CutGroup> selector() const;
     
     int nAtoms() const;
@@ -383,11 +381,9 @@ bool has_metadata(const CutGroup*, const MoleculeData &moldata,
 }
 
 Q_DECLARE_METATYPE(SireMol::CutGroup);
-Q_DECLARE_METATYPE(SireMol::Editor<SireMol::CutGroup>);
 Q_DECLARE_METATYPE(SireMol::Mover<SireMol::CutGroup>);
 Q_DECLARE_METATYPE(SireMol::Selector<SireMol::CutGroup>);
 
-Q_DECLARE_METATYPE(SireMol::Editor< SireMol::Selector<SireMol::CutGroup> >);
 Q_DECLARE_METATYPE(SireMol::Mover< SireMol::Selector<SireMol::CutGroup> >);
 
 SIRE_END_HEADER

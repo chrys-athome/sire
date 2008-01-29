@@ -31,10 +31,10 @@
 #include "atom.h"
 #include "molecule.h"
 
-#include "editor.hpp"
 #include "mover.hpp"
 #include "selector.hpp"
 #include "evaluator.h"
+#include "segeditor.h"
 
 #include "groupatomids.h"
 
@@ -161,9 +161,9 @@ Evaluator Segment::evaluate() const
 }
 
 /** Return an editor that can edit this Segment */
-Editor<Segment> Segment::edit() const
+SegEditor Segment::edit() const
 {
-    return Editor<Segment>(*this);
+    return SegEditor(*this);
 }
 
 /** Return a selector that can be used to change the selection
@@ -309,9 +309,7 @@ bool SireMol::detail::has_metadata(const Segment*, const MoleculeData &moldata,
 }
 
 /////// explicitly instantiate the templates
-template class Editor<Segment>;
 template class Mover<Segment>;
 template class Selector<Segment>;
 
-template class Editor< Selector<Segment> >;
 template class Mover< Selector<Segment> >;

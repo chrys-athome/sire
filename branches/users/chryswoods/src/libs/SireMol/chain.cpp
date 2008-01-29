@@ -31,8 +31,8 @@
 #include "molecule.h"
 #include "residue.h"
 #include "atom.h"
+#include "chaineditor.h"
 
-#include "editor.hpp"
 #include "mover.hpp"
 #include "selector.hpp"
 #include "evaluator.h"
@@ -163,9 +163,9 @@ Evaluator Chain::evaluate() const
 }
 
 /** Return an editor that can edit this chain */
-Editor<Chain> Chain::edit() const
+ChainEditor Chain::edit() const
 {
-    return Editor<Chain>(*this);
+    return ChainEditor(*this);
 }
 
 /** Return the number of atoms in this Chain */
@@ -398,9 +398,7 @@ bool detail::has_metadata(const Chain*, const MoleculeData &moldata,
 }
 
 /////// explicitly instantiate chain templates
-template class Editor<Chain>;
 template class Selector<Chain>;
 template class Mover<Chain>;
 
-template class Editor< Selector<Chain> >;
 template class Mover< Selector<Chain> >;

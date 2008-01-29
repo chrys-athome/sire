@@ -51,9 +51,7 @@ class SegIdx;
 class SegName;
 
 class Evaluator;
-
-template<class T>
-class Editor;
+class SegEditor;
 
 template<class T>
 class Mover;
@@ -135,7 +133,7 @@ public:
     
     Mover<Segment> move() const;
     Evaluator evaluate() const;
-    Editor<Segment> edit() const;
+    SegEditor edit() const;
     Selector<Segment> selector() const;
     
     int nAtoms() const;
@@ -384,11 +382,9 @@ bool has_metadata(const Segment*, const MoleculeData &moldata,
 }
 
 Q_DECLARE_METATYPE(SireMol::Segment);
-Q_DECLARE_METATYPE(SireMol::Editor<SireMol::Segment>);
 Q_DECLARE_METATYPE(SireMol::Mover<SireMol::Segment>);
 Q_DECLARE_METATYPE(SireMol::Selector<SireMol::Segment>);
 
-Q_DECLARE_METATYPE(SireMol::Editor< SireMol::Selector<SireMol::Segment> >);
 Q_DECLARE_METATYPE(SireMol::Mover< SireMol::Selector<SireMol::Segment> >);
 
 SIRE_END_HEADER

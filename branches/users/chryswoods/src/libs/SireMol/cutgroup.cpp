@@ -30,8 +30,8 @@
 
 #include "atom.h"
 #include "molecule.h"
+#include "cgeditor.h"
 
-#include "editor.hpp"
 #include "mover.hpp"
 #include "selector.hpp"
 #include "evaluator.h"
@@ -156,9 +156,9 @@ Evaluator CutGroup::evaluate() const
 }
 
 /** Return an editor that can edit this CutGroup */
-Editor<CutGroup> CutGroup::edit() const
+CGEditor CutGroup::edit() const
 {
-    return Editor<CutGroup>(*this);
+    return CGEditor(*this);
 }
 
 /** Return a selector that can change the selection of CutGroups */

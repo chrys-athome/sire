@@ -52,9 +52,7 @@ class ResName;
 class ResNum;
 
 class Evaluator;
-
-template<class T>
-class Editor;
+class ResEditor;
 
 template<class T>
 class Mover;
@@ -137,7 +135,7 @@ public:
     
     Mover<Residue> move() const;
     Evaluator evaluate() const;
-    Editor<Residue> edit() const;
+    ResEditor edit() const;
     Selector<Residue> selector() const;
     
     int nAtoms() const;
@@ -390,11 +388,9 @@ bool has_metadata(const Residue*, const MoleculeData &moldata,
 } //end of namespace SireMol
 
 Q_DECLARE_METATYPE(SireMol::Residue);
-Q_DECLARE_METATYPE(SireMol::Editor<SireMol::Residue>);
 Q_DECLARE_METATYPE(SireMol::Mover<SireMol::Residue>);
 Q_DECLARE_METATYPE(SireMol::Selector<SireMol::Residue>);
 
-Q_DECLARE_METATYPE(SireMol::Editor< SireMol::Selector<SireMol::Residue> >);
 Q_DECLARE_METATYPE(SireMol::Mover< SireMol::Selector<SireMol::Residue> >);
 
 SIRE_END_HEADER

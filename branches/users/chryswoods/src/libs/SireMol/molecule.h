@@ -49,9 +49,7 @@ class MolName;
 class MolNum;
 
 class Evaluator;
-
-template<class T>
-class Editor;
+class MolEditor;
 
 template<class T>
 class Mover;
@@ -144,7 +142,7 @@ public:
     
     Mover<Molecule> move() const;
     Evaluator evaluate() const;
-    Editor<Molecule> edit() const;
+    MolEditor edit() const;
     
     Atom select(const AtomID &atomid) const;
     Residue select(const ResID &resid) const;
@@ -222,7 +220,6 @@ protected:
 
 Q_DECLARE_METATYPE(SireMol::Molecule);
 Q_DECLARE_METATYPE(SireMol::Mover<SireMol::Molecule>);
-Q_DECLARE_METATYPE(SireMol::Editor<SireMol::Molecule>);
 
 SIRE_END_HEADER
 

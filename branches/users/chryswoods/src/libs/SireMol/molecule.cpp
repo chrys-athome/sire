@@ -34,12 +34,12 @@
 #include "atom.h"
 
 #include "molviewproperty.h"
+#include "moleditor.h"
 
 #include "evaluator.h"
 
 #include "mover.hpp"
 #include "selector.hpp"
-#include "editor.hpp"
 
 using namespace SireMol;
 
@@ -152,9 +152,9 @@ Evaluator Molecule::evaluate() const
 }
 
 /** Return an Editor that can edit any part of this molecule */
-Editor<Molecule> Molecule::edit() const
+MolEditor Molecule::edit() const
 {
-    return Editor<Molecule>(*this);
+    return MolEditor(*this);
 }
 
 /** Return the atom identified by 'atomid'
@@ -586,5 +586,4 @@ bool Molecule::hasMetadata(const PropertyName &key,
 }
 
 ///// explicitly instantiate manipulator classes
-template class Editor<Molecule>;
 template class Mover<Molecule>;
