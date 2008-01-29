@@ -139,6 +139,8 @@ public:
     CGStructureEditor transfer(const std::slice &s, const CGID &cgid) const;
     
     CGStructureEditor transferAll(const CGID &cgid) const;
+    
+    CutGroup commit() const;
 };
 
 /** This is the class used to edit a CutGroup's structure 
@@ -206,6 +208,10 @@ public:
     CGStructureEditor& transfer(const std::slice &s, const CGID &cgid);
     
     CGStructureEditor& transferAll(const CGID &resid);
+    
+    CutGroup commit() const;
+    
+    operator CutGroup() const;
 };
 
 }

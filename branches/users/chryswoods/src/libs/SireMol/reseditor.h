@@ -214,6 +214,10 @@ public:
     ResStructureEditor& transfer(const std::slice &s, const ResID &resid);
     
     ResStructureEditor& transferAll(const ResID &resid);
+
+private:
+    /** The unique ID number of this residue in this editor */
+    quint32 uid;
 };
 
 }

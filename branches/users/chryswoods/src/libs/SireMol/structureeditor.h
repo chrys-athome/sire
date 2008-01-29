@@ -75,6 +75,12 @@ class MolName;
 
 class MoleculeData;
 
+class MolStructureEditor;
+class SegStructureEditor;
+class ChainStructureEditor;
+class ResStructureEditor;
+class CGStructureEditor;
+class AtomStructureEditor;
 
 namespace detail
 {
@@ -180,17 +186,23 @@ protected:
     void removeChain(quint32 uid);
     void removeSegment(quint32 uid);
     
+    void removeAtoms(const AtomID &atomid);
+    void removeCutGroups(const CGID &cgid);
+    void removeResidues(const ResID &resid);
+    void removeChains(const ChainID &chainid);
+    void removeSegments(const SegID &segid);
+    
     void reparentAtom(quint32 uid, CGIdx cgidx);
     void reparentAtom(quint32 uid, ResIdx residx);
     void reparentAtom(quint32 uid, SegIdx segidx);
     
     void reparentResidue(quint32 uid, ChainIdx chainidx);
     
-    quint32 addAtom();
-    quint32 addCutGroup();
-    quint32 addResidue();
-    quint32 addChain();
-    quint32 addSegment();
+    AtomStructureEditor addAtom();
+    CGStructureEditor addCutGroup();
+    ResStructureEditor addResidue();
+    ChainStructureEditor addChain();
+    SegStructureEditor addSegment();
 
 private:
     /** This class is explicitly shared - this means that each copy

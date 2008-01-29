@@ -110,33 +110,43 @@ public:
     MolEditor& operator=(const Molecule &molecule);
     MolEditor& operator=(const MolEditor &other);
 
-    const MolName& name() const;
-    MolNum number() const;
+    AtomEditor select(const AtomID &atomid) const;
+    CGEditor select(const CGID &cgid) const;
+    ResEditor select(const ResID &resid) const;
+    ChainEditor select(const ChainID &chainid) const;
+    SegEditor select(const SegID &segid) const;
+    
+    AtomEditor atom(const AtomID &atomid) const;
+    CGEditor cutGroup(const CGID &cgid) const;
+    ResEditor residue(const ResID &resid) const;
+    ChainEditor chain(const ChainID &chainid) const;
+    SegEditor segment(const SegID &segid) const;
     
     MolEditor& rename(const MolName &name);
     MolEditor& renumber();
     
-    AtomStructureEditor add(const AtomName &atom);
-    AtomStructureEditor add(const AtomNum &atom);
+    AtomStructureEditor add(const AtomName &atom) const;
+    AtomStructureEditor add(const AtomNum &atom) const;
     
-    ResStructureEditor add(const ResName &residue);
-    ResStructureEditor add(const ResNum &residue);
+    ResStructureEditor add(const ResName &residue) const;
+    ResStructureEditor add(const ResNum &residue) const;
     
-    CGStructureEditor add(const CGName &cutgroup);
-    CGStructureEditor add(const CGNum &cutgroup);
+    CGStructureEditor add(const CGName &cutgroup) const;
+    CGStructureEditor add(const CGNum &cutgroup) const;
     
-    ChainStructureEditor add(const ChainName &chain);
-    ChainStructureEditor add(const ChainNum &chain);
+    ChainStructureEditor add(const ChainName &chain) const;
+    ChainStructureEditor add(const ChainNum &chain) const;
     
-    SegStructureEditor add(const SegName &segment);
-    SegStructureEditor add(const SegNum &segment);
+    SegStructureEditor add(const SegName &segment) const;
+    SegStructureEditor add(const SegNum &segment) const;
     
-    MolStructureEditor remove(const AtomID &atomid);
-    MolStructureEditor remove(const CGID &cgid);
-    MolStructureEditor remove(const ResID &resid);
-    MolStructureEditor remove(const ChainID &chainid);
-    MolStructureEditor remove(const SegID &segid);
-
+    MolStructureEditor remove(const AtomID &atomid) const;
+    MolStructureEditor remove(const CGID &cgid) const;
+    MolStructureEditor remove(const ResID &resid) const;
+    MolStructureEditor remove(const ChainID &chainid) const;
+    MolStructureEditor remove(const SegID &segid) const;
+    
+    Molecule commit() const;
 };
 
 /** This class is used to edit structural parts of the molecule,
@@ -159,6 +169,21 @@ public:
     
     ~MolStructureEditor();
     
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<MolStructureEditor>() );
+    }
+    
+    const char* what() const
+    {
+        return MolStructureEditor::typeName();
+    }
+    
+    MolStructureEditor* clone() const
+    {
+        return new MolStructureEditor(*this);
+    }
+    
     MolStructureEditor& operator=(const MoleculeView &molview);
     MolStructureEditor& operator=(const StructureEditor &other);
     MolStructureEditor& operator=(const MolStructureEditor &other);
@@ -177,7 +202,7 @@ public:
 
     const MolName& name() const;
     
-    MolEditor& rename(const MolName &name);
+    MolStructureEditor& rename(const MolName &name);
     
     AtomStructureEditor add(const AtomName &atom);
     AtomStructureEditor add(const AtomNum &atom);
@@ -194,11 +219,14 @@ public:
     SegStructureEditor add(const SegName &segment);
     SegStructureEditor add(const SegNum &segment);
     
-    MolStructureEditor remove(const AtomID &atomid);
-    MolStructureEditor remove(const CGID &cgid);
-    MolStructureEditor remove(const ResID &resid);
-    MolStructureEditor remove(const ChainID &chainid);
-    MolStructureEditor remove(const SegID &segid);
+    MolStructureEditor& remove(const AtomID &atomid);
+    MolStructureEditor& remove(const CGID &cgid);
+    MolStructureEditor& remove(const ResID &resid);
+    MolStructureEditor& remove(const ChainID &chainid);
+    MolStructureEditor& remove(const SegID &segid);
+    
+    Molecule commit() const;
+    operator Molecule() const;
 };
 
 }
