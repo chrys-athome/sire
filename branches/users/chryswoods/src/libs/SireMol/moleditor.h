@@ -187,6 +187,10 @@ public:
     MolStructureEditor& operator=(const MoleculeView &molview);
     MolStructureEditor& operator=(const StructureEditor &other);
     MolStructureEditor& operator=(const MolStructureEditor &other);
+
+    const MolName& name() const;
+    
+    int nAtoms() const;
     
     AtomStructureEditor select(const AtomID &atomid);
     CGStructureEditor select(const CGID &cgid);
@@ -199,8 +203,6 @@ public:
     ResStructureEditor residue(const ResID &resid);
     ChainStructureEditor chain(const ChainID &chainid);
     SegStructureEditor segment(const SegID &segid);
-
-    const MolName& name() const;
     
     MolStructureEditor& rename(const MolName &name);
     

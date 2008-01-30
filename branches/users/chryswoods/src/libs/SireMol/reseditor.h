@@ -47,11 +47,6 @@ QDataStream& operator>>(QDataStream&, SireMol::ResEditor&);
 QDataStream& operator<<(QDataStream&, const SireMol::ResStructureEditor&);
 QDataStream& operator>>(QDataStream&, SireMol::ResStructureEditor&);
 
-namespace std
-{
-class slice;
-}
-
 namespace SireMol
 {
 
@@ -127,7 +122,6 @@ public:
     
     MolStructureEditor remove() const;
     
-    ResStructureEditor reparent(ChainIdx chainidx) const;
     ResStructureEditor reparent(const ChainID &chainid) const;
 
     AtomStructureEditor add(const AtomName &atomname) const;
@@ -136,13 +130,13 @@ public:
     ResStructureEditor remove(const AtomID &atomid) const;
 
     ResStructureEditor remove(int i) const;
-    ResStructureEditor remove(const std::slice &s) const;
     
     ResStructureEditor transfer(const AtomID &atomid, const ResID &resid) const;
     ResStructureEditor transfer(int i, const ResID &resid) const;
-    ResStructureEditor transfer(const std::slice &s, const ResID &resid) const;
     
     ResStructureEditor transferAll(const ResID &resid) const;
+    
+    Residue commit() const;
 };
 
 /** This is the class used to edit a residue's structure 
@@ -182,6 +176,12 @@ public:
     ResStructureEditor& operator=(const Residue &residue);
     ResStructureEditor& operator=(const ResStructureEditor &other);
     
+    const ResName& name() const;
+    ResNum number() const;
+    ResIdx index() const;
+    
+    int nAtoms() const;
+    
     ChainStructureEditor chain();
     MolStructureEditor molecule();
     
@@ -198,7 +198,6 @@ public:
     
     MolStructureEditor remove();
     
-    ResStructureEditor& reparent(ChainIdx chainidx);
     ResStructureEditor& reparent(const ChainID &chainid);
 
     AtomStructureEditor add(const AtomName &atomname);
@@ -207,13 +206,15 @@ public:
     ResStructureEditor& remove(const AtomID &atomid);
 
     ResStructureEditor& remove(int i);
-    ResStructureEditor& remove(const std::slice &s);
     
     ResStructureEditor& transfer(const AtomID &atomid, const ResID &resid);
     ResStructureEditor& transfer(int i, const ResID &resid);
-    ResStructureEditor& transfer(const std::slice &s, const ResID &resid);
     
     ResStructureEditor& transferAll(const ResID &resid);
+
+    Residue commit() const;
+    
+    operator Residue() const;
 
 private:
     /** The unique ID number of this residue in this editor */

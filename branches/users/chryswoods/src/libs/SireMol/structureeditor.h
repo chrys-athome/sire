@@ -123,18 +123,30 @@ protected:
     quint32 getUID(ChainIdx chainidx) const;
     quint32 getUID(SegIdx segidx) const;
     
-    AtomIdx atomIdx(const AtomID &atomid) const;
-    CGIdx cgIdx(const CGID &cgid) const;
-    ResIdx resIdx(const ResID &resid) const;
-    ChainIdx chainIdx(const ChainID &chainid) const;
-    SegIdx segIdx(const SegID &segid) const;
-
-    CGIdx parentCutGroup(AtomIdx atomidx) const;
-    ResIdx parentResidue(AtomIdx atomidx) const;
-    ChainIdx parentChain(AtomIdx atomidx) const;
-    SegIdx parentSegment(AtomIdx atomidx) const;
+    quint32 getUID(const AtomID &atomid) const;
+    quint32 getUID(const CGID &cgid) const;
+    quint32 getUID(const ResID &resid) const;
+    quint32 getUID(const ChainID &chainid) const;
+    quint32 getUID(const SegID &segid) const;
     
-    ChainIdx parentChain(ResIdx residx) const;
+    int nAtomsInResidue(quint32 uid) const;
+    int nAtomsInCutGroup(quint32 uid) const;
+    int nAtomsInChain(quint32 uid) const;
+    int nAtomsInSegment(quint32 uid) const;
+    int nAtomsInMolecule() const;
+
+    quint32 atomInCutGroup(quint32 uid, int i) const;
+    quint32 atomInResidue(quint32 uid, int i) const;
+    quint32 atomInSegment(quint32 uid, int i) const;
+    
+    quint32 resInChain(quint32 uid, int i) const;
+
+    quint32 cutGroupParentOfAtom(quint32 uid) const;
+    quint32 residueParentOfAtom(quint32 uid) const;
+    quint32 chainParentOfAtom(quint32 uid) const;
+    quint32 segmentParentOfAtom(quint32 uid) const;
+    
+    ChainIdx chainParentOfResidue(quint32 uid) const;
     
     const MolName& molName() const;
     
@@ -157,6 +169,12 @@ protected:
     const SegName& segName(quint32 uid) const;
     SegNum segNum(quint32 uid) const;
     SegIdx segIdx(quint32 uid) const;
+    
+    AtomIdx atomIdx(const AtomID &atomid) const;
+    CGIdx cgIdx(const CGID &cgid) const;
+    ResIdx resIdx(const ResID &resid) const;
+    ChainIdx chainIdx(const ChainID &chainid) const;
+    SegIdx segIdx(const SegID &segid) const;
     
     void renameMolecule(const MolName &name);
     
@@ -203,6 +221,12 @@ protected:
     ResStructureEditor addResidue();
     ChainStructureEditor addChain();
     SegStructureEditor addSegment();
+
+    void assertValidAtom(quint32 uid) const;
+    void assertValidCutGroup(quint32 uid) const;
+    void assertValidResidue(quint32 uid) const;
+    void assertValidChain(quint32 uid) const;
+    void assertValidSegment(quint32 uid) const;
 
 private:
     /** This class is explicitly shared - this means that each copy

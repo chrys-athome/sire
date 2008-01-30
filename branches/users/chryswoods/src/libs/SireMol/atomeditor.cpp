@@ -394,25 +394,25 @@ AtomIdx AtomStructureEditor::index() const
 /** Return the editor for the residue that contains this atom */
 ResStructureEditor AtomStructureEditor::residue()
 {
-    return ResStructureEditor(*this, this->parentResidue(this->index()));
+    return ResStructureEditor(*this, resIdx(residueParentOfAtom(uid)));
 }
 
 /** Return the editor for the CutGrop that contains this atom */
 CGStructureEditor AtomStructureEditor::cutGroup()
 {
-    return CGStructureEditor(*this, this->parentCutGroup(this->index()));
+    return CGStructureEditor(*this, cgIdx(cutGroupParentOfAtom(uid)));
 }
 
 /** Return the editor for the chain that contains this atom */
 ChainStructureEditor AtomStructureEditor::chain()
 {
-    return ChainStructureEditor(*this, this->parentChain(this->index()));
+    return ChainStructureEditor(*this, chainIdx(chainParentOfAtom(uid)));
 }
 
 /** Return the editor for the segment that contain this atom */
 SegStructureEditor AtomStructureEditor::segment()
 {
-    return SegStructureEditor(*this, this->parentSegment(this->index()));
+    return SegStructureEditor(*this, segIdx(segmentParentOfAtom(uid)));
 }
 
 /** Return the editor for the molecule that contains this atom */

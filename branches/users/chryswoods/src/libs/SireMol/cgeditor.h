@@ -87,13 +87,13 @@ friend QDataStream& ::operator>>(QDataStream&, CGEditor&);
 public:
     CGEditor();
     
-    CGEditor(const CutGroup &residue);
+    CGEditor(const CutGroup &cutgroup);
     
     CGEditor(const CGEditor &other);
     
     ~CGEditor();
     
-    CGEditor& operator=(const CutGroup &residue);
+    CGEditor& operator=(const CutGroup &cutgroup);
     CGEditor& operator=(const CGEditor &other);
     
     static const char* typeName()
@@ -132,11 +132,9 @@ public:
     CGStructureEditor remove(const AtomID &atomid) const;
 
     CGStructureEditor remove(int i) const;
-    CGStructureEditor remove(const std::slice &s) const;
     
     CGStructureEditor transfer(const AtomID &atomid, const CGID &cgid) const;
     CGStructureEditor transfer(int i, const CGID &cgid) const;
-    CGStructureEditor transfer(const std::slice &s, const CGID &cgid) const;
     
     CGStructureEditor transferAll(const CGID &cgid) const;
     
@@ -180,6 +178,12 @@ public:
     CGStructureEditor& operator=(const CutGroup &cutgroup);
     CGStructureEditor& operator=(const CGStructureEditor &other);
     
+    const CGName& name() const;
+    CGNum number() const;
+    CGIdx index() const;
+    
+    int nAtoms() const;
+    
     MolStructureEditor molecule();
     
     AtomStructureEditor atom(int i);
@@ -201,13 +205,11 @@ public:
     CGStructureEditor& remove(const AtomID &atomid);
 
     CGStructureEditor& remove(int i);
-    CGStructureEditor& remove(const std::slice &s);
     
     CGStructureEditor& transfer(const AtomID &atomid, const CGID &cgid);
     CGStructureEditor& transfer(int i, const CGID &cgid);
-    CGStructureEditor& transfer(const std::slice &s, const CGID &cgid);
     
-    CGStructureEditor& transferAll(const CGID &resid);
+    CGStructureEditor& transferAll(const CGID &cgid);
     
     CutGroup commit() const;
     

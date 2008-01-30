@@ -577,6 +577,12 @@ const MolName& MolStructureEditor::name() const
     return this->molName();
 }
 
+/** Return the number of atoms in this molecule (may be zero!) */
+int MolStructureEditor::nAtoms() const
+{
+    return this->nAtomsInMolecule();
+}
+
 /** Rename this molecule to 'newname' */
 MolStructureEditor& MolStructureEditor::rename(const MolName &newname)
 {
