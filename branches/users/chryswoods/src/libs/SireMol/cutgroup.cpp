@@ -218,6 +218,15 @@ Atom CutGroup::atom(const AtomID &atomid) const
     return Atom( this->data(), cgidx + atomid );
 }
 
+/** Return the ith atom in this CutGroup
+
+    \throw SireError::invalid_index
+*/
+Atom CutGroup::atom(int i) const
+{
+    return Atom( this->data(), CGAtomIdx(cgidx,SireID::Index(i)) );
+}
+
 /** Return the atoms in this CutGroup that also have the ID 'atomid'
 
     \throw SireMol::missing_atom
@@ -243,6 +252,15 @@ Selector<Atom> CutGroup::atoms() const
 Atom CutGroup::select(const AtomID &atomid) const
 {
     return this->atom(atomid);
+}
+
+/** Return the ith atom in this CutGroup
+
+    \throw SireError::invalid_index
+*/
+Atom CutGroup::select(int i) const
+{
+    return this->atom(i);
 }
 
 /** Return the atoms in this CutGroup that also have the ID 'atomid'

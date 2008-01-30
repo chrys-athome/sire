@@ -164,11 +164,13 @@ public:
     Selector<Atom> atoms() const;
 
     Residue select(const ResID &resid) const;
+    Residue select(int i) const;
     
     Selector<Residue> selectAll(const ResID &resid) const;
     Selector<Residue> selectAllResidues() const;
     
     Residue residue(const ResID &resid) const;
+    Residue residue(int i) const;
     
     Selector<Residue> residues(const ResID &resid) const;
     Selector<Residue> residues() const;

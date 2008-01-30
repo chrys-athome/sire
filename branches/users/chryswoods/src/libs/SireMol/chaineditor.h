@@ -47,11 +47,6 @@ QDataStream& operator>>(QDataStream&, SireMol::ChainEditor&);
 QDataStream& operator<<(QDataStream&, const SireMol::ChainStructureEditor&);
 QDataStream& operator>>(QDataStream&, SireMol::ChainStructureEditor&);
 
-namespace std
-{
-class slice;
-}
-
 namespace SireMol
 {
 
@@ -124,8 +119,6 @@ public:
     ResEditor select(const ResID &resid) const;
     
     ChainEditor& rename(const ChainName &name);
-    ChainEditor& renumber(ChainNum number);
-    
     ChainStructureEditor reindex(ChainIdx index) const;
     
     MolStructureEditor remove() const;
@@ -137,13 +130,13 @@ public:
     ChainStructureEditor remove(const ResID &resid) const;
 
     ChainStructureEditor remove(int i) const;
-    ChainStructureEditor remove(const std::slice &s) const;
     
     ChainStructureEditor transfer(const ResID &resid, const ChainID &chainid) const;
     ChainStructureEditor transfer(int i, const ChainID &chainid) const;
-    ChainStructureEditor transfer(const std::slice &s, const ChainID &chainid) const;
     
     ChainStructureEditor transferAll(const ChainID &chainid) const;
+    
+    Chain commit() const;
 };
 
 /** This is the class used to edit a chain's structure 
@@ -180,6 +173,12 @@ public:
         return new ChainStructureEditor(*this);
     }
     
+    const ChainName& name() const;
+    ChainIdx index() const;
+    
+    int nAtoms() const;
+    int nResidues() const;
+    
     ChainStructureEditor& operator=(const Chain &chain);
     ChainStructureEditor& operator=(const ChainStructureEditor &other);
     
@@ -196,7 +195,6 @@ public:
     ResStructureEditor select(const ResID &resid);
     
     ChainStructureEditor& rename(const ChainName &name);
-    ChainStructureEditor& renumber(ChainNum number);
     
     ChainStructureEditor& reindex(ChainIdx index);
     
@@ -208,13 +206,19 @@ public:
     ChainStructureEditor& remove(const ResID &resid);
 
     ChainStructureEditor& remove(int i);
-    ChainStructureEditor& remove(const std::slice &s);
     
     ChainStructureEditor& transfer(const ResID &resid, const ChainID &chainid);
     ChainStructureEditor& transfer(int i, const ChainID &resid);
-    ChainStructureEditor& transfer(const std::slice &s, const ChainID &chainid);
     
     ChainStructureEditor& transferAll(const ChainID &chainid);
+    
+    Chain commit() const;
+    
+    operator Chain() const;
+
+private:
+    /** Unique ID to identify this chain in this molecule editor */
+    quint32 uid;
 };
 
 }

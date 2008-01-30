@@ -47,11 +47,6 @@ QDataStream& operator>>(QDataStream&, SireMol::SegEditor&);
 QDataStream& operator<<(QDataStream&, const SireMol::SegStructureEditor&);
 QDataStream& operator>>(QDataStream&, SireMol::SegStructureEditor&);
 
-namespace std
-{
-class slice;
-}
-
 namespace SireMol
 {
 
@@ -120,8 +115,6 @@ public:
     AtomEditor select(int i) const;
     
     SegEditor& rename(const SegName &name);
-    SegEditor& renumber(SegNum number);
-    
     SegStructureEditor reindex(SegIdx index) const;
     
     MolStructureEditor remove() const;
@@ -132,13 +125,13 @@ public:
     SegStructureEditor remove(const AtomID &atomid) const;
 
     SegStructureEditor remove(int i) const;
-    SegStructureEditor remove(const std::slice &s) const;
     
     SegStructureEditor transfer(const AtomID &atomid, const SegID &segid) const;
     SegStructureEditor transfer(int i, const SegID &segid) const;
-    SegStructureEditor transfer(const std::slice &s, const SegID &segid) const;
     
     SegStructureEditor transferAll(const SegID &segid) const;
+    
+    Segment commit() const;
 };
 
 /** This is the class used to edit a segment's structure 
@@ -178,6 +171,11 @@ public:
     SegStructureEditor& operator=(const Segment &residue);
     SegStructureEditor& operator=(const SegStructureEditor &other);
     
+    const SegName &name() const;
+    SegIdx index() const;
+    
+    int nAtoms() const;
+    
     MolStructureEditor molecule();
     
     AtomStructureEditor atom(int i);
@@ -187,8 +185,6 @@ public:
     AtomStructureEditor select(const AtomID &atomid);
     
     SegStructureEditor& rename(const SegName &name);
-    SegStructureEditor& renumber(SegNum number);
-    
     SegStructureEditor& reindex(SegIdx index);
     
     MolStructureEditor remove();
@@ -199,13 +195,19 @@ public:
     SegStructureEditor& remove(const AtomID &atomid);
 
     SegStructureEditor& remove(int i);
-    SegStructureEditor& remove(const std::slice &s);
     
     SegStructureEditor& transfer(const AtomID &atomid, const SegID &segid);
     SegStructureEditor& transfer(int i, const SegID &segid);
-    SegStructureEditor& transfer(const std::slice &s, const SegID &segid);
     
     SegStructureEditor& transferAll(const SegID &segid);
+    
+    Segment commit() const;
+    
+    operator Segment() const;
+
+private:
+    /** The unique ID for this segment in the molecule editor */
+    quint32 uid;
 };
 
 }

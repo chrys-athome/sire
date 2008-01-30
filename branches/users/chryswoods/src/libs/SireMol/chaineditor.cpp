@@ -26,3 +26,597 @@
   *
 \*********************************************/
 
+#include "atomeditor.h"
+#include "chaineditor.h"
+#include "reseditor.h"
+#include "chaineditor.h"
+#include "segeditor.h"
+#include "moleditor.h"
+
+#include "atom.h"
+#include "chain.h"
+#include "residue.h"
+#include "chain.h"
+#include "segment.h"
+#include "molecule.h"
+#include "mover.hpp"
+#include "selector.hpp"
+
+#include "chainresid.h"
+#include "groupatomids.h"
+
+#include "SireError/errors.h"
+
+#include "SireStream/datastream.h"
+
+using namespace SireMol;
+using namespace SireStream;
+
+// fully instantiate Editor<Chain>
+template class Editor<Chain>;
+//template class Selector< Editor<Chain> >;
+
+////////
+//////// Implementation of ChainEditor
+////////
+
+static const RegisterMetaType<ChainEditor> r_chaineditor;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
+                                       const ChainEditor &chaineditor)
+{
+    writeHeader(ds, r_chaineditor, 1);
+    
+    ds << static_cast<const Editor<Chain>&>(chaineditor);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
+                                       ChainEditor &chaineditor)
+{
+    VersionID v = readHeader(ds, r_chaineditor);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<Editor<Chain>&>(chaineditor);
+    }
+    else
+        throw version_error( v, "1", r_chaineditor, CODELOC );
+        
+    return ds;
+}
+
+/** Null constructor */
+ChainEditor::ChainEditor() : Editor<Chain>()
+{}
+
+/** Construct to edit a copy of the Chain 'chain' */
+ChainEditor::ChainEditor(const Chain &chain) : Editor<Chain>(chain)
+{}
+
+/** Copy constructor */
+ChainEditor::ChainEditor(const ChainEditor &other) : Editor<Chain>(other)
+{}
+
+/** Destructor */
+ChainEditor::~ChainEditor()
+{}
+
+/** Assign this editor so that it edits a copy of the Chain 'chain' */
+ChainEditor& ChainEditor::operator=(const Chain &chain)
+{
+    Editor<Chain>::operator=(chain);
+    return *this;
+}
+
+/** Copy assignment operator */
+ChainEditor& ChainEditor::operator=(const ChainEditor &other)
+{
+    Editor<Chain>::operator=(other);
+    return *this;
+}
+
+/** Return an editor for the molecule that contains this chain */
+MolEditor ChainEditor::molecule() const
+{
+    return MolEditor( Chain::molecule() );
+}
+
+/** Return an editor for the ith residue of this chain
+
+    \throw SireError::invalid_index
+*/
+ResEditor ChainEditor::residue(int i) const
+{
+    return ResEditor( Chain::residue(i) );
+}
+
+/** Return an editor for the atom in this chain that matches
+    the ID 'atomid'
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+AtomEditor ChainEditor::atom(const AtomID &atomid) const
+{
+    return AtomEditor( Chain::atom(atomid) );
+}
+
+/** Return an editor for the residue that matches the ID 'resid' in
+    this Chain
+    
+    \throw SireMol::missing_residue
+    \throw SireMol::duplicate_residue
+    \throw SireError::invalid_index
+*/
+ResEditor ChainEditor::residue(const ResID &resid) const
+{
+    return ResEditor( Chain::residue(resid) );
+}
+
+/** Return an editor for the ith residue of this Chain
+
+    \throw SireError::invalid_index
+*/
+ResEditor ChainEditor::select(const ResID &resid) const
+{
+    return ResEditor( Chain::select(resid) );
+}
+
+/** Return an editor for the residue that matches the ID 'resid' in
+    this Chain
+    
+    \throw SireMol::missing_residue
+    \throw SireMol::duplicate_residue
+    \throw SireError::invalid_index
+*/
+ResEditor ChainEditor::select(int i) const
+{
+    return ResEditor( Chain::select(i) );
+}
+
+/** Return an editor for the atom in this chain that matches
+    the ID 'atomid'
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+AtomEditor ChainEditor::select(const AtomID &atomid) const
+{
+    return AtomEditor( Chain::select(atomid) );
+}
+
+/** Rename this Chain to 'newname' */
+ChainEditor& ChainEditor::rename(const ChainName &newname)
+{
+    if (newname == this->name())
+        //nothing to do
+        return *this;
+        
+    throw SireError::incomplete_code( CODELOC );
+    
+    return *this;
+}
+
+/** Move this Chain to index 'newidx' - this will move it
+    to the start or end if this index is out of range */
+ChainStructureEditor ChainEditor::reindex(ChainIdx newidx) const
+{
+    ChainStructureEditor editor(*this);
+    editor.reindex(newidx);
+    
+    return editor;
+}
+
+/** Complete remove this Chain, and return an editor
+    for the molecule that contained it */
+MolStructureEditor ChainEditor::remove() const
+{
+    ChainStructureEditor editor(*this);
+    
+    return editor.remove();
+}
+
+/** Add a residue called 'resname' to this Chain and return
+    an editor for that residue */
+ResStructureEditor ChainEditor::add(const ResName &resname) const
+{
+    ChainStructureEditor editor(*this);
+    
+    return editor.add(resname);
+}
+
+/** Add a residue with number 'resnum' to this Chain and return
+    an editor for that residue */
+ResStructureEditor ChainEditor::add(ResNum resnum) const
+{
+    ChainStructureEditor editor(*this);
+    
+    return editor.add(resnum);
+}
+
+/** Completely remove all residues that match the ID 'resid' from 
+    this Chain 
+    
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+*/
+ChainStructureEditor ChainEditor::remove(const ResID &resid) const
+{
+    ChainStructureEditor editor(*this);
+    editor.remove(resid);
+    
+    return editor;
+}
+
+/** Remove the ith residue from this Chain
+
+    \throw SireError::invalid_index
+*/
+ChainStructureEditor ChainEditor::remove(int i) const
+{
+    ChainStructureEditor editor(*this);
+    editor.remove(i);
+    
+    return editor;
+}
+
+/** Transfer all residues that match the ID 'resid' in this Chain 
+    to the Chain that matches the ID 'cgid'
+    
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_chain
+    \throw SireMol::duplicate_chain
+    \throw SireError::invalid_index
+*/
+ChainStructureEditor ChainEditor::transfer(const ResID &resid, 
+                                           const ChainID &cgid) const
+{
+    ChainStructureEditor editor(*this);
+    editor.transfer(resid, cgid);
+    
+    return editor;
+}
+                                     
+/** Transfer the ith residue of this Chain into the Chain identified
+    by the ID 'cgid'
+    
+    \throw SireError::invalid_index
+*/
+ChainStructureEditor ChainEditor::transfer(int i, const ChainID &cgid) const
+{
+    ChainStructureEditor editor(*this);
+    editor.transfer(i, cgid);
+    
+    return editor;
+}
+
+/** Completely transfer all of the residues in this Chain to 
+    the Chain that matches the ID 'cgid'
+    
+    \throw SireMol::missing_chain
+    \throw SireMol::duplicate_chain
+    \throw SireError::invalid_index
+*/
+ChainStructureEditor ChainEditor::transferAll(const ChainID &cgid) const
+{
+    ChainStructureEditor editor(*this);
+    editor.transferAll(cgid);
+    
+    return editor;
+}
+
+/** Commit the changes made by this editor and return the 
+    updated Chain */
+Chain ChainEditor::commit() const
+{
+    return *this;
+}
+
+////////
+//////// Implementation of ChainStructureEditor
+////////
+
+static const RegisterMetaType<ChainStructureEditor> r_cgstructeditor;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
+                                       const ChainStructureEditor &chaineditor)
+{
+    writeHeader(ds, r_cgstructeditor, 1);
+    
+    ds << chaineditor.uid
+       << static_cast<const StructureEditor&>(chaineditor);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
+                                       ChainStructureEditor &chaineditor)
+{
+    VersionID v = readHeader(ds, r_cgstructeditor);
+    
+    if (v == 1)
+    {
+        ds >> chaineditor.uid
+           >> static_cast<StructureEditor&>(chaineditor);
+    }
+    else
+        throw version_error( v, "1", r_cgstructeditor, CODELOC );
+        
+    return ds;
+}
+
+/** Null constructor */
+ChainStructureEditor::ChainStructureEditor()
+                  : StructureEditor(), uid(0)
+{}
+
+/** Construct to edit a copy of the Chain 'chain' */
+ChainStructureEditor::ChainStructureEditor(const Chain &chain)
+                  : StructureEditor(chain.data())
+{
+    uid = this->getUID(chain.index());
+}
+
+/** Construct to edit the Chain at index 'cgidx' in the molecule 
+    also being edited in 'data'
+    
+    \throw SireError::invalid_index
+*/
+ChainStructureEditor::ChainStructureEditor(const StructureEditor &data, ChainIdx cgidx)
+                  : StructureEditor(data)
+{
+    uid = this->getUID(cgidx);
+}
+
+/** Copy constructor */
+ChainStructureEditor::ChainStructureEditor(const ChainStructureEditor &other)
+                  : StructureEditor(other), uid(other.uid)
+{}
+
+/** Destructor */
+ChainStructureEditor::~ChainStructureEditor()
+{}
+
+/** Assign this editor so that it edits a copy of the Chain 'chain' */
+ChainStructureEditor& ChainStructureEditor::operator=(const Chain &chain)
+{
+    StructureEditor::operator=(chain.data());
+    uid = this->getUID(chain.index());
+    
+    return *this;
+}
+
+/** Copy assignment operator */
+ChainStructureEditor& ChainStructureEditor::operator=(const ChainStructureEditor &other)
+{
+    StructureEditor::operator=(other);
+    uid = other.uid;
+    
+    return *this;
+}
+
+/** Return the name of this Chain */
+const ChainName& ChainStructureEditor::name() const
+{
+    return this->chainName(uid);
+}
+
+/** Return the index of this Chain in the molecule */
+ChainIdx ChainStructureEditor::index() const
+{
+    return this->chainIdx(uid);
+}
+
+/** Return the number of atoms in this Chain (could be zero!) */
+int ChainStructureEditor::nAtoms() const
+{
+    return this->nAtomsInChain(uid);
+}
+
+/** Return the number of residues in this Chain (could be zero!) */
+int ChainStructureEditor::nResidues() const
+{
+    return this->nResiduesInChain(uid);
+}
+
+/** Return an editor for the molecule that contains this Chain */
+MolStructureEditor ChainStructureEditor::molecule()
+{
+    return MolStructureEditor(*this);
+}
+
+/** Return an editor for the ith residue of this Chain
+
+    \throw SireError::invalid_index
+*/
+ResStructureEditor ChainStructureEditor::residue(int i)
+{
+    return ResStructureEditor(*this, resIdx( residueInChain(uid,i) ));
+}
+
+/** Return an editor for the residue that matches the ID 'resid' in
+    this chain
+    
+    \throw SireMol::missing_residue
+    \throw SireMol::duplicate_residue
+    \throw SireError::invalid_index
+*/
+ResStructureEditor ChainStructureEditor::residue(const ResID &resid)
+{
+    return ResStructureEditor(*this, resIdx(this->index() + resid));
+}
+
+/** Return an editor for the atom that matches the ID 'atomid' in
+    this Chain
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+AtomStructureEditor ChainStructureEditor::atom(const AtomID &atomid)
+{
+    return AtomStructureEditor(*this, atomIdx(this->index() + atomid));
+}
+
+/** Return an editor for the ith residue of this Chain
+
+    \throw SireError::invalid_index
+*/
+ResStructureEditor ChainStructureEditor::select(int i)
+{
+    return ResStructureEditor(*this, resIdx( residueInChain(uid,i) ));
+}
+
+/** Return an editor for the atom that matches the ID 'atomid' in
+    this Chain
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+AtomStructureEditor ChainStructureEditor::select(const AtomID &atomid)
+{
+    return AtomStructureEditor(*this, atomIdx( this->index() + atomid ));
+}
+
+/** Rename this Chain to 'newname' */
+ChainStructureEditor& ChainStructureEditor::rename(const ChainName &newname)
+{
+    this->renameChain(uid, newname);
+    return *this;
+}
+
+/** Move this Chain to index 'newidx' - this will move it
+    to the start or end if this index is out of range */
+ChainStructureEditor& ChainStructureEditor::reindex(ChainIdx newidx)
+{
+    this->reindexChain(uid, newidx);
+    return *this;
+}
+
+/** Complete remove this Chain, and return an editor
+    for the molecule that contained it */
+MolStructureEditor ChainStructureEditor::remove()
+{
+    this->removeChain(uid);
+    return MolStructureEditor(*this);
+}
+
+/** Add a residue called 'resname' to this Chain and return
+    an editor for that residue */
+ResStructureEditor ChainStructureEditor::add(const ResName &resname)
+{
+    this->assertValidChain(uid);
+
+    ResStructureEditor residue = this->addResidue();
+    residue.rename(resname);
+    residue.reparent( this->index() );
+    
+    return residue;
+}
+
+/** Add a residue with number 'resnum' to this Chain and return
+    an editor for that residue */
+ResStructureEditor ChainStructureEditor::add(ResNum resnum)
+{
+    this->assertValidChain(uid);
+
+    ResStructureEditor residue = this->addResidue();
+    residue.renumber(resnum);
+    residue.reparent( this->index() );
+    
+    return residue;
+}
+
+/** Completely remove all residues that match the ID 'resid' from 
+    this Chain 
+    
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+*/
+ChainStructureEditor& ChainStructureEditor::remove(const ResID &resid)
+{
+    this->removeResidues( this->index() + resid );
+    return *this;
+}
+
+/** Remove the ith residue from this Chain
+
+    \throw SireError::invalid_index
+*/
+ChainStructureEditor& ChainStructureEditor::remove(int i)
+{
+    this->removeResidues( resIdx(residueInChain(uid,i)) );
+    return *this;
+}
+
+/** Transfer all residues that match the ID 'resid' in this Chain 
+    to the Chain that matches the ID 'chainid'
+    
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_chain
+    \throw SireMol::duplicate_chain
+    \throw SireError::invalid_index
+*/
+ChainStructureEditor& ChainStructureEditor::transfer(const ResID &resid, 
+                                                     const ChainID &chainid)
+{
+    this->reparentResidue( this->getUID(this->index() + resid),
+                           this->chainIdx(chainid) );
+                        
+    return *this;
+}
+
+/** Transfer the ith residue of this Chain into the Chain identified
+    by the ID 'chainid'
+    
+    \throw SireError::invalid_index
+*/
+ChainStructureEditor& ChainStructureEditor::transfer(int i, 
+                                                     const ChainID &chainid)
+{
+    this->reparentResidue( residueInChain(uid,i), this->chainIdx(chainid) );
+    return *this;
+}
+
+/** Completely transfer all of the residues in this Chain to 
+    the Chain that matches the ID 'cgid'
+    
+    \throw SireMol::missing_chain
+    \throw SireMol::duplicate_chain
+    \throw SireError::invalid_index
+*/
+ChainStructureEditor& ChainStructureEditor::transferAll(const ChainID &chainid)
+{
+    ChainIdx chainidx = this->chainIdx(chainid);
+    
+    int nres = this->nResidues();
+    
+    for (int i=0; i<nres; ++i)
+    {
+        this->reparentResidue( residueInChain(uid,i), chainidx );
+    }
+    
+    return *this;
+}
+
+/** Commit the changes made by this editor and return the 
+    updated Chain */
+Chain ChainStructureEditor::commit() const
+{
+    return Chain( this->commitChanges(), this->index() );
+}
+
+/** Allow automatic casting of this editor to a Chain */
+ChainStructureEditor::operator Chain() const
+{
+    return this->commit();
+}

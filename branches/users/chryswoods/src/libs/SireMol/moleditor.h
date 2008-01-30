@@ -132,13 +132,8 @@ public:
     ResStructureEditor add(const ResNum &residue) const;
     
     CGStructureEditor add(const CGName &cutgroup) const;
-    CGStructureEditor add(const CGNum &cutgroup) const;
-    
     ChainStructureEditor add(const ChainName &chain) const;
-    ChainStructureEditor add(const ChainNum &chain) const;
-    
     SegStructureEditor add(const SegName &segment) const;
-    SegStructureEditor add(const SegNum &segment) const;
     
     MolStructureEditor remove(const AtomID &atomid) const;
     MolStructureEditor remove(const CGID &cgid) const;
@@ -191,6 +186,10 @@ public:
     const MolName& name() const;
     
     int nAtoms() const;
+    int nCutGroups() const;
+    int nResidues() const;
+    int nChains() const;
+    int nSegments() const;
     
     AtomStructureEditor select(const AtomID &atomid);
     CGStructureEditor select(const CGID &cgid);
@@ -213,13 +212,8 @@ public:
     ResStructureEditor add(const ResNum &residue);
     
     CGStructureEditor add(const CGName &cutgroup);
-    CGStructureEditor add(const CGNum &cutgroup);
-    
     ChainStructureEditor add(const ChainName &chain);
-    ChainStructureEditor add(const ChainNum &chain);
-    
     SegStructureEditor add(const SegName &segment);
-    SegStructureEditor add(const SegNum &segment);
     
     MolStructureEditor& remove(const AtomID &atomid);
     MolStructureEditor& remove(const CGID &cgid);

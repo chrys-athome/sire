@@ -714,6 +714,61 @@ QList<ResIdx> MoleculeInfoData::getResiduesIn(const ChainID &chainid) const
     return residxs;
 }
 
+/** Return the index of the ith atom in the CutGroup at index 'cgidx'
+
+    \throw SireError::invalid_index
+*/
+AtomIdx MoleculeInfoData::getAtom(CGIdx cgidx, int i) const
+{
+    const QList<AtomIdx> &atomidxs = this->getAtomsIn(cgidx);
+    
+    return atomidxs.at( Index(i).map(atomidxs.count()) );
+}
+
+/** Return the index of the ith atom in the residue at index 'residx'
+
+    \throw SireError::invalid_index
+*/
+AtomIdx MoleculeInfoData::getAtom(ResIdx residx, int i) const
+{
+    const QList<AtomIdx> &atomidxs = this->getAtomsIn(residx);
+    
+    return atomidxs.at( Index(i).map(atomidxs.count()) );
+}
+
+/** Return the index of the ith atom in the chain at index 'chainidx'
+
+    \throw SireError::invalid_index
+*/
+AtomIdx MoleculeInfoData::getAtom(ChainIdx chainidx, int i) const
+{
+    QList<AtomIdx> atomidxs = this->getAtomsIn(chainidx);
+    
+    return atomidxs.at( Index(i).map(atomidxs.count()) );
+}
+
+/** Return the index of the ith atom in the segment at index 'cgidx'
+
+    \throw SireError::invalid_index
+*/
+AtomIdx MoleculeInfoData::getAtom(SegIdx segidx, int i) const
+{
+    const QList<AtomIdx> &atomidxs = this->getAtomsIn(segidx);
+    
+    return atomidxs.at( Index(i).map(atomidxs.count()) );
+}
+
+/** Return the index of the ith residue in the chain at index 'chainidx'
+
+    \throw SireError::invalid_index
+*/
+ResIdx MoleculeInfoData::getResidue(ChainIdx chainidx, int i) const
+{
+    const QList<ResIdx> &residxs = this->getResiduesIn(chainidx);
+    
+    return residxs.at( Index(i).map(residxs.count()) );
+}
+
 /** Return the indicies of all of the atoms in this molecule */
 QList<AtomIdx> MoleculeInfoData::getAtoms() const
 {

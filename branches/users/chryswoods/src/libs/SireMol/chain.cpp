@@ -313,6 +313,15 @@ Residue Chain::residue(const ResID &resid) const
     return Residue( this->data(), chainidx + resid );
 }
 
+/** Return the ith residue in this chain
+
+    \throw SireError::invalid_index
+*/
+Residue Chain::residue(int i) const
+{
+    return Residue( this->data(), d->info().getResidue(chainidx,i) );
+}
+
 /** Return the residues in this chain that also have ID 'resid'
 
     \throw SireMol::missing_residue
@@ -338,6 +347,15 @@ Selector<Residue> Chain::residues() const
 Residue Chain::select(const ResID &resid) const
 {
     return this->residue(resid);
+}
+
+/** Return the ith residue in this chain
+
+    \throw SireError::invalid_index
+*/
+Residue Chain::select(int i) const
+{
+    return this->residue(i);
 }
 
 /** Return the residues in this chain that also have ID 'resid'

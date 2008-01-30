@@ -286,14 +286,6 @@ CGStructureEditor MolEditor::add(const CGName &name) const
     return editor.add(name);
 }
 
-/** Add a CutGroup with number 'number' and return an editor that
-    can be used to edit it */
-CGStructureEditor MolEditor::add(const CGNum &number) const
-{
-    MolStructureEditor editor(*this);
-    return editor.add(number);
-}
-
 /** Add a chain called 'name' and return an editor that can
     be used to edit it */
 ChainStructureEditor MolEditor::add(const ChainName &name) const
@@ -302,28 +294,12 @@ ChainStructureEditor MolEditor::add(const ChainName &name) const
     return editor.add(name);
 }
 
-/** Add a chain with number 'number' and return an editor that
-    can be used to edit it */
-ChainStructureEditor MolEditor::add(const ChainNum &number) const
-{
-    MolStructureEditor editor(*this);
-    return editor.add(number);
-}
-
 /** Add a segment called 'name' and return an editor that can
     be used to edit it */
 SegStructureEditor MolEditor::add(const SegName &name) const
 {
     MolStructureEditor editor(*this);
     return editor.add(name);
-}
-
-/** Add a segment with number 'number' and return an editor that
-    can be used to edit it */
-SegStructureEditor MolEditor::add(const SegNum &number) const
-{
-    MolStructureEditor editor(*this);
-    return editor.add(number);
 }
 
 /** Remove all atoms from this molecule that have the ID 'atomid'.
@@ -583,6 +559,30 @@ int MolStructureEditor::nAtoms() const
     return this->nAtomsInMolecule();
 }
 
+/** Return the number of CutGroups in this molecule (may be zero!) */
+int MolStructureEditor::nCutGroups() const
+{
+    return this->nCutGroupsInMolecule();
+}
+
+/** Return the number of residues in this molecule (may be zero!) */
+int MolStructureEditor::nResidues() const
+{
+    return this->nResiduesInMolecule();
+}
+
+/** Return the number of chains in this molecule (may be zero!) */
+int MolStructureEditor::nChains() const
+{
+    return this->nChainsInMolecule();
+}
+
+/** Return the number of segments in this molecule (may be zero!) */
+int MolStructureEditor::nSegments() const
+{
+    return this->nSegmentsInMolecule();
+}
+
 /** Rename this molecule to 'newname' */
 MolStructureEditor& MolStructureEditor::rename(const MolName &newname)
 {
@@ -635,15 +635,6 @@ CGStructureEditor MolStructureEditor::add(const CGName &name)
     return editor;
 }
 
-/** Add a CutGroup with number 'number' to this molecule and 
-    return an editor for this CutGroup */
-CGStructureEditor MolStructureEditor::add(const CGNum &number)
-{
-    CGStructureEditor editor = this->addCutGroup();
-    editor.renumber(number);
-    return editor;
-}
-
 /** Add a chain called 'name' to this molecule and return an
     editor for this chain */
 ChainStructureEditor MolStructureEditor::add(const ChainName &name)
@@ -653,30 +644,12 @@ ChainStructureEditor MolStructureEditor::add(const ChainName &name)
     return editor;
 }
 
-/** Add a chain with number 'number' to this molecule and 
-    return an editor for this chain */
-ChainStructureEditor MolStructureEditor::add(const ChainNum &number)
-{
-    ChainStructureEditor editor = this->addChain();
-    editor.renumber(number);
-    return editor;
-}
-
 /** Add a segment called 'name' to this molecule and return an
     editor for this segment */
 SegStructureEditor MolStructureEditor::add(const SegName &name)
 {
     SegStructureEditor editor = this->addSegment();
     editor.rename(name);
-    return editor;
-}
-
-/** Add a segment with number 'number' to this molecule and 
-    return an editor for this segment */
-SegStructureEditor MolStructureEditor::add(const SegNum &number)
-{
-    SegStructureEditor editor = this->addSegment();
-    editor.renumber(number);
     return editor;
 }
 

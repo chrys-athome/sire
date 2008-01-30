@@ -52,7 +52,6 @@ class AtomName;
 class AtomID;
 
 class CGIdx;
-class CGNum;
 class CGName;
 class CGID;
 
@@ -62,12 +61,10 @@ class ResName;
 class ResID;
 
 class ChainIdx;
-class ChainNum;
 class ChainName;
 class ChainID;
 
 class SegIdx;
-class SegNum;
 class SegName;
 class SegID;
 
@@ -135,11 +132,18 @@ protected:
     int nAtomsInSegment(quint32 uid) const;
     int nAtomsInMolecule() const;
 
+    int nResiduesInChain(quint32 uid) const;
+
+    int nResiduesInMolecule() const;
+    int nChainsInMolecule() const;
+    int nSegmentsInMolecule() const;
+    int nCutGroupsInMolecule() const;
+
     quint32 atomInCutGroup(quint32 uid, int i) const;
     quint32 atomInResidue(quint32 uid, int i) const;
     quint32 atomInSegment(quint32 uid, int i) const;
     
-    quint32 resInChain(quint32 uid, int i) const;
+    quint32 residueInChain(quint32 uid, int i) const;
 
     quint32 cutGroupParentOfAtom(quint32 uid) const;
     quint32 residueParentOfAtom(quint32 uid) const;
@@ -155,7 +159,6 @@ protected:
     AtomIdx atomIdx(quint32 uid) const;
     
     const CGName& cgName(quint32 uid) const;
-    CGNum cgNumber(quint32 uid) const;
     CGIdx cgIdx(quint32 uid) const;
     
     const ResName& resName(quint32 uid) const;
@@ -163,11 +166,9 @@ protected:
     ResIdx resIdx(quint32 uid) const;
     
     const ChainName& chainName(quint32 uid) const;
-    ChainNum chainNum(quint32 uid) const;
     ChainIdx chainIdx(quint32 uid) const;
     
     const SegName& segName(quint32 uid) const;
-    SegNum segNum(quint32 uid) const;
     SegIdx segIdx(quint32 uid) const;
     
     AtomIdx atomIdx(const AtomID &atomid) const;
@@ -183,7 +184,6 @@ protected:
     void reindexAtom(quint32 uid, AtomIdx index);
     
     void renameCutGroup(quint32 uid, const CGName &name);
-    void renumberCutGroup(quint32 uid, CGNum number);
     void reindexCutGroup(quint32 uid, CGIdx index);
     
     void renameResidue(quint32 uid, const ResName &name);
@@ -191,12 +191,10 @@ protected:
     void reindexResidue(quint32 uid, ResIdx index);
     
     void renameChain(quint32 uid, const ChainName &name);
-    void renumberChain(quint32 uid, ChainNum number);
     void reindexChain(quint32 uid, ChainIdx index);
     
     void renameSegment(quint32 uid, const SegName &name);
-    void renumberSegment(quint32 uid, SegNum number);
-    void renumberSegment(quint32 uid, SegIdx index);
+    void reindexSegment(quint32 uid, SegIdx index);
     
     void removeAtom(quint32 uid);
     void removeCutGroup(quint32 uid);

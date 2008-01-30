@@ -120,8 +120,6 @@ public:
     AtomEditor select(int i) const;
     
     CGEditor& rename(const CGName &name);
-    CGEditor& renumber(CGNum number);
-    
     CGStructureEditor reindex(CGIdx index) const;
     
     MolStructureEditor remove() const;
@@ -179,7 +177,6 @@ public:
     CGStructureEditor& operator=(const CGStructureEditor &other);
     
     const CGName& name() const;
-    CGNum number() const;
     CGIdx index() const;
     
     int nAtoms() const;
@@ -193,8 +190,6 @@ public:
     AtomStructureEditor select(const AtomID &atomid);
     
     CGStructureEditor& rename(const CGName &name);
-    CGStructureEditor& renumber(CGNum number);
-    
     CGStructureEditor& reindex(CGIdx index);
     
     MolStructureEditor remove();
@@ -214,6 +209,10 @@ public:
     CutGroup commit() const;
     
     operator CutGroup() const;
+
+private:
+    /** Unique ID number for this CutGroup in the molecule editor */
+    quint32 uid;
 };
 
 }

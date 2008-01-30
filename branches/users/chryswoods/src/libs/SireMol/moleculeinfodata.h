@@ -193,6 +193,13 @@ public:
 
     QList<AtomIdx> getAtoms() const;
 
+    AtomIdx getAtom(CGIdx cgidx, int i) const;
+    AtomIdx getAtom(ResIdx residx, int i) const;
+    AtomIdx getAtom(ChainIdx chainidx, int i) const;
+    AtomIdx getAtom(SegIdx segidx, int i) const;
+    
+    ResIdx getResidue(ChainIdx chainidx, int i) const;
+
     const QList<AtomIdx>& getAtomsIn(ResIdx residx) const;
     QList<AtomIdx> getAtomsIn(const ResID &resid) const;
     QList<AtomIdx> getAtomsIn(ResIdx residx, const AtomName &name) const;

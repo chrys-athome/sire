@@ -26,7 +26,25 @@
   *
 \*********************************************/
 
+#include "atomeditor.h"
 #include "cgeditor.h"
+#include "reseditor.h"
+#include "chaineditor.h"
+#include "segeditor.h"
+#include "moleditor.h"
+
+#include "atom.h"
+#include "cutgroup.h"
+#include "residue.h"
+#include "chain.h"
+#include "segment.h"
+#include "molecule.h"
+#include "mover.hpp"
+#include "selector.hpp"
+
+#include "groupatomids.h"
+
+#include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
 
@@ -71,31 +89,49 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 }
 
 /** Null constructor */
-CGEditor::CGEditor();
+CGEditor::CGEditor() : Editor<CutGroup>()
+{}
 
 /** Construct to edit a copy of the CutGroup 'cutgroup' */
-CGEditor::CGEditor(const CutGroup &cutgroup);
+CGEditor::CGEditor(const CutGroup &cutgroup) : Editor<CutGroup>(cutgroup)
+{}
 
 /** Copy constructor */
-CGEditor::CGEditor(const CGEditor &other);
+CGEditor::CGEditor(const CGEditor &other) : Editor<CutGroup>(other)
+{}
 
 /** Destructor */
-CGEditor::~CGEditor();
+CGEditor::~CGEditor()
+{}
 
 /** Assign this editor so that it edits a copy of the CutGroup 'cutgroup' */
-CGEditor& CGEditor::operator=(const CutGroup &cutgroup);
+CGEditor& CGEditor::operator=(const CutGroup &cutgroup)
+{
+    Editor<CutGroup>::operator=(cutgroup);
+    return *this;
+}
 
 /** Copy assignment operator */
-CGEditor& CGEditor::operator=(const CGEditor &other);
+CGEditor& CGEditor::operator=(const CGEditor &other)
+{
+    Editor<CutGroup>::operator=(other);
+    return *this;
+}
 
 /** Return an editor for the molecule that contains this CutGroup */
-MolEditor CGEditor::molecule() const;
+MolEditor CGEditor::molecule() const
+{
+    return MolEditor( CutGroup::molecule() );
+}
 
 /** Return an editor for the ith atom of this CutGroup
 
     \throw SireError::invalid_index
 */
-AtomEditor CGEditor::atom(int i) const;
+AtomEditor CGEditor::atom(int i) const
+{
+    return AtomEditor( CutGroup::atom(i) );
+}
 
 /** Return an editor for the atom that matches the ID 'atomid' in
     this CutGroup
@@ -104,13 +140,19 @@ AtomEditor CGEditor::atom(int i) const;
     \throw SireMol::duplicate_atom
     \throw SireError::invalid_index
 */
-AtomEditor CGEditor::atom(const AtomID &atomid) const;
+AtomEditor CGEditor::atom(const AtomID &atomid) const
+{
+    return AtomEditor( CutGroup::atom(atomid) );
+}
 
 /** Return an editor for the ith atom of this CutGroup
 
     \throw SireError::invalid_index
 */
-AtomEditor CGEditor::select(const AtomID &atomid) const;
+AtomEditor CGEditor::select(const AtomID &atomid) const
+{
+    return AtomEditor( CutGroup::select(atomid) );
+}
 
 /** Return an editor for the atom that matches the ID 'atomid' in
     this CutGroup
@@ -119,29 +161,59 @@ AtomEditor CGEditor::select(const AtomID &atomid) const;
     \throw SireMol::duplicate_atom
     \throw SireError::invalid_index
 */
-AtomEditor CGEditor::select(int i) const;
+AtomEditor CGEditor::select(int i) const
+{
+    return AtomEditor( CutGroup::select(i) );
+}
 
 /** Rename this CutGroup to 'newname' */
-CGEditor& CGEditor::rename(const CGName &newname);
-
-/** Renumber this CutGroup to 'newnum' */
-CGEditor& CGEditor::renumber(CGNum newnum);
+CGEditor& CGEditor::rename(const CGName &newname)
+{
+    if (newname == this->name())
+        //nothing to do
+        return *this;
+        
+    throw SireError::incomplete_code( CODELOC );
+    
+    return *this;
+}
 
 /** Move this CutGroup to index 'newidx' - this will move it
     to the start or end if this index is out of range */
-CGStructureEditor CGEditor::reindex(CGIdx newidx) const;
+CGStructureEditor CGEditor::reindex(CGIdx newidx) const
+{
+    CGStructureEditor editor(*this);
+    editor.reindex(newidx);
+    
+    return editor;
+}
 
 /** Complete remove this CutGroup, and return an editor
     for the molecule that contained it */
-MolStructureEditor CGEditor::remove() const;
+MolStructureEditor CGEditor::remove() const
+{
+    CGStructureEditor editor(*this);
+    
+    return editor.remove();
+}
 
 /** Add an atom called 'atomname' to this CutGroup and return
     an editor for that atom */
-AtomStructureEditor CGEditor::add(const AtomName &atomname) const;
+AtomStructureEditor CGEditor::add(const AtomName &atomname) const
+{
+    CGStructureEditor editor(*this);
+    
+    return editor.add(atomname);
+}
 
 /** Add an atom with number 'atomnum' to this CutGroup and return
     an editor for that atom */
-AtomStructureEditor CGEditor::add(AtomNum atomnum) const;
+AtomStructureEditor CGEditor::add(AtomNum atomnum) const
+{
+    CGStructureEditor editor(*this);
+    
+    return editor.add(atomnum);
+}
 
 /** Completely remove all atoms that match the ID 'atomid' from 
     this CutGroup 
@@ -149,13 +221,25 @@ AtomStructureEditor CGEditor::add(AtomNum atomnum) const;
     \throw SireMol::missing_atom
     \throw SireError::invalid_index
 */
-CGStructureEditor CGEditor::remove(const AtomID &atomid) const;
+CGStructureEditor CGEditor::remove(const AtomID &atomid) const
+{
+    CGStructureEditor editor(*this);
+    editor.remove(atomid);
+    
+    return editor;
+}
 
 /** Remove the ith atom from this CutGroup
 
     \throw SireError::invalid_index
 */
-CGStructureEditor CGEditor::remove(int i) const;
+CGStructureEditor CGEditor::remove(int i) const
+{
+    CGStructureEditor editor(*this);
+    editor.remove(i);
+    
+    return editor;
+}
 
 /** Transfer all atoms that match the ID 'atomid' in this CutGroup 
     to the CutGroup that matches the ID 'cgid'
@@ -167,13 +251,25 @@ CGStructureEditor CGEditor::remove(int i) const;
 */
 CGStructureEditor CGEditor::transfer(const AtomID &atomid, 
                                      const CGID &cgid) const
+{
+    CGStructureEditor editor(*this);
+    editor.transfer(atomid, cgid);
+    
+    return editor;
+}
                                      
 /** Transfer the ith atom of this CutGroup into the CutGroup identified
     by the ID 'cgid'
     
     \throw SireError::invalid_index
 */
-CGStructureEditor CGEditor::transfer(int i, const CGID &cgid) const;
+CGStructureEditor CGEditor::transfer(int i, const CGID &cgid) const
+{
+    CGStructureEditor editor(*this);
+    editor.transfer(i, cgid);
+    
+    return editor;
+}
 
 /** Completely transfer all of the atoms in this CutGroup to 
     the CutGroup that matches the ID 'cgid'
@@ -182,11 +278,20 @@ CGStructureEditor CGEditor::transfer(int i, const CGID &cgid) const;
     \throw SireMol::duplicate_cutgroup
     \throw SireError::invalid_index
 */
-CGStructureEditor CGEditor::transferAll(const CGID &cgid) const;
+CGStructureEditor CGEditor::transferAll(const CGID &cgid) const
+{
+    CGStructureEditor editor(*this);
+    editor.transferAll(cgid);
+    
+    return editor;
+}
 
 /** Commit the changes made by this editor and return the 
     updated CutGroup */
-CutGroup CGEditor::commit() const;
+CutGroup CGEditor::commit() const
+{
+    return *this;
+}
 
 ////////
 //////// Implementation of CGStructureEditor
@@ -224,50 +329,87 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 }
 
 /** Null constructor */
-CGStructureEditor::CGStructureEditor();
+CGStructureEditor::CGStructureEditor()
+                  : StructureEditor(), uid(0)
+{}
 
 /** Construct to edit a copy of the CutGroup 'cutgroup' */
-CGStructureEditor::CGStructureEditor(const CutGroup &cutgroup);
+CGStructureEditor::CGStructureEditor(const CutGroup &cutgroup)
+                  : StructureEditor(cutgroup.data())
+{
+    uid = this->getUID(cutgroup.index());
+}
 
 /** Construct to edit the CutGroup at index 'cgidx' in the molecule 
     also being edited in 'data'
     
     \throw SireError::invalid_index
 */
-CGStructureEditor::CGStructureEditor(const StructureEditor &data, CGIdx cgidx);
+CGStructureEditor::CGStructureEditor(const StructureEditor &data, CGIdx cgidx)
+                  : StructureEditor(data)
+{
+    uid = this->getUID(cgidx);
+}
 
 /** Copy constructor */
-CGStructureEditor::CGStructureEditor(const CGStructureEditor &other);
+CGStructureEditor::CGStructureEditor(const CGStructureEditor &other)
+                  : StructureEditor(other), uid(other.uid)
+{}
 
 /** Destructor */
-CGStructureEditor::~CGStructureEditor();
+CGStructureEditor::~CGStructureEditor()
+{}
 
 /** Assign this editor so that it edits a copy of the CutGroup 'cutgroup' */
-CGStructureEditor& CGStructureEditor::operator=(const CutGroup &cutgroup);
+CGStructureEditor& CGStructureEditor::operator=(const CutGroup &cutgroup)
+{
+    StructureEditor::operator=(cutgroup.data());
+    uid = this->getUID(cutgroup.index());
+    
+    return *this;
+}
 
 /** Copy assignment operator */
-CGStructureEditor& CGStructureEditor::operator=(const CGStructureEditor &other);
+CGStructureEditor& CGStructureEditor::operator=(const CGStructureEditor &other)
+{
+    StructureEditor::operator=(other);
+    uid = other.uid;
+    
+    return *this;
+}
 
 /** Return the name of this CutGroup */
-const CGName& CGStructureEditor::name() const;
-
-/** Return the number of this CutGroup */
-CGNum CGStructureEditor::number() const;
+const CGName& CGStructureEditor::name() const
+{
+    return this->cgName(uid);
+}
 
 /** Return the index of this CutGroup in the molecule */
-CGIdx CGStructureEditor::index() const;
+CGIdx CGStructureEditor::index() const
+{
+    return this->cgIdx(uid);
+}
 
 /** Return the number of atoms in this CutGroup (could be zero!) */
-int CGStructureEditor::nAtoms() const;
+int CGStructureEditor::nAtoms() const
+{
+    return this->nAtomsInCutGroup(uid);
+}
 
 /** Return an editor for the molecule that contains this CutGroup */
-MolStructureEditor CGStructureEditor::molecule();
+MolStructureEditor CGStructureEditor::molecule()
+{
+    return MolStructureEditor(*this);
+}
 
 /** Return an editor for the ith atom of this CutGroup
 
     \throw SireError::invalid_index
 */
-AtomStructureEditor CGStructureEditor::atom(int i);
+AtomStructureEditor CGStructureEditor::atom(int i)
+{
+    return AtomStructureEditor(*this, atomIdx( atomInCutGroup(uid,i) ));
+}
 
 /** Return an editor for the atom that matches the ID 'atomid' in
     this CutGroup
@@ -276,13 +418,19 @@ AtomStructureEditor CGStructureEditor::atom(int i);
     \throw SireMol::duplicate_atom
     \throw SireError::invalid_index
 */
-AtomStructureEditor CGStructureEditor::atom(const AtomID &atomid);
+AtomStructureEditor CGStructureEditor::atom(const AtomID &atomid)
+{
+    return AtomStructureEditor(*this, atomIdx(this->index() + atomid));
+}
 
 /** Return an editor for the ith atom of this CutGroup
 
     \throw SireError::invalid_index
 */
-AtomStructureEditor CGStructureEditor::select(int i);
+AtomStructureEditor CGStructureEditor::select(int i)
+{
+    return AtomStructureEditor(*this, atomIdx( atomInCutGroup(uid,i) ));
+}
 
 /** Return an editor for the atom that matches the ID 'atomid' in
     this CutGroup
@@ -291,29 +439,59 @@ AtomStructureEditor CGStructureEditor::select(int i);
     \throw SireMol::duplicate_atom
     \throw SireError::invalid_index
 */
-AtomStructureEditor CGStructureEditor::select(const AtomID &atomid);
+AtomStructureEditor CGStructureEditor::select(const AtomID &atomid)
+{
+    return AtomStructureEditor(*this, atomIdx( this->index() + atomid ));
+}
 
 /** Rename this CutGroup to 'newname' */
-CGStructureEditor& CGStructureEditor::rename(const CGName &name);
-
-/** Renumber this CutGroup to 'newnum' */
-CGStructureEditor& CGStructureEditor::renumber(CGNum number);
+CGStructureEditor& CGStructureEditor::rename(const CGName &newname)
+{
+    this->renameCutGroup(uid, newname);
+    return *this;
+}
 
 /** Move this CutGroup to index 'newidx' - this will move it
     to the start or end if this index is out of range */
-CGStructureEditor& CGStructureEditor::reindex(CGIdx index);
+CGStructureEditor& CGStructureEditor::reindex(CGIdx newidx)
+{
+    this->reindexCutGroup(uid, newidx);
+    return *this;
+}
 
 /** Complete remove this CutGroup, and return an editor
     for the molecule that contained it */
-MolStructureEditor CGStructureEditor::remove();
+MolStructureEditor CGStructureEditor::remove()
+{
+    this->removeCutGroup(uid);
+    return MolStructureEditor(*this);
+}
 
 /** Add an atom called 'atomname' to this CutGroup and return
     an editor for that atom */
-AtomStructureEditor CGStructureEditor::add(const AtomName &atomname);
+AtomStructureEditor CGStructureEditor::add(const AtomName &atomname)
+{
+    this->assertValidCutGroup(uid);
+
+    AtomStructureEditor atom = this->addAtom();
+    atom.rename(atomname);
+    atom.reparent( this->index() );
+    
+    return atom;
+}
 
 /** Add an atom with number 'atomnum' to this CutGroup and return
     an editor for that atom */
-AtomStructureEditor CGStructureEditor::add(AtomNum atomnum);
+AtomStructureEditor CGStructureEditor::add(AtomNum atomnum)
+{
+    this->assertValidCutGroup(uid);
+
+    AtomStructureEditor atom = this->addAtom();
+    atom.renumber(atomnum);
+    atom.reparent( this->index() );
+    
+    return atom;
+}
 
 /** Completely remove all atoms that match the ID 'atomid' from 
     this CutGroup 
@@ -321,13 +499,21 @@ AtomStructureEditor CGStructureEditor::add(AtomNum atomnum);
     \throw SireMol::missing_atom
     \throw SireError::invalid_index
 */
-CGStructureEditor& CGStructureEditor::remove(const AtomID &atomid);
+CGStructureEditor& CGStructureEditor::remove(const AtomID &atomid)
+{
+    this->removeAtoms( this->index() + atomid );
+    return *this;
+}
 
 /** Remove the ith atom from this CutGroup
 
     \throw SireError::invalid_index
 */
-CGStructureEditor& CGStructureEditor::remove(int i);
+CGStructureEditor& CGStructureEditor::remove(int i)
+{
+    this->removeAtoms( atomIdx(atomInCutGroup(uid,i)) );
+    return *this;
+}
 
 /** Transfer all atoms that match the ID 'atomid' in this CutGroup 
     to the CutGroup that matches the ID 'cgid'
@@ -337,14 +523,25 @@ CGStructureEditor& CGStructureEditor::remove(int i);
     \throw SireMol::duplicate_cutgroup
     \throw SireError::invalid_index
 */
-CGStructureEditor& CGStructureEditor::transfer(const AtomID &atomid, const CGID &cgid);
+CGStructureEditor& CGStructureEditor::transfer(const AtomID &atomid, 
+                                               const CGID &cgid)
+{
+    this->reparentAtom( this->getUID(this->index() + atomid),
+                        this->cgIdx(cgid) );
+                        
+    return *this;
+}
 
 /** Transfer the ith atom of this CutGroup into the CutGroup identified
     by the ID 'cgid'
     
     \throw SireError::invalid_index
 */
-CGStructureEditor& CGStructureEditor::transfer(int i, const CGID &cgid);
+CGStructureEditor& CGStructureEditor::transfer(int i, const CGID &cgid)
+{
+    this->reparentAtom( atomInCutGroup(uid,i), this->cgIdx(cgid) );
+    return *this;
+}
 
 /** Completely transfer all of the atoms in this CutGroup to 
     the CutGroup that matches the ID 'cgid'
@@ -353,11 +550,29 @@ CGStructureEditor& CGStructureEditor::transfer(int i, const CGID &cgid);
     \throw SireMol::duplicate_cutgroup
     \throw SireError::invalid_index
 */
-CGStructureEditor& CGStructureEditor::transferAll(const CGID &cgid);
+CGStructureEditor& CGStructureEditor::transferAll(const CGID &cgid)
+{
+    CGIdx cgidx = this->cgIdx(cgid);
+    
+    int nats = this->nAtoms();
+    
+    for (int i=0; i<nats; ++i)
+    {
+        this->reparentAtom( atomInCutGroup(uid,i), cgidx );
+    }
+    
+    return *this;
+}
 
 /** Commit the changes made by this editor and return the 
     updated CutGroup */
-CutGroup CGStructureEditor::commit() const;
+CutGroup CGStructureEditor::commit() const
+{
+    return CutGroup( this->commitChanges(), this->index() );
+}
 
 /** Allow automatic casting of this editor to a CutGroup */
-CGStructureEditor::operator CutGroup() const;
+CGStructureEditor::operator CutGroup() const
+{
+    return this->commit();
+}

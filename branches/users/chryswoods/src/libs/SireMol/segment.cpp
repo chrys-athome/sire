@@ -224,6 +224,15 @@ Atom Segment::atom(const AtomID &atomid) const
     return Atom( this->data(), segidx + atomid );
 }
 
+/** Return the ith atom in this Segment 
+
+    \throw SireError::invalid_index
+*/
+Atom Segment::atom(int i) const
+{
+    return Atom( this->data(), d->info().getAtom(segidx, i) );
+}
+
 /** Return the atoms in this Segment that also have the ID 'atomid'
 
     \throw SireMol::missing_atom
@@ -249,6 +258,15 @@ Selector<Atom> Segment::atoms() const
 Atom Segment::select(const AtomID &atomid) const
 {
     return this->atom(atomid);
+}
+
+/** Return the ith atom in this Segment
+
+    \throw SireError::invalid_index
+*/
+Atom Segment::select(int i) const
+{
+    return this->atom(i);
 }
 
 /** Return the atoms in this Segment that also have the ID 'atomid'
