@@ -93,6 +93,8 @@ class EditMolData;
     data structure, which doesn't rely on the structure of the molecule
     being constant.
     
+    This class is explicitly shared and is *definitely not* thread safe!
+    
     @author Christopher Woods
 */
 class SIREMOL_EXPORT StructureEditor
@@ -151,7 +153,7 @@ protected:
     quint32 chainParentOfAtom(quint32 uid) const;
     quint32 segmentParentOfAtom(quint32 uid) const;
     
-    ChainIdx chainParentOfResidue(quint32 uid) const;
+    quint32 chainParentOfResidue(quint32 uid) const;
     
     const MolName& molName() const;
     MolNum molNum() const;
