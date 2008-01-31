@@ -26,3 +26,112 @@
   *
 \*********************************************/
 
+#include "structureeditor.h"
+
+#include "atom.h"
+#include "cutgroup.h"
+#include "residue.h"
+#include "chain.h"
+#include "segment.h"
+#include "molecule.h"
+#include "mover.hpp"
+#include "selector.hpp"
+
+#include "atomname.h"
+#include "atomidx.h"
+#include "atomnum.h"
+
+#include "cgname.h"
+#include "cgidx.h"
+
+#include "resname.h"
+#include "resnum.h"
+#include "residx.h"
+
+#include "chainname.h"
+#include "chainidx.h"
+
+#include "segname.h"
+#include "segidx.h"
+
+#include "molname.h"
+#include "molnum.h"
+
+#include "SireBase/properties.h"
+
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
+using namespace SireMol;
+using namespace SireBase;
+using namespace SireStream;
+
+/////////
+///////// Implementation of detail::EditMolData
+/////////
+namespace detail
+{
+
+/** This class holds the editable data of an Atom */
+class EditAtomData
+{
+public:
+    EditAtomData();
+    EditAtomData(const EditAtomData &other);
+    
+    ~EditAtomData();
+    
+    AtomName name;
+    AtomNum number;
+    
+    quint32 cg_parent;
+    quint32 res_parent;
+    quint32 seg_parent;
+    
+    QHash<QString,QVariant> properties;
+};
+
+/** This class holds the editable data of a CutGroup */
+class EditCGData
+{
+public:
+    EditCGData();
+    EditCGData(const EditCGData &other);
+    
+    ~EditCGData();
+    
+    CGName name;
+    
+    QList<quint32> atoms;
+};
+
+/** This private class is used to hold the explicitly shared
+    data of the StructureEditor. */
+class EditMolData
+{
+public:
+    EditMolData();
+    EditMolData(const EditMolData &other);
+    
+    ~EditMolData();
+    
+    MolName molname;
+    MolNum molnum;
+    
+    QHash<quint32, EditAtomData> atoms;
+    QHash<quint32, EditCGData> cutgroups;
+    
+    Properties properties;
+};
+
+} // end of namespace detail
+
+/////////
+///////// Implementation of StructureEditor
+/////////
+
+static const RegisterMetaType<StructureEditor> r_structeditor(MAGIC_ONLY,
+                                                  "SireMol::StructureEditor");
+                                                  
+/** Serialise to a binary datastream */
+

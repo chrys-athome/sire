@@ -77,7 +77,7 @@ AtomSelection Molecule::selection() const
 /** Return the name of this molecule */
 const MolName& Molecule::name() const
 {
-    return d->info().name();
+    return d->name();
 }
 
 /** Return the number of this molecule - this is used

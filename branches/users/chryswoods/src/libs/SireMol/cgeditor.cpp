@@ -173,7 +173,7 @@ CGEditor& CGEditor::rename(const CGName &newname)
         //nothing to do
         return *this;
         
-    throw SireError::incomplete_code( CODELOC );
+    d->rename( this->index(), newname );
     
     return *this;
 }

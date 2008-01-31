@@ -89,10 +89,15 @@ class AtomSelection;
 namespace detail
 {
 class MolInfoRegistry;
+
+class AtomInfo;
+class ResInfo;
+class CGInfo;
+class ChainInfo;
+class SegInfo;
 }
 
-/** This is the implicitly shared class that is used by MoleculeInfo,
-    ResidueInfo, SegmentInfo and CutGroupInfo to provide information
+/** This is the implicitly shared class that is used to provide information
     about the arrangement of atoms in a molecule, specifically
     how one method of indexing the atoms can be mapped to another method.
     In so doing, a MoleculeInfoData object contains all of the information
@@ -102,16 +107,12 @@ class MolInfoRegistry;
     importantly, this object does not contain any information about
     how the atoms in the molecule are connected together, where
     the atoms are in space, or any additional properties that are
-    associated with the molecule.
+    associated with the molecule (or indeed the name or number of the molecule!)
     
-    Each Molecule is given an ID number, which is unique within a
+    Each layout is given a unique ID (UID) number, which is unique within a
     single invocation of Sire, and uniquely identifies a MoleculeInfo
-    object within the program (thus allowing for a quick and simple
+    layout within the program (thus allowing for a quick and simple
     test to ensure that molecules have the same layout of data).
-    
-    This class is private to SireMol, and should not be used by
-    any other classes other than MoleculeInfo, ResidueInfo, SegmentInfo
-    AtomInfo or CutGroupInfo
     
     @author Christopher Woods
 */
@@ -120,8 +121,6 @@ class MoleculeInfoData : public QSharedData
 
 friend QDataStream& ::operator<<(QDataStream&, const MoleculeInfoData&);
 friend QDataStream& ::operator>>(QDataStream&, MoleculeInfoData&);
-
-friend class detail::MolInfoRegistry; //so can call _pvt_sameFingerprint(...)
 
 public:
     MoleculeInfoData();
@@ -135,9 +134,7 @@ public:
     bool operator==(const MoleculeInfoData &other) const;
     bool operator!=(const MoleculeInfoData &other) const;
     
-    const MolName& name() const;
-    
-    bool hasSameFingerprint(const MoleculeInfoData &other) const;
+    quint64 UID() const;
     
     const ChainName& name(const ChainID &chainid) const;
     const ChainName& name(ChainIdx chainidx) const;
@@ -159,6 +156,16 @@ public:
     
     AtomNum number(const AtomID &atomid) const;
     AtomNum number(AtomIdx atomidx) const;
+    
+    MoleculeInfoData rename(AtomIdx atomidx, const AtomName &newname) const;
+    MoleculeInfoData renumber(AtomIdx atomidx, const AtomNum &newnum) const;
+    
+    MoleculeInfoData rename(ResIdx residx, const ResName &newname) const;
+    MoleculeInfoData renumber(ResIdx residx, const ResNum &newnum) const;
+    
+    MoleculeInfoData rename(CGIdx cgidx, const CGName &newname) const;
+    MoleculeInfoData rename(ChainIdx chainidx, const ChainName &newname) const;
+    MoleculeInfoData rename(SegIdx segidx, const SegName &newname) const;
     
     CGAtomIdx cgAtomIdx(AtomIdx atomidx) const;
     CGAtomIdx cgAtomIdx(const AtomID &atomid) const;
@@ -296,7 +303,9 @@ public:
     QList<AtomIdx> map(const AtomIdx &idx) const;
     QList<AtomIdx> map(const AtomID &atomid) const;
 
-    void assertSameFingerprint(const MoleculeInfoData &other) const;
+    void squeeze(const MoleculeInfoData &other) const;
+
+    void assertEqualTo(const MoleculeInfoData &other) const;
 
     void assertSingleAtom(const QList<AtomIdx> &atomidxs) const;
     void assertSingleResidue(const QList<ResIdx> &residxs) const;
@@ -311,113 +320,9 @@ public:
     
 private:
     
-    class ResInfo
-    {
-    public:
-        ResInfo();
-        ~ResInfo();
-        
-        bool operator==(const ResInfo &other);
-        bool operator!=(const ResInfo &other);
-        
-        /** The name of this residue */
-        ResName name;
-        
-        /** The number of this residue */
-        ResNum number;
-
-        /** The index of the chain this residue is in */
-        ChainIdx chainidx;
-
-        /** The sorted list of the indicis of all atoms that are in this residue */
-        QList<AtomIdx> atom_indicies;
-        
-        /** Hash mapping the name of each atom in this residue
-            to the indicies of the atoms in the molecule
-            (there may be more than one atom with the same name) */
-        QMultiHash<QString,AtomIdx> atoms_by_name;
-    };
-
-    class ChainInfo
-    {
-    public:
-        ChainInfo();
-        ~ChainInfo();
-        
-        bool operator==(const ChainInfo &other) const;
-        bool operator!=(const ChainInfo &other) const;
-        
-        /** The name of this chain */
-        ChainName name;
-        
-        /** The sorted list of all indicies of the residues that 
-            are contained in this chain */
-        QList<ResIdx> res_indicies;
-    };
-
-    class SegInfo
-    {
-    public:
-        SegInfo();
-        ~SegInfo();
-
-        bool operator==(const SegInfo &other) const;
-        bool operator!=(const SegInfo &other) const;
-
-        /** The name of this segment */
-        SegName name;
-        
-        /** The sorted list of all indicies of the atoms that are in this residue */
-        QList<AtomIdx> atom_indicies;
-    };
+    void rebuildNameAndNumberIndexes();
     
-    class CGInfo
-    {
-    public:
-        CGInfo();
-        ~CGInfo();
-        
-        bool operator==(const CGInfo &other) const;
-        bool operator!=(const CGInfo &other) const;
-        
-        /** The name of this CutGroup */
-        CGName name;
-        
-        /** The sorted list of all indicies of all of the atoms 
-            that are in this CutGroup */
-        QList<AtomIdx> atom_indicies;
-    };
-    
-    class AtomInfo
-    {
-    public:
-        AtomInfo();
-        ~AtomInfo();
-        
-        bool operator==(const AtomInfo &other) const;
-        bool operator!=(const AtomInfo &other) const;
-        
-        /** The name of this atom */
-        AtomName name;
-
-        /** The number of this atom */
-        AtomNum number;
-
-        /** Index of the residue this atom is in
-            (this also tells us the index of the chain
-             this atom is in) */
-        ResIdx residx;
-        
-        /** Index of the segment this atom is in */
-        SegIdx segidx;
-        
-        /** The CGAtomIdx index of the atom in the molecule
-             - this says which CutGroup the atom is in,
-               which atom in that CutGroup this is */
-        CGAtomIdx cgatomidx;
-    };
-    
-    bool _pvt_hasSameFingerprint(const MoleculeInfoData &other) const;
+    bool _pvt_hasSameFingerprint(const MoleculeInfoData &other);
     
     QList<AtomIdx> _pvt_getAtomsIn(const QList<ResIdx> &residxs) const;
     QList<AtomIdx> _pvt_getAtomsIn(const QList<ResIdx> &residxs,
@@ -428,22 +333,24 @@ private:
     int _pvt_nAtoms(ChainIdx chainidx) const;
     
     QVector<CGAtomIdx> _pvt_cgAtomIdxs(const QList<AtomIdx> &atomidxs) const;
-    
-    /** The name of the molecule */
-    MolName molname;
 
-    /** The ID fingerprint of this info object - the fingerprint
-        identifies the molecule according to the names of its
-        parts, and their order. */
-    quint32 fingerprint;
+    /** The unique ID number that identifies this particular
+        molecule layout. */
+    quint64 uid;
 
     /** All of the atoms in the molecule, in the order they were
         added to the molecule */
-    QVector<AtomInfo> atoms_by_index;
+    QVector<detail::AtomInfo> atoms_by_index;
+    
+    /** Hash mapping atom names to atom indicies */
+    QMultiHash<AtomName,AtomIdx> atoms_by_name;
+    
+    /** Hash mapping atom numbers to atom indicies */
+    QMultiHash<AtomNum,AtomIdx> atoms_by_num;
     
     /** All of the residues in this molecule, arranged in the
         order that they appear in this molecule */
-    QVector<ResInfo> res_by_index;
+    QVector<detail::ResInfo> res_by_index;
     
     /** Hash mapping residue names to residue indicies */
     QMultiHash<ResName,ResIdx> res_by_name;
@@ -453,21 +360,21 @@ private:
     
     /** All of the chains in this molecule, arranged in the 
         order that they appear in this molecule */
-    QVector<ChainInfo> chains_by_index;
+    QVector<detail::ChainInfo> chains_by_index;
     
     /** Hash mapping chain names to chain indicies */
     QMultiHash<ChainName,ChainIdx> chains_by_name;
     
     /** All of the segments in this molecule, arranged in the
         order that they appear in this molecule */
-    QVector<SegInfo> seg_by_index;
+    QVector<detail::SegInfo> seg_by_index;
     
     /** Hash mapping segment names to segment indicies */
     QMultiHash<SegName,SegIdx> seg_by_name;
     
     /** All of the CutGroups in this molecule, arranged in the
         order that they appear in this molecule */
-    QVector<CGInfo> cg_by_index;
+    QVector<detail::CGInfo> cg_by_index;
 
     /** Hash mapping CutGroup name to CutGroup indicies */
     QMultiHash<CGName,CGIdx> cg_by_name;

@@ -69,6 +69,7 @@ class SegName;
 class SegID;
 
 class MolName;
+class MolNum;
 
 class MoleculeData;
 
@@ -153,6 +154,7 @@ protected:
     ChainIdx chainParentOfResidue(quint32 uid) const;
     
     const MolName& molName() const;
+    MolNum molNum() const;
     
     const AtomName& atomName(quint32 uid) const;
     AtomNum atomNum(quint32 uid) const;
@@ -178,6 +180,9 @@ protected:
     SegIdx segIdx(const SegID &segid) const;
     
     void renameMolecule(const MolName &name);
+    
+    void renumberMolecule();
+    void renumberMolecule(MolNum newnum);
     
     void renameAtom(quint32 uid, const AtomName &name);
     void renumberAtom(quint32 uid, AtomNum number);

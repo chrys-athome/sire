@@ -70,8 +70,8 @@ QList<AtomIdx> AtomAtomID::map(const MoleculeInfoData &molinfo) const
                 
         if (atomidxs.isEmpty())
             throw SireMol::missing_atom( QObject::tr(
-                "There is no atom matching the ID %1 in the molecule \"%2\".")
-                    .arg(this->toString(), molinfo.name()), CODELOC );
+                "There is no atom matching the ID %1 in the layout \"%2\".")
+                    .arg(this->toString()).arg(molinfo.UID()), CODELOC );
     
         qSort(atomidxs);
         

@@ -162,7 +162,7 @@ AtomEditor& AtomEditor::rename(const AtomName &newname)
         //nothing needs to be done
         return *this;
         
-    throw SireError::incomplete_code( CODELOC );
+    d->rename( this->index(), newname );
     
     return *this;
 }
@@ -174,7 +174,7 @@ AtomEditor& AtomEditor::renumber(AtomNum newnum)
         //nothing needs to be done
         return *this;
         
-    throw SireError::incomplete_code( CODELOC );
+    d->renumber( this->index(), newnum );
     
     return *this;
 }

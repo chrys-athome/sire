@@ -1934,6 +1934,12 @@ void MolGroups::add(const MolGroup &molgroup)
     molgroup and none of its molecules are in this set */
 void MolGroups::update(const MolGroup &molgroup)
 {
+    //do this in a copy, as something weird may go wrong...
+    MolGroups orig_groups(*this);
+    
+    try
+    {
+
     QHash<MGNum,MoleculeGroup>::iterator it = mgroups.find(molgroup.number());
     
     if (it != mgroups.end() and 
@@ -1958,6 +1964,14 @@ void MolGroups::update(const MolGroup &molgroup)
     for (it = mgroups.begin() ; it != mgroups.end(); ++it)
     {
         it->edit().update(molgroup);
+    }
+    
+    }
+    catch(...)
+    {
+        //something went wrong - restore the original...
+        this->operator=(orig_groups);
+        throw;
     }
 }
 
@@ -2480,11 +2494,26 @@ void MolGroups::update(const MoleculeData &moldata)
     held in 'molecules' */
 void MolGroups::update(const Molecules &molecules)
 {
+    //we need to do this in a copy, so that we can revert
+    //if an error occurs...
+    MolGroups orig_groups(*this);
+    
+    try
+    {
+
     for (QHash<MGNum,MoleculeGroup>::iterator it = mgroups.begin();
          it != mgroups.end();
          ++it)
     {
         it->edit().update(molecules);
+    }
+    
+    }
+    catch(...)
+    {
+        //something went wrong...
+        this->operator=(orig_groups);
+        throw;
     }
 }
 

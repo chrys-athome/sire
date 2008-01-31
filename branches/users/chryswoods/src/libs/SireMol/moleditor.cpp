@@ -234,7 +234,7 @@ MolEditor& MolEditor::rename(const MolName &newname)
         //nothing needs doing
         return *this;
         
-    throw SireError::incomplete_code( CODELOC );
+    d->rename(newname);
     
     return *this;
 }
@@ -242,7 +242,19 @@ MolEditor& MolEditor::rename(const MolName &newname)
 /** Give this molecule a new, unique ID number */
 MolEditor& MolEditor::renumber()
 {
-    d->getNewID();
+    d->renumber();
+    return *this;
+}
+
+/** Give this molecule the ID number 'newnum' */
+MolEditor& MolEditor::renumber(MolNum newnum)
+{
+    if (newnum == this->number())
+        //nothing needs doing
+        return *this;
+        
+    d->renumber(newnum);
+    
     return *this;
 }
 
@@ -553,6 +565,12 @@ const MolName& MolStructureEditor::name() const
     return this->molName();
 }
 
+/** Return this molecule's ID number */
+MolNum MolStructureEditor::number() const
+{
+    return this->molNum();
+}
+
 /** Return the number of atoms in this molecule (may be zero!) */
 int MolStructureEditor::nAtoms() const
 {
@@ -587,6 +605,20 @@ int MolStructureEditor::nSegments() const
 MolStructureEditor& MolStructureEditor::rename(const MolName &newname)
 {
     this->renameMolecule(newname);
+    return *this;
+}
+
+/** Give this molecule a new, unique ID number */
+MolStructureEditor& MolStructureEditor::renumber()
+{
+    this->renumberMolecule();
+    return *this;
+}
+
+/** Renumber this molecule to have the number 'newnum' */
+MolStructureEditor& MolStructureEditor::renumber(MolNum newnum)
+{
+    this->renumberMolecule(newnum);
     return *this;
 }
 

@@ -332,7 +332,7 @@ bool AtomSelection::selected(const SegID &segid) const
 */
 bool AtomSelection::selected(const AtomSelection &selection) const
 {
-    this->info().assertSameFingerprint( selection.info() );
+    this->info().assertEqualTo( selection.info() );
     
     //get rid of the easy cases...
     if (this->isEmpty() or selection.isEmpty())
@@ -776,7 +776,7 @@ QList<CGIdx> AtomSelection::selectedCutGroups() const
 */
 bool AtomSelection::selectedAll(const AtomSelection &selection) const
 {
-    this->info().assertSameFingerprint( selection.info() );
+    this->info().assertEqualTo( selection.info() );
     
     //get rid of the easy cases...
     if (this->isEmpty() or selection.isEmpty())
@@ -1041,7 +1041,7 @@ int AtomSelection::nSelected(const SegID &segid) const
 */
 int AtomSelection::nSelected(const AtomSelection &selection) const
 {
-    info().assertSameFingerprint(selection.info());
+    info().assertEqualTo(selection.info());
     
     if (selection.isEmpty() or this->isEmpty())
         return 0;
@@ -2086,7 +2086,7 @@ AtomSelection AtomSelection::selectOnly(const SegID &segid) const
 
 void AtomSelection::_pvt_select(const AtomSelection &selection)
 {
-    info().assertSameFingerprint(selection.info());
+    info().assertEqualTo(selection.info());
     
     if (this->selectedAll())
         return;
@@ -2152,7 +2152,7 @@ AtomSelection AtomSelection::select(const AtomSelection &selection) const
 */
 AtomSelection AtomSelection::deselect(const AtomSelection &selection) const
 {
-    info().assertSameFingerprint(selection.info());
+    info().assertEqualTo(selection.info());
     
     if (this->selectedNone())
         return *this;
@@ -2208,7 +2208,7 @@ AtomSelection AtomSelection::deselect(const AtomSelection &selection) const
 */
 AtomSelection AtomSelection::selectOnly(const AtomSelection &selection) const
 {
-    info().assertSameFingerprint(selection.info());
+    info().assertEqualTo(selection.info());
     
     AtomSelection ret(*this);
     ret.selected_atoms = selection.selected_atoms;
@@ -2485,7 +2485,7 @@ bool AtomSelection::contains(const AtomSelection &selection) const
 */
 AtomSelection AtomSelection::intersect(const AtomSelection &selection) const
 {
-    info().assertSameFingerprint(selection.info());
+    info().assertEqualTo(selection.info());
 
     if (this->selectedNone() or selection.selectedNone())
     {
@@ -3342,9 +3342,9 @@ void AtomSelection::assertCompatibleWith(const MoleculeInfoData &molinfo) const
 {
     if (*d != molinfo)
         throw SireError::incompatible_error( QObject::tr(
-            "The molecule \"%1\" is incompatible with this selection, "
-            "which is for the molecule \"%2\".")
-                .arg(molinfo.name(), d->name()), CODELOC );
+            "The layout \"%1\" is incompatible with this selection, "
+            "which is for the layout \"%2\".")
+                .arg(molinfo.UID()).arg(d->UID()), CODELOC );
 }
 
 /** Assert that this selection is compatible with the molecule whose
@@ -3356,10 +3356,10 @@ void AtomSelection::assertCompatibleWith(const MoleculeData &moldata) const
 {
     if (*d != moldata.info())
         throw SireError::incompatible_error( QObject::tr(
-            "The molecule \"%1\" (%2) is incompatible with this selection, "
-            "which is for the molecule \"%3\".")
-                .arg(moldata.name()).arg(moldata.number())
-                .arg(d->name()), CODELOC );
+            "The molecule \"%1\" (layout %2) is incompatible with this selection, "
+            "which is for the layout \"%3\".")
+                .arg(moldata.name()).arg(moldata.info().UID())
+                .arg(d->UID()), CODELOC );
 }
 
 /** Return whether or not this selection is compatible with the molecule info
@@ -3387,8 +3387,8 @@ void AtomSelection::assertCompatibleWith(const AtomSelection &other) const
 {
     if (*d != other.info())
         throw SireError::incompatible_error( QObject::tr(
-            "The selection for molecule \"%1\" is incompatible with this selection, "
-            "which is for the molecule \"%2\".")
-                .arg(other.info().name())
-                .arg(d->name()), CODELOC );
+            "The selection for layout \"%1\" is incompatible with this selection, "
+            "which is for the layout \"%2\".")
+                .arg(other.info().UID())
+                .arg(d->UID()), CODELOC );
 }

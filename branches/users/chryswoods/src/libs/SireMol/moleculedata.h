@@ -33,13 +33,14 @@
 #include <QMutex>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 
 #include "SireBase/properties.h"
 #include "SireBase/propertymap.h"
 
 #include "SireBase/shareddatapointer.hpp"
 
-#include "moleculeinfodata.h"
+#include "molname.h"
 #include "molnum.h"
 
 SIRE_BEGIN_HEADER
@@ -54,6 +55,31 @@ QDataStream& operator>>(QDataStream&, SireMol::MoleculeData&);
 
 namespace SireMol
 {
+
+class MoleculeInfoData;
+
+class AtomNum;
+class AtomIdx;
+class AtomName;
+class AtomID;
+
+class CGIdx;
+class CGName;
+class CGID;
+
+class ResNum;
+class ResIdx;
+class ResName;
+class ResID;
+
+class ChainName;
+class ChainIdx;
+class ChainID;
+
+class SegName;
+class SegIdx;
+class SegID;
+
 
 using SireBase::PropertyName;
 using SireBase::Property;
@@ -89,7 +115,7 @@ public:
     /** Return the name of the molecule */
     const MolName& name() const
     {
-        return molinfo->name();
+        return molname;
     }
 
     /** The ID number of this molecule - two molecules with
@@ -99,9 +125,6 @@ public:
     {
         return molnum;
     }
-
-    /** Give this molecule a new, unique ID number */
-    void getNewID();
 
     /** The version number of this molecule - two molecules
         with the same version number and ID number are identical */
@@ -172,6 +195,32 @@ public:
                              const PropertyName &metakey,
                              const Property &default_value) const;
 
+    void rename(const MolName &newname);
+
+    void renumber();
+    void renumber(MolNum newnum);
+
+    void rename(AtomIdx atomidx, const AtomName &newname);
+    void rename(const AtomID &atomid, const AtomName &newname);
+
+    void rename(CGIdx cgidx, const CGName &newname);
+    void rename(const CGID &cgid, const CGName &newname);
+    
+    void rename(ResIdx residx, const ResName &newname);
+    void rename(const ResID &resid, const ResName &newname);
+    
+    void rename(ChainIdx chainidx, const ChainName &newname);
+    void rename(const ChainID &chainid, const ChainName &newname);
+    
+    void rename(SegIdx segix, const SegName &newname);
+    void rename(const SegID &segid, const SegName &newname);
+    
+    void renumber(AtomIdx atomidx, AtomNum newnum);
+    void renumber(const AtomID &atomid, AtomNum newnum);
+    
+    void renumber(ResIdx residx, ResNum newnum);
+    void renumber(const ResID &resid, ResNum newnum);
+
     void setProperty(const QString &key, 
                      const Property &value, bool clear_metadata=false);
 
@@ -209,11 +258,14 @@ private:
 
     /** The version number of this molecule - this changes 
         whenever the molecule is changed in any way. If two molecules
-        have the same ID number and version then they must be the same */
+        have the same molecule number and version then they must be the same */
     quint64 vrsn;
 
-    /** The ID number of this molecule - this is kept the same throughout
-        the lifetime of this molecule, and is used to identify it */
+    /** The name of this molecule. This can be anything you want! */
+    MolName molname;
+
+    /** The ID number of this molecule. This is used to identify a molecule
+        in a group */
     MolNum molnum;
 
     class PropVersions
@@ -228,9 +280,13 @@ private:
         quint64 increment();
         quint64 increment(const QString &key, quint64 &mol);
         
+        void incrementAll(MoleculeData &moldata);
+        
         quint64 reset(QHash<QString,quint64> &prop_vrsns);
         
     private:
+        quint64 increment(const QString &key);
+    
         /** Mutex used to serialise access to the last version
             number */
         QMutex mutex;
@@ -244,8 +300,10 @@ private:
         QHash<QString,quint64> property_version;
     };
 
-    static boost::shared_ptr<PropVersions> shared_nullversions;
-    static const boost::shared_ptr<PropVersions>& getNullVersions();
+    static QHash< MolNum, boost::weak_ptr<PropVersions> > version_registry;
+    static QMutex version_registry_mutex;
+
+    static boost::shared_ptr<PropVersions> registerMolecule(MolNum molnum);
 
     /** The version number of each of the properties in 
         this molecule */

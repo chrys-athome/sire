@@ -33,8 +33,12 @@
 #include "SireError/errors.h"
 #include "SireMol/errors.h"
 
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
 using namespace SireMol;
 using namespace SireID;
+using namespace SireStream;
 
 //////////
 ////////// Implementation of MolInfoRegistry
@@ -45,171 +49,456 @@ namespace SireMol
 namespace detail
 {
 
-/** Registry of all of the different types of molecule - this 
-    is used to quickly test if two molecules have the same
-    layout. This only works (and is thread-safe) because
-    MoleculeInfoData is a const class, that cannot be 
-    modified after construction.
-    
-    @author Christopher Woods
-*/
-class MolInfoRegistry
+class ResInfo
 {
 public:
-    static quint32 getFingerPrint(const MoleculeInfoData &molinfo);
+    ResInfo();
+    ~ResInfo();
     
-    static void unregister(const MoleculeInfoData &molinfo);
+    bool operator==(const ResInfo &other) const;
+    bool operator!=(const ResInfo &other) const;
+    
+    /** The name of this residue */
+    ResName name;
+    
+    /** The number of this residue */
+    ResNum number;
 
-    static void beginCopy(const MoleculeInfoData &source,
-                          const MoleculeInfoData &destination);
-                          
-    static void endCopy();
+    /** The index of the chain this residue is in */
+    ChainIdx chainidx;
 
-private:
-    /** The fingerprint number of each registered MoleculeInfoData object */
-    static QHash<const MoleculeInfoData*, quint32> fingerprints;
+    /** The sorted list of the indicis of all atoms that are in this residue */
+    QList<AtomIdx> atom_indicies;
     
-    /** All of the registered MoleculeInfoData objects arranged into
-        groups according to fingerprint */
-    static QHash< quint32, QList<const MoleculeInfoData*> > moltypes;
-    
-    /** Mutex to serialise access to this registry */
-    static QMutex mutex;
-    
-    /** The ID number of the last registered fingerprint */
-    static quint32 lastid;
+    /** Hash mapping the name of each atom in this residue
+        to the indicies of the atoms in the molecule
+        (there may be more than one atom with the same name) */
+    QMultiHash<QString,AtomIdx> atoms_by_name;
 };
 
-}
-}
+class ChainInfo
+{
+public:
+    ChainInfo();
+    ~ChainInfo();
+    
+    bool operator==(const ChainInfo &other) const;
+    bool operator!=(const ChainInfo &other) const;
+    
+    /** The name of this chain */
+    ChainName name;
+    
+    /** The sorted list of all indicies of the residues that 
+        are contained in this chain */
+    QList<ResIdx> res_indicies;
+};
+
+class SegInfo
+{
+public:
+    SegInfo();
+    ~SegInfo();
+
+    bool operator==(const SegInfo &other) const;
+    bool operator!=(const SegInfo &other) const;
+
+    /** The name of this segment */
+    SegName name;
+    
+    /** The sorted list of all indicies of the atoms that are in this residue */
+    QList<AtomIdx> atom_indicies;
+};
+
+class CGInfo
+{
+public:
+    CGInfo();
+    ~CGInfo();
+    
+    bool operator==(const CGInfo &other) const;
+    bool operator!=(const CGInfo &other) const;
+    
+    /** The name of this CutGroup */
+    CGName name;
+    
+    /** The sorted list of all indicies of all of the atoms 
+        that are in this CutGroup */
+    QList<AtomIdx> atom_indicies;
+};
+
+class AtomInfo
+{
+public:
+    AtomInfo();
+    ~AtomInfo();
+    
+    bool operator==(const AtomInfo &other) const;
+    bool operator!=(const AtomInfo &other) const;
+    
+    /** The name of this atom */
+    AtomName name;
+
+    /** The number of this atom */
+    AtomNum number;
+
+    /** Index of the residue this atom is in
+        (this also tells us the index of the chain
+         this atom is in) */
+    ResIdx residx;
+    
+    /** Index of the segment this atom is in */
+    SegIdx segidx;
+    
+    /** The CGAtomIdx index of the atom in the molecule
+         - this says which CutGroup the atom is in,
+           which atom in that CutGroup this is */
+    CGAtomIdx cgatomidx;
+};
+
+} // end of namespace detail
+} // end of namespace SireMol
 
 using namespace SireMol::detail;
 
-QHash<const MoleculeInfoData*,quint32> MolInfoRegistry::fingerprints;
-QHash< quint32, QList<const MoleculeInfoData*> > MolInfoRegistry::moltypes;
-QMutex MolInfoRegistry::mutex;
-quint32 MolInfoRegistry::lastid(0);
+////////
+//////// Implementation of MoleculeInfoData::AtomInfo
+////////
 
-/** Calculate the fingerprint ID of the passed molinfo object */
-quint32 MolInfoRegistry::getFingerPrint(const MoleculeInfoData &molinfo)
+QDataStream& operator<<(QDataStream &ds, 
+                        const AtomInfo &atominfo)
 {
-    QMutexLocker lkr(&mutex);
-    
-    if (fingerprints.contains(&molinfo))
-        return fingerprints[&molinfo];
-    else
-    {
-        //compare this data against a representative of each of
-        //the different types of data and see if it is new...
-        for (QHash< quint32, QList<const MoleculeInfoData*> >::const_iterator
-                                       it = moltypes.constBegin();
-             it != moltypes.constEnd();
-             ++it)
-        {
-            //only need to compare against the first representative
-            //of this type
-            BOOST_ASSERT( it.value().count() > 0 );
-            
-            if ( molinfo._pvt_hasSameFingerprint( *(it.value().at(0)) ) )
-            {
-                //these molecules have the same fingerprints
-                quint32 fingerprint = it.key();
-                moltypes[fingerprint].append(&molinfo);
-                fingerprints.insert(&molinfo, fingerprint);
-                return fingerprint;
-            }
-        }
-        
-        //this molecule has a different fingerprint
-        ++lastid;
-        
-        moltypes[lastid].append(&molinfo);
-        fingerprints.insert(&molinfo, lastid);
-        
-        return lastid;
-    }
+    ds << atominfo.name << atominfo.number
+       << atominfo.residx << atominfo.segidx
+       << atominfo.cgatomidx;
+       
+    return ds;
 }
 
-/** Unregister the MoleculeInfoData object 'molinfo' */
-void MolInfoRegistry::unregister(const MoleculeInfoData &molinfo)
+QDataStream& operator>>(QDataStream &ds,
+                        AtomInfo &atominfo)
 {
-    QMutexLocker lkr(&mutex);
-    
-    quint32 fingerprint = fingerprints.value(&molinfo, 0);
-    
-    if (fingerprint == 0)
-        //this molinfo has not been registered
-        return;
-        
-    //remove this from the registry
-    fingerprints.remove(&molinfo);
-    
-    QList<const MoleculeInfoData*> &infos = moltypes[fingerprint];
-    infos.removeAll(&molinfo);
-    
-    if (infos.isEmpty())
-        moltypes.remove(fingerprint);
+    ds >> atominfo.name >> atominfo.number
+       >> atominfo.residx >> atominfo.segidx
+       >> atominfo.cgatomidx;
+       
+    return ds;
 }
 
-/** Tell the registry that the copy from 'source' to 'destination'
-    is about to start */
-void MolInfoRegistry::beginCopy(const MoleculeInfoData &source,
-                                const MoleculeInfoData &destination)
-{
-    mutex.lock();
+AtomInfo::AtomInfo()
+         : name( QString::null ), number( AtomNum::null() ),
+           residx( ResIdx::null() ), segidx( SegIdx::null() )
+{}
 
-    if (&source == &destination)
-        return;
-        
-    quint32 old_fingerprint = fingerprints.value(&source, 0);
-    quint32 new_fingerprint = fingerprints.value(&destination, 0);
-    
-    if (old_fingerprint == new_fingerprint)
-        //nothing needs doing
-        return;
-        
-    //remove the old fingerprint
-    if (old_fingerprint != 0)
-    {
-        //remove this from the registry
-        fingerprints.remove(&destination);
-    
-        QList<const MoleculeInfoData*> &infos = moltypes[old_fingerprint];
-        infos.removeAll(&destination);
-    
-        if (infos.isEmpty())
-            moltypes.remove(old_fingerprint);
-    }
-    
-    //add the new fingerprint
-    if (new_fingerprint != 0)
-    {
-        fingerprints.insert(&destination, new_fingerprint);
-        moltypes[new_fingerprint].append(&destination);
-    }
+AtomInfo::~AtomInfo()
+{}
+
+bool AtomInfo::operator==(const AtomInfo &other) const
+{
+    return this == &other or
+           (name == other.name and number == other.number and 
+            residx == other.residx and segidx == other.segidx and
+            cgatomidx == other.cgatomidx);
 }
 
-/** Tell the registry that the copy is complete */
-void MolInfoRegistry::endCopy()
+bool AtomInfo::operator!=(const AtomInfo &other) const
 {
-    mutex.unlock();
+    return this != &other and
+           (name != other.name or number != other.number or
+            residx != other.residx or segidx != other.segidx or
+            cgatomidx != other.cgatomidx);
+}
+
+////////
+//////// Implementation of MoleculeInfoData::CGInfo
+////////
+
+QDataStream& operator<<(QDataStream &ds, 
+                        const CGInfo &cginfo)
+{
+    ds << cginfo.name << cginfo.atom_indicies;
+       
+    return ds;
+}
+
+QDataStream& operator>>(QDataStream &ds,
+                        CGInfo &cginfo)
+{
+    ds >> cginfo.name >> cginfo.atom_indicies;
+       
+    return ds;
+}
+
+CGInfo::CGInfo() : name( QString::null )
+{}
+
+CGInfo::~CGInfo()
+{}
+
+bool CGInfo::operator==(const CGInfo &other) const
+{
+    return name == other.name and atom_indicies == other.atom_indicies;
+}
+
+bool CGInfo::operator!=(const CGInfo &other) const
+{
+    return name != other.name or atom_indicies != other.atom_indicies;
+}
+
+////////
+//////// Implementation of MoleculeInfoData::ResInfo;
+////////
+
+QDataStream& operator<<(QDataStream &ds, 
+                        const ResInfo &resinfo)
+{
+    ds << resinfo.name << resinfo.number << resinfo.chainidx
+       << resinfo.atom_indicies << resinfo.atoms_by_name;
+       
+    return ds;
+}
+
+QDataStream& operator>>(QDataStream &ds,
+                        ResInfo &resinfo)
+{
+    ds >> resinfo.name >> resinfo.number >> resinfo.chainidx
+       >> resinfo.atom_indicies >> resinfo.atoms_by_name;
+       
+    return ds;
+}
+
+ResInfo::ResInfo()
+        : name( QString::null ), number( ResNum::null() ),
+          chainidx( ChainIdx::null() )
+{}
+
+ResInfo::~ResInfo()
+{}
+
+bool ResInfo::operator==(const ResInfo &other) const
+{
+    return this == &other or
+           (name == other.name and number == other.number and
+            chainidx == other.chainidx and atom_indicies == other.atom_indicies and
+            atoms_by_name == other.atoms_by_name);
+}
+
+bool ResInfo::operator!=(const ResInfo &other) const
+{
+    return not this->operator==(other);
+}
+
+////////
+//////// Implementation of MoleculeInfoData::ChainInfo
+////////
+
+QDataStream& operator<<(QDataStream &ds, 
+                        const ChainInfo &chaininfo)
+{
+    ds << chaininfo.name << chaininfo.res_indicies;
+       
+    return ds;
+}
+
+QDataStream& operator>>(QDataStream &ds,
+                        ChainInfo &chaininfo)
+{
+    ds >> chaininfo.name >> chaininfo.res_indicies;
+       
+    return ds;
+}
+
+ChainInfo::ChainInfo() : name( QString::null )
+{}
+
+ChainInfo::~ChainInfo()
+{}
+
+bool ChainInfo::operator==(const ChainInfo &other) const
+{
+    return name == other.name and res_indicies == other.res_indicies;
+}
+
+bool ChainInfo::operator!=(const ChainInfo &other) const
+{
+    return name != other.name or res_indicies != other.res_indicies;
+}
+
+////////
+//////// Implementation of MoleculeInfoData::SegInfo
+////////
+
+QDataStream& operator<<(QDataStream &ds, 
+                        const SegInfo &seginfo)
+{
+    ds << seginfo.name << seginfo.atom_indicies;
+       
+    return ds;
+}
+
+QDataStream& operator>>(QDataStream &ds,
+                        SegInfo &seginfo)
+{
+    ds >> seginfo.name >> seginfo.atom_indicies;
+       
+    return ds;
+}
+
+SegInfo::SegInfo() : name( QString::null )
+{}
+
+SegInfo::~SegInfo()
+{}
+
+bool SegInfo::operator==(const SegInfo &other) const
+{
+    return name == other.name and atom_indicies == other.atom_indicies;
+}
+
+bool SegInfo::operator!=(const SegInfo &other) const
+{
+    return name != other.name or atom_indicies != other.atom_indicies;
 }
 
 ////////
 //////// Implementation of MoleculeInfoData
 ////////
 
+static const RegisterMetaType<MoleculeInfoData> r_molinfo;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
+                                       const MoleculeInfoData &molinfo)
+{
+    writeHeader(ds, r_molinfo, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << molinfo.atoms_by_index
+        << molinfo.res_by_index << molinfo.chains_by_index
+        << molinfo.seg_by_index << molinfo.cg_by_index;
+        
+    return ds;
+}
+
+void MoleculeInfoData::rebuildNameAndNumberIndexes()
+{
+    //now rebuild the other indexes
+    atoms_by_name.clear();
+    atoms_by_num.clear();
+    
+    for (AtomIdx i(0); i < atoms_by_index.count(); ++i)
+    {
+        const AtomInfo &atominfo = atoms_by_index.at(i);
+        
+        if (not atominfo.name.isNull())
+            atoms_by_name.insert(atominfo.name, i);
+            
+        if (not atominfo.number.isNull())
+            atoms_by_num.insert(atominfo.number, i);
+    }
+    
+    res_by_name.clear();
+    res_by_num.clear();
+    
+    for (ResIdx i(0); i < res_by_index.count(); ++i)
+    {
+        const ResInfo &resinfo = res_by_index.at(i);
+    
+        if (not resinfo.name.isNull())
+            res_by_name.insert(resinfo.name, i);
+        
+        if (not resinfo.number.isNull())
+            res_by_num.insert(resinfo.number, i);
+    }
+    
+    chains_by_name.clear();
+    
+    for (ChainIdx i(0); i < chains_by_index.count(); ++i)
+    {
+        const ChainInfo &chaininfo = chains_by_index.at(i);
+        
+        if (not chaininfo.name.isNull())
+            chains_by_name.insert(chaininfo.name, i);
+    }
+    
+    seg_by_name.clear();
+    
+    for (SegIdx i(0); i < seg_by_index.count(); ++i)
+    {
+        const SegInfo &seginfo = seg_by_index.at(i);
+        
+        if (not seginfo.name.isNull())
+            seg_by_name.insert(seginfo.name, i);
+    }
+    
+    cg_by_name.clear();
+    
+    for (CGIdx i(0); i < cg_by_index.count(); ++i)
+    {
+        const CGInfo &cginfo = cg_by_index.at(i);
+        
+        if (not cginfo.name.isNull())
+            cg_by_name.insert(cginfo.name, i);
+    }
+    
+    atoms_by_name.squeeze();
+    atoms_by_num.squeeze();
+    res_by_name.squeeze();
+    res_by_num.squeeze();
+    chains_by_name.squeeze();
+    seg_by_name.squeeze();
+    cg_by_name.squeeze();
+}
+
+static quint64 last_molinfo_uid = 0;
+static QMutex molinfo_uid_mutex;
+
+/** Return a new, unique ID number for a MoleculeInfoData */
+static quint64 getNewMolInfoUID()
+{
+    QMutexLocker lkr(&molinfo_uid_mutex);
+    ++last_molinfo_uid;
+    
+    return last_molinfo_uid;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
+                                       MoleculeInfoData &molinfo)
+{
+    VersionID v = readHeader(ds, r_molinfo);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> molinfo.atoms_by_index
+            >> molinfo.res_by_index >> molinfo.chains_by_index
+            >> molinfo.seg_by_index >> molinfo.cg_by_index;
+            
+        //reconstruct the name and number indexes
+        molinfo.rebuildNameAndNumberIndexes();
+            
+        //finally get a new UID for this molinfo
+        molinfo.uid = getNewMolInfoUID();
+    }
+    else
+        throw version_error( v, "1", r_molinfo, CODELOC );
+        
+    return ds;
+}
+
 /** Null constructor */
-MoleculeInfoData::MoleculeInfoData()
-                 : QSharedData(), fingerprint(0)
+MoleculeInfoData::MoleculeInfoData() : QSharedData(), uid(0)
 {}
     
 /** Copy constructor */
 MoleculeInfoData::MoleculeInfoData(const MoleculeInfoData &other)
                  : QSharedData(),
-                   molname(other.molname),
-                   fingerprint(other.fingerprint),
+                   uid(other.uid),
                    atoms_by_index(other.atoms_by_index),
+                   atoms_by_name(other.atoms_by_name),
+                   atoms_by_num(other.atoms_by_num),
                    res_by_index(other.res_by_index),
                    res_by_name(other.res_by_name),
                    res_by_num(other.res_by_num),
@@ -223,21 +512,17 @@ MoleculeInfoData::MoleculeInfoData(const MoleculeInfoData &other)
   
 /** Destructor */  
 MoleculeInfoData::~MoleculeInfoData()
-{
-    MolInfoRegistry::unregister(*this);
-}
+{}
 
 /** Copy assignment operator */
 MoleculeInfoData& MoleculeInfoData::operator=(const MoleculeInfoData &other)
 {
     if (&other != this)
     {
-        //tell the registry that a copy is being made
-        MolInfoRegistry::beginCopy(other, *this);
-        
-        molname = other.molname;
-        fingerprint = other.fingerprint;
+        uid = other.uid;
         atoms_by_index = other.atoms_by_index;
+        atoms_by_name = other.atoms_by_name;
+        atoms_by_num = other.atoms_by_num;
         res_by_index = other.res_by_index;
         res_by_name = other.res_by_name;
         res_by_num = other.res_by_num;
@@ -247,140 +532,188 @@ MoleculeInfoData& MoleculeInfoData::operator=(const MoleculeInfoData &other)
         seg_by_name = other.seg_by_name;
         cg_by_index = other.cg_by_index;
         cg_by_name = other.cg_by_name;
-        
-        MolInfoRegistry::endCopy();
     }
     
     return *this;
 }
 
-/** Does this object have the same fingerprint as 'other'? If it does,
-    then this implies that it has the same number of atoms, called the same
-    names in the same order, arranged into the same number of residues, CutGroups, 
-    chains and segments, which also have the same names and are in
-    the same order. The only things that can be different if the
-    fingerprints are different are the names of the molecules,
-    and the numbers of the atoms and residues */
-bool MoleculeInfoData::hasSameFingerprint(const MoleculeInfoData &other) const
-{
-    return fingerprint == other.fingerprint;
-} 
-
-/** Assert that this object has the same fingerprint as 'other'.
+/** Assert that this molinfo to equal to 'other'
 
     \throw SireError::incompatible_error
 */
-void MoleculeInfoData::assertSameFingerprint(const MoleculeInfoData &other) const
+void MoleculeInfoData::assertEqualTo(const MoleculeInfoData &other) const
 {
-    if (not this->hasSameFingerprint(other))
+    if (this->operator!=(other))
         throw SireError::incompatible_error( QObject::tr(
-            "Molecule \"%1\" is incompatible with molecule \"%2\" "
-            "as they have different fingerprints! (%3 vs. %4)")
-                .arg(this->name(), other.name())
-                .arg(fingerprint).arg(other.fingerprint), CODELOC );
+            "The two passed molecule layouts are incompatible "
+            "as they have different UIDs! (%1 vs. %2)")
+                .arg(uid).arg(other.uid), CODELOC );
 }
 
-/** Compare this MoleculeInfoData with 'other' to see if they would
-    have the same fingerprint. Two object have the same fingerprint
-    if they contains the same number of atoms, in the same order,
-    with the same names, in the same number of residues that are
-    also in the same order with the same names, in the same
-    chains that are in the same order with the same names,
-    and the atoms also in the same segments with the same order
-    and names, and same CutGroups, with same order and names.
-    
-    This is essentially a test for complete equality, except
-    that the atom numbers, residue numbers and molecule name
-    are ignored.
+/** Use this function to minimise memory usage - this function
+    compares the shared data in this info with 'other', and where
+    they are equal it copies the data from 'other', thereby reducing
+    wastage caused by duplicated storage
 */
-bool MoleculeInfoData::_pvt_hasSameFingerprint(const MoleculeInfoData &other) const
+void MoleculeInfoData::squeeze(const MoleculeInfoData &other) const
 {
     if (this == &other)
-        return true;
-    else if (seg_by_index != other.seg_by_index or
-             chains_by_index != other.chains_by_index or
-             cg_by_index != other.cg_by_index)
-    {
-        return false;
-    }
-    else
-    {
-        //ok, now only need to compare the atom and residue names
-        // -- do the residues first as there are less of them!
-        int nres = res_by_index.count();
+        return;
 
-        if (nres != other.res_by_index.count())
-            //different number of residues!
-            return false;
+    MoleculeInfoData *squeezed_this = const_cast<MoleculeInfoData*>(this);
+    
+    if (seg_by_index == other.seg_by_index)
+    {
+        squeezed_this->seg_by_index = other.seg_by_index;
+        squeezed_this->seg_by_name = other.seg_by_name;
+    }
         
-        int nats = atoms_by_index.count();
+    if (chains_by_index == other.chains_by_index)
+    {
+        squeezed_this->chains_by_index = other.chains_by_index;
+        squeezed_this->chains_by_name = other.chains_by_name;
+    }
         
-        if (nats != other.atoms_by_index.count())
-            //different number of atoms
-            return false;
-        
-        const ResInfo *this_res_array = res_by_index.constData();
-        const ResInfo *other_res_array = other.res_by_index.constData();
+    if (cg_by_index == other.cg_by_index)
+    {
+        squeezed_this->cg_by_index = other.cg_by_index;
+        squeezed_this->cg_by_name = other.cg_by_name;
+    }
+
+    //ok, now only need to compare the atom and residue names
+    int nres = res_by_index.count();
+
+    const ResInfo *this_res_array = res_by_index.constData();
+    const ResInfo *other_res_array = other.res_by_index.constData();
+
+    if (this_res_array == other_res_array)
+    {
+        //both arrays are already identical!
+        squeezed_this->res_by_index = other.res_by_index;
+        squeezed_this->res_by_name = other.res_by_name;
+        squeezed_this->res_by_num = other.res_by_num;
+    }   
+    else if (nres == other.res_by_index.count())
+    {
+        bool same_res_numbers = true;
+        bool same_res_names = true;
+        bool identical_residues = true;
         
         //make sure the residues have the same names and contain the
         //same atoms
         for (int i=0; i<nres; ++i)
         {
-            if (this_res_array[i].name != other_res_array[i].name or
-                this_res_array[i].atom_indicies != other_res_array[i].atom_indicies)
-            {
-                return false;
-            }
+            const ResInfo &this_res = this_res_array[i];
+            const ResInfo &other_res = other_res_array[i];
+        
+            same_res_names = same_res_names and
+                             this_res.name == other_res.name;
+                             
+            same_res_numbers = same_res_numbers and
+                               this_res.number == other_res.number;
+
+            identical_residues = identical_residues and
+                                 same_res_names and same_res_numbers and
+                                 this_res.chainidx == other_res.chainidx and
+                                 this_res.atom_indicies == other_res.atom_indicies and
+                                 this_res.atoms_by_name == other_res.atoms_by_name;
+            
+            if ( not (same_res_names or same_res_numbers or identical_residues) )
+                break;
         }
         
-        const AtomInfo *this_atom_array = atoms_by_index.constData();
-        const AtomInfo *other_atom_array = atoms_by_index.constData();
+        if (identical_residues)
+        {
+            //have the same residue layout and names and numbers :-)
+            squeezed_this->res_by_index = other.res_by_index;
+            squeezed_this->res_by_name = other.res_by_name;
+            squeezed_this->res_by_num = other.res_by_num;
+        }
+        else
+        {
+            if (same_res_names)
+                //residues have the same names
+                squeezed_this->res_by_name = other.res_by_name;
+            
+            if (same_res_numbers)
+                //residues have the same numbers;
+                squeezed_this->res_by_num = other.res_by_num;
+        }
+    }
         
-        //make sure that the atoms have the same names
+    // now process the atoms
+    int nats = atoms_by_index.count();
+
+    const AtomInfo *this_atom_array = atoms_by_index.constData();
+    const AtomInfo *other_atom_array = atoms_by_index.constData();
+
+    if (this_atom_array == other_atom_array)
+    {
+        //both arrays are identical
+        squeezed_this->atoms_by_index = other.atoms_by_index;
+        squeezed_this->atoms_by_name = other.atoms_by_name;
+        squeezed_this->atoms_by_num = other.atoms_by_num;
+    }
+    else if (nats == other.atoms_by_index.count())
+    {
+        bool same_atom_nums = true;
+        bool same_atom_names = true;
+        bool identical_atoms = true;
+        
         for (int i=0; i<nats; ++i)
         {
-            if (this_atom_array[i].name != other_atom_array[i].name)
-                return false;
+            const AtomInfo &this_atom = this_atom_array[i];
+            const AtomInfo &other_atom = other_atom_array[i];
+            
+            same_atom_nums = same_atom_nums and
+                             this_atom.number == other_atom.number;
+                             
+            same_atom_names = same_atom_names and
+                              this_atom.name == other_atom.name;
+                              
+            identical_atoms = identical_atoms and
+                              same_atom_nums and same_atom_names and
+                              this_atom.residx == other_atom.residx and
+                              this_atom.segidx == other_atom.segidx and
+                              this_atom.cgatomidx == other_atom.cgatomidx;
+                              
+            if ( not (same_atom_nums or same_atom_names or identical_atoms) )
+                break;
         }
         
-        return true;
+        if (identical_atoms)
+        {
+            squeezed_this->atoms_by_index = other.atoms_by_index;
+            squeezed_this->atoms_by_name = other.atoms_by_name;
+            squeezed_this->atoms_by_num = other.atoms_by_num;
+        }
+        else
+        {
+            if (same_atom_names)
+                squeezed_this->atoms_by_name = other.atoms_by_name;
+                
+            if (same_atom_nums)
+                squeezed_this->atoms_by_num = other.atoms_by_num;
+        }
     }
 }
 
-/** Comparison operator */
+/** Comparison operator - two molinfos are equal if they have the same UID */
 bool MoleculeInfoData::operator==(const MoleculeInfoData &other) const
 {
-    //seg_by_index == other.seg_by_index and 
-    //cg_by_index == other.cg_by_index and
-    //chains_by_index == other.chains_by_index 
-    // is implied by fingerprint == other.fingerprint
-
-    return &other == this or
-           (molname == other.molname and
-            fingerprint == other.fingerprint and
-            res_by_index == other.res_by_index and
-            atoms_by_index == other.atoms_by_index);
+    return uid == other.uid;
 }
 
-/** Comparison operator */
+/** Comparison operator - two molinfos are equal if they have the same UID */
 bool MoleculeInfoData::operator!=(const MoleculeInfoData &other) const
 {
-    //seg_by_index != other.seg_by_index or 
-    //cg_by_index != other.cg_by_index or
-    //chains_by_index != other.chains_by_index 
-    // is implied by fingerprint != other.fingerprint
-
-    return &other != this and
-           (molname != other.molname or
-            fingerprint != other.fingerprint or
-            res_by_index != other.res_by_index or
-            atoms_by_index != other.atoms_by_index);
+    return uid != other.uid;
 }
 
-/** Return the name of the molecule */
-const MolName& MoleculeInfoData::name() const
+/** Return the unique ID number for this molecule layout */
+quint64 MoleculeInfoData::UID() const
 {
-    return molname;
+    return uid;
 }
 
 /** Return the name of the chain that matches the ID 'chainid' */
@@ -473,6 +806,220 @@ AtomNum MoleculeInfoData::number(AtomIdx atomidx) const
     atomidx = atomidx.map(atoms_by_index.count());
     return atoms_by_index[atomidx].number;
 }
+    
+/** Rename the atom at index 'atomidx' to have the new name 'newname'. 
+    
+    \throw SireError::invalid_index
+*/
+MoleculeInfoData MoleculeInfoData::rename(AtomIdx atomidx, 
+                                          const AtomName &newname) const
+{
+    atomidx = atomidx.map( this->nAtoms() );
+
+    if (atoms_by_index.at(atomidx).name == newname)
+        //the name hasn't changed
+        return *this;
+
+    //make the change in a copy of this object
+    MoleculeInfoData newinfo(*this);
+    
+    AtomInfo &atom = newinfo.atoms_by_index[atomidx];
+    newinfo.atoms_by_name.remove(atom.name, atomidx);
+    
+    if (not atom.residx.isNull())
+    {
+        ResInfo &residue = newinfo.res_by_index[atom.residx];
+        residue.atoms_by_name.remove(atom.name, atomidx);
+
+        if (not newname.isNull())
+            residue.atoms_by_name.insert(newname, atomidx);
+    }
+
+    if (not newname.isNull())
+        newinfo.atoms_by_name.insert(newname, atomidx);
+
+    atom.name = newname;
+    
+    //ok, we must now get a new uid for this info object
+    newinfo.uid = getNewMolInfoUID();
+    
+    return newinfo;
+}
+
+/** Renumber the atom at index 'atomidx' to 'newnum'. 
+    
+    \throw SireError::invalid_index
+*/
+MoleculeInfoData MoleculeInfoData::renumber(AtomIdx atomidx, 
+                                            const AtomNum &newnum) const
+{
+    atomidx = atomidx.map( this->nAtoms() );
+    
+    if (atoms_by_index.at(atomidx).number == newnum)
+        return *this;
+        
+    //make the change in a copy of this object
+    MoleculeInfoData newinfo(*this);
+    
+    AtomInfo &atom = newinfo.atoms_by_index[atomidx];
+    
+    newinfo.atoms_by_num.remove(atom.number, atomidx);
+    
+    if (not newnum.isNull())
+        newinfo.atoms_by_num.insert(newnum, atomidx);
+    
+    atom.number = newnum;
+    
+    newinfo.uid = getNewMolInfoUID();
+    
+    return newinfo;
+}
+
+/** Rename the residue at index 'residx' with the name 'newname'. 
+
+    \throw SireError::invalid_index
+*/
+MoleculeInfoData MoleculeInfoData::rename(ResIdx residx, 
+                                          const ResName &newname) const
+{
+    residx = residx.map( this->nResidues() );
+    
+    if (res_by_index.at(residx).name == newname)
+        return *this;
+        
+    //make the change in a copy of this object
+    MoleculeInfoData newinfo(*this);
+    
+    ResInfo &residue = newinfo.res_by_index[residx];
+    
+    newinfo.res_by_name.remove(residue.name, residx);
+    
+    if (not newname.isNull())
+        newinfo.res_by_name.insert(newname, residx);
+        
+    residue.name = newname;
+    
+    //update the fingerprint
+    newinfo.uid = getNewMolInfoUID();
+    
+    return newinfo;
+}
+
+/** Renumber the residue at index 'residx' to 'newnum'.
+    
+    \throw SireError::invalid_index
+*/
+MoleculeInfoData MoleculeInfoData::renumber(ResIdx residx, 
+                                            const ResNum &newnum) const
+{
+    residx = residx.map( this->nResidues() );
+    
+    if (res_by_index.at(residx).number == newnum)
+        return *this;
+        
+    //make the change in a copy of this object
+    MoleculeInfoData newinfo(*this);
+    
+    ResInfo &residue = newinfo.res_by_index[residx];
+    
+    newinfo.res_by_num.remove(residue.number, residx);
+    
+    if (not newnum.isNull())
+        newinfo.res_by_num.insert(newnum, residx);
+        
+    residue.number = newnum;
+    
+    newinfo.uid = getNewMolInfoUID();
+    
+    return newinfo;
+}
+
+/** Rename the CutGroup at index 'cgidx' to 'newname'.
+    
+    \throw SireError::invalid_index
+*/
+MoleculeInfoData MoleculeInfoData::rename(CGIdx cgidx, 
+                                          const CGName &newname) const
+{
+    cgidx = cgidx.map( this->nCutGroups() );
+    
+    if (cg_by_index.at(cgidx).name == newname)
+        return *this;
+    
+    //make the change in a copy
+    MoleculeInfoData newinfo(*this);
+    
+    CGInfo &cgroup = newinfo.cg_by_index[cgidx];
+    
+    newinfo.cg_by_name.remove(cgroup.name, cgidx);
+    
+    if (not newname.isNull())
+        newinfo.cg_by_name.insert(newname, cgidx);
+        
+    cgroup.name = newname;
+    
+    newinfo.uid = getNewMolInfoUID();
+    
+    return newinfo;
+}
+                                          
+/** Rename the chain at index 'chainidx' to 'newname'.
+    
+    \throw SireError::invalid_index
+*/
+MoleculeInfoData MoleculeInfoData::rename(ChainIdx chainidx, 
+                                          const ChainName &newname) const
+{
+    chainidx = chainidx.map( this->nChains() );
+    
+    if (chains_by_index.at(chainidx).name == newname)
+        return *this;
+    
+    //make the change in a copy
+    MoleculeInfoData newinfo(*this);
+    
+    ChainInfo &chain = newinfo.chains_by_index[chainidx];
+    
+    newinfo.chains_by_name.remove(chain.name, chainidx);
+    
+    if (not newname.isNull())
+        newinfo.chains_by_name.insert(newname, chainidx);
+        
+    chain.name = newname;
+    
+    newinfo.uid = getNewMolInfoUID();
+    
+    return newinfo;
+}
+
+/** Rename the segment at index 'segidx' to 'newname'.
+    
+    \throw SireError::invalid_index
+*/
+MoleculeInfoData MoleculeInfoData::rename(SegIdx segidx, 
+                                          const SegName &newname) const
+{
+    segidx = segidx.map( this->nSegments() );
+    
+    if (seg_by_index.at(segidx).name == newname)
+        return *this;
+    
+    //make the change in a copy
+    MoleculeInfoData newinfo(*this);
+    
+    SegInfo &segment = newinfo.seg_by_index[segidx];
+    
+    newinfo.seg_by_name.remove(segment.name, segidx);
+    
+    if (not newname.isNull())
+        newinfo.seg_by_name.insert(newname, segidx);
+        
+    segment.name = newname;
+    
+    newinfo.uid = getNewMolInfoUID();
+    
+    return newinfo;
+}
 
 /** Return the CGAtomIdx of the atom at index 'atomidx' */
 CGAtomIdx MoleculeInfoData::cgAtomIdx(AtomIdx atomidx) const
@@ -496,13 +1043,13 @@ void MoleculeInfoData::assertSingleAtom(const QList<AtomIdx> &atomidxs) const
 {
     if (atomidxs.isEmpty())
         throw SireMol::missing_atom( QObject::tr(
-            "Could not find a matching atom in the molecule \"%1\".")
-                .arg(molname), CODELOC );
+            "Could not find a matching atom in the layout \"%1\".")
+                .arg(uid), CODELOC );
                 
     else if (atomidxs.count() > 1)
         throw SireMol::duplicate_atom( QObject::tr(
-            "Too many atoms have matched (%1) in the molecule \"%2\".")
-                .arg(atomidxs.count()).arg(molname), CODELOC );
+            "Too many atoms have matched (%1) in the layout \"%2\".")
+                .arg(atomidxs.count()).arg(uid), CODELOC );
 }
 
 /** Assert that there is the index for just one residue
@@ -514,13 +1061,13 @@ void MoleculeInfoData::assertSingleResidue(const QList<ResIdx> &residxs) const
 {
     if (residxs.isEmpty())
         throw SireMol::missing_residue( QObject::tr(
-            "Could not find a matching residue in the molecule \"%1\".")
-                .arg(molname), CODELOC );
+            "Could not find a matching residue in the layout \"%1\".")
+                .arg(uid), CODELOC );
                 
     else if (residxs.count() > 1)
         throw SireMol::duplicate_residue( QObject::tr(
-            "Too many residues have matched (%1) in the molecule \"%2\".")
-                .arg(residxs.count()).arg(molname), CODELOC );
+            "Too many residues have matched (%1) in the layout \"%2\".")
+                .arg(residxs.count()).arg(uid), CODELOC );
 }
 
 /** Assert that there is the index for just one chain 
@@ -532,13 +1079,13 @@ void MoleculeInfoData::assertSingleChain(const QList<ChainIdx> &chainidxs) const
 {
     if (chainidxs.isEmpty())
         throw SireMol::missing_chain( QObject::tr(
-            "Could not find a matching chain in the molecule \"%1\".")
-                .arg(molname), CODELOC );
+            "Could not find a matching chain in the layout \"%1\".")
+                .arg(uid), CODELOC );
                 
     else if (chainidxs.count() > 1)
         throw SireMol::duplicate_chain( QObject::tr(
-            "Too many chains have matched (%1) in the molecule \"%2\".")
-                .arg(chainidxs.count()).arg(molname), CODELOC );
+            "Too many chains have matched (%1) in the layout \"%2\".")
+                .arg(chainidxs.count()).arg(uid), CODELOC );
 }
 
 /** Assert that there is the index for just one CutGroup 
@@ -550,13 +1097,13 @@ void MoleculeInfoData::assertSingleCutGroup(const QList<CGIdx> &cgidxs) const
 {
     if (cgidxs.isEmpty())
         throw SireMol::missing_cutgroup( QObject::tr(
-            "Could not find a matching CutGroup in the molecule \"%1\".")
-                .arg(molname), CODELOC );
+            "Could not find a matching CutGroup in the layout \"%1\".")
+                .arg(uid), CODELOC );
                 
     else if (cgidxs.count() > 1)
         throw SireMol::duplicate_cutgroup( QObject::tr(
-            "Too many CutGroups have matched (%1) in the molecule \"%2\".")
-                .arg(cgidxs.count()).arg(molname), CODELOC );
+            "Too many CutGroups have matched (%1) in the layout \"%2\".")
+                .arg(cgidxs.count()).arg(uid), CODELOC );
 }
 
 /** Assert that there is the index for just one segment 
@@ -568,13 +1115,13 @@ void MoleculeInfoData::assertSingleSegment(const QList<SegIdx> &segidxs) const
 {
     if (segidxs.isEmpty())
         throw SireMol::missing_segment( QObject::tr(
-            "Could not find a matching segment in the molecule \"%1\".")
-                .arg(molname), CODELOC );
+            "Could not find a matching segment in the layout \"%1\".")
+                .arg(uid), CODELOC );
                 
     else if (segidxs.count() > 1)
         throw SireMol::duplicate_segment( QObject::tr(
-            "Too many segments have matched (%1) in the molecule \"%2\".")
-                .arg(segidxs.count()).arg(molname), CODELOC );
+            "Too many segments have matched (%1) in the layout \"%2\".")
+                .arg(segidxs.count()).arg(uid), CODELOC );
 }
 
 /** Return the index of the atom with ID 'atomid' */
@@ -826,8 +1373,8 @@ QList<AtomIdx> MoleculeInfoData::getAtomsIn(ResIdx residx,
     if (atomidxs.isEmpty())
         throw SireMol::missing_atom( QObject::tr(
             "There is no atom called \"%1\" in the residue at index %2 "
-            "in the molecule \"%3\".")
-                .arg(name).arg(residx).arg(molname), CODELOC );
+            "in the layout \"%3\".")
+                .arg(name).arg(residx).arg(uid), CODELOC );
                 
     if (atomidxs.count() > 1)
         qSort(atomidxs);
@@ -863,8 +1410,8 @@ QList<AtomIdx> MoleculeInfoData::getAtomsIn(const ResID &resid,
     if (atomidxs.isEmpty())
         throw SireMol::missing_atom( QObject::tr(
             "There are no atoms called \"%1\" in the residues matching "
-            "%2 in the molecule \"%3\".")
-                .arg(name, resid.toString(), molname), CODELOC );
+            "%2 in the layout \"%3\".")
+                .arg(name, resid.toString()).arg(uid), CODELOC );
 
     return atomidxs;
 }                                            
@@ -902,8 +1449,8 @@ QList<AtomIdx> MoleculeInfoData::getAtomsIn(ChainIdx chainidx,
     if (atomidxs.isEmpty())
         throw SireMol::missing_atom( QObject::tr(
             "There are no atoms called \"%1\" in the chain at index "
-            "%2 in the molecule \"%3\".")
-                .arg(name).arg(chainidx).arg(molname), CODELOC );
+            "%2 in the layout \"%3\".")
+                .arg(name).arg(chainidx).arg(uid), CODELOC );
                 
     return atomidxs;
 }
@@ -919,8 +1466,8 @@ QList<AtomIdx> MoleculeInfoData::getAtomsIn(const ChainID &chainid,
     if (atomidxs.isEmpty())
         throw SireMol::missing_atom( QObject::tr(
             "There are no atoms called \"%1\" in the chains matching "
-            "%2 in the molecule \"%3\".")
-                .arg(name, chainid.toString(), molname), CODELOC );
+            "%2 in the layout \"%3\".")
+                .arg(name, chainid.toString()).arg(uid), CODELOC );
     
     return atomidxs;
 }
@@ -1096,22 +1643,73 @@ QVector<CGAtomIdx> MoleculeInfoData::cgAtomIdxs(const SegID &segid) const
 
 /** Return the index of the chain that contains the residue with index 'residx'
 
+    \throw SireMol::missing_chain
     \throw SireError::invalid_index
 */
 ChainIdx MoleculeInfoData::parentChain(ResIdx residx) const
 {
-    return res_by_index[residx.map(res_by_index.count())].chainidx;
+    ChainIdx chainidx = res_by_index[residx.map(res_by_index.count())].chainidx;
+    
+    if (chainidx.isNull())
+        throw SireMol::missing_chain( QObject::tr(
+            "The residue at index 'residx' has not been added to any chain!")
+                .arg(residx), CODELOC );
+                
+    return chainidx;
 }
 
 /** Return the index of the chain that contains the residue
     identified by the ID 'resid' 
     
     \throw SireMol::missing_residue
+    \throw SireMol::missing_chain
     \throw SireError::invalid_index
 */
 ChainIdx MoleculeInfoData::parentChain(const ResID &resid) const
 {
-    return res_by_index[ this->resIdx(resid) ].chainidx;
+    ChainIdx chainidx = res_by_index[ this->resIdx(resid) ].chainidx;
+    
+    if (chainidx.isNull())
+        throw SireMol::missing_chain( QObject::tr(
+            "The residue with ID \"%1\" has not been added to any chain!")
+                .arg(resid.toString()), CODELOC );
+                
+    return chainidx;
+}
+
+/** Return the parent residue of the atom at index 'atomidx'
+
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+*/
+ResIdx MoleculeInfoData::parentResidue(AtomIdx atomidx) const
+{
+    ResIdx residx = atoms_by_index[atomidx.map(atoms_by_index.count())].residx;
+    
+    if (residx.isNull())
+        throw SireMol::missing_residue( QObject::tr(
+            "The atom at index %1 has not been added to any residue!")
+                .arg(atomidx), CODELOC );
+                
+    return residx;
+}
+
+/** Return the parent residue of the atom identified by 'atomid'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::missing_atom
+    \throw SireError::invalid_index
+*/
+ResIdx MoleculeInfoData::parentResidue(const AtomID &atomid) const
+{
+    ResIdx residx = atoms_by_index[ this->atomIdx(atomid) ].residx;
+    
+    if (residx.isNull())
+        throw SireMol::missing_atom( QObject::tr(
+            "The atom with ID \"%1\" has not been added to any residue!")
+                .arg(atomid.toString()), CODELOC );
+                
+    return residx;
 }
 
 /** Return the parent chain of the atom at index 'atomidx'
@@ -1120,8 +1718,7 @@ ChainIdx MoleculeInfoData::parentChain(const ResID &resid) const
 */
 ChainIdx MoleculeInfoData::parentChain(AtomIdx atomidx) const
 {
-    return res_by_index[ atoms_by_index[
-                           atomidx.map(atoms_by_index.count())].residx ].chainidx;
+    return this->parentChain( this->parentResidue(atomidx) );
 }
 
 /** Return the parent chain of the atom identified by the ID 'atomid'
@@ -1131,48 +1728,47 @@ ChainIdx MoleculeInfoData::parentChain(AtomIdx atomidx) const
 */
 ChainIdx MoleculeInfoData::parentChain(const AtomID &atomid) const
 {
-    return res_by_index[ atoms_by_index[this->atomIdx(atomid)].residx ].chainidx;
-}
-
-/** Return the parent residue of the atom at index 'atomidx'
-
-    \throw SireError::invalid_index
-*/
-ResIdx MoleculeInfoData::parentResidue(AtomIdx atomidx) const
-{
-    return atoms_by_index[atomidx.map(atoms_by_index.count())].residx;
-}
-
-/** Return the parent residue of the atom identified by 'atomid'
-
-    \throw SireMol::missing_atom
-    \throw SireError::invalid_index
-*/
-ResIdx MoleculeInfoData::parentResidue(const AtomID &atomid) const
-{
-    return atoms_by_index[ this->atomIdx(atomid) ].residx;
+    return this->parentChain( this->parentResidue(atomid) );
 }
 
 /** Return the parent segment of the atom at index 'atomidx' 
 
+    \throw SireMol::missing_segment
     \throw SireError::invalid_index 
 */
 SegIdx MoleculeInfoData::parentSegment(AtomIdx atomidx) const
 {
-    return atoms_by_index[atomidx.map(atoms_by_index.count())].segidx;
+    SegIdx segidx = atoms_by_index[atomidx.map(atoms_by_index.count())].segidx;
+    
+    if (segidx.isNull())
+        throw SireMol::missing_segment( QObject::tr(
+            "The atom at index %1 has not been added to any segment!")
+                .arg(atomidx), CODELOC );
+
+    return segidx;
 }
 
 /** Return the parent segment of the atom identified by the ID 'atomid'
 
+    \throw SireMol::missing_segment
     \throw SireMol::missing_atom
     \throw SireError::invalid_index
 */
 SegIdx MoleculeInfoData::parentSegment(const AtomID &atomid) const
 {
-    return atoms_by_index[ this->atomIdx(atomid) ].segidx;
+    SegIdx segidx = atoms_by_index[ this->atomIdx(atomid) ].segidx;
+    
+    if (segidx.isNull())
+        throw SireMol::missing_segment( QObject::tr(
+            "The atom at ID \"%1\" has not been added to any segment!")
+                .arg(atomid.toString()), CODELOC );
+                
+    return segidx;
 }
 
-/** Return the parent CutGroup of the atom at index 'atomid'
+/** Return the parent CutGroup of the atom at index 'atomid'. All
+    atoms *have* to be placed into a CutGroup, so this will always
+    return a valid result.
 
     \throw SireError::invalid_index
 */
@@ -1181,7 +1777,9 @@ CGIdx MoleculeInfoData::parentCutGroup(AtomIdx atomidx) const
     return atoms_by_index[atomidx.map(atoms_by_index.count())].cgatomidx.cutGroup();
 }
 
-/** Return the parent CutGroup of the atom identified by 'atomid'
+/** Return the parent CutGroup of the atom identified by 'atomid'.
+    All atoms *have* to be placed into a CutGroup, so this will always
+    return a valid result.
 
     \throw SireMol::missing_atom
     \throw SireError::invalid_index
@@ -1702,8 +2300,8 @@ QList<ResIdx> MoleculeInfoData::map(const ResName &name) const
     
     if (residxs.isEmpty())
         throw SireMol::missing_residue( QObject::tr(
-            "There is no residue called \"%1\" in the molecule \"%2\".")
-                .arg(name, molname), CODELOC );
+            "There is no residue called \"%1\" in the layout \"%2\".")
+                .arg(name).arg(uid), CODELOC );
                 
     qSort(residxs);
     return residxs;
@@ -1726,8 +2324,8 @@ QList<ResIdx> MoleculeInfoData::map(const ResNum &num) const
     
     if (residxs.isEmpty())
         throw SireMol::missing_residue( QObject::tr(
-            "There is no residue with the number \"%1\" in the molecule \"%2\".")
-                .arg(num).arg(molname), CODELOC );
+            "There is no residue with the number \"%1\" in the layout \"%2\".")
+                .arg(num).arg(uid), CODELOC );
                 
     qSort(residxs);
     return residxs;
@@ -1782,8 +2380,8 @@ QList<ChainIdx> MoleculeInfoData::map(const ChainName &name) const
     
     if (chainidxs.isEmpty())
         throw SireMol::missing_chain( QObject::tr(
-            "There is no chain called \"%1\" in the molecule \"%2\".")
-                .arg(name, molname), CODELOC );
+            "There is no chain called \"%1\" in the layout \"%2\".")
+                .arg(name).arg(uid), CODELOC );
                 
     qSort(chainidxs);
     return chainidxs;
@@ -1831,8 +2429,8 @@ QList<SegIdx> MoleculeInfoData::map(const SegName &name) const
     
     if (segidxs.isEmpty())
         throw SireMol::missing_segment( QObject::tr(
-            "There is no segment called \"%1\" in the molecule \"%2\".")
-                .arg(name, molname), CODELOC );
+            "There is no segment called \"%1\" in the layout \"%2\".")
+                .arg(name).arg(uid), CODELOC );
                 
     qSort(segidxs);
     return segidxs;
@@ -1880,8 +2478,8 @@ QList<CGIdx> MoleculeInfoData::map(const CGName &name) const
     
     if (cgidxs.isEmpty())
         throw SireMol::missing_cutgroup( QObject::tr(
-            "There is no CutGroup called \"%1\" in the molecule \"%2\".")
-                .arg(name, molname), CODELOC );
+            "There is no CutGroup called \"%1\" in the layout \"%2\".")
+                .arg(name).arg(uid), CODELOC );
                 
     qSort(cgidxs);
     return cgidxs;
@@ -1925,24 +2523,14 @@ QList<AtomIdx> MoleculeInfoData::map(const AtomName &name) const
     if (name.isNull())
         return this->getAtoms();
 
-    QList<AtomIdx> atomidxs;
-    
-    //loop through all of the atoms...
-    int nats = atoms_by_index.count();
-    const AtomInfo *atoms_by_index_array = atoms_by_index.constData();
-    
-    for (int i=0; i<nats; ++i)
-    {
-        if (atoms_by_index_array[i].name == name)
-            atomidxs.append( AtomIdx(i) );
-    }
+    QList<AtomIdx> atomidxs = atoms_by_name.values(name);
     
     if (atomidxs.isEmpty())
         throw SireMol::missing_atom( QObject::tr(
-            "There is no atom called \"%1\" in the molecule \"%2\".")
-                .arg(name, molname), CODELOC );
+            "There is no atom called \"%1\" in the layout \"%2\".")
+                .arg(name).arg(uid), CODELOC );
                 
-    //no need to sort as added in sorted order
+    qSort(atomidxs);
     return atomidxs;
 }
 
@@ -1955,19 +2543,14 @@ QList<AtomIdx> MoleculeInfoData::map(const AtomNum &num) const
     if (num.isNull())
         return this->getAtoms();
 
-    QList<AtomIdx> atomidxs;
+    QList<AtomIdx> atomidxs = atoms_by_num.values(num);
     
-    //loop through all of the atoms
-    int nats = atoms_by_index.count();
-    const AtomInfo *atoms_by_index_array = atoms_by_index.constData();
-    
-    for (int i=0; i<nats; ++i)
-    {
-        if (atoms_by_index_array[i].number == num)
-            atomidxs.append( AtomIdx(i) );
-    }
-    
-    //no need to sort as added in sorted order
+    if (atomidxs.isEmpty())
+        throw SireMol::missing_atom( QObject::tr(
+            "There is no atom with the number \"%1\" in the layout \"%2\".")
+                .arg(num).arg(uid), CODELOC );
+                
+    qSort(atomidxs);
     return atomidxs;
 }
 

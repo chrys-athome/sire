@@ -119,7 +119,7 @@ void MoleculeView::assertSameMolecule(const MoleculeData &other) const
         throw SireError::incompatible_error( QObject::tr(
             "The molecules \"%1\", number %2, and \"%3\", number %3, "
             "are different, and therefore incompatible.")
-                .arg(d->info().name()).arg(d->number())
+                .arg(d->name()).arg(d->number())
                 .arg(other.name()).arg(other.number()),
                     CODELOC );
 }
@@ -135,14 +135,16 @@ void MoleculeView::assertSameMolecule(const MoleculeView &other) const
 }
 
 /** Update this view with a new version of the molecule. You 
-    can only update the molecule if it has the same info
-    object (so same atoms, residues, cutgroups etc.)
+    can only update the molecule if it has the same layout UID
+    (so same atoms, residues, cutgroups etc.)
     
     \throw SireError::incompatible_error
 */
 void MoleculeView::update(const MoleculeData &moldata)
 {
     this->assertSameMolecule(moldata);
+    d->info().assertEqualTo(moldata.info());
+    
     d = moldata;
 }
 
@@ -185,7 +187,7 @@ void MoleculeView::assertHasProperty(const PropertyName &key) const
         throw SireBase::missing_property( QObject::tr(
             "This view of the molecule \"%1\" (view type %2) "
             "does not have a valid property at key \"%3\".")
-                .arg(d->info().name())
+                .arg(d->name())
                 .arg(this->what())
                 .arg(key), CODELOC );
 }
@@ -200,7 +202,7 @@ void MoleculeView::assertHasMetadata(const PropertyName &metakey) const
         throw SireBase::missing_property( QObject::tr(
             "This view of the molecule \"%1\" (view type %2) "
             "does not have some valid metadata at metakey \"%3\".")
-                .arg(d->info().name())
+                .arg(d->name())
                 .arg(this->what())
                 .arg(metakey), CODELOC );
 }
@@ -218,7 +220,7 @@ void MoleculeView::assertHasMetadata(const PropertyName &key,
             "This view of the molecule \"%1\" (view type %2) "
             "does not have some valid metadata at metakey \"%3\" "
             "for the property at key \"%4\".")
-                .arg(d->info().name())
+                .arg(d->name())
                 .arg(this->what())
                 .arg(key), CODELOC );
 }

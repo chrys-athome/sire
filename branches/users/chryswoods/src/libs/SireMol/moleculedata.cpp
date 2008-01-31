@@ -30,6 +30,7 @@
 #include <QSharedData>
 
 #include "moleculedata.h"
+#include "moleculeinfodata.h"
 
 #include "SireBase/incremint.h"
 
@@ -59,6 +60,23 @@ quint64 MoleculeData::PropVersions::increment()
     return version;
 }
 
+/** Increment the version number for the property with key 'key' */
+quint64 MoleculeData::PropVersions::increment(const QString &key)
+{
+    QHash<QString,quint64>::iterator it = property_version.find(key);
+    
+    if (it == property_version.end())
+    {
+        property_version.insert(key, 1);
+        return 1;
+    }
+    else
+    {
+        it.value() = it.value() + 1;
+        return it.value();
+    }
+}
+
 /** Increment the version number of the property with key 'key',
     also updating and returning the global version number of 
     the molecule */
@@ -67,49 +85,33 @@ quint64 MoleculeData::PropVersions::increment(const QString &key,
 {
     QMutexLocker lkr(&mutex);
     
-    quint64 prop_version;
-    
-    //increment the property version
-    QHash<QString,quint64>::iterator it = property_version.find(key);
-    
-    if (it == property_version.end())
-    {
-        prop_version = 1;
-        property_version.insert(key, prop_version);
-    }
-    else
-    {
-        prop_version = it.value() + 1;
-        it.value() = prop_version;
-    }
-
     //now increment the global version
     ++version;
     
     //return the values
     molversion = version;
     
-    return prop_version;
+    return this->increment(key);
 }
 
-/** Reset all of the version numbers back to 1 */
-quint64 MoleculeData::PropVersions::reset(QHash<QString,quint64> &prop_vrsns)
+/** Increment all of the IDs for all of the properties contained
+    in the passed MoleculeData */
+void MoleculeData::PropVersions::incrementAll(MoleculeData &moldata)
 {
     QMutexLocker lkr(&mutex);
-
-    property_version.clear();
     
-    for (QHash<QString,quint64>::iterator it = prop_vrsns.begin();
-         it != prop_vrsns.end();
-         ++it)
+    //increment the version for all of the keys in the molecule
+    moldata.prop_vrsns.clear();
+    
+    foreach (QString key, moldata.props.propertyKeys())
     {
-        it.value() = 1;
-        property_version.insert( it.key(), it.value() );
+        moldata.prop_vrsns.insert(key, this->increment(key));
     }
     
-    version = 1;
+    //now increment the global version
+    ++version;
     
-    return version;
+    moldata.vrsn = version;
 }
 
 /////////
@@ -124,11 +126,7 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const MoleculeData &mold
     SharedDataStream sds(ds);
     
     sds << moldata.molinfo << moldata.props 
-        << moldata.vrsn << moldata.molnum;
-        
-    throw SireError::incomplete_code( QObject::tr(
-            "Need to be able to save and restore version numbers!!!"),
-                CODELOC );
+        << moldata.molname << moldata.molnum;
     
     return ds;
 }
@@ -143,11 +141,13 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MoleculeData &moldata)
         SharedDataStream sds(ds);
         
         sds >> moldata.molinfo >> moldata.props 
-            >> moldata.vrsn >> moldata.molnum;
-        
-        throw SireError::incomplete_code( QObject::tr(
-            "Need to be able to save and restore version numbers!!!"),
-                CODELOC );
+            >> moldata.molname >> moldata.molnum;
+
+        //get a versions object for this molecule
+        moldata.vrsns = MoleculeData::registerMolecule(moldata.molnum);
+
+        //now get the version numbers for all parts of this molecule
+        moldata.vrsns->incrementAll(moldata);
     }
     else
         throw version_error(v, "1", r_moldata, CODELOC);
@@ -155,35 +155,59 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MoleculeData &moldata)
     return ds;
 }
 
-/** Shared null MoleculeData */
-static SharedDataPointer<MoleculeData> shared_null;
+QHash< MolNum, boost::weak_ptr<MoleculeData::PropVersions> > 
+MoleculeData::version_registry;
 
-/** Return a QSharedDataPointer to the shared null MoleculeData object */
-SharedDataPointer<MoleculeData> MoleculeData::null()
+QMutex MoleculeData::version_registry_mutex;
+
+/** Return the version object that is used to get version numbers
+    for the molecule with ID number 'molnum' */
+boost::shared_ptr<MoleculeData::PropVersions>
+MoleculeData::registerMolecule(MolNum molnum)
 {
-    if (shared_null.constData() == 0)
+    QMutexLocker lkr(&version_registry_mutex);
+
+    boost::shared_ptr<PropVersions> vrsns 
+                    = version_registry[molnum].lock();
+                    
+    if (not vrsns)
     {
-        shared_null = new MoleculeData();
-    }
-
-    return shared_null;
-}
-
-boost::shared_ptr<MoleculeData::PropVersions> MoleculeData::shared_nullversions;
-
-const boost::shared_ptr<MoleculeData::PropVersions>& MoleculeData::getNullVersions()
-{
-    if (shared_nullversions == 0)
-        shared_nullversions.reset( new MoleculeData::PropVersions() );
+        vrsns.reset( new PropVersions() );
+        version_registry[molnum] = vrsns;
         
-    return shared_nullversions;
+        if (version_registry.capacity() - version_registry.count() < 10)
+        {
+            //ok, its time to try and clean out - remove all expired
+            //molecules from the registry - this prevents us filling
+            //up memory, and also may prevent the next malloc of the
+            //hash (as the test is based on the remaining capacity
+            //of the hash)
+            QMutableHashIterator< MolNum, boost::weak_ptr<PropVersions > >
+                                                it( version_registry );
+            
+            while( it.hasNext() )
+            {
+                if (it.value().expired())
+                    it.remove();
+            }
+        }
+    }
+    
+    return vrsns;
 }
 
 /** Null constructor */
 MoleculeData::MoleculeData()
                 : QSharedData(), vrsn(0), molnum(0),
-                  vrsns(getNullVersions())
+                  vrsns( MoleculeData::registerMolecule(molnum) )
 {}
+
+static SharedDataPointer<MoleculeData> shared_null( new MoleculeData() );
+
+SharedDataPointer<MoleculeData> MoleculeData::null()
+{
+    return shared_null;
+}
 
 /** Copy constructor */
 MoleculeData::MoleculeData(const MoleculeData &other)
@@ -191,7 +215,9 @@ MoleculeData::MoleculeData(const MoleculeData &other)
                   molinfo(other.molinfo),
                   props(other.props),
                   vrsn(other.vrsn),
+                  molname(other.molname),
                   molnum(other.molnum),
+                  prop_vrsns(other.prop_vrsns),
                   vrsns(other.vrsns)
 {}
 
@@ -207,7 +233,9 @@ MoleculeData& MoleculeData::operator=(const MoleculeData &other)
         molinfo = other.molinfo;
         props = other.props;
         vrsn = other.vrsn;
+        molname = other.molname;
         molnum = other.molnum;
+        prop_vrsns = other.prop_vrsns;
         vrsns = other.vrsns;
     }
     
@@ -237,15 +265,26 @@ MolNum MolNum::getUniqueNumber()
     return MolNum( molid_incremint.increment() );
 }
 
-/** Give this molecule a brand new ID number! */
-void MoleculeData::getNewID()
+/** Give this molecule a brand new unique ID number! */
+void MoleculeData::renumber()
 {
     //get the new ID number...
     molnum = MolNum::getUniqueNumber();
     
-    //now reset the version numbers so they are all '1'
-    vrsns.reset( new PropVersions() );
-    vrsn = vrsns->reset(prop_vrsns);
+    vrsns = MoleculeData::registerMolecule(molnum);
+    vrsns->incrementAll(*this);
+}
+
+/** Renumber this molecule to have the number 'molnum' */
+void MoleculeData::renumber(MolNum newnum)
+{
+    if (newnum == molnum)
+        //nothing to do
+        return;
+        
+    molnum = newnum;
+    vrsns = MoleculeData::registerMolecule(molnum);
+    vrsns->incrementAll(*this);
 }
 
 /** Return the version number of the property at key 'key'.
@@ -368,6 +407,269 @@ const Property& MoleculeData::metadata(const PropertyName &key,
                                        const Property &default_value) const
 {
     return props.metadata(key, metakey, default_value);
+}
+
+/** Rename this molecule to 'newname'. This changes the info().UID()
+    number, and the version number, but doesn't change this->number() */
+void MoleculeData::rename(const MolName &newname)
+{
+    if (newname != molname)
+    {
+        molname = newname;
+        vrsn = vrsns->increment();
+    }
+}
+
+/** Rename the atom at index 'atomidx' to 'newname'
+
+    \throw SireError::invalid_index
+*/
+void MoleculeData::rename(AtomIdx atomidx, const AtomName &newname)
+{
+    MoleculeInfoData newinfo = molinfo->rename(atomidx, newname);
+    
+    if (newinfo.UID() != molinfo.constData()->UID())
+    {
+        molinfo = newinfo;
+        vrsn = vrsns->increment();
+    }
+}
+
+/** Rename all atoms identified by 'atomid' to 'newname'
+
+    \throw SireMol::missing_atom
+    \throw SireError::invalid_index
+*/
+void MoleculeData::rename(const AtomID &atomid, const AtomName &newname)
+{
+    MoleculeInfoData newinfo( *(molinfo.constData()) );
+    
+    foreach (AtomIdx atomidx, atomid.map(info()))
+    {
+        newinfo = newinfo.rename(atomidx, newname);
+    }
+    
+    if (newinfo.UID() != molinfo.constData()->UID())
+    {
+        molinfo = newinfo;
+        vrsn = vrsns->increment();
+    }
+}
+
+/** Rename the CutGroup at index 'cgidx' to 'newname'
+
+    \throw SireError::invalid_index
+*/
+void MoleculeData::rename(CGIdx cgidx, const CGName &newname)
+{
+    MoleculeInfoData newinfo = molinfo->rename(cgidx, newname);
+    
+    if (newinfo.UID() != molinfo.constData()->UID())
+    {
+        molinfo = newinfo;
+        vrsn = vrsns->increment();
+    }
+}
+
+/** Rename all CutGroups identified by 'cgid' to 'newname'
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+void MoleculeData::rename(const CGID &cgid, const CGName &newname)
+{
+    MoleculeInfoData newinfo( *(molinfo.constData()) );
+    
+    foreach (CGIdx cgidx, cgid.map(info()))
+    {
+        newinfo = newinfo.rename(cgidx, newname);
+    }
+    
+    if (newinfo.UID() != molinfo.constData()->UID())
+    {
+        molinfo = newinfo;
+        vrsn = vrsns->increment();
+    }
+}
+
+/** Rename the residue at index 'residx' to 'newname'
+
+    \throw SireError::invalid_index
+*/
+void MoleculeData::rename(ResIdx residx, const ResName &newname)
+{
+    MoleculeInfoData newinfo = molinfo->rename(residx, newname);
+    
+    if (newinfo.UID() != molinfo.constData()->UID())
+    {
+        molinfo = newinfo;
+        vrsn = vrsns->increment();
+    }
+}
+
+/** Rename all residues identified by 'resid' to 'newname'
+
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+*/
+void MoleculeData::rename(const ResID &resid, const ResName &newname)
+{
+    MoleculeInfoData newinfo( *(molinfo.constData()) );
+    
+    foreach (ResIdx residx, resid.map(info()))
+    {
+        newinfo = newinfo.rename(residx, newname);
+    }
+    
+    if (newinfo.UID() != molinfo.constData()->UID())
+    {
+        molinfo = newinfo;
+        vrsn = vrsns->increment();
+    }
+}
+
+/** Rename the chain at index 'chainidx' to 'newname'
+
+    \throw SireError::invalid_index
+*/
+void MoleculeData::rename(ChainIdx chainidx, const ChainName &newname)
+{
+    MoleculeInfoData newinfo = molinfo->rename(chainidx, newname);
+    
+    if (newinfo.UID() != molinfo.constData()->UID())
+    {
+        molinfo = newinfo;
+        vrsn = vrsns->increment();
+    }
+}
+
+/** Rename all chains identified by 'chainid' to 'newname'
+
+    \throw SireMol::missing_chain
+    \throw SireError::invalid_index
+*/
+void MoleculeData::rename(const ChainID &chainid, const ChainName &newname)
+{
+    MoleculeInfoData newinfo( *(molinfo.constData()) );
+    
+    foreach (ChainIdx chainidx, chainid.map(info()))
+    {
+        newinfo = newinfo.rename(chainidx, newname);
+    }
+    
+    if (newinfo.UID() != molinfo.constData()->UID())
+    {
+        molinfo = newinfo;
+        vrsn = vrsns->increment();
+    }
+}
+
+/** Rename the segment at index 'segidx' to 'newname'
+
+    \throw SireError::invalid_index
+*/
+void MoleculeData::rename(SegIdx segidx, const SegName &newname)
+{
+    MoleculeInfoData newinfo = molinfo->rename(segidx, newname);
+    
+    if (newinfo.UID() != molinfo.constData()->UID())
+    {
+        molinfo = newinfo;
+        vrsn = vrsns->increment();
+    }
+}
+
+/** Rename all segments identified by 'atomid' to 'newname'
+
+    \throw SireMol::missing_segment
+    \throw SireError::invalid_index
+*/
+void MoleculeData::rename(const SegID &segid, const SegName &newname)
+{
+    MoleculeInfoData newinfo( *(molinfo.constData()) );
+    
+    foreach (SegIdx segidx, segid.map(info()))
+    {
+        newinfo = newinfo.rename(segidx, newname);
+    }
+    
+    if (newinfo.UID() != molinfo.constData()->UID())
+    {
+        molinfo = newinfo;
+        vrsn = vrsns->increment();
+    }
+}
+
+/** Renumber the atom at index 'atomidx' to 'newnum'
+
+    \throw SireError::invalid_index
+*/
+void MoleculeData::renumber(AtomIdx atomidx, AtomNum newnum)
+{
+    MoleculeInfoData newinfo = molinfo->renumber(atomidx, newnum);
+    
+    if (newinfo.UID() != molinfo.constData()->UID())
+    {
+        molinfo = newinfo;
+        vrsn = vrsns->increment();
+    }
+}
+
+/** Renumber all of the atoms that match the ID 'atomid' to 'newnum'
+
+    \throw SireMol::missing_atom
+    \throw SireError::invalid_index
+*/
+void MoleculeData::renumber(const AtomID &atomid, AtomNum newnum)
+{
+    MoleculeInfoData newinfo( *(molinfo.constData()) );
+    
+    foreach (AtomIdx atomidx, atomid.map(info()))
+    {
+        newinfo = newinfo.renumber(atomidx, newnum);
+    }
+    
+    if (newinfo.UID() != molinfo.constData()->UID())
+    {
+        molinfo = newinfo;
+        vrsn = vrsns->increment();
+    }
+}
+
+/** Renumber the residue at index 'residx' to 'newnum'
+
+    \throw SireError::invalid_index
+*/
+void MoleculeData::renumber(ResIdx residx, ResNum newnum)
+{
+    MoleculeInfoData newinfo = molinfo->renumber(residx, newnum);
+    
+    if (newinfo.UID() != molinfo.constData()->UID())
+    {
+        molinfo = newinfo;
+        vrsn = vrsns->increment();
+    }
+}
+
+/** Renumber all of the residues that match the ID 'resid' to 'newnum'
+
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+*/
+void MoleculeData::renumber(const ResID &resid, ResNum newnum)
+{
+    MoleculeInfoData newinfo( *(molinfo.constData()) );
+    
+    foreach (ResIdx residx, resid.map(info()))
+    {
+        newinfo = newinfo.renumber(residx, newnum);
+    }
+    
+    if (newinfo.UID() != molinfo.constData()->UID())
+    {
+        molinfo = newinfo;
+        vrsn = vrsns->increment();
+    }
 }
 
 /** Set the property with the key 'key' to the value 'value'.

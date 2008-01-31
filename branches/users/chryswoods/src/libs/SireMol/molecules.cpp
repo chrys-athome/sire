@@ -436,6 +436,12 @@ bool Molecules::update(const MoleculeView &molview)
 QList<Molecule> Molecules::update(const Molecules &molecules)
 {
     QList<Molecule> updated_mols;
+
+    //need to do this in a copy
+    Molecules old_version( *this );
+    
+    try
+    {
     
     if (this->count() <= molecules.count())
     {
@@ -472,6 +478,14 @@ QList<Molecule> Molecules::update(const Molecules &molecules)
                 mols.find(it.key())->update(it->data());
             }
         }
+    }
+
+    }
+    catch(...)
+    {
+        //something went wrong - revert to the original version
+        this->operator=(old_version);
+        throw;
     }
 
     return updated_mols;

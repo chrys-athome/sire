@@ -30,7 +30,6 @@
 #define SIREMOL_EDITOR_HPP
 
 #include "moleculeview.h"
-#include "editor.h"
 
 SIRE_BEGIN_HEADER
 
@@ -43,7 +42,7 @@ namespace SireMol
     @author Christopher Woods
 */
 template<class T>
-class Editor : public T, public EditorBase
+class Editor : public T
 {
 public:
     ~Editor();
@@ -75,19 +74,19 @@ protected:
 /** Null constructor */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-Editor<T>::Editor() : T(), EditorBase()
+Editor<T>::Editor() : T()
 {}
 
 /** Construct an editor of the passed view */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-Editor<T>::Editor(const T &view) : T(view), EditorBase()
+Editor<T>::Editor(const T &view) : T(view)
 {}
 
 /** Copy constructor */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-Editor<T>::Editor(const Editor<T> &other) : T(other), EditorBase(other)
+Editor<T>::Editor(const Editor<T> &other) : T(other)
 {}
 
 /** Destructor */
@@ -102,7 +101,6 @@ SIRE_OUTOFLINE_TEMPLATE
 Editor<T>& Editor<T>::operator=(const Editor<T> &other)
 {
     T::operator=(other);
-    EditorBase::operator=(other);
     
     return *this;
 }
@@ -164,7 +162,7 @@ SIRE_OUTOFLINE_TEMPLATE
 Editor<T>& Editor<T>::removeProperty(const QString &key)
 {
     T::assertContainsProperty(key);
-    EditorBase::removeProperty(*(this->d), key);
+    this->d->removeProperty(key);
     return *this;
 }
 
@@ -181,7 +179,7 @@ SIRE_OUTOFLINE_TEMPLATE
 Editor<T>& Editor<T>::removeMetadata(const QString &metakey)
 {
     T::assertContainsMetadata(metakey);
-    EditorBase::removeMetadata(*(this->d), metakey);
+    this->d->removeMetadata(metakey);
     return *this;
 }
 
@@ -199,7 +197,7 @@ SIRE_OUTOFLINE_TEMPLATE
 Editor<T>& Editor<T>::removeMetadata(const QString &key, const QString &metakey)
 {
     T::assertContainsMetadata(key, metakey);
-    EditorBase::removeMetadata(*(this->d), key, metakey);
+    this->d->removeMetadata(key, metakey);
     return *this;
 }
 

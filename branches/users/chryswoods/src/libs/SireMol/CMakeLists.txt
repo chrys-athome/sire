@@ -51,7 +51,6 @@ set ( SIREMOL_HEADERS
       cutgroup.h
       cuttingfunction.h
       dihedralid.h
-      editor.h
       editor.hpp
       element-data.h
       element.h
@@ -139,7 +138,6 @@ set ( SIREMOL_SOURCES
       cutgroup.cpp
       cuttingfunction.cpp
       dihedralid.cpp
-      editor.cpp
       elementdb.cpp
       errors.cpp
       evaluator.cpp

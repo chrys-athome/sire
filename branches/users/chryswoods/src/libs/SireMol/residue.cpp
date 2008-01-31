@@ -246,7 +246,7 @@ Chain Residue::chain() const
         throw SireMol::missing_chain( QObject::tr(
             "The residue %1:%2 (index %3) in the molecule \"%4\" "
             "is not part of a chain!")
-                .arg(name()).arg(number()).arg(residx).arg(d->info().name()),
+                .arg(name()).arg(number()).arg(residx).arg(d->name()),
                     CODELOC );
 
     return Chain(this->data(), chainidx);

@@ -123,7 +123,9 @@ public:
     SegEditor segment(const SegID &segid) const;
     
     MolEditor& rename(const MolName &name);
+
     MolEditor& renumber();
+    MolEditor& renumber(MolNum newnum);
     
     AtomStructureEditor add(const AtomName &atom) const;
     AtomStructureEditor add(const AtomNum &atom) const;
@@ -184,6 +186,7 @@ public:
     MolStructureEditor& operator=(const MolStructureEditor &other);
 
     const MolName& name() const;
+    MolNum number() const;
     
     int nAtoms() const;
     int nCutGroups() const;
@@ -203,7 +206,9 @@ public:
     ChainStructureEditor chain(const ChainID &chainid);
     SegStructureEditor segment(const SegID &segid);
     
-    MolStructureEditor& rename(const MolName &name);
+    MolStructureEditor& rename(const MolName &newname);
+    MolStructureEditor& renumber(MolNum newnum);
+    MolStructureEditor& renumber();
     
     AtomStructureEditor add(const AtomName &atom);
     AtomStructureEditor add(const AtomNum &atom);
