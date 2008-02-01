@@ -37,6 +37,13 @@
 #include "mover.hpp"
 #include "selector.hpp"
 
+#include "atomeditor.h"
+#include "cgeditor.h"
+#include "reseditor.h"
+#include "chaineditor.h"
+#include "segeditor.h"
+#include "moleditor.h"
+
 #include "atomname.h"
 #include "atomidx.h"
 #include "atomnum.h"
@@ -186,6 +193,8 @@ public:
     EditChainData& chain(quint32 uid);
     EditSegData& segment(quint32 uid);
     
+    quint32 getNewUID();
+    
     MolName molname;
     MolNum molnum;
     
@@ -202,12 +211,85 @@ public:
     QList<quint32> seg_by_index; 
     
     Properties properties;
+
+private:
+    quint32 last_uid;
 };
 
 } // end of namespace detail
 } // end of namespace SireMol
 
 using namespace SireMol::detail;
+
+/////////
+///////// Implementation of EditMolData
+/////////
+
+/** Serialise to a binary datastream */
+QDataStream& operator<<(QDataStream &ds, const EditMolData &editmol)
+{
+    ds << editmol.molname << editmol.molnum
+       << editmol.atoms << editmol.cutgroups << editmol.residues
+       << editmol.chains << editmol.segments
+       << editmol.atoms_by_index << editmol.cg_by_index
+       << editmol.res_by_index << editmol.chains_by_index
+       << editmol.seg_by_index
+       << editmol.properties
+       << editmol.last_uid;
+       
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream& operator>>(QDataStream &ds, EditMolData &editmol)
+{
+    ds >> editmol.molname >> editmol.molnum
+       >> editmol.atoms >> editmol.cutgroups >> editmol.residues
+       >> editmol.chains >> editmol.segments
+       >> editmol.atoms_by_index >> editmol.cg_by_index
+       >> editmol.res_by_index >> editmol.chains_by_index
+       >> editmol.seg_by_index
+       >> editmol.properties
+       >> editmol.last_uid;
+       
+    return ds;
+}
+
+/** Constructor */
+EditMolData::EditMolData() : last_uid(0)
+{}
+
+/** Copy constructor */
+EditMolData::EditMolData(const EditMolData &other)
+            : molname(other.molname), molnum(other.molnum),
+              atoms(other.atoms), cutgroups(other.cutgroups),
+              residues(other.residues), chains(other.chains),
+              segments(other.segments),
+              atoms_by_index(other.atoms_by_index),
+              cg_by_index(other.cg_by_index),
+              res_by_index(other.res_by_index),
+              chains_by_index(other.chains_by_index),
+              seg_by_index(other.seg_by_index),
+              properties(other.properties),
+              last_uid(other.last_uid)
+{}
+
+/** Destructor */
+EditMolData::~EditMolData()
+{}
+
+/** Get a new unique ID number */
+quint32 EditMolData::getNewUID()
+{
+    if (last_uid == std::numeric_limits<quint32>::max())
+        throw SireError::program_bug( QObject::tr(
+            "An EditMolData can only identify %1 unique objects!")
+                .arg(std::numeric_limits<quint32>::max()), CODELOC );
+                
+    ++last_uid;
+    
+    return last_uid;
+}
 
 /////////
 ///////// Implementation of StructureEditor
@@ -365,6 +447,51 @@ int StructureEditor::nSegmentsInMolecule() const
 int StructureEditor::nCutGroupsInMolecule() const
 {
     return d->cutgroups.count();
+}
+
+/** Assert that the UID 'uid' refers to a valid atom 
+
+    \throw SireMol::missing_atom
+*/
+void StructureEditor::assertValidAtom(quint32 uid) const
+{
+    d->atom(uid);
+}
+
+/** Assert that the UID 'uid' refers to a valid CutGroup
+
+    \throw SireMol::missing_cutgroup
+*/
+void StructureEditor::assertValidCutGroup(quint32 uid) const
+{
+    d->cutGroup(uid);
+}
+
+/** Assert that the UID 'uid' refers to a valid residue
+
+    \throw SireMol::missing_residue
+*/
+void StructureEditor::assertValidResidue(quint32 uid) const
+{
+    d->residue(uid);
+}
+
+/** Assert that the UID 'uid' refers to a valid chain
+
+    \throw SireMol::missing_chain
+*/
+void StructureEditor::assertValidChain(quint32 uid) const
+{
+    d->chain(uid);
+}
+
+/** Assert that the UID 'uid' refers to a valid segment
+
+    \throw SireMol::missing_segment
+*/
+void StructureEditor::assertValidSegment(quint32 uid) const
+{
+    d->segment(uid);
 }
 
 /** Return the UID of the atom at index 'atomidx'
@@ -756,11 +883,95 @@ SegIdx StructureEditor::segIdx(quint32 uid) const
     return SegIdx(i);
 }
 
-AtomIdx StructureEditor::atomIdx(const AtomID &atomid) const;
-CGIdx StructureEditor::cgIdx(const CGID &cgid) const;
-ResIdx StructureEditor::resIdx(const ResID &resid) const;
-ChainIdx StructureEditor::chainIdx(const ChainID &chainid) const;
-SegIdx StructureEditor::segIdx(const SegID &segid) const;
+/** Return the index of the atom that matches the ID 'atomid'
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+AtomIdx StructureEditor::atomIdx(const AtomID &atomid) const
+{
+    QList<AtomIdx> atomidxs = atomid.map(*this);
+    
+    if (atomidxs.count() > 1)
+        throw SireMol::duplicate_atom( QObject::tr(
+            "More than one atom in the molecule matches the ID \"%1\" %2")
+                .arg(atomid.toString(), Sire::toString(atomidxs)), CODELOC );
+                
+    return atomidxs.first();
+}
+
+/** Return the index of the CutGroup that matches the ID 'cgid'
+
+    \throw SireMol::missing_cutgroup
+    \throw SireMol::duplicate_cutgroup
+    \throw SireError::invalid_index
+*/
+CGIdx StructureEditor::cgIdx(const CGID &cgid) const
+{
+    QList<CGIdx> cgidxs = cgid.map(*this);
+    
+    if (cgidxs.count() > 1)
+        throw SireMol::duplicate_cutgroup( QObject::tr(
+            "More than one CutGroup in the molecule matches the ID \"%1\" %2")
+                .arg(cgid.toString(), Sire::toString(cgidxs)), CODELOC );
+                
+    return cgidxs.first();
+}
+
+/** Return the index of the residue that matches the ID 'resid'
+
+    \throw SireMol::missing_residue
+    \throw SireMol::duplicate_residue
+    \throw SireError::invalid_index
+*/
+ResIdx StructureEditor::resIdx(const ResID &resid) const
+{
+    QList<ResIdx> residxs = resid.map(*this);
+    
+    if (residxs.count() > 1)
+        throw SireMol::duplicate_residue( QObject::tr(
+            "More than one residue in the molecule matches the ID \"%1\" %2")
+                .arg(resid.toString(), Sire::toString(residxs)), CODELOC );
+                
+    return residxs.first();
+}
+
+/** Return the index of the chain that matches the ID 'chainid'
+
+    \throw SireMol::missing_chain
+    \throw SireMol::duplicate_chain
+    \throw SireError::invalid_index
+*/
+ChainIdx StructureEditor::chainIdx(const ChainID &chainid) const
+{
+    QList<ChainIdx> chainidxs = chainid.map(*this);
+    
+    if (chainidxs.count() > 1)
+        throw SireMol::duplicate_chain( QObject::tr(
+            "More than one chain in the molecule matches the ID \"%1\" %2")
+                .arg(chainid.toString(), Sire::toString(chainidxs)), CODELOC );
+                
+    return chainidxs.first();
+}
+
+/** Return the index of the segment that matches the ID 'segid'
+
+    \throw SireMol::missing_segment
+    \throw SireMol::duplicate_segment
+    \throw SireError::invalid_index
+*/
+SegIdx StructureEditor::segIdx(const SegID &segid) const
+{
+    QList<SegIdx> segidxs = segid.map(*this);
+    
+    if (segidxs.count() > 1)
+        throw SireMol::duplicate_segment( QObject::tr(
+            "More than one segment in the molecule matches the ID \"%1\" %2")
+                .arg(segid.toString(), Sire::toString(segidxs)), CODELOC );
+                
+    return segidxs.first();
+}
 
 /** Rename this molecule to 'newname' */
 void StructureEditor::renameMolecule(const MolName &newname)
@@ -917,32 +1128,403 @@ void StructureEditor::reindexSegment(quint32 uid, SegIdx newidx)
     changeIndex( d->seg_by_index, uid, newidx );
 }
 
-void StructureEditor::removeAtom(quint32 uid);
-void StructureEditor::removeCutGroup(quint32 uid);
-void StructureEditor::removeResidue(quint32 uid);
-void StructureEditor::removeChain(quint32 uid);
-void StructureEditor::removeSegment(quint32 uid);
+/** Remove the atom identified by 'uid'
 
-void StructureEditor::removeAtoms(const AtomID &atomid);
-void StructureEditor::removeCutGroups(const CGID &cgid);
-void StructureEditor::removeResidues(const ResID &resid);
-void StructureEditor::removeChains(const ChainID &chainid);
-void StructureEditor::removeSegments(const SegID &segid);
+    \throw SireMol::missing_atom
+*/
+void StructureEditor::removeAtom(quint32 uid)
+{
+    const EditAtomData &atom = d->atom(uid);
+    
+    //remove the atom from its parent groups...
+    if (atom.cg_parent != 0)
+        d->cutGroup(atom.cg_parent).atoms.removeAll(uid);
+        
+    if (atom.res_parent != 0)
+        d->residue(atom.res_parent).atoms.removeAll(uid);
+        
+    if (atom.seg_parent != 0)
+        d->segment(atom.seg_parent).atoms.removeAll(uid);
+    
+    //now remove the atom itself
+    d->atoms.remove(uid);
+    d->atoms_by_index.removeAll(uid);
+}
 
-void StructureEditor::reparentAtom(quint32 uid, CGIdx cgidx);
-void StructureEditor::reparentAtom(quint32 uid, ResIdx residx);
-void StructureEditor::reparentAtom(quint32 uid, SegIdx segidx);
+/** Remove the CutGroup identified by 'uid'. This only
+    removes the CutGroup - it doesn't remove the atoms
+    that are contained in this CutGroup
+    
+    \throw SireMol::missing_cutgroup
+*/
+void StructureEditor::removeCutGroup(quint32 uid)
+{
+    const EditCGData &cgroup = d->cutGroup(uid);
+    
+    //tell the atoms that they don't now have a CG parent
+    foreach (quint32 atom, cgroup.atoms)
+    {
+        d->atom(atom).cg_parent = 0;
+    }
+    
+    d->cutgroups.remove(uid);
+    d->cg_by_index.removeAll(uid);
+}
 
-void StructureEditor::reparentResidue(quint32 uid, ChainIdx chainidx);
+/** Remove the residue identified by 'uid'
 
-AtomStructureEditor StructureEditor::addAtom();
-CGStructureEditor StructureEditor::addCutGroup();
-ResStructureEditor StructureEditor::addResidue();
-ChainStructureEditor StructureEditor::addChain();
-SegStructureEditor StructureEditor::addSegment();
+    \throw SireMol:missing_residue
+*/
+void StructureEditor::removeResidue(quint32 uid)
+{
+    const EditResData &residue = d->residue(uid);
+    
+    //tell the parent Chain that this residue is leaving...
+    if (residue.chain_parent != 0)
+        d->chain(residue.chain_parent).residues.removeAll(uid);
+        
+    //now tell the atoms that this residue is leaving
+    foreach (quint32 atom, residue.atoms)
+    {
+        d->atom(atom).res_parent = 0;
+    }
+    
+    d->residues.remove(uid);
+    d->res_by_index.removeAll(uid);
+}
 
-void StructureEditor::assertValidAtom(quint32 uid) const;
-void StructureEditor::assertValidCutGroup(quint32 uid) const;
-void StructureEditor::assertValidResidue(quint32 uid) const;
-void StructureEditor::assertValidChain(quint32 uid) const;
-void StructureEditor::assertValidSegment(quint32 uid) const;
+/** Remove the chain identified by 'uid'
+
+    \throw SireMol::missing_chain
+*/
+void StructureEditor::removeChain(quint32 uid)
+{
+    const EditChainData &chain = d->chain(uid);
+    
+    //tell each residue that this chain is leaving
+    foreach (quint32 residue, chain.residues)
+    {
+        d->residue(residue).chain_parent = 0;
+    }
+    
+    d->chains.remove(uid);
+    d->chains_by_index.removeAll(uid);
+}
+
+/** Remove the segment identified by 'uid'
+
+    \throw SireMol::missing_segment
+*/
+void StructureEditor::removeSegment(quint32 uid)
+{
+    const EditSegData &segment = d->segment(uid);
+    
+    //tell each atom that this segment is leaving
+    foreach (quint32 atom, segment.atoms)
+    {
+        d->atom(atom).seg_parent = 0;
+    }
+    
+    d->segments.remove(uid);
+    d->seg_by_index.removeAll(uid);
+}
+
+/** Remove all atoms identified by 'atomid'
+
+    \throw SireMol::missing_atom
+    \throw SireError::invalid_index
+*/
+void StructureEditor::removeAtoms(const AtomID &atomid)
+{
+    QList<AtomIdx> atomidxs = atomid.map(*this);
+    
+    if (atomidxs.count() == 1)
+    {
+        this->removeAtom( getUID(atomidxs.first()) );
+        return;
+    }
+    
+    //convert the atomidx to uid
+    QList<quint32> uids;
+    
+    foreach (AtomIdx atomidx, atomidxs)
+    {
+        uids.append( getUID(atomidx) );
+    }
+    
+    //now remove all of the atoms
+    foreach (quint32 uid, uids)
+    {
+        this->removeAtom(uid);
+    }
+}
+
+/** Remove all CutGroups identified by 'cgid'
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+void StructureEditor::removeCutGroups(const CGID &cgid)
+{
+    QList<CGIdx> cgidxs = cgid.map(*this);
+    
+    if (cgidxs.count() == 1)
+    {
+        this->removeCutGroup( getUID(cgidxs.first()) );
+        return;
+    }
+    
+    //convert the cgidx to uid
+    QList<quint32> uids;
+    
+    foreach (CGIdx cgidx, cgidxs)
+    {
+        uids.append( getUID(cgidx) );
+    }
+    
+    //now remove all of the CutGroups
+    foreach (quint32 uid, uids)
+    {
+        this->removeCutGroup(uid);
+    }
+}
+
+/** Remove all residues identified by 'resid'
+
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+*/
+void StructureEditor::removeResidues(const ResID &resid)
+{
+    QList<ResIdx> residxs = resid.map(*this);
+    
+    if (residxs.count() == 1)
+    {
+        this->removeResidue( getUID(residxs.first()) );
+        return;
+    }
+    
+    //convert the residx to uid
+    QList<quint32> uids;
+    
+    foreach (ResIdx residx, residxs)
+    {
+        uids.append( getUID(residx) );
+    }
+    
+    //now remove all of the residues
+    foreach (quint32 uid, uids)
+    {
+        this->removeResidue(uid);
+    }
+}
+
+/** Remove all chains identified by 'chainid'
+
+    \throw SireMol::missing_chain
+    \throw SireError::invalid_index
+*/
+void StructureEditor::removeChains(const ChainID &chainid)
+{
+    QList<ChainIdx> chainidxs = chainid.map(*this);
+    
+    if (chainidxs.count() == 1)
+    {
+        this->removeChain( getUID(chainidxs.first()) );
+        return;
+    }
+    
+    //convert the chainidx to uid
+    QList<quint32> uids;
+    
+    foreach (ChainIdx chainidx, chainidxs)
+    {
+        uids.append( getUID(chainidx) );
+    }
+    
+    //now remove all of the chains
+    foreach (quint32 uid, uids)
+    {
+        this->removeChain(uid);
+    }
+}
+
+/** Remove all segments identified by 'segid'
+
+    \throw SireMol::missing_segment
+    \throw SireError::invalid_index
+*/
+void StructureEditor::removeSegments(const SegID &segid)
+{
+    QList<SegIdx> segidxs = segid.map(*this);
+    
+    if (segidxs.count() == 1)
+    {
+        this->removeSegment( getUID(segidxs.first()) );
+        return;
+    }
+    
+    //convert the segidx to uid
+    QList<quint32> uids;
+    
+    foreach (SegIdx segidx, segidxs)
+    {
+        uids.append( getUID(segidx) );
+    }
+    
+    //now remove all of the segments
+    foreach (quint32 uid, uids)
+    {
+        this->removeSegment(uid);
+    }
+}
+
+/** Move the atom identified by 'uid' into the CutGroup at index 'cgidx'
+
+    \throw SireMol::missing_atom
+    \throw SireError::invalid_index
+*/
+void StructureEditor::reparentAtom(quint32 uid, CGIdx cgidx)
+{
+    EditAtomData &atom = d->atom(uid);
+    
+    quint32 cg_uid = this->getUID(cgidx);
+    
+    if (atom.cg_parent == cg_uid)
+        return;
+        
+    //remove the atom from the old CutGroup
+    if (atom.cg_parent != 0)    
+        d->cutGroup(atom.cg_parent).atoms.removeAll(uid);
+        
+    //add the atom to the new CutGroup
+    if (cg_uid != 0)
+        d->cutGroup(cg_uid).atoms.append(uid);
+        
+    atom.cg_parent = cg_uid;
+}
+
+/** Move the atom identified by 'uid' into the residue at index 'residx'
+
+    \throw SireMol::missing_atom
+    \throw SireError::invalid_index
+*/
+void StructureEditor::reparentAtom(quint32 uid, ResIdx residx)
+{
+    EditAtomData &atom = d->atom(uid);
+    
+    quint32 res_uid = this->getUID(residx);
+    
+    if (atom.res_parent == res_uid)
+        return;
+        
+    //remove the atom from the old residue
+    if (atom.res_parent != 0)    
+        d->residue(atom.res_parent).atoms.removeAll(uid);
+        
+    //add the atom to the new residue
+    if (res_uid != 0)
+        d->residue(res_uid).atoms.append(uid);
+        
+    atom.res_parent = res_uid;
+}
+
+/** Move the atom identified by 'uid' into the segment at index 'segidx'
+
+    \throw SireMol::missing_atom
+    \throw SireError::invalid_index
+*/
+void StructureEditor::reparentAtom(quint32 uid, SegIdx segidx)
+{
+    EditAtomData &atom = d->atom(uid);
+    
+    quint32 seg_uid = this->getUID(segidx);
+    
+    if (atom.seg_parent == seg_uid)
+        return;
+        
+    //remove the atom from the old segment
+    if (atom.seg_parent != 0)    
+        d->segment(atom.seg_parent).atoms.removeAll(uid);
+        
+    //add the atom to the new segment
+    if (seg_uid != 0)
+        d->segment(seg_uid).atoms.append(uid);
+        
+    atom.seg_parent = seg_uid;
+}
+
+/** Move the residue identified by 'uid' into the chain at index 'chainidx'
+
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+*/
+void StructureEditor::reparentResidue(quint32 uid, ChainIdx chainidx)
+{
+    EditResData &residue = d->residue(uid);
+    
+    quint32 chain_uid = this->getUID(chainidx);
+    
+    if (residue.chain_parent == chain_uid)
+        return;
+        
+    //remove the residue from the old chain
+    if (residue.chain_parent != 0)    
+        d->chain(residue.chain_parent).residues.removeAll(uid);
+        
+    //add the residue to the new chain
+    if (chain_uid != 0)
+        d->chain(chain_uid).residues.append(uid);
+        
+    residue.chain_parent = chain_uid;
+}
+
+/** Add a new atom to the molecule, returning an editor for that atom */
+AtomStructureEditor StructureEditor::addAtom()
+{
+    quint32 uid = d->getNewUID();
+    d->atoms.insert( uid, EditAtomData() );
+    d->atoms_by_index.append(uid);
+    
+    return AtomStructureEditor( *this, AtomIdx(nAtomsInMolecule()-1) );
+}
+
+/** Add a new CutGroup to the molecule, returning an editor for that CutGroup */
+CGStructureEditor StructureEditor::addCutGroup()
+{
+    quint32 uid = d->getNewUID();
+    d->cutgroups.insert( uid, EditCGData() );
+    d->cg_by_index.append(uid);
+    
+    return CGStructureEditor( *this, CGIdx(nCutGroupsInMolecule()-1) );
+}
+
+/** Add a new residue to the molecule, returning an editor for that residue */
+ResStructureEditor StructureEditor::addResidue()
+{
+    quint32 uid = d->getNewUID();
+    d->residues.insert( uid, EditResData() );
+    d->res_by_index.append(uid);
+    
+    return ResStructureEditor( *this, ResIdx(nResiduesInMolecule()-1) );
+}
+
+/** Add a new chain to the molecule, returning an editor for that chain */
+ChainStructureEditor StructureEditor::addChain()
+{
+    quint32 uid = d->getNewUID();
+    d->chains.insert( uid, EditChainData() );
+    d->chains_by_index.append(uid);
+    
+    return ChainStructureEditor( *this, ChainIdx(nChainsInMolecule()-1) );
+}
+
+/** Add a new segment to the molecule, returning an editor for that segment */
+SegStructureEditor StructureEditor::addSegment()
+{
+    quint32 uid = d->getNewUID();
+    d->segments.insert( uid, EditSegData() );
+    d->seg_by_index.append(uid);
+    
+    return SegStructureEditor( *this, SegIdx(nSegmentsInMolecule()-1) );
+}
