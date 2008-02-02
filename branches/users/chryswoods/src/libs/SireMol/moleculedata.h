@@ -80,6 +80,7 @@ class SegName;
 class SegIdx;
 class SegID;
 
+class StructureEditor;
 
 using SireBase::PropertyName;
 using SireBase::Property;
@@ -102,12 +103,14 @@ friend QDataStream& ::operator>>(QDataStream&, MoleculeData&);
 
 public:
     MoleculeData();
+    MoleculeData(const StructureEditor &editor);
 
     MoleculeData(const MoleculeData &other);
 
     ~MoleculeData();
 
     MoleculeData& operator=(const MoleculeData &other);
+    MoleculeData& operator=(const StructureEditor &editor);
 
     bool operator==(const MoleculeData &other) const;
     bool operator!=(const MoleculeData &other) const;

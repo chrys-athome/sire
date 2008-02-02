@@ -85,6 +85,11 @@ public:
         return new CGAtomIdx(*this);
     }
     
+    static CGAtomIdx null()
+    {
+        return CGAtomIdx( CGIdx::null(), SireID::Index::null() );
+    } 
+    
     bool isNull() const
     {
         return _cgidx.isNull() and _atmidx.isNull();

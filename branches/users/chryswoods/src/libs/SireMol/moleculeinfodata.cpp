@@ -29,6 +29,9 @@
 #include <QMutex>
 
 #include "moleculeinfodata.h"
+#include "structureeditor.h"
+
+#include "tostring.h"
 
 #include "SireError/errors.h"
 #include "SireMol/errors.h"
@@ -36,9 +39,13 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <boost/tuple/tuple.hpp>
+
 using namespace SireMol;
 using namespace SireID;
 using namespace SireStream;
+
+using boost::tuple;
 
 //////////
 ////////// Implementation of MolInfoRegistry
@@ -67,7 +74,8 @@ public:
     /** The index of the chain this residue is in */
     ChainIdx chainidx;
 
-    /** The sorted list of the indicis of all atoms that are in this residue */
+    /** The list of the indicies of all atoms that are in this residue
+        in the order they were added to this residue */
     QList<AtomIdx> atom_indicies;
     
     /** Hash mapping the name of each atom in this residue
@@ -88,8 +96,9 @@ public:
     /** The name of this chain */
     ChainName name;
     
-    /** The sorted list of all indicies of the residues that 
-        are contained in this chain */
+    /** The list of all indicies of the residues that 
+        are contained in this chain in the order they
+        were added to the chain */
     QList<ResIdx> res_indicies;
 };
 
@@ -105,7 +114,8 @@ public:
     /** The name of this segment */
     SegName name;
     
-    /** The sorted list of all indicies of the atoms that are in this residue */
+    /** The list of all indicies of the atoms that are in this segment
+        in the order in which they were added to this segment */
     QList<AtomIdx> atom_indicies;
 };
 
@@ -121,8 +131,9 @@ public:
     /** The name of this CutGroup */
     CGName name;
     
-    /** The sorted list of all indicies of all of the atoms 
-        that are in this CutGroup */
+    /** The list of all indicies of all of the atoms 
+        that are in this CutGroup in the order that they
+        were added to this CutGroup */
     QList<AtomIdx> atom_indicies;
 };
 
@@ -252,7 +263,7 @@ QDataStream& operator<<(QDataStream &ds,
                         const ResInfo &resinfo)
 {
     ds << resinfo.name << resinfo.number << resinfo.chainidx
-       << resinfo.atom_indicies << resinfo.atoms_by_name;
+       << resinfo.atom_indicies;
        
     return ds;
 }
@@ -261,7 +272,7 @@ QDataStream& operator>>(QDataStream &ds,
                         ResInfo &resinfo)
 {
     ds >> resinfo.name >> resinfo.number >> resinfo.chainidx
-       >> resinfo.atom_indicies >> resinfo.atoms_by_name;
+       >> resinfo.atom_indicies;
        
     return ds;
 }
@@ -278,8 +289,7 @@ bool ResInfo::operator==(const ResInfo &other) const
 {
     return this == &other or
            (name == other.name and number == other.number and
-            chainidx == other.chainidx and atom_indicies == other.atom_indicies and
-            atoms_by_name == other.atoms_by_name);
+            chainidx == other.chainidx and atom_indicies == other.atom_indicies);
 }
 
 bool ResInfo::operator!=(const ResInfo &other) const
@@ -386,68 +396,130 @@ void MoleculeInfoData::rebuildNameAndNumberIndexes()
     atoms_by_name.clear();
     atoms_by_num.clear();
     
-    for (AtomIdx i(0); i < atoms_by_index.count(); ++i)
+    int nats = atoms_by_index.count();
+    
+    if (nats > 0)
     {
-        const AtomInfo &atominfo = atoms_by_index.at(i);
+        const AtomInfo *atoms_by_index_array = atoms_by_index.constData();
+    
+        for (AtomIdx i(0); i < nats; ++i)
+        {
+            const AtomInfo &atominfo = atoms_by_index_array[i];
         
-        if (not atominfo.name.isNull())
-            atoms_by_name.insert(atominfo.name, i);
+            if (not atominfo.name.isNull())
+                atoms_by_name.insert(atominfo.name, i);
             
-        if (not atominfo.number.isNull())
-            atoms_by_num.insert(atominfo.number, i);
+            if (not atominfo.number.isNull())
+                atoms_by_num.insert(atominfo.number, i);
+        }
     }
     
     res_by_name.clear();
     res_by_num.clear();
     
-    for (ResIdx i(0); i < res_by_index.count(); ++i)
-    {
-        const ResInfo &resinfo = res_by_index.at(i);
+    int nres = res_by_index.count();
     
-        if (not resinfo.name.isNull())
-            res_by_name.insert(resinfo.name, i);
+    if (nres > 0)
+    {
+        ResInfo *res_by_index_array = res_by_index.data();
+        const AtomInfo *atoms_by_index_array = atoms_by_index.constData();
+    
+        for (ResIdx i(0); i < nres; ++i)
+        {
+            ResInfo &resinfo = res_by_index_array[i];
+    
+            if (not resinfo.name.isNull())
+                res_by_name.insert(resinfo.name, i);
         
-        if (not resinfo.number.isNull())
-            res_by_num.insert(resinfo.number, i);
+            if (not resinfo.number.isNull())
+                res_by_num.insert(resinfo.number, i);
+            
+            //index the names of all of the atoms in this residue
+            foreach (AtomIdx atomidx, resinfo.atom_indicies)
+            {
+                BOOST_ASSERT( atomidx >= 0 and atomidx < nats );
+            
+                const AtomInfo &atominfo = atoms_by_index_array[atomidx];
+            
+                if (not atominfo.name.isNull())
+                    resinfo.atoms_by_name.insert(atominfo.name, atomidx);
+            }
+            
+            if (not resinfo.atoms_by_name.isEmpty())
+                resinfo.atoms_by_name.squeeze();
+        }
     }
-    
+ 
     chains_by_name.clear();
+
+    int nchains = chains_by_index.count();
+    const ChainInfo *chains_by_index_array = chains_by_index.constData();
     
-    for (ChainIdx i(0); i < chains_by_index.count(); ++i)
+    if (nchains > 0)
     {
-        const ChainInfo &chaininfo = chains_by_index.at(i);
+        for (ChainIdx i(0); i < nchains; ++i)
+        {
+            const ChainInfo &chaininfo = chains_by_index_array[i];
         
-        if (not chaininfo.name.isNull())
-            chains_by_name.insert(chaininfo.name, i);
+            if (not chaininfo.name.isNull())
+                chains_by_name.insert(chaininfo.name, i);
+        }
     }
     
     seg_by_name.clear();
     
-    for (SegIdx i(0); i < seg_by_index.count(); ++i)
+    int nseg = seg_by_index.count();
+    
+    if (nseg > 0)
     {
-        const SegInfo &seginfo = seg_by_index.at(i);
+        const SegInfo *seg_by_index_array = seg_by_index.constData();
+    
+        for (SegIdx i(0); i < nseg; ++i)
+        {
+            const SegInfo &seginfo = seg_by_index_array[i];
         
-        if (not seginfo.name.isNull())
-            seg_by_name.insert(seginfo.name, i);
+            if (not seginfo.name.isNull())
+                seg_by_name.insert(seginfo.name, i);
+        }
     }
+    
     
     cg_by_name.clear();
+    int ncg = cg_by_index.count();
     
-    for (CGIdx i(0); i < cg_by_index.count(); ++i)
+    if (ncg > 0)
     {
-        const CGInfo &cginfo = cg_by_index.at(i);
+        const CGInfo *cg_by_index_array = cg_by_index.constData();
         
-        if (not cginfo.name.isNull())
-            cg_by_name.insert(cginfo.name, i);
+        for (CGIdx i(0); i < ncg; ++i)
+        {
+            const CGInfo &cginfo = cg_by_index_array[i];
+        
+            if (not cginfo.name.isNull())
+                cg_by_name.insert(cginfo.name, i);
+        }
     }
     
-    atoms_by_name.squeeze();
-    atoms_by_num.squeeze();
-    res_by_name.squeeze();
-    res_by_num.squeeze();
-    chains_by_name.squeeze();
-    seg_by_name.squeeze();
-    cg_by_name.squeeze();
+    if (not atoms_by_name.isEmpty())
+        atoms_by_name.squeeze();
+    
+    if (not atoms_by_num.isEmpty())
+        atoms_by_num.squeeze();
+    
+    if (not res_by_name.isEmpty())
+        res_by_name.squeeze();
+    
+    if (not res_by_num.isEmpty())
+        res_by_num.squeeze();
+    
+    if (not chains_by_name.isEmpty())
+        chains_by_name.squeeze();
+    
+    if (not seg_by_name.isEmpty())
+        seg_by_name.squeeze();
+    
+    if (not cg_by_name.isEmpty())
+        cg_by_name.squeeze();
 }
 
 static quint64 last_molinfo_uid = 0;
@@ -491,6 +563,215 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 /** Null constructor */
 MoleculeInfoData::MoleculeInfoData() : QSharedData(), uid(0)
 {}
+    
+/** Construct from the passed StructureEditor */
+MoleculeInfoData::MoleculeInfoData(const StructureEditor &editor)
+                 : QSharedData()
+{
+    //first lets allocate memory for all of the parts of the molecule
+
+    //first the atoms...
+    int nats = editor.nAtomsInMolecule();
+    
+    if (nats == 0)
+    {
+        //this is an empty molecule!
+        uid = 0;
+        return;
+    }
+    
+    atoms_by_index.resize(nats);
+    atoms_by_index.squeeze();
+    
+    //now the CutGroups
+    int ncg = editor.nCutGroupsInMolecule();
+    
+    if (ncg == 0)
+    {
+        //we cannot have a molecule with no CutGroups!
+        throw SireMol::missing_cutgroup( QObject::tr(
+            "You have not created any CutGroups in which to place the atoms. "
+            "ALL atoms must be placed into a CutGroup!"), CODELOC );
+    }
+    
+    cg_by_index.resize(ncg);
+    cg_by_index.squeeze();
+    
+    //now the residues
+    int nres = editor.nResiduesInMolecule();
+    
+    if (nres > 0)
+    {
+        res_by_index.resize(nres);
+        res_by_index.squeeze();
+    }
+    
+    //now the chains
+    int nchains = editor.nChainsInMolecule();
+    
+    if (nchains > 0)
+    {
+        chains_by_index.resize(nchains);
+        chains_by_index.squeeze();
+    }
+    
+    //finally, the segments
+    int nsegs = editor.nSegmentsInMolecule();
+    
+    if (nsegs > 0)
+    {
+        seg_by_index.resize(nsegs);
+        seg_by_index.squeeze();
+    }
+    
+    ///
+    /// Now we must transfer the information from the editor
+    /// to this object. Exceptions will be thrown if either
+    /// there are atoms that are not part of any CutGroup,
+    /// or if there are residues, cutgroups, chains or segments
+    /// that are empty (don't contain any atoms)
+    ///
+    
+    /// First, transfer the atom data
+    ///
+    AtomInfo* atoms_by_index_array = atoms_by_index.data();
+    QList<AtomIdx> atoms_missing_cutgroups;
+    
+    for (AtomIdx i(0); i<nats; ++i)
+    {
+        //create the data for atom 'i'
+        AtomInfo &atom = atoms_by_index_array[i];
+        
+        tuple<AtomName,AtomNum,CGAtomIdx,ResIdx,SegIdx> 
+                                atomdata = editor.getAtomData(i);
+                                
+        atom.name = atomdata.get<0>();
+        atom.number = atomdata.get<1>();
+        atom.cgatomidx = atomdata.get<2>();
+        atom.residx = atomdata.get<3>();
+        atom.segidx = atomdata.get<4>();
+        
+        if (atom.cgatomidx.cutGroup().isNull())
+            atoms_missing_cutgroups.append(i);
+    }
+    
+    //ALL atoms must be placed into a CutGroup
+    if (not atoms_missing_cutgroups.isEmpty())
+        throw SireMol::missing_cutgroup( QObject::tr(
+            "ALL atoms in the molecule MUST be placed into a CutGroup. "
+            "Atoms missing a CutGroup are %1.")
+                .arg( Sire::toString(atoms_missing_cutgroups) ), CODELOC );
+
+    /// Now transfer the CutGroup data
+    ///
+    QList<CGIdx> empty_cutgroups;
+    CGInfo *cg_by_index_array = cg_by_index.data();
+
+    for (CGIdx i(0); i<ncg; ++i)
+    {
+        CGInfo &cutgroup = cg_by_index_array[i];
+        
+        tuple< CGName,QList<AtomIdx> > cgdata = editor.getCGData(i);
+        
+        cutgroup.name = cgdata.get<0>();
+        cutgroup.atom_indicies = cgdata.get<1>();
+        
+        if (cutgroup.atom_indicies.isEmpty())
+            empty_cutgroups.append(i);
+    }
+    
+    //ALL CutGroups must contain at least one atom
+    if (not empty_cutgroups.isEmpty())
+        throw SireMol::missing_atom( QObject::tr(
+            "ALL CutGroups must contain at least one atom. "
+            "CutGroups missing atoms are %1.")
+                .arg( Sire::toString(empty_cutgroups) ), CODELOC );
+
+    /// Now transfer the residue data
+    ///
+    QList<ResIdx> empty_residues;
+    ResInfo *res_by_index_array = res_by_index.data();
+    
+    for (ResIdx i(0); i<nres; ++i)
+    {
+        ResInfo &residue = res_by_index_array[i];
+        
+        tuple< ResName,ResNum,ChainIdx,QList<AtomIdx> >
+                                resdata = editor.getResData(i);
+                                
+        residue.name = resdata.get<0>();
+        residue.number = resdata.get<1>();
+        residue.chainidx = resdata.get<2>();
+        residue.atom_indicies = resdata.get<3>();
+        
+        if (residue.atom_indicies.isEmpty())
+            empty_residues.append(i);
+    }
+    
+    //ALL residues must contain at least one atom
+    if (not empty_residues.isEmpty())
+        throw SireMol::missing_atom( QObject::tr(
+            "ALL residues must contain at least one atom. "
+            "Residues missing atoms are %1.")
+                .arg( Sire::toString(empty_residues) ), CODELOC );
+
+    /// Now transfer the chain data
+    ///
+    QList<ChainIdx> empty_chains;
+    ChainInfo *chains_by_index_array = chains_by_index.data();
+    
+    for (ChainIdx i(0); i<nchains; ++i)
+    {
+        ChainInfo &chain = chains_by_index_array[i];
+        
+        tuple< ChainName,QList<ResIdx> > chaindata = editor.getChainData(i);
+        
+        chain.name = chaindata.get<0>();
+        chain.res_indicies = chaindata.get<1>();
+        
+        if (chain.res_indicies.isEmpty())
+            empty_chains.append(i);
+    }
+    
+    //ALL chains must contain at least one residue
+    if (not empty_chains.isEmpty())
+        throw SireMol::missing_residue( QObject::tr(
+            "ALL chains must contain at least one residue. "
+            "Chains missing residues are %1.")
+                .arg( Sire::toString(empty_chains) ), CODELOC );
+    
+    /// Finally convert the segments
+    ///
+    QList<SegIdx> empty_segments;
+    SegInfo *seg_by_index_array = seg_by_index.data();
+    
+    for (SegIdx i(0); i<nsegs; ++i)
+    {
+        SegInfo &segment = seg_by_index_array[i];
+        
+        tuple< SegName,QList<AtomIdx> > segdata = editor.getSegData(i);
+        
+        segment.name = segdata.get<0>();
+        segment.atom_indicies = segdata.get<1>();
+        
+        if (segment.atom_indicies.isEmpty())
+            empty_segments.append(i);
+    }
+    
+    //ALL segments must contain at least one atom
+    if (not empty_segments.isEmpty())
+        throw SireMol::missing_atom( QObject::tr(
+            "ALL segments must contain at least one atom. "
+            "Segments missing atoms are %1.")
+                .arg( Sire::toString(empty_segments) ), CODELOC );
+
+    //now the conversion is complete, we finish by creating
+    //the additional indexes that speed up searches
+    this->rebuildNameAndNumberIndexes();
+    
+    //... and of course get a UID for this layout
+    uid = getNewMolInfoUID();
+}
     
 /** Copy constructor */
 MoleculeInfoData::MoleculeInfoData(const MoleculeInfoData &other)

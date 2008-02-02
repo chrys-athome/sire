@@ -31,6 +31,7 @@
 
 #include "moleculedata.h"
 #include "moleculeinfodata.h"
+#include "structureeditor.h"
 
 #include "SireBase/incremint.h"
 
@@ -198,8 +199,8 @@ MoleculeData::registerMolecule(MolNum molnum)
 
 /** Null constructor */
 MoleculeData::MoleculeData()
-                : QSharedData(), vrsn(0), molnum(0),
-                  vrsns( MoleculeData::registerMolecule(molnum) )
+             : QSharedData(), vrsn(0), molnum(0),
+               vrsns( MoleculeData::registerMolecule(molnum) )
 {}
 
 static SharedDataPointer<MoleculeData> shared_null( new MoleculeData() );
@@ -207,6 +208,58 @@ static SharedDataPointer<MoleculeData> shared_null( new MoleculeData() );
 SharedDataPointer<MoleculeData> MoleculeData::null()
 {
     return shared_null;
+}
+
+static Incremint molid_incremint;
+
+/** Here is the function to get a unique Molecule Number */
+MolNum MolNum::getUniqueNumber()
+{
+    return MolNum( molid_incremint.increment() );
+}
+
+/** Give this molecule a brand new unique ID number! */
+void MoleculeData::renumber()
+{
+    //get the new ID number...
+    molnum = MolNum::getUniqueNumber();
+    
+    vrsns = MoleculeData::registerMolecule(molnum);
+    vrsns->incrementAll(*this);
+}
+
+/** Renumber this molecule to have the number 'molnum' */
+void MoleculeData::renumber(MolNum newnum)
+{
+    if (newnum == molnum)
+        //nothing to do
+        return;
+        
+    molnum = newnum;
+    vrsns = MoleculeData::registerMolecule(molnum);
+    vrsns->incrementAll(*this);
+}
+
+/** Construct from the passed StructureEditor */
+MoleculeData::MoleculeData(const StructureEditor &editor)
+             : QSharedData(), vrsn(0), molnum(0)
+{
+    //create the info object from this editor
+    molinfo = SharedDataPointer<MoleculeInfoData>( new MoleculeInfoData(editor) );
+    
+    //now copy across the properties...
+    props = editor.properties();
+    
+    //copy across the name
+    molname = editor.molName();
+    
+    //finally, sort out the molecule number - this also
+    //sets up all of the version numbers and performs
+    //the registration of the molecule
+    if (editor.molNum().isNull())
+        this->renumber();
+    else
+        this->renumber(editor.molNum());
 }
 
 /** Copy constructor */
@@ -242,6 +295,12 @@ MoleculeData& MoleculeData::operator=(const MoleculeData &other)
     return *this;
 }
 
+/** Assign equal to a copy of the molecule being edited in 'editor' */
+MoleculeData& MoleculeData::operator=(const StructureEditor &editor)
+{
+    return this->operator=( MoleculeData(editor) );
+}
+
 /** Comparison operator - two molecules are the same if they have
     the same ID and version numbers. */
 bool MoleculeData::operator==(const MoleculeData &other) const
@@ -255,36 +314,6 @@ bool MoleculeData::operator==(const MoleculeData &other) const
 bool MoleculeData::operator!=(const MoleculeData &other) const
 {
     return molnum != other.molnum or vrsn != other.vrsn;
-}
-
-static Incremint molid_incremint;
-
-/** Here is the function to get a unique Molecule Number */
-MolNum MolNum::getUniqueNumber()
-{
-    return MolNum( molid_incremint.increment() );
-}
-
-/** Give this molecule a brand new unique ID number! */
-void MoleculeData::renumber()
-{
-    //get the new ID number...
-    molnum = MolNum::getUniqueNumber();
-    
-    vrsns = MoleculeData::registerMolecule(molnum);
-    vrsns->incrementAll(*this);
-}
-
-/** Renumber this molecule to have the number 'molnum' */
-void MoleculeData::renumber(MolNum newnum)
-{
-    if (newnum == molnum)
-        //nothing to do
-        return;
-        
-    molnum = newnum;
-    vrsns = MoleculeData::registerMolecule(molnum);
-    vrsns->incrementAll(*this);
 }
 
 /** Return the version number of the property at key 'key'.

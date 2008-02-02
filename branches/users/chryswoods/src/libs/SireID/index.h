@@ -258,6 +258,11 @@ public:
         return "SireID::Index";
     }
     
+    static Index null()
+    {
+        return Index();
+    }
+    
     QString toString() const
     {
         return QString("Index(%1)").arg(_idx);

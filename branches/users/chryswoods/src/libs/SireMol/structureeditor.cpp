@@ -77,6 +77,8 @@ using namespace SireMol;
 using namespace SireBase;
 using namespace SireStream;
 
+using boost::tuple;
+
 /////////
 ///////// Implementation of detail::EditMolData
 /////////
@@ -90,6 +92,8 @@ class EditAtomData
 {
 public:
     EditAtomData();
+    EditAtomData(const MoleculeInfoData &molinfo, AtomIdx i);
+    
     EditAtomData(const EditAtomData &other);
     
     ~EditAtomData();
@@ -109,6 +113,9 @@ class EditCGData
 {
 public:
     EditCGData();
+    EditCGData(const MoleculeInfoData &molinfo, CGIdx i, 
+               const EditMolData &editmol);
+
     EditCGData(const EditCGData &other);
     
     ~EditCGData();
@@ -125,6 +132,9 @@ class EditResData
 {
 public:
     EditResData();
+    EditResData(const MoleculeInfoData &molinfo, ResIdx residx, 
+                const EditMolData &editmol);
+    
     EditResData(const EditResData &other);
     
     ~EditResData();
@@ -144,6 +154,9 @@ class EditChainData
 {
 public:
     EditChainData();
+    EditChainData(const MoleculeInfoData &molinfo, ChainIdx chainidx,
+                  const EditMolData &editmol);
+    
     EditChainData(const EditChainData &other);
     
     ~EditChainData();
@@ -160,6 +173,9 @@ class EditSegData
 {
 public:
     EditSegData();
+    EditSegData(const MoleculeInfoData &molinfo, SegIdx segidx,
+                const EditMolData &editmol);
+    
     EditSegData(const EditSegData &other);
     
     ~EditSegData();
@@ -177,6 +193,9 @@ class EditMolData
 {
 public:
     EditMolData();
+    
+    EditMolData(const MoleculeData &moldata);
+    
     EditMolData(const EditMolData &other);
     
     ~EditMolData();
@@ -192,6 +211,12 @@ public:
     EditCGData& cutGroup(quint32 uid);
     EditChainData& chain(quint32 uid);
     EditSegData& segment(quint32 uid);
+    
+    CGAtomIdx cgAtomIdx(quint32 atomuid, const EditAtomData &atom) const;
+    ResIdx resIdx(const EditAtomData &atom) const;
+    SegIdx segIdx(const EditAtomData &atom) const;
+    
+    ChainIdx chainIdx(const EditResData &residue) const;
     
     quint32 getNewUID();
     
@@ -212,7 +237,6 @@ public:
     
     Properties properties;
 
-private:
     quint32 last_uid;
 };
 
@@ -220,6 +244,176 @@ private:
 } // end of namespace SireMol
 
 using namespace SireMol::detail;
+
+/////////
+///////// Implementation of EditAtomData
+/////////
+
+QDataStream& operator<<(QDataStream &ds, const EditAtomData &editatom)
+{
+    ds << editatom.name << editatom.number
+       << editatom.cg_parent << editatom.res_parent
+       << editatom.seg_parent << editatom.properties;
+       
+    return ds;
+}
+
+QDataStream& operator>>(QDataStream &ds, EditAtomData &editatom)
+{
+    ds >> editatom.name >> editatom.number
+       >> editatom.cg_parent >> editatom.res_parent
+       >> editatom.seg_parent >> editatom.properties;
+       
+    return ds;
+}
+
+EditAtomData::EditAtomData()
+             : name( QString::null ), number( AtomNum::null() ),
+               cg_parent(0), res_parent(0), seg_parent(0)
+{}
+   
+EditAtomData::EditAtomData(const MoleculeInfoData &molinfo, AtomIdx i)
+             : name(molinfo.name(i)), number(molinfo.number(i)),
+               cg_parent(0), res_parent(0), seg_parent(0)
+{}
+   
+EditAtomData::EditAtomData(const EditAtomData &other)
+             : name(other.name), number(other.number),
+               cg_parent(other.cg_parent), res_parent(other.res_parent),
+               seg_parent(other.seg_parent), properties(other.properties)
+{}
+    
+EditAtomData::~EditAtomData()
+{}
+
+/////////
+///////// Implementation of EditCGData
+/////////
+
+QDataStream& operator<<(QDataStream &ds, const EditCGData &editcg)
+{
+    ds << editcg.name << editcg.atoms << editcg.properties;
+    return ds;
+}
+
+QDataStream& operator>>(QDataStream &ds, EditCGData &editcg)
+{
+    ds >> editcg.name >> editcg.atoms >> editcg.properties;
+    return ds;
+}
+
+EditCGData::EditCGData() : name( QString::null )
+{}
+
+EditCGData::EditCGData(const MoleculeInfoData &molinfo, CGIdx i,
+                       const EditMolData &editmol)
+           : name(molinfo.name(i))
+{
+    foreach (AtomIdx atomidx, molinfo.getAtomsIn(i))
+    {
+        quint32 uid = editmol.atoms_by_index.at(atomidx);
+        atoms.append(uid);
+    }
+}
+
+EditCGData::EditCGData(const EditCGData &other)
+           : name(other.name), atoms(other.atoms), properties(other.properties)
+{}
+    
+EditCGData::~EditCGData()
+{}
+
+/////////
+///////// Implementation of EditResData
+/////////
+
+QDataStream& operator<<(QDataStream &ds, const EditResData &editres)
+{
+    ds << editres.name << editres.number << editres.chain_parent
+       << editres.atoms << editres.properties;
+       
+    return ds;
+}
+
+QDataStream& operator>>(QDataStream &ds, EditResData &editres)
+{
+    ds >> editres.name >> editres.number >> editres.chain_parent
+       >> editres.atoms >> editres.properties;
+       
+    return ds;
+}
+
+EditResData::EditResData()
+            : name( QString::null ), number( ResNum::null() ),
+              chain_parent(0)
+{}
+
+EditResData::EditResData(const EditResData &other)
+            : name(other.name), number(other.number), 
+              chain_parent(other.chain_parent), atoms(other.atoms),
+              properties(other.properties)
+{}
+    
+EditResData::~EditResData()
+{}
+
+/////////
+///////// Implementation of EditChainData
+/////////
+
+QDataStream& operator<<(QDataStream &ds, const EditChainData &editchain)
+{
+    ds << editchain.name << editchain.residues << editchain.properties;
+    
+    return ds;
+}
+
+QDataStream& operator>>(QDataStream &ds, EditChainData &editchain)
+{
+    ds >> editchain.name >> editchain.residues >> editchain.properties;
+    
+    return ds;
+}
+
+EditChainData::EditChainData() : name( QString::null )
+{}
+
+EditChainData::EditChainData(const EditChainData &other)
+              : name(other.name), residues(other.residues),
+                properties(other.properties)
+{}
+    
+EditChainData::~EditChainData()
+{}
+    
+/////////
+///////// Implementation of EditSegData
+/////////
+
+QDataStream& operator<<(QDataStream &ds, const EditSegData &editseg)
+{
+    ds << editseg.name << editseg.atoms << editseg.properties;
+    
+    return ds;
+}
+
+QDataStream& operator>>(QDataStream &ds, EditSegData &editseg)
+{
+    ds >> editseg.name >> editseg.atoms >> editseg.properties;
+    
+    return ds;
+}
+
+EditSegData::EditSegData() : name( QString::null )
+{}
+
+EditSegData::EditSegData(const EditSegData &other)
+            : name(other.name), atoms(other.atoms),
+              properties(other.properties)
+{}
+    
+EditSegData::~EditSegData()
+{}
 
 /////////
 ///////// Implementation of EditMolData
@@ -256,8 +450,97 @@ QDataStream& operator>>(QDataStream &ds, EditMolData &editmol)
 }
 
 /** Constructor */
-EditMolData::EditMolData() : last_uid(0)
+EditMolData::EditMolData() : molname( QString::null ), 
+                             molnum( MolNum::null() ), last_uid(0)
 {}
+
+/** Construct from a MoleculeData */
+EditMolData::EditMolData(const MoleculeData &moldata)
+            : molname(moldata.name()), molnum(moldata.number())
+{
+    const MoleculeInfoData &molinfo = moldata.info();
+    
+    int nats = molinfo.nAtoms();
+    
+    for (AtomIdx i(0); i<nats; ++i)
+    {
+        EditAtomData atom(molinfo, i);
+    
+        quint32 uid = getNewUID();
+        atoms.insert(uid, atom);
+        atoms_by_index.append(uid);
+    }
+    
+    int nres = molinfo.nResidues();
+    
+    for (ResIdx i(0); i<nres; ++i)
+    {
+        EditResData residue(molinfo, i, *this);
+        
+        quint32 uid = getNewUID();
+        residues.insert(uid, residue);
+        res_by_index.append(uid);
+        
+        foreach (quint32 atomuid, residue.atoms)
+        {
+            this->atom(atomuid).res_parent = uid;
+        }
+    }
+    
+    int ncg = molinfo.nCutGroups();
+    
+    for (CGIdx i(0); i<ncg; ++i)
+    {
+        EditCGData cgroup(molinfo, i, *this);
+        
+        quint32 uid = getNewUID();
+        cutgroups.insert(uid, cgroup);
+        cg_by_index.append(uid);
+        
+        foreach (quint32 atomuid, cgroup.atoms)
+        {
+            this->atom(atomuid).cg_parent = uid;
+        }
+    }
+    
+    int nchains = molinfo.nChains();
+    
+    for (ChainIdx i(0); i<nchains; ++i)
+    {
+        EditChainData chain(molinfo, i, *this);
+        
+        quint32 uid = getNewUID();
+        chains.insert(uid, chain);
+        chains_by_index.append(uid);
+        
+        foreach (quint32 resuid, chain.residues)
+        {
+            this->residue(resuid).chain_parent = uid;
+        }
+    }
+    
+    int nseg = molinfo.nSegments();
+    
+    for (SegIdx i(0); i<nseg; ++i)
+    {
+        EditSegData segment(molinfo, i, *this);
+        
+        quint32 uid = getNewUID();
+        segments.insert(uid, segment);
+        seg_by_index.append(uid);
+        
+        foreach (quint32 atomuid, segment.atoms)
+        {
+            this->atom(atomuid).seg_parent = uid;
+        }
+    }
+    
+    //now extract all of the properties...
+    properties = moldata.properties();
+    
+    //need to convert them...
+    qFatal("Need to convert properties!!!");
+}
 
 /** Copy constructor */
 EditMolData::EditMolData(const EditMolData &other)
@@ -289,6 +572,126 @@ quint32 EditMolData::getNewUID()
     ++last_uid;
     
     return last_uid;
+}
+    
+const EditAtomData& EditMolData::atom(quint32 uid) const
+{
+    QHash<quint32,EditAtomData>::const_iterator it = atoms.find(uid);
+    
+    if (it == atoms.end())
+        throw SireMol::missing_atom( QObject::tr(
+            "There is no atom in this molecule that is identified by "
+            "the UID %1.").arg(uid), CODELOC );
+            
+    return it.value();
+}
+
+const EditResData& EditMolData::residue(quint32 uid) const
+{
+    QHash<quint32,EditResData>::const_iterator it = residues.find(uid);
+    
+    if (it == residues.end())
+        throw SireMol::missing_residue( QObject::tr(
+            "There is no residue in this molecule that is identified by "
+            "the UID %1.").arg(uid), CODELOC );
+            
+    return it.value();
+}
+
+const EditCGData& EditMolData::cutGroup(quint32 uid) const
+{
+    QHash<quint32,EditCGData>::const_iterator it = cutgroups.find(uid);
+    
+    if (it == cutgroups.end())
+        throw SireMol::missing_cutgroup( QObject::tr(
+            "There is no CutGroup in this molecule that is identified by "
+            "the UID %1.").arg(uid), CODELOC );
+            
+    return it.value();
+}
+
+const EditChainData& EditMolData::chain(quint32 uid) const
+{
+    QHash<quint32,EditChainData>::const_iterator it = chains.find(uid);
+    
+    if (it == chains.end())
+        throw SireMol::missing_chain( QObject::tr(
+            "There is no chain in this molecule that is identified by "
+            "the UID %1.").arg(uid), CODELOC );
+            
+    return it.value();
+}
+
+const EditSegData& EditMolData::segment(quint32 uid) const
+{
+    QHash<quint32,EditSegData>::const_iterator it = segments.find(uid);
+    
+    if (it == segments.end())
+        throw SireMol::missing_segment( QObject::tr(
+            "There is no segment in this molecule that is identified by "
+            "the UID %1.").arg(uid), CODELOC );
+            
+    return it.value();
+}
+
+EditAtomData& EditMolData::atom(quint32 uid)
+{
+    QHash<quint32,EditAtomData>::iterator it = atoms.find(uid);
+    
+    if (it == atoms.end())
+        throw SireMol::missing_atom( QObject::tr(
+            "There is no atom in this molecule that is identified by "
+            "the UID %1.").arg(uid), CODELOC );
+            
+    return it.value();
+}
+
+EditResData& EditMolData::residue(quint32 uid)
+{
+    QHash<quint32,EditResData>::iterator it = residues.find(uid);
+    
+    if (it == residues.end())
+        throw SireMol::missing_residue( QObject::tr(
+            "There is no residue in this molecule that is identified by "
+            "the UID %1.").arg(uid), CODELOC );
+            
+    return it.value();
+}
+
+EditCGData& EditMolData::cutGroup(quint32 uid)
+{
+    QHash<quint32,EditCGData>::iterator it = cutgroups.find(uid);
+    
+    if (it == cutgroups.end())
+        throw SireMol::missing_cutgroup( QObject::tr(
+            "There is no CutGroup in this molecule that is identified by "
+            "the UID %1.").arg(uid), CODELOC );
+            
+    return it.value();
+}
+
+EditChainData& EditMolData::chain(quint32 uid)
+{
+    QHash<quint32,EditChainData>::iterator it = chains.find(uid);
+    
+    if (it == chains.end())
+        throw SireMol::missing_chain( QObject::tr(
+            "There is no chain in this molecule that is identified by "
+            "the UID %1.").arg(uid), CODELOC );
+            
+    return it.value();
+}
+
+EditSegData& EditMolData::segment(quint32 uid)
+{
+    QHash<quint32,EditSegData>::iterator it = segments.find(uid);
+    
+    if (it == segments.end())
+        throw SireMol::missing_segment( QObject::tr(
+            "There is no segment in this molecule that is identified by "
+            "the UID %1.").arg(uid), CODELOC );
+            
+    return it.value();
 }
 
 /////////
@@ -335,6 +738,9 @@ StructureEditor::StructureEditor()
 /** Assign so that this will edit a copy of 'moldata' */
 StructureEditor& StructureEditor::operator=(const MoleculeData &moldata)
 {
+    d.reset( new EditMolData(moldata) );
+    
+    return *this;
 }
 
 /** Construct an editor that edits a copy of 'moldata' */
@@ -361,10 +767,142 @@ StructureEditor& StructureEditor::operator=(const StructureEditor &other)
     return *this;
 }
 
+CGAtomIdx EditMolData::cgAtomIdx(quint32 atomuid, const EditAtomData &atom) const
+{
+    if (atom.cg_parent == 0)
+        return CGAtomIdx::null();
+        
+    else
+        return CGAtomIdx( CGIdx(cg_by_index.indexOf(atom.cg_parent)), 
+                          Index(cutGroup(atom.cg_parent).atoms.indexOf(atomuid) ) );
+}
+
+ResIdx EditMolData::resIdx(const EditAtomData &atom) const
+{
+    if (atom.res_parent == 0)
+        return ResIdx::null();
+    else
+        return ResIdx( res_by_index.indexOf(atom.res_parent) );
+}
+
+SegIdx EditMolData::segIdx(const EditAtomData &atom) const
+{
+    if (atom.seg_parent == 0)
+        return SegIdx::null();
+    else
+        return SegIdx( seg_by_index.indexOf(atom.seg_parent) );
+}
+
+/** Return all of the metadata about the atom at index 'atomidx'
+
+    \throw SireError::invalid_index
+*/
+tuple<AtomName,AtomNum,CGAtomIdx,ResIdx,SegIdx> 
+StructureEditor::getAtomData(AtomIdx atomidx) const
+{
+    quint32 atomuid = getUID(atomidx);
+    const EditAtomData &atom = d->atom(atomuid);
+    
+    return tuple<AtomName,AtomNum,CGAtomIdx,ResIdx,SegIdx>(
+                 atom.name, atom.number, d->cgAtomIdx(atomuid, atom),
+                 d->resIdx(atom), d->segIdx(atom) );
+}
+
+/** Return all of the metadata about the CutGroup at index 'cgidx' 
+
+    \throw SireError::invalid_index
+*/
+boost::tuple< CGName,QList<AtomIdx> >
+StructureEditor::getCGData(CGIdx cgidx) const
+{
+    const EditCGData &cgroup = d->cutGroup( getUID(cgidx) );
+    
+    if (cgroup.atoms.isEmpty())
+        return tuple< CGName,QList<AtomIdx> >(cgroup.name, QList<AtomIdx>());
+    else
+    {
+        QList<AtomIdx> atomidxs;
+        
+        foreach (quint32 atom, cgroup.atoms)
+        {
+            atomidxs.append( AtomIdx(d->atoms_by_index.indexOf(atom)) );
+        }
+        
+        return tuple< CGName,QList<AtomIdx> >(cgroup.name, atomidxs);
+    }
+}
+
+ChainIdx EditMolData::chainIdx(const EditResData &residue) const
+{
+    if (residue.chain_parent == 0)
+        return ChainIdx::null();
+    else
+        return ChainIdx( chains_by_index.indexOf(residue.chain_parent) );
+}
+
+/** Return the metadata for the residue at index 'residx' 
+
+    \throw SireError::invalid_index
+*/
+boost::tuple< ResName,ResNum,ChainIdx,QList<AtomIdx> >
+StructureEditor::getResData(ResIdx residx) const
+{
+    const EditResData &residue = d->residue( getUID(residx) );
+    
+    QList<AtomIdx> atomidxs;
+    
+    foreach (quint32 atom, residue.atoms)
+    {
+        atomidxs.append( AtomIdx(d->atoms_by_index.indexOf(atom) ) );
+    }
+    
+    return tuple< ResName,ResNum,ChainIdx,QList<AtomIdx> >(
+                    residue.name, residue.number, d->chainIdx(residue), atomidxs );
+}
+
+/** Return the metadata for the chain at index 'chainidx'
+
+    \throw SireError::invalid_index
+*/
+boost::tuple< ChainName,QList<ResIdx> >
+StructureEditor::getChainData(ChainIdx chainidx) const
+{
+    const EditChainData &chain = d->chain( getUID(chainidx) );
+    
+    QList<ResIdx> residxs;
+    
+    foreach (quint32 residue, chain.residues)
+    {
+        residxs.append( ResIdx(d->res_by_index.indexOf(residue)) );
+    }
+    
+    return tuple< ChainName,QList<ResIdx> >(chain.name, residxs);
+}
+
+/** Return the metadata for the segment at index 'segidx' 
+
+    \throw SireError::invalid_index
+*/
+boost::tuple< SegName,QList<AtomIdx> >
+StructureEditor::getSegData(SegIdx segidx) const
+{
+    const EditSegData &segment = d->segment( getUID(segidx) );
+    
+    QList<AtomIdx> atomidxs;
+    
+    foreach (quint32 atom, segment.atoms)
+    {
+        atomidxs.append( AtomIdx(d->atoms_by_index.indexOf(atom)) );
+    }
+    
+    return tuple< SegName,QList<AtomIdx> >(segment.name, atomidxs);
+}
+
 /** Commit the changes - this creates a MoleculeData object that contains
     all of the data in this editor */
 MoleculeData StructureEditor::commitChanges() const
 {
+    return MoleculeData(*this);
 }
 
 /** Return the number of atoms in the residue identified by 'uid'

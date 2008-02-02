@@ -32,6 +32,7 @@
 #include "sireglobal.h"
 
 #include <boost/shared_ptr.hpp>
+#include <boost/tuple/tuple.hpp>
 
 SIRE_BEGIN_HEADER
 
@@ -43,8 +44,15 @@ class StructureEditor;
 QDataStream& operator<<(QDataStream&, const SireMol::StructureEditor&);
 QDataStream& operator>>(QDataStream&, SireMol::StructureEditor&);
 
+namespace SireBase
+{
+class Properties;
+}
+
 namespace SireMol
 {
+
+using SireBase::Properties;
 
 class AtomIdx;
 class AtomNum;
@@ -54,6 +62,8 @@ class AtomID;
 class CGIdx;
 class CGName;
 class CGID;
+
+class CGAtomIdx;
 
 class ResIdx;
 class ResNum;
@@ -72,6 +82,7 @@ class MolName;
 class MolNum;
 
 class MoleculeData;
+class MoleculeInfoData;
 
 class MolStructureEditor;
 class SegStructureEditor;
@@ -103,6 +114,9 @@ class SIREMOL_EXPORT StructureEditor
 friend QDataStream& ::operator<<(QDataStream&, const StructureEditor&);
 friend QDataStream& ::operator>>(QDataStream&, StructureEditor&);
 
+friend class MoleculeInfoData; //so can call query functions when converting
+friend class MoleculeData; //so can call query functions when converting
+
 public:
     ~StructureEditor();
 
@@ -115,7 +129,31 @@ protected:
     StructureEditor& operator=(const MoleculeData &moldata);
     StructureEditor& operator=(const StructureEditor &other);
 
+    void removeEmptyGroups();
+    void removeEmptyResidues();
+    void removeEmptyCutGroups();
+    void removeEmptyChains();
+    void removeEmptySegments();
+
     MoleculeData commitChanges() const;
+
+    /// functions used by MoleculeInfoData when committing
+    boost::tuple<AtomName,AtomNum,CGAtomIdx,ResIdx,SegIdx> 
+    getAtomData(AtomIdx atomidx) const;
+   
+    boost::tuple< CGName,QList<AtomIdx> >
+    getCGData(CGIdx cgidx) const;
+    
+    boost::tuple< ResName,ResNum,ChainIdx,QList<AtomIdx> >
+    getResData(ResIdx residx) const;
+    
+    boost::tuple< ChainName,QList<ResIdx> >
+    getChainData(ChainIdx chainidx) const;
+    
+    boost::tuple< SegName,QList<AtomIdx> >
+    getSegData(SegIdx segidx) const;
+    
+    /// Functions predominantly for StructureEditor derived classes
 
     quint32 getUID(AtomIdx atomidx) const;
     quint32 getUID(CGIdx cgidx) const;
@@ -180,6 +218,8 @@ protected:
     ResIdx resIdx(const ResID &resid) const;
     ChainIdx chainIdx(const ChainID &chainid) const;
     SegIdx segIdx(const SegID &segid) const;
+
+    Properties properties() const;
     
     void renameMolecule(const MolName &name);
     

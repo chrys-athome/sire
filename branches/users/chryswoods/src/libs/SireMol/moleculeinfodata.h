@@ -86,6 +86,8 @@ class Segment;
 class MoleculeData;
 class AtomSelection;
 
+class StructureEditor;
+
 namespace detail
 {
 class MolInfoRegistry;
@@ -124,6 +126,8 @@ friend QDataStream& ::operator>>(QDataStream&, MoleculeInfoData&);
 
 public:
     MoleculeInfoData();
+    
+    MoleculeInfoData(const StructureEditor &editor);
     
     MoleculeInfoData(const MoleculeInfoData &other);
     
