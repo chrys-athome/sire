@@ -348,6 +348,17 @@ EditResData::EditResData()
               chain_parent(0)
 {}
 
+EditResData::EditResData(const MoleculeInfoData &molinfo, ResIdx i,
+                         const EditMolData &editmol)
+            : name(molinfo.name(i)), number(molinfo.number(i))
+{
+    foreach (AtomIdx atomidx, molinfo.getAtomsIn(i))
+    {
+        quint32 uid = editmol.atoms_by_index.at(atomidx);
+        atoms.append(uid);
+    }
+}
+
 EditResData::EditResData(const EditResData &other)
             : name(other.name), number(other.number), 
               chain_parent(other.chain_parent), atoms(other.atoms),
@@ -378,6 +389,17 @@ QDataStream& operator>>(QDataStream &ds, EditChainData &editchain)
 EditChainData::EditChainData() : name( QString::null )
 {}
 
+EditChainData::EditChainData(const MoleculeInfoData &molinfo, ChainIdx i,
+                             const EditMolData &editmol)
+              : name(molinfo.name(i))
+{
+    foreach (ResIdx residx, molinfo.getResiduesIn(i))
+    {
+        quint32 uid = editmol.res_by_index.at(residx);
+        residues.append(uid);
+    }
+}
+
 EditChainData::EditChainData(const EditChainData &other)
               : name(other.name), residues(other.residues),
                 properties(other.properties)
@@ -406,6 +428,17 @@ QDataStream& operator>>(QDataStream &ds, EditSegData &editseg)
 
 EditSegData::EditSegData() : name( QString::null )
 {}
+
+EditSegData::EditSegData(const MoleculeInfoData &molinfo, SegIdx i,
+                         const EditMolData &editmol)
+            : name(molinfo.name(i))
+{
+    foreach (AtomIdx atomidx, molinfo.getAtomsIn(i))
+    {
+        quint32 uid = editmol.atoms_by_index.at(atomidx);
+        atoms.append(uid);
+    }
+}
 
 EditSegData::EditSegData(const EditSegData &other)
             : name(other.name), atoms(other.atoms),
