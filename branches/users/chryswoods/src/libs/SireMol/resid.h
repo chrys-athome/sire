@@ -31,23 +31,21 @@
 
 #include "SireID/id.h"
 
+#include "specify.hpp"
+#include "atomsin.hpp"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
 
 template<class T>
-class Specify;
-
-template<class T>
-class AtomsIn;
-
-template<class T>
 class Selector;
+
+class MolInfo;
 
 class ResIdx;
 class ResIdentifier;
-class MoleculeInfoData;
 
 class Residue;
 
@@ -91,7 +89,7 @@ public:
 
     /** Map this ID back to the indicies of the residues in the molecule, 
         using the passed MoleculeInfo to do the mapping */
-    virtual QList<ResIdx> map(const MoleculeInfoData &molinfo) const=0;
+    virtual QList<ResIdx> map(const MolInfo &molinfo) const=0;
 
     virtual Residue selectFrom(const Molecules &molecules) const;
     virtual QHash< MolNum,Selector<Residue> >
@@ -108,6 +106,10 @@ public:
 };
 
 }
+
+#include "residentifier.h"
+#include "residx.h"
+#include "atomidx.h"
 
 Q_DECLARE_METATYPE( SireMol::Specify<SireMol::ResID> );
 Q_DECLARE_METATYPE( SireMol::AtomsIn<SireMol::ResID> );

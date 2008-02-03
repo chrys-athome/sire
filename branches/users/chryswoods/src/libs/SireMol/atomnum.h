@@ -30,6 +30,7 @@
 #define SIREMOL_ATOMNUM_H
 
 #include "atomid.h"
+#include "molinfo.h"
 
 #include "SireID/number.h"
 
@@ -128,7 +129,10 @@ public:
         return _num != other._num;
     }
 
-    QList<AtomIdx> map(const MoleculeInfoData &molinfo) const;
+    QList<AtomIdx> map(const MolInfo &molinfo) const
+    {
+        return molinfo.map(*this);
+    }
 };
 
 }

@@ -282,7 +282,7 @@ namespace detail
 {
 
 template<>
-inline QList<Residue::Index> getAll<Residue>(const MoleculeInfoData &molinfo)
+inline QList<Residue::Index> getAll<Residue>(const MolInfo &molinfo)
 {
     return molinfo.getResidues();
 }

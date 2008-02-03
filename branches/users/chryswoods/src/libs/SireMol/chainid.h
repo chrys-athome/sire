@@ -31,26 +31,22 @@
 
 #include "SireID/id.h"
 
+#include "specify.hpp"
+#include "atomsin.hpp"
+#include "resin.hpp"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
 
 template<class T>
-class Specify;
-
-template<class T>
-class AtomsIn;
-
-template<class T>
-class ResIn;
-
-template<class T>
 class Selector;
+
+class MolInfo;
 
 class ChainIdx;
 class ChainIdentifier;
-class MoleculeInfoData;
 
 class Chain;
 
@@ -97,7 +93,7 @@ public:
 
     /** Map this ID back to the indicies of the chains in the molecule, 
         using the passed MoleculeInfo to do the mapping */
-    virtual QList<ChainIdx> map(const MoleculeInfoData &molinfo) const=0;
+    virtual QList<ChainIdx> map(const MolInfo &molinfo) const=0;
 
     virtual Chain selectFrom(const Molecules &molecules) const;
     virtual QHash< MolNum,Selector<Chain> >
@@ -113,6 +109,11 @@ public:
 };
 
 }
+
+#include "chainidentifier.h"
+#include "chainidx.h"
+#include "residx.h"
+#include "atomidx.h"
 
 Q_DECLARE_METATYPE( SireMol::Specify<SireMol::ChainID> );
 Q_DECLARE_METATYPE( SireMol::AtomsIn<SireMol::ChainID> );

@@ -90,7 +90,7 @@ public:
         return g0.isNull() and g1.isNull();
     }
              
-    QList<AtomIdx> map(const MoleculeInfoData &molinfo) const;
+    QList<AtomIdx> map(const MolInfo &molinfo) const;
 
 private:
     typename G0::Identifier g0;
@@ -120,7 +120,7 @@ QString GroupGroupID<G0,G1>::toString() const
     \throw SireError::invalid_index
 */
 template<class G0, class G1>
-QList<AtomIdx> GroupGroupID<G0,G1>::map(const MoleculeInfoData &molinfo) const
+QList<AtomIdx> GroupGroupID<G0,G1>::map(const MolInfo &molinfo) const
 {
     if (this->isNull())
         return molinfo.getAtoms();
@@ -130,7 +130,7 @@ QList<AtomIdx> GroupGroupID<G0,G1>::map(const MoleculeInfoData &molinfo) const
         return g0.map(molinfo);
         
     QList<AtomIdx> atomidxs = 
-            MoleculeInfoData::intersection(molinfo.getAtomsIn(g0),
+                     MolInfo::intersection(molinfo.getAtomsIn(g0),
                                            molinfo.getAtomsIn(g1) );
         
     if (atomidxs.isEmpty())

@@ -95,7 +95,7 @@ public:
         return chainid.isNull() and resid.isNull();
     }
 
-    QList<ResIdx> map(const MoleculeInfoData &molinfo) const;
+    QList<ResIdx> map(const MolInfo &molinfo) const;
 
 private:
     /** Identifier for the chain */

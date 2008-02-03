@@ -32,6 +32,7 @@
 #include "SireID/name.h"
 
 #include "segid.h"
+#include "molinfo.h"
 
 SIRE_BEGIN_HEADER
 
@@ -121,7 +122,10 @@ public:
         return _name != other._name;
     }
 
-    QList<SegIdx> map(const MoleculeInfoData &molinfo) const;
+    QList<SegIdx> map(const MolInfo &molinfo) const
+    {
+        return molinfo.map(*this);
+    }
 };
 
 }

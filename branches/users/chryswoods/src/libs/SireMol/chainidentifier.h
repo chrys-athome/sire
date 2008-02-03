@@ -82,7 +82,7 @@ public:
     bool operator==(const ChainID &other) const;
     bool operator!=(const ChainID &other) const;
     
-    QList<ChainIdx> map(const MoleculeInfoData &molinfo) const;
+    QList<ChainIdx> map(const MolInfo &molinfo) const;
 
 private:
     /** Pointer to the ChainID */

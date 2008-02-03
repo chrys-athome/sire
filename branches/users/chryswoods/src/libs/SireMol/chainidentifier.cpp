@@ -27,7 +27,7 @@
 \*********************************************/
 
 #include "chainidentifier.h"
-#include "moleculeinfodata.h"
+#include "molinfo.h"
 
 using namespace SireMol;
 using namespace SireID;
@@ -154,16 +154,15 @@ bool ChainIdentifier::operator!=(const ChainID &other) const
         return d->operator!=(other);
 }
 
-/** Map this ID to the list of indicies of atoms that match this ID
+/** Map this ID to the list of indicies of chains that match this ID
 
-    \throw SireMol::missing_atom
+    \throw SireMol::missing_chain
     \throw SireError::invalid_index
 */
-QList<ChainIdx> ChainIdentifier::map(const MoleculeInfoData &molinfo) const
+QList<ChainIdx> ChainIdentifier::map(const MolInfo &molinfo) const
 {
     if (d.get() == 0)
         return molinfo.getChains();
     else
         return d->map(molinfo);
 }
-

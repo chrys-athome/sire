@@ -82,7 +82,7 @@ public:
     bool operator==(const SegID &other) const;
     bool operator!=(const SegID &other) const;
     
-    QList<SegIdx> map(const MoleculeInfoData &molinfo) const;
+    QList<SegIdx> map(const MolInfo &molinfo) const;
 
 private:
     /** Pointer to the SegID */

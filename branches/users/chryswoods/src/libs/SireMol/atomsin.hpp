@@ -31,6 +31,10 @@
 
 #include "SireID/index.h"
 
+#include "atomidx.h"
+#include "atomidentifier.h"
+#include "molinfo.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol
@@ -101,7 +105,7 @@ public:
     
     QString toString() const;
     
-    QList<AtomIdx> map(const MoleculeInfoData &molinfo) const;
+    QList<AtomIdx> map(const MolInfo &molinfo) const;
 
 private:
     /** The ID of the group that contains the atoms */
@@ -198,6 +202,53 @@ SIRE_OUTOFLINE_TEMPLATE
 bool AtomsIn<GROUP>::operator==(const SireID::ID &other) const
 {
     return SireID::ID::compare< AtomsIn<GROUP> >(*this, other);
+}
+
+/** Map this ID to the indicies of matching atoms 
+
+    \throw ???::missing_ID
+    \throw SireError::invalid_index
+*/
+template<class GROUP>
+SIRE_OUTOFLINE_TEMPLATE
+QList<AtomIdx> AtomsIn<GROUP>::map(const MolInfo &molinfo) const
+{
+    //first get the list of the indicies of the matching groups
+    QList<typename GROUP::Index> idxs = groupid.map(molinfo);
+    
+    //now get a list of the indicies of all of the atoms in these groups
+    QList<AtomIdx> atomidxs;
+    
+    foreach (typename GROUP::Index idx, idxs)
+    {
+        atomidxs += molinfo.getAtomsIn(idx);
+    }
+    
+    //now map _i and _j to the indicies...
+    int nats = atomidxs.count();
+    
+    int sane_strt = strt.map(nats);
+    int sane_end = end.map(nats);
+    
+    if (sane_strt > sane_end)
+        qSwap(sane_strt, sane_end);
+    
+    //now extract only the desired atom indicies
+    if (sane_end - sane_strt == nats)
+    {
+        return atomidxs;
+    }
+    else
+    {
+        QList<AtomIdx> specified_atomidxs;
+    
+        for (int i=sane_strt; i<=sane_end; ++i)
+        {
+            specified_atomidxs.append( atomidxs[i] );
+        }
+    
+        return specified_atomidxs;
+    }
 }
 
 }

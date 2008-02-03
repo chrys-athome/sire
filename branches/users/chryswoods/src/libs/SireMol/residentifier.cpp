@@ -27,7 +27,7 @@
 \*********************************************/
 
 #include "residentifier.h"
-#include "moleculeinfodata.h"
+#include "molinfo.h"
 
 using namespace SireMol;
 using namespace SireID;
@@ -154,12 +154,12 @@ bool ResIdentifier::operator!=(const ResID &other) const
         return d->operator!=(other);
 }
 
-/** Map this ID to the list of indicies of atoms that match this ID
+/** Map this ID to the list of indicies of reidues that match this ID
 
-    \throw SireMol::missing_atom
+    \throw SireMol::missing_residue
     \throw SireError::invalid_index
 */
-QList<ResIdx> ResIdentifier::map(const MoleculeInfoData &molinfo) const
+QList<ResIdx> ResIdentifier::map(const MolInfo &molinfo) const
 {
     if (d.get() == 0)
         return molinfo.getResidues();

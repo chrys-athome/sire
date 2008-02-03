@@ -31,23 +31,21 @@
 
 #include "SireID/id.h"
 
+#include "specify.hpp"
+#include "atomsin.hpp"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
 
 template<class T>
-class Specify;
-
-template<class T>
-class AtomsIn;
-
-template<class T>
 class Selector;
+
+class MolInfo;
 
 class CGIdx;
 class CGIdentifier;
-class MoleculeInfoData;
 
 class CutGroup;
 
@@ -90,7 +88,7 @@ public:
 
     /** Map this ID back to the indicies of the CutGroups
         within the molecule described by the info in 'molinfo' */
-    virtual QList<CGIdx> map(const MoleculeInfoData &molinfo) const=0;
+    virtual QList<CGIdx> map(const MolInfo &molinfo) const=0;
 
     virtual CutGroup selectFrom(const Molecules &molecules) const;
     virtual QHash< MolNum,Selector<CutGroup> >
@@ -107,6 +105,10 @@ public:
 };
 
 }
+
+#include "cgidx.h"
+#include "cgidentifier.h"
+#include "atomidx.h"
 
 Q_DECLARE_METATYPE( SireMol::Specify<SireMol::CGID> );
 Q_DECLARE_METATYPE( SireMol::AtomsIn<SireMol::CGID> );

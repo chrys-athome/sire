@@ -281,7 +281,7 @@ namespace detail
 void assertSameSize(Segment*, int nres, int nprops);
 
 template<>
-inline QList<SegIdx> getAll<Segment>(const MoleculeInfoData &molinfo)
+inline QList<SegIdx> getAll<Segment>(const MolInfo &molinfo)
 {
     return molinfo.getSegments();
 }

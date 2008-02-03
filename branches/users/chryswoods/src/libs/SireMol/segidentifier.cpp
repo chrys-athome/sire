@@ -27,7 +27,8 @@
 \*********************************************/
 
 #include "segidentifier.h"
-#include "moleculeinfodata.h"
+#include "segidx.h"
+#include "molinfo.h"
 
 using namespace SireMol;
 using namespace SireID;
@@ -154,12 +155,12 @@ bool SegIdentifier::operator!=(const SegID &other) const
         return d->operator!=(other);
 }
 
-/** Map this ID to the list of indicies of atoms that match this ID
+/** Map this ID to the list of indicies of segments that match this ID
 
-    \throw SireMol::missing_atom
+    \throw SireMol::missing_segment
     \throw SireError::invalid_index
 */
-QList<SegIdx> SegIdentifier::map(const MoleculeInfoData &molinfo) const
+QList<SegIdx> SegIdentifier::map(const MolInfo &molinfo) const
 {
     if (d.get() == 0)
         return molinfo.getSegments();

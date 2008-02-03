@@ -298,7 +298,7 @@ namespace detail
 void assertSameSize(Chain*, int nres, int nprops);
     
 template<>
-inline QList<ChainIdx> getAll<Chain>(const MoleculeInfoData &molinfo)
+inline QList<ChainIdx> getAll<Chain>(const MolInfo &molinfo)
 {
     return molinfo.getChains();
 }

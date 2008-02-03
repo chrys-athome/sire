@@ -273,7 +273,7 @@ Selector<T>::Selector(const MoleculeData &moldata,
                       const AtomSelection &selected_atoms)
             : MoleculeView(moldata)
 {
-    idxs = detail::getAll<T>(moldata, selected_atoms);
+    idxs = detail::getAll<T>(moldata.info(), selected_atoms);
     idxs_set = idxs.toSet();
 }
 

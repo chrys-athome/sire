@@ -95,7 +95,7 @@ public:
         return atomid0.isNull() and atomid1.isNull();
     }
 
-    QList<AtomIdx> map(const MoleculeInfoData &molinfo) const;
+    QList<AtomIdx> map(const MolInfo &molinfo) const;
 
 private:
     /** The pair of IDs that are combined */

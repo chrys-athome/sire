@@ -80,7 +80,7 @@ public:
     bool operator==(const ResID &other) const;
     bool operator!=(const ResID &other) const;
     
-    QList<ResIdx> map(const MoleculeInfoData &molinfo) const;
+    QList<ResIdx> map(const MolInfo &molinfo) const;
 
 private:
     /** Pointer to the ResID */

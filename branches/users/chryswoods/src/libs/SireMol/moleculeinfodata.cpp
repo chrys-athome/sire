@@ -30,6 +30,7 @@
 
 #include "moleculeinfodata.h"
 #include "structureeditor.h"
+#include "atomselection.h"
 
 #include "tostring.h"
 
@@ -1320,17 +1321,16 @@ CGAtomIdx MoleculeInfoData::cgAtomIdx(const AtomID &atomid) const
     \throw SireMol::missing_atom
     \throw SireMol::duplicate_atom
 */
-void MoleculeInfoData::assertSingleAtom(const QList<AtomIdx> &atomidxs) const
+void MolInfo::assertSingleAtom(const QList<AtomIdx> &atomidxs) const
 {
     if (atomidxs.isEmpty())
         throw SireMol::missing_atom( QObject::tr(
-            "Could not find a matching atom in the layout \"%1\".")
-                .arg(uid), CODELOC );
+            "Could not find a matching atom."), CODELOC );
                 
     else if (atomidxs.count() > 1)
         throw SireMol::duplicate_atom( QObject::tr(
-            "Too many atoms have matched (%1) in the layout \"%2\".")
-                .arg(atomidxs.count()).arg(uid), CODELOC );
+            "Too many atoms have matched (%1).")
+                .arg( Sire::toString(atomidxs) ), CODELOC );
 }
 
 /** Assert that there is the index for just one residue
@@ -1338,17 +1338,16 @@ void MoleculeInfoData::assertSingleAtom(const QList<AtomIdx> &atomidxs) const
     \throw SireMol::missing_residue
     \throw SireMol::duplicate_residue
 */
-void MoleculeInfoData::assertSingleResidue(const QList<ResIdx> &residxs) const
+void MolInfo::assertSingleResidue(const QList<ResIdx> &residxs) const
 {
     if (residxs.isEmpty())
         throw SireMol::missing_residue( QObject::tr(
-            "Could not find a matching residue in the layout \"%1\".")
-                .arg(uid), CODELOC );
+            "Could not find a matching residue."), CODELOC );
                 
     else if (residxs.count() > 1)
         throw SireMol::duplicate_residue( QObject::tr(
-            "Too many residues have matched (%1) in the layout \"%2\".")
-                .arg(residxs.count()).arg(uid), CODELOC );
+            "Too many residues have matched (%1).")
+                .arg( Sire::toString(residxs) ), CODELOC );
 }
 
 /** Assert that there is the index for just one chain 
@@ -1356,17 +1355,16 @@ void MoleculeInfoData::assertSingleResidue(const QList<ResIdx> &residxs) const
     \throw SireMol::missing_chain
     \throw SireMol::duplicate_chain
 */
-void MoleculeInfoData::assertSingleChain(const QList<ChainIdx> &chainidxs) const
+void MolInfo::assertSingleChain(const QList<ChainIdx> &chainidxs) const
 {
     if (chainidxs.isEmpty())
         throw SireMol::missing_chain( QObject::tr(
-            "Could not find a matching chain in the layout \"%1\".")
-                .arg(uid), CODELOC );
+            "Could not find a matching chain."), CODELOC );
                 
     else if (chainidxs.count() > 1)
         throw SireMol::duplicate_chain( QObject::tr(
-            "Too many chains have matched (%1) in the layout \"%2\".")
-                .arg(chainidxs.count()).arg(uid), CODELOC );
+            "Too many chains have matched (%1).")
+                .arg( Sire::toString(chainidxs) ), CODELOC );
 }
 
 /** Assert that there is the index for just one CutGroup 
@@ -1374,17 +1372,16 @@ void MoleculeInfoData::assertSingleChain(const QList<ChainIdx> &chainidxs) const
     \throw SireMol::missing_cutgroup
     \throw SireMol::duplicate_cutgroup
 */
-void MoleculeInfoData::assertSingleCutGroup(const QList<CGIdx> &cgidxs) const
+void MolInfo::assertSingleCutGroup(const QList<CGIdx> &cgidxs) const
 {
     if (cgidxs.isEmpty())
         throw SireMol::missing_cutgroup( QObject::tr(
-            "Could not find a matching CutGroup in the layout \"%1\".")
-                .arg(uid), CODELOC );
+            "Could not find a matching CutGroup."), CODELOC );
                 
     else if (cgidxs.count() > 1)
         throw SireMol::duplicate_cutgroup( QObject::tr(
-            "Too many CutGroups have matched (%1) in the layout \"%2\".")
-                .arg(cgidxs.count()).arg(uid), CODELOC );
+            "Too many CutGroups have matched (%1).")
+                .arg( Sire::toString(cgidxs) ), CODELOC );
 }
 
 /** Assert that there is the index for just one segment 
@@ -1392,17 +1389,16 @@ void MoleculeInfoData::assertSingleCutGroup(const QList<CGIdx> &cgidxs) const
     \throw SireMol::missing_segment
     \throw SireMol::duplicate_segment
 */
-void MoleculeInfoData::assertSingleSegment(const QList<SegIdx> &segidxs) const
+void MolInfo::assertSingleSegment(const QList<SegIdx> &segidxs) const
 {
     if (segidxs.isEmpty())
         throw SireMol::missing_segment( QObject::tr(
-            "Could not find a matching segment in the layout \"%1\".")
-                .arg(uid), CODELOC );
+            "Could not find a matching segment."), CODELOC );
                 
     else if (segidxs.count() > 1)
         throw SireMol::duplicate_segment( QObject::tr(
-            "Too many segments have matched (%1) in the layout \"%2\".")
-                .arg(segidxs.count()).arg(uid), CODELOC );
+            "Too many segments have matched (%1).")
+                .arg( Sire::toString(segidxs) ), CODELOC );
 }
 
 /** Return the index of the atom with ID 'atomid' */
@@ -2596,7 +2592,7 @@ QList<ResIdx> MoleculeInfoData::map(const ResName &name) const
     
     \throw SireMol::missing_residue
 */
-QList<ResIdx> MoleculeInfoData::map(const ResNum &num) const
+QList<ResIdx> MoleculeInfoData::map(ResNum num) const
 {
     if (num.isNull())
         return this->getResidues();
@@ -2619,7 +2615,7 @@ QList<ResIdx> MoleculeInfoData::map(const ResNum &num) const
     
     \throw SireError::invalid_index
 */
-QList<ResIdx> MoleculeInfoData::map(const ResIdx &idx) const
+QList<ResIdx> MoleculeInfoData::map(ResIdx idx) const
 {
     if (idx.isNull())
         return this->getResidues();
@@ -2673,7 +2669,7 @@ QList<ChainIdx> MoleculeInfoData::map(const ChainName &name) const
     
     \throw SireError::invalid_index
 */
-QList<ChainIdx> MoleculeInfoData::map(const ChainIdx &idx) const
+QList<ChainIdx> MoleculeInfoData::map(ChainIdx idx) const
 {
     if (idx.isNull())
         return this->getChains();
@@ -2722,7 +2718,7 @@ QList<SegIdx> MoleculeInfoData::map(const SegName &name) const
     
     \throw SireError::invalid_index
 */
-QList<SegIdx> MoleculeInfoData::map(const SegIdx &idx) const
+QList<SegIdx> MoleculeInfoData::map(SegIdx idx) const
 {
     if (idx.isNull())
         return this->getSegments();
@@ -2771,7 +2767,7 @@ QList<CGIdx> MoleculeInfoData::map(const CGName &name) const
     
     \throw SireError::invalid_index
 */
-QList<CGIdx> MoleculeInfoData::map(const CGIdx &idx) const
+QList<CGIdx> MoleculeInfoData::map(CGIdx idx) const
 {
     if (idx.isNull())
         return this->getCutGroups();
@@ -2819,7 +2815,7 @@ QList<AtomIdx> MoleculeInfoData::map(const AtomName &name) const
 
     \throw SireMol::missing_atom
 */
-QList<AtomIdx> MoleculeInfoData::map(const AtomNum &num) const
+QList<AtomIdx> MoleculeInfoData::map(AtomNum num) const
 {
     if (num.isNull())
         return this->getAtoms();
@@ -2840,7 +2836,7 @@ QList<AtomIdx> MoleculeInfoData::map(const AtomNum &num) const
     
     \throw SireError::invalid_index
 */
-QList<AtomIdx> MoleculeInfoData::map(const AtomIdx &idx) const
+QList<AtomIdx> MoleculeInfoData::map(AtomIdx idx) const
 {
     if (idx.isNull())
         return this->getAtoms();
@@ -2862,4 +2858,10 @@ QList<AtomIdx> MoleculeInfoData::map(const AtomID &atomid) const
         return this->getAtoms();
 
     return atomid.map(*this);
+}
+
+void MoleculeInfoData::assertCompatibleWith(
+                             const AtomSelection &selected_atoms) const
+{
+    return selected_atoms.assertCompatibleWith(*this);
 }

@@ -98,7 +98,7 @@ public:
     bool operator==(const AtomID &other) const;
     bool operator!=(const AtomID &other) const;
     
-    QList<AtomIdx> map(const MoleculeInfoData &molinfo) const;
+    QList<AtomIdx> map(const MolInfo &molinfo) const;
 
 private:
     /** Pointer to the AtomID */

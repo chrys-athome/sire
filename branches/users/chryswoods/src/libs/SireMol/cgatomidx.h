@@ -30,7 +30,8 @@
 #define SIREMOL_CGATOMIDX_H
 
 #include "cgidx.h"
-#include "atomid.h"
+#include "atomidx.h"
+#include "molinfo.h"
 
 #include "SireID/index.h"
 
@@ -130,7 +131,12 @@ public:
         return _cgidx != other._cgidx or _atmidx != other._atmidx;
     }
     
-    QList<AtomIdx> map(const MoleculeInfoData &molinfo) const;
+    QList<AtomIdx> map(const MolInfo &molinfo) const
+    {
+        QList<AtomIdx> atomidxs;
+        atomidxs.append( molinfo.getAtom(_cgidx, _atmidx) );
+        return atomidxs;
+    }
     
     CGIdx cutGroup() const
     {

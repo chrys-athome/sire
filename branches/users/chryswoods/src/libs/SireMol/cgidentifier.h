@@ -82,7 +82,7 @@ public:
     bool operator==(const CGID &other) const;
     bool operator!=(const CGID &other) const;
     
-    QList<CGIdx> map(const MoleculeInfoData &molinfo) const;
+    QList<CGIdx> map(const MolInfo &molinfo) const;
 
 private:
     /** Pointer to the CGID */

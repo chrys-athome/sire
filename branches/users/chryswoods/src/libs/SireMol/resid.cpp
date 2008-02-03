@@ -34,6 +34,8 @@
 #include "atom.h"
 #include "selector.hpp"
 
+#include "molinfo.h"
+
 #include "mover.hpp"
 #include "editor.hpp"
 

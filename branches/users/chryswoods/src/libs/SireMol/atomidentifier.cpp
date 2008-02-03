@@ -27,7 +27,9 @@
 \*********************************************/
 
 #include "atomidentifier.h"
-#include "moleculeinfodata.h"
+#include "atomidx.h"
+
+#include "molinfo.h"
 
 #include "SireError/errors.h"
 
@@ -201,7 +203,7 @@ bool AtomIdentifier::operator!=(const AtomID &other) const
     \throw SireMol::missing_atom
     \throw SireError::invalid_index
 */
-QList<AtomIdx> AtomIdentifier::map(const MoleculeInfoData &molinfo) const
+QList<AtomIdx> AtomIdentifier::map(const MolInfo &molinfo) const
 {
     if (d.get() == 0)
         return molinfo.getAtoms();

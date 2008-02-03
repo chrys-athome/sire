@@ -30,7 +30,7 @@
 
 #include "atomatomid.h"
 #include "atomidx.h"
-#include "moleculeinfodata.h"
+#include "molinfo.h"
 
 #include "SireMol/errors.h"
 
@@ -54,7 +54,7 @@ QString AtomAtomID::toString() const
     \throw SireMol::missing_atom
     \throw SireError::invalid_index
 */
-QList<AtomIdx> AtomAtomID::map(const MoleculeInfoData &molinfo) const
+QList<AtomIdx> AtomAtomID::map(const MolInfo &molinfo) const
 {
     if (this->isNull())
         return molinfo.getAtoms();
@@ -65,13 +65,13 @@ QList<AtomIdx> AtomAtomID::map(const MoleculeInfoData &molinfo) const
     else
     {
         QList<AtomIdx> atomidxs = 
-                MoleculeInfoData::intersection( atomid0.map(molinfo),
+                         MolInfo::intersection( atomid0.map(molinfo),
                                                 atomid1.map(molinfo) );
                 
         if (atomidxs.isEmpty())
             throw SireMol::missing_atom( QObject::tr(
-                "There is no atom matching the ID %1 in the layout \"%2\".")
-                    .arg(this->toString()).arg(molinfo.UID()), CODELOC );
+                "There is no atom matching the ID %1.")
+                    .arg(this->toString()), CODELOC );
     
         qSort(atomidxs);
         

@@ -280,7 +280,7 @@ namespace detail
 void assertSameSize(CutGroup*, int nres, int nprops);
     
 template<>
-inline QList<CGIdx> getAll<CutGroup>(const MoleculeInfoData &molinfo)
+inline QList<CGIdx> getAll<CutGroup>(const MolInfo &molinfo)
 {
     return molinfo.getCutGroups();
 }

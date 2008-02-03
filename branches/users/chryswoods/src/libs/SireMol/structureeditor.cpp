@@ -1462,7 +1462,7 @@ SegIdx StructureEditor::segIdx(quint32 uid) const
 */
 AtomIdx StructureEditor::atomIdx(const AtomID &atomid) const
 {
-    QList<AtomIdx> atomidxs = atomid.map(*this);
+    QList<AtomIdx> atomidxs = atomid.map( EditMolInfo(*this) );
     
     if (atomidxs.count() > 1)
         throw SireMol::duplicate_atom( QObject::tr(
@@ -1480,7 +1480,7 @@ AtomIdx StructureEditor::atomIdx(const AtomID &atomid) const
 */
 CGIdx StructureEditor::cgIdx(const CGID &cgid) const
 {
-    QList<CGIdx> cgidxs = cgid.map(*this);
+    QList<CGIdx> cgidxs = cgid.map( EditMolInfo(*this) );
     
     if (cgidxs.count() > 1)
         throw SireMol::duplicate_cutgroup( QObject::tr(
@@ -1498,7 +1498,7 @@ CGIdx StructureEditor::cgIdx(const CGID &cgid) const
 */
 ResIdx StructureEditor::resIdx(const ResID &resid) const
 {
-    QList<ResIdx> residxs = resid.map(*this);
+    QList<ResIdx> residxs = resid.map( EditMolInfo(*this) );
     
     if (residxs.count() > 1)
         throw SireMol::duplicate_residue( QObject::tr(
@@ -1516,7 +1516,7 @@ ResIdx StructureEditor::resIdx(const ResID &resid) const
 */
 ChainIdx StructureEditor::chainIdx(const ChainID &chainid) const
 {
-    QList<ChainIdx> chainidxs = chainid.map(*this);
+    QList<ChainIdx> chainidxs = chainid.map( EditMolInfo(*this) );
     
     if (chainidxs.count() > 1)
         throw SireMol::duplicate_chain( QObject::tr(
@@ -1534,7 +1534,7 @@ ChainIdx StructureEditor::chainIdx(const ChainID &chainid) const
 */
 SegIdx StructureEditor::segIdx(const SegID &segid) const
 {
-    QList<SegIdx> segidxs = segid.map(*this);
+    QList<SegIdx> segidxs = segid.map( EditMolInfo(*this) );
     
     if (segidxs.count() > 1)
         throw SireMol::duplicate_segment( QObject::tr(
@@ -1807,7 +1807,7 @@ void StructureEditor::removeSegment(quint32 uid)
 */
 void StructureEditor::removeAtoms(const AtomID &atomid)
 {
-    QList<AtomIdx> atomidxs = atomid.map(*this);
+    QList<AtomIdx> atomidxs = atomid.map( EditMolInfo(*this) );
     
     if (atomidxs.count() == 1)
     {
@@ -1837,7 +1837,7 @@ void StructureEditor::removeAtoms(const AtomID &atomid)
 */
 void StructureEditor::removeCutGroups(const CGID &cgid)
 {
-    QList<CGIdx> cgidxs = cgid.map(*this);
+    QList<CGIdx> cgidxs = cgid.map( EditMolInfo(*this) );
     
     if (cgidxs.count() == 1)
     {
@@ -1867,7 +1867,7 @@ void StructureEditor::removeCutGroups(const CGID &cgid)
 */
 void StructureEditor::removeResidues(const ResID &resid)
 {
-    QList<ResIdx> residxs = resid.map(*this);
+    QList<ResIdx> residxs = resid.map( EditMolInfo(*this) );
     
     if (residxs.count() == 1)
     {
@@ -1897,7 +1897,7 @@ void StructureEditor::removeResidues(const ResID &resid)
 */
 void StructureEditor::removeChains(const ChainID &chainid)
 {
-    QList<ChainIdx> chainidxs = chainid.map(*this);
+    QList<ChainIdx> chainidxs = chainid.map( EditMolInfo(*this) );
     
     if (chainidxs.count() == 1)
     {
@@ -1927,7 +1927,7 @@ void StructureEditor::removeChains(const ChainID &chainid)
 */
 void StructureEditor::removeSegments(const SegID &segid)
 {
-    QList<SegIdx> segidxs = segid.map(*this);
+    QList<SegIdx> segidxs = segid.map( EditMolInfo(*this) );
     
     if (segidxs.count() == 1)
     {

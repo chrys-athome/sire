@@ -36,6 +36,8 @@
 #include "mover.hpp"
 #include "editor.hpp"
 
+#include "molinfo.h"
+
 #include "partialmolecule.h"
 #include "segment.h"
 #include "chain.h"

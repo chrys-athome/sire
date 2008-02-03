@@ -44,7 +44,8 @@ class Selector;
 
 class Atom;
 
-class MoleculeInfoData;
+class MolInfo;
+
 class AtomIdx;
 class AtomIdentifier;
 
@@ -82,7 +83,7 @@ public:
 
     /** Map this ID back to the indicies of the matching atoms in the molecule, 
         using the passed MoleculeInfo to do the mapping */
-    virtual QList<AtomIdx> map(const MoleculeInfoData &molinfo) const=0;
+    virtual QList<AtomIdx> map(const MolInfo &molinfo) const=0;
     
     virtual Atom selectFrom(const Molecules &molecules) const;
     virtual QHash< MolNum,Selector<Atom> >
@@ -98,6 +99,8 @@ public:
 };
 
 }
+
+#include "atomidentifier.h"
 
 Q_DECLARE_METATYPE( SireMol::Specify<SireMol::AtomID> );
 

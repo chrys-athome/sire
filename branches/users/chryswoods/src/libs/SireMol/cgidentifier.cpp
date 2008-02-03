@@ -27,7 +27,7 @@
 \*********************************************/
 
 #include "cgidentifier.h"
-#include "moleculeinfodata.h"
+#include "molinfo.h"
 
 using namespace SireMol;
 using namespace SireID;
@@ -154,15 +154,16 @@ bool CGIdentifier::operator!=(const CGID &other) const
         return d->operator!=(other);
 }
 
-/** Map this ID to the list of indicies of atoms that match this ID
+/** Map this ID to the list of indicies of CutGroups that match this ID
 
-    \throw SireMol::missing_atom
+    \throw SireMol::missing_cutgroup
     \throw SireError::invalid_index
 */
-QList<CGIdx> CGIdentifier::map(const MoleculeInfoData &molinfo) const
+QList<CGIdx> CGIdentifier::map(const MolInfo &molinfo) const
 {
     if (d.get() == 0)
         return molinfo.getCutGroups();
     else
         return d->map(molinfo);
 }
+

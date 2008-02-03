@@ -35,6 +35,8 @@
 #include <QMultiHash>
 #include <QSet>
 
+#include "molinfo.h"
+
 #include "cgatomidx.h"
 #include "molname.h"
 
@@ -118,7 +120,7 @@ class SegInfo;
     
     @author Christopher Woods
 */
-class MoleculeInfoData : public QSharedData
+class MoleculeInfoData : public MolInfo, public QSharedData
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const MoleculeInfoData&);
@@ -286,39 +288,32 @@ public:
     int nSegments() const;
     
     QList<ResIdx> map(const ResName &name) const;
-    QList<ResIdx> map(const ResNum &num) const;
-    QList<ResIdx> map(const ResIdx &idx) const;
+    QList<ResIdx> map(ResNum num) const;
+    QList<ResIdx> map(ResIdx idx) const;
     QList<ResIdx> map(const ResID &resid) const;
     
     QList<ChainIdx> map(const ChainName &name) const;
-    QList<ChainIdx> map(const ChainIdx &idx) const;
+    QList<ChainIdx> map(ChainIdx idx) const;
     QList<ChainIdx> map(const ChainID &chainid) const;
 
     QList<SegIdx> map(const SegName &name) const;
-    QList<SegIdx> map(const SegIdx &idx) const;
+    QList<SegIdx> map(SegIdx idx) const;
     QList<SegIdx> map(const SegID &segid) const;
    
     QList<CGIdx> map(const CGName &name) const;
-    QList<CGIdx> map(const CGIdx &idx) const;
+    QList<CGIdx> map(CGIdx idx) const;
     QList<CGIdx> map(const CGID &cgid) const;
     
     QList<AtomIdx> map(const AtomName &name) const;
-    QList<AtomIdx> map(const AtomNum &num) const;
-    QList<AtomIdx> map(const AtomIdx &idx) const;
+    QList<AtomIdx> map(AtomNum num) const;
+    QList<AtomIdx> map(AtomIdx idx) const;
     QList<AtomIdx> map(const AtomID &atomid) const;
 
     void squeeze(const MoleculeInfoData &other) const;
 
+    void assertCompatibleWith(const AtomSelection &selected_atoms) const;
+
     void assertEqualTo(const MoleculeInfoData &other) const;
-
-    void assertSingleAtom(const QList<AtomIdx> &atomidxs) const;
-    void assertSingleResidue(const QList<ResIdx> &residxs) const;
-    void assertSingleChain(const QList<ChainIdx> &chainidxs) const;
-    void assertSingleCutGroup(const QList<CGIdx> &cgidxs) const;
-    void assertSingleSegment(const QList<SegIdx> &segidxs) const;
-
-    template<class T>
-    static QList<T> intersection(const QList<T> &list0, const QList<T> &list1);
     
     static QSharedDataPointer<MoleculeInfoData> null();
     
@@ -383,157 +378,6 @@ private:
     /** Hash mapping CutGroup name to CutGroup indicies */
     QMultiHash<CGName,CGIdx> cg_by_name;
 };
-
-/** Return the intersection of the objects in 'list0' and 'list1'. This returns
-    a list that contains only those items that are in both lists. The order
-    of the list is the same as the input, namely if both list0 and list1 are
-    sorted, then the returned list will be sorted as well. */
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-QList<T> MoleculeInfoData::intersection(const QList<T> &list0, const QList<T> &list1)
-{
-    QList<T> intersection_list;
-
-    if (list0.count() <= list1.count())
-    {
-        QSet<T> set1 = list1.toSet();
-        
-        for (typename QList<T>::const_iterator it = list0.constBegin();
-             it != list0.constEnd();
-             ++it)
-        {
-            if (set1.contains(*it))
-                intersection_list.append(*it);
-        }
-    }
-    else
-    {
-        QSet<T> set0 = list0.toSet();
-        
-        for (typename QList<T>::const_iterator it = list1.constBegin();
-             it != list1.constEnd();
-             ++it)
-        {
-            if (set0.contains(*it))
-                intersection_list.append(*it);
-        }
-    }
-    
-    return intersection_list;
-}
-
-
-/** Map this ID to the indicies of matching atoms 
-    
-    (This is here, rather than in atomsin.hpp, to prevent
-     problems caused by circular header dependencies)
-
-    \throw ???::missing_ID
-    \throw SireError::invalid_index
-*/
-template<class GROUP>
-SIRE_OUTOFLINE_TEMPLATE
-QList<AtomIdx> AtomsIn<GROUP>::map(const MoleculeInfoData &molinfo) const
-{
-    //first get the list of the indicies of the matching groups
-    QList<typename GROUP::Index> idxs = groupid.map(molinfo);
-    
-    //now get a list of the indicies of all of the atoms in these groups
-    QList<AtomIdx> atomidxs;
-    
-    foreach (typename GROUP::Index idx, idxs)
-    {
-        atomidxs += molinfo.getAtomsIn(idx);
-    }
-    
-    //now map _i and _j to the indicies...
-    int nats = atomidxs.count();
-    
-    int sane_strt = strt.map(nats);
-    int sane_end = end.map(nats);
-    
-    if (sane_strt > sane_end)
-        qSwap(sane_strt, sane_end);
-    
-    //now extract only the desired atom indicies
-    if (sane_end - sane_strt == nats)
-    {
-        return atomidxs;
-    }
-    else
-    {
-        QList<AtomIdx> specified_atomidxs;
-    
-        for (int i=sane_strt; i<=sane_end; ++i)
-        {
-            specified_atomidxs.append( atomidxs[i] );
-        }
-    
-        return specified_atomidxs;
-    }
-}
-
-/** Map this ID to the indicies of matching residues
-    
-    (This is here, rather than in resin.hpp, to prevent
-     problems caused by circular header dependencies)
-
-    \throw ???::missing_ID
-    \throw SireError::invalid_index
-*/
-template<class GROUP>
-SIRE_OUTOFLINE_TEMPLATE
-QList<ResIdx> ResIn<GROUP>::map(const MoleculeInfoData &molinfo) const
-{
-    //first get the list of the indicies of the matching groups
-    QList<typename GROUP::Index> idxs = groupid.map(molinfo);
-    
-    //now get a list of the indicies of all of the residues in these groups
-    QList<ResIdx> residxs;
-    
-    foreach (typename GROUP::Index idx, idxs)
-    {
-        residxs += molinfo.getResiduesIn(idx);
-    }
-    
-    //now map _i and _j to the indicies...
-    int nres = residxs.count();
-    
-    int sane_strt = strt.map(nres);
-    int sane_end = end.map(nres);
-    
-    if (sane_strt > sane_end)
-        qSwap(sane_strt, sane_end);
-    
-    //now extract only the desired atom indicies
-    if (sane_end - sane_strt == nres)
-    {
-        return residxs;
-    }
-    else
-    {
-        QList<ResIdx> specified_residxs;
-    
-        for (int i=sane_strt; i<=sane_end; ++i)
-        {
-            specified_residxs.append( residxs[i] );
-        }
-    
-        return specified_residxs;
-    }
-}
-
-namespace detail
-{
-
-template<class T>
-QList<typename T::Index> getAll(const MoleculeInfoData &molinfo);
-
-template<class T>
-QList<typename T::Index> getAll(const MoleculeData &moldata,
-                                const AtomSelection &selected_atoms);
-
-} //end of namespace detail
 
 } //end of namespace SireMol 
 

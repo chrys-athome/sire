@@ -29,7 +29,7 @@
 #ifndef SIREMOL_SPECIFY_HPP
 #define SIREMOL_SPECIFY_HPP
 
-#include "moleculeinfodata.h"
+#include "molinfo.h"
 
 #include "SireID/index.h"
 
@@ -114,7 +114,7 @@ public:
     
     QString toString() const;
     
-    QList<typename ID::Index> map(const MoleculeInfoData &molinfo) const;
+    QList<typename ID::Index> map(const MolInfo &molinfo) const;
 
 private:
     typename ID::Identifier id;
@@ -203,7 +203,7 @@ QString Specify<ID>::toString() const
 /** Map this ID to the indicies of the matching parts of the molecule */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-QList<typename ID::Index> Specify<ID>::map(const MoleculeInfoData &molinfo) const
+QList<typename ID::Index> Specify<ID>::map(const MolInfo &molinfo) const
 {
     //first get all of the matches
     QList<typename ID::Index> idxs = id.map(molinfo);

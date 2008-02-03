@@ -32,6 +32,7 @@
 #include "SireID/index.h"
 
 #include "segid.h"
+#include "molinfo.h"
 
 SIRE_BEGIN_HEADER
 
@@ -131,11 +132,9 @@ public:
     
     using SireID::Index_T_<SegIdx>::map;
     
-    QList<SegIdx> map(const MoleculeInfoData&) const
+    QList<SegIdx> map(const MolInfo &molinfo) const
     {
-        QList<SegIdx> segidxs;
-        segidxs.append(*this);
-        return segidxs;
+        return molinfo.map(*this);
     }
 };
     

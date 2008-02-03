@@ -29,8 +29,10 @@
 #ifndef SIREMOL_GROUPATOMIDS_H
 #define SIREMOL_GROUPATOMIDS_H
 
-#include "moleculeinfodata.h"
-#include "atomid.h"
+#include <QSet>
+
+#include "molinfo.h"
+#include "atomidx.h"
 
 SIRE_BEGIN_HEADER
 
@@ -57,7 +59,7 @@ public:
     ~GroupAtomIDBase();
     
 protected:
-    void throwMissingAtom(const MoleculeInfoData &molinfo) const;
+    void throwMissingAtom(const MolInfo &molinfo) const;
 };
 
 /** This class represents an Atom ID that is comprised of both 
@@ -122,7 +124,7 @@ public:
     
     QString toString() const;
     
-    QList<AtomIdx> map(const MoleculeInfoData &molinfo) const;
+    QList<AtomIdx> map(const MolInfo &molinfo) const;
  
 private:
     typename GROUP::Identifier groupid;
@@ -169,7 +171,7 @@ QString GroupAtomID<GROUP,ATOM>::toString() const
     \throw SireError::invalid_index
 */
 template<class GROUP, class ATOM>
-QList<AtomIdx> GroupAtomID<GROUP,ATOM>::map(const MoleculeInfoData &molinfo) const
+QList<AtomIdx> GroupAtomID<GROUP,ATOM>::map(const MolInfo &molinfo) const
 {
     if (this->isNull())
         return molinfo.getAtoms();
@@ -179,8 +181,8 @@ QList<AtomIdx> GroupAtomID<GROUP,ATOM>::map(const MoleculeInfoData &molinfo) con
         return atomid.map(molinfo);
     
     QList<AtomIdx> atomidxs = 
-                MoleculeInfoData::intersection(atomid.map(molinfo),
-                                               molinfo.getAtomsIn(groupid) );
+                MolInfo::intersection(atomid.map(molinfo),
+                                      molinfo.getAtomsIn(groupid) );
                                              
     if (atomidxs.isEmpty())
         this->throwMissingAtom(molinfo);

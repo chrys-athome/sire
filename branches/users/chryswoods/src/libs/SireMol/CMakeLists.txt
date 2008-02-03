@@ -79,6 +79,7 @@ set ( SIREMOL_HEADERS
       molid.h
       molidentifier.h
       molidx.h
+      molinfo.h
       molname.h
       molnum.h
       molviewproperty.h

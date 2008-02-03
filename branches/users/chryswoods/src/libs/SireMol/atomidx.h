@@ -32,6 +32,8 @@
 #include "SireID/index.h"
 
 #include "atomid.h"
+#include "molinfo.h"
+#include "specify.hpp"
 
 SIRE_BEGIN_HEADER
 
@@ -129,11 +131,9 @@ public:
     
     using SireID::Index_T_<AtomIdx>::map;
     
-    QList<AtomIdx> map(const MoleculeInfoData&) const
+    QList<AtomIdx> map(const MolInfo &molinfo) const
     {
-        QList<AtomIdx> atomidxs;
-        atomidxs.append(*this);
-        return atomidxs;
+        return molinfo.map(*this);
     }
 };
     

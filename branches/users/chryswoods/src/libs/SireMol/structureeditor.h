@@ -29,7 +29,7 @@
 #ifndef SIREMOL_STRUCTUREEDITOR_H
 #define SIREMOL_STRUCTUREEDITOR_H
 
-#include "sireglobal.h"
+#include "molinfo.h"
 
 #include <boost/shared_ptr.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -279,6 +279,77 @@ private:
         copying as small incremental changes are made to the same
         molecule */
     boost::shared_ptr<detail::EditMolData> d;
+};
+
+/** This class is used to query a StructureEditor (to map
+    from an ID to the index)
+    
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT EditMolInfo : public StructureEditor, public MolInfo
+{
+public:
+    EditMolInfo();
+    EditMolInfo(const StructureEditor &editor);
+    
+    EditMolInfo(const EditMolInfo &other);
+    
+    ~EditMolInfo();
+    
+    EditMolInfo& operator=(const StructureEditor &editor);
+    EditMolInfo& operator=(const EditMolInfo &other);
+    
+    QList<AtomIdx> map(const AtomName &name) const;
+    QList<AtomIdx> map(AtomNum num) const;
+    QList<AtomIdx> map(AtomIdx idx) const;
+    QList<AtomIdx> map(const AtomID &atomid) const;
+    
+    QList<ResIdx> map(const ResName &name) const;
+    QList<ResIdx> map(ResNum num) const;
+    QList<ResIdx> map(ResIdx idx) const;
+    QList<ResIdx> map(const ResID &resid) const;
+    
+    QList<CGIdx> map(const CGName &name) const;
+    QList<CGIdx> map(CGIdx idx) const;
+    QList<CGIdx> map(const CGID &cgid) const;
+    
+    QList<ChainIdx> map(const ChainName &name) const;
+    QList<ChainIdx> map(ChainIdx idx) const;
+    QList<ChainIdx> map(const ChainID &chainid) const;
+    
+    QList<SegIdx> map(const SegName &name) const;
+    QList<SegIdx> map(SegIdx idx) const;
+    QList<SegIdx> map(const SegID &segid) const;
+    
+    QList<AtomIdx> getAtoms() const;
+    
+    AtomIdx getAtom(CGIdx cgidx, int i) const;
+    AtomIdx getAtom(ResIdx residx, int i) const;
+    AtomIdx getAtom(ChainIdx chainidx, int i) const;
+    AtomIdx getAtom(SegIdx segidx, int i) const;
+    
+    QList<AtomIdx> getAtomsIn(const ResID &resid) const;
+    QList<AtomIdx> getAtomsIn(const CGID &cgid) const;
+    QList<AtomIdx> getAtomsIn(const ChainID &chainid) const;
+    QList<AtomIdx> getAtomsIn(const SegID &segid) const;
+
+    QList<ResIdx> getResidues() const;
+    
+    ResIdx getResidue(ChainIdx chainidx, int i) const;
+
+    QList<ResIdx> getResiduesIn(const ChainID &chainid) const;
+    
+    QList<CGIdx> getCutGroups() const;
+    QList<ChainIdx> getChains() const;
+    QList<SegIdx> getSegments() const;
+    
+    AtomIdx atomIdx(const AtomID &atomid) const;
+    CGIdx cgIdx(const CGID &cgid) const;
+    ResIdx resIdx(const ResID &resid) const;
+    ChainIdx chainIdx(const ChainID &chainid) const;
+    SegIdx segIdx(const SegID &segid) const;
+    
+    void assertCompatibleWith(const AtomSelection &selected_atoms) const;
 };
 
 }

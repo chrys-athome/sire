@@ -31,12 +31,14 @@
 
 #include "SireID/index.h"
 
+#include "residx.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
 
-class MoleculeInfoData;
+class MolInfo;
 
 /** This helper class is used to provide the '.residues()' functionality
     of the group ID classes. This allows the class to a residue, or
@@ -101,7 +103,7 @@ public:
     
     QString toString() const;
     
-    QList<ResIdx> map(const MoleculeInfoData &molinfo) const;
+    QList<ResIdx> map(const MolInfo &molinfo) const;
 
 private:
     /** The ID of the group that contains the atoms */
@@ -198,6 +200,53 @@ SIRE_OUTOFLINE_TEMPLATE
 bool ResIn<GROUP>::operator==(const SireID::ID &other) const
 {
     return SireID::ID::compare< ResIn<GROUP> >(*this, other);
+}
+
+/** Map this ID to the indicies of matching residues
+    
+    \throw ???::missing_ID
+    \throw SireError::invalid_index
+*/
+template<class GROUP>
+SIRE_OUTOFLINE_TEMPLATE
+QList<ResIdx> ResIn<GROUP>::map(const MolInfo &molinfo) const
+{
+    //first get the list of the indicies of the matching groups
+    QList<typename GROUP::Index> idxs = groupid.map(molinfo);
+    
+    //now get a list of the indicies of all of the residues in these groups
+    QList<ResIdx> residxs;
+    
+    foreach (typename GROUP::Index idx, idxs)
+    {
+        residxs += molinfo.getResiduesIn(idx);
+    }
+    
+    //now map _i and _j to the indicies...
+    int nres = residxs.count();
+    
+    int sane_strt = strt.map(nres);
+    int sane_end = end.map(nres);
+    
+    if (sane_strt > sane_end)
+        qSwap(sane_strt, sane_end);
+    
+    //now extract only the desired atom indicies
+    if (sane_end - sane_strt == nres)
+    {
+        return residxs;
+    }
+    else
+    {
+        QList<ResIdx> specified_residxs;
+    
+        for (int i=sane_strt; i<=sane_end; ++i)
+        {
+            specified_residxs.append( residxs[i] );
+        }
+    
+        return specified_residxs;
+    }
 }
 
 }
