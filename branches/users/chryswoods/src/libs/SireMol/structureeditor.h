@@ -84,6 +84,8 @@ class MolNum;
 class MoleculeData;
 class MoleculeInfoData;
 
+class EditMolInfo;
+
 class MolStructureEditor;
 class SegStructureEditor;
 class ChainStructureEditor;
@@ -116,6 +118,7 @@ friend QDataStream& ::operator>>(QDataStream&, StructureEditor&);
 
 friend class MoleculeInfoData; //so can call query functions when converting
 friend class MoleculeData; //so can call query functions when converting
+friend class EditMolInfo; //so can see d pointer
 
 public:
     ~StructureEditor();

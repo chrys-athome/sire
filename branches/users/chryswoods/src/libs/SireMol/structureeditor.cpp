@@ -728,6 +728,458 @@ EditSegData& EditMolData::segment(quint32 uid)
 }
 
 /////////
+///////// Implementation of EditMolInfo
+/////////
+
+/** Null constructor */
+EditMolInfo::EditMolInfo() : StructureEditor(), MolInfo()
+{}
+
+/** Construct from the passed editor */
+EditMolInfo::EditMolInfo(const StructureEditor &editor)
+            : StructureEditor(editor), MolInfo()
+{}
+
+/** Copy constructor */
+EditMolInfo::EditMolInfo(const EditMolInfo &other)
+            : StructureEditor(other), MolInfo()
+{}
+
+/** Destructor */
+EditMolInfo::~EditMolInfo()
+{}
+
+/** Assign from the passed editor */
+EditMolInfo& EditMolInfo::operator=(const StructureEditor &editor)
+{
+    StructureEditor::operator=(editor);
+    return *this;
+}
+
+/** Copy assignment operator */
+EditMolInfo& EditMolInfo::operator=(const EditMolInfo &other)
+{
+    StructureEditor::operator=(other);
+    return *this;
+}
+
+/** Return the indicies of all of the atoms that have the name 'name'
+
+    \throw SireMol::missing_atom
+*/
+QList<AtomIdx> EditMolInfo::map(const AtomName &name) const
+{
+    int nats = d->atoms_by_index.count();
+    
+    QList<AtomIdx> atomidxs;
+    
+    for (AtomIdx i(0); i<nats; ++i)
+    {
+        if (d->atom(d->atoms_by_index.at(i)).name == name)
+            atomidxs.append(i);
+    }
+    
+    if (atomidxs.isEmpty())
+        throw SireMol::missing_atom( QObject::tr(
+            "There is no atom called \"%1\" in the molecule called \"%2\".")
+                .arg(name, d->molname), CODELOC );
+                
+    return atomidxs;
+}
+
+/** Return the indicies of all atoms that have the number 'num'
+
+    \throw SireMol::missing_atom
+*/
+QList<AtomIdx> EditMolInfo::map(AtomNum num) const
+{
+    int nats = d->atoms_by_index.count();
+ 
+    QList<AtomIdx> atomidxs;
+    
+    for (AtomIdx i(0); i<nats; ++i)
+    {
+        if (d->atom(d->atoms_by_index.at(i)).number == num)
+            atomidxs.append(i);
+    }
+    
+    if (atomidxs.isEmpty())
+        throw SireMol::missing_atom( QObject::tr(
+            "There is no atom with number %1 in the molecule called \"%2\".")
+                .arg(num).arg(d->molname), CODELOC );
+                
+    return atomidxs;
+}
+
+/** Simple function used to return just the index, if it is valid!
+
+    \throw SireError::invalid_index
+*/
+QList<AtomIdx> EditMolInfo::map(AtomIdx idx) const
+{
+    QList<AtomIdx> atomidxs;
+    atomidxs.append( AtomIdx(idx.map(d->atoms_by_index.count())) );
+    
+    return atomidxs;
+}
+
+/** Return the indicies of all of the atoms in this molecule
+    that match the ID 'atomid'
+    
+    \throw SireMol::missing_atom
+    \throw SireError::invalid_index
+*/
+QList<AtomIdx> EditMolInfo::map(const AtomID &atomid) const
+{
+    return atomid.map(*this);
+}
+
+/** Return the indicies of all of the residues in this molecule
+    that have the name 'resname'
+    
+    \throw SireMol::missing_residue
+*/
+QList<ResIdx> EditMolInfo::map(const ResName &name) const
+{
+    int nres = d->res_by_index.count();
+    
+    QList<ResIdx> residxs;
+    
+    for (ResIdx i(0); i<nres; ++i)
+    {
+        if (d->residue(d->res_by_index.at(i)).name == name)
+            residxs.append(i);
+    }
+    
+    if (residxs.isEmpty())
+        throw SireMol::missing_residue( QObject::tr(
+            "There are no residues called \"%1\" in the molecule called \"%2\".")
+                .arg(name, d->molname), CODELOC );
+                
+    return residxs;
+}
+
+/** Return the indicies of all of the residues that have number 'num'
+
+    \throw SireMol::missing_residue
+*/
+QList<ResIdx> EditMolInfo::map(ResNum num) const
+{
+    int nres = d->res_by_index.count();
+    QList<ResIdx> residxs;
+    
+    for (ResIdx i(0); i<nres; ++i)
+    {
+        if (d->residue(d->res_by_index.at(i)).number == num)
+            residxs.append(i);
+    }
+    
+    if (residxs.isEmpty())
+        throw SireMol::missing_residue( QObject::tr(
+            "There are no residues with number %1 in the molecule called \"%2\".")
+                .arg(num).arg(d->molname), CODELOC );
+                
+    return residxs;
+}
+
+/** Simple overload function
+
+    \throw SireError::invalid_index
+*/
+QList<ResIdx> EditMolInfo::map(ResIdx idx) const
+{
+    QList<ResIdx> residxs;
+    residxs.append( ResIdx(idx.map(d->res_by_index.count())) );
+    
+    return residxs;
+}
+
+/** Return the indicies of all of the residues that match the ID 'resid'
+
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+*/
+QList<ResIdx> EditMolInfo::map(const ResID &resid) const
+{
+    return resid.map(*this);
+}
+
+/** Return the indicies of all of the CutGroups in this molecule
+    that have the name 'name'
+    
+    \throw SireMol::missing_cutgroup
+*/
+QList<CGIdx> EditMolInfo::map(const CGName &name) const
+{
+    int ncg = d->cg_by_index.count();
+    
+    QList<CGIdx> cgidxs;
+    
+    for (CGIdx i(0); i<ncg; ++i)
+    {
+        if (d->cutGroup(d->cg_by_index.at(i)).name == name)
+            cgidxs.append(i);
+    }
+    
+    if (cgidxs.isEmpty())
+        throw SireMol::missing_cutgroup( QObject::tr(
+            "There are no CutGroups called \"%1\" in the molecule called \"%2\".")
+                .arg(name, d->molname), CODELOC );
+                
+    return cgidxs;
+}
+
+/** Simple overload function
+
+    \throw SireError::invalid_index
+*/
+QList<CGIdx> EditMolInfo::map(CGIdx idx) const
+{
+    QList<CGIdx> cgidxs;
+    cgidxs.append( CGIdx(idx.map(d->cg_by_index.count())) );
+    
+    return cgidxs;
+}
+
+/** Return the indicies of all of the CutGroups that match the ID 'cgid'
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+QList<CGIdx> EditMolInfo::map(const CGID &cgid) const
+{
+    return cgid.map(*this);
+}
+
+/** Return the indicies of all of the Chains in this molecule
+    that have the name 'name'
+    
+    \throw SireMol::missing_chain
+*/
+QList<ChainIdx> EditMolInfo::map(const ChainName &name) const
+{
+    int ncg = d->chains_by_index.count();
+    
+    QList<ChainIdx> chainidxs;
+    
+    for (ChainIdx i(0); i<ncg; ++i)
+    {
+        if (d->chain(d->chains_by_index.at(i)).name == name)
+            chainidxs.append(i);
+    }
+    
+    if (chainidxs.isEmpty())
+        throw SireMol::missing_chain( QObject::tr(
+            "There are no chains called \"%1\" in the molecule called \"%2\".")
+                .arg(name, d->molname), CODELOC );
+                
+    return chainidxs;
+}
+
+/** Simple overload function
+
+    \throw SireError::invalid_index
+*/
+QList<ChainIdx> EditMolInfo::map(ChainIdx idx) const
+{
+    QList<ChainIdx> chainidxs;
+    chainidxs.append( ChainIdx(idx.map(d->chains_by_index.count())) );
+    
+    return chainidxs;
+}
+
+/** Return the indicies of all of the Chains that match the ID 'chainid'
+
+    \throw SireMol::missing_chain
+    \throw SireError::invalid_index
+*/
+QList<ChainIdx> EditMolInfo::map(const ChainID &chainid) const
+{
+    return chainid.map(*this);
+}
+
+/** Return the indicies of all of the Segments in this molecule
+    that have the name 'name'
+    
+    \throw SireMol::missing_segment
+*/
+QList<SegIdx> EditMolInfo::map(const SegName &name) const
+{
+    int ncg = d->seg_by_index.count();
+    
+    QList<SegIdx> segidxs;
+    
+    for (SegIdx i(0); i<ncg; ++i)
+    {
+        if (d->segment(d->seg_by_index.at(i)).name == name)
+            segidxs.append(i);
+    }
+    
+    if (segidxs.isEmpty())
+        throw SireMol::missing_segment( QObject::tr(
+            "There are no segments called \"%1\" in the molecule called \"%2\".")
+                .arg(name, d->molname), CODELOC );
+                
+    return segidxs;
+}
+
+/** Simple overload function
+
+    \throw SireError::invalid_index
+*/
+QList<SegIdx> EditMolInfo::map(SegIdx idx) const
+{
+    QList<SegIdx> segidxs;
+    segidxs.append( SegIdx(idx.map(d->seg_by_index.count())) );
+    
+    return segidxs;
+}
+
+/** Return the indicies of all of the Segments that match the ID 'segid'
+
+    \throw SireMol::missing_segment
+    \throw SireError::invalid_index
+*/
+QList<SegIdx> EditMolInfo::map(const SegID &segid) const
+{
+    return segid.map(*this);
+}
+
+/** Return the indicies of all of the atoms in this molecule */
+QList<AtomIdx> EditMolInfo::getAtoms() const
+{
+    int nats = d->atoms_by_index.count();
+    QList<AtomIdx> atomidxs;
+    
+    for (AtomIdx i(0); i<nats; ++i)
+    {
+        atomidxs.append(i);
+    }
+    
+    return atomidxs;
+}
+
+/** Return the index of the ith atom in the CutGroup at index 'cgidx'
+
+    \throw SireError::invalid_index
+*/
+AtomIdx EditMolInfo::getAtom(CGIdx cgidx, int i) const
+{
+    const EditCGData &cgroup = d->cutGroup( getUID(cgidx) );
+    
+    quint32 atomuid = cgroup.atoms.at( Index(i).map(cgroup.atoms.count()) );
+    
+    return StructureEditor::atomIdx(atomuid);
+}
+
+/** Return the index of the ith atom in the residue at index 'residx'
+
+    \throw SireError::invalid_index
+*/
+AtomIdx EditMolInfo::getAtom(ResIdx residx, int i) const
+{
+    const EditResData &residue = d->residue( getUID(residx) );
+    
+    quint32 atomuid = residue.atoms.at( Index(i).map(residue.atoms.count()) );
+    
+    return StructureEditor::atomIdx(atomuid);
+}
+
+/** Return the index of the ith atom in the chain at index 'chainidx'
+
+    \throw SireError::invalid_index
+*/
+AtomIdx EditMolInfo::getAtom(ChainIdx chainidx, int i) const
+{
+    return StructureEditor::getAtom(chainidx,i);
+}
+
+AtomIdx EditMolInfo::getAtom(SegIdx segidx, int i) const
+{
+    return StructureEditor::getAtom(segidx,i);
+}
+
+QList<AtomIdx> EditMolInfo::getAtomsIn(const ResID &resid) const
+{
+    return StructureEditor::getAtomsIn(resid);
+}
+
+QList<AtomIdx> EditMolInfo::getAtomsIn(const CGID &cgid) const
+{
+    return StructureEditor::getAtomsIn(cgid);
+}
+
+QList<AtomIdx> EditMolInfo::getAtomsIn(const ChainID &chainid) const
+{
+    return StructureEditor::getAtomsIn(chainid);
+}
+
+QList<AtomIdx> EditMolInfo::getAtomsIn(const SegID &segid) const
+{
+    return StructureEditor::getAtomsIn(segid);
+}
+
+QList<ResIdx> EditMolInfo::getResidues() const
+{
+    return StructureEditor::getResidues();
+}
+
+ResIdx EditMolInfo::getResidue(ChainIdx chainidx, int i) const
+{
+    return StructureEditor::getResidue(chainidx,i);
+}
+
+QList<ResIdx> EditMolInfo::getResiduesIn(const ChainID &chainid) const
+{
+    return StructureEditor::getResiduesIn(chainid);
+}
+
+QList<CGIdx> EditMolInfo::getCutGroups() const
+{
+    return StructureEditor::getCutGroups();
+}
+
+QList<ChainIdx> EditMolInfo::getChains() const
+{
+    return StructureEditor::getChains();
+}
+
+QList<SegIdx> EditMolInfo::getSegments() const
+{
+    return StructureEditor::getSegments();
+}
+
+AtomIdx EditMolInfo::atomIdx(const AtomID &atomid) const
+{
+    return StructureEditor::atomIdx(atomid);
+}
+
+CGIdx EditMolInfo::cgIdx(const CGID &cgid) const
+{
+    return StructureEditor::cgIdx(cgid);
+}
+
+ResIdx EditMolInfo::resIdx(const ResID &resid) const
+{
+    return StructureEditor::resIdx(resid);
+}
+
+ChainIdx EditMolInfo::chainIdx(const ChainID &chainid) const
+{
+    return StructureEditor::chainIdx(chainid);
+}
+
+SegIdx EditMolInfo::segIdx(const SegID &segid) const
+{
+    return StructureEditor::segIdx(segid);
+}
+
+void EditMolInfo::assertCompatibleWith(const AtomSelection &selected_atoms) const
+{
+    throw SireError::incomplete_code(CODELOC);
+}
+
+/////////
 ///////// Implementation of StructureEditor
 /////////
 
