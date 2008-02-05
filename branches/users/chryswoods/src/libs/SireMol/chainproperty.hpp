@@ -29,8 +29,13 @@
 #ifndef SIREMOL_CHAINPROPERTY_HPP
 #define SIREMOL_CHAINPROPERTY_HPP
 
+#include <QVector>
+#include <QVariant>
+
 #include "moleculeinfodata.h"
 #include "molviewproperty.h"
+
+#include "SireError/errors.h"
 
 SIRE_BEGIN_HEADER
 
@@ -60,6 +65,14 @@ public:
     
     virtual ~ChainProp()
     {}
+
+    virtual bool canConvert(const QVariant &value) const=0;
+    
+    virtual void assignFrom(const QVector<QVariant> &values)=0;
+    
+    virtual QVector<QVariant> toVariant() const=0;
+    
+    virtual void assertCanConvert(const QVariant &value) const=0;
 };
 
 /** This is a property that can hold one value for each
@@ -86,6 +99,7 @@ public:
     ChainProperty(const MoleculeInfoData &molinfo);
     
     ChainProperty(const QVector<T> &values);
+    ChainProperty(const QVector<QVariant> &values);
     
     ChainProperty(const ChainProperty<T> &other);
     
@@ -119,6 +133,14 @@ public:
     int count() const;
     
     int nChains() const;
+
+    void assignFrom(const QVector<QVariant> &values);
+    
+    QVector<QVariant> toVariant() const;
+    
+    bool canConvert(const QVariant &value) const;
+    
+    void assertCanConvert(const QVariant &value) const;
 
 private:
     /** The actual chain property values */
@@ -154,6 +176,53 @@ ChainProperty<T>::ChainProperty(const QVector<T> &values)
 {
     props = values;
     props.squeeze();
+}
+
+/** Assert that the variant can be converted to a value that can
+    be held in this list of properties
+    
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void ChainProperty<T>::assertCanConvert(const QVariant &value) const
+{
+    if (not value.canConvert<T>())
+    {
+        throw SireError::invalid_cast( QObject::tr(
+            "Cannot convert an object of type %1 to an object "
+            "of type %2, as required by a %3.")
+                .arg(value.typeName()).arg(T::typeName())
+                .arg(this->what()), CODELOC );
+    }
+}
+
+/** Construct from an array of variants
+
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+ChainProperty<T>::ChainProperty(const QVector<QVariant> &values)
+                 : SireBase::ConcreteProperty<ChainProperty<T>,ChainProp>()
+{
+    if (values.isEmpty())
+        return;
+        
+    int nvals = values.count();
+    const QVariant *values_array = values.constData();
+    
+    props = QVector<T>(nvals);
+    props.squeeze();
+    T *props_array = props.data();
+    
+    for (int i=0; i<nvals; ++i)
+    {
+        const QVariant &value = values_array[i];
+        ChainProperty<T>::assertCanConvert(value);
+        
+        props_array[i] = value.value<T>();
+    }
 }
 
 /** Copy constructor */
@@ -205,6 +274,50 @@ SIRE_OUTOFLINE_TEMPLATE
 const T& ChainProperty<T>::operator[](const ChainIdx &chainidx) const
 {
     return props.constData()[chainidx.map(props.count())];
+}
+
+/** Return whether or not it is possible to convert the variant
+    'value' so that it can be part of this property */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool ChainProperty<T>::canConvert(const QVariant &value) const
+{
+    return value.canConvert<T>();
+}
+
+/** Assign the values of this property from the array of variants
+    in 'values'
+    
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void ChainProperty<T>::assignFrom(const QVector<QVariant> &values)
+{
+    this->operator=( ChainProperty<T>(values) );
+}
+
+/** Convert the properties into an array of QVariants */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QVector<QVariant> ChainProperty<T>::toVariant() const
+{
+    if (props.isEmpty())
+        return QVector<QVariant>();
+        
+    int nvals = props.count();
+    const T *props_array = props.constData();
+    
+    QVector<QVariant> converted_vals(nvals);
+    converted_vals.squeeze();
+    QVariant *converted_vals_array = converted_vals.data();
+
+    for (int i=0; i<nvals; ++i)
+    {
+        converted_vals_array[i].setValue<T>(props_array[i]);
+    }
+    
+    return converted_vals;
 }
 
 /** Return the property for the chain at index 'chainidx' 

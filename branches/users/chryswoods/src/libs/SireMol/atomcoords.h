@@ -75,6 +75,9 @@ public:
     AtomProperty(const CoordGroup &cgroup);
     AtomProperty(const QVector<CoordGroup> &cgroups);
 
+    AtomProperty(const QVector<QVariant> &values);
+    AtomProperty(const QVector< QVector<QVariant> > &values);
+
     AtomProperty(const AtomProperty<Vector> &other);
 
     ~AtomProperty();
@@ -96,6 +99,13 @@ public:
 
     bool operator==(const AtomProperty<Vector> &other) const;
     bool operator!=(const AtomProperty<Vector> &other) const;
+
+    bool canConvert(const QVariant &value) const;
+
+    void assignFrom(const QVector<QVariant> &values);
+    void assignFrom(const QVector< QVector<QVariant> > &values);
+
+    QVector< QVector<QVariant> > toVariant() const;
 
     const CoordGroup& operator[](CGIdx cgidx) const;
     CoordGroup& operator[](CGIdx cgidx);
@@ -127,6 +137,8 @@ public:
 
     int nAtoms() const;
     int nAtoms(CGIdx cgidx) const;
+
+    void assertCanConvert(const QVariant &value) const;
 
 private:
     /** The actual atomic coordinates, arranged into CoordGroups */

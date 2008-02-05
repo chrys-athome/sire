@@ -29,6 +29,9 @@
 #ifndef SIREMOL_ATOMPROPERTY_HPP
 #define SIREMOL_ATOMPROPERTY_HPP
 
+#include <QVector>
+#include <QVariant>
+
 #include "molviewproperty.h"
 #include "moleculeinfodata.h"
 #include "atomselection.h"
@@ -64,6 +67,15 @@ public:
     
     virtual ~AtomProp()
     {}
+    
+    virtual bool canConvert(const QVariant &value) const=0;
+    
+    virtual void assignFrom(const QVector<QVariant> &values)=0;
+    virtual void assignFrom(const QVector< QVector<QVariant> > &values)=0;
+    
+    virtual QVector< QVector<QVariant> > toVariant() const=0;
+    
+    virtual void assertCanConvert(const QVariant &value) const=0;
 };
 
 /** This is a property that can hold one value for each
@@ -94,6 +106,8 @@ public:
     
     AtomProperty(const QVector<T> &values);
     AtomProperty(const QVector< QVector<T> > &values);
+    AtomProperty(const QVector< QVector<QVariant> > &values);
+    AtomProperty(const QVector<QVariant> &values);
     
     AtomProperty(const AtomProperty<T> &other);
     
@@ -110,9 +124,14 @@ public:
     {
         return new AtomProperty<T>(*this);
     }
-    
+ 
     bool operator==(const AtomProperty<T> &other) const;
     bool operator!=(const AtomProperty<T> &other) const;
+
+    QVector< QVector<QVariant> > toVariant() const;
+    
+    void assignFrom(const QVector<QVariant> &values);
+    void assignFrom(const QVector< QVector<QVariant> > &values);
 
     const QVector<T>& operator[](CGIdx cgidx) const;
     const QVector<T>& at(CGIdx cgidx) const;
@@ -144,10 +163,43 @@ public:
 
     AtomProperty<T> matchToSelection(const AtomSelection &selection) const;
 
+    bool canConvert(const QVariant &value) const;
+
+    void assertCanConvert(const QVariant &value) const;
+
 private:
+
     /** The actual atomic property values */
     QVector< QVector<T> > props;
 };
+
+/** Return whether or not the variant 'value' can be converted to be
+    held as an AtomProperty<T> */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool AtomProperty<T>::canConvert(const QVariant &value) const
+{
+    return value.canConvert<T>();
+}
+
+/** Assert that the passed variant value can be converted to be
+    held within this property
+    
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void AtomProperty<T>::assertCanConvert(const QVariant &value) const
+{
+    if (not value.canConvert<T>())
+    {
+        throw SireError::invalid_cast( QObject::tr(
+            "It is not possible to convert the value of type %1 to "
+            "type %2, as is required for storing in the AtomProperty %3.")
+                .arg(value.typeName()).arg(T::typeName())
+                .arg(this->what()), CODELOC );
+    }
+}
 
 /** Null constructor */
 template<class T>
@@ -197,6 +249,84 @@ AtomProperty<T>::AtomProperty(const QVector<T> &values)
         props[0] = values;
         props[0].squeeze();
         props.squeeze();
+    }
+}
+
+/** Construct the Atom property from the array of QVariants.
+    
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+AtomProperty<T>::AtomProperty(const QVector<QVariant> &values)
+                : SireBase::ConcreteProperty<AtomProperty<T>,AtomProp>()
+{
+    if (values.isEmpty())
+        return;
+    
+    int nvals = values.count();
+    const QVariant *values_array = values.constData();
+    
+    QVector<T> converted_vals(nvals);
+    converted_vals.squeeze();
+    T *converted_vals_array = converted_vals.data();
+    
+    for (int i=0; i<nvals; ++i)
+    {
+        const QVariant &value = values_array[i];
+        AtomProperty<T>::assertCanConvert(value);
+
+        converted_vals_array[i] = value.value<T>();
+    }
+    
+    props = QVector< QVector<T> >(1, converted_vals);
+    props.squeeze();
+}
+
+/** Construct the Atom property from the array of array of QVariants.
+     Each array contains the properties for a single CutGroup
+    
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+AtomProperty<T>::AtomProperty(const QVector< QVector<QVariant> > &values)
+                : SireBase::ConcreteProperty<AtomProperty<T>,AtomProp>()
+{
+    if (values.isEmpty())
+        return;
+        
+    int ngroups = values.count();
+    const QVector<QVariant> *values_array = values.constData();
+            
+    props = QVector< QVector<T> >(ngroups);
+    props.squeeze();
+    QVector<T> *props_array = props.data();
+    
+    for (int i=0; i<ngroups; ++i)
+    {
+        const QVector<QVariant> &group_values = values_array[i];
+        int nvals = group_values.count();
+        
+        if (nvals == 0)
+            props_array[i] = QVector<T>();
+        else
+        {
+            QVector<T> converted_vals(nvals);
+            converted_vals.squeeze();
+            T *converted_vals_array = converted_vals.data();
+            const QVariant *group_values_array = group_values.constData();
+
+            for (int j=0; j<nvals; ++j)
+            {
+                const QVariant &value = group_values_array[j];
+                AtomProperty<T>::assertCanConvert(value);
+                
+                converted_vals_array[j] = value.value<T>();
+            }
+            
+            props_array[i] = converted_vals;
+        }
     }
 }
 
@@ -272,6 +402,72 @@ SIRE_OUTOFLINE_TEMPLATE
 const QVector<T>& AtomProperty<T>::operator[](CGIdx cgidx) const
 {
     return props.constData()[ cgidx.map(props.count()) ];
+}
+
+/** Convert the contained properties into an array of arrays of QVariants.
+    There is one array per CutGroup */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QVector< QVector<QVariant> > AtomProperty<T>::toVariant() const
+{
+    if (props.isEmpty())
+        return QVector< QVector<QVariant> >();
+        
+    int ngroups = props.count();
+    const QVector<T> *props_array = props.constData();
+    
+    QVector< QVector<QVariant> > variant_vals(ngroups);
+    variant_vals.squeeze();
+    QVector<QVariant> *variant_vals_array = variant_vals.data();
+    
+    for (int i=0; i<ngroups; ++i)
+    {
+        const QVector<T> &group_props = props_array[i];
+        
+        if (group_props.isEmpty())
+            variant_vals_array[i] = QVector<QVariant>();
+        else
+        {
+            int nvals = group_props.count();
+            const T *group_props_array = group_props.constData();
+            
+            QVector<QVariant> converted_vals(nvals);
+            converted_vals.squeeze();
+            QVariant *converted_vals_array = converted_vals.data();
+            
+            for (int j=0; j<nvals; ++j)
+            {
+                converted_vals_array[j].setValue<T>( group_props_array[j] );
+            }
+            
+            variant_vals_array[i] = converted_vals;
+        }
+    }
+    
+    return variant_vals;
+}
+
+/** Assign the values of the properties from the array of QVariants
+
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void AtomProperty<T>::assignFrom(const QVector<QVariant> &values) 
+{
+    this->operator=( AtomProperty<T>(values) );
+}
+
+/** Assign the values of the properties from the array of array
+    of QVariants
+    
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void AtomProperty<T>::assignFrom(const QVector< QVector<QVariant> > &values)
+{
+    this->operator=( AtomProperty<T>(values) );
 }
 
 /** Return the array of properties for the atoms in the CutGroup

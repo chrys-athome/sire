@@ -130,6 +130,16 @@ public:
     ~PhysUnit()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId< PhysUnit<M,L,T,C,t,Q,A> >() );
+    }
+    
+    const char* what() const
+    {
+        return PhysUnit<M,L,T,C,t,Q,A>::typeName();
+    }
+
     PhysUnit<M,L,T,C,t,Q,A>
     operator=(const PhysUnit<M,L,T,C,t,Q,A> &other)
     {
@@ -355,7 +365,6 @@ typedef PhysUnit<1,2,-2,-1,0,0,0> Potential;
 
 #else // else with 'ifndef SKIP_BROKEN_GCCXML_PARTS'
 
-class Angle;
 class Dimensionless;
 class Mass;
 class MolarMass;
@@ -388,6 +397,60 @@ class Potential;
 } // end of namespace Dimension
 
 }
+
+Q_DECLARE_METATYPE( SireUnits::Dimension::Dimensionless );
+Q_DECLARE_METATYPE( SireUnits::Dimension::Mass );
+Q_DECLARE_METATYPE( SireUnits::Dimension::MolarMass );
+Q_DECLARE_METATYPE( SireUnits::Dimension::Length );
+Q_DECLARE_METATYPE( SireUnits::Dimension::Time );
+Q_DECLARE_METATYPE( SireUnits::Dimension::Charge );
+Q_DECLARE_METATYPE( SireUnits::Dimension::MolarCharge );
+Q_DECLARE_METATYPE( SireUnits::Dimension::Temperature );
+Q_DECLARE_METATYPE( SireUnits::Dimension::Quantity );
+Q_DECLARE_METATYPE( SireUnits::Dimension::Angle );
+Q_DECLARE_METATYPE( SireUnits::Dimension::Area );
+Q_DECLARE_METATYPE( SireUnits::Dimension::Volume );
+Q_DECLARE_METATYPE( SireUnits::Dimension::MolarVolume );
+Q_DECLARE_METATYPE( SireUnits::Dimension::Velocity );
+Q_DECLARE_METATYPE( SireUnits::Dimension::Acceleration );
+Q_DECLARE_METATYPE( SireUnits::Dimension::Energy );
+Q_DECLARE_METATYPE( SireUnits::Dimension::MolarEnergy );
+Q_DECLARE_METATYPE( SireUnits::Dimension::Power );
+Q_DECLARE_METATYPE( SireUnits::Dimension::MolarPower );
+Q_DECLARE_METATYPE( SireUnits::Dimension::Density );
+Q_DECLARE_METATYPE( SireUnits::Dimension::MolarDensity );
+Q_DECLARE_METATYPE( SireUnits::Dimension::Force );
+Q_DECLARE_METATYPE( SireUnits::Dimension::Pressure );
+Q_DECLARE_METATYPE( SireUnits::Dimension::Capacitance );
+Q_DECLARE_METATYPE( SireUnits::Dimension::Current );
+Q_DECLARE_METATYPE( SireUnits::Dimension::Potential );
+
+Q_DECLARE_TYPEINFO( SireUnits::Dimension::Dimensionless, Q_MOVABLE_TYPE );
+Q_DECLARE_TYPEINFO( SireUnits::Dimension::Mass, Q_MOVABLE_TYPE );
+Q_DECLARE_TYPEINFO( SireUnits::Dimension::MolarMass, Q_MOVABLE_TYPE );
+Q_DECLARE_TYPEINFO( SireUnits::Dimension::Length, Q_MOVABLE_TYPE );
+Q_DECLARE_TYPEINFO( SireUnits::Dimension::Time, Q_MOVABLE_TYPE );
+Q_DECLARE_TYPEINFO( SireUnits::Dimension::Charge, Q_MOVABLE_TYPE );
+Q_DECLARE_TYPEINFO( SireUnits::Dimension::MolarCharge, Q_MOVABLE_TYPE );
+Q_DECLARE_TYPEINFO( SireUnits::Dimension::Temperature, Q_MOVABLE_TYPE );
+Q_DECLARE_TYPEINFO( SireUnits::Dimension::Quantity, Q_MOVABLE_TYPE );
+Q_DECLARE_TYPEINFO( SireUnits::Dimension::Angle, Q_MOVABLE_TYPE );
+Q_DECLARE_TYPEINFO( SireUnits::Dimension::Area, Q_MOVABLE_TYPE );
+Q_DECLARE_TYPEINFO( SireUnits::Dimension::Volume, Q_MOVABLE_TYPE );
+Q_DECLARE_TYPEINFO( SireUnits::Dimension::MolarVolume, Q_MOVABLE_TYPE );
+Q_DECLARE_TYPEINFO( SireUnits::Dimension::Velocity, Q_MOVABLE_TYPE );
+Q_DECLARE_TYPEINFO( SireUnits::Dimension::Acceleration, Q_MOVABLE_TYPE );
+Q_DECLARE_TYPEINFO( SireUnits::Dimension::Energy, Q_MOVABLE_TYPE );
+Q_DECLARE_TYPEINFO( SireUnits::Dimension::MolarEnergy, Q_MOVABLE_TYPE );
+Q_DECLARE_TYPEINFO( SireUnits::Dimension::Power, Q_MOVABLE_TYPE );
+Q_DECLARE_TYPEINFO( SireUnits::Dimension::MolarPower, Q_MOVABLE_TYPE );
+Q_DECLARE_TYPEINFO( SireUnits::Dimension::Density, Q_MOVABLE_TYPE );
+Q_DECLARE_TYPEINFO( SireUnits::Dimension::MolarDensity, Q_MOVABLE_TYPE );
+Q_DECLARE_TYPEINFO( SireUnits::Dimension::Force, Q_MOVABLE_TYPE );
+Q_DECLARE_TYPEINFO( SireUnits::Dimension::Pressure, Q_MOVABLE_TYPE );
+Q_DECLARE_TYPEINFO( SireUnits::Dimension::Capacitance, Q_MOVABLE_TYPE );
+Q_DECLARE_TYPEINFO( SireUnits::Dimension::Current, Q_MOVABLE_TYPE );
+Q_DECLARE_TYPEINFO( SireUnits::Dimension::Potential, Q_MOVABLE_TYPE );
 
 SIRE_END_HEADER
 

@@ -70,6 +70,16 @@ public:
     
     ~Element();
     
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<Element>() );
+    }
+    
+    const char* what() const
+    {
+        return Element::typeName();
+    }
+    
     bool operator==(const Element &other) const;
     bool operator!=(const Element &other) const;
     
@@ -142,6 +152,7 @@ inline uint qHash(const SireMol::Element &element)
 }
 
 Q_DECLARE_METATYPE(SireMol::Element);
+Q_DECLARE_TYPEINFO(SireMol::Element, Q_MOVABLE_TYPE);
 
 SIRE_END_HEADER
 

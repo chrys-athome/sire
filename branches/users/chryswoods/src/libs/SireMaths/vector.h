@@ -119,6 +119,16 @@ public:
     
     ~Vector();
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<Vector>() );
+    }
+
+    const char* what() const
+    {
+        return Vector::typeName();
+    }
+
     double x() const;
     double y() const;
     double z() const;
