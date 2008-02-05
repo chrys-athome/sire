@@ -249,6 +249,44 @@ QStringList Properties::propertyKeys() const
     return d->properties.keys();
 }
 
+/** Return an iterator pointing to the first property in this set */
+Properties::const_iterator Properties::begin() const
+{
+    return d->properties.begin();
+}
+
+/** Return an iterator pointing to the first property in this set */
+Properties::const_iterator Properties::constBegin() const
+{
+    return d->properties.constBegin();
+}
+
+/** Return an iterator pointing to the property with key 'key', or
+    Properties::end() if there is no such property */
+Properties::const_iterator Properties::find(const QString &key) const
+{
+    return d->properties.find(key);
+}
+
+/** Return an iterator pointing to the property with key 'key', or
+    Properties::end() if there is no such property */
+Properties::const_iterator Properties::constFind(const QString &key) const
+{
+    return d->properties.constFind(key);
+}
+
+/** Return an iterator pointing one beyond the last property in this set */
+Properties::const_iterator Properties::end() const
+{
+    return d->properties.end();
+}
+
+/** Return an iterator pointing one beyond the last property in this set */
+Properties::const_iterator Properties::constEnd() const
+{
+    return d->properties.end();
+}
+
 /** Assert that this set contains a property with key 'key'
 
     \throw SireBase::missing_property
@@ -412,7 +450,7 @@ const Property& Properties::property(const PropertyName &key,
         QHash<QString,Properties>::const_iterator it = d->props_metadata.constFind(key);
 
         if (it != d->props_metadata.constEnd())
-            return *it;
+            return it.value();
         else
             return default_value;
     }

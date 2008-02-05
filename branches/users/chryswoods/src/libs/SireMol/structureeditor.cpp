@@ -64,9 +64,17 @@
 #include "molname.h"
 #include "molnum.h"
 
+#include "atomproperty.hpp"
+#include "cgproperty.hpp"
+#include "resproperty.hpp"
+#include "chainproperty.hpp"
+#include "segproperty.hpp"
+
 #include "SireBase/properties.h"
 
 #include "tostring.h"
+
+#include <QDebug>
 
 #include "SireMol/errors.h"
 
@@ -107,6 +115,9 @@ public:
     quint32 seg_parent;
     
     QHash<QString,QVariant> properties;
+
+    QHash<QString,QVariant> molecule_metadata;
+    QHash< QString,QHash<QString,QVariant> > property_metadata;
 };
 
 /** This class holds the editable data of a CutGroup */
@@ -126,6 +137,9 @@ public:
     QList<quint32> atoms;
     
     QHash<QString,QVariant> properties;
+
+    QHash<QString,QVariant> molecule_metadata;
+    QHash< QString,QHash<QString,QVariant> > property_metadata;
 };
 
 /** This class holds the editable data of a Residue */
@@ -148,6 +162,9 @@ public:
     QList<quint32> atoms;
     
     QHash<QString,QVariant> properties;
+
+    QHash<QString,QVariant> molecule_metadata;
+    QHash< QString,QHash<QString,QVariant> > property_metadata;
 };
 
 /** This class holds the editable data of a Chain */
@@ -167,6 +184,9 @@ public:
     QList<quint32> residues;
     
     QHash<QString,QVariant> properties;
+
+    QHash<QString,QVariant> molecule_metadata;
+    QHash< QString,QHash<QString,QVariant> > property_metadata;
 };
 
 /** This class holds the editable data of a Segment */
@@ -186,6 +206,9 @@ public:
     QList<quint32> atoms;
     
     QHash<QString,QVariant> properties;
+
+    QHash<QString,QVariant> molecule_metadata;
+    QHash< QString,QHash<QString,QVariant> > property_metadata;
 };
 
 /** This private class is used to hold the explicitly shared
@@ -242,6 +265,36 @@ public:
     Properties properties;
 
     quint32 last_uid;
+
+private:
+    void extractProperties(const Properties &properties);
+
+    void extractProperty(const QString &key, const AtomProp &atom_property);
+    void extractProperty(const QString &key, const ResProp &res_property);
+    void extractProperty(const QString &key, const CGProp &cg_property);
+    void extractProperty(const QString &key, const ChainProp &chain_property);
+    void extractProperty(const QString &key, const SegProp &seg_property);
+    void extractProperty(const QString &key, const AtomSelection &selected_atoms);
+
+    void extractMetadata(const QString &key, const AtomProp &atom_property);
+    void extractMetadata(const QString &key, const ResProp &res_property);
+    void extractMetadata(const QString &key, const CGProp &cg_property);
+    void extractMetadata(const QString &key, const ChainProp &chain_property);
+    void extractMetadata(const QString &key, const SegProp &seg_property);
+    void extractMetadata(const QString &key, const AtomSelection &selected_atoms);
+
+    void extractMetadata(const QString &key, const QString &metakey,
+                         const AtomProp &atom_property);
+    void extractMetadata(const QString &key, const QString &metakey,
+                         const ResProp &res_property);
+    void extractMetadata(const QString &key, const QString &metakey,
+                         const CGProp &cg_property);
+    void extractMetadata(const QString &key, const QString &metakey,
+                         const ChainProp &chain_property);
+    void extractMetadata(const QString &key, const QString &metakey,
+                         const SegProp &seg_property);
+    void extractMetadata(const QString &key, const QString &metakey,
+                         const AtomSelection &selected_atoms);
 };
 
 } // end of namespace detail
@@ -257,7 +310,8 @@ QDataStream& operator<<(QDataStream &ds, const EditAtomData &editatom)
 {
     ds << editatom.name << editatom.number
        << editatom.cg_parent << editatom.res_parent
-       << editatom.seg_parent << editatom.properties;
+       << editatom.seg_parent << editatom.properties
+       << editatom.molecule_metadata << editatom.property_metadata;
        
     return ds;
 }
@@ -266,7 +320,8 @@ QDataStream& operator>>(QDataStream &ds, EditAtomData &editatom)
 {
     ds >> editatom.name >> editatom.number
        >> editatom.cg_parent >> editatom.res_parent
-       >> editatom.seg_parent >> editatom.properties;
+       >> editatom.seg_parent >> editatom.properties
+       >> editatom.molecule_metadata >> editatom.property_metadata;
        
     return ds;
 }
@@ -284,7 +339,9 @@ EditAtomData::EditAtomData(const MoleculeInfoData &molinfo, AtomIdx i)
 EditAtomData::EditAtomData(const EditAtomData &other)
              : name(other.name), number(other.number),
                cg_parent(other.cg_parent), res_parent(other.res_parent),
-               seg_parent(other.seg_parent), properties(other.properties)
+               seg_parent(other.seg_parent), properties(other.properties),
+               molecule_metadata(other.molecule_metadata),
+               property_metadata(other.property_metadata)
 {}
     
 EditAtomData::~EditAtomData()
@@ -296,13 +353,17 @@ EditAtomData::~EditAtomData()
 
 QDataStream& operator<<(QDataStream &ds, const EditCGData &editcg)
 {
-    ds << editcg.name << editcg.atoms << editcg.properties;
+    ds << editcg.name << editcg.atoms << editcg.properties
+       << editcg.molecule_metadata << editcg.property_metadata;
+       
     return ds;
 }
 
 QDataStream& operator>>(QDataStream &ds, EditCGData &editcg)
 {
-    ds >> editcg.name >> editcg.atoms >> editcg.properties;
+    ds >> editcg.name >> editcg.atoms >> editcg.properties
+       >> editcg.molecule_metadata >> editcg.property_metadata;
+       
     return ds;
 }
 
@@ -321,7 +382,9 @@ EditCGData::EditCGData(const MoleculeInfoData &molinfo, CGIdx i,
 }
 
 EditCGData::EditCGData(const EditCGData &other)
-           : name(other.name), atoms(other.atoms), properties(other.properties)
+           : name(other.name), atoms(other.atoms), properties(other.properties),
+             molecule_metadata(other.molecule_metadata),
+             property_metadata(other.property_metadata)
 {}
     
 EditCGData::~EditCGData()
@@ -334,7 +397,8 @@ EditCGData::~EditCGData()
 QDataStream& operator<<(QDataStream &ds, const EditResData &editres)
 {
     ds << editres.name << editres.number << editres.chain_parent
-       << editres.atoms << editres.properties;
+       << editres.atoms << editres.properties
+       << editres.molecule_metadata << editres.property_metadata;
        
     return ds;
 }
@@ -342,7 +406,8 @@ QDataStream& operator<<(QDataStream &ds, const EditResData &editres)
 QDataStream& operator>>(QDataStream &ds, EditResData &editres)
 {
     ds >> editres.name >> editres.number >> editres.chain_parent
-       >> editres.atoms >> editres.properties;
+       >> editres.atoms >> editres.properties
+       >> editres.molecule_metadata >> editres.property_metadata;
        
     return ds;
 }
@@ -366,7 +431,9 @@ EditResData::EditResData(const MoleculeInfoData &molinfo, ResIdx i,
 EditResData::EditResData(const EditResData &other)
             : name(other.name), number(other.number), 
               chain_parent(other.chain_parent), atoms(other.atoms),
-              properties(other.properties)
+              properties(other.properties),
+              molecule_metadata(other.molecule_metadata),
+              property_metadata(other.property_metadata)
 {}
     
 EditResData::~EditResData()
@@ -378,14 +445,16 @@ EditResData::~EditResData()
 
 QDataStream& operator<<(QDataStream &ds, const EditChainData &editchain)
 {
-    ds << editchain.name << editchain.residues << editchain.properties;
+    ds << editchain.name << editchain.residues << editchain.properties
+       << editchain.molecule_metadata << editchain.property_metadata;
     
     return ds;
 }
 
 QDataStream& operator>>(QDataStream &ds, EditChainData &editchain)
 {
-    ds >> editchain.name >> editchain.residues >> editchain.properties;
+    ds >> editchain.name >> editchain.residues >> editchain.properties
+       >> editchain.molecule_metadata >> editchain.property_metadata;
     
     return ds;
 }
@@ -406,7 +475,9 @@ EditChainData::EditChainData(const MoleculeInfoData &molinfo, ChainIdx i,
 
 EditChainData::EditChainData(const EditChainData &other)
               : name(other.name), residues(other.residues),
-                properties(other.properties)
+                properties(other.properties),
+                molecule_metadata(other.molecule_metadata),
+                property_metadata(other.property_metadata)
 {}
     
 EditChainData::~EditChainData()
@@ -418,14 +489,16 @@ EditChainData::~EditChainData()
 
 QDataStream& operator<<(QDataStream &ds, const EditSegData &editseg)
 {
-    ds << editseg.name << editseg.atoms << editseg.properties;
+    ds << editseg.name << editseg.atoms << editseg.properties
+       << editseg.molecule_metadata << editseg.property_metadata;
     
     return ds;
 }
 
 QDataStream& operator>>(QDataStream &ds, EditSegData &editseg)
 {
-    ds >> editseg.name >> editseg.atoms >> editseg.properties;
+    ds >> editseg.name >> editseg.atoms >> editseg.properties
+       >> editseg.molecule_metadata >> editseg.property_metadata;
     
     return ds;
 }
@@ -446,7 +519,9 @@ EditSegData::EditSegData(const MoleculeInfoData &molinfo, SegIdx i,
 
 EditSegData::EditSegData(const EditSegData &other)
             : name(other.name), atoms(other.atoms),
-              properties(other.properties)
+              properties(other.properties),
+              molecule_metadata(other.molecule_metadata),
+              property_metadata(other.property_metadata)
 {}
     
 EditSegData::~EditSegData()
@@ -490,6 +565,564 @@ QDataStream& operator>>(QDataStream &ds, EditMolData &editmol)
 EditMolData::EditMolData() : molname( QString::null ), 
                              molnum( MolNum::null() ), last_uid(0)
 {}
+
+/** Copy the properties for each atom to the individual EditAtomData objects */
+void EditMolData::extractProperty(const QString &key, 
+                                  const AtomProp &atom_property)
+{
+    //convert the properties for each atom into an array of array
+    //of QVariants. These are arranged in CutGroups, in CGAtomIdx order...
+    QVector< QVector<QVariant> > values = atom_property.toVariant();
+    
+    int ngroups = values.count();
+    BOOST_ASSERT( ngroups == cg_by_index.count() );
+    
+    const QVector<QVariant> *values_array = values.constData();
+    
+    for (int i=0; i<ngroups; ++i)
+    {
+        const QVector<QVariant> &group_values = values_array[i];
+    
+        //get the CutGroup at index i
+        const EditCGData &cgroup = this->cutGroup(cg_by_index.at(i));
+        
+        //now loop over the atoms...
+        int nats = group_values.count();
+        BOOST_ASSERT( nats == cgroup.atoms.count() );
+        const QVariant *group_values_array = group_values.constData();
+        
+        for (int j=0; j<nats; ++j)
+        {
+            EditAtomData &atom = this->atom(cgroup.atoms.at(j));
+            
+            atom.properties.insert(key, group_values_array[j]);
+        }
+    }
+}
+
+/** Copy the properties for each residue to the individual EditResData objects */
+void EditMolData::extractProperty(const QString &key, 
+                                  const ResProp &res_property)
+{
+    //convert each property to a QVariant, in ResIdx order
+    QVector<QVariant> values = res_property.toVariant();
+    
+    int nres = values.count();
+    BOOST_ASSERT( nres == res_by_index.count() );
+    
+    const QVariant *values_array = values.constData();
+
+    for (int i=0; i<nres; ++i)
+    {
+        EditResData &residue = this->residue(res_by_index.at(i));
+        residue.properties.insert(key, values_array[i]);
+    }
+}
+
+/** Copy the properties for each atom to the individual EditCGData objects */
+void EditMolData::extractProperty(const QString &key, 
+                                  const CGProp &cg_property)
+{
+    //convert each property to a QVariant, in CGIdx order
+    QVector<QVariant> values = cg_property.toVariant();
+    
+    int ncg = values.count();
+    BOOST_ASSERT( ncg == cg_by_index.count() );
+    
+    const QVariant *values_array = values.constData();
+
+    for (int i=0; i<ncg; ++i)
+    {
+        EditCGData &cgroup = this->cutGroup(cg_by_index.at(i));
+        cgroup.properties.insert(key, values_array[i]);
+    }
+}
+
+/** Copy the properties for each atom to the individual EditChainData objects */
+void EditMolData::extractProperty(const QString &key, 
+                                  const ChainProp &chain_property)
+{
+    //convert each property to a QVariant, in ChainIdx order
+    QVector<QVariant> values = chain_property.toVariant();
+    
+    int nchains = values.count();
+    BOOST_ASSERT( nchains == chains_by_index.count() );
+    
+    const QVariant *values_array = values.constData();
+
+    for (int i=0; i<nchains; ++i)
+    {
+        EditChainData &chain = this->chain(chains_by_index.at(i));
+        chain.properties.insert(key, values_array[i]);
+    }
+}
+
+/** Copy the properties for each atom to the individual EditSegData objects */
+void EditMolData::extractProperty(const QString &key, 
+                                  const SegProp &seg_property)
+{
+    //convert each property to a QVariant, in ResIdx order
+    QVector<QVariant> values = seg_property.toVariant();
+    
+    int nseg = values.count();
+    BOOST_ASSERT( nseg == seg_by_index.count() );
+    
+    const QVariant *values_array = values.constData();
+
+    for (int i=0; i<nseg; ++i)
+    {
+        EditSegData &segment = this->segment(seg_by_index.at(i));
+        segment.properties.insert(key, values_array[i]);
+    }
+}
+
+/** Copy the properties for each atom to the individual EditAtomData objects */
+void EditMolData::extractProperty(const QString &key, 
+                                  const AtomSelection &selected_atoms)
+{
+    if (selected_atoms.selectedAll())
+    {
+        //select every atom
+        for (QHash<quint32,EditAtomData>::iterator it = atoms.begin();
+             it != atoms.end();
+             ++it)
+        {
+            it->properties.insert(key, QVariant(true));
+        }
+    }
+    else if (selected_atoms.selectedNone())
+    {
+        //deselect every atom
+        for (QHash<quint32,EditAtomData>::iterator it = atoms.begin();
+             it != atoms.end();
+             ++it)
+        {
+            it->properties.insert(key, QVariant(false));
+        }
+    }
+    else
+    {
+        //we need to go through each atom in turn...
+        int nats = atoms_by_index.count();
+        
+        for (AtomIdx i(0); i<nats; ++i)
+        {
+            EditAtomData &atom = this->atom( atoms_by_index.at(i) );
+            
+            atom.properties.insert(key, selected_atoms.selected(i));
+        }
+    }
+}
+
+/** Copy the metadata for each atom to the individual EditAtomData objects */
+void EditMolData::extractMetadata(const QString &key, 
+                                  const AtomProp &atom_property)
+{
+    //convert the properties for each atom into an array of array
+    //of QVariants. These are arranged in CutGroups, in CGAtomIdx order...
+    QVector< QVector<QVariant> > values = atom_property.toVariant();
+    
+    int ngroups = values.count();
+    BOOST_ASSERT( ngroups == cg_by_index.count() );
+    
+    const QVector<QVariant> *values_array = values.constData();
+    
+    for (int i=0; i<ngroups; ++i)
+    {
+        const QVector<QVariant> &group_values = values_array[i];
+    
+        //get the CutGroup at index i
+        const EditCGData &cgroup = this->cutGroup(cg_by_index.at(i));
+        
+        //now loop over the atoms...
+        int nats = group_values.count();
+        BOOST_ASSERT( nats == cgroup.atoms.count() );
+        const QVariant *group_values_array = group_values.constData();
+        
+        for (int j=0; j<nats; ++j)
+        {
+            EditAtomData &atom = this->atom(cgroup.atoms.at(j));
+            
+            atom.molecule_metadata.insert(key, group_values_array[j]);
+        }
+    }
+}
+
+/** Copy the metadata for each residue to the individual EditResData objects */
+void EditMolData::extractMetadata(const QString &key, 
+                                  const ResProp &res_property)
+{
+    //convert each property to a QVariant, in ResIdx order
+    QVector<QVariant> values = res_property.toVariant();
+    
+    int nres = values.count();
+    BOOST_ASSERT( nres == res_by_index.count() );
+    
+    const QVariant *values_array = values.constData();
+
+    for (int i=0; i<nres; ++i)
+    {
+        EditResData &residue = this->residue(res_by_index.at(i));
+        residue.molecule_metadata.insert(key, values_array[i]);
+    }
+}
+
+/** Copy the metadata for each atom to the individual EditCGData objects */
+void EditMolData::extractMetadata(const QString &key, 
+                                  const CGProp &cg_property)
+{
+    //convert each property to a QVariant, in CGIdx order
+    QVector<QVariant> values = cg_property.toVariant();
+    
+    int ncg = values.count();
+    BOOST_ASSERT( ncg == cg_by_index.count() );
+    
+    const QVariant *values_array = values.constData();
+
+    for (int i=0; i<ncg; ++i)
+    {
+        EditCGData &cgroup = this->cutGroup(cg_by_index.at(i));
+        cgroup.molecule_metadata.insert(key, values_array[i]);
+    }
+}
+
+/** Copy the metadata for each atom to the individual EditChainData objects */
+void EditMolData::extractMetadata(const QString &key, 
+                                  const ChainProp &chain_property)
+{
+    //convert each property to a QVariant, in ChainIdx order
+    QVector<QVariant> values = chain_property.toVariant();
+    
+    int nchains = values.count();
+    BOOST_ASSERT( nchains == chains_by_index.count() );
+    
+    const QVariant *values_array = values.constData();
+
+    for (int i=0; i<nchains; ++i)
+    {
+        EditChainData &chain = this->chain(chains_by_index.at(i));
+        chain.molecule_metadata.insert(key, values_array[i]);
+    }
+}
+
+/** Copy the metadata for each atom to the individual EditSegData objects */
+void EditMolData::extractMetadata(const QString &key, 
+                                  const SegProp &seg_property)
+{
+    //convert each property to a QVariant, in ResIdx order
+    QVector<QVariant> values = seg_property.toVariant();
+    
+    int nseg = values.count();
+    BOOST_ASSERT( nseg == seg_by_index.count() );
+    
+    const QVariant *values_array = values.constData();
+
+    for (int i=0; i<nseg; ++i)
+    {
+        EditSegData &segment = this->segment(seg_by_index.at(i));
+        segment.molecule_metadata.insert(key, values_array[i]);
+    }
+}
+
+/** Copy the properties for each atom to the individual EditAtomData objects */
+void EditMolData::extractMetadata(const QString &key, 
+                                  const AtomSelection &selected_atoms)
+{
+    if (selected_atoms.selectedAll())
+    {
+        //select every atom
+        for (QHash<quint32,EditAtomData>::iterator it = atoms.begin();
+             it != atoms.end();
+             ++it)
+        {
+            it->molecule_metadata.insert(key, QVariant(true));
+        }
+    }
+    else if (selected_atoms.selectedNone())
+    {
+        //deselect every atom
+        for (QHash<quint32,EditAtomData>::iterator it = atoms.begin();
+             it != atoms.end();
+             ++it)
+        {
+            it->molecule_metadata.insert(key, QVariant(false));
+        }
+    }
+    else
+    {
+        //we need to go through each atom in turn...
+        int nats = atoms_by_index.count();
+        
+        for (AtomIdx i(0); i<nats; ++i)
+        {
+            EditAtomData &atom = this->atom( atoms_by_index.at(i) );
+            
+            atom.molecule_metadata.insert(key, selected_atoms.selected(i));
+        }
+    }
+}
+
+/** Copy the metadata for each atom to the individual EditAtomData objects */
+void EditMolData::extractMetadata(const QString &key, const QString &metakey,
+                                  const AtomProp &atom_property)
+{
+    //convert the properties for each atom into an array of array
+    //of QVariants. These are arranged in CutGroups, in CGAtomIdx order...
+    QVector< QVector<QVariant> > values = atom_property.toVariant();
+    
+    int ngroups = values.count();
+    BOOST_ASSERT( ngroups == cg_by_index.count() );
+    
+    const QVector<QVariant> *values_array = values.constData();
+    
+    for (int i=0; i<ngroups; ++i)
+    {
+        const QVector<QVariant> &group_values = values_array[i];
+    
+        //get the CutGroup at index i
+        const EditCGData &cgroup = this->cutGroup(cg_by_index.at(i));
+        
+        //now loop over the atoms...
+        int nats = group_values.count();
+        BOOST_ASSERT( nats == cgroup.atoms.count() );
+        const QVariant *group_values_array = group_values.constData();
+        
+        for (int j=0; j<nats; ++j)
+        {
+            EditAtomData &atom = this->atom(cgroup.atoms.at(j));
+            
+            atom.property_metadata[key].insert(metakey, group_values_array[j]);
+        }
+    }
+}
+
+/** Copy the metadata for each residue to the individual EditResData objects */
+void EditMolData::extractMetadata(const QString &key, const QString &metakey,
+                                  const ResProp &res_property)
+{
+    //convert each property to a QVariant, in ResIdx order
+    QVector<QVariant> values = res_property.toVariant();
+    
+    int nres = values.count();
+    BOOST_ASSERT( nres == res_by_index.count() );
+    
+    const QVariant *values_array = values.constData();
+
+    for (int i=0; i<nres; ++i)
+    {
+        EditResData &residue = this->residue(res_by_index.at(i));
+        residue.property_metadata[key].insert(metakey, values_array[i]);
+    }
+}
+
+/** Copy the metadata for each atom to the individual EditCGData objects */
+void EditMolData::extractMetadata(const QString &key, const QString &metakey,
+                                  const CGProp &cg_property)
+{
+    //convert each property to a QVariant, in CGIdx order
+    QVector<QVariant> values = cg_property.toVariant();
+    
+    int ncg = values.count();
+    BOOST_ASSERT( ncg == cg_by_index.count() );
+    
+    const QVariant *values_array = values.constData();
+
+    for (int i=0; i<ncg; ++i)
+    {
+        EditCGData &cgroup = this->cutGroup(cg_by_index.at(i));
+        cgroup.property_metadata[key].insert(metakey, values_array[i]);
+    }
+}
+
+/** Copy the metadata for each atom to the individual EditChainData objects */
+void EditMolData::extractMetadata(const QString &key, const QString &metakey,
+                                  const ChainProp &chain_property)
+{
+    //convert each property to a QVariant, in ChainIdx order
+    QVector<QVariant> values = chain_property.toVariant();
+    
+    int nchains = values.count();
+    BOOST_ASSERT( nchains == chains_by_index.count() );
+    
+    const QVariant *values_array = values.constData();
+
+    for (int i=0; i<nchains; ++i)
+    {
+        EditChainData &chain = this->chain(chains_by_index.at(i));
+        chain.property_metadata[key].insert(metakey, values_array[i]);
+    }
+}
+
+/** Copy the metadata for each atom to the individual EditSegData objects */
+void EditMolData::extractMetadata(const QString &key, const QString &metakey,
+                                  const SegProp &seg_property)
+{
+    //convert each property to a QVariant, in ResIdx order
+    QVector<QVariant> values = seg_property.toVariant();
+    
+    int nseg = values.count();
+    BOOST_ASSERT( nseg == seg_by_index.count() );
+    
+    const QVariant *values_array = values.constData();
+
+    for (int i=0; i<nseg; ++i)
+    {
+        EditSegData &segment = this->segment(seg_by_index.at(i));
+        segment.property_metadata[key].insert(metakey, values_array[i]);
+    }
+}
+
+/** Copy the properties for each atom to the individual EditAtomData objects */
+void EditMolData::extractMetadata(const QString &key, const QString &metakey,
+                                  const AtomSelection &selected_atoms)
+{
+    if (selected_atoms.selectedAll())
+    {
+        //select every atom
+        for (QHash<quint32,EditAtomData>::iterator it = atoms.begin();
+             it != atoms.end();
+             ++it)
+        {
+            it->property_metadata[key].insert(metakey, QVariant(true));
+        }
+    }
+    else if (selected_atoms.selectedNone())
+    {
+        //deselect every atom
+        for (QHash<quint32,EditAtomData>::iterator it = atoms.begin();
+             it != atoms.end();
+             ++it)
+        {
+            it->property_metadata[key].insert(metakey, QVariant(false));
+        }
+    }
+    else
+    {
+        //we need to go through each atom in turn...
+        int nats = atoms_by_index.count();
+        
+        for (AtomIdx i(0); i<nats; ++i)
+        {
+            EditAtomData &atom = this->atom( atoms_by_index.at(i) );
+            
+            atom.property_metadata[key].insert(metakey, 
+                                               selected_atoms.selected(i));
+        }
+    }
+}
+
+/** Extract all of the properties and attach them to the correct
+    parts of the molecule */
+void EditMolData::extractProperties(const Properties &props)
+{
+    //first copy the properties to our value
+    properties = props;
+
+    for (Properties::const_iterator it = properties.constBegin();
+         it != properties.constEnd();
+         ++it)
+    {
+        if (it.value()->isA<AtomProp>())
+            this->extractProperty(it.key(), it.value()->asA<AtomProp>());
+            
+        else if (it.value()->isA<CGProp>())
+            this->extractProperty(it.key(), it.value()->asA<CGProp>());
+            
+        else if (it.value()->isA<ResProp>())
+            this->extractProperty(it.key(), it.value()->asA<ResProp>());
+            
+        else if (it.value()->isA<ChainProp>())
+            this->extractProperty(it.key(), it.value()->asA<ChainProp>());
+            
+        else if (it.value()->isA<SegProp>())
+            this->extractProperty(it.key(), it.value()->asA<SegProp>());
+            
+        else if (it.value()->isA<AtomSelection>())
+            this->extractProperty(it.key(), it.value()->asA<AtomSelection>());
+            
+        else if (it.value()->isA<MolViewProperty>())
+        {
+            qDebug() << QObject::tr("Trying to edit an interesting "
+                         "MolViewProperty with key %1, and of type %2.")
+                                .arg(it.key(), it.value()->what());
+        }
+        
+        //now do the same for all of the metadata attached to this
+        //property
+        const Properties &metadata = props.allMetadata(it.key());
+        
+        for (Properties::const_iterator it2 = metadata.constBegin();
+             it2 != metadata.constEnd();
+             ++it2)
+        {
+            if (it2.value()->isA<AtomProp>())
+                this->extractMetadata(it.key(), it2.key(),
+                                      it2.value()->asA<AtomProp>());
+            
+            else if (it2.value()->isA<CGProp>())
+                this->extractMetadata(it.key(), it2.key(),
+                                      it2.value()->asA<CGProp>());
+            
+            else if (it2.value()->isA<ResProp>())
+                this->extractMetadata(it.key(), it2.key(),
+                                      it2.value()->asA<ResProp>());
+            
+            else if (it2.value()->isA<ChainProp>())
+                this->extractMetadata(it.key(), it2.key(),
+                                      it2.value()->asA<ChainProp>());
+            
+            else if (it2.value()->isA<SegProp>())
+                this->extractMetadata(it.key(), it2.key(),
+                                      it2.value()->asA<SegProp>());
+            
+            else if (it2.value()->isA<AtomSelection>())
+                this->extractMetadata(it.key(), it2.key(),
+                                      it2.value()->asA<AtomSelection>());
+            
+            else if (it2.value()->isA<MolViewProperty>())
+            {
+                qDebug() << QObject::tr("Trying to edit an interesting "
+                            "MolViewProperty with key %1, metakey %2, and of type %3.")
+                                    .arg(it.key(), it2.key(), it2.value()->what());
+            }
+        }
+    }
+    
+    //now we've done the properties and their metadata, it is now time 
+    //to extract the molecule's metadata as well (as this may also 
+    //be attached to various molecular subgroups)
+    const Properties &metadata = properties.allMetadata();
+    
+    for (Properties::const_iterator it = metadata.constBegin();
+         it != metadata.constEnd();
+         ++it)
+    {
+        if (it.value()->isA<AtomProp>())
+            this->extractMetadata(it.key(), it.value()->asA<AtomProp>());
+            
+        else if (it.value()->isA<CGProp>())
+            this->extractMetadata(it.key(), it.value()->asA<CGProp>());
+            
+        else if (it.value()->isA<ResProp>())
+            this->extractMetadata(it.key(), it.value()->asA<ResProp>());
+            
+        else if (it.value()->isA<ChainProp>())
+            this->extractMetadata(it.key(), it.value()->asA<ChainProp>());
+            
+        else if (it.value()->isA<SegProp>())
+            this->extractMetadata(it.key(), it.value()->asA<SegProp>());
+            
+        else if (it.value()->isA<AtomSelection>())
+            this->extractMetadata(it.key(), it.value()->asA<AtomSelection>());
+            
+        else if (it.value()->isA<MolViewProperty>())
+        {
+            qDebug() << QObject::tr("Trying to edit an interesting "
+                         "MolViewProperty with metakey %1, and of type %2.")
+                                .arg(it.key(), it.value()->what());
+        }
+    }
+}
 
 /** Construct from a MoleculeData */
 EditMolData::EditMolData(const MoleculeData &moldata)
@@ -572,11 +1205,8 @@ EditMolData::EditMolData(const MoleculeData &moldata)
         }
     }
     
-    //now extract all of the properties...
-    properties = moldata.properties();
-    
     //need to convert them...
-    qFatal("Need to convert properties!!!");
+    this->extractProperties(moldata.properties());
 }
 
 /** Copy constructor */

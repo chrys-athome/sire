@@ -77,6 +77,9 @@ friend XMLStream& ::operator>>(XMLStream&, Properties&);
 friend class detail::PropertiesData; // so can call private constructor
 
 public:
+    typedef QHash<QString,Property>::const_iterator const_iterator;
+    typedef QHash<QString,Property>::const_iterator iterator;
+
     Properties();
 
     Properties(const Properties &other);
@@ -101,6 +104,15 @@ public:
     
     QStringList metadataKeys() const;
     QStringList metadataKeys(const PropertyName &key) const;
+
+    const_iterator begin() const;
+    const_iterator constBegin() const;
+    
+    const_iterator find(const QString &key) const;
+    const_iterator constFind(const QString &key) const;
+    
+    const_iterator end() const;
+    const_iterator constEnd() const;
 
     const Property& property(const PropertyName &key) const;
     const Property& property(const PropertyName &key,
