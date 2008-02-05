@@ -137,6 +137,17 @@ public:
     
         return *as_t;
     }
+    
+    template<class T>
+    T& asA()
+    {
+        T* as_t = dynamic_cast<T*>(this);
+        
+        if (not as_t)
+            throwInvalidCast(T::typeName());
+            
+        return *as_t;
+    }
 
 protected:
     void throwInvalidCast(const PropertyBase &other) const;

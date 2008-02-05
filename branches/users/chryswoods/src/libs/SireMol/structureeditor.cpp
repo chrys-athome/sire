@@ -247,6 +247,31 @@ public:
     
     quint32 getNewUID();
     
+    QVector< QVector<QVariant> > atomProperty(const QString &key) const;
+    QVector< QVector<QVariant> > atomMetadata(const QString &key) const;
+    QVector< QVector<QVariant> > atomMetadata(const QString &key,
+                                              const QString &metakey) const;
+                                              
+    QVector<QVariant> cgProperty(const QString &key) const;
+    QVector<QVariant> cgMetadata(const QString &metakey) const;
+    QVector<QVariant> cgMetadata(const QString &key, 
+                                 const QString &metakey) const;
+                                              
+    QVector<QVariant> resProperty(const QString &key) const;
+    QVector<QVariant> resMetadata(const QString &metakey) const;
+    QVector<QVariant> resMetadata(const QString &key, 
+                                  const QString &metakey) const;
+                                              
+    QVector<QVariant> chainProperty(const QString &key) const;
+    QVector<QVariant> chainMetadata(const QString &metakey) const;
+    QVector<QVariant> chainMetadata(const QString &key, 
+                                    const QString &metakey) const;
+                                              
+    QVector<QVariant> segProperty(const QString &key) const;
+    QVector<QVariant> segMetadata(const QString &metakey) const;
+    QVector<QVariant> segMetadata(const QString &key, 
+                                  const QString &metakey) const;
+    
     MolName molname;
     MolNum molnum;
     
@@ -1406,6 +1431,39 @@ QList<ResIdx> EditMolData::resIdxsFromUIDs(const QList<quint32> &uids) const
                 
     return residxs;
 }
+
+/** Return the values of the atom property at key 'key' 
+
+    \throw SireBase::missing_property
+*/
+QVector< QVector<QVariant> > EditMolData::atomProperty(const QString &key) const
+{
+    
+}
+
+QVector< QVector<QVariant> > EditMolData::atomMetadata(const QString &key) const;
+QVector< QVector<QVariant> > EditMolData::atomMetadata(const QString &key,
+                                                       const QString &metakey) const;
+                                          
+QVector<QVariant> EditMolData::cgProperty(const QString &key) const;
+QVector<QVariant> EditMolData::cgMetadata(const QString &metakey) const;
+QVector<QVariant> EditMolData::cgMetadata(const QString &key, 
+                                          const QString &metakey) const;
+                                          
+QVector<QVariant> EditMolData::resProperty(const QString &key) const;
+QVector<QVariant> EditMolData::resMetadata(const QString &metakey) const;
+QVector<QVariant> EditMolData::resMetadata(const QString &key, 
+                                           const QString &metakey) const;
+                                          
+QVector<QVariant> EditMolData::chainProperty(const QString &key) const;
+QVector<QVariant> EditMolData::chainMetadata(const QString &metakey) const;
+QVector<QVariant> EditMolData::chainMetadata(const QString &key, 
+                                             const QString &metakey) const;
+                                          
+QVector<QVariant> EditMolData::segProperty(const QString &key) const;
+QVector<QVariant> EditMolData::segMetadata(const QString &metakey) const;
+QVector<QVariant> EditMolData::segMetadata(const QString &key, 
+                                           const QString &metakey) const;
 
 /////////
 ///////// Implementation of EditMolInfo
@@ -3413,4 +3471,164 @@ SegStructureEditor StructureEditor::addSegment()
     d->seg_by_index.append(uid);
     
     return SegStructureEditor( *this, SegIdx(nSegmentsInMolecule()-1) );
+}
+
+/** Return the properties of this molecule - this is a slow function
+    as it has to convert all of the properties from an editable to
+    a fixed format. Also note that changing the molecule in any
+    way will mean that the properties will have to be recalculated */
+Properties StructureEditor::properties() const
+{
+    //go through each property in turn and extract it based
+    //on its current type
+    Properties updated_properties = d->properties;
+    
+    for (Properties::const_iterator it = d->properties.constBegin();
+         it != d->properties.constEnd();
+         ++it)
+    {
+        Property updated_property = it.value();
+        const QString &key = it.key();
+    
+        if (updated_property->isA<AtomProp>())
+        {
+            updated_property.edit()
+                .asA<AtomProp>().assignFrom( d->atomProperty(key) );
+        }
+        else if (updated_property->isA<CGProp>())
+        {
+            updated_property.edit()
+                .asA<CGProp>().assignFrom( d->cgProperty(key) );
+        }
+        else if (updated_property->isA<ResProp>())
+        {
+            updated_property.edit()
+                .asA<ResProp>().assignFrom( d->resProperty(key) );
+        }
+        else if (updated_property->isA<ChainProp>())
+        {
+            updated_property.edit()
+                .asA<ChainProp>().assignFrom( d->chainProperty(key) );
+        }
+        else if (updated_property->isA<SegProp>())
+        {
+            updated_property.edit()
+                .asA<SegProp>().assignFrom( d->segProperty(key) );
+        }
+        else if (updated_property->isA<AtomSelection>())
+        {
+            updated_property.edit()
+                .asA<AtomSelection>().assignFrom( d->atomProperty(key) );
+        }
+        else if (updated_property->isA<MolViewProperty>())
+        {
+            qDebug() << QObject::tr("Trying to update an interesting property "
+                         "at key %1, with type %2.")
+                            .arg(key, updated_property->what());
+        }
+        
+        updated_properties.setProperty(key, updated_property, false);
+        
+        //now update all of the metadata for this particular property
+        const Properties &metadata = d->properties.allMetadata(it.key());
+        
+        for (Properties::const_iterator it2 = metadata.constBegin();
+             it2 != metadata.constEnd();
+             ++it2)
+        {
+            updated_property = it2.value();
+            const QString &metakey = it2.key();
+            
+            if (updated_property->isA<AtomProp>())
+            {
+                updated_property.edit()
+                    .asA<AtomProp>().assignFrom( d->atomMetadata(metakey) );
+            }
+            else if (updated_property->isA<CGProp>())
+            {
+                updated_property.edit()
+                    .asA<CGProp>().assignFrom( d->cgMetadata(metakey) );
+            }
+            else if (updated_property->isA<ResProp>())
+            {
+                updated_property.edit()
+                    .asA<ResProp>().assignFrom( d->resMetadata(metakey) );
+            }
+            else if (updated_property->isA<ChainProp>())
+            {
+                updated_property.edit()
+                    .asA<ChainProp>().assignFrom( d->chainMetadata(metakey) );
+            }
+            else if (updated_property->isA<SegProp>())
+            {
+                updated_property.edit()
+                    .asA<SegProp>().assignFrom( d->segMetadata(metakey) );
+            }
+            else if (updated_property->isA<AtomSelection>())
+            {
+                updated_property.edit()
+                    .asA<AtomSelection>().assignFrom( d->atomMetadata(metakey) );
+            }
+            else if (updated_property->isA<MolViewProperty>())
+            {
+                qDebug() << QObject::tr("Trying to update an interesting property "
+                            "at key %1, metakey %2, with type %3.")
+                                .arg(key, metakey, updated_property->what());
+            }
+            
+            updated_properties.setMetadata(key, metakey, updated_property);
+        }
+    }
+    
+    //the last step is converting all of the molecule metadata
+    const Properties &metadata = d->properties.allMetadata();
+    
+    for (Properties::const_iterator it = metadata.constBegin();
+         it != metadata.constEnd();
+         ++it)
+    {
+        Property updated_property = it.value();
+        const QString &metakey = it.key();
+    
+        if (updated_property->isA<AtomProp>())
+        {
+            updated_property.edit()
+                .asA<AtomProp>().assignFrom( d->atomMetadata(metakey) );
+        }
+        else if (updated_property->isA<CGProp>())
+        {
+            updated_property.edit()
+                .asA<CGProp>().assignFrom( d->cgMetadata(metakey) );
+        }
+        else if (updated_property->isA<ResProp>())
+        {
+            updated_property.edit()
+                .asA<ResProp>().assignFrom( d->resMetadata(metakey) );
+        }
+        else if (updated_property->isA<ChainProp>())
+        {
+            updated_property.edit()
+                .asA<ChainProp>().assignFrom( d->chainMetadata(metakey) );
+        }
+        else if (updated_property->isA<SegProp>())
+        {
+            updated_property.edit()
+                .asA<SegProp>().assignFrom( d->segMetadata(metakey) );
+        }
+        else if (updated_property->isA<AtomSelection>())
+        {
+            updated_property.edit()
+                .asA<AtomSelection>().assignFrom( d->atomMetadata(metakey) );
+        }
+        else if (updated_property->isA<MolViewProperty>())
+        {
+            qDebug() << QObject::tr("Trying to update an interesting property "
+                         "at metakey %1, with type %2.")
+                            .arg(metakey, updated_property->what());
+        }
+        
+        updated_properties.setMetadata(metakey, updated_property);
+    }
+    
+    return updated_properties;
 }
