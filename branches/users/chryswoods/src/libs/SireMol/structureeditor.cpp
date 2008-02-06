@@ -272,6 +272,26 @@ public:
     QVector<QVariant> segMetadata(const QString &key, 
                                   const QString &metakey) const;
     
+    void assertHasAtomProperty(const QString &key) const;
+    void assertHasAtomMetadata(const QString &metakey) const;
+    void assertHasAtomMetadata(const QString &key, const QString &metakey) const;
+
+    void assertHasCGProperty(const QString &key) const;
+    void assertHasCGMetadata(const QString &metakey) const;
+    void assertHasCGMetadata(const QString &key, const QString &metakey) const;
+
+    void assertHasResProperty(const QString &key) const;
+    void assertHasResMetadata(const QString &metakey) const;
+    void assertHasResMetadata(const QString &key, const QString &metakey) const;
+
+    void assertHasChainProperty(const QString &key) const;
+    void assertHasChainMetadata(const QString &metakey) const;
+    void assertHasChainMetadata(const QString &key, const QString &metakey) const;
+
+    void assertHasSegProperty(const QString &key) const;
+    void assertHasSegMetadata(const QString &metakey) const;
+    void assertHasSegMetadata(const QString &key, const QString &metakey) const;
+    
     MolName molname;
     MolNum molnum;
     
@@ -1431,39 +1451,603 @@ QList<ResIdx> EditMolData::resIdxsFromUIDs(const QList<quint32> &uids) const
                 
     return residxs;
 }
+ 
+void EditMolData::assertHasAtomProperty(const QString &key) const
+{
+    const Property &property = properties.property(key);
+    
+    if (not property->isA<AtomProp>())
+        throw SireError::invalid_cast( QObject::tr(
+            "The property at key %1 of type %2 is not an AtomProperty!")
+                .arg(key, property->what()), CODELOC );
+}
+
+void EditMolData::assertHasAtomMetadata(const QString &metakey) const
+{
+    const Property &property = properties.metadata(metakey);
+    
+    if (not property->isA<AtomProp>())
+        throw SireError::invalid_cast( QObject::tr(
+            "The metadata at metakey %1 of type %2 is not an AtomProperty!")
+                .arg(metakey, property->what()), CODELOC );
+}
+
+void EditMolData::assertHasAtomMetadata(const QString &key,
+                                        const QString &metakey) const
+{
+    const Property &property = properties.metadata(key, metakey);
+    
+    if (not property->isA<AtomProp>())
+        throw SireError::invalid_cast( QObject::tr(
+            "The metadata at key %1, metakey %2 of type %3 is not an AtomProperty!")
+                .arg(key, metakey, property->what()), CODELOC );
+}
+
+void EditMolData::assertHasCGProperty(const QString &key) const
+{
+    const Property &property = properties.property(key);
+    
+    if (not property->isA<CGProp>())
+        throw SireError::invalid_cast( QObject::tr(
+            "The property at key %1 of type %2 is not a CGProperty!")
+                .arg(key, property->what()), CODELOC );
+}
+
+void EditMolData::assertHasCGMetadata(const QString &metakey) const
+{
+    const Property &property = properties.metadata(metakey);
+    
+    if (not property->isA<CGProp>())
+        throw SireError::invalid_cast( QObject::tr(
+            "The metadata at metakey %1 of type %2 is not a CGProperty!")
+                .arg(metakey, property->what()), CODELOC );
+}
+
+void EditMolData::assertHasCGMetadata(const QString &key,
+                                      const QString &metakey) const
+{
+    const Property &property = properties.metadata(key, metakey);
+    
+    if (not property->isA<CGProp>())
+        throw SireError::invalid_cast( QObject::tr(
+            "The metadata at key %1, metakey %2 of type %3 is not a CGProperty!")
+                .arg(key, metakey, property->what()), CODELOC );
+}
+
+void EditMolData::assertHasResProperty(const QString &key) const
+{
+    const Property &property = properties.property(key);
+    
+    if (not property->isA<ResProp>())
+        throw SireError::invalid_cast( QObject::tr(
+            "The property at key %1 of type %2 is not a ResProperty!")
+                .arg(key, property->what()), CODELOC );
+}
+
+void EditMolData::assertHasResMetadata(const QString &metakey) const
+{
+    const Property &property = properties.metadata(metakey);
+    
+    if (not property->isA<ResProp>())
+        throw SireError::invalid_cast( QObject::tr(
+            "The metadata at metakey %1 of type %2 is not a ResProperty!")
+                .arg(metakey, property->what()), CODELOC );
+}
+
+void EditMolData::assertHasResMetadata(const QString &key,
+                                       const QString &metakey) const
+{
+    const Property &property = properties.metadata(key, metakey);
+    
+    if (not property->isA<ResProp>())
+        throw SireError::invalid_cast( QObject::tr(
+            "The metadata at key %1, metakey %2 of type %3 is not a ResProperty!")
+                .arg(key, metakey, property->what()), CODELOC );
+}
+
+void EditMolData::assertHasChainProperty(const QString &key) const
+{
+    const Property &property = properties.property(key);
+    
+    if (not property->isA<ChainProp>())
+        throw SireError::invalid_cast( QObject::tr(
+            "The property at key %1 of type %2 is not a ChainProperty!")
+                .arg(key, property->what()), CODELOC );
+}
+
+void EditMolData::assertHasChainMetadata(const QString &metakey) const
+{
+    const Property &property = properties.metadata(metakey);
+    
+    if (not property->isA<ChainProp>())
+        throw SireError::invalid_cast( QObject::tr(
+            "The metadata at metakey %1 of type %2 is not a ChainProperty!")
+                .arg(metakey, property->what()), CODELOC );
+}
+
+void EditMolData::assertHasChainMetadata(const QString &key,
+                                         const QString &metakey) const
+{
+    const Property &property = properties.metadata(key, metakey);
+    
+    if (not property->isA<ChainProp>())
+        throw SireError::invalid_cast( QObject::tr(
+            "The metadata at key %1, metakey %2 of type %3 is not an ChainProperty!")
+                .arg(key, metakey, property->what()), CODELOC );
+}
+
+void EditMolData::assertHasSegProperty(const QString &key) const
+{
+    const Property &property = properties.property(key);
+    
+    if (not property->isA<SegProp>())
+        throw SireError::invalid_cast( QObject::tr(
+            "The property at key %1 of type %2 is not a SegProperty!")
+                .arg(key, property->what()), CODELOC );
+}
+
+void EditMolData::assertHasSegMetadata(const QString &metakey) const
+{
+    const Property &property = properties.metadata(metakey);
+    
+    if (not property->isA<SegProp>())
+        throw SireError::invalid_cast( QObject::tr(
+            "The metadata at metakey %1 of type %2 is not a SegProperty!")
+                .arg(metakey, property->what()), CODELOC );
+}
+
+void EditMolData::assertHasSegMetadata(const QString &key,
+                                       const QString &metakey) const
+{
+    const Property &property = properties.metadata(key, metakey);
+    
+    if (not property->isA<SegProp>())
+        throw SireError::invalid_cast( QObject::tr(
+            "The metadata at key %1, metakey %2 of type %3 is not a SegProperty!")
+                .arg(key, metakey, property->what()), CODELOC );
+}
 
 /** Return the values of the atom property at key 'key' 
 
     \throw SireBase::missing_property
+    \throw SireError::invalid_cast
 */
 QVector< QVector<QVariant> > EditMolData::atomProperty(const QString &key) const
 {
+    //ensure that this atom property exists...
+    this->assertHasAtomProperty(key);
     
+    int ngroups = cg_by_index.count();
+    
+    QVector< QVector<QVariant> > values(ngroups);
+    values.squeeze();
+    
+    QVector<QVariant> *values_array = values.data();
+    
+    for (int i=0; i<ngroups; ++i)
+    {
+        const EditCGData &cgroup = this->cutGroup( cg_by_index.at(i) );
+        
+        int nats = cgroup.atoms.count();
+        
+        if (nats == 0)
+            values_array[i] = QVector<QVariant>();
+        else
+        {
+            QVector<QVariant> group_vals(nats);
+            group_vals.squeeze();
+            QVariant *group_vals_array = group_vals.data();
+            
+            for (int j=0; j<nats; ++j)
+            {
+                group_vals_array[j] = this->atom(cgroup.atoms.at(j))
+                                             .properties.value(key);
+            }
+         
+            values_array[i] = group_vals;
+        }
+    }
+    
+    return values;
 }
 
-QVector< QVector<QVariant> > EditMolData::atomMetadata(const QString &key) const;
+/** Return the values of the atom metadata at metakey 'metakey'
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+QVector< QVector<QVariant> > EditMolData::atomMetadata(const QString &metakey) const
+{
+    //ensure that this atom metadata exists...
+    this->assertHasAtomMetadata(metakey);
+    
+    int ngroups = cg_by_index.count();
+    
+    QVector< QVector<QVariant> > values(ngroups);
+    values.squeeze();
+    
+    QVector<QVariant> *values_array = values.data();
+    
+    for (int i=0; i<ngroups; ++i)
+    {
+        const EditCGData &cgroup = this->cutGroup( cg_by_index.at(i) );
+        
+        int nats = cgroup.atoms.count();
+        
+        if (nats == 0)
+            values_array[i] = QVector<QVariant>();
+        else
+        {
+            QVector<QVariant> group_vals(nats);
+            group_vals.squeeze();
+            QVariant *group_vals_array = group_vals.data();
+            
+            for (int j=0; j<nats; ++j)
+            {
+                group_vals_array[j] = this->atom(cgroup.atoms.at(j))
+                                             .molecule_metadata.value(metakey);
+            }
+         
+            values_array[i] = group_vals;
+        }
+    }
+    
+    return values;
+}
+
+/** Return the values of the atom metadata for the property at
+    key 'key', and metadata key 'metakey'
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
 QVector< QVector<QVariant> > EditMolData::atomMetadata(const QString &key,
-                                                       const QString &metakey) const;
-                                          
-QVector<QVariant> EditMolData::cgProperty(const QString &key) const;
-QVector<QVariant> EditMolData::cgMetadata(const QString &metakey) const;
+                                                       const QString &metakey) const
+{
+    //ensure that this atom metadata exists...
+    this->assertHasAtomMetadata(key, metakey);
+    
+    int ngroups = cg_by_index.count();
+    
+    QVector< QVector<QVariant> > values(ngroups);
+    values.squeeze();
+    
+    QVector<QVariant> *values_array = values.data();
+    
+    for (int i=0; i<ngroups; ++i)
+    {
+        const EditCGData &cgroup = this->cutGroup( cg_by_index.at(i) );
+        
+        int nats = cgroup.atoms.count();
+        
+        if (nats == 0)
+            values_array[i] = QVector<QVariant>();
+        else
+        {
+            QVector<QVariant> group_vals(nats);
+            group_vals.squeeze();
+            QVariant *group_vals_array = group_vals.data();
+            
+            for (int j=0; j<nats; ++j)
+            {
+                group_vals_array[j] = this->atom(cgroup.atoms.at(j))
+                                             .property_metadata[key].value(metakey);
+            }
+         
+            values_array[i] = group_vals;
+        }
+    }
+    
+    return values;
+}                                                     
+            
+/** Return the values of the CutGroup property at key 'key'
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+QVector<QVariant> EditMolData::cgProperty(const QString &key) const
+{
+    this->assertHasCGProperty(key);
+    
+    int ncg = cg_by_index.count();
+    
+    QVector<QVariant> values(ncg);
+    values.squeeze();
+    
+    QVariant *values_array = values.data();
+    
+    for (int i=0; i<ncg; ++i)
+    {
+        values_array[i] = this->cutGroup(cg_by_index.at(i))
+                                  .properties.value(key);
+    }
+    
+    return values;
+}
+
+/** Return the values of the CutGroup metadata at metakey 'metakey'
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+QVector<QVariant> EditMolData::cgMetadata(const QString &metakey) const
+{
+    this->assertHasCGMetadata(metakey);
+    
+    int ncg = cg_by_index.count();
+    
+    QVector<QVariant> values(ncg);
+    values.squeeze();
+    
+    QVariant *values_array = values.data();
+    
+    for (int i=0; i<ncg; ++i)
+    {
+        values_array[i] = this->cutGroup(cg_by_index.at(i))
+                                  .molecule_metadata.value(metakey);
+    }
+    
+    return values;
+}
+
+/** Return the values of the CutGroup metadata at metakey 'metakey'
+    for the property at key 'key'
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
 QVector<QVariant> EditMolData::cgMetadata(const QString &key, 
-                                          const QString &metakey) const;
+                                          const QString &metakey) const
+{
+    this->assertHasCGMetadata(key, metakey);
+    
+    int ncg = cg_by_index.count();
+    
+    QVector<QVariant> values(ncg);
+    values.squeeze();
+    
+    QVariant *values_array = values.data();
+    
+    for (int i=0; i<ncg; ++i)
+    {
+        values_array[i] = this->cutGroup(cg_by_index.at(i))
+                                  .property_metadata[key].value(metakey);
+    }
+    
+    return values;
+}
                                           
-QVector<QVariant> EditMolData::resProperty(const QString &key) const;
-QVector<QVariant> EditMolData::resMetadata(const QString &metakey) const;
+/** Return the values of the residue property at key 'key'
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+QVector<QVariant> EditMolData::resProperty(const QString &key) const
+{
+    this->assertHasResProperty(key);
+    
+    int nres = res_by_index.count();
+    
+    QVector<QVariant> values(nres);
+    values.squeeze();
+    
+    QVariant *values_array = values.data();
+    
+    for (int i=0; i<nres; ++i)
+    {
+        values_array[i] = this->residue(res_by_index.at(i))
+                                  .properties.value(key);
+    }
+    
+    return values;
+}
+
+/** Return the values of the residue metadata at metakey 'metakey'
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+QVector<QVariant> EditMolData::resMetadata(const QString &metakey) const
+{
+    this->assertHasResMetadata(metakey);
+    
+    int nres = res_by_index.count();
+    
+    QVector<QVariant> values(nres);
+    values.squeeze();
+    
+    QVariant *values_array = values.data();
+    
+    for (int i=0; i<nres; ++i)
+    {
+        values_array[i] = this->residue(res_by_index.at(i))
+                                  .molecule_metadata.value(metakey);
+    }
+    
+    return values;
+}
+
+/** Return the values of the residue metadata at metakey 'metakey'
+    for the property at key 'key'
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
 QVector<QVariant> EditMolData::resMetadata(const QString &key, 
-                                           const QString &metakey) const;
+                                           const QString &metakey) const
+{
+    this->assertHasResMetadata(key, metakey);
+    
+    int nres = res_by_index.count();
+    
+    QVector<QVariant> values(nres);
+    values.squeeze();
+    
+    QVariant *values_array = values.data();
+    
+    for (int i=0; i<nres; ++i)
+    {
+        values_array[i] = this->residue(res_by_index.at(i))
+                                  .property_metadata[key].value(metakey);
+    }
+    
+    return values;
+}
                                           
-QVector<QVariant> EditMolData::chainProperty(const QString &key) const;
-QVector<QVariant> EditMolData::chainMetadata(const QString &metakey) const;
+/** Return the values of the chain property at key 'key'
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+QVector<QVariant> EditMolData::chainProperty(const QString &key) const
+{
+    this->assertHasChainProperty(key);
+    
+    int nchains = chains_by_index.count();
+    
+    QVector<QVariant> values(nchains);
+    values.squeeze();
+    
+    QVariant *values_array = values.data();
+    
+    for (int i=0; i<nchains; ++i)
+    {
+        values_array[i] = this->chain(chains_by_index.at(i))
+                                  .properties.value(key);
+    }
+    
+    return values;
+}
+
+/** Return the values of the chain metadata at metakey 'metakey'
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+QVector<QVariant> EditMolData::chainMetadata(const QString &metakey) const
+{
+    this->assertHasChainMetadata(metakey);
+    
+    int nchains = chains_by_index.count();
+    
+    QVector<QVariant> values(nchains);
+    values.squeeze();
+    
+    QVariant *values_array = values.data();
+    
+    for (int i=0; i<nchains; ++i)
+    {
+        values_array[i] = this->chain(chains_by_index.at(i))
+                                  .molecule_metadata.value(metakey);
+    }
+    
+    return values;
+}
+
+/** Return the values of the chain metadata at metakey 'metakey'
+    for the property at key 'key'
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
 QVector<QVariant> EditMolData::chainMetadata(const QString &key, 
-                                             const QString &metakey) const;
+                                             const QString &metakey) const
+{
+    this->assertHasChainMetadata(key,metakey);
+    
+    int nchains = chains_by_index.count();
+    
+    QVector<QVariant> values(nchains);
+    values.squeeze();
+    
+    QVariant *values_array = values.data();
+    
+    for (int i=0; i<nchains; ++i)
+    {
+        values_array[i] = this->chain(chains_by_index.at(i))
+                                  .property_metadata[key].value(metakey);
+    }
+    
+    return values;
+}
                                           
-QVector<QVariant> EditMolData::segProperty(const QString &key) const;
-QVector<QVariant> EditMolData::segMetadata(const QString &metakey) const;
+/** Return the values of the segment property at key 'key'
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+QVector<QVariant> EditMolData::segProperty(const QString &key) const
+{
+    this->assertHasSegProperty(key);
+    
+    int nseg = seg_by_index.count();
+    
+    QVector<QVariant> values(nseg);
+    values.squeeze();
+    
+    QVariant *values_array = values.data();
+    
+    for (int i=0; i<nseg; ++i)
+    {
+        values_array[i] = this->segment(seg_by_index.at(i))
+                                  .properties.value(key);
+    }
+    
+    return values;
+}
+
+/** Return the values of the segment metadata at metakey 'metakey'
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+QVector<QVariant> EditMolData::segMetadata(const QString &metakey) const
+{
+    this->assertHasSegMetadata(metakey);
+    
+    int nseg = seg_by_index.count();
+    
+    QVector<QVariant> values(nseg);
+    values.squeeze();
+    
+    QVariant *values_array = values.data();
+    
+    for (int i=0; i<nseg; ++i)
+    {
+        values_array[i] = this->segment(seg_by_index.at(i))
+                                  .molecule_metadata.value(metakey);
+    }
+    
+    return values;
+}
+
+/** Return the values of the segment metadata at metakey 'metakey'
+    for the property at key 'key'
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
 QVector<QVariant> EditMolData::segMetadata(const QString &key, 
-                                           const QString &metakey) const;
+                                           const QString &metakey) const
+{
+    this->assertHasSegMetadata(key, metakey);
+    
+    int nseg = seg_by_index.count();
+    
+    QVector<QVariant> values(nseg);
+    values.squeeze();
+    
+    QVariant *values_array = values.data();
+    
+    for (int i=0; i<nseg; ++i)
+    {
+        values_array[i] = this->segment(seg_by_index.at(i))
+                                  .molecule_metadata.value(key, metakey);
+    }
+    
+    return values;
+}
 
 /////////
 ///////// Implementation of EditMolInfo
@@ -3473,6 +4057,43 @@ SegStructureEditor StructureEditor::addSegment()
     return SegStructureEditor( *this, SegIdx(nSegmentsInMolecule()-1) );
 }
 
+/** Return an AtomSelection based on the bool AtomProperty 'values' */
+AtomSelection StructureEditor::extractAtomSelection(
+                                    const QVector< QVector<QVariant> > &values) const
+{
+    //create an AtomSelection using the current MoleculeInfo object
+    AtomSelection selected_atoms( this->commitInfo() );
+    selected_atoms.selectNone();
+    
+    int ncg = values.count();
+    const QVector<QVariant> *values_array = values.constData();
+    
+    for (CGIdx i(0); i<ncg; ++i)
+    {
+        const QVector<QVariant> &group_values = values_array[i];
+        int nats = group_values.count();
+        const QVariant *group_values_array = group_values.constData();
+        
+        for (Index j(0); j<nats; ++j)
+        {
+            const QVariant &value = group_values_array[j];
+            
+            if (not value.canConvert<bool>())
+                throw SireError::invalid_cast( QObject::tr(
+                    "Cannot convert the object of type %1 to a bool, "
+                    "as required for extraction into an AtomSelection!")
+                        .arg(value.typeName()), CODELOC );
+                        
+            if (value.value<bool>())
+            {
+                selected_atoms.select( CGAtomIdx(i,j) );
+            }
+        }
+    }
+    
+    return selected_atoms;
+}
+
 /** Return the properties of this molecule - this is a slow function
     as it has to convert all of the properties from an editable to
     a fixed format. Also note that changing the molecule in any
@@ -3517,8 +4138,8 @@ Properties StructureEditor::properties() const
         }
         else if (updated_property->isA<AtomSelection>())
         {
-            updated_property.edit()
-                .asA<AtomSelection>().assignFrom( d->atomProperty(key) );
+            updated_property = this->extractAtomSelection(
+                                            d->atomProperty(key) );
         }
         else if (updated_property->isA<MolViewProperty>())
         {
@@ -3542,32 +4163,32 @@ Properties StructureEditor::properties() const
             if (updated_property->isA<AtomProp>())
             {
                 updated_property.edit()
-                    .asA<AtomProp>().assignFrom( d->atomMetadata(metakey) );
+                    .asA<AtomProp>().assignFrom( d->atomMetadata(key, metakey) );
             }
             else if (updated_property->isA<CGProp>())
             {
                 updated_property.edit()
-                    .asA<CGProp>().assignFrom( d->cgMetadata(metakey) );
+                    .asA<CGProp>().assignFrom( d->cgMetadata(key, metakey) );
             }
             else if (updated_property->isA<ResProp>())
             {
                 updated_property.edit()
-                    .asA<ResProp>().assignFrom( d->resMetadata(metakey) );
+                    .asA<ResProp>().assignFrom( d->resMetadata(key, metakey) );
             }
             else if (updated_property->isA<ChainProp>())
             {
                 updated_property.edit()
-                    .asA<ChainProp>().assignFrom( d->chainMetadata(metakey) );
+                    .asA<ChainProp>().assignFrom( d->chainMetadata(key, metakey) );
             }
             else if (updated_property->isA<SegProp>())
             {
                 updated_property.edit()
-                    .asA<SegProp>().assignFrom( d->segMetadata(metakey) );
+                    .asA<SegProp>().assignFrom( d->segMetadata(key, metakey) );
             }
             else if (updated_property->isA<AtomSelection>())
             {
-                updated_property.edit()
-                    .asA<AtomSelection>().assignFrom( d->atomMetadata(metakey) );
+                updated_property = this->extractAtomSelection(
+                                                d->atomMetadata(key, metakey) );
             }
             else if (updated_property->isA<MolViewProperty>())
             {
@@ -3617,8 +4238,8 @@ Properties StructureEditor::properties() const
         }
         else if (updated_property->isA<AtomSelection>())
         {
-            updated_property.edit()
-                .asA<AtomSelection>().assignFrom( d->atomMetadata(metakey) );
+            updated_property = this->extractAtomSelection(
+                                            d->atomMetadata(metakey) );
         }
         else if (updated_property->isA<MolViewProperty>())
         {

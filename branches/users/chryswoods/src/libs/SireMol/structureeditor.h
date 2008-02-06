@@ -140,6 +140,8 @@ protected:
 
     MoleculeData commitChanges() const;
 
+    MoleculeInfoData commitInfo() const;
+
     /// functions used by MoleculeInfoData when committing
     boost::tuple<AtomName,AtomNum,CGAtomIdx,ResIdx,SegIdx> 
     getAtomData(AtomIdx atomidx) const;
@@ -277,6 +279,9 @@ protected:
     void assertValidSegment(quint32 uid) const;
 
 private:
+    AtomSelection extractAtomSelection(
+                        const QVector< QVector<QVariant> > &values) const;
+
     /** This class is explicitly shared - this means that each copy
         edits the *same* underlying data - this is to prevent excess
         copying as small incremental changes are made to the same
