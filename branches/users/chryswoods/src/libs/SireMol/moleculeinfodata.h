@@ -313,6 +313,13 @@ public:
 
     void assertCompatibleWith(const AtomSelection &selected_atoms) const;
 
+    void assertContains(AtomIdx atomidx) const;
+    void assertContains(CGIdx cgidx) const;
+    void assertContains(ResIdx residx) const;
+    void assertContains(ChainIdx chainidx) const;
+    void assertContains(SegIdx segidx) const;
+    
+
     void assertEqualTo(const MoleculeInfoData &other) const;
     
     static QSharedDataPointer<MoleculeInfoData> null();

@@ -1184,29 +1184,25 @@ int AtomSelection::nSelectedSegments() const
 }
 
 /** Return a selection that has all of the atoms selected */
-AtomSelection AtomSelection::selectAll() const
+AtomSelection& AtomSelection::selectAll()
 {
-    AtomSelection ret(*this);
+    selected_atoms.clear();
+    nselected = info().nAtoms();
     
-    ret.selected_atoms.clear();
-    ret.nselected = info().nAtoms();
-    
-    return ret;
+    return *this;
 }
 
 /** Return a selection that has none of the atoms selected */
-AtomSelection AtomSelection::deselectAll() const
+AtomSelection& AtomSelection::deselectAll()
 {
-    AtomSelection ret(*this);
+    selected_atoms.clear();
+    nselected = 0;
     
-    ret.selected_atoms.clear();
-    ret.nselected = 0;
-    
-    return ret;
+    return *this;
 }
 
 /** Return a selection that has none of the atoms selected */
-AtomSelection AtomSelection::selectNone() const
+AtomSelection& AtomSelection::selectNone()
 {
     return this->deselectAll();
 }
@@ -1280,14 +1276,14 @@ void AtomSelection::_pvt_select(AtomIdx atomidx)
     this->_pvt_select( info().cgAtomIdx(atomidx) );
 }
 
-/** Return the selection that has additionally the atom at index
-    'atomidx' selected */
-AtomSelection AtomSelection::select(AtomIdx atomidx) const
+/** Select the atom at index 'atomidx' 
+
+    \throw SireError::invalid_index
+*/
+AtomSelection& AtomSelection::select(AtomIdx atomidx)
 {
-    AtomSelection ret(*this);
-    ret._pvt_select(atomidx);
-    
-    return ret;
+    this->_pvt_select(atomidx);
+    return *this;
 }
 
 void AtomSelection::_pvt_deselect(const CGAtomIdx &cgatomidx)
@@ -1346,31 +1342,24 @@ void AtomSelection::_pvt_deselect(AtomIdx atomidx)
     this->_pvt_deselect( info().cgAtomIdx(atomidx) );
 }
 
-/** Return a selection where the atom atom index 'atomidx'
-    has been deselected 
+/** Deselect the atom at index 'atomidx' 
 
     \throw SireError::invalid_index
 */
-AtomSelection AtomSelection::deselect(AtomIdx atomidx) const
+AtomSelection& AtomSelection::deselect(AtomIdx atomidx)
 {
-    AtomSelection ret(*this);
-    
-    ret._pvt_deselect( info().cgAtomIdx(atomidx) );
-    
-    return ret;
+    this->_pvt_deselect(atomidx);
+    return *this;
 }
 
-/** Return the selection in which only the atom at index
-    'atomidx' has been selected
+/** Select only the atom at index 'atomidx'
     
     \throw SireError::invalid_index
 */
-AtomSelection AtomSelection::selectOnly(AtomIdx atomidx) const
+AtomSelection& AtomSelection::selectOnly(AtomIdx atomidx)
 {
-    AtomSelection ret = this->selectNone();
-    ret._pvt_select( info().cgAtomIdx(atomidx) );
-    
-    return ret;
+    info().assertContains(atomidx);
+    return this->deselectAll().select(atomidx);
 }
 
 void AtomSelection::_pvt_select(CGIdx cgidx)
@@ -1411,43 +1400,34 @@ void AtomSelection::_pvt_deselect(CGIdx cgidx)
     }
 }
 
-/** Return a selection that has the CutGroup at index
-    'cgidx' additionally selected
+/** Select the CutGroup at index 'cgidx'
     
     \throw SireError::invalid_index
 */
-AtomSelection AtomSelection::select(CGIdx cgidx) const
+AtomSelection& AtomSelection::select(CGIdx cgidx)
 {
-    AtomSelection ret(*this);
-    ret._pvt_select( CGIdx(cgidx.map(info().nCutGroups())) );
-    
-    return ret;
+    this->_pvt_select(cgidx);
+    return *this;
 }
 
-/** Return a selection that has the CutGroup at index
-    'cgidx' deselected
+/** Deselect the CutGroup at index 'cgidx'
     
     \throw SireError::invalid_index
 */
-AtomSelection AtomSelection::deselect(CGIdx cgidx) const
+AtomSelection& AtomSelection::deselect(CGIdx cgidx)
 {
-    AtomSelection ret(*this);
-    ret._pvt_deselect( CGIdx(cgidx.map(info().nCutGroups())) );
-    
-    return ret;
+    this->_pvt_deselect(cgidx);
+    return *this;
 }
 
-/** Return a selection that has only the CutGroup at index
-    'cgidx' selected
+/** Select only the CutGroup at index 'cgidx'
     
     \throw SireError::invalid_index
 */
-AtomSelection AtomSelection::selectOnly(CGIdx cgidx) const
+AtomSelection& AtomSelection::selectOnly(CGIdx cgidx)
 {
-    AtomSelection ret = this->selectNone();
-    ret._pvt_select( CGIdx(cgidx.map(info().nCutGroups())) );
-    
-    return ret;
+    info().assertContains(cgidx);
+    return this->deselectAll().select(cgidx);
 }
 
 template<class IDXS>
@@ -1468,414 +1448,466 @@ void AtomSelection::_pvt_deselectAtoms(const IDXS &atoms)
     }
 }
 
-/** Return a selection that has the residue at index
-    'residx' additionally selected
+/** Select the atoms in the residue at index 'residx'
     
     \throw SireError::invalid_index
 */
-AtomSelection AtomSelection::select(ResIdx residx) const
+AtomSelection& AtomSelection::select(ResIdx residx)
 {
-    AtomSelection ret(*this);
-    ret._pvt_selectAtoms( d->getAtomsIn(residx) );
-    return ret;
+    this->_pvt_selectAtoms( info().getAtomsIn(residx) );
+    return *this;
 }
 
-/** Return a selection that has the residue at index
-    'residx' deselected
+/** Deselect the atoms in the residue at index 'residx'
     
     \throw SireError::invalid_index
 */
-AtomSelection AtomSelection::deselect(ResIdx residx) const
+AtomSelection& AtomSelection::deselect(ResIdx residx)
 {
-    AtomSelection ret(*this);
-    ret._pvt_deselectAtoms( d->getAtomsIn(residx) );
-    return ret;
+    this->_pvt_deselectAtoms( info().getAtomsIn(residx) );
+    return *this;
 }
 
-/** Return a selection that has only the residue at index
-    'residx' selected
+/** Select only the atoms in the residue at index 'residx'
     
     \throw SireError::invalid_index
 */
-AtomSelection AtomSelection::selectOnly(ResIdx residx) const
+AtomSelection& AtomSelection::selectOnly(ResIdx residx)
 {
-    AtomSelection ret = this->selectNone();
-    ret._pvt_selectAtoms( d->getAtomsIn(residx) );
-    return ret;
+    info().assertContains(residx);
+    return this->deselectAll().select(residx);
 }
 
-/** Return a selection that has the chain at index
-    'chainidx' additionally selected
+/** Select all of the atoms in the chain at index 'chainidx'
     
     \throw SireError::invalid_index
 */
-AtomSelection AtomSelection::select(ChainIdx chainidx) const
+AtomSelection& AtomSelection::select(ChainIdx chainidx)
 {
-    AtomSelection ret(*this);
-    
     foreach (const ResIdx residx, d->getResiduesIn(chainidx) )
     {
-        ret._pvt_selectAtoms( d->getAtomsIn(residx) );
+        this->_pvt_selectAtoms( d->getAtomsIn(residx) );
     }
     
-    return ret;
+    return *this;
 }
 
-/** Return a selection that has the chain at index
-    'chainidx' deselected
+/** Deselect all of the atoms in the chain at index 'chainidx'
     
     \throw SireError::invalid_index
 */
-AtomSelection AtomSelection::deselect(ChainIdx chainidx) const
+AtomSelection& AtomSelection::deselect(ChainIdx chainidx)
 {
-    AtomSelection ret(*this);
-    
     foreach (const ResIdx residx, d->getResiduesIn(chainidx))
     {
-        ret._pvt_deselectAtoms( d->getAtomsIn(residx) );
+        this->_pvt_deselectAtoms( d->getAtomsIn(residx) );
     }
     
-    return ret;
+    return *this;
 }
 
-/** Return a selection that has only the chain at index
-    'chainidx' selected
+/** Select only the atoms that are in the chain at index 'chainidx'
     
     \throw SireError::invalid_index
 */
-AtomSelection AtomSelection::selectOnly(ChainIdx chainidx) const
+AtomSelection& AtomSelection::selectOnly(ChainIdx chainidx)
 {
-    AtomSelection ret = this->selectNone();
+    info().assertContains(chainidx);
+    return this->deselectAll().select(chainidx);
+}
+
+/** Select all of the atoms in the segment at index 'segidx'
     
-    foreach (const ResIdx &residx, d->getResiduesIn(chainidx))
+    \throw SireError::invalid_index
+*/
+AtomSelection& AtomSelection::select(SegIdx segidx)
+{
+    this->_pvt_selectAtoms( d->getAtomsIn(segidx) );
+    return *this;
+}
+
+/** Deselect all of the atoms in the segment at index 'segidx'
+    
+    \throw SireError::invalid_index
+*/
+AtomSelection& AtomSelection::deselect(SegIdx segidx)
+{
+    this->_pvt_deselectAtoms( d->getAtomsIn(segidx) );
+    return *this;
+}
+
+/** Select only the atoms that are in the segment at index 'segidx'
+    
+    \throw SireError::invalid_index
+*/
+AtomSelection& AtomSelection::selectOnly(SegIdx segidx)
+{
+    info().assertContains(segidx);
+    return this->deselectAll().select(segidx);
+}
+
+/** Deselect all of the atoms whose indicies are in 'atomidxs'
+
+    \throw SireError::invalid_index
+*/
+AtomSelection& AtomSelection::select(const QSet<AtomIdx> &atomidxs)
+{
+    //check the indicies are sane!
+    foreach (AtomIdx atomidx, atomidxs)
     {
-        ret._pvt_selectAtoms( d->getAtomsIn(residx) );
+        info().assertContains(atomidx);
+    }
+
+    this->_pvt_selectAtoms(atomidxs);
+    
+    return *this;
+}
+
+/** Deselect all of the atoms whose indicies are in 'atomidxs'
+    
+    \throw SireError::invalid_index
+*/
+AtomSelection& AtomSelection::deselect(const QSet<AtomIdx> &atomidxs)
+{
+    //check the indicies are sane
+    foreach (AtomIdx atomidx, atomidxs)
+    {
+        info().assertContains(atomidx);
+    }
+
+    this->_pvt_deselectAtoms(atomidxs);
+    
+    return *this;
+}
+
+/** Select only the atoms whose indicies are in 'atomidxs'
+    
+    \throw SireError::invalid_index
+*/
+AtomSelection& AtomSelection::selectOnly(const QSet<AtomIdx> &atomidxs)
+{
+    //check the indicies are sane
+    foreach (AtomIdx atomidx, atomidxs)
+    {
+        info().assertContains(atomidx);
+    }
+
+    this->deselectAll();
+    this->_pvt_selectAtoms(atomidxs);
+    
+    return *this;
+}
+
+/** Deselect all of the atoms whose indicies are in 'atomidxs'
+
+    \throw SireError::invalid_index
+*/
+AtomSelection& AtomSelection::select(const QList<AtomIdx> &atomidxs)
+{
+    //check that the indicies are sane
+    foreach (AtomIdx atomidx, atomidxs)
+    {
+        info().assertContains(atomidx);
     }
     
-    return ret;
-}
-
-/** Return a selection that has the segment at index
-    'segidx' additionally selected
+    this->_pvt_selectAtoms(atomidxs);
     
-    \throw SireError::invalid_index
-*/
-AtomSelection AtomSelection::select(SegIdx segidx) const
-{
-    AtomSelection ret(*this);
-    ret._pvt_selectAtoms( d->getAtomsIn(segidx) );
-    return ret;
-}
-
-/** Return a selection that has the segment at index
-    'segidx' deselected
-    
-    \throw SireError::invalid_index
-*/
-AtomSelection AtomSelection::deselect(SegIdx segidx) const
-{
-    AtomSelection ret(*this);
-    ret._pvt_deselectAtoms( d->getAtomsIn(segidx) );
-    return ret;
-}
-
-/** Return a selection that has only the segment at index
-    'segidx' selected
-    
-    \throw SireError::invalid_index
-*/
-AtomSelection AtomSelection::selectOnly(SegIdx segidx) const
-{
-    AtomSelection ret = this->selectNone();
-    ret._pvt_selectAtoms( d->getAtomsIn(segidx) );
-    return ret;
-}
-
-/** Deselect all of the atoms whose indicies are in 'atomidxs'
-
-    \throw SireError::invalid_index
-*/
-AtomSelection AtomSelection::select(const QSet<AtomIdx> &atomidxs) const
-{
-    AtomSelection ret(*this);
-    ret._pvt_selectAtoms(atomidxs);
-    
-    return ret;
+    return *this;
 }
 
 /** Deselect all of the atoms whose indicies are in 'atomidxs'
     
     \throw SireError::invalid_index
 */
-AtomSelection AtomSelection::deselect(const QSet<AtomIdx> &atomidxs) const
+AtomSelection& AtomSelection::deselect(const QList<AtomIdx> &atomidxs)
 {
-    AtomSelection ret(*this);
-    ret._pvt_deselectAtoms(atomidxs);
+    //check that the indicies are sane
+    foreach (AtomIdx atomidx, atomidxs)
+    {
+        info().assertContains(atomidx);
+    }
+
+    this->_pvt_deselectAtoms(atomidxs);
     
-    return ret;
+    return *this;
 }
 
-/** Return a select where only the atoms whose indicies are in 
-    'atomidxs' are selected
+/** Select only the atoms whose indicies are in 'atomidxs'
     
     \throw SireError::invalid_index
 */
-AtomSelection AtomSelection::selectOnly(const QSet<AtomIdx> &atomidxs) const
+AtomSelection& AtomSelection::selectOnly(const QList<AtomIdx> &atomidxs)
 {
-    AtomSelection ret = this->selectNone();
-    ret._pvt_selectAtoms(atomidxs);
+    //check that the indicies are sane
+    foreach (AtomIdx atomidx, atomidxs)
+    {
+        info().assertContains(atomidx);
+    }
+
+    this->deselectAll();
+    this->_pvt_selectAtoms(atomidxs);
     
-    return ret;
+    return *this;
 }
 
-/** Deselect all of the atoms whose indicies are in 'atomidxs'
-
-    \throw SireError::invalid_index
-*/
-AtomSelection AtomSelection::select(const QList<AtomIdx> &atomidxs) const
-{
-    AtomSelection ret(*this);
-    ret._pvt_selectAtoms(atomidxs);
-    
-    return ret;
-}
-
-/** Deselect all of the atoms whose indicies are in 'atomidxs'
+/** Select all of the CutGroups whose indicies are in 'cgidxs'
     
     \throw SireError::invalid_index
 */
-AtomSelection AtomSelection::deselect(const QList<AtomIdx> &atomidxs) const
+AtomSelection& AtomSelection::select(const QList<CGIdx> &cgidxs)
 {
-    AtomSelection ret(*this);
-    ret._pvt_deselectAtoms(atomidxs);
+    //check that the indicies are sane
+    foreach (CGIdx cgidx, cgidxs)
+    {
+        info().assertContains(cgidx);
+    }
     
-    return ret;
-}
-
-/** Return a select where only the atoms whose indicies are in 
-    'atomidxs' are selected
-    
-    \throw SireError::invalid_index
-*/
-AtomSelection AtomSelection::selectOnly(const QList<AtomIdx> &atomidxs) const
-{
-    AtomSelection ret = this->selectNone();
-    ret._pvt_selectAtoms(atomidxs);
-    
-    return ret;
-}
-
-/** Return the selection with all of the atoms in the CutGroups
-    whose indicies are in 'cgidxs' additionally selected
-    
-    \throw SireError::invalid_index
-*/
-AtomSelection AtomSelection::select(const QList<CGIdx> &cgidxs) const
-{
-    AtomSelection ret(*this);
+    int ncg = info().nCutGroups();
     
     foreach (const CGIdx &cgidx, cgidxs)
     {
-        ret._pvt_select( CGIdx(cgidx.map(d->nCutGroups())) );
+        this->_pvt_select( CGIdx(cgidx.map(ncg)) );
     }
     
-    return ret;
+    return *this;
 }
 
-/** Return the selection with all of the atoms in the CutGroups
-    whose indicies are in 'cgidxs' deselected
+/** Deselect all of the CutGroups whose indicies are in 'cgidxs'
     
     \throw SireError::invalid_index
 */
-AtomSelection AtomSelection::deselect(const QList<CGIdx> &cgidxs) const
+AtomSelection& AtomSelection::deselect(const QList<CGIdx> &cgidxs)
 {
-    AtomSelection ret(*this);
+    //check that the indicies are sane
+    foreach (CGIdx cgidx, cgidxs)
+    {
+        info().assertContains(cgidx);
+    }
+    
+    int ncg = info().nCutGroups();
     
     foreach (const CGIdx &cgidx, cgidxs)
     {
-        ret._pvt_deselect( CGIdx(cgidx.map(d->nCutGroups())) );
+        this->_pvt_deselect( CGIdx(cgidx.map(ncg)) );
     }
     
-    return ret;
+    return *this;
 }
 
-/** Return the selection where only the atoms in the CutGroups
-    whose indicies are in 'cgidxs' are selected
+/** Select only the atoms in the CutGroups whose indicies are in 'cgidxs'
     
     \throw SireError::invalid_index
 */
-AtomSelection AtomSelection::selectOnly(const QList<CGIdx> &cgidxs) const
+AtomSelection& AtomSelection::selectOnly(const QList<CGIdx> &cgidxs)
 {
-    AtomSelection ret = this->deselectAll();
+    //check that the indicies are sane
+    foreach (CGIdx cgidx, cgidxs)
+    {
+        info().assertContains(cgidx);
+    }
+    
+    int ncg = info().nCutGroups();
+    this->deselectAll();
     
     foreach (const CGIdx &cgidx, cgidxs)
     {
-        ret._pvt_select( CGIdx(cgidx.map(d->nCutGroups())) );
+        this->_pvt_select( CGIdx(cgidx.map(ncg)) );
     }
     
-    return ret;
+    return *this;
 }
 
-/** Return the selection with all of the atoms in the residues
-    whose indicies are in 'residxs' additionally selected
+/** Select the atoms in the residues whose indicies are in 'residxs'
     
     \throw SireError::invalid_index
 */
-AtomSelection AtomSelection::select(const QList<ResIdx> &residxs) const
+AtomSelection& AtomSelection::select(const QList<ResIdx> &residxs)
 {
-    AtomSelection ret(*this);
+    foreach (ResIdx residx, residxs)
+    {
+        info().assertContains(residx);
+    }
+
+    foreach (const ResIdx &residx, residxs)
+    {
+        this->_pvt_selectAtoms( d->getAtomsIn(residx) );
+    }
+    
+    return *this;
+}
+
+/** Deselect all of the atoms that are in the residues whose
+    indicies are in 'residxs'
+    
+    \throw SireError::invalid_index
+*/
+AtomSelection& AtomSelection::deselect(const QList<ResIdx> &residxs)
+{
+    foreach (ResIdx residx, residxs)
+    {
+        info().assertContains(residx);
+    }
+
+    foreach (const ResIdx &residx, residxs)
+    {
+        this->_pvt_deselectAtoms( d->getAtomsIn(residx) );
+    }
+    
+    return *this;
+}
+
+/** Select only the atoms that in the residues whose indicies are
+    in 'residxs'
+    
+    \throw SireError::invalid_index
+*/
+AtomSelection& AtomSelection::selectOnly(const QList<ResIdx> &residxs)
+{
+    foreach (ResIdx residx, residxs)
+    {
+        info().assertContains(residx);
+    }
+    
+    this->selectNone();
     
     foreach (const ResIdx &residx, residxs)
     {
-        ret._pvt_selectAtoms( d->getAtomsIn(residx) );
+        this->_pvt_selectAtoms( d->getAtomsIn(residx) );
     }
     
-    return ret;
+    return *this;
 }
 
-/** Return the selection with all of the atoms in the residues
-    whose indicies are in 'residxs' deselected
+/** Select the atoms that are in the chains whose indicies are in 'chainidxs'
     
     \throw SireError::invalid_index
 */
-AtomSelection AtomSelection::deselect(const QList<ResIdx> &residxs) const
+AtomSelection& AtomSelection::select(const QList<ChainIdx> &chainidxs)
 {
-    AtomSelection ret(*this);
-    
-    foreach (const ResIdx &residx, residxs)
+    foreach (ChainIdx chainidx, chainidxs)
     {
-        ret._pvt_deselectAtoms( d->getAtomsIn(residx) );
+        info().assertContains(chainidx);
     }
-    
-    return ret;
-}
-
-/** Return the selection where only the atoms in the residues
-    whose indicies are in 'cgidxs' are selected
-    
-    \throw SireError::invalid_index
-*/
-AtomSelection AtomSelection::selectOnly(const QList<ResIdx> &residxs) const
-{
-    AtomSelection ret = this->deselectAll();
-    
-    foreach (const ResIdx &residx, residxs)
-    {
-        ret._pvt_selectAtoms( d->getAtomsIn(residx) );
-    }
-    
-    return ret;
-}
-
-/** Return the selection with all of the atoms in the chains
-    whose indicies are in 'chainidxs' additionally selected
-    
-    \throw SireError::invalid_index
-*/
-AtomSelection AtomSelection::select(const QList<ChainIdx> &chainidxs) const
-{
-    AtomSelection ret(*this);
     
     foreach (const ChainIdx &chainidx, chainidxs)
     {
         foreach (const ResIdx &residx, d->getResiduesIn(chainidx))
         {
-            ret._pvt_selectAtoms( d->getAtomsIn(residx) );
+            this->_pvt_selectAtoms( d->getAtomsIn(residx) );
         }
     }
     
-    return ret;
+    return *this;
 }
 
-/** Return the selection with all of the atoms in the chains
-    whose indicies are in 'chainidxs' deselected
+/** Deselect the atoms that are in the chains whose indicies
+    are in 'chainidxs'
     
     \throw SireError::invalid_index
 */
-AtomSelection AtomSelection::deselect(const QList<ChainIdx> &chainidxs) const
+AtomSelection& AtomSelection::deselect(const QList<ChainIdx> &chainidxs)
 {
-    AtomSelection ret(*this);
+    foreach (ChainIdx chainidx, chainidxs)
+    {
+        info().assertContains(chainidx);
+    }
     
     foreach (const ChainIdx &chainidx, chainidxs)
     {
         foreach (const ResIdx &residx, d->getResiduesIn(chainidx))
         {
-            ret._pvt_deselectAtoms( d->getAtomsIn(residx) );
+            this->_pvt_deselectAtoms( d->getAtomsIn(residx) );
         }
     }
     
-    return ret;
+    return *this;
 }
 
-/** Return the selection where only the atoms in the chains
-    whose indicies are in 'chainidxs' are selected
+/** Select only the atoms that are in the chains whose indicies are
+    in 'chainidxs'
     
     \throw SireError::invalid_index
 */
-AtomSelection AtomSelection::selectOnly(const QList<ChainIdx> &chainidxs) const
+AtomSelection& AtomSelection::selectOnly(const QList<ChainIdx> &chainidxs)
 {
-    AtomSelection ret = this->deselectAll();
+    foreach (ChainIdx chainidx, chainidxs)
+    {
+        info().assertContains(chainidx);
+    }
+
+    this->deselectAll();
     
     foreach (const ChainIdx &chainidx, chainidxs)
     {
         foreach (const ResIdx &residx, d->getResiduesIn(chainidx))
         {
-            ret._pvt_selectAtoms( d->getAtomsIn(residx) );
+            this->_pvt_selectAtoms( d->getAtomsIn(residx) );
         }
     }
     
-    return ret;
+    return *this;
 }
 
-/** Return the selection with all of the atoms in the segments
-    whose indicies are in 'segidxs' additionally selected
+/** Select the atoms that are in the segments whose indicies
+    are in 'segidxs'
     
     \throw SireError::invalid_index
 */
-AtomSelection AtomSelection::select(const QList<SegIdx> &segidxs) const
+AtomSelection& AtomSelection::select(const QList<SegIdx> &segidxs)
 {
-    AtomSelection ret(*this);
-
-    foreach (const SegIdx &segidx, segidxs)
+    foreach (SegIdx segidx, segidxs)
     {
-        ret._pvt_selectAtoms( d->getAtomsIn(segidx) );
+        info().assertContains(segidx);
     }
     
-    return ret;
+    foreach (const SegIdx &segidx, segidxs)
+    {
+        this->_pvt_selectAtoms( d->getAtomsIn(segidx) );
+    }
+    
+    return *this;
 }
 
-/** Return the selection with all of the atoms in the segments
-    whose indicies are in 'segidxs' deselected
+/** Deselect all of the atoms in the segments whose indicies are
+    in 'segidxs'
     
     \throw SireError::invalid_index
 */
-AtomSelection AtomSelection::deselect(const QList<SegIdx> &segidxs) const
+AtomSelection& AtomSelection::deselect(const QList<SegIdx> &segidxs)
 {
-    AtomSelection ret(*this);
-
-    foreach (const SegIdx &segidx, segidxs)
+    foreach (SegIdx segidx, segidxs)
     {
-        ret._pvt_deselectAtoms( d->getAtomsIn(segidx) );
+        info().assertContains(segidx);
     }
     
-    return ret;
+    foreach (const SegIdx &segidx, segidxs)
+    {
+        this->_pvt_deselectAtoms( d->getAtomsIn(segidx) );
+    }
+    
+    return *this;
 }
 
-/** Return the selection where only the atoms in the segments
-    whose indicies are in 'segidxs' are selected
-    
+/** Select only the atoms in the segments whose indicies are
+    in 'segidxs'
+        
     \throw SireError::invalid_index
 */
-AtomSelection AtomSelection::selectOnly(const QList<SegIdx> &segidxs) const
+AtomSelection& AtomSelection::selectOnly(const QList<SegIdx> &segidxs)
 {
-    AtomSelection ret = this->deselectAll();
+    foreach (SegIdx segidx, segidxs)
+    {
+        info().assertContains(segidx);
+    }
 
+    this->deselectAll();
+    
     foreach (const SegIdx &segidx, segidxs)
     {
-        ret._pvt_selectAtoms( d->getAtomsIn(segidx) );
+        this->_pvt_selectAtoms( d->getAtomsIn(segidx) );
     }
     
-    return ret;
+    return *this;
 }
 
 /** Return a selection that has the atoms identified by
