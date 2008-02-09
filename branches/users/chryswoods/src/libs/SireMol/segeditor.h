@@ -200,6 +200,25 @@ public:
     SegStructureEditor& transfer(int i, const SegID &segid);
     
     SegStructureEditor& transferAll(const SegID &segid);
+
+    template<class T>
+    T property(const QString &key) const;
+
+    template<class T>
+    T metadata(const QString &metakey) const;
+
+    template<class T>
+    T metadata(const QString &key, const QString &metakey) const;
+
+    template<class T>
+    SegStructureEditor& setProperty(const QString &key, const T &value);
+
+    template<class T>
+    SegStructureEditor& setMetadata(const QString &metakey, const T &value);
+    
+    template<class T>
+    SegStructureEditor& setMetadata(const QString &key, const QString &metakey,
+                                    const T &value);
     
     Segment commit() const;
     
@@ -209,6 +228,116 @@ private:
     /** The unique ID for this segment in the molecule editor */
     quint32 uid;
 };
+
+/** Return the value for this segment of the property at key 'key'.
+    Note that this property *must* be of type SegProperty<T> for
+    this to work!
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+T SegStructureEditor::property(const QString &key) const
+{
+    const QVariant &value = this->getSegProperty(uid, key);
+    return this->_pvt_getProperty<T>(key, value);
+}
+
+/** Return the value for this segment of the metadata at metakey 'metakey'.
+    Note that this property *must* be of type SegProperty<T> for
+    this to work!
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+T SegStructureEditor::metadata(const QString &metakey) const
+{
+    const QVariant &value = this->getSegMetadata(uid, metakey);
+    return this->_pvt_getMetadata<T>(metakey, value);
+}
+
+/** Return the value for this segment of the metadata at metakey 'metakey'
+    for the property at key 'key'.
+    
+    Note that this property *must* be of type SegProperty<T> for
+    this to work!
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+T SegStructureEditor::metadata(const QString &key, 
+                               const QString &metakey) const
+{
+    const QVariant &value = this->getSegMetadata(uid, key, metakey);
+    return this->_pvt_getMetadata<T>(key, metakey, value);
+}
+
+/** Set the property at key 'key' to have the value 'value' for this segment.
+    Note that an exception will be thrown if an existing property for
+    this key is not of type SegProperty<T>
+
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SegStructureEditor& SegStructureEditor::setProperty(const QString &key, 
+                                                    const T &value)
+{
+    this->assertValidSegment(uid);
+
+    //create space for this property
+    this->_pvt_createSpaceForProperty< SegProperty<T> >(key);
+    
+    //now set the value of the property
+    this->_pvt_setSegProperty(uid, key, QVariant(value));
+    
+    return *this;
+}
+
+/** Set the metadata at metakey 'metakey' to have the value 'value' for
+    this segment. Note that an exception will be thrown if an existing 
+    property for this metakey is not of type SegProperty<T>
+    
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SegStructureEditor& SegStructureEditor::setMetadata(const QString &metakey,
+                                                    const T &value)
+{
+    this->assertValidSegment(uid);
+    
+    //create space for this metadata
+    this->_pvt_createSpaceForMetadata< SegProperty<T> >(metakey);
+    
+    //now set the value of this metadata
+    this->_pvt_setAtomMetadata(uid, metakey, QVariant(value));
+    
+    return *this;
+}
+
+/** Set the metadata at metakey 'metakey' for the property at
+    key 'key' to have the value 'value' for
+    this segment. Note that an exception will be thrown if an existing 
+    property for this metakey is not of type SegProperty<T>
+    
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SegStructureEditor& SegStructureEditor::setMetadata(const QString &key, 
+                                                    const QString &metakey,
+                                                    const T &value)
+{
+    this->assertValidSegment(uid);
+    
+    //create space for this metadata
+    this->_pvt_createSpaceForMetadata< SegProperty<T> >(key, metakey);
+    
+    //now set the value of this metadata
+    this->_pvt_setAtomMetadata(uid, key, metakey, QVariant(value));
+    
+    return *this;
+}
 
 }
 

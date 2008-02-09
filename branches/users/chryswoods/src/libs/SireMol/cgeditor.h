@@ -205,6 +205,25 @@ public:
     CGStructureEditor& transfer(int i, const CGID &cgid);
     
     CGStructureEditor& transferAll(const CGID &cgid);
+
+    template<class T>
+    T property(const QString &key) const;
+
+    template<class T>
+    T metadata(const QString &metakey) const;
+
+    template<class T>
+    T metadata(const QString &key, const QString &metakey) const;
+
+    template<class T>
+    CGStructureEditor& setProperty(const QString &key, const T &value);
+
+    template<class T>
+    CGStructureEditor& setMetadata(const QString &metakey, const T &value);
+    
+    template<class T>
+    CGStructureEditor& setMetadata(const QString &key, const QString &metakey,
+                                   const T &value);
     
     CutGroup commit() const;
     
@@ -214,6 +233,116 @@ private:
     /** Unique ID number for this CutGroup in the molecule editor */
     quint32 uid;
 };
+
+/** Return the value for this CutGroup of the property at key 'key'.
+    Note that this property *must* be of type CGProperty<T> for
+    this to work!
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+T CGStructureEditor::property(const QString &key) const
+{
+    const QVariant &value = this->getCGProperty(uid, key);
+    return this->_pvt_getProperty<T>(key, value);
+}
+
+/** Return the value for this CutGroup of the metadata at metakey 'metakey'.
+    Note that this property *must* be of type CGProperty<T> for
+    this to work!
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+T CGStructureEditor::metadata(const QString &metakey) const
+{
+    const QVariant &value = this->getCGMetadata(uid, metakey);
+    return this->_pvt_getMetadata<T>(metakey, value);
+}
+
+/** Return the value for this CutGroup of the metadata at metakey 'metakey'
+    for the property at key 'key'.
+    
+    Note that this property *must* be of type CGProperty<T> for
+    this to work!
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+T CGStructureEditor::metadata(const QString &key, 
+                              const QString &metakey) const
+{
+    const QVariant &value = this->getCGMetadata(uid, key, metakey);
+    return this->_pvt_getMetadata<T>(key, metakey, value);
+}
+
+/** Set the property at key 'key' to have the value 'value' for this CutGroup.
+    Note that an exception will be thrown if an existing property for
+    this key is not of type CGProperty<T>
+
+    \throw SireError::invalid_cast
+*/
+template<class T>
+CGStructureEditor& CGStructureEditor::setProperty(const QString &key, 
+                                                  const T &value)
+{
+    this->assertValidCutGroup(uid);
+
+    //create space for this property
+    this->_pvt_createSpaceForProperty< CGProperty<T> >(key);
+    
+    //now set the value of the property
+    this->_pvt_setCGProperty(uid, key, QVariant(value));
+    
+    return *this;
+}
+
+/** Set the metadata at metakey 'metakey' to have the value 'value' for
+    this CutGroup. Note that an exception will be thrown if an existing 
+    property for this metakey is not of type CGProperty<T>
+    
+    \throw SireError::invalid_cast
+*/
+template<class T>
+CGStructureEditor& CGStructureEditor::setMetadata(const QString &metakey,
+                                                  const T &value)
+{
+    this->assertValidCutGroup(uid);
+    
+    //create space for this metadata
+    this->_pvt_createSpaceForMetadata< CGProperty<T> >(metakey);
+    
+    //now set the value of this metadata
+    this->_pvt_setAtomMetadata(uid, metakey, QVariant(value));
+    
+    return *this;
+}
+
+/** Set the metadata at metakey 'metakey' for the property at
+    key 'key' to have the value 'value' for
+    this CutGroup. Note that an exception will be thrown if an existing 
+    property for this metakey is not of type CGProperty<T>
+    
+    \throw SireError::invalid_cast
+*/
+template<class T>
+CGStructureEditor& CGStructureEditor::setMetadata(const QString &key, 
+                                                  const QString &metakey,
+                                                  const T &value)
+{
+    this->assertValidCutGroup(uid);
+    
+    //create space for this metadata
+    this->_pvt_createSpaceForMetadata< CGProperty<T> >(key, metakey);
+    
+    //now set the value of this metadata
+    this->_pvt_setAtomMetadata(uid, key, metakey, QVariant(value));
+    
+    return *this;
+}
 
 }
 

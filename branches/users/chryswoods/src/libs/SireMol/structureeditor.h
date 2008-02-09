@@ -31,6 +31,8 @@
 
 #include "molinfo.h"
 
+#include "SireBase/properties.h"
+
 #include <boost/shared_ptr.hpp>
 #include <boost/tuple/tuple.hpp>
 
@@ -272,6 +274,104 @@ protected:
     ChainStructureEditor addChain();
     SegStructureEditor addSegment();
 
+    template<class T>
+    T _pvt_getProperty(const QString &key, const QVariant &value) const;
+    
+    template<class T>
+    T _pvt_getMetadata(const QString &metakey, const QVariant &value) const;
+    
+    template<class T>
+    T _pvt_getMetadata(const QString &key, const QString &metakey,
+                       const QVariant &value) const;
+
+    const QVariant& getAtomProperty(quint32 uid, const QString &key) const;
+    const QVariant& getResProperty(quint32 uid, const QString &key) const;
+    const QVariant& getCGProperty(quint32 uid, const QString &key) const;
+    const QVariant& getChainProperty(quint32 uid, const QString &key) const;
+    const QVariant& getSegProperty(quint32 uid, const QString &key) const;
+
+    const QVariant& getAtomMetadata(quint32 uid,
+                                    const QString &metakey) const;
+    const QVariant& getResMetadata(quint32 uid,
+                                   const QString &metakey) const;
+    const QVariant& getCGMetadata(quint32 uid,
+                                  const QString &metakey) const;
+    const QVariant& getChainMetadata(quint32 uid,
+                                     const QString &metakey) const;
+    const QVariant& getSegMetadata(quint32 uid,
+                                   const QString &metakey) const;
+
+    const QVariant& getAtomMetadata(quint32 uid, const QString &key,
+                                    const QString &metakey) const;
+    const QVariant& getResMetadata(quint32 uid, const QString &key,
+                                   const QString &metakey) const;
+    const QVariant& getCGMetadata(quint32 uid, const QString &key,
+                                  const QString &metakey) const;
+    const QVariant& getChainMetadata(quint32 uid, const QString &key,
+                                     const QString &metakey) const;
+    const QVariant& getSegMetadata(quint32 uid, const QString &key,
+                                   const QString &metakey) const;
+
+    template<class T>
+    void _pvt_createSpaceForProperty(const QString &key);
+
+    template<class T>
+    void _pvt_createSpaceForMetadata(const QString &metakey);
+    
+    template<class T>
+    void _pvt_createSpaceForMetadata(const QString &key,
+                                     const QString &metakey);
+
+    void _pvt_setAtomProperty(quint32 uid, const QString &key, 
+                              const QVariant &value);
+
+    void _pvt_setAtomMetadata(quint32 uid, const QString &metakey,
+                              const QVariant &value);
+                              
+    void _pvt_setAtomMetadata(quint32 uid, const QString &key,
+                              const QString &metakey,
+                              const QVariant &value);
+
+    void _pvt_setResProperty(quint32 uid, const QString &key, 
+                             const QVariant &value);
+
+    void _pvt_setResMetadata(quint32 uid, const QString &metakey,
+                             const QVariant &value);
+                              
+    void _pvt_setResMetadata(quint32 uid, const QString &key,
+                             const QString &metakey,
+                             const QVariant &value);
+
+    void _pvt_setCGProperty(quint32 uid, const QString &key, 
+                            const QVariant &value);
+
+    void _pvt_setCGMetadata(quint32 uid, const QString &metakey,
+                            const QVariant &value);
+                              
+    void _pvt_setCGMetadata(quint32 uid, const QString &key,
+                            const QString &metakey,
+                            const QVariant &value);
+
+    void _pvt_setChainProperty(quint32 uid, const QString &key, 
+                               const QVariant &value);
+
+    void _pvt_setChainMetadata(quint32 uid, const QString &metakey,
+                               const QVariant &value);
+                              
+    void _pvt_setChainMetadata(quint32 uid, const QString &key,
+                               const QString &metakey,
+                               const QVariant &value);
+
+    void _pvt_setSegProperty(quint32 uid, const QString &key, 
+                             const QVariant &value);
+
+    void _pvt_setSegMetadata(quint32 uid, const QString &metakey,
+                             const QVariant &value);
+                              
+    void _pvt_setSegMetadata(quint32 uid, const QString &key,
+                             const QString &metakey,
+                             const QVariant &value);
+                              
     void assertValidAtom(quint32 uid) const;
     void assertValidCutGroup(quint32 uid) const;
     void assertValidResidue(quint32 uid) const;
@@ -282,12 +382,156 @@ private:
     AtomSelection extractAtomSelection(
                         const QVector< QVector<QVariant> > &values) const;
 
+    Properties& _pvt_properties();
+
+    static void _pvt_invalidPropertyCast(const QString &key, 
+                                         const QString &current_type,
+                                         const QString &required_type);
+
+    static void _pvt_invalidMetadataCast(const QString &metakey,
+                                         const QString &current_type,
+                                         const QString &required_type);
+                                         
+    static void _pvt_invalidMetadataCast(const QString &key,
+                                         const QString &metakey,
+                                         const QString &current_type,
+                                         const QString &required_type);
+
     /** This class is explicitly shared - this means that each copy
         edits the *same* underlying data - this is to prevent excess
         copying as small incremental changes are made to the same
         molecule */
     boost::shared_ptr<detail::EditMolData> d;
 };
+
+/** Protected template function used by the property() functions */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+T StructureEditor::_pvt_getProperty(const QString &key, 
+                                    const QVariant &value) const
+{
+    if (value.isValid())
+    {
+        if (not value.canConvert<T>())
+            StructureEditor::_pvt_invalidPropertyCast(
+                                                key, value.typeName(),
+                                                T::typeName());
+                                                
+        return value.value<T>();
+    }
+    else
+        return T();
+}
+
+/** Protected template function used by the metadata() functions */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+T StructureEditor::_pvt_getMetadata(const QString &metakey, 
+                                    const QVariant &value) const
+{
+    if (value.isValid())
+    {
+        if (not value.canConvert<T>())
+            StructureEditor::_pvt_invalidMetadataCast(
+                                                metakey, value.typeName(),
+                                                T::typeName());
+                                                
+        return value.value<T>();
+    }
+    else
+        return T();
+}
+
+/** Protected template function used by the metadata() functions */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+T StructureEditor::_pvt_getMetadata(const QString &key, const QString &metakey, 
+                                    const QVariant &value) const
+{
+    if (value.isValid())
+    {
+        if (not value.canConvert<T>())
+            StructureEditor::_pvt_invalidMetadataCast(
+                                                key, metakey, value.typeName(),
+                                                T::typeName());
+                                                
+        return value.value<T>();
+    }
+    else
+        return T();
+}
+
+/** Protected template function used by the setProperty functions */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void StructureEditor::_pvt_createSpaceForProperty(const QString &key)
+{
+    Properties &props = this->_pvt_properties();
+    Properties::const_iterator it = props.constFind(key);
+    
+    if (it != props.constEnd())
+    {
+        //a property of this name already exists - ensure that
+        //it is of the correct type!
+        if (dynamic_cast<const T*>( &(it->constData()) ) == 0)
+            StructureEditor::_pvt_invalidPropertyCast(
+                                               key, it.value().what(),
+                                               T::typeName());
+    }
+    else
+        //create a property of this type as a placeholder
+        //(necessary for casting reasons)
+        props.setProperty( key, T() );
+}
+
+/** Protected template function used by the setMetadata functions */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void StructureEditor::_pvt_createSpaceForMetadata(const QString &metakey)
+{
+    Properties &props = this->_pvt_properties();
+    
+    if (props.hasMetadata(metakey))
+    {
+        const SireBase::Property &metadata = props.metadata(metakey);
+    
+        //a property of this name already exists - ensure that
+        //it is of the correct type!
+        if (dynamic_cast<const T*>( &(metadata.constData()) ) == 0)
+            StructureEditor::_pvt_invalidMetadataCast(
+                                              metakey, metadata->what(),
+                                              T::typeName());
+    }
+    else
+        //create some metadata of this type as a placeholder
+        //(necessary for casting reasons)
+        props.setMetadata( metakey, T() );
+}
+
+/** Protected template function used by the setMetadata functions */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void StructureEditor::_pvt_createSpaceForMetadata(const QString &key,
+                                                  const QString &metakey)
+{
+    Properties &props = this->_pvt_properties();
+    
+    if (props.hasMetadata(key, metakey))
+    {
+        const SireBase::Property &metadata = props.metadata(key, metakey);
+    
+        //a property of this name already exists - ensure that
+        //it is of the correct type!
+        if (dynamic_cast<const T*>( &(metadata.constData()) ) == 0)
+            StructureEditor::_pvt_invalidMetadataCast(
+                                        key, metakey, metadata->what(),
+                                        T::typeName());
+    }
+    else
+        //create some metadata of this type as a placeholder
+        //(necessary for casting reasons)
+        props.setMetadata( key, metakey, T() );
+}
 
 /** This class is used to query a StructureEditor (to map
     from an ID to the index)

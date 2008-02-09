@@ -212,6 +212,25 @@ public:
     
     ResStructureEditor& transferAll(const ResID &resid);
 
+    template<class T>
+    T property(const QString &key) const;
+
+    template<class T>
+    T metadata(const QString &metakey) const;
+
+    template<class T>
+    T metadata(const QString &key, const QString &metakey) const;
+
+    template<class T>
+    ResStructureEditor& setProperty(const QString &key, const T &value);
+
+    template<class T>
+    ResStructureEditor& setMetadata(const QString &metakey, const T &value);
+    
+    template<class T>
+    ResStructureEditor& setMetadata(const QString &key, const QString &metakey,
+                                    const T &value);
+
     Residue commit() const;
     
     operator Residue() const;
@@ -220,6 +239,116 @@ private:
     /** The unique ID number of this residue in this editor */
     quint32 uid;
 };
+
+/** Return the value for this residue of the property at key 'key'.
+    Note that this property *must* be of type ResProperty<T> for
+    this to work!
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+T ResStructureEditor::property(const QString &key) const
+{
+    const QVariant &value = this->getResProperty(uid, key);
+    return this->_pvt_getProperty<T>(key, value);
+}
+
+/** Return the value for this residue of the metadata at metakey 'metakey'.
+    Note that this property *must* be of type ResProperty<T> for
+    this to work!
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+T ResStructureEditor::metadata(const QString &metakey) const
+{
+    const QVariant &value = this->getResMetadata(uid, metakey);
+    return this->_pvt_getMetadata<T>(metakey, value);
+}
+
+/** Return the value for this residue of the metadata at metakey 'metakey'
+    for the property at key 'key'.
+    
+    Note that this property *must* be of type ResProperty<T> for
+    this to work!
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+T ResStructureEditor::metadata(const QString &key, 
+                               const QString &metakey) const
+{
+    const QVariant &value = this->getResMetadata(uid, key, metakey);
+    return this->_pvt_getMetadata<T>(key, metakey, value);
+}
+
+/** Set the property at key 'key' to have the value 'value' for this residue.
+    Note that an exception will be thrown if an existing property for
+    this key is not of type ResProperty<T>
+
+    \throw SireError::invalid_cast
+*/
+template<class T>
+ResStructureEditor& ResStructureEditor::setProperty(const QString &key, 
+                                                    const T &value)
+{
+    this->assertValidResidue(uid);
+
+    //create space for this property
+    this->_pvt_createSpaceForProperty< ResProperty<T> >(key);
+    
+    //now set the value of the property
+    this->_pvt_setResProperty(uid, key, QVariant(value));
+    
+    return *this;
+}
+
+/** Set the metadata at metakey 'metakey' to have the value 'value' for
+    this residue. Note that an exception will be thrown if an existing 
+    property for this metakey is not of type ResProperty<T>
+    
+    \throw SireError::invalid_cast
+*/
+template<class T>
+ResStructureEditor& ResStructureEditor::setMetadata(const QString &metakey,
+                                                    const T &value)
+{
+    this->assertValidResidue(uid);
+    
+    //create space for this metadata
+    this->_pvt_createSpaceForMetadata< ResProperty<T> >(metakey);
+    
+    //now set the value of this metadata
+    this->_pvt_setAtomMetadata(uid, metakey, QVariant(value));
+    
+    return *this;
+}
+
+/** Set the metadata at metakey 'metakey' for the property at
+    key 'key' to have the value 'value' for
+    this residue. Note that an exception will be thrown if an existing 
+    property for this metakey is not of type ResProperty<T>
+    
+    \throw SireError::invalid_cast
+*/
+template<class T>
+ResStructureEditor& ResStructureEditor::setMetadata(const QString &key, 
+                                                    const QString &metakey,
+                                                    const T &value)
+{
+    this->assertValidResidue(uid);
+    
+    //create space for this metadata
+    this->_pvt_createSpaceForMetadata< ResProperty<T> >(key, metakey);
+    
+    //now set the value of this metadata
+    this->_pvt_setAtomMetadata(uid, key, metakey, QVariant(value));
+    
+    return *this;
+}
 
 }
 

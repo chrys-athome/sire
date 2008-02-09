@@ -196,6 +196,25 @@ public:
     AtomStructureEditor& reparent(SegIdx segidx);
     AtomStructureEditor& reparent(const SegID &segid);
 
+    template<class T>
+    T property(const QString &key) const;
+
+    template<class T>
+    T metadata(const QString &metakey) const;
+
+    template<class T>
+    T metadata(const QString &key, const QString &metakey) const;
+
+    template<class T>
+    AtomStructureEditor& setProperty(const QString &key, const T &value);
+
+    template<class T>
+    AtomStructureEditor& setMetadata(const QString &metakey, const T &value);
+    
+    template<class T>
+    AtomStructureEditor& setMetadata(const QString &key, const QString &metakey,
+                                     const T &value);
+
     Atom commit() const;
 
     operator Atom() const;
@@ -207,6 +226,116 @@ private:
         to keep track of if it didn't have a private, non-editable ID */
     quint32 uid;
 };
+
+/** Return the value for this atom of the property at key 'key'.
+    Note that this property *must* be of type AtomProperty<T> for
+    this to work!
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+T AtomStructureEditor::property(const QString &key) const
+{
+    const QVariant &value = this->getAtomProperty(uid, key);
+    return this->_pvt_getProperty<T>(key, value);
+}
+
+/** Return the value for this atom of the metadata at metakey 'metakey'.
+    Note that this property *must* be of type AtomProperty<T> for
+    this to work!
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+T AtomStructureEditor::metadata(const QString &metakey) const
+{
+    const QVariant &value = this->getAtomMetadata(uid, metakey);
+    return this->_pvt_getMetadata<T>(metakey, value);
+}
+
+/** Return the value for this atom of the metadata at metakey 'metakey'
+    for the property at key 'key'.
+    
+    Note that this property *must* be of type AtomProperty<T> for
+    this to work!
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+T AtomStructureEditor::metadata(const QString &key, 
+                                const QString &metakey) const
+{
+    const QVariant &value = this->getAtomMetadata(uid, key, metakey);
+    return this->_pvt_getMetadata<T>(key, metakey, value);
+}
+
+/** Set the property at key 'key' to have the value 'value' for this atom.
+    Note that an exception will be thrown if an existing property for
+    this key is not of type AtomProperty<T>
+
+    \throw SireError::invalid_cast
+*/
+template<class T>
+AtomStructureEditor& AtomStructureEditor::setProperty(const QString &key, 
+                                                      const T &value)
+{
+    this->assertValidAtom(uid);
+
+    //create space for this property
+    this->_pvt_createSpaceForProperty< AtomProperty<T> >(key);
+    
+    //now set the value of the property
+    this->_pvt_setAtomProperty(uid, key, QVariant(value));
+    
+    return *this;
+}
+
+/** Set the metadata at metakey 'metakey' to have the value 'value' for
+    this atom. Note that an exception will be thrown if an existing 
+    property for this metakey is not of type AtomProperty<T>
+    
+    \throw SireError::invalid_cast
+*/
+template<class T>
+AtomStructureEditor& AtomStructureEditor::setMetadata(const QString &metakey,
+                                                      const T &value)
+{
+    this->assertValidAtom(uid);
+    
+    //create space for this metadata
+    this->_pvt_createSpaceForMetadata< AtomProperty<T> >(metakey);
+    
+    //now set the value of this metadata
+    this->_pvt_setAtomMetadata(uid, metakey, QVariant(value));
+    
+    return *this;
+}
+
+/** Set the metadata at metakey 'metakey' for the property at
+    key 'key' to have the value 'value' for
+    this atom. Note that an exception will be thrown if an existing 
+    property for this metakey is not of type AtomProperty<T>
+    
+    \throw SireError::invalid_cast
+*/
+template<class T>
+AtomStructureEditor& AtomStructureEditor::setMetadata(const QString &key, 
+                                                      const QString &metakey,
+                                                      const T &value)
+{
+    this->assertValidAtom(uid);
+    
+    //create space for this metadata
+    this->_pvt_createSpaceForMetadata< AtomProperty<T> >(key, metakey);
+    
+    //now set the value of this metadata
+    this->_pvt_setAtomMetadata(uid, key, metakey, QVariant(value));
+    
+    return *this;
+}
 
 }
 

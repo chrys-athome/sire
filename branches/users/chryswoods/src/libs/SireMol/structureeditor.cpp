@@ -77,6 +77,7 @@
 #include <QDebug>
 
 #include "SireMol/errors.h"
+#include "SireBase/errors.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -4252,4 +4253,586 @@ Properties StructureEditor::properties() const
     }
     
     return updated_properties;
+}
+
+/** Return the value of the property at key 'key' for the atom
+    identified by the UID 'uid'
+    
+    \throw SireMol::missing_atom
+    \throw SireBase::missing_property
+*/
+const QVariant& StructureEditor::getAtomProperty(quint32 uid, 
+                                                 const QString &key) const
+{
+    const EditAtomData &atom = d->atom(uid);
+
+    QHash<QString,QVariant>::const_iterator it = atom.properties.constFind(key);
+                                
+    if (it == atom.properties.constEnd())
+        throw SireBase::missing_property( QObject::tr(
+            "There is no AtomProperty identified by the key '%1'. "
+            "Available AtomProperties are [%2].")
+                .arg(key, QStringList(
+                            atom.properties.keys()).join(", ")), CODELOC );
+                
+    return it.value();
+}
+
+/** Return the value of the property at key 'key' for the residue
+    identified by the UID 'uid'
+    
+    \throw SireMol::missing_residue
+    \throw SireBase::missing_property
+*/
+const QVariant& StructureEditor::getResProperty(quint32 uid, 
+                                                const QString &key) const
+{
+    const EditResData &residue = d->residue(uid);
+
+    QHash<QString,QVariant>::const_iterator it = residue.properties.constFind(key);
+                                
+    if (it == residue.properties.constEnd())
+        throw SireBase::missing_property( QObject::tr(
+            "There is no ResProperty identified by the key '%1'. "
+            "Available ResProperties are [%2].")
+                .arg(key, QStringList(
+                            residue.properties.keys()).join(", ")), CODELOC );
+                
+    return it.value();
+}
+
+/** Return the value of the property at key 'key' for the CutGroup
+    identified by the UID 'uid'
+    
+    \throw SireMol::missing_cutgroup
+    \throw SireBase::missing_property
+*/
+const QVariant& StructureEditor::getCGProperty(quint32 uid,
+                                               const QString &key) const
+{
+    const EditCGData &cgroup = d->cutGroup(uid);
+
+    QHash<QString,QVariant>::const_iterator it = cgroup.properties.constFind(key);
+                                
+    if (it == cgroup.properties.constEnd())
+        throw SireBase::missing_property( QObject::tr(
+            "There is no CGProperty identified by the key '%1'. "
+            "Available CGProperties are [%2].")
+                .arg(key, QStringList(
+                            cgroup.properties.keys()).join(", ")), CODELOC );
+                
+    return it.value();
+}
+
+/** Return the value of the property at key 'key' for the chain
+    identified by the UID 'uid'
+    
+    \throw SireMol::missing_chain
+    \throw SireBase::missing_property
+*/
+const QVariant& StructureEditor::getChainProperty(quint32 uid, 
+                                                  const QString &key) const
+{
+    const EditChainData &chain = d->chain(uid);
+
+    QHash<QString,QVariant>::const_iterator it = chain.properties.constFind(key);
+                                
+    if (it == chain.properties.constEnd())
+        throw SireBase::missing_property( QObject::tr(
+            "There is no ChainProperty identified by the key '%1'. "
+            "Available ChainProperties are [%2].")
+                .arg(key, QStringList(
+                            chain.properties.keys()).join(", ")), CODELOC );
+                
+    return it.value();
+}
+
+/** Return the value of the property at key 'key' for the segment
+    identified by the UID 'uid'
+    
+    \throw SireMol::missing_segment
+    \throw SireBase::missing_property
+*/
+const QVariant& StructureEditor::getSegProperty(quint32 uid, 
+                                                const QString &key) const
+{
+    const EditSegData &segment = d->segment(uid);
+
+    QHash<QString,QVariant>::const_iterator it = segment.properties.constFind(key);
+                                
+    if (it == segment.properties.constEnd())
+        throw SireBase::missing_property( QObject::tr(
+            "There is no SegProperty identified by the key '%1'. "
+            "Available SegProperties are [%2].")
+                .arg(key, QStringList(
+                            segment.properties.keys()).join(", ")), CODELOC );
+                
+    return it.value();
+}
+
+/** Return the value of the metadata at metakey 'metakey' for the atom
+    identified by the UID 'uid'
+    
+    \throw SireMol::missing_atom
+    \throw SireBase::missing_property
+*/
+const QVariant& StructureEditor::getAtomMetadata(quint32 uid, 
+                                                 const QString &metakey) const
+{
+    const EditAtomData &atom = d->atom(uid);
+
+    QHash<QString,QVariant>::const_iterator 
+                        it = atom.molecule_metadata.constFind(metakey);
+                                
+    if (it == atom.molecule_metadata.constEnd())
+        throw SireBase::missing_property( QObject::tr(
+            "There is no AtomProperty metadata identified by the metakey '%1'. "
+            "Available AtomProperties are [%2].")
+                .arg(metakey, QStringList(
+                            atom.molecule_metadata.keys()).join(", ")), CODELOC );
+                
+    return it.value();
+}
+
+/** Return the value of the metadata at metakey 'metakey' for the residue
+    identified by the UID 'uid'
+    
+    \throw SireMol::missing_residue
+    \throw SireBase::missing_property
+*/
+const QVariant& StructureEditor::getResMetadata(quint32 uid, 
+                                                const QString &metakey) const
+{
+    const EditResData &residue = d->residue(uid);
+
+    QHash<QString,QVariant>::const_iterator 
+                           it = residue.molecule_metadata.constFind(metakey);
+                                
+    if (it == residue.molecule_metadata.constEnd())
+        throw SireBase::missing_property( QObject::tr(
+            "There is no ResProperty metadata identified by the metakey '%1'. "
+            "Available ResProperties are [%2].")
+                .arg(metakey, QStringList(
+                            residue.molecule_metadata.keys()).join(", ")), CODELOC );
+                
+    return it.value();
+}
+
+/** Return the value of the metadata at metakey 'metakey' for the CutGroup
+    identified by the UID 'uid'
+    
+    \throw SireMol::missing_cutgroup
+    \throw SireBase::missing_property
+*/
+const QVariant& StructureEditor::getCGMetadata(quint32 uid,
+                                               const QString &metakey) const
+{
+    const EditCGData &cgroup = d->cutGroup(uid);
+
+    QHash<QString,QVariant>::const_iterator 
+                            it = cgroup.molecule_metadata.constFind(metakey);
+                                
+    if (it == cgroup.molecule_metadata.constEnd())
+        throw SireBase::missing_property( QObject::tr(
+            "There is no CGProperty metadata identified by the metakey '%1'. "
+            "Available CGProperties are [%2].")
+                .arg(metakey, QStringList(
+                            cgroup.molecule_metadata.keys()).join(", ")), CODELOC );
+                
+    return it.value();
+}
+
+/** Return the value of the metadata at metakey 'metakey' for the chain
+    identified by the UID 'uid'
+    
+    \throw SireMol::missing_chain
+    \throw SireBase::missing_property
+*/
+const QVariant& StructureEditor::getChainMetadata(quint32 uid, 
+                                                  const QString &metakey) const
+{
+    const EditChainData &chain = d->chain(uid);
+
+    QHash<QString,QVariant>::const_iterator 
+                        it = chain.molecule_metadata.constFind(metakey);
+                                
+    if (it == chain.molecule_metadata.constEnd())
+        throw SireBase::missing_property( QObject::tr(
+            "There is no ChainProperty metadata identified by the metakey '%1'. "
+            "Available ChainProperties are [%2].")
+                .arg(metakey, QStringList(
+                            chain.molecule_metadata.keys()).join(", ")), CODELOC );
+                
+    return it.value();
+}
+
+/** Return the value of the metadata at metakey 'metakey' for the segment
+    identified by the UID 'uid'
+    
+    \throw SireMol::missing_segment
+    \throw SireBase::missing_property
+*/
+const QVariant& StructureEditor::getSegMetadata(quint32 uid, 
+                                                const QString &metakey) const
+{
+    const EditSegData &segment = d->segment(uid);
+
+    QHash<QString,QVariant>::const_iterator 
+                        it = segment.molecule_metadata.constFind(metakey);
+                                
+    if (it == segment.molecule_metadata.constEnd())
+        throw SireBase::missing_property( QObject::tr(
+            "There is no SegProperty metadata identified by the metakey '%1'. "
+            "Available SegProperties are [%2].")
+                .arg(metakey, QStringList(
+                            segment.molecule_metadata.keys()).join(", ")), CODELOC );
+                
+    return it.value();
+}
+
+/** Return the value of the metadata at metakey 'metakey' for the 
+    property at key 'key' for the atom identified by the UID 'uid'
+    
+    \throw SireMol::missing_atom
+    \throw SireBase::missing_property
+*/
+const QVariant& StructureEditor::getAtomMetadata(quint32 uid, const QString &key,
+                                                 const QString &metakey) const
+{
+    const EditAtomData &atom = d->atom(uid);
+
+    QHash< QString,QHash<QString,QVariant> >::const_iterator
+                        it2 = atom.property_metadata.constFind(key);
+                        
+    if (it2 == atom.property_metadata.constEnd())
+        throw SireBase::missing_property( QObject::tr(
+            "There is no metadata for the property at key '%1'. Available "
+            "atom metadata for this property is [%2].")
+                .arg(key, QStringList(
+                            atom.property_metadata.keys()).join(", ")), CODELOC );
+
+    QHash<QString,QVariant>::const_iterator 
+                        it = it2->constFind(metakey);
+                                
+    if (it == it2->constEnd())
+        throw SireBase::missing_property( QObject::tr(
+            "There is no AtomProperty metadata for the property '%1' "
+            "identified by the metakey '%2'. "
+            "Available AtomProperties are [%3].")
+                .arg(key, metakey, 
+                     QStringList(it2->keys()).join(", ")), CODELOC );
+                
+    return it.value();
+}
+
+/** Return the value of the metadata at metakey 'metakey' for the 
+    property at key 'key' for the residue identified by the UID 'uid'
+    
+    \throw SireMol::missing_residue
+    \throw SireBase::missing_property
+*/
+const QVariant& StructureEditor::getResMetadata(quint32 uid, const QString &key,
+                                                const QString &metakey) const
+{
+    const EditResData &residue = d->residue(uid);
+
+    QHash< QString,QHash<QString,QVariant> >::const_iterator
+                        it2 = residue.property_metadata.constFind(key);
+                        
+    if (it2 == residue.property_metadata.constEnd())
+        throw SireBase::missing_property( QObject::tr(
+            "There is no metadata for the property at key '%1'. Available "
+            "residue metadata for this property is [%2].")
+                .arg(key, QStringList(
+                            residue.property_metadata.keys()).join(", ")), CODELOC );
+
+    QHash<QString,QVariant>::const_iterator 
+                        it = it2->constFind(metakey);
+                                
+    if (it == it2->constEnd())
+        throw SireBase::missing_property( QObject::tr(
+            "There is no ResProperty metadata for the property '%1' "
+            "identified by the metakey '%2'. "
+            "Available ResProperties are [%3].")
+                .arg(key, metakey, 
+                     QStringList(it2->keys()).join(", ")), CODELOC );
+                
+    return it.value();
+}
+
+/** Return the value of the metadata at metakey 'metakey' for the 
+    property at key 'key' for the CutGroup identified by the UID 'uid'
+    
+    \throw SireMol::missing_cutgroup
+    \throw SireBase::missing_property
+*/
+const QVariant& StructureEditor::getCGMetadata(quint32 uid, const QString &key,
+                                               const QString &metakey) const
+{
+    const EditCGData &cgroup = d->cutGroup(uid);
+
+    QHash< QString,QHash<QString,QVariant> >::const_iterator
+                        it2 = cgroup.property_metadata.constFind(key);
+                        
+    if (it2 == cgroup.property_metadata.constEnd())
+        throw SireBase::missing_property( QObject::tr(
+            "There is no metadata for the property at key '%1'. Available "
+            "CutGroup metadata for this property is [%2].")
+                .arg(key, QStringList(
+                            cgroup.property_metadata.keys()).join(", ")), CODELOC );
+
+    QHash<QString,QVariant>::const_iterator 
+                        it = it2->constFind(metakey);
+                                
+    if (it == it2->constEnd())
+        throw SireBase::missing_property( QObject::tr(
+            "There is no CGProperty metadata for the property '%1' "
+            "identified by the metakey '%2'. "
+            "Available CGProperties are [%3].")
+                .arg(key, metakey, 
+                     QStringList(it2->keys()).join(", ")), CODELOC );
+                
+    return it.value();
+}
+
+/** Return the value of the metadata at metakey 'metakey' for the 
+    property at key 'key' for the chain identified by the UID 'uid'
+    
+    \throw SireMol::missing_chain
+    \throw SireBase::missing_property
+*/
+const QVariant& StructureEditor::getChainMetadata(quint32 uid, const QString &key,
+                                                  const QString &metakey) const
+{
+    const EditChainData &chain = d->chain(uid);
+
+    QHash< QString,QHash<QString,QVariant> >::const_iterator
+                        it2 = chain.property_metadata.constFind(key);
+                        
+    if (it2 == chain.property_metadata.constEnd())
+        throw SireBase::missing_property( QObject::tr(
+            "There is no metadata for the property at key '%1'. Available "
+            "chain metadata for this property is [%2].")
+                .arg(key, QStringList(
+                            chain.property_metadata.keys()).join(", ")), CODELOC );
+
+    QHash<QString,QVariant>::const_iterator 
+                        it = it2->constFind(metakey);
+                                
+    if (it == it2->constEnd())
+        throw SireBase::missing_property( QObject::tr(
+            "There is no ChainProperty metadata for the property '%1' "
+            "identified by the metakey '%2'. "
+            "Available ChainProperties are [%3].")
+                .arg(key, metakey, 
+                     QStringList(it2->keys()).join(", ")), CODELOC );
+                
+    return it.value();
+}
+
+/** Return the value of the metadata at metakey 'metakey' for the 
+    property at key 'key' for the segment identified by the UID 'uid'
+    
+    \throw SireMol::missing_segment
+    \throw SireBase::missing_property
+*/
+const QVariant& StructureEditor::getSegMetadata(quint32 uid, const QString &key,
+                                                const QString &metakey) const
+{
+    const EditSegData &segment = d->segment(uid);
+
+    QHash< QString,QHash<QString,QVariant> >::const_iterator
+                        it2 = segment.property_metadata.constFind(key);
+                        
+    if (it2 == segment.property_metadata.constEnd())
+        throw SireBase::missing_property( QObject::tr(
+            "There is no metadata for the property at key '%1'. Available "
+            "segment metadata for this property is [%2].")
+                .arg(key, QStringList(
+                            segment.property_metadata.keys()).join(", ")), CODELOC );
+
+    QHash<QString,QVariant>::const_iterator 
+                        it = it2->constFind(metakey);
+                                
+    if (it == it2->constEnd())
+        throw SireBase::missing_property( QObject::tr(
+            "There is no SegProperty metadata for the property '%1' "
+            "identified by the metakey '%2'. "
+            "Available SegProperties are [%3].")
+                .arg(key, metakey, 
+                     QStringList(it2->keys()).join(", ")), CODELOC );
+                
+    return it.value();
+}
+
+/** Throw an invalid cast exception - used to move this out of template
+    functions */
+void StructureEditor::_pvt_invalidPropertyCast(const QString &key,
+                                               const QString &existing_type,
+                                               const QString &new_type)
+{
+    throw SireError::invalid_cast( QObject::tr(
+        "Cannot cast the property at key %1 into a %2, as it "
+        "is currently a %3.")
+            .arg(key, new_type, existing_type), CODELOC );
+}
+
+/** Protected function used to set the property at key 'key' 
+    of the atom identified by 'uid' to the value 'value'. You
+    *must* have already checked that this a valid thing to do,
+    as this function does *no* error checking! */
+void StructureEditor::_pvt_setAtomProperty(quint32 uid, const QString &key, 
+                                           const QVariant &value)
+{
+    d->atom(uid).properties.insert(key, value);
+}
+
+/** Protected function used to set the metadata at metakey 'metakey' 
+    of the atom identified by 'uid' to the value 'value'. You
+    *must* have already checked that this a valid thing to do,
+    as this function does *no* error checking! */
+void StructureEditor::_pvt_setAtomMetadata(quint32 uid, const QString &metakey,
+                                           const QVariant &value)
+{
+    d->atom(uid).molecule_metadata.insert(metakey, value);
+}
+                          
+/** Protected function used to set the metadata at metakey
+    'metakey' of the property at key 'key' 
+    of the atom identified by 'uid' to the value 'value'. You
+    *must* have already checked that this a valid thing to do,
+    as this function does *no* error checking! */
+void StructureEditor::_pvt_setAtomMetadata(quint32 uid, const QString &key,
+                                           const QString &metakey,
+                                           const QVariant &value)
+{
+    d->atom(uid).property_metadata[key].insert(metakey, value);
+}
+
+/** Protected function used to set the property at key 'key' 
+    of the residue identified by 'uid' to the value 'value'. You
+    *must* have already checked that this a valid thing to do,
+    as this function does *no* error checking! */
+void StructureEditor::_pvt_setResProperty(quint32 uid, const QString &key, 
+                                          const QVariant &value)
+{
+    d->residue(uid).properties.insert(key, value);
+}
+
+/** Protected function used to set the metadata at metakey 'metakey' 
+    of the residue identified by 'uid' to the value 'value'. You
+    *must* have already checked that this a valid thing to do,
+    as this function does *no* error checking! */
+void StructureEditor::_pvt_setResMetadata(quint32 uid, const QString &metakey,
+                                          const QVariant &value)
+{
+    d->residue(uid).molecule_metadata.insert(metakey, value);
+}
+                          
+/** Protected function used to set the metadata at metakey
+    'metakey' of the property at key 'key' 
+    of the residue identified by 'uid' to the value 'value'. You
+    *must* have already checked that this a valid thing to do,
+    as this function does *no* error checking! */
+void StructureEditor::_pvt_setResMetadata(quint32 uid, const QString &key,
+                                          const QString &metakey,
+                                          const QVariant &value)
+{
+    d->residue(uid).property_metadata[key].insert(metakey, value);
+}
+
+/** Protected function used to set the property at key 'key' 
+    of the CutGroup identified by 'uid' to the value 'value'. You
+    *must* have already checked that this a valid thing to do,
+    as this function does *no* error checking! */
+void StructureEditor::_pvt_setCGProperty(quint32 uid, const QString &key, 
+                                         const QVariant &value)
+{
+    d->cutGroup(uid).properties.insert(key, value);
+}
+
+/** Protected function used to set the metadata at metakey 'metakey' 
+    of the CutGroup identified by 'uid' to the value 'value'. You
+    *must* have already checked that this a valid thing to do,
+    as this function does *no* error checking! */
+void StructureEditor::_pvt_setCGMetadata(quint32 uid, const QString &metakey,
+                                         const QVariant &value)
+{
+    d->cutGroup(uid).molecule_metadata.insert(metakey, value);
+}
+                          
+/** Protected function used to set the metadata at metakey
+    'metakey' of the property at key 'key' 
+    of the CutGroup identified by 'uid' to the value 'value'. You
+    *must* have already checked that this a valid thing to do,
+    as this function does *no* error checking! */
+void StructureEditor::_pvt_setCGMetadata(quint32 uid, const QString &key,
+                                         const QString &metakey,
+                                         const QVariant &value)
+{
+    d->cutGroup(uid).property_metadata[key].insert(metakey, value);
+}
+
+/** Protected function used to set the property at key 'key' 
+    of the chain identified by 'uid' to the value 'value'. You
+    *must* have already checked that this a valid thing to do,
+    as this function does *no* error checking! */
+void StructureEditor::_pvt_setChainProperty(quint32 uid, const QString &key, 
+                                            const QVariant &value)
+{
+    d->chain(uid).properties.insert(key, value);
+}
+
+/** Protected function used to set the metadata at metakey 'metakey' 
+    of the chain identified by 'uid' to the value 'value'. You
+    *must* have already checked that this a valid thing to do,
+    as this function does *no* error checking! */
+void StructureEditor::_pvt_setChainMetadata(quint32 uid, const QString &metakey,
+                                            const QVariant &value)
+{
+    d->chain(uid).molecule_metadata.insert(metakey, value);
+}
+                          
+/** Protected function used to set the metadata at metakey
+    'metakey' of the property at key 'key' 
+    of the chain identified by 'uid' to the value 'value'. You
+    *must* have already checked that this a valid thing to do,
+    as this function does *no* error checking! */
+void StructureEditor::_pvt_setChainMetadata(quint32 uid, const QString &key,
+                                            const QString &metakey,
+                                            const QVariant &value)
+{
+    d->chain(uid).property_metadata[key].insert(metakey, value);
+}
+
+/** Protected function used to set the property at key 'key' 
+    of the segment identified by 'uid' to the value 'value'. You
+    *must* have already checked that this a valid thing to do,
+    as this function does *no* error checking! */
+void StructureEditor::_pvt_setSegProperty(quint32 uid, const QString &key, 
+                                          const QVariant &value)
+{
+    d->segment(uid).properties.insert(key, value);
+}
+
+/** Protected function used to set the metadata at metakey 'metakey' 
+    of the segment identified by 'uid' to the value 'value'. You
+    *must* have already checked that this a valid thing to do,
+    as this function does *no* error checking! */
+void StructureEditor::_pvt_setSegMetadata(quint32 uid, const QString &metakey,
+                                          const QVariant &value)
+{
+    d->segment(uid).molecule_metadata.insert(metakey, value);
+}
+                          
+/** Protected function used to set the metadata at metakey
+    'metakey' of the property at key 'key' 
+    of the segment identified by 'uid' to the value 'value'. You
+    *must* have already checked that this a valid thing to do,
+    as this function does *no* error checking! */
+void StructureEditor::_pvt_setSegMetadata(quint32 uid, const QString &key,
+                                           const QString &metakey,
+                                           const QVariant &value)
+{
+    d->segment(uid).property_metadata[key].insert(metakey, value);
 }

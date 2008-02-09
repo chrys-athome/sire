@@ -211,6 +211,25 @@ public:
     ChainStructureEditor& transfer(int i, const ChainID &resid);
     
     ChainStructureEditor& transferAll(const ChainID &chainid);
+
+    template<class T>
+    T property(const QString &key) const;
+
+    template<class T>
+    T metadata(const QString &metakey) const;
+
+    template<class T>
+    T metadata(const QString &key, const QString &metakey) const;
+
+    template<class T>
+    ChainStructureEditor& setProperty(const QString &key, const T &value);
+
+    template<class T>
+    ChainStructureEditor& setMetadata(const QString &metakey, const T &value);
+    
+    template<class T>
+    ChainStructureEditor& setMetadata(const QString &key, const QString &metakey,
+                                      const T &value);
     
     Chain commit() const;
     
@@ -220,6 +239,116 @@ private:
     /** Unique ID to identify this chain in this molecule editor */
     quint32 uid;
 };
+
+/** Return the value for this chain of the property at key 'key'.
+    Note that this property *must* be of type ChainProperty<T> for
+    this to work!
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+T ChainStructureEditor::property(const QString &key) const
+{
+    const QVariant &value = this->getChainProperty(uid, key);
+    return this->_pvt_getProperty<T>(key, value);
+}
+
+/** Return the value for this chain of the metadata at metakey 'metakey'.
+    Note that this property *must* be of type ChainProperty<T> for
+    this to work!
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+T ChainStructureEditor::metadata(const QString &metakey) const
+{
+    const QVariant &value = this->getChainMetadata(uid, metakey);
+    return this->_pvt_getMetadata<T>(metakey, value);
+}
+
+/** Return the value for this chain of the metadata at metakey 'metakey'
+    for the property at key 'key'.
+    
+    Note that this property *must* be of type ChainProperty<T> for
+    this to work!
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class T>
+T ChainStructureEditor::metadata(const QString &key, 
+                                 const QString &metakey) const
+{
+    const QVariant &value = this->getChainMetadata(uid, key, metakey);
+    return this->_pvt_getMetadata<T>(key, metakey, value);
+}
+
+/** Set the property at key 'key' to have the value 'value' for this chain.
+    Note that an exception will be thrown if an existing property for
+    this key is not of type ChainProperty<T>
+
+    \throw SireError::invalid_cast
+*/
+template<class T>
+ChainStructureEditor& ChainStructureEditor::setProperty(const QString &key, 
+                                                  const T &value)
+{
+    this->assertValidChain(uid);
+
+    //create space for this property
+    this->_pvt_createSpaceForProperty< ChainProperty<T> >(key);
+    
+    //now set the value of the property
+    this->_pvt_setChainProperty(uid, key, QVariant(value));
+    
+    return *this;
+}
+
+/** Set the metadata at metakey 'metakey' to have the value 'value' for
+    this chain. Note that an exception will be thrown if an existing 
+    property for this metakey is not of type ChainProperty<T>
+    
+    \throw SireError::invalid_cast
+*/
+template<class T>
+ChainStructureEditor& ChainStructureEditor::setMetadata(const QString &metakey,
+                                                        const T &value)
+{
+    this->assertValidChain(uid);
+    
+    //create space for this metadata
+    this->_pvt_createSpaceForMetadata< ChainProperty<T> >(metakey);
+    
+    //now set the value of this metadata
+    this->_pvt_setAtomMetadata(uid, metakey, QVariant(value));
+    
+    return *this;
+}
+
+/** Set the metadata at metakey 'metakey' for the property at
+    key 'key' to have the value 'value' for
+    this chain. Note that an exception will be thrown if an existing 
+    property for this metakey is not of type ChainProperty<T>
+    
+    \throw SireError::invalid_cast
+*/
+template<class T>
+ChainStructureEditor& ChainStructureEditor::setMetadata(const QString &key, 
+                                                        const QString &metakey,
+                                                        const T &value)
+{
+    this->assertValidChain(uid);
+    
+    //create space for this metadata
+    this->_pvt_createSpaceForMetadata< ChainProperty<T> >(key, metakey);
+    
+    //now set the value of this metadata
+    this->_pvt_setAtomMetadata(uid, key, metakey, QVariant(value));
+    
+    return *this;
+}
 
 }
 
