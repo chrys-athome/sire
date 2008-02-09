@@ -281,7 +281,7 @@ public:
     
     AtomSelection& select(const SegID &segid);
     AtomSelection& deselect(const SegID &segid);
-    AtomSelection& selectOnly(const SegID &segid;
+    AtomSelection& selectOnly(const SegID &segid);
 
     AtomSelection& select(const AtomSelection &selection);
     AtomSelection& deselect(const AtomSelection &selection);
@@ -369,7 +369,7 @@ public:
 
     AtomSelection& unite(const AtomSelection &selection);
 
-    static AtomSelection unite(const QList<AtomSelection> &selections);
+    AtomSelection& unite(const QList<AtomSelection> &selections);
 
     AtomSelection& subtract(AtomIdx atomidx);
     AtomSelection& subtract(CGIdx cgidx);

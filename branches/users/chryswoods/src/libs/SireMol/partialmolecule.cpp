@@ -222,7 +222,10 @@ Atom PartialMolecule::select(AtomIdx atomidx) const
 */
 Atom PartialMolecule::select(const AtomID &atomid) const
 {
-    QVector<AtomIdx> atomidxs = selected_atoms.intersect(atomid).selectedAtoms();
+    AtomSelection selection = selected_atoms;
+    selection.intersect(atomid);
+
+    QVector<AtomIdx> atomidxs = selection.selectedAtoms();
     
     if (atomidxs.isEmpty())
         throw SireMol::missing_atom( QObject::tr(
@@ -248,15 +251,16 @@ Atom PartialMolecule::select(const AtomID &atomid) const
 */
 Selector<Atom> PartialMolecule::selectAll(const AtomID &atomid) const
 {
-    AtomSelection atoms = selected_atoms.intersect(atomid);
+    AtomSelection selection = selected_atoms;
+    selection.intersect(atomid);
     
-    if (atoms.isEmpty())
+    if (selection.isEmpty())
         throw SireMol::missing_atom( QObject::tr(
             "There is no atom that matches the ID %1 in this view "
             "of the molecule called \"%2\".")
                 .arg(atomid.toString(), this->name()), CODELOC );
 
-    return Selector<Atom>(*d, atoms);
+    return Selector<Atom>(*d, selection);
 }
 
 /** Return all of the atoms in this view */

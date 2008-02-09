@@ -112,7 +112,8 @@ ViewsOfMol::ViewsOfMol(const MoleculeData &moldata,
         views = molviews;
         views.at(0).assertCompatibleWith(moldata);
         
-        selected_atoms = AtomSelection::unite(views);
+        selected_atoms = views.at(0);
+        selected_atoms.unite(views);
     }
 }
 
@@ -142,7 +143,8 @@ void ViewsOfMol::setEqualTo(const Selector<T> &selection)
             views.append( selection.at(i).selection() );
         }
         
-        selected_atoms = AtomSelection::unite(views);
+        selected_atoms = views.at(0);
+        selected_atoms.unite(views);
     }
 }
 
@@ -500,7 +502,10 @@ AtomSelection ViewsOfMol::removeAt(int i)
             views.clear();
         }
         else
-            selected_atoms = AtomSelection::unite(views);
+        {
+            selected_atoms = views.at(0);
+            selected_atoms.unite(views);
+        }
     }
 
     return removed_view;
@@ -543,7 +548,10 @@ bool ViewsOfMol::remove(const AtomSelection &view)
                 views.clear();
             }
             else
-                selected_atoms = AtomSelection::unite(views);
+            {
+                selected_atoms = views.at(0);
+                selected_atoms.unite(views);
+            }
             
             return true;
         }
@@ -615,7 +623,8 @@ bool ViewsOfMol::removeAll(const AtomSelection &view)
             }
             else
             {
-                selected_atoms = AtomSelection::unite(views);
+                selected_atoms = views.first();
+                selected_atoms.unite(views);
             }
             
             return true;
@@ -859,15 +868,16 @@ Atom ViewsOfMol::select(const AtomID &atomid) const
 */
 Selector<Atom> ViewsOfMol::selectAll(const AtomID &atomid) const
 {
-    AtomSelection atms = selected_atoms.intersect(atomid);
+    AtomSelection selection = selected_atoms;
+    selection.intersect(atomid);
     
-    if (atms.isEmpty())
+    if (selection.isEmpty())
         throw SireMol::missing_atom( QObject::tr(
             "There are no atoms that match %1 in the views of the "
             "molecule \"%2\".")
                 .arg(atomid.toString(), d->name()), CODELOC );
                 
-    return Selector<Atom>(*d, atms);
+    return Selector<Atom>(*d, selection);
 }
 
 /** Return all of the atoms that are selected by any of the 
