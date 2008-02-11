@@ -57,17 +57,13 @@ friend XMLStream& ::operator<<(XMLStream&, const MGName&);
 friend XMLStream& ::operator>>(XMLStream&, MGName&);
 
 public:
-    MGName() : SireID::Name(), MGID()
-    {}
+    MGName();
+
+    explicit MGName(const QString &name);
     
-    explicit MGName(const QString &name) : SireID::Name(name), MGID()
-    {}
+    MGName(const MGName &other);
     
-    MGName(const MGName &other) : SireID::Name(other), MGID(other)
-    {}
-    
-    ~MGName()
-    {}
+    ~MGName();
     
     static const char* typeName()
     {

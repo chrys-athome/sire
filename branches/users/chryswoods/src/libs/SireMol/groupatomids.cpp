@@ -33,7 +33,30 @@
 #include "segidentifier.h"
 #include "cgidentifier.h"
 
+#include "SireMol/errors.h"
+
 using namespace SireMol;
+
+//////
+////// Implementation of GroupAtomIDBase
+//////
+
+GroupAtomIDBase::GroupAtomIDBase() : AtomID()
+{}
+
+GroupAtomIDBase::GroupAtomIDBase(const GroupAtomIDBase &other)
+                : AtomID(other)
+{}
+
+GroupAtomIDBase::~GroupAtomIDBase()
+{}
+
+void GroupAtomIDBase::throwMissingAtom(const MolInfo&) const
+{
+    throw SireMol::missing_atom( QObject::tr(
+        "There is no atom that matches the ID %1 in the molecule.")
+            .arg(this->toString()), CODELOC );
+}
 
 //////
 ////// Explicitly instantiate the GroupAtomID classes
@@ -43,3 +66,55 @@ template class GroupAtomID<ResID,AtomID>;
 template class GroupAtomID<ChainID,AtomID>;
 template class GroupAtomID<SegID,AtomID>;
 template class GroupAtomID<CGID,AtomID>;
+
+//////
+////// Implementation of operators that create the GroupAtomID classes
+//////
+
+GroupAtomID<ResID,AtomID> SireMol::operator+(const ResID &resid,
+                                             const AtomID &atomid)
+{
+    return GroupAtomID<ResID,AtomID>(resid,atomid);
+}
+
+GroupAtomID<ResID,AtomID> SireMol::operator+(const AtomID &atomid,
+                                             const ResID &resid)
+{
+    return GroupAtomID<ResID,AtomID>(resid,atomid);
+}
+
+GroupAtomID<ChainID,AtomID> SireMol::operator+(const ChainID &chainid,
+                                               const AtomID &atomid)
+{
+    return GroupAtomID<ChainID,AtomID>(chainid,atomid);
+}
+
+GroupAtomID<ChainID,AtomID> SireMol::operator+(const AtomID &atomid,
+                                               const ChainID &chainid)
+{
+    return GroupAtomID<ChainID,AtomID>(chainid,atomid);
+}
+
+GroupAtomID<SegID,AtomID> SireMol::operator+(const SegID &segid,
+                                             const AtomID &atomid)
+{
+    return GroupAtomID<SegID,AtomID>(segid,atomid);
+}
+
+GroupAtomID<SegID,AtomID> SireMol::operator+(const AtomID &atomid,
+                                             const SegID &segid)
+{
+    return GroupAtomID<SegID,AtomID>(segid,atomid);
+}
+
+GroupAtomID<CGID,AtomID> SireMol::operator+(const CGID &cgid,
+                                            const AtomID &atomid)
+{
+    return GroupAtomID<CGID,AtomID>(cgid,atomid);
+}
+
+GroupAtomID<CGID,AtomID> SireMol::operator+(const AtomID &atomid,
+                                            const CGID &cgid)
+{
+    return GroupAtomID<CGID,AtomID>(cgid,atomid);
+}

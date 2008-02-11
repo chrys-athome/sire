@@ -41,7 +41,39 @@
 #include "mover.hpp"
 #include "selector.hpp"
 
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
 using namespace SireMol;
+using namespace SireStream;
+
+RegisterMetaType<Molecule> r_mol;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
+                                       const Molecule &mol)
+{
+    writeHeader(ds, r_mol, 1);
+    ds << static_cast<const MoleculeView&>(mol);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
+                                       Molecule &mol)
+{
+    VersionID v = readHeader(ds, r_mol);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<MoleculeView&>(mol);
+    }
+    else
+        throw version_error(v, "1", r_mol, CODELOC);
+        
+    return ds;
+}
 
 /** Null constructor */
 Molecule::Molecule() : MoleculeView()

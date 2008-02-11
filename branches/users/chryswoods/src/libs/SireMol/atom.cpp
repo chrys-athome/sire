@@ -251,6 +251,28 @@ bool Atom::hasMetadata(const PropertyName &key,
     return d->hasMetadataOfType<AtomProp>(key, metakey);
 }
 
+/** Return the keys of all AtomProperty properties */
+QStringList Atom::propertyKeys() const
+{
+    return d->properties().propertyKeysOfType<AtomProp>();
+}
+
+/** Return the metakeys of all AtomProperty metadata */
+QStringList Atom::metadataKeys() const
+{
+    return d->properties().metadataKeysOfType<AtomProp>();
+}
+
+/** Return the metakeys of all AtomProperty metadata for 
+    the property at key 'key'
+    
+    \throw SireBase::missing_property
+*/
+QStringList Atom::metadataKeys(const PropertyName &key) const
+{
+    return d->properties().metadataKeysOfType<AtomProp>(key);
+}
+
 /** Assert that this atom has an AtomProperty at key 'key'
 
     \throw SireBase::missing_property

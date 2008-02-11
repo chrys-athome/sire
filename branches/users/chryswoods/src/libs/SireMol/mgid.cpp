@@ -27,6 +27,7 @@
 \*********************************************/
 
 #include "mgid.h"
+#include "mgname.h"
 #include "mgnum.h"
 #include "molgroups.h"
 
@@ -36,6 +37,35 @@
 #include "tostring.h"
 
 using namespace SireMol;
+
+////////
+//////// Implementation of MGID
+////////
+
+MGID::MGID() : SireID::ID()
+{}
+
+MGID::MGID(const MGID &other) : SireID::ID(other)
+{}
+
+MGID::~MGID()
+{}
+
+////////
+//////// Implementation of MGName
+////////
+
+MGName::MGName() : SireID::Name(), MGID()
+{}
+
+MGName::MGName(const QString &name) : SireID::Name(name), MGID()
+{}
+
+MGName::MGName(const MGName &other) : SireID::Name(other), MGID(other)
+{}
+
+MGName::~MGName()
+{}
 
 ////////
 //////// Implementation of MGNumList

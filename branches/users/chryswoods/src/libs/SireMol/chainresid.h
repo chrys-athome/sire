@@ -29,6 +29,7 @@
 #ifndef SIREMOL_CHAINRESID_H
 #define SIREMOL_CHAINRESID_H
 
+#include "chainidentifier.h"
 #include "residentifier.h"
 
 SIRE_BEGIN_HEADER

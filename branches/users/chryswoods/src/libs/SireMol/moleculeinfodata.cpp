@@ -49,6 +49,16 @@ using namespace SireStream;
 using boost::tuple;
 
 //////////
+////////// Implementation of MolInfo
+//////////
+
+MolInfo::MolInfo()
+{}
+
+MolInfo::~MolInfo()
+{}
+
+//////////
 ////////// Implementation of MolInfoRegistry
 //////////
 

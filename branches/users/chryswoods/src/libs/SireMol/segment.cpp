@@ -308,6 +308,28 @@ bool Segment::hasMetadata(const PropertyName &key,
     return d->hasMetadataOfType<SegProp>(key, metakey);
 }
 
+/** Return the keys of all SegProperty properties */
+QStringList Segment::propertyKeys() const
+{
+    return d->properties().propertyKeysOfType<SegProp>();
+}
+
+/** Return the metakeys of all SegProperty metadata */
+QStringList Segment::metadataKeys() const
+{
+    return d->properties().metadataKeysOfType<SegProp>();
+}
+
+/** Return the metakeys of all SegProperty metadata for 
+    the property at key 'key'
+    
+    \throw SireBase::missing_property
+*/
+QStringList Segment::metadataKeys(const PropertyName &key) const
+{
+    return d->properties().metadataKeysOfType<SegProp>(key);
+}
+
 bool SireMol::detail::has_property(const Segment*, const MoleculeData &moldata,
                           const PropertyName &key)
 {

@@ -26,3 +26,61 @@
   *
 \*********************************************/
 
+#include "chainresid.h"
+
+#include <QSet>
+
+#include "SireMol/errors.h"
+
+using namespace SireMol;
+
+ChainResID::ChainResID() : ResID()
+{}
+
+ChainResID::ChainResID(const ChainID &chain, const ResID &res)
+           : ResID(), chainid(chain), resid(res)
+{}
+
+ChainResID::ChainResID(const ChainResID &other)
+           : ResID(other),
+             chainid(other.chainid), resid(other.resid)
+{}
+
+ChainResID::~ChainResID()
+{}
+
+QString ChainResID::toString() const
+{
+    return QObject::tr("%1 and %2").arg(chainid.toString(), resid.toString());
+}
+
+QList<ResIdx> ChainResID::map(const MolInfo &molinfo) const
+{
+    if (this->isNull())
+        return molinfo.getResidues();
+    else if (resid.isNull())
+        return molinfo.getResiduesIn(chainid);
+    else if (resid.isNull())
+        return resid.map(molinfo);
+    
+    QList<ResIdx> residxs = 
+                MolInfo::intersection(resid.map(molinfo),
+                                      molinfo.getResiduesIn(chainid) );
+                                             
+    if (residxs.isEmpty())
+        throw SireMol::missing_residue( QObject::tr(
+            "There are no residues that match %1.")
+                .arg(this->toString()), CODELOC );
+            
+    return residxs;
+}
+
+ChainResID SireMol::operator+(const ChainID &chainid, const ResID &resid)
+{
+    return ChainResID(chainid, resid);
+}
+
+ChainResID SireMol::operator+(const ResID &resid, const ChainID &chainid)
+{
+    return ChainResID(chainid, resid);
+}

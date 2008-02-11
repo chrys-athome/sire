@@ -46,6 +46,15 @@ using namespace SireMol;
 /////// Implementation of MolID
 ///////
 
+MolID::MolID() : SireID::ID()
+{}
+
+MolID::MolID(const MolID &other) : SireID::ID(other)
+{}
+
+MolID::~MolID()
+{}
+
 /** Map this ID to the matching molecules in the groups held in 
     'molgroupsbase'
     

@@ -187,7 +187,6 @@ QList<AtomIdx> GroupAtomID<GROUP,ATOM>::map(const MolInfo &molinfo) const
     if (atomidxs.isEmpty())
         this->throwMissingAtom(molinfo);
             
-    qSort(atomidxs);
     return atomidxs;
 }
 

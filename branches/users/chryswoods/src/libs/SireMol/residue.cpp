@@ -330,6 +330,28 @@ bool Residue::hasMetadata(const PropertyName &key,
     return d->hasMetadataOfType<ResProp>(key, metakey);
 }
 
+/** Return the keys of all ResProperty properties */
+QStringList Residue::propertyKeys() const
+{
+    return d->properties().propertyKeysOfType<ResProp>();
+}
+
+/** Return the metakeys of all ResProperty metadata */
+QStringList Residue::metadataKeys() const
+{
+    return d->properties().metadataKeysOfType<ResProp>();
+}
+
+/** Return the metakeys of all ResProperty metadata for 
+    the property at key 'key'
+    
+    \throw SireBase::missing_property
+*/
+QStringList Residue::metadataKeys(const PropertyName &key) const
+{
+    return d->properties().metadataKeysOfType<ResProp>(key);
+}
+
 bool SireMol::detail::has_property(const Residue*, const MoleculeData &moldata,
                           const PropertyName &key)
 {

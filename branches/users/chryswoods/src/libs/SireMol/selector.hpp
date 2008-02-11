@@ -150,6 +150,8 @@ public:
     Selector<T> at(int i, int j) const;
 
     int count() const;
+    
+    bool isEmpty() const;
 
     Selector<T> add(const Selector<T> &other) const;
     Selector<T> add(const T &view) const;
@@ -362,6 +364,14 @@ SIRE_OUTOFLINE_TEMPLATE
 bool Selector<T>::operator!=(const Selector<T> &other) const
 {
     return idxs != other.idxs or MoleculeView::operator!=(other);
+}
+
+/** Return whether this set is empty */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool Selector<T>::isEmpty() const
+{
+    return idxs.isEmpty();
 }
 
 template<class T>
@@ -1202,6 +1212,45 @@ bool Selector<T>::hasMetadata(const PropertyName &key,
 {
     T *ptr = 0;
     return detail::has_metadata(ptr, this->data(), key, metakey);
+}
+
+/** Return all of the keys for the properties attached to the
+    parts of this selection */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QStringList Selector<T>::propertyKeys() const
+{
+    if (this->isEmpty())
+        return QStringList();
+    else
+        return this->at(0).propertyKeys();
+}
+
+/** Return all of the metakeys for the metadata attached to the
+    parts of this selection */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QStringList Selector<T>::metadataKeys() const
+{
+    if (this->isEmpty())
+        return QStringList();
+    else
+        return this->at(0).metadataKeys();
+}
+
+/** Return all of the metakeys for the metadata attached to the
+    parts of this selection for the property at key 'key'
+    
+    \throw SireBase::missing_property
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QStringList Selector<T>::metadataKeys(const PropertyName &key) const
+{
+    if (this->isEmpty())
+        return QStringList();
+    else
+        return this->at(0).metadataKeys(key);
 }
 
 }

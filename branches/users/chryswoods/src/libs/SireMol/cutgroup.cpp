@@ -291,6 +291,28 @@ bool CutGroup::hasMetadata(const PropertyName &metakey) const
     return d->hasMetadataOfType<CGProp>(metakey);
 }
 
+/** Return the keys of all CGProperty properties */
+QStringList CutGroup::propertyKeys() const
+{
+    return d->properties().propertyKeysOfType<CGProp>();
+}
+
+/** Return the metakeys of all CGProperty metadata */
+QStringList CutGroup::metadataKeys() const
+{
+    return d->properties().metadataKeysOfType<CGProp>();
+}
+
+/** Return the metakeys of all CGProperty metadata for 
+    the property at key 'key'
+    
+    \throw SireBase::missing_property
+*/
+QStringList CutGroup::metadataKeys(const PropertyName &key) const
+{
+    return d->properties().metadataKeysOfType<CGProp>(key);
+}
+
 /** Return whether the metadata at metakey 'metakey' for the property
     at key 'key' is a CGProperty
     

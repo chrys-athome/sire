@@ -105,6 +105,15 @@ public:
     QStringList metadataKeys() const;
     QStringList metadataKeys(const PropertyName &key) const;
 
+    template<class T>
+    QStringList propertyKeysOfType() const;
+
+    template<class T>
+    QStringList metadataKeysOfType() const;
+    
+    template<class T>
+    QStringList metadataKeysOfType(const PropertyName &key) const;
+
     const_iterator begin() const;
     const_iterator constBegin() const;
     
@@ -183,6 +192,67 @@ private:
     /** Implicitly shared pointer to the data of this object */
     QSharedDataPointer<detail::PropertiesData> d;
 };
+
+/** Return the keys of all properties that are of type T */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QStringList Properties::propertyKeysOfType() const
+{
+    QStringList keys;
+
+    for (Properties::const_iterator it = this->constBegin();
+         it != this->constEnd();
+         ++it)
+    {
+        if (it.value()->isA<T>())
+            keys.append(it.key());
+    }
+    
+    return keys;
+}
+
+/** Return the metakeys of all metadata of type T */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QStringList Properties::metadataKeysOfType() const
+{
+    QStringList metakeys;
+    
+    const Properties &metadata = this->allMetadata();
+    
+    for (Properties::const_iterator it = metadata.constBegin();
+         it != metadata.constEnd();
+         ++it)
+    {
+        if (it.value()->isA<T>())
+            metakeys.append(it.key());
+    }
+    
+    return metakeys;
+}
+
+/** Return the metakeys of all metadata of type T for the property
+    with key 'key'
+    
+    \throw SireBase::missing_property
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QStringList Properties::metadataKeysOfType(const PropertyName &key) const
+{
+    QStringList metakeys;
+    const Properties &metadata = this->allMetadata(key);
+    
+    for (Properties::const_iterator it = metadata.constBegin();
+         it != metadata.constEnd();
+         ++it)
+    {
+        if (it.value()->isA<T>())
+            metakeys.append(it.key());
+    }
+    
+    return metakeys;
+}
 
 /** Return whether or not this molecule has a property called 'key'
     that is of type 'T' */

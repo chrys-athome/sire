@@ -397,6 +397,28 @@ bool Chain::hasMetadata(const PropertyName &key,
     return d->hasMetadataOfType<ChainProp>(key, metakey);
 }
 
+/** Return the keys of all ChainProperty properties */
+QStringList Chain::propertyKeys() const
+{
+    return d->properties().propertyKeysOfType<ChainProp>();
+}
+
+/** Return the metakeys of all ChainProperty metadata */
+QStringList Chain::metadataKeys() const
+{
+    return d->properties().metadataKeysOfType<ChainProp>();
+}
+
+/** Return the metakeys of all ChainProperty metadata for 
+    the property at key 'key'
+    
+    \throw SireBase::missing_property
+*/
+QStringList Chain::metadataKeys(const PropertyName &key) const
+{
+    return d->properties().metadataKeysOfType<ChainProp>(key);
+}
+
 bool detail::has_property(const Chain*, const MoleculeData &moldata,
                           const PropertyName &key)
 {
