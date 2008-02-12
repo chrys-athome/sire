@@ -302,7 +302,15 @@ inline QList<ChainIdx> getAll<Chain>(const MolInfo &molinfo)
 {
     return molinfo.getChains();
 }
-    
+
+template<>
+inline QList<ChainIdx> getAll<Chain>(const MolInfo &molinfo,
+                                     const AtomSelection &selected_atoms)
+{
+    molinfo.assertCompatibleWith(selected_atoms);
+    return selected_atoms.selectedChains();
+}
+
 template<class V>
 SIRE_OUTOFLINE_TEMPLATE
 QList<V> get_property(Chain*, const MoleculeData &moldata,

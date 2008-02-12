@@ -40,6 +40,7 @@
 #include "atomidcombos.h"
 
 #include "SireError/errors.h"
+#include "SireBase/errors.h"
 #include "SireMol/errors.h"
 
 #include "SireStream/datastream.h"
@@ -328,6 +329,51 @@ bool Residue::hasMetadata(const PropertyName &key,
                        const PropertyName &metakey) const
 {
     return d->hasMetadataOfType<ResProp>(key, metakey);
+}
+
+/** Assert that this residue contains a residue property at key 'key'
+
+    \throw SireBase::missing_property
+*/
+void Residue::assertContainsProperty(const PropertyName &key) const
+{
+    if (not this->hasProperty(key))
+        throw SireBase::missing_property( QObject::tr(
+            "There is no residue property at key \"%1\" for the "
+            "residue %2 (%3) in the molecule \"%4\".")
+                .arg(key, this->name()).arg(this->number())
+                .arg(d->name()), CODELOC );
+}
+
+/** Assert that this residue contains some residue metadata at metakey 'metakey'
+
+    \throw SireBase::missing_property
+*/
+void Residue::assertContainsMetadata(const PropertyName &metakey) const
+{
+    if (not this->hasMetadata(metakey))
+        throw SireBase::missing_property( QObject::tr(
+            "There is no residue metadata at metakey \"%1\" for the "
+            "residue %2 (%3) in the molecule \"%4\".")
+                .arg(metakey, this->name()).arg(this->number())
+                .arg(d->name()), CODELOC );
+}
+
+/** Assert that this residue contains some residue metadata
+    at metakey 'metakey' for the property at key 'key'
+
+    \throw SireBase::missing_property
+*/
+void Residue::assertContainsMetadata(const PropertyName &key,
+                                     const PropertyName &metakey) const
+{
+    if (not this->hasMetadata(key,metakey))
+        throw SireBase::missing_property( QObject::tr(
+            "There is no residue metadata at metakey \"%1\" for the "
+            "property at key \"%2\" for the "
+            "residue %2 (%3) in the molecule \"%4\".")
+                .arg(metakey, key, this->name()).arg(this->number())
+                .arg(d->name()), CODELOC );
 }
 
 /** Return the keys of all ResProperty properties */

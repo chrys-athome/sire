@@ -29,6 +29,10 @@
 #include "partialmolecule.h"
 #include "molecule.h"
 #include "atom.h"
+#include "cutgroup.h"
+#include "residue.h"
+#include "chain.h"
+#include "segment.h"
 
 #include "evaluator.h"
 
@@ -261,6 +265,82 @@ Selector<Atom> PartialMolecule::selectAll(const AtomID &atomid) const
                 .arg(atomid.toString(), this->name()), CODELOC );
 
     return Selector<Atom>(*d, selection);
+}
+
+/** Return all of the residues from this view that match the ID 'resid'
+
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+*/
+Selector<Residue> PartialMolecule::selectAll(const ResID &resid) const
+{
+    AtomSelection selection = selected_atoms;
+    selection.intersect(resid);
+    
+    if (selection.isEmpty())
+        throw SireMol::missing_residue( QObject::tr(
+            "There are no residues that match the ID %1 in this view "
+            "of the molecule called \"%2\".")
+                .arg(resid.toString(), this->name()), CODELOC );
+                
+    return Selector<Residue>(*d, selection);
+}
+
+/** Return all of the CutGroups from this view that match the ID 'cgid'
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+Selector<CutGroup> PartialMolecule::selectAll(const CGID &cgid) const
+{
+    AtomSelection selection = selected_atoms;
+    selection.intersect(cgid);
+    
+    if (selection.isEmpty())
+        throw SireMol::missing_cutgroup( QObject::tr(
+            "There are no CutGroups that match the ID %1 in this view "
+            "of the molecule called \"%2\".")
+                .arg(cgid.toString(), this->name()), CODELOC );
+                
+    return Selector<CutGroup>(*d, selection);
+}
+
+/** Return all of the chains from this view that match the ID 'chainid'
+
+    \throw SireMol::missing_chain
+    \throw SireError::invalid_index
+*/
+Selector<Chain> PartialMolecule::selectAll(const ChainID &chainid) const
+{
+    AtomSelection selection = selected_atoms;
+    selection.intersect(chainid);
+    
+    if (selection.isEmpty())
+        throw SireMol::missing_chain( QObject::tr(
+            "There are no chains that match the ID %1 in this view "
+            "of the molecule called \"%2\".")
+                .arg(chainid.toString(), this->name()), CODELOC );
+                
+    return Selector<Chain>(*d, selection);
+}
+
+/** Return all of the segments from this view that match the ID 'resid'
+
+    \throw SireMol::missing_segment
+    \throw SireError::invalid_index
+*/
+Selector<Segment> PartialMolecule::selectAll(const SegID &segid) const
+{
+    AtomSelection selection = selected_atoms;
+    selection.intersect(segid);
+    
+    if (selection.isEmpty())
+        throw SireMol::missing_segment( QObject::tr(
+            "There are no segments that match the ID %1 in this view "
+            "of the molecule called \"%2\".")
+                .arg(segid.toString(), this->name()), CODELOC );
+                
+    return Selector<Segment>(*d, selection);
 }
 
 /** Return all of the atoms in this view */

@@ -33,6 +33,7 @@
 
 #include "moleculeview.h"
 #include "cgproperty.hpp"
+#include "atomselection.h"
 
 SIRE_BEGIN_HEADER
 
@@ -284,7 +285,15 @@ inline QList<CGIdx> getAll<CutGroup>(const MolInfo &molinfo)
 {
     return molinfo.getCutGroups();
 }
-    
+
+template<>
+inline QList<CGIdx> getAll<CutGroup>(const MolInfo &molinfo,
+                                     const AtomSelection &selected_atoms)
+{
+    molinfo.assertCompatibleWith(selected_atoms);
+    return selected_atoms.selectedCutGroups();
+}
+
 template<class V>
 SIRE_OUTOFLINE_TEMPLATE
 QList<V> get_property(CutGroup*, const MoleculeData &moldata,

@@ -617,5 +617,56 @@ bool Molecule::hasMetadata(const PropertyName &key,
     return d->hasMetadata(key, metakey);
 }
 
+/** Assert that this molecule contains a property at key 'key'
+
+    \throw SireBase::missing_property
+*/
+void Molecule::assertContainsProperty(const PropertyName &key) const
+{
+    d->properties().assertContainsProperty(key);
+}
+
+/** Assert that this molecule contains some metadata at metakey 'metakey'
+
+    \throw SireBase::missing_property
+*/
+void Molecule::assertContainsMetadata(const PropertyName &metakey) const
+{
+    d->properties().assertContainsMetadata(metakey);
+}
+
+/** Assert that this molecule contains some metadata at metakey 'metakey'
+    associated with the property at key 'key'
+    
+    \throw SireBase::missing_property
+*/
+void Molecule::assertContainsMetadata(const PropertyName &key,
+                                      const PropertyName &metakey) const
+{
+    d->properties().assertContainsMetadata(key, metakey);
+}
+
+/** Return the keys of all of the properties in this molecule */
+QStringList Molecule::propertyKeys() const
+{
+    return d->propertyKeys();
+}
+
+/** Return the metakeys of all the metadata in this molecule */
+QStringList Molecule::metadataKeys() const
+{
+    return d->metadataKeys();
+}
+
+/** Return the metakeys for all of the metadata for the property
+    at key 'key'
+    
+    \throw SireBase::missing_property
+*/
+QStringList Molecule::metadataKeys(const PropertyName &key) const
+{
+    return d->metadataKeys(key);
+}
+
 ///// explicitly instantiate manipulator classes
 template class Mover<Molecule>;

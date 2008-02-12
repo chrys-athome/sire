@@ -749,13 +749,7 @@ QList<CGIdx> AtomSelection::selectedCutGroups() const
 {
     if (this->selectedAll())
     {
-        QList<CGIdx> ret;
-        for (CGIdx i(0); i<info().nCutGroups(); ++i)
-        {
-            ret.append(i);
-        }
-        
-        return ret;
+        return info().getCutGroups();
     }
     else if (this->selectedNone())
     {
@@ -766,6 +760,127 @@ QList<CGIdx> AtomSelection::selectedCutGroups() const
         QList<CGIdx> cgs = selected_atoms.keys();
         qSort(cgs);
         return cgs;
+    }
+}
+
+/** Return the list of residues that contain at least one selected atom */
+QList<ResIdx> AtomSelection::selectedResidues() const
+{
+    if (this->selectedAll())
+    {
+        return info().getResidues();
+    }
+    else if (this->selectedNone())
+    {
+        return QList<ResIdx>();
+    }
+    else
+    {
+        //run over all of the residues and see if they have
+        //any selected atoms
+        int nres = info().nResidues();
+        QList<ResIdx> selected_res;
+        
+        for (ResIdx i(0); i<nres; ++i)
+        {
+            int nats = info().nAtoms(i);
+            
+            for (int j(0); j<nats; ++j)
+            {
+                if (this->selected( info().getAtom(i,j) ))
+                {
+                    selected_res.append(i);
+                    break;
+                }
+            }
+        }
+        
+        return selected_res;
+    }
+}
+
+/** Return the list of chains that contain at least one selected atom */
+QList<ChainIdx> AtomSelection::selectedChains() const
+{
+    if (this->selectedAll())
+    {
+        return info().getChains();
+    }
+    else if (this->selectedNone())
+    {
+        return QList<ChainIdx>();
+    }
+    else
+    {
+        //run over all of the chains and see if they have
+        //any selected atoms
+        int nchains = info().nChains();
+        QList<ChainIdx> selected_chains;
+        
+        for (ChainIdx i(0); i<nchains; ++i)
+        {
+            int nres = info().nResidues(i);
+            
+            bool has_atom = false;
+            
+            for (ResIdx j(0); j<nres; ++j)
+            {
+                int nats = info().nAtoms(j);
+            
+                for (int k(0); k<nats; ++k)
+                {
+                    if (this->selected( info().getAtom(j,k) ))
+                    {
+                        has_atom = true;
+                        break;
+                    }
+                }
+                
+                if (has_atom)
+                    break;
+            }
+            
+            if (has_atom)
+                selected_chains.append(i);
+        }
+        
+        return selected_chains;
+    }
+}
+
+/** Return the list of segments that contain at least one selected atom */
+QList<SegIdx> AtomSelection::selectedSegments() const
+{
+    if (this->selectedAll())
+    {
+        return info().getSegments();
+    }
+    else if (this->selectedNone())
+    {
+        return QList<SegIdx>();
+    }
+    else
+    {
+        //run over all of the segments and see if they have
+        //any selected atoms
+        int nseg = info().nSegments();
+        QList<SegIdx> selected_seg;
+        
+        for (SegIdx i(0); i<nseg; ++i)
+        {
+            int nats = info().nAtoms(i);
+            
+            for (int j(0); j<nats; ++j)
+            {
+                if (this->selected( info().getAtom(i,j) ))
+                {
+                    selected_seg.append(i);
+                    break;
+                }
+            }
+        }
+        
+        return selected_seg;
     }
 }
 

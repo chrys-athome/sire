@@ -285,7 +285,15 @@ inline QList<SegIdx> getAll<Segment>(const MolInfo &molinfo)
 {
     return molinfo.getSegments();
 }
-    
+
+template<>
+inline QList<SegIdx> getAll<Segment>(const MolInfo &molinfo,
+                                     const AtomSelection &selected_atoms)
+{
+    molinfo.assertCompatibleWith(selected_atoms);
+    return selected_atoms.selectedSegments();
+}
+
 template<class V>
 SIRE_OUTOFLINE_TEMPLATE
 QList<V> get_property(Segment*, const MoleculeData &moldata,

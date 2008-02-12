@@ -426,7 +426,11 @@ public:
     QVector<AtomIdx> selectedAtoms() const;
 
     QSet<Index> selectedAtoms(CGIdx cgid) const;
+    
     QList<CGIdx> selectedCutGroups() const;
+    QList<ResIdx> selectedResidues() const;
+    QList<ChainIdx> selectedChains() const;
+    QList<SegIdx> selectedSegments() const;
 
     void assertSelected(AtomIdx atomidx) const;
     void assertSelected(const AtomID &atomid) const;

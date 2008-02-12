@@ -287,6 +287,14 @@ inline QList<Residue::Index> getAll<Residue>(const MolInfo &molinfo)
     return molinfo.getResidues();
 }
 
+template<>
+inline QList<ResIdx> getAll<Residue>(const MolInfo &molinfo,
+                                     const AtomSelection &selected_atoms)
+{
+    molinfo.assertCompatibleWith(selected_atoms);
+    return selected_atoms.selectedResidues();
+}
+
 void assertSameSize(Residue*, int nres, int nprops);
     
 template<class V>
