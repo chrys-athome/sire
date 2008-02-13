@@ -34,6 +34,7 @@
 #include "SireVol/coordgroup.h"
 
 #include "SireMaths/sphere.h"
+#include "SireMaths/axisset.h"
 
 #include "SireBase/errors.h"
 
@@ -723,4 +724,22 @@ Vector Evaluator::centerOfMass(const PropertyMap &map) const
             "Cannot cast the property of type %1 into either an "
             "AtomMasses or AtomElements property!")
                 .arg(p->what()), CODELOC );
+}
+
+
+AxisSet Evaluator::alignmentAxes(const MoleculeView &other, 
+                                 const AtomMatcher &matcher,
+                                 const PropertyMap &map) const
+{
+    throw SireError::incomplete_code(CODELOC);
+    return AxisSet();
+}
+                      
+AxisSet Evaluator::alignmentAxes(const MoleculeView &other,
+                                 const AtomMatcher &matcher,
+                                 const PropertyMap &map0,
+                                 const PropertyMap &map1) const
+{
+    throw SireError::incomplete_code(CODELOC);
+    return AxisSet();
 }

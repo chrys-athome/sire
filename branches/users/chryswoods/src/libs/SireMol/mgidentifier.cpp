@@ -27,6 +27,8 @@
 \*********************************************/
 
 #include "mgidentifier.h"
+#include "mgnum.h"
+#include "molgroups.h"
 
 using namespace SireMol;
 using namespace SireID;
@@ -85,6 +87,14 @@ const MGID& MGIdentifier::base() const
         return *this;
     else
         return *d;
+}
+
+QList<MGNum> MGIdentifier::map(const MolGroupsBase &molgroups) const
+{
+    if (d.get() == 0)
+        return molgroups.groupNums();
+    else
+        return molgroups.map(*d);
 }
 
 /** Copy assignment operator */

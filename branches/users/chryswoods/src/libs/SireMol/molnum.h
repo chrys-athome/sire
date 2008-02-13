@@ -58,17 +58,12 @@ friend XMLStream& ::operator<<(XMLStream&, const MolNum&);
 friend XMLStream& ::operator>>(XMLStream&, MolNum&);
 
 public:
-    MolNum() : SireID::Number(), MolID()
-    {}
+    MolNum();
+    explicit MolNum(quint32 num);
+    
+    MolNum(const MolNum &other);
 
-    explicit MolNum(quint32 num) : SireID::Number(num), MolID()
-    {}
-
-    MolNum(const MolNum &other) : SireID::Number(other), MolID(other)
-    {}
-
-    ~MolNum()
-    {}
+    ~MolNum();
     
     static const char* typeName()
     {
@@ -124,12 +119,8 @@ public:
         return _num != other._num;
     }
 
-    QList<MolNum> map(const MolGroup&) const
-    {
-        QList<MolNum> ret;
-        ret.append(*this);
-        return ret;
-    }
+    QList<MolNum> map(const MolGroup&) const;
+    QList<MolNum> map(const MolGroupsBase&) const;
 };
 
 }

@@ -85,6 +85,7 @@ public:
     bool operator!=(const MolID &other) const;
 
     QList<MolNum> map(const MolGroup &molgroup) const;
+    QList<MolNum> map(const MolGroupsBase &molgroups) const;
 
 private:
     /** Pointer to the MolID */

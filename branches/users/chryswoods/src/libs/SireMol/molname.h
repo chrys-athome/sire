@@ -57,17 +57,12 @@ friend XMLStream& ::operator<<(XMLStream&, const MolName&);
 friend XMLStream& ::operator>>(XMLStream&, MolName&);
 
 public:
-    MolName() : SireID::Name(), MolID()
-    {}
+    MolName();
+    explicit MolName(const QString &name);
     
-    explicit MolName(const QString &name) : SireID::Name(name), MolID()
-    {}
+    MolName(const MolName &other);
     
-    MolName(const MolName &other) : SireID::Name(other), MolID(other)
-    {}
-    
-    ~MolName()
-    {}
+    ~MolName();
     
     static const char* typeName()
     {
@@ -122,6 +117,7 @@ public:
     }
     
     QList<MolNum> map(const MolGroup &molgroup) const;
+    QList<MolNum> map(const MolGroupsBase &molgroups) const;
 };
 
 }

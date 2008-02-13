@@ -35,8 +35,45 @@
 #include "SireError/errors.h"
 #include "SireMol/errors.h"
 
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
 using namespace SireMol;
 using namespace SireBase;
+using namespace SireStream;
+
+RegisterMetaType<AtomSelection> r_selection;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
+                                       const AtomSelection &selection)
+{
+    writeHeader(ds, r_selection, 1);
+    
+    SharedDataStream sds(ds);
+    sds << selection.d << selection.selected_atoms 
+        << selection.nselected;
+        
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
+                                       AtomSelection &selection)
+{
+    VersionID v = readHeader(ds, r_selection);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        sds >> selection.d >> selection.selected_atoms
+            >> selection.nselected;
+    }
+    else
+        throw version_error(v, "1", r_selection, CODELOC);
+        
+    return ds;
+}
 
 /** Null constructor */
 AtomSelection::AtomSelection() 
@@ -131,6 +168,11 @@ bool AtomSelection::_pvt_selected(const CGAtomIdx &cgatomidx) const
     return nselected > 0 and 
            ( (not selected_atoms.contains(cgatomidx.cutGroup())) or
              (selected_atoms.find(cgatomidx.cutGroup())->contains(cgatomidx.atom())) );
+}
+
+bool AtomSelection::_pvt_selected(AtomIdx atomidx) const
+{
+    return this->_pvt_selected( d->cgAtomIdx(atomidx) );
 }
 
 /** Return whether or not the atom at index 'cgatomidx' has

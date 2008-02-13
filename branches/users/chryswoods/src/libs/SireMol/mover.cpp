@@ -77,6 +77,13 @@ MoverBase& MoverBase::operator=(const MoverBase &other)
     return *this;
 }
 
+
+/** Set the movable atoms of this Mover */
+void MoverBase::setMovableAtoms(const AtomSelection &selection)
+{
+    movable_atoms = selection;
+}
+
 /** Translate the selected atoms from 'coords' by 'delta'.
     This function assumes that 'selected_atoms' is compatible
     with 'coords' */
@@ -304,6 +311,83 @@ void MoverBase::mapInto(AtomCoords &coords,
     }
 }
 
+/** Map the selected atoms from 'coords' from the frame 'from_frame'
+    to the frame 'to_frame'
+
+    This function assumes that coords and selected_atoms are compatible!
+*/
+void MoverBase::changeFrame(AtomCoords &coords,
+                            const AtomSelection &selected_atoms,
+                            const AxisSet &from_frame,
+                            const AxisSet &to_frame)
+{
+    if (selected_atoms.selectedNone())
+        return;
+
+    CoordGroup *coords_array = coords.data();
+    int ncg = coords.count();
+
+    if (selected_atoms.selectedAll())
+    {
+        //we are moving everything
+        for (int i=0; i<ncg; ++i)
+        {
+            coords_array[i] = coords_array[i].edit().changeFrame(from_frame,
+                                                                 to_frame);
+        }
+    }
+    else if (selected_atoms.selectedAllCutGroups())
+    {
+        for (CGIdx i(0); i<ncg; ++i)
+        {
+            if (selected_atoms.selectedAll(i))
+            {
+                coords_array[i] = coords_array[i].edit().changeFrame(from_frame,
+                                                                     to_frame);
+            }
+            else
+            {
+                QSet<Index> atoms_to_move = selected_atoms.selectedAtoms(i);
+
+                CoordGroupEditor editor = coords_array[i];
+
+                foreach (const Index &atom, atoms_to_move)
+                {
+                    editor.changeFrame(atom, from_frame, to_frame);
+                }
+
+                coords_array[i] = editor.commit();
+            }
+        }
+    }
+    else
+    {
+        QList<CGIdx> cg_to_move = selected_atoms.selectedCutGroups();
+
+        foreach (CGIdx i, cg_to_move)
+        {
+            if (selected_atoms.selectedAll(i))
+            {
+                coords_array[i] = coords_array[i].edit().changeFrame(from_frame,
+                                                                     to_frame);
+            }
+            else
+            {
+                QSet<Index> atoms_to_move = selected_atoms.selectedAtoms(i);
+
+                CoordGroupEditor editor = coords_array[i].edit();
+
+                foreach (const Index &atom, atoms_to_move)
+                {
+                    editor.changeFrame(atom, from_frame, to_frame);
+                }
+
+                coords_array[i] = editor.commit();
+            }
+        }
+    }
+}
+
 /** Translate the selected atoms in the molecule whose data is in 'moldata'
     by 'delta', using 'coord_property' to get the coordinates to
     be translated. This function assumes that selected_atoms
@@ -384,6 +468,32 @@ void MoverBase::mapInto(MoleculeData &moldata,
     moldata.setProperty(coord_property, coords);
 }
 
+/** This function maps the selected atoms from the frame
+    'from_frame' into the coordinate frame
+    described by 'to_frame'. This function assumes that
+    moldata and 'selected_atoms' are compatible
+
+    \throw SireBase::missing_property
+*/
+void MoverBase::changeFrame(MoleculeData &moldata,
+                            const AtomSelection &selected_atoms,
+                            const AxisSet &from_frame,
+                            const AxisSet &to_frame,
+                            const PropertyMap &map)
+{
+    //get the name of the property that holds the coordinates
+    PropertyName coord_property = map["coordinates"];
+
+    //get the coordinates to be mapped
+    AtomCoords coords = moldata.property(coord_property)->asA<AtomCoords>();
+
+    //map the coordinates
+    MoverBase::changeFrame(coords, selected_atoms, from_frame, to_frame);
+
+    //save the new coordinates
+    moldata.setProperty(coord_property, coords);
+}
+
 /** Map the atoms we are allowed to move into the passed axes,
     finding the coordinates using the passed property map
 
@@ -394,6 +504,21 @@ void MoverBase::mapInto(MoleculeData &moldata,
                         const PropertyMap &map) const
 {
     MoverBase::mapInto(moldata, movable_atoms, axes, map);
+}
+
+/** Map the atoms we are allowed to move from the coordinate frame
+    'from_frame' to the coordinate frame 'to_frame', finding the 
+    coordinates using the passed property map
+    
+    \throw SireBase::missing_property
+*/
+void MoverBase::changeFrame(MoleculeData &moldata,
+                            const AxisSet &from_frame,
+                            const AxisSet &to_frame,
+                            const PropertyMap &map) const
+{
+    MoverBase::changeFrame(moldata, movable_atoms, from_frame,
+                           to_frame, map);
 }
 
 /** Translate atoms we are allowed to move from the molecule whose

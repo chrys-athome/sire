@@ -993,9 +993,9 @@ MolGroup::const_iterator MolGroup::constFind(const MolID &molid) const
 }
 
 /** Return the numbers of all molecules present in this group */
-QSet<MolNum> MolGroup::molNums() const
+QList<MolNum> MolGroup::molNums() const
 {
-    return d->molecules.molNums();
+    return d->molidx_to_num.toList();
 }
 
 /** Return the set of all names of the molecules in this group */

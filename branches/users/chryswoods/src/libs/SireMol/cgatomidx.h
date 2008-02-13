@@ -56,6 +56,10 @@ namespace SireMol
 */
 class SIREMOL_EXPORT CGAtomIdx : public AtomID
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const CGAtomIdx&);
+friend QDataStream& ::operator>>(QDataStream&, CGAtomIdx&);
+
 public:
     CGAtomIdx() : AtomID()
     {}
@@ -156,6 +160,20 @@ private:
     SireID::Index _atmidx;
 };
 
+}
+
+inline QDataStream& operator<<(QDataStream &ds, 
+                               const SireMol::CGAtomIdx &cgatomidx)
+{
+    ds << cgatomidx._cgidx << cgatomidx._atmidx;
+    return ds;
+}
+
+inline QDataStream& operator>>(QDataStream &ds,
+                               SireMol::CGAtomIdx &cgatomidx)
+{
+    ds >> cgatomidx._cgidx >> cgatomidx._atmidx;
+    return ds;
 }
 
 Q_DECLARE_TYPEINFO(SireMol::CGAtomIdx, Q_MOVABLE_TYPE);

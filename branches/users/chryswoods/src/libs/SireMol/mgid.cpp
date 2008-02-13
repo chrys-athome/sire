@@ -27,9 +27,12 @@
 \*********************************************/
 
 #include "mgid.h"
+#include "mgidx.h"
 #include "mgname.h"
 #include "mgnum.h"
 #include "molgroups.h"
+
+#include "SireBase/incremint.h"
 
 #include "SireMol/errors.h"
 #include "SireError/errors.h"
@@ -37,6 +40,7 @@
 #include "tostring.h"
 
 using namespace SireMol;
+using namespace SireBase;
 
 ////////
 //////// Implementation of MGID
@@ -50,6 +54,27 @@ MGID::MGID(const MGID &other) : SireID::ID(other)
 
 MGID::~MGID()
 {}
+
+////////
+//////// Implementation of MGIdx
+////////
+
+MGIdx::MGIdx() : SireID::Index_T_<MGIdx>(), MGID()
+{}
+
+MGIdx::MGIdx(qint32 idx) : SireID::Index_T_<MGIdx>(idx), MGID()
+{}
+
+MGIdx::MGIdx(const MGIdx &other) : SireID::Index_T_<MGIdx>(other), MGID(other)
+{}
+
+MGIdx::~MGIdx()
+{}
+
+QList<MGNum> MGIdx::map(const MolGroupsBase &molgroups) const
+{
+    return molgroups.map(*this);
+}
 
 ////////
 //////// Implementation of MGName
@@ -66,6 +91,39 @@ MGName::MGName(const MGName &other) : SireID::Name(other), MGID(other)
 
 MGName::~MGName()
 {}
+
+QList<MGNum> MGName::map(const MolGroupsBase &molgroups) const
+{
+    return molgroups.map(*this);
+}
+
+////////
+//////// Implementation of MGNum
+////////
+
+MGNum::MGNum() : SireID::Number(), MGID()
+{}
+
+MGNum::MGNum(quint32 num) : SireID::Number(num), MGID()
+{}
+
+MGNum::MGNum(const MGNum &other) : SireID::Number(other), MGID(other)
+{}
+
+MGNum::~MGNum()
+{}
+
+QList<MGNum> MGNum::map(const MolGroupsBase &molgroups) const
+{
+    return molgroups.map(*this);
+}
+
+static Incremint last_number(0);
+
+MGNum MGNum::getUniqueNumber()
+{
+    return MGNum( last_number.increment() );
+}
 
 ////////
 //////// Implementation of MGNumList

@@ -68,8 +68,7 @@ public:
     virtual MolID* clone() const=0;
     
     virtual QList<MolNum> map(const MolGroup &molgroup) const=0;
-    
-    virtual QList<MolNum> map(const MolGroupsBase &molgroupsbase) const;
+    virtual QList<MolNum> map(const MolGroupsBase &molgroupsbase) const=0;
 };
 
 class SIREMOL_EXPORT MolNumList : public MolID

@@ -140,6 +140,9 @@ public:
     MolNum getMoleculeNumber(const MolName &molname) const;
     MolNum getMoleculeNumber(const MolID &molid) const;
     
+    QList<MolNum> molNums() const;
+    QList<MolNum> getMoleculeNumbers() const;
+    
     QList<MolNum> map(MolNum molnum) const;
     QList<MolNum> map(MolIdx molidx) const;
     QList<MolNum> map(const MolName &molname) const;
@@ -168,6 +171,8 @@ public:
     CutGroup select(const CGID &cgid) const;
     Atom select(const AtomID &atomid) const;
 
+    QList<MoleculeGroup> selectAll() const;
+
     QList<MoleculeGroup> selectAll(MGNum mgnum) const;
     QList<MoleculeGroup> selectAll(MGIdx mgidx) const;
     QList<MoleculeGroup> selectAll(const MGName &mgname) const;
@@ -185,6 +190,10 @@ public:
     const MolGroup& group(const MGName &mgname) const;
     const MolGroup& group(MGIdx mgidx) const;
     const MolGroup& group(const MGID &mgid) const;
+    
+    QList<MGNum> groupNums() const;
+    
+    QList<MoleculeGroup> groups() const;
     
     QList<MoleculeGroup> groups(MGNum mgnum) const;
     QList<MoleculeGroup> groups(MGIdx mgidx) const;
@@ -232,8 +241,7 @@ public:
 
     Molecules molecules() const;
     
-    QSet<MolNum> molNums() const;
-    QSet<MGNum> mgNums() const;
+    QList<MGNum> mgNums() const;
     
     void assertContains(MolNum molnum) const;
     void assertContains(const MolID &molid) const;

@@ -58,17 +58,12 @@ friend XMLStream& ::operator<<(XMLStream&, const MolIdx&);
 friend XMLStream& ::operator>>(XMLStream&, MolIdx&);
 
 public:
-    MolIdx() : SireID::Index_T_<MolIdx>(), MolID()
-    {}
+    MolIdx();
+    explicit MolIdx(qint32 idx);
     
-    explicit MolIdx(qint32 idx) : SireID::Index_T_<MolIdx>(idx), MolID()
-    {}
+    MolIdx(const MolIdx &other);
     
-    MolIdx(const MolIdx &other) : SireID::Index_T_<MolIdx>(other), MolID(other)
-    {}
-    
-    ~MolIdx()
-    {}
+    ~MolIdx();
     
     static const char* typeName()
     {
@@ -130,6 +125,7 @@ public:
     using SireID::Index_T_<MolIdx>::map;
     
     QList<MolNum> map(const MolGroup &molgroup) const;
+    QList<MolNum> map(const MolGroupsBase &molgroups) const;
 };
     
 }

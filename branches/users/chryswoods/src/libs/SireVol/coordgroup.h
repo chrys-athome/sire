@@ -591,6 +591,13 @@ public:
 
     CoordGroupEditor& mapInto(const SireMaths::AxisSet &axes);
     CoordGroupEditor& mapInto(quint32 i, const SireMaths::AxisSet &axes);
+    
+    CoordGroupEditor& changeFrame(const SireMaths::AxisSet &from_frame,
+                                  const SireMaths::AxisSet &to_frame);
+                                  
+    CoordGroupEditor& changeFrame(quint32 i,
+                                  const SireMaths::AxisSet &from_frame,
+                                  const SireMaths::AxisSet &to_frame);
 
     CoordGroup commit() const;
 };

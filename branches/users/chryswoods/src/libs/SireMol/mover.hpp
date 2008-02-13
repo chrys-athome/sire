@@ -67,6 +67,10 @@ public:
     Mover<T>& mapInto(const AxisSet &axes,
                       const PropertyMap &map = PropertyMap());
     
+    Mover<T>& changeFrame(const AxisSet &from_frame,
+                          const AxisSet &to_frame,
+                          const PropertyMap &map = PropertyMap());
+    
     Mover<T>& translate(const Vector &delta,
                         const PropertyMap &map = PropertyMap());
     
@@ -201,6 +205,19 @@ SIRE_OUTOFLINE_TEMPLATE
 Mover<T>& Mover<T>::mapInto(const AxisSet &axes, const PropertyMap &map)
 {
     MoverBase::mapInto(*(this->d), axes, map);
+    return *this;
+}
+
+/** Change the coordinate frame of the atoms in this view from the 
+    frame 'from_frame' to the frame 'to_frame' using the supplied
+    property map to find the coordinates to be mapped */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+Mover<T>& Mover<T>::changeFrame(const AxisSet &from_frame,
+                                const AxisSet &to_frame,
+                                const PropertyMap &map)
+{
+    MoverBase::changeFrame(*(this->d), from_frame, to_frame, map);
     return *this;
 }
 

@@ -210,14 +210,6 @@ SharedDataPointer<MoleculeData> MoleculeData::null()
     return shared_null;
 }
 
-static Incremint molid_incremint;
-
-/** Here is the function to get a unique Molecule Number */
-MolNum MolNum::getUniqueNumber()
-{
-    return MolNum( molid_incremint.increment() );
-}
-
 /** Give this molecule a brand new unique ID number! */
 void MoleculeData::renumber()
 {

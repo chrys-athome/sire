@@ -27,6 +27,9 @@
 \*********************************************/
 
 #include "molid.h"
+#include "molidx.h"
+#include "molnum.h"
+#include "molname.h"
 
 #include "molgroup.h"
 #include "molgroups.h"
@@ -35,12 +38,15 @@
 
 #include "mover.hpp"
 
+#include "SireBase/incremint.h"
+
 #include "SireMol/errors.h"
 #include "SireError/errors.h"
 
 #include "tostring.h"
 
 using namespace SireMol;
+using namespace SireBase;
 
 ///////
 /////// Implementation of MolID
@@ -55,55 +61,89 @@ MolID::MolID(const MolID &other) : SireID::ID(other)
 MolID::~MolID()
 {}
 
-/** Map this ID to the matching molecules in the groups held in 
-    'molgroupsbase'
-    
-    \throw SireMol::missing_molecule
-*/
-QList<MolNum> MolID::map(const MolGroupsBase &molgroupsbase) const
+///////
+/////// Implementation of MolIdx
+///////
+
+MolIdx::MolIdx() : SireID::Index_T_<MolIdx>(), MolID()
+{}
+
+MolIdx::MolIdx(qint32 idx) : SireID::Index_T_<MolIdx>(idx), MolID()
+{}
+
+MolIdx::MolIdx(const MolIdx &other) : SireID::Index_T_<MolIdx>(other), MolID(other)
+{}
+
+MolIdx::~MolIdx()
+{}
+
+QList<MolNum> MolIdx::map(const MolGroup &molgroup) const
 {
-    QList<MolNum> molnums;
-    
-    int ngroups = molgroupsbase.nGroups();
-    
-    //loop over all groups in the set
-    for (MGIdx i(0); i<ngroups; ++i)
-    {
-        try
-        {
-            //add on the matching molecules in this group
-            molnums += this->map( molgroupsbase[i] );
-        }
-        catch(...)
-        {
-            //there were no matching molecules
-        }
-    }
-    
-    if (molnums.isEmpty())
-        throw SireMol::missing_molecule( QObject::tr(
-            "There were no molecules in the group that matched the ID "
-            "%1.").arg(this->toString()), CODELOC );
-            
-    //now remove duplicates - need to preserve the order
-    //in which the molecules were added to this list...
-    if (molnums.count() == 1)
-        return molnums;
-        
-    QSet<MolNum> added_molnums;
-    
-    QMutableListIterator<MolNum> it(molnums);
-    
-    while (it.hasNext())
-    {
-        if (added_molnums.contains(it.next()))
-            it.remove();
-            
-        else
-            added_molnums.insert(it.value());
-    }
-    
-    return molnums;
+    return molgroup.map(*this);
+}
+
+QList<MolNum> MolIdx::map(const MolGroupsBase &molgroups) const
+{
+    return molgroups.map(*this);
+}
+
+///////
+/////// Implementation of MolNum
+///////
+
+MolNum::MolNum() : SireID::Number(), MolID()
+{}
+
+MolNum::MolNum(quint32 num) : SireID::Number(num), MolID()
+{}
+
+MolNum::MolNum(const MolNum &other) : SireID::Number(other), MolID(other)
+{}
+
+MolNum::~MolNum()
+{}
+
+static Incremint last_num(0);
+
+MolNum MolNum::getUniqueNumber()
+{
+    return MolNum( last_num.increment() );
+}
+
+QList<MolNum> MolNum::map(const MolGroup &molgroup) const
+{
+    return molgroup.map(*this);
+}
+
+QList<MolNum> MolNum::map(const MolGroupsBase &molgroups) const
+{
+    return molgroups.map(*this);
+}
+
+///////
+/////// Implementation of MolName
+///////
+
+MolName::MolName() : SireID::Name(), MolID()
+{}
+
+MolName::MolName(const QString &name) : SireID::Name(name), MolID()
+{}
+
+MolName::MolName(const MolName &other) : SireID::Name(other), MolID(other)
+{}
+
+MolName::~MolName()
+{}
+
+QList<MolNum> MolName::map(const MolGroup &molgroup) const
+{
+    return molgroup.map(*this);
+}
+
+QList<MolNum> MolName::map(const MolGroupsBase &molgroups) const
+{
+    return molgroups.map(*this);
 }
 
 ///////

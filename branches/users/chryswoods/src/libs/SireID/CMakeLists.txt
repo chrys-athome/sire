@@ -13,14 +13,13 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 set ( SIREID_HEADERS
       id.h
       index.h
-      iterator.h
       name.h
       number.h
     )
 
 # Define the sources in SireID
 set ( SIREID_SOURCES
-      iterator.cpp
+      index.cpp
 
       ${SIREID_HEADERS}
     )

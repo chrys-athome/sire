@@ -220,7 +220,7 @@ public:
     const_iterator find(const MolID &molid) const;
     const_iterator constFind(const MolID &molid) const;
 
-    QSet<MolNum> molNums() const;
+    QList<MolNum> molNums() const;
     QSet<MolName> molNames() const;
 
     void assertContains(MolNum molnum) const;

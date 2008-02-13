@@ -323,6 +323,21 @@ AABox& AABox::operator+=(const QVector<Vector> &points)
     return *this;
 }
 
+/** Construct a new AABox from the passed minimum and maximum coordinates */
+AABox AABox::from(const Vector &mincoords, const Vector &maxcoords)
+{
+    Vector min = mincoords;
+    min.setMin(maxcoords);
+    
+    Vector max = maxcoords;
+    max.setMax(mincoords);
+    
+    Vector cent = 0.5 * (maxcoords + mincoords);
+    Vector halfextents = maxcoords - cent;
+    
+    return AABox(cent, halfextents);
+}
+
 /** Add lots of points to this box */
 AABox AABox::operator+(const QVector<Vector> &points) const
 {

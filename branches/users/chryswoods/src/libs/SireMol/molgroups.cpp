@@ -384,6 +384,28 @@ MolNum MolGroupsBase::getMoleculeNumber(MolIdx molidx) const
     return it.key();
 }
 
+/** Return the list of molecule numbers in molidx order */
+QList<MolNum> MolGroupsBase::getMoleculeNumbers() const
+{
+    QList<MolNum> molnums;
+    
+    for (QHash< MolNum,QList<MGNum> >::const_iterator 
+                                        it = molnum_to_mgnum.constBegin();
+         it != molnum_to_mgnum.constEnd();
+         ++it)
+    {
+        molnums.append(it.key());
+    }
+    
+    return molnums;
+}
+
+/** Return the list of molecule numbers in molidx order */
+QList<MolNum> MolGroupsBase::molNums() const
+{
+    return this->getMoleculeNumbers();
+}
+
 /** Return the number of the molecule called 'molname' from this set.
     
     \throw SireMol::missing_molecule
@@ -726,6 +748,33 @@ CutGroup MolGroupsBase::select(const CGID &cgid) const
 Atom MolGroupsBase::select(const AtomID &atomid) const
 {
     return this->at(atomid);
+}
+
+/** Return a list of all of the molecule groups in this set */
+QList<MoleculeGroup> MolGroupsBase::selectAll() const
+{
+    QList<MoleculeGroup> molgroups;
+    
+    QHash<MGNum,const MolGroup*> groups = this->getGroups();
+    
+    foreach (MGNum mgnum, mgidx_to_num)
+    {
+        molgroups.append( *(groups.value(mgnum)) );
+    }
+    
+    return molgroups;
+}
+
+/** Return a list of all of the molecule groups in this set */
+QList<MoleculeGroup> MolGroupsBase::groups() const
+{
+    return this->selectAll();
+}
+
+/** Return a list of the numbers of all of the groups in this set */
+QList<MGNum> MolGroupsBase::groupNums() const
+{
+    return mgidx_to_num; 
 }
 
 /** Obvious shortcut for select(const MGID&) 
@@ -1371,17 +1420,10 @@ Molecules MolGroupsBase::molecules() const
     return all_mols;
 }
 
-/** Return the numbers of all molecules that contain at least
-    one atom in any of the groups of this set */
-QSet<MolNum> MolGroupsBase::molNums() const
-{
-    return molnum_to_mgnum.keys().toSet();
-}
-
 /** Return the numbers of all molecule groups in this set */
-QSet<MGNum> MolGroupsBase::mgNums() const
+QList<MGNum> MolGroupsBase::mgNums() const
 {
-    return mgidx_to_num.toSet();
+    return mgidx_to_num;
 }
 
 /** Assert that this set contains at least one atom of the 
@@ -1682,7 +1724,7 @@ void MolGroupsBase::addToIndex(const MolGroup &molgroup)
     mgname_to_mgnum[molgroup.name()].append(molgroup.number());
     
     //now add the contents of this group to the index
-    this->addToIndex(molgroup.number(), molgroup.molNums());
+    this->addToIndex(molgroup.number(), molgroup.molNums().toSet());
 }
 
 /** Add the molecule with number 'molnum' to the index of the group
@@ -1951,10 +1993,10 @@ void MolGroups::update(const MolGroup &molgroup)
         //in the index...
         
         //get the list of current molecules in this group
-        QSet<MolNum> old_molnums = it->read().molNums();
+        QSet<MolNum> old_molnums = it->read().molNums().toSet();
         
         //now the new set of numbers...
-        QSet<MolNum> new_molnums = molgroup.molNums();
+        QSet<MolNum> new_molnums = molgroup.molNums().toSet();
         
         this->addToIndex(molgroup.number(), new_molnums - old_molnums);
         this->removeFromIndex(molgroup.number(), old_molnums - new_molnums);
@@ -2098,7 +2140,7 @@ void MolGroups::add(const MolGroup &molgroup, const MGID &mgid)
     MoleculeGroup group(molgroup);
     group.edit().update( this->matchToExistingVersion(group.read().molecules()) );
     
-    QSet<MolNum> molnums = group.read().molNums();
+    QSet<MolNum> molnums = group.read().molNums().toSet();
     
     foreach (MGNum mgnum, mgnums)
     {
@@ -2727,6 +2769,24 @@ void MolGroups::getGroups(const QList<MGNum> &mgnums,
 }
 
 /** Protected function used to return a hash of modifiable 
+    pointers to all of the groups in this set. */
+QHash<MGNum,MolGroup*> MolGroups::getGroups()
+{
+    QHash<MGNum,MolGroup*> groups;
+    
+    groups.reserve(mgroups.count());
+    
+    for (QHash<MGNum,MoleculeGroup>::iterator it = mgroups.begin();
+         it != mgroups.end();
+         ++it)
+    {
+        groups.insert( it.key(), it->data() );
+    }
+    
+    return groups;
+}
+
+/** Protected function used to return a hash of const 
     pointers to all of the groups in this set. */
 QHash<MGNum,const MolGroup*> MolGroups::getGroups() const
 {

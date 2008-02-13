@@ -28,6 +28,7 @@
 
 #include "molidentifier.h"
 #include "molgroup.h"
+#include "molgroups.h"
 #include "moleculeinfodata.h"
 
 #include "mover.hpp"
@@ -166,7 +167,15 @@ bool MolIdentifier::operator!=(const MolID &other) const
 QList<MolNum> MolIdentifier::map(const MolGroup &molgroup) const
 {
     if (d.get() == 0)
-        return molgroup.molNums().toList();
+        return molgroup.molNums();
     else
         return d->map(molgroup);
+}
+
+QList<MolNum> MolIdentifier::map(const MolGroupsBase &molgroups) const
+{
+    if (d.get() == 0)
+        return molgroups.molNums();
+    else
+        return d->map(molgroups);
 }

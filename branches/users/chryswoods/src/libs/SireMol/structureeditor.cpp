@@ -310,6 +310,8 @@ public:
     
     Properties properties;
 
+    SharedDataPointer<MoleculeInfoData> cached_molinfo;
+
     quint32 last_uid;
 
 private:
@@ -580,14 +582,16 @@ EditSegData::~EditSegData()
 /** Serialise to a binary datastream */
 QDataStream& operator<<(QDataStream &ds, const EditMolData &editmol)
 {
-    ds << editmol.molname << editmol.molnum
-       << editmol.atoms << editmol.cutgroups << editmol.residues
-       << editmol.chains << editmol.segments
-       << editmol.atoms_by_index << editmol.cg_by_index
-       << editmol.res_by_index << editmol.chains_by_index
-       << editmol.seg_by_index
-       << editmol.properties
-       << editmol.last_uid;
+    SharedDataStream sds(ds);
+
+    sds << editmol.molname << editmol.molnum
+        << editmol.atoms << editmol.cutgroups << editmol.residues
+        << editmol.chains << editmol.segments
+        << editmol.atoms_by_index << editmol.cg_by_index
+        << editmol.res_by_index << editmol.chains_by_index
+        << editmol.seg_by_index
+        << editmol.properties << editmol.cached_molinfo
+        << editmol.last_uid;
        
     return ds;
 }
@@ -595,14 +599,16 @@ QDataStream& operator<<(QDataStream &ds, const EditMolData &editmol)
 /** Extract from a binary datastream */
 QDataStream& operator>>(QDataStream &ds, EditMolData &editmol)
 {
-    ds >> editmol.molname >> editmol.molnum
-       >> editmol.atoms >> editmol.cutgroups >> editmol.residues
-       >> editmol.chains >> editmol.segments
-       >> editmol.atoms_by_index >> editmol.cg_by_index
-       >> editmol.res_by_index >> editmol.chains_by_index
-       >> editmol.seg_by_index
-       >> editmol.properties
-       >> editmol.last_uid;
+    SharedDataStream sds(ds);
+
+    sds >> editmol.molname >> editmol.molnum
+        >> editmol.atoms >> editmol.cutgroups >> editmol.residues
+        >> editmol.chains >> editmol.segments
+        >> editmol.atoms_by_index >> editmol.cg_by_index
+        >> editmol.res_by_index >> editmol.chains_by_index
+        >> editmol.seg_by_index
+        >> editmol.properties >> editmol.cached_molinfo
+        >> editmol.last_uid;
        
     return ds;
 }
@@ -1172,7 +1178,8 @@ void EditMolData::extractProperties(const Properties &props)
 
 /** Construct from a MoleculeData */
 EditMolData::EditMolData(const MoleculeData &moldata)
-            : molname(moldata.name()), molnum(moldata.number())
+            : molname(moldata.name()), molnum(moldata.number()),
+              cached_molinfo(moldata.info())
 {
     const MoleculeInfoData &molinfo = moldata.info();
     
@@ -1267,6 +1274,7 @@ EditMolData::EditMolData(const EditMolData &other)
               chains_by_index(other.chains_by_index),
               seg_by_index(other.seg_by_index),
               properties(other.properties),
+              cached_molinfo(other.cached_molinfo),
               last_uid(other.last_uid)
 {}
 
@@ -2889,6 +2897,37 @@ StructureEditor::getSegData(SegIdx segidx) const
     return tuple< SegName,QList<AtomIdx> >(segment.name, atomidxs);
 }
 
+/** Return whether or not the MoleculeInfoData info molecule layout object
+    needs to be rebuilt */
+bool StructureEditor::needsInfoRebuild() const
+{
+    return d->cached_molinfo.data() == 0;
+}
+
+/** Return the cached MoleculeInfoData object
+
+    \throw SireError::program_bug
+*/
+const MoleculeInfoData& StructureEditor::info() const
+{
+    if (d->cached_molinfo.constData() == 0)
+        throw SireError::program_bug( QObject::tr(
+            "We must never access the info object when it is invalid!"),
+                CODELOC );
+                
+    return *(d->cached_molinfo);
+}
+
+/** Commit the MoleculeInfo object - this creates the molecule 
+    layout from the current system */
+const MoleculeInfoData& StructureEditor::commitInfo()
+{
+    if (this->needsInfoRebuild())
+        d->cached_molinfo = new MoleculeInfoData(*this);
+        
+    return *(d->cached_molinfo);
+}
+
 /** Commit the changes - this creates a MoleculeData object that contains
     all of the data in this editor */
 MoleculeData StructureEditor::commitChanges() const
@@ -3526,7 +3565,13 @@ void StructureEditor::renumberMolecule(MolNum newnum)
 */
 void StructureEditor::renameAtom(quint32 uid, const AtomName &newname)
 {
-    d->atom(uid).name = newname;
+    EditAtomData &atom = d->atom(uid);
+    
+    if (atom.name != newname)
+    {
+        atom.name = newname;
+        d->cached_molinfo = 0;
+    }
 }
 
 /** Renumber the atom identified by 'uid' to 'newnum'
@@ -3535,7 +3580,13 @@ void StructureEditor::renameAtom(quint32 uid, const AtomName &newname)
 */
 void StructureEditor::renumberAtom(quint32 uid, AtomNum newnum)
 {
-    d->atom(uid).number = newnum;
+    EditAtomData &atom = d->atom(uid);
+    
+    if (atom.number != newnum)
+    {
+        atom.number = newnum;
+        d->cached_molinfo = 0;
+    }
 }
 
 static void changeIndex(QList<quint32> &uids, quint32 uid, int newidx)
@@ -3566,9 +3617,12 @@ static void changeIndex(QList<quint32> &uids, quint32 uid, int newidx)
 */
 void StructureEditor::reindexAtom(quint32 uid, AtomIdx newidx)
 {
-    this->assertValidAtom(uid);
-    
+    AtomIdx old_idx = this->atomIdx(uid);
+
     changeIndex( d->atoms_by_index, uid, newidx );
+
+    if (this->atomIdx(uid) != old_idx)
+        d->cached_molinfo = 0;
 }
 
 /** Rename the CutGroup identified by 'uid' to 'newname'
@@ -3577,7 +3631,11 @@ void StructureEditor::reindexAtom(quint32 uid, AtomIdx newidx)
 */
 void StructureEditor::renameCutGroup(quint32 uid, const CGName &newname)
 {
-    d->cutGroup(uid).name = newname;
+    if ( this->cgName(uid) != newname )
+    {
+        d->cutGroup(uid).name = newname;
+        d->cached_molinfo = 0;
+    }
 }
 
 /** Change the index of the atom identified by 'uid' to 'newidx'
@@ -3586,9 +3644,12 @@ void StructureEditor::renameCutGroup(quint32 uid, const CGName &newname)
 */
 void StructureEditor::reindexCutGroup(quint32 uid, CGIdx newidx)
 {
-    this->assertValidCutGroup(uid);
-    
+    CGIdx old_idx = this->cgIdx(uid);
+
     changeIndex( d->cg_by_index, uid, newidx );
+
+    if (this->cgIdx(uid) != old_idx)
+        d->cached_molinfo = 0;
 }
 
 /** Rename the residue identified by 'uid' to 'newname'
@@ -3597,7 +3658,11 @@ void StructureEditor::reindexCutGroup(quint32 uid, CGIdx newidx)
 */
 void StructureEditor::renameResidue(quint32 uid, const ResName &newname)
 {
-    d->residue(uid).name = newname;
+    if (this->resName(uid) != newname)
+    {
+        d->residue(uid).name = newname;
+        d->cached_molinfo = 0;
+    }
 }
 
 /** Renumber the residue identified by 'uid' to 'newnum'
@@ -3606,7 +3671,11 @@ void StructureEditor::renameResidue(quint32 uid, const ResName &newname)
 */
 void StructureEditor::renumberResidue(quint32 uid, ResNum newnum)
 {
-    d->residue(uid).number = newnum;
+    if (this->resNum(uid) != newnum)
+    {
+        d->residue(uid).number = newnum;
+        d->cached_molinfo = 0;
+    }
 }
 
 /** Change the index of the residue identified by 'uid' to 'newidx'
@@ -3615,9 +3684,12 @@ void StructureEditor::renumberResidue(quint32 uid, ResNum newnum)
 */
 void StructureEditor::reindexResidue(quint32 uid, ResIdx newidx)
 {
-    this->assertValidResidue(uid);
+    ResIdx old_idx = this->resIdx(uid);
     
     changeIndex( d->res_by_index, uid, newidx );
+
+    if (this->resIdx(uid) != old_idx)
+        d->cached_molinfo = 0;
 }
 
 /** Rename the chain identified by 'uid' to 'newname'
@@ -3626,7 +3698,11 @@ void StructureEditor::reindexResidue(quint32 uid, ResIdx newidx)
 */
 void StructureEditor::renameChain(quint32 uid, const ChainName &newname)
 {
-    d->chain(uid).name = newname;
+    if (this->chainName(uid) != newname)
+    {
+        d->chain(uid).name = newname;
+        d->cached_molinfo = 0;
+    }
 }
 
 /** Change the index of the chain identified by 'uid' to 'newidx'
@@ -3635,9 +3711,12 @@ void StructureEditor::renameChain(quint32 uid, const ChainName &newname)
 */
 void StructureEditor::reindexChain(quint32 uid, ChainIdx newidx)
 {
-    this->assertValidChain(uid);
+    ChainIdx old_idx = this->chainIdx(uid);
     
     changeIndex( d->chains_by_index, uid, newidx );
+
+    if (this->chainIdx(uid) != old_idx)
+        d->cached_molinfo = 0;
 }
 
 /** Rename the segment identified by 'uid' to 'newname'
@@ -3646,15 +3725,22 @@ void StructureEditor::reindexChain(quint32 uid, ChainIdx newidx)
 */
 void StructureEditor::renameSegment(quint32 uid, const SegName &newname)
 {
-    d->segment(uid).name = newname;
+    if (this->segName(uid) != newname)
+    {
+        d->segment(uid).name = newname;
+        d->cached_molinfo = 0;
+    }
 }
 
 /** Change the index of the segment identified by 'uid' to 'newidx' */
 void StructureEditor::reindexSegment(quint32 uid, SegIdx newidx)
 {
-    this->assertValidSegment(uid);
+    SegIdx old_idx = this->segIdx(uid);
     
     changeIndex( d->seg_by_index, uid, newidx );
+    
+    if (this->segIdx(uid) != old_idx)
+        d->cached_molinfo = 0;
 }
 
 /** Remove the atom identified by 'uid'
@@ -3678,6 +3764,8 @@ void StructureEditor::removeAtom(quint32 uid)
     //now remove the atom itself
     d->atoms.remove(uid);
     d->atoms_by_index.removeAll(uid);
+    
+    d->cached_molinfo = 0;
 }
 
 /** Remove the CutGroup identified by 'uid'. This only
@@ -3698,6 +3786,8 @@ void StructureEditor::removeCutGroup(quint32 uid)
     
     d->cutgroups.remove(uid);
     d->cg_by_index.removeAll(uid);
+
+    d->cached_molinfo = 0;
 }
 
 /** Remove the residue identified by 'uid'
@@ -3720,6 +3810,8 @@ void StructureEditor::removeResidue(quint32 uid)
     
     d->residues.remove(uid);
     d->res_by_index.removeAll(uid);
+
+    d->cached_molinfo = 0;
 }
 
 /** Remove the chain identified by 'uid'
@@ -3738,6 +3830,8 @@ void StructureEditor::removeChain(quint32 uid)
     
     d->chains.remove(uid);
     d->chains_by_index.removeAll(uid);
+
+    d->cached_molinfo = 0;
 }
 
 /** Remove the segment identified by 'uid'
@@ -3756,6 +3850,8 @@ void StructureEditor::removeSegment(quint32 uid)
     
     d->segments.remove(uid);
     d->seg_by_index.removeAll(uid);
+
+    d->cached_molinfo = 0;
 }
 
 /** Remove all atoms identified by 'atomid'
@@ -3786,6 +3882,8 @@ void StructureEditor::removeAtoms(const AtomID &atomid)
     {
         this->removeAtom(uid);
     }
+
+    d->cached_molinfo = 0;
 }
 
 /** Remove all CutGroups identified by 'cgid'
@@ -3816,6 +3914,8 @@ void StructureEditor::removeCutGroups(const CGID &cgid)
     {
         this->removeCutGroup(uid);
     }
+
+    d->cached_molinfo = 0;
 }
 
 /** Remove all residues identified by 'resid'
@@ -3846,6 +3946,8 @@ void StructureEditor::removeResidues(const ResID &resid)
     {
         this->removeResidue(uid);
     }
+
+    d->cached_molinfo = 0;
 }
 
 /** Remove all chains identified by 'chainid'
@@ -3876,6 +3978,8 @@ void StructureEditor::removeChains(const ChainID &chainid)
     {
         this->removeChain(uid);
     }
+
+    d->cached_molinfo = 0;
 }
 
 /** Remove all segments identified by 'segid'
@@ -3906,6 +4010,8 @@ void StructureEditor::removeSegments(const SegID &segid)
     {
         this->removeSegment(uid);
     }
+
+    d->cached_molinfo = 0;
 }
 
 /** Move the atom identified by 'uid' into the CutGroup at index 'cgidx'
@@ -3931,6 +4037,8 @@ void StructureEditor::reparentAtom(quint32 uid, CGIdx cgidx)
         d->cutGroup(cg_uid).atoms.append(uid);
         
     atom.cg_parent = cg_uid;
+
+    d->cached_molinfo = 0;
 }
 
 /** Move the atom identified by 'uid' into the residue at index 'residx'
@@ -3956,6 +4064,8 @@ void StructureEditor::reparentAtom(quint32 uid, ResIdx residx)
         d->residue(res_uid).atoms.append(uid);
         
     atom.res_parent = res_uid;
+
+    d->cached_molinfo = 0;
 }
 
 /** Move the atom identified by 'uid' into the segment at index 'segidx'
@@ -3981,6 +4091,8 @@ void StructureEditor::reparentAtom(quint32 uid, SegIdx segidx)
         d->segment(seg_uid).atoms.append(uid);
         
     atom.seg_parent = seg_uid;
+
+    d->cached_molinfo = 0;
 }
 
 /** Move the residue identified by 'uid' into the chain at index 'chainidx'
@@ -4006,6 +4118,8 @@ void StructureEditor::reparentResidue(quint32 uid, ChainIdx chainidx)
         d->chain(chain_uid).residues.append(uid);
         
     residue.chain_parent = chain_uid;
+
+    d->cached_molinfo = 0;
 }
 
 /** Add a new atom to the molecule, returning an editor for that atom */
@@ -4014,6 +4128,7 @@ AtomStructureEditor StructureEditor::addAtom()
     quint32 uid = d->getNewUID();
     d->atoms.insert( uid, EditAtomData() );
     d->atoms_by_index.append(uid);
+    d->cached_molinfo = 0;
     
     return AtomStructureEditor( *this, AtomIdx(nAtomsInMolecule()-1) );
 }
@@ -4024,6 +4139,7 @@ CGStructureEditor StructureEditor::addCutGroup()
     quint32 uid = d->getNewUID();
     d->cutgroups.insert( uid, EditCGData() );
     d->cg_by_index.append(uid);
+    d->cached_molinfo = 0;
     
     return CGStructureEditor( *this, CGIdx(nCutGroupsInMolecule()-1) );
 }
@@ -4034,6 +4150,7 @@ ResStructureEditor StructureEditor::addResidue()
     quint32 uid = d->getNewUID();
     d->residues.insert( uid, EditResData() );
     d->res_by_index.append(uid);
+    d->cached_molinfo = 0;
     
     return ResStructureEditor( *this, ResIdx(nResiduesInMolecule()-1) );
 }
@@ -4044,6 +4161,7 @@ ChainStructureEditor StructureEditor::addChain()
     quint32 uid = d->getNewUID();
     d->chains.insert( uid, EditChainData() );
     d->chains_by_index.append(uid);
+    d->cached_molinfo = 0;
     
     return ChainStructureEditor( *this, ChainIdx(nChainsInMolecule()-1) );
 }
@@ -4054,6 +4172,7 @@ SegStructureEditor StructureEditor::addSegment()
     quint32 uid = d->getNewUID();
     d->segments.insert( uid, EditSegData() );
     d->seg_by_index.append(uid);
+    d->cached_molinfo = 0;
     
     return SegStructureEditor( *this, SegIdx(nSegmentsInMolecule()-1) );
 }
@@ -4063,7 +4182,10 @@ AtomSelection StructureEditor::extractAtomSelection(
                                     const QVector< QVector<QVariant> > &values) const
 {
     //create an AtomSelection using the current MoleculeInfo object
-    AtomSelection selected_atoms( this->commitInfo() );
+    if (this->needsInfoRebuild())
+        const_cast<StructureEditor*>(this)->commitInfo();
+
+    AtomSelection selected_atoms( this->info() );
     selected_atoms.selectNone();
     
     int ncg = values.count();

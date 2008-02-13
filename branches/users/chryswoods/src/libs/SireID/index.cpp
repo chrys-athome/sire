@@ -26,3 +26,26 @@
   *
 \*********************************************/
 
+#include "index.h"
+
+#include "SireError/errors.h"
+    
+using namespace SireID;
+    
+void IndexBase::throwInvalidIndex(qint32 n) const
+{
+    if (n == 0)
+        throw SireError::invalid_index(QObject::tr(
+            "Cannot access item at index %1 as the container is empty!")
+                .arg(_idx), CODELOC );
+
+    else if (n == 1)
+        throw SireError::invalid_index(QObject::tr(
+            "Cannot access item at index %1 as there is only item in the "
+            "container.").arg(_idx), CODELOC );
+    
+    else
+        throw SireError::invalid_index( QObject::tr(
+            "No item at index %1. Index range is from %2 to %3.")
+                .arg(_idx).arg(-n).arg(n-1), CODELOC );
+}

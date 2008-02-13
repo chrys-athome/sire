@@ -142,7 +142,10 @@ protected:
 
     MoleculeData commitChanges() const;
 
-    MoleculeInfoData commitInfo() const;
+    const MoleculeInfoData& commitInfo();
+    
+    bool needsInfoRebuild() const;
+    const MoleculeInfoData& info() const;
 
     /// functions used by MoleculeInfoData when committing
     boost::tuple<AtomName,AtomNum,CGAtomIdx,ResIdx,SegIdx> 

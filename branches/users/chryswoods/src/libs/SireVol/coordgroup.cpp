@@ -35,6 +35,7 @@
 #include "SireMaths/rotate.h"
 #include "SireMaths/quaternion.h"
 #include "SireMaths/matrix.h"
+#include "SireMaths/axisset.h"
 
 #include "SireError/errors.h"
 
@@ -751,6 +752,26 @@ CoordGroupEditor& CoordGroupEditor::setCoordinates(const QVector<Vector> &newcoo
     return *this;
 }
 
+/** Set the coordinates of the ith atom to 'newcoords'
+
+    \throw SireError::invalid_index
+*/
+CoordGroupEditor& CoordGroupEditor::setCoordinates(quint32 i, const Vector &newcoords)
+{
+    if (i >= quint32(this->count()))
+        throw SireError::invalid_index( QObject::tr(
+            "Cannot update the coordinates of point %1 as the number "
+            "of points available is just %2.")
+                .arg(i).arg(this->count()), CODELOC );
+    
+    Vector *coords = this->_pvt_data();
+    coords[i] = newcoords;
+    
+    CoordGroupBase::setNeedsUpdate();
+    
+    return *this;
+}
+
 /** Set the coordinates of the CoordGroup to 'newcoords' - this
     must have the same number of points as this CoordGroup or an
     exception will be thrown
@@ -762,6 +783,89 @@ CoordGroupEditor& CoordGroupEditor::setCoordinates(const CoordGroupBase &newcoor
     CoordGroupBase::assertSameSize(newcoords);
     CoordGroupBase::operator=(newcoords);
 
+    return *this;
+}
+
+/** Map all of these coordinates into the axis set 'axes' */
+CoordGroupEditor& CoordGroupEditor::mapInto(const AxisSet &axes)
+{
+    int sz = this->count();
+    
+    Vector *coords = this->_pvt_data();
+    
+    for (int i=0; i<sz; ++i)
+    {
+        coords[i] = axes.fromIdentity(coords[i]);
+    }
+    
+    CoordGroupBase::setNeedsUpdate();
+    
+    return *this;
+}
+
+/** Map the coordinates of the ith point into the axis set 'axes'
+
+    \throw SireError::invalid_index
+*/
+CoordGroupEditor& CoordGroupEditor::mapInto(quint32 i, const AxisSet &axes)
+{
+    if (i >= quint32(this->count()))
+        throw SireError::invalid_index( QObject::tr(
+            "Cannot update the coordinates of point %1 as the number "
+            "of points available is just %2.")
+                .arg(i).arg(this->count()), CODELOC );
+    
+    Vector *coords = this->_pvt_data();
+    coords[i] = axes.fromIdentity(coords[i]);
+    
+    CoordGroupBase::setNeedsUpdate();
+    
+    return *this;
+}
+
+/** Change the coordinate frame of all of the coordinates from
+    'from_frame' to 'to_frame'. This has the same effect
+    as 'mapInto' if 'from_frame' is the unit cartesian set */
+CoordGroupEditor& CoordGroupEditor::changeFrame(const AxisSet &from_frame,
+                                                const AxisSet &to_frame)
+{
+    int sz = this->count();
+    
+    Vector *coords = this->_pvt_data();
+
+    //precalculate what we can...
+    Matrix mat = from_frame.invMatrix() * to_frame.matrix();
+    
+    for (int i=0; i<sz; ++i)
+    {
+        coords[i] = (mat * (coords[i] - from_frame.origin())) + to_frame.origin();
+    }
+    
+    CoordGroupBase::setNeedsUpdate();
+    
+    return *this;
+}
+
+/** Map the coordinates of the ith point from the frame
+    'from_frame' to the frame 'to_frame'
+
+    \throw SireError::invalid_index
+*/
+CoordGroupEditor& CoordGroupEditor::changeFrame(quint32 i,
+                                                const AxisSet &from_frame,
+                                                const AxisSet &to_frame)
+{
+    if (i >= quint32(this->count()))
+        throw SireError::invalid_index( QObject::tr(
+            "Cannot update the coordinates of point %1 as the number "
+            "of points available is just %2.")
+                .arg(i).arg(this->count()), CODELOC );
+    
+    Vector *coords = this->_pvt_data();
+    coords[i] = from_frame.toFrame(to_frame,coords[i]);
+    
+    CoordGroupBase::setNeedsUpdate();
+    
     return *this;
 }
 

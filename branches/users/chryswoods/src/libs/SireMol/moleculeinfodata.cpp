@@ -579,6 +579,12 @@ MoleculeInfoData::MoleculeInfoData() : QSharedData(), uid(0)
 MoleculeInfoData::MoleculeInfoData(const StructureEditor &editor)
                  : QSharedData()
 {
+    if (not editor.needsInfoRebuild())
+    {
+        this->operator=( editor.info() );
+        return;
+    }
+
     //first lets allocate memory for all of the parts of the molecule
 
     //first the atoms...

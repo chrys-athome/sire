@@ -83,9 +83,6 @@ protected:
 
     void setMovableAtoms(const AtomSelection &movable_atoms);
 
-    void mapInto(MoleculeData &data, const AxisSet &axes,
-                 const PropertyMap &map);
-
     void translate(MoleculeData &data,
                    const Vector &delta,
                    const PropertyMap &map) const;
@@ -103,6 +100,11 @@ protected:
     void mapInto(MoleculeData &data,
                  const AxisSet &axes,
                  const PropertyMap &map) const;
+
+    void changeFrame(MoleculeData &data,
+                     const AxisSet &from_frame,
+                     const AxisSet &to_frame,
+                     const PropertyMap &map) const;
 
     void change(MoleculeData &data, const BondID &bond,
                 SireUnits::Dimension::Length delta,
@@ -144,6 +146,13 @@ protected:
              SireUnits::Dimension::Angle value,
              const PropertyMap &map) const;
 
+    static void mapInto(MoleculeData &data, const AtomSelection &selected_atoms,
+                        const AxisSet &axes, const PropertyMap &map);
+
+    static void changeFrame(MoleculeData &data, const AtomSelection &selected_atoms,
+                            const AxisSet &from_axes, const AxisSet &to_axes,
+                            const PropertyMap &map);
+
     static void translate(MoleculeData &view,
                           const AtomSelection &selected_atoms,
                           const Vector &delta,
@@ -155,8 +164,14 @@ protected:
                        const Vector &point,
                        const PropertyMap &map);
 
-    static void mapInto(MoleculeData &data, const AtomSelection &selected_atoms,
-                        const AxisSet &axes, const PropertyMap &map);
+    static void mapInto(AtomCoords &coords,
+                        const AtomSelection &selected_atoms,
+                        const AxisSet &axes);
+
+    static void changeFrame(AtomCoords &coords,
+                            const AtomSelection &selected_atoms,
+                            const AxisSet &from_frame,
+                            const AxisSet &to_frame);
 
     static void translate(AtomCoords &coords,
                           const AtomSelection &selected_atoms,
@@ -171,10 +186,6 @@ protected:
                        const AtomSelection &selected_atoms,
                        const Quaternion &quat,
                        const Vector &point);
-
-    static void mapInto(AtomCoords &coords,
-                        const AtomSelection &selected_atoms,
-                        const AxisSet &axes);
 
     /** The only atoms that can be moved by this Mover */
     AtomSelection movable_atoms;

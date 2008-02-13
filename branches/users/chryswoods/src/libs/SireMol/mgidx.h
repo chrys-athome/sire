@@ -58,17 +58,13 @@ friend XMLStream& ::operator<<(XMLStream&, const MGIdx&);
 friend XMLStream& ::operator>>(XMLStream&, MGIdx&);
 
 public:
-    MGIdx() : SireID::Index_T_<MGIdx>(), MGID()
-    {}
+    MGIdx();
     
-    explicit MGIdx(qint32 idx) : SireID::Index_T_<MGIdx>(idx), MGID()
-    {}
+    explicit MGIdx(qint32 idx);
     
-    MGIdx(const MGIdx &other) : SireID::Index_T_<MGIdx>(other), MGID(other)
-    {}
+    MGIdx(const MGIdx &other);
     
-    ~MGIdx()
-    {}
+    ~MGIdx();
     
     static const char* typeName()
     {
