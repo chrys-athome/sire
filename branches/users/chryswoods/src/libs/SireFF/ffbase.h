@@ -29,24 +29,8 @@
 #ifndef SireFF_FFBASE_H
 #define SireFF_FFBASE_H
 
-#include <boost/scoped_ptr.hpp>
-
-#include <QSet>
-
-#include "SireBase/sharedpolypointer.hpp"
-#include "SireBase/idmajminversion.h"
-
-#include "SireCAS/function.h"
-#include "SireCAS/values.h"
-#include "SireCAS/symbol.h"
-
-#include "SireMol/moleculeid.h"
-#include "SireMol/idmolatom.h"
-
-#include "parametermap.h"
-#include "ffcomponent.h"
-
-#include "forcefieldid.h"
+#include "SireMol/molgroups.h"
+#include "SireBase/properties.h"
 
 SIRE_BEGIN_HEADER
 
@@ -58,442 +42,136 @@ class FFBase;
 QDataStream& operator<<(QDataStream&, const SireFF::FFBase&);
 QDataStream& operator>>(QDataStream&, SireFF::FFBase&);
 
-namespace SireBase
-{
-class Property;
-}
-
-namespace SireMol
-{
-class PartialMolecule;
-class Molecule;
-class Residue;
-class NewAtom;
-
-class MoleculeID;
-class ResNum;
-class ResID;
-
-class Molecules;
-}
-
 namespace SireFF
 {
 
-class ForceField;
-class MovedMols;
+/** This class is the base class of all of the forcefield classes. 
+    A forcefield is a collection of molecule groups (SireMol::MolGroups) 
+    that had additional code to allow the energies, forces (and
+    further derivatives) to be calculated for the molecules in those
+    groups. The forcefield can, optionally, break this energy
+    down into a set of components, and the energy, force (and/or
+    further derivatives) of the components for the group(s) of
+    molecules can be queried individually.
 
-using SireBase::Version;
-using SireBase::Property;
-using SireBase::IDMajMinVersion;
+    FF derived objects are derived from MolGroupsBase, and hold
+    molecule group objects that are derived from MolGroup, e.g.
+    
+    FFGroupPvt : public MolGroup  (used internally)
+    
+    FFGroup : public MolGroup (used externally - needed so can
+                               hold a copy of the FF) - FFGroupPvt
+                               auto-converts to FFGroup when copied
 
-using SireCAS::Function;
-using SireCAS::Values;
-using SireCAS::Symbol;
-using SireCAS::Symbols;
+    This class is derived into a series of types, e.g.
+    
+    G1FF - forcefield that only contains a single group of molecules
+    G2FF - forcefield that contains two groups of molecules
+    
+    MultiFF - forcefield that is an amalgamation of other forcefields
+    
+    There are also additional pure virtual interfaces, e.g.
+    
+    FF2D - interface for all 2-dimensional forcefields
+           (can be used to calculate forces in 2D space)
+    
+    FF3D - interface for all 3-dimensional forcefields
+           (can be used to calculate forces in 3D space)
+    
+    template<class Pot2B>
+    Inter2BFF : public G1FF, protected Pot2B
+    
+    template<class Pot2B3D>
+    Inter2B3DFF : public Inter2BFF<Pot2B3D>, public FF3D
+    
+    InterCLJFF : public Inter2B3DFF< Potential2B3D<CLJTerms> >
+    
+    template<class Pot2B>
+    Intra2BFF : public G1FF, protected Pot2B
+    
+    template<class Pot2B3D>
+    Intra2B3DFF : public Intra2BFF<Pot2B3D>, public FF3D
+    
+    IntraCLJFF : public Intra2BodyFF< TwoBodyPotential<CLJTerms> >
+    
+    template<class Pot2B>
+    Inter2G2BFF : public G2FF, protected Pot2B
+    
+    template<class Pot2B3D>
+    Inter2G2B3DFF : public Inter2G2BFF<Pot2B3D>, public FF3D
+    
+    InterGroupCLJFF : Inter2G2B3DFF< Potential2B3D<CLJTerms> >
+    
+    BondFF : public G1FF, public FF3D
+    AngleFF : public G1FF, public FF3D
+    DihedralFF : public G1FF, public FF3D
+    
+    Bond2DFF : public G1FF, public FF2D
+    Angle2DFF : public G1FF, public FF2D
+    Dihedral2DFF : public G1FF, public FF2D
+    
+    MultiFF : public FF
+      - this is a FF that can hold multiple groups - it also
+      - does its best to shared underlying MoleculeGroups...
+    
+    AmberFF : public MultiFF
+      - contains InterCLJFF, IntraCLJFF, BondFF, 
+                 AngleFF, DihedralFF in an array?
+                  - has array of pointers for MultiFF?
 
-using SireMol::MoleculeID;
-using SireMol::Molecule;
-using SireMol::Molecules;
-using SireMol::Residue;
-using SireMol::ResNum;
-using SireMol::ResID;
-using SireMol::NewAtom;
-using SireMol::IDMolAtom;
-using SireMol::PartialMolecule;
+    Amber2DFF : public MultiFF
+      - contains InterCLJ2DFF, IntraCLJ2DFF, Bond2DFF,
+                 Angle2DFF, Dihedral2DFF
 
-namespace detail
-{
-static Symbol _e_total;
-}
-
-/** Return the global symbol that represents the total  
-    energy - this returns the total energy of whatever
-    it is passed to. */
-inline const Symbol& e_total()
-{
-    if (detail::_e_total.ID() == 0)
-        detail::_e_total = Symbol("E_total");
-        
-    return detail::_e_total;
-}
-
-/**
-This class is the base class of all of the forcefield classes. The forcefields all form
-a polymorphic class hierarchy derived from this class. They are then held via
-the SharedPolyPointer in ForceField, which provides the common user-interface to the
-forcefields.
-
-@author Christopher Woods
+    @author Christopher Woods
 */
-class SIREFF_EXPORT FFBase : public QSharedData
+class SIREFF_EXPORT FF : public SireMol::MolGroupsBase
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const FFBase&);
 friend QDataStream& ::operator>>(QDataStream&, FFBase&);
 
 public:
-    FFBase();
-    FFBase(const QString &name);
-
-    FFBase(const FFBase &other);
-
-    virtual ~FFBase();
-
-    FFBase& operator=(const FFBase &other);
-    FFBase& operator=(const ForceField &ffield);
-
-    bool operator==(const FFBase &other) const;
-    bool operator!=(const FFBase &other) const;
+    virtual ~FF();
 
     static const char* typeName()
     {
-        return "SireFF::FFBase";
+        return "SireFF::FF";
     }
 
     /** Return the class name of the forcefield */
     virtual const char* what() const=0;
 
     /** Return a clone of this forcefield */
-    virtual FFBase* clone() const=0;
+    virtual FF* clone() const=0;
 
     virtual QString toString() const;
 
-    /** This encapsulated class must be derived by
-        each inheriting forcefield to provide information
-        about all of the components of the forcefield */
-    class SIREFF_EXPORT Components
-    {
-    friend class FFBase;
-
-    public:
-        Components();
-        Components(const FFBase &ffield, const Symbols &symbols = Symbols());
-        Components(const Components &other);
-
-        virtual ~Components();
-
-        virtual Components* clone() const
-        {
-            return new Components(*this);
-        }
-
-        Components& operator=(const Components &other);
-
-        const FFComponent& total() const
-        {
-            return e_total;
-        }
-
-        static QString describe_total();
-
-        static Symbol x()
-        {
-            return _x;
-        }
-
-        static Symbol y()
-        {
-            return _y;
-        }
-
-        static Symbol z()
-        {
-            return _z;
-        }
-
-        static Symbols addToSymbols(Symbols symbols,
-                            const Symbol &sym0);
-        static Symbols addToSymbols(Symbols symbols,
-                            const Symbol &sym0, const Symbol &sym1);
-        static Symbols addToSymbols(Symbols symbols,
-                            const Symbol &sym0, const Symbol &sym1, const Symbol &sym2);
-        static Symbols addToSymbols(Symbols symbols,
-                            const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
-                            const Symbol &sym3);
-        static Symbols addToSymbols(Symbols symbols,
-                            const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
-                            const Symbol &sym3, const Symbol &sym4);
-        static Symbols addToSymbols(Symbols symbols,
-                            const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
-                            const Symbol &sym3, const Symbol &sym4, const Symbol &sym5);
-        static Symbols addToSymbols(Symbols symbols,
-                            const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
-                            const Symbol &sym3, const Symbol &sym4, const Symbol &sym5,
-                            const Symbol &sym6);
-        static Symbols addToSymbols(Symbols symbols,
-                            const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
-                            const Symbol &sym3, const Symbol &sym4, const Symbol &sym5,
-                            const Symbol &sym6, const Symbol &sym7);
-        static Symbols addToSymbols(Symbols symbols,
-                            const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
-                            const Symbol &sym3, const Symbol &sym4, const Symbol &sym5,
-                            const Symbol &sym6, const Symbol &sym7, const Symbol &sym8);
-        static Symbols addToSymbols(Symbols symbols,
-                            const Symbol &sym0, const Symbol &sym1, const Symbol &sym2,
-                            const Symbol &sym3, const Symbol &sym4, const Symbol &sym5,
-                            const Symbol &sym6, const Symbol &sym7, const Symbol &sym8,
-                            const Symbol &sym9);
-
-        bool contains(const FFComponent &component) const
-        {
-            return symbolids.contains(component.ID());
-        }
-
-        void assertContains(const FFComponent &component) const;
-
-    protected:
-        virtual void setForceField(const FFBase &ffbase);
-
-        void registerComponent(const FFComponent &component);
-
-    private:
-        static Symbol _x;
-        static Symbol _y;
-        static Symbol _z;
-
-        /** The FFComponent representing the total energy
-            of the forcefield */
-        FFComponent e_total;
-
-        /** The SymbolIDs of all of the functions that
-            represent the components */
-        QSet<SireCAS::SymbolID> symbolids;
-    };
-
-    /** Return the object describing the components of this
-        forcefield */
-    const FFBase::Components& components() const
-    {
-        return *components_ptr;
-    }
-
-    /** This encapsulated class must be derived by all
-        inheriting classes to provide the object
-        that contains information about the parameters
-        used by the forcefield, and the default source
-        properties from which to obtain those parameters */
-    class SIREFF_EXPORT Parameters
-    {
-    public:
-        Parameters();
-        Parameters(const Parameters &other);
-        virtual ~Parameters();
-    };
-
-    /** Return the object containing the names of the parameters
-        used by this forcefield */
-    virtual const FFBase::Parameters& parameters() const=0;
-
-    /** This encapsulated class provides an ID for a group
-        within this forcefield */
-    class SIREFF_EXPORT Group
-    {
-    public:
-        explicit Group(quint32 val=0) : _val(val)
-        {}
-
-        Group(const Group &other) : _val(other._val)
-        {}
-
-        ~Group()
-        {}
-
-        Group& operator=(const Group &other)
-        {
-            _val = other._val;
-            return *this;
-        }
-
-        operator quint32() const
-        {
-            return _val;
-        }
-
-    private:
-        quint32 _val;
-    };
-
-    /** This encapsulated class must be derived by all
-        inheriting classes to provide the object that
-        contains information about the available groups
-        in the forcefield */
-    class SIREFF_EXPORT Groups
-    {
-    friend class FFBase;
-
-    public:
-        Groups();
-        Groups(const Groups &other);
-
-        virtual ~Groups();
-
-        /** Return the name of the main group
-            in the forcefield (the default group) */
-        static FFBase::Group main()
-        {
-            return mainid;
-        }
-
-        /** Return the number of groups in this forcefield */
-        quint32 count() const
-        {
-            return n;
-        }
-
-    protected:
-        static Groups default_group;
-
-        FFBase::Group getUniqueID();
-
-    private:
-        /** The ID of the main (default) group
-            of this forcefield */
-        static FFBase::Group mainid;
-
-        /** The number of groups in this forcefield */
-        quint32 n;
-    };
-
-    /** Return the object containing the names of the
-        groups used by this forcefield */
-    virtual const FFBase::Groups& groups() const
-    {
-        return FFBase::Groups::default_group;
-    }
-
-    const QString& name() const;
+    const FFName& name() const;
     void setName(const QString &name);
 
-    double energy();
-    double energy(const Function &component);
-    double energy(const Symbol &symbol);
+    FFNum number() const;
+    
+    quint64 majorVersion() const;
+    quint64 minorVersion() const;
 
-    Values energies(const QSet<FFComponent> &components);
+    SireUnits::Dimension::Energy energy();
+    SireUnits::Dimension::Energy energy(const Symbol &component);
+
+    Values energies(const QSet<Symbol> &components);
     Values energies();
 
-    virtual bool setProperty(const QString &name, const Property &value);
+    bool setProperty(const QString &name, const Property &value);
 
-    virtual Property getProperty(const QString &name) const;
+    Property getProperty(const QString &name) const;
 
-    virtual bool containsProperty(const QString &name) const;
+    bool containsProperty(const QString &name) const;
 
-    virtual QHash<QString,Property> properties() const;
+    const Properties& properties() const;
 
     /** Tell the forcefield that it has to recalculate everything from
         scratch */
     virtual void mustNowRecalculateFromScratch()=0;
-
-    /** Change the molecule 'molecule' (e.g. move it, or change its
-        parameters). This does nothing if the molecule is not
-        in this forcefield. Returns whether or not the forcefield
-        has been changed by this change, and thus whether the
-        energy needs to be recalculated. The same parameter map
-        that was used when this molecule was added will be used
-        to extract any necessary parameters from the molecule's
-        properties
-
-        \throw SireBase::missing_property
-        \throw SireError::invalid_cast
-        \throw SireError::invalid_operation
-    */
-    virtual bool change(const PartialMolecule &molecule)=0;
-
-    virtual bool change(const Molecules &molecules);
-
-    /** Add the molecule 'molecule' to this forcefield using the
-        optional parameter map to find any necessay parameters
-        from properties of the atom. This will replace any
-        existing copy of the atom that already exists in
-        this forcefield. This returns whether or not the
-        forcefield has been changed by this addition, and therefore
-        whether its energy needs recalculating.
-
-        This will throw an exception if this forcefield doens't
-        support partial molecules.
-
-        \throw SireError::invalid_operation
-        \throw SireBase::missing_property
-        \throw SireError::invalid_cast
-    */
-    virtual bool add(const PartialMolecule &molecule,
-                     const ParameterMap &map = ParameterMap())=0;
-
-    virtual bool addTo(const FFBase::Group &group,
-                       const PartialMolecule &molecule,
-                       const ParameterMap &map = ParameterMap());
-
-    virtual bool add(const Molecules &molecules,
-                     const ParameterMap &map = ParameterMap());
-
-    virtual bool addTo(const FFBase::Group &group,
-                       const Molecules &molecules,
-                       const ParameterMap &map = ParameterMap());
-
-    /** Remove the molecule 'molecule' from this forcefield - this
-        does nothing if the molecule is not in this forcefield. This
-        returns whether this has changed the forcefield (therefore
-        necessitating a recalculation of the energy)
-
-        \throw SireError::invalid_operation
-    */
-    virtual bool remove(const PartialMolecule &molecule)=0;
-
-    virtual bool remove(const Molecules &molecules);
-
-    virtual bool removeFrom(const FFBase::Group &group,
-                            const PartialMolecule &molecule);
-
-    virtual bool removeFrom(const FFBase::Group &group,
-                            const Molecules &molecules);
-
-    /** Return whether this forcefield contains a complete copy of
-        any version of the partial molecule 'molecule' */
-    virtual bool contains(const PartialMolecule &molecule) const=0;
-
-    virtual bool contains(const PartialMolecule &molecule,
-                          const FFBase::Group &group) const;
-
-    /** Return whether or not this forcefield contains *any part* of
-        any version of the molecule with ID 'molid' */
-    virtual bool refersTo(MoleculeID molid) const=0;
-
-    virtual bool refersTo(MoleculeID molid, const FFBase::Group &group) const;
-
-    /** Return the groups that refer to the molecule with ID == molid
-
-        \throw SireMol::missing_molecule
-    */
-    virtual QSet<FFBase::Group> groupsReferringTo(MoleculeID molid) const=0;
-
-    /** Return the set of all of the ID numbers of all of the
-        molecules that are referred to by this forcefield
-        (i.e. all molecules that have at least some part
-        in this forcefield) */
-    virtual QSet<MoleculeID> moleculeIDs() const=0;
-
-    virtual QSet<MoleculeID> moleculeIDs(const FFBase::Group &group) const;
-
-    /** Return the copy of the molecule in this forcefield that
-        has the ID == molid
-
-        \throw SireMol::missing_molecule
-    */
-    virtual PartialMolecule molecule(MoleculeID molid) const=0;
-
-    virtual PartialMolecule molecule(MoleculeID molid,
-                                     const FFBase::Group &group) const;
-
-    virtual Molecules molecules(const QSet<MoleculeID> &molids) const;
-
-    Molecules molecules() const;
-    Molecules molecules(const FFBase::Group &group) const;
-
-    /** Return all of the molecules (and parts of molecules) that
-        are in this forcefield */
-    virtual Molecules contents() const=0;
-
-    virtual Molecules contents(const FFBase::Group &group) const;
 
     bool isDirty() const;
     bool isClean() const;
@@ -501,65 +179,127 @@ public:
     ForceFieldID ID() const;
     const Version& version() const;
 
-    void assertContains(const FFComponent &component) const;
+    ///////
+    /////// Overloading MolGroups functions
+    ///////
+        
+    void add(const MoleculeView &molview, const MGID &mgid);
+    void add(const ViewsOfMol &molviews, const MGID &mgid);
+    void add(const Molecules &molecules, const MGID &mgid);
+    void add(const MolGroup &molgroup, const MGID &mgid);
+    
+    void addIfUnique(const MoleculeView &molview, const MGID &mgid);
+    void addIfUnique(const ViewsOfMol &molviews, const MGID &mgid);
+    void addIfUnique(const Molecules &molecules, const MGID &mgid);
+    void addIfUnique(const MolGroup &molgroup, const MGID &mgid);
+    
+    void remove(const MoleculeView &molview);
+    void remove(const ViewsOfMol &molviews);
+    void remove(const Molecules &molecules);
+    void remove(const MolGroup &molgroup);
+    
+    void removeAll(const MoleculeView &molview);
+    void removeAll(const ViewsOfMol &molviews);
+    void removeAll(const Molecules &molecules);
+    void removeAll(const MolGroup &molgroup);
+
+    void remove(MolNum molnum);
+    void remove(const QSet<MolNum> &molnums);
+
+    void removeAll(const MGID &mgid);
+    void removeAll();
+    
+    void remove(const MoleculeView &molview, const MGID &mgid);
+    void remove(const ViewsOfMol &molviews, const MGID &mgid);
+    void remove(const Molecules &molecules, const MGID &mgid);
+    void remove(const MolGroup &molgroup, const MGID &mgid);
+    
+    void removeAll(const MoleculeView &molview, const MGID &mgid);
+    void removeAll(const ViewsOfMol &molviews, const MGID &mgid);
+    void removeAll(const Molecules &molecules, const MGID &mgid);
+    void removeAll(const MolGroup &molgroup, const MGID &mgid);
+
+    void remove(MolNum molnum, const MGID &mgid);
+    void remove(const QSet<MolNum> &molnums, const MGID &mgid);
+
+    void update(const MoleculeData &moldata);
+    void update(const MoleculeView &molview);
+    
+    void update(const Molecules &molecules);
+    void update(const MolGroup &molgroup);
+    
+    void setContents(const MGID &mgid, const MoleculeView &molview);
+    void setContents(const MGID &mgid, const ViewsOfMol &molviews);
+    void setContents(const MGID &mgid, const Molecules &molecules);
+    void setContents(const MGID &mgid, const MolGroup &molgroup);
 
 protected:
-    void registerComponents(FFBase::Components *components);
+    FFBase();
+    FFBase(const QString &name);
 
-    void incrementMajorVersion();
-    void incrementMinorVersion();
+    FFBase(const FFBase &other);
 
-    void setComponent(const FFComponent &comp, double nrg);
-    void changeComponent(const FFComponent &comp, double delta);
+    FFBase& operator=(const FFBase &other);
+    FFBase& operator=(const ForceField &ffield);
+
+    void setComponent(const Symbol &component, double nrg);
+    void changeComponent(const Symbol &component, double delta);
 
     void setDirty();
     void setClean();
 
-    Values currentEnergies() const;
-
-    static QHash<MoleculeID,int> index(const QVector<Molecule> &molecules);
+    const Values& currentEnergies() const;
 
     /** Virtual function used to trigger a recalculation of the total energy
         and of all of the component energies */
     virtual void recalculateEnergy()=0;
 
-    /** Virtual function used to copy one FFBase to another.
-        'other' is guaranteed to be of the same type as this class */
-    virtual void _pvt_copy(const FFBase &other)=0;
+    ////
+    //// Overloading MolGroups virtual functions
+    ////
+    
+    MolGroup& getGroup(MGNum mgnum); 
+    const MolGroup& getGroup(MGNum mgnum) const;
+    
+    void getGroups(const QList<MGNum> &mgnums,
+                   QVarLengthArray<MolGroup*,10> &groups);
+
+    void getGroups(const QList<MGNum> &mgnums,
+                   QVarLengthArray<const MolGroup*,10> &groups) const;
+
+    QHash<MGNum,MolGroup*> getGroups();
+    QHash<MGNum,const MolGroup*> getGroups() const;
 
 private:
-    /** The name of this forcefield - this may be used to give a unique
-        name to all of the component-symbols in this forcefield. */
-    QString ffname;
+    /** The name of this forcefield */
+    FFName ffname;
 
-    /** The ID number and version numbers of this forcefield. The
-        major version number changes whenever the number of molecules
-        in the forcefield changes - the minor number changes whenever
-        the molecules themselves change (move or change parameters) */
-    IDMajMinVersion id_and_version;
+    /** The number of this forcefield - this is a unique number
+        used to provide a unique ID to all of the symbols in 
+        this forcefield */
+    FFNum ffnum;
+
+    /** The values of all of the properties of this forcefield */
+    Properties props;
 
     /** All of the cached energy components in this forcefield, indexed
         by their symbol ID number (includes the total energy) */
     Values nrg_components;
-
-    /** Active pointer to the object containing the information about all
-        of the components of this forcefield */
-    boost::scoped_ptr<FFBase::Components> components_ptr;
 
     /** Whether or not this forcefield is dirty (requires an update) */
     bool isdirty;
 };
 
 /** Set the energy value of the component 'comp' */
-inline void FFBase::setComponent(const FFComponent &comp, double nrg)
+inline void FFBase::setComponent(const Symbol &component, double nrg)
 {
-    nrg_components.set(comp,nrg);
+    nrg_components.set(component,nrg);
 }
 
 /** Change the existing value of the component 'comp' by delta */
-inline void FFBase::changeComponent(const FFComponent &comp, double delta)
+inline void FFBase::changeComponent(const Symbol &component, double delta)
 {
-    nrg_components.set( comp, delta + nrg_components.value(comp) );
+    nrg_components.set( component, delta + nrg_components.value(component) );
 }
 
 /** Return whether or not the forcefield is dirty (the energy
@@ -574,43 +314,6 @@ inline bool FFBase::isDirty() const
 inline bool FFBase::isClean() const
 {
     return not isDirty();
-}
-
-/** Internal function used by derived classes to increment the major
-    number of the forcefield */
-inline void FFBase::incrementMajorVersion()
-{
-    id_and_version.incrementMajor();
-    setDirty();
-}
-
-/** Internal function used by derived classes to increment the minor
-    number of the forcefield */
-inline void FFBase::incrementMinorVersion()
-{
-    id_and_version.incrementMinor();
-    setDirty();
-}
-
-/** Return the ID number of the forcefield */
-inline ForceFieldID FFBase::ID() const
-{
-    return ForceFieldID(id_and_version.ID());
-}
-
-/** Return the version number of the forcefield */
-inline const Version& FFBase::version() const
-{
-    return id_and_version.version();
-}
-
-/** Assert that this forcefield contains the component 'component'
-
-    \throw SireFF::missing_component
-*/
-inline void FFBase::assertContains(const FFComponent &component) const
-{
-    components().assertContains(component);
 }
 
 }
