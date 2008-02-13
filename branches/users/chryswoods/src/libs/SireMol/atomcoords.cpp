@@ -344,6 +344,26 @@ void AtomProperty<Vector>::assignFrom(const QVector< QVector<QVariant> > &values
     this->operator=( AtomProperty<Vector>(values) );
 }
 
+/** Return whether or not this set of coordinates is compatible with
+    the molecule layout in 'molinfo' */
+bool AtomProperty<Vector>::isCompatibleWith(const MoleculeInfoData &molinfo) const
+{
+    int ncg = molinfo.nCutGroups();
+    
+    if (ncg != coords.count())
+        return false;
+        
+    const CoordGroup *coords_array = coords.constData();
+    
+    for (CGIdx i(0); i<ncg; ++i)
+    {
+        if (molinfo.nAtoms(i) != coords_array[i].count())
+            return false;
+    }
+    
+    return true;
+}
+
 /** Return whether or not the passed QVariant is compatible with
     this property */
 bool AtomProperty<Vector>::canConvert(const QVariant &value) const

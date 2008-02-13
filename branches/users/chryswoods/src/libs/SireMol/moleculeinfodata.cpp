@@ -2870,6 +2870,101 @@ QList<AtomIdx> MoleculeInfoData::map(const AtomID &atomid) const
     return atomid.map(*this);
 }
 
+/** Assert that this molecule contains the atom at index 'atomidx' 
+
+    \throw SireError::invalid_index
+*/
+void MoleculeInfoData::assertContains(AtomIdx atomidx) const
+{
+    try
+    {
+        atomidx.map(this->nAtoms());
+    }
+    catch(const SireError::invalid_index&)
+    {
+        throw SireError::invalid_index( QObject::tr(
+            "There is no atom at index %1. nAtoms() == %2 for the "
+            "molecule layout with UID %3.")
+                .arg(atomidx).arg(nAtoms()).arg(UID()), CODELOC );
+    }
+}
+
+/** Assert that this molecule contains the CutGroup at index 'cgidx' 
+
+    \throw SireError::invalid_index
+*/
+void MoleculeInfoData::assertContains(CGIdx cgidx) const
+{
+    try
+    {
+        cgidx.map(this->nCutGroups());
+    }
+    catch(const SireError::invalid_index&)
+    {
+        throw SireError::invalid_index( QObject::tr(
+            "There is no CutGroup at index %1. nCutGroups() == %2 for the "
+            "molecule layout with UID %3.")
+                .arg(cgidx).arg(nCutGroups()).arg(UID()), CODELOC );
+    }
+}
+
+/** Assert that this molecule contains the residue at index 'residx' 
+
+    \throw SireError::invalid_index
+*/
+void MoleculeInfoData::assertContains(ResIdx residx) const
+{
+    try
+    {
+        residx.map(this->nResidues());
+    }
+    catch(const SireError::invalid_index&)
+    {
+        throw SireError::invalid_index( QObject::tr(
+            "There is no residue at index %1. nResidues() == %2 for the "
+            "molecule layout with UID %3.")
+                .arg(residx).arg(nResidues()).arg(UID()), CODELOC );
+    }
+}
+
+/** Assert that this molecule contains the chain at index 'chainidx' 
+
+    \throw SireError::invalid_index
+*/
+void MoleculeInfoData::assertContains(ChainIdx chainidx) const
+{
+    try
+    {
+        chainidx.map(this->nChains());
+    }
+    catch(const SireError::invalid_index&)
+    {
+        throw SireError::invalid_index( QObject::tr(
+            "There is no chain at index %1. nChains() == %2 for the "
+            "molecule layout with UID %3.")
+                .arg(chainidx).arg(nChains()).arg(UID()), CODELOC );
+    }
+}
+
+/** Assert that this molecule contains the atom at index 'segidx' 
+
+    \throw SireError::invalid_index
+*/
+void MoleculeInfoData::assertContains(SegIdx segidx) const
+{
+    try
+    {
+        segidx.map(this->nSegments());
+    }
+    catch(const SireError::invalid_index&)
+    {
+        throw SireError::invalid_index( QObject::tr(
+            "There is no atom at index %1. nSegments() == %2 for the "
+            "molecule layout with UID %3.")
+                .arg(segidx).arg(nSegments()).arg(UID()), CODELOC );
+    }
+}
+
 void MoleculeInfoData::assertCompatibleWith(
                              const AtomSelection &selected_atoms) const
 {

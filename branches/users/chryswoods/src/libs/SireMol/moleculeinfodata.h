@@ -318,11 +318,8 @@ public:
     void assertContains(ResIdx residx) const;
     void assertContains(ChainIdx chainidx) const;
     void assertContains(SegIdx segidx) const;
-    
 
     void assertEqualTo(const MoleculeInfoData &other) const;
-    
-    static QSharedDataPointer<MoleculeInfoData> null();
     
 private:
     

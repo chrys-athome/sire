@@ -41,9 +41,14 @@ SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
+class ResProp;
+
 template<class T>
 class ResProperty;
 }
+
+QDataStream& operator<<(QDataStream&, const SireMol::ResProp&);
+QDataStream& operator>>(QDataStream&, SireMol::ResProp&);
 
 template<class T>
 QDataStream& operator<<(QDataStream&, const SireMol::ResProperty<T>&);
@@ -57,14 +62,10 @@ namespace SireMol
 class ResProp : public MolViewProperty
 {
 public:
-    ResProp() : MolViewProperty()
-    {}
+    ResProp();
+    ResProp(const ResProp &other);
    
-    ResProp(const ResProp &other) : MolViewProperty(other)
-    {}
-   
-    virtual ~ResProp()
-    {}
+    virtual ~ResProp();
     
     virtual bool canConvert(const QVariant &value) const=0;
     
@@ -392,6 +393,29 @@ int ResProperty<T>::nResidues() const
     return props.count();
 }
 
+}
+
+/** Serialise this property to a binary datastream */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator<<(QDataStream &ds, const SireMol::ResProperty<T> &prop)
+{
+    //serialise the base class - this writes the header and version!
+    ds << static_cast<const SireMol::ResProp&>(prop);
+    ds << prop.props;
+    
+    return ds;
+}
+
+/** Extract from an binary datastream */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator>>(QDataStream &ds, SireMol::ResProperty<T> &prop)
+{
+    ds >> static_cast<SireMol::ResProp&>(prop);
+    ds >> prop.props;
+        
+    return ds;
 }
 
 SIRE_END_HEADER

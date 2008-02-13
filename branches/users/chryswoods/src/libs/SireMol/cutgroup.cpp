@@ -39,11 +39,57 @@
 #include "cgatomidx.h"
 #include "groupatomids.h"
 
+#include "SireBase/errors.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
 using namespace SireMol;
 using namespace SireStream;
+
+///////
+/////// Implementation of CGProp
+///////
+
+static const RegisterMetaType<CGProp> r_cgprop(MAGIC_ONLY,
+                                               "SireMol::CGProp");
+                                                   
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const CGProp &cgprop)
+{
+    writeHeader(ds, r_cgprop, 1)
+         << static_cast<const MolViewProperty&>(cgprop);
+         
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, CGProp &cgprop)
+{
+    VersionID v = readHeader(ds, r_cgprop);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<MolViewProperty&>(cgprop);
+    }
+    else
+        throw version_error(v, "1", r_cgprop, CODELOC);
+        
+    return ds;
+}
+
+CGProp::CGProp() : MolViewProperty()
+{}
+
+CGProp::CGProp(const CGProp &other) : MolViewProperty(other)
+{}
+
+CGProp::~CGProp()
+{}
+
+///////
+/////// Implementation of CutGroup
+///////
 
 RegisterMetaType<CutGroup> r_cg;
 
@@ -128,6 +174,31 @@ AtomSelection CutGroup::selection() const
     AtomSelection selected_atoms(this->data());
     selected_atoms.select(cgidx);
     return selected_atoms;
+}
+
+/** Update this CutGroup with the passed molecule data.
+
+    \throw SireError::incompatible_error
+*/
+void CutGroup::update(const MoleculeData &moldata)
+{
+    //check that the new data is compatible (has same molecule
+    //number and info ID number)
+    if (d->number() != moldata.number() or
+        d->info().UID() != moldata.info().UID())
+    {
+        throw SireError::incompatible_error( QObject::tr(
+            "You can only update a CutGroup with the molecule data "
+            "for the same molecule (same molecule number) and that "
+            "has a .info() object that has the same UID. You are "
+            "trying to update CutGroup %1 in molecule %2 with UID %3 "
+            "with molecule %4 with UID %5.")
+                .arg(cgidx).arg(d->number()).arg(d->info().UID())
+                .arg(moldata.number()).arg(moldata.info().UID()),
+                    CODELOC );
+    }
+    
+    d = moldata;
 }
 
 /** Return the name of this CutGroup */
@@ -322,6 +393,47 @@ bool CutGroup::hasMetadata(const PropertyName &key,
                        const PropertyName &metakey) const
 {
     return d->hasMetadataOfType<CGProp>(key, metakey);
+}
+
+/** Assert that this CutGroup has an CGProperty at key 'key'
+
+    \throw SireBase::missing_property
+*/
+void CutGroup::assertContainsProperty(const PropertyName &key) const
+{
+    if (not this->hasProperty(key))
+        throw SireBase::missing_property( QObject::tr(
+            "There is no CGProperty at key '%1' for this CutGroup.")
+                .arg(key), CODELOC );
+}
+
+/** Assert that this CutGroup has an CGProperty piece of metadata
+    at metakey 'metakey'
+    
+    \throw SireBase::missing_property
+*/
+void CutGroup::assertContainsMetadata(const PropertyName &metakey) const
+{
+    if (not this->hasMetadata(metakey))
+        throw SireBase::missing_property( QObject::tr(
+            "There is no CGProperty metadata at metakey '%1' for "
+            "this CutGroup.")
+                .arg(metakey), CODELOC );
+}
+
+/** Assert that the property at key 'key' has an CGProperty
+    piece of metadata at metakey 'metakey'
+    
+    \throw SireBase::missing_property
+*/
+void CutGroup::assertContainsMetadata(const PropertyName &key,
+                                  const PropertyName &metakey) const
+{
+    if (not this->hasMetadata(key, metakey))
+        throw SireBase::missing_property( QObject::tr(
+            "There is no CGProperty metadata at metakey '%1' "
+            "for the property at key '%2' for this CutGroup.")
+                .arg(metakey, key), CODELOC );
 }
 
 bool detail::has_property(const CutGroup*, const MoleculeData &moldata,

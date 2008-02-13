@@ -28,6 +28,7 @@
 
 #include "atom.h"
 #include "atomeditor.h"
+#include "atomproperty.hpp"
 
 #include "mover.hpp"
 #include "evaluator.h"
@@ -40,12 +41,57 @@
 #include "selector.hpp"
 
 #include "SireBase/errors.h"
+#include "SireMol/errors.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
 using namespace SireMol;
 using namespace SireStream;
+
+///////
+/////// Implementation of AtomProp
+///////
+
+static const RegisterMetaType<AtomProp> r_atomprop(MAGIC_ONLY,
+                                                   "SireMol::AtomProp");
+                                                   
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const AtomProp &atomprop)
+{
+    writeHeader(ds, r_atomprop, 1)
+         << static_cast<const MolViewProperty&>(atomprop);
+         
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, AtomProp &atomprop)
+{
+    VersionID v = readHeader(ds, r_atomprop);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<MolViewProperty&>(atomprop);
+    }
+    else
+        throw version_error(v, "1", r_atomprop, CODELOC);
+        
+    return ds;
+}
+
+AtomProp::AtomProp() : MolViewProperty()
+{}
+
+AtomProp::AtomProp(const AtomProp &other) : MolViewProperty(other)
+{}
+
+AtomProp::~AtomProp()
+{}
+
+///////
+/////// Implementation of Atom
+///////
 
 static const RegisterMetaType<Atom> r_atom;
 
@@ -228,6 +274,37 @@ CutGroup Atom::cutGroup() const
     return CutGroup(*d, d->info().parentCutGroup(atomidx));
 }
 
+/** Return the molecule that contains this atom */
+Molecule Atom::molecule() const
+{
+    return Molecule(*d);
+}
+
+/** Update this atom with the passed molecule data.
+
+    \throw SireError::incompatible_error
+*/
+void Atom::update(const MoleculeData &moldata)
+{
+    //check that the new data is compatible (has same molecule
+    //number and info ID number)
+    if (d->number() != moldata.number() or
+        d->info().UID() != moldata.info().UID())
+    {
+        throw SireError::incompatible_error( QObject::tr(
+            "You can only update an atom with the molecule data "
+            "for the same molecule (same molecule number) and that "
+            "has a .info() object that has the same UID. You are "
+            "trying to update atom %1 in molecule %2 with UID %3 "
+            "with molecule %4 with UID %5.")
+                .arg(atomidx).arg(d->number()).arg(d->info().UID())
+                .arg(moldata.number()).arg(moldata.info().UID()),
+                    CODELOC );
+    }
+    
+    d = moldata;
+}
+
 /** Return whether or not there is an AtomProperty at key 'key' */
 bool Atom::hasProperty(const PropertyName &key) const
 {
@@ -271,6 +348,18 @@ QStringList Atom::metadataKeys() const
 QStringList Atom::metadataKeys(const PropertyName &key) const
 {
     return d->properties().metadataKeysOfType<AtomProp>(key);
+}
+
+/** Assert that this atom is the atom at index 'atomidx'
+
+    \throw SireMol::missing_atom
+*/
+void Atom::assertContains(AtomIdx atom) const
+{
+    if (atomidx != atom.map(d->info().nAtoms()))
+        throw SireMol::missing_atom( QObject::tr(
+            "This atom (index %1) is not the atom at index %2.")
+                .arg(atomidx).arg(atom), CODELOC );
 }
 
 /** Assert that this atom has an AtomProperty at key 'key'

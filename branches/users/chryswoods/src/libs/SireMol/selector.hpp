@@ -32,16 +32,16 @@
 #include "moleculeview.h"
 #include "evaluator.h"
 
+#include "atom.h"
+#include "cutgroup.h"
+#include "residue.h"
+#include "chain.h"
+#include "segment.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
-
-class Atom;
-class Chain;
-class CutGroup;
-class Residue;
-class Segment;
 
 class MoleculeData;
 

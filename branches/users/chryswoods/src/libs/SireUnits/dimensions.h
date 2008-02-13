@@ -37,6 +37,17 @@ SIRE_BEGIN_HEADER
 
 namespace SireUnits
 {
+namespace Dimension
+{
+class Unit;
+}
+}
+
+QDataStream& operator<<(QDataStream&, const SireUnits::Dimension::Unit&);
+QDataStream& operator>>(QDataStream&, SireUnits::Dimension::Unit&);
+
+namespace SireUnits
+{
 
 using SireMaths::pi;
 
@@ -54,6 +65,10 @@ class TempBase;
 */
 class Unit
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const Unit&);
+friend QDataStream& ::operator>>(QDataStream&, Unit&);
+
 public:
     ~Unit()
     {}
@@ -396,6 +411,24 @@ class Potential;
 
 } // end of namespace Dimension
 
+}
+
+/** Serialise a unit to a binary datastream (this does not check
+    the type of unit!) */
+inline QDataStream& operator<<(QDataStream &ds,
+                               const SireUnits::Dimension::Unit &unit)
+{
+    ds << unit.sclfac;
+    return ds;
+}
+
+/** Extract from a binary datastream (this does not check the type
+    of unit!) */
+inline QDataStream& operator>>(QDataStream &ds,
+                               SireUnits::Dimension::Unit &unit)
+{
+    ds >> unit.sclfac;
+    return ds;
 }
 
 Q_DECLARE_METATYPE( SireUnits::Dimension::Dimensionless );

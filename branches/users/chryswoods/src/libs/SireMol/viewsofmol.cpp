@@ -93,6 +93,14 @@ ViewsOfMol::ViewsOfMol(const MoleculeData &moldata)
            : MoleculeView(moldata), selected_atoms(moldata)
 {}
 
+/** Construct the view of the passed molecule */
+ViewsOfMol::ViewsOfMol(const MoleculeData &moldata,
+                       const AtomSelection &molview)
+           : MoleculeView(moldata), selected_atoms(molview)
+{
+    selected_atoms.assertCompatibleWith(moldata);
+}
+
 /** Construct the views of the passed molecule */
 ViewsOfMol::ViewsOfMol(const MoleculeData &moldata,
                        const QList<AtomSelection> &molviews)
@@ -663,6 +671,54 @@ QList<AtomSelection> ViewsOfMol::removeAll(const QList<AtomSelection> &views)
     return removed_views;
 }
 
+/** Remove all duplicate views from this set - this returns
+    copies of all of the removed views (multiple times
+    if a view is contained more than twice in this set) */
+QList<AtomSelection> ViewsOfMol::removeDuplicates()
+{
+    if (views.isEmpty())
+        return views;
+        
+    QList<AtomSelection> removed_views;
+
+    int nviews = views.count();
+    
+    //compare all pairs of views
+    int i = 0;
+    
+    while (i < nviews-1)
+    {
+        //need to take a pointer as removing views would
+        //screw up the reference
+        const AtomSelection *view0 = &(views.at(i));
+        
+        int j = i+1;
+        
+        while (j < nviews)
+        {
+            const AtomSelection &view1 = views.at(j);
+            
+            if (*view0 == view1)
+            {
+                //this is a duplicate view - remove the later view
+                removed_views.append(view1);
+                views.removeAt(j);
+                --nviews;
+                
+                //need to retake the pointer to view0 as removing the
+                //item may have moved view0 in memory
+                view0 = &(views.at(i));
+            }
+            else
+                ++j;
+        }
+        
+        ++i;
+    }
+    
+    return removed_views;
+}
+
 /** Remove all views from this set */
 void ViewsOfMol::removeAll()
 {
@@ -762,6 +818,24 @@ const AtomSelection& ViewsOfMol::selection(int i) const
         return views.at(i);
 }
 
+/** Return all of the selections in this set of views */
+QList<AtomSelection> ViewsOfMol::selections() const
+{
+    if (views.isEmpty())
+    {
+        if (selected_atoms.isEmpty())
+            return QList<AtomSelection>();
+        else
+        {
+            QList<AtomSelection> allviews;
+            allviews.append(selected_atoms);
+            return allviews;
+        }
+    }
+    else
+        return views;
+}
+
 /** Return the mover that can move all of the atoms
     in the ith view in this set 
     
@@ -810,6 +884,32 @@ bool ViewsOfMol::contains(const AtomID &atomid) const
     return selected_atoms.contains(atomid);
 }
 
+/** Return whether or not the views between them contain
+    all of the atoms in the selection 'selection'
+    
+    \throw SireError::incompatible_error
+*/
+bool ViewsOfMol::contains(const AtomSelection &selection) const
+{
+    return selected_atoms.contains(selection);
+}
+
+/** Return whether or not the views between them contain
+    all of the atoms in all of the selections in 'selections'
+    
+    \throw SireError::incompatible_error
+*/
+bool ViewsOfMol::contains(const QList<AtomSelection> &selections) const
+{
+    foreach (const AtomSelection &selection, selections)
+    {
+        if (not selected_atoms.contains(selection))
+            return false;
+    }
+    
+    return true;
+}
+
 /** Return whether or not any of the views contains any
     of the atoms identified by 'atomid'
     
@@ -819,6 +919,16 @@ bool ViewsOfMol::contains(const AtomID &atomid) const
 bool ViewsOfMol::intersects(const AtomID &atomid) const
 {
     return selected_atoms.intersects(atomid);
+}
+
+/** Return whether or not any of the views contains any
+    of the atoms in 'selection'
+    
+    \throw SireError::incompatible_error
+*/
+bool ViewsOfMol::intersects(const AtomSelection &selection) const
+{
+    return selected_atoms.intersects(selection);
 }
 
 /** Return the index of the view 'selection' in this set, 

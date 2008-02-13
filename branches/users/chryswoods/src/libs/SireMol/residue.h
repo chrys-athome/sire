@@ -107,8 +107,10 @@ public:
     {
         return new Residue(*this);
     }
-    
+
     AtomSelection selection() const;
+
+    void update(const MoleculeData &moldata);
 
     ResName name() const;
     ResNum number() const;

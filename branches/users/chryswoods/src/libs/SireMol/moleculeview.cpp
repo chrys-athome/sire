@@ -27,9 +27,11 @@
 \*********************************************/
 
 #include "moleculeview.h"
+#include "atomselection.h"
 
 #include "SireBase/errors.h"
 #include "SireError/errors.h"
+#include "SireMol/errors.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -175,6 +177,21 @@ const char* MoleculeView::metadataType(const PropertyName &key,
                                        const PropertyName &metakey) const
 {
     return d->metadata(key, metakey)->what();
+}
+
+/** Assert that this view contains the atom at index 'atomidx'
+
+    \throw SireMol::missing_atom
+    \throw SireError::invalid_index
+*/
+void MoleculeView::assertContains(AtomIdx atomidx) const
+{
+    if (not this->selection().selected(atomidx))
+        throw SireMol::missing_atom( QObject::tr(
+            "This view of the molecule \"%1\" (%2) does not "
+            "contain the atom at index %3.")
+                .arg(d->name()).arg(d->number())
+                .arg(atomidx), CODELOC );
 }
 
 /** Assert that this contains a property at key 'key' 

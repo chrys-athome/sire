@@ -502,11 +502,8 @@ bool Molecules::removeDuplicates()
          it != mols.end();
          ++it)
     {
-        int n_old_views = it->nViews();
-        *it = it->removeDuplicates();
-        
-        if (not changed)
-            changed = n_old_views != it->nViews();
+        QList<AtomSelection> removed_views = it->removeDuplicates();
+        changed = changed or (not removed_views.isEmpty());
     }
     
     return changed;

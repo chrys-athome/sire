@@ -115,7 +115,7 @@ public:
     
     AtomSelection selection() const;
     
-    void update(const MoleculeData &other) const;
+    void update(const MoleculeData &other);
 
     AtomName name() const;
     AtomNum number() const;

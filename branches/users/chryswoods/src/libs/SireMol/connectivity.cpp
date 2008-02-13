@@ -89,9 +89,19 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
     return ds;
 }
 
+static SharedDataPointer<MoleculeInfoData> shared_null;
+
+static SharedDataPointer<MoleculeInfoData> getNull()
+{
+    if (shared_null.constData() == 0)
+        shared_null = new MoleculeInfoData();
+        
+    return shared_null;
+}
+
 /** Null constructor */
 ConnectivityBase::ConnectivityBase()
-                 : PropertyBase(), d(MoleculeInfoData::null())
+                 : PropertyBase(), d( ::getNull() )
 {}
 
 const MoleculeInfoData& ConnectivityBase::info() const

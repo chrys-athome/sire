@@ -95,7 +95,6 @@ public:
     }
 
     bool isCompatibleWith(const MoleculeInfoData &molinfo) const;
-    SireBase::Property mask(const AtomSelection &selected_atoms) const;
 
     bool operator==(const AtomProperty<Vector> &other) const;
     bool operator!=(const AtomProperty<Vector> &other) const;

@@ -144,6 +144,8 @@ public:
     Evaluator evaluate() const;
     MolEditor edit() const;
     
+    void update(const MoleculeData &moldata);
+    
     Atom select(const AtomID &atomid) const;
     Residue select(const ResID &resid) const;
     Chain select(const ChainID &chainid) const;

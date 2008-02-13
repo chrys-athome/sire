@@ -149,8 +149,6 @@ public:
     PartialMolecule join() const;
     PartialMolecule all() const;
     
-    ViewsOfMol removeDuplicates() const;
-    
     Molecule molecule() const;
 
     Mover<ViewsOfMol> move() const;
@@ -233,6 +231,8 @@ public:
     
     bool removeAll(const AtomSelection &view);
     QList<AtomSelection> removeAll(const QList<AtomSelection> &views);
+    
+    QList<AtomSelection> removeDuplicates();
    
     void removeAll();
    

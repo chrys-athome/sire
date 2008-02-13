@@ -50,6 +50,50 @@ using namespace SireMol;
 using namespace SireBase;
 using namespace SireStream;
 
+///////
+/////// Implementation of ResProp
+///////
+
+static const RegisterMetaType<ResProp> r_resprop(MAGIC_ONLY,
+                                                 "SireMol::ResProp");
+                                                   
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const ResProp &resprop)
+{
+    writeHeader(ds, r_resprop, 1)
+         << static_cast<const MolViewProperty&>(resprop);
+         
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, ResProp &resprop)
+{
+    VersionID v = readHeader(ds, r_resprop);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<MolViewProperty&>(resprop);
+    }
+    else
+        throw version_error(v, "1", r_resprop, CODELOC);
+        
+    return ds;
+}
+
+ResProp::ResProp() : MolViewProperty()
+{}
+
+ResProp::ResProp(const ResProp &other) : MolViewProperty(other)
+{}
+
+ResProp::~ResProp()
+{}
+
+///////
+/////// Implementation of Residue
+///////
+
 RegisterMetaType<Residue> r_res;
 
 /** Serialise to a binary datastream */
@@ -143,11 +187,45 @@ bool Residue::operator!=(const Residue &other) const
            MoleculeView::operator!=(other);
 }
 
+/** Return the ith atom in this residue
+
+    \throw SireError::invalid_index
+*/
+Atom Residue::atom(int i) const
+{
+    return Atom( *d, d->info().getAtom(residx, i) );
+}
+
 /** Return the identities of the atoms that are selected as
     part of this residue */
 AtomSelection Residue::selection() const
 {
     return selected_atoms;
+}
+
+/** Update this residue with the passed molecule data.
+
+    \throw SireError::incompatible_error
+*/
+void Residue::update(const MoleculeData &moldata)
+{
+    //check that the new data is compatible (has same molecule
+    //number and info ID number)
+    if (d->number() != moldata.number() or
+        d->info().UID() != moldata.info().UID())
+    {
+        throw SireError::incompatible_error( QObject::tr(
+            "You can only update a residue with the molecule data "
+            "for the same molecule (same molecule number) and that "
+            "has a .info() object that has the same UID. You are "
+            "trying to update residue %1 in molecule %2 with UID %3 "
+            "with molecule %4 with UID %5.")
+                .arg(residx).arg(d->number()).arg(d->info().UID())
+                .arg(moldata.number()).arg(moldata.info().UID()),
+                    CODELOC );
+    }
+    
+    d = moldata;
 }
 
 /** Return the name of this residue */
@@ -280,6 +358,15 @@ Selector<Atom> Residue::atoms(const AtomID &atomid) const
 Selector<Atom> Residue::atoms() const
 {
     return Selector<Atom>(this->data(), residx.atoms());
+}
+
+/** Return the ith atom in this residue 
+
+    \throw SireError::invalid_index
+*/
+Atom Residue::select(int i) const
+{
+    return this->atom(i);
 }
 
 /** Return the atom in this residue *and* has the ID 'atomid'

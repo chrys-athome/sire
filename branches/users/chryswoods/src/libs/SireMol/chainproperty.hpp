@@ -41,9 +41,14 @@ SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
+class ChainProp;
+
 template<class T>
 class ChainProperty;
 }
+
+QDataStream& operator<<(QDataStream&, const SireMol::ChainProp&);
+QDataStream& operator>>(QDataStream&, SireMol::ChainProp&);
 
 template<class T>
 QDataStream& operator<<(QDataStream&, const SireMol::ChainProperty<T>&);
@@ -57,14 +62,10 @@ namespace SireMol
 class ChainProp : public MolViewProperty
 {
 public:
-    ChainProp() : MolViewProperty()
-    {}
+    ChainProp();
+    ChainProp(const ChainProp &other);
     
-    ChainProp(const ChainProp &other) : MolViewProperty(other)
-    {}
-    
-    virtual ~ChainProp()
-    {}
+    virtual ~ChainProp();
 
     virtual bool canConvert(const QVariant &value) const=0;
     
@@ -392,6 +393,29 @@ int ChainProperty<T>::nChains() const
     return props.count();
 }
 
+}
+
+/** Serialise this property to a binary datastream */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator<<(QDataStream &ds, const SireMol::ChainProperty<T> &prop)
+{
+    //serialise the base class - this writes the header and version!
+    ds << static_cast<const SireMol::ChainProp&>(prop);
+    ds << prop.props;
+    
+    return ds;
+}
+
+/** Extract from an binary datastream */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator>>(QDataStream &ds, SireMol::ChainProperty<T> &prop)
+{
+    ds >> static_cast<SireMol::ChainProp&>(prop);
+    ds >> prop.props;
+        
+    return ds;
 }
 
 SIRE_END_HEADER

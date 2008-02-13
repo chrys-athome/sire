@@ -107,7 +107,7 @@ public:
     
     AtomSelection selection() const;
     
-    void update(const MoleculeData &moldata) const;
+    void update(const MoleculeData &moldata);
     
     const SegName& name() const;
     SegIdx index() const;

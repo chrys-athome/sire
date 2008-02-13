@@ -40,11 +40,57 @@
 #include "chainresid.h"
 #include "groupatomids.h"
 
+#include "SireBase/errors.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
 using namespace SireMol;
 using namespace SireStream;
+
+///////
+/////// Implementation of ChainProp
+///////
+
+static const RegisterMetaType<ChainProp> r_chainprop(MAGIC_ONLY,
+                                                   "SireMol::ChainProp");
+                                                   
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const ChainProp &chainprop)
+{
+    writeHeader(ds, r_chainprop, 1)
+         << static_cast<const MolViewProperty&>(chainprop);
+         
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, ChainProp &chainprop)
+{
+    VersionID v = readHeader(ds, r_chainprop);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<MolViewProperty&>(chainprop);
+    }
+    else
+        throw version_error(v, "1", r_chainprop, CODELOC);
+        
+    return ds;
+}
+
+ChainProp::ChainProp() : MolViewProperty()
+{}
+
+ChainProp::ChainProp(const ChainProp &other) : MolViewProperty(other)
+{}
+
+ChainProp::~ChainProp()
+{}
+
+///////
+/////// Implementation of Chain
+///////
 
 RegisterMetaType<Chain> r_chain;
 
@@ -135,6 +181,31 @@ bool Chain::operator!=(const Chain &other) const
 AtomSelection Chain::selection() const
 {
     return selected_atoms;
+}
+
+/** Update this chain with the passed molecule data.
+
+    \throw SireError::incompatible_error
+*/
+void Chain::update(const MoleculeData &moldata)
+{
+    //check that the new data is compatible (has same molecule
+    //number and info ID number)
+    if (d->number() != moldata.number() or
+        d->info().UID() != moldata.info().UID())
+    {
+        throw SireError::incompatible_error( QObject::tr(
+            "You can only update a chain with the molecule data "
+            "for the same molecule (same molecule number) and that "
+            "has a .info() object that has the same UID. You are "
+            "trying to update chain %1 in molecule %2 with UID %3 "
+            "with molecule %4 with UID %5.")
+                .arg(chainidx).arg(d->number()).arg(d->info().UID())
+                .arg(moldata.number()).arg(moldata.info().UID()),
+                    CODELOC );
+    }
+    
+    d = moldata;
 }
 
 /** Return the name of this chain */
@@ -417,6 +488,47 @@ QStringList Chain::metadataKeys() const
 QStringList Chain::metadataKeys(const PropertyName &key) const
 {
     return d->properties().metadataKeysOfType<ChainProp>(key);
+}
+
+/** Assert that this chain has an ChainProperty at key 'key'
+
+    \throw SireBase::missing_property
+*/
+void Chain::assertContainsProperty(const PropertyName &key) const
+{
+    if (not this->hasProperty(key))
+        throw SireBase::missing_property( QObject::tr(
+            "There is no ChainProperty at key '%1' for this chain.")
+                .arg(key), CODELOC );
+}
+
+/** Assert that this chain has an ChainProperty piece of metadata
+    at metakey 'metakey'
+    
+    \throw SireBase::missing_property
+*/
+void Chain::assertContainsMetadata(const PropertyName &metakey) const
+{
+    if (not this->hasMetadata(metakey))
+        throw SireBase::missing_property( QObject::tr(
+            "There is no ChainProperty metadata at metakey '%1' for "
+            "this chain.")
+                .arg(metakey), CODELOC );
+}
+
+/** Assert that the property at key 'key' has an ChainProperty
+    piece of metadata at metakey 'metakey'
+    
+    \throw SireBase::missing_property
+*/
+void Chain::assertContainsMetadata(const PropertyName &key,
+                                  const PropertyName &metakey) const
+{
+    if (not this->hasMetadata(key, metakey))
+        throw SireBase::missing_property( QObject::tr(
+            "There is no ChainProperty metadata at metakey '%1' "
+            "for the property at key '%2' for this chain.")
+                .arg(metakey, key), CODELOC );
 }
 
 bool detail::has_property(const Chain*, const MoleculeData &moldata,

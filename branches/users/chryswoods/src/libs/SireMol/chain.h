@@ -108,6 +108,8 @@ public:
     
     AtomSelection selection() const;
     
+    void update(const MoleculeData &moldata);
+    
     ChainName name() const;
     ChainIdx index() const;
     

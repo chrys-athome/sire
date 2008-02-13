@@ -38,11 +38,57 @@
 
 #include "groupatomids.h"
 
+#include "SireBase/errors.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
 using namespace SireMol;
 using namespace SireStream;
+
+///////
+/////// Implementation of SegProp
+///////
+
+static const RegisterMetaType<SegProp> r_segprop(MAGIC_ONLY,
+                                                 "SireMol::SegProp");
+                                                   
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const SegProp &segprop)
+{
+    writeHeader(ds, r_segprop, 1)
+         << static_cast<const MolViewProperty&>(segprop);
+         
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, SegProp &segprop)
+{
+    VersionID v = readHeader(ds, r_segprop);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<MolViewProperty&>(segprop);
+    }
+    else
+        throw version_error(v, "1", r_segprop, CODELOC);
+        
+    return ds;
+}
+
+SegProp::SegProp() : MolViewProperty()
+{}
+
+SegProp::SegProp(const SegProp &other) : MolViewProperty(other)
+{}
+
+SegProp::~SegProp()
+{}
+
+///////
+/////// Implementation of Segment
+///////
 
 RegisterMetaType<Segment> r_seg;
 
@@ -133,6 +179,31 @@ bool Segment::operator!=(const Segment &other) const
 AtomSelection Segment::selection() const
 {
     return selected_atoms;
+}
+
+/** Update this segment with the passed molecule data.
+
+    \throw SireError::incompatible_error
+*/
+void Segment::update(const MoleculeData &moldata)
+{
+    //check that the new data is compatible (has same molecule
+    //number and info ID number)
+    if (d->number() != moldata.number() or
+        d->info().UID() != moldata.info().UID())
+    {
+        throw SireError::incompatible_error( QObject::tr(
+            "You can only update a segment with the molecule data "
+            "for the same molecule (same molecule number) and that "
+            "has a .info() object that has the same UID. You are "
+            "trying to update segment %1 in molecule %2 with UID %3 "
+            "with molecule %4 with UID %5.")
+                .arg(segidx).arg(d->number()).arg(d->info().UID())
+                .arg(moldata.number()).arg(moldata.info().UID()),
+                    CODELOC );
+    }
+    
+    d = moldata;
 }
 
 /** Return the name of this Segment */
@@ -328,6 +399,47 @@ QStringList Segment::metadataKeys() const
 QStringList Segment::metadataKeys(const PropertyName &key) const
 {
     return d->properties().metadataKeysOfType<SegProp>(key);
+}
+
+/** Assert that this segment has an SegProperty at key 'key'
+
+    \throw SireBase::missing_property
+*/
+void Segment::assertContainsProperty(const PropertyName &key) const
+{
+    if (not this->hasProperty(key))
+        throw SireBase::missing_property( QObject::tr(
+            "There is no SegProperty at key '%1' for this segment.")
+                .arg(key), CODELOC );
+}
+
+/** Assert that this segment has an SegProperty piece of metadata
+    at metakey 'metakey'
+    
+    \throw SireBase::missing_property
+*/
+void Segment::assertContainsMetadata(const PropertyName &metakey) const
+{
+    if (not this->hasMetadata(metakey))
+        throw SireBase::missing_property( QObject::tr(
+            "There is no SegProperty metadata at metakey '%1' for "
+            "this segment.")
+                .arg(metakey), CODELOC );
+}
+
+/** Assert that the property at key 'key' has an SegProperty
+    piece of metadata at metakey 'metakey'
+    
+    \throw SireBase::missing_property
+*/
+void Segment::assertContainsMetadata(const PropertyName &key,
+                                  const PropertyName &metakey) const
+{
+    if (not this->hasMetadata(key, metakey))
+        throw SireBase::missing_property( QObject::tr(
+            "There is no SegProperty metadata at metakey '%1' "
+            "for the property at key '%2' for this segment.")
+                .arg(metakey, key), CODELOC );
 }
 
 bool SireMol::detail::has_property(const Segment*, const MoleculeData &moldata,

@@ -40,9 +40,14 @@
 
 namespace SireMol
 {
+class AtomProp;
+
 template<class T>
 class AtomProperty;
 }
+
+QDataStream& operator<<(QDataStream&, const SireMol::AtomProp&);
+QDataStream& operator>>(QDataStream&, SireMol::AtomProp&);
 
 template<class T>
 QDataStream& operator<<(QDataStream&, const SireMol::AtomProperty<T>&);
@@ -59,14 +64,10 @@ using SireBase::Property;
 class AtomProp : public MolViewProperty
 {
 public:
-    AtomProp() : MolViewProperty()
-    {}
+    AtomProp();
+    AtomProp(const AtomProp &other);
     
-    AtomProp(const AtomProp &other) : MolViewProperty(other)
-    {}
-    
-    virtual ~AtomProp()
-    {}
+    virtual ~AtomProp();
     
     virtual bool canConvert(const QVariant &value) const=0;
     
@@ -781,6 +782,29 @@ AtomProperty<T> AtomProperty<T>::matchToSelection(
     }
 }
 
+}
+
+/** Serialise this property to a binary datastream */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator<<(QDataStream &ds, const SireMol::AtomProperty<T> &prop)
+{
+    //serialise the base class - this writes the header and version!
+    ds << static_cast<const SireMol::AtomProp&>(prop);
+    ds << prop.props;
+    
+    return ds;
+}
+
+/** Extract from an binary datastream */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator>>(QDataStream &ds, SireMol::AtomProperty<T> &prop)
+{
+    ds >> static_cast<SireMol::AtomProp&>(prop);
+    ds >> prop.props;
+        
+    return ds;
 }
 
 #endif

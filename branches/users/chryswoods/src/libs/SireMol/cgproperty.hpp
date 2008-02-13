@@ -41,9 +41,14 @@ SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
+class CGProp;
+
 template<class T>
 class CGProperty;
 }
+
+QDataStream& operator<<(QDataStream&, const SireMol::CGProp&);
+QDataStream& operator>>(QDataStream&, SireMol::CGProp&);
 
 template<class T>
 QDataStream& operator<<(QDataStream&, const SireMol::CGProperty<T>&);
@@ -57,14 +62,10 @@ namespace SireMol
 class CGProp : public MolViewProperty
 {
 public:
-    CGProp() : MolViewProperty()
-    {}
+    CGProp();
+    CGProp(const CGProp &other);
     
-    CGProp(const CGProp &other) : MolViewProperty(other)
-    {}
-    
-    virtual ~CGProp()
-    {}
+    virtual ~CGProp();
     
     virtual bool canConvert(const QVariant &value) const=0;
     
@@ -393,6 +394,29 @@ int CGProperty<T>::nCutGroups() const
     return props.count();
 }
 
+}
+
+/** Serialise this property to a binary datastream */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator<<(QDataStream &ds, const SireMol::CGProperty<T> &prop)
+{
+    //serialise the base class - this writes the header and version!
+    ds << static_cast<const SireMol::CGProp&>(prop);
+    ds << prop.props;
+    
+    return ds;
+}
+
+/** Extract from an binary datastream */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator>>(QDataStream &ds, SireMol::CGProperty<T> &prop)
+{
+    ds >> static_cast<SireMol::CGProp&>(prop);
+    ds >> prop.props;
+        
+    return ds;
 }
 
 SIRE_END_HEADER

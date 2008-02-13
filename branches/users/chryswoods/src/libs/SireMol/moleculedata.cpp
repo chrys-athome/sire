@@ -361,6 +361,27 @@ const char* MoleculeData::propertyType(const PropertyName &key) const
     return props.propertyType(key);
 }
 
+/** Return all of the keys of the properties of this molecule */
+QStringList MoleculeData::propertyKeys() const
+{
+    return props.propertyKeys();
+}
+
+/** Return all of the metadata keys of the metadata of this molecule */
+QStringList MoleculeData::metadataKeys() const
+{
+    return props.metadataKeys();
+}
+
+/** Return all of the metadata keys for the property at key 'key'
+
+    \throw SireBase::missing_property
+*/
+QStringList MoleculeData::metadataKeys(const PropertyName &key) const
+{
+    return props.metadataKeys(key);
+}
+
 /** Return the type name of the metadata at metakey 'metakey'
 
     \throw SireBase::missing_property
