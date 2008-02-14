@@ -19,7 +19,9 @@ set ( SIREFF_HEADERS
       ffid.h
       ffidentifier.h
       ffidx.h
+      ffmolgroup.h
       ffname.h
+      ffnum.h
       forcefield.h
       forcefields.h
       forcefieldsbase.h
@@ -46,6 +48,7 @@ set ( SIREFF_SOURCES
       ffgroupid.cpp
       ffid.cpp
       ffidentifier.cpp
+      ffmolgroup.cpp
       forcefield.cpp
       forcefields.cpp
       forcefieldsbase.cpp

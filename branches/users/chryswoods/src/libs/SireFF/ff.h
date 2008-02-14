@@ -26,8 +26,11 @@
   *
 \*********************************************/
 
-#ifndef SireFF_FFBASE_H
-#define SireFF_FFBASE_H
+#ifndef SireFF_FF_H
+#define SireFF_FF_H
+
+#include "ffname.h"
+#include "ffnum.h"
 
 #include "SireMol/molgroups.h"
 #include "SireBase/properties.h"
@@ -36,11 +39,11 @@ SIRE_BEGIN_HEADER
 
 namespace SireFF
 {
-class FFBase;
+class FF;
 }
 
-QDataStream& operator<<(QDataStream&, const SireFF::FFBase&);
-QDataStream& operator>>(QDataStream&, SireFF::FFBase&);
+QDataStream& operator<<(QDataStream&, const SireFF::FF&);
+QDataStream& operator>>(QDataStream&, SireFF::FF&);
 
 namespace SireFF
 {
@@ -179,10 +182,6 @@ public:
     ForceFieldID ID() const;
     const Version& version() const;
 
-    ///////
-    /////// Overloading MolGroups functions
-    ///////
-        
     void add(const MoleculeView &molview, const MGID &mgid);
     void add(const ViewsOfMol &molviews, const MGID &mgid);
     void add(const Molecules &molecules, const MGID &mgid);
@@ -192,55 +191,32 @@ public:
     void addIfUnique(const ViewsOfMol &molviews, const MGID &mgid);
     void addIfUnique(const Molecules &molecules, const MGID &mgid);
     void addIfUnique(const MolGroup &molgroup, const MGID &mgid);
-    
-    void remove(const MoleculeView &molview);
-    void remove(const ViewsOfMol &molviews);
-    void remove(const Molecules &molecules);
-    void remove(const MolGroup &molgroup);
-    
-    void removeAll(const MoleculeView &molview);
-    void removeAll(const ViewsOfMol &molviews);
-    void removeAll(const Molecules &molecules);
-    void removeAll(const MolGroup &molgroup);
 
-    void remove(MolNum molnum);
-    void remove(const QSet<MolNum> &molnums);
-
-    void removeAll(const MGID &mgid);
-    void removeAll();
+    virtual void add(const MoleculeView &molview, 
+                     const MGID &mgid, const ParameterMap &map)=0;
+    virtual void add(const ViewOfMol &molviews, 
+                     const MGID &mgid, const ParameterMap &map)=0;
+    virtual void add(const Molecules &molecules, 
+                     const MGID &mgid, const ParameterMap &map)=0;
+    virtual void add(const MolGroup &molgroup, 
+                     const MGID &mgid, const ParameterMap &map)=0;
     
-    void remove(const MoleculeView &molview, const MGID &mgid);
-    void remove(const ViewsOfMol &molviews, const MGID &mgid);
-    void remove(const Molecules &molecules, const MGID &mgid);
-    void remove(const MolGroup &molgroup, const MGID &mgid);
-    
-    void removeAll(const MoleculeView &molview, const MGID &mgid);
-    void removeAll(const ViewsOfMol &molviews, const MGID &mgid);
-    void removeAll(const Molecules &molecules, const MGID &mgid);
-    void removeAll(const MolGroup &molgroup, const MGID &mgid);
-
-    void remove(MolNum molnum, const MGID &mgid);
-    void remove(const QSet<MolNum> &molnums, const MGID &mgid);
-
-    void update(const MoleculeData &moldata);
-    void update(const MoleculeView &molview);
-    
-    void update(const Molecules &molecules);
-    void update(const MolGroup &molgroup);
-    
-    void setContents(const MGID &mgid, const MoleculeView &molview);
-    void setContents(const MGID &mgid, const ViewsOfMol &molviews);
-    void setContents(const MGID &mgid, const Molecules &molecules);
-    void setContents(const MGID &mgid, const MolGroup &molgroup);
+    virtual void addIfUnique(const MoleculeView &molview, 
+                             const MGID &mgid, const ParameterMap &map)=0;
+    virtual void addIfUnique(const ViewOfMol &molviews, 
+                             const MGID &mgid, const ParameterMap &map)=0;
+    virtual void addIfUnique(const Molecules &molecules, 
+                             const MGID &mgid, const ParameterMap &map)=0;
+    virtual void addIfUnique(const MolGroup &molgroup, 
+                             const MGID &mgid, const ParameterMap &map)=0;
 
 protected:
-    FFBase();
-    FFBase(const QString &name);
+    FF();
+    FF(const QString &name);
 
-    FFBase(const FFBase &other);
+    FF(const FF &other);
 
-    FFBase& operator=(const FFBase &other);
-    FFBase& operator=(const ForceField &ffield);
+    FF& operator=(const FF &other);
 
     void setComponent(const Symbol &component, double nrg);
     void changeComponent(const Symbol &component, double delta);
@@ -253,22 +229,6 @@ protected:
     /** Virtual function used to trigger a recalculation of the total energy
         and of all of the component energies */
     virtual void recalculateEnergy()=0;
-
-    ////
-    //// Overloading MolGroups virtual functions
-    ////
-    
-    MolGroup& getGroup(MGNum mgnum); 
-    const MolGroup& getGroup(MGNum mgnum) const;
-    
-    void getGroups(const QList<MGNum> &mgnums,
-                   QVarLengthArray<MolGroup*,10> &groups);
-
-    void getGroups(const QList<MGNum> &mgnums,
-                   QVarLengthArray<const MolGroup*,10> &groups) const;
-
-    QHash<MGNum,MolGroup*> getGroups();
-    QHash<MGNum,const MolGroup*> getGroups() const;
 
 private:
     /** The name of this forcefield */
