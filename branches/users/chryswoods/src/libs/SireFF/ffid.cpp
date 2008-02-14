@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2007  Christopher Woods
+  *  Copyright (C) 2008  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,48 +26,3 @@
   *
 \*********************************************/
 
-#include "SireCAS/qhash_sirecas.h"
-
-#include "ffthreadworker.h"
-#include "ffcalculator.h"
-
-#include "SireMol/molecule.h"
-
-#include "SireError/errors.h"
-
-using namespace SireFF;
-using namespace SireCluster;
-
-/** Constructor */
-FFThreadWorker::FFThreadWorker(FFCalculatorBase *calculator)
-               : FFLocalWorker(calculator), ThreadWorker()
-{}
-
-/** Destructor */
-FFThreadWorker::~FFThreadWorker()
-{}
-
-/** Recalculate the energy in the background */
-void FFThreadWorker::_pvt_recalculateEnergy()
-{
-    //wait until the last calculation has finished
-    ThreadWorker::runBG();
-}
-
-/** Recalculate the energy in the foreground */
-void FFThreadWorker::_pvt_recalculateEnergyFG()
-{
-    ThreadWorker::runFG();
-}
-
-/** Wait until the last calculation has finished */
-void FFThreadWorker::_pvt_waitUntilReady()
-{
-    ThreadWorker::waitUntilReady();
-}
-
-/** Perform the actual energy recalculation */
-void FFThreadWorker::calculate()
-{
-    ffcalculator->calculateEnergy();
-}

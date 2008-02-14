@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2006  Christopher Woods
+  *  Copyright (C) 2008  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,45 +26,3 @@
   *
 \*********************************************/
 
-#ifndef SIREFF_FFTHREADWORKER_H
-#define SIREFF_FFTHREADWORKER_H
-
-#include "ffworker.h"
-#include "SireCluster/threadworker.h"
-
-SIRE_BEGIN_HEADER
-
-namespace SireFF
-{
-
-class FFCalculatorBase;
-
-/** This class provides a worker that can calculate the energy and
-    forces of a ForceField in a background thread (via the passed
-    FFCalculator)
-
-    @author Christopher Woods
-*/
-class SIREFF_EXPORT FFThreadWorker : public FFLocalWorker,
-                                     public SireCluster::ThreadWorker
-{
-public:
-    FFThreadWorker(FFCalculatorBase *ffcalculator);
-
-    ~FFThreadWorker();
-
-protected:
-    void _pvt_recalculateEnergy();
-    void _pvt_recalculateEnergyFG();
-
-    void _pvt_waitUntilReady();
-
-private:
-    void calculate();
-};
-
-}
-
-SIRE_END_HEADER
-
-#endif

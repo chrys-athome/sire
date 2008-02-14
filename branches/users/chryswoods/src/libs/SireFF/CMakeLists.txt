@@ -13,44 +13,51 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 # Define the headers in SireFF
 set ( SIREFF_HEADERS
       errors.h
-      ffbase.h
-      ffcalculator.h
-      ffcalculatorbase.h
-      ffcomponent.h
-      ffexpression.h
+      ff.h
+      ff3d.h
       ffgroupid.h
-      ffprocessor.h
-      ffthreadprocessor.h
-      ffthreadworker.h
-      ffworker.h
-      ffworkerbase.h
+      ffid.h
+      ffidentifier.h
+      ffidx.h
+      ffname.h
       forcefield.h
-      forcefieldid.h
       forcefields.h
       forcefieldsbase.h
       forcetable.h
+      g1ff.h
+      g2ff.h
+      inter2b2g3dff.h
+      inter2b2g3dff.hpp
+      inter2b2gff.h
+      inter2b2gff.hpp
+      inter2b3dff.h
+      inter2b3dff.hpp
+      inter2bff.h
+      inter2bff.hpp
+      multiff.h
       qhash_sireff.h
     )
 
 # Define the sources in SireFF
 set ( SIREFF_SOURCES
       errors.cpp
-      ffbase.cpp
-      ffcalculatorbase.cpp
-      ffcalculator.cpp
-      ffcomponent.cpp
-      ffexpression.cpp
+      ff.cpp
+      ff3d.cpp
       ffgroupid.cpp
-      ffprocessor.cpp
-      ffthreadprocessor.cpp
-      ffthreadworker.cpp
-      ffworkerbase.cpp
-      ffworker.cpp
+      ffid.cpp
+      ffidentifier.cpp
       forcefield.cpp
-      forcefieldsbase.cpp
       forcefields.cpp
+      forcefieldsbase.cpp
       forcetable.cpp
-    
+      g1ff.cpp
+      g2ff.cpp
+      inter2b2g3dff.cpp
+      inter2b2gff.cpp
+      inter2b3dff.cpp
+      inter2bff.cpp
+      multiff.cpp
+   
       ${SIREFF_HEADERS}
     )
 
