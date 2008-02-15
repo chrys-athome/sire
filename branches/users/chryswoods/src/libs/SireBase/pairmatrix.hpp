@@ -37,7 +37,11 @@ namespace SireBase
 {
 
 /**
-This provides a 2D matrix that contains information about all pairs of two groups of atoms. This matrix is designed to be used in a pair-pair loop, where each element is accessed sequentially, and it is thus highly optimised for such use. It does provide random access via indicies, but this will be slightly slower (though still quite quick!).
+This provides a 2D matrix that contains information about all pairs of 
+two groups of atoms. This matrix is designed to be used in a pair-pair loop, 
+where each element is accessed sequentially, and it is thus highly optimised
+for such use. It does provide random access via indicies, but this will be slightly
+slower (though still quite quick!).
 
 @author Christopher Woods
 */
