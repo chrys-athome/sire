@@ -315,5 +315,5 @@ set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${SIRE_LINK_FLAGS}"
 
 # Recurse into the src/libs and src/apps subdirectories
 add_subdirectory (src/libs)
-add_subdirectory (src/apps)
+#add_subdirectory (src/apps)
 
