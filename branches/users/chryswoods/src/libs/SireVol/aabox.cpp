@@ -28,6 +28,7 @@
 
 #include "aabox.h"
 #include "coordgroup.h"
+#include "coordgroup2.h"
 
 #include "SireMaths/sphere.h"
 
@@ -81,6 +82,12 @@ AABox::AABox(const Vector &c, const Vector &extents) : cent(c), halfextents(exte
 AABox::AABox(const CoordGroupBase &coordgroup)
 {
     recalculate(coordgroup);
+}
+
+/** Construct an AABox that completely encases the CoordGroup 'coordgroup' */
+AABox::AABox(const CoordGroup2Base &coordgroup)
+{
+    recalculate( coordgroup.data(), coordgroup.size() );
 }
 
 /** Construct an AABox that completely encases the points  in 'coordinates' */

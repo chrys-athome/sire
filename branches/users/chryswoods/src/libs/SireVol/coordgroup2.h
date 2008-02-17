@@ -46,6 +46,17 @@ class CoordGroup2Array;
 class CoordGroup2ArrayArray;
 }
 
+QDataStream& operator<<(QDataStream&, const SireVol::CoordGroup2&);
+QDataStream& operator>>(QDataStream&, SireVol::CoordGroup2&);
+
+namespace SireMaths
+{
+class AxisSet;
+class Matrix;
+class Vector;
+class Quaternion;
+}
+
 namespace SireVol
 {
 
@@ -55,6 +66,10 @@ class CGArrayArrayData;
 class CGArrayData;
 class CGData;
 };
+
+using SireMaths::Vector;
+using SireMaths::Quaternion;
+using SireMaths::Matrix;
 
 /** This is the base class of all CoordGroup-like classes
     (e.g. CoordGroup and CoordGroupEditor). CoordGroup classes
@@ -107,31 +122,130 @@ protected:
 
     CoordGroup2Base& operator=(const CoordGroup2Base &other);
 
-    void setNeedsUpdate();
-    bool needsUpdate() const;
-    void update();
-
-    const char* memory() const;
-    char* memory();
-
-    const char* constMemory() const;
-
-    const detail::CoordGroupData& _pvt_group() const;
-    detail::CoordGroupData& _pvt_group();
-
-    const detail::CoordGroupData& _pvt_constGroup() const;
-
-    const Vector* _pvt_data() const;
-    Vector* _pvt_data();
-
-    const Vector* _pvt_constData() const;
-
-private:
     /** Pointer to the CGData object that describes
         this CoordGroup */
     detail::CGData *d;
 };
 
+/** This class holds a group of coordinates. This group forms the basis of the
+    Molecular CutGroup, as defined in SireMol. A CoordGroup contains a list of
+    coordinates, together with an AABox which provides information as to the
+    center and extents of this group. SireVol is designed to calculate distances
+    between points in different CoordGroups, or to calculate distances between
+    points within a CoordGroup. A CoordGroup is implicitly shared and is
+    designed to be fast to use, and fast to copy.
+
+    @author Christopher Woods
+*/
+class SIREVOL_EXPORT CoordGroup2 : public CoordGroup2Base
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const CoordGroup2&);
+friend QDataStream& ::operator>>(QDataStream&, CoordGroup2&);
+
+friend class CoordGroup2Editor;
+
+public:
+    CoordGroup2();
+    CoordGroup2(quint32 size);
+    CoordGroup2(quint32 size, const Vector &value);
+    CoordGroup2(quint32 size, const Vector *values);
+    CoordGroup2(const QVector<Vector> &points);
+
+    CoordGroup2(const CoordGroup2 &other);
+
+    ~CoordGroup2();
+
+    CoordGroup2& operator=(const CoordGroup2 &other);
+    CoordGroup2& operator=(CoordGroup2Editor &other);
+
+    CoordGroup2Editor edit() const;
+
+    template<class T>
+    static CoordGroup2 combine(const T &groups);
+
+    template<class T>
+    static T split(const CoordGroup2 &group, const T &groups);
+
+private:
+    CoordGroup2(const CoordGroup2Editor &other);
+
+    static void throwInvalidCountError(uint nats0, uint nats1);
+};
+
+/** This class is used to edit a CoordGroup. This class is used when you want to
+    make several small changes to a CoordGroup, but do not want the CoordGroup to
+    update its internal state after each change (e.g. you are moving each point in
+    turn, and do not want the AABox to be updated for every step!)
+
+    You use a CoordGroupEditor like this;
+
+    \code
+
+    //create a CoordGroup with space for 100 coordinates
+    CoordGroup coordgroup(100);
+
+    //create an editor for this group
+    CoordGroupEditor editor = coordgroup.edit();
+
+    //manipulate each coordinate in turn
+    for (int i=0; i<100; ++i)
+        editor[i] = Vector(i,i+1,i+2);
+
+    //commit the changes
+    coordgroup = editor.commit();
+
+    \endcode
+
+    @author Christopher Woods
+*/
+class SIREVOL_EXPORT CoordGroup2Editor : public CoordGroup2Base
+{
+public:
+    CoordGroup2Editor();
+    CoordGroup2Editor(const CoordGroup2 &other);
+
+    CoordGroup2Editor(const CoordGroup2Editor &other);
+
+    ~CoordGroup2Editor();
+
+    CoordGroup2Editor& operator=(const CoordGroup2 &cgroup);
+    CoordGroup2Editor& operator=(const CoordGroup2Editor &other);
+
+    Vector& operator[](quint32 i);
+
+    Vector* data();
+
+    CoordGroup2Editor& translate(const Vector &delta);
+    CoordGroup2Editor& translate(quint32 i, const Vector &delta);
+
+    CoordGroup2Editor& rotate(const Quaternion &quat, const Vector &point);
+    CoordGroup2Editor& rotate(const Matrix &rotmat, const Vector &point);
+
+    CoordGroup2Editor& rotate(quint32 i, const Quaternion &quat, const Vector &point);
+    CoordGroup2Editor& rotate(quint32 i, const Matrix &rotmat, const Vector &point);
+
+    CoordGroup2Editor& setCoordinates(const QVector<Vector> &newcoords);
+    CoordGroup2Editor& setCoordinates(const CoordGroup2Base &newcoords);
+
+    CoordGroup2Editor& setCoordinates(quint32 i, const Vector &newcoords);
+
+    CoordGroup2Editor& mapInto(const SireMaths::AxisSet &axes);
+    CoordGroup2Editor& mapInto(quint32 i, const SireMaths::AxisSet &axes);
+    
+    CoordGroup2Editor& changeFrame(const SireMaths::AxisSet &from_frame,
+                                  const SireMaths::AxisSet &to_frame);
+                                  
+    CoordGroup2Editor& changeFrame(quint32 i,
+                                  const SireMaths::AxisSet &from_frame,
+                                  const SireMaths::AxisSet &to_frame);
+
+    CoordGroup2 commit();
+
+private:
+    /** Whether or not the AABox needs to be recalculated */
+    bool needsupdate;
+};
 
 }
 

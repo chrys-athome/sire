@@ -306,6 +306,48 @@ double Cartesian::calcDist(const CoordGroup &group0, const CoordGroup &group1,
     return mindist;
 }
 
+/** Populate the matrix 'mat' with the distances between all of the
+    points of the two CoordGroups. Return the shortest distance between the two
+    CoordGroups. */
+double Cartesian::calcDist(const CoordGroup2 &group0, const CoordGroup2 &group1,
+                           DistMatrix &mat) const
+{
+    double mindist(std::numeric_limits<double>::max());
+    double tmpdist;
+
+    int n0 = group0.count();
+    int n1 = group1.count();
+
+    //redimension the matrix to hold all of the pairs
+    mat.redimension(n0, n1);
+
+    //get raw pointers to the arrays - this provides more efficient access
+    const Vector *array0 = group0.constData();
+    const Vector *array1 = group1.constData();
+
+    for (int i=0; i<n0; ++i)
+    {
+        const Vector& point0 = array0[i];
+        mat.setOuterIndex(i);
+
+        for (int j=0; j<n1; ++j)
+        {
+            //calculate the distance between the two points
+            tmpdist = Vector::distance(point0,array1[j]);
+
+            //store the minimum distance, the value expected to be the minimum
+            //value is most efficiently placed as the second argument
+            mindist = qMin(tmpdist,mindist);
+
+            //place this distance into the matrix
+            mat[j] = tmpdist;
+        }
+    }
+
+    //return the minimum distance
+    return mindist;
+}
+
 /** Populate the matrix 'mat' with the distances^2 between all of the
     points of the two CoordGroups. Return the shortest distance between the
     two CoordGroups. */

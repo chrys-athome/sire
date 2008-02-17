@@ -81,6 +81,9 @@ public:
     double calcDist(const CoordGroup &group1, const CoordGroup &group2,
                     DistMatrix &mat) const;
 
+    double calcDist(const CoordGroup2 &group1, const CoordGroup2 &group2,
+                    DistMatrix &mat) const;
+
     double calcDist2(const CoordGroup &group1, const CoordGroup &group2,
                      DistMatrix &mat) const;
 
