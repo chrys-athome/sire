@@ -34,7 +34,11 @@ int main(int argc, const char **argv)
     cout << qPrintable( test[3].toString() ) << endl;
     cout << qPrintable( test.aaBox().center().toString() ) << endl;
 
+    cerr << "*** TRANSLATE ***\n";
     CoordGroup2 test2 = test.edit().translate( Vector(1,0,0) ).commit();
+    cerr << "*** TRANSLATE COMPLETE ***\n";
+
+    cout << "TEST2\n";
 
     cout << test2.count() << endl;
     cout << qPrintable( test2[0].toString() ) << endl;
@@ -42,6 +46,17 @@ int main(int argc, const char **argv)
     cout << qPrintable( test2[2].toString() ) << endl;
     cout << qPrintable( test2[3].toString() ) << endl;
     cout << qPrintable( test2.aaBox().center().toString() ) << endl;
+
+    cout << "TEST\n";
+
+    cout << test.count() << endl;
+    cout << qPrintable( test[0].toString() ) << endl;
+    cout << qPrintable( test[1].toString() ) << endl;
+    cout << qPrintable( test[2].toString() ) << endl;
+    cout << qPrintable( test[3].toString() ) << endl;
+    cout << qPrintable( test.aaBox().center().toString() ) << endl;
+
+    return 0;
 
     QVector< QVector<CoordGroup> > group0;
     QVector< QVector<CoordGroup> > group1;

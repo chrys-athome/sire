@@ -65,6 +65,83 @@ namespace detail
 class CGArrayArrayData;
 class CGArrayData;
 class CGData;
+
+template<class T>
+class CGSharedPtr
+{
+public:
+    CGSharedPtr(T *p = 0) : ptr(p)
+    {
+        if (ptr)
+            ptr->incref();
+    }
+    
+    CGSharedPtr(const CGSharedPtr &other) : ptr(other.ptr)
+    {
+        if (ptr)
+            ptr->incref();
+    }
+    
+    ~CGSharedPtr()
+    {
+        if (ptr)
+            ptr->decref();
+    }
+    
+    CGSharedPtr<T>& operator=(const CGSharedPtr &other)
+    {
+        ///
+    }
+    
+    const T& operator*() const
+    {
+        return *ptr;
+    }
+    
+    const T* operator->() const
+    {
+        return ptr;
+    }
+    
+    T& operator*()
+    {
+        if (ptr)
+            ptr = ptr->detach();
+            
+        return *ptr;
+    }
+    
+    T* operator->()
+    {
+        if (ptr)
+            ptr = ptr->detach();
+            
+        return ptr;
+    }
+    
+    const T* data() const
+    {
+        return ptr;
+    }
+    
+    const T* constData() const
+    {
+        return ptr;
+    }
+    
+    T* data()
+    {
+        if (ptr)
+            ptr = ptr->detach();
+        
+        return ptr;
+    }
+    
+private:
+    /** Actual pointer */
+    T *ptr;
+};
+
 };
 
 using SireMaths::Vector;
@@ -124,7 +201,7 @@ protected:
 
     /** Pointer to the CGData object that describes
         this CoordGroup */
-    detail::CGData *d;
+    detail::CGSharedPtr<detail::CGData> d;
 };
 
 /** This class holds a group of coordinates. This group forms the basis of the

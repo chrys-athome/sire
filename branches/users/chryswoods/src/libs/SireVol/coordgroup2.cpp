@@ -68,15 +68,12 @@ public:
     void incref();
     void decref();
     
+    CGArrayArrayData* detach();
+    
     const CGArrayData* cgArrayData() const;
     const CGData* cGroupData() const;
     const AABox* aaBoxData() const;
     const Vector* coordsData() const;
-
-    const CGArrayData* constCGArrayData() const;
-    const CGData* constCGroupData() const;
-    const AABox* constAABoxData() const;
-    const Vector* constCoordsData() const;
     
     CGArrayData* cgArrayData();
     CGData* cGroupData();
@@ -92,12 +89,10 @@ public:
     quint32 nCGroups() const;
     quint32 nCoords() const;
     
-    const char* constMemory() const;
+    char *memory();
+    const char* memory() const;
     
 private:
-    const char* memory() const;
-    char *memory();
-    
     /** The index in the storage array of the first CoordGroupArray  
         in this array */
     quint32 cgarray0;
@@ -143,6 +138,8 @@ public:
     void incref();
     void decref();
     
+    CGArrayData* detach();
+    
     const CGData* cGroupData() const;
     const AABox* aaBoxData() const;
     const Vector* coordsData() const;
@@ -158,12 +155,10 @@ public:
     quint32 nCGroups() const;
     quint32 nCoords() const;
     
-    const char* constMemory() const;
+    char* memory();
+    const char* memory() const;
     
 private:
-    const char* memory() const;
-    char* memory();
-
     /** The index in the storage array of this CoordGroupArray */
     quint32 this_cgarray;
     
@@ -205,23 +200,19 @@ public:
     void incref();
     void decref();
     
+    CGData* detach();
+    
+    const char* memory() const;
     const Vector* coordsData() const;
     const AABox* aaBox() const;
-    
-    const Vector* constCoordsData() const;
-    const AABox* constAABox() const;
-    
+
+    char* memory();
     Vector* coordsData();
     AABox* aaBox();
     
     quint32 nCoords() const;
     
-    const char* constMemory() const;
-    
 private:
-    const char* memory() const;
-    char* memory();
-
     /** The index in the storage array of this CoordGroup */
     quint32 this_cgroup;
     
@@ -249,14 +240,13 @@ public:
 
     static void destroy(CGArrayArrayData *array);
     
-    static const char* constMemory(const char *this_ptr, quint32 this_idx);
-    static char* memory(char *this_ptr, quint32 this_idx);
-
     static void incref(char *this_ptr, quint32 this_idx);
     static void decref(char *this_ptr, quint32 this_idx);
 
-private:
     static char* getRoot(char *this_ptr, quint32 this_idx);
+    static const char* getRoot(const char *this_ptr, quint32 this_idx);
+
+private:
     static quint32 getSize(quint32 narrays, quint32 ngroups, quint32 ncoords);
 };
 
@@ -410,11 +400,20 @@ char* CGMemory::create(quint32 narrays, quint32 ncgroups, quint32 ncoords)
     return 0;
 }
 
-/** Private function - this converts the pointer to the object
+/** This converts the pointer to the object
     that starts at 'this_ptr' to a pointer to the first element
     of the storage array (given the location of the object at
     index 'this_idx' in the storage array) */
 char* CGMemory::getRoot(char *this_ptr, quint32 this_idx)
+{
+    return this_ptr - this_idx;
+}
+
+/** This converts the pointer to the object
+    that starts at 'this_ptr' to a pointer to the first element
+    of the storage array (given the location of the object at
+    index 'this_idx' in the storage array) */
+const char* CGMemory::getRoot(const char *this_ptr, quint32 this_idx)
 {
     return this_ptr - this_idx;
 }
@@ -482,6 +481,8 @@ void CGMemory::destroy(CGArrayArrayData *array)
 /** Detach this object from shared storage and return a new pointer to it. */
 char* CGMemory::detach(char *this_ptr, quint32 this_idx)
 {
+    qDebug() << CODELOC;
+
     //get a pointer to the start of the storage for this container
     char *storage = getRoot(this_ptr, this_idx);
     
@@ -490,6 +491,8 @@ char* CGMemory::detach(char *this_ptr, quint32 this_idx)
     
     if (cgarrayarray->ref != 1)
     {
+        qDebug() << "*** DETACHING ***";
+    
         //there is more than one reference to this data - it will have to 
         //be cloned - get the size of memory to be cloned
         int sz = getSize(cgarrayarray->nCGArrays(), 
@@ -516,22 +519,11 @@ char* CGMemory::detach(char *this_ptr, quint32 this_idx)
         return new_storage + this_idx;
     }
     else
+    {
+        qDebug() << "Not detaching.";
         //only one reference, so no need to clone
         return this_ptr;
-}
-
-/** Return a const pointer to the first element of the storage array */
-const char* CGMemory::constMemory(const char *this_ptr, quint32 this_idx)
-{
-    return this_ptr - this_idx;
-}
-
-/** Return a modifiable pointer to the first element of the storage
-    array - this detachs from implicitly shared storage */
-char* CGMemory::memory(char *this_ptr, quint32 this_idx)
-{
-    this_ptr = CGMemory::detach(this_ptr, this_idx);
-    return this_ptr - this_idx;
+    }
 }
 
 /** Increase the reference count */
@@ -583,7 +575,7 @@ CGArrayArrayData::~CGArrayArrayData()
 /** Return a pointer to the start of the memory storage for this container */
 const char* CGArrayArrayData::memory() const
 {
-    return CGMemory::constMemory( (const char*)this, 0 );
+    return CGMemory::getRoot( (const char*)this, 0 );
 }
 
 /** Return a modifiable pointer to the start of the memory storage
@@ -591,13 +583,14 @@ const char* CGArrayArrayData::memory() const
     shared storage */
 char* CGArrayArrayData::memory()
 {
-    return CGMemory::memory( (char*)this, 0 );
+    return CGMemory::getRoot( (char*)this, 0 );
 }
 
-/** Return a pointer to the start of the memory storage for this container */
-const char* CGArrayArrayData::constMemory() const
+/** Return a pointer to a CGArrayArrayData copy of this that has
+    been detached from shared storage */
+CGArrayArrayData* CGArrayArrayData::detach()
 {
-    return CGArrayArrayData::memory();
+    return (CGArrayArrayData*)( CGMemory::detach( (char*)(this), 0 ) );
 }
 
 /** Increment the reference count for this object */
@@ -647,46 +640,6 @@ const AABox* CGArrayArrayData::aaBoxData() const
 /** Return a pointer to the first Vector in this container. This
     returns 0 if there are no vectors in this container */
 const Vector* CGArrayArrayData::coordsData() const
-{
-    if (coords0 == 0)
-        return 0;
-    else
-        return (const Vector*)( memory() + coords0 );
-}
-
-/** Return a pointer to the first CGArrayData in this container. This returns
-    0 if there are no arrays in this container */
-const CGArrayData* CGArrayArrayData::constCGArrayData() const
-{
-    if (cgarray0 == 0)
-        return 0;
-    else
-        return (const CGArrayData*)( memory() + cgarray0 );
-}
-
-/** Return a pointer to the first CGData in this container. This returns
-    0 if there are no CoordGroups in this container */
-const CGData* CGArrayArrayData::constCGroupData() const
-{
-    if (cgroup0 == 0)
-        return 0;
-    else
-        return (const CGData*)( memory() + cgroup0 );
-}
-
-/** Return a pointer to the first AABox in this container. This returns
-    0 if there are no AABoxes in this container */
-const AABox* CGArrayArrayData::constAABoxData() const
-{
-    if (aabox0 == 0)
-        return 0;
-    else
-        return (const AABox*)( memory() + aabox0 );
-}
-
-/** Return a pointer to the first Vector in this container. This
-    returns 0 if there are no vectors in this container */
-const Vector* CGArrayArrayData::constCoordsData() const
 {
     if (coords0 == 0)
         return 0;
@@ -876,7 +829,7 @@ CGArrayData::~CGArrayData()
     that holds all of the data of everything in the container */
 const char* CGArrayData::memory() const
 {
-    return CGMemory::constMemory( (const char*)this, this_cgarray );
+    return CGMemory::getRoot( (const char*)this, this_cgarray );
 }
 
 /** Return a pointer to the start of the raw memory
@@ -884,14 +837,7 @@ const char* CGArrayData::memory() const
     This will detach from shared storage */
 char* CGArrayData::memory()
 {
-    return CGMemory::memory( (char*)this, this_cgarray );
-}
-
-/** Return a const pointer to the start of the raw memory
-    that holds all of the data of everything in the container */
-const char* CGArrayData::constMemory() const
-{
-    return CGArrayData::memory();
+    return CGMemory::getRoot( (char*)this, this_cgarray );
 }
 
 /** Increment the reference count for this object */
@@ -904,6 +850,12 @@ void CGArrayData::incref()
 void CGArrayData::decref()
 {
     CGMemory::decref( (char*)this, this_cgarray );
+}
+
+/** Detach from shared storage */
+CGArrayData* CGArrayData::detach()
+{
+    return (CGArrayData*)( CGMemory::detach( (char*)this, this_cgarray ) );
 }
 
 /** Return a pointer to the CGData of the first CoordGroup in this array.
@@ -1039,25 +991,25 @@ CGData::CGData(const CGData &other)
 CGData::~CGData()
 {}
 
+/** Return a pointer to a CGData that has been detached from 
+    shared storage (could be a pointer to this CGData) */
+CGData* CGData::detach()
+{
+    return (CGData*)( CGMemory::detach( (char*)this, this_cgroup ) );
+}
+
 /** Return a const pointer to the start of the storage
     array that contains this CGData */
 const char* CGData::memory() const
 {
-    return CGMemory::constMemory( (const char*)this, this_cgroup );
+    return CGMemory::getRoot( (const char*)this, this_cgroup );
 }
 
 /** Return a pointer to the start of the storage array that
     contains this CGData - this will detach from shared storage */
 char* CGData::memory()
 {
-    return CGMemory::memory( (char*)this, this_cgroup );
-}
-
-/** Return a const pointer to the start of the raw memory
-    that holds all of the data of everything in the container */
-const char* CGData::constMemory() const
-{
-    return CGData::memory();
+    return CGMemory::getRoot( (char*)this, this_cgroup );
 }
 
 /** Increment the reference count for this object */
@@ -1085,23 +1037,6 @@ const Vector* CGData::coordsData() const
 /** Return a pointer to the AABox that surrounds all of the points
     in this CoordGroup */
 const AABox* CGData::aaBox() const
-{
-    return (const AABox*)( memory() + aabox );
-}
-
-/** Return a pointer to the coordinates of the first point in this
-    CoordGroup. This returns 0 if there are no points in this CoordGroup */
-const Vector* CGData::constCoordsData() const
-{
-    if (coords0 == 0)
-        return 0;
-    else
-        return (const Vector*)( memory() + coords0 );
-}
-
-/** Return a pointer to the AABox that surrounds all of the points
-    in this CoordGroup */
-const AABox* CGData::constAABox() const
 {
     return (const AABox*)( memory() + aabox );
 }
@@ -1141,9 +1076,9 @@ quint32 CGData::nCoords() const
 //////// Implementation of CoordGroupBase
 ////////
 
-static CGArrayArrayData* shared_null = 0;
+static CGSharedPtr<CGArrayArrayData> shared_null;
 
-static CGArrayArrayData* getSharedNull()
+static const CGSharedPtr<CGArrayArrayData>& getSharedNull()
 {
     if (shared_null == 0)
     {
@@ -1154,11 +1089,11 @@ static CGArrayArrayData* getSharedNull()
     return shared_null;
 }
 
-static CGData* getSharedNullCoordGroup()
+static CGSharedPtr<CGData> getSharedNullCoordGroup()
 {
-    CGArrayArrayData *array = ::getSharedNull();
+    const CGSharedPtr<CGArrayArrayData> &array = ::getSharedNull();
     
-    return (CGData*)array;
+    //need to work out how to return null...;
 }
 
 /** Null constructor */
@@ -1571,16 +1506,12 @@ Vector* CoordGroup2Editor::data()
 /** Translate this CoordGroup2 by 'delta' */
 CoordGroup2Editor& CoordGroup2Editor::translate(const Vector &delta)
 {
-    qDebug() << "BEFORE";
-    for (int i=0; i<this->count(); ++i)
-    {
-        qDebug() << this->at(i).toString();
-    }
-
     if (not delta.isZero())
     {
         //translate all of the coordinates
         quint32 ncoords = this->count();
+        
+        d = d->detach();
         Vector *coords = d->coordsData();
 
         for (quint32 i=0; i<ncoords; ++i)
@@ -1595,12 +1526,6 @@ CoordGroup2Editor& CoordGroup2Editor::translate(const Vector &delta)
             new_box.translate(delta);
             *(d->aaBox()) = new_box;
         }
-    }
-
-    qDebug() << "AFTER";
-    for (int i=0; i<this->count(); ++i)
-    {
-        qDebug() << this->at(i).toString();
     }
 
     return *this;
