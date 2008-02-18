@@ -14,6 +14,12 @@ using namespace SireMaths;
 
 using namespace std;
 
+void checkDist(int i, int j, double a, double b)
+{
+    if (a != b)
+	cout << "ERROR: " << i << " " << j << " " << a << " " << b << endl;
+}
+
 int main(int argc, const char **argv)
 {
     QTime t;
@@ -55,8 +61,6 @@ int main(int argc, const char **argv)
     cout << qPrintable( test[2].toString() ) << endl;
     cout << qPrintable( test[3].toString() ) << endl;
     cout << qPrintable( test.aaBox().center().toString() ) << endl;
-
-    return 0;
 
     QVector< QVector<CoordGroup> > group0;
     QVector< QVector<CoordGroup> > group1;
@@ -185,6 +189,65 @@ int main(int argc, const char **argv)
 
                    if (this_mindist < mindist)
                        mindist = this_mindist;
+               }
+           }
+       }
+    }
+
+    ms = t.elapsed();
+
+    cout << "Minimum distance = " << mindist << " (took " << ms << " ms)\n";
+
+    //make sure that the calculated distances are the same
+    t.start();
+
+    DistMatrix distmat1;
+    DistMatrix distmat2;
+
+    for (int imol=0; imol<group0.count(); ++imol)
+    {
+       const QVector<CoordGroup> &mol10 = group0_array[imol];
+       const QVector<CoordGroup2> &mol20 = group20_array[imol];
+
+       int ncg0 = mol10.count();
+       const CoordGroup *mol10_array = mol10.constData();
+       const CoordGroup2 *mol20_array = mol20.constData();
+
+       for (int jmol=0; jmol<group1.count(); ++jmol)
+       {
+           const QVector<CoordGroup> &mol11 = group1_array[jmol];
+           const QVector<CoordGroup2> &mol21 = group21_array[jmol];
+
+           int ncg1 = mol11.count();
+
+           const CoordGroup *mol11_array = mol11.constData();
+           const CoordGroup2 *mol21_array = mol21.constData();
+           
+           for (int igroup = 0; igroup<ncg0; ++igroup)
+           {
+               const CoordGroup &group10 = mol10_array[igroup];
+               const CoordGroup2 &group20 = mol20_array[igroup];
+
+               const CoordGroup &group11 = mol11_array[igroup];
+               const CoordGroup2 &group21 = mol21_array[igroup];
+
+               for (int jgroup = 0; jgroup<ncg1; ++jgroup)
+               {
+	           const CoordGroup &group11 = mol11_array[jgroup];
+                   const CoordGroup2 &group21 = mol21_array[jgroup];
+
+                   double this_mindist1 = space->calcDist(group10, group11, distmat1);
+                   double this_mindist2 = space->calcDist(group20, group21, distmat2);
+
+                   checkDist( -1, -1, this_mindist1, this_mindist2 );
+
+                   for (int i=0; i<distmat1.nOuter(); ++i)
+                   {
+                       for (int j=0; j<distmat1.nInner(); ++j)
+                       {
+                           checkDist(i, j, distmat1.at(i,j), distmat2.at(i,j));
+                       }
+                   }
                }
            }
        }

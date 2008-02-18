@@ -70,6 +70,9 @@ public:
     
     CGArrayArrayData* detach();
     
+    const CGArrayData* nullArray() const;
+    const CGData* nullCGroup() const;
+    
     const CGArrayData* cgArrayData() const;
     const CGData* cGroupData() const;
     const AABox* aaBoxData() const;
@@ -264,6 +267,13 @@ using namespace SireVol::detail;
     ngroups CoordGroups and ncoords Vector coordinates */
 quint32 CGMemory::getSize(quint32 narrays, quint32 ngroups, quint32 ncoords)
 {
+    //need to add space for null arrays and groups
+    if (narrays == 0)
+        narrays = 1;
+        
+    if (ngroups == 0)
+        ngroups = 1;
+
     return sizeof(CGArrayArrayData) + 
                   narrays * sizeof(CGArrayData) + 
                   ngroups * sizeof(CGData) + 
@@ -325,64 +335,98 @@ char* CGMemory::create(quint32 narrays, quint32 ncgroups, quint32 ncoords)
                     
         //this is the location of the first CGArrayData :-)
         cgarrayarray->cgarray0 = idx;
-                    
-        //loop over each CGArray and create it in its place
-        for (quint32 i=0; i<narrays; ++i)
+
+        if (narrays > 0)
         {
-            //assert that there is sufficient space in the array
-            BOOST_ASSERT(idx + sizeof(CGArrayData) < sz);
+            //loop over each CGArray and create it in its place
+            for (quint32 i=0; i<narrays; ++i)
+            {   
+                //assert that there is sufficient space in the array
+                BOOST_ASSERT(idx + sizeof(CGArrayData) < sz);
             
-            //create the CGArrayData, letting it know where it
-            //is relative to the beginning of the storage array
-            new (storage + idx) CGArrayData(idx);
+                //create the CGArrayData, letting it know where it
+                //is relative to the beginning of the storage array
+                new (storage + idx) CGArrayData(idx);
         
-            //advance the index into the storage array to point
-            //just after the just-created CGArrayData
+                //advance the index into the storage array to point
+                //just after the just-created CGArrayData
+                idx += sizeof(CGArrayData);
+            }
+        }
+        else
+        {
+            //we need to create space for the null CoordGroupArray
+            CGArrayData *cgarray = new (storage + idx) CGArrayData(idx);
+            cgarray->ncgroups = 0;
+            cgarray->cgroup0 = 0;
+            cgarray->ncoords = 0;
+            cgarray->coords0 = 0;
+            cgarray->aabox0 = 0;
+
+            cgarrayarray->ncgarrays = 0;
+            
             idx += sizeof(CGArrayData);
         }
         
         //we are now at the location of the first CGData
         cgarrayarray->cgroup0 = idx;
         
-        //loop over each CoordGroup and create it in its place
-        for (quint32 i=0; i<ncgroups; ++i)
+        if (ncgroups > 0)
         {
-            //assert that there is sufficient space in the array
-            BOOST_ASSERT(idx + sizeof(CGData) < sz);
+            //loop over each CoordGroup and create it in its place
+            for (quint32 i=0; i<ncgroups; ++i)
+            {
+                //assert that there is sufficient space in the array
+                BOOST_ASSERT(idx + sizeof(CGData) < sz);
             
-            //create the CGData, letting it know where it is
-            //relative to the beginning of the storage array
-            new (storage + idx) CGData(idx);
-            
-            //advance the index into the storage array to point
-            //just after the just-created CGData
-            idx += sizeof(CGData); 
-        }
-        
-        //we are now at the location of the first AABox
-        cgarrayarray->aabox0 = idx;
-        
-        //loop over each AABox and create it in place
-        for (quint32 i=0; i<ncgroups; ++i)
-        {
-            BOOST_ASSERT(idx + sizeof(AABox) < sz);
-            
-            new (storage + idx) AABox();
-            
-            idx += sizeof(AABox);
-        }
-        
-        //we are now at the location of the first Vector
-        cgarrayarray->coords0 = idx;
-        
-        //loop over each vector and create it in place
-        for (quint32 i=0; i<ncoords; ++i)
-        {
-            BOOST_ASSERT(idx + sizeof(Vector) <= sz);
-
-            new (storage + idx) Vector(0.0);
+                //create the CGData, letting it know where it is
+                //relative to the beginning of the storage array
+                new (storage + idx) CGData(idx);
                 
-            idx += sizeof(Vector);
+                //advance the index into the storage array to point
+                //just after the just-created CGData
+                idx += sizeof(CGData); 
+            }
+        
+            //we are now at the location of the first AABox
+            cgarrayarray->aabox0 = idx;
+        
+            //loop over each AABox and create it in place
+            for (quint32 i=0; i<ncgroups; ++i)
+            {
+                BOOST_ASSERT(idx + sizeof(AABox) < sz);
+            
+                new (storage + idx) AABox();
+            
+                idx += sizeof(AABox);
+            }
+        
+            //we are now at the location of the first Vector
+            cgarrayarray->coords0 = idx;
+        
+            //loop over each vector and create it in place
+            for (quint32 i=0; i<ncoords; ++i)
+            {
+                BOOST_ASSERT(idx + sizeof(Vector) <= sz);
+
+                new (storage + idx) Vector(0.0);
+                
+                idx += sizeof(Vector);
+            }
+        }
+        else
+        {
+            //create space for the null CoordGroup
+            CGData *cgroup = new (storage + idx) CGData(idx);
+            cgroup->ncoords = 0;
+            cgroup->coords0 = 0;
+            cgroup->aabox = 0;
+            
+            cgarrayarray->aabox0 = 0;
+            cgarrayarray->coords0 = 0;
+            cgarrayarray->ncgroups = 0;
+            
+            idx += sizeof(CGData);
         }
         
         //we should now be at the end of the storage
@@ -481,8 +525,6 @@ void CGMemory::destroy(CGArrayArrayData *array)
 /** Detach this object from shared storage and return a new pointer to it. */
 char* CGMemory::detach(char *this_ptr, quint32 this_idx)
 {
-    qDebug() << CODELOC;
-
     //get a pointer to the start of the storage for this container
     char *storage = getRoot(this_ptr, this_idx);
     
@@ -491,8 +533,6 @@ char* CGMemory::detach(char *this_ptr, quint32 this_idx)
     
     if (cgarrayarray->ref != 1)
     {
-        qDebug() << "*** DETACHING ***";
-    
         //there is more than one reference to this data - it will have to 
         //be cloned - get the size of memory to be cloned
         int sz = getSize(cgarrayarray->nCGArrays(), 
@@ -520,7 +560,6 @@ char* CGMemory::detach(char *this_ptr, quint32 this_idx)
     }
     else
     {
-        qDebug() << "Not detaching.";
         //only one reference, so no need to clone
         return this_ptr;
     }
@@ -584,6 +623,24 @@ const char* CGArrayArrayData::memory() const
 char* CGArrayArrayData::memory()
 {
     return CGMemory::getRoot( (char*)this, 0 );
+}
+
+/** Return a pointer to the null CoordGroupArray */
+const CGArrayData* CGArrayArrayData::nullArray() const
+{
+    BOOST_ASSERT( ncgarrays == 0 );
+    BOOST_ASSERT( cgarray0 != 0 );
+    
+    return (const CGArrayData*)( memory()[cgarray0] );
+}
+
+/** Return a pointer to the null CoordGroup */
+const CGData* CGArrayArrayData::nullCGroup() const
+{
+    BOOST_ASSERT( ncgroups == 0 );
+    BOOST_ASSERT( cgroup0 != 0 );
+    
+    return (const CGData*)( memory()[cgroup0] );
 }
 
 /** Return a pointer to a CGArrayArrayData copy of this that has
@@ -1080,7 +1137,7 @@ static CGSharedPtr<CGArrayArrayData> shared_null;
 
 static const CGSharedPtr<CGArrayArrayData>& getSharedNull()
 {
-    if (shared_null == 0)
+    if (shared_null.constData() == 0)
     {
         shared_null = (CGArrayArrayData*)( CGMemory::create(0,0,0) );
         shared_null->close();
@@ -1093,7 +1150,7 @@ static CGSharedPtr<CGData> getSharedNullCoordGroup()
 {
     const CGSharedPtr<CGArrayArrayData> &array = ::getSharedNull();
     
-    //need to work out how to return null...;
+    return CGSharedPtr<CGData>( array->nullCGroup() );
 }
 
 /** Null constructor */
@@ -1101,7 +1158,7 @@ CoordGroup2Base::CoordGroup2Base()
                : d( ::getSharedNullCoordGroup() )
 {}
 
-static CGData* createCoordGroup(quint32 size)
+static CGSharedPtr<CGData> createCoordGroup(quint32 size)
 {
     if (size == 0)
         return ::getSharedNullCoordGroup();
@@ -1117,7 +1174,7 @@ static CGData* createCoordGroup(quint32 size)
     //close the array - this validates that it is complete
     array->close();
     
-    return &(array->cGroupData()[0]);
+    return CGSharedPtr<CGData>( &(array->cGroupData()[0]) );
 }
 
 /** Construct a CoordGroup that can hold up to 'size'
@@ -1184,50 +1241,25 @@ CoordGroup2Base::CoordGroup2Base(const QVector<Vector> &coordinates)
     shared */
 CoordGroup2Base::CoordGroup2Base(const CoordGroup2Base &other)
                 : d(other.d)
-{
-    //increment the reference count of the data
-    d->incref();
-}
+{}
 
 /** Destructor - this will only delete the data if this
     is the only reference to it */
 CoordGroup2Base::~CoordGroup2Base()
-{
-    d->decref();
-}
+{}
 
 /** Copy assignment operator - CoordGroup2Base is implicitly
     shared so this will be fast */
 CoordGroup2Base& CoordGroup2Base::operator=(const CoordGroup2Base &other)
 {
-    if (d->constMemory() == other.d->constMemory())
-    {
-        //these are both pointing to CoordGroups in the same
-        //array - just update this pointer (there is no need
-        //to worry about reference counts)
-        d = other.d;
-    }
-    else
-    {
-        //increase the reference count of 'other'
-        CGData *d_copy = other.d;
-        d_copy->incref();
-        
-        //now decrease the reference count of whatever we are
-        //pointing to
-        d->decref();
-        
-        //copy the pointer
-        d = other.d;
-    }
-    
+    d = other.d;
     return *this;
 }
 
 /** Comparison operator */
 bool CoordGroup2Base::operator==(const CoordGroup2Base &other) const
 {
-    if ( d == other.d )
+    if ( d.constData() == other.d.constData() )
     {
         return true;
     }
@@ -1264,7 +1296,7 @@ bool CoordGroup2Base::operator!=(const CoordGroup2Base &other) const
     different */
 bool CoordGroup2Base::maybeDifferent(const CoordGroup2Base &other) const
 {
-    return d != other.d;
+    return d.constData() != other.d.constData();
 }
 
 /** Return whether this group is empty (has no coordinates) */
@@ -1511,7 +1543,6 @@ CoordGroup2Editor& CoordGroup2Editor::translate(const Vector &delta)
         //translate all of the coordinates
         quint32 ncoords = this->count();
         
-        d = d->detach();
         Vector *coords = d->coordsData();
 
         for (quint32 i=0; i<ncoords; ++i)

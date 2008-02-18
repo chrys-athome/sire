@@ -70,8 +70,10 @@ template<class T>
 class CGSharedPtr
 {
 public:
-    CGSharedPtr(T *p = 0) : ptr(p)
+    CGSharedPtr(const T *p = 0)
     {
+        ptr = const_cast<T*>(p);
+    
         if (ptr)
             ptr->incref();
     }
@@ -90,7 +92,23 @@ public:
     
     CGSharedPtr<T>& operator=(const CGSharedPtr &other)
     {
-        ///
+        if (ptr != other.ptr)
+        {
+            T *new_ptr = other.ptr;
+            
+            //increment the other reference count
+            if (new_ptr)
+                new_ptr->incref();
+                
+            //decrement our reference count
+            if (ptr)
+                ptr->decref();
+                
+            //set the new pointer
+            ptr = new_ptr;
+        }
+        
+        return *this;
     }
     
     const T& operator*() const
