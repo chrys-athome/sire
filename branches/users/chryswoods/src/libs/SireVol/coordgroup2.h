@@ -65,12 +65,22 @@ namespace detail
 class CGArrayArrayData;
 class CGArrayData;
 class CGData;
+class CGMemory;
 
+/** This is the implicitly shared pointer class that 
+    is used to hold any of the CGMemory allocated objects
+    
+    @author Christopher Woods
+*/
 template<class T>
 class CGSharedPtr
 {
+
 public:
-    CGSharedPtr(const T *p = 0)
+    CGSharedPtr() : ptr(0)
+    {}
+
+    CGSharedPtr(const T *p)
     {
         ptr = const_cast<T*>(p);
     
@@ -155,6 +165,29 @@ public:
         return ptr;
     }
     
+    /** Assign this pointer to point at 'weakptr' 
+        but *without* changing the reference count.
+        You ABSOLUTELY MUST ensure that you call 
+        CGSharedPtr::weakRelease() before this 
+        pointer is deleted or reassigned, so 
+        as to not decrement the reference count incorrectly! */
+    void weakAssign(T *weakptr)
+    {
+        if (ptr)
+            ptr->decref();
+            
+        ptr = weakptr;
+    }
+    
+    /** Release the pointer *without* decrementing the
+        reference count. You should only call this
+        function if the pointer was assigned using 
+        the 'weakAssign()' function */
+    void weakRelease()
+    {
+        ptr = 0;
+    }
+    
 private:
     /** Actual pointer */
     T *ptr;
@@ -178,6 +211,9 @@ using SireMaths::Matrix;
 */
 class SIREVOL_EXPORT CoordGroup2Base
 {
+
+friend class detail::CGData; // so can see d pointer
+friend class detail::CGMemory; // so can see d pointer
 
 public:
     ~CoordGroup2Base();
@@ -207,6 +243,7 @@ public:
 
 protected:
     CoordGroup2Base();
+    CoordGroup2Base(bool);
 
     CoordGroup2Base(quint32 size, const Vector &value = Vector());
     CoordGroup2Base(quint32 size, const Vector *values);
@@ -239,6 +276,8 @@ friend QDataStream& ::operator<<(QDataStream&, const CoordGroup2&);
 friend QDataStream& ::operator>>(QDataStream&, CoordGroup2&);
 
 friend class CoordGroup2Editor;
+friend class detail::CGData; // so can see d pointer
+friend class detail::CGMemory; // so can see d pointer
 
 public:
     CoordGroup2();
@@ -264,6 +303,8 @@ public:
 
 private:
     CoordGroup2(const CoordGroup2Editor &other);
+
+    CoordGroup2(bool);
 
     static void throwInvalidCountError(uint nats0, uint nats1);
 };
@@ -340,6 +381,64 @@ public:
 private:
     /** Whether or not the AABox needs to be recalculated */
     bool needsupdate;
+};
+
+/** This class holds an array of CoordGroups. While you could  
+    of course just use a QVector<CoordGroup>, this array
+    optimises the memory layout of all of the CoordGroups
+    so that they all lie contiguously along the same piece
+    of memory (and indeed, all of the AABoxes are grouped
+    together, while all of the coordinates are grouped together).
+    
+    The memory packing means that this array is much more
+    limited than a QVector<CoordGroup>, i.e. you can't
+    add or remove CoordGroups from the array, and you can't
+    do anything to the contained CoordGroups except for 
+    change their coordinates.
+  
+    This class is really meant to be used as a fast container
+    that allow rapid iteration over all of the contained
+    CoordGroups / coordinates
+        
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT CoordGroupArray
+{
+
+friend class detail::CGArrayData; // so can see d pointer
+friend class detail::CGMemory; // so can see d pointer
+
+public:
+    CoordGroupArray();
+    CoordGroupArray(const QVector<CoordGroup2> &cgroups);
+    
+    CoordGroupArray(const CoordGroupArray &other);
+    
+    ~CoordGroupArray();
+    
+    CoordGroupArray& operator=(const CoordGroupArray &other);
+    
+    bool operator==(const CoordGroupArray &other) const;
+    bool operator!=(const CoordGroupArray &other) const;
+
+    const CoordGroup2& operator[](quint32 i) const;
+
+    int count() const;
+    int size() const;
+
+    int nCoordGroups() const;
+    int nCoords() const;
+
+    void assertValidIndex(quint32 i) const;
+    
+    void assertValidCoordGroup(quint32 i) const;
+    void assertValidCoordinate(quint32 i) const;
+
+protected:
+    CoordGroupArray(bool);
+
+    /** Implicitly shared pointer to the data for this array */
+    detail::CGSharedPtr<detail::CGArrayData> d;
 };
 
 }

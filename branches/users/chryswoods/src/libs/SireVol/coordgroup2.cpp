@@ -143,6 +143,8 @@ public:
     
     CGArrayData* detach();
     
+    const CoordGroupArray& coordGroupArray() const;
+    
     const CGData* cGroupData() const;
     const AABox* aaBoxData() const;
     const Vector* coordsData() const;
@@ -162,6 +164,9 @@ public:
     const char* memory() const;
     
 private:
+    /** The CoordGroupArray object that points to this data */
+    CoordGroupArray cgarray;
+
     /** The index in the storage array of this CoordGroupArray */
     quint32 this_cgarray;
     
@@ -205,6 +210,8 @@ public:
     
     CGData* detach();
     
+    const CoordGroup2& coordGroup() const;
+    
     const char* memory() const;
     const Vector* coordsData() const;
     const AABox* aaBox() const;
@@ -216,6 +223,9 @@ public:
     quint32 nCoords() const;
     
 private:
+    /** The CoordGroup that uses this data */
+    CoordGroup2 cgroup;
+
     /** The index in the storage array of this CoordGroup */
     quint32 this_cgroup;
     
@@ -431,7 +441,9 @@ char* CGMemory::create(quint32 narrays, quint32 ncgroups, quint32 ncoords)
         
         //we should now be at the end of the storage
         BOOST_ASSERT( idx == sz );
-        
+    
+        qDebug() << CODELOC;
+                
         return storage;
     } 
     catch(...)
@@ -554,6 +566,31 @@ char* CGMemory::detach(char *this_ptr, quint32 this_idx)
 
         //now loose a reference to the original
         CGMemory::decref(this_ptr, this_idx);
+        
+        //the final step is to update all of the CoordGroup and CoordGroupArray
+        //pointers that exist in this array (otherwise they will all
+        //point to the original!)
+        if (new_cgarrayarray->nCGArrays() > 0)
+        {
+            CGArrayData *arrays = (CGArrayData*)( new_storage + 
+                                     new_cgarrayarray->cgarray0 );
+        
+            for (quint32 i=0; i < new_cgarrayarray->nCGArrays(); ++i)
+            {
+                arrays[i].cgarray.d.weakAssign( &(arrays[i]) );
+            }
+        }
+        
+        if (new_cgarrayarray->nCGroups() > 0)
+        {
+            CGData *cgroups = (CGData*)( new_storage + 
+                                     new_cgarrayarray->cgroup0 );
+            
+            for (quint32 i=0; i < new_cgarrayarray->nCGroups(); ++i)
+            {
+                cgroups[i].cgroup.d.weakAssign( &(cgroups[i]) );
+            }
+        }
         
         //return a pointer to the clone
         return new_storage + this_idx;
@@ -861,26 +898,38 @@ void CGArrayArrayData::close()
 
 /** Null constructor */
 CGArrayData::CGArrayData()
-            : this_cgarray(0), cgroup0(0), aabox0(0),
+            : cgarray(false), this_cgarray(0), cgroup0(0), aabox0(0),
               ncgroups(0), coords0(0), ncoords(0)
-{}
+{
+    //make the contained CoordGroupArray point at this 
+    //data
+    cgarray.d.weakAssign(this);
+}
 
 /** Construct, telling this array that it is at index 'this_idx' */
 CGArrayData::CGArrayData(quint32 this_idx)
-            : this_cgarray(this_idx), cgroup0(0), aabox0(0),
+            : cgarray(false), this_cgarray(this_idx), cgroup0(0), aabox0(0),
               ncgroups(0), coords0(0), ncoords(0)
-{}
+{
+    cgarray.d.weakAssign(this);
+}
 
 /** Copy constructor */
 CGArrayData::CGArrayData(const CGArrayData &other)
-            : this_cgarray(other.this_cgarray), cgroup0(other.cgroup0), 
+            : cgarray(false), this_cgarray(other.this_cgarray), 
+              cgroup0(other.cgroup0), 
               aabox0(other.aabox0), ncgroups(other.ncgroups),
               coords0(other.coords0), ncoords(other.ncoords)
-{}
+{
+    cgarray.d.weakAssign(this);
+}
 
 /** Destructor */
 CGArrayData::~CGArrayData()
-{}
+{
+    //cgarray was weakly assigned, so must be weakly released
+    cgarray.d.weakRelease();
+}
 
 /** Return a const pointer to the start of the raw memory
     that holds all of the data of everything in the container */
@@ -913,6 +962,12 @@ void CGArrayData::decref()
 CGArrayData* CGArrayData::detach()
 {
     return (CGArrayData*)( CGMemory::detach( (char*)this, this_cgarray ) );
+}
+
+/** Return the CoordGroupArray that uses this data */
+const CoordGroupArray& CGArrayData::coordGroupArray() const
+{
+    return cgarray;
 }
 
 /** Return a pointer to the CGData of the first CoordGroup in this array.
@@ -1029,24 +1084,32 @@ quint32 CGArrayData::nCoords() const
 
 /** Null constructor */
 CGData::CGData()
-       : this_cgroup(0), coords0(0), ncoords(0), aabox(0)
-{}
+       : cgroup(false), this_cgroup(0), coords0(0), ncoords(0), aabox(0)
+{
+    cgroup.d.weakAssign(this);
+}
 
 /** Construct the data, telling it that it is at 
     index 'this_idx' in the memory storage array */
 CGData::CGData(quint32 this_idx)
-       : this_cgroup(this_idx), coords0(0), ncoords(0), aabox(0)
-{}
+       : cgroup(false), this_cgroup(this_idx), coords0(0), ncoords(0), aabox(0)
+{
+    cgroup.d.weakAssign(this);
+}
 
 /** Copy constructor */
 CGData::CGData(const CGData &other)
-       : this_cgroup(other.this_cgroup), coords0(other.coords0),
+       : cgroup(false), this_cgroup(other.this_cgroup), coords0(other.coords0),
          ncoords(other.ncoords), aabox(other.aabox)
-{}
+{
+    cgroup.d.weakAssign(this);
+}
 
 /** Destructor */
 CGData::~CGData()
-{}
+{
+    cgroup.d.weakRelease();
+}
 
 /** Return a pointer to a CGData that has been detached from 
     shared storage (could be a pointer to this CGData) */
@@ -1079,6 +1142,12 @@ void CGData::incref()
 void CGData::decref()
 {
     CGMemory::decref( (char*)this, this_cgroup );
+}
+
+/** Return the CoordGroup that uses this data */
+const CoordGroup2& CGData::coordGroup() const
+{
+    return cgroup;
 }
 
 /** Return a pointer to the coordinates of the first point in this
@@ -1129,6 +1198,32 @@ quint32 CGData::nCoords() const
 //////// Implementation of CoordGroupArray
 ////////
 
+CoordGroupArray::CoordGroupArray()
+{}
+
+CoordGroupArray::CoordGroupArray(bool)
+{}
+
+CoordGroupArray::~CoordGroupArray()
+{}
+
+void CoordGroupArray::assertValidCoordGroup(quint32 i) const
+{
+    if (i >= d->nCGroups())
+        throw SireError::invalid_index( QObject::tr(
+            "Cannot access the CoordGroup at index %1. The number "
+            "of CoordGroups in this array is just %2.")
+                .arg(i).arg(d->nCGroups()), CODELOC );
+}
+
+const CoordGroup2& CoordGroupArray::operator[](quint32 i) const
+{
+    assertValidCoordGroup(i);
+    
+    const CGData *cgdata = d->cGroupData() + i;
+    return cgdata->coordGroup();
+}
+
 ////////
 //////// Implementation of CoordGroupBase
 ////////
@@ -1156,6 +1251,10 @@ static CGSharedPtr<CGData> getSharedNullCoordGroup()
 /** Null constructor */
 CoordGroup2Base::CoordGroup2Base()
                : d( ::getSharedNullCoordGroup() )
+{}
+
+/** Private constructor used only by CGData */
+CoordGroup2Base::CoordGroup2Base(bool)
 {}
 
 static CGSharedPtr<CGData> createCoordGroup(quint32 size)
@@ -1404,6 +1503,10 @@ const Vector& CoordGroup2Base::operator[](quint32 i) const
 
 /** Null constructor */
 CoordGroup2::CoordGroup2() : CoordGroup2Base()
+{}
+
+/** Private constructor used only by CGData */
+CoordGroup2::CoordGroup2(bool val) : CoordGroup2Base(val)
 {}
 
 /** Construct a CoordGroup2 that holds 'size' coordinates */
