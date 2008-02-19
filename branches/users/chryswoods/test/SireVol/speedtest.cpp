@@ -62,6 +62,8 @@ int main(int argc, const char **argv)
     cout << qPrintable( test[3].toString() ) << endl;
     cout << qPrintable( test.aaBox().center().toString() ) << endl;
 
+    //return 0;
+
     QVector< QVector<CoordGroup> > group0;
     QVector< QVector<CoordGroup> > group1;
 

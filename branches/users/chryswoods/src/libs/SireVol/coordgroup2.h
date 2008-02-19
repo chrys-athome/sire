@@ -243,7 +243,7 @@ public:
 
 protected:
     CoordGroup2Base();
-    CoordGroup2Base(bool);
+    CoordGroup2Base(detail::CGData *data);
 
     CoordGroup2Base(quint32 size, const Vector &value = Vector());
     CoordGroup2Base(quint32 size, const Vector *values);
@@ -304,7 +304,7 @@ public:
 private:
     CoordGroup2(const CoordGroup2Editor &other);
 
-    CoordGroup2(bool);
+    CoordGroup2(detail::CGData *data);
 
     static void throwInvalidCountError(uint nats0, uint nats1);
 };
@@ -435,7 +435,7 @@ public:
     void assertValidCoordinate(quint32 i) const;
 
 protected:
-    CoordGroupArray(bool);
+    CoordGroupArray(detail::CGArrayData *data);
 
     /** Implicitly shared pointer to the data for this array */
     detail::CGSharedPtr<detail::CGArrayData> d;
