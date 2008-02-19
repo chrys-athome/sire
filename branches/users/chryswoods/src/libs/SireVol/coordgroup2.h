@@ -215,6 +215,9 @@ class SIREVOL_EXPORT CoordGroup2Base
 friend class detail::CGData; // so can see d pointer
 friend class detail::CGMemory; // so can see d pointer
 
+friend class CoordGroupArray;
+friend class CoordGroupArrayArray;
+
 public:
     ~CoordGroup2Base();
 
@@ -408,6 +411,8 @@ class SIREMOL_EXPORT CoordGroupArray
 friend class detail::CGArrayData; // so can see d pointer
 friend class detail::CGMemory; // so can see d pointer
 
+friend class CoordGroupArrayArray;
+
 public:
     CoordGroupArray();
     CoordGroupArray(const QVector<CoordGroup2> &cgroups);
@@ -422,12 +427,24 @@ public:
     bool operator!=(const CoordGroupArray &other) const;
 
     const CoordGroup2& operator[](quint32 i) const;
+    const CoordGroup2& at(quint32 i) const;
 
     int count() const;
     int size() const;
 
     int nCoordGroups() const;
     int nCoords() const;
+
+    const CoordGroup2* data() const;
+    const CoordGroup2* constData() const;
+
+    const Vector* coordsData() const;
+    const Vector* constCoordsData() const;
+
+    const AABox* aaBoxData() const;
+    const AABox* constAABoxData() const;
+    
+    void update(quint32 i, const CoordGroup2 &cgroup);
 
     void assertValidIndex(quint32 i) const;
     

@@ -1256,42 +1256,6 @@ quint32 CGData::nCoords() const
 }
 
 ////////
-//////// Implementation of CoordGroupArrayArray
-////////
-
-////////
-//////// Implementation of CoordGroupArray
-////////
-
-CoordGroupArray::CoordGroupArray()
-{}
-
-CoordGroupArray::CoordGroupArray(CGArrayData *data)
-{
-    d.weakAssign(data);
-}
-
-CoordGroupArray::~CoordGroupArray()
-{}
-
-void CoordGroupArray::assertValidCoordGroup(quint32 i) const
-{
-    if (i >= d->nCGroups())
-        throw SireError::invalid_index( QObject::tr(
-            "Cannot access the CoordGroup at index %1. The number "
-            "of CoordGroups in this array is just %2.")
-                .arg(i).arg(d->nCGroups()), CODELOC );
-}
-
-const CoordGroup2& CoordGroupArray::operator[](quint32 i) const
-{
-    assertValidCoordGroup(i);
-    
-    const CoordGroup2 *cgroup = d->cGroupData() + i;
-    return *cgroup;
-}
-
-////////
 //////// Implementation of CoordGroupBase
 ////////
 
@@ -1957,3 +1921,259 @@ CoordGroup2 CoordGroup2Editor::commit()
     
     return CoordGroup2(*this);
 }
+
+////////
+//////// Implementation of CoordGroupArray
+////////
+
+static CGSharedPtr<CGArrayData> getSharedNullCGArray()
+{
+    const CGSharedPtr<CGArrayArrayData> &array = ::getSharedNull();
+    
+    return CGSharedPtr<CGArrayData>( array->nullArray() );
+}
+
+/** Null constructor */
+CoordGroupArray::CoordGroupArray()
+                : d( ::getSharedNullCGArray() )
+{}
+
+/** Private constructor used only by CGArrayData */
+CoordGroupArray::CoordGroupArray(CGArrayData *data)
+{
+    d.weakAssign(data);
+}
+
+static CGSharedPtr<CGArrayData> createCGArray(quint32 ngroups, quint32 ncoords)
+{
+    if (ngroups == 0)
+        return ::getSharedNullCGArray();
+
+    //construct space for 1 array of ngroups CoordGroups of ncoords coordinates
+    char *storage = CGMemory::create(1, ngroups, ncoords);
+        
+    CGArrayArrayData *array = (CGArrayArrayData*)storage;
+    
+    return CGSharedPtr<CGArrayData>( &(array->cgArrayDataData()[0]) );
+}
+
+/** Construct from an array of CoordGroups */
+CoordGroupArray::CoordGroupArray(const QVector<CoordGroup2> &cgroups)
+{
+    //count the number of groups and coordinates
+    quint32 ncoords = 0;
+    
+    const CoordGroup2 *cgroups_array = cgroups.constData();
+    
+    for (int i=0; i<cgroups.count(); ++i)
+    {
+        ncoords += cgroups_array[i].count();
+    }
+    
+    //now create space for the CoordGroups
+    d = ::createCGArray(cgroups.count(), ncoords);
+    
+    if (cgroups.isEmpty())
+        return;
+    
+    CGArrayArrayData *cgarrayarray = (CGArrayArrayData*)(d->memory());
+    
+    cgarrayarray->setNCGroupsInArray(0, cgroups.count());
+    
+    //tell the array about the sizes of the groups
+    for (int i=0; i<cgroups.count(); ++i)
+    {
+        const CoordGroup2 &cgroup = cgroups_array[i];
+        cgarrayarray->setNPointsInCGroup(i, cgroup.count());
+    }
+    
+    cgarrayarray->close();
+    
+    Vector *coords = cgarrayarray->coordsData();
+    AABox *aabox = cgarrayarray->aaBoxData();
+    
+    //finally, copy the data into the arrays
+    for (int i=0; i<cgroups.count(); ++i)
+    {
+        const CoordGroup2 &cgroup = cgroups_array[i];
+        
+        //copy the coordinates
+        void *output = qMemCopy(coords, cgroup.constData(),
+                                cgroup.count() * sizeof(Vector));
+                                
+        BOOST_ASSERT(output == coords);
+        
+        coords += cgroup.count();
+        
+        //now copy the AABox
+        aabox[i] = cgroup.aaBox();
+    }
+}
+
+/** Copy constructor */
+CoordGroupArray::CoordGroupArray(const CoordGroupArray &other)
+                : d(other.d)
+{}
+
+/** Destructor */
+CoordGroupArray::~CoordGroupArray()
+{}
+
+/** Assert that the index i points to a valid CoordGroup 
+
+    \throw SireError::invalid_index
+*/
+void CoordGroupArray::assertValidCoordGroup(quint32 i) const
+{
+    if (i >= d->nCGroups())
+        throw SireError::invalid_index( QObject::tr(
+            "Cannot access the CoordGroup at index %1. The number "
+            "of CoordGroups in this array is just %2.")
+                .arg(i).arg(d->nCGroups()), CODELOC );
+}
+
+/** Assert that the index i points to a valid CoordGroup 
+
+    \throw SireError::invalid_index
+*/
+void CoordGroupArray::assertValidIndex(quint32 i) const
+{
+    this->assertValidCoordGroup(i);
+}
+
+/** Assert that the index i points a valid coordinate
+
+    \throw SireError::invalid_index
+*/
+void CoordGroupArray::assertValidCoordinate(quint32 i) const
+{
+    if (i >= d->nCoords())
+        throw SireError::invalid_index( QObject::tr(
+            "Cannot access the coordinate at index %1. The number "
+            "of coordinates in this array is just %2.")
+                .arg(i).arg(d->nCoords()), CODELOC );
+}
+
+/** Return a reference to the ith CoordGroup
+
+    \throw SireError::invalid_index
+*/
+const CoordGroup2& CoordGroupArray::operator[](quint32 i) const
+{
+    assertValidCoordGroup(i);
+    
+    const CoordGroup2 *cgroup = d->cGroupData() + i;
+    return *cgroup;
+}
+
+/** Return a reference to the ith CoordGroup
+
+    \throw SireError::invalid_index
+*/
+const CoordGroup2& CoordGroupArray::at(quint32 i) const
+{
+    return this->operator[](i);
+}
+
+/** Return the number of CoordGroups in this array */
+int CoordGroupArray::count() const
+{
+    return d->nCGroups();
+}
+
+/** Return the number of CoordGroups in this array */
+int CoordGroupArray::size() const
+{
+    return d->nCGroups();
+}
+
+/** Return the number of CoordGroups in this array */
+int CoordGroupArray::nCoordGroups() const
+{
+    return d->nCGroups();
+}
+
+/** Return the number of coordinates in this array */
+int CoordGroupArray::nCoords() const
+{
+    return d->nCoords();
+}
+
+/** Return a raw pointer to the array of CoordGroups */
+const CoordGroup2* CoordGroupArray::data() const
+{
+    return d->cGroupData();
+}
+
+/** Return a raw pointer to the array of CoordGroups */
+const CoordGroup2* CoordGroupArray::constData() const
+{
+    return d->cGroupData();
+}
+
+/** Return a raw pointer to the array of all coordinates of all
+    of the CoordGroups in this array */
+const Vector* CoordGroupArray::coordsData() const
+{
+    return d->coordsData();
+}
+
+/** Return a raw pointer to the array of all coordinates of all
+    of the CoordGroups in this array */
+const Vector* CoordGroupArray::constCoordsData() const
+{
+    return d->coordsData();
+}
+
+/** Return a raw pointer to the array of all AABoxes for
+    all of the CoordGroups in this array */
+const AABox* CoordGroupArray::aaBoxData() const
+{
+    return d->aaBoxData();
+}
+
+/** Return a raw pointer to the array of all AABoxes for
+    all of the CoordGroups in this array */
+const AABox* CoordGroupArray::constAABoxData() const
+{
+    return d->aaBoxData();
+}
+
+/** Update the CoordGroup at index i so that it is equal to 'cgroup'. Note
+    that 'cgroup' must contain the same number of coordinates as the existing
+    CoordGroup at this index
+    
+    \throw SireError::invalid_index
+    \throw SireError::incompatible_error
+*/
+void CoordGroupArray::update(quint32 i, const CoordGroup2 &cgroup)
+{
+    this->assertValidCoordGroup(i);
+    
+    CoordGroup2 &this_cgroup = d->cGroupData()[i];
+    
+    CGData *cgdata = const_cast<CGData*>( this_cgroup.d.constData() );
+    
+    if (cgdata->nCoords() != quint32(cgroup.count()))
+        throw SireError::incompatible_error( QObject::tr(
+            "Cannot update the CoordGroup at index %1 as this CoordGroup "
+            "has a different number of coordinates (%2) than the "
+            "new CoordGroup (%3).")
+                .arg(i).arg(cgdata->nCoords()).arg(cgroup.count()),
+                    CODELOC );
+                    
+    //copy the coordinates
+    Vector *coords = cgdata->coordsData();
+    
+    void *output = qMemCopy(coords, cgroup.constData(),
+                            cgdata->nCoords() * sizeof(Vector));
+                            
+    BOOST_ASSERT(output == coords);
+    
+    //copy the AABox
+    *(cgdata->aaBox()) = cgroup.aaBox();
+}
+
+////////
+//////// Implementation of CoordGroupArrayArray
+////////

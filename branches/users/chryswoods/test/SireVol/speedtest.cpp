@@ -67,8 +67,8 @@ int main(int argc, const char **argv)
     QVector< QVector<CoordGroup> > group0;
     QVector< QVector<CoordGroup> > group1;
 
-    QVector< QVector<CoordGroup2> > group20;
-    QVector< QVector<CoordGroup2> > group21;
+    QVector<CoordGroupArray> group20;
+    QVector<CoordGroupArray> group21;
 
     QVector<Vector> coords(4);
 
@@ -95,8 +95,8 @@ int main(int argc, const char **argv)
 
         CoordGroup b = a.edit().translate( Vector(0,2,0) );
 
-        QVector<CoordGroup> agroup(1, a);
-        QVector<CoordGroup> bgroup(1, b);
+        QVector<CoordGroup> agroup(3, a);
+        QVector<CoordGroup> bgroup(3, b);
 
         group0.append(agroup);
         group1.append(bgroup);
@@ -104,11 +104,11 @@ int main(int argc, const char **argv)
         CoordGroup2 a2(coords);
         CoordGroup2 b2 = a2.edit().translate( Vector(0,2,0) ).commit();
 
-        QVector<CoordGroup2> a2group(1, a2);
-        QVector<CoordGroup2> b2group(1, b2);
+        QVector<CoordGroup2> a2group(3, a2);
+        QVector<CoordGroup2> b2group(3, b2);
 
-        group20.append(a2group);
-        group21.append(b2group);
+        group20.append( CoordGroupArray(a2group) );
+        group21.append( CoordGroupArray(b2group) );
     }
 
     int ms = t.elapsed();
@@ -157,8 +157,8 @@ int main(int argc, const char **argv)
 
     cout << "Minimum distance = " << mindist << " (took " << ms << " ms)\n";
 
-    const QVector<CoordGroup2> *group20_array = group20.constData();
-    const QVector<CoordGroup2> *group21_array = group21.constData();
+    const CoordGroupArray *group20_array = group20.constData();
+    const CoordGroupArray *group21_array = group21.constData();
 
     //calculate the minimum distance...
     mindist = numeric_limits<double>::max();
@@ -167,14 +167,14 @@ int main(int argc, const char **argv)
 
     for (int imol=0; imol<group20.count(); ++imol)
     {
-       const QVector<CoordGroup2> &mol0 = group20_array[imol];
+       const CoordGroupArray &mol0 = group20_array[imol];
 
        int ncg0 = mol0.count();
        const CoordGroup2 *mol0_array = mol0.constData();
 
        for (int jmol=0; jmol<group21.count(); ++jmol)
        {
-           const QVector<CoordGroup2> &mol1 = group21_array[jmol];
+           const CoordGroupArray &mol1 = group21_array[jmol];
 
            int ncg1 = mol1.count();
            const CoordGroup2 *mol1_array = mol1.constData();
@@ -209,7 +209,7 @@ int main(int argc, const char **argv)
     for (int imol=0; imol<group0.count(); ++imol)
     {
        const QVector<CoordGroup> &mol10 = group0_array[imol];
-       const QVector<CoordGroup2> &mol20 = group20_array[imol];
+       const CoordGroupArray &mol20 = group20_array[imol];
 
        int ncg0 = mol10.count();
        const CoordGroup *mol10_array = mol10.constData();
@@ -218,7 +218,7 @@ int main(int argc, const char **argv)
        for (int jmol=0; jmol<group1.count(); ++jmol)
        {
            const QVector<CoordGroup> &mol11 = group1_array[jmol];
-           const QVector<CoordGroup2> &mol21 = group21_array[jmol];
+           const CoordGroupArray &mol21 = group21_array[jmol];
 
            int ncg1 = mol11.count();
 
