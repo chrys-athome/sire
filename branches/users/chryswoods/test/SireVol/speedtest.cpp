@@ -87,31 +87,41 @@ int main(int argc, const char **argv)
 
     t.start();
 
+    int ngroups_per_mol = 3;
+
     for (int i=0; i<1000; ++i)
     {
-	for (int j=0; j<4; ++j)
+        QVector<CoordGroup> agroup;
+        QVector<CoordGroup> bgroup;
+
+        QVector<CoordGroup2> a2group_vec;
+        QVector<CoordGroup2> b2group_vec;
+
+        for (int j=0; j<ngroups_per_mol; ++j)
         {
-            coords[j] += Vector(2,0,0);
+	    for (int k=0; k<4; ++k)
+            {
+                coords[k] += Vector( 5*rand() - 10, 5*rand() - 10, 5*rand() - 10 );
+            }
+
+            CoordGroup a(coords);
+            CoordGroup b = a.edit().translate( Vector(0,2,0) );
+
+            CoordGroup2 a2(coords);
+            CoordGroup2 b2 = a2.edit().translate( Vector(0,2,0) ).commit();
+
+            agroup.append(a);
+            bgroup.append(b);
+
+            a2group_vec.append(a2);
+            b2group_vec.append(b2);
         }
-
-        CoordGroup a(coords);
-
-        CoordGroup b = a.edit().translate( Vector(0,2,0) );
-
-        QVector<CoordGroup> agroup(1, a);
-        QVector<CoordGroup> bgroup(1, b);
 
         group0.append(agroup);
         group1.append(bgroup);
 
-        CoordGroup2 a2(coords);
-        CoordGroup2 b2 = a2.edit().translate( Vector(0,2,0) ).commit();
-
-        QVector<CoordGroup2> a2group(1, a2);
-        QVector<CoordGroup2> b2group(1, b2);
-
-        group20_vec.append( CoordGroupArray(a2group) );
-        group21_vec.append( CoordGroupArray(b2group) );
+        group20_vec.append( CoordGroupArray(a2group_vec) );
+        group21_vec.append( CoordGroupArray(b2group_vec) );
     }
 
     group20 = CoordGroupArrayArray(group20_vec);
@@ -150,7 +160,7 @@ int main(int argc, const char **argv)
                {
                    const CoordGroup &group1 = mol1_array[jgroup];
 
-                   double this_mindist = space->calcDist(group0, group1, distmat);
+                   double this_mindist = space->calcDist2(group0, group1, distmat);
 
                    if (this_mindist < mindist)
                        mindist = this_mindist;
@@ -193,7 +203,7 @@ int main(int argc, const char **argv)
                {
                    const CoordGroup2 &group1 = mol1_array[jgroup];
 
-                   double this_mindist = space->calcDist(group0, group1, distmat);
+                   double this_mindist = space->calcDist2(group0, group1, distmat);
 
                    if (this_mindist < mindist)
                        mindist = this_mindist;
@@ -214,15 +224,18 @@ int main(int argc, const char **argv)
 
     mindist = std::numeric_limits<double>::max();
 
-    for (int igroup=0; igroup<group20.nCoordGroups(); ++igroup)
+    int ngroups0 = group20.nCoordGroups();
+    int ngroups1 = group21.nCoordGroups();
+
+    for (int igroup=0; igroup<ngroups0; ++igroup)
     {
 	const CoordGroup2 &cgroup0 = allcg_array20[igroup];
 
-        for (int jgroup=0; jgroup<group21.nCoordGroups(); ++jgroup)
+        for (int jgroup=0; jgroup<ngroups1; ++jgroup)
         {
             const CoordGroup2 &cgroup1 = allcg_array21[jgroup];
 
-            double this_mindist = space->calcDist(cgroup0, cgroup1, distmat);
+            double this_mindist = space->calcDist2(cgroup0, cgroup1, distmat);
 
             if (this_mindist < mindist)
                 mindist = this_mindist;
@@ -271,8 +284,8 @@ int main(int argc, const char **argv)
 	           const CoordGroup &group11 = mol11_array[jgroup];
                    const CoordGroup2 &group21 = mol21_array[jgroup];
 
-                   double this_mindist1 = space->calcDist(group10, group11, distmat1);
-                   double this_mindist2 = space->calcDist(group20, group21, distmat2);
+                   double this_mindist1 = space->calcDist2(group10, group11, distmat1);
+                   double this_mindist2 = space->calcDist2(group20, group21, distmat2);
 
                    checkDist( -1, -1, this_mindist1, this_mindist2 );
 

@@ -174,6 +174,9 @@ public:
     virtual double calcDist2(const CoordGroup &group1, const CoordGroup &group2,
                              DistMatrix &distmat) const=0;
 
+    virtual double calcDist2(const CoordGroup2 &group1, const CoordGroup2 &group2,
+                             DistMatrix &distmat) const=0;
+
     /** Populate the matrix 'mat' with the inverse distances between all of the
         points of the two CoordGroups. Return the largest inverse distance between the two
         CoordGroups. */
