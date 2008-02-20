@@ -61,6 +61,20 @@ int main(int argc, const char **argv)
     cout << qPrintable( test[3].toString() ) << endl;
     cout << qPrintable( test.aaBox().center().toString() ) << endl;
 
+    DistMatrix testmat;
+
+    cout << Cartesian().calcDist2(test, test2, testmat);
+
+    for (int i=0; i<testmat.nOuter(); ++i)
+    {
+        for (int j=0; j<testmat.nInner(); ++j)
+        {
+            cout << "(" << i << "," << j << ")=" << testmat(i,j) << " ";
+        }
+
+        cout << endl;
+    }
+
     //return 0;
 
     QVector< QVector<CoordGroup> > group0;
@@ -159,7 +173,7 @@ int main(int argc, const char **argv)
                {
                    const CoordGroup &group1 = mol1_array[jgroup];
 
-                   double this_mindist = space->calcDist2(group0, group1, distmat);
+                   double this_mindist = space->calcDist(group0, group1, distmat);
 
                    if (this_mindist < mindist)
                        mindist = this_mindist;
@@ -202,7 +216,7 @@ int main(int argc, const char **argv)
                {
                    const CoordGroup &group1 = mol1_array[jgroup];
 
-                   double this_mindist = space->calcDist2(group0, group1, distmat);
+                   double this_mindist = space->calcDist(group0, group1, distmat);
 
                    if (this_mindist < mindist)
                        mindist = this_mindist;
@@ -234,7 +248,7 @@ int main(int argc, const char **argv)
         {
             const CoordGroup &cgroup1 = allcg_array21[jgroup];
 
-            double this_mindist = space->calcDist2(cgroup0, cgroup1, distmat);
+            double this_mindist = space->calcDist(cgroup0, cgroup1, distmat);
 
             if (this_mindist < mindist)
                 mindist = this_mindist;
@@ -244,8 +258,6 @@ int main(int argc, const char **argv)
     ms = t.elapsed();
 
     cout << "Minimum distance = " << mindist << " (took " << ms << " ms)\n";
-
-    return 0;
 
     //make sure that the calculated distances are the same
     t.start();

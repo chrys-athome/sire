@@ -277,7 +277,7 @@ inline double Vector::z() const
 /** Return the length of the vector */
 inline double Vector::length() const
 {
-    return sqrt( pow_2(sc[0]) + pow_2(sc[1]) + pow_2(sc[2]) );
+    return std::sqrt( pow_2(sc[0]) + pow_2(sc[1]) + pow_2(sc[2]) );
 }
 
 /** Return the length^2 of the vector */
@@ -289,7 +289,7 @@ inline double Vector::length2() const
 /** Return the inverse of the length of the vector */
 inline double Vector::invLength() const
 {
-    return double(1) / sqrt( pow_2(sc[0]) + pow_2(sc[1]) + pow_2(sc[2]) );
+    return double(1) / std::sqrt( pow_2(sc[0]) + pow_2(sc[1]) + pow_2(sc[2]) );
 }
 
 /** Return the inverse length squared */
@@ -302,24 +302,22 @@ inline double Vector::invLength2() const
 inline double Vector::distance2(const Vector &v1, const Vector &v2)
 {
     return pow_2(v2.sc[0]-v1.sc[0]) + pow_2(v2.sc[1]-v1.sc[1]) +
-           pow_2(v2.sc[2]-v1.sc[1]);
+           pow_2(v2.sc[2]-v1.sc[2]);
 }
 
 /** Return the distance between two vectors */
 inline double Vector::distance(const Vector &v1, const Vector &v2)
 {
-    return sqrt( pow_2(v2.sc[0]-v1.sc[0]) + pow_2(v2.sc[1]-v1.sc[1]) +
-                 pow_2(v2.sc[2]-v1.sc[1]) );
+    return std::sqrt( pow_2(v2.sc[0]-v1.sc[0]) + pow_2(v2.sc[1]-v1.sc[1]) +
+                      pow_2(v2.sc[2]-v1.sc[2]) );
 }
 
 /** Return the 1 / distance between two vectors */
 inline double Vector::invDistance(const Vector &v1, const Vector &v2)
 {
-    double dist = pow_2(v1.sc[0]-v2.sc[0]) +
-                  pow_2(v1.sc[1]-v2.sc[1]) +
-                  pow_2(v1.sc[2]-v2.sc[2]);
-
-    return double(1.0) / std::sqrt(dist);
+    return double(1.0) / std::sqrt( pow_2(v1.sc[0]-v2.sc[0]) +
+                                    pow_2(v1.sc[1]-v2.sc[1]) +
+                                    pow_2(v1.sc[2]-v2.sc[2]) );
 }
 
 /** Return 1 / distance2 between two vectors */
