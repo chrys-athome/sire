@@ -29,6 +29,12 @@
 #include <limits>
 #include <cmath>
 
+#define _SIRE_USE_MANUAL_SSE_
+
+#ifdef _SIRE_USE_MANUAL_SSE_
+#include <Accelerate/Accelerate.h>
+#endif
+
 #include "cartesian.h"
 #include "coordgroup.h"
 
@@ -284,22 +290,62 @@ double Cartesian::calcDist(const CoordGroup &group0, const CoordGroup &group1,
     const Vector *array0 = group0.constData();
     const Vector *array1 = group1.constData();
 
+    const int remainder = n1 % 2;
+
     for (int i=0; i<n0; ++i)
     {
         const Vector& point0 = array0[i];
         mat.setOuterIndex(i);
 
-        for (int j=0; j<n1; ++j)
+        // Process points in pairs to give the compiler a chance
+        // to perform two sqrts simultaneously
+        for (int j=0; j < n1-remainder; j+=2)
         {
+            #ifdef _SIRE_USE_MANUAL_SSE_
+            __m128d tmpdist;
+            
+            double *tmpdist0 = (double*)(&tmpdist);
+            double *tmpdist1 = tmpdist0 + 1;
+        
             //calculate the distance between the two points
-            const double tmpdist = Vector::distance(point0,array1[j]);
+            *tmpdist0 = Vector::distance2(point0,array1[j]);
+            *tmpdist1 = Vector::distance2(point0,array1[j+1]);
+
+            //this is an SSE instruction that performs the
+            //sqrts on the two doubles above in parallel
+            tmpdist = _mm_sqrt_pd(tmpdist);
 
             //store the minimum distance, the value expected to be the minimum
             //value is most efficiently placed as the second argument
-            mindist = qMin(tmpdist,mindist);
+            mindist = qMin(*tmpdist0,mindist);
+            mindist = qMin(*tmpdist1,mindist);
 
             //place this distance into the matrix
-            mat[j] = tmpdist;
+            mat[j] = *tmpdist0;
+            mat[j+1] = *tmpdist1;
+            
+            #else
+            
+            double tmpdist0 = Vector::distance2(point0,array1[j]);
+            double tmpdist1 = Vector::distance2(point0,array1[j+1]);
+            
+            tmpdist0 = std::sqrt(tmpdist0);
+            tmpdist1 = std::sqrt(tmpdist1);
+            
+            mindist = qMin(tmpdist0,mindist);
+            mindist = qMin(tmpdist1,mindist);
+            
+            mat[j] = tmpdist0;
+            mat[j+1] = tmpdist1;
+            
+            #endif
+        }
+        
+        if (remainder == 1)
+        {
+            const double tmpdist = Vector::distance(point0, array1[n1-1]);
+            mindist = qMin(tmpdist,mindist);
+            mat[n1-1] = tmpdist;
         }
     }
 

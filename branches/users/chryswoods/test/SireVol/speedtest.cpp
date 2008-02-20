@@ -23,12 +23,13 @@ int main(int argc, const char **argv)
 {
     QTime t;
 
-    QVector<Vector> c(4);
+    QVector<Vector> c(5);
 
     c[0] = Vector(1,0,0);
     c[1] = Vector(2,0,0);
     c[2] = Vector(0,0,1);
     c[3] = Vector(0,0,2);
+    c[4] = Vector(0,0,3);
 
     CoordGroup test(c);
 
@@ -37,6 +38,7 @@ int main(int argc, const char **argv)
     cout << qPrintable( test[1].toString() ) << endl;
     cout << qPrintable( test[2].toString() ) << endl;
     cout << qPrintable( test[3].toString() ) << endl;
+    cout << qPrintable( test[4].toString() ) << endl;
     cout << qPrintable( test.aaBox().center().toString() ) << endl;
 
     cerr << "*** TRANSLATE ***\n";
@@ -50,6 +52,7 @@ int main(int argc, const char **argv)
     cout << qPrintable( test2[1].toString() ) << endl;
     cout << qPrintable( test2[2].toString() ) << endl;
     cout << qPrintable( test2[3].toString() ) << endl;
+    cout << qPrintable( test2[4].toString() ) << endl;
     cout << qPrintable( test2.aaBox().center().toString() ) << endl;
 
     cout << "TEST\n";
@@ -59,11 +62,12 @@ int main(int argc, const char **argv)
     cout << qPrintable( test[1].toString() ) << endl;
     cout << qPrintable( test[2].toString() ) << endl;
     cout << qPrintable( test[3].toString() ) << endl;
+    cout << qPrintable( test[4].toString() ) << endl;
     cout << qPrintable( test.aaBox().center().toString() ) << endl;
 
     DistMatrix testmat;
 
-    cout << Cartesian().calcDist2(test, test2, testmat);
+    cout << Cartesian().calcDist(test, test2, testmat);
 
     for (int i=0; i<testmat.nOuter(); ++i)
     {
