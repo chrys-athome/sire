@@ -56,7 +56,6 @@ using SireMaths::Vector;
 using SireMaths::Sphere;
 
 class CoordGroupBase;
-class CoordGroup2Base;
 
 /**
 An AABox is an axis-aligned bounding box that is the smallest box that is aligned with the three cartesian axes that completely encases a CoordGroup. It is trivial to obtain the bounding sphere from the AABox. The AABox is used by the distance calculators to quickly determine whether two CoordGroups are within the cutoff radius, and to obtain all CoordGroups that are within particular regions of space.
@@ -77,7 +76,6 @@ public:
     AABox(const Vector &cent, const Vector &extents);
     AABox(const QVector<Vector> &coordinates);
     AABox(const CoordGroupBase &coordgroup);
-    AABox(const CoordGroup2Base &coordgroup);
 
     ~AABox();
 

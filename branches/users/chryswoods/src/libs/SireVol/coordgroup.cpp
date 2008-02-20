@@ -26,7 +26,7 @@
   *
 \*********************************************/
 
-#include "coordgroup2.h"
+#include "coordgroup.h"
 
 #include "SireMaths/matrix.h"
 #include "SireMaths/quaternion.h"
@@ -77,7 +77,7 @@ public:
     const CGArrayData* cgArrayDataData() const;
     
     const CoordGroupArray* cgArrayData() const;
-    const CoordGroup2* cGroupData() const;
+    const CoordGroup* cGroupData() const;
     const AABox* aaBoxData() const;
     const Vector* coordsData() const;
 
@@ -85,7 +85,7 @@ public:
     CGArrayData* cgArrayDataData();
     
     CoordGroupArray* cgArrayData();
-    CoordGroup2* cGroupData();
+    CoordGroup* cGroupData();
     AABox* aaBoxData();
     Vector* coordsData();
     
@@ -155,15 +155,15 @@ public:
     
     CGArrayData* detach();
     
-    const CoordGroup2* cGroupData() const;
+    const CoordGroup* cGroupData() const;
     const AABox* aaBoxData() const;
     const Vector* coordsData() const;
     
-    const CoordGroup2* constCGroupData() const;
+    const CoordGroup* constCGroupData() const;
     const AABox* constAABoxData() const;
     const Vector* constCoordsData() const;
     
-    CoordGroup2* cGroupData();
+    CoordGroup* cGroupData();
     AABox* aaBoxData();
     Vector* coordsData();
     
@@ -289,7 +289,7 @@ quint32 CGMemory::getSize(quint32 narrays, quint32 ngroups, quint32 ncoords)
     return sizeof(CGArrayArrayData) +
                   narrays * sizeof(CoordGroupArray) + 
                   narrays * sizeof(CGArrayData) + 
-                  ngroups * sizeof(CoordGroup2) +
+                  ngroups * sizeof(CoordGroup) +
                   ngroups * sizeof(CGData) + 
                   ngroups * sizeof(AABox) + 
                   ncoords * sizeof(Vector) + 
@@ -409,7 +409,7 @@ char* CGMemory::create(quint32 narrays, quint32 ncgroups, quint32 ncoords)
         
         //we are now at the location of the first CGData
         cgarrayarray->cgroup0 = idx;
-        cgarrayarray->cgdata0 = idx + (ncgroups * sizeof(CoordGroup2));
+        cgarrayarray->cgdata0 = idx + (ncgroups * sizeof(CoordGroup));
         
         if (ncgroups > 0)
         {
@@ -419,7 +419,7 @@ char* CGMemory::create(quint32 narrays, quint32 ncgroups, quint32 ncoords)
             for (quint32 i=0; i<ncgroups; ++i)
             {
                 //assert that there is sufficient space in the array
-                BOOST_ASSERT(idx + sizeof(CoordGroup2) < sz);
+                BOOST_ASSERT(idx + sizeof(CoordGroup) < sz);
                 BOOST_ASSERT(dataidx + sizeof(CGData) < sz);
             
                 //create the CGData, letting it know where it is
@@ -427,16 +427,16 @@ char* CGMemory::create(quint32 narrays, quint32 ncgroups, quint32 ncoords)
                 CGData *data = new (storage + dataidx) CGData(dataidx);
                 
                 //create the CoordGroup
-                new (storage + idx) CoordGroup2(data);
+                new (storage + idx) CoordGroup(data);
                 
                 //advance the index into the storage array to point
                 //just after the just-created CGData
-                idx += sizeof(CoordGroup2);
+                idx += sizeof(CoordGroup);
                 dataidx += sizeof(CGData); 
             }
         
             BOOST_ASSERT( idx == cgarrayarray->cgroup0 + 
-                                    ncgroups * sizeof(CoordGroup2) );
+                                    ncgroups * sizeof(CoordGroup) );
         
             idx = dataidx;
         
@@ -472,10 +472,10 @@ char* CGMemory::create(quint32 narrays, quint32 ncgroups, quint32 ncoords)
         else
         {
             //create space for the null CoordGroup
-            quint32 dataidx = idx + sizeof(CoordGroup2);
+            quint32 dataidx = idx + sizeof(CoordGroup);
             
             CGData *cgroup = new (storage + dataidx) CGData(idx);
-            new (storage + idx) CoordGroup2(cgroup);
+            new (storage + idx) CoordGroup(cgroup);
             
             cgroup->ncoords = 0;
             cgroup->coords0 = 0;
@@ -485,7 +485,7 @@ char* CGMemory::create(quint32 narrays, quint32 ncgroups, quint32 ncoords)
             cgarrayarray->coords0 = 0;
             cgarrayarray->ncgroups = 0;
             
-            idx += sizeof(CGData) + sizeof(CoordGroup2) + sizeof(AABox);
+            idx += sizeof(CGData) + sizeof(CoordGroup) + sizeof(AABox);
         }
         
         //we should now be at the end of the storage
@@ -553,7 +553,7 @@ void CGMemory::destroy(CGArrayArrayData *array)
         }
         
         //now delete all of the CGData objects
-        CoordGroup2 *cgroups = array->cGroupData();
+        CoordGroup *cgroups = array->cGroupData();
             
         for (qint32 i=ncgroups-1; i>=0; --i)
         {
@@ -566,7 +566,7 @@ void CGMemory::destroy(CGArrayArrayData *array)
             cgroups[i].d.weakRelease();
             
             //delete the CoordGroup
-            cgroups[i].~CoordGroup2();
+            cgroups[i].~CoordGroup();
         }
     }
         
@@ -650,7 +650,7 @@ char* CGMemory::detach(char *this_ptr, quint32 this_idx)
         
         if (new_cgarrayarray->nCGroups() > 0)
         {
-            CoordGroup2 *cgroups = new_cgarrayarray->cGroupData();
+            CoordGroup *cgroups = new_cgarrayarray->cGroupData();
             CGData *data = new_cgarrayarray->cgDataData();
             
             for (quint32 i=0; i < new_cgarrayarray->nCGroups(); ++i)
@@ -823,12 +823,12 @@ const CGData* CGArrayArrayData::cgDataData() const
 
 /** Return a pointer to the first CoordGroup in this container. This returns
     0 if there are no CoordGroups in this container */
-const CoordGroup2* CGArrayArrayData::cGroupData() const
+const CoordGroup* CGArrayArrayData::cGroupData() const
 {
     if (cgroup0 == 0)
         return 0;
     else
-        return (const CoordGroup2*)( memory() + cgroup0 );
+        return (const CoordGroup*)( memory() + cgroup0 );
 }
 
 /** Return a pointer to the first AABox in this container. This returns
@@ -863,12 +863,12 @@ CoordGroupArray* CGArrayArrayData::cgArrayData()
 
 /** Return a pointer to the first CoordGroup in this container. This returns
     0 if there are no CoordGroups in this container */
-CoordGroup2* CGArrayArrayData::cGroupData()
+CoordGroup* CGArrayArrayData::cGroupData()
 {
     if (cgroup0 == 0)
         return 0;
     else
-        return (CoordGroup2*)( memory() + cgroup0 );
+        return (CoordGroup*)( memory() + cgroup0 );
 }
 
 /** Return a pointer to the first AABox in this container. This returns
@@ -963,14 +963,14 @@ void CGArrayArrayData::close()
         if (cgarray.nCGroups() > 0)
         {
             //tell the array where its first CoordGroup is located
-            cgarray.cgroup0 = cgroup0 + n_assigned_cgroups * sizeof(CoordGroup2);
+            cgarray.cgroup0 = cgroup0 + n_assigned_cgroups * sizeof(CoordGroup);
         
             //tell the array where its first AABox is located
             cgarray.aabox0 = aabox0 + n_assigned_cgroups * sizeof(AABox);
         
             //sum up the number of coordinates in the CoordGroups in this array
             quint32 ncgcoords = 0;
-            const CoordGroup2 *array_groups = cgarray.constCGroupData();
+            const CoordGroup *array_groups = cgarray.constCGroupData();
         
             for (quint32 j=0; j<cgarray.nCGroups(); ++j)
             {
@@ -1065,12 +1065,12 @@ CGArrayData* CGArrayData::detach()
 
 /** Return a pointer to the first CoordGroup in this array.
     This returns 0 if there are no CoordGroups in this array */
-const CoordGroup2* CGArrayData::cGroupData() const
+const CoordGroup* CGArrayData::cGroupData() const
 {
     if (cgroup0 == 0)
         return 0;
     else
-        return (const CoordGroup2*)( memory() + cgroup0 );
+        return (const CoordGroup*)( memory() + cgroup0 );
 }
 
 /** Return a pointer to the AABox belonging to the first CoordGroup
@@ -1097,12 +1097,12 @@ const Vector* CGArrayData::coordsData() const
 
 /** Return a pointer to the first CoordGroup in this array.
     This returns 0 if there are no CoordGroups in this array */
-const CoordGroup2* CGArrayData::constCGroupData() const
+const CoordGroup* CGArrayData::constCGroupData() const
 {
     if (cgroup0 == 0)
         return 0;
     else
-        return (const CoordGroup2*)( memory() + cgroup0 );
+        return (const CoordGroup*)( memory() + cgroup0 );
 }
 
 /** Return a pointer to the AABox belonging to the first CoordGroup
@@ -1129,12 +1129,12 @@ const Vector* CGArrayData::constCoordsData() const
 
 /** Return a pointer to the first CoordGroup in this array.
     This returns 0 if there are no CoordGroups in this array */
-CoordGroup2* CGArrayData::cGroupData()
+CoordGroup* CGArrayData::cGroupData()
 {
     if (cgroup0 == 0)
         return 0;
     else
-        return (CoordGroup2*)( memory() + cgroup0 );
+        return (CoordGroup*)( memory() + cgroup0 );
 }
 
 /** Return a pointer to the AABox belonging to the first CoordGroup
@@ -1294,12 +1294,12 @@ static CGSharedPtr<CGData> getSharedNullCoordGroup()
 }
 
 /** Null constructor */
-CoordGroup2Base::CoordGroup2Base()
+CoordGroupBase::CoordGroupBase()
                : d( ::getSharedNullCoordGroup() )
 {}
 
 /** Private constructor used only by CGData */
-CoordGroup2Base::CoordGroup2Base(CGData *data)
+CoordGroupBase::CoordGroupBase(CGData *data)
 {
     d.weakAssign(data);
 }
@@ -1325,7 +1325,7 @@ static CGSharedPtr<CGData> createCoordGroup(quint32 size)
 
 /** Construct a CoordGroup that can hold up to 'size'
     coordinates, each of value 'value' */
-CoordGroup2Base::CoordGroup2Base(quint32 size, const Vector &value)
+CoordGroupBase::CoordGroupBase(quint32 size, const Vector &value)
                 : d( createCoordGroup(size) )
 {
     if (size > 0 and not value.isZero())
@@ -1345,7 +1345,7 @@ CoordGroup2Base::CoordGroup2Base(quint32 size, const Vector &value)
 
 /** Construct a CoordGroup that holds the 'size' points
     copied from the array 'values' */
-CoordGroup2Base::CoordGroup2Base(quint32 size, const Vector *values)
+CoordGroupBase::CoordGroupBase(quint32 size, const Vector *values)
                 : d( createCoordGroup(size) )
 {
     if (size > 0)
@@ -1362,7 +1362,7 @@ CoordGroup2Base::CoordGroup2Base(quint32 size, const Vector *values)
 }
 
 /** Construct a CoordGroup from the specified coordinates */
-CoordGroup2Base::CoordGroup2Base(const QVector<Vector> &coordinates)
+CoordGroupBase::CoordGroupBase(const QVector<Vector> &coordinates)
                 : d( createCoordGroup(coordinates.count()) )
 {
     //how many coordinates are there?
@@ -1383,27 +1383,27 @@ CoordGroup2Base::CoordGroup2Base(const QVector<Vector> &coordinates)
     }
 }
 
-/** Copy constructor - this is fast as CoordGroup2Base is implicitly
+/** Copy constructor - this is fast as CoordGroupBase is implicitly
     shared */
-CoordGroup2Base::CoordGroup2Base(const CoordGroup2Base &other)
+CoordGroupBase::CoordGroupBase(const CoordGroupBase &other)
                 : d(other.d)
 {}
 
 /** Destructor - this will only delete the data if this
     is the only reference to it */
-CoordGroup2Base::~CoordGroup2Base()
+CoordGroupBase::~CoordGroupBase()
 {}
 
-/** Copy assignment operator - CoordGroup2Base is implicitly
+/** Copy assignment operator - CoordGroupBase is implicitly
     shared so this will be fast */
-CoordGroup2Base& CoordGroup2Base::operator=(const CoordGroup2Base &other)
+CoordGroupBase& CoordGroupBase::operator=(const CoordGroupBase &other)
 {
     d = other.d;
     return *this;
 }
 
 /** Comparison operator */
-bool CoordGroup2Base::operator==(const CoordGroup2Base &other) const
+bool CoordGroupBase::operator==(const CoordGroupBase &other) const
 {
     if ( d.constData() == other.d.constData() )
     {
@@ -1431,7 +1431,7 @@ bool CoordGroup2Base::operator==(const CoordGroup2Base &other) const
 }
 
 /** Comparison operator */
-bool CoordGroup2Base::operator!=(const CoordGroup2Base &other) const
+bool CoordGroupBase::operator!=(const CoordGroupBase &other) const
 {
     return not this->operator==(other);
 }
@@ -1440,45 +1440,45 @@ bool CoordGroup2Base::operator!=(const CoordGroup2Base &other) const
     a simple comparison of the memory addresses of the storage of
     these two groups to see if they are definitely the same, or maybe
     different */
-bool CoordGroup2Base::maybeDifferent(const CoordGroup2Base &other) const
+bool CoordGroupBase::maybeDifferent(const CoordGroupBase &other) const
 {
     return d.constData() != other.d.constData();
 }
 
 /** Return whether this group is empty (has no coordinates) */
-bool CoordGroup2Base::isEmpty() const
+bool CoordGroupBase::isEmpty() const
 {
     return d->nCoords() == 0;
 }
 
 /** Return the enclosing AABox */
-const AABox& CoordGroup2Base::aaBox() const
+const AABox& CoordGroupBase::aaBox() const
 {
     return *(d->aaBox());
 }
 
 /** Return a raw pointer to the array containing all
     of the coordinates */
-const Vector* CoordGroup2Base::constData() const
+const Vector* CoordGroupBase::constData() const
 {
     return d->coordsData();
 }
 
 /** Return a raw pointer to the array containing all
     of the coordinates */
-const Vector* CoordGroup2Base::data() const
+const Vector* CoordGroupBase::data() const
 {
     return d->coordsData();
 }
 
 /** Return the number of coordinates in this group */
-int CoordGroup2Base::count() const
+int CoordGroupBase::count() const
 {
     return d->nCoords();
 }
 
 /** Return the number of coordinates in this group */
-int CoordGroup2Base::size() const
+int CoordGroupBase::size() const
 {
     return d->nCoords();
 }
@@ -1497,7 +1497,7 @@ static inline void assertSame(quint32 sz, quint32 other)
 
     \throw SireError::incompatible_error
 */
-void CoordGroup2Base::assertSameSize(const QVector<Vector> &coordinates) const
+void CoordGroupBase::assertSameSize(const QVector<Vector> &coordinates) const
 {
     assertSame(this->count(), coordinates.count());
 }
@@ -1507,7 +1507,7 @@ void CoordGroup2Base::assertSameSize(const QVector<Vector> &coordinates) const
 
     \throw SireError::incompatible_error
 */
-void CoordGroup2Base::assertSameSize(const CoordGroup2Base &other) const
+void CoordGroupBase::assertSameSize(const CoordGroupBase &other) const
 {
     assertSame(this->count(), other.count());
 }
@@ -1516,7 +1516,7 @@ void CoordGroup2Base::assertSameSize(const CoordGroup2Base &other) const
 
     \throw SireError::invalid_index
 */
-void CoordGroup2Base::assertValidIndex(quint32 i) const
+void CoordGroupBase::assertValidIndex(quint32 i) const
 {
     if (i >= quint32(this->size()))
         throw SireError::invalid_index( QObject::tr(
@@ -1528,7 +1528,7 @@ void CoordGroup2Base::assertValidIndex(quint32 i) const
 
     \throw SireError::invalid_index
 */
-const Vector& CoordGroup2Base::at(quint32 i) const
+const Vector& CoordGroupBase::at(quint32 i) const
 {
     assertValidIndex(i);
     return d->coordsData()[i];
@@ -1538,7 +1538,7 @@ const Vector& CoordGroup2Base::at(quint32 i) const
 
     \throw SireError::invalid_index
 */
-const Vector& CoordGroup2Base::operator[](quint32 i) const
+const Vector& CoordGroupBase::operator[](quint32 i) const
 {
     assertValidIndex(i);
     return d->coordsData()[i];
@@ -1549,78 +1549,78 @@ const Vector& CoordGroup2Base::operator[](quint32 i) const
 ////////
 
 /** Null constructor */
-CoordGroup2::CoordGroup2() : CoordGroup2Base()
+CoordGroup::CoordGroup() : CoordGroupBase()
 {}
 
 /** Private constructor used only by CGData */
-CoordGroup2::CoordGroup2(CGData *data) : CoordGroup2Base(data)
+CoordGroup::CoordGroup(CGData *data) : CoordGroupBase(data)
 {}
 
-/** Construct a CoordGroup2 that holds 'size' coordinates */
-CoordGroup2::CoordGroup2(quint32 size)
-           : CoordGroup2Base(size)
+/** Construct a CoordGroup that holds 'size' coordinates */
+CoordGroup::CoordGroup(quint32 size)
+           : CoordGroupBase(size)
 {}
 
-/** Construct a CoordGroup2 that holds 'size' coordinates,
+/** Construct a CoordGroup that holds 'size' coordinates,
     all of which have the value 'value' */
-CoordGroup2::CoordGroup2(quint32 size, const Vector &value)
-           : CoordGroup2Base(size,value)
+CoordGroup::CoordGroup(quint32 size, const Vector &value)
+           : CoordGroupBase(size,value)
 {}
 
-/** Construct a CoordGroup2 that holds the 'size' points
+/** Construct a CoordGroup that holds the 'size' points
     copied from the array 'values' */
-CoordGroup2::CoordGroup2(quint32 size, const Vector *values)
-           : CoordGroup2Base(size, values)
+CoordGroup::CoordGroup(quint32 size, const Vector *values)
+           : CoordGroupBase(size, values)
 {}
 
-/** Construct a CoordGroup2 from the array of passed coordinates */
-CoordGroup2::CoordGroup2(const QVector<Vector> &points)
-           : CoordGroup2Base(points)
+/** Construct a CoordGroup from the array of passed coordinates */
+CoordGroup::CoordGroup(const QVector<Vector> &points)
+           : CoordGroupBase(points)
 {}
 
-/** Construct from a CoordGroup2Editor (only CoordGroup2Editor::commit()
+/** Construct from a CoordGroupEditor (only CoordGroupEditor::commit()
     calls this function, and in this case it has already made sure that
     the AABox is up-to-date) */
-CoordGroup2::CoordGroup2(const CoordGroup2Editor &editor)
-            : CoordGroup2Base(editor)
+CoordGroup::CoordGroup(const CoordGroupEditor &editor)
+            : CoordGroupBase(editor)
 {}
 
 /** Copy constructor */
-CoordGroup2::CoordGroup2(const CoordGroup2 &other)
-           : CoordGroup2Base(other)
+CoordGroup::CoordGroup(const CoordGroup &other)
+           : CoordGroupBase(other)
 {}
 
 /** Destructor */
-CoordGroup2::~CoordGroup2()
+CoordGroup::~CoordGroup()
 {}
 
-void CoordGroup2::throwInvalidCountError(uint nats0, uint nats1)
+void CoordGroup::throwInvalidCountError(uint nats0, uint nats1)
 {
     throw SireError::invalid_state( QObject::tr(
-        "You can only split a CoordGroup2 into groups if the total number "
-        "of atoms in the single CoordGroup2 and the group of CoordGroup2s "
+        "You can only split a CoordGroup into groups if the total number "
+        "of atoms in the single CoordGroup and the group of CoordGroups "
         "is the same. It isn't in this case! %1 vs. %2.")
             .arg(nats0).arg(nats1), CODELOC );
 }
 
 /** Copy assignment operator */
-CoordGroup2& CoordGroup2::operator=(const CoordGroup2 &other)
+CoordGroup& CoordGroup::operator=(const CoordGroup &other)
 {
-    CoordGroup2Base::operator=(other);
+    CoordGroupBase::operator=(other);
     return *this;
 }
 
-/** Copy assignment from a CoordGroup2Editor */
-CoordGroup2& CoordGroup2::operator=(CoordGroup2Editor &other)
+/** Copy assignment from a CoordGroupEditor */
+CoordGroup& CoordGroup::operator=(CoordGroupEditor &other)
 {
     return this->operator=( other.commit() );
 }
 
 /** Return an editor that can be used to edit the
     coordinates in this group */
-CoordGroup2Editor CoordGroup2::edit() const
+CoordGroupEditor CoordGroup::edit() const
 {
-    return CoordGroup2Editor(*this);
+    return CoordGroupEditor(*this);
 }
 
 ////////
@@ -1628,37 +1628,37 @@ CoordGroup2Editor CoordGroup2::edit() const
 ////////
 
 /** Null constructor */
-CoordGroup2Editor::CoordGroup2Editor() 
-                  : CoordGroup2Base(), needsupdate(false)
+CoordGroupEditor::CoordGroupEditor() 
+                  : CoordGroupBase(), needsupdate(false)
 {}
 
 /** Construct from a CoordGroup */
-CoordGroup2Editor::CoordGroup2Editor(const CoordGroup2 &other)
-                 : CoordGroup2Base(other), needsupdate(false)
+CoordGroupEditor::CoordGroupEditor(const CoordGroup &other)
+                 : CoordGroupBase(other), needsupdate(false)
 {}
 
 /** Copy constructor */
-CoordGroup2Editor::CoordGroup2Editor(const CoordGroup2Editor &other)
-                  : CoordGroup2Base(other), needsupdate(other.needsupdate)
+CoordGroupEditor::CoordGroupEditor(const CoordGroupEditor &other)
+                  : CoordGroupBase(other), needsupdate(other.needsupdate)
 {}
 
 /** Destructor */
-CoordGroup2Editor::~CoordGroup2Editor()
+CoordGroupEditor::~CoordGroupEditor()
 {}
 
 /** Copy assignment operator */
-CoordGroup2Editor& CoordGroup2Editor::operator=(const CoordGroup2Editor &other)
+CoordGroupEditor& CoordGroupEditor::operator=(const CoordGroupEditor &other)
 {
-    CoordGroup2Base::operator=(other);
+    CoordGroupBase::operator=(other);
     needsupdate = other.needsupdate;
     
     return *this;
 }
 
 /** Assignment operator */
-CoordGroup2Editor& CoordGroup2Editor::operator=(const CoordGroup2 &other)
+CoordGroupEditor& CoordGroupEditor::operator=(const CoordGroup &other)
 {
-    CoordGroup2Base::operator=(other);
+    CoordGroupBase::operator=(other);
     needsupdate = false;
     
     return *this;
@@ -1669,9 +1669,9 @@ CoordGroup2Editor& CoordGroup2Editor::operator=(const CoordGroup2 &other)
 
     \throw SireError::invalid_index
 */
-Vector& CoordGroup2Editor::operator[](quint32 i)
+Vector& CoordGroupEditor::operator[](quint32 i)
 {
-    CoordGroup2Base::assertValidIndex(i);
+    CoordGroupBase::assertValidIndex(i);
     needsupdate = true;
 
     return d->coordsData()[i];
@@ -1679,14 +1679,14 @@ Vector& CoordGroup2Editor::operator[](quint32 i)
 
 /** Return a modifiable pointer to the array of coordinates -
     *do not delete this pointer* */
-Vector* CoordGroup2Editor::data()
+Vector* CoordGroupEditor::data()
 {
     needsupdate = true;
     return d->coordsData();
 }
 
-/** Translate this CoordGroup2 by 'delta' */
-CoordGroup2Editor& CoordGroup2Editor::translate(const Vector &delta)
+/** Translate this CoordGroup by 'delta' */
+CoordGroupEditor& CoordGroupEditor::translate(const Vector &delta)
 {
     if (not delta.isZero())
     {
@@ -1716,7 +1716,7 @@ CoordGroup2Editor& CoordGroup2Editor::translate(const Vector &delta)
 
     \throw SireError::invalid_index
 */
-CoordGroup2Editor& CoordGroup2Editor::translate(quint32 i, const Vector &delta)
+CoordGroupEditor& CoordGroupEditor::translate(quint32 i, const Vector &delta)
 {
     if (not delta.isZero())
         this->operator[](i) += delta;
@@ -1726,7 +1726,7 @@ CoordGroup2Editor& CoordGroup2Editor::translate(quint32 i, const Vector &delta)
 
 /** Rotate (and perhaps scale and shear) this group by the matrix 'rotmat'
     about the point 'point' */
-CoordGroup2Editor& CoordGroup2Editor::rotate(const Matrix &rotmat, const Vector &point)
+CoordGroupEditor& CoordGroupEditor::rotate(const Matrix &rotmat, const Vector &point)
 {
     quint32 sz = this->count();
     Vector *coords = d->coordsData();
@@ -1746,7 +1746,7 @@ CoordGroup2Editor& CoordGroup2Editor::rotate(const Matrix &rotmat, const Vector 
 
     \throw SireError::index
 */
-CoordGroup2Editor& CoordGroup2Editor::rotate(quint32 i, const Matrix &rotmat, 
+CoordGroupEditor& CoordGroupEditor::rotate(quint32 i, const Matrix &rotmat, 
                                            const Vector &point)
 {
     Vector &coord = this->operator[](i);
@@ -1756,7 +1756,7 @@ CoordGroup2Editor& CoordGroup2Editor::rotate(quint32 i, const Matrix &rotmat,
 }
 
 /** Rotate this group by the Quaternion 'quat' about the point 'point' */
-CoordGroup2Editor& CoordGroup2Editor::rotate(const Quaternion &quat, 
+CoordGroupEditor& CoordGroupEditor::rotate(const Quaternion &quat, 
                                              const Vector &point)
 {
     return this->rotate(quat.toMatrix(), point);
@@ -1767,21 +1767,21 @@ CoordGroup2Editor& CoordGroup2Editor::rotate(const Quaternion &quat,
 
     \throw SireError::index
 */
-CoordGroup2Editor& CoordGroup2Editor::rotate(quint32 i, const Quaternion &quat, 
+CoordGroupEditor& CoordGroupEditor::rotate(quint32 i, const Quaternion &quat, 
                                            const Vector &point)
 {
     return this->rotate(i, quat.toMatrix(), point);
 }
 
-/** Set the coordinates of the CoordGroup2 to 'newcoords' - this must
-    have the same number of points as this CoordGroup2 or an exception
+/** Set the coordinates of the CoordGroup to 'newcoords' - this must
+    have the same number of points as this CoordGroup or an exception
     will be thrown
 
     \throw SireError::incompatible_error
 */
-CoordGroup2Editor& CoordGroup2Editor::setCoordinates(const QVector<Vector> &newcoords)
+CoordGroupEditor& CoordGroupEditor::setCoordinates(const QVector<Vector> &newcoords)
 {
-    CoordGroup2Base::assertSameSize(newcoords);
+    CoordGroupBase::assertSameSize(newcoords);
 
     int sz = this->count();
     Vector *coords = d->coordsData();
@@ -1799,7 +1799,7 @@ CoordGroup2Editor& CoordGroup2Editor::setCoordinates(const QVector<Vector> &newc
 
     \throw SireError::invalid_index
 */
-CoordGroup2Editor& CoordGroup2Editor::setCoordinates(quint32 i, const Vector &newcoords)
+CoordGroupEditor& CoordGroupEditor::setCoordinates(quint32 i, const Vector &newcoords)
 {
     if (i >= quint32(this->count()))
         throw SireError::invalid_index( QObject::tr(
@@ -1815,17 +1815,17 @@ CoordGroup2Editor& CoordGroup2Editor::setCoordinates(quint32 i, const Vector &ne
     return *this;
 }
 
-/** Set the coordinates of the CoordGroup2 to 'newcoords' - this
-    must have the same number of points as this CoordGroup2 or an
+/** Set the coordinates of the CoordGroup to 'newcoords' - this
+    must have the same number of points as this CoordGroup or an
     exception will be thrown
 
     \throw SireError::incompatible_error
 */
-CoordGroup2Editor& CoordGroup2Editor::setCoordinates(const CoordGroup2Base &newcoords)
+CoordGroupEditor& CoordGroupEditor::setCoordinates(const CoordGroupBase &newcoords)
 {
     if ( this->constData() != newcoords.constData() )
     {
-        CoordGroup2Base::assertSameSize(newcoords);
+        CoordGroupBase::assertSameSize(newcoords);
 
         int sz = this->count();
         Vector *coords = d->coordsData();
@@ -1841,7 +1841,7 @@ CoordGroup2Editor& CoordGroup2Editor::setCoordinates(const CoordGroup2Base &newc
 }
 
 /** Map all of these coordinates into the axis set 'axes' */
-CoordGroup2Editor& CoordGroup2Editor::mapInto(const AxisSet &axes)
+CoordGroupEditor& CoordGroupEditor::mapInto(const AxisSet &axes)
 {
     int sz = this->count();
     
@@ -1861,7 +1861,7 @@ CoordGroup2Editor& CoordGroup2Editor::mapInto(const AxisSet &axes)
 
     \throw SireError::invalid_index
 */
-CoordGroup2Editor& CoordGroup2Editor::mapInto(quint32 i, const AxisSet &axes)
+CoordGroupEditor& CoordGroupEditor::mapInto(quint32 i, const AxisSet &axes)
 {
     if (i >= quint32(this->count()))
         throw SireError::invalid_index( QObject::tr(
@@ -1880,7 +1880,7 @@ CoordGroup2Editor& CoordGroup2Editor::mapInto(quint32 i, const AxisSet &axes)
 /** Change the coordinate frame of all of the coordinates from
     'from_frame' to 'to_frame'. This has the same effect
     as 'mapInto' if 'from_frame' is the unit cartesian set */
-CoordGroup2Editor& CoordGroup2Editor::changeFrame(const AxisSet &from_frame,
+CoordGroupEditor& CoordGroupEditor::changeFrame(const AxisSet &from_frame,
                                                 const AxisSet &to_frame)
 {
     int sz = this->count();
@@ -1905,7 +1905,7 @@ CoordGroup2Editor& CoordGroup2Editor::changeFrame(const AxisSet &from_frame,
 
     \throw SireError::invalid_index
 */
-CoordGroup2Editor& CoordGroup2Editor::changeFrame(quint32 i,
+CoordGroupEditor& CoordGroupEditor::changeFrame(quint32 i,
                                                 const AxisSet &from_frame,
                                                 const AxisSet &to_frame)
 {
@@ -1923,17 +1923,17 @@ CoordGroup2Editor& CoordGroup2Editor::changeFrame(quint32 i,
     return *this;
 }
 
-/** Return a CoordGroup2 which is a copy of this group. */
-CoordGroup2 CoordGroup2Editor::commit()
+/** Return a CoordGroup which is a copy of this group. */
+CoordGroup CoordGroupEditor::commit()
 {
-    //return a copy of this CoordGroup2
+    //return a copy of this CoordGroup
     if (needsupdate)
     {
         *(d->aaBox()) = AABox(*this);
         needsupdate = false;
     }
     
-    return CoordGroup2(*this);
+    return CoordGroup(*this);
 }
 
 ////////
@@ -1972,12 +1972,12 @@ static CGSharedPtr<CGArrayData> createCGArray(quint32 ngroups, quint32 ncoords)
 }
 
 /** Construct from an array of CoordGroups */
-CoordGroupArray::CoordGroupArray(const QVector<CoordGroup2> &cgroups)
+CoordGroupArray::CoordGroupArray(const QVector<CoordGroup> &cgroups)
 {
     //count the number of groups and coordinates
     quint32 ncoords = 0;
     
-    const CoordGroup2 *cgroups_array = cgroups.constData();
+    const CoordGroup *cgroups_array = cgroups.constData();
     
     for (int i=0; i<cgroups.count(); ++i)
     {
@@ -1997,7 +1997,7 @@ CoordGroupArray::CoordGroupArray(const QVector<CoordGroup2> &cgroups)
     //tell the array about the sizes of the groups
     for (int i=0; i<cgroups.count(); ++i)
     {
-        const CoordGroup2 &cgroup = cgroups_array[i];
+        const CoordGroup &cgroup = cgroups_array[i];
         cgarrayarray->setNPointsInCGroup(i, cgroup.count());
     }
     
@@ -2009,7 +2009,7 @@ CoordGroupArray::CoordGroupArray(const QVector<CoordGroup2> &cgroups)
     //finally, copy the data into the arrays
     for (int i=0; i<cgroups.count(); ++i)
     {
-        const CoordGroup2 &cgroup = cgroups_array[i];
+        const CoordGroup &cgroup = cgroups_array[i];
         
         //copy the coordinates
         void *output = qMemCopy(coords, cgroup.constData(),
@@ -2072,7 +2072,7 @@ void CoordGroupArray::assertValidCoordinate(quint32 i) const
 
     \throw SireError::invalid_index
 */
-const CoordGroup2& CoordGroupArray::operator[](quint32 i) const
+const CoordGroup& CoordGroupArray::operator[](quint32 i) const
 {
     assertValidCoordGroup(i);
     
@@ -2083,7 +2083,7 @@ const CoordGroup2& CoordGroupArray::operator[](quint32 i) const
 
     \throw SireError::invalid_index
 */
-const CoordGroup2& CoordGroupArray::at(quint32 i) const
+const CoordGroup& CoordGroupArray::at(quint32 i) const
 {
     return this->operator[](i);
 }
@@ -2113,13 +2113,13 @@ int CoordGroupArray::nCoords() const
 }
 
 /** Return a raw pointer to the array of CoordGroups */
-const CoordGroup2* CoordGroupArray::data() const
+const CoordGroup* CoordGroupArray::data() const
 {
     return d->cGroupData();
 }
 
 /** Return a raw pointer to the array of CoordGroups */
-const CoordGroup2* CoordGroupArray::constData() const
+const CoordGroup* CoordGroupArray::constData() const
 {
     return d->cGroupData();
 }
@@ -2159,11 +2159,11 @@ const AABox* CoordGroupArray::constAABoxData() const
     \throw SireError::invalid_index
     \throw SireError::incompatible_error
 */
-void CoordGroupArray::update(quint32 i, const CoordGroup2 &cgroup)
+void CoordGroupArray::update(quint32 i, const CoordGroup &cgroup)
 {
     this->assertValidCoordGroup(i);
     
-    CoordGroup2 &this_cgroup = d->cGroupData()[i];
+    CoordGroup &this_cgroup = d->cGroupData()[i];
     
     CGData *cgdata = const_cast<CGData*>( this_cgroup.d.constData() );
     
@@ -2227,7 +2227,7 @@ CoordGroupArrayArray::CoordGroupArrayArray(const QVector<CoordGroupArray> &cgarr
         quint32 this_ngroups = cgarray.count();
         ngroups += this_ngroups;
         
-        const CoordGroup2 *cgarray_array = cgarray.constData();
+        const CoordGroup *cgarray_array = cgarray.constData();
         
         for (quint32 j=0; j<this_ngroups; ++j)
         {
@@ -2248,7 +2248,7 @@ CoordGroupArrayArray::CoordGroupArrayArray(const QVector<CoordGroupArray> &cgarr
         const CoordGroupArray &cgarray = cgroups_array[i];
         
         quint32 this_ngroups = cgarray.count();
-        const CoordGroup2 *cgarray_array = cgarray.constData();
+        const CoordGroup *cgarray_array = cgarray.constData();
         
         dptr->setNCGroupsInArray(i, this_ngroups);
         
@@ -2295,23 +2295,23 @@ CoordGroupArrayArray::CoordGroupArrayArray(const QVector<CoordGroupArray> &cgarr
 
 /** Construct from an array of array of CoordGroups */
 CoordGroupArrayArray::CoordGroupArrayArray(
-                        const QVector< QVector<CoordGroup2> > &cgarrays)
+                        const QVector< QVector<CoordGroup> > &cgarrays)
 {
     //count the number of arrays, groups and coords
     quint32 narrays = cgarrays.count();
     quint32 ngroups = 0;
     quint32 ncoords = 0;
     
-    const QVector<CoordGroup2> *cgroups_array = cgarrays.constData();
+    const QVector<CoordGroup> *cgroups_array = cgarrays.constData();
     
     for (quint32 i=0; i<narrays; ++i)
     {
-        const QVector<CoordGroup2> &cgarray = cgroups_array[i];
+        const QVector<CoordGroup> &cgarray = cgroups_array[i];
         
         quint32 this_ngroups = cgarray.count();
         ngroups += this_ngroups;
         
-        const CoordGroup2 *cgarray_array = cgarray.constData();
+        const CoordGroup *cgarray_array = cgarray.constData();
         
         for (quint32 j=0; j<this_ngroups; ++j)
         {
@@ -2329,10 +2329,10 @@ CoordGroupArrayArray::CoordGroupArrayArray(
     //now tell the space how the arrays are distributed
     for (quint32 i=0; i<narrays; ++i)
     {
-        const QVector<CoordGroup2> &cgarray = cgroups_array[i];
+        const QVector<CoordGroup> &cgarray = cgroups_array[i];
         
         quint32 this_ngroups = cgarray.count();
-        const CoordGroup2 *cgarray_array = cgarray.constData();
+        const CoordGroup *cgarray_array = cgarray.constData();
         
         dptr->setNCGroupsInArray(i, this_ngroups);
         
@@ -2351,14 +2351,14 @@ CoordGroupArrayArray::CoordGroupArrayArray(
     
     for (quint32 i=0; i<narrays; ++i)
     {
-        const QVector<CoordGroup2> &cgarray = cgroups_array[i];
+        const QVector<CoordGroup> &cgarray = cgroups_array[i];
         
         quint32 ngroups = cgarray.count();
-        const CoordGroup2 *cgarray_array = cgarray.constData();
+        const CoordGroup *cgarray_array = cgarray.constData();
         
         for (quint32 j=0; j<ngroups; ++j)
         {
-            const CoordGroup2 &cgroup = cgarray_array[j];
+            const CoordGroup &cgroup = cgarray_array[j];
         
             if (cgroup.count() > 0)
             {
@@ -2505,13 +2505,13 @@ const CoordGroupArray* CoordGroupArrayArray::constData() const
 }
 
 /** Return a raw pointer to the array of CoordGroups */
-const CoordGroup2* CoordGroupArrayArray::coordGroupData() const
+const CoordGroup* CoordGroupArrayArray::coordGroupData() const
 {
     return d->cGroupData();
 }
 
 /** Return a raw pointer to the array of CoordGroups */
-const CoordGroup2* CoordGroupArrayArray::constCoordGroupData() const
+const CoordGroup* CoordGroupArrayArray::constCoordGroupData() const
 {
     return d->cGroupData();
 }
@@ -2562,6 +2562,6 @@ void CoordGroupArrayArray::update(quint32 i, const CoordGroupArray &array)
     \throw SireError::invalid_index
     \throw SireError::incompatible_error
 */
-void CoordGroupArrayArray::update(quint32 i, quint32 j, const CoordGroup2 &cgroup)
+void CoordGroupArrayArray::update(quint32 i, quint32 j, const CoordGroup &cgroup)
 {
 }

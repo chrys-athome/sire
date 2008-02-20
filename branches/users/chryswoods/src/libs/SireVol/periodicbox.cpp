@@ -176,56 +176,9 @@ double PeriodicBox::calcDist(const CoordGroup &group0, const CoordGroup &group1,
                              DistMatrix &mat) const
 {
     double mindist(std::numeric_limits<double>::max());
-    double tmpdist;
 
-    int n0 = group0.count();
-    int n1 = group1.count();
-
-    //redimension the matrix to hold all of the pairs
-    mat.redimension(n0, n1);
-
-    //see if we need to wrap the coordinates...
-    Vector wrapdelta = this->wrapDelta(group0.aaBox().center(), group1.aaBox().center());
-
-    //get raw pointers to the arrays - this provides more efficient access
-    const Vector *array0 = group0.constData();
-    const Vector *array1 = group1.constData();
-
-    for (int i=0; i<n0; ++i)
-    {
-        //add the delta to the coordinates of atom0
-        Vector point0 = array0[i] + wrapdelta;
-        mat.setOuterIndex(i);
-
-        for (int j=0; j<n1; ++j)
-        {
-            //calculate the distance between the two atoms
-            tmpdist = Vector::distance(point0,array1[j]);
-
-            //store the minimum distance, the value expected to be the minimum
-            //value is most efficiently placed as the second argument
-            mindist = qMin(tmpdist,mindist);
-
-            //place this distance into the matrix
-            mat[j] = tmpdist;
-        }
-    }
-
-    //return the minimum distance
-    return mindist;
-}
-
-/** Populate the matrix 'mat' with the distances between all of the
-    atoms of the two CoordGroups. Return the shortest distance^2 between the two
-    CoordGroups. */
-double PeriodicBox::calcDist(const CoordGroup2 &group0, const CoordGroup2 &group1,
-                             DistMatrix &mat) const
-{
-    double mindist(std::numeric_limits<double>::max());
-    double tmpdist;
-
-    int n0 = group0.count();
-    int n1 = group1.count();
+    const int n0 = group0.count();
+    const int n1 = group1.count();
 
     //redimension the matrix to hold all of the pairs
     mat.redimension(n0, n1);
@@ -246,7 +199,7 @@ double PeriodicBox::calcDist(const CoordGroup2 &group0, const CoordGroup2 &group
         for (int j=0; j<n1; ++j)
         {
             //calculate the distance between the two atoms
-            tmpdist = Vector::distance(point0,array1[j]);
+            const double tmpdist = Vector::distance(point0,array1[j]);
 
             //store the minimum distance, the value expected to be the minimum
             //value is most efficiently placed as the second argument
@@ -268,10 +221,9 @@ double PeriodicBox::calcDist2(const CoordGroup &group0, const CoordGroup &group1
                               DistMatrix &mat) const
 {
     double mindist2(std::numeric_limits<double>::max());
-    double tmpdist;
 
-    int n0 = group0.count();
-    int n1 = group1.count();
+    const int n0 = group0.count();
+    const int n1 = group1.count();
 
     //redimension the matrix to hold all of the pairs
     mat.redimension(n0, n1);
@@ -292,7 +244,7 @@ double PeriodicBox::calcDist2(const CoordGroup &group0, const CoordGroup &group1
         for (int j=0; j<n1; ++j)
         {
             //calculate the distance between the two atoms
-            tmpdist = Vector::distance2(point0,array1[j]);
+            const double tmpdist = Vector::distance2(point0,array1[j]);
 
             //store the minimum distance, the value expected to be the minimum
             //value is most efficiently placed as the second argument
@@ -579,7 +531,7 @@ CoordGroup PeriodicBox::mapFromSelf(const CoordGroup &group, const Space &other)
                                    (scale.z() - 1) * delta.z() );
 
         return group.edit().translate( this->center() - other_center +
-                                       new_delta - wrapdelta );
+                                       new_delta - wrapdelta ).commit();
     }
 }
 

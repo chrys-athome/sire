@@ -42,7 +42,6 @@
 #include "SireMaths/vector.h"
 
 #include "coordgroup.h"
-#include "coordgroup2.h"
 
 SIRE_BEGIN_HEADER
 
@@ -165,16 +164,10 @@ public:
     virtual double calcDist(const CoordGroup &group1, const CoordGroup &group2,
                             DistMatrix &distmat) const=0;
 
-    virtual double calcDist(const CoordGroup2 &group1, const CoordGroup2 &group2,
-                            DistMatrix &distmat) const=0;
-
     /** Populate the matrix 'mat' with the distances^2 between all of the
         points of the two CoordGroups. Return the shortest distance^2 between the
         two CoordGroups. */
     virtual double calcDist2(const CoordGroup &group1, const CoordGroup &group2,
-                             DistMatrix &distmat) const=0;
-
-    virtual double calcDist2(const CoordGroup2 &group1, const CoordGroup2 &group2,
                              DistMatrix &distmat) const=0;
 
     /** Populate the matrix 'mat' with the inverse distances between all of the

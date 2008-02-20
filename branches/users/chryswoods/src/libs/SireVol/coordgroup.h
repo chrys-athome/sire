@@ -26,8 +26,8 @@
   *
 \*********************************************/
 
-#ifndef SIREVOL_COORDGROUP2_H
-#define SIREVOL_COORDGROUP2_H
+#ifndef SIREVOL_COORDGROUP_H
+#define SIREVOL_COORDGROUP_H
 
 #include <QSharedData>
 
@@ -39,15 +39,15 @@ SIRE_BEGIN_HEADER
 
 namespace SireVol
 {
-class CoordGroup2Base;
-class CoordGroup2;
-class CoordGroup2Editor;
-class CoordGroup2Array;
-class CoordGroup2ArrayArray;
+class CoordGroupBase;
+class CoordGroup;
+class CoordGroupEditor;
+class CoordGroupArray;
+class CoordGroupArrayArray;
 }
 
-QDataStream& operator<<(QDataStream&, const SireVol::CoordGroup2&);
-QDataStream& operator>>(QDataStream&, SireVol::CoordGroup2&);
+QDataStream& operator<<(QDataStream&, const SireVol::CoordGroup&);
+QDataStream& operator>>(QDataStream&, SireVol::CoordGroup&);
 
 namespace SireMaths
 {
@@ -209,7 +209,7 @@ using SireMaths::Matrix;
 
     @author Christopher Woods
 */
-class SIREVOL_EXPORT CoordGroup2Base
+class SIREVOL_EXPORT CoordGroupBase
 {
 
 friend class detail::CGData; // so can see d pointer
@@ -219,12 +219,12 @@ friend class CoordGroupArray;
 friend class CoordGroupArrayArray;
 
 public:
-    ~CoordGroup2Base();
+    ~CoordGroupBase();
 
-    bool operator==(const CoordGroup2Base &other) const;
-    bool operator!=(const CoordGroup2Base &other) const;
+    bool operator==(const CoordGroupBase &other) const;
+    bool operator!=(const CoordGroupBase &other) const;
 
-    bool maybeDifferent(const CoordGroup2Base &other) const;
+    bool maybeDifferent(const CoordGroupBase &other) const;
 
     const Vector& at(quint32 i) const;
     const Vector& operator[](quint32 i) const;
@@ -242,20 +242,20 @@ public:
     void assertValidIndex(quint32 i) const;
 
     void assertSameSize(const QVector<Vector> &coordinates) const;
-    void assertSameSize(const CoordGroup2Base &other) const;
+    void assertSameSize(const CoordGroupBase &other) const;
 
 protected:
-    CoordGroup2Base();
-    CoordGroup2Base(detail::CGData *data);
+    CoordGroupBase();
+    CoordGroupBase(detail::CGData *data);
 
-    CoordGroup2Base(quint32 size, const Vector &value = Vector());
-    CoordGroup2Base(quint32 size, const Vector *values);
+    CoordGroupBase(quint32 size, const Vector &value = Vector());
+    CoordGroupBase(quint32 size, const Vector *values);
 
-    CoordGroup2Base(const QVector<Vector> &coordinates);
+    CoordGroupBase(const QVector<Vector> &coordinates);
 
-    CoordGroup2Base(const CoordGroup2Base &other);
+    CoordGroupBase(const CoordGroupBase &other);
 
-    CoordGroup2Base& operator=(const CoordGroup2Base &other);
+    CoordGroupBase& operator=(const CoordGroupBase &other);
 
     /** Pointer to the CGData object that describes
         this CoordGroup */
@@ -272,42 +272,42 @@ protected:
 
     @author Christopher Woods
 */
-class SIREVOL_EXPORT CoordGroup2 : public CoordGroup2Base
+class SIREVOL_EXPORT CoordGroup : public CoordGroupBase
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const CoordGroup2&);
-friend QDataStream& ::operator>>(QDataStream&, CoordGroup2&);
+friend QDataStream& ::operator<<(QDataStream&, const CoordGroup&);
+friend QDataStream& ::operator>>(QDataStream&, CoordGroup&);
 
-friend class CoordGroup2Editor;
+friend class CoordGroupEditor;
 friend class detail::CGData; // so can see d pointer
 friend class detail::CGMemory; // so can see d pointer
 
 public:
-    CoordGroup2();
-    CoordGroup2(quint32 size);
-    CoordGroup2(quint32 size, const Vector &value);
-    CoordGroup2(quint32 size, const Vector *values);
-    CoordGroup2(const QVector<Vector> &points);
+    CoordGroup();
+    CoordGroup(quint32 size);
+    CoordGroup(quint32 size, const Vector &value);
+    CoordGroup(quint32 size, const Vector *values);
+    CoordGroup(const QVector<Vector> &points);
 
-    CoordGroup2(const CoordGroup2 &other);
+    CoordGroup(const CoordGroup &other);
 
-    ~CoordGroup2();
+    ~CoordGroup();
 
-    CoordGroup2& operator=(const CoordGroup2 &other);
-    CoordGroup2& operator=(CoordGroup2Editor &other);
+    CoordGroup& operator=(const CoordGroup &other);
+    CoordGroup& operator=(CoordGroupEditor &other);
 
-    CoordGroup2Editor edit() const;
-
-    template<class T>
-    static CoordGroup2 combine(const T &groups);
+    CoordGroupEditor edit() const;
 
     template<class T>
-    static T split(const CoordGroup2 &group, const T &groups);
+    static CoordGroup combine(const T &groups);
+
+    template<class T>
+    static T split(const CoordGroup &group, const T &groups);
 
 private:
-    CoordGroup2(const CoordGroup2Editor &other);
+    CoordGroup(const CoordGroupEditor &other);
 
-    CoordGroup2(detail::CGData *data);
+    CoordGroup(detail::CGData *data);
 
     static void throwInvalidCountError(uint nats0, uint nats1);
 };
@@ -338,48 +338,53 @@ private:
 
     @author Christopher Woods
 */
-class SIREVOL_EXPORT CoordGroup2Editor : public CoordGroup2Base
+class SIREVOL_EXPORT CoordGroupEditor : public CoordGroupBase
 {
 public:
-    CoordGroup2Editor();
-    CoordGroup2Editor(const CoordGroup2 &other);
+    CoordGroupEditor();
+    CoordGroupEditor(const CoordGroup &other);
 
-    CoordGroup2Editor(const CoordGroup2Editor &other);
+    CoordGroupEditor(const CoordGroupEditor &other);
 
-    ~CoordGroup2Editor();
+    ~CoordGroupEditor();
 
-    CoordGroup2Editor& operator=(const CoordGroup2 &cgroup);
-    CoordGroup2Editor& operator=(const CoordGroup2Editor &other);
+    CoordGroupEditor& operator=(const CoordGroup &cgroup);
+    CoordGroupEditor& operator=(const CoordGroupEditor &other);
 
     Vector& operator[](quint32 i);
 
     Vector* data();
 
-    CoordGroup2Editor& translate(const Vector &delta);
-    CoordGroup2Editor& translate(quint32 i, const Vector &delta);
+    CoordGroupEditor& translate(const Vector &delta);
+    CoordGroupEditor& translate(quint32 i, const Vector &delta);
 
-    CoordGroup2Editor& rotate(const Quaternion &quat, const Vector &point);
-    CoordGroup2Editor& rotate(const Matrix &rotmat, const Vector &point);
+    CoordGroupEditor& rotate(const Quaternion &quat, const Vector &point);
+    CoordGroupEditor& rotate(const Matrix &rotmat, const Vector &point);
 
-    CoordGroup2Editor& rotate(quint32 i, const Quaternion &quat, const Vector &point);
-    CoordGroup2Editor& rotate(quint32 i, const Matrix &rotmat, const Vector &point);
+    CoordGroupEditor& rotate(quint32 i, const Quaternion &quat, const Vector &point);
+    CoordGroupEditor& rotate(quint32 i, const Matrix &rotmat, const Vector &point);
 
-    CoordGroup2Editor& setCoordinates(const QVector<Vector> &newcoords);
-    CoordGroup2Editor& setCoordinates(const CoordGroup2Base &newcoords);
+    CoordGroupEditor& setCoordinates(const QVector<Vector> &newcoords);
+    CoordGroupEditor& setCoordinates(const CoordGroupBase &newcoords);
 
-    CoordGroup2Editor& setCoordinates(quint32 i, const Vector &newcoords);
+    CoordGroupEditor& setCoordinates(quint32 i, const Vector &newcoords);
 
-    CoordGroup2Editor& mapInto(const SireMaths::AxisSet &axes);
-    CoordGroup2Editor& mapInto(quint32 i, const SireMaths::AxisSet &axes);
+    CoordGroupEditor& mapInto(const SireMaths::AxisSet &axes);
+    CoordGroupEditor& mapInto(quint32 i, const SireMaths::AxisSet &axes);
     
-    CoordGroup2Editor& changeFrame(const SireMaths::AxisSet &from_frame,
+    CoordGroupEditor& changeFrame(const SireMaths::AxisSet &from_frame,
                                   const SireMaths::AxisSet &to_frame);
                                   
-    CoordGroup2Editor& changeFrame(quint32 i,
+    CoordGroupEditor& changeFrame(quint32 i,
                                   const SireMaths::AxisSet &from_frame,
                                   const SireMaths::AxisSet &to_frame);
 
-    CoordGroup2 commit();
+    CoordGroup commit();
+
+    operator CoordGroup()
+    {
+        return this->commit();
+    }
 
 private:
     /** Whether or not the AABox needs to be recalculated */
@@ -415,7 +420,7 @@ friend class CoordGroupArrayArray;
 
 public:
     CoordGroupArray();
-    CoordGroupArray(const QVector<CoordGroup2> &cgroups);
+    CoordGroupArray(const QVector<CoordGroup> &cgroups);
     
     CoordGroupArray(const CoordGroupArray &other);
     
@@ -426,8 +431,8 @@ public:
     bool operator==(const CoordGroupArray &other) const;
     bool operator!=(const CoordGroupArray &other) const;
 
-    const CoordGroup2& operator[](quint32 i) const;
-    const CoordGroup2& at(quint32 i) const;
+    const CoordGroup& operator[](quint32 i) const;
+    const CoordGroup& at(quint32 i) const;
 
     int count() const;
     int size() const;
@@ -435,8 +440,8 @@ public:
     int nCoordGroups() const;
     int nCoords() const;
 
-    const CoordGroup2* data() const;
-    const CoordGroup2* constData() const;
+    const CoordGroup* data() const;
+    const CoordGroup* constData() const;
 
     const Vector* coordsData() const;
     const Vector* constCoordsData() const;
@@ -444,7 +449,7 @@ public:
     const AABox* aaBoxData() const;
     const AABox* constAABoxData() const;
     
-    void update(quint32 i, const CoordGroup2 &cgroup);
+    void update(quint32 i, const CoordGroup &cgroup);
 
     void assertValidIndex(quint32 i) const;
     
@@ -473,7 +478,7 @@ class SIREMOL_EXPORT CoordGroupArrayArray
 public:
     CoordGroupArrayArray();
     CoordGroupArrayArray(const QVector<CoordGroupArray> &cgarrays);
-    CoordGroupArrayArray(const QVector< QVector<CoordGroup2> > &cgarrays);
+    CoordGroupArrayArray(const QVector< QVector<CoordGroup> > &cgarrays);
     
     CoordGroupArrayArray(const CoordGroupArrayArray &other);
     
@@ -497,8 +502,8 @@ public:
     const CoordGroupArray* data() const;
     const CoordGroupArray* constData() const;
 
-    const CoordGroup2* coordGroupData() const;
-    const CoordGroup2* constCoordGroupData() const;
+    const CoordGroup* coordGroupData() const;
+    const CoordGroup* constCoordGroupData() const;
 
     const Vector* coordsData() const;
     const Vector* constCoordsData() const;
@@ -507,7 +512,7 @@ public:
     const AABox* constAABoxData() const;
     
     void update(quint32 i, const CoordGroupArray &array);
-    void update(quint32 i, quint32 j, const CoordGroup2 &cgroup);
+    void update(quint32 i, quint32 j, const CoordGroup &cgroup);
 
     void assertValidIndex(quint32 i) const;
     

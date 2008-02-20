@@ -1,7 +1,6 @@
 
 #include "SireVol/cartesian.h"
 #include "SireVol/coordgroup.h"
-#include "SireVol/coordgroup2.h"
 #include "SireMaths/vector.h"
 
 #include <QVector>
@@ -31,7 +30,7 @@ int main(int argc, const char **argv)
     c[2] = Vector(0,0,1);
     c[3] = Vector(0,0,2);
 
-    CoordGroup2 test(c);
+    CoordGroup test(c);
 
     cout << test.count() << endl;
     cout << qPrintable( test[0].toString() ) << endl;
@@ -41,7 +40,7 @@ int main(int argc, const char **argv)
     cout << qPrintable( test.aaBox().center().toString() ) << endl;
 
     cerr << "*** TRANSLATE ***\n";
-    CoordGroup2 test2 = test.edit().translate( Vector(1,0,0) ).commit();
+    CoordGroup test2 = test.edit().translate( Vector(1,0,0) ).commit();
     cerr << "*** TRANSLATE COMPLETE ***\n";
 
     cout << "TEST2\n";
@@ -94,8 +93,8 @@ int main(int argc, const char **argv)
         QVector<CoordGroup> agroup;
         QVector<CoordGroup> bgroup;
 
-        QVector<CoordGroup2> a2group_vec;
-        QVector<CoordGroup2> b2group_vec;
+        QVector<CoordGroup> a2group_vec;
+        QVector<CoordGroup> b2group_vec;
 
         for (int j=0; j<ngroups_per_mol; ++j)
         {
@@ -105,10 +104,10 @@ int main(int argc, const char **argv)
             }
 
             CoordGroup a(coords);
-            CoordGroup b = a.edit().translate( Vector(0,2,0) );
+            CoordGroup b = a.edit().translate( Vector(0,2,0) ).commit();
 
-            CoordGroup2 a2(coords);
-            CoordGroup2 b2 = a2.edit().translate( Vector(0,2,0) ).commit();
+            CoordGroup a2(coords);
+            CoordGroup b2 = a2.edit().translate( Vector(0,2,0) ).commit();
 
             agroup.append(a);
             bgroup.append(b);
@@ -186,22 +185,22 @@ int main(int argc, const char **argv)
        const CoordGroupArray &mol0 = group20_array[imol];
 
        int ncg0 = mol0.count();
-       const CoordGroup2 *mol0_array = mol0.constData();
+       const CoordGroup *mol0_array = mol0.constData();
 
        for (int jmol=0; jmol<group21.count(); ++jmol)
        {
            const CoordGroupArray &mol1 = group21_array[jmol];
 
            int ncg1 = mol1.count();
-           const CoordGroup2 *mol1_array = mol1.constData();
+           const CoordGroup *mol1_array = mol1.constData();
            
            for (int igroup = 0; igroup<ncg0; ++igroup)
            {
-               const CoordGroup2 &group0 = mol0_array[igroup];
+               const CoordGroup &group0 = mol0_array[igroup];
 
                for (int jgroup = 0; jgroup<ncg1; ++jgroup)
                {
-                   const CoordGroup2 &group1 = mol1_array[jgroup];
+                   const CoordGroup &group1 = mol1_array[jgroup];
 
                    double this_mindist = space->calcDist2(group0, group1, distmat);
 
@@ -219,8 +218,8 @@ int main(int argc, const char **argv)
     //try looping using the direct CoordGroups...
     t.start();
 
-    const CoordGroup2 *allcg_array20 = group20.coordGroupData();
-    const CoordGroup2 *allcg_array21 = group21.coordGroupData();
+    const CoordGroup *allcg_array20 = group20.coordGroupData();
+    const CoordGroup *allcg_array21 = group21.coordGroupData();
 
     mindist = std::numeric_limits<double>::max();
 
@@ -229,11 +228,11 @@ int main(int argc, const char **argv)
 
     for (int igroup=0; igroup<ngroups0; ++igroup)
     {
-	const CoordGroup2 &cgroup0 = allcg_array20[igroup];
+	const CoordGroup &cgroup0 = allcg_array20[igroup];
 
         for (int jgroup=0; jgroup<ngroups1; ++jgroup)
         {
-            const CoordGroup2 &cgroup1 = allcg_array21[jgroup];
+            const CoordGroup &cgroup1 = allcg_array21[jgroup];
 
             double this_mindist = space->calcDist2(cgroup0, cgroup1, distmat);
 
@@ -261,7 +260,7 @@ int main(int argc, const char **argv)
 
        int ncg0 = mol10.count();
        const CoordGroup *mol10_array = mol10.constData();
-       const CoordGroup2 *mol20_array = mol20.constData();
+       const CoordGroup *mol20_array = mol20.constData();
 
        for (int jmol=0; jmol<group1.count(); ++jmol)
        {
@@ -271,20 +270,20 @@ int main(int argc, const char **argv)
            int ncg1 = mol11.count();
 
            const CoordGroup *mol11_array = mol11.constData();
-           const CoordGroup2 *mol21_array = mol21.constData();
+           const CoordGroup *mol21_array = mol21.constData();
            
            for (int igroup = 0; igroup<ncg0; ++igroup)
            {
                const CoordGroup &group10 = mol10_array[igroup];
-               const CoordGroup2 &group20 = mol20_array[igroup];
+               const CoordGroup &group20 = mol20_array[igroup];
 
                const CoordGroup &group11 = mol11_array[igroup];
-               const CoordGroup2 &group21 = mol21_array[igroup];
+               const CoordGroup &group21 = mol21_array[igroup];
 
                for (int jgroup = 0; jgroup<ncg1; ++jgroup)
                {
 	           const CoordGroup &group11 = mol11_array[jgroup];
-                   const CoordGroup2 &group21 = mol21_array[jgroup];
+                   const CoordGroup &group21 = mol21_array[jgroup];
 
                    double this_mindist1 = space->calcDist2(group10, group11, distmat1);
                    double this_mindist2 = space->calcDist2(group20, group21, distmat2);
