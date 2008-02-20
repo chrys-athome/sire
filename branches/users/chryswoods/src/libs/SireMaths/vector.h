@@ -42,6 +42,8 @@ class QString;
 
 #include "SireUnits/dimensions.h"
 
+#include <Accelerate/Accelerate.h>
+
 SIRE_BEGIN_HEADER
 
 namespace SireMaths
@@ -220,19 +222,20 @@ public:
     friend const Vector SireMaths::operator*(const Matrix &m, const Vector &p);
 
 protected:
-    double sc[3];
+    /** Use four values so that vector arrays can be nicely aligned */
+    double sc[4];
 };
 
 /** Copy constructor */
 inline Vector::Vector(const Vector& other)
 {
-    qMemCopy(sc, other.sc, 3*sizeof(double));
+    qMemCopy(sc, other.sc, 4*sizeof(double));
 }
 
 /** Copy assignment operator */
 inline const Vector& Vector::operator=(const Vector &other)
 {
-    qMemCopy(sc, other.sc, 3*sizeof(double));
+    qMemCopy(sc, other.sc, 4*sizeof(double));
 
     return *this;
 }
@@ -271,20 +274,42 @@ inline double Vector::z() const
     return sc[2];
 }
 
+/** Return the length of the vector */
+inline double Vector::length() const
+{
+    return sqrt( pow_2(sc[0]) + pow_2(sc[1]) + pow_2(sc[2]) );
+}
+
+/** Return the length^2 of the vector */
+inline double Vector::length2() const
+{
+    return pow_2(sc[0]) + pow_2(sc[1]) + pow_2(sc[2]);
+}
+
+/** Return the inverse of the length of the vector */
+inline double Vector::invLength() const
+{
+    return double(1) / sqrt( pow_2(sc[0]) + pow_2(sc[1]) + pow_2(sc[2]) );
+}
+
+/** Return the inverse length squared */
+inline double Vector::invLength2() const
+{
+    return double(1) / ( pow_2(sc[0]) + pow_2(sc[1]) + pow_2(sc[2]) );
+}
+
 /** Return the distance squared between two vectors */
 inline double Vector::distance2(const Vector &v1, const Vector &v2)
 {
-    return pow_2(v1.sc[0]-v2.sc[0]) +
-           pow_2(v1.sc[1]-v2.sc[1]) +
-           pow_2(v1.sc[2]-v2.sc[2]);
+    return pow_2(v2.sc[0]-v1.sc[0]) + pow_2(v2.sc[1]-v1.sc[1]) +
+           pow_2(v2.sc[2]-v1.sc[1]);
 }
 
 /** Return the distance between two vectors */
 inline double Vector::distance(const Vector &v1, const Vector &v2)
 {
-    return std::sqrt( pow_2(v1.sc[0]-v2.sc[0]) +
-                      pow_2(v1.sc[1]-v2.sc[1]) +
-                      pow_2(v1.sc[2]-v2.sc[2]) );
+    return sqrt( pow_2(v2.sc[0]-v1.sc[0]) + pow_2(v2.sc[1]-v1.sc[1]) +
+                 pow_2(v2.sc[2]-v1.sc[1]) );
 }
 
 /** Return the 1 / distance between two vectors */
@@ -322,30 +347,6 @@ inline unsigned int Vector::count() const
 inline const double& Vector::at(unsigned int i) const
 {
     return this->operator[](i);
-}
-
-/** Return the length of the vector */
-inline double Vector::length() const
-{
-    return sqrt( pow_2(sc[0]) + pow_2(sc[1]) + pow_2(sc[2]) );
-}
-
-/** Return the length^2 of the vector */
-inline double Vector::length2() const
-{
-    return pow_2(sc[0]) + pow_2(sc[1]) + pow_2(sc[2]);
-}
-
-/** Return the inverse of the length of the vector */
-inline double Vector::invLength() const
-{
-    return double(1) / sqrt( pow_2(sc[0]) + pow_2(sc[1]) + pow_2(sc[2]) );
-}
-
-/** Return the inverse length squared */
-inline double Vector::invLength2() const
-{
-    return double(1) / ( pow_2(sc[0]) + pow_2(sc[1]) + pow_2(sc[2]) );
 }
 
 /** Return whether or not this is a zero length vector */

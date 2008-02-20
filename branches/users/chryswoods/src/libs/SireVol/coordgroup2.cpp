@@ -292,7 +292,8 @@ quint32 CGMemory::getSize(quint32 narrays, quint32 ngroups, quint32 ncoords)
                   ngroups * sizeof(CoordGroup2) +
                   ngroups * sizeof(CGData) + 
                   ngroups * sizeof(AABox) + 
-                  ncoords * sizeof(Vector);
+                  ncoords * sizeof(Vector) + 
+                  16; // allow 16 extra bytes for spacing
 }
 
 /** Create space for a container that holds narrays CoordGroupArrays,
@@ -334,6 +335,8 @@ char* CGMemory::create(quint32 narrays, quint32 ncgroups, quint32 ncoords)
     
     //allocate this space
     char *storage = new char[sz];
+    
+    quint32 spare_space = 16;
     
     try
     {
@@ -451,6 +454,9 @@ char* CGMemory::create(quint32 narrays, quint32 ncgroups, quint32 ncoords)
             }
         
             //we are now at the location of the first Vector
+            idx += 16; // seems to like it best if there is 16 bytes of space
+            spare_space -= 16;
+            
             cgarrayarray->coords0 = idx;
         
             //loop over each vector and create it in place
@@ -483,7 +489,7 @@ char* CGMemory::create(quint32 narrays, quint32 ncgroups, quint32 ncoords)
         }
         
         //we should now be at the end of the storage
-        BOOST_ASSERT( idx == sz );
+        BOOST_ASSERT( idx + spare_space == sz );
                 
         return storage;
     } 
