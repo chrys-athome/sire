@@ -67,8 +67,11 @@ int main(int argc, const char **argv)
     QVector< QVector<CoordGroup> > group0;
     QVector< QVector<CoordGroup> > group1;
 
-    QVector<CoordGroupArray> group20;
-    QVector<CoordGroupArray> group21;
+    QVector<CoordGroupArray> group20_vec;
+    QVector<CoordGroupArray> group21_vec;
+
+    CoordGroupArrayArray group20;
+    CoordGroupArrayArray group21;
 
     QVector<Vector> coords(4);
 
@@ -95,8 +98,8 @@ int main(int argc, const char **argv)
 
         CoordGroup b = a.edit().translate( Vector(0,2,0) );
 
-        QVector<CoordGroup> agroup(3, a);
-        QVector<CoordGroup> bgroup(3, b);
+        QVector<CoordGroup> agroup(1, a);
+        QVector<CoordGroup> bgroup(1, b);
 
         group0.append(agroup);
         group1.append(bgroup);
@@ -104,12 +107,15 @@ int main(int argc, const char **argv)
         CoordGroup2 a2(coords);
         CoordGroup2 b2 = a2.edit().translate( Vector(0,2,0) ).commit();
 
-        QVector<CoordGroup2> a2group(3, a2);
-        QVector<CoordGroup2> b2group(3, b2);
+        QVector<CoordGroup2> a2group(1, a2);
+        QVector<CoordGroup2> b2group(1, b2);
 
-        group20.append( CoordGroupArray(a2group) );
-        group21.append( CoordGroupArray(b2group) );
+        group20_vec.append( CoordGroupArray(a2group) );
+        group21_vec.append( CoordGroupArray(b2group) );
     }
+
+    group20 = CoordGroupArrayArray(group20_vec);
+    group21 = CoordGroupArrayArray(group21_vec);
 
     int ms = t.elapsed();
     cout << "Building the molecules took " << ms << " ms\n";
@@ -194,6 +200,33 @@ int main(int argc, const char **argv)
                }
            }
        }
+    }
+
+    ms = t.elapsed();
+
+    cout << "Minimum distance = " << mindist << " (took " << ms << " ms)\n";
+
+    //try looping using the direct CoordGroups...
+    t.start();
+
+    const CoordGroup2 *allcg_array20 = group20.coordGroupData();
+    const CoordGroup2 *allcg_array21 = group21.coordGroupData();
+
+    mindist = std::numeric_limits<double>::max();
+
+    for (int igroup=0; igroup<group20.nCoordGroups(); ++igroup)
+    {
+	const CoordGroup2 &cgroup0 = allcg_array20[igroup];
+
+        for (int jgroup=0; jgroup<group21.nCoordGroups(); ++jgroup)
+        {
+            const CoordGroup2 &cgroup1 = allcg_array21[jgroup];
+
+            double this_mindist = space->calcDist(cgroup0, cgroup1, distmat);
+
+            if (this_mindist < mindist)
+                mindist = this_mindist;
+        }
     }
 
     ms = t.elapsed();

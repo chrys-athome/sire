@@ -458,6 +458,68 @@ protected:
     detail::CGSharedPtr<detail::CGArrayData> d;
 };
 
+/** This class holds an array of CoordGroupArrays. This is 
+    used to pack all of the CoordGroupArrays (and thus
+    all contained CoordGroups) into a single contiguous
+    block of memory. This should improve efficiency of 
+    iterating over these groups/coordinates, but it does
+    make this array less flexible than a simple
+    QVector<CoordGroupArray>, or QVector< QVector<CoordGroup> >.
+    
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT CoordGroupArrayArray
+{
+public:
+    CoordGroupArrayArray();
+    CoordGroupArrayArray(const QVector<CoordGroupArray> &cgarrays);
+    CoordGroupArrayArray(const QVector< QVector<CoordGroup2> > &cgarrays);
+    
+    CoordGroupArrayArray(const CoordGroupArrayArray &other);
+    
+    ~CoordGroupArrayArray();
+    
+    CoordGroupArrayArray& operator=(const CoordGroupArrayArray &other);
+    
+    bool operator==(const CoordGroupArrayArray &other) const;
+    bool operator!=(const CoordGroupArrayArray &other) const;
+
+    const CoordGroupArray& operator[](quint32 i) const;
+    const CoordGroupArray& at(quint32 i) const;
+
+    int count() const;
+    int size() const;
+
+    int nCoordGroupArrays() const;
+    int nCoordGroups() const;
+    int nCoords() const;
+
+    const CoordGroupArray* data() const;
+    const CoordGroupArray* constData() const;
+
+    const CoordGroup2* coordGroupData() const;
+    const CoordGroup2* constCoordGroupData() const;
+
+    const Vector* coordsData() const;
+    const Vector* constCoordsData() const;
+
+    const AABox* aaBoxData() const;
+    const AABox* constAABoxData() const;
+    
+    void update(quint32 i, const CoordGroupArray &array);
+    void update(quint32 i, quint32 j, const CoordGroup2 &cgroup);
+
+    void assertValidIndex(quint32 i) const;
+    
+    void assertValidCoordGroupArray(quint32 i) const;
+    void assertValidCoordGroup(quint32 i) const;
+    void assertValidCoordinate(quint32 i) const;
+    
+private:
+    /** Implicitly shared pointer to the array data */
+    detail::CGSharedPtr<detail::CGArrayArrayData> d;
+};
+
 }
 
 SIRE_END_HEADER
