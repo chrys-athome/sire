@@ -49,6 +49,12 @@ class CoordGroupArrayArray;
 QDataStream& operator<<(QDataStream&, const SireVol::CoordGroup&);
 QDataStream& operator>>(QDataStream&, SireVol::CoordGroup&);
 
+QDataStream& operator<<(QDataStream&, const SireVol::CoordGroupArray&);
+QDataStream& operator>>(QDataStream&, SireVol::CoordGroupArray&);
+
+QDataStream& operator<<(QDataStream&, const SireVol::CoordGroupArrayArray&);
+QDataStream& operator>>(QDataStream&, SireVol::CoordGroupArrayArray&);
+
 namespace SireMaths
 {
 class AxisSet;
@@ -221,6 +227,16 @@ friend class CoordGroupArrayArray;
 public:
     ~CoordGroupBase();
 
+    static const char *typeName()
+    {
+        return "SireVol::CoordGroupBase";
+    }
+    
+    const char* what() const
+    {
+        return CoordGroupBase::typeName();
+    }
+
     bool operator==(const CoordGroupBase &other) const;
     bool operator!=(const CoordGroupBase &other) const;
 
@@ -293,6 +309,16 @@ public:
 
     ~CoordGroup();
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<CoordGroup>() );
+    }
+    
+    const char* what() const
+    {
+        return CoordGroup::typeName();
+    }
+
     CoordGroup& operator=(const CoordGroup &other);
     CoordGroup& operator=(CoordGroupEditor &other);
 
@@ -347,6 +373,16 @@ public:
     CoordGroupEditor(const CoordGroupEditor &other);
 
     ~CoordGroupEditor();
+
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<CoordGroupEditor>() );
+    }
+    
+    const char* what() const
+    {
+        return CoordGroupEditor::typeName();
+    }
 
     CoordGroupEditor& operator=(const CoordGroup &cgroup);
     CoordGroupEditor& operator=(const CoordGroupEditor &other);
@@ -418,8 +454,14 @@ friend class detail::CGMemory; // so can see d pointer
 
 friend class CoordGroupArrayArray;
 
+friend QDataStream& ::operator<<(QDataStream&, const CoordGroupArray&);
+friend QDataStream& ::operator>>(QDataStream&, CoordGroupArray&);
+
 public:
     CoordGroupArray();
+    CoordGroupArray(const CoordGroup &cgroup);
+    
+    CoordGroupArray(const QVector< QVector<Vector> > &points);
     CoordGroupArray(const QVector<CoordGroup> &cgroups);
     
     CoordGroupArray(const CoordGroupArray &other);
@@ -427,6 +469,16 @@ public:
     ~CoordGroupArray();
     
     CoordGroupArray& operator=(const CoordGroupArray &other);
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<CoordGroupArray>() );
+    }
+    
+    const char* what() const
+    {
+        return CoordGroupArray::typeName();
+    }
     
     bool operator==(const CoordGroupArray &other) const;
     bool operator!=(const CoordGroupArray &other) const;
@@ -475,14 +527,33 @@ protected:
 */
 class SIREMOL_EXPORT CoordGroupArrayArray
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const CoordGroupArrayArray&);
+friend QDataStream& ::operator>>(QDataStream&, CoordGroupArrayArray&);
+
 public:
     CoordGroupArrayArray();
+    
+    CoordGroupArrayArray(const CoordGroup &cgroup);
+    CoordGroupArrayArray(const CoordGroupArray &cgarray);
+    
     CoordGroupArrayArray(const QVector<CoordGroupArray> &cgarrays);
     CoordGroupArrayArray(const QVector< QVector<CoordGroup> > &cgarrays);
+    CoordGroupArrayArray(const QVector< QVector< QVector<Vector> > > &points);
     
     CoordGroupArrayArray(const CoordGroupArrayArray &other);
     
     ~CoordGroupArrayArray();
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<CoordGroupArrayArray>() );
+    }
+    
+    const char* what() const
+    {
+        return CoordGroupArrayArray::typeName();
+    }
     
     CoordGroupArrayArray& operator=(const CoordGroupArrayArray &other);
     
@@ -526,6 +597,11 @@ private:
 };
 
 }
+
+Q_DECLARE_METATYPE( SireVol::CoordGroup );
+Q_DECLARE_METATYPE( SireVol::CoordGroupEditor );
+Q_DECLARE_METATYPE( SireVol::CoordGroupArray );
+Q_DECLARE_METATYPE( SireVol::CoordGroupArrayArray );
 
 SIRE_END_HEADER
 

@@ -86,89 +86,31 @@ AtomProperty<Vector>::AtomProperty(const MoleculeInfoData &molinfo)
 
     if (ncg > 0)
     {
-        coords = QVector<CoordGroup>(ncg);
-        CoordGroup *coords_array = coords.data();
+        QVector<CoordGroup> tmp_coords(ncg);
+        CoordGroup *tmp_coords_array = tmp_coords.data();
 
         for (CGIdx i(0); i<ncg; ++i)
         {
-            coords_array[i] = CoordGroup(molinfo.nAtoms(i));
+            tmp_coords_array[i] = CoordGroup(molinfo.nAtoms(i));
         }
 
-        coords.squeeze();
+        coords = CoordGroupArray(tmp_coords);
     }
 }
 
 /** Construct from the passed set of coordinates (arranged into
     a single CutGroup */
-AtomProperty<Vector>::AtomProperty(const QVector<Vector> &coordinates)
-                     : ConcreteProperty<AtomProperty<Vector>,AtomProp>()
-{
-    int nats = coordinates.count();
-
-    if (nats > 0)
-    {
-        coords = QVector<CoordGroup>(1);
-        coords[0] = CoordGroup(coordinates);
-        coords.squeeze();
-    }
-}
+AtomProperty<Vector>::AtomProperty(const CoordGroup &cgroup)
+                     : ConcreteProperty<AtomProperty<Vector>,AtomProp>(),
+                       coords(cgroup)
+{}
 
 /** Construct from the passed set of coordinates (arranged into
     CutGroups) */
-AtomProperty<Vector>::AtomProperty(const QVector< QVector<Vector> > &coordinates)
-                     : ConcreteProperty<AtomProperty<Vector>,AtomProp>()
-{
-    int ncg = coordinates.count();
-
-    if (ncg > 0)
-    {
-        const QVector<Vector> *coords_array = coordinates.constData();
-
-        coords.reserve(ncg);
-
-        for (int i=0; i<ncg; ++i)
-        {
-            if (coords_array[i].count() > 0)
-                coords.append( CoordGroup(coords_array[i]) );
-        }
-
-        coords.squeeze();
-    }
-}
-
-/** Construct from the single passed CoordGroup */
-AtomProperty<Vector>::AtomProperty(const CoordGroup &cgroup)
-                     : ConcreteProperty<AtomProperty<Vector>,AtomProp>()
-{
-    if (cgroup.count() > 0)
-    {
-        coords = QVector<CoordGroup>(1);
-        coords[0] = cgroup;
-        coords.squeeze();
-    }
-}
-
-/** Construct from the array of CoordGroups */
-AtomProperty<Vector>::AtomProperty(const QVector<CoordGroup> &cgroups)
-                     : ConcreteProperty<AtomProperty<Vector>,AtomProp>()
-{
-    int ncg = cgroups.count();
-
-    if (ncg > 0)
-    {
-        const CoordGroup *cgroups_array = cgroups.constData();
-
-        coords.reserve(ncg);
-
-        for (int i=0; i<ncg; ++i)
-        {
-            if (cgroups_array[i].count() > 0)
-                coords.append(cgroups_array[i]);
-        }
-
-        coords.squeeze();
-    }
-}
+AtomProperty<Vector>::AtomProperty(const CoordGroupArray &cgroups)
+                     : ConcreteProperty<AtomProperty<Vector>,AtomProp>(),
+                       coords(cgroups)
+{}
 
 static void assertCanConvert(const QVariant &value)
 {
@@ -189,20 +131,18 @@ static CoordGroup makeCoordGroup(const QVector<QVariant> &values)
         
     int nvals = values.count();
     const QVariant *values_array = values.constData();
-    
-    CoordGroupEditor editor = CoordGroupEditor( CoordGroup(nvals) );
-    
-    Vector *editor_array = editor.data();
+
+    QVector<Vector> tmp_coords(nvals);
     
     for (int i=0; i<nvals; ++i)
     {
         const QVariant &value = values_array[i];
         assertCanConvert(value);
         
-        editor_array[i] = value.value<Vector>();
+        tmp_coords[i] = value.value<Vector>();
     }
     
-    return editor.commit();
+    return CoordGroup(tmp_coords);
 }
 
 /** Construct from an array of QVariants 
@@ -213,10 +153,7 @@ AtomProperty<Vector>::AtomProperty(const QVector<QVariant> &values)
                      : ConcreteProperty<AtomProperty<Vector>,AtomProp>()
 {
     if (not values.isEmpty())
-    {
-        coords = QVector<CoordGroup>( 1, makeCoordGroup(values) );
-        coords.squeeze();
-    }
+        coords = makeCoordGroup(values);
 }
 
 /** Construct from an array of an array of QVariants - each QVariant array
@@ -232,16 +169,15 @@ AtomProperty<Vector>::AtomProperty(const QVector< QVector<QVariant> > &values)
         
     int ngroups = values.count();
     
-    coords = QVector<CoordGroup>(ngroups);
-    coords.squeeze();
-    
-    CoordGroup *coords_array = coords.data();
+    QVector<CoordGroup> tmp_coords(ngroups);
     const QVector<QVariant> *values_array = values.constData();
     
     for (int i=0; i<ngroups; ++i)
     {
-        coords_array[i] = makeCoordGroup( values_array[i] );
+        tmp_coords[i] = makeCoordGroup( values_array[i] );
     }
+    
+    coords = tmp_coords;
 }
 
 /** Copy constructor */
@@ -280,21 +216,11 @@ const CoordGroup& AtomProperty<Vector>::operator[](CGIdx cgidx) const
     return coords.constData()[cgidx.map(coords.count())];
 }
 
-/** Return a modifiable reference to the CoordGroup for the CutGroup at
-    index 'cgidx'
-
-    \throw SireError::invalid_index
-*/
-CoordGroup& AtomProperty<Vector>::operator[](CGIdx cgidx)
-{
-    return coords.data()[cgidx.map(coords.count())];
-}
-
 /** Convert the coordinates to an array of array of vectors - each
     array holds the coordinates of one CutGroup */
 QVector< QVector<QVariant> > AtomProperty<Vector>::toVariant() const
 {
-    if (coords.isEmpty())
+    if (coords.count() == 0)
         return QVector< QVector<QVariant> >();
         
     int ngroups = coords.count();
@@ -411,8 +337,12 @@ const Vector& AtomProperty<Vector>::get(const CGAtomIdx &cgatomidx) const
 AtomProperty<Vector>& AtomProperty<Vector>::set(const CGAtomIdx &cgatomidx,
                                                 const Vector &value)
 {
-    CoordGroup &group = coords.data()[cgatomidx.cutGroup().map(coords.count())];
-    group = group.edit().setCoordinates( cgatomidx.atom().map(group.count()), value );
+    quint32 cgidx = cgatomidx.cutGroup().map(coords.count());
+    
+    const CoordGroup &cgroup = coords.at(cgidx);
+    quint32 atomidx = cgatomidx.atom().map(cgroup.count());
+    
+    coords.update( cgidx, cgroup.edit().setCoordinates(atomidx, value) );
 
     return *this;
 }
@@ -423,7 +353,9 @@ AtomProperty<Vector>& AtomProperty<Vector>::set(const CGAtomIdx &cgatomidx,
 AtomProperty<Vector>& AtomProperty<Vector>::set(CGIdx cgidx,
                                                 const QVector<Vector> &values)
 {
-    CoordGroup &group = coords.data()[cgidx.map(coords.count())];
+    quint32 i = cgidx.map(coords.count());
+
+    const CoordGroup &group = coords.constData()[i];
 
     if (group.count() != values.count())
         throw SireError::incompatible_error( QObject::tr(
@@ -432,7 +364,7 @@ AtomProperty<Vector>& AtomProperty<Vector>::set(CGIdx cgidx,
             "of atoms! (%2)")
                 .arg(values.count()).arg(group.count()), CODELOC );
 
-    group = CoordGroup(values);
+    coords.update(i, values);
 
     return *this;
 }
@@ -442,7 +374,9 @@ AtomProperty<Vector>& AtomProperty<Vector>::set(CGIdx cgidx,
     equal the number of atoms!!! */
 AtomProperty<Vector>& AtomProperty<Vector>::set(CGIdx cgidx, const CoordGroup &cgroup)
 {
-    CoordGroup &group = coords.data()[cgidx.map(coords.count())];
+    quint32 i = cgidx.map(coords.count());
+
+    const CoordGroup &group = coords.data()[i];
 
     if (group.count() != cgroup.count())
         throw SireError::incompatible_error( QObject::tr(
@@ -451,7 +385,7 @@ AtomProperty<Vector>& AtomProperty<Vector>::set(CGIdx cgidx, const CoordGroup &c
             "of atoms! (%2)")
                 .arg(cgroup.count()).arg(group.count()), CODELOC );
 
-    group = cgroup;
+    coords.update(i, cgroup);
 
     return *this;
 }
@@ -460,12 +394,6 @@ AtomProperty<Vector>& AtomProperty<Vector>::set(CGIdx cgidx, const CoordGroup &c
 const CoordGroup* AtomProperty<Vector>::data() const
 {
     return coords.constData();
-}
-
-/** Return a modifiable raw pointer to the array of CoordGroups */
-CoordGroup* AtomProperty<Vector>::data()
-{
-    return coords.data();
 }
 
 /** Return a raw pointer to the array of CoordGroups */

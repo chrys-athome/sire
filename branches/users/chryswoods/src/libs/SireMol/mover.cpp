@@ -94,7 +94,6 @@ void MoverBase::translate(AtomCoords &coords,
     if (delta.isZero() or selected_atoms.selectedNone())
         return;
 
-    CoordGroup *coords_array = coords.data();
     int ncg = coords.count();
 
     if (selected_atoms.selectedAll())
@@ -102,7 +101,7 @@ void MoverBase::translate(AtomCoords &coords,
         //we are moving everything!
         for (int i=0; i<ncg; ++i)
         {
-            coords_array[i] = coords_array[i].edit().translate(delta);
+            coords.translate(delta);
         }
     }
     else if (selected_atoms.selectedAllCutGroups())
@@ -112,20 +111,20 @@ void MoverBase::translate(AtomCoords &coords,
         {
             if (selected_atoms.selectedAll(i))
             {
-                coords_array[i] = coords_array[i].edit().translate(delta);
+                coords.translate(i, delta);
             }
             else
             {
                 QSet<Index> atoms_to_move = selected_atoms.selectedAtoms(i);
 
-                CoordGroupEditor editor = coords_array[i].edit();
+                CoordGroupEditor editor = coords.constData()[i].edit();
 
                 foreach (const Index atom, atoms_to_move)
                 {
                     editor.translate(atom, delta);
                 }
 
-                coords_array[i] = editor.commit();
+                coords.set(i, editor.commit());
             }
         }
     }
@@ -138,20 +137,20 @@ void MoverBase::translate(AtomCoords &coords,
         {
             if (selected_atoms.selectedAll(i))
             {
-                coords_array[i] = coords_array[i].edit().translate(delta);
+                coords.translate(i, delta);
             }
             else
             {
                 QSet<Index> atoms_to_move = selected_atoms.selectedAtoms(i);
 
-                CoordGroupEditor editor = coords_array[i].edit();
+                CoordGroupEditor editor = coords.constData()[i].edit();
 
                 foreach (const Index &atom, atoms_to_move)
                 {
                     editor.translate(atom, delta);
                 }
 
-                coords_array[i] = editor.commit();
+                coords.set(i, editor.commit());
             }
         }
     }
@@ -168,7 +167,6 @@ void MoverBase::rotate(AtomCoords &coords,
     if (selected_atoms.selectedNone())
         return;
 
-    CoordGroup *coords_array = coords.data();
     int ncg = coords.count();
 
     if (selected_atoms.selectedAll())
@@ -176,7 +174,7 @@ void MoverBase::rotate(AtomCoords &coords,
         //we are rotating everything
         for (int i=0; i<ncg; ++i)
         {
-            coords_array[i] = coords_array[i].edit().rotate(rotmat,point);
+            coords.rotate(rotmat,point);
         }
     }
     else if (selected_atoms.selectedAllCutGroups())
@@ -186,20 +184,20 @@ void MoverBase::rotate(AtomCoords &coords,
         {
             if (selected_atoms.selectedAll(i))
             {
-                coords_array[i] = coords_array[i].edit().rotate(rotmat,point);
+                coords.rotate(i, rotmat,point);
             }
             else
             {
                 QSet<Index> atoms_to_move = selected_atoms.selectedAtoms(i);
 
-                CoordGroupEditor editor = coords_array[i].edit();
+                CoordGroupEditor editor = coords.constData()[i].edit();
 
                 foreach (const Index &atom, atoms_to_move)
                 {
                     editor.rotate(atom, rotmat, point);
                 }
 
-                coords_array[i] = editor.commit();
+                coords.set(i, editor.commit());
             }
         }
     }
@@ -211,19 +209,19 @@ void MoverBase::rotate(AtomCoords &coords,
         {
             if (selected_atoms.selectedAll(i))
             {
-                coords_array[i] = coords_array[i].edit().rotate(rotmat, point);
+                coords.rotate(i, rotmat, point);
             }
             else
             {
                 QSet<Index> atoms_to_move = selected_atoms.selectedAtoms(i);
-                CoordGroupEditor editor = coords_array[i].edit();
+                CoordGroupEditor editor = coords.constData()[i].edit();
 
                 foreach (const Index &atom, atoms_to_move)
                 {
                     editor.rotate(atom, rotmat, point);
                 }
 
-                coords_array[i] = editor.commit();
+                coords.set(i, editor.commit());
             }
         }
     }
@@ -250,7 +248,6 @@ void MoverBase::mapInto(AtomCoords &coords,
     if (selected_atoms.selectedNone())
         return;
 
-    CoordGroup *coords_array = coords.data();
     int ncg = coords.count();
 
     if (selected_atoms.selectedAll())
@@ -258,7 +255,7 @@ void MoverBase::mapInto(AtomCoords &coords,
         //we are moving everything
         for (int i=0; i<ncg; ++i)
         {
-            coords_array[i] = coords_array[i].edit().mapInto(axes);
+            coords.mapInto(axes);
         }
     }
     else if (selected_atoms.selectedAllCutGroups())
@@ -267,20 +264,20 @@ void MoverBase::mapInto(AtomCoords &coords,
         {
             if (selected_atoms.selectedAll(i))
             {
-                coords_array[i] = coords_array[i].edit().mapInto(axes);
+                coords.mapInto(i, axes);
             }
             else
             {
                 QSet<Index> atoms_to_move = selected_atoms.selectedAtoms(i);
 
-                CoordGroupEditor editor = coords_array[i];
+                CoordGroupEditor editor = coords.constData()[i].edit();
 
                 foreach (const Index &atom, atoms_to_move)
                 {
                     editor.mapInto(atom, axes);
                 }
 
-                coords_array[i] = editor.commit();
+                coords.set(i, editor.commit());
             }
         }
     }
@@ -292,20 +289,20 @@ void MoverBase::mapInto(AtomCoords &coords,
         {
             if (selected_atoms.selectedAll(i))
             {
-                coords_array[i] = coords_array[i].edit().mapInto(axes);
+                coords.mapInto(i, axes);
             }
             else
             {
                 QSet<Index> atoms_to_move = selected_atoms.selectedAtoms(i);
 
-                CoordGroupEditor editor = coords_array[i].edit();
+                CoordGroupEditor editor = coords.constData()[i].edit();
 
                 foreach (const Index &atom, atoms_to_move)
                 {
                     editor.mapInto(atom, axes);
                 }
 
-                coords_array[i] = editor.commit();
+                coords.set(i, editor.commit());
             }
         }
     }
@@ -324,7 +321,6 @@ void MoverBase::changeFrame(AtomCoords &coords,
     if (selected_atoms.selectedNone())
         return;
 
-    CoordGroup *coords_array = coords.data();
     int ncg = coords.count();
 
     if (selected_atoms.selectedAll())
@@ -332,8 +328,7 @@ void MoverBase::changeFrame(AtomCoords &coords,
         //we are moving everything
         for (int i=0; i<ncg; ++i)
         {
-            coords_array[i] = coords_array[i].edit().changeFrame(from_frame,
-                                                                 to_frame);
+            coords.changeFrame(from_frame, to_frame);
         }
     }
     else if (selected_atoms.selectedAllCutGroups())
@@ -342,21 +337,20 @@ void MoverBase::changeFrame(AtomCoords &coords,
         {
             if (selected_atoms.selectedAll(i))
             {
-                coords_array[i] = coords_array[i].edit().changeFrame(from_frame,
-                                                                     to_frame);
+                coords.changeFrame(i, from_frame, to_frame);
             }
             else
             {
                 QSet<Index> atoms_to_move = selected_atoms.selectedAtoms(i);
 
-                CoordGroupEditor editor = coords_array[i];
+                CoordGroupEditor editor = coords.constData()[i];
 
                 foreach (const Index &atom, atoms_to_move)
                 {
                     editor.changeFrame(atom, from_frame, to_frame);
                 }
 
-                coords_array[i] = editor.commit();
+                coords.set(i, editor.commit());
             }
         }
     }
@@ -368,21 +362,20 @@ void MoverBase::changeFrame(AtomCoords &coords,
         {
             if (selected_atoms.selectedAll(i))
             {
-                coords_array[i] = coords_array[i].edit().changeFrame(from_frame,
-                                                                     to_frame);
+                coords.changeFrame(i, from_frame, to_frame);
             }
             else
             {
                 QSet<Index> atoms_to_move = selected_atoms.selectedAtoms(i);
 
-                CoordGroupEditor editor = coords_array[i].edit();
+                CoordGroupEditor editor = coords.constData()[i].edit();
 
                 foreach (const Index &atom, atoms_to_move)
                 {
                     editor.changeFrame(atom, from_frame, to_frame);
                 }
 
-                coords_array[i] = editor.commit();
+                coords.set(i, editor.commit());
             }
         }
     }

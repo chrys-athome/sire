@@ -44,11 +44,24 @@ class AtomProperty<SireMaths::Vector>;
 QDataStream& operator<<(QDataStream&, const SireMol::AtomProperty<SireMaths::Vector>&);
 QDataStream& operator>>(QDataStream&, SireMol::AtomProperty<SireMaths::Vector>&);
 
+namespace SireMaths
+{
+class Vector;
+class Quaternion;
+class AxisSet;
+class Matrix;
+}
+
 namespace SireMol
 {
 
 using SireMaths::Vector;
+using SireMaths::Quaternion;
+using SireMaths::AxisSet;
+using SireMaths::Matrix;
+
 using SireVol::CoordGroup;
+using SireVol::CoordGroupArray;
 
 /** This is an explicit specialisation of AtomProperty<T> for the Vector
     class, as the Vector implies coordinates, which are arranged into
@@ -69,11 +82,8 @@ public:
 
     AtomProperty(const MoleculeInfoData &molinfo);
 
-    AtomProperty(const QVector<Vector> &coordinates);
-    AtomProperty(const QVector< QVector<Vector> > &coordinates);
-
     AtomProperty(const CoordGroup &cgroup);
-    AtomProperty(const QVector<CoordGroup> &cgroups);
+    AtomProperty(const CoordGroupArray &cgroups);
 
     AtomProperty(const QVector<QVariant> &values);
     AtomProperty(const QVector< QVector<QVariant> > &values);
@@ -107,7 +117,6 @@ public:
     QVector< QVector<QVariant> > toVariant() const;
 
     const CoordGroup& operator[](CGIdx cgidx) const;
-    CoordGroup& operator[](CGIdx cgidx);
 
     const CoordGroup& at(CGIdx cgidx) const;
     const CoordGroup& get(CGIdx cgidx) const;
@@ -121,10 +130,24 @@ public:
     AtomProperty<Vector>& set(CGIdx cgidx, const QVector<Vector> &values);
     AtomProperty<Vector>& set(CGIdx cgidx, const CoordGroup &cgroup);
 
+    void translate(const Vector &delta);
+    void translate(CGIdx cgidx, const Vector &delta);
+    
+    void rotate(const Quaternion &quat, const Vector &point);
+    void rotate(const Matrix &rotmat, const Vector &point);
+    
+    void rotate(CGIdx cgidx, const Quaternion &quat, const Vector &point);
+    void rotate(CGIdx cgidx, const Matrix &rotmat, const Vector &point);
+    
+    void mapInto(const AxisSet &axes);
+    void mapInto(CGIdx cgidx, const AxisSet &axes);
+    
+    void changeFrame(const AxisSet &from_frame, const AxisSet &to_frame);
+    void changeFrame(CGIdx cgidx, const AxisSet &from_frame, 
+                                  const AxisSet &to_frame);
+    
     const CoordGroup* data() const;
     const CoordGroup* constData() const;
-
-    CoordGroup* data();
 
     const Vector* data(CGIdx cgidx) const;
     const Vector* constData(CGIdx cgidx) const;
@@ -141,7 +164,7 @@ public:
 
 private:
     /** The actual atomic coordinates, arranged into CoordGroups */
-    QVector<CoordGroup> coords;
+    CoordGroupArray coords;
 };
 
 typedef AtomProperty<Vector> AtomCoords;

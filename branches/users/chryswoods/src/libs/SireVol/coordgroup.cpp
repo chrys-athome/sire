@@ -35,10 +35,14 @@
 
 #include "SireError/errors.h"
 
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
 #include <QDebug>
 
 using namespace SireVol;
 using namespace SireMaths;
+using namespace SireStream;
 
 namespace SireVol
 {
@@ -155,6 +159,8 @@ public:
     
     CGArrayData* detach();
     
+    CGArrayArrayData* extract() const;
+    
     const CoordGroup* cGroupData() const;
     const AABox* aaBoxData() const;
     const Vector* coordsData() const;
@@ -216,6 +222,8 @@ public:
     void decref();
     
     CGData* detach();
+    
+    CGArrayArrayData* extract() const;
     
     const char* memory() const;
     const Vector* coordsData() const;
@@ -1063,6 +1071,57 @@ CGArrayData* CGArrayData::detach()
     return (CGArrayData*)( CGMemory::detach( (char*)this, this_cgarray ) );
 }
 
+/** Return a pointer to a CGArrayArrayData object that contains 
+    just the data of this CoordGroupArray */
+CGArrayArrayData* CGArrayData::extract() const
+{
+    const CGArrayArrayData *array = (const CGArrayArrayData*)(memory());
+    
+    if (array->nCGArrays() <= 1)
+        //this is already extracted!
+        return const_cast<CGArrayArrayData*>(array);
+    
+    CGArrayArrayData *new_array(0);
+    
+    try
+    {
+                
+    //ok, we need to extract!
+    new_array = new CGArrayArrayData(1, this->nCGroups(),
+                                        this->nCoords());
+
+    new_array->setNCGroupsInArray(1, this->nCGroups());
+    
+    for (quint32 i=0; i<this->nCGroups(); ++i)
+    {
+        new_array->setNPointsInCGroup(i, cGroupData()[i].count());
+    }
+
+    new_array->close();
+    
+    //copy the AABoxes
+    void *output = qMemCopy( new_array->aaBoxData(),
+                             this->aaBoxData(), 
+                             this->nCGroups() * sizeof(AABox) );
+                             
+    BOOST_ASSERT( output == new_array->aaBoxData() );
+
+    //copy the coordinates
+    output = qMemCopy( new_array->coordsData(),
+                       this->coordsData(),
+                       this->nCoords() * sizeof(Vector) );
+                       
+    BOOST_ASSERT( output == new_array->coordsData() );
+
+    }
+    catch(...)
+    {
+        delete new_array;
+    }
+    
+    return new_array;
+}
+
 /** Return a pointer to the first CoordGroup in this array.
     This returns 0 if there are no CoordGroups in this array */
 const CoordGroup* CGArrayData::cGroupData() const
@@ -1201,6 +1260,47 @@ CGData::~CGData()
 CGData* CGData::detach()
 {
     return (CGData*)( CGMemory::detach( (char*)this, this_cgroup ) );
+}
+
+/** Return a pointer to a CGArrayArrayData object that contains 
+    just the data of this CoordGroup */
+CGArrayArrayData* CGData::extract() const
+{
+    const CGArrayArrayData *array = (const CGArrayArrayData*)(memory());
+    
+    if (array->nCGroups() <= 1)
+        //this is already extracted!
+        return const_cast<CGArrayArrayData*>(array);
+    
+    CGArrayArrayData *new_array(0);
+    
+    try
+    {
+                
+    //ok, we need to extract!
+    new_array = new CGArrayArrayData(1, 1, this->nCoords());
+
+    new_array->setNCGroupsInArray(1, 1);
+    new_array->setNPointsInCGroup(1, this->nCoords());
+    new_array->close();
+    
+    //copy the AABox
+    new_array->aaBoxData()[0] = *(this->aaBox());
+
+    //copy the coordinates
+    void *output = qMemCopy( new_array->coordsData(),
+                             this->coordsData(),
+                             this->nCoords() * sizeof(Vector) );
+                       
+    BOOST_ASSERT( output == new_array->coordsData() );
+
+    }
+    catch(...)
+    {
+        delete new_array;
+    }
+    
+    return new_array;
 }
 
 /** Return a const pointer to the start of the storage
@@ -1548,6 +1648,42 @@ const Vector& CoordGroupBase::operator[](quint32 i) const
 //////// Implementation of CoordGroup
 ////////
 
+static const RegisterMetaType<CoordGroup> r_cgroup;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
+                                       const CoordGroup &cgroup)
+{
+    writeHeader(ds, r_cgroup, 1);
+
+    SharedDataStream sds(ds);
+
+    sds << CoordGroupArrayArray(cgroup);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
+                                       CoordGroup &cgroup)
+{
+    VersionID v = readHeader(ds, r_cgroup);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+    
+        CoordGroupArrayArray array;
+        sds >> array;
+    
+        cgroup = array.coordGroupData()[0];
+    }
+    else
+        throw version_error(v, "1", r_cgroup, CODELOC);
+    
+    return ds;
+}
+
 /** Null constructor */
 CoordGroup::CoordGroup() : CoordGroupBase()
 {}
@@ -1635,7 +1771,11 @@ CoordGroupEditor::CoordGroupEditor()
 /** Construct from a CoordGroup */
 CoordGroupEditor::CoordGroupEditor(const CoordGroup &other)
                  : CoordGroupBase(other), needsupdate(false)
-{}
+{
+    #warning CGMemory::extract type functions are probably broken!
+    //if (not other.count() == 0)
+    //    d = other.d->extract()->cGroupData()[0].d;
+}
 
 /** Copy constructor */
 CoordGroupEditor::CoordGroupEditor(const CoordGroupEditor &other)
@@ -1658,7 +1798,11 @@ CoordGroupEditor& CoordGroupEditor::operator=(const CoordGroupEditor &other)
 /** Assignment operator */
 CoordGroupEditor& CoordGroupEditor::operator=(const CoordGroup &other)
 {
-    CoordGroupBase::operator=(other);
+    if (other.count() > 0)
+        d = other.d->extract()->cGroupData()[0].d;
+    else
+        d = 0;
+    
     needsupdate = false;
     
     return *this;
@@ -1940,6 +2084,42 @@ CoordGroup CoordGroupEditor::commit()
 //////// Implementation of CoordGroupArray
 ////////
 
+static const RegisterMetaType<CoordGroupArray> r_cgarray;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
+                                       const CoordGroupArray &cgarray)
+{
+    writeHeader(ds, r_cgarray, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << CoordGroupArrayArray(cgarray);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
+                                       CoordGroupArray &cgarray)
+{
+    VersionID v = readHeader(ds, r_cgarray);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        CoordGroupArrayArray array;
+        sds >> array;
+        
+        cgarray = array.data()[0];
+    }
+    else
+        throw version_error(v, "1", r_cgarray, CODELOC);
+        
+    return ds;
+}
+
 static CGSharedPtr<CGArrayData> getSharedNullCGArray()
 {
     const CGSharedPtr<CGArrayArrayData> &array = ::getSharedNull();
@@ -1956,6 +2136,12 @@ CoordGroupArray::CoordGroupArray()
 CoordGroupArray::CoordGroupArray(CGArrayData *data)
 {
     d.weakAssign(data);
+}
+
+/** Construct an array that holds just the passed CoordGroup */
+CoordGroupArray::CoordGroupArray(const CoordGroup &cgroup)
+{
+    d = cgroup.d->extract()->cgArrayData()[0].d;
 }
 
 static CGSharedPtr<CGArrayData> createCGArray(quint32 ngroups, quint32 ncoords)
@@ -2024,6 +2210,22 @@ CoordGroupArray::CoordGroupArray(const QVector<CoordGroup> &cgroups)
     }
 }
 
+/** Construct from a double-vector */
+CoordGroupArray::CoordGroupArray(const QVector< QVector<Vector> > &points)
+{
+    if (points.isEmpty())
+        return;
+        
+    QVector<CoordGroup> cgroups(points.count());
+    
+    for (int i=0; i<points.count(); ++i)
+    {
+        cgroups[i] = CoordGroup(points[i]);
+    }
+    
+    this->operator=( CoordGroupArray(cgroups) );
+}
+
 /** Copy constructor */
 CoordGroupArray::CoordGroupArray(const CoordGroupArray &other)
                 : d(other.d)
@@ -2032,6 +2234,13 @@ CoordGroupArray::CoordGroupArray(const CoordGroupArray &other)
 /** Destructor */
 CoordGroupArray::~CoordGroupArray()
 {}
+
+/** Copy assignment operator */
+CoordGroupArray& CoordGroupArray::operator=(const CoordGroupArray &other)
+{
+    d = other.d;
+    return *this;
+}
 
 /** Assert that the index i points to a valid CoordGroup 
 
@@ -2191,9 +2400,116 @@ void CoordGroupArray::update(quint32 i, const CoordGroup &cgroup)
 //////// Implementation of CoordGroupArrayArray
 ////////
 
+static const RegisterMetaType<CoordGroupArrayArray> r_cgarrayarray;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
+                                       const CoordGroupArrayArray &cgarray)
+{
+    writeHeader(ds, r_cgarrayarray, 1);
+
+    const CGArrayArrayData &array = *(cgarray.d);
+
+    //serialise the prime metadata
+    ds << array.nCGArrays() << array.nCGroups() << array.nCoords();
+
+    //serialise the number of CoordGroups in each CoordGroupArray
+    for (quint32 i=0; i<array.nCGArrays(); ++i)
+    {
+        ds << array.cgArrayDataData()[i].nCGroups();
+    }
+    
+    //serialise the number of coordinates in each CoordGroup
+    for (quint32 i=0; i<array.nCGroups(); ++i)
+    {
+        ds << array.cgDataData()[i].nCoords();
+    }
+    
+    //now the AABoxes
+    for (quint32 i=0; i<array.nCGroups(); ++i)
+    {
+        ds << array.aaBoxData()[i];
+    }
+    
+    //finally the coordinates
+    for (quint32 i=0; i<array.nCoords(); ++i)
+    {
+        ds << array.coordsData()[i];
+    }
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, 
+                                       CoordGroupArrayArray &cgarray)
+{
+    VersionID v = readHeader(ds, r_cgarrayarray);
+    
+    if (v == 1)
+    {
+        quint32 ncgarrays, ncgroups, ncoords;
+        
+        //read the prime metadata
+        ds >> ncgarrays >> ncgroups >> ncoords;
+        
+        //create space for this data
+        CGSharedPtr<CGArrayArrayData> d( new CGArrayArrayData(ncgarrays, 
+                                                        ncgroups, ncoords) );
+            
+        CGArrayArrayData &array = *d;
+                                                                                                                                                
+        //dimension the arrays..
+        for (quint32 i=0; i<ncgarrays; ++i)
+        {
+            quint32 n;
+            ds >> n;
+            
+            array.setNCGroupsInArray(i, n);
+        }
+        
+        for (quint32 i=0; i<ncgroups; ++i)
+        {
+            quint32 n;
+            ds >> n;
+            
+            array.setNPointsInCGroup(i, n);
+        }
+        
+        array.close();
+        
+        //copy in the AABoxes...
+        for (quint32 i=0; i<ncgroups; ++i)
+        {
+            ds >> array.aaBoxData()[i];
+        }
+        
+        //copy in the coordinates
+        for (quint32 i=0; i<ncoords; ++i)
+        {
+            ds >> array.coordsData()[i];
+        }
+    }
+    else
+        throw version_error(v, "1", r_cgarrayarray, CODELOC);
+        
+    return ds;
+}
+
 /** Construct an empty array */
 CoordGroupArrayArray::CoordGroupArrayArray()
                      : d( ::getSharedNull() )
+{}
+
+/** Construct an array that contains just the CoordGroup 'cgroup'
+    (in a single array that contains this group) */
+CoordGroupArrayArray::CoordGroupArrayArray(const CoordGroup &cgroup)
+                     : d( cgroup.d->extract() )
+{}
+
+/** Construct an array that contains just the CoordGroupArray 'cgarray' */
+CoordGroupArrayArray::CoordGroupArrayArray(const CoordGroupArray &cgarray)
+                     : d( cgarray.d->extract() )
 {}
 
 static CGSharedPtr<CGArrayArrayData> createCGArrayArray(quint32 narrays,
@@ -2376,6 +2692,23 @@ CoordGroupArrayArray::CoordGroupArrayArray(
     }
 }
 
+/** Construct from a triple-vector */
+CoordGroupArrayArray::CoordGroupArrayArray(
+                        const QVector< QVector< QVector<Vector> > > &points)
+{
+    if (points.isEmpty())
+        return;
+
+    QVector<CoordGroupArray> arrays(points.count());
+    
+    for (int i=0; i<points.count(); ++i)
+    {
+        arrays[i] = CoordGroupArray(points[i]);
+    }
+    
+    this->operator=( CoordGroupArrayArray(arrays) );
+}
+
 /** Copy constructor */
 CoordGroupArrayArray::CoordGroupArrayArray(const CoordGroupArrayArray &other)
                      : d(other.d)
@@ -2551,7 +2884,7 @@ const AABox* CoordGroupArrayArray::constAABoxData() const
 */
 void CoordGroupArrayArray::update(quint32 i, const CoordGroupArray &array)
 {
-    
+    throw SireError::incomplete_code(CODELOC);
 }
 
 /** Update the jth CoordGroup of the ith CoordGroupArray so that its
@@ -2564,4 +2897,5 @@ void CoordGroupArrayArray::update(quint32 i, const CoordGroupArray &array)
 */
 void CoordGroupArrayArray::update(quint32 i, quint32 j, const CoordGroup &cgroup)
 {
+    throw SireError::incomplete_code(CODELOC);
 }
