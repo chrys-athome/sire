@@ -7,7 +7,7 @@
 # Third Party dependencies of this module
 
 # Other Sire libraries
-include_directories(${CMAKE_SOURCE_DIR}/src/libs)
+include_directories( ${CMAKE_SOURCE_DIR}/src/libs )
 
 set ( SIREUNITS_HEADERS
       convert.h

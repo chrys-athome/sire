@@ -204,6 +204,7 @@ private:
 using SireMaths::Vector;
 using SireMaths::Quaternion;
 using SireMaths::Matrix;
+using SireMaths::AxisSet;
 
 /** This is the base class of all CoordGroup-like classes
     (e.g. CoordGroup and CoordGroupEditor). CoordGroup classes
@@ -503,6 +504,22 @@ public:
     
     void update(quint32 i, const CoordGroup &cgroup);
 
+    void translate(const Vector &delta);
+    void translate(quint32 i, const Vector &delta);
+    
+    void rotate(const Quaternion &quat, const Vector &point);
+    void rotate(const Matrix &rotmat, const Vector &point);
+    
+    void rotate(quint32 i, const Quaternion &quat, const Vector &point);
+    void rotate(quint32 i, const Matrix &rotmat, const Vector &point);
+    
+    void mapInto(const AxisSet &axes);
+    void mapInto(quint32 i, const AxisSet &axes);
+    
+    void changeFrame(const AxisSet &from_frame, const AxisSet &to_frame);
+    void changeFrame(quint32 i,
+                     const AxisSet &from_frame, const AxisSet &to_frame);
+
     void assertValidIndex(quint32 i) const;
     
     void assertValidCoordGroup(quint32 i) const;
@@ -584,6 +601,31 @@ public:
     
     void update(quint32 i, const CoordGroupArray &array);
     void update(quint32 i, quint32 j, const CoordGroup &cgroup);
+
+    void translate(const Vector &delta);
+    void translate(quint32 i, const Vector &delta);
+    void translate(quint32 i, quint32 j, const Vector &delta);
+    
+    void rotate(const Quaternion &quat, const Vector &point);
+    void rotate(const Matrix &rotmat, const Vector &point);
+    
+    void rotate(quint32 i, const Quaternion &quat, const Vector &point);
+    void rotate(quint32 i, const Matrix &rotmat, const Vector &point);
+
+    void rotate(quint32 i, quint32 j,
+                const Quaternion &quat, const Vector &point);
+    void rotate(quint32 i, quint32 j,
+                const Matrix &rotmat, const Vector &point);
+    
+    void mapInto(const AxisSet &axes);
+    void mapInto(quint32 i, const AxisSet &axes);
+    void mapInto(quint32 i, quint32 j, const AxisSet &axes);
+    
+    void changeFrame(const AxisSet &from_frame, const AxisSet &to_frame);
+    void changeFrame(quint32 i,
+                     const AxisSet &from_frame, const AxisSet &to_frame);
+    void changeFrame(quint32 i, quint32 j,
+                     const AxisSet &from_frame, const AxisSet &to_frame);
 
     void assertValidIndex(quint32 i) const;
     

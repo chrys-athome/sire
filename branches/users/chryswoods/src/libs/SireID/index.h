@@ -107,7 +107,7 @@ public:
     }
 
 protected:
-    explicit IndexBase(qint32 idx = IndexBase::null) : _idx(idx)
+    explicit IndexBase(qint32 idx = IndexBase::null()) : _idx(idx)
     {}
     
     IndexBase(const IndexBase &other) : _idx(other._idx)

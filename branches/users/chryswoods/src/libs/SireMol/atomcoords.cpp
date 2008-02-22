@@ -390,6 +390,95 @@ AtomProperty<Vector>& AtomProperty<Vector>::set(CGIdx cgidx, const CoordGroup &c
     return *this;
 }
 
+/** Translate all of the atoms in this container by 'delta' */
+void AtomProperty<Vector>::translate(const Vector &delta)
+{
+    coords.translate(delta);
+}
+
+/** Translate all of the atoms in the CutGroup at index 'cgidx' by 'delta' 
+
+    \throw SireError::invalid_index
+*/
+void AtomProperty<Vector>::translate(CGIdx cgidx, const Vector &delta)
+{
+    coords.translate( cgidx.map(coords.count()), delta );
+}
+
+/** Rotate all of the atoms in this container using the quaternion 'quat'
+    about the point 'point' */
+void AtomProperty<Vector>::rotate(const Quaternion &quat, const Vector &point)
+{
+    coords.rotate(quat, point);
+}
+
+/** Rotate all of the atoms in this container using the matrix 'rotmat'
+    about the point 'point' */
+void AtomProperty<Vector>::rotate(const Matrix &rotmat, const Vector &point)
+{
+    coords.rotate(rotmat, point);
+}
+
+/** Rotate all of the atoms in the CutGroup at index 'cgidx' using
+    the quaternion 'quat' about the point 'point'
+    
+    \throw SireError::invalid_index
+*/
+void AtomProperty<Vector>::rotate(CGIdx cgidx, const Quaternion &quat, 
+                                  const Vector &point)
+{
+    coords.rotate( cgidx.map(coords.count()), quat, point );
+}
+
+/** Rotate all of the atoms in the CutGroup at index 'cgidx' using
+    the matrix 'rotmat' about the point 'point'
+    
+    \throw SireError::invalid_index
+*/
+void AtomProperty<Vector>::rotate(CGIdx cgidx, const Matrix &rotmat, 
+                                  const Vector &point)
+{
+    coords.rotate( cgidx.map(coords.count()), rotmat, point );
+}
+
+/** Map all of the atoms in this container into the coordinate
+    space represented by 'axes' */
+void AtomProperty<Vector>::mapInto(const AxisSet &axes)
+{
+    coords.mapInto(axes);
+}
+
+/** Map all of the atoms in the CutGroup at index 'cgidx' into 
+    the coordinate space represented by 'axes' 
+    
+    \throw SireError::invalid_index
+*/
+void AtomProperty<Vector>::mapInto(CGIdx cgidx, const AxisSet &axes)
+{
+    coords.mapInto( cgidx.map(coords.count()), axes );
+}
+
+/** Change all of the atoms in this container from residing in the
+    coordinate frame 'from_frame' and move them into the coordinate
+    frame 'to_frame' */
+void AtomProperty<Vector>::changeFrame(const AxisSet &from_frame, 
+                                       const AxisSet &to_frame)
+{
+    coords.changeFrame(from_frame, to_frame);
+}
+
+/** Change all of the atoms in the CutGroup at index 'cgidx' so that
+    they move from residing in the coordinate frame 'from_frame' into
+    the coordinate frame 'to_frame'
+    
+    \throw SireError::invalid_index
+*/
+void AtomProperty<Vector>::changeFrame(CGIdx cgidx, const AxisSet &from_frame, 
+                                       const AxisSet &to_frame)
+{
+    coords.changeFrame( cgidx.map(coords.count()), from_frame, to_frame );
+}
+
 /** Return a raw pointer to the array of CoordGroups */
 const CoordGroup* AtomProperty<Vector>::data() const
 {

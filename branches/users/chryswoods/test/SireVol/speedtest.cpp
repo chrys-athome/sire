@@ -19,8 +19,83 @@ void checkDist(int i, int j, double a, double b)
 	cout << "ERROR: " << i << " " << j << " " << a << " " << b << endl;
 }
 
+void checkRawSpeed(int n)
+{
+    double *group0 = new double[3*n];
+    double *group1 = new double[3*n];
+
+    for (int i=0; i<3*n; i+=3)
+    {
+	for (int j=0; j<3; ++j)
+        {
+            group0[i + j] = 5*rand() - 10;
+            group1[i + j] = 5*rand() - 10;
+        }
+    }
+
+    //calculate the distances between all pairs
+    double mindist = std::numeric_limits<double>::max();
+
+    QTime t;
+
+    cout << "Testing raw pair-pair distance speed, by calculating " << n << " by " << n
+         << " interatomic distances...\n";
+
+    t.start();
+
+    for (int i=0; i<3*n; i+=3)
+    {
+        const double &x = group0[i+0];
+        const double &y = group0[i+1];
+        const double &z = group0[i+2];
+
+        for (int j=0; j<3*n; j+=3)
+        {
+            const double dist = std::sqrt( pow_2( group1[j+0] - x ) + 
+                                           pow_2( group1[j+1] - y ) +
+                                           pow_2( group1[j+2] - z ) );
+
+            mindist = qMin(mindist, dist);
+        }
+    }
+
+    int ms = t.elapsed();
+
+    cout << "Calculating pair-pair distances took " << ms << " ms\n";
+
+    delete[] group0;
+    delete[] group1;
+
+    //now just try to do a large number of square roots
+    double *vals = new double[n*n];
+
+    for (int i=0; i<n*n; ++i)
+    {
+        vals[i] = 5*rand() - 10;
+    }
+
+    mindist = std::numeric_limits<double>::max();
+
+    t.start();
+
+    for (int i=0; i<n*n; ++i)
+    {
+        double dist = std::sqrt(vals[i]);
+        mindist = qMin(mindist, dist);
+    }
+
+    ms = t.elapsed();
+
+    delete[] vals;
+
+    cout << "Calculating " << n*n << " square roots took " << ms << " ms\n";
+}
+
 int main(int argc, const char **argv)
 {
+    //check raw sqrt speed
+    //checkRawSpeed(12000);
+
     QTime t;
 
     QVector<Vector> c(5);
@@ -246,6 +321,9 @@ int main(int argc, const char **argv)
 
     for (int igroup=0; igroup<ngroups0; ++igroup)
     {
+        DistMatrix l_distmat;
+        double l_mindist = std::numeric_limits<double>::max();
+
 	const CoordGroup &cgroup0 = allcg_array20[igroup];
 
         for (int jgroup=0; jgroup<ngroups1; ++jgroup)
@@ -254,9 +332,12 @@ int main(int argc, const char **argv)
 
             double this_mindist = space->calcDist(cgroup0, cgroup1, distmat);
 
-            if (this_mindist < mindist)
-                mindist = this_mindist;
+            if (this_mindist < l_mindist)
+                l_mindist = this_mindist;
         }
+
+        if (l_mindist < mindist)
+            mindist = l_mindist;
     }
 
     ms = t.elapsed();

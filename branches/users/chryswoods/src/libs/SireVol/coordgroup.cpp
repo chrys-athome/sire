@@ -2242,6 +2242,27 @@ CoordGroupArray& CoordGroupArray::operator=(const CoordGroupArray &other)
     return *this;
 }
 
+/** Comparison operator */
+bool CoordGroupArray::operator==(const CoordGroupArray &other) const
+{
+    if (d.constData() == other.d.constData())
+        return true;
+        
+    for (quint32 i=0; i<d->nCGroups(); ++i)
+    {
+        if (this->data()[i] != other.data()[i])
+            return false;
+    }
+    
+    return true;
+}
+
+/** Comparison operator */
+bool CoordGroupArray::operator!=(const CoordGroupArray &other) const
+{
+    return not this->operator==(other);
+}
+
 /** Assert that the index i points to a valid CoordGroup 
 
     \throw SireError::invalid_index
@@ -2394,6 +2415,209 @@ void CoordGroupArray::update(quint32 i, const CoordGroup &cgroup)
     
     //copy the AABox
     *(cgdata->aaBox()) = cgroup.aaBox();
+}
+
+/** Translate all of the coordinates in this array by 'delta' */
+void CoordGroupArray::translate(const Vector &delta)
+{
+    if (delta.isZero())
+        return;
+        
+    Vector *coords = d->coordsData();
+    quint32 n = d.constData()->nCoords();
+    
+    for (quint32 i=0; i<n; ++i)
+    {
+        coords[i] += delta;
+    }
+    
+    AABox *aaboxes = d->aaBoxData();
+    n = d.constData()->nCGroups();
+    
+    for (quint32 i=0; i<n; ++i)
+    {
+        aaboxes[i].translate(delta);
+    }
+}
+
+/** Translate all of the coordinates in the ith CoordGroup by 'delta' */
+void CoordGroupArray::translate(quint32 i, const Vector &delta)
+{
+    if (delta.isZero())
+        return;
+        
+    this->assertValidCoordGroup(i);
+
+    CoordGroup &this_cgroup = d->cGroupData()[i];
+    CGData *cgdata = const_cast<CGData*>( this_cgroup.d.constData() );
+
+    quint32 n = cgdata->nCoords();
+    Vector *coords = cgdata->coordsData();
+    
+    for (quint32 i=0; i<n; ++i)
+    {
+        coords[i] += delta;
+    }
+    
+    cgdata->aaBox()->translate(delta);
+}
+
+/** Rotate all of coordinates in this array using the matrix 'rotmat'
+    about the point 'point' */
+void CoordGroupArray::rotate(const Matrix &rotmat, const Vector &point)
+{
+    Vector *coords = d->coordsData();
+    quint32 n = d.constData()->nCoords();
+    
+    for (quint32 i=0; i<n; ++i)
+    {
+        coords[i] = SireMaths::rotate(coords[i], rotmat, point);
+    }
+    
+    //now update all of the AABoxes
+    CoordGroup *cgroups = d->cGroupData();
+    n = d.constData()->nCGroups();
+    
+    for (quint32 i=0; i<n; ++i)
+    {
+        *( const_cast<CGData*>(cgroups[i].d.constData())->aaBox() ) 
+               = AABox(cgroups[i]);
+    }
+}
+
+/** Rotate all of the coordinates in this array using the quaternion
+    'quat' around the point 'point' */
+void CoordGroupArray::rotate(const Quaternion &quat, const Vector &point)
+{
+    this->rotate(quat.toMatrix(), point);
+}
+
+/** Rotate all of the coordinates in the CoordGroup at index 'i' using 
+    the matrix 'rotmat' about the point 'point'
+    
+    \throw SireError::invalid_index
+*/
+void CoordGroupArray::rotate(quint32 i, const Matrix &rotmat, const Vector &point)
+{
+    this->assertValidCoordGroup(i);
+
+    CoordGroup &this_cgroup = d->cGroupData()[i];
+    CGData *cgdata = const_cast<CGData*>( this_cgroup.d.constData() );
+
+    quint32 n = cgdata->nCoords();
+    Vector *coords = cgdata->coordsData();
+    
+    for (quint32 i=0; i<n; ++i)
+    {
+        coords[i] = SireMaths::rotate(coords[i], rotmat, point);
+    }
+    
+    *(cgdata->aaBox()) = AABox(this_cgroup);
+}
+
+/** Rotate all of the coordinates in the CoordGroup at index 'i' using 
+    the quaternion 'quat' about the point 'point'
+    
+    \throw SireError::invalid_index
+*/
+void CoordGroupArray::rotate(quint32 i, const Quaternion &quat, const Vector &point)
+{
+    this->rotate(i, quat.toMatrix(), point);
+}
+
+/** Map all of the coordinates in this array into the coordinate
+    frame represented by 'axes' */
+void CoordGroupArray::mapInto(const AxisSet &axes)
+{
+    Vector *coords = d->coordsData();
+    quint32 n = d.constData()->nCoords();
+    
+    for (quint32 i=0; i<n; ++i)
+    {
+        coords[i] = axes.fromIdentity(coords[i]);
+    }
+    
+    CoordGroup *cgroups = d->cGroupData();
+    n = d.constData()->nCGroups();
+    
+    for (quint32 i=0; i<n; ++i)
+    {
+        *( const_cast<CGData*>(cgroups[i].d.constData())->aaBox() ) 
+               = AABox(cgroups[i]);
+    }
+}
+
+/** Map all of the coordinates of the CoordGroup at index 'i'
+    into the coordinate frame represented by 'axes'
+    
+    \throw SireError::invalid_index
+*/
+void CoordGroupArray::mapInto(quint32 i, const AxisSet &axes)
+{
+    this->assertValidCoordGroup(i);
+
+    CoordGroup &this_cgroup = d->cGroupData()[i];
+    CGData *cgdata = const_cast<CGData*>( this_cgroup.d.constData() );
+
+    quint32 n = cgdata->nCoords();
+    Vector *coords = cgdata->coordsData();
+    
+    for (quint32 i=0; i<n; ++i)
+    {
+        coords[i] = axes.fromIdentity(coords[i]);
+    }
+    
+    *(cgdata->aaBox()) = AABox(this_cgroup);
+}
+
+/** Change all of the coordinates in this array from the 
+    coordinate frame 'from_frame' to the coordinate frame 'to_frame' */
+void CoordGroupArray::changeFrame(const AxisSet &from_frame, 
+                                  const AxisSet &to_frame)
+{
+    Vector *coords = d->coordsData();
+    quint32 n = d.constData()->nCoords();
+    
+    for (quint32 i=0; i<n; ++i)
+    {
+        coords[i] = from_frame.toFrame(to_frame, coords[i]);
+    }
+
+    //update the AABoxes
+    CoordGroup *cgroups = d->cGroupData();
+    n = d.constData()->nCGroups();
+    
+    for (quint32 i=0; i<n; ++i)
+    {
+        *( const_cast<CGData*>(cgroups[i].d.constData())->aaBox() ) 
+               = AABox(cgroups[i]);
+    }
+
+}
+
+/** Change all of the coordinates in the ith CoordGroup from
+    the coordinate frame 'from_frame' to the coordinate frame
+    'to_frame'
+    
+    \throw SireError::invalid_index
+*/
+void CoordGroupArray::changeFrame(quint32 i, const AxisSet &from_frame, 
+                                             const AxisSet &to_frame)
+{
+    this->assertValidCoordGroup(i);
+
+    CoordGroup &this_cgroup = d->cGroupData()[i];
+    CGData *cgdata = const_cast<CGData*>( this_cgroup.d.constData() );
+
+    quint32 n = cgdata->nCoords();
+    Vector *coords = cgdata->coordsData();
+    
+    for (quint32 i=0; i<n; ++i)
+    {
+        coords[i] = from_frame.toFrame(to_frame, coords[i]);
+    }
+    
+    *(cgdata->aaBox()) = AABox(this_cgroup);
 }
 
 ////////
@@ -2884,7 +3108,51 @@ const AABox* CoordGroupArrayArray::constAABoxData() const
 */
 void CoordGroupArrayArray::update(quint32 i, const CoordGroupArray &array)
 {
-    throw SireError::incomplete_code(CODELOC);
+    this->assertValidCoordGroupArray(i);
+
+    CoordGroupArray &this_cgarray = d->cgArrayData()[i];
+    CGArrayData *cgarraydata = const_cast<CGArrayData*>( this_cgarray.d.constData() );
+
+    quint32 n = cgarraydata->nCoords();
+
+    if (n != quint32(array.count()))
+        throw SireError::incompatible_error( QObject::tr(
+            "Cannot update the CoordGroupArray at index %1 as "
+            "it contains %2 CoordGroups, but the new array has %3.")
+                .arg(i).arg(n).arg(array.count()), CODELOC );
+
+    //ensure all of the CoordGroups have the same number of points...
+    const CGArrayData *new_cgarray = array.d.constData();
+    
+    for (quint32 j=0; j<n; ++j)
+    {
+        if (cgarraydata->cGroupData()[j].count() 
+                != new_cgarray->cGroupData()[j].count())
+        {
+            throw SireError::incompatible_error( QObject::tr(
+                "Cannot update the CoordGroupArray at index %1 as "
+                "the number of coordinates in the CoordGroup at index "
+                "%2 (%3) is not the same as the number of "
+                "CoordGroups at the same index in 'array' (%4).")
+                    .arg(i).arg(j)
+                    .arg(cgarraydata->cGroupData()[j].count())
+                    .arg(new_cgarray->cGroupData()[j].count()), CODELOC );
+        }
+    }
+    
+    //ok, we can now copy the AABoxes as a block, then the 
+    //CoordGroups as a block
+    void *output = qMemCopy( cgarraydata->aaBoxData(),
+                             new_cgarray->aaBoxData(),
+                             cgarraydata->nCGroups() * sizeof(AABox) );
+                             
+    BOOST_ASSERT( output == cgarraydata->aaBoxData() );
+    
+    output = qMemCopy( cgarraydata->coordsData(),
+                       new_cgarray->coordsData(),
+                       cgarraydata->nCoords() * sizeof(Vector) );
+                       
+    BOOST_ASSERT( output == cgarraydata->coordsData() );
 }
 
 /** Update the jth CoordGroup of the ith CoordGroupArray so that its
@@ -2897,5 +3165,182 @@ void CoordGroupArrayArray::update(quint32 i, const CoordGroupArray &array)
 */
 void CoordGroupArrayArray::update(quint32 i, quint32 j, const CoordGroup &cgroup)
 {
-    throw SireError::incomplete_code(CODELOC);
+    this->assertValidCoordGroupArray(i);
+
+    CoordGroupArray &this_cgarray = d->cgArrayData()[i];
+    CGArrayData *cgarraydata = const_cast<CGArrayData*>( this_cgarray.d.constData() );
+
+    if (j >= cgarraydata->nCGroups())
+        throw SireError::invalid_index( QObject::tr(
+            "There is no CoordGroup at index %1 in the array at "
+            "index %2. The number of CoordGroups in this array "
+            "is %3.")
+                .arg(j).arg(i).arg(cgarraydata->nCGroups()), CODELOC );
+    
+    CGData *cgdata = const_cast<CGData*>( cgarraydata->cGroupData()[j]
+                                            .d.constData() );
+    
+    if (cgdata->nCoords() != quint32(cgroup.count()))
+        throw SireError::incompatible_error( QObject::tr(
+            "Cannot update the CoordGroup at index %1 in the array "
+            "at index %2, as the number of coordinates in this "
+            "CoordGroup (%3) is not equal to the new CoordGroup (%4).")
+                .arg(j).arg(i).arg(cgdata->nCoords()).arg(cgroup.count()),
+                    CODELOC );
+
+    //copy the coordinates and AABox in one go
+    *(cgdata->aaBox()) = cgroup.aaBox();
+    
+    void *output = qMemCopy( cgdata->coordsData(),
+                             cgroup.constData(),
+                             cgdata->nCoords() * sizeof(Vector) );
+                             
+    BOOST_ASSERT( output == cgdata->coordsData() );
 }
+
+/** Translate all of the coordinates held in this container by 'delta' */
+void CoordGroupArrayArray::translate(const Vector &delta)
+{
+    if (delta.isZero())
+        return;
+        
+    Vector *coords = d->coordsData();
+    quint32 n = d.constData()->nCoords();
+    
+    for (quint32 i=0; i<n; ++i)
+    {
+        coords[i] += delta;
+    }
+    
+    //update all of the AABoxes
+    AABox *aaboxes = d->aaBoxData();
+    n = d.constData()->nCGroups();
+    
+    for (quint32 i=0; i<n; ++i)
+    {
+        aaboxes[i].translate(delta);
+    }
+}
+
+void CoordGroupArrayArray::translate(quint32 i, const Vector &delta);
+void CoordGroupArrayArray::translate(quint32 i, quint32 j, const Vector &delta);
+
+/** Rotate all of the points in this container using the matrix 'rotmat'
+    about the point 'point' */
+void CoordGroupArrayArray::rotate(const Matrix &rotmat, const Vector &point)
+{
+    Vector *coords = d->coordsData();
+    quint32 n = d.constData()->nCoords();
+    
+    for (quint32 i=0; i<n; ++i)
+    {
+        coords[i] = SireMaths::rotate(coords[i], rotmat, point);
+    }
+    
+    //update all of the AABoxes
+    AABox *aaboxes = d->aaBoxData();
+    n = d.constData()->nCGroups();
+    
+    for (quint32 i=0; i<n; ++i)
+    {
+        aaboxes[i] = AABox(d.constData()->aaBoxData()[i]);
+    }
+}
+
+/** Rotate all of the points in this container using the quaternion 'quat'
+    about the point 'point' */
+void CoordGroupArrayArray::rotate(const Quaternion &quat, const Vector &point)
+{
+    this->rotate(quat.toMatrix(), point);
+}
+
+/** Rotate all of the points in the ith array using the matrix 'rotmat'
+    about the point 'point' 
+    
+    \throw SireError::invalid_index
+*/
+void CoordGroupArrayArray::rotate(quint32 i, const Matrix &rotmat, 
+                                  const Vector &point);
+
+/** Rotate all of the points in the ith array using the quaternion 'quat'
+    about the point 'point' 
+    
+    \throw SireError::invalid_index
+*/
+void CoordGroupArrayArray::rotate(quint32 i, const Quaternion &quat, 
+                                  const Vector &point)
+{
+    this->rotate(i, quat.toMatrix(), point);
+}
+
+/** Rotate all of the points in the jth CoordGroup in the 
+    ith array using the matrix 'rotmat' about the point 'point' 
+    
+    \throw SireError::invalid_index
+*/
+void CoordGroupArrayArray::rotate(quint32 i, quint32 j,
+                                  const Matrix &rotmat, const Vector &point);
+
+/** Rotate all of the points in the jth CoordGroup in the 
+    ith array using the quaternion 'quat' about the point 'point' 
+    
+    \throw SireError::invalid_index
+*/
+void CoordGroupArrayArray::rotate(quint32 i, quint32 j,
+                                  const Quaternion &quat, const Vector &point)
+{
+    this->rotate(i, j, quat.toMatrix(), point);
+}
+
+/** Map all of the points in this array into the coordinate frame
+    represented by 'axes' */
+void CoordGroupArrayArray::mapInto(const AxisSet &axes)
+{
+    Vector *coords = d->coordsData();
+    quint32 n = d.constData()->nCoords();
+    
+    for (quint32 i=0; i<n; ++i)
+    {
+        coords[i] = axes.fromIdentity(coords[i]);
+    }
+    
+    //update all of the AABoxes
+    AABox *aaboxes = d->aaBoxData();
+    n = d.constData()->nCGroups();
+    
+    for (quint32 i=0; i<n; ++i)
+    {
+        aaboxes[i] = AABox(d.constData()->aaBoxData()[i]);
+    }
+}
+
+void CoordGroupArrayArray::mapInto(quint32 i, const AxisSet &axes);
+void CoordGroupArrayArray::mapInto(quint32 i, quint32 j, const AxisSet &axes);
+
+/** Map all of the points in this array from the coordinate frame
+    'from_frame' to the coordinate frame 'to_frame' */
+void CoordGroupArrayArray::changeFrame(const AxisSet &from_frame, 
+                                       const AxisSet &to_frame)
+{
+    Vector *coords = d->coordsData();
+    quint32 n = d.constData()->nCoords();
+    
+    for (quint32 i=0; i<n; ++i)
+    {
+        coords[i] = from_frame.toFrame(to_frame, coords[i]);
+    }
+    
+    //update all of the AABoxes
+    AABox *aaboxes = d->aaBoxData();
+    n = d.constData()->nCGroups();
+    
+    for (quint32 i=0; i<n; ++i)
+    {
+        aaboxes[i] = AABox(d.constData()->aaBoxData()[i]);
+    }
+}
+
+void CoordGroupArrayArray::changeFrame(quint32 i,
+                 const AxisSet &from_frame, const AxisSet &to_frame);
+void CoordGroupArrayArray::changeFrame(quint32 i, quint32 j,
+                 const AxisSet &from_frame, const AxisSet &to_frame);

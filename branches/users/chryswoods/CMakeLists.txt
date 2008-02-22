@@ -35,6 +35,10 @@ INCLUDE_DIRECTORIES( BEFORE ${SIRE_SOURCE_DIR} )
 # Build shared libraries by default
 set (BUILD_SHARED_LIBS ON)
 
+# Target an i686 by default
+set (SIRE_TARGET_OPTIONS "-march=i686" CACHE STRING
+            "Compiler option used to specify the target processor.")
+
 # Name of executable install dir
 set (SIRE_BIN "bin")
 # Shared library install dir
@@ -211,10 +215,11 @@ find_package(GSL REQUIRED)
 message( STATUS "GSL paths ${GSL_LINK_DIRECTORIES} ${GSL_LIBRARIES} | ${GSL_INCLUDE_DIR}" )
 
 # Add defaults for all parts of the program
-include_directories( ${QT_INCLUDE_DIR} 
-                     ${QT_QTCORE_INCLUDE_DIR} 
-                     ${BOOST_INCLUDE_DIRS}
-                   )
+add_definitions( -I${QT_INCLUDE_DIR} 
+                 -I${QT_QTCORE_INCLUDE_DIR} 
+                 -I${BOOST_INCLUDE_DIRS}
+                 -I${GSL_INCLUDE_DIR}
+               )
 
 add_definitions( ${QT_DEFINITIONS} )
 
@@ -222,10 +227,10 @@ add_definitions( ${QT_DEFINITIONS} )
 
 set( SIRE_PLATFORM_OPTIONS "" )
 
-if(APPLE)
-   set( SIRE_PLATFORM_OPTIONS 
-       "-arch i386 -Wno-long-double -no-cpp-precomp -mno-fused-madd -fno-common" )
-endif()
+#if(APPLE)
+#   set( SIRE_PLATFORM_OPTIONS 
+#       "-arch i386 -Wno-long-double -no-cpp-precomp -mno-fused-madd -fno-common" )
+#endif()
 
 set( SIRE_C_FLAGS_RELEASE "-Wall -O2 ${SIRE_PLATFORM_OPTIONS}" )
 set( SIRE_CXX_FLAGS_RELEASE ${SIRE_C_FLAGS_RELEASE} )
@@ -238,6 +243,9 @@ set( SIRE_CXX_FLAGS_DEBUG ${SIRE_C_FLAGS_DEBUG} )
 # otherwise! (and aren't performance critical)
 set( SIRE_C_FLAGS_SMALL "-Wall -Os ${SIRE_PLATFORM_OPTIONS}" )
 set( SIRE_CXX_FLAGS_SMALL ${SIRE_C_FLAGS_SMALL} )
+
+# Add machine definition (supplied by user?)
+ADD_DEFINITIONS( ${SIRE_TARGET_OPTIONS} )
 
 # Add compiler specific flags
 if ( CMAKE_COMPILER_IS_GNUCC )
@@ -275,6 +283,15 @@ if ( CMAKE_COMPILER_IS_GNUCC )
       # remove warnings about strict aliasing (lots from Qt4
       # when compiling with GCC 4, and they are annoying!)
       ADD_DEFINITIONS( -Wno-strict-aliasing )
+
+      # gcc-4.2 has -march=native, that autodetects best compiler
+      # for the current machine
+      #if ( GCC_MINOR_VERSION GREATER 1 )
+      #   message( "Adding -march=native to compiler options. This is a bad idea "
+      #            "if this is not the machine that you will be running on..." )
+      #
+      #   ADD_DEFINITIONS( -march=native )
+      #endif()
 
       # add symbol hiding if the compiler supports it and it is
       # requested

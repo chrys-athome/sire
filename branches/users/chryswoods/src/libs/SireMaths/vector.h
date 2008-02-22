@@ -65,6 +65,8 @@ using boost::tuple;
 
 using SireUnits::Dimension::Angle;
 
+const Vector operator/(const Vector&,double);
+
 /**
 This is a simple 3D vector.
 

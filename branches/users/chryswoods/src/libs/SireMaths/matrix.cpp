@@ -231,20 +231,6 @@ bool Matrix::operator!=(const Matrix& m)
            zx!=m.zx | zy!=m.zy | zz!=m.zz;
 }
 
-bool SIREMATHS_EXPORT SireMaths::operator==(const Matrix &m1, const Matrix &m2)
-{
-    return m1.xx==m2.xx && m1.xy==m2.xy && m1.xz==m2.xz &&
-           m1.yx==m2.yx && m1.yy==m2.yy && m1.yx==m2.yz &&
-           m1.zx==m2.zx && m1.zy==m2.zy && m1.zz==m2.zz;
-}
-
-bool SIREMATHS_EXPORT SireMaths::operator!=(const Matrix &m1, const Matrix &m2)
-{
-    return m1.xx!=m2.xx | m1.xy!=m2.xy | m1.xz!=m2.xz |
-           m1.yx!=m2.yx | m1.yy!=m2.yy | m1.yz!=m2.yz |
-           m1.zx!=m2.zx | m1.zy!=m2.zy | m1.zz!=m2.zz;
-}
-
 Matrix& Matrix::operator+=(const Matrix &m)
 {
     xx += m.xx;
