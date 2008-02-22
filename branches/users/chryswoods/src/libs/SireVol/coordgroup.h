@@ -633,6 +633,8 @@ public:
     void assertValidCoordGroup(quint32 i) const;
     void assertValidCoordinate(quint32 i) const;
     
+    void assertValidCoordGroup(quint32 i, quint32 j) const;
+    
 private:
     /** Implicitly shared pointer to the array data */
     detail::CGSharedPtr<detail::CGArrayArrayData> d;
