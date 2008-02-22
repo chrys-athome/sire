@@ -36,14 +36,16 @@ SIRE_BEGIN_HEADER
 namespace SireBase
 {
 
-/**
-This provides a 2D matrix that contains information about all pairs of 
-two groups of atoms. This matrix is designed to be used in a pair-pair loop, 
-where each element is accessed sequentially, and it is thus highly optimised
-for such use. It does provide random access via indicies, but this will be slightly
-slower (though still quite quick!).
+/** This provides a 2D matrix that contains information about all pairs of 
+    two groups. This matrix is designed to be used in a pair-pair loop, 
+    where each element is accessed sequentially, and it is thus highly optimised
+    for such use. It does provide random access via indicies, but this will be slightly
+    slower (though still quite quick!).
 
-@author Christopher Woods
+    If you want a general purpose 2D, implicitly shared array, then 
+    use Array2D
+
+    @author Christopher Woods
 */
 template<class T>
 class PairMatrix
@@ -57,6 +59,10 @@ public:
         an invalid PairMatrix will be created. Also note that you can redimension
         this PairMatrix at any time using a potentially very quick function. */
     PairMatrix(unsigned int n_outer, unsigned int n_inner);
+
+    /** Copy constructor. This is not very fast... */
+    PairMatrix(const PairMatrix<T> &other);
+
     ~PairMatrix();
 
     /** Return a reference to the element at index 'i,j', where
@@ -122,6 +128,24 @@ PairMatrix<T>::PairMatrix(unsigned int i, unsigned int j)
 {
     n_elements = n_outer * n_inner;
     array = new T[n_elements];
+}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+PairMatrix<T>::PairMatrix(const PairMatrix<T> &other)
+              : n_outer(other.n_outer), n_inner(other.n_inner),
+                n_elements(other.n_elements)
+{
+    if (n_elements > 0)
+    {
+        array = new T[n_elements];
+        
+        //have to manual copy as T may not be memcpy'able
+        for (quint32 i=0; i<n_elements; ++i)
+        {
+            array[i] = other.array[i];
+        }
+    }
 }
 
 template<class T>

@@ -78,11 +78,10 @@ friend QDataStream& ::operator>>(QDataStream&, CLJFunctional&);
 public:
 
     class Energy;     // class used to hold the energy components
-    class Molecule;   // how the molecule is represented in this functional
-    class ChangedMol; // how to change the molecule in this functional
     class Parameters; // the parameters used by this functional
     class Components; // the energy components available in this functional
-    class Workspace;  // the temporary workspace used during the calculation
+    
+    typedef PairMatrix<double> Workspace;
 
     CLJFunctional();
     
@@ -102,10 +101,42 @@ public:
         return CLJFunctional::typeName();
     }
 
-    Energy calculateEnergy(const Molecule &mol0, const Molecule &mol1,
-                           Workspace &workspace) const;
+    /** This is the atom parameter used by this 
+        forcefield to calculate the interatomic potential 
+        
+        In this case, it is the combination of the charge
+        divided by $sqrt( 4 \pi \epsilon_0 )$ (so that
+        charge*charge*inv_distance is the coulomb energy)
+        and it is the index of the LJ parameter (so that
+        we can look up the combination with any other 
+        LJ parameter via the LJPair array)
+    */
+    class Parameter
+    {
+    public:
+        Parameter();
+        Parameter(double reduced_chg, quint32 ljid);
+        Parameter(const Parameter &other);
+        
+        ~Parameter();
+        
+        Parameter& operator=(const Parameter &other);
+        
+        double reduced_charge;
+        quint32 ljid;
+    };
+    
+    Molecules parameterise(const MolGroup &molecules);
+    Molecules parameteriseForIntermolecular(const MolGroup &molecules);
+    Molecules parameteriseForIntramolecular(const MolGroup &molecules);
+
+    //intermolecular energy between a pair of molecules
+    void calculateEnergy(const Molecule &mol0, const Molecule &mol1,
+                         Energy &energy, Workspace &workspace) const;
                            
-    Energy calculateEnergy(const Molecule &mol, Workspace &workspace) const;
+    //intramolecular energy with a molecule
+    void calculateEnergy(const Molecule &mol, Energy &energy,
+                         Workspace &workspace) const;
 
     void calculateForces(const Molecule &mol0, const Molecule &mol1,
                          ForceTable &forces, Workspace &workspace) const;
@@ -126,18 +157,20 @@ private:
     
     /** The nonbonded switching function */
     SwitchingFunction switchfunc;
+    
+    /** All of the LJ parameters in this forcefield, arranged by ID 
+        (index) */
+    QVector<LJParameter> ljparams;
+    
+    /** All possible LJ parameter pair combinations, arranged
+        in a symmetric 2D array */
+    Array2D<LJPair> ljpairs;
 };
 
 } // end of namespace SireMM
 
 QDataStream& operator<<(QDataStream&, const CLJFunctional::Energy&);
 QDataStream& operator>>(QDataStream&, CLJFunctional::Energy&);
-
-QDataStream& operator<<(QDataStream&, const CLJFunctional::Molecule&);
-QDataStream& operator>>(QDataStream&, CLJFunctional::Molecule&);
-
-QDataStream& operator<<(QDataStream&, const CLJFunctional::ChangedMol&);
-QDataStream& operator>>(QDataStream&, CLJFunctional::ChangedMol&);
 
 QDataStream& operator<<(QDataStream&, const CLJFunctional::Components&);
 QDataStream& operator>>(QDataStream&, CLJFunctional::Components&);
@@ -209,22 +242,6 @@ private:
     double icnrg, iljnrg;
 };
 
-/** This small class provides a temporary workspace that is needed to
-    hold intermediate values for the CLJ calculation
-*/
-class SIREMM_EXPORT CLJFunctional::Workspace
-{
-public:
-    Workspace()
-    {}
-    
-    ~Workspace()
-    {}
-    
-    SireBase::PairMatrix<double> distmatrix;
-    SireBase::PairMatrix<CLJPair> cljmatrix;
-};
-
 /** This empty class provides the functions that return the parameters
     used by this forcefield
 */
@@ -255,47 +272,97 @@ public:
 private:
     /** The parameter name used to locate partial charges */
     static ParameterName charge_param;
+    
+    /** The parameter name used to locate the LJ parameters */
+    static ParameterName lj_param;
+    
+    /** The parameter name used to locate the non-bonded scale factors */
+    static ParameterName nbscl_param;
 };
 
-namespace detail
+class SIREMM_EXPORT CLJFunctional::MolParams
 {
-class CLJFunctional_MolData;
-}
+public:
+    Parameters();
+    
+    const QVector<CLJFunctional::Parameter>& clj() const;
+    
+    const CLJNBPairs& nbScale() const;
+    
+private:
+    /** All of the parameters for this molecule, arranged by 
+        CutGroup */
+    QVector<CLJFunctional::Parameter> cljparams;
+    
+    /** The non-bonded pairs scale factors for each pair
+        of atoms within this molecule */
+    CLJNBPairs nbscl_factors;
+    
+    /** The name of the property to use to get
+        the charges for this molecule */
+    ParameterName chg_property;
+    
+    /** The name of the property to use to get 
+        the LJ parameters for this molecule */
+    ParameterName lj_property;
+    
+    /** The name of the property to use to get 
+        the NB scale factor for this molecule */
+    ParameterName nbscl_property;
+    
+    /** The overall molecule type - this is an optimisation
+        that allows us to skip lots of sqrt calculations if
+        this has relatively few charge parameters
+        
+        0 = completely zero charge (all atoms have 0 charge)
+        1 = mainly uncharged (only a few atoms carry a charge)
+        2 = mainly charged (most or all atoms carry a charge)
+    */
+    quint32 mol_charge_class;
+};
+
+/** This is a *very* lightweight class that is used
+    to return temporary references to the coordinates
+    and parameters of a molecule so that they can be
+    used together in the energy calculations */
+class SIREMM_EXPORT CLJFunctional::Molecule
+{
+public:
+    Molecule(const CoordGroupArray &coords,
+             const QVector<CLJFunctional::Parameters> &params);
+
+    Molecule(const Molecule &other);
+
+    const CoordGroupArray& coordinates() const;
+    const CLJFunctional::Parameters& parameters() const;
+
+private:
+    /** Reference to the coordinates of this molecule */
+    const CoordGroupArray &coords;
+    
+    /** Reference to the parameters of this molecule */
+    const CLJFunctional::Parameters &params;
+};
 
 /** This class holds the representation of a molecule required
     by the CLJFunctional
 */
-class SIREMM_EXPORT CLJFunctional::Molecule
+class SIREMM_EXPORT CLJFunctional::Molecules
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const Molecule&);
-friend QDataStream& ::operator>>(QDataStream&, Molecule&);
-
 public:
-    Molecule();
+    Molecules();
     
-    Molecule(const PartialMolecule &molecule,
-             const ParameterMap &map = ParameterMap());
-             
-    Molecule(const Molecule &other);
+    Molecule at(quint32 i) const;
     
-    ~Molecule();
-    
-    Molecule& operator=(const Molecule &other);
-    
-    static const char* typeName()
-    {
-        return "SireMM::CLJFunctional::Molecule";
-    }
-
-    const char* what() const
-    {
-        return Molecule::typeName();
-    }
-
 private:
-    /** Implicitly shared pointer to the raw data for this molecule */
-    QSharedDataPointer<detail::CLJFunctional_MolData> d;
+    /** All of the coordinates of all of the atoms arranged
+        into molecules, then CoordGroups, then coordinates */
+    CoordGroupArrayArray coords;
+    
+    /** Parameters for all of the atoms arranged in the same
+        order as the coordinates */
+    QVector<CLJFunctional::Parameters> params;
 };
 
 }

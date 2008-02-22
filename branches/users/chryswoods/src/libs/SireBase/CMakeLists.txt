@@ -15,6 +15,8 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 # Define the header files for SireBase
 set ( SIREBASE_HEADERS
 
+      array2d.hpp
+      array2d.h
       errors.h
       findexe.h
       increment.h
@@ -33,6 +35,7 @@ set ( SIREBASE_HEADERS
 # Define the sources in SireBase
 set ( SIREBASE_SOURCES
 
+      array2d.cpp
       errors.cpp
       findexe.cpp
       md5sum.cpp
