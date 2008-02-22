@@ -319,24 +319,28 @@ int main(int argc, const char **argv)
     int ngroups0 = group20.nCoordGroups();
     int ngroups1 = group21.nCoordGroups();
 
+    double l_mindist = mindist;
+    DistMatrix l_distmat;
+
+    #pragma omp parallel for \
+            shared(allcg_array20, allcg_array21, mindist) \
+            private(l_mindist,l_distmat,space)
     for (int igroup=0; igroup<ngroups0; ++igroup)
     {
-        DistMatrix l_distmat;
-        double l_mindist = std::numeric_limits<double>::max();
-
 	const CoordGroup &cgroup0 = allcg_array20[igroup];
 
         for (int jgroup=0; jgroup<ngroups1; ++jgroup)
         {
             const CoordGroup &cgroup1 = allcg_array21[jgroup];
 
-            double this_mindist = space->calcDist(cgroup0, cgroup1, distmat);
+            double this_mindist = space->calcDist(cgroup0, cgroup1, l_distmat);
 
             if (this_mindist < l_mindist)
                 l_mindist = this_mindist;
         }
 
-        if (l_mindist < mindist)
+
+	if (l_mindist < mindist)
             mindist = l_mindist;
     }
 
