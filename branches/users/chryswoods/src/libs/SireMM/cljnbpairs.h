@@ -54,7 +54,7 @@ struct CLJFactor
     double lj;
 };
 
-typedef CGAtomPairs<CLJFactor> CLJCGNBPairs;
+typedef CGAtomPairs<CLJFactor> GroupCLJNBPairs;
 
 /** This class holds all of the non-bonded scale factors that are used
     to scale the intramolecular atom-atom coulomb and Lennard-Jones

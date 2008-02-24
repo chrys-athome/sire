@@ -130,19 +130,23 @@ public:
     Molecules parameteriseForIntermolecular(const MolGroup &molecules);
     Molecules parameteriseForIntramolecular(const MolGroup &molecules);
 
-    //intermolecular energy between a pair of molecules
     void calculateEnergy(const Molecule &mol0, const Molecule &mol1,
-                         Energy &energy, Workspace &workspace) const;
+                         Energy &energy, Workspace &workspace,
+                         double scale_energy=1) const;
                            
-    //intramolecular energy with a molecule
     void calculateEnergy(const Molecule &mol, Energy &energy,
-                         Workspace &workspace) const;
+                         Workspace &workspace,
+                         double scale_energy=1) const;
 
-    void calculateForces(const Molecule &mol0, const Molecule &mol1,
-                         ForceTable &forces, Workspace &workspace) const;
+    void calculateForce(const Molecule &mol0, const Molecule &mol1,
+                        MolForceTable &forces0, 
+                        MolForceTable &forces1,
+                        Workspace &workspace,
+                        double scale_force=1) const;
                          
-    void calculateForces(const Molecule &mol, ForceTable &forces,
-                         Workspace &workspace) const;
+    void calculateForce(const Molecule &mol, MolForceTable &forces,
+                        Workspace &workspace,
+                        double scale_force=1) const;
 
     const Properties& properties() const;
     

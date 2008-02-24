@@ -92,11 +92,11 @@ public:
 
     CGAtomPairs<T>& operator=(const CGAtomPairs<T> &other);
 
-    const T& operator()(AtomID atm0) const;
-    const T& operator()(AtomID atm0, AtomID atm1) const;
+    const T& operator()(Index i) const;
+    const T& operator()(Index i, Index j) const;
 
-    const T& get(AtomID atm0) const;
-    const T& get(AtomID atm0, AtomID atm1) const;
+    const T& get(Index atm0) const;
+    const T& get(Index atm0, Index atm1) const;
 
     void set(AtomID atm0, const T &value);
     void set(AtomID atm0, AtomID atm1, const T &value);
@@ -104,6 +104,8 @@ public:
     bool isEmpty() const;
 
     const T& defaultValue() const;
+
+    const SparseMatrix<T>& data() const;
 
 private:
     /** The matrix of objects associated with each pair of atoms */
