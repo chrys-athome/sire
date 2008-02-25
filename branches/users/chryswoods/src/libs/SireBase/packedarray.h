@@ -26,24 +26,34 @@
   *
 \*********************************************/
 
-#ifndef SIREFF_INTER2BFF_HPP
-#define SIREFF_INTER2BFF_HPP
+#ifndef SIREBASE_PACKEDARRAY_H
+#define SIREBASE_PACKEDARRAY_H
 
-#include "ff.h"
-#include "inter2bff.h"
-
-SIRE_BEGIN_HEADER
-
-namespace SireFF
+namespace SireBase
 {
 
-template<class TwoBodyFunc>
-class Inter2BFF : public G1FF, public TwoBodyFunc
+namespace detail
 {
+
+/** Template-independent parts of ArrayMemory */
+class ArrayMemoryBase
+{
+public: 
+    static char* create(quint32 narrays, quint32 nvalues, quint32 size);
+    static char* detach(char *this_ptr, quint32 this_idx);
+    static void destroy(PackedArrayData *arrays);
+    
+    static void incref(char *this_ptr, quint32 this_idx);
+    static void decref(char *this_ptr, quint32 this_idx);
+    
+    static char* getRoot(char *this_ptr, quint32 this_idx);
+    static const char* getRoot(const char *this_ptr, quint32 this_idx);
 };
 
 }
 
-SIRE_END_HEADER
+
+
+}
 
 #endif

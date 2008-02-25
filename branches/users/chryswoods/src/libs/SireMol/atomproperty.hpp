@@ -36,6 +36,8 @@
 #include "moleculeinfodata.h"
 #include "atomselection.h"
 
+#include "SireBase/packedarray.hpp"
+
 #include "SireError/errors.h"
 
 namespace SireMol
@@ -81,7 +83,7 @@ public:
 
 /** This is a property that can hold one value for each
     atom in the molecule. The properties are held in 
-    arrays, with each array corresponding to a CutGroup,
+    a packed array, with each array corresponding to a CutGroup,
     and the order of the properties stored according 
     to CutGroup
     
@@ -134,9 +136,9 @@ public:
     void assignFrom(const QVector<QVariant> &values);
     void assignFrom(const QVector< QVector<QVariant> > &values);
 
-    const QVector<T>& operator[](CGIdx cgidx) const;
-    const QVector<T>& at(CGIdx cgidx) const;
-    const QVector<T>& get(CGIdx cgidx) const;
+    const SireBase::PackedArray<T>::Array& operator[](CGIdx cgidx) const;
+    const SireBase::PackedArray<T>::Array& at(CGIdx cgidx) const;
+    const SireBase::PackedArray<T>::Array& get(CGIdx cgidx) const;
 
     const T& operator[](const CGAtomIdx &cgatomidx) const;
     const T& at(const CGAtomIdx &cgatomidx) const;
@@ -146,8 +148,8 @@ public:
 
     AtomProperty<T>& set(CGIdx cgidx, const QVector<T> &values);
 
-    const QVector<T>* data() const;
-    const QVector<T>* constData() const;
+    const SireBase::PackedArray<T>::Array* data() const;
+    const SireBase::PackedArray<T>::Array* constData() const;
 
     const T* data(CGIdx cgidx) const;
     const T* constData(CGIdx cgidx) const;
@@ -169,9 +171,8 @@ public:
     void assertCanConvert(const QVariant &value) const;
 
 private:
-
     /** The actual atomic property values */
-    QVector< QVector<T> > props;
+    SireBase::PackedArray<T> props;
 };
 
 /** Return whether or not the variant 'value' can be converted to be

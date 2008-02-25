@@ -29,15 +29,12 @@
 /** Calculate the coulomb and LJ energy between the passed pair
     of molecules and add these energies onto 'energy'. This uses
     the passed workspace to perform the calculation */
-void CLJPotential::calculateEnergy(const CLJPotential::Molecule &mol0,
-                                   const CLJPotential::Molecule &mol1,
-                                   CLJPotential::Energy &energy,
-                                   CLJPotential::Workspace &distmat,
-                                   double scale_energy) const
+void CLJPotential::_pvt_calculateEnergy(const CLJPotential::Molecule &mol0,
+                                        const CLJPotential::Molecule &mol1,
+                                        CLJPotential::Energy &energy,
+                                        CLJPotential::Workspace &distmat,
+                                        double scale_energy) const
 {
-    if (scale_energy == 0)
-        return;
-
     const quint32 ngroups0 = mol0.nCutGroups();
     const quint32 ngroups1 = mol1.nCutGroups();
     
@@ -70,10 +67,13 @@ void CLJPotential::calculateEnergy(const CLJPotential::Molecule &mol0,
             const CGParams &params1 = molparams1_array[jgroup];
 
             //check first that these two CoordGroups could be within cutoff
-            const bool outside_cutoff = space->beyond(switchfunc->cutoffDistance(), 
+            //(if there is only one CutGroup in both molecules then this
+            //test has already been performed and passed)
+            const bool within_cutoff = (ngroups0 == 1 and ngroups1 == 1) or not
+                                        space->beyond(switchfunc->cutoffDistance(), 
                                                       aabox0, group1.aaBox());
             
-            if (outside_cutoff or params1.isNull())
+            if (not within_cutoff or params1.isNull())
                 //this CutGroup is either beyond the cutoff distance
                 //or all of the atoms are dummies
                 continue;
@@ -199,10 +199,13 @@ void CLJPotential::calculateEnergy(const CLJPotential::Molecule &mol,
             const CGParams &params1 = molparams_array[jgroup];
 
             //check first that these two CoordGroups could be within cutoff
-            const bool outside_cutoff = space->beyond(switchfunc->cutoffDistance(), 
+            //(don't test igroup==jgroup as this is the same CutGroup
+            // and definitely within cutoff!)
+            const bool within_cutoff = (igroup == jgroup) or not
+                                        space->beyond(switchfunc->cutoffDistance(), 
                                                       aabox0, group1.aaBox());
             
-            if (outside_cutoff or params1.isNull())
+            if (not within_cutoff or params1.isNull())
                 //this CutGroup is either beyond the cutoff distance
                 //or all of the atoms are dummies
                 continue;
@@ -376,15 +379,12 @@ void CLJPotential::calculateEnergy(const CLJPotential::Molecule &mol,
 /** Calculate the coulomb and LJ forces on the atoms between the passed pair
     of molecules and add these energies onto 'forces'. This uses
     the passed workspace to perform the calculation */
-void CLJPotential::calculateForce(const Molecule &mol0, const Molecule &mol1,
-                                  MolForceTable &forces0, 
-                                  MolForceTable &forces1,
-                                  Workspace &workspace,
-                                  double scale_force) const
+void CLJPotential::_pvt_calculateForce(const Molecule &mol0, const Molecule &mol1,
+                                       MolForceTable &forces0, 
+                                       MolForceTable &forces1,
+                                       Workspace &workspace,
+                                       double scale_force) const
 {
-    if (scale_forces == 0)
-        return;
-    
     const quint32 ngroups0 = mol0.nCutGroups();
     const quint32 ngroups1 = mol1.nCutGroups();
     
@@ -427,10 +427,13 @@ void CLJPotential::calculateForce(const Molecule &mol0, const Molecule &mol1,
             const CGParams &params1 = molparams1_array[jgroup];
 
             //check first that these two CoordGroups could be within cutoff
-            const bool outside_cutoff = space->beyond(switchfunc->cutoffDistance(), 
+            //(if there is only one CutGroup in both molecules then this
+            //test has already been performed and passed)
+            const bool within_cutoff = (ngroups0 == 1 and ngroups1 == 1) or not
+                                        space->beyond(switchfunc->cutoffDistance(), 
                                                       aabox0, group1.aaBox());
             
-            if (outside_cutoff or params1.isNull())
+            if (not within_cutoff or params1.isNull())
                 //this CutGroup is either beyond the cutoff distance
                 //or all of the atoms are dummies
                 continue;

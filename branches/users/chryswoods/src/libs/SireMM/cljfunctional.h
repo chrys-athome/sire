@@ -153,6 +153,16 @@ public:
     bool setProperty(const QString &name, const PropertyBase &value);
 
 private:
+    void _pvt_calculateEnergy(const Molecule &mol0, const Molecule &mol1,
+                              Energy &energy, Workspace &workspace,
+                              double scale_energy) const;
+
+    void _pvt_calculateForce(const Molecule &mol0, const Molecule &mol1,
+                             MolForceTable &forces0, 
+                             MolForceTable &forces1,
+                             Workspace &workspace,
+                             double scale_force) const;
+
     /** The current values of the properties of this functional */
     Properties props;
     
@@ -170,6 +180,39 @@ private:
         in a symmetric 2D array */
     Array2D<LJPair> ljpairs;
 };
+
+/** Calculate the coulomb and LJ energy between the passed pair
+    of molecules and add these energies onto 'energy'. This uses
+    the passed workspace to perform the calculation */
+inline void CLJPotential::calculateEnergy(const CLJPotential::Molecule &mol0,
+                                          const CLJPotential::Molecule &mol1,
+                                          CLJPotential::Energy &energy,
+                                          CLJPotential::Workspace &workspace,
+                                          double scale_energy) const
+{
+    if (scale_energy != 0 and not space->beyond(switchfunc->cutoffDistance(),
+                                                mol0.aaBox(), mol1.aaBox()))
+    {
+        this->_pvt_calculateEnergy(mol0, mol1, energy, workspace, scale_energy);
+    }
+}
+
+/** Calculate the coulomb and LJ forces on the atoms between the passed pair
+    of molecules and add these energies onto 'forces'. This uses
+    the passed workspace to perform the calculation */
+void CLJPotential::_pvt_calculateForce(const Molecule &mol0, const Molecule &mol1,
+                                       MolForceTable &forces0, 
+                                       MolForceTable &forces1,
+                                       Workspace &workspace,
+                                       double scale_force) const
+{
+    if (scale_force != 0 and not space->beyond(switchfunc->cutoffDistance(),
+                                               mol0.aaBox(), mol1.aaBox())
+    {
+        this->_pvt_calculateForce(mol0, mol1, forces0, forces1,
+                                  workspace, scale_force);
+    }
+}
 
 } // end of namespace SireMM
 
@@ -338,14 +381,19 @@ public:
     Molecule(const Molecule &other);
 
     const CoordGroupArray& coordinates() const;
+    const AABox& aaBox() const;
     const CLJFunctional::Parameters& parameters() const;
 
 private:
-    /** Reference to the coordinates of this molecule */
-    const CoordGroupArray &coords;
+    /** The coordinates of this molecule */
+    CoordGroupArray coords;
+    
+    /** The AABox that completely encloses this
+        molecule */
+    AABox aabox;
     
     /** Reference to the parameters of this molecule */
-    const CLJFunctional::Parameters &params;
+    CLJFunctional::Parameters params;
 };
 
 /** This class holds the representation of a molecule required
@@ -357,16 +405,31 @@ class SIREMM_EXPORT CLJFunctional::Molecules
 public:
     Molecules();
     
-    Molecule at(quint32 i) const;
+    const Molecule& at(quint32 i) const;
     
 private:
     /** All of the coordinates of all of the atoms arranged
         into molecules, then CoordGroups, then coordinates */
     CoordGroupArrayArray coords;
     
+    /** The AABoxes that completely enclose each molecule */
+    QVector<AABox> mol_aaboxes;
+    
     /** Parameters for all of the atoms arranged in the same
         order as the coordinates */
     QVector<CLJFunctional::Parameters> params;
+};
+
+/** This class holds the representations of all changed 
+    molecules
+*/
+class SIREMM_EXPORT CLJFunctional::ChangedMolecules
+{
+public:
+    ChangedMolecules();
+    
+private:
+    
 };
 
 }

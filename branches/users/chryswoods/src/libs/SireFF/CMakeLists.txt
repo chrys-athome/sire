@@ -37,6 +37,7 @@ set ( SIREFF_HEADERS
       inter2bff.h
       inter2bff.hpp
       multiff.h
+      twobodyfunctional.hpp
       qhash_sireff.h
     )
 

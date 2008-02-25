@@ -22,6 +22,8 @@ set ( SIREBASE_HEADERS
       increment.h
       incremint.h
       md5sum.h
+      packedarray.h
+      packedarray.hpp
       pairmatrix.hpp
       properties.h
       property.h
@@ -39,6 +41,7 @@ set ( SIREBASE_SOURCES
       errors.cpp
       findexe.cpp
       md5sum.cpp
+      packedarray.cpp
       properties.cpp
       property.cpp
       propertymap.cpp

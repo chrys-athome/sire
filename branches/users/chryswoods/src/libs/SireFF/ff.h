@@ -211,6 +211,8 @@ public:
                              const MGID &mgid, const ParameterMap &map)=0;
 
 protected:
+    class Molecule;
+
     FF();
     FF(const QString &name);
 
@@ -257,24 +259,56 @@ inline void FFBase::setComponent(const Symbol &component, double nrg)
 }
 
 /** Change the existing value of the component 'comp' by delta */
-inline void FFBase::changeComponent(const Symbol &component, double delta)
+inline void FF::changeComponent(const Symbol &component, double delta)
 {
     nrg_components.set( component, delta + nrg_components.value(component) );
 }
 
 /** Return whether or not the forcefield is dirty (the energy
     needs to be recalculated) */
-inline bool FFBase::isDirty() const
+inline bool FF::isDirty() const
 {
     return isdirty;
 }
 
 /** Return whether or not the forcefield is clean (the energy
     does not need to be recalculated) */
-inline bool FFBase::isClean() const
+inline bool FF::isClean() const
 {
     return not isDirty();
 }
+
+}
+
+QDataStream& operator<<(QDataStream&, const SireFF::FF::Molecule&);
+QDataStream& operator>>(QDataStream&, SireFF::FF::Molecule&);
+
+namespace SireFF
+{
+
+/** This class is used as the base class by forcefields to hold
+    coordinate and parameter data about a molecule
+    
+    @author Christopher Woods
+*/
+class SIREFF_EXPORT FF::Molecule
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const FF::Molecule&);
+friend QDataStream& ::operator>>(QDataStream&, FF::Molecule&);
+
+public:
+    Molecule();
+    Molecule(const MoleculeView &molview);
+    
+    ~Molecule();
+    
+    const MoleculeView& view() const;
+    
+private:
+    /** Copy of the view that this object represents */
+    PartialMolecule molview;
+};
 
 }
 

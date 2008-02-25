@@ -26,24 +26,3 @@
   *
 \*********************************************/
 
-#ifndef SIREFF_INTER2BFF_HPP
-#define SIREFF_INTER2BFF_HPP
-
-#include "ff.h"
-#include "inter2bff.h"
-
-SIRE_BEGIN_HEADER
-
-namespace SireFF
-{
-
-template<class TwoBodyFunc>
-class Inter2BFF : public G1FF, public TwoBodyFunc
-{
-};
-
-}
-
-SIRE_END_HEADER
-
-#endif
