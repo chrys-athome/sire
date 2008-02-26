@@ -655,6 +655,15 @@ char* CGMemory::detach(char *this_ptr, quint32 this_idx)
                 cgarray[i].d.weakAssign( &(data[i]) );
             }
         }
+        else
+        {
+            //update the null CoordGroupArray
+            CoordGroupArray *cgarray = new_cgarrayarray->cgArrayData();
+            CGArrayData *data = new_cgarrayarray->cgArrayDataData();
+
+            cgarray[0].d.weakRelease();
+            cgarray[0].d.weakAssign( &(data[i]) );
+        }
         
         if (new_cgarrayarray->nCGroups() > 0)
         {
@@ -666,6 +675,15 @@ char* CGMemory::detach(char *this_ptr, quint32 this_idx)
                 cgroups[i].d.weakRelease();
                 cgroups[i].d.weakAssign( &(data[i]) );
             }
+        }
+        else
+        {
+            //update the null CoordGroup
+            CoordGroup *cgroups = new_cgarrayarray->cGroupData();
+            CGData *data = new_cgarrayarray->cgDataData();
+
+            cgroups[0].d.weakRelease();
+            cgroups[0].d.weakAssign( &(data[i]) );
         }
 
         //return a pointer to the clone
@@ -753,7 +771,7 @@ const CGArrayData* CGArrayArrayData::nullArray() const
 const CGData* CGArrayArrayData::nullCGroup() const
 {
     BOOST_ASSERT( ncgroups == 0 );
-    BOOST_ASSERT( cgroup0 != 0 );
+    BOOST_ASSERT( cgdata0 != 0 );
     
     return (const CGData*)( memory()[cgdata0] );
 }
