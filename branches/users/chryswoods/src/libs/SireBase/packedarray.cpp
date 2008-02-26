@@ -124,3 +124,48 @@ const char* PackedArrayDataBase::memory() const
 {
     return ArrayMemoryBase::getRoot( (const char*)this, 0 );
 }
+
+//////////
+////////// Implementation of PackedArray_ArrayDataBase
+//////////
+
+/** Null constructor */
+PackedArray_ArrayDataBase::PackedArray_ArrayDataBase()
+                          : this_array(0), value0(0), nvalues(0)
+{}
+
+/** Construct, telling this array where it is in the storage array */
+PackedArray_ArrayDataBase::PackedArray_ArrayDataBase(quint32 this_idx)
+                          : this_array(this_idx), value0(0), nvalues(0)
+{}
+
+/** Copy constructor */
+PackedArray_ArrayDataBase::PackedArray_ArrayDataBase(
+                                    const PackedArray_ArrayDataBase &other)
+                          : this_array(other.this_array),
+                            value0(other.value0), nvalues(other.nvalues)
+{}
+
+/** Destructor */
+PackedArray_ArrayDataBase::~PackedArray_ArrayDataBase()
+{}
+
+/** Return the number of values in the array */
+quint32 PackedArray_ArrayDataBase::nValues() const
+{
+    return nvalues;
+}
+
+/** Return a const pointer to the start of the storage
+    array that contains this ArrayData */
+const char* PackedArray_ArrayDataBase::memory() const
+{
+    return ArrayMemoryBase::getRoot( (const char*)this, this_array );
+}
+
+/** Return a pointer to the start of the storage array that
+    contains this ArrayData */
+char* PackedArray_ArrayDataBase::memory()
+{
+    return ArrayMemoryBase::getRoot( (char*)this, this_array );
+}

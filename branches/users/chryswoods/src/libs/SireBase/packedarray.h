@@ -121,6 +121,33 @@ private:
     
 };
 
+/** The template independent parts of the PackedArray_ArrayData metadata */
+class PackedArray_ArrayDataBase
+{
+public:
+    PackedArray_ArrayDataBase();
+    PackedArray_ArrayDataBase(quint32 this_idx);
+    
+    PackedArray_ArrayDataBase(const PackedArray_ArrayDataBase &other);
+    
+    ~PackedArray_ArrayDataBase();
+
+    const char* memory() const;
+    char* memory();
+    
+    quint32 nValues() const;
+    
+private:
+    /** The index in the storage array of this array */
+    quint32 this_array;
+    
+    /** The index in the storage array of the first object in this array */
+    quint32 value0;
+    
+    /** The number of objects in this array */
+    quint32 nvalues;
+};
+
 }
 
 }

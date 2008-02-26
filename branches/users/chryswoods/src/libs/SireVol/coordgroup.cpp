@@ -662,7 +662,7 @@ char* CGMemory::detach(char *this_ptr, quint32 this_idx)
             CGArrayData *data = new_cgarrayarray->cgArrayDataData();
 
             cgarray[0].d.weakRelease();
-            cgarray[0].d.weakAssign( &(data[i]) );
+            cgarray[0].d.weakAssign( &(data[0]) );
         }
         
         if (new_cgarrayarray->nCGroups() > 0)
@@ -683,7 +683,7 @@ char* CGMemory::detach(char *this_ptr, quint32 this_idx)
             CGData *data = new_cgarrayarray->cgDataData();
 
             cgroups[0].d.weakRelease();
-            cgroups[0].d.weakAssign( &(data[i]) );
+            cgroups[0].d.weakAssign( &(data[0]) );
         }
 
         //return a pointer to the clone
@@ -1099,14 +1099,12 @@ CGArrayArrayData* CGArrayData::extract() const
         //this is already extracted!
         return const_cast<CGArrayArrayData*>(array);
     
-    CGArrayArrayData *new_array(0);
+    char *new_storage = CGMemory::create(1, this->nCGroups(), this->nCoords());
     
     try
     {
                 
-    //ok, we need to extract!
-    new_array = new CGArrayArrayData(1, this->nCGroups(),
-                                        this->nCoords());
+    CGArrayArrayData *new_array = (CGArrayArrayData*)(new_storage);
 
     new_array->setNCGroupsInArray(1, this->nCGroups());
     
@@ -1131,13 +1129,15 @@ CGArrayArrayData* CGArrayData::extract() const
                        
     BOOST_ASSERT( output == new_array->coordsData() );
 
+    return new_array;
+
     }
     catch(...)
     {
-        delete new_array;
+        delete[] new_storage;
     }
     
-    return new_array;
+    return 0;
 }
 
 /** Return a pointer to the first CoordGroup in this array.
@@ -1290,13 +1290,13 @@ CGArrayArrayData* CGData::extract() const
         //this is already extracted!
         return const_cast<CGArrayArrayData*>(array);
     
-    CGArrayArrayData *new_array(0);
+    char *new_storage = CGMemory::create(1, 1, this->nCoords());
     
     try
     {
                 
     //ok, we need to extract!
-    new_array = new CGArrayArrayData(1, 1, this->nCoords());
+    CGArrayArrayData *new_array = (CGArrayArrayData*)(new_storage);
 
     new_array->setNCGroupsInArray(1, 1);
     new_array->setNPointsInCGroup(1, this->nCoords());
@@ -1312,13 +1312,15 @@ CGArrayArrayData* CGData::extract() const
                        
     BOOST_ASSERT( output == new_array->coordsData() );
 
+    return new_array;
+
     }
     catch(...)
     {
-        delete new_array;
+        delete[] new_storage;
     }
     
-    return new_array;
+    return 0;
 }
 
 /** Return a const pointer to the start of the storage
@@ -1790,9 +1792,8 @@ CoordGroupEditor::CoordGroupEditor()
 CoordGroupEditor::CoordGroupEditor(const CoordGroup &other)
                  : CoordGroupBase(other), needsupdate(false)
 {
-    #warning CGMemory::extract type functions are probably broken!
-    //if (not other.count() == 0)
-    //    d = other.d->extract()->cGroupData()[0].d;
+    if (not other.count() == 0)
+        d = other.d->extract()->cGroupData()[0].d;
 }
 
 /** Copy constructor */
