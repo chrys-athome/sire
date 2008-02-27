@@ -3,6 +3,8 @@
 #include "SireVol/coordgroup.h"
 #include "SireMaths/vector.h"
 
+#include "SireBase/packedarray2d.hpp"
+
 #include <QVector>
 #include <QTime>
 
@@ -10,6 +12,7 @@
 
 using namespace SireVol;
 using namespace SireMaths;
+using namespace SireBase;
 
 using namespace std;
 
@@ -91,10 +94,53 @@ void checkRawSpeed(int n)
     cout << "Calculating " << n*n << " square roots took " << ms << " ms\n";
 }
 
+template
+class PackedArray2D<Vector>;
+
+template
+class SireBase::detail::PackedArray2D_Array<Vector>;
+
+void checkPackedArray()
+{
+    QVector< QVector<Vector> > a(4);
+
+    for (int i=0; i<4; ++i)
+    {
+        QVector<Vector> b(5);
+
+        for (int j=0; j<5; ++j)
+        {
+            b[j] = Vector(j,1,i*j);
+        }
+
+        a[i] = b;
+    }
+
+    PackedArray2D<Vector> array2d(a);
+
+    cout << array2d.count() << " " << array2d.nValues() << endl;
+
+    for (int i=0; i<array2d.count(); ++i)
+    {
+        PackedArray2D<Vector>::Array array1d = array2d[i];
+
+        cout << " *** " << i << " *** " << endl;
+
+        for (int j=0; j<array1d.count(); ++j)
+        {
+            cout << qPrintable(array1d[j].toString()) 
+	         << " " << qPrintable(array2d(i,j).toString()) << endl;
+        }
+    }
+}
+
 int main(int argc, const char **argv)
 {
     //check raw sqrt speed
     //checkRawSpeed(12000);
+
+    checkPackedArray();
+    return 0;
 
     QTime t;
 
@@ -324,7 +370,7 @@ int main(int argc, const char **argv)
 
     #pragma omp parallel for \
             shared(allcg_array20, allcg_array21, mindist) \
-            private(l_mindist,l_distmat,space)
+            firstprivate(l_mindist,l_distmat,space)
     for (int igroup=0; igroup<ngroups0; ++igroup)
     {
 	const CoordGroup &cgroup0 = allcg_array20[igroup];

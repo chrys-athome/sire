@@ -27,9 +27,38 @@
 \*********************************************/
 
 #include "packedarray2d.h"
+#include "packedarray2d.hpp"
+
+#include "SireError/errors.h"
 
 using namespace SireBase;
 using namespace SireBase::detail;
+
+void SIREBASE_EXPORT SireBase::detail::throwPackedArray2D_invalidIndex(
+                                                    quint32 i, quint32 nvals)
+{
+    throw SireError::invalid_index( QObject::tr(
+        "The index %1 is invalid, as the number of arrays equals %2.")
+            .arg(i).arg(nvals), CODELOC );
+}
+
+void SIREBASE_EXPORT SireBase::detail::throwPackedArray2D_Array_invalidIndex(
+                                                          quint32 i, quint32 nvals)
+{
+    throw SireError::invalid_index( QObject::tr(
+        "The index %1 is invalid, as the number of objects in the array equals %2.")
+            .arg(i).arg(nvals), CODELOC );
+}
+
+void SIREBASE_EXPORT SireBase::detail::throwPackedArray2D_Array_incompatibleError(
+                                                    quint32 this_sz, quint32 other_sz)
+{
+    throw SireError::incompatible_error( QObject::tr(
+        "Cannot update as the PackedArray<T>::Arrays are incompatible! "
+        "(number of objects in this array is %1, while the number of "
+        "objects in the other array is %2.")
+            .arg(this_sz).arg(other_sz), CODELOC );
+}          
 
 ////////
 //////// Implementation of PackedArray2DMemoryBase
