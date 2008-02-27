@@ -26,8 +26,8 @@
   *
 \*********************************************/
 
-#ifndef SIREBASE_PACKEDARRAY_H
-#define SIREBASE_PACKEDARRAY_H
+#ifndef SIREBASE_PACKEDARRAY2D_H
+#define SIREBASE_PACKEDARRAY2D_H
 
 #include "sireglobal.h"
 
@@ -39,23 +39,23 @@ namespace SireBase
 namespace detail
 {
 
-/** Template-independent parts of ArrayMemory */
-class ArrayMemoryBase
+/** Template-independent parts of PackedArray2DMemory */
+class PackedArray2DMemoryBase
 {
     static char* getRoot(char *this_ptr, quint32 this_idx);
     static const char* getRoot(const char *this_ptr, quint32 this_idx);
 
 protected:
     static quint32 getSize(quint32 narrays, quint32 nvalues, 
-                           quint32 sizeof_PackedArrayData,
-                           quint32 sizeof_PackedArray_Array,
-                           quint32 sizeof_PackedArray_ArrayData,
+                           quint32 sizeof_PackedArray2DData,
+                           quint32 sizeof_PackedArray2D_Array,
+                           quint32 sizeof_PackedArray2D_ArrayData,
                            quint32 sizeof_T
 
     static char* create(quint32 narrays, quint32 nvalues, 
-                        quint32 sizeof_PackedArrayData,
-                        quint32 sizeof_PackedArray_Array,
-                        quint32 sizeof_PackedArray_ArrayData,
+                        quint32 sizeof_PackedArray2DData,
+                        quint32 sizeof_PackedArray2D_Array,
+                        quint32 sizeof_PackedArray2D_ArrayData,
                         quint32 sizeof_T);
 };
 
@@ -63,7 +63,7 @@ protected:
     that starts at 'this_ptr' to a pointer to the first element
     of the storage array (given the location of the object at
     index 'this_idx' in the storage array) */
-inline char* ArrayMemoryBase::getRoot(char *this_ptr, quint32 this_idx)
+inline char* PackedArray2DMemoryBase::getRoot(char *this_ptr, quint32 this_idx)
 {
     return this_ptr - this_idx;
 }
@@ -72,21 +72,22 @@ inline char* ArrayMemoryBase::getRoot(char *this_ptr, quint32 this_idx)
     that starts at 'this_ptr' to a pointer to the first element
     of the storage array (given the location of the object at
     index 'this_idx' in the storage array) */
-const char* ArrayMemoryBase::getRoot(const char *this_ptr, quint32 this_idx)
+inline const char* PackedArray2DMemoryBase::getRoot(const char *this_ptr, 
+                                                    quint32 this_idx)
 {
     return this_ptr - this_idx;
 }
 
-/** The template independent parts of the PackedArray metadata */
-class PackedArrayDataBase : public QSharedData
+/** The template independent parts of the PackedArray2D metadata */
+class PackedArray2DDataBase : public QSharedData
 {
 public:
-    PackedArrayDataBase();
-    PackedArrayDataBase(quint32 narrays, quint32 nvalues);
+    PackedArray2DDataBase();
+    PackedArray2DDataBase(quint32 narrays, quint32 nvalues);
     
-    PackedArrayDataBase(const PackedArrayDataBase &other);
+    PackedArray2DDataBase(const PackedArray2DDataBase &other);
     
-    ~PackedArrayDataBase();
+    ~PackedArray2DDataBase();
 
     void incref();
     
@@ -102,11 +103,11 @@ public:
     const char* memory() const;
     
 private:
-    /** The index in the storage array of the first PackedArray<T>::Array
+    /** The index in the storage array of the first PackedArray2D<T>::Array
         in this array */
     quint32 array0;
     
-    /** The index in the storage array of the first PackedArray_ArrayData */
+    /** The index in the storage array of the first PackedArray2D_ArrayData */
     quint32 arraydata0;
     
     /** The number of arrays in this array */
@@ -121,16 +122,16 @@ private:
     
 };
 
-/** The template independent parts of the PackedArray_ArrayData metadata */
-class PackedArray_ArrayDataBase
+/** The template independent parts of the PackedArray2D_ArrayData metadata */
+class PackedArray2D_ArrayDataBase
 {
 public:
-    PackedArray_ArrayDataBase();
-    PackedArray_ArrayDataBase(quint32 this_idx);
+    PackedArray2D_ArrayDataBase();
+    PackedArray2D_ArrayDataBase(quint32 this_idx);
     
-    PackedArray_ArrayDataBase(const PackedArray_ArrayDataBase &other);
+    PackedArray2D_ArrayDataBase(const PackedArray2D_ArrayDataBase &other);
     
-    ~PackedArray_ArrayDataBase();
+    ~PackedArray2D_ArrayDataBase();
 
     const char* memory() const;
     char* memory();

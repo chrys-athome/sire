@@ -26,10 +26,10 @@
   *
 \*********************************************/
 
-#ifndef SIREBASE_PACKEDARRAY_HPP
-#define SIREBASE_PACKEDARRAY_HPP
+#ifndef SIREBASE_PACKEDARRAY2D_HPP
+#define SIREBASE_PACKEDARRAY2D_HPP
 
-#include "packedarray.h"
+#include "packedarray2d.h"
 
 SIRE_BEGIN_HEADER
 
@@ -40,44 +40,44 @@ namespace detail
 {
 
 template<class T>
-class PackedArrayData;
+class PackedArray2DData;
 
 template<class T>
-class PackedArray_ArrayData;
+class PackedArray2D_ArrayData;
 
 template<class T>
-class PackedArray_Array;
+class PackedArray2D_Array;
 
 /** This is a simple class that is used to manage the memory and 
-    reference counting for the PackedArray */
+    reference counting for the PackedArray2D */
 template<class T>
-class ArrayMemory : public ArrayMemoryBase
+class PackedArray2DMemory : public PackedArray2DMemoryBase
 {
 public:
     static char* create(quint32 narrays, quint32 nvalues);
     static char* detach(char *this_ptr, quint32 this_idx);
-    static void destroy(PackedArrayData *arrays);
+    static void destroy(PackedArray2DData *arrays);
     
     static void incref(char *this_ptr, quint32 this_idx);
     static void decref(char *this_ptr, quint32 this_idx);
 
-    static SharedArrayPtr< PackedArrayData<T> > shared_null;
+    static SharedArray2DPtr< PackedArray2DData<T> > shared_null;
 };
 
 /** This is the implicitly shared pointer class that 
-    is used to hold any of the ArrayMemory allocated objects
+    is used to hold any of the PackedArray2DMemory allocated objects
     
     @author Christopher Woods
 */
 template<class T>
-class SharedArrayPtr
+class SharedArray2DPtr
 {
 
 public:
-    SharedArrayPtr() : ptr(0)
+    SharedArray2DPtr() : ptr(0)
     {}
 
-    SharedArrayPtr(const T *p)
+    SharedArray2DPtr(const T *p)
     {
         ptr = const_cast<T*>(p);
     
@@ -85,19 +85,19 @@ public:
             ptr->incref();
     }
     
-    SharedArrayPtr(const SharedArrayPtr &other) : ptr(other.ptr)
+    SharedArray2DPtr(const SharedArray2DPtr &other) : ptr(other.ptr)
     {
         if (ptr)
             ptr->incref();
     }
     
-    ~SharedArrayPtr()
+    ~SharedArray2DPtr()
     {
         if (ptr)
             ptr->decref();
     }
     
-    SharedArrayPtr<T>& operator=(const SharedArrayPtr &other)
+    SharedArray2DPtr<T>& operator=(const SharedArray2DPtr &other)
     {
         if (ptr != other.ptr)
         {
@@ -165,7 +165,7 @@ public:
     /** Assign this pointer to point at 'weakptr' 
         but *without* changing the reference count.
         You ABSOLUTELY MUST ensure that you call 
-        SharedArrayPtr::weakRelease() before this 
+        SharedArray2DPtr::weakRelease() before this 
         pointer is deleted or reassigned, so 
         as to not decrement the reference count incorrectly! */
     void weakAssign(T *weakptr)
@@ -194,32 +194,32 @@ private:
     packed array of arrays
 */
 template<class T>
-class PackedArrayData : public PackedArrayDataBase
+class PackedArray2DData : public PackedArray2DDataBase
 {
 
-friend class ArrayMemory<T>;
+friend class PackedArray2DMemory<T>;
 
 public:
-    PackedArrayData();
-    PackedArrayData(quint32 narrays, quint32 nvalues);
+    PackedArray2DData();
+    PackedArray2DData(quint32 narrays, quint32 nvalues);
     
-    PackedArrayData(const PackedArrayData &other);
+    PackedArray2DData(const PackedArray2DData &other);
     
-    ~PackedArrayData();
+    ~PackedArray2DData();
 
     void decref();
     
-    PackedArrayData* detach();
+    PackedArray2DData* detach();
     
-    const PackedArray_ArrayData* nullArray() const;
+    const PackedArray2D_ArrayData* nullArray() const;
     
-    const PackedArray_ArrayData* arrayDataData() const;
-    const PackedArray_Array<T>* arrayData() const;
+    const PackedArray2D_ArrayData* arrayDataData() const;
+    const PackedArray2D_Array<T>* arrayData() const;
 
     const T* valueData() const;
 
-    PackedArray_ArrayData* arrayDataData();
-    PackedArray_Array<T>* arrayData();
+    PackedArray2D_ArrayData* arrayDataData();
+    PackedArray2D_Array<T>* arrayData();
 
     T* valueData();
     
@@ -231,57 +231,57 @@ public:
 /** This class holds the metadata about an individual array
     in the packed collection of arrays */
 template<class T>
-class PackedArray_ArrayData : public PackedArray_ArrayDataBase
+class PackedArray2D_ArrayData : public PackedArray2D_ArrayDataBase
 {
 
-friend class PackedArrayData<T>;
-friend class ArrayMemory<T>;
+friend class PackedArray2DData<T>;
+friend class PackedArray2DMemory<T>;
 
 public:
-    PackedArray_ArrayData();
-    PackedArray_ArrayData(quint32 this_idx);
+    PackedArray2D_ArrayData();
+    PackedArray2D_ArrayData(quint32 this_idx);
     
-    PackedArray_ArrayData(const PackedArray_ArrayData &other);
+    PackedArray2D_ArrayData(const PackedArray2D_ArrayData &other);
     
-    ~PackedArray_ArrayData();
+    ~PackedArray2D_ArrayData();
     
     void incref();
     void decref();
     
-    PackedArray_ArrayData* detach();
+    PackedArray2D_ArrayData* detach();
     
-    PackedArrayData* extract() const;
+    PackedArray2DData* extract() const;
     
     const T* valueData() const;
     T* valueData();
 };
 
 /** This is the implicitly shared array class that is packed
-    together to make a PackedArray<T>. This class is mainly used
-    via its alias - PackedArray<T>::Array. Note that the size
-    of a PackedArray<T>::Array is fixed at construction. You
+    together to make a PackedArray2D<T>. This class is mainly used
+    via its alias - PackedArray2D<T>::Array. Note that the size
+    of a PackedArray2D<T>::Array is fixed at construction. You
     cannot change the size as this array is packed contiguously
     in memory with other arrays.
     
     @author Christopher Woods
 */
 template<class T>
-class PackedArray_Array
+class PackedArray2D_Array
 {
 public:
-    PackedArray_Array();
-    PackedArray_Array(quint32 sz);
-    PackedArray_Array(quint32 sz, const T &value);
-    PackedArray_Array(const QVector<T> &values);
+    PackedArray2D_Array();
+    PackedArray2D_Array(quint32 sz);
+    PackedArray2D_Array(quint32 sz, const T &value);
+    PackedArray2D_Array(const QVector<T> &values);
     
-    PackedArray_Array(const PackedArray_Array<T> &other);
+    PackedArray2D_Array(const PackedArray2D_Array<T> &other);
     
-    ~PackedArray_Array();
+    ~PackedArray2D_Array();
     
-    PackedArray_Array<T>& operator=(const PackedArray_Array<T> &other);
+    PackedArray2D_Array<T>& operator=(const PackedArray2D_Array<T> &other);
     
-    bool operator==(const PackedArray_Array<T> &other) const;
-    bool operator!=(const PackedArray_Array<T> &other) const;
+    bool operator==(const PackedArray2D_Array<T> &other) const;
+    bool operator!=(const PackedArray2D_Array<T> &other) const;
 
     const T& operator[](quint32 i) const;
     T& operator[](quint32 i);
@@ -300,16 +300,16 @@ public:
     
     const T* constData() const;
     
-    void update(const PackedArray_Array<T> &other);
+    void update(const PackedArray2D_Array<T> &other);
     
     void assertValidIndex(quint32 i) const;
 
 protected:
-    PackedArray_Array(detail::PackedArray_ArrayData<T> *data);
+    PackedArray2D_Array(detail::PackedArray2D_ArrayData<T> *data);
     
 private:
     /** Implicitly shared pointer to the array */
-    detail::SharedArrayPtr< detail::PackedArray_ArrayData<T> > d;
+    detail::SharedArray2DPtr< detail::PackedArray2D_ArrayData<T> > d;
 };
 
 }
@@ -322,24 +322,27 @@ private:
     @author Christopher Woods
 */
 template<class T>
-class PackedArray
+class PackedArray2D
 {
 public:
-    typedef typename detail::PackedArray_Array<T> Array;
+    typedef typename detail::PackedArray2D_Array<T> Array;
 
-    PackedArray();
-    PackedArray(const QVector<T> &values);
-    PackedArray(const QVector< QVector<T> > &values);
-    PackedArray(const QVector<Array> &arrays);
+    PackedArray2D();
     
-    PackedArray(const PackedArray<T> &other);
+    PackedArray2D(const Array &array);
+    PackedArray2D(const QVector<Array> &arrays);
     
-    ~PackedArray();
+    PackedArray2D(const QVector<T> &values);
+    PackedArray2D(const QVector< QVector<T> > &values);
     
-    PackedArray<T>& operator=(const PackedArray<T> &other);
+    PackedArray2D(const PackedArray2D<T> &other);
     
-    bool operator==(const PackedArray<T> &other) const;
-    bool operator!=(const PackedArray<T> &other) const;
+    ~PackedArray2D();
+    
+    PackedArray2D<T>& operator=(const PackedArray2D<T> &other);
+    
+    bool operator==(const PackedArray2D<T> &other) const;
+    bool operator!=(const PackedArray2D<T> &other) const;
     
     const Array& operator[](quint32 i);  // only const to prevent accidental assignment
     
@@ -374,7 +377,7 @@ public:
 
 private:
     /** Implicitly shared pointer to the array data */
-    detail::SharedPtr<detail::PackedArrayData> d;
+    detail::SharedPtr<detail::PackedArray2DData> d;
 };
 
 }
@@ -386,7 +389,7 @@ namespace detail
 {
 
 ////////
-//////// Implementation of ArrayMemory
+//////// Implementation of PackedArray2DMemory
 ////////
 
 /** Create space for the arrays. The layout in memory is;
@@ -395,42 +398,42 @@ namespace detail
     | A |   B   |    C    |            D             |
     --------------------------------------------------
 
-      A = PackedArrayData<T> object          1 * sizeof(PackedArrayData<T>)
-      B = PackedArray_Array<T> objects      narrays * sizeof(PackedArray_Array<T>)
-      C = PackedArray_ArrayData<T> objects   narrays * sizeof( " _ArrayData<T>)
+      A = PackedArray2DData<T> object          1 * sizeof(PackedArray2DData<T>)
+      B = PackedArray2D_Array<T> objects      narrays * sizeof(PackedArray2D_Array<T>)
+      C = PackedArray2D_ArrayData<T> objects   narrays * sizeof( " _ArrayData<T>)
       D = Array of T objects                 nvalues * sizeof(T)
 */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-char* ArrayMemory<T>::create(quint32 narrays, quint32 nvalues)
+char* PackedArray2DMemory<T>::create(quint32 narrays, quint32 nvalues)
 {
     //create space for the data
-    char *storage = ArrayMemoryBase::create(narrays, nvalues, 
-                                            sizeof(PackedArrayData<T>),
-                                            sizeof(PackedArray_Array<T>),
-                                            sizeof(PackedArray_ArrayData<T>),
+    char *storage = PackedArray2DMemoryBase::create(narrays, nvalues, 
+                                            sizeof(PackedArray2DData<T>),
+                                            sizeof(PackedArray2D_Array<T>),
+                                            sizeof(PackedArray2D_ArrayData<T>),
                                             sizeof(T));
     
     try
     {
         //now we need to construct each object in turn at its correct
         //location in this space
-        PackedArrayData<T> *arraydata 
-                    = new (storage) PackedArrayData<T>(narrays, nvalues);
+        PackedArray2DData<T> *arraydata 
+                    = new (storage) PackedArray2DData<T>(narrays, nvalues);
                     
         //add a reference count for this object
         arraydata->ref.ref();
 
         //advance the index into the storage array so that we are now
-        //pointing just after the PackedArrayData
-        quint32 idx = sizeof(PackedArrayData<T>);
+        //pointing just after the PackedArray2DData
+        quint32 idx = sizeof(PackedArray2DData<T>);
                     
-        //this is the location of the first PackedArray_Array<T> :-)
+        //this is the location of the first PackedArray2D_Array<T> :-)
         arraydata->array0 = idx;
         
-        //the first PackedArray_ArrayData lies at this 
-        //index + narrays*sizeof(PackedArray_Array<T>)
-        arraydata->arraydata0 = idx + (narrays * sizeof(PackedArray_Array<T>));
+        //the first PackedArray2D_ArrayData lies at this 
+        //index + narrays*sizeof(PackedArray2D_Array<T>)
+        arraydata->arraydata0 = idx + (narrays * sizeof(PackedArray2D_Array<T>));
 
         if (narrays > 0)
         {
@@ -440,43 +443,43 @@ char* ArrayMemory<T>::create(quint32 narrays, quint32 nvalues)
             for (quint32 i=0; i<narrays; ++i)
             {   
                 //assert that there is sufficient space in the array
-                BOOST_ASSERT(idx + sizeof(PackedArray_Array<T>) < sz);
-                BOOST_ASSERT(dataidx + sizeof(PackedArray_ArrayData<T>) < sz);
+                BOOST_ASSERT(idx + sizeof(PackedArray2D_Array<T>) < sz);
+                BOOST_ASSERT(dataidx + sizeof(PackedArray2D_ArrayData<T>) < sz);
             
                 //create the ArrayData, letting it know where it
                 //is relative to the beginning of the storage array
-                PackedArray_ArrayData<T> *data 
-                        = new (storage + dataidx) PackedArray_ArrayData<T>(dataidx);
+                PackedArray2D_ArrayData<T> *data 
+                        = new (storage + dataidx) PackedArray2D_ArrayData<T>(dataidx);
                 
-                //now create the PackedArray_Array<T> that uses this data
-                new (storage + idx) PackedArray_Array<T>(data);
+                //now create the PackedArray2D_Array<T> that uses this data
+                new (storage + idx) PackedArray2D_Array<T>(data);
         
                 //advance the index into the storage array to point
-                //just after the just-created PackedArray_ArrayData
-                idx += sizeof(PackedArray_Array<T>);
-                dataidx += sizeof(PackedArray_ArrayData<T>);
+                //just after the just-created PackedArray2D_ArrayData
+                idx += sizeof(PackedArray2D_Array<T>);
+                dataidx += sizeof(PackedArray2D_ArrayData<T>);
             }
             
-            //make idx point just after all of the PackedArray_ArrayDatas...
+            //make idx point just after all of the PackedArray2D_ArrayDatas...
             BOOST_ASSERT( idx == arraydata->array0 
-                                + narrays*sizeof(PackedArray_Array<T>) );
+                                + narrays*sizeof(PackedArray2D_Array<T>) );
                                 
             idx = dataidx;
         }
         else
         {
-            //we need to create space for the null PackedArray_Array<T>
-            quint32 data_idx = idx + sizeof(PackedArray_Array<T>);
-            PackedArray_ArrayData<T> *array_arraydata 
-                        = new (storage + data_idx) PackedArray_ArrayData<T>(data_idx);
+            //we need to create space for the null PackedArray2D_Array<T>
+            quint32 data_idx = idx + sizeof(PackedArray2D_Array<T>);
+            PackedArray2D_ArrayData<T> *array_arraydata 
+                        = new (storage + data_idx) PackedArray2D_ArrayData<T>(data_idx);
             
-            new (storage + idx) PackedArray_Array<T>(arraydata);
+            new (storage + idx) PackedArray2D_Array<T>(arraydata);
             
             array_arraydata->nvalues = 0;
             array_arraydata->value0 = 0;
             
-            idx += sizeof(PackedArray_Array<T>) 
-                    + sizeof(PackedArray_ArrayData);
+            idx += sizeof(PackedArray2D_Array<T>) 
+                    + sizeof(PackedArray2D_ArrayData);
         }
         
         //we are now at the location of the first item in the array
@@ -507,23 +510,23 @@ char* ArrayMemory<T>::create(quint32 narrays, quint32 nvalues)
 /** Increase the reference count */
 template<class T>
 SIRE_INLINE_TEMPLATE
-void ArrayMemory<T>::incref(char *this_ptr, quint32 this_idx)
+void PackedArray2DMemory<T>::incref(char *this_ptr, quint32 this_idx)
 {
-    ( (PackedArrayData*)(ArrayMemoryBase::getRoot(this_ptr,this_idx)) )->incref();
+    ( (PackedArray2DData*)(PackedArray2DMemoryBase::getRoot(this_ptr,this_idx)) )->incref();
 }
 
 /** Decrease the reference count */
 template<class T>
 SIRE_INLINE_TEMPLATE
-void ArrayMemory<T>::decref(char *this_ptr, quint32 this_idx)
+void PackedArray2DMemory<T>::decref(char *this_ptr, quint32 this_idx)
 {
-    ( (PackedArrayData*)(ArrayMemoryBase::getRoot(this_ptr,this_idx)) )->decref();
+    ( (PackedArray2DData*)(PackedArray2DMemoryBase::getRoot(this_ptr,this_idx)) )->decref();
 }
 
 /** Destroy the object 'array' */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-void ArrayMemory<T>::destroy(PackedArrayData<T> *array)
+void PackedArray2DMemory<T>::destroy(PackedArray2DData<T> *array)
 {
     //we need to delete it in the opposite order to creation - first
     //lets delete all of the objects
@@ -546,26 +549,26 @@ void ArrayMemory<T>::destroy(PackedArrayData<T> *array)
         
     if (narrays > 0)
     {
-        PackedArray_Array<T> *arrays = array->arrayData();
+        PackedArray2D_Array<T> *arrays = array->arrayData();
             
         for (qint32 i=narrays-1; i>=0; --i)
         {
-            PackedArray_ArrayData *arraydata 
-                   = const_cast<PackedArray_ArrayData*>( arrays[i].d.constData() );
+            PackedArray2D_ArrayData *arraydata 
+                   = const_cast<PackedArray2D_ArrayData*>( arrays[i].d.constData() );
             
-            //delete the PackedArray_ArrayData
-            data->~PackedArray_ArrayData();
+            //delete the PackedArray2D_ArrayData
+            data->~PackedArray2D_ArrayData();
             
             //remove the shared pointer
             arrays[i].d.weakRelease();
             
-            //delete the PackedArray_Array<T>
-            arrays[i].~PackedArray_Array<T>();
+            //delete the PackedArray2D_Array<T>
+            arrays[i].~PackedArray2D_Array<T>();
         }
     }
         
-    //delete the PackedArrayData object itself
-    array->~PackedArrayData();
+    //delete the PackedArray2DData object itself
+    array->~PackedArray2DData();
         
     //finally release the memory
     delete[] storage;
@@ -574,22 +577,22 @@ void ArrayMemory<T>::destroy(PackedArrayData<T> *array)
 /** Detach the data pointed to by 'this_ptr' from shared storage */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-char* ArrayMemory<T>::detach(char *this_ptr, quint32 this_idx)
+char* PackedArray2DMemory<T>::detach(char *this_ptr, quint32 this_idx)
 {
     //get a pointer to the start of the storage for this container
     char *storage = getRoot(this_ptr, this_idx);
     
-    //The PackedArrayData object is at the beginning of this storage array
-    PackedArrayData<T> *arraydata = (PackedArrayData<T>*) storage;
+    //The PackedArray2DData object is at the beginning of this storage array
+    PackedArray2DData<T> *arraydata = (PackedArray2DData<T>*) storage;
     
     if (arraydata->ref != 1)
     {
         //there is more than one reference to this data - it will have to 
         //be cloned - get the size of memory to be cloned
         int sz = getSize(arraydata->nArrays(), arraydata->nValues(),
-                         sizeof(PackedArrayData<T>), 
-                         sizeof(PackedArray_Array<T>),
-                         sizeof(PackedArray_ArrayData<T>),
+                         sizeof(PackedArray2DData<T>), 
+                         sizeof(PackedArray2D_Array<T>),
+                         sizeof(PackedArray2D_ArrayData<T>),
                          sizeof(T));
                          
         //create space for the copy
@@ -599,23 +602,23 @@ char* ArrayMemory<T>::detach(char *this_ptr, quint32 this_idx)
         void *output = qMemCopy( new_storage, storage, sz*sizeof(char) );
         BOOST_ASSERT(output == new_storage);
 
-        //the first part of the data is the PackedArrayData object
-        PackedArrayData *new_arraydata = (PackedArrayData*) new_storage;
+        //the first part of the data is the PackedArray2DData object
+        PackedArray2DData *new_arraydata = (PackedArray2DData*) new_storage;
         
         //set the reference count of this copy to 1
         new_arraydata->ref = 1;
 
         //now loose a reference to the original
-        ArrayMemory<T>::decref(this_ptr, this_idx);
+        PackedArray2DMemory<T>::decref(this_ptr, this_idx);
         
-        //the final step is to update all of the PackedArray_Array<T>
+        //the final step is to update all of the PackedArray2D_Array<T>
         //pointers that exist in this array (otherwise they will all
         //point to the original!)
         
         if (new_arraydata->nArrays() > 0)
         {
-            PackedArray_Array<T> *arrays = new_arraydata->arrayData();
-            PackedArray_ArrayData *arrays_data = new_array->arrayDataData();
+            PackedArray2D_Array<T> *arrays = new_arraydata->arrayData();
+            PackedArray2D_ArrayData *arrays_data = new_array->arrayDataData();
         
             for (quint32 i=0; i < new_arraydata->nArrays(); ++i)
             {
@@ -625,9 +628,9 @@ char* ArrayMemory<T>::detach(char *this_ptr, quint32 this_idx)
         }
         else
         {
-            //update the null PackedArray_Array<T>
-            PackedArray_Array<T> *arrays = new_arraydata->arrayData();
-            PackedArray_ArrayData *arrays_data = new_array->arrayDataData();
+            //update the null PackedArray2D_Array<T>
+            PackedArray2D_Array<T> *arrays = new_arraydata->arrayData();
+            PackedArray2D_ArrayData *arrays_data = new_array->arrayDataData();
 
             arrays[0].d.weakRelease();
             arrays[0].d.weakAssign( &(arrays_data[0]) );
@@ -644,90 +647,90 @@ char* ArrayMemory<T>::detach(char *this_ptr, quint32 this_idx)
 }
 
 ///////
-/////// Implementation of PackedArrayData<T>
+/////// Implementation of PackedArray2DData<T>
 ///////
 
 /** Null constructor */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-PackedArrayData<T>::PackedArrayData() : PackedArrayDataBase()
+PackedArray2DData<T>::PackedArray2DData() : PackedArray2DDataBase()
 {}
 
 /** Construct to hold the specified number of arrays and values */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-PackedArrayData<T>::PackedArrayData(quint32 narrays, quint32 nvalues)
-                   : PackedArrayDataBase(narrays, nvalues)
+PackedArray2DData<T>::PackedArray2DData(quint32 narrays, quint32 nvalues)
+                   : PackedArray2DDataBase(narrays, nvalues)
 {}
 
 /** Copy constructor */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-PackedArrayData<T>::PackedArrayData(const PackedArrayData &other)
-                   : PackedArrayDataBase(other)
+PackedArray2DData<T>::PackedArray2DData(const PackedArray2DData &other)
+                   : PackedArray2DDataBase(other)
 {}
 
 /** Destructor */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-PackedArrayData<T>::~PackedArrayData()
+PackedArray2DData<T>::~PackedArray2DData()
 {}
 
 /** Decrease the reference count of this object */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-void PackedArrayData<T>::decref()
+void PackedArray2DData<T>::decref()
 {
     if (not this->ref.deref())
-        ArrayMemory<T>::destroy(this);
+        PackedArray2DMemory<T>::destroy(this);
 }
 
 /** Return a pointer to a copy of this array that has been 
     detached from shared storage */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-PackedArrayData<T>* PackedArrayData<T>::detach()
+PackedArray2DData<T>* PackedArray2DData<T>::detach()
 {
-    return (PackedArrayData<T>*)( ArrayMemory<T>::detach( (char*)(this), 0 ) );
+    return (PackedArray2DData<T>*)( PackedArray2DMemory<T>::detach( (char*)(this), 0 ) );
 }
 
 /** Return a pointer to the null array */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-const PackedArray_ArrayData* PackedArrayData<T>::nullArray() const
+const PackedArray2D_ArrayData* PackedArray2DData<T>::nullArray() const
 {
     BOOST_ASSERT( this->narrays == 0 );
     BOOST_ASSERT( this->arraydata0 != 0 );
     
-    return (const PackedArray_ArrayData*)( this->memory()[this->arraydata0] );
+    return (const PackedArray2D_ArrayData*)( this->memory()[this->arraydata0] );
 }
 
-/** Return a raw pointer to the array of PackedArray_ArrayData objects */
+/** Return a raw pointer to the array of PackedArray2D_ArrayData objects */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-const PackedArray_ArrayData<T>* PackedArrayData<T>::arrayDataData() const
+const PackedArray2D_ArrayData<T>* PackedArray2DData<T>::arrayDataData() const
 {
     if (this->arraydata0 == 0)
         return 0;
     else
-        return (const PackedArray_ArrayData<T>*)( this->memory() + this->arraydata0 );
+        return (const PackedArray2D_ArrayData<T>*)( this->memory() + this->arraydata0 );
 }
 
-/** Return a raw pointer to the array of PackedArray_Array<T> objects */
+/** Return a raw pointer to the array of PackedArray2D_Array<T> objects */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-const PackedArray_Array<T>* PackedArrayData<T>::arrayData() const
+const PackedArray2D_Array<T>* PackedArray2DData<T>::arrayData() const
 {
     if (this->array0 == 0)
         return 0;
     else
-        return (const PackedArray_Array<T>*)( this->memory() + this->array0 );
+        return (const PackedArray2D_Array<T>*)( this->memory() + this->array0 );
 }
 
 /** Return a raw pointer to the array of objects in this array */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-const T* PackedArrayData<T>::valueData() const
+const T* PackedArray2DData<T>::valueData() const
 {
     if (this->value0 == 0)
         return 0;
@@ -735,32 +738,32 @@ const T* PackedArrayData<T>::valueData() const
         return (const T*)( this->memory() + this->array0 );
 }
 
-/** Return a raw pointer to the array of PackedArray_ArrayData objects */
+/** Return a raw pointer to the array of PackedArray2D_ArrayData objects */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-PackedArray_ArrayData<T>* PackedArrayData<T>::arrayDataData()
+PackedArray2D_ArrayData<T>* PackedArray2DData<T>::arrayDataData()
 {
     if (this->arraydata0 == 0)
         return 0;
     else
-        return (PackedArray_ArrayData<T>*)( this->memory() + this->arraydata0 );
+        return (PackedArray2D_ArrayData<T>*)( this->memory() + this->arraydata0 );
 }
 
-/** Return a raw pointer to the array of PackedArray_Array<T> objects */
+/** Return a raw pointer to the array of PackedArray2D_Array<T> objects */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-PackedArray_Array<T>* PackedArrayData<T>::arrayData()
+PackedArray2D_Array<T>* PackedArray2DData<T>::arrayData()
 {
     if (this->array0 == 0)
         return 0;
     else
-        return (PackedArray_Array<T>*)( this->memory() + this->array0 );
+        return (PackedArray2D_Array<T>*)( this->memory() + this->array0 );
 }
 
 /** Return a raw pointer to the array of objects in this array */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-T* PackedArrayData<T>::valueData()
+T* PackedArray2DData<T>::valueData()
 {
     if (this->value0 == 0)
         return 0;
@@ -772,7 +775,7 @@ T* PackedArrayData<T>::valueData()
     before the close() (so don't call it after closing the arrays) */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-void PackedArrayData<T>::setNValuesInArray(quint32 i, quint32 nvalues)
+void PackedArray2DData<T>::setNValuesInArray(quint32 i, quint32 nvalues)
 {
     BOOST_ASSERT( i < narrays );
     this->arrayDataData()[i].nvalues = nvalues;
@@ -782,9 +785,9 @@ void PackedArrayData<T>::setNValuesInArray(quint32 i, quint32 nvalues)
     in each array in this array of arrays */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-void PackedArrayData<T>::close()
+void PackedArray2DData<T>::close()
 {
-    PackedArray_ArrayData<T> *arraydata = this->arrayDataData();
+    PackedArray2D_ArrayData<T> *arraydata = this->arrayDataData();
     
     //ensure that everything adds up
     quint32 n_assigned_vals = 0;
@@ -792,7 +795,7 @@ void PackedArrayData<T>::close()
     //close out each array
     for (quint32 i=0; i<this->narrays; ++i)
     {
-        PackedArray_ArrayData<T> &array = arraydata[i];
+        PackedArray2D_ArrayData<T> &array = arraydata[i];
         
         //tell the array where its first value is located
         if (array.nValues() > 0)
@@ -807,66 +810,66 @@ void PackedArrayData<T>::close()
 }
 
 ////////
-//////// Implementation of PackedArray_ArrayData
+//////// Implementation of PackedArray2D_ArrayData
 ////////
 
 /** Null constructor */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-PackedArray_ArrayData<T>::PackedArray_ArrayData()
-                         : PackedArray_ArrayDataBase()
+PackedArray2D_ArrayData<T>::PackedArray2D_ArrayData()
+                         : PackedArray2D_ArrayDataBase()
 {}
 
 /** Construct the data, telling it that it is at 
     index 'this_idx' in the memory storage array */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-PackedArray_ArrayData<T>::PackedArray_ArrayData(quint32 this_idx)
-                         : PackedArray_ArrayDataBase(this_idx)
+PackedArray2D_ArrayData<T>::PackedArray2D_ArrayData(quint32 this_idx)
+                         : PackedArray2D_ArrayDataBase(this_idx)
 {}
 
 /** Copy constructor */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-PackedArray_ArrayData<T>::PackedArray_ArrayData(const PackedArray_ArrayData<T> &other)
-                         : PackedArray_ArrayDataBase(other)
+PackedArray2D_ArrayData<T>::PackedArray2D_ArrayData(const PackedArray2D_ArrayData<T> &other)
+                         : PackedArray2D_ArrayDataBase(other)
 {}
 
 /** Destructor */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-PackedArray_ArrayData<T>::~PackedArray_ArrayData()
+PackedArray2D_ArrayData<T>::~PackedArray2D_ArrayData()
 {}
 
-/** Return a pointer to a PackedArray_ArrayData that has been detached from 
-    shared storage (could be a pointer to this PackedArray_ArrayData) */
+/** Return a pointer to a PackedArray2D_ArrayData that has been detached from 
+    shared storage (could be a pointer to this PackedArray2D_ArrayData) */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-PackedArray_ArrayData<T>* PackedArray_ArrayData<T>::detach()
+PackedArray2D_ArrayData<T>* PackedArray2D_ArrayData<T>::detach()
 {
-    return (PackedArray_ArrayData<T>*)
-           ( ArrayMemory<T>::detach( (char*)this, this_array ) );
+    return (PackedArray2D_ArrayData<T>*)
+           ( PackedArray2DMemory<T>::detach( (char*)this, this_array ) );
 }
 
-/** Return a pointer to a PackedArrayData object that contains 
-    just the data of this PackedArray_Array */
+/** Return a pointer to a PackedArray2DData object that contains 
+    just the data of this PackedArray2D_Array */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-PackedArrayData<T>* PackedArray_ArrayData<T>::extract() const
+PackedArray2DData<T>* PackedArray2D_ArrayData<T>::extract() const
 {
-    const PackedArrayData<T> *array = (const PackedArrayData<T>*)(this->memory());
+    const PackedArray2DData<T> *array = (const PackedArray2DData<T>*)(this->memory());
     
     if (array->nArrays() <= 1)
         //this is already extracted!
-        return const_cast<PackedArrayData<T>*>(array);
+        return const_cast<PackedArray2DData<T>*>(array);
     
-    char *new_storage = ArrayMemory<T>::create(1, this->nValues());
+    char *new_storage = PackedArray2DMemory<T>::create(1, this->nValues());
     
     try
     {
                 
     //ok, we need to extract!
-    PackedArrayData<T> *new_array = (PackedArrayData<T>*)(new_storage);
+    PackedArray2DData<T> *new_array = (PackedArray2DData<T>*)(new_storage);
 
     new_array->setNValuesInArray(1, this->nValues());
     new_array->close();
@@ -892,23 +895,23 @@ PackedArrayData<T>* PackedArray_ArrayData<T>::extract() const
 /** Increment the reference count for this object */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-void PackedArray_ArrayData<T>::incref()
+void PackedArray2D_ArrayData<T>::incref()
 {
-    ArrayMemory<T>::incref( (char*)this, this_array );
+    PackedArray2DMemory<T>::incref( (char*)this, this_array );
 }
 
 /** Decrement the reference count for this object - this may delete it! */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-void PackedArray_ArrayData<T>::decref()
+void PackedArray2D_ArrayData<T>::decref()
 {
-    ArrayMemory<T>::decref( (char*)this, this_array );
+    PackedArray2DMemory<T>::decref( (char*)this, this_array );
 }
 
 /** Return a pointer to the first object in this array */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-const T* PackedArray_ArrayData<T>::valueData() const
+const T* PackedArray2D_ArrayData<T>::valueData() const
 {
     if (value0 == 0)
         return 0;
@@ -919,7 +922,7 @@ const T* PackedArray_ArrayData<T>::valueData() const
 /** Return a pointer to the first object in this array */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-T* PackedArray_ArrayData<T>::valueData()
+T* PackedArray2D_ArrayData<T>::valueData()
 {
     if (value0 == 0)
         return 0;
@@ -936,68 +939,68 @@ quint32 CGData::nValues() const
 }
 
 ///////////
-/////////// Implementation of PackedArray_Array
+/////////// Implementation of PackedArray2D_Array
 ///////////
 
 template<class T>
-static const SharedArrayPtr< PackedArrayData<T> >& getSharedNull()
+static const SharedArray2DPtr< PackedArray2DData<T> >& getSharedNull()
 {
-    if (detail::ArrayMemory<T>::shared_null.constData() == 0)
+    if (detail::PackedArray2DMemory<T>::shared_null.constData() == 0)
     {
-        detail::ArrayMemory<T>::shared_null 
-                = (PackedArrayData<T>*)( ArrayMemory<T>::create(0,0,0) );
+        detail::PackedArray2DMemory<T>::shared_null 
+                = (PackedArray2DData<T>*)( PackedArray2DMemory<T>::create(0,0,0) );
                 
-        detail::ArrayMemory<T>::shared_null->close();
+        detail::PackedArray2DMemory<T>::shared_null->close();
     }
     
-    return detail::ArrayMemory<T>::shared_null;
+    return detail::PackedArray2DMemory<T>::shared_null;
 }
 
 template<class T>
-static SharedArrayPtr< PackedArray_ArrayData<T> > createNullArray()
+static SharedArray2DPtr< PackedArray2D_ArrayData<T> > createNullArray()
 {
-    const SharedArrayPtr< PackedArrayData<T> > &array 
+    const SharedArray2DPtr< PackedArray2DData<T> > &array 
                             = SireBase::detail::getSharedNull<T>();
     
-    return SharedArrayPtr< PackedArray_ArrayData<T> >( array->nullArray() );
+    return SharedArray2DPtr< PackedArray2D_ArrayData<T> >( array->nullArray() );
 }
 
 /** Null constructor */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-PackedArray_Array<T>::PackedArray_Array()
+PackedArray2D_Array<T>::PackedArray2D_Array()
                      : d( SireBase::detail::createNullArray<T>() )
 {}
 
 template<class T>
-static SharedArrayPtr< PackedArray_ArrayData<T> > createArray(quint32 sz)
+static SharedArray2DPtr< PackedArray2D_ArrayData<T> > createArray(quint32 sz)
 {
     if (sz == 0)
         return SireBase::detail::createNullArray<T>();
         
     //construct space for 1 array of sz objects
-    char *storage = ArrayMemory<T>::create(1, sz);
+    char *storage = PackedArray2DMemory<T>::create(1, sz);
         
-    PackedArrayData<T> *array = (PackedArrayData<T>*)storage;
+    PackedArray2DData<T> *array = (PackedArray2DData<T>*)storage;
         
     array->setNValuesInArray(0, sz);
     array->close();
     
-    return SharedArrayPtr< PackedArray_ArrayData<T> >( &(array->arrayDataData()[0]) );
+    return SharedArray2DPtr< PackedArray2D_ArrayData<T> >( &(array->arrayDataData()[0]) );
 }
 
 /** Construct an array of size 'sz'. All of the objects will be initialised  
     with their default values */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-PackedArray_Array<T>::PackedArray_Array(quint32 sz)
+PackedArray2D_Array<T>::PackedArray2D_Array(quint32 sz)
                      : d( SireBase::detail::createArray<T>(sz) )
 {}
 
 /** Construct an array of size 'sz' where all of the objects have value 'value'. */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-PackedArray_Array<T>::PackedArray_Array(quint32 sz, const T &value)
+PackedArray2D_Array<T>::PackedArray2D_Array(quint32 sz, const T &value)
                      : d( SireBase::detail::createArray<T>(sz) )
 {
     if (sz == 0)
@@ -1015,16 +1018,16 @@ PackedArray_Array<T>::PackedArray_Array(quint32 sz, const T &value)
 /** Construct from the passed array of values */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-PackedArray_Array<T>::PackedArray_Array(const QVector<T> &values)
+PackedArray2D_Array<T>::PackedArray2D_Array(const QVector<T> &values)
 {
-    PackedArray<T> array(values);
+    PackedArray2D<T> array(values);
     this->operator=( array.constData()[0] );
 }
 
 /** Private constructor used internally */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-PackedArray_Array<T>::PackedArray_Array(detail::PackedArray_ArrayData<T> *data)
+PackedArray2D_Array<T>::PackedArray2D_Array(detail::PackedArray2D_ArrayData<T> *data)
 {
     d.weakAssign(data);
 }
@@ -1032,24 +1035,24 @@ PackedArray_Array<T>::PackedArray_Array(detail::PackedArray_ArrayData<T> *data)
 /** Copy constructor - fast as this class is implicitly shared */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-PackedArray_Array<T>::PackedArray_Array(const PackedArray_Array<T> &other)
+PackedArray2D_Array<T>::PackedArray2D_Array(const PackedArray2D_Array<T> &other)
                      : d(other.d)
 {}
 
 /** Destructor */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-PackedArray_Array<T>::~PackedArray_Array()
+PackedArray2D_Array<T>::~PackedArray2D_Array()
 {}
 
 /** Copy assignment operator - fast as this class is implicitly shared.
     However, as this copies a view of the whole packed array, you cannot
     use this to assign the contents of this array within its current 
-    PackedArray - to do this, you must use the 'update()' function. */
+    PackedArray2D - to do this, you must use the 'update()' function. */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-PackedArray_Array<T>& PackedArray_Array<T>::operator=(
-                                        const PackedArray_Array<T> &other)
+PackedArray2D_Array<T>& PackedArray2D_Array<T>::operator=(
+                                        const PackedArray2D_Array<T> &other)
 {
     this->d = other.d;
     return *this;
@@ -1058,7 +1061,7 @@ PackedArray_Array<T>& PackedArray_Array<T>::operator=(
 /** Comparison operator */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-bool PackedArray_Array<T>::operator==(const PackedArray_Array<T> &other) const
+bool PackedArray2D_Array<T>::operator==(const PackedArray2D_Array<T> &other) const
 {
     if (this->d.constData() == other.d.constData())
         return true;
@@ -1081,7 +1084,7 @@ bool PackedArray_Array<T>::operator==(const PackedArray_Array<T> &other) const
 /** Comparison operator */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-bool PackedArray_Array<T>::operator!=(const PackedArray_Array<T> &other) const
+bool PackedArray2D_Array<T>::operator!=(const PackedArray2D_Array<T> &other) const
 {
     return not this->operator==(other);
 }
@@ -1092,16 +1095,16 @@ bool PackedArray_Array<T>::operator!=(const PackedArray_Array<T> &other) const
 */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-void PackedArray_Array<T>::assertValidIndex(quint32 i) const
+void PackedArray2D_Array<T>::assertValidIndex(quint32 i) const
 {
     if (i >= this->nvalues)
-        detail::throwPackedArray_Array_invalidIndex(i, this->nvalues);
+        detail::throwPackedArray2D_Array_invalidIndex(i, this->nvalues);
 }
 
 /** Return a raw pointer to the array */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-const T* PackedArray_Array<T>::data() const
+const T* PackedArray2D_Array<T>::data() const
 {
     return this->d->valueData();
 }
@@ -1110,7 +1113,7 @@ const T* PackedArray_Array<T>::data() const
      *DO NOT* delete this pointer! */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-T* PackedArray_Array<T>::data()
+T* PackedArray2D_Array<T>::data()
 {
     return this->d->valueData();
 }
@@ -1118,7 +1121,7 @@ T* PackedArray_Array<T>::data()
 /** Return a raw pointer to the array */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-const T* PackedArray_Array<T>::constData() const
+const T* PackedArray2D_Array<T>::constData() const
 {
     return this->d->constValueData();
 }
@@ -1126,7 +1129,7 @@ const T* PackedArray_Array<T>::constData() const
 /** Return a reference to the ith object in this array */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-const T& PackedArray_Array<T>::operator[](quint32 i) const
+const T& PackedArray2D_Array<T>::operator[](quint32 i) const
 {
     this->assertValidIndex(i);
     return this->data()[i];
@@ -1135,7 +1138,7 @@ const T& PackedArray_Array<T>::operator[](quint32 i) const
 /** Return a reference to the ith object in this array */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-T& PackedArray_Array<T>::operator[](quint32 i)
+T& PackedArray2D_Array<T>::operator[](quint32 i)
 {
     this->assertValidIndex(i);
     return this->data()[i];
@@ -1144,7 +1147,7 @@ T& PackedArray_Array<T>::operator[](quint32 i)
 /** Return a reference to the ith object in this array */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-const T& PackedArray_Array<T>::at(quint32 i) const
+const T& PackedArray2D_Array<T>::at(quint32 i) const
 {
     this->assertValidIndex(i);
     return this->data()[i];
@@ -1153,7 +1156,7 @@ const T& PackedArray_Array<T>::at(quint32 i) const
 /** Return the number of objects in this array */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-int PackedArray_Array<T>::count() const
+int PackedArray2D_Array<T>::count() const
 {
     return d->nvalues;
 }
@@ -1161,7 +1164,7 @@ int PackedArray_Array<T>::count() const
 /** Return the number of objects in this array */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-int PackedArray_Array<T>::size() const
+int PackedArray2D_Array<T>::size() const
 {
     return this->d->nValues();
 }
@@ -1169,7 +1172,7 @@ int PackedArray_Array<T>::size() const
 /** Return the number of objects in this array */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-int PackedArray_Array<T>::nValues() const
+int PackedArray2D_Array<T>::nValues() const
 {
     return this->d->nValues();
 }
@@ -1177,7 +1180,7 @@ int PackedArray_Array<T>::nValues() const
 /** Return whether or not this array is empty */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-bool PackedArray_Array<T>::isEmpty() const
+bool PackedArray2D_Array<T>::isEmpty() const
 {
     return this->count() == 0;
 }
@@ -1188,10 +1191,10 @@ bool PackedArray_Array<T>::isEmpty() const
 */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-void PackedArray_Array<T>::update(const PackedArray_Array<T> &other)
+void PackedArray2D_Array<T>::update(const PackedArray2D_Array<T> &other)
 {
     if (this->size() != other.size())
-        detail::throwPackedArray_Array_incompatibleError(this->size(),other.size());
+        detail::throwPackedArray2D_Array_incompatibleError(this->size(),other.size());
         
     if (this->size() == 0)
         return;
@@ -1205,120 +1208,378 @@ void PackedArray_Array<T>::update(const PackedArray_Array<T> &other)
 } // end of namespace detail
 
 /////////
-///////// Implementation of PackedArray
+///////// Implementation of PackedArray2D
 /////////
 
+/** Null constructor */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-PackedArray<T>::PackedArray();
+PackedArray2D<T>::PackedArray2D() : d( SireBase::detail::getSharedNull<T>() )
+{}
 
+/** Construct from a passed Array */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-PackedArray<T>::PackedArray(const QVector<T> &values);
+PackedArray2D<T>::PackedArray2D(const PackedArray2D<T>::Array &array)
+               : d( array.d->extract() )
+{}
 
+/** Copy assignment operator - fast as this class is implicitly shared */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-PackedArray<T>::PackedArray(const QVector< QVector<T> > &values);
+PackedArray2D<T>& PackedArray2D<T>::operator=(const PackedArray2D<T> &other)
+{
+    d = other.d;
+    return *this;
+}
 
+/** Construct from an array of arrays */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-PackedArray<T>::PackedArray(const QVector<Array> &arrays);
+PackedArray2D<T>::PackedArray2D(const QVector<PackedArray2D<T>::Array> &arrays)
+{
+    if (arrays.isEmpty())
+        return;
 
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-PackedArray<T>::PackedArray(const PackedArray<T> &other);
+    else if (arrays.count() == 1)
+    {
+        this->operator=( PackedArray2D<T>(arrays.at(0)) );
+        return;
+    }
 
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-PackedArray<T>::~PackedArray();
+    //count the number of values and groups...
+    quint32 nvals = 0;
+    
+    const Array *arrays_data = arrays.constData();
+    quint32 narrays = arrays.count();
+    
+    for (quint32 i=0; i<narrays; ++i)
+    {
+        nvals += arrays_data[i].count();
+    }
+    
+    d = SireBase::detail::createArray(narrays, nvals);
+    
+    PackedArray2DData *dptr = d.data();
+    T *values = dptr->valueData();
+    
+    //dimension each packed array
+    for (quint32 i=0; i<narrays; ++i)
+    {
+        //dimension the array
+        dptr->setNValuesInArray(i, arrays_data[i].count());
+    }
+    
+    dptr->close();
+    
+    //now copy all of the data
+    for (quint32 i=0; i<narrays; ++i)
+    {
+        const Array &array = arrays_data[i];
+        const T *array_values = array.constData();
+        
+        void *output = qMemCopy(values, array_values, array.count()*sizeof(T));
+        
+        BOOST_ASSERT( output == values );
+        
+        values += array.count();
+    }
+}
 
+/** Construct from an array of values */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-PackedArray<T>& PackedArray<T>::operator=(const PackedArray<T> &other);
+PackedArray2D<T>::PackedArray2D(const QVector<T> &values)
+{
+    this->operator=( PackedArray2D<T>(Array(values)) ); 
+}
 
+/** Construct from an array of array of values */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-bool PackedArray<T>::operator==(const PackedArray<T> &other) const;
+PackedArray2D<T>::PackedArray2D(const QVector< QVector<T> > &values)
+{
+    if (values.isEmpty())
+        return;
+        
+    else if (values.count() == 1)
+    {
+        this->operator=( PackedArray2D<T>(values.at(0)) );
+        return;
+    }
 
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-bool PackedArray<T>::operator!=(const PackedArray<T> &other) const;
+    //count the number of values and groups...
+    quint32 nvals = 0;
+    
+    const QVector<T> *values_data = values.constData();
+    quint32 narrays = values.count();
+    
+    for (quint32 i=0; i<narrays; ++i)
+    {
+        nvals += values_data[i].count();
+    }
+    
+    d = SireBase::detail::createArray(narrays, nvals);
+    
+    PackedArray2DData *dptr = d.data();
+    T *values = dptr->valueData();
+    
+    //dimension each packed array
+    for (quint32 i=0; i<narrays; ++i)
+    {
+        //dimension the array
+        dptr->setNValuesInArray(i, values_data[i].count());
+    }
+    
+    dptr->close();
+    
+    //now copy all of the data
+    for (quint32 i=0; i<narrays; ++i)
+    {
+        const QVector<T> &array = values_data[i];
+        const T *array_values = array.constData();
+        
+        void *output = qMemCopy(values, array_values, array.count()*sizeof(T));
+        
+        BOOST_ASSERT( output == values );
+        
+        values += array.count();
+    }
+}
 
+/** Copy constructor */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-const Array& PackedArray<T>::operator[](quint32 i);
+PackedArray2D<T>::PackedArray2D(const PackedArray2D<T> &other)
+               : d(other.d)
+{}
 
+/** Destructor */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-const T& PackedArray<T>::operator()(quint32 i, quint32 j) const;
+PackedArray2D<T>::~PackedArray2D()
+{}
 
+/** Comparison operator */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-T& PackedArray<T>::operator()(quint32 i, quint32 j);
+bool PackedArray2D<T>::operator==(const PackedArray2D<T> &other) const
+{
+    if (d.constData() == other.d.constData())
+        return true;
+        
+    if (this->nArrays() != other.nArrays())
+        return false;
+        
+    const Array *this_arrays = this->constData();
+    const Array *other_arrays = other.constData();
+    quint32 narrays = this->count();
+    
+    for (quint32 i=0; i<narrays; ++i)
+    {
+        if (this_arrays[i] != other_arrays[i])
+            return false;
+    }
+    
+    return true;
+}
 
+/** Comparison operator */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-const Array& PackedArray<T>::at(quint32 i) const;
+bool PackedArray2D<T>::operator!=(const PackedArray2D<T> &other) const
+{
+    return not this->operator==(other);
+}
 
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-const T& PackedArray<T>::at(quint32 i, quint32 j) const;
+/** Return a reference to the ith array in this container
 
+    \throw SireError::invalid_index
+*/
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-int PackedArray<T>::count() const;
+const Array& PackedArray2D<T>::operator[](quint32 i)
+{
+    this->assertValidIndex(i);
+    return this->arrayData()[i];
+}
 
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-int PackedArray<T>::size() const;
+/** Return a reference to the ith array in this container
 
+    \throw SireError::invalid_index
+*/
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-int PackedArray<T>::nArrays() const;
+const Array& PackedArray2D<T>::at(quint32 i) const
+{
+    return this->operator[](i);
+}
 
+/** Return a reference to the jth value of the ith array in 
+    this container
+    
+    \throw SireError::invalid_index
+*/
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-int PackedArray<T>::nValues() const;
+const T& PackedArray2D<T>::operator()(quint32 i, quint32 j) const
+{
+    return this->at(i).at(j);
+}
 
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-bool PackedArray<T>::isEmpty() const;
+/** Return a modifiable reference to the jth value of the ith array 
 
+    \throw SireError::invalid_index
+*/
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-const Array* PackedArray<T>::data() const;
+T& PackedArray2D<T>::operator()(quint32 i, quint32 j)
+{
+    this->assertValidIndex(i);
+    Array &array = this->arrayData()[i];
+    
+    return array[j];
+}
 
+/** Return a reference to the jth value of the ith array in 
+    this container
+    
+    \throw SireError::invalid_index
+*/
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-const Array* PackedArray<T>::constData() const;
+const T& PackedArray2D<T>::at(quint32 i, quint32 j) const
+{
+    return this->operator()(i,j);
+}
 
+/** Return the number of arrays in this PackedArray2D */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-const T* PackedArray<T>::data(quint32 i) const;
+int PackedArray2D<T>::count() const
+{
+    return d->nArrays();
+}
 
+/** Return the number of arrays in this PackedArray2D */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-T* PackedArray<T>::data(quint32 i);
+int PackedArray2D<T>::size() const
+{
+    return this->count();
+}
 
+/** Return the number of arrays in this PackedArray2D */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-const T* PackedArray<T>::constData(quint32 i) const;
+int PackedArray2D<T>::nArrays() const
+{
+    return this->count();
+}
 
+/** Return the total number of objects in this array */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-const T* PackedArray<T>::valueData() const;
+int PackedArray2D<T>::nValues() const
+{
+    return d->nValues();
+}
 
+/** Return whether or not this array is empty (contains no arrays) */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-T* PackedArray<T>::valueData();
+bool PackedArray2D<T>::isEmpty() const
+{
+    return this->count() == 0;
+}
 
+/** Return a raw pointer to the array of arrays. */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-const T* PackedArray<T>::constValueData() const;
+const Array* PackedArray2D<T>::data() const
+{
+    return d->data();
+}
 
+/** Return a raw pointer to the array of arrays. */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-void PackedArray<T>::update(quint32 i, const Array &array);
+const Array* PackedArray2D<T>::constData() const
+{
+    return d->constData();
+}
+
+/** Return a raw pointer to the array of values in the ith array 
+
+    \throw SireError::invalid_index
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+const T* PackedArray2D<T>::data(quint32 i) const
+{
+    return this->at(i).data();
+}
+
+/** Return a modifiable pointer to the array of values in the
+    ith array. *DO NOT* delete this pointer! 
+    
+    \throw SireError::invalid_index
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+T* PackedArray2D<T>::data(quint32 i)
+{
+    this->assertValidIndex(i);
+    return d->arrayData()[i].data();
+}
+
+/** Return a raw pointer to the array of values in the ith array 
+
+    \throw SireError::invalid_index
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+const T* PackedArray2D<T>::constData(quint32 i) const
+{
+    return this->data(i);
+}
+
+/** Return a raw pointer to the array of all values in all arrays */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+const T* PackedArray2D<T>::valueData() const
+{
+    return d->valueData();
+}
+
+/** Return a modifiable pointer to the array of all values in 
+    all arrays. *DO NOT* delete this pointer. */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+T* PackedArray2D<T>::valueData()
+{
+    return d->valueData();
+}
+
+/** Return a raw pointer to the array of all values in all arrays */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+const T* PackedArray2D<T>::constValueData() const
+{
+    return d->valueData();
+}
+
+/** Update the ith array so that it has the same contents as 'array'
+
+    \throw SireError::incompatible_error
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void PackedArray2D<T>::update(quint32 i, const Array &array)
+{
+    this->assertValidIndex(i);
+    d->arrayData()[i].update(array);
+}
 
 } // end of namespace SireBase
 
