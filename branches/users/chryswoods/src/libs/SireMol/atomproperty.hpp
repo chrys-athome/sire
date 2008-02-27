@@ -36,7 +36,7 @@
 #include "moleculeinfodata.h"
 #include "atomselection.h"
 
-#include "SireBase/packedarray.hpp"
+#include "SireBase/packedarray2d.hpp"
 
 #include "SireError/errors.h"
 
@@ -60,6 +60,7 @@ namespace SireMol
 {
 
 using SireBase::Property;
+using SireBase::PackedArray2D;
 
 /** Small class used to give a common base to all
     AtomProperty classes */
@@ -107,8 +108,9 @@ public:
 
     AtomProperty(const MoleculeInfoData &molinfo);
     
-    AtomProperty(const QVector<T> &values);
-    AtomProperty(const QVector< QVector<T> > &values);
+    AtomProperty(const T &value);
+    AtomProperty(const PackedArray2D<T> &values);
+
     AtomProperty(const QVector< QVector<QVariant> > &values);
     AtomProperty(const QVector<QVariant> &values);
     
@@ -136,9 +138,9 @@ public:
     void assignFrom(const QVector<QVariant> &values);
     void assignFrom(const QVector< QVector<QVariant> > &values);
 
-    const SireBase::PackedArray<T>::Array& operator[](CGIdx cgidx) const;
-    const SireBase::PackedArray<T>::Array& at(CGIdx cgidx) const;
-    const SireBase::PackedArray<T>::Array& get(CGIdx cgidx) const;
+    const typename PackedArray2D<T>::Array& operator[](CGIdx cgidx) const;
+    const typename PackedArray2D<T>::Array& at(CGIdx cgidx) const;
+    const typename PackedArray2D<T>::Array& get(CGIdx cgidx) const;
 
     const T& operator[](const CGAtomIdx &cgatomidx) const;
     const T& at(const CGAtomIdx &cgatomidx) const;
@@ -148,8 +150,10 @@ public:
 
     AtomProperty<T>& set(CGIdx cgidx, const QVector<T> &values);
 
-    const SireBase::PackedArray<T>::Array* data() const;
-    const SireBase::PackedArray<T>::Array* constData() const;
+    const PackedArray2D<T>& array() const;
+
+    const typename PackedArray2D<T>::Array* data() const;
+    const typename PackedArray2D<T>::Array* constData() const;
 
     const T* data(CGIdx cgidx) const;
     const T* constData(CGIdx cgidx) const;
@@ -172,7 +176,7 @@ public:
 
 private:
     /** The actual atomic property values */
-    SireBase::PackedArray<T> props;
+    SireBase::PackedArray2D<T> props;
 };
 
 /** Return whether or not the variant 'value' can be converted to be
@@ -223,36 +227,39 @@ AtomProperty<T>::AtomProperty(const MoleculeInfoData &molinfo)
     if (ncg > 0)
     {
         //create space for each CutGroup
-        props = QVector< QVector<T> >(ncg);
+        QVector< QVector<T> > tmp_props = QVector< QVector<T> >(ncg);
         
-        QVector<T> *props_array = props.data();
+        QVector<T> *tmp_props_array = tmp_props.data();
         
         for (CGIdx i(0); i<ncg; ++i)
         {
             //now create space for all of the atoms
-            props_array[i] = QVector<T>(molinfo.nAtoms(i));
-            props_array[i].squeeze();
+            tmp_props_array[i] = QVector<T>(molinfo.nAtoms(i));
         }
-        
-        props.squeeze();
+
+        //now copy this into the PackedArray
+        props = PackedArray2D<T>(tmp_props);
     }
 }
 
-/** Construct the Atom property from the array of values
-    (this would be for a molecule with just a single CutGroup) */
+/** Construct an Atom property that holds a single value (only
+    suitable for a molecule that has just one atom in just one CutGroup) */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-AtomProperty<T>::AtomProperty(const QVector<T> &values)
+AtomProperty<T>::AtomProperty(const T &value)
                 : SireBase::ConcreteProperty<AtomProperty<T>,AtomProp>()
 {
-    if (not values.isEmpty())
-    {
-        props = QVector< QVector<T> >(1);
-        props[0] = values;
-        props[0].squeeze();
-        props.squeeze();
-    }
+    QVector<T> tmp_props(1, value);
+    props = PackedArray2D<T>(tmp_props);
 }
+
+/** Construct the Atom property from the PackedArray2D of values */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+AtomProperty<T>::AtomProperty(const PackedArray2D<T> &values)
+                : SireBase::ConcreteProperty<AtomProperty<T>,AtomProp>(),
+                  props(values)
+{}
 
 /** Construct the Atom property from the array of QVariants.
     
@@ -270,7 +277,6 @@ AtomProperty<T>::AtomProperty(const QVector<QVariant> &values)
     const QVariant *values_array = values.constData();
     
     QVector<T> converted_vals(nvals);
-    converted_vals.squeeze();
     T *converted_vals_array = converted_vals.data();
     
     for (int i=0; i<nvals; ++i)
@@ -281,8 +287,7 @@ AtomProperty<T>::AtomProperty(const QVector<QVariant> &values)
         converted_vals_array[i] = value.value<T>();
     }
     
-    props = QVector< QVector<T> >(1, converted_vals);
-    props.squeeze();
+    props = PackedArray2D<T>(converted_vals);
 }
 
 /** Construct the Atom property from the array of array of QVariants.
@@ -301,9 +306,8 @@ AtomProperty<T>::AtomProperty(const QVector< QVector<QVariant> > &values)
     int ngroups = values.count();
     const QVector<QVariant> *values_array = values.constData();
             
-    props = QVector< QVector<T> >(ngroups);
-    props.squeeze();
-    QVector<T> *props_array = props.data();
+    QVector< QVector<T> > tmp_props = QVector< QVector<T> >(ngroups);
+    QVector<T> *tmp_props_array = tmp_props.data();
     
     for (int i=0; i<ngroups; ++i)
     {
@@ -311,11 +315,10 @@ AtomProperty<T>::AtomProperty(const QVector< QVector<QVariant> > &values)
         int nvals = group_values.count();
         
         if (nvals == 0)
-            props_array[i] = QVector<T>();
+            tmp_props_array[i] = QVector<T>();
         else
         {
             QVector<T> converted_vals(nvals);
-            converted_vals.squeeze();
             T *converted_vals_array = converted_vals.data();
             const QVariant *group_values_array = group_values.constData();
 
@@ -327,32 +330,11 @@ AtomProperty<T>::AtomProperty(const QVector< QVector<QVariant> > &values)
                 converted_vals_array[j] = value.value<T>();
             }
             
-            props_array[i] = converted_vals;
+            tmp_props_array[i] = converted_vals;
         }
     }
-}
-
-/** Create the Atom property from the array of array of values
-     - each array contains the properties for a single CutGroup */
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-AtomProperty<T>::AtomProperty(const QVector< QVector<T> > &values)
-                : SireBase::ConcreteProperty<AtomProperty<T>,AtomProp>(), 
-                  props(values)
-{
-    if (not props.isEmpty())
-    {
-        //squeeze everything to save space
-        int ncg = props.count();
-        QVector<T> *props_array = props.data();
-        
-        for (int i=0; i<ncg; ++i)
-        {
-            props_array[i].squeeze();
-        }
-        
-        props.squeeze();
-    }
+    
+    props = PackedArray2D<T>(tmp_props);
 }
 
 /** Copy constructor */
@@ -401,7 +383,7 @@ bool AtomProperty<T>::operator!=(const AtomProperty<T> &other) const
 */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-const QVector<T>& AtomProperty<T>::operator[](CGIdx cgidx) const
+const typename PackedArray2D<T>::Array& AtomProperty<T>::operator[](CGIdx cgidx) const
 {
     return props.constData()[ cgidx.map(props.count()) ];
 }
@@ -416,7 +398,7 @@ QVector< QVector<QVariant> > AtomProperty<T>::toVariant() const
         return QVector< QVector<QVariant> >();
         
     int ngroups = props.count();
-    const QVector<T> *props_array = props.constData();
+    const typename PackedArray2D<T>::Array *props_array = props.constData();
     
     QVector< QVector<QVariant> > variant_vals(ngroups);
     variant_vals.squeeze();
@@ -424,7 +406,7 @@ QVector< QVector<QVariant> > AtomProperty<T>::toVariant() const
     
     for (int i=0; i<ngroups; ++i)
     {
-        const QVector<T> &group_props = props_array[i];
+        const typename PackedArray2D<T>::Array &group_props = props_array[i];
         
         if (group_props.isEmpty())
             variant_vals_array[i] = QVector<QVariant>();
@@ -479,7 +461,7 @@ void AtomProperty<T>::assignFrom(const QVector< QVector<QVariant> > &values)
 */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-const QVector<T>& AtomProperty<T>::at(CGIdx cgidx) const
+const typename PackedArray2D<T>::Array& AtomProperty<T>::at(CGIdx cgidx) const
 {
     return this->operator[](cgidx);
 }
@@ -491,7 +473,7 @@ const QVector<T>& AtomProperty<T>::at(CGIdx cgidx) const
 */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-const QVector<T>& AtomProperty<T>::get(CGIdx cgidx) const
+const typename PackedArray2D<T>::Array& AtomProperty<T>::get(CGIdx cgidx) const
 {
     return this->operator[](cgidx);
 }
@@ -504,7 +486,8 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 const T& AtomProperty<T>::operator[](const CGAtomIdx &cgatomidx) const
 {
-    const QVector<T> &group_props = this->operator[](cgatomidx.cutGroup());
+    const typename PackedArray2D<T>::Array &group_props 
+                            = this->operator[](cgatomidx.cutGroup());
 
     return group_props.constData()[ cgatomidx.atom().map(group_props.count()) ];
 }
@@ -539,9 +522,10 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 AtomProperty<T>& AtomProperty<T>::set(const CGAtomIdx &cgatomidx, const T &value)
 {
-    QVector<T> &group_props = props.data()[cgatomidx.cutGroup().map(props.count())];
-    
-    group_props.data()[cgatomidx.atom().map(group_props.count())] = value;
+    quint32 cgidx = cgatomidx.cutGroup().map(props.count());
+    quint32 atomidx = cgatomidx.atom().map( props.at(cgidx).count() );
+
+    props(cgidx, atomidx) = value;
     
     return *this;
 }
@@ -555,27 +539,24 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 AtomProperty<T>& AtomProperty<T>::set(CGIdx cgidx, const QVector<T> &values)
 {
-    QVector<T> &group_props = props.data()[cgidx.map(props.count())];
-    
-    if (values.count() != group_props.count())
-        throw SireError::incompatible_error( QObject::tr(
-            "Cannot set the atomic properties of a %1 for the CutGroup "
-            "at index %2, as the number of atoms in this CutGroup is "
-            "%3, but the number of supplied properties is %4.")
-                .arg( AtomProperty<T>::typeName() )
-                .arg(cgidx).arg(group_props.count()).arg(values.count()),
-                    CODELOC );
-                    
-    group_props = values;
-    group_props.squeeze();
+    props.update( cgidx.map(props.count()), values );
     
     return *this;
+}
+
+/** Return a const-reference to the PackedArray2D used to store
+    all of the atom properties */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+const PackedArray2D<T>& AtomProperty<T>::array() const
+{
+    return props;
 }
 
 /** Return a raw pointer to the array of arrays */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-const QVector<T>* AtomProperty<T>::data() const
+const typename PackedArray2D<T>::Array* AtomProperty<T>::data() const
 {
     return props.constData();
 }
@@ -583,7 +564,7 @@ const QVector<T>* AtomProperty<T>::data() const
 /** Return a raw pointer to the array of arrays */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-const QVector<T>* AtomProperty<T>::constData() const
+const typename PackedArray2D<T>::Array* AtomProperty<T>::constData() const
 {
     return props.constData();
 }
@@ -641,14 +622,7 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 int AtomProperty<T>::nAtoms() const
 {
-    int nats = 0;
-    
-    for (int i=0; i<props.count(); ++i)
-    {
-        nats += props.constData()[i].count();
-    }
-    
-    return nats;
+    return props.nValues();
 }
 
 /** Return the number of atoms in the CutGroup at index 'cgidx'
@@ -669,12 +643,15 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 bool AtomProperty<T>::isCompatibleWith(const MoleculeInfoData &molinfo) const
 {
+    if (props.nValues() != molinfo.nAtoms())
+        return false;
+
     int ncg = molinfo.nCutGroups();
 
     if (ncg != props.count())
         return false;
         
-    const QVector<T> *props_array = props.constData();
+    const typename PackedArray2D<T>::Array *props_array = props.constData();
     
     for (CGIdx i(0); i<ncg; ++i)
     {
@@ -715,8 +692,7 @@ AtomProperty<T> AtomProperty<T>::matchToSelection(
     
     else if (selected_atoms.selectedAllCutGroups())
     {
-        QVector< QVector<T> > new_props = props;
-        QVector<T> *new_props_array = new_props.data();
+        PackedArray2D<T> new_props = props;
         
         int ncg = props.count();
         
@@ -724,17 +700,15 @@ AtomProperty<T> AtomProperty<T>::matchToSelection(
         {
             if (not selected_atoms.selectedAll(i))
             {
+                int nats = new_props.at(i).count();
+                T *atom_props_array = new_props.data(i);
+
                 const QSet<Index> &atoms = selected_atoms.selectedAtoms(i);
                 
-                QVector<T> &atom_props = new_props_array[i];
-                int nats = atom_props.count();
-                
-                T *atom_props_array = atom_props.data();
-                
-                for (Index i(0); i<nats; ++i)
+                for (Index j(0); j<nats; ++j)
                 {
-                    if (not atoms.contains(i))
-                        atom_props_array[i] = T();
+                    if (not atoms.contains(j))
+                        atom_props_array[j] = T();
                 }
             }
         }
@@ -748,7 +722,7 @@ AtomProperty<T> AtomProperty<T>::matchToSelection(
         QVector< QVector<T> > new_props = QVector< QVector<T> >(cgidxs.count());
         QVector<T> *new_props_array = new_props.data();
         
-        const QVector<T> *props_array = props.constData();
+        const typename PackedArray2D<T>::Array *props_array = props.constData();
         
         int n = 0;
         
@@ -756,22 +730,22 @@ AtomProperty<T> AtomProperty<T>::matchToSelection(
         {
             if (selected_atoms.selectedAll(i))
             {
-                new_props_array[n] = props_array[i];
+                new_props_array[n] = props_array[i].toQVector();
                 ++n;
             }
             else
             {
                 const QSet<Index> &atoms = selected_atoms.selectedAtoms(i);
                 
-                QVector<T> atom_props = props_array[i];
+                QVector<T> atom_props = props_array[i].toQVector();
                 int nats = atom_props.count();
                 
                 T *atom_props_array = atom_props.data();
                 
-                for (Index i(0); i<nats; ++i)
+                for (Index j(0); j<nats; ++j)
                 {
-                    if (not atoms.contains(i))
-                        atom_props_array[i] = T();
+                    if (not atoms.contains(j))
+                        atom_props_array[j] = T();
                 }
                 
                 new_props_array[n] = atom_props;

@@ -240,7 +240,7 @@ Sphere Evaluator::boundingSphere(const PropertyMap &map) const
     return this->aaBox(map).boundingSphere();
 }
 
-double calc_mass(const QVector<SireUnits::Dimension::Mass> &masses)
+double calc_mass(const PackedArray2D<SireUnits::Dimension::Mass>::Array &masses)
 {
     const SireUnits::Dimension::Mass *masses_array = masses.constData();
     int nmasses = masses.count();
@@ -255,7 +255,7 @@ double calc_mass(const QVector<SireUnits::Dimension::Mass> &masses)
     return m;
 }
 
-static double calc_mass(const QVector<SireUnits::Dimension::Mass> &masses,
+static double calc_mass(const PackedArray2D<SireUnits::Dimension::Mass>::Array &masses,
                         const QSet<Index> &idxs)
 {
     const SireUnits::Dimension::Mass *masses_array = masses.constData();
@@ -275,7 +275,8 @@ static double get_mass(const AtomMasses &masses,
 {
     double m = 0;
     
-    const QVector<SireUnits::Dimension::Mass> *masses_array = masses.constData();
+    const PackedArray2D<SireUnits::Dimension::Mass>::Array *masses_array 
+                                            = masses.constData();
     int ncg = masses.count();
 
     if (selected_atoms.selectedAll())
@@ -309,7 +310,7 @@ static double get_mass(const AtomMasses &masses,
     return m;
 }
 
-static double calc_mass(const QVector<Element> &elements)
+static double calc_mass(const PackedArray2D<Element>::Array &elements)
 {
     const Element *elements_array = elements.constData();
     int nelements = elements.count();
@@ -324,7 +325,8 @@ static double calc_mass(const QVector<Element> &elements)
     return m;
 }
 
-static double calc_mass(const QVector<Element> &elements, const QSet<Index> &idxs)
+static double calc_mass(const PackedArray2D<Element>::Array &elements, 
+                        const QSet<Index> &idxs)
 {
     const Element *elements_array = elements.constData();
     
@@ -343,7 +345,7 @@ static double get_mass(const AtomElements &elements,
 {
     double m = 0;
     
-    const QVector<Element> *elements_array = elements.constData();
+    const PackedArray2D<Element>::Array *elements_array = elements.constData();
     int ncg = elements.count();
 
     if (selected_atoms.selectedAll())
@@ -512,7 +514,8 @@ Vector Evaluator::centerOfGeometry(const PropertyMap &map) const
 }
 
 static double addToAvg(const CoordGroup &coords, 
-                       const QVector<SireUnits::Dimension::Mass> &masses, Vector &avg)
+                       const PackedArray2D<SireUnits::Dimension::Mass>::Array &masses, 
+                       Vector &avg)
 {
     const Vector *coords_array = coords.constData();
     const SireUnits::Dimension::Mass *masses_array = masses.constData();
@@ -531,7 +534,7 @@ static double addToAvg(const CoordGroup &coords,
 }
 
 double addToAvg(const CoordGroup &coords, 
-                const QVector<SireUnits::Dimension::Mass> &masses,
+                const PackedArray2D<SireUnits::Dimension::Mass>::Array &masses,
                 const QSet<Index> &indicies, Vector &avg)
 {
     const Vector *coords_array = coords.constData();
@@ -553,7 +556,8 @@ static Vector get_com(const AtomCoords &coords,
                       const AtomSelection &selected_atoms)
 {
     const CoordGroup *coords_array = coords.constData();
-    const QVector<SireUnits::Dimension::Mass> *masses_array = masses.constData();
+    const PackedArray2D<SireUnits::Dimension::Mass>::Array *masses_array 
+                                                        = masses.constData();
     
     int ncg = coords.count();
     
@@ -604,7 +608,8 @@ static Vector get_com(const AtomCoords &coords,
     return avg / total_mass;
 }
 
-double addToAvg(const CoordGroup &coords, const QVector<Element> &elements, 
+double addToAvg(const CoordGroup &coords, 
+                const PackedArray2D<Element>::Array &elements, 
                 Vector &avg)
 {
     const Vector *coords_array = coords.constData();
@@ -623,7 +628,8 @@ double addToAvg(const CoordGroup &coords, const QVector<Element> &elements,
     return mass;
 }
 
-double addToAvg(const CoordGroup &coords, const QVector<Element> &elements,
+double addToAvg(const CoordGroup &coords, 
+                const PackedArray2D<Element>::Array &elements,
                 const QSet<Index> &indicies, Vector &avg)
 {
     const Vector *coords_array = coords.constData();
@@ -645,7 +651,7 @@ static Vector get_com(const AtomCoords &coords,
                       const AtomSelection &selected_atoms)
 {
     const CoordGroup *coords_array = coords.constData();
-    const QVector<Element> *elements_array = elements.constData();
+    const PackedArray2D<Element>::Array *elements_array = elements.constData();
     
     int ncg = coords.count();
     

@@ -30,9 +30,12 @@
 #include "packedarray2d.hpp"
 
 #include "SireError/errors.h"
+#include "SireStream/datastream.h"
 
 using namespace SireBase;
 using namespace SireBase::detail;
+
+using namespace SireStream;
 
 void SIREBASE_EXPORT SireBase::detail::throwPackedArray2D_invalidIndex(
                                                     quint32 i, quint32 nvals)
@@ -58,7 +61,43 @@ void SIREBASE_EXPORT SireBase::detail::throwPackedArray2D_Array_incompatibleErro
         "(number of objects in this array is %1, while the number of "
         "objects in the other array is %2.")
             .arg(this_sz).arg(other_sz), CODELOC );
-}          
+}       
+
+static const RegisterMetaType<PackedArray2DDataBase> r_parray( MAGIC_ONLY,
+                                                      "SireBase::PackedArray2D<T>" );
+
+void SIREBASE_EXPORT 
+SireBase::detail::writePackedArray2DHeader(QDataStream &ds, quint32 version)
+{
+    writeHeader(ds, r_parray, version);
+}
+
+void SIREBASE_EXPORT 
+SireBase::detail::readPackedArray2DHeader(QDataStream &ds, quint32 version)
+{
+    VersionID v = readHeader(ds, r_parray);
+    
+    if (v != version)
+        throw version_error(v, QString::number(version), r_parray, CODELOC);
+}
+
+static const RegisterMetaType<PackedArray2D_ArrayDataBase> r_parrayarray( MAGIC_ONLY,
+                                                "SireBase::PackedArray2D<T>::Array" );
+
+void SIREBASE_EXPORT 
+SireBase::detail::writePackedArray2DArrayHeader(QDataStream &ds, quint32 version)
+{
+    writeHeader(ds, r_parrayarray, version);
+}
+
+void SIREBASE_EXPORT 
+SireBase::detail::readPackedArray2DArrayHeader(QDataStream &ds, quint32 version)
+{
+    VersionID v = readHeader(ds, r_parrayarray);
+    
+    if (v != version)
+        throw version_error(v, QString::number(version), r_parrayarray, CODELOC);
+}
 
 ////////
 //////// Implementation of PackedArray2DMemoryBase

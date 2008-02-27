@@ -45,6 +45,12 @@ void throwPackedArray2D_invalidIndex(quint32 i, quint32 nvals);
 void throwPackedArray2D_Array_invalidIndex(quint32 i, quint32 nvals);
 void throwPackedArray2D_Array_incompatibleError(quint32 this_sz, quint32 other_sz);
 
+void writePackedArray2DHeader(QDataStream &ds, quint32 version);
+void readPackedArray2DHeader(QDataStream &ds, quint32 version);
+
+void writePackedArray2DArrayHeader(QDataStream &ds, quint32 version);
+void readPackedArray2DArrayHeader(QDataStream &ds, quint32 version);
+
 class PackedArray2DDataBase;
 class PackedArray2D_ArrayDataBase;
 

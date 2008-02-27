@@ -36,6 +36,31 @@ SIRE_BEGIN_HEADER
 
 namespace SireBase
 {
+template<class T>
+class PackedArray2D;
+
+namespace detail
+{
+template<class T>
+class PackedArray2D_Array;
+}
+
+}
+
+template<class T>
+QDataStream& operator<<(QDataStream&, const SireBase::PackedArray2D<T>&);
+template<class T>
+QDataStream& operator>>(QDataStream&, SireBase::PackedArray2D<T>&);
+
+template<class T>
+QDataStream& operator<<(QDataStream&, 
+                        const SireBase::detail::PackedArray2D_Array<T>&);
+template<class T>
+QDataStream& operator>>(QDataStream&, 
+                        SireBase::detail::PackedArray2D_Array<T>&);
+
+namespace SireBase
+{
 
 template<class T>
 class PackedArray2D;
@@ -280,10 +305,17 @@ class PackedArray2D_Array
 friend class PackedArray2DMemory<T>;
 friend class PackedArray2D<T>;
 
+friend QDataStream& ::operator<<<>(QDataStream&, const PackedArray2D_Array<T>&);
+friend QDataStream& ::operator>><>(QDataStream&, PackedArray2D_Array<T>&);
+
 public:
     PackedArray2D_Array();
+    
     PackedArray2D_Array(quint32 sz);
     PackedArray2D_Array(quint32 sz, const T &value);
+
+    PackedArray2D_Array(const T &value);
+    
     PackedArray2D_Array(const QVector<T> &values);
     
     PackedArray2D_Array(const PackedArray2D_Array<T> &other);
@@ -314,6 +346,8 @@ public:
     
     void update(const PackedArray2D_Array<T> &other);
     
+    QVector<T> toQVector() const;
+    
     void assertValidIndex(quint32 i) const;
 
 protected:
@@ -338,6 +372,9 @@ class PackedArray2D
 {
 
 friend class detail::PackedArray2DMemory<T>;
+
+friend QDataStream& ::operator<<<>(QDataStream&, const PackedArray2D<T>&);
+friend QDataStream& ::operator>><>(QDataStream&, PackedArray2D<T>&);
 
 public:
     typedef typename detail::PackedArray2D_Array<T> Array;
@@ -387,6 +424,9 @@ public:
     T* valueData();
     
     const T* constValueData() const;
+
+    QVector<T> toQVector() const;
+    QVector< QVector<T> > toQVectorVector() const;
 
     void update(quint32 i, const Array &array);
 
@@ -1099,7 +1139,7 @@ bool PackedArray2D_Array<T>::operator==(const PackedArray2D_Array<T> &other) con
     const T *this_data = this->constData();
     const T *other_data = other.constData();
     
-    for (quint32 i=0; i<this->nValues(); ++i)
+    for (int i=0; i<this->nValues(); ++i)
     {
         if (this_data[i] != other_data[i])
             return false;
@@ -1124,7 +1164,7 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 void PackedArray2D_Array<T>::assertValidIndex(quint32 i) const
 {
-    if (i >= this->nValues())
+    if (i >= quint32(this->nValues()))
         detail::throwPackedArray2D_Array_invalidIndex(i, this->nValues());
 }
 
@@ -1210,6 +1250,23 @@ SIRE_OUTOFLINE_TEMPLATE
 bool PackedArray2D_Array<T>::isEmpty() const
 {
     return this->count() == 0;
+}
+
+/** Return the QVector that has the same contents as this array */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QVector<T> PackedArray2D_Array<T>::toQVector() const
+{
+    if (this->isEmpty())
+        return QVector<T>();
+        
+    QVector<T> ret( this->count() );
+    
+    void *output = qMemCopy( ret.data(), this->data(), this->count() * sizeof(T) );
+    
+    BOOST_ASSERT(output == ret.data());
+    
+    return ret;
 }
 
 /** Update this array so that it has the same contents as 'other'
@@ -1448,7 +1505,7 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 void PackedArray2D<T>::assertValidIndex(quint32 i) const
 {
-    if (i >= this->count())
+    if (i >= quint32(this->count()))
         SireBase::detail::throwPackedArray2D_invalidIndex(i, this->count());
 }
 
@@ -1629,6 +1686,45 @@ const T* PackedArray2D<T>::constValueData() const
     return d->valueData();
 }
 
+/** Return the QVector that has the same contents as this array */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QVector<T> PackedArray2D<T>::toQVector() const
+{
+    if (this->nValues() == 0)
+        return QVector<T>();
+        
+    QVector<T> ret( this->nValues() );
+    
+    void *output = qMemCopy( ret.data(), this->valueData(), 
+                             this->nValues() * sizeof(T) );
+    
+    BOOST_ASSERT(output == ret.data());
+    
+    return ret;
+}
+
+/** Return the QVector that has the same contents as this array */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QVector< QVector<T> > PackedArray2D<T>::toQVectorVector() const
+{
+    if (this->isEmpty())
+        return QVector< QVector<T> >();
+        
+    QVector< QVector<T> > ret( this->count() );
+
+    QVector<T> *ret_array = ret.data();
+    const Array *arrays = this->data();
+    
+    for (int i=0; i<this->count(); ++i)
+    {
+        ret[i] = arrays[i].toQVector();
+    }
+    
+    return ret;
+}
+
 /** Update the ith array so that it has the same contents as 'array'
 
     \throw SireError::incompatible_error
@@ -1642,6 +1738,130 @@ void PackedArray2D<T>::update(quint32 i, const Array &array)
 }
 
 } // end of namespace SireBase
+
+/** Serialise a PackedArray2D<T>::Array to a binary datastream */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator<<(QDataStream &ds,
+                        const typename SireBase::PackedArray2D<T>::Array &array)
+{
+    SireBase::detail::writePackedArray2DArrayHeader(ds, 1);
+    
+    //serialise the number of objects in this array
+    ds << quint32(array.count());
+    
+    //serialise all of the values
+    for (int i=0; i<array.count(); ++i)
+    {
+        ds << array.constData()[i];
+    }
+    
+    return ds;
+}
+
+/** Extract a PackedArray2D<T>::Array from a binary datastream */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator>>(QDataStream &ds,
+                        typename SireBase::PackedArray2D<T>::Array &array)
+{
+    SireBase::detail::readPackedArray2DArrayHeader(ds, 1);
+    
+    //extract the number of objects
+    quint32 nvals;
+    ds >> nvals;
+    
+    if (nvals == 0)
+    {
+        array = SireBase::PackedArray2D<T>::Array();
+        return ds;
+    }
+    
+    //create an array of sufficient size
+    typename SireBase::PackedArray2D<T>::Array new_array(nvals);
+    
+    //read in the values
+    T *data = new_array.data();
+    
+    for (int i=0; i<nvals; ++i)
+    {
+        ds >> data[i];
+    }
+    
+    array = new_array;
+    
+    return ds;
+}
+
+/** Serialise a PackedArray2D<T> to a binary datastream */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator<<(QDataStream &ds, 
+                        const SireBase::PackedArray2D<T> &arrays)
+{
+    SireBase::detail::writePackedArray2DHeader(ds, 1);
+    
+    //serialise the number of arrays in this array
+    ds << quint32(arrays.count());
+    
+    //now go through each array and serialise the number of values
+    //in each array
+    for (int i=0; i<arrays.count(); ++i)
+    {
+        ds << quint32( arrays.constData()[i].count() );
+    }
+    
+    //now serialise all of the data
+    for (int i=0; i<arrays.nValues(); ++i)
+    {
+        ds << arrays.constValueData()[i];
+    }
+    
+    return ds;
+}
+
+/** Extract a PackedArray2D<T> from a binary datastream */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator>>(QDataStream &ds, 
+                        SireBase::PackedArray2D<T> &arrays)
+{
+    SireBase::detail::readPackedArray2DHeader(ds, 1);
+    
+    //get the number of arrays in this array
+    quint32 narrays;
+    
+    ds >> narrays;
+    
+    if (narrays == 0)
+    {
+        arrays = SireBase::PackedArray2D<T>();
+        return ds;
+    }
+    
+    QVector< QVector<T> > tmp_arrays(narrays);
+    
+    for (quint32 i=0; i<narrays; ++i)
+    {
+        quint32 nvals;
+        ds >> nvals;
+        tmp_arrays[i] = QVector<T>(nvals);
+    }
+    
+    SireBase::PackedArray2D<T> new_arrays(tmp_arrays);
+    
+    //now extract all of the objects...
+    T *data = new_arrays.valueData();
+    
+    for (int i=0; i<arrays.nValues(); ++i)
+    {
+        ds >> data[i];
+    }
+    
+    arrays = new_arrays;
+    
+    return ds;
+}
 
 SIRE_END_HEADER
 

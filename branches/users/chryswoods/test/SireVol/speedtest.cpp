@@ -120,6 +120,10 @@ void checkPackedArray()
 
     cout << array2d.count() << " " << array2d.nValues() << endl;
 
+    QVector< QVector<Vector> > c = array2d.toQVectorVector();
+
+    cout << (a == c) << endl;
+
     for (int i=0; i<array2d.count(); ++i)
     {
         PackedArray2D<Vector>::Array array1d = array2d[i];
@@ -140,7 +144,6 @@ int main(int argc, const char **argv)
     //checkRawSpeed(12000);
 
     checkPackedArray();
-    return 0;
 
     QTime t;
 
@@ -365,12 +368,15 @@ int main(int argc, const char **argv)
     int ngroups0 = group20.nCoordGroups();
     int ngroups1 = group21.nCoordGroups();
 
+    #pragma omp parallel firstprivate(ngroups0,ngroups1)
+    {
+
     double l_mindist = mindist;
     DistMatrix l_distmat;
 
-    #pragma omp parallel for \
-            shared(allcg_array20, allcg_array21, mindist) \
-            firstprivate(l_mindist,l_distmat,space)
+    const Space l_space = space;
+
+    #pragma omp for
     for (int igroup=0; igroup<ngroups0; ++igroup)
     {
 	const CoordGroup &cgroup0 = allcg_array20[igroup];
@@ -379,16 +385,18 @@ int main(int argc, const char **argv)
         {
             const CoordGroup &cgroup1 = allcg_array21[jgroup];
 
-            double this_mindist = space->calcDist(cgroup0, cgroup1, l_distmat);
+            const double this_mindist = l_space->calcDist(cgroup0, cgroup1, l_distmat);
 
             if (this_mindist < l_mindist)
                 l_mindist = this_mindist;
         }
 
-
-	if (l_mindist < mindist)
-            mindist = l_mindist;
     }
+
+    if (l_mindist < mindist)
+         mindist = l_mindist;
+
+    } // end of omp parallel
 
     ms = t.elapsed();
 
