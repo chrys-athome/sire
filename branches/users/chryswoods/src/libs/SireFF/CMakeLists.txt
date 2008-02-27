@@ -38,6 +38,10 @@ set ( SIREFF_HEADERS
       inter2bff.hpp
       multiff.h
       twobodyfunctional.hpp
+
+      detail/ffmolecules.h
+      detail/ffmolecules3d.h
+
       qhash_sireff.h
     )
 
@@ -61,6 +65,9 @@ set ( SIREFF_SOURCES
       inter2b3dff.cpp
       inter2bff.cpp
       multiff.cpp
+
+      detail/ffmolecules.cpp
+      detail/ffmolecules3d.cpp
    
       ${SIREFF_HEADERS}
     )

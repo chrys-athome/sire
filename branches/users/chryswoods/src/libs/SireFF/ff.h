@@ -286,30 +286,6 @@ QDataStream& operator>>(QDataStream&, SireFF::FF::Molecule&);
 namespace SireFF
 {
 
-/** This class is used as the base class by forcefields to hold
-    coordinate and parameter data about a molecule
-    
-    @author Christopher Woods
-*/
-class SIREFF_EXPORT FF::Molecule
-{
-
-friend QDataStream& ::operator<<(QDataStream&, const FF::Molecule&);
-friend QDataStream& ::operator>>(QDataStream&, FF::Molecule&);
-
-public:
-    Molecule();
-    Molecule(const MoleculeView &molview);
-    
-    ~Molecule();
-    
-    const MoleculeView& view() const;
-    
-private:
-    /** Copy of the view that this object represents */
-    PartialMolecule molview;
-};
-
 }
 
 SIRE_END_HEADER
