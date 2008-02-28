@@ -26,3 +26,128 @@
   *
 \*********************************************/
 
+#include "ffmolecules.h"
+
+#include "SireMol/atomselection.h"
+#include "SireMol/molnum.h"
+
+#include "SireMol/mover.hpp"
+
+#include "SireError/errors.h"
+
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
+using namespace SireFF;
+using namespace SireFF::detail;
+
+using namespace SireStream;
+
+/////////
+///////// Implementation of FFMoleculeBase
+/////////
+
+static const RegisterMetaType<FFMoleculeBase> r_ffmolbase(MAGIC_ONLY,
+                                                  "SireFF::detail::FFMoleculeBase");
+
+/** Serialise to a binary datastream */
+QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds,
+                                      const FFMoleculeBase &ffmol)
+{
+    writeHeader(ds, r_ffmolbase, 1);
+    
+    SharedDataStream sds(ds);
+    sds << ffmol.mol;
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds,
+                                      FFMoleculeBase &ffmol)
+{
+    VersionID v = readHeader(ds, r_ffmolbase);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        sds >> ffmol.mol;
+    }
+    else
+        throw version_error(v, "1", r_ffmolbase, CODELOC);
+        
+    return ds;
+}
+
+/** Null constructor */
+FFMoleculeBase::FFMoleculeBase()
+{}
+
+/** Construct a specialised version of the view of the molecule
+    in 'molview' */
+FFMoleculeBase::FFMoleculeBase(const PartialMolecule &molview)
+           : mol(molview)
+{}
+
+/** Destructor */
+FFMoleculeBase::~FFMoleculeBase()
+{}
+
+/** Copy assignment operator */
+FFMoleculeBase& FFMoleculeBase::operator=(const FFMoleculeBase &other)
+{
+    mol = other.mol;
+    return *this;
+}
+
+/** Comparison operator */
+bool FFMoleculeBase::operator==(const FFMoleculeBase &other) const
+{
+    return mol == other.mol;
+}
+
+/** Comparison operator */
+bool FFMoleculeBase::operator!=(const FFMoleculeBase &other) const
+{
+    return mol != other.mol;
+}
+
+/** Return a reference to the non-specialised molecule */
+const PartialMolecule& FFMoleculeBase::molecule() const
+{
+    return mol;
+}
+
+/** Return the number of the molecule */
+MolNum FFMoleculeBase::number() const
+{
+    return mol.number();
+}
+
+/** Return whether or not this molecule is empty (contains no atoms) */
+bool FFMoleculeBase::isEmpty() const
+{
+    return mol.selection().selectedNone();
+}
+
+/** Change this view to use the passed molecule
+
+    \throw SireError::incompatible_error
+*/
+bool FFMoleculeBase::change(const PartialMolecule &molecule)
+{
+    if (molecule.number() != mol.number())
+        throw SireError::incompatible_error( QObject::tr(
+            "You cannot change the molecule %1 using the molecule %2 "
+            "as they are different molecules! (their numbers are "
+            "different)")
+                .arg(mol.number()).arg(molecule.number()), CODELOC );
+
+    if (mol != molecule)
+    {
+        mol = molecule;
+        return true;
+    }
+    else
+        return false;
+}
