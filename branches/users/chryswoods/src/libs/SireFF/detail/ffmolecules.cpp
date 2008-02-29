@@ -34,6 +34,9 @@
 #include "SireMol/mover.hpp"
 
 #include "SireError/errors.h"
+#include "SireMol/errors.h"
+
+#include "tostring.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -150,4 +153,221 @@ bool FFMoleculeBase::change(const PartialMolecule &molecule)
     }
     else
         return false;
+}
+
+////////
+//////// Implementation of FFMoleculesBase
+////////
+
+static const RegisterMetaType<FFMoleculesBase> r_ffmolsbase( MAGIC_ONLY,
+                                                "SireFF::detail::FFMoleculesBase" );
+                                                
+/** Serialise to a binary datastream */
+QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds,
+                                      const FFMoleculesBase &ffmols)
+{
+    writeHeader(ds, r_ffmolsbase, 1);
+    
+    SharedDataStream sds(ds);
+    sds << ffmols.molnums_by_idx;
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds,
+                                      FFMoleculesBase &ffmols)
+{
+    VersionID v = readHeader(ds, r_ffmolsbase);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        sds >> ffmols.molnums_by_idx;
+        ffmols._pvt_reindex();
+    }
+    else
+        throw version_error(v, "1", r_ffmolsbase, CODELOC);
+        
+    return ds;
+}
+
+/** Null constructor */
+FFMoleculesBase::FFMoleculesBase()
+{}
+
+/** Copy constructor */
+FFMoleculesBase::FFMoleculesBase(const FFMoleculesBase &other)
+                : molnums_by_idx(other.molnums_by_idx),
+                  idxs_by_molnum(other.idxs_by_molnum)
+{}
+
+/** Destructor */
+FFMoleculesBase::~FFMoleculesBase()
+{}
+
+/** Copy assignment operator */
+FFMoleculesBase& FFMoleculesBase::operator=(const FFMoleculesBase &other)
+{
+    molnums_by_idx = other.molnums_by_idx;
+    idxs_by_molnum = other.idxs_by_molnum;
+    return *this;
+}
+
+/** Comparison operator */
+bool FFMoleculesBase::operator==(const FFMoleculesBase &other) const
+{
+    return molnums_by_idx == other.molnums_by_idx;
+}
+
+/** Comparison operator */
+bool FFMoleculesBase::operator!=(const FFMoleculesBase &other) const
+{
+    return molnums_by_idx != other.molnums_by_idx;
+}
+
+/** Return the array that maps the index in the group to the 
+    molecule number */
+const QVector<MolNum> FFMoleculesBase::molNumsByIndex() const
+{
+    return molnums_by_idx;
+}
+
+/** Return the hash that maps molecule numbers to their index 
+    in the array */
+const QHash<MolNum,quint32>& FFMoleculesBase::indexesByMolNum() const
+{
+    return idxs_by_molnum;
+}
+
+/** Return the index of the molecule with number 'molnum'
+
+    \throw SireMol::missing_molecule
+*/
+quint32 FFMoleculesBase::indexOf(MolNum molnum) const
+{
+    QHash<MolNum,quint32>::const_iterator it = idxs_by_molnum.constFind(molnum);
+    
+    if (it == idxs_by_molnum.constEnd())
+        throw SireMol::missing_molecule( QObject::tr(
+            "There is no molecule with number %1 in this group. "
+            "The available molecules are %2.")
+                .arg(molnum).arg( Sire::toString(idxs_by_molnum.keys()) ),
+                    CODELOC );
+                    
+    return *it;
+}
+
+/** Return whether or not this group contains the molecule with 
+    number 'molnum' */
+bool FFMoleculesBase::contains(MolNum molnum) const
+{
+    return idxs_by_molnum.contains(molnum);
+}
+
+/** Assert that this group contains the molecule with number 'molnum'
+
+    \throw SireMol::missing_molecule
+*/
+void FFMoleculesBase::assertContains(MolNum molnum) const
+{
+    if (not idxs_by_molnum.contains(molnum))
+        throw SireMol::missing_molecule( QObject::tr(
+            "There is no molecule with number %1 in this group. "
+            "The available molecules are %2.")
+                .arg(molnum).arg( Sire::toString(idxs_by_molnum.keys()) ),
+                    CODELOC );
+}
+
+/** Add the molecule 'molnum' to the array, returning its index */
+quint32 FFMoleculesBase::_pvt_add(MolNum molnum)
+{
+    QHash<MolNum,quint32>::const_iterator it = idxs_by_molnum.constFind(molnum);
+    
+    if (it == idxs_by_molnum.constEnd())
+    {
+        //this is a new molecule - add it onto the end of the array
+        molnums_by_idx.append(molnum);
+        idxs_by_molnum.insert(molnum, molnums_by_idx.count() - 1);
+        
+        return molnums_by_idx.count() - 1;
+    }
+    else
+        return *it;
+}
+
+/** Reindex this group */
+void FFMoleculesBase::_pvt_reindex()
+{
+    idxs_by_molnum.clear();
+    
+    if (molnums_by_idx.isEmpty())
+        return;
+        
+    quint32 nmols = molnums_by_idx.count();
+    const MolNum *molnums_array = molnums_by_idx.constData();
+    
+    idxs_by_molnum.reserve(nmols);
+    
+    for (quint32 i=0; i<nmols; ++i)
+    {
+        idxs_by_molnum.insert(molnums_array[i], i);
+    }
+}
+
+/** Completely remove the molecule with number 'molnum' from this index.
+    This does nothing if this molecule is not in this group */
+void FFMoleculesBase::_pvt_remove(MolNum molnum)
+{
+    QHash<MolNum,quint32>::const_iterator it = idxs_by_molnum.constFind(molnum);
+    
+    if (it != idxs_by_molnum.constEnd())
+    {
+        quint32 idx = *it;
+        
+        idxs_by_molnum.remove(molnum);
+        
+        molnums_by_idx.remove(idx);
+        
+        if (molnums_by_idx.isEmpty())
+        {
+            molnums_by_idx.clear();
+            idxs_by_molnum.clear();
+        }
+        else if (idx != quint32(molnums_by_idx.count()))
+        {
+            //we need to reindex the arrays...
+            this->_pvt_reindex();
+        }
+    }
+}
+
+/** Remove all of the molecules whose numbers are in 'molnums' */
+void FFMoleculesBase::_pvt_remove(const QList<MolNum> &molnums)
+{
+    if (molnums.isEmpty())
+        return;
+    else if (molnums.count() == 1)
+    {
+        this->_pvt_remove( *(molnums.begin()) );
+        return;
+    }
+    
+    QHash<MolNum,quint32>::const_iterator it;
+    bool removed_some = false;
+    
+    foreach (MolNum molnum, molnums)
+    {
+        it = idxs_by_molnum.constFind(molnum);
+        
+        if (it != idxs_by_molnum.constEnd())
+        {
+            molnums_by_idx.remove(*it);
+            idxs_by_molnum.remove(molnum);
+            removed_some = true;
+        }
+    }
+    
+    if (removed_some)
+        this->_pvt_reindex();
 }

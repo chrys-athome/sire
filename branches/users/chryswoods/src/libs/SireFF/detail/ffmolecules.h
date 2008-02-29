@@ -39,9 +39,13 @@ namespace SireFF
 namespace detail
 {
 class FFMoleculeBase;
+class FFMoleculesBase;
 
-template<class FFIELD>
+template<class PTNL>
 class FFMolecule;
+
+template<class PTNL>
+class FFMolecules;
 }
 
 }
@@ -49,10 +53,18 @@ class FFMolecule;
 QDataStream& operator<<(QDataStream&, const SireFF::detail::FFMoleculeBase&);
 QDataStream& operator>>(QDataStream&, SireFF::detail::FFMoleculeBase&);
 
-template<class FFIELD>
-QDataStream& operator<<(QDataStream&, const SireFF::detail::FFMolecule<FFIELD>&);
-template<class FFIELD>
-QDataStream& operator>>(QDataStream&, SireFF::detail::FFMolecule<FFIELD>&);
+QDataStream& operator<<(QDataStream&, const SireFF::detail::FFMoleculesBase&);
+QDataStream& operator>>(QDataStream&, SireFF::detail::FFMoleculesBase&);
+
+template<class PTNL>
+QDataStream& operator<<(QDataStream&, const SireFF::detail::FFMolecule<PTNL>&);
+template<class PTNL>
+QDataStream& operator>>(QDataStream&, SireFF::detail::FFMolecule<PTNL>&);
+
+template<class PTNL>
+QDataStream& operator<<(QDataStream&, const SireFF::detail::FFMolecules<PTNL>&);
+template<class PTNL>
+QDataStream& operator>>(QDataStream&, SireFF::detail::FFMolecules<PTNL>&);
 
 namespace SireMol
 {
@@ -114,42 +126,45 @@ private:
     
     @author Christopher Woods
 */
-template<class FFIELD>
+template<class PTNL>
 class FFMolecule : public FFMoleculeBase
 {
 
-friend QDataStream& ::operator<<<>(QDataStream&, const FFMolecule<FFIELD>&);
-friend QDataStream& ::operator>><>(QDataStream&, FFMolecule<FFIELD>&);
+friend QDataStream& ::operator<<<>(QDataStream&, const FFMolecule<PTNL>&);
+friend QDataStream& ::operator>><>(QDataStream&, FFMolecule<PTNL>&);
 
 public:
-    typedef typename FFIELD::Parameters Parameters;
-    typedef typename FFIELD::ParameterNames ParameterNames;
+    typedef typename PTNL::Parameters Parameters;
+    typedef typename PTNL::ParameterNames ParameterNames;
 
     FFMolecule();
     
     FFMolecule(const PartialMolecule &molecule,
-               FFIELD &forcefield,
+               PTNL &forcefield,
                const ParameterNames &parameters);
 
-    FFMolecule(const FFMolecule<FFIELD> &other);
+    FFMolecule(const FFMolecule<PTNL> &other);
 
     ~FFMolecule();
 
-    FFMolecule<FFIELD>& operator=(const FFMolecule<FFIELD> &other);
+    FFMolecule<PTNL>& operator=(const FFMolecule<PTNL> &other);
     
-    bool operator==(const FFMolecule<FFIELD> &other) const;
-    bool operator!=(const FFMolecule<FFIELD> &other) const;
+    bool operator==(const FFMolecule<PTNL> &other) const;
+    bool operator!=(const FFMolecule<PTNL> &other) const;
 
     const Parameters& parameters() const;
     
     bool change(const PartialMolecule &molecule,
-                FFIELD &forcefield,
+                PTNL &forcefield,
                 const ParameterNames &parameternames);
     
     bool change(const PartialMolecule &molecule,
                 const ParameterNames &new_paramnames,
-                FFIELD &forcefield,
+                PTNL &forcefield,
                 const ParameterNames &old_paramnames);
+
+    FFMolecule<PTNL> getDifferences(const FFMolecule<PTNL> &other) const;
+
 private:
     /** The parameters for this molecule */
     Parameters params;
@@ -166,8 +181,12 @@ private:
 */
 class SIREFF_EXPORT FFMoleculesBase
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const FFMoleculesBase&);
+friend QDataStream& ::operator>>(QDataStream&, FFMoleculesBase&);
+
 public:
-    FFMoleculesBase();
+    ~FFMoleculesBase();
 
     const QVector<MolNum> molNumsByIndex() const;
     const QHash<MolNum,quint32>& indexesByMolNum() const;
@@ -175,11 +194,26 @@ public:
     quint32 indexOf(MolNum molnum) const;
     bool contains(MolNum molnum) const;
 
+    void assertContains(MolNum molnum) const;
+
 protected:
-    void _pvt_removed(MolNum molnum);
-    void _pvt_reindex();
+    FFMoleculesBase();
+    
+    FFMoleculesBase(const FFMoleculesBase &other);
+    
+    FFMoleculesBase& operator=(const FFMoleculesBase &other);
+
+    bool operator==(const FFMoleculesBase &other) const;
+    bool operator!=(const FFMoleculesBase &other) const;
+
+    quint32 _pvt_add(MolNum molnum);
+
+    void _pvt_remove(MolNum molnum);
+    void _pvt_remove(const QList<MolNum> &molnums);
     
 private:
+    void _pvt_reindex();
+
     /** The number of each molecule in the group, 
         in the order they appear in the arrays */
     QVector<MolNum> molnums_by_idx;
@@ -192,32 +226,43 @@ private:
 /** This class provides an array of FF specialised molecules, 
     arranged in such a way as to speed up indexing over them.
     
-    The template parameter is the forcefield type for which 
-    this group is used. This is necessary, as different
-    forcefield types use different parameterisation methods,
+    The template parameter is the potential type for which 
+    this group is used (e.g. SireMM::CLJPotential)
+    
+    This is necessary, as different
+    potentials use different parameterisation methods,
     and can supply different specialised molecule types.
     
     @author Christopher Woods
 */
-template<class FFIELD>
+template<class PTNL>
 class FFMolecules : public FFMoleculesBase
 {
 public:
-    typedef typename FFIELD::Molecule Molecule;
-    typedef typename FFIELD::ChangedMolecule ChangedMolecule;
+    typedef typename PTNL::Molecule Molecule;
+    typedef typename PTNL::ChangedMolecule ChangedMolecule;
 
-    typedef typename FFIELD::ParameterNames ParameterNames;
+    typedef typename PTNL::ParameterNames ParameterNames;
 
     FFMolecules();
+    
+    FFMolecules(const FFMolecules<PTNL> &other);
+    
+    ~FFMolecules();
+
+    FFMolecules<PTNL>& operator=(const FFMolecules<PTNL> &other);
+    
+    bool operator==(const FFMolecules<PTNL> &other) const;
+    bool operator!=(const FFMolecules<PTNL> &other) const;
 
     ChangedMolecule change(const PartialMolecule &molecule,
-                           FFIELD &forcefield);
+                           PTNL &forcefield);
                            
     ChangedMolecule add(const PartialMolecule &molecule,
-                        FFIELD &forcefield);
+                        PTNL &forcefield);
                         
     ChangedMolecule remove(const PartialMolecule &molecule,
-                           FFIELD &forcefield);
+                           PTNL &forcefield);
     
     const QVector<Molecule>& moleculesByIndex() const;
     const QVector<ParameterNames>& parameterNamesByIndex() const;
@@ -262,6 +307,8 @@ public:
     bool operator==(const ChangedMolecule<FFMOL> &other) const;
     bool operator!=(const ChangedMolecule<FFMOL> &other) const;
     
+    MolNum number() const;
+    
     bool isEmpty() const;
     
     bool changedAll() const;
@@ -294,19 +341,19 @@ private:
 ////////
 
 /** Null constructor */
-template<class FFIELD>
+template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
-FFMolecule<FFIELD>::FFMolecule() : FFMoleculeBase()
+FFMolecule<PTNL>::FFMolecule() : FFMoleculeBase()
 {}
 
 /** Create a specialised version of the molecule 'molecule'
     that will be part of the passed forcefield 'forcefield',
     using the parameter names in 'parameternames' to find
     and extract the correct parameters */
-template<class FFIELD>
+template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
-FFMolecule<FFIELD>::FFMolecule(const PartialMolecule &molecule,
-                               FFIELD &forcefield,
+FFMolecule<PTNL>::FFMolecule(const PartialMolecule &molecule,
+                               PTNL &forcefield,
                                const ParameterNames &parameternames)
                    : FFMoleculeBase(),
                      params( forcefield.parameterise(molecule,
@@ -314,22 +361,22 @@ FFMolecule<FFIELD>::FFMolecule(const PartialMolecule &molecule,
 {}
 
 /** Copy constructor */
-template<class FFIELD>
+template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
-FFMolecule<FFIELD>::FFMolecule(const FFMolecule<FFIELD> &other)
+FFMolecule<PTNL>::FFMolecule(const FFMolecule<PTNL> &other)
                    : FFMoleculeBase(other), params(other.params)
 {}
 
 /** Destructor */
-template<class FFIELD>
+template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
-FFMolecule<FFIELD>::~FFMolecule()
+FFMolecule<PTNL>::~FFMolecule()
 {}
 
 /** Copy assignment operator */
-template<class FFIELD>
+template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
-FFMolecule<FFIELD>& FFMolecule<FFIELD>::operator=(const FFMolecule<FFIELD> &other)
+FFMolecule<PTNL>& FFMolecule<PTNL>::operator=(const FFMolecule<PTNL> &other)
 {
     FFMoleculeBase::operator=(other);
     params = other.params;
@@ -338,18 +385,18 @@ FFMolecule<FFIELD>& FFMolecule<FFIELD>::operator=(const FFMolecule<FFIELD> &othe
 }
 
 /** Comparison operator */
-template<class FFIELD>
+template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
-bool FFMolecule<FFIELD>::operator==(const FFMolecule<FFIELD> &other) const
+bool FFMolecule<PTNL>::operator==(const FFMolecule<PTNL> &other) const
 {
     return FFMoleculeBase::operator==(other) and 
            params == other.params;
 }
 
 /** Comparison operator */
-template<class FFIELD>
+template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
-bool FFMolecule<FFIELD>::operator!=(const FFMolecule<FFIELD> &other) const
+bool FFMolecule<PTNL>::operator!=(const FFMolecule<PTNL> &other) const
 {
     return FFMoleculeBase::operator!=(other) or
            params != other.params;
@@ -359,9 +406,9 @@ bool FFMolecule<FFIELD>::operator!=(const FFMolecule<FFIELD> &other) const
     are specialised for the particular forcefield that this object
     was parameterised in (so will not necessarily make sense outside
     that forcefield) */
-template<class FFIELD>
+template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
-const typename FFMolecule<FFIELD>::Parameters& FFMolecule<FFIELD>::parameters() const
+const typename FFMolecule<PTNL>::Parameters& FFMolecule<PTNL>::parameters() const
 {
     return params;
 }
@@ -371,11 +418,11 @@ const typename FFMolecule<FFIELD>::Parameters& FFMolecule<FFIELD>::parameters() 
     The names of the properties used to originally get the 
     parameters for this molecule are in 'parameternames'
 */
-template<class FFIELD>
+template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
-bool FFMolecule<FFIELD>::change(const PartialMolecule &new_molecule,
-                                FFIELD &forcefield,
-                    const typename FFMolecule<FFIELD>::ParameterNames &parameternames)
+bool FFMolecule<PTNL>::change(const PartialMolecule &new_molecule,
+                                PTNL &forcefield,
+                    const typename FFMolecule<PTNL>::ParameterNames &parameternames)
 {
     //save the old molecule in case it needs to be restored
     PartialMolecule old_molecule = FFMoleculeBase::molecule();
@@ -408,12 +455,12 @@ bool FFMolecule<FFIELD>::change(const PartialMolecule &new_molecule,
     The names of the properties used to originally get the 
     parameters for this molecule are in 'parameternames'
 */
-template<class FFIELD>
+template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
-bool FFMolecule<FFIELD>::change(const PartialMolecule &new_molecule,
-                  const typename FFMolecule<FFIELD>::ParameterNames &new_parameternames,
-                                FFIELD &forcefield,
-                  const typename FFMolecule<FFIELD>::ParameterNames &parameternames)
+bool FFMolecule<PTNL>::change(const PartialMolecule &new_molecule,
+                  const typename FFMolecule<PTNL>::ParameterNames &new_parameternames,
+                                PTNL &forcefield,
+                  const typename FFMolecule<PTNL>::ParameterNames &parameternames)
 {
     if (new_parameternames == parameternames)
         //we are not changing the parameter sources
@@ -441,6 +488,238 @@ bool FFMolecule<FFIELD>::change(const PartialMolecule &new_molecule,
     }
     
     return changed;
+}
+
+///////
+/////// Implementation of FFMolecules
+///////
+
+
+///////
+/////// Implementation of ChangedMolecule
+///////
+
+/** Null constructor */
+template<class FFMOL>
+SIRE_OUTOFLINE_TEMPLATE
+ChangedMolecule<FFMOL>::ChangedMolecule()
+{}
+
+/** Construct from just the old molecule. This represents no change */
+template<class FFMOL>
+SIRE_OUTOFLINE_TEMPLATE
+ChangedMolecule<FFMOL>::ChangedMolecule(const FFMOL &molecule)
+                       : old_molecule(molecule),
+                         new_molecule(molecule)
+{}
+
+/** Construct the change from 'oldmol' to 'newmol'. Both 'oldmol'
+    and 'newmol' must be views of the same molecule (i.e. their
+    molecule numbers must be identical!)
+
+    \throw SireError::incompatible_error
+*/
+template<class FFMOL>
+SIRE_OUTOFLINE_TEMPLATE
+ChangedMolecule<FFMOL>::ChangedMolecule(const FFMOL &oldmol, const FFMOL &newmol)
+                       : old_molecule(oldmol),
+                         new_molecule(newmol)
+{
+    if (oldmol.isEmpty())
+    {
+        //this represents creating newmol
+        new_parts = new_molecule;
+    }
+    else if (newmol.isEmpty())
+    {
+        //this represent destroying oldmol
+        old_parts = old_molecule;
+    }
+    else
+    {
+        //we are changing from oldmol to newmol
+        SireFF::detail::assertCompatible(old_molecule, new_molecule);
+        
+        //now work out the differences
+        if (oldmol != newmol)
+        {
+            old_parts = old_molecule.getDifferences(new_molecule);
+            new_parts = new_molecule.getDifferences(old_molecule);
+        }
+    }
+}
+
+/** Copy constructor */
+template<class FFMOL>
+SIRE_OUTOFLINE_TEMPLATE
+ChangedMolecule<FFMOL>::ChangedMolecule(const ChangedMolecule<FFMOL> &other)
+                       : old_molecule(other.old_molecule),
+                         new_molecule(other.new_molecule),
+                         old_parts(other.old_parts),
+                         new_parts(other.new_parts)
+{}
+
+/** Destructor */
+template<class FFMOL>
+SIRE_OUTOFLINE_TEMPLATE
+ChangedMolecule<FFMOL>::~ChangedMolecule()
+{}
+
+/** Copy assignment operator */
+template<class FFMOL>
+SIRE_OUTOFLINE_TEMPLATE
+ChangedMolecule<FFMOL>& ChangedMolecule<FFMOL>::operator=(
+                                            const ChangedMolecule<FFMOL> &other)
+{
+    if (this != &other)
+    {
+        old_molecule = other.old_molecule;
+        new_molecule = other.new_molecule;
+        old_parts = other.old_parts;
+        new_parts = other.new_parts;
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+template<class FFMOL>
+SIRE_OUTOFLINE_TEMPLATE
+bool ChangedMolecule<FFMOL>::operator==(const ChangedMolecule<FFMOL> &other) const
+{
+    return this == &other or
+           (old_molecule == other.old_molecule and 
+            new_molecule == other.new_molecule and
+            old_parts == other.old_parts and
+            new_parts == other.new_parts);
+}
+
+/** Comparison operator */
+template<class FFMOL>
+SIRE_OUTOFLINE_TEMPLATE
+bool ChangedMolecule<FFMOL>::operator!=(const ChangedMolecule<FFMOL> &other) const
+{
+    return not this->operator==(other);
+}
+
+/** Return the number of this molecule */
+template<class FFMOL>
+SIRE_OUTOFLINE_TEMPLATE
+MolNum ChangedMolecule<FFMOL>::number() const
+{
+    if (old_molecule.isEmpty())
+        return new_molecule.number();
+    else
+        return old_molecule.number();
+}
+
+/** Return whether this is an empty change (contains nothing!) */
+template<class FFMOL>
+SIRE_OUTOFLINE_TEMPLATE
+bool ChangedMolecule<FFMOL>::isEmpty() const
+{
+    return old_molecule.isEmpty() and new_molecule.isEmpty();
+}
+
+/** Return whether or not the entire molecule has changed */
+template<class FFMOL>
+SIRE_OUTOFLINE_TEMPLATE
+bool ChangedMolecule<FFMOL>::changedAll() const
+{
+    return new_molecule == new_parts and 
+           old_molecule == old_parts;
+}
+
+/** Return whether nothing has changed */
+template<class FFMOL>
+SIRE_OUTOFLINE_TEMPLATE
+bool ChangedMolecule<FFMOL>::nothingChanged() const
+{
+    return new_molecule == old_molecule;
+}
+
+/** Return the complete old version of the molecule
+    (this may be empty if this represents the creation of a molecule) */
+template<class FFMOL>
+SIRE_OUTOFLINE_TEMPLATE
+const FFMOL& ChangedMolecule<FFMOL>::oldMolecule() const
+{
+    return old_molecule;
+}
+
+/** Return the complete new version of the molecule
+    (this may be empty if this represents the removal of a molecule) */
+template<class FFMOL>
+SIRE_OUTOFLINE_TEMPLATE
+const FFMOL& ChangedMolecule<FFMOL>::newMolecule() const
+{
+    return new_molecule;
+}
+
+/** Return the parts of the old molecule that have changed */
+template<class FFMOL>
+SIRE_OUTOFLINE_TEMPLATE
+const FFMOL& ChangedMolecule<FFMOL>::oldParts() const
+{
+    return old_parts;
+}
+
+/** Return the parts of the new molecule that have changed */
+template<class FFMOL>
+SIRE_OUTOFLINE_TEMPLATE
+const FFMOL& ChangedMolecule<FFMOL>::newParts() const
+{
+    return new_parts;
+}
+
+/** Further change this change so that it equals the change
+    from old_molecule to new_new_molecule
+    
+    \throw SireError::incompatible_error
+*/
+template<class FFMOL>
+SIRE_OUTOFLINE_TEMPLATE
+ChangedMolecule<FFMOL>& ChangedMolecule<FFMOL>::change(
+                                            const FFMOL &new_new_molecule)
+{
+    if (new_new_molecule.isEmpty())
+    {
+        //we are now removing the molecule
+        new_molecule = new_new_molecule;
+        new_parts = FFMOL();
+        old_parts = old_molecule;
+    }
+    else if (old_molecule.isEmpty())
+    {
+        //we are changing an added molecule - ensure that it is compatible
+        if (not new_molecule.isEmpty())
+            SireFF::detail::assertCompatible(new_molecule, new_new_molecule);
+
+        new_molecule = new_new_molecule;
+        new_parts = new_new_molecule;
+    }
+    else
+    {
+        SireFF::detail::assertCompatible(old_molecule, new_molecule);
+        
+        new_molecule = new_new_molecule;
+        
+        if (new_molecule != old_molecule)
+        {
+            old_parts = old_molecule.getDifferences(new_molecule);
+            new_parts = new_molecule.getDifferences(old_molecule);
+        }
+        else
+        {
+            //this represents no change
+            new_molecule = old_molecule;
+            
+            old_parts = FFMOL();
+            new_parts = FFMOL();
+        }
+    }
+    
+    return *this;
 }
 
 }
