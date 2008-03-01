@@ -491,6 +491,20 @@ private:
 
 }
 
+inline SireMol::AtomSelection operator+(const SireMol::AtomSelection &a,
+                                        const SireMol::AtomSelection &b)
+{
+    SireMol::AtomSelection ret(a);
+    return ret.unite(b);
+}
+
+inline SireMol::AtomSelection operator-(const SireMol::AtomSelection &a,
+                                        const SireMol::AtomSelection &b)
+{
+    SireMol::AtomSelection ret(a);
+    return ret.subtract(b);
+}
+
 Q_DECLARE_METATYPE(SireMol::AtomSelection);
 
 SIRE_END_HEADER

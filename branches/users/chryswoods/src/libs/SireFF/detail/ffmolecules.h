@@ -78,7 +78,13 @@ namespace detail
 {
 
 using SireMol::PartialMolecule;
+using SireMol::AtomSelection;
 using SireMol::MolNum;
+
+void throwFFMoleculesIncompatibleParameterNames(const QString &params0, 
+                                                const QString &params1);
+
+void assertCompatible(const FFMoleculeBase &mol0, const FFMoleculeBase &mol1);
 
 /** This is the base class of most (all?) of the forcefield
     specialised molecules. Forcefields used specialised molecule
@@ -115,6 +121,10 @@ protected:
     FFMoleculeBase& operator=(const FFMoleculeBase &other);
 
     bool change(const PartialMolecule &molecule);
+    bool add(const AtomSelection &added_atoms);
+    bool remove(const AtomSelection &removed_atoms);
+    
+    void restore(const PartialMolecule &oldmol);
     
 private:
     /** Copy of the view that this object represents */
@@ -162,6 +172,14 @@ public:
                 const ParameterNames &new_paramnames,
                 PTNL &forcefield,
                 const ParameterNames &old_paramnames);
+
+    bool add(const AtomSelection &selected_atoms,
+             PTNL &forcefield,
+             const ParameterNames &parameternames);
+
+    bool remove(const AtomSelection &selected_atoms,
+                PTNL &forcefield,
+                const ParameterNames &parameternames);
 
     FFMolecule<PTNL> getDifferences(const FFMolecule<PTNL> &other) const;
 
@@ -256,13 +274,22 @@ public:
     bool operator!=(const FFMolecules<PTNL> &other) const;
 
     ChangedMolecule change(const PartialMolecule &molecule,
-                           PTNL &forcefield);
+                           PTNL &forcefield,
+                           bool record_changes = true);
+                           
+    ChangedMolecule change(const PartialMolecule &molecule,
+                           const ParameterNames &paramnames,
+                           PTNL &forcefield,
+                           bool record_changes = true);
                            
     ChangedMolecule add(const PartialMolecule &molecule,
-                        PTNL &forcefield);
+                        const ParameterNames &paramnames,
+                        PTNL &forcefield,
+                        bool record_changes = true);
                         
     ChangedMolecule remove(const PartialMolecule &molecule,
-                           PTNL &forcefield);
+                           PTNL &forcefield,
+                           bool record_changes = true);
     
     const QVector<Molecule>& moleculesByIndex() const;
     const QVector<ParameterNames>& parameterNamesByIndex() const;
@@ -353,18 +380,18 @@ FFMolecule<PTNL>::FFMolecule() : FFMoleculeBase()
 template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
 FFMolecule<PTNL>::FFMolecule(const PartialMolecule &molecule,
-                               PTNL &forcefield,
-                               const ParameterNames &parameternames)
-                   : FFMoleculeBase(),
-                     params( forcefield.parameterise(molecule,
-                                                     parameternames) )
+                             PTNL &forcefield,
+                             const ParameterNames &parameternames)
+                 : FFMoleculeBase(),
+                   params( forcefield.parameterise(molecule,
+                                                   parameternames) )
 {}
 
 /** Copy constructor */
 template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
 FFMolecule<PTNL>::FFMolecule(const FFMolecule<PTNL> &other)
-                   : FFMoleculeBase(other), params(other.params)
+                 : FFMoleculeBase(other), params(other.params)
 {}
 
 /** Destructor */
@@ -415,8 +442,18 @@ const typename FFMolecule<PTNL>::Parameters& FFMolecule<PTNL>::parameters() cons
 
 /** Change this molecule so that it is equal to 'new_molecule'.
 
+    Note that you can only change a molecule's molecule layout ID
+    is *all* of the molecule is contained in this forcefield.
+    If only part of the molecule is contained, then you will
+    need to remove it, and then add it again to be able to
+    change its layout ID.
+
     The names of the properties used to originally get the 
     parameters for this molecule are in 'parameternames'
+    
+    \throw SireError::incompatible_error
+    \throw SireError::invalid_cast
+    \throw SireBase::missing_property
 */
 template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
@@ -435,13 +472,13 @@ bool FFMolecule<PTNL>::change(const PartialMolecule &new_molecule,
         try
         {
             //now try to change the parameters
-            params = forcefield.updateParameters(params, new_molecule,
+            params = forcefield.updateParameters(params, FFMoleculeBase::molecule(),
                                                  old_molecule, parameternames);
         }
         catch(...)
         {
             //something went wrong... restore the old molecule
-            FFMoleculeBase::change(old_molecule);
+            FFMoleculeBase::restore(old_molecule);
             throw;
         }
         
@@ -473,8 +510,8 @@ bool FFMolecule<PTNL>::change(const PartialMolecule &new_molecule,
     
     try
     {
-        Parameters new_params = forcefield.paramterise(new_molecule,
-                                                       new_parameternames);
+        Parameters new_params = forcefield.parameterise(FFMoleculeBase::molecule(),
+                                                        new_parameternames);
 
         changed = changed or (new_params != params);
         
@@ -483,17 +520,450 @@ bool FFMolecule<PTNL>::change(const PartialMolecule &new_molecule,
     catch(...)
     {
         //restore the old molecule
-        FFMoleculeBase::change(old_molecule);
+        FFMoleculeBase::restore(old_molecule);
         throw;
     }
     
     return changed;
 }
 
+/** Add the selected atoms in 'added_atoms' to this view.
+
+    \throw SireError::incompatible_error
+    \throw SireError::invalid_cast
+    \throw SireBase::missing_property
+*/
+template<class PTNL>
+SIRE_OUTOFLINE_TEMPLATE
+bool FFMolecule<PTNL>::add(const AtomSelection &added_atoms,
+                           PTNL &forcefield,
+                    const typename FFMolecule<PTNL>::ParameterNames &parameternames)
+{
+    //save the old version of the molecule
+    PartialMolecule old_mol = FFMoleculeBase::molecule();
+    
+    //add the atoms
+    if (FFMoleculeBase::add(added_atoms))
+    {
+        //atoms were added. We now need to reparameterise the molecule
+        try
+        {
+            params = forcefield.parameterise(FFMoleculeBase::molecule(),
+                                             parameternames);
+        }
+        catch(...)
+        {
+            FFMoleculeBase::restore(old_mol);
+            throw;
+        }
+        
+        return true;
+    }
+    else
+        return false;
+}
+
+/** Remove the selected atoms 'removed_atoms' from this molecule.
+
+    \throw SireError::incompatible_error
+    \throw SireError::invalid_cast
+    \throw SireBase::missing_property
+*/
+template<class PTNL>
+SIRE_OUTOFLINE_TEMPLATE
+bool FFMolecule<PTNL>::remove(const AtomSelection &removed_atoms,
+                              PTNL &forcefield,
+                    const typename FFMolecule<PTNL>::ParameterNames &parameternames)
+{
+    if (this->isEmpty())
+        return false;
+
+    PartialMolecule old_mol = FFMoleculeBase::molecule();
+    
+    if (FFMoleculeBase::remove(removed_atoms))
+    {
+        if (FFMoleculeBase::molecule().isEmpty())
+        {
+            //the molecule has been completely removed
+            params = Parameters();
+            return true;
+        }
+        else
+        {
+            //we need to reparameterise the molecule
+            try
+            {
+                params = forcefield.parameterise(FFMoleculeBase::molecule(),
+                                                 parameternames);
+            }
+            catch(...)
+            {
+                FFMoleculeBase::restore(old_mol);
+                throw;
+            }
+            
+            return true;
+        }
+    }
+    else
+        return false;
+}
+
 ///////
 /////// Implementation of FFMolecules
 ///////
 
+/** Null constructor */
+template<class PTNL>
+SIRE_OUTOFLINE_TEMPLATE
+FFMolecules<PTNL>::FFMolecules() : FFMoleculesBase()
+{}
+
+/** Copy constructor */
+template<class PTNL>
+SIRE_OUTOFLINE_TEMPLATE
+FFMolecules<PTNL>::FFMolecules(const FFMolecules<PTNL> &other)
+                  : FFMoleculesBase(other),
+                    mols_by_idx(other.mols_by_idx),
+                    parameter_names(other.parameter_names)
+{}
+
+/** Destructor */
+template<class PTNL>
+SIRE_OUTOFLINE_TEMPLATE
+FFMolecules<PTNL>::~FFMolecules()
+{}
+
+/** Copy assignment operator */
+template<class PTNL>
+SIRE_OUTOFLINE_TEMPLATE
+FFMolecules<PTNL>& FFMolecules<PTNL>::operator=(const FFMolecules<PTNL> &other)
+{
+    if (this != &other)
+    {
+        FFMoleculesBase::operator=(other);
+        mols_by_idx = other.mols_by_idx;
+        parameter_names = other.parameter_names;
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+template<class PTNL>
+SIRE_OUTOFLINE_TEMPLATE
+bool FFMolecules<PTNL>::operator==(const FFMolecules<PTNL> &other) const
+{
+    return this == &other or
+           (mols_by_idx == other.mols_by_idx and
+            parameter_names == other.parameter_names);
+}
+
+/** Comparison operator */
+template<class PTNL>
+SIRE_OUTOFLINE_TEMPLATE
+bool FFMolecules<PTNL>::operator!=(const FFMolecules<PTNL> &other) const
+{
+    return not this->operator==(other);
+}
+
+/** Change the molecule 'new_molecule' (which is in the forcefield 'forcefield').
+    This does nothing if this molecule is not in this group. If 
+    'record_changes' is true then this returns a ChangedMolecule that
+    records the change from the current version of the molecule 
+    to 'new_molecule'. If there is no change, or record_changes is false,
+    then a null (isEmpty()) ChangedMolecule is returned
+
+    \throw SireError::incompatible_error
+    \throw SireError::invalid_cast
+    \throw SireBase::missing_property
+*/
+template<class PTNL>
+SIRE_OUTOFLINE_TEMPLATE
+typename FFMolecules<PTNL>::ChangedMolecule 
+FFMolecules<PTNL>::change(const PartialMolecule &new_molecule,
+                          PTNL &forcefield, bool record_changes)
+{
+    QHash<MolNum,quint32>::const_iterator it = FFMoleculesBase::indexesByMolNum()
+                                                    .constFind(new_molecule.number());
+                                                    
+    if (it == FFMoleculesBase::indexesByMolNum().constEnd())
+        //this molecule is not in this group
+        return ChangedMolecule();
+
+    if (record_changes)
+    {
+        typename FFMolecules<PTNL>::Molecule *mols_array = mols_by_idx.data();
+    
+        //get the current copy of the molecule
+        typename FFMolecules<PTNL>::Molecule old_molecule = mols_array[*it];
+        
+        //now make the change
+        if (mols_array[*it].change(new_molecule, forcefield,
+                                   parameter_names.constData()[*it]))
+        {
+            return ChangedMolecule(old_molecule, mols_array[*it]);
+        }
+        else
+            //there was no change
+            return ChangedMolecule();
+    }
+    else
+    {
+        mols_by_idx.data()[*it].change(new_molecule, forcefield,
+                                       parameter_names.constData()[*it]);
+                                       
+        return ChangedMolecule();
+    }
+}
+
+/** Change the molecule 'new_molecule' (which is in the forcefield 'forcefield'),
+    also changing the source of its parameters to 'new_params'.
+    This does nothing if this molecule is not in this group. If 
+    'record_changes' is true then this returns a ChangedMolecule that
+    records the change from the current version of the molecule 
+    to 'new_molecule'. If there is no change, or record_changes is false,
+    then a null (isEmpty()) ChangedMolecule is returned
+
+    \throw SireError::incompatible_error
+    \throw SireError::invalid_cast
+    \throw SireBase::missing_property
+*/
+template<class PTNL>
+SIRE_OUTOFLINE_TEMPLATE
+typename FFMolecules<PTNL>::ChangedMolecule 
+FFMolecules<PTNL>::change(const PartialMolecule &new_molecule,
+                          const typename FFMolecules<PTNL>::ParameterNames &new_params,
+                          PTNL &forcefield, bool record_changes)
+{
+    QHash<MolNum,quint32>::const_iterator it = FFMoleculesBase::indexesByMolNum()
+                                                    .constFind(new_molecule.number());
+                                                    
+    if (it == FFMoleculesBase::indexesByMolNum().constEnd())
+        //this molecule is not in this group
+        return ChangedMolecule();
+
+    //have the parameters changed?
+    const ParameterNames &old_params = parameter_names.constData()[*it];
+
+    if (new_params == old_params)
+        //no, they haven't
+        return this->change(new_molecule, forcefield, record_changes);
+
+    if (record_changes)
+    {
+        typename FFMolecules<PTNL>::Molecule *mols_array = mols_by_idx.data();
+    
+        //get the current copy of the molecule
+        typename FFMolecules<PTNL>::Molecule old_molecule = mols_array[*it];
+        
+        //now make the change
+        if (mols_array[*it].change(new_molecule, new_params, 
+                                   forcefield, old_params))
+        {
+            parameter_names.data()[*it] = new_params;
+            return ChangedMolecule(old_molecule, mols_array[*it]);
+        }
+        else
+        {
+            //there was no change
+            parameter_names.data()[*it] = new_params;
+            return ChangedMolecule();
+        }
+    }
+    else
+    {
+        mols_by_idx.data()[*it].change(new_molecule, new_params,
+                                       forcefield, old_params);
+
+        parameter_names.data()[*it] = new_params;
+
+        return ChangedMolecule();
+    }
+}
+
+/** Add the molecule 'molecule' to this group, getting the parameters
+    for the molecule using the parameter names listed in 'paramnames'.
+    
+    If this molecule already exists in this group then this will
+    add any parts of 'molecule' that don't already exist, but this
+    will *not* update the existing molecule so that it is at the 
+    same version. If you want to add to the same version, then
+    you must call change(molecule, ffield) then add(molecule, ffield).
+    
+    Note also that you *cannot* add this molecule if the existing
+    version has a different molecule layout ID.
+    
+    Note also that you *cannot* change the source of the parameters
+    if this molecule exists already in the forcefield. To change
+    parameter sources for a molecule that is already in the forcefield
+    you must remove the molecule and then add it from scratch.
+
+    If 'record_changes' is true then this returns a ChangedMolecule
+    that records the change. If there is no change, or if 'record_changes'
+    is false, then a null ChangedMolecule is returned
+    
+    \throw SireError::incompatible_error
+    \throw SireError::invalid_cast
+    \throw SireBase::missing_property
+*/                                                        
+template<class PTNL>
+SIRE_OUTOFLINE_TEMPLATE
+typename FFMolecules<PTNL>::ChangedMolecule 
+FFMolecules<PTNL>::add(const PartialMolecule &molecule,
+                       const typename FFMolecules<PTNL>::ParameterNames &paramnames,
+                       PTNL &forcefield, bool record_changes)
+{
+    //does this molecule exist already?
+    if (FFMoleculesBase::contains(molecule.number()))
+    {
+        //difficult case - the existing molecule may be incompatible.
+        quint32 i = FFMoleculesBase::indexOf(molecule.number());
+        
+        //ensure that the parameter source names are the same
+        if (paramnames != parameter_names.constData()[i])
+            SireFF::detail::throwFFMoleculesIncompatibleParameterNames(
+                    parameter_names.constData()[i].toString(),
+                    paramnames.toString());
+        
+        if (record_changes)
+        {
+            typename FFMolecules<PTNL>::Molecule *mols_array = mols_by_idx.data();
+        
+            //get the existing copy of the molecule
+            typename FFMolecules<PTNL>::Molecule old_mol = mols_array[i];
+            
+            //try to make the change
+            if (mols_array[i].add(molecule.selection(), forcefield, paramnames))
+            {
+                //there was a change!
+                return ChangedMolecule(old_mol, mols_array[i]);
+            }
+            else
+                //there was no change
+                return ChangedMolecule();
+        }
+        else
+        {
+            //add the molecule
+            mols_by_idx.data()[i].add(molecule.selection(), forcefield, paramnames);
+            
+            return ChangedMolecule();
+        }
+    }
+    else
+    {
+        //we are adding this molecule from scratch. First create
+        //a forcefield specialised version of this molecule
+        typename FFMolecules<PTNL>::Molecule ffmol(molecule, forcefield, paramnames);
+        
+        //that was successful! Add the molecule into the index
+        FFMoleculesBase::_pvt_add(molecule.number());
+        
+        mols_by_idx.append(ffmol);
+        parameter_names.append(paramnames);
+        
+        if (record_changes)
+            return ChangedMolecule( typename FFMolecules<PTNL>::Molecule(),
+                                    ffmol );
+        else
+            return ChangedMolecule();
+    }
+}
+            
+/** Remove the molecule 'molecule' from this forcefield. This only
+    removes the selected atoms in 'molecule', and this molecule must
+    have the same molecule layout version. Note that this does not
+    update the version of the molecule in this set to be the 
+    same as 'molecule'
+    
+    If 'record_changes' is true then this records the change
+    caused by the removal of the atoms and returns it in the
+    returned ChangedMolecule. If there is no change, or if
+    'record_changes' is false, then a null ChangedMolecule
+    is returned.
+    
+    \throw SireError::incompatible_error
+    \throw SireError::invalid_cast
+    \throw SireBase::missing_property
+*/        
+template<class PTNL>
+SIRE_OUTOFLINE_TEMPLATE
+typename FFMolecules<PTNL>::ChangedMolecule 
+FFMolecules<PTNL>::remove(const PartialMolecule &molecule,
+                          PTNL &forcefield, bool record_changes)
+{
+    if (not this->contains(molecule.number()))
+        return ChangedMolecule();
+
+    quint32 i = this->indexOf(molecule.number());
+    
+    typename FFMolecules<PTNL>::Molecule *mols_array = mols_by_idx.data();
+ 
+    if (record_changes)
+    {
+    
+        PartialMolecule old_mol = mols_array[i];
+        
+        if (mols_array[i].remove(molecule.selection(), forcefield,
+                                 parameter_names.constData()[i]))
+        {
+            //some atoms were removed - were all of them?
+            if (mols_array[i].isEmpty())
+            {
+                //yes - the molecule has been completely removed
+                FFMoleculesBase::_pvt_remove(molecule.number());
+                
+                mols_by_idx.remove(i);
+                parameter_names.remove(i);
+                
+                return ChangedMolecule(old_mol, 
+                                       typename FFMolecules<PTNL>::Molecule());
+            }
+            
+            return ChangedMolecule(old_mol, mols_array[i]);
+        }
+        else
+            //nothing was removed
+            return ChangedMolecule();
+    }
+    else
+    {
+        if (mols_array[i].remove(molecule.selection(), forcefield,
+                                 parameter_names.constData()[i]))
+        {
+            //has the whole molecule been removed?
+            if (mols_array[i].isEmpty())
+            {
+                //yes!
+                FFMolecules::_pvt_remove(molecule.number());
+                mols_by_idx.remove(i);
+                parameter_names.remove(i);
+            }
+        }
+    }
+}
+
+/** Return the array of all of the molecules in this group arranged
+    in the order they appear in this group */
+template<class PTNL>
+SIRE_OUTOFLINE_TEMPLATE
+const QVector<typename FFMolecules<PTNL>::Molecule>&
+FFMolecules<PTNL>::moleculesByIndex() const
+{
+    return mols_by_idx;
+}
+
+/** Return the array of the names of the properties used to get the parameters
+    for each molecule, arranged in the order that the molecules appear
+    in this group */
+template<class PTNL>
+SIRE_OUTOFLINE_TEMPLATE
+const QVector<typename FFMolecules<PTNL>::ParameterNames>&
+FFMolecules<PTNL>::parameterNamesByIndex() const
+{
+    return parameter_names;
+}
 
 ///////
 /////// Implementation of ChangedMolecule

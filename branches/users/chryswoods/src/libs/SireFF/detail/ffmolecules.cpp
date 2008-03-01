@@ -30,6 +30,9 @@
 
 #include "SireMol/atomselection.h"
 #include "SireMol/molnum.h"
+#include "SireMol/moleculedata.h"
+#include "SireMol/moleculeinfodata.h"
+#include "SireMol/molecule.h"
 
 #include "SireMol/mover.hpp"
 
@@ -45,6 +48,31 @@ using namespace SireFF;
 using namespace SireFF::detail;
 
 using namespace SireStream;
+
+
+void SIREFF_EXPORT 
+SireFF::detail::throwFFMoleculesIncompatibleParameterNames(const QString &params0, 
+                                                           const QString &params1)
+{
+    throw SireError::incompatible_error( QObject::tr(
+        "You cannot change the parameter source names when you add "
+        "atoms to a molecule. The existing molecule uses the parameter "
+        "source names %1, while you are trying to add atoms using "
+        "the parameter sources names %2.")
+            .arg(params0, params1), CODELOC );
+}
+
+void SIREFF_EXPORT 
+SireFF::detail::assertCompatible(const FFMoleculeBase &mol0,
+                                 const FFMoleculeBase &mol1)
+{
+    if (mol0.number() != mol1.number())
+        throw SireError::incompatible_error( QObject::tr(
+            "You cannot construct a ChangedMolecule from two different "
+            "molecules! (%1 vs. %2)")
+                .arg(mol0.number()).arg(mol1.number()),
+                    CODELOC );
+}
 
 /////////
 ///////// Implementation of FFMoleculeBase
@@ -133,7 +161,14 @@ bool FFMoleculeBase::isEmpty() const
     return mol.selection().selectedNone();
 }
 
-/** Change this view to use the passed molecule
+/** Change this view to use the same molecule data version
+    as the passed molecule. 
+    
+    Note that you can only change the molecule layout ID of the
+    molecule if the entire molecule is included in this
+    group. If only part of the molecule is included then
+    it is not possible, as the code is not capable of
+    updating an atom selection to a new molecule layout ID.
 
     \throw SireError::incompatible_error
 */
@@ -146,13 +181,75 @@ bool FFMoleculeBase::change(const PartialMolecule &molecule)
             "different)")
                 .arg(mol.number()).arg(molecule.number()), CODELOC );
 
-    if (mol != molecule)
+    if (mol.data().version() != molecule.data().version())
     {
-        mol = molecule;
+        if (mol.selection().selectedAll())
+            mol = molecule.molecule();
+            
+        else if (mol.data().info().UID() != molecule.data().info().UID())
+        {
+            throw SireError::incompatible_error( QObject::tr(
+                "Cannot change the molecule %1 as its molecule layout "
+                "ID has changed (%2 to %3), and only part of the molecule "
+                "exists in the forcefield.")
+                    .arg(mol.number()).arg(mol.data().info().UID())
+                    .arg(molecule.data().info().UID()), CODELOC );
+        }
+    
+        mol = PartialMolecule(molecule.data(), mol.selection());
         return true;
     }
     else
         return false;
+}
+
+/** Add the selected atoms 'added_atoms' to this view. This does
+    nothing if these atoms are already part of the view.
+    
+    Returns whether this changes the view.
+    
+    \throw SireError::incompatible_error
+*/
+bool FFMoleculeBase::add(const AtomSelection &added_atoms)
+{
+    if (mol.selection().contains(added_atoms))
+        return false;
+        
+    mol = PartialMolecule(mol.data(), mol.selection() + added_atoms);
+    return true;
+}
+
+/** Remove the selected atoms 'removed_atoms' from this view.
+    This does nothing if none of these atoms are part of this view.
+    
+    \throw SireError::incompatible_error
+*/
+bool FFMoleculeBase::remove(const AtomSelection &removed_atoms)
+{
+    if (mol.selection().selectedNone())
+        return false;
+
+    else if (not mol.selection().intersects(removed_atoms))
+        return false;
+    
+    else if (removed_atoms.contains(mol.selection()))
+    {
+        //we are removing the entire molecule
+        mol = PartialMolecule();
+        return true;
+    }
+    else
+    {
+        mol = PartialMolecule(mol.data(), mol.selection() - removed_atoms);
+        return true;
+    }
+}
+
+/** Private function used to restore the old molecule in case of 
+    an exception being thrown (so to restore the original state) */
+void FFMoleculeBase::restore(const PartialMolecule &oldmol)
+{
+    mol = oldmol;
 }
 
 ////////
