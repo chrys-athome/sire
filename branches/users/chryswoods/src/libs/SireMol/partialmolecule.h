@@ -180,11 +180,11 @@ public:
     QStringList metadataKeys() const;
     QStringList metadataKeys(const PropertyName &key) const;
 
-    Property property(const PropertyName &key) const;
+    const Property& property(const PropertyName &key) const;
 
-    Property metadata(const PropertyName &metakey) const;
-    Property metadata(const PropertyName &key,
-                      const PropertyName &metakey) const;
+    const Property& metadata(const PropertyName &metakey) const;
+    const Property& metadata(const PropertyName &key,
+                             const PropertyName &metakey) const;
 
 private:
     /** The atoms that are selected in this view */

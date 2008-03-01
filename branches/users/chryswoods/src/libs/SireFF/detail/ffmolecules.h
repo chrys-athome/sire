@@ -80,6 +80,7 @@ namespace detail
 using SireMol::PartialMolecule;
 using SireMol::AtomSelection;
 using SireMol::MolNum;
+using SireMol::CGIdx;
 
 void throwFFMoleculesIncompatibleParameterNames(const QString &params0, 
                                                 const QString &params1);
@@ -182,6 +183,10 @@ public:
                 const ParameterNames &parameternames);
 
     FFMolecule<PTNL> getDifferences(const FFMolecule<PTNL> &other) const;
+
+protected:
+    FFMolecule(const PartialMolecule &molecule,
+               const Parameters &parameters);
 
 private:
     /** The parameters for this molecule */
@@ -382,9 +387,20 @@ SIRE_OUTOFLINE_TEMPLATE
 FFMolecule<PTNL>::FFMolecule(const PartialMolecule &molecule,
                              PTNL &forcefield,
                              const ParameterNames &parameternames)
-                 : FFMoleculeBase(),
+                 : FFMoleculeBase(molecule),
                    params( forcefield.parameterise(molecule,
                                                    parameternames) )
+{}
+
+/** Private constructor used to create a molecule from the passed
+    data and parameters - these are assumed to be compatible - this
+    is not checked! */
+template<class PTNL>
+SIRE_OUTOFLINE_TEMPLATE
+FFMolecule<PTNL>::FFMolecule(const PartialMolecule &molecule,
+                             const FFMolecule<PTNL>::Parameters &parameters)
+                 : FFMoleculeBase(molecule),
+                   params(parameters)
 {}
 
 /** Copy constructor */
@@ -607,6 +623,84 @@ bool FFMolecule<PTNL>::remove(const AtomSelection &removed_atoms,
     }
     else
         return false;
+}
+
+/** Return the differences between this molecule and 'newmol'. This returns
+    the parts of this molecule that are different to 'newmol'. 
+    
+    \throw SireError::incompatible_error
+*/
+template<class PTNL>
+SIRE_OUTOFLINE_TEMPLATE
+FFMolecule<PTNL> FFMolecule<PTNL>::getDifferences(const FFMolecule<PTNL> &newmol) const
+{
+    if (this->operator==(newmol))
+        return FFMolecule<PTNL>();
+    
+    else if (this->isEmpty() or newmol.isEmpty())
+        return *this;
+        
+    //ensure that they are compatible
+    SireFF::detail::assertCompatible(*this, newmol);
+    
+    //how many CutGroups are there in this view?
+    int ncgroups = FFMoleculeBase::molecule().selection().nSelectedCutGroups();
+
+    //if there is only one group, then it has either changed or not
+    if (this->params.changedAllGroups(newmol.params))
+        return *this;
+    else
+        return FFMolecule<PTNL>();
+    
+    //there is more than one CutGroup in this 
+    //selection - get the groups that have changed
+    QSet<quint32> changed_groups = this->params.getChangedGroups(newmol.params);
+    
+    if (changed_groups.count() == ncgroups)
+        //all of the CutGroups have changed
+        return *this;
+    
+    else if (changed_groups.isEmpty())
+        //nothing has changed
+        return FFMolecule<PTNL>();
+    
+    else
+    {
+        //only some of the CutGroups have changed - create a selection
+        //of the CutGroups that changed - remember that we need to convert
+        //the index into the parameters array into the CGIdx...
+        AtomSelection changed_atoms = FFMoleculeBase::molecule().selection();
+
+        QList<CGIdx> changed_cgroups;
+        
+        if (changed_atoms.selectedAllCutGroups())
+        {
+            //the indicies correspond exactly with the CGIdxs
+            foreach (quint32 changed_group, changed_groups)
+            {
+                changed_cgroups.append( CGIdx(changed_group) );
+            }
+        }
+        else
+        {
+            QList<CGIdx> selected_cgroups = changed_atoms.selectedCutGroups();
+        
+            foreach (quint32 changed_group, changed_groups)
+            {
+                //get the CGIdx of this group
+                changed_cgroups.append( selected_cgroups.at(changed_group) );
+            }
+        }
+        
+        //now mask the selection so that only atoms in the changed
+        //CutGroups are selected
+        changed_atoms.mask(changed_cgroups);
+        
+        return FFMolecule<PTNL>( PartialMolecule( FFMoleculeBase::molecule().data(),
+                                                  changed_atoms ),
+
+                                 params.applyMask(changed_groups) );
+    }
 }
 
 ///////

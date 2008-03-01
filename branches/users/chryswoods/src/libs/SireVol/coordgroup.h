@@ -493,6 +493,8 @@ public:
     int nCoordGroups() const;
     int nCoords() const;
 
+    AABox aaBox() const;
+
     const CoordGroup* data() const;
     const CoordGroup* constData() const;
 
@@ -586,6 +588,8 @@ public:
     int nCoordGroupArrays() const;
     int nCoordGroups() const;
     int nCoords() const;
+
+    AABox aaBox() const;
 
     const CoordGroupArray* data() const;
     const CoordGroupArray* constData() const;

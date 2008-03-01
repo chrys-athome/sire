@@ -2361,6 +2361,33 @@ int CoordGroupArray::nCoords() const
     return d->nCoords();
 }
 
+/** Return an AABox that complete encompasses all of the CoordGroups 
+    in this array */
+AABox CoordGroupArray::aaBox() const
+{
+    int ncgroups = this->count();
+
+    if (ncgroups == 1)
+        return this->constData()[0].aaBox();
+    else if (ncgroups == 0)
+        return AABox();
+    else
+    {
+        const CoordGroup *coords_array = this->constData();
+        
+        Vector mincoords = coords_array[0].aaBox().minCoords();
+        Vector maxcoords = coords_array[0].aaBox().maxCoords();
+        
+        for (int i=1; i<ncgroups; ++i)
+        {
+            mincoords.setMin(coords_array[i].aaBox().minCoords());
+            maxcoords.setMax(coords_array[i].aaBox().maxCoords());
+        }
+        
+        return AABox::from(mincoords, maxcoords);
+    }
+}
+
 /** Return a raw pointer to the array of CoordGroups */
 const CoordGroup* CoordGroupArray::data() const
 {
@@ -3066,6 +3093,33 @@ int CoordGroupArrayArray::nCoordGroups() const
 int CoordGroupArrayArray::nCoords() const
 {
     return d->nCoords();
+}
+
+/** Return an AABox that complete encompasses all of the CoordGroups 
+    in this array */
+AABox CoordGroupArrayArray::aaBox() const
+{
+    int ncgroups = this->nCoordGroups();
+
+    if (ncgroups == 1)
+        return this->coordGroupData()[0].aaBox();
+    else if (ncgroups == 0)
+        return AABox();
+    else
+    {
+        const CoordGroup *coords_array = this->coordGroupData();
+        
+        Vector mincoords = coords_array[0].aaBox().minCoords();
+        Vector maxcoords = coords_array[0].aaBox().maxCoords();
+        
+        for (int i=1; i<ncgroups; ++i)
+        {
+            mincoords.setMin(coords_array[i].aaBox().minCoords());
+            maxcoords.setMax(coords_array[i].aaBox().maxCoords());
+        }
+        
+        return AABox::from(mincoords, maxcoords);
+    }
 }
 
 /** Return a raw pointer to the array of CoordGroupArrays */

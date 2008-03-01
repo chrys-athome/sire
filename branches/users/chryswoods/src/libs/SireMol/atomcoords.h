@@ -160,12 +160,20 @@ public:
     int nAtoms() const;
     int nAtoms(CGIdx cgidx) const;
 
+    const CoordGroupArray& array() const;
+
     void assertCanConvert(const QVariant &value) const;
 
 private:
     /** The actual atomic coordinates, arranged into CoordGroups */
     CoordGroupArray coords;
 };
+
+/** Return the raw array that hold the coordinates */
+inline const CoordGroupArray& AtomProperty<Vector>::array() const
+{
+    return coords;
+}
 
 typedef AtomProperty<Vector> AtomCoords;
 

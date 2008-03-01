@@ -431,39 +431,37 @@ QStringList PartialMolecule::metadataKeys(const PropertyName &key) const
     return d->metadataKeys(key);
 }
 
-/** Return the property at key 'key'. Note that if this is a MolViewProperty
-    (e.g. like AtomProperty, ResProperty etc.) then this property
-    will be masked so that only values for the atoms that
-    are part of this view will be returned.
+/** Return the property at key 'key'. Note that this returns the 
+    property for the molecule - no attempt is made to mask this
+    property to match the current selection
     
     \throw SireBase::missing_property
 */
-Property PartialMolecule::property(const PropertyName &key) const
+const Property& PartialMolecule::property(const PropertyName &key) const
 {
     return d->property(key);
 }
 
-/** Return the metadata at metakey 'metakey'. Note that if this 
-    is a MolViewProperty then this metadata will be masked so that
-    only values for the atoms that are part of this view will
-    be returned
+/** Return the metadata at metakey 'metakey'. Note that this returns the 
+    metadata for the molecule - no attempt is made to mask this
+    metadata to match the current selection
     
     \throw SireBase::missing_property
 */
-Property PartialMolecule::metadata(const PropertyName &metakey) const
+const Property& PartialMolecule::metadata(const PropertyName &metakey) const
 {
     return d->metadata(metakey);
 }
 
 /** Return the metadata at the metakey 'metakey' for the property
-    at key 'key'. If this is a MolViewProperty then this metadata
-    will be masked so that only values for the atoms that are
-    part of this view will be returned
+    at key 'key'. Note that this returns the 
+    metadata for the molecule - no attempt is made to mask this
+    metadata to match the current selection
     
     \throw SireBase::missing_property
 */
-Property PartialMolecule::metadata(const PropertyName &key,
-                                   const PropertyName &metakey) const
+const Property& PartialMolecule::metadata(const PropertyName &key,
+                                          const PropertyName &metakey) const
 {
     return d->metadata(key, metakey);
 }
