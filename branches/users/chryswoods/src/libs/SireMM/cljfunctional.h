@@ -34,6 +34,7 @@
 #include "SireBase/packedarray2d.hpp"
 
 #include "cljpair.h"
+#include "atomicpairs.h"
 
 #include "SireFF/detail/ffmolecules3d.h"
 
@@ -69,103 +70,259 @@ using SireFF::ForceTable;
 namespace detail
 {
 
-using SireBase::PropertyName;
-using SireBase::PackedArray2D;
+using SireFF::detail::AtomicParameters3D;
 
-using SireFF::detail::FFParameters3D;
-
-/** These are the Coulomb and LJ parameters of all of 
-    the atoms in this view. This stores the parameters
-    in a format that is optimised for the CLJ forcefield
+/** Generic atomic parameters that use a scale factor
+    for intermolecular atom pairs
     
     @author Christopher Woods
 */
-class CLJParameters : public FFParameters3D
+template<class PARAM, class SCALE_FACTORS>
+class IntraScaledAtomicParameters3D : public AtomicParameters3D<PARAM>
 {
 public:
-
-    class Parameter
-    {
-        Parameter();
-        Parameter(double reduced_chg, quint32 ljid);
-        Parameter(const Parameter &other);
-        
-        ~Parameter();
-        
-        Parameter& operator=(const Parameter &other);
-        
-        double reduced_charge;
-        quint32 ljid;
-    };
-
-    CLJParameters();
+    IntraScaledAtomicParameters3D();
     
-    CLJParameters(const PartialMolecule &molecule,
-                  const PropertyName &coords_property);
-     
-    CLJParameters(const FFParameters3D &params3d,
-                  const PackedArray2D<Parameter> &cljparams);
-                                            
+    IntraScaledAtomicParameters3D(const PartialMolecule &molecule,
+                                  const PropertyName &coord_property,
+                                  const PropertyName &scale_property);
+                                  
+    IntraScaledAtomicParameters3D(const SireBase::AtomicParameters3D<PARAM> &params,
+                                  const SCALE_FACTORS &scale_factors);
+
     template<class T>
-    CLJParameters(const PartialMolecule &molecule,
-                  const T &parameternames);
+    IntraScaledAtomicParameters3D(const PartialMolecule &molecule,
+                                  const T &propertynames);
+                                  
+    IntraScaledAtomicParameters3D(
+        const IntraScaledAtomicParameters3D<PARAM,SCALE_FACTORS> &other);
     
-    CLJParameters(const CLJParameters &other);
+    ~IntraScaledAtomicParameters3D();
     
-    ~CLJParameters();
+    IntraScaledAtomicParameters3D<PARAM> operator=(
+                    const IntraScaledAtomicParameters3D<PARAM,SCALE_FACTORS> &other);
+                                
+    bool operator==(
+        const IntraScaledAtomicParameters3D<PARAM,SCALE_FACTORS> &other) const;
+    bool operator!=(
+        const IntraScaledAtomicParameters3D<PARAM,SCALE_FACTORS> &other) const;
     
-    CLJParameters& operator=(const CLJParameters &other);
+    const SCALE_FACTORS& scaleFactors() const;
     
-    bool operator==(const CLJParameters &other) const;
-    bool operator!=(const CLJParameters &other) const;
-
-    const PackedArray2D<Parameter>& cljParameters() const;
-
-    void setCLJParameters(const PackedArray2D<Parameter> &parameters);
-
-    bool changedAllGroups(const CLJParameters &params) const;
+    void setScaleFactors(const SCALE_FACTORS &scale_factors);
     
-    QSet<quint32> getChangedGroups(const CLJParameters &params) const;
+    bool changedAllGroups(
+            const IntraScaledAtomicParameters3D<PARAM,SCALE_FACTORS> &other) const;
     
-    void addChangedGroups(const CLJParameters &params,
-                          QSet<quint32> &changed_groups) const;
+    QSet<quint32> getChangedGroups(
+            const IntraScaledAtomicParameters3D<PARAM,SCALE_FACTORS> &params) const;
     
-    CLJParameters applyMask(const QSet<quint32> &idxs) const;
-
-    void assertCompatible(const PackedArray2D<Parameter> &params) const;
+    void addChangedGroups(
+            const IntraScaledAtomicParameters3D<PARAM,SCALE_FACTORS> &params,
+            QSet<quint32> &changed_groups) const;
+    
+    IntraScaledAtomicParameters3D<PARAM,SCALE_FACTORS> 
+    applyMask(const QSet<quint32> &idxs) const;
 
 protected:
-    /** The CLJ parameters. This holds the reduced charge
-        (charge divided by sqrt(4 pi eps0)) and the ID of
-        the LJ parameter (so that the LJPair parameter can 
-        be located) */
-    PackedArray2D<Parameter> cljparams;
+    /** The intramolecular inter-atomic scale factors to apply to 
+        the potential between intramolecular pairs of atoms */
+    SCALE_FACTORS sclfactors;
 };
 
-/** Construct for the passed molecule, using the .coordinates()   
-    property to find the correct parameter */
-template<class T>
-CLJParameters::CLJParameters(const PartialMolecule &molecule,
-                             const T &parameternames)
-              : FFParameters3D(molecule, parameternames)
+/////////
+///////// Implementation of IntraScaledAtomicParameters3D
+/////////
+
+/** Null constructor */
+template<class PARAM, class SCALE_FACTORS>
+SIRE_OUTOFLINE_TEMPLATE
+IntraScaledAtomicParameters3D<PARAM,SCALE_FACTORS>::IntraScaledAtomicParameters3D()
+               : AtomicParameters3D<PARAM>()
 {}
 
-/** Return the array of CLJ parameters */
-inline const PackedArray2D<CLJParameters::Parameter>& 
-CLJParameters::cljParameters() const
+/** Construct for the molecule 'molecule' using the specified properties
+    to find the coordinates and scale factor properties
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class PARAM, class SCALE_FACTORS>
+SIRE_OUTOFLINE_TEMPLATE
+IntraScaledAtomicParameters3D<PARAM,SCALE_FACTORS>::IntraScaledAtomicParameters3D(
+                              const PartialMolecule &molecule,
+                              const PropertyName &coord_property,
+                              const PropertyName &scale_property)
+                : AtomicParameters3D<PARAM>(molecule, coord_property)
 {
-    return cljparams;
+    sclfactors = molecule.property(scale_property).asA<SCALE_FACTORS>();
+}
+
+/** Construct by combining some AtomicParameters3D with some scale factors */
+template<class PARAM, class SCALE_FACTORS>
+SIRE_OUTOFLINE_TEMPLATE
+IntraScaledAtomicParameters3D<PARAM>::IntraScaledAtomicParameters3D(
+                              const SireBase::AtomicParameters3D<PARAM> &params,
+                              const SCALE_FACTORS &scale_factors)
+                : AtomicParameters3D<PARAM>(params), sclfactors(scale_factors)
+{
+    this->assertCompatible(sclfactors);
+}
+
+/** Construct the parameters for the passed molecule using 'propertynames' 
+    to find the right properties for the parameters
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+template<class PARAM, class SCALE_FACTORS>
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+IntraScaledAtomicParameters3D<PARAM>::IntraScaledAtomicParameters3D(
+                              const PartialMolecule &molecule,
+                              const T &propertynames)
+                : AtomicParameters3D<PARAM>(molecule, propertynames)
+{
+    sclfactors = molecule.property( propertynames.nbScaleFactors() )
+                         .asA<SCALE_FACTORS>();
+}
+                              
+/** Copy constructor */
+template<class PARAM, class SCALE_FACTORS>
+SIRE_OUTOFLINE_TEMPLATE
+IntraScaledAtomicParameters3D<PARAM>::IntraScaledAtomicParameters3D(
+                              const IntraScaledAtomicParameters3D<PARAM> &other)
+                : AtomicParameters3D<PARAM>(other),
+                  sclfactors(other.sclfactors)
+{}
+
+/** Destructor */
+template<class PARAM, class SCALE_FACTORS>
+SIRE_OUTOFLINE_TEMPLATE
+IntraScaledAtomicParameters3D<PARAM>::~IntraScaledAtomicParameters3D()
+{}
+
+/** Copy assignment operator */
+template<class PARAM, class SCALE_FACTORS>
+SIRE_OUTOFLINE_TEMPLATE
+IntraScaledAtomicParameters3D<PARAM> IntraScaledAtomicParameters3D<PARAM>::operator=(
+                            const IntraScaledAtomicParameters3D<PARAM> &other)
+{
+    AtomicParameters3D<PARAM>::operator=(other);
+    sclfactors = other.sclfactors;
+    return *this;
+}
+                 
+/** Comparison operator */           
+template<class PARAM, class SCALE_FACTORS>
+SIRE_OUTOFLINE_TEMPLATE
+bool IntraScaledAtomicParameters3D<PARAM>::operator==(
+                            const IntraScaledAtomicParameters3D<PARAM> &other) const
+{
+    return AtomicParameters3D::operator==(other) and 
+           sclfactors == other.sclfactors;
+}
+
+/** Comparison operator */
+template<class PARAM, class SCALE_FACTORS>
+SIRE_OUTOFLINE_TEMPLATE
+bool IntraScaledAtomicParameters3D<PARAM>::operator!=(
+                            const IntraScaledAtomicParameters3D<PARAM> &other) const
+{
+    return AtomicParameters3D::operator!=(other) or
+           sclfactors != other.sclfactors;
+}
+
+/** Return the inter-atomic intramolecular scale factors for the 
+    intramolecular atom-atom interactions */
+template<class PARAM, class SCALE_FACTORS>
+SIRE_OUTOFLINE_TEMPLATE
+const SCALE_FACTORS& IntraScaledAtomicParameters3D<PARAM>::scaleFactors() const
+{
+    return sclfactors;
+}
+
+/** Set the inter-atomic intramolecular scale factors for the 
+    intramolecular atom-atom interactions 
+    
+    \throw SireError::incompatible_error
+*/
+template<class PARAM, class SCALE_FACTORS>
+SIRE_OUTOFLINE_TEMPLATE
+void IntraScaledAtomicParameters3D<PARAM>::setScaleFactors(
+                                            const SCALE_FACTORS &scale_factors)
+{
+    this->assertCompatible(scale_factors);
+    sclfactors = scale_factors;
+}
+
+/** Return whether or not all CutGroups in this molecule have changed compared
+    to 'other' */
+template<class PARAM, class SCALE_FACTORS>
+SIRE_OUTOFLINE_TEMPLATE
+bool IntraScaledAtomicParameters3D<PARAM>::changedAllGroups(
+                        const IntraScaledAtomicParameters3D<PARAM> &other) const
+{
+    return sclfactors != other.sclfactors or
+           AtomicParameters3D<PARAM>::changedAllGroups(other);
+}
+
+/** Add to 'changed_groups' the indicies of groups that have changed
+    compared to 'other' */
+template<class PARAM, class SCALE_FACTORS>
+SIRE_OUTOFLINE_TEMPLATE
+void IntraScaledAtomicParameters3D<PARAM>::addChangedGroups(
+                      const IntraScaledAtomicParameters3D<PARAM> &other,
+                      QSet<quint32> &changed_groups) const
+{
+    if (sclfactors != other.sclfactors)
+    {
+        //all groups have changed
+        for (CGIdx i(0); i<quint32(this->coordinates().count()); ++i)
+        {
+            changed_groups.insert(i);
+        }
+        
+        return;
+    }
+    else
+        AtomicParameters3D<PARAM>::addChangedGroups(other, changed_groups);
+}
+
+/** Return the indicies of CutGroups that have changed compared to 'other' */
+template<class PARAM, class SCALE_FACTORS>
+SIRE_OUTOFLINE_TEMPLATE
+QSet<quint32> IntraScaledAtomicParameters3D<PARAM>::getChangedGroups(
+                        const IntraScaledAtomicParameters3D<PARAM> &other) const
+{
+    QSet<quint32> changed_groups;
+    changed_groups.reserve(this->coordinates().count());
+    this->addChangedGroups(other, changed_groups);
+    
+    return changed_groups;
+}
+
+/** Mask these parameters so that only the atomic parameters for the 
+    CutGroups whose indicies are in 'cgidxs' are present. */
+template<class PARAM, class SCALE_FACTORS>
+SIRE_OUTOFLINE_TEMPLATE
+IntraScaledAtomicParameters3D<PARAM> 
+IntraScaledAtomicParameters3D<PARAM>::applyMask(const QSet<quint32> &idxs) const
+{
+    return IntraScaledAtomicParameters3D<PARAM>(
+                        AtomicParameters3D<PARAM>::applyMask(idxs), sclfactors);
 }
 
 } // end of namespace SireMM::detail
 
 /** This class provides all of the functions and containers  
-    necessary to provide an interface to calculate interatomic
-    potentials using the Coulomb and Lennard Jones functions.
+    necessary to provide an interface to calculate the
+    intermolecular interatomic potentials using the Coulomb 
+    and Lennard Jones functions.
     
     @author Christopher Woods
 */
-class SIREMM_EXPORT CLJFunctional
+class SIREMM_EXPORT InterCLJPotential
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const CLJFunctional&);
@@ -173,11 +330,18 @@ friend QDataStream& ::operator>>(QDataStream&, CLJFunctional&);
 
 public:
 
-    class Energy;     // class used to hold the energy components
-    class Parameters; // the parameters used by this functional
-    class Components; // the energy components available in this functional
-    
+    typedef detail::CLJEnergy Energy;
+    typedef Energy::Components Components;
+
+    typedef detail::CLJParameterNames3D ParameterNames;
+
+    typedef detail::CLJParameter Parameter;
+    typedef SireFF::detail::AtomicParameters3D<Parameter> Parameters;
+        
     typedef SireBase::PairMatrix<double> Workspace;
+
+    typedef SireFF::detail::FFMolecule3D<Parameters> Molecule;
+    
 
     CLJFunctional();
     
@@ -204,18 +368,10 @@ public:
     void calculateEnergy(const Molecule &mol0, const Molecule &mol1,
                          Energy &energy, Workspace &workspace,
                          double scale_energy=1) const;
-                           
-    void calculateEnergy(const Molecule &mol, Energy &energy,
-                         Workspace &workspace,
-                         double scale_energy=1) const;
 
     void calculateForce(const Molecule &mol0, const Molecule &mol1,
                         MolForceTable &forces0, 
                         MolForceTable &forces1,
-                        Workspace &workspace,
-                        double scale_force=1) const;
-                         
-    void calculateForce(const Molecule &mol, MolForceTable &forces,
                         Workspace &workspace,
                         double scale_force=1) const;
 
@@ -250,6 +406,55 @@ private:
     /** All possible LJ parameter pair combinations, arranged
         in a symmetric 2D array */
     Array2D<LJPair> ljpairs;
+};
+
+/** This class represents a coulomb and LJ potential that is suited
+    towards calculations of intramolecular CLJ energies. This is because
+    it uses, in addition to coulomb and LJ parameters, an intramolecular
+    non-bonded scaling parameter that allows for the interactions between
+    arbitrary intramolecular atom pairs to be scaled by arbitrary amounts
+    
+    @author Christopher Woods
+*/
+class SIREMM_EXPORT IntraCLJPotential
+{
+public:
+
+    typedef detail::CLJEnergy Energy;
+    typedef Energy::Components Components;
+    
+    typedef detail::IntraScaledCLJParameterNames3D ParameterNames;
+
+    typedef SireMM::detail::CLJParameter Parameter;
+    typedef SireMM::detail::IntraScaledAtomicParameters3D<Parameter,
+                                                          CLJScaleFactors> Parameters;
+
+    IntraCLJPotential();
+    
+    IntraCLJPotential(const IntraCLJPotential &other);
+    
+    ~IntraCLJPotential();
+    
+    IntraCLJPotential& operator=(const IntraCLJPotential &other);
+    
+    static const char* typeName()
+    {
+        return "SireMM::IntraCLJPotential";
+    }
+    
+    const char* what() const
+    {
+        return IntraCLJPotential::typeName();
+    }
+    
+    void calculateEnergy(const Molecule &mol, Energy &energy,
+                         Workspace &workspace,
+                         double scale_energy=1) const;
+
+    void calculateForce(const Molecule &mol, MolForceTable &forces,
+                        Workspace &workspace,
+                        double scale_force=1) const;
+    
 };
 
 /** Calculate the coulomb and LJ energy between the passed pair

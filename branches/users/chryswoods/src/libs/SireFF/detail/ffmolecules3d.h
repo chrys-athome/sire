@@ -31,6 +31,8 @@
 
 #include "ffmolecules.h"
 
+#include "SireBase/packedarray2d.hpp"
+
 #include "SireVol/coordgroup.h"
 #include "SireVol/aabox.h"
 
@@ -65,6 +67,10 @@ using SireVol::CoordGroupArrayArray;
 using SireVol::AABox;
 
 using SireBase::PropertyName;
+
+void throwAtomicParameters3DIncompatibleError(int i, int ncoords, int nparams);
+void throwAtomicParameters3DIncompatibleError(int ncoordgroups, int nparamgroups);
+
 
 /** This is the base class of all parameters objects for 3D potentials.
     It holds the coordinates property (and is responsible for extracting
@@ -109,7 +115,7 @@ public:
     FFParameters3D applyMask(const QSet<quint32> &idxs) const;
     
 protected:
-    static bool selectedAll(quint32 n);
+    static bool selectedAll(const QSet<quint32> &idxs, quint32 n);
     
 private:
     /** The 3D coordinates of all of the atoms in this forcefield,
@@ -122,44 +128,49 @@ private:
     @author Christopher Woods
 */
 template<class PARAM>
-class AtomicParameters : public FFParameters3D
+class AtomicParameters3D : public FFParameters3D
 {
 public:
-    AtomicParameters();
+    typedef PARAM Parameter;
+    typedef SireBase::PackedArray2D<PARAM> Parameters;
+
+    AtomicParameters3D();
     
-    AtomicParameters(const PartialMolecule &molecule,
-                     const PropertyName &coords_property);
+    AtomicParameters3D(const PartialMolecule &molecule,
+                       const PropertyName &coords_property);
      
-    AtomicParameters(const FFParameters3D &params3d,
-                     const PackedArray2D<PARAM> &parameters);
+    AtomicParameters3D(const FFParameters3D &params3d,
+                       const Parameters &parameters);
     
-    AtomicParameters(const AtomicParameters<PARAM> &other);
+    AtomicParameters3D(const AtomicParameters3D<PARAM> &other);
     
-    ~AtomicParameters();
+    ~AtomicParameters3D();
     
-    AtomicParameters<PARAM>& operator=(const AtomicParameters<PARAM> &other);
+    AtomicParameters3D<PARAM>& operator=(const AtomicParameters3D<PARAM> &other);
     
-    bool operator==(const AtomicParameters<PARAM> &other) const;
-    bool operator!=(const AtomicParameters<PARAM> &other) const;
+    bool operator==(const AtomicParameters3D<PARAM> &other) const;
+    bool operator!=(const AtomicParameters3D<PARAM> &other) const;
 
-    const PackedArray2D<PARAM>& cljParameters() const;
+    const Parameters& parameters() const;
+    void setParameters(const Parameters &parameters);
 
-    void setAtomicParameters(const PackedArray2D<PARAM> &parameters);
+    void setCoordinates(const CoordGroupArray &coordinates);
 
-    bool changedAllGroups(const AtomicParameters<PARAM> &params) const;
+    bool changedAllGroups(const AtomicParameters3D<PARAM> &params) const;
     
-    QSet<quint32> getChangedGroups(const AtomicParameters<PARAM> &params) const;
+    QSet<quint32> getChangedGroups(const AtomicParameters3D<PARAM> &params) const;
     
-    void addChangedGroups(const AtomicParameters<PARAM> &params,
+    void addChangedGroups(const AtomicParameters3D<PARAM> &params,
                           QSet<quint32> &changed_groups) const;
     
-    AtomicParameters<PARAM> applyMask(const QSet<quint32> &idxs) const;
+    AtomicParameters3D<PARAM> applyMask(const QSet<quint32> &idxs) const;
 
-    void assertCompatible(const PackedArray2D<PARAM> &params) const;
+    void assertCompatible(const Parameters &parameters) const;
+    void assertCompatible(const CoordGroupArray &coordinates) const;
 
 protected:
     /** The atomic parameters, arranged by CutGroup */
-    PackedArray2D<PARAM> cljparams;
+    Parameters params;
 };
 
 /** This class holds a 3D molecule for a 3n D potential energy
@@ -304,6 +315,211 @@ FFParameters3D::FFParameters3D(const PartialMolecule &molecule,
 inline const CoordGroupArray& FFParameters3D::coordinates() const
 {
     return coords;
+}
+
+///////
+/////// Implementation of AtomicParameters3D
+///////
+
+/** Null constructor */
+template<class PARAM>
+SIRE_OUTOFLINE_TEMPLATE
+AtomicParameters3D<PARAM>::AtomicParameters3D() : FFParameters3D()
+{}
+
+/** Assert that the supplied parameters are compatible with the
+    3D parameters already part of this object
+    
+    \throw SireError::incompatible_error
+*/
+template<class PARAM>
+SIRE_OUTOFLINE_TEMPLATE
+void AtomicParameters3D<PARAM>::assertCompatible(
+                    const typename AtomicParameters3D<PARAM>::Parameters &params) const
+{
+    if (params.count() == this->coordinates().count())
+    {
+        quint32 ngroups = params.count();
+        
+        const CoordGroup *cgroup_array = this->coordinates().constData();
+        const typename Parameters::Array *params_array = params.constData();
+        
+        for (quint32 i=0; i<ngroups; ++i)
+        {
+            if (cgroup_array[i].count() != params_array[i].count())
+            {
+                SireFF::detail::throwAtomicParameters3DIncompatibleError(
+                        i, cgroup_array[i].count(), params_array[i].count());
+            }
+        }
+    }
+    else
+        SireFF::detail::throwAtomicParameters3DIncompatibleError(
+                params.count(), this->coordinates().count());
+}
+
+/** Construct from the passed 3D coordinates and CLJ parameters */
+template<class PARAM>
+SIRE_OUTOFLINE_TEMPLATE
+AtomicParameters3D<PARAM>::AtomicParameters3D(const FFParameters3D &params3d,
+                  const typename AtomicParameters3D<PARAM>::Parameters &parameters)
+              : FFParameters3D(params3d),
+                params(parameters)
+{
+    this->assertCompatible(params);
+}
+
+/** Copy constructor */
+template<class PARAM>
+SIRE_OUTOFLINE_TEMPLATE
+AtomicParameters3D<PARAM>::AtomicParameters3D(const AtomicParameters3D<PARAM> &other)
+                          : FFParameters3D(other), params(other.params)
+{}
+
+/** Destructor */
+template<class PARAM>
+SIRE_OUTOFLINE_TEMPLATE
+AtomicParameters3D<PARAM>::~AtomicParameters3D()
+{}
+
+/** Copy assignment operator */
+template<class PARAM>
+SIRE_OUTOFLINE_TEMPLATE
+AtomicParameters3D<PARAM>& AtomicParameters3D<PARAM>::operator=(
+                                        const AtomicParameters3D<PARAM> &other)
+{
+    FFParameters3D::operator=(other);
+    params = other.params;
+    return *this;
+}
+
+/** Comparison operator */
+template<class PARAM>
+SIRE_OUTOFLINE_TEMPLATE
+bool AtomicParameters3D<PARAM>::operator==(const AtomicParameters3D<PARAM> &other) const
+{
+    return FFParameters3D::operator==(other) and 
+           params == other.params;
+}
+
+/** Comparison operator */
+template<class PARAM>
+SIRE_OUTOFLINE_TEMPLATE
+bool AtomicParameters3D<PARAM>::operator!=(const AtomicParameters3D<PARAM> &other) const
+{
+    return FFParameters3D::operator!=(other) or
+           params != other.params;
+}
+
+/** Return whether or not all of the groups have changed parameters
+    compared to 'params' */
+template<class PARAM>
+SIRE_OUTOFLINE_TEMPLATE
+bool AtomicParameters3D<PARAM>::changedAllGroups(
+                                    const AtomicParameters3D<PARAM> &other) const
+{
+    //check the CLJ parameters
+    if (FFParameters3D::changedAllGroups(other))
+        return true;
+    else
+    {
+        //have all of the clj parameters changed?
+        int ngroups = qMin(params.count(), other.params.count());
+        
+        const typename Parameters::Array *this_array = params.constData();
+        const typename Parameters::Array *other_array = other.params.constData();
+                                                    
+        for (int i=0; i<ngroups; ++i)
+        {
+            if (this->array[i] == other_array[i])
+                return false;
+        }
+        
+        return true;
+    }
+}
+
+/** Add the changed groups from 'params' to the set 'changed_groups' */
+template<class PARAM>
+SIRE_OUTOFLINE_TEMPLATE
+void AtomicParameters3D<PARAM>::addChangedGroups(
+                                     const AtomicParameters3D<PARAM> &parameters,
+                                     QSet<quint32> &changed_groups) const
+{
+    //first add on the groups that have changed coordinates
+    FFParameters3D::addChangedGroups(parameters, changed_groups);
+
+    //now add on the groups that have changed parameters
+    quint32 ngroups = changed_groups.count();
+    
+    if (FFParameters3D::selectedAll(changed_groups, ngroups))
+        return;
+        
+    quint32 nsharedgroups = qMin(ngroups, parameters.params.count());
+    
+    const typename Parameters::Array *this_array = params.count();
+    const typename Parameters::Array *other_array = parameters.params.count();
+    
+    for (quint32 i=0; i<nsharedgroups; ++i)
+    {
+        if (not changed_groups.contains(i) 
+            and (this_array[i] != other_array[i]))
+        {
+            changed_groups.insert(i);
+            
+            if (FFParameters3D::selectedAll(changed_groups, ngroups))
+                return;
+        }
+    }
+}
+
+/** Return the set of groups that have changed parameters */
+template<class PARAM>
+SIRE_OUTOFLINE_TEMPLATE
+QSet<quint32> AtomicParameters3D<PARAM>::getChangedGroups(
+                                    const AtomicParameters3D<PARAM> &parameters) const
+{
+    QSet<quint32> changed_groups;
+    changed_groups.reserve(params.count());
+    
+    this->addChangedGroups(parameters, changed_groups);
+    
+    return changed_groups;
+}
+
+/** Mask this set of parameters so that only the CutGroups at indicies 
+    'idxs' are present */ 
+template<class PARAM>
+SIRE_OUTOFLINE_TEMPLATE
+AtomicParameters3D<PARAM> AtomicParameters3D<PARAM>::applyMask(
+                                            const QSet<quint32> &idxs) const
+{
+    FFParameters3D masked_coords = FFParameters3D::applyMask(idxs);
+    
+    if (masked_coords.coordinates().count() == 0)
+        //all of the groups are masked
+        return AtomicParameters3D<PARAM>();
+    
+    else if (masked_coords.coordinates().count() == this->coordinates().count())
+        //none of the groups are masked
+        return *this;
+        
+    //otherwise, some are maked - apply the mask
+    //mask by the indicies
+    quint32 ngroups = params.count();
+    
+    QVector< typename Parameters::Array > group_params;
+    group_params.reserve(ngroups);
+    
+    const typename Parameters::Array *this_array = params.constData();
+    
+    for (quint32 i=0; i<ngroups; ++i)
+    {
+        if (idxs.contains(i))
+            group_params.append( this_array[i] );
+    }
+    
+    return AtomicParameters3D<PARAM>( Parameters(group_params), masked_coords );
 }
 
 ///////
