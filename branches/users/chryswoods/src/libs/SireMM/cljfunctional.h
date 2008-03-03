@@ -31,8 +31,11 @@
 
 #include "SireBase/propertymap.h"
 #include "SireBase/pairmatrix.hpp"
+#include "SireBase/packedarray2d.hpp"
 
 #include "cljpair.h"
+
+#include "SireFF/detail/ffmolecules3d.h"
 
 SIRE_BEGIN_HEADER
 
@@ -63,6 +66,99 @@ using SireMol::PartialMolecule;
 
 using SireFF::ForceTable;
 
+namespace detail
+{
+
+using SireBase::PropertyName;
+using SireBase::PackedArray2D;
+
+using SireFF::detail::FFParameters3D;
+
+/** These are the Coulomb and LJ parameters of all of 
+    the atoms in this view. This stores the parameters
+    in a format that is optimised for the CLJ forcefield
+    
+    @author Christopher Woods
+*/
+class CLJParameters : public FFParameters3D
+{
+public:
+
+    class Parameter
+    {
+        Parameter();
+        Parameter(double reduced_chg, quint32 ljid);
+        Parameter(const Parameter &other);
+        
+        ~Parameter();
+        
+        Parameter& operator=(const Parameter &other);
+        
+        double reduced_charge;
+        quint32 ljid;
+    };
+
+    CLJParameters();
+    
+    CLJParameters(const PartialMolecule &molecule,
+                  const PropertyName &coords_property);
+     
+    CLJParameters(const FFParameters3D &params3d,
+                  const PackedArray2D<Parameter> &cljparams);
+                                            
+    template<class T>
+    CLJParameters(const PartialMolecule &molecule,
+                  const T &parameternames);
+    
+    CLJParameters(const CLJParameters &other);
+    
+    ~CLJParameters();
+    
+    CLJParameters& operator=(const CLJParameters &other);
+    
+    bool operator==(const CLJParameters &other) const;
+    bool operator!=(const CLJParameters &other) const;
+
+    const PackedArray2D<Parameter>& cljParameters() const;
+
+    void setCLJParameters(const PackedArray2D<Parameter> &parameters);
+
+    bool changedAllGroups(const CLJParameters &params) const;
+    
+    QSet<quint32> getChangedGroups(const CLJParameters &params) const;
+    
+    void addChangedGroups(const CLJParameters &params,
+                          QSet<quint32> &changed_groups) const;
+    
+    CLJParameters applyMask(const QSet<quint32> &idxs) const;
+
+    void assertCompatible(const PackedArray2D<Parameter> &params) const;
+
+protected:
+    /** The CLJ parameters. This holds the reduced charge
+        (charge divided by sqrt(4 pi eps0)) and the ID of
+        the LJ parameter (so that the LJPair parameter can 
+        be located) */
+    PackedArray2D<Parameter> cljparams;
+};
+
+/** Construct for the passed molecule, using the .coordinates()   
+    property to find the correct parameter */
+template<class T>
+CLJParameters::CLJParameters(const PartialMolecule &molecule,
+                             const T &parameternames)
+              : FFParameters3D(molecule, parameternames)
+{}
+
+/** Return the array of CLJ parameters */
+inline const PackedArray2D<CLJParameters::Parameter>& 
+CLJParameters::cljParameters() const
+{
+    return cljparams;
+}
+
+} // end of namespace SireMM::detail
+
 /** This class provides all of the functions and containers  
     necessary to provide an interface to calculate interatomic
     potentials using the Coulomb and Lennard Jones functions.
@@ -81,7 +177,7 @@ public:
     class Parameters; // the parameters used by this functional
     class Components; // the energy components available in this functional
     
-    typedef PairMatrix<double> Workspace;
+    typedef SireBase::PairMatrix<double> Workspace;
 
     CLJFunctional();
     
@@ -100,31 +196,6 @@ public:
     {
         return CLJFunctional::typeName();
     }
-
-    /** This is the atom parameter used by this 
-        forcefield to calculate the interatomic potential 
-        
-        In this case, it is the combination of the charge
-        divided by $sqrt( 4 \pi \epsilon_0 )$ (so that
-        charge*charge*inv_distance is the coulomb energy)
-        and it is the index of the LJ parameter (so that
-        we can look up the combination with any other 
-        LJ parameter via the LJPair array)
-    */
-    class Parameter
-    {
-    public:
-        Parameter();
-        Parameter(double reduced_chg, quint32 ljid);
-        Parameter(const Parameter &other);
-        
-        ~Parameter();
-        
-        Parameter& operator=(const Parameter &other);
-        
-        double reduced_charge;
-        quint32 ljid;
-    };
     
     Molecules parameterise(const MolGroup &molecules);
     Molecules parameteriseForIntermolecular(const MolGroup &molecules);
@@ -325,111 +396,6 @@ private:
     
     /** The parameter name used to locate the non-bonded scale factors */
     static ParameterName nbscl_param;
-};
-
-class SIREMM_EXPORT CLJFunctional::MolParams
-{
-public:
-    Parameters();
-    
-    const QVector<CLJFunctional::Parameter>& clj() const;
-    
-    const CLJNBPairs& nbScale() const;
-    
-private:
-    /** All of the parameters for this molecule, arranged by 
-        CutGroup */
-    QVector<CLJFunctional::Parameter> cljparams;
-    
-    /** The non-bonded pairs scale factors for each pair
-        of atoms within this molecule */
-    CLJNBPairs nbscl_factors;
-    
-    /** The name of the property to use to get
-        the charges for this molecule */
-    ParameterName chg_property;
-    
-    /** The name of the property to use to get 
-        the LJ parameters for this molecule */
-    ParameterName lj_property;
-    
-    /** The name of the property to use to get 
-        the NB scale factor for this molecule */
-    ParameterName nbscl_property;
-    
-    /** The overall molecule type - this is an optimisation
-        that allows us to skip lots of sqrt calculations if
-        this has relatively few charge parameters
-        
-        0 = completely zero charge (all atoms have 0 charge)
-        1 = mainly uncharged (only a few atoms carry a charge)
-        2 = mainly charged (most or all atoms carry a charge)
-    */
-    quint32 mol_charge_class;
-};
-
-/** This is a *very* lightweight class that is used
-    to return temporary references to the coordinates
-    and parameters of a molecule so that they can be
-    used together in the energy calculations */
-class SIREMM_EXPORT CLJFunctional::Molecule
-{
-public:
-    Molecule(const CoordGroupArray &coords,
-             const QVector<CLJFunctional::Parameters> &params);
-
-    Molecule(const Molecule &other);
-
-    const CoordGroupArray& coordinates() const;
-    const AABox& aaBox() const;
-    const CLJFunctional::Parameters& parameters() const;
-
-private:
-    /** The coordinates of this molecule */
-    CoordGroupArray coords;
-    
-    /** The AABox that completely encloses this
-        molecule */
-    AABox aabox;
-    
-    /** Reference to the parameters of this molecule */
-    CLJFunctional::Parameters params;
-};
-
-/** This class holds the representation of a molecule required
-    by the CLJFunctional
-*/
-class SIREMM_EXPORT CLJFunctional::Molecules
-{
-
-public:
-    Molecules();
-    
-    const Molecule& at(quint32 i) const;
-    
-private:
-    /** All of the coordinates of all of the atoms arranged
-        into molecules, then CoordGroups, then coordinates */
-    CoordGroupArrayArray coords;
-    
-    /** The AABoxes that completely enclose each molecule */
-    QVector<AABox> mol_aaboxes;
-    
-    /** Parameters for all of the atoms arranged in the same
-        order as the coordinates */
-    QVector<CLJFunctional::Parameters> params;
-};
-
-/** This class holds the representations of all changed 
-    molecules
-*/
-class SIREMM_EXPORT CLJFunctional::ChangedMolecules
-{
-public:
-    ChangedMolecules();
-    
-private:
-    
 };
 
 }

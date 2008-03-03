@@ -108,10 +108,58 @@ public:
     
     FFParameters3D applyMask(const QSet<quint32> &idxs) const;
     
+protected:
+    static bool selectedAll(quint32 n);
+    
 private:
     /** The 3D coordinates of all of the atoms in this forcefield,
         arranged by CutGroup */
     CoordGroupArray coords;
+};
+
+/** This class holds 3D parameters, one for each atom 
+
+    @author Christopher Woods
+*/
+template<class PARAM>
+class AtomicParameters : public FFParameters3D
+{
+public:
+    AtomicParameters();
+    
+    AtomicParameters(const PartialMolecule &molecule,
+                     const PropertyName &coords_property);
+     
+    AtomicParameters(const FFParameters3D &params3d,
+                     const PackedArray2D<PARAM> &parameters);
+    
+    AtomicParameters(const AtomicParameters<PARAM> &other);
+    
+    ~AtomicParameters();
+    
+    AtomicParameters<PARAM>& operator=(const AtomicParameters<PARAM> &other);
+    
+    bool operator==(const AtomicParameters<PARAM> &other) const;
+    bool operator!=(const AtomicParameters<PARAM> &other) const;
+
+    const PackedArray2D<PARAM>& cljParameters() const;
+
+    void setAtomicParameters(const PackedArray2D<PARAM> &parameters);
+
+    bool changedAllGroups(const AtomicParameters<PARAM> &params) const;
+    
+    QSet<quint32> getChangedGroups(const AtomicParameters<PARAM> &params) const;
+    
+    void addChangedGroups(const AtomicParameters<PARAM> &params,
+                          QSet<quint32> &changed_groups) const;
+    
+    AtomicParameters<PARAM> applyMask(const QSet<quint32> &idxs) const;
+
+    void assertCompatible(const PackedArray2D<PARAM> &params) const;
+
+protected:
+    /** The atomic parameters, arranged by CutGroup */
+    PackedArray2D<PARAM> cljparams;
 };
 
 /** This class holds a 3D molecule for a 3n D potential energy
@@ -747,9 +795,9 @@ FFMolecules3D<PTNL>::remove(const PartialMolecule &molecule,
     return changed_mol;
 }
 
-}
+} // end of namespace SireFF::detail
 
-}
+} // end of namespace SireFF
 
 SIRE_END_HEADER
 

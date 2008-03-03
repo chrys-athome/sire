@@ -147,15 +147,17 @@ bool FFParameters3D::changedAllGroups(const FFParameters3D &other) const
     return true;
 }
 
-bool selectedAll(const QSet<quint32> &changed_groups, quint32 n)
+bool FFParameters3D::selectedAll(const QSet<quint32> &changed_groups, quint32 n)
 {
     if (quint32(changed_groups.count()) >= n)
     {
         quint32 got = 0;
     
-        foreach (quint32 i, changed_groups)
+        for (QSet<quint32>::const_iterator it = changed_groups.begin();
+             it != changed_groups.end();
+             ++it)
         {
-            if (i < n)
+            if (*it < n)
             {
                 ++got;
                 

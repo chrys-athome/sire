@@ -26,6 +26,240 @@
   *
 \*********************************************/
 
+#include "cljfunctional.h"
+
+#include "SireError/errors.h"
+
+using namespace SireMM;
+using namespace SireMM::detail;
+
+using namespace SireFF;
+using namespace SireFF::detail;
+
+using namespace SireBase;
+
+///////
+/////// Implementation of CLJParameters::Parameter
+///////
+
+/** Null constructor */
+CLJParameters::Parameter::Parameter() : reduced_charge(0), ljid(0)
+{}
+
+/** Construct with a specified reduced charge and LJ parameter ID */
+CLJParameters::Parameter::Parameter(double reduced_chg, quint32 lj_id)
+          : reduced_charge(reduced_chg), ljid(lj_id)
+{}
+
+/** Copy constructor */
+CLJParameters::Parameter::Parameter(const Parameter &other)
+          : reduced_charge(other.reduced_charge), ljid(other.ljid)
+{}
+
+/** Destructor */
+CLJParameters::Parameter::~Parameter()
+{}
+
+/** Copy assignment operator */
+CLJParameters::Parameter& 
+CLJParameters::Parameter::operator=(const CLJParameters::Parameter &other)
+{
+    reduced_charge = other.reduced_charge;
+    ljid = other.ljid;
+    
+    return *this;
+}
+
+///////
+/////// Implementation of CLJParameters
+///////
+
+/** Null constructor */
+CLJParameters::CLJParameters() : FFParameters3D()
+{}
+
+/** Assert that the supplied parameters are compatible with the
+    3D parameters already part of this object
+    
+    \throw SireError::incompatible_error
+*/
+void CLJParameters::assertCompatible(
+                        const PackedArray2D<CLJParameters::Parameters> &params) const
+{
+    if (params.count() == this->coordinates().count())
+    {
+        quint32 ngroups = params.count();
+        
+        const CoordGroup *cgroup_array = this->coordinates().constData();
+        const PackedArray2D<Parameter>::Array *params_array = params.constData();
+        
+        for (quint32 i=0; i<ngroups; ++i)
+        {
+            if (cgroup_array[i].count() != params_array[i].count())
+            {
+                throw SireError::incompatible_error( QObject::tr(
+                    "The passed parameters are incompatible as the group "
+                    "at index %1 has coordinates for %2 atoms, but the "
+                    "passed parameters only has CLJ parameters for %3 atoms.")
+                        .arg(i).arg(cgroup_array[i].count())
+                        .arg(params_array[i].count()), CODELOC );
+            }
+        }
+    }
+    else
+        throw SireError::incompatible_error( QObject::tr(
+            "The passed parameters are incompatible as the parameters "
+            "are for %1 CutGroups, while this only has the coordinates "
+            "for %2 CutGroups.")
+                .arg(params.count()).arg(this->coordinates().count()),
+                    CODELOC );
+}
+
+/** Construct from the passed 3D coordinates and CLJ parameters */
+CLJParameters::CLJParameters(const FFParameters3D &params3d,
+                             const PackedArray2D<CLJParameters::Parameters> &params)
+              : FFParameters3D(params3d),
+                cljparams(params)
+{
+    this->assertCompatible(cljparams);
+}
+
+/** Copy constructor */
+CLJParameters::CLJParameters(const CLJParameters &other)
+              : FFParameters3D(other)
+{}
+
+/** Destructor */
+CLJParameters::~CLJParameters()
+{}
+
+/** Copy assignment operator */
+CLJParameters& CLJParameters::operator=(const CLJParameters &other)
+{
+    FFMolecules3D::operator=(other);
+    cljparams = other.cljparams;
+    return *this;
+}
+
+/** Comparison operator */
+bool CLJParameters::operator==(const CLJParameters &other) const
+{
+    return FFMolecules3D::operator==(other) and 
+           cljparams == other.cljparams;
+}
+
+/** Comparison operator */
+bool CLJParameters::operator!=(const CLJParameters &other) const
+{
+    return FFMolecules3D::operator!=(other) or
+           cljparams != other.cljparams;
+}
+
+/** Return whether or not all of the groups have changed parameters
+    compared to 'params' */
+bool CLJParameters::changedAllGroups(const CLJParameters &params) const
+{
+    //check the CLJ parameters
+    if (FFParameters3D::changedAllGroups(params))
+        return true;
+    else
+    {
+        //have all of the clj parameters changed?
+        int ngroups = qMin(cljparams.count(), params.cljparams.count());
+        
+        const PackedArray2D<Parameter>::Array *this_array = cljparams.constData();
+        const PackedArray2D<Parameter>::Array *other_array 
+                                                    = params.cljparams.constData();
+                                                    
+        for (int i=0; i<ngroups; ++i)
+        {
+            if (this->array[i] == other_array[i])
+                return false;
+        }
+        
+        return true;
+    }
+}
+
+/** Add the changed groups from 'params' to the set 'changed_groups' */
+void CLJParameters::addChangedGroups(const CLJParameters &params,
+                                     QSet<quint32> &changed_groups) const
+{
+    //first add on the groups that have changed coordinates
+    FFParameters3D::addChangedGroups(params, changed_groups);
+
+    //now add on the groups that have changed parameters
+    quint32 ngroups = changed_groups.count();
+    
+    if (FFParameters3D::selectedAll(changed_groups, ngroups))
+        return;
+        
+    quint32 nsharedgroups = qMin(ngroups, params.cljparams.count());
+    
+    const PackedArray2D<Parameter>::Array *this_array = cljparams.count();
+    const PackedArray2D<Parameter>::Array *other_array = params.cljparams.count();
+    
+    for (quint32 i=0; i<nsharedgroups; ++i)
+    {
+        if (not changed_groups.contains(i) 
+            and (this_array[i] != other_array[i]))
+        {
+            changed_groups.insert(i);
+            
+            if (FFParameters3D::selectedAll(changed_groups, ngroups))
+                return;
+        }
+    }
+}
+
+/** Return the set of groups that have changed CLJ parameters */
+QSet<quint32> CLJParameters::getChangedGroups(const CLJParameters &params) const
+{
+    QSet<quint32> changed_groups;
+    changed_groups.reserve(cljparams.count());
+    
+    this->addChangedGroups(params, changed_groups);
+    
+    return changed_groups;
+}
+
+/** Mask this set of parameters so that only the CutGroups at indicies 
+    'idxs' are present */ 
+CLJParameters CLJParameters::applyMask(const QSet<quint32> &idxs) const
+{
+    FFParameters3D masked_coords = FFParameters3D::applyMask(idxs);
+    
+    if (masked_coords.coordinates().isEmpty())
+        //all of the groups are masked
+        return CLJParameters();
+    
+    else if (masked_coords.coordinates().count() == this->coordinates().count())
+        //none of the groups are masked
+        return *this;
+        
+    //otherwise, some are maked - apply the mask
+    //mask by the indicies
+    quint32 ngroups = cljparams.count();
+    
+    QVector<PackedArray2D<Parameter>::Array> params;
+    params.reserve(ngroups);
+    
+    const PackedArray2D<Parameter>::Array *this_array = cljparams.constData();
+    
+    for (quint32 i=0; i<ngroups; ++i)
+    {
+        if (idxs.contains(i))
+            params.append( this_array[i] );
+    }
+    
+    return CLJParameters( PackedArray2D<Parameter>(params),
+                          masked_coords );
+}
+
+///////
+/////// Implementation of CLJPotential
+///////
+
 /** Calculate the coulomb and LJ energy between the passed pair
     of molecules and add these energies onto 'energy'. This uses
     the passed workspace to perform the calculation */
