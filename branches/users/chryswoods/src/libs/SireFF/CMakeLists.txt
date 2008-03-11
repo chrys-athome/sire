@@ -40,6 +40,9 @@ set ( SIREFF_HEADERS
       multiff.h
       twobodyfunctional.hpp
 
+      detail/atomiccoords3d.h
+      detail/atomicparameters.hpp
+      detail/atomicparameters3d.hpp
       detail/ffmolecules.h
       detail/ffmolecules3d.h
 
@@ -68,9 +71,10 @@ set ( SIREFF_SOURCES
       inter2bff.cpp
       multiff.cpp
 
+      detail/atomiccoords3d.cpp
       detail/ffmolecules.cpp
-      detail/ffmolecules3d.cpp
-   
+      detail/ffmolecules3d.cpp   
+
       ${SIREFF_HEADERS}
     )
 

@@ -35,6 +35,7 @@
 
 #include "cljpair.h"
 #include "atomicpairs.h"
+#include "cljcomponent.h"
 
 #include "SireFF/detail/ffmolecules3d.h"
 
