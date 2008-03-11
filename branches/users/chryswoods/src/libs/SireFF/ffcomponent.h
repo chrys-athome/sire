@@ -59,6 +59,7 @@ public:
 
 protected:
     FFComponent(quint64 ffuid, const QLatin1String &name);
+    FFComponent(const SireCAS::Symbol &symbol, const QLatin1String &name);
     
     FFComponent(const FFComponent &other);
     

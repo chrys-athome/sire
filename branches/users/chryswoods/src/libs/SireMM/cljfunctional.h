@@ -315,52 +315,6 @@ IntraScaledAtomicParameters3D<PARAM>::applyMask(const QSet<quint32> &idxs) const
 
 } // end of namespace SireMM::detail
 
-class SIREFF_EXPORT FFComponent : public SireCAS::Symbol
-{
-};
-
-/** This class represents a Coulomb component of a forcefield */
-class SIREMM_EXPORT CoulombComponent : public FFComponent
-{
-public:
-    CoulombComponent(quint64 ffuid = 0);
-    ~CoulombComponent();
-};
-
-/** This class represents a LJ component of a forcefield */
-class SIREMM_EXPORT LJComponent : public FFComponent
-{
-public:
-    LJComponent(quint64 ffuid = 0);
-    ~LJComponent();
-};
-
-/** This class represents the sum of the coulomb and LJ components
-    of the forcefield */
-class SIREMM_EXPORT CLJComponent : public FFComponent
-{
-public:
-    CLJComponent(quint64 ffuid = 0);
-    ~CLJComponent();
-    
-    const CoulombComponent& coulomb() const
-    {
-        return coul_component;
-    }
-    
-    const LJComponent& lj() const
-    {
-        return lj_component;
-    }
-
-protected:
-    /** The coulomb component */
-    CoulombComponent coul_component;
-    
-    /** The LJ component */
-    LJComponent lj_component;
-};
-
 /** This is the class that holds the energy components of 
     the CLJFunctional (Coulomb and LJ) 
 */

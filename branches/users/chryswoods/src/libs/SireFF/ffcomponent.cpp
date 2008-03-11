@@ -35,13 +35,50 @@
 using namespace SireFF;
 using namespace SireCAS;
 
-static QRegExp uid_regexp( "E_{FF:(\\d+)}" );
-static QRegExp name_regexp( "E_{FF:\\d+}^{(*)}" );
+static QRegExp uid_regexp( "E_\\{FF:(\\d+)\\}" );
+static QRegExp name_regexp( "E_{FF:\\d+}\\^\\{(.+)\\}" );
+
+static QRegExp all_regexp( "E_\\{FF:(\\d+)\\}\\^\\{(._)\\}" );
 
 /** Constructor */
 FFComponent::FFComponent(quint64 ffuid, const QLatin1String &name)
             : Symbol( FFComponent::symbolName(ffuid, name) )
 {}
+
+/** Construct from a passed symbol 
+
+    \throw SireError::incompatible_error
+*/
+FFComponent::FFComponent(const Symbol &symbol, const QLatin1String &name)
+            : Symbol(symbol)
+{
+    QRegExp local_copy = all_regexp;
+    
+    if (local_copy.indexIn( Symbol::toString() ) == -1)
+        //we could not interpret the symbol
+        throw SireError::incompatible_error( QObject::tr(
+            "The symbol \"%1\" is not a valid FFComponent symbol. "
+            "FFComponent symbols have the form E_{FF:<UID>}^{<NAME>} "
+            "where <UID> is the UID of the potential energy function "
+            "and <NAME> is the name of the component on that surface. ")
+                .arg(symbol.toString()), CODELOC );
+                
+    bool ok;
+    local_copy.cap(1).toULong(&ok);
+    
+    if (not ok)
+        throw SireError::incompatible_error( QObject::tr(
+            "Could not interpret the UID of the potential energy "
+            "surface from \"%1\" (from the symbol \"%2\")")
+                .arg(local_copy.cap(1), symbol.toString()), CODELOC );
+                
+    if (name != local_copy.cap(2))
+        throw SireError::incompatible_error( QObject::tr(
+            "The symbol \"%1\" is for the wrong component! (%2). "
+            "The correct component is called \"%3\".")
+                .arg(symbol.toString(), local_copy.cap(2), name),
+                    CODELOC );
+}
 
 /** Copy constructor */
 FFComponent::FFComponent(const FFComponent &other)

@@ -26,3 +26,91 @@
   *
 \*********************************************/
 
+#include "cljcomponent.h"
+
+using namespace SireMM;
+using namespace SireFF;
+using namespace SireCAS;
+
+//////
+////// Implementation of CoulombComponent
+//////
+
+/** Constructor */
+CoulombComponent::CoulombComponent(quint64 ffuid)
+                 : FFComponent(ffuid, QLatin1String("coulomb"))
+{}
+
+/** Construct from a symbol
+
+    \throw SireError::incompatible_error
+*/
+CoulombComponent::CoulombComponent(const SireCAS::Symbol &symbol)
+                 : FFComponent(symbol, QLatin1String("coulomb"))
+{}
+
+/** Copy constructor */  
+CoulombComponent::CoulombComponent(const CoulombComponent &other)
+                 : FFComponent(other)
+{}
+  
+/** Destructor */  
+CoulombComponent::~CoulombComponent()
+{}
+
+//////
+////// Implementation of LJComponent
+//////
+
+/** Constructor */
+LJComponent::LJComponent(quint64 ffuid)
+            : FFComponent(ffuid, QLatin1String("LJ"))
+{}
+
+/** Construct from a symbol
+
+    \throw SireError::incompatible_error
+*/
+LJComponent::LJComponent(const SireCAS::Symbol &symbol)
+            : FFComponent(symbol, QLatin1String("LJ"))
+{}
+
+/** Copy constructor */  
+LJComponent::LJComponent(const LJComponent &other)
+            : FFComponent(other)
+{}
+  
+/** Destructor */  
+LJComponent::~LJComponent()
+{}
+
+//////
+////// Implementation of CLJComponent
+//////
+
+/** Constructor */
+CLJComponent::CLJComponent(quint64 ffuid)
+            : FFComponent(ffuid, QLatin1String("CLJ")),
+               coul_component(ffuid), lj_component(ffuid)
+{}
+
+/** Construct from a symbol
+
+    \throw SireError::incompatible_error
+*/
+CLJComponent::CLJComponent(const SireCAS::Symbol &symbol)
+            : FFComponent(symbol, QLatin1String("CLJ"))
+{
+    coul_component = CoulombComponent( this->UID() );
+    lj_component = LJComponent( this->UID() );
+}
+
+/** Copy constructor */  
+CLJComponent::CLJComponent(const CLJComponent &other)
+            : FFComponent(other), coul_component(other.coul_component), 
+              lj_component(other.lj_component)
+{}
+  
+/** Destructor */  
+CLJComponent::~CLJComponent()
+{}
