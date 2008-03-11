@@ -30,6 +30,7 @@ set ( SIREMM_HEADERS
       chargedb.h
       chargeparameter.h
       chargetable.h
+      cljcomponent.h
       cljff.h
       cljfunctional.h
       cljnbpairs.h
@@ -93,6 +94,7 @@ set ( SIREMM_SOURCES
       chargedb.cpp
       chargeparameter.cpp
       chargetable.cpp
+      cljcomponent.cpp
       cljff.cpp
       cljfunctional.cpp
       cljnbpairs.cpp

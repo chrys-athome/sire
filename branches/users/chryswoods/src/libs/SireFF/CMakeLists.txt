@@ -15,6 +15,7 @@ set ( SIREFF_HEADERS
       errors.h
       ff.h
       ff3d.h
+      ffcomponent.h
       ffgroupid.h
       ffid.h
       ffidentifier.h
@@ -50,6 +51,7 @@ set ( SIREFF_SOURCES
       errors.cpp
       ff.cpp
       ff3d.cpp
+      ffcomponent.cpp
       ffgroupid.cpp
       ffid.cpp
       ffidentifier.cpp

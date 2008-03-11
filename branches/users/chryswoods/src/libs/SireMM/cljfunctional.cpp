@@ -39,6 +39,46 @@ using namespace SireFF::detail;
 using namespace SireBase;
 
 ///////
+/////// Implementation of CoulombComponent
+///////
+
+/** Constructor */
+CoulombComponent::CoulombComponent(quint64 ffuid)
+                 : FFComponent(ffuid, "coulomb")
+{}
+
+/** Destructor */
+CoulombComponent::~CoulombComponent()
+{}
+
+///////
+/////// Implementation of LJComponent
+///////
+
+/** Constructor */
+LJComponent::LJComponent(quint64 ffuid)
+            : FFComponent(ffuid, "LJ")
+{}
+
+/** Destructor */
+LJComponent::~LJComponent()
+{}
+
+///////
+/////// Implementation of CLJComponent
+///////
+
+/** Constructor */
+CLJComponent::CLJComponent(quint64 ffuid)
+             : FFComponent(ffuid, "CLJ"), 
+               coul_component(ffuid), lj_component(ffuid)
+{}
+
+/** Destructor */
+CLJComponent::~CLJComponent()
+{}
+
+///////
 /////// Implementation of CLJParameters::Parameter
 ///////
 

@@ -315,6 +315,138 @@ IntraScaledAtomicParameters3D<PARAM>::applyMask(const QSet<quint32> &idxs) const
 
 } // end of namespace SireMM::detail
 
+class SIREFF_EXPORT FFComponent : public SireCAS::Symbol
+{
+};
+
+/** This class represents a Coulomb component of a forcefield */
+class SIREMM_EXPORT CoulombComponent : public FFComponent
+{
+public:
+    CoulombComponent(quint64 ffuid = 0);
+    ~CoulombComponent();
+};
+
+/** This class represents a LJ component of a forcefield */
+class SIREMM_EXPORT LJComponent : public FFComponent
+{
+public:
+    LJComponent(quint64 ffuid = 0);
+    ~LJComponent();
+};
+
+/** This class represents the sum of the coulomb and LJ components
+    of the forcefield */
+class SIREMM_EXPORT CLJComponent : public FFComponent
+{
+public:
+    CLJComponent(quint64 ffuid = 0);
+    ~CLJComponent();
+    
+    const CoulombComponent& coulomb() const
+    {
+        return coul_component;
+    }
+    
+    const LJComponent& lj() const
+    {
+        return lj_component;
+    }
+
+protected:
+    /** The coulomb component */
+    CoulombComponent coul_component;
+    
+    /** The LJ component */
+    LJComponent lj_component;
+};
+
+/** This is the class that holds the energy components of 
+    the CLJFunctional (Coulomb and LJ) 
+*/
+class SIREMM_EXPORT CLJEnergy
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const Energy&);
+friend QDataStream& ::operator>>(QDataStream&, Energy&);
+
+public:
+    typedef CLJComponent Components;
+
+    Energy(double cnrg=0, double ljnrg=0) : icnrg(cnrg), iljnrg(ljnrg)
+    {}
+    
+    Energy(const Energy &other) : icnrg(other.icnrg), ljnrg(other.ljnrg)
+    {}
+    
+    ~Energy()
+    {}
+    
+    static const char* typeName()
+    {
+        return "SireMM::CLJFunctional::Energy";
+    }
+    
+    const char* what() const
+    {
+        return Energy::typeName();
+    }
+    
+    Energy& operator+=(const Energy &other)
+    {
+        icnrg += other.icnrg;
+        iljnrg += other.iljnrg;
+        return *this;
+    }
+    
+    Energy& operator-=(const Energy &other)
+    {
+        icnrg -= other.icnrg;
+        iljnrg -= other.iljnrg;
+        return *this;
+    }
+    
+    Components components() const
+    {
+        return Components();
+    }
+    
+    double component(const CoulombComponent&) const
+    {
+        return icnrg;
+    }
+    
+    double component(const LJComponent&) const
+    {
+        return iljnrg;
+    }
+    
+    double component(const CLJComponent&) const
+    {
+        return icnrg + iljnrg;
+    }
+    
+    double coulomb() const
+    {
+        return icnrg;
+    }
+    
+    double lj() const
+    {
+        return iljnrg;
+    }
+    
+    operator double() const
+    {
+        //return the total energy
+        return icnrg + iljnrg;
+    }
+
+private:
+    /** The coulomb and LJ components of the energy */
+    double icnrg, iljnrg;
+};
+
 /** This class provides all of the functions and containers  
     necessary to provide an interface to calculate the
     intermolecular interatomic potentials using the Coulomb 
@@ -460,11 +592,11 @@ public:
 /** Calculate the coulomb and LJ energy between the passed pair
     of molecules and add these energies onto 'energy'. This uses
     the passed workspace to perform the calculation */
-inline void CLJPotential::calculateEnergy(const CLJPotential::Molecule &mol0,
-                                          const CLJPotential::Molecule &mol1,
-                                          CLJPotential::Energy &energy,
-                                          CLJPotential::Workspace &workspace,
-                                          double scale_energy) const
+inline void InterCLJPotential::calculateEnergy(const InterCLJPotential::Molecule &mol0,
+                                               const InterCLJPotential::Molecule &mol1,
+                                               InterCLJPotential::Energy &energy,
+                                               InterCLJPotential::Workspace &workspace,
+                                               double scale_energy) const
 {
     if (scale_energy != 0 and not space->beyond(switchfunc->cutoffDistance(),
                                                 mol0.aaBox(), mol1.aaBox()))
@@ -476,11 +608,12 @@ inline void CLJPotential::calculateEnergy(const CLJPotential::Molecule &mol0,
 /** Calculate the coulomb and LJ forces on the atoms between the passed pair
     of molecules and add these energies onto 'forces'. This uses
     the passed workspace to perform the calculation */
-void CLJPotential::_pvt_calculateForce(const Molecule &mol0, const Molecule &mol1,
-                                       MolForceTable &forces0, 
-                                       MolForceTable &forces1,
-                                       Workspace &workspace,
-                                       double scale_force) const
+void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &mol0, 
+                                            const InterCLJPotential::Molecule &mol1,
+                                            MolForceTable &forces0, 
+                                            MolForceTable &forces1,
+                                            InterCLJPotential::Workspace &workspace,
+                                            double scale_force) const
 {
     if (scale_force != 0 and not space->beyond(switchfunc->cutoffDistance(),
                                                mol0.aaBox(), mol1.aaBox())
@@ -500,70 +633,6 @@ QDataStream& operator>>(QDataStream&, CLJFunctional::Components&);
 
 namespace SireMM
 {
-
-/** This is the class that holds the energy components of 
-    the CLJFunctional (Coulomb and LJ) 
-*/
-class SIREMM_EXPORT CLJFunctional::Energy
-{
-
-friend QDataStream& ::operator<<(QDataStream&, const Energy&);
-friend QDataStream& ::operator>>(QDataStream&, Energy&);
-
-public:
-    Energy(double cnrg=0, double ljnrg=0) : icnrg(cnrg), iljnrg(ljnrg)
-    {}
-    
-    Energy(const Energy &other) : icnrg(other.icnrg), ljnrg(other.ljnrg)
-    {}
-    
-    ~Energy()
-    {}
-    
-    static const char* typeName()
-    {
-        return "SireMM::CLJFunctional::Energy";
-    }
-    
-    const char* what() const
-    {
-        return Energy::typeName();
-    }
-    
-    Energy& operator+=(const Energy &other)
-    {
-        icnrg += other.icnrg;
-        iljnrg += other.iljnrg;
-        return *this;
-    }
-    
-    Energy& operator-=(const Energy &other)
-    {
-        icnrg -= other.icnrg;
-        iljnrg -= other.iljnrg;
-        return *this;
-    }
-    
-    double coulomb() const
-    {
-        return icnrg;
-    }
-    
-    double lj() const
-    {
-        return iljnrg;
-    }
-    
-    operator double() const
-    {
-        //return the total energy
-        return icnrg + iljnrg;
-    }
-
-private:
-    /** The coulomb and LJ components of the energy */
-    double icnrg, iljnrg;
-};
 
 /** This empty class provides the functions that return the parameters
     used by this forcefield
