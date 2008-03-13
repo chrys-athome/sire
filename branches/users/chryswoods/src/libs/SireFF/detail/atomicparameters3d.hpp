@@ -40,28 +40,25 @@ namespace SireFF
 namespace detail
 {
 
-void throwAtomicParameters3DIncompatibleError(int i, int ncoords, int nparams);
-void throwAtomicParameters3DIncompatibleError(int ncoordgroups, int nparamgroups);
-
 /** This class holds 3D parameters, one for each atom 
 
     @author Christopher Woods
 */
 template<class PARAM>
 class AtomicParameters3D : public AtomicParameters<PARAM>,
-                           public FFParameters3D
+                           public AtomicCoords3D
 {
 public:
-    typedef AtomicParameters<PARAM>::Parameter Parameter;
-    typedef AtomicParameters<PARAM>::Parameters Parameters;
+    typedef typename AtomicParameters<PARAM>::Parameter Parameter;
+    typedef typename AtomicParameters<PARAM>::Parameters Parameters;
 
     AtomicParameters3D();
     
     AtomicParameters3D(const PartialMolecule &molecule,
                        const PropertyName &coords_property);
      
-    AtomicParameters3D(const FFParameters3D &params3d,
-                       const Parameters &parameters);
+    AtomicParameters3D(const AtomicCoords3D &coords,
+                       const AtomicParameters<PARAM> &parameters);
     
     AtomicParameters3D(const AtomicParameters3D<PARAM> &other);
     
@@ -71,11 +68,12 @@ public:
     
     bool operator==(const AtomicParameters3D<PARAM> &other) const;
     bool operator!=(const AtomicParameters3D<PARAM> &other) const;
-
-    const Parameters& parameters() const;
+    
     void setParameters(const Parameters &parameters);
+    void setParameters(const AtomicParameters<PARAM> &parameters);
 
     void setCoordinates(const CoordGroupArray &coordinates);
+    void setCoordinates(const AtomicCoords3D &coordinates);
 
     bool changedAllGroups(const AtomicParameters3D<PARAM> &params) const;
     
@@ -119,13 +117,13 @@ void AtomicParameters3D<PARAM>::assertCompatible(
         {
             if (cgroup_array[i].count() != params_array[i].count())
             {
-                SireFF::detail::throwAtomicParameters3DIncompatibleError(
+                SireFF::detail::throwAtomicParametersIncompatibleError(
                         i, cgroup_array[i].count(), params_array[i].count());
             }
         }
     }
     else
-        SireFF::detail::throwAtomicParameters3DIncompatibleError(
+        SireFF::detail::throwAtomicParametersIncompatibleError(
                 params.count(), this->coordinates().count());
 }
 
@@ -133,11 +131,11 @@ void AtomicParameters3D<PARAM>::assertCompatible(
 template<class PARAM>
 SIRE_OUTOFLINE_TEMPLATE
 AtomicParameters3D<PARAM>::AtomicParameters3D(const AtomicCoords3D &coords3d,
-                  const typename AtomicParameters3D<PARAM>::Parameters &parameters)
-              : AtomicParameters<PARAM>(parameters)
+                                              const AtomicParameters<PARAM> &parameters)
+              : AtomicParameters<PARAM>(parameters),
                 AtomicCoords3D(coords3d)
 {
-    this->assertCompatible(params);
+    this->assertCompatible( this->params );
 }
 
 /** Copy constructor */

@@ -268,6 +268,9 @@ public:
 
     const MoleculeInfo& info() const;
 
+    int nGroups() const;
+    int nAtoms() const;
+
     bool isCompatibleWith(const MoleculeInfo &molinfo) const;
     Property mask(const AtomSelection &selected_atoms) const;
 
@@ -537,6 +540,23 @@ SIRE_INLINE_TEMPLATE
 const MoleculeInfo& AtomPairs<T>::info() const
 {
     return molinfo;
+}
+
+/** Return the number of atoms in the molecule (hence the size of the 
+    square matrix) */
+template<class T>
+SIRE_INLINE_TEMPLATE
+int AtomPairs<T>::nAtoms() const
+{
+    return molinfo.nAtoms();
+}
+
+/** Return the number of CutGroups in the molecule (hence the size
+    of the square group matrix) */
+template<class T>
+int AtomPairs<T>::nGroups() const
+{
+    return molinfo.nCutGroups();
 }
 
 /** Return whether this object is compatible with a molecule with

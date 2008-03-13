@@ -36,6 +36,9 @@ SIRE_BEGIN_HEADER
 namespace SireMM
 {
 
+namespace detail
+{
+
 /** This class represents a Coulomb component of a forcefield */
 class SIREMM_EXPORT CoulombComponent : public SireFF::FFComponent
 {
@@ -150,7 +153,104 @@ protected:
     LJComponent lj_component;
 };
 
-}
+typedef SireFF::detail::ComponentEnergy<CoulombComponent> CoulombEnergy;
+typedef SireFF::detail::ComponentEnergy<LJComponent> LJEnergy;
+
+/** This class holds the coulomb and Lennard-Jones (LJ) components
+    of the energy.
+*/
+class SIREMM_EXPORT CLJEnergy
+{
+public:
+    typedef CLJComponent Components;
+
+    CLJEnergy(double cnrg=0, double ljnrg=0) : icnrg(cnrg), iljnrg(ljnrg)
+    {}
+    
+    CLJEnergy(const CLJEnergy &other) : icnrg(other.icnrg), ljnrg(other.ljnrg)
+    {}
+    
+    ~CLJEnergy()
+    {}
+    
+    static const char* typeName()
+    {
+        return "SireMM::CLJEnergy";
+    }
+    
+    const char* what() const
+    {
+        return CLJEnergy::typeName();
+    }
+    
+    CLJEnergy& operator+=(const CLJEnergy &other)
+    {
+        icnrg += other.icnrg;
+        iljnrg += other.iljnrg;
+        return *this;
+    }
+    
+    CLJEnergy& operator-=(const CLJEnergy &other)
+    {
+        icnrg -= other.icnrg;
+        iljnrg -= other.iljnrg;
+        return *this;
+    }
+    
+    Components components() const
+    {
+        return Components();
+    }
+    
+    double component(const CoulombComponent&) const
+    {
+        return icnrg;
+    }
+    
+    double component(const LJComponent&) const
+    {
+        return iljnrg;
+    }
+    
+    double component(const CLJComponent&) const
+    {
+        return icnrg + iljnrg;
+    }
+    
+    double coulomb() const
+    {
+        return icnrg;
+    }
+    
+    double lj() const
+    {
+        return iljnrg;
+    }
+    
+    operator double() const
+    {
+        //return the total energy
+        return icnrg + iljnrg;
+    }
+    
+    operator CoulombEnergy() const
+    {
+        return CoulombEnergy(icnrg);
+    }
+
+    operator LJEnergy() const
+    {
+        return LJEnergy(iljnrg);
+    }
+
+private:
+    /** The coulomb and LJ components of the energy */
+    double icnrg, iljnrg;
+};
+
+} // end of namespace detail
+
+} // end of namespace SireMM
 
 SIRE_END_HEADER
 

@@ -38,6 +38,9 @@ SIRE_BEGIN_HEADER
 namespace SireFF
 {
 
+namespace detail
+{
+
 /** This is the base class of all Symbols that represent forcefield
     components.
     
@@ -69,7 +72,63 @@ protected:
     }
 };
 
-}
+/** This class holds the energy for the component of type T
+
+    @author Christopher Woods
+*/
+template<class T>
+class SIREFF_EXPORT ComponentEnergy
+{
+public:
+    typedef T Components;
+    
+    ComponentEnergy() : nrg(0)
+    {}
+    
+    explicit ComponentEnergy(double inrg) : nrg(inrg)
+    {}
+    
+    ComponentEnergy(const ComponentEnergy<T> &other) : nrg(other.nrg)
+    {}
+    
+    ~ComponentEnergy()
+    {}
+    
+    ComponentEnergy<T>& operator+=(const ComponentEnergy<T> &other)
+    {
+        nrg += other.nrg;
+        return *this;
+    }
+    
+    ComponentEnergy<T>& operator-=(const ComponentEnergy<T> &other)
+    {
+        nrg -= other.nrg;
+        return *this;
+    }
+    
+    Components components() const
+    {
+        return Components();
+    }
+    
+    double component(const T&) const
+    {
+        return nrg;
+    }
+    
+    operator double() const
+    {
+        return nrg;
+    }
+    
+private:
+    /** The component of the energy */
+    double nrg;
+};
+
+} // end of namespace detail
+
+} // end of namespace SireFF
 
 SIRE_END_HEADER
 

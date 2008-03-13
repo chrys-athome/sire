@@ -29,6 +29,8 @@
 #ifndef SIREFF_DETAIL_ATOMICPARAMETERS_HPP
 #define SIREFF_DETAIL_ATOMICPARAMETERS_HPP
 
+#include "SireBase/packedarray2d.hpp"
+
 SIRE_BEGIN_HEADER
 
 namespace SireFF
@@ -36,6 +38,13 @@ namespace SireFF
 
 namespace detail
 {
+
+using SireBase::PackedArray2D;
+
+bool selectedAll(const QSet<quint32> &idxs, quint32 n);
+
+void throwAtomicParametersIncompatibleError(int i, int ncoords, int nparams);
+void throwAtomicParametersIncompatibleError(int ncoordgroups, int nparamgroups);
 
 /** This class hold parameters of type PARAM, one for each atom
 
@@ -51,6 +60,8 @@ public:
     typedef typename SireBase::PackedArray2D<PARAM> Parameters;
 
     AtomicParameters();
+    
+    AtomicParameters(const Parameters &parameters);
     
     AtomicParameters(const AtomicParameters<PARAM> &other);
     
@@ -83,79 +94,74 @@ protected:
 
 };
 
-
 /** Null constructor */
 template<class PARAM>
 SIRE_OUTOFLINE_TEMPLATE
-AtomicParameters3D<PARAM>::AtomicParameters3D()
-                          : AtomicParameters<PARAM>(),
-                            AtomicCoords3D()
+AtomicParameters<PARAM>::AtomicParameters()
 {}
 
-/** Assert that the supplied parameters are compatible with the
-    3D parameters already part of this object
+/** Assert that the passed parameters are compatible with the
+    parameters that are already part of this object
     
     \throw SireError::incompatible_error
 */
 template<class PARAM>
 SIRE_OUTOFLINE_TEMPLATE
-void AtomicParameters3D<PARAM>::assertCompatible(
-                    const typename AtomicParameters3D<PARAM>::Parameters &params) const
+void AtomicParameters<PARAM>::assertCompatible(
+                    const typename AtomicParameters<PARAM>::Parameters &other) const
 {
-    if (params.count() == this->coordinates().count())
+    if (params.isEmpty())
+        return;
+
+    if (params.count() == other.params.count())
     {
         quint32 ngroups = params.count();
         
-        const CoordGroup *cgroup_array = this->coordinates().constData();
+        const typename Parameters::Array *other_array = other.params.constData();
         const typename Parameters::Array *params_array = params.constData();
         
         for (quint32 i=0; i<ngroups; ++i)
         {
-            if (cgroup_array[i].count() != params_array[i].count())
+            if (other_array[i].count() != params_array[i].count())
             {
-                SireFF::detail::throwAtomicParameters3DIncompatibleError(
-                        i, cgroup_array[i].count(), params_array[i].count());
+                SireFF::detail::throwAtomicParametersIncompatibleError(
+                        i, other_array[i].count(), params_array[i].count());
             }
         }
     }
     else
-        SireFF::detail::throwAtomicParameters3DIncompatibleError(
-                params.count(), this->coordinates().count());
+        SireFF::detail::throwAtomicParametersIncompatibleError(
+                params.count(), other.params.count());
 }
 
-/** Construct from the passed 3D coordinates and CLJ parameters */
+/** Construct from the passed parameters */
 template<class PARAM>
 SIRE_OUTOFLINE_TEMPLATE
-AtomicParameters3D<PARAM>::AtomicParameters3D(const AtomicCoords3D &coords3d,
-                  const typename AtomicParameters3D<PARAM>::Parameters &parameters)
-              : AtomicParameters<PARAM>(parameters)
-                AtomicCoords3D(coords3d)
-{
-    this->assertCompatible(params);
-}
+AtomicParameters<PARAM>::AtomicParameters(
+                  const typename AtomicParameters<PARAM>::Parameters &parameters)
+              : params(parameters)
+{}
 
 /** Copy constructor */
 template<class PARAM>
 SIRE_OUTOFLINE_TEMPLATE
-AtomicParameters3D<PARAM>::AtomicParameters3D(const AtomicParameters3D<PARAM> &other)
-                          : AtomicParameters<PARAM>(other),
-                            AtomicCoords3D(other)
+AtomicParameters<PARAM>::AtomicParameters(const AtomicParameters<PARAM> &other)
+                        : params(other.params)
 {}
 
 /** Destructor */
 template<class PARAM>
 SIRE_OUTOFLINE_TEMPLATE
-AtomicParameters3D<PARAM>::~AtomicParameters3D()
+AtomicParameters<PARAM>::~AtomicParameters()
 {}
 
 /** Copy assignment operator */
 template<class PARAM>
 SIRE_OUTOFLINE_TEMPLATE
-AtomicParameters3D<PARAM>& AtomicParameters3D<PARAM>::operator=(
-                                        const AtomicParameters3D<PARAM> &other)
+AtomicParameters<PARAM>& AtomicParameters<PARAM>::operator=(
+                                        const AtomicParameters<PARAM> &other)
 {
-    AtomicParameters<PARAM>::operator=(other);
-    AtomicCoords3D::operator=(other);
+    params = other.params;
     
     return *this;
 }
@@ -163,69 +169,57 @@ AtomicParameters3D<PARAM>& AtomicParameters3D<PARAM>::operator=(
 /** Comparison operator */
 template<class PARAM>
 SIRE_OUTOFLINE_TEMPLATE
-bool AtomicParameters3D<PARAM>::operator==(const AtomicParameters3D<PARAM> &other) const
+bool AtomicParameters<PARAM>::operator==(const AtomicParameters<PARAM> &other) const
 {
-    return AtomicParameters<PARAM>::operator==(other) and
-           AtomicCoords3D::operator==(other);
+    return params == other.params;
 }
 
 /** Comparison operator */
 template<class PARAM>
 SIRE_OUTOFLINE_TEMPLATE
-bool AtomicParameters3D<PARAM>::operator!=(const AtomicParameters3D<PARAM> &other) const
+bool AtomicParameters<PARAM>::operator!=(const AtomicParameters<PARAM> &other) const
 {
-    return AtomicParameters<PARAM>::operator!=(other) or
-           AtomicCoords3D::operator!=(other);
+    return params != other.params;
 }
 
 /** Return whether or not all of the groups have changed parameters
     compared to 'params' */
 template<class PARAM>
 SIRE_OUTOFLINE_TEMPLATE
-bool AtomicParameters3D<PARAM>::changedAllGroups(
-                                    const AtomicParameters3D<PARAM> &other) const
+bool AtomicParameters<PARAM>::changedAllGroups(
+                                  const AtomicParameters<PARAM> &other) const
 {
-    //check the CLJ parameters
-    if (FFParameters3D::changedAllGroups(other))
-        return true;
-    else
-    {
-        //have all of the clj parameters changed?
-        int ngroups = qMin(params.count(), other.params.count());
+    int ngroups = qMin(params.count(), other.params.count());
         
-        const typename Parameters::Array *this_array = params.constData();
-        const typename Parameters::Array *other_array = other.params.constData();
+    const typename Parameters::Array *this_array = params.constData();
+    const typename Parameters::Array *other_array = other.params.constData();
                                                     
-        for (int i=0; i<ngroups; ++i)
-        {
-            if (this->array[i] == other_array[i])
-                return false;
-        }
-        
-        return true;
+    for (int i=0; i<ngroups; ++i)
+    {
+        if (this->array[i] == other_array[i])
+            return false;
     }
+        
+    return true;
 }
 
 /** Add the changed groups from 'params' to the set 'changed_groups' */
 template<class PARAM>
 SIRE_OUTOFLINE_TEMPLATE
-void AtomicParameters3D<PARAM>::addChangedGroups(
-                                     const AtomicParameters3D<PARAM> &parameters,
-                                     QSet<quint32> &changed_groups) const
+void AtomicParameters<PARAM>::addChangedGroups(
+                                   const AtomicParameters<PARAM> &other,
+                                   QSet<quint32> &changed_groups) const
 {
-    //first add on the groups that have changed coordinates
-    FFParameters3D::addChangedGroups(parameters, changed_groups);
-
     //now add on the groups that have changed parameters
-    quint32 ngroups = changed_groups.count();
+    quint32 ngroups = this->nGroups();
     
-    if (FFParameters3D::selectedAll(changed_groups, ngroups))
+    if (SireFF::detail::selectedAll(changed_groups, ngroups))
         return;
         
-    quint32 nsharedgroups = qMin(ngroups, parameters.params.count());
-    
+    quint32 nsharedgroups = qMin(ngroups, other.params.count());
+   
     const typename Parameters::Array *this_array = params.count();
-    const typename Parameters::Array *other_array = parameters.params.count();
+    const typename Parameters::Array *other_array = other.params.count();
     
     for (quint32 i=0; i<nsharedgroups; ++i)
     {
@@ -234,7 +228,7 @@ void AtomicParameters3D<PARAM>::addChangedGroups(
         {
             changed_groups.insert(i);
             
-            if (FFParameters3D::selectedAll(changed_groups, ngroups))
+            if (SireFF::detail::selectedAll(changed_groups, ngroups))
                 return;
         }
     }
@@ -243,8 +237,8 @@ void AtomicParameters3D<PARAM>::addChangedGroups(
 /** Return the set of groups that have changed parameters */
 template<class PARAM>
 SIRE_OUTOFLINE_TEMPLATE
-QSet<quint32> AtomicParameters3D<PARAM>::getChangedGroups(
-                                    const AtomicParameters3D<PARAM> &parameters) const
+QSet<quint32> AtomicParameters<PARAM>::getChangedGroups(
+                                    const AtomicParameters<PARAM> &other) const
 {
     QSet<quint32> changed_groups;
     changed_groups.reserve(params.count());
@@ -258,18 +252,16 @@ QSet<quint32> AtomicParameters3D<PARAM>::getChangedGroups(
     'idxs' are present */ 
 template<class PARAM>
 SIRE_OUTOFLINE_TEMPLATE
-AtomicParameters3D<PARAM> AtomicParameters3D<PARAM>::applyMask(
-                                            const QSet<quint32> &idxs) const
+AtomicParameters<PARAM> AtomicParameters<PARAM>::applyMask(
+                                          const QSet<quint32> &idxs) const
 {
-    FFParameters3D masked_coords = FFParameters3D::applyMask(idxs);
-    
-    if (masked_coords.coordinates().count() == 0)
-        //all of the groups are masked
-        return AtomicParameters3D<PARAM>();
-    
-    else if (masked_coords.coordinates().count() == this->coordinates().count())
-        //none of the groups are masked
+    if (SireFF::detail::selectedAll(idxs, params.count()))
+        //all of the groups have been selected
         return *this;
+    
+    else if (idxs.isEmpty())
+        //definitely nothing has been selected
+        return AtomicParameters<PARAM>();
         
     //otherwise, some are maked - apply the mask
     //mask by the indicies
@@ -286,7 +278,7 @@ AtomicParameters3D<PARAM> AtomicParameters3D<PARAM>::applyMask(
             group_params.append( this_array[i] );
     }
     
-    return AtomicParameters3D<PARAM>( Parameters(group_params), masked_coords );
+    return AtomicParameters<PARAM>( Parameters(group_params) );
 }
 
 } //end of namespace detail

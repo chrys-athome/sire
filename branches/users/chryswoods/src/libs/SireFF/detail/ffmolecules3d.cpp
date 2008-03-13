@@ -40,27 +40,3 @@ using namespace SireFF::detail;
 
 using namespace SireMol;
 using namespace SireVol;
-
-///////
-/////// Implementation of AtomicParameters3D
-///////
-
-void SIREFF_EXPORT SireFF::detail::throwAtomicParameters3DIncompatibleError(
-                            int i, int ncoords, int nparams)
-{
-    throw SireError::incompatible_error( QObject::tr(
-             "The passed parameters are incompatible as the group "
-             "at index %1 has coordinates for %2 atoms, but the "
-             "passed parameters only has CLJ parameters for %3 atoms.")
-                  .arg(i).arg(ncoords).arg(nparams), CODELOC );
-}
-
-void SIREFF_EXPORT SireFF::detail::throwAtomicParameters3DIncompatibleError(
-                            int ncoordgroups, int nparamgroups)
-{
-    throw SireError::incompatible_error( QObject::tr(
-       "The passed parameters are incompatible as the parameters "
-       "are for %1 CutGroups, while this only has the coordinates "
-       "for %2 CutGroups.")
-            .arg(nparamgroups).arg(ncoordgroups), CODELOC );
-}

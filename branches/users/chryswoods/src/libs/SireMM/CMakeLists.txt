@@ -76,6 +76,8 @@ set ( SIREMM_HEADERS
       resinternalinfo.hpp
       switchingfunction.h
       ureybradleydb.h
+
+      detail/intrascaledatomicparameters.hpp
     )
 
 # Define the sources in SireMM

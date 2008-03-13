@@ -33,11 +33,37 @@
 
 SIRE_BEGIN_HEADER
 
+namespace SireVol
+{
+class CoordGroup;
+class CoordGroupArray;
+class CoordGroupArrayArray;
+}
+
+namespace SireMol
+{
+class PartialMolecule;
+}
+
+namespace SireBase
+{
+class PropertyName;
+}
+
 namespace SireFF
 {
 
+using SireVol::CoordGroup;
+using SireVol::CoordGroupArray;
+using SireVol::CoordGroupArrayArray;
+
+using SireMol::PartialMolecule;
+using SireBase::PropertyName;
+
 namespace detail
 {
+    
+bool selectedAll(const QSet<quint32> &idxs, quint32 n);
 
 /** This class holds the 3D coordinates of all of the atoms,
     optimised for access by the forcefield
@@ -79,9 +105,6 @@ public:
                           QSet<quint32> &changed_groups) const;
     
     AtomicCoords3D applyMask(const QSet<quint32> &idxs) const;
-    
-protected:
-    static bool selectedAll(const QSet<quint32> &idxs, quint32 n);
     
 private:
     /** The 3D coordinates of all of the atoms in this forcefield,

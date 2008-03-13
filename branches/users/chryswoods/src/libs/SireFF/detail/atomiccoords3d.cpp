@@ -26,10 +26,68 @@
   *
 \*********************************************/
 
+#include <QSet>
+
 #include "atomiccoords3d.h"
+#include "atomicparameters.hpp"
+#include "atomicparameters3d.hpp"
+
+#include "SireMol/partialmolecule.h"
+#include "SireMol/atomcoords.h"
+
+#include "SireMol/mover.hpp"
+
+#include "SireError/errors.h"
 
 using namespace SireFF;
 using namespace SireFF::detail;
+
+using namespace SireVol;
+using namespace SireMol;
+
+bool SIREFF_EXPORT SireFF::detail::selectedAll(const QSet<quint32> &changed_groups, 
+                                               quint32 n)
+{
+    if (quint32(changed_groups.count()) >= n)
+    {
+        quint32 got = 0;
+    
+        for (QSet<quint32>::const_iterator it = changed_groups.begin();
+             it != changed_groups.end();
+             ++it)
+        {
+            if (*it < n)
+            {
+                ++got;
+                
+                if (got == n)
+                    return true;
+            }
+        }
+    }
+    
+    return false;
+}
+
+void SIREFF_EXPORT SireFF::detail::throwAtomicParametersIncompatibleError(
+                            int i, int natoms, int nparams)
+{
+    throw SireError::incompatible_error( QObject::tr(
+             "The passed parameters are incompatible as the group "
+             "at index %1 has space for %2 atoms, but the "
+             "passed parameters only provides parameters for %3 atoms.")
+                  .arg(i).arg(natoms).arg(nparams), CODELOC );
+}
+
+void SIREFF_EXPORT SireFF::detail::throwAtomicParametersIncompatibleError(
+                            int ngroups, int nparamgroups)
+{
+    throw SireError::incompatible_error( QObject::tr(
+       "The passed parameters are incompatible as the parameters "
+       "are for %1 CutGroups, while this only has space "
+       "for %2 CutGroups.")
+            .arg(nparamgroups).arg(ngroups), CODELOC );
+}
 
 /** Null constructor */
 AtomicCoords3D::AtomicCoords3D()
@@ -131,29 +189,6 @@ bool AtomicCoords3D::changedAllGroups(const AtomicCoords3D &other) const
     }
     
     return true;
-}
-
-bool AtomicCoords3D::selectedAll(const QSet<quint32> &changed_groups, quint32 n)
-{
-    if (quint32(changed_groups.count()) >= n)
-    {
-        quint32 got = 0;
-    
-        for (QSet<quint32>::const_iterator it = changed_groups.begin();
-             it != changed_groups.end();
-             ++it)
-        {
-            if (*it < n)
-            {
-                ++got;
-                
-                if (got == n)
-                    return true;
-            }
-        }
-    }
-    
-    return false;
 }
 
 /** Add the indicies of CoordGroups in this array that are different
