@@ -29,6 +29,10 @@
 #ifndef SIREMM_DETAIL_INTRASCALEDATOMICPARAMETERS_HPP
 #define SIREMM_DETAIL_INTRASCALEDATOMICPARAMETERS_HPP
 
+#include "SireBase/propertymap.h"
+
+#include "SireMol/partialmolecule.h"
+
 #include "SireFF/detail/atomicparameters.hpp"
 #include "SireFF/detail/atomicparameters3d.hpp"
 
@@ -39,6 +43,29 @@ namespace SireMM
 
 namespace detail
 {
+
+using SireBase::PropertyName;
+
+using SireMol::PartialMolecule;
+using SireMol::CGIdx;
+
+class SIREMM_EXPORT IntraScaleParameterName
+{
+public:
+    IntraScaleParameterName()
+    {}
+    
+    ~IntraScaleParameterName()
+    {}
+    
+    const PropertyName& intraScaleFactors() const
+    {
+        return nbscl_param;
+    }
+
+private:
+    static PropertyName nbscl_param;
+};
 
 /** This class represents parameters that are scaled using information
     stored in the object of type 'SCALE_FACTORS'
@@ -119,7 +146,7 @@ public:
     
     ~IntraScaledAtomicParameters();
     
-    IntraScaledAtomicParameters<SCALE_FACTORS> operator=(
+    IntraScaledAtomicParameters<ATOMPARAM,INTRASCALE> operator=(
                         const IntraScaledAtomicParameters<ATOMPARAM,INTRASCALE> &other);
                                 
     bool operator==(
@@ -168,7 +195,7 @@ IntraScaledParameters<SCALE_FACTORS>::IntraScaledParameters(
                               const PartialMolecule &molecule,
                               const PropertyName &scale_property)
 {
-    sclfactors = molecule.property(scale_property).asA<SCALE_FACTORS>();
+    sclfactors = molecule.property(scale_property)->asA<SCALE_FACTORS>();
 }
 
 /** Construct by combining some AtomicParameters3D with some scale factors */
@@ -192,8 +219,10 @@ IntraScaledParameters<SCALE_FACTORS>::IntraScaledParameters(
                               const PartialMolecule &molecule,
                               const T &propertynames)
 {
-    sclfactors = molecule.property( propertynames.scaleFactors() )
-                         .asA<SCALE_FACTORS>();
+    const SireBase::Property &property 
+                    = molecule.property( propertynames.intraScaleFactors() );
+    
+    sclfactors = property->asA<SCALE_FACTORS>();
 }
                               
 /** Copy constructor */
@@ -462,6 +491,7 @@ void IntraScaledAtomicParameters<ATOMPARAM,INTRASCALE>::addChangedGroups(
     indicies are 'idxs' are present */
 template<class ATOMPARAM, class INTRASCALE>
 SIRE_OUTOFLINE_TEMPLATE
+IntraScaledAtomicParameters<ATOMPARAM,INTRASCALE>
 IntraScaledAtomicParameters<ATOMPARAM,INTRASCALE>::applyMask(
                                             const QSet<quint32> &idxs) const
 {

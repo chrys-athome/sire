@@ -29,6 +29,8 @@
 #ifndef SIREFF_DETAIL_ATOMICPARAMETERS_HPP
 #define SIREFF_DETAIL_ATOMICPARAMETERS_HPP
 
+#include <QSet>
+
 #include "SireBase/packedarray2d.hpp"
 
 SIRE_BEGIN_HEADER
@@ -58,6 +60,7 @@ public:
 
     typedef PARAM Parameter;
     typedef typename SireBase::PackedArray2D<PARAM> Parameters;
+    typedef typename Parameters::Array CGParameters;
 
     AtomicParameters();
     

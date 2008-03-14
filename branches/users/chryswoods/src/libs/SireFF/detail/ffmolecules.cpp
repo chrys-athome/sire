@@ -161,6 +161,14 @@ bool FFMoleculeBase::isEmpty() const
     return mol.selection().selectedNone();
 }
 
+/** Return the number of CutGroups in this view of the molecule
+    (this is the number of CutGroups that contain at least
+    one selected atom) */
+int FFMoleculeBase::nCutGroups() const
+{
+    return mol.selection().nSelectedCutGroups();
+}
+
 /** Change this view to use the same molecule data version
     as the passed molecule. 
     

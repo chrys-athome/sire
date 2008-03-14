@@ -51,6 +51,7 @@ class AtomicParameters3D : public AtomicParameters<PARAM>,
 public:
     typedef typename AtomicParameters<PARAM>::Parameter Parameter;
     typedef typename AtomicParameters<PARAM>::Parameters Parameters;
+    typedef typename AtomicParameters<PARAM>::CGParameters CGParameters;
 
     AtomicParameters3D();
     

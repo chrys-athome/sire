@@ -44,6 +44,8 @@ class QDataStream;
 QDataStream& operator<<(QDataStream&, const SireMM::LJParameter&);
 QDataStream& operator>>(QDataStream&, SireMM::LJParameter&);
 
+quint32 qHash(const SireMM::LJParameter&);
+
 namespace SireMM
 {
 

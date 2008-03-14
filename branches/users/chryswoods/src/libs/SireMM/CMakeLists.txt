@@ -64,6 +64,7 @@ set ( SIREMM_HEADERS
       ljff.h
       ljpair.h
       ljparameter.h
+      ljparameterdb.h
       ljtable.h
       molangleinfo.h
       molbondinfo.h
@@ -120,6 +121,7 @@ set ( SIREMM_SOURCES
       ljff.cpp
       ljpair.cpp
       ljparameter.cpp
+      ljparameterdb.cpp
       ljtable.cpp
       molangleinfo.cpp
       molbondinfo.cpp

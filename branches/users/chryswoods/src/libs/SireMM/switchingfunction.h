@@ -37,16 +37,18 @@ SIRE_BEGIN_HEADER
 namespace SireMM
 {
 class SwitchingFunction;
-class SwitchFuncBase;
+class SwitchFunc;
+
 class NoCutoff;
 class HarmonicSwitchingFunction;
+class CHARMMSwitchingFunction;
 }
 
 QDataStream& operator<<(QDataStream&, const SireMM::SwitchingFunction&);
 QDataStream& operator>>(QDataStream&, SireMM::SwitchingFunction&);
 
-QDataStream& operator<<(QDataStream&, const SireMM::SwitchFuncBase&);
-QDataStream& operator>>(QDataStream&, SireMM::SwitchFuncBase&);
+QDataStream& operator<<(QDataStream&, const SireMM::SwitchFunc&);
+QDataStream& operator>>(QDataStream&, SireMM::SwitchFunc&);
 
 QDataStream& operator<<(QDataStream&, const SireMM::NoCutoff&);
 QDataStream& operator>>(QDataStream&, SireMM::NoCutoff&);
@@ -54,58 +56,134 @@ QDataStream& operator>>(QDataStream&, SireMM::NoCutoff&);
 QDataStream& operator<<(QDataStream&, const SireMM::HarmonicSwitchingFunction&);
 QDataStream& operator>>(QDataStream&, SireMM::HarmonicSwitchingFunction&);
 
+QDataStream& operator<<(QDataStream&, const SireMM::CHARMMSwitchingFunction&);
+QDataStream& operator>>(QDataStream&, SireMM::CHARMMSwitchingFunction&);
+
 namespace SireMM
 {
 
 using SireBase::SharedPolyPointer;
 
-/**
-This is the virtual base class of all switching functions. These return scale factors
-for based on the supplied distance
+/** This is the virtual base class of all switching functions. These 
+    return scale factors based on the supplied distance
 
-@author Christopher Woods
+    @author Christopher Woods
 */
-class SIREMM_EXPORT SwitchFuncBase : public SireBase::PropertyBase
+class SIREMM_EXPORT SwitchFunc : public SireBase::PropertyBase
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const SwitchFuncBase&);
-friend QDataStream& ::operator>>(QDataStream&, SwitchFuncBase&);
+friend QDataStream& ::operator<<(QDataStream&, const SwitchFunc&);
+friend QDataStream& ::operator>>(QDataStream&, SwitchFunc&);
 
 public:
-    SwitchFuncBase();
-    SwitchFuncBase(double cutdistance);
+    ~SwitchFunc();
 
-    SwitchFuncBase(const SwitchFuncBase &other);
+    virtual SwitchFunc* clone() const=0;
 
-    ~SwitchFuncBase();
-
-    virtual SwitchFuncBase* clone() const=0;
-
+    /** Return the electrostatic scale factor for the distance 'dist' */
     virtual double electrostaticScaleFactor(double dist) const=0;
+
+    /** Return the VDW scale factor for the distance 'dist' */
     virtual double vdwScaleFactor(double dist) const=0;
 
+    /** Return the derivative (gradient) of the electrostatic
+        scale factor at the distance 'dist' */
+    virtual double dElectrostaticScaleFactor(double dist) const=0;
+
+    /** Return the derivative (gradient) of the VDW
+        scale factor at the distance 'dist' */
+    virtual double dVDWScaleFactor(double dist) const=0;
+
     double cutoffDistance() const;
+    double featherDistance() const;
+
+    double electrostaticCutoffDistance() const;
+    double electrostaticFeatherDistance() const;
+    
+    double vdwCutoffDistance() const;
+    double vdwFeatherDistance() const;
 
 protected:
+    SwitchFunc();
+    SwitchFunc(double cutdistance);
+    SwitchFunc(double cutdistance, double featherdistance);
+    SwitchFunc(double eleccut, double elecfeather,
+               double vdwcut, double vdwfeather);
+
+    SwitchFunc(const SwitchFunc &other);
+
+    SwitchFunc& operator=(const SwitchFunc &other);
+
+    bool operator==(const SwitchFunc &other) const;
+    bool operator!=(const SwitchFunc &other) const;
+
     /** The maximum cutoff distance - both the electrostatic
         and vdw energies are scaled to zero beyond this distance */
     double cutdist;
+
+    /** The maximum feather distance - feathering of the electrostatic
+        and vdw interaction is *not* performed below this distance */
+    double featherdist;
+
+    /** The electrostatic cutoff distance */
+    double cut_elec;
+    /** The electrostatic feather distance */
+    double feather_elec;
+
+    /** The vdw cutoff distance */
+    double cut_vdw;
+    /** The vdw feather distance */
+    double feather_vdw;
 };
 
 /** Return the cutoff distance beyond which both the electrostatic
     and vdw energies are scaled to zero */
-inline double SwitchFuncBase::cutoffDistance() const
+inline double SwitchFunc::cutoffDistance() const
 {
     return cutdist;
 }
 
-/**
-This class implements no cutoffs (e.g. there is no cutoff, and no switching function!).
+/** Return the feather distance, below which feathering of the 
+    electrostatic and vdw interactions is *not* performed */
+inline double SwitchFunc::featherDistance() const
+{
+    return featherdist;
+}
 
-@author Christopher Woods
+/** Return the distance beyond which the electrostatic interaction
+    is not evaluated */
+inline double SwitchFunc::electrostaticCutoffDistance() const
+{
+    return cut_elec;
+}
+
+/** Return the distance below which the electrostatic interaction
+    is *not* feathered */
+inline double SwitchFunc::electrostaticFeatherDistance() const
+{
+    return feather_elec;
+}
+
+/** Return the distance beyond which the VDW interaction is not evaluated */
+inline double SwitchFunc::vdwCutoffDistance() const
+{
+    return cut_vdw;
+}
+
+/** Return the distance below which the VDW interaction is 
+    *not* feathered */
+inline double SwitchFunc::vdwFeatherDistance() const
+{
+    return feather_vdw;
+}
+
+/** This class implements no cutoffs (e.g. there is no cutoff, 
+    and no switching function!).
+
+    @author Christopher Woods
 */
 class SIREMM_EXPORT NoCutoff 
-        : public SireBase::ConcreteProperty<NoCutoff,SwitchFuncBase>
+        : public SireBase::ConcreteProperty<NoCutoff,SwitchFunc>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const NoCutoff&);
@@ -120,12 +198,8 @@ public:
 
     static const char* typeName()
     {
-        return "SireMM::NoCutoff";
+        return QMetaType::typeName( qMetaTypeId<NoCutoff>() );
     }
-
-    using PropertyBase::operator=;
-    using PropertyBase::operator==;
-    using PropertyBase::operator!=;
     
     NoCutoff& operator=(const NoCutoff &other);
     
@@ -134,17 +208,19 @@ public:
     
     double electrostaticScaleFactor(double dist) const;
     double vdwScaleFactor(double dist) const;
+    
+    double dElectrostaticScaleFactor(double dist) const;
+    double dVDWScaleFactor(double dist) const;
 };
 
-/**
-This class implements harmonic switching functions - these scale the energy
-harmonically down to zero.
+/** This class implements harmonic switching functions - these scale the energy
+    harmonically down to zero.
 
-@author Christopher Woods
+    @author Christopher Woods
 */
 class SIREMM_EXPORT HarmonicSwitchingFunction 
          : public SireBase::ConcreteProperty<HarmonicSwitchingFunction,
-                                             SwitchFuncBase>
+                                             SwitchFunc>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const HarmonicSwitchingFunction&);
@@ -166,7 +242,7 @@ public:
 
     static const char* typeName()
     {
-        return "SireMM::HarmonicSwitchingFunction";
+        return QMetaType::typeName( qMetaTypeId<HarmonicSwitchingFunction>() );
     }
 
     HarmonicSwitchingFunction& operator=(const HarmonicSwitchingFunction &other);
@@ -177,24 +253,17 @@ public:
     double electrostaticScaleFactor(double dist) const;
     double vdwScaleFactor(double dist) const;
 
+    double dElectrostaticScaleFactor(double dist) const;
+    double dVDWScaleFactor(double dist) const;
+    
 protected:
     void set(double cutelec, double featherelec,
              double cutvdw, double feathervdw);
-
-    /** The electrostatic cutoff distance */
-    double cut_elec;
-    /** The electrostatic feather distance */
-    double feather_elec;
 
     /** Square of the cutoff distance */
     double cut_elec2;
     /** Normalisation factor for the electrostatic cutoff */
     double norm_elec;
-
-    /** The vdw cutoff distance */
-    double cut_vdw;
-    /** The vdw feather distance */
-    double feather_vdw;
 
     /** Square of the cutoff distance */
     double cut_vdw2;
@@ -202,12 +271,87 @@ protected:
     double norm_vdw;
 };
 
-/**
-This class provides an abstraction of a switching function - these are used to cutoff a non-bonded interaction potential smoothly. These functions provide a scaling factor that can be used to scale the electrostatic or vdw energies.
+/** This class implements the CHARMMM switching function - these scale the energy
+    to zero is such a way that the first derivative of the switching
+    function is continuous (and therefore this function can be used
+    in a dynamics simulation)
 
-@author Christopher Woods
+    This is the switching function reported in;
+    
+    Steinbach and Brooks, "New spherical cutoff methods for long-range
+                           forces in macromolecular simulaton"
+    
+    J. Comp. Chem., 15, 7, pp667-683, 1994
+
+    @author Christopher Woods
 */
-class SIREMM_EXPORT SwitchingFunction
+class SIREMM_EXPORT CHARMMSwitchingFunction 
+         : public SireBase::ConcreteProperty<CHARMMSwitchingFunction,
+                                             SwitchFunc>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const CHARMMSwitchingFunction&);
+friend QDataStream& ::operator>>(QDataStream&, CHARMMSwitchingFunction&);
+
+public:
+    CHARMMSwitchingFunction();
+
+    CHARMMSwitchingFunction(double cutoffdist);
+    CHARMMSwitchingFunction(double cutoffdist, double featherdist);
+    CHARMMSwitchingFunction(double cutoffdist,
+                            double elecfeather, double vdwfeather);
+    CHARMMSwitchingFunction(double eleccutoff, double elecfeather,
+                            double vdwcutoff, double vdwfeather);
+
+    CHARMMSwitchingFunction(const CHARMMSwitchingFunction &other);
+
+    ~CHARMMSwitchingFunction();
+
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<CHARMMSwitchingFunction>() );
+    }
+
+    CHARMMSwitchingFunction& operator=(const CHARMMSwitchingFunction &other);
+    
+    bool operator==(const CHARMMSwitchingFunction &other) const;
+    bool operator!=(const CHARMMSwitchingFunction &other) const;
+    
+    double electrostaticScaleFactor(double dist) const;
+    double vdwScaleFactor(double dist) const;
+
+    double dElectrostaticScaleFactor(double dist) const;
+    double dVDWScaleFactor(double dist) const;
+    
+protected:
+    void set(double cutelec, double featherelec,
+             double cutvdw, double feathervdw);
+
+    /** Square of the cutoff distance */
+    double cut_elec2;
+    
+    /** Square of the feather distance */
+    double feather_elec2;
+    
+    /** Normalisation factor for the electrostatic cutoff */
+    double norm_elec;
+
+    /** Square of the cutoff distance */
+    double cut_vdw2;
+    
+    /** Square of the feather distance */
+    double feather_vdw2;
+    
+    /** Normalisation factor for the vdw cutoff */
+    double norm_vdw;
+};
+
+/** This is the user-handle class that is used to hold 
+    the dynamic SwitchingFunction classes.
+
+    @author Christopher Woods
+*/
+class SIREVOL_EXPORT SwitchingFunction : public SireBase::Property
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const SwitchingFunction&);
@@ -215,83 +359,38 @@ friend QDataStream& ::operator>>(QDataStream&, SwitchingFunction&);
 
 public:
     SwitchingFunction();
-    SwitchingFunction(const SwitchFuncBase &switchingfunction);
-
-    SwitchingFunction(const SireBase::Property &property);
+    SwitchingFunction(const SwitchFunc &other);
+    SwitchingFunction(const SireBase::PropertyBase &property);
 
     SwitchingFunction(const SwitchingFunction &other);
 
     ~SwitchingFunction();
 
-    SwitchingFunction& operator=(const SwitchingFunction &other);
-    SwitchingFunction& operator=(const SwitchFuncBase &other);
-    SwitchingFunction& operator=(const SireBase::Property &property);
+    virtual SwitchingFunction& operator=(const SwitchFunc &other);
+    virtual SwitchingFunction& operator=(const SireBase::PropertyBase &other);
 
-    bool operator==(const SwitchingFunction &other) const;
-    bool operator!=(const SwitchingFunction &other) const;
+    const SwitchFunc* operator->() const;
+    const SwitchFunc& operator*() const;
+    
+    const SwitchFunc& read() const;
+    SwitchFunc& edit();
+    
+    const SwitchFunc* data() const;
+    const SwitchFunc* constData() const;
+    
+    SwitchFunc* data();
+    
+    operator const SwitchFunc&() const;
 
-    const char* what() const;
-
-    const SwitchFuncBase& base() const
-    {
-        return *d;
-    }
-
-    double electrostaticScaleFactor(double dist) const;
-    double vdwScaleFactor(double dist) const;
-
-    double cutoffDistance() const;
-
-    template<class T>
-    bool isA() const
-    {
-        return d->isA<T>();
-    }
-
-    template<class T>
-    const T& asA() const
-    {
-        return d->asA<T>();
-    }
-
-    /** Allow implicit conversion to a Property */
-    operator SireBase::Property() const
-    {
-        return SireBase::Property(*d);
-    }
-
-private:
-    /** Dynamic shared pointer to the object implementing
-        the switching function */
-    SharedPolyPointer<SwitchFuncBase> d;
+    static const SwitchingFunction& shared_null();
 };
-
-/** Return the scaling factor for the electrostatic energy for the
-    distance 'dist' */
-inline double SwitchingFunction::electrostaticScaleFactor(double dist) const
-{
-    return d->electrostaticScaleFactor(dist);
-}
-
-/** Return the scaling factor for the vdw energy for the
-    distance 'dist' */
-inline double SwitchingFunction::vdwScaleFactor(double dist) const
-{
-    return d->vdwScaleFactor(dist);
-}
-
-/** Return the cutoff distance beyond which both the electrostatic
-    and vdw energies are scaled to zero */
-inline double SwitchingFunction::cutoffDistance() const
-{
-    return d->cutoffDistance();
-}
 
 }
 
 Q_DECLARE_METATYPE(SireMM::SwitchingFunction)
 Q_DECLARE_METATYPE(SireMM::NoCutoff)
 Q_DECLARE_METATYPE(SireMM::HarmonicSwitchingFunction)
+Q_DECLARE_METATYPE(SireMM::CHARMMSwitchingFunction)
 
 SIRE_END_HEADER
 

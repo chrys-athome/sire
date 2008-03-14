@@ -146,6 +146,34 @@ public:
     }
 };
 
+/** This exception is thrown when a request is made of an unavailable
+    derivative of a function (either because the derivative has
+    not been programmed, or because it is not mathematically available)
+
+    @author Christopher Woods
+*/
+class SIREFF_EXPORT missing_derivative : public sireff_error
+{
+public:
+    missing_derivative() : sireff_error()
+    {}
+
+    missing_derivative(QString err, QString place = QString::null)
+              : sireff_error(err,place)
+    {}
+
+    missing_derivative(const missing_derivative &other) : sireff_error(other)
+    {}
+
+    ~missing_derivative() throw()
+    {}
+
+    const char* what() const throw()
+    {
+        return "SireFF::missing_derivative";
+    }
+};
+
 /** This exception is thrown when a forcefield is added when
     one already exists!
 
@@ -260,6 +288,7 @@ Q_DECLARE_METATYPE(SireFF::sireff_error)
 Q_DECLARE_METATYPE(SireFF::missing_component)
 Q_DECLARE_METATYPE(SireFF::missing_function)
 Q_DECLARE_METATYPE(SireFF::missing_forcefield)
+Q_DECLARE_METATYPE(SireFF::missing_derivative)
 Q_DECLARE_METATYPE(SireFF::duplicate_component)
 Q_DECLARE_METATYPE(SireFF::duplicate_function)
 Q_DECLARE_METATYPE(SireFF::duplicate_forcefield)

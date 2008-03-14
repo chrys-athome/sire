@@ -33,6 +33,8 @@
 #include <QRegExp>
 
 using namespace SireFF;
+using namespace SireFF::detail;
+
 using namespace SireCAS;
 
 static QRegExp uid_regexp( "E_\\{FF:(\\d+)\\}" );

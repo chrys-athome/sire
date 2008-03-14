@@ -18,6 +18,7 @@ set ( SIREMATHS_HEADERS
       circularangle.h
       complex.h
       constants.h
+      distvector.h
       errors.h
       line.h
       maths.h
@@ -39,6 +40,7 @@ set ( SIREMATHS_HEADERS
 set ( SIREMATHS_SOURCES
       axisset.cpp
       complex.cpp
+      distvector.cpp
       errors.cpp
       line.cpp
       matrix4.cpp

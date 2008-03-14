@@ -61,10 +61,7 @@ QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, SireMaths::Vector &vec
 
     if (v == 1)
     {
-        double x,y,z;
-        ds >> x >> y >> z;
-
-        vec.set(x,y,z);
+        ds >> vec.sc[0] >> vec.sc[1] >> vec.sc[2];
     }
     else
         throw version_error(v, "1", r_vector, CODELOC);

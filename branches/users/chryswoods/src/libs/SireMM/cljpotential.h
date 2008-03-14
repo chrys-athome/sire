@@ -26,16 +26,21 @@
   *
 \*********************************************/
 
-#ifndef SIREMM_CLJFUNCTIONAL_H
-#define SIREMM_CLJFUNCTIONAL_H
+#ifndef SIREMM_CLJPOTENTIAL_H
+#define SIREMM_CLJPOTENTIAL_H
 
+#include "SireBase/properties.h"
 #include "SireBase/propertymap.h"
 #include "SireBase/pairmatrix.hpp"
 #include "SireBase/packedarray2d.hpp"
 
-#include "cljpair.h"
-#include "atomicpairs.h"
+#include "SireVol/space.h"
+
 #include "cljcomponent.h"
+#include "detail/intrascaledatomicparameters.hpp"
+
+#include "ljparameterdb.h"
+#include "switchingfunction.h"
 
 #include "SireFF/detail/ffmolecules3d.h"
 
@@ -56,34 +61,180 @@ QDataStream& operator>>(QDataStream&, SireMM::IntraCLJPotential&);
 namespace SireMol
 {
 class PartialMolecule;
+class MolGroup;
 }
 
 namespace SireFF
 {
-class ForceTable;
+class MolForceTable;
 }
 
 namespace SireMM
 {
 
+using SireBase::Properties;
+using SireBase::PropertyBase;
 using SireBase::PropertyMap;
+using SireBase::PropertyName;
+
+using SireVol::Space;
 
 using SireMol::PartialMolecule;
+using SireMol::MolGroup;
 
-using SireFF::ForceTable;
+using SireFF::MolForceTable;
+
+namespace detail
+{
+
+/** This class provides the default name of the 
+    property that contains the charge parameters */
+class SIREMM_EXPORT ChargeParameterName
+{
+public:
+    ChargeParameterName()
+    {}
+    
+    ~ChargeParameterName()
+    {}
+    
+    const PropertyName& charge() const
+    {
+        return chg_param;
+    }
+    
+private:
+    static PropertyName chg_param;
+};
+
+/** This class provides the default name of the 
+    property that contains the LJ parameters */
+class SIREMM_EXPORT LJParameterName
+{
+public:
+    LJParameterName()
+    {}
+    
+    ~LJParameterName()
+    {}
+    
+    const PropertyName& lj() const
+    {
+        return lj_param;
+    }
+    
+private:
+    static PropertyName lj_param;
+};
+
+/** This class provides the default name of the properties
+    that contain the charge and LJ parameters */
+class SIREMM_EXPORT CLJParameterNames : public ChargeParameterName,
+                                        public LJParameterName
+{
+public:
+    CLJParameterNames() : ChargeParameterName(), LJParameterName()
+    {}
+    
+    ~CLJParameterNames()
+    {}
+};
+
+/** This class provides the default name of the properties
+    that contain the charge, LJ and 3D coordinates properties */
+class SIREMM_EXPORT CLJParameterNames3D : public CLJParameterNames,
+                                          public SireFF::detail::Coords3DParameterName
+{
+public:
+    CLJParameterNames3D()
+    {}
+    
+    ~CLJParameterNames3D()
+    {}
+};
+
+/** This class provides the default name of the properties 
+    that contain the charge, LJ, intramolecular NB scale parameters and
+    3D coordinates properties */
+class SIREMM_EXPORT ScaledCLJParameterNames3D : public CLJParameterNames3D,
+                                                public detail::IntraScaleParameterName
+{
+public:
+    ScaledCLJParameterNames3D() : CLJParameterNames3D(),
+                                  detail::IntraScaleParameterName()
+    {}
+    
+    ~ScaledCLJParameterNames3D()
+    {}
+};
+
+/** This class holds the CLJ parameter used by both the Inter- and Intra-
+    CLJPotentials. It is just the charge of the atom in reduced units
+    (atomic charge divided by sqrt(4 pi eps_0)) and the ID of the LJ
+    parameter in the singleton LJParameterDB database
+    
+    @author Christopher Woods
+*/
+class SIREMM_EXPORT CLJParameter
+{
+public:
+    CLJParameter(double charge=0, quint32 lj_id=0)
+          : reduced_charge(charge), ljid(lj_id)
+    {}
+    
+    CLJParameter(const CLJParameter &other)
+          : reduced_charge(other.reduced_charge), ljid(other.ljid)
+    {}
+    
+    ~CLJParameter()
+    {}
+    
+    double reduced_charge;
+    quint32 ljid;
+};
+
+/** This is the interatomic scale factor for the coulomb and
+    LJ parameters for the intramolecular energy. */
+class SIREMM_EXPORT CLJScaleFactor
+{
+public:
+    CLJScaleFactor(double scl=0)
+          : coulomb(scl), lj(scl)
+    {}
+
+    CLJScaleFactor(double scale_coul, double scale_lj)
+          : coulomb(scale_coul), lj(scale_lj)
+    {}
+    
+    CLJScaleFactor(const CLJScaleFactor &other)
+          : coulomb(other.coulomb), lj(other.lj)
+    {}
+    
+    ~CLJScaleFactor()
+    {}
+
+    double coulomb;
+    double lj;
+};
+
+} // end of namespace detail
 
 /** This class provides all of the functions and containers  
     necessary to provide an interface to calculate the
     intermolecular interatomic potentials using the Coulomb 
     and Lennard Jones functions.
     
+    This is a 3D potential class, namely it requires that
+    the atoms possess 3D coordinates, thereby allowing this
+    potential to also be used to calculate 3D forces on the atoms.
+=    
     @author Christopher Woods
 */
 class SIREMM_EXPORT InterCLJPotential
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const CLJFunctional&);
-friend QDataStream& ::operator>>(QDataStream&, CLJFunctional&);
+friend QDataStream& ::operator<<(QDataStream&, const InterCLJPotential&);
+friend QDataStream& ::operator>>(QDataStream&, InterCLJPotential&);
 
 public:
 
@@ -94,41 +245,52 @@ public:
 
     typedef detail::CLJParameter Parameter;
     typedef SireFF::detail::AtomicParameters3D<Parameter> Parameters;
-        
+    
+    typedef Parameters::CGParameters CGParameters;
+                
     typedef SireBase::PairMatrix<double> Workspace;
 
-    typedef SireFF::detail::FFMolecule3D<Parameters> Molecule;
+    typedef SireFF::detail::FFMolecule3D<InterCLJPotential> Molecule;
+    typedef SireFF::detail::FFMolecules3D<InterCLJPotential> Molecules;
 
-    CLJFunctional();
+    InterCLJPotential();
     
-    CLJFunctional(const CLJFunctional &other);
+    InterCLJPotential(const InterCLJPotential &other);
     
-    ~CLJFunctional();
+    ~InterCLJPotential();
     
-    CLJFunctional& operator=(const CLJFunctional &other);
+    InterCLJPotential& operator=(const InterCLJPotential &other);
 
     static const char* typeName()
     {
-        return "SireMM::CLJFunctional";
+        return "SireMM::InterCLJPotential";
     }
 
     const char* what() const
     {
-        return CLJFunctional::typeName();
+        return InterCLJPotential::typeName();
     }
     
-    Molecules parameterise(const MolGroup &molecules);
-    Molecules parameteriseForIntermolecular(const MolGroup &molecules);
-    Molecules parameteriseForIntramolecular(const MolGroup &molecules);
+    InterCLJPotential::Molecules 
+    parameterise(const MolGroup &molecules);
+    
+    InterCLJPotential::Molecules 
+    parameteriseForIntermolecular(const MolGroup &molecules);
+    
+    InterCLJPotential::Molecules 
+    parameteriseForIntramolecular(const MolGroup &molecules);
 
-    void calculateEnergy(const Molecule &mol0, const Molecule &mol1,
-                         Energy &energy, Workspace &workspace,
+    void calculateEnergy(const InterCLJPotential::Molecule &mol0, 
+                         const InterCLJPotential::Molecule &mol1,
+                         InterCLJPotential::Energy &energy, 
+                         InterCLJPotential::Workspace &workspace,
                          double scale_energy=1) const;
 
-    void calculateForce(const Molecule &mol0, const Molecule &mol1,
+    void calculateForce(const InterCLJPotential::Molecule &mol0, 
+                        const InterCLJPotential::Molecule &mol1,
                         MolForceTable &forces0, 
                         MolForceTable &forces1,
-                        Workspace &workspace,
+                        InterCLJPotential::Workspace &workspace,
                         double scale_force=1) const;
 
     const Properties& properties() const;
@@ -136,14 +298,19 @@ public:
     bool setProperty(const QString &name, const PropertyBase &value);
 
 private:
-    void _pvt_calculateEnergy(const Molecule &mol0, const Molecule &mol1,
-                              Energy &energy, Workspace &workspace,
+    double totalCharge(const InterCLJPotential::CGParameters &params) const;
+
+    void _pvt_calculateEnergy(const InterCLJPotential::Molecule &mol0, 
+                              const InterCLJPotential::Molecule &mol1,
+                              InterCLJPotential::Energy &energy, 
+                              InterCLJPotential::Workspace &workspace,
                               double scale_energy) const;
 
-    void _pvt_calculateForce(const Molecule &mol0, const Molecule &mol1,
+    void _pvt_calculateForce(const InterCLJPotential::Molecule &mol0, 
+                             const InterCLJPotential::Molecule &mol1,
                              MolForceTable &forces0, 
                              MolForceTable &forces1,
-                             Workspace &workspace,
+                             InterCLJPotential::Workspace &workspace,
                              double scale_force) const;
 
     /** The current values of the properties of this functional */
@@ -155,40 +322,48 @@ private:
     /** The nonbonded switching function */
     SwitchingFunction switchfunc;
     
-    /** All of the LJ parameters in this forcefield, arranged by ID 
-        (index) */
-    QVector<LJParameter> ljparams;
-    
     /** All possible LJ parameter pair combinations, arranged
         in a symmetric 2D array */
-    Array2D<LJPair> ljpairs;
+    LJPairMatrix ljpairs;
+    
+    /** Whether or not electrostatic potential shifting is used
+        (this shifts the entire electrostatic potential so that it
+        is zero at the cutoff distance) */
+    bool use_electrostatic_shifting;
 };
 
-/** This class represents a coulomb and LJ potential that is suited
-    towards calculations of intramolecular CLJ energies. This is because
-    it uses, in addition to coulomb and LJ parameters, an intramolecular
-    non-bonded scaling parameter that allows for the interactions between
-    arbitrary intramolecular atom pairs to be scaled by arbitrary amounts
+/** This class provides all of the functions and containers  
+    necessary to provide an interface to calculate the
+    intramolecular interatomic potentials using the Coulomb 
+    and Lennard Jones functions.
+    
+    This is a 3D potential class, namely it requires that
+    the atoms possess 3D coordinates, thereby allowing this
+    potential to also be used to calculate 3D forces on the atoms.
     
     @author Christopher Woods
 */
 class SIREMM_EXPORT IntraCLJPotential
 {
-public:
 
+friend QDataStream& ::operator<<(QDataStream&, const IntraCLJPotential&);
+friend QDataStream& ::operator>>(QDataStream&, IntraCLJPotential&);
+
+public:
     typedef detail::CLJEnergy Energy;
     typedef Energy::Components Components;
     
-    typedef detail::IntraScaledCLJParameterNames3D ParameterNames;
+    typedef detail::ScaledCLJParameterNames3D ParameterNames;
 
     typedef detail::CLJParameter Parameter;
     typedef detail::IntraScaledAtomicParameters<
                   SireFF::detail::AtomicParameters3D<Parameter>,
-                  detail::IntraScaledParameters<CLJScaleFactors> > Parameters;
+                  detail::IntraScaledParameters<detail::CLJScaleFactor> > Parameters;
         
     typedef SireBase::PairMatrix<double> Workspace;
 
-    typedef SireFF::detail::FFMolecule3D<Parameters> Molecule;
+    typedef SireFF::detail::FFMolecule3D<IntraCLJPotential> Molecule;
+    typedef SireFF::detail::FFMolecules3D<IntraCLJPotential> Molecules;
 
     IntraCLJPotential();
     
@@ -208,14 +383,43 @@ public:
         return IntraCLJPotential::typeName();
     }
     
-    void calculateEnergy(const Molecule &mol, Energy &energy,
+    IntraCLJPotential::Molecules 
+    parameterise(const MolGroup &molecules);
+    
+    IntraCLJPotential::Molecules 
+    parameteriseForIntermolecular(const MolGroup &molecules);
+    
+    IntraCLJPotential::Molecules 
+    parameteriseForIntramolecular(const MolGroup &molecules);
+
+    void calculateEnergy(const IntraCLJPotential::Molecule &mol, 
+                         IntraCLJPotential::Energy &energy,
                          Workspace &workspace,
                          double scale_energy=1) const;
 
-    void calculateForce(const Molecule &mol, MolForceTable &forces,
+    void calculateForce(const IntraCLJPotential::Molecule &mol, 
+                        MolForceTable &forces,
                         Workspace &workspace,
                         double scale_force=1) const;
+
+private:
+    /** The current values of the properties of this functional */
+    Properties props;
     
+    /** The space in which this functional operates */
+    Space spce;
+    
+    /** The nonbonded switching function */
+    SwitchingFunction switchfunc;
+    
+    /** All possible LJ parameter pair combinations, arranged
+        in a symmetric 2D array */
+    LJPairMatrix ljpairs;
+    
+    /** Whether or not electrostatic potential shifting is used
+        (this shifts the entire electrostatic potential so that it
+        is zero at the cutoff distance) */
+    bool use_electrostatic_shifting;
 };
 
 /** Calculate the coulomb and LJ energy between the passed pair
@@ -227,8 +431,8 @@ inline void InterCLJPotential::calculateEnergy(const InterCLJPotential::Molecule
                                                InterCLJPotential::Workspace &workspace,
                                                double scale_energy) const
 {
-    if (scale_energy != 0 and not space->beyond(switchfunc->cutoffDistance(),
-                                                mol0.aaBox(), mol1.aaBox()))
+    if (scale_energy != 0 and not spce->beyond(switchfunc->cutoffDistance(),
+                                               mol0.aaBox(), mol1.aaBox()))
     {
         this->_pvt_calculateEnergy(mol0, mol1, energy, workspace, scale_energy);
     }
@@ -244,53 +448,19 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
                                             InterCLJPotential::Workspace &workspace,
                                             double scale_force) const
 {
-    if (scale_force != 0 and not space->beyond(switchfunc->cutoffDistance(),
-                                               mol0.aaBox(), mol1.aaBox())
+    if ( scale_force != 0 and not spce->beyond(switchfunc->cutoffDistance(),
+                                               mol0.aaBox(), mol1.aaBox()) )
     {
         this->_pvt_calculateForce(mol0, mol1, forces0, forces1,
                                   workspace, scale_force);
     }
 }
 
-/** This empty class provides the functions that return the parameters
-    used by this forcefield
-*/
-class SIREMM_EXPORT CLJFunctional::Parameters
-{
-public:
-    Parameters()
-    {}
-    
-    ~Parameters()
-    {}
-    
-    const ParameterName& charges() const
-    {
-        return Parameters::charge_param;
-    }
-    
-    const ParameterName& lj() const
-    {
-        return Parameters::lj_param;
-    }
-    
-    const ParameterName& nb_scale() const
-    {
-        return Parameters::nbscl_param;
-    }
-    
-private:
-    /** The parameter name used to locate partial charges */
-    static ParameterName charge_param;
-    
-    /** The parameter name used to locate the LJ parameters */
-    static ParameterName lj_param;
-    
-    /** The parameter name used to locate the non-bonded scale factors */
-    static ParameterName nbscl_param;
-};
-
 }
+
+
+Q_DECLARE_TYPEINFO( SireMM::detail::CLJParameter, Q_MOVABLE_TYPE );
+Q_DECLARE_TYPEINFO( SireMM::detail::CLJScaleFactor, Q_MOVABLE_TYPE );
 
 SIRE_END_HEADER
 

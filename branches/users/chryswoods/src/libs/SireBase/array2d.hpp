@@ -66,7 +66,7 @@ namespace SireBase
     @author Christopher Woods
 */
 template<class T>
-class Array2D
+class Array2D : public Array2DBase
 {
 
 friend QDataStream& ::operator<<<>(QDataStream&, const Array2D<T>&);

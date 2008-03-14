@@ -350,18 +350,22 @@ double PeriodicBox::calcInvDist2(const CoordGroup &group0, const CoordGroup &gro
     return 1.0 / sqrt(maxinvdist2);
 }
 
+/** Return whether or not two groups enclosed by the AABoxes 'aabox0' and 
+    'aabox1' are definitely beyond the cutoff distance 'dist' */
+bool PeriodicBox::beyond(double dist, const AABox &aabox0, const AABox &aabox1) const
+{
+    //see if we need to wrap the coordinates...
+    Vector wrapdelta = this->wrapDelta(aabox0.center(), aabox1.center());
+
+    return Vector::distance2( aabox0.center()+wrapdelta, aabox1.center() ) >
+                      SireMaths::pow_2(dist + aabox0.radius() + aabox1.radius());
+}
+
 /** Return whether or not these two groups are definitely beyond the cutoff distance. */
 bool PeriodicBox::beyond(double dist, const CoordGroup &group0,
                          const CoordGroup &group1) const
 {
-    const AABox &box0 = group0.aaBox();
-    const AABox &box1 = group1.aaBox();
-
-    //see if we need to wrap the coordinates...
-    Vector wrapdelta = this->wrapDelta(box0.center(), box1.center());
-
-    return Vector::distance2( box0.center()+wrapdelta, box1.center() ) >
-                      SireMaths::pow_2(dist + box0.radius() + box1.radius());
+    return PeriodicBox::beyond(dist, group0.aaBox(), group1.aaBox());
 }
 
 /** Return the minimum distance between the points in 'group0' and 'group1'.

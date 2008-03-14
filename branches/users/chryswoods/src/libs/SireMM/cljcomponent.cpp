@@ -29,7 +29,11 @@
 #include "cljcomponent.h"
 
 using namespace SireMM;
+using namespace SireMM::detail;
+
 using namespace SireFF;
+using namespace SireFF::detail;
+
 using namespace SireCAS;
 
 //////

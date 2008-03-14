@@ -112,6 +112,8 @@ public:
     bool operator==(const FFMoleculeBase &other) const;
     bool operator!=(const FFMoleculeBase &other) const;
     
+    int nCutGroups() const;
+    
     const PartialMolecule& molecule() const;
 
     MolNum number() const;
@@ -145,6 +147,7 @@ friend QDataStream& ::operator<<<>(QDataStream&, const FFMolecule<PTNL>&);
 friend QDataStream& ::operator>><>(QDataStream&, FFMolecule<PTNL>&);
 
 public:
+    typedef typename PTNL::Parameter Parameter;
     typedef typename PTNL::Parameters Parameters;
     typedef typename PTNL::ParameterNames ParameterNames;
 
@@ -163,7 +166,7 @@ public:
     bool operator==(const FFMolecule<PTNL> &other) const;
     bool operator!=(const FFMolecule<PTNL> &other) const;
 
-    const Parameters& parameters() const;
+    const typename Parameters::Parameters& parameters() const;
     
     bool change(const PartialMolecule &molecule,
                 PTNL &forcefield,
@@ -264,6 +267,9 @@ class FFMolecules : public FFMoleculesBase
 public:
     typedef typename PTNL::Molecule Molecule;
     typedef typename PTNL::ChangedMolecule ChangedMolecule;
+
+    typedef typename PTNL::Parameter Parameter;
+    typedef typename PTNL::Parameters Parameters;
 
     typedef typename PTNL::ParameterNames ParameterNames;
 
@@ -451,9 +457,10 @@ bool FFMolecule<PTNL>::operator!=(const FFMolecule<PTNL> &other) const
     that forcefield) */
 template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
-const typename FFMolecule<PTNL>::Parameters& FFMolecule<PTNL>::parameters() const
+const typename FFMolecule<PTNL>::Parameters::Parameters& 
+FFMolecule<PTNL>::parameters() const
 {
-    return params;
+    return params.parameters();
 }
 
 /** Change this molecule so that it is equal to 'new_molecule'.

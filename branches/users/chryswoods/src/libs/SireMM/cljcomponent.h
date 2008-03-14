@@ -40,7 +40,7 @@ namespace detail
 {
 
 /** This class represents a Coulomb component of a forcefield */
-class SIREMM_EXPORT CoulombComponent : public SireFF::FFComponent
+class SIREMM_EXPORT CoulombComponent : public SireFF::detail::FFComponent
 {
 public:
     CoulombComponent(quint64 ffuid = 0);
@@ -72,7 +72,7 @@ public:
 };
 
 /** This class represents a LJ component of a forcefield */
-class SIREMM_EXPORT LJComponent : public SireFF::FFComponent
+class SIREMM_EXPORT LJComponent : public SireFF::detail::FFComponent
 {
 public:
     LJComponent(quint64 ffuid = 0);
@@ -105,7 +105,7 @@ public:
 
 /** This class represents the sum of the coulomb and LJ components
     of the forcefield */
-class SIREMM_EXPORT CLJComponent : public SireFF::FFComponent
+class SIREMM_EXPORT CLJComponent : public SireFF::detail::FFComponent
 {
 public:
     CLJComponent(quint64 ffuid = 0);
@@ -167,7 +167,7 @@ public:
     CLJEnergy(double cnrg=0, double ljnrg=0) : icnrg(cnrg), iljnrg(ljnrg)
     {}
     
-    CLJEnergy(const CLJEnergy &other) : icnrg(other.icnrg), ljnrg(other.ljnrg)
+    CLJEnergy(const CLJEnergy &other) : icnrg(other.icnrg), iljnrg(other.iljnrg)
     {}
     
     ~CLJEnergy()

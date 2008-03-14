@@ -90,6 +90,8 @@ public:
     double calcInvDist2(const CoordGroup &group1, const CoordGroup &group2,
                         DistMatrix &mat) const;
 
+    bool beyond(double dist, const AABox &aabox0, const AABox &aabox1) const;
+
     bool beyond(double dist, const CoordGroup &group0,
                 const CoordGroup &group1) const;
 

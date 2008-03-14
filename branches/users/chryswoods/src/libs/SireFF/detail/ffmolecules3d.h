@@ -32,6 +32,7 @@
 #include "ffmolecules.h"
 
 #include "SireBase/packedarray2d.hpp"
+#include "SireBase/propertymap.h"
 
 #include "SireVol/coordgroup.h"
 #include "SireVol/aabox.h"
@@ -49,11 +50,6 @@ class FFMolecules3D;
 }
 }
 
-namespace SireBase
-{
-class PropertyName;
-}
-
 namespace SireFF
 {
 
@@ -66,6 +62,24 @@ using SireVol::CoordGroupArrayArray;
 
 using SireVol::AABox;
 using SireBase::PropertyName;
+
+class SIREFF_EXPORT Coords3DParameterName
+{
+public:
+    Coords3DParameterName()
+    {}
+    
+    ~Coords3DParameterName()
+    {}
+    
+    const PropertyName& coordinates() const
+    {
+        return coords_param;
+    }
+
+private:
+    static PropertyName coords_param;
+};
 
 /** This class holds a 3D molecule for a 3n D potential energy
     surface (each atom has 3 degrees of freedom, x, y, z). This

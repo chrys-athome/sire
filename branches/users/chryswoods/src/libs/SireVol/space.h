@@ -189,6 +189,13 @@ public:
     virtual bool beyond(double dist, const CoordGroup &group0,
                         const CoordGroup &group1) const=0;
 
+    /** Return whether or not two groups that are enclosed by the AABoxes
+        'aabox0' and 'aabox1' are beyond the cutoff distance 'dist'.
+        
+        \warning Note 'beyond' does not mean definitely within the distance!
+    */
+    virtual bool beyond(double dist, const AABox &aabox0, const AABox &aabox1) const=0;
+
     /** Return the minimum distance between the points in 'group0' and 'group1'.
         If this is a periodic space then this uses the minimum image convention
         (i.e. the minimum distance between the closest periodic replicas are
