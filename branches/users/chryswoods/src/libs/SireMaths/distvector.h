@@ -49,7 +49,7 @@ namespace SireMaths
     
     @author Christopher Woods
 */
-class SIREMATHS_EXPORT DistVector
+class SIREMATHS_EXPORT DistVector : private Vector
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const DistVector&);
@@ -96,10 +96,10 @@ public:
     const DistVector& operator/=(const double &other);
     DistVector operator-() const;
 
-    const double& operator[](unsigned int i) const;
+    double operator[](unsigned int i) const;
 
     unsigned int count() const;
-    const double& at(unsigned int i) const;
+    double at(unsigned int i) const;
 
     double manhattanLength() const;
     
@@ -148,10 +148,6 @@ public:
                                const DistVector &v3);
 
     operator Vector() const;
-
-private:
-    /** The vector, arranged as unit vector, then magnitude */
-    Vector vec;
 };
 
 }

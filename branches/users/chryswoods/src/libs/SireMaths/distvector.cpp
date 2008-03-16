@@ -27,6 +27,7 @@
 \*********************************************/
 
 #include "distvector.h"
+#include "matrix.h"
 
 #include "SireUnits/units.h"
 #include "SireStream/datastream.h"
@@ -48,8 +49,8 @@ static const RegisterMetaType<DistVector> r_distvector;
 QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, 
                                          const SireMaths::DistVector &vec)
 {
-    writeHeader(ds, r_vector, 1) << vec.vec.sc[0] << vec.vec.sc[1]
-                                 << vec.vec.sc[2] << vec.vec.sc[3];
+    writeHeader(ds, r_distvector, 1) << vec.sc[0] << vec.sc[1]
+                                     << vec.sc[2] << vec.sc[3];
 
     return ds;
 }
@@ -58,43 +59,43 @@ QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds,
 QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, 
                                          SireMaths::DistVector &vec)
 {
-    VersionID v = readHeader(ds, r_vector);
+    VersionID v = readHeader(ds, r_distvector);
 
     if (v == 1)
     {
-        ds >> vec.vec.sc[0] >> vec.vec.sc[1] >> vec.vec.sc[2] >> vec.vec.sc[3];
+        ds >> vec.sc[0] >> vec.sc[1] >> vec.sc[2] >> vec.sc[3];
     }
     else
-        throw version_error(v, "1", r_vector, CODELOC);
+        throw version_error(v, "1", r_distvector, CODELOC);
 
     return ds;
 }
 
 /** Create the zero vector */
-DistVector::DistVector()
+DistVector::DistVector() : Vector()
 {
     for (int i=0; i<4; i++)
-        vec.sc[i] = 0;
+        sc[i] = 0;
 }
 
 /** Create from the passed vector */
-DistVector::DistVector( const Vector &vec )
+DistVector::DistVector( const Vector &vec ) : Vector()
 {
     double dist = vec.length();
     
     if (SireMaths::isZero(dist))
     {
         for (int i=0; i<4; ++i)
-            vec.sc[i] = 0;
+            sc[i] = 0;
     }
     else
     {
-        vec.sc[3] = dist;
+        sc[3] = dist;
         dist = 1 / dist;
         
-        vec.sc[0] = vec.x() * dist;
-        vec.sc[1] = vec.y() * dist;
-        vec.sc[2] = vec.z() * dist;
+        sc[0] = vec.x() * dist;
+        sc[1] = vec.y() * dist;
+        sc[2] = vec.z() * dist;
     }
 }
 
@@ -113,13 +114,13 @@ DistVector::~DistVector()
 
 
 /** Copy constructor */
-inline Vector::Vector(const Vector& other)
+DistVector::DistVector(const DistVector& other)
 {
     qMemCopy(sc, other.sc, 4*sizeof(double));
 }
 
 /** Copy assignment operator */
-inline const Vector& Vector::operator=(const Vector &other)
+const DistVector& DistVector::operator=(const DistVector &other)
 {
     qMemCopy(sc, other.sc, 4*sizeof(double));
 
@@ -127,167 +128,130 @@ inline const Vector& Vector::operator=(const Vector &other)
 }
 
 /** Comparison operator */
-inline bool Vector::operator==(const Vector &other) const
+bool DistVector::operator==(const DistVector &other) const
 {
     return &other == this or
            (sc[0] == other.sc[0] and sc[1] == other.sc[1] and
-            sc[2] == other.sc[2]);
+            sc[2] == other.sc[2] and sc[3] == other.sc[3]);
 }
 
 /** Comparison operator */
-inline bool Vector::operator!=(const Vector &other) const
+bool DistVector::operator!=(const DistVector &other) const
 {
     return &other != this and
            (sc[0] != other.sc[0] or sc[1] != other.sc[1] or
-            sc[2] != other.sc[2]);
+            sc[2] != other.sc[2] or sc[3] != other.sc[3]);
 }
 
 /** Return the x component of the vector */
-inline double Vector::x() const
+double DistVector::x() const
 {
-    return sc[0];
+    return sc[3] * sc[0];
 }
 
 /** Return the y component of the vector */
-inline double Vector::y() const
+double DistVector::y() const
 {
-    return sc[1];
+    return sc[3] * sc[1];
 }
 
 /** Return the z component of the vector */
-inline double Vector::z() const
+double DistVector::z() const
 {
-    return sc[2];
+    return sc[3] * sc[2];
+}
+
+/** Allow auto-conversion to a Vector */
+DistVector::operator Vector() const
+{
+    return Vector( x(), y(), z() );
 }
 
 /** Return the length of the vector */
-inline double Vector::length() const
+double DistVector::length() const
 {
-    return std::sqrt( pow_2(sc[0]) + pow_2(sc[1]) + pow_2(sc[2]) );
+    return sc[3];
 }
 
 /** Return the length^2 of the vector */
-inline double Vector::length2() const
+double DistVector::length2() const
 {
-    return pow_2(sc[0]) + pow_2(sc[1]) + pow_2(sc[2]);
+    return pow_2(sc[3]);
 }
 
 /** Return the inverse of the length of the vector */
-inline double Vector::invLength() const
+double DistVector::invLength() const
 {
-    return double(1) / std::sqrt( pow_2(sc[0]) + pow_2(sc[1]) + pow_2(sc[2]) );
+    return 1 / sc[3];
 }
 
 /** Return the inverse length squared */
-inline double Vector::invLength2() const
+double DistVector::invLength2() const
 {
-    return double(1) / ( pow_2(sc[0]) + pow_2(sc[1]) + pow_2(sc[2]) );
+    return 1 / pow_2(sc[3]);
 }
 
 /** Return the distance squared between two vectors */
-inline double Vector::distance2(const Vector &v1, const Vector &v2)
+double DistVector::distance2(const DistVector &v1, const DistVector &v2)
 {
-    return pow_2(v2.sc[0]-v1.sc[0]) + pow_2(v2.sc[1]-v1.sc[1]) +
-           pow_2(v2.sc[2]-v1.sc[2]);
+    return Vector::distance2( v1, v2 );
 }
 
 /** Return the distance between two vectors */
-inline double Vector::distance(const Vector &v1, const Vector &v2)
+double DistVector::distance(const DistVector &v1, const DistVector &v2)
 {
-    return std::sqrt( pow_2(v2.sc[0]-v1.sc[0]) + pow_2(v2.sc[1]-v1.sc[1]) +
-                      pow_2(v2.sc[2]-v1.sc[2]) );
+    return Vector::distance( v1, v2 );
 }
 
 /** Return the 1 / distance between two vectors */
-inline double Vector::invDistance(const Vector &v1, const Vector &v2)
+double DistVector::invDistance(const DistVector &v1, const DistVector &v2)
 {
-    return double(1.0) / std::sqrt( pow_2(v1.sc[0]-v2.sc[0]) +
-                                    pow_2(v1.sc[1]-v2.sc[1]) +
-                                    pow_2(v1.sc[2]-v2.sc[2]) );
+    return Vector::invDistance( v1, v2 );
 }
 
 /** Return 1 / distance2 between two vectors */
-inline double Vector::invDistance2(const Vector &v1, const Vector &v2)
+double DistVector::invDistance2(const DistVector &v1, const DistVector &v2)
 {
-    return double(1.0) / ( pow_2(v1.sc[0]-v2.sc[0]) +
-                           pow_2(v1.sc[1]-v2.sc[1]) +
-                           pow_2(v1.sc[2]-v2.sc[2]) );
+    return Vector::invDistance2( v1, v2 );
 }
 
 /** Access the elements of the array via an index operator */
-inline const double& Vector::operator[](unsigned int i) const
+double DistVector::operator[](unsigned int i) const
 {
-    return sc[i%3];
+    return sc[3] * sc[i%3];
 }
 
 /** Return the size of the Vector (always 3 - unless you disagree
     with me that we should be living in a 3-dimensional space!) */
-inline unsigned int Vector::count() const
+unsigned int DistVector::count() const
 {
     return 3;
 }
 
 /** Access elements by index */
-inline const double& Vector::at(unsigned int i) const
+double DistVector::at(unsigned int i) const
 {
     return this->operator[](i);
 }
 
 /** Return whether or not this is a zero length vector */
-inline bool Vector::isZero() const
+bool DistVector::isZero() const
 {
-    return SireMaths::isZero(sc[0]) and SireMaths::isZero(sc[1]) and SireMaths::isZero(sc[2]);
+    return SireMaths::isZero(sc[3]) or Vector(*this).isZero();
 }
 
 /** Return a normalised form of the vector */
-inline Vector Vector::normalise() const
+DistVector DistVector::normalise() const
 {
-    double l = length2();
-
-    if (SireMaths::isZero(l))
-        throw SireMaths::math_error(QObject::tr(
-            "Cannot normalise a zero vector, %1").arg(this->toString()),CODELOC);
-
-    l = double(1) / sqrt(l);
-    return Vector(sc[0]*l,sc[1]*l,sc[2]*l);
+    DistVector ret(*this);
+    ret.sc[3] = 1;
+    return ret;
 }
 
 /** Return the dot product of v0 and v1 */
-inline double Vector::dot(const Vector &v0, const Vector &v1)
+double DistVector::dot(const DistVector &v0, const DistVector &v1)
 {
     return (v0.sc[0]*v1.sc[0] + v0.sc[1]*v1.sc[1] + v0.sc[2]*v1.sc[2]);
-}
-
-/** Set this Vector so that it has the maximum x/y/z components out of
-    this and 'other' (e.g. this->x = max(this->x(),other.x() etc.) */
-inline void Vector::setMax(const Vector &other)
-{
-    for (int i=0; i<3; i++)
-        sc[i] = SIRE_MAX( other.sc[i], sc[i] );
-}
-
-/** Set this Vector so that it has the minimum x/y/z components */
-inline void Vector::setMin(const Vector &other)
-{
-    for (int i=0; i<3; i++)
-        sc[i] = SIRE_MIN( other.sc[i], sc[i] );
-}
-
-/** Return a vector that has the maximum x/y/z components out of this
-    and 'other' */
-inline Vector Vector::max(const Vector &other) const
-{
-    Vector v(*this);
-    v.setMax(other);
-    return v;
-}
-
-/** Return a vector that has the minimum components */
-inline Vector Vector::min(const Vector &other) const
-{
-    Vector v(*this);
-    v.setMin(other);
-    return v;
 }
 
 /** Return a QString representation of the vector */
@@ -317,13 +281,13 @@ double DistVector::b() const
 /** Return the direction of this vector */
 const Vector& DistVector::direction() const
 {
-    return vec;
+    return *this;
 }
 
 /** Return the magnitude of this vector */
 double DistVector::magnitude() const
 {
-    return vec.sc[3];
+    return sc[3];
 } 
 
 /** Return the bearing of this vector against (0,1,0) (north) on the xy plane */

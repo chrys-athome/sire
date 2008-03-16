@@ -151,7 +151,7 @@ double Cartesian::calcDist(const CoordGroup &group, DistMatrix &mat) const
 
             //place this distance into the matrix
             mat[j] = tmpdist;
-            mat(i,j) = tmpdist;
+            mat(j,i) = tmpdist;
         }
     }
 
@@ -189,7 +189,7 @@ double Cartesian::calcDist2(const CoordGroup &group, DistMatrix &mat) const
 
             //place this distance into the matrix
             mat[j] = tmpdist2;
-            mat(i,j) = tmpdist2;
+            mat(j,i) = tmpdist2;
         }
     }
 
@@ -227,7 +227,7 @@ double Cartesian::calcInvDist(const CoordGroup &group, DistMatrix &mat) const
 
             //place this distance into the matrix
             mat[j] = tmpdist;
-            mat(i,j) = tmpdist;
+            mat(j,i) = tmpdist;
         }
     }
 
@@ -265,7 +265,7 @@ double Cartesian::calcInvDist2(const CoordGroup &group, DistMatrix &mat) const
 
             //place this distance into the matrix
             mat[j] = tmpdist2;
-            mat(i,j) = tmpdist2;
+            mat(j,i) = tmpdist2;
         }
     }
 
@@ -474,6 +474,87 @@ double Cartesian::calcInvDist2(const CoordGroup &group0, const CoordGroup &group
     }
 
     return sqrt( 1.0 / maxinvdist2 );
+}
+
+/** Calculate the distance vector between two points */
+DistVector Cartesian::calcDistVector(const Vector &point0, 
+                                     const Vector &point1) const
+{
+    return point1 - point0;
+}
+    
+/** Populate the matrix 'distmat' with all of the interpoint distance vectors
+    between all points within the CoordGroup. This is *not* a symmetrical matrix,
+    as the direction from point A to point B is the negative of the 
+    direction from point B to point A. This returns the shortest distance
+    between two points in the group (that is not the self-self distance) */
+double Cartesian::calcDistVectors(const CoordGroup &group, 
+                                  DistVectorMatrix &mat) const
+{
+    double mindist = std::numeric_limits<double>::max();
+
+    const int n = group.count();
+    const Vector *array = group.constData();
+
+    //redimension the matrix to hold all of the pairs
+    mat.redimension(n,n);
+
+    for (int i=0; i<n; ++i)
+    {
+        const Vector &point = array[i];
+        mat.setOuterIndex(i);
+
+        //zero diagonal
+        mat[i] = DistVector();
+
+        for (int j=i+1; j<n; ++j)
+        {
+            mat[j] = (array[j] - point);
+
+            //store the minimum distance
+            mindist = qMin(mat[j].length(),mindist);
+
+            //remember to store the negative of the distance
+            mat(j,i) = -(mat[j]);
+        }
+    }
+
+    return mindist;
+}
+
+/** Populate the matrix 'distmat' between all the points of the two CoordGroups
+    'group1' and 'group2' - the returned matrix has the vectors pointing
+    from each point in 'group1' to each point in 'group2'. This returns
+    the shortest distance between two points in the group */
+double Cartesian::calcDistVectors(const CoordGroup &group0, const CoordGroup &group1,
+                                  DistVectorMatrix &mat) const
+{
+    double mindist = std::numeric_limits<double>::max();
+
+    const int n0 = group0.count();
+    const int n1 = group1.count();
+
+    //redimension the matrix to hold all of the pairs
+    mat.redimension(n0, n1);
+
+    //get raw pointers to the arrays - this provides more efficient access
+    const Vector *array0 = group0.constData();
+    const Vector *array1 = group1.constData();
+
+    for (int i=0; i<n0; ++i)
+    {
+        const Vector& point0 = array0[i];
+        mat.setOuterIndex(i);
+
+        for (int j=0; j < n1; ++j)
+        {
+            mat[j] = (array1[j] - point0);
+            mindist = qMin(mat[j].length(),mindist);
+        }
+    }
+
+    //return the minimum distance
+    return mindist;
 }
 
 /** Return whether or not two groups enclosed by the AABoxes 'aabox0'

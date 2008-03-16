@@ -350,6 +350,57 @@ double PeriodicBox::calcInvDist2(const CoordGroup &group0, const CoordGroup &gro
     return 1.0 / sqrt(maxinvdist2);
 }
 
+/** Calculate the distance vector between two points */
+DistVector PeriodicBox::calcDistVector(const Vector &point0, 
+                                       const Vector &point1) const
+{
+    Vector wrapdelta = this->wrapDelta(point0, point1);
+
+    return point1 - (point0+wrapdelta);
+}
+
+/** Populate the matrix 'distmat' between all the points of the two CoordGroups
+    'group1' and 'group2' - the returned matrix has the vectors pointing
+    from each point in 'group1' to each point in 'group2'. This returns
+    the shortest distance between two points in the group */
+double PeriodicBox::calcDistVectors(const CoordGroup &group0, const CoordGroup &group1,
+                                    DistVectorMatrix &mat) const
+{
+    double mindist(std::numeric_limits<double>::max());
+
+    const int n0 = group0.count();
+    const int n1 = group1.count();
+
+    //redimension the matrix to hold all of the pairs
+    mat.redimension(n0, n1);
+
+    //see if we need to wrap the coordinates...
+    Vector wrapdelta = this->wrapDelta(group0.aaBox().center(), group1.aaBox().center());
+
+    //get raw pointers to the arrays - this provides more efficient access
+    const Vector *array0 = group0.constData();
+    const Vector *array1 = group1.constData();
+
+    for (int i=0; i<n0; ++i)
+    {
+        //add the delta to the coordinates of atom0
+        Vector point0 = array0[i] + wrapdelta;
+        mat.setOuterIndex(i);
+
+        for (int j=0; j<n1; ++j)
+        {
+            mat[j] = (array1[j] - point0);
+
+            //store the minimum distance, the value expected to be the minimum
+            //value is most efficiently placed as the second argument
+            mindist = qMin(mat[j].length(),mindist);
+        }
+    }
+
+    //return the minimum distance
+    return mindist;
+}
+
 /** Return whether or not two groups enclosed by the AABoxes 'aabox0' and 
     'aabox1' are definitely beyond the cutoff distance 'dist' */
 bool PeriodicBox::beyond(double dist, const AABox &aabox0, const AABox &aabox1) const

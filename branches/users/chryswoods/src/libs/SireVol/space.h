@@ -40,6 +40,7 @@
 #include "SireUnits/dimensions.h"
 
 #include "SireMaths/vector.h"
+#include "SireMaths/distvector.h"
 
 #include "coordgroup.h"
 
@@ -61,9 +62,14 @@ namespace SireVol
 {
 
 using SireMaths::Vector;
+using SireMaths::DistVector;
 
 /** Define a distance matrix as being a PairMatrix of doubles */
 typedef SireBase::PairMatrix<double> DistMatrix;
+
+/** Define a vector field matrix as being a PairMatrix of DistVectors
+    (these are Vectors that have the magnitude and direction separated out) */
+typedef SireBase::PairMatrix<DistVector> DistVectorMatrix;
 
 /**
 This pure virtual base class represents the volume of space within which a SimSystem
@@ -181,6 +187,26 @@ public:
         CoordGroups. */
     virtual double calcInvDist2(const CoordGroup &group1, const CoordGroup &group2,
                                 DistMatrix &distmat) const=0;
+
+    /** Calculate the distance vector between two points */
+    virtual DistVector calcDistVector(const Vector &point0, 
+                                      const Vector &point1) const=0;
+
+    /** Populate the matrix 'distmat' with all of the interpoint distance vectors
+        between all points within the CoordGroup. This is *not* a symmetrical matrix,
+        as the direction from point A to point B is the negative of the 
+        direction from point B to point A. This returns the shortest distance
+        between two points in the group (that is not the self-self distance) */
+    virtual double calcDistVectors(const CoordGroup &group,
+                                   DistVectorMatrix &distmat) const=0;
+                                       
+    /** Populate the matrix 'distmat' between all the points of the two CoordGroups
+        'group1' and 'group2' - the returned matrix has the vectors pointing
+        from each point in 'group1' to each point in 'group2'. This returns
+        the shortest distance between two points in the group */
+    virtual double calcDistVectors(const CoordGroup &group1,
+                                   const CoordGroup &group2,
+                                   DistVectorMatrix &distmat) const=0;
 
     /** Return whether or not these two groups are definitely beyond the distance 'dist'.
 

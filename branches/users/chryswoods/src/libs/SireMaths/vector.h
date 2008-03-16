@@ -60,7 +60,6 @@ namespace SireMaths
 
 class Quaternion;
 class Matrix;
-class DistVector;
 
 using boost::tuple;
 
@@ -110,8 +109,6 @@ class SIREMATHS_EXPORT Vector
 
 friend QDataStream& ::operator<<(QDataStream&, const Vector&);
 friend QDataStream& ::operator>>(QDataStream&, Vector&);
-
-friend class DistVector; // so can see the sc array
 
 public:
     typedef double value_type;
