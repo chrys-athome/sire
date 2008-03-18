@@ -98,7 +98,7 @@ class FFMolecule3D<IntraCLJPotential>;
 
 /** Return the total charge of the parameters for the group in 'params' */
 double InterCLJPotential::totalCharge(
-                        const InterCLJPotential::CGParameters &params) const
+                        const InterCLJPotential::Parameters::Array &params) const
 {
     int n = params.count();
     const Parameter *params_array = params.constData();
@@ -119,7 +119,7 @@ double InterCLJPotential::totalCharge(
 void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &mol0,
                                              const InterCLJPotential::Molecule &mol1,
                                              InterCLJPotential::Energy &energy,
-                                             InterCLJPotential::Workspace &distmat,
+                                             InterCLJPotential::EnergyWorkspace &distmat,
                                              double scale_energy) const
 {
     const quint32 ngroups0 = mol0.nCutGroups();
@@ -128,8 +128,8 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
     const CoordGroup *groups0_array = mol0.coordinates().constData();
     const CoordGroup *groups1_array = mol1.coordinates().constData();
     
-    const Parameters::CGParameters *molparams0_array = mol0.parameters().constData();
-    const Parameters::CGParameters *molparams1_array = mol1.parameters().constData();
+    const Parameters::Array *molparams0_array = mol0.parameters().constData();
+    const Parameters::Array *molparams1_array = mol1.parameters().constData();
     
     double cnrg = 0;
     double ljnrg = 0;
@@ -137,7 +137,7 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
     //loop over all pairs of CutGroups in the two molecules
     for (quint32 igroup=0; igroup<ngroups0; ++igroup)
     {
-        const Parameters::CGParameters &params0 = molparams0_array[igroup];
+        const Parameters::Array &params0 = molparams0_array[igroup];
 
         const CoordGroup &group0 = groups0_array[igroup];
         const AABox &aabox0 = group0.aaBox();
@@ -147,7 +147,7 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
         for (quint32 jgroup=0; jgroup<ngroups1; ++jgroup)
         {
             const CoordGroup &group1 = groups1_array[jgroup];
-            const Parameters::CGParameters &params1 = molparams1_array[jgroup];
+            const Parameters::Array &params1 = molparams1_array[jgroup];
 
             //check first that these two CoordGroups could be within cutoff
             //(if there is only one CutGroup in both molecules then this
@@ -240,16 +240,6 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
     energy += Energy(scale_energy * cnrg, scale_energy * ljnrg);
 }
 
-//force workspace is a PairMatrix< DistVector >
-
-// A DistVector is a struct{ double distance; Vector unit_vector; }
-
-// Holds a unit vector that points from point0 to point1, and the 
-// distance between those two points
-
-// A DistVector could be a derived class of Vector, using the spacer 
-// to hold the distance?
-
 /** Calculate the coulomb and LJ forces on the atoms between the passed pair
     of molecules and add these energies onto 'forces'. This uses
     the passed workspace to perform the calculation */
@@ -257,28 +247,28 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
                                             const InterCLJPotential::Molecule &mol1,
                                             MolForceTable &forces0, 
                                             MolForceTable &forces1,
-                                            InterCLJPotential::Workspace &workspace,
+                                            InterCLJPotential::ForceWorkspace &distmat,
                                             double scale_force) const
 {
     const quint32 ngroups0 = mol0.nCutGroups();
     const quint32 ngroups1 = mol1.nCutGroups();
     
-    const CoordGroup *groups0_array = mol0.coordGroups().constData();
-    const CoordGroup *groups1_array = mol1.coordGroups().constData();
+    const CoordGroup *groups0_array = mol0.coordinates().constData();
+    const CoordGroup *groups1_array = mol1.coordinates().constData();
     
-    const CGParams *molparams0_array = mol0.parameters().constData();
-    const CGParams *molparams1_array = mol1.parameters().constData();
+    const Parameters::Array *molparams0_array = mol0.parameters().constData();
+    const Parameters::Array *molparams1_array = mol1.parameters().constData();
     
-    BOOST_ASSERT(forces0.count() == ngroups0);
-    BOOST_ASSERT(forces1.count() == ngroups1);
+    BOOST_ASSERT(forces0.count() == int(ngroups0));
+    BOOST_ASSERT(forces1.count() == int(ngroups1));
     
-    GroupForceTable *forces0_array = forces0.data();
-    GroupForceTable *forces1_array = forces1.data();
+    const MolForceTable::Array *forces0_array = forces0.constData();
+    const MolForceTable::Array *forces1_array = forces1.constData();
     
     //loop over all pairs of CutGroups in the two molecules
     for (quint32 igroup=0; igroup<ngroups0; ++igroup)
     {
-        const CGParams &params0 = molparams0_array[igroup];
+        const Parameters::Array &params0 = molparams0_array[igroup];
 
         const CoordGroup &group0 = groups0_array[igroup];
         const AABox &aabox0 = group0.aaBox();
@@ -287,15 +277,14 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
     
         //get the table that holds the forces acting on all of the
         //atoms of this CutGroup
-        GroupForceTable &group_forces0 = forces0_array[igroup];
-        BOOST_ASSERT(group_forces0.count() == nats0);
+        BOOST_ASSERT(forces0_array[igroup].count() == int(nats0));
     
-        Vector *group_forces0_array = group_forces0.data();
+        Vector *group_forces0_array = forces0.data(igroup);
     
         for (quint32 jgroup=0; jgroup<ngroups1; ++jgroup)
         {
             const CoordGroup &group1 = groups1_array[jgroup];
-            const CGParams &params1 = molparams1_array[jgroup];
+            const Parameters::Array &params1 = molparams1_array[jgroup];
 
             //check first that these two CoordGroups could be within cutoff
             //(if there is only one CutGroup in both molecules then this
@@ -309,7 +298,7 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
                 continue;
             
             //calculate all of the interatomic distances
-            const double mindist = spce->calcDist(group0, group1, distmat);
+            const double mindist = spce->calcDistVectors(group0, group1, distmat);
             
             if (mindist > switchfunc->cutoffDistance())
                 //all of the atoms are definitely beyond cutoff
@@ -319,13 +308,12 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
 
             //get the table that holds all of the forces acting on the
             //atoms of this CutGroup
-            GroupForceTable &group_forces1 = forces1_array[jgroup];
-            BOOST_ASSERT(group_forces1.count() == nats1);
+            BOOST_ASSERT(forces1_array[jgroup].count() == int(nats1));
             
-            Vector *group_forces1_array = group_forces1.data();
+            Vector *group_forces1_array = forces1.data(jgroup);
             
             //loop over all interatomic pairs and calculate the energies
-            const Parameter *params1_array = params1_constData();
+            const Parameter *params1_array = params1.constData();
 
             if (mindist > switchfunc->featherDistance())
             {
@@ -337,7 +325,7 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
                 const double scl_coul = switchfunc->electrostaticScaleFactor(mindist);
                 const double scl_lj = switchfunc->vdwScaleFactor(mindist);
                 
-                Vector group_sep = (aabox0.center() - group1.aaBox().center())
+                Vector group_sep = (group1.aaBox().center() - aabox0.center())
                                         .normalise();
                 
                 Vector dscl_coul = switchfunc->dElectrostaticScaleFactor(mindist) 
@@ -349,8 +337,8 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
                 double shift_coul = 0;
 
                 if (use_electrostatic_shifting)
-                    shift_coul = params0.totalCharge() * params1.totalCharge()
-                                    * switchfunc->invCutoffDistance();
+                    shift_coul = this->totalCharge(params0) * this->totalCharge(params1)
+                                    / switchfunc->electrostaticCutoffDistance();
                 
                 for (quint32 i=0; i<nats0; ++i)
                 {
@@ -372,7 +360,7 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
                                                
                                 //calculate the coulomb force
                                 Vector cforce = (scl_coul * -cnrg / distmat[j].length() *
-                                                 distmat[j].unitVector()) +
+                                                 distmat[j].direction()) +
                                              
                                                 ((cnrg-shift_coul) * dscl_coul);
 
@@ -386,13 +374,12 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
                     }
                     else
                     {
-                        for (quint32 j=0; j<nats2; ++j)
+                        for (quint32 j=0; j<nats1; ++j)
                         {
                             //do both coulomb and LJ
                             const Parameter &param1 = params1_array[j];
                         
                             const double invdist = double(1) / distmat[j].length();
-                            const double invdist2 = pow_2(invdist);
                         
                             Vector force;
                             
@@ -406,7 +393,7 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
                         
                                 //calculate the force
                                 force = (scl_coul * -cnrg / distmat[j].length() *
-                                         distmat[j].unitVector()) +
+                                         distmat[j].direction()) +
                                              
                                          ((cnrg-shift_coul) * dscl_coul);
                             }
@@ -417,7 +404,7 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
                                                         ljpairs.map(param0.ljid,
                                                                     param1.ljid)];
                         
-                                double sig_over_dist6 = pow_6(ljpair.sigma*invdist);
+                                double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
                                 double sig_over_dist12 = pow_2(sig_over_dist6);
 
                                 //calculate the energy
@@ -428,9 +415,9 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
                                 sig_over_dist6 *= invdist;
                                 sig_over_dist12 *= invdist;
 
-                                force += ((scl_lj * ljpair.epsilon * 
+                                force += ((scl_lj * ljpair.epsilon() * 
                                             (6.0*sig_over_dist6 - 12.0*sig_over_dist12))
-                                            * distmat[j].unitVector())
+                                            * distmat[j].direction())
                                             
                                           + (ljnrg * dscl_lj);
                             }
@@ -465,7 +452,7 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
                                               params1_array[j].reduced_charge / 
                                               distmat[j].length2()) *
                                              
-                                              distmat[j].unitVector();
+                                              distmat[j].direction();
 
                             //add this force onto the tables for the two atoms
                             cforce *= scale_force;
@@ -476,7 +463,7 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
                     }
                     else
                     {
-                        for (quint32 j=0; j<nats2; ++j)
+                        for (quint32 j=0; j<nats1; ++j)
                         {
                             //do both coulomb and LJ
                             const Parameter &param1 = params1_array[j];
@@ -488,7 +475,7 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
                             Vector force = -(param0.reduced_charge * 
                                              param1.reduced_charge * invdist2) 
                                             
-                                            * distmat[j].vector();
+                                            * distmat[j].direction();
                               
                             if (param1.ljid != 0)
                             {
@@ -496,16 +483,16 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
                                                         ljpairs.map(param0.ljid,
                                                                     param1.ljid)];
                         
-                                double sig_over_dist6 = pow_6(ljpair.sigma*invdist);
+                                double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
                                 double sig_over_dist12 = pow_2(sig_over_dist6);
 
                                 // dU/dr requires an extra power of r
                                 sig_over_dist6 *= invdist;
                                 sig_over_dist12 *= invdist;
 
-                                force += (ljpair.epsilon * (6.0*sig_over_dist6 - 
-                                                            12.0*sig_over_dist12))
-                                        * distmat[j].unitVector();
+                                force += (ljpair.epsilon() * (6.0*sig_over_dist6 - 
+                                                              12.0*sig_over_dist12))
+                                        * distmat[j].direction();
                             }
                         
                             //add the force onto the tables
@@ -530,7 +517,7 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
     performing the calculation */
 void IntraCLJPotential::calculateEnergy(const IntraCLJPotential::Molecule &mol,
                                         IntraCLJPotential::Energy &energy,
-                                        IntraCLJPotential::Workspace &distmat,
+                                        IntraCLJPotential::EnergyWorkspace &distmat,
                                         double scale_energy) const
 {
     if (scale_energy == 0)
@@ -538,8 +525,8 @@ void IntraCLJPotential::calculateEnergy(const IntraCLJPotential::Molecule &mol,
 
     const quint32 ngroups = mol.nCutGroups();
     
-    const CoordGroup *groups_array = mol.coordGroups().constData();
-    const CGParams *molparams_array = mol.parameters().constData();
+    const CoordGroup *groups_array = mol.coordinates().constData();
+    const Parameters::Array *molparams_array = mol.parameters().constData();
 
     const CLJNBPairs &nbpairs = mol.nbScale();
     
@@ -549,7 +536,7 @@ void IntraCLJPotential::calculateEnergy(const IntraCLJPotential::Molecule &mol,
     //loop over all pairs of CutGroups in the molecule
     for (quint32 igroup=0; igroup<ngroups; ++igroup)
     {
-        const CGParams &params0 = molparams_array[igroup];
+        const Parameters::Array &params0 = molparams_array[igroup];
 
         const CoordGroup &group0 = groups_array[igroup];
         const AABox &aabox0 = group0.aaBox();
@@ -559,7 +546,7 @@ void IntraCLJPotential::calculateEnergy(const IntraCLJPotential::Molecule &mol,
         for (quint32 jgroup=igroup; jgroup<ngroups; ++jgroup)
         {
             const CoordGroup &group1 = groups_array[jgroup];
-            const CGParams &params1 = molparams_array[jgroup];
+            const Parameters::Array &params1 = molparams_array[jgroup];
 
             //check first that these two CoordGroups could be within cutoff
             //(don't test igroup==jgroup as this is the same CutGroup

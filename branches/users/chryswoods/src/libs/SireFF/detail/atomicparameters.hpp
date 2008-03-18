@@ -60,7 +60,7 @@ public:
 
     typedef PARAM Parameter;
     typedef typename SireBase::PackedArray2D<PARAM> Parameters;
-    typedef typename Parameters::Array CGParameters;
+    typedef typename Parameters::Array Array;
 
     AtomicParameters();
     

@@ -66,7 +66,7 @@ class MolGroup;
 
 namespace SireFF
 {
-class MolForceTable;
+typedef SireBase::PackedArray2D<SireMaths::Vector> MolForceTable;
 }
 
 namespace SireMM
@@ -193,30 +193,6 @@ public:
     quint32 ljid;
 };
 
-/** This is the interatomic scale factor for the coulomb and
-    LJ parameters for the intramolecular energy. */
-class SIREMM_EXPORT CLJScaleFactor
-{
-public:
-    CLJScaleFactor(double scl=0)
-          : coulomb(scl), lj(scl)
-    {}
-
-    CLJScaleFactor(double scale_coul, double scale_lj)
-          : coulomb(scale_coul), lj(scale_lj)
-    {}
-    
-    CLJScaleFactor(const CLJScaleFactor &other)
-          : coulomb(other.coulomb), lj(other.lj)
-    {}
-    
-    ~CLJScaleFactor()
-    {}
-
-    double coulomb;
-    double lj;
-};
-
 } // end of namespace detail
 
 /** This class provides all of the functions and containers  
@@ -246,9 +222,8 @@ public:
     typedef detail::CLJParameter Parameter;
     typedef SireFF::detail::AtomicParameters3D<Parameter> Parameters;
     
-    typedef Parameters::CGParameters CGParameters;
-                
-    typedef SireBase::PairMatrix<double> Workspace;
+    typedef SireBase::PairMatrix<double> EnergyWorkspace;
+    typedef SireBase::PairMatrix<SireMaths::DistVector> ForceWorkspace;
 
     typedef SireFF::detail::FFMolecule3D<InterCLJPotential> Molecule;
     typedef SireFF::detail::FFMolecules3D<InterCLJPotential> Molecules;
@@ -283,14 +258,14 @@ public:
     void calculateEnergy(const InterCLJPotential::Molecule &mol0, 
                          const InterCLJPotential::Molecule &mol1,
                          InterCLJPotential::Energy &energy, 
-                         InterCLJPotential::Workspace &workspace,
+                         InterCLJPotential::EnergyWorkspace &workspace,
                          double scale_energy=1) const;
 
     void calculateForce(const InterCLJPotential::Molecule &mol0, 
                         const InterCLJPotential::Molecule &mol1,
                         MolForceTable &forces0, 
                         MolForceTable &forces1,
-                        InterCLJPotential::Workspace &workspace,
+                        InterCLJPotential::ForceWorkspace &workspace,
                         double scale_force=1) const;
 
     const Properties& properties() const;
@@ -298,19 +273,19 @@ public:
     bool setProperty(const QString &name, const PropertyBase &value);
 
 private:
-    double totalCharge(const InterCLJPotential::CGParameters &params) const;
+    double totalCharge(const InterCLJPotential::Parameters::Array &params) const;
 
     void _pvt_calculateEnergy(const InterCLJPotential::Molecule &mol0, 
                               const InterCLJPotential::Molecule &mol1,
                               InterCLJPotential::Energy &energy, 
-                              InterCLJPotential::Workspace &workspace,
+                              InterCLJPotential::EnergyWorkspace &workspace,
                               double scale_energy) const;
 
     void _pvt_calculateForce(const InterCLJPotential::Molecule &mol0, 
                              const InterCLJPotential::Molecule &mol1,
                              MolForceTable &forces0, 
                              MolForceTable &forces1,
-                             InterCLJPotential::Workspace &workspace,
+                             InterCLJPotential::ForceWorkspace &workspace,
                              double scale_force) const;
 
     /** The current values of the properties of this functional */
@@ -360,7 +335,8 @@ public:
                   SireFF::detail::AtomicParameters3D<Parameter>,
                   detail::IntraScaledParameters<detail::CLJScaleFactor> > Parameters;
         
-    typedef SireBase::PairMatrix<double> Workspace;
+    typedef SireBase::PairMatrix<double> EnergyWorkspace;
+    typedef SireBase::PairMatrix<SireMaths::DistVector> ForceWorkspace;
 
     typedef SireFF::detail::FFMolecule3D<IntraCLJPotential> Molecule;
     typedef SireFF::detail::FFMolecules3D<IntraCLJPotential> Molecules;
@@ -394,12 +370,12 @@ public:
 
     void calculateEnergy(const IntraCLJPotential::Molecule &mol, 
                          IntraCLJPotential::Energy &energy,
-                         Workspace &workspace,
+                         IntraCLJPotential::EnergyWorkspace &workspace,
                          double scale_energy=1) const;
 
     void calculateForce(const IntraCLJPotential::Molecule &mol, 
                         MolForceTable &forces,
-                        Workspace &workspace,
+                        IntraCLJPotential::ForceWorkspace &workspace,
                         double scale_force=1) const;
 
 private:
@@ -425,11 +401,12 @@ private:
 /** Calculate the coulomb and LJ energy between the passed pair
     of molecules and add these energies onto 'energy'. This uses
     the passed workspace to perform the calculation */
-inline void InterCLJPotential::calculateEnergy(const InterCLJPotential::Molecule &mol0,
-                                               const InterCLJPotential::Molecule &mol1,
-                                               InterCLJPotential::Energy &energy,
-                                               InterCLJPotential::Workspace &workspace,
-                                               double scale_energy) const
+inline void 
+InterCLJPotential::calculateEnergy(const InterCLJPotential::Molecule &mol0,
+                                   const InterCLJPotential::Molecule &mol1,
+                                   InterCLJPotential::Energy &energy,
+                                   InterCLJPotential::EnergyWorkspace &workspace,
+                                   double scale_energy) const
 {
     if (scale_energy != 0 and not spce->beyond(switchfunc->cutoffDistance(),
                                                mol0.aaBox(), mol1.aaBox()))
@@ -441,12 +418,13 @@ inline void InterCLJPotential::calculateEnergy(const InterCLJPotential::Molecule
 /** Calculate the coulomb and LJ forces on the atoms between the passed pair
     of molecules and add these energies onto 'forces'. This uses
     the passed workspace to perform the calculation */
-void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &mol0, 
-                                            const InterCLJPotential::Molecule &mol1,
-                                            MolForceTable &forces0, 
-                                            MolForceTable &forces1,
-                                            InterCLJPotential::Workspace &workspace,
-                                            double scale_force) const
+inline void 
+InterCLJPotential::calculateForce(const InterCLJPotential::Molecule &mol0, 
+                                  const InterCLJPotential::Molecule &mol1,
+                                  MolForceTable &forces0, 
+                                  MolForceTable &forces1,
+                                  InterCLJPotential::ForceWorkspace &workspace,
+                                  double scale_force) const
 {
     if ( scale_force != 0 and not spce->beyond(switchfunc->cutoffDistance(),
                                                mol0.aaBox(), mol1.aaBox()) )

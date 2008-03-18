@@ -61,18 +61,18 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJNBPairs &cljnbpairs)
 }
 
 /** Null constructor */
-CLJNBPairs::CLJNBPairs() : AtomPairs<CLJFactor>( CLJFactor(1,1) )
+CLJNBPairs::CLJNBPairs() : AtomPairs<CLJScaleFactor>( CLJFactor(1,1) )
 {}
 
 /** Construct, using 'default_scale' for all of the atom-atom
     interactions in the molecule 'molinfo' */
 CLJNBPairs::CLJNBPairs(const MoleculeInfo &molinfo, const CLJFactor &default_scale)
-           : AtomPairs<CLJFactor>(molinfo, default_scale)
+           : AtomPairs<CLJScaleFactor>(molinfo, default_scale)
 {}
 
 /** Copy constructor */
 CLJNBPairs::CLJNBPairs(const CLJNBPairs &other)
-           : AtomPairs<CLJFactor>(other)
+           : AtomPairs<CLJScaleFactor>(other)
 {}
 
 /** Destructor */
@@ -82,6 +82,6 @@ CLJNBPairs::~CLJNBPairs()
 /** Copy assignment operator */
 CLJNBPairs& CLJNBPairs::operator=(const CLJNBPairs &other)
 {
-    AtomPairs<CLJFactor>::operator=(other);
+    AtomPairs<CLJScaleFactor>::operator=(other);
     return *this;
 }

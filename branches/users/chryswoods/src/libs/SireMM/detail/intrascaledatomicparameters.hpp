@@ -76,6 +76,8 @@ template<class SCALE_FACTORS>
 class IntraScaledParameters
 {
 public:
+    typedef typename SCALE_FACTORS ScaleFactors;
+
     IntraScaledParameters();
     
     IntraScaledParameters(const PartialMolecule &molecule,
@@ -99,9 +101,9 @@ public:
     
     int nGroups() const;
     
-    const SCALE_FACTORS& scaleFactors() const;
+    const ScaleFactors& scaleFactors() const;
     
-    void setScaleFactors(const SCALE_FACTORS &scale_factors);
+    void setScaleFactors(const ScaleFactors &scale_factors);
     
     bool changedAllGroups(const IntraScaledParameters<SCALE_FACTORS> &other) const;
     
@@ -117,7 +119,7 @@ public:
 protected:
     /** The intramolecular inter-atomic scale factors to apply to 
         the potential between intramolecular pairs of atoms */
-    SCALE_FACTORS sclfactors;
+    ScaleFactors sclfactors;
 };
 
 /** Atomic parameters that use a scale factor
@@ -131,6 +133,7 @@ class IntraScaledAtomicParameters : public ATOMPARAM, public INTRASCALE
 public:
     typedef typename ATOMPARAM::Parameter Parameter;
     typedef typename ATOMPARAM::Parameters Parameters;
+    typedef typename INTRASCALE::ScaleFactors ScaleFactors;
 
     IntraScaledAtomicParameters();
                           

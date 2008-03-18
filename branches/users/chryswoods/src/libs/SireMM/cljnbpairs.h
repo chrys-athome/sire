@@ -36,25 +36,46 @@ SIRE_BEGIN_HEADER
 namespace SireMM
 {
 class CLJNBPairs;
+class CLJScaleFactor;
 }
 
 QDataStream& operator<<(QDataStream&, const SireMM::CLJNBPairs&);
 QDataStream& operator>>(QDataStream&, SireMM::CLJNBPairs&);
 
+QDataStream& operator<<(QDataStream&, const SireMM::CLJScaleFactor&);
+QDataStream& operator>>(QDataStream&, SireMM::CLJScaleFactor&);
+
 namespace SireMM
 {
 
-/** This small struct holds the coulomb and LJ scaling factors */
-struct CLJFactor
+/** This is the interatomic scale factor for the coulomb and
+    LJ parameters for the intramolecular energy. */
+class SIREMM_EXPORT CLJScaleFactor
 {
-    CLJFactor(double _coulomb=0, double _lj=0) : coulomb(_coulomb), lj(_lj)
+public:
+    CLJScaleFactor(double scl=0)
+          : coulomb(scl), lj(scl)
     {}
+
+    CLJScaleFactor(double scale_coul, double scale_lj)
+          : coulomb(scale_coul), lj(scale_lj)
+    {}
+    
+    CLJScaleFactor(const CLJScaleFactor &other)
+          : coulomb(other.coulomb), lj(other.lj)
+    {}
+    
+    ~CLJScaleFactor()
+    {}
+
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<CLJScaleFactor>() );
+    }
 
     double coulomb;
     double lj;
 };
-
-typedef CGAtomPairs<CLJFactor> GroupCLJNBPairs;
 
 /** This class holds all of the non-bonded scale factors that are used
     to scale the intramolecular atom-atom coulomb and Lennard-Jones
@@ -66,7 +87,7 @@ typedef CGAtomPairs<CLJFactor> GroupCLJNBPairs;
 
     @author Christopher Woods
 */
-class SIREMM_EXPORT CLJNBPairs : public AtomPairs<CLJFactor>
+class SIREMM_EXPORT CLJNBPairs : public AtomPairs<CLJScaleFactor>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const CLJNBPairs&);
@@ -76,7 +97,7 @@ public:
     CLJNBPairs();
 
     CLJNBPairs(const MoleculeInfo &molinfo,
-               const CLJFactor &default_scale = CLJFactor(1,1));
+               const CLJFactor &default_scale = CLJScaleFactor(1,1));
 
     CLJNBPairs(const CLJNBPairs &other);
 
@@ -88,14 +109,12 @@ public:
     {
         return "SireMM::CLJNBPairs";
     }
-
-
 };
 
 }
 
-Q_DECLARE_METATYPE(SireMM::CLJCGNBPairs);
-Q_DECLARE_METATYPE(SireMM::CLJNBPairs);
+Q_DECLARE_METATYPE(SireMM::CLJScaleFactor)
+Q_DECLARE_METATYPE(SireMM::CLJNBPairs)
 
 SIRE_END_HEADER
 
