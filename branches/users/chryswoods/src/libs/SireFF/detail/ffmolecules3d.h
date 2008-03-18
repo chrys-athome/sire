@@ -229,7 +229,7 @@ FFMolecule3D<PTNL>::FFMolecule3D(const PartialMolecule &molecule,
                    : FFMolecule<PTNL>(molecule, forcefield, parameters)
 {
     //get the AABox
-    aabox = this->params.coordinates().aaBox();
+    aabox = this->parameters().atomicCoordinates().aaBox();
 }
 
 /** Private constructor used to create from an FFMolecule<PTNL> */
@@ -238,7 +238,7 @@ SIRE_OUTOFLINE_TEMPLATE
 FFMolecule3D<PTNL>::FFMolecule3D(const FFMolecule<PTNL> &ffmol)
                    : FFMolecule<PTNL>(ffmol)
 {
-    aabox = this->params.coordinates().aaBox();
+    aabox = this->parameters().atomicCoordinates().aaBox();
 }
 
 /** Copy constructor */
@@ -285,16 +285,6 @@ bool FFMolecule3D<PTNL>::operator!=(const FFMolecule3D<PTNL> &other) const
     return FFMolecule<PTNL>::operator!=(other);
 }
 
-/** Return the coordinate of the atoms of this molecule, arranged
-    into CoordGroups. Note that only CoordGroups that contain at
-    least one selected atom are included in this list */
-template<class PTNL>
-SIRE_OUTOFLINE_TEMPLATE
-const CoordGroupArray& FFMolecule3D<PTNL>::coordinates() const
-{
-    return this->params.coordinates();
-}
-
 /** Return the AABox that encloses all of the atoms whose coordinates
     are returned in 'coordinates()' (this includes atoms that are in
     the same CutGroup as selected atoms, but are not themselves selected) */
@@ -329,7 +319,7 @@ bool FFMolecule3D<PTNL>::change(const PartialMolecule &molecule,
     if (FFMolecule<PTNL>::change(molecule, forcefield, parameternames))
     {
         //we need to update the global AABox
-        aabox = this->params.coordinates().aaBox();
+        aabox = this->parameters().atomicCoordinates().aaBox();
         
         return true;
     }
@@ -354,7 +344,7 @@ bool FFMolecule3D<PTNL>::change(const PartialMolecule &molecule,
                                  forcefield, old_paramnames))
     {
         //we need to update the aabox
-        aabox = this->params.coordinates().aaBox();
+        aabox = this->parameters().atomicCoordinates().aaBox();
         return true;
     }
     else
@@ -376,7 +366,7 @@ bool FFMolecule3D<PTNL>::add(const AtomSelection &selected_atoms,
     if (FFMolecule<PTNL>::add(selected_atoms, forcefield, parameternames))
     {
         //update the aabox
-        aabox = this->params.coordinates().aaBox();
+        aabox = this->parameters().atomicCoordinates().aaBox();
         return true;
     }
     else
@@ -398,7 +388,7 @@ bool FFMolecule3D<PTNL>::remove(const AtomSelection &selected_atoms,
     if (FFMolecule<PTNL>::remove(selected_atoms, forcefield, parameternames))
     {
         //update the aabox
-        aabox = this->params.coordinates().aaBox();
+        aabox = this->parameters().atomicCoordinates().aaBox();
         return true;
     }
     else
@@ -424,7 +414,7 @@ template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
 void FFMolecule3D<PTNL>::setCoordinates(const CoordGroupArray &coords)
 {
-    this->params.setCoordinates(coords);
+    this->_edit_parameters().setAtomicCoordinates(coords);
 }
 
 ///////

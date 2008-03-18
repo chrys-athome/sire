@@ -93,9 +93,9 @@ public:
     bool operator==(const AtomicCoords3D &other);
     bool operator!=(const AtomicCoords3D &other);
     
-    const CoordGroupArray& coordinates() const;
+    const CoordGroupArray& atomicCoordinates() const;
     
-    void setCoordinates(const CoordGroupArray &coords);
+    void setAtomicCoordinates(const CoordGroupArray &coords);
     
     bool changedAllGroups(const AtomicCoords3D &params) const;
     
@@ -122,7 +122,7 @@ AtomicCoords3D::AtomicCoords3D(const PartialMolecule &molecule,
 }
 
 /** Return the 3D coordinates of the atoms in the forcefield */
-inline const CoordGroupArray& AtomicCoords3D::coordinates() const
+inline const CoordGroupArray& AtomicCoords3D::atomicCoordinates() const
 {
     return coords;
 }

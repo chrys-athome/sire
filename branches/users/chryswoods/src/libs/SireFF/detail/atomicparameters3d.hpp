@@ -70,11 +70,11 @@ public:
     bool operator==(const AtomicParameters3D<PARAM> &other) const;
     bool operator!=(const AtomicParameters3D<PARAM> &other) const;
     
-    void setParameters(const Parameters &parameters);
-    void setParameters(const AtomicParameters<PARAM> &parameters);
+    void setAtomicParameters(const Parameters &parameters);
+    void setAtomicParameters(const AtomicParameters<PARAM> &parameters);
 
-    void setCoordinates(const CoordGroupArray &coordinates);
-    void setCoordinates(const AtomicCoords3D &coordinates);
+    void setAtomicCoordinates(const CoordGroupArray &coordinates);
+    void setAtomicCoordinates(const AtomicCoords3D &coordinates);
 
     bool changedAllGroups(const AtomicParameters3D<PARAM> &params) const;
     
@@ -240,11 +240,12 @@ AtomicParameters3D<PARAM> AtomicParameters3D<PARAM>::applyMask(
 {
     AtomicCoords3D masked_coords = AtomicCoords3D::applyMask(idxs);
     
-    if (masked_coords.coordinates().count() == 0)
+    if (masked_coords.atomicCoordinates().count() == 0)
         //all of the groups are masked
         return AtomicParameters3D<PARAM>();
     
-    else if (masked_coords.coordinates().count() == this->coordinates().count())
+    else if (masked_coords.atomicCoordinates().count() 
+                    == this->atomicCoordinates().count())
         //none of the groups are masked
         return *this;
         

@@ -76,7 +76,7 @@ template<class SCALE_FACTORS>
 class IntraScaledParameters
 {
 public:
-    typedef typename SCALE_FACTORS ScaleFactors;
+    typedef SCALE_FACTORS ScaleFactors;
 
     IntraScaledParameters();
     

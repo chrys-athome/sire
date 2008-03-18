@@ -77,8 +77,8 @@ public:
 
     int nGroups() const;
 
-    const Parameters& parameters() const;
-    void setParameters(const Parameters &parameters);
+    const Parameters& atomicParameters() const;
+    void setAtomicParameters(const Parameters &parameters);
 
     bool changedAllGroups(const AtomicParameters<PARAM> &params) const;
     
@@ -246,7 +246,7 @@ QSet<quint32> AtomicParameters<PARAM>::getChangedGroups(
     QSet<quint32> changed_groups;
     changed_groups.reserve(params.count());
     
-    this->addChangedGroups(parameters, changed_groups);
+    this->addChangedGroups(other, changed_groups);
     
     return changed_groups;
 }

@@ -54,15 +54,15 @@ class SIREMM_EXPORT CLJScaleFactor
 {
 public:
     CLJScaleFactor(double scl=0)
-          : coulomb(scl), lj(scl)
+          : cscl(scl), ljscl(scl)
     {}
 
     CLJScaleFactor(double scale_coul, double scale_lj)
-          : coulomb(scale_coul), lj(scale_lj)
+          : cscl(scale_coul), ljscl(scale_lj)
     {}
     
     CLJScaleFactor(const CLJScaleFactor &other)
-          : coulomb(other.coulomb), lj(other.lj)
+          : cscl(other.cscl), ljscl(other.ljscl)
     {}
     
     ~CLJScaleFactor()
@@ -73,8 +73,36 @@ public:
         return QMetaType::typeName( qMetaTypeId<CLJScaleFactor>() );
     }
 
-    double coulomb;
-    double lj;
+    CLJScaleFactor& operator=(const CLJScaleFactor &other)
+    {
+        cscl = other.cscl;
+        ljscl = other.ljscl;
+        return *this;
+    }
+
+    bool operator==(const CLJScaleFactor &other) const
+    {
+        return cscl == other.cscl and ljscl == other.ljscl;
+    }
+
+    bool operator!=(const CLJScaleFactor &other) const
+    {
+        return cscl != other.cscl or ljscl != other.ljscl;
+    }
+
+    double coulomb() const
+    {
+        return cscl;
+    }
+    
+    double lj() const
+    {
+        return ljscl;
+    }
+ 
+private:
+    /** The coulomb and LJ scale factors */
+    double cscl, ljscl;
 };
 
 /** This class holds all of the non-bonded scale factors that are used
@@ -87,17 +115,21 @@ public:
 
     @author Christopher Woods
 */
-class SIREMM_EXPORT CLJNBPairs : public AtomPairs<CLJScaleFactor>
+class SIREMM_EXPORT CLJNBPairs 
+        : public SireBase::ConcreteProperty< CLJNBPairs, 
+                                             AtomPairs<CLJScaleFactor> >
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const CLJNBPairs&);
 friend QDataStream& ::operator>>(QDataStream&, CLJNBPairs&);
 
 public:
+    typedef AtomPairs<CLJScaleFactor>::CGPairs CGPairs;
+
     CLJNBPairs();
 
-    CLJNBPairs(const MoleculeInfo &molinfo,
-               const CLJFactor &default_scale = CLJScaleFactor(1,1));
+    CLJNBPairs(const MoleculeInfoData &molinfo,
+               const CLJScaleFactor &default_scale = CLJScaleFactor(1,1));
 
     CLJNBPairs(const CLJNBPairs &other);
 
@@ -107,14 +139,19 @@ public:
 
     static const char* typeName()
     {
-        return "SireMM::CLJNBPairs";
+        return QMetaType::typeName( qMetaTypeId<CLJNBPairs>() );
     }
+    
+    bool operator==(const CLJNBPairs &other) const;
+    bool operator!=(const CLJNBPairs &other) const;
 };
 
 }
 
 Q_DECLARE_METATYPE(SireMM::CLJScaleFactor)
 Q_DECLARE_METATYPE(SireMM::CLJNBPairs)
+
+Q_DECLARE_TYPEINFO( SireMM::CLJScaleFactor, Q_MOVABLE_TYPE );
 
 SIRE_END_HEADER
 

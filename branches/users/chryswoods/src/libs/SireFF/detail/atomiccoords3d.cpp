@@ -161,7 +161,7 @@ bool AtomicCoords3D::operator!=(const AtomicCoords3D &other)
 }
 
 /** Set the coordinates manually */
-void AtomicCoords3D::setCoordinates(const CoordGroupArray &new_coords)
+void AtomicCoords3D::setAtomicCoordinates(const CoordGroupArray &new_coords)
 {
     BOOST_ASSERT( coords.count() == new_coords.count() );
     

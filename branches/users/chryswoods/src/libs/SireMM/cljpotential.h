@@ -37,6 +37,8 @@
 #include "SireVol/space.h"
 
 #include "cljcomponent.h"
+#include "cljnbpairs.h"
+
 #include "detail/intrascaledatomicparameters.hpp"
 
 #include "ljparameterdb.h"
@@ -246,14 +248,29 @@ public:
         return InterCLJPotential::typeName();
     }
     
+    InterCLJPotential::Parameters 
+    getParameters(const PartialMolecule &molecule,
+                  const PropertyMap &map = PropertyMap());
+    
+    InterCLJPotential::Parameters
+    updateParameters(const InterCLJPotential::Parameters &old_params,
+                     const PartialMolecule &old_molecule,
+                     const PartialMolecule &new_molecule,
+                     const PropertyMap &old_map = ParameterMap());
+    
+    InterCLJPotential::Molecule
+    parameterise(const PartialMolecule &molecule);
+    
+    InterCLJPotential::Molecule
+    parameterise(const PartialMolecule &molecule,
+                 const InterCLJPotential::ParameterNames &paramnames);
+    
     InterCLJPotential::Molecules 
     parameterise(const MolGroup &molecules);
     
     InterCLJPotential::Molecules 
-    parameteriseForIntermolecular(const MolGroup &molecules);
-    
-    InterCLJPotential::Molecules 
-    parameteriseForIntramolecular(const MolGroup &molecules);
+    parameterise(const MolGroup &molecules,
+                 const InterCLJPotential::ParameterNames &paramnames);
 
     void calculateEnergy(const InterCLJPotential::Molecule &mol0, 
                          const InterCLJPotential::Molecule &mol1,
@@ -331,9 +348,10 @@ public:
     typedef detail::ScaledCLJParameterNames3D ParameterNames;
 
     typedef detail::CLJParameter Parameter;
+    
     typedef detail::IntraScaledAtomicParameters<
                   SireFF::detail::AtomicParameters3D<Parameter>,
-                  detail::IntraScaledParameters<detail::CLJScaleFactor> > Parameters;
+                  detail::IntraScaledParameters<CLJNBPairs> > Parameters;
         
     typedef SireBase::PairMatrix<double> EnergyWorkspace;
     typedef SireBase::PairMatrix<SireMaths::DistVector> ForceWorkspace;
@@ -379,6 +397,8 @@ public:
                         double scale_force=1) const;
 
 private:
+    double totalCharge(const IntraCLJPotential::Parameters::Array &params) const;
+
     /** The current values of the properties of this functional */
     Properties props;
     
@@ -436,9 +456,7 @@ InterCLJPotential::calculateForce(const InterCLJPotential::Molecule &mol0,
 
 }
 
-
 Q_DECLARE_TYPEINFO( SireMM::detail::CLJParameter, Q_MOVABLE_TYPE );
-Q_DECLARE_TYPEINFO( SireMM::detail::CLJScaleFactor, Q_MOVABLE_TYPE );
 
 SIRE_END_HEADER
 

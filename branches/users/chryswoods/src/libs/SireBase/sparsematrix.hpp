@@ -77,12 +77,12 @@ public:
         return *this;
     }
 
-    bool operator==(const Index &other)
+    bool operator==(const Index &other) const
     {
         return i == other.i and j == other.j;
     }
 
-    bool operator!=(const Index &other)
+    bool operator!=(const Index &other) const
     {
         return i != other.i or j != other.j;
     }
@@ -158,7 +158,7 @@ private:
         NORMAL,     //normal matrix
         TRANSPOSE,  //the transpose of the matrix is stored
         SYMMETRIC   //this is a symmetrix matrix
-    }
+    };
     
     /** The state of this matrix */
     MATRIX_STATE current_state;

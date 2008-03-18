@@ -30,6 +30,7 @@
 #define SIREFF_DETAIL_FFMOLECULES_H
 
 #include "SireMol/partialmolecule.h"
+#include "SireBase/propertymap.h"
 
 SIRE_BEGIN_HEADER
 
@@ -81,6 +82,8 @@ using SireMol::PartialMolecule;
 using SireMol::AtomSelection;
 using SireMol::MolNum;
 using SireMol::CGIdx;
+
+using SireBase::PropertyMap;
 
 void throwFFMoleculesIncompatibleParameterNames(const QString &params0, 
                                                 const QString &params1);
@@ -155,7 +158,7 @@ public:
     
     FFMolecule(const PartialMolecule &molecule,
                PTNL &forcefield,
-               const ParameterNames &parameters);
+               const PropertyMap &map = PropertyMap());
 
     FFMolecule(const FFMolecule<PTNL> &other);
 
@@ -166,30 +169,32 @@ public:
     bool operator==(const FFMolecule<PTNL> &other) const;
     bool operator!=(const FFMolecule<PTNL> &other) const;
 
-    const typename Parameters::Parameters& parameters() const;
+    const Parameters& parameters() const;
     
     bool change(const PartialMolecule &molecule,
                 PTNL &forcefield,
-                const ParameterNames &parameternames);
+                const PropertyMap &map = PropertyMap());
     
     bool change(const PartialMolecule &molecule,
-                const ParameterNames &new_paramnames,
+                const PropertyMap &new_map,
                 PTNL &forcefield,
-                const ParameterNames &old_paramnames);
+                const PropertyMap &old_map);
 
     bool add(const AtomSelection &selected_atoms,
              PTNL &forcefield,
-             const ParameterNames &parameternames);
+             const PropertyMap &map = PropertyMap());
 
     bool remove(const AtomSelection &selected_atoms,
                 PTNL &forcefield,
-                const ParameterNames &parameternames);
+                const PropertyMap &map = PropertyMap());
 
     FFMolecule<PTNL> getDifferences(const FFMolecule<PTNL> &other) const;
 
 protected:
     FFMolecule(const PartialMolecule &molecule,
                const Parameters &parameters);
+
+    Parameters& _edit_parameters();
 
 private:
     /** The parameters for this molecule */
@@ -289,12 +294,12 @@ public:
                            bool record_changes = true);
                            
     ChangedMolecule change(const PartialMolecule &molecule,
-                           const ParameterNames &paramnames,
+                           const PropertyMap &new_map,
                            PTNL &forcefield,
                            bool record_changes = true);
                            
     ChangedMolecule add(const PartialMolecule &molecule,
-                        const ParameterNames &paramnames,
+                        const PropertyMap &map,
                         PTNL &forcefield,
                         bool record_changes = true);
                         
@@ -310,7 +315,7 @@ protected:
     QVector<Molecule> mols_by_idx;
     
     /** The current parameter locations used for each molecule */
-    QVector<ParameterNames> parameter_names;
+    QVector<PropertyMap> parameter_names;
 };
 
 /** This implementation class holds the information about 
@@ -392,10 +397,9 @@ template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
 FFMolecule<PTNL>::FFMolecule(const PartialMolecule &molecule,
                              PTNL &forcefield,
-                             const ParameterNames &parameternames)
+                             const PropertyMap &map)
                  : FFMoleculeBase(molecule),
-                   params( forcefield.parameterise(molecule,
-                                                   parameternames) )
+                   params( forcefield.getParameters(molecule,map) )
 {}
 
 /** Private constructor used to create a molecule from the passed
@@ -457,10 +461,17 @@ bool FFMolecule<PTNL>::operator!=(const FFMolecule<PTNL> &other) const
     that forcefield) */
 template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
-const typename FFMolecule<PTNL>::Parameters::Parameters& 
-FFMolecule<PTNL>::parameters() const
+const typename FFMolecule<PTNL>::Parameters& FFMolecule<PTNL>::parameters() const
 {
-    return params.parameters();
+    return params;
+}
+
+/** Protected function used by derived classes to edit the parameters */
+template<class PTNL>
+SIRE_OUTOFLINE_TEMPLATE
+typename FFMolecule<PTNL>::Parameters& FFMolecule<PTNL>::_edit_parameters()
+{
+    return params;
 }
 
 /** Change this molecule so that it is equal to 'new_molecule'.
@@ -481,8 +492,7 @@ FFMolecule<PTNL>::parameters() const
 template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
 bool FFMolecule<PTNL>::change(const PartialMolecule &new_molecule,
-                                PTNL &forcefield,
-                    const typename FFMolecule<PTNL>::ParameterNames &parameternames)
+                              PTNL &forcefield, const PropertyMap &old_map)
 {
     //save the old molecule in case it needs to be restored
     PartialMolecule old_molecule = FFMoleculeBase::molecule();
@@ -495,8 +505,9 @@ bool FFMolecule<PTNL>::change(const PartialMolecule &new_molecule,
         try
         {
             //now try to change the parameters
-            params = forcefield.updateParameters(params, FFMoleculeBase::molecule(),
-                                                 old_molecule, parameternames);
+            params = forcefield.updateParameters(params, old_molecule,
+                                                 FFMoleculeBase::molecule(),
+                                                 parameternames);
         }
         catch(...)
         {
@@ -518,13 +529,13 @@ bool FFMolecule<PTNL>::change(const PartialMolecule &new_molecule,
 template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
 bool FFMolecule<PTNL>::change(const PartialMolecule &new_molecule,
-                  const typename FFMolecule<PTNL>::ParameterNames &new_parameternames,
-                                PTNL &forcefield,
-                  const typename FFMolecule<PTNL>::ParameterNames &parameternames)
+                              const PropertyMap &new_map,
+                              PTNL &forcefield,
+                              const PropertyMap &old_map)
 {
-    if (new_parameternames == parameternames)
+    if (new_map == old_map)
         //we are not changing the parameter sources
-        return this->change(new_molecule, forcefield, parameternames);
+        return this->change(new_molecule, forcefield, old_map);
 
     //save the old version of the molecule
     PartialMolecule old_molecule = FFMoleculeBase::molecule();
@@ -533,8 +544,8 @@ bool FFMolecule<PTNL>::change(const PartialMolecule &new_molecule,
     
     try
     {
-        Parameters new_params = forcefield.parameterise(FFMoleculeBase::molecule(),
-                                                        new_parameternames);
+        Parameters new_params = forcefield.getParameters(FFMoleculeBase::molecule(),
+                                                         new_map);
 
         changed = changed or (new_params != params);
         

@@ -32,15 +32,23 @@
 
 using namespace SireMM;
 using namespace SireMol;
+using namespace SireBase;
 using namespace SireStream;
 
 static const RegisterMetaType<CLJNBPairs> r_cljnbpairs;
+
+////////
+//////// Fully instantiate the template class
+////////
+
+template class AtomPairs<CLJScaleFactor>;
+template class CGAtomPairs<CLJScaleFactor>;
 
 /** Serialise to a binary datastream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJNBPairs &cljnbpairs)
 {
     writeHeader(ds, r_cljnbpairs, 1)
-        << static_cast<const AtomPairs<CLJFactor>&>(cljnbpairs);
+        << static_cast<const AtomPairs<CLJScaleFactor>&>(cljnbpairs);
 
     return ds;
 }
@@ -52,7 +60,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJNBPairs &cljnbpairs)
 
     if (v == 1)
     {
-        ds >> static_cast<AtomPairs<CLJFactor>&>(cljnbpairs);
+        ds >> static_cast<AtomPairs<CLJScaleFactor>&>(cljnbpairs);
     }
     else
         throw version_error(v, "1", r_cljnbpairs, CODELOC);
@@ -61,18 +69,21 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJNBPairs &cljnbpairs)
 }
 
 /** Null constructor */
-CLJNBPairs::CLJNBPairs() : AtomPairs<CLJScaleFactor>( CLJFactor(1,1) )
+CLJNBPairs::CLJNBPairs() : ConcreteProperty<CLJNBPairs,
+                               AtomPairs<CLJScaleFactor> >( CLJScaleFactor(1,1) )
 {}
 
 /** Construct, using 'default_scale' for all of the atom-atom
     interactions in the molecule 'molinfo' */
-CLJNBPairs::CLJNBPairs(const MoleculeInfo &molinfo, const CLJFactor &default_scale)
-           : AtomPairs<CLJScaleFactor>(molinfo, default_scale)
+CLJNBPairs::CLJNBPairs(const MoleculeInfoData &molinfo, 
+                       const CLJScaleFactor &default_scale)
+           : ConcreteProperty<CLJNBPairs,
+                   AtomPairs<CLJScaleFactor> >(molinfo, default_scale)
 {}
 
 /** Copy constructor */
 CLJNBPairs::CLJNBPairs(const CLJNBPairs &other)
-           : AtomPairs<CLJScaleFactor>(other)
+           : ConcreteProperty< CLJNBPairs, AtomPairs<CLJScaleFactor> >(other)
 {}
 
 /** Destructor */
@@ -84,4 +95,16 @@ CLJNBPairs& CLJNBPairs::operator=(const CLJNBPairs &other)
 {
     AtomPairs<CLJScaleFactor>::operator=(other);
     return *this;
+}
+
+/** Comparison operator */
+bool CLJNBPairs::operator==(const CLJNBPairs &other) const
+{
+    return AtomPairs<CLJScaleFactor>::operator==(other);
+}
+
+/** Comparison operator */
+bool CLJNBPairs::operator!=(const CLJNBPairs &other) const
+{
+    return AtomPairs<CLJScaleFactor>::operator!=(other);
 }
