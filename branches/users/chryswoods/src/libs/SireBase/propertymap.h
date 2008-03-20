@@ -82,7 +82,7 @@ class Properties;
     
     or
     
-    cljff.add( mol, charges="charges", ljs="ljparams" )
+    cljff.add( mol, charges=="charges", ljs=="ljparams" )
 
     @author Christopher Woods
 */
@@ -112,20 +112,14 @@ public:
     const QString& source() const;
     const Property& value() const;
 
-    operator QString() const
-    {
-        return src;
-    }
+    QString toString() const;
 
 private:
     /** The name to use to find the property in the  
         Properties container */
     QString src;
     
-    /** The value of the property - this is either
-        the value to use instead of the container value
-        (if 'isPreferred()' is true), or the default value to 
-        use if the container doesn't have the property set */
+    /** The default value of the property */
     Property val;
 };
 
@@ -177,6 +171,8 @@ public:
     bool specified(const QString &name) const;
 
     void set(const QString &name, const PropertyName &source);
+
+    QString toString() const;
 
 private:
     /** Hash indexing all of the PropertyNames */

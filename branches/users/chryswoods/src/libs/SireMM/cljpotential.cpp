@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#include "SireBase/sparsematrix.hpp"
+
 #include "cljpotential.h"
 
 #include "SireMol/mover.hpp"

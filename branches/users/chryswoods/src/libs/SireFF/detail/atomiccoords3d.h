@@ -90,8 +90,8 @@ public:
     
     AtomicCoords3D& operator=(const AtomicCoords3D &other);
     
-    bool operator==(const AtomicCoords3D &other);
-    bool operator!=(const AtomicCoords3D &other);
+    bool operator==(const AtomicCoords3D &other) const;
+    bool operator!=(const AtomicCoords3D &other) const;
     
     const CoordGroupArray& atomicCoordinates() const;
     

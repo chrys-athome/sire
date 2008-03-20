@@ -107,7 +107,7 @@ public:
     
     FFMolecule3D(const PartialMolecule &molecule,
                  PTNL &forcefield,
-                 const ParameterNames &parameters);
+                 const PropertyMap &map);
     
     FFMolecule3D(const FFMolecule3D<PTNL> &other);
     
@@ -124,20 +124,20 @@ public:
     
     bool change(const PartialMolecule &molecule,
                 PTNL &forcefield,
-                const ParameterNames &parameternames);
+                const PropertyMap &map);
     
     bool change(const PartialMolecule &molecule,
-                const ParameterNames &new_paramnames,
+                const PropertyMap &new_map,
                 PTNL &forcefield,
-                const ParameterNames &old_paramnames);
+                const PropertyMap &old_map);
 
     bool add(const AtomSelection &selected_atoms,
              PTNL &forcefield,
-             const ParameterNames &parameternames);
+             const PropertyMap &map);
 
     bool remove(const AtomSelection &selected_atoms,
                 PTNL &forcefield,
-                const ParameterNames &parameternames);
+                const PropertyMap &map);
 
     FFMolecule3D<PTNL> getDifferences(const FFMolecule<PTNL> &other) const;
 
@@ -185,12 +185,12 @@ public:
                            bool record_changes = true);
                            
     ChangedMolecule change(const PartialMolecule &molecule,
-                           const ParameterNames &paramnames,
+                           const PropertyMap &new_map,
                            PTNL &forcefield,
                            bool record_changes = true);
                            
     ChangedMolecule add(const PartialMolecule &molecule,
-                        const ParameterNames &paramnames,
+                        const PropertyMap &map,
                         PTNL &forcefield,
                         bool record_changes = true);
                         
@@ -225,8 +225,8 @@ template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
 FFMolecule3D<PTNL>::FFMolecule3D(const PartialMolecule &molecule,
                                  PTNL &forcefield,
-                                 const ParameterNames &parameters)
-                   : FFMolecule<PTNL>(molecule, forcefield, parameters)
+                                 const PropertyMap &map)
+                   : FFMolecule<PTNL>(molecule, forcefield, map)
 {
     //get the AABox
     aabox = this->parameters().atomicCoordinates().aaBox();
@@ -304,7 +304,7 @@ const AABox& FFMolecule3D<PTNL>::aaBox() const
     change its layout ID.
 
     The names of the properties used to originally get the 
-    parameters for this molecule are in 'parameternames'
+    parameters for this molecule are in 'map'
     
     \throw SireError::incompatible_error
     \throw SireError::invalid_cast
@@ -313,10 +313,9 @@ const AABox& FFMolecule3D<PTNL>::aaBox() const
 template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
 bool FFMolecule3D<PTNL>::change(const PartialMolecule &molecule,
-                                PTNL &forcefield,
-                   const typename FFMolecule3D<PTNL>::ParameterNames &parameternames)
+                                PTNL &forcefield, const PropertyMap &map)
 {
-    if (FFMolecule<PTNL>::change(molecule, forcefield, parameternames))
+    if (FFMolecule<PTNL>::change(molecule, forcefield, map))
     {
         //we need to update the global AABox
         aabox = this->parameters().atomicCoordinates().aaBox();
@@ -328,20 +327,18 @@ bool FFMolecule3D<PTNL>::change(const PartialMolecule &molecule,
 }
 
 /** Change this molecule so that it is equal to 'new_molecule' and
-    so that it gets its parameters from 'new_parameternames'
+    so that it gets its parameters from 'new_map'
 
     The names of the properties used to originally get the 
-    parameters for this molecule are in 'parameternames'
+    parameters for this molecule are in 'old_map'
 */
 template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
 bool FFMolecule3D<PTNL>::change(const PartialMolecule &molecule,
-            const typename FFMolecule3D<PTNL>::ParameterNames &new_paramnames,
-                                PTNL &forcefield,
-            const typename FFMolecule3D<PTNL>::ParameterNames &old_paramnames)
+                                const PropertyMap &new_map,
+                                PTNL &forcefield, const PropertyMap &old_map)
 {
-    if (FFMolecule<PTNL>::change(molecule, new_paramnames,
-                                 forcefield, old_paramnames))
+    if (FFMolecule<PTNL>::change(molecule, new_map, forcefield, old_map))
     {
         //we need to update the aabox
         aabox = this->parameters().atomicCoordinates().aaBox();
@@ -360,10 +357,9 @@ bool FFMolecule3D<PTNL>::change(const PartialMolecule &molecule,
 template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
 bool FFMolecule3D<PTNL>::add(const AtomSelection &selected_atoms,
-                             PTNL &forcefield,
-                const typename FFMolecule3D<PTNL>::ParameterNames &parameternames)
+                             PTNL &forcefield, const PropertyMap &map)
 {   
-    if (FFMolecule<PTNL>::add(selected_atoms, forcefield, parameternames))
+    if (FFMolecule<PTNL>::add(selected_atoms, forcefield, map))
     {
         //update the aabox
         aabox = this->parameters().atomicCoordinates().aaBox();
@@ -382,10 +378,9 @@ bool FFMolecule3D<PTNL>::add(const AtomSelection &selected_atoms,
 template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
 bool FFMolecule3D<PTNL>::remove(const AtomSelection &selected_atoms,
-                                PTNL &forcefield,
-                    const typename FFMolecule<PTNL>::ParameterNames &parameternames)
+                                PTNL &forcefield, const PropertyMap &map)
 {
-    if (FFMolecule<PTNL>::remove(selected_atoms, forcefield, parameternames))
+    if (FFMolecule<PTNL>::remove(selected_atoms, forcefield, map))
     {
         //update the aabox
         aabox = this->parameters().atomicCoordinates().aaBox();
@@ -573,10 +568,10 @@ template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
 typename FFMolecules3D<PTNL>::ChangedMolecule 
 FFMolecules3D<PTNL>::change(const PartialMolecule &molecule,
-                      const typename FFMolecules3D<PTNL>::ParameterNames &paramnames,
+                            const PropertyMap &new_map,
                             PTNL &forcefield, bool record_changes)
 {
-    ChangedMolecule changed_mol = FFMolecules<PTNL>::change(molecule, paramnames,
+    ChangedMolecule changed_mol = FFMolecules<PTNL>::change(molecule, new_map,
                                                             forcefield, record_changes);
                                                             
     //update the AABox for this molecule
@@ -614,10 +609,10 @@ template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
 typename FFMolecules3D<PTNL>::ChangedMolecule
 FFMolecules3D<PTNL>::add(const PartialMolecule &molecule,
-                    const typename FFMolecules3D<PTNL>::ParameterNames &paramnames,
-                         PTNL &forcefield, bool record_changes)
+                         const PropertyMap &map, PTNL &forcefield, 
+                         bool record_changes)
 {
-    ChangedMolecule changed_mol = FFMolecules<PTNL>::add(molecule, paramnames,
+    ChangedMolecule changed_mol = FFMolecules<PTNL>::add(molecule, map,
                                                          forcefield, record_changes);
                                                          
     if (changed_mol.oldMolecule().isEmpty())

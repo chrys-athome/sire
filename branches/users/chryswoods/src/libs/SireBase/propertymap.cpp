@@ -141,6 +141,17 @@ const Property& PropertyName::value() const
     return val;
 }
 
+/** Return a string representation of this propertyname */
+QString PropertyName::toString() const
+{
+    if (this->hasSource())
+        return src;
+    else if (this->hasValue())
+        return val->what();
+    else
+        return "NULL";
+}
+
 ////////////
 //////////// Implementation of PropertyMap
 ////////////
@@ -240,7 +251,7 @@ bool PropertyMap::operator!=(const PropertyMap &other) const
     that property */
 PropertyName PropertyMap::operator[](const QString &name) const
 {
-    return propmap.value( PropertyName(name) );
+    return propmap.value(name);
 }
 
 /** Return whether or not this map specifies the source or value
@@ -256,4 +267,19 @@ bool PropertyMap::specified(const QString &name) const
 void PropertyMap::set(const QString &name, const PropertyName &source)
 {
     propmap.insert(name, source);
+}
+
+/** Return a string representation of this PropertyMap */
+QString PropertyMap::toString() const
+{
+    QStringList items;
+    
+    for (QHash<QString,PropertyName>::const_iterator it = propmap.constBegin();
+         it != propmap.constEnd();
+         ++it)
+    {
+        items.append( QString("%1 == %2").arg( it.key(), it.value().toString() ) );
+    }
+    
+    return QString("[ %1 ]").arg( items.join(", ") );
 }

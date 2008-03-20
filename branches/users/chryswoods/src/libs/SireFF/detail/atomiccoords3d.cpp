@@ -149,13 +149,13 @@ AtomicCoords3D& AtomicCoords3D::operator=(const AtomicCoords3D &other)
 }
 
 /** Comparison operator */
-bool AtomicCoords3D::operator==(const AtomicCoords3D &other)
+bool AtomicCoords3D::operator==(const AtomicCoords3D &other) const
 {
     return coords == other.coords;
 }
 
 /** Comparison operator */
-bool AtomicCoords3D::operator!=(const AtomicCoords3D &other)
+bool AtomicCoords3D::operator!=(const AtomicCoords3D &other) const
 {
     return coords != other.coords;
 }

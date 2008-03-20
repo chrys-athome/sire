@@ -191,6 +191,18 @@ public:
     ~CLJParameter()
     {}
     
+    bool operator==(const CLJParameter &other) const
+    {
+        return reduced_charge == other.reduced_charge and
+               ljid == other.ljid;
+    }
+    
+    bool operator!=(const CLJParameter &other) const
+    {
+        return reduced_charge != other.reduced_charge or
+               ljid != other.ljid;
+    }
+    
     double reduced_charge;
     quint32 ljid;
 };
@@ -248,6 +260,11 @@ public:
         return InterCLJPotential::typeName();
     }
     
+    static ParameterNames parameters()
+    {
+        return ParameterNames();
+    }
+    
     InterCLJPotential::Parameters 
     getParameters(const PartialMolecule &molecule,
                   const PropertyMap &map = PropertyMap());
@@ -256,21 +273,21 @@ public:
     updateParameters(const InterCLJPotential::Parameters &old_params,
                      const PartialMolecule &old_molecule,
                      const PartialMolecule &new_molecule,
-                     const PropertyMap &old_map = ParameterMap());
-    
-    InterCLJPotential::Molecule
-    parameterise(const PartialMolecule &molecule);
+                     const PropertyMap &map = PropertyMap());
+                     
+    InterCLJPotential::Parameters
+    updateParameters(const InterCLJPotential::Parameters &old_params,
+                     const PartialMolecule &old_molecule,
+                     const PartialMolecule &new_molecule,
+                     const PropertyMap &old_map, const PropertyMap &new_map);
     
     InterCLJPotential::Molecule
     parameterise(const PartialMolecule &molecule,
-                 const InterCLJPotential::ParameterNames &paramnames);
-    
-    InterCLJPotential::Molecules 
-    parameterise(const MolGroup &molecules);
+                 const PropertyMap &map = PropertyMap());
     
     InterCLJPotential::Molecules 
     parameterise(const MolGroup &molecules,
-                 const InterCLJPotential::ParameterNames &paramnames);
+                 const PropertyMap &map = PropertyMap());
 
     void calculateEnergy(const InterCLJPotential::Molecule &mol0, 
                          const InterCLJPotential::Molecule &mol1,
@@ -377,14 +394,29 @@ public:
         return IntraCLJPotential::typeName();
     }
     
-    IntraCLJPotential::Molecules 
-    parameterise(const MolGroup &molecules);
+    IntraCLJPotential::Parameters 
+    getParameters(const PartialMolecule &molecule,
+                  const PropertyMap &map = PropertyMap());
+    
+    IntraCLJPotential::Parameters
+    updateParameters(const IntraCLJPotential::Parameters &old_params,
+                     const PartialMolecule &old_molecule,
+                     const PartialMolecule &new_molecule,
+                     const PropertyMap &map = PropertyMap());
+                     
+    IntraCLJPotential::Parameters
+    updateParameters(const IntraCLJPotential::Parameters &old_params,
+                     const PartialMolecule &old_molecule,
+                     const PartialMolecule &new_molecule,
+                     const PropertyMap &old_map, const PropertyMap &new_map);
+    
+    IntraCLJPotential::Molecule
+    parameterise(const PartialMolecule &molecule,
+                 const PropertyMap &map = PropertyMap());
     
     IntraCLJPotential::Molecules 
-    parameteriseForIntermolecular(const MolGroup &molecules);
-    
-    IntraCLJPotential::Molecules 
-    parameteriseForIntramolecular(const MolGroup &molecules);
+    parameterise(const MolGroup &molecules,
+                 const PropertyMap &map = PropertyMap());
 
     void calculateEnergy(const IntraCLJPotential::Molecule &mol, 
                          IntraCLJPotential::Energy &energy,

@@ -199,7 +199,7 @@ bool AtomicParameters<PARAM>::changedAllGroups(
                                                     
     for (int i=0; i<ngroups; ++i)
     {
-        if (this->array[i] == other_array[i])
+        if (this_array[i] == other_array[i])
             return false;
     }
         
@@ -219,10 +219,10 @@ void AtomicParameters<PARAM>::addChangedGroups(
     if (SireFF::detail::selectedAll(changed_groups, ngroups))
         return;
         
-    quint32 nsharedgroups = qMin(ngroups, other.params.count());
+    quint32 nsharedgroups = qMin(ngroups, quint32(other.params.count()));
    
-    const typename Parameters::Array *this_array = params.count();
-    const typename Parameters::Array *other_array = other.params.count();
+    const typename Parameters::Array *this_array = params.constData();
+    const typename Parameters::Array *other_array = other.params.constData();
     
     for (quint32 i=0; i<nsharedgroups; ++i)
     {

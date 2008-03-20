@@ -85,8 +85,8 @@ using SireMol::CGIdx;
 
 using SireBase::PropertyMap;
 
-void throwFFMoleculesIncompatibleParameterNames(const QString &params0, 
-                                                const QString &params1);
+void throwFFMoleculesIncompatibleParameterNames(const PropertyMap &old_map, 
+                                                const PropertyMap &new_map);
 
 void assertCompatible(const FFMoleculeBase &mol0, const FFMoleculeBase &mol1);
 
@@ -173,7 +173,7 @@ public:
     
     bool change(const PartialMolecule &molecule,
                 PTNL &forcefield,
-                const PropertyMap &map = PropertyMap());
+                const PropertyMap &map);
     
     bool change(const PartialMolecule &molecule,
                 const PropertyMap &new_map,
@@ -182,11 +182,11 @@ public:
 
     bool add(const AtomSelection &selected_atoms,
              PTNL &forcefield,
-             const PropertyMap &map = PropertyMap());
+             const PropertyMap &map);
 
     bool remove(const AtomSelection &selected_atoms,
                 PTNL &forcefield,
-                const PropertyMap &map = PropertyMap());
+                const PropertyMap &map);
 
     FFMolecule<PTNL> getDifferences(const FFMolecule<PTNL> &other) const;
 
@@ -222,6 +222,8 @@ public:
     const QVector<MolNum> molNumsByIndex() const;
     const QHash<MolNum,quint32>& indexesByMolNum() const;
 
+    const QVector<PropertyMap>& parameterNamesByIndex() const;
+
     quint32 indexOf(MolNum molnum) const;
     bool contains(MolNum molnum) const;
 
@@ -241,6 +243,10 @@ protected:
 
     void _pvt_remove(MolNum molnum);
     void _pvt_remove(const QList<MolNum> &molnums);
+
+    /** The names of the properties used to get the parameters for
+        each molecule */
+    QVector<PropertyMap> parameter_names;
     
 private:
     void _pvt_reindex();
@@ -308,14 +314,10 @@ public:
                            bool record_changes = true);
     
     const QVector<Molecule>& moleculesByIndex() const;
-    const QVector<ParameterNames>& parameterNamesByIndex() const;
     
 protected:
     /** The array of forcefield-specialised molecules in this group */
     QVector<Molecule> mols_by_idx;
-    
-    /** The current parameter locations used for each molecule */
-    QVector<PropertyMap> parameter_names;
 };
 
 /** This implementation class holds the information about 
@@ -507,7 +509,7 @@ bool FFMolecule<PTNL>::change(const PartialMolecule &new_molecule,
             //now try to change the parameters
             params = forcefield.updateParameters(params, old_molecule,
                                                  FFMoleculeBase::molecule(),
-                                                 parameternames);
+                                                 old_map);
         }
         catch(...)
         {
@@ -518,6 +520,8 @@ bool FFMolecule<PTNL>::change(const PartialMolecule &new_molecule,
         
         return true;
     }
+    else
+        return false;
 }
 
 /** Change this molecule so that it is equal to 'new_molecule' and
@@ -544,8 +548,9 @@ bool FFMolecule<PTNL>::change(const PartialMolecule &new_molecule,
     
     try
     {
-        Parameters new_params = forcefield.getParameters(FFMoleculeBase::molecule(),
-                                                         new_map);
+        Parameters new_params = forcefield.updateParameters(params,
+                                                  FFMoleculeBase::molecule(),
+                                                  old_molecule, old_map, new_map);
 
         changed = changed or (new_params != params);
         
@@ -570,8 +575,7 @@ bool FFMolecule<PTNL>::change(const PartialMolecule &new_molecule,
 template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
 bool FFMolecule<PTNL>::add(const AtomSelection &added_atoms,
-                           PTNL &forcefield,
-                    const typename FFMolecule<PTNL>::ParameterNames &parameternames)
+                           PTNL &forcefield, const PropertyMap &map)
 {
     //save the old version of the molecule
     PartialMolecule old_mol = FFMoleculeBase::molecule();
@@ -582,8 +586,8 @@ bool FFMolecule<PTNL>::add(const AtomSelection &added_atoms,
         //atoms were added. We now need to reparameterise the molecule
         try
         {
-            params = forcefield.parameterise(FFMoleculeBase::molecule(),
-                                             parameternames);
+            params = forcefield.getParameters(FFMoleculeBase::molecule(),
+                                              map);
         }
         catch(...)
         {
@@ -606,8 +610,7 @@ bool FFMolecule<PTNL>::add(const AtomSelection &added_atoms,
 template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
 bool FFMolecule<PTNL>::remove(const AtomSelection &removed_atoms,
-                              PTNL &forcefield,
-                    const typename FFMolecule<PTNL>::ParameterNames &parameternames)
+                              PTNL &forcefield, const PropertyMap &map)
 {
     if (this->isEmpty())
         return false;
@@ -616,7 +619,7 @@ bool FFMolecule<PTNL>::remove(const AtomSelection &removed_atoms,
     
     if (FFMoleculeBase::remove(removed_atoms))
     {
-        if (FFMoleculeBase::molecule().isEmpty())
+        if (FFMoleculeBase::molecule().selection().selectedNone())
         {
             //the molecule has been completely removed
             params = Parameters();
@@ -627,8 +630,8 @@ bool FFMolecule<PTNL>::remove(const AtomSelection &removed_atoms,
             //we need to reparameterise the molecule
             try
             {
-                params = forcefield.parameterise(FFMoleculeBase::molecule(),
-                                                 parameternames);
+                params = forcefield.getParameters(FFMoleculeBase::molecule(),
+                                                  map);
             }
             catch(...)
             {
@@ -736,8 +739,7 @@ template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
 FFMolecules<PTNL>::FFMolecules(const FFMolecules<PTNL> &other)
                   : FFMoleculesBase(other),
-                    mols_by_idx(other.mols_by_idx),
-                    parameter_names(other.parameter_names)
+                    mols_by_idx(other.mols_by_idx)
 {}
 
 /** Destructor */
@@ -845,7 +847,7 @@ template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
 typename FFMolecules<PTNL>::ChangedMolecule 
 FFMolecules<PTNL>::change(const PartialMolecule &new_molecule,
-                          const typename FFMolecules<PTNL>::ParameterNames &new_params,
+                          const PropertyMap &new_map,
                           PTNL &forcefield, bool record_changes)
 {
     QHash<MolNum,quint32>::const_iterator it = FFMoleculesBase::indexesByMolNum()
@@ -856,9 +858,9 @@ FFMolecules<PTNL>::change(const PartialMolecule &new_molecule,
         return ChangedMolecule();
 
     //have the parameters changed?
-    const ParameterNames &old_params = parameter_names.constData()[*it];
+    const PropertyMap &old_map = parameter_names.constData()[*it];
 
-    if (new_params == old_params)
+    if (new_map == old_map)
         //no, they haven't
         return this->change(new_molecule, forcefield, record_changes);
 
@@ -870,25 +872,25 @@ FFMolecules<PTNL>::change(const PartialMolecule &new_molecule,
         typename FFMolecules<PTNL>::Molecule old_molecule = mols_array[*it];
         
         //now make the change
-        if (mols_array[*it].change(new_molecule, new_params, 
-                                   forcefield, old_params))
+        if (mols_array[*it].change(new_molecule, new_map, 
+                                   forcefield, old_map))
         {
-            parameter_names.data()[*it] = new_params;
+            parameter_names.data()[*it] = new_map;
             return ChangedMolecule(old_molecule, mols_array[*it]);
         }
         else
         {
             //there was no change
-            parameter_names.data()[*it] = new_params;
+            parameter_names.data()[*it] = new_map;
             return ChangedMolecule();
         }
     }
     else
     {
-        mols_by_idx.data()[*it].change(new_molecule, new_params,
-                                       forcefield, old_params);
+        mols_by_idx.data()[*it].change(new_molecule, new_map,
+                                       forcefield, old_map);
 
-        parameter_names.data()[*it] = new_params;
+        parameter_names.data()[*it] = new_map;
 
         return ChangedMolecule();
     }
@@ -923,7 +925,7 @@ template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
 typename FFMolecules<PTNL>::ChangedMolecule 
 FFMolecules<PTNL>::add(const PartialMolecule &molecule,
-                       const typename FFMolecules<PTNL>::ParameterNames &paramnames,
+                       const PropertyMap &map,
                        PTNL &forcefield, bool record_changes)
 {
     //does this molecule exist already?
@@ -933,10 +935,9 @@ FFMolecules<PTNL>::add(const PartialMolecule &molecule,
         quint32 i = FFMoleculesBase::indexOf(molecule.number());
         
         //ensure that the parameter source names are the same
-        if (paramnames != parameter_names.constData()[i])
+        if (map != parameter_names.constData()[i])
             SireFF::detail::throwFFMoleculesIncompatibleParameterNames(
-                    parameter_names.constData()[i].toString(),
-                    paramnames.toString());
+                    parameter_names.constData()[i], map);
         
         if (record_changes)
         {
@@ -946,7 +947,7 @@ FFMolecules<PTNL>::add(const PartialMolecule &molecule,
             typename FFMolecules<PTNL>::Molecule old_mol = mols_array[i];
             
             //try to make the change
-            if (mols_array[i].add(molecule.selection(), forcefield, paramnames))
+            if (mols_array[i].add(molecule.selection(), forcefield, map))
             {
                 //there was a change!
                 return ChangedMolecule(old_mol, mols_array[i]);
@@ -958,7 +959,7 @@ FFMolecules<PTNL>::add(const PartialMolecule &molecule,
         else
         {
             //add the molecule
-            mols_by_idx.data()[i].add(molecule.selection(), forcefield, paramnames);
+            mols_by_idx.data()[i].add(molecule.selection(), forcefield, map);
             
             return ChangedMolecule();
         }
@@ -967,13 +968,13 @@ FFMolecules<PTNL>::add(const PartialMolecule &molecule,
     {
         //we are adding this molecule from scratch. First create
         //a forcefield specialised version of this molecule
-        typename FFMolecules<PTNL>::Molecule ffmol(molecule, forcefield, paramnames);
+        typename FFMolecules<PTNL>::Molecule ffmol(molecule, forcefield, map);
         
         //that was successful! Add the molecule into the index
         FFMoleculesBase::_pvt_add(molecule.number());
         
         mols_by_idx.append(ffmol);
-        parameter_names.append(paramnames);
+        parameter_names.append(map);
         
         if (record_changes)
             return ChangedMolecule( typename FFMolecules<PTNL>::Molecule(),
@@ -1064,17 +1065,6 @@ const QVector<typename FFMolecules<PTNL>::Molecule>&
 FFMolecules<PTNL>::moleculesByIndex() const
 {
     return mols_by_idx;
-}
-
-/** Return the array of the names of the properties used to get the parameters
-    for each molecule, arranged in the order that the molecules appear
-    in this group */
-template<class PTNL>
-SIRE_OUTOFLINE_TEMPLATE
-const QVector<typename FFMolecules<PTNL>::ParameterNames>&
-FFMolecules<PTNL>::parameterNamesByIndex() const
-{
-    return parameter_names;
 }
 
 ///////

@@ -107,11 +107,11 @@ SIRE_OUTOFLINE_TEMPLATE
 void AtomicParameters3D<PARAM>::assertCompatible(
                     const typename AtomicParameters3D<PARAM>::Parameters &params) const
 {
-    if (params.count() == this->coordinates().count())
+    if (params.count() == this->atomicCoordinates().count())
     {
         quint32 ngroups = params.count();
         
-        const CoordGroup *cgroup_array = this->coordinates().constData();
+        const CoordGroup *cgroup_array = this->atomicCoordinates().constData();
         const typename Parameters::Array *params_array = params.constData();
         
         for (quint32 i=0; i<ngroups; ++i)
@@ -125,7 +125,7 @@ void AtomicParameters3D<PARAM>::assertCompatible(
     }
     else
         SireFF::detail::throwAtomicParametersIncompatibleError(
-                params.count(), this->coordinates().count());
+                params.count(), this->atomicCoordinates().count());
 }
 
 /** Construct from the passed 3D coordinates and CLJ parameters */
@@ -190,14 +190,14 @@ SIRE_OUTOFLINE_TEMPLATE
 bool AtomicParameters3D<PARAM>::changedAllGroups(
                                     const AtomicParameters3D<PARAM> &other) const
 {
-    if (AtomicCoords3D::changedAllGroups() or
-        AtomicParameters<PARAM>::changedAllGroups())
+    if (AtomicCoords3D::changedAllGroups(other) or
+        AtomicParameters<PARAM>::changedAllGroups(other))
     {
         return true;
     }
     
     //get the list of groups that have changed...
-    QSet<quint32> changed_idxs = this->getChangedGroups();
+    QSet<quint32> changed_idxs = this->getChangedGroups(other);
 
     return SireFF::detail::selectedAll(changed_idxs, this->nGroups());
 }
@@ -249,8 +249,8 @@ AtomicParameters3D<PARAM> AtomicParameters3D<PARAM>::applyMask(
         //none of the groups are masked
         return *this;
         
-    return AtomicParameters3D<PARAM>( AtomicParameters<PARAM>::applyMask(idxs), 
-                                      masked_coords );
+    return AtomicParameters3D<PARAM>( masked_coords,
+                                      AtomicParameters<PARAM>::applyMask(idxs) );
 }
 
 } // end of namespace detail

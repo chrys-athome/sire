@@ -51,15 +51,15 @@ using namespace SireStream;
 
 
 void SIREFF_EXPORT 
-SireFF::detail::throwFFMoleculesIncompatibleParameterNames(const QString &params0, 
-                                                           const QString &params1)
+SireFF::detail::throwFFMoleculesIncompatibleParameterNames(const PropertyMap &old_map, 
+                                                           const PropertyMap &new_map)
 {
     throw SireError::incompatible_error( QObject::tr(
         "You cannot change the parameter source names when you add "
         "atoms to a molecule. The existing molecule uses the parameter "
         "source names %1, while you are trying to add atoms using "
         "the parameter sources names %2.")
-            .arg(params0, params1), CODELOC );
+            .arg(old_map.toString(), new_map.toString()), CODELOC );
 }
 
 void SIREFF_EXPORT 
@@ -303,7 +303,8 @@ FFMoleculesBase::FFMoleculesBase()
 
 /** Copy constructor */
 FFMoleculesBase::FFMoleculesBase(const FFMoleculesBase &other)
-                : molnums_by_idx(other.molnums_by_idx),
+                : parameter_names(other.parameter_names),
+                  molnums_by_idx(other.molnums_by_idx),
                   idxs_by_molnum(other.idxs_by_molnum)
 {}
 
@@ -314,6 +315,7 @@ FFMoleculesBase::~FFMoleculesBase()
 /** Copy assignment operator */
 FFMoleculesBase& FFMoleculesBase::operator=(const FFMoleculesBase &other)
 {
+    parameter_names = other.parameter_names;
     molnums_by_idx = other.molnums_by_idx;
     idxs_by_molnum = other.idxs_by_molnum;
     return *this;
@@ -400,6 +402,15 @@ quint32 FFMoleculesBase::_pvt_add(MolNum molnum)
     else
         return *it;
 }
+    
+/** Return the array of the names of the properties used to get the parameters
+    for each molecule, arranged in the order that the molecules appear
+    in this group */
+const QVector<PropertyMap>& FFMoleculesBase::parameterNamesByIndex() const
+{
+    return parameter_names;
+}
+
 
 /** Reindex this group */
 void FFMoleculesBase::_pvt_reindex()
